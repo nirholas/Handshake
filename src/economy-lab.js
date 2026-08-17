@@ -489,8 +489,10 @@ function drawChart(series, knobs) {
 
 	const padL = narrow ? 42 : 58;
 	const padR = narrow ? 34 : 52;
-	const padT = 16;
-	const padB = 28;
+	// Room above the plot for the axis unit captions, which used to be drawn
+	// inside it and landed straight on top of the first gridline label.
+	const padT = 26;
+	const padB = 30;
 	const w = cssW - padL - padR;
 	const h = cssH - padT - padB;
 	if (w <= 0 || h <= 0 || !series.length) return;
@@ -501,11 +503,14 @@ function drawChart(series, knobs) {
 	const yBal = (v) => padT + h - (v / maxBal) * h;
 	const yCount = (v) => padT + h - (v / maxCount) * h;
 
-	// Grid
+	// Grid. Tick precision is derived from the range being plotted: a fee wallet
+	// holding 0.0023 SOL rendered every one of its five gridlines as "0.002" or
+	// "0.001" at a fixed three decimals, which is an axis that cannot be read.
 	ctx.strokeStyle = line;
 	ctx.lineWidth = 1;
 	ctx.font = '11px ui-sans-serif, system-ui, sans-serif';
 	ctx.fillStyle = faint;
+	const solDigits = axisSolDigits(maxBal);
 	for (let g = 0; g <= 4; g++) {
 		const yy = padT + (h / 4) * g;
 		ctx.beginPath();
@@ -513,25 +518,38 @@ function drawChart(series, knobs) {
 		ctx.lineTo(padL + w, yy);
 		ctx.stroke();
 		ctx.textAlign = 'right';
-		ctx.fillText(`${fmtSol(maxBal * (1 - g / 4), 3)}`, padL - 8, yy + 4);
+		ctx.fillText(fmtSol(maxBal * (1 - g / 4), solDigits), padL - 8, yy + 4);
 		ctx.textAlign = 'left';
 		ctx.fillText(fmtInt(maxCount * (1 - g / 4)), padL + w + 8, yy + 4);
 	}
 
-	// UTC midnight markers
+	// Axis captions, in the gutter above the plot so they cannot sit on a tick.
+	ctx.fillStyle = faint;
+	ctx.textAlign = 'left';
+	ctx.fillText('SOL', 6, 13);
+	ctx.textAlign = 'right';
+	ctx.fillText('settles/h', cssW - 6, 13);
+
+	// UTC midnight markers. Labelled in the bottom gutter: inside the plot the
+	// caption landed on top of the columns it was meant to annotate.
 	const startHour = seed?.meter?.utc_hour ?? 0;
 	ctx.save();
 	ctx.setLineDash([2, 4]);
 	ctx.strokeStyle = faint;
+	let lastMarkerX = -Infinity;
 	for (let i = 0; i < series.length; i++) {
 		if ((startHour + i) % 24 !== 0 || i === 0) continue;
 		ctx.beginPath();
 		ctx.moveTo(x(i), padT);
 		ctx.lineTo(x(i), padT + h);
 		ctx.stroke();
+		// Skip a caption that would collide with the previous one: a 14-day
+		// horizon on a phone puts midnights 15px apart.
+		if (x(i) - lastMarkerX < 46) continue;
+		lastMarkerX = x(i);
 		ctx.fillStyle = faint;
 		ctx.textAlign = 'center';
-		ctx.fillText('00 UTC', x(i), padT + 10);
+		ctx.fillText('00 UTC', x(i), padT + h + 15);
 	}
 	ctx.restore();
 
@@ -564,9 +582,19 @@ function drawChart(series, knobs) {
 	ctx.lineTo(padL + w, yBal(knobs.floorLamports));
 	ctx.stroke();
 	ctx.restore();
+	// The label rides on a chip of the panel background. Bare text sat directly
+	// on the refusal columns, which is precisely the case where the floor line
+	// matters most and was least readable.
+	const floorY = yBal(knobs.floorLamports);
+	const floorLabel = 'hard floor';
+	const labelW = ctx.measureText(floorLabel).width;
+	const above = floorY - padT > 16;
+	const chipY = above ? floorY - 15 : floorY + 3;
+	ctx.fillStyle = col('--el-surface-2', '#111420');
+	ctx.fillRect(padL + 3, chipY, labelW + 8, 13);
 	ctx.fillStyle = danger;
 	ctx.textAlign = 'left';
-	ctx.fillText('hard floor', padL + 4, yBal(knobs.floorLamports) - 5);
+	ctx.fillText(floorLabel, padL + 7, chipY + 10);
 
 	// Balance area + line
 	ctx.beginPath();
@@ -590,13 +618,20 @@ function drawChart(series, knobs) {
 	ctx.strokeStyle = info;
 	ctx.lineWidth = 2;
 	ctx.stroke();
+}
 
-	// Axis labels
-	ctx.fillStyle = faint;
-	ctx.textAlign = 'left';
-	ctx.fillText('SOL', 6, padT + 10);
-	ctx.textAlign = 'right';
-	ctx.fillText('settles/h', cssW - 6, padT + 10);
+// Decimals an axis tick needs for five gridlines over `maxLamports` to read as
+// five different numbers. A rail's balance spans nine orders of magnitude
+// between a funded wallet and a starved one, so a fixed precision is wrong at
+// one end or the other.
+function axisSolDigits(maxLamports) {
+	const span = Math.abs(Number(maxLamports) || 0) / LAMPORTS_PER_SOL;
+	if (span >= 10) return 1;
+	if (span >= 1) return 2;
+	if (span >= 0.1) return 3;
+	if (span >= 0.01) return 4;
+	if (span >= 0.001) return 5;
+	return 6;
 }
 
 function hexWithAlpha(color, alpha) {

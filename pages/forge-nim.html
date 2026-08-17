@@ -902,6 +902,7 @@
 				// disabled and the stage explains how to point it at a NIM instead.
 				hasEndpoint: false,
 				healthSeq: 0,
+				stage: 'idle',
 			};
 
 			// ── Health ────────────────────────────────────────────────────
@@ -928,13 +929,22 @@
 				}
 				if (seq !== state.healthSeq) return;
 
-				state.hasEndpoint = Boolean(override) || Boolean(d.configured);
-				if (!d.configured && !override) {
+				// A rejected override answers from the env instead of the box, and says so
+				// via `reason` with no masked baseUrl echoed back. Treat it as no endpoint
+				// rather than letting the composer promise a POST that can only 400.
+				const overrideRejected = Boolean(override) && !d.baseUrl;
+				state.hasEndpoint = overrideRejected ? Boolean(d.configured) : Boolean(override) || Boolean(d.configured);
+
+				if (overrideRejected) {
+					setStatus('down', 'Endpoint rejected');
+				} else if (!d.configured && !override) {
 					setStatus('off', 'No NIM wired');
 				} else if (d.reachable) {
 					setStatus('live', override ? 'Endpoint ready' : 'NIM ready');
 				} else {
-					setStatus('down', override ? 'Endpoint unreachable' : 'NIM unreachable');
+					// A NIM behind a gateway may refuse /v1/health/ready yet serve /v1/infer,
+					// so unreachable warns without locking the composer.
+					setStatus('down', override ? 'Ready check failed' : 'NIM unreachable');
 				}
 				applyEndpointState();
 			}
@@ -1043,11 +1053,33 @@
 
 			els.prompt.addEventListener('input', updateGenerateEnabled);
 			function updateGenerateEnabled() {
-				const ready =
+				const hasInput =
 					state.mode === 'image' ? Boolean(state.imageDataUri) : els.prompt.value.trim().length >= 3;
-				els.generate.disabled = !ready;
+				els.generate.disabled = !hasInput || !state.hasEndpoint;
+				els.generate.title = state.hasEndpoint
+					? ''
+					: 'No NIM endpoint yet. Add one under "NIM endpoint & wire contract".';
 			}
 			updateGenerateEnabled();
+
+			// ── Endpoint override ─────────────────────────────────────────
+			// Typing a base URL re-probes THAT box, so the pill and the composer describe
+			// the endpoint the next POST will actually hit, not the deployment default.
+			let baseUrlTimer = null;
+			function scheduleHealth() {
+				clearTimeout(baseUrlTimer);
+				baseUrlTimer = setTimeout(() => checkHealth(els.baseUrl.value), 600);
+			}
+			els.baseUrl.addEventListener('input', scheduleHealth);
+			els.baseUrl.addEventListener('change', () => {
+				clearTimeout(baseUrlTimer);
+				checkHealth(els.baseUrl.value);
+			});
+			els.setEndpoint.addEventListener('click', () => {
+				els.advanced.open = true;
+				els.baseUrl.focus();
+				els.baseUrl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+			});
 
 			// ── Samples ───────────────────────────────────────────────────
 			els.sampleRow.addEventListener('click', (e) => {
@@ -1067,7 +1099,15 @@
 				els.stateError.classList.toggle('show', name === 'error');
 				els.stateUnconfigured.classList.toggle('show', name === 'unconfigured');
 				els.viewer.style.display = name === 'result' ? 'block' : 'none';
-				if (name !== 'result') els.resultBar.classList.add('is-hidden');
+				if (name !== 'result') {
+					els.resultBar.classList.add('is-hidden');
+					els.download.hidden = true;
+				}
+			}
+			// "Back to start" always lands on the state that is actually true right now:
+			// the idle prompt when an endpoint exists, the setup card when none does.
+			function showRest() {
+				showState(state.hasEndpoint ? 'idle' : 'unconfigured');
 			}
 			function showError(title, msg) {
 				els.errorTitle.textContent = title;
@@ -1106,11 +1146,20 @@
 				e.preventDefault();
 				generate();
 			});
-			els.errorRetry.addEventListener('click', generate);
+			els.errorRetry.addEventListener('click', () => {
+				// Retrying with no endpoint would fail identically, so send the user to the
+				// one action that can fix it instead of replaying the same 503.
+				if (!state.hasEndpoint) {
+					showState('unconfigured');
+					els.setEndpoint.focus();
+					return;
+				}
+				generate();
+			});
 			els.cancel.addEventListener('click', () => {
 				state.abort?.abort();
 				stopTimers();
-				showState('idle');
+				showRest();
 			});
 
 			async function generate() {
@@ -1141,7 +1190,10 @@
 					});
 					const d = await r.json().catch(() => ({}));
 					if (!r.ok || !d.ok) {
-						throw new Error(d.message || d.error || `Request failed (${r.status})`);
+						// The API's boundary errors carry the human sentence in
+						// `error_description`; `error` is only the machine code, so reading it
+						// first showed the user a bare `nim_unconfigured` instead of the reason.
+						throw new Error(d.error_description || d.message || d.error || `Request failed (${r.status})`);
 					}
 					renderResult(d);
 				} catch (err) {
@@ -1164,6 +1216,7 @@
 				state.objectUrl = URL.createObjectURL(blob);
 				els.viewer.src = state.objectUrl;
 				els.download.href = state.objectUrl;
+				els.download.hidden = false;
 				showState('result');
 
 				const kb = (d.bytes / 1024).toFixed(0);
@@ -1196,7 +1249,7 @@
 			});
 
 			setMode('image');
-			checkHealth();
+			checkHealth(els.baseUrl.value);
 		</script>
 		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-17T04:47:06.239Z",
+	"generated_at": "2026-08-17T04:49:46.210Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -65,17 +65,6 @@
 			"title": "Blockchain TVL by Chain is readable again, and its numbers can be copied",
 			"summary": "The cross-chain leaderboard at /chains was audited end to end in a real browser: the live DeFiLlama board, the sortable columns, the row links out to each chain's page, and the loading, empty and error states, at phone, tablet and desktop widths. The page had briefly stopped working entirely. Its row-click helpers were declared twice in the same file, which is a syntax error, so the script never ran and the table sat on its grey loading bars forever. That is fixed and covered by a browser test so it cannot come back. Two real defects came out of the same pass. Every row navigated on any click, so dragging across a cell to copy a chain's TVL threw the selection away and opened that chain's page instead; a figure or a name can now be selected and copied, while a plain click still opens the chain. And the page wrapped the site navigation in a second page banner, leaving screen readers with two overlapping banner landmarks to pick between. The share bar beside each chain also stopped reading its percentage aloud a second time, since the dominance column right next to it already says it.",
 			"link": "/chains",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-08-17",
-			"type": "update",
-			"title": "Building an agent no longer throws you out to the login page, and the wizard answers the keyboard",
-			"summary": "The six-step agent builder at /create-agent was audited end to end in a real browser: naming an agent, generating a whole spec from one sentence, choosing a body from the starter library, the skills and personality steps, the voice step, and the review screen, plus the loading, empty and error states at phone, tablet and desktop widths. The worst finding was that the wizard broke its own promise. It is built so anyone can construct an entire agent before making an account, and sign in only at the final step where the agent gets its wallet. But opening the My avatars tab without an account threw the visitor straight out to the login page, mid-build, with no warning and no explanation, because that tab asked for avatars you can only have if you are signed in. It now recognises a visitor who has no account, says so in the tab, and points at the Starter library and Upload tabs, which both work without one, alongside a Sign in button that saves the build first so nothing is lost either way. The step markers across the top of the wizard could only be used with a mouse. They are the only way back to an earlier step from the review screen, so anyone working by keyboard reached the end of the flow with no way to correct anything; they are now real buttons that take focus, show a focus ring, and respond to Enter and Space, with the completed steps marked as such for screen readers. The four tabs on the body step also announced themselves as tabs without ever telling a screen reader which panel each one opens, and left the arrow keys dead; the arrow keys, Home and End now move between them the way tabs are meant to work. Finally, a first-time visitor generating an agent from a description no longer sees a failed request in the browser console.",
-			"link": "/create-agent",
 			"tags": [
 				"fix",
 				"improvement"
@@ -249,6 +238,17 @@
 		{
 			"date": "2026-08-17",
 			"type": "update",
+			"title": "Selfie to Avatar tells you your library is full before it spends ninety seconds building",
+			"summary": "Five fixes to Selfie to Avatar. If your avatar library was already at the limit for your plan, nothing noticed until the very end: you waited out the full reconstruction, and then the page said the 3D engine had hit a snag and told you to try again. It was not an engine problem, trying again could never work, and every attempt spent another ninety seconds of generation to land in the same place. Your library is now checked the moment you press the button, so a full one is refused immediately with the actual reason and what to do about it, and a build that fills the last slot while it is running ends with that same plain explanation instead of the engine message. The page also stopped losing its own error messages: the Build button floats above the page, so tapping it from higher up left the explanation somewhere below the fold while the button quietly reset itself, which read as nothing having happened. Errors now scroll into view. On the finished-avatar screen, Learn how to embed pointed at a page that did not exist and answered 404; it now opens the embedding guide. And on a narrow phone the Photoreal and Stylized choices were squeezed into two columns barely wide enough for one word per line, so they now stack and can be read.",
+			"link": "/create/selfie",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-17",
+			"type": "update",
 			"title": "Talking Avatar Video stops handing the renderer a 3D file where a photo belongs, and says up front when the GPU lane is down",
 			"summary": "The /create/video page turns one of your avatars plus an audio clip into a lip-synced video, and it was driven end to end in a real browser: every state, every button, every width. The worst finding was invisible from the page. The reference frame the GPU worker renders from was being taken from whatever the browser had handy, which for an avatar with no thumbnail meant its 3D model file. The worker saved that as the reference photo and then failed on it minutes later, after the wait had already been spent. The page now sends only the avatar, and the server resolves a real image for it: the stored thumbnail, or a fresh portrait render when there is none. Second, the GPU renderer is a separate service, and when it is not running the only signal was a failure after you had already picked a file and uploaded it. The page now asks first and, if the lane is down, says so at the top, keeps Generate switched off, and points at the Avatar Studio and prompt-to-avatar in the meantime. The rest is the ordinary polish an audit turns up: a failed avatar list used to look identical to owning no avatars, so it sent people off to create one they already had, and now it says what broke and offers a retry; having no avatars yet gets a real empty state with a link to make one; the Generate button always explains what it is still waiting for and, once audio is in, how many clips of video that audio is worth; the clip you picked can be played back with its length and size before you spend a generation on it; a render job that goes unreachable now says so after thirty seconds instead of spinning for twenty minutes; and after a spent free trial the button under the error no longer stayed stuck on Upgrade plan for every later error. Avatar thumbnails are real buttons with visible focus rings, the two form fields have proper labels, and the second animated avatar that the site companion used to drop onto this page no longer loads over the one you are working on.",
 			"link": "/create/video",
@@ -308,6 +308,17 @@
 			"title": "The Concierge page stops cutting itself off on a phone, and its install tabs work from the keyboard",
 			"summary": "Three fixes to the Concierge landing page. On a narrow phone screen the whole page was being sized against the longest line of the install snippet, which pushed the column roughly twice as wide as the screen; because the site clips sideways overflow, the right-hand half of every headline, paragraph and button was simply cut off with no way to scroll to it. The column now fits the screen and the code snippet scrolls inside its own box, the way it already did on a laptop. The four install tabs (one tag, web component, npm, imperative) announced themselves to a screen reader as tabs but were not wired to the panels they open and ignored the arrow keys; they now move with Left, Right, Home and End, and each tab is properly tied to its snippet. Copy buttons also say which snippet they copy, and if the browser blocks the clipboard the snippet is selected for you so Ctrl+C still works. Finally, the passive \"Have you tried\" suggestion card could land on top of the live concierge demo in the corner; it now stacks clear of it.",
 			"link": "/concierge",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-17",
+			"type": "update",
+			"title": "The Create page no longer black-screens when the sign-in check stalls, and a broken remix link no longer kills every button on it",
+			"summary": "Two ways the front door for creating could strand you are gone. The page opens behind a full-screen loading screen while it checks whether you are signed in; if that check got no answer at all (a stalled connection rather than a refused one) the screen stayed black forever and the page read as dead. It now hands the page back after a short wait and treats you as signed out, which costs at most one extra trip through sign-in. Separately, opening a remix link for an avatar that had been deleted or made private used to show a message for four seconds and then leave you on a page where not one of the eight creation cards did anything: the remix ran before the buttons were wired and gave up without wiring them. The cards are live first now, and a failed remix explains itself in a panel that stays put, with a button to try again and a button to move on. Also: the talking-avatar-video card now says \"Coming soon\" on the card itself instead of only dimming, answers the keyboard the same way it answers a mouse, and stops calling itself unavailable when the check simply could not reach us (it asks again when you click). A saved avatar whose thumbnail has been deleted falls back to a silhouette instead of a broken image.",
+			"link": "/create",
 			"tags": [
 				"fix",
 				"improvement"

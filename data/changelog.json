@@ -3,6 +3,26 @@
 	"entries": [
 		{
 			"date": "2026-08-17",
+			"title": "The Create page no longer black-screens when the sign-in check stalls, and a broken remix link no longer kills every button on it",
+			"summary": "Two ways the front door for creating could strand you are gone. The page opens behind a full-screen loading screen while it checks whether you are signed in; if that check got no answer at all (a stalled connection rather than a refused one) the screen stayed black forever and the page read as dead. It now hands the page back after a short wait and treats you as signed out, which costs at most one extra trip through sign-in. Separately, opening a remix link for an avatar that had been deleted or made private used to show a message for four seconds and then leave you on a page where not one of the eight creation cards did anything: the remix ran before the buttons were wired and gave up without wiring them. The cards are live first now, and a failed remix explains itself in a panel that stays put, with a button to try again and a button to move on. Also: the talking-avatar-video card now says \"Coming soon\" on the card itself instead of only dimming, answers the keyboard the same way it answers a mouse, and stops calling itself unavailable when the check simply could not reach us (it asks again when you click). A saved avatar whose thumbnail has been deleted falls back to a silhouette instead of a broken image.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/create"
+		},
+		{
+			"date": "2026-08-17",
+			"title": "Selfie to Avatar tells you your library is full before it spends ninety seconds building",
+			"summary": "Five fixes to Selfie to Avatar. If your avatar library was already at the limit for your plan, nothing noticed until the very end: you waited out the full reconstruction, and then the page said the 3D engine had hit a snag and told you to try again. It was not an engine problem, trying again could never work, and every attempt spent another ninety seconds of generation to land in the same place. Your library is now checked the moment you press the button, so a full one is refused immediately with the actual reason and what to do about it, and a build that fills the last slot while it is running ends with that same plain explanation instead of the engine message. The page also stopped losing its own error messages: the Build button floats above the page, so tapping it from higher up left the explanation somewhere below the fold while the button quietly reset itself, which read as nothing having happened. Errors now scroll into view. On the finished-avatar screen, Learn how to embed pointed at a page that did not exist and answered 404; it now opens the embedding guide. And on a narrow phone the Photoreal and Stylized choices were squeezed into two columns barely wide enough for one word per line, so they now stack and can be read.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/create/selfie"
+		},
+		{
+			"date": "2026-08-17",
 			"title": "Trial Conversions: the Buy button lands on the right skill, and Edit pricing stops going nowhere",
 			"summary": "Six fixes to the Trial Conversions page, which shows both sides of a free trial running out: the trials you hold and the trials running on skills you sell. A seller's Edit pricing button pointed at a page that no longer exists and answered 404 on every row; it now opens that agent's monetization panel, where the price and the trial grant are actually set. A buyer's Buy it and Open agent buttons dropped you at the top of an agent selling a dozen skills, leaving you to hunt for the one your trial just ran out on; they now open the agent's pricing list scrolled to that exact skill, with the row briefly marked so you can see which one you came for. Those links also took a redirect that quietly discarded everything after the question mark, so they now use the direct address. A trial whose skill has since been delisted used to claim \"1 of 1 free runs left\", inventing a grant size nobody ever reported, and said \"free runs\" even when there was one run; the count now says only what is known, and matches word for word what a screen reader is told. A row missing a timestamp printed the bare word \"started\" with nothing after it, and the seller list said \"1 trials running\"; both now read as sentences. If you hold more trials than one page can carry, the page says how many it is leaving out instead of showing a total that stops at the cap. Sellers who price in more than one currency now see the currencies the headline number cannot hold, rather than only the largest pile.",
 			"tags": [
@@ -24344,16 +24364,6 @@
 				"improvement"
 			],
 			"link": "/create/video"
-		},
-		{
-			"date": "2026-08-17",
-			"title": "Building an agent no longer throws you out to the login page, and the wizard answers the keyboard",
-			"summary": "The six-step agent builder at /create-agent was audited end to end in a real browser: naming an agent, generating a whole spec from one sentence, choosing a body from the starter library, the skills and personality steps, the voice step, and the review screen, plus the loading, empty and error states at phone, tablet and desktop widths. The worst finding was that the wizard broke its own promise. It is built so anyone can construct an entire agent before making an account, and sign in only at the final step where the agent gets its wallet. But opening the My avatars tab without an account threw the visitor straight out to the login page, mid-build, with no warning and no explanation, because that tab asked for avatars you can only have if you are signed in. It now recognises a visitor who has no account, says so in the tab, and points at the Starter library and Upload tabs, which both work without one, alongside a Sign in button that saves the build first so nothing is lost either way. The step markers across the top of the wizard could only be used with a mouse. They are the only way back to an earlier step from the review screen, so anyone working by keyboard reached the end of the flow with no way to correct anything; they are now real buttons that take focus, show a focus ring, and respond to Enter and Space, with the completed steps marked as such for screen readers. The four tabs on the body step also announced themselves as tabs without ever telling a screen reader which panel each one opens, and left the arrow keys dead; the arrow keys, Home and End now move between them the way tabs are meant to work. Finally, a first-time visitor generating an agent from a description no longer sees a failed request in the browser console.",
-			"tags": [
-				"fix",
-				"improvement"
-			],
-			"link": "/create-agent"
 		}
 	]
 }

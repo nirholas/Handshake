@@ -308,7 +308,8 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 0.75rem;
+	flex-wrap: wrap;
+	gap: 0.5rem 0.75rem;
 	margin-bottom: 1rem;
 }
 .el-panel-head h2 { font-size: 1rem; font-weight: 650; }
@@ -515,7 +516,9 @@
 /* ── Chart ─────────────────────────────────────────────────────────────── */
 .el-panel-chart { min-width: 0; }
 
-.el-legend { display: flex; gap: 0.85rem; font-size: 0.76rem; color: var(--el-muted); }
+/* Wraps rather than running off the panel: at 320px the three series names do
+   not fit on one line beside the heading, and the last one was clipped. */
+.el-legend { display: flex; flex-wrap: wrap; gap: 0.4rem 0.85rem; font-size: 0.76rem; color: var(--el-muted); }
 .el-legend-item { display: inline-flex; align-items: center; gap: 0.35rem; }
 .el-legend-item::before {
 	content: '';
