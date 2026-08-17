@@ -7,9 +7,9 @@
 		<title data-i18n="forge_spark.meta_title">Text → 3D · Nemotron → FLUX → TRELLIS · three.ws</title>
 		<meta
 			name="description"
-			content="Describe an object and watch it become a textured 3D mesh. Nemotron sharpens the prompt, FLUX paints a reference image, and TRELLIS reconstructs the model — served on NVIDIA NIM."
+			content="Describe an object and watch it become a textured 3D mesh. Nemotron sharpens the prompt, FLUX paints a reference image, and TRELLIS reconstructs the model, served on NVIDIA NIM."
 		 data-i18n-attr="content:forge_spark.meta_description"/>
-		<meta property="og:title" content="Text → 3D — Nemotron → FLUX → TRELLIS · three.ws"  data-i18n-attr="content:forge_spark.meta_og_title"/>
+		<meta property="og:title" content="Text → 3D · Nemotron → FLUX → TRELLIS · three.ws"  data-i18n-attr="content:forge_spark.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Describe it. Nemotron sharpens the words, FLUX paints a clean reference, TRELLIS reconstructs the mesh. Served on NVIDIA NIM, quiet and always on."
@@ -206,6 +206,13 @@
 			.stage[data-state='active'] .num { animation: spark-spin 1s linear infinite; border-style: dashed; }
 			.stage[data-state='done'] { border-color: #76e0a0; color: var(--text, #e6e6f2); }
 			.stage[data-state='done'] .num { background: #76e0a0; color: #07070f; border-color: #76e0a0; }
+			.stage[data-state='failed'] {
+				border-color: color-mix(in srgb, #ff6b6b 55%, transparent);
+				background: color-mix(in srgb, #ff6b6b 6%, transparent);
+				color: var(--text, #e6e6f2);
+			}
+			.stage[data-state='failed'] .num { border-color: #ff9a9a; color: #ff9a9a; }
+			.stage[data-state='failed'] .state { color: #ff9a9a; opacity: 1; }
 			@keyframes spark-spin { to { transform: rotate(360deg); } }
 			/* Viewer ----------------------------------------------------- */
 			.stage-block { display: flex; flex-direction: column; gap: var(--space-md); }
@@ -267,7 +274,27 @@
 				background: color-mix(in srgb, #ff6b6b 8%, transparent);
 				border-radius: var(--radius, 12px);
 				padding: 0.7rem 0.9rem;
+				display: flex;
+				flex-wrap: wrap;
+				align-items: center;
+				justify-content: space-between;
+				gap: 0.5rem 0.9rem;
 			}
+			.error-retry {
+				font: inherit;
+				font-size: 0.84rem;
+				font-weight: 600;
+				color: inherit;
+				background: transparent;
+				border: 1px solid color-mix(in srgb, #ff6b6b 55%, transparent);
+				border-radius: 999px;
+				padding: 0.35em 0.95em;
+				cursor: pointer;
+				transition: border-color 0.16s ease, background 0.16s ease;
+			}
+			.error-retry:hover { border-color: #ff9a9a; background: color-mix(in srgb, #ff6b6b 14%, transparent); }
+			.error-retry:active { transform: translateY(1px); }
+			.error-retry:focus-visible { outline: 2px solid #ff9a9a; outline-offset: 2px; }
 			.refined {
 				font-size: 0.86rem;
 				color: var(--text-muted, #9a9ab2);
@@ -277,20 +304,27 @@
 			}
 			.refined b { color: var(--text, #e6e6f2); font-weight: 600; }
 			.refined .by { font-size: 0.74rem; opacity: 0.7; display: block; margin-top: 0.25rem; }
-			.spark-footer {
-				margin-top: var(--space-2xl);
+			/* A plain <p>, not a <footer>: public/style.css turns any <footer>
+			 * without an h-footer class into the legacy absolutely-positioned
+			 * corner credit badge for the 3D viewer pages, which pulled this note
+			 * out of flow and clipped its links off-screen on a phone. */
+			.spark-note {
+				margin: var(--space-2xl) auto 0;
+				max-width: 62ch;
 				text-align: center;
 				color: var(--text-muted, #7a7a92);
 				font-size: 0.85rem;
 				line-height: 1.6;
 			}
-			.spark-footer a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+			.spark-note a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+			.spark-note a:hover { color: var(--text, #e6e6f2); }
+			.spark-note a:focus-visible { outline: 2px solid var(--accent, #6c8cff); outline-offset: 2px; border-radius: 3px; }
 			.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 		</style>
 	
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:image:alt" content="Text → 3D — Nemotron → FLUX → TRELLIS — three.ws">
+	<meta property="og:image:alt" content="Text → 3D: Nemotron → FLUX → TRELLIS - three.ws">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Text → 3D - Nemotron → FLUX → TRELLIS","description":"Describe an object and watch it become a textured 3D mesh: Nemotron sharpens the prompt, FLUX paints a clean reference, and TRELLIS reconstructs the model - served on NVIDIA NIM, quiet and always on.","url":"https://three.ws/forge-spark","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=build&t=Text+%E2%86%92+3D+-+Nemotron+%E2%86%92+FLUX+%E2%86%92+TRELLIS&d=Describe+an+object+and+watch+it+become+a+textured+3D+mesh%3A+Nemotron+sharpens+the+prompt%2C+FLUX+paints+a+clean+reference%2C+and+TRELLIS+reconstructs+the+model+-+ser&p=%2Fforge-spark"}]}</script>
 </head>
 	<body class="forge-page">

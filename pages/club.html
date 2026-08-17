@@ -143,29 +143,32 @@
 				color: var(--text-2);
 			}
 			#club-top .spacer { flex: 1; }
-			/* The bar is a nowrap flex row inside an `overflow: hidden` body, so
-			   anything that does not fit is clipped away with no way to scroll to
-			   it. On a 320px phone that silently ate the audio and 8D buttons.
-			   Drop the read-only labels (the tagline and the price/rail pills, all
-			   of which the panel's "How it works" section repeats) and let the two
-			   real controls keep the room. */
+			/* Narrow phones: the bar is a nowrap flex row inside an `overflow:
+			   hidden` body, so anything that does not fit is clipped away with no
+			   way to scroll to it. Drop the read-only labels (the tagline, the
+			   price and rail pills, the divider), all of which the panel's "How it
+			   works" section repeats, and make the brand the only thing that can
+			   give up space: `flex: none` keeps the two real controls at full size
+			   and `min-width: 0` lets the title ellipsise into whatever is left,
+			   so the audio buttons can never be the part that gets cut. */
 			@media (max-width: 560px) {
-				#club-top .tagline { display: none; }
-				#club-top .club-pill:not(.club-pill-toggle) { display: none; }
-				/* A bare `1fr` column keeps an `auto` minimum, so the header's
-				   min-content width pushed the whole grid wider than the phone and
-				   the overflow was clipped away rather than scrollable. minmax(0,1fr)
-				   pins the column to the viewport; the brand then gives up the space
-				   (ellipsised) while the two controls keep their full size. */
-				#club-app { grid-template-columns: minmax(0, 1fr); }
 				#club-top { padding: 0 10px; gap: 8px; }
+				#club-top .tagline,
+				#club-top .sep,
+				#club-top .club-pill:not(.club-pill-toggle) { display: none; }
 				#club-top .brand { min-width: 0; }
 				#club-top .club-top-title {
+					min-width: 0;
 					overflow: hidden;
 					text-overflow: ellipsis;
 					white-space: nowrap;
 				}
-				#club-top .club-pill-toggle { flex: none; }
+				#club-top .club-pill-toggle {
+					flex: none;
+					padding: 4px 8px;
+					gap: 4px;
+					font-size: 10.5px;
+				}
 			}
 			.club-pill {
 				display: inline-flex;
@@ -1612,7 +1615,12 @@
 			/* ── Responsive ─────────────────────────────────────── */
 			@media (max-width: 800px) {
 				#club-app {
-					grid-template-columns: 1fr;
+					/* minmax(0, …), not a bare 1fr: a bare `1fr` keeps an `auto`
+					   minimum, so the top bar's min-content width dragged the grid
+					   wider than the phone. body is `overflow: hidden`, so whatever
+					   spilled was clipped away with no way to scroll to it, and on a
+					   320px screen that silently ate the 8D audio button. */
+					grid-template-columns: minmax(0, 1fr);
 					grid-template-rows: 52px 1fr;
 					grid-template-areas:
 						"top"
