@@ -107,6 +107,70 @@ const CODESPACE_HMR =
 			}
 		: undefined;
 
+// Content types for the file kinds `npm run build:chat` emits into public/chat.
+// A dev-only static fallback needs exactly these; anything else is served as an
+// octet-stream rather than guessed.
+const CHAT_ASSET_TYPES = {
+	'.css': 'text/css; charset=utf-8',
+	'.html': 'text/html; charset=utf-8',
+	'.ico': 'image/x-icon',
+	'.jpeg': 'image/jpeg',
+	'.jpg': 'image/jpeg',
+	'.js': 'text/javascript; charset=utf-8',
+	'.json': 'application/json; charset=utf-8',
+	'.map': 'application/json; charset=utf-8',
+	'.mjs': 'text/javascript; charset=utf-8',
+	'.png': 'image/png',
+	'.svg': 'image/svg+xml',
+	'.wasm': 'application/wasm',
+	'.webmanifest': 'application/manifest+json',
+	'.webp': 'image/webp',
+	'.woff2': 'font/woff2',
+};
+
+// Serve the built chat app (public/chat) for a /chat/* request. Used when the
+// chat dev server on :5174 is unreachable, so a plain `npm run dev` still serves
+// the same artifact production serves. Returns false when there is no build to
+// serve, so the caller can explain how to make one.
+function serveBuiltChat(req, res) {
+	const root = resolve(__dirname, 'public/chat');
+	if (!existsSync(resolve(root, 'index.html'))) return false;
+	let pathname;
+	try {
+		pathname = decodeURIComponent((req.url || '/chat/').split('?')[0]);
+	} catch {
+		pathname = '/chat/';
+	}
+	const rel = pathname.replace(/^\/chat\/?/, '');
+	const candidate = rel ? resolve(root, rel) : root;
+	// Contain the fallback inside public/chat.
+	const inRoot = candidate === root || candidate.startsWith(root + sep);
+	const hit = inRoot && existsSync(candidate) && !statSync(candidate).isDirectory();
+	let file;
+	if (hit) {
+		file = candidate;
+	} else if (!extname(rel) || extname(rel).toLowerCase() === '.html') {
+		// A document request the build has no file for: hand it the SPA shell,
+		// which owns its own client-side routing.
+		file = resolve(root, 'index.html');
+	} else {
+		// A missing asset has to read as missing. Answering it with the shell is
+		// what made the browser refuse a module script for its text/html type.
+		res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
+		res.end(`not found in public/chat: ${rel}\nrebuild with: npm run build:chat\n`);
+		return true;
+	}
+	// writeHead (not setHeader) because Vite registers its own proxy error
+	// handler after ours and answers 500 unless the headers are already
+	// committed, which a streamed body only reaches on the next tick.
+	res.writeHead(200, {
+		'content-type': CHAT_ASSET_TYPES[extname(file).toLowerCase()] || 'application/octet-stream',
+		'cache-control': 'no-store',
+	});
+	createReadStream(file).pipe(res);
+	return true;
+}
+
 // Set by the threews-i18n-external-entry plugin's configResolved hook, read by
 // its resolveId hook: a closure var rather than `this`, since Vite-only hooks
 // (configResolved) aren't guaranteed the same PluginContext as Rollup hooks
@@ -147,27 +211,33 @@ const appConfig = {
 			'/chat': {
 				// The chat UI is a separate Vite app served on :5174 (run
 				// `cd chat && npm run dev`). `npm run dev` does not start it, so when
-				// it's down the proxy would surface a bare HTTP 500 on every /chat
-				// navigation. Degrade to a clean, self-contained 200 placeholder that
-				// explains how to start it — no console error, honest dev guidance.
+				// it is down every /chat request lands in this error handler: the
+				// navigation AND each hashed asset the built HTML asks for. Answering
+				// all of them with one HTML notice broke the route outright, because
+				// the browser refuses /chat/assets/index-*.js for its text/html MIME
+				// type and renders an empty <div id="app">. Serve the real built app
+				// out of public/chat instead (what `npm run build:chat` emits and what
+				// production serves), so /chat works locally with no second server.
 				target: 'http://localhost:5174',
 				changeOrigin: true,
 				configure: (proxy) => {
-					proxy.on('error', (err, _req, res) => {
+					proxy.on('error', (err, req, res) => {
 						if (!res || res.headersSent || res.writableEnded) return;
-						res.statusCode = 200;
-						res.setHeader('content-type', 'text/html; charset=utf-8');
+						if (serveBuiltChat(req, res)) return;
+						res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
 						res.end(
-							`<!doctype html><meta charset="utf-8"><title>Chat — dev server offline</title>` +
+							`<!doctype html><meta charset="utf-8"><title>Chat build missing</title>` +
 								`<style>html{color-scheme:dark}body{margin:0;min-height:100vh;display:grid;place-items:center;` +
 								`background:#0a0a0f;color:#e8e8f0;font:15px/1.6 ui-sans-serif,system-ui,sans-serif}` +
 								`main{max-width:34rem;padding:2rem;text-align:center}code{background:#1a1a24;padding:.15em .45em;` +
 								`border-radius:6px;font-size:.92em}a{color:#8ab4ff}</style>` +
-								`<main><h1 style="margin:.2em 0;font-size:1.4rem">Chat dev server isn't running</h1>` +
-								`<p>The chat UI is a separate app. Start it in another terminal:</p>` +
+								`<main><h1 style="margin:.2em 0;font-size:1.4rem">The chat app has not been built yet</h1>` +
+								`<p>Build it once (it lands in <code>public/chat</code>, which this server then serves):</p>` +
+								`<p><code>npm run build:chat</code></p>` +
+								`<p>Or run it with hot reload in another terminal:</p>` +
 								`<p><code>cd chat &amp;&amp; npm run dev</code></p>` +
-								`<p style="opacity:.6;font-size:.9em">It serves on <code>:5174</code>; this page proxies to it. ` +
-								`In production <code>/chat</code> is the deployed build — this notice is dev-only ` +
+								`<p style="opacity:.6;font-size:.9em">That dev server owns <code>:5174</code> and takes over ` +
+								`<code>/chat</code> as soon as it is up. Dev-only notice ` +
 								`(${(err && err.code) || 'upstream offline'}).</p></main>`,
 						);
 					});
@@ -180,16 +250,35 @@ const appConfig = {
 							changeOrigin: true,
 							secure: false,
 							configure: (proxy) => {
-								proxy.on('error', (err, _req, res) => {
+								proxy.on('error', (err, req, res) => {
 									if (!res || res.headersSent || res.writableEnded) return;
-									res.statusCode = 502;
-									res.setHeader('content-type', 'application/json');
-									res.end(
-										JSON.stringify({
-											error: 'bad_gateway',
-											message: `x402-pay dev helper unreachable at ${X402_PAY_DEV_URL}: ${err.message}`,
-										}),
-									);
+									const message =
+										`x402-pay dev helper unreachable at ${X402_PAY_DEV_URL}: ${err.message}. ` +
+										`Start it with: node scripts/dev-x402-pay-server.mjs`;
+									// A read-only probe (the pay-wallet picker's ?balance=1 and ?agents=1)
+									// gets the handler's real "no wallet here" shape, so dev renders the
+									// designed neutral state instead of a red network error on every load.
+									// These never fail over to the upstream: a paid call has to settle from
+									// the locally funded helper, so a POST stays a hard 502 rather than
+									// quietly spending production's wallet. writeHead (not setHeader)
+									// because Vite registers its own proxy error handler after this one and
+									// answers 500 unless the headers are already committed.
+									if ((req.method || 'GET').toUpperCase() === 'GET') {
+										res.writeHead(200, { 'content-type': 'application/json' });
+										return res.end(
+											JSON.stringify({
+												configured: false,
+												code: 'wallet_unconfigured',
+												error: message,
+												address: null,
+												sol: 0,
+												usdc: 0,
+												agents: [],
+											}),
+										);
+									}
+									res.writeHead(502, { 'content-type': 'application/json' });
+									res.end(JSON.stringify({ error: 'bad_gateway', message }));
 								});
 							},
 						},
