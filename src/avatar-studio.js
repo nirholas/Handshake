@@ -662,7 +662,15 @@ async function bootScene(glbUrl, editAvatar) {
  */
 async function startIdleClip() {
 	const emotes = scene?.getEmoteController?.();
-	if (!emotes) return;
+	if (!emotes) {
+		emotesFailed = true;
+		if (activeTab === 'animate') renderActivePanel();
+		return;
+	}
+	// A retry re-enters here, so clear the previous verdict and let the tab show
+	// its loading state again rather than the stale error.
+	emotesFailed = false;
+	if (activeTab === 'animate') renderActivePanel();
 	try {
 		const ok = await emotes.loadManifest();
 		if (ok && (await scene.playEmote(DEFAULT_EMOTE))) {
@@ -670,8 +678,11 @@ async function startIdleClip() {
 			currentEmote = DEFAULT_EMOTE;
 			activeIdleClip = DEFAULT_EMOTE;
 			idle?.setChannels({ breathing: false, saccade: false, weightShift: false, blink: true });
+		} else {
+			emotesFailed = true;
 		}
 	} catch (err) {
+		emotesFailed = true;
 		log.warn('[avatar-studio] idle clip unavailable; using procedural idle', err?.message);
 	}
 	if (activeTab === 'animate') renderActivePanel();
@@ -877,6 +888,20 @@ function tilePreviewMarkup(preset) {
 function renderAnimatePanel(panel) {
 	if (!scene?.root) {
 		panel.innerHTML = `<div class="as-empty">Waiting for avatar to load…</div>`;
+		return;
+	}
+	if (!emotesReady && emotesFailed) {
+		// The avatar is still breathing and blinking on the procedural idle, so
+		// say what is actually missing and offer the one action that can fix it.
+		panel.innerHTML = `
+			<div class="as-empty" role="alert">
+				The motion library did not load, so the clips are unavailable right now.
+				Your avatar is still animated and still safe to save.
+				<button class="as-empty-action" type="button" data-as-retry-emotes>Try again</button>
+			</div>`;
+		panel
+			.querySelector('[data-as-retry-emotes]')
+			?.addEventListener('click', () => startIdleClip());
 		return;
 	}
 	if (!emotesReady) {

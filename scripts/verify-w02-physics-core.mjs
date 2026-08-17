@@ -12,8 +12,14 @@ function fail(msg) { console.error('FAIL:', msg); process.exitCode = 1; }
 
 async function main() {
 	const rapier = await initRapier();
-	const spec = vehicleSpec('sedan');
-	const y = vehicleRestHeight('sedan') + 0.1;
+	// Any type in the table can be put through this, so a new car's suspension and
+	// clearance are proved against real Rapier before it ships:
+	//   node scripts/verify-w02-physics-core.mjs trench
+	const type = process.argv[2] || 'sedan';
+	const spec = vehicleSpec(type);
+	if (spec.id !== type && process.argv[2]) fail(`unknown vehicle type "${type}", fell back to ${spec.id}`);
+	console.log(`--- vehicle type under test: ${spec.id} (${spec.label}) ---`);
+	const y = vehicleRestHeight(spec.id) + 0.1;
 
 	// --- Sub-test 1: open ground, prove real acceleration under throttle -----
 	const worldA = new PhysicsWorld(rapier);

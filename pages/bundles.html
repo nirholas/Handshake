@@ -71,13 +71,18 @@
 		/* ── tooltips: every number explains itself without leaving the page ── */
 		.bd-tip { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; margin-left: 5px; border-radius: 50%; border: 1px solid var(--stroke); color: var(--ink-dim); font-size: 0.62rem; font-weight: 700; cursor: help; vertical-align: middle; background: none; padding: 0; line-height: 1; }
 		.bd-tip:hover, .bd-tip:focus-visible { color: var(--ink-bright, var(--ink)); border-color: var(--ink-dim); }
+		/* --bd-tip-dx is measured per tip as it opens: a tooltip centred on its
+		   button hangs off the screen for any tip near an edge, and on a 320px
+		   phone that clipped four of the seven explanations this page exists to
+		   give. The shift pulls the box back inside the viewport. */
 		.bd-tip::after {
-			content: attr(data-tip); position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%) translateY(4px);
-			width: max-content; max-width: 260px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--stroke);
+			content: attr(data-tip); position: absolute; bottom: calc(100% + 8px); left: 50%;
+			transform: translateX(calc(-50% + var(--bd-tip-dx, 0px))) translateY(4px);
+			width: max-content; max-width: min(260px, calc(100vw - 24px)); padding: 8px 10px; border-radius: 8px; border: 1px solid var(--stroke);
 			background: var(--bg-1, #14161c); color: var(--ink); font-size: 0.78rem; font-weight: 400; line-height: 1.45; text-align: left;
 			opacity: 0; pointer-events: none; transition: opacity 140ms ease, transform 140ms ease; z-index: 60; box-shadow: 0 8px 26px rgba(0,0,0,0.32);
 		}
-		.bd-tip:hover::after, .bd-tip:focus-visible::after { opacity: 1; transform: translateX(-50%) translateY(0); }
+		.bd-tip:hover::after, .bd-tip:focus-visible::after { opacity: 1; transform: translateX(calc(-50% + var(--bd-tip-dx, 0px))) translateY(0); }
 		@media (prefers-reduced-motion: reduce) { .bd-tip::after { transition: none; } }
 
 		/* ── skill picker ───────────────────────────────────────────────── */
@@ -98,6 +103,12 @@
 		.bd-priceline { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
 		.bd-priceline span { color: var(--ink-dim); font-size: 0.85rem; }
 		.bd-priceline b { font-size: 1.05rem; font-variant-numeric: tabular-nums; color: var(--ink-bright, var(--ink)); }
+		/* Stacked on a phone: side by side at 320px the label broke with its "?"
+		   orphaned on a line of its own and the amount split across "4" and
+		   "$THREE", which reads as a rendering fault rather than a price. */
+		@media (max-width: 430px) {
+			.bd-priceline { flex-direction: column; align-items: flex-start; gap: 3px; }
+		}
 		/* Wraps rather than squeezing: on a 320px screen an unwrapped row left the
 		   price field 31px wide, too narrow to read the number being typed in it. */
 		.bd-priceinput { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -161,8 +172,15 @@
 		.bd-bundle p { margin: 0 0 10px; font-size: 0.86rem; color: var(--ink-dim); line-height: 1.5; }
 		.bd-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
 		.bd-chip { font-size: 0.74rem; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--hairline, var(--stroke)); color: var(--ink-dim); }
-		.bd-bundle-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+		.bd-bundle-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 		.bd-bundle-price { font-size: 1.1rem; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--ink-bright, var(--ink)); }
+		/* A paused bundle stays on screen, dimmed, because it is the only place
+		   its owner can bring it back. Buyers never see it: the endpoint returns
+		   inactive rows to the agent's owner and to nobody else. */
+		.bd-bundle[data-paused="1"] { border-style: dashed; }
+		.bd-bundle[data-paused="1"] h3, .bd-bundle[data-paused="1"] .bd-bundle-price { color: var(--ink-dim); }
+		.bd-chip--paused { border-color: color-mix(in srgb, var(--ink) 28%, transparent); color: var(--ink); font-weight: 600; }
+		.bd-bundle-status { font-size: 0.78rem; color: var(--ink-dim); }
 
 		.bd-section { margin-top: 40px; }
 		.bd-section > h2 { margin: 0 0 6px; font-size: 1.2rem; letter-spacing: -0.01em; }
@@ -306,7 +324,7 @@
 
 			<section class="bd-section" aria-labelledby="bd-live-h">
 				<h2 id="bd-live-h">Published bundles</h2>
-				<p>Live on this agent right now, served publicly at <code>/api/agents/&lt;id&gt;/bundles</code> and bought in one payment that unlocks every skill inside. <a href="/docs/skill-bundles">How checkout works</a>.</p>
+				<p>Live on this agent right now, served publicly at <code>/api/agents/&lt;id&gt;/bundles</code> and bought in one payment that unlocks every skill inside. Pausing one hides it from buyers and leaves it here, dimmed, so you can put it back. <a href="/docs/skill-bundles">How checkout works</a>.</p>
 				<div id="bd-list" class="bd-list"></div>
 				<div id="bd-list-empty" class="bd-note bd-hide" style="margin-top:14px"></div>
 			</section>
@@ -450,10 +468,42 @@
 
 		const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+		// ── tooltips stay on screen ─────────────────────────────────────
+		// The box is centred on its button in CSS, which is right until the
+		// button sits near an edge: at 320px that pushed four of the seven
+		// tooltips partly off the viewport, and a tooltip you cannot read is
+		// the same as one that was never written. Measured as it opens, because
+		// the width depends on the text and the viewport, not on the markup.
+		const TIP_GUTTER = 12;
+		function placeTip(btn) {
+			const box = btn.getBoundingClientRect();
+			const measured = parseFloat(getComputedStyle(btn, '::after').width);
+			const width = Number.isFinite(measured) && measured > 0
+				? measured
+				: Math.min(260, window.innerWidth - TIP_GUTTER * 2);
+			const centre = box.left + box.width / 2;
+			const left = centre - width / 2;
+			const right = centre + width / 2;
+			let dx = 0;
+			if (left < TIP_GUTTER) dx = TIP_GUTTER - left;
+			else if (right > window.innerWidth - TIP_GUTTER) dx = window.innerWidth - TIP_GUTTER - right;
+			btn.style.setProperty('--bd-tip-dx', dx.toFixed(1) + 'px');
+		}
+		for (const tip of document.querySelectorAll('.bd-tip')) {
+			tip.addEventListener('pointerenter', () => placeTip(tip));
+			tip.addEventListener('focus', () => placeTip(tip));
+		}
+
 		async function selectAgent(id) {
 			agentId = id;
 			selected = new Set();
 			pricing = null;
+			// A pricing failure belongs to the agent that produced it. Left on
+			// screen through a switch, agent A's "priced in 2 different
+			// currencies" sat above agent B's untouched picker as if it were a
+			// verdict on B.
+			show($('bd-price-error'), false);
+			$('bd-publish-note').textContent = '';
 			renderPricing();
 			await Promise.all([loadSkills(), loadBundles()]);
 		}
@@ -787,7 +837,10 @@
 			let bundles = null;
 			let failure = null;
 			try {
-				const res = await apiFetch('/api/agents/' + encodeURIComponent(agentId) + '/bundles');
+				// include_inactive is honoured for the agent's owner only, which is
+				// who this page is for. A buyer hitting the same path still gets the
+				// active-only list.
+				const res = await apiFetch('/api/agents/' + encodeURIComponent(agentId) + '/bundles?include_inactive=1');
 				if (res.ok) {
 					const b = await res.json().catch(() => null);
 					bundles = b?.data?.bundles || [];
@@ -820,28 +873,56 @@
 
 			list.innerHTML = bundles.map((b) => {
 				const skills = Array.isArray(b.skills) ? b.skills : [];
-				return '<article class="bd-bundle">' +
+				const paused = b.is_active === false;
+				return '<article class="bd-bundle"' + (paused ? ' data-paused="1"' : '') + '>' +
 					'<h3>' + esc(b.name) + '</h3>' +
 					(b.description ? '<p>' + esc(b.description) + '</p>' : '') +
-					'<div class="bd-chips">' + skills.map((s) => '<span class="bd-chip">' + esc(s) + '</span>').join('') + '</div>' +
+					'<div class="bd-chips">' +
+						(paused ? '<span class="bd-chip bd-chip--paused">Paused</span>' : '') +
+						skills.map((s) => '<span class="bd-chip">' + esc(s) + '</span>').join('') +
+					'</div>' +
 					'<div class="bd-bundle-foot">' +
 						'<span class="bd-bundle-price">' + fmt(b.price_amount) + ' ' + esc(mintSymbol(b.currency_mint)) + '</span>' +
-						'<button type="button" class="bd-btn bd-btn--ghost" data-off="' + esc(b.id) + '">Deactivate</button>' +
+						(paused
+							? '<button type="button" class="bd-btn bd-btn--ghost" data-on="' + esc(b.id) + '">Reactivate</button>'
+							: '<button type="button" class="bd-btn bd-btn--ghost" data-off="' + esc(b.id) + '">Pause</button>') +
 					'</div>' +
+					(paused ? '<p class="bd-bundle-status">Hidden from buyers. Anyone who already bought it keeps every skill.</p>' : '') +
 				'</article>';
 			}).join('');
 
-			list.querySelectorAll('button[data-off]').forEach((btn) => {
+			// Pausing and reactivating are the same interaction with different
+			// verbs, so they share one handler: the button carries which way it
+			// goes, and a failure says so on the button rather than silently
+			// leaving the card in the state it was already in.
+			const toggle = (btn, { path, init, busy, failed }) => {
 				btn.addEventListener('click', async () => {
 					btn.disabled = true;
-					btn.textContent = 'Deactivating…';
+					btn.textContent = busy;
 					try {
-						const res = await apiFetch('/api/agents/' + encodeURIComponent(agentId) + '/bundles/' + encodeURIComponent(btn.dataset.off), { method: 'DELETE' });
-						if (!res.ok) { btn.textContent = 'Failed, retry'; btn.disabled = false; return; }
+						const res = await apiFetch(path(btn), init);
+						if (!res.ok) { btn.textContent = failed; btn.disabled = false; return; }
 						await loadBundles();
-					} catch { btn.textContent = 'Failed, retry'; btn.disabled = false; }
+					} catch { btn.textContent = failed; btn.disabled = false; }
 				});
-			});
+			};
+			const bundlePath = (id) => '/api/agents/' + encodeURIComponent(agentId) + '/bundles/' + encodeURIComponent(id);
+			list.querySelectorAll('button[data-off]').forEach((btn) => toggle(btn, {
+				path: (b) => bundlePath(b.dataset.off),
+				init: { method: 'DELETE' },
+				busy: 'Pausing…',
+				failed: 'Failed, retry',
+			}));
+			list.querySelectorAll('button[data-on]').forEach((btn) => toggle(btn, {
+				path: (b) => bundlePath(b.dataset.on),
+				init: {
+					method: 'PATCH',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ is_active: true }),
+				},
+				busy: 'Reactivating…',
+				failed: 'Failed, retry',
+			}));
 		}
 
 		boot();
