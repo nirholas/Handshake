@@ -970,6 +970,15 @@ async function loadLibraryAvatars({ append = false } = {}) {
 		renderLibrary();
 		return;
 	}
+	// A guest owns no avatars, so the request could only 401. Answering from the
+	// session we already resolved keeps a first-time visitor's console clean
+	// (the browser logs every 401 itself, whoever asked for it) and skips a round
+	// trip. The 401 branch below still covers a session that expired mid-build.
+	if (!state.authed) {
+		libraryState = 'signedout';
+		renderLibrary();
+		return;
+	}
 	libraryState = 'loading';
 	if (!append) renderLibrary();
 	try {

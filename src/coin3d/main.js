@@ -83,17 +83,28 @@ let rpcId = 0;
 // stalls used to hang the whole page on the loading spinner forever, because
 // nothing downstream could time it out.
 async function mcpCall(name, args = {}, timeoutMs = 15_000) {
-	const res = await fetch(MCP_ENDPOINT, {
-		method: 'POST',
-		headers: { 'content-type': 'application/json' },
-		signal: AbortSignal.timeout(timeoutMs),
-		body: JSON.stringify({
-			jsonrpc: '2.0',
-			id: ++rpcId,
-			method: 'tools/call',
-			params: { name, arguments: args },
-		}),
-	});
+	let res;
+	try {
+		res = await fetch(MCP_ENDPOINT, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			signal: AbortSignal.timeout(timeoutMs),
+			body: JSON.stringify({
+				jsonrpc: '2.0',
+				id: ++rpcId,
+				method: 'tools/call',
+				params: { name, arguments: args },
+			}),
+		});
+	} catch (err) {
+		// The endpoint was never reached. Tagged so the caller can tell an outage
+		// ("we could not ask") apart from an answer ("this mint is not a token").
+		const e = new Error(
+			`${name}: ${err?.name === 'TimeoutError' ? 'timed out' : 'endpoint unreachable'}`,
+		);
+		e.transport = true;
+		throw e;
+	}
 	if (!res.ok) throw new Error(`${name} → HTTP ${res.status}`);
 	const env = await res.json();
 	if (env.error) throw new Error(env.error.message || `${name} failed`);
@@ -121,6 +132,13 @@ async function loadSnapshot() {
 	// getTokenDetails comes back null (e.g. $THREE itself).
 	const gt = meta.status === 'fulfilled' ? meta.value || null : null;
 
+	// Did anything actually answer? A JSON-RPC error is an answer ("no such
+	// token"); a transport failure is not ("we could not ask"). The two need
+	// different error copy and different recovery actions.
+	const answered = [details, curve].some(
+		(r) => r.status === 'fulfilled' || !r.reason?.transport,
+	);
+
 	const name = d.name || d.metadata?.name || gt?.name || 'Unknown token';
 	const symbol = (d.symbol || d.metadata?.symbol || gt?.symbol || '').toUpperCase();
 	const image = (await resolveImage(d)) || gt?.image || null;
@@ -128,6 +146,7 @@ async function loadSnapshot() {
 	return {
 		mint,
 		network,
+		answered,
 		name,
 		symbol,
 		image,

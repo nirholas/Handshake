@@ -370,6 +370,7 @@ function onPointerUp(e) {
 	// star the visitor was aiming at, and the scene keeps auto-rotating under the
 	// cursor between the hover and the release.
 	const node = pickNode() || hovered;
+	console.log("DBG up pick=", !!pickNode(), "hovered=", hovered && hovered.token.symbol);
 	if (node) { keyboardFocused = false; selectNode(node.mesh.userData.index, { fromKeyboard: false }); }
 }
 
@@ -437,6 +438,7 @@ function selectNode(index, { fromKeyboard = false } = {}) {
 	links.appendChild(extLink(`https://pump.fun/coin/${token.mint}`, 'pump.fun ↗'));
 	links.appendChild(extLink(`https://solscan.io/token/${token.mint}`, 'Solscan ↗'));
 
+	console.log("DBG selectNode", index);
 	panel.classList.add('open');
 	panel.setAttribute('aria-hidden', 'false');
 	panel.removeAttribute('inert');
@@ -457,6 +459,7 @@ function formatPrice(p) {
 	return `$${p.toExponential(2)}`;
 }
 function closePanel() {
+	console.log("DBG closePanel", new Error().stack.split(String.fromCharCode(10)).slice(1,4).join(" | "));
 	if (!panel.classList.contains('open')) return;
 	panel.classList.remove('open');
 	panel.setAttribute('aria-hidden', 'true');

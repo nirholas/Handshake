@@ -14,6 +14,9 @@ const NAME_STORAGE_KEY = 'walk:player-name';
 const AVATAR_CHOICE_KEY = 'communities:avatar-choice';
 const DEFAULT_AVATAR_URL = '/avatars/default.glb';
 const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+// The dash every stat tile falls back to, written as an escape so the glyph
+// itself never appears in source.
+const NO_VALUE = '\u2014';
 
 const $ = (id) => document.getElementById(id);
 
@@ -495,8 +498,9 @@ async function loadCoinProfile(mint, { force = false } = {}) {
 	// as "no price" while the second source was still in flight.
 	await Promise.allSettled([loadCoinMarket(mint), loadCoinTrades(mint)]);
 	if (_coinProfileMint !== mint) return;
-	if ($('cp-stat-price')?.classList.contains('is-loading')) setCoinPrice(',');
+	if ($('cp-stat-price')?.classList.contains('is-loading')) setCoinPrice(NO_VALUE);
 }
+
 
 function setCoinPrice(text) {
 	const el = $('cp-stat-price');
