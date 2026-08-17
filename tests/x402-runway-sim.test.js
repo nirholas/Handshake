@@ -230,7 +230,45 @@ describe('simulateRunway — input hardening', () => {
 	it('survives a fully empty input without throwing', () => {
 		const { summary } = simulateRunway({});
 		expect(summary.admitted).toBe(0);
-		expect(summary.verdict).toBe('healthy');
+		// Not 'healthy': nothing was attempted, so nothing was proved.
+		expect(summary.verdict).toBe('idle');
+	});
+
+	it('calls a projection with no demand idle, not healthy', () => {
+		// The live shape that exposed this: a fee wallet UNDER its hard floor, so
+		// not one settle could land, on a rail nobody sent traffic to that day. The
+		// old contract reported verdict 'healthy' and a 100% admission rate for it,
+		// which is the exact misdiagnosis /economy-lab exists to prevent.
+		const { summary } = simulateRunway({
+			startLamports: 899_107,
+			floorLamports: 2_000_000,
+			runwayDays: 1,
+			minBudgetLamports: 10_000_000,
+			feeLamports: 5_000,
+			demandPerHour: 0,
+			hours: 72,
+		});
+		expect(summary.demanded).toBe(0);
+		expect(summary.verdict).toBe('idle');
+		expect(summary.admissionRate).toBeNull();
+		expect(summary.limiter).toBe('none');
+	});
+
+	it('reports the same wallet as starved the moment any demand arrives', () => {
+		const { summary } = simulateRunway({
+			startLamports: 899_107,
+			floorLamports: 2_000_000,
+			runwayDays: 1,
+			minBudgetLamports: 10_000_000,
+			feeLamports: 5_000,
+			demandPerHour: 60,
+			hours: 72,
+		});
+		expect(summary.admitted).toBe(0);
+		expect(summary.refusedFloor).toBe(60 * 72);
+		expect(summary.verdict).toBe('starved');
+		expect(summary.limiter).toBe('floor');
+		expect(summary.admissionRate).toBe(0);
 	});
 
 	it('never lets the balance go negative', () => {

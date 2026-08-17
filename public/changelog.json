@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-17T04:29:52.560Z",
+	"generated_at": "2026-08-17T04:31:23.562Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -131,6 +131,17 @@
 			"title": "Coin Communities keeps its own words on screen, and the Retry button on a failed coin now retries",
 			"summary": "A coin page that failed to load offered a Retry button that did nothing: it re-requested the coin the page was already showing, which the loader skipped as already-loaded, so the only escape from a transient outage was a manual reload. Retry now forces the fetch and recovers the page. The page was also arguing with its own translation layer: the browser tab and the failure message are written live by the page, but the translation pass ran afterwards and reverted them, so a coin that could not be reached said it did not exist, and the tab kept a coin's name after you had gone back to browsing. Both now hold what the page wrote and hand it back when the live state is gone. Alongside that: the price figure shows a real loading shimmer until both of its data sources have answered instead of a bare dash, signed-out visitors get a short line explaining the avatar row and a link to sign in rather than a silent unauthorized request, a pasted avatar URL that is not a link now says what a working one looks like, the search and mint fields have proper labels, and every button, chip and card has a visible keyboard focus ring and a press state.",
 			"link": "/communities",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-17",
+			"type": "update",
+			"title": "Coin Intelligence fits a phone screen, and a search no longer snaps back to the previous results",
+			"summary": "Five fixes to the Coin Intelligence dashboard. On a narrow phone the page was sized against its own tab strip rather than the screen, pushing the layout about 170px wider than the viewport; because the site clips sideways overflow, the right-hand third of the headline, the counters and every coin card was cut off with no way to scroll to it. The page now fits the screen and the tab strip scrolls inside its own row. Changing a filter or typing a search could also snap back to the previous set of coins a second later, because the older request was still open and whichever answer arrived last won; only the newest request can now paint the radar. The leaderboard used to greet an empty day with the radar's message about loosening filters, next to a Reset filters button that did nothing at all, since the leaderboard has no filters; it now explains that nothing has cleared observation in the last 24 hours. When the feed is down, the counters in the header stay in place instead of vanishing, the Confirmed winners rail and the Outcomes and Coverage panels say so instead of standing over empty boxes, and every one of those messages now carries a Retry that actually reloads. Smart Money shows shimmering placeholder rows while its cross-coin wallet aggregate is computed, and that aggregate plus the learning stats are now cached for minutes at the edge rather than seconds, so repeat visits are immediate.",
+			"link": "/coin-intel",
 			"tags": [
 				"fix",
 				"improvement"

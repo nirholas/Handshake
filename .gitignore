@@ -487,3 +487,6 @@ contracts/program-tests/target/
 
 # Downloaded ONNX weights cached by the node-operator self-test (23 MB+, fetched on demand)
 packages/node-operator/models/
+
+# Dev-server logs from `npm run dev` on an alternate port (.vite<port>.log).
+.vite*.log

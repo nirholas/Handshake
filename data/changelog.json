@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-17",
+			"title": "Coin Intelligence fits a phone screen, and a search no longer snaps back to the previous results",
+			"summary": "Five fixes to the Coin Intelligence dashboard. On a narrow phone the page was sized against its own tab strip rather than the screen, pushing the layout about 170px wider than the viewport; because the site clips sideways overflow, the right-hand third of the headline, the counters and every coin card was cut off with no way to scroll to it. The page now fits the screen and the tab strip scrolls inside its own row. Changing a filter or typing a search could also snap back to the previous set of coins a second later, because the older request was still open and whichever answer arrived last won; only the newest request can now paint the radar. The leaderboard used to greet an empty day with the radar's message about loosening filters, next to a Reset filters button that did nothing at all, since the leaderboard has no filters; it now explains that nothing has cleared observation in the last 24 hours. When the feed is down, the counters in the header stay in place instead of vanishing, the Confirmed winners rail and the Outcomes and Coverage panels say so instead of standing over empty boxes, and every one of those messages now carries a Retry that actually reloads. Smart Money shows shimmering placeholder rows while its cross-coin wallet aggregate is computed, and that aggregate plus the learning stats are now cached for minutes at the edge rather than seconds, so repeat visits are immediate.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/coin-intel"
+		},
+		{
+			"date": "2026-08-17",
 			"title": "The Concierge page stops cutting itself off on a phone, and its install tabs work from the keyboard",
 			"summary": "Three fixes to the Concierge landing page. On a narrow phone screen the whole page was being sized against the longest line of the install snippet, which pushed the column roughly twice as wide as the screen; because the site clips sideways overflow, the right-hand half of every headline, paragraph and button was simply cut off with no way to scroll to it. The column now fits the screen and the code snippet scrolls inside its own box, the way it already did on a laptop. The four install tabs (one tag, web component, npm, imperative) announced themselves to a screen reader as tabs but were not wired to the panels they open and ignored the arrow keys; they now move with Left, Right, Home and End, and each tab is properly tied to its snippet. Copy buttons also say which snippet they copy, and if the browser blocks the clipboard the snippet is selected for you so Ctrl+C still works. Finally, the passive \"Have you tried\" suggestion card could land on top of the live concierge demo in the corner; it now stacks clear of it.",
 			"tags": [
