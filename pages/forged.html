@@ -69,6 +69,18 @@
 				font-size: 14px; outline: none;
 			}
 			.ch-search:focus { border-color: var(--stroke-strong); }
+			/* `outline: none` above kills the UA focus ring, so every control on this
+			   page paints its own: keyboard users need to see where they are. */
+			.ch-search:focus-visible, .ch-sort:focus-visible, .ch-chip:focus-visible,
+			.ch-btn:focus-visible, .ch-hbtn:focus-visible {
+				outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, var(--accent));
+				outline-offset: var(--focus-ring-offset, 2px);
+			}
+			/* The card clips its overflow, so the thumbnail's ring is drawn inside it. */
+			.ch-card-thumb:focus-visible {
+				outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, var(--accent));
+				outline-offset: -3px;
+			}
 			.ch-search-kbd {
 				position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
 				font-family: var(--font-mono); font-size: 11px; color: var(--ink-dim);
@@ -216,7 +228,9 @@
 				<span class="ch-count" data-role="count" aria-live="polite"></span>
 			</div>
 
-			<div class="ch-chips" data-role="chips" role="tablist" aria-label="Filter by category"></div>
+			<!-- role="group", not "tablist": the chips are plain filter buttons, and tablist
+			     requires role="tab" children (axe aria-required-children, critical). -->
+			<div class="ch-chips" data-role="chips" role="group" aria-label="Filter by category"></div>
 
 			<div data-role="loading" class="ch-skeleton-grid" role="status" aria-label="Loading agent-forged props">
 				<div class="ch-skeleton"></div><div class="ch-skeleton"></div><div class="ch-skeleton"></div>

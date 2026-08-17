@@ -36,8 +36,9 @@ const escapeAttr = escapeHtml;
 function show(el, on) { if (el) el.hidden = !on; }
 
 function formatUsdc(n) {
-	if (n == null) return '';
-	return n < 0.01 ? `$${n.toFixed(3)}` : `$${n.toFixed(2)}`;
+	if (n == null || !Number.isFinite(Number(n))) return null;
+	const v = Number(n);
+	return v < 0.01 ? `$${v.toFixed(3)}` : `$${v.toFixed(2)}`;
 }
 
 function formatWhen(ts) {
@@ -49,43 +50,59 @@ function formatWhen(ts) {
 	return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
+// A card's <model-viewer> is deliberately control-free. model-viewer reads
+// `camera-controls` as a boolean attribute, so the old `camera-controls="false"`
+// switched controls ON: it made every thumbnail drag-orbit and swallow the click
+// meant for the link that wraps it, so the card's primary action did nothing.
+// Dropping the attribute leaves auto-rotate (which does not need controls) and
+// hands the click straight to the link. The `disable-*` and `interaction-prompt`
+// attributes went with it; they only ever qualified camera-controls.
 function renderCard(p) {
 	const glbUrl = p.glb_url || '';
 	const alt = p.prompt || 'Agent-forged prop';
 	const previewUrl = glbUrl
 		? `/app#model=${encodeURIComponent(glbUrl)}&kind=object&title=${encodeURIComponent(alt)}`
-		: '#';
+		: '';
+	const price = formatUsdc(p.price_usdc);
+
+	// A prop whose GLB is still being written gets a plain, unlinked tile rather
+	// than an anchor to "#": the viewer and the download both take the model URL,
+	// so with none there is nothing for either to open.
+	const thumbOpen = previewUrl
+		? `<a class="ch-card-thumb" href="${escapeAttr(previewUrl)}" aria-label="Preview ${escapeAttr(alt)} in 3D">`
+		: '<div class="ch-card-thumb">';
+	const thumbClose = previewUrl ? '</a>' : '</div>';
 
 	const card = document.createElement('article');
 	card.className = 'ch-card';
 	card.innerHTML = `
-		<a class="ch-card-thumb" href="${escapeAttr(previewUrl)}" aria-label="Preview ${escapeAttr(alt)} in 3D">
+		${thumbOpen}
 			<model-viewer
 				src="${escapeAttr(glbUrl)}"
 				alt="${escapeAttr(alt)}"
 				class="ch-card-mv"
-				reveal="auto" loading="lazy" disable-zoom disable-pan disable-tap
-				interaction-prompt="none" camera-controls="false"
+				reveal="auto" loading="lazy"
 				auto-rotate rotation-per-second="20deg"
 				environment-image="neutral" shadow-intensity="0.4" exposure="1"
 			></model-viewer>
 			<span class="ch-card-pill">${escapeHtml(p.category || 'prop')}</span>
-			<span class="ch-card-play" aria-hidden="true">▶</span>
-		</a>
+			${previewUrl ? '<span class="ch-card-play" aria-hidden="true">▶</span>' : ''}
+		${thumbClose}
 		<div class="ch-card-body">
 			<h3 class="ch-card-name" title="${escapeAttr(alt)}">${escapeHtml(alt)}</h3>
 			<div class="ch-card-meta">
 				<span>${escapeHtml(formatWhen(p.ts))}${p.novelty != null ? ` · novelty ${Number(p.novelty).toFixed(2)}` : ''}</span>
 			</div>
 			<div class="fg-receipt" title="This asset was bought by an autonomous agent with real USDC on Solana">
-				<span class="fg-receipt-amount">${escapeHtml(formatUsdc(p.price_usdc))} USDC</span>
+				<span class="fg-receipt-amount">${price ? `${escapeHtml(price)} USDC` : 'settling'}</span>
 				<span class="fg-receipt-payer">${escapeHtml(p.payer_short || 'agent wallet')}</span>
 				${p.explorer_url ? `<a class="fg-receipt-tx" href="${escapeAttr(p.explorer_url)}" target="_blank" rel="noopener noreferrer" title="View the settlement transaction on Solscan">receipt ↗</a>` : ''}
 			</div>
+			${previewUrl ? `
 			<div class="ch-card-actions">
 				<a class="ch-btn ch-btn--primary" href="${escapeAttr(previewUrl)}" title="Open in the 3D viewer">Preview</a>
 				<a class="ch-btn ch-btn--ghost" href="${escapeAttr(glbUrl)}" download title="Download the GLB">Download</a>
-			</div>
+			</div>` : ''}
 		</div>
 	`;
 	return card;
@@ -101,9 +118,12 @@ function renderChips() {
 	if (!els.catChips) return;
 	const cats = categories();
 	if (!cats.length) { els.catChips.innerHTML = ''; return; }
-	els.catChips.innerHTML =
-		`<button class="ch-chip${state.category === '' ? ' is-active' : ''}" data-cat="">All</button>` +
-		cats.map((c) => `<button class="ch-chip${state.category === c ? ' is-active' : ''}" data-cat="${escapeAttr(c)}">${escapeHtml(c)}</button>`).join('');
+	// aria-pressed, not role="tab": these are toggle buttons in a group, and a
+	// screen reader has to hear which family the grid is currently filtered to.
+	const chip = (cat, label) =>
+		`<button type="button" class="ch-chip${state.category === cat ? ' is-active' : ''}" ` +
+		`data-cat="${escapeAttr(cat)}" aria-pressed="${state.category === cat}">${escapeHtml(label)}</button>`;
+	els.catChips.innerHTML = chip('', 'All') + cats.map((c) => chip(c, c)).join('');
 	els.catChips.querySelectorAll('.ch-chip').forEach((b) => b.addEventListener('click', () => {
 		state.category = b.dataset.cat;
 		renderChips();
@@ -151,8 +171,9 @@ async function load() {
 		state.stats = data.stats || null;
 		if (els.heroStats && state.stats) {
 			const s = state.stats;
+			const spent = formatUsdc(s.spent_usdc);
 			els.heroStats.textContent = s.done
-				? `${s.done} props forged · ${formatUsdc(s.spent_usdc)} USDC settled on-chain${s.queued ? ` · ${s.queued} generating` : ''}`
+				? `${s.done} props forged${spent ? ` · ${spent} USDC settled on-chain` : ''}${s.queued ? ` · ${s.queued} generating` : ''}`
 				: '';
 		}
 		renderChips();

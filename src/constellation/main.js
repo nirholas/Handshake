@@ -57,6 +57,12 @@ const RADIUS = 28; // target galaxy radius for the semantic / rank layouts
 // glow rather than the geometry.
 const PICK_RADIUS_PX = 22;
 const PICK_RADIUS_COARSE_PX = 34;
+// A tap is deliberately more forgiving than a hover. Hover has to stay tight or
+// the label jitters between neighbours as the cursor crosses empty sky, but a
+// tap is a stated intent to open the nearest star, and the galaxy keeps rotating
+// under a stationary finger while the press is being made.
+const TAP_RADIUS_PX = 46;
+const TAP_RADIUS_COARSE_PX = 60;
 const SIGN_IN_HREF = '/login?next=%2Fconstellation';
 const REGISTER_HREF = '/register?next=%2Fconstellation';
 
@@ -300,8 +306,14 @@ function screenXY(node) {
 		((1 - _projected.y) / 2) * window.innerHeight,
 	];
 }
+function coarsePointer() {
+	return Boolean(window.matchMedia?.('(pointer: coarse)')?.matches);
+}
 function pickTolerancePx() {
-	return window.matchMedia?.('(pointer: coarse)')?.matches ? PICK_RADIUS_COARSE_PX : PICK_RADIUS_PX;
+	return coarsePointer() ? PICK_RADIUS_COARSE_PX : PICK_RADIUS_PX;
+}
+function tapTolerancePx() {
+	return coarsePointer() ? TAP_RADIUS_COARSE_PX : TAP_RADIUS_PX;
 }
 function nearestNodeToScreen(px, py, maxPx) {
 	let best = null;
@@ -315,11 +327,11 @@ function nearestNodeToScreen(px, py, maxPx) {
 }
 // Exact ray hit first (it respects depth, so the front star wins where two
 // overlap), then the screen-space fallback so the visible glow is the target.
-function pickNode() {
+function pickNode(tolerancePx = pickTolerancePx()) {
 	raycaster.setFromCamera(pointer, camera);
 	const hits = raycaster.intersectObjects(nodes.map((n) => n.mesh), false);
 	if (hits.length) return nodes[hits[0].object.userData.index];
-	return nearestNodeToScreen(pointerPx[0], pointerPx[1], pickTolerancePx());
+	return nearestNodeToScreen(pointerPx[0], pointerPx[1], tolerancePx);
 }
 
 function hideTooltip() {
@@ -370,7 +382,7 @@ function onPointerDown(e) {
 	// so the star can slide out from under a stationary cursor between the press
 	// and the release; what the visitor aimed at is what they pressed on.
 	updatePointer(e);
-	downNode = pickNode() || hovered;
+	downNode = pickNode(tapTolerancePx()) || hovered;
 }
 function onPointerUp(e) {
 	const moved = Math.hypot(e.clientX - downXY[0], e.clientY - downXY[1]);
@@ -378,7 +390,7 @@ function onPointerUp(e) {
 	updatePointer(e);
 	// The star under the release wins; then the star the tooltip is naming; then
 	// the one that was under the press. Any of the three is the intended target.
-	const node = pickNode() || hovered || downNode;
+	const node = pickNode(tapTolerancePx()) || hovered || downNode;
 	downNode = null;
 	if (node) { keyboardFocused = false; selectNode(node.mesh.userData.index, { fromKeyboard: false }); }
 }

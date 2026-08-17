@@ -336,7 +336,7 @@
 				<h1 data-i18n="forge_spark.describe_it_hold_it">Describe it. Hold it.</h1>
 				<p data-i18n="forge_spark.a_sentence_becomes_a_textured_3d_mesh">
 					A sentence becomes a textured 3D mesh. Nemotron sharpens your words, FLUX paints a clean
-					reference, and TRELLIS reconstructs the model — quietly, on NVIDIA NIM.
+					reference, and TRELLIS reconstructs the model, quietly, on NVIDIA NIM.
 				</p>
 			</header>
 
@@ -387,15 +387,18 @@
 								<path d="m2 17 10 5 10-5" />
 								<path d="m2 12 10 5 10-5" />
 							</svg>
-							<p data-i18n="forge_spark.your_model_will_appear_here_describe_an">Your model will appear here. Describe an object and hit generate — then orbit, light, and download the GLB.</p>
+							<p data-i18n="forge_spark.your_model_will_appear_here_describe_an">Your model will appear here. Describe an object and hit generate, then orbit, light, and download the GLB.</p>
 						</div>
-						<div class="viewer-status" id="viewer-status" hidden>
-							<span class="spinner"></span>
+						<div class="viewer-status" id="viewer-status" role="status" aria-live="polite" hidden>
+							<span class="spinner" aria-hidden="true"></span>
 							<span id="viewer-status-text" data-i18n="forge_spark.working">Working…</span>
 						</div>
 					</div>
 
-					<div class="error-note" id="error" hidden></div>
+					<div class="error-note" id="error" role="alert" hidden>
+						<span id="error-text"></span>
+						<button type="button" class="error-retry" id="retry" data-i18n="forge_spark.try_again">Try again</button>
+					</div>
 
 					<div class="viewer-actions" id="actions" hidden>
 						<a id="download" download data-i18n="forge_spark.download_glb">Download GLB</a>
@@ -404,14 +407,17 @@
 				</div>
 			</div>
 
-			<footer class="spark-footer">
-				The same TRELLIS NIM runs across lanes — local and cloud — so reconstruction stays
+			<p class="spark-note">
+				The same TRELLIS NIM runs across lanes, local and cloud, so reconstruction stays
 				<b data-i18n="forge_spark.always_on">always on</b>. Image → 3D lives at <a href="/forge-nim" data-i18n="forge_spark.forge_nim">/forge-nim</a>; the full studio at
 				<a href="/forge" data-i18n="forge_spark.forge">/forge</a>.
-			</footer>
+			</p>
 		</main>
 
+		<div id="footer-container"></div>
+
 		<script src="/nav.js" defer></script>
+		<script src="/footer.js" defer></script>
 		<script src="/model-viewer-meshopt.js"></script>
 		<script type="module">
 			const form = document.getElementById('composer');
@@ -423,6 +429,8 @@
 			const statusEl = document.getElementById('viewer-status');
 			const statusText = document.getElementById('viewer-status-text');
 			const errorEl = document.getElementById('error');
+			const errorText = document.getElementById('error-text');
+			const retry = document.getElementById('retry');
 			const actions = document.getElementById('actions');
 			const download = document.getElementById('download');
 			const again = document.getElementById('again');
@@ -457,10 +465,10 @@
 			}
 			function hideStatus() { statusEl.hidden = true; }
 			function showError(msg) {
-				errorEl.textContent = msg;
+				errorText.textContent = msg;
 				errorEl.hidden = false;
 			}
-			function clearError() { errorEl.hidden = true; errorEl.textContent = ''; }
+			function clearError() { errorEl.hidden = true; errorText.textContent = ''; }
 
 			function renderModel(url) {
 				if (!viewer) {
@@ -482,7 +490,7 @@
 				actions.hidden = false;
 			}
 
-			// Step 1 — Nemotron refines the prompt. Enhancement is a boost, never a
+			// Step 1: Nemotron refines the prompt. Enhancement is a boost, never a
 			// gate: if the lane is unavailable we keep the user's own words.
 			async function refinePrompt(raw) {
 				setStage('nemotron', 'active', 'refining');
@@ -506,13 +514,13 @@
 				} catch (err) {
 					// Quiet fallback — keep the original prompt, mark the stage done.
 					refinedEl.hidden = false;
-					refinedEl.innerHTML = '<b>Using your prompt as written.</b><span class="by">refine step unavailable — generating anyway</span>';
+					refinedEl.innerHTML = '<b>Using your prompt as written.</b><span class="by">refine step unavailable, generating anyway</span>';
 					setStage('nemotron', 'done', 'skipped');
 					return raw;
 				}
 			}
 
-			// Steps 2 + 3 — FLUX paints a reference, TRELLIS reconstructs. /api/forge
+			// Steps 2 + 3: FLUX paints a reference, TRELLIS reconstructs. /api/forge
 			// returns a finished glb_url synchronously, or a job to poll.
 			async function generateMesh(prompt) {
 				setStage('flux', 'active', 'painting');
@@ -555,7 +563,7 @@
 						});
 						data = await r.json();
 					} catch {
-						continue; // transient network blip — keep polling
+						continue; // transient network blip, keep polling
 					}
 					const status = data.status;
 					if (status === 'done' && (data.glb_url || data.model_url)) {
@@ -570,14 +578,18 @@
 				throw new Error('This is taking longer than usual. Please try again.');
 			}
 
-			form.addEventListener('submit', async (e) => {
-				e.preventDefault();
+			async function run() {
 				if (busy) return;
 				const raw = promptEl.value.trim();
-				if (raw.length < 3) { promptEl.focus(); return; }
+				if (raw.length < 3) {
+					showError('Describe the object in a few words first, then hit generate.');
+					promptEl.focus();
+					return;
+				}
 
 				busy = true;
 				generateBtn.disabled = true;
+				retry.disabled = true;
 				generateBtn.textContent = 'Generating…';
 				clearError();
 				actions.hidden = true;
@@ -592,15 +604,25 @@
 					hideStatus();
 					// Mark whichever stage was active as failed.
 					for (const name of Object.keys(stages)) {
-						if (stages[name].dataset.state === 'active') setStage(name, 'idle', 'failed');
+						if (stages[name].dataset.state === 'active') setStage(name, 'failed', 'failed');
 					}
 					showError(err.message || 'Something went wrong. Please try again.');
 				} finally {
 					busy = false;
 					generateBtn.disabled = false;
+					retry.disabled = false;
 					generateBtn.textContent = 'Generate 3D model';
 				}
+			}
+
+			form.addEventListener('submit', (e) => {
+				e.preventDefault();
+				run();
 			});
+
+			// The error note's own recovery action: same prompt, same pipeline, no
+			// scrolling back up to the button.
+			retry.addEventListener('click', run);
 
 			again.addEventListener('click', () => {
 				promptEl.focus();

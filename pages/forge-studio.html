@@ -2848,7 +2848,7 @@
 			@keyframes studioSpin { to { transform: rotate(360deg); } }
 			#studio-avatar .step { display: none; flex-direction: column; }
 			#studio-avatar .step.active { display: flex; animation: studioFade 0.35s ease; }
-			#studio-avatar h1 {
+			#studio-avatar h2 {
 				font-size: clamp(26px, 5vw, 36px);
 				line-height: 1.1;
 				margin: 12px 0 8px;
@@ -3953,7 +3953,7 @@
 			<section id="studio-avatar" class="studio-pane" role="tabpanel" aria-labelledby="studio-tab-avatar" hidden>
 				<!-- Step 1: compose -->
 				<section class="step active" data-step="compose" aria-label="Describe your avatar">
-					<h1 data-i18n="forge_studio.describe_it_get_a_rigged_3d_avatar">Describe it. Get a rigged 3D avatar.</h1>
+					<h2 data-i18n="forge_studio.describe_it_get_a_rigged_3d_avatar">Describe it. Get a rigged 3D avatar.</h2>
 					<p class="sub" data-i18n="forge_studio.type_what_you_want_a_character_a">
 						Type what you want — a character, a creature, a style. We render a clean
 						reference, reconstruct it into 3D, and add a skeleton so it can move.
@@ -4038,7 +4038,7 @@
 
 				<!-- Step 3: done -->
 				<section class="step done-wrap" data-step="done" aria-label="Your avatar is ready">
-					<h1 data-i18n="forge_studio.your_avatar_is_ready">Your avatar is ready</h1>
+					<h2 data-i18n="forge_studio.your_avatar_is_ready">Your avatar is ready</h2>
 					<p class="sub" style="margin-bottom: 0" data-i18n="forge_studio.open_it_in_the_editor_to_animate">
 						Open it in the editor to animate, dress, and export.
 					</p>
@@ -4111,7 +4111,7 @@
 						</div>
 						<div class="lab-actions">
 							<button class="btn-primary" id="lab-generate" type="button" data-i18n="forge_studio.generate_model">Generate model</button>
-							<a class="btn-ghost is-disabled" id="lab-download" download>
+							<a class="btn-ghost is-disabled" id="lab-download" download aria-disabled="true" title="Generate something first, then download it as a file">
 								<span class="lab-dl-label" data-i18n="forge_studio.download">Download</span>
 								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 									<path d="M12 3v12" /><polyline points="7 11 12 16 17 11" /><line x1="5" y1="20" x2="19" y2="20" />

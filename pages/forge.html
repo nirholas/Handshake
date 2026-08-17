@@ -158,6 +158,15 @@
 				font-size: var(--text-lg);
 				line-height: var(--leading-normal);
 			}
+			/* The textarea drops its own outline so the composer reads as one
+			   surface, which left keyboard users with no focus signal at all on
+			   the page's primary input. Put a ring back for :focus-visible only,
+			   so pointer users keep the seamless look. */
+			.composer textarea:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 3px;
+				border-radius: var(--radius-sm, 6px);
+			}
 			.composer textarea::placeholder {
 				color: var(--ink-dim);
 			}
