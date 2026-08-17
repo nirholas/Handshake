@@ -175,8 +175,15 @@ function showError(grid, appending) {
 }
 
 async function fetchCharacters(reset = false) {
-	if (state.loading) return;
-	state.loading = true;
+	// A reset (search or sort change) always supersedes whatever is in flight;
+	// only an append is dropped, and only to swallow a double-click on Load more.
+	// A blanket "already loading, ignore" guard meant that clicking Top while the
+	// first page was still arriving lit the button up and changed nothing else,
+	// so the page then showed New results under a Top label.
+	if (!reset && state.appending) return;
+	if (!reset) state.appending = true;
+	const gen = ++state.gen;
+	const superseded = () => gen !== state.gen;
 
 	const grid = document.getElementById('chs-grid');
 	const loadBtn = document.getElementById('chs-load-btn');
@@ -205,12 +212,18 @@ async function fetchCharacters(reset = false) {
 		if (!res.ok) throw new Error('characters feed responded ' + res.status);
 		data = await res.json();
 	} catch {
+		state.appending = false;
+		if (superseded()) return;
 		grid.setAttribute('aria-busy', 'false');
 		showError(grid, !reset);
 		if (loadBtn) loadBtn.disabled = false;
-		state.loading = false;
 		return;
 	}
+
+	state.appending = false;
+	// A newer reset landed while this response was in flight; its render owns the
+	// grid now, so drop this one rather than painting stale results over it.
+	if (superseded()) return;
 
 	const chars = data.characters || [];
 
@@ -219,7 +232,6 @@ async function fetchCharacters(reset = false) {
 			grid.setAttribute('aria-busy', 'false');
 			showEmpty(grid);
 			if (loadMore) loadMore.hidden = true;
-			state.loading = false;
 			return;
 		}
 		grid.innerHTML = chars.map(cardHtml).join('');
@@ -244,7 +256,6 @@ async function fetchCharacters(reset = false) {
 		loadBtn.disabled = false;
 		loadBtn.textContent = 'Load more';
 	}
-	state.loading = false;
 }
 
 function init() {

@@ -758,7 +758,7 @@ function renderActivePanel() {
 
 	if (tab.sculpt) {
 		if (!scene?.root) {
-			panel.innerHTML = `<div class="as-empty">Waiting for avatar to load...</div>`;
+			panel.innerHTML = `<div class="as-empty">Waiting for avatar to load…</div>`;
 			return;
 		}
 		renderSculptPanel({
@@ -858,7 +858,7 @@ function tilePreviewMarkup(preset) {
 
 function renderAnimatePanel(panel) {
 	if (!scene?.root) {
-		panel.innerHTML = `<div class="as-empty">Waiting for avatar to load...</div>`;
+		panel.innerHTML = `<div class="as-empty">Waiting for avatar to load…</div>`;
 		return;
 	}
 	if (!emotesReady) {

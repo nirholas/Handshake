@@ -410,6 +410,15 @@
 				padding: 24px 4px;
 				text-align: center;
 			}
+			/* While an accessory is loading onto the rig, the grid stops taking
+			   input: a second click during the fetch queued a competing op that
+			   landed after the first and undid it. */
+			.as-grid, .as-swatches { transition: opacity 0.15s; }
+			.as-panel[aria-busy='true'] .as-grid,
+			.as-panel[aria-busy='true'] .as-swatches {
+				opacity: 0.55;
+				pointer-events: none;
+			}
 			.as-grid {
 				display: grid;
 				grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
