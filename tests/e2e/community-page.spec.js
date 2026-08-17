@@ -45,8 +45,12 @@ async function serveFeed(page, body, status = 200) {
 
 test.describe('/community', () => {
 	test('renders one intact row per feed item, with both of its links reachable', async ({ page }) => {
+		// The dev server's own HMR socket cannot reach a forwarded port in a
+		// container, and its failure is not the page's, so it is filtered out.
 		const errors = [];
-		page.on('pageerror', (e) => errors.push(e.message));
+		page.on('pageerror', (e) => {
+			if (!/WebSocket|\[vite\]/.test(e.message)) errors.push(e.message);
+		});
 		await serveFeed(page, feedPayload(6));
 
 		await page.goto(COMMUNITY);
