@@ -675,7 +675,10 @@ function renderApply() {
 		: '';
 
 	if (!changes.length) {
-		host.innerHTML = `<p class="el-empty">No configuration change. Every knob matches what this deploy is running.</p>${fundingNote}`;
+		// Deliberately scoped to the environment: the balance knob has no env var
+		// behind it, so claiming "every knob matches" while the balance is dragged
+		// somewhere else was simply false. The funding note below covers that case.
+		host.innerHTML = `<p class="el-empty">No environment change. Every governor setting matches what this deploy is running.</p>${fundingNote}`;
 		return;
 	}
 

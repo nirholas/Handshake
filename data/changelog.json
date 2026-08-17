@@ -24304,6 +24304,16 @@
 				"improvement"
 			],
 			"link": "/create-agent"
+		},
+		{
+			"date": "2026-08-17",
+			"title": "Token in 3D paints in seconds instead of waiting on the slowest lookup, and the trade tape stops reporting every swap as $0",
+			"summary": "The /coin3d page renders any pump.fun or Solana token as a live 3D scene, and it was audited end to end in a real browser: the landing search, a loaded token, and every loading, empty and error state at phone, tablet and desktop widths. The biggest finding was that the whole page waited on the top-holder scan before showing anything. That scan walks every token account and takes around ten seconds on a large holder set, so the page sat on a spinner the entire time, and if the scan stalled outright there was no timeout at all and the spinner never went away. The coin, the price, the stats and the live tape now paint as soon as the token identity resolves, and the holder galaxy grows into the scene when the scan lands, with the holder share showing as pending until then. Every lookup is now bounded, so a stalled data source degrades one number instead of freezing the page. The live trade tape had been rounding every trade to the nearest dollar, which printed real swaps as $0 and 0.000 SOL; it now shows cents and fractional SOL. When a data source is genuinely unreachable the page says that, with a retry, instead of claiming the token does not exist. On a 320px screen the landing card no longer runs off the right edge with the search button and a third of the launch grid cut off, and it scrolls instead of clipping its own footer. The page also had no top-level heading in any state but one, the browser tab title reverted to the generic page name once translations loaded, and the price chart and holder share showed placeholder boxes that could pulse forever; all three are fixed.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/coin3d"
 		}
 	]
 }

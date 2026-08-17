@@ -155,8 +155,8 @@
 							<button type="button" class="el-help" aria-label="What is demand?" data-tip="Settle attempts arriving per hour. Seeded from the last 24 hours of the facilitator log, excluding duplicate-signature retries, so the projection starts from measured traffic rather than a guess.">?</button>
 							<output class="el-value" id="el-demand-out" for="el-demand"></output>
 						</div>
-						<input type="range" id="el-demand" min="0" max="3000" step="5" value="0" />
-						<p class="el-hint">What the rail is being asked to do, per hour.</p>
+						<input type="range" id="el-demand" min="0" max="3000" step="1" value="0" />
+						<p class="el-hint" id="el-demand-hint">What the rail is being asked to do, per hour.</p>
 					</div>
 
 					<div class="el-field" data-knob="horizon">

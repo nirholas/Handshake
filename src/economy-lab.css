@@ -151,6 +151,9 @@
 .el-verdict[data-state='starved'] { border-left-color: var(--el-danger); }
 .el-verdict[data-state='error'] { border-left-color: var(--el-danger); }
 .el-verdict[data-state='loading'] { border-left-color: var(--el-line-2); }
+/* Idle is neither good nor bad: nothing was attempted, so the banner must not
+   borrow the green of a rail that actually admitted traffic. */
+.el-verdict[data-state='idle'] { border-left-color: var(--el-line-2); }
 
 .el-verdict-icon {
 	flex: none;
@@ -167,6 +170,7 @@
 .el-verdict[data-state='throttled'] .el-verdict-icon { color: var(--el-warn); }
 .el-verdict[data-state='starved'] .el-verdict-icon,
 .el-verdict[data-state='error'] .el-verdict-icon { color: var(--el-danger); }
+.el-verdict[data-state='idle'] .el-verdict-icon { color: var(--el-faint); }
 
 .el-spin {
 	width: 15px;
@@ -335,6 +339,13 @@
 	margin: 0.35rem 0 0;
 	font-size: 0.78rem;
 	color: var(--el-faint);
+}
+/* A knob seeded from a scenario rather than a measurement says so, and is
+   marked so the disclosure cannot be mistaken for ordinary helper text. */
+.el-hint[data-source='scenario'] {
+	color: var(--el-muted);
+	border-left: 2px solid var(--el-line-2);
+	padding-left: 0.55rem;
 }
 
 /* Range inputs: styled in both engines, with a visible focus ring. */
