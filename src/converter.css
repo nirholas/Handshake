@@ -179,6 +179,10 @@
 	color: var(--cv-warn, #f59e0b);
 }
 
+.cvt-subline .dim {
+	color: var(--cv-text-3);
+}
+
 .cvt-subline {
 	margin: 0.5rem 0 0;
 	font-size: 0.8125rem;

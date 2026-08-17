@@ -893,6 +893,12 @@ html.cv-page,
 	border-radius: var(--cv-radius-md);
 	box-shadow: var(--cv-shadow-dropdown);
 	overflow: hidden;
+	transition: opacity 0.15s;
+}
+/* Results from the previous query stay readable while the next one resolves,
+   dimmed so it is obvious they are about to be replaced. */
+.cv-search-pop[aria-busy='true'] {
+	opacity: 0.55;
 }
 /* Options are anchors on /coins (each one navigates to a coin page) and plain
    elements on /compare (picking one adds a column, it navigates nowhere).
@@ -928,6 +934,9 @@ html.cv-page,
 	font-size: 0.75rem;
 }
 .cv-search-pop .none {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
 	padding: 0.75rem;
 	color: var(--cv-text-3);
 	font-size: 0.875rem;

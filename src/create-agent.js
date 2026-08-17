@@ -14,7 +14,7 @@
 // identity, /api/marketplace/agents/:id/publish for personality + listing) so
 // there are no parallel code paths to drift out of sync.
 
-import { apiFetch } from './api.js';
+import { apiFetch, noteSession } from './api.js';
 import { getMe, saveRemoteGlbToAccount } from './account.js';
 import { peekGuestAgent, clearGuestAgent } from './agents/guest-agent.js';
 import { log } from './shared/log.js';
@@ -297,6 +297,11 @@ async function boot() {
 	}
 	$('page-loading')?.remove();
 	state.authed = Boolean(me);
+	// Teach api.js the answer we just paid for. A guest has no session for a CSRF
+	// token to bind to, so without this every allowAnonymous POST on this page
+	// (Generate, the persona interview) opens with a doomed /api/csrf-token
+	// pre-flight that logs a red 401 in a first-time visitor's console.
+	noteSession(state.authed);
 
 	// A saved draft means the visitor built something before and came back —
 	// either via the ship-step sign-in bounce, or just by leaving and returning
@@ -472,11 +477,18 @@ function renderStepper() {
 		const li = document.createElement('li');
 		li.className = 'step-pip';
 		li.dataset.pip = String(i);
-		li.innerHTML = `<span class="num">${i + 1}</span><span class="label">${label}</span>`;
-		// Let users jump back to any completed step by clicking its pip.
-		li.addEventListener('click', () => {
+		// A real <button>, not a click handler on the <li>: jumping back to a
+		// completed step is the only way to edit one from Review, and on a bare
+		// <li> it was mouse-only, no tab stop, no Enter/Space, no focus ring.
+		// type="button" because this lives inside <form id="wizard">.
+		const btn = document.createElement('button');
+		btn.type = 'button';
+		btn.className = 'step-pip-btn';
+		btn.innerHTML = `<span class="num">${i + 1}</span><span class="label">${label}</span>`;
+		btn.addEventListener('click', () => {
 			if (i < state.step) showStep(i);
 		});
+		li.appendChild(btn);
 		stepper.appendChild(li);
 	});
 }
@@ -485,10 +497,24 @@ function updateStepper() {
 	document.querySelectorAll('.step-pip').forEach((pip) => {
 		const i = Number(pip.dataset.pip);
 		const done = i < state.step;
-		pip.dataset.state = i === state.step ? 'active' : done ? 'done' : '';
+		const current = i === state.step;
+		pip.dataset.state = current ? 'active' : done ? 'done' : '';
 		pip.dataset.clickable = done ? 'true' : 'false';
-		if (done) pip.querySelector('.num').textContent = '✓';
-		else pip.querySelector('.num').textContent = String(i + 1);
+		// Only completed steps are navigable, so only they are tab stops; the rest
+		// stay out of the tab order instead of being focusable dead ends.
+		const btn = pip.querySelector('.step-pip-btn');
+		if (btn) {
+			btn.disabled = !done;
+			btn.setAttribute(
+				'aria-label',
+				done
+					? `Go back to step ${i + 1}, ${STEP_LABELS[i]}`
+					: `Step ${i + 1}, ${STEP_LABELS[i]}`,
+			);
+		}
+		if (current) pip.setAttribute('aria-current', 'step');
+		else pip.removeAttribute('aria-current');
+		pip.querySelector('.num').textContent = done ? '✓' : String(i + 1);
 	});
 	document.querySelectorAll('.step-bar').forEach((bar) => {
 		bar.dataset.state = Number(bar.dataset.bar) <= state.step ? 'done' : '';
@@ -745,10 +771,14 @@ async function generateSpec(rawPrompt) {
 	setMagicBusy(true);
 	setMagicMsg('Designing your agent…', '');
 	try {
+		// allowAnonymous: generating is deliberately open to guests, so a 401 here
+		// is an answer this function renders itself (see the 401 branch below),
+		// not a reason for api.js to throw the visitor out to /login.
 		const res = await apiFetch('/api/agents/suggest-spec', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ prompt }),
+			allowAnonymous: true,
 		});
 		const data = await res.json().catch(() => ({}));
 		if (!res.ok || !data.spec) {
@@ -1469,6 +1499,9 @@ async function runInterviewExtraction() {
 	btn.setAttribute('aria-busy', 'true');
 	setInterviewStatus('Writing the profile from your answers…', '');
 	try {
+		// allowAnonymous: step 4 is reachable without an account, so this call must
+		// surface its own failure in the interview status line rather than let the
+		// shared 401 handler discard an in-progress build.
 		const res = await apiFetch('/api/persona/interview', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -1478,6 +1511,7 @@ async function runInterviewExtraction() {
 				greeting: state.greeting.trim(),
 				answers,
 			}),
+			allowAnonymous: true,
 		});
 		const data = await res.json().catch(() => ({}));
 		if (!res.ok) {

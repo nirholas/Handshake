@@ -126,6 +126,11 @@ function revealModel(thumb) {
 	if (!mv) return;
 	thumb.dataset.revealed = '1';
 	thumb.classList.add('is-live');
+	// A slotted poster is ours to clear: dismissPoster only fades model-viewer's
+	// own built-in poster, so without this the thumbnail would sit on top of the
+	// model it just finished downloading.
+	if (mv.loaded) mv.dataset.loaded = '1';
+	else mv.addEventListener('load', () => { mv.dataset.loaded = '1'; }, { once: true });
 	// whenDefined resolves synchronously once the CDN module has upgraded the
 	// element, and waits for it on a slow connection instead of no-opping.
 	customElements.whenDefined('model-viewer').then(() => mv.dismissPoster?.());

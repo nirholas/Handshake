@@ -165,6 +165,11 @@ function assetButtonLabel(asset, side) {
 function assetSubline(asset) {
 	if (!asset) return '';
 	if (asset.kind === 'crypto') {
+		// A coin whose price request failed says so, rather than showing a dash
+		// the reader has to interpret.
+		if (!Number.isFinite(asset.priceUSD)) {
+			return `${esc(asset.name)} · <span class="dim">price unavailable</span>`;
+		}
 		return `${esc(asset.name)} · ${esc(formatPrice(asset.priceUSD))}`;
 	}
 	return esc(asset.name);
@@ -633,16 +638,23 @@ function onPickerKey(e) {
 	if (e.key === 'Tab') closePicker();
 }
 
+const PICKER_GUTTER = 8;
+
 function positionPicker(anchor) {
 	// Fixed position (viewport coords) so the offset parent is unambiguous: the
-	// popover is a sibling of the card, not a child. Right-aligned under the
-	// button and clamped to an 8px viewport gutter on both edges.
+	// popover is a sibling of the card, not a child. It hangs off the button's
+	// right edge, then gets clamped into the viewport. Clamping via `left` (not
+	// `right`) is what keeps it on screen at 320px: the popover is wider than
+	// the gap between the button and the left edge, so a right-only rule pushed
+	// it off the left side.
 	const el = $('cvt-picker');
 	const rect = anchor.getBoundingClientRect();
+	const width = el.offsetWidth || el.getBoundingClientRect().width;
+	const maxLeft = Math.max(PICKER_GUTTER, window.innerWidth - width - PICKER_GUTTER);
+	const left = Math.min(Math.max(PICKER_GUTTER, rect.right - width), maxLeft);
 	el.style.top = `${rect.bottom + 6}px`;
-	const right = Math.max(8, window.innerWidth - rect.right);
-	el.style.right = `${right}px`;
-	el.style.left = 'auto';
+	el.style.left = `${left}px`;
+	el.style.right = 'auto';
 }
 
 function openPicker(side, anchor) {
@@ -758,8 +770,11 @@ function applyPreset(p) {
 function viewFromUrl() {
 	const q = parseConverterQuery(window.location.search);
 	const byCode = state.rates?.byCode;
+	const from = resolveAssetRef(q.from, byCode);
 	return {
-		from: resolveAssetRef(q.from, byCode) || { kind: 'crypto', id: DEFAULT_CRYPTO },
+		// The seed keeps the default side readable ("BTC", "Bitcoin") even when
+		// its price request fails, instead of falling back to the raw coin id.
+		from: from || { kind: 'crypto', id: DEFAULT_CRYPTO, symbol: 'BTC', name: 'Bitcoin' },
 		to: resolveAssetRef(q.to, byCode) || { kind: 'fiat', code: DEFAULT_FIAT },
 		amount: Number.isFinite(q.amount) ? q.amount : 1,
 	};
@@ -770,7 +785,12 @@ async function applyView(view) {
 	state.amountText = String(view.amount);
 	const input = $('cvt-amount');
 	if (input) input.value = state.amountText;
-	await Promise.all([selectRef('from', view.from), selectRef('to', view.to)].filter(Boolean));
+	const seed = (ref) => ({ symbol: ref.symbol, name: ref.name });
+	await Promise.all(
+		[selectRef('from', view.from, seed(view.from)), selectRef('to', view.to, seed(view.to))].filter(
+			Boolean,
+		),
+	);
 }
 
 async function boot() {

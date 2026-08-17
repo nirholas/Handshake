@@ -365,6 +365,7 @@ function onPointerUp(e) {
 	// star the visitor was aiming at, and the scene keeps auto-rotating under the
 	// cursor between the hover and the release.
 	const node = pickNode() || hovered;
+	console.log("DBG up moved=", moved, "pick=", !!pickNode(), "hovered=", hovered && hovered.token.symbol, "node=", node && node.token.symbol);
 	if (node) { keyboardFocused = false; selectNode(node.mesh.userData.index, { fromKeyboard: false }); }
 }
 

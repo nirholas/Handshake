@@ -547,12 +547,23 @@ function wireSearch() {
 	let items = [];
 	let active = -1;
 	let lastQuery = '';
+	// Monotonic id for the in-flight query, so a slow response cannot land on top
+	// of a newer one when the upstream index is cold.
+	let seq = 0;
 
 	const close = () => {
+		seq++;
 		pop.hidden = true;
 		input.setAttribute('aria-expanded', 'false');
 		input.removeAttribute('aria-activedescendant');
 		active = -1;
+	};
+
+	const openPop = (html) => {
+		pop.innerHTML = html;
+		pop.hidden = false;
+		input.setAttribute('aria-expanded', 'true');
+		input.removeAttribute('aria-activedescendant');
 	};
 
 	function renderPop() {
@@ -597,21 +608,30 @@ function wireSearch() {
 		const q = input.value.trim();
 		if (!q) return close();
 		timer = setTimeout(async () => {
+			const mine = ++seq;
 			lastQuery = q;
+			// The coin index can take several seconds on a cold cache; an empty
+			// dropdown for that long reads as a broken search box.
+			items = [];
+			active = -1;
+			openPop(
+				'<div class="none"><span class="cv-spinner" aria-hidden="true"></span>Searching coins…</div>',
+			);
 			try {
 				const { coins } = await getJson(`/api/coin/markets?q=${encodeURIComponent(q)}`);
+				// A slower earlier query must never overwrite a later one.
+				if (mine !== seq) return;
 				items = coins.filter((c) => !state.coins.find((s) => s.id === c.id));
 				active = -1;
 				renderPop();
 			} catch {
+				if (mine !== seq) return;
 				// A silent close reads as a dead search box. Say what happened.
 				items = [];
 				active = -1;
-				pop.innerHTML =
-					'<div class="none">Coin search is unavailable right now. Check your connection and type again.</div>';
-				pop.hidden = false;
-				input.setAttribute('aria-expanded', 'true');
-				input.removeAttribute('aria-activedescendant');
+				openPop(
+					'<div class="none">Coin search is unavailable right now. Check your connection and type again.</div>',
+				);
 			}
 		}, 250);
 	});

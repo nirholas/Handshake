@@ -11,17 +11,20 @@
 // These tests pin the guard that catches it: every ticker and every figure in a
 // generated card must trace to the trade, and the avatar reaction must point the
 // same way the trade went.
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 // The free LLM chain needs no key, so llmConfigured() is true even in CI and an
 // unmocked directClip would reach the network and assert on whatever a rate
 // limiter felt like returning. The writer is stubbed here so each test states
 // exactly what the model said and what the guard did with it.
-const llmText = vi.fn();
+const { llmText, LlmUnavailable } = vi.hoisted(() => ({
+	llmText: vi.fn(),
+	LlmUnavailable: class LlmUnavailableError extends Error {},
+}));
 vi.mock('../api/_lib/llm.js', () => ({
 	llmConfigured: () => true,
 	llmComplete: async (...a) => ({ text: await llmText(...a) }),
-	LlmUnavailableError: class LlmUnavailableError extends Error {},
+	LlmUnavailableError: LlmUnavailable,
 }));
 
 const { isGrounded, directClip, tradeFromPosition } = await import('../api/_lib/clip-director.js');
@@ -92,8 +95,6 @@ describe('isGrounded', () => {
 });
 
 describe('directClip', () => {
-	beforeEach(() => llmText.mockReset());
-
 	it('discards the hallucinated card and answers from the real trade instead', async () => {
 		llmText.mockResolvedValue(JSON.stringify({
 			hook: 'I let my bias override the data on $THREE today.',
@@ -139,7 +140,7 @@ describe('directClip', () => {
 	});
 
 	it('gives a loss an honest card, never a celebration', async () => {
-		llmText.mockImplementation(() => { throw new Error('providers exhausted'); });
+		llmText.mockImplementation(async () => { throw new LlmUnavailable('every provider rung exhausted'); });
 		// "Swarm 2" is a real agent name, not a stated figure: the guard has to know
 		// the difference or every numbered agent falls back forever.
 		const clip = await directClip({ agentName: 'Swarm 2', trade: LOSS, surface: 'feed' });
