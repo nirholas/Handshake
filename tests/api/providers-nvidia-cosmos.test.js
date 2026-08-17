@@ -327,3 +327,65 @@ describe('nvidia-cosmos provider: 202-then-poll loop', () => {
 		expect(globalThis.fetch).not.toHaveBeenCalled();
 	});
 });
+
+// NVIDIA retires a hosted preview function without retiring its gateway path, so
+// the route keeps answering and only an authenticated submit reveals the model is
+// gone ("Function '<uuid>': Not found for account '<id>'"). That is exactly what
+// the live account hit on cosmos-predict1-7b, and it must not read as a transient
+// failure the user should retry.
+describe('nvidia-cosmos provider: a retired route falls over instead of killing the lane', () => {
+	const RETIRED_BODY = { detail: "Function '01327741-a1cb-4bdb-a31e-5391c8ca48c2': Not found for account 'acct-1'" };
+	const FALLBACK_INVOKE = 'https://ai.api.nvidia.com/v1/cosmos/nvidia/cosmos-predict1-5b';
+
+	it('submits to the next published route when the first is retired for this account', async () => {
+		vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const urls = [];
+		globalThis.fetch = vi.fn(async (url) => {
+			urls.push(String(url));
+			if (String(url) === DEFAULT_INVOKE) return jsonResponse(RETIRED_BODY, 404);
+			return jsonResponse({}, 202, { 'nvcf-reqid': 'req-fallback' });
+		});
+
+		const provider = createNvidiaCosmosProvider();
+		expect(await provider.textToWorld({ prompt: 'a koi pond at dawn' })).toEqual({ taskId: 'req-fallback' });
+		expect(urls).toEqual([DEFAULT_INVOKE, FALLBACK_INVOKE]);
+	});
+
+	it('reports lane_unavailable (503) once every published route is gone', async () => {
+		vi.spyOn(console, 'warn').mockImplementation(() => {});
+		globalThis.fetch = vi.fn(async () => jsonResponse(RETIRED_BODY, 404));
+		const provider = createNvidiaCosmosProvider();
+		await expect(provider.textToWorld({ prompt: 'x' })).rejects.toMatchObject({
+			code: 'lane_unavailable',
+			status: 503,
+		});
+	});
+
+	it('classifies the retirement detail on a non-404 status too', async () => {
+		vi.spyOn(console, 'warn').mockImplementation(() => {});
+		globalThis.fetch = vi.fn(async () => jsonResponse(RETIRED_BODY, 400));
+		const provider = createNvidiaCosmosProvider();
+		await expect(provider.textToWorld({ prompt: 'x' })).rejects.toMatchObject({ code: 'lane_unavailable' });
+	});
+
+	it('does not walk the chain for a credential failure: the next rung would fail identically', async () => {
+		globalThis.fetch = vi.fn(async () => jsonResponse({ detail: 'bad key' }, 401));
+		const provider = createNvidiaCosmosProvider();
+		await expect(provider.textToWorld({ prompt: 'x' })).rejects.toMatchObject({ code: 'invalid_key' });
+		expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+	});
+
+	it('uses an explicit NVIDIA_COSMOS_INVOKE_URL alone, with no sibling fallback', async () => {
+		process.env.NVIDIA_COSMOS_INVOKE_URL = 'https://nim.internal.test/v1/cosmos';
+		globalThis.fetch = vi.fn(async () => jsonResponse(RETIRED_BODY, 404));
+		const provider = createNvidiaCosmosProvider();
+		await expect(provider.textToWorld({ prompt: 'x' })).rejects.toMatchObject({ code: 'lane_unavailable' });
+		expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+	});
+
+	it('treats a 4xx poll as terminal so a dead handle is not polled for five minutes', async () => {
+		globalThis.fetch = vi.fn(async () => new Response(null, { status: 400 }));
+		const provider = createNvidiaCosmosProvider();
+		expect((await provider.status({ taskId: 'bogus-handle' })).status).toBe('failed');
+	});
+});

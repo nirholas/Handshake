@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-17",
+			"title": "Clip Director shows real traders again, and can no longer print a number the trade never made",
+			"summary": "The Clip Director page told every visitor that no agent had ever closed a trade. Its trader picker asked the leaderboard for the highest-ranked agents and then kept only the ones with a closed round-trip, and because the ranking score has nothing to do with having closed trades, the nine agents that qualified all sat below the cut. The picker now asks the leaderboard for exactly what it needs, so those nine traders and their real closed positions are back on the page. The bigger repair is underneath: the card copy is written by a language model, and one of the providers answered a real +1.89x win with an invented loss on a different coin, complete with a celebrating avatar, next to the on-chain link proving otherwise. Every generated card is now checked against the trade it describes before it ships, so a ticker or a figure that is not in the round-trip gets the card thrown away and rewritten from the position itself, and a stop-out can never be celebrated. Also on the page: a shared /clip-director?agent_id= link now opens that trader even when they are outside the ranking, the Try again buttons retry the step that actually failed instead of doing nothing, each card's call to action is a real link, and the copy button copies on browsers that block the clipboard API instead of telling you to press a key.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/clip-director"
+		},
+		{
+			"date": "2026-08-17",
 			"title": "The Pole Club leaderboard now ranks the dancers who are actually on the poles",
 			"summary": "The club's leaderboard was reading names out of the payout registry instead of off the stage, so it listed four dancers under names matching none of the three at the poles, every one of them sitting at zero. It now names each dancer exactly as her pole card does, drops entries for dancers who are not in tonight's lineup and have never been tipped, and says what a quiet board actually means: the 24h and 1h views tell you the club has been quiet rather than claiming nobody has ever tipped, which was never true while the all-time board was full. Keyboard and screen-reader visitors get the rest of the pass: the page carries one real heading instead of five competing ones, Skip to stage now lands you on the stage, and the controls belonging to the walk-in (the agent picker, the Enter the club prompt) no longer sit invisibly in the tab order once you are inside the room.",
 			"tags": [
