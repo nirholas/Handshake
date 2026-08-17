@@ -580,7 +580,7 @@ function setStatus(text, opts = {}) {
 			bar?.parentNode?.insertBefore(errorBanner, bar);
 		}
 		errorBanner.textContent = text;
-		// The submit bar is sticky, so it is reachable from anywhere on the page —
+		// The submit bar is sticky, so it is reachable from anywhere on the page,
 		// but the banner lands at the bar's NATURAL position, near the bottom of a
 		// phone-height page. Tapping the button from higher up therefore put the
 		// only explanation off-screen while resetSubmit restored the button to its
