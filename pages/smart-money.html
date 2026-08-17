@@ -1077,9 +1077,9 @@
 				clearStale();
 			} catch (e) {
 				if (!hasData) {
-					// Cold failure: no view has ever rendered, so every tab would be a
-					// blank void. Give the feed the retry and tell the other two tabs
-					// the same story rather than leaving them empty.
+					// Cold failure: neither the feed nor the leaderboard has ever
+					// rendered, so both tabs would be a blank void. Tell the same story
+					// in each. The watchlist fetches per mint and reports its own.
 					const why = e.status ? `The radar API answered ${e.status}.` : "We couldn't reach the radar from this browser.";
 					$('feedGrid').innerHTML = `<div class="state" style="grid-column:1/-1"><b>Couldn't reach the radar.</b>${esc(why)} Nothing is cached yet, so there is nothing to show.
 						<button class="btn primary" id="retry" type="button">Retry</button></div>`;
