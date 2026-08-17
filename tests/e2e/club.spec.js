@@ -170,6 +170,53 @@ test.describe('/club', () => {
 			}),
 		);
 		await page.goto('/club');
-		await expect(page.locator('#club-lb-rows .club-lb-row').first()).toContainText('Nyx');
+
+		const rows = page.locator('#club-lb-rows .club-lb-row');
+		// The board names each dancer the way her pole card does. club_dancer_wallets
+		// is a payout registry, and its display_name ("Nyx") is not what the visitor
+		// sees on stage ("Dylan"): showing it made the top of the leaderboard read as
+		// a dancer who is not in the room.
+		await expect(rows.first()).toContainText('Dylan');
+		await expect(page.locator('#club-lb-rows')).not.toContainText('Nyx');
+		// Dancer 4 is in the registry but has no pole here and has never been tipped,
+		// so she is not someone this visitor can rank or reach.
+		await expect(page.locator('#club-lb-rows')).not.toContainText('Vesper');
+		await expect(rows).toHaveCount(3);
+
+		// Tab switching: the picked window becomes the selected tab and the board
+		// re-renders under it. The board lives in a <details> that src/club.js opens
+		// at desktop widths; open it here rather than racing that boot step, so this
+		// assertion is about the tabs and not about when the disclosure flips.
+		await page.locator('#club-lb-details').evaluate((d) => { d.open = true; });
+		await page.locator('.club-lb-tab[data-window="all"]').click();
+		await expect(page.locator('.club-lb-tab[data-window="all"]')).toHaveAttribute('aria-selected', 'true');
+		await expect(page.locator('.club-lb-tab[data-window="day"]')).toHaveAttribute('aria-selected', 'false');
+		await expect(rows.first()).toContainText('Dylan');
+	});
+
+	test('leaderboard with no tips in the window shows that window empty state', async ({ page }) => {
+		await stubVenueAssets(page);
+		// The registry always returns a row per registered dancer, so a quiet window
+		// arrives as a full set of zeroes. That is an empty board, not a ranking of
+		// dancers tied at nothing, and the copy has to name the window it describes:
+		// "no tips yet" is only true of the all-time board.
+		await page.route('**/api/club/leaderboard*', (route) =>
+			route.fulfill({
+				status: 200,
+				contentType: 'application/json',
+				body: JSON.stringify({
+					window: 'day',
+					rows: [
+						{ dancer: '1', display_name: 'Nyx',   total_atomics: '0', tip_count: 0, unpaid_atomics: '0' },
+						{ dancer: '2', display_name: 'Ari',   total_atomics: '0', tip_count: 0, unpaid_atomics: '0' },
+						{ dancer: '3', display_name: 'Sable', total_atomics: '0', tip_count: 0, unpaid_atomics: '0' },
+					],
+				}),
+			}),
+		);
+		await page.goto('/club');
+
+		await expect(page.locator('#club-lb-rows .club-lb-empty')).toContainText('No tips in the last 24 hours');
+		await expect(page.locator('#club-lb-rows .club-lb-row')).toHaveCount(0);
 	});
 });
