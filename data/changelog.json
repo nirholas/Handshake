@@ -3,6 +3,26 @@
 	"entries": [
 		{
 			"date": "2026-08-17",
+			"title": "Compare Coins now tells you when a coin will not load instead of shimmering forever",
+			"summary": "The side-by-side coin comparison had one failure mode that looked exactly like a hung page: when the market data service did not answer, the stats table kept its grey loading shimmer up permanently and the chips still showed the raw coin ids, with nothing to click and nothing to read. Every one of those states is now written out. A coin that does not exist is labelled Not found with a one-click Remove; a coin the service failed to return is labelled Failed to load with a Retry that actually refetches it and redraws the chart. The chart says which of the two happened and offers the same recovery. The search box no longer goes quiet when the coin index is slow or down: it shows a Searching indicator while it waits and an explanation if the request fails, and a slow answer can no longer overwrite a newer one. Once four coins are up, the box says four is the maximum and stops accepting a fifth rather than silently swallowing the pick. New Copy link button next to the picker hands over the shareable matchup URL, the three default coins load in parallel instead of one after another, and the stats table now carries proper row and column headers for screen readers with a visible focus ring on every chip.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/compare"
+		},
+		{
+			"date": "2026-08-17",
+			"title": "Coin Communities keeps its own words on screen, and the Retry button on a failed coin now retries",
+			"summary": "A coin page that failed to load offered a Retry button that did nothing: it re-requested the coin the page was already showing, which the loader skipped as already-loaded, so the only escape from a transient outage was a manual reload. Retry now forces the fetch and recovers the page. The page was also arguing with its own translation layer: the browser tab and the failure message are written live by the page, but the translation pass ran afterwards and reverted them, so a coin that could not be reached said it did not exist, and the tab kept a coin's name after you had gone back to browsing. Both now hold what the page wrote and hand it back when the live state is gone. Alongside that: the price figure shows a real loading shimmer until both of its data sources have answered instead of a bare dash, signed-out visitors get a short line explaining the avatar row and a link to sign in rather than a silent unauthorized request, a pasted avatar URL that is not a link now says what a working one looks like, the search and mint fields have proper labels, and every button, chip and card has a visible keyboard focus ring and a press state.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/communities"
+		},
+		{
+			"date": "2026-08-17",
 			"title": "Clip Director shows real traders again, and can no longer print a number the trade never made",
 			"summary": "The Clip Director page told every visitor that no agent had ever closed a trade. Its trader picker asked the leaderboard for the highest-ranked agents and then kept only the ones with a closed round-trip, and because the ranking score has nothing to do with having closed trades, the nine agents that qualified all sat below the cut. The picker now asks the leaderboard for exactly what it needs, so those nine traders and their real closed positions are back on the page. The bigger repair is underneath: the card copy is written by a language model, and one of the providers answered a real +1.89x win with an invented loss on a different coin, complete with a celebrating avatar, next to the on-chain link proving otherwise. Every generated card is now checked against the trade it describes before it ships, so a ticker or a figure that is not in the round-trip gets the card thrown away and rewritten from the position itself, and a stop-out can never be celebrated. Also on the page: a shared /clip-director?agent_id= link now opens that trader even when they are outside the ranking, the Try again buttons retry the step that actually failed instead of doing nothing, each card's call to action is a real link, and the copy button copies on browsers that block the clipboard API instead of telling you to press a key.",
 			"tags": [

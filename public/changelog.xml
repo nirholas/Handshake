@@ -87,6 +87,14 @@
 			<description>The live indicator at the top of Coin Clash sat on a pulsing amber &quot;connecting&quot; forever, even once the page had established that the battle service was offline and had stopped trying to reach it. The cause was the page's own translation pass: the line of copy holding the indicator is translatable, and applying it rewrote that whole line back to the wording it shipped with, wiping out the status the page had just worked out. The indicator now survives a translation pass, so it reads offline when the arena is offline and live when battles are running. The same fault was quietly affecting the leaderboard, labor market and signals pages, and is fixed for all four. Two more repairs on Coin Clash: when the arena cannot be reached at all, the error card now explains that in words you can act on and offers Try again, instead of showing the browser's raw &quot;Failed to fetch&quot;; and on a narrow phone the Arena, War Records and Communities tabs wrap onto a second row rather than running off the right edge, where the Communities tab was cut in half and unreachable.</description>
 		</item>
 		<item>
+			<title>Coin Communities keeps its own words on screen, and the Retry button on a failed coin now retries</title>
+			<link>https://three.ws/communities</link>
+			<guid isPermaLink="false">2026-08-17:Coin Communities keeps its own words on screen, and the Retry button on a failed coin now retries</guid>
+			<pubDate>Mon, 17 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A coin page that failed to load offered a Retry button that did nothing: it re-requested the coin the page was already showing, which the loader skipped as already-loaded, so the only escape from a transient outage was a manual reload. Retry now forces the fetch and recovers the page. The page was also arguing with its own translation layer: the browser tab and the failure message are written live by the page, but the translation pass ran afterwards and reverted them, so a coin that could not be reached said it did not exist, and the tab kept a coin's name after you had gone back to browsing. Both now hold what the page wrote and hand it back when the live state is gone. Alongside that: the price figure shows a real loading shimmer until both of its data sources have answered instead of a bare dash, signed-out visitors get a short line explaining the avatar row and a link to sign in rather than a silent unauthorized request, a pasted avatar URL that is not a link now says what a working one looks like, the search and mint fields have proper labels, and every button, chip and card has a visible keyboard focus ring and a press state.</description>
+		</item>
+		<item>
 			<title>Crypto Categories reads correctly in all 84 languages</title>
 			<link>https://three.ws/categories</link>
 			<guid isPermaLink="false">2026-08-17:Crypto Categories reads correctly in all 84 languages</guid>
