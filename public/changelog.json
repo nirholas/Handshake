@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-17T07:34:35.423Z",
+	"generated_at": "2026-08-17T07:37:02.213Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -319,6 +319,17 @@
 			"title": "Smart Money Radar stops shearing coin cards on a phone, and a lost connection no longer masquerades as a coin nobody is buying",
 			"summary": "The /smart-money page was driven end to end in a real browser at 320, 768 and 1440 pixels. On a narrow phone the coin grid insisted on a column wider than the screen, so the right edge of every card was silently cut away by the page: the pedigree score badge and the star that adds a coin to your watchlist were both off-screen, with no sideways scroll to reach them. Cards now fit the screen they are on, and the score and the star are back. The bigger problem was that the page could not tell a coin it had never scored apart from a request that never arrived. If your connection dropped, or the radar was briefly down, every coin on your watchlist was relabelled Not on the radar yet, which reads as a verdict on the coin rather than a problem with the connection, and opening any coin or wallet gave you the same flat Not scored yet with no way to try again. The page now separates the two. A genuine miss keeps its explanation and now says why, and adds a link out to pump.fun or Solscan so the trail does not end there. A connection failure says the radar could not be reached and gives you a Retry button, in the drawer, on the watchlist, and on individual watched coins, and your watchlist is explicitly noted as still saved on your device. A first load that fails outright used to leave the Top wallets tab as an empty void; it now carries the same message and its own retry. A proven wallet whose trades predate the detail the radar keeps used to show a bare No recent coins on record, which looked like a wallet that had stopped trading; it now explains that the coin-level detail has aged out while the win record above still counts every verdict.",
 			"link": "/smart-money",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-17",
+			"type": "update",
+			"title": "Studio stops going quiet when the engine list fails, and a broken preview no longer leaves a wall of broken images",
+			"summary": "The Studio at three.ws/forge-studio was driven end to end in a real browser: both text-to-3D pipelines, all three tabs (Object, Avatar and Lab), a real generation from prompt to finished GLB, and the loading, empty, error and populated states at phone, tablet and desktop widths. The finding that mattered was silent. Studio asks the server which generation engines are live before it draws the Quality and Engine pickers, and if that request failed for any reason, the whole row of controls simply vanished with nothing said. You were left on a page that looked complete but had quietly lost the choice between Draft, Standard and High, and every engine behind it, with no hint that anything had gone wrong or any way to get it back short of a reload. A failed engine list now says so where the pickers used to be, explains that generation still works on the free engine, and offers a Retry that brings the full picker back in place. A server that genuinely has no engines to offer stays quiet as before, because that is not a failure. Second, when a thumbnail in the community showcase could not load, the card started rendering a 3D frame from the model file instead, which is the right answer, but it left the broken image sitting on screen for the whole wait. Those renders are queued one at a time behind a twenty second limit, so a bad network turned the showcase into a grid of broken-image boxes for minutes. The card now falls back to its readable gradient-and-prompt tile the instant the image fails, and the 3D render replaces it when it arrives. The rest is the polish an audit turns up: the Avatar tab carried two competing page headings, so a screen reader heard the page rename itself when you switched tabs; the Lab tab's Download button now tells assistive tech it is disabled and why, instead of just looking dim; the photo and sketch file pickers finally have names; and a freshly generated model now actually previews, where before the viewer, the reveal animation and the game-ready poly counter all failed to read the finished file outside production.",
+			"link": "/forge-studio",
 			"tags": [
 				"fix",
 				"improvement"

@@ -5471,6 +5471,7 @@ curl 'https://three.ws/api/animations/signatures?similar=wave&limit=5'
 ```
 GET /api/play/population
 GET /api/play/population?coin=<mint-or-contract>
+GET /api/play/population?by=coin
 ```
 
 How many people are standing in the `/play` worlds right now. No auth, CORS open, cached 5 seconds at the edge.
@@ -5478,6 +5479,8 @@ How many people are standing in the `/play` worlds right now. No auth, CORS open
 `/play` presence lives in Colyseus rooms on the standalone multiplayer server, not in Postgres, so this handler proxies that server's own `/population` aggregate. That aggregate reads the matchmaker's driver-backed room listing, so the count spans every instance when the fleet is scaled horizontally. Only a count crosses the boundary: no session ids, no display names, no wallets, no positions.
 
 `coin` narrows the count to one community's worlds (a Solana mint or an EVM contract address). Anything that is not a well-formed address is ignored rather than forwarded, and the response reports the filter that was actually applied.
+
+`by=coin` adds `byCoin`, a mint to headcount map covering every live world, so a page listing many communities gets all of their counts from one request instead of one request per card (this is what the `/play` lobby paints on its cards). Keys are re-validated as addresses before they are republished, and worlds with nobody in them are left out. `byCoin` is **absent**, not empty, when the multiplayer server is older than this parameter: an absent map means "unknown" and an empty map means "measured, nobody anywhere", and a caller must not render the first as zeroes.
 
 **Response**
 
@@ -5487,6 +5490,18 @@ How many people are standing in the `/play` worlds right now. No auth, CORS open
 	"coin": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
 	"players": 4,
 	"rooms": 1
+}
+```
+
+With `by=coin`:
+
+```json
+{
+	"ok": true,
+	"coin": null,
+	"players": 7,
+	"rooms": 3,
+	"byCoin": { "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump": 5 }
 }
 ```
 

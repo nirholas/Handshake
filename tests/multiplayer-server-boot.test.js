@@ -195,6 +195,18 @@ describe('multiplayer entry point', () => {
 			// A different coin is a different world, so it must not see this player.
 			const other = await (await fetch(`${base}/population?coin=NotThisCoin111`)).json();
 			expect(other).toMatchObject({ ok: true, rooms: 0, players: 0 });
+
+			// ?by=coin adds the per-coin breakdown the /play lobby paints on its
+			// cards. One poll, every world, still nothing but counts.
+			const grouped = await (await fetch(`${base}/population?by=coin`)).json();
+			expect(grouped).toMatchObject({ ok: true, players: 1 });
+			expect(grouped.byCoin).toEqual({ [COIN]: 1 });
+			expect(Object.keys(grouped).sort()).toEqual(['byCoin', 'coin', 'ok', 'players', 'rooms']);
+
+			// Without the flag the response shape is byte-for-byte what every
+			// existing caller already parses.
+			const plain = await (await fetch(`${base}/population`)).json();
+			expect(Object.keys(plain).sort()).toEqual(['coin', 'ok', 'players', 'rooms']);
 		} finally {
 			await room.leave();
 		}

@@ -21,6 +21,7 @@
 
 import { payForConsumption } from './forge-pay.js';
 import { attachTierPass, getAccess, getTierPass } from '../three-access.js';
+import { resolveDevR2Url } from '../shared/dev-r2-proxy.js';
 
 const resultPanel = document.getElementById('state-result');
 const viewer = document.getElementById('viewer');
@@ -328,7 +329,9 @@ if (resultPanel && viewer && triggerBtn) {
 	async function loadSourceFaceCount(url) {
 		state.sourceFaces = null;
 		try {
-			const res = await fetch(url);
+			// Reading the GLB bytes is a cross-origin fetch, so it needs the dev
+			// proxy path on localhost / Codespaces. No-op in production.
+			const res = await fetch(resolveDevR2Url(url));
 			if (!res.ok) return;
 			const buf = await res.arrayBuffer();
 			const tris = countGlbTriangles(buf);

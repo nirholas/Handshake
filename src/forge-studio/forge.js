@@ -16,6 +16,7 @@ import { initWalletButton, getConnectedWalletAddress } from '../wallet.js';
 import { openSketchCanvas } from './sketch-canvas.js';
 import { mountPromptDictation } from '../voice/prompt-dictation.js';
 import { showToast } from '../ui-helpers.js';
+import { resolveDevR2Url } from '../shared/dev-r2-proxy.js';
 ensureStateKitStyles();
 //
 // Drives /api/forge. Three paths share one polling loop:
@@ -1673,7 +1674,13 @@ function showResult(glbUrl, label, meta, { autoSaved = false } = {}) {
 	// Show the load skeleton over the dark viewport until the GLB paints. The
 	// persistent 'load'/'error' listeners below clear it.
 	els.viewerShell?.classList.add('is-loading');
-	els.viewer.setAttribute('src', glbUrl);
+	// The viewer fetches the GLB cross-origin, so it needs the dev proxy path on
+	// localhost / Codespaces. The free lane returns the finished glb_url in the
+	// POST response, which the dev server's r2-url-rewrite middleware skips (it
+	// only rewrites GET/HEAD bodies), so the raw r2.dev URL arrives here and the
+	// preview dead-ends on CORS. No-op in production. Everything downstream
+	// (download, share, segment, refine) keeps the canonical public URL.
+	els.viewer.setAttribute('src', resolveDevR2Url(glbUrl));
 	els.viewer.setAttribute('alt', `3D model: ${label}`);
 	lastShownGlb = glbUrl;
 	els.resultLabel.textContent = label;

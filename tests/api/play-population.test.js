@@ -145,6 +145,58 @@ describe('GET /api/play/population: the live count', () => {
 	});
 });
 
+describe('GET /api/play/population: the per-coin breakdown', () => {
+	it('asks the upstream for the breakdown and republishes it', async () => {
+		const calls = upstream(jsonReply({ ok: true, players: 5, rooms: 2, byCoin: { [MINT]: 5 } }));
+		const res = await get('/api/play/population?by=coin');
+		expect(new URL(calls[0]).searchParams.get('by')).toBe('coin');
+		expect(res.parsed).toEqual({ ok: true, coin: null, players: 5, rooms: 2, byCoin: { [MINT]: 5 } });
+	});
+
+	it('omits the breakdown entirely when the caller did not ask for it', async () => {
+		const calls = upstream(jsonReply({ ok: true, players: 5, rooms: 2, byCoin: { [MINT]: 5 } }));
+		const res = await get('/api/play/population');
+		expect(new URL(calls[0]).searchParams.has('by')).toBe(false);
+		expect(res.parsed.byCoin).toBeUndefined();
+	});
+
+	it('answers without a breakdown when the upstream is older than the parameter', async () => {
+		// An upstream that has not shipped `?by=coin` yet answers its normal
+		// aggregate. The field is then absent, which the lobby reads as "unknown"
+		// and renders as no per-card counts at all. An upstream that DOES support
+		// it while every world is empty answers `{}` instead, a real measurement of
+		// zero, so the two cases stay distinguishable.
+		upstream(jsonReply({ ok: true, players: 5, rooms: 2 }));
+		const res = await get('/api/play/population?by=coin');
+		expect(res.parsed).toMatchObject({ ok: true, players: 5 });
+		expect(res.parsed.byCoin).toBeUndefined();
+	});
+
+	it('publishes an empty breakdown when the upstream measured zero worlds', async () => {
+		upstream(jsonReply({ ok: true, players: 0, rooms: 0, byCoin: {} }));
+		const res = await get('/api/play/population?by=coin');
+		expect(res.parsed.byCoin).toEqual({});
+	});
+
+	it('re-validates every key in the breakdown before republishing it', async () => {
+		// The keys are whatever clients passed as their `coin` join option, so a
+		// non-address key, a negative count and an empty world are all dropped
+		// rather than forwarded to the browser.
+		upstream(jsonReply({
+			ok: true, players: 4, rooms: 3,
+			byCoin: { [MINT]: 4, '../../etc/passwd': 9, ['A'.repeat(60)]: 2, So11111111111111111111111111111111111111112: 0 },
+		}));
+		const res = await get('/api/play/population?by=coin');
+		expect(res.parsed.byCoin).toEqual({ [MINT]: 4 });
+	});
+
+	it('ignores a breakdown that is not an object', async () => {
+		upstream(jsonReply({ ok: true, players: 1, rooms: 1, byCoin: [['a', 1]] }));
+		const res = await get('/api/play/population?by=coin');
+		expect(res.parsed.byCoin).toBeUndefined();
+	});
+});
+
 describe('GET /api/play/population: degrading without inventing a number', () => {
 	it('answers unavailable, not an error, when no upstream is configured', async () => {
 		envState.MULTIPLAYER_INTERNAL_URL = '';

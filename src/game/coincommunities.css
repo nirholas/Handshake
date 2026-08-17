@@ -528,6 +528,23 @@ html[data-bg="transparent"] #cc-lobby {
 @keyframes cc-id-reveal { from { opacity: 0; transform: translateY(-6px); } }
 @media (prefers-reduced-motion: reduce) { .cc-id-body { animation: none; } }
 .cc-avatar-label { width: 100%; font-weight: 700; font-size: 13px; letter-spacing: 0.02em; text-transform: uppercase; }
+/* On a phone the portrait, the name field and the disclosure cannot share one
+   line: the name row overflowed the viewport by 26px. Let the fields drop under
+   the portrait and give the field and the toggle the full width each. */
+/* Between a phone and a laptop the preset chips and the paste/gallery/upload
+   row are 1px too wide to share a line, which pushed the upload button past the
+   viewport edge. Give the second row its own line before that happens. */
+@media (max-width: 900px) {
+	.cc-id-body .cc-avatar-custom { flex: 1 1 100%; }
+}
+@media (max-width: 620px) {
+	.cc-id-fields { flex: 1 1 100%; min-width: 0; gap: 8px; }
+	.cc-name-row { flex-wrap: wrap; width: 100%; gap: 6px; }
+	.cc-name-label { flex: 1 1 100%; }
+	.cc-name-input { flex: 1 1 100%; max-width: none; }
+	.cc-id-summary { max-width: 100%; }
+	.cc-id-toggle { flex: 1 1 100%; justify-content: center; }
+}
 .cc-avatar-label small { display: block; color: var(--cc-dim); font-weight: 400; font-size: 12px; margin-top: 3px; text-transform: none; letter-spacing: 0; }
 .cc-avatar-presets { display: flex; gap: 8px; flex-wrap: wrap; }
 .cc-avatar-chip {
@@ -853,7 +870,8 @@ html[data-bg="transparent"] #cc-lobby {
 	background: transparent; border: 1px solid var(--cc-edge-soft); border-radius: 999px;
 	transition: color 0.14s ease, border-color 0.14s ease, background 0.14s ease;
 }
-.cc-sort:hover { color: var(--cc-text); border-color: var(--cc-edge); }
+.cc-sort:hover:not(:disabled) { color: var(--cc-text); border-color: var(--cc-edge); }
+.cc-sort:disabled { opacity: 0.4; cursor: not-allowed; }
 .cc-sort:focus-visible { outline: 2px solid var(--cc-edge-hi); outline-offset: 2px; }
 .cc-sort.cc-on { color: var(--cc-ink); background: #fff; border-color: #fff; box-shadow: var(--cc-glow); }
 

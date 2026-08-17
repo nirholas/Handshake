@@ -11,6 +11,8 @@
 // timeout) resolves immediately and the standing viewer is untouched. Honors
 // prefers-reduced-motion by not playing at all.
 
+import { resolveDevR2Url } from '../shared/dev-r2-proxy.js';
+
 const REVEAL_DELAY_MS = 200; // beat before the dissolve starts
 const DISSOLVE_MS = 2100; // wireframe ghost → textured surface
 const MIN_HOLD_MS = 450; // settle time after the dissolve completes
@@ -161,7 +163,7 @@ export async function playForgeReveal({ container, glbUrl, waitFor }) {
 		const loader = new GLTFLoader();
 		loader.setMeshoptDecoder(await getMeshoptDecoder());
 		const gltf = await Promise.race([
-			loader.loadAsync(glbUrl),
+			loader.loadAsync(resolveDevR2Url(glbUrl)),
 			new Promise((resolve) => setTimeout(() => resolve(null), LOAD_TIMEOUT_MS)),
 		]);
 		if (!gltf || cancelled) return null;

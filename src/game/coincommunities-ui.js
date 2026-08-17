@@ -194,7 +194,8 @@ function fmtAge(ts) {
 	const at = Number(ts);
 	if (!at || !isFinite(at) || at > Date.now()) return '';
 	const s = (Date.now() - at) / 1000;
-	if (s < 3600) return `${Math.max(1, Math.floor(s / 60))}m old`;
+	// "min" spelled out: "24m old" next to "20mo old" reads as months at a glance.
+	if (s < 3600) return `${Math.max(1, Math.floor(s / 60))}min old`;
 	if (s < 86400) return `${Math.floor(s / 3600)}h old`;
 	if (s < 86400 * 30) return `${Math.floor(s / 86400)}d old`;
 	return `${Math.floor(s / (86400 * 30))}mo old`;
@@ -480,6 +481,11 @@ export class CommunityUI {
 			onclick: () => this._setSort(s.id),
 			text: s.label,
 		})));
+		// Ranking by headcount needs headcounts. Until a per-coin read lands (the
+		// multiplayer server is unreachable, or it predates the breakdown), the
+		// control that promises that ordering cannot keep the promise, so it stays
+		// disabled and says why rather than silently sorting by something else.
+		this._setPeopleSortAvailable(false);
 		return el('div', { class: 'cc-feed-head' }, [
 			el('div', { class: 'cc-feed-title' }, [
 				el('p', { class: 'cc-section-title', text: 'Live communities' }),
@@ -487,6 +493,16 @@ export class CommunityUI {
 			]),
 			this.sortRow,
 		]);
+	}
+
+	_setPeopleSortAvailable(on) {
+		const chip = this.sortRow?.querySelector('[data-sort="people"]');
+		if (!chip) return;
+		chip.disabled = !on;
+		chip.title = on
+			? SORTS.find((s) => s.id === 'people').hint
+			: 'Live headcounts are unavailable right now';
+		if (!on && this.sort === 'people') this._setSort('trending');
 	}
 
 	_setSort(id) {
@@ -1288,6 +1304,7 @@ export class CommunityUI {
 	}
 
 	_paintPopulation() {
+		this._setPeopleSortAvailable(!!this.popByCoin);
 		if (this.popTotal !== null && this.statPeopleWrap) {
 			this.statPeopleWrap.hidden = false;
 			countUp(this.statPeople, Number(this.statPeople.dataset.v) || 0, this.popTotal, { format: (n) => String(Math.round(n)) });
@@ -1364,6 +1381,7 @@ export class CommunityUI {
 		const extra = this.enriched.get(c.mint);
 		const age = fmtAge(extra?.createdAt);
 		const fresh = !featured && extra?.createdAt > 0 && Date.now() - extra.createdAt < NEW_COIN_MS;
+		const onCurve = !featured && extra !== undefined && extra.graduated === false;
 		// Live headcount, painted here on first render and updated in place by
 		// _paintPopulation on every poll. Hidden while it reads zero: an empty
 		// world is the normal state and "0 people inside" is discouraging noise.
@@ -1406,14 +1424,16 @@ export class CommunityUI {
 					mc ? el('span', { text: mc + ' mcap' }) : null,
 					age ? el('span', { class: 'cc-card-age', text: age }) : null,
 				]),
-				// Signals worth one glance each, and only when they are true of this
-				// coin: a launch inside the last day, a completed bonding curve, and
-				// how much the coin's own board is talking.
-				(fresh || extra?.graduated || extra?.replies)
+				// Signals worth one glance, and only the ones that actually separate this
+				// coin from its neighbours. A completed bonding curve is true of nearly
+				// everything on a market-cap-ranked feed, so a badge for it said nothing
+				// on 28 cards out of 30; the rare, useful state is the inverse, a coin
+				// still on its curve. Replies say how loud the coin's own board is.
+				(fresh || onCurve || extra?.replies)
 					? el('div', { class: 'cc-card-tags' }, [
 						fresh ? el('span', { class: 'cc-tag cc-tag-new', title: 'Launched in the last 24 hours', text: 'NEW' }) : null,
-						extra?.graduated ? el('span', { class: 'cc-tag', title: 'Bonding curve complete, trading on a DEX', text: 'Graduated' }) : null,
-						extra?.replies ? el('span', { class: 'cc-tag cc-tag-quiet', title: `${extra.replies} replies on the coin's pump.fun board`, text: `${fmtCompact(extra.replies)} replies` }) : null,
+						onCurve ? el('span', { class: 'cc-tag', title: 'Still on its pump.fun bonding curve, not graduated to a DEX yet', text: 'On curve' }) : null,
+						extra?.replies ? el('span', { class: 'cc-tag cc-tag-quiet', title: `${extra.replies} replies on this coin’s pump.fun board`, text: `${fmtCompact(extra.replies)} replies` }) : null,
 					])
 					: null,
 				el('div', { class: 'cc-card-cta', text: featured ? 'Enter home town →' : 'Enter community →' }),

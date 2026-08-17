@@ -393,12 +393,15 @@ function buildCard(c) {
 		img.alt = '';
 		img.src = c.preview_image_url;
 		img.onerror = () => {
-			// Plan B: image URL broken → try GLB capture, then gradient
-			if (c.glb_url) {
+			// Drop the broken <img> the moment it fails. GLB capture is queued one
+			// at a time behind a 20s timeout, so leaving it in place parks a row of
+			// broken-image boxes on screen for minutes while Plan B works. The
+			// gradient stands in immediately and the capture upgrades it in place.
+			applyGradientFallback(card, c.prompt);
+			// Plan B: image URL broken → try GLB capture, gradient already stands in
+			if (c.glb_url && captureObserver) {
 				card.dataset.glbUrl = c.glb_url;
-				captureObserver ? captureObserver.observe(card) : applyGradientFallback(card, c.prompt);
-			} else {
-				applyGradientFallback(card, c.prompt);
+				captureObserver.observe(card);
 			}
 		};
 		card.appendChild(img);
