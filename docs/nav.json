@@ -483,6 +483,10 @@
 					"path": "world-lines"
 				},
 				{
+					"label": "Cars in /play (traffic and the drivable fleet)",
+					"path": "play-vehicles"
+				},
+				{
 					"label": "Walk Leaderboard",
 					"path": "walk-leaderboard"
 				},

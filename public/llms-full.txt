@@ -1901,6 +1901,12 @@ URL: https://three.ws/docs/play-forge-in-world
 
 Describe an item in a coin's world, or attach a reference photo, and the free forge lane builds a real 3D model in about half a minute. It is armed for placement and, once placed, appears for everyone connected to that server and persists like any other build.
 
+### Docs · Cars in /play: traffic and the drivable fleet
+
+URL: https://three.ws/docs/play-vehicles
+
+The Trench Car is the default car in every coin world: ambient traffic drives it and it is parked for you to take the wheel. How to drive, how a car is assembled from spec, physics and mesh, how the model is staged, and how to add another.
+
 ### Docs · Trading swarms
 
 URL: https://three.ws/docs/swarms

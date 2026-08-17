@@ -3,6 +3,26 @@
 	"entries": [
 		{
 			"date": "2026-08-17",
+			"title": "Pausing a skill bundle is no longer permanent, and every tooltip fits on a phone",
+			"summary": "The bundle builder at /bundles was audited end to end in a real browser: signing in, picking priced skills, the price panel and its backtest, publishing, the published list, and the loading, empty and error states, at phone, tablet and desktop widths. The worst finding was that Deactivate was a one-way door. It hid the bundle from buyers, which is correct, but it also removed it from the only page that could put it back, so a misclick permanently retired a bundle you had just priced. The button is now called Pause, a paused bundle stays on the page dimmed and clearly marked, and a Reactivate button puts it back on sale. Buyers still never see a paused bundle: the public list is unchanged, and paused ones are returned only to a signed-in owner of that agent. The small question-mark tooltips that explain every number on the page were also cut off at the edge of a phone screen, so four of the seven explanations were partly unreadable at 320 pixels wide; they now shift to stay on screen at any width. The sum of the parts and the suggested price were cramped into a broken-looking two-line squeeze on a narrow screen and now stack cleanly. Finally, a pricing error raised by one agent no longer sits on screen after you switch to another agent, where it read as a verdict on an agent it had never looked at.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/bundles"
+		},
+		{
+			"date": "2026-08-17",
+			"title": "Avatar Studio survives an accessory outage, and tells you when it is putting a hat on",
+			"summary": "The studio at /avatar-studio was audited end to end in a real browser: loading the base body, all six tabs, the colour swatches, the sculpt sliders, the motion library, undo and redo, and the loading, empty and error states, at phone, tablet and desktop widths. The worst finding was that a single failed request for the accessory catalogue took the entire studio down. The hats, glasses and earrings lists come from one file, and if that file did not load, the page replaced everything with a Retry screen, throwing away the 3D avatar it had already finished loading. Colours, sculpting, animation and saving need nothing from that catalogue, so they all now keep working, and only the three accessory tabs show a message explaining what is missing, with a Retry button that reloads just the catalogue. The Save, Reset, Randomise and Undo buttons were also on screen but not yet connected until that same request finished, so pressing them early did nothing at all and the tab strip sat empty; they are live from the first paint now. Putting on a hat downloads and fits a 3D model, which takes a few seconds, and until now the studio gave no sign it was working: the tile click looked ignored, and a hat that failed to download failed in complete silence. Every accessory change now shows what it is doing and says so plainly if it could not finish. Randomise no longer lists an accessory you are not actually wearing when its model fails to load. Pressing Undo then Redo quickly could leave the avatar and the list of what it is wearing disagreeing with each other; each step now settles correctly. Spinners also finally stop for people who have asked their device to reduce motion.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/avatar-studio"
+		},
+		{
+			"date": "2026-08-17",
 			"title": "Blockchain TVL by Chain is readable again, and its numbers can be copied",
 			"summary": "The cross-chain leaderboard at /chains was audited end to end in a real browser: the live DeFiLlama board, the sortable columns, the row links out to each chain's page, and the loading, empty and error states, at phone, tablet and desktop widths. The page had briefly stopped working entirely. Its row-click helpers were declared twice in the same file, which is a syntax error, so the script never ran and the table sat on its grey loading bars forever. That is fixed and covered by a browser test so it cannot come back. Two real defects came out of the same pass. Every row navigated on any click, so dragging across a cell to copy a chain's TVL threw the selection away and opened that chain's page instead; a figure or a name can now be selected and copied, while a plain click still opens the chain. And the page wrapped the site navigation in a second page banner, leaving screen readers with two overlapping banner landmarks to pick between. The share bar beside each chain also stopped reading its percentage aloud a second time, since the dominance column right next to it already says it.",
 			"tags": [
@@ -24072,6 +24092,17 @@
 				"improvement"
 			],
 			"link": "/avatar-wallet-chat"
+		},
+		{
+			"date": "2026-08-17",
+			"title": "There is a real car in every coin world now, and you can get in and drive it",
+			"summary": "The cars in a coin world used to be boxes: a box on wheels driving the ring road, and a slightly different box parked for you to drive. Both are now the Trench Car, a real community model published to the three.ws avatar gallery, so the car that drives past you on the road is the same car parked at the plaza that you can get into. Walk within a few metres of one, press F (or tap the car on a phone) and drive it with WASD and the on-screen pedals, with a working speedometer, brake lights and a handbrake. Your driver now actually sits in the seat: every car in the world had been placing its driver standing on the roof, and other players saw them there too, because the seat was measured from the wrong point. Drivers are now seated inside the car in a seated pose for themselves and for everyone else in the world. Parked cars had also been sitting with their wheels a few centimetres into the asphalt, and snapping up the moment someone took the wheel; they now rest on their wheels whether or not anyone is driving. The model is optimized on the way in, from 16 MB down to 1.4 MB with a third of the triangles, one download shared by every car on screen, and if it ever fails to load the old box still drives so the delivery jobs keep working.",
+			"tags": [
+				"feature",
+				"improvement",
+				"fix"
+			],
+			"link": "/play"
 		}
 	]
 }

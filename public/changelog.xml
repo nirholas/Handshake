@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · Cars in /play: traffic and the drivable fleet</title>
+			<link>https://three.ws/docs/play-vehicles</link>
+			<guid isPermaLink="false">2026-08-17:Docs · Cars in /play: traffic and the drivable fleet</guid>
+			<pubDate>Mon, 17 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The Trench Car is the default car in every coin world: ambient traffic drives it and it is parked for you to take the wheel. How to drive, how a car is assembled from spec, physics and mesh, how the model is staged, and how to add another.</description>
+		</item>
+		<item>
 			<title>A shared ASL letter link now opens on that letter, not on A</title>
 			<link>https://three.ws/asl-alphabet</link>
 			<guid isPermaLink="false">2026-08-17:A shared ASL letter link now opens on that letter, not on A</guid>
@@ -21,6 +29,14 @@
 			<pubDate>Mon, 17 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The studio camera was framing the base body from the shoulders to the knees: the face you were sculpting and the shoes you were picking were both outside the picture, and the only way to see them was to orbit the camera yourself every time the page loaded. The framing is now solved from the lens rather than guessed at, so a full-body shot really does hold the avatar head to toe, arms included, on any window shape, and the half-body and headshot views stay as tight as their names promise. On a 320px phone the top bar had been running past the edge of the screen and taking the Save avatar button with it, so a look built on a phone could not be saved at all; the bar now fits, with the Back and title labels standing down to make room. The tab strip on that same narrow layout had been hiding its labels without putting anything in their place, leaving six blank buttons, and now shows an icon per tab. The Parametric body badge that read 120+ sliders was white text on a white pill and invisible everywhere. A failed save now says the connection could not be reached and that your look is still there, instead of repeating the browser phrase Failed to fetch, and every accessory search box, every tab and the Back link now carry names a screen reader can read. Opening avatar-studio in local development also serves the same page production does, which it previously did not.</description>
+		</item>
+		<item>
+			<title>Avatar Studio survives an accessory outage, and tells you when it is putting a hat on</title>
+			<link>https://three.ws/avatar-studio</link>
+			<guid isPermaLink="false">2026-08-17:Avatar Studio survives an accessory outage, and tells you when it is putting a hat on</guid>
+			<pubDate>Mon, 17 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The studio at /avatar-studio was audited end to end in a real browser: loading the base body, all six tabs, the colour swatches, the sculpt sliders, the motion library, undo and redo, and the loading, empty and error states, at phone, tablet and desktop widths. The worst finding was that a single failed request for the accessory catalogue took the entire studio down. The hats, glasses and earrings lists come from one file, and if that file did not load, the page replaced everything with a Retry screen, throwing away the 3D avatar it had already finished loading. Colours, sculpting, animation and saving need nothing from that catalogue, so they all now keep working, and only the three accessory tabs show a message explaining what is missing, with a Retry button that reloads just the catalogue. The Save, Reset, Randomise and Undo buttons were also on screen but not yet connected until that same request finished, so pressing them early did nothing at all and the tab strip sat empty; they are live from the first paint now. Putting on a hat downloads and fits a 3D model, which takes a few seconds, and until now the studio gave no sign it was working: the tile click looked ignored, and a hat that failed to download failed in complete silence. Every accessory change now shows what it is doing and says so plainly if it could not finish. Randomise no longer lists an accessory you are not actually wearing when its model fails to load. Pressing Undo then Redo quickly could leave the avatar and the list of what it is wearing disagreeing with each other; each step now settles correctly. Spinners also finally stop for people who have asked their device to reduce motion.</description>
 		</item>
 		<item>
 			<title>Blockchain TVL by Chain is readable again, and its numbers can be copied</title>
@@ -39,12 +55,28 @@
 			<description>The sector leaderboard at /categories was audited end to end in a real browser: the table, the search box, the sortable columns, the paging, and the loading, empty, error and rate-limited states all behave, at phone, tablet and desktop widths. One real defect turned up, and it only showed outside English. The page's own summary line and the description search engines and link previews read were translated once against an older wording and had kept a dash where the English now uses a colon, so every non-English visitor saw punctuation the platform does not use, in the headline copy and in the shared-link preview. All 83 translated catalogs are corrected, with the full-width colon that Japanese, Korean and Chinese actually want rather than a Latin one.</description>
 		</item>
 		<item>
+			<title>Pausing a skill bundle is no longer permanent, and every tooltip fits on a phone</title>
+			<link>https://three.ws/bundles</link>
+			<guid isPermaLink="false">2026-08-17:Pausing a skill bundle is no longer permanent, and every tooltip fits on a phone</guid>
+			<pubDate>Mon, 17 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The bundle builder at /bundles was audited end to end in a real browser: signing in, picking priced skills, the price panel and its backtest, publishing, the published list, and the loading, empty and error states, at phone, tablet and desktop widths. The worst finding was that Deactivate was a one-way door. It hid the bundle from buyers, which is correct, but it also removed it from the only page that could put it back, so a misclick permanently retired a bundle you had just priced. The button is now called Pause, a paused bundle stays on the page dimmed and clearly marked, and a Reactivate button puts it back on sale. Buyers still never see a paused bundle: the public list is unchanged, and paused ones are returned only to a signed-in owner of that agent. The small question-mark tooltips that explain every number on the page were also cut off at the edge of a phone screen, so four of the seven explanations were partly unreadable at 320 pixels wide; they now shift to stay on screen at any width. The sum of the parts and the suggested price were cramped into a broken-looking two-line squeeze on a narrow screen and now stack cleanly. Finally, a pricing error raised by one agent no longer sits on screen after you switch to another agent, where it read as a verdict on an agent it had never looked at.</description>
+		</item>
+		<item>
 			<title>The viewer's backdrop picker stops vanishing while you read it, and sharing no longer posts &quot;Meet Agent&quot;</title>
 			<link>https://three.ws/app</link>
 			<guid isPermaLink="false">2026-08-17:The viewer's backdrop picker stops vanishing while you read it, and sharing no longer posts &quot;Meet Agent&quot;</guid>
 			<pubDate>Mon, 17 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Five fixes to the 3D model viewer at /app. Opening the Backdrop picker and taking a few seconds to read the six choices used to make the picker fade out from under the cursor: the viewer hides its controls after five seconds of stillness, and the picker was not on the list of surfaces that keep them awake, so an open picker went invisible and unclickable while still counting as open. It now stays put until you choose a backdrop or close it, and the controls resume fading once it is shut. Typing in the animation search while the clips were still loading stacked a second, contradictory message under the first, so the panel read &quot;Loading clips&quot; and &quot;No clips matching&quot; at the same time, and clearing the box left behind the nonsense line &quot;No clips matching&quot; with nothing in the quotes; the search now stays quiet until there are clips to search. Sharing the viewer to X, Farcaster or Telegram published &quot;Meet Agent&quot;, an internal placeholder name, for anyone who had not loaded an agent of their own, and now uses the generic line instead. The page also shipped a sign-in panel and a welcome card that its own stylesheet blanked unconditionally, four links nobody could ever reach, and the preview card shown when the page is shared described the platform instead of the viewer. The avatar gallery behind the Avatar button is now announced to screen readers as a named dialog.</description>
+		</item>
+		<item>
+			<title>There is a real car in every coin world now, and you can get in and drive it</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-08-17:There is a real car in every coin world now, and you can get in and drive it</guid>
+			<pubDate>Mon, 17 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The cars in a coin world used to be boxes: a box on wheels driving the ring road, and a slightly different box parked for you to drive. Both are now the Trench Car, a real community model published to the three.ws avatar gallery, so the car that drives past you on the road is the same car parked at the plaza that you can get into. Walk within a few metres of one, press F (or tap the car on a phone) and drive it with WASD and the on-screen pedals, with a working speedometer, brake lights and a handbrake. Your driver now actually sits in the seat: every car in the world had been placing its driver standing on the roof, and other players saw them there too, because the seat was measured from the wrong point. Drivers are now seated inside the car in a seated pose for themselves and for everyone else in the world. Parked cars had also been sitting with their wheels a few centimetres into the asphalt, and snapping up the moment someone took the wheel; they now rest on their wheels whether or not anyone is driving. The model is optimized on the way in, from 16 MB down to 1.4 MB with a third of the triangles, one download shared by every car on screen, and if it ever fails to load the old box still drives so the delivery jobs keep working.</description>
 		</item>
 		<item>
 			<title>Wallet Intelligence stops reporting win rates like 570% and 9790%</title>
