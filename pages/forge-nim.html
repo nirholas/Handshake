@@ -7,9 +7,9 @@
 		<title data-i18n="forge_nim.meta_title">Forge · NIM Self-Host · Image → 3D · three.ws</title>
 		<meta
 			name="description"
-			content="Drive a self-hosted TRELLIS NIM (nvcr.io/nim/microsoft/trellis) directly. Drop a photo, hit /v1/infer, and get the GLB back synchronously as base64 — rendered live, downloadable."
+			content="Drive a self-hosted TRELLIS NIM (nvcr.io/nim/microsoft/trellis) directly. Drop a photo, hit /v1/infer, and get the textured GLB back synchronously as base64: rendered live and downloadable."
 		 data-i18n-attr="content:forge_nim.meta_description"/>
-		<meta property="og:title" content="Forge — Self-Hosted NIM · Image → 3D · three.ws"  data-i18n-attr="content:forge_nim.meta_og_title"/>
+		<meta property="og:title" content="Forge · Self-Hosted NIM · Image to 3D · three.ws"  data-i18n-attr="content:forge_nim.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="A forge-styled demo for a self-hosted TRELLIS NIM. Real photo in, synchronous GLB out of /v1/infer. No async poll, no mocks."
@@ -47,6 +47,88 @@
 				margin: 0;
 				padding: var(--space-md) clamp(var(--space-md), 4vw, var(--space-2xl)) var(--space-2xl);
 			}
+			/* Page header ------------------------------------------------- */
+			.forge-head {
+				display: flex;
+				align-items: flex-start;
+				justify-content: space-between;
+				gap: var(--space-md);
+				flex-wrap: wrap;
+				margin-bottom: var(--space-lg);
+			}
+			.forge-head h1 {
+				margin: 0 0 0.35rem;
+				font-family: var(--font-display);
+				font-size: clamp(1.4rem, 3.2vw, 2rem);
+				line-height: 1.15;
+				color: var(--ink);
+			}
+			.forge-head .forge-sub {
+				margin: 0;
+				max-width: 62ch;
+				font-size: var(--text-sm);
+				line-height: var(--leading-normal);
+				color: var(--ink-dim);
+			}
+			.nim-status {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.45rem;
+				flex-shrink: 0;
+				border: 1px solid var(--stroke);
+				border-radius: 999px;
+				padding: 0.3rem 0.75rem;
+				background: var(--surface-1);
+				font-family: var(--font-mono);
+				font-size: var(--text-2xs, 0.66rem);
+				letter-spacing: 0.05em;
+				text-transform: uppercase;
+				color: var(--ink-dim);
+			}
+			.nim-status .dot {
+				width: 7px;
+				height: 7px;
+				border-radius: 50%;
+				background: var(--ink-dim);
+				flex-shrink: 0;
+			}
+			.nim-status[data-state='checking'] .dot {
+				animation: nim-pulse 1.1s ease-in-out infinite;
+			}
+			.nim-status[data-state='live'] {
+				color: #76b900;
+				border-color: rgba(118, 185, 0, 0.4);
+			}
+			.nim-status[data-state='live'] .dot {
+				background: #76b900;
+				box-shadow: 0 0 0 3px rgba(118, 185, 0, 0.18);
+			}
+			.nim-status[data-state='down'],
+			.nim-status[data-state='off'] {
+				color: var(--warning, #e0a93e);
+				border-color: rgba(224, 169, 62, 0.4);
+			}
+			.nim-status[data-state='down'] .dot,
+			.nim-status[data-state='off'] .dot {
+				background: var(--warning, #e0a93e);
+			}
+			@keyframes nim-pulse {
+				0%,
+				100% {
+					opacity: 1;
+				}
+				50% {
+					opacity: 0.25;
+				}
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.nim-status[data-state='checking'] .dot,
+				.loader-ring,
+				.spinner {
+					animation: none;
+				}
+			}
+
 			/* Workspace --------------------------------------------------- */
 			.forge-workspace {
 				display: grid;
@@ -524,17 +606,67 @@
 				color: var(--ink);
 				border-color: var(--stroke-strong);
 			}
+
+			/* Unconfigured state ------------------------------------------ */
+			.state-actions {
+				display: flex;
+				gap: 0.5rem;
+				flex-wrap: wrap;
+				justify-content: center;
+				margin-top: 0.3rem;
+			}
+			.state-links {
+				display: flex;
+				gap: 0.9rem;
+				flex-wrap: wrap;
+				justify-content: center;
+				font-size: var(--text-xs);
+			}
+			.state-links a {
+				color: var(--ink-dim);
+				text-decoration: underline;
+				text-underline-offset: 3px;
+			}
+			.state-links a:hover,
+			.state-links a:focus-visible {
+				color: var(--ink);
+			}
+			.state-inner code {
+				font-family: var(--font-mono);
+				font-size: 0.92em;
+				color: var(--ink);
+			}
+			/* Every focusable control on this page gets the same visible ring. */
+			.forge-page :is(button, a, input, textarea, summary, [tabindex]):focus-visible {
+				outline: 2px solid #76b900;
+				outline-offset: 2px;
+				border-radius: var(--radius-sm);
+			}
 		</style>
 	
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:image:alt" content="Forge · NIM — Self-Hosted Image to 3D — three.ws">
+	<meta property="og:image:alt" content="Forge · NIM: Self-Hosted Image to 3D · three.ws">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Forge · NIM - Self-Hosted Image to 3D","description":"Drive a self-hosted TRELLIS NIM (nvcr.io/nim/microsoft/trellis) directly: drop a photo, hit /v1/infer, and get the textured GLB back synchronously as base64 - rendered live and downloadable.","url":"https://three.ws/forge-nim","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=build&t=Forge+%C2%B7+NIM+-+Self-Hosted+Image+to+3D&d=Drive+a+self-hosted+TRELLIS+NIM+%28nvcr.io%2Fnim%2Fmicrosoft%2Ftrellis%29+directly%3A+drop+a+photo%2C+hit+%2Fv1%2Finfer%2C+and+get+the+textured+GLB+back+synchronously+as+base64+-+r&p=%2Fforge-nim"}]}</script>
 </head>
 	<body class="forge-page">
 		<div id="nav-container"></div>
 
 		<main class="forge-main">
+			<header class="forge-head">
+				<div>
+					<h1 data-i18n="forge_nim.h1">Self-hosted TRELLIS NIM</h1>
+					<p class="forge-sub" data-i18n="forge_nim.subtitle">
+						Drop a photo, POST it once to <code>/v1/infer</code>, and a textured GLB comes back synchronously as
+						base64: rendered live here, downloadable, AR-ready. No async poll, no storage round trip.
+					</p>
+				</div>
+				<div class="nim-status" id="nim-status" data-state="checking" role="status" aria-live="polite">
+					<span class="dot" aria-hidden="true"></span>
+					<span id="nim-status-text" data-i18n="forge_nim.status_checking">Checking NIM</span>
+				</div>
+			</header>
+
 			<div class="forge-workspace">
 				<!-- Composer rail -->
 				<div class="forge-rail">
@@ -645,7 +777,33 @@
 										<path d="m2 12 10 5 10-5" />
 									</svg>
 									<h3 data-i18n="forge_nim.drop_a_photo_to_begin">Drop a photo to begin</h3>
-									<p data-i18n="forge_nim.one_clear_subject_plain_background_the_self">One clear subject, plain background. The self-hosted NIM reconstructs a textured GLB in a single hop — then orbit, AR, or download it here.</p>
+									<p data-i18n="forge_nim.one_clear_subject_plain_background_the_self">One clear subject, plain background. The self-hosted NIM reconstructs a textured GLB in a single hop, then orbit, AR, or download it here.</p>
+								</div>
+							</div>
+
+							<!-- No endpoint wired -->
+							<div class="stage-state" id="state-unconfigured">
+								<div class="state-inner">
+									<svg class="state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+										<rect x="2" y="3" width="20" height="7" rx="2" />
+										<rect x="2" y="14" width="20" height="7" rx="2" />
+										<line x1="6" y1="6.5" x2="6.01" y2="6.5" />
+										<line x1="6" y1="17.5" x2="6.01" y2="17.5" />
+									</svg>
+									<h3 data-i18n="forge_nim.unconfigured_title">Point this at your NIM</h3>
+									<p id="unconfigured-msg" data-i18n="forge_nim.unconfigured_body">
+										This page drives a TRELLIS NIM you host yourself, and no endpoint is wired to this
+										deployment. Paste the base URL of your own <code>nvcr.io/nim/microsoft/trellis</code>
+										container to reconstruct right here, or set <code>NIM_TRELLIS_URL</code> on the deployment
+										to wire it for everyone.
+									</p>
+									<div class="state-actions">
+										<button type="button" class="btn btn-ghost" id="set-endpoint" data-i18n="forge_nim.set_endpoint">Set the endpoint</button>
+									</div>
+									<div class="state-links">
+										<a href="/forge" data-i18n="forge_nim.link_hosted_forge">Use the hosted forge instead</a>
+										<a href="/docs/nvidia-models" data-i18n="forge_nim.link_nvidia_docs">NVIDIA model docs</a>
+									</div>
 								</div>
 							</div>
 
@@ -678,7 +836,7 @@
 						<div class="result-bar is-hidden" id="result-bar">
 							<div class="meta" id="result-meta"></div>
 							<span class="spacer"></span>
-							<a class="btn btn-ghost" id="download" download="trellis-nim.glb" style="font-size: var(--text-sm); padding: 0.45rem 0.9rem" data-i18n="forge_nim.download_glb">Download GLB</a>
+							<a class="btn btn-ghost" id="download" download="trellis-nim.glb" hidden style="font-size: var(--text-sm); padding: 0.45rem 0.9rem" data-i18n="forge_nim.download_glb">Download GLB</a>
 						</div>
 					</div>
 
@@ -716,6 +874,9 @@
 				stateIdle: $('state-idle'),
 				stateLoading: $('state-loading'),
 				stateError: $('state-error'),
+				stateUnconfigured: $('state-unconfigured'),
+				setEndpoint: $('set-endpoint'),
+				advanced: document.querySelector('details.advanced'),
 				errorTitle: $('error-title'),
 				errorMsg: $('error-msg'),
 				errorRetry: $('error-retry'),
@@ -736,28 +897,62 @@
 				abort: null,
 				elapsedTimer: null,
 				stepTimer: null,
+				// hasEndpoint gates the whole page: with no NIM wired to the deployment and
+				// no override typed, every POST is a guaranteed 503, so the composer stays
+				// disabled and the stage explains how to point it at a NIM instead.
+				hasEndpoint: false,
+				healthSeq: 0,
 			};
 
 			// ── Health ────────────────────────────────────────────────────
-			async function checkHealth() {
+			// Ask the API whether a NIM is wired (NIM_TRELLIS_URL) or, when the operator
+			// typed one, whether THAT box answers /v1/health/ready. Late replies from a
+			// superseded check are dropped so a slow probe can't overwrite a newer verdict.
+			async function checkHealth(overrideUrl) {
+				const seq = ++state.healthSeq;
+				const override = (overrideUrl || '').trim();
+				setStatus('checking', override ? 'Probing endpoint' : 'Checking NIM');
+				let d;
 				try {
-					const r = await fetch('/api/forge-nim?action=health', { headers: { accept: 'application/json' } });
-					const d = await r.json();
-					if (!d.configured) {
-						setStatus('off', '');
-					} else if (d.reachable) {
-						setStatus('live', 'NIM ready');
-					} else {
-						setStatus('down', 'NIM unreachable');
-					}
+					const qs = override ? `&baseUrl=${encodeURIComponent(override)}` : '';
+					const r = await fetch(`/api/forge-nim?action=health${qs}`, { headers: { accept: 'application/json' } });
+					d = await r.json();
 				} catch {
-					setStatus('down', 'status unavailable');
+					if (seq !== state.healthSeq) return;
+					// The health probe itself failed to answer. An override is still usable:
+					// only the deployment default is unknown, so do not lock the composer.
+					state.hasEndpoint = Boolean(override);
+					setStatus('down', 'Status unavailable');
+					applyEndpointState();
+					return;
 				}
+				if (seq !== state.healthSeq) return;
+
+				state.hasEndpoint = Boolean(override) || Boolean(d.configured);
+				if (!d.configured && !override) {
+					setStatus('off', 'No NIM wired');
+				} else if (d.reachable) {
+					setStatus('live', override ? 'Endpoint ready' : 'NIM ready');
+				} else {
+					setStatus('down', override ? 'Endpoint unreachable' : 'NIM unreachable');
+				}
+				applyEndpointState();
 			}
+
 			function setStatus(s, text) {
-				if (!els.status) return;
 				els.status.dataset.state = s;
 				els.statusText.textContent = text;
+				// The pill is live copy from here on; stop i18n from restoring the boot label.
+				els.statusText.removeAttribute('data-i18n');
+			}
+
+			// Reflect endpoint availability in the composer and the stage. Only run while
+			// the stage is idle so it never stomps a result, an in-flight run, or an error.
+			function applyEndpointState() {
+				updateGenerateEnabled();
+				if (state.stage === 'idle' || state.stage === 'unconfigured') {
+					showState(state.hasEndpoint ? 'idle' : 'unconfigured');
+				}
 			}
 
 			// ── Mode switch ───────────────────────────────────────────────
@@ -866,9 +1061,11 @@
 
 			// ── Stage states ──────────────────────────────────────────────
 			function showState(name) {
+				state.stage = name;
 				els.stateIdle.classList.toggle('show', name === 'idle');
 				els.stateLoading.classList.toggle('show', name === 'loading');
 				els.stateError.classList.toggle('show', name === 'error');
+				els.stateUnconfigured.classList.toggle('show', name === 'unconfigured');
 				els.viewer.style.display = name === 'result' ? 'block' : 'none';
 				if (name !== 'result') els.resultBar.classList.add('is-hidden');
 			}

@@ -41,6 +41,36 @@ poll would have, so an abandoned job still lands in the library. Design notes:
 - A provider 404 (`gcp_task_missing`) is terminal here, so a job whose worker
   record is genuinely gone resolves instead of being retried forever.
 
+## Plan quotas are checked twice, on purpose
+
+A reconstruction only meets the caller's plan quota at the very end, inside
+`createAvatar` → `enforceQuotas`. That is roughly ninety seconds of GPU time
+after the button was pressed (plus a Flux reference image on the text→avatar
+lane), and a refusal there used to leave the job at `done` with no
+`resultAvatarId`: a state no recovery cron looks at (they filter on
+`queued`/`running`), which re-ran the same doomed materialization on every poll
+and reported the generic engine-fault copy to the browser. The user was told the
+engine had a problem, and every retry burned the same spend to land in the same
+place.
+
+Two checks now bracket the job:
+
+1. **Pre-flight, at submit.** `POST /api/avatars/reconstruct` calls
+   `assertAvatarSlotAvailable(userId)` ([`api/_lib/avatars.js`](../api/_lib/avatars.js))
+   before it resolves a provider or generates a reference image. A full library
+   is refused in milliseconds with `402 plan_limit` and an actionable
+   `error_description`. This is the check that fires in practice.
+2. **At materialization, for the race.** If another avatar lands while the mesh
+   is generating, the finalize stage still throws. `failJobOnPlanLimit` then
+   ends the job as `failed` with `error_kind = 'input'`, so
+   `/api/avatars/regenerate-status` relays the plan copy verbatim (see
+   [REGENERATE.md](../api/avatars/REGENERATE.md)) instead of masking it as an
+   engine fault.
+
+Only the per-plan avatar count and the total-bytes ceiling can be pre-flighted:
+per-file size is unknowable until the mesh exists, so `plan_limit_size` remains a
+materialization-time refusal.
+
 ## How it works
 
 The avatar is a fixed-topology Wolf3D/RPM template that ships **pre-rigged** with

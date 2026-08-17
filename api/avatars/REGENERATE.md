@@ -52,6 +52,19 @@ Initiate an avatar regeneration job.
     ```
 - **429 rate_limited** — user has exceeded upload quota
 
+`POST /api/avatars/reconstruct` (the selfie and text→avatar lane) additionally
+pre-flights the caller's plan quota before it spends any GPU time, and answers a
+full library with:
+
+- **402 plan_limit**, the avatar count or storage ceiling for the plan is
+  already reached, so the job would have nowhere to land
+    ```json
+    {
+    	"error": "plan_limit",
+    	"error_description": "Your avatar library is full on this plan. Delete an avatar or upgrade to build another."
+    }
+    ```
+
 ### `GET /api/avatars/regenerate-status?jobId=<id>`
 
 Poll the status of a regeneration job.
@@ -68,9 +81,11 @@ Poll the status of a regeneration job.
 {
 	"ok": true,
 	"jobId": "string",
-	"status": "queued|running|done|failed",
+	"status": "queued|running|rigging|done|failed",
 	"resultAvatarId": "avatar-uuid",
-	"error": "optional error message"
+	"resultGlbUrl": "https://…/model.glb",
+	"error": "optional error message",
+	"errorKind": "input"
 }
 ```
 
@@ -78,8 +93,28 @@ Poll the status of a regeneration job.
 
 - `queued` — job waiting for processing
 - `running` — actively processing
+- `rigging`, the mesh landed bare and a child auto-rig job is running
 - `done` — completed successfully
 - `failed` — failed (check `error` field)
+
+**`error` and `errorKind`:**
+
+`error` is never the raw provider or job string: that can name a vendor, a task
+id, or an upstream status, so it is collapsed into neutral copy before it leaves
+the API. Two cases are relayed verbatim instead, and both are marked
+`errorKind: "input"`:
+
+- a worker rejection the worker itself classified as caller-facing ("no face
+  detected in any of the provided photos");
+- a plan-quota refusal at materialization, telling the caller to delete an avatar
+  or upgrade.
+
+`errorKind` is absent on every other error. Clients should print an
+`errorKind: "input"` message as-is and only apply their own friendlier wording
+when it is absent, the `/create/selfie` poll loop does exactly this
+([`src/selfie-pipeline.js`](../../src/selfie-pipeline.js)), because rewriting an
+exact reason with a keyword guess sends the user off to retake a photo that was
+never the problem.
 
 ## Provider Plug Shape
 
