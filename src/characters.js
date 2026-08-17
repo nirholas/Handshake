@@ -9,7 +9,10 @@ import { walletChipHTML, wireWalletChips } from './shared/agent-wallet-chip.js';
 import './ui-juice.css';
 import { enterStagger } from './ui-juice.js';
 
-let state = { cursor: null, loading: false, sort: 'new', q: '' };
+// `gen` is the request generation: every fetch claims one, and a response whose
+// generation is no longer current is dropped so a slow reply cannot paint over a
+// newer one. `appending` guards only Load more against a double-click.
+let state = { cursor: null, sort: 'new', q: '', gen: 0, appending: false };
 
 function formatNum(n) {
 	if (!n) return '0';
