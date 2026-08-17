@@ -3,6 +3,26 @@
 	"entries": [
 		{
 			"date": "2026-08-17",
+			"title": "The Pole Club leaderboard now ranks the dancers who are actually on the poles",
+			"summary": "The club's leaderboard was reading names out of the payout registry instead of off the stage, so it listed four dancers under names matching none of the three at the poles, every one of them sitting at zero. It now names each dancer exactly as her pole card does, drops entries for dancers who are not in tonight's lineup and have never been tipped, and says what a quiet board actually means: the 24h and 1h views tell you the club has been quiet rather than claiming nobody has ever tipped, which was never true while the all-time board was full. Keyboard and screen-reader visitors get the rest of the pass: the page carries one real heading instead of five competing ones, Skip to stage now lands you on the stage, and the controls belonging to the walk-in (the agent picker, the Enter the club prompt) no longer sit invisibly in the tab order once you are inside the room.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/club"
+		},
+		{
+			"date": "2026-08-17",
+			"title": "The security agent in the world no longer opens its scanner in your face",
+			"summary": "zauth, the security agent standing in the town plaza, used to throw its RepoScan panel over the screen the moment you walked within a few metres of it, interrupting whatever you were doing and hiding the world behind a modal you never asked for. Walking up now only gets you the agent's line and the usual E prompt above its head. The scanner opens when you choose to open it: press E, click the agent, or click its nameplate. Nothing else changed about the scan itself, and the price is still fetched live from zauth in the background as you approach, so the panel shows the real cost the instant it opens instead of a loading shimmer.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-08-17",
 			"title": "Coin Clash stops claiming it is connecting when it has gone offline",
 			"summary": "The live indicator at the top of Coin Clash sat on a pulsing amber \"connecting\" forever, even once the page had established that the battle service was offline and had stopped trying to reach it. The cause was the page's own translation pass: the line of copy holding the indicator is translatable, and applying it rewrote that whole line back to the wording it shipped with, wiping out the status the page had just worked out. The indicator now survives a translation pass, so it reads offline when the arena is offline and live when battles are running. The same fault was quietly affecting the leaderboard, labor market and signals pages, and is fixed for all four. Two more repairs on Coin Clash: when the arena cannot be reached at all, the error card now explains that in words you can act on and offers Try again, instead of showing the browser's raw \"Failed to fetch\"; and on a narrow phone the Arena, War Records and Communities tabs wrap onto a second row rather than running off the right edge, where the Communities tab was cut in half and unreachable.",
 			"tags": [
