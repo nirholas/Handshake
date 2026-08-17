@@ -35,8 +35,14 @@ This directory is covered by [LICENSE](LICENSE) (proprietary, copyright 2026 nir
 ```sh
 cd chat
 npm ci            # or: node scripts/ensure-deps.mjs
-npm run dev       # http://localhost:5173
+npm run dev       # http://localhost:5174
 ```
+
+The port is pinned to 5174 (`strictPort`) because the repo-root dev server proxies
+`/chat` there. You do not have to run this app at all to see `/chat` locally: the root
+`npm run dev` serves the last `npm run build:chat` output out of `public/chat` whenever
+5174 is down, which is the same artifact production serves. Run this app when you want
+hot reload while editing `chat/src`.
 
 The dev server ([vite.config.js](vite.config.js)) does three things for you:
 

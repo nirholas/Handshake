@@ -55,6 +55,11 @@ export default defineConfig(function () {
 			emptyOutDir: true,
 		},
 		server: {
+			// Pinned, because the root dev server proxies /chat to exactly this
+			// port. On Vite's default (5173) the proxy could never reach this app,
+			// and a second Vite instance would silently take the next free port.
+			port: 5174,
+			strictPort: true,
 			fs: {
 				// The chat app reuses shared wallet modules that live in the main
 				// repo's src/ (one repo, one wallet truth) — allow Vite to serve them.

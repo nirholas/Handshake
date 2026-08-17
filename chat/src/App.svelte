@@ -954,14 +954,27 @@
 			}
 		};
 
+		// Retry-After is a raw second count that ranges from a few seconds to the
+		// free tier's whole daily window (~22h). Printing it as "79445s" told the
+		// reader nothing, so say it in units people use, and once waiting stops
+		// being a plan, name the way out instead.
+		const retryAdvice = (retryAfter) => {
+			const seconds = Number(retryAfter);
+			if (!Number.isFinite(seconds) || seconds <= 0) return 'Please wait a moment and try again.';
+			if (seconds < 90) return `Try again in ${Math.ceil(seconds)}s.`;
+			const minutes = Math.round(seconds / 60);
+			if (minutes < 60) return `Try again in about ${minutes} minutes.`;
+			const hours = Math.round(seconds / 3600);
+			return `The free allowance resets in about ${hours} ${hours === 1 ? 'hour' : 'hours'}. To keep going now, open Settings and add your own provider key, or pick a model you hold a key for.`;
+		};
+
 		const onabort = (err) => {
 			if (err && typeof err === 'object') {
 				if (err.code === 'payment_required') {
 					const url = err.upgradeUrl || '/pricing';
 					convo.messages[i].error = `Out of credits. [Upgrade your plan](${url}) to keep chatting.`;
 				} else if (err.code === 'rate_limited') {
-					const hint = err.retryAfter ? ` Try again in ${err.retryAfter}s.` : ' Please wait a moment and try again.';
-					convo.messages[i].error = `The built-in model is rate-limited.${hint}`;
+					convo.messages[i].error = `The built-in model is rate-limited. ${retryAdvice(err.retryAfter)}`;
 				} else if (err.code === 'network') {
 					convo.messages[i].error =
 						'Could not reach the model. The request never left this device, so nothing was sent. Check your connection, then hover this reply and press the refresh button to try again.';
