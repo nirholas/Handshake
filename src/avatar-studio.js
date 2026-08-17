@@ -76,6 +76,10 @@ let accessoryManager = null;
 let idle = null;
 let presets = [];
 let presetsById = new Map();
+// Lifecycle of the accessory catalog, read by the three accessory tabs so each
+// renders its own loading / error / populated state instead of a bare "none".
+let presetsState = 'loading'; // 'loading' | 'ready' | 'error'
+let presetsError = '';
 // Canonical bone → live node for the mounted rig, resolved once at boot and
 // reused by every proportion apply so the skeleton is never re-walked mid-drag.
 let boneNodes = new Map();
@@ -242,6 +246,14 @@ const EYE_OFF =
 
 init().catch((err) => {
 	log.error('[avatar-studio] init', err);
+	// Only tear the shell down when there is nothing usable behind it. Once the
+	// avatar has mounted, wiping the shell would destroy a working 3D stage (and
+	// leave its render loop ticking on a detached container) over a failure the
+	// user could otherwise ignore, so that case reports into the status bar.
+	if (scene?.root) {
+		setStatus('err', `Something went wrong: ${err?.message || 'Unknown error'}. Reload to start clean.`);
+		return;
+	}
 	renderStageError($('as-shell'), 'Avatar Studio couldn’t load. Check your connection and try again.');
 });
 
@@ -302,16 +314,23 @@ async function init() {
 
 	const scenePromise = bootScene(glbUrl, editAvatar);
 
-	presets = await fetchPresets();
-	presetsById = new Map(presets.map((p) => [p.id, p]));
-
+	// Paint and wire the whole rail before anything is fetched. The header
+	// buttons and the tab bar ship in the initial HTML, so gating them on a
+	// network round trip left real controls on screen that silently did
+	// nothing (and an empty tab bar) for the length of that request.
 	renderTabs();
 	renderChips();
 	renderActivePanel();
 	bindHeader();
 	bindKeyboard();
 
+	// The accessory catalog powers three of six tabs. A catalog outage degrades
+	// those tabs to a retryable error; it must not take down colors, sculpt,
+	// animate, or save, all of which need nothing from it.
+	const presetsPromise = loadPresets();
+
 	await scenePromise;
+	await presetsPromise;
 	if (scene?.root) {
 		applyAllColors();
 		applyAllLayers();
@@ -503,10 +522,6 @@ function updateDirtyState() {
 		titleEl.textContent = isDirty ? `${base} ·` : base;
 	}
 
-	const saveBtn = $('as-save');
-	if (saveBtn && !saveBtn.disabled) {
-		// keep save always enabled — just mark with dirty dot
-	}
 }
 
 // ── Randomise ────────────────────────────────────────────────────────
@@ -717,7 +732,39 @@ async function playEmote(name) {
 async function fetchPresets() {
 	const r = await fetch('/accessories/presets.json');
 	if (!r.ok) throw new Error(`Could not load presets (${r.status})`);
-	return r.json();
+	const list = await r.json();
+	if (!Array.isArray(list)) throw new Error('Accessory catalog is malformed.');
+	return list;
+}
+
+/**
+ * Load the accessory catalog into module state without ever throwing. The three
+ * accessory tabs read `presetsState` to choose between their loading, error and
+ * populated renders; every other surface keeps working regardless of outcome.
+ */
+async function loadPresets() {
+	presetsState = 'loading';
+	if (TABS.find((t) => t.id === activeTab)?.kinds.length) renderActivePanel();
+	try {
+		presets = await fetchPresets();
+		presetsById = new Map(presets.map((p) => [p.id, p]));
+		presetsState = 'ready';
+		presetsError = '';
+	} catch (err) {
+		log.warn('[avatar-studio] accessory catalog unavailable:', err?.message);
+		presets = [];
+		presetsById = new Map();
+		presetsState = 'error';
+		presetsError = err?.message || 'Unknown error';
+	}
+	renderChips();
+	renderActivePanel();
+}
+
+/** Retry the catalog after a failure, from the error state's Retry button. */
+async function retryPresets() {
+	if (presetsState === 'loading') return;
+	await loadPresets();
 }
 
 // ── Rendering ────────────────────────────────────────────────────────
@@ -809,6 +856,28 @@ function renderActivePanel() {
 
 	if (tab.animate) {
 		renderAnimatePanel(panel);
+		return;
+	}
+
+	// The catalog is a separate fetch from the model, so these tabs own their
+	// own loading and failure renders rather than inheriting the stage's.
+	if (presetsState === 'loading') {
+		panel.innerHTML = `
+			<div class="as-animate-intro">Loading ${esc(tab.label.toLowerCase())}…</div>
+			<div class="as-grid">${'<div class="as-tile as-skeleton" aria-hidden="true"></div>'.repeat(6)}</div>`;
+		return;
+	}
+	if (presetsState === 'error') {
+		panel.innerHTML =
+			`<div class="as-error" role="alert" style="padding:48px 16px;">` +
+			`<p>We couldn’t load the ${esc(tab.label.toLowerCase())} catalog.<br />` +
+			`<span style="font-size:12px;">${esc(presetsError)}</span></p>` +
+			`<div class="as-error-actions">` +
+			`<button type="button" id="as-presets-retry">Retry</button>` +
+			`</div>` +
+			`<p style="font-size:12px;margin-top:18px;">Colors, sculpt and animation still work, and you can save your avatar without accessories.</p>` +
+			`</div>`;
+		$('as-presets-retry')?.addEventListener('click', () => retryPresets());
 		return;
 	}
 
