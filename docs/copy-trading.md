@@ -40,10 +40,18 @@ Money-moving actions are yours to confirm. Nothing on these pages spends without
 | `network` | `mainnet`, `devnet` | `mainnet` |
 | `sort` | `score`, `pnl`, `followers`, `volume`, `winrate` | `score` |
 | `limit` | 1 to 50 | 25 |
+| `settled_min` | 0 to 1000 | 0 |
 
 ### Who is eligible
 
 An agent appears if it is public (`is_public <> false`), not deleted, and has **either** at least one closed sniper position **or** at least one confirmed discretionary trade on that network. An agent that only trades discretionarily still ranks, with volume and no realized P&L. The candidate scan is capped at 500 rows before scoring.
+
+`settled_min` narrows that to agents with at least that many **closed** round-trips, before the ranking is windowed by `limit`. Ask for it when your surface cannot use an agent without a realized track record. [The Clip Director](clip-director.md) is the case in point: it mints a card from a closed trade, so an agent with none is useless to it. Filtering client side instead is a trap, and it bit us: the composite score does not correlate with having settled trades, so the only eligible agent ranked below the caller's window and the page reported that nobody had ever closed a trade.
+
+```bash
+# Only agents with a realized track record, best composite score first
+curl -s 'https://three.ws/api/mirror/leaderboard?settled_min=1&limit=50'
+```
 
 ### The weighting, exactly as coded
 
@@ -85,6 +93,7 @@ Response shape:
   "data": {
     "network": "mainnet",
     "sort": "score",
+    "settled_min": 0,
     "leaders": [
       {
         "rank": 1,

@@ -23,6 +23,7 @@ import { proxiedImageURL } from '../ipfs.js';
 import { log } from '../shared/log.js';
 import { t, onLocaleChange } from './i18n-play.js';
 import { announce } from './a11y.js';
+import { countUp } from '../ui-juice.js';
 
 // localStorage throws in private mode and in third-party iframe contexts where
 // storage is blocked (the `?bg=transparent` embed). Guard every access so a
@@ -161,6 +162,44 @@ const ADVENTURE_MARK =
 	'<path d="M21 3 4.5 19.5"/><path d="M7 13 11 17"/>' +
 	'<path d="M3 3 19.5 19.5"/><path d="M13 17 17 13"/></svg>';
 
+// Grid orderings. Each one reads a field we actually hold: `trending` is the
+// feed's own rank (the order the API returned), `people` the live matchmaker
+// headcount, `mcap` the pump.fun market cap, `new` the on-chain launch time that
+// arrives with the enrichment pass. Nothing here invents a ranking signal.
+const SORTS = [
+	{ id: 'trending', label: 'Trending', hint: 'The live pump.fun trending order' },
+	{ id: 'people', label: 'Most people', hint: 'Worlds with the most players inside right now' },
+	{ id: 'mcap', label: 'Market cap', hint: 'Biggest market cap first' },
+	{ id: 'new', label: 'Newest', hint: 'Most recently launched coins first' },
+];
+
+// Live headcount poll. 20s is slower than the 5s cache on the endpoint on
+// purpose: the number moves on a human timescale and the lobby is a browse
+// surface, not a dashboard.
+const POPULATION_URL = '/api/play/population?by=coin';
+const POPULATION_POLL_MS = 20_000;
+
+// Second pass over the same trending feed, for the fields the thin projection
+// drops: launch time, reply count, and whether the bonding curve has completed.
+// The thin feed stays the one the grid is built from (it has a Birdeye fallback
+// and therefore survives a pump.fun outage); this only ever adds texture on top,
+// and a failure here leaves the cards exactly as they were.
+const ENRICH_URL = '/api/pump/trending?limit=50&rich=1';
+
+// A coin younger than this wears the NEW badge.
+const NEW_COIN_MS = 24 * 60 * 60 * 1000;
+
+// Compact age label for a launch timestamp: "3h old", "6d old".
+function fmtAge(ts) {
+	const at = Number(ts);
+	if (!at || !isFinite(at) || at > Date.now()) return '';
+	const s = (Date.now() - at) / 1000;
+	if (s < 3600) return `${Math.max(1, Math.floor(s / 60))}m old`;
+	if (s < 86400) return `${Math.floor(s / 3600)}h old`;
+	if (s < 86400 * 30) return `${Math.floor(s / 86400)}d old`;
+	return `${Math.floor(s / (86400 * 30))}mo old`;
+}
+
 export class CommunityUI {
 	/**
 	 * @param {object} h handlers: { onEnter(coin), onLeave(), onChat(text), onEmote(name) }
@@ -173,6 +212,9 @@ export class CommunityUI {
 		this.searching = false;
 		this._searchSeq = 0;       // guards against out-of-order async search responses
 		this._searchTimer = null;
+		this.popByCoin = null;     // mint → live headcount, null until a real read lands
+		this.popTotal = null;      // people standing in any world, null until measured
+		this.enriched = new Map(); // mint → { createdAt, replies, graduated } from the rich feed
 		this.avatar = lsGet('cc-avatar') || DEFAULT_AVATAR;
 		this._buildLobby();
 		this._buildHud();
@@ -209,7 +251,22 @@ export class CommunityUI {
 
 	// ---------------------------------------------------------------- lobby
 	_buildLobby() {
-		this.searchInput = el('input', { type: 'text', placeholder: 'Search any pump.fun coin…', oninput: () => this._onSearchInput() });
+		this.sort = SORTS.some((s) => s.id === lsGet('cc-sort')) ? lsGet('cc-sort') : 'trending';
+		this.searchInput = el('input', {
+			type: 'text', class: 'cc-search-input', id: 'cc-search-input',
+			placeholder: 'Search any pump.fun coin by name, symbol, or mint…',
+			autocomplete: 'off', spellcheck: 'false', 'aria-label': 'Search pump.fun coins',
+			oninput: () => this._onSearchInput(),
+			onkeydown: (e) => {
+				e.stopPropagation();
+				if (e.key === 'Escape' && this.searchInput.value) { this._clearSearch(); }
+			},
+		});
+		this.searchClear = el('button', {
+			type: 'button', class: 'cc-search-clear', 'aria-label': 'Clear search', hidden: true,
+			onclick: () => { this._clearSearch(); this.searchInput.focus(); },
+			html: '<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><line x1="3" y1="3" x2="11" y2="11"/><line x1="11" y1="3" x2="3" y2="11"/></svg>',
+		});
 		this.grid = el('div', { class: 'cc-grid' });
 
 		// Your display name, the label peers see above your avatar and in chat.
@@ -272,15 +329,55 @@ export class CommunityUI {
 		this.lobby = el('div', { id: 'cc-lobby' }, [
 			this._buildSiteNav(),
 			el('div', { class: 'cc-lobby-inner' }, [
-				el('div', { class: 'cc-lobby-head' }, [
-					el('div', { class: 'cc-brand' }, [
-						el('a', { class: 'cc-brand-logo', href: '/', 'aria-label': 'three.ws home', title: 'three.ws', html: threeMarkSvg() }),
-						el('div', {}, [
-							el('div', { class: 'cc-brand-title', text: 'Coin Communities' }),
-							el('div', { class: 'cc-brand-sub', text: 'Every coin is a 3D world. Drop in and hang out.' }),
-						]),
+				this._buildHero(),
+				this._buildSearchBar(),
+				this._buildIdentityBar(),
+				this._buildFeedHead(),
+				this.grid,
+			]),
+			this._buildSiteFooter(),
+		]);
+		document.body.appendChild(this.lobby);
+
+		this._wireNav();
+		this._wireGlbDrop();
+		this._wireLobbyKeys();
+		this._renderPresets();
+		this.setCoinsLoading();
+		this._startPopulation();
+	}
+
+	// The hero states what this place is in one line and proves it is alive in
+	// three real numbers: how many communities are on screen, how many people are
+	// standing in the worlds right now, and what those communities are worth
+	// together. Every figure is measured, never decorative: the population comes
+	// from the multiplayer matchmaker and the rest from the live pump.fun feed,
+	// and a figure we cannot measure is hidden rather than filled in.
+	_buildHero() {
+		this.statWorlds = el('dd', { class: 'cc-stat-v', text: '…' });
+		this.statPeople = el('dd', { class: 'cc-stat-v', text: '…' });
+		this.statCap = el('dd', { class: 'cc-stat-v', text: '…' });
+		const stat = (label, valueEl, hint) => el('div', { class: 'cc-stat', title: hint }, [
+			valueEl,
+			el('dt', { class: 'cc-stat-k', text: label }),
+		]);
+		// Hidden until the first successful population read: a landing page must
+		// never invent a headcount (see api/play/population.js).
+		this.statPeopleWrap = stat('inside right now', this.statPeople, 'People standing in a three.ws world at this moment');
+		this.statPeopleWrap.hidden = true;
+
+		return el('section', { class: 'cc-hero' }, [
+			el('div', { class: 'cc-hero-copy' }, [
+				el('div', { class: 'cc-brand' }, [
+					el('a', { class: 'cc-brand-logo', href: '/', 'aria-label': 'three.ws home', title: 'three.ws', html: threeMarkSvg() }),
+					el('div', {}, [
+						el('div', { class: 'cc-brand-title', text: 'Coin Communities' }),
+						el('div', { class: 'cc-brand-sub', text: 'A live 3D world behind every ticker' }),
 					]),
-					el('div', { class: 'cc-search' }, [el('span', { text: '🔎' }), this.searchInput]),
+				]),
+				el('h1', { class: 'cc-hero-title', html: 'Every coin is a <em>3D world</em>.' }),
+				el('p', { class: 'cc-hero-sub', text: 'Walk into any pump.fun community as your own avatar. Talk, build, trade and play with the people holding the same coin, straight in the browser. No download, no wallet needed to look around.' }),
+				el('div', { class: 'cc-hero-actions' }, [
 					// A button into the home-town world, not a link: an <a href="/play">
 					// here was a full page reload back to this same lobby.
 					el('button', {
@@ -294,29 +391,130 @@ export class CommunityUI {
 					// per browser; this brings it back for anyone who skipped it.
 					makeIntroReopener(() => this.h.onDropIn?.()),
 				]),
-				this.avatarBar = el('div', { class: 'cc-avatar-bar' }, [
+			]),
+			el('dl', { class: 'cc-stats' }, [
+				stat('communities live', this.statWorlds, 'Coin worlds you can enter from this page right now'),
+				this.statPeopleWrap,
+				stat('combined market cap', this.statCap, 'Market cap of every community listed below, added up'),
+			]),
+		]);
+	}
+
+	// One command bar: the search field plus the shortcut hint that teaches it.
+	// Sat in the header row before, competing with the brand for the eye; it is
+	// the page's main verb, so it gets its own line at full width.
+	_buildSearchBar() {
+		return el('div', { class: 'cc-cmd' }, [
+			el('label', { class: 'cc-search', for: 'cc-search-input' }, [
+				el('span', { class: 'cc-search-ico', 'aria-hidden': 'true', html: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="9" cy="9" r="6"/><line x1="13.5" y1="13.5" x2="18" y2="18"/></svg>' }),
+				this.searchInput,
+				this.searchClear,
+				el('kbd', { class: 'cc-search-kbd', 'aria-hidden': 'true', text: '/' }),
+			]),
+			el('p', { class: 'cc-cmd-hint', text: 'Any pump.fun coin works, even one that launched a minute ago. Paste a mint to jump straight to its world.' }),
+		]);
+	}
+
+	// Your identity, one row: the avatar you will be seen as, the name above your
+	// head, and a disclosure holding every way to change it. It used to be a tall
+	// always-open panel that pushed the communities (the reason people come here)
+	// below the fold; a returning player who already has both now sees a compact
+	// summary, and a first-timer still lands on the picker wide open.
+	_buildIdentityBar() {
+		this.idPortrait = el('div', { class: 'cc-id-portrait', 'aria-hidden': 'true' }, [
+			el('span', { class: 'cc-id-portrait-glyph', text: '🧍' }),
+		]);
+		this.idSummary = el('span', { class: 'cc-id-summary', text: 'Default avatar' });
+
+		const startOpen = !(lsGet('cc-avatar') && lsGet('cc-name'));
+		this.idBody = el('div', { class: 'cc-id-body', id: 'cc-id-body' }, [
+			el('div', { class: 'cc-avatar-label', html: 'Your avatar<small>Create your own, pick a preset, browse the gallery, paste a URL, or drop your own .glb / .vrm</small>' }),
+			this.createBtn,
+			this.presetRow,
+			el('div', { class: 'cc-avatar-custom' }, [this.customInput, this.galleryBtn, this.uploadBtn]),
+			this.uploadStatus,
+		]);
+		this.idToggle = el('button', {
+			type: 'button', class: 'cc-id-toggle', 'aria-expanded': String(startOpen), 'aria-controls': 'cc-id-body',
+			onclick: () => this._toggleIdentity(),
+		}, [
+			el('span', { class: 'cc-id-toggle-text', text: startOpen ? 'Hide options' : 'Change avatar' }),
+			el('span', { class: 'cc-id-toggle-caret', 'aria-hidden': 'true', text: '▾' }),
+		]);
+
+		this.avatarBar = el('div', { class: 'cc-avatar-bar' + (startOpen ? ' cc-id-open' : '') }, [
+			el('div', { class: 'cc-id-head' }, [
+				this.idPortrait,
+				el('div', { class: 'cc-id-fields' }, [
 					this.nameRow = el('div', { class: 'cc-name-row' }, [
 						el('label', { class: 'cc-name-label', for: 'cc-name-input', text: 'Your name' }),
 						this.nameInput,
 					]),
-					el('div', { class: 'cc-avatar-label', html: 'Your avatar<small>Create your own, pick a preset, browse the gallery, paste a URL, or drop your own .glb / .vrm</small>' }),
-					this.createBtn,
-					this.presetRow,
-					el('div', { class: 'cc-avatar-custom' }, [this.customInput, this.galleryBtn, this.uploadBtn]),
-						this.uploadStatus,
-						el('div', { class: 'cc-avatar-dropmsg', text: 'Drop a .glb or .vrm to use as your avatar' }),
+					this.idSummary,
 				]),
-				el('p', { class: 'cc-section-title', text: 'Live communities' }),
-				this.grid,
+				this.idToggle,
 			]),
-			this._buildSiteFooter(),
+			this.idBody,
+			el('div', { class: 'cc-avatar-dropmsg', text: 'Drop a .glb or .vrm to use as your avatar' }),
 		]);
-		document.body.appendChild(this.lobby);
+		this.idBody.hidden = !startOpen;
+		return this.avatarBar;
+	}
 
-		this._wireNav();
-		this._wireGlbDrop();
-		this._renderPresets();
-		this.setCoinsLoading();
+	_toggleIdentity(force) {
+		const open = force === undefined ? this.idBody.hidden : !!force;
+		this.idBody.hidden = !open;
+		this.avatarBar.classList.toggle('cc-id-open', open);
+		this.idToggle.setAttribute('aria-expanded', String(open));
+		this.idToggle.querySelector('.cc-id-toggle-text').textContent = open ? 'Hide options' : 'Change avatar';
+	}
+
+	// Section head over the grid: what you are looking at, how many there are, and
+	// how to reorder them. The sort is a real reorder of real fields (feed rank,
+	// live headcount, market cap, launch time), not a filter that hides coins.
+	_buildFeedHead() {
+		this.feedCount = el('span', { class: 'cc-feed-count', 'aria-live': 'polite' });
+		this.sortRow = el('div', { class: 'cc-sorts', role: 'group', 'aria-label': 'Sort communities' }, SORTS.map((s) => el('button', {
+			type: 'button', class: 'cc-sort' + (s.id === this.sort ? ' cc-on' : ''),
+			'aria-pressed': String(s.id === this.sort), title: s.hint, 'data-sort': s.id,
+			onclick: () => this._setSort(s.id),
+			text: s.label,
+		})));
+		return el('div', { class: 'cc-feed-head' }, [
+			el('div', { class: 'cc-feed-title' }, [
+				el('p', { class: 'cc-section-title', text: 'Live communities' }),
+				this.feedCount,
+			]),
+			this.sortRow,
+		]);
+	}
+
+	_setSort(id) {
+		if (!SORTS.some((s) => s.id === id) || id === this.sort) return;
+		this.sort = id;
+		lsSet('cc-sort', id);
+		for (const b of this.sortRow.children) {
+			const on = b.dataset.sort === id;
+			b.classList.toggle('cc-on', on);
+			b.setAttribute('aria-pressed', String(on));
+		}
+		this._renderGrid();
+		announce(`Sorted by ${SORTS.find((s) => s.id === id).label}`);
+	}
+
+	// "/" focuses the search from anywhere in the lobby, the shortcut every
+	// browse surface has trained people to expect. Bound on the document because
+	// the field is rarely what has focus; ignored while typing somewhere else, and
+	// ignored entirely once the player is in a world (the same keys drive movement).
+	_wireLobbyKeys() {
+		document.addEventListener('keydown', (e) => {
+			if (this.lobby.hidden || e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return;
+			const t = e.target;
+			if (t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+			e.preventDefault();
+			this.searchInput.focus();
+			this.searchInput.select();
+		});
 	}
 
 	// ---------------------------------------------------------- site chrome
@@ -842,6 +1040,9 @@ export class CommunityUI {
 		}
 		chip.textContent = '';
 		chip.appendChild(el('img', { class: 'cc-avatar-render', src: dataUrl, alt: p.label }));
+		// The portrait mirrors whichever chip is selected, and this render may be
+		// the one it was waiting for.
+		if (chip._url === this.avatar) this._syncPortrait();
 	}
 
 	// True on phones and tablets: a coarse pointer is the primary input. Used to
@@ -855,7 +1056,26 @@ export class CommunityUI {
 		lsSet('cc-avatar', this.avatar);
 		for (const chip of this.presetRow.children) chip.classList.toggle('cc-on', chip._url === this.avatar);
 		if (!fromCustom) this.customInput.value = (this.avatar === DEFAULT_AVATAR || !/^https?:|^\//.test(this.avatar)) ? '' : this.avatar;
+		this._syncPortrait();
 		this.h.onAvatarChange?.(this.avatar);
+	}
+
+	// Mirror the selected chip into the identity portrait. Deliberately a mirror
+	// and not a second render: the chips already paid for the model download and
+	// the offscreen render, so the summary costs one <img> src copy. A chip that
+	// has not finished rendering yet leaves the glyph up and re-syncs when it does.
+	_syncPortrait() {
+		if (!this.idPortrait) return;
+		const chip = [...this.presetRow.children].find((c) => c._url === this.avatar);
+		const img = chip?.querySelector('img');
+		const label = chip?.getAttribute('title') || 'Custom avatar';
+		this.idSummary.textContent = this.avatar === DEFAULT_AVATAR ? 'Default avatar' : label;
+		this.idPortrait.textContent = '';
+		if (img?.src) {
+			this.idPortrait.appendChild(el('img', { src: img.src, alt: '', class: img.className }));
+		} else {
+			this.idPortrait.appendChild(el('span', { class: 'cc-id-portrait-glyph', text: '🧍' }));
+		}
 	}
 
 	getAvatar() { return this.customInput.value.trim() || this.avatar; }
@@ -873,7 +1093,11 @@ export class CommunityUI {
 		}
 	}
 
-	setCoins(list) { this.coins = list || []; this._renderGrid(); }
+	setCoins(list) {
+		this.coins = list || [];
+		this._renderGrid();
+		this._enrichCoins();
+	}
 
 	/** Pin an official town (e.g. the $THREE flagship) to the top of the lobby. */
 	setFeatured(coin) { this.featured = coin && coin.mint ? coin : null; this._renderGrid(); }
@@ -892,6 +1116,7 @@ export class CommunityUI {
 	// trending 30) becomes reachable as a world.
 	_onSearchInput() {
 		const q = this.searchInput.value.trim();
+		this.searchClear.hidden = !this.searchInput.value;
 		clearTimeout(this._searchTimer);
 		if (q.length < 2) {
 			this.searchResults = [];
@@ -926,6 +1151,37 @@ export class CommunityUI {
 		this._renderGrid();
 	}
 
+	// Clear the query and put the full trending grid back. Shared by the field's
+	// Escape key and the clear button, so both paths always agree.
+	_clearSearch() {
+		this.searchInput.value = '';
+		this.searchClear.hidden = true;
+		this.searchResults = [];
+		this.searching = false;
+		this.searchError = false;
+		this._searchSeq++; // invalidate any in-flight search
+		clearTimeout(this._searchTimer);
+		this._renderGrid();
+	}
+
+	/** Live headcount for one coin's worlds, or 0 when nobody is measured inside. */
+	_popFor(mint) {
+		return (this.popByCoin && mint && this.popByCoin[mint]) || 0;
+	}
+
+	// Order the grid by the active sort. Ties fall back to market cap so the
+	// ordering is total and the grid never reshuffles between identical renders.
+	_sortCoins(list) {
+		const cap = (c) => Number(c.marketCap) || 0;
+		const born = (c) => Number(this.enriched.get(c.mint)?.createdAt) || 0;
+		const sorted = [...list];
+		if (this.sort === 'people') sorted.sort((a, b) => this._popFor(b.mint) - this._popFor(a.mint) || cap(b) - cap(a));
+		else if (this.sort === 'mcap') sorted.sort((a, b) => cap(b) - cap(a));
+		// Unknown launch times sort last rather than jumping to the top as 0.
+		else if (this.sort === 'new') sorted.sort((a, b) => (born(b) || -Infinity) - (born(a) || -Infinity) || cap(b) - cap(a));
+		return sorted;
+	}
+
 	_renderGrid() {
 		const q = this.searchInput.value.trim().toLowerCase();
 		const matches = (c) =>
@@ -941,6 +1197,7 @@ export class CommunityUI {
 		for (const c of this.searchResults) {
 			if (c.mint && !seen.has(c.mint)) { seen.add(c.mint); list.push(c); }
 		}
+		this._paintStats(list, featured);
 		this.grid.textContent = '';
 		if (!featured && !list.length) {
 			if (this.searching) { this._renderSearching(); return; }

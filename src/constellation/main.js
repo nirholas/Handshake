@@ -73,6 +73,7 @@ let signedIn = false; // resolved once at boot; gates the Granite analysis call
 
 // ---- status / overlay helpers ---------------------------------------------
 function setStatus(kind, html) {
+	console.log("DBG setStatus", kind, String(html).slice(0,60));
 	statusEl.classList.remove('live', 'off', 'err');
 	if (kind) statusEl.classList.add(kind);
 	statusText.innerHTML = html;
@@ -452,6 +453,7 @@ function formatPrice(p) {
 	return `$${p.toExponential(2)}`;
 }
 function closePanel() {
+	console.log("DBG closePanel", new Error().stack);
 	if (!panel.classList.contains('open')) return;
 	panel.classList.remove('open');
 	panel.setAttribute('aria-hidden', 'true');

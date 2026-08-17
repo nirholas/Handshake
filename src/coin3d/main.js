@@ -1093,7 +1093,7 @@ function renderLanding() {
 	statusEl.innerHTML = `
 		<div class="c3d-landing">
 			<h1>See any token in 3D</h1>
-			<p class="lede">Paste a pump.fun or Solana mint to render it as a live scene — a logo medallion, holder galaxy, graduation ring, and real-time trade pulses, all from on-chain data.</p>
+			<p class="lede">Paste a pump.fun or Solana mint to render it as a live scene: a logo medallion, holder galaxy, graduation ring, and real-time trade pulses, all from on-chain data.</p>
 			<form class="c3d-search" id="c3d-form" autocomplete="off">
 				<input id="c3d-mint-input" type="text" inputmode="text" spellcheck="false"
 					placeholder="Paste a token mint address…" aria-label="Token mint address" />

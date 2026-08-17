@@ -24,9 +24,35 @@ loss) and directs one card per surface:
 - **alt_text** (an accessibility description of the card).
 
 Honest by design: a losing trade still gets a card (radical downside-transparency is the
-brand), with a "live to trade again" tone, always with a verifiable on-chain angle. No
-number is invented; every stat traces to the closed position it was handed. When no LLM
-provider is available a deterministic director produces the same-shaped artifact.
+brand), with a "live to trade again" tone, always with a verifiable on-chain angle. When
+no LLM provider is available a deterministic director produces the same-shaped artifact.
+
+## The grounding guard
+
+"The real number, never a screenshot" is the only thing this surface sells, and the LLM
+lane writes the prose, so nothing downstream can tell a fluent invention from a fact. It
+is not a hypothetical risk. During the July route audit a provider in the free chain
+answered a real **+1.89x win on $NIBZ** with *"-8.2% realized loss"* on *"$THREE"*,
+gesture `celebrate`: every word fluent, every fact invented, rendered next to a solscan
+link proving the opposite.
+
+So a generated card is checked against the trade it claims to describe before it ships
+(`isGrounded` in [api/_lib/clip-director.js](../api/_lib/clip-director.js)):
+
+- **Every `$TICKER` in the copy must be the traded coin.** No other ticker, $THREE
+  included: the card is about this trade.
+- **Every figure in the copy must trace to the trade** (multiple, P&L %, entry/exit SOL,
+  realized SOL, hold time read in minutes, hours, or days) or to the follower count. The
+  agent's own name is stripped first, so a trader called "Swarm 2" costs it nothing.
+- **The check runs on the finalized card, not the raw model output**, because the length
+  clamp landing mid-number is its own way of stating a figure the trade never contained.
+- **The avatar reaction has to point the way the trade went.** `celebrate` / `point` /
+  `wave` on a win, `sweat` / `shrug` on a loss. A stop-out cannot be celebrated.
+
+A card that fails any of these is discarded and the deterministic director answers
+instead, so the response carries `"source": "deterministic"`. The endpoint never fails
+and never ships an unverifiable number. [tests/clip-director-grounding.test.js](../tests/clip-director-grounding.test.js)
+pins the behaviour with the exact captured hallucination.
 
 ## Where the numbers come from
 
@@ -74,6 +100,21 @@ Response shape (GET):
 
 When the agent has no closed trades yet the response returns `clips: []` with an `empty`
 message instead of an error, so a card is only ever minted from a real closed round-trip.
+
+## The page
+
+[/clip-director](https://three.ws/clip-director) fills its trader picker from
+`GET /api/mirror/leaderboard?settled_min=1`, the [copy-trading](copy-trading.md)
+ranking narrowed to agents that actually have a closed round-trip. That parameter is
+load-bearing: the page used to ask for the top agents by composite score and filter for
+a track record client side, and because score does not correlate with having settled
+trades, the only eligible agent ranked below the window and every visitor was told that
+no agent had ever closed a trade.
+
+`?agent_id=<uuid>` deep-links a specific trader, including one outside the ranking (a
+shared link, or a private agent that never ranks); the picker labels it once the clip
+comes back. Each card's CTA is a real link: `copy-the-agent` and `fork-this-trade` go to
+[/mirror](https://three.ws/mirror), `view-track-record` to that agent's profile.
 
 ## Related
 
