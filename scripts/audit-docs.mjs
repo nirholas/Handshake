@@ -290,6 +290,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['ibm-community-recap-nichxbt', 'internal: source draft of an IBM Community post'],
 	['ibm-community-blog-meetup-jessica', 'internal: source draft of an IBM Community post'],
 	['ibm-community-thread', 'internal: source draft of an IBM Community post'],
+	['ibm-skillsbuild-x-post', 'internal: paste-ready X copy for the SkillsBuild badge, drafted for the owner to post'],
 	['launch-usecases', 'owner-gated: names a crypto project other than $THREE'],
 	['pumpfun-article-x-post', 'internal: ready-to-paste X post drafts; posting is owner-gated'],
 	['memetic-launcher', 'owner-gated: names a crypto project other than $THREE'],

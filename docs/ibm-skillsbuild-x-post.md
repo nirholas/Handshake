@@ -73,7 +73,10 @@ the self-reply, where it reaches everyone who opens the post but does not dilute
 pattern match on the tweet IBM's team sees.
 
 **Tweet 1** (attach the badge certificate image, 187 characters). Human copy leads, link
-sits at the end, no hashtags:
+sits at the end, no hashtags. The image to attach is
+[images/ibm-skillsbuild-cybersecurity-badge.png](images/ibm-skillsbuild-cybersecurity-badge.png);
+the full certificate PDF sits beside it as
+[images/ibm-skillsbuild-cybersecurity-certificate.pdf](images/ibm-skillsbuild-cybersecurity-certificate.pdf):
 
 ```
 View my verified achievement from @IBM
