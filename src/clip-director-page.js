@@ -173,9 +173,12 @@ function renderClips(agent, data) {
 		<div class="cd-note"><b>Honest by design.</b> Wins and losses both get a card, always with a verifiable on-chain angle. The number you see is a real closed round-trip, never a screenshot.</div>`;
 
 	for (const btn of resultEl.querySelectorAll('.cd-copy')) {
+		// The label is captured once, before any click can overwrite it: reading it
+		// back inside the handler would restore "Copied ✓" on a double click.
 		const original = btn.textContent;
+		let revert = 0;
 		btn.addEventListener('click', async () => {
-			clearTimeout(btn.dataset.timer);
+			clearTimeout(revert);
 			try {
 				await copyText(btn.dataset.payload);
 				btn.textContent = 'Copied ✓';
@@ -184,7 +187,7 @@ function renderClips(agent, data) {
 				btn.textContent = 'Copy blocked by browser';
 				btn.classList.remove('done');
 			}
-			btn.dataset.timer = setTimeout(() => { btn.textContent = original; btn.classList.remove('done'); }, 1600);
+			revert = setTimeout(() => { btn.textContent = original; btn.classList.remove('done'); }, 1600);
 		});
 	}
 }
