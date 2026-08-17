@@ -182,6 +182,11 @@
 				position: fixed;
 				inset: 0;
 				display: grid;
+				/* An auto-sized track takes its width from the card's max-content,
+				   which on a 320px screen pushes the search button and the third
+				   column of launch cards off-screen. A minmax(0, 1fr) track is
+				   exactly the padding box, so the card shrinks to fit. */
+				grid-template-columns: minmax(0, 1fr);
 				justify-items: center;
 				align-items: center;
 				/* Safe centering + a scroll track: the landing card is taller than a
@@ -676,6 +681,7 @@
 				display: flex;
 				flex-direction: column;
 				align-items: center;
+				min-width: 0;
 				gap: 7px;
 				padding: 12px 8px;
 				background: rgba(255, 255, 255, 0.04);
@@ -737,11 +743,18 @@
 					bottom: 16px;
 					max-height: 72vh;
 				}
+				#status {
+					padding: 20px 16px;
+					/* Clear the site-wide locale switcher and command bar, which are
+					   pinned to the bottom of the viewport above this overlay. */
+					padding-bottom: 72px;
+				}
 				.hint {
 					display: none;
 				}
 				.c3d-recent {
 					grid-template-columns: repeat(3, 1fr);
+					gap: 8px;
 				}
 				.c3d-landing h1 {
 					font-size: 22px;

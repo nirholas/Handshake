@@ -1275,7 +1275,7 @@ async function main() {
 function showSceneFallback() {
 	if (canvas) canvas.style.display = 'none';
 	const hint = document.querySelector('.hint');
-	if (hint) hint.textContent = '3D unavailable — showing live data';
+	if (hint) hint.textContent = '3D unavailable. Showing live data.';
 	document.body.style.background =
 		'radial-gradient(120% 120% at 50% 0%, #15182c 0%, #060606 70%)';
 }
