@@ -1279,9 +1279,47 @@
 				'text/plain': sharePromise,
 			});
 			await navigator.clipboard.write([clipboardItem]);
-		} catch (err) {
-			await navigator.clipboard.writeText(await sharePromise);
+			notify('Share link copied.', 'success');
+			return;
+		} catch {}
+
+		const link = await sharePromise;
+		try {
+			await navigator.clipboard.writeText(link);
+			notify('Share link copied.', 'success');
+			return;
+		} catch {}
+
+		// The async clipboard API can be refused outright (permission denied, an
+		// unfocused tab, a hardened browser). The button had already flashed
+		// success by then and the rejection went unhandled, so the link silently
+		// never existed. The selection-based copy still works in that case; if it
+		// does not either, say so instead of claiming a copy that did not happen.
+		if (copyBySelection(link)) {
+			notify('Share link copied.', 'success');
+		} else {
+			notify('Could not reach the clipboard. Copy the link from the address bar after opening it: ' + link);
 		}
+	}
+
+	/** Legacy selection copy: works when the async clipboard API is refused. */
+	function copyBySelection(text) {
+		const el = document.createElement('textarea');
+		el.value = text;
+		el.setAttribute('readonly', '');
+		el.style.position = 'fixed';
+		el.style.top = '-1000px';
+		el.style.opacity = '0';
+		document.body.appendChild(el);
+		el.select();
+		let ok = false;
+		try {
+			ok = document.execCommand('copy');
+		} catch {
+			ok = false;
+		}
+		el.remove();
+		return ok;
 	}
 
 	let exportOpen = false;
