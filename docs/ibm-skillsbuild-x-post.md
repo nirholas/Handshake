@@ -114,6 +114,50 @@ More of the team is going through the SkillsBuild track.
 https://three.ws
 ```
 
+## Reply from @nichxbt
+
+The @nichxbt account replies as the person behind the platform account, not as an
+anonymous bystander praising it. Personal voice, first person, adding something the
+brand account did not say. That is authentic and it reads that way. A reply that
+pretends to be an unrelated stranger complimenting the badge is the one shape to avoid:
+it is transparent to anyone who checks, and it is the reason IBM's community team would
+skip the thread.
+
+Each of these carries its own `@IBM` mention, so it is a second, independent path into
+IBM's notifications rather than a dependent of the parent post.
+
+**Recommended**, 192 characters. Useful to a reader and it recommends IBM's program,
+which gives their community team something worth replying to:
+
+```
+Working through the @IBM SkillsBuild track with the team. Free, self-paced, and the cybersecurity module is a genuinely good primer.
+
+Recommend it to anyone building something people log into.
+```
+
+**Alternate, the point of view**, 182 characters:
+
+```
+Security literacy is not the security team's job, it is everyone's. That is why the whole three.ws team is going through @IBM SkillsBuild and not just whoever owns the on-call pager.
+```
+
+**Alternate, personal**, 174 characters:
+
+```
+I would rather learn the fundamentals properly than pick them up after an incident. That is the whole reason we started the @IBM SkillsBuild track.
+
+Start before you need it.
+```
+
+**Alternate, opens a conversation**, 208 characters. The only one that invites replies
+from people other than IBM:
+
+```
+Genuinely useful primer. What surprised me: how much of the cybersecurity module is process and habit rather than tooling.
+
+Anyone else run their team through @IBM SkillsBuild? Curious which track you picked.
+```
+
 ## Variant A: single post, three.ws named up front
 
 Use if the goal is brand reach over reply odds. 255 characters.
