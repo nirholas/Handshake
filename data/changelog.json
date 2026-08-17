@@ -3,6 +3,26 @@
 	"entries": [
 		{
 			"date": "2026-08-17",
+			"title": "Tabbing into the Forge prompt box now shows you where you are",
+			"summary": "The Forge composer (three.ws/forge and the maximum-quality lane at three.ws/forge-max) draws its describe-it box, its photo-guidance box and its sketch-description box without a border, so the card reads as one clean surface. That styling had also switched off the browser focus outline, which meant anyone moving through the page with the Tab key landed in the main prompt field with no visible sign that they were there: the page looked identical whether the box had keyboard focus or not, on the single most important input on the surface. All three boxes now draw a focus ring when you reach them by keyboard, and only by keyboard, so clicking in with a mouse keeps the seamless look it always had. The rest of the lane was driven end to end in a real browser at phone, tablet and desktop widths: High stays pinned when you open /forge-max, the quality switches move between Draft, Standard and High with the holder gate reflected on the Generate button, and a busy or failing generator lands on a designed message with a retry rather than a blank panel.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/forge-max"
+		},
+		{
+			"date": "2026-08-17",
+			"title": "Smart Money Radar stops shearing coin cards on a phone, and a lost connection no longer masquerades as a coin nobody is buying",
+			"summary": "The /smart-money page was driven end to end in a real browser at 320, 768 and 1440 pixels. On a narrow phone the coin grid insisted on a column wider than the screen, so the right edge of every card was silently cut away by the page: the pedigree score badge and the star that adds a coin to your watchlist were both off-screen, with no sideways scroll to reach them. Cards now fit the screen they are on, and the score and the star are back. The bigger problem was that the page could not tell a coin it had never scored apart from a request that never arrived. If your connection dropped, or the radar was briefly down, every coin on your watchlist was relabelled Not on the radar yet, which reads as a verdict on the coin rather than a problem with the connection, and opening any coin or wallet gave you the same flat Not scored yet with no way to try again. The page now separates the two. A genuine miss keeps its explanation and now says why, and adds a link out to pump.fun or Solscan so the trail does not end there. A connection failure says the radar could not be reached and gives you a Retry button, in the drawer, on the watchlist, and on individual watched coins, and your watchlist is explicitly noted as still saved on your device. A first load that fails outright used to leave the Top wallets tab as an empty void; it now carries the same message and its own retry. A proven wallet whose trades predate the detail the radar keeps used to show a bare No recent coins on record, which looked like a wallet that had stopped trading; it now explains that the coin-level detail has aged out while the win record above still counts every verdict.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/smart-money"
+		},
+		{
+			"date": "2026-08-17",
 			"title": "A busy Forge engine now says it is busy and counts you back in, instead of telling you to go set an environment variable",
 			"summary": "The /forge page was driven end to end in a real browser. When every free 3D engine was momentarily at capacity, or a worker was still warming up, the server said so clearly and told the page to try again in about half a minute. The page threw that away. It treated any temporary outage as proof that the whole generator had never been set up, and showed a panel headed Generator not configured that asked you to set NVIDIA_API_KEY or HF_TOKEN on the deployment. For anyone who is not running the servers, which is everyone using the site, that is an instruction you cannot act on, about a problem you do not have, and the panel had no Try again button at all, so a wait of thirty seconds became a dead end that looked like the product was broken. A temporary outage now lands in the wait state the site already had for this: a heading that says Temporarily unavailable, the countdown ticking down to when the engines free up, and a Retry button that switches itself on the moment the wait is over. The genuine case, a deployment with no engine wired at all, still gets its original panel, because for the operator that message is the correct one. The engine picker also had a key underneath it explaining that a red dot means an engine is unavailable, but no engine could ever show that dot: only the amber busy dot was ever drawn, so a down engine was dimmed with no indication why, and the key described something that did not exist. Down engines now carry the red dot the key promises, at full strength so it stays distinct from the amber one. Separately, roughly one in ten preview thumbnails failed to load while developing locally, which made the gallery look like a broken image host when nothing was actually wrong with it.",
 			"tags": [

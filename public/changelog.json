@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-17T05:33:50.826Z",
+	"generated_at": "2026-08-17T05:59:12.393Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -293,6 +293,28 @@
 		{
 			"date": "2026-08-17",
 			"type": "update",
+			"title": "Smart Money Radar stops shearing coin cards on a phone, and a lost connection no longer masquerades as a coin nobody is buying",
+			"summary": "The /smart-money page was driven end to end in a real browser at 320, 768 and 1440 pixels. On a narrow phone the coin grid insisted on a column wider than the screen, so the right edge of every card was silently cut away by the page: the pedigree score badge and the star that adds a coin to your watchlist were both off-screen, with no sideways scroll to reach them. Cards now fit the screen they are on, and the score and the star are back. The bigger problem was that the page could not tell a coin it had never scored apart from a request that never arrived. If your connection dropped, or the radar was briefly down, every coin on your watchlist was relabelled Not on the radar yet, which reads as a verdict on the coin rather than a problem with the connection, and opening any coin or wallet gave you the same flat Not scored yet with no way to try again. The page now separates the two. A genuine miss keeps its explanation and now says why, and adds a link out to pump.fun or Solscan so the trail does not end there. A connection failure says the radar could not be reached and gives you a Retry button, in the drawer, on the watchlist, and on individual watched coins, and your watchlist is explicitly noted as still saved on your device. A first load that fails outright used to leave the Top wallets tab as an empty void; it now carries the same message and its own retry. A proven wallet whose trades predate the detail the radar keeps used to show a bare No recent coins on record, which looked like a wallet that had stopped trading; it now explains that the coin-level detail has aged out while the win record above still counts every verdict.",
+			"link": "/smart-money",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-17",
+			"type": "update",
+			"title": "Tabbing into the Forge prompt box now shows you where you are",
+			"summary": "The Forge composer (three.ws/forge and the maximum-quality lane at three.ws/forge-max) draws its describe-it box, its photo-guidance box and its sketch-description box without a border, so the card reads as one clean surface. That styling had also switched off the browser focus outline, which meant anyone moving through the page with the Tab key landed in the main prompt field with no visible sign that they were there: the page looked identical whether the box had keyboard focus or not, on the single most important input on the surface. All three boxes now draw a focus ring when you reach them by keyboard, and only by keyboard, so clicking in with a mouse keeps the seamless look it always had. The rest of the lane was driven end to end in a real browser at phone, tablet and desktop widths: High stays pinned when you open /forge-max, the quality switches move between Draft, Standard and High with the holder gate reflected on the Generate button, and a busy or failing generator lands on a designed message with a retry rather than a blank panel.",
+			"link": "/forge-max",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-17",
+			"type": "update",
 			"title": "Talking Avatar Video stops handing the renderer a 3D file where a photo belongs, and says up front when the GPU lane is down",
 			"summary": "The /create/video page turns one of your avatars plus an audio clip into a lip-synced video, and it was driven end to end in a real browser: every state, every button, every width. The worst finding was invisible from the page. The reference frame the GPU worker renders from was being taken from whatever the browser had handy, which for an avatar with no thumbnail meant its 3D model file. The worker saved that as the reference photo and then failed on it minutes later, after the wait had already been spent. The page now sends only the avatar, and the server resolves a real image for it: the stored thumbnail, or a fresh portrait render when there is none. Second, the GPU renderer is a separate service, and when it is not running the only signal was a failure after you had already picked a file and uploaded it. The page now asks first and, if the lane is down, says so at the top, keeps Generate switched off, and points at the Avatar Studio and prompt-to-avatar in the meantime. The rest is the ordinary polish an audit turns up: a failed avatar list used to look identical to owning no avatars, so it sent people off to create one they already had, and now it says what broke and offers a retry; having no avatars yet gets a real empty state with a link to make one; the Generate button always explains what it is still waiting for and, once audio is in, how many clips of video that audio is worth; the clip you picked can be played back with its length and size before you spend a generation on it; a render job that goes unreachable now says so after thirty seconds instead of spinning for twenty minutes; and after a spent free trial the button under the error no longer stayed stuck on Upgrade plan for every later error. Avatar thumbnails are real buttons with visible focus rings, the two form fields have proper labels, and the second animated avatar that the site companion used to drop onto this page no longer loads over the one you are working on.",
 			"link": "/create/video",
@@ -372,7 +394,7 @@
 			"date": "2026-08-17",
 			"type": "update",
 			"title": "The Create page no longer black-screens when the sign-in check stalls, and a broken remix link no longer kills every button on it",
-			"summary": "Two ways the front door for creating could strand you are gone. The page opens behind a full-screen loading screen while it checks whether you are signed in; if that check got no answer at all (a stalled connection rather than a refused one) the screen stayed black forever and the page read as dead. It now hands the page back after a short wait and treats you as signed out, which costs at most one extra trip through sign-in. Separately, opening a remix link for an avatar that had been deleted or made private used to show a message for four seconds and then leave you on a page where not one of the eight creation cards did anything: the remix ran before the buttons were wired and gave up without wiring them. The cards are live first now, and a failed remix explains itself in a panel that stays put, with a button to try again and a button to move on. Also: the talking-avatar-video card now says \"Coming soon\" on the card itself instead of only dimming, answers the keyboard the same way it answers a mouse, and stops calling itself unavailable when the check simply could not reach us (it asks again when you click). A saved avatar whose thumbnail has been deleted falls back to a silhouette instead of a broken image.",
+			"summary": "Three fixes to the front door for creating, plus a strip of your own avatars that was never once drawn. The page is meant to greet a returning creator with \"Start from one of yours\" and a row of the avatars they have already made, one click from remixing any of them. It read the library reply in the wrong shape, decided it had received nothing, and hid the row every single time, so nobody has ever seen it. It reads the reply correctly now and the row appears, with a real thumbnail for each avatar. The page opens behind a full-screen loading screen while it checks whether you are signed in; if that check got no answer at all (a stalled connection rather than a refused one) the screen stayed black forever and the page read as dead. It now hands the page back after a short wait and treats you as signed out, which costs at most one extra trip through sign-in. Separately, opening a remix link for an avatar that had been deleted or made private used to show a message for four seconds and then leave you on a page where not one of the eight creation cards did anything: the remix ran before the buttons were wired and gave up without wiring them. The cards are live first now, and a failed remix explains itself in a panel that stays put, with a button to try again and a button to move on. Also: the talking-avatar-video card now says \"Coming soon\" on the card itself instead of only dimming, answers the keyboard the same way it answers a mouse, and stops calling itself unavailable when the check simply could not reach us (it asks again when you click). A saved avatar whose thumbnail has been deleted falls back to a silhouette instead of a broken image.",
 			"link": "/create",
 			"tags": [
 				"fix",
