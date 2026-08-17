@@ -87,20 +87,27 @@ Set image alt text to `IBM SkillsBuild certificate: Getting Started with Cyberse
 issued June 8 2026`. It is an accessibility requirement and it restates the badge name
 for anyone who cannot load the image.
 
-**Tweet 2** (self-reply, 252 characters). This is where the three.ws link goes: the main
+**Tweet 2** (self-reply, 239 characters). This is where the three.ws link goes: the main
 post already spent its link on Credly, and a reply carries a link without costing the
 parent any reach.
 
+Do not enumerate product surfaces here. Naming wallets, payments or API endpoints turns
+a credential post into a product pitch, which is the shape IBM never replied to once in
+the scrape, and it advertises the attack surface in the same breath as saying the team
+is still learning to defend it.
+
 ```
-Why it matters for us: three.ws runs agent wallets, on-chain payments and a public API. Every credential the team adds becomes real hardening. Tighter key handling, better auth, safer defaults for users who never see any of it.
+Security is not a feature you bolt on at the end. It is the part of the work users never see and always depend on. That is the standard we hold three.ws to.
+
+More of the team is going through the SkillsBuild track.
 
 https://three.ws
 ```
 
-Alternate ending if you would rather close on the team than the product, 269 characters:
+Shorter alternate, 195 characters:
 
 ```
-Security is not a feature you bolt on at the end. three.ws runs agent wallets, on-chain payments and a public API, so the fundamentals in this course are the fundamentals of the product.
+Security is not a feature you bolt on at the end. It is a habit, and habits are built one fundamental at a time.
 
 More of the team is going through the SkillsBuild track.
 
