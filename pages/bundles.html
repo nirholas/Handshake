@@ -476,6 +476,9 @@
 		// the width depends on the text and the viewport, not on the markup.
 		const TIP_GUTTER = 12;
 		function placeTip(btn) {
+			// A hidden panel has no geometry to measure, and measuring it anyway
+			// stores a shift that is wrong the moment the panel opens.
+			if (!btn.offsetParent) return;
 			const box = btn.getBoundingClientRect();
 			const measured = parseFloat(getComputedStyle(btn, '::after').width);
 			const width = Number.isFinite(measured) && measured > 0
@@ -489,10 +492,23 @@
 			else if (right > window.innerWidth - TIP_GUTTER) dx = window.innerWidth - TIP_GUTTER - right;
 			btn.style.setProperty('--bd-tip-dx', dx.toFixed(1) + 'px');
 		}
-		for (const tip of document.querySelectorAll('.bd-tip')) {
+		const tips = [...document.querySelectorAll('.bd-tip')];
+		for (const tip of tips) {
 			tip.addEventListener('pointerenter', () => placeTip(tip));
 			tip.addEventListener('focus', () => placeTip(tip));
 		}
+		// Opening a tooltip is not the only thing that moves it: rotating a phone
+		// or resizing a window relays the tiles under a pointer that never leaves
+		// and re-enters, which would leave the shift measured against a layout
+		// that is gone. Coalesced to one pass per frame.
+		let tipFrame = 0;
+		window.addEventListener('resize', () => {
+			if (tipFrame) return;
+			tipFrame = requestAnimationFrame(() => {
+				tipFrame = 0;
+				tips.forEach(placeTip);
+			});
+		});
 
 		async function selectAgent(id) {
 			agentId = id;
