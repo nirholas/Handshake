@@ -133,6 +133,60 @@ test.describe('/play vehicles', () => {
 		}
 	});
 
+	test('ambient traffic drives the same car the fleet does', async ({ page }) => {
+		// The NPC lane is the other half of "the default car": whatever a player can
+		// take the wheel of should be what they watch drive past. AmbientLife builds
+		// its own stand-in first, so this asserts the upgrade actually lands, that
+		// the cars sit on the road (not sunk into it), and that each one spins its
+		// own four wheels.
+		const traffic = await page.evaluate(async () => {
+			const THREE = await window.__imp('/node_modules/three/build/three.module.js');
+			const { NavGraph } = await window.__imp('/src/game/npc/nav-graph.js');
+			const { AmbientLife } = await window.__imp('/src/game/npc/ambient-life.js');
+			const { hasVehicleModel, TRENCH_CAR_URL } = await window.__imp('/src/game/vehicle-model.js');
+
+			const scene = new THREE.Scene();
+			const life = new AmbientLife({ scene, nav: new NavGraph({ seed: 7 }), biome: { town: 'downtown' } });
+			// Give the shared model time to land, then run a few frames so the cars
+			// take their places on the ring road.
+			const deadline = Date.now() + 30000;
+			while (!hasVehicleModel(TRENCH_CAR_URL) && Date.now() < deadline) await new Promise((r) => setTimeout(r, 100));
+			await new Promise((r) => setTimeout(r, 2500));
+			for (let i = 0; i < 8; i++) life.update(1 / 60, { player: { x: 999, y: 0, z: 999 } });
+			// Park the wheels at zero roll before measuring: a rolling wheel's world
+			// AABB grows to its own diagonal, which reads as the car sinking into the
+			// road when it is only the measurement box that got bigger.
+			for (const v of life.vehicles) for (const w of v.wheels) w.rotation.x = 0;
+			scene.updateMatrixWorld(true);
+
+			const cars = life.vehicles.map((v) => {
+				const box = new THREE.Box3().setFromObject(v.group);
+				let lamps = 0;
+				v.group.traverse((n) => {
+					if (!n.isMesh) return;
+					for (const mat of Array.isArray(n.material) ? n.material : [n.material]) {
+						if (mat && /^stoplamp$/i.test(mat.name || '')) lamps++;
+					}
+				});
+				return { wheels: v.wheels.length, lowest: box.min.y, height: box.max.y - box.min.y, lamps, upgraded: !!v._model };
+			});
+			const out = { count: life.vehicles.length, cars };
+			life.dispose();
+			return out;
+		});
+
+		expect(traffic.count).toBeGreaterThan(0);
+		for (const car of traffic.cars) {
+			expect(car.upgraded, 'traffic car kept its stand-in').toBe(true);
+			expect(car.wheels).toBe(4);
+			expect(car.lamps).toBeGreaterThan(0);
+			// On the road surface, not floating over it or buried in it.
+			expect(car.lowest).toBeGreaterThan(-0.05);
+			expect(car.lowest).toBeLessThan(0.05);
+			expect(car.height).toBeCloseTo(1.31, 1);
+		}
+	});
+
 	test('two cars on one model keep their own brake lights', async ({ page }) => {
 		const result = await page.evaluate(async () => {
 			const { buildVehicleMesh } = await window.__imp('/src/game/vehicle-mesh.js');
