@@ -321,7 +321,13 @@ async function loadYourAvatars() {
 		// otherwise redirect to /login, breaking the anonymous create flow.
 		const res = await apiFetch('/api/avatars', { allowAnonymous: true });
 		if (!res.ok) return;
-		avatars = (await res.json()) ?? [];
+		// The endpoint answers { avatars, next_cursor }. This used to read the
+		// body as a bare array, so Array.isArray was false for every real
+		// response and the strip returned early every time: a signed-in visitor
+		// with a full library never saw one of their own avatars here. Accept the
+		// envelope, and still accept a bare array so an older API keeps working.
+		const body = await res.json();
+		avatars = Array.isArray(body) ? body : (body?.avatars ?? []);
 	} catch {
 		return; // network/auth issue — leave the strip hidden
 	}
