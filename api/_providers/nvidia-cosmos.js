@@ -388,7 +388,7 @@ export function createNvidiaCosmosProvider() {
 					// Only a retired route is worth stepping past; a key, quota, or
 					// gateway failure means the next rung would fail the same way.
 					if (err?.code !== 'lane_unavailable') throw err;
-					console.warn('[nvidia-cosmos] route retired, trying the next rung — %s', url);
+					console.warn('[nvidia-cosmos] route retired, trying the next rung: %s', url);
 					retiredErr = err;
 				}
 			}
@@ -440,6 +440,12 @@ export function createNvidiaCosmosProvider() {
 			}
 			if (res.status === 429) {
 				return { status: 'running', error: 'NVIDIA is rate limiting; will retry' };
+			}
+			if (res.status >= 400 && res.status < 500) {
+				// A 4xx other than the rate limit means NVCF rejected the handle itself
+				// (malformed or unknown request id). Reporting 'running' made the client
+				// poll a dead job for the full five-minute ceiling before giving up.
+				return { status: 'failed', error: 'NVCF rejected this request id' };
 			}
 			return { status: 'running', error: `NVIDIA Cosmos poll returned ${res.status}` };
 		},
