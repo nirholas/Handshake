@@ -146,6 +146,24 @@ export function simulateRunway(input = {}) {
 		const hourOfDay = (startHourOfDay + h) % 24;
 		let hourBudget = budgetAt(lamports, hourOfDay);
 
+		// A refusal mutates nothing: not the balance, not the day's meter. So the
+		// first refusal inside an hour decides every remaining attempt in that
+		// hour, and the rest of the loop can be settled in one step instead of one
+		// iteration each. This is an exact shortcut, not an approximation, and it
+		// is what keeps the starved case (where every attempt refuses, and the fee
+		// wallet under its floor right now is exactly that case) from costing a
+		// slider drag hundreds of milliseconds.
+		//
+		// Declared per hour rather than per attempt on purpose: a closure built
+		// inside the attempt loop doubled the cost of the admit path it was not
+		// even helping.
+		const batchAfter = (i) => {
+			const left = demandPerHour - i - 1;
+			const allowance = MAX_ATTEMPTS - attempts;
+			if (left > allowance) { truncated = true; return allowance; }
+			return left;
+		};
+
 		for (let i = 0; i < demandPerHour; i++) {
 			if (attempts >= MAX_ATTEMPTS) { truncated = true; break; }
 			attempts++;
@@ -156,11 +174,13 @@ export function simulateRunway(input = {}) {
 			// settle and lands just under it. That is production's comparison,
 			// reproduced rather than rounded away.
 			if (lamports < floorLamports) {
-				hourRefusedFloor++;
+				const batch = 1 + batchAfter(i);
+				hourRefusedFloor += batch;
+				attempts += batch - 1;
 				lastReason = `fee_wallet_below_floor:${lamports}<${floorLamports}`;
 				if (floorBreachHour === null) floorBreachHour = h;
 				if (firstRefusalHour === null) firstRefusalHour = h;
-				continue;
+				break;
 			}
 
 			// (1b) With a floor at or near zero the floor check stops binding and
@@ -168,11 +188,13 @@ export function simulateRunway(input = {}) {
 			// account does not hold. Same bucket as the floor (both are "the wallet
 			// is out of SOL"), distinct reason so the cause stays legible.
 			if (lamports < feeLamports) {
-				hourRefusedFloor++;
+				const batch = 1 + batchAfter(i);
+				hourRefusedFloor += batch;
+				attempts += batch - 1;
 				lastReason = `insufficient_lamports_for_fee:${lamports}<${feeLamports}`;
 				if (floorBreachHour === null) floorBreachHour = h;
 				if (firstRefusalHour === null) firstRefusalHour = h;
-				continue;
+				break;
 			}
 
 			// (2) Wallet fee governor, recomputed per settle from the live balance
@@ -184,10 +206,12 @@ export function simulateRunway(input = {}) {
 					spentTodayLamports: spentToday, budgetLamports, nextFeeLamports: feeLamports,
 				});
 				if (!verdict.ok) {
-					hourRefusedGovernor++;
+					const batch = 1 + batchAfter(i);
+					hourRefusedGovernor += batch;
+					attempts += batch - 1;
 					lastReason = verdict.reason;
 					if (firstRefusalHour === null) firstRefusalHour = h;
-					continue;
+					break;
 				}
 			}
 

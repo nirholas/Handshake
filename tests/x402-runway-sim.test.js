@@ -271,6 +271,31 @@ describe('simulateRunway — input hardening', () => {
 		expect(summary.admissionRate).toBe(0);
 	});
 
+	// The refusal path settles a whole hour in one step once the first attempt is
+	// refused (nothing a refusal touches can change the next attempt's outcome).
+	// These pin that the shortcut is exact: same attempt counts, same per-hour
+	// breakdown, same MAX_ATTEMPTS ceiling as counting one at a time.
+	it('accounts for every attempt in an hour that refuses from the first settle', () => {
+		const { summary, series } = simulateRunway({
+			startLamports: 0, floorLamports: 2_000_000, runwayDays: 3,
+			minBudgetLamports: 10_000_000, feeLamports: 5_000, demandPerHour: 137, hours: 5,
+		});
+		expect(summary.demanded).toBe(137 * 5);
+		expect(summary.refusedFloor).toBe(137 * 5);
+		expect(summary.admitted).toBe(0);
+		expect(series).toHaveLength(5);
+		for (const s of series) expect(s.refusedFloor).toBe(137);
+	});
+
+	it('still stops at MAX_ATTEMPTS when the refusal path is batched', () => {
+		const { summary } = simulateRunway({
+			startLamports: 0, floorLamports: 2_000_000, runwayDays: 3,
+			minBudgetLamports: 10_000_000, feeLamports: 5_000, demandPerHour: 200_000, hours: 24,
+		});
+		expect(summary.demanded).toBe(MAX_ATTEMPTS);
+		expect(summary.truncated).toBe(true);
+	});
+
 	it('never lets the balance go negative', () => {
 		const { summary } = simulateRunway({
 			startLamports: 12_000, floorLamports: 0, runwayDays: 0.5,

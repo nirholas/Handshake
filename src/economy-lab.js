@@ -94,14 +94,25 @@ function initTooltips() {
 	const tip = $('el-tip');
 	if (!tip) return;
 	let current = null;
+	// A tip opened by hover is transient; one opened by a click is pinned until
+	// the reader dismisses it. Without that distinction a click could never open
+	// anything: the pointer's own mouseenter opened the tip first, so the click
+	// behind it always read as "already open, close it", and on touch (which
+	// synthesizes the same enter) the tip flashed and vanished.
+	let pinned = null;
 
 	const close = () => {
 		if (!current) return;
 		current.setAttribute('aria-expanded', 'false');
 		current.removeAttribute('aria-describedby');
 		current = null;
+		pinned = null;
 		tip.dataset.open = 'false';
 		tip.hidden = true;
+	};
+
+	const closeTransient = (btn) => {
+		if (pinned !== btn) close();
 	};
 
 	const open = (btn) => {
@@ -111,7 +122,6 @@ function initTooltips() {
 		tip.textContent = text;
 		tip.hidden = false;
 		tip.dataset.open = 'true';
-		tip.id = 'el-tip';
 		btn.setAttribute('aria-expanded', 'true');
 		btn.setAttribute('aria-describedby', 'el-tip');
 
@@ -128,13 +138,13 @@ function initTooltips() {
 	for (const btn of document.querySelectorAll('.el-help')) {
 		btn.setAttribute('aria-expanded', 'false');
 		btn.addEventListener('mouseenter', () => open(btn));
-		btn.addEventListener('mouseleave', close);
+		btn.addEventListener('mouseleave', () => closeTransient(btn));
 		btn.addEventListener('focus', () => open(btn));
-		btn.addEventListener('blur', close);
+		btn.addEventListener('blur', () => closeTransient(btn));
 		btn.addEventListener('click', (e) => {
 			e.preventDefault();
-			if (current === btn) close();
-			else open(btn);
+			if (pinned === btn) close();
+			else { open(btn); pinned = btn; }
 		});
 	}
 	// Capture phase: site-wide scripts (nav, command palette) also listen for
@@ -814,11 +824,20 @@ function renderApply() {
 }
 
 // ── Observed panel ─────────────────────────────────────────────────────────
+// Built once from the seed. Everything in it is a measurement except the single
+// "Model, your config" cell, so rebuilding the whole panel (bars, examples and
+// all) on every slider frame was work that could only produce identical markup.
 function renderObserved(summary) {
 	const o = seed.observed;
 	const host = $('el-observed');
 	if (!o) {
 		host.innerHTML = '<div class="el-obs-card"><p class="el-empty">The facilitator ledger could not be read, so there are no observed outcomes to compare against.</p></div>';
+		return;
+	}
+
+	const modelled = $('el-obs-modelled');
+	if (modelled) {
+		modelled.textContent = `${fmtInt(summary.steadySettlesPerDay)}/day`;
 		return;
 	}
 
@@ -854,7 +873,7 @@ function renderObserved(summary) {
 			<ul class="el-compare">
 				<li><span>Settles landed (24h)</span><strong>${fmtInt(o.settled)}</strong></li>
 				<li><span>Model, live config</span><strong>${liveEquilibrium === null ? 'not read' : fmtInt(liveEquilibrium)}/day</strong></li>
-				<li><span>Model, your config</span><strong>${fmtInt(summary.steadySettlesPerDay)}/day</strong></li>
+				<li><span>Model, your config</span><strong id="el-obs-modelled">${fmtInt(summary.steadySettlesPerDay)}/day</strong></li>
 				<li><span>Capacity admission rate</span><strong>${fmtPct(o.capacity_admission_rate)}</strong></li>
 				<li><span>Demand arriving</span><strong>${fmtInt(o.demand_per_hour)}/hour</strong></li>
 				<li><span>Fee per settle</span><strong>${fmtInt(o.fee_lamports_observed)} lamports</strong></li>
@@ -935,6 +954,10 @@ function showLoading() {
 	$('el-retry').hidden = true;
 	$('el-stats').innerHTML = '<div class="el-stat el-skeleton" aria-hidden="true"></div>'.repeat(6);
 	$('el-live-note').hidden = true;
+	// Dropped rather than left standing: the observed panel is keyed off the
+	// seed, and its build-once path would otherwise keep the previous read's
+	// measurements alongside the new one's numbers.
+	$('el-observed').innerHTML = '';
 	setControlsEnabled(false);
 }
 
