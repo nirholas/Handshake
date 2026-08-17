@@ -815,9 +815,11 @@ async function fetchMarket(mintAddr) {
 		if (!r.ok) return null;
 		const body = await r.json();
 		const candles = Array.isArray(body?.data) ? body.data : [];
-		if (!candles.length) return null;
+		// An answer with no candles is a fact about the coin ("nothing has traded
+		// yet"); a failure is a fact about us. They get different copy.
+		if (!candles.length) return { empty: true };
 		const closes = candles.map((c) => Number(c.c)).filter(Number.isFinite);
-		if (!closes.length) return null;
+		if (!closes.length) return { empty: true };
 		const price = closes[closes.length - 1];
 		const first = closes[0];
 		const change = first > 0 ? (price - first) / first : null;
@@ -1039,11 +1041,13 @@ function gradLabel(s) {
 
 function applyMarket(m) {
 	const sparkSlot = document.getElementById('c3d-spark');
-	if (!m) {
-		// No candles for this mint (a brand-new coin, or the history provider is
-		// down). Say so once rather than pulsing a skeleton that never resolves.
+	if (!m || m.empty) {
+		// Replace the skeleton rather than pulsing forever. The next 60s refresh
+		// still overwrites this with a real sparkline once one exists.
 		if (sparkSlot?.querySelector('.c3d-spark-empty')) {
-			sparkSlot.innerHTML = '<p class="c3d-spark-none">No price history yet.</p>';
+			sparkSlot.innerHTML = `<p class="c3d-spark-none">${
+				m ? 'No price history yet.' : 'Price history unavailable.'
+			}</p>`;
 		}
 		return;
 	}

@@ -432,12 +432,13 @@ function selectNode(index, { fromKeyboard = false } = {}) {
 	$('c-panel-mcap').textContent = token.market_cap_usd ? formatUsd(token.market_cap_usd) : '…';
 	// Price is optional in the live feed. Hide the stat entirely rather than
 	// leaving a permanently empty tile next to the numbers that do arrive.
-	$('c-panel-price').textContent = token.price_usd ? formatPrice(token.price_usd) : '—';
+	$('c-panel-price').textContent = token.price_usd ? formatPrice(token.price_usd) : '…';
 	$('c-stat-price').hidden = !token.price_usd;
 	$('c-panel-rank').textContent = `#${token.rank}`;
 
 	const neigh = nearestNeighbors(index, 3);
-	$('c-panel-neighbors').textContent = neigh.length ? neigh.map((x) => x.token.symbol).join(', ') : '—';
+	// No neighbor list until the embedding vectors land; say "not yet", not "none".
+	$('c-panel-neighbors').textContent = neigh.length ? neigh.map((x) => x.token.symbol).join(', ') : '…';
 
 	const links = $('c-panel-links');
 	links.innerHTML = '';

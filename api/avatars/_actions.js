@@ -3,7 +3,7 @@
 
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
 import { presignUpload, headObject, r2, publicUrl, putObject } from '../_lib/r2.js';
-import { storageKeyFor, enforceQuotas, searchPublicAvatars, stripOwnerFor } from '../_lib/avatars.js';
+import { storageKeyFor, enforceQuotas, searchPublicAvatars, stripOwnerFor, assertAvatarSlotAvailable, isPlanLimitError } from '../_lib/avatars.js';
 import { listAvatars } from '../_lib/avatars.js';
 import { env } from '../_lib/env.js';
 import { sql } from '../_lib/db.js';
@@ -519,6 +519,32 @@ const handleRegenerate = wrap(async (req, res) => {
 
 // ── regenerate-status ─────────────────────────────────────────────────────────
 
+// Copy shown to a user whose library is full when a job reaches materialization.
+// handleReconstruct pre-flights the same quota, so this only fires on the race
+// (another avatar landed while the mesh was generating), but a job that loses
+// that race must still end somewhere the user can act on.
+const PLAN_LIMIT_JOB_ERROR =
+	'Your avatar library is full on this plan. Delete an avatar or upgrade, then build this one again.';
+
+/**
+ * A materialize stage threw. If the cause was a plan-limit refusal, terminate
+ * the job as failed with caller-facing copy rather than leaving it at 'done'
+ * with no avatar, that state is invisible to every recovery cron (they filter
+ * on queued/running) and re-runs the same doomed materialization on every poll,
+ * so the browser retries forever against a generic engine-fault message. Marked
+ * error_kind 'input' so the wire relays the copy verbatim.
+ * @returns {Promise<any|null>} the updated job row, or null if err was not a plan limit
+ */
+async function failJobOnPlanLimit({ userId, jobId, job, err }) {
+	if (!isPlanLimitError(err)) return null;
+	await sql`
+		update avatar_regen_jobs
+		set status = 'failed', error = ${PLAN_LIMIT_JOB_ERROR}, error_kind = 'input', updated_at = now()
+		where job_id = ${jobId} and user_id = ${userId}
+	`;
+	return { ...job, status: 'failed', error: PLAN_LIMIT_JOB_ERROR, error_kind: 'input' };
+}
+
 const handleRegenerateStatus = wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET'])) return;
@@ -624,7 +650,10 @@ const handleRegenerateStatus = wrap(async (req, res) => {
 			const result = await pollRiggingStage({ userId, jobId, job });
 			job = { ...job, status: result.status, result_avatar_id: result.resultAvatarId ?? job.result_avatar_id };
 		} catch (err) {
-			job = { ...job, error: job.error || `rig stage failed: ${err?.message}` };
+			job = (await failJobOnPlanLimit({ userId, jobId, job, err })) ?? {
+				...job,
+				error: job.error || `rig stage failed: ${err?.message}`,
+			};
 		}
 	}
 
@@ -643,7 +672,10 @@ const handleRegenerateStatus = wrap(async (req, res) => {
 			const result = await finalizeReconstructStage({ userId, jobId, job, glbUrl: job.result_glb_url });
 			job = { ...job, status: result.status, result_avatar_id: result.resultAvatarId ?? job.result_avatar_id };
 		} catch (err) {
-			job = { ...job, error: job.error || `materialize failed: ${err?.message}` };
+			job = (await failJobOnPlanLimit({ userId, jobId, job, err })) ?? {
+				...job,
+				error: job.error || `materialize failed: ${err?.message}`,
+			};
 		}
 	}
 
@@ -667,7 +699,10 @@ const handleRegenerateStatus = wrap(async (req, res) => {
 			const result = await finalizeAutoRigStage({ userId, jobId, job, glbUrl: job.result_glb_url });
 			job = { ...job, status: result.status, result_avatar_id: result.resultAvatarId ?? job.result_avatar_id };
 		} catch (err) {
-			job = { ...job, error: job.error || `auto-rig finalize failed: ${err?.message}` };
+			job = (await failJobOnPlanLimit({ userId, jobId, job, err })) ?? {
+				...job,
+				error: job.error || `auto-rig finalize failed: ${err?.message}`,
+			};
 		}
 	}
 
@@ -685,6 +720,11 @@ const handleRegenerateStatus = wrap(async (req, res) => {
 		? String(job.error).slice(0, 300)
 		: sanitizeJobError(job.error);
 	if (maskedError) response.error = maskedError;
+	// Tell the client WHICH kind of copy it just received. Without this the
+	// browser has to guess, and its keyword-matching fallback rewrites the
+	// caller-facing text we deliberately relayed verbatim into a generic
+	// "try a clearer photo" that is wrong for a quota or a plan refusal.
+	if (job.error_kind === 'input' && maskedError) response.errorKind = 'input';
 	if (job.provider) response.provider = job.provider;
 	return json(res, 200, response);
 });
@@ -1076,6 +1116,28 @@ const handleReconstruct = wrap(async (req, res) => {
 	const rl = await limits.upload(userId);
 	if (!rl.success) return rateLimited(res, rl);
 	const body = parse(reconstructSchema, await readJson(req));
+
+	// A library that is already at its plan ceiling cannot accept the avatar this
+	// job would produce, and nothing downstream discovers that until
+	// materialization, about ninety seconds of GPU reconstruction (plus a Flux
+	// reference image on the prompt lane) after the user pressed the button. The
+	// job then strands at 'done' with no avatar and the browser shows the generic
+	// engine-fault copy, which is both a lie and a dead end: every retry burns the
+	// same spend and lands in the same place. Refuse here instead, with the 402
+	// the client already renders as "Avatar quota reached".
+	try {
+		await assertAvatarSlotAvailable(userId);
+	} catch (err) {
+		if (isPlanLimitError(err)) {
+			return error(
+				res,
+				402,
+				'plan_limit',
+				'Your avatar library is full on this plan. Delete an avatar or upgrade to build another.',
+			);
+		}
+		throw err;
+	}
 
 	// ── Provider resolution ──────────────────────────────────────────────────
 	// Build the ordered list of providers to try. Every configured platform

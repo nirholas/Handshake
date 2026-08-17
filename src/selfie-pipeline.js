@@ -29,6 +29,8 @@ const JPEG_QUALITY = 0.88;
 const POLL_INTERVAL_MS = 3000;
 const POLL_TIMEOUT_MS = 8 * 60 * 1000;
 const RATE_LIMIT_COOLDOWN_MS = 60_000;
+/** Extra polls to allow a 'done' job whose avatar has not materialized yet. */
+const MATERIALIZE_RETRY_POLLS = 3;
 
 // BYOK key session storage keys — readable by the page to pre-populate the
 // key entry form and by the pipeline to attach the key to submit requests.
@@ -279,6 +281,12 @@ async function pollUntilDone(jobId) {
 	const deadline = Date.now() + POLL_TIMEOUT_MS;
 	let attempt = 0;
 	let consecutiveErrors = 0;
+	// A 'done' job with no avatar id means the server's materialize stage threw
+	// after the mesh was already generated. That stage re-runs on every poll, so
+	// a transient (a storage blip, a lock) clears itself if we look again instead
+	// of failing the user out of a reconstruction they already waited through.
+	// Bounded: a deterministic failure must not spin until the poll deadline.
+	let unmaterializedPolls = 0;
 	const url = `${STATUS_ENDPOINT}?jobId=${encodeURIComponent(jobId)}`;
 
 	while (Date.now() < deadline) {
@@ -324,11 +332,22 @@ async function pollUntilDone(jobId) {
 			detail: { label: statusLabel(job.status, attempt, elapsed), attempt },
 		}));
 
-		if (job.status === 'done') return job;
+		if (job.status === 'done') {
+			if (job.resultAvatarId) return job;
+			unmaterializedPolls += 1;
+			if (unmaterializedPolls <= MATERIALIZE_RETRY_POLLS) continue;
+			return job;
+		}
 		if (job.status === 'failed') {
+			// errorKind 'input' means the API already vetted this string as
+			// caller-facing copy (a plan refusal, a worker's "no face detected").
+			// Running it back through friendlyJobError's keyword match would
+			// overwrite an exact reason with a guess, "your library is full"
+			// becomes "try again with a clearer photo", which sends the user off
+			// to retake a photo that was never the problem.
 			throw withMessage(
 				new Error(job.error || 'reconstruct failed'),
-				friendlyJobError(job.error),
+				job.errorKind === 'input' && job.error ? job.error : friendlyJobError(job.error),
 				inferFailingSlot(job.error),
 			);
 		}
