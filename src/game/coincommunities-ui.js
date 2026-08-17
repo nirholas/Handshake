@@ -1219,11 +1219,122 @@ export class CommunityUI {
 			return;
 		}
 		if (featured) this.grid.appendChild(this._coinCard(featured, true));
-		for (const c of list) this.grid.appendChild(this._coinCard(c, false));
+		for (const c of this._sortCoins(list)) this.grid.appendChild(this._coinCard(c, false));
+		// Entrance: cards fade up in reading order, capped so a 50-card grid does
+		// not crawl in. The delay is a custom property the stylesheet reads, and
+		// the whole animation is off under prefers-reduced-motion.
+		[...this.grid.children].forEach((card, i) => {
+			card.style.setProperty('--cc-in-delay', `${Math.min(i * 22, 320)}ms`);
+		});
 		// Searching beyond the trending grid while results are already showing.
 		if (this.searching) this.grid.appendChild(el('div', { class: 'cc-search-more' }, [
 			el('span', { class: 'cc-spinner' }), document.createTextNode('Searching all of pump.fun…'),
 		]));
+	}
+
+	// The hero counters and the result count over the grid. Only measured values
+	// land here: the market-cap total sums the coins actually on screen, and the
+	// headcount stat stays hidden until a real population read has arrived.
+	_paintStats(list, featured) {
+		const shown = list.length + (featured ? 1 : 0);
+		const cap = list.reduce((sum, c) => sum + (Number(c.marketCap) || 0), 0) + (Number(featured?.marketCap) || 0);
+		const q = this.searchInput.value.trim();
+		this.feedCount.textContent = shown ? `${shown} ${shown === 1 ? 'world' : 'worlds'}${q ? ' matching' : ''}` : '';
+		countUp(this.statWorlds, Number(this.statWorlds.dataset.v) || 0, shown, { format: (n) => String(Math.round(n)) });
+		this.statWorlds.dataset.v = String(shown);
+		countUp(this.statCap, Number(this.statCap.dataset.v) || 0, cap, { format: (n) => fmtMc(n) || '$0' });
+		this.statCap.dataset.v = String(cap);
+		if (this.popTotal !== null) {
+			this.statPeopleWrap.hidden = false;
+			countUp(this.statPeople, Number(this.statPeople.dataset.v) || 0, this.popTotal, { format: (n) => String(Math.round(n)) });
+			this.statPeople.dataset.v = String(this.popTotal);
+		}
+	}
+
+	// ------------------------------------------------------- live headcounts
+	// Poll the matchmaker-backed population endpoint and paint the result on the
+	// cards in place, without rebuilding the grid (a rebuild would drop hover and
+	// keyboard focus every 20 seconds). A failed or unavailable read leaves the
+	// last real numbers alone: the count is either measured or absent.
+	_startPopulation() {
+		this._readPopulation();
+		this._popTimer = setInterval(() => {
+			if (document.hidden || this.lobby.hidden) return;
+			this._readPopulation();
+		}, POPULATION_POLL_MS);
+		// A tab that comes back after minutes away should not show a stale count
+		// until the next tick.
+		document.addEventListener('visibilitychange', () => {
+			if (!document.hidden && !this.lobby.hidden) this._readPopulation();
+		});
+	}
+
+	async _readPopulation() {
+		if (this._popBusy) return;
+		this._popBusy = true;
+		try {
+			const r = await fetch(POPULATION_URL, { headers: { accept: 'application/json' } });
+			if (!r.ok) throw new Error('HTTP ' + r.status);
+			const body = await r.json();
+			if (body?.ok !== true) return; // multiplayer server down: keep what we had
+			this.popTotal = Math.max(0, Math.floor(Number(body.players) || 0));
+			this.popByCoin = body.byCoin && typeof body.byCoin === 'object' ? body.byCoin : null;
+			this._paintPopulation();
+		} catch (err) {
+			log.info('[coincommunities] population read failed:', err?.message);
+		} finally {
+			this._popBusy = false;
+		}
+	}
+
+	_paintPopulation() {
+		if (this.popTotal !== null && this.statPeopleWrap) {
+			this.statPeopleWrap.hidden = false;
+			countUp(this.statPeople, Number(this.statPeople.dataset.v) || 0, this.popTotal, { format: (n) => String(Math.round(n)) });
+			this.statPeople.dataset.v = String(this.popTotal);
+		}
+		for (const card of this.grid.querySelectorAll('.cc-card[data-mint]')) {
+			const pill = card.querySelector('.cc-card-pop');
+			if (!pill) continue;
+			const n = this._popFor(card.dataset.mint);
+			pill.hidden = !n;
+			if (n) {
+				pill.querySelector('.cc-card-pop-n').textContent = String(n);
+				pill.querySelector('.cc-card-pop-l').textContent = n === 1 ? 'person inside' : 'people inside';
+			}
+		}
+		// "Most people" is an ordering over numbers that just changed.
+		if (this.sort === 'people') this._renderGrid();
+	}
+
+	// ------------------------------------------------------- coin enrichment
+	// Second read of the same trending feed for the fields the thin projection
+	// drops (launch time, replies, bonding-curve completion). Best effort by
+	// design: on failure the cards keep exactly the data they already had.
+	async _enrichCoins() {
+		if (this._enrichDone || this._enrichBusy) return;
+		this._enrichBusy = true;
+		try {
+			const r = await fetch(ENRICH_URL, { headers: { accept: 'application/json' } });
+			if (!r.ok) throw new Error('HTTP ' + r.status);
+			const body = await r.json();
+			const rows = Array.isArray(body) ? body : body?.data || [];
+			for (const row of rows) {
+				const mint = row?.mint || row?.address;
+				if (!mint) continue;
+				this.enriched.set(mint, {
+					createdAt: Number(row.created_timestamp) || 0,
+					replies: Math.max(0, Math.floor(Number(row.reply_count) || 0)),
+					graduated: row.complete === true,
+				});
+			}
+			this._enrichDone = this.enriched.size > 0;
+			if (this._enrichDone) this._renderGrid();
+		} catch (err) {
+			log.info('[coincommunities] coin enrichment skipped:', err?.message);
+		} finally {
+			this._enrichBusy = false;
+		}
 	}
 
 	// Build one lobby card. The featured (official) town gets a distinct frame, an
@@ -1250,9 +1361,25 @@ export class CommunityUI {
 		// the lobby's primary action, and a bare div with onclick left it
 		// unreachable by Tab and invisible to screen readers.
 		const cardName = c.name || (c.symbol ? '$' + c.symbol : 'this coin');
+		const extra = this.enriched.get(c.mint);
+		const age = fmtAge(extra?.createdAt);
+		const fresh = !featured && extra?.createdAt > 0 && Date.now() - extra.createdAt < NEW_COIN_MS;
+		// Live headcount, painted here on first render and updated in place by
+		// _paintPopulation on every poll. Hidden while it reads zero: an empty
+		// world is the normal state and "0 people inside" is discouraging noise.
+		const here = this._popFor(c.mint);
+		const popPill = el('div', { class: 'cc-card-pop', hidden: !here }, [
+			el('span', { class: 'cc-card-pop-dot', 'aria-hidden': 'true' }),
+			el('strong', { class: 'cc-card-pop-n', text: String(here || 0) }),
+			el('span', { class: 'cc-card-pop-l', text: here === 1 ? 'person inside' : 'people inside' }),
+		]);
+		// Whatever the artwork does, the card keeps an identity mark: the monogram
+		// sits under the background image, so a dead IPFS gateway leaves the coin's
+		// initial rather than an empty grey box.
+		const mono = el('span', { class: 'cc-card-mono', 'aria-hidden': 'true', text: (c.symbol || c.name || '?').replace(/^\$/, '').charAt(0).toUpperCase() });
 		return el('div', {
 			class: 'cc-card' + (featured ? ' cc-card-featured' : ''),
-			role: 'button', tabindex: '0',
+			role: 'button', tabindex: '0', 'data-mint': c.mint || '',
 			'aria-label': `Enter the ${cardName} community world`,
 			onclick: () => this.h.onEnter(c, ''),
 			onkeydown: (e) => {
@@ -1264,16 +1391,27 @@ export class CommunityUI {
 			// so anchoring there stranded the Holders badge in the middle of the
 			// card, floating over the seam. Hang them off the card instead, which
 			// is also position:relative, so they land on its real top corners.
-			el('div', { class: 'cc-card-img', style: cssBgImage(c.image) }, featured ? [] : [liveBadge, holdersBadge]),
+			el('div', { class: 'cc-card-img', style: cssBgImage(c.image) }, featured ? [mono] : [mono, liveBadge, holdersBadge, popPill]),
 			el('div', { class: 'cc-card-body' }, [
 				el('div', { class: 'cc-card-name', text: c.name || 'Unnamed coin' }),
 				el('div', { class: 'cc-card-meta' }, [
 					el('span', { class: 'cc-card-sym', text: c.symbol ? '$' + c.symbol : '' }),
 					mc ? el('span', { text: mc + ' mcap' }) : null,
+					age ? el('span', { class: 'cc-card-age', text: age }) : null,
 				]),
+				// Signals worth one glance each, and only when they are true of this
+				// coin: a launch inside the last day, a completed bonding curve, and
+				// how much the coin's own board is talking.
+				(fresh || extra?.graduated || extra?.replies)
+					? el('div', { class: 'cc-card-tags' }, [
+						fresh ? el('span', { class: 'cc-tag cc-tag-new', title: 'Launched in the last 24 hours', text: 'NEW' }) : null,
+						extra?.graduated ? el('span', { class: 'cc-tag', title: 'Bonding curve complete, trading on a DEX', text: 'Graduated' }) : null,
+						extra?.replies ? el('span', { class: 'cc-tag cc-tag-quiet', title: `${extra.replies} replies on the coin's pump.fun board`, text: `${fmtCompact(extra.replies)} replies` }) : null,
+					])
+					: null,
 				el('div', { class: 'cc-card-cta', text: featured ? 'Enter home town →' : 'Enter community →' }),
 			]),
-			...(featured ? [liveBadge, holdersBadge] : []),
+			...(featured ? [liveBadge, holdersBadge, popPill] : []),
 		]);
 	}
 
