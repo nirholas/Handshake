@@ -119,7 +119,7 @@
 		var a = document.createElement('a');
 		a.className = 'brand-mark-chip';
 		a.href = '/';
-		a.setAttribute('aria-label', 'three.ws — home');
+		a.setAttribute('aria-label', 'three.ws home');
 		a.innerHTML =
 			'<img class="brand-mark" src="/three.svg" alt="three.ws" width="24" height="24" />';
 		document.body.appendChild(a);

@@ -7,6 +7,15 @@
 
 * { box-sizing: border-box; }
 
+/* Auth pages paint themselves near-black, where the UA default focus ring
+   (a 1px near-black outline) is invisible. Text inputs already draw their own
+   lit border on focus, so they are excluded; everything else keyboard users
+   can reach gets an explicit, high-contrast ring in the brand accent. */
+:where(a, button, [tabindex]):focus-visible {
+	outline: 2px solid #6e8bff;
+	outline-offset: 3px;
+}
+
 .header-logo {
 	width: 14px;
 	height: 14px;
