@@ -2458,12 +2458,25 @@ const LB_EMPTY_COPY = {
 let lbWindow = 'day';
 let lbTimer = null;
 let lbInflight = false;
+let lbRequestSeq = 0;
 
-async function fetchLeaderboard() {
-	if (!lbRowsEl || lbInflight) return;
+// `force` is the tab switch: a visitor picking a window must always get that
+// window's request, even with a poll already in flight.
+async function fetchLeaderboard({ force = false } = {}) {
+	if (!lbRowsEl) return;
+	if (lbInflight && !force) return;
+
+	// Stamp every request with the window it asked for and a sequence number. The
+	// aggregate behind this endpoint takes seconds on the wider windows, so a
+	// visitor switching tabs mid-flight would otherwise watch the PREVIOUS
+	// window's rows land under the tab they just picked. A response paints only
+	// while it is still the newest request and still the selected window.
+	const seq = ++lbRequestSeq;
+	const requested = lbWindow;
+	const isStale = () => seq !== lbRequestSeq || requested !== lbWindow;
 	lbInflight = true;
 	try {
-		const res = await fetch(`/api/club/leaderboard?window=${encodeURIComponent(lbWindow)}`, {
+		const res = await fetch(`/api/club/leaderboard?window=${encodeURIComponent(requested)}`, {
 			headers: { accept: 'application/json' },
 			cache: 'no-store',
 		});
@@ -2475,18 +2488,24 @@ async function fetchLeaderboard() {
 			throw e;
 		}
 		const body = await res.json();
-		renderLeaderboard(body.rows || []);
+		if (isStale()) return;
+		renderLeaderboard(body.rows || [], requested);
 	} catch (err) {
 		log.error('[club] leaderboard fetch failed', err);
+		// A superseded request's failure is not this window's failure; letting it
+		// paint would put an error wall over a board that is loading fine.
+		if (isStale()) return;
 		// A rejected fetch (offline / DNS / CORS) surfaces as a TypeError.
 		const kind = err?.kind || (err instanceof TypeError ? 'network' : 'down');
-		// Don't blow away an already-rendered table on a transient hiccup —
+		// Don't blow away an already-rendered table on a transient hiccup:
 		// stale-but-real data beats an error wall.
 		if (!lbRowsEl.querySelector('.club-lb-row')) {
 			renderLeaderboardError(kind);
 		}
 	} finally {
-		lbInflight = false;
+		// Only the newest request owns the flag; an overtaken one must not clear it
+		// and let the 30s poll stack a second aggregate on top of the live request.
+		if (seq === lbRequestSeq) lbInflight = false;
 	}
 }
 
@@ -2518,7 +2537,9 @@ function renderLeaderboardError(kind) {
 	});
 }
 
-function renderLeaderboard(rows) {
+// `windowKey` is the window these rows were fetched for, not whatever is
+// selected now, so the empty copy can never describe a different window's data.
+function renderLeaderboard(rows, windowKey = lbWindow) {
 	if (!lbRowsEl) return;
 
 	// club_dancer_wallets is a payout registry, not tonight's lineup: it holds a
@@ -2532,7 +2553,7 @@ function renderLeaderboard(rows) {
 		|| Number(row.total_atomics || 0) > 0
 	));
 	if (!ranked.some((row) => Number(row.total_atomics || 0) > 0)) {
-		lbRowsEl.innerHTML = `<div class="club-lb-empty">${LB_EMPTY_COPY[lbWindow] || LB_EMPTY_COPY.all}</div>`;
+		lbRowsEl.innerHTML = `<div class="club-lb-empty">${LB_EMPTY_COPY[windowKey] || LB_EMPTY_COPY.all}</div>`;
 		return;
 	}
 
