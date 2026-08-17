@@ -569,6 +569,7 @@ function setStatus(text, opts = {}) {
 		submitBtn.classList.remove('ready');
 	}
 	if (opts.error) {
+		const isNew = !errorBanner;
 		if (!errorBanner) {
 			errorBanner = document.createElement('p');
 			errorBanner.className = 'unsupported show';
@@ -579,6 +580,19 @@ function setStatus(text, opts = {}) {
 			bar?.parentNode?.insertBefore(errorBanner, bar);
 		}
 		errorBanner.textContent = text;
+		// The submit bar is sticky, so it is reachable from anywhere on the page —
+		// but the banner lands at the bar's NATURAL position, near the bottom of a
+		// phone-height page. Tapping the button from higher up therefore put the
+		// only explanation off-screen while resetSubmit restored the button to its
+		// idle label, which reads as "nothing happened". Bring the banner to the
+		// user. Only on first appearance: the rate-limit cooldown rewrites this
+		// text every second and must not fight their scrolling.
+		if (isNew) {
+			errorBanner.scrollIntoView({
+				block: 'center',
+				behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+			});
+		}
 	} else if (errorBanner) {
 		errorBanner.remove();
 		errorBanner = null;
