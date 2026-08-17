@@ -59,6 +59,12 @@ function formatBytes(n) {
 // nothing to operate. Dropping the attribute leaves auto-rotate (which does not
 // need controls) and hands the click straight to the viewer link. The `disable-*`
 // attributes went with it; they only ever qualified camera-controls.
+//
+// The thumbnail is slotted in as a real <img> rather than passed as `poster=`.
+// model-viewer's built-in poster is a <button> in its shadow DOM, so the default
+// gave every card a second tab stop announcing the same character name as the
+// link that wraps it. A slotted poster replaces that button, and the image gets
+// native lazy loading and off-thread decoding on the way.
 function renderCard(a) {
 	const glbUrl = a.url || '';
 	const previewUrl = glbUrl ? `/app#model=${encodeURIComponent(glbUrl)}` : '#';
@@ -83,8 +89,7 @@ function renderCard(a) {
 				environment-image="neutral"
 				shadow-intensity="0"
 				exposure="1"
-				${thumb ? `poster="${escapeAttr(thumb)}"` : ''}
-			></model-viewer>
+			>${thumb ? `<img slot="poster" class="ch-card-poster" src="${escapeAttr(thumb)}" alt="" loading="lazy" decoding="async" />` : ''}</model-viewer>
 			<span class="ch-card-pill">Rigged</span>
 			<span class="ch-card-play" aria-hidden="true">▶</span>
 		</a>

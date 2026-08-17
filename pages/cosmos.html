@@ -148,6 +148,13 @@
 				background: var(--cz-danger);
 				box-shadow: 0 0 10px var(--cz-danger);
 			}
+			/* Idle: nothing has been asked of the lane yet, so the dot claims no
+			   health. It turns green on the first accepted job and red when the
+			   lane reports itself down. */
+			.cz-badge.is-idle .dot {
+				background: var(--cz-dim);
+				box-shadow: none;
+			}
 
 			/* ── Layout ───────────────────────────────────────────────────── */
 			.cz-wrap {
@@ -161,6 +168,20 @@
 			@media (max-width: 900px) {
 				.cz-wrap {
 					grid-template-columns: 1fr;
+				}
+				/* min-height plus aspect-ratio forces a WIDTH: 420px at 16/10 is a
+				   672px stage, which overflowed its column (and clipped the avatar)
+				   on every phone. Below the two-column breakpoint the ratio alone
+				   sizes the stage from the width that is actually available. */
+				.cz-stage {
+					min-height: 0;
+				}
+			}
+			@media (max-width: 560px) {
+				/* A 16/10 letterbox on a phone leaves the avatar a sliver; go
+				   portrait so the character still has vertical room to stand in. */
+				.cz-stage {
+					aspect-ratio: 4 / 5;
 				}
 			}
 
@@ -672,7 +693,7 @@
 				<b data-i18n="cosmos.cosmos_living_worlds">Cosmos · Living Worlds</b>
 				<span data-i18n="cosmos.nvidia_world_models_type_a_world_watch">NVIDIA world models — type a world, watch your avatar live in it</span>
 			</div>
-			<div class="cz-badge" id="cz-status-badge" title="Cosmos lane status">
+			<div class="cz-badge is-idle" id="cz-status-badge" title="Cosmos lane status">
 				<span class="dot"></span>
 				<span id="cz-status-text" data-i18n="cosmos.nvidia_cosmos">NVIDIA Cosmos</span>
 			</div>

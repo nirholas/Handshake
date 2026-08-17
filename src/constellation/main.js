@@ -452,22 +452,43 @@ function formatPrice(p) {
 	return `$${p.toExponential(2)}`;
 }
 function closePanel() {
+	if (!panel.classList.contains('open')) return;
 	panel.classList.remove('open');
 	panel.setAttribute('aria-hidden', 'true');
+	// The panel is only translated off-screen, so without `inert` its close
+	// button and links stay in the tab order while the panel is invisible.
+	panel.setAttribute('inert', '');
 	if (selectedNode) { const n = selectedNode; selectedNode = null; n.glow.scale.setScalar(glowScaleFor(n)); }
 	if (analysisAbort) { analysisAbort.abort(); analysisAbort = null; }
+	if (returnFocusToCanvas) { returnFocusToCanvas = false; canvas.focus(); }
+}
+
+// Reset the "Analysis by …" byline to the lane we are about to ask for. A
+// previous star's fallback attribution must not carry over to the next one.
+function resetAnalysisByline() {
+	$('c-analysis-by').innerHTML = 'Analysis by <strong>IBM Granite</strong>&nbsp;on watsonx.ai';
 }
 
 async function runGraniteAnalysis(token, neighbors) {
 	const out = $('c-analysis');
 	const meta = $('c-analysis-meta');
-	out.innerHTML = '<span class="cursor"></span>';
+	resetAnalysisByline();
 	meta.textContent = '';
 	if (analysisAbort) analysisAbort.abort();
 	analysisAbort = new AbortController();
 
+	// Signed-out visitors cannot reach any /api/brain/chat model that runs on the
+	// server's billed keys, so say that up front with a way through rather than
+	// firing a request that can only come back 401.
+	if (!signedIn) {
+		out.innerHTML = graniteUnavailableNotice('unauthorized');
+		return;
+	}
+
+	out.innerHTML = '<span class="cursor"></span>';
+
 	const neighborLine = neighbors.length
-		? ` Its closest neighbors in Granite embedding space are ${neighbors.map((n) => `${n.token.name} (${n.token.symbol})`).join(', ')}.`
+		? ` Its closest neighbors in the embedding space that lays out this galaxy are ${neighbors.map((n) => `${n.token.name} (${n.token.symbol})`).join(', ')}.`
 		: '';
 	const system = 'You are a concise, neutral crypto market analyst. You never give financial advice or price predictions. You explain what a token\'s name and ticker suggest, the typical risks of similar Solana meme/utility tokens, and concrete things a careful trader should verify (liquidity, holder concentration, mint authority, socials).';
 	const userMsg = `Briefly analyze the Solana token "${token.name}" (ticker ${token.symbol}), currently trending at rank #${token.rank}.${neighborLine} In ~110 words: what the name/ticker signals about its theme, the main risks, and 3 things to check before touching it. End with one line: "Not financial advice."`;
@@ -497,6 +518,9 @@ async function runGraniteAnalysis(token, neighbors) {
 		const decoder = new TextDecoder();
 		let buf = '';
 		let usage = null;
+		let servedLabel = null;   // from the `meta` event
+		let servedNetwork = null;
+		let fallbackRoute = null; // set when watsonx Granite could not serve the turn
 		while (true) {
 			const { value, done } = await reader.read();
 			if (done) break;
@@ -510,9 +534,19 @@ async function runGraniteAnalysis(token, neighbors) {
 					else if (line.startsWith('data:')) data += line.slice(5).trim();
 				}
 				if (!data) continue;
-				if (evt === 'error') { out.innerHTML = `<div class="c-notice">IBM Granite returned an error: ${escapeHtml(safeMsg(data))}</div>`; return; }
+				if (evt === 'error') { out.innerHTML = `<div class="c-notice">The analysis service returned an error: ${escapeHtml(safeMsg(data))}</div>`; return; }
 				if (evt === 'done') { try { usage = JSON.parse(data).usage; } catch { /* ignore */ } continue; }
-				if (evt === 'meta' || evt === 'first') continue;
+				if (evt === 'meta') {
+					try { const m = JSON.parse(data); servedLabel = m.label; servedNetwork = m.network; } catch { /* ignore */ }
+					continue;
+				}
+				// The server announces every route change before it streams a token.
+				// The LAST one named is the route that actually produced this text.
+				if (evt === 'fallback') {
+					try { fallbackRoute = JSON.parse(data).route; } catch { /* ignore */ }
+					continue;
+				}
+				if (evt === 'first') continue;
 				if (data === '[DONE]') continue;
 				// default event = streamed text chunk (JSON-encoded string)
 				try { text += JSON.parse(data); } catch { text += data; }
@@ -521,23 +555,31 @@ async function runGraniteAnalysis(token, neighbors) {
 			}
 		}
 		out.textContent = text || 'No response.';
-		meta.textContent = usage?.totalTokens
-			? `IBM Granite 3.8B · watsonx.ai · ${usage.totalTokens} tokens`
-			: 'IBM Granite 3.8B · watsonx.ai';
+		const tokenCount = usage?.totalTokens ? ` · ${usage.totalTokens} tokens` : '';
+		if (fallbackRoute) {
+			// Not Granite. Say so where the reader is looking, not only in the meta line.
+			$('c-analysis-by').innerHTML = `Analysis by <strong>${escapeHtml(fallbackRoute)}</strong>`;
+			meta.textContent = `IBM Granite on watsonx.ai could not serve this request · answered by ${fallbackRoute}${tokenCount}`;
+		} else {
+			meta.textContent = `${servedLabel || 'IBM Granite 3.8B'} · ${servedNetwork || 'IBM watsonx.ai'}${tokenCount}`;
+		}
 	} catch (e) {
 		if (e.name === 'AbortError') return;
-		out.innerHTML = `<div class="c-notice">Could not reach the analysis service: ${escapeHtml(e.message)}</div>`;
+		out.innerHTML = `<div class="c-notice">Could not reach the analysis service: ${escapeHtml(e.message)}. Pick the star again to retry.</div>`;
 	}
 }
 
 function graniteUnavailableNotice(code) {
+	if (code === 'unauthorized') {
+		return `<div class="c-notice">Live analysis runs on the platform's own model keys, so it needs an account. <a href="${SIGN_IN_HREF}">Sign in</a> or <a href="${REGISTER_HREF}">create a free account</a> and pick this star again. The galaxy, its live prices and its semantic layout all stay open to everyone.</div>`;
+	}
 	if (code === 'provider_not_configured') {
 		return '<div class="c-notice">IBM Granite isn\'t enabled on this deployment yet — set <code>WATSONX_API_KEY</code> to turn on live analysis. See the <a href="/galaxy">IBM Granite demos</a>.</div>';
 	}
 	if (code === 'rate_limited') {
-		return '<div class="c-notice">Rate limit reached — wait a moment and click again.</div>';
+		return '<div class="c-notice">Rate limit reached, wait a moment and pick the star again.</div>';
 	}
-	return `<div class="c-notice">Analysis unavailable (${escapeHtml(code)}).</div>`;
+	return `<div class="c-notice">Analysis unavailable (${escapeHtml(code)}). Pick the star again to retry.</div>`;
 }
 function safeMsg(data) { try { return JSON.parse(data).message || data; } catch { return data; } }
 
@@ -550,6 +592,12 @@ function animate() {
 		node.glow.position.copy(node.mesh.position);
 	}
 	controls.update();
+	// A keyboard-picked star keeps drifting with the auto-rotation, so its label
+	// has to follow it instead of being pinned where it was when it was picked.
+	if (keyboardFocused && hovered) {
+		const [x, y] = screenXY(hovered);
+		placeTooltip(x, y);
+	}
 	renderer.render(scene, camera);
 }
 
@@ -596,12 +644,19 @@ function boot() {
 	renderer.domElement.addEventListener('pointermove', onPointerMove);
 	renderer.domElement.addEventListener('pointerdown', onPointerDown);
 	renderer.domElement.addEventListener('pointerup', onPointerUp);
+	renderer.domElement.addEventListener('pointerleave', hideTooltip);
+	renderer.domElement.addEventListener('keydown', onCanvasKeyDown);
+	renderer.domElement.addEventListener('blur', hideTooltip);
 	window.addEventListener('resize', () => {
 		camera.aspect = window.innerWidth / window.innerHeight;
 		camera.updateProjectionMatrix();
 		renderer.setSize(window.innerWidth, window.innerHeight);
 	});
 	$('c-close').addEventListener('click', closePanel);
+	retryBtn.addEventListener('click', () => {
+		loadingOverlay('<strong>Loading the constellation…</strong><br/>Fetching live trending tokens.');
+		init();
+	});
 	window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePanel(); });
 
 	animate();
@@ -610,16 +665,25 @@ function boot() {
 
 // ---- orchestration --------------------------------------------------------
 async function init() {
+	closePanel();
 	let tokens;
 	try {
 		setStatus('off', 'Fetching live tokens…');
 		tokens = await fetchTokens(64);
 	} catch (e) {
-		fatalOverlay(`<strong>Couldn't load live tokens.</strong><br/>${escapeHtml(e.message)}`);
+		setStatus('err', 'Live token feed unreachable.');
+		fatalOverlay(
+			`<strong>Couldn't load live tokens.</strong><br/>The pump.fun trending feed didn't answer (${escapeHtml(e.message)}).`,
+			{ retryable: true },
+		);
 		return;
 	}
 	if (!tokens.length) {
-		fatalOverlay('<strong>No trending tokens right now.</strong><br/>The live feed returned an empty set — try again shortly.');
+		setStatus('off', 'Trending feed returned no tokens.');
+		fatalOverlay(
+			'<strong>No trending tokens right now.</strong><br/>The live feed answered with an empty set. It refills continuously, try again in a moment.',
+			{ retryable: true },
+		);
 		return;
 	}
 
@@ -634,7 +698,16 @@ async function init() {
 		const dim = vectors.find((v) => v?.length)?.length || dimensions || 0;
 		const filled = vectors.map((v) => (v?.length ? v : new Array(dim).fill(0)));
 		applySemanticLayout(filled);
-		setStatus('live', `Embedded by IBM&nbsp;Granite · <code>${escapeHtml(model || EMBED_MODEL_HINT)}</code> · ${dimensions || dim}d`);
+		// The embed endpoint has its own failover chain, so name the model that
+		// actually produced these vectors rather than assuming Granite served.
+		const served = String(model || '');
+		const d = dimensions || dim;
+		setStatus(
+			'live',
+			/granite/i.test(served)
+				? `Embedded by IBM&nbsp;Granite · <code>${escapeHtml(served)}</code> · ${d}d`
+				: `Semantic layout live · <code>${escapeHtml(served || 'fallback embedder')}</code> · ${d}d · IBM&nbsp;Granite was unavailable, so the fallback embedder placed these stars`,
+		);
 	} catch (e) {
 		if (e.code === 'embed_unconfigured') {
 			setStatus('off', 'Semantic layout off — IBM watsonx isn\'t configured, so stars are placed by trending rank instead of meaning. <a href="/galaxy" style="color:var(--brand-blue-light)">Enable Granite →</a>');
@@ -646,4 +719,25 @@ async function init() {
 	}
 }
 
-if (boot()) init();
+// Resolve the session once. /api/auth/me answers 200 with `{ user: null }` when
+// signed out, so this costs one clean request and lets the page say what a star
+// click will actually do before the visitor spends one finding out.
+async function resolveSession() {
+	try {
+		const res = await fetch('/api/auth/me', { credentials: 'include', headers: { accept: 'application/json' } });
+		const data = res.ok ? await res.json() : null;
+		return Boolean(data && data.user);
+	} catch {
+		return false;
+	}
+}
+
+if (boot()) {
+	init();
+	resolveSession().then((ok) => {
+		signedIn = ok;
+		if (!ok) {
+			hint.innerHTML = `drag to orbit · scroll to zoom · click a star (or arrow keys + Enter) for its detail · <a href="${SIGN_IN_HREF}" style="color:var(--brand-blue-light)">sign in</a> for a live Granite analysis`;
+		}
+	});
+}

@@ -20,8 +20,13 @@
 //   /api/oracle/coin         conviction score + tier
 //   /api/pump/launches       platform launch records → no-mint landing grid
 //
-// Every state — landing, loading, error, populated — is designed. This is the
+// Every state (landing, loading, error, populated) is designed. This is the
 // page the MCP tool `pumpfun_token_3d` deep-links to.
+//
+// Load order matters: the HUD and medallion paint from the identity frame
+// (getTokenDetails + getBondingCurve + token meta), and every slower source
+// (the holder scan, market history, intel, oracle, trade tape) fills in behind
+// it. Nothing on the page waits on the slowest call.
 
 import {
 	Scene,
@@ -960,7 +965,7 @@ function renderHud(s) {
 		<dl class="hud-stats">
 			<div><dt>Market cap</dt><dd id="c3d-mcap">${s.marketCapUsd !== null ? '$' + compact(s.marketCapUsd) : '—'}</dd></div>
 			<div><dt>24h volume</dt><dd id="c3d-vol">${s.volume24 !== null ? '$' + compact(s.volume24) : '—'}</dd></div>
-			<div><dt>Top-holder share</dt><dd id="c3d-conc">${s.topHolderPercent !== null ? escapeHtml(s.topHolderPercent.toFixed(1)) + '%' : '<span class="c3d-dd-sk" role="img" aria-label="Loading top-holder share"></span>'}</dd></div>
+			<div><dt>Top-holder share</dt><dd id="c3d-conc"><span class="c3d-dd-sk" role="img" aria-label="Loading top-holder share"></span></dd></div>
 			<div><dt>Status</dt><dd id="c3d-status">${escapeHtml(gradLabel(s))}</dd></div>
 			<div><dt>Quality</dt><dd id="c3d-quality">—</dd></div>
 			<div><dt>Smart money</dt><dd id="c3d-smart">—</dd></div>

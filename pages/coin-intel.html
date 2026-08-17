@@ -40,7 +40,11 @@
 		.site-header { position: sticky; top: 0; z-index: 50; background: rgba(0,0,0,0.82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
 		* { box-sizing: border-box; }
 
-		.ci-wrap { max-width: 1320px; margin: 0 auto; padding: 0 20px 80px; }
+		/* `body` is a flex container site-wide, so this is a flex item: without an
+		   explicit min-width it refuses to shrink below its min-content width and
+		   the page silently overflows a 320px viewport (html/body clip the overflow,
+		   so the right edge is cut off with no scrollbar to reveal it). */
+		.ci-wrap { max-width: 1320px; min-width: 0; margin: 0 auto; padding: 0 20px 80px; }
 
 		/* ── hero / header ─────────────────────────────── */
 		.ci-hero {
@@ -96,6 +100,7 @@
 			font: inherit; font-size: 13px; outline: none; transition: border-color .15s;
 		}
 		.ci-search input:focus { border-color: var(--ci-accent); }
+		.ci-search input:focus-visible { outline: 2px solid var(--ci-accent); outline-offset: 1px; }
 		.ci-search svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; stroke: var(--ci-faint); pointer-events: none; }
 		.ci-chips { display: flex; gap: 6px; flex-wrap: wrap; }
 		.ci-chip {
@@ -112,7 +117,9 @@
 		}
 
 		/* ── coin grid ─────────────────────────────────── */
-		.ci-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; }
+		/* min() keeps the single column narrower than the viewport at 320px, where a
+		   flat 290px track plus the wrap padding would not fit. */
+		.ci-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(290px, 100%), 1fr)); gap: 14px; }
 		.ci-card {
 			background: var(--ci-panel); border: 1px solid var(--ci-border); border-radius: 14px;
 			padding: 15px; cursor: pointer; position: relative; overflow: hidden;
@@ -195,7 +202,15 @@
 		.ci-empty p { color: var(--ci-muted); font-size: 13.5px; max-width: 520px; margin: 0 auto 8px; line-height: 1.55; }
 		.ci-empty .how { display: inline-flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 14px; }
 		.ci-empty .how span { font-size: 11px; color: var(--ci-muted); background: var(--ci-panel); border: 1px solid var(--ci-border); border-radius: 999px; padding: 5px 11px; }
-		.ci-retry { margin-top: 16px; background: var(--ci-accent); color: #fff; border: none; border-radius: 9px; padding: 9px 20px; font: inherit; cursor: pointer; }
+		.ci-retry { margin-top: 16px; background: var(--ci-accent); color: #fff; border: none; border-radius: 9px; padding: 9px 20px; font: inherit; cursor: pointer; transition: background .14s; }
+		.ci-retry:hover { background: #7c4ded; }
+		.ci-retry:active { background: #6d3fd6; }
+		.ci-retry:focus-visible { outline: 2px solid var(--ci-text); outline-offset: 2px; }
+		/* Row-shaped skeleton for the traders list: the cross-coin wallet aggregate
+		   is the slowest view on this page, so the wait needs a real shape to fill. */
+		.ci-skel-row { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--ci-border); }
+		.ci-skel-row:last-child { border-bottom: none; }
+		.ci-skel-row .sh { height: 11px; border-radius: 6px; background: linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.09), rgba(255,255,255,0.04)); background-size: 200% 100%; animation: ciShimmer 1.4s infinite; }
 
 		/* ── detail drawer ─────────────────────────────── */
 		.ci-scrim { position: fixed; inset: 0; background: rgba(0,0,0,0.55); opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 90; backdrop-filter: blur(2px); }
@@ -632,64 +647,109 @@
 		}
 
 		function skeletons(n = 6) { return Array.from({length:n}, () => `<div class="ci-skel"><div class="sh" style="width:60%"></div><div class="sh" style="width:90%"></div><div class="sh" style="width:40%"></div><div class="sh" style="width:75%"></div></div>`).join(''); }
-
-		function emptyState(degraded) {
-			if (degraded) {
-				return `<div class="ci-empty"><div class="icon">🛰️</div><h3>The engine is warming up</h3>
-					<p>The Coin Intelligence engine watches the live pump.fun firehose, observing each new launch's first ~90 seconds before it has a verdict. As soon as coins are observed they appear here — newest first.</p>
-					<div class="how"><span>Classifies every launch</span><span>Records every wallet</span><span>Organic vs bundle</span><span>Learns from outcomes</span></div>
-					<button class="ci-retry" id="ci-empty-retry">Refresh</button></div>`;
-			}
-			return `<div class="ci-empty"><div class="icon">🔍</div><h3>No coins match these filters</h3>
-				<p>Loosen the category, verdict, or quality filters to see more of the live radar.</p>
-				<button class="ci-retry" id="ci-empty-retry">Reset filters</button></div>`;
+		function rowSkeletons(n = 8) {
+			return Array.from({length:n}, () => `<div class="ci-skel-row"><div style="flex:1;min-width:0"><div class="sh" style="width:120px"></div><div class="sh" style="width:78px;height:8px;margin-top:6px"></div></div><div class="sh" style="width:70px"></div><div class="sh" style="width:56px"></div></div>`).join('');
 		}
 
+		// Every non-populated state is built here so each one carries its own copy and
+		// its own working control. `.ci-retry` is a class, not an id: several of these
+		// blocks can be on the page at once (radar grid, both leaderboard rails, the
+		// three learning panels) and a shared id both invalidates the document and
+		// makes a single querySelector wire the wrong button.
+		function warmingState() {
+			return `<div class="ci-empty"><div class="icon">🛰️</div><h3>The engine is warming up</h3>
+				<p>The Coin Intelligence engine watches the live pump.fun firehose, observing each new launch's first ~90 seconds before it has a verdict. As soon as coins are observed they appear here, newest first.</p>
+				<div class="how"><span>Classifies every launch</span><span>Records every wallet</span><span>Organic vs bundle</span><span>Learns from outcomes</span></div>
+				<button type="button" class="ci-retry">Refresh</button></div>`;
+		}
+		function filteredOutState() {
+			return `<div class="ci-empty"><div class="icon">🔍</div><h3>No coins match these filters</h3>
+				<p>Loosen the category, verdict, or quality filters to see more of the live radar.</p>
+				<button type="button" class="ci-retry">Reset filters</button></div>`;
+		}
+		function errorState(title, detail, { bare = false } = {}) {
+			return `<div class="ci-empty"${bare ? ' style="border:none;background:none"' : ''}><div class="icon">⚠️</div><h3>${esc(title)}</h3>
+				<p>${esc(detail)}</p><button type="button" class="ci-retry">Retry</button></div>`;
+		}
+		// Wire every retry/reset button inside a container that was just re-rendered.
+		function wireRetry(container, onRetry) {
+			container?.querySelectorAll('.ci-retry').forEach((b) => b.addEventListener('click', onRetry));
+		}
+
+		// The feed answers in roughly a second, and both the filter controls and the
+		// 15s auto-refresh can fire while a request is still open. Without a sequence
+		// token the slower response wins whichever order it lands in, so typing a
+		// search would repaint the grid with the PREVIOUS filter's coins a moment
+		// later. Only the newest request is allowed to touch the DOM.
+		let radarSeq = 0;
+		function resetFilters() {
+			state.category = state.verdict = state.minq = state.q = '';
+			$('#ci-q').value = ''; $('#ci-verdict').value = ''; $('#ci-minq').value = '';
+			renderCatChips();
+		}
 		async function loadRadar() {
+			const seq = ++radarSeq;
 			if (!state.coins.length) grid.innerHTML = skeletons();
 			state.loading = true;
 			try {
 				const data = await api({ view: 'feed', limit: 60, category: state.category, verdict: state.verdict, minQuality: state.minq, q: state.q });
+				if (seq !== radarSeq) return;
 				state.degraded = !!data.degraded;
 				state.coins = data.coins || [];
 				$('#cnt-radar').textContent = state.degraded ? '' : state.coins.length;
 				if (state.degraded || !state.coins.length) {
 					// Distinguish "filtered to nothing" from "the index is genuinely empty".
 					// With no active filters and zero coins, the engine simply hasn't
-					// observed anything yet — show the warming-up state, not a misleading
+					// observed anything yet: show the warming-up state, not a misleading
 					// "no coins match these filters" (there are no filters to loosen).
 					const hasFilters = !!(state.category || state.verdict || state.minq || state.q);
-					grid.innerHTML = emptyState(state.degraded || !hasFilters);
-					const rb = $('#ci-empty-retry');
-					if (rb) rb.addEventListener('click', () => { if (hasFilters && !state.degraded) { state.category=state.verdict=state.minq=state.q=''; $('#ci-q').value=''; $('#ci-verdict').value=''; $('#ci-minq').value=''; renderCatChips(); } loadRadar(); });
+					const filteredOut = hasFilters && !state.degraded;
+					grid.innerHTML = filteredOut ? filteredOutState() : warmingState();
+					wireRetry(grid, () => { if (filteredOut) resetFilters(); loadRadar(); });
 				} else {
 					grid.innerHTML = '';
 					state.coins.forEach(c => grid.appendChild(coinCard(c)));
 				}
 			} catch (e) {
-				grid.innerHTML = `<div class="ci-empty"><div class="icon">⚠️</div><h3>Couldn't reach the intelligence feed</h3><p>${esc(e.message)}</p><button class="ci-retry" id="ci-empty-retry">Retry</button></div>`;
-				$('#ci-empty-retry')?.addEventListener('click', loadRadar);
-			} finally { state.loading = false; }
+				if (seq !== radarSeq) return;
+				grid.innerHTML = errorState("Couldn't reach the intelligence feed", e.message);
+				wireRetry(grid, loadRadar);
+			} finally { if (seq === radarSeq) state.loading = false; }
 		}
 
 		// ── leaderboard ───────────────────────────────────────────
 		let lbLoaded = false;
 		async function loadLeaderboard() {
 			if (lbLoaded) return;
-			$('#ci-lb-top').innerHTML = skeletons(3); $('#ci-lb-win').innerHTML = skeletons(3);
+			const lbTop = $('#ci-lb-top'), lbWin = $('#ci-lb-win');
+			lbTop.innerHTML = skeletons(3); lbWin.innerHTML = skeletons(3);
 			try {
 				const data = await api({ view: 'leaderboard', limit: 18 });
 				const top = data.top || [], win = data.winners || [];
-				const lbTop = $('#ci-lb-top'), lbWin = $('#ci-lb-win');
 				if (top.length) { lbTop.innerHTML = ''; top.forEach(c => lbTop.appendChild(coinCard(c))); }
-				else lbTop.innerHTML = emptyState(!!data.degraded);
+				else if (data.degraded) { lbTop.innerHTML = warmingState(); wireRetry(lbTop, retryLeaderboard); }
+				else {
+					// The leaderboard carries no filters, so the radar's "loosen your
+					// filters" copy (and its reset button, which had nothing to reset)
+					// was both wrong and dead here. This ranks the last 24 hours.
+					lbTop.innerHTML = `<div class="ci-empty"><div class="icon">🕒</div><h3>Nothing scored in the last 24 hours</h3>
+						<p>This board ranks the coins the engine observed today by quality score. Nothing has cleared observation in the past 24 hours yet, so check the live radar for launches still being measured.</p>
+						<button type="button" class="ci-retry">Refresh</button></div>`;
+					wireRetry(lbTop, retryLeaderboard);
+				}
 				if (win.length) { lbWin.innerHTML = ''; win.forEach(c => lbWin.appendChild(coinCard(c))); }
 				else lbWin.innerHTML = `<div class="ci-empty"><div class="icon">🌱</div><h3>No labeled winners yet</h3><p>Once observed coins graduate or 3×, they're labeled and surfaced here with their launch-time signals.</p></div>`;
 				lbLoaded = true;
 			} catch (e) {
-				$('#ci-lb-top').innerHTML = `<div class="ci-empty"><div class="icon">⚠️</div><h3>Couldn't load leaderboard</h3><p>${esc(e.message)}</p></div>`;
+				// Both rails get the failure: leaving the "Confirmed winners" rail
+				// untouched left a heading standing over an empty void.
+				lbTop.innerHTML = errorState("Couldn't load the leaderboard", e.message);
+				lbWin.innerHTML = errorState("Couldn't load confirmed winners", e.message);
+				wireRetry(lbTop, retryLeaderboard);
+				wireRetry(lbWin, retryLeaderboard);
 			}
 		}
+		function retryLeaderboard() { lbLoaded = false; loadLeaderboard(); }
 
 		// ── traders / smart money ─────────────────────────────────
 		let tradersLoaded = false;
@@ -712,16 +772,21 @@
 		}
 		async function loadTraders() {
 			if (tradersLoaded) return;
-			$('#ci-traders').innerHTML = `<div class="sub" style="color:var(--ci-muted)">Loading traders…</div>`;
+			const box = $('#ci-traders');
+			// This aggregate spans every wallet on every observed coin and is the
+			// slowest view on the page, so it gets row-shaped skeletons rather than a
+			// line of text that reads as a stall.
+			box.innerHTML = rowSkeletons();
 			try {
 				const data = await api({ view: 'traders', limit: 50 });
 				const ts = data.traders || [];
 				$('#cnt-traders').textContent = ts.length || '';
-				$('#ci-traders').innerHTML = ts.length ? ts.map(traderRow).join('')
+				box.innerHTML = ts.length ? ts.map(traderRow).join('')
 					: `<div class="ci-empty" style="border:none;background:none"><div class="icon">👻</div><h3>No traders recorded yet</h3><p>As the engine observes coins, every wallet that buys or sells is recorded and classified across coins. Smart-money win-rates appear once wallets accumulate labeled coins.</p></div>`;
 				tradersLoaded = true;
 			} catch (e) {
-				$('#ci-traders').innerHTML = `<div class="ci-empty" style="border:none;background:none"><div class="icon">⚠️</div><h3>Couldn't load traders</h3><p>${esc(e.message)}</p></div>`;
+				box.innerHTML = errorState("Couldn't load traders", e.message, { bare: true });
+				wireRetry(box, () => { tradersLoaded = false; loadTraders(); });
 			}
 		}
 
@@ -730,7 +795,7 @@
 		const OUTCOME_COLOR = { graduated: '#34d399', pumped: '#22d3ee', flat: '#818cf8', rugged: '#f87171', unknown: '#64748b' };
 		async function loadLearning() {
 			if (learnLoaded) return;
-			$('#ci-weights').innerHTML = `<div class="sub">Loading…</div>`;
+			$('#ci-weights').innerHTML = Array.from({length:8}, () => `<div class="wbar-row"><span class="wn"><span class="sh" style="display:block;width:110px;height:10px;border-radius:6px;background:linear-gradient(90deg,rgba(255,255,255,.04),rgba(255,255,255,.09),rgba(255,255,255,.04));background-size:200% 100%;animation:ciShimmer 1.4s infinite"></span></span><div class="wbar-track"><span class="mid"></span></div><span class="wv"></span></div>`).join('');
 			try {
 				const data = await api({ view: 'learning' });
 				// weights
@@ -763,9 +828,17 @@
 				$('#ci-coverage').innerHTML = (cov.by_category||[]).map(c => `<span class="cov-cat"><span class="dot" style="width:7px;height:7px;border-radius:50%;background:${CAT_COLOR(c.category)}"></span>${esc(c.category)} <b>${c.count}</b></span>`).join('') || '<span class="sub">No categories yet.</span>';
 				learnLoaded = true;
 			} catch (e) {
-				$('#ci-weights').innerHTML = `<div class="ci-empty" style="border:none;background:none"><div class="icon">⚠️</div><h3>Couldn't load learning data</h3><p>${esc(e.message)}</p></div>`;
+				// All three panels are fed by the same request, so all three have to
+				// show the failure: filling only the weights panel left "Outcomes
+				// observed" and "Coverage" standing over empty boxes.
+				$('#ci-weights').innerHTML = errorState("Couldn't load learning data", e.message, { bare: true });
+				wireRetry($('#ci-weights'), retryLearning);
+				$('#ci-outcomes').innerHTML = `<p class="sub" style="margin:0">Outcome counts are unavailable while the learning feed is down.</p>`;
+				$('#ci-coverage-sub').textContent = 'Coverage is unavailable while the learning feed is down.';
+				$('#ci-coverage').innerHTML = '';
 			}
 		}
+		function retryLearning() { learnLoaded = false; loadLearning(); }
 		const prettySignal = (k) => ({ organic_score:'Organic demand', bundle_score:'Bundle likelihood', snipe_ratio:'Snipe ratio', coordination_score:'Coordination', timing_entropy:'Timing spread', concentration_top1:'Top wallet share', concentration_top5:'Top-5 share', concentration_top10:'Top-10 share', fresh_wallet_ratio:'Fresh wallets', bubblemap_connectivity:'Funder connectivity' }[k] || k);
 
 		// ── detail drawer + bubble-map ────────────────────────────
@@ -847,7 +920,8 @@
 					});
 
 			} catch (e) {
-				drawerBody.innerHTML = `<div class="ci-empty" style="border:none"><div class="icon">⚠️</div><h3>Couldn't load detail</h3><p>${esc(e.message)}</p></div>`;
+				drawerBody.innerHTML = errorState("Couldn't load this coin's detail", e.message, { bare: true });
+				wireRetry(drawerBody, () => openDrawer(mint));
 			}
 		}
 
@@ -1007,18 +1081,27 @@
 		document.querySelectorAll('.ci-tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
 
 		// ── header stats ───────────────────────────────────────────
+		const STAT_LABELS = ['Observed', 'Classified', 'Labeled', 'Graduated'];
+		const renderStats = (values) => {
+			$('#ci-stats').innerHTML = STAT_LABELS
+				.map((l, i) => `<div class="ci-stat"><div class="v">${values[i] ?? ','}</div><div class="l">${l}</div></div>`).join('');
+		};
 		async function loadStats() {
 			try {
 				const data = await api({ view: 'learning' });
 				const cov = data.coverage || { observed:0, classified:0, labeled:0 };
 				const grad = (data.outcomes||[]).find(o => o.outcome === 'graduated')?.count || 0;
-				$('#ci-stats').innerHTML = [
-					['Observed', cov.observed], ['Classified', cov.classified], ['Labeled', cov.labeled], ['Graduated', grad],
-				].map(([l,v]) => `<div class="ci-stat"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
+				renderStats([cov.observed, cov.classified, cov.labeled, grad]);
 				// Amber pulse when the engine is degraded OR has observed nothing yet
-				// (worker not reporting) — never a false "all-green live" with no data.
+				// (worker not reporting): never a false "all-green live" with no data.
 				$('#ci-hero').dataset.degraded = (data.degraded || cov.observed === 0) ? '1' : '0';
-			} catch { $('#ci-hero').dataset.degraded = '1'; }
+			} catch {
+				// Keep the tiles with dashes rather than emptying the row. A hero that
+				// loses its counters entirely reads as a broken page; four dashed
+				// counters next to the amber pulse read as "the engine is not reporting".
+				renderStats([]);
+				$('#ci-hero').dataset.degraded = '1';
+			}
 		}
 
 		// ── filters wiring ─────────────────────────────────────────
@@ -1029,9 +1112,10 @@
 
 		// ── boot + auto-refresh ────────────────────────────────────
 		renderCatChips();
+		renderStats([]);
 		loadStats();
 		loadRadar();
-		let timer = setInterval(() => { if (state.tab === 'radar' && !document.hidden) loadRadar(); }, REFRESH_MS);
+		setInterval(() => { if (state.tab === 'radar' && !document.hidden) loadRadar(); }, REFRESH_MS);
 		document.addEventListener('visibilitychange', () => { if (!document.hidden && state.tab === 'radar') loadRadar(); });
 	</script>
 	<script src="/brand.js" defer></script>

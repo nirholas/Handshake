@@ -524,6 +524,23 @@
 				width: 14px;
 				height: 14px;
 			}
+			.audio-file-name .fmeta {
+				flex-shrink: 0;
+				font-size: 11.5px;
+				color: var(--muted);
+				font-variant-numeric: tabular-nums;
+			}
+			/* Hearing the clip back before spending a generation on it is the
+			   cheapest way to catch the wrong file. Hidden until one is picked. */
+			.audio-preview {
+				display: none;
+				width: 100%;
+				margin-top: 10px;
+				height: 34px;
+			}
+			.audio-preview.is-visible {
+				display: block;
+			}
 
 			/* Prompt */
 			.prompt-input {
@@ -579,6 +596,18 @@
 			.generate-btn svg {
 				width: 18px;
 				height: 18px;
+			}
+			/* A disabled primary button with no explanation reads as a broken page.
+			   This line always says what is still missing. */
+			.generate-hint {
+				margin: -10px 0 0;
+				font-size: 12px;
+				line-height: 1.45;
+				color: var(--muted);
+				text-align: center;
+			}
+			.generate-hint:empty {
+				display: none;
 			}
 
 			/* ── Progress / result ──────────────────────────────────────── */
@@ -914,6 +943,7 @@
 								<circle cx="18" cy="16" r="3" />
 							</svg>
 							<span class="fname" id="audio-fname"></span>
+							<span class="fmeta" id="audio-fmeta"></span>
 							<button
 								class="audio-file-clear"
 								id="audio-clear"
@@ -932,11 +962,12 @@
 								</svg>
 							</button>
 						</div>
+						<audio class="audio-preview" id="audio-preview" controls preload="metadata"></audio>
 					</div>
 
 					<!-- Prompt -->
 					<div class="control-block">
-						<p class="control-label" data-i18n-html="create_video.scene_description_optional">
+						<label class="control-label" for="prompt-input" data-i18n-html="create_video.scene_description_optional">
 							Scene description
 							<span
 								style="
@@ -947,7 +978,7 @@
 								"
 								>(optional)</span
 							>
-						</p>
+						</label>
 						<textarea
 							class="prompt-input"
 							id="prompt-input"
@@ -970,14 +1001,17 @@
 						</svg>
 						Generate video
 					</button>
+					<p class="generate-hint" id="generate-hint" data-i18n="create_video.pick_an_avatar_and_add_an_audio">
+						Pick an avatar and add an audio clip to generate.
+					</p>
 
 					<!-- Result block -->
 					<div class="result-block" id="result-block">
 						<!-- Progress -->
-						<div class="progress-area" id="progress-area">
+						<div class="progress-area" id="progress-area" role="status" aria-live="polite">
 							<div class="progress-spinner"></div>
 							<p class="progress-label" id="progress-label" data-i18n="create_video.generating">Generating…</p>
-							<p class="progress-sublabel" data-i18n="create_video.takes_2_4_minutes_on_gpu_hang">Takes 2–4 minutes on GPU. Hang tight.</p>
+							<p class="progress-sublabel" data-i18n="create_video.takes_2_to_4_minutes_on_gpu">Takes 2 to 4 minutes on GPU. Hang tight.</p>
 						</div>
 						<!-- Video -->
 						<div class="video-area" id="video-area">
@@ -1024,7 +1058,7 @@
 							</div>
 						</div>
 						<!-- Error -->
-						<div class="error-area" id="error-area">
+						<div class="error-area" id="error-area" role="alert">
 							<p class="error-msg" id="error-msg" data-i18n="create_video.generation_failed_please_try_again">
 								Generation failed. Please try again.
 							</p>

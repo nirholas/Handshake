@@ -1446,16 +1446,19 @@ async function loadGallery() {
 	creationsList.setAttribute('aria-busy', 'true');
 	galleryMessage('Loading…');
 	try {
-		let items = await fetchCreations('limit=24');
-		let mine = true;
-		if (!items.length) {
-			// A first-time visitor has no creations of their own, and an empty strip
-			// left the fastest path into the composer (drop a real model into the
-			// scene) behind a multi-minute generation. The community showcase is a
-			// live public feed, so seed the strip from that instead.
-			mine = false;
-			items = await fetchCreations('scope=community&limit=24');
-		}
+		// A first-time visitor has no creations of their own, and an empty strip
+		// left the fastest path into the composer (drop a real model into the
+		// scene) behind a multi-minute generation. The community showcase is a
+		// live public feed, so seed the strip from that instead. Both reads go out
+		// together: chaining them doubled time-to-first-card for exactly the new
+		// user the fallback exists for. A failed showcase read is not fatal on its
+		// own, so it resolves to an empty list rather than rejecting the pair.
+		const [own, community] = await Promise.all([
+			fetchCreations('limit=24'),
+			fetchCreations('scope=community&limit=24').catch(() => []),
+		]);
+		const mine = own.length > 0;
+		const items = mine ? own : community;
 		creationsHead.textContent = mine ? 'Recent Creations' : 'Fresh from the Forge';
 		if (!items.length) {
 			galleryMessage('No creations yet. Describe an item above and press Forge to make the first one.');

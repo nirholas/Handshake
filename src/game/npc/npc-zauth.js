@@ -3,10 +3,12 @@
 // zauth (zauth.inc) runs RepoScan, a real paid x402 service: $0.05 USDC buys
 // a GitHub repository scan for code provenance, contributor verification,
 // and vulnerabilities, returning a 0–100 trust score with a full written
-// analysis. Their agent stands in the $THREE town plaza; WALKING UP to it
-// calls their x402 endpoint live (the unpaid probe that draws the 402
-// payment challenge) and opens the scanner with the real price and terms
-// from that challenge. Press the scan button and window.X402.pay settles
+// analysis. Their agent stands in the $THREE town plaza. Walking up only
+// greets you and warms the live 402 probe in the background; the scanner
+// opens on YOUR action (press E, or click the agent/nameplate), never on
+// proximity, so crossing the plaza never takes the screen away from you.
+// The panel then shows the real price and terms from that live challenge.
+// Press the scan button and window.X402.pay settles
 // $0.05 from YOUR wallet straight to zauth's address — Solana or Base — via
 // the same-origin pass-through at /api/zauth-reposcan (their CORS blocks a
 // direct browser payment; the proxy forwards your signed payment untouched).
@@ -133,7 +135,7 @@ function scoreBadge(score) {
 	return badge;
 }
 
-// ── live challenge probe — the x402 call made on walk-up ──────────────────────
+// ── live challenge probe, the x402 call warmed on walk-up ────────────────────
 // An unpaid POST draws the real 402 payment challenge from zauth (via the
 // pass-through), so the price, rails, and terms on the counter are theirs,
 // live — never hardcoded copy.
@@ -165,6 +167,14 @@ function probeChallenge() {
 		});
 	}
 	return challengePromise;
+}
+
+// Warm the challenge on walk-up without opening anything. The result is cached
+// in `challengePromise`, so the panel the player later opens renders the live
+// price immediately instead of flashing a skeleton. A failed probe is silent
+// here: nothing is on screen to report it to, and opening re-probes.
+export function prewarmZauthChallenge() {
+	probeChallenge().catch((err) => log.warn('[npc-zauth] challenge prewarm failed:', err?.message));
 }
 
 function challengePrice(envelope) {

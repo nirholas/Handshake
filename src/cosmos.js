@@ -474,7 +474,7 @@ function init() {
 	// Model-viewer load resilience: if the chosen GLB fails, fall back to default.
 	els.avatar.addEventListener('error', () => {
 		if (activeAvatarUrl !== DEFAULT_AVATAR) {
-			showNote('info', 'That avatar couldn’t load — falling back to a default. Pick another below.');
+			showNote('info', 'That avatar could not load, so the stage fell back to a default. Pick another below.');
 			selectAvatar(DEFAULT_AVATAR, { quiet: true });
 		}
 	});
