@@ -1690,7 +1690,7 @@ async function recallForChat(agentId, message, isOwner) {
 // the Anthropic route can put a prompt-cache breakpoint after it; `volatile`
 // (recalled memories + live viewer context) changes per message and stays
 // after the breakpoint. `text` is the joined form every other provider uses.
-function buildSystemPrompt(ctx = {}, personaPrompt = null, recalled = [], installedSkills = []) {
+export function buildSystemPrompt(ctx = {}, personaPrompt = null, recalled = [], installedSkills = []) {
 	const loaded = ctx.modelName
 		? `A model named "${ctx.modelName}" is loaded. Stats: ${fmt(ctx.vertices)} vertices, ${fmt(ctx.triangles)} triangles, ${fmt(ctx.materials)} materials, ${ctx.animations ?? 0} animations.`
 		: 'No model is currently loaded in the viewer.';

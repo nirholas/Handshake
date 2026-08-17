@@ -1727,6 +1727,11 @@ export const limits = {
 		getLimiter('brain:chat:ip', { limit: 20, window: '1 m', critical: true }).limit(ip),
 	// X (Twitter) memory seeding: 1 seed per agent per 6 hours.
 	xSeed: (agentId) => getLimiter('memory:seed:x', { limit: 1, window: '6 h' }).limit(agentId),
+	// Give the window back when a seed run stored nothing: X refused the read,
+	// the token could not be refreshed, or the run produced no usable fact. The
+	// agent's memories are untouched on all of those paths, so charging six hours
+	// for them bills the owner for someone else's outage.
+	xSeedRefund: (agentId) => refundLimit('memory:seed:x', { limit: 1, window: '6 h' }, agentId),
 	// Consent-first GitHub memory seeding: reads the GitHub API and one LLM pass
 	// per run. 1 seed per agent per 6 hours, matching the X lane.
 	githubSeed: (agentId) =>

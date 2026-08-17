@@ -15,6 +15,9 @@
 //
 // Rate limit: 1 seed per agent per 6 hours, consumed only once the request is
 // authorized and consented, so a rejected call never burns the owner's window.
+// A run that gets past that point and still stores nothing (X refused the read,
+// the token would not refresh, no usable fact came back) hands the window back
+// and leaves the existing memories exactly where they were.
 
 import { sql } from '../../_lib/db.js';
 import { getSessionUser } from '../../_lib/auth.js';
@@ -166,6 +169,61 @@ function consentPayload(state) {
 	};
 }
 
+// ── Abandoning a charged run ─────────────────────────────────────────────────
+
+// Every exit between "the window was charged" and "the new rows are written"
+// comes through here. The run stored nothing, so the window goes back and the
+// reply says so: the owner can act on the advice immediately instead of waiting
+// out six hours for a failure that was never theirs.
+async function abandonSeed(res, agentId, status, code, description, extra = {}) {
+	const refunded = await limits.xSeedRefund(agentId).catch(() => false);
+	return error(
+		res,
+		status,
+		code,
+		refunded
+			? `${description}. Your memories are unchanged and this attempt did not use up your six-hour window, so you can seed again as soon as it is fixed`
+			: `${description}. Your memories are unchanged`,
+		{ ...extra, window_refunded: refunded },
+	);
+}
+
+// Turn a non-ok X response into the honest reason the owner needs. X answers a
+// revoked or narrowed connection with 401/403 and a throttled app with 429, and
+// those want opposite actions (reconnect vs wait), so a single "X fetch failed"
+// would send half of them the wrong way.
+async function describeXFailure(response, what) {
+	const detail = await response.text().catch(() => '');
+	const reset = Number(response.headers?.get?.('x-rate-limit-reset'));
+	if (response.status === 401 || response.status === 403) {
+		return {
+			status: 502,
+			code: 'x_read_denied',
+			description: `X would not let us read your ${what}, which usually means the connection was revoked or narrowed on X. Reconnect X and seed again`,
+			extra: { x_status: response.status },
+		};
+	}
+	if (response.status === 429) {
+		const retryAt = Number.isFinite(reset) && reset > 0 ? new Date(reset * 1000).toISOString() : null;
+		const minutes = retryAt ? Math.max(1, Math.ceil((reset * 1000 - Date.now()) / 60_000)) : null;
+		return {
+			status: 503,
+			code: 'x_rate_limited',
+			description: `X is rate limiting us and returned no ${what}${
+				minutes ? `. X should accept the read again in about ${minutes} minute${minutes === 1 ? '' : 's'}` : ''
+			}`,
+			extra: { x_status: 429, retry_at: retryAt },
+		};
+	}
+	console.warn(`[x-seed] ${what} read failed: ${response.status} ${detail.slice(0, 300)}`);
+	return {
+		status: 502,
+		code: 'x_unavailable',
+		description: `X did not return your ${what} and answered with ${response.status} instead`,
+		extra: { x_status: response.status },
+	};
+}
+
 async function countSeededMemories(agentId) {
 	const [{ count }] = await sql`
 		SELECT count(*)::int AS count FROM agent_memories
@@ -272,21 +330,45 @@ async function handlePost(req, res, agentId) {
 	const rl = await limits.xSeed(agentId);
 	if (!rl.success) return rateLimited(res, rl, 'agent can only be re-seeded every 6 hours');
 
-	const accessToken = await getAccessToken(conn);
+	// An expired access token that will not refresh is a dead connection, not a
+	// seed the owner should be charged for.
+	let accessToken;
+	try {
+		accessToken = await getAccessToken(conn);
+	} catch (err) {
+		console.warn('[x-seed] token refresh failed:', err?.message);
+		return abandonSeed(
+			res,
+			agentId,
+			502,
+			'x_token_expired',
+			'your X sign-in could not be renewed, so nothing was read. Reconnect X and seed again',
+		);
+	}
 
 	const profileRes = await fetch(
 		'https://api.twitter.com/2/users/me?user.fields=name,username,description,public_metrics',
 		{ headers: { authorization: `Bearer ${accessToken}` } },
 	);
-	if (!profileRes.ok) throw Object.assign(new Error('X profile fetch failed'), { status: 502 });
+	if (!profileRes.ok) {
+		const f = await describeXFailure(profileRes, 'profile');
+		return abandonSeed(res, agentId, f.status, f.code, f.description, f.extra);
+	}
 	const { data: rawProfile } = await profileRes.json();
-	if (!rawProfile?.id) throw Object.assign(new Error('X profile unreadable'), { status: 502 });
+	if (!rawProfile?.id) {
+		return abandonSeed(res, agentId, 502, 'x_unavailable', 'X returned a profile we could not read');
+	}
 
 	// The account that consented must be the account being read.
 	if (rawProfile.id !== consent.x_user_id) {
-		return error(res, 409, 'account_mismatch', 'consent was granted for a different X account', {
-			consent: consentPayload(consentState(consent, conn)),
-		});
+		return abandonSeed(
+			res,
+			agentId,
+			409,
+			'account_mismatch',
+			'consent was granted for a different X account, so nothing was read. Review the consent screen for the account you are connected to now',
+			{ consent: consentPayload(consentState(consent, conn)) },
+		);
 	}
 
 	const postsRes = await fetch(
@@ -294,7 +376,10 @@ async function handlePost(req, res, agentId) {
 			'&exclude=retweets,replies&tweet.fields=text,created_at',
 		{ headers: { authorization: `Bearer ${accessToken}` } },
 	);
-	if (!postsRes.ok) throw Object.assign(new Error('X posts fetch failed'), { status: 502 });
+	if (!postsRes.ok) {
+		const f = await describeXFailure(postsRes, 'posts');
+		return abandonSeed(res, agentId, f.status, f.code, f.description, f.extra);
+	}
 	const postsJson = await postsRes.json();
 
 	const seededAt = new Date().toISOString();
@@ -304,6 +389,20 @@ async function handlePost(req, res, agentId) {
 		distil: (profile, posts) => distilFacts(profile, posts, user.id),
 		seededAt,
 	});
+
+	// Nothing usable came back. The delete below would otherwise take the
+	// previous batch out and put nothing in its place, so an account whose recent
+	// timeline is all replies and reposts would wipe a good seed by re-seeding.
+	if (!result.memories.length) {
+		return abandonSeed(
+			res,
+			agentId,
+			502,
+			'seed_empty',
+			'your recent original posts and profile did not yield a single usable fact, so nothing was stored. Post something original, or widen what your profile says about you, and seed again',
+			{ posts_read: result.postsRead },
+		);
+	}
 
 	// Re-seeding replaces: the previous batch goes before the new one lands, so
 	// the agent never carries two generations of facts about the same account.

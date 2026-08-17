@@ -31,6 +31,14 @@ export default wrap(async function handler(req, res) {
 	const network = NETWORKS.has(p.get('network')) ? p.get('network') : 'mainnet';
 	const sort = SORTS.has(p.get('sort')) ? p.get('sort') : 'score';
 	const limit = Math.min(50, Math.max(1, parseInt(p.get('limit') || '25', 10) || 25));
+	// Callers that can only work with a realized track record (the Clip Director
+	// mints a card from a closed round-trip, so an agent with none is unusable to
+	// it) ask for `settled_min=1` instead of over-fetching and filtering client
+	// side. That filter used to live in the caller, which silently broke: the
+	// composite score does not correlate with having closed trades, so the only
+	// eligible agent ranked below the caller's window and the page saw an empty
+	// board. Filtering here makes the window hold what the caller asked for.
+	const settledMin = Math.min(1000, Math.max(0, parseInt(p.get('settled_min') || '0', 10) || 0));
 
 	// Realized stats per agent from closed sniper round-trips: the honest P&L
 	// surface. LEFT JOIN follower counts + discretionary trade activity so an agent
@@ -80,6 +88,7 @@ export default wrap(async function handler(req, res) {
 		LEFT JOIN followers fl ON fl.agent_id = a.id
 		WHERE a.deleted_at IS NULL AND a.is_public = true
 		  AND (c.settled IS NOT NULL OR act.trades IS NOT NULL)
+		  AND COALESCE(c.settled, 0) >= ${settledMin}
 		ORDER BY COALESCE(c.settled, 0) DESC,
 		         COALESCE(fl.followers, 0) DESC,
 		         COALESCE(act.trades, 0) DESC,
@@ -88,17 +97,21 @@ export default wrap(async function handler(req, res) {
 	`;
 
 	res.setHeader?.('cache-control', 'public, max-age=30, s-maxage=60');
-	return json(res, 200, { data: { network, sort, leaders: rankLeaders(rows, { sort, limit }) } });
+	return json(res, 200, {
+		data: { network, sort, settled_min: settledMin, leaders: rankLeaders(rows, { sort, limit, settledMin }) },
+	});
 });
 
 /**
  * Rank raw leaderboard rows. Pure: same rows in, same ranking out, so the 60s
  * edge cache never serves two different orderings of the same data.
  * @param {Array<object>} rows raw SQL rows (lamport sums arrive as strings)
- * @param {{sort?: string, limit?: number}} opts
+ * @param {{sort?: string, limit?: number, settledMin?: number}} opts settledMin drops
+ *   agents with fewer closed round-trips, so a caller that needs a realized
+ *   track record never has to filter (and mis-window) the ranking itself
  * @returns {Array<object>} ranked leaders, rank 1 first
  */
-export function rankLeaders(rows, { sort = 'score', limit = 25 } = {}) {
+export function rankLeaders(rows, { sort = 'score', limit = 25, settledMin = 0 } = {}) {
 	const leaders = rows.map((r) => {
 		const pnlSol = lamToSol(r.pnl_lamports);
 		const entrySol = lamToSol(r.entry_lamports);
@@ -129,7 +142,7 @@ export function rankLeaders(rows, { sort = 'score', limit = 25 } = {}) {
 			last_trade_at: r.last_trade_at || null,
 			score,
 		};
-	});
+	}).filter((l) => l.settled >= settledMin);
 
 	const cmp = COMPARATORS[sort] || COMPARATORS.score;
 	// Tiebreak on agent_id so equal-scoring agents rank in one fixed order
