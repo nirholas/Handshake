@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-17T04:56:09.259Z",
+	"generated_at": "2026-08-17T04:58:51.889Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -238,6 +238,17 @@
 		{
 			"date": "2026-08-17",
 			"type": "update",
+			"title": "Scene Composer works on a phone, starts you off with real models, and every control is reachable by keyboard",
+			"summary": "Scene Composer was unusable on anything narrower than a laptop. Below 900px the scene panel was switched off, which pushed the 3D canvas into a zero-width column, so a tablet visitor got no viewport at all and no way back to the hierarchy, inspector or bone-attach controls; at phone widths the toolbar forced the whole editor wider than the screen and pushed the right-hand panel out of view. The panel is now a drawer behind a toolbar button, the toolbar scrolls instead of shoving the layout off screen, and the canvas keeps real dimensions at 320, 768 and 1440 pixels. The Recent Creations strip also no longer greets a first-time visitor with an empty box: until you have forged something it shows the live community showcase, so there are real models to drop into the scene straight away. The avatar picker was asking the directory a question it does not answer and got a feed of on-chain agents with no 3D model attached, so most slots were silently dropped and the rest never showed their thumbnails; it now asks for public 3D avatars and renders them. The start panel finally honours what it always promised: paste an avatar ID, not just a URL, and a model that cannot be loaded leaves a written explanation instead of a toast that vanishes before you can read it. Both the creations strip and the avatar picker now offer a working Try again when a request fails. On the keyboard side: the page has a real heading, the camera-view menu and every creation and avatar tile are proper buttons, the scene rows expose their hide and remove actions on focus, the prompt and avatar fields have labels, dialogs trap focus and hand it back on Escape, and there is a visible focus ring throughout. Removing an object now frees its GPU memory once the step drops out of undo range, undo puts a bone-attached item back on its bone, and saving an outfit refuses a locally dropped file rather than storing a link that breaks on reload.",
+			"link": "/compose",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-17",
+			"type": "update",
 			"title": "Selfie to Avatar tells you your library is full before it spends ninety seconds building",
 			"summary": "Five fixes to Selfie to Avatar. If your avatar library was already at the limit for your plan, nothing noticed until the very end: you waited out the full reconstruction, and then the page said the 3D engine had hit a snag and told you to try again. It was not an engine problem, trying again could never work, and every attempt spent another ninety seconds of generation to land in the same place. Your library is now checked the moment you press the button, so a full one is refused immediately with the actual reason and what to do about it, and a build that fills the last slot while it is running ends with that same plain explanation instead of the engine message. The page also stopped losing its own error messages: the Build button floats above the page, so tapping it from higher up left the explanation somewhere below the fold while the button quietly reset itself, which read as nothing having happened. Errors now scroll into view. On the finished-avatar screen, Learn how to embed pointed at a page that did not exist and answered 404; it now opens the embedding guide. And on a narrow phone the Photoreal and Stylized choices were squeezed into two columns barely wide enough for one word per line, so they now stack and can be read.",
 			"link": "/create/selfie",
@@ -322,6 +333,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-17",
+			"type": "update",
+			"title": "The Pole Club audio controls no longer fall off the edge of a small phone",
+			"summary": "On a narrow phone the club's top bar ran out of room and simply cut off whatever did not fit, and the page cannot scroll sideways, so the mute button and the 8D audio toggle were gone with no way to reach them. The bar now gives up the parts that are only there to read (the tagline and the price and rail labels, all repeated in the panel's How it works section) and keeps both controls at full size at every width, down to a 320px screen.",
+			"link": "/club",
+			"tags": [
+				"fix"
 			]
 		},
 		{

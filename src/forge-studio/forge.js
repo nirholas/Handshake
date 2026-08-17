@@ -434,7 +434,10 @@ async function loadCatalog() {
 		if (errorEl && !reachable) showCatalogError(errorEl);
 		return;
 	}
-	errorEl?.classList.add('is-hidden');
+	if (errorEl) {
+		errorEl.innerHTML = '';
+		errorEl.classList.add('is-hidden');
+	}
 	qualityEl?.classList.remove('is-hidden');
 	buildEngineButtons();
 	selectTier(selectedTier);
@@ -443,14 +446,8 @@ async function loadCatalog() {
 }
 
 // Render the retryable notice that replaces the quality/engine controls when the
-// catalog could not be reached. A served response without a backends array is an
-// older deploy with nothing to pick, so it stays silent as before.
-function showCatalogError(errorEl, reachable) {
-	if (reachable) {
-		errorEl.classList.add('is-hidden');
-		errorEl.innerHTML = '';
-		return;
-	}
+// catalog could not be reached.
+function showCatalogError(errorEl) {
 	errorEl.innerHTML = errorStateHTML({
 		title: "Couldn't load the engine list",
 		body: 'Quality and engine options are unavailable right now. Generation still works on the default free engine, or retry to get the full picker back.',

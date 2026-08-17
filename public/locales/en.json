@@ -7884,13 +7884,14 @@
 		"unconfigured_body": "This page drives a TRELLIS NIM you host yourself, and no endpoint is wired to this deployment. Paste the base URL of your own <code>nvcr.io/nim/microsoft/trellis</code> container to reconstruct right here, or set <code>NIM_TRELLIS_URL</code> on the deployment to wire it for everyone.",
 		"set_endpoint": "Set the endpoint",
 		"link_hosted_forge": "Use the hosted forge instead",
-		"link_nvidia_docs": "NVIDIA model docs"
+		"link_nvidia_docs": "NVIDIA model docs",
+		"retry_check": "Retry check"
 	},
 	"forge_spark": {
 		"1_nemotron_refines_your_prompt_idle": "<span class=\"num\">1</span> <span><span class=\"who\">Nemotron</span><br><span class=\"does\">refines your prompt</span></span> <span class=\"state\">idle</span>",
 		"2_flux_paints_a_reference_image_idle": "<span class=\"num\">2</span> <span><span class=\"who\">FLUX</span><br><span class=\"does\">paints a reference image</span></span> <span class=\"state\">idle</span>",
 		"3_trellis_reconstructs_the_3d_mesh_idle": "<span class=\"num\">3</span> <span><span class=\"who\">TRELLIS</span><br><span class=\"does\">reconstructs the 3D mesh</span></span> <span class=\"state\">idle</span>",
-		"a_sentence_becomes_a_textured_3d_mesh": "A sentence becomes a textured 3D mesh. Nemotron sharpens your words, FLUX paints a clean reference, and TRELLIS reconstructs the model — quietly, on NVIDIA NIM.",
+		"a_sentence_becomes_a_textured_3d_mesh": "A sentence becomes a textured 3D mesh. Nemotron sharpens your words, FLUX paints a clean reference, and TRELLIS reconstructs the model, quietly, on NVIDIA NIM.",
 		"always_on": "always on",
 		"brass_pocket_watch": "brass pocket watch",
 		"ceramic_teapot": "ceramic teapot",
@@ -7901,17 +7902,18 @@
 		"forge_nim": "/forge-nim",
 		"generate_3d_model": "Generate 3D model",
 		"generate_another": "Generate another",
-		"meta_description": "Describe an object and watch it become a textured 3D mesh. Nemotron sharpens the prompt, FLUX paints a reference image, and TRELLIS reconstructs the model — served on NVIDIA NIM.",
+		"meta_description": "Describe an object and watch it become a textured 3D mesh. Nemotron sharpens the prompt, FLUX paints a reference image, and TRELLIS reconstructs the model, served on NVIDIA NIM.",
 		"meta_og_description": "Describe it. Nemotron sharpens the words, FLUX paints a clean reference, TRELLIS reconstructs the mesh. Served on NVIDIA NIM, quiet and always on.",
-		"meta_og_title": "Text → 3D — Nemotron → FLUX → TRELLIS · three.ws",
+		"meta_og_title": "Text → 3D · Nemotron → FLUX → TRELLIS · three.ws",
 		"meta_title": "Text → 3D · Nemotron → FLUX → TRELLIS · three.ws",
 		"meta_twitter_description": "Describe it. Nemotron sharpens the words, FLUX paints a reference, TRELLIS reconstructs the mesh. Served on NVIDIA NIM.",
 		"meta_twitter_title": "Text → 3D · Nemotron → FLUX → TRELLIS · three.ws",
 		"potted_monstera": "potted monstera",
 		"text_3d_served_on_nvidia_nim": "<span class=\"dot\"></span> Text → 3D · served on NVIDIA NIM",
+		"try_again": "Try again",
 		"what_should_we_build": "What should we build?",
 		"working": "Working…",
-		"your_model_will_appear_here_describe_an": "Your model will appear here. Describe an object and hit generate — then orbit, light, and download the GLB."
+		"your_model_will_appear_here_describe_an": "Your model will appear here. Describe an object and hit generate, then orbit, light, and download the GLB."
 	},
 	"forge_studio": {
 		"0_of_4_views": "<strong>0</strong> of 4 views",

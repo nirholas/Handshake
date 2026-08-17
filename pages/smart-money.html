@@ -946,12 +946,12 @@
 			try {
 				const { wallet: w, recent_coins } = await getJSON(`${API}?wallet=${encodeURIComponent(wallet)}`);
 				$('drTitle').textContent = short(w.wallet);
+				const last = ago(w.last_active_at);
 				const coins = (recent_coins || []).slice(0, 18).map((c) => `<div class="nwallet" data-mint="${esc(c.mint)}" role="button" tabindex="0">
 					<div class="lw-top"><span class="lw-addr">${esc(c.symbol || c.mint.slice(0, 8))}</span>${c.graduated ? '<span class="nlabel lb-smart_money">graduated</span>' : ''}</div>
 					<div class="lstat">${fmtSol(c.buy_sol)}◎</div>
 					<a class="solscan" href="https://pump.fun/${esc(c.mint)}" target="_blank" rel="noopener">pump ↗</a>
 				</div>`).join('') || `<p style="color:var(--muted)">No recent coins on record. This wallet's judged trades sit outside the window the radar keeps coin-level detail for${last ? `, and it was last active ${last} ago` : ''}. Its reputation above still counts every verdict.</p>`;
-				const last = ago(w.last_active_at);
 				$('drBody').innerHTML = `
 					<div style="margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
 						<span class="nlabel lb-${w.label}">${labelText[w.label] || w.label}</span>

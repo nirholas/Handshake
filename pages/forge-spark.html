@@ -560,7 +560,7 @@
 					setStage('nemotron', 'done', 'done');
 					return refined;
 				} catch (err) {
-					// Quiet fallback — keep the original prompt, mark the stage done.
+					// Quiet fallback: keep the original prompt, mark the stage done.
 					refinedEl.hidden = false;
 					refinedEl.innerHTML = '<b>Using your prompt as written.</b><span class="by">refine step unavailable, generating anyway</span>';
 					setStage('nemotron', 'done', 'skipped');
@@ -624,7 +624,7 @@
 					if (status === 'failed' || status === 'error') {
 						throw new Error(data.message || data.error || 'Reconstruction failed.');
 					}
-					// running / queued — keep waiting
+					// running / queued: keep waiting
 				}
 				throw new Error('This is taking longer than usual. Please try again.');
 			}
