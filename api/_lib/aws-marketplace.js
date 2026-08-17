@@ -1,21 +1,33 @@
 // AWS Marketplace integration helpers.
 //
-// Covers the three integration points for a SaaS usage-based listing:
-//   1. resolveCustomer  — exchange a registration token for a stable customer ID
-//   2. meterUsage       — report metered consumption to AWS for billing
-//   3. getEntitlements  — check what a customer is entitled to (contract products)
-//   4. verifySnsMessage — validate that an SNS notification is genuinely from AWS
+// Covers the integration points for a SaaS listing under the Concurrent
+// Agreements requirements AWS made mandatory for new products on 2026-06-01:
+//   1. resolveCustomer        : exchange a registration token for the buyer's
+//                               LicenseArn + CustomerAWSAccountId
+//   2. meterUsage             : report consumption (BatchMeterUsage, keyed on
+//                               LicenseArn) for a usage-priced listing
+//   3. getEntitlements        : check entitlements for a contract listing
+//   4. verifySnsMessage       : validate a legacy SNS lifecycle notification
+//   5. parseMarketplaceEvent  : normalize an EventBridge agreement/license event
+//   6. verifyEventSecret      : authenticate the EventBridge API destination
+//
+// Why both notification transports: AWS still documents the SNS subscription
+// topic for existing integrations, but new products receive agreement and
+// license lifecycle events on the seller account's default EventBridge bus
+// instead, and SNS never carries a LicenseArn. The webhook accepts either
+// envelope so the listing works whichever one AWS wires up for it.
 
 import {
 	MarketplaceMeteringClient,
 	ResolveCustomerCommand,
 	MeterUsageCommand,
+	BatchMeterUsageCommand,
 } from '@aws-sdk/client-marketplace-metering';
 import {
 	MarketplaceEntitlementServiceClient,
 	GetEntitlementsCommand,
 } from '@aws-sdk/client-marketplace-entitlement-service';
-import { createVerify, createPublicKey } from 'node:crypto';
+import { createVerify, createPublicKey, timingSafeEqual } from 'node:crypto';
 import { env } from './env.js';
 
 function credentials() {
@@ -41,10 +53,16 @@ function entitlementClient() {
 
 /**
  * Exchange the registration token (from the POST body of the registration URL)
- * for a stable CustomerIdentifier and ProductCode.
+ * for the buyer's identity.
  *
- * Returns { customerIdentifier, productCode, customerAWSAccountId }.
- * Throws on invalid/expired token.
+ * For a NEW SaaS integration AWS leaves `CustomerIdentifier` empty and returns
+ * `LicenseArn` + `CustomerAWSAccountId` instead, so all four fields are surfaced
+ * and the caller keys on whichever it got. Our listing has never been created,
+ * which makes it a new integration by definition; the legacy field is carried
+ * only so a pre-existing row can still be matched.
+ *
+ * Returns { customerIdentifier, licenseArn, customerAWSAccountId, productCode }.
+ * Throws on an invalid or expired token.
  */
 export async function resolveCustomer(registrationToken) {
 	const client = meteringClient();
@@ -52,47 +70,98 @@ export async function resolveCustomer(registrationToken) {
 		new ResolveCustomerCommand({ RegistrationToken: registrationToken }),
 	);
 	return {
-		customerIdentifier: result.CustomerIdentifier,
+		customerIdentifier: result.CustomerIdentifier || null,
+		licenseArn: result.LicenseArn || null,
+		customerAWSAccountId: result.CustomerAWSAccountId || null,
 		productCode: result.ProductCode,
-		customerAWSAccountId: result.CustomerAWSAccountId,
 	};
 }
 
 /**
  * Report metered usage to AWS Marketplace for billing.
  *
+ * New integrations meter through BatchMeterUsage with `LicenseArn` +
+ * `CustomerAWSAccountId` per record; `MeterUsage` with a `CustomerIdentifier` is
+ * the legacy shape and is only used when that is genuinely all we hold for the
+ * buyer. Returns the metering record id, or null when AWS accepted the batch
+ * without issuing one.
+ *
  * @param {object} params
- * @param {string} params.customerIdentifier  — from resolveCustomer
- * @param {string} params.dimension           — usage dimension defined in seller portal
- * @param {number} params.quantity            — units consumed
- * @param {Date}   [params.timestamp]         — defaults to now
- * @param {string} [params.usageAllocationId] — idempotency key (UUID recommended)
+ * @param {string} [params.licenseArn]           from resolveCustomer (new integrations)
+ * @param {string} [params.customerAWSAccountId] from resolveCustomer (new integrations)
+ * @param {string} [params.customerIdentifier]   legacy integrations only
+ * @param {string} params.dimension              usage dimension defined in the seller portal
+ * @param {number} params.quantity               units consumed
+ * @param {Date}   [params.timestamp]            defaults to now
  */
-export async function meterUsage({ customerIdentifier, dimension, quantity, timestamp, usageAllocationId }) {
+export async function meterUsage({
+	licenseArn,
+	customerAWSAccountId,
+	customerIdentifier,
+	dimension,
+	quantity,
+	timestamp,
+}) {
 	const client = meteringClient();
+	const when = timestamp ?? new Date();
+
+	if (licenseArn || customerAWSAccountId) {
+		const result = await client.send(
+			new BatchMeterUsageCommand({
+				ProductCode: env.AWS_MP_PRODUCT_CODE,
+				UsageRecords: [
+					{
+						Timestamp: when,
+						Dimension: dimension,
+						Quantity: quantity,
+						...(licenseArn ? { LicenseArn: licenseArn } : {}),
+						...(customerAWSAccountId ? { CustomerAWSAccountId: customerAWSAccountId } : {}),
+					},
+				],
+			}),
+		);
+		const [record] = result.Results ?? [];
+		if (record && record.Status && record.Status !== 'Success') {
+			throw new Error(`BatchMeterUsage rejected the record: ${record.Status}`);
+		}
+		return record?.MeteringRecordId ?? null;
+	}
+
+	if (!customerIdentifier) {
+		throw new Error('meterUsage: need LicenseArn/CustomerAWSAccountId (new integrations) or CustomerIdentifier (legacy)');
+	}
+
 	const result = await client.send(
 		new MeterUsageCommand({
 			ProductCode: env.AWS_MP_PRODUCT_CODE,
 			UsageDimension: dimension,
 			UsageQuantity: quantity,
-			Timestamp: timestamp ?? new Date(),
+			Timestamp: when,
 			CustomerIdentifier: customerIdentifier,
-			...(usageAllocationId ? { UsageAllocations: [{ AllocatedUsageQuantity: quantity, Tags: [{ Key: 'allocationId', Value: usageAllocationId }] }] } : {}),
 		}),
 	);
-	return result.MeteringRecordId;
+	return result.MeteringRecordId ?? null;
 }
 
 /**
- * Check entitlements for a customer (used for contract-based products).
- * Returns the list of active entitlement objects.
+ * Check entitlements for a buyer (contract-based products).
+ *
+ * Filters on CUSTOMER_AWS_ACCOUNT_ID, which is the filter new integrations must
+ * use; CUSTOMER_IDENTIFIER remains only for a legacy row that has nothing else.
+ * Returns the list of entitlement objects.
  */
-export async function getEntitlements(customerIdentifier) {
+export async function getEntitlements({ customerAWSAccountId, customerIdentifier }) {
+	const filter = customerAWSAccountId
+		? { CUSTOMER_AWS_ACCOUNT_ID: [customerAWSAccountId] }
+		: { CUSTOMER_IDENTIFIER: [customerIdentifier] };
+	if (!customerAWSAccountId && !customerIdentifier) {
+		throw new Error('getEntitlements: need CustomerAWSAccountId or CustomerIdentifier');
+	}
 	const client = entitlementClient();
 	const result = await client.send(
 		new GetEntitlementsCommand({
 			ProductCode: env.AWS_MP_PRODUCT_CODE,
-			Filter: { CUSTOMER_IDENTIFIER: [customerIdentifier] },
+			Filter: filter,
 		}),
 	);
 	return result.Entitlements ?? [];
@@ -121,10 +190,13 @@ export function awsMarketplaceConfigured() {
  *
  * @returns {Promise<{ configured: boolean, entitled: boolean|null, entitlements: object[] }>}
  */
-export async function customerEntitlement(customerIdentifier) {
+export async function customerEntitlement({ customerAWSAccountId, customerIdentifier }) {
 	if (!awsMarketplaceConfigured()) return { configured: false, entitled: null, entitlements: [] };
+	if (!customerAWSAccountId && !customerIdentifier) {
+		return { configured: true, entitled: null, entitlements: [] };
+	}
 	try {
-		const entitlements = await getEntitlements(customerIdentifier);
+		const entitlements = await getEntitlements({ customerAWSAccountId, customerIdentifier });
 		const now = Date.now();
 		const active = entitlements.filter(
 			(e) => !e.ExpirationDate || new Date(e.ExpirationDate).getTime() > now,
@@ -199,6 +271,11 @@ function buildSignatureString(msg) {
 /**
  * Verify that a parsed SNS message object was genuinely signed by AWS.
  * Throws if verification fails; returns void on success.
+ *
+ * SignatureVersion selects the digest: version 1 topics sign with SHA1, and
+ * version 2 topics (which AWS now recommends, and which a topic can be switched
+ * to at any time) sign with SHA256. Hardcoding SHA1 rejects every message from
+ * a version 2 topic with a signature failure that reads like an attack.
  */
 export async function verifySnsMessage(msg) {
 	const expectedTopicArn = env.AWS_MP_SNS_TOPIC_ARN;
@@ -206,10 +283,91 @@ export async function verifySnsMessage(msg) {
 		throw new Error(`SNS TopicArn mismatch: got ${msg.TopicArn}`);
 	}
 
+	const digest = String(msg.SignatureVersion) === '2' ? 'SHA256' : 'SHA1';
 	const pem = await fetchCert(msg.SigningCertURL);
 	const pubKey = createPublicKey(pem);
-	const verifier = createVerify('SHA1');
+	const verifier = createVerify(digest);
 	verifier.update(buildSignatureString(msg));
 	const valid = verifier.verify(pubKey, msg.Signature, 'base64');
 	if (!valid) throw new Error('SNS signature verification failed');
+}
+
+// ── EventBridge agreement + license events ───────────────────────────────────
+// New SaaS products receive lifecycle notifications as EventBridge events on the
+// seller account's default bus, not on an SNS topic. EventBridge cannot call an
+// external HTTPS endpoint directly, so a rule relays them through an API
+// destination, whose connection attaches a shared secret header. That header is
+// the only thing standing between this endpoint and an anonymous caller who
+// wants to revoke a buyer's access, so an unset secret refuses delivery outright
+// rather than trusting the payload.
+
+export const AGREEMENT_EVENT_SOURCE = 'aws.agreement-marketplace';
+
+/** Header the EventBridge API destination connection attaches. */
+export const EVENT_SECRET_HEADER = 'x-three-ws-marketplace-secret';
+
+/**
+ * Constant-time comparison of the request's shared secret against the configured
+ * one. Returns a reason string on failure, or null when the request is trusted.
+ */
+export function verifyEventSecret(req) {
+	const expected = env.AWS_MP_EVENT_SECRET;
+	if (!expected) return 'not_configured';
+	const presented = req.headers?.[EVENT_SECRET_HEADER];
+	if (typeof presented !== 'string' || presented.length === 0) return 'missing_secret';
+	const a = Buffer.from(presented, 'utf8');
+	const b = Buffer.from(expected, 'utf8');
+	if (a.length !== b.length) return 'bad_secret';
+	return timingSafeEqual(a, b) ? null : 'bad_secret';
+}
+
+/** True when the parsed body looks like an EventBridge envelope rather than SNS. */
+export function isEventBridgeEnvelope(body) {
+	return Boolean(body && typeof body === 'object' && typeof body['detail-type'] === 'string' && body.source);
+}
+
+/**
+ * Normalize an AWS Marketplace EventBridge event into the fields the webhook
+ * acts on. Returns null for an event from another source.
+ *
+ * `kind` is one of:
+ *   agreement-created      a new/renewed/amended agreement; grant access
+ *   agreement-ended        expired, cancelled, or terminated; revoke access
+ *   license-updated        the buyer's license was provisioned or changed
+ *   license-deprovisioned  the buyer's license ended; revoke access
+ *   ignored                a marketplace event this listing takes no action on
+ *
+ * Manufacturer and proposer variants of the agreement events are identical for
+ * our purposes (we are both), so the role suffix is stripped.
+ */
+export function parseMarketplaceEvent(event) {
+	if (!event || event.source !== AGREEMENT_EVENT_SOURCE) return null;
+
+	const detailType = String(event['detail-type'] || '');
+	const base = detailType.replace(/\s+-\s+(Manufacturer|Proposer|Acceptor)$/, '').trim();
+	const detail = event.detail || {};
+
+	const common = {
+		detailType,
+		agreementId: detail.agreement?.id ?? null,
+		agreementStatus: detail.agreement?.status ?? null,
+		acceptorAccountId: detail.acceptor?.accountId ?? detail.agreement?.acceptorId ?? null,
+		offerId: detail.offer?.id ?? detail.agreement?.offerId ?? null,
+		productCode: detail.product?.code ?? null,
+		licenseArn: detail.license?.arn ?? null,
+	};
+
+	switch (base) {
+		case 'Purchase Agreement Created':
+		case 'Purchase Agreement Amended':
+			return { kind: 'agreement-created', ...common };
+		case 'Purchase Agreement Ended':
+			return { kind: 'agreement-ended', ...common };
+		case 'License Updated':
+			return { kind: 'license-updated', ...common };
+		case 'License Deprovisioned':
+			return { kind: 'license-deprovisioned', ...common };
+		default:
+			return { kind: 'ignored', ...common };
+	}
 }

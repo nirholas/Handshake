@@ -149,21 +149,33 @@ describe('atomicsToUsd', () => {
 	});
 });
 
-describe('AWS Marketplace — MeterUsage call shape (SDK boundary mocked)', () => {
-	it('issues a MeterUsage command with the product code, dimension, and idempotency allocation', async () => {
+describe('AWS Marketplace metering call shape (SDK boundary mocked)', () => {
+	// AWS stopped populating CustomerIdentifier for new SaaS integrations and
+	// requires LicenseArn + CustomerAWSAccountId instead. The metering helper has
+	// to pick the right command for whichever identity the buyer's row holds:
+	// BatchMeterUsage for a licensed buyer, the legacy MeterUsage only when a
+	// pre-existing row has nothing but a customer identifier.
+	async function loadMetering(response) {
 		vi.resetModules();
 		const sent = [];
 		vi.doMock('@aws-sdk/client-marketplace-metering', () => ({
 			MarketplaceMeteringClient: class {
 				async send(cmd) {
 					sent.push(cmd);
-					return { MeteringRecordId: 'rec-1' };
+					return response;
 				}
 			},
 			ResolveCustomerCommand: class {},
 			MeterUsageCommand: class {
 				constructor(input) {
 					this.input = input;
+					this.commandName = 'MeterUsage';
+				}
+			},
+			BatchMeterUsageCommand: class {
+				constructor(input) {
+					this.input = input;
+					this.commandName = 'BatchMeterUsage';
 				}
 			},
 		}));
@@ -174,25 +186,70 @@ describe('AWS Marketplace — MeterUsage call shape (SDK boundary mocked)', () =
 		vi.doMock('../api/_lib/env.js', () => ({
 			env: { AWS_MP_PRODUCT_CODE: 'prod123', AWS_MP_REGION: 'us-east-1', AWS_MP_ACCESS_KEY_ID: 'k', AWS_MP_SECRET_ACCESS_KEY: 's' },
 		}));
-
 		const { meterUsage } = await import('../api/_lib/aws-marketplace.js');
+		return { meterUsage, sent };
+	}
+
+	function unmock() {
+		vi.doUnmock('@aws-sdk/client-marketplace-metering');
+		vi.doUnmock('@aws-sdk/client-marketplace-entitlement-service');
+		vi.doUnmock('../api/_lib/env.js');
+	}
+
+	it('meters a licensed buyer through BatchMeterUsage with the license ARN', async () => {
+		const { meterUsage, sent } = await loadMetering({
+			Results: [{ Status: 'Success', MeteringRecordId: 'rec-1' }],
+		});
+		const recordId = await meterUsage({
+			licenseArn: 'arn:aws:license-manager:us-east-1:155407237916:l-synthetic',
+			customerAWSAccountId: '111122223333',
+			dimension: 'api_call',
+			quantity: 1,
+		});
+		expect(recordId).toBe('rec-1');
+		expect(sent).toHaveLength(1);
+		expect(sent[0].commandName).toBe('BatchMeterUsage');
+		const record = sent[0].input.UsageRecords[0];
+		expect(sent[0].input.ProductCode).toBe('prod123');
+		expect(record.LicenseArn).toBe('arn:aws:license-manager:us-east-1:155407237916:l-synthetic');
+		expect(record.CustomerAWSAccountId).toBe('111122223333');
+		expect(record.Dimension).toBe('api_call');
+		expect(record.Quantity).toBe(1);
+		expect(record.CustomerIdentifier).toBeUndefined();
+		unmock();
+	});
+
+	it('surfaces a rejected usage record instead of reporting it as metered', async () => {
+		const { meterUsage } = await loadMetering({
+			Results: [{ Status: 'CustomerNotSubscribed' }],
+		});
+		await expect(
+			meterUsage({
+				licenseArn: 'arn:aws:license-manager:us-east-1:155407237916:l-synthetic',
+				dimension: 'api_call',
+				quantity: 1,
+			}),
+		).rejects.toThrow(/CustomerNotSubscribed/);
+		unmock();
+	});
+
+	it('falls back to the legacy MeterUsage command for a customer-identifier-only row', async () => {
+		const { meterUsage, sent } = await loadMetering({ MeteringRecordId: 'rec-legacy' });
 		const recordId = await meterUsage({
 			customerIdentifier: 'cust-1',
 			dimension: 'api_call',
 			quantity: 1,
-			usageAllocationId: 'alloc-1',
 		});
-		expect(recordId).toBe('rec-1');
-		expect(sent).toHaveLength(1);
-		const input = sent[0].input;
-		expect(input.ProductCode).toBe('prod123');
-		expect(input.UsageDimension).toBe('api_call');
-		expect(input.UsageQuantity).toBe(1);
-		expect(input.CustomerIdentifier).toBe('cust-1');
-		// Idempotency allocation carries the dedupe key AWS bills against.
-		expect(input.UsageAllocations[0].Tags[0].Value).toBe('alloc-1');
-		vi.doUnmock('@aws-sdk/client-marketplace-metering');
-		vi.doUnmock('@aws-sdk/client-marketplace-entitlement-service');
-		vi.doUnmock('../api/_lib/env.js');
+		expect(recordId).toBe('rec-legacy');
+		expect(sent[0].commandName).toBe('MeterUsage');
+		expect(sent[0].input.CustomerIdentifier).toBe('cust-1');
+		expect(sent[0].input.UsageDimension).toBe('api_call');
+		unmock();
+	});
+
+	it('refuses to meter a buyer it cannot identify at all', async () => {
+		const { meterUsage } = await loadMetering({});
+		await expect(meterUsage({ dimension: 'api_call', quantity: 1 })).rejects.toThrow(/LicenseArn/);
+		unmock();
 	});
 });

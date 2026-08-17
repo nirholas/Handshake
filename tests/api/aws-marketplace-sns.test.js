@@ -35,10 +35,18 @@ function signingString(msg) {
 		.join('');
 }
 
-/** Build a message and attach a valid AWS-style RSA-SHA1 signature over it. */
-function signed(msg) {
-	const m = { ...msg, SigningCertURL: msg.SigningCertURL ?? CERT_URL, SignatureVersion: '1' };
-	const sig = createSign('RSA-SHA1').update(signingString(m)).sign(privateKey, 'base64');
+/**
+ * Build a message and attach a valid AWS-style signature over it.
+ *
+ * SignatureVersion selects the digest, and SNS supports both: version 1 topics
+ * sign with SHA1, version 2 topics with SHA256. A topic can be switched to
+ * version 2 at any time, so the verifier has to follow the field rather than
+ * assume one.
+ */
+function signed(msg, signatureVersion = '1') {
+	const m = { ...msg, SigningCertURL: msg.SigningCertURL ?? CERT_URL, SignatureVersion: signatureVersion };
+	const algorithm = signatureVersion === '2' ? 'RSA-SHA256' : 'RSA-SHA1';
+	const sig = createSign(algorithm).update(signingString(m)).sign(privateKey, 'base64');
 	return { ...m, Signature: sig };
 }
 
@@ -121,6 +129,41 @@ describe('verifySnsMessage', () => {
 	it('accepts the matching TopicArn when pinned', async () => {
 		process.env.AWS_MP_SNS_TOPIC_ARN = 'arn:aws:sns:us-east-1:155407237916:marketplace-topic';
 		await expect(verifySnsMessage(validNotification())).resolves.toBeUndefined();
+	});
+
+	// A SignatureVersion 2 topic signs with SHA256. Verifying it with SHA1 fails
+	// every genuine message, and the failure reads exactly like a forgery, so the
+	// operator hunts an attack that is not there while real lifecycle events are
+	// dropped with a 403.
+	it('accepts a SignatureVersion 2 message, which AWS signs with SHA256', async () => {
+		const msg = signed(
+			{
+				Type: 'Notification',
+				MessageId: 'id-v2',
+				Subject: 'AWS Marketplace',
+				Message: JSON.stringify({ action: 'subscribe-success', 'customer-identifier': 'CUST1' }),
+				Timestamp: '2026-08-17T00:00:00.000Z',
+				TopicArn: 'arn:aws:sns:us-east-1:155407237916:marketplace-topic',
+			},
+			'2',
+		);
+		await expect(verifySnsMessage(msg)).resolves.toBeUndefined();
+	});
+
+	it('still rejects a tampered SignatureVersion 2 message', async () => {
+		const msg = signed(
+			{
+				Type: 'Notification',
+				MessageId: 'id-v2-tampered',
+				Subject: 'AWS Marketplace',
+				Message: JSON.stringify({ action: 'subscribe-success', 'customer-identifier': 'CUST1' }),
+				Timestamp: '2026-08-17T00:00:00.000Z',
+				TopicArn: 'arn:aws:sns:us-east-1:155407237916:marketplace-topic',
+			},
+			'2',
+		);
+		msg.Message = JSON.stringify({ action: 'unsubscribe-success', 'customer-identifier': 'CUST1' });
+		await expect(verifySnsMessage(msg)).rejects.toThrow(/signature verification failed/i);
 	});
 });
 

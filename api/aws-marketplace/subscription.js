@@ -1,23 +1,43 @@
 // POST /api/aws-marketplace/subscription
 //
-// Amazon SNS webhook called by AWS Marketplace when a customer subscribes,
-// unsubscribes, or when entitlements change.
+// Lifecycle webhook for the AWS Marketplace listing. Accepts BOTH transports,
+// because which one AWS uses depends on when the product was created:
 //
-// AWS sends three message types:
-//   SubscriptionConfirmation — one-time handshake; we must GET the SubscribeURL.
-//   UnsubscribeConfirmation  — mirrored when AWS cancels the subscription.
-//   Notification             — actual subscription lifecycle events.
+//   EventBridge, the transport AWS has required of new products since 2026-06-01.
+//     Agreement and license events land on the seller account's default event
+//     bus with source `aws.agreement-marketplace`. EventBridge cannot POST to an
+//     external HTTPS endpoint, so a rule relays them through an API destination
+//     whose connection attaches a shared secret header. The events carry a
+//     LicenseArn and an agreement id; they never carry a CustomerIdentifier.
+//       Purchase Agreement Created / Amended  → grant
+//       Purchase Agreement Ended              → revoke
+//       License Updated                       → grant, and attach the license
+//       License Deprovisioned                 → revoke
 //
-// Notification actions received for SaaS usage-based products:
-//   subscribe-success        — customer has subscribed (isFreeTrialTermPresent may be true)
-//   subscribe-fail           — subscription could not be completed
-//   unsubscribe-success      — customer cancelled or subscription expired
-//   entitlement-updated      — contract product entitlement changed
+//   Amazon SNS (existing products)
+//     The aws-mp-subscription-notification-<PRODUCTCODE> topic, signed by AWS.
+//       subscribe-success / unsubscribe-success / subscribe-fail / entitlement-updated
+//
+// Both paths converge on the same store, so a listing that is migrated from one
+// transport to the other keeps working without a code change.
 
 import { json, wrap, readBody } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
-import { verifySnsMessage, assertAwsHttpsUrl } from '../_lib/aws-marketplace.js';
+import {
+	verifySnsMessage,
+	assertAwsHttpsUrl,
+	isEventBridgeEnvelope,
+	parseMarketplaceEvent,
+	verifyEventSecret,
+} from '../_lib/aws-marketplace.js';
 import { revokeSubscriptionForCustomer } from '../_lib/aws-marketplace-bridge.js';
+import {
+	upsertResolvedCustomer,
+	recordAgreementCreated,
+	attachLicenseToAgreement,
+	resolveLifecycleTargets,
+	markCustomerStatus,
+} from '../_lib/aws-marketplace-store.js';
 import { env } from '../_lib/env.js';
 
 // Delegates to the shared readBody (api/_lib/http.js), which prefers the
@@ -28,14 +48,105 @@ async function readRawBody(req) {
 	return (await readBody(req, 1_000_000)).toString('utf8');
 }
 
-export default wrap(async (req, res) => {
-	// AWS SNS sends POST for all message types.
-	if (req.method !== 'POST') {
-		res.statusCode = 405;
-		res.end();
-		return;
+/**
+ * Revoke a buyer's access. Revokes the x402 key BEFORE flipping status. If the
+ * revoke fails we leave the row live so the event can be retried, rather than
+ * ending up with a cancelled customer who still holds a working key.
+ */
+async function revokeCustomer(row, status) {
+	await revokeSubscriptionForCustomer(row.id);
+	await markCustomerStatus(row.id, status);
+}
+
+// ── EventBridge ──────────────────────────────────────────────────────────────
+
+async function handleEventBridge(req, res, event) {
+	const secretFailure = verifyEventSecret(req);
+	if (secretFailure) {
+		if (secretFailure === 'not_configured') {
+			console.error('[aws-marketplace/subscription] refusing EventBridge delivery: AWS_MP_EVENT_SECRET is not set');
+			return json(res, 503, { error: 'not_configured' });
+		}
+		console.error('[aws-marketplace/subscription] EventBridge secret rejected', { reason: secretFailure });
+		return json(res, 403, { error: 'forbidden' });
 	}
 
+	const parsed = parseMarketplaceEvent(event);
+	if (!parsed) {
+		console.error('[aws-marketplace/subscription] event from unexpected source', { source: event.source });
+		return json(res, 400, { error: 'unexpected_source' });
+	}
+	if (parsed.kind === 'ignored') {
+		return json(res, 200, { ok: true, ignored: parsed.detailType });
+	}
+
+	const productCode = parsed.productCode || env.AWS_MP_PRODUCT_CODE;
+
+	if (parsed.kind === 'agreement-created') {
+		const row = await recordAgreementCreated({
+			agreementId: parsed.agreementId,
+			acceptorAccountId: parsed.acceptorAccountId,
+			offerId: parsed.offerId,
+			productCode,
+		});
+		return json(res, 200, { ok: true, customer: row?.id ?? null });
+	}
+
+	if (parsed.kind === 'license-updated') {
+		const row = await attachLicenseToAgreement({
+			agreementId: parsed.agreementId,
+			licenseArn: parsed.licenseArn,
+			acceptorAccountId: parsed.acceptorAccountId,
+			offerId: parsed.offerId,
+			productCode,
+		});
+		return json(res, 200, { ok: true, customer: row?.id ?? null });
+	}
+
+	// agreement-ended | license-deprovisioned
+	const targets = await resolveLifecycleTargets({
+		licenseArn: parsed.licenseArn,
+		agreementId: parsed.agreementId,
+		acceptorAccountId: parsed.acceptorAccountId,
+		productCode,
+	});
+
+	if (targets.length === 0) {
+		// The buyer never completed registration, so there is nothing to revoke.
+		// Not an error: AWS sends the end event regardless.
+		return json(res, 200, { ok: true, matched: 0 });
+	}
+
+	// Under Concurrent Agreements one AWS account can hold several live
+	// agreements for the same product. If the event only identified the account,
+	// revoking would be a coin flip between them, and the wrong call cuts off a
+	// paying buyer. Retrying cannot add information, so answer 200 and make the
+	// ambiguity loud instead of silently guessing.
+	if (targets.length > 1) {
+		console.error('[aws-marketplace/subscription] ambiguous lifecycle target; refusing to revoke', {
+			detailType: parsed.detailType,
+			agreementId: parsed.agreementId,
+			acceptorAccountId: parsed.acceptorAccountId,
+			matched: targets.length,
+		});
+		return json(res, 200, { ok: true, unresolved: true, matched: targets.length });
+	}
+
+	try {
+		await revokeCustomer(targets[0], 'cancelled');
+	} catch (err) {
+		console.error('[aws-marketplace/subscription] revoke failed', {
+			customer: targets[0].id,
+			error: err?.message,
+		});
+		return json(res, 500, { error: 'revoke_failed' });
+	}
+	return json(res, 200, { ok: true, revoked: targets[0].id });
+}
+
+// ── Amazon SNS (legacy transport) ────────────────────────────────────────────
+
+async function handleSns(req, res, msg) {
 	// The topic pin is what binds this webhook to OUR listing. A valid signature
 	// alone only proves "some AWS account signed this": anyone can create their
 	// own SNS topic and have AWS sign a Notification for it, so an unpinned
@@ -49,17 +160,6 @@ export default wrap(async (req, res) => {
 		return json(res, 503, { error: 'not_configured' });
 	}
 
-	let msg;
-	try {
-		const raw = await readRawBody(req);
-		msg = JSON.parse(raw);
-	} catch {
-		res.statusCode = 400;
-		res.end();
-		return;
-	}
-
-	// Verify the message was genuinely signed by AWS.
 	try {
 		await verifySnsMessage(msg);
 	} catch (err) {
@@ -81,7 +181,6 @@ export default wrap(async (req, res) => {
 			console.error('[aws-marketplace/subscription] refusing SubscribeURL', err?.message);
 			return json(res, 400, { error: 'invalid_subscribe_url' });
 		}
-		// Confirm the SNS subscription by hitting the provided URL.
 		try {
 			await fetch(subscribeUrl);
 		} catch (err) {
@@ -102,79 +201,91 @@ export default wrap(async (req, res) => {
 		return json(res, 400, { error: 'malformed_message' });
 	}
 
-	const { action, 'customer-identifier': customerId, 'product-code': productCode, 'offer-identifier': offerId, isFreeTrialTermPresent } = payload;
+	const {
+		action,
+		'customer-identifier': customerId,
+		'product-code': productCode,
+		'offer-identifier': offerId,
+		isFreeTrialTermPresent,
+	} = payload;
 	const isFreeTrial = isFreeTrialTermPresent === 'true' || isFreeTrialTermPresent === true;
 
+	// SNS never carries a LicenseArn, so this transport can only ever address a
+	// buyer by the legacy identifier. A notification without one is unusable.
 	if (!customerId) {
 		console.error('[aws-marketplace/subscription] missing customer-identifier', payload);
 		return json(res, 400, { error: 'missing_customer_identifier' });
 	}
 
 	if (action === 'subscribe-success') {
-		await sql`
-			INSERT INTO aws_marketplace_customers
-				(customer_identifier, product_code, offer_id, subscription_status, is_free_trial, subscribed_at)
-			VALUES
-				(${customerId}, ${productCode ?? env.AWS_MP_PRODUCT_CODE}, ${offerId ?? null},
-				 ${isFreeTrial ? 'trial' : 'active'}, ${isFreeTrial}, now())
-			ON CONFLICT (customer_identifier) DO UPDATE SET
-				subscription_status = EXCLUDED.subscription_status,
-				is_free_trial       = EXCLUDED.is_free_trial,
-				offer_id            = COALESCE(EXCLUDED.offer_id, aws_marketplace_customers.offer_id),
-				subscribed_at       = COALESCE(aws_marketplace_customers.subscribed_at, now()),
-				cancelled_at        = NULL,
-				updated_at          = now()
-		`;
-	} else if (action === 'unsubscribe-success') {
-		// Revoke the x402 bypass key BEFORE flipping status — if the revoke
-		// fails we leave the row 'active' so we can retry from the dead-letter
-		// queue rather than ending up with a cancelled customer who still has
-		// a working key.
+		const row = await upsertResolvedCustomer({
+			customerIdentifier: customerId,
+			productCode: productCode ?? env.AWS_MP_PRODUCT_CODE,
+			isFreeTrial,
+		});
+		if (offerId) {
+			await sql`
+				update aws_marketplace_customers
+				set offer_id = ${offerId}, updated_at = now()
+				where id = ${row.id}
+			`;
+		}
+		return json(res, 200, { ok: true, customer: row.id });
+	}
+
+	const [row] = await sql`
+		select id from aws_marketplace_customers
+		where customer_identifier = ${customerId} limit 1
+	`;
+	if (!row) {
+		return json(res, 200, { ok: true, matched: 0 });
+	}
+
+	if (action === 'unsubscribe-success' || action === 'subscribe-fail') {
+		const status = action === 'unsubscribe-success' ? 'cancelled' : 'expired';
 		try {
-			await revokeSubscriptionForCustomer(customerId);
+			await revokeCustomer(row, status);
 		} catch (err) {
-			console.error('[aws-marketplace/subscription] revoke failed', {
-				customerId,
-				error: err?.message,
-			});
+			console.error('[aws-marketplace/subscription] revoke failed', { customerId, error: err?.message });
 			return json(res, 500, { error: 'revoke_failed' });
 		}
-		await sql`
-			UPDATE aws_marketplace_customers
-			SET subscription_status = 'cancelled',
-			    cancelled_at        = now(),
-			    updated_at          = now()
-			WHERE customer_identifier = ${customerId}
-		`;
-	} else if (action === 'subscribe-fail') {
-		try {
-			await revokeSubscriptionForCustomer(customerId);
-		} catch (err) {
-			console.error('[aws-marketplace/subscription] revoke on fail failed', {
-				customerId,
-				error: err?.message,
-			});
-		}
-		await sql`
-			UPDATE aws_marketplace_customers
-			SET subscription_status = 'expired',
-			    updated_at          = now()
-			WHERE customer_identifier = ${customerId}
-		`;
 	} else if (action === 'entitlement-updated') {
 		// Contract products use entitlements; usage products ignore this beat.
-		// For both, we touch updated_at so audit queries reflect the event.
-		// If a tier change implies a different rate-limit, the partner will
-		// see it on next /api/x402/* call: lookupSubscription reads the live
-		// rate_limit_per_minute from the row, so a follow-up admin update
-		// (or future per-tier auto-tune) takes effect without a re-issue.
+		// For both, we touch updated_at so audit queries reflect the event. If a
+		// tier change implies a different rate limit, the partner sees it on the
+		// next /api/x402/* call: lookupSubscription reads the live
+		// rate_limit_per_minute from the row, so a follow-up update takes effect
+		// without a re-issue.
 		await sql`
-			UPDATE aws_marketplace_customers
-			SET offer_id   = COALESCE(${offerId ?? null}, offer_id),
+			update aws_marketplace_customers
+			set offer_id   = coalesce(${offerId ?? null}, offer_id),
 			    updated_at = now()
-			WHERE customer_identifier = ${customerId}
+			where id = ${row.id}
 		`;
 	}
 
 	return json(res, 200, { ok: true });
+}
+
+export default wrap(async (req, res) => {
+	if (req.method !== 'POST') {
+		res.statusCode = 405;
+		res.setHeader('allow', 'POST');
+		res.end();
+		return;
+	}
+
+	let body;
+	try {
+		body = JSON.parse(await readRawBody(req));
+	} catch {
+		res.statusCode = 400;
+		res.end();
+		return;
+	}
+
+	if (isEventBridgeEnvelope(body)) {
+		return handleEventBridge(req, res, body);
+	}
+	return handleSns(req, res, body);
 });

@@ -8,7 +8,7 @@
 //     rotate: revoke the old key and mint a fresh one. The new plaintext is
 //              returned ONCE. For AWS-Marketplace-sourced keys this goes
 //              through the billing bridge so the new key stays linked to the
-//              AWS CustomerIdentifier and keeps metering correctly.
+//              AWS subscription record and keeps metering correctly.
 //     revoke: permanently disable a NATIVE key. AWS-sourced keys cannot be
 //              bare-revoked here (that would cut off access the customer is
 //              paying AWS for); cancellation must originate in AWS Marketplace.
@@ -26,6 +26,7 @@ import {
 	issueSubscriptionForCustomer,
 	revokeSubscriptionForCustomer,
 } from '../_lib/aws-marketplace-bridge.js';
+import { findCustomerByHandle } from '../_lib/aws-marketplace-store.js';
 
 const AWS_SOURCE = 'aws-marketplace';
 
@@ -140,16 +141,14 @@ export default wrap(async (req, res) => {
 
 	// rotate
 	if (isAws) {
-		const customerId = meta.aws_customer_identifier;
+		// Keys minted since the Concurrent Agreements re-key carry the customer
+		// row id; older ones only carry the legacy CustomerIdentifier, which AWS
+		// no longer issues. findCustomerByHandle resolves either.
+		const customerId = meta.aws_customer_row_id || meta.aws_customer_identifier;
 		if (!customerId) {
 			return json(res, 422, { error: 'aws_customer_unresolved' });
 		}
-		const [customer] = await sql`
-			SELECT customer_identifier, product_code, offer_id, is_free_trial,
-			       subscription_status, user_id
-			FROM aws_marketplace_customers
-			WHERE customer_identifier = ${customerId}
-		`;
+		const customer = await findCustomerByHandle(customerId);
 		if (!customer) return json(res, 404, { error: 'customer_not_found' });
 		if (
 			customer.subscription_status === 'cancelled' ||
@@ -164,17 +163,11 @@ export default wrap(async (req, res) => {
 		}
 
 		// Revoke the prior link, then mint a fresh key through the bridge so the
-		// new key stays attached to the AWS CustomerIdentifier and keeps metering.
-		await revokeSubscriptionForCustomer(customerId);
+		// new key stays attached to the AWS subscription and keeps metering.
+		await revokeSubscriptionForCustomer(customer.id);
 		let issued;
 		try {
-			issued = await issueSubscriptionForCustomer({
-				customer_identifier: customer.customer_identifier,
-				product_code: customer.product_code,
-				offer_id: customer.offer_id,
-				is_free_trial: customer.is_free_trial,
-				user_id: customer.user_id || user.id,
-			});
+			issued = await issueSubscriptionForCustomer({ ...customer, user_id: customer.user_id || user.id });
 		} catch (err) {
 			console.error('[user/x402-subscriptions] aws rotate failed', { customerId, error: err?.message });
 			return json(res, 502, { error: 'rotate_failed' });

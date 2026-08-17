@@ -1145,8 +1145,19 @@ export const env = {
 	},
 	// SNS topic ARN that AWS sends subscription notifications to. Used to
 	// reject SNS messages that did not originate from the Marketplace topic.
+	// Legacy transport: a product created after 2026-06-01 receives lifecycle
+	// events on EventBridge instead, guarded by AWS_MP_EVENT_SECRET below.
 	get AWS_MP_SNS_TOPIC_ARN() {
 		return opt('AWS_MP_SNS_TOPIC_ARN');
+	},
+	// Shared secret the EventBridge API destination's connection attaches to
+	// every relayed agreement/license event. EventBridge cannot post to an
+	// external HTTPS endpoint on its own, so the rule targets an API destination
+	// and this header is what proves the POST came from that rule and not from
+	// anyone who found the URL. Unset means the webhook refuses EventBridge
+	// deliveries entirely rather than trusting an unauthenticated body.
+	get AWS_MP_EVENT_SECRET() {
+		return opt('AWS_MP_EVENT_SECRET');
 	},
 	// Rate limit applied to the auto-issued x402 subscription minted when an
 	// AWS Marketplace customer links their account. Tune per-tier by reading

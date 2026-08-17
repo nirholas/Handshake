@@ -77,7 +77,9 @@ function notification(action, customerId = 'THREEsynthetic-awsmp-test') {
 }
 
 beforeEach(() => {
-	sqlMock.mockClear();
+	// Every store query in this path either reads or returns the customer row,
+	// so a single-row answer keeps the mock honest without a database.
+	sqlMock.mockClear().mockResolvedValue([{ id: 'row-1', customer_identifier: 'THREEsynthetic-awsmp-test' }]);
 	verifySnsMessageMock.mockClear().mockResolvedValue(undefined);
 	revokeMock.mockClear().mockResolvedValue(null);
 	process.env.AWS_MP_SNS_TOPIC_ARN = TOPIC;
@@ -111,8 +113,8 @@ describe('POST /api/aws-marketplace/subscription topic pin', () => {
 		await handler(makeReq(notification('subscribe-success')), res);
 		expect(verifySnsMessageMock).toHaveBeenCalledTimes(1);
 		expect(res._get().status).toBe(200);
-		expect(res._get().body).toEqual({ ok: true });
-		expect(sqlMock).toHaveBeenCalledTimes(1);
+		expect(res._get().body).toEqual({ ok: true, customer: 'row-1' });
+		expect(sqlMock).toHaveBeenCalled();
 	});
 
 	it('rejects a message the verifier refuses', async () => {
@@ -150,7 +152,17 @@ describe('POST /api/aws-marketplace/subscription topic pin', () => {
 		await handler(makeReq(notification('unsubscribe-success')), res);
 		expect(res._get().status).toBe(500);
 		expect(res._get().body).toEqual({ error: 'revoke_failed' });
-		// Status must NOT flip to cancelled while the key is still live.
-		expect(sqlMock).not.toHaveBeenCalled();
+		// Only the lookup that found the row may have run. Status must NOT flip to
+		// cancelled while the key is still live.
+		expect(sqlMock).toHaveBeenCalledTimes(1);
+	});
+
+	it('answers 200 without revoking when the notification names an unknown customer', async () => {
+		sqlMock.mockResolvedValue([]);
+		const res = makeRes();
+		await handler(makeReq(notification('unsubscribe-success')), res);
+		expect(res._get().status).toBe(200);
+		expect(res._get().body).toEqual({ ok: true, matched: 0 });
+		expect(revokeMock).not.toHaveBeenCalled();
 	});
 });

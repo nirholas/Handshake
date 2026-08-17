@@ -3,12 +3,12 @@
 // Called by the /aws-marketplace/welcome page after the user authenticates.
 // Links an existing aws_marketplace_customers row to the signed-in user account.
 //
-// Body (JSON): { customer: "<customerIdentifier>" }
+// Body (JSON): { customer: "<row id, or a legacy CustomerIdentifier>" }
 // Requires an active session cookie (set by /api/auth/login or /api/auth/register).
 
 import { cors, json, readJson, wrap } from '../_lib/http.js';
-import { sql } from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';
+import { findCustomerByHandle, claimCustomerForUser } from '../_lib/aws-marketplace-store.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
@@ -45,11 +45,7 @@ export default wrap(async (req, res) => {
 		return json(res, 400, { error: 'missing_customer' });
 	}
 
-	const [row] = await sql`
-		SELECT customer_identifier, subscription_status, user_id
-		FROM aws_marketplace_customers
-		WHERE customer_identifier = ${customerId}
-	`;
+	const row = await findCustomerByHandle(customerId);
 
 	if (!row) {
 		return json(res, 404, { error: 'customer_not_found' });
@@ -68,19 +64,12 @@ export default wrap(async (req, res) => {
 		return json(res, 403, { error: 'customer_linked_to_other_account' });
 	}
 
-	const linked = await sql`
-		UPDATE aws_marketplace_customers
-		SET user_id    = ${user.id},
-		    updated_at = now()
-		WHERE customer_identifier = ${customerId}
-		  AND (user_id IS NULL OR user_id = ${user.id})
-		RETURNING customer_identifier
-	`;
+	const linked = await claimCustomerForUser(row.id, user.id);
 
 	// Lost a race with a concurrent link from another account between the check
 	// above and this write. The guard held, so the row is not ours: report the
 	// ownership conflict rather than an ok the database does not back.
-	if (!linked.length) {
+	if (!linked) {
 		return json(res, 403, { error: 'customer_linked_to_other_account' });
 	}
 

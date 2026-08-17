@@ -8,13 +8,13 @@
 // Called by /aws-marketplace/welcome after /api/aws-marketplace/link succeeds,
 // so the customer can copy the key and start calling /api/x402/* immediately.
 //
-// Body (JSON): { customer: "<customerIdentifier>" }
+// Body (JSON): { customer: "<row id, or a legacy CustomerIdentifier>" }
 // Requires an active session cookie.
 
 import { cors, json, readJson, wrap } from '../_lib/http.js';
-import { sql } from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';
 import { issueSubscriptionForCustomer } from '../_lib/aws-marketplace-bridge.js';
+import { findCustomerByHandle } from '../_lib/aws-marketplace-store.js';
 import { customerEntitlement } from '../_lib/aws-marketplace.js';
 import { env } from '../_lib/env.js';
 
@@ -48,12 +48,7 @@ export default wrap(async (req, res) => {
 		return json(res, 400, { error: 'missing_customer' });
 	}
 
-	const [row] = await sql`
-		SELECT customer_identifier, product_code, offer_id, is_free_trial,
-		       subscription_status, user_id
-		FROM aws_marketplace_customers
-		WHERE customer_identifier = ${customerId}
-	`;
+	const row = await findCustomerByHandle(customerId);
 
 	if (!row) return json(res, 404, { error: 'customer_not_found' });
 	if (row.user_id && row.user_id !== user.id) {
@@ -70,7 +65,10 @@ export default wrap(async (req, res) => {
 	// a throttled/unavailable AWS surfaces an actionable 503 instead of a 500.
 	if (env.AWS_MP_ENTITLEMENT_REQUIRED) {
 		try {
-			const ent = await customerEntitlement(row.customer_identifier);
+			const ent = await customerEntitlement({
+				customerAWSAccountId: row.customer_aws_account_id,
+				customerIdentifier: row.customer_identifier,
+			});
 			if (ent.configured && ent.entitled === false) {
 				return json(res, 403, {
 					error: 'not_entitled',
@@ -89,13 +87,7 @@ export default wrap(async (req, res) => {
 
 	let issued;
 	try {
-		issued = await issueSubscriptionForCustomer({
-			customer_identifier: row.customer_identifier,
-			product_code: row.product_code,
-			offer_id: row.offer_id,
-			is_free_trial: row.is_free_trial,
-			user_id: row.user_id || user.id,
-		});
+		issued = await issueSubscriptionForCustomer({ ...row, user_id: row.user_id || user.id });
 	} catch (err) {
 		console.error('[aws-marketplace/issue-key] failed', {
 			customerId,
