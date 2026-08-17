@@ -16,7 +16,7 @@
 
 // Handling profiles. Lengths in metres, mass in kg, forces in Newtons, speeds in
 // m/s, angles in radians. Each type has a distinct feel:
-//   trench — the world's default car, the Trench Car GLB, balanced and quick
+//   trench: the world's default car, the Trench Car GLB, balanced and quick
 //   coupe  — low, fast, light, twitchy steering, less grip (slides)
 //   sedan  — the balanced everyday car
 //   pickup — heavy, slower, planted, wide turning, lots of grip
@@ -84,7 +84,7 @@ export const VEHICLE_TYPES = {
 		// same 3s in the same repro).
 		suspension: { rest: 0.4, stiffness: 26, travel: 0.16, compression: 0.82, relax: 0.88 },
 		// Driver's seat, as the offset from the chassis CENTRE to where the
-		// driver's rig origin (their feet) belongs — the footwell floor, which is
+		// driver's rig origin (their feet) belongs: the footwell floor, which is
 		// below the chassis centre on every car, hence the negative y. Both the
 		// client (VehicleManager._seatAvatar) and the server (WalkRoom's rider
 		// height) read this, so a driver sits in the same place for everyone.

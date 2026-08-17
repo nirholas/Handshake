@@ -1,4 +1,4 @@
-/* /characters — character discovery feed.
+/* /characters: character discovery feed.
 
    Token-driven (public/tokens.css, reaching this page via nav.css), so the
    whole surface flips with [data-theme] instead of fighting the shared header:

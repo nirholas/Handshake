@@ -3,7 +3,7 @@
  *
  * Query params:
  *   limit=<int>    — page size, default 24, max 60
- *   cursor=<opaque>— echoed back from a previous response's `next_cursor`
+ *   cursor=<opaque>: echoed back from a previous response's `next_cursor`
  *   q=<text>       — name/description substring search
  *   sort=<field>   — "chats" | "new" (default "new")
  *
