@@ -106,7 +106,11 @@
 				background: radial-gradient(120% 120% at 50% 20%, rgba(255,255,255,.05), rgba(0,0,0,.25));
 			}
 			.ch-card-mv { width: 100%; height: 100%; --poster-color: transparent; background: transparent; }
-			.ch-card-poster { width: 100%; height: 100%; object-fit: contain; display: block; }
+			.ch-card-poster {
+				width: 100%; height: 100%; object-fit: contain; display: block;
+				pointer-events: none; transition: opacity .35s ease;
+			}
+			model-viewer[data-loaded="1"] .ch-card-poster { opacity: 0; }
 			.ch-card-pill {
 				position: absolute; top: 10px; left: 10px; z-index: 2;
 				font-family: var(--font-mono); font-size: 10px; letter-spacing: .05em; text-transform: uppercase;

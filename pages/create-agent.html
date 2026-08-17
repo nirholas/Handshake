@@ -215,12 +215,35 @@
 			}
 			.step-pip {
 				display: flex;
+			}
+			/* The pip's interactive core is a real button so completed steps are
+			   reachable by keyboard, not just by mouse. Reset it to look exactly
+			   like the inline text row it replaced. */
+			.step-pip-btn {
+				display: flex;
 				align-items: center;
 				gap: 9px;
 				color: var(--muted);
 				font-size: 12.5px;
 				font-weight: 500;
 				white-space: nowrap;
+				appearance: none;
+				background: none;
+				border: 0;
+				margin: 0;
+				padding: 0;
+				font-family: inherit;
+				cursor: default;
+			}
+			.step-pip-btn:disabled {
+				/* Not-yet-reached steps are inert, but must not read as greyed-out
+				   chrome: the pip is the progress indicator either way. */
+				opacity: 1;
+			}
+			.step-pip-btn:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 3px;
+				border-radius: 999px;
 			}
 			.step-pip .num {
 				width: 26px;
@@ -240,7 +263,7 @@
 					transform 0.2s;
 				flex: 0 0 auto;
 			}
-			.step-pip[data-state='active'] {
+			.step-pip[data-state='active'] .step-pip-btn {
 				color: var(--text);
 			}
 			.step-pip[data-state='active'] .num {
@@ -249,7 +272,7 @@
 				color: var(--accent-ink);
 				transform: scale(1.06);
 			}
-			.step-pip[data-state='done'] {
+			.step-pip[data-state='done'] .step-pip-btn {
 				color: var(--text);
 			}
 			.step-pip[data-state='done'] .num {
@@ -257,11 +280,15 @@
 				border-color: rgba(74, 222, 128, 0.5);
 				color: var(--ok);
 			}
-			.step-pip[data-clickable='true'] {
+			.step-pip[data-clickable='true'] .step-pip-btn {
 				cursor: pointer;
 			}
-			.step-pip[data-clickable='true']:hover .num {
+			.step-pip[data-clickable='true'] .step-pip-btn:hover .num,
+			.step-pip[data-clickable='true'] .step-pip-btn:focus-visible .num {
 				border-color: var(--accent);
+			}
+			.step-pip[data-clickable='true'] .step-pip-btn:active .num {
+				transform: scale(0.94);
 			}
 			.step-pip .label {
 				display: none;
@@ -1608,12 +1635,14 @@
 								you can always swap it later.
 							</p>
 
-							<div class="model-tabs" role="tablist">
+							<div class="model-tabs" role="tablist" aria-label="Choose where the 3D body comes from">
 								<button
 									type="button"
 									class="model-tab is-active"
 									data-pane="starter"
 									role="tab"
+									id="model-tab-starter"
+									aria-controls="model-pane-starter"
 									aria-selected="true"
 								 data-i18n="create_agent.starter_library">
 									Starter library
@@ -1623,7 +1652,10 @@
 									class="model-tab"
 									data-pane="library"
 									role="tab"
+									id="model-tab-library"
+									aria-controls="model-pane-library"
 									aria-selected="false"
+									tabindex="-1"
 								 data-i18n="create_agent.my_avatars">
 									My avatars
 								</button>
@@ -1632,7 +1664,10 @@
 									class="model-tab"
 									data-pane="upload"
 									role="tab"
+									id="model-tab-upload"
+									aria-controls="model-pane-upload"
 									aria-selected="false"
+									tabindex="-1"
 								 data-i18n="create_agent.upload_your_own">
 									Upload your own
 								</button>
@@ -1641,17 +1676,34 @@
 									class="model-tab"
 									data-pane="skip"
 									role="tab"
+									id="model-tab-skip"
+									aria-controls="model-pane-skip"
 									aria-selected="false"
+									tabindex="-1"
 								 data-i18n="create_agent.add_later">
 									Add later
 								</button>
 							</div>
 
-							<div class="model-pane is-active" data-pane="starter">
+							<div
+								class="model-pane is-active"
+								data-pane="starter"
+								id="model-pane-starter"
+								role="tabpanel"
+								aria-labelledby="model-tab-starter"
+								tabindex="0"
+							>
 								<div class="starter-grid" id="starter-grid"></div>
 							</div>
 
-							<div class="model-pane" data-pane="library">
+							<div
+								class="model-pane"
+								data-pane="library"
+								id="model-pane-library"
+								role="tabpanel"
+								aria-labelledby="model-tab-library"
+								tabindex="0"
+							>
 								<div
 									class="starter-grid"
 									id="library-grid"
@@ -1659,7 +1711,14 @@
 								></div>
 							</div>
 
-							<div class="model-pane" data-pane="upload">
+							<div
+								class="model-pane"
+								data-pane="upload"
+								id="model-pane-upload"
+								role="tabpanel"
+								aria-labelledby="model-tab-upload"
+								tabindex="0"
+							>
 								<div
 									class="dropzone"
 									id="dropzone"
@@ -1696,7 +1755,14 @@
 								/>
 							</div>
 
-							<div class="model-pane" data-pane="skip">
+							<div
+								class="model-pane"
+								data-pane="skip"
+								id="model-pane-skip"
+								role="tabpanel"
+								aria-labelledby="model-tab-skip"
+								tabindex="0"
+							>
 								<p class="panel-help" style="margin: 6px 0 0" data-i18n="create_agent.a_3d_avatar_is_how_people_recognize">
 									A 3D avatar is how people recognize and connect with your agent
 									across three.ws — we strongly recommend giving it one now from

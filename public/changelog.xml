@@ -71,12 +71,28 @@
 			<description>The gesture composer at /choreograph was audited end to end in a real browser: loading a starter routine, adding and reordering beats, retiming and repointing a step, previewing the whole performance on a live avatar, scrubbing the timeline, sharing a link, and saving to a real agent, at phone, tablet and desktop widths. Copy share link used to hand you a link with the routine name escaped twice, so a routine called The pitch travelled as The%2520pitch: it worked, but it looked broken, and it invited people to tidy it up and break it for real. Links now carry the routine as you can read it, and every link shared before today still opens. A routine whose name ended in the loop marker came back from a link under the wrong name and looping when it should not. On a 320 pixel phone, opening either of the two code panels pushed the whole page sideways; the code block now scrolls on its own instead. Pressing the transport a second time while the first play was still loading its clips said Pause but started a second load; it now stops the one in progress, and deleting the last beat mid-load can no longer bring an avatar back onto a stage the routine has left. Signed-out visitors also no longer see a failed request in the browser console on first paint.</description>
 		</item>
 		<item>
+			<title>Coin Clash stops claiming it is connecting when it has gone offline</title>
+			<link>https://three.ws/clash</link>
+			<guid isPermaLink="false">2026-08-17:Coin Clash stops claiming it is connecting when it has gone offline</guid>
+			<pubDate>Mon, 17 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The live indicator at the top of Coin Clash sat on a pulsing amber &quot;connecting&quot; forever, even once the page had established that the battle service was offline and had stopped trying to reach it. The cause was the page's own translation pass: the line of copy holding the indicator is translatable, and applying it rewrote that whole line back to the wording it shipped with, wiping out the status the page had just worked out. The indicator now survives a translation pass, so it reads offline when the arena is offline and live when battles are running. The same fault was quietly affecting the leaderboard, labor market and signals pages, and is fixed for all four. Two more repairs on Coin Clash: when the arena cannot be reached at all, the error card now explains that in words you can act on and offers Try again, instead of showing the browser's raw &quot;Failed to fetch&quot;; and on a narrow phone the Arena, War Records and Communities tabs wrap onto a second row rather than running off the right edge, where the Communities tab was cut in half and unreachable.</description>
+		</item>
+		<item>
 			<title>Crypto Categories reads correctly in all 84 languages</title>
 			<link>https://three.ws/categories</link>
 			<guid isPermaLink="false">2026-08-17:Crypto Categories reads correctly in all 84 languages</guid>
 			<pubDate>Mon, 17 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The sector leaderboard at /categories was audited end to end in a real browser: the table, the search box, the sortable columns, the paging, and the loading, empty, error and rate-limited states all behave, at phone, tablet and desktop widths. One real defect turned up, and it only showed outside English. The page's own summary line and the description search engines and link previews read were translated once against an older wording and had kept a dash where the English now uses a colon, so every non-English visitor saw punctuation the platform does not use, in the headline copy and in the shared-link preview. All 83 translated catalogs are corrected, with the full-width colon that Japanese, Korean and Chinese actually want rather than a Latin one.</description>
+		</item>
+		<item>
+			<title>My Collection loads visibly, keeps its counts, and never mangles an agent's name</title>
+			<link>https://three.ws/collection</link>
+			<guid isPermaLink="false">2026-08-17:My Collection loads visibly, keeps its counts, and never mangles an agent's name</guid>
+			<pubDate>Mon, 17 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The collection page had a loading state nobody could see: the shimmer placeholders were drawn inside a container the page kept hidden until the data had already arrived, so a slow connection got a blank stretch of nothing instead. The tabs, the placeholders and the counts now appear from the first frame. The counts next to Skills and Subscriptions used to vanish at random, because the page's own translation pass could overwrite the tab label a split second after the number was written into it; the count now lives in its own slot and survives. A skill published by an agent whose name contains a quotation mark or an angle bracket rendered as broken markup rather than as the name, and a publisher who earned a vanity wallet address had it shown as an ordinary one, because the card was reading a field the collection endpoint does not return. Both are fixed, so tipping a creator from your collection now shows the wallet they actually have. Empty states are centred under the tabs instead of squeezed into the first column, both of them now point you at the marketplace, the Retry button on a failed load is a real button rather than a raw grey box, and the whole page is keyboard-navigable: arrow keys move between tabs, Home and End jump to the ends, and every link and button shows a clear focus ring.</description>
 		</item>
 		<item>
 			<title>Pausing a skill bundle is no longer permanent, and every tooltip fits on a phone</title>
