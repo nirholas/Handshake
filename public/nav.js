@@ -839,7 +839,8 @@ const WALK_AUTO_KEY = 'walk:companion:auto';
 // Routes that own their own full-screen 3D or camera experience — summoning a
 // second WebGL avatar there hurts more than it helps. (walk-sdk keeps its own
 // exclusion list too; this is the conservative outer gate.)
-const WALK_AUTO_SKIP = /^\/(play|walk|club|tour|world|scan|arena|pose|splat|capture)(\/|$)|^\/create\/selfie/;
+const WALK_AUTO_SKIP =
+	/^\/(play|walk|club|tour|world|scan|arena|pose|splat|capture)(\/|$)|^\/create\/(selfie|video)/;
 
 function initCompanionAutoStart() {
 	// Every check lives inside the deferred callback: boot() can run while this

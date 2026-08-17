@@ -35,6 +35,16 @@ const KNOBS = {
 let seed = null;
 let feeLamports = 5000;
 
+// Demand the projection falls back to when the facilitator log recorded no
+// settle attempts in the window. A projection needs traffic to say anything:
+// seeded at zero the page opens with an empty chart and a verdict that has
+// proved nothing, which is worse than useless on a rail whose wallet is sitting
+// under its hard floor. The knob is a scenario input, not a measurement, so a
+// labelled default is honest as long as the page says which one it is, and
+// demandSource below is what makes it say so.
+const SCENARIO_DEMAND_PER_HOUR = 60;
+let demandSource = 'measured';
+
 // ── Formatting ─────────────────────────────────────────────────────────────
 function fmtSol(lamports, max = 4) {
 	const n = Number(lamports) / LAMPORTS_PER_SOL;
@@ -48,7 +58,11 @@ function fmtInt(n) {
 	return Number.isFinite(Number(n)) ? Math.round(Number(n)).toLocaleString('en-US') : '0';
 }
 
+// null and undefined are "the ledger had nothing to divide", not zero. Number()
+// turns both into 0, which rendered an unread admission rate as a confident
+// "0.0%", a starvation reading invented out of missing data.
 function fmtPct(n, digits = 1) {
+	if (n === null || n === undefined || n === '') return 'not read';
 	return Number.isFinite(Number(n)) ? `${(Number(n) * 100).toFixed(digits)}%` : 'not read';
 }
 
@@ -142,11 +156,14 @@ function applySeedToKnobs() {
 	const bal = seed.fee_wallet.sol_lamports;
 	feeLamports = seed.observed?.fee_lamports_observed || 5000;
 
+	const measuredDemand = Number(seed.observed?.demand_per_hour) || 0;
+	demandSource = measuredDemand > 0 ? 'measured' : 'scenario';
+
 	KNOBS.balance.live = bal ?? cfg.floor_lamports;
 	KNOBS.floor.live = cfg.floor_lamports;
 	KNOBS.runway.live = cfg.runway_days;
 	KNOBS.heartbeat.live = cfg.min_budget_lamports;
-	KNOBS.demand.live = Math.max(1, seed.observed?.demand_per_hour ?? 60);
+	KNOBS.demand.live = measuredDemand > 0 ? measuredDemand : SCENARIO_DEMAND_PER_HOUR;
 	KNOBS.horizon.live = 72;
 
 	// Ranges are derived from the live values so every knob has useful travel on
@@ -160,14 +177,38 @@ function applySeedToKnobs() {
 	setRange(KNOBS.balance.el, 0, Math.max(2 * LAMPORTS_PER_SOL, KNOBS.balance.live * 4), 1);
 	setRange(KNOBS.floor.el, 0, Math.max(200_000_000, KNOBS.floor.live * 4), 1);
 	setRange(KNOBS.heartbeat.el, 0, Math.max(200_000_000, KNOBS.heartbeat.live * 8), 1);
-	setRange(KNOBS.demand.el, 0, Math.max(3000, KNOBS.demand.live * 6), 5);
+	// Step 1, for the same reason the lamport knobs use it: a step of 5 snapped a
+	// measured 37 settles/hour to 35, and snapped the seed of a barely-used rail
+	// all the way down to 0.
+	setRange(KNOBS.demand.el, 0, Math.max(3000, KNOBS.demand.live * 6), 1);
 
 	$('el-governor').checked = cfg.governor_enabled;
+	describeDemandSeed();
 	for (const key of Object.keys(KNOBS)) KNOBS[key].el.value = String(KNOBS[key].live);
 	// The input clamps and snaps on assignment, so the resolved value is the real
 	// baseline. Comparing against the requested value instead would leave every
 	// knob permanently "dirty" and the reset button permanently enabled.
 	for (const key of Object.keys(KNOBS)) KNOBS[key].live = Number(KNOBS[key].el.value);
+}
+
+// Say where the demand number came from, in the hint and in the tooltip. A
+// scenario default presented as a measurement would make the whole page a lie;
+// presented as what it is, it is the only way to project a rail nobody used
+// today.
+function describeDemandSeed() {
+	const hint = $('el-demand-hint');
+	const help = document.querySelector('[data-knob="demand"] .el-help');
+	const measured = demandSource === 'measured';
+
+	hint.textContent = measured
+		? 'What the rail is being asked to do, per hour. Seeded from the last 24 hours.'
+		: `No settles were attempted in the last 24 hours, so there is no measured rate to seed from. This starts at ${fmtInt(SCENARIO_DEMAND_PER_HOUR)}/hour as a scenario: drag it to the load you care about.`;
+	hint.dataset.source = demandSource;
+
+	if (!help) return;
+	help.dataset.tip = measured
+		? 'Settle attempts arriving per hour. Seeded from the last 24 hours of the facilitator log, excluding duplicate-signature retries, so the projection starts from measured traffic rather than a guess.'
+		: 'Settle attempts arriving per hour. The facilitator log recorded no attempts in the last 24 hours, so this knob is a scenario you choose rather than a measurement. Everything else on the page is still read live.';
 }
 
 function setRange(el, min, max, step) {
@@ -219,6 +260,11 @@ function renderLiveState() {
 		? null
 		: Math.max(cfg.governor_enabled ? cfg.min_budget_lamports : 0, Math.floor(spendable / cfg.runway_days));
 	const headroom = budgetNow === null || spent === null ? null : budgetNow - spent;
+	// Below the floor the settle path refuses before the meter is read, so the
+	// governor's headroom is not the binding constraint and must not be rendered
+	// as one. A wallet under its floor with a full daily budget was reporting
+	// "headroom 0.01 SOL" in green while admitting nothing at all.
+	const belowFloor = w.balance_read && w.sol_lamports < cfg.floor_lamports;
 
 	const cards = [
 		{
@@ -235,25 +281,35 @@ function renderLiveState() {
 		{
 			label: 'Spendable',
 			value: spendable === null ? 'not read' : `${fmtSol(spendable)} SOL`,
-			sub: 'balance above the hard floor',
+			sub: belowFloor
+				? `${fmtSol(cfg.floor_lamports - w.sol_lamports)} SOL short of the hard floor`
+				: 'balance above the hard floor',
 			tone: spendable === null ? '' : spendable <= 0 ? 'bad' : spendable < cfg.min_budget_lamports ? 'warn' : 'good',
 		},
 		{
 			label: 'Today’s headroom',
-			value: headroom === null ? 'not read' : `${fmtSol(headroom)} SOL`,
-			sub: spent === null ? 'ledger unread' : `${fmtSol(spent)} spent of ${fmtSol(budgetNow)} budget`,
-			tone: headroom === null ? '' : headroom <= 0 ? 'bad' : headroom < budgetNow * 0.2 ? 'warn' : 'good',
+			value: belowFloor ? 'not reachable' : headroom === null ? 'not read' : `${fmtSol(headroom)} SOL`,
+			sub: belowFloor
+				? 'the hard floor refuses before the budget is consulted'
+				: spent === null ? 'ledger unread' : `${fmtSol(spent)} spent of ${fmtSol(budgetNow)} budget`,
+			tone: belowFloor ? 'bad' : headroom === null ? '' : headroom <= 0 ? 'bad' : headroom < budgetNow * 0.2 ? 'warn' : 'good',
 		},
 		{
 			label: 'Settles / day',
 			value: seed.projected_settles_per_day === null ? 'not read' : fmtInt(seed.projected_settles_per_day),
 			sub: 'at this balance and config',
-			tone: seed.projected_settles_per_day === null ? '' : seed.projected_settles_per_day < 1000 ? 'warn' : 'good',
+			tone: seed.projected_settles_per_day === null
+				? ''
+				: seed.projected_settles_per_day <= 0 ? 'bad' : seed.projected_settles_per_day < 1000 ? 'warn' : 'good',
 		},
 		{
 			label: 'Admitted (24h)',
-			value: o ? fmtPct(o.capacity_admission_rate) : 'not read',
-			sub: o ? `${fmtInt(o.settled)} settled, ${fmtInt(o.capacity_refused)} could not be afforded` : 'ledger unread',
+			value: !o ? 'not read' : o.attempts === 0 ? 'no traffic' : fmtPct(o.capacity_admission_rate),
+			sub: !o
+				? 'ledger unread'
+				: o.attempts === 0
+					? 'no settles were attempted in this window'
+					: `${fmtInt(o.settled)} settled, ${fmtInt(o.capacity_refused)} could not be afforded`,
 			tone: !o || o.capacity_admission_rate === null ? '' : o.capacity_admission_rate > 0.9 ? 'good' : o.capacity_admission_rate > 0.5 ? 'warn' : 'bad',
 		},
 	];
@@ -292,18 +348,23 @@ function renderVerdict(summary) {
 
 	const state = summary.verdict;
 	box.dataset.state = state;
-	icon.textContent = state === 'healthy' ? '✓' : state === 'throttled' ? '!' : '×';
+	icon.textContent = { healthy: '✓', throttled: '!', idle: '·' }[state] || '×';
 
 	const head = {
 		healthy: `${scope}, settlement is healthy`,
 		throttled: `${scope}, settlement is throttled`,
 		starved: `${scope}, settlement is starved`,
+		idle: `${scope}, nothing is being attempted`,
 	}[state];
 
 	$('el-verdict-head').textContent = head;
-	$('el-verdict-detail').textContent =
-		`${fmtInt(summary.admitted)} of ${fmtInt(summary.demanded)} settles land over the next ${fmtWhenSpan(summary.hoursSimulated)}: ${limiterText}` +
-		(summary.firstRefusalHour !== null ? ` First refusal ${fmtWhen(summary.firstRefusalHour)}.` : '');
+	// An idle projection has admitted nothing and refused nothing, which is not a
+	// clean bill of health: it is an experiment that was never run. Say that
+	// instead of reporting a 100% admission rate over an empty set.
+	$('el-verdict-detail').textContent = state === 'idle'
+		? `No settles are attempted over the next ${fmtWhenSpan(summary.hoursSimulated)}, so this projection cannot say whether the rail would admit them. Raise demand to find out what this balance and config would actually deliver.`
+		: `${fmtInt(summary.admitted)} of ${fmtInt(summary.demanded)} settles land over the next ${fmtWhenSpan(summary.hoursSimulated)}: ${limiterText}` +
+			(summary.firstRefusalHour !== null ? ` First refusal ${fmtWhen(summary.firstRefusalHour)}.` : '');
 }
 
 function fmtWhenSpan(hours) {
@@ -315,6 +376,10 @@ function renderKpis(summary, knobs) {
 	const liveProjection = seed.projected_settles_per_day;
 	const steady = summary.steadySettlesPerDay;
 	const delta = liveProjection ? steady - liveProjection : null;
+	// With no attempts in the projection, "never refused" and "never hit the
+	// floor" are facts about an empty simulation, not about the rail. Reporting
+	// them in green is the same error as a 100% admission rate over zero settles.
+	const idle = summary.demanded === 0;
 
 	const kpis = [
 		{
@@ -325,21 +390,21 @@ function renderKpis(summary, knobs) {
 		},
 		{
 			label: 'Admission rate',
-			value: fmtPct(summary.admissionRate, 0),
-			tone: summary.admissionRate > 0.9 ? 'good' : summary.admissionRate > 0.5 ? 'warn' : 'bad',
-			delta: `${fmtInt(summary.refused)} refused`,
+			value: idle ? 'no demand' : fmtPct(summary.admissionRate, 0),
+			tone: idle ? '' : summary.admissionRate > 0.9 ? 'good' : summary.admissionRate > 0.5 ? 'warn' : 'bad',
+			delta: idle ? 'nothing was attempted' : `${fmtInt(summary.refused)} refused`,
 		},
 		{
 			label: 'First refusal',
-			value: summary.firstRefusalHour === null ? 'never' : fmtWhen(summary.firstRefusalHour).replace(/ \(.*\)/, ''),
-			tone: summary.firstRefusalHour === null ? 'good' : summary.firstRefusalHour < 6 ? 'bad' : 'warn',
-			delta: summary.firstRefusalHour === null ? 'holds the whole horizon' : 'throughput breaks here',
+			value: idle ? 'untested' : summary.firstRefusalHour === null ? 'never' : fmtWhen(summary.firstRefusalHour).replace(/ \(.*\)/, ''),
+			tone: idle ? '' : summary.firstRefusalHour === null ? 'good' : summary.firstRefusalHour < 6 ? 'bad' : 'warn',
+			delta: idle ? 'raise demand to test it' : summary.firstRefusalHour === null ? 'holds the whole horizon' : 'throughput breaks here',
 		},
 		{
 			label: 'Hits the floor',
-			value: summary.floorBreachHour === null ? 'never' : fmtWhen(summary.floorBreachHour).replace(/ \(.*\)/, ''),
-			tone: summary.floorBreachHour === null ? 'good' : 'bad',
-			delta: summary.floorBreachHour === null ? 'stays above the floor' : 'funding required',
+			value: idle ? 'untested' : summary.floorBreachHour === null ? 'never' : fmtWhen(summary.floorBreachHour).replace(/ \(.*\)/, ''),
+			tone: idle ? '' : summary.floorBreachHour === null ? 'good' : 'bad',
+			delta: idle ? 'no fees are being burned' : summary.floorBreachHour === null ? 'stays above the floor' : 'funding required',
 		},
 		{
 			label: 'SOL burned',

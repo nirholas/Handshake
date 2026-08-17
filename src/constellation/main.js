@@ -555,7 +555,7 @@ async function runGraniteAnalysis(token, neighbors) {
 					else if (line.startsWith('data:')) data += line.slice(5).trim();
 				}
 				if (!data) continue;
-				if (evt === 'error') { out.innerHTML = `<div class="c-notice">The analysis service returned an error: ${escapeHtml(safeMsg(data))}</div>`; return; }
+				if (evt === 'error') { out.innerHTML = `<div class="c-notice">Every analysis route refused this request (${escapeHtml(safeMsg(data))}). Pick the star again to retry.</div>`; return; }
 				if (evt === 'done') { try { usage = JSON.parse(data).usage; } catch { /* ignore */ } continue; }
 				if (evt === 'meta') {
 					try { const m = JSON.parse(data); servedLabel = m.label; servedNetwork = m.network; } catch { /* ignore */ }
