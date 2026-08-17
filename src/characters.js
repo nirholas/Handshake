@@ -217,9 +217,9 @@ async function fetchCharacters(reset = false) {
 	} catch {
 		state.appending = false;
 		if (superseded()) return;
-		grid.setAttribute('aria-busy', 'false');
 		showError(grid, !reset);
 		if (loadBtn) loadBtn.disabled = false;
+		grid.setAttribute('aria-busy', 'false');
 		return;
 	}
 
@@ -232,9 +232,11 @@ async function fetchCharacters(reset = false) {
 
 	if (reset) {
 		if (!chars.length) {
-			grid.setAttribute('aria-busy', 'false');
 			showEmpty(grid);
 			if (loadMore) loadMore.hidden = true;
+			// Flipped last, so anything waiting on aria-busy (assistive tech, the
+			// e2e probe) observes the rendered state rather than an empty grid.
+			grid.setAttribute('aria-busy', 'false');
 			return;
 		}
 		grid.innerHTML = chars.map(cardHtml).join('');

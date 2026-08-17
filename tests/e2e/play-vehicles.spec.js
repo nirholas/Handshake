@@ -18,14 +18,26 @@ import { serveHarness, collectPageErrors } from './_support.js';
 
 const HARNESS = '**/e2e/vehicle-mesh';
 
+// Vite re-bundles the moment it first sees a new dependency and drops the module
+// requests that were in flight while it does, which surfaces as "Failed to fetch
+// dynamically imported module" on a cold dev server. Retry the import instead of
+// reporting a build-server restart as a product failure.
+const RETRYING_IMPORT = `window.__imp = async (path) => {
+	let last;
+	for (let i = 0; i < 4; i++) {
+		try { return await import(path); } catch (e) { last = e; await new Promise((r) => setTimeout(r, 700)); }
+	}
+	throw last;
+};`;
+
 // Build a parked car of `type` in a real WebGL scene and report its geometry.
 // The group origin is the chassis centre, so a parked car is lifted by exactly
 // vehicleRestHeight, the same placement WalkRoom seeds the fleet with.
 async function measureCar(page, type) {
 	return page.evaluate(async (vehicleType) => {
-		const THREE = await import('/node_modules/three/build/three.module.js');
-		const { buildVehicleMesh } = await import('/src/game/vehicle-mesh.js');
-		const { vehicleSpec, vehicleRestHeight } = await import('/multiplayer/src/vehicles.js');
+		const THREE = await window.__imp('/node_modules/three/build/three.module.js');
+		const { buildVehicleMesh } = await window.__imp('/src/game/vehicle-mesh.js');
+		const { vehicleSpec, vehicleRestHeight } = await window.__imp('/multiplayer/src/vehicles.js');
 
 		const spec = vehicleSpec(vehicleType);
 		const rest = vehicleRestHeight(spec.id);
@@ -73,6 +85,7 @@ async function measureCar(page, type) {
 test.describe('/play vehicles', () => {
 	test.beforeEach(async ({ page }) => {
 		await serveHarness(page, HARNESS, { title: 'vehicle mesh harness' });
+		await page.addInitScript(RETRYING_IMPORT);
 		await page.goto('/e2e/vehicle-mesh');
 	});
 
@@ -122,8 +135,8 @@ test.describe('/play vehicles', () => {
 
 	test('two cars on one model keep their own brake lights', async ({ page }) => {
 		const result = await page.evaluate(async () => {
-			const { buildVehicleMesh } = await import('/src/game/vehicle-mesh.js');
-			const { vehicleSpec } = await import('/multiplayer/src/vehicles.js');
+			const { buildVehicleMesh } = await window.__imp('/src/game/vehicle-mesh.js');
+			const { vehicleSpec } = await window.__imp('/multiplayer/src/vehicles.js');
 			const spec = vehicleSpec('trench');
 			const a = buildVehicleMesh(spec, spec.color);
 			const b = buildVehicleMesh(spec, spec.color);

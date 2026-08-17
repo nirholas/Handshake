@@ -188,6 +188,28 @@ document.addEventListener('DOMContentLoaded', () => {
 function showErr(msg) { const e = $('#cwErr'); e.textContent = msg; e.hidden = false; }
 function hideErr() { $('#cwErr').hidden = true; }
 
+// The Analyze button carries data-i18n, so the catalog pass (which lands after
+// an async /api/locale fetch) used to overwrite "Analyzing…" with the idle label
+// mid-request and the busy state never showed. data-i18n-owned is the codebase's
+// opt-out: claim the element while busy, hand it back on release so a later
+// locale switch still translates it.
+let _idleBtnLabel = null;
+function setBtnBusy(btn, label) {
+	if (_idleBtnLabel === null) _idleBtnLabel = btn.textContent;
+	btn.setAttribute('data-i18n-owned', '1');
+	btn.disabled = true;
+	btn.setAttribute('aria-busy', 'true');
+	btn.textContent = label;
+}
+function setBtnIdle(btn) {
+	btn.disabled = false;
+	btn.removeAttribute('aria-busy');
+	btn.textContent = _idleBtnLabel ?? btn.textContent;
+	btn.removeAttribute('data-i18n-owned');
+	// Re-apply in case the catalog landed while the button was owned.
+	window.threewsI18n?.apply?.(btn);
+}
+
 // ── fetch + orchestrate ─────────────────────────────────────────────────────────
 const STATE = { data: null, wallet: null, win: 'all', sortKey: 'last_seen_at', sortDir: -1, q: '', hideClosed: false, creatorOnly: false, hideDust: true };
 
@@ -196,8 +218,7 @@ async function analyze(wallet) {
 	const btn = $('#cwBtn');
 	$('#cwHero').classList.add('compact');
 
-	btn.disabled = true;
-	btn.textContent = 'Analyzing…';
+	setBtnBusy(btn, 'Analyzing…');
 	result.innerHTML = skeletonHtml();
 
 	let data;
@@ -218,11 +239,11 @@ async function analyze(wallet) {
 		result.innerHTML = errorHtml(wallet, e);
 		const retry = result.querySelector('#cwRetry');
 		if (retry) retry.addEventListener('click', () => analyze(wallet));
-		btn.disabled = false; btn.textContent = 'Analyze';
+		setBtnIdle(btn);
 		return;
 	}
 
-	btn.disabled = false; btn.textContent = 'Analyze';
+	setBtnIdle(btn);
 
 	if (!data.claimable && !data.known) {
 		result.innerHTML = notFoundHtml(wallet);

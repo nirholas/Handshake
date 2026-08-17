@@ -122,9 +122,13 @@ const DEFAULT_EMOTE = 'idle';
 
 // Animation state. `emotesReady` flips true once the clip library loads and the
 // idle clip binds to the rig; until then the Animate tab shows a loading state.
+// `emotesFailed` separates "still loading" from "this attempt is over", because
+// treating a failed load as perpetual loading left the tab showing skeleton
+// tiles forever when the clip manifest could not be fetched.
 // `currentEmote` is the looping clip the avatar rests in (one-shots settle back
 // to it). `activeIdleClip` is the looping baseline that Save bakes in.
 let emotesReady = false;
+let emotesFailed = false;
 let currentEmote = DEFAULT_EMOTE;
 let activeIdleClip = DEFAULT_EMOTE;
 
@@ -507,7 +511,7 @@ function updateDirtyState() {
 
 // ── Randomise ────────────────────────────────────────────────────────
 
-function randomizeAppearance() {
+async function randomizeAppearance() {
 	// Pick one random swatch per color slot
 	for (const slot of COLOR_SLOTS) {
 		const swatch = slot.swatches[Math.floor(Math.random() * slot.swatches.length)];
@@ -538,11 +542,20 @@ function randomizeAppearance() {
 	const hat = pick(hats);
 	const glass = pick(glasses);
 	const toApply = [hat, glass].filter(Boolean);
-	for (const p of toApply) workingAppearance.accessories.push(p.id);
-	if (accessoryManager) {
-		queueOp(async () => {
-			for (const p of toApply) await accessoryManager.applyPreset(p);
-		});
+
+	// Record an accessory only once it is actually on the rig. Listing it up
+	// front meant a failed fetch left a chip for something the avatar was not
+	// wearing, which then got saved into the appearance record. Each apply is
+	// independent so one failure cannot drop the other.
+	const failed = [];
+	if (accessoryManager && toApply.length) {
+		const done = beginBusy('Randomising…');
+		for (const p of toApply) {
+			const { ok } = await runQueued(() => accessoryManager.applyPreset(p));
+			if (ok) workingAppearance.accessories.push(p.id);
+			else failed.push(p.name);
+		}
+		done();
 	}
 
 	pushHistory();
@@ -550,7 +563,12 @@ function randomizeAppearance() {
 	renderActivePanel();
 	updateDirtyState();
 	scheduleDraftSave();
-	setStatus('ok', 'Randomised! Click Save when happy.');
+	setStatus(
+		failed.length ? 'err' : 'ok',
+		failed.length
+			? `Randomised, but ${failed.join(' and ')} couldn’t load. Everything else applied.`
+			: 'Randomised! Click Save when happy.',
+	);
 }
 
 // ── Proportions (skeleton-space build) ───────────────────────────────
