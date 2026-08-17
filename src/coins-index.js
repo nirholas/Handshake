@@ -420,7 +420,7 @@ function renderLiqOffline() {
 	const el = $('cv-liq');
 	if (!el) return;
 	el.innerHTML =
-		'<p class="cv-liq-offline" role="status"><span class="dot" aria-hidden="true"></span>Liquidation feed offline — showing the rest of the markets page as usual.</p>';
+		'<p class="cv-liq-offline" role="status"><span class="dot" aria-hidden="true"></span>Liquidation feed offline. The rest of the markets page is live as usual.</p>';
 }
 
 function renderLiqPopulated(data) {
@@ -475,7 +475,7 @@ function renderLiqPopulated(data) {
 						: `<span class="cv-liq-item">${inner}</span>`;
 				})
 				.join('')
-		: '<span class="cv-liq-item" style="color:var(--cv-text-3)">No liquidations in the last 4h — quiet market.</span>';
+		: '<span class="cv-liq-item" style="color:var(--cv-text-3)">No liquidations in the last 4h. Quiet market.</span>';
 
 	el.innerHTML = `
 		<span class="cv-liq-badge ${badgeCls}">${esc(badge)}</span>

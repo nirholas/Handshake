@@ -147,13 +147,23 @@
 }
 .cl-round-stat-timer dd { color: var(--warn); }
 
+/* The three tabs measure ~304px, so on a 320px screen (288px of content width
+   inside the shell) the trailing "Communities" tab used to run off the right
+   edge and get clipped, with no page scroll to reach it. Wrapping keeps the
+   whole group reachable; the pill radius still reads correctly on two rows. */
 .cl-tabs {
 	display: inline-flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	max-width: 100%;
 	gap: 4px;
 	padding: 4px;
 	border: 1px solid var(--stroke);
-	border-radius: var(--radius-pill);
+	border-radius: var(--radius-lg);
 	background: var(--surface-1);
+}
+@media (min-width: 480px) {
+	.cl-tabs { flex-wrap: nowrap; border-radius: var(--radius-pill); }
 }
 .cl-tab {
 	appearance: none;
@@ -165,7 +175,11 @@
 	border-radius: var(--radius-pill);
 	cursor: pointer;
 	text-decoration: none;
+	white-space: nowrap;
 	transition: color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
+}
+@media (max-width: 479px) {
+	.cl-tab { padding: 9px 12px; }
 }
 .cl-tab:hover { color: var(--ink-bright); }
 .cl-tab.active { background: var(--surface-3); color: var(--ink-bright); }

@@ -28,8 +28,12 @@ async function getJson(url) {
 	return res.json();
 }
 
-// state.coins: [{ id, color, detail, series }]
-const state = { coins: [], days: 30, loadingChart: false };
+// state.coins: [{ id, color, detail, series, status, seriesError }]
+// status: 'loading' while /api/coin/detail is in flight, 'ready' once it lands,
+// 'missing' when the id does not exist (404), 'failed' for anything else. Every
+// non-ready status is surfaced in the UI; none of them is allowed to leave a
+// skeleton on screen forever.
+const state = { coins: [], days: 30, loadingChart: false, booting: true };
 
 const RANGES = [
 	{ label: '7D', days: 7 },
@@ -64,24 +68,35 @@ function nextColor() {
 
 // ── Add / remove ──────────────────────────────────────────────────────────────
 
+async function loadDetail(entry) {
+	entry.status = 'loading';
+	try {
+		const { coin } = await getJson(`/api/coin/detail?id=${encodeURIComponent(entry.id)}`);
+		entry.detail = coin;
+		entry.status = 'ready';
+	} catch (err) {
+		entry.detail = null;
+		entry.status = err.status === 404 ? 'missing' : 'failed';
+	}
+}
+
+/** Returns why the add was refused, or 'added' once the coin has been fetched. */
 async function addCoin(id) {
 	id = id.toLowerCase();
-	if (state.coins.length >= MAX_COINS) return;
-	if (state.coins.find((c) => c.id === id)) return;
-	const entry = { id, color: nextColor(), detail: null, series: null, error: false };
+	if (state.coins.length >= MAX_COINS) return 'full';
+	if (state.coins.find((c) => c.id === id)) return 'duplicate';
+	const entry = { id, color: nextColor(), detail: null, series: null, status: 'loading' };
 	state.coins.push(entry);
 	renderChips();
+	renderTable();
+	renderChart();
 	syncUrl();
-	try {
-		const { coin } = await getJson(`/api/coin/detail?id=${encodeURIComponent(id)}`);
-		entry.detail = coin;
-	} catch {
-		entry.error = true;
-	}
+	await loadDetail(entry);
 	renderChips();
 	renderTable();
 	await loadSeries(entry);
 	renderChart();
+	return entry.status === 'ready' ? 'added' : entry.status;
 }
 
 function removeCoin(id) {
@@ -92,7 +107,37 @@ function removeCoin(id) {
 	syncUrl();
 }
 
+/** Re-fetch every coin whose detail request failed on a transport error. */
+async function retryFailed() {
+	const failed = state.coins.filter((c) => c.status === 'failed');
+	if (!failed.length) return;
+	for (const c of failed) c.status = 'loading';
+	renderChips();
+	renderTable();
+	await Promise.all(failed.map(loadDetail));
+	renderChips();
+	renderTable();
+	await Promise.all(failed.map(loadSeries));
+	renderChart();
+}
+
+function dropUnresolved(status) {
+	const keep = state.coins.filter((c) => c.status !== status);
+	if (keep.length === state.coins.length) return;
+	state.coins = keep;
+	renderChips();
+	renderTable();
+	renderChart();
+	syncUrl();
+}
+
 // ── Chips ─────────────────────────────────────────────────────────────────────
+
+const CHIP_NOTE = {
+	loading: 'Loading',
+	missing: 'Not found',
+	failed: 'Failed to load',
+};
 
 function renderChips() {
 	const el = $('cmp-chips');
@@ -103,10 +148,13 @@ function renderChips() {
 			const img = d?.image
 				? `<img loading="lazy" decoding="async" src="${esc(d.image)}" alt="" width="18" height="18" data-no-dark-filter />`
 				: `<span class="dot" style="background:${c.color}"></span>`;
-			return `<span class="cmp-chip" style="border-color:${c.color}55">
+			const note = CHIP_NOTE[c.status];
+			const state_ = c.status && c.status !== 'ready' ? ` data-state="${c.status}"` : '';
+			return `<span class="cmp-chip" role="listitem"${state_} style="border-color:${c.color}55">
 				<span class="dot" style="background:${c.color}"></span>
 				${img}
 				<span>${name}${d?.symbol ? ` <span style="color:var(--cv-text-3)">${esc(d.symbol)}</span>` : ''}</span>
+				${note ? `<span class="note">${note}</span>` : ''}
 				<button type="button" data-remove="${esc(c.id)}" aria-label="Remove ${name}">×</button>
 			</span>`;
 		})
@@ -114,6 +162,23 @@ function renderChips() {
 	el.querySelectorAll('button[data-remove]').forEach((b) =>
 		b.addEventListener('click', () => removeCoin(b.dataset.remove)),
 	);
+	syncPicker();
+}
+
+/** The picker has to say why it is closed once four coins are on screen. */
+function syncPicker() {
+	const input = $('cmp-search-input');
+	const hint = $('cmp-limit-hint');
+	const share = $('cmp-share');
+	const full = state.coins.length >= MAX_COINS;
+	if (input) {
+		input.disabled = full;
+		input.placeholder = full
+			? 'Four coins is the maximum'
+			: `Add a coin to compare (up to ${MAX_COINS})…`;
+	}
+	if (hint) hint.hidden = !full;
+	if (share) share.disabled = !state.coins.length;
 }
 
 // ── Overlay chart ─────────────────────────────────────────────────────────────
@@ -124,6 +189,11 @@ const PAD = { top: 16, right: 56, bottom: 26, left: 16 };
 
 async function loadSeries(entry) {
 	entry.series = null;
+	entry.seriesError = false;
+	if (entry.status === 'missing') {
+		entry.series = [];
+		return;
+	}
 	try {
 		const { data } = await getJson(
 			`/api/coin/ohlc?id=${encodeURIComponent(entry.id)}&days=${state.days}`,
@@ -137,6 +207,7 @@ async function loadSeries(entry) {
 			: [];
 	} catch {
 		entry.series = [];
+		entry.seriesError = true;
 	}
 }
 
@@ -182,17 +253,34 @@ function renderChart() {
 			`<button type="button" class="cv-range-btn" data-days="${r.days}" aria-pressed="${r.days === state.days}">${r.label}</button>`,
 	).join('');
 
+	const pending =
+		state.loadingChart ||
+		state.coins.some((c) => c.status === 'loading' || (c.series === null && c.status !== 'missing'));
+
 	let body;
 	if (!state.coins.length) {
-		body = '<div class="cv-chart-state">Add a coin above to start comparing.</div>';
-	} else if (state.loadingChart) {
+		body = state.booting
+			? '<div class="cv-chart-state"><span class="cv-spinner" aria-hidden="true"></span>Loading comparison…</div>'
+			: '<div class="cv-chart-state">Add a coin with the search box to start comparing.</div>';
+	} else if (pending) {
 		body =
 			'<div class="cv-chart-state"><span class="cv-spinner" aria-hidden="true"></span>Loading performance…</div>';
 	} else {
 		const g = chartGeometry();
 		if (!g) {
-			body =
-				'<div class="cv-chart-state">Performance data unavailable for the current selection.</div>';
+			// Every coin came back without a usable series. Say which failure it was
+			// and give the user the one control that can fix it.
+			const transport = state.coins.some((c) => c.seriesError || c.status === 'failed');
+			body = `<div class="cv-chart-state col" role="alert">
+					<p>${
+						transport
+							? 'Performance data could not be loaded. The market data service did not respond.'
+							: 'No performance history is published for this selection over the last ' +
+								state.days +
+								' days.'
+					}</p>
+					<button type="button" class="cv-linkbtn" id="cmp-chart-retry">${transport ? 'Retry' : 'Reload'}</button>
+				</div>`;
 		} else {
 			const h = CH - PAD.top - PAD.bottom;
 			const steps = 4;
@@ -233,12 +321,16 @@ function renderChart() {
 		}
 	}
 
+	// A coin the overlay could not draw still owns a legend slot, labelled so the
+	// missing line reads as a known gap rather than a rendering bug.
 	const legend = state.coins.length
 		? `<div class="cmp-legend">${state.coins
-				.map(
-					(c) =>
-						`<span class="li"><span class="dot" style="background:${c.color}"></span>${esc(c.detail?.symbol || c.id)}</span>`,
-				)
+				.map((c) => {
+					const drawn = !pending && c.series && c.series.length >= 2;
+					return `<span class="li${drawn ? '' : ' na'}"><span class="dot" style="background:${c.color}"></span>${esc(c.detail?.symbol || c.id)}${
+						pending || drawn ? '' : ' <span class="tag">no data</span>'
+					}</span>`;
+				})
 				.join('')}</div>`
 		: '';
 
@@ -260,6 +352,7 @@ function renderChart() {
 			reloadAllSeries();
 		});
 	});
+	el.querySelector('#cmp-chart-retry')?.addEventListener('click', () => reloadAllSeries());
 	wireChartPointer();
 }
 
@@ -301,7 +394,9 @@ function wireChartPointer() {
 			.join('');
 		tip.hidden = false;
 		tip.innerHTML = `<p class="d" style="margin:0 0 0.25rem">${esc(formatChartTick(t, state.days))}</p>${rows}`;
-		tip.style.left = `${(x / CW) * 100}%`;
+		// Clamped so the tooltip never hangs off the panel and drags the page into
+		// a horizontal scroll on a narrow viewport.
+		tip.style.left = `${Math.max(14, Math.min(86, (x / CW) * 100))}%`;
 	}
 	function hide() {
 		cross.setAttribute('hidden', '');
@@ -345,6 +440,42 @@ const ROWS = [
 	},
 ];
 
+function listIds(coins) {
+	return coins.map((c) => `<strong>${esc(c.detail?.name || c.id)}</strong>`).join(', ');
+}
+
+/** Anything the selection asked for and the API could not give back. */
+function issuesHtml() {
+	const missing = state.coins.filter((c) => c.status === 'missing');
+	const failed = state.coins.filter((c) => c.status === 'failed');
+	if (!missing.length && !failed.length) return '';
+	const lines = [];
+	if (failed.length)
+		lines.push(
+			`<p>Could not load ${listIds(failed)}. The market data service did not respond.</p>`,
+		);
+	if (missing.length)
+		lines.push(
+			`<p>No coin matches ${listIds(missing)}. Use the search box to pick one that exists.</p>`,
+		);
+	const acts = [
+		failed.length
+			? '<button type="button" class="cv-linkbtn" data-retry-failed>Retry</button>'
+			: '',
+		missing.length
+			? `<button type="button" class="cv-linkbtn" data-drop-missing>Remove ${missing.length > 1 ? 'them' : 'it'}</button>`
+			: '',
+	].join('');
+	return `<div class="cmp-issues" role="alert">${lines.join('')}<div class="acts">${acts}</div></div>`;
+}
+
+function wireIssueActions(el) {
+	el.querySelector('[data-retry-failed]')?.addEventListener('click', retryFailed);
+	el.querySelector('[data-drop-missing]')?.addEventListener('click', () =>
+		dropUnresolved('missing'),
+	);
+}
+
 function renderTable() {
 	const el = $('cmp-table');
 	const ready = state.coins.filter((c) => c.detail);
@@ -352,15 +483,20 @@ function renderTable() {
 		el.innerHTML = '';
 		return;
 	}
+	const issues = issuesHtml();
 	if (!ready.length) {
-		el.innerHTML = '<div class="cv-skel" style="height:16rem"></div>';
+		// Never leave the skeleton up once every request has settled: a permanent
+		// shimmer reads as a hung page, not as a failure the user can act on.
+		const stillLoading = state.coins.some((c) => c.status === 'loading');
+		el.innerHTML = issues + (stillLoading ? '<div class="cv-skel" style="height:16rem"></div>' : '');
+		wireIssueActions(el);
 		return;
 	}
 
 	const head = ready
 		.map(
 			(c) =>
-				`<th><a class="coin" href="/coin/${encodeURIComponent(c.id)}" style="text-decoration:none;color:inherit">
+				`<th scope="col"><a class="coin" href="/coin/${encodeURIComponent(c.id)}" style="text-decoration:none;color:inherit">
 					${c.detail.image ? `<img loading="lazy" decoding="async" src="${esc(c.detail.image)}" alt="" data-no-dark-filter />` : ''}
 					<span style="color:${c.color}">${esc(c.detail.symbol || c.detail.name)}</span>
 				</a></th>`,
@@ -387,16 +523,19 @@ function renderTable() {
 				return `<td class="${cls.join(' ')}">${esc(row.fmt(v))}</td>`;
 			})
 			.join('');
-		return `<tr><td>${esc(row.label)}</td>${cells}</tr>`;
+		return `<tr><th scope="row">${esc(row.label)}</th>${cells}</tr>`;
 	}).join('');
 
 	el.innerHTML = `
+		${issues}
 		<div class="cmp-table-wrap">
 			<table class="cmp-table">
-				<thead><tr><th></th>${head}</tr></thead>
+				<caption class="cv-sr-only">Key market statistics for the selected coins, best value in each row highlighted.</caption>
+				<thead><tr><th scope="col"><span class="cv-sr-only">Metric</span></th>${head}</tr></thead>
 				<tbody>${body}</tbody>
 			</table>
 		</div>`;
+	wireIssueActions(el);
 }
 
 // ── Search type-ahead (mirrors the /coins picker) ─────────────────────────────

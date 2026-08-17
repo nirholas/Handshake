@@ -1,68 +1,37 @@
-// /converter — crypto ⇄ crypto ⇄ fiat converter, part of the /coins "Markets"
-// surface. Reuses the shared /api/coin proxies:
-//   · /api/coin/rates            → curated fiat currencies (units per 1 BTC)
-//   · /api/coin/markets?q=<text> → coin search type-ahead (same UX as /coins)
-//   · /api/coin/detail?id=<id>   → a coin's live USD price (market.price)
+// /converter - crypto and fiat converter, part of the /coins "Markets" surface.
+// Reuses the shared /api/coin proxies:
+//   · /api/coin/rates            -> curated fiat currencies (units per 1 BTC)
+//   · /api/coin/markets?q=<text> -> coin search type-ahead (same UX as /coins)
+//   · /api/coin/detail?id=<id>   -> a coin's live USD price (market.price)
 //
-// Conversion is anchored in USD. Every asset knows its USD value:
-//   · crypto: priceUSD = market.price (USD per 1 coin)
-//   · fiat:   fiatPerUsd(code) = fiat.per_btc / usd.per_btc  (units per 1 USD)
-// From any FROM asset we compute the USD value of `amount`, then express that
-// value in the TO asset — which makes all four directions fall out of one
-// formula: crypto→crypto, crypto→fiat, fiat→crypto, fiat→fiat.
+// The conversion math, formatting, and shareable-URL codec live in
+// src/shared/converter-state.js; this module is the DOM layer on top of them.
+// Every view is addressable: /converter?from=ethereum&to=EUR&amount=3 restores
+// both sides and the amount, and the URL rewrites itself as the user edits so
+// the address bar (and the Copy link button) always hold the current result.
 
 import { formatPrice, escapeHtml as esc } from './shared/coin-format.js';
+import {
+	EMPTY,
+	assetCode,
+	buildConverterQuery,
+	convert as convertAmount,
+	formatInAsset,
+	parseAmount,
+	parseConverterQuery,
+	resolveAssetRef,
+} from './shared/converter-state.js';
 
 const $ = (id) => document.getElementById(id);
 
 async function getJson(url) {
 	const res = await fetch(url, { headers: { accept: 'application/json' } });
 	if (!res.ok) {
-		const err = new Error(`fetch ${url} → ${res.status}`);
+		const err = new Error(`fetch ${url} -> ${res.status}`);
 		err.status = res.status;
 		throw err;
 	}
 	return res.json();
-}
-
-// ── Formatting ────────────────────────────────────────────────────────────────
-
-// Fiat amount with the currency's own unit symbol + thousands separators.
-// Alphabetic units ("Fr.", "R$", "kr") get a space; glyphs ("$", "€", "₹") hug.
-function formatFiatAmount(n, unit) {
-	if (n == null || !Number.isFinite(n)) return '—';
-	const sign = n < 0 ? '-' : '';
-	const abs = Math.abs(n);
-	let body;
-	if (abs !== 0 && abs < 0.01) body = abs.toPrecision(4);
-	else body = abs.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-	const u = unit || '';
-	const sep = /[A-Za-z.]$/.test(u) ? ' ' : '';
-	return `${sign}${u}${sep}${body}`;
-}
-
-// Crypto amount: full precision for whole coins, significant figures for the
-// deep-decimal results a fiat→BTC conversion produces (e.g. 0.00001587 BTC).
-function formatCryptoAmount(n) {
-	if (n == null || !Number.isFinite(n)) return '—';
-	if (n === 0) return '0';
-	const abs = Math.abs(n);
-	if (abs >= 1) return n.toLocaleString('en-US', { maximumFractionDigits: 8 });
-	const s = n.toPrecision(6);
-	const expanded = s.includes('e') ? Number(s).toFixed(18) : s;
-	return expanded.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
-}
-
-// Format `n` in whatever `asset` is — used for the result field and rate line.
-function formatInAsset(n, asset) {
-	if (!asset) return '—';
-	return asset.kind === 'fiat' ? formatFiatAmount(n, asset.unit) : formatCryptoAmount(n);
-}
-
-// Short code shown on the asset button and rate line.
-function assetCode(asset) {
-	if (!asset) return '';
-	return asset.kind === 'fiat' ? asset.code : asset.symbol;
 }
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -75,50 +44,91 @@ const state = {
 	from: null,
 	to: null,
 	amount: 1,
+	amountText: '1',
 	loading: true,
 	error: null,
 	pending: { from: false, to: false },
 };
 
 const DEFAULT_CRYPTO = 'bitcoin';
+const DEFAULT_FIAT = 'USD';
 
-// ── Conversion math (USD-anchored) ────────────────────────────────────────────
+const usdPerBtc = () => state.rates?.usdPerBtc ?? NaN;
+const convert = (amount, from, to) => convertAmount(amount, from, to, usdPerBtc());
 
-function fiatPerUsd(fiat) {
-	// units of `fiat` per 1 BTC ÷ USD per 1 BTC = units of `fiat` per 1 USD.
-	return fiat.per_btc / state.rates.usdPerBtc;
+// ── Shareable URL ─────────────────────────────────────────────────────────────
+
+// Every state change rewrites the query in place. replaceState (not pushState)
+// keeps the back button pointing at wherever the visitor came from instead of
+// burying it under one entry per keystroke.
+function syncUrl() {
+	if (state.loading || state.error) return;
+	const query = buildConverterQuery(state);
+	const next = `${window.location.pathname}${query}`;
+	if (next === `${window.location.pathname}${window.location.search}`) return;
+	window.history.replaceState(null, '', next);
+	const copy = $('cvt-copy');
+	if (copy) resetCopyButton(copy);
 }
 
-// USD value of `amount` units of `asset`.
-function toUsd(amount, asset) {
-	if (!asset || !Number.isFinite(amount)) return null;
-	if (asset.kind === 'crypto') {
-		if (!Number.isFinite(asset.priceUSD)) return null;
-		return amount * asset.priceUSD;
+function shareUrl() {
+	return `${window.location.origin}${window.location.pathname}${buildConverterQuery(state)}`;
+}
+
+const COPY_ICON =
+	'<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+const CHECK_ICON =
+	'<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>';
+
+function resetCopyButton(btn) {
+	btn.classList.remove('is-copied');
+	btn.innerHTML = `${COPY_ICON}<span>Copy link</span>`;
+}
+
+// Clipboard API first; on a browser or context that refuses it, fall back to a
+// scratch textarea so the button still works instead of silently doing nothing.
+async function writeClipboard(text) {
+	if (navigator.clipboard?.writeText) {
+		try {
+			await navigator.clipboard.writeText(text);
+			return true;
+		} catch {
+			// Permission denied or an insecure context: try the fallback below.
+		}
 	}
-	// fiat: amount fiat-units ÷ (fiat-units per USD) = USD.
-	const perUsd = fiatPerUsd(asset);
-	if (!Number.isFinite(perUsd) || perUsd <= 0) return null;
-	return amount / perUsd;
-}
-
-// Express a USD value in `asset`.
-function fromUsd(valueUsd, asset) {
-	if (!asset || !Number.isFinite(valueUsd)) return null;
-	if (asset.kind === 'crypto') {
-		if (!Number.isFinite(asset.priceUSD) || asset.priceUSD <= 0) return null;
-		return valueUsd / asset.priceUSD;
+	const ta = document.createElement('textarea');
+	ta.value = text;
+	ta.setAttribute('readonly', '');
+	ta.style.cssText = 'position:fixed;top:0;left:-9999px;opacity:0';
+	document.body.appendChild(ta);
+	ta.select();
+	let ok = false;
+	try {
+		ok = document.execCommand('copy');
+	} catch {
+		ok = false;
 	}
-	const perUsd = fiatPerUsd(asset);
-	if (!Number.isFinite(perUsd)) return null;
-	return valueUsd * perUsd;
+	ta.remove();
+	return ok;
 }
 
-// Convert `amount` of FROM into TO. Null if either leg lacks a price.
-function convert(amount, from, to) {
-	const usd = toUsd(amount, from);
-	if (usd == null) return null;
-	return fromUsd(usd, to);
+let copyTimer = null;
+async function onCopyLink() {
+	const btn = $('cvt-copy');
+	if (!btn) return;
+	const ok = await writeClipboard(shareUrl());
+	clearTimeout(copyTimer);
+	btn.classList.add('is-copied');
+	btn.innerHTML = ok
+		? `${CHECK_ICON}<span>Link copied</span>`
+		: `${COPY_ICON}<span>Press Ctrl+C</span>`;
+	const status = $('cvt-copy-status');
+	if (status) {
+		status.textContent = ok
+			? `Link copied: ${shareUrl()}`
+			: 'Copy blocked by the browser. The link is in the address bar.';
+	}
+	copyTimer = setTimeout(() => resetCopyButton(btn), 2200);
 }
 
 // ── Rendering ─────────────────────────────────────────────────────────────────
@@ -143,6 +153,15 @@ function assetButtonInner(asset, side) {
 	return `<span class="cvt-asset-glyph fiat">${esc(glyph)}</span><span class="cvt-asset-code">${esc(asset.code)}</span>${CHEVRON}`;
 }
 
+// Accessible name for the asset button, so a screen reader hears the currency
+// rather than just "button".
+function assetButtonLabel(asset, side) {
+	const what = side === 'from' ? 'Convert from' : 'Convert to';
+	if (state.pending[side]) return `${what}: loading`;
+	if (!asset) return `${what}: choose a currency`;
+	return `${what}: ${asset.name || assetCode(asset)}. Change currency`;
+}
+
 function assetSubline(asset) {
 	if (!asset) return '';
 	if (asset.kind === 'crypto') {
@@ -160,7 +179,7 @@ function renderRate() {
 	}
 	const one = convert(1, state.from, state.to);
 	if (one == null) {
-		el.innerHTML = `<span class="dim">Live rate unavailable for this pair.</span>`;
+		el.innerHTML = `<span class="dim">Live rate unavailable for this pair. Pick another currency or try again shortly.</span>`;
 		return;
 	}
 	el.innerHTML = `1 ${esc(assetCode(state.from))} = <strong>${esc(formatInAsset(one, state.to))}</strong> ${esc(assetCode(state.to))}`;
@@ -169,33 +188,55 @@ function renderRate() {
 function renderResult() {
 	const el = $('cvt-result');
 	if (!el) return;
-	const amt = state.amount;
-	if (!Number.isFinite(amt)) {
-		el.innerHTML = '<span class="cvt-result-empty">—</span>';
-		return;
-	}
-	const out = convert(amt, state.from, state.to);
+	const out = Number.isFinite(state.amount)
+		? convert(state.amount, state.from, state.to)
+		: null;
 	if (out == null) {
-		el.innerHTML = '<span class="cvt-result-empty">—</span>';
+		el.innerHTML = `<span class="cvt-result-empty">${EMPTY}</span>`;
 		return;
 	}
 	el.textContent = formatInAsset(out, state.to);
+}
+
+// A typed value the converter cannot use gets an explanation instead of a bare
+// placeholder, so the user knows the page is not broken.
+function renderAmountHint() {
+	const el = $('cvt-amount-hint');
+	if (!el) return;
+	const raw = state.amountText.trim();
+	if (!raw) {
+		el.textContent = 'Enter an amount to convert.';
+		el.hidden = false;
+		return;
+	}
+	if (!Number.isFinite(state.amount)) {
+		el.textContent = 'Enter a positive number, digits only.';
+		el.hidden = false;
+		return;
+	}
+	el.hidden = true;
+	el.textContent = '';
 }
 
 function renderUpdated() {
 	const el = $('cvt-updated');
 	if (!el || !state.rates) return;
 	const d = new Date(state.rates.updated_at);
+	if (Number.isNaN(d.getTime())) {
+		el.textContent = 'Live market prices';
+		return;
+	}
 	el.textContent = `Rates updated ${d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} · live market prices`;
 }
 
 function renderCard() {
 	const app = $('cvt-app');
+	renderPresets();
 	if (state.error) {
 		app.innerHTML = `
 			<div class="cvt-card cv-card">
 				<div class="cv-empty">
-					<p style="margin:0 0 0.75rem">We couldn't load live rates just now.</p>
+					<p style="margin:0 0 0.75rem">We couldn't load live rates just now. Check your connection, then retry.</p>
 					<button type="button" class="cvt-retry" id="cvt-retry">Try again</button>
 				</div>
 			</div>`;
@@ -214,7 +255,7 @@ function renderCard() {
 	app.innerHTML = `
 		<div class="cvt-card cv-card">
 			<div class="cvt-side" data-side="from">
-				<span class="cvt-label">Amount</span>
+				<label class="cvt-label" for="cvt-amount">Amount</label>
 				<div class="cvt-row">
 					<input
 						class="cvt-amount"
@@ -223,27 +264,29 @@ function renderCard() {
 						inputmode="decimal"
 						autocomplete="off"
 						spellcheck="false"
-						aria-label="Amount to convert"
-						value="${esc(state.amount != null && Number.isFinite(state.amount) ? String(state.amount) : '')}"
+						size="1"
+						aria-describedby="cvt-amount-hint"
+						value="${esc(state.amountText)}"
 					/>
-					<button type="button" class="cvt-asset" id="cvt-from-btn" aria-haspopup="listbox" aria-expanded="false">
+					<button type="button" class="cvt-asset" id="cvt-from-btn" aria-haspopup="dialog" aria-expanded="false" aria-label="${esc(assetButtonLabel(state.from, 'from'))}">
 						${assetButtonInner(state.from, 'from')}
 					</button>
 				</div>
+				<p class="cvt-hint" id="cvt-amount-hint" hidden></p>
 				<p class="cvt-subline" id="cvt-from-sub">${assetSubline(state.from)}</p>
 			</div>
 
 			<div class="cvt-swap-wrap">
-				<button type="button" class="cvt-swap" id="cvt-swap" aria-label="Swap currencies" title="Swap">
+				<button type="button" class="cvt-swap" id="cvt-swap" aria-label="Swap the two currencies" title="Swap">
 					${SWAP_ICON}
 				</button>
 			</div>
 
 			<div class="cvt-side" data-side="to">
-				<span class="cvt-label">Converted to</span>
+				<span class="cvt-label" id="cvt-to-label">Converted to</span>
 				<div class="cvt-row">
-					<div class="cvt-result" id="cvt-result" aria-live="polite"></div>
-					<button type="button" class="cvt-asset" id="cvt-to-btn" aria-haspopup="listbox" aria-expanded="false">
+					<output class="cvt-result" id="cvt-result" for="cvt-amount" aria-live="polite" aria-labelledby="cvt-to-label"></output>
+					<button type="button" class="cvt-asset" id="cvt-to-btn" aria-haspopup="dialog" aria-expanded="false" aria-label="${esc(assetButtonLabel(state.to, 'to'))}">
 						${assetButtonInner(state.to, 'to')}
 					</button>
 				</div>
@@ -251,59 +294,70 @@ function renderCard() {
 			</div>
 
 			<p class="cvt-rate" id="cvt-rate"></p>
-			<p class="cv-updated" id="cvt-updated"></p>
+			<div class="cvt-foot">
+				<p class="cv-updated" id="cvt-updated"></p>
+				<button type="button" class="cvt-copy" id="cvt-copy">${COPY_ICON}<span>Copy link</span></button>
+			</div>
+			<p class="cvt-sr-status" id="cvt-copy-status" role="status" aria-live="polite"></p>
 		</div>`;
 
 	wireCard();
 	renderResult();
 	renderRate();
+	renderAmountHint();
 	renderUpdated();
 }
 
-// Refresh just the dynamic bits without tearing down the input (keeps focus /
+// Refresh just the dynamic bits without tearing down the input (keeps focus and
 // caret while typing). Falls back to a full re-render if the card isn't mounted.
 function refresh() {
 	if (!$('cvt-result')) {
 		renderCard();
 		return;
 	}
-	const fb = $('cvt-from-btn');
-	const tb = $('cvt-to-btn');
-	if (fb) fb.innerHTML = assetButtonInner(state.from, 'from');
-	if (tb) tb.innerHTML = assetButtonInner(state.to, 'to');
-	const fs = $('cvt-from-sub');
-	const ts = $('cvt-to-sub');
-	if (fs) fs.innerHTML = assetSubline(state.from);
-	if (ts) ts.innerHTML = assetSubline(state.to);
+	for (const side of ['from', 'to']) {
+		const btn = $(`cvt-${side}-btn`);
+		if (btn) {
+			btn.innerHTML = assetButtonInner(state[side], side);
+			btn.setAttribute('aria-label', assetButtonLabel(state[side], side));
+		}
+		const sub = $(`cvt-${side}-sub`);
+		if (sub) sub.innerHTML = assetSubline(state[side]);
+	}
 	renderResult();
 	renderRate();
+	renderAmountHint();
 	renderUpdated();
+	renderPresets();
+	syncUrl();
 }
 
 function wireCard() {
 	const input = $('cvt-amount');
 	let debounce = null;
 	input?.addEventListener('input', () => {
-		const raw = input.value.replace(/,/g, '').trim();
+		state.amountText = input.value;
 		clearTimeout(debounce);
 		debounce = setTimeout(() => {
-			const n = raw === '' ? NaN : Number(raw);
-			state.amount = Number.isFinite(n) && n >= 0 ? n : NaN;
+			state.amount = parseAmount(input.value);
 			renderResult();
+			renderAmountHint();
+			renderPresets();
+			syncUrl();
 		}, 120);
 	});
 	// Select-all on focus so a tap-and-type replaces the value cleanly.
 	input?.addEventListener('focus', () => input.select());
 
 	$('cvt-swap')?.addEventListener('click', swap);
-	$('cvt-from-btn')?.addEventListener('click', (e) => {
-		e.stopPropagation();
-		openPicker('from', e.currentTarget);
-	});
-	$('cvt-to-btn')?.addEventListener('click', (e) => {
-		e.stopPropagation();
-		openPicker('to', e.currentTarget);
-	});
+	$('cvt-copy')?.addEventListener('click', onCopyLink);
+	for (const side of ['from', 'to']) {
+		$(`cvt-${side}-btn`)?.addEventListener('click', (e) => {
+			e.stopPropagation();
+			if (picker.open && picker.side === side) closePicker();
+			else openPicker(side, e.currentTarget);
+		});
+	}
 }
 
 function swap() {
@@ -316,12 +370,12 @@ function swap() {
 // ── Asset resolution ──────────────────────────────────────────────────────────
 
 function fiatAsset(code) {
-	const f = state.rates?.byCode.get(code.toUpperCase());
+	const f = state.rates?.byCode.get(String(code).toUpperCase());
 	if (!f) return null;
 	return { kind: 'fiat', code: f.code, name: f.name, unit: f.unit, per_btc: f.per_btc };
 }
 
-// Fetch a coin's live USD price and metadata → a crypto asset.
+// Fetch a coin's live USD price and metadata -> a crypto asset.
 async function cryptoAsset(id, seed = {}) {
 	const { coin } = await getJson(`/api/coin/detail?id=${encodeURIComponent(id)}`);
 	const price = coin?.market?.price;
@@ -337,7 +391,7 @@ async function cryptoAsset(id, seed = {}) {
 
 // Load a crypto into `side`, showing a spinner on that side while the price
 // request is in flight. Seed carries the search-result metadata so the button
-// shows the symbol/icon immediately.
+// shows the symbol and icon immediately.
 async function selectCrypto(side, id, seed = {}) {
 	state.pending[side] = true;
 	// Optimistic placeholder so the button updates instantly.
@@ -353,8 +407,8 @@ async function selectCrypto(side, id, seed = {}) {
 	try {
 		state[side] = await cryptoAsset(id, seed);
 	} catch {
-		// Keep the placeholder but mark price missing — the rate line shows the
-		// "unavailable" copy rather than a wrong number.
+		// Keep the placeholder but leave the price missing: the rate line shows
+		// the "unavailable" copy rather than a wrong number.
 		state[side] = { ...state[side], priceUSD: NaN };
 	}
 	state.pending[side] = false;
@@ -368,9 +422,19 @@ function selectFiat(side, code) {
 	refresh();
 }
 
+// Load whichever kind of asset a URL ref or preset names.
+function selectRef(side, ref, seed = {}) {
+	if (!ref) return null;
+	if (ref.kind === 'fiat') {
+		selectFiat(side, ref.code);
+		return null;
+	}
+	return selectCrypto(side, ref.id, seed);
+}
+
 // ── Asset picker (fiat + crypto search) ───────────────────────────────────────
 
-const picker = { open: false, side: null, anchor: null, timer: null };
+const picker = { open: false, side: null, anchor: null, timer: null, active: -1 };
 
 function currencyGlyph(f) {
 	return f.unit || f.code.slice(0, 1);
@@ -385,14 +449,14 @@ function pickerFiatRows(query) {
 	const items = rows
 		.map(
 			(f) => `
-			<button type="button" class="cvt-pick-item" role="option" data-kind="fiat" data-code="${esc(f.code)}">
+			<button type="button" class="cvt-pick-item" role="option" aria-selected="false" data-kind="fiat" data-code="${esc(f.code)}">
 				<span class="cvt-pick-glyph fiat">${esc(currencyGlyph(f))}</span>
 				<span class="cvt-pick-name">${esc(f.name)}</span>
 				<span class="cvt-pick-code">${esc(f.code)}</span>
 			</button>`,
 		)
 		.join('');
-	return `<div class="cvt-pick-group"><p class="cvt-pick-head">Fiat currencies</p>${items}</div>`;
+	return `<div class="cvt-pick-group" role="group" aria-label="Fiat currencies"><p class="cvt-pick-head">Fiat currencies</p>${items}</div>`;
 }
 
 function pickerCryptoRows(coins) {
@@ -400,7 +464,7 @@ function pickerCryptoRows(coins) {
 	const items = coins
 		.map(
 			(c) => `
-			<button type="button" class="cvt-pick-item" role="option" data-kind="crypto" data-id="${esc(c.id)}" data-symbol="${esc(c.symbol)}" data-name="${esc(c.name)}" data-thumb="${esc(c.thumb || '')}">
+			<button type="button" class="cvt-pick-item" role="option" aria-selected="false" data-kind="crypto" data-id="${esc(c.id)}" data-symbol="${esc(c.symbol)}" data-name="${esc(c.name)}" data-thumb="${esc(c.thumb || '')}">
 				${c.thumb ? `<img loading="lazy" decoding="async" src="${esc(c.thumb)}" alt="" width="22" height="22" data-no-dark-filter />` : `<span class="cvt-pick-glyph">${esc((c.symbol || '?').slice(0, 1))}</span>`}
 				<span class="cvt-pick-name">${esc(c.name)}</span>
 				<span class="cvt-pick-code">${esc(c.symbol)}</span>
@@ -408,11 +472,12 @@ function pickerCryptoRows(coins) {
 			</button>`,
 		)
 		.join('');
-	return `<div class="cvt-pick-group"><p class="cvt-pick-head">Cryptocurrencies</p>${items}</div>`;
+	return `<div class="cvt-pick-group" role="group" aria-label="Cryptocurrencies"><p class="cvt-pick-head">Cryptocurrencies</p>${items}</div>`;
 }
 
-function renderPicker({ query = '', coins = null, loading = false } = {}) {
-	const el = $('cvt-picker');
+// One builder for the results body, used by both the full popover render and
+// the list-only refresh, so the two can never drift apart.
+function pickerBody({ query = '', coins = null, loading = false } = {}) {
 	const fiatRows = pickerFiatRows(query);
 	let cryptoSection;
 	if (loading) {
@@ -424,19 +489,24 @@ function renderPicker({ query = '', coins = null, loading = false } = {}) {
 			: `<div class="cvt-pick-note">No coins match “${esc(query)}”.</div>`;
 	} else {
 		cryptoSection =
-			'<div class="cvt-pick-note">Type to search 10,000+ coins by name or symbol.</div>';
+			'<div class="cvt-pick-note">Type to search thousands of coins by name or symbol.</div>';
 	}
-	const body =
-		!fiatRows && coins && !coins.length
-			? `<div class="cvt-pick-note">Nothing matches “${esc(query)}”.</div>`
-			: `${fiatRows}${cryptoSection}`;
+	if (!fiatRows && coins && !coins.length) {
+		return `<div class="cvt-pick-note">Nothing matches “${esc(query)}”. Try a ticker such as BTC, or a name such as Euro.</div>`;
+	}
+	return `${fiatRows}${cryptoSection}`;
+}
 
+function renderPicker({ query = '', coins = null, loading = false } = {}) {
+	const el = $('cvt-picker');
 	el.innerHTML = `
 		<div class="cvt-pick-search">
 			<svg class="mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-			<input type="text" id="cvt-pick-input" placeholder="Search currency or coin" autocomplete="off" spellcheck="false" aria-label="Search for a currency or coin" value="${esc(query)}" />
+			<input type="text" id="cvt-pick-input" placeholder="Search currency or coin" autocomplete="off" spellcheck="false"
+				role="combobox" aria-expanded="true" aria-controls="cvt-pick-list" aria-autocomplete="list"
+				aria-label="Search for a currency or coin" value="${esc(query)}" />
 		</div>
-		<div class="cvt-pick-list" id="cvt-pick-list" role="listbox">${body}</div>`;
+		<div class="cvt-pick-list" id="cvt-pick-list" role="listbox" aria-label="Currencies and coins">${pickerBody({ query, coins, loading })}</div>`;
 
 	const input = $('cvt-pick-input');
 	input.focus();
@@ -445,10 +515,44 @@ function renderPicker({ query = '', coins = null, loading = false } = {}) {
 	wirePickerItems();
 }
 
+// Re-render the list only (not the whole popover) so the search input keeps
+// focus and caret while results stream in.
+function renderPickerPreserveFocus(opts) {
+	const list = $('cvt-pick-list');
+	if (!list) return renderPicker(opts);
+	list.innerHTML = pickerBody(opts);
+	wirePickerItems();
+}
+
+function pickerItems() {
+	return [...($('cvt-pick-list')?.querySelectorAll('.cvt-pick-item') || [])];
+}
+
 function wirePickerItems() {
-	$('cvt-pick-list')
-		?.querySelectorAll('.cvt-pick-item')
-		.forEach((btn) => btn.addEventListener('click', () => choosePickItem(btn)));
+	picker.active = -1;
+	pickerItems().forEach((btn, i) => {
+		btn.id = `cvt-pick-opt-${i}`;
+		btn.addEventListener('click', () => choosePickItem(btn));
+		btn.addEventListener('mousemove', () => setActiveItem(i, { scroll: false }));
+	});
+	$('cvt-pick-input')?.removeAttribute('aria-activedescendant');
+}
+
+// Roving highlight driven from the search box: the input keeps DOM focus (so
+// typing never breaks) and aria-activedescendant points at the current option.
+function setActiveItem(index, { scroll = true } = {}) {
+	const items = pickerItems();
+	if (!items.length) return;
+	const next = ((index % items.length) + items.length) % items.length;
+	items.forEach((el, i) => {
+		const on = i === next;
+		el.classList.toggle('is-active', on);
+		el.setAttribute('aria-selected', on ? 'true' : 'false');
+	});
+	picker.active = next;
+	const el = items[next];
+	if (scroll) el.scrollIntoView({ block: 'nearest' });
+	$('cvt-pick-input')?.setAttribute('aria-activedescendant', el.id);
 }
 
 function choosePickItem(btn) {
@@ -463,6 +567,7 @@ function choosePickItem(btn) {
 		});
 	}
 	closePicker();
+	$(`cvt-${side}-btn`)?.focus();
 }
 
 function onPickerInput(e) {
@@ -472,14 +577,14 @@ function onPickerInput(e) {
 		renderPickerPreserveFocus({ query: '' });
 		return;
 	}
-	// Show fiat matches + a loading state immediately, then fill crypto results.
+	// Show fiat matches plus a loading state immediately, then fill in crypto.
 	renderPickerPreserveFocus({ query: q, loading: true });
 	picker.timer = setTimeout(async () => {
 		try {
 			const { coins } = await getJson(`/api/coin/markets?q=${encodeURIComponent(q)}`);
 			// Guard against a stale response after the input changed again.
 			if ($('cvt-pick-input')?.value.trim() === q) {
-				renderPickerPreserveFocus({ query: q, coins });
+				renderPickerPreserveFocus({ query: q, coins: coins || [] });
 			}
 		} catch {
 			if ($('cvt-pick-input')?.value.trim() === q) {
@@ -489,42 +594,47 @@ function onPickerInput(e) {
 	}, 250);
 }
 
-// Re-render the list only (not the whole popover) so the search input keeps
-// focus and caret while results stream in.
-function renderPickerPreserveFocus(opts) {
-	const list = $('cvt-pick-list');
-	if (!list) return renderPicker(opts);
-	const { query = '', coins = null, loading = false } = opts;
-	const fiatRows = pickerFiatRows(query);
-	let cryptoSection;
-	if (loading) {
-		cryptoSection =
-			'<div class="cvt-pick-note"><span class="cv-spinner" aria-hidden="true"></span>Searching coins…</div>';
-	} else if (coins) {
-		cryptoSection = coins.length
-			? pickerCryptoRows(coins)
-			: `<div class="cvt-pick-note">No coins match “${esc(query)}”.</div>`;
-	} else {
-		cryptoSection =
-			'<div class="cvt-pick-note">Type to search 10,000+ coins by name or symbol.</div>';
-	}
-	list.innerHTML =
-		!fiatRows && coins && !coins.length
-			? `<div class="cvt-pick-note">Nothing matches “${esc(query)}”.</div>`
-			: `${fiatRows}${cryptoSection}`;
-	wirePickerItems();
-}
-
 function onPickerKey(e) {
 	if (e.key === 'Escape') {
 		e.preventDefault();
+		const anchor = picker.anchor;
 		closePicker();
-		picker.anchor?.focus();
+		anchor?.focus();
+		return;
 	}
+	if (e.key === 'ArrowDown') {
+		e.preventDefault();
+		setActiveItem(picker.active + 1);
+		return;
+	}
+	if (e.key === 'ArrowUp') {
+		e.preventDefault();
+		setActiveItem(picker.active <= 0 ? pickerItems().length - 1 : picker.active - 1);
+		return;
+	}
+	if (e.key === 'Home') {
+		e.preventDefault();
+		setActiveItem(0);
+		return;
+	}
+	if (e.key === 'End') {
+		e.preventDefault();
+		setActiveItem(pickerItems().length - 1);
+		return;
+	}
+	if (e.key === 'Enter') {
+		e.preventDefault();
+		const items = pickerItems();
+		const target = items[picker.active >= 0 ? picker.active : 0];
+		if (target) choosePickItem(target);
+		return;
+	}
+	// Tab out of the popover closes it rather than leaving an orphan overlay.
+	if (e.key === 'Tab') closePicker();
 }
 
 function positionPicker(anchor) {
-	// Fixed position (viewport coords) so the offset parent is unambiguous — the
+	// Fixed position (viewport coords) so the offset parent is unambiguous: the
 	// popover is a sibling of the card, not a child. Right-aligned under the
 	// button and clamped to an 8px viewport gutter on both edges.
 	const el = $('cvt-picker');
@@ -548,6 +658,7 @@ function openPicker(side, anchor) {
 
 function closePicker() {
 	if (!picker.open) return;
+	clearTimeout(picker.timer);
 	picker.open = false;
 	picker.anchor?.setAttribute('aria-expanded', 'false');
 	const el = $('cvt-picker');
@@ -555,6 +666,7 @@ function closePicker() {
 	el.innerHTML = '';
 	picker.side = null;
 	picker.anchor = null;
+	picker.active = -1;
 }
 
 document.addEventListener('click', (e) => {
@@ -565,7 +677,7 @@ document.addEventListener('click', (e) => {
 window.addEventListener('resize', () => {
 	if (picker.open && picker.anchor) positionPicker(picker.anchor);
 });
-// A fixed popover doesn't follow page scroll — keep it pinned to its anchor.
+// A fixed popover doesn't follow page scroll: keep it pinned to its anchor.
 window.addEventListener(
 	'scroll',
 	() => {
@@ -578,101 +690,126 @@ window.addEventListener(
 
 const PRESETS = [
 	{
-		label: 'BTC → USD',
+		label: 'BTC to USD',
 		from: { kind: 'crypto', id: 'bitcoin', symbol: 'BTC' },
 		to: { kind: 'fiat', code: 'USD' },
 	},
 	{
-		label: 'ETH → USD',
+		label: 'ETH to USD',
 		from: { kind: 'crypto', id: 'ethereum', symbol: 'ETH' },
 		to: { kind: 'fiat', code: 'USD' },
 	},
 	{
-		label: 'SOL → USD',
+		label: 'SOL to USD',
 		from: { kind: 'crypto', id: 'solana', symbol: 'SOL' },
 		to: { kind: 'fiat', code: 'USD' },
 	},
 	{
-		label: 'USD → BTC',
+		label: 'USD to BTC',
 		from: { kind: 'fiat', code: 'USD' },
 		to: { kind: 'crypto', id: 'bitcoin', symbol: 'BTC' },
 	},
 ];
 
+// A preset reads as pressed only when it fully describes the current view:
+// both sides and the amount it would apply.
+function presetIsActive(p) {
+	const sideMatches = (ref, asset) => {
+		if (!asset) return false;
+		return ref.kind === 'fiat' ? asset.code === ref.code : asset.id === ref.id;
+	};
+	return (
+		state.amount === 1 && sideMatches(p.from, state.from) && sideMatches(p.to, state.to)
+	);
+}
+
 function renderPresets() {
 	const el = $('cvt-presets');
-	el.innerHTML = PRESETS.map(
-		(p, i) =>
-			`<button type="button" class="cvt-preset" data-preset="${i}">${esc(p.label)}</button>`,
-	).join('');
+	if (!el) return;
+	// Disabled until rates land, so a preset is never a button that does nothing.
+	const ready = Boolean(state.rates);
+	const html = PRESETS.map((p, i) => {
+		const on = ready && presetIsActive(p);
+		return `<button type="button" class="cvt-preset${on ? ' is-active' : ''}" data-preset="${i}" aria-pressed="${on}"${ready ? '' : ' disabled'}>${esc(p.label)}</button>`;
+	}).join('');
+	if (el.innerHTML === html) return;
+	el.innerHTML = html;
 	el.querySelectorAll('[data-preset]').forEach((btn) =>
 		btn.addEventListener('click', () => applyPreset(PRESETS[Number(btn.dataset.preset)])),
 	);
 }
 
-async function applyPreset(p) {
+function applyPreset(p) {
 	if (!state.rates) return;
 	closePicker();
 	state.amount = 1;
+	state.amountText = '1';
 	const input = $('cvt-amount');
 	if (input) input.value = '1';
 	// Set both sides. Fiat resolves instantly; crypto resolves via detail fetch.
-	if (p.from.kind === 'fiat') selectFiat('from', p.from.code);
-	else selectCrypto('from', p.from.id, { symbol: p.from.symbol });
-	if (p.to.kind === 'fiat') selectFiat('to', p.to.code);
-	else selectCrypto('to', p.to.id, { symbol: p.to.symbol });
+	selectRef('from', p.from, { symbol: p.from.symbol });
+	selectRef('to', p.to, { symbol: p.to.symbol });
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
+
+// Turn the current query string into the two asset refs and the amount, falling
+// back to the default BTC to USD view for anything the URL doesn't name.
+function viewFromUrl() {
+	const q = parseConverterQuery(window.location.search);
+	const byCode = state.rates?.byCode;
+	return {
+		from: resolveAssetRef(q.from, byCode) || { kind: 'crypto', id: DEFAULT_CRYPTO },
+		to: resolveAssetRef(q.to, byCode) || { kind: 'fiat', code: DEFAULT_FIAT },
+		amount: Number.isFinite(q.amount) ? q.amount : 1,
+	};
+}
+
+async function applyView(view) {
+	state.amount = view.amount;
+	state.amountText = String(view.amount);
+	const input = $('cvt-amount');
+	if (input) input.value = state.amountText;
+	await Promise.all([selectRef('from', view.from), selectRef('to', view.to)].filter(Boolean));
+}
 
 async function boot() {
 	state.loading = true;
 	state.error = null;
 	renderCard();
 
-	// Rates + the default coin's price, in parallel — the page needs both to show
-	// its default BTC → USD conversion.
-	const [ratesRes, btcRes] = await Promise.allSettled([
-		getJson('/api/coin/rates'),
-		cryptoAsset(DEFAULT_CRYPTO, { symbol: 'BTC', name: 'Bitcoin' }),
-	]);
-
-	if (ratesRes.status !== 'fulfilled') {
+	let rates;
+	try {
+		rates = await getJson('/api/coin/rates');
+	} catch {
 		state.loading = false;
 		state.error = 'rates';
 		renderCard();
 		return;
 	}
 
-	const { fiats, updated_at } = ratesRes.value;
+	const fiats = Array.isArray(rates?.fiats) ? rates.fiats : [];
 	const byCode = new Map(fiats.map((f) => [f.code, f]));
 	const usd = byCode.get('USD');
-	if (!usd) {
+	if (!usd || !Number.isFinite(usd.per_btc)) {
 		state.loading = false;
 		state.error = 'rates';
 		renderCard();
 		return;
 	}
-	state.rates = { byCode, list: fiats, usdPerBtc: usd.per_btc, updated_at };
-
-	// Default matchup: 1 BTC → USD. If the coin price failed, still show the
-	// widget (the rate line degrades gracefully) so the page is never a dead end.
-	state.from =
-		btcRes.status === 'fulfilled'
-			? btcRes.value
-			: {
-					kind: 'crypto',
-					id: DEFAULT_CRYPTO,
-					symbol: 'BTC',
-					name: 'Bitcoin',
-					image: null,
-					priceUSD: NaN,
-				};
-	state.to = fiatAsset('USD');
-	state.amount = 1;
+	state.rates = { byCode, list: fiats, usdPerBtc: usd.per_btc, updated_at: rates.updated_at };
 	state.loading = false;
-	renderCard();
+
+	// applyView mounts the card through refresh() with an optimistic placeholder
+	// on each side, so the widget is on screen before the coin price lands.
+	await applyView(viewFromUrl());
+	syncUrl();
 }
 
-renderPresets();
+// Back/forward past the entry the page was opened on: re-apply that view.
+window.addEventListener('popstate', () => {
+	if (!state.rates) return;
+	applyView(viewFromUrl());
+});
+
 boot();

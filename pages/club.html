@@ -855,9 +855,20 @@
 				pointer-events: none;
 				opacity: 0;
 				transform: translateY(-10px);
-				transition: opacity 0.6s ease, transform 0.6s ease;
+				/* visibility, not just opacity: this pill holds a <select> and a
+				   Browse button, and a transparent control is still a tab stop. Off
+				   the walk-in, a keyboard user would otherwise tab into an agent
+				   picker they cannot see. Flipped after the fade so it still plays. */
+				visibility: hidden;
+				transition: opacity 0.6s ease, transform 0.6s ease, visibility 0s linear 0.6s;
 			}
-			.club-agent-switch.is-visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+			.club-agent-switch.is-visible {
+				opacity: 1;
+				transform: translateY(0);
+				pointer-events: auto;
+				visibility: visible;
+				transition-delay: 0s;
+			}
 			.club-agent-label {
 				font: 600 11px/1 'Inter', system-ui, sans-serif;
 				letter-spacing: 0.08em;
@@ -1002,13 +1013,19 @@
 				cursor: pointer;
 				pointer-events: none;
 				opacity: 0;
-				transition: opacity 0.25s ease, transform 0.25s ease;
+				/* Same reason as the agent pill above: an invisible <button> is still
+				   a tab stop, so "Enter the club" must leave the tab order until the
+				   walk-in actually puts you at the door. */
+				visibility: hidden;
+				transition: opacity 0.25s ease, transform 0.25s ease, visibility 0s linear 0.25s;
 			}
 			.club-door-prompt.is-visible {
 				opacity: 1;
 				pointer-events: auto;
+				visibility: visible;
 				transform: translate(-50%, -50%) scale(1);
 				animation: clubPromptBob 1.8s ease-in-out infinite;
+				transition-delay: 0s;
 			}
 			.club-door-prompt:hover { border-color: #ff3bd6; box-shadow: 0 0 44px -4px rgba(255, 59, 214, 0.9); }
 			.club-door-prompt:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }

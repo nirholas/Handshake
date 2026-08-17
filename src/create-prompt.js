@@ -45,8 +45,16 @@ let _submitting = false;
 let _startedAt = 0;
 let _elapsedTimer = 0;
 let _aborter = /** @type {AbortController | null} */ (null);
-let _cancelled = false;
 let _stallNoted = false;
+
+// Monotonic build token. Every start() claims the next one; cancelling or
+// returning to compose burns the current token. A run whose token is no longer
+// current is "stale" and must not touch the UI: without this, cancelling a
+// build and immediately starting another let the abandoned poll loop wake from
+// its sleep, keep polling the old job, and drop the OLD avatar onto the done
+// screen while the NEW build was still running.
+let _runId = 0;
+const isStale = (run) => run !== _runId;
 
 function showStep(step) {
 	for (const el of document.querySelectorAll('.step')) {
@@ -130,8 +138,8 @@ async function start() {
 		return;
 	}
 
+	const run = ++_runId;
 	_submitting = true;
-	_cancelled = false;
 	_stallNoted = false;
 	_aborter = new AbortController();
 	generateBtn.disabled = true;

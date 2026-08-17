@@ -996,7 +996,7 @@ html.cv-page,
 }
 .cv-load-err {
 	margin-top: 0.625rem;
-	color: var(--cv-down);
+	color: var(--cv-red);
 }
 
 /* An in-prose control that acts on this page (retry, clear a filter) is a button,

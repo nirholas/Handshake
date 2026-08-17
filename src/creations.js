@@ -68,11 +68,14 @@ function truncate(s, n) {
 
 // ── card rendering ───────────────────────────────────────────────────────────
 
-function thumbHTML(glbUrl, alt) {
+function thumbHTML(glbUrl, alt, posterUrl) {
 	if (!glbUrl) return `<div class="cr-card-noglb" aria-hidden="true">3D</div>`;
+	// The feed ships a rendered still alongside every GLB, so paint that first
+	// and let the interactive mesh swap in once it has streamed.
+	const poster = posterUrl ? ` poster="${esc(posterUrl)}"` : '';
 	return `<model-viewer
 			src="${esc(glbUrl)}"
-			alt="${esc(alt)}"
+			alt="${esc(alt)}"${poster}
 			class="cr-card-mv"
 			reveal="auto"
 			loading="lazy"
@@ -100,21 +103,21 @@ function cardHTML(item) {
 		<article class="cr-card" data-id="${esc(item.id)}">
 			<div class="cr-card-thumb">
 				${item.isDerived ? '<span class="cr-card-derived" title="This is itself a remix">remix</span>' : ''}
-				${thumbHTML(item.glbUrl, promptText)}
+				${thumbHTML(item.glbUrl, promptText, item.previewImageUrl)}
 			</div>
 			<div class="cr-card-body">
 				<p class="cr-card-prompt" title="${esc(item.prompt || '')}">${esc(promptText)}</p>
 				<div class="cr-card-meta">${categoryChip}${royaltyChip}${remixChip}</div>
 				<div class="cr-card-actions">
 					<a class="cr-card-btn" href="/m/${esc(item.id)}" title="Open the model page: stats, comments, likes">Details</a>
-					<a class="cr-card-btn" href="${esc(item.viewerUrl)}" target="_blank" rel="noopener noreferrer">View</a>
-					<button class="cr-card-btn" type="button" data-lineage="${esc(item.id)}">Lineage</button>
+					${item.viewerUrl ? `<a class="cr-card-btn" href="${esc(item.viewerUrl)}" target="_blank" rel="noopener noreferrer">View</a>` : ''}
+					<button class="cr-card-btn" type="button" data-lineage="${esc(item.id)}" aria-controls="cr-lineage-panel">Lineage</button>
 					${item.prompt ? `<button class="cr-card-btn" type="button" data-copy-prompt="${esc(item.id)}" title="Copy the prompt that generated this model">Copy prompt</button>` : ''}
 					<button class="cr-card-btn cr-card-btn--remix" type="button" data-remix-open="${esc(item.id)}">Remix — $0.25</button>
 					<span class="cr-time">${esc(timeAgo(item.createdAt))}</span>
 				</div>
 				<div class="cr-remix-inline" data-remix-inline="${esc(item.id)}">
-					<input type="text" class="cr-remix-input" placeholder='Describe the change, e.g. "make it metallic"' maxlength="500" />
+					<input type="text" class="cr-remix-input" aria-label="Describe the change this remix should make" placeholder='Describe the change, e.g. "make it metallic"' maxlength="500" />
 					<button class="cr-card-btn cr-card-btn--remix" type="button" data-remix-pay="${esc(item.id)}">Pay &amp; remix</button>
 					<div class="cr-remix-status" role="status" aria-live="polite"></div>
 				</div>
@@ -440,7 +443,7 @@ function trendingRowHTML(item, i) {
 		<li>
 			<a class="cr-lb-row" href="${esc(item.viewerUrl)}" target="_blank" rel="noopener noreferrer">
 				<span class="cr-lb-rank">${i + 1}</span>
-				<span class="cr-lb-thumb">${thumbHTML(item.glbUrl, item.prompt || 'creation')}</span>
+				<span class="cr-lb-thumb">${thumbHTML(item.glbUrl, item.prompt || 'creation', item.previewImageUrl)}</span>
 				<span class="cr-lb-body">
 					<span class="cr-lb-title">${esc(truncate(item.prompt || 'A 3D creation', 48))}</span>
 					<span class="cr-lb-meta">${esc(item.category || 'other')}${item.remixable ? '' : ' · no longer remixable'}</span>

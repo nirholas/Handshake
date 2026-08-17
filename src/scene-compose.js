@@ -42,6 +42,8 @@ const loadingMsg   = $('lmsg');
 const avatarPrompt = $('ap');
 const canvasHint   = $('ch');
 const objectList   = $('ol');
+const scenePanel   = $('po');
+const sceneScrim   = $('poscrim');
 const inspectorEl  = $('ins');
 const saveStatus   = $('ss');
 const statTris     = $('s-tri');
@@ -62,6 +64,7 @@ const btnShot    = $('btn-screenshot');
 const btnExport  = $('btn-export');
 const btnSaveOutfit = $('btn-save-outfit');
 const btnHelp    = $('btn-help');
+const btnPanel   = $('btn-panel');
 const helpPanel  = $('hp');
 const helpClose  = $('hp-close');
 
@@ -72,12 +75,14 @@ const forgeFill     = $('fprf');
 const forgeMsg      = $('fprm');
 const forgeErr      = $('fe');
 const creationsList = $('gl');
+const creationsHead = $('glh');
 const dropZone      = $('dz');
 const glbFileInput  = $('gfi');
 const intentChips   = $('intent-chips');
 const suggestPills  = $('sps');
 
 const avatarUrlInput = $('av-url');
+const avatarPromptErr = $('ape');
 const btnLoadUrl     = $('btn-load-url');
 const btnBrowseAv    = $('btn-browse-av');
 const btnSkip        = $('btn-skip');
@@ -257,10 +262,23 @@ const FORGE_TIMEOUT = 12 * 60 * 1000;
 // ── Undo / Redo ───────────────────────────────────────────────────────────────
 const hist = { stack: [], cursor: -1 };
 
+/**
+ * A command leaves the stack in one of two ways, and each frees a different
+ * side's GPU resources, without this the removed meshes stayed resident for
+ * the life of the tab, because nothing could safely dispose them while undo
+ * could still bring them back.
+ *
+ *   abandon(), the command sat after the cursor (it had been undone) and a new
+ *               command truncated the redo branch. Its *undone* state is now
+ *               permanent, so whatever the redo would have re-added is garbage.
+ *   forget(), the command fell off the 50-deep tail. Its *applied* state is
+ *               now permanent, so whatever the undo would have restored is
+ *               garbage.
+ */
 function pushHistory(cmd) {
-	hist.stack.splice(hist.cursor + 1);
+	for (const dropped of hist.stack.splice(hist.cursor + 1)) dropped.abandon?.();
 	hist.stack.push(cmd);
-	if (hist.stack.length > 50) hist.stack.shift();
+	if (hist.stack.length > 50) hist.stack.shift().forget?.();
 	else hist.cursor++;
 	syncUndoUI();
 }
@@ -406,6 +424,8 @@ function addToScene(group, name, glbUrl, role = 'item', pushUndo = true) {
 		pushHistory({
 			execute: () => { scene.add(group); sceneObjects.set(id, sceneObjects.get(id) || { group, name, glbUrl, visible: true, boneAttached: false, boneName: null, role }); renderHierarchy(); },
 			undo:    () => { if (selectedId === id) deselect(); scene.remove(group); sceneObjects.delete(id); renderHierarchy(); },
+			// Abandoned after an undo: the object is out of the scene for good.
+			abandon: () => { if (!sceneObjects.has(id)) disposeObject(group); },
 		});
 	}
 	renderHierarchy();
@@ -416,18 +436,36 @@ function addToScene(group, name, glbUrl, role = 'item', pushUndo = true) {
 function removeObject(id) {
 	const obj = sceneObjects.get(id);
 	if (!obj) return;
-	if (obj.boneAttached && obj.boneName) {
-		const be = avatarBones.find((b) => b.name === obj.boneName);
+	// Remember the bone so undo can put the item back ON the bone. Restoring it
+	// to the scene root instead left the row tagged with a bone it was no longer
+	// parented to, and the inspector offering "Detach" on a detached item.
+	const restoreBone = obj.boneAttached ? obj.boneName : null;
+	if (restoreBone) {
+		const be = avatarBones.find((b) => b.name === restoreBone);
 		if (be) scene.attach(obj.group);
 	}
 	if (selectedId === id) deselect();
 	scene.remove(obj.group);
 	const snapshot = { ...obj };
 	sceneObjects.delete(id);
-	if (id === avatarId) { avatarId = null; avatarBones = []; if (mixer) { mixer.stopAllAction(); mixer = null; } }
+	if (id === avatarId) {
+		// Anything parented to this avatar's bones would vanish with it, so hand
+		// those items back to the scene root before the skeleton goes away.
+		sceneObjects.forEach((o, oid) => { if (o.boneAttached) detachFromBone(oid, false); });
+		avatarId = null; avatarBones = [];
+		if (mixer) { mixer.stopAllAction(); mixer = null; }
+	}
+	const reattach = () => {
+		const be = restoreBone ? avatarBones.find((b) => b.name === restoreBone) : null;
+		if (be) { scene.remove(snapshot.group); be.bone.add(snapshot.group); }
+		else if (restoreBone) { snapshot.boneAttached = false; snapshot.boneName = null; }
+	};
 	pushHistory({
 		execute: () => { scene.remove(snapshot.group); sceneObjects.delete(id); renderHierarchy(); },
-		undo:    () => { scene.add(snapshot.group); sceneObjects.set(id, snapshot); renderHierarchy(); },
+		undo:    () => { scene.add(snapshot.group); reattach(); sceneObjects.set(id, snapshot); renderHierarchy(); },
+		// Fell off the tail: the removal can no longer be undone, so free the GPU
+		// buffers this object still holds.
+		forget:  () => { if (!sceneObjects.has(id)) disposeObject(snapshot.group); },
 	});
 	renderHierarchy();
 }
@@ -483,8 +521,10 @@ canvasEl.addEventListener('pointerdown', (e) => {
 function setMode(mode) {
 	xformMode = mode;
 	transform.setMode(mode);
-	[btnTrans, btnRot, btnScale].forEach((b) => b.classList.remove('active'));
-	({ translate: btnTrans, rotate: btnRot, scale: btnScale })[mode]?.classList.add('active');
+	const byMode = { translate: btnTrans, rotate: btnRot, scale: btnScale };
+	[btnTrans, btnRot, btnScale].forEach((b) => { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
+	byMode[mode]?.classList.add('active');
+	byMode[mode]?.setAttribute('aria-pressed', 'true');
 }
 
 btnTrans.addEventListener('click', () => setMode('translate'));
@@ -502,6 +542,7 @@ btnSpace.addEventListener('click', toggleSpace);
 function toggleSnap() {
 	snapEnabled = !snapEnabled;
 	btnSnap.classList.toggle('active', snapEnabled);
+	btnSnap.setAttribute('aria-pressed', String(snapEnabled));
 	toast(`Snap ${snapEnabled ? 'on (0.25 units)' : 'off'}`);
 }
 btnSnap.addEventListener('click', toggleSnap);
@@ -526,21 +567,34 @@ const CAM_PRESETS = {
 	iso:   { pos: [3.5, 3.5, 3.5], target: [0, 0.8, 0] },
 };
 
+function openCamMenu() {
+	camMenu.hidden = false;
+	btnCam.setAttribute('aria-expanded', 'true');
+	camMenu.querySelector('.cmi')?.focus();
+}
+
+function closeCamMenu(restoreFocus = true) {
+	if (camMenu.hidden) return;
+	camMenu.hidden = true;
+	btnCam.setAttribute('aria-expanded', 'false');
+	if (restoreFocus) btnCam.focus();
+}
+
 function applyCameraPreset(name) {
 	const p = CAM_PRESETS[name];
 	if (!p) return;
 	camera.position.set(...p.pos);
 	orbit.target.set(...p.target);
 	orbit.update();
-	camMenu.hidden = true;
+	closeCamMenu(false);
 }
 
-btnCam.addEventListener('click', (e) => { e.stopPropagation(); camMenu.hidden = !camMenu.hidden; });
+btnCam.addEventListener('click', (e) => { e.stopPropagation(); if (camMenu.hidden) openCamMenu(); else closeCamMenu(false); });
 camMenu.querySelectorAll('.cmi').forEach((item) => {
 	item.addEventListener('click', () => applyCameraPreset(item.dataset.cam));
 });
 document.addEventListener('click', (e) => {
-	if (!btnCam.contains(e.target) && !camMenu.contains(e.target)) camMenu.hidden = true;
+	if (!btnCam.contains(e.target) && !camMenu.contains(e.target)) closeCamMenu(false);
 });
 
 // ── Frame camera on selected (F key) ─────────────────────────────────────────
@@ -589,6 +643,16 @@ document.addEventListener('keydown', (e) => {
 	if (ctrl && e.key === 'g') { e.preventDefault(); toggleSnap(); return; }
 	if (ctrl && e.key === 'p') { e.preventDefault(); takeScreenshot(); return; }
 	if (ctrl && e.key === 'd') { e.preventDefault(); duplicateSelected(); return; }
+	// Escape has to work from inside a text field too, or the avatar picker and
+	// the shortcuts panel become untrappable once focus lands in one of them.
+	if (e.key === 'Escape') {
+		if (!camMenu.hidden) { closeCamMenu(); return; }
+		if (!avatarModal.hidden) { closeAvatarModal(); return; }
+		if (!helpPanel.hidden) { closeDialog(helpPanel); return; }
+		if (scenePanel.classList.contains('open')) { setScenePanel(false); return; }
+		if (!inp) deselect();
+		return;
+	}
 
 	if (inp) return;
 
@@ -597,19 +661,63 @@ document.addEventListener('keydown', (e) => {
 	if (e.key === 'r' || e.key === 'R') setMode('scale');
 	if (e.key === 'f' || e.key === 'F') frameObject(selectedId);
 	if (e.key === 'x' || e.key === 'X') toggleSpace();
-	if (e.key === 'Escape') { deselect(); camMenu.hidden = true; helpPanel.hidden = true; avatarModal.hidden = true; }
 	if (e.key === 'Delete' || e.key === 'Backspace') { if (selectedId !== null) removeObject(selectedId); }
-	if (e.key === '?') { helpPanel.hidden = !helpPanel.hidden; }
+	if (e.key === '?') { if (helpPanel.hidden) openDialog(helpPanel, helpClose); else closeDialog(helpPanel); }
 	// Numpad camera presets (Blender-style)
 	if (e.code === 'Numpad1' && !e.ctrlKey) applyCameraPreset('front');
 	if (e.code === 'Numpad3' && !e.ctrlKey) applyCameraPreset('left');
 	if (e.code === 'Numpad7' && !e.ctrlKey) applyCameraPreset('top');
 });
 
+// ── Dialogs (help + avatar picker) ────────────────────────────────────────────
+// Focus moves into the dialog on open and returns to the trigger on close, and
+// Tab is trapped inside it, without that a keyboard user tabs behind the
+// backdrop into a viewport they cannot see.
+const FOCUSABLE = 'a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex="-1"])';
+let dialogReturnFocus = null;
+
+function openDialog(el, initial) {
+	dialogReturnFocus = document.activeElement;
+	el.hidden = false;
+	(initial || el.querySelector(FOCUSABLE))?.focus();
+}
+
+function closeDialog(el) {
+	if (el.hidden) return;
+	el.hidden = true;
+	if (dialogReturnFocus?.isConnected) dialogReturnFocus.focus();
+	dialogReturnFocus = null;
+}
+
+function openDialogs() {
+	return [helpPanel, avatarModal].filter((d) => !d.hidden);
+}
+
+document.addEventListener('keydown', (e) => {
+	if (e.key !== 'Tab') return;
+	const dlg = openDialogs()[0];
+	if (!dlg) return;
+	const items = [...dlg.querySelectorAll(FOCUSABLE)].filter((el) => el.offsetParent !== null);
+	if (!items.length) return;
+	const first = items[0], last = items[items.length - 1];
+	if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+	else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+}, true);
+
 // ── Help panel ────────────────────────────────────────────────────────────────
-btnHelp.addEventListener('click', () => { helpPanel.hidden = !helpPanel.hidden; });
-helpClose.addEventListener('click', () => { helpPanel.hidden = true; });
-helpPanel.addEventListener('click', (e) => { if (e.target === helpPanel) helpPanel.hidden = true; });
+btnHelp.addEventListener('click', () => { if (helpPanel.hidden) openDialog(helpPanel, helpClose); else closeDialog(helpPanel); });
+helpClose.addEventListener('click', () => closeDialog(helpPanel));
+helpPanel.addEventListener('click', (e) => { if (e.target === helpPanel) closeDialog(helpPanel); });
+
+// ── Scene panel drawer (narrow viewports) ─────────────────────────────────────
+function setScenePanel(open) {
+	scenePanel.classList.toggle('open', open);
+	sceneScrim.classList.toggle('open', open);
+	btnPanel.setAttribute('aria-expanded', String(open));
+	btnPanel.classList.toggle('active', open);
+}
+btnPanel.addEventListener('click', () => setScenePanel(!scenePanel.classList.contains('open')));
+sceneScrim.addEventListener('click', () => setScenePanel(false));
 
 // ── Hierarchy rendering ───────────────────────────────────────────────────────
 function roleIcon(role) {
@@ -637,49 +745,61 @@ function renderHierarchy() {
 		row.className = 'or' + (id === selectedId ? ' sel' : '');
 		row.dataset.id = id;
 
+		const pick = document.createElement('button');
+		pick.type = 'button';
+		pick.className = 'ob';
+		pick.setAttribute('aria-pressed', String(id === selectedId));
+
 		const icon = document.createElement('span');
 		icon.className = 'oi';
+		icon.setAttribute('aria-hidden', 'true');
 		icon.textContent = roleIcon(obj.role);
-		row.appendChild(icon);
+		pick.appendChild(icon);
 
 		const name = document.createElement('span');
 		name.className = 'on';
 		name.textContent = obj.name;
-		row.appendChild(name);
+		pick.appendChild(name);
 
 		if (obj.boneAttached) {
 			const tag = document.createElement('span');
 			tag.className = 'ot b';
 			tag.textContent = cleanBoneName(obj.boneName).split(' ').pop();
-			row.appendChild(tag);
+			pick.appendChild(tag);
 		} else if (obj.role !== 'item' && obj.role !== 'other') {
 			const tag = document.createElement('span');
 			tag.className = 'ot';
 			tag.textContent = obj.role;
-			row.appendChild(tag);
+			pick.appendChild(tag);
 		}
+
+		pick.addEventListener('click', () => select(id));
+		// Double-click to rename
+		pick.addEventListener('dblclick', (ev) => { ev.preventDefault(); startRename(id, name); });
+		row.appendChild(pick);
 
 		const actions = document.createElement('div');
 		actions.className = 'oa';
 
 		const visBtn = document.createElement('button');
+		visBtn.type = 'button';
 		visBtn.className = 'oab';
 		visBtn.title = obj.visible ? 'Hide' : 'Show';
+		visBtn.setAttribute('aria-label', `${obj.visible ? 'Hide' : 'Show'} ${obj.name}`);
 		visBtn.textContent = obj.visible ? '●' : '○';
 		visBtn.addEventListener('click', (ev) => { ev.stopPropagation(); toggleVis(id); });
 		actions.appendChild(visBtn);
 
 		const delBtn = document.createElement('button');
+		delBtn.type = 'button';
 		delBtn.className = 'oab d';
 		delBtn.title = 'Remove';
+		delBtn.setAttribute('aria-label', `Remove ${obj.name}`);
 		delBtn.textContent = '×';
 		delBtn.addEventListener('click', (ev) => { ev.stopPropagation(); removeObject(id); });
 		actions.appendChild(delBtn);
 
 		row.appendChild(actions);
-		row.addEventListener('click', () => select(id));
-		// Double-click to rename
-		row.addEventListener('dblclick', (ev) => { ev.preventDefault(); startRename(id, row, name); });
 		objectList.appendChild(row);
 	}
 
@@ -691,23 +811,22 @@ function renderHierarchy() {
 	}
 }
 
-function startRename(id, row, nameEl) {
+function startRename(id, nameEl) {
 	const obj = sceneObjects.get(id);
 	if (!obj) return;
 	const input = document.createElement('input');
 	input.className = 'oni';
 	input.value = obj.name;
+	input.setAttribute('aria-label', 'Object name');
 	nameEl.replaceWith(input);
 	input.focus();
 	input.select();
+	let done = false;
 	const commit = () => {
-		const newName = input.value.trim() || obj.name;
-		obj.name = newName;
-		const span = document.createElement('span');
-		span.className = 'on';
-		span.textContent = newName;
-		input.replaceWith(span);
-		span.addEventListener('dblclick', (ev) => { ev.preventDefault(); startRename(id, row, span); });
+		if (done) return;
+		done = true;
+		obj.name = input.value.trim() || obj.name;
+		renderHierarchy();
 	};
 	input.addEventListener('blur', commit);
 	input.addEventListener('keydown', (e) => {

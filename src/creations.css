@@ -8,6 +8,9 @@
 
 .cr-shell { max-width: 1200px; margin: 0 auto; padding: var(--space-xl, 40px) var(--space-md, 16px) var(--space-2xl, 64px); }
 
+/* Labels that name a control for assistive tech without adding visible chrome. */
+.cr-sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
+
 /* Hero */
 .cr-hero { text-align: center; margin-bottom: var(--space-xl, 40px); }
 .cr-kicker { display: inline-flex; align-items: center; gap: 8px; font-size: var(--text-2xs, .68rem); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-dim, #888); margin: 0 0 var(--space-sm, 12px); }

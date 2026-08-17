@@ -20,11 +20,43 @@ const $ = (id) => document.getElementById(id);
 const nameInput = $('name-input');
 const avatarRow = $('avatar-row');
 const avatarUrlInput = $('avatar-url-input');
+const avatarUrlError = $('avatar-url-error');
 const coinGrid = $('coin-grid');
 const searchInput = $('coin-search');
 const mintInput = $('mint-input');
 const mintBtn = $('mint-enter');
 const mintError = $('mint-error');
+const titleEl = document.querySelector('title');
+
+// ── i18n ownership ─────────────────────────────────────────────────────────
+// Several nodes here carry a data-i18n key (so the pre-render placeholder is
+// translated) but hold live state once this script runs: the document title,
+// the coin-profile failure message, the graduation label. The i18n catalog pass
+// lands after /api/locale resolves, which is routinely *after* the first render,
+// and it would revert those nodes to their declared copy. `data-i18n-owned="1"`
+// is that runtime's documented opt-out. Releasing an element hands it back and
+// restores the copy the catalog would have written, so a non-English visitor
+// keeps a localized page once the live state is gone.
+const i18nDefaults = new WeakMap();
+
+function claimI18n(el, text) {
+	if (!el) return;
+	if (!i18nDefaults.has(el)) i18nDefaults.set(el, el.textContent);
+	el.setAttribute('data-i18n-owned', '1');
+	el.textContent = text;
+}
+
+function releaseI18n(el) {
+	if (!el) return;
+	el.removeAttribute('data-i18n-owned');
+	const key = el.getAttribute('data-i18n');
+	const translated = key ? window.threewsI18n?.t?.(key) : '';
+	const restored = translated && translated !== key ? translated : i18nDefaults.get(el);
+	if (restored != null) el.textContent = restored;
+}
+
+const setPageTitle = (text) => claimI18n(titleEl, text);
+const releasePageTitle = () => releaseI18n(titleEl);
 
 // Selected avatar: { kind: 'default'|'id'|'url', value, label, thumb }
 let selectedAvatar = { kind: 'default', value: DEFAULT_AVATAR_URL, label: 'Default', thumb: '' };
@@ -58,7 +90,11 @@ function avatarChip({ kind, value, label, thumb, id }) {
 		selectedAvatar = { kind, value, label, thumb };
 		try { localStorage.setItem(AVATAR_CHOICE_KEY, JSON.stringify(selectedAvatar)); } catch {}
 		markSelectedAvatar();
-		if (kind !== 'url' && avatarUrlInput) avatarUrlInput.value = '';
+		if (kind !== 'url' && avatarUrlInput) {
+			avatarUrlInput.value = '';
+			avatarUrlInput.classList.remove('is-error');
+			setAvatarUrlMessage('');
+		}
 	});
 	return chip;
 }
@@ -116,12 +152,29 @@ async function initAvatars() {
 }
 
 // Paste a direct GLB / VRM / Ready Player Me URL.
+function setAvatarUrlMessage(text, ok = false) {
+	if (!avatarUrlError) return;
+	avatarUrlError.textContent = text;
+	avatarUrlError.classList.toggle('is-ok', ok && !!text);
+}
+
 if (avatarUrlInput) {
 	const apply = () => {
 		const url = avatarUrlInput.value.trim();
-		if (!url) return;
-		if (!/^https?:\/\//i.test(url)) { avatarUrlInput.classList.add('is-error'); return; }
+		if (!url) {
+			avatarUrlInput.classList.remove('is-error');
+			setAvatarUrlMessage('');
+			return;
+		}
+		// A silent red border tells the visitor nothing. Say what is wrong and what
+		// a working value looks like.
+		if (!/^https?:\/\//i.test(url)) {
+			avatarUrlInput.classList.add('is-error');
+			setAvatarUrlMessage('Enter a full https:// link to a .glb or .gltf file.');
+			return;
+		}
 		avatarUrlInput.classList.remove('is-error');
+		setAvatarUrlMessage('Custom avatar selected.', true);
 		selectedAvatar = { kind: 'url', value: url, label: 'Custom', thumb: '' };
 		try { localStorage.setItem(AVATAR_CHOICE_KEY, JSON.stringify(selectedAvatar)); } catch {}
 		// Reflect the choice: clear chip highlight (none of the chips own a URL).
@@ -129,6 +182,12 @@ if (avatarUrlInput) {
 	};
 	avatarUrlInput.addEventListener('change', apply);
 	avatarUrlInput.addEventListener('blur', apply);
+	// Clear a stale complaint as soon as the visitor starts fixing the value.
+	avatarUrlInput.addEventListener('input', () => {
+		if (!avatarUrlInput.classList.contains('is-error')) return;
+		avatarUrlInput.classList.remove('is-error');
+		setAvatarUrlMessage('');
+	});
 }
 
 // ── Hand-off into the world ────────────────────────────────────────────────
@@ -190,6 +249,7 @@ function coinCard(coin) {
 
 function renderCoins(coins) {
 	coinGrid.innerHTML = '';
+	coinGrid.setAttribute('aria-busy', 'false');
 	const usable = (coins || []).filter((c) => c && c.mint && MINT_RE.test(c.mint));
 	if (!usable.length) {
 		coinGrid.innerHTML = `<div class="coin-empty">No coins matched. Try a different search, or paste a mint address below.</div>`;
@@ -202,6 +262,7 @@ function renderCoins(coins) {
 
 function renderSkeleton(n = 12) {
 	coinGrid.innerHTML = '';
+	coinGrid.setAttribute('aria-busy', 'true');
 	for (let i = 0; i < n; i++) {
 		const sk = document.createElement('div');
 		sk.className = 'coin-card is-skeleton';
@@ -211,6 +272,7 @@ function renderSkeleton(n = 12) {
 }
 
 function renderCoinError() {
+	coinGrid.setAttribute('aria-busy', 'false');
 	coinGrid.innerHTML = `
 		<div class="coin-empty">
 			<p>Couldn't reach the pump.fun feed.</p>
@@ -304,6 +366,8 @@ function routeView() {
 		loadCoinProfile(m[1]);
 	} else {
 		_coinProfileMint = null;
+		// Back to the browse view: the coin's title no longer describes the page.
+		releasePageTitle();
 	}
 }
 window.addEventListener('popstate', routeView);
@@ -368,15 +432,15 @@ async function loadCoinProfile(mint) {
 		if (loadFailed) {
 			// Couldn't reach the feed — distinguish from a genuine 404 and let the
 			// user retry the same mint without re-navigating.
-			$('coin-profile-empty-msg').textContent = 'Couldn’t load this coin right now.';
-			document.title = 'Couldn’t load coin · three.ws';
+			claimI18n($('coin-profile-empty-msg'), 'Couldn’t load this coin right now.');
+			setPageTitle('Couldn’t load coin · three.ws');
 			if (retryBtn) {
 				retryBtn.hidden = false;
 				retryBtn.onclick = () => loadCoinProfile(mint);
 			}
 		} else {
-			$('coin-profile-empty-msg').textContent = 'That coin couldn’t be found on pump.fun.';
-			document.title = 'Coin not found · three.ws';
+			releaseI18n($('coin-profile-empty-msg'));
+			setPageTitle('Coin not found · three.ws');
 			if (retryBtn) retryBtn.hidden = true;
 		}
 		return;
@@ -446,10 +510,14 @@ function renderCoinProfile(coin) {
 		if (navigator.share) { try { await navigator.share({ title, text, url }); return; } catch {} }
 		try {
 			await navigator.clipboard.writeText(url);
-			const orig = shareBtn.textContent;
-			shareBtn.textContent = 'Link copied ✓';
-			setTimeout(() => { shareBtn.textContent = orig; }, 1500);
-		} catch {}
+			claimI18n(shareBtn, 'Link copied ✓');
+			setTimeout(() => releaseI18n(shareBtn), 1500);
+		} catch {
+			// Clipboard denied (permission or an insecure origin): the address bar
+			// already holds the shareable URL, so say that instead of failing mute.
+			claimI18n(shareBtn, 'Copy the page URL');
+			setTimeout(() => releaseI18n(shareBtn), 2500);
+		}
 	};
 
 	// Social links when pump.fun provides them.
@@ -464,7 +532,7 @@ function renderCoinProfile(coin) {
 	$('coin-profile-skeleton').hidden = true;
 	$('coin-profile-body').hidden = false;
 
-	document.title = `$${symbol || name} · Coin Communities · three.ws`;
+	setPageTitle(`$${symbol || name} · Coin Communities · three.ws`);
 }
 
 function statHtml(label, value, up = false, id = '') {
@@ -497,7 +565,8 @@ async function loadCoinMarket(mint) {
 			$('cp-grad-ring').style.setProperty('--pct', `${pct.toFixed(0)}%`);
 			$('cp-grad-pct').textContent = g.isGraduated ? '✓' : `${pct.toFixed(0)}%`;
 			const lbl = gradWrap.querySelector('.cp-grad-label');
-			if (lbl) lbl.textContent = g.isGraduated ? 'graduated' : 'to graduation';
+			if (g.isGraduated) claimI18n(lbl, 'graduated');
+			else releaseI18n(lbl);
 		}
 	} catch (err) {
 		log.warn('[communities] coin market', err?.message ?? err);
