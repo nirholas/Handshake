@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-17T06:57:02.770Z",
+	"generated_at": "2026-08-17T07:34:35.423Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -360,6 +360,17 @@
 		{
 			"date": "2026-08-17",
 			"type": "update",
+			"title": "The Agent-Forged Gallery says what actually went wrong, and its thumbnails stop fighting the link they sit in",
+			"summary": "The gallery of 3D props that the platform's autonomous agents bought with real USDC was driven end to end in a real browser: a hundred live cards, the category chips, prompt search, all four sorts, and the loading, empty and error states at phone, tablet and desktop widths. The finding worth caring about was in the error state. When the feed failed with a server error rather than a dropped connection, the page still said only \"Something went wrong\", because the translation pass ran after the failed request and overwrote the specific reason the page had just written there. The reason now lives on its own line that translation leaves alone, so a failure tells you what it was and the Try again button next to it recovers the full gallery. Each prop's spinning preview had also been set up to drag-orbit under the link that wraps it, from an attribute written to do the exact opposite; the previews are now purely decorative and the whole tile is just a link to the 3D viewer. The category chips announced themselves to screen readers as tabs without being tabs, and never said which family the grid was filtered to; they are now a labelled group of toggle buttons that report their own state. Every control on the page (search box, sort, chips, the Preview and Download buttons, the thumbnail itself) now shows a focus ring when reached by keyboard, where the search box previously had its ring switched off entirely. A prop still waiting on its settlement no longer renders an empty price, and one whose model file is not written yet no longer offers a Preview and Download that lead nowhere.",
+			"link": "/forged",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-17",
+			"type": "update",
 			"title": "The avatar SDK bundle we ship is now built from the code we deploy",
 			"summary": "The <agent-3d> runtime that sites load from three.ws is a single bundled file, and the production build never rebuilt it. It was copied from whatever the build machine happened to have on disk, which could be days older than the code being deployed, so a fix to the avatar element could ship everywhere else on the site and quietly not reach the SDK. The deploy now rebuilds that bundle from the same commit as the rest of the release, every time. Nothing to change on your side: existing embeds keep working and simply pick up the current runtime.",
 			"link": "/avatar-sdk",
@@ -419,6 +430,17 @@
 			"title": "The Create page no longer black-screens when the sign-in check stalls, and a broken remix link no longer kills every button on it",
 			"summary": "Three fixes to the front door for creating, plus a strip of your own avatars that was never once drawn. The page is meant to greet a returning creator with \"Start from one of yours\" and a row of the avatars they have already made, one click from remixing any of them. It read the library reply in the wrong shape, decided it had received nothing, and hid the row every single time, so nobody has ever seen it. It reads the reply correctly now and the row appears, with a real thumbnail for each avatar. The page opens behind a full-screen loading screen while it checks whether you are signed in; if that check got no answer at all (a stalled connection rather than a refused one) the screen stayed black forever and the page read as dead. It now hands the page back after a short wait and treats you as signed out, which costs at most one extra trip through sign-in. Separately, opening a remix link for an avatar that had been deleted or made private used to show a message for four seconds and then leave you on a page where not one of the eight creation cards did anything: the remix ran before the buttons were wired and gave up without wiring them. The cards are live first now, and a failed remix explains itself in a panel that stays put, with a button to try again and a button to move on. Also: the talking-avatar-video card now says \"Coming soon\" on the card itself instead of only dimming, answers the keyboard the same way it answers a mouse, and stops calling itself unavailable when the check simply could not reach us (it asks again when you click). A saved avatar whose thumbnail has been deleted falls back to a silhouette instead of a broken image.",
 			"link": "/create",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-17",
+			"type": "update",
+			"title": "The Money Flow Map stops cutting its own table off on a phone, and a refresh no longer blanks the map",
+			"summary": "The map of who pays whom at three.ws/flow was driven end to end in a real browser: every window, every filter, the legend toggles, search, zoom, the wallet table and the loading, empty and error states, at phone, tablet and desktop widths. Two findings mattered. On a phone the page was quietly cutting itself in half: the \"What the money bought\" panel and the entire wallet table were laid out wider than the screen and then clipped away, with no way to scroll to them, so the text version of the graph (the part a screen reader and a keyboard actually use) was unreachable on mobile. The table now scrolls inside its own frame and nothing runs off the edge. Second, the page re-reads the chain every minute, and every one of those re-reads used to cover the drawn map with a loading spinner, so a live page flickered into looking broken once a minute. A background re-read now leaves the map alone and reports itself on the timestamp next to the controls, and if it fails, the graph you were reading stays on screen with the failure named there instead of being wiped for an error panel. Switching the time window still shows the loading state, because that genuinely replaces the topology, and it now cancels a read that is still in flight: a slow 90-day request could previously land after you had already switched to 7 days and draw a window you were not looking at, under a button that said something else. The rest is the polish an audit turns up: the table's own caption said \"no wallets match the current filters\" even in a quiet window where you had set no filters, and now tells those two situations apart; the empty state no longer offers a \"Show 90 days\" button while you are already on 90 days, and offers the next longer window instead; the clear-search cross stayed on screen after Clear filters had already emptied the box; and the canvas now resolves its colours once per frame rather than several times per line, which is what a four-hundred-route graph feels like on a laptop.",
+			"link": "/flow",
 			"tags": [
 				"fix",
 				"improvement"

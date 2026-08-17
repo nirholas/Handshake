@@ -1706,7 +1706,9 @@ only.
 
 ```
 GET /api/forged                    → recent agent-bought props (status done)
-GET /api/forged?category=crate     → filter by prop family (crate|barrel|furniture|terrain)
+GET /api/forged?category=container → filter by prop family (club-decor|ar-object|
+                                     diorama-set|avatar-item|vehicle|container|
+                                     furniture|terrain)
 GET /api/forged?status=all         → include queued/failed rows (audit view)
 GET /api/forged?limit=60           → page size (default 30, max 100)
 ```

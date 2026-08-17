@@ -52,11 +52,11 @@ function formatWhen(ts) {
 
 // A card's <model-viewer> is deliberately control-free. model-viewer reads
 // `camera-controls` as a boolean attribute, so the old `camera-controls="false"`
-// switched controls ON: it made every thumbnail drag-orbit and swallow the click
-// meant for the link that wraps it, so the card's primary action did nothing.
-// Dropping the attribute leaves auto-rotate (which does not need controls) and
-// hands the click straight to the link. The `disable-*` and `interaction-prompt`
-// attributes went with it; they only ever qualified camera-controls.
+// switched controls ON, so every thumbnail drag-orbited under the link that
+// wraps it: the opposite of what the attribute was written to say. Dropping it
+// leaves auto-rotate (which does not need controls) and the link as the card's
+// only affordance. The `disable-*` and `interaction-prompt` attributes went
+// with it; they only ever qualified camera-controls.
 function renderCard(p) {
 	const glbUrl = p.glb_url || '';
 	const alt = p.prompt || 'Agent-forged prop';
@@ -180,7 +180,7 @@ async function load() {
 		applyView();
 	} catch (err) {
 		show(els.loading, false); show(els.grid, false); show(els.empty, false); show(els.emptySearch, false); show(els.error, true);
-		if (els.errorMsg) els.errorMsg.textContent = `Failed to load the gallery: ${err?.message || 'network error'}`;
+		if (els.errorMsg) els.errorMsg.textContent = err?.message || 'network error';
 	}
 }
 
