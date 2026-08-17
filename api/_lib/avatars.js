@@ -489,6 +489,31 @@ export async function enforceQuotas(userId, incomingBytes) {
 	}
 }
 
+/**
+ * Is this error one of enforceQuotas' plan-limit refusals? Long-running lanes
+ * (reconstruct, auto-rig) only reach createAvatar minutes after the user
+ * pressed the button, so they need to tell a plan refusal apart from an engine
+ * fault: the first is the caller's to fix, the second is ours.
+ * @param {unknown} err
+ * @returns {boolean}
+ */
+export function isPlanLimitError(err) {
+	const code = /** @type {any} */ (err)?.code;
+	return typeof code === 'string' && code.startsWith('plan_limit');
+}
+
+/**
+ * Pre-flight the quotas that a not-yet-generated avatar can already be judged
+ * against: the per-plan avatar count, and whether the library is already at its
+ * total-bytes ceiling. Lets a lane that will spend real GPU time refuse in
+ * milliseconds instead of failing at materialization, after the spend.
+ * Per-file size still has to wait for the finished mesh.
+ * @param {string} userId
+ */
+export async function assertAvatarSlotAvailable(userId) {
+	await enforceQuotas(userId, 0);
+}
+
 // ── helpers ──────────────────────────────────────────────────────────────────
 function decorate(row) {
 	const bakedFresh = isBakedFresh(row);
