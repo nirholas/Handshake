@@ -37,7 +37,11 @@
 		<script type="application/ld+json">{"@context":"https://schema.org","@type":"CollectionPage","name":"Character Library","description":"Professionally rigged 3D characters, free to use on three.ws. Each drives the full animation library and drops into the Studio, Animation Studio, and embed viewer.","url":"https://three.ws/character-library","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
 		<style>
-			.ch-main { max-width: 1320px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px) 80px; }
+			/* style.css makes <body> a column flex container, so a bare `margin: 0
+			   auto` here left the page shrink-to-fit: 957px of a 1440px viewport, and
+			   a three-column grid where six fit. width:100% claims the line; the
+			   max-width still caps it. */
+			.ch-main { width: 100%; max-width: 1320px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px) 80px; box-sizing: border-box; }
 
 			.ch-hero { padding: clamp(36px, 6vw, 72px) 0 clamp(20px, 3vw, 32px); }
 			.ch-hero-chip {
@@ -166,6 +170,10 @@
 			@media (max-width: 560px) {
 				.ch-grid, .ch-skeleton-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 				.ch-card-actions { flex-wrap: wrap; }
+				/* The "/" shortcut hint is keyboard-only advice; on a phone it is just
+				   a glyph eating the input's right padding. */
+				.ch-search-kbd { display: none; }
+				.ch-search { padding-right: 12px; }
 			}
 		</style>
 	
