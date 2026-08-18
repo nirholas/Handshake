@@ -1,7 +1,9 @@
-# Ask the Experts: Nemotron Open Family (Nemotron Labs live on X)
+# Ask the Experts: Nemotron Open Family (Nemotron Labs, YouTube livestream)
 
-Two messages to post into the live chat of NVIDIA's "What's New in the Nemotron Open
-Family" stream (@NVIDIAAI): one from the official account, one from the founder account.
+Two messages to post into the YouTube live chat of NVIDIA's "Ask the Experts: What's New
+in the Nemotron Open Family" stream: one from the official account, one from the founder
+account. YouTube live chat hard-caps a message at 200 characters, so every quote below is
+counted and fits.
 Both are built on things we can prove, so a panelist can check us mid-stream and find a
 real deployment, a published write-up on NVIDIA's own forums, and Inception membership.
 
@@ -10,14 +12,16 @@ the reason is simple: these are not "what is Nemotron" questions from a stranger
 are production questions from a company already shipping on the models, carrying a
 number the panel will want to repeat.
 
-## Post 1: @trythreews (official)
+## Post 1: three.ws (official)
 
 Send this one first. It carries the Inception credential and the one product ask we
 actually want answered.
 
-> We're an NVIDIA Inception startup running nemotron-nano-12b-v2-vl as the input gate in
-> front of our text-to-3D pipeline. Any plans for guaranteed structured / JSON decoding
-> on the NIM chat models? Half our small-model work is coaxing rigid JSON out of them.
+> NVIDIA Inception startup here: nemotron-nano-12b-v2-vl gates every generation in our
+> text-to-3D pipeline. Any plans for guaranteed JSON / structured output decoding on the
+> NIM chat models?
+
+188 characters.
 
 Why this gets answered:
 
@@ -31,18 +35,21 @@ Why this gets answered:
 
 Backup, if post 1 gets skipped and the chat moves on:
 
-> NVIDIA Inception member here: Nemotron Nano VL gates every generation on our
-> text-to-3D platform because of its image-token footprint. Does Nemotron 3 Nano keep
-> that footprint, or does the hybrid MoE change the math?
+> Inception member here: Nemotron Nano VL gates every generation on our text-to-3D
+> platform for its image-token footprint. Does Nemotron 3 Nano keep that footprint, or
+> does hybrid MoE change the math? (198 chars)
 
-## Post 2: @nichxbt (founder)
+## Post 2: nichxbt (founder)
 
 Send this five to ten minutes after post 1, never simultaneously. Different account,
 different angle, no repetition of the Inception line: this one is engineer to engineer.
 
-> We picked nemotron-nano-12b-v2-vl on an axis no leaderboard tracks: about 281 prompt
-> tokens for a small reference image, vs about 1,600 for a 90B-class vision model on the
-> identical image. Was that token efficiency a deliberate design target?
+> 281 vs 1600: prompt tokens for the same image on nemotron-nano-12b-v2-vl vs a
+> 90B-class vision model. That number is why we shipped Nano. Was token efficiency a
+> deliberate design target?
+
+186 characters, and it opens with the number, which is what a host scanning a moving
+chat stops on.
 
 Why this gets answered:
 
@@ -55,20 +62,35 @@ Why this gets answered:
 Backup for the founder account:
 
 > What is the smallest Nemotron you would trust as the input guardrail in front of an
-> expensive GPU job? Ours answers in 1-2 seconds and saves a 20-second generation. Does
-> Nemotron 3 Nano move that floor?
+> expensive GPU job? Ours answers in 1-2s and saves a 20s generation. Does Nemotron 3
+> Nano move that floor? (189 chars)
 
-## The self-reply, once either gets answered
+## The Super Chat play (if enabled)
 
-Do not put a link in the first message. Post it as a reply to your own message the moment
-a panelist engages:
+Super Chat is the closest thing this format has to a guaranteed reply: a paid message
+pins in the ticker above the chat, and hosts clear the Super Chat queue before free
+messages. Send it from the official account at the $10-20 tier, which buys the character
+room and keeps it in the ticker longer:
 
-> Wrote the whole thing up on the NVIDIA Developer Forums:
-> https://forums.developer.nvidia.com/t/how-nemotron-made-three-ws-text-to-3d-pipeline-usable/376445
+> Inception startup: nemotron-nano-12b-v2-vl gates our text-to-3D pipeline. Any plans
+> for guaranteed JSON / structured decoding on NIM chat models?
 
-That link is the closer. It is a published Nemotron case study on NVIDIA's own property,
-which converts "someone in the chat" into "a member with a citable story", and it gives
-whoever runs @NVIDIAAI something safe to amplify afterwards.
+145 characters, so it fits every paid tier. If you Super Chat this one, keep the founder
+account in free chat with the token-efficiency question so the two lanes stay distinct.
+
+## The closer, once either gets answered
+
+YouTube holds or hides live-chat links from non-moderator accounts, so the closer moves
+off-chat:
+
+- In chat, the moment a panelist engages, say it in words: "Full write-up is on the
+  NVIDIA Developer Forums, search Nemotron three.ws." That survives the filter, and a
+  curious panelist finds the thread in one search.
+- After the stream, put the real link in the video's comment section:
+  https://forums.developer.nvidia.com/t/how-nemotron-made-three-ws-text-to-3d-pipeline-usable/376445
+- The link is still the closer. A published Nemotron case study on NVIDIA's own property
+  converts "someone in the chat" into "a member with a citable story", and gives the
+  channel something safe to amplify afterwards.
 
 ## What we can prove if asked
 
@@ -87,21 +109,27 @@ restriction and the 77-character TRELLIS prompt cap) are TRELLIS questions, not 
 questions. Do not spend a Nemotron panel's attention on them; they belong in the NIM or
 TRELLIS channel.
 
-## Posting rules for this stream
+## Posting rules for YouTube live chat
 
+- 200 characters is a hard cap, not a guideline: the chat box stops accepting input at
+  200. Every quote in this doc is counted to fit.
 - One question per message. Two questions in one line get half-answered.
-- Keep it near 200 characters. Long messages get skipped on air.
 - Lead with the constraint or the number, never with what we sell.
+- No links in live chat. YouTube holds URL messages from non-moderator accounts, and a
+  held message is invisible. Name the forum thread in words instead.
+- If the host asks for a prefix (NVIDIA streams often take questions as "Q: ..."), use
+  it exactly; moderators filter the chat on it.
+- The spam filter eats repeats. Never paste the same text twice from one account; if you
+  re-ask, change the wording.
+- Slow mode may allow one message per interval per account, so the first message from
+  each account has to be the good one.
+- Check display names before posting: the official account should show "three.ws" and
+  the founder account "nichxbt". The display name is what gets read aloud on stream.
 - Do not post the same question from both accounts. It reads as brigading and both get
   ignored.
-- Tag `@NVIDIAAI`. There is no verified dedicated Inception handle on X, so write
-  "NVIDIA Inception" as words rather than inventing a mention.
-- If a panelist answers, reply once with thanks and the forum link. Do not stack
-  follow-ups in the same breath.
-- Reply directly to the live post. A quote tweet sits outside the thread the host is
-  reading from; save the quote tweet for after they engage.
-- Post early, while the stream is live. Read-out-loud questions get picked in the first
-  third, once the queue is still short enough to skim.
+- If a panelist answers, one thanks message, then stop. No stacked follow-ups.
+- Post early. Read-out-loud questions get picked in the first third, while the queue is
+  short enough to skim.
 - If neither post is answered on air, ask the same question in our existing forum thread.
   The Nemotron team reads the developer forums, and a written answer there outlives a
   live mention.
