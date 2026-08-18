@@ -1916,16 +1916,26 @@ const appConfig = {
 					// /agents/:id/classic → the preserved pre-redesign profile layout
 					else if (!filePath && /^\/agents?\/[^/.]+\/classic\/?$/.test(path))
 						filePath = resolve(root, 'pages/agent-detail-classic.html');
-					else if (!filePath && /^\/agents\/[^/.]+\/?$/.test(path))
+					// /agents/:id/profile → the long-form agent profile (capabilities,
+					// economy, activity, trust, developer tools). /agents/:id itself is
+					// the studio template both entity kinds share.
+					else if (!filePath && /^\/agents\/[^/.]+\/profile\/?$/.test(path))
 						filePath = resolve(root, 'pages/agent-detail.html');
+					// /agents/:id/ar → dedicated AR experience for the agent's body
+					else if (!filePath && /^\/agents\/[^/.]+\/ar\/?$/.test(path))
+						filePath = resolve(root, 'pages/ar.html');
+					else if (!filePath && /^\/agents\/[^/.]+\/?$/.test(path))
+						filePath = resolve(root, 'pages/avatar-page.html');
 					else if (!filePath && /^\/agent\/[^/]+\/mind\/?$/.test(path))
 						filePath = resolve(root, 'pages/agent-mind.html');
 					else if (!filePath && /^\/agent\/[^/]+\/edit$/.test(path))
 						filePath = resolve(root, 'pages/agent-edit.html');
 					else if (!filePath && /^\/agent\/[^/]+\/embed$/.test(path))
 						filePath = resolve(root, 'pages/agent-embed.html');
+					// Legacy singular /agent/:id: vercel.json 301s it to /agents/:id,
+					// so dev serves the same studio template it lands on in prod.
 					else if (!filePath && /^\/agent\/[^/]+$/.test(path))
-						filePath = resolve(root, 'pages/agent-detail.html');
+						filePath = resolve(root, 'pages/avatar-page.html');
 					else if (!filePath && /^\/character\/[^/]+\/?$/.test(path))
 						filePath = resolve(root, 'public/character.html');
 					else if (!filePath && (path === '/characters' || path === '/characters/'))

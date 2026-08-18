@@ -1,8 +1,18 @@
 /**
- * Avatar studio page controller — /avatars/:id
+ * Studio page controller: the canonical profile for every entity on three.ws.
  *
- * Renders an avatar with a 3D viewer, metadata, attachable skills + plugins,
- * a live LLM chat, embed snippets, and a related-avatars grid. Demo IDs
+ * One template, two entity kinds:
+ *   /avatars/:id  a 3D body (the avatar itself is the subject)
+ *   /agents/:id   an agent identity, rendered wearing its bound body
+ *
+ * Both render the same shell: a 3D viewer, identity + wallet, metadata,
+ * attachable skills + plugins, a live LLM chat, pose stage, embed snippets,
+ * and a related grid. Whatever links to an entity anywhere on the platform
+ * (search, /agents, /gallery, the marketplace) lands here.
+ *
+ * Agent mode projects the agent record onto the avatar shape (see
+ * `agentStudioRecord`) so a single renderer drives both, and an agent with no
+ * body yet still gets a full page instead of a broken viewer. Demo IDs
  * (avatar_demo_*) are resolved server-side via /api/avatars/[id].js so the
  * same code path serves both real and seeded avatars.
  */
@@ -37,28 +47,33 @@ const esc = (s) =>
 
 // ── Routing ───────────────────────────────────────────────────────────
 
-// Avatar id: path-based in production (/avatars/:id) or `?id=` query param in
-// dev (vite doesn't rewrite arbitrary paths to avatar-page.html).
+// Entity id + kind: path-based in production (/avatars/:id, /agents/:id) or
+// `?id=` + `?kind=` query params in dev (vite doesn't rewrite arbitrary paths
+// to avatar-page.html).
 const segments = location.pathname.split('/').filter(Boolean);
-const queryId = new URLSearchParams(location.search).get('id');
-const avatarId = (segments[0] === 'avatars' && segments[1]) || queryId || '';
+const params = new URLSearchParams(location.search);
+const queryId = params.get('id');
+const mode = segments[0] === 'agents' || params.get('kind') === 'agent' ? 'agent' : 'avatar';
+const entityId =
+	((segments[0] === 'avatars' || segments[0] === 'agents') && segments[1]) || queryId || '';
+
+// The bound body's id. Identical to `entityId` on an avatar route; filled in
+// from the agent's `avatar_id` once the agent record loads. Every avatar-scoped
+// call (poses, forks, /api/avatars/*) keys off THIS, never off an agent id:
+// the two live in separate tables with separate UUIDs. Empty string means the
+// agent has no body yet, and body-scoped sections stay hidden.
+let avatarId = mode === 'avatar' ? entityId : '';
+
+// Canonical URL for this entity, used for OG/canonical tags and share links.
+const entityPath = `/${mode === 'agent' ? 'agents' : 'avatars'}/${encodeURIComponent(entityId)}`;
 
 // Embed mode: hide chrome (header, actionbar, related, footer) so the page
 // looks clean inside an iframe.
-const isEmbed = new URLSearchParams(location.search).get('embed') === '1';
+const isEmbed = params.get('embed') === '1';
 if (isEmbed) {
 	document.body.classList.add('av-embed');
 	document.querySelectorAll('.site-header, .av-actionbar, .av-related, .h-footer-horizon')
 		.forEach((el) => { el.style.display = 'none'; });
-}
-
-if (!avatarId) {
-	$('av-shell').innerHTML = `<div class="av-error">No avatar specified.</div>`;
-} else {
-	init().catch((err) => {
-		log.error('[avatar] init', err);
-		$('av-shell').innerHTML = `<div class="av-error">${esc(err.message || 'Failed to load')}</div>`;
-	});
 }
 
 // Stop the wallet-aura live poll and free its rAF when the page unloads.
@@ -71,6 +86,12 @@ window.addEventListener('pagehide', () => {
 // ── State ─────────────────────────────────────────────────────────────
 
 let avatar = null;
+// The agent record in agent mode; null when the subject is a bare avatar.
+let agent = null;
+// Whether the current session owns the subject. In avatar mode `owner_id` is
+// only present on the GET response for the owner; in agent mode the server
+// answers directly with `is_owner`.
+let viewerOwns = false;
 let netWorthAura = null;
 let netWorthPanel = null;
 let netWorthPlate = null;
@@ -116,59 +137,144 @@ const MODEL_STORAGE_KEY = 'avatar_chat_model_v1';
 // ── Init ──────────────────────────────────────────────────────────────
 
 async function init() {
-	avatar = await fetchAvatar(avatarId);
-	if (!avatar.model_url && !avatar.url) throw new Error('This avatar has no GLB.');
+	({ agent, avatar } = await resolveEntity(entityId));
+	avatarId = avatar.id || '';
+	viewerOwns = mode === 'agent' ? !!agent.is_owner : !!avatar.owner_id;
 
-	const glbUrl = avatar.model_url || avatar.url;
+	// An avatar always has geometry; an agent may not have been given a body
+	// yet. The bodyless case is a designed state, not an error.
+	const glbUrl = avatar.model_url || avatar.url || '';
+	if (!glbUrl && mode === 'avatar') throw new Error('This avatar has no GLB.');
 
-	// Persisted skill/plugin attachments (per-avatar, in localStorage)
+	// Persisted skill/plugin attachments (per-entity, in localStorage)
 	loadAttached();
 
 	updateOg();
 	renderShell(glbUrl);
+	mountBackLink();
 	mountSwitcher();
 	bindShareButtons();
 	bindTabs();
 	bindChat();
-	bindOwnerActions();
 	loadSkills();
 	loadPlugins();
 	loadRelated();
-	loadUsedBy();
-	loadForks();
-	measureModel(glbUrl);
+
+	// Body-scoped surfaces. An agent with no avatar has nothing to measure,
+	// fork, or launch a coin against, so they stay off rather than rendering
+	// empty shells.
+	if (avatarId) {
+		bindOwnerActions();
+		loadForks();
+		measureModel(glbUrl);
+	}
+	// "Used by" is the inverse of agent mode's "Wearing" card: it belongs on the
+	// body's page, listing the agents that wear it.
+	if (mode === 'avatar') loadUsedBy();
+}
+
+// The action bar's back link points at the directory this entity came from.
+function mountBackLink() {
+	const back = document.querySelector('.av-back');
+	if (!back || mode !== 'agent') return;
+	// The label is i18n-managed in avatar mode; drop the binding so the runtime
+	// doesn't overwrite the agent-mode text on its pass.
+	back.removeAttribute('data-i18n');
+	back.href = '/agents';
+	back.textContent = '\u2190 Agents';
 }
 
 // ── API ───────────────────────────────────────────────────────────────
 
-async function fetchAvatar(id) {
-	const r = await fetch(`/api/avatars/${encodeURIComponent(id)}`);
-	if (!r.ok) {
-		// A 404 may mean this id is actually an agent shared (or old-linked) as
-		// /avatars/:id. agent-detail.js does the reverse for avatar ids landing
-		// on /agents/:id — keep that symmetry so neither page dead-ends a valid
-		// entity behind "not found".
-		if (r.status === 404 && (await resolveAsAgent(id))) {
-			location.replace(`/agents/${encodeURIComponent(id)}`);
+/**
+ * Load whichever entity the URL names and hand back the pair the renderer
+ * needs. Agents and avatars live in separate tables with separate UUIDs, so an
+ * id can land on the wrong route (an old link, a shared URL). Rather than
+ * dead-end on "not found", probe the other store and redirect to the canonical
+ * path. The page looks the same either way, but the URL stays truthful.
+ *
+ * @param {string} id
+ * @returns {Promise<{ agent: object|null, avatar: object }>}
+ */
+async function resolveEntity(id) {
+	if (mode === 'agent') {
+		const rec = await fetchAgentRecord(id);
+		if (rec) return { agent: rec, avatar: await agentStudioRecord(rec) };
+		if (await fetchAvatarRecord(id).catch(() => null)) {
+			location.replace(`/avatars/${encodeURIComponent(id)}`);
 			return new Promise(() => {}); // navigating away; never resolve
 		}
-		const j = await r.json().catch(() => ({}));
-		throw new Error(j.error_description || `Avatar not found (${r.status})`);
+		throw new Error('No agent with that id.');
 	}
-	return (await r.json()).avatar;
+
+	const av = await fetchAvatarRecord(id);
+	if (av) return { agent: null, avatar: av };
+	if (await fetchAgentRecord(id).catch(() => null)) {
+		location.replace(`/agents/${encodeURIComponent(id)}`);
+		return new Promise(() => {});
+	}
+	throw new Error('No avatar with that id.');
 }
 
-// Probe the agent store so a misrouted agent id can be handed back to the
-// agent detail page instead of rendering a dead "Avatar not found".
-async function resolveAsAgent(id) {
-	try {
-		const r = await fetch(`/api/agents/${encodeURIComponent(id)}`);
-		if (!r.ok) return false;
-		const j = await r.json();
-		return !!(j && j.agent);
-	} catch {
-		return false;
+/** GET an avatar record. Returns null on 404; throws on any other failure. */
+async function fetchAvatarRecord(id) {
+	const r = await fetch(`/api/avatars/${encodeURIComponent(id)}`, { credentials: 'include' });
+	if (r.status === 404) return null;
+	if (!r.ok) {
+		const j = await r.json().catch(() => ({}));
+		throw new Error(j.error_description || `Could not load this avatar (${r.status})`);
 	}
+	return (await r.json()).avatar || null;
+}
+
+/** GET an agent record. Returns null on 404; throws on any other failure. */
+async function fetchAgentRecord(id) {
+	const r = await fetch(`/api/agents/${encodeURIComponent(id)}`, { credentials: 'include' });
+	if (r.status === 404) return null;
+	if (!r.ok) {
+		const j = await r.json().catch(() => ({}));
+		throw new Error(j.error_description || `Could not load this agent (${r.status})`);
+	}
+	return (await r.json()).agent || null;
+}
+
+/**
+ * Project an agent onto the studio's avatar shape so one renderer drives both
+ * entity kinds. The agent's identity (name, description, tags, wallet) wins;
+ * its bound body supplies geometry, thumbnail, license, and fork lineage.
+ *
+ * An agent whose body is missing or private still yields a record, with no
+ * model URL, which the stage renders as the "give this agent a body" state.
+ */
+async function agentStudioRecord(rec) {
+	const body = rec.avatar_id ? await fetchAvatarRecord(rec.avatar_id).catch(() => null) : null;
+	const base = body || {
+		id: null,
+		name: rec.name,
+		description: rec.description,
+		model_category: 'avatar',
+		tags: [],
+		visibility: 'public',
+		attribution: null,
+		source_meta: null,
+	};
+	return {
+		...base,
+		name: rec.name || base.name || 'Agent',
+		description: rec.description || base.description || '',
+		tags: rec.tags?.length ? rec.tags : base.tags || [],
+		agent_id: rec.id,
+		// The body keeps its own name so the "Wearing" card can show it even
+		// though the agent's name wins for the page title.
+		body_name: body?.name || null,
+		// Wallet chip + net-worth aura read either shape; carry both spellings so
+		// an agent with a wallet but no saved body still wears it.
+		agent_solana_address: rec.solana_address || base.agent_solana_address || null,
+		solana_address: rec.solana_address || null,
+		model_url: base.model_url || rec.avatar_model_url || null,
+		url: base.url || rec.avatar_model_url || null,
+		thumbnail_url: base.thumbnail_url || rec.avatar_thumbnail_url || null,
+	};
 }
 
 async function fetchRelated() {
@@ -228,7 +334,7 @@ async function fetchSkills() {
 // nothing when the bound agent has no wallet yet (showPending:false), which is
 // fine: the avatar itself is an asset and the page already has a fork CTA.
 function walletRowHTML() {
-	const chip = walletChipHTML(avatar, { isOwner: !!avatar.owner_id, showPending: false });
+	const chip = walletChipHTML(avatar, { isOwner: viewerOwns, showPending: false });
 	return chip ? `<div class="av-wallet-row" id="av-wallet-row">${chip}</div>` : '';
 }
 
@@ -240,10 +346,66 @@ const CATEGORY_META = {
 	creature:  { label: 'Creature · 3D Character',   tip: 'A 3D creature or non-human character.' },
 	vehicle:   { label: 'Vehicle · 3D Object',       tip: 'A 3D vehicle.' },
 	other:     { label: '3D Model',                  tip: 'A 3D model.' },
+	agent:     { label: 'Agent · AI Identity',       tip: 'An agent is the mind: a persona, skills, a wallet, and an on-chain identity. It wears an avatar as its body.' },
 };
 
 function categoryMeta() {
+	if (mode === 'agent') return CATEGORY_META.agent;
 	return CATEGORY_META[avatar.model_category] || CATEGORY_META.avatar;
+}
+
+// The line under the title: who made this, or what kind of thing it is.
+function sourceTagText() {
+	if (mode === 'agent') {
+		return agent.author_name ? `Agent by ${agent.author_name}` : 'Agent on three.ws';
+	}
+	if (avatar.demo) return 'Curated · Public Domain';
+	const kind = CATEGORY_META[avatar.model_category]?.label.split(' · ')[0].toLowerCase() || 'avatar';
+	return `Community ${kind}`;
+}
+
+/**
+ * Stage content for an agent that has no body yet. The studio is the page
+ * every agent link lands on, so this has to be a real destination: it says
+ * what is missing and hands the owner (or anyone) the two ways to fix it.
+ */
+function bodylessStageHTML() {
+	return `<div class="av-stage-bodyless">
+		<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+			<circle cx="12" cy="7.5" r="3.5"/><path d="M4.5 20.5c0-4 3.4-6.5 7.5-6.5s7.5 2.5 7.5 6.5"/>
+		</svg>
+		<strong>${esc(avatar.name)} has no body yet</strong>
+		<p>Agents wear an avatar. Give this one a 3D body and it renders here, in AR, in XR, and in every embed.</p>
+		<div class="av-stage-bodyless-actions">
+			<a class="av-cta" href="/create#avatar-options">Create a body</a>
+			<a class="av-cta-sec" href="/marketplace">Pick one from the marketplace</a>
+		</div>
+	</div>`;
+}
+
+/**
+ * Agent mode only: the body this agent wears, linking to that avatar's own
+ * studio page. Keeps the agent/avatar distinction navigable in both directions
+ * (the avatar page's "Used by" grid is the inverse link).
+ */
+function bodyCardHTML() {
+	if (!avatarId) return '';
+	const label = avatar.body_name || avatar.slug || 'Body';
+	const thumb = avatar.thumbnail_url
+		? `<img class="av-used-by-thumb" src="${esc(avatar.thumbnail_url)}" alt="" loading="lazy" />`
+		: `<div class="av-used-by-thumb av-used-by-thumb--placeholder" aria-hidden="true">${esc(label.slice(0, 1).toUpperCase())}</div>`;
+	return `<section class="av-used-by" aria-labelledby="av-body-heading">
+		<h3 class="av-used-by-heading" id="av-body-heading">Wearing</h3>
+		<div class="av-used-by-grid">
+			<a class="av-used-by-card" href="/avatars/${encodeURIComponent(avatarId)}" title="Open this body's own page">
+				${thumb}
+				<div class="av-used-by-meta">
+					<span class="av-used-by-name">${esc(avatar.body_name || avatar.slug || 'Body')}</span>
+					<span class="av-used-by-badge">avatar</span>
+				</div>
+			</a>
+		</div>
+	</section>`;
 }
 
 function renderShell(glbUrl) {
@@ -262,6 +424,7 @@ function renderShell(glbUrl) {
 	$('av-shell').innerHTML = `
 		<div class="av-stage-col">
 			<div class="av-stage" id="av-stage">
+				${glbUrl ? `
 				<div class="av-stage-loading" id="av-stage-loading">Loading 3D model…</div>
 				<model-viewer
 					id="av-viewer"
@@ -296,8 +459,9 @@ function renderShell(glbUrl) {
 					</button>
 					<div class="av-anim-clips" id="av-anim-clips"></div>
 				</div>
+				` : bodylessStageHTML()}
 			</div>
-			<div class="av-meta-strip" id="av-meta-strip">
+			<div class="av-meta-strip" id="av-meta-strip"${glbUrl ? '' : ' hidden'}>
 				<div class="av-meta-item"><span class="av-meta-key">Format</span><span class="av-meta-val">glTF 2.0</span></div>
 				<div class="av-meta-item"><span class="av-meta-key">License</span><span class="av-meta-val" id="av-license">${esc(avatar.attribution?.license || 'Public')}</span></div>
 				<div class="av-meta-item" id="av-size-item" hidden><span class="av-meta-key">Size</span><span class="av-meta-val" id="av-size">—</span></div>
@@ -319,11 +483,11 @@ function renderShell(glbUrl) {
 					>?</a>
 				</div>
 				<h1 class="av-name">${esc(avatar.name)}</h1>
-				<div class="av-source-tag">${avatar.demo ? 'Curated · Public Domain' : `Community ${esc(CATEGORY_META[avatar.model_category]?.label.split(' · ')[0].toLowerCase() || 'avatar')}`}</div>
+				<div class="av-source-tag">${esc(sourceTagText())}</div>
 				${byLine}
 				${tagsHtml ? `<div class="av-tags">${tagsHtml}</div>` : ''}
 				${walletRowHTML()}
-				${avatar.owner_id && avatar.agent_id ? `<div class="av-wallet-manage" id="av-wallet-manage"></div>` : ''}
+				${viewerOwns && avatar.agent_id ? `<div class="av-wallet-manage" id="av-wallet-manage"></div>` : ''}
 			</div>
 			<div class="av-cta-talk-row">
 				<button class="av-cta-talk" id="av-talk" type="button" aria-label="Talk to ${esc(avatar.name)}">
@@ -332,43 +496,48 @@ function renderShell(glbUrl) {
 				</button>
 			</div>
 			<div class="av-cta-row">
-				<button class="av-cta" id="av-use">Start an agent</button>
+				${mode === 'agent'
+					? `<a class="av-cta" href="/agents/${encodeURIComponent(entityId)}/profile" title="Capabilities, economy, activity, trust and developer tools">Full profile</a>`
+					: `<button class="av-cta" id="av-use">Start an agent</button>`}
 				<a class="av-cta-sec" href="/brain" title="Build a persona and test with AI models">Brain</a>
-				<a class="av-cta-sec" href="/voice" title="Clone your voice for this avatar">Voice Lab</a>
-				<a class="av-cta-sec" href="/studio?avatar=${encodeURIComponent(avatar.id || avatarId)}" title="Use this avatar in Widget Studio">Open in Studio</a>
-				<button class="av-cta-sec" id="av-download" type="button">Download ▾</button>
+				<a class="av-cta-sec" href="/voice" title="Clone a voice for this ${mode}">Voice Lab</a>
+				${avatarId ? `<a class="av-cta-sec" href="/studio?avatar=${encodeURIComponent(avatarId)}" title="Use this body in Widget Studio">Open in Studio</a>` : ''}
+				${glbUrl ? `<button class="av-cta-sec" id="av-download" type="button">Download ▾</button>` : ''}
 			</div>
+			${avatarId ? `
 			<div class="av-ar-row">
-				<a class="av-ar-btn" href="/avatars/${encodeURIComponent(avatar.id || avatarId)}/ar" id="av-ar-link">
+				<a class="av-ar-btn" href="/avatars/${encodeURIComponent(avatarId)}/ar" id="av-ar-link">
 					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
 					View in AR
 				</a>
-				<a class="av-ar-btn" href="/irl?avatar=${encodeURIComponent(avatar.id || avatarId)}">
+				<a class="av-ar-btn" href="/irl?avatar=${encodeURIComponent(avatarId)}">
 					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
 					Walk IRL
 				</a>
-				<a class="av-ar-btn" href="/xr?avatar=${encodeURIComponent(avatar.id || avatarId)}">
+				<a class="av-ar-btn" href="/xr?avatar=${encodeURIComponent(avatarId)}">
 					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l9-4 9 4v10l-9 4-9-4V7z"/><path d="M12 3v18M3 7l9 4 9-4"/></svg>
 					View in XR
 				</a>
-				<a class="av-ar-btn" href="/pose?avatar=${encodeURIComponent(avatar.id || avatarId)}" title="Pose and animate this avatar in the Animation Studio">
+				<a class="av-ar-btn" href="/pose?avatar=${encodeURIComponent(avatarId)}" title="Pose and animate this avatar in the Animation Studio">
 					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
 					Animate
 				</a>
 			</div>
-			<avatar-actions id="av-actions" avatar-id="${esc(avatar.id || avatarId)}" style="margin-top:14px;display:block"></avatar-actions>
-			${avatar.owner_id ? `
+			` : ''}
+			${avatarId ? `<avatar-actions id="av-actions" avatar-id="${esc(avatarId)}"${mode === 'agent' ? ' mode="fork"' : ''} style="margin-top:14px;display:block"></avatar-actions>` : ''}
+			${viewerOwns ? `
 			<div class="av-owner-row" id="av-owner-row">
-				<a class="av-owner-btn" href="/avatars/${encodeURIComponent(avatar.id || avatarId)}/edit">
+				<a class="av-owner-btn" href="${mode === 'agent' ? `/agent/${encodeURIComponent(entityId)}/edit` : `/avatars/${encodeURIComponent(avatarId)}/edit`}">
 					<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
 					Edit
 				</a>
-				${avatar.source_meta?.generator === 'avatar-studio' ? `
-				<a class="av-owner-btn" href="/create/studio?edit=${encodeURIComponent(avatar.id || avatarId)}">
+				${avatarId && avatar.source_meta?.generator === 'avatar-studio' ? `
+				<a class="av-owner-btn" href="/create/studio?edit=${encodeURIComponent(avatarId)}">
 					<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
 					Edit in Studio
 				</a>
 				` : ''}
+				${avatarId ? `
 				<button class="av-owner-btn" id="av-deploy-onchain" type="button">
 					<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
 					Deploy on-chain
@@ -381,12 +550,13 @@ function renderShell(glbUrl) {
 					<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M14.5 9.3a2.6 2.6 0 0 0-4.9.9c0 2.7 4.9 1.4 4.9 4.1a2.6 2.6 0 0 1-4.9.9M12 6.5v11"/></svg>
 					Fees &amp; rewards
 				</button>
+				` : ''}
 			</div>
 			` : ''}
 			<nav class="av-tabs" role="tablist">
 				<button class="av-tab active" data-tab="overview" role="tab">Overview</button>
 				<button class="av-tab" data-tab="chat" role="tab">Chat</button>
-				<button class="av-tab" data-tab="pose" role="tab">Pose</button>
+				${avatarId ? `<button class="av-tab" data-tab="pose" role="tab">Pose</button>` : ''}
 				<button class="av-tab" data-tab="skills" role="tab">Skills</button>
 				<button class="av-tab" data-tab="plugins" role="tab">Plugins</button>
 				<button class="av-tab" data-tab="embed" role="tab">Embed</button>
@@ -394,6 +564,7 @@ function renderShell(glbUrl) {
 			<div class="av-panels">
 				<div class="av-panel active" data-panel="overview" id="av-overview">
 					${avatar.description ? `<p class="av-desc">${esc(avatar.description)}</p>` : '<p class="av-desc" style="color:var(--text-3)">No description provided.</p>'}
+					${mode === 'agent' ? bodyCardHTML() : ''}
 					<section class="av-used-by" id="av-used-by" hidden aria-labelledby="av-used-by-heading">
 						<h3 class="av-used-by-heading" id="av-used-by-heading">Used by</h3>
 						<div class="av-used-by-grid" id="av-used-by-grid"></div>
@@ -513,7 +684,7 @@ function renderShell(glbUrl) {
  */
 function mountWalletManager() {
 	const host = $('av-wallet-manage');
-	if (!host || !avatar.owner_id || !avatar.agent_id) return;
+	if (!host || !viewerOwns || !avatar.agent_id) return;
 
 	const identity = {
 		id: avatar.agent_id,
@@ -615,7 +786,7 @@ function mountNetWorthAura() {
 	// hydrates from the same cached wallet read the aura uses (no extra request).
 	if (!netWorthPlate) {
 		netWorthPlate = mountNameplate(stage, avatar, {
-			network: 'mainnet', isOwner: !!avatar.owner_id, live: true, position: 'bottom',
+			network: 'mainnet', isOwner: viewerOwns, live: true, position: 'bottom',
 		});
 	}
 
@@ -821,12 +992,14 @@ function renderAttached() {
 
 function renderEmbedPanel(glbUrl) {
 	const fullUrl = location.origin + location.pathname;
-	// The avatar studio page itself is iframe-friendly; embedders can drop the
-	// page URL with `?embed=1` and we hide the chrome (handled below).
+	// The studio page itself is iframe-friendly; embedders can drop the page URL
+	// with `?embed=1` and we hide the chrome (handled below).
 	const iframeSrc = `${fullUrl}?embed=1`;
+	// In agent mode the component gets `agent-id` too, so the embed talks to the
+	// agent's brain rather than just rendering its body.
 	const webComponentSnippet = `<script type="module" src="https://three.ws/dist-lib/agent-3d.js"><\/script>
 <agent-3d
-  src="${glbUrl}"
+  src="${glbUrl}"${mode === 'agent' ? `\n  agent-id="${entityId}"` : ''}
   style="width:480px;height:480px"
 ></agent-3d>`;
 	const iframeSnippet = `<iframe
@@ -837,10 +1010,12 @@ function renderEmbedPanel(glbUrl) {
   allow="autoplay; xr-spatial-tracking"
 ></iframe>`;
 	const linkSnippet = fullUrl;
-	const wizardUrl = `/embed?${new URLSearchParams({ avatar: avatar.id || avatarId })}`;
+	const wizardUrl = `/embed?${new URLSearchParams(
+		mode === 'agent' ? { agent: entityId, ...(avatarId ? { avatar: avatarId } : {}) } : { avatar: avatarId },
+	)}`;
 	return `
 		<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px">
-			<p class="av-embed-intro" style="margin:0;font-size:13px;color:var(--ink-dim)">Drop this avatar on any website. Use the wizard for a live preview and platform instructions.</p>
+			<p class="av-embed-intro" style="margin:0;font-size:13px;color:var(--ink-dim)">Drop this ${mode} on any website. Use the wizard for a live preview and platform instructions.</p>
 			<a href="${esc(wizardUrl)}" class="av-embed-wizard" target="_blank" rel="noopener">Configure in wizard ↗</a>
 		</div>
 		<div class="av-embed-section">
@@ -869,14 +1044,19 @@ function renderEmbedPanel(glbUrl) {
 
 // ── View switcher ─────────────────────────────────────────────────────
 
-// Surface the page-level views (3D · Chat · AR · Embed) in the action bar.
-// The active view tracks ?view= so Chat/Embed deep-links light up the right
-// segment; the bare page is the 3D view.
+// Surface the page-level views (3D · Chat · AR · Embed, plus Profile for an
+// agent) in the action bar. The active view tracks ?view= so Chat/Embed
+// deep-links light up the right segment; the bare page is the 3D view.
 function mountSwitcher() {
 	if (isEmbed) return;
-	const view = new URLSearchParams(location.search).get('view');
+	const view = params.get('view');
 	const active = view === 'chat' || view === 'embed' ? view : '3d';
-	mountViewSwitcher($('view-switch-slot'), { kind: 'avatar', id: avatar.id || avatarId, active });
+	mountViewSwitcher($('view-switch-slot'), {
+		kind: mode,
+		id: entityId,
+		active,
+		hasBody: !!avatarId,
+	});
 }
 
 // ── Tabs ──────────────────────────────────────────────────────────────
@@ -1112,7 +1292,10 @@ function bindShareButtons() {
 		});
 	}
 	if (twBtn && avatar) {
-		const text = `Check out "${avatar.name}" — a 3D avatar on three.ws`;
+		const text =
+			mode === 'agent'
+				? `Meet "${avatar.name}", a 3D AI agent on three.ws`
+				: `Check out "${avatar.name}", a 3D avatar on three.ws`;
 		const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(location.href)}`;
 		twBtn.href = url;
 	}
@@ -1134,7 +1317,7 @@ function bindOwnerActions() {
 let avatarCoin = null;
 async function checkAvatarCoin() {
 	if (new URLSearchParams(location.search).get('launch') === '1') openLaunchPumpFun();
-	const id = avatar?.id || avatarId;
+	const id = avatarId;
 	if (!id) return;
 	try {
 		const r = await fetch(`/api/pump/by-agent?avatar_id=${encodeURIComponent(id)}`, { credentials: 'include' });
@@ -1228,7 +1411,7 @@ async function openLaunchPumpFun() {
 		const launchPanelUrl = '/studio/launch-panel.js';
 		const { mountLaunchPanel } = await import(/* @vite-ignore */ launchPanelUrl);
 		mountLaunchPanel(inner, {
-			getAvatar: () => ({ ...avatar, id: avatar.id || avatarId }),
+			getAvatar: () => ({ ...avatar, id: avatarId }),
 			getUser: () => user,
 			getPreviewViewer: () => null,
 		});
@@ -1248,7 +1431,7 @@ async function openFeesPanel() {
 	if (btn) btn.disabled = true;
 	try {
 		if (!avatarCoin?.mint) {
-			const id = avatar?.id || avatarId;
+			const id = avatarId;
 			const r = await fetch(`/api/pump/by-agent?avatar_id=${encodeURIComponent(id)}`, { credentials: 'include' });
 			const { data } = r.ok ? await r.json() : { data: null };
 			avatarCoin = data;
@@ -1262,7 +1445,7 @@ async function openFeesPanel() {
 			mint: avatarCoin.mint,
 			network: avatarCoin.network || 'mainnet',
 			creator: avatarCoin.agent_authority || null,
-			avatarId: avatar.id || avatarId,
+			avatarId: avatarId,
 			agentId: avatar.agent_id || null,
 			symbol: avatarCoin.symbol || '',
 			name: avatarCoin.name || '',
@@ -1301,7 +1484,7 @@ async function startAgentWithAvatar() {
 			category: 'general',
 			tags: (avatar.tags || []).slice(0, 8),
 			capabilities: { skills: skillsArr, library: [], bullets: [] },
-			avatar_id: avatar.id || avatarId,
+			avatar_id: avatarId,
 		};
 		// apiFetch attaches the single-use CSRF token every marketplace write needs.
 		const r = await apiFetch('/api/marketplace/agents', {
@@ -1591,8 +1774,14 @@ function togglePlugin(id) {
 
 // ── Attached storage ──────────────────────────────────────────────────
 
+// Storage is scoped per ENTITY, not per body: an agent and the avatar it wears
+// are different subjects, so their attachments and chat memory must not merge.
+function entityKey() {
+	return mode === 'agent' ? `agent:${entityId}` : avatar?.id || entityId;
+}
+
 function attachedKey() {
-	return ATTACHED_KEY_PREFIX + (avatar?.id || avatarId);
+	return ATTACHED_KEY_PREFIX + entityKey();
 }
 function loadAttached() {
 	try {
@@ -1748,7 +1937,7 @@ function bindChat() {
 // ── Persistent chat memory ───────────────────────────────────────────
 
 const MEMORY_KEY_PREFIX = 'avatar_chat_v1:';
-function memoryKey() { return MEMORY_KEY_PREFIX + (avatar?.id || avatarId); }
+function memoryKey() { return MEMORY_KEY_PREFIX + entityKey(); }
 
 function hydrateChatHistory() {
 	if (!attachedSkills.has('memory')) return;
@@ -1758,15 +1947,15 @@ function hydrateChatHistory() {
 		const stored = JSON.parse(raw);
 		if (!Array.isArray(stored) || stored.length === 0) return;
 		chatHistory = stored.slice(-40); // cap so we don't blow context
-		const log = $('av-chat-log');
-		if (!log) return;
-		log.querySelector('.av-chat-empty')?.remove();
+		const logEl = $('av-chat-log');
+		if (!logEl) return;
+		logEl.querySelector('.av-chat-empty')?.remove();
 		// Re-render the conversation from the persisted history.
-		const existing = log.querySelectorAll('.av-chat-msg');
+		const existing = logEl.querySelectorAll('.av-chat-msg');
 		existing.forEach((n) => n.remove());
 		for (const m of chatHistory) appendChatMessage(m.role, m.content);
 	} catch (err) {
-		log.warn('[avatar] memory hydrate failed', err.message);
+		log.warn('[studio] memory hydrate failed', err.message);
 	}
 }
 
@@ -1813,12 +2002,12 @@ async function speakReply(text) {
 }
 
 async function sendChatMessage(text) {
-	const log = $('av-chat-log');
+	const logEl = $('av-chat-log');
 	const send = $('av-chat-send');
-	if (!log) return;
+	if (!logEl) return;
 
 	// Drop empty-state once we have any message
-	const empty = log.querySelector('.av-chat-empty');
+	const empty = logEl.querySelector('.av-chat-empty');
 	if (empty) empty.remove();
 
 	// Wave on the very first user message of the session, if the avatar has
@@ -1832,7 +2021,7 @@ async function sendChatMessage(text) {
 
 	// Real conversation sentiment moves the agent's mood (deterministic lexicon,
 	// never random). Scoped to this agent inside the engine.
-	moodEngine.observeChat(avatar?.id || avatarId, text, 'user');
+	moodEngine.observeChat(chatAgentId(), text, 'user');
 
 	const assistantNode = appendChatMessage('assistant', '');
 	const cursor = document.createElement('span');
@@ -1844,7 +2033,7 @@ async function sendChatMessage(text) {
 	let acc = '';
 	try {
 		const systemContext = buildSystemContext();
-		const agentIdMaybe = avatar?.id || avatarId;
+		const agentIdMaybe = chatAgentId();
 		const isUuid = typeof agentIdMaybe === 'string'
 			&& /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(agentIdMaybe);
 		const choice = MODEL_OPTIONS.find((o) => o.id === selectedModelId);
@@ -1883,7 +2072,7 @@ async function sendChatMessage(text) {
 				if (evt.type === 'chunk' && evt.text) {
 					acc += evt.text;
 					assistantNode.textContent = acc;
-					log.scrollTop = log.scrollHeight;
+					logEl.scrollTop = logEl.scrollHeight;
 					streamThoughtText(acc);
 				} else if (evt.type === 'done') {
 					// The server reports exactly which memories it recalled into this
@@ -1904,7 +2093,7 @@ async function sendChatMessage(text) {
 	} catch (err) {
 		assistantNode.textContent = acc || `⚠ ${err.message}`;
 		finalizeThought(acc || err.message);
-		log.error('[avatar] chat', err);
+		log.error('[studio] chat', err);
 	} finally {
 		cursor.remove();
 		send.disabled = false;
@@ -1912,18 +2101,29 @@ async function sendChatMessage(text) {
 }
 
 function appendChatMessage(role, text) {
-	const log = $('av-chat-log');
+	const logEl = $('av-chat-log');
 	const node = document.createElement('div');
 	node.className = `av-chat-msg ${role}`;
 	node.textContent = text;
-	log.appendChild(node);
-	log.scrollTop = log.scrollHeight;
+	logEl.appendChild(node);
+	logEl.scrollTop = logEl.scrollHeight;
 	return node;
+}
+
+/**
+ * The id /api/chat should key memory, persona, and metering on. In agent mode
+ * that is the agent itself (its brain, its memories); in avatar mode the avatar
+ * id is the only stable handle the page has.
+ */
+function chatAgentId() {
+	return mode === 'agent' ? entityId : avatar?.id || entityId;
 }
 
 function buildSystemContext() {
 	const parts = [
-		`You are voicing the avatar "${avatar.name}" on three.ws.`,
+		mode === 'agent'
+			? `You are the agent "${avatar.name}" on three.ws, speaking as yourself.`
+			: `You are voicing the avatar "${avatar.name}" on three.ws.`,
 		avatar.description ? `Your character description: ${avatar.description}` : '',
 		avatar.tags?.length ? `Tags: ${avatar.tags.join(', ')}` : '',
 	];
@@ -2120,16 +2320,22 @@ let availableAnimations = new Set();
 // ── OG meta ───────────────────────────────────────────────────────────
 
 function updateOg() {
-	document.title = `${avatar.name} — Avatar Studio · three.ws`;
-	$('og-title')?.setAttribute('content', `${avatar.name} — Avatar Studio`);
-	$('og-description')?.setAttribute('content', avatar.description || `A 3D avatar on three.ws`);
-	$('og-url')?.setAttribute('content', location.href);
-	$('tw-title')?.setAttribute('content', `${avatar.name} — Avatar Studio`);
-	$('tw-description')?.setAttribute('content', avatar.description || `A 3D avatar on three.ws`);
-	// Always point at /api/avatar/:id/og — that endpoint redirects to the real
+	const suffix = mode === 'agent' ? 'Agent Studio' : 'Avatar Studio';
+	const fallbackDesc = mode === 'agent' ? 'A 3D AI agent on three.ws' : 'A 3D avatar on three.ws';
+	document.title = `${avatar.name} · ${suffix} · three.ws`;
+	$('og-title')?.setAttribute('content', `${avatar.name} · ${suffix}`);
+	$('og-description')?.setAttribute('content', avatar.description || fallbackDesc);
+	$('og-url')?.setAttribute('content', location.origin + entityPath);
+	$('tw-title')?.setAttribute('content', `${avatar.name} · ${suffix}`);
+	$('tw-description')?.setAttribute('content', avatar.description || fallbackDesc);
+	setCanonical(location.origin + entityPath);
+	// Always point at the entity's /og endpoint, which redirects to the real
 	// thumbnail when one exists, falls back to a styled SVG card when it doesn't.
-	// This way social cards never come up empty for demo avatars.
-	const ogUrl = `${location.origin}/api/avatar/${encodeURIComponent(avatar.id || avatarId)}/og`;
+	// This way social cards never come up empty for demo avatars or new agents.
+	const ogUrl =
+		mode === 'agent'
+			? `${location.origin}/api/og/agent?id=${encodeURIComponent(entityId)}`
+			: `${location.origin}/api/avatar/${encodeURIComponent(avatarId)}/og`;
 	$('og-image')?.setAttribute('content', ogUrl);
 	const twImage = document.querySelector('meta[name="twitter:image"]');
 	if (twImage) twImage.setAttribute('content', ogUrl);
@@ -2139,4 +2345,44 @@ function updateOg() {
 		m.content = ogUrl;
 		document.head.appendChild(m);
 	}
+}
+
+// One canonical URL per entity: /avatars/:id or /agents/:id, never the ?view=
+// or ?embed= variants, so search engines and social unfurls collapse to a
+// single page instead of indexing every tab as its own document.
+function setCanonical(href) {
+	let link = document.querySelector('link[rel="canonical"]');
+	if (!link) {
+		link = document.createElement('link');
+		link.rel = 'canonical';
+		document.head.appendChild(link);
+	}
+	link.href = href;
+}
+
+// ── bootstrap (must run last) ────────────────────────────────────────
+// Kept at the very end of the module, below every `let` this page owns.
+// init() runs during module evaluation and writes module-level state
+// (`agent`, `avatar`, `avatarId`, `viewerOwns`). JavaScriptCore checks an
+// assignment target's temporal dead zone EAGERLY, before it evaluates the
+// right-hand side, so `avatar = await fetch...()` threw
+// "Cannot access uninitialized variable." in Safari (desktop and iOS) while
+// V8 deferred the same check past the await and never noticed. That took the
+// whole studio page down to its "Avatar not found" error state in Safari only.
+// Declaring every binding before this call removes the ordering dependency
+// instead of relying on which engine checks when.
+if (!entityId) {
+	$('av-shell').innerHTML = `<div class="av-error">No ${mode} specified.</div>`;
+} else {
+	init().catch((err) => {
+		log.error('[studio] init', err);
+		const browse = mode === 'agent'
+			? { href: '/agents', label: 'Browse agents' }
+			: { href: '/marketplace', label: 'Browse the marketplace' };
+		$('av-shell').innerHTML = `<div class="av-error">
+			<strong>${esc(mode === 'agent' ? 'Agent not found' : 'Avatar not found')}</strong>
+			<span>${esc(err.message || 'Failed to load')}</span>
+			<a class="av-error-cta" href="${browse.href}">${browse.label} &rarr;</a>
+		</div>`;
+	});
 }

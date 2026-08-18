@@ -564,6 +564,11 @@
 			.av-cta:hover {
 				transform: translateY(-1px);
 			}
+			.av-cta:focus-visible,
+			.av-cta-sec:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+			}
 			.av-cta-sec {
 				background: transparent;
 				border: 1px solid var(--border-2);
@@ -1538,10 +1543,92 @@
 			}
 
 			.av-error {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: 8px;
 				padding: 80px 24px;
 				text-align: center;
 				color: var(--text-3);
 				font-size: 14px;
+			}
+			.av-error strong {
+				font-size: 17px;
+				color: var(--text);
+				letter-spacing: -0.01em;
+			}
+			.av-error-cta {
+				margin-top: 10px;
+				padding: 9px 18px;
+				border-radius: 999px;
+				border: 1px solid var(--border-2);
+				color: var(--text);
+				text-decoration: none;
+				font-size: 13px;
+				font-weight: 600;
+				transition:
+					background 0.15s ease,
+					border-color 0.15s ease,
+					transform 0.15s ease;
+			}
+			.av-error-cta:hover {
+				background: var(--panel-2);
+				border-color: var(--text-3);
+			}
+			.av-error-cta:active {
+				transform: translateY(1px);
+			}
+			.av-error-cta:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+			}
+
+			/* Agent with no avatar bound yet: the stage explains the gap and
+			   offers both ways to close it, instead of an empty black box. */
+			.av-stage-bodyless {
+				position: absolute;
+				inset: 0;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				gap: 10px;
+				padding: 32px 28px;
+				text-align: center;
+				color: var(--text-3);
+				background:
+					radial-gradient(
+						circle at 50% 38%,
+						rgba(255, 255, 255, 0.06),
+						transparent 62%
+					);
+			}
+			.av-stage-bodyless svg {
+				opacity: 0.4;
+			}
+			.av-stage-bodyless strong {
+				font-size: 18px;
+				font-weight: 600;
+				letter-spacing: -0.01em;
+				color: var(--text);
+			}
+			.av-stage-bodyless p {
+				margin: 0;
+				max-width: 42ch;
+				font-size: 13px;
+				line-height: 1.6;
+			}
+			.av-stage-bodyless-actions {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 8px;
+				justify-content: center;
+				margin-top: 8px;
+			}
+			.av-stage-bodyless-actions .av-cta,
+			.av-stage-bodyless-actions .av-cta-sec {
+				display: inline-flex;
+				align-items: center;
 			}
 
 			/* ── Responsive ──────────────────────────────────── */

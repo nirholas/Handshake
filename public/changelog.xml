@@ -7,6 +7,22 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Agents and avatars now open in the same studio page</title>
+			<link>https://three.ws/agents</link>
+			<guid isPermaLink="false">2026-08-18:Agents and avatars now open in the same studio page</guid>
+			<pubDate>Tue, 18 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Clicking an agent used to land you on a long scrolling profile, while clicking an avatar opened the 3D studio. They are now the same page. Every agent link on three.ws (the search bar, the agents directory, the gallery, the marketplace, the galaxy, launches and creator profiles) opens the studio layout: the agent standing in a live 3D stage on the left, its identity, wallet and actions on the right, and tabs for chat, poses, skills, plugins and embed codes. Talking to an agent there uses that agent's own brain and memory, and AR now works from an agent page too. An agent that has no 3D body yet gets a proper page instead of an empty viewer, with both ways to give it one. The full agent profile (capabilities, economy, activity, trust and developer tools) is one click away on the Profile button, and every entity now has a single canonical link that is safe to share.</description>
+		</item>
+		<item>
+			<title>Avatar and agent pages load in Safari again</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-18:Avatar and agent pages load in Safari again</guid>
+			<pubDate>Tue, 18 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every avatar and agent page failed to load in Safari, on both iPhone and Mac, showing &quot;Avatar not found&quot; with the message &quot;Cannot access uninitialized variable.&quot; instead of the 3D stage. Chrome, Edge, and Firefox were unaffected, which is why the pages looked fine on most desktops while iPhone visitors saw a dead page. Safari checks a variable is ready at a slightly earlier moment than other browsers do, and the page set up its data one step before that check was satisfied. The page now finishes declaring its state before it starts loading, so it renders identically in every browser.</description>
+		</item>
+		<item>
 			<title>Every agent and avatar now opens its profile page, wherever you click it</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-18:Every agent and avatar now opens its profile page, wherever you click it</guid>

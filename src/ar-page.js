@@ -1,7 +1,8 @@
 /**
- * /avatars/:id/ar — dedicated AR experience page
+ * /avatars/:id/ar and /agents/:id/ar: the dedicated AR experience page
  *
- * Fetches the avatar, loads it into a full-screen model-viewer with AR enabled.
+ * Fetches the entity (an avatar directly, or an agent's bound body), loads it
+ * into a full-screen model-viewer with AR enabled.
  * If the avatar has a pre-generated usdz_url, sets it as ios-src immediately.
  * Otherwise converts the GLB to USDZ in-browser and sets a temporary object URL
  * so Quick Look works in the current session.
@@ -13,19 +14,36 @@ import { log } from './shared/log.js';
 import { mountViewSwitcher } from './view-switcher.js';
 
 const segments = location.pathname.split('/').filter(Boolean);
-// /avatars/:id/ar → segments = ['avatars', 'uuid', 'ar']
-const fromPath = segments[0] === 'avatars' && segments[2] === 'ar' ? segments[1] : null;
-const fromQuery = new URLSearchParams(location.search).get('id');
-const avatarId = fromPath || fromQuery || '';
+// /avatars/:id/ar → ['avatars', 'uuid', 'ar']; /agents/:id/ar → ['agents', ...]
+const isAgentRoute = segments[0] === 'agents' && segments[2] === 'ar';
+const fromPath =
+	(segments[0] === 'avatars' || isAgentRoute) && segments[2] === 'ar' ? segments[1] : null;
+const params = new URLSearchParams(location.search);
+const fromQuery = params.get('id');
+const mode = isAgentRoute || params.get('kind') === 'agent' ? 'agent' : 'avatar';
+const entityId = fromPath || fromQuery || '';
+// The body's id. Equal to entityId for an avatar, resolved from the agent's
+// avatar_id otherwise. Every /api/avatars call keys off this.
+let avatarId = mode === 'avatar' ? entityId : '';
 
 const $ = (id) => document.getElementById(id);
 
 let usdzObjectUrl = null;
 
 async function init() {
-	if (!avatarId) {
-		showError('No avatar specified.');
+	if (!entityId) {
+		showError(`No ${mode} specified.`);
 		return;
+	}
+
+	if (mode === 'agent') {
+		const agent = await fetchAgent(entityId);
+		if (!agent) return;
+		if (!agent.avatar_id) {
+			showError(`${agent.name || 'This agent'} has no 3D body yet.`);
+			return;
+		}
+		avatarId = agent.avatar_id;
 	}
 
 	const avatar = await fetchAvatar(avatarId);
@@ -59,6 +77,17 @@ async function fetchAvatar(id) {
 	}
 }
 
+async function fetchAgent(id) {
+	try {
+		const r = await fetch(`/api/agents/${encodeURIComponent(id)}`, { credentials: 'include' });
+		if (!r.ok) throw new Error(`${r.status}`);
+		return (await r.json()).agent;
+	} catch (err) {
+		showError(`Couldn't load agent (${err.message}).`);
+		return null;
+	}
+}
+
 function renderPage(avatar, glbUrl) {
 	$('ar-avatar-name').textContent = avatar.name || 'Avatar';
 	document.title = `${avatar.name || 'Avatar'} in AR · three.ws`;
@@ -76,7 +105,12 @@ function renderPage(avatar, glbUrl) {
 	}
 
 	const id = avatar.id || avatarId;
-	$('ar-back-link').href = `/avatars/${encodeURIComponent(id)}`;
+	// Back goes to whichever studio page the visitor came from (the agent's or
+	// the body's), so the AR detour never strands them on the wrong entity.
+	$('ar-back-link').href =
+		mode === 'agent'
+			? `/agents/${encodeURIComponent(entityId)}`
+			: `/avatars/${encodeURIComponent(id)}`;
 	// Living-agent handoff: /irl loads this avatar as the agent's body in the
 	// user's real space (camera passthrough, animation, conversation). Static
 	// placement is one option; alive is the point.
@@ -85,7 +119,12 @@ function renderPage(avatar, glbUrl) {
 		liveLink.href = `/irl?avatar=${encodeURIComponent(id)}`;
 		liveLink.hidden = false;
 	}
-	mountViewSwitcher($('view-switch-slot'), { kind: 'avatar', id, active: 'ar' });
+	mountViewSwitcher($('view-switch-slot'), {
+		kind: mode,
+		id: mode === 'agent' ? entityId : id,
+		active: 'ar',
+		hasBody: true,
+	});
 
 	$('ar-share-btn').addEventListener('click', () => shareAvatar(avatar));
 }

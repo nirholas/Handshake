@@ -4647,6 +4647,17 @@
 			"dest": "/agent-detail-classic.html"
 		},
 		{
+			"src": "/agents/([^/.]+)/profile/?",
+			"dest": "/agent-detail.html"
+		},
+		{
+			"src": "/agents/([^/.]+)/ar/?",
+			"headers": {
+				"permissions-policy": "xr-spatial-tracking=*, camera=(self), microphone=(self)"
+			},
+			"dest": "/ar.html"
+		},
+		{
 			"src": "/agents/([^/.]+)",
 			"has": [
 				{
@@ -4659,7 +4670,7 @@
 		},
 		{
 			"src": "/agents/([^/.]+)",
-			"dest": "/agent-detail.html"
+			"dest": "/avatar-page.html"
 		},
 		{
 			"src": "/my-agents",
@@ -4717,7 +4728,7 @@
 			"src": "/discover/avatar/([^/]+)",
 			"status": 301,
 			"headers": {
-				"Location": "/marketplace/agents/$1"
+				"Location": "/avatars/$1"
 			}
 		},
 		{

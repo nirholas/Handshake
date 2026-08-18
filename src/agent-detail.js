@@ -1040,14 +1040,25 @@ function render(agent) {
 	// has a resolvable body (custom GLB or mannequin), so the mode is always live.
 	wireWalkMode(agent);
 
-	// View switcher: flip this agent between its detail, 3D world, and embed
-	// presentations. Every agent has a 3D body (custom GLB or mannequin).
+	// View switcher: flip this agent between the studio (/agents/:id), chat, AR,
+	// embed, and this long-form profile. Every agent has a 3D body (custom GLB
+	// or mannequin), so the AR segment always applies.
 	mountViewSwitcher($('view-switch-slot'), {
 		kind: 'agent',
 		id: agent.id,
 		active: new URLSearchParams(location.search).get('view') === 'embed' ? 'embed' : 'detail',
-		worldHref: seeInWorldHref(agent),
+		hasBody: true,
 	});
+
+	// This profile sits one level below the agent's studio page, so "back" is
+	// the studio, not the whole registry. The registry is one more hop up and
+	// stays reachable from the nav.
+	const back = document.querySelector('.ad-back');
+	if (back) {
+		back.removeAttribute('data-i18n');
+		back.href = `/agents/${encodeURIComponent(agent.id)}`;
+		back.textContent = `\u2190 ${agent.name || 'Agent'}`;
+	}
 
 	// Embed snippets work for every agent, not just marketplace-published ones,
 	// so the "Embed" view always lands on real, copyable code. Marketplace

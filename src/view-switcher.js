@@ -40,14 +40,19 @@ function avatarViews(id) {
 	];
 }
 
-// Views for an agent. The 3D world view is only offered when the agent has a
-// real body to render there; chat lives behind the fork flow, so it is not a
-// standalone URL and is intentionally omitted.
-function agentViews(id, { worldHref } = {}) {
+// Views for an agent. /agents/:id is the studio (the same template an avatar
+// gets), so 3D and Chat are first-class URLs here too. AR needs a body, and the
+// long-form profile (capabilities, economy, activity, trust, developer tools)
+// lives one level deeper at /agents/:id/profile.
+function agentViews(id, { hasBody = true } = {}) {
 	const e = encodeURIComponent(id);
-	const views = [{ key: 'detail', label: 'Detail', href: `/agents/${e}`, title: 'Agent profile & details' }];
-	if (worldHref) views.push({ key: '3d', label: '3D', href: worldHref, title: 'See this agent in 3D' });
+	const views = [
+		{ key: '3d', label: '3D', href: `/agents/${e}`, title: '3D body & details' },
+		{ key: 'chat', label: 'Chat', href: `/agents/${e}?view=chat`, title: 'Talk to this agent' },
+	];
+	if (hasBody) views.push({ key: 'ar', label: 'AR', href: `/agents/${e}/ar`, title: 'View in your space (AR)' });
 	views.push({ key: 'embed', label: 'Embed', href: `/agents/${e}?view=embed`, title: 'Embed this agent anywhere' });
+	views.push({ key: 'detail', label: 'Profile', href: `/agents/${e}/profile`, title: 'Capabilities, economy, activity & trust' });
 	return views;
 }
 
@@ -104,7 +109,7 @@ function injectStyles() {
 /**
  * Mount the switcher into `slot`. Returns the created <nav>, or null if no slot.
  * @param {Element|null} slot
- * @param {{ kind: 'avatar'|'agent', id: string, active: string, worldHref?: string }} opts
+ * @param {{ kind: 'avatar'|'agent', id: string, active: string, hasBody?: boolean }} opts
  */
 export function mountViewSwitcher(slot, opts) {
 	if (!slot || !opts?.id) return null;
