@@ -103,7 +103,7 @@ export function normalizeAgent(a) {
 		uses: makeUses('owners', a.buyers_total),
 		tags: cleanTags(a.tags),
 		featured: false,
-		href: `/marketplace/agents/${encodeURIComponent(a.id)}`,
+		href: `/agents/${encodeURIComponent(a.id)}`,
 	};
 }
 

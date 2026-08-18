@@ -111,7 +111,7 @@ describe('normalizeAgent', () => {
 		expect(out.rating).toEqual({ avg: 4.7, count: 9 });
 		expect(out.uses).toEqual({ label: 'owners', count: 1200 });
 		expect(out.tags).toEqual(['defi', 'solana', 'a', 'b']); // trimmed, blanks dropped, capped at 4
-		expect(out.href).toBe('/marketplace/agents/a%201%2Fb');
+		expect(out.href).toBe('/agents/a%201%2Fb');
 	});
 
 	it('falls back to a placeholder name and Free price', () => {

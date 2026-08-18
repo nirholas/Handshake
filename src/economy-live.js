@@ -90,7 +90,7 @@ function agentCard(a) {
 	const buyers = Number(a.buyers_total) || 0;
 	const buyers24 = Number(a.buyers_24h) || 0;
 	return `
-		<a class="ae-card" href="/marketplace/agents/${encodeURIComponent(a.id)}">
+		<a class="ae-card" href="/agents/${encodeURIComponent(a.id)}">
 			<div class="ae-card-top">
 				<div class="ae-avatar">${thumb ? `<img src="${esc(thumb)}" alt="" loading="lazy" />` : `<span class="ae-avatar-fallback">${esc((a.name || '?').slice(0, 1).toUpperCase())}</span>`}</div>
 				<div class="ae-card-head">

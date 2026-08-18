@@ -77,8 +77,10 @@ function skillCard(p) {
 		? `<div class="col-card-wallet" style="margin-top:8px">${walletChipHTML(agentRecord, { isOwner: false, showPending: false, dense: true })}</div>`
 		: '';
 
+	// The agent's canonical studio page, which /marketplace/agents/:id only
+	// 301s to anyway. Linking it directly saves the redirect hop.
 	const agentHref = p.agent_id
-		? `/marketplace/agents/${encodeURIComponent(p.agent_id)}`
+		? `/agents/${encodeURIComponent(p.agent_id)}`
 		: '/marketplace';
 
 	return `

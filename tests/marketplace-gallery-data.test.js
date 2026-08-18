@@ -126,7 +126,7 @@ describe('normalizers — one listing shape across three APIs', () => {
 			tags: ['nft-lookup', ' trending ', '', 'a', 'b', 'c'],
 		});
 		expect(out.type).toBe('agent');
-		expect(out.href).toBe('/marketplace/agents/a%201%2Fb'); // encoded, no dead link
+		expect(out.href).toBe('/agents/a%201%2Fb'); // encoded, no dead link
 		expect(out.price).toBe('$1');
 		expect(out.paid).toBe(true);
 		expect(out.rating).toEqual({ avg: 4.5, count: 2 });
