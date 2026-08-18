@@ -1,113 +1,111 @@
 # Ask the Experts: Nemotron Open Family (Nemotron Labs live on X)
 
-Questions for three.ws to drop into the live chat of NVIDIA's "What's New in the
-Nemotron Open Family" stream (@NVIDIAAI). Ordered by what actually helps this platform
-and by how likely a panel is to read it out.
+Two messages to post into the live chat of NVIDIA's "What's New in the Nemotron Open
+Family" stream (@NVIDIAAI): one from the official account, one from the founder account.
+Both are built on things we can prove, so a panelist can check us mid-stream and find a
+real deployment, a published write-up on NVIDIA's own forums, and Inception membership.
 
-## What the panel is fielding
+Nothing on a live stream is literally guaranteed. What follows maximizes the odds, and
+the reason is simple: these are not "what is Nemotron" questions from a stranger. They
+are production questions from a company already shipping on the models, carrying a
+number the panel will want to repeat.
 
-Public state of the family as of this stream:
+## Post 1: @trythreews (official)
 
-| Model | Params (total / active) | Notes |
-|---|---|---|
-| Nemotron 3 Nano | 31.6B / 3.6B | 1M token context, 24.6 GB, consumer-GPU class |
-| Nemotron 3 Super | 120.6B / 12.7B | GTC, March 2026 |
-| Nemotron 3 Ultra | 550B / 55B | June 2026 |
-| Nemotron 4 | ~1T, in training | reported for late 2026 |
+Send this one first. It carries the Inception credential and the one product ask we
+actually want answered.
 
-The family ships open weights, open training data, and open recipes (roughly 10T tokens
-of released datasets), with a hybrid mixture-of-experts architecture aimed at agentic
-work. Every question below is written against that, not against generic "what is an LLM"
-framing, because the read-out-loud questions are the specific ones.
+> We're an NVIDIA Inception startup running nemotron-nano-12b-v2-vl as the input gate in
+> front of our text-to-3D pipeline. Any plans for guaranteed structured / JSON decoding
+> on the NIM chat models? Half our small-model work is coaxing rigid JSON out of them.
 
-## Rules for posting into a live chat
+Why this gets answered:
+
+- It is a **roadmap question a panel can answer**, not an opinion prompt. Guided decoding
+  is a real feature area with a real status.
+- It is **framed as a user who already shipped**, which is the framing NVIDIA's own
+  developer-relations people are on the stream to find.
+- The Inception line is one clause, up front, not a pitch. It qualifies us and then gets
+  out of the way.
+- It contains no link, so it is not filtered and it is easy to read aloud.
+
+Backup, if post 1 gets skipped and the chat moves on:
+
+> NVIDIA Inception member here: Nemotron Nano VL gates every generation on our
+> text-to-3D platform because of its image-token footprint. Does Nemotron 3 Nano keep
+> that footprint, or does the hybrid MoE change the math?
+
+## Post 2: @nichxbt (founder)
+
+Send this five to ten minutes after post 1, never simultaneously. Different account,
+different angle, no repetition of the Inception line: this one is engineer to engineer.
+
+> We picked nemotron-nano-12b-v2-vl on an axis no leaderboard tracks: about 281 prompt
+> tokens for a small reference image, vs about 1,600 for a 90B-class vision model on the
+> identical image. Was that token efficiency a deliberate design target?
+
+Why this gets answered:
+
+- It hands the panel a **compliment with a measurement attached**. Teams love hearing
+  their model won on an axis they were not benchmarked on, and it is the kind of line a
+  host repeats on air.
+- It is answerable in one sentence by anyone who worked on the model.
+- It reads as a person, not a brand, which is what a founder account is for.
+
+Backup for the founder account:
+
+> What is the smallest Nemotron you would trust as the input guardrail in front of an
+> expensive GPU job? Ours answers in 1-2 seconds and saves a 20-second generation. Does
+> Nemotron 3 Nano move that floor?
+
+## The self-reply, once either gets answered
+
+Do not put a link in the first message. Post it as a reply to your own message the moment
+a panelist engages:
+
+> Wrote the whole thing up on the NVIDIA Developer Forums:
+> https://forums.developer.nvidia.com/t/how-nemotron-made-three-ws-text-to-3d-pipeline-usable/376445
+
+That link is the closer. It is a published Nemotron case study on NVIDIA's own property,
+which converts "someone in the chat" into "a member with a citable story", and it gives
+whoever runs @NVIDIAAI something safe to amplify afterwards.
+
+## What we can prove if asked
+
+Every claim in the two posts is sourced, so a follow-up question cannot catch us out:
+
+| Claim | Source |
+|---|---|
+| NVIDIA Inception member, accepted July 2026 | [nvidia-inception.md](./nvidia-inception.md) |
+| `nvidia/nemotron-nano-12b-v2-vl` gates every photo-to-3D generation, 1-2s | [nvidia-nemotron-spotlight.md](./nvidia-nemotron-spotlight.md), `api/_lib/forge-image-validate.js` |
+| ~281 image prompt tokens vs ~1,600 for a 90B-class VLM | [nvidia-nemotron-spotlight.md](./nvidia-nemotron-spotlight.md) |
+| Published Nemotron write-up on the NVIDIA Developer Forums | [forums.developer.nvidia.com](https://forums.developer.nvidia.com/t/how-nemotron-made-three-ws-text-to-3d-pipeline-usable/376445) |
+| `nvidia-nemotron-nano-9b-v2` used for reasoning turns, NemoGuard at ~340 ms median | [nvidia-nemotron-spotlight.md](./nvidia-nemotron-spotlight.md) |
+
+The two other standing asks from that write-up (the hosted TRELLIS image-input
+restriction and the 77-character TRELLIS prompt cap) are TRELLIS questions, not Nemotron
+questions. Do not spend a Nemotron panel's attention on them; they belong in the NIM or
+TRELLIS channel.
+
+## Posting rules for this stream
 
 - One question per message. Two questions in one line get half-answered.
-- Under about 200 characters. Long messages are skipped on air.
-- Lead with the constraint, not with our product. "3.6B active on an L4" is a hook;
-  "we built a 3D avatar platform" is an ad and gets skipped.
-- Post from the three.ws handle, ask the follow-up only after they answer the first.
+- Keep it near 200 characters. Long messages get skipped on air.
+- Lead with the constraint or the number, never with what we sell.
+- Do not post the same question from both accounts. It reads as brigading and both get
+  ignored.
+- Tag `@NVIDIAAI`. There is no verified dedicated Inception handle on X, so write
+  "NVIDIA Inception" as words rather than inventing a mention.
+- If a panelist answers, reply once with thanks and the forum link. Do not stack
+  follow-ups in the same breath.
 
-## The questions
+## Background on the family, for the follow-up
 
-### 1. Interactive latency next to a render loop (best single ask)
+If they engage and there is room for a second question, these are grounded in the family
+as it stands: Nemotron 3 Nano at 31.6B total / 3.6B active with 1M context in 24.6 GB,
+Super at 120.6B / 12.7B, Ultra at 550B / 55B, all with open weights, data, and recipes,
+plus a reported trillion-parameter Nemotron 4 in training.
 
-> Nemotron 3 Nano at 3.6B active: what time-to-first-token are you seeing on an L4 when
-> the GPU is also feeding a real-time render loop? Any guidance on sharing one GPU
-> between inference and graphics?
-
-Why it lands: it is a hardware question with a number in it, it is the exact thing our
-GPU workers do, and nobody else in the chat will ask it. This is the one to post first.
-
-### 2. Tool calling under an agentic harness
-
-> For agentic use: how does Nemotron 3 hold up on strict JSON schema adherence over long
-> multi-tool runs, and is there a reasoning-budget control to keep tool latency bounded?
-
-Why it lands: "agentic AI" is the family's own positioning, so they have prepared
-material, and schema adherence is what actually decides whether an agent runtime can use
-a model in production.
-
-### 3. What 1M context costs in memory
-
-> The 1M context on Nano is the headline. What does the KV cache cost at 1M on a single
-> 24 GB card, and what retrieval accuracy do you measure at full length vs 128k?
-
-Why it lands: it is a friendly but real question. Long-context claims usually degrade,
-and asking for the honest curve reads as a builder, not a critic.
-
-### 4. Fine-tuning on a narrow domain without losing the agentic behavior
-
-> With the open recipes out there: what is the recommended way to fine-tune Nano on a
-> narrow domain corpus without degrading the tool-calling behavior you post-trained in?
-
-Why it lands: this is the question every team that adopts an open model hits in week
-two, and the open-recipe release is exactly what makes it answerable on air.
-
-### 5. Quantization floor for consumer hardware
-
-> Where does quality actually break down on Nano: FP8, NVFP4, lower? Which quantization
-> do you ship as the recommended default for consumer GPUs?
-
-Why it lands: it converts the "24.6 GB fits consumer hardware" claim into something a
-builder can plan capacity against.
-
-### 6. Vision and 3D
-
-> Anything in the Nemotron VL line aimed at 3D assets, so a model can look at a rendered
-> mesh and judge topology or texture quality? Curious how it lines up with Cosmos.
-
-Why it lands: this is our lane (text to 3D, rigging, avatar QA), and it invites them to
-talk about physical AI, which they like talking about.
-
-### 7. Serving stack on day one
-
-> Which serving path do you consider first-class for Nemotron 3: TensorRT-LLM, vLLM, or
-> SGLang? Where does the hybrid MoE architecture need a version bump to run right?
-
-Why it lands: hybrid architectures routinely land ahead of runtime support, and knowing
-which runtime is blessed saves a deployment week.
-
-### 8. What stays open in Nemotron 4
-
-> With Nemotron 4 reported at trillion scale: does the same openness bar hold there,
-> weights plus data plus recipes, or does the tier change with size?
-
-Why it lands: it is the forward-looking question of the stream, and it is a fair one to
-ask a team whose whole pitch is openness. Post it late, near the end.
-
-### 9. The accuracy follow-up
-
-The chat already asked "how do you increase the accuracy?" and that question is too
-broad to get a useful answer. A sharper version, posted as a follow-up:
-
-> Following the accuracy question: for a narrow domain, what moves the needle more in
-> your experience, more post-training data or more reasoning tokens at inference?
-
-Why it lands: it rescues a question the panel already saw, which makes it likely to be
-picked up, and the answer is genuinely useful to us.
-
-## If we only get one message in
-
-Post question 1. It is specific, it has numbers, it is a hardware question at a hardware
-company, and the answer directly informs how we size the GPU workers.
+- Time-to-first-token for Nano on an L4 when the same GPU is also feeding a render loop.
+- KV cache cost at full 1M context on a 24 GB card, and retrieval accuracy at 1M vs 128k.
+- Whether the openness bar (weights plus data plus recipes) holds at Nemotron 4 scale.
