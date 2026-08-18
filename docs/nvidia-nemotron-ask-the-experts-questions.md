@@ -106,6 +106,48 @@ TRELLIS channel.
   The Nemotron team reads the developer forums, and a written answer there outlives a
   live mention.
 
+## If the panel is on architecture and design
+
+Segment-matched questions. A question that lands on the topic already on screen gets read
+far more often than a good question that arrives out of order, so switch to these while
+architecture is up and hold the roadmap questions for later.
+
+### Official account, architecture segment
+
+> At 3.6B active of 31.6B, batch-1 latency still pays to read every expert. For a
+> single-call guardrail sitting in front of an expensive GPU job, is Nano MoE or a dense
+> small model the better design?
+
+197 characters. This is the sharpest architecture question we can ask honestly, because it
+is our actual deployment shape: the input gate runs one call per generation, concurrency
+one, latency-bound rather than throughput-bound. Sparse MoE pays off on batched serving
+and buys much less at batch 1, and an architecture panel knows that. Asking it as a design
+tradeoff rather than a complaint is what makes it answerable on air.
+
+### Founder account, architecture segment
+
+> On the hybrid Mamba-Transformer split: how many attention layers do you keep in
+> Nemotron 3 Nano, and was that ratio tuned for 1M-context KV cost or for recall quality?
+
+167 characters. The hybrid backbone is the family's signature design choice and the reason
+the 1M context fits in 24.6 GB at all. Asking which objective set the ratio invites the
+architecture answer they came to give.
+
+### Two more, if the segment runs long
+
+> What in the VL design gets a small reference image down to ~281 prompt tokens: patch
+> tiling, a token compressor, or the projector? We picked the model on that axis.
+
+Pairs with the founder post already drafted above, and turns our measurement into a
+design question about the vision tower rather than a repeat of the same compliment.
+
+> Does expert routing stay stable under constrained JSON decoding, or does forcing a
+> grammar push tokens to experts the router would not have picked? We run rigid JSON on
+> every call.
+
+This one bridges architecture and the structured-decoding ask in post 1, so it works as
+the follow-up if the official post gets answered while architecture is still on screen.
+
 ## Background on the family, for the follow-up
 
 If they engage and there is room for a second question, these are grounded in the family
