@@ -474,7 +474,6 @@ function renderCard(a) {
 	card.className = 'gallery-card';
 
 	const glbUrl = a.model_url || '';
-	const viewerUrl = glbUrl ? `/app#model=${encodeURIComponent(glbUrl)}` : '#';
 	const detailUrl = `/avatars/${a.id}`;
 	const studioUrl = `/studio?avatar=${encodeURIComponent(a.id)}`;
 	const animateUrl = `/pose?avatar=${encodeURIComponent(a.id)}`;
@@ -516,7 +515,7 @@ function renderCard(a) {
 	const rigBadge = window.twsRig?.rigBadgeHTML ? window.twsRig.rigBadgeHTML(a) : '';
 
 	card.innerHTML = `
-		<a class="gallery-card-thumb" href="${escapeAttr(viewerUrl)}" aria-label="View ${escapeAttr(a.name || 'Avatar')} in 3D viewer">
+		<a class="gallery-card-thumb" href="${escapeAttr(detailUrl)}" aria-label="Open ${escapeAttr(a.name || 'Avatar')}">
 			${thumbContent}
 			<span class="gallery-card-3dpill">3D</span>
 			${rigBadge ? `<span class="gallery-card-rig">${rigBadge}</span>` : ''}

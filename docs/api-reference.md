@@ -3392,41 +3392,52 @@ Requires auth. Permanently revokes the key.
 GET /api/explore
 ```
 
-Paginated search over ERC-8004 registered agents. No auth required.
+Paginated directory across every source the platform crawls: ERC-8004 registered agents (EVM), three.ws Solana agents, external Solana agents (Metaplex Agent Registry + AgenC), and public 3D avatars. No auth required.
 
 **Query parameters**
 
-| Parameter | Type    | Description                                     |
-| --------- | ------- | ----------------------------------------------- |
-| `q`       | string  | Full-text search query                          |
-| `only3d`  | `1`     | Filter to agents with 3D avatars only           |
-| `chain`   | integer | Filter by chain ID                              |
-| `cursor`  | string  | ISO 8601 timestamp cursor for keyset pagination |
-| `limit`   | integer | Max results (default: 20)                       |
+| Parameter  | Type    | Description                                                                                           |
+| ---------- | ------- | ----------------------------------------------------------------------------------------------------- |
+| `q`        | string  | Name/description substring search                                                                     |
+| `source`   | string  | `all` (default), `onchain`, `avatar`, `solana`, or `agents` (every on-chain agent, no avatars)        |
+| `only3d`   | `1`     | Only rows with a 3D body (avatars are always 3D)                                                      |
+| `chain`    | integer | Filter by EVM chain ID (implicitly excludes avatars and Solana)                                       |
+| `category` | string  | Avatar `model_category` filter, single or comma-separated (`avatar`, `accessory`, `item`, `scene`, `creature`, `vehicle`, `other`) |
+| `quality`  | string  | `high` (default, hides auto-named junk) or `all`                                                      |
+| `cursor`   | string  | ISO 8601 timestamp cursor for keyset pagination                                                       |
+| `limit`    | integer | Max results, 1 to 250 (default: 24)                                                                   |
 
 **Response**
 
 ```json
 {
-	"agents": [
+	"items": [
 		{
-			"id": "onchain_abc",
+			"kind": "onchain",
+			"chainId": 8453,
+			"agentId": 42,
 			"name": "Aria",
 			"description": "Product guide",
-			"avatar_url": "https://three.ws/avatars/default.glb",
-			"thumbnail_url": "https://three.ws/avatars/thumbs/default.png",
-			"chain_id": 8453,
-			"chain_agent_id": 42,
-			"registered_at": "2025-01-15T10:00:00Z",
-			"services": [],
-			"explorer_url": "https://basescan.org/..."
+			"detailUrl": "/a/8453/42",
+			"viewerUrl": "/app#model=...",
+			"registeredAt": "2025-01-15T10:00:00Z",
+			"services": []
+		},
+		{
+			"kind": "avatar",
+			"avatarId": "13f259c7-7024-4d68-b1f0-dbbf52c06209",
+			"name": "Michelle",
+			"detailUrl": "/avatars/13f259c7-7024-4d68-b1f0-dbbf52c06209",
+			"viewerUrl": "/app#model=...",
+			"glbUrl": "https://three.ws/avatars/michelle.glb"
 		}
 	],
-	"total": 142,
-	"total_3d": 89,
-	"cursor": "2025-01-10T10:00:00Z"
+	"nextCursor": "2025-01-10T10:00:00Z",
+	"totals": { "all": 142, "threeD": 89, "onchain": 40, "solana": 12, "solanaExternal": 4, "avatars": 86 }
 }
 ```
+
+Every item carries a `detailUrl`: the canonical on-platform detail page for that entity (`/avatars/:id` for avatars, `/agents/:id` for three.ws agents, `/a/:chainId/:agentId` for ERC-8004 agents, `/discover/a/sol/:asset` for external Solana agents). Link to it rather than assembling paths from ids.
 
 ---
 

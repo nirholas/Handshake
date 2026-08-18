@@ -61,7 +61,7 @@ function mapAgent(r) {
 		description:       r.description || null,
 		skills:            r.skills || [],
 		avatar_thumbnail:  thumbnail,
-		home_url:          r.home_url || `/agent/${r.id}`,
+		home_url:          r.home_url || `/agents/${r.id}`,
 		chat_count:        Number(r.chat_count) || 0,
 		is_registered:     !!(onchain || meta.sol_mint_address || r.erc8004_agent_id || meta.erc8004_agent_id),
 		onchain:           onchain ? { network: onchain.network, asset: onchain.sol_asset || null } : null,

@@ -208,6 +208,7 @@ export default wrap(async (req, res) => {
 			registeredAt: r.registered_at,
 			tokenExplorerUrl: tokenExplorerUrl(r.chain_id, r.agent_id),
 			ownerExplorerUrl: addressExplorerUrl(r.chain_id, r.owner),
+			detailUrl: `/a/${r.chain_id}/${r.agent_id}`,
 			viewerUrl: r.glb_url ? `/app#model=${encodeURIComponent(r.glb_url)}` : null,
 			services: (r.services || []).map((s) => ({
 				name: s?.name || null,
@@ -234,7 +235,8 @@ export default wrap(async (req, res) => {
 			owner: r.wallet_address,
 			ownerShort: shortAddr(r.wallet_address),
 			createdAt: r.created_at,
-			viewerUrl: `/agent/${r.id}`,
+			detailUrl: `/agents/${r.id}`,
+			viewerUrl: `/agents/${r.id}`,
 			explorerUrl: asset ? `https://solscan.io/token/${asset}` : null,
 			ownerExplorerUrl: r.wallet_address ? `https://solscan.io/account/${r.wallet_address}` : null,
 			network: r.meta?.network || 'mainnet',
@@ -269,6 +271,7 @@ export default wrap(async (req, res) => {
 				owner: r.owner || null,
 				ownerShort: shortAddr(r.owner),
 				createdAt: r.registered_at,
+				detailUrl: r.asset ? `/discover/a/sol/${encodeURIComponent(r.asset)}` : null,
 				viewerUrl: r.glb_url ? `/app#model=${encodeURIComponent(r.glb_url)}` : null,
 				explorerUrl: explorerTarget ? `https://solscan.io/account/${explorerTarget}` : null,
 				ownerExplorerUrl: r.owner ? `https://solscan.io/account/${r.owner}` : null,
@@ -308,6 +311,7 @@ export default wrap(async (req, res) => {
 			featured: r.featured === true || r.featured === 't',
 			viewCount: Number(r.view_count) || 0,
 			createdAt: r.created_at,
+			detailUrl: `/avatars/${r.id}`,
 			viewerUrl: `/app#model=${encodeURIComponent(glb)}`,
 			price,
 			author: handle

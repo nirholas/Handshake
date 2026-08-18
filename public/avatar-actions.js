@@ -213,7 +213,7 @@ class AvatarActions extends HTMLElement {
 
 		const lineage = a.forked_from
 			? `<div class="lineage">⑂ Forked from
-				<a href="/avatar-page.html?id=${a.forked_from.avatar_id}" title="View the original">
+				<a href="/avatars/${a.forked_from.avatar_id}" title="View the original">
 					${escapeHtml(a.forked_from.owner_name || a.forked_from.name || 'original')}
 				</a></div>`
 			: '';
@@ -457,7 +457,7 @@ class AvatarActions extends HTMLElement {
 			const wallet = d.agent?.wallet_address ? ` Its agent wallet: <code>${short(d.agent.wallet_address)}</code>.` : '';
 			this._msg(
 				'ok',
-				`Saved to your avatars. <a class="manage" href="/avatar-page.html?id=${d.avatar.id}">Open →</a>${wallet}`,
+				`Saved to your avatars. <a class="manage" href="/avatars/${d.avatar.id}">Open →</a>${wallet}`,
 			);
 			this.dispatchEvent(
 				new CustomEvent('avatar-forked', { detail: d, bubbles: true, composed: true }),

@@ -1285,14 +1285,26 @@
 				});
 
 				var agentItems = (agents || []).slice(0, 6).map(function (a) {
-					var href = '/agent/' + esc(a.agent_id || a.id || '');
+					// Canonical detail-page permalink per entity kind: avatars to
+					// /avatars/:id, on-chain agents to /a/:chain/:id, three.ws agents
+					// to /agents/:id. The API's detailUrl is authoritative; the local
+					// branches keep results linked if a cached bundle outlives it.
+					var href = a.detailUrl
+						|| (a.kind === 'avatar' && a.avatarId ? '/avatars/' + esc(a.avatarId)
+						: a.kind === 'onchain' && a.chainId != null && a.agentId != null
+							? '/a/' + esc(a.chainId) + '/' + esc(a.agentId)
+						: a.agentId ? '/agents/' + esc(a.agentId)
+						: a.viewerUrl || a.explorerUrl || '/agents');
+					var badge = a.kind === 'avatar' ? 'Avatar'
+						: a.kind === 'onchain' ? 'ERC-8004'
+						: a.kind === 'solana' ? 'Solana' : '';
 					return {
 						el: resultRow(
 							href,
 							agentIcon(a),
 							a.name || 'Agent',
 							a.description || '',
-							a.source === 'solana' ? 'Solana' : a.chain_id ? 'ERC-8004' : '',
+							badge,
 							q
 						),
 					};

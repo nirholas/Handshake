@@ -74,7 +74,7 @@ export default wrap(async (req, res) => {
 				display_name: row.name,
 				bio: row.description || null,
 				avatar_url,
-				detail_url: row.home_url || `/agent/${row.id}`,
+				detail_url: row.home_url || `/agents/${row.id}`,
 				net_30d: Number(row.net_total),
 			},
 		},

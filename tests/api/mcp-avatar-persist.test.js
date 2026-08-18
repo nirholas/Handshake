@@ -170,7 +170,7 @@ describe('save_avatar', () => {
 			avatar_id: 'avatar-uuid-0001',
 			slug: expect.stringMatching(/^studio-/),
 			model_url: expect.stringContaining('https://cdn.test/'),
-			view_url: 'https://three.ws/discover/avatar/avatar-uuid-0001',
+			view_url: 'https://three.ws/avatars/avatar-uuid-0001',
 		});
 		expect(r.isError).toBeUndefined();
 	});

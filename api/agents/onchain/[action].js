@@ -671,7 +671,7 @@ async function handleConfirm(req, res) {
 		agent: {
 			...agent,
 			onchain,
-			home_url: `${env.APP_ORIGIN}/agent/${agent.id}`,
+			home_url: `${env.APP_ORIGIN}/agents/${agent.id}`,
 		},
 	});
 }

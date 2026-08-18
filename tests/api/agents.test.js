@@ -143,7 +143,7 @@ describe('GET /api/agents — list', () => {
 		expect(body.agents).toHaveLength(1);
 		expect(body.agents[0].id).toBe('agent-1');
 		expect(body.agents[0].name).toBe('Alpha');
-		expect(body.agents[0].home_url).toBe('/agent/agent-1');
+		expect(body.agents[0].home_url).toBe('/agents/agent-1');
 		// decorate() must strip encrypted_wallet_key from meta
 		expect(body.agents[0].meta.encrypted_wallet_key).toBeUndefined();
 		// Owner sees their own wallet_address

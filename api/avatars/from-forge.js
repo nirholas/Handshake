@@ -205,6 +205,6 @@ export default wrap(async (req, res) => {
 	// once and pays the two-sided referral reward when referred. Fire-and-forget.
 	queueMicrotask(() => markActivated(auth.userId, { source: 'forge_save', meta: { avatarId: avatar.id } }));
 
-	const viewUrl = `${env.APP_ORIGIN || ''}/discover/avatar/${avatar.id}`;
+	const viewUrl = `${env.APP_ORIGIN || ''}/avatars/${avatar.id}`;
 	return json(res, 201, { avatar, view_url: viewUrl });
 });

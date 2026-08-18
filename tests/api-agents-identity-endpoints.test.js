@@ -204,7 +204,7 @@ describe('GET /api/agents/by-wallet', () => {
 		await byWalletHandler(req({ url: `/api/agents/by-wallet?address=${EVM_ADDR}&chain_id=8453` }), res);
 
 		expect(res.statusCode).toBe(200);
-		expect(res.body.agents[0]).toMatchObject({ id: AGENT_ID, chain_id: 8453, home_url: `/agent/${AGENT_ID}` });
+		expect(res.body.agents[0]).toMatchObject({ id: AGENT_ID, chain_id: 8453, home_url: `/agents/${AGENT_ID}` });
 	});
 
 	it('rejects a malformed wallet address', async () => {

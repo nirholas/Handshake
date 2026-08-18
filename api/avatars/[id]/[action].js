@@ -104,7 +104,7 @@ async function handleAgentsByAvatar(req, res) {
 		solana_vanity_prefix: r.solana_vanity_prefix || null,
 		solana_vanity_suffix: r.solana_vanity_suffix || null,
 		createdAt: r.created_at,
-		url: `/agent/${r.id}`,
+		url: `/agents/${r.id}`,
 	}));
 
 	res.setHeader('cache-control', 'public, max-age=30, s-maxage=120, stale-while-revalidate=600');

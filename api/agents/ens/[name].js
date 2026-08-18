@@ -55,7 +55,7 @@ async function agentsByAddress(address) {
 		name: r.name,
 		description: r.description,
 		avatar_id: r.avatar_id,
-		home_url: r.home_url || `/agent/${r.id}`,
+		home_url: r.home_url || `/agents/${r.id}`,
 		erc8004_agent_id: r.erc8004_agent_id != null ? String(r.erc8004_agent_id) : null,
 		erc8004_registry: r.erc8004_registry,
 		chain_id: r.chain_id,

@@ -918,7 +918,7 @@ async function handleLaunchConfirm(req, res) {
 
 	return json(res, 201, {
 		ok: true,
-		agent: { ...updated, token, home_url: `${env.APP_ORIGIN}/agent/${updated.id}` },
+		agent: { ...updated, token, home_url: `${env.APP_ORIGIN}/agents/${updated.id}` },
 		plan: shapePlan(launchedPlan),
 	});
 }

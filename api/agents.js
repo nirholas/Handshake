@@ -814,7 +814,7 @@ function decorate(row, isOwner = true) {
 		avatar_visibility: avatarVisibility,
 		avatar_model_url: avatarModelUrl,
 		avatar_thumbnail_url: avatarThumbnailUrl,
-		home_url: row.home_url || `/agent/${row.id}`,
+		home_url: row.home_url || `/agents/${row.id}`,
 		skills: row.skills || [],
 		skill_prices: row.skill_prices || {},
 		meta,

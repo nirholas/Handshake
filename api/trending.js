@@ -146,7 +146,7 @@ export default wrap(async (req, res) => {
 			solana_address:       typeof meta.solana_address === 'string' ? meta.solana_address : null,
 			solana_vanity_prefix: meta.solana_vanity_prefix || null,
 			solana_vanity_suffix: meta.solana_vanity_suffix || null,
-			agent_url:          `https://three.ws/agent/${encodeURIComponent(r.id)}`,
+			agent_url:          `https://three.ws/agents/${encodeURIComponent(r.id)}`,
 		};
 	});
 

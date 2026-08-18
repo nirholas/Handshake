@@ -290,17 +290,18 @@
 			return { label: 'Solana', src: 'metaplex' };
 		}
 
-		// Each kind links to its natural detail surface: EVM to /a/<chain>/<id>,
-		// our Solana agents to their profile, external Solana to the 3D viewer or
-		// the on-chain explorer when there's nothing else to open. A registry row
-		// with no asset and no ref has nowhere real to go, so it returns null and
-		// the card renders without a link rather than with a dead stub link.
+		// Each kind links to its canonical detail page: EVM to /a/<chain>/<id>,
+		// our Solana agents to /agents/<id>, external Solana to its detail page
+		// when the API provides one, else the 3D viewer or the on-chain explorer
+		// when there's nothing else to open. A registry row with no asset and no
+		// ref has nowhere real to go, so it returns null and the card renders
+		// without a link rather than with a dead stub link.
 		function hrefFor(a) {
 			if (a.kind === 'onchain' && a.chainId != null && a.agentId != null) {
 				return `/a/${encodeURIComponent(a.chainId)}/${encodeURIComponent(a.agentId)}`;
 			}
-			if (a.source === 'three.ws' && a.agentId) return `/agent/${encodeURIComponent(a.agentId)}`;
-			return a.viewerUrl || a.explorerUrl || null;
+			if (a.source === 'three.ws' && a.agentId) return `/agents/${encodeURIComponent(a.agentId)}`;
+			return a.detailUrl || a.viewerUrl || a.explorerUrl || null;
 		}
 
 		function cardHtml(a) {

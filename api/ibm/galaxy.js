@@ -121,7 +121,7 @@ function agentImage(a) {
 }
 
 function agentUrl(a) {
-	return a.home_url || `/agent/${a.id}`;
+	return a.home_url || `/agents/${a.id}`;
 }
 
 // ── Cluster naming ───────────────────────────────────────────────────────────

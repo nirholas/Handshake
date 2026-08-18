@@ -174,7 +174,7 @@ describe('GET /api/trending payload', () => {
 		const { agents, coins } = res.json;
 
 		expect(agents.map((a) => a.rank)).toEqual([1, 2]);
-		expect(agents[0].agent_url).toBe('https://three.ws/agent/4339aafa-e5ed-496f-a8dd-9e6c4bff914d');
+		expect(agents[0].agent_url).toBe('https://three.ws/agents/4339aafa-e5ed-496f-a8dd-9e6c4bff914d');
 		expect(agents[0].avatar_thumbnail_url).toBe('https://cdn.test/thumb/harbor.png');
 		// A private avatar's thumbnail never leaves the platform on a public feed.
 		expect(agents[1].avatar_thumbnail_url).toBeNull();

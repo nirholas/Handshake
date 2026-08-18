@@ -134,7 +134,7 @@ describe('POST /api/avatars/from-forge', () => {
 		});
 		expect(res.statusCode).toBe(201);
 		expect(json.avatar.id).toBe('avatar-uuid-0001');
-		expect(json.view_url).toBe('https://three.ws/discover/avatar/avatar-uuid-0001');
+		expect(json.view_url).toBe('https://three.ws/avatars/avatar-uuid-0001');
 		// Copied into the caller's own namespace.
 		expect(r2State.put).toHaveBeenCalledTimes(1);
 		expect(r2State.put.mock.calls[0][0].key).toMatch(/^u\/user-1\//);

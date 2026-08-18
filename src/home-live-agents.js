@@ -838,7 +838,9 @@
 		function makeAgentCard(item, idx) {
 			var card = document.createElement('a');
 			card.className = 'showcase-agent-card';
-			card.href = item.viewerUrl || ('/avatars/' + (item.avatarId || item.agentId));
+			// The canonical avatar detail page, not the bare GLB viewer: the
+			// detail template carries chat, skills, embed, and launch actions.
+			card.href = item.detailUrl || ('/avatars/' + (item.avatarId || item.agentId));
 
 			var h = hashHue(item.avatarId || item.agentId || item.name || String(idx));
 			var h2 = (h + 50) % 360;

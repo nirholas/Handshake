@@ -789,7 +789,7 @@ export const handleRegisterConfirm = wrap(async (req, res) => {
 		validation = { error: e.code || 'validation_failed' };
 	}
 
-	return json(res, 201, { ok: true, agent: { ...agent, home_url: `${env.APP_ORIGIN}/agent/${agent.id}` }, sol_mint_address: asset_pubkey, tx_signature, network, ...(validation ? { validation } : {}) });
+	return json(res, 201, { ok: true, agent: { ...agent, home_url: `${env.APP_ORIGIN}/agents/${agent.id}` }, sol_mint_address: asset_pubkey, tx_signature, network, ...(validation ? { validation } : {}) });
 });
 
 // ── solana-collection-metadata ─────────────────────────────────────────────────
@@ -1075,7 +1075,7 @@ export const handleEdit = wrap(async (req, res) => {
 
 	return json(res, 200, {
 		ok: true,
-		agent: { ...updated, home_url: `${env.APP_ORIGIN}/agent/${updated.id}` },
+		agent: { ...updated, home_url: `${env.APP_ORIGIN}/agents/${updated.id}` },
 		asset_pubkey,
 		network,
 		signatures,
