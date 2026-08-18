@@ -98,6 +98,13 @@ TRELLIS channel.
   "NVIDIA Inception" as words rather than inventing a mention.
 - If a panelist answers, reply once with thanks and the forum link. Do not stack
   follow-ups in the same breath.
+- Reply directly to the live post. A quote tweet sits outside the thread the host is
+  reading from; save the quote tweet for after they engage.
+- Post early, while the stream is live. Read-out-loud questions get picked in the first
+  third, once the queue is still short enough to skim.
+- If neither post is answered on air, ask the same question in our existing forum thread.
+  The Nemotron team reads the developer forums, and a written answer there outlives a
+  live mention.
 
 ## Background on the family, for the follow-up
 
@@ -109,3 +116,4 @@ plus a reported trillion-parameter Nemotron 4 in training.
 - Time-to-first-token for Nano on an L4 when the same GPU is also feeding a render loop.
 - KV cache cost at full 1M context on a 24 GB card, and retrieval accuracy at 1M vs 128k.
 - Whether the openness bar (weights plus data plus recipes) holds at Nemotron 4 scale.
+
