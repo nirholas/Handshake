@@ -2243,7 +2243,7 @@
 						const newId = j.data?.agent?.id || j.agent?.id || j.id;
 						showToast(
 							newId
-								? `Forked. <a href="/agent/${esc(newId)}">Open your copy →</a>`
+								? `Forked. <a href="/agents/${esc(newId)}">Open your copy →</a>`
 								: 'Forked to your account.',
 							'ok',
 						);
@@ -2769,7 +2769,7 @@
 								: '';
 						return `
 						<div class="up-card-row-wrap">
-							<a class="up-card-row" href="/agent/${attr(a.id)}">
+							<a class="up-card-row" href="/agents/${attr(a.id)}">
 								<div class="up-card-row-thumb">${thumb}</div>
 								<div class="up-card-row-body">
 									<div class="up-card-row-head">
@@ -2914,7 +2914,7 @@
 						// the launching agent so the card is never a dead end.
 						return c.url
 							? `<a class="up-card" href="${attr(c.url)}" target="_blank" rel="noopener" style="text-decoration:none">${inner}</a>`
-							: `<a class="up-card" href="/agent/${attr(c.agent_id)}" style="text-decoration:none">${inner}</a>`;
+							: `<a class="up-card" href="/agents/${attr(c.agent_id)}" style="text-decoration:none">${inner}</a>`;
 					})
 					.join('');
 				return `<div class="up-grid">${cards}</div>`;
@@ -3058,7 +3058,7 @@
 								})
 							: '';
 						const agent = m.agent_name
-							? `<a href="/agent/${attr(m.agent_id)}">${esc(m.agent_name)}</a>`
+							? `<a href="/agents/${attr(m.agent_id)}">${esc(m.agent_name)}</a>`
 							: '';
 						return `
 						<div class="up-card-row">

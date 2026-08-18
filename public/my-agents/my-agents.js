@@ -338,7 +338,7 @@ function buildNativeCard(agent) {
 	const body = document.createElement('div');
 	body.className = 'my-agents-card__body';
 	body.innerHTML = `
-		<a class="my-agents-card__name-link" href="/agent/${escapeHtml(agent.id)}">
+		<a class="my-agents-card__name-link" href="/agents/${escapeHtml(agent.id)}">
 			<h2 class="my-agents-card__name" title="${escapeHtml(agent.name)}">${escapeHtml(agent.name)}</h2>
 		</a>
 		<div class="my-agents-card__row">${sourcePill}${publishedPill}</div>
@@ -349,7 +349,7 @@ function buildNativeCard(agent) {
 	const footer = document.createElement('div');
 	footer.className = 'my-agents-card__footer';
 	footer.innerHTML = `
-		<a class="my-agents-btn" href="/agent/${escapeHtml(agent.id)}">Open</a>
+		<a class="my-agents-btn" href="/agents/${escapeHtml(agent.id)}">Open</a>
 		<a class="my-agents-btn my-agents-btn--ghost" href="/agent-edit?id=${escapeHtml(agent.id)}">Edit</a>`;
 	card.appendChild(footer);
 
@@ -402,7 +402,7 @@ function _renderImportAction(wrap, agent, importedId = null) {
 	if (importedId) {
 		wrap.innerHTML = `
 			<button class="my-agents-btn my-agents-btn--done" disabled aria-label="Agent already in library">In library ✓</button>
-			<a class="my-agents-btn my-agents-btn--ghost" href="/agent/${escapeHtml(importedId)}">Open</a>`;
+			<a class="my-agents-btn my-agents-btn--ghost" href="/agents/${escapeHtml(importedId)}">Open</a>`;
 		return;
 	}
 

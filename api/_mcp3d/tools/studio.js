@@ -2060,7 +2060,7 @@ export const toolDefs = [
 				},
 			});
 
-			const viewUrl = `${env.APP_ORIGIN}/discover/avatar/${avatar.id}`;
+			const viewUrl = `${env.APP_ORIGIN}/avatars/${avatar.id}`;
 			return {
 				content: [
 					{

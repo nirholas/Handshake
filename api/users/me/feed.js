@@ -334,7 +334,7 @@ function mergeItems({ avatarRows, agentRows, coinRows, modelRows, worldRows, res
 			actor: actorFrom(r, { avatar: 'actor_avatar' }),
 			title: r.name,
 			subtitle: r.description || null,
-			href: `/agent/${r.id}`,
+			href: `/agents/${r.id}`,
 			image: r.profile_image_url || r.avatar_url || null,
 		});
 	}
@@ -349,7 +349,7 @@ function mergeItems({ avatarRows, agentRows, coinRows, modelRows, worldRows, res
 			actor: actorFrom(r, { avatar: 'actor_avatar' }),
 			title: t.name || r.agent_name,
 			subtitle: t.symbol ? `$${String(t.symbol).replace(/^\$/, '')}` : null,
-			href: t.pumpfun_url || t.explorer_url || `/agent/${r.agent_id}`,
+			href: t.pumpfun_url || t.explorer_url || `/agents/${r.agent_id}`,
 			external: Boolean(t.pumpfun_url || t.explorer_url),
 			image: t.image || r.profile_image_url || r.avatar_url || null,
 		});

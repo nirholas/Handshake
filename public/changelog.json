@@ -1,11 +1,22 @@
 {
-	"generated_at": "2026-08-17T15:18:34.436Z",
+	"generated_at": "2026-08-18T23:12:24.206Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-08-18",
+			"type": "update",
+			"title": "Every agent and avatar now opens its profile page, wherever you click it",
+			"summary": "Clicking an agent or avatar used to land you in different places depending on where you found it: search results took a detour through two redirects, the quick-search palette linked every agent to a dead URL, gallery thumbnails dropped you into the bare 3D viewer, and older links still used a retired address. Now every surface, including search, the quick-search palette, the gallery, the homepage showcase, your feed, and creator profiles, links straight to the entity's profile page: the one with the 3D stage, chat, wallet, skills, and embed tools. Agents share the same page style as avatars, so the platform feels like one place instead of six.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
 		{
 			"date": "2026-08-17",
 			"type": "launch",

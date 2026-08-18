@@ -315,7 +315,7 @@ export default wrap(async (req, res) => {
 			const href = isAvatar
 				? `/avatars/${r.item_id}`
 				: isAgent
-					? `/agent/${r.item_id}`
+					? `/agents/${r.item_id}`
 					: '/marketplace';
 			const decimals = Number(r.mint_decimals || 0);
 			const price = Number(r.amount || 0) / 10 ** decimals;

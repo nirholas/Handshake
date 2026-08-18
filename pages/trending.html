@@ -501,7 +501,7 @@
 				const onchainBadge = a.is_onchain ? '<span class="tr-onchain">◈ on-chain</span>' : '';
 				const rankCls = a.rank <= 3 ? ` tr-rank-${a.rank}` : '';
 				const name = a.name || 'Unnamed agent';
-				const internal = a.id != null ? `/agent/${encodeURIComponent(a.id)}` : null;
+				const internal = a.id != null ? `/agents/${encodeURIComponent(a.id)}` : null;
 				const href = safeHref(internal, a.agent_url);
 				const tag = href ? 'a' : 'div';
 				const attrs = href
@@ -594,7 +594,7 @@
 				const name = a.name || 'Unnamed agent';
 				const tier = String(a.tier || 'emerging');
 				const tierLabel = a.tier_label || tier;
-				const internal = a.id != null ? `/agent/${encodeURIComponent(a.id)}/wallet#reputation` : null;
+				const internal = a.id != null ? `/agents/${encodeURIComponent(a.id)}/wallet#reputation` : null;
 				const href = safeHref(internal, a.breakdown_url);
 				const tag = href ? 'a' : 'div';
 				const score = Math.round(Number(a.score) || 0);

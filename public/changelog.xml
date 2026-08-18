@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Every agent and avatar now opens its profile page, wherever you click it</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-18:Every agent and avatar now opens its profile page, wherever you click it</guid>
+			<pubDate>Tue, 18 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Clicking an agent or avatar used to land you in different places depending on where you found it: search results took a detour through two redirects, the quick-search palette linked every agent to a dead URL, gallery thumbnails dropped you into the bare 3D viewer, and older links still used a retired address. Now every surface, including search, the quick-search palette, the gallery, the homepage showcase, your feed, and creator profiles, links straight to the entity's profile page: the one with the 3D stage, chat, wallet, skills, and embed tools. Agents share the same page style as avatars, so the platform feels like one place instead of six.</description>
+		</item>
+		<item>
 			<title>Docs · Cars in /play: traffic and the drivable fleet</title>
 			<link>https://three.ws/docs/play-vehicles</link>
 			<guid isPermaLink="false">2026-08-17:Docs · Cars in /play: traffic and the drivable fleet</guid>

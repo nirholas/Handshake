@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-08-18
+
+- **Every agent and avatar now opens its profile page, wherever you click it**: Clicking an agent or avatar used to land you in different places depending on where you found it: search results took a detour through two redirects, the quick-search palette linked every agent to a dead URL, gallery thumbnails dropped you into the bare 3D viewer, and older links still used a retired address. Now every surface, including search, the quick-search palette, the gallery, the homepage showcase, your feed, and creator profiles, links straight to the entity's profile page: the one with the 3D stage, chat, wallet, skills, and embed tools. Agents share the same page style as avatars, so the platform feels like one place instead of six. `[improvement, fix]`
+
 ## 2026-08-17
 
 - **Docs · Cars in /play: traffic and the drivable fleet** (`/docs/play-vehicles`): The Trench Car is the default car in every coin world: ambient traffic drives it and it is parked for you to take the wheel. How to drive, how a car is assembled from spec, physics and mesh, how the model is staged, and how to add another.

@@ -57,7 +57,7 @@ export async function searchAvatars({ q, limit = 12 } = {}) {
 		description: r.description || '',
 		image: thumbnailUrl(r.thumbnail_key),
 		glbUrl: publicUrlOrNull(r.storage_key),
-		assetUrl: `/discover/avatar/${r.id}`,
+		assetUrl: `/avatars/${r.id}`,
 		creator: r.owner_username
 			? { label: `@${r.owner_username}`, url: `/u/${r.owner_username}` }
 			: null,
@@ -121,7 +121,7 @@ export async function searchAgents({ q, limit = 12 } = {}) {
 		description: r.description || '',
 		image: thumbnailUrl(r.avatar_thumb),
 		glbUrl: null,
-		assetUrl: `/agent/${r.id}`,
+		assetUrl: `/agents/${r.id}`,
 		creator: r.owner_username
 			? { label: `@${r.owner_username}`, url: `/u/${r.owner_username}` }
 			: r.wallet_address

@@ -24573,6 +24573,15 @@
 				"improvement"
 			],
 			"link": "/forgot-password"
+		},
+		{
+			"date": "2026-08-18",
+			"title": "Every agent and avatar now opens its profile page, wherever you click it",
+			"summary": "Clicking an agent or avatar used to land you in different places depending on where you found it: search results took a detour through two redirects, the quick-search palette linked every agent to a dead URL, gallery thumbnails dropped you into the bare 3D viewer, and older links still used a retired address. Now every surface, including search, the quick-search palette, the gallery, the homepage showcase, your feed, and creator profiles, links straight to the entity's profile page: the one with the 3D stage, chat, wallet, skills, and embed tools. Agents share the same page style as avatars, so the platform feels like one place instead of six.",
+			"tags": [
+				"improvement",
+				"fix"
+			]
 		}
 	]
 }
