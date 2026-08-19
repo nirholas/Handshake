@@ -359,6 +359,14 @@ export function getLocale() {
 	return state.current;
 }
 
+// "en" → "EN", "zh-CN" → "ZH", "pt-BR" → "PT". The two-letter code is what a
+// compact control shows in place of the full language name; the picker itself
+// still lists the names, so nothing is lost.
+export function shortLocaleLabel(code) {
+	const base = String(code || '').split(/[-_]/)[0].trim();
+	return base ? base.toUpperCase().slice(0, 3) : 'EN';
+}
+
 export async function initI18n() {
 	const manifest = await loadManifest();
 	await setLocale(detectLocale(manifest));
@@ -395,7 +403,34 @@ function registerLangSwitcher() {
 				   screen. Unconstrained parents render exactly as before. */
 				:host { display: inline-flex; max-width: 100%; min-width: 0; }
 				.wrap { position: relative; display: inline-flex; align-items: center; max-width: 100%; min-width: 0; }
-				svg { position: absolute; left: 8px; width: 14px; height: 14px; opacity: .6; pointer-events: none; }
+				svg { position: absolute; left: 8px; width: 14px; height: 14px; opacity: .6; pointer-events: none; z-index: 1; }
+				/* Compact face: the locale CODE instead of its name. "English"
+				   makes a 170px control; on a phone that either ran off the edge
+				   of a HUD ("Englis…") or, as the floating FAB, laid a full-width
+				   bar across the page's own bottom controls. The native <select>
+				   still owns the interaction (it sits transparent on top, so the
+				   picker, keyboard and screen readers behave exactly as before)
+				   and its options keep the full language names. */
+				.face {
+					display: none; align-items: center; gap: 6px;
+					font: inherit; font-size: 13px; font-weight: 600; line-height: 1;
+					letter-spacing: .04em;
+					color: var(--text-2, #cfcfd4);
+					background: var(--surface-2, rgba(255,255,255,.04));
+					border: 1px solid var(--border, rgba(255,255,255,.12));
+					border-radius: 8px;
+					padding: 7px 22px 7px 26px;
+					transition: border-color .15s ease, background .15s ease, color .15s ease;
+				}
+				.wrap.is-compact .face { display: inline-flex; }
+				.wrap.is-compact select {
+					position: absolute; inset: 0; width: 100%; height: 100%;
+					padding: 0; border: 0; background: transparent; opacity: 0;
+				}
+				.wrap.is-compact .chev { right: 7px; }
+				.wrap.is-compact select:hover ~ .face { color: var(--text, #fff); border-color: var(--border-strong, rgba(255,255,255,.24)); }
+				.wrap.is-compact select:focus-visible { opacity: 0; }
+				.wrap.is-compact select:focus-visible ~ .face { outline: 2px solid var(--accent, #6d6dff); outline-offset: 2px; }
 				select {
 					appearance: none; -webkit-appearance: none;
 					font: inherit; font-size: 13px; line-height: 1;
@@ -420,16 +455,35 @@ function registerLangSwitcher() {
 				<select aria-label="Choose language">
 					${manifest.locales.map((l) => `<option value="${l.code}">${l.name}</option>`).join('')}
 				</select>
+				<span class="face" aria-hidden="true"></span>
 				<svg class="chev" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.6"/></svg>
 			</span>`;
 
 			const select = root.querySelector('select');
+			const wrap = root.querySelector('.wrap');
+			const face = root.querySelector('.face');
+			const paintFace = () => { face.textContent = shortLocaleLabel(select.value); };
 			select.value = getLocale();
-			select.addEventListener('change', () => setLocale(select.value));
+			paintFace();
+			select.addEventListener('change', () => {
+				paintFace();
+				setLocale(select.value);
+			});
 			// Keep the control in sync if another instance or code path changes locale.
 			window.addEventListener('i18n:change', (e) => {
-				if (e.detail?.locale) select.value = e.detail.locale;
+				if (e.detail?.locale) {
+					select.value = e.detail.locale;
+					paintFace();
+				}
 			});
+
+			// Compact below the phone breakpoint, or wherever a page asks for it
+			// (a narrow HUD rail). matchMedia keeps it correct across rotation.
+			const compactAttr = this.hasAttribute('compact');
+			const mq = window.matchMedia?.('(max-width: 640px)');
+			const syncCompact = () => wrap.classList.toggle('is-compact', compactAttr || !!mq?.matches);
+			syncCompact();
+			mq?.addEventListener?.('change', syncCompact);
 		}
 	}
 	customElements.define('lang-switcher', LangSwitcher);
