@@ -2,22 +2,32 @@
 	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
 	"name": "io.github.nirholas/metaplex-agent",
 	"title": "Metaplex Agent Registry",
-	"description": "Deploy AI agents on-chain: mint a Metaplex Core asset + EIP-8004 identity on Solana. By three.ws.",
+	"description": "Deploy AI agents on-chain on Solana with an EIP-8004 identity. Deploy fee funds $THREE buybacks.",
 	"websiteUrl": "https://three.ws",
-	"icons": [{ "src": "https://three.ws/three-ws-mcp-icon.svg", "mimeType": "image/svg+xml", "sizes": ["any"] }],
+	"icons": [
+		{
+			"src": "https://three.ws/three-ws-mcp-icon.svg",
+			"mimeType": "image/svg+xml",
+			"sizes": [
+				"any"
+			]
+		}
+	],
 	"repository": {
 		"url": "https://github.com/nirholas/three.ws",
 		"source": "github",
 		"subfolder": "packages/metaplex-agent-mcp"
 	},
-	"version": "0.1.2",
+	"version": "0.2.0",
 	"packages": [
 		{
 			"registryType": "npm",
 			"identifier": "@three-ws/metaplex-agent-mcp",
-			"version": "0.1.2",
+			"version": "0.2.0",
 			"runtimeHint": "npx",
-			"transport": { "type": "stdio" },
+			"transport": {
+				"type": "stdio"
+			},
 			"environmentVariables": [
 				{
 					"name": "SOLANA_SECRET_KEY",
@@ -45,6 +55,40 @@
 					"isRequired": false,
 					"default": "true",
 					"format": "boolean"
+				},
+				{
+					"name": "DEPLOY_FEE_SOL",
+					"description": "Mainnet deploy fee, in SOL, paid to DEPLOY_FEE_WALLET in the same transaction as the mint. Default 0.02.",
+					"isRequired": false,
+					"default": "0.02",
+					"format": "string"
+				},
+				{
+					"name": "DEPLOY_FEE_WALLET",
+					"description": "Wallet the deploy fee is paid to. Defaults to the three.ws $THREE buyback wallet; override only when self-hosting a fork.",
+					"isRequired": false,
+					"format": "string"
+				},
+				{
+					"name": "DEPLOY_FEE_ENABLED",
+					"description": "Set false to build a fork that charges no deploy fee. Default true.",
+					"isRequired": false,
+					"default": "true",
+					"format": "boolean"
+				},
+				{
+					"name": "THREE_HALF_PRICE_AT",
+					"description": "$THREE balance in the paying wallet that halves the deploy fee. Default 50000.",
+					"isRequired": false,
+					"default": "50000",
+					"format": "string"
+				},
+				{
+					"name": "THREE_FREE_AT",
+					"description": "$THREE balance in the paying wallet that waives the deploy fee entirely. Default 250000.",
+					"isRequired": false,
+					"default": "250000",
+					"format": "string"
 				}
 			]
 		}
