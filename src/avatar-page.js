@@ -35,6 +35,7 @@ import { mountNameplate } from './shared/living-avatar.js';
 import { mountPresence } from './shared/networth-presence.js';
 import { emitRecallFromChat } from './agents/memory-client.js';
 import { moodEngine } from './agents/mood-engine.js';
+import { skillLabel } from './shared/skill-label.js';
 
 const ATTACHED_KEY_PREFIX = 'avatar_attached_v1:';
 
@@ -174,6 +175,46 @@ async function init() {
 	if (mode === 'avatar') loadUsedBy();
 }
 
+
+/**
+ * The two ways this page can fail need different words.
+ *
+ * A missing subject is a normal outcome of a stale or mistyped link, so it says
+ * so plainly and points at the directory. Anything else (a network drop, a 500,
+ * a bug in this module) is not the visitor's doing: it offers a retry instead of
+ * a dead end, and it never presents the thrown message as the explanation. That
+ * last part is not cosmetic. When a JavaScriptCore dead-zone error took this
+ * page down, every Safari visitor was told the avatar was "not found" above the
+ * raw string "Cannot access uninitialized variable.", which is both wrong and
+ * unreadable. The engine's wording belongs in the console, where it is useful.
+ */
+function renderInitFailure(err) {
+	const subject = mode === 'agent' ? 'agent' : 'avatar';
+	const browse = mode === 'agent'
+		? { href: '/agents', label: 'Browse agents' }
+		: { href: '/marketplace', label: 'Browse the marketplace' };
+
+	if (err?.code === 'not_found') {
+		$('av-shell').innerHTML = `<div class="av-error">
+			<strong>${esc(mode === 'agent' ? 'Agent not found' : 'Avatar not found')}</strong>
+			<span>No ${subject} lives at this address. The link may be out of date, or the ${subject} may have been removed.</span>
+			<a class="av-error-cta" href="${browse.href}">${browse.label} &rarr;</a>
+		</div>`;
+		return;
+	}
+
+	$('av-shell').innerHTML = `<div class="av-error">
+		<strong>This ${subject} could not be loaded</strong>
+		<span>Something went wrong on our end, not with your link. Try again in a moment.</span>
+		<div class="av-error-actions">
+			<button type="button" class="av-error-cta" id="av-error-retry">Try again</button>
+			<a class="av-error-cta" href="${browse.href}">${browse.label} &rarr;</a>
+		</div>
+		<p class="av-error-detail">${esc(err?.message || 'Unknown error')}</p>
+	</div>`;
+	$('av-error-retry')?.addEventListener('click', () => { location.reload(); });
+}
+
 // The action bar's back link points at the directory this entity came from.
 function mountBackLink() {
 	const back = document.querySelector('.av-back');
@@ -197,6 +238,17 @@ function mountBackLink() {
  * @param {string} id
  * @returns {Promise<{ agent: object|null, avatar: object }>}
  */
+/**
+ * A subject that genuinely does not exist, as opposed to a request that failed.
+ * The two need different words on screen: one is a stale link the visitor can
+ * act on, the other is our problem and deserves a retry.
+ */
+function notFound(message) {
+	const err = new Error(message);
+	err.code = 'not_found';
+	return err;
+}
+
 async function resolveEntity(id) {
 	if (mode === 'agent') {
 		const rec = await fetchAgentRecord(id);
@@ -205,7 +257,7 @@ async function resolveEntity(id) {
 			location.replace(`/avatars/${encodeURIComponent(id)}`);
 			return new Promise(() => {}); // navigating away; never resolve
 		}
-		throw new Error('No agent with that id.');
+		throw notFound('No agent with that id.');
 	}
 
 	const av = await fetchAvatarRecord(id);
@@ -214,7 +266,7 @@ async function resolveEntity(id) {
 		location.replace(`/agents/${encodeURIComponent(id)}`);
 		return new Promise(() => {});
 	}
-	throw new Error('No avatar with that id.');
+	throw notFound('No avatar with that id.');
 }
 
 /** GET an avatar record. Returns null on 404; throws on any other failure. */
@@ -436,13 +488,16 @@ function signalsHTML() {
 	if (mode === 'agent') {
 		const skills = (agent.skills || []).length;
 		if (skills) items.push({ v: skills, k: skills === 1 ? 'skill' : 'skills' });
-		if (num(agent.chat_count)) items.push({ v: compactNumber(agent.chat_count), k: 'chats' });
+		const chats = num(agent.chat_count);
+		if (chats) items.push({ v: compactNumber(chats), k: chats === 1 ? 'chat' : 'chats' });
 		if (agent.solana_address) items.push({ v: 'Solana', k: 'wallet' });
 		if (agent.is_registered) items.push({ v: 'On-chain', k: 'identity' });
 		if (agent.created_at) items.push({ v: sinceLabel(agent.created_at), k: 'active since' });
 	} else {
-		if (num(avatar.view_count)) items.push({ v: compactNumber(avatar.view_count), k: 'views' });
-		if (num(avatar.fork_count)) items.push({ v: compactNumber(avatar.fork_count), k: 'forks' });
+		const views = num(avatar.view_count);
+		const forks = num(avatar.fork_count);
+		if (views) items.push({ v: compactNumber(views), k: views === 1 ? 'view' : 'views' });
+		if (forks) items.push({ v: compactNumber(forks), k: forks === 1 ? 'fork' : 'forks' });
 		if (num(avatar.version) > 1) items.push({ v: `v${avatar.version}`, k: 'version' });
 		if (avatar.created_at) items.push({ v: sinceLabel(avatar.created_at), k: 'created' });
 	}
@@ -588,7 +643,7 @@ function renderShell(glbUrl) {
 			${avatarId ? `<avatar-actions id="av-actions" avatar-id="${esc(avatarId)}"${mode === 'agent' ? ' mode="fork"' : ''} style="margin-top:14px;display:block"></avatar-actions>` : ''}
 			${viewerOwns ? `
 			<div class="av-owner-row" id="av-owner-row">
-				<a class="av-owner-btn" href="${mode === 'agent' ? `/agent/${encodeURIComponent(entityId)}/edit` : `/avatars/${encodeURIComponent(avatarId)}/edit`}">
+				<a class="av-owner-btn" href="${mode === 'agent' ? `/agents/${encodeURIComponent(entityId)}/edit` : `/avatars/${encodeURIComponent(avatarId)}/edit`}">
 					<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
 					Edit
 				</a>
@@ -706,6 +761,9 @@ function renderShell(glbUrl) {
 			</div>
 		</div>
 	`;
+
+	// The skeleton is gone the moment real markup lands; tell assistive tech too.
+	$('av-shell')?.removeAttribute('aria-busy');
 
 	wireWalletChips($('av-wallet-row'));
 
@@ -1618,7 +1676,7 @@ async function startAgentWithAvatar() {
 		if (!r.ok) throw new Error(j.error_description || j.error || 'Failed to create agent');
 		const newId = j?.data?.agent?.id;
 		if (!newId) throw new Error('Server did not return new agent id');
-		location.href = `/agent/${encodeURIComponent(newId)}/edit`;
+		location.href = `/agents/${encodeURIComponent(newId)}/edit`;
 	} catch (err) {
 		// A signed-out caller is already on its way to /login (apiFetch owns that
 		// redirect), so there is nothing to say and nothing to retry.
@@ -1710,8 +1768,8 @@ function renderAgentCapabilities(list) {
 						: `<span class="av-cap-badge">Free</span>`;
 				return `<div class="av-row">
 					<div class="av-row-main">
-						<p class="av-row-title">${esc(name)}</p>
-						<p class="av-row-sub">${gated || amount > 0 ? 'Priced per call' : 'Callable at no cost'}</p>
+						<p class="av-row-title">${esc(skillLabel(name))}</p>
+						<p class="av-row-sub"><code class="av-row-slug">${esc(name)}</code></p>
 					</div>
 					${badge}
 				</div>`;
@@ -2463,9 +2521,11 @@ async function loadRelated() {
 		<div class="av-related-card">
 			<a class="av-related-main" href="${esc(a.href || `/avatars/${id}`)}" aria-label="Open ${esc(a.name || 'avatar')}">
 				<div class="av-related-thumb">
-					${a.glbUrl ? `<model-viewer
+					${a.glbUrl
+						? `<model-viewer
 						src="${esc(a.glbUrl)}"
 						alt="${esc(a.name || 'Avatar')}"
+						${a.image ? `poster="${esc(a.image)}"` : ''}
 						auto-rotate
 						rotation-per-second="14deg"
 						interaction-prompt="none"
@@ -2476,7 +2536,10 @@ async function loadRelated() {
 						shadow-intensity="0.4"
 						tone-mapping="aces"
 						loading="lazy"
-					></model-viewer>` : ''}
+					></model-viewer>`
+						: a.image
+							? `<img class="av-related-img" src="${esc(a.image)}" alt="${esc(a.name || 'Avatar')}" loading="lazy" decoding="async" />`
+							: `<span class="av-related-initial" aria-hidden="true">${esc((a.name || '?').slice(0, 1).toUpperCase())}</span>`}
 				</div>
 				<div class="av-related-info">
 					<p class="av-related-name">${esc(a.name || 'Untitled')}</p>
@@ -2509,6 +2572,9 @@ async function fetchSimilarAgents() {
 		href: `/agents/${encodeURIComponent(a.id)}`,
 		name: a.name,
 		glbUrl: a.avatar_glb_url || null,
+		// Doubles as the model-viewer poster, so the card shows the agent even
+		// before its GLB is fetched, and as the whole card when it has no body.
+		image: a.thumbnail_url || null,
 		subtitle: relatedAgentSubtitle(a),
 	}));
 }
@@ -2627,17 +2693,12 @@ function setCanonical(href) {
 // Declaring every binding before this call removes the ordering dependency
 // instead of relying on which engine checks when.
 if (!entityId) {
+	$('av-shell').removeAttribute('aria-busy');
 	$('av-shell').innerHTML = `<div class="av-error">No ${mode} specified.</div>`;
 } else {
 	init().catch((err) => {
 		log.error('[studio] init', err);
-		const browse = mode === 'agent'
-			? { href: '/agents', label: 'Browse agents' }
-			: { href: '/marketplace', label: 'Browse the marketplace' };
-		$('av-shell').innerHTML = `<div class="av-error">
-			<strong>${esc(mode === 'agent' ? 'Agent not found' : 'Avatar not found')}</strong>
-			<span>${esc(err.message || 'Failed to load')}</span>
-			<a class="av-error-cta" href="${browse.href}">${browse.label} &rarr;</a>
-		</div>`;
+		$('av-shell')?.removeAttribute('aria-busy');
+		renderInitFailure(err);
 	});
 }

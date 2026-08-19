@@ -487,6 +487,41 @@
 				border: 1px solid rgba(255, 255, 255, 0.2);
 				color: rgba(255, 255, 255, 0.9);
 			}
+			.av-tag:hover {
+				background: rgba(255, 255, 255, 0.14);
+				border-color: rgba(255, 255, 255, 0.34);
+			}
+			.av-tag:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+			}
+
+			/* ── Signals (real counters, never placeholders) ── */
+			.av-signals {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 6px 20px;
+				margin: 14px 0 0;
+			}
+			.av-signal {
+				display: flex;
+				flex-direction: column-reverse;
+				gap: 1px;
+				min-width: 0;
+			}
+			.av-signal dt {
+				font-size: 10px;
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+				color: var(--text-3);
+			}
+			.av-signal dd {
+				margin: 0;
+				font-size: 14px;
+				font-weight: 600;
+				color: var(--text);
+				font-variant-numeric: tabular-nums;
+			}
 
 			.av-cta-talk-row {
 				padding: 16px 24px 0;
@@ -1218,6 +1253,68 @@
 			.av-row:hover {
 				border-color: var(--border-2);
 			}
+
+			/* ── Agent capabilities (real skills + real prices) ── */
+			.av-cap-summary {
+				display: flex;
+				flex-wrap: wrap;
+				align-items: baseline;
+				gap: 4px 8px;
+				padding: 12px 14px;
+				margin-bottom: 4px;
+				border: 1px solid var(--border-2);
+				border-radius: 10px;
+				background: var(--panel-2);
+				font-size: 13px;
+				color: var(--text-2);
+			}
+			.av-cap-summary strong {
+				color: var(--text);
+				font-weight: 600;
+			}
+			.av-cap-summary--free strong {
+				color: var(--success);
+			}
+			.av-cap-badge {
+				flex: none;
+				padding: 4px 10px;
+				border-radius: 999px;
+				border: 1px solid var(--border-2);
+				background: var(--panel-2);
+				font-size: 11px;
+				font-weight: 600;
+				color: var(--text-2);
+				white-space: nowrap;
+				font-variant-numeric: tabular-nums;
+			}
+			.av-cap-badge--paid {
+				color: var(--text);
+				border-color: rgba(255, 255, 255, 0.3);
+			}
+			.av-cap-badge--gated {
+				color: var(--warn);
+				border-color: rgba(251, 191, 36, 0.4);
+			}
+			.av-cap-more {
+				display: inline-block;
+				margin-top: 6px;
+				font-size: 12px;
+				color: var(--text-2);
+				text-decoration: none;
+				border-bottom: 1px solid var(--border-2);
+				padding-bottom: 2px;
+				transition:
+					color 0.15s ease,
+					border-color 0.15s ease;
+			}
+			.av-cap-more:hover {
+				color: var(--text);
+				border-color: var(--text-3);
+			}
+			.av-cap-more:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 3px;
+			}
 			.av-row-main {
 				min-width: 0;
 				flex: 1;
@@ -1527,6 +1624,24 @@
 				background: transparent;
 				--poster-color: transparent;
 			}
+			/* Fallbacks so a card is never an empty box: the rendered thumbnail
+			   when there is no GLB, and the initial when there is neither. */
+			.av-related-img {
+				width: 100%;
+				height: 100%;
+				object-fit: cover;
+				display: block;
+			}
+			.av-related-initial {
+				position: absolute;
+				inset: 0;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 28px;
+				font-weight: 600;
+				color: var(--text-3);
+			}
 			.av-related-info {
 				padding: 10px 12px;
 			}
@@ -1545,6 +1660,85 @@
 				margin: 2px 0 0;
 			}
 
+			/* ── Loading skeleton ────────────────────────────── */
+			.av-sr-only {
+				position: absolute;
+				width: 1px;
+				height: 1px;
+				padding: 0;
+				margin: -1px;
+				overflow: hidden;
+				clip: rect(0, 0, 0, 0);
+				white-space: nowrap;
+				border: 0;
+			}
+			.av-skel-stage {
+				position: relative;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				min-height: 560px;
+				border-right: 1px solid var(--border);
+				background:
+					radial-gradient(ellipse at 50% 35%, rgba(255, 255, 255, 0.03), transparent 60%),
+					var(--bg);
+			}
+			.av-skel-orb {
+				width: 190px;
+				height: 260px;
+				border-radius: 120px / 150px;
+				background: linear-gradient(
+					100deg,
+					rgba(255, 255, 255, 0.03) 30%,
+					rgba(255, 255, 255, 0.08) 50%,
+					rgba(255, 255, 255, 0.03) 70%
+				);
+				background-size: 220% 100%;
+				animation: av-skel-sweep 1.6s ease-in-out infinite;
+			}
+			.av-skel-side {
+				display: flex;
+				flex-direction: column;
+				gap: 12px;
+				padding: 24px;
+				min-width: 0;
+			}
+			.av-skel {
+				border-radius: 8px;
+				background: linear-gradient(
+					100deg,
+					rgba(255, 255, 255, 0.04) 30%,
+					rgba(255, 255, 255, 0.09) 50%,
+					rgba(255, 255, 255, 0.04) 70%
+				);
+				background-size: 220% 100%;
+				animation: av-skel-sweep 1.6s ease-in-out infinite;
+			}
+			.av-skel-pill { width: 118px; height: 18px; border-radius: 999px; }
+			.av-skel-title { width: 62%; height: 30px; }
+			.av-skel-line { width: 100%; height: 13px; }
+			.av-skel-line.short { width: 48%; }
+			.av-skel-cta { width: 100%; height: 44px; border-radius: 12px; margin-top: 6px; }
+			.av-skel-row { display: flex; gap: 8px; }
+			.av-skel-chip { flex: 1; height: 38px; border-radius: 10px; }
+			@keyframes av-skel-sweep {
+				0% { background-position: 140% 0; }
+				100% { background-position: -40% 0; }
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.av-skel,
+				.av-skel-orb {
+					animation: none;
+				}
+			}
+			@media (max-width: 980px) {
+				.av-skel-stage {
+					border-right: 0;
+					border-bottom: 1px solid var(--border);
+					min-height: 320px;
+				}
+			}
+
 			.av-error {
 				display: flex;
 				flex-direction: column;
@@ -1560,15 +1754,32 @@
 				color: var(--text);
 				letter-spacing: -0.01em;
 			}
+			.av-error-actions {
+				display: flex;
+				flex-wrap: wrap;
+				justify-content: center;
+				gap: 10px;
+			}
+			.av-error-detail {
+				margin-top: 6px;
+				font-size: 12px;
+				color: var(--text-3);
+				opacity: 0.75;
+				max-width: 40ch;
+				word-break: break-word;
+			}
 			.av-error-cta {
 				margin-top: 10px;
 				padding: 9px 18px;
 				border-radius: 999px;
 				border: 1px solid var(--border-2);
+				background: none;
 				color: var(--text);
 				text-decoration: none;
+				font-family: inherit;
 				font-size: 13px;
 				font-weight: 600;
+				cursor: pointer;
 				transition:
 					background 0.15s ease,
 					border-color 0.15s ease,
@@ -1685,8 +1896,24 @@
 			</div>
 		</header>
 
-		<main class="av-shell" id="av-shell">
-			<div class="av-error" id="av-loading">Loading avatar…</div>
+		<main class="av-shell" id="av-shell" aria-busy="true">
+			<div class="av-skel-stage" id="av-loading" role="status" aria-live="polite">
+				<span class="av-sr-only">Loading</span>
+				<div class="av-skel-orb" aria-hidden="true"></div>
+			</div>
+			<div class="av-skel-side" aria-hidden="true">
+				<div class="av-skel av-skel-pill"></div>
+				<div class="av-skel av-skel-title"></div>
+				<div class="av-skel av-skel-line"></div>
+				<div class="av-skel av-skel-cta"></div>
+				<div class="av-skel-row">
+					<div class="av-skel av-skel-chip"></div>
+					<div class="av-skel av-skel-chip"></div>
+					<div class="av-skel av-skel-chip"></div>
+				</div>
+				<div class="av-skel av-skel-line"></div>
+				<div class="av-skel av-skel-line short"></div>
+			</div>
 		</main>
 
 		<section class="av-related" id="av-related" hidden>
