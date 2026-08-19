@@ -131,6 +131,7 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | Guard | Command | Protects |
 |---|---|---|
 | Browser bundle purity | `npm run check:browser-graph` | No Node-only module leaks into the browser bundle. |
+| Bootstrap ordering | `npm run check:tdz-bootstrap` | No page calls its own entry point above the state that entry point writes, which renders fine in Chrome and throws in every Safari. |
 | Build output shape | `npm run check:dist` | `dist/` contains every artifact the deploy expects. |
 | Deploy artifact preflight | `npm run audit:deploy` | The artifact failure classes that have taken production down. |
 | Cloud Build upload | `npm run check:gcloudignore` | What `gcloud builds submit` would actually upload. |
