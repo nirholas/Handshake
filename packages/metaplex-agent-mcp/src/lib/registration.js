@@ -17,7 +17,23 @@
 
 export const EIP_8004_REGISTRATION_TYPE = 'https://eips.ethereum.org/EIPS/eip-8004#registration-v1';
 
-const b64 = (obj) => Buffer.from(JSON.stringify(obj), 'utf8').toString('base64');
+// Isomorphic base64: Buffer in Node, TextEncoder + btoa in the browser, so the
+// same builders power the MCP server, scripts, and the three.ws deploy page.
+function encodeBase64(str) {
+	if (typeof Buffer !== 'undefined') return Buffer.from(str, 'utf8').toString('base64');
+	const bytes = new TextEncoder().encode(str);
+	let bin = '';
+	for (const byte of bytes) bin += String.fromCharCode(byte);
+	return btoa(bin);
+}
+
+function decodeBase64(b64str) {
+	if (typeof Buffer !== 'undefined') return Buffer.from(b64str, 'base64').toString('utf8');
+	const bin = atob(b64str);
+	return new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0)));
+}
+
+const b64 = (obj) => encodeBase64(JSON.stringify(obj));
 
 /** Wrap a JSON document in a data:application/json;base64 URI. */
 export function jsonDataUri(doc) {
@@ -106,9 +122,7 @@ export async function decodeJsonUri(uri, { timeoutMs = 30000 } = {}) {
 		const meta = uri.slice(5, comma);
 		const payload = uri.slice(comma + 1);
 		try {
-			const raw = meta.includes('base64')
-				? Buffer.from(payload, 'base64').toString('utf8')
-				: decodeURIComponent(payload);
+			const raw = meta.includes('base64') ? decodeBase64(payload) : decodeURIComponent(payload);
 			return JSON.parse(raw);
 		} catch {
 			return null;

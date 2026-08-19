@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Deploy On-chain · three.ws</title>
+		<meta
+			name="description"
+			content="Put your agent on-chain the exact way the Genesis 333 shipped: mint a Metaplex Core asset with its own wallet and register its EIP-8004 identity in the Metaplex Agent Registry, signed by your Phantom, Solflare, or any Solana wallet."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/deploy-onchain" />
+		<meta property="og:title" content="Deploy On-chain · three.ws" />
+		<meta
+			property="og:description"
+			content="Mint your agent into the Metaplex Agent Registry on Solana: a Core asset with its own wallet, EIP-8004 identity, and the exact Genesis 333 shape. Your wallet signs; keys never leave the browser."
+		/>
+		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Deploy+On-chain&amp;d=Mint+your+agent+into+the+Metaplex+Agent+Registry+on+Solana%3A+a+Core+asset+with+its+own+wallet+and+EIP-8004+identity%2C+Genesis-333+exact.&amp;p=%2Fdeploy-onchain" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Deploy On-chain · three.ws" />
+		<meta
+			name="twitter:description"
+			content="Mint your agent into the Metaplex Agent Registry on Solana, Genesis-333 exact, signed by your own wallet."
+		/>
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Deploy+On-chain&amp;d=Mint+your+agent+into+the+Metaplex+Agent+Registry+on+Solana%3A+a+Core+asset+with+its+own+wallet+and+EIP-8004+identity%2C+Genesis-333+exact.&amp;p=%2Fdeploy-onchain" />
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/deploy-onchain.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
+		<link rel="canonical" href="https://three.ws/deploy-onchain" />
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Deploy On-chain","description":"Mint your agent into the Metaplex Agent Registry on Solana: a Core asset with its own wallet and EIP-8004 identity, in the exact Genesis 333 shape.","url":"https://three.ws/deploy-onchain","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="do-shell">
+			<section class="do-hero">
+				<p class="do-kicker"><span class="do-live-dot" aria-hidden="true"></span> Metaplex Agent Registry · Solana</p>
+				<h1 class="do-title">Deploy your agent <em>on-chain</em></h1>
+				<p class="do-sub">
+					The exact mint that shipped the <strong>Genesis 333</strong>: a <strong>Metaplex Core</strong> asset with its
+					own built-in wallet, an <strong>EIP-8004</strong> identity in the Agent Registry, verified creator, 5%
+					royalties, immutable metadata. Your wallet signs; keys never leave your browser.
+				</p>
+				<ul class="do-badges" aria-label="What you get">
+					<li>Core asset</li>
+					<li>Agent wallet</li>
+					<li>EIP-8004 identity</li>
+					<li>x402-ready</li>
+					<li>Live on metaplex.com/agents</li>
+				</ul>
+			</section>
+
+			<div class="do-grid">
+				<div class="do-form">
+					<!-- Step 1: wallet -->
+					<section class="do-card" aria-labelledby="do-wallet-h">
+						<div class="do-card-head">
+							<span class="do-step" aria-hidden="true">1</span>
+							<h2 id="do-wallet-h">Connect a Solana wallet</h2>
+						</div>
+						<div id="do-wallet-body">
+							<div class="do-wallet-row" id="do-wallet-disconnected">
+								<button type="button" class="do-btn do-btn-primary" id="do-connect">Connect wallet</button>
+								<p class="do-hint">Phantom, Solflare, Backpack, Ledger via wallet app. The wallet pays the mint (~0.007 SOL) and owns the agent.</p>
+							</div>
+							<div class="do-wallet-row" id="do-wallet-connected" hidden>
+								<span class="do-chip do-chip-wallet"><span class="do-dot-ok" aria-hidden="true"></span><span id="do-wallet-addr"></span></span>
+								<span class="do-chip" id="do-wallet-balance" title="Wallet SOL balance">…</span>
+								<button type="button" class="do-btn do-btn-ghost" id="do-disconnect">Disconnect</button>
+							</div>
+							<p class="do-error" id="do-wallet-error" role="alert" hidden></p>
+							<div class="do-nowallet" id="do-nowallet" hidden>
+								<p>No Solana wallet detected in this browser.</p>
+								<p><a href="https://phantom.com" target="_blank" rel="noopener">Get Phantom</a> · <a href="https://solflare.com" target="_blank" rel="noopener">Get Solflare</a>, then reload this page.</p>
+							</div>
+							<div class="do-net" role="radiogroup" aria-label="Network">
+								<button type="button" class="do-net-btn active" data-net="mainnet" role="radio" aria-checked="true">Mainnet</button>
+								<button type="button" class="do-net-btn" data-net="devnet" role="radio" aria-checked="false">Devnet (free rehearsal)</button>
+							</div>
+						</div>
+					</section>
+
+					<!-- Step 2: source -->
+					<section class="do-card" aria-labelledby="do-source-h">
+						<div class="do-card-head">
+							<span class="do-step" aria-hidden="true">2</span>
+							<h2 id="do-source-h">Choose your agent</h2>
+						</div>
+						<div id="do-agents-loading" class="do-agent-strip" aria-hidden="true">
+							<div class="do-agent-tile do-skeleton"></div>
+							<div class="do-agent-tile do-skeleton"></div>
+							<div class="do-agent-tile do-skeleton"></div>
+						</div>
+						<div id="do-agents" class="do-agent-strip" role="listbox" aria-label="Your three.ws agents" hidden></div>
+						<p class="do-hint" id="do-agents-signedout" hidden>
+							<a href="/login?next=/deploy-onchain">Sign in</a> to start from one of your three.ws avatars, or fill the fields below by hand.
+						</p>
+						<p class="do-hint" id="do-agents-empty" hidden>
+							You have no avatars yet. <a href="/create">Create one in the studio</a> (it takes a minute), or fill the fields below by hand.
+						</p>
+					</section>
+
+					<!-- Step 3: identity -->
+					<section class="do-card" aria-labelledby="do-id-h">
+						<div class="do-card-head">
+							<span class="do-step" aria-hidden="true">3</span>
+							<h2 id="do-id-h">Identity</h2>
+						</div>
+						<div class="do-fields">
+							<label class="do-field">
+								<span>Name <em class="do-req">required</em></span>
+								<input type="text" id="do-name" maxlength="60" placeholder="astra" autocomplete="off" />
+								<small class="do-count"><span id="do-name-count">0</span>/60</small>
+							</label>
+							<label class="do-field">
+								<span>Description</span>
+								<textarea id="do-desc" rows="2" maxlength="2000" placeholder="What this agent is or does"></textarea>
+							</label>
+							<label class="do-field">
+								<span>Image URL</span>
+								<input type="url" id="do-image" placeholder="https://…/thumbnail.png" autocomplete="off" />
+								<small>Shown on metaplex.com/agents, wallets, and explorers.</small>
+							</label>
+							<label class="do-field">
+								<span>3D model URL (GLB)</span>
+								<input type="url" id="do-model" placeholder="https://…/avatar.glb" autocomplete="off" />
+								<small>Written as <code>animation_url</code> and <code>model.uri</code>, exactly like the Genesis mints.</small>
+							</label>
+							<div class="do-toggles">
+								<label class="do-toggle"><input type="checkbox" id="do-x402" /> <span>x402 payments supported</span></label>
+								<label class="do-toggle"><input type="checkbox" id="do-active" checked /> <span>Active</span></label>
+							</div>
+						</div>
+					</section>
+
+					<!-- Step 4: advanced -->
+					<section class="do-card" aria-labelledby="do-adv-h">
+						<details class="do-adv">
+							<summary>
+								<span class="do-step" aria-hidden="true">4</span>
+								<h2 id="do-adv-h">Every knob Metaplex allows</h2>
+								<span class="do-adv-hint">optional, Genesis defaults</span>
+							</summary>
+							<div class="do-fields">
+								<label class="do-field do-field-inline">
+									<span>Royalty</span>
+									<input type="number" id="do-royalty" min="0" max="10000" step="50" value="500" />
+									<small>basis points (500 = 5%, the Genesis value; 0 removes the plugin)</small>
+								</label>
+								<div class="do-field">
+									<span>Royalty split</span>
+									<div id="do-creators"></div>
+									<button type="button" class="do-btn do-btn-ghost do-btn-sm" id="do-add-creator">+ Add creator</button>
+									<small>Defaults to your wallet at 100%. Percentages must sum to 100.</small>
+								</div>
+								<div class="do-field">
+									<span>On-chain attributes</span>
+									<div id="do-attrs"></div>
+									<button type="button" class="do-btn do-btn-ghost do-btn-sm" id="do-add-attr">+ Add attribute</button>
+									<small>Real bytes in the asset account (Attributes plugin).</small>
+								</div>
+								<div class="do-field">
+									<span>Services</span>
+									<div id="do-services"></div>
+									<button type="button" class="do-btn do-btn-ghost do-btn-sm" id="do-add-service">+ Add service</button>
+									<small>Name + endpoint pairs listed on the agent's Metaplex page.</small>
+								</div>
+								<label class="do-field">
+									<span>Trust models</span>
+									<input type="text" id="do-trust" value="reputation" autocomplete="off" />
+									<small>Comma separated. Genesis ships <code>reputation</code>.</small>
+								</label>
+								<label class="do-field">
+									<span>Collection address</span>
+									<input type="text" id="do-collection" placeholder="Optional: a Core collection you are the authority of" autocomplete="off" />
+								</label>
+								<div class="do-toggles do-toggles-grid">
+									<label class="do-toggle"><input type="checkbox" id="do-verified" checked /> <span>Verified creator</span></label>
+									<label class="do-toggle"><input type="checkbox" id="do-immutable" checked /> <span>Immutable metadata</span></label>
+									<label class="do-toggle"><input type="checkbox" id="do-pfreeze" /> <span>Permanent freeze delegate</span></label>
+									<label class="do-toggle"><input type="checkbox" id="do-ptransfer" /> <span>Permanent transfer delegate</span></label>
+									<label class="do-toggle"><input type="checkbox" id="do-pburn" /> <span>Permanent burn delegate</span></label>
+									<label class="do-toggle"><input type="checkbox" id="do-addblocker" /> <span>Add blocker (no more plugins, ever)</span></label>
+								</div>
+							</div>
+						</details>
+					</section>
+
+					<!-- Deploy -->
+					<section class="do-card do-deploy-card" aria-labelledby="do-deploy-h">
+						<div class="do-card-head">
+							<span class="do-step" aria-hidden="true">5</span>
+							<h2 id="do-deploy-h">Deploy</h2>
+							<span class="do-cost" id="do-cost">~0.007 SOL</span>
+						</div>
+						<button type="button" class="do-btn do-btn-primary do-btn-deploy" id="do-deploy" disabled>Connect a wallet to deploy</button>
+						<ol class="do-stages" id="do-stages" hidden>
+							<li data-stage="build">Building the Genesis-shape transactions</li>
+							<li data-stage="sign">Waiting for your wallet signature</li>
+							<li data-stage="mint">Minting the Core asset</li>
+							<li data-stage="register">Registering the agent identity</li>
+							<li data-stage="live">Live in the Metaplex Agent Registry</li>
+						</ol>
+						<p class="do-error" id="do-deploy-error" role="alert" hidden></p>
+						<div class="do-success" id="do-success" hidden>
+							<h3>Your agent is on-chain</h3>
+							<dl class="do-success-rows">
+								<div><dt>Core asset</dt><dd><code id="do-out-asset"></code><button type="button" class="do-copy" data-copy="do-out-asset" aria-label="Copy asset address">copy</button></dd></div>
+								<div><dt>Agent wallet</dt><dd><code id="do-out-wallet"></code><button type="button" class="do-copy" data-copy="do-out-wallet" aria-label="Copy agent wallet">copy</button></dd></div>
+							</dl>
+							<div class="do-success-links" id="do-out-links"></div>
+							<button type="button" class="do-btn do-btn-ghost" id="do-again">Deploy another</button>
+						</div>
+					</section>
+				</div>
+
+				<!-- Live preview -->
+				<aside class="do-preview" aria-label="Live preview">
+					<div class="do-preview-card">
+						<div class="do-preview-media" id="do-preview-media"><span class="do-preview-mono" id="do-preview-mono">?</span></div>
+						<div class="do-preview-body">
+							<h3 id="do-preview-name">Your agent</h3>
+							<p id="do-preview-desc">Fill in the identity and watch the on-chain documents build themselves.</p>
+							<div class="do-preview-chips" id="do-preview-chips"></div>
+						</div>
+					</div>
+					<div class="do-genesis" aria-label="Genesis shape checklist">
+						<h4>Genesis-333 shape</h4>
+						<ul id="do-genesis-list">
+							<li data-check="royalty" class="on">5% royalties to the owner</li>
+							<li data-check="verified" class="on">Verified creator</li>
+							<li data-check="immutable" class="on">Immutable metadata</li>
+							<li data-check="identity" class="on">EIP-8004 registration, self-contained data: URI</li>
+						</ul>
+					</div>
+					<div class="do-json">
+						<div class="do-json-tabs" role="tablist" aria-label="Document preview">
+							<button type="button" class="do-json-tab active" data-doc="registration" role="tab" aria-selected="true">Registration</button>
+							<button type="button" class="do-json-tab" data-doc="metadata" role="tab" aria-selected="false">Metadata</button>
+						</div>
+						<pre class="do-json-pre" id="do-json-pre" tabindex="0"><code id="do-json-code"></code></pre>
+						<p class="do-hint">These exact bytes go on-chain as base64 <code>data:</code> URIs. Nothing to pin, nothing that can rot.</p>
+					</div>
+				</aside>
+			</div>
+
+			<!-- Latest to land -->
+			<section class="do-latest" aria-labelledby="do-latest-h">
+				<div class="do-latest-head">
+					<h2 id="do-latest-h">Latest to land</h2>
+					<a class="do-latest-all" href="/deployments">Full feed →</a>
+				</div>
+				<div class="do-latest-strip" id="do-latest-strip">
+					<div class="do-agent-tile do-skeleton"></div>
+					<div class="do-agent-tile do-skeleton"></div>
+					<div class="do-agent-tile do-skeleton"></div>
+					<div class="do-agent-tile do-skeleton"></div>
+				</div>
+			</section>
+
+			<!-- Agents can do this too -->
+			<section class="do-mcp">
+				<div class="do-mcp-inner">
+					<div>
+						<h2>Agents can do this too</h2>
+						<p>
+							The same mint ships as an MCP server, so any AI agent can put itself on-chain with its own wallet:
+							preview first, confirm to spend, devnet for free rehearsal.
+						</p>
+					</div>
+					<div class="do-mcp-cmd">
+						<code id="do-mcp-cmd">npx -y @three-ws/metaplex-agent-mcp</code>
+						<button type="button" class="do-copy" data-copy="do-mcp-cmd" aria-label="Copy install command">copy</button>
+					</div>
+				</div>
+			</section>
+		</main>
+
+		<script type="module" src="/src/deploy-onchain.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

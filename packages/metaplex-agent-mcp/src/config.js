@@ -6,7 +6,7 @@
 // any Solana wallet) work with no key at all.
 
 export function env(key, fallback) {
-	const v = process.env[key];
+	const v = typeof process !== 'undefined' && process.env ? process.env[key] : undefined;
 	return v !== undefined && String(v).trim() !== '' ? String(v).trim() : fallback;
 }
 
