@@ -11,7 +11,13 @@ export {
 	decodeJsonUri,
 } from './registration.js';
 
-export { buildPlugins, buildAgentMint } from './mint.js';
+export {
+	buildPlugins,
+	buildAgentMint,
+	sendAgentMint,
+	waitForAsset,
+	isAssetPropagationError,
+} from './mint.js';
 
 export {
 	LAMPORTS_PER_SOL,

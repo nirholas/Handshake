@@ -2,7 +2,7 @@
 
 Deploy AI agents on-chain into the **[Metaplex Agent Registry](https://www.metaplex.com/agents)** on Solana, from any MCP client.
 
-One atomic transaction mints a **Metaplex Core asset** and registers its **EIP-8004 agent identity**, so the agent shows up on metaplex.com/agents with its own built-in wallet, reputation surface, and explorer pages. The default output reproduces the exact shape of the [three.ws](https://three.ws) Genesis 333 mints, verified byte-for-byte against the live assets:
+One flow mints a **Metaplex Core asset** and registers its **EIP-8004 agent identity** (a single atomic transaction when it fits Solana's 1232-byte limit, create + register in sequence otherwise, exactly how the Genesis 333 landed), so the agent shows up on metaplex.com/agents with its own built-in wallet, reputation surface, and explorer pages. The default output reproduces the exact shape of the [three.ws](https://three.ws) Genesis 333 mints, verified byte-for-byte against the live assets:
 
 - asset metadata as a self-contained `data:application/json;base64` URI (`name`, `image`, `animation_url` GLB)
 - Royalties plugin (5% to the owner), VerifiedCreators (the signing wallet), ImmutableMetadata
@@ -66,9 +66,9 @@ The mint costs ~0.007 SOL on mainnet (Core rent + identity PDA rent + fees).
 
 | Tool | What it does |
 |---|---|
-| `mint_onchain_agent` | Atomic mint + register, signed by your key. `confirm:true` gates the spend; anything else returns a full preview. |
-| `prepare_agent_mint` | The same transaction, built for an external wallet (`wallet` param) to sign. Returns base64, already co-signed by the new asset keypair. |
-| `send_signed_transaction` | Broadcast a wallet-signed transaction and poll to confirmation. |
+| `mint_onchain_agent` | Mint + register, signed by your key (atomic when it fits, auto-split otherwise). `confirm:true` gates the spend; anything else returns a full preview. |
+| `prepare_agent_mint` | The same mint, built for an external wallet (`wallet` param) to sign. Returns `txs_base64`, already co-signed by the new asset keypair; sign with `signTransaction` / `signAllTransactions`. |
+| `send_signed_transaction` | Broadcast wallet-signed transactions in order, polling each to confirmation and absorbing the create/register propagation race. |
 | `register_agent_identity` | Enrol an already-minted Core asset in the Agent Registry (idempotent; the signer must be the asset authority). |
 | `get_onchain_agent` | Read any registered agent: asset, plugins, decoded metadata + registration documents, identity PDA, built-in wallet + balance. |
 | `agent_wallet` | An asset's built-in wallet (mpl-core Asset Signer PDA), any address, or the configured signer, with live SOL balance. |
