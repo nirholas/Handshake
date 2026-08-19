@@ -1,5 +1,5 @@
 /**
- * audit-routes.mjs — the one route list every browser sweep works from.
+ * audit-routes.mjs: the one route list every browser sweep works from.
  *
  * page-audit (console/network/layout findings) and page-snapshot (the visual
  * record) both have to answer the same question: what pages does this site
@@ -8,11 +8,11 @@
  * dashboard page. This module is that answer, once.
  *
  * Sources, in order of authority:
- *   1. data/pages.json — the manifest that also drives /sitemap, llms.txt and
+ *   1. data/pages.json: the manifest that also drives /sitemap, llms.txt and
  *      the changelog. Every public, user-discoverable page.
- *   2. AUTHED_ROUTES   — signed-in pages the manifest intentionally omits
+ *   2. AUTHED_ROUTES  : signed-in pages the manifest intentionally omits
  *      (dashboard sub-pages that are not marketing surfaces).
- *   3. seedDynamicRoutes() — parameterised routes filled with REAL ids read
+ *   3. seedDynamicRoutes(): parameterised routes filled with REAL ids read
  *      from the live API at run time, never placeholders.
  */
 import { readFileSync } from 'node:fs';
@@ -105,7 +105,7 @@ export async function seedDynamicRoutes(ctx, baseUrl) {
 			}
 		}
 	} catch {
-		/* live API unreachable — dynamic routes simply skipped */
+		/* live API unreachable: dynamic routes simply skipped */
 	}
 	return routes;
 }

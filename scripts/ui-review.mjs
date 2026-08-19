@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * ui-review.mjs — the queue that hands a screenshot of every page to an agent,
+ * ui-review.mjs: the queue that hands a screenshot of every page to an agent,
  * one batch at a time, and remembers what it already looked at.
  *
  * ── Why ───────────────────────────────────────────────────────────────────────
@@ -187,7 +187,7 @@ function printBatch(n) {
 	}
 	const total = q.pages.length;
 	const done = q.pages.filter((p) => p.status !== 'pending').length;
-	console.log(`■ UI review batch — ${batch.length} page(s), ${done}/${total} reviewed, target ${q.baseUrl}\n`);
+	console.log(`■ UI review batch: ${batch.length} page(s), ${done}/${total} reviewed, target ${q.baseUrl}\n`);
 	console.log('Read each screenshot below with the Read tool, judge it as a user would,');
 	console.log('confirm anything suspicious against the live DOM, then fix it and record');
 	console.log('the verdict with --done. Screenshots are full-page.\n');
@@ -236,7 +236,7 @@ function recordDone() {
 function printStatus() {
 	const q = loadQueue();
 	const by = (s) => q.pages.filter((p) => p.status === s);
-	console.log(`■ UI review — ${q.baseUrl} — started ${q.startedAt}`);
+	console.log(`■ UI review: ${q.baseUrl} (started ${q.startedAt})`);
 	console.log(`  pending ${by('pending').length}  ·  clean ${by('clean').length}  ·  with issues ${by('issues').length}`);
 	for (const p of by('issues')) {
 		console.log(`\n  ${p.route}`);
@@ -261,7 +261,7 @@ function writeReport() {
 		lines.push('No visual defects recorded in this run.');
 	}
 	for (const p of withIssues) {
-		lines.push(`## ${p.route}${p.title ? ` — ${p.title}` : ''}`, '');
+		lines.push(`## ${p.route}${p.title ? `: ${p.title}` : ''}`, '');
 		for (const i of p.issues) lines.push(`- **found:** ${i}`);
 		for (const f of p.fixes) lines.push(`- **fixed:** ${f}`);
 		for (const [vp, file] of Object.entries(p.shots)) lines.push(`- ${vp} shot: \`${file}\``);
