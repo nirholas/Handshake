@@ -69,7 +69,7 @@
 		'/skills':         { label: 'Skills',         desc: 'Browse tool packs your agents can equip.' },
 		'/brain':          { label: 'Brain',          desc: 'Compare one prompt across Claude, GPT and more.' },
 		'/embed':          { label: 'Embed',          desc: 'Put your live agent on any website.' },
-		'/embed.html':     { label: 'Embed Editor',   desc: 'Tune mode, size, and position — then copy the snippet.' },
+		'/embed.html':     { label: 'Embed Editor',   desc: 'Tune mode, size, and position, then copy the snippet.' },
 		'/docs':           { label: 'Docs',            desc: 'SDKs, API reference, and integration guides.' },
 		'/launchpad':      { label: 'Launchpad Studio', desc: 'Build a white-label 3D token launchpad and go live onchain.' },
 		'/deploy':         { label: 'Deploy Onchain',  desc: 'Register your model as a permanent on-chain agent identity.' },

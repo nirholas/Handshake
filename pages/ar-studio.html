@@ -386,11 +386,11 @@
 	</style>
 
 	<meta property="og:locale" content="en_US">
-	<meta property="og:image:alt" content="AR Studio — three.ws">
+	<meta property="og:image:alt" content="AR Studio · three.ws">
 </head>
 <body>
 	<video id="ars-video" playsinline muted autoplay aria-hidden="true"></video>
-	<canvas id="ars-canvas" aria-label="Your AR scene — tap a model to select it, drag to move, pinch to resize"></canvas>
+	<canvas id="ars-canvas" aria-label="Your AR scene: tap a model to select it, drag to move, pinch to resize"></canvas>
 
 	<div id="ars-hud">
 		<header class="ars-top" data-xr-ui>
@@ -414,7 +414,7 @@
 			<div class="ars-empty-card">
 				<div class="ars-empty-art" aria-hidden="true">🛋️✨</div>
 				<h1 data-i18n="ar_studio.your_room_is_the_canvas">Your room is the canvas</h1>
-				<p data-i18n="ar_studio.place_as_many_3d_models_as_you">Place as many 3D models as you like into your real space — yours, the community's, or brand new ones forged from a prompt right here.</p>
+				<p data-i18n="ar_studio.place_as_many_3d_models_as_you">Place as many 3D models as you like into your real space: yours, the community's, or brand new ones forged from a prompt right here.</p>
 				<div class="ars-empty-row">
 					<button class="ars-btn ars-btn-primary" id="ars-empty-camera" type="button" data-i18n="ar_studio.start_camera">Start camera</button>
 					<button class="ars-btn" id="ars-empty-add" type="button" data-i18n="ar_studio.browse_models">Browse models</button>
@@ -468,7 +468,7 @@
 		<div class="ars-modal-card">
 			<h2 data-i18n="ar_studio.continue_on_your_phone">Continue on your phone</h2>
 			<div class="ars-qr-box" id="ars-qr-box" aria-label="QR code that opens this scene on a phone"></div>
-			<p data-i18n="ar_studio.scan_with_your_phone_camera_your_placed">Scan with your phone camera — your placed models come along and open straight into camera AR.</p>
+			<p data-i18n="ar_studio.scan_with_your_phone_camera_your_placed">Scan with your phone camera. Your placed models come along and open straight into camera AR.</p>
 			<a class="ars-qr-link" id="ars-qr-link" href="/ar/studio" target="_blank" rel="noopener"></a>
 			<button class="ars-btn" id="ars-qr-close" type="button" data-i18n="ar_studio.close">Close</button>
 		</div>
@@ -479,7 +479,7 @@
 			<!-- Idle: start or join a room -->
 			<div id="ars-room-idle">
 				<h2 data-i18n="ar_studio.build_together_live">Build together, live</h2>
-				<p data-i18n="ar_studio.open_a_shared_room_and_everyone_with">Open a shared room and everyone with the code sees the same scene update in real time — add, move, and forge models together.</p>
+				<p data-i18n="ar_studio.open_a_shared_room_and_everyone_with">Open a shared room and everyone with the code sees the same scene update in real time: add, move, and forge models together.</p>
 				<button class="ars-btn ars-btn-primary ars-room-start" id="ars-room-create" type="button" data-i18n="ar_studio.start_a_shared_room">Start a shared room</button>
 				<div class="ars-room-or"><span data-i18n="ar_studio.or_join_one">or join one</span></div>
 				<form class="ars-room-join" id="ars-room-join-form">
@@ -518,7 +518,7 @@
 			if (empty) {
 				empty.innerHTML = '<div class="ars-empty-art" aria-hidden="true">🛰️</div>'
 					+ '<h1>This browser can’t run the AR Studio</h1>'
-					+ '<p>The studio renders 3D over your camera with WebGL, which isn’t available here. Reopen in an up-to-date Chrome or Safari — or generate models on the classic AR Forge.</p>'
+					+ '<p>The studio renders 3D over your camera with WebGL, which isn’t available here. Reopen in an up-to-date Chrome or Safari, or generate models on the classic AR Forge.</p>'
 					+ '<div class="ars-empty-row"><a class="ars-btn ars-btn-primary" href="/ar">Open AR Forge</a><a class="ars-btn" href="/viewer">3D viewer</a></div>';
 			}
 		}
