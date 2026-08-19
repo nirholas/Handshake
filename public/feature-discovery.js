@@ -92,36 +92,36 @@
 	//                registered avatar carries name + thumbnail; a bare URL doesn't)
 	// A link with none of these stays a plain route.
 	var CROSSLINKS = {
-		forge: { kicker: 'Nice model — what now?', links: [
+		forge: { kicker: 'Nice model. What now?', links: [
 			{ route: '/scene',    label: 'Open in Scene Studio', primary: true, modelParam: 'model', nameParam: 'name' },
 			{ route: '/embed.html', label: 'Embed editor', modelParam: 'avatar' },
 			{ route: '/deploy',   label: 'Deploy onchain', idParam: 'avatar', modelParam: 'model', nameParam: 'name' },
 			{ route: '/play',     label: 'Drop it in a world', modelParam: 'avatar' },
 		] },
-		segment: { kicker: 'Parts split — what now?', links: [
+		segment: { kicker: 'Parts split. What now?', links: [
 			{ route: '/scene',    label: 'Open in Scene Studio', primary: true, modelParam: 'model', nameParam: 'name' },
 			{ route: '/forge',    label: 'Forge another model' },
 			{ route: '/play',     label: 'Drop it in a world', modelParam: 'avatar' },
 			{ route: '/docs',     label: 'Read the docs' },
 		] },
-		prompt: { kicker: 'Avatar ready — what now?', links: [
+		prompt: { kicker: 'Avatar ready. What now?', links: [
 			{ route: '/studio',   label: 'Open Studio', primary: true, idParam: 'avatar', modelParam: 'model' },
 			{ route: '/create-agent', label: 'Make it an agent' },
 			{ route: '/walk',     label: 'Walk your avatar', idParam: 'avatar', modelParam: 'avatarUrl' },
 			{ route: '/embed.html', label: 'Embed editor', idParam: 'avatar', modelParam: 'avatar' },
 		] },
-		scan: { kicker: 'Avatar ready — what now?', links: [
+		scan: { kicker: 'Avatar ready. What now?', links: [
 			{ route: '/studio',   label: 'Open Studio', primary: true, idParam: 'avatar', modelParam: 'model' },
 			{ route: '/walk',     label: 'Walk your avatar', idParam: 'avatar', modelParam: 'avatarUrl' },
 			{ route: '/embed.html', label: 'Embed editor', idParam: 'avatar', modelParam: 'avatar' },
 			{ route: '/docs',     label: 'Read the docs' },
 		] },
-		studio: { kicker: 'Widget ready — share it?', links: [
+		studio: { kicker: 'Widget ready. Share it?', links: [
 			{ route: '/embed.html', label: 'Embed editor', primary: true },
 			{ route: '/deploy',     label: 'Deploy onchain', idParam: 'avatar', modelParam: 'model', nameParam: 'name' },
 			{ route: '/docs',       label: 'Integration guide' },
 		] },
-		embed: { kicker: 'Embedded — what else?', links: [
+		embed: { kicker: 'Embedded. What else?', links: [
 			{ route: '/deploy',     label: 'Deploy onchain', primary: true, idParam: 'avatar', modelParam: 'model', nameParam: 'name' },
 			{ route: '/marketplace', label: 'List on marketplace' },
 			{ route: '/docs',       label: 'API reference' },

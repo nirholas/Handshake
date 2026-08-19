@@ -119,6 +119,14 @@
 
 @media (max-width: 520px) {
 	.tws-disc-card { right: 12px; left: 12px; bottom: 12px; width: auto; }
+	/* Inside the shared corner stack the card is a flex item that sizes to its
+	   content, so `width: auto` shrink-wraps it around its longest link and the
+	   copy wraps to a ribbon. The edge-to-edge rule above is the standalone
+	   fallback; in the stack the card states the width it wants. */
+	.tws-corner-item.tws-disc-card { width: min(340px, calc(100vw - 24px)); }
+	/* Content-width buttons in a narrow card read as a ragged staircase; one
+	   column of equal buttons is both tidier and easier to hit. */
+	.tws-disc-card .tws-disc-cta { justify-content: center; width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
