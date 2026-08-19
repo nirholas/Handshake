@@ -193,11 +193,10 @@
 				.docs-header-right .docs-header-more {
 					display: none;
 				}
-				.sidebar-site {
-					display: block;
-				}
 			}
-			@media (max-width: 400px) {
+			/* Last resort for the narrowest devices (Fold-class outer screens):
+			   drop the "Docs" label rather than let the logo and the nav collide. */
+			@media (max-width: 340px) {
 				.docs-header-sep,
 				.docs-header-label {
 					display: none;
@@ -438,12 +437,39 @@
 			}
 
 			/* The site links the header drops on narrow screens. Hidden wherever
-			   the header still shows them. */
+			   the header still shows them. Chips rather than four more rows,
+			   because they sit above a list of 200+ doc links and must not push
+			   the docs themselves off the first screen. */
 			.sidebar-site {
 				display: none;
-				margin-top: var(--space-md);
-				padding-top: var(--space-md);
-				border-top: 1px solid var(--border);
+				flex-wrap: wrap;
+				gap: 6px;
+				margin: 0 var(--space-sm) var(--space-md);
+				padding-bottom: var(--space-md);
+				border-bottom: 1px solid var(--border);
+			}
+			.sidebar-site a {
+				display: inline-flex;
+				align-items: center;
+				min-height: 44px;
+				padding: 4px 10px;
+				font-size: var(--text-sm);
+				color: rgba(255, 255, 255, 0.62);
+				text-decoration: none;
+				border: 1px solid var(--border);
+				border-radius: var(--radius-md);
+				background: rgba(255, 255, 255, 0.03);
+				transition: color 0.15s, background 0.15s, border-color 0.15s;
+			}
+			.sidebar-site a:hover,
+			.sidebar-site a:focus-visible {
+				color: #fff;
+				background: rgba(255, 255, 255, 0.07);
+			}
+			@media (max-width: 760px) {
+				.sidebar-site {
+					display: flex;
+				}
 			}
 
 			/* ── Main ────────────────────────────────────── */
@@ -998,7 +1024,7 @@
 			<span class="docs-header-sep"></span>
 			<span class="docs-header-label">Docs</span>
 			<nav class="docs-header-right">
-				<a href="/docs/world" class="docs-world-link" id="world-link" title="Read these docs inside a walkable 3D world">
+				<a href="/docs/world" class="docs-world-link" id="world-link" aria-label="3D world" title="Read these docs inside a walkable 3D world">
 					<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="9" ry="3.6"/><path d="M12 3v18"/></svg>
 					<span>3D world</span>
 				</a>
@@ -1044,14 +1070,12 @@
 					aria-label="Documentation content matches"
 					hidden
 				></div>
-				<nav id="sidebar-nav"></nav>
-				<nav class="sidebar-site" aria-label="three.ws">
-					<span class="sidebar-section-title">three.ws</span>
-					<a class="sidebar-link" href="/widgets">Widgets</a>
-					<a class="sidebar-link" href="/discover">Discover</a>
-					<a class="sidebar-link" href="/app">Launch app</a>
-					<a class="sidebar-link" href="/studio">Studio</a>
+				<nav class="sidebar-site" aria-label="three.ws site">
+					<a href="/widgets">Widgets</a>
+					<a href="/discover">Discover</a>
+					<a href="/app">Launch app</a>
 				</nav>
+				<nav id="sidebar-nav"></nav>
 			</aside>
 
 			<main class="docs-main">

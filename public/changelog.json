@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-19T01:50:37.339Z",
+	"generated_at": "2026-08-19T03:49:12.341Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -41,6 +41,17 @@
 		{
 			"date": "2026-08-19",
 			"type": "update",
+			"title": "Every three.ws package on npm is current again",
+			"summary": "Our npm packages had drifted a long way behind the code: 73 of them, including the main SDK, the React components, the avatar and walk SDKs and most of the MCP servers, were sitting on npm at an older version than what we had actually built. Anyone installing from npm got stale code. All 73 are now published at their current version, and four packages that had never been released at all (the agent runtime, the sign language pack, the spatial MCP server and the VS Code extension) are on npm for the first time. The cause was our release script working from a hand written list, so any package added after that list was written was silently never published; it now discovers packages itself, so a new one cannot be forgotten again.",
+			"link": null,
+			"tags": [
+				"sdk",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-19",
+			"type": "update",
 			"title": "Phone fixes: helper widgets no longer sit on top of the controls",
 			"summary": "On a phone the floating language control and the Getting started pill landed directly on the page's own bottom controls: the language picker rendered inside the \"Ask the agent\" box and the pill covered the save row. Helper widgets now measure a page's bottom bar and float above it, and the language control shows a compact code (EN) instead of a full-width bar. Gallery cards show all three actions in full, so Animate is no longer clipped mid-word. In the AR Studio, the Add models sheet keeps its tabs at full height on short screens, and each model is labelled with a readable name instead of the whole generation prompt. On the viewer page a long email no longer pushes the account button off the edge of the screen.",
 			"link": "/gallery",
@@ -68,6 +79,16 @@
 			"link": null,
 			"tags": [
 				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-19",
+			"type": "update",
+			"title": "The docs header no longer cuts links off on a phone",
+			"summary": "On a narrow phone screen the docs header packed five site links beside the logo, so the last ones ran off the right edge: Discover showed as a lone D and Launch app was gone entirely, with no way to scroll to them. The header now keeps the logo, the 3D world button and Studio, and moves Widgets, Discover and Launch app into the navigation drawer, right under the docs search, where they are reachable with a thumb. Nothing was removed: the full header returns on wider screens.",
+			"link": "/docs",
+			"tags": [
 				"fix"
 			]
 		},

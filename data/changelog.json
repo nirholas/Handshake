@@ -3,6 +3,24 @@
 	"entries": [
 		{
 			"date": "2026-08-19",
+			"title": "Every three.ws package on npm is current again",
+			"summary": "Our npm packages had drifted a long way behind the code: 73 of them, including the main SDK, the React components, the avatar and walk SDKs and most of the MCP servers, were sitting on npm at an older version than what we had actually built. Anyone installing from npm got stale code. All 73 are now published at their current version, and four packages that had never been released at all (the agent runtime, the sign language pack, the spatial MCP server and the VS Code extension) are on npm for the first time. The cause was our release script working from a hand written list, so any package added after that list was written was silently never published; it now discovers packages itself, so a new one cannot be forgotten again.",
+			"tags": [
+				"sdk",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-19",
+			"title": "The docs header no longer cuts links off on a phone",
+			"summary": "On a narrow phone screen the docs header packed five site links beside the logo, so the last ones ran off the right edge: Discover showed as a lone D and Launch app was gone entirely, with no way to scroll to them. The header now keeps the logo, the 3D world button and Studio, and moves Widgets, Discover and Launch app into the navigation drawer, right under the docs search, where they are reachable with a thumb. Nothing was removed: the full header returns on wider screens.",
+			"tags": [
+				"fix"
+			],
+			"link": "/docs"
+		},
+		{
+			"date": "2026-08-19",
 			"title": "A page that fails to load now tells you which thing went wrong",
 			"summary": "When an avatar or agent page could not load, it always said the same thing: not found, followed by whatever internal message the browser happened to throw. A stale link and a temporary server hiccup looked identical, and the explanation was often developer jargon rather than English. The two cases are now told apart. A link to something that no longer exists says exactly that and points you at the marketplace or the agent directory. A genuine failure on our side says so, offers a Try again button, and keeps the technical detail as a small footnote instead of presenting it as the reason.",
 			"tags": [

@@ -31,6 +31,14 @@
 			<description>The studio page every agent link opens now carries the agent's real substance. Its Capabilities tab lists the skills it genuinely exposes with the real per-call price of each, and a summary line telling you the cheapest paid call up front (or that everything is free). Skill names read as words instead of raw slugs, with the exact slug shown underneath for anyone wiring an integration. Under the title there is now a row of real counters: skills, conversations, wallet, whether the identity is on-chain, and how long the agent has been around. Below the fold, an agent recommends similar agents rather than unrelated avatars, each rendered as a live 3D card. The page also loads better: a skeleton in the real layout instead of a line of text, cards that show a picture while their 3D model downloads, and full keyboard support on the section tabs with a shareable link per tab.</description>
 		</item>
 		<item>
+			<title>Every three.ws package on npm is current again</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-19:Every three.ws package on npm is current again</guid>
+			<pubDate>Wed, 19 Aug 2026 12:00:00 GMT</pubDate>
+			<category>sdk</category>
+			<description>Our npm packages had drifted a long way behind the code: 73 of them, including the main SDK, the React components, the avatar and walk SDKs and most of the MCP servers, were sitting on npm at an older version than what we had actually built. Anyone installing from npm got stale code. All 73 are now published at their current version, and four packages that had never been released at all (the agent runtime, the sign language pack, the spatial MCP server and the VS Code extension) are on npm for the first time. The cause was our release script working from a hand written list, so any package added after that list was written was silently never published; it now discovers packages itself, so a new one cannot be forgotten again.</description>
+		</item>
+		<item>
 			<title>Phone fixes: helper widgets no longer sit on top of the controls</title>
 			<link>https://three.ws/gallery</link>
 			<guid isPermaLink="false">2026-08-19:Phone fixes: helper widgets no longer sit on top of the controls</guid>
@@ -53,6 +61,14 @@
 			<pubDate>Wed, 19 Aug 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>Paste an avatar link into X, Discord, Telegram, or Slack and the preview now shows that avatar's rendered image, name, and description instead of the generic site card. The profile page also reports a view each time someone opens it, so the view counts that rank search and explore results reflect real traffic at last. Discover cards for agents without a coin no longer point at a dead address, and the sitemap hands search engines the current agent page URLs directly.</description>
+		</item>
+		<item>
+			<title>The docs header no longer cuts links off on a phone</title>
+			<link>https://three.ws/docs</link>
+			<guid isPermaLink="false">2026-08-19:The docs header no longer cuts links off on a phone</guid>
+			<pubDate>Wed, 19 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>On a narrow phone screen the docs header packed five site links beside the logo, so the last ones ran off the right edge: Discover showed as a lone D and Launch app was gone entirely, with no way to scroll to them. The header now keeps the logo, the 3D world button and Studio, and moves Widgets, Discover and Launch app into the navigation drawer, right under the docs search, where they are reachable with a thumb. Nothing was removed: the full header returns on wider screens.</description>
 		</item>
 		<item>
 			<title>Agents and avatars now open in the same studio page</title>
