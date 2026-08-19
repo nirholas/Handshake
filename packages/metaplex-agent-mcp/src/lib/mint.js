@@ -168,7 +168,77 @@ export function buildAgentMint(umi, {
 	const registerArgs = { asset: assetSigner.publicKey, agentRegistrationUri };
 	if (collection) registerArgs.collection = umiPublicKey(collection);
 
-	const builder = create(umi, createArgs).add(registerIdentityV1(umi, registerArgs));
+	const createBuilder = create(umi, createArgs);
+	const registerBuilder = registerIdentityV1(umi, registerArgs);
+	const combinedBuilder = createBuilder.add(registerBuilder);
 
-	return { builder, assetSigner, assetMetadata, metadataUri: uri, registration, registrationUri: agentRegistrationUri };
+	// Solana caps a transaction at 1232 bytes, and two data: URIs plus two
+	// instructions can exceed it. Atomic when it fits (small/hosted URIs);
+	// otherwise the mint runs as create followed by register, exactly how the
+	// Genesis 333 landed (their register txs are separate on-chain).
+	const atomic = combinedBuilder.fitsInOneTransaction(umi);
+
+	return {
+		atomic,
+		builders: atomic ? [combinedBuilder] : [createBuilder, registerBuilder],
+		createBuilder,
+		registerBuilder,
+		combinedBuilder,
+		assetSigner,
+		assetMetadata,
+		metadataUri: uri,
+		registration,
+		registrationUri: agentRegistrationUri,
+	};
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Wait until the asset account is visible to the RPC. A freshly-minted asset
+ * can lag the node that simulates the register tx; the identity program then
+ * reads an empty account and rejects with `InvalidCoreAsset` (0x4). Bounded
+ * poll + retry closes that race for the split create-then-register path.
+ */
+export async function waitForAsset(umi, assetPk, { tries = 12, delayMs = 1500 } = {}) {
+	for (let i = 0; i < tries; i++) {
+		const acct = await umi.rpc.getAccount(assetPk).catch(() => null);
+		if (acct?.exists && acct.data?.length) return true;
+		await sleep(delayMs);
+	}
+	return false;
+}
+
+/** True when the error is the propagation race, not a real rejection. */
+export function isAssetPropagationError(err) {
+	return /Invalid Core Asset|custom program error: 0x4/i.test(err?.message || '');
+}
+
+/**
+ * Send a mint end-to-end with a keypair identity: one atomic transaction when
+ * it fits, otherwise create then register with the propagation race handled.
+ * @returns {Promise<{ signatures: string[], atomic: boolean }>}
+ */
+export async function sendAgentMint(umi, mint, { toBase58Signature }) {
+	const confirmOpts = { confirm: { commitment: 'confirmed' } };
+	if (mint.atomic) {
+		const result = await mint.combinedBuilder.sendAndConfirm(umi, confirmOpts);
+		return { signatures: [toBase58Signature(result.signature)], atomic: true };
+	}
+	const created = await mint.createBuilder.sendAndConfirm(umi, confirmOpts);
+	await waitForAsset(umi, mint.assetSigner.publicKey);
+	let registered;
+	for (let attempt = 0; ; attempt++) {
+		try {
+			registered = await mint.registerBuilder.sendAndConfirm(umi, confirmOpts);
+			break;
+		} catch (err) {
+			if (!isAssetPropagationError(err) || attempt >= 4) throw err;
+			await sleep(2000);
+		}
+	}
+	return {
+		signatures: [toBase58Signature(created.signature), toBase58Signature(registered.signature)],
+		atomic: false,
+	};
 }

@@ -6,7 +6,7 @@
 import { z } from 'zod';
 
 import { NETWORK, REQUIRE_CONFIRM } from '../config.js';
-import { buildAgentMint } from '../lib/mint.js';
+import { buildAgentMint, sendAgentMint } from '../lib/mint.js';
 import {
 	buildUmi,
 	solBalance,
@@ -27,9 +27,10 @@ export const def = {
 	title: 'Mint an on-chain agent into the Metaplex Agent Registry',
 	annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
 	description:
-		'Deploy an AI agent on-chain, Genesis-333 style: one atomic Solana transaction mints a Metaplex Core asset ' +
-		'(data: URI metadata, verified creator, royalties, immutable metadata) AND registers its EIP-8004 Agent ' +
-		'Identity, so it appears on metaplex.com/agents with its own built-in wallet. Signs with the configured ' +
+		'Deploy an AI agent on-chain, Genesis-333 style: mints a Metaplex Core asset (data: URI metadata, verified ' +
+		'creator, royalties, immutable metadata) AND registers its EIP-8004 Agent Identity, so it appears on ' +
+		'metaplex.com/agents with its own built-in wallet. Runs as ONE atomic transaction when it fits Solana\'s ' +
+		'1232-byte limit, otherwise as create followed by register (how the Genesis 333 landed). Signs with the configured ' +
 		'SOLANA_SECRET_KEY (or a per-call secret) and spends ~0.007 SOL in rent + fees. Without confirm:true it ' +
 		'returns a full preview (both JSON documents, the paying wallet, the cost) and broadcasts NOTHING. ' +
 		'For Phantom/Solflare users, use prepare_agent_mint instead.',
@@ -70,15 +71,15 @@ export const def = {
 			);
 		}
 
-		const result = await mint.builder.sendAndConfirm(umi, { confirm: { commitment: 'confirmed' } });
-		const signature = toBase58Signature(result.signature);
+		const { signatures, atomic } = await sendAgentMint(umi, mint, { toBase58Signature });
 
 		return {
 			ok: true,
 			network,
 			asset,
-			signature,
-			tx: txLink(signature, network),
+			atomic,
+			signatures,
+			txs: signatures.map((s) => txLink(s, network)),
 			owner: args.owner || wallet,
 			agent_wallet: assetSignerAddress(umi, asset),
 			metadata_uri: mint.metadataUri,
