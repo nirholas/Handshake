@@ -48,7 +48,34 @@ node scripts/page-audit.mjs --mobile-only    # skip the desktop viewport
 node scripts/page-audit.mjs --concurrency 6  # parallel pages per viewport
 node scripts/page-audit.mjs --strict         # exit 1 on any error-severity finding
 node scripts/page-audit.mjs --reverify-cap 0 # skip the solo re-check pass
+node scripts/page-audit.mjs --engine webkit   # audit in Safari's engine
 ```
+
+## Engines: why Chromium alone is not enough
+
+`--engine` picks the renderer: `chromium` (default), `webkit`, or `firefox`.
+
+Chromium is the default because it is the only browser every machine here
+already has. It cannot, on its own, see a class of bug that only Safari shows.
+JavaScriptCore and V8 disagree about *when* a temporal dead zone is checked:
+JavaScriptCore checks an assignment target before it evaluates the right-hand
+side, V8 checks it afterwards. So a module that bootstraps itself above the
+`let`s it writes renders perfectly in Chrome and throws
+`Cannot access uninitialized variable.` in every Safari, desktop and iOS alike.
+
+That is not hypothetical. It is how every `/avatars/:id` page shipped dead in
+Safari while this audit, the production smoke sweep, and review all stayed
+green. `npm run check:tdz-bootstrap` now refuses that ordering at build time
+(it runs inside `build:gcp`), and a WebKit pass here catches the runtime half:
+
+```sh
+npx playwright install webkit        # one time
+node scripts/page-audit.mjs --engine webkit --desktop-only --strict
+```
+
+Run a WebKit pass before any release that touched page-level JavaScript. It is
+worth the extra minutes precisely because nothing else in the pipeline looks at
+a non-V8 engine.
 
 ## Targeting
 

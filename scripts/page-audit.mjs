@@ -43,8 +43,9 @@
  *   node scripts/page-audit.mjs --mobile-only   # skip the desktop viewport
  *   node scripts/page-audit.mjs --concurrency 6 # parallel pages per viewport
  *   node scripts/page-audit.mjs --strict        # exit 1 if any error-severity finding
+ *   node scripts/page-audit.mjs --engine webkit # audit in Safari's engine instead
  */
-import { chromium, devices } from 'playwright';
+import { chromium, webkit, firefox, devices } from 'playwright';
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -74,6 +75,21 @@ const DESKTOP_ONLY = flag('desktop-only');
 const MOBILE_ONLY = flag('mobile-only');
 const STRICT = flag('strict');
 const CONCURRENCY = Math.max(1, Number(opt('concurrency', 5)) || 5);
+
+// Which engine renders the sweep. Chromium is the default because it is the
+// only browser every machine here already has, but it cannot see a whole class
+// of bug on its own: JavaScriptCore and V8 disagree about when a temporal dead
+// zone is checked, so a page can render perfectly in Chrome and throw
+// "Cannot access uninitialized variable." on every Safari. That is exactly how
+// /avatars/:id shipped dead on iOS and macOS while this audit stayed green.
+// `--engine webkit` needs `npx playwright install webkit` once.
+const ENGINES = { chromium, webkit, firefox };
+const ENGINE_NAME = String(opt('engine', 'chromium')).toLowerCase();
+const ENGINE = ENGINES[ENGINE_NAME];
+if (!ENGINE) {
+	console.error(`✗ unknown --engine "${ENGINE_NAME}". Use one of: ${Object.keys(ENGINES).join(', ')}`);
+	process.exit(2);
+}
 const explicitRoutes = argv.filter((a) => a.startsWith('/'));
 
 // ── Noise filter ────────────────────────────────────────────────────────────
@@ -814,8 +830,12 @@ async function main() {
 	console.log(`Page audit → ${BASE_URL}`);
 	console.log(`  auth: ${authed ? 'session from ' + AUTH_STATE.replace(ROOT + '/', '') : 'anonymous'}`);
 	console.log(`  viewports: ${viewports.join(', ')}  ·  concurrency: ${CONCURRENCY}`);
+	console.log(`  engine: ${ENGINE_NAME}`);
 
-	const browser = await chromium.launch({ args: ['--no-sandbox', '--disable-dev-shm-usage'] });
+	// The sandbox flags are chromium-only; webkit and firefox reject unknown args.
+	const browser = await ENGINE.launch(
+		ENGINE_NAME === 'chromium' ? { args: ['--no-sandbox', '--disable-dev-shm-usage'] } : {},
+	);
 	const seedCtx = await browser.newContext(
 		authed ? { storageState: AUTH_STATE } : {},
 	);
