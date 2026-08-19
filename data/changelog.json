@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-19",
+			"title": "Our AR studio is now a package anyone can drop into their own site",
+			"summary": "The multi-model AR surface behind three.ws is now a standalone open-source package: 3d-ar-studio on npm, and a hosted demo at nirholas.github.io/3D-AR-Studio. One script tag gives any web page a working augmented-reality studio: place any number of 3D models in your real room through the camera, drag, pinch and rotate them, generate new ones from a text prompt without leaving the camera view, then share the whole arrangement as a link or a QR code, or open a live room and build it with someone else. It carries the full rendering ladder we run here, WebXR placement with per-model anchors, real-world light estimation and depth occlusion on Android, camera passthrough with gyro world-lock on iOS, and a framed preview with a QR hand-off on desktop, plus the universal idle retarget so humanoid models animate instead of standing in a T-pose. Out of the box it pulls models and free keyless text-to-3D from three.ws, and a single option repoints it at anyone's own catalogue. It ships with an MCP server (published to the official registry) so an agent can generate a model, arrange a scene, and hand a person one link that opens it in their room, and a two-command CLI that puts a live AR page on GitHub Pages.",
+			"tags": [
+				"feature",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-08-19",
 			"title": "Deploying an agent on-chain now buys $THREE, and holders deploy free",
 			"summary": "The Metaplex Agent Registry deployer (the browser page and the @three-ws/metaplex-agent-mcp server) now carries a flat 0.02 SOL deploy fee on mainnet, and that fee is paid to the wallet the $THREE buyback lane spends from. So every agent someone puts on-chain through us turns into buy pressure on $THREE instead of nothing. Holding $THREE is what makes it cheaper: 50,000 in the paying wallet halves the fee, 250,000 waives it entirely, and the balance is read live from the chain when the transaction is built, so nothing is staked, locked, or spent to earn it. Deploy a whole fleet and the waiver applies to every one. Devnet rehearsals stay free, the fee travels inside the same transaction that creates the agent (so a deploy that fails costs nothing), and both the amount and its destination are shown before anything is signed. A new three_status tool prices your next deploy against any wallet and returns the live $THREE market and buyback figures.",
 			"tags": [

@@ -23,7 +23,11 @@ import { limits, clientIp } from './_lib/rate-limit.js';
 import { hashClient, listCreations, listShowcase, countShowcase, forgeStoreEnabled } from './_lib/forge-store.js';
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	// Open CORS: this is a public, keyless, read-only feed of models people chose
+	// to publish, and it is the catalogue the standalone AR studio
+	// (npm: 3d-ar-studio) offers as its Community tab from whatever origin a
+	// developer embedded it on. Rate limiting below is the real control here.
+	if (cors(req, res, { origins: '*', methods: 'GET,OPTIONS' })) return;
 	if (!method(req, res, ['GET'])) return;
 
 	const rl = await limits.publicIp(clientIp(req));

@@ -459,6 +459,36 @@ How this link ships through ChatGPT end to end (the app connector, the custom GP
 
 ---
 
+## Put this AR studio on your own site
+
+The multi-model studio at [/ar/studio](/ar/studio) is published as a standalone open-source
+package, so any site can embed the same thing:
+
+```html
+<script type="module" src="https://unpkg.com/3d-ar-studio/dist/ar-studio.min.js"></script>
+<ar-studio></ar-studio>
+```
+
+- npm: [`3d-ar-studio`](https://www.npmjs.com/package/3d-ar-studio)
+- Source and docs: [github.com/nirholas/3D-AR-Studio](https://github.com/nirholas/3D-AR-Studio)
+- Hosted demo: [nirholas.github.io/3D-AR-Studio](https://nirholas.github.io/3D-AR-Studio/)
+- MCP server: `npx 3d-ar-studio-mcp` (registry name `io.github.nirholas/3d-ar-studio`)
+
+With no configuration it pulls models from our CC0 object library and generates new ones
+through the free, keyless `/api/mcp-studio` connector documented above, so an embedder needs
+no key and no account. One option repoints it at their own catalogue:
+
+```js
+createArStudio('#stage', { assets: 'https://their.cdn/models.json' })
+```
+
+Those surfaces answer open CORS on purpose: `/cdn/<key>` (models and thumbnails),
+`/cdn/objects/library/manifest.json`, `/api/mcp-studio`, `/animations/manifest.json`,
+`/hdri/*.hdr`, and `GET /api/ar`. Changing any of them changes what every embedded studio in
+the wild can load.
+
+---
+
 ## See also
 
 - [AR on the homepage](https://three.ws/#home-ar) — live demo with real Forge models

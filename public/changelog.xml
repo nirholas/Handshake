@@ -55,6 +55,14 @@
 			<description>Our npm packages had drifted a long way behind the code: 73 of them, including the main SDK, the React components, the avatar and walk SDKs and most of the MCP servers, were sitting on npm at an older version than what we had actually built. Anyone installing from npm got stale code. All 73 are now published at their current version, and four packages that had never been released at all (the agent runtime, the sign language pack, the spatial MCP server and the VS Code extension) are on npm for the first time. The cause was our release script working from a hand written list, so any package added after that list was written was silently never published; it now discovers packages itself, so a new one cannot be forgotten again.</description>
 		</item>
 		<item>
+			<title>Our AR studio is now a package anyone can drop into their own site</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-19:Our AR studio is now a package anyone can drop into their own site</guid>
+			<pubDate>Wed, 19 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The multi-model AR surface behind three.ws is now a standalone open-source package: 3d-ar-studio on npm, and a hosted demo at nirholas.github.io/3D-AR-Studio. One script tag gives any web page a working augmented-reality studio: place any number of 3D models in your real room through the camera, drag, pinch and rotate them, generate new ones from a text prompt without leaving the camera view, then share the whole arrangement as a link or a QR code, or open a live room and build it with someone else. It carries the full rendering ladder we run here, WebXR placement with per-model anchors, real-world light estimation and depth occlusion on Android, camera passthrough with gyro world-lock on iOS, and a framed preview with a QR hand-off on desktop, plus the universal idle retarget so humanoid models animate instead of standing in a T-pose. Out of the box it pulls models and free keyless text-to-3D from three.ws, and a single option repoints it at anyone's own catalogue. It ships with an MCP server (published to the official registry) so an agent can generate a model, arrange a scene, and hand a person one link that opens it in their room, and a two-command CLI that puts a live AR page on GitHub Pages.</description>
+		</item>
+		<item>
 			<title>Phone fixes: helper widgets no longer sit on top of the controls</title>
 			<link>https://three.ws/gallery</link>
 			<guid isPermaLink="false">2026-08-19:Phone fixes: helper widgets no longer sit on top of the controls</guid>

@@ -35,7 +35,10 @@ function parseCursor(raw) {
 }
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	// Open CORS: a CC0 manifest with no caller data in it, served to whoever asks.
+	// The same objects already load cross-origin through /cdn/<key>, so pinning
+	// the index to our own origin only broke the tray in embeds that render it.
+	if (cors(req, res, { origins: '*', methods: 'GET,OPTIONS' })) return;
 	if (!method(req, res, ['GET'])) return;
 
 	// Cursors are validated BEFORE the manifest fetch. A request that is going to
