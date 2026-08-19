@@ -444,13 +444,24 @@ async function auditRoute(ctx, route, viewport) {
 		const t = m.type();
 		if (t !== 'error' && t !== 'warning') return;
 		const text = m.text();
-		if (text.startsWith('Failed to load resource')) return; // cascade — captured below
+		// A blocked or failed resource is reported once, by the requestfailed
+		// handler below. Each engine also echoes it to the console in its own
+		// words, and counting those again turned one blocked IPFS image into
+		// three findings. Chromium's echo is "Failed to load resource"; these
+		// are WebKit's.
+		if (text.startsWith('Failed to load resource')) return; // cascade, captured below
+		if (/^Cancelled load to .+ because it violates the Content Security Policy/.test(text)) return;
+		if (/^Cannot load .+ due to access control checks\.$/.test(text)) return;
 		push(t === 'error' ? 'console-error' : 'console-warn', t === 'error' ? 'error' : 'warn', text);
 	});
 	page.on('pageerror', (e) => push('exception', 'error', `${e.message}`));
 	page.on('requestfailed', (req) => {
 		const f = req.failure()?.errorText || '';
-		if (f === 'net::ERR_ABORTED') return; // navigations / cancelled prefetch
+		// Same event, two vocabularies: Chromium says net::ERR_ABORTED, WebKit
+		// says "Load request cancelled". Both mean the page navigated away or a
+		// long-lived stream (SSE, the pump/oracle trade feeds) was closed with
+		// the tab, which is the audit's own doing rather than a page fault.
+		if (f === 'net::ERR_ABORTED' || /^Load request cancelled$/i.test(f.trim())) return;
 		push('request-failed', 'error', `${req.url()} — ${f}`);
 	});
 	page.on('response', (res) => {
