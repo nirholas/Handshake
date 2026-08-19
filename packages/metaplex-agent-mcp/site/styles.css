@@ -52,6 +52,11 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
+/* Author display rules (.choice, .stages, .wallet-bar) outrank the user-agent
+   [hidden] style, which quietly left "hidden" panels on screen. Everything in
+   this page toggles with the attribute, so it has to win outright. */
+[hidden] { display: none !important; }
+
 html { scroll-behavior: smooth; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
