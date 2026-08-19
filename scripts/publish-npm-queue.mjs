@@ -25,7 +25,7 @@
 // refuses to start unless the logged-in account is actually in it.
 
 import { execFileSync } from 'node:child_process';
-import { readFileSync, existsSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -131,6 +131,59 @@ const QUEUE = [
 	"packages/vscode-x402", // @three-ws/vscode-x402 0.2.0 (first release)
 ];
 
+// The QUEUE above is ordered by monthly downloads, a judgement a directory scan
+// cannot make, so it stays hand-written. What a hand-written list cannot do is
+// stay complete: every package added to the repo after the list was written is
+// invisible to it, and that is not hypothetical. On 2026-08-19 four packages
+// (@three-ws/agent-runtime, @three-ws/metaplex-agent-mcp among them) had never
+// reached the registry at all, purely because nobody added a line here. So the
+// scan runs on every invocation and appends whatever the list forgot, after the
+// ordered entries, where its ordering does not matter.
+const SCAN_ROOTS = ['packages'];
+const SKIP_ROOT_DIRS = new Set(['node_modules', 'packages', 'dist', 'dist-lib', 'public', 'coverage']);
+
+/**
+ * True for a package this account is the publisher of. Vendored third-party
+ * forks live in this tree too (character-studio is @m3-org/characterstudio) and
+ * publishing one under our token would hijack someone else's package name, so
+ * the scan is scope-gated rather than "every package.json I can see".
+ */
+const isOurs = (name) => name.startsWith('@three-ws/') || name === 'readme-3d';
+
+function discoverPublishable() {
+	const found = [];
+	const consider = (dir) => {
+		const path = resolve(ROOT, dir, 'package.json');
+		if (!existsSync(path)) return;
+		let pkg;
+		try {
+			pkg = JSON.parse(readFileSync(path, 'utf8'));
+		} catch {
+			return;
+		}
+		if (pkg.private || !pkg.name || !pkg.version) return;
+		if (!isOurs(pkg.name)) return;
+		found.push(dir);
+	};
+	for (const scanRoot of SCAN_ROOTS) {
+		for (const entry of readdirSync(resolve(ROOT, scanRoot), { withFileTypes: true })) {
+			if (entry.isDirectory()) consider(`${scanRoot}/${entry.name}`);
+		}
+	}
+	for (const entry of readdirSync(ROOT, { withFileTypes: true })) {
+		if (!entry.isDirectory() || entry.name.startsWith('.') || SKIP_ROOT_DIRS.has(entry.name)) continue;
+		consider(entry.name);
+	}
+	return found;
+}
+
+const queued = new Set(QUEUE);
+const discovered = discoverPublishable().filter((dir) => !queued.has(dir));
+const TARGETS = [...QUEUE, ...discovered];
+if (discovered.length) {
+	console.log(`note: ${discovered.length} publishable package(s) absent from the ordered queue, appended: ${discovered.join(', ')}`);
+}
+
 const publish = process.argv.includes('--publish');
 
 function registryVersion(name) {
@@ -181,7 +234,7 @@ function preflight() {
 		return false;
 	}
 	// Sample a published package from the queue to learn who actually owns these.
-	const sample = QUEUE.map((dir) => resolve(ROOT, dir, 'package.json'))
+	const sample = TARGETS.map((dir) => resolve(ROOT, dir, 'package.json'))
 		.filter((p) => existsSync(p))
 		.map((p) => JSON.parse(readFileSync(p, 'utf8')).name)
 		.find((name) => maintainersOf(name).length > 0);
@@ -207,7 +260,7 @@ function preflight() {
 if (!preflight()) process.exit(2);
 
 let failures = 0;
-for (const dir of QUEUE) {
+for (const dir of TARGETS) {
 	const pkgPath = resolve(ROOT, dir, 'package.json');
 	if (!existsSync(pkgPath)) {
 		console.error(`SKIP ${dir}: no package.json`);
