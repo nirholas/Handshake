@@ -14,6 +14,10 @@ platform-wide.
 > [`api/cron/treasury-topup.js`](../api/cron/treasury-topup.js), registry
 > [`api/_lib/solana-signers.js`](../api/_lib/solana-signers.js) — the registry is
 > the source of truth for every engine signer and its funding floor.
+>
+> Rotating this wallet (or any other economy signer) goes through the wallet
+> registry: [`docs/ops/economy-wallet-rotation.md`](ops/economy-wallet-rotation.md),
+> which keeps a permanent log of every address each role has ever held.
 
 **Address (mainnet vanity):** `WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW`
 
