@@ -224,7 +224,9 @@ describe('agent-embed.html — consolidated embed page', () => {
 	});
 
 	it('resolves agentId from both the path and the ?id= query (so the legacy share snippet still works)', () => {
-		expect(html).toContain("parts.indexOf('agent')");
+		// Both path shapes resolve: /agents/:id/embed (canonical) and the legacy
+		// /agent/:id/embed a share snippet copied before the rename still carries.
+		expect(html).toContain("parts.findIndex((p) => p === 'agents' || p === 'agent')");
 		expect(html).toContain("params.get('id')");
 	});
 

@@ -65,7 +65,7 @@ describe('buildAgentRegistrationMetadata', () => {
 	it('falls back to a generated description and home url when none supplied', () => {
 		const m = buildAgentRegistrationMetadata({ agentId: 7, name: 'Solo' });
 		expect(m.description).toContain('Solo');
-		expect(m.services.find((s) => s.name === 'web').endpoint).toMatch(/\/agent\/7$/);
+		expect(m.services.find((s) => s.name === 'web').endpoint).toMatch(/\/agents\/7$/);
 	});
 });
 

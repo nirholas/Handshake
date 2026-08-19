@@ -55,7 +55,10 @@ export function agentEmbedTarget(origin, id) {
 	return {
 		embedUrl: `${origin}/agents/${id}/embed`,
 		shareUrl: `${origin}/agents/${id}`,
-		thumbnailUrl: `${origin}/api/agents/${id}/og`,
+		// The OG card route is /api/agent/:id/og (singular) in vercel.json. The
+		// page-link rename to /agents/:id does not apply to it: there is no plural
+		// API route, so a renamed thumbnail URL 404s on every embed snippet.
+		thumbnailUrl: `${origin}/api/agent/${id}/og`,
 	};
 }
 
