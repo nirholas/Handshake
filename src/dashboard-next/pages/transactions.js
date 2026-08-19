@@ -12,6 +12,7 @@
 import { mountShell } from '../shell.js';
 import { requireUser, get, esc, relTime, ApiError } from '../api.js';
 import { errorStateHTML, emptyStateHTML, ensureStateKitStyles } from '../../shared/state-kit.js';
+import { skillLabel } from '../../shared/skill-label.js';
 
 const FETCH_LIMIT = 200; // endpoint hard cap; we paginate the rest client-side
 const PAGE_SIZE = 25;
@@ -193,7 +194,7 @@ function rowHtml(r) {
 
 	const agentName = r.agent_name ? esc(r.agent_name) : 'Unknown agent';
 	const agentCell = r.agent_id && r.agent_name
-		? `<a class="tx-agent" href="/agent/${encodeURIComponent(r.agent_id)}">${agentName}</a>`
+		? `<a class="tx-agent" href="/agents/${encodeURIComponent(r.agent_id)}">${agentName}</a>`
 		: `<span class="tx-agent tx-agent--muted">${agentName}</span>`;
 
 	// Buyer pays out (−), seller takes home (+). Sellers also see gross + fee.
@@ -210,7 +211,7 @@ function rowHtml(r) {
 			</td>
 			<td>${typeTag}</td>
 			<td>
-				<div class="tx-skill">${esc(humanizeSkill(r.skill))}</div>
+				<div class="tx-skill">${esc(skillLabel(r.skill))}</div>
 				<div class="tx-sub">${agentCell}${r.skill_nft_mint ? ' · <span class="tx-nft">NFT</span>' : ''}</div>
 			</td>
 			<td style="text-align:right;white-space:nowrap">${amountCell}</td>
@@ -327,11 +328,6 @@ function formatDate(iso) {
 	const d = new Date(iso);
 	if (isNaN(d)) return '—';
 	return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-}
-
-function humanizeSkill(skill) {
-	if (!skill) return 'Skill';
-	return String(skill).replace(/[_-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 // ── Skeletons ─────────────────────────────────────────────────────────────────

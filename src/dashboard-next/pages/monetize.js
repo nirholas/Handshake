@@ -7,6 +7,7 @@
 import { mountShell } from '../shell.js';
 import { requireUser, get, post, put, del, esc, relTime, formatUsdc, ApiError } from '../api.js';
 import { errorStateHTML, ensureStateKitStyles } from '../../shared/state-kit.js';
+import { skillLabel } from '../../shared/skill-label.js';
 
 const USDC_MINTS = {
 	solana: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
@@ -902,7 +903,7 @@ function renderSkillLegend(bySkill) {
 			const pct = ((Number(r.net_total || 0) / total) * 100).toFixed(0);
 			return `<span style="display:inline-flex;align-items:center;gap:7px">
 				<span style="width:9px;height:9px;border-radius:2px;background:${swatches[i % swatches.length]}"></span>
-				<span style="color:var(--nxt-ink)">${esc(humanizeSkill(r.skill))}</span>
+				<span style="color:var(--nxt-ink)">${esc(revenueSourceLabel(r.skill))}</span>
 				<span style="color:var(--nxt-ink-fade)">${esc(formatUsdc(r.net_total))} · ${pct}%</span>
 			</span>`;
 		})
@@ -928,16 +929,19 @@ function formatUsd(amount) {
 	return n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 }
 
-function humanizeSkill(skill) {
-	if (!skill) return 'Other';
-	const map = {
-		'subscription': 'Subscriptions',
-		'api': 'API calls',
-		'tip': 'Tips',
-		'skill_unlock': 'Skill unlocks',
-		'token_royalty': 'Token royalties',
+// The revenue breakdown mixes platform revenue KINDS with real skill names in
+// one column, so the named kinds keep their own plural labels and anything else
+// falls through to the shared skill formatter (which was not applied here
+// before, so a skill named `nft-lookup` rendered as its raw slug).
+function revenueSourceLabel(source) {
+	const kinds = {
+		subscription: 'Subscriptions',
+		api: 'API calls',
+		tip: 'Tips',
+		skill_unlock: 'Skill unlocks',
+		token_royalty: 'Token royalties',
 	};
-	return map[skill] || skill.replace(/_/g, ' ');
+	return kinds[source] || skillLabel(source, 'Other');
 }
 
 // -- Recent payments --
