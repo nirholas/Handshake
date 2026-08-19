@@ -14,7 +14,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { analyze } from '../scripts/check-tdz-bootstrap.mjs';
+import { analyze, tracked } from '../scripts/check-tdz-bootstrap.mjs';
 
 const names = (src) => analyze('t.js', src).map((f) => f.name).sort();
 
@@ -142,5 +142,23 @@ describe('the shipped browser modules stay clean', () => {
 		const { readFileSync } = await import('node:fs');
 		const src = readFileSync(new URL('../src/avatar-page.js', import.meta.url), 'utf8');
 		expect(analyze('src/avatar-page.js', src)).toEqual([]);
+	});
+});
+
+describe('the sweep actually reaches the pages it claims to cover', () => {
+	// git's `src/**/*.js` pathspec does NOT match a direct child, so an earlier
+	// version of this guard scanned only nested modules and silently skipped
+	// every top-level page, including the one whose regression it was written
+	// for. A count alone would not have caught that; naming the file does.
+	it('includes top-level page modules, not just nested ones', () => {
+		const files = tracked(['src', 'public']).map((f) => f.replace(/^.*\/three\.ws\//, ''));
+		expect(files).toContain('src/avatar-page.js');
+		expect(files).toContain('src/three-tier-page.js');
+		expect(files).toContain('public/forever.js');
+		expect(files.filter((f) => /^src\/[^/]+\.js$/.test(f)).length).toBeGreaterThan(100);
+	});
+
+	it('only enumerates JavaScript', () => {
+		expect(tracked(['src', 'public']).every((f) => f.endsWith('.js') || f.endsWith('.mjs'))).toBe(true);
 	});
 });

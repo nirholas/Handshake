@@ -61,10 +61,18 @@ const ROOT = resolve(new URL('..', import.meta.url).pathname);
 // (mount -> boot -> injectStyles), so a depth of 1 would have missed it.
 const MAX_CALL_DEPTH = 4;
 
-function tracked(patterns) {
-	return execFileSync('git', ['ls-files', ...patterns], { cwd: ROOT, encoding: 'utf8' })
+// Tracked files AND new ones git does not know about yet (`--others`), minus
+// anything gitignored (`--exclude-standard`). A bare `git ls-files` cannot see a
+// module that was just written, which is precisely when a new page is most
+// likely to carry this ordering bug.
+export function tracked(dirs) {
+	// Directory pathspecs, not globs: git's `src/**/*.js` does NOT match a direct
+	// child like src/avatar-page.js, so a glob silently skipped every top-level
+	// page module, which is exactly where this bug class lives. Filter by
+	// extension here instead, where the semantics are ours.
+	return execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', '--', ...dirs], { cwd: ROOT, encoding: 'utf8' })
 		.split('\n')
-		.filter(Boolean)
+		.filter((p) => p.endsWith('.js') || p.endsWith('.mjs'))
 		.map((p) => resolve(ROOT, p));
 }
 
@@ -259,7 +267,7 @@ const argv = process.argv.slice(2);
 const pathsFlag = argv.indexOf('--paths');
 const files = pathsFlag !== -1
 	? argv.slice(pathsFlag + 1).filter((a) => !a.startsWith('--')).map((p) => resolve(ROOT, p))
-	: tracked(['src/**/*.js', 'public/**/*.js']);
+	: tracked(['src', 'public']);
 
 const all = [];
 for (const file of files) {
