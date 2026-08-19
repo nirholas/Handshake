@@ -246,24 +246,17 @@
 		return !!(stack && (el === stack || stack.contains(el)));
 	}
 
-	function measureDocks() {
-		if (!document.body || !stack || !stack.children.length) return 0;
-		var vw = window.innerWidth || document.documentElement.clientWidth || 0;
-		var vh = window.innerHeight || document.documentElement.clientHeight || 0;
-		if (!vw || !vh) return 0;
-		var band = stack.getBoundingClientRect();
-		/* An empty/collapsed stack gives no band to compare against: fall back
-		   to the corner it is anchored to. */
-		var left = band.width > 0 ? band.left : vw * 0.6;
-		var right = band.width > 0 ? band.right : vw;
+	/* Tallest dock intersecting the band that starts `from` pixels above the
+	   viewport bottom, expressed as the clearance the stack would need. */
+	function probeBand(from, left, right, vw, vh) {
 		var xs = [left + 4, (left + right) / 2, right - 4];
-		var ys = [vh - 4, vh - 24, vh - 48];
-		var max = 0;
+		var ys = [vh - from - 4, vh - from - 24, vh - from - 48];
+		var need = from;
 		for (var yi = 0; yi < ys.length; yi++) {
+			var y = ys[yi];
+			if (y < vh * 0.4) continue;
 			for (var xi = 0; xi < xs.length; xi++) {
 				var x = Math.max(1, Math.min(vw - 1, xs[xi]));
-				var y = ys[yi];
-				if (y < vh * 0.5) continue;
 				var hits = document.elementsFromPoint(x, y) || [];
 				for (var hi = 0; hi < hits.length; hi++) {
 					var hit = hits[hi];
@@ -272,18 +265,43 @@
 					if (!root || isStackPart(root)) break; /* plain page content under here */
 					if (root.hasAttribute('data-corner-ignore')) break;
 					var r = root.getBoundingClientRect();
-					/* Bottom-anchored, not a full-viewport scrim, and actually
-					   in the stack's column. */
-					if (r.bottom < vh - 56) break;
+					/* Anchored to the band we are probing, not a full-viewport
+					   scrim, and actually in the stack's column. */
+					if (r.bottom < vh - from - 56) break;
 					if (r.height > vh * 0.5 || r.height < 8) break;
 					if (r.right <= left || r.left >= right) break;
 					var lift = vh - r.top + DOCK_GAP;
-					if (lift > max) max = lift;
+					if (lift > need) need = lift;
 					break; /* the topmost dock at this point is the one that matters */
 				}
 			}
 		}
-		return Math.min(Math.round(max), Math.round(vh * DOCK_MAX_RATIO));
+		return need;
+	}
+
+	function measureDocks() {
+		if (!document.body || !stack || !stack.children.length) return 0;
+		if (typeof document.elementsFromPoint !== 'function') return 0;
+		var vw = window.innerWidth || document.documentElement.clientWidth || 0;
+		var vh = window.innerHeight || document.documentElement.clientHeight || 0;
+		if (!vw || !vh) return 0;
+		var band = stack.getBoundingClientRect();
+		/* An empty/collapsed stack gives no band to compare against: fall back
+		   to the corner it is anchored to. */
+		var left = band.width > 0 ? band.left : vw * 0.6;
+		var right = band.width > 0 ? band.right : vw;
+		var cap = Math.round(vh * DOCK_MAX_RATIO);
+		/* Docks stack: /app pins an action bar under a chat composer. Climb one
+		   band at a time until nothing new appears above, so clearing the first
+		   one never parks the stack on the second. */
+		var lift = 0;
+		for (var pass = 0; pass < 4; pass++) {
+			var next = probeBand(lift, left, right, vw, vh);
+			if (next <= lift) break;
+			lift = Math.min(next, cap);
+			if (lift >= cap) break;
+		}
+		return Math.min(Math.round(lift), cap);
 	}
 
 	function applyDocks() {
