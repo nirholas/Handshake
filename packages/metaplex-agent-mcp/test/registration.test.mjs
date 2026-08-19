@@ -17,11 +17,12 @@ const READ_ONLY_TOOLS = new Set([
 	'agent_wallet',
 	'build_registration',
 	'list_onchain_agents',
+	'three_status',
 ]);
 const EXECUTION_TOOLS = new Set(['mint_onchain_agent', 'send_signed_transaction', 'register_agent_identity']);
 
 test('exactly the expected tools are registered', () => {
-	assert.equal(TOOLS.length, 8);
+	assert.equal(TOOLS.length, 9);
 	assert.deepEqual(new Set(TOOLS.map((t) => t.name)), new Set([...READ_ONLY_TOOLS, ...EXECUTION_TOOLS]));
 });
 
