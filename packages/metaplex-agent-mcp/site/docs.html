@@ -58,6 +58,7 @@
 						<li><a href="#deploy-web">Deploy in the browser</a></li>
 						<li><a href="#wallets">Wallets and keys</a></li>
 						<li><a href="#costs">Costs and networks</a></li>
+						<li><a href="#three">The deploy fee and $THREE</a></li>
 					</ul>
 				</div>
 				<div>
@@ -153,14 +154,17 @@
 					<table>
 						<thead><tr><th>What</th><th>Cost</th><th>Why</th></tr></thead>
 						<tbody>
-							<tr><td>Core asset</td><td>~0.004 SOL</td><td>Rent for the account holding your agent, plus the fee</td></tr>
-							<tr><td>Identity registration</td><td>~0.003 SOL</td><td>Rent for the identity PDA, plus the fee</td></tr>
-							<tr><td>Total</td><td><strong>~0.007 SOL</strong></td><td>Paid once, by the wallet you deploy from</td></tr>
+							<tr><td>Core asset</td><td>~0.004 SOL</td><td>Rent for the account holding your agent, plus the network fee</td></tr>
+							<tr><td>Identity registration</td><td>~0.003 SOL</td><td>Rent for the identity PDA, plus the network fee</td></tr>
+							<tr><td>Deploy fee (mainnet)</td><td>0.02 SOL</td><td>The protocol fee, which funds $THREE buybacks. Free on devnet, and waived for $THREE holders</td></tr>
+							<tr><td>Total</td><td><strong>~0.027 SOL</strong></td><td>Paid once, by the wallet you deploy from</td></tr>
 						</tbody>
 					</table>
 					<p>
-						Rent is a deposit held by the network for as long as the accounts exist, not a fee to anyone. There is no
-						charge from this site or from three.ws: it takes no cut and has no server in the path.
+						Rent is a deposit held by the network for as long as the accounts exist, not a fee to anyone: close the
+						accounts and it comes back. The deploy fee is the one charge that is ours, it is shown in the deployer
+						before you sign anything, and it is the whole business model of this tool. See
+						<a href="#three">the deploy fee and $THREE</a>.
 					</p>
 					<h3>RPC endpoints</h3>
 					<p>
@@ -171,6 +175,43 @@
 						<a href="https://quicknode.com" target="_blank" rel="noopener">QuickNode</a>, or
 						<a href="https://triton.one" target="_blank" rel="noopener">Triton</a> under <em>Use my own RPC</em>. It is
 						checked against the cluster you selected before it is saved, and stored only in your browser.
+					</p>
+				</section>
+
+				<section id="three">
+					<h2>The deploy fee and $THREE</h2>
+					<p>
+						A mainnet deploy carries a flat <strong>0.02 SOL</strong> fee. It travels in the same transaction that
+						creates your agent, so a deploy that fails, is rejected, or expires costs you nothing, and it is always
+						shown, with its recipient, before you sign. Devnet deploys never pay it: a full end-to-end rehearsal is
+						free.
+					</p>
+					<p>
+						The fee is paid to the wallet the three.ws
+						<a href="https://three.ws/three" target="_blank" rel="noopener">$THREE</a> buyback lane spends from, and the
+						public ledger of what that lane has bought lives at
+						<a href="https://three.ws/api/three-token/stats" target="_blank" rel="noopener">/api/three-token/stats</a>.
+						Deploys fund buybacks; there is no other revenue in this tool.
+					</p>
+					<h3>Holding $THREE makes it cheaper, then free</h3>
+					<table>
+						<thead><tr><th>$THREE in the paying wallet</th><th>Deploy fee</th></tr></thead>
+						<tbody>
+							<tr><td>Any amount under 50,000</td><td>0.02 SOL</td></tr>
+							<tr><td>50,000 or more</td><td>0.01 SOL</td></tr>
+							<tr><td>250,000 or more</td><td>Free</td></tr>
+						</tbody>
+					</table>
+					<p>
+						The balance is read live from the chain when the transaction is built. Nothing is staked, escrowed,
+						locked, or spent to earn the discount: you hold the tokens, in your own wallet, and keep them. Deploy a
+						fleet and the waiver applies to every one of them.
+					</p>
+					<p>
+						From MCP, <code>three_status</code> prices your next deploy against any wallet and returns the live
+						$THREE market and buyback figures. <code>agent_wallet</code> reports the same tier for the wallet it
+						looks up. Self-hosting a fork with different economics is a matter of
+						<code>DEPLOY_FEE_SOL</code>, <code>DEPLOY_FEE_WALLET</code>, and <code>DEPLOY_FEE_ENABLED</code>.
 					</p>
 				</section>
 
@@ -215,7 +256,11 @@
 							<tr><td><code>SOLANA_RPC_URL</code></td><td>public endpoint</td><td>Your own HTTPS RPC. Recommended for anything beyond a trial.</td></tr>
 							<tr><td><code>METAPLEX_AGENT_NETWORK</code></td><td><code>mainnet</code></td><td>Default cluster. Every tool also takes a per-call <code>network</code>.</td></tr>
 							<tr><td><code>REQUIRE_CONFIRM</code></td><td><code>true</code></td><td>Refuse to spend until a call repeats with <code>confirm: true</code>.</td></tr>
-							<tr><td><code>THREE_WS_BASE</code></td><td><code>https://three.ws</code></td><td>Host backing <code>list_onchain_agents</code>.</td></tr>
+							<tr><td><code>THREE_WS_BASE</code></td><td><code>https://three.ws</code></td><td>Host backing <code>list_onchain_agents</code> and <code>three_status</code>.</td></tr>
+							<tr><td><code>DEPLOY_FEE_SOL</code></td><td><code>0.02</code></td><td>The mainnet deploy fee, in SOL. See <a href="#three">the deploy fee and $THREE</a>.</td></tr>
+							<tr><td><code>DEPLOY_FEE_WALLET</code></td><td>three.ws buyback wallet</td><td>Where the fee is paid. Change it only when self-hosting a fork.</td></tr>
+							<tr><td><code>DEPLOY_FEE_ENABLED</code></td><td><code>true</code></td><td>Set false to build a fork that charges nothing.</td></tr>
+							<tr><td><code>THREE_HALF_PRICE_AT</code> / <code>THREE_FREE_AT</code></td><td><code>50000</code> / <code>250000</code></td><td>$THREE balances that halve, then waive, the fee.</td></tr>
 						</tbody>
 					</table>
 					<h3>A first session</h3>
@@ -239,7 +284,7 @@ get_onchain_agent { "asset": "&lt;returned address&gt;", "network": "devnet" }</
 							<tr>
 								<td><code>mint_onchain_agent</code></td>
 								<td>Mints the Core asset and registers the identity, signed by your key. Returns a full preview unless <code>confirm: true</code>.</td>
-								<td>~0.007 SOL</td>
+								<td>~0.027 SOL</td>
 							</tr>
 							<tr>
 								<td><code>prepare_agent_mint</code></td>
@@ -274,6 +319,11 @@ get_onchain_agent { "asset": "&lt;returned address&gt;", "network": "devnet" }</
 							<tr>
 								<td><code>list_onchain_agents</code></td>
 								<td>The newest registrations from the live feed. <code>all_chains: true</code> adds EVM ERC-8004 registrations.</td>
+								<td>No</td>
+							</tr>
+							<tr>
+								<td><code>three_status</code></td>
+								<td>Prices your next deploy: the fee schedule, a wallet's live $THREE balance and tier, and the public buyback ledger.</td>
 								<td>No</td>
 							</tr>
 						</tbody>

@@ -201,6 +201,9 @@ code, pre { font-family: var(--mono); }
 }
 .card-status { margin-left: auto; font-size: 12px; color: var(--ink-4); font-family: var(--mono); }
 .cost { margin-left: auto; font-size: 13px; font-family: var(--mono); color: var(--ink-3); }
+.fee-note { margin: 0 0 12px; font-size: 12.5px; line-height: 1.5; color: var(--ink-4); }
+.fee-note a { color: var(--ink-3); text-decoration: underline; text-underline-offset: 2px; }
+.fee-note a:hover { color: var(--ink); }
 
 /* ── Wallet choices ───────────────────────────────────────────────────── */
 .choice-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }

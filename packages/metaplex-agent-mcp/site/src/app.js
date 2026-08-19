@@ -24,6 +24,7 @@ import {
 	jsonDataUri,
 } from '../../src/lib/registration.js';
 import { toBase58Signature } from '../../src/lib/solana.js';
+import { resolveDeployFee, feeSchedule } from '../../src/lib/three.js';
 import { resolveEndpoint, validateRpc, saveCustomRpc, customRpc, rpcCall } from './rpc.js';
 import {
 	detectInjected,
@@ -41,6 +42,7 @@ const short = (a) => (a && a.length > 12 ? `${a.slice(0, 4)}…${a.slice(-4)}` :
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const MINT_COST_SOL = 0.007;
+const FEE = feeSchedule();
 
 const state = {
 	network: 'devnet',
@@ -51,7 +53,22 @@ const state = {
 	previewDoc: 'registration',
 	pickerCursor: '',
 	deploying: false,
+	fee: null, // resolved $THREE deploy fee for the connected wallet, see refreshFee()
 };
+
+/**
+ * Total SOL this deploy costs right now: rent + network fees + the deploy fee.
+ * With no wallet connected there is no balance to price the fee against, so
+ * mainnet quotes the standard fee rather than a number nobody can actually pay.
+ */
+function deployCostSol() {
+	const fee = state.fee
+		? state.fee.sol
+		: state.network === 'mainnet' && FEE.enabled
+			? FEE.standard_sol
+			: 0;
+	return Math.round((MINT_COST_SOL + fee) * 1e6) / 1e6;
+}
 
 /* ── Umi ──────────────────────────────────────────────────────────────── */
 
@@ -239,23 +256,49 @@ $('disconnect-btn').addEventListener('click', () => {
 	render();
 });
 
+/**
+ * Price the deploy fee for the connected wallet: mainnet only, waived or halved
+ * by the wallet's live $THREE balance. Never blocks the deployer; an unresolved
+ * fee falls back to the standard schedule so the cost shown is never too low.
+ */
+async function refreshFee() {
+	if (!state.wallet || !state.endpoint) {
+		state.fee = null;
+		return;
+	}
+	try {
+		state.fee = await resolveDeployFee(umiFor(state.endpoint), {
+			network: state.network,
+			payer: state.wallet.address,
+		});
+	} catch {
+		state.fee =
+			state.network === 'mainnet'
+				? { sol: FEE.standard_sol, lamports: FEE.standard_lamports, wallet: FEE.fee_wallet, tier: 'standard' }
+				: { sol: 0, lamports: 0, wallet: null, tier: 'devnet' };
+	}
+	render();
+}
+
 async function refreshBalance() {
 	if (!state.wallet || !state.endpoint) {
 		$('wallet-balance').textContent = '';
 		return;
 	}
+	refreshFee();
 	try {
 		const result = await rpcCall(state.endpoint, 'getBalance', [state.wallet.address]);
 		const sol = (result?.value ?? 0) / 1e9;
 		state.balance = sol;
 		$('wallet-balance').textContent = `${sol.toFixed(4)} SOL`;
-		const short_ = sol < MINT_COST_SOL;
+		const need = deployCostSol();
+		const short_ = sol < need;
 		$('funding-warn').hidden = !short_;
 		if (short_) {
 			$('funding-warn').textContent =
 				state.network === 'devnet'
-					? `This wallet holds ${sol.toFixed(4)} SOL. A mint costs about ${MINT_COST_SOL} SOL. Use "Get devnet SOL" above, it is free.`
-					: `This wallet holds ${sol.toFixed(4)} SOL. A mint costs about ${MINT_COST_SOL} SOL. Send some SOL to ${state.wallet.address} and it will update here.`;
+					? `This wallet holds ${sol.toFixed(4)} SOL. A deploy costs about ${need} SOL. Use "Get devnet SOL" above, it is free.`
+					: `This wallet holds ${sol.toFixed(4)} SOL. A deploy costs about ${need} SOL. Send some SOL to ${state.wallet.address} and it will update here.`;
 		}
 	} catch {
 		$('wallet-balance').textContent = 'balance unavailable';
@@ -589,6 +632,8 @@ function params() {
 		addBlocker: $('p-addblocker').checked,
 		metadataUri: $('f-metadata-uri').value.trim() || undefined,
 		registrationUri: $('f-registration-uri').value.trim() || undefined,
+		feeLamports: state.fee?.lamports || 0,
+		feeWallet: state.fee?.wallet || undefined,
 	};
 }
 
@@ -603,11 +648,52 @@ function problemWith(p) {
 	}
 	if (!state.wallet) return 'Connect a wallet first';
 	if (!state.endpoint) return 'Add an RPC endpoint to continue';
-	if (typeof state.balance === 'number' && state.balance < MINT_COST_SOL) return 'Not enough SOL to cover the mint';
+	if (typeof state.balance === 'number' && state.balance < deployCostSol()) return 'Not enough SOL to cover the deploy';
 	return null;
 }
 
 /* ── Render ───────────────────────────────────────────────────────────── */
+
+const num = (n) => Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 });
+
+/**
+ * The one line that explains what the deploy fee is, why it is that number, and
+ * how to make it smaller. Every state is written out: no wallet, devnet, and
+ * each of the three mainnet tiers.
+ */
+function renderFeeNote() {
+	const el = $('fee-note');
+	if (!el) return;
+	const link = '<a href="https://three.ws/three" target="_blank" rel="noopener">$THREE</a>';
+	const schedule = `Holding ${num(FEE.half_price_at_three)} ${link} halves it, ${num(FEE.free_at_three)} waives it.`;
+
+	if (!FEE.enabled) {
+		el.innerHTML = 'No deploy fee is configured on this build.';
+		return;
+	}
+	if (state.network === 'devnet') {
+		el.innerHTML = `Devnet rehearsals are free: no deploy fee, only devnet rent. Mainnet adds a ${FEE.standard_sol} SOL deploy fee that funds ${link} buybacks. ${schedule}`;
+		return;
+	}
+	if (!state.wallet || !state.fee) {
+		el.innerHTML = `Mainnet deploys carry a ${FEE.standard_sol} SOL fee that funds ${link} buybacks. ${schedule}`;
+		return;
+	}
+	const held = state.fee.three_tokens;
+	if (state.fee.tier === 'holder_free') {
+		el.innerHTML = `Deploy fee waived: this wallet holds ${num(held)} ${link}. You pay network rent only.`;
+		return;
+	}
+	if (state.fee.tier === 'holder_half') {
+		el.innerHTML = `Deploy fee halved to ${state.fee.sol} SOL: this wallet holds ${num(held)} ${link}. ${num(FEE.free_at_three)} waives it entirely.`;
+		return;
+	}
+	const need = state.fee.next_tier?.need_three;
+	el.innerHTML =
+		`Includes a ${state.fee.sol} SOL deploy fee that funds ${link} buybacks.` +
+		(need ? ` ${num(need)} more $THREE in this wallet halves it.` : ` ${schedule}`);
+}
+
 
 function render() {
 	const p = params();
@@ -662,7 +748,8 @@ function render() {
 	);
 
 	const bytes = jsonDataUri(registration).length + jsonDataUri(metadata).length;
-	$('cost-line').textContent = `~${MINT_COST_SOL} SOL · ${bytes.toLocaleString()} bytes on-chain`;
+	$('cost-line').textContent = `~${deployCostSol()} SOL · ${bytes.toLocaleString()} bytes on-chain`;
+	renderFeeNote();
 	$('royalty-pct').textContent = `${(p.royaltyBasisPoints / 100).toFixed(p.royaltyBasisPoints % 100 ? 2 : 0)}%`;
 
 	const btn = $('deploy-btn');
@@ -812,7 +899,7 @@ async function waitForAccount(conn, address) {
 function explain(err) {
 	const msg = err?.message || String(err);
 	if (/reject|denied|declined|4001/i.test(msg)) return 'You dismissed the signature request. Nothing was spent.';
-	if (/insufficient|0x1\b/i.test(msg)) return `Not enough SOL for the mint (about ${MINT_COST_SOL} SOL). Top the wallet up and try again.`;
+	if (/insufficient|0x1\b/i.test(msg)) return `Not enough SOL for the deploy (about ${deployCostSol()} SOL). Top the wallet up and try again.`;
 	if (/blockhash|expired/i.test(msg)) return 'The transaction expired before it was signed. Press deploy again to rebuild it.';
 	if (/403|forbidden/i.test(msg)) return 'The RPC endpoint refused the request. Add your own endpoint with "Use my own RPC".';
 	return `Deploy failed: ${msg}`;

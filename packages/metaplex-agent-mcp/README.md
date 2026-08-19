@@ -13,6 +13,8 @@ Two signing lanes, both self-custodial:
 - **Agents** sign with their own keypair (`SOLANA_SECRET_KEY`): `mint_onchain_agent`.
 - **People** sign with Phantom, Solflare, Backpack, Ledger, or any Solana wallet: `prepare_agent_mint` builds the transaction, the wallet signs it, `send_signed_transaction` broadcasts it. No key ever touches the server.
 
+A mainnet deploy pays a flat **0.02 SOL** fee, in the same transaction as the mint, and that fee funds **[$THREE](https://three.ws/three) buybacks**. Hold $THREE and it halves, then disappears; devnet never pays it. Every preview shows the number and its recipient before anything is signed. See [$THREE: the deploy fee and the holder waiver](#three-the-deploy-fee-and-the-holder-waiver).
+
 Nothing is mocked: real Metaplex programs, real Solana, and devnet support for free end-to-end rehearsal.
 
 ## Install
@@ -60,7 +62,9 @@ Rehearse on devnet for free, then go to mainnet:
 4. get_onchain_agent { asset: "<returned asset>", network: "devnet" }
 ```
 
-The mint costs ~0.007 SOL on mainnet (Core rent + identity PDA rent + fees).
+A mainnet deploy costs ~0.027 SOL: ~0.007 in Core rent, identity PDA rent, and network fees, plus a
+flat 0.02 SOL deploy fee that funds $THREE buybacks. Holding $THREE halves that fee and then waives
+it, and devnet is free. See [$THREE](#three-the-deploy-fee-and-the-holder-waiver).
 
 ## Tools
 
@@ -74,6 +78,42 @@ The mint costs ~0.007 SOL on mainnet (Core rent + identity PDA rent + fees).
 | `agent_wallet` | An asset's built-in wallet (mpl-core Asset Signer PDA), any address, or the configured signer, with live SOL balance. |
 | `build_registration` | The EIP-8004 registration JSON + `data:` URI, fully offline. |
 | `list_onchain_agents` | Latest registrations from the live three.ws `/api/deployments` feed (Solana by default, `all_chains:true` for EVM ERC-8004 too). |
+| `three_status` | Prices your next deploy: fee schedule, a wallet's live $THREE balance and tier, and the public buyback ledger. |
+
+## $THREE: the deploy fee and the holder waiver
+
+A **mainnet** deploy carries a flat **0.02 SOL** fee. Three things about it matter:
+
+- **It rides in the same transaction that creates the asset.** A deploy that fails, is rejected, or
+  expires moves no money. There is no separate payment step and nothing to reconcile.
+- **It is disclosed before anything is signed.** Every `mint_onchain_agent` preview and every
+  `prepare_agent_mint` response returns `deploy_fee_sol` and `deploy_fee_to`, with the tier that
+  produced them.
+- **It funds $THREE buybacks.** The fee is paid to the wallet the three.ws
+  [$THREE](https://three.ws/three) buyback lane spends from
+  (`FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump` is the mint), and the public ledger of what that
+  lane has bought is at [`/api/three-token/stats`](https://three.ws/api/three-token/stats). Deploys
+  are the only revenue this package has.
+
+**Holding $THREE makes it cheaper, then free:**
+
+| $THREE in the paying wallet | Deploy fee |
+|---|---|
+| under 50,000 | 0.02 SOL |
+| 50,000 or more | 0.01 SOL |
+| 250,000 or more | free |
+
+The balance is read live from the chain when the transaction is built. Nothing is staked, escrowed,
+locked, or spent to earn it: hold the tokens in your own wallet and keep them, and the waiver applies
+to every agent you deploy. Devnet always pays zero, so a full end-to-end rehearsal stays free.
+
+```
+three_status {}                                  → what your next deploy costs and why
+three_status { wallet: "<any base58 address>" }  → price it for someone else's wallet
+```
+
+Self-hosting a fork with different economics is `DEPLOY_FEE_SOL`, `DEPLOY_FEE_WALLET`, and
+`DEPLOY_FEE_ENABLED`.
 
 ## Customization
 
@@ -93,7 +133,12 @@ Every field the mint touches is a parameter: owner, collection, royalty basis po
 | `SOLANA_RPC_URL` | public endpoint | HTTPS RPC. Bring your own for production traffic. |
 | `METAPLEX_AGENT_NETWORK` | `mainnet` | Default cluster (`mainnet` or `devnet`); every tool takes a per-call `network` too. |
 | `REQUIRE_CONFIRM` | `true` | Gate spends behind `confirm: true`. |
-| `THREE_WS_BASE` | `https://three.ws` | Host for the deployments feed. |
+| `THREE_WS_BASE` | `https://three.ws` | Host for the deployments feed and the $THREE ledger. |
+| `DEPLOY_FEE_SOL` | `0.02` | Mainnet deploy fee, in SOL. |
+| `DEPLOY_FEE_WALLET` | three.ws buyback wallet | Where the deploy fee is paid. |
+| `DEPLOY_FEE_ENABLED` | `true` | Set false to build a fork that charges nothing. |
+| `THREE_HALF_PRICE_AT` / `THREE_FREE_AT` | `50000` / `250000` | $THREE balances that halve, then waive, the fee. |
+| `THREE_MINT` | $THREE mint | Only to track an updated canonical contract. |
 
 ## Library use
 
@@ -120,11 +165,13 @@ The registration and metadata builders are also importable on their own (depende
 ## Requirements
 
 - Node 20+
-- SOL on the target network for minting (~0.007 SOL per agent on mainnet; devnet is free via faucet)
+- SOL on the target network for minting (~0.027 SOL per agent on mainnet, or ~0.007 with the
+  holder waiver; devnet is free via faucet)
 
 ## Links
 
 - three.ws: https://three.ws
+- $THREE: https://three.ws/three
 - Live deployments feed: https://three.ws/deployments
 - Metaplex Agent Registry: https://www.metaplex.com/agents
 - Metaplex docs: https://www.metaplex.com/docs/agents
