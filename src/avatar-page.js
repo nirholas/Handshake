@@ -230,7 +230,7 @@ async function fetchAvatarRecord(id) {
 
 // Fire-and-forget view tracking for the body on display. The server counts at
 // most one view per IP per avatar per 30 min and only for public avatars, so
-// calling on every load is safe — and without this ping the canonical page
+// calling on every load is safe, and without this ping the canonical page
 // (where nearly all views now land) never moved the view_count that search
 // and explore rank by. Demo ids are not uuids and are skipped server-side
 // anyway; skip them here to save the request.
@@ -425,6 +425,49 @@ function bodyCardHTML() {
 	</section>`;
 }
 
+/**
+ * The at-a-glance counters under the title. Every number is a real column on
+ * the record we already fetched, so this costs no extra request and can never
+ * show a placeholder: a signal with nothing to say is simply omitted.
+ */
+function signalsHTML() {
+	const items = [];
+	const num = (n) => Number(n) || 0;
+	if (mode === 'agent') {
+		const skills = (agent.skills || []).length;
+		if (skills) items.push({ v: skills, k: skills === 1 ? 'skill' : 'skills' });
+		if (num(agent.chat_count)) items.push({ v: compactNumber(agent.chat_count), k: 'chats' });
+		if (agent.solana_address) items.push({ v: 'Solana', k: 'wallet' });
+		if (agent.is_registered) items.push({ v: 'On-chain', k: 'identity' });
+		if (agent.created_at) items.push({ v: sinceLabel(agent.created_at), k: 'active since' });
+	} else {
+		if (num(avatar.view_count)) items.push({ v: compactNumber(avatar.view_count), k: 'views' });
+		if (num(avatar.fork_count)) items.push({ v: compactNumber(avatar.fork_count), k: 'forks' });
+		if (num(avatar.version) > 1) items.push({ v: `v${avatar.version}`, k: 'version' });
+		if (avatar.created_at) items.push({ v: sinceLabel(avatar.created_at), k: 'created' });
+	}
+	if (!items.length) return '';
+	return `<dl class="av-signals">${items
+		.map((i) => `<div class="av-signal"><dt>${esc(i.k)}</dt><dd>${esc(String(i.v))}</dd></div>`)
+		.join('')}</dl>`;
+}
+
+// 1240 -> "1.2k". Kept local because the only alternative in reach formats
+// currency, and a view count is not money.
+function compactNumber(n) {
+	const v = Number(n) || 0;
+	if (v < 1000) return String(v);
+	if (v < 1000000) return `${(v / 1000).toFixed(v < 10000 ? 1 : 0).replace(/\.0$/, '')}k`;
+	return `${(v / 1000000).toFixed(1).replace(/\.0$/, '')}m`;
+}
+
+// "Mar 2026" from an ISO timestamp, in the visitor's locale.
+function sinceLabel(iso) {
+	const d = new Date(iso);
+	if (Number.isNaN(d.getTime())) return '';
+	return d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
+}
+
 function renderShell(glbUrl) {
 	const tagsHtml = (avatar.tags || [])
 		.map((t) => `<a class="av-tag" href="/marketplace?tag=${encodeURIComponent(t)}">${esc(t)}</a>`)
@@ -503,6 +546,7 @@ function renderShell(glbUrl) {
 				<div class="av-source-tag">${esc(sourceTagText())}</div>
 				${byLine}
 				${tagsHtml ? `<div class="av-tags">${tagsHtml}</div>` : ''}
+				${signalsHTML()}
 				${walletRowHTML()}
 				${viewerOwns && avatar.agent_id ? `<div class="av-wallet-manage" id="av-wallet-manage"></div>` : ''}
 			</div>
@@ -2391,24 +2435,33 @@ async function loadForks() {
 		.join('');
 }
 
-// ── Related avatars ───────────────────────────────────────────────────
+// ── Related entities ──────────────────────────────────────────────────
+//
+// Same grid, same 3D cards, different neighbours: a body's neighbours are other
+// bodies, an agent's are other agents doing similar work (server-side
+// similarity over name, description, category and tags).
 
 async function loadRelated() {
 	let items;
 	try {
-		items = await fetchRelated();
+		items = mode === 'agent' ? await fetchSimilarAgents() : await fetchRelated();
 	} catch {
-		return; // optional below-the-fold section — stays hidden on network failure
+		return; // optional below-the-fold section, stays hidden on network failure
 	}
 	if (!items.length) return;
 	const grid = $('av-related-grid');
 	if (!grid) return;
+	const heading = $('av-related')?.querySelector('h2');
+	if (heading) {
+		heading.removeAttribute('data-i18n');
+		heading.textContent = mode === 'agent' ? 'Similar agents' : 'Related avatars';
+	}
 	$('av-related').hidden = false;
 	grid.innerHTML = items.map((a) => {
 		const id = encodeURIComponent(a.avatarId);
 		return `
 		<div class="av-related-card">
-			<a class="av-related-main" href="/avatars/${id}" aria-label="Open ${esc(a.name || 'avatar')}">
+			<a class="av-related-main" href="${esc(a.href || `/avatars/${id}`)}" aria-label="Open ${esc(a.name || 'avatar')}">
 				<div class="av-related-thumb">
 					${a.glbUrl ? `<model-viewer
 						src="${esc(a.glbUrl)}"
@@ -2427,15 +2480,50 @@ async function loadRelated() {
 				</div>
 				<div class="av-related-info">
 					<p class="av-related-name">${esc(a.name || 'Untitled')}</p>
-					<p class="av-related-author">${esc(a.author?.displayName || a.author?.handle || 'Anonymous')}</p>
+					<p class="av-related-author">${esc(a.subtitle || a.author?.displayName || a.author?.handle || 'Anonymous')}</p>
 				</div>
 			</a>
-			<a class="av-related-irl" href="/irl?avatar=${id}" title="Walk ${esc(a.name || 'this avatar')} IRL" aria-label="Walk ${esc(a.name || 'this avatar')} IRL">
+			${a.avatarId ? `<a class="av-related-irl" href="/irl?avatar=${id}" title="Walk ${esc(a.name || 'this avatar')} IRL" aria-label="Walk ${esc(a.name || 'this avatar')} IRL">
 				<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
 				IRL
-			</a>
+			</a>` : ''}
 		</div>`;
 	}).join('');
+}
+
+/**
+ * Agents doing similar work, from the marketplace's own similarity ranking
+ * (name, description, category and tag overlap, scored in SQL). Normalised
+ * into the same card shape the avatar grid uses so one renderer draws both.
+ */
+async function fetchSimilarAgents() {
+	const r = await fetch(`/api/marketplace/agents/${encodeURIComponent(entityId)}/similar`, {
+		credentials: 'include',
+	});
+	if (!r.ok) return [];
+	const j = await r.json();
+	const items = j?.data?.items || j?.data?.agents || j?.data || [];
+	if (!Array.isArray(items)) return [];
+	return items.slice(0, 8).map((a) => ({
+		avatarId: a.avatar_id || null,
+		href: `/agents/${encodeURIComponent(a.id)}`,
+		name: a.name,
+		glbUrl: a.avatar_glb_url || null,
+		subtitle: relatedAgentSubtitle(a),
+	}));
+}
+
+// One honest line under a similar agent's name: its category if it has one,
+// else its real reach. Never a fabricated "Anonymous" when we know better.
+function relatedAgentSubtitle(a) {
+	const views = Number(a.views_count) || 0;
+	const forks = Number(a.forks_count) || 0;
+	if (views || forks) {
+		return [views ? `${compactNumber(views)} views` : '', forks ? `${compactNumber(forks)} forks` : '']
+			.filter(Boolean)
+			.join(' \u00b7 ');
+	}
+	return a.category || 'Agent';
 }
 
 // ── Model measurement ─────────────────────────────────────────────────
