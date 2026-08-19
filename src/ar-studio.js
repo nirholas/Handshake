@@ -24,7 +24,7 @@
 // round-trips through ?src= links, so a desktop arrangement reopens on a phone.
 
 import {
-	AnimationMixer, Box3, CanvasTexture, Color, DirectionalLight, GridHelper, Group,
+	AnimationMixer, Box3, CanvasTexture, Color, DirectionalLight, Fog, GridHelper, Group,
 	HemisphereLight, Mesh, MeshBasicMaterial, PerspectiveCamera, PlaneGeometry,
 	Raycaster, RingGeometry, Scene, Vector2, Vector3, WebGLRenderer,
 } from 'three';
@@ -157,6 +157,14 @@ scene.add(sun);
 // the ground truth. The ray plane is the invisible tap/drag target either way.
 const grid = new GridHelper(24, 48, 0x3a3f52, 0x23273a);
 grid.position.y = 0.001;
+grid.material.transparent = true;
+grid.material.opacity = 0.75;
+// Distance fog fades the far lines out instead of letting a flat grid viewed at
+// a shallow angle collapse into a moire band across the horizon. It starts well
+// beyond any placement, so it never touches a model, and it is removed the
+// moment the real room becomes the backdrop.
+const previewFog = new Fog(0x06070a, 5, 17);
+scene.fog = previewFog;
 scene.add(grid);
 const rayPlane = new Mesh(
 	new PlaneGeometry(80, 80),
@@ -203,7 +211,33 @@ const reducedMotion = (() => {
 
 // ── Camera look (yaw/pitch; gyro on mobile, drag anywhere) ───────────────────
 let cameraYaw = 0;
-let cameraPitch = -0.12;
+let cameraPitch = -0.24;
+// Once the viewer aims the camera themselves (drag-look, gyro, passthrough),
+// their aim is the truth and the studio stops reframing for them.
+let userLooked = false;
+
+// Desktop and phone preview have no room to look at, so a model dropped on the
+// floor lands below the eyeline and reads as "nothing happened". Aim the view at
+// what is actually in the scene.
+function framePreview() {
+	if (arActive || xrSession || userLooked || !placements.length) return;
+	let sx = 0;
+	let sz = 0;
+	let sh = 0;
+	for (const p of placements) {
+		sx += p.group.position.x;
+		sz += p.group.position.z;
+		sh += (p.height || 0.4) * (p.group.userData._targetScale ?? 1);
+	}
+	const n = placements.length;
+	const cx = sx / n;
+	const cz = sz / n;
+	const centre = (sh / n) * 0.5;
+	const dist = Math.hypot(cx - camera.position.x, cz - camera.position.z);
+	if (!(dist > 0.05)) return;
+	cameraYaw = Math.atan2(cx - camera.position.x, -(cz - camera.position.z));
+	cameraPitch = clampPitch(-Math.atan2(camera.position.y - centre, dist), PITCH_MIN, PITCH_MAX);
+}
 
 function applyCameraLook() {
 	camera.rotation.set(0, 0, 0);
@@ -233,7 +267,6 @@ let arActive = false;
 let mediaStream = null;
 let arTransitioning = false;
 let xrSession = null;
-let usdzObjectUrl = null;
 let estimatedLight = null;
 let arTrackW = 0;
 let arTrackH = 0;
@@ -553,6 +586,7 @@ async function addModel({ src, title = '' }, {
 	if (!remote) armedSrc = { src: url, title: placement.title };
 	updateCount();
 	if (!remote) select(placement);
+	if (!remote) framePreview();
 	if (persist) saveScene();
 
 	// Broadcast a locally-added model to the shared room (once): mint a wire id,
@@ -1112,6 +1146,8 @@ async function startCamera() {
 		cameraBtn?.classList.add('is-active');
 		cameraBtn?.setAttribute('aria-pressed', 'true');
 		grid.visible = false;
+		scene.fog = null;
+		userLooked = true;
 		videoEl?.play?.().catch(() => {});
 		applyCameraFov();
 		startLightMatching();
@@ -1134,6 +1170,8 @@ function stopCamera() {
 	cameraBtn?.classList.remove('is-active');
 	cameraBtn?.setAttribute('aria-pressed', 'false');
 	grid.visible = true;
+	scene.fog = previewFog;
+	userLooked = false;
 	camera.fov = 58;
 	camera.updateProjectionMatrix();
 	gyroBase = null;
@@ -1288,6 +1326,7 @@ canvas.addEventListener('pointermove', (e) => {
 		netBroadcastTransform(p);
 	} else if (!pointerDown.placement && !(arActive && gyroBase)) {
 		// Drag-look: only when the gyro isn't already steering the view.
+		userLooked = true;
 		cameraYaw = pointerDown.lookYaw + dx * 0.0042;
 		cameraPitch = clampPitch(pointerDown.lookPitch + dy * 0.0032, PITCH_MIN, PITCH_MAX);
 	}
@@ -1912,12 +1951,107 @@ function renderObjectsTray(items) {
 	paint();
 }
 
-// ── WebXR immersive multi-placement ──────────────────────────────────────────
-MultiPlaceSession.isSupported().then((ok) => {
-	if (ok && xrBtn) xrBtn.hidden = false;
+// ── Entering AR ──────────────────────────────────────────────────────────────
+// Three device classes, three genuinely different experiences, and only one of
+// them is WebXR. An iPhone has no immersive-ar session, and until this existed
+// it was offered nothing but the camera-passthrough composite: the model floats
+// convincingly in a screenshot and not at all in the hand, because there is no
+// plane detection, no real scale and nothing occluding it. Every iPhone already
+// ships ARKit through AR Quick Look, which is what /avatars/:id/ar has always
+// used, so the studio now hands one model to it the same way.
+//
+// 'webxr' keeps the whole multi-model scene in the page and stays first.
+/** @type {'webxr'|'quicklook'|'sceneviewer'|'none'} */
+let arMode = 'none';
+
+async function resolveArMode() {
+	try {
+		if (await MultiPlaceSession.isSupported()) return 'webxr';
+	} catch {
+		// A throwing support probe is just "not webxr".
+	}
+	if (canUseQuickLook()) return 'quicklook';
+	if (canUseSceneViewer()) return 'sceneviewer';
+	return 'none';
+}
+
+resolveArMode().then((mode) => {
+	arMode = mode;
+	if (!xrBtn || mode === 'none') return;
+	xrBtn.hidden = false;
+	const label = xrBtn.querySelector('.ars-ar-label');
+	if (mode === 'webxr') {
+		if (label) label.textContent = 'Immersive';
+		xrBtn.setAttribute('aria-label', 'Enter immersive AR');
+	} else {
+		// Do not promise an immersive session to a device that has none.
+		if (label) {
+			label.textContent = 'Place in AR';
+			label.setAttribute('data-i18n', 'ar_studio.place_in_ar');
+		}
+		xrBtn.setAttribute('aria-label', 'Open this in your device AR viewer and place it in your real space');
+	}
+});
+
+// The device's own AR viewer, for one model. Quick Look reads USDZ rather than
+// glTF, so the GLB is converted here on the device (a real conversion through
+// three's USDZExporter, the same pipeline /avatars/:id/ar uses) and handed over
+// as a blob. A couple of silent seconds after a tap reads as a dead button, so
+// every stage reports.
+let nativeArBusy = false;
+let nativeArObjectUrl = null;
+
+async function placeNative(placement) {
+	const target = placement || selected || placements[placements.length - 1];
+	if (!target) {
+		setStatus('Add a model first, then place it in your space.', { warn: true });
+		return;
+	}
+	if (nativeArBusy) return;
+	nativeArBusy = true;
+	xrBtn?.setAttribute('aria-busy', 'true');
+	try {
+		if (canUseQuickLook()) {
+			setStatus('Fetching the model…', { sticky: true });
+			const res = await fetch(target.src);
+			if (!res.ok) throw new Error(`model fetch ${res.status}`);
+			const glbBlob = await res.blob();
+			setStatus('Preparing it for AR…', { sticky: true });
+			const usdzBlob = await glbBlobToUsdzBlob(glbBlob);
+			if (nativeArObjectUrl) URL.revokeObjectURL(nativeArObjectUrl);
+			nativeArObjectUrl = URL.createObjectURL(usdzBlob);
+			setStatus('Opening AR…', { sticky: true });
+			openQuickLook(nativeArObjectUrl);
+		} else if (canUseSceneViewer()) {
+			setStatus('Opening AR…', { sticky: true });
+			openSceneViewer(target.src, { title: target.title || '', link: location.href });
+		} else {
+			setStatus('This device has no AR viewer. Open this scene on a phone to place it in a room.', {
+				warn: true, actionLabel: 'Show QR', onAction: () => qrBtn?.click(),
+			});
+			return;
+		}
+		setStatus('Point at the floor, then drag to place it.');
+	} catch (err) {
+		setStatus(`Could not open AR for this model (${err?.message || err}).`, {
+			warn: true, actionLabel: 'Try again', onAction: () => placeNative(target),
+		});
+	} finally {
+		nativeArBusy = false;
+		xrBtn?.removeAttribute('aria-busy');
+	}
+}
+
+window.addEventListener('pagehide', () => {
+	if (nativeArObjectUrl) URL.revokeObjectURL(nativeArObjectUrl);
 });
 
 xrBtn?.addEventListener('click', async () => {
+	// Anything that is not WebXR goes to the platform's own viewer instead.
+	if (arMode !== 'webxr') {
+		placeNative();
+		return;
+	}
 	if (xrSession) {
 		xrSession.end();
 		return;
@@ -2009,6 +2143,7 @@ xrBtn?.addEventListener('click', async () => {
 					}
 				}
 				grid.visible = true;
+				if (!arActive) scene.fog = previewFog;
 				saveScene();
 				startLoop();
 				setStatus('Back to the studio view.');
@@ -2031,6 +2166,7 @@ xrBtn?.addEventListener('click', async () => {
 		estimatedLight.start();
 		document.body.classList.add('is-xr');
 		grid.visible = false;
+		scene.fog = null;
 		selRing.visible = false;
 		for (const p of placements) {
 			if (p.shadow) p.shadow.visible = false;

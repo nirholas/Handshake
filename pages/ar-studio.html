@@ -197,6 +197,9 @@
 			max-width: 26vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 		}
 		.ars-selbar .ars-icon-btn { border-radius: 999px; padding: 7px 11px; font-size: 12.5px; background: rgba(255, 255, 255, 0.06); }
+		/* Placing the selected model in the real room is the dock's AR button, which
+		   is always visible; the selection toolbar stays icon-sized edit actions. */
+		#ars-xr-btn { display: inline-flex; align-items: center; gap: 6px; }
 
 		/* ── Status line ── */
 		.ars-status {
@@ -243,7 +246,7 @@
 		.ars-forge button:hover { filter: brightness(1.08); }
 		.ars-forge button:active { transform: translateY(1px); }
 		.ars-forge button[disabled] { opacity: 0.55; cursor: progress; filter: none; }
-		.ars-dock-row { display: flex; gap: 8px; align-items: center; }
+		.ars-dock-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; row-gap: 8px; }
 		.ars-dock-row .ars-icon-btn { flex: 0 0 auto; }
 		.ars-dock-row .ars-grow { flex: 1 1 auto; justify-content: center; }
 
@@ -441,7 +444,7 @@
 			<div class="ars-dock-row">
 				<button class="ars-icon-btn ars-grow" id="ars-add-btn" type="button" aria-expanded="false" aria-controls="ars-tray" data-i18n="ar_studio.add_models">＋ Add models</button>
 				<button class="ars-icon-btn" id="ars-camera-btn" type="button" aria-pressed="false" aria-label="Toggle camera passthrough" data-i18n="ar_studio.camera" data-i18n-attr="aria-label:ar_studio.toggle_camera_passthrough_arialabel">📷 Camera</button>
-				<button class="ars-icon-btn" id="ars-xr-btn" type="button" hidden aria-pressed="false" aria-label="Enter immersive AR" data-i18n="ar_studio.immersive" data-i18n-attr="aria-label:ar_studio.enter_immersive_ar_arialabel">✦ Immersive</button>
+				<button class="ars-icon-btn" id="ars-xr-btn" type="button" hidden aria-pressed="false" aria-label="View this in augmented reality" data-i18n-attr="aria-label:ar_studio.view_in_ar_arialabel"><span aria-hidden="true">✦</span> <span class="ars-ar-label" data-i18n="ar_studio.immersive">Immersive</span></button>
 				<button class="ars-icon-btn" id="ars-clear-btn" type="button" hidden aria-label="Clear all models" data-i18n="ar_studio.clear" data-i18n-attr="aria-label:ar_studio.clear_all_models_arialabel">Clear</button>
 			</div>
 		</footer>
