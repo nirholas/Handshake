@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>
+			(function () {
+				try {
+					var t = localStorage.getItem('map.theme');
+					if (!t) t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+					document.documentElement.setAttribute('data-theme', t);
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Docs · Agent Deployer</title>
+		<meta
+			name="description"
+			content="How to put an AI agent on-chain in the Metaplex Agent Registry: the web deployer, the MCP server for Claude and Cursor, the tool reference, the library API, and the on-chain document schema."
+		/>
+		<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+			rel="stylesheet"
+		/>
+		<link rel="stylesheet" href="styles.css" />
+	</head>
+	<body>
+		<header class="nav">
+			<div class="nav-in">
+				<a class="brand" href="./">
+					<span class="brand-mark" aria-hidden="true"></span>
+					<span class="brand-name">Agent Deployer</span>
+				</a>
+				<nav class="nav-links" aria-label="Main">
+					<a href="./#deploy">Deploy</a>
+					<a href="docs.html">Docs</a>
+					<a href="https://github.com/nirholas/metaplex-agent-mcp" target="_blank" rel="noopener">GitHub</a>
+					<a href="https://www.npmjs.com/package/@three-ws/metaplex-agent-mcp" target="_blank" rel="noopener">npm</a>
+				</nav>
+				<div class="nav-right">
+					<button type="button" class="icon-btn" id="theme-toggle" aria-label="Switch theme" title="Switch theme">
+						<span class="theme-icon" aria-hidden="true"></span>
+					</button>
+				</div>
+			</div>
+		</header>
+
+		<div class="docs">
+			<nav class="docs-nav" aria-label="Documentation">
+				<div>
+					<h6>Start</h6>
+					<ul>
+						<li><a href="#what">What this is</a></li>
+						<li><a href="#deploy-web">Deploy in the browser</a></li>
+						<li><a href="#wallets">Wallets and keys</a></li>
+						<li><a href="#costs">Costs and networks</a></li>
+					</ul>
+				</div>
+				<div>
+					<h6>For agents</h6>
+					<ul>
+						<li><a href="#mcp">MCP setup</a></li>
+						<li><a href="#tools">Tool reference</a></li>
+						<li><a href="#library">Use as a library</a></li>
+					</ul>
+				</div>
+				<div>
+					<h6>Reference</h6>
+					<ul>
+						<li><a href="#anatomy">What gets written</a></li>
+						<li><a href="#schema">Registration schema</a></li>
+						<li><a href="#discovery">Discovery</a></li>
+						<li><a href="#faq">FAQ</a></li>
+					</ul>
+				</div>
+			</nav>
+
+			<main class="docs-body">
+				<h1>Documentation</h1>
+				<p class="lede">
+					Everything about putting an agent on-chain in the Metaplex Agent Registry: the browser deployer, the MCP
+					server your AI assistant can drive, and the exact bytes that land on Solana.
+				</p>
+
+				<section id="what">
+					<h2>What this is</h2>
+					<p>
+						An <strong>on-chain agent</strong> is a Metaplex Core asset that carries an identity document. That gives
+						a piece of software three things it cannot otherwise have: an address it controls, a public description of
+						what it does and how to reach it, and a place other agents can look it up.
+					</p>
+					<p>Concretely, one deploy produces:</p>
+					<ul>
+						<li>a <strong>Metaplex Core asset</strong> on Solana, owned by whoever you choose;</li>
+						<li>an <strong>Asset Signer PDA</strong>, the agent's own wallet, derived from the asset with no private key in existence;</li>
+						<li>an <strong>EIP-8004 registration document</strong> written into the asset's Agent Identity plugin;</li>
+						<li>an entry in the <a href="https://www.metaplex.com/agents" target="_blank" rel="noopener">Metaplex Agent Registry</a>, indexed automatically.</li>
+					</ul>
+					<p>
+						The shape it mints is the one three.ws used for its Genesis 333 agents, reproduced byte for byte and
+						pinned by tests against the live on-chain originals. Two ways to drive it: this website, or the MCP
+						server so an agent can do it itself.
+					</p>
+				</section>
+
+				<section id="deploy-web">
+					<h2>Deploy in the browser</h2>
+					<p>No account and no install. <a href="./#deploy">Open the deployer</a> and work down the page.</p>
+					<ol>
+						<li><strong>Pick a wallet.</strong> Connect Phantom, Solflare, or Backpack, or create a wallet on the spot (see <a href="#wallets">Wallets and keys</a>).</li>
+						<li><strong>Describe the agent.</strong> A name is the only required field. Add a description, an image, and optionally a GLB model so it renders in 3D. You can import all of that from a three.ws avatar instead of typing URLs.</li>
+						<li><strong>List what it offers.</strong> Optional name and endpoint pairs, shown on the agent's Metaplex page.</li>
+						<li><strong>Adjust the rules.</strong> Royalties, recipients, on-chain attributes, and permanent plugins. The defaults are the Genesis ones and are fine to leave alone.</li>
+						<li><strong>Deploy.</strong> Your wallet asks you to sign; nothing is spent until you approve.</li>
+					</ol>
+					<p class="note">
+						Rehearse on devnet first. It uses the same code and the same programs, costs nothing, and the faucet
+						button funds you in a click. Switch to mainnet when the preview looks right.
+					</p>
+				</section>
+
+				<section id="wallets">
+					<h2>Wallets and keys</h2>
+					<h3>An extension you already have</h3>
+					<p>
+						Phantom, Solflare, Backpack, and Seeker are detected automatically. Your key never leaves the extension:
+						the page builds the transactions, the wallet signs them, and you approve each one.
+					</p>
+					<h3>A wallet created here</h3>
+					<p>
+						If you have never installed a wallet, the deployer can make one. It is generated in your browser with
+						WebCrypto randomness, encrypted with a passphrase you choose (PBKDF2-SHA256, 310,000 iterations, then
+						AES-GCM) and written to this browser's local storage. The decrypted key exists only in the tab while you
+						are using it, and never crosses the network, because this site has no server to send it to.
+					</p>
+					<p>Two consequences worth being blunt about:</p>
+					<ul>
+						<li><strong>Clearing your browser data deletes it.</strong> The backup step exists for this reason. Download the file or copy the key into a password manager.</li>
+						<li><strong>Losing the passphrase loses the wallet.</strong> Nobody can reset it, because nobody else has it.</li>
+					</ul>
+					<p>
+						The secret key is standard base58, so you can import it into Phantom or Solflare at any time and keep
+						using the same wallet and the same agents.
+					</p>
+				</section>
+
+				<section id="costs">
+					<h2>Costs and networks</h2>
+					<table>
+						<thead><tr><th>What</th><th>Cost</th><th>Why</th></tr></thead>
+						<tbody>
+							<tr><td>Core asset</td><td>~0.004 SOL</td><td>Rent for the account holding your agent, plus the fee</td></tr>
+							<tr><td>Identity registration</td><td>~0.003 SOL</td><td>Rent for the identity PDA, plus the fee</td></tr>
+							<tr><td>Total</td><td><strong>~0.007 SOL</strong></td><td>Paid once, by the wallet you deploy from</td></tr>
+						</tbody>
+					</table>
+					<p>
+						Rent is a deposit held by the network for as long as the accounts exist, not a fee to anyone. There is no
+						charge from this site or from three.ws: it takes no cut and has no server in the path.
+					</p>
+					<h3>RPC endpoints</h3>
+					<p>
+						A static page needs somewhere to send transactions. Devnet's public endpoint accepts browser traffic, so
+						rehearsal works out of the box. Solana's public mainnet endpoint refuses browser origins, so mainnet uses
+						the three.ws public proxy when it is reachable; otherwise paste your own endpoint from
+						<a href="https://helius.dev" target="_blank" rel="noopener">Helius</a>,
+						<a href="https://quicknode.com" target="_blank" rel="noopener">QuickNode</a>, or
+						<a href="https://triton.one" target="_blank" rel="noopener">Triton</a> under <em>Use my own RPC</em>. It is
+						checked against the cluster you selected before it is saved, and stored only in your browser.
+					</p>
+				</section>
+
+				<section id="mcp">
+					<h2>MCP setup</h2>
+					<p>
+						The same deploy ships as an <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener">MCP</a>
+						server, so an AI assistant can mint and read agents directly. It is on npm as
+						<code>@three-ws/metaplex-agent-mcp</code> and in the official MCP registry as
+						<code>io.github.nirholas/metaplex-agent</code>.
+					</p>
+					<h3>Claude Code</h3>
+					<pre><code>claude mcp add metaplex-agent -- npx -y @three-ws/metaplex-agent-mcp</code></pre>
+					<p>To let it sign with its own key, pass one:</p>
+					<pre><code>claude mcp add metaplex-agent \
+  -e SOLANA_SECRET_KEY=&lt;base58 secret key&gt; \
+  -e METAPLEX_AGENT_NETWORK=devnet \
+  -- npx -y @three-ws/metaplex-agent-mcp</code></pre>
+					<h3>Cursor, Claude Desktop, and other clients</h3>
+					<pre><code>{
+  "mcpServers": {
+    "metaplex-agent": {
+      "command": "npx",
+      "args": ["-y", "@three-ws/metaplex-agent-mcp"],
+      "env": {
+        "SOLANA_SECRET_KEY": "&lt;base58 secret key&gt;",
+        "METAPLEX_AGENT_NETWORK": "devnet"
+      }
+    }
+  }
+}</code></pre>
+					<p>
+						Every read tool works with no key at all, and so does the Phantom flow
+						(<code>prepare_agent_mint</code> plus <code>send_signed_transaction</code>). A key is only needed when the
+						agent signs for itself.
+					</p>
+					<h3>Environment variables</h3>
+					<table>
+						<thead><tr><th>Variable</th><th>Default</th><th>What it does</th></tr></thead>
+						<tbody>
+							<tr><td><code>SOLANA_SECRET_KEY</code></td><td>unset</td><td>Base58 secret key (or JSON byte array) that pays for and signs mints.</td></tr>
+							<tr><td><code>SOLANA_RPC_URL</code></td><td>public endpoint</td><td>Your own HTTPS RPC. Recommended for anything beyond a trial.</td></tr>
+							<tr><td><code>METAPLEX_AGENT_NETWORK</code></td><td><code>mainnet</code></td><td>Default cluster. Every tool also takes a per-call <code>network</code>.</td></tr>
+							<tr><td><code>REQUIRE_CONFIRM</code></td><td><code>true</code></td><td>Refuse to spend until a call repeats with <code>confirm: true</code>.</td></tr>
+							<tr><td><code>THREE_WS_BASE</code></td><td><code>https://three.ws</code></td><td>Host backing <code>list_onchain_agents</code>.</td></tr>
+						</tbody>
+					</table>
+					<h3>A first session</h3>
+					<pre><code>agent_wallet {}                       # is the signer funded?
+mint_onchain_agent {                  # a preview, spends nothing
+  "name": "Astra",
+  "description": "Reads on-chain data and answers questions about it",
+  "image": "https://example.com/astra.png",
+  "x402_support": true,
+  "network": "devnet"
+}
+mint_onchain_agent { ..., "confirm": true }   # now it mints
+get_onchain_agent { "asset": "&lt;returned address&gt;", "network": "devnet" }</code></pre>
+				</section>
+
+				<section id="tools">
+					<h2>Tool reference</h2>
+					<table>
+						<thead><tr><th>Tool</th><th>Does</th><th>Spends</th></tr></thead>
+						<tbody>
+							<tr>
+								<td><code>mint_onchain_agent</code></td>
+								<td>Mints the Core asset and registers the identity, signed by your key. Returns a full preview unless <code>confirm: true</code>.</td>
+								<td>~0.007 SOL</td>
+							</tr>
+							<tr>
+								<td><code>prepare_agent_mint</code></td>
+								<td>Builds the same mint for an external wallet to sign. Returns <code>txs_base64</code>, already co-signed by the new asset keypair.</td>
+								<td>No</td>
+							</tr>
+							<tr>
+								<td><code>send_signed_transaction</code></td>
+								<td>Broadcasts wallet-signed transactions in order, confirming each and absorbing the create-then-register race.</td>
+								<td>Whatever it sends</td>
+							</tr>
+							<tr>
+								<td><code>register_agent_identity</code></td>
+								<td>Adds an identity to a Core asset that already exists. Idempotent; the signer must hold the asset authority.</td>
+								<td>~0.003 SOL</td>
+							</tr>
+							<tr>
+								<td><code>get_onchain_agent</code></td>
+								<td>Reads any registered agent: plugins, decoded documents, identity PDA, and its wallet balance.</td>
+								<td>No</td>
+							</tr>
+							<tr>
+								<td><code>agent_wallet</code></td>
+								<td>An asset's built-in wallet, any address, or the configured signer, with live SOL balance.</td>
+								<td>No</td>
+							</tr>
+							<tr>
+								<td><code>build_registration</code></td>
+								<td>Builds the EIP-8004 document and its <code>data:</code> URI offline, for previewing or self-hosting.</td>
+								<td>No</td>
+							</tr>
+							<tr>
+								<td><code>list_onchain_agents</code></td>
+								<td>The newest registrations from the live feed. <code>all_chains: true</code> adds EVM ERC-8004 registrations.</td>
+								<td>No</td>
+							</tr>
+						</tbody>
+					</table>
+					<h3>Every mint option</h3>
+					<p>
+						<code>mint_onchain_agent</code> and <code>prepare_agent_mint</code> take an identical set of fields, so the
+						two signing lanes produce identical assets: <code>name</code>, <code>description</code>,
+						<code>image</code>, <code>model_url</code>, <code>external_url</code>, <code>services</code>,
+						<code>x402_support</code>, <code>active</code>, <code>supported_trust</code>, <code>registrations</code>,
+						<code>threews_agent_id</code>, <code>owner</code>, <code>collection</code>,
+						<code>royalty_basis_points</code>, <code>royalty_creators</code>, <code>verified_creator</code>,
+						<code>immutable_metadata</code>, <code>attributes</code>, <code>metadata_attributes</code>,
+						<code>permanent_freeze</code>, <code>permanent_transfer</code>, <code>permanent_burn</code>,
+						<code>add_blocker</code>, <code>metadata_uri</code>, <code>registration_uri</code>, and
+						<code>network</code>.
+					</p>
+				</section>
+
+				<section id="library">
+					<h2>Use as a library</h2>
+					<p>The builders are exported, so you can embed the same mint in your own app or script.</p>
+					<pre><code>import {
+  buildAgentMint, sendAgentMint, buildUmi, toBase58Signature,
+} from '@three-ws/metaplex-agent-mcp/lib';
+
+const umi = buildUmi({ network: 'devnet', secret: process.env.SOLANA_SECRET_KEY });
+const mint = buildAgentMint(umi, {
+  network: 'devnet',
+  creator: umi.identity.publicKey.toString(),
+  name: 'Astra',
+  description: 'An autonomous agent',
+  image: 'https://example.com/astra.png',
+  modelUrl: 'https://example.com/astra.glb',
+  x402Support: true,
+});
+const { signatures, atomic } = await sendAgentMint(umi, mint, { toBase58Signature });</code></pre>
+					<p>
+						Two narrower entry points exist for the browser: <code>@three-ws/metaplex-agent-mcp/lib/registration</code>
+						(document builders, no dependencies) and <code>@three-ws/metaplex-agent-mcp/lib/mint</code> (transaction
+						builders). This deployer runs on exactly those.
+					</p>
+				</section>
+
+				<section id="anatomy">
+					<h2>What gets written</h2>
+					<p>One deploy writes an asset with these plugins, which are the Genesis-333 defaults:</p>
+					<table>
+						<thead><tr><th>Plugin</th><th>Default</th><th>Meaning</th></tr></thead>
+						<tbody>
+							<tr><td>Royalties</td><td>500 bps</td><td>5% of secondary sales to the recipients you set.</td></tr>
+							<tr><td>VerifiedCreators</td><td>your wallet</td><td>Cryptographic proof you signed this mint.</td></tr>
+							<tr><td>ImmutableMetadata</td><td>on</td><td>The metadata can never be changed by anyone.</td></tr>
+							<tr><td>AgentIdentity</td><td>always</td><td>Holds the EIP-8004 registration document.</td></tr>
+							<tr><td>Attributes</td><td>off</td><td>Key and value pairs stored in the account itself.</td></tr>
+							<tr><td>Permanent delegates</td><td>off</td><td>Freeze, transfer, or burn rights you keep after selling.</td></tr>
+						</tbody>
+					</table>
+					<h3>One transaction, or two</h3>
+					<p>
+						Solana caps a transaction at 1232 bytes. When the documents fit, the mint and the registration go out
+						together atomically. When they do not, they run as create then register, which is how the Genesis 333
+						landed. Both paths are handled for you, including the brief window where a freshly minted asset has not
+						reached the node validating the registration.
+					</p>
+				</section>
+
+				<section id="schema">
+					<h2>Registration schema</h2>
+					<p>
+						The identity document follows
+						<a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener">EIP-8004</a>
+						registration-v1. It is embedded on-chain as a base64 <code>data:</code> URI by default, so nothing needs
+						hosting and nothing can rot:
+					</p>
+					<pre><code>{
+  "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
+  "name": "Astra",
+  "description": "Reads on-chain data and answers questions about it",
+  "image": "https://example.com/astra.png",
+  "model": { "uri": "https://example.com/astra.glb" },
+  "services": [{ "name": "chat", "endpoint": "https://example.com/chat" }],
+  "active": true,
+  "x402Support": true,
+  "registrations": [
+    { "agentId": "&lt;asset address&gt;", "agentRegistry": "solana:101:metaplex" }
+  ],
+  "supportedTrust": ["reputation"]
+}</code></pre>
+					<p>
+						The asset's own metadata URI is a second <code>data:</code> document holding <code>name</code>,
+						<code>image</code>, and <code>animation_url</code>, which is what wallets and marketplaces read.
+					</p>
+				</section>
+
+				<section id="discovery">
+					<h2>Discovery</h2>
+					<p>
+						There is no submission step. Registering creates the identity PDA, and Metaplex DAS indexes it across
+						every major Solana RPC provider, exposing <code>is_agent</code>, <code>asset_signer</code>, and
+						<code>agent_token</code>. Within minutes the agent appears on
+						<a href="https://www.metaplex.com/agents" target="_blank" rel="noopener">metaplex.com/agents</a> and in
+						the <a href="https://three.ws/deployments" target="_blank" rel="noopener">three.ws deployments feed</a>,
+						and any client can find it with a <code>searchAssets</code> call filtered on <code>isAgent</code>.
+					</p>
+				</section>
+
+				<section id="faq">
+					<h2>FAQ</h2>
+					<h3>Do I need to know anything about crypto?</h3>
+					<p>
+						No. Create a wallet on the deploy page, rehearse on devnet for free, and the only unusual step is keeping
+						your backup somewhere safe.
+					</p>
+					<h3>What is the agent's wallet, exactly?</h3>
+					<p>
+						A Program Derived Address owned by the asset. There is no private key for it anywhere: it acts only when
+						the asset's owner or a delegate routes an instruction through Core's Execute hook. That is what lets an
+						agent hold and spend funds without a key that can leak.
+					</p>
+					<h3>Can I change the metadata later?</h3>
+					<p>
+						Not with the defaults on, which is the point of Immutable metadata. Turn it off before deploying if you
+						want mutability. The identity document itself is registered once per asset.
+					</p>
+					<h3>Can I sell or transfer an agent?</h3>
+					<p>Yes. It is a standard Core asset, so any Solana marketplace or wallet can transfer it, royalties included.</p>
+					<h3>Is anything sent to a server?</h3>
+					<p>
+						No. This site is static files. It talks to a Solana RPC endpoint and, only if you use the import feature,
+						to the public read-only three.ws API. Keys are never transmitted.
+					</p>
+					<h3>Does it work on other SVM chains?</h3>
+					<p>
+						The registry programs are deployed at the same addresses on mainnet and devnet, and the underlying SDK
+						also names Eclipse, Sonic, and Fogo. This deployer exposes Solana mainnet and devnet, which are the two
+						the tooling is verified against.
+					</p>
+				</section>
+
+				<section id="links">
+					<h2>Links</h2>
+					<ul>
+						<li><a href="https://github.com/nirholas/metaplex-agent-mcp" target="_blank" rel="noopener">Source on GitHub</a></li>
+						<li><a href="https://www.npmjs.com/package/@three-ws/metaplex-agent-mcp" target="_blank" rel="noopener">Package on npm</a></li>
+						<li><a href="https://www.metaplex.com/docs/agents" target="_blank" rel="noopener">Metaplex agent documentation</a></li>
+						<li><a href="https://three.ws" target="_blank" rel="noopener">three.ws</a>, which builds and maintains this</li>
+					</ul>
+				</section>
+			</main>
+		</div>
+
+		<footer class="foot">
+			<div class="foot-in">
+				<div>
+					<span class="brand-mark small" aria-hidden="true"></span>
+					<span>Agent Deployer</span>
+					<small>by <a href="https://three.ws" target="_blank" rel="noopener">three.ws</a></small>
+				</div>
+				<nav aria-label="Footer">
+					<a href="./">Deployer</a>
+					<a href="https://github.com/nirholas/metaplex-agent-mcp" target="_blank" rel="noopener">GitHub</a>
+					<a href="https://www.npmjs.com/package/@three-ws/metaplex-agent-mcp" target="_blank" rel="noopener">npm</a>
+				</nav>
+			</div>
+		</footer>
+
+		<script>
+			document.getElementById('theme-toggle').addEventListener('click', function () {
+				var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+				document.documentElement.setAttribute('data-theme', next);
+				try {
+					localStorage.setItem('map.theme', next);
+				} catch (e) {
+					/* private mode: the choice just does not persist */
+				}
+			});
+		</script>
+	</body>
+</html>

@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>
+			/* No-flash theme boot. Runtime toggle lives in app.js. */
+			(function () {
+				try {
+					var t = localStorage.getItem('map.theme');
+					if (!t) t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+					document.documentElement.setAttribute('data-theme', t);
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Agent Deployer · Put an AI agent on-chain</title>
+		<meta
+			name="description"
+			content="Deploy an AI agent on-chain in a minute: mint a Metaplex Core asset with its own wallet and register its EIP-8004 identity in the Metaplex Agent Registry on Solana. Pay with Phantom, or create a wallet right here."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content="Agent Deployer · Put an AI agent on-chain" />
+		<meta
+			property="og:description"
+			content="Mint a Metaplex Core asset with its own wallet and register its EIP-8004 identity in the Metaplex Agent Registry on Solana. No account, no server, no install."
+		/>
+		<meta name="twitter:card" content="summary_large_image" />
+		<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+			rel="stylesheet"
+		/>
+		<link rel="stylesheet" href="styles.css" />
+	</head>
+	<body>
+		<a class="skip" href="#deploy">Skip to the deployer</a>
+
+		<header class="nav">
+			<div class="nav-in">
+				<a class="brand" href="./">
+					<span class="brand-mark" aria-hidden="true"></span>
+					<span class="brand-name">Agent Deployer</span>
+				</a>
+				<nav class="nav-links" aria-label="Main">
+					<a href="#deploy">Deploy</a>
+					<a href="docs.html">Docs</a>
+					<a href="#mcp">For agents</a>
+					<a href="https://github.com/nirholas/metaplex-agent-mcp" target="_blank" rel="noopener">GitHub</a>
+				</nav>
+				<div class="nav-right">
+					<button type="button" class="icon-btn" id="theme-toggle" aria-label="Switch theme" title="Switch theme">
+						<span class="theme-icon" aria-hidden="true"></span>
+					</button>
+				</div>
+			</div>
+		</header>
+
+		<main>
+			<!-- ── Hero ────────────────────────────────────────────────────── -->
+			<section class="hero">
+				<p class="eyebrow">Metaplex Agent Registry · Solana</p>
+				<h1>Give your AI agent<br />an on-chain identity.</h1>
+				<p class="lede">
+					One flow mints a <strong>Metaplex Core asset</strong> with its own built-in wallet and registers its
+					<strong>EIP-8004 identity</strong>, so your agent can own things, get paid, and be found by other agents.
+					No account. No server. Your keys stay yours.
+				</p>
+				<div class="hero-actions">
+					<a class="btn btn-primary btn-lg" href="#deploy">Deploy an agent</a>
+					<a class="btn btn-ghost btn-lg" href="docs.html">Read the docs</a>
+				</div>
+				<dl class="hero-stats">
+					<div><dt>Cost to deploy</dt><dd>~0.007 SOL</dd></div>
+					<div><dt>Time</dt><dd>Under a minute</dd></div>
+					<div><dt>Rehearsal</dt><dd>Free on devnet</dd></div>
+				</dl>
+			</section>
+
+			<!-- ── What you get ───────────────────────────────────────────── -->
+			<section class="strip" aria-label="What your agent gets">
+				<ul class="feature-row">
+					<li>
+						<h3>Its own wallet</h3>
+						<p>Every Core asset carries an Asset Signer PDA: an address the agent itself controls, with no private key to leak.</p>
+					</li>
+					<li>
+						<h3>A verifiable identity</h3>
+						<p>An EIP-8004 registration document written on-chain: who the agent is, what it offers, how to trust it.</p>
+					</li>
+					<li>
+						<h3>Discovery</h3>
+						<p>Indexed by Metaplex DAS the moment it lands, so it shows up on metaplex.com/agents and in agent search.</p>
+					</li>
+					<li>
+						<h3>Payments, optionally</h3>
+						<p>Flag x402 support and other agents can pay yours per call, in stablecoins, with no invoice and no account.</p>
+					</li>
+				</ul>
+			</section>
+
+			<!-- ── The deployer ───────────────────────────────────────────── -->
+			<section class="app" id="deploy">
+				<div class="app-head">
+					<h2>Deploy an agent</h2>
+					<div class="net-switch" role="radiogroup" aria-label="Network">
+						<button type="button" class="net-btn" data-net="devnet" role="radio" aria-checked="true">
+							Devnet <span>free</span>
+						</button>
+						<button type="button" class="net-btn" data-net="mainnet" role="radio" aria-checked="false">Mainnet</button>
+					</div>
+				</div>
+
+				<div class="app-grid">
+					<div class="app-main">
+						<!-- Step 1: wallet -->
+						<section class="card" id="step-wallet" aria-labelledby="h-wallet">
+							<div class="card-head">
+								<span class="step" aria-hidden="true">1</span>
+								<h3 id="h-wallet">Choose a wallet</h3>
+								<span class="card-status" id="wallet-status">Not connected</span>
+							</div>
+
+							<div id="wallet-choices">
+								<div class="choice-grid" id="injected-list"></div>
+
+								<div class="choice-or"><span>or</span></div>
+
+								<button type="button" class="choice choice-wide" id="create-wallet-btn">
+									<span class="choice-ic" aria-hidden="true">+</span>
+									<span class="choice-body">
+										<strong>Create a wallet here</strong>
+										<small id="create-wallet-sub">Generated in your browser, encrypted with a passphrase. No extension needed.</small>
+									</span>
+								</button>
+								<button type="button" class="choice choice-wide" id="unlock-wallet-btn" hidden>
+									<span class="choice-ic" aria-hidden="true">&#8226;</span>
+									<span class="choice-body">
+										<strong>Unlock your wallet</strong>
+										<small id="unlock-wallet-sub">This browser already holds a wallet.</small>
+									</span>
+								</button>
+								<p class="hint" id="no-wallet-hint" hidden>
+									No wallet extension detected. Create one above, or install
+									<a href="https://phantom.com" target="_blank" rel="noopener">Phantom</a> /
+									<a href="https://solflare.com" target="_blank" rel="noopener">Solflare</a> and reload.
+								</p>
+							</div>
+
+							<div id="wallet-connected" hidden>
+								<div class="wallet-bar">
+									<div class="wallet-id">
+										<span class="dot-ok" aria-hidden="true"></span>
+										<span class="wallet-kind" id="wallet-kind">Wallet</span>
+										<code id="wallet-address" title=""></code>
+										<button type="button" class="copy" data-copy="wallet-address">Copy</button>
+									</div>
+									<div class="wallet-actions">
+										<span class="balance" id="wallet-balance">…</span>
+										<button type="button" class="btn btn-ghost btn-sm" id="airdrop-btn" hidden>Get devnet SOL</button>
+										<button type="button" class="btn btn-ghost btn-sm" id="wallet-manage-btn" hidden>Manage</button>
+										<button type="button" class="btn btn-ghost btn-sm" id="disconnect-btn">Disconnect</button>
+									</div>
+								</div>
+								<p class="warn" id="funding-warn" hidden></p>
+							</div>
+							<p class="error" id="wallet-error" role="alert" hidden></p>
+						</section>
+
+						<!-- Step 2: identity -->
+						<section class="card" aria-labelledby="h-identity">
+							<div class="card-head">
+								<span class="step" aria-hidden="true">2</span>
+								<h3 id="h-identity">Describe your agent</h3>
+							</div>
+
+							<div class="seg" role="radiogroup" aria-label="Where the body comes from">
+								<button type="button" class="seg-btn active" data-source="custom" role="radio" aria-checked="true">
+									Bring your own
+								</button>
+								<button type="button" class="seg-btn" data-source="threews" role="radio" aria-checked="false">
+									Use a three.ws avatar
+								</button>
+							</div>
+
+							<div class="fields">
+								<label class="field">
+									<span class="label">Name <em>required</em></span>
+									<input type="text" id="f-name" maxlength="60" placeholder="Astra" autocomplete="off" />
+									<small class="counter"><span id="name-count">0</span>/60</small>
+								</label>
+
+								<label class="field">
+									<span class="label">What it does</span>
+									<textarea id="f-description" rows="3" maxlength="2000" placeholder="A research agent that reads on-chain data and answers questions about it."></textarea>
+								</label>
+
+								<div id="source-custom">
+									<label class="field">
+										<span class="label">Image URL</span>
+										<input type="url" id="f-image" placeholder="https://example.com/agent.png" autocomplete="off" />
+										<small>Shown on metaplex.com/agents, in wallets, and on explorers.</small>
+									</label>
+									<label class="field">
+										<span class="label">3D model URL <em class="opt">optional</em></span>
+										<input type="url" id="f-model" placeholder="https://example.com/agent.glb" autocomplete="off" />
+										<small>A GLB body. Written as <code>animation_url</code> and <code>model.uri</code>, so wallets and viewers can render your agent in 3D.</small>
+									</label>
+								</div>
+
+								<div id="source-threews" hidden>
+									<div class="import-row">
+										<input type="text" id="f-threews" placeholder="Paste a three.ws avatar link or id" autocomplete="off" />
+										<button type="button" class="btn btn-secondary" id="import-btn">Import</button>
+									</div>
+									<p class="hint">
+										Or pick one below. No avatar yet?
+										<a href="https://three.ws/create" target="_blank" rel="noopener">Make one on three.ws</a> in a minute, then come back.
+									</p>
+									<div class="picker" id="avatar-picker" aria-live="polite"></div>
+									<button type="button" class="btn btn-ghost btn-sm" id="picker-more" hidden>Show more</button>
+									<p class="error" id="import-error" role="alert" hidden></p>
+								</div>
+
+								<div class="switch-row">
+									<label class="switch">
+										<input type="checkbox" id="f-x402" />
+										<span class="switch-track" aria-hidden="true"></span>
+										<span class="switch-text">
+											<strong>Accepts payments (x402)</strong>
+											<small>Tell other agents this one can be paid per call.</small>
+										</span>
+									</label>
+									<label class="switch">
+										<input type="checkbox" id="f-active" checked />
+										<span class="switch-track" aria-hidden="true"></span>
+										<span class="switch-text">
+											<strong>Active</strong>
+											<small>Advertise the agent as live and accepting work.</small>
+										</span>
+									</label>
+								</div>
+							</div>
+						</section>
+
+						<!-- Step 3: services -->
+						<section class="card" aria-labelledby="h-services">
+							<div class="card-head">
+								<span class="step" aria-hidden="true">3</span>
+								<h3 id="h-services">What it offers <em class="opt">optional</em></h3>
+							</div>
+							<p class="card-sub">Endpoints other agents and people can call. These are listed on your agent's Metaplex page.</p>
+							<div id="services-rows" class="rows"></div>
+							<button type="button" class="btn btn-ghost btn-sm" id="add-service">Add a service</button>
+						</section>
+
+						<!-- Step 4: advanced -->
+						<section class="card card-quiet">
+							<details id="advanced">
+								<summary>
+									<span class="step" aria-hidden="true">4</span>
+									<h3>Ownership, royalties, and on-chain rules</h3>
+									<span class="summary-hint">Genesis defaults applied</span>
+								</summary>
+
+								<div class="fields adv">
+									<div class="field-row">
+										<label class="field field-sm">
+											<span class="label">Royalty</span>
+											<div class="input-suffix">
+												<input type="number" id="f-royalty" min="0" max="10000" step="50" value="500" />
+												<span>bps</span>
+											</div>
+											<small><span id="royalty-pct">5%</span> of secondary sales. 0 removes royalties entirely.</small>
+										</label>
+										<label class="field">
+											<span class="label">Owner <em class="opt">optional</em></span>
+											<input type="text" id="f-owner" placeholder="Defaults to your wallet" autocomplete="off" />
+											<small>Mint the agent directly to a different address.</small>
+										</label>
+									</div>
+
+									<div class="field">
+										<span class="label">Royalty recipients</span>
+										<div id="creators-rows" class="rows"></div>
+										<button type="button" class="btn btn-ghost btn-sm" id="add-creator">Add a recipient</button>
+										<small>Defaults to your wallet at 100%. Shares must total 100.</small>
+									</div>
+
+									<div class="field">
+										<span class="label">On-chain attributes</span>
+										<div id="attrs-rows" class="rows"></div>
+										<button type="button" class="btn btn-ghost btn-sm" id="add-attr">Add an attribute</button>
+										<small>Written into the asset account itself, readable by any program.</small>
+									</div>
+
+									<div class="field-row">
+										<label class="field">
+											<span class="label">Trust models</span>
+											<input type="text" id="f-trust" value="reputation" autocomplete="off" />
+											<small>Comma separated, e.g. <code>reputation, tee</code>.</small>
+										</label>
+										<label class="field">
+											<span class="label">Collection <em class="opt">optional</em></span>
+											<input type="text" id="f-collection" placeholder="Core collection address" autocomplete="off" />
+											<small>You must hold its authority.</small>
+										</label>
+									</div>
+
+									<fieldset class="plugin-set">
+										<legend>Permanent rules</legend>
+										<label class="check"><input type="checkbox" id="p-verified" checked /> <span>Verified creator<small>Proves you signed this mint.</small></span></label>
+										<label class="check"><input type="checkbox" id="p-immutable" checked /> <span>Immutable metadata<small>Nobody, including you, can ever change it.</small></span></label>
+										<label class="check"><input type="checkbox" id="p-freeze" /> <span>Freeze delegate<small>Keep the right to freeze transfers.</small></span></label>
+										<label class="check"><input type="checkbox" id="p-transfer" /> <span>Transfer delegate<small>Keep the right to move it.</small></span></label>
+										<label class="check"><input type="checkbox" id="p-burn" /> <span>Burn delegate<small>Keep the right to destroy it.</small></span></label>
+										<label class="check"><input type="checkbox" id="p-addblocker" /> <span>Add blocker<small>No further plugins, forever.</small></span></label>
+									</fieldset>
+
+									<details class="nested">
+										<summary>Host the documents yourself</summary>
+										<label class="field">
+											<span class="label">Metadata URI</span>
+											<input type="text" id="f-metadata-uri" placeholder="https:// or data:" autocomplete="off" />
+										</label>
+										<label class="field">
+											<span class="label">Registration URI</span>
+											<input type="text" id="f-registration-uri" placeholder="https:// or data:" autocomplete="off" />
+										</label>
+										<small>By default both documents are embedded on-chain as base64 <code>data:</code> URIs, so there is nothing to host and nothing that can rot. Override only if you need a mutable, hosted document.</small>
+									</details>
+								</div>
+							</details>
+						</section>
+
+						<!-- Deploy -->
+						<section class="card card-deploy" aria-labelledby="h-deploy">
+							<div class="card-head">
+								<span class="step" aria-hidden="true">5</span>
+								<h3 id="h-deploy">Deploy</h3>
+								<span class="cost" id="cost-line">~0.007 SOL</span>
+							</div>
+							<button type="button" class="btn btn-primary btn-block" id="deploy-btn" disabled>Connect a wallet first</button>
+							<ol class="stages" id="stages" hidden>
+								<li data-stage="build">Building the transaction</li>
+								<li data-stage="sign">Waiting for your signature</li>
+								<li data-stage="mint">Minting the Core asset</li>
+								<li data-stage="register">Registering the identity</li>
+								<li data-stage="done">Live in the Agent Registry</li>
+							</ol>
+							<p class="error" id="deploy-error" role="alert" hidden></p>
+
+							<div class="success" id="success" hidden>
+								<h4>Your agent is on-chain.</h4>
+								<dl class="kv">
+									<div><dt>Agent address</dt><dd><code id="out-asset"></code><button type="button" class="copy" data-copy="out-asset">Copy</button></dd></div>
+									<div><dt>Its wallet</dt><dd><code id="out-wallet"></code><button type="button" class="copy" data-copy="out-wallet">Copy</button></dd></div>
+								</dl>
+								<div class="out-links" id="out-links"></div>
+								<button type="button" class="btn btn-ghost btn-sm" id="again-btn">Deploy another</button>
+							</div>
+						</section>
+					</div>
+
+					<!-- Preview rail -->
+					<aside class="rail" aria-label="Preview">
+						<div class="preview">
+							<div class="preview-media" id="preview-media"><img id="preview-img" alt="" hidden /><span class="preview-initial" id="preview-initial">A</span></div>
+							<div class="preview-body">
+								<h4 id="preview-name">Your agent</h4>
+								<p id="preview-desc">Fill in the form and watch exactly what lands on-chain.</p>
+								<div class="chips" id="preview-chips"></div>
+							</div>
+						</div>
+
+						<div class="rail-card">
+							<h5>Network</h5>
+							<p class="rail-net" id="rail-net">Devnet</p>
+							<p class="rail-rpc" id="rail-rpc">Checking endpoint…</p>
+							<button type="button" class="btn btn-ghost btn-sm" id="rpc-btn">Use my own RPC</button>
+						</div>
+
+						<div class="rail-card">
+							<div class="rail-head">
+								<h5>On-chain documents</h5>
+								<div class="tabs" role="tablist" aria-label="Document">
+									<button type="button" class="tab active" data-doc="registration" role="tab" aria-selected="true">Identity</button>
+									<button type="button" class="tab" data-doc="metadata" role="tab" aria-selected="false">Metadata</button>
+								</div>
+							</div>
+							<pre class="json" id="json-out" tabindex="0"><code></code></pre>
+							<p class="rail-note">Embedded in the transaction as a base64 <code>data:</code> URI.</p>
+						</div>
+					</aside>
+				</div>
+			</section>
+
+			<!-- ── Recent ─────────────────────────────────────────────────── -->
+			<section class="recent" aria-labelledby="h-recent">
+				<div class="section-head">
+					<h2 id="h-recent">Recently deployed</h2>
+					<a href="https://three.ws/deployments" target="_blank" rel="noopener">Live feed</a>
+				</div>
+				<div class="recent-row" id="recent-row">
+					<div class="recent-card skeleton"></div>
+					<div class="recent-card skeleton"></div>
+					<div class="recent-card skeleton"></div>
+					<div class="recent-card skeleton"></div>
+				</div>
+			</section>
+
+			<!-- ── For agents ─────────────────────────────────────────────── -->
+			<section class="mcp" id="mcp">
+				<div class="mcp-in">
+					<div class="mcp-copy">
+						<p class="eyebrow">For developers and agents</p>
+						<h2>Agents can deploy themselves.</h2>
+						<p>
+							The same mint ships as an MCP server. Point Claude, Cursor, or your own agent at it and it can mint
+							its own identity, read any agent in the registry, and manage its wallet. Preview first, spend only on
+							an explicit confirm.
+						</p>
+						<div class="mcp-actions">
+							<a class="btn btn-primary" href="docs.html#mcp">Set up MCP</a>
+							<a class="btn btn-ghost" href="https://www.npmjs.com/package/@three-ws/metaplex-agent-mcp" target="_blank" rel="noopener">View on npm</a>
+						</div>
+					</div>
+					<div class="mcp-code">
+						<div class="code-head"><span>Terminal</span><button type="button" class="copy" data-copy="mcp-cmd">Copy</button></div>
+						<pre><code id="mcp-cmd">claude mcp add metaplex-agent -- npx -y @three-ws/metaplex-agent-mcp</code></pre>
+						<ul class="tool-list">
+							<li><code>mint_onchain_agent</code><span>Mint and register in one call</span></li>
+							<li><code>get_onchain_agent</code><span>Read any agent on-chain</span></li>
+							<li><code>agent_wallet</code><span>Its wallet and balance</span></li>
+							<li><code>list_onchain_agents</code><span>The live registry feed</span></li>
+						</ul>
+					</div>
+				</div>
+			</section>
+		</main>
+
+		<footer class="foot">
+			<div class="foot-in">
+				<div>
+					<span class="brand-mark small" aria-hidden="true"></span>
+					<span>Agent Deployer</span>
+					<small>by <a href="https://three.ws" target="_blank" rel="noopener">three.ws</a></small>
+				</div>
+				<nav aria-label="Footer">
+					<a href="docs.html">Docs</a>
+					<a href="https://github.com/nirholas/metaplex-agent-mcp" target="_blank" rel="noopener">GitHub</a>
+					<a href="https://www.npmjs.com/package/@three-ws/metaplex-agent-mcp" target="_blank" rel="noopener">npm</a>
+					<a href="https://www.metaplex.com/agents" target="_blank" rel="noopener">Metaplex Agents</a>
+				</nav>
+			</div>
+		</footer>
+
+		<!-- ── Modals ─────────────────────────────────────────────────────── -->
+		<dialog id="wallet-modal" class="modal">
+			<form method="dialog" class="modal-x"><button aria-label="Close">&times;</button></form>
+			<div class="modal-body" id="wallet-modal-body"></div>
+		</dialog>
+
+		<dialog id="rpc-modal" class="modal">
+			<form method="dialog" class="modal-x"><button aria-label="Close">&times;</button></form>
+			<div class="modal-body">
+				<h3>Use your own RPC endpoint</h3>
+				<p>
+					Solana's free public endpoint refuses browser traffic on mainnet, so a page like this one needs an endpoint
+					of its own. Paste an HTTPS URL from
+					<a href="https://helius.dev" target="_blank" rel="noopener">Helius</a>,
+					<a href="https://quicknode.com" target="_blank" rel="noopener">QuickNode</a>, or
+					<a href="https://triton.one" target="_blank" rel="noopener">Triton</a>. It is stored only in this browser.
+				</p>
+				<label class="field">
+					<span class="label">Endpoint for <span id="rpc-modal-net">mainnet</span></span>
+					<input type="url" id="rpc-input" placeholder="https://mainnet.helius-rpc.com/?api-key=…" autocomplete="off" />
+				</label>
+				<p class="error" id="rpc-error" role="alert" hidden></p>
+				<p class="ok" id="rpc-ok" hidden></p>
+				<div class="modal-actions">
+					<button type="button" class="btn btn-ghost" id="rpc-clear">Clear saved</button>
+					<button type="button" class="btn btn-primary" id="rpc-save">Verify and save</button>
+				</div>
+			</div>
+		</dialog>
+
+		<script type="module" src="app.js"></script>
+	</body>
+</html>
