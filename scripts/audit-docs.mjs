@@ -295,6 +295,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['pumpfun-article-x-post', 'internal: ready-to-paste X post drafts; posting is owner-gated'],
 	['memetic-launcher', 'owner-gated: names a crypto project other than $THREE'],
 	['meta-allocator', 'owner-gated: names a crypto project other than $THREE'],
+	['metaplex-agent-mcp-x-post', 'internal: unposted launch copy and video script, not a reader-facing doc'],
 	['money-map', 'internal: revenue-share and treasury routing'],
 	['native-launchpad', 'owner-gated: names a crypto project other than $THREE'],
 	['news-archive-x-post', 'internal: paste-ready X copy for the news archive, drafted for the owner to post'],

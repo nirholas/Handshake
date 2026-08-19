@@ -80,7 +80,7 @@ npx -y @three-ws/ibm-x402-mcp     # pay-per-use IBM Granite AI
 npx -y @three-ws/agentcore-payments-mcp # pay x402 endpoints from a governed budget, no private key
 
 # On-chain identity
-npx -y @three-ws/metaplex-agent-mcp # mint + register on-chain agents in the Metaplex Agent Registry (Genesis-333 style)
+npx -y @three-ws/metaplex-agent-mcp # mint + register on-chain agents in the Metaplex Agent Registry (deploy fee funds $THREE buybacks, waived for holders)
 
 # Market data, intel & discovery
 npx -y @three-ws/intel-mcp        # smart-money, signal feeds, KOL & copy-trade intel
