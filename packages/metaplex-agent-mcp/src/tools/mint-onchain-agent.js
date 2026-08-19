@@ -18,9 +18,23 @@ import {
 	EST_REGISTER_LAMPORTS,
 	LAMPORTS_PER_SOL,
 } from '../lib/solana.js';
+import { resolveDeployFee } from '../lib/three.js';
 import { mintShape, mintParams } from './mint-shape.js';
 
-const EST_TOTAL_SOL = (EST_MINT_LAMPORTS + EST_REGISTER_LAMPORTS) / LAMPORTS_PER_SOL;
+const EST_NETWORK_SOL = (EST_MINT_LAMPORTS + EST_REGISTER_LAMPORTS) / LAMPORTS_PER_SOL;
+
+/** The fee block every preview and every receipt renders, in one shape. */
+function feeBlock(fee) {
+	return {
+		deploy_fee_sol: fee.sol,
+		deploy_fee_to: fee.wallet,
+		three_tier: fee.tier,
+		three_balance: fee.three_tokens,
+		three_note: fee.reason,
+		...(fee.next_tier ? { three_next_tier: fee.next_tier } : {}),
+		...(fee.three_balance_error ? { three_balance_error: fee.three_balance_error } : {}),
+	};
+}
 
 export const def = {
 	name: 'mint_onchain_agent',
@@ -44,17 +58,26 @@ export const def = {
 		const umi = buildUmi({ network, secret: args.secret, requireSigner: true });
 		const wallet = umi.identity.publicKey.toString();
 
-		const mint = buildAgentMint(umi, mintParams(args, { network, creator: wallet }));
+		const fee = await resolveDeployFee(umi, { network, payer: wallet });
+		const total = EST_NETWORK_SOL + fee.sol;
+		const mint = buildAgentMint(
+			umi,
+			mintParams(args, { network, creator: wallet, feeLamports: fee.lamports, feeWallet: fee.wallet }),
+		);
 		const asset = mint.assetSigner.publicKey.toString();
 
 		if (REQUIRE_CONFIRM && args.confirm !== true) {
 			return {
 				ok: true,
 				confirm_required: true,
-				message: `Preview only. Re-issue with confirm:true to mint on ${network} for ~${EST_TOTAL_SOL} SOL.`,
+				message:
+					`Preview only. Re-issue with confirm:true to mint on ${network} for ~${total} SOL ` +
+					`(~${EST_NETWORK_SOL} rent + network fees${fee.sol > 0 ? `, ${fee.sol} SOL deploy fee to ${fee.wallet}` : ', no deploy fee'}).`,
 				network,
 				paying_wallet: wallet,
-				estimated_cost_sol: EST_TOTAL_SOL,
+				estimated_cost_sol: total,
+				network_cost_sol: EST_NETWORK_SOL,
+				...feeBlock(fee),
 				asset_metadata: mint.assetMetadata,
 				metadata_uri_bytes: mint.metadataUri.length,
 				registration: mint.registration,
@@ -62,10 +85,10 @@ export const def = {
 		}
 
 		const balance = await solBalance(umi, wallet);
-		if (balance * LAMPORTS_PER_SOL < EST_MINT_LAMPORTS + EST_REGISTER_LAMPORTS) {
+		if (balance * LAMPORTS_PER_SOL < EST_MINT_LAMPORTS + EST_REGISTER_LAMPORTS + fee.lamports) {
 			throw Object.assign(
 				new Error(
-					`Wallet ${wallet} holds ${balance} SOL on ${network}; the mint needs ~${EST_TOTAL_SOL} SOL. Fund it and retry.`,
+					`Wallet ${wallet} holds ${balance} SOL on ${network}; this deploy needs ~${total} SOL. Fund it and retry.`,
 				),
 				{ code: 'insufficient_sol' },
 			);
@@ -82,6 +105,7 @@ export const def = {
 			txs: signatures.map((s) => txLink(s, network)),
 			owner: args.owner || wallet,
 			agent_wallet: assetSignerAddress(umi, asset),
+			...feeBlock(fee),
 			metadata_uri: mint.metadataUri,
 			registration: mint.registration,
 			links: agentLinks(asset, network),

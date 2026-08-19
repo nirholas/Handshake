@@ -45,10 +45,12 @@ export const mintShape = {
 };
 
 /** Map snake_case tool args onto buildAgentMint camelCase params. */
-export function mintParams(args, { network, creator }) {
+export function mintParams(args, { network, creator, feeLamports = 0, feeWallet }) {
 	return {
 		network,
 		creator,
+		feeLamports,
+		feeWallet,
 		owner: args.owner,
 		collection: args.collection,
 		name: args.name,

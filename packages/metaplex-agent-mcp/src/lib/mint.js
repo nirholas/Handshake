@@ -13,7 +13,8 @@
 // of both JSON documents (or complete URI overrides).
 
 import { create, ruleSet } from '@metaplex-foundation/mpl-core';
-import { generateSigner, publicKey as umiPublicKey } from '@metaplex-foundation/umi';
+import { generateSigner, publicKey as umiPublicKey, sol } from '@metaplex-foundation/umi';
+import { transferSol } from '@metaplex-foundation/mpl-toolbox';
 import { registerIdentityV1 } from '@metaplex-foundation/mpl-agent-registry';
 
 import {
@@ -116,6 +117,8 @@ export function buildAgentMint(umi, {
 	permanentTransfer,
 	permanentBurn,
 	addBlocker,
+	feeLamports = 0,
+	feeWallet,
 } = {}) {
 	const assetSigner = generateSigner(umi);
 	const assetAddress = assetSigner.publicKey.toString();
@@ -168,7 +171,22 @@ export function buildAgentMint(umi, {
 	const registerArgs = { asset: assetSigner.publicKey, agentRegistrationUri };
 	if (collection) registerArgs.collection = umiPublicKey(collection);
 
-	const createBuilder = create(umi, createArgs);
+	// The $THREE deploy fee rides on the CREATE transaction, never on its own.
+	// One transaction means the fee moves if and only if the asset is created:
+	// a mint that fails, is rejected, or expires costs the payer nothing. The
+	// caller resolves the amount (lib/three.js) and always discloses it first.
+	const fee = Math.max(0, Math.floor(Number(feeLamports) || 0));
+	if (fee > 0 && !feeWallet) {
+		throw Object.assign(new Error('feeLamports was set without a feeWallet to pay it to'), {
+			code: 'validation_error',
+		});
+	}
+	const createBuilder =
+		fee > 0
+			? transferSol(umi, { destination: umiPublicKey(feeWallet), amount: sol(fee / 1_000_000_000) }).add(
+					create(umi, createArgs),
+				)
+			: create(umi, createArgs);
 	const registerBuilder = registerIdentityV1(umi, registerArgs);
 	const combinedBuilder = createBuilder.add(registerBuilder);
 
@@ -180,6 +198,8 @@ export function buildAgentMint(umi, {
 
 	return {
 		atomic,
+		feeLamports: fee,
+		feeWallet: fee > 0 ? String(feeWallet) : null,
 		builders: atomic ? [combinedBuilder] : [createBuilder, registerBuilder],
 		createBuilder,
 		registerBuilder,

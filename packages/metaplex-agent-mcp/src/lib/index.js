@@ -20,6 +20,16 @@ export {
 } from './mint.js';
 
 export {
+	THREE_STATS_URL,
+	feeSchedule,
+	threeBalance,
+	tierFor,
+	nextTier,
+	resolveDeployFee,
+	threeStats,
+} from './three.js';
+
+export {
 	LAMPORTS_PER_SOL,
 	EST_MINT_LAMPORTS,
 	EST_REGISTER_LAMPORTS,

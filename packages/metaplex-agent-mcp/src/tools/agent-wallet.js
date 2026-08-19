@@ -7,6 +7,7 @@ import { z } from 'zod';
 
 import { NETWORK, SOLANA_DEFAULT_SECRET } from '../config.js';
 import { buildUmi, solBalance, assetSignerAddress } from '../lib/solana.js';
+import { threeBalance, tierFor, nextTier } from '../lib/three.js';
 
 export const def = {
 	name: 'agent_wallet',
@@ -16,7 +17,8 @@ export const def = {
 		"Show a wallet address and its live SOL balance. Pass `asset` to derive an on-chain agent's built-in wallet " +
 		'(the Metaplex Core Asset Signer PDA, the wallet shown on metaplex.com/agents). Pass `address` to inspect ' +
 		'any wallet. Pass neither to see the configured signing wallet, e.g. to confirm it is funded before ' +
-		'mint_onchain_agent. Read-only; never moves funds.',
+		'mint_onchain_agent. On mainnet it also reports the wallet $THREE balance and the deploy-fee tier that ' +
+		'balance earns (see three_status). Read-only; never moves funds.',
 	inputSchema: {
 		asset: z.string().min(32).max(44).optional().describe("A Core asset address: derives that agent's built-in wallet."),
 		address: z.string().min(32).max(44).optional().describe('A wallet address to inspect verbatim.'),
@@ -50,12 +52,27 @@ export const def = {
 		}
 
 		const sol = await solBalance(umi, address);
+
+		// The $THREE read is mainnet-only (the mint does not exist on devnet) and
+		// never fatal: a wallet lookup must still answer if the token RPC hiccups.
+		let three = null;
+		if (network === 'mainnet') {
+			three = await threeBalance(umi, address).catch(() => null);
+		}
+
 		return {
 			ok: true,
 			network,
 			kind,
 			address,
 			sol,
+			...(three
+				? {
+						three: three.tokens,
+						three_tier: tierFor(three.tokens).tier,
+						three_next_tier: nextTier(three.tokens),
+					}
+				: {}),
 			...(args.asset ? { asset: args.asset } : {}),
 		};
 	},

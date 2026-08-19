@@ -16,6 +16,7 @@ import {
 	EST_REGISTER_LAMPORTS,
 	LAMPORTS_PER_SOL,
 } from '../lib/solana.js';
+import { resolveDeployFee } from '../lib/three.js';
 import { mintShape, mintParams } from './mint-shape.js';
 import { createNoopSigner, publicKey as umiPublicKey, signerIdentity } from '@metaplex-foundation/umi';
 
@@ -40,7 +41,11 @@ export const def = {
 		const umi = buildUmi({ network });
 		umi.use(signerIdentity(createNoopSigner(umiPublicKey(args.wallet))));
 
-		const mint = buildAgentMint(umi, mintParams(args, { network, creator: args.wallet }));
+		const fee = await resolveDeployFee(umi, { network, payer: args.wallet });
+		const mint = buildAgentMint(
+			umi,
+			mintParams(args, { network, creator: args.wallet, feeLamports: fee.lamports, feeWallet: fee.wallet }),
+		);
 		const asset = mint.assetSigner.publicKey.toString();
 
 		const txsBase64 = [];
@@ -57,7 +62,13 @@ export const def = {
 			agent_wallet: assetSignerAddress(umi, asset),
 			atomic: mint.atomic,
 			txs_base64: txsBase64,
-			estimated_cost_sol: (EST_MINT_LAMPORTS + EST_REGISTER_LAMPORTS) / LAMPORTS_PER_SOL,
+			estimated_cost_sol: (EST_MINT_LAMPORTS + EST_REGISTER_LAMPORTS) / LAMPORTS_PER_SOL + fee.sol,
+			network_cost_sol: (EST_MINT_LAMPORTS + EST_REGISTER_LAMPORTS) / LAMPORTS_PER_SOL,
+			deploy_fee_sol: fee.sol,
+			deploy_fee_to: fee.wallet,
+			three_tier: fee.tier,
+			three_balance: fee.three_tokens,
+			three_note: fee.reason,
 			asset_metadata: mint.assetMetadata,
 			registration: mint.registration,
 			links: agentLinks(asset, network),

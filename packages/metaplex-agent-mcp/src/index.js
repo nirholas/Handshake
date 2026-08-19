@@ -11,6 +11,7 @@
 //   • agent_wallet            : an agent's built-in wallet (Asset Signer PDA) + balance
 //   • build_registration      : the EIP-8004 document + data: URI, offline
 //   • list_onchain_agents     : the live registration feed
+//   • three_status            : deploy fee, $THREE holder tier, live buyback ledger
 //
 // Self-custodial: mints are signed by YOUR key (SOLANA_SECRET_KEY) or your own
 // browser wallet via prepare/send. The read tools and the wallet flow need no
@@ -36,6 +37,7 @@ import { def as getOnchainAgent } from './tools/get-onchain-agent.js';
 import { def as agentWallet } from './tools/agent-wallet.js';
 import { def as buildRegistration } from './tools/build-registration.js';
 import { def as listOnchainAgents } from './tools/list-onchain-agents.js';
+import { def as threeStatus } from './tools/three-status.js';
 
 const require = createRequire(import.meta.url);
 const { version: PKG_VERSION } = require('../package.json');
@@ -49,6 +51,7 @@ export const TOOLS = [
 	agentWallet,
 	buildRegistration,
 	listOnchainAgents,
+	threeStatus,
 ];
 
 /**
@@ -68,8 +71,11 @@ export function buildServer() {
 				'(one atomic tx, signed by SOLANA_SECRET_KEY, ~0.007 SOL, gated by confirm:true). prepare_agent_mint ' +
 				'+ send_signed_transaction are the SAME mint for a human wallet (Phantom, Solflare, anything) with ' +
 				'no key configured. register_agent_identity enrols an existing Core asset. get_onchain_agent, ' +
-				'agent_wallet, build_registration, and list_onchain_agents are read-only. Every Core plugin and ' +
-				'metadata field is customizable; the defaults reproduce the three.ws Genesis mint shape exactly.',
+				'agent_wallet, build_registration, list_onchain_agents, and three_status are read-only. Every Core ' +
+				'plugin and metadata field is customizable; the defaults reproduce the three.ws Genesis mint shape ' +
+				'exactly. A mainnet deploy also carries a flat SOL deploy fee that funds $THREE buybacks, always ' +
+				'disclosed in the preview before anything is signed; holding $THREE halves it and then waives it, ' +
+				'and devnet is free. three_status prices it against any wallet.',
 		},
 	);
 

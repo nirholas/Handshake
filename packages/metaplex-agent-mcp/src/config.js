@@ -84,4 +84,48 @@ export const HTTP_TIMEOUT_MS = (() => {
 	return n;
 })();
 
+// ── $THREE: the deploy fee and the holder waiver ──────────────────────────
+//
+// Every MAINNET deploy through this server carries a flat protocol fee, paid in
+// SOL, in the SAME transaction that creates the asset (so a failed mint pays
+// nothing). The fee lands in the wallet the three.ws $THREE buyback lane signs
+// from, which turns platform revenue into on-chain $THREE buys
+// (https://three.ws/api/three-token/stats is the public ledger).
+//
+// Holding $THREE is what makes it cheaper or free. The balance is read live from
+// the paying wallet at build time; nothing is escrowed, staked, or spent.
+// Devnet is always free, so a full rehearsal still costs nothing.
+
+// $THREE is the only coin this server references, and the ONLY reason to
+// override THREE_MINT is to track an updated canonical contract. Never point it
+// at a different coin.
+export const THREE_MINT = env('THREE_MINT', 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump');
+export const THREE_DECIMALS = 6;
+
+// Where the fee goes: the three.ws economy/buyback signer. Override only when
+// self-hosting a fork whose fees should fund something else.
+export const DEPLOY_FEE_WALLET = env('DEPLOY_FEE_WALLET', 'WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW');
+
+function positiveNumber(key, fallback) {
+	const raw = env(key);
+	if (raw === undefined) return fallback;
+	const n = Number(raw);
+	if (!Number.isFinite(n) || n < 0) {
+		throw Object.assign(new Error(`${key} must be a non-negative number (got "${raw}")`), { code: 'bad_config' });
+	}
+	return n;
+}
+
+export const DEPLOY_FEE_SOL = positiveNumber('DEPLOY_FEE_SOL', 0.02);
+
+export const DEPLOY_FEE_ENABLED = (() => {
+	const raw = env('DEPLOY_FEE_ENABLED');
+	if (raw === undefined) return true;
+	return !['0', 'false', 'no', 'off'].includes(String(raw).toLowerCase());
+})();
+
+// Holder thresholds, in whole $THREE tokens, read from the paying wallet.
+export const THREE_HALF_PRICE_AT = positiveNumber('THREE_HALF_PRICE_AT', 50_000);
+export const THREE_FREE_AT = positiveNumber('THREE_FREE_AT', 250_000);
+
 export const USER_AGENT = '@three-ws/metaplex-agent-mcp';
