@@ -77,6 +77,8 @@ if (isEmbed) {
 		.forEach((el) => { el.style.display = 'none'; });
 }
 
+mountBackLink();
+
 // Stop the wallet-aura live poll and free its rAF when the page unloads.
 window.addEventListener('pagehide', () => {
 	netWorthAura?.destroy?.(); netWorthAura = null;
@@ -152,7 +154,6 @@ async function init() {
 
 	updateOg();
 	renderShell(glbUrl);
-	mountBackLink();
 	mountSwitcher();
 	bindShareButtons();
 	bindTabs();
@@ -216,6 +217,8 @@ function renderInitFailure(err) {
 }
 
 // The action bar's back link points at the directory this entity came from.
+// Called before the entity resolves, because it depends only on the route:
+// an agent page must not spend its loading second offering "Marketplace".
 function mountBackLink() {
 	const back = document.querySelector('.av-back');
 	if (!back || mode !== 'agent') return;

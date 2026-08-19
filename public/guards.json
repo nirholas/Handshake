@@ -543,6 +543,29 @@
 			}
 		},
 		{
+			"id": "check-tdz-bootstrap",
+			"script": "scripts/check-tdz-bootstrap.mjs",
+			"npm": "check:tdz-bootstrap",
+			"title": "Bootstrap ordering",
+			"protects": "No page calls its own entry point above the state that entry point writes.",
+			"why": "JavaScriptCore checks an assignment target's temporal dead zone before it evaluates the right-hand side and V8 checks it afterwards, so a module that bootstraps itself above its own `let`s renders correctly in Chrome and throws \"Cannot access uninitialized variable.\" in every Safari. That shipped: each /avatars/:id page was dead on iOS and macOS while review, the page audit and the production smoke sweep all stayed green, because every one of them looks only at V8. A synchronous read of a later-declared binding is worse still and throws everywhere.",
+			"stages": [
+				"gate",
+				"build:gcp"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A page whose top-level bootstrap writes a `let` declared further down the module.",
+				"stage": true,
+				"violation": {
+					"write": {
+						"src/guard-proof-tdz.js": "init().catch(() => {});\n\nasync function init() {\n\tavatar = await Promise.resolve(null);\n}\n\nlet avatar = null;\n"
+					}
+				},
+				"expect": "src/guard-proof-tdz.js"
+			}
+		},
+		{
 			"id": "check-dist",
 			"script": "scripts/check-dist.mjs",
 			"npm": "check:dist",
