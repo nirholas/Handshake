@@ -61,7 +61,7 @@ There are two kinds. **Hosted remote servers** run over Streamable HTTP with not
 | pump.fun | `/api/pump-fun-mcp` | Free pump.fun + Solana token tools; `pumpfun_upload_metadata` needs a key |
 | IBM x402 | `/api/ibm-mcp` | Pay-per-use IBM Granite AI |
 
-**Thirty-seven install-and-run servers** on npm under the `@three-ws` scope — each runs over stdio with one command:
+**Thirty-eight install-and-run servers** on npm under the `@three-ws` scope, each running over stdio with one command:
 
 ```bash
 # 3D & avatars
@@ -78,6 +78,9 @@ npx -y @three-ws/three-token-mcp  # price, hold, and burn $THREE on Solana
 npx -y @three-ws/mcp-bridge       # bridge that pays any x402 endpoint on the open web
 npx -y @three-ws/ibm-x402-mcp     # pay-per-use IBM Granite AI
 npx -y @three-ws/agentcore-payments-mcp # pay x402 endpoints from a governed budget, no private key
+
+# On-chain identity
+npx -y @three-ws/metaplex-agent-mcp # mint + register on-chain agents in the Metaplex Agent Registry (Genesis-333 style)
 
 # Market data, intel & discovery
 npx -y @three-ws/intel-mcp        # smart-money, signal feeds, KOL & copy-trade intel

@@ -289,6 +289,7 @@ packages/naming-mcp/          → @three-ws/naming-mcp        (MCP server — .s
 packages/intel-mcp/           → @three-ws/intel-mcp         (MCP server — smart-money, signals, KOL, copy-trade intel)
 packages/marketplace-mcp/     → @three-ws/marketplace-mcp   (MCP server — agent marketplace + skills catalog browse)
 packages/x402-mcp/            → @three-ws/x402-mcp          (MCP server — self-custodial x402 buyer: find/inspect/pay any service in USDC)
+packages/metaplex-agent-mcp/  → @three-ws/metaplex-agent-mcp (MCP server: mint + register on-chain agents in the Metaplex Agent Registry, self-custody or Phantom/Solflare)
 packages/autopilot-mcp/       → @three-ws/autopilot-mcp     (MCP server — agent execution control: scopes, SOL spend caps, propose/execute/undo)
 packages/portfolio-mcp/       → @three-ws/portfolio-mcp     (MCP server — portfolio, PnL, balances, trade feed, signed transfers)
 packages/provenance-mcp/      → @three-ws/provenance-mcp    (MCP server — append-only, signed, on-chain-verifiable agent action log)

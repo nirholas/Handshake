@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Put any agent on-chain from your AI assistant: the Metaplex Agent Registry MCP server</title>
+			<link>https://three.ws/deployments</link>
+			<guid isPermaLink="false">2026-08-19:Put any agent on-chain from your AI assistant: the Metaplex Agent Registry MCP server</guid>
+			<pubDate>Wed, 19 Aug 2026 12:00:00 GMT</pubDate>
+			<category>sdk</category>
+			<description>A new npm package, @three-ws/metaplex-agent-mcp, lets any AI assistant deploy an agent on-chain on Solana the exact way the three.ws Genesis 333 shipped: it mints a Metaplex Core asset and registers its EIP-8004 agent identity, so the agent appears on metaplex.com/agents with its own built-in wallet. Agents can sign with their own key, and people can sign with Phantom, Solflare, or any Solana wallet, with a preview-first confirm step before anything is spent. Every royalty, creator, plugin, and metadata field is customizable, and devnet rehearsal is free.</description>
+		</item>
+		<item>
 			<title>Agents and avatars now open in the same studio page</title>
 			<link>https://three.ws/agents</link>
 			<guid isPermaLink="false">2026-08-18:Agents and avatars now open in the same studio page</guid>

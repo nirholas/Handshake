@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-08-19
+
+- **Put any agent on-chain from your AI assistant: the Metaplex Agent Registry MCP server**: A new npm package, @three-ws/metaplex-agent-mcp, lets any AI assistant deploy an agent on-chain on Solana the exact way the three.ws Genesis 333 shipped: it mints a Metaplex Core asset and registers its EIP-8004 agent identity, so the agent appears on metaplex.com/agents with its own built-in wallet. Agents can sign with their own key, and people can sign with Phantom, Solflare, or any Solana wallet, with a preview-first confirm step before anything is spent. Every royalty, creator, plugin, and metadata field is customizable, and devnet rehearsal is free. (`/deployments`) `[sdk, feature]`
+
 ## 2026-08-18
 
 - **Agents and avatars now open in the same studio page**: Clicking an agent used to land you on a long scrolling profile, while clicking an avatar opened the 3D studio. They are now the same page. Every agent link on three.ws (the search bar, the agents directory, the gallery, the marketplace, the galaxy, launches and creator profiles) opens the studio layout: the agent standing in a live 3D stage on the left, its identity, wallet and actions on the right, and tabs for chat, poses, skills, plugins and embed codes. Talking to an agent there uses that agent's own brain and memory, and AR now works from an agent page too. An agent that has no 3D body yet gets a proper page instead of an empty viewer, with both ways to give it one. The full agent profile (capabilities, economy, activity, trust and developer tools) is one click away on the Profile button, and every entity now has a single canonical link that is safe to share. (`/agents`) `[improvement, feature]`

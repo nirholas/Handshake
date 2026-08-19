@@ -24600,6 +24600,16 @@
 				"improvement",
 				"fix"
 			]
+		},
+		{
+			"date": "2026-08-19",
+			"title": "Put any agent on-chain from your AI assistant: the Metaplex Agent Registry MCP server",
+			"summary": "A new npm package, @three-ws/metaplex-agent-mcp, lets any AI assistant deploy an agent on-chain on Solana the exact way the three.ws Genesis 333 shipped: it mints a Metaplex Core asset and registers its EIP-8004 agent identity, so the agent appears on metaplex.com/agents with its own built-in wallet. Agents can sign with their own key, and people can sign with Phantom, Solflare, or any Solana wallet, with a preview-first confirm step before anything is spent. Every royalty, creator, plugin, and metadata field is customizable, and devnet rehearsal is free.",
+			"tags": [
+				"sdk",
+				"feature"
+			],
+			"link": "/deployments"
 		}
 	]
 }
