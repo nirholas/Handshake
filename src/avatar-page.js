@@ -167,6 +167,7 @@ async function init() {
 		bindOwnerActions();
 		loadForks();
 		measureModel(glbUrl);
+		trackView(avatarId);
 	}
 	// "Used by" is the inverse of agent mode's "Wearing" card: it belongs on the
 	// body's page, listing the agents that wear it.
@@ -225,6 +226,22 @@ async function fetchAvatarRecord(id) {
 		throw new Error(j.error_description || `Could not load this avatar (${r.status})`);
 	}
 	return (await r.json()).avatar || null;
+}
+
+// Fire-and-forget view tracking for the body on display. The server counts at
+// most one view per IP per avatar per 30 min and only for public avatars, so
+// calling on every load is safe — and without this ping the canonical page
+// (where nearly all views now land) never moved the view_count that search
+// and explore rank by. Demo ids are not uuids and are skipped server-side
+// anyway; skip them here to save the request.
+function trackView(id) {
+	if (!id || String(id).startsWith('avatar_demo_')) return;
+	fetch('/api/avatars/view', {
+		method: 'POST',
+		headers: { 'content-type': 'application/json' },
+		body: JSON.stringify({ avatar_id: id }),
+		keepalive: true,
+	}).catch(() => {});
 }
 
 /** GET an agent record. Returns null on 404; throws on any other failure. */
@@ -553,16 +570,23 @@ function renderShell(glbUrl) {
 				` : ''}
 			</div>
 			` : ''}
-			<nav class="av-tabs" role="tablist">
-				<button class="av-tab active" data-tab="overview" role="tab">Overview</button>
-				<button class="av-tab" data-tab="chat" role="tab">Chat</button>
-				${avatarId ? `<button class="av-tab" data-tab="pose" role="tab">Pose</button>` : ''}
-				<button class="av-tab" data-tab="skills" role="tab">Skills</button>
-				<button class="av-tab" data-tab="plugins" role="tab">Plugins</button>
-				<button class="av-tab" data-tab="embed" role="tab">Embed</button>
+			<nav class="av-tabs" role="tablist" aria-label="${esc(avatar.name)} sections">
+				${tabList()
+					.map(
+						(t, i) => `<button
+							class="av-tab${i === 0 ? ' active' : ''}"
+							data-tab="${t.id}"
+							role="tab"
+							id="av-tab-${t.id}"
+							aria-controls="av-panel-${t.id}"
+							aria-selected="${i === 0 ? 'true' : 'false'}"
+							tabindex="${i === 0 ? '0' : '-1'}"
+						>${esc(t.label)}</button>`,
+					)
+					.join('')}
 			</nav>
 			<div class="av-panels">
-				<div class="av-panel active" data-panel="overview" id="av-overview">
+				<div class="av-panel active" data-panel="overview" id="av-panel-overview" role="tabpanel" aria-labelledby="av-tab-overview" tabindex="0">
 					${avatar.description ? `<p class="av-desc">${esc(avatar.description)}</p>` : '<p class="av-desc" style="color:var(--text-3)">No description provided.</p>'}
 					${mode === 'agent' ? bodyCardHTML() : ''}
 					<section class="av-used-by" id="av-used-by" hidden aria-labelledby="av-used-by-heading">
@@ -576,7 +600,7 @@ function renderShell(glbUrl) {
 					${renderAttribution()}
 					${renderAttached()}
 				</div>
-				<div class="av-panel" data-panel="chat">
+				<div class="av-panel" data-panel="chat" id="av-panel-chat" role="tabpanel" aria-labelledby="av-tab-chat" tabindex="0">
 					<div class="av-chat">
 						<div class="av-chat-modelbar">
 							<label class="av-chat-modellabel" for="av-chat-model">Model</label>
@@ -602,7 +626,7 @@ function renderShell(glbUrl) {
 						</form>
 					</div>
 				</div>
-				<div class="av-panel" data-panel="pose">
+				<div class="av-panel" data-panel="pose" id="av-panel-pose" role="tabpanel" aria-labelledby="av-tab-pose" tabindex="0">
 					<div class="av-pose" id="av-pose">
 						<div class="av-pose-loading" id="av-pose-loading">Loading the pose stage…</div>
 						<div class="av-pose-body" id="av-pose-body" hidden>
@@ -622,17 +646,17 @@ function renderShell(glbUrl) {
 						</div>
 					</div>
 				</div>
-				<div class="av-panel" data-panel="skills">
+				<div class="av-panel" data-panel="skills" id="av-panel-skills" role="tabpanel" aria-labelledby="av-tab-skills" tabindex="0">
 					<div class="av-list" id="av-skills-list">
 						<div class="av-list-loading">Loading skills…</div>
 					</div>
 				</div>
-				<div class="av-panel" data-panel="plugins">
+				<div class="av-panel" data-panel="plugins" id="av-panel-plugins" role="tabpanel" aria-labelledby="av-tab-plugins" tabindex="0">
 					<div class="av-list" id="av-plugins-list">
 						<div class="av-list-loading">Loading plugins…</div>
 					</div>
 				</div>
-				<div class="av-panel" data-panel="embed">
+				<div class="av-panel" data-panel="embed" id="av-panel-embed" role="tabpanel" aria-labelledby="av-tab-embed" tabindex="0">
 					${renderEmbedPanel(glbUrl)}
 				</div>
 			</div>
@@ -798,7 +822,7 @@ function mountNetWorthAura() {
 			// reputation regalia (each a real number), and, for the owner, the
 			// reactivity dial that drives the glow above. Lives at the top of Overview.
 			if (!netWorthPanel) {
-				const overview = $('av-overview');
+				const overview = $('av-panel-overview');
 				if (overview) {
 					mountPresence({ agentId, container: overview, aura: controller, position: 'prepend' })
 						.then((panel) => { if (panel) netWorthPanel = panel; else netWorthPanel = null; })
@@ -1061,20 +1085,59 @@ function mountSwitcher() {
 
 // ── Tabs ──────────────────────────────────────────────────────────────
 
-function activateTab(tab) {
+/**
+ * The tabs this entity actually has. Pose needs a rig to drive, so an agent
+ * with no body never gets a tab that would only apologise for itself.
+ */
+function tabList() {
+	return [
+		{ id: 'overview', label: 'Overview' },
+		{ id: 'chat', label: 'Chat' },
+		...(avatarId ? [{ id: 'pose', label: 'Pose' }] : []),
+		{ id: 'skills', label: mode === 'agent' ? 'Capabilities' : 'Skills' },
+		{ id: 'plugins', label: 'Plugins' },
+		{ id: 'embed', label: 'Embed' },
+	];
+}
+
+/**
+ * Show one tab. `focus` moves keyboard focus onto the newly selected tab (true
+ * for arrow-key navigation, false for a click or a deep link, where stealing
+ * focus would be wrong). `push` writes the choice into the URL so a tab is a
+ * shareable address and the browser's back button walks the tabs.
+ */
+function activateTab(tab, { focus = false, push = true } = {}) {
 	const btn = document.querySelector(`.av-tab[data-tab="${tab}"]`);
 	if (!btn) return false;
-	document.querySelectorAll('.av-tab').forEach((b) => b.classList.remove('active'));
-	btn.classList.add('active');
+	document.querySelectorAll('.av-tab').forEach((b) => {
+		const on = b === btn;
+		b.classList.toggle('active', on);
+		b.setAttribute('aria-selected', on ? 'true' : 'false');
+		// Roving tabindex: only the selected tab is in the page's tab order, so
+		// Tab moves past the strip and the arrow keys move within it (WAI-ARIA
+		// tabs pattern).
+		b.tabIndex = on ? 0 : -1;
+	});
+	if (focus) btn.focus();
 	document.querySelectorAll('.av-panel').forEach((p) => {
 		p.classList.toggle('active', p.dataset.panel === tab);
 	});
+	if (push) syncTabUrl(tab);
 	// The Pose tab swaps the model-viewer stage for a live Three.js scene; every
 	// other tab restores it. Driven from here so deep-links and the view switcher
 	// enter/leave pose mode correctly too.
 	if (tab === 'pose') enterPoseMode();
 	else leavePoseMode();
 	return true;
+}
+
+// One URL per tab, on the canonical path. Overview is the bare page, so it
+// drops the parameter instead of shipping `?view=overview` around.
+function syncTabUrl(tab) {
+	const url = new URL(location.href);
+	if (tab === 'overview') url.searchParams.delete('view');
+	else url.searchParams.set('view', tab);
+	if (url.href !== location.href) history.replaceState(history.state, '', url);
 }
 
 // ── Pose stage ────────────────────────────────────────────────────────
@@ -1240,14 +1303,29 @@ function wirePoseControls() {
 }
 
 function bindTabs() {
-	document.querySelectorAll('.av-tab').forEach((btn) => {
+	const tabs = [...document.querySelectorAll('.av-tab')];
+	tabs.forEach((btn) => {
 		btn.addEventListener('click', () => activateTab(btn.dataset.tab));
 	});
 
-	// Deep-link a tab from the view switcher: /avatars/:id?view=chat focuses the
-	// Chat panel on load so each switcher view lands on a real, shareable URL.
-	const view = new URLSearchParams(location.search).get('view');
-	if (view && view !== 'overview') activateTab(view);
+	// WAI-ARIA tabs keyboard contract: arrows move between tabs (wrapping),
+	// Home/End jump to the ends. Without this the strip is a row of buttons a
+	// keyboard user has to Tab through one at a time.
+	document.querySelector('.av-tabs')?.addEventListener('keydown', (e) => {
+		const i = tabs.indexOf(document.activeElement);
+		if (i < 0) return;
+		const last = tabs.length - 1;
+		const next = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: last }[e.key];
+		if (next === undefined) return;
+		e.preventDefault();
+		activateTab(tabs[(next + tabs.length) % tabs.length].dataset.tab, { focus: true });
+	});
+
+	// Deep-link a tab from the view switcher or a shared URL:
+	// /avatars/:id?view=chat opens the Chat panel on load. `push:false` because
+	// the URL already says this; rewriting it would clobber the entry.
+	const view = params.get('view');
+	if (view && view !== 'overview') activateTab(view, { push: false });
 
 	// Embed copy buttons
 	document.body.addEventListener('click', async (e) => {
@@ -1509,10 +1587,17 @@ async function startAgentWithAvatar() {
 }
 
 // ── Skills panel ──────────────────────────────────────────────────────
+//
+// Two different questions share this tab, because the subject is different:
+//   agent mode  → "what can THIS agent do, and what does it charge?"
+//                 (real capabilities off the agent record, priced in USDC)
+//   avatar mode → "what can I attach to this body?"
+//                 (the local catalog of animation/wallet/memory add-ons)
 
 async function loadSkills() {
 	const list = $('av-skills-list');
 	if (!list) return;
+	if (mode === 'agent') return renderAgentCapabilities(list);
 	const skills = await fetchSkills();
 	if (!skills.length) {
 		list.innerHTML = emptyStateHTML({
@@ -1527,6 +1612,88 @@ async function loadSkills() {
 	list.querySelectorAll('[data-skill]').forEach((btn) => {
 		btn.addEventListener('click', () => toggleSkill(btn.dataset.skill));
 	});
+}
+
+/**
+ * The agent's real, published capabilities: the skill names it exposes and, for
+ * the priced ones, what a call actually costs. Prices are atomic integers in
+ * the mint's own decimals (a 9-decimal mint overflows a float), so they are
+ * formatted from the integer, never parsed into one.
+ *
+ * Buying is deliberately NOT reimplemented here. Checkout needs a connected
+ * wallet, CSRF, trial accounting and receipt handling, all of which already
+ * live on the full profile; every priced row links straight to it rather than
+ * shipping a second, subtly different checkout.
+ */
+function renderAgentCapabilities(list) {
+	const skills = (agent.skills || []).map((x) => (typeof x === 'string' ? x : x?.name)).filter(Boolean);
+	if (!skills.length) {
+		list.innerHTML = emptyStateHTML({
+			compact: true,
+			icon: '\u{1f9e9}',
+			title: 'No published capabilities yet',
+			body: `${esc(avatar.name)} has not exposed any callable skills. You can still talk to it in the Chat tab.`,
+		});
+		return;
+	}
+
+	const prices = agent.skill_prices || {};
+	const priced = skills.filter((n) => Number(prices[n]?.amount) > 0);
+	// `#sec-capabilities` is the anchor the profile's own section nav uses.
+	const profileHref = `/agents/${encodeURIComponent(entityId)}/profile#sec-capabilities`;
+
+	const summary = priced.length
+		? `<div class="av-cap-summary">
+				<strong>${priced.length} paid skill${priced.length === 1 ? '' : 's'}</strong>
+				<span>from ${esc(formatSkillPrice(cheapestPrice(priced, prices)))} per call</span>
+			</div>`
+		: `<div class="av-cap-summary av-cap-summary--free">
+				<strong>Free to call</strong>
+				<span>every skill this agent exposes is open</span>
+			</div>`;
+
+	list.innerHTML =
+		summary +
+		skills
+			.map((name) => {
+				const p = prices[name];
+				const gated = p?.gate_type === 'nft';
+				const amount = Number(p?.amount) || 0;
+				const badge = gated
+					? `<span class="av-cap-badge av-cap-badge--gated" title="Hold an NFT from the collection to unlock">Token gated</span>`
+					: amount > 0
+						? `<span class="av-cap-badge av-cap-badge--paid">${esc(formatSkillPrice(p))}</span>`
+						: `<span class="av-cap-badge">Free</span>`;
+				return `<div class="av-row">
+					<div class="av-row-main">
+						<p class="av-row-title">${esc(name)}</p>
+						<p class="av-row-sub">${gated || amount > 0 ? 'Priced per call' : 'Callable at no cost'}</p>
+					</div>
+					${badge}
+				</div>`;
+			})
+			.join('') +
+		`<a class="av-cap-more" href="${profileHref}">Pricing, trials and purchase on the full profile &rarr;</a>`;
+}
+
+// Cheapest priced skill, compared on the atomic integer so a 9-decimal mint
+// never rounds through a float on the way to the comparison.
+function cheapestPrice(names, prices) {
+	return names
+		.map((n) => prices[n])
+		.reduce((best, p) => (!best || BigInt(p.amount) < BigInt(best.amount) ? p : best), null);
+}
+
+// Atomic integer + mint decimals → a human amount, formatted from the digits
+// rather than by dividing, so large mints stay exact.
+function formatSkillPrice(price) {
+	if (!price) return '';
+	const decimals = Number(price.mint_decimals ?? 6);
+	const digits = String(price.amount ?? '0').padStart(decimals + 1, '0');
+	const whole = digits.slice(0, digits.length - decimals) || '0';
+	const frac = decimals ? digits.slice(-decimals).replace(/0+$/, '') : '';
+	const symbol = price.mint_symbol || 'USDC';
+	return `${whole}${frac ? `.${frac}` : ''} ${symbol}`;
 }
 
 function renderSkillRow(s) {
@@ -1550,7 +1717,7 @@ async function toggleSkill(id) {
 	else attachedSkills.add(id);
 	saveAttached();
 	await loadSkills();
-	const overview = $('av-overview');
+	const overview = $('av-panel-overview');
 	if (overview) {
 		const existing = overview.querySelector('.av-attached');
 		if (existing) existing.remove();
@@ -1763,7 +1930,7 @@ function togglePlugin(id) {
 	else attachedPlugins.add(id);
 	saveAttached();
 	loadPlugins();
-	const overview = $('av-overview');
+	const overview = $('av-panel-overview');
 	if (overview) {
 		const existing = overview.querySelector('.av-attached');
 		if (existing) existing.remove();
