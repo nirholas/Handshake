@@ -21,6 +21,31 @@ export function titleFromPrompt(prompt) {
 	return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
+// A card label, not a heading. Prompts that came out of a refiner or an
+// image-to-3D pass are structured specs hundreds of characters long ("1.
+// Geometry and pose: Torso: volumetric, teardrop shaped, …"), so a grid of them
+// reads as a wall of identical text with the one distinguishing word off the
+// end. Keep the first clause of the first line: enough to tell two models
+// apart, short enough to sit on two lines of a card. The full prompt still
+// belongs in the tooltip/aria-label of whatever renders this.
+export function cardTitleFromPrompt(prompt, maxLen = 48) {
+	const line = String(prompt || '').trim().split('\n')[0].trim();
+	if (!line) return 'Untitled model';
+	// Drop list scaffolding ("1.", "2)", "-", "•") the spec formats start with.
+	const unnumbered = line.replace(/^\s*(?:[-*•]|\d+\s*[.)])\s+/, '').trim();
+	// First clause: a colon/semicolon, the "1." that opens the spec's first
+	// numbered section mid-line, or a comma/period followed by a space.
+	// Requiring the space keeps "3.5 inch" and "1,200" whole.
+	const clause = unnumbered.split(/[:;]|\s\d+\s*[.)]\s|,\s|\.\s|\.$/)[0].trim() || unnumbered;
+	const head = clause.length >= 3 ? clause : unnumbered;
+	const trimmed = head.replace(/[\s,;:.-]+$/, '');
+	const t =
+		trimmed.length <= maxLen
+			? trimmed
+			: `${trimmed.slice(0, maxLen).replace(/\s+\S*$/, '')}…`;
+	return t ? t.charAt(0).toUpperCase() + t.slice(1) : 'Untitled model';
+}
+
 // 1234 → "1.2k", 1200000 → "1.2M"; below 1000 verbatim.
 export function formatCount(n) {
 	const v = Number(n) || 0;
