@@ -69,6 +69,13 @@ const SKIP = [
 	/^public\/mcp-catalog\.json$/,
 	/^tests\/fixtures\/mcp-golden-tools\.json$/,
 	/^locales\//,
+	// The standalone deployer site's build output. site/build.mjs esbuilds
+	// site/src into packages/metaplex-agent-mcp/docs/ and copies the HTML and
+	// CSS beside it, because GitHub Pages serves that directory from main. The
+	// bundle carries upstream library strings (including a vendored
+	// not-implemented throw) that no edit of ours can reach. The sources in
+	// site/ are still scanned.
+	/^packages\/metaplex-agent-mcp\/docs\//,
 	/\.min\.(js|css)$/,
 	/package-lock\.json$/,
 	/\.(png|jpg|jpeg|gif|webp|glb|gltf|bin|woff2?|ttf|mp4|wasm|ico|svg)$/i,
