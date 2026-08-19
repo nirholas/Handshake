@@ -1,4 +1,4 @@
-// Standalone Mind Palace route — /agents/:id/mind.
+// Standalone Mind Palace route: /agents/:id/mind.
 //
 // Resolves the agent from the URL, wires the header, and mounts the same
 // mountMindPalace() surface the editor's Mind tab uses. The Palace itself owns

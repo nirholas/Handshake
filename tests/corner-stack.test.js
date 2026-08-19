@@ -223,7 +223,7 @@ describe('corner stack — stylesheet contract', () => {
 
 	it('offsets both rules by the measured page dock as well as the reserve', () => {
 		// A page's own bottom chrome (the /app chat composer, a viewer action
-		// bar) is not a reservation — nobody declares it — so the stack measures
+		// bar) is not a reservation (nobody declares it), so the stack measures
 		// it. Both the desktop and the narrow rule have to honour that lift or
 		// the phone layout keeps parking helper widgets on the composer.
 		const docked = SOURCE.match(/bottom:calc\([^;]*--tws-corner-dock/g) || [];

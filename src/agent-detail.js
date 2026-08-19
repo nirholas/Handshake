@@ -2869,7 +2869,7 @@ function bindWalletActions(agent) {
 	// AGENT HOLDINGS shows the agent's custodial Solana address + balance as
 	// read-only info for everyone. Funding, trading, paying, and withdrawing the
 	// agent's OWN custodial wallet all live in one place — the Agent Wallet hub
-	// (/agents/:id/wallet) — so this card just links there for the owner. The hub
+	// (/agents/:id/wallet), so this card just links there for the owner. The hub
 	// owns every wallet action; the detail page no longer re-implements them.
 	const actions = document.getElementById('ad-holdings-actions');
 	if (!actions) return;

@@ -4,7 +4,7 @@
  * GET /api/oembed?url=<agent-or-forge-share-url>[&format=json|xml]
  *
  * Implements https://oembed.com with type=rich. The html payload is a
- * sandboxed iframe — /agents/:id/embed for agents, /forge/embed?src=<glb> for
+ * sandboxed iframe: /agents/:id/embed for agents, /forge/embed?src=<glb> for
  * Forge creations — so consumers (Notion, Discord, etc.) can render the model
  * inline just by pasting the shareUrl.
  */
