@@ -6,6 +6,8 @@ An MCP server that hands any agent a spending allowance instead of a private key
 
 Nothing here is mocked: real SPL Token delegations, real Solana, real x402 settlement.
 
+**[Read the overview](https://nirholas.github.io/onchain-agent-wallets/)** · [npm](https://www.npmjs.com/package/@three-ws/onchain-agent-wallets)
+
 ## The problem this solves
 
 Every "agent wallet" today works the same way: you generate a keypair, you hand it to the agent, and now the agent has everything in it. There is no ceiling, no allowlist, no expiry, and no way to take it back short of racing the agent to move the funds. People solve this by keeping almost nothing in the wallet, which means the agent cannot do anything useful.
