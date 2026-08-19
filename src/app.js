@@ -736,7 +736,15 @@ class App {
 		const signOutBtn = document.getElementById('nav-sign-out-btn');
 		if (!wrap || !btn || !menu) return;
 
-		if (label) label.textContent = user.email || user.username || 'Account';
+		// A full email is 30+ characters and pushed the whole header cluster off
+		// the right edge of a phone. Show the handle (or the address's local
+		// part) and keep the full identity in the button's tooltip.
+		if (label) {
+			label.textContent =
+				user.username || user.display_name || user.email?.split('@')[0] || 'Account';
+			const full = user.email || user.username || '';
+			if (full) btn.title = full;
+		}
 		if (profileLink && user.address) profileLink.href = `/u/${user.address}`;
 
 		wrap.hidden = false;
