@@ -262,13 +262,17 @@
 			animation: ars-sheet 0.22s ease;
 		}
 		@keyframes ars-sheet { from { transform: translateY(24px); opacity: 0.6; } to { transform: translateY(0); opacity: 1; } }
-		.ars-tray-head { display: flex; align-items: center; gap: 8px; margin-bottom: 11px; }
+		/* Head and tabs keep their intrinsic height: the sheet is a flex column
+		   capped at 72dvh, so on a short viewport flex would otherwise shrink
+		   them (the body carries a min-height and cannot give) and the tab pills
+		   rendered sliced in half. The body absorbs the squeeze instead. */
+		.ars-tray-head { display: flex; align-items: center; gap: 8px; margin-bottom: 11px; flex: 0 0 auto; }
 		.ars-tray-head h2 { margin: 0; font-size: 15px; flex: 1 1 auto; }
 		/* The strip scrolls at phone widths with the scrollbar hidden, so the only
 		   sign that Objects and GLB link exist is an edge fade. Both edges are
 		   driven by data-scroll (set in src/ar-studio.js) so the cue points at
 		   whichever direction still has tabs, in any translation. */
-		.ars-tabs { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; scrollbar-width: none; }
+		.ars-tabs { display: flex; flex: 0 0 auto; gap: 6px; margin-bottom: 12px; overflow-x: auto; scrollbar-width: none; }
 		.ars-tabs::-webkit-scrollbar { display: none; }
 		.ars-tabs[data-scroll~="end"] {
 			-webkit-mask-image: linear-gradient(to right, #000 82%, transparent 100%);
@@ -290,7 +294,7 @@
 		}
 		.ars-tab:hover { color: var(--ink); }
 		.ars-tab.is-active { color: var(--accent-ink); background: rgba(139, 124, 248, 0.16); border-color: rgba(139, 124, 248, 0.45); }
-		.ars-tray-body { overflow-y: auto; min-height: 160px; }
+		.ars-tray-body { overflow-y: auto; flex: 1 1 auto; min-height: 0; }
 		.ars-item-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 9px; }
 		.ars-item-add {
 			appearance: none; cursor: pointer; font: inherit; width: 100%; text-align: left;
