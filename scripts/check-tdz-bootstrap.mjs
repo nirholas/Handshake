@@ -50,6 +50,7 @@
 
 import { readFileSync } from 'node:fs';
 import { resolve, relative } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { parse } from 'acorn';
 
@@ -138,7 +139,7 @@ function isNonReference(node, parent) {
 
 // ── the check ─────────────────────────────────────────────────────────
 
-function analyze(file, src) {
+export function analyze(file, src) {
 	let ast;
 	try {
 		ast = parse(src, { ecmaVersion: 'latest', sourceType: 'module', locations: true });
@@ -250,6 +251,10 @@ function analyze(file, src) {
 
 // ── run ───────────────────────────────────────────────────────────────
 
+// Importable for tests (`analyze` above); the sweep runs only as a command.
+if (import.meta.url === pathToFileURL(process.argv[1] || '').href) main();
+
+function main() {
 const argv = process.argv.slice(2);
 const pathsFlag = argv.indexOf('--paths');
 const files = pathsFlag !== -1
@@ -291,3 +296,4 @@ declarations, as src/avatar-page.js and src/three-tier-page.js both do:
     init().catch(renderError);
 `);
 process.exit(1);
+}
