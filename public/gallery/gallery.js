@@ -16,6 +16,10 @@
 // One-click "Surprise me" instant avatar. Self-wiring on import: attaches to the
 // hero's [data-surprise-avatar] button and handles ?surprise=<seed> deep links.
 import './surprise.js';
+// Shared prompt→label helper: a forge row has no title, and a refined prompt is
+// a multi-clause spec, so cards show its first clause and keep the full text in
+// the tooltip.
+import { cardTitleFromPrompt } from '../../src/model-lib.js';
 
 const els = {
 	search: document.querySelector('[data-role="search"]'),
@@ -896,8 +900,7 @@ function renderForgeCard(c) {
 	const name = document.createElement('h3');
 	name.className = 'gallery-card-name';
 	name.title = label;
-	// Limit display to keep cards compact — full prompt in title attr
-	name.textContent = label.length > 60 ? label.slice(0, 57) + '…' : label;
+	name.textContent = cardTitleFromPrompt(label, 60);
 	body.appendChild(name);
 
 	// Engine/tier tags when available

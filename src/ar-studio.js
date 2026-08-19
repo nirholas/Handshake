@@ -39,6 +39,7 @@ import {
 import { StudioNet } from './ar/studio-net.js';
 import { MultiPlaceSession } from './ar/multi-place.js';
 import { forgeStageNarration } from './shared/forge-frames.js';
+import { cardTitleFromPrompt } from './model-lib.js';
 import {
 	createPinchState, pinchEnd, pinchMove, pinchStart, touchDist,
 	PINCH_SCALE_MAX, PINCH_SCALE_MIN,
@@ -1710,12 +1711,18 @@ function trayItemHTML(it) {
 	const img = it.poster
 		? `<img src="${esc(it.poster)}" alt="" loading="lazy" />`
 		: '<span class="ars-item-cube" aria-hidden="true">◆</span>';
+	// A forge row's "title" is the prompt it was generated from, and a refined
+	// or image-derived prompt is a multi-clause spec. Cards get the first
+	// clause; the whole prompt stays reachable as the tooltip.
+	const label = cardTitleFromPrompt(it.title);
+	const full = String(it.title || '').trim();
 	return `
 		<li class="ars-item">
-			<button type="button" class="ars-item-add" data-src="${esc(it.src)}" data-title="${esc(it.title)}"
-				aria-label="Add ${esc(it.title || 'model')} to your space">
+			<button type="button" class="ars-item-add" data-src="${esc(it.src)}" data-title="${esc(label)}"
+				${full ? `title="${esc(full)}"` : ''}
+				aria-label="Add ${esc(label)} to your space">
 				<span class="ars-item-thumb">${img}</span>
-				<span class="ars-item-title">${esc(it.title || 'Untitled model')}</span>
+				<span class="ars-item-title">${esc(label)}</span>
 				<span class="ars-item-cta">Add</span>
 			</button>
 		</li>`;
