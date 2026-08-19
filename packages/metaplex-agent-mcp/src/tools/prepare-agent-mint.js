@@ -30,7 +30,9 @@ export const def = {
 		'transactions base64 in txs_base64 (already co-signed by the new asset keypair) with `wallet` as the fee ' +
 		'payer: one atomic tx when it fits Solana\'s size limit, else create + register to sign together via ' +
 		'signAllTransactions. The wallet signs and broadcasts, or hands the signed array to ' +
-		'send_signed_transaction. Broadcasts nothing itself. The blockhash expires after roughly a minute, so sign ' +
+		'send_signed_transaction. Includes the same mainnet deploy fee as mint_onchain_agent, priced against the ' +
+		"wallet's live $THREE balance and returned as deploy_fee_sol/deploy_fee_to before anything is signed. " +
+		'Broadcasts nothing itself. The blockhash expires after roughly a minute, so sign ' +
 		'promptly and re-prepare if a wallet reports an expired transaction.',
 	inputSchema: {
 		...mintShape,

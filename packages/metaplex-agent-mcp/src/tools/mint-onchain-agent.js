@@ -45,9 +45,11 @@ export const def = {
 		'creator, royalties, immutable metadata) AND registers its EIP-8004 Agent Identity, so it appears on ' +
 		'metaplex.com/agents with its own built-in wallet. Runs as ONE atomic transaction when it fits Solana\'s ' +
 		'1232-byte limit, otherwise as create followed by register (how the Genesis 333 landed). Signs with the configured ' +
-		'SOLANA_SECRET_KEY (or a per-call secret) and spends ~0.007 SOL in rent + fees. Without confirm:true it ' +
-		'returns a full preview (both JSON documents, the paying wallet, the cost) and broadcasts NOTHING. ' +
-		'For Phantom/Solflare users, use prepare_agent_mint instead.',
+		'SOLANA_SECRET_KEY (or a per-call secret) and spends ~0.007 SOL in rent + fees, plus a flat SOL deploy fee ' +
+		'on mainnet that funds $THREE buybacks (holding $THREE halves it, then waives it; devnet is free; see ' +
+		'three_status). The fee rides in the same transaction as the mint, so a failed mint pays nothing. Without ' +
+		'confirm:true it returns a full preview (both JSON documents, the paying wallet, every cost line including ' +
+		'the fee and its recipient) and broadcasts NOTHING. For Phantom/Solflare users, use prepare_agent_mint.',
 	inputSchema: {
 		...mintShape,
 		secret: z.string().optional().describe('Per-call signing key (base58 secret key or JSON byte array). Overrides SOLANA_SECRET_KEY.'),
