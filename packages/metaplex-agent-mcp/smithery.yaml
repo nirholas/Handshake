@@ -1,0 +1,44 @@
+# Smithery deployment config for @three-ws/metaplex-agent-mcp
+# https://smithery.ai/docs/config#smitheryyaml
+#
+# Deploy AI agents on-chain into the Metaplex Agent Registry on Solana,
+# Genesis-333 style: one atomic tx mints a Metaplex Core asset and registers
+# its EIP-8004 agent identity. Read tools and the Phantom/Solflare
+# prepare/send flow work with no key; only the self-custody mint needs one.
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      SOLANA_SECRET_KEY:
+        type: string
+        title: Solana secret key
+        description: Base58 secret key (or JSON byte array) for the minting wallet. Optional. Read tools and the wallet prepare/send flow work without it.
+      SOLANA_RPC_URL:
+        type: string
+        title: Solana RPC URL
+        description: HTTPS Solana RPC endpoint. Defaults to the public endpoint for the configured network. Bring your own (Helius / Quicknode / Triton) for production.
+      METAPLEX_AGENT_NETWORK:
+        type: string
+        title: Default network
+        default: mainnet
+        enum: [mainnet, devnet]
+        description: Default Solana cluster. Every tool also takes a per-call network.
+      REQUIRE_CONFIRM:
+        type: boolean
+        title: Require explicit confirm
+        default: true
+        description: Refuse to broadcast a mint or registration until re-issued with confirm=true.
+    required: []
+  commandFunction: |
+    (config) => ({
+      command: 'npx',
+      args: ['-y', '@three-ws/metaplex-agent-mcp'],
+      env: Object.assign(
+        {},
+        config.SOLANA_SECRET_KEY ? { SOLANA_SECRET_KEY: config.SOLANA_SECRET_KEY } : {},
+        config.SOLANA_RPC_URL ? { SOLANA_RPC_URL: config.SOLANA_RPC_URL } : {},
+        config.METAPLEX_AGENT_NETWORK ? { METAPLEX_AGENT_NETWORK: config.METAPLEX_AGENT_NETWORK } : {},
+        config.REQUIRE_CONFIRM != null ? { REQUIRE_CONFIRM: String(config.REQUIRE_CONFIRM) } : {}
+      )
+    })

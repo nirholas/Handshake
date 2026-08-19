@@ -80,6 +80,11 @@ const SERVERS = [
 		manifest: 'packages/marketplace-mcp/server.json',
 	},
 	{ key: 'x402-mcp', dir: 'packages/x402-mcp', manifest: 'packages/x402-mcp/server.json' },
+	{
+		key: 'metaplex-agent-mcp',
+		dir: 'packages/metaplex-agent-mcp',
+		manifest: 'packages/metaplex-agent-mcp/server.json',
+	},
 	// Autonomous-agent control plane + account/discovery + capability surfaces
 	// (the 2025-06 buildout). Each is a stdio npm package with its own server.json.
 	{ key: 'autopilot-mcp', dir: 'packages/autopilot-mcp', manifest: 'packages/autopilot-mcp/server.json' },
