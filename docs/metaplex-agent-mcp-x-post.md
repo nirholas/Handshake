@@ -8,36 +8,51 @@ with it.
 **Thesis of this announcement:** an agent should be able to deploy itself on-chain, hold its own
 wallet, and pay for what it uses. Nothing else. No mint drop, no supply, no collection talk.
 
-**Every claim below is true today** (verified against the package README and `package.json`):
-`npx -y @three-ws/metaplex-agent-mcp`, 8 tools, mint + register in one flow, agent wallet is the
-mpl-core Asset Signer PDA, `x402Support` ships in the registration document, ~0.007 SOL on mainnet,
-free devnet rehearsal, keys never leave the client, Phantom/Solflare/Backpack/Ledger sign the
-browser lane.
+**Every claim below is true today** (verified against the shipped 0.2.0 code, with the fee lanes
+exercised against mainnet): `npx -y @three-ws/metaplex-agent-mcp`, 9 tools, mint + register in one
+flow, agent wallet is the mpl-core Asset Signer PDA, `x402Support` ships in the registration
+document, ~0.007 SOL of rent and network fees, a 0.02 SOL deploy fee on mainnet paid to the wallet
+the $THREE buyback lane spends from, halved at 50,000 $THREE and waived at 250,000, free on devnet,
+keys never leave the client, Phantom/Solflare/Backpack/Ledger sign the browser lane.
+
+**One thing to NOT claim:** that buybacks are running. The lane is built and the fee is wired into
+it, but `enabled` is currently false on the public ledger
+([/api/three-token/stats](https://three.ws/api/three-token/stats)), and someone will check. "The fee
+funds $THREE buybacks" is true and safe. "We are buying back $THREE right now" is not, until that
+flag flips.
 
 ---
 
 ## 1. Main post (recommended)
 
-278 characters with X's 23-character URL count, so it posts from any account, Premium or not.
+277 characters with X's 23-character URL count, so it posts from any account, Premium or not.
 
 > Your agent can now hold its own wallet.
 >
-> One command and it deploys itself into the Metaplex Agent Registry on Solana: an asset with its
-> own on-chain wallet, an EIP-8004 identity, and x402 on so it can pay for what it uses.
+> One command and it deploys itself into the Metaplex Agent Registry on Solana: its own on-chain
+> wallet, an EIP-8004 identity, x402 on.
 >
-> ~0.007 SOL. Keys stay yours.
+> The 0.02 SOL deploy fee buys $THREE. Hold 250k and you deploy free, forever.
 >
 > github.com/nirholas/metaplex-agent-mcp
 
 Why this one: line 1 is the whole idea in seven words, line 2 is the mechanism without asking the
-reader to already know what MCP is, line 3 kills the only two objections anyone has (what does it
-cost, who holds the key). "Deploys itself" is the phrase doing the work; keep it in any rewrite.
+reader to already know what MCP is, and line 3 is the part that makes a holder repost it. The fee
+and the waiver are one thought, so nobody reads the fee as a toll. "Deploys itself" and "free,
+forever" are the two phrases doing the work; keep both in any rewrite.
 
-Premium-length variant, if the account has the room, swap line 2 for:
+## 1b. Alternate main post ($THREE-first)
 
-> One command in Claude and it deploys itself into the Metaplex Agent Registry on Solana: a
-> Metaplex Core asset with an on-chain wallet, an EIP-8004 identity, and x402 on so it can pay for
-> what it uses.
+For the holder timeline rather than the builder timeline. 272 characters.
+
+> Every agent deployed on-chain through this now buys $THREE.
+>
+> One command mints a Metaplex Core asset with its own wallet and registers its EIP-8004 identity
+> on Solana. The 0.02 SOL fee funds $THREE buybacks.
+>
+> Hold 250k $THREE, deploy free forever.
+>
+> github.com/nirholas/metaplex-agent-mcp
 
 ## 2. Alternate: builder-facing
 
@@ -102,6 +117,27 @@ Premium-length variant, if the account has the room, swap line 2 for:
 > the whole thing for free.
 
 **8/**
+> Now the part that makes this pay for itself.
+>
+> A mainnet deploy costs 0.02 SOL on top of rent. That fee goes to the wallet the $THREE buyback
+> lane spends from. Deploys fund buybacks. That is the whole business model.
+
+**9/**
+> And holding $THREE is how you stop paying it.
+>
+> 50,000 $THREE in the paying wallet halves the fee.
+> 250,000 waives it.
+>
+> Read live from the chain when the transaction is built. Nothing staked, nothing locked, nothing
+> spent. Hold the tokens, deploy your whole fleet free.
+
+**10/**
+> The fee rides inside the same transaction that creates the agent, so a deploy that fails moves no
+> money, and both the amount and where it goes are printed before you sign anything.
+>
+> `three_status` prices your next deploy against any wallet.
+
+**11/**
 > Works in any MCP client:
 >
 > ```
@@ -110,7 +146,7 @@ Premium-length variant, if the account has the room, swap line 2 for:
 >
 > Or skip the install and do it in the browser.
 
-**9/**
+**12/**
 > Open source. Real programs, real Solana, no mocks.
 >
 > github.com/nirholas/metaplex-agent-mcp

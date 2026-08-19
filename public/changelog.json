@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-19T20:35:11.335Z",
+	"generated_at": "2026-08-19T21:17:27.214Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -48,6 +48,17 @@
 				"feature",
 				"sdk",
 				"security"
+			]
+		},
+		{
+			"date": "2026-08-19",
+			"type": "update",
+			"title": "Deploying an agent on-chain now buys $THREE, and holders deploy free",
+			"summary": "The Metaplex Agent Registry deployer (the browser page and the @three-ws/metaplex-agent-mcp server) now carries a flat 0.02 SOL deploy fee on mainnet, and that fee is paid to the wallet the $THREE buyback lane spends from. So every agent someone puts on-chain through us turns into buy pressure on $THREE instead of nothing. Holding $THREE is what makes it cheaper: 50,000 in the paying wallet halves the fee, 250,000 waives it entirely, and the balance is read live from the chain when the transaction is built, so nothing is staked, locked, or spent to earn it. Deploy a whole fleet and the waiver applies to every one. Devnet rehearsals stay free, the fee travels inside the same transaction that creates the agent (so a deploy that fails costs nothing), and both the amount and its destination are shown before anything is signed. A new three_status tool prices your next deploy against any wallet and returns the live $THREE market and buyback figures.",
+			"link": "/deploy-onchain",
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{

@@ -39,6 +39,14 @@
 			<description>Handing an AI agent a wallet has always meant handing it a private key, which means handing it everything in that wallet. The new onchain-agent-wallets MCP server replaces that with an allowance. Your money stays in an account you own, and the agent gets permission to spend a slice of it that the Solana token program enforces on-chain: it cannot spend past the ceiling however it is prompted, every spend decrements what is left, and you can cancel the whole thing in one instruction or take the balance back without the agent's cooperation. On top of that you set the rules it runs under: a maximum per transaction, a maximum per day, which addresses it may pay, which APIs it may buy from, an expiry, and a pause switch that stops it instantly for free. It can pay x402 APIs out of the allowance, and the price is always read before any money moves. Every decision, including every refusal and the reason for it, is written to an audit log you can read. You never have to put a secret key on the machine: owner actions come back as an unsigned transaction for Phantom, Solflare, or a Ledger to sign.</description>
 		</item>
 		<item>
+			<title>Deploying an agent on-chain now buys $THREE, and holders deploy free</title>
+			<link>https://three.ws/deploy-onchain</link>
+			<guid isPermaLink="false">2026-08-19:Deploying an agent on-chain now buys $THREE, and holders deploy free</guid>
+			<pubDate>Wed, 19 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The Metaplex Agent Registry deployer (the browser page and the @three-ws/metaplex-agent-mcp server) now carries a flat 0.02 SOL deploy fee on mainnet, and that fee is paid to the wallet the $THREE buyback lane spends from. So every agent someone puts on-chain through us turns into buy pressure on $THREE instead of nothing. Holding $THREE is what makes it cheaper: 50,000 in the paying wallet halves the fee, 250,000 waives it entirely, and the balance is read live from the chain when the transaction is built, so nothing is staked, locked, or spent to earn it. Deploy a whole fleet and the waiver applies to every one. Devnet rehearsals stay free, the fee travels inside the same transaction that creates the agent (so a deploy that fails costs nothing), and both the amount and its destination are shown before anything is signed. A new three_status tool prices your next deploy against any wallet and returns the live $THREE market and buyback figures.</description>
+		</item>
+		<item>
 			<title>Every three.ws package on npm is current again</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-19:Every three.ws package on npm is current again</guid>
