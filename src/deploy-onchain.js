@@ -1,11 +1,11 @@
 /**
- * /deploy-onchain — mint an agent into the Metaplex Agent Registry from the
+ * /deploy-onchain: mint an agent into the Metaplex Agent Registry from the
  * user's own wallet (Phantom / Solflare / Backpack / Seeker), in the exact
  * Genesis-333 shape.
  *
  * The on-chain documents and transaction builders come from
- * @three-ws/metaplex-agent-mcp/lib — the same library behind the published MCP
- * server — so what this page mints is byte-identical to what an agent minting
+ * @three-ws/metaplex-agent-mcp/lib, the same library behind the published MCP
+ * server, so what this page mints is byte-identical to what an agent minting
  * itself over MCP produces. The registration builders are dependency-free and
  * load with the page; umi, mpl-core, and web3.js only load when the user
  * actually deploys.
