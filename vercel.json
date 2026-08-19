@@ -3897,6 +3897,17 @@
 		},
 		{
 			"src": "/avatars/([^/.]+)",
+			"has": [
+				{
+					"type": "header",
+					"key": "user-agent",
+					"value": "(?i).*(Twitterbot|facebookexternalhit|Slackbot|LinkedInBot|Discordbot|TelegramBot|WhatsApp|Googlebot|bingbot|Applebot|Pinterestbot|redditbot|Embedly|Quora|outbrain|vkShare|Iframely).*"
+				}
+			],
+			"dest": "/api/avatar-detail-og?id=$1"
+		},
+		{
+			"src": "/avatars/([^/.]+)",
 			"dest": "/avatar-page.html"
 		},
 		{
@@ -4656,6 +4667,29 @@
 				"permissions-policy": "xr-spatial-tracking=*, camera=(self), microphone=(self)"
 			},
 			"dest": "/ar.html"
+		},
+		{
+			"src": "/agents/([^/.]+)/share/?",
+			"dest": "/api/agent-share?id=$1"
+		},
+		{
+			"src": "/agents/([^/.]+)/mind/?",
+			"dest": "/agent-mind.html"
+		},
+		{
+			"src": "/agents/([^/.]+)/edit",
+			"dest": "/agent-edit.html"
+		},
+		{
+			"src": "/agents/([^/.]+)/embed",
+			"headers": {
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; report-uri /api/client-errors",
+				"x-content-type-options": "nosniff",
+				"referrer-policy": "strict-origin-when-cross-origin",
+				"permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*",
+				"cross-origin-resource-policy": "cross-origin"
+			},
+			"dest": "/agent-embed.html"
 		},
 		{
 			"src": "/agents/([^/.]+)",
