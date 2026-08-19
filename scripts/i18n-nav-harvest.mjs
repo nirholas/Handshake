@@ -81,13 +81,13 @@ const NAV_JS_STRINGS = [
 // Inline literals rendered by getting-started.js.
 const GETTING_STARTED_STRINGS = [
 	'Getting started',
-	'Give your AI a body — in about five minutes',
+	'Give your AI a body, in about five minutes',
 	'Create your first avatar',
-	'Selfie, text prompt, or upload — your 3D agent in a couple of minutes.',
+	'Selfie, text prompt, or upload. Your 3D agent in a couple of minutes.',
 	'Give it a brain',
 	'Add a name, personality, and voice so it can talk back.',
 	'Embed it anywhere',
-	'Drop one line of HTML onto any site — it loads and animates itself.',
+	'Drop one line of HTML onto any site. It loads and animates itself.',
 	'Own it on-chain',
 	'Register your agent on-chain so its identity is verifiable.',
 	'Monetize it',

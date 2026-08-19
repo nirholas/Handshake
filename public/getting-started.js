@@ -44,7 +44,7 @@
 		{
 			id: 'create', core: true, glyph: '🧍',
 			title: 'Create your first avatar',
-			desc: 'Selfie, text prompt, or upload — your 3D agent in a couple of minutes.',
+			desc: 'Selfie, text prompt, or upload. Your 3D agent in a couple of minutes.',
 			href: '/create',
 			done: function (p, q) {
 				return (p.indexOf('/app') === 0 && q.has('agent')) ||
@@ -63,7 +63,7 @@
 		{
 			id: 'embed', core: true, glyph: '🔗',
 			title: 'Embed it anywhere',
-			desc: 'Drop one line of HTML onto any site — it loads and animates itself.',
+			desc: 'Drop one line of HTML onto any site. It loads and animates itself.',
 			href: '/studio',
 			done: function (p) {
 				return p.indexOf('/studio') === 0 || p === '/embed' ||
@@ -225,8 +225,8 @@
 		pill.setAttribute(
 			'aria-label',
 			complete
-				? 'Getting started — all core steps complete. Open checklist.'
-				: 'Getting started — ' + done + ' of ' + total + ' steps done. Open checklist.'
+				? 'Getting started: all core steps complete. Open checklist.'
+				: 'Getting started: ' + done + ' of ' + total + ' steps done. Open checklist.'
 		);
 	}
 
@@ -312,7 +312,7 @@
 
 		panel.classList.toggle('is-complete', doneN >= totalN);
 		panelSub.textContent = doneN >= totalN
-			? "Core path done — you've got an embeddable avatar. Bonus steps below."
+			? "Core path done. You've got an embeddable avatar, and bonus steps below."
 			: doneN + ' of ' + totalN + ' core steps complete';
 		barFill.style.width = Math.round((doneN / totalN) * 100) + '%';
 
@@ -382,7 +382,7 @@
 
 		var body = el('div', 'twg-modal-body');
 		body.appendChild(el('p', 'twg-modal-eyebrow', 'Welcome to three.ws'));
-		var title = elT('h1', 'twg-modal-title', 'Give your AI a body — in about five minutes');
+		var title = elT('h1', 'twg-modal-title', 'Give your AI a body, in about five minutes');
 		title.id = 'twg-modal-title';
 		body.appendChild(title);
 		body.appendChild(el('p', 'twg-modal-lede',

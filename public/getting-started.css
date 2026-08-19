@@ -430,7 +430,24 @@
 
 @media (max-width: 480px) {
 	.twg-root { right: 12px; bottom: 12px; }
-	.twg-panel { width: calc(100vw - 24px); }
+	/* Anchored to the viewport, not to the pill. The pill lives in the shared
+	   corner stack, and that stack steps sideways into a narrow column when the
+	   Walk Companion claims the corner: a 358px panel hung on the right edge of
+	   a 171px column ran a third of its width off the left of the screen. The
+	   offset mirrors the stack's own (inset + reserve + measured page dock) plus
+	   the pill's height, so the panel opens directly above the pill wherever the
+	   stack currently sits. */
+	.twg-panel {
+		position: fixed;
+		left: 12px;
+		right: 12px;
+		width: auto;
+		max-width: none;
+		/* --tws-corner-claim, not --tws-corner-reserve: when a corner widget is
+		   narrow enough for the stack to step beside it, the pill moves sideways
+		   but a full-width panel still has to clear it. */
+		bottom: calc(66px + var(--tws-corner-claim, 0px) + var(--tws-corner-dock, 0px));
+	}
 	.twg-modal-title { font-size: 20px; }
 	.twg-modal-steps { flex-direction: row; }
 }

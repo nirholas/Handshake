@@ -182,6 +182,12 @@
 		else root.style.removeProperty('--tws-corner-reserve');
 		if (inset > 0) root.style.setProperty('--tws-corner-reserve-w', inset + 'px');
 		else root.style.removeProperty('--tws-corner-reserve-w');
+		/* The claim itself, whichever way the stack chose to dodge it. A member
+		   that opens a panel too wide to fit the side-by-side column (the
+		   Getting started checklist) reads this instead and lifts over the
+		   claim rather than squeezing beside it. */
+		if (maxH > 0) root.style.setProperty('--tws-corner-claim', maxH + 'px');
+		else root.style.removeProperty('--tws-corner-claim');
 		return maxH;
 	}
 
