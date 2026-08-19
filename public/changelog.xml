@@ -31,6 +31,14 @@
 			<description>The studio page every agent link opens now carries the agent's real substance. Its Capabilities tab lists the skills it genuinely exposes with the real per-call price of each, and a summary line telling you the cheapest paid call up front (or that everything is free). Skill names read as words instead of raw slugs, with the exact slug shown underneath for anyone wiring an integration. Under the title there is now a row of real counters: skills, conversations, wallet, whether the identity is on-chain, and how long the agent has been around. Below the fold, an agent recommends similar agents rather than unrelated avatars, each rendered as a live 3D card. The page also loads better: a skeleton in the real layout instead of a line of text, cards that show a picture while their 3D model downloads, and full keyboard support on the section tabs with a shareable link per tab.</description>
 		</item>
 		<item>
+			<title>Agents can now hold a spending allowance instead of your private key</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-19:Agents can now hold a spending allowance instead of your private key</guid>
+			<pubDate>Wed, 19 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Handing an AI agent a wallet has always meant handing it a private key, which means handing it everything in that wallet. The new onchain-agent-wallets MCP server replaces that with an allowance. Your money stays in an account you own, and the agent gets permission to spend a slice of it that the Solana token program enforces on-chain: it cannot spend past the ceiling however it is prompted, every spend decrements what is left, and you can cancel the whole thing in one instruction or take the balance back without the agent's cooperation. On top of that you set the rules it runs under: a maximum per transaction, a maximum per day, which addresses it may pay, which APIs it may buy from, an expiry, and a pause switch that stops it instantly for free. It can pay x402 APIs out of the allowance, and the price is always read before any money moves. Every decision, including every refusal and the reason for it, is written to an audit log you can read. You never have to put a secret key on the machine: owner actions come back as an unsigned transaction for Phantom, Solflare, or a Ledger to sign.</description>
+		</item>
+		<item>
 			<title>Every three.ws package on npm is current again</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-19:Every three.ws package on npm is current again</guid>

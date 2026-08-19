@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-19T03:49:12.341Z",
+	"generated_at": "2026-08-19T20:35:11.335Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -36,6 +36,18 @@
 			"tags": [
 				"improvement",
 				"feature"
+			]
+		},
+		{
+			"date": "2026-08-19",
+			"type": "update",
+			"title": "Agents can now hold a spending allowance instead of your private key",
+			"summary": "Handing an AI agent a wallet has always meant handing it a private key, which means handing it everything in that wallet. The new onchain-agent-wallets MCP server replaces that with an allowance. Your money stays in an account you own, and the agent gets permission to spend a slice of it that the Solana token program enforces on-chain: it cannot spend past the ceiling however it is prompted, every spend decrements what is left, and you can cancel the whole thing in one instruction or take the balance back without the agent's cooperation. On top of that you set the rules it runs under: a maximum per transaction, a maximum per day, which addresses it may pay, which APIs it may buy from, an expiry, and a pause switch that stops it instantly for free. It can pay x402 APIs out of the allowance, and the price is always read before any money moves. Every decision, including every refusal and the reason for it, is written to an audit log you can read. You never have to put a secret key on the machine: owner actions come back as an unsigned transaction for Phantom, Solflare, or a Ledger to sign.",
+			"link": null,
+			"tags": [
+				"feature",
+				"sdk",
+				"security"
 			]
 		},
 		{

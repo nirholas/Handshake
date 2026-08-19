@@ -1,0 +1,75 @@
+{
+	"name": "@three-ws/onchain-agent-wallets",
+	"version": "0.1.0",
+	"mcpName": "io.github.nirholas/onchain-agent-wallets",
+	"description": "Give an AI agent a real Solana wallet without giving it your money. The agent gets a spending allowance the SPL Token program enforces on-chain, plus guardrails (per-tx cap, daily cap, recipient and host allowlists, expiry, kill switch), x402 payments, and a one-call on-chain deploy. Custody never leaves your wallet: you can revoke or withdraw at any moment, and the agent can never spend past the delegated ceiling.",
+	"type": "module",
+	"author": "nirholas <support@three.ws>",
+	"license": "SEE LICENSE IN LICENSE",
+	"homepage": "https://three.ws",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/onchain-agent-wallets.git"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/onchain-agent-wallets/issues"
+	},
+	"keywords": [
+		"mcp",
+		"model-context-protocol",
+		"solana",
+		"agent-wallet",
+		"onchain-agent",
+		"x402",
+		"usdc",
+		"spl-token",
+		"delegation",
+		"spending-limit",
+		"self-custody",
+		"guardrails",
+		"ai-agent",
+		"agent-payments",
+		"three.ws"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"src",
+		"server.json",
+		"README.md",
+		"LICENSE"
+	],
+	"bin": {
+		"onchain-agent-wallets": "src/index.js"
+	},
+	"main": "./src/index.js",
+	"exports": {
+		".": "./src/index.js",
+		"./lib": "./src/lib/index.js",
+		"./lib/vault": "./src/lib/vault.js",
+		"./lib/policy": "./src/lib/policy.js"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"scripts": {
+		"start": "node src/index.js",
+		"test": "node --test \"test/**/*.test.mjs\"",
+		"inspect": "npx -y @modelcontextprotocol/inspector node src/index.js"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.29.0",
+		"@solana/spl-token": "^0.4.15",
+		"@solana/web3.js": "^1.98.4",
+		"@three-ws/metaplex-agent-mcp": "^0.1.2",
+		"@x402/core": "^2.14.0",
+		"@x402/fetch": "^2.14.0",
+		"@x402/svm": "^2.14.0",
+		"bs58": "^6.0.0",
+		"zod": "^3.23.8"
+	},
+	"devDependencies": {
+		"solana-bankrun": "^0.4.0"
+	}
+}

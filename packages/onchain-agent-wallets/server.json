@@ -1,0 +1,57 @@
+{
+	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+	"name": "io.github.nirholas/onchain-agent-wallets",
+	"title": "Onchain Agent Wallets",
+	"description": "Give an AI agent a Solana wallet with an on-chain spending limit it cannot exceed. Guardrails, x402, revocable custody. By three.ws.",
+	"websiteUrl": "https://three.ws",
+	"icons": [{ "src": "https://three.ws/three-ws-mcp-icon.svg", "mimeType": "image/svg+xml", "sizes": ["any"] }],
+	"repository": {
+		"url": "https://github.com/nirholas/onchain-agent-wallets",
+		"source": "github"
+	},
+	"version": "0.1.0",
+	"packages": [
+		{
+			"registryType": "npm",
+			"identifier": "@three-ws/onchain-agent-wallets",
+			"version": "0.1.0",
+			"runtimeHint": "npx",
+			"transport": { "type": "stdio" },
+			"environmentVariables": [
+				{
+					"name": "OWNER_SECRET_KEY",
+					"description": "Owner secret key, base58 or a JSON byte array. Optional: without it every owner action is returned as an unsigned transaction for Phantom, Solflare, Backpack, or a Ledger to sign.",
+					"isRequired": false,
+					"isSecret": true,
+					"format": "string"
+				},
+				{
+					"name": "OAW_NETWORK",
+					"description": "Cluster: mainnet or devnet. Defaults to mainnet. State is kept per network, so a devnet rehearsal never touches mainnet agents.",
+					"isRequired": false,
+					"default": "mainnet",
+					"format": "string"
+				},
+				{
+					"name": "SOLANA_RPC_URL",
+					"description": "HTTPS Solana RPC endpoint. Defaults to the public endpoint for the configured network; bring your own (Helius / Quicknode / Triton) for production.",
+					"isRequired": false,
+					"format": "string"
+				},
+				{
+					"name": "OAW_STATE_DIR",
+					"description": "Where agent keypairs, guardrails, and the spend ledger are stored. Defaults to ~/.onchain-agent-wallets, written 0600 inside a 0700 directory.",
+					"isRequired": false,
+					"format": "string"
+				},
+				{
+					"name": "REQUIRE_CONFIRM",
+					"description": "Refuse to broadcast anything that moves value until the call is re-issued with confirm:true. Default true.",
+					"isRequired": false,
+					"default": "true",
+					"format": "boolean"
+				}
+			]
+		}
+	]
+}

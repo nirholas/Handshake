@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-19",
+			"title": "Agents can now hold a spending allowance instead of your private key",
+			"summary": "Handing an AI agent a wallet has always meant handing it a private key, which means handing it everything in that wallet. The new onchain-agent-wallets MCP server replaces that with an allowance. Your money stays in an account you own, and the agent gets permission to spend a slice of it that the Solana token program enforces on-chain: it cannot spend past the ceiling however it is prompted, every spend decrements what is left, and you can cancel the whole thing in one instruction or take the balance back without the agent's cooperation. On top of that you set the rules it runs under: a maximum per transaction, a maximum per day, which addresses it may pay, which APIs it may buy from, an expiry, and a pause switch that stops it instantly for free. It can pay x402 APIs out of the allowance, and the price is always read before any money moves. Every decision, including every refusal and the reason for it, is written to an audit log you can read. You never have to put a secret key on the machine: owner actions come back as an unsigned transaction for Phantom, Solflare, or a Ledger to sign.",
+			"tags": [
+				"feature",
+				"sdk",
+				"security"
+			]
+		},
+		{
+			"date": "2026-08-19",
 			"title": "Every three.ws package on npm is current again",
 			"summary": "Our npm packages had drifted a long way behind the code: 73 of them, including the main SDK, the React components, the avatar and walk SDKs and most of the MCP servers, were sitting on npm at an older version than what we had actually built. Anyone installing from npm got stale code. All 73 are now published at their current version, and four packages that had never been released at all (the agent runtime, the sign language pack, the spatial MCP server and the VS Code extension) are on npm for the first time. The cause was our release script working from a hand written list, so any package added after that list was written was silently never published; it now discovers packages itself, so a new one cannot be forgotten again.",
 			"tags": [

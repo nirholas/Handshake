@@ -1,0 +1,49 @@
+# Smithery deployment config for @three-ws/onchain-agent-wallets
+# https://smithery.ai/docs/config#smitheryyaml
+#
+# Give an AI agent a Solana wallet with an on-chain spending limit. The owner
+# keeps custody; the agent holds a capped SPL Token delegation the token program
+# enforces. Read tools and the whole Phantom/Solflare owner lane work with no
+# key configured at all.
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      OWNER_SECRET_KEY:
+        type: string
+        title: Owner secret key
+        description: Base58 secret key (or JSON byte array) for the wallet that funds and controls the agents. Optional. Without it, owner actions come back as unsigned transactions for your own wallet to sign.
+      SOLANA_RPC_URL:
+        type: string
+        title: Solana RPC URL
+        description: HTTPS Solana RPC endpoint. Defaults to the public endpoint for the configured network. Bring your own (Helius / Quicknode / Triton) for production.
+      OAW_NETWORK:
+        type: string
+        title: Default network
+        default: mainnet
+        enum: [mainnet, devnet]
+        description: Solana cluster. State is kept per network, so devnet rehearsals never touch mainnet agents.
+      OAW_STATE_DIR:
+        type: string
+        title: State directory
+        description: Where agent keypairs, guardrails, and the spend ledger live. Defaults to ~/.onchain-agent-wallets.
+      REQUIRE_CONFIRM:
+        type: boolean
+        title: Require explicit confirm
+        default: true
+        description: Refuse to broadcast anything that moves value until the call is re-issued with confirm=true.
+    required: []
+  commandFunction: |
+    (config) => ({
+      command: 'npx',
+      args: ['-y', '@three-ws/onchain-agent-wallets'],
+      env: Object.assign(
+        {},
+        config.OWNER_SECRET_KEY ? { OWNER_SECRET_KEY: config.OWNER_SECRET_KEY } : {},
+        config.SOLANA_RPC_URL ? { SOLANA_RPC_URL: config.SOLANA_RPC_URL } : {},
+        config.OAW_NETWORK ? { OAW_NETWORK: config.OAW_NETWORK } : {},
+        config.OAW_STATE_DIR ? { OAW_STATE_DIR: config.OAW_STATE_DIR } : {},
+        config.REQUIRE_CONFIRM != null ? { REQUIRE_CONFIRM: String(config.REQUIRE_CONFIRM) } : {}
+      )
+    })
