@@ -2,9 +2,17 @@
 	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
 	"name": "io.github.nirholas/onchain-agent-wallets",
 	"title": "Onchain Agent Wallets",
-	"description": "Give an AI agent a Solana wallet with an on-chain spending limit it cannot exceed. Guardrails, x402, revocable custody. By three.ws.",
+	"description": "Give an AI agent a Solana spending allowance instead of your key. Chain-enforced cap, x402.",
 	"websiteUrl": "https://three.ws",
-	"icons": [{ "src": "https://three.ws/three-ws-mcp-icon.svg", "mimeType": "image/svg+xml", "sizes": ["any"] }],
+	"icons": [
+		{
+			"src": "https://three.ws/three-ws-mcp-icon.svg",
+			"mimeType": "image/svg+xml",
+			"sizes": [
+				"any"
+			]
+		}
+	],
 	"repository": {
 		"url": "https://github.com/nirholas/onchain-agent-wallets",
 		"source": "github"
@@ -16,7 +24,9 @@
 			"identifier": "@three-ws/onchain-agent-wallets",
 			"version": "0.1.0",
 			"runtimeHint": "npx",
-			"transport": { "type": "stdio" },
+			"transport": {
+				"type": "stdio"
+			},
 			"environmentVariables": [
 				{
 					"name": "OWNER_SECRET_KEY",
