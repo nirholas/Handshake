@@ -32,6 +32,15 @@
  *   node scripts/page-snapshot.mjs --concurrency 4 # parallel pages per viewport (default 3)
  *   node scripts/page-snapshot.mjs --settle 5000   # ms to wait after load for 3D/animations
  *   node scripts/page-snapshot.mjs --quality 80    # JPEG quality (default 72)
+ *   node scripts/page-snapshot.mjs --authed        # signed-in sweep (dashboard, settings, profile)
+ *   node scripts/page-snapshot.mjs --out reports/x # write somewhere other than snapshots/current
+ *
+ * ── Authenticated sweep ───────────────────────────────────────────────────────
+ * `--authed` replays the Playwright storageState that `npm run audit:web:login`
+ * writes to .auth/audit-state.json, and widens the route list to every page a
+ * signed-in visitor can reach. Those shots show the QA account's own data, so
+ * they default to reports/ui-shots/ (gitignored) rather than the committed
+ * public design record under snapshots/.
  *
  * Note: headless Chromium renders WebGL via SWANGLE/SwiftShader. Most 3D heroes
  * render, but some heavy GPU scenes (and backdrop-filter) may come out dark. The
@@ -39,13 +48,14 @@
  * is the design record. Raise --settle if a page's data loads slowly.
  */
 import { chromium, devices } from 'playwright';
-import { readFileSync, writeFileSync, mkdirSync, existsSync, rmSync, statSync } from 'node:fs';
+import { writeFileSync, mkdirSync, existsSync, rmSync, statSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { AUTHED_ROUTES, manifestPages, slugFor } from './lib/audit-routes.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const BASE_URL = (process.env.BASE_URL || 'https://three.ws').replace(/\/$/, '');
-const OUT_DIR = resolve(ROOT, 'snapshots/current');
+const AUTH_STATE = resolve(ROOT, '.auth/audit-state.json');
 
 // ── CLI parsing ───────────────────────────────────────────────────────────────
 const argv = process.argv.slice(2);
@@ -60,34 +70,17 @@ const CONCURRENCY = Math.max(1, Number(opt('concurrency', 3)) || 3);
 const SETTLE_MS = Math.max(0, Number(opt('settle', 3500)) || 3500);
 const QUALITY = Math.min(100, Math.max(30, Number(opt('quality', 72)) || 72));
 const explicitRoutes = argv.filter((a) => a.startsWith('/'));
+// Signed-in sweep. The session comes from the storageState `npm run
+// audit:web:login` writes, and it changes where the shots land: the committed
+// design record under snapshots/ is a PUBLIC record, and an authenticated run
+// shows the QA account's own data, so it defaults to a gitignored directory.
+const AUTHED = flag('authed');
+const OUT_DIR = resolve(ROOT, opt('out', AUTHED ? 'reports/ui-shots' : 'snapshots/current'));
 
 // ── Route discovery ────────────────────────────────────────────────────────────
-// Public, user-discoverable pages from the manifest that drives /sitemap and
-// llms.txt — the single source of truth. Machine-readable endpoints (.xml/.txt/
-// .json, .well-known) and parameterised routes are skipped: they have no design.
-function manifestPages() {
-	const pages = JSON.parse(readFileSync(resolve(ROOT, 'data/pages.json'), 'utf8'));
-	const out = [];
-	const seen = new Set();
-	for (const s of pages.sections || []) {
-		if (s.id === 'machine') continue;
-		for (const p of s.pages || []) {
-			const path = p.path;
-			if (!path || !path.startsWith('/') || /[:*]/.test(path)) continue;
-			if (/\.(xml|txt|json)$/.test(path) || path.startsWith('/.well-known')) continue;
-			if (seen.has(path)) continue;
-			seen.add(path);
-			out.push({ path, title: p.title || path, section: s.title || s.id, auth: p.auth || null });
-		}
-	}
-	return out;
-}
-
-// Map a route to a filesystem-safe slug: '/' → 'home', '/docs/api' → 'docs-api'.
-function slugFor(path) {
-	if (path === '/') return 'home';
-	return path.replace(/^\//, '').replace(/\/$/, '').replace(/[^a-zA-Z0-9._-]+/g, '-') || 'home';
-}
+// Pages, the authenticated route list and the slug rule come from
+// scripts/lib/audit-routes.mjs, shared with page-audit so the visual record and
+// the console/layout audit always cover the same site.
 
 // ── Snapshot one route in one viewport ──────────────────────────────────────────
 async function snapshotRoute(ctx, page, route, viewport) {
@@ -257,12 +250,36 @@ render();
 
 // ── Main ────────────────────────────────────────────────────────────────────────
 async function main() {
-	const pages = explicitRoutes.length
-		? explicitRoutes.map((p) => ({ path: p, title: p, section: 'Selected', auth: null }))
-		: manifestPages();
-	// Public design record: skip auth-gated pages unless explicitly requested.
-	const targets = pages.filter((p) => explicitRoutes.length || !p.auth);
+	let targets;
+	if (explicitRoutes.length) {
+		targets = explicitRoutes.map((p) => ({ path: p, title: p, section: 'Selected', auth: null }));
+	} else if (AUTHED) {
+		// Everything a signed-in visitor can reach: the public pages plus the
+		// auth-gated ones the manifest flags plus the dashboard sub-pages it
+		// deliberately leaves out of the public index.
+		const inManifest = new Set(manifestPages({ access: 'all' }).map((p) => p.path));
+		targets = [
+			...manifestPages({ access: 'all' }),
+			...AUTHED_ROUTES.filter((path) => !inManifest.has(path)).map((path) => ({
+				path,
+				title: path,
+				section: 'Signed in',
+				auth: 'required',
+			})),
+		];
+	} else {
+		// Public design record: auth-gated pages would only show a login wall.
+		targets = manifestPages({ access: 'public' });
+	}
 	const routes = targets.map((p) => p.path);
+
+	if (AUTHED && !existsSync(AUTH_STATE)) {
+		console.error(
+			'--authed needs a session. Run `npm run audit:web:login` first (it writes .auth/audit-state.json).',
+		);
+		process.exitCode = 1;
+		return;
+	}
 
 	const viewports = MOBILE_ONLY ? ['mobile'] : DESKTOP_ONLY ? ['desktop'] : ['desktop', 'mobile'];
 
@@ -302,6 +319,7 @@ async function main() {
 			viewport === 'mobile'
 				? { ...devices['iPhone 13'] }
 				: { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 };
+		if (AUTHED) ctxOpts.storageState = AUTH_STATE;
 		const ctx = await browser.newContext(ctxOpts);
 		ctx.setDefaultTimeout(45000);
 		console.log(`── ${viewport} ──`);

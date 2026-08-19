@@ -50,6 +50,12 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { config as dotenv } from 'dotenv';
+import {
+	AUTHED_ROUTES,
+	isHtmlRoute,
+	manifestRoutes,
+	seedDynamicRoutes,
+} from './lib/audit-routes.mjs';
 
 // The QA credentials live in .env, so `npm run audit:web:login` has to read it:
 // without this the script only ever saw an inline-prefixed environment and told
@@ -128,83 +134,16 @@ const ignorePatterns = IS_LOCAL ? [...ALWAYS_IGNORE, ...LOCAL_ONLY_IGNORE] : ALW
 const shouldIgnore = (text) => ignorePatterns.some((re) => re.test(text || ''));
 
 // ── Route discovery ───────────────────────────────────────────────────────────
-// Public, user-discoverable pages come straight from the manifest that already
-// drives /sitemap, llms.txt and the changelog — the single source of truth.
-function manifestRoutes() {
-	try {
-		const pages = JSON.parse(readFileSync(resolve(ROOT, 'data/pages.json'), 'utf8'));
-		const out = [];
-		for (const s of pages.sections || []) {
-			// `machine` section = non-HTML endpoints (.xml/.txt/.json/.well-known);
-			// no DOM, no console. Not part of a browser sweep.
-			if (s.id === 'machine') continue;
-			for (const p of s.pages || []) {
-				if (!p.path || !p.path.startsWith('/') || /[:*]/.test(p.path)) continue;
-				// Skip anything that resolves to a static file rather than an HTML page.
-				if (!isHtmlRoute(p.path)) continue;
-				out.push(p.path);
-			}
-		}
-		return out;
-	} catch {
-		return [];
-	}
-}
-
-// Authenticated and parameterised routes the manifest intentionally omits.
-// Dynamic params are filled with REAL ids fetched from the live API at runtime
-// (see seedDynamicRoutes) — never placeholders.
-const STATIC_AUTHED_ROUTES = [
-	'/dashboard',
-	'/dashboard/actions',
-	'/dashboard/sessions',
-	'/dashboard/analytics',
-	'/dashboard/wallets',
-	'/dashboard/settings',
-	'/dashboard/memory',
-	'/dashboard/strategy',
-	'/dashboard/voice',
-	'/dashboard/sns',
-	'/dashboard/delegation',
-	'/dashboard/embed-policy',
-	'/dashboard/agent-pumpfun',
-	'/dashboard/x402',
-	'/dashboard/portfolio',
-	'/profile',
-	'/settings',
-	'/my-agents',
-	'/dashboard/developers',
-];
-
-async function seedDynamicRoutes(ctx) {
-	const routes = [];
-	try {
-		const res = await ctx.request.get(`${BASE_URL}/api/explore?limit=5`, { timeout: 15000 });
-		if (res.ok()) {
-			const body = await res.json();
-			const items = body.items || body.agents || [];
-			const onchain = items.find((i) => i.agentId && i.chainId);
-			if (onchain) {
-				routes.push(`/a/${onchain.chainId}/${onchain.agentId}`);
-				routes.push(`/agent/${onchain.chainId}:${onchain.agentId}`);
-			}
-		}
-	} catch {
-		/* live API unreachable — dynamic routes simply skipped */
-	}
-	return routes;
-}
-
-// Machine-readable endpoints (.xml/.txt/.json/...) have no DOM to audit.
-const isHtmlRoute = (path) => !/\.[a-z0-9]+$/i.test(path) || /\.html$/i.test(path);
-
+// Public pages, the authenticated route list and the dynamic-id seeder all come
+// from scripts/lib/audit-routes.mjs, shared with the visual sweep so the two
+// can never disagree about what pages exist.
 function buildRouteList(dynamic) {
 	if (explicitRoutes.length) {
 		const skipped = explicitRoutes.filter((r) => !isHtmlRoute(r));
 		for (const r of skipped) console.log(`  skipping ${r} (non-HTML endpoint, nothing to audit)`);
 		return [...new Set(explicitRoutes.filter(isHtmlRoute))];
 	}
-	const authed = existsSync(AUTH_STATE) ? STATIC_AUTHED_ROUTES : [];
+	const authed = existsSync(AUTH_STATE) ? AUTHED_ROUTES : [];
 	return [...new Set([...manifestRoutes(), ...authed, ...dynamic])];
 }
 
@@ -850,7 +789,7 @@ async function main() {
 	const seedCtx = await browser.newContext(
 		authed ? { storageState: AUTH_STATE } : {},
 	);
-	const dynamic = explicitRoutes.length ? [] : await seedDynamicRoutes(seedCtx);
+	const dynamic = explicitRoutes.length ? [] : await seedDynamicRoutes(seedCtx, BASE_URL);
 	await seedCtx.close();
 	const routes = buildRouteList(dynamic);
 	console.log(`  routes: ${routes.length}\n`);
