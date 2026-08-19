@@ -38,6 +38,9 @@ import {
 } from './ar/studio-coords.js';
 import { StudioNet } from './ar/studio-net.js';
 import { MultiPlaceSession } from './ar/multi-place.js';
+import { canUseQuickLook, openQuickLook } from './ar/quick-look.js';
+import { canUseSceneViewer, openSceneViewer } from './ar/scene-viewer.js';
+import { glbBlobToUsdzBlob } from './usdz-pipeline.js';
 import { forgeStageNarration } from './shared/forge-frames.js';
 import { cardTitleFromPrompt } from './model-lib.js';
 import {
@@ -230,6 +233,7 @@ let arActive = false;
 let mediaStream = null;
 let arTransitioning = false;
 let xrSession = null;
+let usdzObjectUrl = null;
 let estimatedLight = null;
 let arTrackW = 0;
 let arTrackH = 0;

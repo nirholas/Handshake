@@ -85,6 +85,11 @@ const SERVERS = [
 		dir: 'packages/metaplex-agent-mcp',
 		manifest: 'packages/metaplex-agent-mcp/server.json',
 	},
+	{
+		key: 'onchain-agent-wallets',
+		dir: 'packages/onchain-agent-wallets',
+		manifest: 'packages/onchain-agent-wallets/server.json',
+	},
 	// Autonomous-agent control plane + account/discovery + capability surfaces
 	// (the 2025-06 buildout). Each is a stdio npm package with its own server.json.
 	{ key: 'autopilot-mcp', dir: 'packages/autopilot-mcp', manifest: 'packages/autopilot-mcp/server.json' },
