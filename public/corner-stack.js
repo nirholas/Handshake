@@ -63,11 +63,11 @@
 		'}',
 		'#' + STACK_ID + '{',
 		'position:fixed;right:calc(18px + var(--tws-corner-reserve-w,0px));',
-		'bottom:calc(18px + var(--tws-corner-reserve,0px));',
+		'bottom:calc(18px + var(--tws-corner-reserve,0px) + var(--tws-corner-dock,0px));',
 		'z-index:var(--z-corner-stack,2147482500);',
 		'display:flex;flex-direction:column;align-items:flex-end;',
 		'gap:12px;max-width:min(380px,calc(100vw - 24px));',
-		'max-height:calc(100dvh - 36px - var(--tws-corner-reserve,0px));overflow:visible;',
+		'max-height:calc(100dvh - 36px - var(--tws-corner-reserve,0px) - var(--tws-corner-dock,0px));overflow:visible;',
 		/* Clicks fall through the gaps; members re-enable pointer events. */
 		'pointer-events:none;',
 		'transition:bottom .35s cubic-bezier(.22,1,.36,1),right .35s cubic-bezier(.22,1,.36,1);',
@@ -81,9 +81,14 @@
 		'position:relative;inset:auto;margin:0;pointer-events:auto;',
 		'}',
 		'@media (max-width:640px){',
+		/* Phone layout: the stack still spans the width so a wide card can grow
+		   leftward, but members size to their content and hug the right edge.
+		   Stretching every member edge-to-edge turned a 44px language control
+		   into a full-width bar laid over the page's own bottom controls. */
 		'#' +
 			STACK_ID +
-			'{right:calc(12px + var(--tws-corner-reserve-w,0px));bottom:calc(12px + var(--tws-corner-reserve,0px));left:12px;align-items:stretch;gap:10px;max-width:none;}',
+			'{right:calc(12px + var(--tws-corner-reserve-w,0px));bottom:calc(12px + var(--tws-corner-reserve,0px) + var(--tws-corner-dock,0px));left:12px;align-items:flex-end;gap:10px;max-width:none;}',
+		'#' + STACK_ID + '>.' + ITEM_CLASS + '{max-width:100%;}',
 		'}'
 	].join('');
 
@@ -124,6 +129,7 @@
 			if (priorityOf(siblings[i]) > p) { before = siblings[i]; break; }
 		}
 		s.insertBefore(el, before);
+		scheduleDocks();
 		return el;
 	}
 
@@ -137,6 +143,7 @@
 
 	function unmount(el) {
 		if (el && stack && el.parentNode === stack) stack.removeChild(el);
+		scheduleDocks();
 	}
 
 	/* ── Reservations ────────────────────────────────────────────────────────
@@ -204,6 +211,103 @@
 		return applyReserve();
 	}
 
+	/* ── Page docks (measured, not declared) ─────────────────────────────────
+	   Reservations cover widgets that know about this module. They do nothing
+	   for the chrome a PAGE owns: the /app chat composer, a viewer's action
+	   bar, an editor's toolbar. Those are plain `position: fixed` boxes pinned
+	   to the bottom edge, and the stack used to sit right on top of them. On a
+	   phone the language control landed inside the "Ask the agent…" field and
+	   the Getting started pill covered the save button.
+
+	   Rather than ask every such page to opt in (which is the wiring this
+	   module exists to avoid), measure it: probe the bottom band of the
+	   viewport with elementsFromPoint, keep the hits that resolve to a
+	   bottom-anchored fixed/sticky box which is not part of the stack, and lift
+	   the stack above the tallest one. elementsFromPoint costs a few
+	   microseconds and needs no tree walk, so this stays cheap enough to re-run
+	   on every resize and DOM change. */
+	var DOCK_VAR = '--tws-corner-dock';
+	var DOCK_GAP = 10; /* breathing room between the dock and the stack */
+	var DOCK_MAX_RATIO = 0.45; /* never lift the stack past mid-screen */
+	var dockLift = 0;
+
+	/* The fixed/sticky box `el` belongs to, or null when it is ordinary
+	   in-flow content that merely happens to sit at the bottom of the page. */
+	function fixedRootOf(el) {
+		for (var node = el; node && node !== document.body; node = node.parentElement) {
+			if (node.nodeType !== 1) continue;
+			var pos = getComputedStyle(node).position;
+			if (pos === 'fixed' || pos === 'sticky') return node;
+		}
+		return null;
+	}
+
+	function isStackPart(el) {
+		return !!(stack && (el === stack || stack.contains(el)));
+	}
+
+	function measureDocks() {
+		if (!document.body || !stack || !stack.children.length) return 0;
+		var vw = window.innerWidth || document.documentElement.clientWidth || 0;
+		var vh = window.innerHeight || document.documentElement.clientHeight || 0;
+		if (!vw || !vh) return 0;
+		var band = stack.getBoundingClientRect();
+		/* An empty/collapsed stack gives no band to compare against: fall back
+		   to the corner it is anchored to. */
+		var left = band.width > 0 ? band.left : vw * 0.6;
+		var right = band.width > 0 ? band.right : vw;
+		var xs = [left + 4, (left + right) / 2, right - 4];
+		var ys = [vh - 4, vh - 24, vh - 48];
+		var max = 0;
+		for (var yi = 0; yi < ys.length; yi++) {
+			for (var xi = 0; xi < xs.length; xi++) {
+				var x = Math.max(1, Math.min(vw - 1, xs[xi]));
+				var y = ys[yi];
+				if (y < vh * 0.5) continue;
+				var hits = document.elementsFromPoint(x, y) || [];
+				for (var hi = 0; hi < hits.length; hi++) {
+					var hit = hits[hi];
+					if (isStackPart(hit)) continue;
+					var root = fixedRootOf(hit);
+					if (!root || isStackPart(root)) break; /* plain page content under here */
+					if (root.hasAttribute('data-corner-ignore')) break;
+					var r = root.getBoundingClientRect();
+					/* Bottom-anchored, not a full-viewport scrim, and actually
+					   in the stack's column. */
+					if (r.bottom < vh - 56) break;
+					if (r.height > vh * 0.5 || r.height < 8) break;
+					if (r.right <= left || r.left >= right) break;
+					var lift = vh - r.top + DOCK_GAP;
+					if (lift > max) max = lift;
+					break; /* the topmost dock at this point is the one that matters */
+				}
+			}
+		}
+		return Math.min(Math.round(max), Math.round(vh * DOCK_MAX_RATIO));
+	}
+
+	function applyDocks() {
+		var next = measureDocks();
+		if (next === dockLift) return dockLift;
+		dockLift = next;
+		if (next > 0) document.documentElement.style.setProperty(DOCK_VAR, next + 'px');
+		else document.documentElement.style.removeProperty(DOCK_VAR);
+		return dockLift;
+	}
+
+	/* Coalesce bursts into one measurement. A 3D page mutates its DOM every
+	   frame, and each measurement forces a layout flush, so this throttles to a
+	   trailing call a few frames later rather than running per mutation. */
+	var dockTimer = 0;
+	var DOCK_THROTTLE_MS = 250;
+	function scheduleDocks() {
+		if (dockTimer) return;
+		dockTimer = setTimeout(function () {
+			dockTimer = 0;
+			applyDocks();
+		}, DOCK_THROTTLE_MS);
+	}
+
 	/* Adopt widgets that mounted to <body> before this script executed. */
 	function adoptOrphans() {
 		if (!document.body) return;
@@ -217,18 +321,46 @@
 		ensure: ensureStack,
 		reserve: reserve,
 		release: release,
-		reserved: reservedHeight
+		reserved: reservedHeight,
+		remeasure: applyDocks
 	};
 
 	if (document.body) adoptOrphans();
 	else document.addEventListener('DOMContentLoaded', adoptOrphans);
 
 	/* Lift-vs-step-aside is a function of viewport width, so re-decide whenever
-	   that changes (rotation, a resized window, a phone's URL bar collapsing). */
+	   that changes (rotation, a resized window, a phone's URL bar collapsing).
+	   A page's own bottom dock moves with the same events, plus whenever the
+	   page renders one, so it is re-measured there too. */
 	if (typeof window.addEventListener === 'function') {
-		window.addEventListener('resize', applyReserve);
-		window.addEventListener('orientationchange', applyReserve);
+		var onViewportChange = function () {
+			applyReserve();
+			scheduleDocks();
+		};
+		window.addEventListener('resize', onViewportChange);
+		window.addEventListener('orientationchange', onViewportChange);
 	}
+
+	/* Docks mount on their own schedule: after a fetch, after a WebGL boot,
+	   when a chat panel opens. Watch the document rather than asking each page
+	   to announce itself, and re-measure on a settle timer for the first few
+	   seconds so a late dock never leaves the stack parked on top of it. */
+	function watchDocks() {
+		if (!document.body) return;
+		scheduleDocks();
+		if (typeof MutationObserver === 'function') {
+			var observer = new MutationObserver(scheduleDocks);
+			observer.observe(document.body, {
+				childList: true,
+				subtree: true,
+				attributes: true,
+				attributeFilter: ['style', 'class', 'hidden']
+			});
+		}
+		[400, 1500, 4000].forEach(function (ms) { setTimeout(scheduleDocks, ms); });
+	}
+	if (document.body) watchDocks();
+	else document.addEventListener('DOMContentLoaded', watchDocks);
 
 	/* Announce ourselves so a widget that mounted first can (re)claim its
 	   reservation. Orphan adoption already covers stack MEMBERS; this covers
