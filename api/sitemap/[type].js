@@ -163,7 +163,7 @@ async function agentsSitemap() {
 		limit ${MAX_URLS}
 	`;
 	return rows.map((r) => ({
-		loc: `${ORIGIN}/agent/${r.id}`,
+		loc: `${ORIGIN}/agents/${r.id}`,
 		lastmod: fmtDate(r.updated_at || r.created_at),
 		changefreq: 'weekly',
 		priority: '0.7',

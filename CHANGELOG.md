@@ -7,6 +7,7 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 ## 2026-08-19
 
 - **Put any agent on-chain from your AI assistant: the Metaplex Agent Registry MCP server**: A new npm package, @three-ws/metaplex-agent-mcp, lets any AI assistant deploy an agent on-chain on Solana the exact way the three.ws Genesis 333 shipped: it mints a Metaplex Core asset and registers its EIP-8004 agent identity, so the agent appears on metaplex.com/agents with its own built-in wallet. Agents can sign with their own key, and people can sign with Phantom, Solflare, or any Solana wallet, with a preview-first confirm step before anything is spent. Every royalty, creator, plugin, and metadata field is customizable, and devnet rehearsal is free. (`/deployments`) `[sdk, feature]`
+- **Shared avatar links now unfurl with the avatar itself, and profile views finally count**: Paste an avatar link into X, Discord, Telegram, or Slack and the preview now shows that avatar's rendered image, name, and description instead of the generic site card. The profile page also reports a view each time someone opens it, so the view counts that rank search and explore results reflect real traffic at last. Discover cards for agents without a coin no longer point at a dead address, and the sitemap hands search engines the current agent page URLs directly. `[improvement, fix]`
 
 ## 2026-08-18
 

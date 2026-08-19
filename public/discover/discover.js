@@ -496,7 +496,7 @@ function renderOnchainCard(item) {
 		.map((s) => `<span class="explore-svc">${escapeHtml(s.name)}</span>`)
 		.join('');
 
-	const detailUrl = `/discover/a/${item.chainId}/${item.agentId}`;
+	const detailUrl = item.detailUrl || `/a/${item.chainId}/${item.agentId}`;
 
 	card.innerHTML = `
 		<a class="explore-card-thumb" href="${escapeAttr(detailUrl)}">
@@ -607,7 +607,13 @@ function renderSolanaCard(item) {
 		.map((s) => `<span class="explore-svc">${escapeHtml(s)}</span>`)
 		.join('');
 
-	const detailUrl = `/discover/a/sol/${encodeURIComponent(item.asset)}`;
+	// The API's detailUrl is authoritative: three.ws agents get their canonical
+	// /agents/:id page, external registry rows their /discover/a/sol/:asset
+	// detail. The local fallback covers a cached bundle outliving the API, and
+	// only when the item actually has an asset; a platform agent without a mint
+	// otherwise produced a dead /discover/a/sol/undefined link.
+	const detailUrl = item.detailUrl
+		|| (item.asset ? `/discover/a/sol/${encodeURIComponent(item.asset)}` : `/agents/${encodeURIComponent(item.agentId)}`);
 
 	card.innerHTML = `
 		<a class="explore-card-thumb" href="${escapeAttr(detailUrl)}">

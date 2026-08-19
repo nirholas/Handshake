@@ -24610,6 +24610,15 @@
 				"feature"
 			],
 			"link": "/deployments"
+		},
+		{
+			"date": "2026-08-19",
+			"title": "Shared avatar links now unfurl with the avatar itself, and profile views finally count",
+			"summary": "Paste an avatar link into X, Discord, Telegram, or Slack and the preview now shows that avatar's rendered image, name, and description instead of the generic site card. The profile page also reports a view each time someone opens it, so the view counts that rank search and explore results reflect real traffic at last. Discover cards for agents without a coin no longer point at a dead address, and the sitemap hands search engines the current agent page URLs directly.",
+			"tags": [
+				"improvement",
+				"fix"
+			]
 		}
 	]
 }
