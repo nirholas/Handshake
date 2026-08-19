@@ -1011,6 +1011,14 @@ async function refreshAuthState() {
 		if (signinEl) signinEl.hidden = true;
 		if (userWrap) userWrap.hidden = false;
 		if (userLabel) userLabel.textContent = label;
+		// Phones hide the label and keep the dot, so the account button carries
+		// the identity for screen readers and as its tooltip.
+		const userBtn = document.getElementById('nav-user-btn');
+		if (userBtn) {
+			const full = me.email || me.username || label;
+			userBtn.title = full;
+			userBtn.setAttribute('aria-label', `Account: ${full}`);
+		}
 		// The public profile route is keyed by handle, so only link it once the
 		// user has a username — otherwise it would resolve to a dead page.
 		if (profileLink) {

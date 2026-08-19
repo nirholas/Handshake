@@ -740,10 +740,13 @@ class App {
 		// the right edge of a phone. Show the handle (or the address's local
 		// part) and keep the full identity in the button's tooltip.
 		if (label) {
-			label.textContent =
-				user.username || user.display_name || user.email?.split('@')[0] || 'Account';
-			const full = user.email || user.username || '';
-			if (full) btn.title = full;
+			const short = user.username || user.display_name || user.email?.split('@')[0] || 'Account';
+			label.textContent = short;
+			const full = user.email || user.username || short;
+			btn.title = full;
+			// The label is hidden on phones (see app-next.css), so the identity
+			// has to reach assistive tech through the button itself.
+			btn.setAttribute('aria-label', `Account: ${full}`);
 		}
 		if (profileLink && user.address) profileLink.href = `/u/${user.address}`;
 
@@ -968,7 +971,7 @@ class App {
 						body: JSON.stringify({ avatar_id: avatarId }),
 					});
 				}
-				location.href = `/agent/${this._editingAgentId}`;
+				location.href = `/agents/${this._editingAgentId}`;
 			} else {
 				// Create a new agent linked to the uploaded avatar
 				const res = await fetch('/api/agents/me', {
@@ -999,7 +1002,7 @@ class App {
 				}
 
 				if (agentId) {
-					location.href = `/agent/${agentId}`;
+					location.href = `/agents/${agentId}`;
 				} else {
 					this._flashSaved({ name: 'your account' });
 					if (btn) {
@@ -1191,7 +1194,7 @@ class App {
 
 		const publicLink = document.getElementById('view-public-profile-btn');
 		if (publicLink) {
-			publicLink.href = `/agent/${agentId}`;
+			publicLink.href = `/agents/${agentId}`;
 			publicLink.hidden = false;
 		}
 
@@ -1226,7 +1229,7 @@ class App {
 		const shareLink = document.getElementById('agent-onboarding-share');
 
 		if (deployLink) deployLink.href = `/deploy?agent=${agentId}`;
-		if (shareLink) shareLink.href = `/agent/${agentId}`;
+		if (shareLink) shareLink.href = `/agents/${agentId}`;
 
 		// Remember what had focus so we can restore it when the dialog closes.
 		const prevFocus = document.activeElement;

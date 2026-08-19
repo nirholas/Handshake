@@ -178,6 +178,26 @@ body.app-next-body {
 	display: flex;
 	align-items: center;
 	gap: 8px;
+	/* The header is a fixed bar with no overflow: whatever the auth cluster
+	   renders (a handle, an email, a long display name) has to fit inside it,
+	   or it runs past the right edge of a phone and takes the account menu with
+	   it. Let the cluster shrink and truncate instead. */
+	min-width: 0;
+	flex: 0 1 auto;
+}
+
+
+.nxt-user-btn,
+.nxt-signin {
+	max-width: min(38vw, 220px);
+	min-width: 0;
+}
+
+#nav-user-label {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	min-width: 0;
 }
 
 .nxt-more {
@@ -1685,6 +1705,20 @@ body.app-next-body.nxt-chat-merged .nxt-chat-input-wrap:focus-within {
 
 @media (max-width: 640px) {
 	.nxt-brand-tag { display: none; }
+	/* Phone header: the account chip becomes the dot alone. A handle, a display
+	   name or an email all have to share ~230px with the brand, the two icon
+	   buttons and Explore, and any of them long enough pushed the chip (and the
+	   menu behind it) off the edge of the screen. The identity still reads out
+	   through the button's aria-label and sits at the top of its menu. */
+	#nav-user-label { display: none; }
+	.nxt-user-btn {
+		padding: 9px;
+		border-radius: 50%;
+		gap: 0;
+	}
+	/* The shared nav's own presence dot (.nav-user::before) is the whole chip at
+	   this size; a second dot beside it just reads as a rendering glitch. */
+	.nxt-user-dot { display: none; }
 	.nxt-more { padding: 7px 8px; }
 	.nxt-more-menu a,
 	.nxt-more-menu button { padding: 12px 14px; font-size: 15px; min-height: 44px; }
