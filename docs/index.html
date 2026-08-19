@@ -180,6 +180,29 @@
 					display: none;
 				}
 			}
+			/* Below ~760px the five site links stop fitting beside the logo. The
+			   header is fixed, so the overflow was clipped off the right edge with
+			   no scroll and no hint (an Android reader saw "Discover" cut to "D").
+			   The secondary links move into the sidebar drawer, which is already
+			   the mobile navigation surface, so nothing becomes unreachable. */
+			@media (max-width: 760px) {
+				.docs-header {
+					padding: 0 var(--space-md);
+					gap: var(--space-sm);
+				}
+				.docs-header-right .docs-header-more {
+					display: none;
+				}
+				.sidebar-site {
+					display: block;
+				}
+			}
+			@media (max-width: 400px) {
+				.docs-header-sep,
+				.docs-header-label {
+					display: none;
+				}
+			}
 
 			/* ── Shell ───────────────────────────────────── */
 			.docs-shell {
@@ -412,6 +435,15 @@
 				font-size: 10px;
 				margin-left: 4px;
 				opacity: 0.5;
+			}
+
+			/* The site links the header drops on narrow screens. Hidden wherever
+			   the header still shows them. */
+			.sidebar-site {
+				display: none;
+				margin-top: var(--space-md);
+				padding-top: var(--space-md);
+				border-top: 1px solid var(--border);
 			}
 
 			/* ── Main ────────────────────────────────────── */
@@ -970,9 +1002,9 @@
 					<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="9" ry="3.6"/><path d="M12 3v18"/></svg>
 					<span>3D world</span>
 				</a>
-				<a href="/widgets">Widgets</a>
-				<a href="/discover">Discover</a>
-				<a href="/app">Launch app</a>
+				<a href="/widgets" class="docs-header-more">Widgets</a>
+				<a href="/discover" class="docs-header-more">Discover</a>
+				<a href="/app" class="docs-header-more">Launch app</a>
 				<a href="/studio" class="btn-primary">Studio</a>
 			</nav>
 		</header>
@@ -1013,6 +1045,13 @@
 					hidden
 				></div>
 				<nav id="sidebar-nav"></nav>
+				<nav class="sidebar-site" aria-label="three.ws">
+					<span class="sidebar-section-title">three.ws</span>
+					<a class="sidebar-link" href="/widgets">Widgets</a>
+					<a class="sidebar-link" href="/discover">Discover</a>
+					<a class="sidebar-link" href="/app">Launch app</a>
+					<a class="sidebar-link" href="/studio">Studio</a>
+				</nav>
 			</aside>
 
 			<main class="docs-main">
