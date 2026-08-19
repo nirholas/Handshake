@@ -19,15 +19,16 @@ threshold) are checked before signing; `pay_x402` reads the price from the unpai
 money moves; owner actions return an unsigned transaction for Phantom, Solflare, Backpack, or a
 Ledger, so no secret key is needed on the machine.
 
-**Things to NOT claim yet:**
+**Things to NOT claim:**
 
-1. **Do not put an `npx` or `npm install` line in the post.** `@three-ws/onchain-agent-wallets` is
-   not on npm yet: publishing is blocked on npm's 2FA policy for the current token. Every draft
-   below links the repo instead, on purpose. The moment the package is live, the builder-facing
-   alternate below becomes the better post.
-2. **Do not say it is in the MCP registry.** That entry is gated on the npm publish above.
-3. **Do not call it audited.** It is tested against the real token program, which is a different and
+1. **Do not call it audited.** It is tested against the real token program, which is a different and
    weaker claim. "The token program enforces it" is true and strong enough.
+2. **Do not claim a live x402 settlement volume or any usage numbers.** It shipped today.
+
+**Now live, so the drafts below are all postable:** `npx -y @three-ws/onchain-agent-wallets`
+(verified: 14 tools over stdio from a clean install), and
+`io.github.nirholas/onchain-agent-wallets@0.1.0` in the official MCP registry, flagged latest and
+active.
 
 ---
 
@@ -80,10 +81,11 @@ pre-empts the first reply you will get, which is "so what stops the agent ignori
 >
 > github.com/nirholas/onchain-agent-wallets
 
-## 4. Alternate: builder-facing (HOLD until npm is live)
+## 4. Alternate: builder-facing
 
-Do not post this one until `@three-ws/onchain-agent-wallets` is published. Then it is probably the
-best of the four.
+Now unblocked: the package is live on npm and the command below is verified working. For a
+timeline that already knows what MCP is, this is arguably the strongest of the four, because the
+install line makes it real in one glance.
 
 > ```
 > npx -y @three-ws/onchain-agent-wallets
@@ -173,3 +175,5 @@ Post 1 is the main post above. Then:
   whole design instantly. Keep it in every rewrite.
 - The Pages overview at nirholas.github.io/onchain-agent-wallets is a good second link for a reply,
   not for the main post: one link per post converts better.
+- If someone asks where to find it in the MCP ecosystem, the registry name is
+  `io.github.nirholas/onchain-agent-wallets`. Worth a reply, not worth crowding the main post.
