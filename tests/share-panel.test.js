@@ -17,9 +17,9 @@ const ORIGIN = 'https://three.ws/';
 const ID = '9fc7f1ba-2f34-4d79-843b-9b34c27e0d72';
 
 describe('share-panel — buildEmbedUrl', () => {
-	it('uses the working /agent/{id}/embed path (not the broken /agent-embed.html?id=...)', () => {
+	it('uses the canonical /agents/{id}/embed path (not the broken /agent-embed.html?id=...)', () => {
 		const url = buildEmbedUrl({ origin: ORIGIN, agentId: ID });
-		expect(url).toBe(`${ORIGIN}/agent/${ID}/embed`);
+		expect(url).toBe(`${ORIGIN}/agents/${ID}/embed`);
 		expect(url).not.toContain('/agent-embed.html');
 	});
 
@@ -58,7 +58,7 @@ describe('share-panel — buildIframeSnippet', () => {
 	it('produces a valid iframe with the embed URL', () => {
 		const snippet = buildIframeSnippet({ origin: ORIGIN, agentId: ID });
 		expect(snippet).toContain(`<iframe`);
-		expect(snippet).toContain(`src="${ORIGIN}/agent/${ID}/embed"`);
+		expect(snippet).toContain(`src="${ORIGIN}/agents/${ID}/embed"`);
 		expect(snippet).toContain(`</iframe>`);
 	});
 
@@ -246,6 +246,13 @@ describe('vercel.json — embed route headers', () => {
 		const r = routes.find((x) => x.src === '/agent/([^/]+)/embed');
 		expect(r).toBeTruthy();
 		expect(r.dest).toBe('/agent-embed.html');
+	});
+
+	it('rewrites the canonical /agents/{id}/embed to /agent-embed.html with the same CSP', () => {
+		const r = routes.find((x) => x.src === '/agents/([^/.]+)/embed');
+		expect(r).toBeTruthy();
+		expect(r.dest).toBe('/agent-embed.html');
+		expect(r?.headers?.['content-security-policy']).toContain('frame-ancestors *');
 	});
 
 	it('sets a permissive frame-ancestors CSP header so external sites can iframe', () => {

@@ -1,7 +1,7 @@
 // Memory-grounded Autopilot — the control surface (Living Agents · Task 08).
 //
 // Self-contained module mounted in two places:
-//   • the Autopilot tab of /agent/{id}/edit (mountAutopilotMind)
+//   • the Autopilot tab of /agents/{id}/edit (mountAutopilotMind)
 //   • the standalone /autopilot-activity receipts page (renderReceipt is reused)
 //
 // It is the legible face of explainable autonomy: the owner grants scoped

@@ -36,7 +36,7 @@ export function buildEmbedUrl({ origin, agentId, opts = {} }) {
 }
 
 /**
- * Build the iframe embed snippet. Uses the canonical /agent/{id}/embed URL,
+ * Build the iframe embed snippet. Uses the canonical /agents/{id}/embed URL,
  * declares a transparent CSS background so external sites composite cleanly,
  * and lazy-loads to avoid a network hit on hosts that paginate embeds.
  *
