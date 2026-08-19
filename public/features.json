@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-19T01:21:08.490Z",
+	"generated_at": "2026-08-19T01:22:21.740Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1571,6 +1571,16 @@
 					"title": "On-chain Deployments",
 					"description": "A live, cross-chain feed of every agent registered on the ERC-8004 Identity Registry: the moment each registration lands on-chain. Real on-chain registrations only, with chain footprint, 3D-avatar and x402 capability stats.",
 					"added": "2026-06-27",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/deploy-onchain",
+					"title": "Deploy On-chain",
+					"description": "Mint your agent into the Metaplex Agent Registry on Solana, in the exact shape the Genesis 333 shipped: a Metaplex Core asset with its own wallet, EIP-8004 identity, verified creator, royalties, and immutable metadata. Phantom, Solflare, or any Solana wallet signs; keys never leave the browser, and devnet rehearsal is free.",
+					"added": "2026-08-19",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

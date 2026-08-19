@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-08-19T01:21:08.518Z",
+	"generated_at": "2026-08-19T01:22:21.757Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-08-19",
+			"type": "launch",
+			"title": "Deploy On-chain",
+			"summary": "Mint your agent into the Metaplex Agent Registry on Solana, in the exact shape the Genesis 333 shipped: a Metaplex Core asset with its own wallet, EIP-8004 identity, verified creator, royalties, and immutable metadata. Phantom, Solflare, or any Solana wallet signs; keys never leave the browser, and devnet rehearsal is free.",
+			"link": "/deploy-onchain",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-08-19",
 			"type": "update",

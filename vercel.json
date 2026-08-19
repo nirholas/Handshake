@@ -938,6 +938,10 @@
 			"dest": "/deployments.html"
 		},
 		{
+			"src": "/deploy-onchain/?",
+			"dest": "/deploy-onchain.html"
+		},
+		{
 			"src": "/portfolio/?",
 			"dest": "/portfolio.html"
 		},

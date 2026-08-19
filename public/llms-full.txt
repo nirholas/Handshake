@@ -956,6 +956,12 @@ URL: https://three.ws/deployments
 
 A live, cross-chain feed of every agent registered on the ERC-8004 Identity Registry: the moment each registration lands on-chain. Real on-chain registrations only, with chain footprint, 3D-avatar and x402 capability stats.
 
+### Deploy On-chain
+
+URL: https://three.ws/deploy-onchain
+
+Mint your agent into the Metaplex Agent Registry on Solana, in the exact shape the Genesis 333 shipped: a Metaplex Core asset with its own wallet, EIP-8004 identity, verified creator, royalties, and immutable metadata. Phantom, Solflare, or any Solana wallet signs; keys never leave the browser, and devnet rehearsal is free.
+
 ### Wallet Portfolio
 
 URL: https://three.ws/portfolio

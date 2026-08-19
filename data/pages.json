@@ -1293,6 +1293,14 @@
 					"added": "2026-06-27"
 				},
 				{
+					"path": "/deploy-onchain",
+					"title": "Deploy On-chain",
+					"description": "Mint your agent into the Metaplex Agent Registry on Solana, in the exact shape the Genesis 333 shipped: a Metaplex Core asset with its own wallet, EIP-8004 identity, verified creator, royalties, and immutable metadata. Phantom, Solflare, or any Solana wallet signs; keys never leave the browser, and devnet rehearsal is free.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-08-19"
+				},
+				{
 					"path": "/portfolio",
 					"title": "Wallet Portfolio",
 					"description": "A live portfolio view for any Solana or Ethereum wallet: total value, 24h move with honest coverage, stablecoin/major/token breakdown, top-asset allocation, and every holding priced in real time. Free, keyless, deep-linkable, no account.",
