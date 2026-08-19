@@ -601,6 +601,7 @@ body.gallery-page {
 }
 .gallery-card-actions {
 	display: inline-flex;
+	flex-wrap: wrap;
 	gap: 6px;
 }
 .gallery-card-btn {
@@ -869,16 +870,23 @@ body.gallery-page {
 		gap: 8px;
 		padding-top: 8px;
 	}
+	/* Three actions (Embed / Use / Animate) never fit one row of a half-width
+	   card, and a plain flex row cannot shrink a button below its label, so the
+	   last one used to be clipped mid-word past the card's edge. A grid wraps
+	   them onto as many rows as the card is wide enough for, each one a full
+	   tap target. */
 	.gallery-card-actions {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(68px, 1fr));
 		gap: 8px;
 	}
 	/* Full-width, comfortably tappable action buttons on phones. */
 	.gallery-card-actions .gallery-card-btn {
-		flex: 1;
+		min-width: 0;
 		justify-content: center;
 		min-height: 40px;
 		font-size: 12px;
-		padding: 8px 10px;
+		padding: 8px 8px;
 	}
 	/* Empty state: lighter padding + wrapping, full-width CTAs on phones. */
 	.gallery-empty {
