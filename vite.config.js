@@ -405,6 +405,11 @@ const appConfig = {
 			// whose lib.js pulls Solana/Anchor deps served as source). The CJS
 			// package, once prebundled by esbuild, exposes both default and named.
 			buffer: resolve(__dirname, 'node_modules/buffer/index.js'),
+			// `node-fetch` in a browser bundle is the platform fetch. Without this,
+			// umi-http-fetch (inside @metaplex-foundation/umi-bundle-defaults, used
+			// by /deploy-onchain) loads node-fetch's Node build, which dereferences
+			// `stream.Readable.prototype` at module scope and crashes the page.
+			'node-fetch': resolve(__dirname, 'src/shims/node-fetch-browser.js'),
 		},
 	},
 	optimizeDeps: {

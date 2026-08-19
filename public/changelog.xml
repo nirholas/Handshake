@@ -15,6 +15,30 @@
 			<description>Mint your agent into the Metaplex Agent Registry on Solana, in the exact shape the Genesis 333 shipped: a Metaplex Core asset with its own wallet, EIP-8004 identity, verified creator, royalties, and immutable metadata. Phantom, Solflare, or any Solana wallet signs; keys never leave the browser, and devnet rehearsal is free.</description>
 		</item>
 		<item>
+			<title>A page that fails to load now tells you which thing went wrong</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-19:A page that fails to load now tells you which thing went wrong</guid>
+			<pubDate>Wed, 19 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>When an avatar or agent page could not load, it always said the same thing: not found, followed by whatever internal message the browser happened to throw. A stale link and a temporary server hiccup looked identical, and the explanation was often developer jargon rather than English. The two cases are now told apart. A link to something that no longer exists says exactly that and points you at the marketplace or the agent directory. A genuine failure on our side says so, offers a Try again button, and keeps the technical detail as a small footnote instead of presenting it as the reason.</description>
+		</item>
+		<item>
+			<title>Agent pages show what an agent can actually do, and what it charges</title>
+			<link>https://three.ws/agents</link>
+			<guid isPermaLink="false">2026-08-19:Agent pages show what an agent can actually do, and what it charges</guid>
+			<pubDate>Wed, 19 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The studio page every agent link opens now carries the agent's real substance. Its Capabilities tab lists the skills it genuinely exposes with the real per-call price of each, and a summary line telling you the cheapest paid call up front (or that everything is free). Skill names read as words instead of raw slugs, with the exact slug shown underneath for anyone wiring an integration. Under the title there is now a row of real counters: skills, conversations, wallet, whether the identity is on-chain, and how long the agent has been around. Below the fold, an agent recommends similar agents rather than unrelated avatars, each rendered as a live 3D card. The page also loads better: a skeleton in the real layout instead of a line of text, cards that show a picture while their 3D model downloads, and full keyboard support on the section tabs with a shareable link per tab.</description>
+		</item>
+		<item>
+			<title>Phone fixes: helper widgets no longer sit on top of the controls</title>
+			<link>https://three.ws/gallery</link>
+			<guid isPermaLink="false">2026-08-19:Phone fixes: helper widgets no longer sit on top of the controls</guid>
+			<pubDate>Wed, 19 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>On a phone the floating language control and the Getting started pill landed directly on the page's own bottom controls: the language picker rendered inside the &quot;Ask the agent&quot; box and the pill covered the save row. Helper widgets now measure a page's bottom bar and float above it, and the language control shows a compact code (EN) instead of a full-width bar. Gallery cards show all three actions in full, so Animate is no longer clipped mid-word. In the AR Studio, the Add models sheet keeps its tabs at full height on short screens, and each model is labelled with a readable name instead of the whole generation prompt. On the viewer page a long email no longer pushes the account button off the edge of the screen.</description>
+		</item>
+		<item>
 			<title>Put any agent on-chain from your AI assistant: the Metaplex Agent Registry MCP server</title>
 			<link>https://three.ws/deployments</link>
 			<guid isPermaLink="false">2026-08-19:Put any agent on-chain from your AI assistant: the Metaplex Agent Registry MCP server</guid>
