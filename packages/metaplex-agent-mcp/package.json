@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/metaplex-agent-mcp",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"mcpName": "io.github.nirholas/metaplex-agent",
 	"description": "Deploy AI agents on-chain into the Metaplex Agent Registry on Solana, exactly the way the three.ws Genesis 333 shipped: one atomic transaction mints a Metaplex Core asset (data: URI metadata, verified creator, royalties, immutable metadata) and registers its EIP-8004 agent identity. Agents sign with their own key; people sign with Phantom, Solflare, or any Solana wallet via the prepare/send flow. Every Core plugin and every metadata field is customizable.",
 	"type": "module",
