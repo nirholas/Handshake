@@ -97,7 +97,14 @@ function rejectReason(body) {
 }
 
 export default wrap(async function handler(req, res) {
-	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: false })) return;
+	// Open to any origin: this is a public, unauthenticated, method-allowlisted
+	// proxy whose whole job is to be callable from a browser, and the abuse
+	// surface is unchanged by CORS (curl never needed it). Opening it lets
+	// statically-hosted three.ws surfaces reach mainnet, notably the standalone
+	// agent deployer at nirholas.github.io/metaplex-agent-mcp, which otherwise
+	// has no mainnet path at all because api.mainnet-beta.solana.com 403s
+	// browser origins. The per-IP and global rate limits below still apply.
+	if (cors(req, res, { methods: 'POST,OPTIONS', origins: '*', credentials: false })) return;
 	if (!method(req, res, ['POST'])) return;
 
 	const ip = clientIp(req);
