@@ -31,7 +31,7 @@ describe('resolveLivingAvatar — identity composition', () => {
 		expect(d.hasWallet).toBe(false);
 		expect(d.address).toBeNull();
 		expect(d.name).toBe('Fresh');
-		expect(d.hubUrl).toBe('/agent/a1/wallet');
+		expect(d.hubUrl).toBe('/agents/a1/wallet');
 		expect(d.isOwner).toBe(false);
 	});
 

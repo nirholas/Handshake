@@ -184,7 +184,7 @@ function buildMirror(leaderId, leaderName) {
 		if (!mine.length) {
 			wrap.replaceChildren(el('p', { class: 'th-panel-foot th-muted' }, [
 				'Copying a trader needs one of your own agents with a wallet. ',
-				el('a', { href: '/agent/me', text: 'Create one →' }),
+				el('a', { href: '/agent/new', text: 'Create one →' }),
 			]));
 			return;
 		}
@@ -202,7 +202,7 @@ function buildMirror(leaderId, leaderName) {
 				const name = mine.find((a) => a.id === follower)?.name || 'Your agent';
 				wrap.replaceChildren(el('p', { class: 'th-mirror-ok' }, [
 					`✓ ${name} now copies ${leaderName || 'this trader'}. `,
-					el('a', { href: `/agent/${follower}`, text: 'Manage mirror →' }),
+					el('a', { href: `/agents/${follower}`, text: 'Manage mirror →' }),
 				]));
 			} catch (e) {
 				submit.disabled = false; submit.textContent = 'Start mirroring';
@@ -616,8 +616,8 @@ export function initTheater(root) {
 					onClick: () => toggleWatch(id),
 					text: watching ? '★ Watching' : '☆ Watch',
 				}),
-				el('a', { class: 'th-btn', href: `/agent/${id}/wallet#reputation`, text: 'Wallet & positions' }),
-				el('a', { class: 'th-btn th-btn-primary', href: `/agent/${id}`, text: isOwner ? 'Manage agent' : 'Open profile' }),
+				el('a', { class: 'th-btn', href: `/agents/${id}/wallet#reputation`, text: 'Wallet & positions' }),
+				el('a', { class: 'th-btn th-btn-primary', href: `/agents/${id}`, text: isOwner ? 'Manage agent' : 'Open profile' }),
 			]),
 			isOwner
 				? el('p', { class: 'th-panel-foot th-muted', text: 'This agent is yours — act from its profile.' })
@@ -626,12 +626,12 @@ export function initTheater(root) {
 						buildMirror(id, agent.name),
 						el('p', { class: 'th-panel-foot th-muted' }, [
 							'Or ',
-							el('a', { href: `/agent/${id}`, text: 'open its profile' }),
+							el('a', { href: `/agents/${id}`, text: 'open its profile' }),
 							' to fork it to your own wallet.',
 						]),
 					])
 					: el('p', { class: 'th-panel-foot th-muted' }, [
-						el('a', { href: `/login?next=${encodeURIComponent(`/agent/${id}`)}`, text: 'Sign in' }),
+						el('a', { href: `/login?next=${encodeURIComponent(`/agents/${id}`)}`, text: 'Sign in' }),
 						' to copy this agent to your own wallet or follow its alpha. Watching is always free.',
 					]),
 			recentForAgent(id),

@@ -216,7 +216,24 @@ describe('corner stack — stylesheet contract', () => {
 	});
 
 	it('caps its height against the reserve so a tall stack cannot overflow', () => {
-		expect(SOURCE).toContain('max-height:calc(100dvh - 36px - var(--tws-corner-reserve,0px))');
+		expect(SOURCE).toContain(
+			'max-height:calc(100dvh - 36px - var(--tws-corner-reserve,0px) - var(--tws-corner-dock,0px))'
+		);
+	});
+
+	it('offsets both rules by the measured page dock as well as the reserve', () => {
+		// A page's own bottom chrome (the /app chat composer, a viewer action
+		// bar) is not a reservation — nobody declares it — so the stack measures
+		// it. Both the desktop and the narrow rule have to honour that lift or
+		// the phone layout keeps parking helper widgets on the composer.
+		const docked = SOURCE.match(/bottom:calc\([^;]*--tws-corner-dock/g) || [];
+		expect(docked.length).toBe(2);
+	});
+
+	it('sizes members to their content on a phone instead of stretching them', () => {
+		// align-items:stretch turned a 44px language control into a full-width
+		// bar laid across whatever the page had at the bottom of the screen.
+		expect(SOURCE).not.toContain('align-items:stretch');
 	});
 
 	it('offsets both rules horizontally too, so stepping aside works at any width', () => {

@@ -173,8 +173,8 @@ describe('GET /api/reputation/leaderboard', () => {
 		expect(top.tier).toBe('established');
 		expect(top.tier_label).toBe('Established');
 		expect(top.totals.holds_three).toBe(true);
-		expect(top.agent_url).toBe(`https://three.ws/agent/${ROWS[0].id}`);
-		expect(top.breakdown_url).toBe(`https://three.ws/agent/${ROWS[0].id}/wallet#reputation`);
+		expect(top.agent_url).toBe(`https://three.ws/agents/${ROWS[0].id}`);
+		expect(top.breakdown_url).toBe(`https://three.ws/agents/${ROWS[0].id}/wallet#reputation`);
 		expect(top.avatar_thumbnail_url).toBe('https://cdn.test/thumb/harbor.png');
 		expect(Date.parse(body.generated_at)).not.toBeNaN();
 		expect(res.getHeader('x-cache')).toBe('MISS');

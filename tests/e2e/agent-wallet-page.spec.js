@@ -104,8 +104,8 @@ test.describe('/agent-wallet entry page', () => {
 		const rows = page.locator('.awh-pick-row');
 		await expect(rows).toHaveCount(2, { timeout: SLOW });
 		expect(await page.locator('h1').count()).toBe(1);
-		await expect(rows.nth(0)).toHaveAttribute('href', '/agent/11111111-1111-4111-8111-111111111111/wallet');
-		await expect(rows.nth(1)).toHaveAttribute('href', '/agent/22222222-2222-4222-8222-222222222222/wallet');
+		await expect(rows.nth(0)).toHaveAttribute('href', '/agents/11111111-1111-4111-8111-111111111111/wallet');
+		await expect(rows.nth(1)).toHaveAttribute('href', '/agents/22222222-2222-4222-8222-222222222222/wallet');
 
 		// A wallet that is still being provisioned says so instead of showing a blank
 		// address, and a ready one shows the truncated address it will receive at.

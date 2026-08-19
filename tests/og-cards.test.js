@@ -259,7 +259,7 @@ describe('og/agent', () => {
 		expect(svg).toContain('TRUSTED');
 		expect(svg).toContain('◆ $THREE');             // holder mark
 		expect(svg).toContain('+1.25 ◎');              // realized P&L
-		expect(svg).toContain(`three.ws/agent/${ID}`);
+		expect(svg).toContain(`three.ws/agents/${ID}`);
 	});
 
 	// Failure path: every enrichment timed out. The card still renders, and says

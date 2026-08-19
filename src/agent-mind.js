@@ -1,4 +1,4 @@
-// Standalone Mind Palace route — /agent/:id/mind.
+// Standalone Mind Palace route — /agents/:id/mind.
 //
 // Resolves the agent from the URL, wires the header, and mounts the same
 // mountMindPalace() surface the editor's Mind tab uses. The Palace itself owns
@@ -15,8 +15,8 @@ const titleEl = document.getElementById('mind-title');
 const backEl = document.getElementById('mind-back');
 
 function agentIdFromPath() {
-	// /agent/:id/mind  (also tolerate a trailing slash or ?id= override)
-	const m = location.pathname.match(/^\/agent\/([^/]+)\/mind\/?$/);
+	// /agents/:id/mind  (also tolerate a trailing slash or ?id= override)
+	const m = location.pathname.match(/^\/agents?\/([^/]+)\/mind\/?$/);
 	if (m) return decodeURIComponent(m[1]);
 	const q = new URLSearchParams(location.search).get('id') || new URLSearchParams(location.search).get('agentId');
 	return q || null;
@@ -54,7 +54,7 @@ async function init() {
 	const name = agent.name || 'Your agent';
 	titleEl.textContent = `${name} · Mind Palace`;
 	document.title = `${name}'s Mind — three.ws`;
-	if (backEl) backEl.href = `/agent/${agent.id}/edit`;
+	if (backEl) backEl.href = `/agents/${agent.id}/edit`;
 	// Make this the active agent so the site-wide companion + HUD follow it.
 	setActiveAgent(agent.id).catch(() => {});
 

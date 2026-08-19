@@ -141,7 +141,7 @@ describe('_sub.js handleManifest', () => {
 		expect(json.id).toBe(AGENT_ID);
 		expect(json.name).toBe('Probe Agent');
 		expect(json.skills).toEqual(['chat']);
-		expect(json.homeUrl).toContain(`/agent/${AGENT_ID}`);
+		expect(json.homeUrl).toContain(`/agents/${AGENT_ID}`);
 		// No voice row configured: the manifest still names a provider so an embed
 		// always has something to fall back to.
 		expect(json.voice.provider).toBe('browser');

@@ -1,7 +1,7 @@
 /**
  * Agent Wallet hub: page entry.
  *
- * Routes: /agent/:id/wallet and /agents/:id/wallet (agent named in the path),
+ * Routes: /agents/:id/wallet and /agents/:id/wallet (agent named in the path),
  * plus /agent-wallet with an optional ?id=<uuid>.
  *
  * When no agent is named, the page resolves the signed-in user's own agents
@@ -21,7 +21,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 function resolveAgentId() {
 	const fromQuery = new URLSearchParams(location.search).get('id');
 	if (fromQuery) return fromQuery;
-	// /agent/:id/wallet  or  /agents/:id/wallet
+	// /agents/:id/wallet  or  /agents/:id/wallet
 	const m = location.pathname.match(/\/agents?\/([^/]+)\/wallet/);
 	return m ? decodeURIComponent(m[1]) : null;
 }
@@ -106,7 +106,7 @@ function renderPicker(agents) {
 							? `${addr.slice(0, 4)}…${addr.slice(-4)}`
 							: 'Wallet is being prepared';
 						return `<li>
-							<a class="awh-pick-row" href="/agent/${encodeURIComponent(a.id)}/wallet">
+							<a class="awh-pick-row" href="/agents/${encodeURIComponent(a.id)}/wallet">
 								${
 									a.avatar_thumbnail_url
 										? `<img class="awh-pick-av" src="${escapeHtml(a.avatar_thumbnail_url)}" alt="" loading="lazy" />`

@@ -23,7 +23,7 @@ import {
 	setDeep,
 	getDeep,
 } from '../scripts/lib/i18n-shared.mjs';
-import { resolveKey, interpolate, translate, pickLocale } from '../src/i18n.js';
+import { resolveKey, interpolate, translate, pickLocale, shortLocaleLabel } from '../src/i18n.js';
 
 describe('extractFromHtml', () => {
 	it('pulls text, html, and attribute keys with their English source values', () => {
@@ -229,5 +229,23 @@ describe('pruneStale', () => {
 	it('is idempotent: a pruned catalog has nothing left to drop', () => {
 		const once = pruneStale(source, { a: 'uno', retired: 'y' }).pruned;
 		expect(pruneStale(source, once).removed).toEqual([]);
+	});
+});
+
+// The compact language control shows a code instead of a name: "English" is a
+// 170px control, which on a phone either overflowed a HUD or laid a full-width
+// bar over the page's own bottom controls.
+describe('shortLocaleLabel', () => {
+	it('uppercases the base tag', () => {
+		expect(shortLocaleLabel('en')).toBe('EN');
+		expect(shortLocaleLabel('ru')).toBe('RU');
+	});
+	it('drops the region so the control stays two characters wide', () => {
+		expect(shortLocaleLabel('zh-CN')).toBe('ZH');
+		expect(shortLocaleLabel('pt_BR')).toBe('PT');
+	});
+	it('falls back rather than rendering an empty control', () => {
+		expect(shortLocaleLabel('')).toBe('EN');
+		expect(shortLocaleLabel(null)).toBe('EN');
 	});
 });

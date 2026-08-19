@@ -173,7 +173,7 @@ describe('sellerView', () => {
 		// "Edit pricing" pointed at /dashboard-next/agent, which 404s. The agent
 		// editor's monetization panel is the surface that actually sets a skill's
 		// price and trial grant.
-		expect(out.queue[0].pricingUrl).toBe(`/agent/${AGENT}/edit?tab=monetization`);
+		expect(out.queue[0].pricingUrl).toBe(`/agents/${AGENT}/edit?tab=monetization`);
 		expect(out.queue[0].agentUrl).toBe(`/agents/${AGENT}`);
 		expect(out.summary.warmLeads).toBe(3);
 		expect(out.summary.sold).toBe(2);

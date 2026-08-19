@@ -161,7 +161,7 @@ describe('pushPayloadFor', () => {
 		const p = pushPayloadFor('skill_purchased', { skill: 'Voice Pack', agent_id: 'a1' }, 'n-123');
 		expect(p.title).toMatch(/sale/i);
 		expect(p.body).toContain('Voice Pack');
-		expect(p.url).toBe('/agent/a1');
+		expect(p.url).toBe('/agents/a1');
 		expect(p.notificationId).toBe('n-123');
 		expect(p.category).toBe('sales');
 		expect(p.tag).toBe('skill_purchased');

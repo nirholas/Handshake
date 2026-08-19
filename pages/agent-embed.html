@@ -139,7 +139,7 @@
 			//   3. ?id={id}                  (any path — explicit override)
 			const agentId = (() => {
 				const parts = location.pathname.split('/').filter(Boolean);
-				const idx = parts.indexOf('agent');
+				const idx = parts.findIndex((p) => p === 'agents' || p === 'agent');
 				if (idx !== -1 && parts[idx + 1] && parts[idx + 1] !== 'embed') {
 					return parts[idx + 1];
 				}

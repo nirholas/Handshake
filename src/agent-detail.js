@@ -1010,7 +1010,7 @@ function render(agent) {
 
 	// Register the shared royalty panel so the avatar-actions royalty chips open
 	// the rich in-page ledger (rather than navigating away), and honor a
-	// /agent/:id#royalties deep link by opening it directly.
+	// /agents/:id#royalties deep link by opening it directly.
 	import('./shared/agent-fork-royalty.js')
 		.then((rty) => {
 			if (location.hash === '#royalties' && agent.id) {
@@ -1314,7 +1314,7 @@ function render(agent) {
 					id: agent.id,
 					title: agent.name || 'Agent',
 					description: agent.description || '',
-					shareUrl: `${location.origin}/agent/${agent.id}/share`,
+					shareUrl: `${location.origin}/agents/${agent.id}/share`,
 					remixUrl: `${location.origin}/agents/${agent.id}`,
 					previewImage: `${location.origin}/api/og/agent?id=${encodeURIComponent(agent.id)}`,
 				}, shareTrigger);
@@ -2653,7 +2653,7 @@ function renderEmbedPolicy(p) {
 
 function wireShareButton(agent) {
 	const origin   = location.origin;
-	const shareUrl = `${origin}/agent/${agent.id}/share`;
+	const shareUrl = `${origin}/agents/${agent.id}/share`;
 	const remixUrl = `${origin}/create`;
 	// Per-agent share template assembled from the agent's real capabilities:
 	// a tweet that says what this agent actually has, not a generic title drop.
@@ -2869,7 +2869,7 @@ function bindWalletActions(agent) {
 	// AGENT HOLDINGS shows the agent's custodial Solana address + balance as
 	// read-only info for everyone. Funding, trading, paying, and withdrawing the
 	// agent's OWN custodial wallet all live in one place — the Agent Wallet hub
-	// (/agent/:id/wallet) — so this card just links there for the owner. The hub
+	// (/agents/:id/wallet) — so this card just links there for the owner. The hub
 	// owns every wallet action; the detail page no longer re-implements them.
 	const actions = document.getElementById('ad-holdings-actions');
 	if (!actions) return;
@@ -2891,19 +2891,19 @@ function bindWalletActions(agent) {
 	actions.innerHTML = '';
 	const manage = document.createElement('a');
 	manage.className = 'ad-btn ad-btn-primary';
-	manage.href = `/agent/${encodeURIComponent(agentId)}/wallet`;
+	manage.href = `/agents/${encodeURIComponent(agentId)}/wallet`;
 	manage.textContent = 'Manage wallet';
 	manage.setAttribute('aria-label', 'Open this agent’s wallet hub');
 	const deposit = document.createElement('a');
 	deposit.className = 'ad-btn';
-	deposit.href = `/agent/${encodeURIComponent(agentId)}/wallet#deposit`;
+	deposit.href = `/agents/${encodeURIComponent(agentId)}/wallet#deposit`;
 	deposit.textContent = 'Deposit';
 	// Opt-in vanity: grind a custom address for this agent's custodial wallet.
 	const meta = agent?.rawMetadata?.meta || {};
 	const isVanity = !!(meta.solana_vanity_prefix || meta.solana_vanity_suffix);
 	const vanity = document.createElement('a');
 	vanity.className = 'ad-btn';
-	vanity.href = `/agent/${encodeURIComponent(agentId)}/wallet#vanity`;
+	vanity.href = `/agents/${encodeURIComponent(agentId)}/wallet#vanity`;
 	vanity.textContent = isVanity ? '✦ Vanity address' : '✦ Make it vanity';
 	vanity.setAttribute('aria-label', 'Grind a custom vanity address for this agent wallet');
 	actions.append(manage, deposit, vanity);
@@ -3006,7 +3006,7 @@ export function normalize(rec, avatar) {
 		services.push({
 			type: 'a2a',
 			version: meta.a2a_version || '0.3.0',
-			url: `${location.origin}/agent/${rec.id}`,
+			url: `${location.origin}/agents/${rec.id}`,
 			skills: rec.skills
 				.map((s) => (typeof s === 'string' ? s : s.name || s.id))
 				.filter(Boolean),
@@ -3239,6 +3239,6 @@ async function loadPlatformBar() {
 }
 
 // Only auto-run when the route actually carries an agent id. In the browser the
-// /agents/:id (and /agent/:id) route always does; importing this module without
+// /agents/:id (and /agents/:id) route always does; importing this module without
 // one (e.g. a unit test of normalize()) is a no-op rather than a stray fetch.
 if (id) runLoad();

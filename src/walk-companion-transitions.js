@@ -277,6 +277,7 @@ async function softGlowFade(fromEl, toEl) {
 export const PRESETS = [
 	{ pattern: '/walk', preset: cameraZoomIntoAvatar, name: 'camera-zoom-into-avatar' },
 	{ pattern: '/pricing', preset: curtainPull, name: 'curtain-pull' },
+	{ pattern: '/agents/*', preset: spotlightExpand, name: 'spotlight-expand' },
 	{ pattern: '/agent/*', preset: spotlightExpand, name: 'spotlight-expand' },
 	{ pattern: '/marketplace', preset: corridorDepthZoom, name: 'corridor-depth-zoom' },
 	{ pattern: '/dashboard', preset: softGlowFade, name: 'soft-glow-fade' },

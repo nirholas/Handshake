@@ -75,7 +75,7 @@ describe('platformEconomyStats', () => {
 
 		// Public provider keeps its profile URL + resolves a thumbnail; private one
 		// is gated to no URL and no leaked avatar.
-		expect(r.top_providers[0]).toMatchObject({ agent_id: 'p1', name: 'Oracle', url: '/agent/p1', earned_usd: 800, hires: 200, avg_rating: 4.6 });
+		expect(r.top_providers[0]).toMatchObject({ agent_id: 'p1', name: 'Oracle', url: '/agents/p1', earned_usd: 800, hires: 200, avg_rating: 4.6 });
 		expect(r.top_providers[0].avatar_thumbnail_url).toBe('https://cdn.test/thumb/p1.png');
 		expect(r.top_providers[1].url).toBe(null);
 		expect(r.top_providers[1].avatar_thumbnail_url).toBe(null);
@@ -89,7 +89,7 @@ describe('platformEconomyStats', () => {
 		});
 		// The feed links an agent exactly when the row says it is linkable (alive
 		// and public), so a private or deleted agent is named but not linked.
-		expect(r.recent[0].hirer).toEqual({ agent_id: 'h1', name: 'Trader', url: '/agent/h1' });
+		expect(r.recent[0].hirer).toEqual({ agent_id: 'h1', name: 'Trader', url: '/agents/h1' });
 		expect(r.recent[0].provider).toEqual({ agent_id: 'p1', name: 'Oracle', url: null });
 	});
 

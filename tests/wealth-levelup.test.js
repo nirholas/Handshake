@@ -160,7 +160,7 @@ describe('installLevelUpCelebrations — card rendering', () => {
 		// Real tier label from the ladder, real balance, the "view wallet" deep-link.
 		expect(card.querySelector('.wlu-tier').textContent).toBe('Glow');
 		expect(card.textContent).toContain('$420');
-		expect(card.querySelector('[data-wallet]').getAttribute('href')).toBe('/agent/card1/wallet');
+		expect(card.querySelector('[data-wallet]').getAttribute('href')).toBe('/agents/card1/wallet');
 
 		card.querySelector('.wlu-close').click();
 		await new Promise((r) => setTimeout(r, 360)); // teardown fallback timer

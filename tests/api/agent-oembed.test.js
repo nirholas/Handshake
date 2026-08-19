@@ -54,13 +54,21 @@ beforeEach(() => {
 });
 
 describe('agent target', () => {
-	it('resolves /agent/:id into a rich oEmbed payload', async () => {
+	it('resolves the canonical /agents/:id url into a rich oEmbed payload', async () => {
+		sqlState.queue = [[{ id: AGENT_ID, name: 'Nova', description: 'guide', avatar_id: null }]];
+		const { status, body } = await get(`https://three.ws/agents/${AGENT_ID}`);
+		expect(status).toBe(200);
+		expect(body.type).toBe('rich');
+		expect(body.title).toBe('Nova');
+		expect(body.html).toContain(`https://three.ws/agents/${AGENT_ID}/embed`);
+	});
+
+	it('still resolves the legacy /agent/:id url shape', async () => {
 		sqlState.queue = [[{ id: AGENT_ID, name: 'Nova', description: 'guide', avatar_id: null }]];
 		const { status, body } = await get(`https://three.ws/agent/${AGENT_ID}`);
 		expect(status).toBe(200);
 		expect(body.type).toBe('rich');
-		expect(body.title).toBe('Nova');
-		expect(body.html).toContain(`https://three.ws/agent/${AGENT_ID}/embed`);
+		expect(body.html).toContain(`https://three.ws/agents/${AGENT_ID}/embed`);
 	});
 });
 

@@ -145,10 +145,10 @@ describe('agent embed', () => {
 		expect(body.error).toBeUndefined();
 		const sc = body.result.structuredContent;
 		expect(sc.ok).toBe(true);
-		expect(sc.embed_html).toContain(`https://three.ws/agent/${AGENT_ID}/embed`);
+		expect(sc.embed_html).toContain(`https://three.ws/agents/${AGENT_ID}/embed`);
 		expect(sc.embed_html).toContain('width="640"');
 		expect(sc.embed_html).toContain('height="480"');
-		expect(sc.share_url).toBe(`https://three.ws/agent/${AGENT_ID}`);
+		expect(sc.share_url).toBe(`https://three.ws/agents/${AGENT_ID}`);
 		expect(sc.oembed_url).toContain('/api/oembed?url=');
 		expect(sc.thumbnail_url).toBe(`https://three.ws/api/agent/${AGENT_ID}/og`);
 		// Live-preview artifact for HTML-rendering clients.

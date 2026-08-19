@@ -4,7 +4,7 @@
  * GET /api/oembed?url=<agent-or-forge-share-url>[&format=json|xml]
  *
  * Implements https://oembed.com with type=rich. The html payload is a
- * sandboxed iframe — /agent/:id/embed for agents, /forge/embed?src=<glb> for
+ * sandboxed iframe — /agents/:id/embed for agents, /forge/embed?src=<glb> for
  * Forge creations — so consumers (Notion, Discord, etc.) can render the model
  * inline just by pasting the shareUrl.
  */
@@ -105,7 +105,7 @@ function extractAgentId(target) {
 		originStr === env.APP_ORIGIN || /^https?:\/\/localhost(:\d+)?$/.test(originStr);
 	if (!okOrigin) return null;
 
-	const match = parsed.pathname.match(/^\/agent\/([A-Za-z0-9_-]+)\/?$/);
+	const match = parsed.pathname.match(/^\/agents?\/([A-Za-z0-9_-]+)\/?$/);
 	const id = match ? match[1] : null;
 	// agent_identities.id is a uuid column, so a non-uuid slug reached Postgres as
 	// an uncastable literal and came back as an unhandled 500. Treat it the same

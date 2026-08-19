@@ -15,7 +15,7 @@ import './agents/mood-embodiment.js';
 const API_BASE = '/api';
 const params = new URLSearchParams(location.search);
 
-// Resolve agent id from the canonical clean URL /agent/<uuid>(/edit)?, falling
+// Resolve agent id from the canonical clean URL /agents/<uuid>(/edit)?, falling
 // back to the legacy /agent-edit.html?id=<uuid> querystring form. Kept as a
 // `let` so it can be reassigned after the create-from-avatar flow mints a real
 // agent — every fetch below uses this value, so the URL must stay the source
@@ -23,8 +23,8 @@ const params = new URLSearchParams(location.search);
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function resolveAgentIdFromUrl() {
   const seg = location.pathname.split('/').filter(Boolean);
-  // /agent/<id>(/edit)?  →  seg = ['agent', '<id>', 'edit'?]
-  if (seg[0] === 'agent' && seg[1] && UUID_RE.test(seg[1])) return seg[1];
+  // /agents/<id>(/edit)? or legacy /agent/<id>(/edit)?  →  seg = ['agents', '<id>', 'edit'?]
+  if ((seg[0] === 'agents' || seg[0] === 'agent') && seg[1] && UUID_RE.test(seg[1])) return seg[1];
   const qid = params.get('id');
   return qid && UUID_RE.test(qid) ? qid : null;
 }
@@ -100,7 +100,7 @@ async function createDraftAgent() {
       }
     }
 
-    history.replaceState({}, '', `/agent/${agent.id}/edit`);
+    history.replaceState({}, '', `/agents/${agent.id}/edit`);
     agentId = agent.id;
     agentData = agent;
     if (initAvatarName) {
@@ -1930,7 +1930,7 @@ function renderMemories(rows) {
 }
 
 // Every autopilot receipt cites the memories that motivated it and links here as
-// /agent/<id>/edit?tab=knowledge#mem-<memoryId>. The list renders after the
+// /agents/<id>/edit?tab=knowledge#mem-<memoryId>. The list renders after the
 // browser has already resolved the fragment, so nothing scrolled and the cited
 // memory was indistinguishable from the rest: bring it into view and mark it.
 function revealCitedMemory() {
@@ -2663,8 +2663,8 @@ function parseSize(token) {
 function updateEmbedPreview() {
   const { w, h } = parseSize($('embed-size').value);
   const origin = embedOrigin();
-  const embedUrl = `${origin}/agent/${agentId}/embed`;
-  const pageUrl = `${origin}/agent/${agentId}`;
+  const embedUrl = `${origin}/agents/${agentId}/embed`;
+  const pageUrl = `${origin}/agents/${agentId}`;
   const oembedUrl = `${origin}/api/oembed?url=${encodeURIComponent(pageUrl)}`;
 
   const iframeAttrs = `src="${embedUrl}" width="${w}" height="${h}" frameborder="0" allow="microphone; autoplay; clipboard-write" style="border:0;border-radius:12px;background:#000"`;
@@ -2851,7 +2851,7 @@ function ensureStudioTab() {
   const origin = embedOrigin();
   $('studio-playground').href = `/playground?agent_id=${encodeURIComponent(agentId)}`;
   $('studio-avatar').href = agentData.avatar_id ? `/avatars/${encodeURIComponent(agentData.avatar_id)}` : '/dashboard/#avatars';
-  $('studio-public').href = `/agent/${agentId}`;
+  $('studio-public').href = `/agents/${agentId}`;
   $('studio-manifest').href = `${origin}/api/agents/${agentId}/manifest`;
 
   const anims = agentData.meta?.animations || [];
@@ -3258,13 +3258,13 @@ async function ensureOwnershipTab() {
 }
 
 // Mind Palace — the agent's memory as a navigable spatial scene with the live
-// avatar at its core. Mounts the same module the standalone /agent/:id/mind
+// avatar at its core. Mounts the same module the standalone /agents/:id/mind
 // route uses; the empty state can ask the editor to jump to the Knowledge tab.
 let mindMounted = false;
 let mindController = null;
 async function ensureMindTab() {
   const link = $('mind-fullscreen-link');
-  if (link && agentId) link.href = `/agent/${agentId}/mind`;
+  if (link && agentId) link.href = `/agents/${agentId}/mind`;
   if (mindMounted || !agentId) return;
   mindMounted = true;
   const host = $('mind-palace-host');

@@ -86,7 +86,7 @@ const queueRow = (over = {}) => ({
 	lastActivity: '2026-08-01T00:00:00.000Z',
 	price: { atomic: '2000000', decimals: 6, display: '2', mint: THREE, chain: 'solana' },
 	potential: { atomic: '0', display: '0', mint: THREE },
-	pricingUrl: `/agent/${AGENT}/edit?tab=monetization`,
+	pricingUrl: `/agents/${AGENT}/edit?tab=monetization`,
 	...over,
 });
 
@@ -206,7 +206,7 @@ describe('seller queue', () => {
 		window.history.replaceState({}, '', '/conversions?role=seller');
 		await render({ seller: sellerPayload([queueRow()]) });
 		const edit = [...document.querySelectorAll('.cv-side a')].find((a) => a.textContent.includes('Edit pricing'));
-		expect(edit.getAttribute('href')).toBe(`/agent/${AGENT}/edit?tab=monetization`);
+		expect(edit.getAttribute('href')).toBe(`/agents/${AGENT}/edit?tab=monetization`);
 	});
 
 	it('names the queue currencies the headline number cannot hold', async () => {

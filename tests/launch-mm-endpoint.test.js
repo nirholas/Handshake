@@ -302,7 +302,7 @@ describe('POST /api/launch/mm', () => {
 		expect(res.statusCode).toBe(200);
 		const { data } = parse(res);
 		expect(data.policy.kill_switch).toBe(true);
-		expect(data.withdraw_url).toBe(`/agent/${AGENT}/wallet#withdraw`);
+		expect(data.withdraw_url).toBe(`/agents/${AGENT}/wallet#withdraw`);
 	});
 });
 
@@ -340,7 +340,7 @@ describe('DELETE /api/launch/mm', () => {
 		await mmHandler(delReq(), res);
 		expect(res.statusCode).toBe(200);
 		expect(parse(res).data.removed).toBe(true);
-		expect(parse(res).data.withdraw_url).toBe(`/agent/${AGENT}/wallet#withdraw`);
+		expect(parse(res).data.withdraw_url).toBe(`/agents/${AGENT}/wallet#withdraw`);
 	});
 });
 

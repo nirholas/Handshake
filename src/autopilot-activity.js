@@ -187,9 +187,9 @@ function wireUndo(scope) {
 // It's carried on the receipt row's source links; fall back to the filter.
 function resolveAgentForUndo(btn) {
 	const row = btn.closest('.apm-receipt');
-	const link = row?.querySelector('a.apm-source[href*="/agent/"]');
+	const link = row?.querySelector('a.apm-source[href*="/agents/"], a.apm-source[href*="/agent/"]');
 	if (link) {
-		const m = link.getAttribute('href').match(/\/agent\/([0-9a-f-]{36})/i);
+		const m = link.getAttribute('href').match(/\/agents?\/([0-9a-f-]{36})/i);
 		if (m) return m[1];
 	}
 	return agentFilter;

@@ -72,7 +72,7 @@ describe('getWalletStatus / wallet chip', () => {
 
 	it('renders an owner make-vanity entry point only for non-vanity owner wallets', () => {
 		const ownerPlain = walletChipHTML({ id: 'agent-1', solana_address: PLAIN }, { isOwner: true });
-		expect(ownerPlain).toContain('/agent/agent-1/wallet#vanity');
+		expect(ownerPlain).toContain('/agents/agent-1/wallet#vanity');
 		expect(ownerPlain).toContain('data-twc-copy');
 
 		const ownerVanity = walletChipHTML({ id: 'agent-1', solana_address: VANITY, solana_vanity_prefix: 'agnt' }, { isOwner: true });

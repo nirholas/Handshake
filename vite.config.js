@@ -635,6 +635,7 @@ const appConfig = {
 				fits: resolve(__dirname, 'pages/fits.html'),
 				viability: resolve(__dirname, 'pages/viability.html'),
 				deployments: resolve(__dirname, 'pages/deployments.html'),
+				deployOnchain: resolve(__dirname, 'pages/deploy-onchain.html'),
 				portfolio: resolve(__dirname, 'pages/portfolio.html'),
 				airdrops: resolve(__dirname, 'pages/airdrops.html'),
 				launcher: resolve(__dirname, 'pages/launcher.html'),
@@ -1310,6 +1311,8 @@ const appConfig = {
 					'/viability/': resolve(root, 'pages/viability.html'),
 					'/deployments': resolve(root, 'pages/deployments.html'),
 					'/deployments/': resolve(root, 'pages/deployments.html'),
+					'/deploy-onchain': resolve(root, 'pages/deploy-onchain.html'),
+					'/deploy-onchain/': resolve(root, 'pages/deploy-onchain.html'),
 					'/portfolio': resolve(root, 'pages/portfolio.html'),
 					'/portfolio/': resolve(root, 'pages/portfolio.html'),
 					'/airdrops': resolve(root, 'pages/airdrops.html'),
@@ -1926,11 +1929,11 @@ const appConfig = {
 						filePath = resolve(root, 'pages/ar.html');
 					else if (!filePath && /^\/agents\/[^/.]+\/?$/.test(path))
 						filePath = resolve(root, 'pages/avatar-page.html');
-					else if (!filePath && /^\/agent\/[^/]+\/mind\/?$/.test(path))
+					else if (!filePath && /^\/agents?\/[^/]+\/mind\/?$/.test(path))
 						filePath = resolve(root, 'pages/agent-mind.html');
-					else if (!filePath && /^\/agent\/[^/]+\/edit$/.test(path))
+					else if (!filePath && /^\/agents?\/[^/]+\/edit$/.test(path))
 						filePath = resolve(root, 'pages/agent-edit.html');
-					else if (!filePath && /^\/agent\/[^/]+\/embed$/.test(path))
+					else if (!filePath && /^\/agents?\/[^/]+\/embed$/.test(path))
 						filePath = resolve(root, 'pages/agent-embed.html');
 					// Legacy singular /agent/:id: vercel.json 301s it to /agents/:id,
 					// so dev serves the same studio template it lands on in prod.
