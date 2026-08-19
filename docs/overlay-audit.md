@@ -126,10 +126,39 @@ If the corner stack has not booted yet when your widget mounts, listen once for
 `tws-corner-stack:ready` and claim then. Load order between these modules is not
 guaranteed.
 
+### The page's own bottom chrome
+
+Reservations only cover widgets that know the stack exists. They do nothing for
+the chrome a *page* owns: the `/app` chat composer and its action row, a
+viewer's toolbar, an editor's dock. Nobody declares those, and on a phone the
+helper widgets used to sit right on them, so the language control rendered
+inside the "Ask the agent…" field and the Getting started pill covered the save
+button.
+
+The stack measures those instead of waiting to be told. On every resize, DOM
+change and orientation change (throttled), it probes the bottom band of the
+viewport with `elementsFromPoint`, keeps the hits that resolve to a
+bottom-anchored `fixed`/`sticky` box which is not part of the stack, and lifts
+itself above the tallest one via `--tws-corner-dock`. Docks that stack (a bar
+under a composer) are climbed one band at a time, and the lift is capped at 45%
+of the viewport height so a misdetection can never park the stack mid-screen.
+
+Nothing to wire up: a page that grows a bottom dock is handled the moment it
+renders one. A fixed element that should be ignored (a decorative bar the stack
+may sit over) opts out with `data-corner-ignore`.
+
+```html
+<div class="my-decorative-bar" data-corner-ignore>…</div>
+```
+
+`window.twsCornerStack.remeasure()` forces the measurement immediately, which is
+only worth calling from a test.
+
 ## Related
 
 - [`public/corner-stack.js`](../public/corner-stack.js): the shared container and the reservation API
 - [`tests/corner-stack.test.js`](../tests/corner-stack.test.js): the contract, exercised in JSDOM
+- [`tests/e2e/mobile-helper-overlays.spec.js`](../tests/e2e/mobile-helper-overlays.spec.js): the phone-width geometry, measured in a real browser
 - `npm run audit:mobile-touch`: touch-target sizes, the other half of "can I actually hit this"
 - `npm run audit:a11y`: keyboard and screen-reader coverage on the top pages
 - `npm run snapshot`: the daily full-page visual record of every route

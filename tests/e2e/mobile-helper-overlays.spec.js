@@ -82,8 +82,13 @@ test('every gallery card action stays inside its card', async ({ page }) => {
 test('the AR Studio sheet keeps its tabs at full height on a short viewport', async ({ page }) => {
 	await page.setViewportSize({ width: 390, height: 480 });
 	await page.goto('/ar-studio', { waitUntil: 'domcontentloaded', timeout: 120_000 });
-	await page.click('#ars-add-btn');
-	await page.waitForSelector('.ars-tabs .ars-tab', { timeout: 30_000 });
+	// The sheet only opens once the studio module has booted its WebGL scene, so
+	// retry the click rather than racing it.
+	await page.waitForSelector('#ars-add-btn', { state: 'visible', timeout: 60_000 });
+	await expect(async () => {
+		await page.click('#ars-add-btn');
+		await expect(page.locator('#ars-tray')).toBeVisible({ timeout: 2000 });
+	}).toPass({ timeout: 60_000 });
 	await page.click('#ars-tab-community');
 	await page.waitForTimeout(3000);
 
