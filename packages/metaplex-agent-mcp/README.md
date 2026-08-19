@@ -100,7 +100,7 @@ Every field the mint touches is a parameter: owner, collection, royalty basis po
 The builders are exported for direct embedding (web apps, scripts):
 
 ```js
-import { buildAgentMint, buildUmi } from '@three-ws/metaplex-agent-mcp/lib';
+import { buildAgentMint, sendAgentMint, buildUmi, toBase58Signature } from '@three-ws/metaplex-agent-mcp/lib';
 
 const umi = buildUmi({ network: 'devnet', secret: process.env.SOLANA_SECRET_KEY });
 const mint = buildAgentMint(umi, {
@@ -112,8 +112,10 @@ const mint = buildAgentMint(umi, {
 	modelUrl: 'https://example.com/astra.glb',
 	x402Support: true,
 });
-await mint.builder.sendAndConfirm(umi);
+const { signatures, atomic } = await sendAgentMint(umi, mint, { toBase58Signature });
 ```
+
+The registration and metadata builders are also importable on their own (dependency-free, browser-safe) from `@three-ws/metaplex-agent-mcp/lib/registration`, and the transaction builders from `@three-ws/metaplex-agent-mcp/lib/mint`. The three.ws `/deploy-onchain` page runs on exactly these.
 
 ## Requirements
 
