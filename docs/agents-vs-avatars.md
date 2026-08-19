@@ -46,10 +46,23 @@ The two modes differ only where the underlying entity does:
 | Views in the switcher | 3D, Chat, AR, Embed | 3D, Chat, AR, Embed, Profile |
 | Primary action | `Start an agent` | `Full profile` |
 | Chat | Voices the body | Speaks as the agent, using its brain and memory |
+| Third tab | `Skills`: add-ons you attach to the body | `Capabilities`: the skills this agent exposes, and their real per-call price |
+| Signals row | Views, forks, version, created | Skills, conversations, wallet, on-chain identity, active since |
 | Relationship card | `Used by`: the agents wearing this body | `Wearing`: the body this agent wears |
+| Below the fold | Related avatars | Similar agents |
 | Wallet | Only via a bound agent | The agent's own custodial wallet |
 
 Both directions are one click apart: an agent's `Wearing` card opens its body's page, and a body's `Used by` grid opens each agent that wears it.
+
+### Reading an agent's capabilities
+
+The `Capabilities` tab is the honest answer to "what can I call, and what does it cost?" Each row shows the skill's readable name, its exact slug (the string you pass to the API or an x402 call), and a badge: `Free`, a real price such as `1 USDC`, or `Token gated` when access is holding an NFT rather than paying. A summary line above the list names the cheapest paid call, so you learn the floor without reading every row.
+
+Prices are read straight off the agent record as atomic integers in the mint's own decimals and formatted from those digits, never divided into a float, so a nine-decimal mint stays exact. Buying is not duplicated here: trials, time passes and purchase all live on the [full profile](#the-long-form-agent-profile), which every priced row links to.
+
+### Every tab is an address
+
+The section tabs are a real WAI-ARIA tab list: arrow keys move between them, `Home` and `End` jump to the ends, and only the selected tab sits in the page's tab order. Selecting one writes it into the URL (`?view=chat`, `?view=skills`), so any tab can be linked or bookmarked, and `Overview` is the bare canonical URL with no parameter.
 
 ### How to tell which page you're on
 

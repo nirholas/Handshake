@@ -36,6 +36,7 @@ import { mountPresence } from './shared/networth-presence.js';
 import { emitRecallFromChat } from './agents/memory-client.js';
 import { moodEngine } from './agents/mood-engine.js';
 import { skillLabel } from './shared/skill-label.js';
+import { mountCoinStatus } from './pump/coin-status-card.js';
 
 const ATTACHED_KEY_PREFIX = 'avatar_attached_v1:';
 
@@ -81,6 +82,7 @@ mountBackLink();
 
 // Stop the wallet-aura live poll and free its rAF when the page unloads.
 window.addEventListener('pagehide', () => {
+	coinStatus?.destroy?.(); coinStatus = null;
 	netWorthAura?.destroy?.(); netWorthAura = null;
 	netWorthPanel?.destroy?.(); netWorthPanel = null;
 	netWorthPlate?.destroy?.(); netWorthPlate = null;
@@ -95,6 +97,8 @@ let agent = null;
 // only present on the GET response for the owner; in agent mode the server
 // answers directly with `is_owner`.
 let viewerOwns = false;
+// Live coin widget handle, so its refresh timer is cancelled on unload.
+let coinStatus = null;
 let netWorthAura = null;
 let netWorthPanel = null;
 let netWorthPlate = null;
@@ -232,16 +236,6 @@ function mountBackLink() {
 // ── API ───────────────────────────────────────────────────────────────
 
 /**
- * Load whichever entity the URL names and hand back the pair the renderer
- * needs. Agents and avatars live in separate tables with separate UUIDs, so an
- * id can land on the wrong route (an old link, a shared URL). Rather than
- * dead-end on "not found", probe the other store and redirect to the canonical
- * path. The page looks the same either way, but the URL stays truthful.
- *
- * @param {string} id
- * @returns {Promise<{ agent: object|null, avatar: object }>}
- */
-/**
  * A subject that genuinely does not exist, as opposed to a request that failed.
  * The two need different words on screen: one is a stale link the visitor can
  * act on, the other is our problem and deserves a retry.
@@ -252,6 +246,16 @@ function notFound(message) {
 	return err;
 }
 
+/**
+ * Load whichever entity the URL names and hand back the pair the renderer
+ * needs. Agents and avatars live in separate tables with separate UUIDs, so an
+ * id can land on the wrong route (an old link, a shared URL). Rather than
+ * dead-end on "not found", probe the other store and redirect to the canonical
+ * path. The page looks the same either way, but the URL stays truthful.
+ *
+ * @param {string} id
+ * @returns {Promise<{ agent: object|null, avatar: object }>}
+ */
 async function resolveEntity(id) {
 	if (mode === 'agent') {
 		const rec = await fetchAgentRecord(id);
@@ -493,7 +497,9 @@ function signalsHTML() {
 		if (skills) items.push({ v: skills, k: skills === 1 ? 'skill' : 'skills' });
 		const chats = num(agent.chat_count);
 		if (chats) items.push({ v: compactNumber(chats), k: chats === 1 ? 'chat' : 'chats' });
-		if (agent.solana_address) items.push({ v: 'Solana', k: 'wallet' });
+		// No wallet signal here on purpose: the chip directly below already shows
+		// the address, its live value and the tip action. Two of the same fact is
+		// noise, and the chip is the richer one.
 		if (agent.is_registered) items.push({ v: 'On-chain', k: 'identity' });
 		if (agent.created_at) items.push({ v: sinceLabel(agent.created_at), k: 'active since' });
 	} else {
@@ -690,6 +696,12 @@ function renderShell(glbUrl) {
 			<div class="av-panels">
 				<div class="av-panel active" data-panel="overview" id="av-panel-overview" role="tabpanel" aria-labelledby="av-tab-overview" tabindex="0">
 					${avatar.description ? `<p class="av-desc">${esc(avatar.description)}</p>` : '<p class="av-desc" style="color:var(--text-3)">No description provided.</p>'}
+					${mode === 'agent'
+						? `<section class="av-coin" id="av-coin" hidden aria-labelledby="av-coin-heading">
+								<h3 class="av-used-by-heading" id="av-coin-heading">Its coin</h3>
+								<div id="av-coin-slot"></div>
+							</section>`
+						: ''}
 					${mode === 'agent' ? bodyCardHTML() : ''}
 					<section class="av-used-by" id="av-used-by" hidden aria-labelledby="av-used-by-heading">
 						<h3 class="av-used-by-heading" id="av-used-by-heading">Used by</h3>
@@ -798,6 +810,64 @@ function renderShell(glbUrl) {
 	if (actions && customElements.get('avatar-actions')) actions.avatar = avatar;
 
 	mountWalletManager();
+	mountAgentCoin();
+}
+
+/**
+ * The live market state of the coin this agent launched, using the same shared
+ * widget the full profile mounts, so one mint reads identically on both. Real
+ * data only: symbol, price, market cap and graduation come off the pump.fun
+ * indexer, falling back to the bonding curve read straight from the cluster
+ * (the only source on devnet, where the widget prices in SOL rather than
+ * pretending a rehearsal coin is worth dollars).
+ *
+ * The mint is never hardcoded: it comes from this platform's own launch records
+ * at runtime, so the section only exists for an agent that really launched.
+ */
+async function mountAgentCoin() {
+	const slot = $('av-coin-slot');
+	if (!slot || mode !== 'agent') return;
+	const token = await resolveAgentCoin();
+	if (!token?.mint) return; // no coin, section stays hidden
+	$('av-coin').hidden = false;
+	coinStatus = mountCoinStatus(slot, token.mint, {
+		variant: 'chip',
+		network: token.cluster === 'devnet' ? 'devnet' : 'mainnet',
+		meta: {
+			symbol: token.symbol || '',
+			name: token.name || '',
+			image: token.image || '',
+			createdAt: token.launched_at ? Date.parse(token.launched_at) || null : null,
+		},
+	});
+}
+
+/**
+ * Which coin, if any, this agent launched. `meta.token` is written by only one
+ * of the two launch paths, so an agent that launched from its own custodial
+ * wallet has an empty field and a real row in `pump_agent_mints`. Ask the
+ * launch records rather than trusting the cached field alone.
+ */
+async function resolveAgentCoin() {
+	if (agent?.token?.mint) return agent.token;
+	try {
+		const r = await fetch(`/api/pump/by-agent?agent_id=${encodeURIComponent(entityId)}`, {
+			credentials: 'include',
+		});
+		if (!r.ok) return null;
+		const rec = (await r.json())?.data;
+		if (!rec?.mint) return null;
+		return {
+			mint: rec.mint,
+			cluster: rec.network === 'devnet' ? 'devnet' : 'mainnet',
+			symbol: rec.symbol || '',
+			name: rec.name || '',
+			image: rec.image || '',
+			launched_at: rec.created_at || null,
+		};
+	} catch {
+		return null; // optional section, stays hidden on network failure
+	}
 }
 
 /**
