@@ -298,6 +298,8 @@ const UNPUBLISHED_DOCS = new Map([
 	['money-map', 'internal: revenue-share and treasury routing'],
 	['native-launchpad', 'owner-gated: names a crypto project other than $THREE'],
 	['news-archive-x-post', 'internal: paste-ready X copy for the news archive, drafted for the owner to post'],
+	['oracle-trading-mcp-plan', 'internal: build order for the Oracle and trading-agent MCP servers, not a reader-facing product doc'],
+	['oracle-trading-mcp-x-post', 'internal: paste-ready X copy for the MCP launch, drafted for the owner to post'],
 	['nvidia-apps-catalog-listing', 'internal: paste-ready listing copy and portal steps for the NVIDIA Inception catalog'],
 	['nvidia-apps-catalog-request', 'internal: outbound email asking NVIDIA to publish the catalog listing'],
 	['nvidia-visibility-map', 'internal: outreach priorities and unclaimed program benefits across every NVIDIA surface'],
