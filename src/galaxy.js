@@ -540,7 +540,7 @@ function selectAgent(index, fly = false) {
 	wireWalletChips(els.gxCardMeta);
 
 	els.gxCardView.href = `/agents/${a.id}`;
-	els.gxCardChat.href = `/agent/${a.id}`;
+	els.gxCardChat.href = `/agents/${a.id}`;
 	els.gxCard.hidden = false;
 
 	if (fly) flyToTarget(new THREE.Vector3(...a.coords), 120);

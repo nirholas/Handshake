@@ -203,7 +203,7 @@ async function handleCallback(req, res) {
 			return `/settings?${q.toString()}`;
 		}
 		return stateAgentId
-			? `/agent/${encodeURIComponent(stateAgentId)}/edit?tab=social&x=${outcome}`
+			? `/agents/${encodeURIComponent(stateAgentId)}/edit?tab=social&x=${outcome}`
 			: `/settings?tab=connected-accounts&x=${outcome}`;
 	};
 	const successRedirect = backTo('connected');

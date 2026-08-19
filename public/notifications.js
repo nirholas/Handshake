@@ -122,7 +122,7 @@
 	// of strings / <b> nodes built with textContent only (XSS-safe). ─────────────
 	function describe(n) {
 		var p = n.payload || {};
-		var agentHref = p.agent_id ? '/agent/' + encodeURIComponent(p.agent_id) : '/dashboard';
+		var agentHref = p.agent_id ? '/agents/' + encodeURIComponent(p.agent_id) : '/dashboard';
 
 		switch (n.type) {
 			case 'payment_received': {

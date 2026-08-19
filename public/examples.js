@@ -186,7 +186,7 @@ const EXAMPLES = [
 	</head>
 	<body>
 		<iframe
-			src="https://three.ws/agent/demo/embed"
+			src="https://three.ws/agents/demo/embed"
 			width="400"
 			height="560"
 			frameborder="0"

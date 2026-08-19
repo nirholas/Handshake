@@ -357,7 +357,7 @@ export function analyze(obs) {
 				'fail',
 				'The element has nothing to load',
 				`<${tag}> stays deliberately inert until it is given a source. Without one of ${SOURCE_ATTRIBUTES.map((a) => `\`${a}\``).join(', ')} it renders nothing rather than guessing.`,
-				`Add your agent id:\n<${tag} agent-id="YOUR_AGENT_ID" mode="floating"></${tag}>\n\nYour agent id is the string after /agent/ in its three.ws profile URL.`,
+				`Add your agent id:\n<${tag} agent-id="YOUR_AGENT_ID" mode="floating"></${tag}>\n\nYour agent id is the string after /agents/ in its three.ws profile URL.`,
 				{ attributes: el.attributes || {} },
 			),
 		);
@@ -372,7 +372,7 @@ export function analyze(obs) {
 					obs.agent.error
 						? `Looking the agent up returned: ${obs.agent.error}`
 						: 'The platform has no public agent with that id, so the runtime has no body, personality, or animations to load.',
-					'Copy the id again from the agent\'s profile URL (the part after /agent/). If the agent is private, publish it or embed one that is public — the embed runs in your visitors\' browsers and can only read public agents.',
+					'Copy the id again from the agent\'s profile URL (the part after /agents/). If the agent is private, publish it or embed one that is public. The embed runs in your visitors\' browsers and can only read public agents.',
 					{ agentId: obs.agent.id, status: obs.agent.status ?? null },
 				),
 			);

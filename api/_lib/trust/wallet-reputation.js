@@ -359,7 +359,7 @@ function buildEvidence(agent, { solRep, registry, holdsThree }) {
 	const ev = {};
 	if (agent.solana_address) {
 		ev.wallet = { label: 'Wallet activity', href: `https://solscan.io/account/${agent.solana_address}` };
-		ev.ledger = { label: 'Custody ledger', href: `/agent/${agent.id}/wallet` };
+		ev.ledger = { label: 'Custody ledger', href: `/agents/${agent.id}/wallet` };
 	}
 	if (holdsThree && agent.solana_address) {
 		// $THREE conviction is provable on-chain — link to this wallet's token holdings.
@@ -372,12 +372,12 @@ function buildEvidence(agent, { solRep, registry, holdsThree }) {
 		// The registered identity's public page is the discover detail route
 		// (/discover/a/:chainId/:agentId). Without a chain the record predates the
 		// unified deploy, so fall back to the agent profile, which mounts the
-		// on-chain card. There is no /agent/:id/onchain route.
+		// on-chain card. There is no /agents/:id/onchain route.
 		ev.identity = {
 			label: 'On-chain identity',
 			href: agent.chain_id
 				? `/discover/a/${agent.chain_id}/${agent.erc8004_agent_id}`
-				: `/agent/${agent.id}`,
+				: `/agents/${agent.id}`,
 		};
 	}
 	if (registry?.count > 0) {
@@ -399,7 +399,7 @@ function buildGuidance(result, inputs, agent) {
 			action: 'stop_self_dealing',
 			label: 'Stop tipping yourself between your own agents',
 			detail: `${inputs.washTipCount} wash-tip${inputs.washTipCount === 1 ? '' : 's'} were ignored. Trust only grows from independent wallets.`,
-			href: `/agent/${agent.id}/wallet`,
+			href: `/agents/${agent.id}/wallet`,
 		});
 	}
 	if (inputs.reservesKnown && inputs.obligationsUsd > inputs.reserveUsd) {
@@ -407,7 +407,7 @@ function buildGuidance(result, inputs, agent) {
 			action: 'top_up_reserves',
 			label: 'Top up reserves to cover obligations',
 			detail: `Your reserves ($${round1(inputs.reserveUsd)}) are below your outstanding obligations ($${round1(inputs.obligationsUsd)}).`,
-			href: `/agent/${agent.id}/wallet#reserves`,
+			href: `/agents/${agent.id}/wallet#reserves`,
 		});
 	}
 	if (inputs.dumpEvents > 0) {
@@ -415,7 +415,7 @@ function buildGuidance(result, inputs, agent) {
 			action: 'protect_supporters',
 			label: 'Stop dumping on your supporters',
 			detail: 'Large sells right after your launch hurt early buyers and lower your trading conduct.',
-			href: `/agent/${agent.id}/wallet`,
+			href: `/agents/${agent.id}/wallet`,
 		});
 	}
 	if (inputs.threeTokens <= 0) {
@@ -423,7 +423,7 @@ function buildGuidance(result, inputs, agent) {
 			action: 'hold_three',
 			label: 'Hold $THREE to build conviction',
 			detail: 'Holding the platform coin over time is a real, on-chain trust signal — and it unlocks holder-only worlds and cosmetics.',
-			href: `/agent/${agent.id}/wallet`,
+			href: `/agents/${agent.id}/wallet`,
 		});
 	}
 	if (!inputs.hasOnchainIdentity) {
@@ -443,7 +443,7 @@ function buildGuidance(result, inputs, agent) {
 			action: 'grow_tips',
 			label: 'Earn tips from real wallets',
 			detail: 'Trust grows fastest from many distinct funded wallets choosing to tip you.',
-			href: `/agent/${agent.id}/wallet`,
+			href: `/agents/${agent.id}/wallet`,
 		});
 	}
 	if (inputs.tipsGivenUsd <= 0) {
@@ -451,7 +451,7 @@ function buildGuidance(result, inputs, agent) {
 			action: 'give_back',
 			label: 'Tip the agents you work with',
 			detail: 'Reciprocity builds standing — supporting other agents raises your generosity factor.',
-			href: `/agent/${agent.id}/wallet`,
+			href: `/agents/${agent.id}/wallet`,
 		});
 	}
 	return tips.slice(0, 3);

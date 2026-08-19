@@ -348,7 +348,7 @@ export function mountMirrorPanel({ mount, agent, isOwner = false }) {
 		const overflow = data.count - shown.length;
 		const pile = shown.map((fl) => {
 			const inner = fl.avatar ? `<img loading="lazy" decoding="async" src="${esc(fl.avatar)}" alt="">` : '';
-			return `<a href="/agent/${esc(fl.agent_id)}" title="${esc(fl.name || shortAddr(fl.agent_id))}${fl.enabled ? '' : ' (paused)'}" style="${fl.enabled ? '' : 'opacity:.5'}">${inner}</a>`;
+			return `<a href="/agents/${esc(fl.agent_id)}" title="${esc(fl.name || shortAddr(fl.agent_id))}${fl.enabled ? '' : ' (paused)'}" style="${fl.enabled ? '' : 'opacity:.5'}">${inner}</a>`;
 		}).join('');
 		const more = overflow > 0 ? `<span class="mir-more">+${overflow}</span>` : '';
 		const names = shown.map((f) => f.name || shortAddr(f.agent_id)).filter(Boolean);
@@ -366,7 +366,7 @@ export function mountMirrorPanel({ mount, agent, isOwner = false }) {
 				<div class="mir-follow" data-paused="${!f.enabled}" data-leader="${esc(f.leader_agent_id)}">
 					${f.leader_avatar ? `<img loading="lazy" decoding="async" class="mir-av" src="${esc(f.leader_avatar)}" alt="">` : '<div class="mir-av"></div>'}
 					<div class="mir-fl-body">
-						<div class="mir-fl-name"><a href="/agent/${esc(f.leader_agent_id)}" style="color:inherit;text-decoration:none">${esc(f.leader_name || shortAddr(f.leader_agent_id))}</a></div>
+						<div class="mir-fl-name"><a href="/agents/${esc(f.leader_agent_id)}" style="color:inherit;text-decoration:none">${esc(f.leader_name || shortAddr(f.leader_agent_id))}</a></div>
 						<div class="mir-fl-sub">${esc(sizingSummary(f))}${leashSummary(f) ? ' · ' + esc(leashSummary(f)) : ''}</div>
 					</div>
 					<div class="mir-fl-actions">

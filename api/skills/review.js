@@ -233,7 +233,7 @@ async function handleUpsert(req, res) {
 			agent_name: agent.name || null,
 			skill,
 			rating,
-			link: `/agent/${agentId}`,
+			link: `/agents/${agentId}`,
 		});
 	}
 

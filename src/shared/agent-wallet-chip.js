@@ -137,7 +137,7 @@ export function getWalletStatus(agent) {
 		forkedFrom,
 		explorerUrl: `https://solscan.io/account/${address}`,
 		evmExplorerUrl: evmAddress ? `https://basescan.org/address/${evmAddress}` : null,
-		hubUrl: agentId ? `/agent/${agentId}/wallet` : null,
+		hubUrl: agentId ? `/agents/${agentId}/wallet` : null,
 		galleryUrl: `/vanity/gallery?address=${encodeURIComponent(String(address))}`,
 		agentId,
 		name: name ? String(name) : null,
@@ -1026,7 +1026,7 @@ function wirePopoverActions(el, meta) {
 	});
 	const fork = el.querySelector('[data-twc-fork]');
 	if (fork) fork.addEventListener('click', async () => {
-		const dest = `/agent/${meta.agentId}`;
+		const dest = `/agents/${meta.agentId}`;
 		const loggedIn = await probeLoggedIn();
 		// Forking mints the caller their own wallet (POST /api/avatars/fork). The
 		// fork-to-own CTA + its auth/CSRF handling already live on the agent's own
@@ -1036,7 +1036,7 @@ function wirePopoverActions(el, meta) {
 	});
 	const share = el.querySelector('[data-twc-share]');
 	if (share) share.addEventListener('click', async () => {
-		const shareUrl = `${location.origin}/agent/${meta.agentId}`;
+		const shareUrl = `${location.origin}/agents/${meta.agentId}`;
 		try {
 			const mod = await import('./share.js');
 			if (mod.showSharePanel) {

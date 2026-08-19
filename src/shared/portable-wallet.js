@@ -422,7 +422,7 @@ export function mountPortableWallet(host, opts = {}) {
 			// The growth loop: a wallet worth screenshotting that links back to tip
 			// or fork. The /share?wallet=1 link previews with the vanity address +
 			// lifetime tips OG card.
-			const shareUrl = `${origin}/agent/${encodeURIComponent(agentId)}/share?wallet=1`;
+			const shareUrl = `${origin}/agents/${encodeURIComponent(agentId)}/share?wallet=1`;
 			const btn = e.currentTarget;
 			try {
 				if (navigator.share) {
@@ -581,7 +581,7 @@ export function mountPortableWallet(host, opts = {}) {
 				name: seedName,
 				avatar: seedAvatar,
 				address: null,
-				openUrl: `${origin}/agent/${agentId || ''}`,
+				openUrl: `${origin}/agents/${agentId || ''}`,
 			};
 		}
 		render();

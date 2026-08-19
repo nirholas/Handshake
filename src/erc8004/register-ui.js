@@ -2442,7 +2442,7 @@ export class RegisterUI {
 			const agentLink = body.querySelector('[data-role="res-agent"]');
 			const backendAgentId = result.agent?.id || this._backendAgentId;
 			if (agentLink && backendAgentId && backendAgentId !== 'wizard') {
-				agentLink.href = `/agent/${encodeURIComponent(backendAgentId)}`;
+				agentLink.href = `/agents/${encodeURIComponent(backendAgentId)}`;
 				agentLink.style.display = '';
 			}
 			const launchLink = body.querySelector('[data-role="res-launch"]');
@@ -2998,7 +2998,7 @@ export class RegisterUI {
 						<div><b>${esc(a.name || 'Agent')}</b> <span class="erc8004-muted erc8004-small">${esc(network)}</span></div>
 						${a.description ? `<p class="erc8004-p erc8004-small">${esc(a.description)}</p>` : ''}
 						<div class="erc8004-row">
-							<a class="erc8004-link" href="/agent/${encodeURIComponent(a.id)}">Agent page →</a>
+							<a class="erc8004-link" href="/agents/${encodeURIComponent(a.id)}">Agent page →</a>
 							${mint ? `<a class="erc8004-link" href="${esc(this._solAddrUrl(network, mint))}" target="_blank" rel="noopener">Asset ↗</a>` : ''}
 							${tx ? `<a class="erc8004-link" href="${esc(solanaTxExplorerUrl(network, tx))}" target="_blank" rel="noopener">Mint tx ↗</a>` : ''}
 						</div>

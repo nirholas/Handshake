@@ -3,11 +3,11 @@
  * -------------------------------------------------
  * GET /api/agent-share?id=<agentId>
  *
- * Wired via vercel.json: /agent/<agentId>/share → /api/agent-share?id=$1
+ * Wired via vercel.json: /agents/<agentId>/share → /api/agent-share?id=$1
  *
  * Bakes Open Graph + Twitter Card + Farcaster Frame meta into <head> so social
  * crawlers render a rich preview with the agent's name, avatar, and on-chain
- * status. Real browsers are JS-redirected to /agent/<agentId>.
+ * status. Real browsers are JS-redirected to /agents/<agentId>.
  *
  * OG image: /api/og/agent?id=<agentId> — SVG card with avatar, name, chain badge.
  */
@@ -41,7 +41,7 @@ export default wrap(async (req, res) => {
 			limit 1
 		`;
 	} catch {
-		return redirect(res, `${origin}/agent/${encodeURIComponent(id)}`);
+		return redirect(res, `${origin}/agents/${encodeURIComponent(id)}`);
 	}
 
 	if (!row) return redirect(res, `${origin}/agents`);
@@ -81,10 +81,10 @@ export default wrap(async (req, res) => {
 	const walletShare = url.searchParams.get('wallet') === '1';
 
 	const ogImage  = `${origin}/api/og/agent?id=${encodeURIComponent(id)}`;
-	const pageUrl  = `${origin}/agent/${encodeURIComponent(id)}/share${walletShare ? '?wallet=1' : ''}`;
+	const pageUrl  = `${origin}/agents/${encodeURIComponent(id)}/share${walletShare ? '?wallet=1' : ''}`;
 	const deepUrl  = walletShare
-		? `${origin}/agent/${encodeURIComponent(id)}/wallet`
-		: `${origin}/agent/${encodeURIComponent(id)}`;
+		? `${origin}/agents/${encodeURIComponent(id)}/wallet`
+		: `${origin}/agents/${encodeURIComponent(id)}`;
 
 	const title = walletShare
 		? `Tip ${name}'s wallet · 3D AI Agent · three.ws`
@@ -99,8 +99,8 @@ export default wrap(async (req, res) => {
 	// otherwise prefer the richer raw thumbnail when the avatar is public.
 	const forcedOgImage = walletShare ? ogImage : null;
 
-	// /api/oembed (extractAgentId) only resolves the canonical /agent/:id shape —
-	// not the /share or /wallet variants — so discovery is only offered here.
+	// /api/oembed (extractAgentId) only resolves the canonical /agents/:id shape,
+	// not the /share or /wallet variants, so discovery is only offered here.
 	const oembedJsonUrl = walletShare
 		? null
 		: `${origin}/api/oembed?url=${encodeURIComponent(deepUrl)}&format=json`;

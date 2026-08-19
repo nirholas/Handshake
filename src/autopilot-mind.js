@@ -183,7 +183,7 @@ function sourceChip(agentId, src) {
 	if (src.forgotten) {
 		return `<span class="apm-source forgotten" title="This memory was forgotten">🜸 <span class="apm-source-txt">memory ${esc(String(src.id).slice(0, 8))} (forgotten)</span></span>`;
 	}
-	const href = `/agent/${encodeURIComponent(agentId)}/edit?tab=knowledge#mem-${encodeURIComponent(src.id)}`;
+	const href = `/agents/${encodeURIComponent(agentId)}/edit?tab=knowledge#mem-${encodeURIComponent(src.id)}`;
 	return `<a class="apm-source" href="${href}" title="${esc(src.content || '')}">🧠 <span class="apm-source-txt">${esc((src.content || 'memory').slice(0, 80))}</span></a>`;
 }
 

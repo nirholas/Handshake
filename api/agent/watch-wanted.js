@@ -121,7 +121,7 @@ export default wrap(async (req, res) => {
 			return {
 				agentId: id,
 				name: a?.name || 'Agent',
-				homeUrl: a?.home_url || `/agent/${id}`,
+				homeUrl: a?.home_url || `/agents/${id}`,
 			};
 		});
 

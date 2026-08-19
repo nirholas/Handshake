@@ -304,7 +304,7 @@ class AvatarActions extends HTMLElement {
 				<button class="copy" data-copy="${sol}" title="Copy SOL address">Copy</button>
 				${solVanity
 					? `<span title="Custom vanity address" style="${VTAG}">vanity</span>`
-					: `<a class="manage" href="/agent/${ag.id}/wallet#vanity" title="Grind a custom vanity address">✦ Vanity</a>`}
+					: `<a class="manage" href="/agents/${ag.id}/wallet#vanity" title="Grind a custom vanity address">✦ Vanity</a>`}
 				<span class="bal" data-bal="sol"></span></div>`
 			: '';
 		return `<div class="wallet">
@@ -477,7 +477,7 @@ class AvatarActions extends HTMLElement {
 		if (!agentId) return;
 		const panel = (typeof window !== 'undefined') && window.twsForkRoyalty?.openRoyaltyPanel;
 		if (panel) panel(agentId, { name: this._avatar?.name || 'this agent' });
-		else window.location.href = `/agent/${agentId}#royalties`;
+		else window.location.href = `/agents/${agentId}#royalties`;
 	}
 
 	// Inline royalty-consent dialog (self-contained — no cross-bundle import).

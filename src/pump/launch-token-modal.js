@@ -502,7 +502,7 @@ export class LaunchTokenModal {
 						Website <span class="ltm-hint">optional — defaults to your three.ws agent page</span>
 					</label>
 					<input class="ltm-input" id="ltm-web" type="url"
-						value="${_esc(d.website)}" autocomplete="off" placeholder="https://three.ws/agent/…">
+						value="${_esc(d.website)}" autocomplete="off" placeholder="https://three.ws/agents/…">
 				</div>
 				<div class="ltm-field">
 					<label class="ltm-label" for="ltm-tw">

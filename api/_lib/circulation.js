@@ -1504,7 +1504,7 @@ async function buildAgentCard(agent, origin) {
 		name: agent.name,
 		description: agent.meta?.description || `${agent.name}, an autonomous agent on three.ws`,
 		image: image || `${origin}/og.png`,
-		url: `${origin}/agent/${agent.id}`,
+		url: `${origin}/agents/${agent.id}`,
 		active: true,
 		x402Support: true,
 		services: glb ? [{ name: 'avatar', endpoint: glb, type: 'model/gltf-binary' }] : [],

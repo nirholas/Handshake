@@ -509,7 +509,7 @@ export function mountPatronagePanel({ mount, agent, isOwner = false }) {
 
 	// Owner reciprocity: a real, shareable shout-out thanking a patron by name.
 	function thankPatron(wallet, name) {
-		const text = `Huge thanks to ${name || shortAddr(wallet)} for being a patron of ${data.agent_name} on @three_ws — support that builds a real relationship. ${location.origin}/agent/${agentId}`;
+		const text = `Huge thanks to ${name || shortAddr(wallet)} for being a patron of ${data.agent_name} on @three_ws. Support that builds a real relationship. ${location.origin}/agents/${agentId}`;
 		const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
 		window.open(url, '_blank', 'noopener');
 	}

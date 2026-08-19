@@ -138,7 +138,7 @@ async function resolveArtifact() {
 		}
 
 		const agent = payload?.agent || payload;
-		const href = `/agent/${agentParam}`;
+		const href = `/agents/${agentParam}`;
 		const label = els.error?.dataset.actionProfile || '';
 		if (!agent?.id) {
 			fail('msgNotFound', { href: '/agents', label: els.error?.dataset.actionAgents || '' });

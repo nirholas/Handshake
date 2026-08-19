@@ -52,7 +52,7 @@ function snapshotFromRecord(rec) {
 		name: rec.name || 'Agent',
 		description: rec.description || '',
 		avatarId: rec.avatar_id || rec.avatarId || null,
-		homeUrl: rec.home_url || rec.homeUrl || (rec.id ? `/agent/${rec.id}` : ''),
+		homeUrl: rec.home_url || rec.homeUrl || (rec.id ? `/agents/${rec.id}` : ''),
 		skills: [...(rec.skills || [])],
 		meta: structuredClone(rec.meta || {}),
 		personaPrompt: rec.persona_prompt ?? rec.personaPrompt ?? '',

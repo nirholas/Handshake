@@ -548,7 +548,7 @@ async function settlePayouts({ forkAgentId, network, claimed, sourceEventId, kin
 					depth: t.depth,
 					signature: r.signature,
 					tx_signature: r.signature,
-					link: `/agent/${encodeURIComponent(t.ancestor_agent_id)}`,
+					link: `/agents/${encodeURIComponent(t.ancestor_agent_id)}`,
 				});
 			}
 		}

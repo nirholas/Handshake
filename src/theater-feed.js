@@ -57,9 +57,9 @@ export function normalizeEvent(e) {
 		case 'coin-buy':
 			return { ...base, kind: 'buy', mint: e.mint || null, title: 'Buy filled', sub: fmtSol(e.sol) || shortMint(e.mint), href: e.mint ? solscanToken(e.mint, e.network) : null };
 		case 'agent-deploy':
-			return { ...base, kind: 'launch', agentId: e.agentId || null, title: 'New agent', sub: e.name || base.actor, href: e.agentId ? `/agent/${e.agentId}` : null };
+			return { ...base, kind: 'launch', agentId: e.agentId || null, title: 'New agent', sub: e.name || base.actor, href: e.agentId ? `/agents/${e.agentId}` : null };
 		case 'agent-onchain':
-			return { ...base, kind: 'verify', agentId: e.agentId || null, title: 'Verified on-chain', sub: e.name || base.actor, href: e.agentId ? `/agent/${e.agentId}` : null };
+			return { ...base, kind: 'verify', agentId: e.agentId || null, title: 'Verified on-chain', sub: e.name || base.actor, href: e.agentId ? `/agents/${e.agentId}` : null };
 		case 'payment':
 			return { ...base, kind: 'pay', title: 'Payment', usd: Number.isFinite(Number(e.usdcAtomic)) ? Number(e.usdcAtomic) / 1e6 : null, sub: fmtUsdc(e.usdcAtomic) || e.recipientLabel || base.actor, href: e.explorerUrl || null };
 		case 'jackpot':
@@ -67,7 +67,7 @@ export function normalizeEvent(e) {
 		case 'agent-guard':
 			// A safety refusal — an agent declined a bad buy. Shown in the tape (not
 			// as a performance) so watchers see the platform's guardrails working.
-			return { ...base, kind: 'guard', agentId: e.agentId || null, title: `${base.actor || 'Agent'} ${e.label || 'skipped an unsafe buy'}`, sub: e.mint ? shortMint(e.mint) : (e.reason || 'safety'), href: e.agentId ? `/agent/${e.agentId}` : (e.mint ? solscanToken(e.mint, e.network) : null) };
+			return { ...base, kind: 'guard', agentId: e.agentId || null, title: `${base.actor || 'Agent'} ${e.label || 'skipped an unsafe buy'}`, sub: e.mint ? shortMint(e.mint) : (e.reason || 'safety'), href: e.agentId ? `/agents/${e.agentId}` : (e.mint ? solscanToken(e.mint, e.network) : null) };
 		case 'agora-registered':
 			return { ...base, kind: 'launch', title: 'Agora citizen joined', sub: base.actor, href: e.citizenId ? `/agora?citizen=${e.citizenId}` : '/agora' };
 		case 'agora-task-claimed':

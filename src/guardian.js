@@ -167,7 +167,7 @@ function itemHTML(item) {
 			<div class="gd-row">
 				${avatarHTML(item)}
 				<div class="gd-id">
-					<div class="gd-name"><a href="/agent/${esc(item.agent_id)}">${esc(item.agent_name || 'Agent')}</a></div>
+					<div class="gd-name"><a href="/agents/${esc(item.agent_id)}">${esc(item.agent_name || 'Agent')}</a></div>
 					<div class="gd-meta">Owned by ${esc(item.owner?.label || 'someone')} · trusted since ${item.since ? new Date(item.since).toLocaleDateString() : '—'}</div>
 				</div>
 				<div class="gd-roles">${roles}</div>

@@ -53,9 +53,9 @@ export function buildEmbedIframe({ src, width, height, title, autorotate = true,
 
 export function agentEmbedTarget(origin, id) {
 	return {
-		embedUrl: `${origin}/agent/${id}/embed`,
-		shareUrl: `${origin}/agent/${id}`,
-		thumbnailUrl: `${origin}/api/agent/${id}/og`,
+		embedUrl: `${origin}/agents/${id}/embed`,
+		shareUrl: `${origin}/agents/${id}`,
+		thumbnailUrl: `${origin}/api/agents/${id}/og`,
 	};
 }
 

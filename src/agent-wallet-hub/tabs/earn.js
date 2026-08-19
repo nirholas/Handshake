@@ -284,7 +284,7 @@ registerWalletTab({
 			if (!skills.length) {
 				h.innerHTML = `<h2 class="awh-card-h">Earning engine</h2>
 					<div class="awh-earn-empty"><strong>No skills to price yet.</strong>Add skills to this agent, then set a price so other people — and other agents — can pay to use them.</div>
-					<div class="awh-earn-save-row"><a class="awh-earn-link" href="/agent/${escapeHtml(ctx.agentId)}/edit#skills">Add skills →</a></div>`;
+					<div class="awh-earn-save-row"><a class="awh-earn-link" href="/agents/${escapeHtml(ctx.agentId)}/edit#skills">Add skills →</a></div>`;
 				return;
 			}
 			if (!state.pricingLoaded) {
@@ -309,7 +309,7 @@ registerWalletTab({
 				<ul class="awh-sk-list">${rows}</ul>
 				<div class="awh-earn-save-row">
 					<button class="awh-btn awh-btn--primary" type="button" data-act="save-prices" ${state.saving ? 'disabled' : ''}>${state.saving ? 'Saving…' : 'Save prices'}</button>
-					<a class="awh-earn-link" href="/agent/${escapeHtml(ctx.agentId)}/edit#monetize">Trials, time-passes & pay-what-you-want →</a>
+					<a class="awh-earn-link" href="/agents/${escapeHtml(ctx.agentId)}/edit#monetize">Trials, time-passes & pay-what-you-want →</a>
 					${state.saveMsg ? `<span class="msg ${state.saveOk ? 'ok' : 'err'}">${escapeHtml(state.saveMsg)}</span>` : ''}
 				</div>`;
 		}
@@ -519,7 +519,7 @@ registerWalletTab({
 				// bare id falls back to a short label.
 				let cp = '';
 				if (r.counterparty_agent_id) {
-					cp = `<a href="/agent/${escapeHtml(r.counterparty_agent_id)}">${escapeHtml(clampName(r.counterparty || 'Agent'))}</a>`;
+					cp = `<a href="/agents/${escapeHtml(r.counterparty_agent_id)}">${escapeHtml(clampName(r.counterparty || 'Agent'))}</a>`;
 				} else if (r.counterparty && looksLikeAddress(r.counterparty)) {
 					cp = `<a href="${escapeHtml(explorerAddressUrl(r.counterparty, net))}" target="_blank" rel="noopener">${escapeHtml(shortAddress(r.counterparty, 4, 4))} ↗</a>`;
 				} else if (r.counterparty) {
@@ -557,7 +557,7 @@ registerWalletTab({
 						<p class="awh-cust-h">Top customers</p>
 						<ul class="awh-cust-list">${customers.slice(0, 5).map((c) => `
 							<li class="awh-cust-row">
-								<a class="awh-cust-name" href="/agent/${escapeHtml(c.agent_id)}" title="${escapeHtml(c.name)}">${escapeHtml(clampName(c.name))}</a>
+								<a class="awh-cust-name" href="/agents/${escapeHtml(c.agent_id)}" title="${escapeHtml(c.name)}">${escapeHtml(clampName(c.name))}</a>
 								<span class="awh-cust-meta">${c.count} hire${c.count === 1 ? '' : 's'}</span>
 								<span class="awh-cust-usd">${escapeHtml(money(c.usd))}</span>
 							</li>`).join('')}</ul>

@@ -5,7 +5,7 @@
  * A *place* — somewhere you can go to see the agent, its history, its skills.
  *
  * Every agent deserves an address. This renders it.
- * Embeddable anywhere: main page identity card, /agent/:id home page.
+ * Embeddable anywhere: main page identity card, /agents/:id home page.
  */
 
 import { apiFetch } from './api.js';

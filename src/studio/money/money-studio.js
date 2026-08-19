@@ -231,7 +231,7 @@ class MoneyStudio {
 						<a class="mny-icon-btn" href="https://solscan.io/account/${esc(addr)}" target="_blank" rel="noopener" title="View on Solscan" aria-label="View on explorer">↗</a>
 					</div>
 					<div class="mny-wallet-tools">
-						<a class="studio-btn studio-btn-primary studio-action" href="/agent/${encodeURIComponent(this.agentId)}/wallet#deposit">Add funds</a>
+						<a class="studio-btn studio-btn-primary studio-action" href="/agents/${encodeURIComponent(this.agentId)}/wallet#deposit">Add funds</a>
 						<button class="studio-btn studio-btn-ghost studio-action" data-action="refresh">Refresh balance</button>
 						<button class="studio-btn studio-btn-ghost studio-action" data-action="toggle-withdraw">Withdraw</button>
 					</div>

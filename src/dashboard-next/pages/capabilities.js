@@ -405,7 +405,7 @@ function renderLauncher(configs, coins) {
 			</div>
 			<div style="display:flex;align-items:center;gap:8px">
 				<span class="cp-badge ${badgeClass}">${badgeLabel}</span>
-				<a class="cp-link" href="/agent/${configs[0]?.agent_id || ''}/edit#section-launcher" style="display:${configs.length ? 'inline-flex' : 'none'}">Configure ↗</a>
+				<a class="cp-link" href="/agents/${configs[0]?.agent_id || ''}/edit#section-launcher" style="display:${configs.length ? 'inline-flex' : 'none'}">Configure ↗</a>
 			</div>
 		</div>
 		<div class="cp-kpi-row">

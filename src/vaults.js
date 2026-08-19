@@ -517,8 +517,8 @@ function renderDetail(v, ledger) {
 				<h1 class="vx-d-name">${esc(v.agent?.name || 'Agent')}'s Vault</h1>
 				<div class="vx-d-rep">${repLine}</div>
 				<div class="vx-d-links">
-					<a class="vx-link" href="/agent/${esc(v.agent_id)}">Agent profile →</a>
-					<a class="vx-link" href="/agent/${esc(v.agent_id)}#trades">Watch it trade →</a>
+					<a class="vx-link" href="/agents/${esc(v.agent_id)}">Agent profile →</a>
+					<a class="vx-link" href="/agents/${esc(v.agent_id)}#trades">Watch it trade →</a>
 				</div>
 			</div>
 			<div class="vx-d-cta">

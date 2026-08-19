@@ -381,7 +381,7 @@ async function handleCreate(req, res) {
 	// Push the new agent's URL to IndexNow so Bing / Yandex discover it within
 	// minutes instead of waiting for the next crawl. Fire-and-forget — IndexNow
 	// failures must never block agent creation.
-	pingIndexNow(`${env.APP_ORIGIN}/agent/${agent.id}`).catch(() => {});
+	pingIndexNow(`${env.APP_ORIGIN}/agents/${agent.id}`).catch(() => {});
 
 	// Announce the new agent on the site-wide live activity ticker — discovery +
 	// social proof. Fire-and-forget; never block or fail creation on the feed.

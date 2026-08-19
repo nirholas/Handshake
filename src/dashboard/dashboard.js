@@ -404,8 +404,8 @@ function agentCard(a, onRemoved) {
 		</details>
 		<div class="footer">
 			<div class="actions">
-				<a class="btn sec" href="/agent/${agentIdEnc}" title="Open public agent page">Open</a>
-				<a class="btn sec" href="/agent/${agentIdEnc}/edit" title="Edit name, persona, avatar, skills">Edit</a>
+				<a class="btn sec" href="/agents/${agentIdEnc}" title="Open public agent page">Open</a>
+				<a class="btn sec" href="/agents/${agentIdEnc}/edit" title="Edit name, persona, avatar, skills">Edit</a>
 				<button class="btn sec" data-share type="button" title="Copy public agent link">Share</button>
 				<button class="btn sec" data-embed type="button" ${embedDisabledAttr}>Embed</button>
 				${
@@ -422,7 +422,7 @@ function agentCard(a, onRemoved) {
 	mountAgentAvatarPreview(el.querySelector('[data-agent-preview]'), a);
 
 	el.querySelector('[data-share]').addEventListener('click', (e) => {
-		copyToClipboard(`${location.origin}/agent/${a.id}`, e.currentTarget);
+		copyToClipboard(`${location.origin}/agents/${a.id}`, e.currentTarget);
 	});
 	el.querySelector('[data-embed]').addEventListener('click', (e) => {
 		if (e.currentTarget.disabled) return;
@@ -476,7 +476,7 @@ function agentMoreItems(a, el, onRemoved) {
 	const items = [
 		{
 			label: 'Open public page ↗',
-			run: () => window.open(`/agent/${agentIdEnc}`, '_blank', 'noopener'),
+			run: () => window.open(`/agents/${agentIdEnc}`, '_blank', 'noopener'),
 		},
 		{
 			label: 'View manifest JSON ↗',
@@ -484,7 +484,7 @@ function agentMoreItems(a, el, onRemoved) {
 		},
 		{
 			label: 'Show QR code',
-			run: () => openQrModal(`${location.origin}/agent/${a.id}`, a.name || 'Agent'),
+			run: () => openQrModal(`${location.origin}/agents/${a.id}`, a.name || 'Agent'),
 		},
 		{
 			label: 'Duplicate',
@@ -872,7 +872,7 @@ async function makeAgentFromAvatar(a, btn) {
 		// calls makeAgentFromAvatar can't fire again and race a second create.
 		const link = document.createElement('a');
 		link.className = 'btn sec';
-		link.href = `/agent/${encodeURIComponent(agent.id)}/edit`;
+		link.href = `/agents/${encodeURIComponent(agent.id)}/edit`;
 		link.textContent = 'Open agent →';
 		link.title = 'Open the newly-created agent';
 		btn.replaceWith(link);
@@ -2323,8 +2323,8 @@ async function renderEmbed(root) {
 	}
 
 	const origin = location.origin;
-	const embedUrl = `${origin}/agent/${encodeURIComponent(agent.id)}/embed`;
-	const homeUrl = `${origin}/agent/${encodeURIComponent(agent.id)}`;
+	const embedUrl = `${origin}/agents/${encodeURIComponent(agent.id)}/embed`;
+	const homeUrl = `${origin}/agents/${encodeURIComponent(agent.id)}`;
 	const iframeSnippet = `<iframe src="${embedUrl}" allow="camera; microphone" style="width:320px;height:420px;border:0;border-radius:16px;overflow:hidden" title="${esc(agent.name || 'Agent')}"></iframe>`;
 	const sidecarSnippet = [
 		'// Drop into a chat host — renders the agent alongside the chat panel',
@@ -2373,7 +2373,7 @@ async function renderEmbed(root) {
 	].join('\n');
 	const sdkSnippet = [
 		'<!-- Drop-in SDK around the postMessage Bridge v1. -->',
-		'<!-- See /agent/' + agent.id + '/embed for the wire contract. -->',
+		'<!-- See /agents/' + agent.id + '/embed for the wire contract. -->',
 		`<iframe id="agent" src="${embedUrl}" allow="camera; microphone"`,
 		'        style="width:320px;height:420px;border:0;border-radius:16px"></iframe>',
 		`<script src="${origin}/embed-sdk.js"></script>`,
@@ -2644,7 +2644,7 @@ function bindSnippetTabs(root) {
 
 // ── Onchain deploy card ─────────────────────────────────────────────────────
 // Mints the agent on ERC-8004 so any host (Lobehub / Claude / etc.) can resolve
-// it from its onchain ID instead of needing the /agent/:id URL. Uses the
+// it from its onchain ID instead of needing the /agents/:id URL. Uses the
 // wallet the user already connected for SIWE; pins the avatar GLB + manifest
 // to IPFS; calls register() on the Identity Registry; writes the resulting
 // agentId back to our DB so the agent row becomes the bridge between our host
@@ -2998,7 +2998,7 @@ function renderAgentRows(list, onchainAgents, dbAgents) {
 		const name = meta?.name || dbRow?.name || `Agent #${id}`;
 		const desc = meta?.description || dbRow?.description || '';
 		const img = uriToHttp(meta?.image || '');
-		const homeLink = dbRow ? `/agent/${encodeURIComponent(dbRow.id)}` : '';
+		const homeLink = dbRow ? `/agents/${encodeURIComponent(dbRow.id)}` : '';
 		const metaLink = uri ? uriToHttp(uri) : '';
 
 		const el = document.createElement('div');
@@ -3046,7 +3046,7 @@ function renderAgentRows(list, onchainAgents, dbAgents) {
 				</div>
 				${a.description ? `<p class="muted" style="margin:4px 0 0; font-size:12px">${esc(a.description)}</p>` : ''}
 				<div class="row" style="gap:10px; margin-top:6px; font-size:12px">
-					<a href="/agent/${encodeURIComponent(a.id)}" target="_blank" rel="noopener">Open home</a>
+					<a href="/agents/${encodeURIComponent(a.id)}" target="_blank" rel="noopener">Open home</a>
 				</div>
 			</div>
 		`;

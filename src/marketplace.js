@@ -5533,7 +5533,7 @@ function renderEmbedTab(a) {
 	const agentId = a.id;
 	const glbUrl = a.avatar_glb_url || '';
 	const embedPageUrl = `${location.origin}/marketplace/agents/${agentId}`;
-	const iframeSrc = `/agent/${agentId}/embed`;
+	const iframeSrc = `/agents/${agentId}/embed`;
 
 	const wcSnippet = glbUrl
 		? `<script type="module" src="https://three.ws/dist-lib/agent-3d.js"><\/script>\n<agent-3d\n  src="${glbUrl}"\n  agent-id="${agentId}"\n  style="width:480px;height:480px"\n></agent-3d>`

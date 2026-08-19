@@ -2183,7 +2183,7 @@
 					descEl.textContent = agent.bio || 'A featured 3D agent on three.ws.';
 					linkEl.onclick = null;
 					linkEl.textContent = 'View profile';
-					linkEl.href = agent.detail_url || '/agent/' + agent.id;
+					linkEl.href = agent.detail_url || '/agents/' + agent.id;
 					if (statsEl) {
 						statsEl.hidden = false;
 						statsEl.innerHTML = [
@@ -2409,8 +2409,8 @@
 							<td>${escapeHtml((a.description || '').slice(0, 80))}</td>
 							<td class="pd-mono">${created}</td>
 							<td>
-								<a class="pd-btn pd-btn-sm" href="/agent/${escapeHtml(a.id)}/edit">Edit</a>
-								<a class="pd-btn pd-btn-sm" href="/agent/${escapeHtml(a.id)}">Open</a>
+								<a class="pd-btn pd-btn-sm" href="/agents/${escapeHtml(a.id)}/edit">Edit</a>
+								<a class="pd-btn pd-btn-sm" href="/agents/${escapeHtml(a.id)}">Open</a>
 								<button class="pd-btn pd-btn-sm is-danger" type="button" data-delete-agent="${escapeHtml(a.id)}" data-agent-name="${escapeHtml(a.name || a.id)}">Delete</button>
 							</td>
 						</tr>`;

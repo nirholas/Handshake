@@ -90,7 +90,7 @@ const OUTPUT_EXAMPLE = {
 	},
 	evidence: [
 		{ kind: 'solana_token', ref: 'https://solscan.io/token/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump' },
-		{ kind: 'threews_agent', ref: '/agent/7b9a4f30-2d11-4e2d-9d12-1cdb1f6a3a55' },
+		{ kind: 'threews_agent', ref: '/agents/7b9a4f30-2d11-4e2d-9d12-1cdb1f6a3a55' },
 	],
 	caveats: [],
 	ts: '2026-07-07T00:00:00Z',

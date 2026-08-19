@@ -175,9 +175,9 @@ function renderTicker() {
 		<div class="lm-flow">
 			<span class="lm-flow-amt">${fmtThree(s.worker_payout_three)} <span>$THREE</span></span>
 			<span class="lm-flow-body">
-				<a href="/agent/${esc(s.poster_agent_id)}">${esc(s.poster_name)}</a>
+				<a href="/agents/${esc(s.poster_agent_id)}">${esc(s.poster_name)}</a>
 				<span class="lm-flow-arrow" aria-hidden="true">→</span>
-				<a href="/agent/${esc(s.worker_agent_id)}">${esc(s.worker_name)}</a>
+				<a href="/agents/${esc(s.worker_agent_id)}">${esc(s.worker_name)}</a>
 				${s.required_skill ? `<span class="lm-flow-skill">${esc(s.required_skill)}</span>` : ''}
 			</span>
 			${s.settlement_explorer ? `<a class="lm-flow-tx" href="${esc(s.settlement_explorer)}" target="_blank" rel="noopener" title="View settlement on Solscan">tx ↗</a>` : ''}
@@ -225,7 +225,7 @@ function bountyCard(b) {
 		<p class="lm-card-spec">${esc((b.spec || '').slice(0, 150))}${(b.spec || '').length > 150 ? '…' : ''}</p>
 		<div class="lm-card-foot">
 			${chip(b.required_skill)}
-			<span class="lm-card-meta">by <a href="/agent/${esc(b.poster_agent_id)}" data-stop-propagation>${esc(b.poster_name)}</a></span>
+			<span class="lm-card-meta">by <a href="/agents/${esc(b.poster_agent_id)}" data-stop-propagation>${esc(b.poster_name)}</a></span>
 			${mine ? '<span class="lm-tag-mine">yours</span>' : ''}
 			<span class="lm-card-bids ${hot ? 'is-hot' : ''}">${b.bid_count} bid${b.bid_count === 1 ? '' : 's'}</span>
 			${b.escrow_explorer ? `<span class="lm-card-escrow" title="Reward escrowed on-chain">◆ escrowed</span>` : ''}
@@ -244,7 +244,7 @@ function jobCard(j) {
 		<h3 class="lm-card-title">${esc(j.title || 'Job')}</h3>
 		<div class="lm-card-foot">
 			${chip(j.required_skill)}
-			<span class="lm-card-meta"><a href="/agent/${esc(j.poster_agent_id)}" data-stop-propagation>${esc(j.poster_name)}</a> → <a href="/agent/${esc(j.worker_agent_id)}" data-stop-propagation>${esc(j.worker_name)}</a></span>
+			<span class="lm-card-meta"><a href="/agents/${esc(j.poster_agent_id)}" data-stop-propagation>${esc(j.poster_name)}</a> → <a href="/agents/${esc(j.worker_agent_id)}" data-stop-propagation>${esc(j.worker_name)}</a></span>
 			${mine ? '<span class="lm-tag-mine">yours</span>' : ''}
 			<span class="lm-card-bids">${ago(j.created_at)}</span>
 		</div>
@@ -262,7 +262,7 @@ function settledCard(s) {
 		<h3 class="lm-card-title">${esc(s.title || 'Bounty')}</h3>
 		<div class="lm-card-foot">
 			${chip(s.required_skill)}
-			<span class="lm-card-meta"><a href="/agent/${esc(s.poster_agent_id)}" data-stop-propagation>${esc(s.poster_name)}</a> → <a href="/agent/${esc(s.worker_agent_id)}" data-stop-propagation>${esc(s.worker_name)}</a></span>
+			<span class="lm-card-meta"><a href="/agents/${esc(s.poster_agent_id)}" data-stop-propagation>${esc(s.poster_name)}</a> → <a href="/agents/${esc(s.worker_agent_id)}" data-stop-propagation>${esc(s.worker_name)}</a></span>
 			${mine ? '<span class="lm-tag-mine">yours</span>' : ''}
 			${Number(s.royalty_three) > 0 ? `<span class="lm-card-bids">+${fmtThree(s.royalty_three)} royalty</span>` : ''}
 		</div>
@@ -429,7 +429,7 @@ function drawerMarkup({ bounty: b, bids, job }) {
 					return `
 				<div class="lm-bid ${winner ? 'lm-bid-win' : ''}">
 					<div class="lm-bid-head">
-						<a href="/agent/${esc(bd.worker_agent_id)}" class="lm-bid-name">${esc(bd.worker_name)}</a>
+						<a href="/agents/${esc(bd.worker_agent_id)}" class="lm-bid-name">${esc(bd.worker_name)}</a>
 						${bd.auto ? '<span class="lm-tag-auto" title="Autonomous bid">auto</span>' : ''}
 						${winner ? '<span class="lm-tag-win">awarded</span>' : ''}
 						<span class="lm-bid-price">${fmtThree(bd.price_three)} $THREE</span>
@@ -483,7 +483,7 @@ function drawerMarkup({ bounty: b, bids, job }) {
 	<p class="lm-drawer-spec">${esc(b.spec)}</p>
 	<div class="lm-drawer-tags">
 		${chip(b.required_skill)}
-		<span class="lm-card-meta">by <a href="/agent/${esc(b.poster_agent_id)}">${esc(b.poster_name)}</a></span>
+		<span class="lm-card-meta">by <a href="/agents/${esc(b.poster_agent_id)}">${esc(b.poster_name)}</a></span>
 		${b.escrow_explorer ? `<a class="lm-card-escrow" href="${esc(b.escrow_explorer)}" target="_blank" rel="noopener" title="Reward escrowed on-chain">◆ escrow tx ↗</a>` : ''}
 	</div>
 	${b.award_rationale ? `<div class="lm-rationale"><span class="lm-rationale-mark">⚖</span> <span>${esc(b.award_rationale)}</span></div>` : ''}

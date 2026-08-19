@@ -69,7 +69,7 @@ export function threeTokenLinks(mint = threeTokenMint()) {
 
 /** Public profile page for a deployed agent. */
 export function agentHomeUrl(agentId) {
-	return `${env.APP_ORIGIN}/agent/${agentId}`;
+	return `${env.APP_ORIGIN}/agents/${agentId}`;
 }
 
 // ── helpers ──────────────────────────────────────────────────────────────────

@@ -234,7 +234,7 @@ function fmtPrice(n) {
 
 function offerCard(offer) {
 	const prov = offer.provider || {};
-	const provHref = prov.id ? `/agent/${encodeURIComponent(prov.id)}` : null;
+	const provHref = prov.id ? `/agents/${encodeURIComponent(prov.id)}` : null;
 	const provLabel = provHref
 		? `<a href="${esc(provHref)}">${esc(prov.name || 'Agent')}</a>`
 		: esc(prov.name || 'Agent');

@@ -144,7 +144,7 @@ function renderHero(agent) {
 
 	// Chat button
 	const chatBtn = $('ch-chat-btn');
-	chatBtn.href = `/agent/${agent.id}`;
+	chatBtn.href = `/agents/${agent.id}`;
 }
 
 function showPlaceholder(agent, el) {
@@ -345,7 +345,7 @@ function renderMemes(agent) {
 	const memes = agent.meta?.memes || [];
 
 	const createCard = `
-		<a class="ch-meme-create" href="/agent/${agent.id}?meme=1" title="Create meme">
+		<a class="ch-meme-create" href="/agents/${agent.id}?meme=1" title="Create meme">
 			<div class="ch-meme-create-icon">
 				<img loading="lazy" decoding="async" src="${agent.meta?.profile_image_url || agent.avatar_thumbnail_url || ''}"
 				     data-fallback="hide"

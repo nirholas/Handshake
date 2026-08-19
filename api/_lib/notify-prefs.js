@@ -282,7 +282,7 @@ export function pushPayloadFor(type, payload, notificationId) {
 function pushUrlFor(p) {
 	const raw = p.link
 		|| (p.tx_signature ? `https://solscan.io/tx/${encodeURIComponent(p.tx_signature)}` : null)
-		|| (p.agent_id ? `/agent/${encodeURIComponent(p.agent_id)}` : null)
+		|| (p.agent_id ? `/agents/${encodeURIComponent(p.agent_id)}` : null)
 		|| '/dashboard/';
 	// Same allowlist as the inbox: same-origin path or absolute http(s).
 	if (typeof raw !== 'string') return '/dashboard/';

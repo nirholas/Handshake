@@ -32,7 +32,7 @@ function shapeProvider(row) {
 	return {
 		id: row.provider_agent_id,
 		name: row.provider_name || 'Agent',
-		url: `/agent/${row.provider_agent_id}`,
+		url: `/agents/${row.provider_agent_id}`,
 		avatar_thumbnail_url: avatarThumb(row.provider_thumb_key, row.provider_avatar_vis),
 		solana_address: row.provider_addr || null,
 		is_public: row.provider_is_public !== false,
@@ -462,7 +462,7 @@ export async function platformEconomyStats({
 		// Both leaderboards compute `linkable` in SQL for the same reason the
 		// settled-hire feed below does: a deleted agent leaves no `agent_identities`
 		// row at all, so its `is_public` reads NULL, and treating NULL as "public"
-		// handed every deleted earner a leaderboard link to a hollow /agent/<id>.
+		// handed every deleted earner a leaderboard link to a hollow /agents/<id>.
 		const providerRows = await sql`
 			SELECT
 				h.provider_agent_id                                        AS agent_id,
@@ -544,7 +544,7 @@ export async function platformEconomyStats({
 			top_providers: providerRows.map((r) => ({
 				agent_id: r.agent_id,
 				name: r.name || 'Agent',
-				url: r.linkable && r.agent_id ? `/agent/${r.agent_id}` : null,
+				url: r.linkable && r.agent_id ? `/agents/${r.agent_id}` : null,
 				avatar_thumbnail_url: avatarThumb(r.thumb_key, r.avatar_vis),
 				earned_usd: Number(r.earned_usd || 0),
 				hires: Number(r.hires || 0),
@@ -553,7 +553,7 @@ export async function platformEconomyStats({
 			top_hirers: hirerRows.map((r) => ({
 				agent_id: r.agent_id,
 				name: r.name || 'Agent',
-				url: r.linkable && r.agent_id ? `/agent/${r.agent_id}` : null,
+				url: r.linkable && r.agent_id ? `/agents/${r.agent_id}` : null,
 				avatar_thumbnail_url: avatarThumb(r.thumb_key, r.avatar_vis),
 				spent_usd: Number(r.spent_usd || 0),
 				hires: Number(r.hires || 0),
@@ -570,12 +570,12 @@ export async function platformEconomyStats({
 				hirer: {
 					agent_id: r.hirer_agent_id,
 					name: r.hirer_name || 'Agent',
-					url: r.hirer_linkable && r.hirer_agent_id ? `/agent/${r.hirer_agent_id}` : null,
+					url: r.hirer_linkable && r.hirer_agent_id ? `/agents/${r.hirer_agent_id}` : null,
 				},
 				provider: {
 					agent_id: r.provider_agent_id,
 					name: r.provider_name || 'Agent',
-					url: r.provider_linkable && r.provider_agent_id ? `/agent/${r.provider_agent_id}` : null,
+					url: r.provider_linkable && r.provider_agent_id ? `/agents/${r.provider_agent_id}` : null,
 				},
 			})),
 			window_days: win,

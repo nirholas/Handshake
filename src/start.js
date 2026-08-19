@@ -480,7 +480,7 @@ async function startDeploy() {
 		// 3. Build embed code
 		const origin = location.origin;
 		const embedCode = `<script src="${origin}/widget.js" data-widget="${widgetId}" async><\/script>`;
-		const liveUrl = `${origin}/agent/${agentId}`;
+		const liveUrl = `${origin}/agents/${agentId}`;
 
 		state.liveUrl = liveUrl;
 		state.embedCode = embedCode;

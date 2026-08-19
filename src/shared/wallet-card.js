@@ -198,7 +198,7 @@ export function mountWalletCard(host, agent, opts = {}) {
 			id: agentId,
 			title: identity.name || agent?.name || 'Agent',
 			description: `${identity.name || 'This agent'} on three.ws — its avatar, its wallet, its reputation.`,
-			shareUrl: `${origin}/agent/${agentId}/share`,
+			shareUrl: `${origin}/agents/${agentId}/share`,
 			remixUrl: `${origin}/agents/${agentId}`,
 			previewImage: `${origin}/api/og/agent?id=${encodeURIComponent(agentId)}`,
 		};
@@ -338,10 +338,10 @@ export function mountWalletCard(host, agent, opts = {}) {
 		// CTA row by viewer role. Owner → manage/customize; visitor/logged-out →
 		// tip + fork. Share is universal. No owner-only datum is ever rendered above.
 		const primaryCta = isOwner
-			? `<a class="twc2-btn twc2-btn-primary" href="${esc(identity.hubUrl || `/agent/${agentId}/wallet`)}">Manage wallet</a>`
+			? `<a class="twc2-btn twc2-btn-primary" href="${esc(identity.hubUrl || `/agents/${agentId}/wallet`)}">Manage wallet</a>`
 			: `<button type="button" class="twc2-btn twc2-btn-primary" data-twc2-tip>Tip</button>`;
 		const secondaryCta = isOwner
-			? `<a class="twc2-btn twc2-btn-ghost" href="${esc(identity.hubUrl || `/agent/${agentId}/wallet`)}#customize">Customize</a>`
+			? `<a class="twc2-btn twc2-btn-ghost" href="${esc(identity.hubUrl || `/agents/${agentId}/wallet`)}#customize">Customize</a>`
 			: `<button type="button" class="twc2-btn twc2-btn-ghost" data-twc2-fork>Fork to own</button>`;
 
 		setHTML(`

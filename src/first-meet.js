@@ -254,7 +254,7 @@ async function runTour(agent) {
 
 function showChecklist(agent) {
 	const agentId = agent?.id;
-	const shareUrl = agentId ? `${location.origin}/agent/${agentId}` : null;
+	const shareUrl = agentId ? `${location.origin}/agents/${agentId}` : null;
 
 	const ITEMS = [
 		{

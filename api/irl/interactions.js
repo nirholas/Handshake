@@ -388,7 +388,7 @@ export default wrap(async (req, res) => {
 						pin_id: pinId,
 						agent_id: pin.agent_id ?? null,
 						message,
-						link: pin.agent_id ? `/agent/${pin.agent_id}` : undefined,
+						link: pin.agent_id ? `/agents/${pin.agent_id}` : undefined,
 					});
 					notified = true;
 				}

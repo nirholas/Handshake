@@ -334,7 +334,7 @@ async function scoreThreewsAgent(det, ts) {
 	const sig = { ...sigFromAgentRep(rep), ageDays };
 	caveats.push(...missingCaveats(sig, ['holdings']));
 
-	const evidence = [{ kind: 'threews_agent', ref: `/agent/${det.subject}` }];
+	const evidence = [{ kind: 'threews_agent', ref: `/agents/${det.subject}` }];
 	if (rep.wallet_address) evidence.push({ kind: 'solana_account', ref: `https://solscan.io/account/${rep.wallet_address}` });
 	const firstMint = rep.mints?.[0]?.mint;
 	if (firstMint) evidence.push({ kind: 'launched_coin', ref: `https://solscan.io/token/${firstMint}` });
@@ -554,7 +554,7 @@ async function scoreThreewsMint(det, mintRow, ts) {
 
 	const evidence = [
 		{ kind: 'solana_token', ref: `https://solscan.io/token/${det.subject}` },
-		{ kind: 'threews_agent', ref: `/agent/${mintRow.agent_id}` },
+		{ kind: 'threews_agent', ref: `/agents/${mintRow.agent_id}` },
 	];
 	if (market) evidence.push({ kind: 'dexscreener', ref: `https://dexscreener.com/solana/${det.subject}` });
 
@@ -679,7 +679,7 @@ async function scoreSolanaWallet(det, { knownAgentId }, ts) {
 	caveats.push(...missingCaveats(sig, knownAgentId ? [] : ['counterparties', 'reliability', 'attestations']));
 
 	const evidence = [{ kind: 'solana_account', ref: `https://solscan.io/account/${det.subject}` }];
-	if (knownAgentId) evidence.push({ kind: 'threews_agent', ref: `/agent/${knownAgentId}` });
+	if (knownAgentId) evidence.push({ kind: 'threews_agent', ref: `/agents/${knownAgentId}` });
 
 	return finalize({
 		subject: det.subject,

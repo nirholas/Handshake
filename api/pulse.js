@@ -114,7 +114,7 @@ function shapeEvent(r) {
 			? {
 					id: r.agent_id,
 					name: r.agent_name || 'Agent',
-					url: `/agent/${r.agent_id}`,
+					url: `/agents/${r.agent_id}`,
 					avatar_thumbnail_url: r2Url(r.thumb_key, avatarPublic),
 					solana_address: r.agent_addr || null,
 					solana_vanity_prefix: r.vanity_prefix || null,
@@ -488,7 +488,7 @@ async function handleGraph(network, windowKey) {
 			kind: agent ? 'agent' : 'wallet',
 			agent_id: agent?.id || null,
 			name: agent?.name || shortAddr(addr),
-			url: agent ? `/agent/${agent.id}` : null,
+			url: agent ? `/agents/${agent.id}` : null,
 			avatar_thumbnail_url: agent
 				? r2Url(agent.thumb_key, agent.avatar_vis === 'public' || agent.avatar_vis === 'unlisted')
 				: null,
@@ -744,7 +744,7 @@ async function handleStats(network) {
 	const shapeAgent = (r) => ({
 		id: r.agent_id,
 		name: r.agent_name || 'Agent',
-		url: `/agent/${r.agent_id}`,
+		url: `/agents/${r.agent_id}`,
 		avatar_thumbnail_url: r2Url(r.thumb_key, r.avatar_vis === 'public' || r.avatar_vis === 'unlisted'),
 		solana_address: r.agent_addr || null,
 		tip_count: r.tip_count != null ? Number(r.tip_count) : undefined,
@@ -1027,7 +1027,7 @@ async function handleMarketplace(network) {
 		top_sellers: topSellers.map((r) => ({
 			id: r.agent_id,
 			name: r.agent_name || 'Agent',
-			url: `/agent/${r.agent_id}`,
+			url: `/agents/${r.agent_id}`,
 			avatar_thumbnail_url: r2Url(r.thumb_key, r.avatar_vis === 'public' || r.avatar_vis === 'unlisted'),
 			solana_address: r.agent_addr || null,
 			sales: Number(r.sales || 0),
@@ -1158,7 +1158,7 @@ async function handleTrading(network) {
 		top_traders: topTraders.map((r) => ({
 			id: r.agent_id,
 			name: r.agent_name || 'Agent',
-			url: `/agent/${r.agent_id}`,
+			url: `/agents/${r.agent_id}`,
 			avatar_thumbnail_url: r2Url(r.thumb_key, r.avatar_vis === 'public' || r.avatar_vis === 'unlisted'),
 			solana_address: r.agent_addr || null,
 			trades: Number(r.trades || 0),

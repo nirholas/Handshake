@@ -202,7 +202,7 @@
 
 			root.innerHTML = `<div class="ag-list">${agents.map((a) => {
 				const oc = onchain(a);
-				const agentUrl = a.home_url || `/agent/${a.id}`;
+				const agentUrl = a.home_url || `/agents/${a.id}`;
 				const topSkills = (a.skills || []).slice(0, 4);
 				return `<div class="ag-row">
 					<div>
@@ -219,8 +219,8 @@
 					</div>
 					<div class="ag-actions">
 						<a class="ag-action primary" href="${esc(agentUrl)}">View</a>
-						<a class="ag-action" href="/agent/${esc(a.id)}/edit">Edit</a>
-						${!oc ? `<a class="ag-action" href="/agent/${esc(a.id)}/edit" style="color:var(--gold);border-color:color-mix(in srgb, var(--gold) 28%, var(--line))">Deploy</a>` : ''}
+						<a class="ag-action" href="/agents/${esc(a.id)}/edit">Edit</a>
+						${!oc ? `<a class="ag-action" href="/agents/${esc(a.id)}/edit" style="color:var(--gold);border-color:color-mix(in srgb, var(--gold) 28%, var(--line))">Deploy</a>` : ''}
 					</div>
 				</div>`;
 			}).join('')}</div>`;

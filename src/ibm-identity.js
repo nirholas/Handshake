@@ -218,7 +218,7 @@ function render(data) {
 			const tag   = s.owned
 				? '<span class="ntag">yours</span>'
 				: s.public ? '' : '<span class="ntag">private</span>';
-			return `<a class="neighbor" href="/agent/${esc(s.id)}" target="_blank" rel="noopener">
+			return `<a class="neighbor" href="/agents/${esc(s.id)}" target="_blank" rel="noopener">
 				<span class="nname">${esc(s.name || 'Agent')}</span>
 				<span class="nbar"><span style="width:${score}%"></span></span>
 				<span class="nscore">${score}%</span>${tag}

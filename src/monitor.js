@@ -108,8 +108,8 @@ function mountSpotlight(agent) {
 	$('spot-desc').textContent = agent.description || 'No description yet.';
 	const links = $('spot-links');
 	links.hidden = false;
-	$('spot-profile').href = agent.home_url || `/agent/${agent.id}`;
-	$('spot-chat').href = `/agent/${agent.id}`;
+	$('spot-profile').href = agent.home_url || `/agents/${agent.id}`;
+	$('spot-chat').href = `/agents/${agent.id}`;
 	document.querySelectorAll('.fleet-row').forEach((row) => {
 		row.setAttribute('aria-selected', row.dataset.agentId === agent.id ? 'true' : 'false');
 	});

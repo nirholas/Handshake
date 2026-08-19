@@ -29,7 +29,7 @@ export const SIZES = Object.freeze({
  */
 export function buildEmbedUrl({ origin, agentId, opts = {} }) {
 	const merged = { ...DEFAULT_OPTIONS, ...opts };
-	const url = new URL(`${origin}/agent/${agentId}/embed`);
+	const url = new URL(`${origin}/agents/${agentId}/embed`);
 	if (merged.bg !== DEFAULT_OPTIONS.bg) url.searchParams.set('bg', merged.bg);
 	if (merged.name !== DEFAULT_OPTIONS.name) url.searchParams.set('name', '0');
 	return url.toString();

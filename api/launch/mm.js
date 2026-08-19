@@ -198,7 +198,7 @@ async function handlePost(req, res, url) {
 		}
 		if (action === 'kill') {
 			const row = await upsertPolicy({ mint, network, agentId, userId: auth.userId, patch: { enabled: false, kill_switch: true } });
-			return json(res, 200, { data: { policy: toPublicPolicy(row), withdraw_url: `/agent/${agentId}/wallet#withdraw` } });
+			return json(res, 200, { data: { policy: toPublicPolicy(row), withdraw_url: `/agents/${agentId}/wallet#withdraw` } });
 		}
 		if (action === 'withdraw') {
 			// The MM never holds custody, funds live in the agent wallet. Halt the
@@ -207,7 +207,7 @@ async function handlePost(req, res, url) {
 			return json(res, 200, {
 				data: {
 					policy: toPublicPolicy(row),
-					withdraw_url: `/agent/${agentId}/wallet#withdraw`,
+					withdraw_url: `/agents/${agentId}/wallet#withdraw`,
 					message: 'Market-maker halted. Withdraw the remaining inventory + SOL from the agent wallet.',
 				},
 			});
@@ -239,7 +239,7 @@ async function handleDelete(req, res, url) {
 	if (existing.user_id !== auth.userId) return error(res, 403, 'forbidden', 'only the owner can remove this market-maker');
 	if (auth.session && !(await requireCsrf(req, res, auth.userId))) return;
 	await sql`DELETE FROM market_maker_policies WHERE id = ${existing.id}`;
-	return json(res, 200, { data: { removed: true, withdraw_url: `/agent/${existing.agent_id}/wallet#withdraw` } });
+	return json(res, 200, { data: { removed: true, withdraw_url: `/agents/${existing.agent_id}/wallet#withdraw` } });
 }
 
 // ── SSE live action feed ──────────────────────────────────────────────────────

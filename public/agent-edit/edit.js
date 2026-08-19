@@ -1,4 +1,4 @@
-// Agent persona editor — /agent/:id/edit
+// Agent persona editor: /agents/:id/edit
 // Native DOM, no framework.
 
 const agentId = location.pathname.split('/').filter(Boolean)[1];
@@ -63,7 +63,7 @@ async function main() {
 	document.getElementById('layout').style.display = '';
 	document.getElementById('header-title').textContent = `Edit — ${agent.name}`;
 	const viewLink = document.getElementById('view-link');
-	viewLink.href = `/agent/${agentId}`;
+	viewLink.href = `/agents/${agentId}`;
 
 	loadPreview();
 	renderTemplates();
@@ -84,7 +84,7 @@ function showForbidden() {
 function loadPreview() {
 	const frame = document.getElementById('preview-frame');
 	const loading = document.getElementById('preview-loading');
-	frame.src = `/agent/${agentId}/embed`;
+	frame.src = `/agents/${agentId}/embed`;
 	frame.addEventListener(
 		'load',
 		() => {
@@ -100,7 +100,7 @@ function reloadPreview() {
 	const loading = document.getElementById('preview-loading');
 	frame.style.display = 'none';
 	loading.style.display = 'grid';
-	frame.src = `/agent/${agentId}/embed?_t=${Date.now()}`;
+	frame.src = `/agents/${agentId}/embed?_t=${Date.now()}`;
 	frame.addEventListener(
 		'load',
 		() => {

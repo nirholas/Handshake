@@ -1,5 +1,5 @@
 /**
- * Hub actions row for the /agent/:id page.
+ * Hub actions row for the /agents/:id page.
  * Renders four CTAs (Customize, Embed, Deploy on-chain, Edit avatar)
  * into the agent-home-panel, above the timeline.
  *
@@ -118,9 +118,9 @@ export function renderHubActions(panel, identity, rawAgent) {
 		});
 	}
 
-	// Edit avatar → /agent/:id/edit
+	// Edit avatar → /agents/:id/edit
 	row.querySelector('#hub-edit').addEventListener('click', () => {
-		location.href = `/agent/${agentId}/edit`;
+		location.href = `/agents/${agentId}/edit`;
 	});
 
 	// Insert above the timeline (but below identity card + skills)

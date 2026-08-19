@@ -383,7 +383,7 @@ export function renderCard({
 	<!-- footer -->
 	<rect x="0" y="588" width="1200" height="42" fill="#040408"/>
 	<text x="440" y="615" font-family="Inter,system-ui,sans-serif" font-size="13" font-weight="600" fill="#5b5470">Tip it · Fork it · own its wallet</text>
-	<text x="1176" y="615" font-family="Inter,system-ui,sans-serif" font-size="13" fill="#5b5470" text-anchor="end">three.ws/agent/${x(id)}</text>
+	<text x="1176" y="615" font-family="Inter,system-ui,sans-serif" font-size="13" fill="#5b5470" text-anchor="end">three.ws/agents/${x(id)}</text>
 </svg>`;
 }
 

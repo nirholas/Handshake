@@ -674,8 +674,8 @@ function renderReveal(name) {
 	wallets.appendChild(walletRow('Solana', agent.solana_address));
 	wallets.appendChild(walletRow('EVM · Base', agent.wallet_address));
 
-	$('#gx-cta-fund').href = `/agent/${agent.id}/wallet#deposit`;
-	$('#gx-cta-open').href = agent.home_url || `/agent/${agent.id}`;
+	$('#gx-cta-fund').href = `/agents/${agent.id}/wallet#deposit`;
+	$('#gx-cta-open').href = agent.home_url || `/agents/${agent.id}`;
 	$('#gx-cta-share').href = `/api/agent-share?id=${encodeURIComponent(agent.id)}`;
 
 	renderIdentity();

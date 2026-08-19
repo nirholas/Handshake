@@ -150,7 +150,7 @@ function agentRow(agent, maxWeight) {
 	const weight = Number(agent.epoch_weight) || 0;
 	const bar = maxWeight > 0 ? Math.max(2, Math.round((weight / maxWeight) * 100)) : 0;
 	const label = agent.name
-		? `<a class="rsm-agent-name" href="/agent/${encodeURIComponent(agent.agent_id)}">${esc(agent.name)}</a>`
+		? `<a class="rsm-agent-name" href="/agents/${encodeURIComponent(agent.agent_id)}">${esc(agent.name)}</a>`
 		: '<span class="rsm-agent-name">Unnamed agent</span>';
 	const apr = Number(agent.realized_apr) || 0;
 	return `
@@ -262,7 +262,7 @@ function positionCard(p) {
 	const chip = p.status === 'open' ? 'open' : p.status === 'settling' ? 'settling' : 'closed';
 	const earnings = BigInt(p.earnings_lamports);
 	const label = p.name
-		? `<a href="/agent/${encodeURIComponent(p.agent_id)}">${esc(p.name)}</a>`
+		? `<a href="/agents/${encodeURIComponent(p.agent_id)}">${esc(p.name)}</a>`
 		: esc(short(p.agent_asset));
 	return `
 		<article class="rsm-card">

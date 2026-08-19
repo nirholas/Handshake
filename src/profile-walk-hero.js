@@ -7,7 +7,7 @@
 //
 //   • "Say hi"      → opens the owner's REAL chat surface. We never invent an
 //                     endpoint: the avatar page (/avatars/:id?view=chat) hosts a
-//                     live LLM chat tab, and the agent detail page (/agent/:id)
+//                     live LLM chat tab, and the agent detail page (/agents/:id)
 //                     hosts the live "try it" chat preview. We prefer the avatar
 //                     chat (it's the thing rendered in the hero), then fall back
 //                     to the agent chat.
@@ -321,11 +321,11 @@ function resolveEmbodiment({ avatars = [], agents = [] }) {
 }
 
 // The REAL chat surface for this owner. Avatars carry a live LLM chat tab at
-// /avatars/:id?view=chat; agents carry the live chat preview at /agent/:id.
+// /avatars/:id?view=chat; agents carry the live chat preview at /agents/:id.
 function chatHref(embodiment) {
 	if (embodiment.kind === 'avatar')
 		return `/avatars/${encodeURIComponent(embodiment.id)}?view=chat`;
-	return `/agent/${encodeURIComponent(embodiment.id)}#chat`;
+	return `/agents/${encodeURIComponent(embodiment.id)}#chat`;
 }
 
 // The full walk experience for this same body. /walk/app accepts ?avatar= or

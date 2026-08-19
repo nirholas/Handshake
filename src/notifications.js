@@ -191,7 +191,7 @@ export function notifLink(n) {
 	const p = n.payload || {};
 	const raw = p.link
 		|| (p.tx_signature ? `https://solscan.io/tx/${encodeURIComponent(p.tx_signature)}` : null)
-		|| (p.agent_id ? `/agent/${encodeURIComponent(p.agent_id)}` : null);
+		|| (p.agent_id ? `/agents/${encodeURIComponent(p.agent_id)}` : null);
 	return safeNavUrl(raw);
 }
 

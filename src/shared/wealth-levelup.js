@@ -286,7 +286,7 @@ function render(detail) {
 			</div>
 			<div class="wlu-actions">
 				<button class="wlu-btn primary" type="button" data-share>Share</button>
-				<a class="wlu-btn ghost" data-wallet href="/agent/${encodeURIComponent(agentId)}/wallet">View wallet</a>
+				<a class="wlu-btn ghost" data-wallet href="/agents/${encodeURIComponent(agentId)}/wallet">View wallet</a>
 			</div>
 		</div>`;
 
@@ -362,7 +362,7 @@ function render(detail) {
 }
 
 async function shareLevelUp(agentId, toTier, brief, btn) {
-	const url = `${location.origin}/agent/${encodeURIComponent(agentId)}`;
+	const url = `${location.origin}/agents/${encodeURIComponent(agentId)}`;
 	const who = brief?.name || 'My agent';
 	const text = `${who} just reached ${toTier.label} on @three_ws — its wallet glows brighter the more it earns.`;
 	try {

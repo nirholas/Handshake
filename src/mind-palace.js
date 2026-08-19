@@ -31,7 +31,7 @@
 // GPU. Respects the shared WebGL context budget.
 //
 // Mounted lazily by the Mind tab in src/agent-edit.js, and full-screen by the
-// /agent/:id/mind route (src/agent-mind.js). Both call mountMindPalace().
+// /agents/:id/mind route (src/agent-mind.js). Both call mountMindPalace().
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -1362,7 +1362,7 @@ class MindPalace {
 		const conv = c.conversationId || c.conversation_id || c.threadId;
 		const url = c.url || c.href;
 		const links = [];
-		if (conv) links.push(`<a href="/agent/${esc(this.agentId)}?conversation=${esc(conv)}">the conversation that formed it →</a>`);
+		if (conv) links.push(`<a href="/agents/${esc(this.agentId)}?conversation=${esc(conv)}">the conversation that formed it →</a>`);
 		if (url && /^https?:\/\//.test(url)) links.push(`<a href="${esc(url)}" target="_blank" rel="noopener">source page →</a>`);
 		if (!src && !links.length) return '';
 		return `<h4>Provenance</h4><div class="mp-prov">${src ? `Formed via <b>${esc(src)}</b>. ` : ''}${links.join(' · ')}</div>`;
@@ -1452,10 +1452,10 @@ class MindPalace {
 		if (kind === 'loading') {
 			o.innerHTML = `<div class="mp-orb"></div><h3>Entering the mind…</h3><p>Reading every memory your agent holds.</p>`;
 		} else if (kind === 'empty') {
-			const chatHref = `/agent/${esc(this.agentId)}`;
+			const chatHref = `/agents/${esc(this.agentId)}`;
 			const addCta = this.embedded
 				? `<button class="primary" id="mp-empty-add">Add the first memory</button>`
-				: `<a class="primary" href="/agent/${esc(this.agentId)}/edit?tab=knowledge">Add the first memory</a>`;
+				: `<a class="primary" href="/agents/${esc(this.agentId)}/edit?tab=knowledge">Add the first memory</a>`;
 			o.innerHTML = `<div class="mp-orb" style="opacity:.5"></div>
 				<h3>This mind is a blank canvas</h3>
 				<p>Your agent hasn't formed any memories yet. Talk to it and watch its mind grow — every fact, preference, and lesson becomes an object you can see and shape here.</p>

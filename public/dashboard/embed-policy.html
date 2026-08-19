@@ -290,7 +290,7 @@
 						><input type="checkbox" id="surf-iframe" />
 						<span
 							 data-i18n-html="dashboard_embed_policy.iframe"><strong>iframe</strong> —
-							<code>&lt;iframe src="/agent/:id/embed"&gt;</code></span
+							<code>&lt;iframe src="/agents/:id/embed"&gt;</code></span
 						></label
 					>
 					<label class="check"
@@ -716,7 +716,7 @@
 					await pickAgent();
 					return;
 				}
-				urlEl.textContent = `/agent/${agentId}/embed`;
+				urlEl.textContent = `/agents/${agentId}/embed`;
 				await loadAgent();
 				await loadPolicy();
 			})();

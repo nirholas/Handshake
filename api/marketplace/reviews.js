@@ -192,7 +192,7 @@ async function handleUpsert(req, res, agentId) {
 			agent_id: agentId,
 			agent_name: agent.name || null,
 			rating: parsed.data.rating,
-			link: `/agent/${agentId}`,
+			link: `/agents/${agentId}`,
 		});
 	}
 

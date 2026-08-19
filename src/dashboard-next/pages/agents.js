@@ -714,7 +714,7 @@ function showReputationPanel(card, rep) {
 								.join('')}</div>`
 						: ''
 				}
-				<a href="/agent/${encodeURIComponent(rep.agent_id || '')}/wallet#reputation" style="display:inline-block;margin-top:12px;font-size:12.5px;color:${esc(accent)};text-decoration:none">View full breakdown →</a>`
+				<a href="/agents/${encodeURIComponent(rep.agent_id || '')}/wallet#reputation" style="display:inline-block;margin-top:12px;font-size:12.5px;color:${esc(accent)};text-decoration:none">View full breakdown →</a>`
 					: `<div style="color:var(--nxt-ink-dim);font-size:13px">Trust score unavailable right now.</div>`
 		}
 	`;

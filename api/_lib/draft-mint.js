@@ -158,7 +158,7 @@ function buildDraftAgentCard({ agent, origin, publicUrl, thumbnailUrl }) {
 		name: agent.name || 'Agent',
 		description: agent.description || `${agent.name || 'Agent'}, an autonomous agent on three.ws`,
 		image,
-		url: `${origin}/agent/${agent.id}`,
+		url: `${origin}/agents/${agent.id}`,
 		active: false, // draft identity: registered on-chain, not yet live
 		x402Support: true,
 		services: glb ? [{ name: 'avatar', endpoint: glb, type: 'model/gltf-binary' }] : [],

@@ -112,7 +112,7 @@ export function createPresencePanel({ agentId, onPrefsSaved } = {}) {
 		const tier = data.tier || look.tier || { label: '—', index: 0, accent: '#8b8b9a' };
 		const accent = tier.accent || '#a78bfa';
 		const usd = data.portfolio?.usd ?? 0;
-		const hub = data.hub_url || (agentId ? `/agent/${agentId}/wallet` : null);
+		const hub = data.hub_url || (agentId ? `/agents/${agentId}/wallet` : null);
 		el.style.setProperty('--nw-accent', accent);
 
 		const next = tier.next;

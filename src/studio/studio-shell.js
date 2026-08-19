@@ -203,7 +203,7 @@ class StudioShell {
 							<button type="button" class="studio-btn studio-btn-ghost studio-action" id="studio-save-draft"
 								title="Save your progress now — your agent stays a private draft you can keep editing">Save draft</button>
 							<a class="studio-btn studio-btn-ghost studio-action" id="studio-exit"
-								href="${agent.id ? `/agent/${encodeURIComponent(agent.id)}` : '/'}"
+								href="${agent.id ? `/agents/${encodeURIComponent(agent.id)}` : '/'}"
 								title="Save and view your live agent page">View agent ↗</a>
 						</div>
 					</header>

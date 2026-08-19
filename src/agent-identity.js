@@ -4,7 +4,7 @@
  * Every agent deserves a body, a place, a name, and a history.
  * This module is that. It persists to localStorage + backend,
  * links to an ERC-8004 on-chain presence, and maintains a signed
- * action log — the agent's provenance trail.
+ * action log : the agent's provenance trail.
  *
  * Think of it as the agent's passport + diary.
  */
@@ -17,7 +17,7 @@ const STORAGE_KEY = 'agent_identity';
 // All /api traffic goes through apiFetch (src/api.js): it issues a fresh
 // single-use CSRF token for every mutation, carries the session cookie, and
 // retries transient 5xx on safe methods. We pass allowAnonymous:true on every
-// call — this module routinely runs for signed-out widget visitors, and a 401
+// call : this module routinely runs for signed-out widget visitors, and a 401
 // must surface as "no backend identity", never hijack the page to /login.
 const ANON = { allowAnonymous: true };
 
@@ -26,14 +26,14 @@ const ANON = { allowAnonymous: true };
  * @property {string}   id
  * @property {string}   name
  * @property {string}   [description]
- * @property {string}   [avatarId]      — R2 avatar UUID
- * @property {string}   [homeUrl]       — /agent/:id
+ * @property {string}   [avatarId]      : R2 avatar UUID
+ * @property {string}   [homeUrl]       : /agents/:id
  * @property {string}   [walletAddress]
  * @property {number}   [chainId]
- * @property {string[]} skills          — enabled skill names
+ * @property {string[]} skills          : enabled skill names
  * @property {Object}   meta
  * @property {number}   createdAt
- * @property {boolean}  isRegistered    — ERC-8004 on-chain
+ * @property {boolean}  isRegistered    : ERC-8004 on-chain
  */
 
 export class AgentIdentity {
@@ -76,7 +76,7 @@ export class AgentIdentity {
 		return this._record?.avatarId || null;
 	}
 	get homeUrl() {
-		return this._record?.homeUrl || (this.id ? `/agent/${this.id}` : null);
+		return this._record?.homeUrl || (this.id ? `/agents/${this.id}` : null);
 	}
 	get walletAddress() {
 		return this._record?.walletAddress || null;
@@ -158,7 +158,7 @@ export class AgentIdentity {
 	 * Studio store, which needs optimistic updates + rollback + updated_at conflict
 	 * reconciliation that `save()` can't express) keep this identity + its
 	 * localStorage cache coherent with what the server stored. Returns the record.
-	 * @param {Object} apiRecord — a decorated agent record from /api/agents/:id
+	 * @param {Object} apiRecord : a decorated agent record from /api/agents/:id
 	 */
 	applyServerRecord(apiRecord) {
 		if (!apiRecord) return this._record;
@@ -196,12 +196,12 @@ export class AgentIdentity {
 
 	/**
 	 * Append an action to the agent's signed history.
-	 * Fire-and-forget — never blocks the caller.
+	 * Fire-and-forget : never blocks the caller.
 	 * @param {import('./agent-protocol.js').ActionPayload} action
 	 */
 	async recordAction(action) {
-		if (!this._backendConfirmed) return; // no session — skip to avoid 401 noise
-		if (!this._owned) return; // viewing someone else's agent — backend would 403
+		if (!this._backendConfirmed) return; // no session : skip to avoid 401 noise
+		if (!this._owned) return; // viewing someone else's agent : backend would 403
 		try {
 			await apiFetch('/api/agent-actions', {
 				method: 'POST',
@@ -214,7 +214,7 @@ export class AgentIdentity {
 					source_skill: action.sourceSkill || null,
 				}),
 			});
-		} catch {} // non-critical — fire-and-forget
+		} catch {} // non-critical : fire-and-forget
 	}
 
 	/**
@@ -223,7 +223,7 @@ export class AgentIdentity {
 	 * @returns {Promise<Object[]>}
 	 */
 	async getActionHistory({ limit = 50, cursor } = {}) {
-		if (!this._owned) return []; // action log is owner-only — backend returns 403 otherwise
+		if (!this._owned) return []; // action log is owner-only : backend returns 403 otherwise
 		try {
 			const params = new URLSearchParams({ agent_id: this.id, limit: String(limit) });
 			if (cursor) params.set('cursor', cursor);
@@ -299,14 +299,14 @@ export class AgentIdentity {
 
 			if (resp.ok) {
 				const { agent } = await resp.json();
-				// Server returns { agent: null } for anonymous /me — treat as
+				// Server returns { agent: null } for anonymous /me : treat as
 				// "no server identity" and fall through to local-only.
 				if (agent) {
 					this._record = _normalise(agent);
 					this._agentId = this._record.id;
 					this._loaded = true;
 					this._backendConfirmed = true;
-					// `/api/agents/:id` is a public read — it confirms the agent
+					// `/api/agents/:id` is a public read : it confirms the agent
 					// EXISTS, not that we own it. Owner-only fields (is_owner) tell
 					// us whether the signed-in session may write to its action log.
 					this._owned = agent.is_owner === true;
@@ -314,7 +314,7 @@ export class AgentIdentity {
 					if (!this.memory) {
 						this.memory = new AgentMemory(this._record.id, { backendSync: true, embedFn: _makeEmbedFn(this._record.id) });
 					} else {
-						// Agent confirmed in backend — enable sync and pull latest
+						// Agent confirmed in backend : enable sync and pull latest
 						this.memory.backendSync = true;
 						this.memory._syncFromBackend();
 					}
@@ -333,7 +333,7 @@ export class AgentIdentity {
 				this.memory = new AgentMemory(this._agentId, { backendSync: false, embedFn: _makeEmbedFn(this._agentId) });
 			}
 		} catch {
-			// Offline — use local record if we have one
+			// Offline : use local record if we have one
 			if (!this._record) {
 				this._record = _makeDefault(this._agentId);
 				this._agentId = this._record.id;
@@ -394,7 +394,7 @@ function _makeEmbedFn(agentId) {
 		// The endpoint serves a free-first provider chain, so the model can
 		// differ between calls (NIM up vs. fallen back to Voyage). Pass the
 		// model through: AgentMemory only cosine-compares vectors from the
-		// same model — different models are different vector spaces.
+		// same model : different models are different vector spaces.
 		const { embedding, model } = await resp.json();
 		return { vector: embedding, model: model || null };
 	};
@@ -431,14 +431,14 @@ function _normalise(apiRecord) {
 		name: apiRecord.name || 'Agent',
 		description: apiRecord.description || '',
 		avatarId: apiRecord.avatar_id || apiRecord.avatarId || null,
-		homeUrl: apiRecord.home_url || apiRecord.homeUrl || `/agent/${apiRecord.id}`,
+		homeUrl: apiRecord.home_url || apiRecord.homeUrl || `/agents/${apiRecord.id}`,
 		walletAddress: apiRecord.wallet_address || apiRecord.walletAddress || null,
 		chainId: apiRecord.chain_id || apiRecord.chainId || null,
 		skills: apiRecord.skills || [],
 		meta: apiRecord.meta || {},
 		// Carried through for the Agent Studio store (P0): the compiled Brain
 		// persona and the server's authoritative update timestamp (used for
-		// optimistic-write reconciliation). Owner-only on the wire — null for visitors.
+		// optimistic-write reconciliation). Owner-only on the wire : null for visitors.
 		persona_prompt: apiRecord.persona_prompt ?? null,
 		updated_at: apiRecord.updated_at || apiRecord.updatedAt || null,
 		createdAt: apiRecord.created_at
@@ -455,7 +455,7 @@ function _normalise(apiRecord) {
 				apiRecord.meta?.onchain,
 		),
 		// Server decorates owner-only fields (user_id, wallet_address, system_prompt,
-		// etc.) only when the requester owns the agent — see api/agents.js decorate().
+		// etc.) only when the requester owns the agent : see api/agents.js decorate().
 		// Use user_id presence as the canonical owner signal so visitor flows don't
 		// trigger owner-only requests (e.g. /solana, /eth-vanity) and get 401s.
 		isOwner: typeof apiRecord.isOwner === 'boolean'

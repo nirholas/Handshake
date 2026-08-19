@@ -223,7 +223,7 @@ export function hydrateReputationBadges(root) {
 /** Navigate to the agent's wallet hub, reputation tab. */
 export function openReputation(agentId) {
 	if (!agentId || !isBrowser()) return;
-	window.location.assign(`/agent/${encodeURIComponent(agentId)}/wallet#reputation`);
+	window.location.assign(`/agents/${encodeURIComponent(agentId)}/wallet#reputation`);
 }
 
 // ── full breakdown panel (HUD tab) ───────────────────────────────────────────

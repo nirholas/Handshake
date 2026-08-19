@@ -999,7 +999,7 @@
 						<div class="assigned-ok">
 							✦ Assigned to <strong>${esc(agentName)}</strong>.
 							The agent can now sign Solana transactions with <code style="font-family:ui-monospace,monospace">${esc(prefix || addr.slice(0, 4))}…${esc(suffix || addr.slice(-4))}</code>.
-							<a href="/agent/${esc(sel.value)}" style="color:inherit;text-decoration:underline">Open agent →</a>
+							<a href="/agents/${esc(sel.value)}" style="color:inherit;text-decoration:underline">Open agent →</a>
 						</div>`;
 				} catch (e) {
 					status.innerHTML = `<span style="color:var(--bad-fg)">Network error: ${esc(e.message)}</span>`;

@@ -132,7 +132,7 @@ const STATE = {
 					: { id: null, name: 'Your agent' },
 				onShare() {
 					if (newestAgent?.id) {
-						navigator.clipboard?.writeText(`${location.origin}/agent/${newestAgent.id}`).catch(() => {});
+						navigator.clipboard?.writeText(`${location.origin}/agents/${newestAgent.id}`).catch(() => {});
 					}
 				},
 				onContinue() {},

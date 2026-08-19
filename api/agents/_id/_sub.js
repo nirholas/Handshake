@@ -439,7 +439,7 @@ export const handleManifest = wrap(async (req, res, id) => {
 		tags: Array.isArray(row.meta?.tags) ? row.meta.tags : [],
 		body: bodyUri ? { uri: bodyUri, format: row.content_type || 'gltf-binary' } : undefined,
 		skills: Array.isArray(row.skills) ? row.skills : [],
-		homeUrl: `${origin}/agent/${row.id}`,
+		homeUrl: `${origin}/agents/${row.id}`,
 		registrations:
 			row.chain_id && row.erc8004_agent_id
 				? [
@@ -530,7 +530,7 @@ export const handleRegistration = wrap(async (req, res, id) => {
 		image,
 		modelUri,
 		modelFormat: row.content_type || 'gltf-binary',
-		agentUrl: `${origin}/agent/${row.id}`,
+		agentUrl: `${origin}/agents/${row.id}`,
 		origin,
 		skills: Array.isArray(row.skills) ? row.skills : [],
 		erc8004:

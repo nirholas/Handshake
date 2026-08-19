@@ -635,7 +635,7 @@ function renderPricing(a) {
 let pricingDeepLinkHandled = false;
 
 /**
- * Honour `/agent/:id?skill=<name>#pricing`, the link every conversion surface
+ * Honour `/agents/:id?skill=<name>#pricing`, the link every conversion surface
  * (notably the Buy CTA on /conversions) sends a buyer here with. Without it the
  * buyer lands at the top of an agent selling a dozen skills and has to find the
  * one their trial just ran out on.
@@ -913,7 +913,7 @@ export function renderEmbed(a) {
 	const agentId = a.id;
 	const glbUrl = a.avatar_glb_url || '';
 	const embedPageUrl = `${location.origin}/agents/${agentId}`;
-	const iframeSrc = `/agent/${agentId}/embed`;
+	const iframeSrc = `/agents/${agentId}/embed`;
 
 	const wcSnippet = glbUrl
 		? `<script type="module" src="https://three.ws/dist-lib/agent-3d.js"><\/script>\n<agent-3d\n  src="${glbUrl}"\n  agent-id="${agentId}"\n  style="width:480px;height:480px"\n></agent-3d>`

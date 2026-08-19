@@ -277,7 +277,7 @@ function notifyFrozen({ agentId, userId, category, usdValue, summary, score, fac
 	if (!userId) return;
 	insertNotification(userId, 'wallet_anomaly_frozen', {
 		agent_id: agentId,
-		link: `/agent/${encodeURIComponent(agentId)}/wallet#guard`,
+		link: `/agents/${encodeURIComponent(agentId)}/wallet#guard`,
 		category,
 		usd: usdValue ?? null,
 		score,

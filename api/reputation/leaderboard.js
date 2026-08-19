@@ -112,8 +112,8 @@ export default wrap(async (req, res) => {
 				tier: rep.tier,
 				tier_label: rep.tierLabel,
 				totals: rep.totals,
-				agent_url: `https://three.ws/agent/${encodeURIComponent(id)}`,
-				breakdown_url: `https://three.ws/agent/${encodeURIComponent(id)}/wallet#reputation`,
+				agent_url: `https://three.ws/agents/${encodeURIComponent(id)}`,
+				breakdown_url: `https://three.ws/agents/${encodeURIComponent(id)}/wallet#reputation`,
 			};
 		});
 

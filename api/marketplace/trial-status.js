@@ -239,7 +239,7 @@ export async function sellerView(userId) {
 			// The agent editor's monetization panel is where skill prices and trial
 			// grants are actually set. The old `/dashboard-next/agent` target was a
 			// 404 on every seller row on the page.
-			pricingUrl: `/agent/${r.agent_id}/edit?tab=monetization`,
+			pricingUrl: `/agents/${r.agent_id}/edit?tab=monetization`,
 		};
 	});
 

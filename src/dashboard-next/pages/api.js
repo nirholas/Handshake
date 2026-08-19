@@ -1108,7 +1108,7 @@ function embedIframeSrc(sel, opts) {
 	const base = sel.kind === 'widget'
 		? `${o}/widget/${encodeURIComponent(sel.id)}`
 		: sel.agentId
-			? `${o}/agent/${encodeURIComponent(sel.agentId)}/embed`
+			? `${o}/agents/${encodeURIComponent(sel.agentId)}/embed`
 			: `${o}/a/${encodeURIComponent(sel.id)}`;
 	const params = new URLSearchParams();
 	if (opts.background) params.set('bg', opts.background);

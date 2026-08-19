@@ -159,7 +159,7 @@ function renderPanel(data, { name, network }) {
 
 function incomeRow(p, network) {
 	const net = p.network || network;
-	const who = p.fork_agent_id ? `<a href="/agent/${esc(p.fork_agent_id)}" class="twr-link">a fork</a>` : 'a fork';
+	const who = p.fork_agent_id ? `<a href="/agents/${esc(p.fork_agent_id)}" class="twr-link">a fork</a>` : 'a fork';
 	return `<div class="twr-row twr-row--in">
 		<span class="twr-row-amt">+${esc(sol(p.amount_sol))}</span>
 		<span class="twr-row-mid">from ${who} · ${esc(p.source_kind)} · gen ${p.depth} · ${esc(pct(p.bps))}</span>
@@ -170,7 +170,7 @@ function incomeRow(p, network) {
 function paidRow(p, network) {
 	const net = p.network || network;
 	const dest = p.rerouted ? 'platform treasury (ancestor unavailable)'
-		: (p.recipient_wallet ? `<a href="/agent/${esc(p.ancestor_agent_id)}" class="twr-link">${esc(shortAddr(p.recipient_wallet))}</a>` : 'creator');
+		: (p.recipient_wallet ? `<a href="/agents/${esc(p.ancestor_agent_id)}" class="twr-link">${esc(shortAddr(p.recipient_wallet))}</a>` : 'creator');
 	const badge = p.status === 'failed' ? `<span class="twr-pending twr-fail">failed</span>`
 		: p.status === 'pending' ? `<span class="twr-pending">pending</span>`
 		: (p.signature ? `<a class="twr-tx" href="${esc(explorer(p.signature, net))}" target="_blank" rel="noopener">tx ↗</a>` : '');

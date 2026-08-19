@@ -8,7 +8,7 @@
 //
 // Usage:
 //   import { pingIndexNow } from '../_lib/indexnow.js';
-//   await pingIndexNow([`https://three.ws/agent/${agentId}`]);
+//   await pingIndexNow([`https://three.ws/agents/${agentId}`]);
 //
 // Fire-and-forget — IndexNow is best-effort and must never block the
 // user-facing response that triggered it.

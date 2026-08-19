@@ -61,7 +61,7 @@ async function resolveIdentity() {
 			const mod = await import('./agents/active-agent.js');
 			const agent = await mod.getActiveAgent();
 			if (agent && agent.name) {
-				return { name: agent.name, guest: false, href: agent.id ? `/agent/${agent.id}` : '/dashboard' };
+				return { name: agent.name, guest: false, href: agent.id ? `/agents/${agent.id}` : '/dashboard' };
 			}
 		} catch {
 			/* fall through to the hint-name below */

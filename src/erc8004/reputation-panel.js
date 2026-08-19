@@ -150,7 +150,7 @@ export class ReputationPanel {
 			: this._viewer
 				? `<span class="agent-reputation__hint">Owners can't vouch for their own agent.</span>`
 				: `<span class="agent-reputation__hint">
-					 <a href="/login?next=${encodeURIComponent(`/agent/${this._agent.id}`)}">Sign in</a>
+					 <a href="/login?next=${encodeURIComponent(`/agents/${this._agent.id}`)}">Sign in</a>
 					 to vouch for this agent.
 				   </span>`;
 

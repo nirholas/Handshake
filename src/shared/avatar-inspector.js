@@ -511,7 +511,7 @@ async function renderAbout(root, subject, { agentId }) {
 			body.innerHTML =
 				(agent?.description ? `<p class="avi-bio">${esc(agent.description)}</p>` : '') +
 				factRows([
-					{ label: 'Agent', value: agent?.name || agentId.slice(0, 8), href: `/agent/${encodeURIComponent(agentId)}` },
+					{ label: 'Agent', value: agent?.name || agentId.slice(0, 8), href: `/agents/${encodeURIComponent(agentId)}` },
 					...(agent?.author_name ? [{ label: 'Creator', value: agent.author_name }] : []),
 					...(agent?.erc8004_agent_id ? [{ label: 'ERC-8004', value: `#${agent.erc8004_agent_id} on-chain` }] : []),
 					...baseFacts,
@@ -528,7 +528,7 @@ async function renderAbout(root, subject, { agentId }) {
 				const nameEl = root.querySelector('.avi-name');
 				// Peer nickname stays primary; the agent name rides underneath.
 				if (nameEl && agent.name !== nameEl.textContent) {
-					nameEl.insertAdjacentHTML('afterend', `<div class="avi-subname">pilots <a href="/agent/${encodeURIComponent(agentId)}">${esc(agent.name)}</a></div>`);
+					nameEl.insertAdjacentHTML('afterend', `<div class="avi-subname">pilots <a href="/agents/${encodeURIComponent(agentId)}">${esc(agent.name)}</a></div>`);
 				}
 			}
 		} catch (err) {
@@ -693,12 +693,12 @@ function renderFooter(root, { agentId, wallet, username, actions }) {
 		// A verified platform account leads with its real profile page; the agent
 		// profile (when also present) steps back to a ghost link.
 		links.push(`<a class="avi-cta${hasActions ? ' avi-cta-ghost' : ''}" href="/u/${encodeURIComponent(username)}">View profile</a>`);
-		if (agentId) links.push(`<a class="avi-cta avi-cta-ghost" href="/agent/${encodeURIComponent(agentId)}">Agent profile</a>`);
+		if (agentId) links.push(`<a class="avi-cta avi-cta-ghost" href="/agents/${encodeURIComponent(agentId)}">Agent profile</a>`);
 	} else if (agentId) {
 		// When a world action (Talk 1-on-1) leads the footer, the links step back
 		// to ghost style and the wallet hub folds into the full profile page.
-		links.push(`<a class="avi-cta${hasActions ? ' avi-cta-ghost' : ''}" href="/agent/${encodeURIComponent(agentId)}">Full profile</a>`);
-		if (!hasActions) links.push(`<a class="avi-cta avi-cta-ghost" href="/agent/${encodeURIComponent(agentId)}/wallet">Wallet hub</a>`);
+		links.push(`<a class="avi-cta${hasActions ? ' avi-cta-ghost' : ''}" href="/agents/${encodeURIComponent(agentId)}">Full profile</a>`);
+		if (!hasActions) links.push(`<a class="avi-cta avi-cta-ghost" href="/agents/${encodeURIComponent(agentId)}/wallet">Wallet hub</a>`);
 	} else if (wallet) {
 		links.push(`<a class="avi-cta avi-cta-ghost" href="${esc(explorerAddr(wallet))}" target="_blank" rel="noopener noreferrer">View on explorer</a>`);
 	}

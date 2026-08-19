@@ -4,10 +4,10 @@ import { track, trackError, ANALYTICS_EVENTS } from './analytics.js';
  * Embed modal for the agent hub page.
  *
  * Offers four embed kinds, all generating real, copy-pasteable snippets:
- *   • iframe         — chat-style embed (/agent/:id/embed)
- *   • <agent-3d>     — web component wrapper
- *   • SDK            — iframe + Agent3D bridge for programmatic control
- *   • walking        — a live, walking 3D avatar of THIS agent
+ *   • iframe         : chat-style embed (/agents/:id/embed)
+ *   • <agent-3d>     : web component wrapper
+ *   • SDK            : iframe + Agent3D bridge for programmatic control
+ *   • walking        : a live, walking 3D avatar of THIS agent
  *                      (/walk-embed?agent=:id) with joystick/keyboard controls,
  *                      a selectable environment, autoplay, and a background.
  *
@@ -190,7 +190,7 @@ export class AgentEmbedModal {
 		this._onKey = this._onKey.bind(this);
 		this._w = 420;
 		this._h = 520;
-		// Which snippet kinds we've already reported for this agent — instance-level
+		// Which snippet kinds we've already reported for this agent : instance-level
 		// so closing and reopening the modal doesn't re-fire EMBED_GENERATED.
 		this._embeddedKinds = new Set();
 		// Walking-mode options, mutated live by the option controls.
@@ -235,7 +235,7 @@ export class AgentEmbedModal {
 		return {
 			iframe:
 				`<iframe\n` +
-				`  src="${origin}/agent/${id}/embed"\n` +
+				`  src="${origin}/agents/${id}/embed"\n` +
 				`  width="${w}" height="${h}"\n` +
 				`  title="three.ws agent"\n` +
 				`  style="border:0;border-radius:12px"\n` +
@@ -255,7 +255,7 @@ export class AgentEmbedModal {
 				`<script src="${origin}/embed-sdk.js"><\/script>\n` +
 				`<iframe\n` +
 				`  id="agent-frame"\n` +
-				`  src="${origin}/agent/${id}/embed"\n` +
+				`  src="${origin}/agents/${id}/embed"\n` +
 				`  width="${w}" height="${h}"\n` +
 				`  title="three.ws agent"\n` +
 				`  style="border:0;border-radius:12px"\n` +
@@ -378,7 +378,7 @@ export class AgentEmbedModal {
 						<pre class="aem-snippet" id="aem-snippet-text"></pre>
 						<button class="aem-copy" id="aem-copy-btn">copy</button>
 					</div>
-					<p class="aem-note" id="aem-note">Free to embed — no wallet or on-chain deployment required.</p>
+					<p class="aem-note" id="aem-note">Free to embed : no wallet or on-chain deployment required.</p>
 				</div>
 			</div>
 		`;
@@ -427,7 +427,7 @@ export class AgentEmbedModal {
 			noteEl.textContent =
 				current === 'walking'
 					? 'Drops a live, walking 3D avatar of this agent on any site. Free to embed.'
-					: 'Free to embed — no wallet or on-chain deployment required.';
+					: 'Free to embed : no wallet or on-chain deployment required.';
 		};
 
 		const setActiveTab = (kind) => {

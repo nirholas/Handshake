@@ -218,7 +218,7 @@ async function loadAgent(id) {
 	try { localStorage.setItem(LS_KEY, agent.id); } catch { /* ignore */ }
 	dom.agentName.textContent = agent.name || 'Agent';
 	dom.agentRole.textContent = agent.is_owner ? 'Your alpha co-pilot' : 'Alpha co-pilot · public read';
-	dom.agentLink.href = agent.home_url || `/agent/${agent.id}`;
+	dom.agentLink.href = agent.home_url || `/agents/${agent.id}`;
 	dom.agentLink.hidden = false;
 	ensureCardFor(agent);
 	markActiveCard(agent.id);
@@ -660,7 +660,7 @@ function openActDrawer(data) {
 					<p>Bought into ${sym} for ${fmtSol(spent)}.</p>
 					${sig2 ? `<a class="ac-btn ac-btn-ghost" href="${esc(res.explorer || explorerTxUrl(sig2))}" target="_blank" rel="noopener">View transaction</a>` : ''}
 					${res?.new_balance_sol != null ? `<p class="ac-act-fine">Wallet now ${fmtSol(res.new_balance_sol)}.</p>` : ''}
-					<a class="ac-act-audit" href="/agent/${esc(state.agent.id)}" target="_blank" rel="noopener">See it in the custody trail →</a>
+					<a class="ac-act-audit" href="/agents/${esc(state.agent.id)}" target="_blank" rel="noopener">See it in the custody trail →</a>
 				</div>`;
 		} catch (e) {
 			const msg = e instanceof TradeError ? e.message : (e?.message || 'Trade failed.');

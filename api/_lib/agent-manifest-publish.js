@@ -100,7 +100,7 @@ export async function buildLiveAgentManifest(agentId) {
 			row.chain_id && row.erc8004_agent_id
 				? { chainId: row.chain_id, registry: row.erc8004_registry, agentId: row.erc8004_agent_id }
 				: null,
-		homeUrl: `${appOrigin()}/agent/${row.id}`,
+		homeUrl: `${appOrigin()}/agents/${row.id}`,
 		createdAt: row.created_at ? new Date(row.created_at).toISOString() : null,
 		updatedAt: row.persona_updated_at ? new Date(row.persona_updated_at).toISOString() : null,
 	});

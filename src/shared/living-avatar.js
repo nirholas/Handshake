@@ -90,7 +90,7 @@ export function resolveLivingAvatar(agent, opts = {}) {
 		return {
 			agentId: id, address: null, name, avatarUrl: null,
 			prefix: null, suffix: null, isVanity: false, rarity: null,
-			explorerUrl: null, hubUrl: id ? `/agent/${id}/wallet` : null,
+			explorerUrl: null, hubUrl: id ? `/agents/${id}/wallet` : null,
 			ownerName: null, isOwner: !!opts.isOwner, hasWallet: false,
 			tier: tier?.key || null, tierLabel: tier?.label || null, level: tier?.level ?? null,
 			accent: visual?.accent || 'var(--wallet-accent,#c4b5fd)',

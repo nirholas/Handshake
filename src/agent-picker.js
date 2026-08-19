@@ -502,7 +502,7 @@ export class AgentPicker {
 
 		// Profile link
 		this._els.previewProfile.hidden = false;
-		this._els.previewProfile.href = a.home_url || `/agent/${a.id}`;
+		this._els.previewProfile.href = a.home_url || `/agents/${a.id}`;
 
 		// CTA
 		this._els.cta.disabled = false;

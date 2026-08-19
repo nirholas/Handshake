@@ -170,7 +170,7 @@ function wireStepButtons() {
 			return;
 		}
 		if (state.agent) {
-			window.location.href = `/agent/${state.agent.id}`;
+			window.location.href = `/agents/${state.agent.id}`;
 		}
 	});
 	document.getElementById('done-dashboard').addEventListener('click', () => {

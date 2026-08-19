@@ -13,7 +13,7 @@
  * shell never hardcodes a tab list and a surface is a single-file change.
  *
  * Reachable from the agent profile and the create-agent success screen as
- * `/agent/:id/wallet` (or `?id=`). Owner sees management tabs; a visitor gets a
+ * `/agents/:id/wallet` (or `?id=`). Owner sees management tabs; a visitor gets a
  * read-only view (Balance + Deposit only).
  */
 
@@ -190,7 +190,7 @@ export function mountAgentWalletHub({ mount, agent, initialTab, onNetworkChange 
 		(tabs[0]?.id ?? null);
 
 	const ready = !!(agent.walletReady ?? agent.wallet_ready);
-	const profileUrl = agent.home_url || `/agent/${agent.id}`;
+	const profileUrl = agent.home_url || `/agents/${agent.id}`;
 
 	mount.innerHTML = `
 		<section class="awh" aria-label="Agent wallet">

@@ -204,7 +204,7 @@ async function loadWallet(agentId) {
 	const bal = $('#walletBal');
 	pill.hidden = false;
 	pill.classList.remove('low');
-	$('#walletFund').href = `/agent/${encodeURIComponent(agentId)}/wallet#deposit`;
+	$('#walletFund').href = `/agents/${encodeURIComponent(agentId)}/wallet#deposit`;
 	$('#walletRun').textContent = '';
 	bal.classList.add('sk'); bal.textContent = '0.00◎';
 	state.wallet = null;

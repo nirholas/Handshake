@@ -289,9 +289,9 @@
 			document.title = `${name} deployed · three.ws`;
 
 			// CTA links
-			document.getElementById('btnView').href = `/agent/${encodeURIComponent(agentId)}`;
+			document.getElementById('btnView').href = `/agents/${encodeURIComponent(agentId)}`;
 			document.getElementById('btnShare').addEventListener('click', () => {
-				const url  = `https://three.ws/agent/${encodeURIComponent(agentId)}`;
+				const url  = `https://three.ws/agents/${encodeURIComponent(agentId)}`;
 				const text = `Just deployed my 3D AI Agent on-chain.\n\n${name} is live on ${chainDisplayName(chain)}.\n\n${url}`;
 				if (navigator.share) {
 					navigator.share({ title: `${name} — deployed on three.ws`, text, url }).catch(() => {});

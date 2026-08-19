@@ -824,7 +824,7 @@ function openLaunch({ identity, agentId, avatarId, formData }) {
 					setTimeout(() => {
 						close();
 						if (resolvedAgentId) {
-							window.location.href = `/agent/${resolvedAgentId}`;
+							window.location.href = `/agents/${resolvedAgentId}`;
 						} else {
 							window.location.reload();
 						}

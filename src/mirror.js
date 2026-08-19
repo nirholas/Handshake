@@ -32,7 +32,7 @@ function leaderRow(l) {
 		<div class="mp-rank ${l.rank <= 3 ? 'top' : ''}">#${l.rank}</div>
 		${l.avatar ? `<img class="mp-av" src="${esc(l.avatar)}" alt="" loading="lazy">` : '<div class="mp-av"></div>'}
 		<div class="mp-lbody">
-			<div class="mp-lname"><a href="/agent/${esc(l.agent_id)}">${esc(l.name || short(l.agent_id))}</a></div>
+			<div class="mp-lname"><a href="/agents/${esc(l.agent_id)}">${esc(l.name || short(l.agent_id))}</a></div>
 			<div class="mp-lstats">${stats}</div>
 		</div>
 		<button class="mp-mirror-btn" data-id="${esc(l.agent_id)}" data-name="${esc(l.name || '')}">Mirror</button>
@@ -132,7 +132,7 @@ async function loadMine() {
 		// every other surface uses) so the wallet reads identically here and links to
 		// the HUD; these cards are already filtered to agents that have a wallet.
 		const chip = walletChipHTML(a, { isOwner: true, showPending: false, link: true, tip: false });
-		head.innerHTML = `${a.avatar_url || a.profile_image_url ? `<img loading="lazy" decoding="async" class="mp-av" src="${esc(a.avatar_url || a.profile_image_url)}" alt="">` : '<div class="mp-av"></div>'}<div class="mp-lname"><a href="/agent/${esc(a.id)}">${esc(a.name || short(a.id))}</a>${chip ? `<div class="mp-agent-chip">${chip}</div>` : ''}</div>`;
+		head.innerHTML = `${a.avatar_url || a.profile_image_url ? `<img loading="lazy" decoding="async" class="mp-av" src="${esc(a.avatar_url || a.profile_image_url)}" alt="">` : '<div class="mp-av"></div>'}<div class="mp-lname"><a href="/agents/${esc(a.id)}">${esc(a.name || short(a.id))}</a>${chip ? `<div class="mp-agent-chip">${chip}</div>` : ''}</div>`;
 		const panelMount = document.createElement('div');
 		card.appendChild(head);
 		card.appendChild(panelMount);

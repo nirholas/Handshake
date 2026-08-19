@@ -1048,7 +1048,7 @@ async function handleBuildMetadata(req, res) {
 	// ── Build metadata JSON via the canonical three.ws brand builder ─────────
 	// This stamps createdOn=https://three.ws plus the Platform/Launchpad
 	// attributes that explorers and launchpad aggregators read for attribution.
-	const agentHomeUrl = body.agent_id ? `${env.APP_ORIGIN}/agent/${body.agent_id}` : undefined;
+	const agentHomeUrl = body.agent_id ? `${env.APP_ORIGIN}/agents/${body.agent_id}` : undefined;
 	const metadata = buildTokenMetadata({
 		name: body.name,
 		symbol: body.symbol,
