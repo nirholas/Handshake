@@ -25,6 +25,18 @@
 .dp-sub { max-width: 640px; margin: 0 auto; color: var(--ink-dim, #999); font-size: var(--text-lg, 1.02rem); line-height: 1.5; }
 .dp-sub strong { color: var(--ink, #e8e8e8); font-weight: 600; }
 
+/* Deploy CTA: the feed's one action, straight to /deploy-onchain. */
+.dp-deploy-cta { margin: var(--space-md, 16px) 0 0; }
+.dp-deploy-cta a {
+  display: inline-block; font-size: var(--text-sm, .85rem); font-weight: 600; text-decoration: none;
+  color: var(--ink-bright, #fff); padding: 9px 20px;
+  border: 1px solid var(--stroke-strong, rgba(255,255,255,.16)); border-radius: var(--radius-pill, 999px);
+  background: var(--surface-2, rgba(255,255,255,.05));
+  transition: border-color .14s ease, background .14s ease;
+}
+.dp-deploy-cta a:hover { border-color: var(--ink-dim, #888); background: var(--surface-3, rgba(255,255,255,.08)); }
+.dp-deploy-cta a:focus-visible { outline: 2px solid var(--accent, #fff); outline-offset: 2px; }
+
 /* Network toggle */
 .dp-net { display: inline-flex; gap: 2px; margin-top: var(--space-md, 16px); padding: 3px; background: var(--surface-1, rgba(255,255,255,.03)); border: 1px solid var(--stroke, rgba(255,255,255,.08)); border-radius: var(--radius-pill, 999px); }
 .dp-net-btn { appearance: none; font: inherit; font-size: var(--text-sm, .8rem); font-weight: 500; cursor: pointer; color: var(--ink-dim, #888); background: transparent; border: none; border-radius: var(--radius-pill, 999px); padding: 6px 16px; transition: color .14s ease, background .14s ease; }
