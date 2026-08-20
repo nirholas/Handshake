@@ -11,7 +11,7 @@ guessing between lookalike mints.
 **What it is not:** a price post. No moon language, no "don't miss out", no predictions, no
 telling anyone to buy. State the verification, state why verification matters, stop.
 
-**Media for every option:** [fomo-verified-x.png](media/fomo-verified-x.png) (2400x1350, 16:9,
+**Media for every option:** [fomo-verified-x.png](../media/fomo-verified-x.png) (2400x1350, 16:9,
 dark mode: $THREE cube mark x fomo mark, "verified" badge). Built from fomo's own 1024px mark and
 `public/brand/three-ws-mark.png` on fomo's `#0B091F` navy.
 
@@ -69,7 +69,7 @@ Pick one. Do not post all three.
 Post this as a reply to whichever option ran, to cap the thread. The graphic carries the
 disclaimer, so the reply text stays short.
 
-**Media:** [fomo-thread-end.png](media/fomo-thread-end.png) (2400x1350, 16:9). Same visual
+**Media:** [fomo-thread-end.png](../media/fomo-thread-end.png) (2400x1350, 16:9). Same visual
 system as the main graphic, "/ end of thread" as the headline, and the fine print baked in:
 the not-financial-advice / do-your-own-research statement plus the full contract address.
 

@@ -1,6 +1,6 @@
 # X posts: community meetup announcement (Friday, August 7)
 
-Post copy for the meetup push on X. The @trythreews posts go out first; personal-account amplification can follow. Posting to X is owner-gated; these are ready-to-paste drafts. Attach [media/meetup-banner-x.png](./media/meetup-banner-x.png) (2400x1350, three.ws branding only) to the main post. The IBM-logo banner ([media/ibm-community-event-banner.png](./media/ibm-community-event-banner.png)) is for the IBM Community listing only; do not use IBM's logo on our own channels.
+Post copy for the meetup push on X. The @trythreews posts go out first; personal-account amplification can follow. Posting to X is owner-gated; these are ready-to-paste drafts. Attach [media/meetup-banner-x.png](../media/meetup-banner-x.png) (2400x1350, three.ws branding only) to the main post. The IBM-logo banner ([media/ibm-community-event-banner.png](../media/ibm-community-event-banner.png)) is for the IBM Community listing only; do not use IBM's logo on our own channels.
 
 ## Main post (@trythreews)
 

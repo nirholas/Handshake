@@ -214,7 +214,7 @@ Per the documentation rules in `CLAUDE.md`, all of these apply and none are opti
 
 ### Phase 5: the X post
 
-Draft lives at [`docs/oracle-trading-mcp-x-post.md`](oracle-trading-mcp-x-post.md). Written before
+Draft lives at [`docs/oracle-trading-mcp-x-post.md`](x-posts/oracle-trading-mcp-x-post.md). Written before
 the work ships so the announcement shapes the scope rather than the reverse: if a claim in that
 post is not true when the phases are done, the phases are not done.
 

@@ -12,7 +12,7 @@ exact permalink from the account's profile before posting; quote-tweet directly 
 rather than typing a URL by hand.
 
 Two accounts, two jobs, same split used for the IBM Community campaign in
-[event-x-posts.md](event-x-posts.md): `@trythreews` posts the institutional version, `@nichxbt`
+[event-x-posts.md](x-posts/event-x-posts.md): `@trythreews` posts the institutional version, `@nichxbt`
 posts the human one. Do not post both within a few minutes of each other.
 
 ---

@@ -10,11 +10,11 @@ before posting; the hourly archiver appends and the count only goes up.
 |---|---|---|
 | Archived articles | 740,889 | `stats.total_articles` |
 | First article | 2017-09-23 (not 2016) | `stats.first_article_date` |
-| Last article | today, refreshed hourly | `stats.last_article_date`, [api/cron/news-archive-append.js](../api/cron/news-archive-append.js) |
+| Last article | today, refreshed hourly | `stats.last_article_date`, [api/cron/news-archive-append.js](../../api/cron/news-archive-append.js) |
 | Months covered | 103 | `months.count` |
 | Languages | English + 中文 | `stats.languages` |
-| Live publisher feeds | 197 | [api/_lib/news-sources.js](../api/_lib/news-sources.js) `NEWS_SOURCES` |
-| Agent memory path | every read story lands in the durable `news_knowledge` corpus that grounds the 3D agents | [api/_lib/news-knowledge-store.js](../api/_lib/news-knowledge-store.js), `GET /api/news/knowledge` |
+| Live publisher feeds | 197 | [api/_lib/news-sources.js](../../api/_lib/news-sources.js) `NEWS_SOURCES` |
+| Agent memory path | every read story lands in the durable `news_knowledge` corpus that grounds the 3D agents | [api/_lib/news-knowledge-store.js](../../api/_lib/news-knowledge-store.js), `GET /api/news/knowledge` |
 
 **Do not say "since 2016."** The corpus starts September 2017. Do not say "every article ever
 published" either: 197 feeds is the live registry, and the archive is enriched (tickers,
@@ -84,4 +84,4 @@ If someone asks how it stays current: the archiver runs hourly against all 197 f
 newest month is always live and the corpus grows every hour. If someone asks about publisher
 rights: the reader shows a bounded excerpt plus our own summary and sends readers to the
 publisher, and the cap plus any takedown is enforced server side across the reader, the RSS
-mirror, archive search, and the agent knowledge corpus. See [docs/news-rights.md](news-rights.md).
+mirror, archive search, and the agent knowledge corpus. See [docs/news-rights.md](../news-rights.md).

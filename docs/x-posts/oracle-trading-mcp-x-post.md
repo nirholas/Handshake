@@ -5,7 +5,7 @@ trading agents are published as Model Context Protocol servers in
 [Anthropic's official MCP registry](https://registry.modelcontextprotocol.io/?q=io.github.nirholas),
 so any AI assistant can use them directly.
 
-Build plan this announces: [`docs/oracle-trading-mcp-plan.md`](oracle-trading-mcp-plan.md).
+Build plan this announces: [`docs/oracle-trading-mcp-plan.md`](../oracle-trading-mcp-plan.md).
 
 **Do not post until:** `npm run smoke:mcp` passes against the live remotes, and both
 `io.github.nirholas/threews-oracle` and `io.github.nirholas/threews-agent-trader` resolve in the

@@ -46,7 +46,7 @@ Full recap once the day wraps.
   follow-up, not a replacement for the original event post.
 - **Do not post an X/Twitter version of this.** This content is for the IBM Community group only;
   the group is the audience that gets the personal, honest register. The `@trythreews` and
-  `@nichxbt` X copy in [event-x-posts.md](./event-x-posts.md) is a separate, distinct campaign and
+  `@nichxbt` X copy in [event-x-posts.md](./x-posts/event-x-posts.md) is a separate, distinct campaign and
   stays in its organizer voice.
 - **Let Jessica edit freely.** This is a starting draft in her established voice (see the section
   "Why I think this format is worth your hour" in her earlier blog post), not a final script.
