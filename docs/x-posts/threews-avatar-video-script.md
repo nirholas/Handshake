@@ -1,7 +1,8 @@
 # Text-to-video script: the three.ws avatar
 
 Prompts for a video model (Veo, run through ElevenLabs), using a three.ws 3D avatar render as the
-reference image. This file is the **picture**, not the words. The spoken lines live in
+reference image. This file is the **picture**, not the words. The X copy it ships with is in
+[threews-avatar-launch.md](./threews-avatar-launch.md), the spoken lines live in
 [metaplex-agent-deployer-video-script.md](./metaplex-agent-deployer-video-script.md), and the
 deployer-specific shot list lives in [metaplex-agent-mcp-x-post.md](./metaplex-agent-mcp-x-post.md).
 
@@ -143,46 +144,3 @@ Keep the pause after "It has no body." That silence is the whole premise.
   sound; a violet cloud does not.
 - Post as native video, not a link to a video. X will not show a link preview and a video at once,
   and the video wins.
-
----
-
-## X post
-
-### Recommended
-
-> Give your AI a body.
->
-> Type a prompt, get a rigged 3D avatar that talks, walks, and holds its own Solana wallet. Drop it
-> on your site with one tag.
->
-> three.ws
-
-Line 1 is the product in five words. Line 2 is the three things that make it different from a
-picture, in the order people care about. The wallet lands last because it is the part nobody expects
-from an avatar company.
-
-### Alternate: builder-facing
-
-> Your agent has a voice, a model, and a name. It still has no body.
->
-> three.ws gives it one: a rigged 3D avatar you can talk to, embed anywhere with a single element,
-> and fund with its own on-chain wallet.
->
-> ```html
-> <script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
-> <agent-3d src="agent://base/42"></agent-3d>
-> ```
-
-### Alternate: $THREE-first
-
-> Every 3D agent built on three.ws ships with its own Solana wallet, an on-chain identity, and
-> pay-per-call built in.
->
-> $THREE is the coin of that economy.
->
-> Give your AI a body: three.ws
-
-### Reply slot, post under the main one
-
-> The avatar in the video was generated from a text prompt on three.ws, rigged automatically, and
-> rendered in the browser. No modeling, no rigging software, no download.
