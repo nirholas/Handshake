@@ -7,6 +7,7 @@ import {
 	buildViewerUrl,
 	buildArLaunchUrl,
 	buildIrlUrl,
+	buildArViewUrl,
 	planArLaunch,
 } from '../api/_lib/ar-launch.js';
 import { toolDefs as arDefs } from '../api/_mcp3d/tools/ar.js';
@@ -27,13 +28,13 @@ describe('detectArTarget', () => {
 	});
 });
 
-describe('assertArAssetUrl — boundary rejection', () => {
+describe('assertArAssetUrl: boundary rejection', () => {
 	it('accepts an https .glb / .gltf', () => {
 		expect(assertArAssetUrl(GLB)).toBe(GLB);
 		expect(assertArAssetUrl('https://x.io/a.gltf')).toBe('https://x.io/a.gltf');
 		expect(assertArAssetUrl('https://x.io/a.glb?token=1')).toContain('.glb');
 	});
-	it('rejects non-https, non-glb, and garbage — with a coded error, not a crash', () => {
+	it('rejects non-https, non-glb, and garbage: a coded error, not a crash', () => {
 		expect(() => assertArAssetUrl('http://x.io/a.glb')).toThrow(/https/i);
 		expect(() => assertArAssetUrl('https://x.io/a.png')).toThrow(/\.glb/i);
 		expect(() => assertArAssetUrl('not a url')).toThrow(/valid https url/i);
@@ -56,30 +57,44 @@ describe('buildSceneViewerUrl', () => {
 	});
 });
 
-describe('planArLaunch — device routing', () => {
+describe('buildArViewUrl', () => {
+	it('builds the /ar/view URL with src and title', () => {
+		const u = buildArViewUrl('https://three.ws', GLB, 'Robot');
+		expect(u).toBe(`https://three.ws/ar/view?src=${encodeURIComponent(GLB)}&title=Robot`);
+	});
+	it('adds irl only when passed', () => {
+		expect(buildArViewUrl('https://three.ws', GLB)).not.toContain('irl=');
+		const u = buildArViewUrl('https://three.ws', GLB, 'Scout', { irlUrl: 'https://three.ws/irl?avatar=x' });
+		expect(u).toContain(`irl=${encodeURIComponent('https://three.ws/irl?avatar=x')}`);
+	});
+});
+
+describe('planArLaunch: device routing', () => {
 	it('Android → redirect to Scene Viewer', () => {
 		const p = planArLaunch({ glbUrl: GLB, userAgent: ANDROID, origin: 'https://three.ws' });
 		expect(p.target).toBe('android');
 		expect(p.action).toBe('redirect');
 		expect(p.url).toContain('scene-viewer');
 	});
-	it('iOS → serve the launch page', () => {
+	it('iOS → redirect to /ar/view, the page that generates a real ios-src USDZ', () => {
 		const p = planArLaunch({ glbUrl: GLB, userAgent: IOS, origin: 'https://three.ws' });
 		expect(p.target).toBe('ios');
-		expect(p.action).toBe('page');
+		expect(p.action).toBe('redirect');
+		expect(p.url).toContain('/ar/view?src=');
 		expect(p.viewerUrl).toContain('/viewer?src=');
 	});
-	it('desktop → serve the launch page (WebGL fallback)', () => {
+	it('desktop → redirect to /ar/view too (its own WebGL fallback handles no-AR-hardware)', () => {
 		const p = planArLaunch({ glbUrl: GLB, userAgent: DESKTOP, origin: 'https://three.ws' });
 		expect(p.target).toBe('desktop');
-		expect(p.action).toBe('page');
+		expect(p.action).toBe('redirect');
+		expect(p.url).toContain('/ar/view?src=');
 	});
 	it('bad input throws at the boundary (handled by the endpoint)', () => {
 		expect(() => planArLaunch({ glbUrl: 'http://x/a.glb', userAgent: IOS, origin: 'https://three.ws' })).toThrow();
 	});
 });
 
-describe('GET /api/ar — response caching is UA-safe', () => {
+describe('GET /api/ar: response caching and redirect targets', () => {
 	function makeReq(ua) {
 		return {
 			method: 'GET',
@@ -106,13 +121,15 @@ describe('GET /api/ar — response caching is UA-safe', () => {
 		};
 	}
 
-	it('the launch page varies on User-Agent so a CDN never serves a desktop page to a phone', async () => {
+	it('iOS gets a 200 interstitial that redirects to /ar/view, never cached (the content is UA-specific)', async () => {
 		const { default: handler } = await import('../api/ar.js');
 		const res = makeRes();
 		await handler(makeReq(IOS), res);
 		expect(res.statusCode).toBe(200);
+		expect(res._body).toContain('/ar/view?src=');
+		expect(res._body).toContain('title=Robot');
 		expect(res.getHeader('vary')).toMatch(/user-agent/i);
-		expect(res.getHeader('cache-control')).toContain('public');
+		expect(res.getHeader('cache-control')).toBe('no-store');
 	});
 
 	it('the Android Scene Viewer redirect stays uncached (no-store)', async () => {
@@ -124,36 +141,12 @@ describe('GET /api/ar — response caching is UA-safe', () => {
 		expect(res.getHeader('cache-control')).toBe('no-store');
 	});
 
-	it('the launch page unfurls as a share card: og/twitter meta with a real model render', async () => {
-		const { default: handler } = await import('../api/ar.js');
-		const res = makeRes();
-		await handler(makeReq(IOS), res);
-		const html = res._body;
-		expect(html).toContain('og:title');
-		expect(html).toContain('Place Robot in your room');
-		expect(html).toContain('summary_large_image');
-		// og:image is the GET renderer pointed at THIS model, sized for unfurls.
-		expect(html).toContain('/api/render/glb?glbUrl=' + encodeURIComponent(GLB));
-		expect(html).toContain('width=1200&amp;height=630');
-	});
-
-	it('the launch page shows the model name and invites the viewer to create their own', async () => {
+	it('desktop also gets the /ar/view interstitial', async () => {
 		const { default: handler } = await import('../api/ar.js');
 		const res = makeRes();
 		await handler(makeReq(DESKTOP), res);
-		const html = res._body;
-		expect(html).toContain('class="name">Robot<');
-		expect(html).toContain('Create your own');
-		expect(html).toContain('Loading your model');
-	});
-
-	it('embeds THIS GLB in the launch page <model-viewer src>', async () => {
-		const { default: handler } = await import('../api/ar.js');
-		const res = makeRes();
-		await handler(makeReq(IOS), res);
-		const html = res._body;
-		expect(html).toContain(`src="${GLB}"`);
-		expect(html).toContain('ar-modes="webxr scene-viewer quick-look"');
+		expect(res.statusCode).toBe(200);
+		expect(res._body).toContain('/ar/view?src=');
 	});
 
 	it('a missing/invalid src is rejected at the boundary with a designed 400 error page, not a crash', async () => {
@@ -164,7 +157,6 @@ describe('GET /api/ar — response caching is UA-safe', () => {
 		expect(missing.statusCode).toBe(400);
 		expect(missing.getHeader('cache-control')).toBe('no-store');
 		expect(missing._body).toContain("Can't open this in AR");
-		expect(missing._body).not.toContain('<model-viewer');
 		// Non-https src.
 		const insecure = makeRes();
 		await handler(
@@ -175,56 +167,17 @@ describe('GET /api/ar — response caching is UA-safe', () => {
 		expect(insecure._body).toContain("Can't open this in AR");
 	});
 
-	it('kind=avatar serves the living-agent launch page with a "Bring it to life" IRL handoff (Android included)', async () => {
+	it('kind=avatar sends everyone (Android included) to the /ar/view interstitial carrying the irl handoff', async () => {
 		const { default: handler } = await import('../api/ar.js');
 		const res = makeRes();
-		// Android would normally 302 to Scene Viewer, but an avatar always gets the page.
+		// Android would normally 302 to Scene Viewer, but an avatar always goes to /ar/view.
 		await handler(
 			{ method: 'GET', url: `/api/ar?src=${encodeURIComponent(GLB)}&title=Scout&kind=avatar`, headers: { 'user-agent': ANDROID, host: 'three.ws' } },
 			res,
 		);
 		expect(res.statusCode).toBe(200);
-		expect(res._body).toContain('Bring it to life');
-		expect(res._body).toContain('/irl?avatar=' + encodeURIComponent(GLB));
-	});
-});
-
-describe('GET /api/render/glb — URL-addressable render (share cards)', () => {
-	function makeReq(url) {
-		return { method: 'GET', url, headers: { host: 'three.ws' } };
-	}
-	function makeRes() {
-		return {
-			statusCode: 200,
-			_h: {},
-			writableEnded: false,
-			headersSent: false,
-			setHeader(k, v) {
-				this._h[k.toLowerCase()] = v;
-			},
-			getHeader(k) {
-				return this._h[k.toLowerCase()];
-			},
-			end(body) {
-				this._body = body;
-				this.writableEnded = true;
-			},
-		};
-	}
-
-	it('400s a GET without glbUrl (no chromium spin-up on junk)', async () => {
-		const { default: handler } = await import('../api/render/glb.js');
-		const res = makeRes();
-		await handler(makeReq('/api/render/glb'), res);
-		expect(res.statusCode).toBe(400);
-		expect(JSON.parse(res._body).error).toBe('bad_request');
-	});
-
-	it('400s a GET pointing at a private address (SSRF guard holds on the GET path)', async () => {
-		const { default: handler } = await import('../api/render/glb.js');
-		const res = makeRes();
-		await handler(makeReq('/api/render/glb?glbUrl=' + encodeURIComponent('https://10.0.0.8/a.glb')), res);
-		expect(res.statusCode).toBe(400);
+		expect(res._body).toContain('/ar/view?src=');
+		expect(res._body).toContain(`irl=${encodeURIComponent(`https://three.ws/irl?avatar=${encodeURIComponent(GLB)}`)}`);
 	});
 });
 
@@ -299,36 +252,34 @@ describe('live (avatar) AR lane: the agent-economy bridge into physical space', 
 		expect(buildArLaunchUrl('https://three.ws', GLB)).not.toContain('kind=avatar');
 	});
 
-	it('planArLaunch live: Android gets the page (never a blind Scene Viewer redirect), with irlUrl', () => {
+	it('planArLaunch live: Android goes to /ar/view (never a blind Scene Viewer redirect), with irlUrl', () => {
 		const p = planArLaunch({ glbUrl: GLB, userAgent: ANDROID, origin: 'https://three.ws', live: true });
-		expect(p.action).toBe('page');
+		expect(p.action).toBe('redirect');
+		expect(p.url).toContain('/ar/view?src=');
 		expect(p.irlUrl).toContain('/irl?avatar=');
 	});
 
-	it('planArLaunch live: iOS and desktop carry irlUrl on the page plan', () => {
+	it('planArLaunch live: iOS and desktop carry irlUrl into the /ar/view redirect', () => {
 		for (const ua of [IOS, DESKTOP]) {
 			const p = planArLaunch({ glbUrl: GLB, userAgent: ua, origin: 'https://three.ws', live: true });
-			expect(p.action).toBe('page');
-			expect(p.irlUrl).toContain('/irl?avatar=');
+			expect(p.action).toBe('redirect');
+			expect(p.url).toContain(`irl=${encodeURIComponent(p.irlUrl)}`);
 		}
 	});
 
-	it('planArLaunch static: Android redirect unchanged, no irlUrl anywhere', () => {
+	it('planArLaunch static: Android still goes straight to Scene Viewer, no irlUrl anywhere', () => {
 		const android = planArLaunch({ glbUrl: GLB, userAgent: ANDROID, origin: 'https://three.ws' });
 		expect(android.action).toBe('redirect');
+		expect(android.url).toContain('scene-viewer');
 		expect(android.irlUrl).toBe('');
 		const ios = planArLaunch({ glbUrl: GLB, userAgent: IOS, origin: 'https://three.ws' });
 		expect(ios.irlUrl).toBe('');
 	});
 });
 
-describe('GET /api/ar?kind=avatar: living-agent launch page', () => {
-	function makeReq(ua, extra = '') {
-		return {
-			method: 'GET',
-			url: `/api/ar?src=${encodeURIComponent(GLB)}&title=Scout${extra}`,
-			headers: { 'user-agent': ua, host: 'three.ws' },
-		};
+describe('GET /api/render/glb: URL-addressable render (share cards)', () => {
+	function makeReq(url) {
+		return { method: 'GET', url, headers: { host: 'three.ws' } };
 	}
 	function makeRes() {
 		return {
@@ -349,28 +300,18 @@ describe('GET /api/ar?kind=avatar: living-agent launch page', () => {
 		};
 	}
 
-	it('an avatar launch serves the page on Android with the Bring-it-to-life handoff', async () => {
-		const { default: handler } = await import('../api/ar.js');
+	it('400s a GET without glbUrl (no chromium spin-up on junk)', async () => {
+		const { default: handler } = await import('../api/render/glb.js');
 		const res = makeRes();
-		await handler(makeReq(ANDROID, '&kind=avatar'), res);
-		expect(res.statusCode).toBe(200);
-		expect(res._body).toContain('Bring it to life');
-		expect(res._body).toContain('/irl?avatar=');
+		await handler(makeReq('/api/render/glb'), res);
+		expect(res.statusCode).toBe(400);
+		expect(JSON.parse(res._body).error).toBe('bad_request');
 	});
 
-	it('an avatar launch on iOS offers both the living handoff and static placement', async () => {
-		const { default: handler } = await import('../api/ar.js');
+	it('400s a GET pointing at a private address (SSRF guard holds on the GET path)', async () => {
+		const { default: handler } = await import('../api/render/glb.js');
 		const res = makeRes();
-		await handler(makeReq(IOS, '&kind=avatar'), res);
-		expect(res._body).toContain('Bring it to life');
-		expect(res._body).toContain('Place in your space');
-	});
-
-	it('a static model launch page has no living-agent surface', async () => {
-		const { default: handler } = await import('../api/ar.js');
-		const res = makeRes();
-		await handler(makeReq(IOS), res);
-		expect(res._body).not.toContain('Bring it to life');
-		expect(res._body).not.toContain('/irl?avatar=');
+		await handler(makeReq('/api/render/glb?glbUrl=' + encodeURIComponent('https://10.0.0.8/a.glb')), res);
+		expect(res.statusCode).toBe(400);
 	});
 });

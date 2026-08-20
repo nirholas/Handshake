@@ -1009,6 +1009,14 @@
 					"showcase": true
 				},
 				{
+					"path": "/ar/view",
+					"title": "View in AR",
+					"description": "Place any three.ws GLB in your real space from a plain link: real ARKit Quick Look on iPhone (a genuine on-device USDZ conversion, not a camera overlay), Scene Viewer or WebXR on Android. The shared landing page behind /api/ar and every AR hand-off across the site.",
+					"priority": 0.3,
+					"changefreq": "monthly",
+					"added": "2026-08-19"
+				},
+				{
 					"path": "/daily",
 					"title": "Daily Forge",
 					"description": "A new 3D creative challenge every day. Forge today's theme into a real 3D model, free and no sign-up, build a daily streak, and place your creation in AR on your phone.",

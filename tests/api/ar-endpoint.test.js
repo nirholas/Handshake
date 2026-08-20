@@ -4,13 +4,24 @@
 //
 // The routing core is pure and unit-tested in tests/ar-export.test.js. What was
 // never pinned is the HTTP surface a reviewer actually hits: the User-Agent
-// branch (Android intent redirect vs iOS/desktop launch page vs the avatar IRL
-// handoff), the designed error page for a bad src, and the cache/Vary headers
-// that keep a CDN from serving a desktop page to an Android phone.
+// branch (Android intent redirect vs the /ar/view interstitial vs the avatar
+// IRL handoff carried through the query string), the designed error page for a
+// bad src, and the cache/Vary headers that keep a CDN from serving one device's
+// response to another.
+//
+// Android gets a clean 302 straight into the Scene Viewer intent. Everyone else
+// gets a 200 interstitial: real og:image/title meta (so a pasted link still
+// unfurls on X/Discord/iMessage, which a bare 302 cannot do) plus an immediate
+// client-side redirect to /ar/view, the Vite-bundled page that actually
+// generates a USDZ from the GLB on the device (three.js USDZExporter) before
+// offering Apple Quick Look. The handler used to inline a <model-viewer> launch
+// page directly for iOS/desktop instead, but that HTML never set ios-src
+// (Quick Look needs a real USDZ, and <model-viewer> does not generate one on
+// its own), so iOS visitors silently fell back to the plain 3D viewer.
 //
 // No network and no mocks: the handler is invoked directly with mocked req/res
 // objects (the pattern used by tests/api/avatar-og.test.js), so every assertion
-// runs against the real handler, the real planArLaunch, and the real HTML.
+// runs against the real handler and the real planArLaunch.
 
 import { describe, it, expect } from 'vitest';
 
@@ -59,6 +70,13 @@ async function get(opts) {
 	return res;
 }
 
+// The interstitial embeds its redirect target in a <meta http-equiv="refresh">
+// and a location.replace call; pull it out of either rather than re-deriving it.
+function redirectTargetOf(html) {
+	const m = html.match(/location\.replace\((".*?")\)/);
+	return m ? JSON.parse(m[1]) : null;
+}
+
 describe('GET /api/ar - Android Scene Viewer branch', () => {
 	it('302s a static model straight into the ARCore Scene Viewer intent', async () => {
 		const res = await get({ ua: UA.android, title: 'a low-poly fox' });
@@ -79,33 +97,32 @@ describe('GET /api/ar - Android Scene Viewer branch', () => {
 	});
 });
 
-describe('GET /api/ar - iOS and desktop launch page', () => {
-	it('serves the HTML launch page to iPhone with the model wired into model-viewer', async () => {
-		const res = await get({ ua: UA.iphone });
+describe('GET /api/ar - iOS and desktop interstitial to /ar/view', () => {
+	it('serves an iPhone a 200 interstitial that redirects to /ar/view with the model and title carried through', async () => {
+		const res = await get({ ua: UA.iphone, title: 'a low-poly fox' });
 		expect(res.statusCode).toBe(200);
 		expect(res._h['content-type']).toBe('text/html; charset=utf-8');
-		expect(res._body).toContain(`<model-viewer id="mv" src="${GLB}"`);
-		// Quick Look is what iOS enters; model-viewer converts the GLB in-page.
-		expect(res._body).toContain('ar-modes="webxr scene-viewer quick-look"');
-		expect(res._body).toContain('id="ar-btn"');
-		expect(res._body).toContain('View in your space');
+		const target = new URL(redirectTargetOf(res._body));
+		expect(target.pathname).toBe('/ar/view');
+		expect(target.searchParams.get('src')).toBe(GLB);
+		expect(target.searchParams.get('title')).toBe('a low-poly fox');
 	});
 
-	it('serves the same page to iPad and to desktop, with the 3D viewer fallback link', async () => {
+	it('sends iPad and desktop to the same /ar/view interstitial', async () => {
 		for (const ua of [UA.ipad, UA.desktop]) {
 			const res = await get({ ua });
 			expect(res.statusCode).toBe(200);
-			expect(res._body).toContain(`href="https://three.ws/viewer?src=${encodeURIComponent(GLB)}"`);
-			expect(res._body).toContain('Open in 3D viewer');
+			expect(redirectTargetOf(res._body)).toContain('/ar/view?src=');
 		}
 	});
 
-	it('renders the title into the document title and the name chip, HTML-escaped', async () => {
+	it('carries the title through untouched, HTML-escaped in the unfurl meta', async () => {
 		const res = await get({ ua: UA.desktop, title: '<img src=x onerror=alert(1)>' });
 		expect(res.statusCode).toBe(200);
-		expect(res._body).not.toContain('<img src=x');
+		expect(res._body).not.toContain('<img src=x onerror');
 		expect(res._body).toContain('&lt;img src=x onerror=alert(1)&gt;');
-		expect(res._body).toContain('class="name"');
+		const target = new URL(redirectTargetOf(res._body));
+		expect(target.searchParams.get('title')).toBe('<img src=x onerror=alert(1)>');
 	});
 
 	it('unfurls with a real render of THIS model, not a logo', async () => {
@@ -116,39 +133,43 @@ describe('GET /api/ar - iOS and desktop launch page', () => {
 		expect(res._body).toContain('<meta property="og:url" content="https://three.ws/api/ar?src=');
 	});
 
-	it('honours the forwarded host so the page links back to the origin that served it', async () => {
+	it('honours the forwarded host so the interstitial links back to the origin that served it', async () => {
 		const req = mkReq({ ua: UA.desktop, headers: { 'x-forwarded-host': 'staging.three.ws' } });
 		const res = mkRes();
 		await handler(req, res);
-		expect(res._body).toContain('https://staging.three.ws/viewer?src=');
+		expect(redirectTargetOf(res._body).startsWith('https://staging.three.ws/ar/view?src=')).toBe(true);
 		expect(res._body).toContain('https://staging.three.ws/api/render/glb?');
+	});
+
+	it('is not indexed and never cached (the content is UA-specific)', async () => {
+		const res = await get({ ua: UA.iphone });
+		expect(res._body).toContain('<meta name="robots" content="noindex"/>');
+		expect(res._h['cache-control']).toBe('no-store');
 	});
 });
 
 describe('GET /api/ar - kind=avatar IRL handoff', () => {
-	it('keeps Android on the launch page so the living-agent path stays visible', async () => {
+	it('sends Android to the /ar/view interstitial too, so the living-agent path stays visible', async () => {
 		const res = await get({ ua: UA.android, kind: 'avatar' });
 		expect(res.statusCode).toBe(200);
-		expect(res._h.location).toBeUndefined();
-		expect(res._body).toContain(`href="https://three.ws/irl?avatar=${encodeURIComponent(GLB)}"`);
-		expect(res._body).toContain('Bring it to life');
-		// Static placement stays available alongside the living handoff.
-		expect(res._body).toContain('Place in your space');
+		const target = new URL(redirectTargetOf(res._body));
+		expect(target.pathname).toBe('/ar/view');
+		expect(target.searchParams.get('irl')).toBe(`https://three.ws/irl?avatar=${encodeURIComponent(GLB)}`);
+		expect(res._body).toContain('living AI agent');
 	});
 
-	it('offers the IRL handoff on iOS and desktop too', async () => {
+	it('carries the same irl handoff for iOS and desktop', async () => {
 		for (const ua of [UA.iphone, UA.desktop]) {
 			const res = await get({ ua, kind: 'avatar' });
 			expect(res.statusCode).toBe(200);
-			expect(res._body).toContain('/irl?avatar=');
-			expect(res._body).toContain('This is a living agent.');
+			expect(redirectTargetOf(res._body)).toContain('irl=');
 		}
 	});
 
-	it('a static model gets no IRL link at all', async () => {
+	it('a static model interstitial carries no irl param and the static-model description', async () => {
 		const res = await get({ ua: UA.desktop });
-		expect(res._body).not.toContain('/irl?avatar=');
-		expect(res._body).not.toContain('Bring it to life');
+		expect(redirectTargetOf(res._body)).not.toContain('irl=');
+		expect(res._body).not.toContain('living AI agent');
 	});
 });
 
@@ -171,8 +192,7 @@ describe('GET /api/ar - designed error page for bad input', () => {
 			expect(res._body).toContain(c.message);
 			// The error state is actionable: it offers the way forward.
 			expect(res._body).toContain('Create a 3D model');
-			// A rejected asset never reaches the page.
-			expect(res._body).not.toContain('<model-viewer');
+			expect(res._h.location).toBeUndefined();
 		});
 	}
 
@@ -181,15 +201,15 @@ describe('GET /api/ar - designed error page for bad input', () => {
 		expect(bad.statusCode).toBe(400);
 		const ok = await get({ src: 'https://cdn.example/scene.gltf?v=2', ua: UA.desktop });
 		expect(ok.statusCode).toBe(200);
-		expect(ok._body).toContain('https://cdn.example/scene.gltf?v=2');
+		expect(redirectTargetOf(ok._body)).toContain(encodeURIComponent('https://cdn.example/scene.gltf?v=2'));
 	});
 });
 
 describe('GET /api/ar - caching and CORS headers', () => {
-	it('varies the cached page on user-agent so an Android phone cannot be served a desktop page', async () => {
+	it('varies the response on user-agent so a CDN never serves one device the wrong content', async () => {
 		const res = await get({ ua: UA.desktop });
 		expect(res._h.vary).toBe('user-agent');
-		expect(res._h['cache-control']).toBe('public, max-age=60, s-maxage=600');
+		expect(res._h['cache-control']).toBe('no-store');
 	});
 
 	it('answers the CORS preflight with 204 and no body', async () => {
@@ -202,6 +222,6 @@ describe('GET /api/ar - caching and CORS headers', () => {
 	it('treats an absent User-Agent as desktop rather than failing', async () => {
 		const res = await get({ ua: '' });
 		expect(res.statusCode).toBe(200);
-		expect(res._body).toContain('<model-viewer');
+		expect(redirectTargetOf(res._body)).toContain('/ar/view?src=');
 	});
 });

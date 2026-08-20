@@ -2,29 +2,34 @@
  * Device-aware AR launch: GET /api/ar?src=<glbUrl>&title=<name>&kind=<avatar?>
  * -----------------------------------------------------------------------------
  * Places a generated GLB in the user's space, branching on the request's
- * User-Agent (server-side, from the header — no client round-trip):
+ * User-Agent (server-side, from the header, no client round-trip):
  *
- *   • Android → 302 to a Google Scene Viewer ARCore intent:// URL (GLB as the
- *     source), with a browser fallback to the WebGL viewer.
- *   • iOS     → an HTML launch page with <model-viewer>; tapping "View in AR"
- *     enters Apple Quick Look, for which model-viewer generates a USDZ from the
- *     GLB on the fly (a real conversion via three.js USDZExporter, in-page).
- *   • desktop → the same launch page, which falls back to the interactive WebGL
- *     viewer (no AR hardware).
+ *   • Android → a straight 302 to a Google Scene Viewer ARCore intent:// URL
+ *     (GLB as the source), with a browser fallback to the WebGL viewer.
+ *   • iOS / desktop / any live avatar → an interstitial that carries this
+ *     model's real og:image/title so a pasted link still unfurls, then hands
+ *     off to /ar/view (pages/ar-view.html), which generates a real USDZ from
+ *     the GLB on the device (three.js USDZExporter) before offering Apple
+ *     Quick Look. <model-viewer> does not do that conversion on its own, so
+ *     the actual AR page has to be a real Vite-bundled page rather than HTML
+ *     this handler writes inline (a bare `three` import does not resolve
+ *     outside a bundle). See api/_lib/ar-launch.js for the full routing
+ *     rationale. A plain 302 here would drop the unfurl (crawlers don't run
+ *     the JS on the redirect target), which is why this branch gets a real
+ *     page instead of Android's clean redirect.
  *
  * `kind=avatar` marks a LIVE asset (a rigged avatar, an agent's body). AR is how
  * three.ws agents cross into the physical world, so an avatar launch always
- * serves the page (Android included) with a "Bring it to life" handoff into
+ * lands on /ar/view (Android included) with a "Bring it to life" hand-off into
  * /irl?avatar=<glb>: camera passthrough, animation, movement, and conversation
  * with the AI in the user's real room, alongside the static AR placement.
  *
  * Bad input (non-https, non-GLB, missing) is rejected at the boundary with a
- * clean, designed error page — never a crash. Zero payment/coin surface.
+ * clean, designed error page, never a crash. Zero payment/coin surface.
  */
 
 import { cors, method, wrap } from './_lib/http.js';
 import { planArLaunch } from './_lib/ar-launch.js';
-import { MODEL_VIEWER_SRC } from './_lib/model-viewer-cdn.js';
 
 function esc(s) {
 	return String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -48,17 +53,20 @@ border-radius:10px;padding:9px 14px;text-decoration:none;font-weight:600;font-si
 <a href="https://three.ws">Create a 3D model</a></div></body></html>`;
 }
 
-function launchPage({ target, asset, viewerUrl, title, irlUrl, origin, pageUrl }) {
+// A crawler (X, Discord, iMessage) reads only this static HTML and never runs
+// the redirect script, so the unfurl meta has to be right here rather than on
+// /ar/view. A real visitor's browser runs the one-line redirect immediately;
+// there is no visible interstitial in practice.
+function interstitialPage({ target, asset, title, irlUrl, origin, pageUrl }) {
 	const t = title ? esc(title) : irlUrl ? '3D avatar' : '3D model';
-	// Share card: a real render of THIS model (GET /api/render/glb, CDN-cached a
-	// day), so a pasted AR link unfurls with the object itself, not a logo.
 	const ogImage = `${origin}/api/render/glb?glbUrl=${encodeURIComponent(asset)}&width=1200&height=630`;
 	const ogDesc = irlUrl
 		? 'A living AI agent. Open on your phone to place it in your room, or bring it to life to walk and talk with it.'
 		: 'Open on your phone to place this 3D model in your room at real size. Made on three.ws: type a sentence, get a 3D model.';
 	return `<!doctype html><html lang="en"><head><meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>View ${t} in AR · three.ws</title><meta name="robots" content="noindex"/>
+<meta http-equiv="refresh" content="0;url=${esc(target)}"/>
 <meta property="og:type" content="website"/>
 <meta property="og:site_name" content="three.ws"/>
 <meta property="og:title" content="Place ${t} in your room"/>
@@ -69,49 +77,16 @@ function launchPage({ target, asset, viewerUrl, title, irlUrl, origin, pageUrl }
 <meta name="twitter:title" content="Place ${t} in your room"/>
 <meta name="twitter:description" content="${esc(ogDesc)}"/>
 <meta name="twitter:image" content="${esc(ogImage)}"/>
-<script src="/model-viewer-meshopt.js"></script>
-<script type="module" src="${MODEL_VIEWER_SRC}"></script>
-<style>:root{color-scheme:dark;--accent:#6ea8fe}*{box-sizing:border-box}html,body{margin:0;height:100%}
-body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:radial-gradient(130% 130% at 50% 0%,#14161c,#08090c);color:#e8eaf0;overflow:hidden}
-.wrap{display:flex;flex-direction:column;height:100dvh}.stage{position:relative;flex:1 1 auto;min-height:0}
-model-viewer{width:100%;height:100%;--progress-bar-color:var(--accent);background:transparent}
-.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;padding:14px 16px;border-top:1px solid rgba(255,255,255,.07);background:rgba(10,11,14,.55);backdrop-filter:blur(8px)}
-.name{position:absolute;top:14px;left:50%;transform:translateX(-50%);max-width:min(86vw,48ch);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#cdd3de;font-size:13px;font-weight:600;background:rgba(10,11,14,.5);border:1px solid rgba(255,255,255,.07);border-radius:999px;padding:6px 14px;backdrop-filter:blur(8px);pointer-events:none}
-.loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#9aa3b2;font-size:13px;pointer-events:none;transition:opacity .3s ease}
-button.ar,a.ar{appearance:none;cursor:pointer;text-decoration:none;font-size:14px;font-weight:700;color:#0b0c10;background:var(--accent);border:0;border-radius:12px;padding:12px 20px;display:inline-flex;align-items:center;gap:8px}
-button.ar:active{transform:translateY(1px)}button.ar:focus-visible{outline:2px solid #fff;outline-offset:2px}
-.ghost{appearance:none;cursor:pointer;text-decoration:none;font-size:14px;font-weight:700;color:var(--accent);background:rgba(110,168,254,.14);border:1px solid rgba(110,168,254,.45);border-radius:12px;padding:11px 18px;display:inline-flex;align-items:center;gap:8px;transition:background .15s ease}
-.ghost:hover{background:rgba(110,168,254,.24)}.ghost:active{transform:translateY(1px)}.ghost:focus-visible{outline:2px solid #fff;outline-offset:2px}
-.hint{position:absolute;left:0;right:0;bottom:16px;text-align:center;color:#9aa3b2;font-size:12px;pointer-events:none}
-a.alt{color:#aeb6c4;font-size:12.5px;text-decoration:underline}</style></head>
-<body><div class="wrap"><div class="stage">
-<model-viewer id="mv" src="${esc(asset)}" alt="${t}" camera-controls auto-rotate touch-action="pan-y"
- environment-image="neutral" exposure="1.05" shadow-intensity="1" tone-mapping="aces"
- ar ar-modes="webxr scene-viewer quick-look" ar-scale="auto" ${target === 'ios' ? 'reveal="auto"' : ''}>
-</model-viewer>
-${title ? `<div class="name">${t}</div>` : ''}
-<div class="loading" id="loading">Loading your model…</div>
-<div class="hint" id="hint">${irlUrl ? 'This is a living agent. Bring it to life to walk and talk with it in your room.' : 'Move your phone to place the model in your space.'}</div>
-</div>
-<div class="bar">
-${irlUrl ? `<a class="ar" href="${esc(irlUrl)}" aria-label="Bring this avatar to life in your room: it moves and talks through your camera">🤖 Bring it to life</a>\n<button class="ghost" id="ar-btn" type="button" aria-label="Place a static copy of this avatar in augmented reality">📱 Place in your space</button>` : `<button class="ar" id="ar-btn" type="button" aria-label="View this model in augmented reality">📱 View in your space</button>`}
-<a class="alt" href="${esc(viewerUrl)}">Open in 3D viewer</a>
-<a class="alt" href="/ar" aria-label="Create your own 3D model from a sentence, free">Create your own</a>
-</div></div>
-<script>
-(function(){var mv=document.getElementById('mv'),btn=document.getElementById('ar-btn'),hint=document.getElementById('hint'),loading=document.getElementById('loading'),live=${irlUrl ? 'true' : 'false'};
-function sync(){ loading.style.opacity='0'; if(!mv.canActivateAR){ btn.textContent='View in 3D'; if(!live){ hint.style.display='none'; } } }
-mv.addEventListener('load',sync);
-mv.addEventListener('error',function(){ loading.textContent='This model could not load. Try the 3D viewer below.'; });
-btn.addEventListener('click',function(){ if(mv.canActivateAR){ try{mv.activateAR();}catch(e){} } else { window.location.href='${esc(viewerUrl)}'; } });
-})();
-</script></body></html>`;
+<style>:root{color-scheme:dark}body{margin:0;min-height:100dvh;display:flex;align-items:center;justify-content:center;
+font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:radial-gradient(130% 130% at 50% 0%,#14161c,#08090c);color:#9aa3b2;font-size:13px}</style>
+<script>location.replace(${JSON.stringify(target)});</script>
+</head><body>Opening AR…</body></html>`;
 }
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
 	// The CORS preflight already advertises GET only; enforce it too, so a POST
-	// gets a 405 with an Allow header instead of being served the launch page.
+	// gets a 405 with an Allow header instead of a redirect.
 	if (!method(req, res, ['GET'])) return;
 
 	const url = new URL(req.url, 'http://x');
@@ -119,10 +94,11 @@ export default wrap(async (req, res) => {
 	const title = (url.searchParams.get('title') || '').slice(0, 120);
 	// kind=avatar marks a rigged agent body; it unlocks the IRL living handoff.
 	const live = url.searchParams.get('kind') === 'avatar';
+	const origin = originFrom(req);
 
 	let plan;
 	try {
-		plan = planArLaunch({ glbUrl: src, userAgent: req.headers['user-agent'], origin: originFrom(req), title, live });
+		plan = planArLaunch({ glbUrl: src, userAgent: req.headers['user-agent'], origin, title, live });
 	} catch (err) {
 		res.statusCode = 400;
 		res.setHeader('content-type', 'text/html; charset=utf-8');
@@ -131,28 +107,25 @@ export default wrap(async (req, res) => {
 		return;
 	}
 
-	if (plan.action === 'redirect') {
+	// Every branch here is device-specific (Android gets Scene Viewer, everyone
+	// else gets /ar/view), so a shared CDN cache must never serve one device's
+	// response to another.
+	res.setHeader('vary', 'user-agent');
+	res.setHeader('cache-control', 'no-store');
+
+	if (plan.url.startsWith('intent://')) {
 		res.statusCode = 302;
 		res.setHeader('location', plan.url);
-		res.setHeader('cache-control', 'no-store');
 		res.end();
 		return;
 	}
 
 	res.statusCode = 200;
 	res.setHeader('content-type', 'text/html; charset=utf-8');
-	// The page is UA-branched (iOS Quick Look vs desktop fallback) while Android
-	// gets a 302 above — without Vary a CDN-cached desktop page can be served to
-	// an Android phone and swallow the straight-into-AR redirect. Vary keeps the
-	// browser cache (one UA per browser) and stops the cross-device bleed.
-	res.setHeader('vary', 'user-agent');
-	res.setHeader('cache-control', 'public, max-age=60, s-maxage=600');
-	const origin = originFrom(req);
 	res.end(
-		launchPage({
-			target: plan.target,
+		interstitialPage({
+			target: plan.url,
 			asset: plan.asset,
-			viewerUrl: plan.viewerUrl,
 			title,
 			irlUrl: plan.irlUrl,
 			origin,

@@ -1550,6 +1550,13 @@
 			"dest": "/ar-studio.html"
 		},
 		{
+			"src": "/ar/view/?",
+			"headers": {
+				"permissions-policy": "xr-spatial-tracking=*, camera=(self), microphone=()"
+			},
+			"dest": "/ar-view.html"
+		},
+		{
 			"src": "/daily/?",
 			"headers": {
 				"permissions-policy": "xr-spatial-tracking=*, camera=(self)"

@@ -1,22 +1,21 @@
-// The single source of truth for the <model-viewer> build the server-rendered
+// The single source of truth for the <model-viewer> build server-rendered
 // embed surfaces load.
 //
-// Two surfaces render a GLB from HTML this repo generates on the server:
-//   • api/ar.js                    (the /api/ar device-aware AR launch page)
-//   • api/_mcp-studio/component.js (the ChatGPT Apps SDK inline widget)
+// Current consumer: api/_mcp-studio/component.js (the ChatGPT Apps SDK inline
+// widget), which renders a GLB from HTML generated on the server and needs the
+// CDN host named in its `openai/widgetCSP` resource_domains allowlist, a second
+// reason the URL must not be retyped per file. (/api/ar used to inline a
+// <model-viewer> from this pin too; it now 302s to /ar/view, a Vite-bundled
+// page (see api/_lib/ar-launch.js) because a server-rendered HTML string
+// can offer AR modes but can never generate the ios-src USDZ Quick Look
+// actually needs.)
 //
-// Both import MODEL_VIEWER_SRC from here, so the pin moves in one place and the
-// two surfaces can never drift apart. The CDN host is also what the widget's
-// `openai/widgetCSP` resource_domains allowlist has to name, which is a second
-// reason the URL must not be retyped per file.
-//
-// Why 3.5.0 and not the newest release: these two pages run inside someone
-// else's frame (ChatGPT's sandboxed iframe, and a mobile in-app browser after a
-// link tap). 3.5.0 is the build the rest of the platform's embeddable bundles
-// ship (public/agenc/embed.js, public/ar-forge.html, public/spatial-mcp/), so an
-// embedding page that already loaded model-viewer for one three.ws embed reuses
-// the exact same module instead of registering a second, conflicting
-// <model-viewer> custom element.
+// Why 3.5.0 and not the newest release: the widget runs inside someone else's
+// frame (ChatGPT's sandboxed iframe). 3.5.0 is the build the rest of the
+// platform's embeddable bundles ship (public/agenc/embed.js,
+// public/ar-forge.html, public/spatial-mcp/), so an embedding page that already
+// loaded model-viewer for one three.ws embed reuses the exact same module
+// instead of registering a second, conflicting <model-viewer> custom element.
 //
 // The standalone browser viewer (public/viewer.html) is deliberately NOT on this
 // pin. It is a first-party top-level page, not an embed, so it takes 4.0.0 with

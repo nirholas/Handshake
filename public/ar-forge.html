@@ -558,8 +558,12 @@
 
 		arBtn.addEventListener('click', function () {
 			if (mv.canActivateAR) { try { mv.activateAR(); return; } catch (e) {} }
-			// Desktop / unsupported browser: the server-side launcher routes any device correctly.
-			window.open(arLink(), '_blank', 'noopener');
+			// iOS Safari never reports canActivateAR here (this model-viewer has no
+			// ios-src: Quick Look needs a real USDZ, which only /ar/view generates
+			// on the device). /api/ar 302s any device to the right place: Quick Look
+			// on iOS, the WebGL viewer on desktop. Same-tab so a phone tap feels like
+			// one action, not a background tab nobody notices.
+			location.href = arLink();
 		});
 
 		shareBtn.addEventListener('click', function () {

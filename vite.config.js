@@ -786,6 +786,7 @@ const appConfig = {
 				irl: resolve(__dirname, 'pages/irl.html'),
 				daily: resolve(__dirname, 'pages/daily.html'),
 				'ar-studio': resolve(__dirname, 'pages/ar-studio.html'),
+				'ar-view': resolve(__dirname, 'pages/ar-view.html'),
 				'irl-privacy': resolve(__dirname, 'pages/irl-privacy.html'),
 				'world-lines': resolve(__dirname, 'pages/world-lines.html'),
 				communities: resolve(__dirname, 'pages/communities.html'),
@@ -1476,6 +1477,8 @@ const appConfig = {
 					'/irl/': resolve(root, 'pages/irl.html'),
 					'/ar/studio': resolve(root, 'pages/ar-studio.html'),
 					'/ar/studio/': resolve(root, 'pages/ar-studio.html'),
+					'/ar/view': resolve(root, 'pages/ar-view.html'),
+					'/ar/view/': resolve(root, 'pages/ar-view.html'),
 					// AR Forge lives in public/ (no bundler), so dev must map /ar the
 					// same way vercel.json does or the route 404s only in dev.
 					'/ar': resolve(root, 'public/ar-forge.html'),

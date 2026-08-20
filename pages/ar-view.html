@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<style>/* three.ws hidden-guard: make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<script>/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="theme-color" content="#000000" />
+		<title data-i18n="ar_view.meta_title">View in AR · three.ws</title>
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<meta name="description" content="Place any three.ws 3D model in your real space: Quick Look on iPhone, Scene Viewer or WebXR on Android." data-i18n-attr="content:ar_view.meta_description" />
+		<meta name="robots" content="noindex" />
+		<link rel="canonical" href="https://three.ws/ar/view" />
+
+		<script
+			type="module"
+			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
+			integrity="sha384-sr9b4Ux0WhAUGclJ0ym0FSY2zSOMmNSn0bP/SA0e6bNCrpn/5W3QL8mm+LdlQMKw"
+			crossorigin="anonymous"
+		></script>
+		<script type="module" src="/src/ar-view.js"></script>
+
+		<style>
+			:root {
+				--bg: #000000;
+				--text: #e8e8e8;
+				--text-2: #888888;
+				--text-3: #555555;
+				--accent: #ffffff;
+				--accent-2: #ffffff;
+				--border: rgba(255, 255, 255, 0.08);
+			}
+			*, *::before, *::after { box-sizing: border-box; }
+			html, body {
+				margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+				background: var(--bg); color: var(--text);
+				font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased;
+			}
+			.ar-bg { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+			.ar-bg::before {
+				content: ''; position: absolute; inset: 0;
+				background:
+					radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255, 255, 255, 0.03) 0%, transparent 65%),
+					radial-gradient(ellipse 60% 50% at 80% 80%, rgba(255, 255, 255, 0.02) 0%, transparent 60%),
+					radial-gradient(ellipse 50% 40% at 20% 70%, rgba(255, 255, 255, 0.02) 0%, transparent 55%);
+			}
+			#ar-shell { position: relative; width: 100%; height: 100%; z-index: 1; display: flex; flex-direction: column; }
+			.ar-topbar {
+				position: absolute; top: 0; left: 0; right: 0; z-index: 10;
+				display: flex; align-items: center; justify-content: space-between;
+				padding-left: 16px; padding-right: 16px;
+				padding-top: calc(env(safe-area-inset-top, 0px) + 14px); padding-bottom: 14px;
+				background: linear-gradient(to bottom, rgba(0, 0, 0, 0.85) 0%, transparent 100%);
+			}
+			.ar-back {
+				display: inline-flex; align-items: center; gap: 6px;
+				color: var(--text-2); text-decoration: none; font-size: 14px; font-weight: 500;
+				transition: color 0.15s; padding: 6px 0;
+			}
+			.ar-back:hover { color: var(--text); }
+			.ar-back svg { flex-shrink: 0; }
+			.ar-topbar-center { position: absolute; left: 50%; transform: translateX(-50%); text-align: center; pointer-events: none; }
+			.ar-badge {
+				display: inline-flex; align-items: center; gap: 5px;
+				font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+				color: var(--accent); background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.2);
+				border-radius: 999px; padding: 4px 10px;
+			}
+			.ar-badge-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); animation: ar-pulse 2s ease-in-out infinite; }
+			@keyframes ar-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.75); } }
+			.ar-share-btn {
+				background: transparent; border: 1px solid var(--border); border-radius: 999px;
+				color: var(--text-2); font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer;
+				padding: 6px 14px; transition: border-color 0.15s, color 0.15s;
+			}
+			.ar-share-btn:hover { border-color: var(--text-3); color: var(--text); }
+			model-viewer { position: absolute; inset: 0; width: 100%; height: 100%; --poster-color: transparent; background: transparent; }
+			model-viewer::part(default-ar-button) { display: none; }
+			.ar-bottom {
+				position: absolute; bottom: 0; left: 0; right: 0; z-index: 10;
+				padding: 0 20px; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 28px);
+				background: linear-gradient(to top, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.6) 60%, transparent 100%);
+				display: flex; flex-direction: column; align-items: center; gap: 10px; pointer-events: none;
+			}
+			.ar-bottom > * { pointer-events: auto; }
+			.ar-title { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); text-align: center; margin: 0; line-height: 1.2; font-family: 'Space Grotesk', system-ui, sans-serif; }
+			.ar-subtitle { font-size: 13px; color: var(--text-2); text-align: center; margin: 0; }
+			.ar-status { font-size: 12.5px; color: var(--accent-2); text-align: center; height: 18px; display: flex; align-items: center; gap: 6px; }
+			.ar-status.is-error { color: #f87171; }
+			.ar-status-spinner {
+				width: 13px; height: 13px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.25);
+				border-top-color: var(--accent-2); animation: ar-spin 0.7s linear infinite; flex-shrink: 0;
+			}
+			@keyframes ar-spin { to { transform: rotate(360deg); } }
+			.ar-launch-btn {
+				width: 100%; max-width: 380px; height: 60px; background: #ffffff; color: #000000; border: 0;
+				border-radius: 18px; font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 17px; font-weight: 700;
+				letter-spacing: -0.01em; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+				transition: transform 0.12s, box-shadow 0.2s, opacity 0.15s;
+				box-shadow: 0 8px 32px -8px rgba(255, 255, 255, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+				position: relative; overflow: hidden;
+			}
+			.ar-launch-btn::after {
+				content: ''; position: absolute; inset: 0;
+				background: linear-gradient(to bottom, rgba(255, 255, 255, 0.12) 0%, transparent 50%); pointer-events: none;
+			}
+			.ar-launch-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 14px 40px -8px rgba(255, 255, 255, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1) inset; }
+			.ar-launch-btn:active:not(:disabled) { transform: translateY(0); }
+			.ar-launch-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+			.ar-launch-btn svg { flex-shrink: 0; }
+			.ar-live-btn {
+				width: 100%; max-width: 380px; height: 52px; margin-top: 10px;
+				background: rgba(255, 255, 255, 0.08); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.22);
+				border-radius: 16px; font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 15.5px; font-weight: 700;
+				letter-spacing: -0.01em; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 9px;
+				text-decoration: none; transition: transform 0.12s, background 0.2s, border-color 0.2s;
+			}
+			.ar-live-btn:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 0.14); border-color: rgba(255, 255, 255, 0.34); }
+			.ar-live-btn:active { transform: translateY(0); }
+			.ar-live-btn:focus-visible { outline: 2px solid #ffffff; outline-offset: 2px; }
+			.ar-live-btn[hidden] { display: none; }
+			.ar-live-btn svg { flex-shrink: 0; }
+			.ar-footer-links { display: flex; align-items: center; gap: 8px; margin-top: 12px; justify-content: center; flex-wrap: wrap; }
+			.ar-footer-link { font-size: 12px; color: var(--text-3); text-decoration: none; transition: color 0.15s; }
+			.ar-footer-link:hover { color: var(--text-2); }
+			.ar-footer-sep { font-size: 12px; color: var(--text-3); }
+			.ar-error { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-2); font-size: 15px; text-align: center; padding: 2rem; }
+		</style>
+		<script src="/model-viewer-meshopt.js"></script>
+	</head>
+	<body>
+		<div class="ar-bg" aria-hidden="true"></div>
+
+		<div id="ar-shell">
+			<model-viewer
+				id="ar-viewer"
+				alt="3D model"
+				camera-controls
+				auto-rotate
+				rotation-per-second="12deg"
+				interaction-prompt="none"
+				exposure="1.1"
+				shadow-intensity="0.8"
+				shadow-softness="0.9"
+				environment-image="neutral"
+				tone-mapping="aces"
+				ar
+				ar-modes="webxr scene-viewer quick-look"
+				ar-scale="auto"
+				reveal="auto"
+			></model-viewer>
+
+			<header class="ar-topbar">
+				<a class="ar-back" id="ar-back-link" href="/ar">
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<polyline points="15 18 9 12 15 6" />
+					</svg>
+					Back
+				</a>
+				<div class="ar-topbar-center">
+					<span class="ar-badge" data-i18n-html="ar_view.ar_ready">
+						<span class="ar-badge-dot"></span>
+						AR Ready
+					</span>
+				</div>
+				<button class="ar-share-btn" id="ar-share-btn" type="button" aria-label="Share" data-i18n="ar_view.share" data-i18n-attr="aria-label:ar_view.share_arialabel">
+					Share
+				</button>
+			</header>
+
+			<footer class="ar-bottom">
+				<h1 class="ar-title" id="ar-title" data-i18n="ar_view.loading">Loading…</h1>
+				<p class="ar-subtitle" data-i18n="ar_view.point_your_device_at_a_flat_surface">Point your device at a flat surface to place</p>
+				<p class="ar-status" id="ar-status" hidden>
+					<span class="ar-status-spinner" aria-hidden="true"></span>
+					<span id="ar-status-text"></span>
+				</p>
+				<button class="ar-launch-btn" id="ar-launch-btn" type="button" disabled aria-busy="true">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+					</svg>
+					Place in your space
+				</button>
+				<a class="ar-live-btn" id="ar-live-link" href="/irl" aria-label="Bring this avatar to life: it walks and talks with you through your camera" hidden data-i18n-attr="aria-label:ar_view.bring_this_avatar_to_life_it_arialabel">
+					<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<circle cx="12" cy="5" r="3" />
+						<path d="M12 8v6" />
+						<path d="M9 22l3-8 3 8" />
+						<path d="M8 12h8" />
+					</svg>
+					Bring it to life
+				</a>
+				<div class="ar-footer-links">
+					<a href="/features/ar" class="ar-footer-link" data-i18n="ar_view.ar_feature_overview">AR feature overview</a>
+					<span class="ar-footer-sep" aria-hidden="true">·</span>
+					<a href="/docs/ar" class="ar-footer-link" data-i18n="ar_view.how_it_works">How it works</a>
+					<span class="ar-footer-sep" aria-hidden="true">·</span>
+					<a href="/ar" class="ar-footer-link" data-i18n="ar_view.make_your_own">Make your own</a>
+				</div>
+			</footer>
+		</div>
+		<script src="/brand.js" defer></script>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

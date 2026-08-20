@@ -1,26 +1,33 @@
-// AR launch — device-aware "View in your space" routing for a generated GLB.
+// AR launch: device-aware "View in your space" routing for a generated GLB.
 //
 // The pure core behind GET /api/ar (api/ar.js) and the export_ar MCP tool. Given
 // a GLB URL and a User-Agent, it decides how to place the model in AR:
 //
-//   • iOS      → Apple Quick Look. model-viewer generates a USDZ from the GLB on
-//                the fly (a real conversion via three.js USDZExporter, in-page),
-//                so the launch page hands iOS a Quick Look experience with no
-//                server-side USD tooling required.
 //   • Android  → Google Scene Viewer via an ARCore intent:// URL (the GLB is the
 //                Scene Viewer source), with a browser fallback to the WebGL viewer.
-//   • desktop  → the interactive WebGL viewer (no AR hardware).
+//   • iOS / desktop / any live avatar → a 302 to /ar/view (pages/ar-view.html,
+//                src/ar-view.js), a Vite-bundled page that generates a real USDZ
+//                from the GLB on the device (three.js USDZExporter) and sets it
+//                as <model-viewer>'s ios-src before Quick Look is offered.
+//                <model-viewer> does NOT convert GLB to USDZ on its own: an
+//                earlier version of this file inlined a <model-viewer> with no
+//                ios-src and a comment claiming otherwise, which is why iOS
+//                visitors silently fell back to the plain 3D viewer instead of
+//                Quick Look. Never inline that HTML again: any surface that
+//                needs real Quick Look must route through a page Vite bundles
+//                (bare `three` imports don't resolve in a raw server-rendered
+//                string or an unbundled static file).
 //
 // AR here is not a prop viewer: it is how three.ws agents cross into physical
 // space. A static object gets Quick Look / Scene Viewer placement; a LIVE asset
 // (a rigged avatar, an agent's body) additionally gets the IRL handoff
 // (/irl?avatar=<glb>): camera passthrough, animation, movement, and conversation
 // with the AI in the user's real room. `live: true` in planArLaunch marks that
-// lane; it keeps Android on the launch page (instead of the blind Scene Viewer
+// lane; it keeps Android on /ar/view (instead of the blind Scene Viewer
 // redirect) so the living-agent path is always visible.
 //
 // It is dependency-free and side-effect-free so the routing decision is unit-
-// tested in isolation, and carries ZERO payment/wallet/coin surface — AR is pure
+// tested in isolation, and carries ZERO payment/wallet/coin surface: AR is pure
 // consumer value and ships on both the Claude and OpenAI tracks.
 
 // A GLB URL must be https and point at a .glb/.gltf asset (query string allowed).
@@ -50,7 +57,7 @@ function arError(code, message) {
 export function detectArTarget(userAgent) {
 	const ua = String(userAgent || '');
 	// iPadOS 13+ reports a Mac UA; the "Mobile" token + touch is the tell, but
-	// server-side we only have the string — match the explicit iOS device tokens.
+	// server-side we only have the string, so match the explicit iOS device tokens.
 	if (/\b(iphone|ipad|ipod)\b/i.test(ua)) return 'ios';
 	if (/\bandroid\b/i.test(ua)) return 'android';
 	return 'desktop';
@@ -97,12 +104,28 @@ export function buildIrlUrl(origin, glbUrl) {
 }
 
 /**
- * Resolve the launch plan for a request. Returns:
- *   { target, action:'redirect', url }   Android static model: 302 to Scene Viewer
- *   { target, action:'page' }            iOS/desktop, and any live avatar
- * plus the resolved viewer + scene-viewer URLs for the page/tool to use, and
- * `irlUrl` when live (a rigged avatar) so the launch surface can offer the
- * walking, talking agent experience alongside static placement.
+ * The /ar/view URL for a GLB: the shared, Vite-bundled "place this in AR" page
+ * (pages/ar-view.html, src/ar-view.js) that does the real on-device USDZ
+ * conversion Quick Look needs. `irlUrl`, when set, adds the "Bring it to life"
+ * hand-off for a live avatar.
+ */
+export function buildArViewUrl(origin, glbUrl, title = '', { irlUrl = '' } = {}) {
+	const base = String(origin || 'https://three.ws').replace(/\/$/, '');
+	const params = new URLSearchParams({ src: glbUrl });
+	if (title) params.set('title', title);
+	if (irlUrl) params.set('irl', irlUrl);
+	return `${base}/ar/view?${params.toString()}`;
+}
+
+/**
+ * Resolve the launch plan for a request. Every branch is a 302:
+ *   Android, static model → Scene Viewer's ARCore intent:// URL
+ *   iOS / desktop / any live avatar → /ar/view, which renders the right thing
+ *     per device (Quick Look with a real ios-src on iOS, the interactive
+ *     WebGL viewer on desktop) and carries the "Bring it to life" hand-off
+ *     when `irlUrl` is set.
+ * `viewerUrl` and `sceneViewerUrl` are still returned for callers (the
+ * export_ar MCP tool) that want the raw URLs alongside the launch link.
  */
 export function planArLaunch({ glbUrl, userAgent, origin, title = '', live = false }) {
 	const asset = assertArAssetUrl(glbUrl);
@@ -110,10 +133,11 @@ export function planArLaunch({ glbUrl, userAgent, origin, title = '', live = fal
 	const viewerUrl = buildViewerUrl(origin, asset, title);
 	const sceneViewerUrl = buildSceneViewerUrl(asset, { title, fallbackUrl: viewerUrl });
 	const irlUrl = live ? buildIrlUrl(origin, asset) : '';
-	// Live avatars always get the launch page: a straight Scene Viewer redirect
-	// would place a frozen body and hide the "bring it to life" path entirely.
+	// Live avatars always get /ar/view: a straight Scene Viewer redirect would
+	// place a frozen body and hide the "bring it to life" path entirely.
 	if (target === 'android' && !live) {
 		return { target, action: 'redirect', url: sceneViewerUrl, asset, viewerUrl, sceneViewerUrl, irlUrl };
 	}
-	return { target, action: 'page', asset, viewerUrl, sceneViewerUrl, irlUrl, live };
+	const viewUrl = buildArViewUrl(origin, asset, title, { irlUrl });
+	return { target, action: 'redirect', url: viewUrl, asset, viewerUrl, sceneViewerUrl, irlUrl, live };
 }

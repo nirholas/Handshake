@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-19T21:24:49.110Z",
+	"generated_at": "2026-08-20T00:11:00.463Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -7,11 +7,32 @@
 	},
 	"entries": [
 		{
+			"date": "2026-08-20",
+			"type": "update",
+			"title": "AR now actually opens AR on iPhone: AR Forge and AR Studio, not just avatars",
+			"summary": "Placing a model from AR Forge or the multi-model AR Studio in your real room worked correctly on Android, but iPhone quietly got a downgrade: AR Forge fell back to the plain 3D viewer, and AR Studio faked it with a camera overlay that had no real-world plane detection, no correct scale, and nothing to rest the model on the floor. Only the avatar AR page did this right. Both surfaces now use the same real pipeline: a genuine USDZ is generated on your device (the same three.js conversion the avatar page always used) and handed to Apple Quick Look, so the model is actually tracked to your room, sized correctly, and sits on your real floor. AR Studio's AR button now also offers Google Scene Viewer directly instead of only the raw WebXR session. Shared AR links still unfurl with a real render of the model when pasted into X, Discord, or iMessage.",
+			"link": "/ar",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
 			"date": "2026-08-19",
 			"type": "launch",
 			"title": "Deploy On-chain",
 			"summary": "Mint your agent into the Metaplex Agent Registry on Solana, in the exact shape the Genesis 333 shipped: a Metaplex Core asset with its own wallet, EIP-8004 identity, verified creator, royalties, and immutable metadata. Phantom, Solflare, or any Solana wallet signs; keys never leave the browser, and devnet rehearsal is free.",
 			"link": "/deploy-onchain",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-19",
+			"type": "launch",
+			"title": "View in AR",
+			"summary": "Place any three.ws GLB in your real space from a plain link: real ARKit Quick Look on iPhone (a genuine on-device USDZ conversion, not a camera overlay), Scene Viewer or WebXR on Android. The shared landing page behind /api/ar and every AR hand-off across the site.",
+			"link": "/ar/view",
 			"tags": [
 				"launch"
 			]
