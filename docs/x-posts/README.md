@@ -29,6 +29,7 @@ explicit approval). Each file states what it's for and what has already been ver
 | [`threews-avatar-launch.md`](threews-avatar-launch.md) | The three.ws avatar pipeline launch copy |
 | [`oracle-trading-mcp-x-post.md`](oracle-trading-mcp-x-post.md) | The oracle trading MCP server launch |
 | [`sperax-staking-in-chat-x-post.md`](sperax-staking-in-chat-x-post.md) | SperaxOS chat-native staking, balance, and buy-SPA tool calls. The embedded `/staking` page is not working yet: do not announce until the blockers in the file clear |
+| [`ar-quick-look-fix-x-post.md`](ar-quick-look-fix-x-post.md) | A bug fix, not a feature: `three.ws/ar` and `three.ws/ar/studio` now open real AR on iPhone the way `/avatars/:id/ar` already did |
 | [`news-archive-x-post.md`](news-archive-x-post.md) | The news archive |
 | [`pumpfun-article-x-post.md`](pumpfun-article-x-post.md) | The pump.fun article |
 
