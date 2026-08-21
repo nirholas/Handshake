@@ -169,7 +169,14 @@ test.describe('/club', () => {
 				}),
 			}),
 		);
-		await page.goto('/club');
+		// ?demo is the platform's own express entry (src/shared/club-express.js):
+		// it skips the cover charge AND the walk-in, dropping straight onto the pole
+		// stage. Without it the visitor is still outside, and #club-door-canvas (the
+		// full-screen z-index-9400 walk-in canvas) plus the #club-door cover dialog
+		// both sit over the side panel and swallow the tab click below. The board
+		// itself renders either way, which is why the row assertions passed while
+		// the click timed out.
+		await page.goto('/club?demo');
 
 		const rows = page.locator('#club-lb-rows .club-lb-row');
 		// The board names each dancer the way her pole card does. club_dancer_wallets

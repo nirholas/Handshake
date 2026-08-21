@@ -2375,7 +2375,11 @@ body.deploy-page {
 	text-decoration: underline;
 }
 .explore-card-id {
-	color: rgba(255, 255, 255, 0.4);
+	/* 0.55 is the a11y floor here, not a taste call: over the card surface
+	   (#111 once the 3% white wash lands on --bg-0) this reads 6.2:1, and
+	   anything under 0.45 drops below the 4.5:1 axe requires of 11px text.
+	   Covered by the /discover case in tests/e2e/a11y-top-pages.spec.js. */
+	color: rgba(255, 255, 255, 0.55);
 	font-size: var(--text-xs);
 	font-variant-numeric: tabular-nums;
 }
@@ -8468,7 +8472,9 @@ textarea.erc8004-code {
 }
 .explore-card-id {
 	font-size: 11px;
-	color: rgba(255, 255, 255, 0.35);
+	/* See the note on the earlier .explore-card-id rule: 0.55 is the contrast
+	   floor for this size over the card surface, not a styling preference. */
+	color: rgba(255, 255, 255, 0.55);
 	font-family:
 		ui-monospace,
 		SF Mono,
