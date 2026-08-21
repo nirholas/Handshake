@@ -116,6 +116,7 @@ The convention detector reports which authoring tool your skeleton came from and
 | Ready Player Me | `Wolf3D_*` mesh nodes over a Mixamo skeleton | `rpm` |
 | Mixamo | `mixamorig:` joint prefix | `mixamo` |
 | VRM / VRoid | `J_Bip_*` humanoid joint names | `vrm-humanoid` |
+| MikuMikuDance (PMX/PMD) | Japanese PMX bone names (`センター`, `上半身`, `左腕`) | `custom` |
 | Reallusion Character Creator | `CC_Base_*` joint prefix | `custom` |
 | Unreal Engine mannequin | `pelvis`, `thigh_l`, `clavicle_l` | `custom` |
 | 3ds Max Biped | `Bip01` / `Bip001` prefix | `custom` |

@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import {
 	analyzeGlb,
+	detectConvention,
 	readGlbJson,
 	manifestFromReport,
 	formatBytes,
@@ -48,6 +49,24 @@ describe('readGlbJson', () => {
 		v.setUint32(12, 4096, true);
 		v.setUint32(16, 0x4e4f534a, true);
 		expect(() => readGlbJson(buf)).toThrow(/runs past the end/);
+	});
+});
+
+describe('detectConvention fingerprints', () => {
+	const ctx = (joints, meshNames = []) => ({ joints, meshNames, json: {} });
+
+	it('identifies an MMD rig from its Japanese PMX bone names', () => {
+		const c = detectConvention(ctx(['センター', '上半身', '左腕', '左ひじ', '右ひざ']));
+		expect(c.id).toBe('mmd');
+		expect(c.label).toBe('MikuMikuDance (PMX/PMD)');
+	});
+
+	it('does not claim MMD for a Latin-named rig', () => {
+		expect(detectConvention(ctx(['Hips', 'Spine', 'LeftArm', 'RightArm'])).id).not.toBe('mmd');
+	});
+
+	it('reports unknown rather than guessing when nothing fingerprints', () => {
+		expect(detectConvention(ctx(['bone_a', 'bone_b', 'bone_c'])).id).toBe('unknown');
 	});
 });
 

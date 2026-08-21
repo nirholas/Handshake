@@ -89,6 +89,11 @@ const CONVENTIONS = [
 		evidence: 'J_Bip_* humanoid joint names',
 	},
 	{
+		id: 'mmd', label: 'MikuMikuDance (PMX/PMD)', schema: 'custom',
+		test: (ctx) => ctx.joints.some((n) => /^(センター|上半身2?|下半身|[左右](腕|ひじ|ひざ|手首|足首))$/.test(n)),
+		evidence: 'Japanese PMX bone names (センター / 上半身 / 左腕)',
+	},
+	{
 		id: 'reallusion', label: 'Reallusion Character Creator', schema: 'custom',
 		test: (ctx) => ctx.joints.some((n) => /^CC_Base_/i.test(n)),
 		evidence: 'CC_Base_* joint prefix',
@@ -181,7 +186,7 @@ function jointNodeIndices(json) {
 	return set;
 }
 
-function detectConvention(ctx) {
+export function detectConvention(ctx) {
 	for (const c of CONVENTIONS) {
 		let hit = false;
 		try {

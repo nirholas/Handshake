@@ -11,6 +11,7 @@
 //   • Unreal mannequin: `pelvis`, `clavicle_l`, `upperarm_l`, `thigh_l`, `calf_l`, … (alias map)
 //   • VRM / VRoid:     `J_Bip_C_Hips`, `J_Bip_L_UpperArm`, `J_Bip_L_Little1` (alias map)
 //   • VRM 1.0:         `upperChest`, `leftUpperArm`, `leftLowerLeg`, `leftToes` (camelCase)
+//   • MMD (PMX/PMD):   `センター`, `上半身`, `左腕`, `左ひじ`, `左ひざ` (Japanese, 左/右 side prefix)
 //   • Daz / Genesis:   `hip`, `abdomen`, `lShldr`, `lForeArm`, `lThigh`, `lShin`, `lCollar`
 //   • MakeHuman:       `upperarm.L`, `shin.L`, `clavicle.L` (shared with Unreal/Blender stems)
 //   • Simple rigs:     `shoulderL`, `elbowL`, `wristL`, `hipL`, `kneeL`, `ankleL`, `chest`
@@ -161,6 +162,36 @@ const EXTRA_ALIASES = (() => {
 			put(`J_Bip_L_${vf}${n}`, `LeftHand${cf}${n}`);
 			put(`J_Bip_R_${vf}${n}`, `RightHand${cf}${n}`);
 		}
+	}
+
+	// MikuMikuDance (PMX/PMD) skeletons name every bone in Japanese, with the
+	// side carried by a leading 左 (left) / 右 (right) character. No spelling
+	// here shares a stem with any Latin convention, so the whole rig previously
+	// mapped zero joints and animated nothing. Sides are listed explicitly
+	// rather than derived, because the SIDED table below swaps Latin side
+	// tokens (left→right, l→r, L→R) and cannot reach a Japanese prefix.
+	//
+	// Deliberately NOT mapped: the IK targets (左足ＩＫ, 左つま先ＩＫ) and the
+	// twist bones (左腕捩, 左手捩). Neither is a chain joint. MMD drives the leg
+	// chain from the IK target, so binding a clip to it would fight the chain
+	// it is supposed to solve, and the twist bones are secondary deformers that
+	// tear the mesh when rotated as if they were the limb.
+	for (const [v, c] of [
+		['センター', 'Hips'], ['下半身', 'Hips'],
+		['上半身', 'Spine'], ['上半身2', 'Spine1'],
+		['首', 'Neck'], ['頭', 'Head'],
+	]) put(v, c);
+	for (const [jp, side] of [['左', 'Left'], ['右', 'Right']]) {
+		for (const [v, c] of [
+			['肩', 'Shoulder'], ['腕', 'Arm'], ['ひじ', 'ForeArm'], ['手首', 'Hand'],
+			['足', 'UpLeg'], ['ひざ', 'Leg'], ['足首', 'Foot'], ['つま先', 'ToeBase'],
+		]) put(`${jp}${v}`, `${side}${c}`);
+		// MMD finger chains. 親指 (thumb) is numbered 0-2, every other digit 1-3.
+		// 人指 is the index finger; some exporters spell it 人差指.
+		for (const [jp2, cf] of [['人指', 'Index'], ['人差指', 'Index'], ['中指', 'Middle'], ['薬指', 'Ring'], ['小指', 'Pinky']]) {
+			for (let n = 1; n <= 3; n++) put(`${jp}${jp2}${n}`, `${side}Hand${cf}${n}`);
+		}
+		for (let n = 0; n <= 2; n++) put(`${jp}親指${n}`, `${side}HandThumb${n + 1}`);
 	}
 
 	// Centre / torso bones with no side (VRM 1.0, Daz, generic single-chest rigs).

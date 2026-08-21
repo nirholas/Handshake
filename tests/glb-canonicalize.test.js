@@ -942,6 +942,75 @@ describe('anatomical-Latin skeleton', () => {
 	});
 });
 
+describe('MMD (MikuMikuDance) Japanese skeleton', () => {
+	it.each([
+		['センター', 'Hips'],
+		['下半身', 'Hips'],
+		['上半身', 'Spine'],
+		['上半身2', 'Spine1'],
+		['首', 'Neck'],
+		['頭', 'Head'],
+	])('centre chain: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
+	it.each([
+		['左肩', 'LeftShoulder'],
+		['左腕', 'LeftArm'],
+		['左ひじ', 'LeftForeArm'],
+		['左手首', 'LeftHand'],
+		['左足', 'LeftUpLeg'],
+		['左ひざ', 'LeftLeg'],
+		['左足首', 'LeftFoot'],
+		['左つま先', 'LeftToeBase'],
+		['右肩', 'RightShoulder'],
+		['右腕', 'RightArm'],
+		['右ひじ', 'RightForeArm'],
+		['右手首', 'RightHand'],
+		['右足', 'RightUpLeg'],
+		['右ひざ', 'RightLeg'],
+		['右足首', 'RightFoot'],
+		['右つま先', 'RightToeBase'],
+	])('limbs: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
+	it.each([
+		['左人指1', 'LeftHandIndex1'],
+		['左人差指2', 'LeftHandIndex2'],
+		['左中指3', 'LeftHandMiddle3'],
+		['左薬指1', 'LeftHandRing1'],
+		['左小指2', 'LeftHandPinky2'],
+		['右人指3', 'RightHandIndex3'],
+		['右小指1', 'RightHandPinky1'],
+	])('finger chains: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
+	it('shifts the 0-indexed thumb onto the 1-indexed canonical chain', () => {
+		expect(canonicalizeBoneName('左親指0')).toBe('LeftHandThumb1');
+		expect(canonicalizeBoneName('左親指1')).toBe('LeftHandThumb2');
+		expect(canonicalizeBoneName('左親指2')).toBe('LeftHandThumb3');
+		expect(canonicalizeBoneName('右親指0')).toBe('RightHandThumb1');
+	});
+
+	it('leaves IK targets, twist bones, and non-joint control bones unmapped', () => {
+		for (const name of ['左足ＩＫ', '左つま先ＩＫ', '右足ＩＫ', '左腕捩', '左手捩', '全ての親', 'グルーブ', '両目']) {
+			expect(canonicalizeBoneName(name), name).toBeNull();
+		}
+	});
+
+	it('never crosses sides', () => {
+		const left = ['左肩', '左腕', '左ひじ', '左手首', '左足', '左ひざ', '左足首', '左つま先', '左人指1', '左親指0'];
+		for (const name of left) {
+			expect(canonicalizeBoneName(name)?.startsWith('Left'), name).toBe(true);
+		}
+		for (const name of left.map((n) => n.replace(/^左/, '右'))) {
+			expect(canonicalizeBoneName(name)?.startsWith('Right'), name).toBe(true);
+		}
+	});
+});
+
 describe('canonicalizeJointNodes (in-place rewrite)', () => {
 	it('only touches nodes referenced by skins[].joints', () => {
 		const json = {
