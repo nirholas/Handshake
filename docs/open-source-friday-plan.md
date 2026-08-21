@@ -33,7 +33,7 @@ Before, the repo shipped a proprietary LICENSE ("All rights reserved... may not 
 What landed:
 
 - [LICENSE](../LICENSE) is now the verbatim Apache-2.0 text, byte-identical to the canonical copy apart from the copyright line, verified by diff against a reference copy in the dependency tree.
-- [NOTICE](../NOTICE) records attribution for the vendored and derived code that keeps its own license: the character studio fork, the vendored three.js editor, the animation clip library, and the club assets. Every path in it was checked to exist.
+- [NOTICE](../NOTICE) records attribution for the vendored and derived code that keeps its own license: the forked avatar builder, the vendored three.js editor, the animation clip library, and the club assets. Every path in it was checked to exist.
 - All **102** first-party `package.json` manifests moved from `"SEE LICENSE IN LICENSE"` to `"license": "Apache-2.0"`, each re-parsed as JSON before it was written. Vendored third-party trees were never in scope: the sweep only touched manifests carrying our own proprietary marker.
 - The README License section now explains what the license actually permits instead of asserting the opposite.
 
