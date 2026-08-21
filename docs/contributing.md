@@ -321,7 +321,7 @@ Core team response times: typically 2-3 business days on GitHub. If a PR has bee
 
 ## License
 
-By contributing, you agree that your contributions are provided under the terms of the repository's [LICENSE](../LICENSE) (proprietary, all rights reserved). Read it before submitting substantial work.
+By contributing, you agree that your contributions are licensed under the [Apache License 2.0](../LICENSE), the same license the repository ships under.
 
 ---
 

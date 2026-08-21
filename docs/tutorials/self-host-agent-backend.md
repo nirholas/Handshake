@@ -521,7 +521,7 @@ A few things you should know going in:
 
 **Some upstream features require platform-only secrets.** The hosted three.ws has access to API keys and wallets that aren't published. If you fork, those features (e.g., the platform-managed agent treasury) won't work as-is — you'll either disable them or wire your own equivalents. The code paths that depend on platform secrets are clearly conditional on env-var presence; if your env var is empty, the feature is hidden in the UI.
 
-**Check the license before you deploy anything.** The repo's `LICENSE` is proprietary, not open source: "All rights reserved", with use, copying, modification, and distribution requiring the copyright owner's express written permission. Reading the source is not the same as being licensed to run a fork of it, so get that permission in writing before you stand up a deployment. Everything below assumes you have it.
+**You are licensed to do this.** The repo ships under the Apache License 2.0, so self-hosting, forking, and running a modified deployment are all permitted. Keep the `LICENSE` and `NOTICE` files with any copy you distribute, and state what you changed. No permission request needed.
 
 **You become responsible for security patches.** Vercel handles its own infrastructure. You handle the application code. Subscribe to GitHub Dependabot alerts on your fork, and feed fixes back upstream when they aren't specific to your deployment.
 

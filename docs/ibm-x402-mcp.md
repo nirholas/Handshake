@@ -345,7 +345,7 @@ knowing the server up front.
 ## Affiliation
 
 three.ws is an **IBM Business Partner**. This npm package is an independent,
-proprietary project built by three.ws that integrates IBM Granite via
+project built by three.ws that integrates IBM Granite via
 watsonx.ai — IBM Cloud Partner Center requires third-party MCP listings to state
 this, so to be precise: the package itself is **not an IBM product** and is not
 operated by IBM. Granite, watsonx, and watsonx.ai are trademarks of IBM.

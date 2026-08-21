@@ -10,7 +10,7 @@ This page explains how three.ws keeps your data, wallet, and agents safe, and wh
 
 **Least privilege** — agents access only what is explicitly declared and granted. Skills declare permission requirements; users must grant them. API keys carry only the scopes you assign. OAuth access tokens are short-lived (1 hour) and audience-bound.
 
-**Transparency**: the codebase is publicly readable on GitHub (source-available under the repository's proprietary LICENSE). The on-chain identity, reputation, and validation registries are auditable on Base. Badge verification derives from on-chain attestations, not the badge UI itself.
+**Transparency**: the codebase is open source on GitHub under the Apache License 2.0. The on-chain identity, reputation, and validation registries are auditable on Base. Badge verification derives from on-chain attestations, not the badge UI itself.
 
 **Standard web security** — HTTPS-only for all authenticated operations. CSP, CORS, and `__Host-` cookie prefix enforced throughout.
 

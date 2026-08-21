@@ -7,7 +7,7 @@ This page is for developers who want to build with three.ws code in their own pr
 | **Web component bundle** | `agent-3d.js` (CDN or `TARGET=lib` build) | Drop-in `<agent-3d>` element + programmatic viewer/runtime APIs |
 | **AgentKit SDK** | `@three-ws/sdk` | Ship an ERC-8004 agent: chat panel, on-chain registration, `.well-known` manifests |
 
-Both are proprietary (see [LICENSE](https://github.com/nirholas/three.ws/blob/main/LICENSE)) and free to install and use from npm. Neither requires the other.
+Both are open source under the [Apache License 2.0](https://github.com/nirholas/three.ws/blob/main/LICENSE) and free to install and use from npm. Neither requires the other.
 
 > **Building payments?** The x402 buyer, seller, browser-modal, and MCP packages are
 > published to npm as standalone libraries — `@three-ws/x402-fetch`,

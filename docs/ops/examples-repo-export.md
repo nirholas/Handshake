@@ -105,10 +105,10 @@ rather than let that happen.
 
 ## License note before first publish
 
-The export carries the monorepo root `LICENSE` verbatim, which is currently
-"All rights reserved". A public examples repo usually ships a permissive license
-(MIT/Apache-2.0). Confirm or replace `dist/examples-repo/LICENSE` before the
-first public push. This is an owner decision; the export does not choose one.
+The export carries the monorepo root `LICENSE` verbatim, which is the Apache
+License 2.0. That is already the permissive license a public examples repo
+wants, so no substitution is needed. Ship `dist/examples-repo/NOTICE` alongside
+it, since Apache-2.0 section 4(d) requires the notice to travel with the code.
 
 ## Owner publish steps (run by hand; not automated here)
 
