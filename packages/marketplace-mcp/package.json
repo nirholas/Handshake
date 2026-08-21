@@ -5,7 +5,7 @@
 	"description": "Browse the three.ws agent marketplace and skills catalog from any AI agent. browse_agents and browse_skills search & page the public listings; agent_detail and the category tools round out discovery. Read-only — no key, no signer, no payment.",
 	"type": "module",
 	"author": "nirholas <support@three.ws>",
-	"license": "SEE LICENSE IN LICENSE",
+	"license": "Apache-2.0",
 	"homepage": "https://three.ws",
 	"repository": {
 		"type": "git",

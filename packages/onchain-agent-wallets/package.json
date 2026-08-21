@@ -5,7 +5,7 @@
 	"description": "Give an AI agent a real Solana wallet without giving it your money. The agent gets a spending allowance the SPL Token program enforces on-chain, plus guardrails (per-tx cap, daily cap, recipient and host allowlists, expiry, kill switch), x402 payments, and a one-call on-chain deploy. Custody never leaves your wallet: you can revoke or withdraw at any moment, and the agent can never spend past the delegated ceiling.",
 	"type": "module",
 	"author": "nirholas <support@three.ws>",
-	"license": "SEE LICENSE IN LICENSE",
+	"license": "Apache-2.0",
 	"homepage": "https://three.ws",
 	"repository": {
 		"type": "git",

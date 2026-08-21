@@ -4,7 +4,7 @@
 	"description": "Free, read-only pump.fun + Solana MCP server — token discovery, on-chain bonding-curve & holder analysis, creator fee-claim tracking, SNS resolution, KOL signals, and swap quotes. No API keys.",
 	"type": "module",
 	"author": "nirholas",
-	"license": "SEE LICENSE IN LICENSE",
+	"license": "Apache-2.0",
 	"homepage": "https://three.ws",
 	"mcpName": "io.github.nirholas/pumpfun-solana-mcp",
 	"repository": {

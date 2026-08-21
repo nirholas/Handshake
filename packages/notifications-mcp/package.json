@@ -5,7 +5,7 @@
 	"description": "Read and manage your three.ws notification inbox from any AI agent — list inbound events (pump/market alerts, sales, purchases, social, IRL, account), mark read, tune the per-category delivery matrix, and register Web Push devices. Account-scoped over the live API via a Bearer API key.",
 	"type": "module",
 	"author": "nirholas <support@three.ws>",
-	"license": "SEE LICENSE IN LICENSE",
+	"license": "Apache-2.0",
 	"homepage": "https://three.ws",
 	"repository": {
 		"type": "git",

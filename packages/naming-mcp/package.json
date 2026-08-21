@@ -5,7 +5,7 @@
 	"description": "Resolve Solana .sol names and check *.threews.sol agent-identity availability from any AI agent. sns_resolve maps a .sol name to its owner wallet, sns_reverse maps a wallet to its primary name, and threews_availability checks whether a three.ws agent handle is free to claim. No key, no signer, no payment.",
 	"type": "module",
 	"author": "nirholas <support@three.ws>",
-	"license": "SEE LICENSE IN LICENSE",
+	"license": "Apache-2.0",
 	"homepage": "https://three.ws",
 	"repository": {
 		"type": "git",

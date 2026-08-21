@@ -5,7 +5,7 @@
 	"description": "The three.ws agent action-provenance log over MCP — append-only, ERC-191-signed, on-chain-verifiable. Any AI agent can record what it did and audit another agent's provenance trail. Cursor-paginated reads + a signed append to an immutable ledger.",
 	"type": "module",
 	"author": "nirholas <support@three.ws>",
-	"license": "SEE LICENSE IN LICENSE",
+	"license": "Apache-2.0",
 	"homepage": "https://three.ws",
 	"repository": {
 		"type": "git",

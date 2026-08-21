@@ -5,7 +5,7 @@
 	"name": "3d-agent",
 	"description": "three.ws — build, animate, rig, and monetize 3D AI agents on-chain. Three.js web app, SDKs, MCP servers, and x402 payment rails.",
 	"author": "nirholas",
-	"license": "SEE LICENSE IN LICENSE",
+	"license": "Apache-2.0",
 	"homepage": "https://three.ws",
 	"repository": {
 		"type": "git",

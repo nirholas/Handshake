@@ -81,7 +81,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "license": "SEE LICENSE IN LICENSE",
+  "license": "Apache-2.0",
   "keywords": [
     "three.ws",
     "solana",

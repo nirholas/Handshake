@@ -5,7 +5,7 @@
 	"description": "three.ws market intelligence from any AI agent — smart-money scoring, wallet intel, signal feeds, KOL leaderboards/trades, and the copy-trade Smart Money directory. Read-only over the live public API. No key, no signer, no payment.",
 	"type": "module",
 	"author": "nirholas <support@three.ws>",
-	"license": "SEE LICENSE IN LICENSE",
+	"license": "Apache-2.0",
 	"homepage": "https://three.ws",
 	"repository": {
 		"type": "git",

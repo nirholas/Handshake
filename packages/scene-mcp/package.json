@@ -5,7 +5,7 @@
 	"description": "Speak 3D worlds into being from any AI agent. compose_scene turns one sentence into a placed diorama plan (mood, palette, and single-object forge prompts) over the live three.ws pipeline; build_world runs the whole pipeline server-side in one call; export_scene merges a forged diorama into one glTF binary with selectable nodes; get_scene and list_scenes read the saved gallery. No key, no signer, no payment.",
 	"type": "module",
 	"author": "nirholas <support@three.ws>",
-	"license": "SEE LICENSE IN LICENSE",
+	"license": "Apache-2.0",
 	"homepage": "https://three.ws",
 	"repository": {
 		"type": "git",

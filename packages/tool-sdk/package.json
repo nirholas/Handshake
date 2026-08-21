@@ -12,7 +12,7 @@
 		"json-schema"
 	],
 	"author": "three.ws <support@three.ws> (https://three.ws)",
-	"license": "SEE LICENSE IN LICENSE",
+	"license": "Apache-2.0",
 	"homepage": "https://three.ws",
 	"repository": {
 		"type": "git",

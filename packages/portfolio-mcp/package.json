@@ -5,7 +5,7 @@
 	"description": "An AI agent's own trading state over MCP — portfolio summary, value history, live wallet balances, the public closed-trade PnL feed, and one real write: a signed on-chain Solana transfer. Powered by three.ws.",
 	"type": "module",
 	"author": "nirholas <support@three.ws>",
-	"license": "SEE LICENSE IN LICENSE",
+	"license": "Apache-2.0",
 	"homepage": "https://three.ws",
 	"repository": {
 		"type": "git",

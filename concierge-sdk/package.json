@@ -20,7 +20,7 @@
 		"intercom-alternative"
 	],
 	"author": "three.ws <support@three.ws> (https://three.ws)",
-	"license": "SEE LICENSE IN LICENSE",
+	"license": "Apache-2.0",
 	"homepage": "https://three.ws/concierge",
 	"repository": {
 		"type": "git",

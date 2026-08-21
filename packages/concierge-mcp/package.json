@@ -5,7 +5,7 @@
 	"description": "Ask any website's AI concierge a grounded question, and generate the copy-paste embed code to add a three.ws Concierge (an AI chat widget with a 3D avatar) to a site. concierge_ask fetches a page and answers from its real content; concierge_embed builds the one-tag install; concierge_avatars lists the avatars. No key, no signer, no payment.",
 	"type": "module",
 	"author": "nirholas <support@three.ws>",
-	"license": "SEE LICENSE IN LICENSE",
+	"license": "Apache-2.0",
 	"homepage": "https://three.ws/concierge",
 	"repository": {
 		"type": "git",

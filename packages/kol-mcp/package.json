@@ -5,7 +5,7 @@
 	"description": "Track one smart trader from any AI agent — a tracked KOL wallet's portfolio P&L (realized/unrealized, win rate, top holding) and its trades on a given mint. Read-only over the live public three.ws KOL API. No key, no signer, no payment.",
 	"type": "module",
 	"author": "nirholas <support@three.ws>",
-	"license": "SEE LICENSE IN LICENSE",
+	"license": "Apache-2.0",
 	"homepage": "https://three.ws",
 	"repository": {
 		"type": "git",

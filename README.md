@@ -11364,4 +11364,8 @@ Want your name here? Open a PR — see [Contributing](#contributing).
 
 ## License
 
-All rights reserved. See [LICENSE](LICENSE).
+three.ws is open source under the [Apache License 2.0](LICENSE). You may use, modify, distribute, and build commercial products on it, including in closed-source work, provided you keep the license and attribution notices and state what you changed. Apache-2.0 also carries an explicit patent grant from every contributor, which matters for the on-chain contracts in this repository.
+
+Contributions are accepted under the same license; see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+Vendored third-party code keeps its own license. Attribution for derived code and assets lives in [character-studio/LICENSE](character-studio/LICENSE), [src/scene-studio/vendor/LICENSE](src/scene-studio/vendor/LICENSE), [public/animations/LICENSES.md](public/animations/LICENSES.md), and the per-asset `LICENSES.md` files under [public/club/](public/club).

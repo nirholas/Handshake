@@ -5,7 +5,7 @@
 	"description": "Generate a paste-ready three.ws assistant widget from any AI agent. build_assistant_widget turns a config into an embeddable <script> tag, a frame URL, and a ThreeAssistant.init() snippet for a floating 3D avatar chatbot on any website; list_assistant_options enumerates every avatar, background, mode and data-* attribute you can set. Pure, offline, deterministic, no key, no signer, no payment.",
 	"type": "module",
 	"author": "nirholas <support@three.ws>",
-	"license": "SEE LICENSE IN LICENSE",
+	"license": "Apache-2.0",
 	"homepage": "https://three.ws/assistant",
 	"repository": {
 		"type": "git",

@@ -1,0 +1,19 @@
+three.ws
+Copyright 2026 nirholas
+
+This product includes software developed as part of the three.ws project
+(https://github.com/nirholas/three.ws).
+
+Licensed under the Apache License, Version 2.0. See the LICENSE file in the
+root of this repository for the full terms.
+
+Vendored and derived third-party code keeps its own license and attribution.
+Those notices live alongside the code they cover:
+
+  character-studio/LICENSE            fork of M3-org/CharacterStudio
+  src/scene-studio/vendor/LICENSE     vendored three.js editor
+  public/animations/LICENSES.md       animation clip library provenance
+  public/club/**/LICENSES.md          per-asset attribution
+  contracts/lib/**                    third-party Solidity dependencies
+
+Nothing in this NOTICE modifies the terms of the Apache License, Version 2.0.

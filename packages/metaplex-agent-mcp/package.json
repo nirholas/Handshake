@@ -5,7 +5,7 @@
 	"description": "Deploy AI agents on-chain into the Metaplex Agent Registry on Solana: one atomic transaction mints a Metaplex Core asset (data: URI metadata, verified creator, royalties, immutable metadata) and registers its EIP-8004 agent identity, so the agent lands with its own on-chain wallet. Agents sign with their own key; people sign with Phantom, Solflare, or any Solana wallet via the prepare/send flow. A flat mainnet deploy fee funds $THREE buybacks and is waived for $THREE holders. Every Core plugin and every metadata field is customizable.",
 	"type": "module",
 	"author": "nirholas <support@three.ws>",
-	"license": "SEE LICENSE IN LICENSE",
+	"license": "Apache-2.0",
 	"homepage": "https://three.ws",
 	"repository": {
 		"type": "git",

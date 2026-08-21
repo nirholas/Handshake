@@ -5,7 +5,7 @@
 	"description": "Discover, subscribe to, and track three.ws copy-trade signal feeds from any AI agent — a marketplace ranked by proven realized edge, a publisher leaderboard from real on-chain performance, and account-scoped subscribe + kill-switch controls over the live API.",
 	"type": "module",
 	"author": "nirholas <support@three.ws>",
-	"license": "SEE LICENSE IN LICENSE",
+	"license": "Apache-2.0",
 	"homepage": "https://three.ws",
 	"repository": {
 		"type": "git",

@@ -5,7 +5,7 @@
 	"description": "Any model, one interface: the three.ws multi-provider LLM router over MCP. Discover available providers/models (Claude, GPT-5, Grok, Qwen, DeepSeek, NVIDIA Nemotron, IBM Granite and more) and run a chat completion through whichever one fits. Free tiers need no key; paid flagships unlock with a three.ws API key.",
 	"type": "module",
 	"author": "nirholas <support@three.ws>",
-	"license": "SEE LICENSE IN LICENSE",
+	"license": "Apache-2.0",
 	"homepage": "https://three.ws",
 	"repository": {
 		"type": "git",

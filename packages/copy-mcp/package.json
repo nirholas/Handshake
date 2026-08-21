@@ -5,7 +5,7 @@
 	"description": "Manage your three.ws copy-trade follows from any AI agent — follow/unfollow leaders, tune sizing & guard rules, read the copy-intent inbox, and track fees owed. Account-scoped, non-custodial, over the live API.",
 	"type": "module",
 	"author": "nirholas <support@three.ws>",
-	"license": "SEE LICENSE IN LICENSE",
+	"license": "Apache-2.0",
 	"homepage": "https://three.ws",
 	"repository": {
 		"type": "git",

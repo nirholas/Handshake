@@ -4,7 +4,7 @@
 	"description": "Browse the x402 bazaar, decode 402 payment challenges, and pay per call for paid APIs and MCP tools in USDC or $THREE on Solana and Base, without leaving VS Code. Powered by three.ws.",
 	"version": "0.2.0",
 	"publisher": "three-ws",
-	"license": "SEE LICENSE IN LICENSE",
+	"license": "Apache-2.0",
 	"homepage": "https://three.ws",
 	"repository": {
 		"type": "git",

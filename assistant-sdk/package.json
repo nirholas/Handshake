@@ -4,7 +4,7 @@
 	"description": "A 3D avatar assistant for any website in one script tag. A floating launcher opens a real animated avatar with a chatbot mode (free models or the visitor's own Groq/OpenRouter key) and a speak mode that says whatever you type, out loud, in a speech bubble.",
 	"type": "module",
 	"author": "nirholas <support@three.ws>",
-	"license": "SEE LICENSE IN LICENSE",
+	"license": "Apache-2.0",
 	"homepage": "https://three.ws/assistant",
 	"repository": {
 		"type": "git",

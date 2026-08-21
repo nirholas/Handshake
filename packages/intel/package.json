@@ -35,7 +35,7 @@
     "three.ws"
   ],
   "author": "nirholas <support@three.ws>",
-  "license": "SEE LICENSE IN LICENSE",
+  "license": "Apache-2.0",
   "homepage": "https://three.ws/docs/mcp-intel",
   "repository": {
     "type": "git",

@@ -5,7 +5,7 @@
 	"description": "three.ws Pay-As-You-Learn tutor ledger from any AI agent — read a learning session's itemized running tab and close it for an attested invoice. Free, no key, no signer; answering questions is the paid action handled elsewhere.",
 	"type": "module",
 	"author": "nirholas <support@three.ws>",
-	"license": "SEE LICENSE IN LICENSE",
+	"license": "Apache-2.0",
 	"homepage": "https://three.ws",
 	"repository": {
 		"type": "git",
