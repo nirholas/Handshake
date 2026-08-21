@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-20T00:11:00.455Z",
+	"generated_at": "2026-08-21T04:43:00.061Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -5152,6 +5152,16 @@
 					"title": "Docs · Design tokens",
 					"description": "The canonical design vocabulary every three.ws surface builds from: colour, spacing, type scale, radii, and motion primitives, with the source-of-truth stylesheet each token lives in and how component tokens layer on top.",
 					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/liquid-glass",
+					"title": "Docs · Liquid glass, the visual direction",
+					"description": "The design brief for the liquid-glass look on three.ws grids and panels: real refraction instead of blur, the squircle and material recipe, the two lanes (CSS glass for chrome, three.js transmission for tiles), the open-source references, and the performance and accessibility budget.",
+					"added": "2026-08-21",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

@@ -1166,6 +1166,10 @@
 					"path": "DESIGN-TOKENS"
 				},
 				{
+					"label": "Liquid glass (visual direction)",
+					"path": "liquid-glass"
+				},
+				{
 					"label": "Vanity protocol spec",
 					"path": "PROTOCOL-vanity"
 				},

@@ -3125,6 +3125,12 @@ URL: https://three.ws/docs/DESIGN-TOKENS
 
 The canonical design vocabulary every three.ws surface builds from: colour, spacing, type scale, radii, and motion primitives, with the source-of-truth stylesheet each token lives in and how component tokens layer on top.
 
+### Docs · Liquid glass, the visual direction
+
+URL: https://three.ws/docs/liquid-glass
+
+The design brief for the liquid-glass look on three.ws grids and panels: real refraction instead of blur, the squircle and material recipe, the two lanes (CSS glass for chrome, three.js transmission for tiles), the open-source references, and the performance and accessibility budget.
+
 ### Docs · Agent manifest reference
 
 URL: https://three.ws/docs/agent-manifest

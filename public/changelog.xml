@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · Liquid glass, the visual direction</title>
+			<link>https://three.ws/docs/liquid-glass</link>
+			<guid isPermaLink="false">2026-08-21:Docs · Liquid glass, the visual direction</guid>
+			<pubDate>Fri, 21 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The design brief for the liquid-glass look on three.ws grids and panels: real refraction instead of blur, the squircle and material recipe, the two lanes (CSS glass for chrome, three.js transmission for tiles), the open-source references, and the performance and accessibility budget.</description>
+		</item>
+		<item>
 			<title>AR now actually opens AR on iPhone: AR Forge and AR Studio, not just avatars</title>
 			<link>https://three.ws/ar</link>
 			<guid isPermaLink="false">2026-08-20:AR now actually opens AR on iPhone: AR Forge and AR Studio, not just avatars</guid>

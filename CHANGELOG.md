@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-08-21
+
+- **Docs · Liquid glass, the visual direction** (`/docs/liquid-glass`): The design brief for the liquid-glass look on three.ws grids and panels: real refraction instead of blur, the squircle and material recipe, the two lanes (CSS glass for chrome, three.js transmission for tiles), the open-source references, and the performance and accessibility budget.
+
 ## 2026-08-20
 
 - **AR now actually opens AR on iPhone: AR Forge and AR Studio, not just avatars**: Placing a model from AR Forge or the multi-model AR Studio in your real room worked correctly on Android, but iPhone quietly got a downgrade: AR Forge fell back to the plain 3D viewer, and AR Studio faked it with a camera overlay that had no real-world plane detection, no correct scale, and nothing to rest the model on the floor. Only the avatar AR page did this right. Both surfaces now use the same real pipeline: a genuine USDZ is generated on your device (the same three.js conversion the avatar page always used) and handed to Apple Quick Look, so the model is actually tracked to your room, sized correctly, and sits on your real floor. AR Studio's AR button now also offers Google Scene Viewer directly instead of only the raw WebXR session. Shared AR links still unfurl with a real render of the model when pasted into X, Discord, or iMessage. (`/ar`) `[fix, improvement]`

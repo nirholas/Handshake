@@ -4028,6 +4028,14 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/liquid-glass",
+					"title": "Docs · Liquid glass, the visual direction",
+					"description": "The design brief for the liquid-glass look on three.ws grids and panels: real refraction instead of blur, the squircle and material recipe, the two lanes (CSS glass for chrome, three.js transmission for tiles), the open-source references, and the performance and accessibility budget.",
+					"added": "2026-08-21",
+					"priority": 0.6,
+					"changefreq": "monthly"
+				},
+				{
 					"path": "/docs/agent-manifest",
 					"title": "Docs · Agent manifest reference",
 					"description": "The complete definition of an embodied AI agent in one JSON file: its 3D body, LLM brain, voice, personality, skills, memory, and on-chain identity. Every field, its type, its default, and what breaks if you omit it.",
