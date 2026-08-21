@@ -2,6 +2,25 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-08-21",
+			"title": "MikuMikuDance avatars now animate instead of standing still",
+			"summary": "Upload a model rigged in MikuMikuDance and it now plays the full animation library like any other avatar. MMD names every bone in Japanese (センター, 上半身, 左腕) and shares no spelling at all with the Latin conventions we already understood, so until now the entire skeleton went unrecognised and the character fell back to a default body. Every joint in the standard PMX skeleton is now mapped, fingers and toes included, along with the two thumb-numbering quirks MMD has. The IK targets and twist bones are deliberately left alone, because driving those would fight the chain they exist to solve and tear the mesh. Rig Doctor also names the convention on sight now, so an MMD upload tells you what it is instead of reporting an unknown rig.",
+			"tags": [
+				"improvement",
+				"feature"
+			],
+			"link": "/rig-doctor"
+		},
+		{
+			"date": "2026-08-21",
+			"title": "A real front door for contributors: community channels, a 15-minute first PR, and how we triage",
+			"summary": "Three new docs make it obvious how to join in. Community lists every room we are in (GitHub Discussions, the Telegram community, the X community, the IBM Community group, the release channel) and which one fits which question. Your first contribution walks from clone to open pull request in about 15 minutes with a complete worked example: teaching the avatar retargeter a bone-naming convention it did not know, plus the test that proves it. Triage documents how issues and pull requests get sorted, what every label means, how to claim work so nobody duplicates it, and the response times you can hold us to. The README, the contributing guide, and the new-issue chooser all point at them now.",
+			"tags": [
+				"docs"
+			],
+			"link": "/docs/community"
+		},
+		{
 			"date": "2026-08-20",
 			"title": "AR now actually opens AR on iPhone: AR Forge and AR Studio, not just avatars",
 			"summary": "Placing a model from AR Forge or the multi-model AR Studio in your real room worked correctly on Android, but iPhone quietly got a downgrade: AR Forge fell back to the plain 3D viewer, and AR Studio faked it with a camera overlay that had no real-world plane detection, no correct scale, and nothing to rest the model on the floor. Only the avatar AR page did this right. Both surfaces now use the same real pipeline: a genuine USDZ is generated on your device (the same three.js conversion the avatar page always used) and handed to Apple Quick Look, so the model is actually tracked to your room, sized correctly, and sits on your real floor. AR Studio's AR button now also offers Google Scene Viewer directly instead of only the raw WebXR session. Shared AR links still unfurl with a real render of the model when pasted into X, Discord, or iMessage.",

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-21T04:43:00.061Z",
+	"generated_at": "2026-08-21T18:39:21.979Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -6632,6 +6632,36 @@
 					"title": "Docs · Airdrop Checker",
 					"description": "How the airdrop eligibility checker works: the keyless Solana activity scan and Etherscan V2 EVM scan, the check DSL and scoring thresholds, the honesty contract around unmeasurable and manual criteria, and the full response shape.",
 					"added": "2026-08-06",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/community",
+					"title": "Docs · Community",
+					"description": "Where the three.ws community talks: GitHub Discussions, the Telegram community, the X community, the IBM Community group, and the release channel, with guidance on which room fits which question.",
+					"added": "2026-08-21",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/first-contribution",
+					"title": "Docs · Your first contribution",
+					"description": "Clone to open pull request in about 15 minutes, with a complete worked example: teaching the avatar retargeter a bone-naming convention it did not know, plus the test that proves it.",
+					"added": "2026-08-21",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/triage",
+					"title": "Docs · Triage",
+					"description": "How incoming issues and pull requests get sorted, what every label means, how to claim work, and the response times contributors can expect.",
+					"added": "2026-08-21",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

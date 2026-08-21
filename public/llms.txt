@@ -703,6 +703,9 @@ Docs, tutorials, and reference.
 - [Docs · Trader Passport](https://three.ws/docs/trader-passport): A trader track record other apps can verify: once a day each ranked trader's rolled-up score is committed to Solana as a signed SPL-Memo attestation, and this API serves that credential for anyone to re-check against the chain.
 - [Docs · Wallet Portfolio](https://three.ws/docs/portfolio): How the live wallet portfolio works: the keyless Solana-first data sources behind /api/crypto/portfolio, the stable/major/token classification, the honest 24h coverage contract, and the full response shape for agents and scripts.
 - [Docs · Airdrop Checker](https://three.ws/docs/airdrops): How the airdrop eligibility checker works: the keyless Solana activity scan and Etherscan V2 EVM scan, the check DSL and scoring thresholds, the honesty contract around unmeasurable and manual criteria, and the full response shape.
+- [Docs · Community](https://three.ws/docs/community): Where the three.ws community talks: GitHub Discussions, the Telegram community, the X community, the IBM Community group, and the release channel, with guidance on which room fits which question.
+- [Docs · Your first contribution](https://three.ws/docs/first-contribution): Clone to open pull request in about 15 minutes, with a complete worked example: teaching the avatar retargeter a bone-naming convention it did not know, plus the test that proves it.
+- [Docs · Triage](https://three.ws/docs/triage): How incoming issues and pull requests get sorted, what every label means, how to claim work, and the response times contributors can expect.
 
 ## Blog
 

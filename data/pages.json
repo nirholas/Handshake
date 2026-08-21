@@ -5123,6 +5123,30 @@
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-08-06"
+				},
+				{
+					"path": "/docs/community",
+					"title": "Docs · Community",
+					"description": "Where the three.ws community talks: GitHub Discussions, the Telegram community, the X community, the IBM Community group, and the release channel, with guidance on which room fits which question.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-08-21"
+				},
+				{
+					"path": "/docs/first-contribution",
+					"title": "Docs · Your first contribution",
+					"description": "Clone to open pull request in about 15 minutes, with a complete worked example: teaching the avatar retargeter a bone-naming convention it did not know, plus the test that proves it.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-08-21"
+				},
+				{
+					"path": "/docs/triage",
+					"title": "Docs · Triage",
+					"description": "How incoming issues and pull requests get sorted, what every label means, how to claim work, and the response times contributors can expect.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-08-21"
 				}
 			]
 		},

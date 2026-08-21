@@ -7,12 +7,52 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · Community</title>
+			<link>https://three.ws/docs/community</link>
+			<guid isPermaLink="false">2026-08-21:Docs · Community</guid>
+			<pubDate>Fri, 21 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Where the three.ws community talks: GitHub Discussions, the Telegram community, the X community, the IBM Community group, and the release channel, with guidance on which room fits which question.</description>
+		</item>
+		<item>
 			<title>Docs · Liquid glass, the visual direction</title>
 			<link>https://three.ws/docs/liquid-glass</link>
 			<guid isPermaLink="false">2026-08-21:Docs · Liquid glass, the visual direction</guid>
 			<pubDate>Fri, 21 Aug 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>The design brief for the liquid-glass look on three.ws grids and panels: real refraction instead of blur, the squircle and material recipe, the two lanes (CSS glass for chrome, three.js transmission for tiles), the open-source references, and the performance and accessibility budget.</description>
+		</item>
+		<item>
+			<title>Docs · Triage</title>
+			<link>https://three.ws/docs/triage</link>
+			<guid isPermaLink="false">2026-08-21:Docs · Triage</guid>
+			<pubDate>Fri, 21 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How incoming issues and pull requests get sorted, what every label means, how to claim work, and the response times contributors can expect.</description>
+		</item>
+		<item>
+			<title>Docs · Your first contribution</title>
+			<link>https://three.ws/docs/first-contribution</link>
+			<guid isPermaLink="false">2026-08-21:Docs · Your first contribution</guid>
+			<pubDate>Fri, 21 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Clone to open pull request in about 15 minutes, with a complete worked example: teaching the avatar retargeter a bone-naming convention it did not know, plus the test that proves it.</description>
+		</item>
+		<item>
+			<title>A real front door for contributors: community channels, a 15-minute first PR, and how we triage</title>
+			<link>https://three.ws/docs/community</link>
+			<guid isPermaLink="false">2026-08-21:A real front door for contributors: community channels, a 15-minute first PR, and how we triage</guid>
+			<pubDate>Fri, 21 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>Three new docs make it obvious how to join in. Community lists every room we are in (GitHub Discussions, the Telegram community, the X community, the IBM Community group, the release channel) and which one fits which question. Your first contribution walks from clone to open pull request in about 15 minutes with a complete worked example: teaching the avatar retargeter a bone-naming convention it did not know, plus the test that proves it. Triage documents how issues and pull requests get sorted, what every label means, how to claim work so nobody duplicates it, and the response times you can hold us to. The README, the contributing guide, and the new-issue chooser all point at them now.</description>
+		</item>
+		<item>
+			<title>MikuMikuDance avatars now animate instead of standing still</title>
+			<link>https://three.ws/rig-doctor</link>
+			<guid isPermaLink="false">2026-08-21:MikuMikuDance avatars now animate instead of standing still</guid>
+			<pubDate>Fri, 21 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Upload a model rigged in MikuMikuDance and it now plays the full animation library like any other avatar. MMD names every bone in Japanese (センター, 上半身, 左腕) and shares no spelling at all with the Latin conventions we already understood, so until now the entire skeleton went unrecognised and the character fell back to a default body. Every joint in the standard PMX skeleton is now mapped, fingers and toes included, along with the two thumb-numbering quirks MMD has. The IK targets and twist bones are deliberately left alone, because driving those would fight the chain they exist to solve and tear the mesh. Rig Doctor also names the convention on sight now, so an MMD upload tells you what it is instead of reporting an unknown rig.</description>
 		</item>
 		<item>
 			<title>AR now actually opens AR on iPhone: AR Forge and AR Studio, not just avatars</title>
