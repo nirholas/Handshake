@@ -16,7 +16,7 @@ Verified 2026-08-21 against `gh repo view nirholas/three.ws` and the working tre
 |---|---|---|
 | Code of conduct | PASS | [CODE_OF_CONDUCT.md](../CODE_OF_CONDUCT.md), Contributor Covenant, detected by GitHub |
 | Contributing guide | PASS | [CONTRIBUTING.md](../CONTRIBUTING.md), now opening with the community table and the 15-minute onboarding path |
-| **License** | **FAIL** | [LICENSE](../LICENSE) is proprietary: "All rights reserved... may not be used, copied, modified, distributed". GitHub reports `licenseInfo.key: other`. `package.json` and all 67 `packages/*` declare `SEE LICENSE IN LICENSE`. |
+| License | **PASS** | Relicensed to Apache-2.0 on 2026-08-21. Verbatim [LICENSE](../LICENSE), a [NOTICE](../NOTICE) covering vendored and derived code, and all 102 first-party manifests set to `"license": "Apache-2.0"`. |
 | **100+ stars, hosted on GitHub** | **FAIL by 2** | 98 stargazers, 24 forks |
 | Open to outside contributions | PASS | 11 contributors, issue and PR templates, CODEOWNERS, and six curated open issues (see below) |
 | *Preferred:* community channel | **PASS** | Telegram community, X community, IBM Community group, GitHub Discussions, release channel. All five documented in [docs/community.md](community.md) and wired into the README, CONTRIBUTING, and the new-issue chooser. |
@@ -24,18 +24,20 @@ Verified 2026-08-21 against `gh repo view nirholas/three.ws` and the working tre
 | Guest available Friday 1:00 PM ET | Owner to confirm | Pre-recording is allowed as an exception |
 | Booked at least two weeks ahead | Plan for it | Earliest realistic slot: **2026-09-11** |
 
-### The one thing that still blocks this
+### License: done
 
-**The license.** Everything else is either already true or is now done. Open Source Friday is a program for open source projects, and our repo is publicly described as "Open-source 3D AI agent framework" while shipping a LICENSE that forbids use, copying, modification, and distribution. A reviewer who opens the file sees the contradiction, and the request stalls there no matter how good the demo is.
+Relicensed to **Apache-2.0** on 2026-08-21, which was the last hard failure against the criteria.
 
-It is contradicted inside the repo too: [CONTRIBUTING.md](../CONTRIBUTING.md) ends by telling contributors their work "will be licensed under the Apache License 2.0", which is not what LICENSE says. Whatever the outcome, those two files have to agree.
+Before, the repo shipped a proprietary LICENSE ("All rights reserved... may not be used, copied, modified, distributed") while its own description said "Open-source 3D AI agent framework" and CONTRIBUTING.md told contributors their work was Apache-2.0. Three statements, no two of which agreed. A reviewer who opened LICENSE stopped there.
 
-This is an owner decision, not an agent decision. Two workable paths:
+What landed:
 
-- **Option A (recommended): relicense the repo to MIT or Apache-2.0.** MIT is the lowest-friction read for a JS/Three.js ecosystem project and matches most of our dependency tree. Apache-2.0 buys an explicit patent grant, which matters more if the on-chain contracts stay in-repo, and it is what CONTRIBUTING.md already claims. Mechanically: replace `LICENSE`, set `"license"` in the root `package.json` and every `packages/*/package.json` (67, scriptable), update the README License section, add the changelog entry. Contributors so far are the owner plus a small set of collaborators, so there is no large CLA cleanup problem.
-- **Option B: split out an OSS core.** Keep the platform proprietary and publish a genuinely open subset (the `<agent-3d>` web component, `avatar-sdk`, and the glTF canonicalize/retarget layer) as its own repo, then apply with that. Honest, but expensive: a new repo starts at 0 stars and fails criterion 2 on day one.
+- [LICENSE](../LICENSE) is now the verbatim Apache-2.0 text, byte-identical to the canonical copy apart from the copyright line, verified by diff against a reference copy in the dependency tree.
+- [NOTICE](../NOTICE) records attribution for the vendored and derived code that keeps its own license: the character studio fork, the vendored three.js editor, the animation clip library, and the club assets. Every path in it was checked to exist.
+- All **102** first-party `package.json` manifests moved from `"SEE LICENSE IN LICENSE"` to `"license": "Apache-2.0"`, each re-parsed as JSON before it was written. Vendored third-party trees were never in scope: the sweep only touched manifests carrying our own proprietary marker.
+- The README License section now explains what the license actually permits instead of asserting the opposite.
 
-Option A is the only path that gets us on air this quarter.
+Apache-2.0 over MIT for two reasons: CONTRIBUTING.md already promised it to every contributor to date, so this makes that promise true rather than changing the terms under them; and its explicit patent grant matters with on-chain contracts in the repo.
 
 ### Clearing the two-star gap
 
@@ -62,10 +64,9 @@ Option A is the only path that gets us on air this quarter.
 
 ### Still to do
 
-1. **Relicense** (owner call, section 1). Everything below assumes it landed.
-2. **Post the three seeded Discussions.** Written and ready in [contributing/discussion-seeds.md](contributing/discussion-seeds.md): a Welcome post (pin it), a Show and tell thread, and an open Roadmap thread. The workspace token has `issues: write` but not `discussions: write`, so this is 60 seconds of paste by a human. Zero threads is what reads as nobody being home; three real ones fixes it.
-3. **Trim the README's front door.** It is 401 KB. Nobody evaluating a livestream guest reads 401 KB. The first screen needs what it is, a 10-second demo GIF, and the install line. Everything else moves below the fold or into `docs/`.
-4. **Record a 45-second demo clip** (prompt to rigged avatar to embedded on a page). Reusable: README, the issue body, and every amplification post. Per section 5, video and images are what move GitHub's own numbers.
+1. **Post the three seeded Discussions.** Written and ready in [contributing/discussion-seeds.md](contributing/discussion-seeds.md): a Welcome post (pin it), a Show and tell thread, and an open Roadmap thread. The workspace token has `issues: write` but not `discussions: write`, so this is 60 seconds of paste by a human. Zero threads is what reads as nobody being home; three real ones fixes it.
+2. **Trim the README's front door.** It is 401 KB. Nobody evaluating a livestream guest reads 401 KB. The first screen needs what it is, a 10-second demo GIF, and the install line. Everything else moves below the fold or into `docs/`.
+3. **Record a 45-second demo clip** (prompt to rigged avatar to embedded on a page). Reusable: README, the issue body, and every amplification post. Per section 5, video and images are what move GitHub's own numbers.
 
 ---
 
@@ -165,14 +166,13 @@ Every one carries an image or video. No plain-text posts in this sequence. Cross
 
 ## 6. Timeline
 
-Assumes the license call is made this week.
+Every hard criterion is met. What remains is polish and scheduling.
 
 | Date | Milestone | Owner |
 |---|---|---|
 | 2026-08-21 | Community docs, triage, onboarding, six curated issues, labels, MMD rig support | Done |
-| 2026-08-22 | License decision (MIT / Apache-2.0 / split-repo) | Owner |
+| 2026-08-21 | Relicensed to Apache-2.0: LICENSE, NOTICE, 102 manifests, README, changelog | Done |
 | 2026-08-22 | Post the three seeded Discussions, pin the Welcome post | Owner, 60 seconds |
-| 2026-08-24 | Relicense landed: LICENSE, root plus 67 package manifests, README, CONTRIBUTING, changelog | Agent |
 | 2026-08-26 | README front door trimmed, demo clip recorded | Agent |
 | 2026-08-27 | **Issue submitted**, reply posted to Andrea's X thread | Owner |
 | 2026-08-28+ | Booking link arrives on approval, book the slot | Owner |
@@ -182,7 +182,8 @@ Assumes the license call is made this week.
 
 ## 7. Open questions for the owner
 
-Only two, and both are genuinely yours to call:
+One, and it is genuinely yours to call:
 
-1. **License: MIT, Apache-2.0, or keep it proprietary and apply with a split-out OSS core?** This gates everything, and it is the only remaining hard failure against the criteria.
-2. **Fridays 1:00 PM ET: live or pre-recorded?** The form allows either. Live is better for the contributor-pipeline story.
+**Fridays 1:00 PM ET: live or pre-recorded?** The form allows either. Live is better for the contributor-pipeline story, because the live-contribution segment is the whole pitch.
+
+The license question that used to sit here is resolved: Apache-2.0, shipped 2026-08-21.
