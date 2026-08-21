@@ -8506,6 +8506,7 @@ endsolid threews_avatar
 - [Environment Variables](#environment-variables)
 - [Testing](#testing)
 - [FAQ & Troubleshooting](#faq--troubleshooting)
+- [Community](#community)
 - [Contributing](#contributing)
 - [Contributors](#contributors)
 - [License](#license)
@@ -11286,6 +11287,25 @@ Increment `JWT_KID` and add the new secret. Existing tokens continue to validate
 - Security: see [Reporting Security Issues](#reporting-security-issues)
 - Discussion and showcase: [GitHub Discussions](https://github.com/nirholas/three.ws/discussions)
 - Live status: [three.ws](https://three.ws)
+
+---
+
+## Community
+
+three.ws is built in the open. Pick the room that fits what you want to do.
+
+| Where | Best for |
+| --- | --- |
+| [GitHub Discussions](https://github.com/nirholas/three.ws/discussions) | Design questions, feature ideas, show and tell |
+| [Telegram community](https://t.me/three_ws_community) | Real-time chat and quick help |
+| [X community](https://x.com/i/communities/1923523161230078106) | Demos, avatars people built, launch chatter |
+| [IBM Community group](https://community.ibm.com/community/user/usergroup?CommunityKey=e71510cc-d953-408f-9a1c-019f5c0a7016) | Enterprise and integration discussion |
+| [Release channel](https://t.me/three_ws) | Every user-visible change, pushed automatically on deploy |
+| [@trythreews on X](https://x.com/trythreews) | Product announcements |
+
+Guidance on which channel suits which question, plus the house rules, lives in [docs/community.md](docs/community.md).
+
+**Want to contribute?** [Your first contribution](docs/first-contribution.md) goes from clone to open pull request in about 15 minutes with a complete worked example, and [`good first issue`](https://github.com/nirholas/three.ws/labels/good%20first%20issue) is a curated list where every entry names the file to change and the command that proves it worked. How we triage and how fast you can expect a response: [docs/triage.md](docs/triage.md).
 
 ---
 

@@ -4,6 +4,22 @@ Thanks for your interest in contributing! This guide covers everything you need 
 
 ---
 
+## Community
+
+| Where | For what |
+| --- | --- |
+| [GitHub Discussions](https://github.com/nirholas/three.ws/discussions) | Design questions, ideas, show and tell |
+| [Telegram community](https://t.me/three_ws_community) | Real-time chat and quick help |
+| [X community](https://x.com/i/communities/1923523161230078106) | Demos and avatars people built |
+| [IBM Community group](https://community.ibm.com/community/user/usergroup?CommunityKey=e71510cc-d953-408f-9a1c-019f5c0a7016) | Enterprise and integration discussion |
+| [Release channel](https://t.me/three_ws) | Every user-visible change, pushed on deploy |
+
+Full list with guidance on which room fits which question: [docs/community.md](docs/community.md).
+
+**New here?** [Your first contribution](docs/first-contribution.md) takes you from clone to open pull request in about 15 minutes, with a complete worked example. How we sort and respond to incoming work, including our response targets, is documented in [Triage](docs/triage.md).
+
+---
+
 ## Quick Start
 
 ```bash
@@ -170,6 +186,12 @@ Use the [Khronos glTF Sample Assets](https://github.com/KhronosGroup/glTF-Sample
 
 Looking for something to work on? Here are areas that welcome contributions:
 
+**Start here:** [`good first issue`](https://github.com/nirholas/three.ws/labels/good%20first%20issue) is curated, not a dumping ground. Every issue on that list names the file to change and the command that proves the change worked. Comment on one to claim it.
+
+The areas that most need help:
+
+- **Rig support**: teach [`src/glb-canonicalize.js`](src/glb-canonicalize.js) a bone-naming convention it does not know yet, so more uploaded avatars animate instead of falling back to a default body. The single highest-leverage self-contained change in the repo. Walked through step by step in [Your first contribution](docs/first-contribution.md).
+- **Animation quality**: new clips for the shared library, or better retargeting in [`src/animation-retarget.js`](src/animation-retarget.js)
 - **Bug fixes** — check the [issues page](https://github.com/nirholas/three.ws/issues)
 - **New environment maps** — add more HDR options
 - **Accessibility** — improve keyboard navigation and screen reader support
