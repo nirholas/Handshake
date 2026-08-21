@@ -139,3 +139,155 @@ Use these under the main post rather than stuffing them into it.
 - Do not promise multi-model placement inside Quick Look or Scene Viewer. Those native
   viewers take one model at a time; the multi-model scene lives in the page.
 - Do not put a number on generation time. It depends on queue depth.
+
+---
+
+# Two-account plan: @trythreews then @nichxbt
+
+The product account announces the thing. The personal account gives it a reason to be
+interesting. Two different jobs, so two different voices, and they must not read as the same
+person posting twice.
+
+**Sequencing.** Post from @trythreews first. Wait for it to settle, roughly twenty to forty
+minutes, then quote it from @nichxbt. Quoting immediately reads as self-amplification and
+splits the engagement across both posts before either has traction. Do not have @trythreews
+reply to the quote tweet: let the personal account carry that branch of the conversation.
+
+**Voice split.**
+
+- **@trythreews** is the platform. Declarative, no "I", no backstory, no feelings about it.
+  It states what exists, shows it, and links to it.
+- **@nichxbt** is a person who built it. First person, one specific detail nobody would know
+  unless they had done the work, and an opinion. This is the post that earns the reshare.
+
+---
+
+## @trythreews (post first)
+
+Attach the two room photos plus the studio screenshot.
+
+### Option A: the release (recommended)
+
+```
+3D AR Studio is open source.
+
+The multi-model AR studio from three.ws, extracted into a package any site can drop in:
+
+<script src="unpkg.com/3d-ar-studio"></script>
+<ar-studio></ar-studio>
+
+Describe an object, watch it generate, put it on your real floor. Add more. Share the scene as a link.
+
+Free, no key, Apache-2.0.
+
+nirholas.github.io/3D-AR-Studio
+```
+
+### Option B: the capability, for a non-developer timeline
+
+```
+Put anything in your room, straight from a web page.
+
+Type "a brass desk lamp". It gets generated, then stands on your actual floor at actual size. Put a chair next to it. Send the whole room to someone as a link.
+
+One script tag. Free. Open source.
+
+nirholas.github.io/3D-AR-Studio
+```
+
+### Option C: the shortest version
+
+```
+Any web page can now put real 3D objects in your actual room.
+
+One script tag. Free. Open source. Works on the phone you're holding.
+
+nirholas.github.io/3D-AR-Studio
+```
+
+---
+
+## @nichxbt (quote tweet, 20 to 40 minutes later)
+
+Pick one. A is the strongest: it is a real thing that happened, it is slightly unflattering,
+and the technical detail proves the fix is real.
+
+### Option A: the confession (recommended)
+
+```
+Yesterday I found out my own AR was fake on iPhone.
+
+iOS has no WebXR, so we were painting the model over the camera feed. It floats. No real size. Nothing occludes it.
+
+Every iPhone already ships ARKit. Now it uses it, and the model converts to USDZ on the device in about a second.
+```
+
+### Option B: why it is open source
+
+```
+People kept asking how the AR on three.ws works.
+
+So I pulled it out of our site and published it. One script tag, your models, your domain, none of it pointing back at us unless you want it to.
+
+I would rather this exist everywhere than be a feature only we have.
+```
+
+### Option C: for the graphics crowd
+
+```
+The part I am proud of: no rig allowlist.
+
+Any humanoid GLB that ships with no animation gets an idle retargeted onto its own skeleton. Mixamo, VRM, Unreal, Daz, MMD, whatever came out of your pipeline.
+
+No T-posing statues in anyone's living room.
+```
+
+### Option D: the short one
+
+```
+Every phone has had AR hardware in it for years and almost no website uses it.
+
+Fixed that. It is one script tag and it is free.
+```
+
+---
+
+## @nichxbt follow-up replies (under the quote tweet)
+
+Post one or two of these under your own quote tweet, not under the @trythreews post. They are
+where the developers land.
+
+```
+It is one npm install if you would rather bundle it:
+
+npm i 3d-ar-studio three
+
+Or two commands to get a live AR page on GitHub Pages:
+
+npx 3d-ar-studio create my-ar-site
+npx 3d-ar-studio deploy
+```
+
+```
+It also ships an MCP server, so an agent can generate a model, arrange a scene, and hand a person one link that opens the whole arrangement in their room.
+
+npx 3d-ar-studio-mcp
+```
+
+```
+Models are free too. A few hundred public-domain props are already in it, and generating a new one needs no key and no account.
+
+Point it at your own catalogue with one option if you would rather use yours.
+```
+
+---
+
+## If someone big replies
+
+- **A graphics or WebXR person**: go technical immediately. Mention the per-model XRAnchor,
+  the light estimation, and the depth occlusion, and offer the repo. They will read code.
+- **A non-technical account**: send them the demo link and tell them to open it on their
+  phone and tap the AR button. Nothing else.
+- **Someone asking "why not Unity / 8th Wall / a native app"**: no app install, no licence,
+  no key, and it is a web page you can link to. That is the whole argument, do not oversell
+  past it.
