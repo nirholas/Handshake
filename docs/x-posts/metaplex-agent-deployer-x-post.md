@@ -165,3 +165,67 @@ Use this if you would rather not quote-tweet.
   > MCP registry: io.github.nirholas/metaplex-agent
 - **Do not** open with "Introducing" or "excited to announce". Both main posts start with the claim
   itself, which is what gets reposted.
+
+---
+
+## 8. The two-account split (use this pair)
+
+Same convention as the meetup and SkillsBuild launches: `@trythreews` posts the product version and
+`@nichxbt` quote-tweets it with the version only a person can say. Do not post them within a few
+minutes of each other, and do not put the first-person line on the brand account.
+
+**Link discipline for this launch:** the only deployer URL that resolves is the GitHub Pages one.
+`three.ws/deploy-onchain` is built but not deployed, so it 404s today. Do not put it in a post until
+production ships it.
+
+### From @trythreews (post this first)
+
+> We put 333 agents on-chain for people who had never held a wallet.
+>
+> Now the tool is public.
+>
+> Name an agent, click deploy, and it lands in the Metaplex Agent Registry on Solana with its own
+> wallet and a portable identity.
+>
+> nirholas.github.io/metaplex-agent-mcp
+
+Why this one: the 333 is proof the thing works before anyone clicks, and "now the tool is public"
+is the entire announcement in five words. The brand account is allowed to say "we put", which is
+what makes this version institutional rather than personal.
+
+### First reply from @trythreews (carries the developer links)
+
+> Agents can deploy themselves too, over MCP:
+>
+> npx -y @three-ws/metaplex-agent-mcp
+>
+> 9 tools, self-custodial, free on devnet.
+>
+> github.com/nirholas/metaplex-agent-mcp
+
+### Quote tweet from @nichxbt (post a few minutes later)
+
+> Those 333 went out through a script. Admin only. That always bothered me.
+>
+> This is the version where you don't need us.
+>
+> The part I like most: the wallet your agent gets has no private key anywhere. It is derived from
+> the asset itself, so there is nothing to leak.
+
+Why this one: it adds two things the brand account never said, which is the whole job of the second
+account. The first is an admission (the Genesis mints were gated, and that was a limitation), and
+the second is a technical detail the founder would notice and a marketer would not. No praise of
+our own product, no pretending to be a bystander.
+
+### Alternate quote tweet from @nichxbt (shorter, conviction-first)
+
+> Nobody's first wallet should be a 12-word phrase they have to protect forever.
+>
+> Make an agent, click deploy, and the crypto part happens behind you. That was always the point.
+
+### If you would rather reply than quote-tweet
+
+> Built this because the 333 needed me to run a script. Now it needs nobody.
+>
+> Your agent's wallet has no private key. It is derived from the asset, so there is nothing to
+> leak and nothing to back up.

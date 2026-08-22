@@ -169,3 +169,28 @@ outbound slot.
 > enforced by the Solana token program itself, not a raw key. And if you just want to see the
 > deploy: the browser version builds the transaction locally, your wallet signs it, nothing
 > touches a server.
+
+## 5. @nichxbt quote tweet (personal voice, quote-tweeting the @trythreews main post above)
+
+Same convention as the event campaign copy: the brand account posts the tight institutional
+version, the personal account quote-tweets with the human read, not a restatement of the facts.
+Post this a few minutes after the @trythreews post lands, not at the same time.
+
+> Every project that builds on this becomes a $THREE buyer, forever. Not just our own users.
+>
+> That's the whole thesis behind open-sourcing it instead of keeping it in-house.
+>
+> Go build something with it: github.com/nirholas/metaplex-agent-mcp
+
+**Why this one:** it says the plain version of the investment thesis in first person, which reads
+as conviction rather than marketing copy when it comes from a personal account. It doesn't repeat
+"agent wallet, EIP-8004 identity, x402" (already said in the post it's quoting) and it doesn't
+touch the buyback.enabled caveat since it isn't claiming buybacks are running, only that deploys
+fund them, which is already the safe, verified claim.
+
+**Alternate, shorter:**
+
+> Open-sourced the whole agent wallet + deploy stack today.
+>
+> Every team that plugs into it sends fees to $THREE buybacks. That's not a slogan, it's just how
+> the fee lane is wired.
