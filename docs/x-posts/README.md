@@ -48,6 +48,7 @@ explicit approval). Each file states what it's for and what has already been ver
 | [`event-x-posts.md`](event-x-posts.md) | Event campaign copy, split by account (`@trythreews` institutional, `@nichxbt` personal) |
 | [`x-meetup-posts.md`](x-meetup-posts.md) | The in-platform community meetup announcement |
 | [`ibm-skillsbuild-x-post.md`](ibm-skillsbuild-x-post.md) | The IBM SkillsBuild badge |
+| [`coinbase-listing-thank-you-reply.md`](coinbase-listing-thank-you-reply.md) | The long thank-you reply for the Coinbase listing moment: credit to Jesse Pollak and Base for x402, the ERC-8004 contracts we build on, and every three.ws partner |
 | [`fomo-verified-x-post.md`](fomo-verified-x-post.md) | FOMO verification |
 
 ## Conventions
