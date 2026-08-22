@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-08-22
+
+- **The README now says open source, because it is**: Ten places across the README and our published articles still described three.ws as source-available, which understated the Apache 2.0 license the project actually ships under. They now say open source, and the README explains what that buys you: fork it, self-host it, ship commercial work on it. The top of the README also carries a license badge, a live count of good first issues, and a one-line path for anyone who wants to contribute rather than just use it. The security reporting line no longer points at a retired mirror repository. (`/docs/first-contribution`) `[docs]`
+
 ## 2026-08-21
 
 - **Docs · Community** (`/docs/community`): Where the three.ws community talks: GitHub Discussions, the Telegram community, the X community, the IBM Community group, and the release channel, with guidance on which room fits which question.

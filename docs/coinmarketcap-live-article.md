@@ -113,5 +113,5 @@ close.
 ---
 
 *three.ws is an open-source, browser-native platform for 3D AI agents and on-chain communities, live
-at [three.ws](https://three.ws) and source-available. The Three.ws User Group on IBM Community is
+at [three.ws](https://three.ws) and open source under Apache-2.0. The Three.ws User Group on IBM Community is
 at [community.ibm.com](https://community.ibm.com/community/user/usergroup?CommunityKey=e71510cc-d953-408f-9a1c-019f5c0a7016).*

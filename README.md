@@ -2,13 +2,15 @@
 
 [**Website**](https://three.ws) · [**Docs**](https://three.ws/docs) · [**Changelog**](https://three.ws/changelog) · [**X / Twitter**](https://x.com/trythreews) · [**GitHub**](https://github.com/nirholas/three.ws) · [**$THREE on pump.fun**](https://pump.fun/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump)
 
-[![site](https://img.shields.io/website?url=https%3A%2F%2Fthree.ws&label=three.ws)](https://three.ws) [![npm](https://img.shields.io/npm/v/%40three-ws%2Fsdk?label=%40three-ws%2Fsdk)](https://www.npmjs.com/package/@three-ws/sdk) [![npm](https://img.shields.io/npm/v/%40three-ws%2Fmcp-server?label=%40three-ws%2Fmcp-server)](https://www.npmjs.com/package/@three-ws/mcp-server) [![MCP Registry](https://img.shields.io/badge/MCP_Registry-io.github.nirholas-blue)](https://registry.modelcontextprotocol.io/?q=io.github.nirholas) [![x402scan](https://img.shields.io/badge/x402scan-listed-green)](https://www.x402scan.com/server/17cbd874-52ac-4920-a020-b22ff2489a07)
+[![site](https://img.shields.io/website?url=https%3A%2F%2Fthree.ws&label=three.ws)](https://three.ws) [![npm](https://img.shields.io/npm/v/%40three-ws%2Fsdk?label=%40three-ws%2Fsdk)](https://www.npmjs.com/package/@three-ws/sdk) [![npm](https://img.shields.io/npm/v/%40three-ws%2Fmcp-server?label=%40three-ws%2Fmcp-server)](https://www.npmjs.com/package/@three-ws/mcp-server) [![MCP Registry](https://img.shields.io/badge/MCP_Registry-io.github.nirholas-blue)](https://registry.modelcontextprotocol.io/?q=io.github.nirholas) [![x402scan](https://img.shields.io/badge/x402scan-listed-green)](https://www.x402scan.com/server/17cbd874-52ac-4920-a020-b22ff2489a07) [![License: Apache 2.0](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE) [![good first issues](https://img.shields.io/github/issues/nirholas/three.ws/good%20first%20issue?label=good%20first%20issues&color=7057ff)](https://github.com/nirholas/three.ws/labels/good%20first%20issue)
 
 https://github.com/user-attachments/assets/d52515d1-cb04-4dd6-98bd-fef233312dc4
 
-**Give your AI a body.** three.ws is a source-available, browser-native 3D AI agent platform. Type a prompt and [**Forge**](https://three.ws/forge) generates a textured 3D model, or drop a GLB you already have. Add an LLM brain, register on-chain, and embed anywhere: no plugins, no server uploads, no installs required.
+**Give your AI a body.** three.ws is an open source (Apache-2.0), browser-native 3D AI agent platform. Type a prompt and [**Forge**](https://three.ws/forge) generates a textured 3D model, or drop a GLB you already have. Add an LLM brain, register on-chain, and embed anywhere: no plugins, no server uploads, no installs required.
 
 > **Try it in 60 seconds:** open [three.ws/forge](https://three.ws/forge), type *"a brass steampunk owl, full body"*, and download the GLB. Text→3D, image→3D, and sketch→3D — free draft tier, no account. [Jump to the Forge section ↓](#forge--text--image-to-3d)
+
+> **Want to build it with us?** [Your first contribution](docs/first-contribution.md) goes from clone to open pull request in about 15 minutes, with a full worked example. Every [`good first issue`](https://github.com/nirholas/three.ws/labels/good%20first%20issue) names the file to change and the command that proves it worked. Say hello in [Discussions](https://github.com/nirholas/three.ws/discussions) or [Telegram](https://t.me/three_ws_community).
 
 ### Meet the avatar: a live 3D model, right here in markdown
 
@@ -8531,7 +8533,7 @@ At its core, it does five things:
 
 The backend is a set of serverless-style handlers (in `api/`) served in production by a single Google Cloud Run container ([server/index.mjs](server/index.mjs)), backed by Neon Postgres for metadata, Cloudflare R2 for model storage, and Upstash Redis for rate limiting. It exposes a full OAuth 2.1 authorization server and an MCP (Model Context Protocol) endpoint so external AI systems can drive avatars programmatically.
 
-three.ws is production-ready and serves [three.ws](https://three.ws) live on Google Cloud Run: `GET https://three.ws/api/version` returns the exact commit the site is running right now. The entire stack (viewer, agent runtime, contracts, backend, and web component) is source-available in this repository; see [LICENSE](LICENSE) for terms.
+three.ws is production-ready and serves [three.ws](https://three.ws) live on Google Cloud Run: `GET https://three.ws/api/version` returns the exact commit the site is running right now. The entire stack (viewer, agent runtime, contracts, backend, and web component) is open source in this repository under the [Apache License 2.0](LICENSE): fork it, self-host it, and ship commercial work on it.
 
 ---
 
@@ -11339,7 +11341,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contributor guide. Contribut
 
 Please **do not** file public GitHub issues for vulnerabilities. Disclosure runs on a coordinated timeline so users get a fix before details circulate.
 
-1. Email **security@three.ws** (or open a [private GitHub security advisory](https://github.com/nirholas/three.ws/security/advisories/new) on the mirror repos) with a clear write-up: affected component, reproduction steps, and the impact you observed.
+1. Email **security@three.ws** or open a [private GitHub security advisory](https://github.com/nirholas/three.ws/security/advisories/new), with a clear write-up: affected component, reproduction steps, and the impact you observed.
 2. You will receive an acknowledgement within two business days.
 3. We aim to ship a fix or mitigation within 30 days for high-severity reports, and to credit reporters in the release notes (unless you ask to remain anonymous).
 

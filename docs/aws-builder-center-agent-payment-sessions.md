@@ -22,7 +22,7 @@ This is a walk through the pattern we shipped instead, in production, at [three.
 
 > The agent does not hold a wallet. It proposes spend. Governance enforces policy.
 
-Everything below is real code from our source-available repository, including the concurrency bug we had to design around and the failure mode that has no clean answer.
+Everything below is real code from our open source (Apache-2.0) repository, including the concurrency bug we had to design around and the failure mode that has no clean answer.
 
 ## The three bad options, and what each one actually costs
 

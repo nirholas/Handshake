@@ -65,7 +65,7 @@ Apache-2.0 over MIT for two reasons: CONTRIBUTING.md already promised it to ever
 ### Still to do
 
 1. **Post the three seeded Discussions.** Written and ready in [contributing/discussion-seeds.md](contributing/discussion-seeds.md): a Welcome post (pin it), a Show and tell thread, and an open Roadmap thread. The workspace token has `issues: write` but not `discussions: write`, so this is 60 seconds of paste by a human. Zero threads is what reads as nobody being home; three real ones fixes it.
-2. **Trim the README's front door.** It is 401 KB. Nobody evaluating a livestream guest reads 401 KB. The first screen needs what it is, a 10-second demo GIF, and the install line. Everything else moves below the fold or into `docs/`.
+2. **The README front door is better than its file size suggests.** 8,402 of its 11,372 lines are one inline STL model that GitHub renders as an interactive 3D viewer, so a reader on github.com sees a widget, not 8,000 lines of vertex data. The prose is about 3,000 lines. The first screen now carries the license and good-first-issue badges and a contributor CTA alongside the user one. What is still worth doing is a 10-second demo GIF above the fold, since the current hero is a video attachment that does not autoplay in every context.
 3. **Record a 45-second demo clip** (prompt to rigged avatar to embedded on a page). Reusable: README, the issue body, and every amplification post. Per section 5, video and images are what move GitHub's own numbers.
 
 ---

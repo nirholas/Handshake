@@ -105,7 +105,7 @@ For a CoinMarketCap reader, the load-bearing question is always: *is any of this
 - **Real voice.** Peer-to-peer WebRTC with spatial HRTF audio, proximity-gated so it scales and so it sounds right.
 - **Real buys.** A native pump.fun transaction built server-side and signed by your own wallet, not a redirect dressed up as a feature.
 
-And it's **source-available** and readable, like the rest of the platform.
+And it's **open source** and readable, like the rest of the platform.
 
 ## Why this matters
 
@@ -136,4 +136,4 @@ The chart has always told you *what* a coin is doing. /play lets you go stand wh
 
 ---
 
-*three.ws is an open-source, browser-native platform for 3D AI agents and on-chain communities, live at [three.ws](https://three.ws) and source-available. Coin Communities (/play) is live at [three.ws/play](https://three.ws/play).*
+*three.ws is an open-source, browser-native platform for 3D AI agents and on-chain communities, live at [three.ws](https://three.ws) and open source under Apache-2.0. Coin Communities (/play) is live at [three.ws/play](https://three.ws/play).*

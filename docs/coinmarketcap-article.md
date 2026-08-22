@@ -9,7 +9,7 @@ target: CoinMarketCap Community / Editorial
 
 For most of the last two years, the conversation about AI and crypto has lived inside a narrow lane: chatbots that can read a wallet balance, agents that can sign a swap, frameworks that promise "autonomous trading" but stall the moment the demo ends. What's been missing is the layer underneath all of that, a way for an AI agent to actually *exist* as a first-class object on the internet. To have an embodiment users can see. An identity that survives a model swap. A wallet that can pay for its own compute. A reputation that follows it across apps. A way to be embedded anywhere a YouTube video can be embedded today.
 
-[three.ws](https://three.ws) is building exactly that. It is an open-source platform that turns an AI agent into a persistent, ownable, multi-chain object, a 3D body in the browser, an LLM brain, an onchain identity registered on any of 15+ EVM networks (or Solana), and a distributable web component you can drop into any page on the internet. Every layer is source-available and readable end to end. The full stack is live and in production.
+[three.ws](https://three.ws) is building exactly that. It is an open-source platform that turns an AI agent into a persistent, ownable, multi-chain object, a 3D body in the browser, an LLM brain, an onchain identity registered on any of 15+ EVM networks (or Solana), and a distributable web component you can drop into any page on the internet. Every layer is open source under Apache-2.0 and readable end to end. The full stack is live and in production.
 
 This article is about the part of three.ws that matters most to the crypto-native reader: **the onchain layer**. How the platform uses ERC-8004 across the EVM ecosystem, why it deploys to the same address on every chain, how Solana fits in, what role IPFS plays, and where the project is heading with agent tokens, reputation markets, skill royalties, and a decentralized inference network.
 
@@ -175,7 +175,7 @@ Plenty of teams are building AI agents. Plenty of teams are building agent ident
 - The reputation system is open and pseudonymous, not curated by a moderator.
 - The economic future of the platform, agent tokens, royalties, payments, inference settlement, is being built on contracts and cryptographic permissions, not on Stripe and a terms-of-service page.
 
-The platform is source-available. The viewer, the runtime, the contracts, the backend, the embedding layer, all of it is readable. If three.ws disappeared tomorrow, the agents minted today would still be onchain, their manifests would still be pinned to IPFS, the contracts would still be callable, and any reasonably motivated developer could rebuild the frontend in a weekend.
+The platform is open source under the Apache License 2.0. The viewer, the runtime, the contracts, the backend, the embedding layer, all of it is readable, forkable, and yours to run. If three.ws disappeared tomorrow, the agents minted today would still be onchain, their manifests would still be pinned to IPFS, the contracts would still be callable, and any reasonably motivated developer could rebuild the frontend in a weekend.
 
 That's the property that distinguishes a *protocol* from a product. Most "AI agent platforms" today are products. three.ws is being built as a protocol, with an unfortunately polished product layer attached so people who are not developers can use it.
 
@@ -193,4 +193,4 @@ If you've been waiting for the moment AI and crypto stop talking past each other
 
 ---
 
-*three.ws is source-available. The repo, contracts, and full roadmap are at [github.com/nirholas/three.ws](https://github.com/nirholas/three.ws). The platform is live at [three.ws](https://three.ws).*
+*three.ws is open source under Apache-2.0. The repo, contracts, and full roadmap are at [github.com/nirholas/three.ws](https://github.com/nirholas/three.ws). The platform is live at [three.ws](https://three.ws).*
