@@ -334,7 +334,7 @@ def add_hand(skel, side, wrist, tip, radius):
         parent = f'{side}Hand'
 
 
-def build_skeleton(limbs, body_axis, body_y0, body_y1):
+def build_skeleton(limbs, roots, body_axis, body_y0, body_y1):
     """Lay the 52-bone Mixamo skeleton onto the traced limb curves."""
     skel = Skeleton()
     height = body_y1 - body_y0
@@ -358,7 +358,7 @@ def build_skeleton(limbs, body_axis, body_y0, body_y1):
 
     for side in ('Left', 'Right'):
         curve, nub = limbs[f'{side}Arm']
-        shoulder = sample_curve(curve, 0.0)
+        shoulder = roots[f'{side}Arm']
         chest = axis_at(shoulder[1])
         skel.add(f'{side}Shoulder', 'Spine2',
                  chest + (shoulder - chest) * 0.42, shoulder, nub * 1.2)
@@ -372,7 +372,7 @@ def build_skeleton(limbs, body_axis, body_y0, body_y1):
 
     for side in ('Left', 'Right'):
         curve, nub, ankle_t, toe = limbs[f'{side}Leg']
-        hip = sample_curve(curve, 0.0)
+        hip = roots[f'{side}Leg']
         skel.add(f'{side}UpLeg', 'Hips', hip, sample_curve(curve, ankle_t * 0.52), nub)
         skel.add(f'{side}Leg', f'{side}UpLeg', sample_curve(curve, ankle_t * 0.52),
                  sample_curve(curve, ankle_t), nub)
@@ -580,71 +580,378 @@ def torso_weights(vertices, skel, thickness, lo):
             weights[inside, i + 1] += t
         else:
             weights[inside, i] += 1.0          # head -> crown runs on Head alone
-
-    radius = np.interp(best_u, arc, sample_thickness(thickness, lo, line))
-    claim = np.exp(-np.clip(best_d / np.maximum(radius * 1.25, 1e-4), 0, 6) ** 4)
-    return weights, claim
+    return weights, line
 
 
-def limb_envelope(vertices, bone, root_radius):
+def trilinear(field, lo, points):
+    """Smooth sample of a scalar or vector voxel field at world positions."""
+    grid = (points - lo) / VOXEL
+    shape = np.array(field.shape[:3])
+    base = np.floor(grid).astype(int)
+    frac = grid - base
+    out = np.zeros((len(points),) + field.shape[3:], field.dtype)
+    for dx in (0, 1):
+        for dy in (0, 1):
+            for dz in (0, 1):
+                idx = np.clip(base + (dx, dy, dz), 0, shape - 1)
+                w = (np.where(dx, frac[:, 0], 1 - frac[:, 0])
+                     * np.where(dy, frac[:, 1], 1 - frac[:, 1])
+                     * np.where(dz, frac[:, 2], 1 - frac[:, 2]))
+                sample = field[idx[:, 0], idx[:, 1], idx[:, 2]]
+                out += sample * (w[:, None] if sample.ndim > 1 else w)
+    return out
+
+
+def medial_anchors(vertices, thickness, lo, steps=70):
+    """Walk each vertex inward to the medial axis of the part it sits on.
+
+    Which limb a vertex belongs to is a question about the mesh's interior, not
+    its surface: the mascot's raised hand rests against the side of its head, so
+    those two surfaces are neighbours under any distance measure, straight-line
+    or through-the-mesh, and skinning them by proximity welds the head to the
+    hand. Climbing the thickness field's gradient from a vertex ends on the axis
+    of whichever part that vertex is skin for -- the hand's own axis for the
+    hand, the body's for the head -- and those are half a body apart.
+
+    Gradient ascent rather than a march along the vertex normal, because this
+    mesh is 286 separately-wound shells and one flipped normal would march a
+    patch straight out of the model.
+    """
+    gradient = np.stack(np.gradient(thickness), axis=-1)
+    point = vertices.copy()
+    best = point.copy()
+    best_thickness = trilinear(thickness, lo, point)
+    for _ in range(steps):
+        g = trilinear(gradient, lo, point)
+        point = point + g / np.maximum(np.linalg.norm(g, axis=1, keepdims=True), 1e-9) * VOXEL
+        here = trilinear(thickness, lo, point)
+        better = here > best_thickness
+        best[better] = point[better]
+        best_thickness = np.maximum(best_thickness, here)
+    return best
+
+
+def polyline_distance(points, line):
+    best = np.full(len(points), np.inf)
+    for i in range(len(line) - 1):
+        d, _ = point_segment_distance(points, line[i], line[i + 1])
+        best = np.minimum(best, d)
+    return best
+
+
+BRANCH_BLUR = 0.20
+
+
+def branch_membership(anchors, spine_line, limb_curves):
+    """Soft split of every vertex across the medial branches it could belong to.
+
+    Each limb's branch is measured from its root joint, not from where the nub
+    visibly leaves the body: the fillet between a splayed leg and the capsule is
+    real geometry that has to travel with the leg, and anchoring on the visible
+    nub alone leaves it behind as a flap when the leg swings under the hips.
+    """
+    scores = [np.exp(-(polyline_distance(anchors, spine_line) / BRANCH_BLUR) ** 2)]
+    for curve in limb_curves:
+        scores.append(np.exp(-(polyline_distance(anchors, curve) / BRANCH_BLUR) ** 2))
+    scores = np.stack(scores, axis=1)
+    return scores / np.maximum(scores.sum(1, keepdims=True), 1e-9)
+
+
+def geodesic_from_segment(mcp, lo, shape, a, b):
+    """Distance from a bone segment to every voxel, measured *through the mesh*.
+
+    Straight-line distance is what makes an auto-rig dent a face: on this model
+    the raised hand sits 5 cm from the side of the head, so a euclidean envelope
+    binds head to hand and lowering the arm drags a crater across the cheek.
+    Through the mesh that same hand is a whole arm plus half a torso away, so the
+    head keeps still and only the arm moves.
+    """
+    steps = max(2, int(np.ceil(np.linalg.norm(b - a) / (VOXEL * 0.5))))
+    points = a + (b - a) * np.linspace(0, 1, steps)[:, None]
+    idx = np.clip(np.floor((points - lo) / VOXEL).astype(int), 0, np.array(shape) - 1)
+    starts = list({tuple(v) for v in idx})
+    cumulative, _ = mcp.find_costs(starts)
+    return cumulative * VOXEL
+
+
+def limb_envelope(distance, along, bone, root_radius):
     """Soft tube around one limb bone, fattest where it enters the body.
 
     The tube widens toward the root so the fillet where a nub meets the capsule
     travels with the nub instead of creasing, and is capped there so a shoulder
     bone buried in the body cannot claim the belly behind it.
     """
-    d, t = point_segment_distance(vertices, bone.head, bone.tail)
-    near = min(root_radius, bone.radius * 1.9)
+    near = max(min(root_radius, bone.radius * 1.9), bone.radius)
     far = bone.radius * 1.35
-    radius = near + (far - near) * t
-    return np.exp(-np.clip(d / radius, 0, 6) ** 4)
+    radius = near + (far - near) * along
+    return np.exp(-np.clip(distance / radius, 0, 6) ** 4)
 
 
-def smooth_weights(vertices, weights, rounds=2, k=10):
-    """Average each vertex's weights with its spatial neighbours.
+def smooth_weights(vertices, weights, rounds=2, k=8, reach=0.02):
+    """Average each vertex's weights with its close spatial neighbours.
 
     Spatial, not topological: this mesh is 286 disconnected shells, so a
     face-adjacency graph would leave seams unsmoothed exactly where two shells
-    meet. Nearest neighbours in space weld them.
+    meet. The reach is deliberately tight -- wide enough to weld the shells,
+    narrow enough that the hand cannot smooth its weights onto the head it is
+    raised beside.
     """
     from scipy.spatial import cKDTree
     tree = cKDTree(vertices)
-    _, idx = tree.query(vertices, k=k)
+    _, idx = tree.query(vertices, k=k, distance_upper_bound=reach)
+    missing = idx >= len(vertices)
+    idx[missing] = np.arange(len(vertices))[:, None].repeat(k, 1)[missing]
     for _ in range(rounds):
         weights = 0.35 * weights + 0.65 * weights[idx].mean(axis=1)
     return weights
 
 
-def skin(vertices, skel, thickness, lo):
+def skin(vertices, skel, filled, thickness, lo, limbs, roots):
+    from skimage.graph import MCP_Geometric
+
     names = [b.name for b in skel.bones]
     weights = np.zeros((len(vertices), len(names)), np.float32)
+    index = np.clip(np.floor((vertices - lo) / VOXEL).astype(int), 0,
+                    np.array(filled.shape) - 1)
 
-    torso, claim = torso_weights(vertices, skel, thickness, lo)
+    _, spine_line = torso_weights(vertices[:1], skel, thickness, lo)
+    limb_names = ('LeftArm', 'RightArm', 'LeftLeg', 'RightLeg')
+    anchors = medial_anchors(vertices, thickness, lo)
+    member = branch_membership(anchors, spine_line,
+                               [np.vstack([roots[n], limbs[n][0]]) for n in limb_names])
+    # Gradient ascent is a watershed, and a watershed has hard edges: two
+    # neighbouring vertices on the crotch webbing can climb to different ridges
+    # and end up in different limbs. Unsmoothed, that seam tears into a fin the
+    # moment the leg swings. Blurring the classification over the surface first
+    # turns the seam into a gradient.
+    member = smooth_weights(vertices, member, rounds=6, k=14, reach=0.05)
+    member /= np.maximum(member.sum(1, keepdims=True), 1e-9)
+    branch_of = {name: 0 for name in SPINE_CHAIN}
+    for i, limb in enumerate(limb_names):
+        prefix = 'Left' if limb.startswith('Left') else 'Right'
+        chain = ((f'{prefix}Shoulder', f'{prefix}Arm', f'{prefix}ForeArm', f'{prefix}Hand')
+                 if limb.endswith('Arm') else
+                 (f'{prefix}UpLeg', f'{prefix}Leg', f'{prefix}Foot', f'{prefix}ToeBase'))
+        for bone in chain:
+            branch_of[bone] = i + 1
+        if limb.endswith('Arm'):
+            for finger in FINGERS:
+                for j in (1, 2, 3):
+                    branch_of[f'{prefix}Hand{finger}{j}'] = i + 1
+
+    torso, _ = torso_weights(vertices, skel, thickness, lo)
     for i, name in enumerate(SPINE_CHAIN):
-        weights[:, names.index(name)] = torso[:, i] * claim
+        weights[:, names.index(name)] = torso[:, i] * member[:, 0]
 
+    mcp = MCP_Geometric(np.where(filled, 1.0, np.inf), fully_connected=True)
     for bone in skel.bones:
         if bone.name in SPINE_CHAIN:
             continue
+        field = geodesic_from_segment(mcp, lo, filled.shape, bone.head, bone.tail)
+        distance = field[index[:, 0], index[:, 1], index[:, 2]]
+        distance[~np.isfinite(distance)] = 1e3
+        _, along = point_segment_distance(vertices, bone.head, bone.tail)
         root = float(sample_thickness(thickness, lo, bone.head[None, :])[0])
-        weights[:, bone.index] = limb_envelope(vertices, bone, root)
+        envelope = limb_envelope(distance, along, bone, root)
+        weights[:, bone.index] = envelope * member[:, branch_of[bone.name]]
 
     weights = smooth_weights(vertices, weights)
     order = np.argsort(weights, axis=1)[:, ::-1][:, :MAX_INFLUENCES]
     kept = np.take_along_axis(weights, order, axis=1)
     total = kept.sum(1, keepdims=True)
-    orphan = (total[:, 0] < 1e-6)
+    orphan = total[:, 0] < 1e-6
     if orphan.any():
-        # Nothing claimed these -- park them on the nearest bone rather than
-        # letting a zero-weight vertex collapse to the origin.
-        centres = np.array([(b.head + b.tail) * 0.5 for b in skel.bones])
-        nearest = np.argmin(((vertices[orphan][:, None, :] - centres) ** 2).sum(2), axis=1)
-        order[orphan, 0] = nearest
-        kept[orphan] = 0.0
-        kept[orphan, 0] = 1.0
-        total[orphan] = 1.0
+        # Nothing claimed these. Fall back inside the branch the vertex was
+        # traced to, never across the whole skeleton: at the back of the head
+        # the nearest bone by centre distance is a coin toss between Head and
+        # RightForeArm, and a coin toss tears the mesh along that seam.
+        branch = np.argmax(member[orphan], axis=1)
+        for b in range(member.shape[1]):
+            pick = branch == b
+            if not pick.any():
+                continue
+            candidates = [bone for bone in skel.bones
+                          if branch_of.get(bone.name, 0) == b]
+            points = vertices[orphan][pick]
+            best = np.full(len(points), np.inf)
+            chosen = np.zeros(len(points), int)
+            for bone in candidates:
+                d, _ = point_segment_distance(points, bone.head, bone.tail)
+                closer = d < best
+                best[closer] = d[closer]
+                chosen[closer] = bone.index
+            rows = np.where(orphan)[0][pick]
+            order[rows, 0] = chosen
+            kept[rows] = 0.0
+            kept[rows, 0] = 1.0
+            total[rows] = 1.0
     return order.astype(np.uint16), (kept / total).astype(np.float32)
 
+
+
+# --------------------------------------------------------------------------
+# Stage 4: the neutral standing pose
+# --------------------------------------------------------------------------
+
+def symmetrize_roots(limbs, axis_x, axis_z):
+    """Average each limb pair's attachment across the body so the rig is even.
+
+    The nubs are sculpted mid-action: the right arm is thrown up beside the head
+    and the right leg is kicked out, so the traced attachments sit 0.24 apart in
+    height and 0.4 apart in reach. Binding to those raw points gives a rig that
+    walks lopsided. Averaging the pair and mirroring it about the body axis costs
+    a little fidelity at the nub base and buys a skeleton that poses.
+    """
+    out = {}
+    for role in ('Arm', 'Leg'):
+        left, right = limbs[f'Left{role}'][0][0], limbs[f'Right{role}'][0][0]
+        reach = 0.5 * (abs(left[0] - axis_x) + abs(right[0] - axis_x))
+        y = 0.5 * (left[1] + right[1])
+        z = 0.5 * (left[2] + right[2])
+        out[f'Left{role}'] = np.array([axis_x + reach, y, z])
+        out[f'Right{role}'] = np.array([axis_x - reach, y, z])
+    return out
+
+
+# A capsule this wide leaves nowhere for an arm to hang: dropped past about 25
+# degrees the nub is inside the belly, so the mascot's rest is arms-out.
+NEUTRAL_ARM_DROP = np.radians(22.0)
+NEUTRAL_ARM_FORWARD = 0.14
+
+
+def neutral_pose(skel):
+    """Arms out, legs under the hips, facing +Z: the rest every clip starts from."""
+    drop = -np.sin(NEUTRAL_ARM_DROP)
+    reach = np.cos(NEUTRAL_ARM_DROP)
+    aims = {name: np.array([0.0, 1.0, 0.0]) for name in SPINE_CHAIN}
+    for side, sx in (('Left', 1.0), ('Right', -1.0)):
+        aims[f'{side}Shoulder'] = np.array([sx, 0.0, 0.0])
+        for bone in ('Arm', 'ForeArm', 'Hand'):
+            aims[f'{side}{bone}'] = unit([sx * reach, drop, NEUTRAL_ARM_FORWARD])
+        aims[f'{side}UpLeg'] = unit([-sx * 0.05, -1.0, 0.02])
+        aims[f'{side}Leg'] = np.array([0.0, -1.0, 0.03])
+        aims[f'{side}Foot'] = unit([0.0, -0.42, 1.0])
+    return aims
+
+
+# --------------------------------------------------------------------------
+# Stage 5: write the rigged GLB
+# --------------------------------------------------------------------------
+
+def pad4(blob):
+    return blob + b'\x00' * (-len(blob) % 4)
+
+
+class BufferWriter:
+    """Appends accessors to a GLB's single binary chunk."""
+
+    def __init__(self, gltf, blob):
+        self.gltf = gltf
+        self.chunks = [pad4(blob)]
+        self.offset = len(self.chunks[0])
+
+    def add(self, array, component_type, accessor_type, target=None, minmax=False):
+        import pygltflib
+        array = np.ascontiguousarray(array)
+        raw = array.tobytes()
+        self.gltf.bufferViews.append(pygltflib.BufferView(
+            buffer=0, byteOffset=self.offset, byteLength=len(raw), target=target))
+        self.chunks.append(pad4(raw))
+        self.offset += len(pad4(raw))
+        count = array.shape[0]
+        accessor = pygltflib.Accessor(bufferView=len(self.gltf.bufferViews) - 1,
+                                      componentType=component_type, count=count,
+                                      type=accessor_type)
+        if minmax:
+            flat = array.reshape(count, -1)
+            accessor.min = flat.min(0).tolist()
+            accessor.max = flat.max(0).tolist()
+        self.gltf.accessors.append(accessor)
+        return len(self.gltf.accessors) - 1
+
+    def finish(self):
+        blob = b''.join(self.chunks)
+        self.gltf.buffers[0].byteLength = len(blob)
+        self.gltf.set_binary_blob(blob)
+
+
+BONE_PREFIX = 'mixamorig:'
+
+
+def write_rig(gltf, blob, skel, joint_index, weights, rest_locals, clips):
+    """Graft skeleton, skin and clips onto the source GLB, bytes intact.
+
+    The mesh, its materials and its three 2K textures are never touched: the
+    original buffer is kept verbatim and everything new is appended after it, so
+    the rigged file is the same model rather than a re-export of it.
+    """
+    import pygltflib
+    writer = BufferWriter(gltf, blob)
+
+    mesh_node = next(i for i, n in enumerate(gltf.nodes) if n.mesh is not None)
+    first_bone = len(gltf.nodes)
+    for bone in skel.bones:
+        q = rest_locals[bone.name]
+        gltf.nodes.append(pygltflib.Node(
+            name=BONE_PREFIX + bone.name,
+            translation=[float(v) for v in skel.local_rest_translation(bone)],
+            rotation=[float(v) for v in q],
+            children=[first_bone + skel.by_name[c].index for c in bone.children] or None,
+        ))
+
+    inverse_bind = np.zeros((len(skel.bones), 16), np.float32)
+    for bone in skel.bones:
+        m = np.eye(4, dtype=np.float32)
+        m[3, :3] = -bone.head            # column-major identity-rotation inverse
+        inverse_bind[bone.index] = m.reshape(-1)
+
+    ibm = writer.add(inverse_bind, pygltflib.FLOAT, 'MAT4')
+    joints = writer.add(joint_index, pygltflib.UNSIGNED_SHORT, 'VEC4',
+                        target=pygltflib.ARRAY_BUFFER)
+    skin_weights = writer.add(weights, pygltflib.FLOAT, 'VEC4',
+                              target=pygltflib.ARRAY_BUFFER)
+
+    gltf.skins.append(pygltflib.Skin(
+        name='pill-rig', inverseBindMatrices=ibm, skeleton=first_bone,
+        joints=[first_bone + b.index for b in skel.bones]))
+    gltf.nodes[mesh_node].skin = len(gltf.skins) - 1
+    primitive = gltf.meshes[gltf.nodes[mesh_node].mesh].primitives[0]
+    primitive.attributes.JOINTS_0 = joints
+    primitive.attributes.WEIGHTS_0 = skin_weights
+
+    scene = gltf.scenes[gltf.scene or 0]
+    if first_bone not in scene.nodes:
+        scene.nodes.append(first_bone)
+    # A skinned mesh node must not inherit the skeleton's motion, or every bone
+    # transform is applied twice. Its own transform is the identity already.
+    gltf.nodes[mesh_node].matrix = None
+
+    for clip in clips:
+        animation = pygltflib.Animation(name=clip['name'], samplers=[], channels=[])
+        times = writer.add(clip['times'].astype(np.float32), pygltflib.FLOAT, 'SCALAR',
+                           minmax=True)
+        for bone_name, track in clip['rotation'].items():
+            sampler = len(animation.samplers)
+            animation.samplers.append(pygltflib.AnimationSampler(
+                input=times, interpolation='LINEAR',
+                output=writer.add(track.astype(np.float32), pygltflib.FLOAT, 'VEC4')))
+            animation.channels.append(pygltflib.AnimationChannel(
+                sampler=sampler,
+                target=pygltflib.AnimationChannelTarget(
+                    node=first_bone + skel.by_name[bone_name].index, path='rotation')))
+        for bone_name, track in clip.get('translation', {}).items():
+            sampler = len(animation.samplers)
+            animation.samplers.append(pygltflib.AnimationSampler(
+                input=times, interpolation='LINEAR',
+                output=writer.add(track.astype(np.float32), pygltflib.FLOAT, 'VEC3')))
+            animation.channels.append(pygltflib.AnimationChannel(
+                sampler=sampler,
+                target=pygltflib.AnimationChannelTarget(
+                    node=first_bone + skel.by_name[bone_name].index, path='translation')))
+        gltf.animations.append(animation)
+
+    writer.finish()
+    return first_bone
 
 
 # --------------------------------------------------------------------------
@@ -689,6 +996,10 @@ def debug_overlay(path, vertices, colors, skel, pose_world=None, title=''):
     sheet.save(path)
 
 
+def build_clips(skel):
+    return []
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -710,17 +1021,37 @@ def main():
           f" (painted {a['face_skew']:.1f} deg off axis)")
     print(f"  body y [{a['body_y0']:+.3f}, {a['body_y1']:+.3f}]")
     for name, limb in a['limbs'].items():
-        curve, nub = limb[0], limb[1]
-        print(f"  {name:10s} root {np.round(curve[0], 3)} tip {np.round(curve[-1], 3)} r={nub:.3f}"
-              + (f" ankle_t={limb[2]:.2f} toe {np.round(limb[3], 3)}" if len(limb) > 2 else ''))
+        print(f"  {name:10s} root {np.round(limb[0][0], 3)} tip {np.round(limb[0][-1], 3)}"
+              f" r={limb[1]:.3f}"
+              + (f" ankle={limb[2]:.2f} toe {np.round(limb[3], 3)}" if len(limb) > 2 else ''))
 
-    skel = build_skeleton(a['limbs'], a['body_axis'], a['body_y0'], a['body_y1'])
+    axis = a['body_axis']
+    roots = symmetrize_roots(a['limbs'], float(np.median(axis[:, 0])),
+                             float(np.median(axis[:, 2])))
+    skel = build_skeleton(a['limbs'], roots, axis, a['body_y0'], a['body_y1'])
     print(f'  skeleton: {len(skel.bones)} bones')
+
+    joint_index, weights = skin(vertices, skel, a['filled'], a['thickness'],
+                                a['lo'], a['limbs'], roots)
+    used = len(set(joint_index[weights > 0.02].ravel().tolist()))
+    print(f'  skinned: {used}/{len(skel.bones)} bones carry weight above 2%')
+
+    rest_locals, rest_world, _ = skel.solve(neutral_pose(skel))
+    clips = build_clips(skel)
+    print(f"  clips: {', '.join(c['name'] for c in clips)}")
+
+    write_rig(gltf, blob, skel, joint_index, weights, rest_locals, clips)
+    Path(args.out).parent.mkdir(parents=True, exist_ok=True)
+    gltf.save(args.out)
+    print(f'  wrote {args.out} ({Path(args.out).stat().st_size / 1e6:.1f} MB)')
+
     if args.debug_dir:
-        Path(args.debug_dir).mkdir(parents=True, exist_ok=True)
-        debug_overlay(Path(args.debug_dir) / 'bind.png', vertices, a['colors'], skel,
-                      title='bind (sculpted)')
-        print(f"  wrote {Path(args.debug_dir) / 'bind.png'}")
+        out = Path(args.debug_dir)
+        out.mkdir(parents=True, exist_ok=True)
+        debug_overlay(out / 'bind.png', vertices, a['colors'], skel, title='bind (sculpted)')
+        debug_overlay(out / 'neutral.png', vertices, a['colors'], skel, rest_world,
+                      title='rest (neutral)')
+        print(f'  wrote {out}/bind.png, {out}/neutral.png')
 
 
 if __name__ == '__main__':
