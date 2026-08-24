@@ -1,5 +1,5 @@
 # three.ws         
-
+ 
 [**Website**](https://three.ws) · [**Docs**](https://three.ws/docs) · [**Changelog**](https://three.ws/changelog) · [**X / Twitter**](https://x.com/trythreews) · [**GitHub**](https://github.com/nirholas/three.ws) · [**$THREE on pump.fun**](https://pump.fun/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump)
 
 [![site](https://img.shields.io/website?url=https%3A%2F%2Fthree.ws&label=three.ws)](https://three.ws) [![npm](https://img.shields.io/npm/v/%40three-ws%2Fsdk?label=%40three-ws%2Fsdk)](https://www.npmjs.com/package/@three-ws/sdk) [![npm](https://img.shields.io/npm/v/%40three-ws%2Fmcp-server?label=%40three-ws%2Fmcp-server)](https://www.npmjs.com/package/@three-ws/mcp-server) [![MCP Registry](https://img.shields.io/badge/MCP_Registry-io.github.nirholas-blue)](https://registry.modelcontextprotocol.io/?q=io.github.nirholas) [![x402scan](https://img.shields.io/badge/x402scan-listed-green)](https://www.x402scan.com/server/17cbd874-52ac-4920-a020-b22ff2489a07) [![License: Apache 2.0](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE) [![good first issues](https://img.shields.io/github/issues/nirholas/three.ws/good%20first%20issue?label=good%20first%20issues&color=7057ff)](https://github.com/nirholas/three.ws/labels/good%20first%20issue)
