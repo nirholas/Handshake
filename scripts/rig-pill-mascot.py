@@ -67,14 +67,25 @@ def build_volume(mesh):
     lo = vertices.min(0) - 6 * VOXEL
     hi = vertices.max(0) + 6 * VOXEL
     dims = np.ceil((hi - lo) / VOXEL).astype(int) + 1
-    count = int(max(len(vertices) * 4, mesh.area / (VOXEL * VOXEL) * 6))
+    count = int(max(len(vertices) * 8, mesh.area / (VOXEL * VOXEL) * 8))
     points = trimesh.sample.sample_surface(mesh, count)[0]
     idx = np.floor((np.vstack([vertices, points]) - lo) / VOXEL).astype(int)
     occ = np.zeros(dims, bool)
     occ[idx[:, 0], idx[:, 1], idx[:, 2]] = True
-    filled = ndimage.binary_fill_holes(occ)
-    if filled.sum() < occ.sum() * 3:
-        raise SystemExit('flood fill leaked -- the shell has a hole larger than a voxel')
+    # A decimated mesh can carry real gaps where two shells were pulled apart,
+    # and one gap wider than a voxel lets the flood fill escape and takes the
+    # whole analysis with it. Close by as little as it takes to seal the shell,
+    # so the recovered volume stays honest about the shape.
+    structure = ndimage.generate_binary_structure(3, 3)
+    for closing in range(0, 6):
+        sealed = ndimage.binary_closing(occ, structure, iterations=closing) if closing else occ
+        filled = ndimage.binary_fill_holes(sealed)
+        if filled.sum() >= sealed.sum() * 3:
+            break
+    else:
+        raise SystemExit('flood fill leaked even after closing; the shell has a real hole')
+    if closing:
+        print(f'  sealed the shell with a {closing}-voxel closing before the flood fill')
     thickness = ndimage.distance_transform_edt(filled) * VOXEL
     return lo, filled, thickness
 
@@ -290,6 +301,13 @@ class Skeleton:
         locals_ = {b.name: q_slerp_norm(world_q[b.name + '/local']) for b in self.bones}
         return locals_, world_p, {b.name: world_q[b.name] for b in self.bones}
 
+    def freeze(self, world_p, world_q):
+        """Rewrite every bone onto a solved pose, so bind and rest coincide."""
+        tails = {b.name: self._tip_world(b, world_p, world_q) for b in self.bones}
+        for bone in self.bones:
+            bone.head = np.array(world_p[bone.name], float)
+            bone.tail = np.array(tails[bone.name], float)
+
     def _tip_world(self, bone, world_p, world_q):
         """Where this bone currently points: its first child, or its own tail."""
         if bone.children:
@@ -392,7 +410,15 @@ def sample_base_color(mesh, gltf, blob):
     from PIL import Image
     import io
     tex = gltf.materials[0].pbrMetallicRoughness.baseColorTexture
-    image = gltf.images[gltf.textures[tex.index].source]
+    texture = gltf.textures[tex.index]
+    # A WebP-encoded texture hangs its image off EXT_texture_webp instead of the
+    # core `source`, which is what scripts/decimate-glb.mjs leaves behind.
+    source = texture.source
+    if source is None:
+        source = (texture.extensions or {}).get('EXT_texture_webp', {}).get('source')
+    if source is None:
+        raise SystemExit('base colour texture has no resolvable image source')
+    image = gltf.images[source]
     view = gltf.bufferViews[image.bufferView]
     start = view.byteOffset or 0
     img = Image.open(io.BytesIO(blob[start:start + view.byteLength])).convert('RGB')
@@ -687,7 +713,25 @@ def limb_envelope(distance, along, bone, root_radius):
     return np.exp(-np.clip(distance / radius, 0, 6) ** 4)
 
 
-def smooth_weights(vertices, weights, rounds=2, k=8, reach=0.02):
+def vertex_spacing(vertices, sample=20000):
+    """Median nearest-neighbour distance: the mesh's own resolution.
+
+    Every neighbourhood radius below is a multiple of this rather than a
+    constant, so the same code smooths a 300k-triangle scan and the 45k-triangle
+    decimation of it by the same amount of *surface*, not the same number of
+    metres.
+    """
+    from scipy.spatial import cKDTree
+    step = max(1, len(vertices) // sample)
+    probe = vertices[::step]
+    # Skip coincident neighbours: a UV seam duplicates its vertices at the same
+    # position, so the nearest one is zero away and says nothing about density.
+    d = cKDTree(vertices).query(probe, k=8)[0]
+    first = np.where(d > 1e-7, d, np.inf).min(axis=1)
+    return float(np.median(first[np.isfinite(first)]))
+
+
+def smooth_weights(vertices, weights, spacing, rounds=2, k=8, reach=2.5):
     """Average each vertex's weights with its close spatial neighbours.
 
     Spatial, not topological: this mesh is 286 disconnected shells, so a
@@ -698,7 +742,7 @@ def smooth_weights(vertices, weights, rounds=2, k=8, reach=0.02):
     """
     from scipy.spatial import cKDTree
     tree = cKDTree(vertices)
-    _, idx = tree.query(vertices, k=k, distance_upper_bound=reach)
+    _, idx = tree.query(vertices, k=k, distance_upper_bound=reach * spacing)
     missing = idx >= len(vertices)
     idx[missing] = np.arange(len(vertices))[:, None].repeat(k, 1)[missing]
     for _ in range(rounds):
@@ -706,7 +750,7 @@ def smooth_weights(vertices, weights, rounds=2, k=8, reach=0.02):
     return weights
 
 
-def skin(vertices, skel, filled, thickness, lo, limbs, roots):
+def skin(vertices, skel, filled, thickness, lo, limbs, roots, spacing):
     from skimage.graph import MCP_Geometric
 
     names = [b.name for b in skel.bones]
@@ -724,7 +768,7 @@ def skin(vertices, skel, filled, thickness, lo, limbs, roots):
     # and end up in different limbs. Unsmoothed, that seam tears into a fin the
     # moment the leg swings. Blurring the classification over the surface first
     # turns the seam into a gradient.
-    member = smooth_weights(vertices, member, rounds=6, k=14, reach=0.05)
+    member = smooth_weights(vertices, member, spacing, rounds=6, k=14, reach=6.0)
     member /= np.maximum(member.sum(1, keepdims=True), 1e-9)
     branch_of = {name: 0 for name in SPINE_CHAIN}
     for i, limb in enumerate(limb_names):
@@ -755,7 +799,7 @@ def skin(vertices, skel, filled, thickness, lo, limbs, roots):
         envelope = limb_envelope(distance, along, bone, root)
         weights[:, bone.index] = envelope * member[:, branch_of[bone.name]]
 
-    weights = smooth_weights(vertices, weights)
+    weights = smooth_weights(vertices, weights, spacing)
     order = np.argsort(weights, axis=1)[:, ::-1][:, :MAX_INFLUENCES]
     kept = np.take_along_axis(weights, order, axis=1)
     total = kept.sum(1, keepdims=True)
@@ -785,7 +829,12 @@ def skin(vertices, skel, filled, thickness, lo, limbs, roots):
             kept[rows] = 0.0
             kept[rows, 0] = 1.0
             total[rows] = 1.0
-    return order.astype(np.uint16), (kept / total).astype(np.float32)
+    kept = kept / total
+    # glTF wants an unused influence slot to name joint 0, not whatever bone
+    # happened to rank fourth; leaving it set trips ACCESSOR_JOINTS_USED_ZERO_WEIGHT
+    # on every validator and every importer that runs one.
+    order[kept <= 0.0] = 0
+    return order.astype(np.uint16), kept.astype(np.float32)
 
 
 
@@ -835,11 +884,86 @@ def neutral_pose(skel):
 
 
 # --------------------------------------------------------------------------
+# Stage 4b: bake the neutral pose into the geometry
+# --------------------------------------------------------------------------
+
+def linear_blend(vertices, normals, skel, joint_index, weights, world_q, world_p):
+    """Standard LBS, with bind rotations identity so the skin matrix is q, t."""
+    posed = np.zeros_like(vertices)
+    posed_n = np.zeros_like(normals)
+    for k in range(joint_index.shape[1]):
+        for bone in skel.bones:
+            pick = (joint_index[:, k] == bone.index) & (weights[:, k] > 0)
+            if not pick.any():
+                continue
+            q, t = world_q[bone.name], world_p[bone.name]
+            w = weights[pick, k][:, None]
+            axis = np.repeat(q[None, :3], int(pick.sum()), 0)
+            for source, target, translate in ((vertices, posed, True), (normals, posed_n, False)):
+                v = source[pick] - (bone.head if translate else 0.0)
+                cross = 2.0 * np.cross(axis, v)
+                rotated = v + q[3] * cross + np.cross(axis, cross)
+                target[pick] += w * (rotated + t if translate else rotated)
+    lengths = np.linalg.norm(posed_n, axis=1, keepdims=True)
+    return posed, posed_n / np.maximum(lengths, 1e-9)
+
+
+def relax_distortion(bind, posed, spacing, rounds=12, k=10, reach=3.0, threshold=1.22):
+    """Smooth only where linear blend skinning tore the surface.
+
+    Swinging the sculpted right leg 50 degrees under the hips closes the crevice
+    between it and the belly, and linear blending resolves a closing crevice by
+    stretching it into a thin fin. Measuring each vertex's neighbourhood before
+    and after the pose isolates exactly those vertices -- the ones whose local
+    spacing collapsed or blew up -- and relaxes them back onto the surface
+    without touching the 99% of the mesh that posed cleanly.
+    """
+    from scipy.spatial import cKDTree
+    tree = cKDTree(bind)
+    _, idx = tree.query(bind, k=k, distance_upper_bound=reach * spacing)
+    missing = idx >= len(bind)
+    idx[missing] = np.arange(len(bind))[:, None].repeat(k, 1)[missing]
+    before = np.linalg.norm(bind[idx[:, 1:]] - bind[:, None, :], axis=2).mean(1)
+    after = np.linalg.norm(posed[idx[:, 1:]] - posed[:, None, :], axis=2).mean(1)
+    ratio = after / np.maximum(before, 1e-9)
+    strength = np.clip((np.maximum(ratio, 1.0 / np.maximum(ratio, 1e-9)) - threshold)
+                       / threshold, 0.0, 1.0)[:, None]
+    out = posed.copy()
+    for _ in range(rounds):
+        out = out + strength * (out[idx[:, 1:]].mean(1) - out) * 0.6
+    return out, int((strength > 0).sum())
+
+
+# --------------------------------------------------------------------------
 # Stage 5: write the rigged GLB
 # --------------------------------------------------------------------------
 
 def pad4(blob):
     return blob + b'\x00' * (-len(blob) % 4)
+
+
+def overwrite_attribute(gltf, blob, accessor_index, data):
+    """Replace an existing vertex attribute in place, byte for byte.
+
+    The baked neutral pose changes only positions and normals, and both are the
+    same size as what they replace, so they go back exactly where they came
+    from. That keeps the buffer layout, the textures and every other accessor
+    identical to the source file. Accessors are addressed through their own
+    byteOffset because a packer may share one bufferView between several of
+    them, and refused outright when the view is interleaved.
+    """
+    accessor = gltf.accessors[accessor_index]
+    view = gltf.bufferViews[accessor.bufferView]
+    raw = np.ascontiguousarray(data).tobytes()
+    start = (view.byteOffset or 0) + (accessor.byteOffset or 0)
+    stride = view.byteStride
+    if stride not in (None, data.shape[1] * data.dtype.itemsize):
+        raise SystemExit('cannot rewrite an interleaved vertex attribute in place')
+    if start + len(raw) > (view.byteOffset or 0) + view.byteLength:
+        raise SystemExit('baked attribute does not fit its bufferView')
+    accessor.min = data.min(0).tolist()
+    accessor.max = data.max(0).tolist()
+    return blob[:start] + raw + blob[start + len(raw):]
 
 
 class BufferWriter:
@@ -878,7 +1002,7 @@ class BufferWriter:
 BONE_PREFIX = 'mixamorig:'
 
 
-def write_rig(gltf, blob, skel, joint_index, weights, rest_locals, clips):
+def write_rig(gltf, blob, skel, joint_index, weights, clips, positions, normals):
     """Graft skeleton, skin and clips onto the source GLB, bytes intact.
 
     The mesh, its materials and its three 2K textures are never touched: the
@@ -886,16 +1010,19 @@ def write_rig(gltf, blob, skel, joint_index, weights, rest_locals, clips):
     the rigged file is the same model rather than a re-export of it.
     """
     import pygltflib
-    writer = BufferWriter(gltf, blob)
-
     mesh_node = next(i for i, n in enumerate(gltf.nodes) if n.mesh is not None)
+    primitive = gltf.meshes[gltf.nodes[mesh_node].mesh].primitives[0]
+    blob = overwrite_attribute(gltf, blob, primitive.attributes.POSITION,
+                               positions.astype(np.float32))
+    blob = overwrite_attribute(gltf, blob, primitive.attributes.NORMAL,
+                               normals.astype(np.float32))
+    writer = BufferWriter(gltf, blob)
     first_bone = len(gltf.nodes)
     for bone in skel.bones:
-        q = rest_locals[bone.name]
         gltf.nodes.append(pygltflib.Node(
             name=BONE_PREFIX + bone.name,
             translation=[float(v) for v in skel.local_rest_translation(bone)],
-            rotation=[float(v) for v in q],
+            rotation=[0.0, 0.0, 0.0, 1.0],
             children=[first_bone + skel.by_name[c].index for c in bone.children] or None,
         ))
 
@@ -915,7 +1042,6 @@ def write_rig(gltf, blob, skel, joint_index, weights, rest_locals, clips):
         name='pill-rig', inverseBindMatrices=ibm, skeleton=first_bone,
         joints=[first_bone + b.index for b in skel.bones]))
     gltf.nodes[mesh_node].skin = len(gltf.skins) - 1
-    primitive = gltf.meshes[gltf.nodes[mesh_node].mesh].primitives[0]
     primitive.attributes.JOINTS_0 = joints
     primitive.attributes.WEIGHTS_0 = skin_weights
 
@@ -996,8 +1122,202 @@ def debug_overlay(path, vertices, colors, skel, pose_world=None, title=''):
     sheet.save(path)
 
 
+# --------------------------------------------------------------------------
+# Stage 6: mascot-proportioned clips
+# --------------------------------------------------------------------------
+
+TAU = 2.0 * np.pi
+FORWARD_AXIS = np.array([-1.0, 0.0, 0.0])   # right-hand rotation about it swings +Z
+SIDE_AXIS = np.array([0.0, 0.0, 1.0])
+UP_AXIS = np.array([0.0, 1.0, 0.0])
+
+
+class Pose:
+    """A single clip frame, written as offsets from the rest pose.
+
+    Clips are authored against the rest directions rather than as absolute
+    orientations, so a nub that rests 22 degrees out to the side swings forward
+    from there. That is also what keeps these clips honest about the mascot's
+    proportions: nothing here assumes a limb long enough to reach anywhere.
+    """
+
+    def __init__(self, rest):
+        self.rest = rest
+        self.aims = {}
+        self.twists = {}
+        self.hips = np.zeros(3)
+
+    def turn(self, bone, axis, angle):
+        base = self.aims.get(bone, self.rest[bone])
+        self.aims[bone] = q_rotate(q_axis_angle(axis, angle), base)
+        return self
+
+    def pitch(self, bone, angle):
+        """Positive swings the bone forward (+Z)."""
+        return self.turn(bone, FORWARD_AXIS, angle)
+
+    def roll(self, bone, angle):
+        """Positive swings the bone toward the mascot's left (+X)."""
+        return self.turn(bone, SIDE_AXIS, angle)
+
+    def lift(self, bone, angle):
+        """Positive raises the nub away from the body, whichever side it is on."""
+        return self.roll(bone, angle if bone.startswith('Left') else -angle)
+
+    def twist(self, bone, angle):
+        self.twists[bone] = self.twists.get(bone, 0.0) + angle
+        return self
+
+    def aim(self, bone, direction):
+        self.aims[bone] = unit(direction)
+        return self
+
+    def shift(self, dx=0.0, dy=0.0, dz=0.0):
+        self.hips = self.hips + np.array([dx, dy, dz])
+        return self
+
+
+def _stride(pose, phase, swing, knee, arm, lift=0.0):
+    """One symmetric two-beat gait, shared by walk and run."""
+    for side, offset in (('Left', 0.0), ('Right', np.pi)):
+        leg = np.sin(phase + offset)
+        pose.pitch(f'{side}UpLeg', swing * leg)
+        # Knee folds on the back half of the stride, when the foot leaves the
+        # ground; a straight-through knee reads as a stiff waddle.
+        pose.pitch(f'{side}Leg', -knee * max(0.0, -np.sin(phase + offset - 0.7)))
+        pose.pitch(f'{side}Foot', -0.35 * swing * leg + lift)
+        pose.pitch(f'{side}Arm', -arm * leg)
+        pose.pitch(f'{side}ForeArm', -arm * 0.5 * leg)
+
+
+def walk_pose(u, rest, swing=0.52, knee=0.75, arm=0.42, bounce=0.045, lean=0.09):
+    phase = u * TAU
+    pose = Pose(rest)
+    _stride(pose, phase, swing, knee, arm)
+    pose.pitch('Spine', lean).pitch('Spine1', lean * 0.5)
+    pose.pitch('Neck', -lean * 0.8).pitch('Head', -lean * 0.6)
+    pose.roll('Hips', 0.05 * np.sin(phase))
+    pose.twist('Hips', 0.12 * np.sin(phase))
+    pose.twist('Spine2', -0.10 * np.sin(phase))
+    pose.shift(dy=-bounce * np.cos(2 * phase), dx=0.02 * np.sin(phase))
+    return pose
+
+
+def run_pose(u, rest):
+    pose = walk_pose(u, rest, swing=0.85, knee=1.25, arm=0.75, bounce=0.09, lean=0.26)
+    pose.shift(dy=0.05 * max(0.0, np.sin(u * TAU * 2)))
+    return pose
+
+
+def idle_pose(u, rest):
+    """Breathing, not standing still: a mascot frozen mid-frame reads as broken."""
+    phase = u * TAU
+    pose = Pose(rest)
+    pose.shift(dy=0.018 * np.sin(phase) - 0.006)
+    pose.pitch('Spine', 0.035 * np.sin(phase))
+    pose.pitch('Spine2', -0.03 * np.sin(phase))
+    pose.pitch('Head', 0.05 * np.sin(phase + 0.9))
+    pose.twist('Head', 0.09 * np.sin(phase * 0.5))
+    for side in ('Left', 'Right'):
+        pose.lift(f'{side}Arm', 0.09 * np.sin(phase + 0.5))
+        pose.pitch(f'{side}ForeArm', 0.07 * np.sin(phase + 1.1))
+    return pose
+
+
+def wave_pose(u, rest):
+    """Back to the pose it was sculpted in: arm up beside the head, waving."""
+    pose = Pose(rest)
+    raise_in = np.clip(u / 0.22, 0.0, 1.0) if u < 0.78 else np.clip((1.0 - u) / 0.22, 0.0, 1.0)
+    ease = raise_in * raise_in * (3 - 2 * raise_in)
+    pose.lift('RightArm', 1.45 * ease)
+    pose.lift('RightForeArm', 1.15 * ease)
+    swing = np.sin(u * TAU * 3.0) * ease
+    pose.lift('RightHand', 0.9 * ease - 0.45 * swing)
+    pose.twist('Head', -0.16 * ease)
+    pose.pitch('Head', 0.10 * ease)
+    pose.roll('Spine2', -0.08 * ease)
+    pose.shift(dy=0.02 * np.sin(u * TAU * 3.0) * ease)
+    pose.pitch('LeftArm', 0.12 * np.sin(u * TAU * 3.0) * ease)
+    return pose
+
+
+def jump_pose(u, rest):
+    """Anticipate, launch, tuck, land, settle -- the whole squash-and-stretch beat."""
+    keys = (0.0, 0.18, 0.34, 0.58, 0.76, 1.0)
+    crouch = np.interp(u, keys, (0.0, 1.0, 0.15, 0.0, 0.85, 0.0))
+    airborne = np.interp(u, keys, (0.0, 0.0, 0.75, 1.0, 0.10, 0.0))
+    pose = Pose(rest)
+    pose.shift(dy=-0.16 * crouch + 0.42 * airborne)
+    for side in ('Left', 'Right'):
+        pose.pitch(f'{side}UpLeg', 0.55 * crouch + 0.30 * airborne)
+        pose.pitch(f'{side}Leg', -1.10 * crouch - 0.85 * airborne)
+        pose.pitch(f'{side}Foot', 0.45 * crouch - 0.55 * airborne)
+        pose.pitch(f'{side}Arm', -0.75 * crouch)
+        pose.lift(f'{side}Arm', 1.25 * airborne)
+        pose.lift(f'{side}ForeArm', 0.55 * airborne)
+        pose.pitch(f'{side}ForeArm', -0.45 * crouch)
+    pose.pitch('Spine', 0.30 * crouch - 0.12 * airborne)
+    pose.pitch('Head', -0.18 * crouch + 0.16 * airborne)
+    return pose
+
+
+def dance_pose(u, rest):
+    phase = u * TAU
+    pose = Pose(rest)
+    pose.shift(dy=0.055 * abs(np.sin(phase)) - 0.02, dx=0.05 * np.sin(phase))
+    pose.roll('Hips', -0.12 * np.sin(phase))
+    pose.roll('Spine1', 0.10 * np.sin(phase))
+    pose.roll('Spine2', 0.10 * np.sin(phase))
+    pose.twist('Spine2', 0.22 * np.sin(phase))
+    pose.roll('Head', -0.14 * np.sin(phase))
+    pose.twist('Head', -0.20 * np.sin(phase))
+    for side in ('Left', 'Right'):
+        beat = np.sin(phase + (0.0 if side == 'Left' else np.pi))
+        pose.lift(f'{side}Arm', 0.55 + 0.5 * beat)
+        pose.lift(f'{side}ForeArm', 0.40 + 0.6 * beat)
+        pose.pitch(f'{side}Arm', 0.22 * beat)
+        pose.pitch(f'{side}UpLeg', 0.18 * beat)
+        pose.pitch(f'{side}Leg', -0.30 * max(0.0, beat))
+    return pose
+
+
+CLIPS = (
+    ('idle', idle_pose, 3.6, 37, True),
+    ('walk', walk_pose, 1.0, 25, True),
+    ('run', run_pose, 0.62, 19, True),
+    ('wave', wave_pose, 2.6, 53, False),
+    ('jump', jump_pose, 1.5, 37, False),
+    ('dance', dance_pose, 1.9, 39, True),
+)
+
+IDENTITY = np.array([0.0, 0.0, 0.0, 1.0])
+
+
 def build_clips(skel):
-    return []
+    """Sample every clip through the same aim solver the rest pose was built with."""
+    rest = {b.name: unit(b.tail - b.head) for b in skel.bones}
+    hips_rest = skel.local_rest_translation(skel.by_name['Hips'])
+    built = []
+    for name, poser, duration, frames, loop in CLIPS:
+        times = np.linspace(0.0, duration, frames)
+        rotation = {b.name: np.zeros((frames, 4)) for b in skel.bones}
+        translation = np.zeros((frames, 3))
+        for i, t in enumerate(times):
+            u = (t / duration) if not loop else (t % duration) / duration
+            pose = poser(u, rest)
+            locals_, _, _ = skel.solve(pose.aims, pose.twists)
+            for bone in skel.bones:
+                rotation[bone.name][i] = locals_[bone.name]
+            translation[i] = hips_rest + pose.hips
+        if loop:
+            for track in rotation.values():
+                track[-1] = track[0]
+            translation[-1] = translation[0]
+        moving = {n: t for n, t in rotation.items()
+                  if np.abs(t - IDENTITY).max() > 1e-4}
+        built.append({'name': name, 'times': times, 'rotation': moving,
+                      'translation': {'Hips': translation}, 'loop': loop})
+    return built
 
 
 def main():
@@ -1029,18 +1349,28 @@ def main():
     roots = symmetrize_roots(a['limbs'], float(np.median(axis[:, 0])),
                              float(np.median(axis[:, 2])))
     skel = build_skeleton(a['limbs'], roots, axis, a['body_y0'], a['body_y1'])
+    skel_bind = build_skeleton(a['limbs'], roots, axis, a['body_y0'], a['body_y1'])
     print(f'  skeleton: {len(skel.bones)} bones')
 
+    spacing = vertex_spacing(vertices)
+    print(f'  vertex spacing {spacing:.4f}')
     joint_index, weights = skin(vertices, skel, a['filled'], a['thickness'],
-                                a['lo'], a['limbs'], roots)
+                                a['lo'], a['limbs'], roots, spacing)
     used = len(set(joint_index[weights > 0.02].ravel().tolist()))
     print(f'  skinned: {used}/{len(skel.bones)} bones carry weight above 2%')
 
-    rest_locals, rest_world, _ = skel.solve(neutral_pose(skel))
-    clips = build_clips(skel)
-    print(f"  clips: {', '.join(c['name'] for c in clips)}")
+    _, rest_world, rest_rotation = skel.solve(neutral_pose(skel))
+    normals = np.asarray(mesh.vertex_normals, float)
+    posed, posed_normals = linear_blend(vertices, normals, skel, joint_index, weights,
+                                        rest_rotation, rest_world)
+    posed, relaxed = relax_distortion(vertices, posed, spacing)
+    print(f'  baked the neutral pose ({relaxed} vertices relaxed after blending)')
+    skel.freeze(rest_world, rest_rotation)
 
-    write_rig(gltf, blob, skel, joint_index, weights, rest_locals, clips)
+    clips = build_clips(skel)
+    print(f"  clips: {', '.join(c['name'] for c in clips) or 'none'}")
+
+    write_rig(gltf, blob, skel, joint_index, weights, clips, posed, posed_normals)
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     gltf.save(args.out)
     print(f'  wrote {args.out} ({Path(args.out).stat().st_size / 1e6:.1f} MB)')
@@ -1048,10 +1378,10 @@ def main():
     if args.debug_dir:
         out = Path(args.debug_dir)
         out.mkdir(parents=True, exist_ok=True)
-        debug_overlay(out / 'bind.png', vertices, a['colors'], skel, title='bind (sculpted)')
-        debug_overlay(out / 'neutral.png', vertices, a['colors'], skel, rest_world,
-                      title='rest (neutral)')
-        print(f'  wrote {out}/bind.png, {out}/neutral.png')
+        debug_overlay(out / 'sculpted.png', vertices, a['colors'], skel_bind,
+                      title='sculpted (bind)')
+        debug_overlay(out / 'neutral.png', posed, a['colors'], skel, title='neutral (rest)')
+        print(f'  wrote {out}/sculpted.png, {out}/neutral.png')
 
 
 if __name__ == '__main__':
