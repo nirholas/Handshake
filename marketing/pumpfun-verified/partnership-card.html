@@ -1,0 +1,80 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>three.ws x pump.fun verified card</title>
+<!--
+  Source for the $THREE pump.fun verification graphics.
+
+  Renders two sizes from one layout: 1600x900 by default, 1600x1600 with the
+  "#square" hash. Every asset is a repo file referenced relatively, so a fresh
+  clone re-renders the exact PNGs in marketing/pumpfun-verified/ with:
+
+    npm run render:pumpfun-verified
+
+  See README.md in this directory for the palette and the usage rules.
+-->
+<style>
+@font-face { font-family: Inter; src: url('../../public/fonts/inter-latin.woff2') format('woff2'); font-weight: 100 900; font-display: block; }
+@font-face { font-family: 'Space Grotesk'; src: url('../../public/fonts/space-grotesk-latin.woff2') format('woff2'); font-weight: 300 700; font-display: block; }
+@font-face { font-family: 'JetBrains Mono'; src: url('../../public/fonts/jetbrains-mono-latin.woff2') format('woff2'); font-weight: 100 800; font-display: block; }
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1600px; height: 900px; background: #0a0a0a; }
+body.square, body.square html { height: 1600px; }
+body.square .card { height: 1600px; padding-bottom: 210px; }
+
+.card { position: relative; width: 1600px; height: 900px; background: #0a0a0a;
+	display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.frame { position: absolute; inset: 26px; border: 1px solid #1c1c1c; border-radius: 4px; }
+
+.eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 19px; font-weight: 500;
+	letter-spacing: .42em; color: #4ade80; margin-bottom: 104px; }
+.eyebrow span { color: #2f7d4d; margin-right: 12px; }
+
+.lockup { display: flex; align-items: center; gap: 56px; }
+.brand { display: flex; align-items: center; gap: 30px; }
+.threews img { height: 92px; display: block; }
+.pump img { height: 122px; display: block; transform: rotate(-8deg); }
+.pump .word { font-family: 'Space Grotesk', Inter, sans-serif; font-size: 62px; font-weight: 700;
+	color: #fff; letter-spacing: -.02em; }
+.rule { width: 1px; height: 118px;
+	background: linear-gradient(180deg, transparent, #2a2a2a 22%, #2a2a2a 78%, transparent); }
+
+/* The token line: symbol + the green verification check, small, near the base. */
+.token { position: absolute; left: 0; right: 0; bottom: 160px; display: flex;
+	align-items: center; justify-content: center; gap: 12px; }
+body.square .token { bottom: 520px; }
+.token .sym { font-family: 'Space Grotesk', Inter, sans-serif; font-size: 27px; font-weight: 700;
+	color: #f5f5f7; letter-spacing: .01em; }
+.token svg { width: 30px; height: 30px; display: block; }
+
+.foot { position: absolute; left: 78px; right: 78px; bottom: 62px; display: flex;
+	justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 18px;
+	letter-spacing: .12em; color: #3a3a3a; }
+</style>
+<div class="card">
+	<div class="frame"></div>
+
+	<div class="eyebrow"><span>//</span>VERIFIED PROJECT</div>
+
+	<div class="lockup">
+		<div class="brand threews"><img src="../../public/brand/three-ws-lockup-on-dark.png" alt="three.ws"></div>
+		<div class="rule"></div>
+		<div class="brand pump">
+			<img src="../../public/marks/pump-fun-alpha.png" alt="pump.fun">
+			<div class="word">pump.fun</div>
+		</div>
+	</div>
+
+	<div class="token">
+		<div class="sym">$THREE</div>
+		<svg viewBox="0 0 20 20" aria-hidden="true">
+			<path fill="#00d68f" d="M10 .9l2.2 1.7 2.7-.2.9 2.6 2.3 1.5-1.1 2.5 1.1 2.5-2.3 1.5-.9 2.6-2.7-.2L10 19.1l-2.2-1.7-2.7.2-.9-2.6-2.3-1.5L3 11l-1.1-2.5 2.3-1.5.9-2.6 2.7.2L10 .9z"/>
+			<path fill="none" stroke="#0a0a0a" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" d="M6.4 10.1l2.4 2.4 4.8-5"/>
+		</svg>
+	</div>
+
+	<div class="foot"><div>three.ws</div><div>// 2026</div></div>
+</div>
+<script>
+	if (location.hash === '#square') document.body.classList.add('square');
+</script>
