@@ -27,7 +27,7 @@ import { execFileSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import { OKX_CATALOG, catalogIndex, listingDescription, validateCatalog } from '../api/_lib/okx-catalog.js';
+import { OKX_CATALOG, catalogIndex, listedCatalog, listingDescription, validateCatalog } from '../api/_lib/okx-catalog.js';
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -46,7 +46,10 @@ const fail = (where, detail) => drift.push({ where, detail });
 
 // Copy 1: the module must be internally valid before it is worth comparing.
 validateCatalog();
-console.log(`module    ${OKX_CATALOG.length} rows, validateCatalog PASS`);
+const LISTED = listedCatalog();
+console.log(
+	`module    ${OKX_CATALOG.length} rows (${LISTED.length} listed, ${OKX_CATALOG.length - LISTED.length} back burner), validateCatalog PASS`,
+);
 
 // Copy 2: the live endpoint. catalogIndex() is the exact function the route
 // serializes, so a byte-identical JSON comparison is the strongest available
@@ -79,7 +82,19 @@ if (JSON.stringify(mod) === JSON.stringify(live)) {
 		}
 		liveById.delete(m.id);
 	}
-	for (const extra of liveById.keys()) fail('live', `row "${extra}" is live but not in the module`);
+	// A row the live catalog still publishes under `services` that the module no
+	// longer lists. Distinguish the two causes: a row demoted to the back burner
+	// is expected here until the deploy lands, a row missing from the module
+	// entirely is real drift.
+	for (const extra of liveById.keys()) {
+		const known = OKX_CATALOG.find((e) => e.id === extra);
+		fail(
+			'live',
+			known
+				? `row "${extra}" is still listed live but is back burner in the module (deploy pending)`
+				: `row "${extra}" is live but not in the module at all`,
+		);
+	}
 	for (const key of ['provider', 'okxAgentId', 'chain', 'docs']) {
 		if (JSON.stringify(mod[key]) !== JSON.stringify(live[key])) {
 			fail('live', `${key}: module ${JSON.stringify(mod[key])} vs live ${JSON.stringify(live[key])}`);
@@ -95,7 +110,9 @@ const submission = JSON.parse(
 console.log(`listing   ${submission.length} rows from scripts/okx-listing-payload.mjs`);
 
 const byName = new Map(submission.map((s) => [s.serviceName, s]));
-for (const row of OKX_CATALOG) {
+// The submission carries the LISTED rows only; a back-burner row is expected to
+// be absent from it, so comparing the whole module here would fail by design.
+for (const row of LISTED) {
 	const s = byName.get(row.name);
 	if (!s) {
 		fail('listing', `submission omits "${row.name}"`);
@@ -111,7 +128,10 @@ for (const row of OKX_CATALOG) {
 for (const extra of byName.keys()) fail('listing', `submission has "${extra}" which is not in the module`);
 
 if (args.json) {
-	writeFileSync(args.json, JSON.stringify({ base: args.base, rows: OKX_CATALOG.length, drift, ok: drift.length === 0 }, null, 2));
+	writeFileSync(
+		args.json,
+		JSON.stringify({ base: args.base, rows: OKX_CATALOG.length, listed: LISTED.length, drift, ok: drift.length === 0 }, null, 2),
+	);
 }
 
 if (drift.length === 0) {

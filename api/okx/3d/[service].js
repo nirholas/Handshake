@@ -3,18 +3,23 @@
 //
 //   /api/okx/3d/catalog          GET, free, machine-readable service index
 //   /api/okx/3d/health           GET, free, live subsystem health (real probes)
-//   /api/okx/3d/identity-studio  A2MCP (MCP Streamable HTTP): POST tool calls,
-//                                GET SSE, DELETE terminate. create_identity is
-//                                x402-priced; identity_status + getting_started
-//                                are free. Transport mirrors api/mcp-3d.js,
-//                                verify → dispatch → settle-on-success.
-//   /api/okx/3d/<paid service>   REST (work order 03): plain JSON POST, one
-//                                capability + one price per endpoint. Unpaid
-//                                POST → OKX-dialect 402 (PAYMENT-REQUIRED
-//                                header + body); paid replay → verify →
-//                                engine → settle → PAYMENT-RESPONSE. GET is
-//                                the free per-service descriptor. Engines in
-//                                api/_okx3d/rest-services.js.
+//   /api/okx/3d/forge-draft      A2MCP, the LISTED line-up (api/_okx3d/forge.js).
+//   /api/okx/3d/forge-standard   Each row is a real MCP Streamable HTTP server:
+//   /api/okx/3d/forge-hd         POST tool calls, GET SSE, DELETE terminate.
+//   /api/okx/3d/forge-image      forge_3d is x402-priced on the X Layer rail;
+//   /api/okx/3d/forge-status     forge_status + getting_started are free.
+//   /api/okx/3d/identity-studio  A2MCP, back burner (unlisted, still routable).
+//   /api/okx/3d/<paid service>   REST, back burner (unlisted, still routable):
+//                                plain JSON POST, one capability + one price per
+//                                endpoint. Unpaid POST → OKX-dialect 402
+//                                (PAYMENT-REQUIRED header + body); paid replay →
+//                                verify → engine → settle → PAYMENT-RESPONSE.
+//                                GET is the free per-service descriptor. Engines
+//                                in api/_okx3d/rest-services.js.
+//
+// Both A2MCP families share ONE transport (handleA2mcp): same challenge, verify,
+// batch pricing, single-use payment proof and settle-on-success. Only the tool
+// catalog, the price function and the discovery metadata differ per service.
 import { cors, error, json, readBody, readJson, wrap } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import {
@@ -54,11 +59,12 @@ import {
 } from '../../_mcp/auth.js';
 import { sendX402Error, reservePaymentProof } from '../../_mcp/payments.js';
 import {
-	dispatch,
+	dispatch as identityDispatch,
 	PROTOCOL_VERSION,
 	identityX402Amount,
 	isPublicIdentityTool,
 } from '../../_okx3d/tools.js';
+import { forgeSurface, isForgeService } from '../../_okx3d/forge.js';
 import { IDENTITY_CHALLENGE } from '../../_okx3d/discovery.js';
 import { invokeRestService, isRestPaidService } from '../../_okx3d/rest-services.js';
 
@@ -352,21 +358,26 @@ async function handleRestService(req, res, entry) {
 	}
 }
 
-async function handleIdentityStudio(req, res) {
-	const resourcePath = '/api/okx/3d/identity-studio';
+// One A2MCP transport, every listed MCP service. Identity Studio and each
+// forge row differ only in their tool catalog, their price function and their
+// 402 discovery metadata, so those arrive as `cfg` and the wire behaviour
+// (challenge, verify, batch pricing, single-use proof, settle-on-success)
+// stays byte-identical across endpoints. A buyer that can pay one can pay all.
+async function handleA2mcp(req, res, cfg) {
+	const { serviceId, challenge, dispatch: dispatchTool, priceForTool, isFreeName, listPrice } = cfg;
+	const resourcePath = `/api/okx/3d/${serviceId}`;
 	const resourceUrl = resolveResourceUrl(req, resourcePath);
-	// The flagship sells on OKX.AI, so its 402 must LEAD with the X Layer
-	// (eip155:196) accept, exactly like the WO-03 REST services, or an OKX
-	// buyer can't pay it. Gated on the X Layer envs being present. Prepended
-	// into the MCP challenge + verify path.
-	const listPrice = catalogEntry('identity-studio').amountAtomics;
+	// These services sell on OKX.AI, so the 402 must LEAD with the X Layer
+	// (eip155:196) accept or an OKX buyer cannot pay it. Gated on the X Layer
+	// envs being present. Prepended into the MCP challenge + verify path.
 	const xlayerAcceptsFor = (amount) => (xlayerSettleable() ? [okxXLayerAccept(resourceUrl, amount)] : []);
 
 	if (req.method === 'GET' || req.method === 'HEAD')
 		return handleSse(req, res, {
 			resourcePath,
-			challenge: IDENTITY_CHALLENGE,
+			challenge,
 			extraAccepts: xlayerAcceptsFor(listPrice),
+			x402Amount: listPrice,
 		});
 	if (req.method === 'DELETE') return handleTerminate(req, res);
 	if (req.method !== 'POST') return send401(res, 'method not supported');
@@ -374,8 +385,8 @@ async function handleIdentityStudio(req, res) {
 	const body = await readJson(req, 1_000_000);
 
 	const { totalAmount: x402Amount, allFree } = priceBatch(body, {
-		priceForTool: identityX402Amount,
-		isFreeName: isPublicIdentityTool,
+		priceForTool,
+		isFreeName,
 	});
 
 	// The X Layer accept must quote the SAME batch total the platform rails
@@ -389,7 +400,7 @@ async function handleIdentityStudio(req, res) {
 	const result = await authenticateRequest(req, res, {
 		x402Amount,
 		resourcePath,
-		challenge: IDENTITY_CHALLENGE,
+		challenge,
 		allowFree: allFree || (isDiscoveryOnlyBatch(body) && !isMcpProtocolClient(req)),
 		extraAccepts,
 	});
@@ -418,7 +429,7 @@ async function handleIdentityStudio(req, res) {
 	// back to judging the whole batch.
 	const pricedIds = new Set(
 		batch
-			.filter((m) => m?.method === 'tools/call' && identityX402Amount(m?.params?.name))
+			.filter((m) => m?.method === 'tools/call' && priceForTool(m?.params?.name))
 			.map((m) => m?.id)
 			.filter((id) => id !== undefined && id !== null),
 	);
@@ -441,7 +452,7 @@ async function handleIdentityStudio(req, res) {
 	try {
 		const responses = [];
 		for (const msg of batch) {
-			const r = await dispatch(msg, auth, req);
+			const r = await dispatchTool(msg, auth, req);
 			if (r !== null) responses.push(r);
 		}
 
@@ -464,7 +475,7 @@ async function handleIdentityStudio(req, res) {
 						{
 							resourceUrl: x402Ctx.resourceUrl,
 							accepts: x402Ctx.requirements,
-							challenge: IDENTITY_CHALLENGE,
+							challenge,
 						},
 						err,
 					);
@@ -511,7 +522,30 @@ export default wrap(async (req, res) => {
 		});
 	}
 
-	if (service === 'identity-studio') return handleIdentityStudio(req, res);
+	if (service === 'identity-studio') {
+		return handleA2mcp(req, res, {
+			serviceId: 'identity-studio',
+			challenge: IDENTITY_CHALLENGE,
+			dispatch: identityDispatch,
+			priceForTool: identityX402Amount,
+			isFreeName: isPublicIdentityTool,
+			listPrice: catalogEntry('identity-studio').amountAtomics,
+		});
+	}
+
+	// The listed OKX.AI line-up: three.ws Forge. Every row is a real MCP server
+	// over the same transport, priced from its own catalog entry.
+	if (isForgeService(service)) {
+		const surface = forgeSurface(service);
+		return handleA2mcp(req, res, {
+			serviceId: service,
+			challenge: surface.challenge,
+			dispatch: surface.dispatch,
+			priceForTool: surface.x402Amount,
+			isFreeName: surface.isPublicTool,
+			listPrice: surface.entry.amountAtomics,
+		});
+	}
 
 	if (isRestPaidService(service)) return handleRestService(req, res, catalogEntry(service));
 

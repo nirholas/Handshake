@@ -50,6 +50,38 @@ function usdToAtomics(usd) {
 	return String(Math.round(Number(usd) * 1e6));
 }
 
+// Tool names on every A2MCP forge endpoint. They are deliberately identical
+// across the paid rows so a buying agent writes one client and points it at
+// whichever price/quality row it wants.
+export const FORGE_TOOL = 'forge_3d';
+export const FORGE_STATUS_TOOL = 'forge_status';
+
+// The paid text lanes take the same arguments; only the endpoint's lane and
+// fee differ. Built fresh per row so no two rows share a mutable schema object.
+function textForgeSchema() {
+	return {
+		type: 'object',
+		required: ['prompt'],
+		additionalProperties: false,
+		properties: {
+			prompt: { type: 'string', minLength: 3, maxLength: 1000 },
+			aspect_ratio: { type: 'string', enum: ['1:1', '4:3', '3:4', '16:9', '9:16'] },
+		},
+	};
+}
+
+function forgeStatusSchema() {
+	return {
+		type: 'object',
+		required: ['job_id'],
+		additionalProperties: false,
+		properties: {
+			job_id: { type: 'string', minLength: 8, maxLength: 1024 },
+			title: { type: 'string', maxLength: 200 },
+		},
+	};
+}
+
 // One row per marketplace service. Fields:
 //   id                  URL slug, the service's route is /api/okx/3d/<id>
 //   name                Listing display name
@@ -60,9 +92,161 @@ function usdToAtomics(usd) {
 //   endpoint            Absolute endpoint URL buyers call
 //   tool                For a2mcp services: the paid MCP tool name on that endpoint
 //   inputSchema         JSON Schema of the paid call's arguments (free lanes: response shape)
+//   listed              true = on the live OKX.AI listing; false = back burner,
+//                       still deployed and routable, absent from the submission
+//   lane                For forge rows: which generation lane the endpoint drives
 export const OKX_CATALOG = Object.freeze([
+	// ── The listed OKX.AI line-up: three.ws Forge ────────────────────────────
+	// One capability, sold four ways, plus a free poll. Every listed row is a
+	// real A2MCP endpoint (MCP Streamable HTTP, JSON-RPC tools/call) whose paid
+	// tool answers an unpaid call with an OKX-dialect 402 that leads with
+	// eip155:196, which is the OKX Agent Payments Protocol integration the
+	// 2026-07-04 review rejected us for missing.
+	//
+	// The four paid rows differ ONLY in lane and price: OKX prices a service,
+	// not a parameter, so a quality tier has to be its own row to carry its own
+	// fee. Buyers keep one client shape: every endpoint exposes the same
+	// forge_3d (paid) / forge_status (free) / getting_started (free) tools.
+	//
+	// What a buyer gets back is byte-for-byte what the "three.ws 3D Studio"
+	// custom GPT gets from /api/3d/studio: the GLB, the concept image, a browser
+	// viewer link and a device-aware AR link, and nothing else. Both fronts
+	// shape their responses through api/_mcp-studio/studio-shape.js, so the
+	// marketplace and the GPT cannot drift apart.
+	{
+		id: 'forge-draft',
+		name: 'Forge 3D Draft',
+		kind: 'a2mcp',
+		listed: true,
+		lane: { tier: 'draft', path: 'image', mode: 'text_to_3d' },
+		describes: {
+			capability:
+				'Turns a text description of one object or character into a downloadable textured 3D ' +
+				'model in GLB format, with a browser preview link and an augmented-reality link that ' +
+				'places it in a real room.',
+			input:
+				'Provide a text description of a single subject, 3 to 1000 characters, naming its style ' +
+				'and main colours. An aspect ratio is optional. Returns a job id to poll on the free ' +
+				'status service.',
+		},
+		priceUsd: '0.01',
+		amountAtomics: usdToAtomics(0.01),
+		endpoint: `${BASE}/api/okx/3d/forge-draft`,
+		tool: FORGE_TOOL,
+		inputSchema: textForgeSchema(),
+	},
+	{
+		id: 'forge-standard',
+		name: 'Forge 3D Standard',
+		kind: 'a2mcp',
+		listed: true,
+		lane: { tier: 'standard', mode: 'text_to_3d' },
+		describes: {
+			capability:
+				'Turns a text description of one object or character into a downloadable textured 3D ' +
+				'model in GLB format on the standard quality pass, with a browser preview link and an ' +
+				'augmented-reality link.',
+			input:
+				'Provide a text description of a single subject, 3 to 1000 characters, naming its style ' +
+				'and main colours. An aspect ratio is optional. Returns a job id to poll on the free ' +
+				'status service.',
+		},
+		priceUsd: '0.05',
+		amountAtomics: usdToAtomics(0.05),
+		endpoint: `${BASE}/api/okx/3d/forge-standard`,
+		tool: FORGE_TOOL,
+		inputSchema: textForgeSchema(),
+	},
+	{
+		id: 'forge-hd',
+		name: 'Forge 3D HD',
+		kind: 'a2mcp',
+		listed: true,
+		lane: { tier: 'high', mode: 'text_to_3d' },
+		describes: {
+			capability:
+				'Turns a text description of one object or character into a downloadable textured 3D ' +
+				'model in GLB format on the highest detail pass, with a browser preview link and an ' +
+				'augmented-reality link.',
+			input:
+				'Provide a text description of a single subject, 3 to 1000 characters, naming its style ' +
+				'and main colours. An aspect ratio is optional. This pass runs longer, so keep polling ' +
+				'the free status service.',
+		},
+		priceUsd: '0.25',
+		amountAtomics: usdToAtomics(0.25),
+		endpoint: `${BASE}/api/okx/3d/forge-hd`,
+		tool: FORGE_TOOL,
+		inputSchema: textForgeSchema(),
+	},
+	{
+		id: 'forge-image',
+		name: 'Forge 3D from Image',
+		kind: 'a2mcp',
+		listed: true,
+		lane: { mode: 'image_to_3d' },
+		describes: {
+			capability:
+				'Rebuilds a downloadable textured 3D model in GLB format from photographs or rendered ' +
+				'views of one object, with a browser preview link and an augmented-reality link that ' +
+				'places it in a real room.',
+			input:
+				'Provide one to four publicly reachable image links showing the same subject. A short ' +
+				'text description is optional and sharpens the result. Returns a job id to poll on the ' +
+				'free status service.',
+		},
+		priceUsd: '0.25',
+		amountAtomics: usdToAtomics(0.25),
+		endpoint: `${BASE}/api/okx/3d/forge-image`,
+		tool: FORGE_TOOL,
+		inputSchema: {
+			type: 'object',
+			required: ['image_urls'],
+			additionalProperties: false,
+			properties: {
+				image_urls: {
+					type: 'array',
+					minItems: 1,
+					maxItems: 4,
+					items: { type: 'string', format: 'uri', pattern: '^https://' },
+				},
+				prompt: { type: 'string', minLength: 3, maxLength: 1000 },
+			},
+		},
+	},
+	{
+		id: 'forge-status',
+		name: 'Forge Job Status',
+		kind: 'a2mcp',
+		listed: true,
+		lane: { mode: 'status' },
+		describes: {
+			capability:
+				'Reports the live state of any three.ws forge generation job and returns the finished ' +
+				'model file, concept image, browser preview link and augmented-reality link once the ' +
+				'job completes. Always free.',
+			input:
+				'Provide the job id returned when a generation was accepted. Optionally provide the ' +
+				'original description so the preview pages carry a title. No payment, account, or key ' +
+				'is required to call it.',
+		},
+		priceUsd: '0',
+		amountAtomics: null,
+		endpoint: `${BASE}/api/okx/3d/forge-status`,
+		tool: FORGE_STATUS_TOOL,
+		inputSchema: forgeStatusSchema(),
+	},
+
+	// ── Back burner (owner directive 2026-08-22) ─────────────────────────────
+	// Everything below stays deployed, tested and individually routable, and is
+	// NOT part of the OKX.AI listing: `listed: false` keeps it out of
+	// catalogIndex() and out of scripts/okx-listing-payload.mjs. The listing was
+	// rebuilt around the forge because a focused line-up is what sells and what
+	// passes review on this marketplace; these specialist services return to the
+	// listing when the forge rows have real sales behind them.
 	{
 		id: 'identity-studio',
+		listed: false,
 		name: 'Agent Identity Studio',
 		kind: 'a2mcp',
 		describes: {
@@ -120,6 +304,7 @@ export const OKX_CATALOG = Object.freeze([
 	// lane cost; the math is recorded in prompts/okx-ai/PROGRESS.md.
 	{
 		id: 'text-to-3d',
+		listed: false,
 		name: 'Text to 3D Model (GLB)',
 		kind: 'rest',
 		describes: {
@@ -148,6 +333,7 @@ export const OKX_CATALOG = Object.freeze([
 	},
 	{
 		id: 'text-to-3d-pro',
+		listed: false,
 		name: 'Text to 3D Model (Pro)',
 		kind: 'rest',
 		describes: {
@@ -177,6 +363,7 @@ export const OKX_CATALOG = Object.freeze([
 	},
 	{
 		id: 'image-to-3d',
+		listed: false,
 		name: 'Image to 3D Model',
 		kind: 'rest',
 		describes: {
@@ -209,6 +396,7 @@ export const OKX_CATALOG = Object.freeze([
 	},
 	{
 		id: 'rig',
+		listed: false,
 		name: 'GLB Auto-Rigging',
 		kind: 'rest',
 		describes: {
@@ -233,6 +421,7 @@ export const OKX_CATALOG = Object.freeze([
 	},
 	{
 		id: 'avatar',
+		listed: false,
 		name: 'Text to Rigged Avatar',
 		kind: 'rest',
 		describes: {
@@ -261,6 +450,7 @@ export const OKX_CATALOG = Object.freeze([
 	},
 	{
 		id: 'retarget',
+		listed: false,
 		name: 'Animation Retargeting',
 		kind: 'rest',
 		describes: {
@@ -290,6 +480,7 @@ export const OKX_CATALOG = Object.freeze([
 	},
 	{
 		id: 'pose-seed',
+		listed: false,
 		name: 'Pose Seed',
 		kind: 'rest',
 		describes: {
@@ -314,6 +505,7 @@ export const OKX_CATALOG = Object.freeze([
 	},
 	{
 		id: 'fbx-export',
+		listed: false,
 		name: 'FBX Export (rig-preserving)',
 		kind: 'rest',
 		describes: {
@@ -341,16 +533,17 @@ export const OKX_CATALOG = Object.freeze([
 	},
 	{
 		id: 'catalog',
+		listed: true,
 		name: '3D Studio Service Catalog',
 		kind: 'rest',
 		describes: {
 			capability:
-				'Free machine-readable index of every three.ws 3D Studio service on OKX.AI: names, ' +
+				'Free machine-readable index of every three.ws 3D Studio service sold here: names, ' +
 				'descriptions, prices, endpoints, and input formats, always in sync with the live ' +
 				'services.',
 			input:
-				'Provide nothing. No parameters, no payment, no account required. Example: fetch ' +
-				'the link to list every service with names, prices, and input details.',
+				'Provide nothing. No parameters, no payment, and no account are required. Returns the ' +
+				'full service list with names, prices, endpoints, and the exact input each one expects.',
 		},
 		priceUsd: '0',
 		amountAtomics: null,
@@ -360,6 +553,7 @@ export const OKX_CATALOG = Object.freeze([
 	},
 	{
 		id: 'health',
+		listed: true,
 		name: '3D Studio Health Status',
 		kind: 'rest',
 		describes: {
@@ -367,8 +561,8 @@ export const OKX_CATALOG = Object.freeze([
 				'Free live health status for the systems behind every paid service: generation, rigging, ' +
 				'rendering, storage, and the payment rail, from real checks rather than a fixed reply.',
 			input:
-				'Provide nothing. No parameters, no payment, no account required. Example: fetch ' +
-				'the link to confirm all systems are up before buying a paid service.',
+				'Provide nothing. No parameters, no payment, and no account are required. Returns a ' +
+				'per-system reading so a buyer can confirm everything is up before paying for a job.',
 		},
 		priceUsd: '0',
 		amountAtomics: null,
@@ -389,22 +583,38 @@ export function listingDescription(entry) {
 }
 
 // The machine-readable index the free catalog service returns, the exact
-// payload OKX buyers (and work order 05's listing update) consume.
+// payload OKX buyers (and the listing update in scripts/okx-listing-payload.mjs)
+// consume.
+//
+// `services` is the live OKX.AI line-up. `unlisted` is the back burner: still
+// deployed, still payable, deliberately absent from the marketplace listing. It
+// is published rather than hidden because those endpoints answer real 402s to
+// anyone who calls them, and a catalog that pretended otherwise would be lying
+// to the buyer holding the URL.
+function publicRow(e) {
+	return {
+		id: e.id,
+		name: e.name,
+		kind: e.kind,
+		description: e.describes,
+		price_usd: e.priceUsd,
+		endpoint: e.endpoint,
+		...(e.tool ? { tool: e.tool } : {}),
+		...(e.inputSchema ? { input_schema: e.inputSchema } : {}),
+	};
+}
+
+export function listedCatalog(catalog = OKX_CATALOG) {
+	return catalog.filter((e) => e.listed);
+}
+
 export function catalogIndex() {
 	return {
 		provider: 'three.ws 3D Studio',
 		okxAgentId: 2632,
 		chain: 'eip155:196',
-		services: OKX_CATALOG.map((e) => ({
-			id: e.id,
-			name: e.name,
-			kind: e.kind,
-			description: e.describes,
-			price_usd: e.priceUsd,
-			endpoint: e.endpoint,
-			...(e.tool ? { tool: e.tool } : {}),
-			...(e.inputSchema ? { input_schema: e.inputSchema } : {}),
-		})),
+		services: listedCatalog().map(publicRow),
+		unlisted: OKX_CATALOG.filter((e) => !e.listed).map(publicRow),
 		docs: `${BASE}/docs/okx-marketplace`,
 	};
 }
@@ -419,6 +629,13 @@ export function validateCatalog(catalog = OKX_CATALOG) {
 		if (seen.has(e.id)) throw new Error(`${ctx}: duplicate id`);
 		seen.add(e.id);
 		if (!e.name) throw new Error(`${ctx}: missing name`);
+		// OKX caps a service name at 30 display columns (5 minimum); an over-long
+		// name is rejected at submission, not at review, so catch it in CI.
+		if (e.listed) {
+			const nw = displayWidth(e.name);
+			if (nw < 5 || nw > 30) throw new Error(`${ctx}: listed name display width ${nw} outside 5..30`);
+		}
+		if (typeof e.listed !== 'boolean') throw new Error(`${ctx}: listed must be a boolean`);
 		if (!['a2mcp', 'rest'].includes(e.kind)) throw new Error(`${ctx}: bad kind`);
 		for (const part of ['capability', 'input']) {
 			const text = e.describes?.[part];
@@ -450,5 +667,6 @@ export function validateCatalog(catalog = OKX_CATALOG) {
 			throw new Error(`${ctx}: paid rest row needs inputSchema`);
 		}
 	}
+	if (!catalog.some((e) => e.listed)) throw new Error('okx-catalog: no listed services, the submission would be empty');
 	return true;
 }

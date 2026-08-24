@@ -11,15 +11,22 @@
 //     (write it to ~/.okx-agent-task/workspace/CLAUDE.md so the okx-a2a daemon's AI
 //      subsession answers marketplace chat with real catalog knowledge)
 //
-// With --delta, every live service whose name is NOT in the catalog becomes an
-// "operation":"delete" entry, and every catalog row becomes either an
+// The payload is built from the LISTED rows only (`listed: true`). Back-burner
+// rows stay deployed and routable but are deliberately absent from the
+// marketplace listing, so a row demoted to `listed: false` in the catalog turns
+// into an "operation":"delete" here on the next --delta run.
+//
+// With --delta, every live service whose name is NOT in the listed catalog
+// becomes an "operation":"delete" entry, and every listed row becomes either an
 // "operation":"update" (live row with the same name exists) or
 // "operation":"create". Output is a single JSON array ready for --service.
 
-import { OKX_CATALOG, listingDescription, validateCatalog } from '../api/_lib/okx-catalog.js';
+import { listedCatalog, listingDescription, validateCatalog } from '../api/_lib/okx-catalog.js';
 import { buildChatBriefing } from '../api/_lib/okx-chat-briefing.js';
 
 validateCatalog();
+
+const LISTED = listedCatalog();
 
 function catalogEntryToService(e) {
 	return {
@@ -40,7 +47,7 @@ if (wantBriefing) {
 }
 
 if (!wantDelta) {
-	console.log(JSON.stringify(OKX_CATALOG.map(catalogEntryToService), null, 2));
+	console.log(JSON.stringify(LISTED.map(catalogEntryToService), null, 2));
 	process.exit(0);
 }
 
@@ -56,7 +63,7 @@ if (!Array.isArray(live)) {
 	process.exit(1);
 }
 
-const catalogByName = new Map(OKX_CATALOG.map((e) => [e.name, e]));
+const catalogByName = new Map(LISTED.map((e) => [e.name, e]));
 const liveByName = new Map(live.map((s) => [s.serviceName ?? s.name, s]));
 
 const delta = [];
@@ -73,7 +80,7 @@ for (const s of live) {
 		});
 	}
 }
-for (const e of OKX_CATALOG) {
+for (const e of LISTED) {
 	const liveRow = liveByName.get(e.name);
 	const entry = catalogEntryToService(e);
 	if (liveRow) {

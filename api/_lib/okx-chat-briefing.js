@@ -6,7 +6,7 @@
 // "what do you sell?" or "what is three.ws?", which is worse than being offline
 // because it answers wrongly and confidently.
 //
-// Built from OKX_CATALOG so prices, endpoints and capability text can never
+// Built from the catalog module so prices, endpoints and capability text can never
 // drift from the live services. Two consumers, one source of truth:
 //   scripts/okx-listing-payload.mjs --briefing   (writes the local workspace)
 //   workers/okx-chat-bot/workspace.js            (writes the hosted workspace)
@@ -15,17 +15,22 @@
 // the subsession reads depends on which AI CLI the adapter is configured to
 // spawn (Claude Code reads CLAUDE.md, Codex reads AGENTS.md).
 
-import { OKX_CATALOG } from './okx-catalog.js';
+import { listedCatalog, OKX_CATALOG } from './okx-catalog.js';
 
 /**
  * Render the chat-responder briefing as markdown.
  * @returns {string}
  */
 export function buildChatBriefing() {
-	const rows = OKX_CATALOG.map((e) => {
+	const row = (e) => {
 		const price = e.priceUsd === '0' ? 'Free' : `$${e.priceUsd} USDT`;
 		return `### ${e.name} (${price})\n${e.describes.capability}\n${e.describes.input}\nEndpoint: ${e.endpoint}`;
-	}).join('\n\n');
+	};
+	const rows = listedCatalog().map(row).join('\n\n');
+	// Back-burner services are not on the listing, but they are deployed and
+	// payable, so a buyer who asks for rigging or an avatar in chat gets a real
+	// answer instead of "we do not offer that".
+	const offListRows = OKX_CATALOG.filter((e) => !e.listed).map(row).join('\n\n');
 
 	return `# three.ws 3D Studio (OKX.AI agent #2632): chat responder briefing
 
@@ -50,9 +55,17 @@ What that means for a buyer in this chat:
 - A live, animated avatar embeddable on any website with a single web component.
 - Everything returns a real GLB URL you can download, view in a browser, or embed.
 
-## What we sell
+## What we sell on the marketplace listing
 
 ${rows}
+
+## Also available, not on the listing
+
+These are deployed, priced and payable exactly like the listed rows, they are simply not
+part of the current marketplace listing. If a buyer asks for one, give them the endpoint
+and the price; do not tell them we cannot do it.
+
+${offListRows}
 
 ## How buyers pay
 

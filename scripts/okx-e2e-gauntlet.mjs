@@ -32,7 +32,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import { OKX_CATALOG, catalogEntry } from '../api/_lib/okx-catalog.js';
+import { catalogEntry, listedCatalog } from '../api/_lib/okx-catalog.js';
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const EVIDENCE = resolve(REPO, 'prompts/okx-ai/e2e-evidence');
@@ -207,7 +207,8 @@ async function case1Free() {
 
 	const healthOk = health.status === 200 && healthBody.ok === true && Array.isArray(healthBody.subsystems) && healthBody.subsystems.length > 0;
 	const live = healthBody.subsystems?.every((s) => typeof s.latency_ms === 'number');
-	const catalogOk = catalog.status === 200 && catalogBody.services?.length === OKX_CATALOG.length;
+	// `services` is the listed line-up; back-burner rows ship under `unlisted`.
+	const catalogOk = catalog.status === 200 && catalogBody.services?.length === listedCatalog().length;
 	record(
 		'1',
 		'free lane serves live data, no payment demanded',

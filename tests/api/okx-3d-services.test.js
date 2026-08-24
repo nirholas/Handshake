@@ -118,6 +118,7 @@ const {
 	OKX_CATALOG,
 	catalogEntry,
 	catalogIndex,
+	listedCatalog,
 	listingDescription,
 	validateCatalog,
 } = await import('../../api/_lib/okx-catalog.js');
@@ -205,21 +206,41 @@ describe('okx catalog — work order 03 rows', () => {
 	});
 
 	// OKX rejected the listing on 2026-07-26 for "missing a complete description,
-	// parameter details, and usage examples". Every row now carries all three, and
-	// this is the guard that keeps them from silently regressing.
-	it('every row states its parameters AND shows a usage example', () => {
+	// parameter details, and usage examples". Every row states its capability and
+	// what the caller must provide, and this guard keeps that from regressing.
+	it('every row states its capability and its parameters', () => {
 		for (const e of OKX_CATALOG) {
 			expect(e.describes.capability.length, `${e.id} capability`).toBeGreaterThan(40);
-			// Parameter details: the numbered "Provide:" list OKX's format asks for.
+			// Parameter details: the "Provide..." sentence OKX's format asks for.
 			expect(e.describes.input, `${e.id} input`).toMatch(/^Provide/);
-			// Usage example: what the reviewer specifically found missing.
-			expect(e.describes.input, `${e.id} usage example`).toMatch(/Example: \S/);
 		}
 	});
 
-	it('the free catalog index carries every service 1:1', () => {
-		const ids = catalogIndex().services.map((s) => s.id);
-		for (const id of PAID_REST_IDS) expect(ids).toContain(id);
+	// The listing invariants (.agents/skills/okx-agent-identity/references/
+	// invariants.md) forbid example prompts, links and tech-stack names inside a
+	// service description. The back-burner rows predate that reading and are not
+	// submitted; every LISTED row must be clean, since those are the strings a
+	// reviewer actually reads.
+	it('listed rows carry no example prompt, link, or tech-stack name', () => {
+		for (const e of listedCatalog()) {
+			for (const part of [e.describes.capability, e.describes.input]) {
+				expect(part, `${e.id}`).not.toMatch(/Example:/i);
+				expect(part, `${e.id}`).not.toMatch(/https?:\/\//);
+				expect(part, `${e.id}`).not.toMatch(/\b(TRELLIS|Hunyuan|NVIDIA|GPU|MCP|x402|JSON-RPC)\b/);
+			}
+		}
+	});
+
+	// The back burner is a listing decision, not a deletion: those endpoints stay
+	// deployed and payable, so the free index still publishes them under
+	// `unlisted` rather than pretending they are gone.
+	it('the free catalog index splits listed from back-burner rows, losing none', () => {
+		const index = catalogIndex();
+		const listedIds = index.services.map((s) => s.id);
+		const unlistedIds = index.unlisted.map((s) => s.id);
+		for (const id of PAID_REST_IDS) expect(unlistedIds).toContain(id);
+		expect([...listedIds, ...unlistedIds].sort()).toEqual(OKX_CATALOG.map((e) => e.id).sort());
+		expect(listedIds).toEqual(listedCatalog().map((e) => e.id));
 	});
 
 	it('the paid MCP tools each service maps to exist on the studio engine', () => {

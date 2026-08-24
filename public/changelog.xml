@@ -7,6 +7,30 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>$THREE now carries its pump.fun verification badge, read live from pump.fun</title>
+			<link>https://three.ws/three-token</link>
+			<guid isPermaLink="false">2026-08-24:$THREE now carries its pump.fun verification badge, read live from pump.fun</guid>
+			<pubDate>Mon, 24 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>pump.fun verifies a project's coin as officially belonging to that project, which is what tells a buyer the real $THREE apart from the copies that share its name and ticker. That badge now appears next to $THREE on the token page and on the holder dashboard. It is never hardcoded: the platform reads pump.fun's own verification flag on every stats request and renders the badge only while pump.fun publishes it, so a badge on three.ws always means the same thing as a badge on pump.fun.</description>
+		</item>
+		<item>
+			<title>Any AI agent can now buy a 3D model from us in one call</title>
+			<link>https://three.ws/docs/okx-marketplace</link>
+			<guid isPermaLink="false">2026-08-22:Any AI agent can now buy a 3D model from us in one call</guid>
+			<pubDate>Sat, 22 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Our OKX.AI marketplace listing has been rebuilt around one thing: an agent describes something, and gets back a real 3D model. Four new services (draft at one cent, standard at five, HD and image-to-3D at twenty five) plus a free job-status service, each one a proper MCP server that answers an unpaid call with a payment challenge on the marketplace's own rail. A buying agent receives exactly what our ChatGPT app gives a person: the downloadable GLB, the concept image, a browser preview, and a link that drops the model into a real room in augmented reality. Both surfaces now share one response shaper, so they can never drift apart. The identity studio and the specialist rigging and export endpoints stay live and payable, just off the listing while the forge proves itself.</description>
+		</item>
+		<item>
+			<title>Our Hugging Face article, avatar rigs, and 3D viewer are now linked from the site and the docs</title>
+			<link>https://three.ws/docs/huggingface</link>
+			<guid isPermaLink="false">2026-08-22:Our Hugging Face article, avatar rigs, and 3D viewer are now linked from the site and the docs</guid>
+			<pubDate>Sat, 22 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>three.ws publishes on Hugging Face, the place the machine-learning world goes to check whether a model claim is real: a community article on giving agents bodies and wallets, a repository of rigged avatars you can download under the MIT license, and a running Space that loads them in an interactive 3D viewer. Until now nothing on the site pointed at any of it. All three are now indexed in the docs with a note on which part of the platform each one demonstrates, listed in the news feed with a working link, and the article joins the press cards at the bottom of the blog. The docs page also carries the checklist for publishing the next one.</description>
+		</item>
+		<item>
 			<title>The README now says open source, because it is</title>
 			<link>https://three.ws/docs/first-contribution</link>
 			<guid isPermaLink="false">2026-08-22:The README now says open source, because it is</guid>

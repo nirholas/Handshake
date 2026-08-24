@@ -190,7 +190,7 @@ const MODEL_PNG = await _sharp(
 	.png()
 	.toBuffer();
 
-const { OKX_CATALOG, validateCatalog, catalogIndex, displayWidth, DESCRIPTION_MAX_WIDTH } =
+const { OKX_CATALOG, validateCatalog, catalogIndex, listedCatalog, displayWidth, DESCRIPTION_MAX_WIDTH } =
 	await import('../../api/_lib/okx-catalog.js');
 const tools = await import('../../api/_okx3d/tools.js');
 const identity = await import('../../api/_okx3d/identity.js');
@@ -248,15 +248,18 @@ describe('okx catalog module', () => {
 		expect(displayWidth('a中b')).toBe(4);
 	});
 
-	it('prices identity-studio at $1.50 = 1500000 atomics, and the index mirrors the catalog 1:1', () => {
+	it('prices identity-studio at $1.50 = 1500000 atomics and keeps it on the back burner', () => {
 		const row = OKX_CATALOG.find((e) => e.id === 'identity-studio');
 		expect(row.amountAtomics).toBe('1500000');
 		expect(tools.identityX402Amount('create_identity')).toBe('1500000');
 		expect(tools.identityX402Amount('identity_status')).toBe(null);
 		expect(tools.identityX402Amount('getting_started')).toBe(null);
+		// Unlisted since the 2026-08-22 rebuild: still deployed and payable, just
+		// not part of the OKX.AI submission.
+		expect(row.listed).toBe(false);
 		const index = catalogIndex();
-		expect(index.services.map((s) => s.id)).toEqual(OKX_CATALOG.map((e) => e.id));
-		expect(index.services.find((s) => s.id === 'identity-studio').price_usd).toBe('1.50');
+		expect(index.services.map((s) => s.id)).toEqual(listedCatalog().map((e) => e.id));
+		expect(index.unlisted.find((s) => s.id === 'identity-studio').price_usd).toBe('1.50');
 	});
 });
 
@@ -267,7 +270,8 @@ describe('free lanes over HTTP', () => {
 		expect(res.statusCode).toBe(200);
 		const body = JSON.parse(res.body);
 		expect(body.okxAgentId).toBe(2632);
-		expect(body.services.length).toBe(OKX_CATALOG.length);
+		expect(body.services.length).toBe(listedCatalog().length);
+		expect(body.services.length + body.unlisted.length).toBe(OKX_CATALOG.length);
 	});
 
 	it('GET /health runs real probes and reports per-subsystem status', async () => {

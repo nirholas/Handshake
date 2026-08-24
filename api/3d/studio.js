@@ -47,9 +47,15 @@
 
 import { cors, wrap, method, json, readJson, setRateLimitHeaders } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { startForge, originFromReq, viewerUrl, arLaunchUrl } from '../_mcp-studio/gpt-forge-client.js';
+import { startForge, originFromReq } from '../_mcp-studio/gpt-forge-client.js';
+// Response shaping is shared with the OKX.AI A2MCP forge services so the two
+// fronts over this lane cannot drift; re-exported here because the Actions
+// contract tests pin the boundary through this route's module.
+import { shapeSubmit, shapePoll } from '../_mcp-studio/studio-shape.js';
 import { checkPromptSafety } from '../_mcp-studio/safety.js';
 import { resolveLogoPrompt } from '../_lib/forge-director-prompts.js';
+
+export { shapeSubmit, shapePoll };
 
 const PROMPT_MIN = 3; // the generation lane needs a subject to condition on
 const PROMPT_MAX = 1000; // matches /api/gpt-forge's own prompt ceiling
@@ -59,101 +65,6 @@ const MAX_BODY_BYTES = 8_000;
 // prediction id. Bound the poll param to that shape before forwarding —
 // /api/gpt-forge does the authoritative validation, this just keeps junk off the wire.
 const JOB_HANDLE_RE = /^[A-Za-z0-9._-]{8,1024}$/;
-
-// The painted reference view of the model — the forge's first, image-generation
-// step. Surfaced on every state (pending included) so the GPT can show the
-// concept image the moment it exists, while the mesh is still generating —
-// the same paint-then-reconstruct experience the /forge page gives.
-function previewOf(payload) {
-	const u = payload?.preview_image_url;
-	return typeof u === 'string' && /^https:\/\//.test(u) ? u : null;
-}
-
-function tierOf(payload) {
-	const t = payload?.tier;
-	return t === 'draft' || t === 'standard' || t === 'high' ? t : null;
-}
-
-// Shape a forge submit response into the Actions contract: model URLs and job
-// state only. Pure + exported so tests pin the boundary against real captured
-// forge shapes without any network.
-export function shapeSubmit(job, base, prompt) {
-	const glbUrl = typeof job?.glb_url === 'string' ? job.glb_url : '';
-	const preview = previewOf(job);
-	const tier = tierOf(job);
-	if (job?.status === 'done' && glbUrl) {
-		return {
-			status: 'done',
-			glbUrl,
-			viewerUrl: viewerUrl(base, glbUrl),
-			arUrl: arLaunchUrl(base, glbUrl, prompt),
-			format: 'glb',
-			...(preview ? { previewImageUrl: preview } : {}),
-			...(tier ? { tier } : {}),
-		};
-	}
-	const handle = job?.job_id ?? null;
-	// The poll URL carries the prompt as `title` so the eventual done response
-	// can label the AR/viewer pages without the GPT having to resend anything.
-	const t = typeof prompt === 'string' && prompt.trim() ? `&title=${encodeURIComponent(prompt.trim().slice(0, 80))}` : '';
-	const eta = Number(job?.eta_seconds);
-	return {
-		status: 'pending',
-		job: handle,
-		poll: handle ? `/api/3d/studio?job=${encodeURIComponent(handle)}${t}` : null,
-		...(handle ? { watchUrl: `${base}/watch?job=${encodeURIComponent(handle)}${t}` } : {}),
-		format: 'glb',
-		...(preview ? { previewImageUrl: preview } : {}),
-		...(tier ? { tier } : {}),
-		...(Number.isFinite(eta) && eta > 0 ? { etaSeconds: Math.round(eta) } : {}),
-	};
-}
-
-// Shape a forge poll response into { status:'pending'|'done'|'error', ... }.
-export function shapePoll(data, base, jobId, title) {
-	const glbUrl = typeof data?.glb_url === 'string' ? data.glb_url : '';
-	const preview = previewOf(data);
-	const tier = tierOf(data);
-	if (data?.status === 'done' && glbUrl) {
-		return {
-			status: 'done',
-			job: jobId,
-			glbUrl,
-			viewerUrl: viewerUrl(base, glbUrl),
-			arUrl: arLaunchUrl(base, glbUrl, title),
-			format: 'glb',
-			...(preview ? { previewImageUrl: preview } : {}),
-			...(tier ? { tier } : {}),
-		};
-	}
-	if (data?.status === 'failed') {
-		return {
-			status: 'error',
-			job: jobId,
-			// The message is already sanitized by /api/gpt-forge; generation is free, so a
-			// failed job costs the user nothing — they can simply try again.
-			error: data?.error || '3D generation hit a snag upstream — it costs nothing to try again.',
-		};
-	}
-	// queued / running / anything transient → still pending; keep the title on the
-	// poll URL so it survives to the done response. The published Actions contract
-	// (openai-actions.yaml) documents etaSeconds on pending states, so forward the
-	// live remaining estimate the poll now carries (falling back to the lane's
-	// total estimate) instead of leaving the GPT with N identical frames.
-	const t = typeof title === 'string' && title.trim() ? `&title=${encodeURIComponent(title.trim().slice(0, 80))}` : '';
-	const etaRemaining = Number(data?.eta_remaining_seconds ?? data?.eta_seconds);
-	const elapsed = Number(data?.elapsed_seconds);
-	return {
-		status: 'pending',
-		job: jobId,
-		poll: `/api/3d/studio?job=${encodeURIComponent(jobId)}${t}`,
-		watchUrl: `${base}/watch?job=${encodeURIComponent(jobId)}${t}`,
-		...(preview ? { previewImageUrl: preview } : {}),
-		...(tier ? { tier } : {}),
-		...(Number.isFinite(etaRemaining) && etaRemaining > 0 ? { etaSeconds: Math.round(etaRemaining) } : {}),
-		...(Number.isFinite(elapsed) && elapsed >= 0 ? { elapsedSeconds: Math.round(elapsed) } : {}),
-	};
-}
 
 // Every error body on this route is an ErrorResponse from the published Actions
 // schema: { error, message, retry_after? }. The generic http.js helpers emit

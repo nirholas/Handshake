@@ -2,6 +2,35 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-08-24",
+			"title": "$THREE now carries its pump.fun verification badge, read live from pump.fun",
+			"summary": "pump.fun verifies a project's coin as officially belonging to that project, which is what tells a buyer the real $THREE apart from the copies that share its name and ticker. That badge now appears next to $THREE on the token page and on the holder dashboard. It is never hardcoded: the platform reads pump.fun's own verification flag on every stats request and renders the badge only while pump.fun publishes it, so a badge on three.ws always means the same thing as a badge on pump.fun.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/three-token"
+		},
+		{
+			"date": "2026-08-22",
+			"title": "Our Hugging Face article, avatar rigs, and 3D viewer are now linked from the site and the docs",
+			"summary": "three.ws publishes on Hugging Face, the place the machine-learning world goes to check whether a model claim is real: a community article on giving agents bodies and wallets, a repository of rigged avatars you can download under the MIT license, and a running Space that loads them in an interactive 3D viewer. Until now nothing on the site pointed at any of it. All three are now indexed in the docs with a note on which part of the platform each one demonstrates, listed in the news feed with a working link, and the article joins the press cards at the bottom of the blog. The docs page also carries the checklist for publishing the next one.",
+			"tags": [
+				"docs",
+				"improvement"
+			],
+			"link": "/docs/huggingface"
+		},
+		{
+			"date": "2026-08-22",
+			"title": "Any AI agent can now buy a 3D model from us in one call",
+			"summary": "Our OKX.AI marketplace listing has been rebuilt around one thing: an agent describes something, and gets back a real 3D model. Four new services (draft at one cent, standard at five, HD and image-to-3D at twenty five) plus a free job-status service, each one a proper MCP server that answers an unpaid call with a payment challenge on the marketplace's own rail. A buying agent receives exactly what our ChatGPT app gives a person: the downloadable GLB, the concept image, a browser preview, and a link that drops the model into a real room in augmented reality. Both surfaces now share one response shaper, so they can never drift apart. The identity studio and the specialist rigging and export endpoints stay live and payable, just off the listing while the forge proves itself.",
+			"tags": [
+				"feature"
+			],
+			"link": "/docs/okx-marketplace"
+		},
+		{
 			"date": "2026-08-22",
 			"title": "The README now says open source, because it is",
 			"summary": "Ten places across the README and our published articles still described three.ws as source-available, which understated the Apache 2.0 license the project actually ships under. They now say open source, and the README explains what that buys you: fork it, self-host it, ship commercial work on it. The top of the README also carries a license badge, a live count of good first issues, and a one-line path for anyone who wants to contribute rather than just use it. The security reporting line no longer points at a retired mirror repository.",

@@ -1,20 +1,35 @@
 # OKX.AI Marketplace Services
 
-three.ws sells 3D services to other AI agents on [OKX.AI](https://web3.okx.com), OKX's
+three.ws sells 3D generation to other AI agents on [OKX.AI](https://web3.okx.com), OKX's
 on-chain agent marketplace. Buyers are agents: they discover a service, receive an HTTP 402
 payment challenge, pay in stablecoins on X Layer (or USDC on our other x402 rails), and get
-the artifact. Our marketplace entry is agent **#2632 "three.ws 3D Studio"**. That listing is
-not live yet: it was rejected in review and a resubmission is pending, so the services below
-are reachable directly at the endpoints documented here rather than through the marketplace.
-Current listing state is tracked in [`prompts/okx-ai/PROGRESS.md`](../prompts/okx-ai/PROGRESS.md).
+the artifact. Our marketplace entry is agent **#2632 "three.ws 3D Studio"**.
+
+> **Listing state.** The listing is not live yet. It was rejected in review on 2026-07-04
+> ("your A2MCP service has not been integrated with the OKX Agent Payments Protocol
+> standard") and a resubmission is pending. The services below are reachable directly at
+> the endpoints documented here in the meantime. Current state is tracked in
+> [`prompts/okx-ai/PROGRESS.md`](../prompts/okx-ai/PROGRESS.md).
+
+**What we list, as of 2026-08-22: three.ws Forge.** The listing was rebuilt around one
+thing done extremely well, turning a description into a real 3D model, because that is the
+capability agents actually ask for and it is the smallest surface a reviewer has to trust.
+An OKX.AI agent gets exactly what the "three.ws 3D Studio" custom GPT gives a ChatGPT user
+(a GLB, a concept image, a browser viewer link, and an AR link that puts the model in a
+real room), over the marketplace's own payment rail. Everything else we built for OKX.AI
+(the Agent Identity Studio and the specialist rigging/retargeting/export endpoints) is on
+the **back burner**: still deployed, still payable, deliberately off the listing. Those are
+documented at the bottom of this page.
 
 > Related: [REST API Reference](./api-reference.md) · [MCP servers](./mcp.md) ·
-> [x402 payments](./x402.md) · seller-side protocol spec: [`specs/okx-agent-payments.md`](../specs/okx-agent-payments.md)
+> [x402 payments](./x402.md) · seller-side protocol spec:
+> [`specs/okx-agent-payments.md`](../specs/okx-agent-payments.md)
 
 The **single source of truth** for every service (names, 2-part OKX descriptions, prices,
-endpoints, input schemas) is [`api/_lib/okx-catalog.js`](../api/_lib/okx-catalog.js), the
-free catalog endpoint below serves it verbatim, so the docs, the endpoints, and the OKX
-listing can never drift apart.
+endpoints, input schemas, and which rows are listed) is
+[`api/_lib/okx-catalog.js`](../api/_lib/okx-catalog.js). The free catalog endpoint below
+serves it verbatim and the listing submission is generated from it, so the docs, the
+endpoints, and the OKX listing cannot drift apart.
 
 ---
 
@@ -23,7 +38,7 @@ listing can never drift apart.
 No payment, no account, no key.
 
 ```bash
-# Machine-readable index of every service
+# Machine-readable index: `services` is the listed line-up, `unlisted` is the back burner
 curl https://three.ws/api/okx/3d/catalog
 
 # Live health of the lanes behind the paid services (real probes, not a static ok)
@@ -32,107 +47,158 @@ curl https://three.ws/api/okx/3d/health
 
 ---
 
-## Agent Identity Studio, `$1.50` per identity
+## three.ws Forge
 
-**The flagship.** Turns an AI agent's brand brief into a complete 3D identity:
+Four paid services and one free one. Every row is a real **A2MCP** endpoint: MCP Streamable
+HTTP, JSON-RPC 2.0 `tools/call` over `POST`, SSE discovery on `GET`, session terminate on
+`DELETE`. The paid tool answers an unpaid call with an OKX-dialect 402 whose `accepts[]`
+**leads with `eip155:196`**, which is the OKX Agent Payments Protocol integration the
+review asked for.
 
-- a **square PFP** (1024 px PNG + 128 px preview) framed head-and-shoulders, sized for the
-  OKX.AI avatar slot and legible at marketplace thumbnail size;
-- a **full-body render set**, three distinct poses from the three.ws pose library, studio
-  lighting, consistent backdrop;
-- the **rigged, animation-ready GLB** itself (humanoid skeleton + skin weights), usable in
-  three.ws scenes, games, and any glTF runtime;
-- a live [three.ws viewer](https://three.ws/viewer) link and pose-studio link.
+| Service | Price (USDT) | Endpoint | You send |
+|---|---|---|---|
+| Forge 3D Draft | $0.01 | `/api/okx/3d/forge-draft` | `prompt` |
+| Forge 3D Standard | $0.05 | `/api/okx/3d/forge-standard` | `prompt` |
+| Forge 3D HD | $0.25 | `/api/okx/3d/forge-hd` | `prompt` |
+| Forge 3D from Image | $0.25 | `/api/okx/3d/forge-image` | `image_urls[]` |
+| Forge Job Status | free | `/api/okx/3d/forge-status` | `job_id` |
 
-Endpoint: `https://three.ws/api/okx/3d/identity-studio`, an A2MCP service (MCP Streamable
-HTTP, JSON-RPC `tools/call`). Demo identities generated end-to-end by this pipeline:
-[three.ws/agent-identities](https://three.ws/agent-identities).
+The four paid rows differ **only** in generation lane and price. OKX prices a service, not
+a parameter, so a quality tier has to be its own row to carry its own fee. Your client code
+is identical across all of them: every endpoint exposes the same three tools.
 
-### 1 · Create (paid)
+| Tool | Cost | What it does |
+|---|---|---|
+| `forge_3d` | the row's price | Starts a generation, returns a `job` handle |
+| `forge_status` | free | Polls any three.ws forge job, returns the finished links |
+| `getting_started` | free | Overview of the server, its tools, prices, and links |
 
-An unpaid call returns the 402 challenge; pay it (e.g. `onchainos payment pay --payload …`
-on OKX rails, or any x402 client) and replay with the payment header.
+`forge_status` lives on every endpoint, so you poll a job where you paid for it and never
+have to discover a second host mid-flight. It is also listed as its own free service, so an
+agent can hold one status endpoint for jobs started anywhere.
+
+### 1 · Start a generation (paid)
+
+An unpaid call returns the 402 challenge; pay it (`onchainos payment pay --payload '<402
+body>'` on OKX rails, or any x402 client) and replay with the payment header.
 
 ```bash
-curl -sS -X POST https://three.ws/api/okx/3d/identity-studio \
+curl -sS -X POST https://three.ws/api/okx/3d/forge-standard \
   -H 'content-type: application/json' \
+  -H 'PAYMENT-SIGNATURE: <the header your x402 client returned>' \
   -d '{
     "jsonrpc": "2.0", "id": 1, "method": "tools/call",
     "params": {
-      "name": "create_identity",
-      "arguments": {
-        "agent_name": "LedgerLynx",
-        "brief": "A meticulous on-chain accounting agent that reconciles wallets and flags anomalies in real time. Calm, precise, incorruptible.",
-        "style_hints": "deep navy and silver palette, brushed-metal accents"
-      }
+      "name": "forge_3d",
+      "arguments": { "prompt": "a low-poly orange fox sitting down" }
     }
   }'
 ```
 
-Arguments:
+Arguments for the three text rows:
 
 | Field | Required | Notes |
 | --- | --- | --- |
-| `agent_name` | yes | ≤80 chars, rendered into the identity brief |
-| `brief` | yes | any language; >2000 chars is truncated and the response flags `brief_truncated` |
-| `style_hints` | no | palette / materials / era / mood |
-| `reference_image_url` | no | public image guiding the look, validated **before** any charge |
+| `prompt` | yes | 3 to 1000 characters, one subject, its style and key colours |
+| `aspect_ratio` | no | `1:1`, `4:3`, `3:4`, `16:9`, `9:16` |
 
-Success returns `{ job_id, status: "running", stage: "generate", poll_tool: "identity_status", eta_seconds }`.
+`forge-image` takes `image_urls` (1 to 4 `https://` links to views of the same subject)
+plus an optional `prompt` that sharpens the reconstruction.
 
-### 2 · Poll (free)
+A queued job returns:
+
+```json
+{
+  "ok": true, "service": "forge-standard", "status": "pending",
+  "job": "f1.…", "poll_tool": "forge_status",
+  "poll_endpoint": "https://three.ws/api/okx/3d/forge-status",
+  "watchUrl": "https://three.ws/watch?job=…", "format": "glb", "etaSeconds": 45
+}
+```
+
+A fast lane can finish inline instead, in which case you get the `done` body below with no
+polling at all.
+
+### 2 · Poll the job (free)
 
 ```bash
-curl -sS -X POST https://three.ws/api/okx/3d/identity-studio \
+curl -sS -X POST https://three.ws/api/okx/3d/forge-status \
   -H 'content-type: application/json' \
   -d '{
     "jsonrpc": "2.0", "id": 2, "method": "tools/call",
-    "params": { "name": "identity_status", "arguments": { "job_id": "<job_id>" } }
+    "params": { "name": "forge_status", "arguments": { "job_id": "f1.…" } }
   }'
 ```
 
-Each poll advances the pipeline one bounded step (generation → humanoid auto-rig → one
-studio render per poll) and reports `stage` + render progress. Poll every ~5 s; typical time
-to `done` is 3-6 minutes. When `status` is `"done"`, `deliverables` carries the PFP URLs,
-the full-body set, `rigged_glb_url`, `mesh_glb_url`, `viewer_url`, and `pose_studio_url`.
+Poll every few seconds. When `status` is `"done"`:
+
+```json
+{
+  "ok": true, "status": "done", "job": "f1.…",
+  "glbUrl": "https://…/model.glb",
+  "viewerUrl": "https://three.ws/viewer?src=…",
+  "arUrl": "https://three.ws/api/ar?src=…",
+  "previewImageUrl": "https://…/concept.png",
+  "format": "glb", "tier": "standard"
+}
+```
+
+- `glbUrl` is the model itself, a real glTF binary you can download, open in any glTF
+  runtime, or embed.
+- `viewerUrl` opens it in a browser, spinning, on any device.
+- `arUrl` is the device-aware AR launch: Scene Viewer on Android, Quick Look on iOS
+  (GLB to USDZ converted in-page), the WebGL viewer on desktop. This is the link that puts
+  the model in a human's actual room, which is usually what an agent's user wanted.
+- `previewImageUrl` is the painted concept view the forge produces before the mesh, so you
+  can show something the moment it exists.
+
+A failed job answers `status: "error"` with an actionable message. Generation failures are
+free to retry.
 
 ### Payment semantics
 
-Each guarantee below is enforced in code, the request path is
-`verify → dispatch → settle-on-success` ([`api/okx/3d/[service].js`](../api/okx/3d/%5Bservice%5D.js)),
-so an engine error is answered *before* settlement, and is covered by the endpoint's unit
-tests.
+Each guarantee below is enforced in code (`verify → dispatch → settle-on-success`, in
+[`api/okx/3d/[service].js`](../api/okx/3d/%5Bservice%5D.js)) and covered by the endpoint's
+unit tests in [`tests/api/okx-forge.test.js`](../tests/api/okx-forge.test.js).
 
-- **You pay only when the job is accepted.** Input validation, including fetching your
-  `reference_image_url`, runs before settlement; an invalid brief or unreachable image
-  fails the call and **no payment settles**.
-- **Failed stages retry free.** Generation and rigging each retry up to 3 total attempts on
-  transient upstream failures; renders re-run on the next poll. Only exhausted retries mark
-  the job `failed`, with the last actionable error in `last_error`.
-- **Status polling is free and unauthenticated**, job tokens are HMAC-signed, so they are
-  the only capability needed to read a job.
-- One payment ↔ one job: the payment proof is single-use across dispatch + settlement
+- **You pay only when the job is accepted.** Input validation and the age-13+ content gate
+  run before settlement; a rejected prompt or a malformed argument fails the call and
+  **no payment settles**.
+- **Polling is free and unlimited**, on every endpoint and on the standalone status
+  service.
+- **One payment, one job.** The payment proof is single-use across dispatch and settlement
   (replay-guarded), and the settled amount always equals the advertised price.
+- **Retried payments are safe.** The same payment plus the same body replays the same
+  response through the idempotency cache instead of running a second job.
+- **Each rail is advertised once**, and every rail in a service's 402 quotes the same
+  amount, derived from the catalog module.
 
 > **Not yet demonstrated end to end.** The X Layer rail reports `settleable: true` in
-> production, but no *funded* call has settled on-chain against this endpoint yet, the payer
-> wallet is unfunded, so every real attempt returns `insufficient_balance`. Treat the bullets
-> above as the implemented and unit-tested contract, not as a claim of an observed on-chain
-> settlement. The first settled transaction hash will be recorded in
+> production, but no *funded* call has settled on-chain against these endpoints yet: the
+> payer wallet is unfunded, so every real attempt returns `insufficient_balance`. Treat the
+> bullets above as the implemented and unit-tested contract, not as a claim of an observed
+> on-chain settlement. The first settled transaction hash gets recorded in
 > [`prompts/okx-ai/PROGRESS.md`](../prompts/okx-ai/PROGRESS.md).
-
-### Also on this endpoint (free)
-
-- `getting_started`, overview of the server, tools, prices, and links.
-- `GET https://three.ws/api/okx/3d/identity-studio`, SSE / discovery challenge.
 
 ---
 
-## Decomposed 3D studio services
+## Back burner
 
-Micro-priced, single-capability REST endpoints, plain JSON `POST`, one price each, all
-backed by the same engines the [MCP 3D studio](./mcp.md) runs (no separate pipeline).
-`GET` on any of them returns its free descriptor (price, description, input schema).
+These are **not** on the OKX.AI listing and are not part of the current submission. They
+remain deployed, priced, tested and payable at the endpoints below, and the free catalog
+publishes them under `unlisted` rather than hiding them, because they answer real 402s to
+anyone holding the URL. They return to the listing once the forge rows have sales behind
+them.
+
+**Agent Identity Studio**, `$1.50`, `/api/okx/3d/identity-studio` (A2MCP). Turns an agent's
+brand brief into a complete 3D identity: a square PFP sized for the OKX.AI avatar slot, a
+three-pose full-body render set, and the rigged animation-ready GLB. Paid tool
+`create_identity`, free `identity_status` polling. Demo identities generated end to end by
+this pipeline: [three.ws/agent-identities](https://three.ws/agent-identities).
+
+**Single-capability REST endpoints.** Plain JSON `POST`, one price each, all backed by the
+same engines the [MCP 3D studio](./mcp.md) runs. `GET` on any of them returns its free
+descriptor (price, description, input schema).
 
 | Service | Price (USDT) | Endpoint | You send |
 |---|---|---|---|
@@ -146,119 +212,19 @@ backed by the same engines the [MCP 3D studio](./mcp.md) runs (no separate pipel
 | FBX Export (rig-preserving) | $0.10 | `/api/okx/3d/fbx-export` | `model_url`, `format?` |
 
 The buyer flow is the same for all of them: unpaid `POST` → 402 → sign
-(`onchainos payment pay --payload '<402 body>'`) → replay with
-`PAYMENT-SIGNATURE`. Generation-grade services reply `{status:"queued", job_id, poll_url}`, polling `GET https://three.ws/api/forge?job=<job_id>` is free and unlimited; fast
-services (`retarget`, `pose-seed`) reply `{status:"done", …}` inline. Settlement happens
-**after** the engine accepts the job; invalid input, the avatar humanoid gate, or an
-engine failure answers before settlement and never charges.
-
-### Text → 3D Model (GLB), $0.01
-
-Textured GLB from a text prompt on the fast draft lane. The lane leads with our self-hosted
-TRELLIS worker and falls back through Hunyuan3D, HuggingFace, and NVIDIA NIM as a last
-resort, so a single dead upstream never fails the call.
-
-```bash
-curl -i -X POST https://three.ws/api/okx/3d/text-to-3d \
-  -H 'content-type: application/json' \
-  -d '{"prompt":"a brass steampunk owl, full body"}'
-```
-
-### Text → 3D Model (Pro), $0.30
-
-An LLM art director refines the prompt, then a higher-quality lane generates the GLB.
-`tier:"standard"` (default) or `tier:"high"` (max geometric detail + PBR textures).
-
-```bash
-curl -i -X POST https://three.ws/api/okx/3d/text-to-3d-pro \
-  -H 'content-type: application/json' \
-  -d '{"prompt":"ornate elven longsword","tier":"high"}'
-```
-
-### Image → 3D Model, $0.30
-
-Reconstructs a textured GLB from 1-4 public photos of one object.
-
-```bash
-curl -i -X POST https://three.ws/api/okx/3d/image-to-3d \
-  -H 'content-type: application/json' \
-  -d '{"image_urls":["https://three.ws/avatars/thumbs/default.png","https://three.ws/avatars/thumbs/cz.png"]}'
-```
-
-### GLB Auto-Rigging, $0.25
-
-Adds an animation-ready humanoid skeleton and skin weights to a static GLB (UniRig lane).
-
-```bash
-curl -i -X POST https://three.ws/api/okx/3d/rig \
-  -H 'content-type: application/json' \
-  -d '{"glb_url":"https://three.ws/avatars/cesium-man.glb"}'
-```
-
-### Text → Rigged Avatar, $0.50
-
-Mesh generation + auto-rig in one call. Obvious non-humanoid prompts are refused **before**
-payment settles (`allow_non_humanoid: true` overrides). The paid response returns the mesh
-GLB immediately (`mesh_glb_url` + viewer link) plus the rig job to poll, a rig hiccup
-never loses the paid generation.
-
-```bash
-curl -i -X POST https://three.ws/api/okx/3d/avatar \
-  -H 'content-type: application/json' \
-  -d '{"prompt":"a heroic knight in silver armor, full body"}'
-```
-
-### Animation Retargeting, $0.10
-
-Retargets a curated clip (idle, walk, dance, …) onto any rigged humanoid GLB, returns the
-retargeted AnimationClip JSON keyed to the rig's actual bones plus a bone-coverage report.
-Completes inside the request. Clip names are free at
-[`/animations/manifest.json`](https://three.ws/animations/manifest.json).
-
-```bash
-curl -i -X POST https://three.ws/api/okx/3d/retarget \
-  -H 'content-type: application/json' \
-  -d '{"model_url":"https://three.ws/avatars/cz.glb","animation":"idle"}'
-```
-
-### Pose Seed, $0.02
-
-Deterministic pose resolution: natural-language description → stable seed + full
-joint-rotation map for humanoid rigs. Same prompt, same pose, every time. Completes inside
-the request.
-
-```bash
-curl -i -X POST https://three.ws/api/okx/3d/pose-seed \
-  -H 'content-type: application/json' \
-  -d '{"prompt":"confident standing pose, arms crossed"}'
-```
-
-### FBX Export (rig-preserving), $0.10
-
-GLB → FBX for Unity/Unreal; a rigged GLB keeps its skeleton, skin weights, and blendshapes.
-Other formats: `obj`, `stl`, `ply`, `usdz`, `3mf`.
-
-```bash
-curl -i -X POST https://three.ws/api/okx/3d/fbx-export \
-  -H 'content-type: application/json' \
-  -d '{"model_url":"https://three.ws/avatars/cz.glb","format":"fbx"}'
-```
-
-### Guarantees (all decomposed services)
-
-- **Pay only after the job is accepted**, verify runs before the engine, settle after it;
-  failure replies state explicitly that the payment was not taken.
-- **Retried payments are safe**, the same payment + body replays the same response
-  (idempotency cache); a payment proof is single-use across dispatch + settlement.
-- **One service, one price**, every rail advertised in a service's 402 quotes the same
-  amount, derived from the catalog module.
+(`onchainos payment pay --payload '<402 body>'`) → replay with `PAYMENT-SIGNATURE`.
+Generation-grade services reply `{status:"queued", job_id, poll_url}` and polling
+`GET https://three.ws/api/forge?job=<job_id>` is free; fast services (`retarget`,
+`pose-seed`) reply `{status:"done", …}` inline. Settlement happens **after** the engine
+accepts the job, so invalid input, the avatar humanoid gate, or an engine failure answers
+before settlement and never charges.
 
 ---
 
 ## Rails
 
 Challenges advertise every rail the deployment can settle: **X Layer (`eip155:196`,
-USD₮0)** via the OKX facilitator for OKX.AI buyers, plus the existing Solana / Base / BSC
-USDC rails. The wire format OKX buyers use (headers `PAYMENT-REQUIRED` /
-`PAYMENT-SIGNATURE` / `PAYMENT-RESPONSE`, scheme `exact` EIP-3009) is pinned down in
-[`specs/okx-agent-payments.md`](../specs/okx-agent-payments.md).
+USD₮0)** first for OKX.AI buyers, plus the existing Solana / Base / BSC USDC rails so
+non-OKX agents can pay the same endpoint. The wire format OKX buyers use (headers
+`PAYMENT-REQUIRED` / `PAYMENT-SIGNATURE` / `PAYMENT-RESPONSE`, scheme `exact` EIP-3009) is
+pinned down in [`specs/okx-agent-payments.md`](../specs/okx-agent-payments.md).

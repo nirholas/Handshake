@@ -93,6 +93,26 @@ export function sendJsonRpcError(res, id, code, message, data) {
 // 402 challenge AND in the requirements used to verify the X-PAYMENT, so the
 // advertised price and the charged price agree. null = use the flat default
 // (initialize / tools/list / free tools / mixed batches).
+// Prepended rails can collide with the shared builder's own output: when the
+// OKX X Layer rail is configured, paymentRequirements() already emits it, so a
+// bare prepend leaves two identical `exact` entries in accepts[]. Harmless to a
+// payer, but it is the first thing a marketplace reviewer reads, and a listing
+// that advertises the same rail twice looks broken. Keep the FIRST occurrence
+// (that is the whole point of prepending) and drop later twins.
+function mergeAccepts(extra, base) {
+	const seen = new Set();
+	const out = [];
+	for (const a of [...extra, ...base]) {
+		const key = [a?.scheme, a?.network, a?.asset, a?.amount ?? a?.maxAmountRequired, a?.payTo]
+			.map((v) => String(v ?? '').toLowerCase())
+			.join('|');
+		if (seen.has(key)) continue;
+		seen.add(key);
+		out.push(a);
+	}
+	return out;
+}
+
 export async function authenticateRequest(
 	req,
 	res,
@@ -131,10 +151,10 @@ export async function authenticateRequest(
 	// e.g. the OKX X Layer (eip155:196) accept must LEAD for OKX buyers (their
 	// CLI auto-selects the first `exact` entry). Prepended so it also participates
 	// in verifyPayment, letting an X Layer replay verify + settle here.
-	const requirements = [
-		...extraAccepts,
-		...paymentRequirements(resourceUrl, x402Amount != null ? { amount: x402Amount } : {}),
-	];
+	const requirements = mergeAccepts(
+		extraAccepts,
+		paymentRequirements(resourceUrl, x402Amount != null ? { amount: x402Amount } : {}),
+	);
 
 	if (paymentHeader) {
 		try {
@@ -181,7 +201,16 @@ export async function authenticateRequest(
 	return null;
 }
 
-export async function handleSse(req, res, { resourcePath = '/api/mcp', challenge, extraAccepts = [] } = {}) {
+// `x402Amount` is the endpoint's list price. Without it, paymentRequirements()
+// quotes the shared default here while the prepended rail quotes the real price,
+// so the discovery challenge advertised the SAME rail twice at two DIFFERENT
+// amounts. A buyer reading accepts[] could not tell which one the endpoint
+// actually charges, and it is the first array a marketplace reviewer opens.
+export async function handleSse(
+	req,
+	res,
+	{ resourcePath = '/api/mcp', challenge, extraAccepts = [], x402Amount = null } = {},
+) {
 	// We don't hold long-lived server→client subscriptions yet; respond politely.
 	const bearer = extractBearer(req);
 	// Unauthenticated callers without an X-PAYMENT header get a 401 +
@@ -193,7 +222,10 @@ export async function handleSse(req, res, { resourcePath = '/api/mcp', challenge
 		return await sendAuthChallenge(res, {
 			req,
 			resourceUrl: sseResourceUrl,
-			requirements: [...extraAccepts, ...paymentRequirements(sseResourceUrl)],
+			requirements: mergeAccepts(
+				extraAccepts,
+				paymentRequirements(sseResourceUrl, x402Amount != null ? { amount: x402Amount } : {}),
+			),
 			challenge,
 		});
 	}

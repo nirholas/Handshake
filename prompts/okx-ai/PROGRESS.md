@@ -6,6 +6,86 @@ Work Order 04 session, no earlier entries existed because no earlier work order 
 
 ---
 
+## 2026-08-22, Listing REBUILT around the forge (owner directive): new A2MCP line-up shipped in-repo
+
+**Owner directive this session:** put the current submission on the back burner and ship
+something completely different. Everything the "three.ws 3D Studio" custom GPT does for a
+ChatGPT user, an OKX.AI agent should be able to do against three.ws/forge, over MCP or
+x402, whichever is most likely to be approved. Answer: both, because on this marketplace
+they are the same thing. A listed row is `serviceType: A2MCP`, and the 2026-07-04 rejection
+was specifically that our A2MCP service was not integrated with the OKX Agent Payments
+Protocol. So every listed row is now a genuine MCP Streamable HTTP server whose paid tool
+is genuinely x402-gated on the X Layer rail.
+
+### The new listing (7 rows, down from 11; nothing on-chain has been submitted yet)
+
+| Service | Fee | Endpoint | Tool |
+|---|---|---|---|
+| Forge 3D Draft | 0.01 | `/api/okx/3d/forge-draft` | `forge_3d` |
+| Forge 3D Standard | 0.05 | `/api/okx/3d/forge-standard` | `forge_3d` |
+| Forge 3D HD | 0.25 | `/api/okx/3d/forge-hd` | `forge_3d` |
+| Forge 3D from Image | 0.25 | `/api/okx/3d/forge-image` | `forge_3d` |
+| Forge Job Status | 0 | `/api/okx/3d/forge-status` | `forge_status` |
+| 3D Studio Service Catalog | 0 | `/api/okx/3d/catalog` | (free REST) |
+| 3D Studio Health Status | 0 | `/api/okx/3d/health` | (free REST) |
+
+Design decisions, each deliberate:
+
+- **Four paid rows for one capability.** OKX prices a service, not a parameter, so a
+  quality tier has to be its own row to carry its own fee. Buyer code stays identical:
+  every endpoint exposes the same `forge_3d` / `forge_status` / `getting_started` tools.
+- **`forge_status` is free and lives on every endpoint**, and is also its own listed row.
+  The old REST rows had no free poll on our OKX surface at all: a buyer got `queued` and
+  was sent to `/api/forge?job=`, a different, unlisted host. That is fixed.
+- **Buyers get the GPT payload.** `glbUrl`, `previewImageUrl`, `viewerUrl` and the
+  device-aware `arUrl`, because "put it in the user's actual room" is the part that sells.
+  The GPT route and the OKX tools now shape responses through ONE module
+  (`api/_mcp-studio/studio-shape.js`), so the two fronts cannot drift.
+- **Back burner, not deletion.** Identity Studio and the eight single-capability REST rows
+  carry `listed: false`. They stay deployed, tested and payable; `catalogIndex()` publishes
+  them under `unlisted` rather than hiding endpoints that answer real 402s; and
+  `scripts/okx-listing-payload.mjs` builds the submission from listed rows only, so a
+  `--delta` run turns each stale live row into an `operation: delete`.
+- **The age-13+ content gate now runs on the OKX surface too**, before any generation
+  starts, so a refused prompt can never settle.
+
+### Fixed while building (real defect, both surfaces)
+
+`accepts[]` advertised the X Layer rail **twice**. `paymentRequirements()` already emits it
+when it is configured, and the endpoint prepended it again so it would lead. Harmless to a
+payer, but it is the first array a reviewer reads. `mergeAccepts()` in `api/_mcp/auth.js`
+now keeps the first occurrence and drops later twins; Identity Studio inherited the fix.
+
+### Verified this session (no network, no chain)
+
+- `validateCatalog()` passes, and every listed row is inside OKX's limits: name 5 to 30
+  display columns, both description parts under 200.
+- Listed descriptions carry no example prompt, no link and no tech-stack name, per
+  `.agents/skills/okx-agent-identity/references/invariants.md`. A test now enforces it.
+- Unpaid `tools/call forge_3d` on all four paid endpoints answers 402 with `accepts[0]`
+  = `eip155:196`, `scheme: exact`, the row's own atomic amount, asset `0x779ded…713736`,
+  and at least one non-X-Layer rail behind it. Nothing generates on an unpaid call.
+- Free `getting_started` and `forge_status` are served with no payment on every endpoint.
+- `node scripts/okx-listing-payload.mjs` emits exactly the 7 rows above.
+- `npx vitest run tests/` : 25037 passed. The one failure,
+  `tests/multiplayer-server-boot.test.js`, is a Colyseus boot test with no path to any file
+  touched here.
+
+### Still owner-gated (unchanged, and unchanged by this rebuild)
+
+Funding. Relayer `0x1F4a753c61b54Bdec7AE0AF338A887E63Cdbbb74` needs native OKB on X Layer
+for settle gas, and buyer `0x75d00a2713565171f33216e5aa2a375e076ecf69` needs USD₮0
+(`0x779ded0c9e1022225f8e0630b35a9b54be713736`). Re-checked live on 2026-08-22: **all three
+balances are 0**. That gates a real settlement, which gates the resubmission.
+
+### Next
+
+`prompts/okx-ai/08-forge-relisting.md` is the executable work order for the resubmission.
+It needs two owner interactions and nothing else: the email OTP for `claude@three.ws`, and
+the diff-card confirmation before the on-chain update.
+
+---
+
 ## 2026-07-10, Work Order 07 (partial): RUNBOOK written, live re-verification, listing drift found
 
 Ran the unfunded half of WO-07's Part 1 audit against production and wrote the missing
