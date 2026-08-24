@@ -26,7 +26,7 @@
  *
  * Card anatomy (1200×630, dark):
  *   top, three.ws wordmark + "TOKEN"
- *   hero, $THREE glyph mark + symbol + truncated mint
+ *   hero, $THREE glyph mark + symbol + pump.fun verified pill + truncated mint
  *   price, large USD price + 24h change pill (green up / red down)
  *   stats, market cap · holders · 24h volume · on-chain agents grid
  *   footer, contract address + "three.ws/three-token"
@@ -36,6 +36,7 @@ import { cors, wrap } from '../_lib/http.js';
 import { TOKEN_MINT as THREE_MINT } from '../_lib/token/config.js';
 import { fetchTokenMarketData } from '../_lib/market/token-market.js';
 import { threeHolderCount } from '../_lib/coin/three-holders.js';
+import { fetchPumpVerification } from '../_lib/pump-verification.js';
 import { sql } from '../_lib/db.js';
 
 // Edge-cache the card: 60s fresh, 10m at the CDN, serve-stale-while-revalidate.
@@ -75,16 +76,37 @@ function fmtPrice(n) {
 	return `$${n.toFixed(decimals).replace(/0+$/, '').replace(/\.$/, '')}`;
 }
 
-// Approximate advance width of a string in the hero face (Inter, weight 800) so
-// the layout can flow around a rendered figure. SVG has no measurement API at
-// render time and the card ships no font metrics, so the widths below are the
-// per-glyph em advances Inter uses: digits and "$" are tabular-wide, separators
-// are narrow. Used to keep the 24h pill clear of the price at any magnitude.
-const EM_ADVANCE = { '.': 0.27, ',': 0.27 };
+// Approximate advance width of a string in the card's bold face, so the layout
+// can flow pills around rendered text. SVG has no measurement API at render
+// time and the card embeds no font, so these are per-glyph em advances.
+//
+// They are calibrated to the FALLBACK face, not to Inter. The card asks for
+// "Inter,system-ui,sans-serif", and almost nothing that rasterizes it has Inter
+// installed: social crawlers, headless renderers, and image proxies all land on
+// a generic bold sans (DejaVu Sans Bold measures 0.696em per digit, 0.38em per
+// separator). Sizing against Inter's narrower metrics is what made the 24h pill
+// sit on top of the price digits in the rendered card. Overestimating merely
+// pushes a pill a few px right on a machine that does have Inter; underestimating
+// overlaps text on every machine that does not.
+const EM_DIGIT = 0.7;
+const EM_SEP = 0.38;
+const EM_UPPER = 0.8;
+const EM_OTHER = 0.65;
 function heroTextWidth(s, fontSize) {
 	let em = 0;
-	for (const ch of String(s)) em += EM_ADVANCE[ch] ?? 0.6;
+	for (const ch of String(s)) {
+		if (ch === '.' || ch === ',') em += EM_SEP;
+		else if (ch >= '0' && ch <= '9') em += EM_DIGIT;
+		else if (ch === '$') em += EM_DIGIT;
+		else if (ch >= 'A' && ch <= 'Z') em += EM_UPPER;
+		else em += EM_OTHER;
+	}
 	return em * fontSize;
+}
+
+// Width of a letter-spaced label at a given size, for pills sized to their text.
+function labelWidth(label, fontSize, letterSpacingEm = 0) {
+	return heroTextWidth(label, fontSize) + label.length * fontSize * letterSpacingEm;
 }
 
 // Compact USD for market cap / volume: $1.2M, $640K, $12.3B.
@@ -111,7 +133,7 @@ function fmtPct(n) {
 // Resolve every datum the card shows from real sources, each independently
 // resilient so one failing provider blanks a single figure rather than the card.
 async function loadBadgeData() {
-	const [market, agentRow, holderCount] = await Promise.all([
+	const [market, agentRow, holderCount, verification] = await Promise.all([
 		fetchTokenMarketData(THREE_MINT).catch(() => null),
 		sql`SELECT count(*)::int AS total FROM agent_identities WHERE deleted_at IS NULL`
 			.catch(() => [{ total: null }]),
@@ -121,6 +143,10 @@ async function loadBadgeData() {
 		// thing standing between the card and a permanently blank HOLDERS cell.
 		// Omitting it here is what let the card and the page disagree.
 		threeHolderCount().catch(() => null),
+		// pump.fun's live verification flag. The card is what unfurls in every
+		// chat where the link gets posted, so it is the highest-leverage place to
+		// show that this mint is the verified one and the lookalikes are not.
+		fetchPumpVerification(THREE_MINT).catch(() => null),
 	]);
 	return {
 		price: market?.price_usd ?? null,
@@ -129,6 +155,7 @@ async function loadBadgeData() {
 		volume24h: market?.volume_24h ?? null,
 		holders: market?.holders ?? holderCount ?? null,
 		agents: agentRow?.[0]?.total ?? null,
+		verified: verification?.verified ?? null,
 	};
 }
 
@@ -158,6 +185,24 @@ function renderCard(d) {
 		1128 - pillW,
 		Math.round(72 + heroTextWidth(priceStr, 84) + 28),
 	);
+	// pump.fun verification pill, right of the "$THREE" wordmark. Rendered only on
+	// an explicit true: an unreadable upstream (null) must never look like a
+	// verified coin, and the hero simply closes up when it is absent.
+	const verifiedLabel = 'VERIFIED ON PUMP.FUN';
+	// Icon zone + measured label + right padding, so the text can never spill past
+	// the pill's own rounded edge.
+	const vW = Math.round(42 + labelWidth(verifiedLabel, 16, 0.06) + 20);
+	const vX = Math.round(200 + heroTextWidth('$THREE', 64) + 22);
+	const verifiedPill = d.verified === true
+		? `<rect x="${vX}" y="166" width="${vW}" height="42" rx="21"
+			fill="${UP}" fill-opacity=".12" stroke="${UP}" stroke-opacity=".45" stroke-width="1.5"/>
+		   <path d="M${vX + 20} 187 l5 5 l9 -10" fill="none" stroke="${UP}" stroke-width="3"
+			stroke-linecap="round" stroke-linejoin="round"/>
+		   <text x="${Math.round(vX + 42)}" y="194" font-family="Inter,system-ui,sans-serif"
+			font-size="16" font-weight="700" letter-spacing=".06em"
+			fill="${UP}">${x(verifiedLabel)}</text>`
+		: '';
+
 	const changePill = pct
 		? `<rect x="${pillX}" y="300" width="${pillW}" height="44" rx="22"
 			fill="${changeColor}" fill-opacity=".12" stroke="${changeColor}" stroke-opacity=".4" stroke-width="1.5"/>
@@ -204,6 +249,7 @@ function renderCard(d) {
 		font-size="40" font-weight="800" fill="#ffffff">3</text>
 	<text x="200" y="200" font-family="Inter,system-ui,sans-serif" font-size="64" font-weight="800"
 		fill="#f9fafb">$THREE</text>
+	${verifiedPill}
 	<text x="202" y="240" font-family="ui-monospace,Menlo,monospace" font-size="20"
 		fill="#6b7280">${x(mintShort)}</text>
 

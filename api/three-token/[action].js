@@ -23,6 +23,7 @@ import { fetchTokenMarketData } from '../_lib/market/token-market.js';
 import { threeHolderBalances, threeHolderCount } from '../_lib/coin/three-holders.js';
 import { buybackStats } from '../_lib/token/buyback.js';
 import { microbuyStats } from '../_lib/token/microbuy.js';
+import { fetchPumpVerification } from '../_lib/pump-verification.js';
 
 // Truncate a base58 wallet for display: "FeMb…Jpump".
 function shortWallet(addr) {
@@ -115,7 +116,7 @@ export default wrap(async (req, res) => {
 	const action = parts[2];
 
 	if (action === 'stats') {
-		const [market, platform, buyback, microbuy, holderCount] = await Promise.all([
+		const [market, platform, buyback, microbuy, holderCount, verification] = await Promise.all([
 			fetchTokenMarketData(THREE_MINT).catch(() => null),
 			fetchPlatformMetrics(),
 			// Programmatic buyback summary (revenue → $THREE bought into treasury).
@@ -128,6 +129,10 @@ export default wrap(async (req, res) => {
 			// (DexScreener / GeckoTerminal) don't return holders, so without this the
 			// panel shows "—" whenever Birdeye is rate-limited. Cheap meta read only.
 			threeHolderCount().catch(() => null),
+			// pump.fun's own verification flag for the mint, read live (5-min cached
+			// upstream). Never hardcoded: the badge our surfaces render has to be
+			// whatever pump.fun publishes right now, or it is decoration.
+			fetchPumpVerification(THREE_MINT).catch(() => null),
 		]);
 
 		return json(
@@ -146,6 +151,11 @@ export default wrap(async (req, res) => {
 					supply: market?.supply ?? null,
 					decimals: market?.decimals ?? 6,
 					source: market?.source ?? null,
+					// true = pump.fun publishes the verified badge for this mint,
+					// false = it does not, null = we could not read it this request.
+					verified: verification?.verified ?? null,
+					verified_source: 'pumpfun',
+					pump_url: verification?.url ?? `https://pump.fun/coin/${THREE_MINT}`,
 				},
 				protocol: {
 					total_agents: platform.total_agents,

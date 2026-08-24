@@ -16,6 +16,7 @@ import { fetchTokenConfig, fetchTokenPrice } from '../../token-pay.js';
 import { fetchAllowanceStatus, grantAllowance, revokeAllowance } from '../../three-allowance.js';
 import { terminalLinks } from '../../shared/trading-terminals.js';
 import { createThreeTokenData } from '../../pump/three-token-data.js';
+import { paintVerifiedBadge } from '../../pump/verified-badge.js';
 import { errorStateHTML, ensureStateKitStyles } from '../../shared/state-kit.js';
 import { toast } from '../../shared/toast.js';
 
@@ -68,7 +69,7 @@ function pctColor(n) {
 				<div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
 					<div style="width:36px;height:36px;border-radius:10px;background:#111116;border:1px solid #232329;display:grid;place-items:center;flex-shrink:0;overflow:hidden"><img loading="lazy" decoding="async" src="/favicon.svg" alt="three.ws" width="26" height="26" style="display:block" /></div>
 					<div>
-						<h1 class="dn-h1" style="margin:0">$THREE</h1>
+						<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><h1 class="dn-h1" style="margin:0">$THREE</h1><span data-verified></span></div>
 						<p class="dn-h1-sub" style="margin:0">The protocol token powering the three.ws agent economy</p>
 					</div>
 				</div>
@@ -120,6 +121,10 @@ function pctColor(n) {
 			}
 
 			const stats = { token: snap.protocol.token, protocol: snap.protocol.protocol };
+
+			// pump.fun verification badge beside the page title. Same live flag and
+			// same badge the public /three-token page renders.
+			paintVerifiedBadge(main.querySelector('[data-verified]'), stats.token);
 			const revenueShare = snap.revenueShare.status === 'ok' && !snap.revenueShare.unauthenticated
 				? snap.revenueShare
 				: null;

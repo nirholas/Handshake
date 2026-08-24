@@ -11,6 +11,7 @@ import { mountBondingCurve } from './widgets/bonding-curve.js';
 import { openSwapModal } from './swap-jupiter.js';
 import { trackFunnelStep, ANALYTICS_EVENTS } from './analytics.js';
 import { emptyStateHTML, ensureStateKitStyles } from './shared/state-kit.js';
+import { paintVerifiedBadge } from './pump/verified-badge.js';
 
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
 const PUMP_URL = `https://pump.fun/coin/${THREE_MINT}`;
@@ -59,6 +60,7 @@ function injectStyles() {
 	.tk-head { display:flex; align-items:center; gap:14px; margin-bottom:4px; }
 	.tk-logo { width:46px; height:46px; border-radius:12px; background:#111116; border:1px solid #232329; display:grid; place-items:center; flex-shrink:0; overflow:hidden; }
 	.tk-logo img { width:32px; height:32px; display:block; }
+	.tk-titlerow { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 	.tk-title { font-size:26px; font-weight:800; margin:0; letter-spacing:-0.02em; }
 	.tk-sub { margin:0; color:#9a9aa3; font-size:13px; }
 	.tk-ca { font-family:ui-monospace,Menlo,monospace; font-size:11.5px; color:#8a8a93; cursor:pointer; border:1px solid #232329; border-radius:8px; padding:3px 8px; background:none; }
@@ -355,7 +357,7 @@ function boot() {
 		<div class="tk-head">
 			<div class="tk-logo"><img loading="lazy" decoding="async" src="/favicon.svg" alt="three.ws" width="32" height="32" /></div>
 			<div style="flex:1;min-width:0">
-				<h1 class="tk-title">$THREE</h1>
+				<div class="tk-titlerow"><h1 class="tk-title">$THREE</h1><span data-verified></span></div>
 				<p class="tk-sub">The protocol token powering the three.ws agent economy</p>
 			</div>
 			<button class="tk-ca" data-ca title="Copy contract address">${esc(shortAddr(THREE_MINT))} · copy</button>
@@ -425,12 +427,16 @@ function boot() {
 
 	// Header stats from the shared store (price/mcap/volume/holders).
 	const statsEl = wrap.querySelector('[data-stats]');
+	// pump.fun verification, straight off the live stats payload. Fades in on the
+	// first snapshot that carries it, so the header never flashes.
+	const verifiedEl = wrap.querySelector('[data-verified]');
 	const store = createThreeTokenData({ pollMs: 30_000, anchorEl: wrap });
 	store.subscribe((state) => {
 		const p = state.protocol;
 		if (p.status === 'ok' && p.token) {
 			if (p.token.price_usd != null) _lastThreePrice = Number(p.token.price_usd);
 			statsEl.innerHTML = renderHeaderStats(p.token);
+			paintVerifiedBadge(verifiedEl, p.token);
 		}
 		else if (p.status === 'error') statsEl.innerHTML = `<div class="tk-empty" style="grid-column:1/-1">Couldn’t load $THREE market data. <a href="${PUMP_URL}" target="_blank" rel="noopener" style="color:#7CC4FF">View on pump.fun ↗</a></div>`;
 	});

@@ -64,6 +64,34 @@ The discovery surfaces owned by the AI platforms themselves, where an MCP server
 | **Alibaba Cloud Marketplace Blog** | Live | [Editorial feature](https://marketplace.alibabacloud.com/doc/blog/detail/mplace-sgcmfw00036800.html) — Alibaba Cloud Marketplace published an editorial introducing three.ws. Announcement: [three.ws Featured on the Alibaba Cloud Marketplace Blog](/blog/three-ws-featured-on-alibaba-cloud-marketplace-blog) |
 | **pump.fun** | Live | [Three Builds With Tech Giants](https://pump.fun/coin/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump/article): a feature article published on the official $THREE coin page, profiling the platform's browser-native 3D AI agents with onchain identities, the Animations and Poses Studio, the 3D Studio MCP server, and the AWS and IBM milestones. |
 
+### pump.fun verification
+
+$THREE is a verified project on pump.fun. Verification is pump.fun's own statement that the coin at `FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump` belongs to three.ws, which is what separates the real token from the copies that share its name and ticker.
+
+three.ws never hardcodes that claim. `GET /api/three-token/stats` reads pump.fun's public coin record on every (5-minute cached) request and returns the live flag on the token block:
+
+```json
+{
+  "token": {
+    "mint": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+    "symbol": "$THREE",
+    "verified": true,
+    "verified_source": "pumpfun",
+    "pump_url": "https://pump.fun/coin/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump"
+  }
+}
+```
+
+`verified` has three states, and callers should treat them differently:
+
+| Value | Meaning | What the UI does |
+|---|---|---|
+| `true` | pump.fun publishes the badge right now | Render the badge |
+| `false` | pump.fun publishes no badge | Render nothing |
+| `null` | pump.fun could not be reached this request | Render nothing |
+
+The badge itself is one shared component ([src/pump/verified-badge.js](../src/pump/verified-badge.js)), so the public [/three-token](/three-token) page and the [/dashboard/three-token](/dashboard/three-token) holder view can never disagree about whether the coin is verified. If pump.fun ever withdraws verification, the badge disappears on the next stats read with no deploy.
+
 HackerNoon is one of the world's largest independent tech publications, read by millions of developers and founders monthly. Every three.ws announcement is pulled automatically from [`three.ws/rss/announcements.xml`](https://three.ws/rss/announcements.xml) into the HackerNoon drafts queue, then published with canonical URLs pointing back to three.ws. See [syndication setup](/docs/syndication#hackernoon) for technical details.
 
 ---

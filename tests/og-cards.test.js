@@ -217,6 +217,40 @@ describe('og/three-token-badge', () => {
 		expect(pillX).toBeLessThan(1128);
 	});
 
+	it('carries the pump.fun verified pill only when pump.fun publishes it', () => {
+		const { renderCard } = badgeInternals;
+		expect(renderCard({ ...FULL, verified: true })).toContain('VERIFIED ON PUMP.FUN');
+		// Unverified and unreadable both render nothing: an upstream blip must never
+		// look like a verified coin on a card that unfurls in every chat.
+		expect(renderCard({ ...FULL, verified: false })).not.toContain('VERIFIED ON PUMP.FUN');
+		expect(renderCard({ ...FULL, verified: null })).not.toContain('VERIFIED ON PUMP.FUN');
+		expect(renderCard(FULL)).not.toContain('VERIFIED ON PUMP.FUN');
+	});
+
+	it('keeps the verified pill clear of the wordmark and inside the canvas', () => {
+		const { renderCard, heroTextWidth } = badgeInternals;
+		const svg = renderCard({ ...FULL, verified: true });
+		const [, xs, ws] = /<rect x="(\d+)" y="166" width="(\d+)"/.exec(svg) || [];
+		const pillX = Number(xs);
+		const pillW = Number(ws);
+		// The wordmark starts at x=200 and is drawn at 64px.
+		expect(pillX).toBeGreaterThan(200 + heroTextWidth('$THREE', 64));
+		expect(pillX + pillW).toBeLessThan(1128);
+		// The label has to fit inside its own pill, or the text spills past the edge.
+		expect(pillW).toBeGreaterThan(42 + heroTextWidth('VERIFIED ON PUMP.FUN', 16));
+	});
+
+	it('sizes text against the fallback face crawlers actually rasterize with', () => {
+		const { heroTextWidth } = badgeInternals;
+		// Inter is not installed on the crawlers and headless renderers that turn
+		// this SVG into an image; they land on a generic bold sans whose digits
+		// advance ~0.696em. Undershooting that is what put the 24h pill on top of
+		// the price. Measured widths must cover the real face, not Inter's.
+		expect(heroTextWidth('0', 100)).toBeGreaterThanOrEqual(69.6);
+		expect(heroTextWidth('$0.002013', 100)).toBeGreaterThanOrEqual(594.8);
+		expect(heroTextWidth('$THREE', 100)).toBeGreaterThanOrEqual(435.1);
+	});
+
 	it('compacts USD the way the token page does', () => {
 		const { fmtCompactUsd, fmtInt, fmtPct } = badgeInternals;
 		expect(fmtCompactUsd(1_843_105)).toBe('$1.84M');
