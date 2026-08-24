@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-24T15:23:37.938Z",
+	"generated_at": "2026-08-24T17:17:28.122Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2721,6 +2721,16 @@
 					"title": "The economy solver",
 					"description": "The /play world economy, solved. Exact expected cash and XP per hour for every tree, rock and pond at every skill level, the optimal fish-and-cook time split, what the store costs in minutes and swings, the wheel's true expected value in store prices, and per-kill combat worth. Computed in closed form from the game's own tables, never measured.",
 					"added": "2026-07-31",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/pill",
+					"title": "The pump.fun Pill, Rigged",
+					"description": "three.ws is verified on pump.fun. Their pill mascot, rigged with a 52-bone skeleton and six hand-built clips, on a stage you can walk it around in the browser.",
+					"added": "2026-08-24",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -6672,6 +6682,16 @@
 					"title": "Docs · Triage",
 					"description": "How incoming issues and pull requests get sorted, what every label means, how to claim work, and the response times contributors can expect.",
 					"added": "2026-08-21",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/pill-mascot",
+					"title": "Docs · Rigging the pump.fun pill mascot",
+					"description": "How a static capsule mascot with four nubs became a 52-bone, six-clip avatar: limb discovery from a distance transform, medial-axis skinning, and a bind pose that differs from the rest pose on purpose.",
+					"added": "2026-08-24",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

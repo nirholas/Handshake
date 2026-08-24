@@ -2218,6 +2218,14 @@
 					"priority": 0.6,
 					"changefreq": "weekly",
 					"added": "2026-07-31"
+				},
+				{
+					"path": "/pill",
+					"title": "The pump.fun Pill, Rigged",
+					"description": "three.ws is verified on pump.fun. Their pill mascot, rigged with a 52-bone skeleton and six hand-built clips, on a stage you can walk it around in the browser.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-08-24"
 				}
 			]
 		},
@@ -4542,7 +4550,7 @@
 				},
 				{
 					"path": "/docs/huggingface",
-					"title": "Docs \u00b7 three.ws on Hugging Face",
+					"title": "Docs · three.ws on Hugging Face",
 					"description": "Hugging Face is where the machine-learning community publishes models, demos, and engineering writing. three.ws publishes there under its organization account, and this is the index of the article, the avatar rigs, and the Space.",
 					"priority": 0.6,
 					"changefreq": "monthly"
@@ -5154,6 +5162,14 @@
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-08-21"
+				},
+				{
+					"path": "/docs/pill-mascot",
+					"title": "Docs · Rigging the pump.fun pill mascot",
+					"description": "How a static capsule mascot with four nubs became a 52-bone, six-clip avatar: limb discovery from a distance transform, medial-axis skinning, and a bind pose that differs from the rest pose on purpose.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-08-24"
 				}
 			]
 		},

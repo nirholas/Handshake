@@ -248,6 +248,10 @@
 				{
 					"label": "Avatar thumbnails",
 					"path": "avatar-thumbnails"
+				},
+				{
+					"label": "Rigging a mascot",
+					"path": "pill-mascot"
 				}
 			]
 		},

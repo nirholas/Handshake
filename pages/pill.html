@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot: no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>The pump.fun pill, rigged · three.ws</title>
+		<meta
+			name="description"
+			content="pump.fun verified $THREE as officially ours. We rigged their pill mascot to say thanks: a 52-bone skeleton, six hand-built clips, and a stage you can walk it around in your browser."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/pill" />
+		<meta property="og:title" content="The pump.fun pill, rigged · three.ws" />
+		<meta
+			property="og:description"
+			content="pump.fun verified $THREE as officially ours. So we rigged their pill mascot: arms, legs, six clips, and a stage you can walk it around."
+		/>
+		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=The+pump.fun+pill%2C+rigged&amp;d=pump.fun+verified+%24THREE.+We+rigged+their+mascot%3A+52+bones%2C+six+clips%2C+and+a+stage+you+can+walk+it+around.&amp;p=%2Fpill" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="The pump.fun pill, rigged · three.ws" />
+		<meta
+			name="twitter:description"
+			content="pump.fun verified $THREE as officially ours. So we rigged their pill mascot and gave it legs. Walk it around in your browser."
+		/>
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=The+pump.fun+pill%2C+rigged&amp;d=pump.fun+verified+%24THREE.+We+rigged+their+mascot%3A+52+bones%2C+six+clips%2C+and+a+stage+you+can+walk+it+around.&amp;p=%2Fpill" />
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/pill.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
+		<link rel="canonical" href="https://three.ws/pill" />
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"The pump.fun pill, rigged","description":"pump.fun verified $THREE as officially ours. We rigged their pill mascot: a 52-bone skeleton, six hand-built clips, and a browser stage you can walk it around.","url":"https://three.ws/pill","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="pill-shell">
+			<section class="pill-hero">
+				<p class="pill-kicker">
+					<svg class="pill-check" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+						<path d="M10 0a10 10 0 1 0 0 20A10 10 0 0 0 10 0Zm4.7 7.6-5.5 5.6a1 1 0 0 1-1.4 0L5.3 10.7a1 1 0 1 1 1.4-1.4l1.8 1.8 4.8-4.9a1 1 0 1 1 1.4 1.4Z" />
+					</svg>
+					$THREE is verified on pump.fun
+				</p>
+				<h1 class="pill-title">So we gave their pill <em>arms and legs</em></h1>
+				<p class="pill-sub">
+					pump.fun verified <strong>$THREE</strong> as officially ours. A thank-you note felt thin coming from
+					a 3D platform, so we ran their mascot through our own rig pipeline instead. It has a skeleton now.
+					Drive it around.
+				</p>
+			</section>
+
+			<div class="pill-stage" id="pill-stage" data-state="loading">
+				<canvas
+					id="pill-canvas"
+					tabindex="0"
+					role="application"
+					aria-label="3D stage. The pump.fun pill mascot, rigged and drivable."
+					aria-describedby="pill-stage-help"
+				></canvas>
+				<p id="pill-stage-help" class="pill-sr">
+					A green and white capsule character with a smiling painted face, two stubby arms and two
+					stubby legs, standing on a round stage. Use W, A, S and D or the arrow keys to walk it,
+					Shift to run, Space to jump, E to wave and Q to dance. The buttons below play the same
+					animations.
+				</p>
+
+				<div class="pill-status" id="pill-status">
+					<p>Waking the pill up</p>
+					<div class="pill-progress" id="pill-progress"></div>
+				</div>
+
+				<div class="pill-hint" id="pill-hint">
+					<span><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> walk</span>
+					<span><kbd>Shift</kbd> run</span>
+					<span><kbd>Space</kbd> jump</span>
+					<span>drag to orbit</span>
+				</div>
+
+				<div class="pill-joystick" id="pill-joystick" hidden></div>
+
+				<div class="pill-clips" id="pill-clips" role="group" aria-label="Play an animation">
+					<button type="button" data-clip="idle" aria-pressed="true">Idle</button>
+					<button type="button" data-clip="walk" aria-pressed="false">Walk</button>
+					<button type="button" data-clip="run" aria-pressed="false">Run</button>
+					<button type="button" data-clip="wave" aria-pressed="false">Wave<kbd>E</kbd></button>
+					<button type="button" data-clip="jump" aria-pressed="false">Jump<kbd>Space</kbd></button>
+					<button type="button" data-clip="dance" aria-pressed="false">Dance<kbd>Q</kbd></button>
+				</div>
+			</div>
+
+			<section class="pill-section">
+				<h2>What the check mark actually buys you</h2>
+				<p>
+					pump.fun verification marks a coin as officially belonging to the project behind it. That is the line
+					between the real <strong>$THREE</strong> and the copies that share its name and its ticker, and it is
+					the single fastest way for a buyer to tell them apart before spending anything.
+				</p>
+				<p>
+					$THREE is the only coin this platform promotes, and it lives at
+					<code>FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump</code>. The badge now shows next to it on the
+					<a href="/three-token">token page</a>, read live from pump.fun on every stats request rather than
+					hardcoded, so a badge here always means the same thing as a badge there. Everything else minted
+					through three.ws is a user's launch, and every one of them is listed with its creator on
+					<a href="/launches">Agent Launches</a>.
+				</p>
+			</section>
+
+			<section class="pill-section">
+				<h2>How the pill got a skeleton</h2>
+				<p>
+					The mascot arrived the way generated and scanned models usually do: one sealed shell, no bones, no
+					joints, frozen mid-stride, and dense enough to choke a phone. Our humanoid auto-rigger looks for a
+					head on a neck and two long arms, and a capsule with four nubs has none of that. So it got its own
+					pipeline, and that pipeline is in the repo:
+					<a href="https://github.com/nirholas/three.ws/blob/main/scripts/rig-pill-mascot.py">scripts/rig-pill-mascot.py</a>.
+				</p>
+				<ol class="pill-steps">
+					<li>
+						<b>Find the limbs without being told where they are.</b> Voxelize the mesh, take its distance
+						transform, and the body is everything thicker than a limb. The four nubs fall out as whatever is
+						left over.
+					</li>
+					<li>
+						<b>Trace each nub back into the body.</b> A minimum-cost path that prefers thick interior follows
+						the limb's real curve instead of guessing a straight line, which is how the bent foot ends up
+						with a bent foot bone.
+					</li>
+					<li>
+						<b>Skin it by what is inside, not what is nearby.</b> The sculpted pose rests one hand against
+						the side of the head. Any distance measure calls those two surfaces neighbours and welds them,
+						so the weights are decided by walking each vertex inward to the axis of the part it is skin for.
+						Through the mesh, that hand is a whole arm away from that cheek.
+					</li>
+					<li>
+						<b>Bind mid-stride, rest standing.</b> glTF keeps the bind pose and the rest pose separate, and
+						our retargeter replays clip motion as a delta on the rest pose. A walk cycle has to start from
+						legs-under-hips, so the neutral stance is baked into the shipped geometry.
+					</li>
+					<li>
+						<b>Animate for the proportions it actually has.</b> Six clips, authored against a mascot with
+						nub limbs and no neck rather than borrowed from a human mocap library: idle, walk, run, wave,
+						jump, dance.
+					</li>
+				</ol>
+				<ul class="pill-stats">
+					<li><b>52</b><span>Mixamo-named bones</span></li>
+					<li><b>44,544</b><span>triangles, down from 296,962</span></li>
+					<li><b>2.6 MB</b><span>rigged, down from 12.6 MB static</span></li>
+					<li><b>6</b><span>clips baked into the file</span></li>
+					<li><b>100%</b><span>of the three.ws clip library retargets onto it</span></li>
+				</ul>
+				<p>
+					That last number is the one that matters past this page. The skeleton uses the canonical bone names,
+					so the pill is not limited to the six clips it ships with: every animation on the platform drives it,
+					including the ones you have not made yet. Full write-up in
+					<a href="/docs/pill-mascot">the docs</a>.
+				</p>
+			</section>
+
+			<section class="pill-section">
+				<h2>Do this to your own character</h2>
+				<p>
+					Nothing on this page is a one-off favour. The same tools are open to anyone with a GLB and a
+					character worth animating.
+				</p>
+				<div class="pill-cards">
+					<a class="pill-card" href="/pose">
+						<h3>Pose it <span aria-hidden="true">&rarr;</span></h3>
+						<p>Open the pill in the Animation Studio and drive it with the full clip library.</p>
+					</a>
+					<a class="pill-card" href="/forge">
+						<h3>Forge a character <span aria-hidden="true">&rarr;</span></h3>
+						<p>Text or an image in, a textured 3D model out. Free lane, no account.</p>
+					</a>
+					<a class="pill-card" href="/docs/avatar-pipeline">
+						<h3>Rig any GLB <span aria-hidden="true">&rarr;</span></h3>
+						<p>Send a static humanoid model to the auto-rigger and get a skinned, clip-ready avatar back.</p>
+					</a>
+					<a class="pill-card" href="/walk">
+						<h3>Put it on your site <span aria-hidden="true">&rarr;</span></h3>
+						<p>One script tag drops a walking avatar onto any page, yours or someone else's.</p>
+					</a>
+					<a class="pill-card" href="/avatars/pumpfun-pill-cupsey.glb" type="model/gltf-binary" download>
+						<h3>Download the GLB <span aria-hidden="true">&darr;</span></h3>
+						<p>2.6 MB, rigged, six clips included. Open it in Blender, Unity, or anything that reads glTF.</p>
+					</a>
+					<a class="pill-card" href="/launches">
+						<h3>See what agents launched <span aria-hidden="true">&rarr;</span></h3>
+						<p>Every coin minted through three.ws, with the agent that minted it.</p>
+					</a>
+				</div>
+			</section>
+		</main>
+
+		<script type="module" src="/src/pill.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

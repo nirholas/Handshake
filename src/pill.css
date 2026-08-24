@@ -1,0 +1,255 @@
+/* /pill: the pump.fun pill mascot, rigged and drivable.
+   Canonical :root tokens stay the base; the accent layer here is the mascot's
+   own green rather than the site iris, because on this page the character is
+   the brand (the B02 rule for surfaces that need their own accent). */
+
+/* The shell paints the page canvas rather than leaving it to `color-scheme`.
+   Not cosmetic: with no colour actually painted, a contrast checker has nothing
+   to measure against and reports every line on the page as failing. Scoped with
+   :has() so it only applies where this stylesheet's page is; browsers without
+   it fall back to the UA canvas, exactly as before. */
+html:has(.pill-shell) { background: var(--bg-0, #0a0a0a); }
+
+.pill-shell {
+	--pill-green: #2fd35f;
+	--pill-green-deep: #14a544;
+	--pill-grad: linear-gradient(120deg, var(--pill-green), #7ef0a6);
+	max-width: 1180px;
+	margin: 0 auto;
+	padding: var(--space-lg, 28px) var(--space-md, 16px) var(--space-2xl, 64px);
+	/* No global body rule ships with the shell, so the page sets its own. */
+	font-family: var(--font-body, 'Inter', system-ui, sans-serif);
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────────── */
+.pill-hero { text-align: center; margin-bottom: var(--space-lg, 24px); }
+.pill-kicker {
+	display: inline-flex; align-items: center; gap: 8px;
+	font-size: var(--text-2xs, 0.68rem); letter-spacing: 0.14em; text-transform: uppercase;
+	color: var(--ink-dim, #999); margin: 0 0 var(--space-sm, 12px);
+	padding: 6px 14px 6px 10px;
+	border: 1px solid rgba(47, 211, 95, 0.32);
+	border-radius: var(--radius-pill, 999px);
+	background: rgba(47, 211, 95, 0.08);
+}
+.pill-check {
+	width: 16px; height: 16px; flex: none;
+	color: var(--pill-green);
+}
+.pill-title {
+	font-family: var(--font-display, 'Space Grotesk', sans-serif);
+	font-size: clamp(2.1rem, 5.6vw, 3.5rem); font-weight: 700; line-height: 1.03;
+	letter-spacing: -0.02em; margin: 0 0 var(--space-sm, 12px); color: var(--ink, #e8e8e8);
+}
+.pill-title em {
+	font-style: normal;
+	background: var(--pill-grad);
+	-webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.pill-sub {
+	max-width: 690px; margin: 0 auto;
+	color: var(--ink-dim, #999); font-size: var(--text-lg, 1.02rem); line-height: 1.55;
+}
+.pill-sub strong { color: var(--ink, #e8e8e8); font-weight: 600; }
+
+/* ── Stage ────────────────────────────────────────────────────────────── */
+.pill-stage {
+	position: relative;
+	aspect-ratio: 16 / 10;
+	max-height: min(70vh, 620px);
+	margin: var(--space-lg, 24px) 0 var(--space-md, 16px);
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.08));
+	border-radius: var(--radius-lg, 16px);
+	overflow: hidden;
+	background:
+		radial-gradient(120% 90% at 50% 0%, rgba(47, 211, 95, 0.13), transparent 62%),
+		var(--surface-1, #0d1014);
+	touch-action: none;
+	contain: layout paint;
+}
+.pill-stage canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+.pill-stage canvas:active { cursor: grabbing; }
+.pill-stage canvas:focus-visible { outline: 2px solid var(--pill-green); outline-offset: -3px; }
+
+/* The stage's text alternative: real content for a screen reader, no pixels. */
+.pill-sr {
+	position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+	overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+
+.pill-status {
+	position: absolute; inset: 0;
+	display: flex; flex-direction: column; align-items: center; justify-content: center;
+	gap: var(--space-sm, 12px); text-align: center; padding: var(--space-lg, 24px);
+	color: var(--ink-dim, #999); font-size: var(--text-sm, 0.86rem);
+}
+.pill-status[hidden] { display: none; }
+.pill-progress {
+	--pill-progress: 0%;
+	width: min(220px, 60%); height: 3px; border-radius: 999px;
+	background: rgba(255, 255, 255, 0.09); overflow: hidden;
+}
+.pill-progress::after {
+	content: ''; display: block; height: 100%;
+	width: var(--pill-progress);
+	background: var(--pill-grad);
+	transition: width 0.2s ease;
+}
+.pill-poster { max-width: min(360px, 70%); height: auto; border-radius: var(--radius-md, 12px); }
+.pill-fallback-note { margin: 0; max-width: 42ch; }
+
+/* Controls */
+.pill-clips {
+	position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%);
+	display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
+	padding: 6px; max-width: calc(100% - 24px);
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.1));
+	border-radius: var(--radius-pill, 999px);
+	background: color-mix(in srgb, var(--surface-2, #14181d) 82%, transparent);
+	backdrop-filter: blur(10px);
+}
+.pill-clips button {
+	appearance: none; border: 0; cursor: pointer;
+	padding: 7px 14px; border-radius: var(--radius-pill, 999px);
+	font: inherit; font-size: var(--text-xs, 0.78rem); font-weight: 600;
+	letter-spacing: 0.01em;
+	color: var(--ink-dim, #a8a8a8); background: transparent;
+	transition: color 0.16s ease, background 0.16s ease, transform 0.12s ease;
+}
+.pill-clips button:hover { color: var(--ink, #ececec); background: rgba(255, 255, 255, 0.07); }
+.pill-clips button:active { transform: translateY(1px); }
+.pill-clips button:focus-visible { outline: 2px solid var(--pill-green); outline-offset: 2px; }
+.pill-clips button[aria-pressed='true'] {
+	color: #04170b; background: var(--pill-grad);
+}
+.pill-clips kbd {
+	display: inline-block; margin-left: 6px; opacity: 0.6;
+	font: inherit; font-size: 0.86em;
+}
+
+.pill-hint {
+	position: absolute; top: 14px; left: 14px;
+	display: flex; flex-wrap: wrap; gap: 6px; max-width: calc(100% - 28px);
+	font-size: var(--text-2xs, 0.68rem); color: var(--ink-dim, #8d8d8d);
+	transition: opacity 0.5s ease 1.2s;
+}
+.pill-hint[data-used='true'] { opacity: 0; pointer-events: none; }
+.pill-hint span {
+	padding: 4px 9px; border-radius: var(--radius-pill, 999px);
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.08));
+	background: color-mix(in srgb, var(--surface-2, #14181d) 76%, transparent);
+}
+.pill-joystick {
+	position: absolute; left: 18px; bottom: 74px;
+	width: 132px; height: 132px;
+}
+.pill-joystick[hidden] { display: none; }
+
+@media (max-width: 700px) {
+	.pill-stage { aspect-ratio: 4 / 5; max-height: 74vh; }
+	.pill-hint { display: none; }
+	/* One scrolling row, not three wrapped ones: a toolbar that grows upward
+	   collides with the joystick and buries the mascot behind its own controls. */
+	.pill-clips {
+		left: 0; right: 0; bottom: 0; transform: none;
+		max-width: none; border-radius: 0;
+		border-left: 0; border-right: 0; border-bottom: 0;
+		flex-wrap: nowrap; justify-content: flex-start;
+		overflow-x: auto; scrollbar-width: none; padding: 8px 10px;
+	}
+	.pill-clips::-webkit-scrollbar { display: none; }
+	.pill-clips button { flex: none; }
+	.pill-clips kbd { display: none; }
+	.pill-joystick { left: 12px; bottom: 62px; width: 104px; height: 104px; }
+}
+
+/* ── Sections ─────────────────────────────────────────────────────────── */
+.pill-section { margin-top: var(--space-2xl, 56px); }
+.pill-section h2 {
+	font-family: var(--font-display, 'Space Grotesk', sans-serif);
+	font-size: clamp(1.4rem, 3vw, 1.9rem); font-weight: 650; letter-spacing: -0.01em;
+	margin: 0 0 var(--space-sm, 12px); color: var(--ink, #e8e8e8);
+}
+.pill-section p { font-family: inherit; color: var(--ink-dim, #9a9a9a); line-height: 1.62; margin: 0 0 var(--space-sm, 12px); max-width: 68ch; }
+.pill-section a { color: var(--ink, #e8e8e8); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(47, 211, 95, 0.55); }
+.pill-section a:hover { text-decoration-color: var(--pill-green); }
+
+.pill-stats {
+	display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+	gap: var(--space-sm, 12px); list-style: none; margin: var(--space-md, 18px) 0 0; padding: 0;
+}
+.pill-stats li {
+	padding: var(--space-md, 16px);
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.07));
+	border-radius: var(--radius-md, 12px);
+	background: var(--surface-1, rgba(255, 255, 255, 0.03));
+}
+.pill-stats b {
+	display: block;
+	font-family: var(--font-display, 'Space Grotesk', sans-serif);
+	font-size: 1.5rem; font-weight: 700; color: var(--ink, #ececec); line-height: 1.1;
+}
+.pill-stats span {
+	display: block; margin-top: 4px;
+	font-size: var(--text-2xs, 0.7rem); letter-spacing: 0.08em; text-transform: uppercase;
+	color: var(--ink-dim, #8d8d8d);
+}
+
+.pill-steps { list-style: none; margin: var(--space-md, 18px) 0 0; padding: 0; counter-reset: pill-step; }
+.pill-steps li {
+	position: relative; padding: 0 0 var(--space-md, 18px) 42px;
+	color: var(--ink-dim, #9a9a9a); line-height: 1.6;
+}
+.pill-steps li::before {
+	counter-increment: pill-step; content: counter(pill-step);
+	position: absolute; left: 0; top: 0;
+	width: 28px; height: 28px; border-radius: 50%;
+	display: grid; place-items: center;
+	font-size: var(--text-xs, 0.76rem); font-weight: 700; color: #04170b;
+	background: var(--pill-grad);
+}
+.pill-steps li::after {
+	content: ''; position: absolute; left: 13px; top: 32px; bottom: 4px; width: 1px;
+	background: linear-gradient(rgba(47, 211, 95, 0.35), transparent);
+}
+.pill-steps li:last-child { padding-bottom: 0; }
+.pill-steps li:last-child::after { display: none; }
+.pill-steps b { color: var(--ink, #e4e4e4); font-weight: 650; }
+
+.pill-cards {
+	display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+	gap: var(--space-sm, 12px); margin-top: var(--space-md, 18px);
+}
+.pill-card {
+	display: block; padding: var(--space-md, 18px);
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.07));
+	border-radius: var(--radius-md, 12px);
+	background: var(--surface-1, rgba(255, 255, 255, 0.03));
+	color: inherit; text-decoration: none;
+	transition: border-color 0.18s ease, transform 0.18s ease, background 0.18s ease;
+}
+.pill-card:hover {
+	border-color: rgba(47, 211, 95, 0.45);
+	background: rgba(47, 211, 95, 0.05);
+	transform: translateY(-2px);
+}
+.pill-card:focus-visible { outline: 2px solid var(--pill-green); outline-offset: 3px; }
+.pill-card h3 {
+	margin: 0 0 6px; font-size: var(--text-md, 0.98rem); font-weight: 650; color: var(--ink, #ececec);
+}
+.pill-card p { margin: 0; font-size: var(--text-sm, 0.86rem); color: var(--ink-dim, #8f8f8f); line-height: 1.5; }
+.pill-card span[aria-hidden] { color: var(--pill-green); }
+
+@media (prefers-reduced-motion: reduce) {
+	.pill-card, .pill-clips button, .pill-hint { transition: none; }
+	.pill-card:hover { transform: none; }
+}
+
+:root[data-theme='light'] .pill-stage {
+	background:
+		radial-gradient(120% 90% at 50% 0%, rgba(20, 165, 68, 0.12), transparent 62%),
+		var(--surface-1, #f3f4f6);
+}
+:root[data-theme='light'] .pill-kicker { background: rgba(20, 165, 68, 0.09); border-color: rgba(20, 165, 68, 0.3); }
+:root[data-theme='light'] .pill-check { color: var(--pill-green-deep); }
+:root[data-theme='light'] .pill-title em { background: linear-gradient(120deg, var(--pill-green-deep), #2fd35f); -webkit-background-clip: text; background-clip: text; }

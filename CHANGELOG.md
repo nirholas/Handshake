@@ -6,7 +6,10 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 
 ## 2026-08-24
 
+- **Docs · Rigging the pump.fun pill mascot** (`/docs/pill-mascot`): How a static capsule mascot with four nubs became a 52-bone, six-clip avatar: limb discovery from a distance transform, medial-axis skinning, and a bind pose that differs from the rest pose on purpose.
+- **The pump.fun Pill, Rigged** (`/pill`): three.ws is verified on pump.fun. Their pill mascot, rigged with a 52-bone skeleton and six hand-built clips, on a stage you can walk it around in the browser.
 - **$THREE now carries its pump.fun verification badge, read live from pump.fun**: pump.fun verifies a project's coin as officially belonging to that project, which is what tells a buyer the real $THREE apart from the copies that share its name and ticker. That badge now appears next to $THREE on the token page and on the holder dashboard. It is never hardcoded: the platform reads pump.fun's own verification flag on every stats request and renders the badge only while pump.fun publishes it, so a badge on three.ws always means the same thing as a badge on pump.fun. (`/three-token`) `[feature, improvement]`
+- **The pump.fun pill mascot is now a rigged, drivable avatar at /pill**: pump.fun verified $THREE as officially ours, so we rigged their pill mascot and built it a stage. Walk it around with WASD or a touch joystick, run, jump, wave, dance, and drag to orbit. The model arrived as a static 297,000-triangle capsule with four stubby nubs, which our humanoid auto-rigger cannot read because there is no neck, no head and no long limbs to find. It now carries a 52-bone skeleton with canonical bone names, six clips authored for its own proportions, and 44,544 triangles in a 2.6 MB file, which means the entire three.ws animation library retargets onto it as well. Download the GLB from the page and open it in Blender, Unity, or anything that reads glTF. (`/pill`) `[feature, improvement]`
 
 ## 2026-08-22
 

@@ -308,6 +308,7 @@ On-chain features: pay-per-call, token launches, vanity wallets.
 - [Exit Lab](https://three.ws/exit-lab): Replay the fleet's real closed trades under a different exit policy. Move the stop-loss, trailing stop, take-initials ladder and moon-bag floor and see what the SOL already spent would have returned.
 - [The in-game economy](https://three.ws/play/economy): Every price, prize and gate in the /play world economy: what the general store pays for gathered goods, what it sells, how the bank protects cash through death, what the $THREE cosmetics boutique charges, and the full Wheel of Fortune paytable with real per-outcome odds. Read live from the same tables the game server prices trades with.
 - [The economy solver](https://three.ws/play/solver): The /play world economy, solved. Exact expected cash and XP per hour for every tree, rock and pond at every skill level, the optimal fish-and-cook time split, what the store costs in minutes and swings, the wheel's true expected value in store prices, and per-kill combat worth. Computed in closed form from the game's own tables, never measured.
+- [The pump.fun Pill, Rigged](https://three.ws/pill): three.ws is verified on pump.fun. Their pill mascot, rigged with a 52-bone skeleton and six hand-built clips, on a stage you can walk it around in the browser.
 
 ## Agent Tools
 
@@ -707,6 +708,7 @@ Docs, tutorials, and reference.
 - [Docs · Community](https://three.ws/docs/community): Where the three.ws community talks: GitHub Discussions, the Telegram community, the X community, the IBM Community group, and the release channel, with guidance on which room fits which question.
 - [Docs · Your first contribution](https://three.ws/docs/first-contribution): Clone to open pull request in about 15 minutes, with a complete worked example: teaching the avatar retargeter a bone-naming convention it did not know, plus the test that proves it.
 - [Docs · Triage](https://three.ws/docs/triage): How incoming issues and pull requests get sorted, what every label means, how to claim work, and the response times contributors can expect.
+- [Docs · Rigging the pump.fun pill mascot](https://three.ws/docs/pill-mascot): How a static capsule mascot with four nubs became a 52-bone, six-clip avatar: limb discovery from a distance transform, medial-axis skinning, and a bind pose that differs from the rest pose on purpose.
 
 ## Blog
 
