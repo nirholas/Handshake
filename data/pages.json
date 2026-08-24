@@ -4541,6 +4541,13 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/huggingface",
+					"title": "Docs \u00b7 three.ws on Hugging Face",
+					"description": "Hugging Face is where the machine-learning community publishes models, demos, and engineering writing. three.ws publishes there under its organization account, and this is the index of the article, the avatar rigs, and the Space.",
+					"priority": 0.6,
+					"changefreq": "monthly"
+				},
+				{
 					"path": "/docs/aws-builder-center",
 					"title": "Docs · three.ws on the AWS Builder Center",
 					"description": "The AWS Builder Center is Amazon's community publishing platform for engineers building on AWS. three.ws publishes there under its official organisation account, and this is the index of what has been published.",

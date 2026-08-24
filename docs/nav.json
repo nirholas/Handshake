@@ -968,6 +968,10 @@
 					"path": "nvidia-inception"
 				},
 				{
+					"label": "Hugging Face",
+					"path": "huggingface"
+				},
+				{
 					"label": "AWS Builder Center",
 					"path": "aws-builder-center"
 				},

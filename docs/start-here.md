@@ -170,6 +170,7 @@ Deeper references that don't fit a track above but answer real questions:
 - [Big-tech recognition dispatch board](./big-tech-recognition-week.md): every big-tech surface ranked against every other by the odds of a published mention this week, which six are already one action from shipping, and what to stop chasing
 - [The generator was never the hard part](./nvidia-nemotron-spotlight.md): our Nemotron Nano write-up, published on the NVIDIA Developer Forums
 - [three.ws on the AWS Builder Center](./aws-builder-center.md): the index of our published AWS engineering writing, what code each article documents, and the checklist for publishing the next one
+- [three.ws on Hugging Face](./huggingface.md): our organization account there, the community article on giving agents bodies and wallets, the published avatar rigs and the Space that renders them, and the checklist for publishing the next one
 - [The onboarding tier](./onboarding-tier.md): why a first-time visitor sees ~20 nav destinations instead of ~100, how the Simple ⇄ Everything switch works, and which tier a new page belongs in
 - [What an agent can do](./agent-abilities/ABILITIES.md): the full abilities dossier, generated from the source article
 - [Use cases and example workflows](./content/use-cases/README.md): five audience-specific walkthroughs tying shipped features to concrete outcomes

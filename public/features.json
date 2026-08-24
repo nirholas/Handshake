@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-22T02:40:42.481Z",
+	"generated_at": "2026-08-24T15:23:37.938Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -5888,6 +5888,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/docs/huggingface",
+					"title": "Docs · three.ws on Hugging Face",
+					"description": "Hugging Face is where the machine-learning community publishes models, demos, and engineering writing. three.ws publishes there under its organization account, and this is the index of the article, the avatar rigs, and the Space.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/docs/aws-builder-center",
 					"title": "Docs · three.ws on the AWS Builder Center",
 					"description": "The AWS Builder Center is Amazon's community publishing platform for engineers building on AWS. three.ws publishes there under its official organisation account, and this is the index of what has been published.",
@@ -7309,6 +7319,16 @@
 					"path": "/news/quicknode-startup-program",
 					"title": "three.ws Joins the Quicknode Startup Program",
 					"description": "three.ws has been accepted into the Quicknode Startup Program and approved for free infrastructure credits: more RPC headroom for the Solana-first agent economy, provider redundancy, and Quicknode's founder network.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/news/huggingface-bodies-and-wallets",
+					"title": "Giving AI Agents 3D Bodies, Real Jobs, and Wallets on three.ws",
+					"description": "Our community article on Hugging Face, the platform where the machine-learning world publishes and checks models: four problems an embodied agent has to solve, and the shipped surface that answers each one. Published alongside a repository of rigged avatars and a running Space that renders them in the browser.",
 					"added": null,
 					"auth": null,
 					"indexable": true,
