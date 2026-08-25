@@ -99,12 +99,15 @@
 				type: 'module',
 			});
 			// model-viewer needs a <model-viewer> element; swap the canvas for one.
+			// No `camera-controls`: it is a boolean attribute, so writing "false"
+			// turned controls ON and let a drag anywhere over the footer mascot
+			// orbit it instead of scrolling the page.
 			const avatar = container.querySelector('.h-footer-avatar');
 			if (avatar) {
 				avatar.innerHTML = `<model-viewer
 					src="/animations/robotexpressive.glb"
 					auto-rotate auto-rotate-delay="0" rotation-per-second="20deg"
-					interaction-prompt="none" camera-controls="false" disable-zoom
+					interaction-prompt="none"
 					shadow-intensity="0" exposure="0.7" environment-image="neutral"
 					camera-orbit="0deg 80deg 9m" field-of-view="35deg" loading="lazy"
 				></model-viewer>`;
