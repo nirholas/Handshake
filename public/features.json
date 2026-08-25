@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-25T16:27:42.749Z",
+	"generated_at": "2026-08-25T16:35:10.242Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -4172,6 +4172,16 @@
 					"title": "Docs · SDK",
 					"description": "JavaScript / Node SDK for three.ws.",
 					"added": "2026-04-27",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/open-source-footprint",
+					"title": "Docs · Open-Source Footprint",
+					"description": "Every registry, marketplace, community, and directory where three.ws code and listings live, with live links and the number behind each one.",
+					"added": "2026-08-25",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

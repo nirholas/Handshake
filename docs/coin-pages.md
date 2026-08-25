@@ -287,11 +287,23 @@ pattern from [`src/coins-index.js`](../src/coins-index.js).
 
 Up to four coins head to head: an **overlay chart** of normalized price
 performance (% change from the window start) over 7D / 30D / 90D / 1Y with a
-multi-series crosshair, and a **stats table** lining up price, 24h/7d/30d change,
-market cap, volume, FDV, supply, and all-time high — the best value per row
-highlighted. Add coins with the search type-ahead; the selection is mirrored to
-`?ids=…` so any matchup is a shareable link. Reuses `/api/coin/markets` (search),
-`/api/coin/detail`, and `/api/coin/ohlc` — no new endpoint.
+multi-series crosshair and a date axis, and a **stats table** lining up price,
+24h/7d/30d change, market cap, volume, FDV, supply, and all-time high. Add coins
+with the search type-ahead; the selection is mirrored to `?ids=…` so any matchup
+is a shareable link. Reuses `/api/coin/markets` (search), `/api/coin/detail`, and
+`/api/coin/ohlc`, no new endpoint.
+
+Three details the table and chart depend on:
+
+- **Sign wins the colour, the row winner wins the weight.** Gains render green
+  and losses red; the best value in a row is bold on a tinted cell and carries a
+  screen-reader-only "(best)", so a 37% drawdown that happens to be the smallest
+  one is never painted as a gain.
+- **The overlay is measured, not scaled.** Its viewBox is taken from the panel
+  width on every render (and on resize), so a 320 px column draws a full-height
+  chart with legible axis labels instead of a squashed desktop chart.
+- **A slow range answer is discarded.** Each reload carries a monotonic id;
+  clicking 1Y then 7D can no longer paint a year of history under a 7D axis.
 
 ## More market tools
 

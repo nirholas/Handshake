@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · Open-Source Footprint</title>
+			<link>https://three.ws/docs/open-source-footprint</link>
+			<guid isPermaLink="false">2026-08-25:Docs · Open-Source Footprint</guid>
+			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Every registry, marketplace, community, and directory where three.ws code and listings live, with live links and the number behind each one.</description>
+		</item>
+		<item>
 			<title>Docs · The $THREE thesis</title>
 			<link>https://three.ws/docs/three-thesis</link>
 			<guid isPermaLink="false">2026-08-25:Docs · The $THREE thesis</guid>
@@ -23,12 +31,20 @@
 			<description>The first three.ws weekly report: a week-by-week roundup of everything shipped from the first commit on 2026-04-14 through 2026-08-25, with every launch, partnership, announcement, and where $THREE fits.</description>
 		</item>
 		<item>
+			<title>Compare reads correctly on a phone and stops mislabelling gains and losses</title>
+			<link>https://three.ws/compare</link>
+			<guid isPermaLink="false">2026-08-25:Compare reads correctly on a phone and stops mislabelling gains and losses</guid>
+			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The side-by-side coin comparison had three problems worth fixing. Percentage rows rendered every number the same neutral colour, so a loss looked like a gain unless it happened to be the row winner, and the winning cell was painted green even when it was a 37% drawdown; gains are now green, losses red, and the row winner is marked by weight and a tint that reads on either. The performance overlay gained date labels along its bottom edge, and on a phone it now draws at the width of the screen instead of shrinking a desktop-sized chart to a third of its height with unreadable text. Switching range fast could also leave a year of history drawn under a 7-day label; the chart now ignores a slow answer that a newer range has already replaced.</description>
+		</item>
+		<item>
 			<title>Connect X no longer dead-ends when X sign-in is switched off</title>
 			<link>https://three.ws/settings</link>
 			<guid isPermaLink="false">2026-08-25:Connect X no longer dead-ends when X sign-in is switched off</guid>
 			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
-			<description>Seeding an agent's memory from X starts by connecting your X account, and on a deployment where X sign-in is not switched on every Connect X button led to a page of raw error text with no way back. Those buttons now say X connections are not enabled and why, on the dashboard's X panel and in the agent editor's Social tab as well as in Settings, and following an old connect link lands you back on the page you started from with the reason stated instead of stranding you. Nothing about consent, seeding, or revocation changes.</description>
+			<description>Seeding an agent's memory from X starts by connecting your X account, and on a deployment where X sign-in is not switched on every Connect X button led to a page of raw error text with no way back. Those buttons now say X connections are not enabled and why, in the agent editor's Social tab and the avatar editor's X panel as well as in Settings, and following an old connect link lands you back on the page you started from with the reason stated instead of stranding you. Nothing about consent, seeding, or revocation changes.</description>
 		</item>
 		<item>
 			<title>Creator Gallery cards stay put while you scroll, and the leaderboards show they are loading</title>

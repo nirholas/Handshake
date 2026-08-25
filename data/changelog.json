@@ -14,7 +14,7 @@
     {
       "date": "2026-08-25",
       "title": "Connect X no longer dead-ends when X sign-in is switched off",
-      "summary": "Seeding an agent's memory from X starts by connecting your X account, and on a deployment where X sign-in is not switched on every Connect X button led to a page of raw error text with no way back. Those buttons now say X connections are not enabled and why, on the dashboard's X panel and in the agent editor's Social tab as well as in Settings, and following an old connect link lands you back on the page you started from with the reason stated instead of stranding you. Nothing about consent, seeding, or revocation changes.",
+      "summary": "Seeding an agent's memory from X starts by connecting your X account, and on a deployment where X sign-in is not switched on every Connect X button led to a page of raw error text with no way back. Those buttons now say X connections are not enabled and why, in the agent editor's Social tab and the avatar editor's X panel as well as in Settings, and following an old connect link lands you back on the page you started from with the reason stated instead of stranding you. Nothing about consent, seeding, or revocation changes.",
       "tags": [
         "fix"
       ],

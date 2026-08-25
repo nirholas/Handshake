@@ -3317,6 +3317,14 @@
 					"added": "2026-04-27"
 				},
 				{
+					"path": "/docs/open-source-footprint",
+					"title": "Docs · Open-Source Footprint",
+					"description": "Every registry, marketplace, community, and directory where three.ws code and listings live, with live links and the number behind each one.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-08-25"
+				},
+				{
 					"path": "/docs/listings",
 					"title": "Docs · Listings & Distribution",
 					"description": "Cloud marketplaces and ecosystem directories where three.ws is listed (Alibaba Cloud, BNB Chain Dappbay, and more).",

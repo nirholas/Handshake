@@ -2537,6 +2537,12 @@ URL: https://three.ws/docs/sdk
 
 JavaScript / Node SDK for three.ws.
 
+### Docs · Open-Source Footprint
+
+URL: https://three.ws/docs/open-source-footprint
+
+Every registry, marketplace, community, and directory where three.ws code and listings live, with live links and the number behind each one.
+
 ### Docs · Listings & Distribution
 
 URL: https://three.ws/docs/listings

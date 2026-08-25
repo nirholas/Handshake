@@ -457,6 +457,7 @@ Docs, tutorials, and reference.
 - [Docs · API Reference](https://three.ws/docs/api-reference): Full HTTP API reference.
 - [Docs · Authentication](https://three.ws/docs/authentication): Sign-In with Solana (SIWS), Sign-In with Ethereum (SIWE), Privy email/wallet login, sessions, and API keys.
 - [Docs · SDK](https://three.ws/docs/sdk): JavaScript / Node SDK for three.ws.
+- [Docs · Open-Source Footprint](https://three.ws/docs/open-source-footprint): Every registry, marketplace, community, and directory where three.ws code and listings live, with live links and the number behind each one.
 - [Docs · Listings & Distribution](https://three.ws/docs/listings): Cloud marketplaces and ecosystem directories where three.ws is listed (Alibaba Cloud, BNB Chain Dappbay, and more).
 - [Tutorials](https://three.ws/tutorials): Step-by-step build guides.
 - [Walkthroughs](https://three.ws/walkthroughs): Interactive, click-through tours of the surfaces people reach for first. Every frame is captured from the live product and every step is pinned to a real element on the page it explains.
