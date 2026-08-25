@@ -190,8 +190,8 @@ async function copyToClipboard(text) {
 	main.querySelector('#wallets [data-action="link-wallet"]')
 		.addEventListener('click', (e) => startWalletLink(walletsHost, e.currentTarget));
 
-	const wallets = await loadWallets(walletsHost);
-	renderSns(snsHost, wallets);
+	snsPanelHost = snsHost;
+	await loadWallets(walletsHost);
 
 	const delegationConsoleHost = main.querySelector('[data-slot="delegation-console"]');
 	const delegationSection = main.querySelector('#delegation');
@@ -514,11 +514,18 @@ function startEditUsername(host, me) {
 
 // ── Wallets ───────────────────────────────────────────────────────────────
 
+// The SNS panel is derived from the wallet list, so it has to re-render every
+// time that list changes. Captured once at boot; every later loadWallets()
+// (link, unlink, primary change) refreshes the domains through it, instead of
+// leaving "No Solana wallets linked" on screen after the user just linked one.
+let snsPanelHost = null;
+
 async function loadWallets(host) {
 	try {
 		const r = await get('/api/auth/wallets');
 		const wallets = Array.isArray(r?.wallets) ? r.wallets : [];
 		renderWallets(host, wallets);
+		if (snsPanelHost) renderSns(snsPanelHost, wallets);
 		return wallets;
 	} catch (err) {
 		showLoadError(host, {
@@ -658,10 +665,9 @@ function renderWallets(host, wallets) {
 			try {
 				await del(`/api/auth/wallets/${encodeURIComponent(addr)}`);
 				toast('Wallet disconnected');
-				const tr = btn.closest('tr');
-				if (tr) tr.remove();
-				const remaining = host.querySelectorAll('tbody tr').length;
-				if (remaining === 0) renderWallets(host, []);
+				// Re-read rather than splicing the row out: dropping a wallet can move
+				// the primary flag and always changes what the SNS panel should show.
+				await loadWallets(host);
 			} catch (err) {
 				toast(err?.message ? `Failed: ${err.message}` : 'Disconnect failed');
 				btn.disabled = false;
@@ -677,8 +683,7 @@ function renderWallets(host, wallets) {
 			try {
 				await post('/api/auth/wallets/primary', { address: addr });
 				toast('Primary wallet updated');
-				const r = await get('/api/auth/wallets');
-				renderWallets(host, Array.isArray(r?.wallets) ? r.wallets : []);
+				await loadWallets(host);
 			} catch (err) {
 				toast(err?.message ? `Failed: ${err.message}` : 'Couldn’t set primary');
 				btn.disabled = false;
@@ -708,19 +713,32 @@ async function renderSns(host, wallets) {
 		solanaWallets.map(async (w) => {
 			try {
 				const r = await get(`/api/sns?address=${encodeURIComponent(w.address)}`);
-				return { wallet: w, domain: r?.data?.name || null };
-			} catch {
-				return { wallet: w, domain: null };
+				return { wallet: w, domain: r?.data?.name || null, failed: false };
+			} catch (err) {
+				return { wallet: w, domain: null, failed: true, error: err };
 			}
 		}),
 	);
 
 	const hits = lookups.filter((l) => l.domain);
+	const failures = lookups.filter((l) => l.failed);
+
+	// A resolver outage is not the same answer as "you own no domains". Saying
+	// the second when we mean the first tells the user to go buy a domain they
+	// may already have, so an all-failed lookup gets the retry, not the empty.
+	if (hits.length === 0 && failures.length === lookups.length) {
+		showLoadError(rowsHost, {
+			title: 'Couldn’t check your .sol domains',
+			body: esc(failures[0]?.error?.message || 'The SNS resolver did not answer. Try again in a moment.'),
+		}, () => renderSns(host, wallets));
+		return;
+	}
+
 	if (hits.length === 0) {
 		rowsHost.innerHTML = `
 			<div class="dn-empty" style="padding:32px 24px">
 				<h3>No primary .sol domains found</h3>
-				<p>Set one of your wallets' primary .sol domain on-chain — it'll show up here automatically.</p>
+				<p>Set one of your wallets' primary .sol domain on-chain and it shows up here automatically.</p>
 				<a class="dn-btn" href="/vanity-wallet">+ Register a domain</a>
 			</div>`;
 		return;
@@ -763,6 +781,18 @@ async function renderSns(host, wallets) {
 		</div>
 	`;
 
+	if (failures.length) {
+		rowsHost.insertAdjacentHTML(
+			'beforeend',
+			`<div role="status" style="padding:10px 2px 0;font-size:12px;color:var(--nxt-ink-fade)">
+				${failures.length} of ${lookups.length} wallets could not be checked against the SNS resolver.
+				<button class="dn-btn ghost" type="button" data-action="retry-sns" style="padding:2px 8px;font-size:12px">Retry</button>
+			</div>`,
+		);
+		rowsHost.querySelector('[data-action="retry-sns"]')
+			.addEventListener('click', () => renderSns(host, wallets));
+	}
+
 	rowsHost.querySelectorAll('.dn-copy').forEach((btn) => {
 		btn.addEventListener('click', () => copyToClipboard(btn.dataset.copy));
 	});
@@ -790,7 +820,11 @@ async function loadDelegations(host, consoleHost) {
 			return;
 		}
 
-		const rows = agents.slice(0, 8).map((a) => `
+		// The table is a preview of the newest agents; the console's picker holds
+		// every one of them, and the count below says so rather than letting the
+		// cap read as "these are all the agents you have".
+		const PREVIEW_LIMIT = 8;
+		const rows = agents.slice(0, PREVIEW_LIMIT).map((a) => `
 			<tr>
 				<td style="padding:11px 12px">
 					<div style="font-size:13.5px;color:var(--nxt-ink);font-weight:500">${esc(a.name || a.display_name || 'Unnamed agent')}</div>
@@ -818,6 +852,12 @@ async function loadDelegations(host, consoleHost) {
 					<tbody>${rows}</tbody>
 				</table>
 			</div>
+			${agents.length > PREVIEW_LIMIT
+				? `<div style="padding:10px 2px 0;font-size:12px;color:var(--nxt-ink-fade)">
+						Showing the ${PREVIEW_LIMIT} most recent of ${agents.length} agents.
+						<button class="dn-btn ghost" type="button" data-action="open-delegation-console" style="padding:2px 8px;font-size:12px">Pick another in the console</button>
+					</div>`
+				: ''}
 		`;
 	} catch (err) {
 		showLoadError(host, {
