@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-25T14:11:43.309Z",
+	"generated_at": "2026-08-25T15:05:49.632Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -14,6 +14,17 @@
 			"link": "/docs/three-thesis",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-08-25",
+			"type": "update",
+			"title": "The first-contribution guide now hands you real open work, and the docs sidebar can find it",
+			"summary": "The 15-minute contributor guide walked through adding MikuMikuDance rig support as its example, but that support had already shipped, so anyone following it literally would have re-done merged work and been told a bone was unmapped when it was not. It now shows the MMD change as the finished reference, exactly as it landed with its tests, and points you at two rig conventions that are genuinely still open, each with the bones that fail today. The community, triage, and first-contribution pages also appear in the docs sidebar under Guides instead of being reachable only from the README, and the triage page now explains every label the repo actually uses.",
+			"link": "/docs/first-contribution",
+			"tags": [
+				"docs",
+				"fix"
 			]
 		},
 		{

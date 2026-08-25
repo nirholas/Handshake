@@ -2,6 +2,16 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-08-25",
+			"title": "The first-contribution guide now hands you real open work, and the docs sidebar can find it",
+			"summary": "The 15-minute contributor guide walked through adding MikuMikuDance rig support as its example, but that support had already shipped, so anyone following it literally would have re-done merged work and been told a bone was unmapped when it was not. It now shows the MMD change as the finished reference, exactly as it landed with its tests, and points you at two rig conventions that are genuinely still open, each with the bones that fail today. The community, triage, and first-contribution pages also appear in the docs sidebar under Guides instead of being reachable only from the README, and the triage page now explains every label the repo actually uses.",
+			"tags": [
+				"docs",
+				"fix"
+			],
+			"link": "/docs/first-contribution"
+		},
+		{
 			"date": "2026-08-24",
 			"title": "The pump.fun pill mascot is now a rigged, drivable avatar at /pill",
 			"summary": "pump.fun verified $THREE as officially ours, so we rigged their pill mascot and built it a stage. Walk it around with WASD or a touch joystick, run, jump, wave, dance, and drag to orbit. The model arrived as a static 297,000-triangle capsule with four stubby nubs, which our humanoid auto-rigger cannot read because there is no neck, no head and no long limbs to find. It now carries a 52-bone skeleton with canonical bone names, six clips authored for its own proportions, and 44,544 triangles in a 2.6 MB file, which means the entire three.ws animation library retargets onto it as well. Download the GLB from the page and open it in Blender, Unity, or anything that reads glTF.",

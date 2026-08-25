@@ -15,6 +15,14 @@
 			<description>The long-form case for $THREE: what three.ws is, every utility and sink the token has, how platform revenue routes into buybacks, where it trades and is verified, the ecosystem footprint, the roadmap, and every risk the platform documents about itself.</description>
 		</item>
 		<item>
+			<title>The first-contribution guide now hands you real open work, and the docs sidebar can find it</title>
+			<link>https://three.ws/docs/first-contribution</link>
+			<guid isPermaLink="false">2026-08-25:The first-contribution guide now hands you real open work, and the docs sidebar can find it</guid>
+			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>The 15-minute contributor guide walked through adding MikuMikuDance rig support as its example, but that support had already shipped, so anyone following it literally would have re-done merged work and been told a bone was unmapped when it was not. It now shows the MMD change as the finished reference, exactly as it landed with its tests, and points you at two rig conventions that are genuinely still open, each with the bones that fail today. The community, triage, and first-contribution pages also appear in the docs sidebar under Guides instead of being reachable only from the README, and the triage page now explains every label the repo actually uses.</description>
+		</item>
+		<item>
 			<title>The full $THREE thesis is now a single document</title>
 			<link>https://three.ws/three-token</link>
 			<guid isPermaLink="false">2026-08-25:The full $THREE thesis is now a single document</guid>
