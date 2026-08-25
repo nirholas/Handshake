@@ -2385,7 +2385,7 @@
 				{
 					"path": "/dashboard/analytics",
 					"title": "Dashboard · Analytics",
-					"description": "API call volume, x402 spend, and per-agent usage breakdowns.",
+					"description": "Revenue over time, revenue by skill, widget views and chats, conversion funnel, and per-agent performance across your three.ws agents.",
 					"auth": "required",
 					"indexable": false,
 					"added": "2026-05-25"

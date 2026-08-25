@@ -37,7 +37,8 @@ let me = null;
 		return;
 	}
 	const main = document.querySelector('.dn-main-inner') || document.body;
-	main.innerHTML = `<h1 class="dn-h1">Analytics</h1><div class="dn-panel"><div class="dn-panel-title" style="color:var(--nxt-danger)">Failed to load</div><div class="dn-panel-sub">${esc(err?.message || 'unknown')}</div><button class="dn-btn" data-action="reload">Reload</button></div>`;
+	main.innerHTML = `<h1 class="dn-h1">Analytics</h1><div class="dn-panel"><div class="dn-panel-title" style="color:var(--nxt-danger)">Failed to load</div><div class="dn-panel-sub">${esc(err?.message || 'unknown')}</div><button type="button" class="dn-btn" data-action="reload">Reload</button></div>`;
+	main.querySelector('[data-action="reload"]')?.addEventListener('click', () => location.reload());
 });
 
 function renderSkeletons(root) {
@@ -56,12 +57,11 @@ async function loadAndRender(root) {
 	const from = new Date(Date.now() - range.days * 86400_000).toISOString();
 	const to = new Date().toISOString();
 
-	const [revenue, agents, widgets, summary, monRevenue, retention] = await Promise.all([
+	const [revenue, agents, widgets, summary, retention] = await Promise.all([
 		safe(() => get(`/api/billing/revenue?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&granularity=${range.granularity}`)),
 		safe(() => get('/api/agents?limit=50')),
 		safe(() => get('/api/widgets')),
 		safe(() => get('/api/billing/summary')),
-		safe(() => get(`/api/monetization/revenue?period=${range.key}`)),
 		// Platform-wide week-2 retention on minted agents. Admin-only upstream, so
 		// only an admin session asks for it. Every other user would get a
 		// guaranteed 403, which `safe` swallows but the browser still logs as a
@@ -846,9 +846,9 @@ function injectStyles() {
 	const style = document.createElement('style');
 	style.id = 'ana-styles';
 	style.textContent = `
-.ana-root { display: flex; flex-direction: column; gap: 18px; }
+.ana-root { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
 
-.ana-range-bar { display: flex; gap: 6px; margin-bottom: 2px; }
+.ana-range-bar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 2px; }
 .ana-range-btn { padding: 6px 16px; border: 1px solid var(--nxt-stroke); border-radius: 8px; background: none; color: var(--nxt-ink-dim); font: inherit; font-size: 12px; font-weight: 500; cursor: pointer; transition: background 0.12s, color 0.12s, border-color 0.12s; }
 .ana-range-btn:hover { background: rgba(255,255,255,0.04); color: var(--nxt-ink); }
 .ana-range-btn.is-active { background: rgba(74,222,128,0.12); color: #4ade80; border-color: rgba(74,222,128,0.3); }
@@ -873,6 +873,7 @@ function injectStyles() {
 .ana-ret-swatch.is-open { background: rgba(148,163,184,0.45); }
 
 .ana-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.ana-two-col > * { min-width: 0; }
 
 .ana-tbl-wrap { overflow-x: auto; margin-top: 12px; }
 .ana-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
