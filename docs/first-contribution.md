@@ -40,61 +40,106 @@ three.ws ships one library of pre-baked animation clips and plays them on *any* 
 
 ### Check what is missing
 
-```js
-// scratch.mjs
-import { canonicalizeBoneName } from './src/glb-canonicalize.js';
-console.log(canonicalizeBoneName('左腕'));   // null  → not supported yet
-console.log(canonicalizeBoneName('upperarm_l')); // 'LeftArm' → already supported
-```
+No scratch files in the repo root: probe the function straight from the shell.
 
 ```bash
-node scratch.mjs
+node --input-type=module -e "
+import { canonicalizeBoneName as c } from './src/glb-canonicalize.js';
+for (const n of ['left_arm_joint', 'hips_joint', '左腕', 'upperarm_l']) console.log(n, '->', c(n));
+"
 ```
 
-`null` means the bone would be dropped and the rig would score below the retarget coverage floor.
+```
+left_arm_joint -> null        Apple / ARKit rigs: not supported yet (issue #110)
+hips_joint -> null
+左腕 -> LeftArm               MikuMikuDance: supported, added 2026-08-21
+upperarm_l -> LeftArm         Unreal mannequin: supported
+```
 
-### Make the change
+`null` means the bone would be dropped, and a rig with enough of those scores below the retarget coverage floor and falls back to a default body.
 
-Bone-name variants live in the `EXTRA_ALIASES` map in [`src/glb-canonicalize.js`](../src/glb-canonicalize.js). Entries are keyed by a separator-stripped, lowercased form, and the `put()` helper does that normalization for you. First spelling wins, so listing order is priority order.
+### The reference: how MikuMikuDance was added
 
-A MikuMikuDance rig, for example, names bones in Japanese with a 左 / 右 side prefix:
+MMD support is the most recent convention to land, and it is the shape every new one should take. This is the code that actually shipped in [`src/glb-canonicalize.js`](../src/glb-canonicalize.js), inside the `EXTRA_ALIASES` block. Entries are keyed by a separator-stripped, lowercased form, and the `put()` helper does that normalization for you. First spelling wins, so listing order is priority order.
 
 ```js
-// MikuMikuDance (MMD) skeletons name bones in Japanese, side-prefixed
-// with 左 (left) / 右 (right). Extremely common in the VRM/anime avatar
-// ecosystem, and none of these spellings share a stem with any Latin rig.
+// MikuMikuDance (PMX/PMD) skeletons name every bone in Japanese, with the
+// side carried by a leading 左 (left) / 右 (right) character. No spelling
+// here shares a stem with any Latin convention, so the whole rig previously
+// mapped zero joints and animated nothing. Sides are listed explicitly
+// rather than derived, because the SIDED table below swaps Latin side
+// tokens (left→right, l→r, L→R) and cannot reach a Japanese prefix.
+//
+// Deliberately NOT mapped: the IK targets (左足ＩＫ, 左つま先ＩＫ) and the
+// twist bones (左腕捩, 左手捩). Neither is a chain joint. MMD drives the leg
+// chain from the IK target, so binding a clip to it would fight the chain
+// it is supposed to solve, and the twist bones are secondary deformers that
+// tear the mesh when rotated as if they were the limb.
 for (const [v, c] of [
-	['センター', 'Hips'], ['上半身', 'Spine'], ['上半身2', 'Spine1'],
+	['センター', 'Hips'], ['下半身', 'Hips'],
+	['上半身', 'Spine'], ['上半身2', 'Spine1'],
 	['首', 'Neck'], ['頭', 'Head'],
 ]) put(v, c);
-for (const [side, prefix] of [['左', 'Left'], ['右', 'Right']]) {
-	put(`${side}肩`,   `${prefix}Shoulder`);
-	put(`${side}腕`,   `${prefix}Arm`);
-	put(`${side}ひじ`, `${prefix}ForeArm`);
-	put(`${side}手首`, `${prefix}Hand`);
-	put(`${side}足`,   `${prefix}UpLeg`);
-	put(`${side}ひざ`, `${prefix}Leg`);
-	put(`${side}足首`, `${prefix}Foot`);
-	put(`${side}つま先`, `${prefix}ToeBase`);
+for (const [jp, side] of [['左', 'Left'], ['右', 'Right']]) {
+	for (const [v, c] of [
+		['肩', 'Shoulder'], ['腕', 'Arm'], ['ひじ', 'ForeArm'], ['手首', 'Hand'],
+		['足', 'UpLeg'], ['ひざ', 'Leg'], ['足首', 'Foot'], ['つま先', 'ToeBase'],
+	]) put(`${jp}${v}`, `${side}${c}`);
+	// MMD finger chains. 親指 (thumb) is numbered 0-2, every other digit 1-3.
+	for (const [jp2, cf] of [['人指', 'Index'], ['人差指', 'Index'], ['中指', 'Middle'], ['薬指', 'Ring'], ['小指', 'Pinky']]) {
+		for (let n = 1; n <= 3; n++) put(`${jp}${jp2}${n}`, `${side}Hand${cf}${n}`);
+	}
+	for (let n = 0; n <= 2; n++) put(`${jp}親指${n}`, `${side}HandThumb${n + 1}`);
 }
 ```
 
-### Prove it
+Three things to copy from it, beyond the mapping itself:
 
-Add a case to [`tests/glb-canonicalize.test.js`](../tests/glb-canonicalize.test.js) beside the existing per-convention blocks:
+- **The comment says what was left out and why.** The IK and twist bones are the interesting decision here, and the next reader needs the reasoning, not just the table.
+- **Fingers are not optional.** 30 of the 53 tracks in every clip address a finger joint, so a rig whose hands do not map scores around 40% coverage and gets no animation at all.
+- **Rig Doctor learned the name too.** A matching fingerprint went into `CONVENTIONS` in [`src/rig-report.js`](../src/rig-report.js), so an MMD upload is identified on sight instead of reported as unrecognised, and a row went into the table in [`docs/rig-doctor.md`](rig-doctor.md).
+
+The tests that shipped with it, in [`tests/glb-canonicalize.test.js`](../tests/glb-canonicalize.test.js), use the file's `describe` + `it.each` table style. Match it:
 
 ```js
-it('maps an MMD (Japanese) skeleton', () => {
-	expect(canonicalizeBoneName('センター')).toBe('Hips');
-	expect(canonicalizeBoneName('左腕')).toBe('LeftArm');
-	expect(canonicalizeBoneName('右ひざ')).toBe('RightLeg');
-});
+describe('MMD (MikuMikuDance) Japanese skeleton', () => {
+	it.each([
+		['センター', 'Hips'],
+		['上半身', 'Spine'],
+		['首', 'Neck'],
+	])('centre chain: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
 
-it('never crosses sides', () => {
-	expect(canonicalizeBoneName('左足首')).toBe('LeftFoot');
-	expect(canonicalizeBoneName('右足首')).toBe('RightFoot');
+	it.each([
+		['左腕', 'LeftArm'],
+		['右ひざ', 'RightLeg'],
+	])('limbs: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
+	it('leaves IK targets, twist bones, and non-joint control bones unmapped', () => {
+		for (const name of ['左足ＩＫ', '左腕捩', '全ての親']) {
+			expect(canonicalizeBoneName(name), name).toBeNull();
+		}
+	});
+
+	it('never crosses sides', () => {
+		const left = ['左肩', '左腕', '左ひじ', '左手首', '左足', '左ひざ', '左足首'];
+		for (const name of left) expect(canonicalizeBoneName(name)?.startsWith('Left'), name).toBe(true);
+		for (const name of left.map((n) => n.replace(/^左/, '右'))) expect(canonicalizeBoneName(name)?.startsWith('Right'), name).toBe(true);
+	});
 });
 ```
+
+### Now do one that is actually open
+
+MMD is done, so do not re-submit it. Pick a convention that still returns `null` and give it the same four-part treatment (alias map, tests, Rig Doctor fingerprint, docs row). Two are verified open and waiting, each with the file, the bones, and the verification command spelled out:
+
+- [#110](https://github.com/nirholas/three.ws/issues/110): Apple / ARKit rigs, which suffix every joint with `_joint` (`hips_joint`, `left_arm_joint`). 0 of 10 joints map today.
+- [#111](https://github.com/nirholas/three.ws/issues/111): Kinect rigs, which put the side word last (`ShoulderLeft`, `ElbowLeft`, `SpineBase`). 0 of 10 map today.
+
+Comment on the one you are taking, then:
 
 Run just that file. It takes about a second:
 
@@ -116,11 +161,11 @@ Two rules that will save you a review round:
 ## 4. Open the pull request
 
 ```bash
-git checkout -b feat/mmd-bone-names
-npx prettier --write src/glb-canonicalize.js tests/glb-canonicalize.test.js
-git add src/glb-canonicalize.js tests/glb-canonicalize.test.js
-git commit -m "feat(rig): map MikuMikuDance Japanese bone names to the canonical skeleton"
-git push origin feat/mmd-bone-names
+git checkout -b feat/arkit-bone-names
+npx prettier --write src/glb-canonicalize.js src/rig-report.js tests/glb-canonicalize.test.js tests/rig-report.test.js docs/rig-doctor.md
+git add src/glb-canonicalize.js src/rig-report.js tests/glb-canonicalize.test.js tests/rig-report.test.js docs/rig-doctor.md
+git commit -m "feat(rig): map Apple ARKit _joint-suffixed bone names to the canonical skeleton"
+git push origin feat/arkit-bone-names
 ```
 
 Then open the PR on GitHub. In the description say what changed, what you tested it against, and paste the test output. If you have a real GLB that exercises the change, link it.
