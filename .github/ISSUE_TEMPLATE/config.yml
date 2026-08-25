@@ -1,26 +1,26 @@
 blank_issues_enabled: false
 contact_links:
-  - name: 💬 Ask in GitHub Discussions
+  - name: Ask in GitHub Discussions
     url: https://github.com/nirholas/three.ws/discussions
     about: Design questions, feature ideas, and anything worth keeping searchable.
-  - name: 🚀 Your first contribution
+  - name: Your first contribution
     url: https://github.com/nirholas/three.ws/blob/main/docs/first-contribution.md
-    about: Clone to open PR in 15 minutes, with a worked example.
-  - name: ✈️ Telegram community
+    about: Clone to open PR in 15 minutes, with a worked example and two open issues to take.
+  - name: Telegram community
     url: https://t.me/three_ws_community
     about: Real-time chat and quick help from other builders.
-  - name: 𝕏 X community
+  - name: X community
     url: https://x.com/i/communities/1923523161230078106
     about: Demos, avatars people built, and launch chatter.
-  - name: 🔷 IBM Community group
+  - name: IBM Community group
     url: https://community.ibm.com/community/user/usergroup?CommunityKey=e71510cc-d953-408f-9a1c-019f5c0a7016
     about: Enterprise and integration discussion with the IBM developer community.
-  - name: 🔒 Report a security vulnerability
+  - name: Report a security vulnerability
     url: https://github.com/nirholas/three.ws/security/advisories/new
     about: Privately report a security issue. Please do NOT open a public issue.
-  - name: 📧 Private or account-specific help
+  - name: Private or account-specific help
     url: mailto:support@three.ws
     about: Billing, account issues, or anything you would rather not post publicly.
-  - name: 📖 Documentation
+  - name: Documentation
     url: https://three.ws/docs
     about: Guides, API reference, and SDK docs.
