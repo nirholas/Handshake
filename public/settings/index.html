@@ -1287,7 +1287,8 @@
 				const xResult = _urlP.get('x');
 				if (xResult === 'connected') showMsg(msg, 'ok', 'X account connected successfully.');
 				else if (xResult === 'denied') showMsg(msg, 'err', 'X connection cancelled.');
-				else if (xResult === 'error') showMsg(msg, 'err', 'X connection failed — try again.');
+				else if (xResult === 'unconfigured') showMsg(msg, 'err', 'X connections are not enabled on this deployment, so the connect could not start.');
+				else if (xResult === 'error') showMsg(msg, 'err', 'X connection failed. Try again.');
 			}
 
 			function escHtml(s) {

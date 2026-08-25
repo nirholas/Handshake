@@ -134,7 +134,7 @@ export function redactUrl(rawUrl) {
 // fall back to an Accept that prefers HTML. Used so a human who hits a 5xx is
 // sent to the branded /500 page (carrying their support ref) while every API /
 // agent caller keeps receiving the JSON error envelope it expects.
-function wantsHtmlNavigation(req) {
+export function wantsHtmlNavigation(req) {
 	const m = req?.method || 'GET';
 	if (m !== 'GET' && m !== 'HEAD') return false;
 	const mode = req?.headers?.['sec-fetch-mode'];

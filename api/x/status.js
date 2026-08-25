@@ -6,6 +6,7 @@ import { getSessionUser } from '../_lib/auth.js';
 import { cors, method, wrap, error, json } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { getUserTier } from '../_lib/x-post.js';
+import { env } from '../_lib/env.js';
 import { revokeAllSeedConsentsForUser } from '../_lib/x-seed-consent.js';
 
 export default wrap(async (req, res) => {
@@ -35,6 +36,10 @@ export default wrap(async (req, res) => {
 	}
 
 	const tier = await getUserTier(user.id);
+	// Whether this deployment can start an X OAuth flow at all. Without it every
+	// caller of this endpoint renders a Connect X button that dead-ends on
+	// /api/auth/x/connect's not_configured refusal.
+	const configured = !!(env.X_OAUTH_CLIENT_ID && env.X_OAUTH_CLIENT_SECRET);
 
 	const rows = await sql`
 		select username, posts_this_month, month_resets_at, connected_at, last_posted_at
@@ -43,7 +48,8 @@ export default wrap(async (req, res) => {
 		limit 1
 	`;
 	const conn = rows[0];
-	if (!conn) return json(res, 200, { connected: false, tier: tier.tier, quota: tier.quota });
+	if (!conn)
+		return json(res, 200, { connected: false, configured, tier: tier.tier, quota: tier.quota });
 
 	let postsThisMonth = conn.posts_this_month;
 	if (new Date(conn.month_resets_at) <= new Date()) {
@@ -58,6 +64,7 @@ export default wrap(async (req, res) => {
 
 	return json(res, 200, {
 		connected: true,
+		configured,
 		username: conn.username,
 		tier: tier.tier,
 		quota: tier.quota,

@@ -359,7 +359,36 @@ describe('/api/x/status', () => {
 	it('reports a disconnected account without inventing a username', async () => {
 		queue.push([]);
 		const res = await call(status, { url: '/api/x/status' });
-		expect(res.json).toEqual({ connected: false, tier: 'free', quota: 5 });
+		expect(res.json).toEqual({ connected: false, configured: false, tier: 'free', quota: 5 });
+	});
+
+	// The dashboard X panel and the agent editor's Social tab both render a
+	// "Connect X" button off this payload, and /api/auth/x/connect can only refuse
+	// when the OAuth app credentials are absent. Without this flag those surfaces
+	// have no way to tell, so they offer a button that dead-ends.
+	it('says whether this deployment can start an X OAuth flow at all', async () => {
+		queue.push([]);
+		expect((await call(status, { url: '/api/x/status' })).json.configured).toBe(false);
+
+		process.env.X_OAUTH_CLIENT_ID = 'test-client-id';
+		process.env.X_OAUTH_CLIENT_SECRET = 'test-client-secret';
+		try {
+			queue.push([]);
+			expect((await call(status, { url: '/api/x/status' })).json.configured).toBe(true);
+
+			getUserTier.mockResolvedValue({ tier: 'free', quota: 5, min_interval_min: 30 });
+			queue.push([{
+				username: 'threews',
+				posts_this_month: 0,
+				month_resets_at: new Date(Date.now() + 86_400_000).toISOString(),
+				connected_at: '2026-01-01T00:00:00.000Z',
+				last_posted_at: null,
+			}]);
+			expect((await call(status, { url: '/api/x/status' })).json.configured).toBe(true);
+		} finally {
+			delete process.env.X_OAUTH_CLIENT_ID;
+			delete process.env.X_OAUTH_CLIENT_SECRET;
+		}
 	});
 
 	it('revokes seed consents on disconnect', async () => {

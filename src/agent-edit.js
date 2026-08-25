@@ -2322,6 +2322,10 @@ async function ensureSocialTab() {
   if (xParam === 'connected') {
     $('x-post-status').textContent = 'X connected.';
     $('x-post-status').className = 'form-status ok';
+  } else if (xParam === 'unconfigured') {
+    $('x-post-status').textContent =
+      'X connections are not enabled on this deployment, so the connect could not start.';
+    $('x-post-status').className = 'form-status err';
   } else if (xParam === 'error' || xParam === 'denied') {
     $('x-post-status').textContent = `X connect failed (${xParam}).`;
     $('x-post-status').className = 'form-status err';
@@ -2345,6 +2349,15 @@ function renderXStatus() {
   const connectBtn = $('x-connect-btn');
   const disconnectBtn = $('x-disconnect-btn');
   if (!xConnection?.connected) {
+    // Without X OAuth credentials the connect endpoint can only refuse, so the
+    // button stays hidden and the reason is stated instead of dead-ending.
+    if (xConnection?.configured === false) {
+      el.textContent =
+        'X connections are not enabled on this deployment. Ask an operator to configure X OAuth.';
+      connectBtn.hidden = true;
+      disconnectBtn.hidden = true;
+      return;
+    }
     el.textContent = 'Not connected.';
     connectBtn.hidden = false;
     disconnectBtn.hidden = true;

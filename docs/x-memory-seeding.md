@@ -282,6 +282,18 @@ gcloud run services update three-ws-api --region us-central1 \
 Until both are present, `GET /api/agents/:id/memory/seed/x` answers
 `configured: false` and the Settings card says X connections are not enabled on
 this deployment, rather than offering a Connect button that could not complete.
+`GET /api/x/status` carries the same `configured` flag, so the posting surfaces
+that read it (the dashboard's X panel, the agent editor's Social tab) hide their
+Connect button for the same reason instead of offering one that dead-ends.
+
+If the connect URL is reached anyway (an old tab, a bookmark, a link someone
+saved), `/api/auth/x/connect` distinguishes a top-level browser navigation from
+a programmatic call. A navigation is redirected back to the surface it came from
+with `?x=unconfigured`, which both pages render as an explanation; an API or
+agent caller still receives the `501 not_configured` JSON envelope it parses. No
+PKCE state cookie is set on that path, so nothing is left behind for a callback
+that can never arrive.
+
 Nothing else in the lane changes: the disclosure, the consent grant, and
 revocation behave identically once the credentials are in place.
 
@@ -311,3 +323,4 @@ Seeded rows in `agent_memories` are found by tag (`tags && '{x_seed}'`) and by
 | Transform tests | [tests/api/x-memory-seed-transform.test.js](../tests/api/x-memory-seed-transform.test.js), [tests/api/agents-memory-seed.test.js](../tests/api/agents-memory-seed.test.js) |
 | Consent gate, scope gate and revocation tests | [tests/api/x-memory-seed-consent.test.js](../tests/api/x-memory-seed-consent.test.js), [tests/api/x-scopes.test.js](../tests/api/x-scopes.test.js) |
 | What the connect redirect asks X for | [tests/api/x-connect-scope.test.js](../tests/api/x-connect-scope.test.js) |
+| How connect refuses when no X OAuth app is configured | [tests/api/x-connect-unconfigured.test.js](../tests/api/x-connect-unconfigured.test.js) |

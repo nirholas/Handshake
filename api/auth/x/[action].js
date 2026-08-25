@@ -21,7 +21,7 @@ import {
 	hmacSha256,
 	constantTimeEquals,
 } from '../../_lib/crypto.js';
-import { cors, method, wrap, error, redirect, rateLimited } from '../../_lib/http.js';
+import { cors, method, wrap, error, redirect, rateLimited, wantsHtmlNavigation } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { env } from '../../_lib/env.js';
 import { revokeAllSeedConsentsForUser } from '../../_lib/x-seed-consent.js';
@@ -120,13 +120,46 @@ export function decryptToken(ciphertext) {
 	]).toString('utf8');
 }
 
+// ── Where a finished or refused connect sends the browser back to ────────────
+
+// A read-only connect can only have come from the memory-seeding card, so it
+// goes back to Settings (with the agent it targets) rather than to the agent
+// editor's posting tab, which is about the write access that grant deliberately
+// does not carry. The callback and the connect endpoint both route through this
+// so a refusal lands on the same surface a success would.
+function connectReturnUrl({ scopeSet, agentId, outcome }) {
+	if (scopeSet === 'read') {
+		const q = new URLSearchParams({ tab: 'connected-accounts', x: outcome });
+		if (agentId) q.set('agent_id', agentId);
+		return `/settings?${q.toString()}`;
+	}
+	return agentId
+		? `/agents/${encodeURIComponent(agentId)}/edit?tab=social&x=${outcome}`
+		: `/settings?tab=connected-accounts&x=${outcome}`;
+}
+
 // ── GET /api/auth/x/connect ───────────────────────────────────────────────────
 
 async function handleConnect(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET'])) return;
 
+	const url = new URL(req.url, env.APP_ORIGIN);
+	const agentId = url.searchParams.get('agent_id') || null;
+	const scopeSet = resolveScopeSet(url.searchParams.get('scope'));
+
 	if (!env.X_OAUTH_CLIENT_ID || !env.X_OAUTH_CLIENT_SECRET) {
+		// Every Connect X button on the site is an anchor or a location assignment,
+		// so an unconfigured deployment used to answer a top-level navigation with a
+		// raw JSON body in the address bar. Send the browser back to the surface it
+		// came from with an outcome the page explains instead; API and agent callers
+		// still get the 501 envelope they parse.
+		if (wantsHtmlNavigation(req)) {
+			return redirect(
+				res,
+				connectReturnUrl({ scopeSet: scopeSet.name, agentId, outcome: 'unconfigured' }),
+			);
+		}
 		return error(res, 501, 'not_configured', 'X OAuth is not configured');
 	}
 
@@ -135,10 +168,6 @@ async function handleConnect(req, res) {
 
 	const user = await getSessionUser(req);
 	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
-
-	const url = new URL(req.url, env.APP_ORIGIN);
-	const agentId = url.searchParams.get('agent_id') || null;
-	const scopeSet = resolveScopeSet(url.searchParams.get('scope'));
 
 	const codeVerifier = randomToken(32); // 43-char base64url
 	const codeChallenge = await sha256Base64Url(codeVerifier);
@@ -192,20 +221,10 @@ async function handleCallback(req, res) {
 	if (!stateData) return error(res, 400, 'invalid_state', 'OAuth state expired or invalid');
 
 	const { codeVerifier, userId, agentId: stateAgentId, scopeSet } = stateData;
-	// Return to the surface that started the connect. A read-only connect can only
-	// have come from the memory-seeding card, so it goes back to Settings (with
-	// the agent it targets) rather than to the agent editor's posting tab, which
-	// is about the write access this grant deliberately does not carry.
-	const backTo = (outcome) => {
-		if (scopeSet === 'read') {
-			const q = new URLSearchParams({ tab: 'connected-accounts', x: outcome });
-			if (stateAgentId) q.set('agent_id', stateAgentId);
-			return `/settings?${q.toString()}`;
-		}
-		return stateAgentId
-			? `/agents/${encodeURIComponent(stateAgentId)}/edit?tab=social&x=${outcome}`
-			: `/settings?tab=connected-accounts&x=${outcome}`;
-	};
+	// Return to the surface that started the connect, the same one a refusal at
+	// /connect lands on.
+	const backTo = (outcome) =>
+		connectReturnUrl({ scopeSet, agentId: stateAgentId, outcome });
 	const successRedirect = backTo('connected');
 	const errorRedirect = backTo('error');
 	const deniedRedirect = backTo('denied');

@@ -995,7 +995,12 @@ async function loadXPanel({ host, meterEl, bodyEl, avatar }) {
 
 	if (!status.connected) {
 		meterEl.textContent = '';
-		bodyEl.innerHTML = `
+		// A deployment without X OAuth credentials cannot start the flow, so say so
+		// rather than offering a button whose only outcome is a refusal.
+		bodyEl.innerHTML =
+			status.configured === false
+				? `<p class="muted" style="font-size:13px;margin:0">X connections are not enabled on this deployment, so this agent cannot post to X yet. Ask an operator to configure X OAuth.</p>`
+				: `
 			<p class="muted" style="font-size:13px;margin:0 0 10px">Connect your X account to let this agent post tweets. Free tier: 5 posts/month per account.</p>
 			<a class="btn" href="/api/auth/x/connect?agent_id=${encodeURIComponent(avatar.agent_id || avatar.id)}">Connect X</a>
 		`;
