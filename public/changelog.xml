@@ -47,6 +47,14 @@
 			<description>A long-form research thesis on $THREE now lives in the docs: what three.ws is, every way the token is used (hold-to-access tiers, plan and pass discounts, marketplace and labor escrow, game cosmetics, gated embeds, deploy-fee waivers), how platform revenue is routed into buybacks, where the token trades and is verified, the ecosystem footprint, the roadmap, and every risk the platform documents about itself, each claim sourced to the code.</description>
 		</item>
 		<item>
+			<title>three.ws crossed 100 stars on GitHub</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-25:three.ws crossed 100 stars on GitHub</guid>
+			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>The open-source repo behind three.ws passed 100 GitHub stars, with 101 npm packages under @three-ws, 72 MCP servers in the official registry, 11 contributors, and 9,508 commits since April 14. Thank you for building with us.</description>
+		</item>
+		<item>
 			<title>Weekly Report #1: everything shipped since day one, week by week</title>
 			<link>https://three.ws/docs/weekly-report-1</link>
 			<guid isPermaLink="false">2026-08-25:Weekly Report #1: everything shipped since day one, week by week</guid>
