@@ -23,6 +23,22 @@
 			<description>The first three.ws weekly report: a week-by-week roundup of everything shipped from the first commit on 2026-04-14 through 2026-08-25, with every launch, partnership, announcement, and where $THREE fits.</description>
 		</item>
 		<item>
+			<title>Connect X no longer dead-ends when X sign-in is switched off</title>
+			<link>https://three.ws/settings</link>
+			<guid isPermaLink="false">2026-08-25:Connect X no longer dead-ends when X sign-in is switched off</guid>
+			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Seeding an agent's memory from X starts by connecting your X account, and on a deployment where X sign-in is not switched on every Connect X button led to a page of raw error text with no way back. Those buttons now say X connections are not enabled and why, on the dashboard's X panel and in the agent editor's Social tab as well as in Settings, and following an old connect link lands you back on the page you started from with the reason stated instead of stranding you. Nothing about consent, seeding, or revocation changes.</description>
+		</item>
+		<item>
+			<title>Creator Gallery cards stay put while you scroll, and the leaderboards show they are loading</title>
+			<link>https://three.ws/creations</link>
+			<guid isPermaLink="false">2026-08-25:Creator Gallery cards stay put while you scroll, and the leaderboards show they are loading</guid>
+			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>On /creations, the 3D preview on every gallery card and leaderboard row was accidentally accepting drag input, so a card could be flung out of frame and a swipe over one scrolled nothing on a phone instead of moving the feed. The previews now spin on their own and hand the drag back to the page. The trending and top-creator columns also render shimmer rows while they load instead of sitting blank, the browse tally no longer shows a stale number over a loading grid, and keyboard focus on the search field is now clearly outlined.</description>
+		</item>
+		<item>
 			<title>Text-to-3D no longer hangs when the concept painter stalls</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-08-25:Text-to-3D no longer hangs when the concept painter stalls</guid>

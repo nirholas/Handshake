@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-25T15:53:22.224Z",
+	"generated_at": "2026-08-25T16:27:42.773Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -24,6 +24,27 @@
 			"link": "/docs/weekly-report-1",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-08-25",
+			"type": "update",
+			"title": "Connect X no longer dead-ends when X sign-in is switched off",
+			"summary": "Seeding an agent's memory from X starts by connecting your X account, and on a deployment where X sign-in is not switched on every Connect X button led to a page of raw error text with no way back. Those buttons now say X connections are not enabled and why, on the dashboard's X panel and in the agent editor's Social tab as well as in Settings, and following an old connect link lands you back on the page you started from with the reason stated instead of stranding you. Nothing about consent, seeding, or revocation changes.",
+			"link": "/settings",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-08-25",
+			"type": "update",
+			"title": "Creator Gallery cards stay put while you scroll, and the leaderboards show they are loading",
+			"summary": "On /creations, the 3D preview on every gallery card and leaderboard row was accidentally accepting drag input, so a card could be flung out of frame and a swipe over one scrolled nothing on a phone instead of moving the feed. The previews now spin on their own and hand the drag back to the page. The trending and top-creator columns also render shimmer rows while they load instead of sitting blank, the browse tally no longer shows a stale number over a loading grid, and keyboard focus on the search field is now clearly outlined.",
+			"link": "/creations",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{

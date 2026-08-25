@@ -3,6 +3,25 @@
   "entries": [
     {
       "date": "2026-08-25",
+      "title": "Compare reads correctly on a phone and stops mislabelling gains and losses",
+      "summary": "The side-by-side coin comparison had three problems worth fixing. Percentage rows rendered every number the same neutral colour, so a loss looked like a gain unless it happened to be the row winner, and the winning cell was painted green even when it was a 37% drawdown; gains are now green, losses red, and the row winner is marked by weight and a tint that reads on either. The performance overlay gained date labels along its bottom edge, and on a phone it now draws at the width of the screen instead of shrinking a desktop-sized chart to a third of its height with unreadable text. Switching range fast could also leave a year of history drawn under a 7-day label; the chart now ignores a slow answer that a newer range has already replaced.",
+      "tags": [
+        "fix",
+        "improvement"
+      ],
+      "link": "/compare"
+    },
+    {
+      "date": "2026-08-25",
+      "title": "Connect X no longer dead-ends when X sign-in is switched off",
+      "summary": "Seeding an agent's memory from X starts by connecting your X account, and on a deployment where X sign-in is not switched on every Connect X button led to a page of raw error text with no way back. Those buttons now say X connections are not enabled and why, on the dashboard's X panel and in the agent editor's Social tab as well as in Settings, and following an old connect link lands you back on the page you started from with the reason stated instead of stranding you. Nothing about consent, seeding, or revocation changes.",
+      "tags": [
+        "fix"
+      ],
+      "link": "/settings"
+    },
+    {
+      "date": "2026-08-25",
       "title": "three.ws crossed 100 stars on GitHub",
       "summary": "The open-source repo behind three.ws passed 100 GitHub stars: 9,508 commits from 21 contributors, 101 npm packages under @three-ws, 72 MCP servers in the official registry, 4,519 x402 endpoints with 110,416 on-chain settlements, and 3,000 validator attestations on Solana. Thank you for building with us.",
       "tags": [
@@ -24827,6 +24846,16 @@
         "docs"
       ],
       "link": "/docs/weekly-report-1"
+    },
+    {
+      "date": "2026-08-25",
+      "title": "Creator Gallery cards stay put while you scroll, and the leaderboards show they are loading",
+      "summary": "On /creations, the 3D preview on every gallery card and leaderboard row was accidentally accepting drag input, so a card could be flung out of frame and a swipe over one scrolled nothing on a phone instead of moving the feed. The previews now spin on their own and hand the drag back to the page. The trending and top-creator columns also render shimmer rows while they load instead of sitting blank, the browse tally no longer shows a stale number over a loading grid, and keyboard focus on the search field is now clearly outlined.",
+      "tags": [
+        "fix",
+        "improvement"
+      ],
+      "link": "/creations"
     }
   ]
 }
