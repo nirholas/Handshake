@@ -24,7 +24,7 @@ export function renderTopbar(pathname) {
 			<button type="button" class="dn-topbar-search" data-action="open-palette" aria-label="Open command palette">
 				<span style="display:inline-flex;align-items:center;gap:8px">
 					<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="4.5"/><path d="M13 13l-2.6-2.6"/></svg>
-					Search or jump to…
+					<span data-slot="search-label">Search or jump to…</span>
 				</span>
 				<kbd>⌘K</kbd>
 			</button>

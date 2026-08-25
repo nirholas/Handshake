@@ -431,9 +431,13 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 }
 
 @media (max-width: 880px) {
+	/* minmax(0, 1fr), not a bare 1fr: a bare 1fr floors the column at the
+	   topbar's min-content width, so at 320px the search pill plus the account
+	   button pushed the whole shell (topbar AND main) out to ~417px and every
+	   dashboard page clipped its right edge. */
 	.dn-shell,
 	.dn-shell[data-rail-collapsed='true'] {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 		grid-template-rows: var(--dn-topbar-h) 1fr 64px;
 		grid-template-areas: 'topbar' 'main' 'rail';
 	}
@@ -542,11 +546,17 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 
 	/* Topbar shrink at ≤880px: hide breadcrumb, let search flex. */
 	.dn-topbar-crumb { display: none; }
+	.dn-topbar { min-width: 0; }
 	.dn-topbar-search {
 		min-width: 0;
 		flex: 1 1 auto;
+		overflow: hidden;
 	}
+	.dn-topbar-search > span { min-width: 0; overflow: hidden; }
+	.dn-topbar-search > span > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 	.dn-topbar-search kbd { display: none; }
+	.dn-topbar-user { flex: 0 1 auto; min-width: 0; }
+	.dn-topbar-user [data-slot='label'] { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 9ch; }
 	/* Tap targets ≥44px. */
 	.dn-topbar-btn { min-height: 44px; min-width: 44px; justify-content: center; }
 	.dn-rail-mobile-slot { min-height: 44px; }
@@ -580,6 +590,7 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 	/* Single-column reflow helper for page grids. */
 	.dn-panel-grid { grid-template-columns: 1fr !important; }
 	.dn-main-inner { padding: 14px 14px 80px; }
+	.dn-topbar { padding: 0 14px; gap: 10px; }
 }
 
 /* ==========================================================================
