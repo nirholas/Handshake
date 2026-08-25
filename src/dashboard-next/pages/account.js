@@ -94,7 +94,7 @@ async function copyToClipboard(text) {
 		<h1 class="dn-h1">Account</h1>
 		<p class="dn-h1-sub">Profile, wallets, and the audit trail.</p>
 
-		<div style="display:grid;gap:16px">
+		<div style="display:grid;grid-template-columns:minmax(0,1fr);gap:16px">
 			<section class="dn-panel" data-section="profile">
 				<div data-slot="profile"></div>
 			</section>
@@ -274,11 +274,11 @@ function renderProviderKeys(host, keyStatus) {
 		const isSet = !!keyStatus[provider]?.set;
 		return `
 			<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--nxt-stroke);flex-wrap:wrap" data-provider="${esc(provider)}">
-				<div style="flex:1;min-width:180px">
+				<div style="flex:1 1 180px;min-width:0">
 					<div style="font-size:13.5px;font-weight:500;color:var(--nxt-ink)">${esc(meta.label)}</div>
-					<a href="${esc(meta.url)}" target="_blank" rel="noopener" style="font-size:12px;color:var(--nxt-ink-fade)">${esc(meta.url)}</a>
+					<a href="${esc(meta.url)}" target="_blank" rel="noopener" style="font-size:12px;color:var(--nxt-ink-fade);overflow-wrap:anywhere">${esc(meta.url)}</a>
 				</div>
-				<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+				<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0">
 					${isSet
 						? `<span class="dn-tag success">Key set</span>
 						   <button class="dn-btn danger" data-action="clear-key" data-provider="${esc(provider)}" style="padding:5px 10px;font-size:12px">Remove</button>`
@@ -286,7 +286,8 @@ function renderProviderKeys(host, keyStatus) {
 							   placeholder="${esc(meta.placeholder)}"
 							   aria-label="${esc(meta.label)} API key"
 							   style="background:rgba(255,255,255,0.04);border:1px solid var(--nxt-stroke-strong);border-radius:6px;
-							          padding:6px 10px;color:var(--nxt-ink);font-size:12.5px;width:260px;font-family:${MONO}"
+							          padding:6px 10px;color:var(--nxt-ink);font-size:12.5px;
+						          flex:1 1 200px;min-width:0;max-width:260px;font-family:${MONO}"
 							   autocomplete="off" spellcheck="false" />
 						   <button class="dn-btn primary" data-action="save-key" data-provider="${esc(provider)}" style="padding:6px 12px;font-size:12.5px">Save</button>`
 					}
@@ -695,6 +696,22 @@ function renderWallets(host, wallets) {
 
 // ── SNS ───────────────────────────────────────────────────────────────────
 
+// A resolver that answered for some wallets and failed for others leaves the
+// table honest but incomplete; name the gap and offer the retry rather than
+// letting the unchecked wallets read as "no domain".
+function appendSnsFailureNotice(rowsHost, failures, lookups, host, wallets) {
+	if (!failures.length) return;
+	rowsHost.insertAdjacentHTML(
+		'beforeend',
+		`<div role="status" style="padding:10px 2px 0;font-size:12px;color:var(--nxt-ink-fade)">
+			${failures.length} of ${lookups.length} wallets could not be checked against the SNS resolver.
+			<button class="dn-btn ghost" type="button" data-action="retry-sns" style="padding:2px 8px;font-size:12px">Retry</button>
+		</div>`,
+	);
+	rowsHost.querySelector('[data-action="retry-sns"]')
+		.addEventListener('click', () => renderSns(host, wallets));
+}
+
 async function renderSns(host, wallets) {
 	const solanaWallets = wallets.filter((w) => chainKey(w) === 'solana');
 	if (solanaWallets.length === 0) {
@@ -734,6 +751,8 @@ async function renderSns(host, wallets) {
 		return;
 	}
 
+	// Some wallets answered and none of them owns a domain. Say so, but never
+	// let a wallet we failed to check pass silently as one with no domain.
 	if (hits.length === 0) {
 		rowsHost.innerHTML = `
 			<div class="dn-empty" style="padding:32px 24px">
@@ -741,6 +760,7 @@ async function renderSns(host, wallets) {
 				<p>Set one of your wallets' primary .sol domain on-chain and it shows up here automatically.</p>
 				<a class="dn-btn" href="/vanity-wallet">+ Register a domain</a>
 			</div>`;
+		appendSnsFailureNotice(rowsHost, failures, lookups, host, wallets);
 		return;
 	}
 
@@ -781,17 +801,7 @@ async function renderSns(host, wallets) {
 		</div>
 	`;
 
-	if (failures.length) {
-		rowsHost.insertAdjacentHTML(
-			'beforeend',
-			`<div role="status" style="padding:10px 2px 0;font-size:12px;color:var(--nxt-ink-fade)">
-				${failures.length} of ${lookups.length} wallets could not be checked against the SNS resolver.
-				<button class="dn-btn ghost" type="button" data-action="retry-sns" style="padding:2px 8px;font-size:12px">Retry</button>
-			</div>`,
-		);
-		rowsHost.querySelector('[data-action="retry-sns"]')
-			.addEventListener('click', () => renderSns(host, wallets));
-	}
+	appendSnsFailureNotice(rowsHost, failures, lookups, host, wallets);
 
 	rowsHost.querySelectorAll('.dn-copy').forEach((btn) => {
 		btn.addEventListener('click', () => copyToClipboard(btn.dataset.copy));
