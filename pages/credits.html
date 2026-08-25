@@ -178,8 +178,8 @@
 					color 0.15s;
 			}
 			.seg button[aria-pressed='true'] {
-				background: var(--accent, #6c8cff);
-				color: #fff;
+				background: var(--btn-primary-bg, var(--accent, #6c8cff));
+				color: var(--btn-primary-fg, #0a0a0a);
 			}
 			.field {
 				margin-top: 1rem;
@@ -257,23 +257,32 @@
 				padding: 0.7rem 1.1rem;
 				width: 100%;
 				margin-top: 1rem;
-				background: var(--accent, #6c8cff);
-				color: #fff;
+				background: var(--btn-primary-bg, var(--accent, #6c8cff));
+				color: var(--btn-primary-fg, #0a0a0a);
 				transition:
-					filter 0.15s,
+					background 0.15s,
 					opacity 0.15s;
 			}
-			.btn:hover {
-				filter: brightness(1.08);
+			.btn:not(.secondary):hover:not(:disabled) {
+				background: var(--btn-primary-bg-hover, rgba(255, 255, 255, 0.88));
+			}
+			.btn:not(.secondary):active:not(:disabled) {
+				background: var(--btn-primary-bg-active, rgba(255, 255, 255, 0.76));
 			}
 			.btn:disabled {
-				opacity: 0.55;
-				cursor: not-allowed;
+				opacity: var(--disabled-opacity, 0.4);
+				cursor: var(--disabled-cursor, not-allowed);
 			}
 			.btn.secondary {
-				background: var(--surface-2, #1c1f27);
-				border: 1px solid var(--border, #262a33);
-				color: var(--text-primary, #e8ebf2);
+				background: var(--btn-secondary-bg, var(--surface-2, #1c1f27));
+				border: 1px solid var(--btn-secondary-border, var(--border, #262a33));
+				color: var(--btn-secondary-fg, var(--text-primary, #e8ebf2));
+			}
+			.btn.secondary:hover:not(:disabled) {
+				background: var(--btn-secondary-bg-hover, rgba(255, 255, 255, 0.12));
+			}
+			.btn.secondary:active:not(:disabled) {
+				background: var(--btn-secondary-bg-active, rgba(255, 255, 255, 0.16));
 			}
 			.status {
 				margin-top: 0.85rem;

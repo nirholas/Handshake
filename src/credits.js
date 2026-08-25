@@ -15,6 +15,7 @@ const SOL_MINT = 'So11111111111111111111111111111111111111112';
 
 const $ = (id) => document.getElementById(id);
 const fmtUsd = (n) => `$${(Number(n) || 0).toFixed(2)}`;
+const origin = window.location.origin;
 
 // Balances round to cents, but a UNIT price does not: $THREE trades well under a
 // cent, and `$0.00` next to a live quote reads as broken. Keep enough decimals to
@@ -26,7 +27,6 @@ function fmtUnitPrice(n) {
 	const decimals = Math.min(10, Math.max(2, Math.ceil(-Math.log10(v)) + 3));
 	return `$${v.toFixed(decimals).replace(/0+$/, '')}`;
 }
-const origin = window.location.origin;
 
 let state = {
 	asset: 'SOL',
