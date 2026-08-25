@@ -116,6 +116,14 @@ function fmtPctPoints(points) {
 	if (points == null || !Number.isFinite(Number(points))) return LAMP_NA;
 	return `${Math.round(Number(points))}%`;
 }
+// `wallet_reputation` stores win_rate / early_win_rate / dump_rate already in
+// percentage points (see pct() in src/pump/wallet-reputation.js, which divides
+// then multiplies by 100), so these values must NOT be scaled again. Running a
+// 5.7% lifetime win rate through fmtPct printed "570%" on the live card.
+function fmtPctPoints(points) {
+	if (points == null || !Number.isFinite(Number(points))) return LAMP_NA;
+	return `${Math.round(Number(points))}%`;
+}
 function fmtRoi(roi) {
 	if (roi == null) return LAMP_NA;
 	const pct = Math.round(roi * 100);
