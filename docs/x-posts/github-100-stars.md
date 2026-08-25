@@ -48,18 +48,20 @@ Thank you to everyone who starred, forked, opened an issue, or shipped a PR. Eve
 github.com/nirholas/three.ws
 ```
 
-## Reply 1 (where the open source stems)
+## Reply 1 (the scale of it)
 
 ```
-Where the three.ws open source ecosystem lives:
+100 stars understates it. In 19 weeks this one repo became:
 
-npm: 101 packages under @three-ws, 42 of them MCP servers. Avatars, x402 payments, Solana agents, pump.fun tooling, voice, mocap, retargeting.
+101 npm packages. 72 servers in the official MCP registry, the largest namespace on it we know of. 60 agent skills any agent can install.
 
-MCP registry: 72 servers under one namespace at registry.modelcontextprotocol.io. Any MCP client can install them.
+1,000,000+ priced x402 endpoints, 110,416 of them already settled on Solana. Our own facilitator, our own validators, 3,000 attestations on-chain.
 
-Agent skills: 60 ready-to-install SKILL.md skills for Claude Code and any agent that reads them.
+ERC-8004 identity, reputation, and validation registries at one address on 12 EVM mainnets. Two Solana programs. 111 spin-out repos.
 
-On-chain: Solana programs (agent invocation, skill licensing), ERC-8004 identity, reputation and validation registries, and the x402 payment contracts, all in the repo.
+3,000+ mocap animations, 500+ CC0 props, 106 rigged characters, a 740,889-article crypto news archive, a self-hosted NVIDIA GPU fleet.
+
+All Apache-2.0. All in one place.
 ```
 
 ## Reply 2 (the machine economy, in numbers)
