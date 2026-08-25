@@ -82,11 +82,27 @@ curl -s https://three.ws/api/credits \
     "three_symbol": "THREE",
     "three_decimals": 6
   },
+  "holder": {
+    "tier": { "level": 2, "id": "silver", "label": "Silver", "discount_bps": 1000 },
+    "usd_held": 140.0,
+    "discount_bps": 1000,
+    "next_tier": { "id": "gold", "label": "Gold", "min_usd": 500 },
+    "usd_to_next": 360.0
+  },
   "buys": [ { "id": "...", "label": "...", "category": "...", "policy": "...", "usd": 0.05 } ],
   "ledger": [ { "id": "...", "kind": "deposit", "amount_usd": 20, "...": "..." } ],
   "next_cursor": null
 }
 ```
+
+`holder` is the $THREE tier every debit on this account is already priced at:
+the same shape [`GET /api/pricing`](api-reference.md) returns. `discount_bps`
+is the discount applied to each spend (1000 = 10% off), `usd_held` is the USD
+value of the $THREE held by the linked wallet, and `next_tier` / `usd_to_next`
+say how much more $THREE reaches the next rung (`next_tier` is `null` at the
+top tier). Resolving it reads a Solana balance, so it degrades to `null` rather
+than failing the balance read; treat `null` as "tier unknown", not "no
+discount".
 
 `ledger` is newest-first (25 entries here); each item carries `id`, `kind`
 (`deposit`, `refund`, `grant`, `adjust`, or a spend), `amount_usd`,
