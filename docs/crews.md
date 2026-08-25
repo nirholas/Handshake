@@ -42,6 +42,15 @@ in [`src/crews-page.js`](../src/crews-page.js) caps how many members render as a
 live `<agent-3d>` (6); everyone past that renders as their avatar's still image,
 and live figures mount only when they scroll into the stage.
 
+Two rules keep those contexts alive once they exist. Presence refreshes every 20
+seconds, and the room writes the new state into the figures already standing
+rather than rebuilding the stage: the cast is rebuilt only when the membership
+itself changes, so a long-open tab is not creating and discarding WebGL contexts
+four times a minute. And a figure whose model fails to load (the agent's GLB was
+replaced, storage had a bad minute) falls back to the member's still portrait on
+the same plinth, so the person keeps standing in the room instead of leaving a
+gap.
+
 ## API
 
 All endpoints answer `{ data: … }` on success and
