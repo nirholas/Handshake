@@ -13,6 +13,16 @@ import { requireUser, get, post, esc, relTime } from '../api.js';
 import { emptyStateHTML, errorStateHTML, ensureStateKitStyles, attachRetry } from '../../shared/state-kit.js';
 
 const POLL_MS = 30_000;
+
+// Placeholder for a value the page could not read. Matches the dash this file
+// already renders in every other empty cell.
+const EMPTY = '\u2014';
+
+// Poll-loop guards: a re-render must never land on top of an in-flight refresh
+// or replace a button whose request has not come back yet.
+let refreshing = false;
+let actionsInFlight = 0;
+let retryWired = false;
 const fmtSol    = (n) => (n == null || isNaN(Number(n)) ? '—' : `${Number(n) >= 0 ? '+' : ''}${Number(n).toFixed(4)} ◎`);
 const fmtSolAbs = (n) => (n == null || isNaN(Number(n)) ? '—' : `${Number(n).toFixed(4)} ◎`);
 const clr       = (n) => (Number(n) >= 0 ? 'cp-pos' : 'cp-neg');
@@ -30,7 +40,7 @@ const STYLE = `<style>
 .cp-status-label { font-weight: 600; }
 .cp-status-meta  { color: var(--nxt-ink-dim); }
 .cp-status-spacer { flex: 1; }
-.cp-status-link { color: #60a5fa; text-decoration: none; font-weight: 600; }
+.cp-status-link { color: #60a5fa; text-decoration: none; font-weight: 600; background: none; border: 0; padding: 0; font: inherit; font-weight: 600; cursor: pointer; }
 .cp-status-link:hover { text-decoration: underline; }
 
 /* Sections */
@@ -180,23 +190,55 @@ function toast(msg, type = 'ok') {
 		`;
 		main.insertAdjacentHTML('beforeend', STYLE);
 
-		await refresh(main.querySelector('#cp-root'));
+		const root = main.querySelector('#cp-root');
+		// Delegated, so it survives every innerHTML re-render: one listener serves
+		// the whole-page error state and each section's own retry button.
+		attachRetry(root, () => { refresh(root).catch(showBootError); });
+		retryWired = true;
 
-		setInterval(async () => {
-			const root = document.getElementById('cp-root');
-			if (root) await refresh(root).catch(() => {});
-		}, POLL_MS);
+		await refresh(root);
+
+		setInterval(() => { poll(root); }, POLL_MS);
+		// A tab returning to the foreground has stale numbers on screen; refresh
+		// immediately rather than making the user wait out the interval.
+		document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(root); });
 	} catch (e) {
-		const root = document.getElementById('cp-root') || main;
-		if (root) {
-			root.innerHTML = errorStateHTML({
-				title: 'Couldn’t load capabilities',
-				body: esc(e?.message || 'Something went wrong reaching the capabilities API.'),
-			});
-			attachRetry(root, () => location.reload());
-		}
+		showBootError(e, main);
 	}
 })();
+
+/** Poll tick. Skips work that would be wasted or destructive: a hidden tab, a
+ *  refresh still in flight, or a button mid-request whose DOM node we would
+ *  otherwise replace. */
+async function poll(root) {
+	if (document.hidden || refreshing || actionsInFlight > 0) return;
+	if (!document.body.contains(root)) return;
+	refreshing = true;
+	try {
+		await refresh(root);
+	} catch (e) {
+		// A poll failure never blanks data already on screen; refresh() renders
+		// its own per-section notices, so this only catches a render-time throw.
+		console.warn('[capabilities] refresh failed:', e?.message || e);
+	} finally {
+		refreshing = false;
+	}
+}
+
+function showBootError(e, fallback) {
+	const root = document.getElementById('cp-root') || fallback;
+	if (!root) return;
+	root.innerHTML = errorStateHTML({
+		title: 'Couldn’t load capabilities',
+		body: esc(e?.message || 'Something went wrong reaching the capabilities API.'),
+		scope: 'capabilities',
+	});
+	root.removeAttribute('aria-busy');
+	root.removeAttribute('aria-label');
+	// Only when boot died before the delegated handler was wired; otherwise that
+	// handler already re-runs refresh() and a second listener would double-fire.
+	if (!retryWired) attachRetry(root, () => location.reload());
+}
 
 // ── Data + render ─────────────────────────────────────────────────────────────
 
@@ -312,12 +354,14 @@ function restoreUiState(root, ui) {
 
 // ── Worker Status ──────────────────────────────────────────────────────────────
 
-function renderWorkerStatus(s) {
+function renderWorkerStatus(s, err) {
 	if (!s) {
 		return `<div class="cp-status-bar" role="status">
 			<div class="cp-status-dot unknown" aria-hidden="true"></div>
-			<span class="cp-status-label">Worker status unknown</span>
-			<span class="cp-status-meta">Could not reach the sniper status API</span>
+			<span class="cp-status-label">Worker status unavailable</span>
+			<span class="cp-status-meta">${esc(err || 'The sniper status API did not answer.')}</span>
+			<div class="cp-status-spacer"></div>
+			<button type="button" class="cp-status-link" data-sk-retry data-sk-scope="capabilities">Retry</button>
 		</div>`;
 	}
 
@@ -362,7 +406,7 @@ function renderWorkerStatus(s) {
 
 // ── Alpha Hunt ────────────────────────────────────────────────────────────────
 
-function renderAlphaHunt(strategies, agentMap) {
+function renderAlphaHunt(strategies, err) {
 	const armed       = strategies.filter((s) => s.enabled && !s.kill_switch);
 	const totalBudget = strategies.reduce((sum, s) => sum + (lamportsToSol(s.daily_budget_lamports) || 0), 0);
 	const totalPnl    = strategies.reduce((sum, s) => sum + (lamportsToSol(s.summary?.realized_pnl_lamports) || 0), 0);
@@ -370,8 +414,9 @@ function renderAlphaHunt(strategies, agentMap) {
 	const totalClosed = strategies.reduce((sum, s) => sum + (s.summary?.closed_positions || 0), 0);
 	const wr          = totalClosed > 0 ? Math.round((totalWins / totalClosed) * 100) : null;
 
-	const badgeClass = armed.length ? 'live' : 'off';
-	const badgeLabel = armed.length ? `${armed.length} Armed` : 'Disarmed';
+	const badgeClass = err ? 'warning' : armed.length ? 'live' : 'off';
+	const badgeLabel = err ? 'Unavailable' : armed.length ? `${armed.length} Armed` : 'Disarmed';
+	const kpi = (v) => (err ? EMPTY : v);
 
 	return `<div class="cp-section">
 		<div class="cp-head">
@@ -387,13 +432,13 @@ function renderAlphaHunt(strategies, agentMap) {
 			</div>
 		</div>
 		<div class="cp-kpi-row">
-			<div class="cp-kpi"><div class="cp-kpi-label">Strategies</div><div class="cp-kpi-val">${strategies.length}</div></div>
-			<div class="cp-kpi"><div class="cp-kpi-label">Daily Budget</div><div class="cp-kpi-val cp-mono">${fmtSolAbs(totalBudget)}</div></div>
-			<div class="cp-kpi"><div class="cp-kpi-label">Win Rate</div><div class="cp-kpi-val">${wr != null ? `${wr}%` : '—'}</div></div>
-			<div class="cp-kpi"><div class="cp-kpi-label">Realized P&L</div><div class="cp-kpi-val cp-mono ${clr(totalPnl)}">${fmtSol(totalPnl)}</div></div>
+			<div class="cp-kpi"><div class="cp-kpi-label">Strategies</div><div class="cp-kpi-val">${kpi(strategies.length)}</div></div>
+			<div class="cp-kpi"><div class="cp-kpi-label">Daily Budget</div><div class="cp-kpi-val cp-mono">${kpi(fmtSolAbs(totalBudget))}</div></div>
+			<div class="cp-kpi"><div class="cp-kpi-label">Win Rate</div><div class="cp-kpi-val">${kpi(wr != null ? `${wr}%` : EMPTY)}</div></div>
+			<div class="cp-kpi"><div class="cp-kpi-label">Realized P&L</div><div class="cp-kpi-val cp-mono ${err ? '' : clr(totalPnl)}">${kpi(fmtSol(totalPnl))}</div></div>
 		</div>
 		<div class="cp-body">
-			${strategies.length === 0 ? emptyStateHTML({
+			${err ? sectionErrorHTML(err) : strategies.length === 0 ? emptyStateHTML({
 				icon: '🎯',
 				title: 'No Alpha Hunt strategies yet',
 				body: 'Arm an agent to score smart-money signals and auto-buy when quality converges.',
@@ -415,7 +460,6 @@ function renderAlphaHunt(strategies, agentMap) {
 				</thead>
 				<tbody>
 					${strategies.map((s) => {
-						const ag     = agentMap.get(s.agent_id);
 						const pnl    = lamportsToSol(s.summary?.realized_pnl_lamports);
 						const closed = s.summary?.closed_positions || 0;
 						const wins   = s.summary?.wins || 0;
@@ -423,8 +467,8 @@ function renderAlphaHunt(strategies, agentMap) {
 						return `<tr>
 							<td>
 								<div class="cp-agent-chip">
-									<img class="cp-av" src="${esc(ag?.image || '/favicon.ico')}" alt="" data-fallback="invisible" loading="lazy" />
-									<span>${esc(ag?.name || s.agent_id.slice(0, 8))}</span>
+									<img class="cp-av" src="${esc(s.image || '/favicon.ico')}" alt="" data-fallback="invisible" loading="lazy" />
+									<span>${esc(s.agent_name || s.agent_id.slice(0, 8))}</span>
 								</div>
 							</td>
 							<td><span class="cp-badge ${s.enabled && !s.kill_switch ? 'on' : 'off'}">${s.kill_switch ? 'Kill switch' : s.enabled ? 'Armed' : 'Disarmed'}</span></td>
@@ -432,7 +476,7 @@ function renderAlphaHunt(strategies, agentMap) {
 							<td class="hide-sm cp-mono">${s.alpha_min_quality_score != null ? s.alpha_min_quality_score : '—'}</td>
 							<td class="hide-sm cp-mono">${s.alpha_max_mcap_usd != null ? `$${Number(s.alpha_max_mcap_usd).toLocaleString()}` : '—'}</td>
 							<td class="r cp-mono ${clr(pnl)}">${fmtSol(pnl)}</td>
-							<td class="r">${wr != null ? `${wr}%` : '—'}</td>
+							<td class="r">${wr != null ? `${wr}%` : EMPTY}</td>
 						</tr>`;
 					}).join('')}
 				</tbody>
@@ -444,13 +488,19 @@ function renderAlphaHunt(strategies, agentMap) {
 
 // ── Coin Launcher ─────────────────────────────────────────────────────────────
 
-function renderLauncher(configs, coins) {
+function renderLauncher(configs, coins, err) {
 	const enabled       = configs.filter((c) => c.enabled);
 	const totalLaunches = configs.reduce((sum, c) => sum + (Number(c.launches_count) || 0), 0);
 	const totalClaimed  = coins.reduce((sum, c)   => sum + (Number(c.total_claimed_lamports) || 0), 0);
 	const graduated     = coins.filter((c) => c.is_graduated).length;
-	const badgeClass    = enabled.length ? 'live' : 'off';
-	const badgeLabel    = enabled.length ? `${enabled.length} Active` : 'Inactive';
+	const badgeClass    = err ? 'warning' : enabled.length ? 'live' : 'off';
+	const badgeLabel    = err ? 'Unavailable' : enabled.length ? `${enabled.length} Active` : 'Inactive';
+	const kpi           = (v) => (err ? EMPTY : v);
+	// One launcher per agent, so a single "Configure" target only makes sense
+	// when exactly one is set up. With several, the per-row agent column is the
+	// way in; an arbitrary configs[0] link was a coin flip, and with none it
+	// rendered a dead /agents//edit href.
+	const soleAgentId   = !err && configs.length === 1 ? configs[0].agent_id : null;
 
 	return `<div class="cp-section">
 		<div class="cp-head">
@@ -462,16 +512,16 @@ function renderLauncher(configs, coins) {
 			</div>
 			<div style="display:flex;align-items:center;gap:8px">
 				<span class="cp-badge ${badgeClass}">${badgeLabel}</span>
-				<a class="cp-link" href="/agents/${configs[0]?.agent_id || ''}/edit#section-launcher" style="display:${configs.length ? 'inline-flex' : 'none'}">Configure ↗</a>
+				${soleAgentId ? `<a class="cp-link" href="/agents/${esc(soleAgentId)}/edit#section-launcher">Configure ↗</a>` : '<a class="cp-link" href="/dashboard/agents">Agents ↗</a>'}
 			</div>
 		</div>
 		<div class="cp-kpi-row">
-			<div class="cp-kpi"><div class="cp-kpi-label">Launchers</div><div class="cp-kpi-val">${configs.length}</div></div>
-			<div class="cp-kpi"><div class="cp-kpi-label">Total Launches</div><div class="cp-kpi-val">${totalLaunches}</div></div>
-			<div class="cp-kpi"><div class="cp-kpi-label">Graduated</div><div class="cp-kpi-val">${graduated}</div></div>
-			<div class="cp-kpi"><div class="cp-kpi-label">Fees Claimed</div><div class="cp-kpi-val cp-mono">${fmtSolAbs(totalClaimed / 1e9)}</div></div>
+			<div class="cp-kpi"><div class="cp-kpi-label">Launchers</div><div class="cp-kpi-val">${kpi(configs.length)}</div></div>
+			<div class="cp-kpi"><div class="cp-kpi-label">Total Launches</div><div class="cp-kpi-val">${kpi(totalLaunches)}</div></div>
+			<div class="cp-kpi"><div class="cp-kpi-label">Graduated</div><div class="cp-kpi-val">${kpi(graduated)}</div></div>
+			<div class="cp-kpi"><div class="cp-kpi-label">Fees Claimed</div><div class="cp-kpi-val cp-mono">${kpi(fmtSolAbs(totalClaimed / 1e9))}</div></div>
 		</div>
-		${configs.length > 0 ? `
+		${err ? `<div class="cp-body">${sectionErrorHTML(err)}</div>` : configs.length > 0 ? `
 		<div class="cp-body">
 			<div class="cp-tabs" role="tablist" aria-label="Coin Launcher views">
 				<button class="cp-tab active" role="tab" id="cptab-launcher-schedule" aria-controls="cppanel-launcher-schedule" aria-selected="true" data-tab-group="launcher" data-tab="schedule">Schedule</button>
@@ -550,14 +600,15 @@ function renderLauncher(configs, coins) {
 
 // ── Auto-Claim ────────────────────────────────────────────────────────────────
 
-function renderAutoClaim(coins) {
+function renderAutoClaim(coins, err) {
 	const claimable      = coins.filter((c) => c.auto_claim_enabled);
 	const totalClaimable = claimable.reduce((sum, c) => sum + (Number(c.claimable_lamports) || 0), 0);
 	const totalEarned    = claimable.reduce((sum, c) => sum + (Number(c.total_claimed_lamports) || 0), 0);
 	const runners        = claimable.filter((c) => Number(c.claimable_lamports) > 0.1e9);
 
-	const badgeClass = runners.length ? 'warning' : claimable.length ? 'on' : 'off';
-	const badgeLabel = runners.length ? `${runners.length} Ready to Claim` : claimable.length ? `${claimable.length} Watching` : 'Inactive';
+	const badgeClass = err || runners.length ? 'warning' : claimable.length ? 'on' : 'off';
+	const badgeLabel = err ? 'Unavailable' : runners.length ? `${runners.length} Ready to Claim` : claimable.length ? `${claimable.length} Watching` : 'Inactive';
+	const kpi        = (v) => (err ? EMPTY : v);
 
 	return `<div class="cp-section">
 		<div class="cp-head">
@@ -572,12 +623,12 @@ function renderAutoClaim(coins) {
 			</div>
 		</div>
 		<div class="cp-kpi-row">
-			<div class="cp-kpi"><div class="cp-kpi-label">Coins Watching</div><div class="cp-kpi-val">${claimable.length}</div></div>
-			<div class="cp-kpi"><div class="cp-kpi-label">Claimable Now</div><div class="cp-kpi-val cp-mono ${totalClaimable > 0 ? 'cp-pos' : ''}">${fmtSolAbs(totalClaimable / 1e9)}</div></div>
-			<div class="cp-kpi"><div class="cp-kpi-label">Total Earned</div><div class="cp-kpi-val cp-mono">${fmtSolAbs(totalEarned / 1e9)}</div></div>
-			<div class="cp-kpi"><div class="cp-kpi-label">Runners</div><div class="cp-kpi-val ${runners.length ? 'cp-pos' : ''}">${runners.length}</div></div>
+			<div class="cp-kpi"><div class="cp-kpi-label">Coins Watching</div><div class="cp-kpi-val">${kpi(claimable.length)}</div></div>
+			<div class="cp-kpi"><div class="cp-kpi-label">Claimable Now</div><div class="cp-kpi-val cp-mono ${!err && totalClaimable > 0 ? 'cp-pos' : ''}">${kpi(fmtSolAbs(totalClaimable / 1e9))}</div></div>
+			<div class="cp-kpi"><div class="cp-kpi-label">Total Earned</div><div class="cp-kpi-val cp-mono">${kpi(fmtSolAbs(totalEarned / 1e9))}</div></div>
+			<div class="cp-kpi"><div class="cp-kpi-label">Runners</div><div class="cp-kpi-val ${!err && runners.length ? 'cp-pos' : ''}">${kpi(runners.length)}</div></div>
 		</div>
-		${claimable.length > 0 ? `
+		${err ? `<div class="cp-body">${sectionErrorHTML(err)}</div>` : claimable.length > 0 ? `
 		<div class="cp-body">
 			<div class="cp-scroll" tabindex="0" role="region" aria-label="Auto-claim coins (scrollable)">
 			<table class="cp-table">
@@ -622,12 +673,13 @@ function renderAutoClaim(coins) {
 
 // ── Market Maker ──────────────────────────────────────────────────────────────
 
-function renderMarketMaker(configs, trades) {
+function renderMarketMaker(configs, trades, err) {
 	const active     = configs.filter((c) => c.enabled);
 	const totalPnl   = configs.reduce((sum, c) => sum + (Number(c.total_pnl_sol)    || 0), 0);
 	const totalVol   = configs.reduce((sum, c) => sum + (Number(c.total_volume_sol) || 0), 0);
 	const totalBuys  = configs.reduce((sum, c) => sum + (Number(c.total_buys)       || 0), 0);
 	const totalSells = configs.reduce((sum, c) => sum + (Number(c.total_sells)      || 0), 0);
+	const kpi        = (v) => (err ? EMPTY : v);
 
 	return `<div class="cp-section">
 		<div class="cp-head">
@@ -638,16 +690,16 @@ function renderMarketMaker(configs, trades) {
 				</div>
 			</div>
 			<div style="display:flex;align-items:center;gap:8px">
-				<span class="cp-badge ${active.length ? 'live' : 'off'}">${active.length ? `${active.length} Active` : 'Inactive'}</span>
+				<span class="cp-badge ${err ? 'warning' : active.length ? 'live' : 'off'}">${err ? 'Unavailable' : active.length ? `${active.length} Active` : 'Inactive'}</span>
 			</div>
 		</div>
 		<div class="cp-kpi-row">
-			<div class="cp-kpi"><div class="cp-kpi-label">Active Markets</div><div class="cp-kpi-val">${active.length}</div></div>
-			<div class="cp-kpi"><div class="cp-kpi-label">Total Volume</div><div class="cp-kpi-val cp-mono">${fmtSolAbs(totalVol)}</div></div>
-			<div class="cp-kpi"><div class="cp-kpi-label">Buys / Sells</div><div class="cp-kpi-val">${totalBuys} / ${totalSells}</div></div>
-			<div class="cp-kpi"><div class="cp-kpi-label">Net P&L</div><div class="cp-kpi-val cp-mono ${clr(totalPnl)}">${fmtSol(totalPnl)}</div></div>
+			<div class="cp-kpi"><div class="cp-kpi-label">Active Markets</div><div class="cp-kpi-val">${kpi(active.length)}</div></div>
+			<div class="cp-kpi"><div class="cp-kpi-label">Total Volume</div><div class="cp-kpi-val cp-mono">${kpi(fmtSolAbs(totalVol))}</div></div>
+			<div class="cp-kpi"><div class="cp-kpi-label">Buys / Sells</div><div class="cp-kpi-val">${kpi(`${totalBuys} / ${totalSells}`)}</div></div>
+			<div class="cp-kpi"><div class="cp-kpi-label">Net P&L</div><div class="cp-kpi-val cp-mono ${err ? '' : clr(totalPnl)}">${kpi(fmtSol(totalPnl))}</div></div>
 		</div>
-		${active.length > 0 ? `
+		${err ? `<div class="cp-body">${sectionErrorHTML(err)}</div>` : active.length > 0 ? `
 		<div class="cp-body">
 			<div class="cp-tabs" role="tablist" aria-label="Market Maker views">
 				<button class="cp-tab active" role="tab" id="cptab-mm-markets" aria-controls="cppanel-mm-markets" aria-selected="true" data-tab-group="mm" data-tab="markets">Active Markets</button>
@@ -739,47 +791,45 @@ function renderMarketMaker(configs, trades) {
 
 // ── Interactive buttons ───────────────────────────────────────────────────────
 
-function wireLaunchNow(root, agentIds, agentMap) {
+function wireLaunchNow(root) {
 	root.querySelectorAll('[data-launch-now]').forEach((btn) => {
-		btn.addEventListener('click', async () => {
-			const agentId  = btn.dataset.agentId;
-			const configId = btn.dataset.configId;
-			const network  = btn.dataset.network || 'mainnet';
-			btn.disabled = true;
-			btn.textContent = 'Launching…';
-			try {
-				const res = await post('/api/agent/launcher', { action: 'trigger', agentId, configId, network });
-				toast(res?.message ?? 'Launch queued — worker will fire within 60s');
-			} catch (e) {
-				toast(e?.message || 'Launch failed', 'err');
-			} finally {
-				btn.disabled = false;
-				btn.textContent = 'Launch Now';
-			}
-		});
+		btn.addEventListener('click', () => runAction(btn, 'Launching…', 'Launch failed', () =>
+			post('/api/agent/launcher', {
+				action:   'trigger',
+				agentId:  btn.dataset.agentId,
+				configId: btn.dataset.configId,
+				network:  btn.dataset.network || 'mainnet',
+			}).then((res) => res?.message ?? 'Launch queued. The worker fires within 60s.')));
 	});
 }
 
 function wireClaimNow(root) {
 	root.querySelectorAll('[data-claim-now]').forEach((btn) => {
-		btn.addEventListener('click', async () => {
-			const agentId = btn.dataset.agentId;
-			const mint    = btn.dataset.mint;
-			const network = btn.dataset.network || 'mainnet';
-			btn.disabled = true;
-			const orig = btn.textContent;
-			btn.textContent = 'Claiming…';
-			try {
-				const res = await post('/api/pump?action=collect-creator-fee-agent', { agentId, mint, network });
-				toast(res?.message ?? `Claimed successfully · tx: ${res?.sig?.slice(0, 8) ?? '?'}…`);
-			} catch (e) {
-				toast(e?.message || 'Claim failed', 'err');
-			} finally {
-				btn.disabled = false;
-				btn.textContent = orig;
-			}
-		});
+		btn.addEventListener('click', () => runAction(btn, 'Claiming…', 'Claim failed', () =>
+			post('/api/pump?action=collect-creator-fee-agent', {
+				agentId: btn.dataset.agentId,
+				mint:    btn.dataset.mint,
+				network: btn.dataset.network || 'mainnet',
+			}).then((res) => res?.message ?? `Claimed successfully · tx: ${res?.sig?.slice(0, 8) ?? '?'}…`)));
 	});
+}
+
+/** Shared button lifecycle: pending label, toast, and a poll hold so the 30s
+ *  re-render cannot replace the button out from under an in-flight request. */
+async function runAction(btn, pendingLabel, failLabel, run) {
+	const orig = btn.textContent;
+	btn.disabled = true;
+	btn.textContent = pendingLabel;
+	actionsInFlight += 1;
+	try {
+		toast(await run());
+	} catch (e) {
+		toast(e?.message || failLabel, 'err');
+	} finally {
+		actionsInFlight -= 1;
+		btn.disabled = false;
+		btn.textContent = orig;
+	}
 }
 
 // ── Tab switchers ─────────────────────────────────────────────────────────────

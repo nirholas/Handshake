@@ -4047,6 +4047,7 @@
 		"skip_to_main_content": "Skip to main content"
 	},
 	"dashboard_next_account": {
+		"meta_description": "Your three.ws account: profile and username, linked Solana and EVM wallets, SNS .sol domains, agent delegation, AI provider keys, and the audit trail of every sensitive action.",
 		"meta_title": "Account · Dashboard · three.ws"
 	},
 	"dashboard_next_agents": {
