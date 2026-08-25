@@ -1950,6 +1950,12 @@ const appConfig = {
 					// so dev serves the same studio template it lands on in prod.
 					else if (!filePath && /^\/agent\/[^/]+$/.test(path))
 						filePath = resolve(root, 'pages/avatar-page.html');
+					// /crews/<TAG> -> the Crew HQ page in its public-crew mode (mirrors
+					// vercel.json's /crews/([A-Za-z0-9]{2,6})/? rewrite). Without this the
+					// only reachable crew URL in dev is /crews itself, so every directory
+					// card and every shared crew link 404s locally while working in prod.
+					else if (!filePath && /^\/crews\/[A-Za-z0-9]{2,6}\/?$/.test(path))
+						filePath = resolve(root, 'pages/crews.html');
 					else if (!filePath && /^\/character\/[^/]+\/?$/.test(path))
 						filePath = resolve(root, 'public/character.html');
 					else if (!filePath && (path === '/characters' || path === '/characters/'))

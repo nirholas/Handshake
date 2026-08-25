@@ -24,7 +24,7 @@
 // LIVE_FIGURE_BUDGET caps how many members render as a live <agent-3d>; the rest
 // render as their avatar still, which is the same figure, just not animated.
 
-import { apiFetch } from './api.js';
+import { apiFetch, noteSession } from './api.js';
 import { crestHues, presenceLine, sanitizeTag, tagFromPath, validateTag } from './crews-shared.js';
 
 const LIVE_FIGURE_BUDGET = 6;
@@ -72,6 +72,35 @@ async function readError(res) {
 		body?.error ||
 		(res.status === 429 ? 'Too many requests. Wait a moment and try again.' : `Request failed (${res.status}).`)
 	);
+}
+
+// ── session ───────────────────────────────────────────────────────────────────
+// Who is looking, resolved once per tab. GET /api/crews answers 401 for a
+// signed-out visitor by design, and this is a public page: asking anyway printed
+// a red 401 in the console of every anonymous visitor and taught apiFetch
+// nothing. /api/auth/me answers 200 with { user: null } instead, so one clean GET
+// decides which of the three views renders. Mirrors src/agents-live.js.
+//
+// Resolves to null when the probe itself fails (offline, 5xx). Null is "unknown",
+// not "anonymous": the caller then asks /api/crews as before rather than
+// silently downgrading a signed-in visitor to the signed-out view.
+let sessionProbe = null;
+function resolveSession() {
+	if (!sessionProbe) {
+		sessionProbe = fetch('/api/auth/me', {
+			credentials: 'include',
+			headers: { accept: 'application/json' },
+		})
+			.then((r) => (r.ok ? r.json() : null))
+			.then((d) => {
+				if (!d) return null;
+				const signedIn = !!d.user;
+				noteSession(signedIn);
+				return signedIn;
+			})
+			.catch(() => null);
+	}
+	return sessionProbe;
 }
 
 // ── state ────────────────────────────────────────────────────────────────────
@@ -260,47 +289,69 @@ function renderInvites(invites) {
 }
 
 // ── directory ────────────────────────────────────────────────────────────────
-async function loadDirectory() {
+// The fetch is public and session-independent, so it flies beside the crew load
+// rather than queueing behind it. Only the render waits, because which card to
+// drop depends on which crew the visitor already has on screen. It resolves
+// rather than rejects so a request in flight while the crew loads can never
+// surface as an unhandled rejection in the console.
+function fetchDirectory() {
+	return apiFetch('/api/crews/directory?limit=24', { allowAnonymous: true })
+		.then(async (res) => {
+			if (!res.ok) return { error: await readError(res) };
+			const { data } = await res.json();
+			return { crews: data?.crews || [] };
+		})
+		.catch((err) => ({ error: err?.message || 'Try again in a moment.' }));
+}
+
+async function renderDirectory(pending) {
 	const wrap = $('cw-dir');
-	try {
-		const res = await apiFetch('/api/crews/directory?limit=24', { allowAnonymous: true });
-		if (!res.ok) throw new Error(await readError(res));
-		const { data } = await res.json();
-		const crews = (data?.crews || []).filter((c) => c.tag !== state.me?.crew?.tag);
-		if (!crews.length) {
-			wrap.innerHTML =
-				'<p class="cw-empty" style="grid-column:1/-1"><strong>No crews yet</strong>' +
-				'Found the first one. Its tag is yours for good.</p>';
-			return;
-		}
-		wrap.innerHTML = crews
-			.map(
-				(c) =>
-					`<a class="cw-dir-card" href="/crews/${encodeURIComponent(c.tag)}" title="Open ${esc(c.name)}">` +
-					crestHtml(c.tag, true) +
-					'<span class="cw-row-main">' +
-					`<b>${esc(c.name)}</b>` +
-					`<span>${c.memberCount} member${c.memberCount === 1 ? '' : 's'}</span>` +
-					'<span class="cw-faces">' +
-					c.faces
-						.map((f) =>
-							f.avatarUrl
-								? `<img src="${esc(f.avatarUrl)}" alt="" loading="lazy" decoding="async" />`
-								: '<span class="cw-face-blank"></span>',
-						)
-						.join('') +
-					'</span>' +
-					'</span>' +
-					'</a>',
-			)
-			.join('');
-	} catch (err) {
+	const { crews: all, error } = await pending;
+	if (error) {
 		wrap.innerHTML =
 			'<p class="cw-empty" style="grid-column:1/-1"><strong>The directory did not load</strong>' +
-			esc(err.message || 'Try again in a moment.') +
+			esc(error) +
 			'</p>';
+		return;
 	}
+	// Never card a crew the visitor is already looking at: their own HQ above, or
+	// the public crew this URL is for.
+	const here = new Set([state.me?.crew?.tag, state.publicTag].filter(Boolean));
+	const crews = all.filter((c) => !here.has(c.tag));
+	if (!crews.length) {
+		// "No other crews" only reads right to someone who is already looking at one.
+		const headline = here.size ? 'No other crews yet' : 'No crews yet';
+		const line = here.size
+			? 'This is the only one flying so far.'
+			: 'Found the first one. Its tag is yours for good.';
+		wrap.innerHTML =
+			`<p class="cw-empty" style="grid-column:1/-1"><strong>${headline}</strong>${line}</p>`;
+		return;
+	}
+	wrap.innerHTML = crews
+		.map(
+			(c) =>
+				`<a class="cw-dir-card" href="/crews/${encodeURIComponent(c.tag)}" title="Open ${esc(c.name)}">` +
+				crestHtml(c.tag, true) +
+				'<span class="cw-row-main">' +
+				`<b>${esc(c.name)}</b>` +
+				`<span>${c.memberCount} member${c.memberCount === 1 ? '' : 's'}</span>` +
+				'<span class="cw-faces">' +
+				c.faces
+					.map((f) =>
+						f.avatarUrl
+							? `<img src="${esc(f.avatarUrl)}" alt="" loading="lazy" decoding="async" />`
+							: '<span class="cw-face-blank"></span>',
+					)
+					.join('') +
+				'</span>' +
+				'</span>' +
+				'</a>',
+		)
+		.join('');
 }
+
+const loadDirectory = () => renderDirectory(fetchDirectory());
 
 // ── founding a crew ──────────────────────────────────────────────────────────
 function wireFoundForm() {
@@ -533,10 +584,18 @@ async function loadPublicCrew(tag) {
 		if (res.status === 404) {
 			$('cw-room').hidden = true;
 			$('cw-manage').hidden = true;
+			$('cw-roster-panel').hidden = true;
 			showError(`No crew flies the tag ${tag}. It is still available.`, () => loadPublicCrew(tag));
-			$('cw-found-panel').hidden = false;
-			$('cw-found-tag').value = tag;
-			$('cw-found-tag').dispatchEvent(new Event('input'));
+			// The free tag is only an offer to someone who can take it. A visitor with
+			// no session gets the sign-in prompt and someone already in a crew gets
+			// neither, rather than a form whose submit was always going to be refused.
+			const canFound = state.authed && !state.me?.crew;
+			$('cw-found-panel').hidden = !canFound;
+			$('cw-signedout').hidden = state.authed;
+			if (canFound) {
+				$('cw-found-tag').value = tag;
+				$('cw-found-tag').dispatchEvent(new Event('input'));
+			}
 			return;
 		}
 		if (!res.ok) throw new Error(await readError(res));
@@ -552,12 +611,18 @@ async function loadPublicCrew(tag) {
 			`Viewing <b>${esc(crew.name)}</b> as a visitor. <a href="/crews">Your own Crew HQ</a> is one click away.`;
 	} catch (err) {
 		$('cw-room').hidden = true;
+		$('cw-stage').innerHTML = '';
 		showError(err.message || 'That crew could not be loaded.', () => loadPublicCrew(tag));
 	}
 }
 
 async function loadMine() {
 	try {
+		if ((await resolveSession()) === false) {
+			state.authed = false;
+			state.me = null;
+			return;
+		}
 		const res = await apiFetch('/api/crews', { allowAnonymous: true });
 		if (res.status === 401) {
 			state.authed = false;
@@ -582,6 +647,11 @@ async function refresh() {
 	try {
 		await loadMine();
 	} catch (err) {
+		// The skeleton is a promise that something is coming. Once the load has
+		// failed it is a lie, so the room goes with it and the error box is the
+		// only thing left saying what happened.
+		$('cw-room').hidden = true;
+		$('cw-stage').innerHTML = '';
 		showError(err.message || 'Your crew could not be loaded.', refresh);
 		return;
 	}
@@ -648,20 +718,23 @@ async function boot() {
 		state.publicTag = tag;
 		$('cw-found-panel').hidden = true;
 		$('cw-dir-panel').hidden = false;
-		await Promise.all([loadPublicCrew(tag), loadDirectory()]);
-		// A visitor who is signed in still gets their invites, so a link shared in
-		// chat and an invite sitting in the app converge on the same page.
+		// Who is looking resolves FIRST: a visitor who is signed in still gets their
+		// invites, so a link shared in chat and an invite sitting in the app converge
+		// on the same page, and the 404 branch below needs the answer before it
+		// decides whether to offer the free tag.
 		try {
 			await loadMine();
-			renderInvites(state.me?.invites || []);
 		} catch {
 			/* an anonymous visitor simply has no invites */
 		}
+		renderInvites(state.authed ? state.me?.invites || [] : []);
+		await Promise.all([loadPublicCrew(tag), loadDirectory()]);
 		state.loaded = true;
 	} else {
 		showSkeleton();
+		const directory = fetchDirectory();
 		await refresh();
-		await loadDirectory();
+		await renderDirectory(directory);
 	}
 	startPolling();
 }
