@@ -38,10 +38,52 @@
 				--border-strong: #2a2a2a;
 				--text: #e8e8e8;
 				--muted: #888888;
+				/* Secondary copy that has to clear 4.5:1 in BOTH themes: the hint,
+				   the counter, the placeholder, the elapsed clock, the footnote. */
+				--muted-soft: #8a8a8a;
 				--accent: #ffffff;
 				--accent-ink: #000000;
 				--danger: #f87171;
 				--danger-dim: #4a1a1a;
+				--danger-ink: #f3b4b4;
+				--ok-ink: #6ee7a8;
+				--ok-border: #1f3a2a;
+				--hairline-hover: #444444;
+				--hover-tint: rgba(255, 255, 255, 0.04);
+				--focus-ring: #ffffff;
+				--orb-lit: #2a2a2a;
+				--orb-shade: #0c0c0c;
+				--orb-sweep: rgba(255, 255, 255, 0.14);
+			}
+
+			/* Light theme. public/tokens.css remaps the shared primitives
+			   (--bg, --text, --accent) under this selector, but --panel,
+			   --border, --accent-ink and friends are declared locally above, so
+			   without this block the composer, the chips and the done panel stayed
+			   near-black on a white canvas and the primary CTA rendered black ink
+			   on the light accent blue (3.5:1, under the AA floor). The page
+			   passes the theme-switcher's light-capability probe, so the toggle is
+			   live here and these values are what it toggles to. */
+			:root[data-theme='light'] {
+				color-scheme: light;
+				--panel: #f4f5f7;
+				--panel-elev: #e9ebef;
+				--border: rgba(15, 18, 28, 0.1);
+				--border-strong: rgba(15, 18, 28, 0.18);
+				--muted: #5a616f;
+				--muted-soft: #5a616f;
+				--accent-ink: #ffffff;
+				--danger: #b42318;
+				--danger-dim: #f3c9c4;
+				--danger-ink: #912018;
+				--ok-ink: #067647;
+				--ok-border: #a7f3d0;
+				--hairline-hover: rgba(15, 18, 28, 0.3);
+				--hover-tint: rgba(15, 18, 28, 0.05);
+				--focus-ring: #1d212b;
+				--orb-lit: #e4e7ed;
+				--orb-shade: #c2c8d4;
+				--orb-sweep: rgba(15, 18, 28, 0.12);
 			}
 			* {
 				box-sizing: border-box;
@@ -109,7 +151,7 @@
 					transform 0.12s;
 			}
 			.back:hover {
-				border-color: #444;
+				border-color: var(--hairline-hover);
 				background: var(--panel-elev);
 			}
 			.back:active {
@@ -198,10 +240,10 @@
 				outline: none;
 			}
 			textarea#prompt::placeholder {
-				/* Same floor as .hint below: #555 on the #000 bg measures ~2.9:1,
-				   under the 4.5:1 AA threshold, and this placeholder is the only
-				   guidance in an empty composer. #8a8a8a measures ~5.8:1. */
-				color: #8a8a8a;
+				/* #555 on the #000 bg measured ~2.9:1, under the 4.5:1 AA
+				   threshold, and this placeholder is the only guidance in an empty
+				   composer. --muted-soft measures 5.8:1 dark and 6.4:1 light. */
+				color: var(--muted-soft);
 			}
 			.composer-foot {
 				display: flex;
@@ -211,7 +253,7 @@
 				padding: 0 10px;
 			}
 			.counter {
-				color: #8a8a8a;
+				color: var(--muted-soft);
 				font-size: 12px;
 				font-variant-numeric: tabular-nums;
 			}
@@ -250,7 +292,7 @@
 					transform 0.12s;
 			}
 			.example:hover {
-				border-color: #444;
+				border-color: var(--hairline-hover);
 				color: var(--text);
 				background: var(--panel-elev);
 			}
@@ -312,13 +354,13 @@
 				cursor: not-allowed;
 			}
 			.btn-primary:focus-visible {
-				outline: 2px solid #fff;
+				outline: 2px solid var(--focus-ring);
 				outline-offset: 3px;
 			}
 			.hint {
-				/* #8a8a8a, not #666: #666 on the #000 bg measured ~3.9:1 (axe AA
-				   needs 4.5:1); #8a8a8a measures ~5.8:1. */
-				color: #8a8a8a;
+				/* --muted-soft, not #666: #666 on the #000 bg measured ~3.9:1 (axe
+				   AA needs 4.5:1); --muted-soft measures 5.8:1 dark, 6.4:1 light. */
+				color: var(--muted-soft);
 				font-size: 12.5px;
 			}
 			.hint .chip-auth {
@@ -327,14 +369,14 @@
 
 			.note {
 				margin-top: 28px;
-				color: #8a8a8a;
+				color: var(--muted-soft);
 				font-size: 12.5px;
 				border-top: 1px solid var(--border);
 				padding-top: 16px;
 				max-width: 60ch;
 			}
 			.note a {
-				color: #aaa;
+				color: var(--text);
 				text-decoration: underline;
 				text-underline-offset: 2px;
 				transition: color 0.15s;
@@ -359,7 +401,7 @@
 				height: 132px;
 				border-radius: 50%;
 				margin: 8px auto 26px;
-				background: radial-gradient(circle at 32% 30%, #2a2a2a, #0c0c0c 70%);
+				background: radial-gradient(circle at 32% 30%, var(--orb-lit), var(--orb-shade) 70%);
 				border: 1px solid var(--border-strong);
 				position: relative;
 				overflow: hidden;
@@ -371,7 +413,7 @@
 				background: conic-gradient(
 					from 0deg,
 					transparent 0 70%,
-					rgba(255, 255, 255, 0.14) 85%,
+					var(--orb-sweep) 85%,
 					transparent 100%
 				);
 				animation: spin 1.5s linear infinite;
@@ -418,7 +460,7 @@
 				transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 			}
 			.elapsed {
-				color: #8a8a8a;
+				color: var(--muted-soft);
 				font-size: 12px;
 				margin-top: 14px;
 				font-variant-numeric: tabular-nums;
@@ -438,7 +480,7 @@
 				.cancel-build:hover {
 					color: var(--text);
 					border-color: var(--muted);
-					background: rgba(255, 255, 255, 0.04);
+					background: var(--hover-tint);
 				}
 				.cancel-build:focus-visible {
 					outline: 2px solid var(--accent);
@@ -490,12 +532,12 @@
 					display: none;
 				}
 				.error-box a {
-					color: #f3b4b4;
+					color: var(--danger-ink);
 					text-decoration: underline;
 					text-underline-offset: 2px;
 				}
 				.error-box a:hover {
-					color: #fff;
+					color: var(--text);
 				}
 				.error-box a:focus-visible {
 					outline: 2px solid var(--accent);
@@ -543,8 +585,8 @@
 				padding: 5px 11px;
 			}
 			.tag.ok {
-				color: #6ee7a8;
-				border-color: #1f3a2a;
+				color: var(--ok-ink);
+				border-color: var(--ok-border);
 			}
 			.done-actions {
 				display: flex;
@@ -572,7 +614,7 @@
 				text-decoration: none;
 			}
 			.btn-ghost:hover {
-				border-color: #444;
+				border-color: var(--hairline-hover);
 				background: var(--panel-elev);
 			}
 			.btn-ghost:active {
@@ -591,7 +633,7 @@
 				background: rgba(248, 113, 113, 0.06);
 				border-radius: 12px;
 				padding: 14px 16px;
-				color: #f3b4b4;
+				color: var(--danger-ink);
 				font-size: 14px;
 			}
 			.error-box.show {
