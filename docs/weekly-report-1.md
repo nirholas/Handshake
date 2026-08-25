@@ -16,7 +16,7 @@ Before the timeline, the totals as of August 25, 2026:
 
 - 9,508 commits on main since April 14 from 21 contributors, 60 pull requests, 104 stars, 26 forks. To be honest about the count: roughly 2,200 of those in one May week were per-file imports of two vendored workspaces, and about 250 were deliberate empty commits in another. Strip those and it is still north of 7,000 real changes in 19 weeks, about 50 a day, every day.
 - 2,674 holder-readable changelog entries: 991 features, 1,075 improvements, 1,190 fixes, 320 infrastructure, 226 docs, 216 security, 166 SDK. Every one is pushed to the holders' Telegram automatically.
-- 724 public pages across Build, Discover, Learn, Crypto, Labs, Blog, and Legal.
+- 725 public pages across Build, Discover, Learn, Crypto, Labs, Blog, and Legal.
 - 101 npm packages published under the @three-ws scope (42 of them MCP servers, 6,225 downloads in the last 30 days), 72 distinct servers under one namespace in the official MCP registry, 60 installable agent skills.
 - 4,519 priced x402 endpoints in the live discovery catalog, 110,416 on-chain settlements and 803,483 payment verifications through our own self-hosted facilitator, 3,000 validator attestations and 126,522 custody proofs on Solana.
 - 111 open-source repos spun out of three.ws with 1,222 stars between them, ERC-8004 registries live on 12 EVM mainnets, two Solana programs, 33 workers, 1,752 test files. All Apache-2.0.
@@ -26,7 +26,7 @@ Before the timeline, the totals as of August 25, 2026:
 - 3,000+ motion-capture animations, 500+ CC0 3D props, 106 rigged characters in the character library.
 - A self-hosted GPU fleet on Google Cloud Run: NVIDIA L4s and an RTX PRO 6000 Blackwell.
 - 44,122 wallet transactions scanned by our own leak scanners as of July 12, with zero leaks found, ever.
-- About 1,500 test files, about 53 Postgres tables, 101 scheduled jobs on Cloud Scheduler, a 21-page Demos Hub, and a walkable 3D city built on real Manhattan map data.
+- 1,752 test files, about 53 Postgres tables, 101 scheduled jobs on Cloud Scheduler, a 21-page Demos Hub, and a walkable 3D city built on real Manhattan map data.
 - An OAuth 2.1 authorization server (PKCE, dynamic registration, revocation, introspection, discovery), an OpenAPI 3.1 spec at /openapi.json, and a hosted MCP endpoint any assistant can drive.
 - 3,145 peak concurrent avatars at the first $THREE holders meetup on August 7.
 - $THREE today, read live from the token page: 16,264 holders, about $2.3M market cap, about $538K 24h volume, verified project on pump.fun, Jupiter Verified, Phantom Verified, listed on MEXC, LBank, KCEX, Bybit Alpha, KuCoin Alpha, Binance Web3, Coinbase Wallet, CoinGecko, and CoinMarketCap.
@@ -561,6 +561,7 @@ Pages include /deploy-onchain, /ar/view, and docs for play vehicles, community, 
 - The pump.fun pill mascot shipped as a rigged, drivable 2.6 MB avatar with its own stage at /pill, and capsule mascots now auto-rig from their own geometry.
 - The full $THREE thesis was published as a single document, every utility, sink, listing, and risk sourced back to the code.
 - The Hugging Face article, avatar rigs, and Space were indexed in the docs.
+- The repo crossed 100 stars on GitHub, and the open-source footprint page went up: every registry, marketplace, community, and directory where three.ws code lives, each link verified live and each number pulled from the registry's own API.
 
 ---
 
@@ -570,11 +571,14 @@ Everything three.ws ships is Apache-2.0, and it has not stayed inside one reposi
 
 - The main repo, github.com/nirholas/three.ws: 9,508 commits, 21 contributors, 60 pull requests, 104 stars, 26 forks, 70 packages, 33 workers (27 as Docker images), 31 specs, 323 docs, 1,752 test files, 4 Rust crates, 7 Solidity contracts, 2 Anchor programs.
 - npm: 101 packages under @three-ws, 42 of them MCP servers, 6,225 downloads in the last 30 days. Avatars, x402 payments, Solana agents, pump.fun tooling, voice, mocap, retargeting, sign language, the assistant and concierge widgets, readme-3d, 3d-ar-studio.
-- The official MCP registry: 72 servers under io.github.nirholas. Also listed on Smithery, Glama, and PulseMCP, and on x402scan.
+- The official MCP registry: 72 servers under io.github.nirholas. Also listed on Glama (10 servers) and PulseMCP (18), on x402scan, and on 402index (19 endpoints, domain claimed). The Smithery submission is drafted, not filed.
 - 111 related public repos with 1,222 stars between them: a 50-repo x402 suite of standalone paid services, the Robinhood Chain family, the extracted x402 server, fetch, modal, bridge, and VS Code extension, the Metaplex agent MCP, on-chain agent wallets, the AR Studio, the news archive, the X Spaces voice agent, and more.
 - On-chain: ERC-8004 identity, reputation, and validation registries deployed by CREATE2 to the same address on 12 EVM mainnets (Ethereum, Optimism, BSC, Gnosis, Polygon, Mantle, Base, Arbitrum, Celo, Avalanche, Linea, Scroll), bytecode-verified; the ThreeWSFactory and payments contracts; two Solana programs for agent invocation and skill licensing.
 - x402: 4,519 priced endpoints in the live discovery catalog, 110,416 on-chain settlements and 803,483 verifications through the self-hosted facilitator, 3,000 validator attestations under the threews.validation.v1 memo envelope, 126,522 custody proofs across 244 epochs.
 - Hugging Face: the three-ws org, the avatar-viewer Space, the avatars model repo, and a published blog post, "Giving AI agents bodies and wallets."
+- Where we write on other people's platforms: three articles on AWS Builder Center (metering a SaaS product through AWS Marketplace, autonomous agents with 3D bodies and on-chain payments, and the agentic economy), two NVIDIA Developer Forums write-ups (how Nemotron made the text-to-3D pipeline usable, and translating the site into 100 languages with NIM), three IBM Community blog posts (our founding post on June 8, IBM's own welcome to the user group on July 14, and IBM's meetup recap on August 8), and the HackerNoon author page.
+- Chat platforms: three.ws 3D Studio in the OpenAI GPT Store, the LobeHub plugin, and the SperaxOS chat plugin at chat.sperax.io. An OpenAI Cookbook pull request is open.
+- Every link, with the number behind it, lives at three.ws/docs/open-source-footprint.
 - Editors and stores: a Blender addon, ComfyUI nodes, the VS Code x402 extension on the VS Code Marketplace and Open VSX, a Chrome extension, and two Claude Code plugins in the plugin marketplace.
 - Three GitHub Pages apps that run with no server and no account: the AR Studio, the Metaplex agent deployer, and the on-chain agent wallets overview.
 - Open assets: 500+ CC0 3D props, 106 rigged characters, 3,000+ animations, and a free crypto news API over a 740,889-article archive.
@@ -585,10 +589,10 @@ Everything three.ws ships is Apache-2.0, and it has not stayed inside one reposi
 Because they are spread across nineteen weeks, here is the full list:
 
 - OpenAI Select Partner (announced July 25).
-- IBM Business Partner (May 6), the IBM Granite runtime, an IBM Community Three.ws User Group, the first in-world meetup (August 7), and the world's first x402-enabled MCP server on IBM Cloud.
-- NVIDIA Inception member (July), with the self-hosted L4 and RTX PRO 6000 Blackwell fleet and the NIM lanes.
+- IBM Business Partner (May 6), the IBM Granite runtime, an IBM Community Three.ws User Group with IBM-authored welcome and recap posts, the first in-world meetup (August 7), two @IBM posts on X about three.ws, press pickup on Yahoo Finance and Business Insider Markets, and the world's first x402-enabled MCP server on IBM Cloud.
+- NVIDIA Inception member (July), with the self-hosted L4 and RTX PRO 6000 Blackwell fleet, the NIM lanes, and two write-ups on the NVIDIA Developer Forums.
 - Google Cloud for Web3 Startups (April 30), production on Cloud Run, a credit grant of up to $200k over two years.
-- AWS Partner Network and AWS Marketplace (May 27), with the integration conformant to the June 2026 Concurrent Agreements rules.
+- AWS Partner Network (May 27), the AWS Marketplace SaaS metering integration conformant to the June 2026 Concurrent Agreements rules (the public listing is still in flight), and an author profile on AWS Builder Center with three published articles.
 - Alibaba Cloud Marketplace live listing (May 17), Alibaba Cloud Partner Network (June 27), a feature on the Alibaba Cloud Marketplace Blog (June 8).
 - HackerNoon (May 17), with automatic import from our announcements RSS.
 - Quicknode Startup Program (July 16).
