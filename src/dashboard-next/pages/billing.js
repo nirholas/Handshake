@@ -44,10 +44,14 @@ const solscan = (sig) => `https://solscan.io/tx/${encodeURIComponent(sig)}`;
 function renderPremium(data) {
 	const el = $('bl-premium');
 	if (!data) {
-		el.innerHTML = errorStateHTML({
-			title: 'Couldn’t load your passes',
-			body: 'The premium endpoint did not answer. Your passes and keys are unaffected; retry in a moment.',
-		});
+		el.innerHTML = `
+			<section class="dn-panel">
+				<div class="bl-panel-head"><h2>Premium pass</h2></div>
+				${errorStateHTML({
+					title: 'Couldn’t load your passes',
+					body: 'The premium endpoint did not answer. Your passes and keys are unaffected; retry in a moment.',
+				})}
+			</section>`;
 		return;
 	}
 	const { active, passes, keys, plan } = data;
