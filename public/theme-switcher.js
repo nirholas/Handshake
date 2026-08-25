@@ -33,6 +33,15 @@
 	var prefersLight =
 		window.matchMedia && window.matchMedia('(prefers-color-scheme: light)');
 	var islandCache = null; // memoised capability result for this page
+	// Is that verdict final? A page whose light palette arrives only through
+	// tokens.css gets it via nav.css's @import, which is a second round trip
+	// after an async-injected <link>. Probing before that lands reads the
+	// page's own dark --bg and memoises "island" for the whole visit, so a
+	// user with light saved was served dark on roughly a third of loads. A
+	// not-capable verdict therefore stays provisional until every stylesheet
+	// has loaded; a capable one is final, since later sheets only ever add
+	// light support.
+	var islandSettled = false;
 
 	function getMode() {
 		try {
@@ -68,7 +77,7 @@
 	// attribute to 'light', read the body (forces a style recalc, NOT a paint),
 	// then restore — all in one JS turn, so nothing flashes on screen.
 	function pageSupportsLight() {
-		if (islandCache !== null) return !islandCache;
+		if (islandCache !== null && islandSettled) return !islandCache;
 		if (!document.body) return true; // can't tell yet — assume capable
 		var el = document.documentElement;
 		var prev = el.getAttribute('data-theme');
@@ -76,6 +85,8 @@
 		var dark = bodyIsDark();
 		el.setAttribute('data-theme', prev || 'dark');
 		islandCache = dark; // true ⇒ island (light not supported)
+		// Capable is final; not-capable only once the stylesheets are all in.
+		islandSettled = !dark || document.readyState === 'complete';
 		return !dark;
 	}
 
@@ -140,6 +151,64 @@
 	// Apply immediately (gates this page right away, correcting the boot script's
 	// pre-paint guess on islands before the page is interactive).
 	applyResolved();
+
+	// Re-run the capability probe whenever a stylesheet lands, and re-apply if the
+	// page turned out to support light after all. nav.js injects its <link>
+	// asynchronously and nav.css @imports tokens.css, so the sheet that carries
+	// the light palette can arrive well after the first probe, and on a slow
+	// load, after window.load too. A page that is a genuine island stays dark
+	// from first paint (no flash); one that merely lost the race to its token
+	// sheet flips to the theme the user actually chose. The watch stops the
+	// moment the page reads as capable, and gives up a few seconds after load so
+	// nothing observes the document forever.
+	function reprobeCapability() {
+		var wasCapable = islandCache === false;
+		islandCache = null;
+		islandSettled = false;
+		var capable = pageSupportsLight();
+		if (capable !== wasCapable) applyResolved();
+		return capable;
+	}
+
+	if (!pageSupportsLight()) {
+		var sheetWatch = null;
+		var giveUp = 0;
+		var stopWatching = function () {
+			if (sheetWatch) { sheetWatch.disconnect(); sheetWatch = null; }
+			if (giveUp) { clearTimeout(giveUp); giveUp = 0; }
+			islandSettled = true;
+			setToggleVisible(islandCache === false);
+		};
+		var onSheet = function () {
+			if (reprobeCapability()) stopWatching();
+		};
+		var watchLink = function (node) {
+			if (!node || node.tagName !== 'LINK' || node.rel !== 'stylesheet') return;
+			node.addEventListener('load', onSheet);
+		};
+		for (var i = 0; i < document.styleSheets.length; i++) onSheet();
+		var links = document.querySelectorAll('link[rel="stylesheet"]');
+		for (var j = 0; j < links.length; j++) watchLink(links[j]);
+		if (window.MutationObserver && islandCache !== false) {
+			sheetWatch = new MutationObserver(function (records) {
+				for (var r = 0; r < records.length; r++) {
+					var added = records[r].addedNodes;
+					for (var n = 0; n < added.length; n++) watchLink(added[n]);
+				}
+				onSheet();
+			});
+			sheetWatch.observe(document.documentElement, { childList: true, subtree: true });
+		}
+		window.addEventListener('load', function () {
+			if (islandCache === false) return;
+			// One last look a beat after load, then settle: an @import resolves
+			// after its own link's load event, and nav.js may inject even later.
+			giveUp = setTimeout(function () {
+				if (!reprobeCapability()) stopWatching();
+				else stopWatching();
+			}, 3000);
+		});
+	}
 
 	// Delegated click — independent of when the async-injected nav button mounts.
 	document.addEventListener('click', function (e) {
