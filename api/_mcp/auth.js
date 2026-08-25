@@ -56,9 +56,18 @@ export function isMcpProtocolClient(req) {
 // treats any WWW-Authenticate on a 402 as an MPP header and flags the missing
 // Payment challenge. A plain client that actually wants OAuth can still find
 // the metadata at /.well-known/oauth-protected-resource.
-export async function sendAuthChallenge(res, { req, resourceUrl, requirements, challenge }) {
+// `paymentStatus: 402` forces a Payment Required answer for EVERY caller, MCP
+// protocol clients included, and drops the OAuth WWW-Authenticate hint. The
+// OKX.AI surfaces need it: a spec-compliant MCP client sends
+// `Accept: application/json, text/event-stream`, which reads as a protocol
+// client here and used to earn a 401. The OKX buyer flow keys strictly on 402
+// ("if it is not 402, return the body directly"), so a real MCP client calling
+// a paid tool unpaid was handed a 401 it could not pay, and a reviewer probing
+// with one saw a service with no payment integration. curl never showed it.
+export async function sendAuthChallenge(res, { req, resourceUrl, requirements, challenge, paymentStatus = null }) {
 	const resource = env.MCP_RESOURCE;
-	const isProtocolClient = isMcpProtocolClient(req);
+	const forced402 = paymentStatus === 402;
+	const isProtocolClient = !forced402 && isMcpProtocolClient(req);
 	res.statusCode = isProtocolClient ? 401 : 402;
 	if (isProtocolClient) {
 		res.setHeader(
@@ -116,7 +125,7 @@ function mergeAccepts(extra, base) {
 export async function authenticateRequest(
 	req,
 	res,
-	{ x402Amount, resourcePath = '/api/mcp', challenge, allowFree = false, extraAccepts = [] } = {},
+	{ x402Amount, resourcePath = '/api/mcp', challenge, allowFree = false, extraAccepts = [], paymentStatus = null } = {},
 ) {
 	const bearer = extractBearer(req);
 	// OKX Agent Payments Protocol buyers replay with PAYMENT-SIGNATURE (x402 v2
@@ -197,7 +206,7 @@ export async function authenticateRequest(
 		}
 	}
 
-	await sendAuthChallenge(res, { req, resourceUrl, requirements, challenge });
+	await sendAuthChallenge(res, { req, resourceUrl, requirements, challenge, paymentStatus });
 	return null;
 }
 
@@ -209,7 +218,7 @@ export async function authenticateRequest(
 export async function handleSse(
 	req,
 	res,
-	{ resourcePath = '/api/mcp', challenge, extraAccepts = [], x402Amount = null } = {},
+	{ resourcePath = '/api/mcp', challenge, extraAccepts = [], x402Amount = null, paymentStatus = null } = {},
 ) {
 	// We don't hold long-lived server→client subscriptions yet; respond politely.
 	const bearer = extractBearer(req);
@@ -227,6 +236,7 @@ export async function handleSse(
 				paymentRequirements(sseResourceUrl, x402Amount != null ? { amount: x402Amount } : {}),
 			),
 			challenge,
+			paymentStatus,
 		});
 	}
 	const auth = await authenticateBearer(bearer, { audience: env.MCP_RESOURCE });

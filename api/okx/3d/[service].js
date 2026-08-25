@@ -378,6 +378,7 @@ async function handleA2mcp(req, res, cfg) {
 			challenge,
 			extraAccepts: xlayerAcceptsFor(listPrice),
 			x402Amount: listPrice,
+			paymentStatus: 402,
 		});
 	if (req.method === 'DELETE') return handleTerminate(req, res);
 	if (req.method !== 'POST') return send401(res, 'method not supported');
@@ -403,6 +404,9 @@ async function handleA2mcp(req, res, cfg) {
 		challenge,
 		allowFree: allFree || (isDiscoveryOnlyBatch(body) && !isMcpProtocolClient(req)),
 		extraAccepts,
+		// OKX buyers pay a 402 and nothing else; there is no OAuth story on this
+		// surface, so an MCP client must never be diverted to a 401.
+		paymentStatus: 402,
 	});
 	if (!result) return;
 	const { auth, x402Ctx } = result;

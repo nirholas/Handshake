@@ -94,7 +94,13 @@ function internalHeaders() {
 // self-hosted Hunyuan3D worker that serves high does return a poll handle, so
 // the usual cause of the second case is its scale-to-zero cold start rather
 // than a blocking lane; either way, standard is better than a dead end.
-export async function startForge(base, { prompt, imageUrls, aspect, backend, path, tier, internal }) {
+//
+// `strictTier: true` disables that degrade and throws `tier_unavailable`
+// instead. A PAID high-tier surface must use it: a buyer who paid the HD price
+// and silently received standard has been overcharged, and the seller side
+// settles on success, so refusing here is what keeps their money in their
+// wallet.
+export async function startForge(base, { prompt, imageUrls, aspect, backend, path, tier, internal, strictTier = false }) {
 	const attempt = async (tierId, withInternal) => {
 		const payload = {
 			...(prompt ? { prompt } : {}),
@@ -131,9 +137,13 @@ export async function startForge(base, { prompt, imageUrls, aspect, backend, pat
 		// in milliseconds, so a submit that blocked to the deadline almost always
 		// hit a cold start or a blocking fallback lane. High tier degrades to the
 		// async standard router; other tiers retry as submitted.
+		if (tier === 'high' && strictTier)
+			throw failure('tier_unavailable', 'the high-detail lane did not accept the job in time; try again shortly', { retryAfter: 30 });
 		if (tier === 'high') ({ res, data } = await attempt('standard', false));
 		else ({ res, data } = await attempt(tier, !!internal));
 	}
+	if (res.status === 402 && tier === 'high' && strictTier)
+		throw failure('tier_unavailable', 'the high-detail lane is not accepting operator-funded jobs right now; try again shortly', { retryAfter: 60 });
 	if (res.status === 402 && tier === 'high') ({ res, data } = await attempt('standard', false));
 	if (res.status === 503) throw failure('not_configured', data?.message || '3D generation is not configured on this deployment');
 	if (res.status === 429) throw failure('busy', data?.message || 'the 3D generator is busy; try again shortly', { retryAfter: data?.retry_after });
