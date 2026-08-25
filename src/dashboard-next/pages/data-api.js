@@ -641,19 +641,25 @@ async function loadStatus() {
 }
 
 // Free, public, and slow enough to be worth keeping off the critical path: the
-// pass UI never waits on it, and the catalog upgrades in place when it lands.
-async function loadCorpus() {
-	const [archive, feed] = await Promise.allSettled([
-		get('/api/news/archive?stats=true'),
-		get('/api/news/feed?meta=1&limit=1'),
-	]);
-	if (archive.status === 'fulfilled') state.corpus = archive.value?.stats || null;
-	if (feed.status === 'fulfilled') {
-		const n = Array.isArray(feed.value?.sources) ? feed.value.sources.length : 0;
-		state.feedSources = n > 0 ? n : null;
-	}
-	renderLede();
-	renderCatalog();
+// pass UI never waits on either probe, and each upgrades its copy in place as
+// it lands. Kept as two independent fetches on purpose, because the feed
+// registry takes seconds and would otherwise hold the article count hostage.
+function loadCorpus() {
+	get('/api/news/archive?stats=true')
+		.then((out) => {
+			state.corpus = out?.stats || null;
+			renderLede();
+			renderCatalog();
+		})
+		.catch(() => { /* the lede and catalog stay on their number-free wording */ });
+
+	get('/api/news/feed?meta=1&limit=1')
+		.then((out) => {
+			const n = Array.isArray(out?.sources) ? out.sources.length : 0;
+			state.feedSources = n > 0 ? n : null;
+			renderCatalog();
+		})
+		.catch(() => { /* the feed row stays on its number-free wording */ });
 }
 
 // Connect the wallet, prove ownership, then reload the (now full) status.
