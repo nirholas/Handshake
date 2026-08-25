@@ -23,12 +23,12 @@
 			<description>The long-form case for $THREE: what three.ws is, every utility and sink the token has, how platform revenue routes into buybacks, where it trades and is verified, the ecosystem footprint, the roadmap, and every risk the platform documents about itself.</description>
 		</item>
 		<item>
-			<title>Docs · Weekly Report #1</title>
-			<link>https://three.ws/docs/weekly-report-1</link>
-			<guid isPermaLink="false">2026-08-25:Docs · Weekly Report #1</guid>
+			<title>Docs · The First 19 Weeks</title>
+			<link>https://three.ws/docs/the-first-19-weeks</link>
+			<guid isPermaLink="false">2026-08-25:Docs · The First 19 Weeks</guid>
 			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>The first three.ws weekly report: a week-by-week roundup of everything shipped from the first commit on 2026-04-14 through 2026-08-25, with every launch, partnership, announcement, and where $THREE fits.</description>
+			<description>The founding three.ws roundup: a week-by-week record of everything shipped from the first commit on 2026-04-14 through 2026-08-25, with every launch, partnership, announcement, and where $THREE fits.</description>
 		</item>
 		<item>
 			<title>Billing &amp; Passes names your creators, keeps its retry buttons live, and the dashboard fits a phone screen</title>
@@ -103,6 +103,14 @@
 			<description>Every text-to-3D generation starts by painting a concept image, and that step tried its image providers one after another with no overall time limit. When the first provider stalled, a request could sit for two and a half minutes before answering, and anything with a shorter patience (ChatGPT, agent clients) simply saw nothing. The painter now works to one shared budget: a slow provider hands off with real time left for the next one, and if the whole chain runs out you get a quick, honest retry-in-a-moment answer instead of a hang. Image-to-3D was never affected.</description>
 		</item>
 		<item>
+			<title>The First 19 Weeks: everything shipped since day one, week by week</title>
+			<link>https://three.ws/docs/the-first-19-weeks</link>
+			<guid isPermaLink="false">2026-08-25:The First 19 Weeks: everything shipped since day one, week by week</guid>
+			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>The First 19 Weeks, the founding three.ws roundup, walks every week from the first commit on April 14 to today: what launched, what was announced, which partnerships landed, and where $THREE fits, with the totals (commits, changelog entries, pages, packages, MCP servers, listings) up front. It is written for the timeline, so no tables, and ships with a screenshot kit of the live surfaces.</description>
+		</item>
+		<item>
 			<title>The first-contribution guide now hands you real open work, and the docs sidebar can find it</title>
 			<link>https://three.ws/docs/first-contribution</link>
 			<guid isPermaLink="false">2026-08-25:The first-contribution guide now hands you real open work, and the docs sidebar can find it</guid>
@@ -125,14 +133,6 @@
 			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>The open-source repo behind three.ws passed 100 GitHub stars: 9,508 commits from 21 contributors, 101 npm packages under @three-ws, 72 MCP servers in the official registry, 4,519 x402 endpoints with 110,416 on-chain settlements, and 3,000 validator attestations on Solana. Thank you for building with us.</description>
-		</item>
-		<item>
-			<title>Weekly Report #1: everything shipped since day one, week by week</title>
-			<link>https://three.ws/docs/weekly-report-1</link>
-			<guid isPermaLink="false">2026-08-25:Weekly Report #1: everything shipped since day one, week by week</guid>
-			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
-			<category>docs</category>
-			<description>The first three.ws weekly report walks every week from the first commit on April 14 to today: what launched, what was announced, which partnerships landed, and where $THREE fits, with the totals (commits, changelog entries, pages, packages, MCP servers, listings) up front. It is written for the timeline, so no tables, and ships with a screenshot kit of the live surfaces.</description>
 		</item>
 		<item>
 			<title>Docs · Rigging the pump.fun pill mascot</title>

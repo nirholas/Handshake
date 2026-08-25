@@ -528,7 +528,7 @@ If buybacks never turn on, perks never activate, or revenue does not grow, the t
 
 ## 17. Summary of the bull case
 
-1. **A real, shipping, open-source product** with 725 pages, 101 npm packages, 72 MCP servers in the official registry, 4,519 priced x402 endpoints with 110,416 on-chain settlements, and 2,674 changelog entries in four months. The code is public and every mechanic in this document can be read. The week-by-week record is in [the first weekly report](./weekly-report-1.md).
+1. **A real, shipping, open-source product** with 725 pages, 101 npm packages, 72 MCP servers in the official registry, 4,519 priced x402 endpoints with 110,416 on-chain settlements, and 2,674 changelog entries in four months. The code is public and every mechanic in this document can be read. The week-by-week record is in [The First 19 Weeks](./the-first-19-weeks.md).
 2. **A complete agent-economy stack**: bodies (3D avatars), identities (ERC-8004 and Metaplex Core), wallets (custodial with a single spend-policy boundary), rails (x402 with a self-hosted Solana facilitator), trust (cross-chain reputation and identity verification), and markets (skills, assets, labor, bounties, vaults).
 3. **The token is wired into every layer**: hold-to-access tiers, 20% discounts on plans and passes, marketplace-only currency, labor and bounty escrow, game cosmetics, gated embeds, holder worlds, rider passes, deploy-fee waivers, x402 acceptance, and one-signature allowances.
 4. **Three simultaneous demand vectors**: standing demand from holding, spend demand from discounts, and buy-side demand from a published 50%-of-revenue buyback commitment plus a per-call micro-buy loop. The platform never sells and never burns.

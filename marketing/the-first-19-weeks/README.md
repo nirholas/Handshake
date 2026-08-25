@@ -1,10 +1,10 @@
-# Weekly Report #1 image kit
+# The First 19 Weeks image kit
 
-Screenshots of live three.ws surfaces captured from https://three.ws on 2026-08-25 at 1440x900, 2x device scale, for the X Article "three.ws Weekly Report #1" (`docs/weekly-report-1.md`). Regenerate with `node scripts/render-weekly-report-shots.mjs`.
+Screenshots of live three.ws surfaces captured from https://three.ws on 2026-08-25 at 1440x900, 2x device scale, for the X Article "three.ws: The First 19 Weeks" (`docs/the-first-19-weeks.md`). Regenerate with `node scripts/render-weekly-report-shots.mjs`.
 
-Header images for the X Article cover, rendered by `node scripts/render-weekly-report-header.mjs 1`:
+Header images for the X Article cover, rendered by `node scripts/render-weekly-report-header.mjs the-first-19-weeks`:
 
-- header-x-article.png: 2400x1200 (2:1), black background, three.ws lockup, "Weekly Report #1". Use this as the article cover.
+- header-x-article.png: 2400x1200 (2:1), black background, three.ws lockup, "The First 19 Weeks". Use this as the article cover.
 - header-16x9.png: 2400x1350 (16:9) cut of the same header for the announcing post.
 
 The two open-source graphics referenced by the article live in `docs/media/` (rendered by `node scripts/render-github-stars-banner.mjs`): github-100-stars-x.png (the 100-stars milestone with twelve repo stats) and github-100-stars-ecosystem.png (where the open source stems beyond the repo).

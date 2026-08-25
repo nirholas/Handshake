@@ -1,8 +1,8 @@
-# three.ws Weekly Report #1: Everything We Have Shipped So Far
+# three.ws: The First 19 Weeks
 
 Nineteen weeks. 9,508 commits. 21 contributors. 2,674 changelog entries. 725 pages. 101 npm packages. 72 MCP servers in the official registry. 4,519 x402 endpoints. One token.
 
-This is the first weekly report, and because it is the first, it is also the whole story. It runs from the first commit on April 14, 2026 to today, August 25, 2026, week by week, and it covers everything: what we built, what we announced, what we partnered on, and where $THREE fits. Every number in it comes from the public repository, the public changelog, or a public listing.
+This is the founding roundup, the whole story so far. It runs from the first commit on April 14, 2026 to today, August 25, 2026, week by week, and it covers everything: what we built, what we announced, what we partnered on, and where $THREE fits. Every number in it comes from the public repository, the public changelog, or a public listing.
 
 If you only read one line: three.ws went from an empty repo to a live, open-source, revenue-generating platform where AI agents get a 3D body, an on-chain identity, a wallet, and a way to get paid, in four months, and $THREE is the coin in the middle of it.
 
@@ -632,7 +632,7 @@ Every week above added a place where the token does work. Collected here; the fu
 
 The roadmap has four phases. Foundations are shipped. The selfie-to-avatar engine, agent personalization with voice cloning, the on-chain economy (agent tokens, reputation markets, royalties), and the open inference network are each live in core and being pushed further. Nearer term, the buyback and micro-buy engines are built, capped, and waiting on their switches; the next holder perks are specified down to the migration; the MEXC market is filed with CoinGecko; and the AWS listing, OKX resubmission, and OpenAI directory submission are in flight.
 
-Announcement coverage is the gap we are most aware of: an internal audit in August counted 410 shipped surfaces and only 47 ever announced on X. Some of the strongest things on the platform have never had a post: three-token-mcp (the first MCP server whose actions burn a token), Forge Max, Motion Swap and Mocap Studio, Capture and the Splat viewer, Genome and Genesis, the Wardrobe and Fits, Oracle and the activity feed, Guardian, the Arena and Coin Clash and Coin Wars, Vaults and the Labor Market and Signals, Mirror and Swarms and Ghost Copy, Launch Studio, readme-3d, agent-memory and agent-runtime and agent-guards, Concierge and Assistant, the AgenC embodied room, Choreograph and Gestures, Portfolio and Airdrops and the master Wallet, Theater and Pulse and Flow, and skill-license. That is inventory, not a roadmap of promises, and it is why this report exists. Weekly from now on.
+Announcement coverage is the gap we are most aware of: an internal audit in August counted 410 shipped surfaces and only 47 ever announced on X. Some of the strongest things on the platform have never had a post: three-token-mcp (the first MCP server whose actions burn a token), Forge Max, Motion Swap and Mocap Studio, Capture and the Splat viewer, Genome and Genesis, the Wardrobe and Fits, Oracle and the activity feed, Guardian, the Arena and Coin Clash and Coin Wars, Vaults and the Labor Market and Signals, Mirror and Swarms and Ghost Copy, Launch Studio, readme-3d, agent-memory and agent-runtime and agent-guards, Concierge and Assistant, the AgenC embodied room, Choreograph and Gestures, Portfolio and Airdrops and the master Wallet, Theater and Pulse and Flow, and skill-license. That is inventory, not a roadmap of promises, and it is why this roundup exists. From here the record continues weekly: Weekly Report #1 covers the seven days after this one, and every week after gets its own.
 
 Everything above is open source under Apache-2.0 at github.com/nirholas/three.ws. Read the code, check the endpoints, join the world at three.ws/play.
 

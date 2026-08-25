@@ -4501,9 +4501,9 @@
 					"changefreq": "monthly"
 				},
 				{
-					"path": "/docs/weekly-report-1",
-					"title": "Docs · Weekly Report #1",
-					"description": "The first three.ws weekly report: a week-by-week roundup of everything shipped from the first commit on 2026-04-14 through 2026-08-25, with every launch, partnership, announcement, and where $THREE fits.",
+					"path": "/docs/the-first-19-weeks",
+					"title": "Docs · The First 19 Weeks",
+					"description": "The founding three.ws roundup: a week-by-week record of everything shipped from the first commit on 2026-04-14 through 2026-08-25, with every launch, partnership, announcement, and where $THREE fits.",
 					"priority": 0.7,
 					"changefreq": "weekly",
 					"added": "2026-08-25"

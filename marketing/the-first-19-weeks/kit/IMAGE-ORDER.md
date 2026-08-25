@@ -1,6 +1,6 @@
 # Image insertion order
 
-Numbers match the placeholders in weekly-report-1.html. Cover image is separate (cover-x-article.png).
+Numbers match the placeholders in the-first-19-weeks.html. Cover image is separate (cover-x-article.png).
 
 01. 01-home.png
 02. 02-three-token.png

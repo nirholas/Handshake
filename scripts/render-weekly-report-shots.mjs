@@ -3,7 +3,7 @@
 import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
 
-const out = process.argv[2] || 'marketing/weekly-report-1/images';
+const out = process.argv[2] || 'marketing/the-first-19-weeks/images';
 const base = 'https://three.ws';
 const pages = [
   ['home', '/'],

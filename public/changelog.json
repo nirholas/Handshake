@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-25T17:44:51.441Z",
+	"generated_at": "2026-08-25T17:51:37.666Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -29,9 +29,9 @@
 		{
 			"date": "2026-08-25",
 			"type": "launch",
-			"title": "Docs · Weekly Report #1",
-			"summary": "The first three.ws weekly report: a week-by-week roundup of everything shipped from the first commit on 2026-04-14 through 2026-08-25, with every launch, partnership, announcement, and where $THREE fits.",
-			"link": "/docs/weekly-report-1",
+			"title": "Docs · The First 19 Weeks",
+			"summary": "The founding three.ws roundup: a week-by-week record of everything shipped from the first commit on 2026-04-14 through 2026-08-25, with every launch, partnership, announcement, and where $THREE fits.",
+			"link": "/docs/the-first-19-weeks",
 			"tags": [
 				"launch"
 			]
@@ -136,6 +136,16 @@
 		{
 			"date": "2026-08-25",
 			"type": "update",
+			"title": "The First 19 Weeks: everything shipped since day one, week by week",
+			"summary": "The First 19 Weeks, the founding three.ws roundup, walks every week from the first commit on April 14 to today: what launched, what was announced, which partnerships landed, and where $THREE fits, with the totals (commits, changelog entries, pages, packages, MCP servers, listings) up front. It is written for the timeline, so no tables, and ships with a screenshot kit of the live surfaces.",
+			"link": "/docs/the-first-19-weeks",
+			"tags": [
+				"docs"
+			]
+		},
+		{
+			"date": "2026-08-25",
+			"type": "update",
 			"title": "The first-contribution guide now hands you real open work, and the docs sidebar can find it",
 			"summary": "The 15-minute contributor guide walked through adding MikuMikuDance rig support as its example, but that support had already shipped, so anyone following it literally would have re-done merged work and been told a bone was unmapped when it was not. It now shows the MMD change as the finished reference, exactly as it landed with its tests, and points you at two rig conventions that are genuinely still open, each with the bones that fail today. The community, triage, and first-contribution pages also appear in the docs sidebar under Guides instead of being reachable only from the README, and the triage page now explains every label the repo actually uses.",
 			"link": "/docs/first-contribution",
@@ -160,16 +170,6 @@
 			"title": "three.ws crossed 100 stars on GitHub",
 			"summary": "The open-source repo behind three.ws passed 100 GitHub stars: 9,508 commits from 21 contributors, 101 npm packages under @three-ws, 72 MCP servers in the official registry, 4,519 x402 endpoints with 110,416 on-chain settlements, and 3,000 validator attestations on Solana. Thank you for building with us.",
 			"link": null,
-			"tags": [
-				"docs"
-			]
-		},
-		{
-			"date": "2026-08-25",
-			"type": "update",
-			"title": "Weekly Report #1: everything shipped since day one, week by week",
-			"summary": "The first three.ws weekly report walks every week from the first commit on April 14 to today: what launched, what was announced, which partnerships landed, and where $THREE fits, with the totals (commits, changelog entries, pages, packages, MCP servers, listings) up front. It is written for the timeline, so no tables, and ships with a screenshot kit of the live surfaces.",
-			"link": "/docs/weekly-report-1",
 			"tags": [
 				"docs"
 			]
