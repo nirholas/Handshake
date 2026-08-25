@@ -55,6 +55,14 @@
 			<description>On /creations, the 3D preview on every gallery card and leaderboard row was accidentally accepting drag input, so a card could be flung out of frame and a swipe over one scrolled nothing on a phone instead of moving the feed. The previews now spin on their own and hand the drag back to the page. The trending and top-creator columns also render shimmer rows while they load instead of sitting blank, the browse tally no longer shows a stale number over a loading grid, and keyboard focus on the search field is now clearly outlined.</description>
 		</item>
 		<item>
+			<title>Credits shows your $THREE discount tier, and no longer goes blank when it cannot load</title>
+			<link>https://three.ws/credits</link>
+			<guid isPermaLink="false">2026-08-25:Credits shows your $THREE discount tier, and no longer goes blank when it cannot load</guid>
+			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The Credits page had a hole where its error state should be: if the balance request failed, every panel disappeared and the page ended below the heading with nothing on it. There is now a designed card that says what happened, links to platform status, and retries in one click, and a dropped connection reads as a real sentence instead of the browser's &quot;Failed to fetch&quot;. The page also finally states the thing it promises: a pill showing the $THREE tier you are actually charged at, with the discount you are getting or how much more $THREE reaches the next tier. On a 320px phone the whole layout used to be a hundred pixels wider than the screen with the right edge silently cut off, so nothing over there was reachable; the page now fits, and the history table scrolls inside its own box. Smaller fixes throughout: every button and field has a visible keyboard focus ring, the deposit address has a copy button, the $THREE unit price shows real decimals instead of rounding to $0.00, the amount field and the history controls stay translated when you switch asset or load another page, and the price list dropped the dashes from its labels.</description>
+		</item>
+		<item>
 			<title>Crew HQ keeps its 3D room standing, and crew links now open where they point</title>
 			<link>https://three.ws/crews</link>
 			<guid isPermaLink="false">2026-08-25:Crew HQ keeps its 3D room standing, and crew links now open where they point</guid>
