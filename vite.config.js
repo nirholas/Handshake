@@ -2062,11 +2062,20 @@ const appConfig = {
 					// /dashboard/<tab> and /dashboard/edit/<id> → pages/dashboard-next/index.html (new SPA)
 					else if (
 						!filePath &&
-						// `billing` left out on purpose: /dashboard/billing is a real
-						// dashboard-next page (pages/dashboard-next/billing.html), not a
-						// legacy SPA tab.
+						// A slug that owns a real pages/dashboard-next/<slug>.html is NOT a
+						// legacy SPA tab: prod (vercel.json) routes it to that file, so dev
+						// must fall through to the /dashboard/<page> rule below or the page
+						// only exists in production. `account`, `agents` and `widgets` all
+						// graduated out of the SPA and were still listed here, which served
+						// the Overview page in dev under their URLs.
 						/^\/dashboard\/(?:agents|avatars|create|upload|animations|widgets|embed|keys|mcp|monetization|payments|subscriptions|revenue|withdrawals|earnings|account)\/?$/.test(
 							path,
+						) &&
+						!existsSync(
+							resolve(
+								root,
+								`pages/dashboard-next/${path.replace(/^\/dashboard\//, '').replace(/\/$/, '')}.html`,
+							),
 						)
 					)
 						filePath = resolve(root, 'pages/dashboard-next/index.html');
