@@ -175,3 +175,62 @@ describe('/api/agent/market-maker id validation', () => {
 		expect(sqlMock.mock.calls[1].slice(1)).not.toContain('not-a-cluster');
 	});
 });
+
+// The Capabilities command center reads every capability for the whole account
+// at once. Before `all=1` it asked once per agent, which on a real roster spent
+// more of the per-IP budget than the bucket held: the overflow came back 429,
+// the page discarded it, and an account with launchers and live markets was
+// shown a confident row of zeros. These pin the account-wide contract.
+describe('account-wide reads (all=1)', () => {
+	it('answers the launcher for every owned agent in two queries, with no agentId', async () => {
+		sqlQueue = [
+			[{ id: CONFIG, agent_id: AGENT, agent_name: 'Roster Agent', agent_image: null }],
+			[{ mint: THREE_MINT, agent_id: AGENT, agent_name: 'Roster Agent', agent_image: null }],
+		];
+		const res = mkRes();
+		await launcher(mkReq({ url: '/api/agent/launcher?all=1' }), res);
+		expect(res.statusCode).toBe(200);
+		const body = parse(res);
+		expect(body.scope).toBe('all');
+		expect(body.configs).toHaveLength(1);
+		expect(body.coins).toHaveLength(1);
+		// Rows carry the owning agent inline so the caller needs no second lookup.
+		expect(body.configs[0].agent_name).toBe('Roster Agent');
+		// Two queries total: no per-agent ownership round trip.
+		expect(sqlMock).toHaveBeenCalledTimes(2);
+	});
+
+	it('answers the market maker for every owned agent in two queries, with no agentId', async () => {
+		sqlQueue = [
+			[{ id: CONFIG, agent_id: AGENT, agent_name: 'Roster Agent', agent_image: null }],
+			[{ id: 'trade-1', agent_id: AGENT, side: 'buy', agent_name: 'Roster Agent', agent_image: null }],
+		];
+		const res = mkRes();
+		await marketMaker(mkReq({ url: '/api/agent/market-maker?all=1' }), res);
+		expect(res.statusCode).toBe(200);
+		const body = parse(res);
+		expect(body.scope).toBe('all');
+		expect(body.configs).toHaveLength(1);
+		expect(body.recent_trades).toHaveLength(1);
+		expect(body.recent_trades[0].agent_name).toBe('Roster Agent');
+		expect(sqlMock).toHaveBeenCalledTimes(2);
+	});
+
+	it('still demands an agentId when all is absent or not truthy', async () => {
+		for (const url of ['/api/agent/launcher', '/api/agent/launcher?all=0', '/api/agent/launcher?all=maybe']) {
+			sqlMock.mockClear();
+			const res = mkRes();
+			await launcher(mkReq({ url }), res);
+			expect(res.statusCode).toBe(400);
+			expect(parse(res).error).toBe('missing_agent_id');
+			expect(sqlMock).not.toHaveBeenCalled();
+		}
+		for (const url of ['/api/agent/market-maker', '/api/agent/market-maker?all=0']) {
+			sqlMock.mockClear();
+			const res = mkRes();
+			await marketMaker(mkReq({ url }), res);
+			expect(res.statusCode).toBe(400);
+			expect(sqlMock).not.toHaveBeenCalled();
+		}
+	});
+});

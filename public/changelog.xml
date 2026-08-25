@@ -39,6 +39,14 @@
 			<description>On /dashboard/billing, creator subscriptions now show the creator's name (linked to their profile), the real renewal or end date, a colour-coded status, and the plan price with its interval, instead of a raw account id. When the passes or subscriptions feed cannot be reached, the Retry button now actually reloads that section. Across every dashboard page, the top bar no longer forces the layout wider than a 320px phone screen, so nothing is clipped off the right edge.</description>
 		</item>
 		<item>
+			<title>Capabilities stops reporting an empty dashboard when the API is the thing that failed</title>
+			<link>https://three.ws/dashboard/capabilities</link>
+			<guid isPermaLink="false">2026-08-25:Capabilities stops reporting an empty dashboard when the API is the thing that failed</guid>
+			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The Capabilities command center used to ask the API once per agent for launcher and market-maker data, which on a real roster tripped the rate limiter mid-load. The failed calls were silently discarded and the page rendered a confident all-zero dashboard for an account that had launchers, coins and live markets. It now reads each capability for the whole account in a single call, so the request count no longer grows with your roster, and any lane that does fail says so in place with a working Retry instead of showing a zero. The 30-second refresh also stops resetting the tab you were reading and no longer replaces a Launch Now or Claim button while its request is still in flight, and on a phone the row action stays pinned in view instead of scrolling off the right edge.</description>
+		</item>
+		<item>
 			<title>Compare reads correctly on a phone and stops mislabelling gains and losses</title>
 			<link>https://three.ws/compare</link>
 			<guid isPermaLink="false">2026-08-25:Compare reads correctly on a phone and stops mislabelling gains and losses</guid>
@@ -79,6 +87,14 @@
 			<description>Crew HQ refreshes who is in the world every 20 seconds, and it used to rebuild the whole room to do it: every member's 3D figure was destroyed and recreated four times a minute, which burns through the handful of live 3D canvases a browser will give a page and could catch a figure mid-load. The room now writes the new state into the figures already standing and only rebuilds when the roster itself changes, and opening a shared crew link no longer flashes the loading skeleton over a room that is already there. A member whose model cannot be loaded now shows their portrait on the plinth instead of an empty space. Signed-out visitors get a clean page: the sign-in-only crew request is no longer fired at all, the crew directory loads beside the room rather than behind it, and it stops listing the crew you are already looking at. A tag nobody flies offers the founding form only to someone who can actually take it, and a dropped connection now says what happened and how to retry instead of showing the browser's &quot;Failed to fetch&quot;.</description>
 		</item>
 		<item>
+			<title>Dashboard Account fits a phone screen, and it stops claiming you own no .sol domains when it could not check</title>
+			<link>https://three.ws/dashboard/account</link>
+			<guid isPermaLink="false">2026-08-25:Dashboard Account fits a phone screen, and it stops claiming you own no .sol domains when it could not check</guid>
+			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>On a 320px phone every card on the account page ran past the right edge of the screen, which put Sign out, the AI provider key fields, Link wallet, and the quick links out of reach with no way to scroll to them; the cards now fit and every control is reachable. The SNS panel used to answer a resolver outage with &quot;No primary .sol domains found&quot;, telling you to go register a domain you may already own. It now says plainly that the lookup failed and offers a retry, and when only some of your wallets could be checked it says how many were missed instead of quietly counting them as empty. The panel also refreshes itself when you link, disconnect, or re-prioritise a wallet, rather than sitting on a stale answer until you reload. The delegation table says how many agents it is showing out of your total instead of silently listing the first eight, and the page finally carries a search description of what it holds: profile, wallets, domains, delegation, provider keys, and the audit trail.</description>
+		</item>
+		<item>
 			<title>Dashboard Analytics fits a phone screen and its failure page can actually reload</title>
 			<link>https://three.ws/dashboard/analytics</link>
 			<guid isPermaLink="false">2026-08-25:Dashboard Analytics fits a phone screen and its failure page can actually reload</guid>
@@ -103,6 +119,14 @@
 			<description>Every text-to-3D generation starts by painting a concept image, and that step tried its image providers one after another with no overall time limit. When the first provider stalled, a request could sit for two and a half minutes before answering, and anything with a shorter patience (ChatGPT, agent clients) simply saw nothing. The painter now works to one shared budget: a slow provider hands off with real time left for the next one, and if the whole chain runs out you get a quick, honest retry-in-a-moment answer instead of a hang. Image-to-3D was never affected.</description>
 		</item>
 		<item>
+			<title>The Data API console keeps working when one of its services is down, and its corpus numbers are now live</title>
+			<link>https://three.ws/dashboard/data-api</link>
+			<guid isPermaLink="false">2026-08-25:The Data API console keeps working when one of its services is down, and its corpus numbers are now live</guid>
+			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The developer console at Dashboard &gt; Data API is fed by three separate services, and any one of them failing used to take the whole page down: a pricing outage left a single error card where the pass status, the API key table, the quickstarts, and the endpoint list should have been, and a pass-status hiccup left a loading shimmer that never resolved. Each card now fails on its own with an explanation and a retry, and everything else stays usable. Status messages appear next to the control that produced them, so a key rotation error no longer lands in the pricing card several screens away. The copyable quickstarts stopped pasting a shortened version of your key into commands that could only ever be rejected; they now carry a clearly marked placeholder, or the real key in the moment it is minted. Copy buttons say so honestly when the browser refuses the clipboard instead of claiming success. The article and publisher-feed counts are read from the archive itself rather than typed into the page, so they no longer drift, and the tables and code blocks can be scrolled with the keyboard.</description>
+		</item>
+		<item>
 			<title>The First 19 Weeks: everything shipped since day one, week by week</title>
 			<link>https://three.ws/docs/the-first-19-weeks</link>
 			<guid isPermaLink="false">2026-08-25:The First 19 Weeks: everything shipped since day one, week by week</guid>
@@ -125,6 +149,14 @@
 			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>A long-form research thesis on $THREE now lives in the docs: what three.ws is, every way the token is used (hold-to-access tiers, plan and pass discounts, marketplace and labor escrow, game cosmetics, gated embeds, deploy-fee waivers), how platform revenue is routed into buybacks, where the token trades and is verified, the ecosystem footprint, the roadmap, and every risk the platform documents about itself, each claim sourced to the code.</description>
+		</item>
+		<item>
+			<title>The market tools now clear the WCAG AA contrast floor</title>
+			<link>https://three.ws/compare</link>
+			<guid isPermaLink="false">2026-08-25:The market tools now clear the WCAG AA contrast floor</guid>
+			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>An accessibility sweep of the compare page found four places where text did not have enough contrast against what sat behind it. The selected time-range button, the rank badge, and the heatmap's view switcher all put white on a blue too light to read; they now use a blue and a text colour chosen to clear the standard in both the light and the dark theme. The comparison table's green was too pale on a white background, the coin column headings were painted in their chart-line colour (worst of all for the amber series), and the Getting started pill's counter borrowed a colour meant for light backgrounds while sitting on a dark one. Every one of those is fixed, and the column headings keep their tie to the chart through a coloured rule under each symbol.</description>
 		</item>
 		<item>
 			<title>three.ws crossed 100 stars on GitHub</title>

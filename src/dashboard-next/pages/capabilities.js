@@ -120,6 +120,27 @@ const STYLE = `<style>
 .cp-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .cp-scroll:focus-visible { outline: 2px solid var(--nxt-accent); outline-offset: -2px; }
 
+/* Below 640px the section header's badge and link squeeze the title into a
+   four-line column. Stack instead: title gets the full width, controls sit
+   under it on one row. */
+@media (max-width: 640px) {
+  .cp-head { flex-direction: column; align-items: stretch; gap: 10px; padding: 12px 14px; }
+  .cp-head-actions { display: flex; align-items: center; gap: 8px; }
+  .cp-kpi { padding: 10px 14px; }
+}
+
+/* On a phone the table still scrolls sideways, but the row's primary action
+   must not scroll out of reach with it: pin the action column to the right
+   edge so Launch Now / Claim are always one tap away. */
+@media (max-width: 640px) {
+  .cp-table th.cp-act, .cp-table td.cp-act {
+    position: sticky; right: 0; z-index: 1;
+    background: var(--nxt-panel);
+    box-shadow: -8px 0 8px -8px rgba(0,0,0,.55);
+  }
+  .cp-table tr:hover td.cp-act { background: var(--nxt-bg-2); }
+}
+
 /* Keyboard focus rings on every interactive element */
 .cp-tab:focus-visible,
 .cp-btn:focus-visible,
@@ -260,6 +281,9 @@ function failureText(err) {
 	if (err?.status === 429) return 'Rate limited. The data below is not available right now.';
 	if (err?.status === 401 || err?.status === 403) return 'Your session no longer covers this data. Sign in again to load it.';
 	if (err?.status >= 500) return 'The API returned an error. This is on our side, not yours.';
+	// A fetch that never reached a server has no status, and its raw message is
+	// browser-speak ("Failed to fetch"). Say something the reader can act on.
+	if (err?.status == null) return 'No response from the network. Check your connection, then retry.';
 	return err?.message || 'Could not reach the API.';
 }
 
@@ -426,7 +450,7 @@ function renderAlphaHunt(strategies, err) {
 					<div class="cp-head-sub">Smart-money signal scoring — buys when quality signals converge</div>
 				</div>
 			</div>
-			<div style="display:flex;align-items:center;gap:8px">
+			<div class="cp-head-actions">
 				<span class="cp-badge ${badgeClass}">${badgeLabel}</span>
 				<a class="cp-link" href="/dashboard/sniper">Configure ↗</a>
 			</div>
@@ -510,7 +534,7 @@ function renderLauncher(configs, coins, err) {
 					<div class="cp-head-sub">Autonomous pump.fun launches on schedule</div>
 				</div>
 			</div>
-			<div style="display:flex;align-items:center;gap:8px">
+			<div class="cp-head-actions">
 				<span class="cp-badge ${badgeClass}">${badgeLabel}</span>
 				${soleAgentId ? `<a class="cp-link" href="/agents/${esc(soleAgentId)}/edit#section-launcher">Configure ↗</a>` : '<a class="cp-link" href="/dashboard/agents">Agents ↗</a>'}
 			</div>
@@ -538,7 +562,7 @@ function renderLauncher(configs, coins, err) {
 							<th scope="col" class="hide-sm">Interval</th>
 							<th scope="col" class="r">Launches</th>
 							<th scope="col" class="r">Next Launch</th>
-							<th scope="col" class="r">Action</th>
+							<th scope="col" class="r cp-act">Action</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -548,7 +572,7 @@ function renderLauncher(configs, coins, err) {
 							<td class="hide-sm cp-muted">${c.interval_hours != null ? `Every ${c.interval_hours}h` : 'Manual'}</td>
 							<td class="r">${c.launches_count || 0}${c.max_launches ? ` / ${c.max_launches}` : ''}</td>
 							<td class="r cp-muted">${c.next_launch_at ? relTime(c.next_launch_at) : c.enabled ? 'Ready' : '—'}</td>
-							<td class="r">
+							<td class="r cp-act">
 								${c.enabled ? `<button type="button" class="cp-btn cp-btn-go" data-launch-now data-agent-id="${esc(c.agent_id)}" data-config-id="${esc(c.id)}" data-network="${esc(c.network || 'mainnet')}" aria-label="Launch $${esc(c.symbol || 'coin')} now">Launch Now</button>` : '<span class="cp-muted">—</span>'}
 							</td>
 						</tr>`).join('')}
@@ -618,7 +642,7 @@ function renderAutoClaim(coins, err) {
 					<div class="cp-head-sub">Auto-harvests creator fees when coins run — runs every 5 min</div>
 				</div>
 			</div>
-			<div style="display:flex;align-items:center;gap:8px">
+			<div class="cp-head-actions">
 				<span class="cp-badge ${badgeClass}">${badgeLabel}</span>
 			</div>
 		</div>
@@ -640,7 +664,7 @@ function renderAutoClaim(coins, err) {
 						<th scope="col" class="r">Claimable</th>
 						<th scope="col" class="r">Total Claimed</th>
 						<th scope="col" class="r hide-sm">Last Checked</th>
-						<th scope="col" class="r">Action</th>
+						<th scope="col" class="r cp-act">Action</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -654,7 +678,7 @@ function renderAutoClaim(coins, err) {
 							<td class="r cp-mono ${claimSol > 0 ? 'cp-pos' : 'cp-muted'}">${fmtSolAbs(claimSol)}</td>
 							<td class="r cp-mono">${fmtSolAbs(earnedSol)}</td>
 							<td class="r hide-sm cp-muted">${c.last_fee_check_at ? relTime(c.last_fee_check_at) : 'Never'}</td>
-							<td class="r">
+							<td class="r cp-act">
 								${canClaim && claimSol > 0 ? `<button type="button" class="cp-btn cp-btn-claim" data-claim-now data-agent-id="${esc(c.agent_id)}" data-mint="${esc(c.mint)}" data-network="${esc(c.network || 'mainnet')}" aria-label="Claim ${fmtSolAbs(claimSol)} from $${esc(c.symbol || 'coin')}">Claim ${fmtSolAbs(claimSol)}</button>` : '<span class="cp-muted">Below threshold</span>'}
 							</td>
 						</tr>`;
@@ -689,7 +713,7 @@ function renderMarketMaker(configs, trades, err) {
 					<div class="cp-head-sub">Range-based liquidity with Jito-accelerated execution</div>
 				</div>
 			</div>
-			<div style="display:flex;align-items:center;gap:8px">
+			<div class="cp-head-actions">
 				<span class="cp-badge ${err ? 'warning' : active.length ? 'live' : 'off'}">${err ? 'Unavailable' : active.length ? `${active.length} Active` : 'Inactive'}</span>
 			</div>
 		</div>

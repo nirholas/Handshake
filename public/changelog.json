@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-25T17:51:37.666Z",
+	"generated_at": "2026-08-25T18:12:14.260Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -42,6 +42,17 @@
 			"title": "Billing & Passes names your creators, keeps its retry buttons live, and the dashboard fits a phone screen",
 			"summary": "On /dashboard/billing, creator subscriptions now show the creator's name (linked to their profile), the real renewal or end date, a colour-coded status, and the plan price with its interval, instead of a raw account id. When the passes or subscriptions feed cannot be reached, the Retry button now actually reloads that section. Across every dashboard page, the top bar no longer forces the layout wider than a 320px phone screen, so nothing is clipped off the right edge.",
 			"link": "/dashboard/billing",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-25",
+			"type": "update",
+			"title": "Capabilities stops reporting an empty dashboard when the API is the thing that failed",
+			"summary": "The Capabilities command center used to ask the API once per agent for launcher and market-maker data, which on a real roster tripped the rate limiter mid-load. The failed calls were silently discarded and the page rendered a confident all-zero dashboard for an account that had launchers, coins and live markets. It now reads each capability for the whole account in a single call, so the request count no longer grows with your roster, and any lane that does fail says so in place with a working Retry instead of showing a zero. The 30-second refresh also stops resetting the tab you were reading and no longer replaces a Launch Now or Claim button while its request is still in flight, and on a phone the row action stays pinned in view instead of scrolling off the right edge.",
+			"link": "/dashboard/capabilities",
 			"tags": [
 				"fix",
 				"improvement"
@@ -104,6 +115,17 @@
 		{
 			"date": "2026-08-25",
 			"type": "update",
+			"title": "Dashboard Account fits a phone screen, and it stops claiming you own no .sol domains when it could not check",
+			"summary": "On a 320px phone every card on the account page ran past the right edge of the screen, which put Sign out, the AI provider key fields, Link wallet, and the quick links out of reach with no way to scroll to them; the cards now fit and every control is reachable. The SNS panel used to answer a resolver outage with \"No primary .sol domains found\", telling you to go register a domain you may already own. It now says plainly that the lookup failed and offers a retry, and when only some of your wallets could be checked it says how many were missed instead of quietly counting them as empty. The panel also refreshes itself when you link, disconnect, or re-prioritise a wallet, rather than sitting on a stale answer until you reload. The delegation table says how many agents it is showing out of your total instead of silently listing the first eight, and the page finally carries a search description of what it holds: profile, wallets, domains, delegation, provider keys, and the audit trail.",
+			"link": "/dashboard/account",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-25",
+			"type": "update",
 			"title": "Dashboard Analytics fits a phone screen and its failure page can actually reload",
 			"summary": "On a 320px phone the time-range buttons refused to wrap, which pushed every panel below them past the right edge of the screen; they wrap now and nothing scrolls sideways. The rare failure page showed a Reload button that did nothing when tapped, so it now reloads, and it explains what happened in plain language with a link to support instead of only printing a developer error string. A malformed response from one of the services behind the page no longer blanks the whole dashboard: the panel that depends on it degrades on its own and the rest still draws. The page also stops requesting a monetization report it never displayed, and its search-engine description finally says what the page shows: revenue over time, revenue by skill, widget views and chats, the conversion funnel, and per-agent performance.",
 			"link": "/dashboard/analytics",
@@ -136,6 +158,17 @@
 		{
 			"date": "2026-08-25",
 			"type": "update",
+			"title": "The Data API console keeps working when one of its services is down, and its corpus numbers are now live",
+			"summary": "The developer console at Dashboard > Data API is fed by three separate services, and any one of them failing used to take the whole page down: a pricing outage left a single error card where the pass status, the API key table, the quickstarts, and the endpoint list should have been, and a pass-status hiccup left a loading shimmer that never resolved. Each card now fails on its own with an explanation and a retry, and everything else stays usable. Status messages appear next to the control that produced them, so a key rotation error no longer lands in the pricing card several screens away. The copyable quickstarts stopped pasting a shortened version of your key into commands that could only ever be rejected; they now carry a clearly marked placeholder, or the real key in the moment it is minted. Copy buttons say so honestly when the browser refuses the clipboard instead of claiming success. The article and publisher-feed counts are read from the archive itself rather than typed into the page, so they no longer drift, and the tables and code blocks can be scrolled with the keyboard.",
+			"link": "/dashboard/data-api",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-25",
+			"type": "update",
 			"title": "The First 19 Weeks: everything shipped since day one, week by week",
 			"summary": "The First 19 Weeks, the founding three.ws roundup, walks every week from the first commit on April 14 to today: what launched, what was announced, which partnerships landed, and where $THREE fits, with the totals (commits, changelog entries, pages, packages, MCP servers, listings) up front. It is written for the timeline, so no tables, and ships with a screenshot kit of the live surfaces.",
 			"link": "/docs/the-first-19-weeks",
@@ -162,6 +195,17 @@
 			"link": "/three-token",
 			"tags": [
 				"docs"
+			]
+		},
+		{
+			"date": "2026-08-25",
+			"type": "update",
+			"title": "The market tools now clear the WCAG AA contrast floor",
+			"summary": "An accessibility sweep of the compare page found four places where text did not have enough contrast against what sat behind it. The selected time-range button, the rank badge, and the heatmap's view switcher all put white on a blue too light to read; they now use a blue and a text colour chosen to clear the standard in both the light and the dark theme. The comparison table's green was too pale on a white background, the coin column headings were painted in their chart-line colour (worst of all for the amber series), and the Getting started pill's counter borrowed a colour meant for light backgrounds while sitting on a dark one. Every one of those is fixed, and the column headings keep their tie to the chart through a coloured rule under each symbol.",
+			"link": "/compare",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
