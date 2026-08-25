@@ -34,6 +34,7 @@ const buildPrompt = $('#build-prompt');
 const buildStatus = $('#build-status');
 const progressFill = $('#progress-fill');
 const elapsedEl = $('#elapsed');
+const buildWrap = document.querySelector('.build-wrap');
 
 // Voice → prompt: dictate the avatar description instead of typing it. Feeds
 // the exact same #prompt textarea /api/avatars/reconstruct already consumes —
@@ -151,6 +152,8 @@ async function start() {
 
 	buildPrompt.textContent = `“${prompt}”`;
 	setError(buildError, '');
+	buildWrap?.classList.remove('errored');
+	stopRetryCountdown();
 	// Seed the first progress band so the bar creeps from the very first second.
 	_phaseFloor = PHASE.queued.floor;
 	_phaseCeil = PHASE.queued.ceil;
@@ -174,7 +177,7 @@ async function start() {
 		}
 		const data = await res.json().catch(() => ({}));
 		if (!res.ok || !data.jobId) {
-			throw new ApiError(mapSubmitError(res.status, data));
+			throw submitError(res.status, data);
 		}
 		jobId = data.jobId;
 	} catch (err) {
@@ -217,50 +220,106 @@ function cancelBuild() {
 	resetToCompose();
 }
 
-class ApiError extends Error {}
-
-/** @param {string | null | undefined} raw */
-function friendlyJobError(raw) {
-	if (!raw) return 'Generation failed. Try a different prompt.';
-	const lower = raw.toLowerCase();
-	if (lower.includes('face') && (lower.includes('detect') || lower.includes('no face')))
-		return 'Couldn\'t find a face in the generated reference image. Try rewording your prompt to describe the person more clearly.';
-	if (lower.includes('nsfw'))
-		return 'Content safety blocked this image. Try a different prompt.';
-	if (lower.includes('unreachable') || lower.includes('502') || lower.includes('503'))
-		return 'The avatar engine is temporarily unavailable. Try again in a few minutes.';
-	if (lower.includes('timeout') || lower.includes('timed out'))
-		return 'The engine took too long. Try again in a moment.';
-	if (lower.includes('oom') || lower.includes('memory'))
-		return 'The engine ran out of resources. Try a simpler prompt.';
-	return 'Generation failed. Try a different prompt.';
+// `retryable` drives which recovery buttons the failure state offers. A plan
+// limit or an unconfigured deployment cannot be fixed by pressing the same
+// button again, so those failures must not show "Try again" at all.
+class ApiError extends Error {
+	constructor(message, { retryable = true, retryAfterSec = 0 } = {}) {
+		super(message);
+		this.retryable = retryable;
+		this.retryAfterSec = retryAfterSec;
+	}
 }
 
-function mapSubmitError(status, data) {
+/**
+ * A job that ended in 'failed' carries a raw backend reason. Turn it into copy
+ * the user can act on, plus whether pressing the same button again could ever
+ * help.
+ * @param {string | null | undefined} raw
+ * @returns {ApiError}
+ */
+function jobError(raw) {
+	if (!raw) return new ApiError('Generation failed. Try a different prompt.');
+	const lower = raw.toLowerCase();
+	// The server refuses a full library up front, but a job can still lose the
+	// race when another avatar lands mid-build. Same dead end, same exits.
+	if (lower.includes('library is full') || lower.includes('plan limit')) return planLimitError(raw);
+	if (lower.includes('face') && (lower.includes('detect') || lower.includes('no face')))
+		return new ApiError('Couldn\'t find a face in the generated reference image. Try rewording your prompt to describe the person more clearly.');
+	if (lower.includes('nsfw'))
+		return new ApiError('Content safety blocked this image. Try a different prompt.');
+	if (lower.includes('unreachable') || lower.includes('502') || lower.includes('503'))
+		return new ApiError('The avatar engine is temporarily unavailable. Try again in a few minutes.');
+	if (lower.includes('timeout') || lower.includes('timed out'))
+		return new ApiError('The engine took too long. Try again in a moment.');
+	if (lower.includes('oom') || lower.includes('memory'))
+		return new ApiError('The engine ran out of resources. Try a simpler prompt.');
+	return new ApiError('Generation failed. Try a different prompt.');
+}
+
+// A full avatar library is the one failure on this page that retrying can never
+// clear: the same prompt burns the same GPU minute and lands on the same
+// ceiling. Name the two places that actually clear it and drop the retry.
+function planLimitError(description) {
+	const lead = description && /\S/.test(description)
+		? description.replace(/\s*(Delete an avatar or upgrade[^.]*\.|Delete an avatar[^.]*\.)\s*$/i, '').trim()
+		: 'Your avatar library is full on this plan.';
+	return new ApiError(
+		`${lead} <a href="/dashboard">Delete one from your dashboard</a> or ` +
+			`<a href="/pricing">upgrade your plan</a>, then build this one again.`,
+		{ retryable: false },
+	);
+}
+
+/**
+ * The submit call failed. Build the ApiError the failure state renders.
+ * @returns {ApiError}
+ */
+function submitError(status, data) {
 	// The API error envelope is { error: <code string>, error_description: <message> }
-	// (see api/_lib/http.js error()). Read those fields directly — older code that
+	// (see api/_lib/http.js error()). Read those fields directly, older code that
 	// reached for data.error.code / data.message never matched and collapsed every
 	// failure into the generic fallback, hiding the real reason from the user.
 	const code = typeof data?.error === 'string' ? data.error : data?.code;
 	const description = data?.error_description;
+	if (code === 'plan_limit' || status === 402) return planLimitError(description);
 	if (code === 'txt2img_rate_limited' || status === 429) {
-		return 'The image engine is busy right now — wait a moment and try again.';
+		// The image ladder answers a throttle (or an exhausted budget) with a real
+		// Retry-After. Quote it instead of "wait a moment", and let failBuild hold
+		// the retry button for exactly that long: a click before then earns the
+		// same 429 and another minute of the user's time.
+		const wait = Math.min(120, Math.max(1, Math.round(Number(data?.retry_after) || 15)));
+		return new ApiError(
+			`The image engine is busy right now. It asked us to wait ${wait} seconds.`,
+			{ retryAfterSec: wait },
+		);
 	}
 	if (code === 'regen_unconfigured' || code === 'txt2img_unconfigured') {
-		return 'The avatar generator isn\'t configured on this deployment yet. Try the <a href="/create/selfie">selfie scanner</a> instead.';
+		return new ApiError(
+			'The avatar generator isn\'t configured on this deployment yet. Try the <a href="/create/selfie">selfie scanner</a> instead.',
+			{ retryable: false },
+		);
 	}
-	if (code === 'txt2img_billing') return 'The image engine is temporarily unavailable (provider billing). Try again later.';
-	if (code === 'txt2img_unreachable') return 'Couldn\'t reach the image engine. Check your connection and try again.';
-	if (code === 'txt2img_error') return 'Couldn\'t render a reference image from that prompt. Try rewording it.';
+	if (code === 'txt2img_billing')
+		return new ApiError('The image engine is temporarily unavailable (provider billing). Try again later.');
+	if (code === 'txt2img_unreachable')
+		return new ApiError('Couldn\'t reach the image engine. Check your connection and try again.');
+	if (code === 'txt2img_error')
+		return new ApiError('Couldn\'t render a reference image from that prompt. Try rewording it.');
 	if (code === 'regen_needs_byok')
-		return 'Avatar generation needs a 3D engine key on this deployment. Add a Meshy or Tripo key in <a href="/settings">settings</a>, or try the <a href="/create/selfie">selfie scanner</a>.';
+		return new ApiError(
+			'Avatar generation needs a 3D engine key on this deployment. Add a Meshy or Tripo key in <a href="/settings">settings</a>, or try the <a href="/create/selfie">selfie scanner</a>.',
+			{ retryable: false },
+		);
 	// Reached only after the server has tried every configured backend (platform
-	// providers + your BYOK keys) and all of them failed — so this is a genuine
+	// providers + your BYOK keys) and all of them failed, so this is a genuine
 	// transient outage, not a single-provider hiccup. Offer the photo path as an
 	// immediate alternative rather than leaving the user to guess.
 	if (code === 'regen_provider_error')
-		return 'The avatar engines are all busy right now. Try again in a moment, or use the <a href="/create/selfie">selfie scanner</a> instead.';
-	return description || `The avatar engine returned ${status}. Try again.`;
+		return new ApiError(
+			'The avatar engines are all busy right now. Try again in a moment, or use the <a href="/create/selfie">selfie scanner</a> instead.',
+		);
+	return new ApiError(description || `The avatar engine returned ${status}. Try again.`);
 }
 
 async function pollUntilDone(jobId, run) {
@@ -305,7 +364,7 @@ async function pollUntilDone(jobId, run) {
 			return data;
 		}
 		if (data.status === 'failed') {
-			throw new ApiError(friendlyJobError(data.error));
+			throw jobError(data.error);
 		}
 
 		// Soft stall note: if it's still running well past the typical minute,
@@ -405,7 +464,7 @@ async function renderDone(avatarId, run) {
 		tagsEl.appendChild(s);
 	};
 	if (rigged) tag('Animation-ready', true);
-	else tag('Static mesh — riggable in editor', false);
+	else tag('Static mesh, riggable in editor', false);
 	tag('Private to you', false);
 
 	stopElapsed();
@@ -439,6 +498,9 @@ function resetToCompose() {
 	_submitting = false;
 	stopElapsed();
 	setError(composeError, '');
+	setError(buildError, '');
+	buildWrap?.classList.remove('errored');
+	stopRetryCountdown();
 	updateCounter();
 	showStep('compose');
 	promptEl.focus();
@@ -449,21 +511,68 @@ function resetToCompose() {
 function failBuild(err) {
 	if (err instanceof ApiError && err.message === 'redirecting') return;
 	stopElapsed();
+	stopRetryCountdown();
 	_submitting = false;
 	log.error('[create-prompt]', err);
+	// Everything that reaches here without being an ApiError came out of fetch
+	// itself (the JSON parses are already guarded), so name the connection rather
+	// than shrugging at the user.
 	const message =
-		err instanceof ApiError ? err.message : 'Something went wrong. Try again.';
-	// Two recovery paths: "Try again" re-submits the same prompt in place (the
-	// textarea still holds it) for transient engine outages; "Edit prompt" returns
-	// to compose to reword. Both keep the user moving instead of stranding them.
+		err instanceof ApiError
+			? err.message
+			: err?.name === 'TypeError'
+				? 'Couldn\'t reach the avatar engine. Check your connection and try again.'
+				: 'Something went wrong. Try again.';
+	// Stop the screen from claiming work is still happening: freeze the orb, mute
+	// the bar, and drop Cancel (there is nothing left to cancel). Escape still
+	// returns to compose, same as "Edit prompt".
+	buildWrap?.classList.add('errored');
+	buildStatus.textContent = '';
+	// "Try again" re-submits the same prompt in place (the textarea still holds
+	// it), which only helps a transient failure. A plan limit or an unconfigured
+	// deployment cannot clear that way, so those failures offer the exits their
+	// copy points at instead of a button guaranteed to land here again.
+	const retryable = !(err instanceof ApiError) || err.retryable !== false;
 	setError(
 		buildError,
 		`<span>${message}</span>` +
-			` <button type="button" id="build-retry-now" class="cancel-build" style="margin-left:10px">Try again</button>` +
+			(retryable
+				? ` <button type="button" id="build-retry-now" class="cancel-build" style="margin-left:10px">Try again</button>`
+				: '') +
 			` <button type="button" id="build-edit" class="cancel-build" style="margin-left:8px">Edit prompt</button>`,
 	);
-	document.getElementById('build-retry-now')?.addEventListener('click', () => start());
+	const retryBtn = document.getElementById('build-retry-now');
+	retryBtn?.addEventListener('click', () => start());
 	document.getElementById('build-edit')?.addEventListener('click', resetToCompose);
+	if (retryBtn && err instanceof ApiError && err.retryAfterSec > 0) {
+		armRetryCountdown(retryBtn, err.retryAfterSec);
+	}
+}
+
+// Hold "Try again" for the wait the server asked for and count it down in
+// place, so the button reads as a timer rather than a dead control. Clicking
+// through a Retry-After only earns the same 429, and on this page each attempt
+// can cost the user a full minute before it comes back.
+let _retryTimer = 0;
+function stopRetryCountdown() {
+	if (_retryTimer) { clearInterval(_retryTimer); _retryTimer = 0; }
+}
+function armRetryCountdown(btn, seconds) {
+	stopRetryCountdown();
+	const label = btn.textContent;
+	let left = Math.min(120, Math.max(1, Math.round(seconds)));
+	btn.disabled = true;
+	btn.textContent = `Try again in ${left}s`;
+	_retryTimer = window.setInterval(() => {
+		left -= 1;
+		if (left > 0) {
+			btn.textContent = `Try again in ${left}s`;
+			return;
+		}
+		stopRetryCountdown();
+		btn.disabled = false;
+		btn.textContent = label;
+	}, 1000);
 }
 
 // ── Elapsed clock ────────────────────────────────────────────────────────────

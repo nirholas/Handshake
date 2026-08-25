@@ -198,7 +198,10 @@
 				outline: none;
 			}
 			textarea#prompt::placeholder {
-				color: #555;
+				/* Same floor as .hint below: #555 on the #000 bg measures ~2.9:1,
+				   under the 4.5:1 AA threshold, and this placeholder is the only
+				   guidance in an empty composer. #8a8a8a measures ~5.8:1. */
+				color: #8a8a8a;
 			}
 			.composer-foot {
 				display: flex;
@@ -208,7 +211,7 @@
 				padding: 0 10px;
 			}
 			.counter {
-				color: #555;
+				color: #8a8a8a;
 				font-size: 12px;
 				font-variant-numeric: tabular-nums;
 			}
@@ -415,7 +418,7 @@
 				transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 			}
 			.elapsed {
-				color: #555;
+				color: #8a8a8a;
 				font-size: 12px;
 				margin-top: 14px;
 				font-variant-numeric: tabular-nums;
@@ -441,9 +444,63 @@
 					outline: 2px solid var(--accent);
 					outline-offset: 2px;
 				}
+				/* "Try again" while a server Retry-After is still counting down. */
+				.cancel-build:disabled {
+					opacity: 0.5;
+					cursor: default;
+					font-variant-numeric: tabular-nums;
+				}
+				.cancel-build:disabled:hover {
+					color: var(--muted);
+					border-color: var(--border-strong);
+					background: transparent;
+				}
 				@media (prefers-reduced-motion: reduce) {
 					.orb::after { animation: none; }
 					.progress-fill { transition: none; }
+				}
+
+				/* A failed build must stop looking like a running one. The orb sweep
+				   freezes, the bar and clock recede, and Cancel goes away because
+				   there is nothing left to cancel: the recovery buttons inside the
+				   error box are the only live controls. */
+				.build-wrap.errored .orb::after {
+					animation: none;
+					opacity: 0.2;
+				}
+				.build-wrap.errored .progress-track {
+					opacity: 0.25;
+				}
+				.build-wrap.errored .elapsed {
+					opacity: 0.5;
+				}
+				/* The phase line ("Reconstructing it into 3D...") is a claim about
+				   work in flight, so it goes away entirely on failure. Hiding it
+				   rather than only blanking it also survives the runtime i18n pass,
+				   which re-applies the translated string from data-i18n after load.
+				   The error box carries role="alert", so screen readers still get
+				   the outcome. */
+				.build-wrap.errored .build-status {
+					display: none;
+				}
+				/* By id, not by class: the recovery buttons inside the error box
+				   borrow .cancel-build for their styling, and hiding those would
+				   strand the user on the failure with no way out. */
+				.build-wrap.errored #cancel-build {
+					display: none;
+				}
+				.error-box a {
+					color: #f3b4b4;
+					text-decoration: underline;
+					text-underline-offset: 2px;
+				}
+				.error-box a:hover {
+					color: #fff;
+				}
+				.error-box a:focus-visible {
+					outline: 2px solid var(--accent);
+					outline-offset: 2px;
+					border-radius: 2px;
 				}
 
 			/* ── Done ──────────────────────────────────────────────────────────── */
