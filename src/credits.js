@@ -15,6 +15,17 @@ const SOL_MINT = 'So11111111111111111111111111111111111111112';
 
 const $ = (id) => document.getElementById(id);
 const fmtUsd = (n) => `$${(Number(n) || 0).toFixed(2)}`;
+
+// Balances round to cents, but a UNIT price does not: $THREE trades well under a
+// cent, and `$0.00` next to a live quote reads as broken. Keep enough decimals to
+// show a real number, capped so the row never turns into scientific noise.
+function fmtUnitPrice(n) {
+	const v = Number(n) || 0;
+	if (v >= 0.01) return `$${v.toFixed(2)}`;
+	if (v <= 0) return '$0.00';
+	const decimals = Math.min(10, Math.max(2, Math.ceil(-Math.log10(v)) + 3));
+	return `$${v.toFixed(decimals).replace(/0+$/, '')}`;
+}
 const origin = window.location.origin;
 
 let state = {
@@ -234,7 +245,7 @@ function updateEstimate() {
 	const fallback = 'Credited at the live USD value when your deposit confirms.';
 	el.textContent = '';
 	if (!(amt > 0)) {
-		el.textContent = price > 0 ? `1 ${unit} \u2248 ${fmtUsd(price)}` : fallback;
+		el.textContent = price > 0 ? `1 ${unit} \u2248 ${fmtUnitPrice(price)}` : fallback;
 		return;
 	}
 	if (!(price > 0)) {
