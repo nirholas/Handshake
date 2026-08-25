@@ -4493,6 +4493,14 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/three-thesis",
+					"title": "Docs · The $THREE thesis",
+					"description": "The long-form case for $THREE: what three.ws is, every utility and sink the token has, how platform revenue routes into buybacks, where it trades and is verified, the ecosystem footprint, the roadmap, and every risk the platform documents about itself.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-08-25"
+				},
+				{
 					"path": "/docs/plan-checkout",
 					"title": "Docs · Paid plans",
 					"description": "Upgrading to a paid tier is a single on-chain payment on Solana: no card and no billing processor. Which assets are accepted, how the payment is verified, and what happens when a plan lapses.",

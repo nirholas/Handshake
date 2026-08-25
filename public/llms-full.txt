@@ -3521,6 +3521,12 @@ URL: https://three.ws/docs/hold-to-access
 
 three.ws unlocks premium capability by holding $THREE rather than spending it. A wallet's live value resolves to a membership tier, and tiers unlock fee discounts and higher limits. How tiers are computed and refreshed.
 
+### Docs · The $THREE thesis
+
+URL: https://three.ws/docs/three-thesis
+
+The long-form case for $THREE: what three.ws is, every utility and sink the token has, how platform revenue routes into buybacks, where it trades and is verified, the ecosystem footprint, the roadmap, and every risk the platform documents about itself.
+
 ### Docs · Paid plans
 
 URL: https://three.ws/docs/plan-checkout

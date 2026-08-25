@@ -4,6 +4,11 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-08-25
+
+- **Docs · The $THREE thesis** (`/docs/three-thesis`): The long-form case for $THREE: what three.ws is, every utility and sink the token has, how platform revenue routes into buybacks, where it trades and is verified, the ecosystem footprint, the roadmap, and every risk the platform documents about itself.
+- **The full $THREE thesis is now a single document**: A long-form research thesis on $THREE now lives in the docs: what three.ws is, every way the token is used (hold-to-access tiers, plan and pass discounts, marketplace and labor escrow, game cosmetics, gated embeds, deploy-fee waivers), how platform revenue is routed into buybacks, where the token trades and is verified, the ecosystem footprint, the roadmap, and every risk the platform documents about itself, each claim sourced to the code. (`/three-token`) `[docs]`
+
 ## 2026-08-24
 
 - **Docs · Rigging the pump.fun pill mascot** (`/docs/pill-mascot`): How a static capsule mascot with four nubs became a 52-bone, six-clip avatar: limb discovery from a distance transform, medial-axis skinning, and a bind pose that differs from the rest pose on purpose.

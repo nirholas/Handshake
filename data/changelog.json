@@ -24782,6 +24782,15 @@
 				"improvement",
 				"fix"
 			]
+		},
+		{
+			"date": "2026-08-25",
+			"title": "The full $THREE thesis is now a single document",
+			"summary": "A long-form research thesis on $THREE now lives in the docs: what three.ws is, every way the token is used (hold-to-access tiers, plan and pass discounts, marketplace and labor escrow, game cosmetics, gated embeds, deploy-fee waivers), how platform revenue is routed into buybacks, where the token trades and is verified, the ecosystem footprint, the roadmap, and every risk the platform documents about itself, each claim sourced to the code.",
+			"tags": [
+				"docs"
+			],
+			"link": "/three-token"
 		}
 	]
 }
