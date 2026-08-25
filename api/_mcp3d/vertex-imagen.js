@@ -155,12 +155,12 @@ export async function generateImage(prompt, { aspectRatio = '1:1', timeoutMs = V
   const token = await getGcpAccessToken();
 
   return isImagenPredictModel(model)
-    ? generateViaImagenPredict({ prompt, aspectRatio, project, location, model, token })
-    : generateViaGemini({ prompt, aspectRatio, project, location, model, token });
+    ? generateViaImagenPredict({ prompt, aspectRatio, project, location, model, token, timeoutMs: laneTimeoutMs })
+    : generateViaGemini({ prompt, aspectRatio, project, location, model, token, timeoutMs: laneTimeoutMs });
 }
 
 // ── Gemini image (generateContent) — the live default path ──────────────────
-async function generateViaGemini({ prompt, aspectRatio, project, location, model, token }) {
+async function generateViaGemini({ prompt, aspectRatio, project, location, model, token, timeoutMs }) {
   const aspect = GEMINI_ASPECTS.has(aspectRatio) ? aspectRatio : '1:1';
   const endpoint =
     `${aiplatformHost(location)}/v1/projects/${project}` +
@@ -182,13 +182,13 @@ async function generateViaGemini({ prompt, aspectRatio, project, location, model
 
   let data;
   try {
-    data = await postJson(endpoint, body, token, 'image generation');
+    data = await postJson(endpoint, body, token, 'image generation', timeoutMs);
   } catch (err) {
     // Older Gemini image models reject imageSize with INVALID_ARGUMENT. Retry
     // once without it rather than failing the lane over an optional knob.
     if (err?.providerStatus !== 400) throw err;
     delete body.generationConfig.imageConfig.imageSize;
-    data = await postJson(endpoint, body, token, 'image generation');
+    data = await postJson(endpoint, body, token, 'image generation', timeoutMs);
   }
   const parts = data?.candidates?.[0]?.content?.parts || [];
   const imgPart = parts.find((p) => p?.inlineData?.data);
@@ -205,7 +205,7 @@ async function generateViaGemini({ prompt, aspectRatio, project, location, model
 }
 
 // ── Imagen (predict) — legacy path for an explicit imagen-* override ─────────
-async function generateViaImagenPredict({ prompt, aspectRatio, project, location, model, token }) {
+async function generateViaImagenPredict({ prompt, aspectRatio, project, location, model, token, timeoutMs }) {
   const aspectEnum = IMAGEN_ASPECT_MAP[aspectRatio] || '1:1';
   const endpoint =
     `${aiplatformHost(location)}/v1/projects/${project}` +
@@ -222,7 +222,7 @@ async function generateViaImagenPredict({ prompt, aspectRatio, project, location
     },
   };
 
-  const data = await postJson(endpoint, body, token, 'image generation');
+  const data = await postJson(endpoint, body, token, 'image generation', timeoutMs);
   const b64 = data?.predictions?.[0]?.bytesBase64Encoded;
   if (!b64) throw new Error('Vertex AI returned no image data');
   return { imageUrl: `data:image/png;base64,${b64}`, model: `vertex-ai/${model}` };
@@ -231,7 +231,8 @@ async function generateViaImagenPredict({ prompt, aspectRatio, project, location
 // POST a JSON body to Vertex and return the parsed response. Throws a designed
 // error (rate_limited / provider_unreachable / providerStatus) on any failure so
 // the caller's fallback ladder can branch on it.
-async function postJson(endpoint, body, token, label) {
+async function postJson(endpoint, body, token, label, timeoutMs = VERTEX_TIMEOUT_MS) {
+  const laneTimeoutMs = Math.max(1_000, Math.min(VERTEX_TIMEOUT_MS, Number(timeoutMs) || VERTEX_TIMEOUT_MS));
   let res;
   try {
     res = await fetch(endpoint, {
