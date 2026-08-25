@@ -1658,6 +1658,15 @@ html.cv-page,
 	border-radius: var(--cv-radius-xl);
 	background: var(--cv-surface);
 }
+.cmp-table-wrap:focus-visible {
+	outline: 2px solid var(--cv-accent);
+	outline-offset: 2px;
+}
+.cmp-scroll-hint {
+	margin: 0.5rem 0 0;
+	font-size: 0.75rem;
+	color: var(--cv-text-3);
+}
 .cmp-table {
 	width: 100%;
 	border-collapse: collapse;
@@ -1697,9 +1706,26 @@ html.cv-page,
 .cmp-table tbody tr:last-child td {
 	border-bottom: 0;
 }
+/* Order matters: `.cmp-table td` (0,1,1) outranks a bare `.cv-up`, so the signed
+   rows rendered neutral white until these landed, and `.best` painted a -36%
+   drawdown green. Sign wins the colour, `best` wins the weight and the tint. */
 .cmp-table td.best {
-	color: var(--cv-green);
 	font-weight: 600;
+	background: var(--cv-surface-2);
+	/* The cell owns its screen-reader marker. Without a containing block here the
+	   absolutely positioned .cv-sr-only resolves against the page, escapes the
+	   wrapper's overflow clip, and stretches html's scroll width past the
+	   viewport on a phone. */
+	position: relative;
+}
+.cmp-table td.cv-up {
+	color: var(--cv-green);
+}
+.cmp-table td.cv-down {
+	color: var(--cv-red);
+}
+.cmp-table td.best:not(.cv-up):not(.cv-down) {
+	color: var(--cv-green);
 }
 .cmp-legend {
 	display: flex;

@@ -9,7 +9,6 @@ import {
 	formatPrice,
 	formatPercent,
 	formatSupply,
-	formatDateShort,
 	formatChartTick,
 	escapeHtml as esc,
 } from './shared/coin-format.js';
@@ -117,7 +116,7 @@ async function retryFailed() {
 	await Promise.all(failed.map(loadDetail));
 	renderChips();
 	renderTable();
-	await Promise.all(failed.map(loadSeries));
+	await Promise.all(failed.map((c) => loadSeries(c)));
 	renderChart();
 }
 
@@ -183,11 +182,31 @@ function syncPicker() {
 
 // ── Overlay chart ─────────────────────────────────────────────────────────────
 
-const CW = 760;
+const CW_FALLBACK = 760;
 const CH = 300;
 const PAD = { top: 16, right: 56, bottom: 26, left: 16 };
 
+// The overlay is drawn at 1:1 with its panel rather than through a fixed
+// 760-wide viewBox. Scaling that viewBox down to a 254 px phone column rendered
+// the 10 px axis labels at roughly 3 px and squashed the plot to 100 px tall.
+let cw = CW_FALLBACK;
+
+function measureChartWidth() {
+	const panel = $('cmp-chart').querySelector('.cv-chart-panel');
+	if (!panel) return cw;
+	const cs = getComputedStyle(panel);
+	const inner = panel.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+	return inner > 0 ? Math.max(280, Math.round(inner)) : cw;
+}
+
+// Monotonic id for the range currently on screen. Without it a slow 1Y response
+// landing after a fast 7D one repainted a year of history under a 7D axis, with
+// the 7D button still reading as selected.
+let seriesSeq = 0;
+
 async function loadSeries(entry) {
+	const mine = seriesSeq;
+	const days = state.days;
 	entry.series = null;
 	entry.seriesError = false;
 	if (entry.status === 'missing') {
@@ -196,8 +215,9 @@ async function loadSeries(entry) {
 	}
 	try {
 		const { data } = await getJson(
-			`/api/coin/ohlc?id=${encodeURIComponent(entry.id)}&days=${state.days}`,
+			`/api/coin/ohlc?id=${encodeURIComponent(entry.id)}&days=${days}`,
 		);
+		if (mine !== seriesSeq) return;
 		// Normalize to % change from the first point.
 		const base = data[0]?.[1];
 		entry.series = base
@@ -206,15 +226,18 @@ async function loadSeries(entry) {
 					.filter((d) => Number.isFinite(d[1]))
 			: [];
 	} catch {
+		if (mine !== seriesSeq) return;
 		entry.series = [];
 		entry.seriesError = true;
 	}
 }
 
 async function reloadAllSeries() {
+	const mine = ++seriesSeq;
 	state.loadingChart = true;
 	renderChart();
-	await Promise.all(state.coins.map(loadSeries));
+	await Promise.all(state.coins.map((c) => loadSeries(c)));
+	if (mine !== seriesSeq) return;
 	state.loadingChart = false;
 	renderChart();
 }
@@ -239,7 +262,7 @@ function chartGeometry() {
 	vMin -= pad;
 	vMax += pad;
 	const range = vMax - vMin || 1;
-	const w = CW - PAD.left - PAD.right;
+	const w = cw - PAD.left - PAD.right;
 	const h = CH - PAD.top - PAD.bottom;
 	const xOf = (t) => PAD.left + ((t - tMin) / span) * w;
 	const yOf = (v) => PAD.top + h - ((v - vMin) / range) * h;
@@ -248,6 +271,7 @@ function chartGeometry() {
 
 function renderChart() {
 	const el = $('cmp-chart');
+	cw = measureChartWidth();
 	const rangeBtns = RANGES.map(
 		(r) =>
 			`<button type="button" class="cv-range-btn" data-days="${r.days}" aria-pressed="${r.days === state.days}">${r.label}</button>`,
@@ -271,15 +295,21 @@ function renderChart() {
 			// Every coin came back without a usable series. Say which failure it was
 			// and give the user the one control that can fix it.
 			const transport = state.coins.some((c) => c.seriesError || c.status === 'failed');
+			// Nothing to retry when every id in the URL is simply not a coin, so that
+			// case says what is wrong instead of offering a control that cannot help.
+			const allMissing = state.coins.every((c) => c.status === 'missing');
+			const note = allMissing
+				? 'None of the selected coins exists in the market index, so there is nothing to overlay.'
+				: transport
+					? 'Performance data could not be loaded. The market data service did not respond.'
+					: `No performance history is published for this selection over the last ${state.days} days.`;
 			body = `<div class="cv-chart-state col" role="alert">
-					<p>${
-						transport
-							? 'Performance data could not be loaded. The market data service did not respond.'
-							: 'No performance history is published for this selection over the last ' +
-								state.days +
-								' days.'
-					}</p>
-					<button type="button" class="cv-linkbtn" id="cmp-chart-retry">${transport ? 'Retry' : 'Reload'}</button>
+					<p>${note}</p>
+					${
+						allMissing
+							? ''
+							: `<button type="button" class="cv-linkbtn" id="cmp-chart-retry">${transport ? 'Retry' : 'Reload'}</button>`
+					}
 				</div>`;
 		} else {
 			const h = CH - PAD.top - PAD.bottom;
@@ -287,13 +317,21 @@ function renderChart() {
 			const yLabels = Array.from({ length: steps + 1 }, (_, i) => {
 				const v = g.vMin + (g.vMax - g.vMin) * (i / steps);
 				const y = PAD.top + h - (i / steps) * h;
-				return `<g><line x1="${PAD.left}" y1="${y}" x2="${CW - PAD.right}" y2="${y}" stroke="var(--cv-border)" stroke-width="0.5" stroke-dasharray="4 4" opacity="0.5"/><text x="${CW - PAD.right + 6}" y="${y + 3}" font-size="10" fill="var(--cv-text-3)">${v >= 0 ? '+' : ''}${v.toFixed(0)}%</text></g>`;
+				return `<g><line x1="${PAD.left}" y1="${y}" x2="${cw - PAD.right}" y2="${y}" stroke="var(--cv-border)" stroke-width="0.5" stroke-dasharray="4 4" opacity="0.5"/><text x="${cw - PAD.right + 6}" y="${y + 3}" font-size="10" fill="var(--cv-text-3)">${v >= 0 ? '+' : ''}${v.toFixed(0)}%</text></g>`;
+			}).join('');
+			// Date ticks in the band PAD.bottom already reserves. Without them the
+			// overlay never says which window it is showing.
+			const xSteps = cw < 420 ? 2 : 4;
+			const xLabels = Array.from({ length: xSteps + 1 }, (_, i) => {
+				const t = g.tMin + (g.tMax - g.tMin) * (i / xSteps);
+				const anchor = i === 0 ? 'start' : i === xSteps ? 'end' : 'middle';
+				return `<text x="${g.xOf(t).toFixed(1)}" y="${CH - 8}" font-size="10" text-anchor="${anchor}" fill="var(--cv-text-3)">${esc(formatChartTick(t, state.days))}</text>`;
 			}).join('');
 			// Zero baseline (start-of-window) emphasized.
 			const zeroY = g.yOf(0);
 			const zeroLine =
 				g.vMin < 0 && g.vMax > 0
-					? `<line x1="${PAD.left}" y1="${zeroY}" x2="${CW - PAD.right}" y2="${zeroY}" stroke="var(--cv-text-3)" stroke-width="0.75" opacity="0.5"/>`
+					? `<line x1="${PAD.left}" y1="${zeroY}" x2="${cw - PAD.right}" y2="${zeroY}" stroke="var(--cv-text-3)" stroke-width="0.75" opacity="0.5"/>`
 					: '';
 			const paths = g.withData
 				.map((c) => {
@@ -308,8 +346,9 @@ function renderChart() {
 				.join('');
 			body = `
 				<div class="cv-chart-area">
-					<svg viewBox="0 0 ${CW} ${CH}" role="img" aria-label="Normalized performance comparison over ${state.days} days">
+					<svg viewBox="0 0 ${cw} ${CH}" role="img" aria-label="Normalized performance comparison over ${state.days} days">
 						${yLabels}
+						${xLabels}
 						${zeroLine}
 						${paths}
 						<g id="cmp-cross" hidden>
@@ -379,7 +418,7 @@ function wireChartPointer() {
 
 	function show(clientX) {
 		const rect = svg.getBoundingClientRect();
-		const mx = ((clientX - rect.left) / rect.width) * CW;
+		const mx = ((clientX - rect.left) / rect.width) * cw;
 		const frac = Math.max(0, Math.min(1, (mx - PAD.left) / g.w));
 		const t = g.tMin + frac * (g.tMax - g.tMin);
 		const x = g.xOf(t);
@@ -396,7 +435,7 @@ function wireChartPointer() {
 		tip.innerHTML = `<p class="d" style="margin:0 0 0.25rem">${esc(formatChartTick(t, state.days))}</p>${rows}`;
 		// Clamped so the tooltip never hangs off the panel and drags the page into
 		// a horizontal scroll on a narrow viewport.
-		tip.style.left = `${Math.max(14, Math.min(86, (x / CW) * 100))}%`;
+		tip.style.left = `${Math.max(14, Math.min(86, (x / cw) * 100))}%`;
 	}
 	function hide() {
 		cross.setAttribute('hidden', '');
@@ -518,9 +557,11 @@ function renderTable() {
 		const cells = vals
 			.map((v, i) => {
 				const cls = [];
-				if (i === bestIdx && ready.length > 1) cls.push('best');
+				const best = i === bestIdx && ready.length > 1;
+				if (best) cls.push('best');
 				if (row.signed && Number.isFinite(v)) cls.push(v >= 0 ? 'cv-up' : 'cv-down');
-				return `<td class="${cls.join(' ')}">${esc(row.fmt(v))}</td>`;
+				// Colour alone cannot carry "best": a screen reader gets the word too.
+				return `<td class="${cls.join(' ')}">${esc(row.fmt(v))}${best ? '<span class="cv-sr-only"> (best)</span>' : ''}</td>`;
 			})
 			.join('');
 		return `<tr><th scope="row">${esc(row.label)}</th>${cells}</tr>`;
@@ -528,14 +569,25 @@ function renderTable() {
 
 	el.innerHTML = `
 		${issues}
-		<div class="cmp-table-wrap">
+		<div class="cmp-table-wrap" tabindex="0" role="region" aria-label="Coin comparison statistics, scrolls horizontally">
 			<table class="cmp-table">
 				<caption class="cv-sr-only">Key market statistics for the selected coins, best value in each row highlighted.</caption>
 				<thead><tr><th scope="col"><span class="cv-sr-only">Metric</span></th>${head}</tr></thead>
 				<tbody>${body}</tbody>
 			</table>
-		</div>`;
+		</div>
+		<p class="cmp-scroll-hint" hidden>Scroll the table sideways to reach every coin.</p>`;
 	wireIssueActions(el);
+	syncScrollHint();
+}
+
+/** A phone shows one column at a time; say the rest are a swipe away, and only
+    say it while that is actually true. */
+function syncScrollHint() {
+	const wrap = $('cmp-table').querySelector('.cmp-table-wrap');
+	const hint = $('cmp-table').querySelector('.cmp-scroll-hint');
+	if (!wrap || !hint) return;
+	hint.hidden = wrap.scrollWidth <= wrap.clientWidth + 1;
 }
 
 // ── Search type-ahead (mirrors the /coins picker) ─────────────────────────────
@@ -704,5 +756,16 @@ async function init() {
 	renderTable();
 	renderChart();
 }
+
+// The overlay viewBox is measured from its panel, so a resize that changes that
+// width has to redraw it; otherwise the chart keeps the previous aspect ratio.
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+	clearTimeout(resizeTimer);
+	resizeTimer = setTimeout(() => {
+		if (measureChartWidth() !== cw) renderChart();
+		syncScrollHint();
+	}, 150);
+});
 
 init();
