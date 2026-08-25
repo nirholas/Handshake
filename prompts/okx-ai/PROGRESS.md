@@ -106,8 +106,16 @@ real one (two amounts for one rail). `handleSse` now takes the list price.
 0.8 s. The health probe reads the generator's static tier matrix, not its acceptance
 latency, so it cannot see a saturated lane. From inside `forge_3d` that call would have hit
 the 90 s client timeout and surfaced as `timeout` with `retry_after`, which is honest but
-slow. Worth a follow-up: an acceptance-latency reading in the health probe, and a shorter
-submit budget on the OKX surface.
+slow. **Root-caused and fixed the same day.** Image-to-3D (no paint step) answered in 3.7 s, so
+the hang was the text-to-image paint ladder: Vertex Imagen leads it with a 90 s timeout,
+NIM follows with 60 s, and nothing bounded the ladder as a whole (90 + 60 + throttle = the
+156 s → 429). None of the hung submits ever created a `forge_creations` row, which is what
+placed the stall before job creation. `api/_mcp3d/text-to-image.js` now runs the ladder on
+one shared budget (`TEXT_TO_IMAGE_BUDGET_MS`, default 60 s): a lane with a fallback behind
+it is capped at max(25% of budget, 60% of what is left), a lane with under 10% left is
+skipped, and exhaustion is a fast retryable `rate_limited`. Regression test:
+`tests/text-to-image-budget.test.js`. Still open: the health probe cannot see a saturated
+lane because it reads the static tier matrix.
 
 ### Still owner-gated (unchanged, and unchanged by this rebuild)
 

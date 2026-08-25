@@ -23,6 +23,14 @@
 			<description>The first three.ws weekly report: a week-by-week roundup of everything shipped from the first commit on 2026-04-14 through 2026-08-25, with every launch, partnership, announcement, and where $THREE fits.</description>
 		</item>
 		<item>
+			<title>Text-to-3D no longer hangs when the concept painter stalls</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-08-25:Text-to-3D no longer hangs when the concept painter stalls</guid>
+			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every text-to-3D generation starts by painting a concept image, and that step tried its image providers one after another with no overall time limit. When the first provider stalled, a request could sit for two and a half minutes before answering, and anything with a shorter patience (ChatGPT, agent clients) simply saw nothing. The painter now works to one shared budget: a slow provider hands off with real time left for the next one, and if the whole chain runs out you get a quick, honest retry-in-a-moment answer instead of a hang. Image-to-3D was never affected.</description>
+		</item>
+		<item>
 			<title>The first-contribution guide now hands you real open work, and the docs sidebar can find it</title>
 			<link>https://three.ws/docs/first-contribution</link>
 			<guid isPermaLink="false">2026-08-25:The first-contribution guide now hands you real open work, and the docs sidebar can find it</guid>

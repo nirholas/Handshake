@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-25",
+			"title": "Text-to-3D no longer hangs when the concept painter stalls",
+			"summary": "Every text-to-3D generation starts by painting a concept image, and that step tried its image providers one after another with no overall time limit. When the first provider stalled, a request could sit for two and a half minutes before answering, and anything with a shorter patience (ChatGPT, agent clients) simply saw nothing. The painter now works to one shared budget: a slow provider hands off with real time left for the next one, and if the whole chain runs out you get a quick, honest retry-in-a-moment answer instead of a hang. Image-to-3D was never affected.",
+			"tags": [
+				"fix"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-08-25",
 			"title": "The first-contribution guide now hands you real open work, and the docs sidebar can find it",
 			"summary": "The 15-minute contributor guide walked through adding MikuMikuDance rig support as its example, but that support had already shipped, so anyone following it literally would have re-done merged work and been told a bone was unmapped when it was not. It now shows the MMD change as the finished reference, exactly as it landed with its tests, and points you at two rig conventions that are genuinely still open, each with the bones that fail today. The community, triage, and first-contribution pages also appear in the docs sidebar under Guides instead of being reachable only from the README, and the triage page now explains every label the repo actually uses.",
 			"tags": [

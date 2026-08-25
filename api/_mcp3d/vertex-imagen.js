@@ -138,7 +138,10 @@ function imageLaneLocation() {
   );
 }
 
-export async function generateImage(prompt, { aspectRatio = '1:1' } = {}) {
+// `timeoutMs` lets the paint ladder (text-to-image.js) cap this lane to its
+// remaining budget; the module default is the ceiling, never the floor.
+export async function generateImage(prompt, { aspectRatio = '1:1', timeoutMs = VERTEX_TIMEOUT_MS } = {}) {
+  const laneTimeoutMs = Math.max(1_000, Math.min(VERTEX_TIMEOUT_MS, Number(timeoutMs) || VERTEX_TIMEOUT_MS));
   const project = readEnv('GOOGLE_CLOUD_PROJECT');
   if (!project) {
     throw Object.assign(
@@ -238,12 +241,12 @@ async function postJson(endpoint, body, token, label) {
         'content-type': 'application/json',
       },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(VERTEX_TIMEOUT_MS),
+      signal: AbortSignal.timeout(laneTimeoutMs),
     });
   } catch (err) {
     // A blown VERTEX_TIMEOUT_MS aborts the fetch and lands here too, so a stalled
     // socket degrades to the same fallback path as a refused connection.
-    const detail = err?.name === 'TimeoutError' ? `no response in ${VERTEX_TIMEOUT_MS}ms` : err?.message;
+    const detail = err?.name === 'TimeoutError' ? `no response in ${laneTimeoutMs}ms` : err?.message;
     throw Object.assign(
       new Error(`Vertex AI ${label} unreachable: ${detail}`),
       { code: 'provider_unreachable' },

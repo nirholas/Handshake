@@ -44,8 +44,8 @@ const REPLICATE_TERMINAL_STATUSES = new Set(['succeeded', 'failed', 'canceled'])
 // prediction; returns the last seen object (caller surfaces a clear error) when
 // the poll budget is exhausted. A transient poll blip is retried within budget,
 // never fatal — the prediction keeps running upstream regardless.
-async function pollReplicatePrediction(getUrl, token) {
-	const deadline = Date.now() + REPLICATE_POLL_TIMEOUT_MS;
+async function pollReplicatePrediction(getUrl, token, { timeoutMs = REPLICATE_POLL_TIMEOUT_MS } = {}) {
+	const deadline = Date.now() + Math.min(REPLICATE_POLL_TIMEOUT_MS, Math.max(1_000, timeoutMs));
 	let last = null;
 	while (Date.now() < deadline) {
 		await sleep(REPLICATE_POLL_INTERVAL_MS);
@@ -108,6 +108,45 @@ const NIM_TIMEOUT_MS = 60_000;
 // second attempt would just double the wait before failover (the same reasoning
 // that makes the TRELLIS submit timeout terminal). Bounded to one extra attempt
 // so a genuinely-down gateway still hands off fast.
+// ── Ladder budget ─────────────────────────────────────────────────────────
+// Every lane below is bounded on its own (Vertex 90s, NIM 60s, Replicate 45s
+// of polling), but the LADDER never was: a stalled leading lane burned its
+// full window, then the next lane burned its own, and the caller's socket
+// (ChatGPT Actions allow ~45s, the OKX/MCP clients 90s) was long gone before a
+// job even existed. Measured on 2026-08-25: text submits hung 95s+ with no
+// answer, or took 156s to say "busy", while image submits answered in 3.7s.
+//
+// The ladder now shares ONE budget (TEXT_TO_IMAGE_BUDGET_MS, default 60s, or
+// the caller's `budgetMs`). Each lane gets min(its own ceiling, what is left),
+// and while a fallback lane still remains the current lane is capped at
+// max(a quarter of the budget, 60% of what is left) so a stalled leader hands
+// off with real time to spare. A lane with under a tenth of the budget left is
+// skipped, and an exhausted ladder surfaces a retryable rate_limited error the
+// forge boundary already maps to a fast 429 with a Retry-After.
+// Vertex's own ceiling lives in vertex-imagen.js (90s); mirrored here so the
+// ladder math can cap it without importing the lane eagerly.
+const VERTEX_LANE_CEILING_MS = 90_000;
+const DEFAULT_BUDGET_MS = 60_000;
+export function ladderBudgetMs(override) {
+	const env = Number(readEnv('TEXT_TO_IMAGE_BUDGET_MS'));
+	const chosen = Number(override) || (Number.isFinite(env) && env > 0 ? env : DEFAULT_BUDGET_MS);
+	return Math.max(5_000, chosen);
+}
+// Pure: how long the current lane may run. `budgetMs` is the ladder total,
+// `remainingMs` what is left of it, `laneRemains` whether a fallback follows.
+export function laneTimeoutMs(ownCeilingMs, { budgetMs, remainingMs, laneRemains }) {
+	if (remainingMs <= 0) return 0;
+	let cap = remainingMs;
+	if (laneRemains) cap = Math.min(remainingMs, Math.max(budgetMs * 0.25, remainingMs * 0.6));
+	return Math.max(0, Math.min(ownCeilingMs, Math.floor(cap)));
+}
+function budgetExhausted(budgetMs) {
+	return Object.assign(
+		new Error('Image generation is taking longer than usual, please retry in a few seconds.'),
+		{ code: 'rate_limited', queued: true, retryAfter: 15, budgetMs },
+	);
+}
+
 const NIM_GATEWAY_RETRY_STATUSES = new Set([502, 503, 504]);
 const NIM_MAX_ATTEMPTS = 2;
 const NIM_RETRY_DELAY_MS = 1_200;
@@ -195,14 +234,15 @@ async function persistDataUriImage(result) {
 // comes back inline as base64, no poll. Caller guarantees NVIDIA_API_KEY is set.
 // Throws on any failure (timeout, throttle, malformed body) so the caller can
 // degrade to the paid lanes; never returns a half-result.
-async function nimFluxImage(prompt, aspectRatio, seed = 0) {
+async function nimFluxImage(prompt, aspectRatio, seed = 0, { timeoutMs = NIM_TIMEOUT_MS } = {}) {
 	const key = readEnv('NVIDIA_API_KEY');
 	const [width, height] = NIM_DIMENSIONS[aspectRatio] || NIM_DIMENSIONS['1:1'];
+	const laneTimeout = Math.max(1_000, Math.min(NIM_TIMEOUT_MS, Number(timeoutMs) || NIM_TIMEOUT_MS));
 
 	let lastErr = null;
 	for (let attempt = 1; attempt <= NIM_MAX_ATTEMPTS; attempt++) {
 		const controller = new AbortController();
-		const timer = setTimeout(() => controller.abort(), NIM_TIMEOUT_MS);
+		const timer = setTimeout(() => controller.abort(), laneTimeout);
 		let res;
 		try {
 			res = await fetch(NIM_FLUX_URL, {
@@ -348,8 +388,15 @@ export function enhanceFluxPrompt(raw) {
 // paid Replicate backstop on any failure — a broken or throttled preferred
 // provider must hand off, never take down the whole text→3D pipeline. The last
 // configured lane's error is surfaced only when nothing is left to try.
-export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false, seed } = {}) {
+export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false, seed, budgetMs } = {}) {
 	prompt = enhanceFluxPrompt(prompt);
+	const budget = ladderBudgetMs(budgetMs);
+	const deadline = Date.now() + budget;
+	const remaining = () => deadline - Date.now();
+	// A lane with under a tenth of the budget left cannot finish; skip it.
+	const canTry = () => remaining() >= budget * 0.1;
+	const laneMs = (ownCeilingMs, laneRemains) =>
+		laneTimeoutMs(ownCeilingMs, { budgetMs: budget, remainingMs: remaining(), laneRemains });
 	// Optional deterministic seed. Honored on the lanes that expose one (NIM FLUX,
 	// Replicate flux); the Vertex/Gemini image API has no seed parameter, so a seed
 	// is silently ignored there. Undefined preserves the prior default (seed 0).
@@ -385,7 +432,15 @@ export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false
 		try {
 			const { generateImage, isConfigured } = await import('./vertex-imagen.js');
 			if (!isConfigured()) return null;
-			return logImageProvider(await persistDataUriImage(await generateImage(prompt, { aspectRatio })));
+			if (!canTry()) {
+				if (!laneRemains) throw budgetExhausted(budget);
+				return null;
+			}
+			return logImageProvider(
+				await persistDataUriImage(
+					await generateImage(prompt, { aspectRatio, timeoutMs: laneMs(VERTEX_LANE_CEILING_MS, laneRemains) }),
+				),
+			);
 		} catch (err) {
 			if (!laneRemains) throw err;
 			console.warn(`vertex imagen failed, falling back: ${err?.message}`);
@@ -407,9 +462,15 @@ export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false
 	const nimCooling =
 		hasFallback &&
 		(skipNim || (await providersInCooldown([NIM_FLUX_COOLDOWN_KEY])).has(NIM_FLUX_COOLDOWN_KEY));
-	if (readEnv('NVIDIA_API_KEY') && !nimCooling) {
+	const nimWanted = readEnv('NVIDIA_API_KEY') && !nimCooling;
+	if (nimWanted && !canTry() && !hasFallback) throw budgetExhausted(budget);
+	if (nimWanted && canTry()) {
 		try {
-			return logImageProvider(await nimFluxImage(prompt, aspectRatio, hasSeed ? seed : 0));
+			return logImageProvider(
+				await nimFluxImage(prompt, aspectRatio, hasSeed ? seed : 0, {
+					timeoutMs: laneMs(NIM_TIMEOUT_MS, hasFallback),
+				}),
+			);
 		} catch (err) {
 			// A degraded lane (timeout / unreachable / throttle / 5xx) cools down so the
 			// next caller skips it; a clean 4xx (bad input) is not a lane-health fault.
@@ -437,9 +498,12 @@ export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false
 	// Replicate backstop (it costs real money per image): a successful federated
 	// call is strictly cheaper than every remaining option. Off by default; the
 	// measured case for flipping it is in docs/ops/livepeer-federation.md.
-	if (hasLivepeer) {
+	if (hasLivepeer && !canTry() && !token) throw budgetExhausted(budget);
+	if (hasLivepeer && canTry()) {
 		try {
-			return logImageProvider(await livepeerTextToImage(prompt, { aspectRatio, seed }));
+			return logImageProvider(
+				await livepeerTextToImage(prompt, { aspectRatio, seed, timeoutMs: laneMs(REPLICATE_POLL_TIMEOUT_MS, !!token) }),
+			);
 		} catch (err) {
 			// Nothing downstream to fall through to → surface the Livepeer error.
 			if (!token) throw err;
@@ -456,6 +520,8 @@ export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false
 			{ code: 'unconfigured' },
 		);
 	}
+
+	if (!canTry()) throw budgetExhausted(budget);
 
 	const modelRef = readEnv('REPLICATE_TXT2IMG_MODEL') || DEFAULT_TXT2IMG_MODEL;
 	const isVersionHash = /^[a-f0-9]{40,64}$/i.test(modelRef);
@@ -517,6 +583,9 @@ export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false
 				prefer: 'wait',
 			},
 			body,
+			// The create call previously had NO timeout, so a `prefer: wait` that
+			// never returned held the ladder open indefinitely.
+			signal: AbortSignal.timeout(Math.max(1_000, laneMs(REPLICATE_POLL_TIMEOUT_MS, false))),
 		});
 	} catch (err) {
 		throw Object.assign(new Error(`text-to-image provider unreachable: ${err?.message}`), {
@@ -575,7 +644,7 @@ export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false
 		const getUrl = data?.urls?.get;
 		const nonTerminal = data.status && !REPLICATE_TERMINAL_STATUSES.has(data.status);
 		if (getUrl && nonTerminal) {
-			const finished = await pollReplicatePrediction(getUrl, token);
+			const finished = await pollReplicatePrediction(getUrl, token, { timeoutMs: laneMs(REPLICATE_POLL_TIMEOUT_MS, false) });
 			url = extractImageUrl(finished?.output);
 			if (url) {
 				return logImageProvider({ imageUrl: url, predictionId: finished?.id || data.id, model: modelRef });

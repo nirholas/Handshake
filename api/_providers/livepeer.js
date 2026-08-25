@@ -114,7 +114,8 @@ function resolveImageUrl(raw, base) {
 // "hand off to the next lane"): provider_unreachable for socket/TLS failures,
 // rate_limited for 429, verification_failed for a well-formed 200 whose
 // payload is not a usable image, and upstream_error otherwise.
-export async function livepeerTextToImage(prompt, { aspectRatio = '1:1', seed, model } = {}) {
+export async function livepeerTextToImage(prompt, { aspectRatio = '1:1', seed, model, timeoutMs = T2I_TIMEOUT_MS } = {}) {
+	const laneTimeoutMs = Math.max(1_000, Math.min(T2I_TIMEOUT_MS, Number(timeoutMs) || T2I_TIMEOUT_MS));
 	const { base, gateway, key } = livepeerGatewayConfig();
 	const [width, height] = DIMENSIONS[aspectRatio] || DIMENSIONS['1:1'];
 	const modelId = model || process.env.LIVEPEER_T2I_MODEL || env.LIVEPEER_T2I_MODEL || DEFAULT_T2I_MODEL;
@@ -143,7 +144,7 @@ export async function livepeerTextToImage(prompt, { aspectRatio = '1:1', seed, m
 			method: 'POST',
 			headers,
 			body: JSON.stringify(body),
-			signal: AbortSignal.timeout(T2I_TIMEOUT_MS),
+			signal: AbortSignal.timeout(laneTimeoutMs),
 		});
 	} catch (err) {
 		throw Object.assign(new Error(`livepeer gateway unreachable: ${describeTransportFailure(err)}`), {
@@ -177,7 +178,7 @@ export async function livepeerTextToImage(prompt, { aspectRatio = '1:1', seed, m
 	try {
 		imgRes = await fetch(imageUrl, {
 			headers: key ? { authorization: `Bearer ${key}` } : {},
-			signal: AbortSignal.timeout(T2I_TIMEOUT_MS),
+			signal: AbortSignal.timeout(laneTimeoutMs),
 		});
 	} catch (err) {
 		throw Object.assign(new Error(`livepeer image fetch failed: ${describeTransportFailure(err)}`), {
