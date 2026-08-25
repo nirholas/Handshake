@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-25",
+			"title": "The market tools now clear the WCAG AA contrast floor",
+			"summary": "An accessibility sweep of the compare page found four places where text did not have enough contrast against what sat behind it. The selected time-range button, the rank badge, and the heatmap's view switcher all put white on a blue too light to read; they now use a blue and a text colour chosen to clear the standard in both the light and the dark theme. The comparison table's green was too pale on a white background, the coin column headings were painted in their chart-line colour (worst of all for the amber series), and the Getting started pill's counter borrowed a colour meant for light backgrounds while sitting on a dark one. Every one of those is fixed, and the column headings keep their tie to the chart through a coloured rule under each symbol.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/compare"
+		},
+		{
+			"date": "2026-08-25",
 			"title": "Dashboard Analytics fits a phone screen and its failure page can actually reload",
 			"summary": "On a 320px phone the time-range buttons refused to wrap, which pushed every panel below them past the right edge of the screen; they wrap now and nothing scrolls sideways. The rare failure page showed a Reload button that did nothing when tapped, so it now reloads, and it explains what happened in plain language with a link to support instead of only printing a developer error string. A malformed response from one of the services behind the page no longer blanks the whole dashboard: the panel that depends on it degrades on its own and the rest still draws. The page also stops requesting a monetization report it never displayed, and its search-engine description finally says what the page shows: revenue over time, revenue by skill, widget views and chats, the conversion funnel, and per-agent performance.",
 			"tags": [
