@@ -139,6 +139,7 @@ function toast(message, tone = 'good') {
 // cast is rebuilt only when the cast actually changes; who is in world is
 // written into the standing figures in place.
 let stageKey = '';
+let rosterKey = '';
 
 const castKey = (crew, members) => `${crew.tag}|${members.map((m) => m.id).join(',')}`;
 
@@ -181,10 +182,13 @@ function renderRoom(crew, members, { canManage }) {
 
 // Hiding the room is not enough to release its WebGL contexts: an <agent-3d>
 // that is merely display:none still holds its canvas. Emptying the stage is what
-// gives them back when a visitor leaves a crew or a load fails.
+// gives them back when a visitor leaves a crew or a load fails. The roster goes
+// with it so the two cached keys can never disagree about who is on screen.
 function clearStage() {
 	stageKey = '';
+	rosterKey = '';
 	$('cw-stage').innerHTML = '';
+	$('cw-roster').innerHTML = '';
 }
 
 // Presence, written into figures that are already standing. Keyed by member id
@@ -276,8 +280,6 @@ function mountFigure(el) {
 // Same rule as the stage: rebuilt when the membership changes, updated in place
 // when only presence moved, so a poll cannot yank the Remove button out from
 // under a keyboard user mid-focus.
-let rosterKey = '';
-
 function renderRoster(members, { canKick }) {
 	const list = $('cw-roster');
 	const key = `${canKick ? 'kick' : 'read'}|${members.map((m) => m.id).join(',')}`;
@@ -611,6 +613,7 @@ async function shareCrew(tag) {
 // ── loading ──────────────────────────────────────────────────────────────────
 function showSkeleton() {
 	$('cw-room').hidden = false;
+	stageKey = '';
 	$('cw-stage').innerHTML =
 		'<div class="cw-skeleton">' +
 		Array.from({ length: 4 }, () => '<div class="cw-shimmer"></div>').join('') +
@@ -628,8 +631,11 @@ function showError(message, retry) {
 	});
 }
 
-async function loadPublicCrew(tag) {
-	showSkeleton();
+// `skeleton` is false on a presence poll: the room is already standing, and
+// re-flashing shimmer bars over it every 20 seconds reads as a page that cannot
+// hold still, on top of rebuilding every figure underneath.
+async function loadPublicCrew(tag, { skeleton = true } = {}) {
+	if (skeleton) showSkeleton();
 	try {
 		const res = await apiFetch(`/api/crews/${encodeURIComponent(tag)}`, { allowAnonymous: true });
 		if (res.status === 404) {
@@ -745,7 +751,7 @@ function startPolling() {
 		if (document.visibilityState !== 'visible') return;
 		if (!state.loaded) return;
 		try {
-			if (state.mode === 'public') await loadPublicCrew(state.publicTag);
+			if (state.mode === 'public') await loadPublicCrew(state.publicTag, { skeleton: false });
 			else if (state.me?.crew) {
 				await loadMine();
 				renderMine();
