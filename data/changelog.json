@@ -24801,6 +24801,15 @@
 				"docs"
 			],
 			"link": "/three-token"
+		},
+		{
+			"date": "2026-08-25",
+			"title": "Weekly Report #1: everything shipped since day one, week by week",
+			"summary": "The first three.ws weekly report walks every week from the first commit on April 14 to today: what launched, what was announced, which partnerships landed, and where $THREE fits, with the totals (commits, changelog entries, pages, packages, MCP servers, listings) up front. It is written for the timeline, so no tables, and ships with a screenshot kit of the live surfaces.",
+			"tags": [
+				"docs"
+			],
+			"link": "/docs/weekly-report-1"
 		}
 	]
 }

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-25T15:05:49.624Z",
+	"generated_at": "2026-08-25T15:09:27.003Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -5812,6 +5812,16 @@
 					"title": "Docs · Hold-to-access",
 					"description": "three.ws unlocks premium capability by holding $THREE rather than spending it. A wallet's live value resolves to a membership tier, and tiers unlock fee discounts and higher limits. How tiers are computed and refreshed.",
 					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/weekly-report-1",
+					"title": "Docs · Weekly Report #1",
+					"description": "The first three.ws weekly report: a week-by-week roundup of everything shipped from the first commit on 2026-04-14 through 2026-08-25, with every launch, partnership, announcement, and where $THREE fits.",
+					"added": "2026-08-25",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

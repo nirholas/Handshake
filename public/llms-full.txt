@@ -3521,6 +3521,12 @@ URL: https://three.ws/docs/hold-to-access
 
 three.ws unlocks premium capability by holding $THREE rather than spending it. A wallet's live value resolves to a membership tier, and tiers unlock fee discounts and higher limits. How tiers are computed and refreshed.
 
+### Docs · Weekly Report #1
+
+URL: https://three.ws/docs/weekly-report-1
+
+The first three.ws weekly report: a week-by-week roundup of everything shipped from the first commit on 2026-04-14 through 2026-08-25, with every launch, partnership, announcement, and where $THREE fits.
+
 ### Docs · The $THREE thesis
 
 URL: https://three.ws/docs/three-thesis

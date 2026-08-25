@@ -4493,6 +4493,14 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/weekly-report-1",
+					"title": "Docs · Weekly Report #1",
+					"description": "The first three.ws weekly report: a week-by-week roundup of everything shipped from the first commit on 2026-04-14 through 2026-08-25, with every launch, partnership, announcement, and where $THREE fits.",
+					"priority": 0.7,
+					"changefreq": "weekly",
+					"added": "2026-08-25"
+				},
+				{
 					"path": "/docs/three-thesis",
 					"title": "Docs · The $THREE thesis",
 					"description": "The long-form case for $THREE: what three.ws is, every utility and sink the token has, how platform revenue routes into buybacks, where it trades and is verified, the ecosystem footprint, the roadmap, and every risk the platform documents about itself.",

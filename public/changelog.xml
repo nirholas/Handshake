@@ -15,6 +15,14 @@
 			<description>The long-form case for $THREE: what three.ws is, every utility and sink the token has, how platform revenue routes into buybacks, where it trades and is verified, the ecosystem footprint, the roadmap, and every risk the platform documents about itself.</description>
 		</item>
 		<item>
+			<title>Docs · Weekly Report #1</title>
+			<link>https://three.ws/docs/weekly-report-1</link>
+			<guid isPermaLink="false">2026-08-25:Docs · Weekly Report #1</guid>
+			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The first three.ws weekly report: a week-by-week roundup of everything shipped from the first commit on 2026-04-14 through 2026-08-25, with every launch, partnership, announcement, and where $THREE fits.</description>
+		</item>
+		<item>
 			<title>The first-contribution guide now hands you real open work, and the docs sidebar can find it</title>
 			<link>https://three.ws/docs/first-contribution</link>
 			<guid isPermaLink="false">2026-08-25:The first-contribution guide now hands you real open work, and the docs sidebar can find it</guid>
@@ -29,6 +37,14 @@
 			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>A long-form research thesis on $THREE now lives in the docs: what three.ws is, every way the token is used (hold-to-access tiers, plan and pass discounts, marketplace and labor escrow, game cosmetics, gated embeds, deploy-fee waivers), how platform revenue is routed into buybacks, where the token trades and is verified, the ecosystem footprint, the roadmap, and every risk the platform documents about itself, each claim sourced to the code.</description>
+		</item>
+		<item>
+			<title>Weekly Report #1: everything shipped since day one, week by week</title>
+			<link>https://three.ws/docs/weekly-report-1</link>
+			<guid isPermaLink="false">2026-08-25:Weekly Report #1: everything shipped since day one, week by week</guid>
+			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>The first three.ws weekly report walks every week from the first commit on April 14 to today: what launched, what was announced, which partnerships landed, and where $THREE fits, with the totals (commits, changelog entries, pages, packages, MCP servers, listings) up front. It is written for the timeline, so no tables, and ships with a screenshot kit of the live surfaces.</description>
 		</item>
 		<item>
 			<title>Docs · Rigging the pump.fun pill mascot</title>
