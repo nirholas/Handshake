@@ -112,9 +112,13 @@ A queued job returns:
   "ok": true, "service": "forge-standard", "status": "pending",
   "job": "f1.…", "poll_tool": "forge_status",
   "poll_endpoint": "https://three.ws/api/okx/3d/forge-status",
+  "poll_arguments": { "job_id": "f1.…", "title": "a low-poly orange fox sitting down" },
   "watchUrl": "https://three.ws/watch?job=…", "format": "glb", "etaSeconds": 45
 }
 ```
+
+Copy `poll_arguments` verbatim into the next `forge_status` call. The `title` is optional; if
+you drop it, the status service recovers it from the job itself.
 
 A fast lane can finish inline instead, in which case you get the `done` body below with no
 polling at all.
@@ -138,10 +142,15 @@ Poll every few seconds. When `status` is `"done"`:
   "glbUrl": "https://…/model.glb",
   "viewerUrl": "https://three.ws/viewer?src=…",
   "arUrl": "https://three.ws/api/ar?src=…",
+  "pageUrl": "https://three.ws/m/0b6d2a9e-…",
   "previewImageUrl": "https://…/concept.png",
   "format": "glb", "tier": "standard"
 }
 ```
+
+The text content of the same response lists every one of those links on its own line, so an
+agent that relays tool text to a human without reading `structuredContent` still hands over
+the viewer, the AR launch and the page.
 
 - `glbUrl` is the model itself, a real glTF binary you can download, open in any glTF
   runtime, or embed.
@@ -149,6 +158,9 @@ Poll every few seconds. When `status` is `"done"`:
 - `arUrl` is the device-aware AR launch: Scene Viewer on Android, Quick Look on iOS
   (GLB to USDZ converted in-page), the WebGL viewer on desktop. This is the link that puts
   the model in a human's actual room, which is usually what an agent's user wanted.
+- `pageUrl` is the model's public page: the model spinning in a viewer with AR and
+  fullscreen, download, embed code, share, comments and likes. It is the one link to hand a
+  human when they should get everything.
 - `previewImageUrl` is the painted concept view the forge produces before the mesh, so you
   can show something the moment it exists.
 
@@ -164,6 +176,14 @@ unit tests in [`tests/api/okx-forge.test.js`](../tests/api/okx-forge.test.js).
 - **You pay only when the job is accepted.** Input validation and the age-13+ content gate
   run before settlement; a rejected prompt or a malformed argument fails the call and
   **no payment settles**.
+- **HD means HD.** If the high-detail lane will not take a job, `forge-hd` answers
+  `tier_unavailable` (with `charged: false` and a `retry_after`) instead of quietly serving
+  a standard mesh at the HD price. That refusal is also before settlement.
+- **A real MCP client gets a 402.** The shared three.ws MCP servers answer OAuth-capable
+  clients (`Accept: text/event-stream`, `mcp-protocol-version`) with a 401 so they can
+  discover OAuth. The OKX.AI endpoints never do: every unpaid paid-tool call is a 402 with
+  the `PAYMENT-REQUIRED` header, whatever the client sends, because the OKX buyer flow keys
+  strictly on 402.
 - **Polling is free and unlimited**, on every endpoint and on the standalone status
   service.
 - **One payment, one job.** The payment proof is single-use across dispatch and settlement

@@ -22,7 +22,7 @@ Every GPU and render stage is driven over the deployed three.ws HTTP surfaces (t
 
 | File | Role |
 | --- | --- |
-| [`forge.js`](./forge.js) | The listed line-up: per-endpoint MCP tool catalogs, dispatchers, x402 price hooks, the bazaar discovery metadata in each 402, and the age-13+ content gate that runs before any generation starts. One surface is built per catalog row and memoized. |
+| [`forge.js`](./forge.js) | The listed line-up: per-endpoint MCP tool catalogs, dispatchers, x402 price hooks, the bazaar discovery metadata in each 402, the age-13+ content gate that runs before any generation starts, and the strict HD lane (refuses before settlement rather than serving a lower tier). Done responses carry the public model page (`/m/<creation id>`) and every link is repeated in the text content. One surface is built per catalog row and memoized. |
 | [`identity.js`](./identity.js) | The pipeline engine: prompt shaping, forge/rig/render orchestration, sharp compositing (PFP head crop, 4:5 full-body frames), and the R2-persisted job state machine. |
 | [`tools.js`](./tools.js) | The A2MCP face of the pipeline for `/api/okx/3d/identity-studio`: MCP tool catalog (`create_identity` paid, `identity_status` and `getting_started` free), dispatcher, x402 pricing hook, and the 402 challenge metadata indexers see. |
 | [`rest-services.js`](./rest-services.js) | Engine adapters for the decomposed paid REST services (`text-to-3d`, `text-to-3d-pro`, `image-to-3d`, `rig`, `avatar`, `retarget`, `pose-seed`, `fbx-export`). Thin wrappers over engines the platform already runs, no duplicated pipeline logic. |

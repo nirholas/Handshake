@@ -485,7 +485,13 @@ describe('402 challenge and pricing', () => {
 			}),
 			res,
 		);
-		expect(res.statusCode).toBe(401); // MCP protocol client: 401 + www-authenticate, same envelope
+		// An MCP protocol client still gets 402 here, never the OAuth 401 the
+		// shared servers issue: the OKX buyer flow keys strictly on 402, and a
+		// spec-compliant MCP client (Accept: text/event-stream) is exactly the
+		// caller a marketplace reviewer uses.
+		expect(res.statusCode).toBe(402);
+		expect(res.headers['www-authenticate']).toBeUndefined();
+		expect(res.headers['payment-required']).toBeTruthy();
 		const challenge = JSON.parse(res.body);
 		expect(challenge.accepts[0].network).toBe('eip155:196');
 		expect(challenge.accepts[0].amount).toBe('1500000');

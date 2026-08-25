@@ -71,6 +71,44 @@ now keeps the first occurrence and drops later twins; Identity Studio inherited 
   `tests/multiplayer-server-boot.test.js`, is a Colyseus boot test with no path to any file
   touched here.
 
+### Audit pass, same day (owner: "audit it and improve it as much as possible")
+
+Four real defects found and fixed, each with a regression test in `tests/api/okx-forge.test.js`:
+
+1. **MCP clients got a 401, not a 402, on every OKX endpoint.** The shared auth answers an
+   OAuth-capable client (`Accept: text/event-stream` or `mcp-protocol-version`) with 401 +
+   `WWW-Authenticate: Bearer` so claude.ai can discover OAuth. A spec-compliant MCP client
+   sends exactly those headers. The OKX buyer flow is explicit: "if it is not 402, return the
+   body directly." So a real A2MCP client calling a paid tool unpaid was handed a status it
+   could not pay, and a reviewer probing with one saw no payment integration at all. **This
+   is a strong candidate for the actual 2026-07-04 rejection cause**: every prior
+   verification used curl, which never sends those headers. `paymentStatus: 402` is now
+   forced on every OKX A2MCP service (forge rows AND Identity Studio), and the
+   `WWW-Authenticate` hint is dropped there.
+2. **`forge-hd` overcharged.** The generator hold-gates its high tier; the lane client
+   silently degraded a refused high job to standard. A buyer paid $0.25 for HD and got a
+   standard mesh. The HD row now submits operator-funded (internal seed, same as the custom
+   GPT) with `strictTier: true`, and refuses with `tier_unavailable` BEFORE settlement if the
+   HD lane will not take the job. `charged: false` is stated in the error.
+3. **No shareable link.** The lane records a `forge_creations` row on submit and every poll
+   frame carries `creation_id`; nothing surfaced it. Done responses now carry `pageUrl`
+   (`https://three.ws/m/<id>`: viewer, AR, download, embed, share, comments).
+4. **Text content only named the GLB.** Most buying agents relay tool text verbatim, so the
+   viewer, AR and page links were invisible to their humans. Every link is now on its own
+   line in the text; pending frames carry `poll_arguments` to copy into `forge_status`, and
+   the status tool recovers the title from the job's own prompt when none is passed.
+
+Also fixed in passing: the GET discovery challenge quoted the shared default price beside the
+real one (two amounts for one rail). `handleSse` now takes the list price.
+
+**Production observation, not fixed here:** a real draft submit to `/api/gpt-forge` on
+2026-08-22 took 156 s to answer `429 busy` while `/api/okx/3d/health` read all-green in
+0.8 s. The health probe reads the generator's static tier matrix, not its acceptance
+latency, so it cannot see a saturated lane. From inside `forge_3d` that call would have hit
+the 90 s client timeout and surfaced as `timeout` with `retry_after`, which is honest but
+slow. Worth a follow-up: an acceptance-latency reading in the health probe, and a shorter
+submit budget on the OKX surface.
+
 ### Still owner-gated (unchanged, and unchanged by this rebuild)
 
 Funding. Relayer `0x1F4a753c61b54Bdec7AE0AF338A887E63Cdbbb74` needs native OKB on X Layer

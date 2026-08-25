@@ -39,7 +39,7 @@ import { buildBazaarSchema } from '../_lib/x402-spec.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { catalogEntry, FORGE_TOOL, FORGE_STATUS_TOOL } from '../_lib/okx-catalog.js';
 import { startForge, pollOnce, originFromReq } from '../_mcp-studio/gpt-forge-client.js';
-import { shapeSubmit, shapePoll } from '../_mcp-studio/studio-shape.js';
+import { shapeSubmit, shapePoll, tierOf } from '../_mcp-studio/studio-shape.js';
 import { checkPromptSafety } from '../_mcp-studio/safety.js';
 
 export { PROTOCOL_VERSION, FORGE_TOOL, FORGE_STATUS_TOOL };
@@ -90,6 +90,10 @@ function laneError(err) {
 			});
 		case 'unknown_job':
 			return toolError('unknown_job', err.message || 'That job id is not recognized.');
+		case 'tier_unavailable':
+			// The paid HD row refuses rather than quietly serving a lower tier.
+			// This error answers BEFORE settlement, so the buyer is not charged.
+			return toolError('tier_unavailable', err.message, { retry_after: err.retryAfter || 60, charged: false });
 		default:
 			return toolError('generation_failed', err?.message || 'The generator could not start this job.');
 	}
@@ -100,15 +104,52 @@ function laneError(err) {
 // there. Both, because buyers in this marketplace read either.
 const POLL_OPTS = { pollPath: STATUS_ENDPOINT };
 
-function withPollTool(shaped) {
-	return shaped.status === 'pending' ? { ...shaped, poll_tool: FORGE_STATUS_TOOL, poll_endpoint: STATUS_ENDPOINT } : shaped;
+// Every finished creation has a public page at /m/<creation id>: the model
+// spinning in a viewer, AR and fullscreen, download, embed and share, comments
+// and likes. It is the one link an agent can hand a human that does everything.
+// The forge lane records the creation id on submit and on every poll frame, so
+// the page link is available the moment the job is done.
+const CREATION_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function pageUrlOf(base, data) {
+	const id = data?.creation_id;
+	return typeof id === 'string' && CREATION_ID_RE.test(id) ? `${base}/m/${id}` : null;
 }
 
+function withPollTool(shaped, { base, data, title }) {
+	if (shaped.status === 'pending') {
+		return {
+			...shaped,
+			poll_tool: FORGE_STATUS_TOOL,
+			poll_endpoint: STATUS_ENDPOINT,
+			// Copy these verbatim into the next forge_status call.
+			poll_arguments: { job_id: shaped.job, ...(title ? { title } : {}) },
+		};
+	}
+	if (shaped.status === 'done') {
+		const pageUrl = pageUrlOf(base, data);
+		return pageUrl ? { ...shaped, pageUrl } : shaped;
+	}
+	return shaped;
+}
+
+// The text content is what most buying agents relay to their human verbatim,
+// so it carries every link, not just the file. An agent that never reads
+// structuredContent still hands over the viewer, the AR launch and the page.
 function summarize(shaped) {
-	if (shaped.status === 'done') return `Model ready. GLB: ${shaped.glbUrl}`;
+	if (shaped.status === 'done') {
+		return [
+			'Model ready.',
+			`Download (GLB): ${shaped.glbUrl}`,
+			`View in browser: ${shaped.viewerUrl}`,
+			`See it in your room (AR): ${shaped.arUrl}`,
+			...(shaped.pageUrl ? [`Model page (share, embed, download): ${shaped.pageUrl}`] : []),
+			...(shaped.previewImageUrl ? [`Concept image: ${shaped.previewImageUrl}`] : []),
+		].join('\n');
+	}
 	if (shaped.status === 'error') return shaped.error;
 	const eta = shaped.etaSeconds ? ` ETA ~${shaped.etaSeconds}s.` : '';
-	return `Job accepted.${eta} Call ${FORGE_STATUS_TOOL} with job_id ${shaped.job} until status is "done".`;
+	const preview = shaped.previewImageUrl ? ` Concept image so far: ${shaped.previewImageUrl}` : '';
+	return `Job accepted.${eta} Poll ${FORGE_STATUS_TOOL} with job_id "${shaped.job}" every 5s until status is "done".${preview}`;
 }
 
 function buildForgeTool(entry) {
@@ -119,9 +160,10 @@ function buildForgeTool(entry) {
 		title: `Forge a 3D model (paid, $${entry.priceUsd})`,
 		description:
 			`${priceLine} ${entry.describes.capability} ` +
-			`Async: returns a job_id immediately, then poll ${FORGE_STATUS_TOOL} (free) every few ` +
-			'seconds until status is "done". Invalid input fails before settlement, so a rejected ' +
-			'call costs nothing.',
+			`Async: returns a job id immediately, then poll ${FORGE_STATUS_TOOL} (free) every few ` +
+			'seconds until status is "done". You receive the GLB file, a browser viewer link, an ' +
+			'augmented-reality link that places the model in a real room, a shareable model page, and ' +
+			'the concept image. Invalid input fails before settlement, so a rejected call costs nothing.',
 		annotations: { readOnlyHint: false, idempotentHint: false, openWorldHint: true },
 		inputSchema: entry.inputSchema,
 		async handler(args, _auth, req) {
@@ -138,6 +180,12 @@ function buildForgeTool(entry) {
 				return toolError('invalid_input', 'prompt is required: describe one subject in 3 to 1000 characters.');
 			}
 
+			// The high tier is hold-gated on the generator; the buyer has already
+			// paid this row's price, so the job runs operator-funded (internal seed),
+			// the same way the custom GPT runs it. strictTier keeps the promise: if
+			// the HD lane will not take the job, refuse before settlement instead of
+			// charging HD money for a standard mesh.
+			const high = entry.lane?.tier === 'high';
 			let job;
 			try {
 				job = await startForge(base, {
@@ -146,12 +194,21 @@ function buildForgeTool(entry) {
 					aspect: isImageLane ? '1:1' : args.aspect_ratio,
 					...(entry.lane?.tier ? { tier: entry.lane.tier } : {}),
 					...(entry.lane?.path ? { path: entry.lane.path } : {}),
+					...(high ? { internal: true, strictTier: true } : {}),
 				});
 			} catch (err) {
 				return laneError(err);
 			}
+			// Belt and braces: a lane that answered with a tier it was not asked
+			// for is refused the same way, still before settlement.
+			if (high && tierOf(job) && tierOf(job) !== 'high') {
+				return toolError('tier_unavailable', 'the high-detail lane is not available right now; try again shortly', {
+					retry_after: 60,
+					charged: false,
+				});
+			}
 
-			const shaped = withPollTool(shapeSubmit(job, base, prompt, POLL_OPTS));
+			const shaped = withPollTool(shapeSubmit(job, base, prompt, POLL_OPTS), { base, data: job, title: prompt });
 			return toolOk(summarize(shaped), { ok: true, service: entry.id, ...shaped });
 		},
 	};
@@ -164,21 +221,28 @@ function buildStatusTool() {
 		title: 'Check a forge job (free)',
 		description:
 			'FREE. Reports the live state of a three.ws forge job and returns the finished GLB, the ' +
-			'concept image, a browser viewer link and an augmented-reality link once it is done. ' +
-			'Poll every few seconds. No payment, account, or key required.',
+			'concept image, a browser viewer link, an augmented-reality link and a shareable model ' +
+			'page once it is done. Poll every 5 seconds. No payment, account, or key required.',
 		annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
 		inputSchema: entry.inputSchema,
 		async handler(args, _auth, req) {
 			const base = originFromReq(req);
 			const jobId = String(args.job_id || '').trim();
-			const title = typeof args.title === 'string' ? args.title : '';
 			let data;
 			try {
 				data = await pollOnce(base, jobId);
 			} catch (err) {
 				return laneError(err);
 			}
-			const shaped = withPollTool(shapePoll(data, base, jobId, title, POLL_OPTS));
+			// The poll frame carries the job's own prompt, so the viewer and AR
+			// pages get a title even when the buyer never passed one.
+			const title =
+				typeof args.title === 'string' && args.title.trim()
+					? args.title
+					: typeof data?.prompt === 'string'
+						? data.prompt
+						: '';
+			const shaped = withPollTool(shapePoll(data, base, jobId, title, POLL_OPTS), { base, data, title });
 			const body = { ok: shaped.status !== 'error', ...shaped };
 			return shaped.status === 'error'
 				? { isError: true, content: [{ type: 'text', text: shaped.error }], structuredContent: body }
@@ -305,7 +369,13 @@ function buildSurface(id) {
 					'Free: no payment, account, or key. Poll any three.ws forge job here.',
 					'Full service index (free): https://three.ws/api/okx/3d/catalog',
 				],
-		links: { docs: DOCS_URL, catalog: `${BASE}/api/okx/3d/catalog`, health: `${BASE}/api/okx/3d/health` },
+		links: {
+			docs: DOCS_URL,
+			catalog: `${BASE}/api/okx/3d/catalog`,
+			health: `${BASE}/api/okx/3d/health`,
+			try_it_in_a_browser: `${BASE}/forge`,
+			example_model_page: `${BASE}/creations`,
+		},
 	});
 
 	const toolDefs = [gettingStarted, ...(paidTool ? [paidTool] : []), statusTool];

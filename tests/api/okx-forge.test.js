@@ -225,6 +225,27 @@ describe('402 challenge: the OKX Agent Payments Protocol integration', () => {
 		expect(new Set(rails).size).toBe(rails.length);
 	});
 
+	// The OKX buyer flow: "if it is not 402, return the body directly". A
+	// spec-compliant MCP client sends Accept: application/json, text/event-stream
+	// and mcp-protocol-version, which the shared servers answer with an OAuth 401.
+	// That is a 401 no OKX buyer can pay and no reviewer reads as integrated.
+	it('a real MCP client gets 402 with the OKX header, never an OAuth 401', async () => {
+		for (const headers of [
+			{ accept: 'application/json, text/event-stream' },
+			{ 'mcp-protocol-version': '2025-06-18' },
+		]) {
+			const res = makeRes();
+			await handler(makeReq({ service: 'forge-standard', headers, body: rpc(FORGE_TOOL, { prompt: 'a fox' }) }), res);
+			expect(res.statusCode).toBe(402);
+			expect(res.headers['www-authenticate']).toBeUndefined();
+			expect(res.headers['payment-required']).toBeTruthy();
+			expect(JSON.parse(res.body).accepts[0].network).toBe('eip155:196');
+		}
+		const sse = makeRes();
+		await handler(makeReq({ method: 'GET', service: 'forge-standard', headers: { accept: 'text/event-stream' } }), sse);
+		expect(sse.statusCode).toBe(402);
+	});
+
 	it('free tools need no payment on a paid endpoint', async () => {
 		const res = await post('forge-draft', rpc('getting_started', {}));
 		expect(res.statusCode).toBe(200);
@@ -249,10 +270,11 @@ describe('what a buying agent actually receives', () => {
 		expect(out.structuredContent.etaSeconds).toBe(45);
 	});
 
-	it('a finished job carries the GLB, the browser viewer and the AR link, same as the custom GPT', async () => {
+	it('a finished job carries the GLB, the browser viewer, the AR link and the model page', async () => {
 		lane.poll = () =>
 			jsonResponse(200, {
 				status: 'done',
+				creation_id: '0b6d2a9e-6f0f-4b1e-9a2c-3d4e5f607182',
 				glb_url: 'https://cdn.test/fox.glb',
 				preview_image_url: 'https://cdn.test/fox.png',
 				tier: 'draft',
@@ -263,8 +285,26 @@ describe('what a buying agent actually receives', () => {
 		expect(body.glbUrl).toBe('https://cdn.test/fox.glb');
 		expect(body.viewerUrl).toContain('/viewer?src=');
 		expect(body.arUrl).toContain('/api/ar?src=');
+		expect(body.pageUrl).toBe('https://three.ws/m/0b6d2a9e-6f0f-4b1e-9a2c-3d4e5f607182');
 		expect(body.previewImageUrl).toBe('https://cdn.test/fox.png');
 		expect(body.format).toBe('glb');
+		// The text content is what most agents relay verbatim: every link is in it.
+		const text = out.content[0].text;
+		for (const link of [body.glbUrl, body.viewerUrl, body.arUrl, body.pageUrl]) expect(text).toContain(link);
+	});
+
+	it('titles the viewer and AR pages from the job itself when the buyer passes no title', async () => {
+		lane.poll = () =>
+			jsonResponse(200, { status: 'done', glb_url: 'https://cdn.test/fox.glb', prompt: 'a low-poly fox' });
+		const out = await callTool('forge-status', FORGE_STATUS_TOOL, { job_id: 'f1.job.abc' });
+		expect(out.structuredContent.arUrl).toContain('title=a%20low-poly%20fox');
+	});
+
+	it('a pending job tells the buyer exactly what to call next', async () => {
+		const out = await callTool('forge-standard', FORGE_TOOL, { prompt: 'a low-poly fox' });
+		expect(out.structuredContent.poll_arguments).toEqual({ job_id: 'f1.job.abc', title: 'a low-poly fox' });
+		expect(out.content[0].text).toContain(FORGE_STATUS_TOOL);
+		expect(out.content[0].text).toContain('f1.job.abc');
 	});
 
 	it('a failed job is an error the buyer can act on, not a silent pending', async () => {
@@ -294,6 +334,43 @@ describe('each row drives its own lane', () => {
 		await callTool('forge-image', FORGE_TOOL, { image_urls: ['https://cdn.test/a.png'] });
 		expect(submitted.at(-1).image_urls).toEqual(['https://cdn.test/a.png']);
 		expect(submitted.at(-1).tier).toBeUndefined();
+	});
+
+	// The generator hold-gates its high tier. A buyer of the HD row has already
+	// paid, so the job runs operator-funded, exactly like the custom GPT runs it.
+	it('runs the HD row operator-funded on the generator', async () => {
+		process.env.CRON_SECRET = 'seed-for-test';
+		let seen;
+		globalThis.fetch.mockImplementationOnce(async (input, init) => {
+			seen = init.headers;
+			submitted.push(JSON.parse(init.body));
+			return jsonResponse(200, { job_id: 'f1.job.hd', tier: 'high', eta_seconds: 240 });
+		});
+		const out = await callTool('forge-hd', FORGE_TOOL, { prompt: 'a fox' });
+		expect(seen['x-forge-seed']).toBe('seed-for-test');
+		expect(out.structuredContent.status).toBe('pending');
+		expect(out.structuredContent.tier).toBe('high');
+	});
+
+	// Without this the lane client degraded a refused high job to standard on
+	// its own, and the buyer paid the HD price for a standard mesh. The refusal
+	// answers before settlement, so nothing is charged.
+	it('refuses the HD row BEFORE settlement when the high lane will not take the job', async () => {
+		lane.submit = () => jsonResponse(402, { error: 'three_hold_required' });
+		const out = await callTool('forge-hd', FORGE_TOOL, { prompt: 'a fox' });
+		expect(out.isError).toBe(true);
+		expect(out.structuredContent.error).toBe('tier_unavailable');
+		expect(out.structuredContent.charged).toBe(false);
+		// Exactly one submit, no silent second attempt at a lower tier.
+		expect(submitted).toHaveLength(1);
+		expect(submitted[0].tier).toBe('high');
+	});
+
+	it('refuses the HD row if the lane answers with a lower tier than it was asked for', async () => {
+		lane.submit = () => jsonResponse(200, { job_id: 'f1.job.x', tier: 'standard' });
+		const out = await callTool('forge-hd', FORGE_TOOL, { prompt: 'a fox' });
+		expect(out.isError).toBe(true);
+		expect(out.structuredContent.error).toBe('tier_unavailable');
 	});
 
 	it('rejects an unsafe prompt BEFORE any generation runs, so it can never settle', async () => {
