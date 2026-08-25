@@ -1,19 +1,25 @@
-// dashboard-next — Data API developer console.
+// dashboard-next: Data API developer console.
 //
 // The premium developer surface: buy/renew the monthly Premium pass on Solana
 // ($THREE at a discount, SOL, or USDC), manage the x402_live_ API key it
 // mints, watch usage, and copy working quickstarts against the news-archive
-// Data API. Purchase is fully on-chain from the visitor's own wallet: quote →
-// sign in Phantom → poll /api/premium/subscribe until the pass lands.
+// Data API. Purchase is fully on-chain from the visitor's own wallet: quote,
+// sign in Phantom, then poll /api/premium/subscribe until the pass lands.
 //
 // Session-authed like every dashboard page (requireUser), and the purchase is
-// additionally wallet-bound — the session link is what enables key
+// additionally wallet-bound: the session link is what enables key
 // rotate/revoke on this page.
+//
+// Every panel renders independently. Pricing, pass status, and the corpus
+// figures each come from a different endpoint, so one of them failing degrades
+// its own card into a designed error state and leaves the rest of the console
+// usable.
 
 import { mountShell } from '../shell.js';
 import { requireUser, get, post, esc } from '../api.js';
 import {
 	skeletonHTML,
+	emptyStateHTML,
 	errorStateHTML,
 	ensureStateKitStyles,
 	attachRetry,
@@ -27,21 +33,36 @@ const WALLET_LS = 'threews:premium:wallet';
 // approval covers a normal session of key management without re-prompting.
 const PROOF_TTL_MS = 4 * 60 * 1000;
 
+// The only key string safe to put in a copyable snippet when we do not hold
+// the plaintext. A stored key is only ever known by its prefix, and pasting a
+// truncated prefix into a shell produces a 401, so never render one as if it
+// were usable.
+const KEY_PLACEHOLDER = 'x402_live_YOUR_KEY';
+
 const state = {
 	plans: null,
+	plansError: null, // message when /api/premium/plans could not be read
 	wallet: localStorage.getItem(WALLET_LS) || null,
 	status: null,     // /api/premium/status for state.wallet
+	statusError: null, // message when /api/premium/status could not be read
 	proof: null,      // { wallet, signature, issuedAt, ts } ownership proof for keys/history
 	buying: null,     // asset symbol while a purchase is in flight
 	freshKey: null,   // plaintext shown exactly once after purchase/rotate
+	corpus: null,     // live /api/news/archive?stats=true figures
+	feedSources: null, // live publisher-feed registry size
+	quickstartTab: 'curl',
 };
+
+// Panel-scoped status lines. Each renders next to the control that produced it,
+// so a key-rotation failure never lands in the pricing card three screens up.
+const notes = { status: null, buy: null, keys: null };
 
 const $ = (id) => document.getElementById(id);
 
 function fmtDate(iso) {
 	const d = new Date(iso);
 	return Number.isNaN(d.getTime())
-		? '—'
+		? '-'
 		: d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 }
 function daysLeft(iso) {
@@ -53,11 +74,26 @@ function amountLabel(a) {
 	return `${rounded} ${a.asset === 'THREE' ? '$THREE' : a.asset}`;
 }
 
+function setNote(slot, text, isError = false) {
+	notes[slot] = text ? { text, isError } : null;
+	paintNote(slot);
+}
+function paintNote(slot) {
+	const el = $(`da-${slot}-note`);
+	if (!el) return;
+	const n = notes[slot];
+	el.textContent = n ? n.text : '';
+	el.style.color = n?.isError ? 'var(--nxt-danger)' : 'var(--nxt-ink-dim)';
+}
+function noteHTML(slot) {
+	return `<p class="da-note" id="da-${slot}-note" role="status" aria-live="polite"></p>`;
+}
+
 function solanaProvider() {
 	return window.phantom?.solana || window.solana || null;
 }
 
-// Base64 of an ed25519 signature — the server (verifySiwsSignature) accepts base64.
+// Base64 of an ed25519 signature: the server (verifySiwsSignature) accepts base64.
 function bytesToB64(bytes) {
 	const arr = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
 	let bin = '';
@@ -86,12 +122,41 @@ async function ensureProof(provider) {
 	return state.proof;
 }
 
+// ── Clipboard ────────────────────────────────────────────────────────────────
+
+// Reports honestly. navigator.clipboard is absent on insecure origins and can
+// be refused by permission policy, and a button that claims "Copied" when the
+// write threw is a lie the user only discovers on paste.
+async function copyText(text) {
+	try {
+		await navigator.clipboard.writeText(text);
+		return true;
+	} catch {
+		return false;
+	}
+}
+function flashButton(btn, label, restore) {
+	if (!btn) return;
+	btn.textContent = label;
+	setTimeout(() => { if (btn.isConnected) btn.textContent = restore; }, 1800);
+}
+// Falls back to selecting the source node so the keyboard shortcut still works
+// when the async clipboard API is unavailable.
+function selectNode(el) {
+	if (!el || !window.getSelection) return;
+	const range = document.createRange();
+	range.selectNodeContents(el);
+	const sel = window.getSelection();
+	sel.removeAllRanges();
+	sel.addRange(range);
+}
+
 // ── Purchase flow ────────────────────────────────────────────────────────────
 
 async function connectWallet() {
 	const provider = solanaProvider();
 	if (!provider) {
-		throw new Error('No Solana wallet found — install Phantom (phantom.com) and reload.');
+		throw new Error('No Solana wallet found. Install Phantom (phantom.com) and reload this page.');
 	}
 	const conn = await provider.connect();
 	const wallet = (conn?.publicKey || provider.publicKey)?.toString();
@@ -106,17 +171,10 @@ async function pollSubscribe(quoteId, signature) {
 	for (let i = 0; i < 30; i++) {
 		const out = await post('/api/premium/subscribe', { quote_id: quoteId, tx_signature: signature });
 		if (out?.pass) return out;
-		setBuyNote(`Payment sent — waiting for Solana confirmation… (${i + 1})`);
+		setNote('buy', `Payment sent. Waiting for Solana confirmation… (${i + 1})`);
 		await new Promise((r) => setTimeout(r, 3000));
 	}
-	throw new Error(`Transaction ${signature.slice(0, 8)}… did not confirm in time. Your funds are safe — reopen this page and the pass activates automatically once it lands.`);
-}
-
-function setBuyNote(text, isError = false) {
-	const el = $('da-buy-note');
-	if (!el) return;
-	el.textContent = text || '';
-	el.style.color = isError ? 'var(--nxt-danger)' : 'var(--nxt-ink-dim)';
+	throw new Error(`Transaction ${signature.slice(0, 8)}… did not confirm in time. Your funds are safe: reopen this page and the pass activates automatically once it lands.`);
 }
 
 async function buy(planId, asset) {
@@ -124,11 +182,11 @@ async function buy(planId, asset) {
 	state.buying = `${planId}:${asset}`;
 	renderPricing();
 	try {
-		setBuyNote('Connecting wallet…');
+		setNote('buy', 'Connecting wallet…');
 		const { provider, wallet } = await connectWallet();
-		setBuyNote('Locking the price and building your payment…');
+		setNote('buy', 'Locking the price and building your payment…');
 		const { quote, tx_base64 } = await post('/api/premium/quote', { asset, wallet, plan: planId });
-		setBuyNote('Confirm the payment in your wallet…');
+		setNote('buy', 'Confirm the payment in your wallet…');
 		const { VersionedTransaction } = await import('@solana/web3.js');
 		const bytes = Uint8Array.from(atob(tx_base64), (c) => c.charCodeAt(0));
 		const tx = VersionedTransaction.deserialize(bytes);
@@ -137,14 +195,14 @@ async function buy(planId, asset) {
 		if (!signature) throw new Error('Wallet did not return a transaction signature.');
 		const out = await pollSubscribe(quote.id, signature);
 		state.freshKey = out.api_key || null;
-		setBuyNote('');
+		setNote('buy', '');
 		try { await ensureProof(provider); } catch { /* keys stay hidden until Verify */ }
 		await loadStatus();
 	} catch (err) {
 		if (!/user rejected|cancell?ed/i.test(err?.message || '')) {
-			setBuyNote(err?.message || 'Purchase failed — nothing was charged beyond the on-chain transaction you approved.', true);
+			setNote('buy', err?.message || 'Purchase failed. Nothing was charged beyond the on-chain transaction you approved.', true);
 		} else {
-			setBuyNote('');
+			setNote('buy', '');
 		}
 	} finally {
 		state.buying = null;
@@ -158,17 +216,43 @@ async function keyAction(action, id) {
 	const verb = action === 'revoke' ? 'Revoke this API key? Anything using it stops working immediately.' : null;
 	if (verb && !window.confirm(verb)) return;
 	try {
+		setNote('keys', action === 'rotate' ? 'Rotating…' : 'Revoking…');
 		const out = await post('/api/premium/keys', { action, id });
 		if (out?.api_key) state.freshKey = out.api_key;
+		setNote('keys', '');
 		await loadStatus();
 	} catch (err) {
-		setBuyNote(err?.message === 'key_not_found' || err?.code === 'key_not_found'
-			? 'This key isn’t linked to your account — keys bought without being signed in are managed via the API only.'
-			: (err?.message || 'Key action failed.'), true);
+		setNote('keys', err?.message === 'key_not_found' || err?.code === 'key_not_found'
+			? 'This key is not linked to your account. Keys bought without being signed in are managed through the API only.'
+			: (err?.message || 'Key action failed. Try again in a moment.'), true);
 	}
 }
 
+// ── Live corpus figures ──────────────────────────────────────────────────────
+
+function corpusCount() {
+	const n = Number(state.corpus?.total_articles);
+	return Number.isFinite(n) && n > 0 ? n : null;
+}
+function corpusSinceYear() {
+	const d = new Date(state.corpus?.first_article_date || '');
+	return Number.isNaN(d.getTime()) ? null : d.getUTCFullYear();
+}
+
 // ── Rendering ────────────────────────────────────────────────────────────────
+
+export function ledeText(corpus) {
+	const n = Number(corpus?.total_articles);
+	const size = Number.isFinite(n) && n > 0 ? `${n.toLocaleString()}-article ` : '';
+	const first = new Date(corpus?.first_article_date || '');
+	const since = Number.isNaN(first.getTime()) ? '' : ` Coverage runs back to ${first.getUTCFullYear()}.`;
+	return `The ${size}crypto-news archive as a developer product: a monthly pass in three tiers, paid on Solana in $THREE, SOL, or USDC, instead of a payment per call.${since}`;
+}
+
+function renderLede() {
+	const el = $('da-lede');
+	if (el) el.textContent = ledeText(state.corpus);
+}
 
 function renderStatusCard() {
 	const el = $('da-status');
@@ -179,28 +263,47 @@ function renderStatusCard() {
 				<div>
 					<div class="da-hero-kicker">Premium pass</div>
 					<div class="da-hero-title">Not connected</div>
-					<p class="da-hero-sub">Connect the Solana wallet you'll pay with to see your pass status, or buy below — the pass follows the wallet, the key follows your account.</p>
+					<p class="da-hero-sub">Connect the Solana wallet you'll pay with to see your pass status, or buy below. The pass follows the wallet, the key follows your account.</p>
+					${noteHTML('status')}
 				</div>
 				<button class="dn-btn primary" id="da-connect" type="button">Connect wallet</button>
 			</div>`;
 		$('da-connect')?.addEventListener('click', async () => {
-			try { await verifyAndLoad(); } catch (e) { setBuyNote(e.message, true); }
+			setNote('status', 'Connecting wallet…');
+			try { await verifyAndLoad(); setNote('status', ''); }
+			catch (e) { setNote('status', e.message, true); }
 		});
+		paintNote('status');
 		return;
 	}
 	const s = state.status;
 	const short = `${state.wallet.slice(0, 4)}…${state.wallet.slice(-4)}`;
-	if (!s) {
-		el.innerHTML = `<div class="da-hero">${skeletonHTML(2, 'row')}</div>`;
+	if (state.statusError) {
+		el.innerHTML = `
+			<div class="da-hero da-hero-error">
+				<div>
+					<div class="da-hero-kicker">Premium pass · ${esc(short)}</div>
+					<div class="da-hero-title">Pass status unavailable</div>
+					<p class="da-hero-sub">${esc(state.statusError)} Your pass and key are unaffected: this page could not read them just now. Retry, or switch to a different wallet.</p>
+					${noteHTML('status')}
+				</div>
+				<div class="da-hero-actions">
+					<button class="dn-btn primary" id="da-status-retry" type="button">Retry</button>
+					<button class="dn-btn ghost" id="da-switch" type="button">Switch wallet</button>
+				</div>
+			</div>`;
+		$('da-status-retry')?.addEventListener('click', () => { loadStatus(); });
+	} else if (!s) {
+		el.innerHTML = `<div class="da-hero" aria-busy="true">${skeletonHTML(2, 'row')}</div>`;
 		return;
-	}
-	if (!s.active) {
+	} else if (!s.active) {
 		el.innerHTML = `
 			<div class="da-hero">
 				<div>
 					<div class="da-hero-kicker">Premium pass · ${esc(short)}</div>
 					<div class="da-hero-title">No active pass</div>
-					<p class="da-hero-sub">Pick an asset below — one on-chain payment activates 30 days of unmetered archive search plus an API key. Paying in $THREE is the cheapest way in.</p>
+					<p class="da-hero-sub">Pick an asset below. One on-chain payment activates 30 days of unmetered archive search plus an API key. Paying in $THREE is the cheapest way in.</p>
+					${noteHTML('status')}
 				</div>
 				<button class="dn-btn ghost" id="da-switch" type="button">Switch wallet</button>
 			</div>`;
@@ -214,30 +317,50 @@ function renderStatusCard() {
 			<div class="da-hero da-hero-active">
 				<div>
 					<div class="da-hero-kicker">Premium pass · ${esc(short)}</div>
-					<div class="da-hero-title"><span class="da-dot"></span> Active — ${left} day${left === 1 ? '' : 's'} left</div>
-					<p class="da-hero-sub">Runs until ${esc(fmtDate(s.pass.expires_at))}. Renewing now appends 30 days to the end — no lost time. Browser searches: choose “sign with wallet” in the payment dialog on <a href="/markets/archive">/markets/archive</a>.</p>
+					<div class="da-hero-title"><span class="da-dot"></span> Active, ${left} day${left === 1 ? '' : 's'} left</div>
+					<p class="da-hero-sub">Runs until ${esc(fmtDate(s.pass.expires_at))}. Renewing now appends 30 days to the end, with no lost time. Browser searches: choose “sign with wallet” in the payment dialog on <a href="/markets/archive">/markets/archive</a>.</p>
+					${noteHTML('status')}
 				</div>
 				<div class="da-hero-actions">${verifyBtn}<button class="dn-btn ghost" id="da-switch" type="button">Switch wallet</button></div>
 			</div>`;
 	}
 	$('da-verify')?.addEventListener('click', async () => {
-		try { await verifyAndLoad(); } catch (e) { setBuyNote(e.message, true); }
+		setNote('status', 'Waiting for the signature in your wallet…');
+		try { await verifyAndLoad(); setNote('status', ''); }
+		catch (e) { setNote('status', e.message, true); }
 	});
 	$('da-switch')?.addEventListener('click', async () => {
 		localStorage.removeItem(WALLET_LS);
 		state.wallet = null;
 		state.status = null;
+		state.statusError = null;
 		state.proof = null;
+		setNote('status', '');
 		renderStatusCard();
-		try { await verifyAndLoad(); } catch { /* stays disconnected */ }
+		try { await verifyAndLoad(); } catch (e) { setNote('status', e.message, true); }
 	});
+	paintNote('status');
 }
 
 function renderPricing() {
 	const el = $('da-pricing');
-	if (!el || !state.plans) return;
-	const plans = state.plans.plans || [];
-	if (!plans.length) return;
+	if (!el) return;
+	if (state.plansError) {
+		el.innerHTML = errorStateHTML({
+			title: 'Pricing is unavailable',
+			body: `${esc(state.plansError)} Your pass and API key are unaffected, and everything below still works.`,
+		});
+		return;
+	}
+	const plans = state.plans?.plans || [];
+	if (!plans.length) {
+		el.innerHTML = emptyStateHTML({
+			title: 'No passes on sale right now',
+			body: 'Premium plans are temporarily closed for purchase. Existing passes and API keys keep working until they expire.',
+			actions: [{ href: '/community', label: 'Talk to us', primary: true }],
+		});
+		return;
+	}
 	const active = Boolean(state.status?.active);
 	const fromUsd = Math.min(...plans.map((p) => Number(p.usd)));
 
@@ -245,13 +368,13 @@ function renderPricing() {
 		const key = `${plan.id}:${a.asset}`;
 		const label = a.asset === 'THREE' ? '$THREE' : a.asset;
 		if (!a.available) {
-			return `<button class="da-paybtn" type="button" disabled title="${esc(a.reason || 'temporarily unavailable')}">${esc(label)} —</button>`;
+			return `<button class="da-paybtn" type="button" disabled title="${esc(a.reason || 'temporarily unavailable')}">${esc(label)} unavailable</button>`;
 		}
 		const busy = state.buying === key;
 		return `
 			<button class="da-paybtn ${a.asset === 'THREE' ? 'da-paybtn-three' : ''}" type="button"
 				data-buy-plan="${esc(plan.id)}" data-buy-asset="${esc(a.asset)}" ${state.buying ? 'disabled' : ''}
-				title="≈ $${Number(a.usd).toFixed(2)} in ${esc(label)}">
+				title="About $${Number(a.usd).toFixed(2)} in ${esc(label)}">
 				${busy ? 'Processing…' : `${esc(amountLabel(a))}${a.asset === 'THREE' ? ` <span class="da-off">−${Math.round((a.discount || 0) * 100)}%</span>` : ''}`}
 			</button>`;
 	};
@@ -279,16 +402,17 @@ function renderPricing() {
 	el.innerHTML = `
 		<div class="dn-panel">
 			<div class="da-panel-head">
-				<h2>${active ? 'Renew or upgrade' : 'Go Premium'} — from $${fromUsd % 1 ? fromUsd.toFixed(2) : fromUsd}/30 days</h2>
+				<h2>${active ? 'Renew or upgrade' : 'Go Premium'}, from $${fromUsd % 1 ? fromUsd.toFixed(2) : fromUsd}/30 days</h2>
 				<span class="da-tagline">Solana only · one transaction · pay in $THREE (20% off), SOL, or USDC</span>
 			</div>
 			<div class="da-cards da-cards-tiers">${cards}</div>
-			<p class="da-note" id="da-buy-note" role="status" aria-live="polite"></p>
+			${noteHTML('buy')}
 			<p class="da-note" style="color:var(--nxt-ink-fade)">Buying a higher tier while a pass is active upgrades your key's rate limit immediately and appends the new period to the end. Enterprise needs something custom? <a href="/community" style="color:var(--nxt-accent)">Talk to us.</a></p>
 		</div>`;
 	el.querySelectorAll('[data-buy-plan]').forEach((b) =>
 		b.addEventListener('click', () => buy(b.dataset.buyPlan, b.dataset.buyAsset)),
 	);
+	paintNote('buy');
 }
 
 function renderFreshKey() {
@@ -297,7 +421,7 @@ function renderFreshKey() {
 	if (!state.freshKey) { el.innerHTML = ''; return; }
 	el.innerHTML = `
 		<div class="dn-panel da-fresh">
-			<div class="da-panel-head"><h2>Your API key — copy it now</h2></div>
+			<div class="da-panel-head"><h2>Your API key, copy it now</h2></div>
 			<p class="da-note">This is the only time the full key is shown. It is already active.</p>
 			<div class="da-keyrow">
 				<code class="da-keycode" id="da-key-plain">${esc(state.freshKey)}</code>
@@ -305,10 +429,31 @@ function renderFreshKey() {
 			</div>
 		</div>`;
 	$('da-key-copy')?.addEventListener('click', async () => {
-		await navigator.clipboard.writeText(state.freshKey).catch(() => {});
-		$('da-key-copy').textContent = 'Copied ✓';
-		setTimeout(() => { const b = $('da-key-copy'); if (b) b.textContent = 'Copy'; }, 1500);
+		const btn = $('da-key-copy');
+		if (await copyText(state.freshKey)) {
+			flashButton(btn, 'Copied ✓', 'Copy');
+		} else {
+			selectNode($('da-key-plain'));
+			flashButton(btn, 'Press Ctrl+C', 'Copy');
+		}
 	});
+}
+
+export function keysTableRows(keys) {
+	return keys.map((k) => `
+		<tr>
+			<td><code>${esc(k.key_prefix)}…</code></td>
+			<td>${k.status === 'active' ? '<span class="da-ok">active</span>' : `<span class="da-bad">${esc(k.status)}</span>`}</td>
+			<td class="da-num">${k.rate_limit_per_minute}/min</td>
+			<td>${esc(fmtDate(k.expires_at))}</td>
+			<td class="da-num">${Number(k.usage.granted).toLocaleString()}</td>
+			<td class="da-num">${Number(k.usage.denied).toLocaleString()}</td>
+			<td>${k.usage.last_seen ? esc(fmtDate(k.usage.last_seen)) : 'Never'}</td>
+			<td class="da-actions">
+				<button class="dn-btn ghost" type="button" data-rotate="${esc(k.id)}">Rotate</button>
+				<button class="dn-btn danger" type="button" data-revoke="${esc(k.id)}">Revoke</button>
+			</td>
+		</tr>`).join('');
 }
 
 function renderKeys() {
@@ -317,55 +462,52 @@ function renderKeys() {
 	const keys = state.status?.keys || [];
 	if (!state.wallet || !keys.length) {
 		// An active pass with no visible key means we haven't proved wallet
-		// ownership yet — the key exists server-side but is gated behind a signature.
+		// ownership yet: the key exists server-side but is gated behind a signature.
 		const locked = state.status?.active && !freshProof();
 		el.innerHTML = locked
 			? `<div class="dn-panel">
 					<div class="da-panel-head"><h2>API key</h2></div>
 					<p class="da-note">Your key is protected. <button class="da-inline-link" id="da-keys-verify" type="button">Verify this wallet</button> to view its prefix, usage, and rotate/revoke controls.</p>
+					${noteHTML('keys')}
 				</div>`
 			: `<div class="dn-panel">
 					<div class="da-panel-head"><h2>API key</h2></div>
-					<p class="da-note">No key yet — buying a pass mints one automatically (<code>x402_live_…</code>). It bypasses the per-call x402 charge on every premium endpoint via the <code>X-API-Key</code> header.</p>
+					<p class="da-note">No key yet. Buying a pass mints one automatically (<code>x402_live_…</code>). It bypasses the per-call x402 charge on every premium endpoint via the <code>X-API-Key</code> header.</p>
+					${noteHTML('keys')}
 				</div>`;
 		$('da-keys-verify')?.addEventListener('click', async () => {
-			try { await verifyAndLoad(); } catch (e) { setBuyNote(e.message, true); }
+			setNote('keys', 'Waiting for the signature in your wallet…');
+			try { await verifyAndLoad(); setNote('keys', ''); }
+			catch (e) { setNote('keys', e.message, true); }
 		});
+		paintNote('keys');
 		return;
 	}
-	const rows = keys.map((k) => `
-		<tr>
-			<td><code>${esc(k.key_prefix)}…</code></td>
-			<td>${k.status === 'active' ? '<span class="da-ok">active</span>' : `<span class="da-bad">${esc(k.status)}</span>`}</td>
-			<td class="da-num">${k.rate_limit_per_minute}/min</td>
-			<td>${esc(fmtDate(k.expires_at))}</td>
-			<td class="da-num">${Number(k.usage.granted).toLocaleString()}</td>
-			<td class="da-num">${Number(k.usage.denied).toLocaleString()}</td>
-			<td>${k.usage.last_seen ? esc(fmtDate(k.usage.last_seen)) : '—'}</td>
-			<td class="da-actions">
-				<button class="dn-btn ghost" type="button" data-rotate="${esc(k.id)}">Rotate</button>
-				<button class="dn-btn danger" type="button" data-revoke="${esc(k.id)}">Revoke</button>
-			</td>
-		</tr>`).join('');
 	el.innerHTML = `
 		<div class="dn-panel">
-			<div class="da-panel-head"><h2>API key</h2><span class="da-tagline">usage from the access log — granted vs denied calls</span></div>
-			<div class="da-scroll">
+			<div class="da-panel-head"><h2>API key</h2><span class="da-tagline">usage from the access log: granted vs denied calls</span></div>
+			<div class="da-scroll" tabindex="0" role="region" aria-label="API keys and usage">
 				<table class="da-table">
-					<thead><tr><th>Key</th><th>Status</th><th class="da-num">Rate limit</th><th>Expires</th><th class="da-num">Granted</th><th class="da-num">Denied</th><th>Last used</th><th></th></tr></thead>
-					<tbody>${rows}</tbody>
+					<thead><tr><th>Key</th><th>Status</th><th class="da-num">Rate limit</th><th>Expires</th><th class="da-num">Granted</th><th class="da-num">Denied</th><th>Last used</th><th><span class="da-visually-hidden">Actions</span></th></tr></thead>
+					<tbody>${keysTableRows(keys)}</tbody>
 				</table>
 			</div>
+			${noteHTML('keys')}
 		</div>`;
 	el.querySelectorAll('[data-rotate]').forEach((b) => b.addEventListener('click', () => keyAction('rotate', b.dataset.rotate)));
 	el.querySelectorAll('[data-revoke]').forEach((b) => b.addEventListener('click', () => keyAction('revoke', b.dataset.revoke)));
+	paintNote('keys');
 }
 
-function renderQuickstart() {
-	const el = $('da-quickstart');
-	if (!el) return;
-	const key = state.status?.keys?.[0]?.key_prefix ? `${state.status.keys[0].key_prefix}…` : 'x402_live_YOUR_KEY';
-	const snippets = {
+// The key that goes into a copyable snippet. Only the plaintext minted this
+// session is real; a stored key is known by prefix alone, so anything else
+// renders the honest placeholder.
+export function snippetKey({ freshKey } = {}) {
+	return freshKey || KEY_PLACEHOLDER;
+}
+
+export function quickstartSnippets(key) {
+	return {
 		curl: `curl "https://three.ws/api/news/archive?q=bitcoin+etf&start_date=2024-01-01&end_date=2024-03-31&limit=50" \\
   -H "X-API-Key: ${key}"`,
 		javascript: `const res = await fetch(
@@ -375,53 +517,89 @@ function renderQuickstart() {
   { headers: { 'X-API-Key': '${key}' } },
 );
 const { articles, scanned } = await res.json();`,
-		mcp: `// claude_desktop_config.json / .mcp.json — crypto_news_archive tool
+		mcp: `// claude_desktop_config.json / .mcp.json, crypto_news_archive tool
 {
   "mcpServers": {
     "three-ws": { "command": "npx", "args": ["-y", "@three-ws/mcp-server"] }
   }
 }`,
 	};
+}
+
+function renderQuickstart() {
+	const el = $('da-quickstart');
+	if (!el) return;
+	const key = snippetKey(state);
+	const snippets = quickstartSnippets(key);
+	if (!snippets[state.quickstartTab]) state.quickstartTab = 'curl';
+	const label = (t) => (t === 'javascript' ? 'JavaScript' : t.toUpperCase());
 	const tabs = Object.keys(snippets).map((t) =>
-		`<button class="da-tab" type="button" data-tab="${t}" aria-pressed="${t === 'curl'}">${t === 'javascript' ? 'JavaScript' : t.toUpperCase()}</button>`,
+		`<button class="da-tab" type="button" data-tab="${t}" aria-pressed="${t === state.quickstartTab}">${label(t)}</button>`,
 	).join('');
+	// The placeholder is only worth explaining when the visitor actually owns a
+	// key they cannot see the plaintext of.
+	const hasStoredKey = Boolean(state.status?.keys?.length);
+	const keyHint = key === KEY_PLACEHOLDER && hasStoredKey
+		? '<p class="da-note">Swap <code>x402_live_YOUR_KEY</code> for the key you saved at purchase. Lost it? Rotate above to mint a fresh one.</p>'
+		: '';
 	el.innerHTML = `
 		<div class="dn-panel">
 			<div class="da-panel-head"><h2>Quickstart</h2><span class="da-tagline">works the moment your pass is active</span></div>
-			<div class="da-tabs" role="tablist">${tabs}</div>
-			<pre class="da-code" id="da-snippet"><code>${esc(snippets.curl)}</code></pre>
+			<div class="da-tabs" role="group" aria-label="Quickstart language">${tabs}</div>
+			<pre class="da-code" id="da-snippet" tabindex="0" role="region" aria-label="Quickstart snippet"><code>${esc(snippets[state.quickstartTab])}</code></pre>
 			<button class="dn-btn ghost" id="da-snippet-copy" type="button">Copy snippet</button>
+			${keyHint}
 		</div>`;
-	let current = 'curl';
 	el.querySelectorAll('.da-tab').forEach((b) =>
 		b.addEventListener('click', () => {
-			current = b.dataset.tab;
+			state.quickstartTab = b.dataset.tab;
 			el.querySelectorAll('.da-tab').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-			$('da-snippet').innerHTML = `<code>${esc(snippets[current])}</code>`;
+			$('da-snippet').innerHTML = `<code>${esc(snippets[state.quickstartTab])}</code>`;
 		}),
 	);
 	$('da-snippet-copy')?.addEventListener('click', async () => {
-		await navigator.clipboard.writeText(snippets[current]).catch(() => {});
-		$('da-snippet-copy').textContent = 'Copied ✓';
-		setTimeout(() => { const b = $('da-snippet-copy'); if (b) b.textContent = 'Copy snippet'; }, 1500);
+		const btn = $('da-snippet-copy');
+		if (await copyText(snippets[state.quickstartTab])) {
+			flashButton(btn, 'Copied ✓', 'Copy snippet');
+		} else {
+			selectNode($('da-snippet'));
+			flashButton(btn, 'Press Ctrl+C', 'Copy snippet');
+		}
 	});
+}
+
+// The endpoint catalog. Article and feed counts come from the live corpus so
+// the table cannot drift away from what the API actually serves; the wording
+// stays true (just less specific) when those probes have not landed yet.
+export function catalogRows({ articles, sinceYear, feedSources } = {}) {
+	const archiveWhat = articles
+		? `Search ${articles.toLocaleString()} articles${sinceYear ? ` back to ${sinceYear}` : ''} by keyword, ticker, source, date, sentiment, or language`
+		: 'Search the full archive by keyword, ticker, source, date, sentiment, or language';
+	const feedWhat = feedSources
+		? `Live headlines from ${feedSources.toLocaleString()} publisher feeds`
+		: 'Live headlines from the publisher feed registry';
+	return [
+		['GET /api/news/archive', archiveWhat, 'Premium · 60/day free · $0.001/search'],
+		['GET /api/news/archive?stats=true', 'Corpus statistics and month range', 'Free'],
+		['GET /api/news/archive?trending=true', 'Most-covered tickers of the newest archive weeks', 'Free'],
+		['GET /api/news/feed', feedWhat, 'Free'],
+		['GET /api/news/digest', 'Last 1 to 72 h clustered into narratives with stance and tickers', 'Free'],
+	];
 }
 
 function renderCatalog() {
 	const el = $('da-catalog');
 	if (!el) return;
-	const rows = [
-		['GET /api/news/archive', 'Search 660k+ articles back to 2017 — keyword, ticker, source, date, sentiment, language', 'Premium · 60/day free · $0.001/search'],
-		['GET /api/news/archive?stats=true', 'Corpus statistics + month range', 'Free'],
-		['GET /api/news/archive?trending=true', 'Most-covered tickers of the newest archive weeks', 'Free'],
-		['GET /api/news/feed', 'Live headlines from 197 publisher feeds', 'Free'],
-		['GET /api/news/digest', 'Last 1–72 h clustered into narratives with stance + tickers', 'Free'],
-	].map(([ep, what, access]) => `
+	const rows = catalogRows({
+		articles: corpusCount(),
+		sinceYear: corpusSinceYear(),
+		feedSources: state.feedSources,
+	}).map(([ep, what, access]) => `
 		<tr><td><code>${esc(ep)}</code></td><td>${esc(what)}</td><td>${esc(access)}</td></tr>`).join('');
 	el.innerHTML = `
 		<div class="dn-panel">
 			<div class="da-panel-head"><h2>Endpoints</h2><a class="da-tagline" href="/docs/api-reference">full API reference →</a></div>
-			<div class="da-scroll">
+			<div class="da-scroll" tabindex="0" role="region" aria-label="Data API endpoints">
 				<table class="da-table">
 					<thead><tr><th>Endpoint</th><th>What it does</th><th>Access</th></tr></thead>
 					<tbody>${rows}</tbody>
@@ -431,6 +609,7 @@ function renderCatalog() {
 }
 
 function renderAll() {
+	renderLede();
 	renderStatusCard();
 	renderPricing();
 	renderFreshKey();
@@ -442,17 +621,39 @@ function renderAll() {
 // ── Data ─────────────────────────────────────────────────────────────────────
 
 async function loadStatus() {
-	if (!state.wallet) { renderAll(); return; }
+	if (!state.wallet) {
+		state.statusError = null;
+		renderAll();
+		return;
+	}
 	try {
 		const p = freshProof();
 		const auth = p
 			? `&signature=${encodeURIComponent(p.signature)}&issuedAt=${encodeURIComponent(p.issuedAt)}`
 			: '';
 		state.status = await get(`/api/premium/status?wallet=${encodeURIComponent(state.wallet)}${auth}`);
-	} catch {
+		state.statusError = null;
+	} catch (err) {
 		state.status = null;
+		state.statusError = err?.message || 'The pass service is unreachable.';
 	}
 	renderAll();
+}
+
+// Free, public, and slow enough to be worth keeping off the critical path: the
+// pass UI never waits on it, and the catalog upgrades in place when it lands.
+async function loadCorpus() {
+	const [archive, feed] = await Promise.allSettled([
+		get('/api/news/archive?stats=true'),
+		get('/api/news/feed?meta=1&limit=1'),
+	]);
+	if (archive.status === 'fulfilled') state.corpus = archive.value?.stats || null;
+	if (feed.status === 'fulfilled') {
+		const n = Array.isArray(feed.value?.sources) ? feed.value.sources.length : 0;
+		state.feedSources = n > 0 ? n : null;
+	}
+	renderLede();
+	renderCatalog();
 }
 
 // Connect the wallet, prove ownership, then reload the (now full) status.
@@ -469,8 +670,10 @@ function injectStyles() {
 	s.id = 'da-styles';
 	s.textContent = `
 		.da-root { display: flex; flex-direction: column; gap: 1.25rem; padding-bottom: 3rem; }
+		.da-visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 		.da-hero { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; background: var(--nxt-glass); border: 1px solid var(--nxt-stroke); border-radius: var(--nxt-radius-sm); padding: 1.2rem 1.4rem; }
 		.da-hero-active { border-left: 3px solid var(--nxt-success); }
+		.da-hero-error { border-left: 3px solid var(--nxt-danger); }
 		.da-hero-kicker { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--nxt-ink-fade); }
 		.da-hero-title { font-size: 1.35rem; font-weight: 680; color: var(--nxt-ink); margin: .2rem 0; display: flex; align-items: center; gap: .5rem; }
 		.da-hero-sub { margin: 0; font-size: .85rem; color: var(--nxt-ink-dim); line-height: 1.55; max-width: 60ch; }
@@ -483,9 +686,6 @@ function injectStyles() {
 		.da-panel-head h2 { margin: 0; font-size: .95rem; font-weight: 650; color: var(--nxt-ink); }
 		.da-tagline { font-size: .74rem; color: var(--nxt-ink-fade); }
 		.da-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: .9rem; }
-		.da-card { position: relative; border: 1px solid var(--nxt-stroke); border-radius: var(--nxt-radius-sm); padding: 1.1rem 1rem .9rem; display: flex; flex-direction: column; gap: .3rem; transition: border-color .15s ease, transform .15s ease; }
-		.da-card:hover { border-color: var(--nxt-stroke-strong); transform: translateY(-1px); }
-		.da-card[aria-disabled="true"] { opacity: .55; }
 		.da-card-hot { border-color: color-mix(in srgb, var(--nxt-accent) 55%, transparent); background: color-mix(in srgb, var(--nxt-accent) 6%, transparent); }
 		.da-card-badge { position: absolute; top: -.6rem; left: .8rem; font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--nxt-accent); background: var(--nxt-bg-0); border: 1px solid color-mix(in srgb, var(--nxt-accent) 55%, transparent); padding: .12rem .5rem; border-radius: var(--nxt-radius-pill); }
 		.da-card-asset { font-size: .78rem; color: var(--nxt-ink-dim); font-weight: 600; }
@@ -494,6 +694,7 @@ function injectStyles() {
 		.da-cards-tiers { grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); align-items: stretch; }
 		.da-tiercard { position: relative; border: 1px solid var(--nxt-stroke); border-radius: var(--nxt-radius-sm); padding: 1.2rem 1.1rem 1rem; display: flex; flex-direction: column; gap: .4rem; transition: border-color .15s ease, transform .15s ease; }
 		.da-tiercard:hover { border-color: var(--nxt-stroke-strong); transform: translateY(-1px); }
+		.da-tiercard button:focus-visible { outline: 2px solid var(--nxt-accent); outline-offset: 2px; }
 		.da-per { font-size: .8rem; font-weight: 500; color: var(--nxt-ink-fade); margin-left: .15rem; }
 		.da-feats { list-style: none; margin: .2rem 0 .3rem; padding: 0; display: flex; flex-direction: column; gap: .3rem; }
 		.da-feats li { font-size: .78rem; color: var(--nxt-ink-dim); padding-left: 1.1rem; position: relative; }
@@ -510,6 +711,7 @@ function injectStyles() {
 		.da-keyrow { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; margin-top: .6rem; }
 		.da-keycode { font-family: var(--nxt-mono, ui-monospace, monospace); font-size: .82rem; background: color-mix(in srgb, var(--nxt-ink) 7%, transparent); padding: .5rem .7rem; border-radius: 6px; word-break: break-all; user-select: all; }
 		.da-scroll { overflow-x: auto; }
+		.da-scroll:focus-visible, .da-code:focus-visible { outline: 2px solid var(--nxt-accent); outline-offset: 2px; }
 		.da-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
 		.da-table th { text-align: left; font-weight: 600; color: var(--nxt-ink-fade); font-size: .7rem; text-transform: uppercase; letter-spacing: .05em; padding: .35rem .5rem; border-bottom: 1px solid var(--nxt-stroke); white-space: nowrap; }
 		.da-table td { padding: .45rem .5rem; border-bottom: 1px solid color-mix(in srgb, var(--nxt-stroke) 55%, transparent); color: var(--nxt-ink); vertical-align: middle; }
@@ -517,12 +719,16 @@ function injectStyles() {
 		.da-ok { color: var(--nxt-success); font-weight: 600; }
 		.da-bad { color: var(--nxt-danger); font-weight: 600; }
 		.da-actions { white-space: nowrap; display: flex; gap: .4rem; }
-		.da-tabs { display: flex; gap: .4rem; margin-bottom: .6rem; }
+		.da-tabs { display: flex; gap: .4rem; margin-bottom: .6rem; flex-wrap: wrap; }
 		.da-tab { background: none; border: 1px solid var(--nxt-stroke); color: var(--nxt-ink-dim); border-radius: var(--nxt-radius-pill); font-size: .74rem; padding: .3rem .8rem; cursor: pointer; transition: all .12s ease; }
 		.da-tab[aria-pressed="true"] { color: var(--nxt-ink); border-color: var(--nxt-stroke-strong); background: color-mix(in srgb, var(--nxt-ink) 6%, transparent); }
-		.da-tab:focus-visible, .da-card button:focus-visible { outline: 2px solid var(--nxt-accent); outline-offset: 2px; }
+		.da-tab:focus-visible { outline: 2px solid var(--nxt-accent); outline-offset: 2px; }
 		.da-code { background: color-mix(in srgb, var(--nxt-ink) 6%, transparent); border: 1px solid var(--nxt-stroke); border-radius: var(--nxt-radius-sm); padding: .9rem 1rem; overflow-x: auto; font-size: .78rem; line-height: 1.55; margin: 0 0 .7rem; }
 		.da-code code { font-family: var(--nxt-mono, ui-monospace, monospace); white-space: pre; }
+		@media (prefers-reduced-motion: reduce) {
+			.da-tiercard, .da-paybtn, .da-tab { transition: none; }
+			.da-tiercard:hover { transform: none; }
+		}
 	`;
 	document.head.appendChild(s);
 }
@@ -535,10 +741,10 @@ function injectStyles() {
 	main.innerHTML = `
 		<div style="margin-bottom:1.5rem">
 			<h1 class="dn-h1" style="margin-bottom:.25rem">Data API</h1>
-			<p class="dn-h1-sub" style="margin:0">The 660k-article crypto-news archive as a developer product — a monthly pass in three tiers, paid on Solana in $THREE, SOL, or USDC, instead of a payment per call.</p>
+			<p class="dn-h1-sub" id="da-lede" style="margin:0">${esc(ledeText(null))}</p>
 		</div>
 		<div class="da-root" id="da-root">
-			<div id="da-status"></div>
+			<div id="da-status">${`<div class="da-hero" aria-busy="true">${skeletonHTML(2, 'row')}</div>`}</div>
 			<div id="da-freshkey"></div>
 			<div id="da-pricing">${`<div class="dn-panel">${skeletonHTML(3, 'row')}</div>`}</div>
 			<div id="da-keys"></div>
@@ -548,18 +754,19 @@ function injectStyles() {
 
 	attachRetry($('da-root'), () => boot2());
 	async function boot2() {
+		state.plansError = null;
 		try {
 			state.plans = await get('/api/premium/plans');
 		} catch (err) {
-			$('da-pricing').innerHTML = errorStateHTML({
-				title: 'Couldn’t load pricing',
-				body: esc(err?.message || 'The pricing endpoint is unreachable — retry in a moment.'),
-			});
-			return;
+			state.plans = null;
+			state.plansError = err?.message || 'The pricing endpoint is unreachable.';
 		}
+		// Runs whatever happened above, so a pricing outage never blanks the
+		// pass card, the key table, the quickstarts, or the endpoint catalog.
 		await loadStatus();
 	}
 	await boot2();
+	loadCorpus();
 })().catch((err) => {
 	const main = document.querySelector('.dn-main-inner') || document.body;
 	main.innerHTML = `<h1 class="dn-h1">Data API</h1><div class="dn-panel"><div class="dn-panel-title" style="color:var(--nxt-danger)">Failed to load</div><div class="dn-panel-sub">${String(err?.message || 'unknown').replace(/</g, '&lt;')}</div></div>`;
