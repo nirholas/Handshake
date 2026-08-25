@@ -9,7 +9,7 @@ it builds on (see `STRUCTURE.md`) and the doc that governs it.
 
 Companion docs (read-order): [00-README.md](00-README.md) (roadmap prompts +
 regression gate), [REUSE-MAP.md](REUSE-MAP.md) (license-vetted OSS),
-[../../docs/x402-revenue.md](../../docs/x402-revenue.md) (how money is measured),
+[../../docs/financial-controls.md](../../docs/financial-controls.md) (how money is measured),
 and [../backlog/00-INDEX.md](../backlog/00-INDEX.md) (the measured open backlog).
 
 ---
@@ -151,7 +151,7 @@ Rules that keep the ladder honest:
   ring volume as traction — to the team or anyone else.
 - **Unit economics per generation.** Every paid Forge/splat lane must price
   above its GPU + egress cost. Fable maintains a cost model per tier in
-  `docs/x402-revenue.md` when tiers change.
+  `docs/x402-endpoints.md` when tiers change.
 - **The funnel is: OSS/MCP → free lane → paid x402 → B2B.** 38 MCP servers in
   the public registry and the free TRELLIS lane are top-of-funnel; don't
   paywall the top, don't give away the bottom.

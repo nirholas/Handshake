@@ -7,7 +7,6 @@ get the result. These are the platform's **own** sellable services — the catal
 other agents (and the [autonomous loop](../../docs/autonomous-x402.md)) pay to use.
 
 - **Full catalog + prices:** [`docs/x402-endpoints.md`](../../docs/x402-endpoints.md)
-- **Where revenue is recorded:** [`docs/x402-revenue.md`](../../docs/x402-revenue.md)
 - **How to pay one as a buyer:** [`docs/x402-buyer.md`](../../docs/x402-buyer.md)
 - **Protocol mechanics:** [`docs/x402.md`](../../docs/x402.md)
 

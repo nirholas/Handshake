@@ -16,7 +16,6 @@ const EXPECTED_NAMES = [
 	'query_usage',
 	'export_billing_history',
 	'get_receipt',
-	'get_revenue',
 	'get_fee_info',
 ];
 

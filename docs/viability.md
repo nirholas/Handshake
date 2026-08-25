@@ -176,7 +176,7 @@ appears only when there is something to show, pointing at the filtered
 
 - [The autonomous economy](autonomous-economy.md): the wallets, spend policies,
   paid skills, and trading loops whose real activity this page measures.
-- [x402 revenue and receipts](x402-revenue.md): the platform's own endpoint
+- [x402 paid endpoints](x402-endpoints.md): the platform's own endpoint
   revenue, recorded in a different table and never mixed into the marketplace or
   trading figures here.
 - [Agent Economy Volume](agent-economy-volume.md): the agent-to-agent USDC

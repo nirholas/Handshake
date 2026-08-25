@@ -10,7 +10,6 @@ Numbers match the placeholders in the-first-19-weeks.html. Cover image is separa
 06. 06-agora.png
 07. 07-vaults.png
 08. 08-labor-market.png
-09. 09-x402-revenue.png
 10. 10-pulse.png
 11. 11-markets.png
 12. 12-markets-news.png

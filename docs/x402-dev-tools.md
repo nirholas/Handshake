@@ -202,4 +202,4 @@ implementation against a live server.
 - [x402 Protocol](/docs/x402) - the challenge / verify / settle mechanics.
 - [x402 Paid Endpoints](/docs/x402-endpoints) - the full catalog and pricing.
 - [x402 Buyer Client](/docs/x402-buyer) - how to settle a challenge from code.
-- [x402 Revenue & Receipts](/docs/x402-revenue) - how signed receipts are recorded.
+- [Receipt Vault](/receipts) - every signed receipt issued to a wallet.

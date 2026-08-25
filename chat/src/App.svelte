@@ -78,7 +78,6 @@
 	import TopNav from './three-ui/TopNav.svelte';
 	import WebsiteFlow from './three-ui/flows/WebsiteFlow.svelte';
 	import DesktopFlow from './three-ui/flows/DesktopFlow.svelte';
-	import RevenueDashboard from './three-ui/pages/RevenueDashboard.svelte';
 	import SkillsMarketplaceModal from './SkillsMarketplaceModal.svelte';
 
 	marked.use(
@@ -2344,11 +2343,6 @@
   <div class="min-h-dvh bg-paper">
     <div class="sticky top-0 z-[110]"><TopNav /></div>
     <AuthPage kind={$route} />
-  </div>
-{:else if $route === 'dashboard/revenue'}
-  <div class="min-h-dvh bg-paper">
-    <div class="sticky top-0 z-[110]"><TopNav /></div>
-    <RevenueDashboard />
   </div>
 {:else}
 <main class="flex h-dvh w-screen flex-col">

@@ -145,14 +145,6 @@ describe('billing — metering is wired into the one charge choke point', () => 
 	});
 });
 
-describe('billing — revenue dashboard surfaces reconciliation status', () => {
-	const src = readFileSync(p('api/billing/revenue.js'), 'utf8');
-	it('includes reconciliation in the dashboard payload', () => {
-		expect(src).toContain('reconciliationStatus');
-		expect(src).toContain('reconciliation');
-	});
-});
-
 describe('billing — usage metering migration', () => {
 	const sqlText = readFileSync(p('api/_lib/migrations/20260623170000_usage_metering.sql'), 'utf8');
 

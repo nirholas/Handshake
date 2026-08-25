@@ -2038,20 +2038,6 @@
 			"schemaHash": "6d5d0d20e194"
 		}
 	],
-	"packages/billing-mcp/src/tools/get-revenue.js": [
-		{
-			"name": "get_revenue",
-			"title": "My agents’ earnings (revenue + subscriptions)",
-			"descHead": "dynamic",
-			"descHash": "dynamic",
-			"annotations": {
-				"readOnlyHint": true,
-				"idempotentHint": false,
-				"openWorldHint": true
-			},
-			"schemaHash": "3f1680deb206"
-		}
-	],
 	"packages/billing-mcp/src/tools/query-usage.js": [
 		{
 			"name": "query_usage",

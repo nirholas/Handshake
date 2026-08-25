@@ -8,9 +8,9 @@ import {
 	foldNetworkRows,
 } from '../api/_lib/x402/revenue-networks.js';
 
-// The exact values the live revenue ledger stores (read off /api/x402-revenue on
-// 2026-08-13): CAIP-2 ids, not the bare chain names the page used to compare
-// against. Filtering by the bare name matched zero rows, which is what these
+// The exact values the live settlement ledger stores (read off x402_audit_log on
+// 2026-08-13): CAIP-2 ids, not the bare chain names the creator ledger used to
+// compare against. Filtering by the bare name matched zero rows, which is what these
 // tests pin down.
 const SOLANA_MAINNET = 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp';
 const BASE_MAINNET = 'eip155:8453';

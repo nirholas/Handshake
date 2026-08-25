@@ -4209,7 +4209,6 @@ The budget is deliberately *not* restored on `settle_uncertain`. Releasing it wo
 GET    /api/monetization/prices?agent_id=…  List an agent's priced and gated skills (public)
 PUT    /api/monetization/prices             Set or update the price/gate for one skill
 DELETE /api/monetization/prices             Deactivate (or hard-delete) a skill's price
-GET    /api/monetization/revenue            Aggregated earnings for your agents
 GET    /api/monetization/wallet             Read the payout addresses on file
 PUT    /api/monetization/wallet             Save a Solana and/or EVM payout address
 GET    /api/monetization/withdrawals        Withdrawal history plus the live balance
@@ -4280,35 +4279,6 @@ An NFT gate stores a zero amount: access is the holding, not a payment. A `price
 ### DELETE /api/monetization/prices
 
 Owner only. Body: `{ agent_id, skill_name, hard? }`. The default is a soft delete (the row is deactivated and disappears from the public listing, and re-pricing the skill later revives it). `hard: true` removes the row outright. Either way, a skill with no price row is a `404 not_found`.
-
-### GET /api/monetization/revenue
-
-Aggregated earnings across every agent you own, or one agent with `?agent_id=`.
-
-`period` is one of `1d`, `7d`, `30d`, `90d`, `all` and defaults to `7d`. Anything else is a `400`.
-
-```bash
-curl "https://three.ws/api/monetization/revenue?period=30d" \
-  -H "Authorization: Bearer $THREE_WS_API_KEY"
-```
-
-**200 OK**
-
-```json
-{
-	"total_usdc": 6,
-	"total_fees_usdc": 0.15,
-	"net_usdc": 5.85,
-	"event_count": 3,
-	"total_atomic": 6000000,
-	"fees_atomic": 150000,
-	"net_atomic": 5850000,
-	"by_skill": [{ "skill": "summarize", "total": 2.925, "total_atomic": 2925000, "count": 1 }],
-	"by_day": [{ "date": "2026-08-01", "total": 5.85, "total_atomic": 5850000, "count": 3 }]
-}
-```
-
-`total` is gross, `net` is what you can withdraw, and the difference is the platform fee. Scoping to an agent you do not own is a `403`.
 
 ### GET /api/monetization/wallet
 

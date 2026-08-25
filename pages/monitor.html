@@ -6,7 +6,7 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Agent Monitor · three.ws</title>
-		<meta name="description" content="Mission-control dashboard for the three.ws 3D AI agent fleet: live agent activity, on-chain money pulse, x402 revenue, agent-to-agent hires, launches and platform health, all on one screen." />
+		<meta name="description" content="Mission-control dashboard for the three.ws 3D AI agent fleet: live agent activity, on-chain money pulse, agent-to-agent hires, launches and platform health, all on one screen." />
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -19,9 +19,9 @@
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:title" content="Agent Monitor · three.ws" />
-		<meta property="og:description" content="Mission-control dashboard for the three.ws 3D AI agent fleet: live activity, money pulse, x402 revenue and platform health." />
+		<meta property="og:description" content="Mission-control dashboard for the three.ws 3D AI agent fleet: live activity, money pulse, agent-to-agent hires and platform health." />
 		<meta property="og:url" content="https://three.ws/monitor" />
-		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Agent+Monitor&amp;d=Ops-room+dashboard+for+the+3D+AI+agent+fleet%3A+live+agent+activity+with+a+3D+spotlight%2C+on-chain+money+pulse%2C+x402+revenue%2C+agent-to-agent+hires%2C+coin+launches&amp;p=%2Fmonitor" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Agent+Monitor&amp;d=Ops-room+dashboard+for+the+3D+AI+agent+fleet%3A+live+agent+activity+with+a+3D+spotlight%2C+on-chain+money+pulse%2C+agent-to-agent+hires%2C+coin+launches&amp;p=%2Fmonitor" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta property="og:image:alt" content="Agent Monitor - three.ws" />
@@ -29,10 +29,10 @@
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
 		<meta name="twitter:title" content="Agent Monitor · three.ws" />
-		<meta name="twitter:description" content="Mission-control dashboard for the three.ws 3D AI agent fleet: live activity, money pulse, x402 revenue and platform health." />
-		<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Agent+Monitor&amp;d=Ops-room+dashboard+for+the+3D+AI+agent+fleet%3A+live+agent+activity+with+a+3D+spotlight%2C+on-chain+money+pulse%2C+x402+revenue%2C+agent-to-agent+hires%2C+coin+launches&amp;p=%2Fmonitor" />
+		<meta name="twitter:description" content="Mission-control dashboard for the three.ws 3D AI agent fleet: live activity, money pulse, agent-to-agent hires and platform health." />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Agent+Monitor&amp;d=Ops-room+dashboard+for+the+3D+AI+agent+fleet%3A+live+agent+activity+with+a+3D+spotlight%2C+on-chain+money+pulse%2C+agent-to-agent+hires%2C+coin+launches&amp;p=%2Fmonitor" />
 		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
-		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Agent Monitor","description":"Mission-control dashboard for the three.ws 3D AI agent fleet: live activity, money pulse, x402 revenue and platform health.","url":"https://three.ws/monitor","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Agent Monitor","description":"Mission-control dashboard for the three.ws 3D AI agent fleet: live activity, money pulse, agent-to-agent hires and platform health.","url":"https://three.ws/monitor","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 		<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 		<style>
 			:root {
@@ -351,7 +351,7 @@
 					</div>
 				</section>
 
-				<section class="panel span-4" aria-labelledby="p-pulse-t">
+				<section class="panel span-6" aria-labelledby="p-pulse-t">
 					<div class="panel-head">
 						<span class="panel-title" id="p-pulse-t"><a href="/pulse">Money Pulse · 24h</a></span>
 						<span style="display:flex;gap:5px;align-items:center">
@@ -367,24 +367,7 @@
 					</div>
 				</section>
 
-				<section class="panel span-4" aria-labelledby="p-x402-t">
-					<div class="panel-head">
-						<span class="panel-title" id="p-x402-t"><a href="/x402-revenue">x402 Revenue</a></span>
-						<span style="display:flex;gap:5px;align-items:center">
-							<span class="seg" id="x402-period" role="group" aria-label="Revenue period">
-								<button type="button" data-period="24h" aria-pressed="true">24h</button>
-								<button type="button" data-period="7d" aria-pressed="false">7d</button>
-								<button type="button" data-period="30d" aria-pressed="false">30d</button>
-							</span>
-							<span class="panel-badge" id="x402-badge">USDC</span>
-						</span>
-					</div>
-					<div class="panel-body" id="x402-body">
-						<div class="sk sk-row"></div><div class="sk sk-row"></div><div class="sk sk-row"></div>
-					</div>
-				</section>
-
-				<section class="panel span-4" aria-labelledby="p-a2a-t">
+				<section class="panel span-6" aria-labelledby="p-a2a-t">
 					<div class="panel-head">
 						<span class="panel-title" id="p-a2a-t"><a href="/agent-economy-volume">A2A Hires</a></span>
 						<span style="display:flex;gap:5px;align-items:center">
@@ -473,7 +456,7 @@
 				</section>
 			</div>
 
-			<p class="mon-foot">Every number on this board is live platform data: the fleet ranks by real recorded agent actions, the wire streams settled on-chain events with Solscan proofs, and revenue reads the x402 audit ledger. Nothing is simulated. Deeper views: <a href="/agents-live">live screens</a>, <a href="/pulse">money pulse</a>, <a href="/flow">money flow map</a>, <a href="/status">status</a>.</p>
+			<p class="mon-foot">Every number on this board is live platform data: the fleet ranks by real recorded agent actions, the wire streams settled on-chain events with Solscan proofs, and hires read the settled x402 hire ledger. Nothing is simulated. Deeper views: <a href="/agents-live">live screens</a>, <a href="/pulse">money pulse</a>, <a href="/flow">money flow map</a>, <a href="/status">status</a>.</p>
 		</main>
 
 		<div id="footer-container"></div>

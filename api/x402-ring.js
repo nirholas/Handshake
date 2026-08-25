@@ -14,8 +14,8 @@
 // Reads x402_self_facilitator_log (settlements + fees) and x402_ring_ledger
 // (sweeps), plus live on-chain balances for the treasury / payer / sponsor. Every
 // row is a real settled payment — if the ring is idle the report is honestly
-// empty. This is internal/dogfooding volume and is labeled as such; it is NOT the
-// public organic-revenue feed (see /api/x402-revenue).
+// empty. This is internal/dogfooding volume and is labeled as such; it is NOT
+// organic buyer revenue.
 
 import { cors, error, json, method, wrap } from './_lib/http.js';
 import { sql, isDbUnavailableError } from './_lib/db.js';

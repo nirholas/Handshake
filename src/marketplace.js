@@ -3071,8 +3071,7 @@ async function downloadReceipt(purchaseId) {
 const earnState = {
 	loaded: false, loading: false, authFailed: false, errorMsg: null,
 	pending_usd: 0, settled_usd: 0, entries: [], wallet: null,
-	revBySkill: [], revTimeseries: [], revLoading: false,
-	period: 30, txnVisible: 20,
+	txnVisible: 20,
 };
 
 function fmtUsd(n) {
@@ -3082,19 +3081,6 @@ function fmtUsd(n) {
 	if (abs < 0.01) return (n < 0 ? '-' : '') + '$' + abs.toFixed(4);
 	if (abs < 1) return (n < 0 ? '-' : '') + '$' + abs.toFixed(3);
 	return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-function earnPeriodParams(days) {
-	const to = new Date();
-	if (days === 'all') return { from: new Date('2020-01-01'), to, granularity: 'month' };
-	const from = new Date(to.getTime() - days * 24 * 60 * 60 * 1000);
-	return { from, to, granularity: days <= 30 ? 'day' : 'week' };
-}
-
-function fmtChartDate(iso) {
-	if (!iso) return '';
-	const d = new Date(iso + (iso.length === 10 ? 'T00:00:00' : ''));
-	return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 async function loadEarnTab(force = false) {
@@ -3144,30 +3130,6 @@ async function loadEarnTab(force = false) {
 		earnState.loading = false;
 	}
 	renderEarnTab();
-	loadEarnRevenue();
-}
-
-async function loadEarnRevenue() {
-	if (earnState.revLoading) return;
-	earnState.revLoading = true;
-	const { from, to, granularity } = earnPeriodParams(earnState.period);
-	try {
-		const r = await fetch(
-			`${API}/billing/revenue?granularity=${granularity}&from=${from.toISOString()}&to=${to.toISOString()}`,
-			{ credentials: 'include' },
-		);
-		if (r.ok) {
-			const j = await r.json();
-			earnState.revBySkill = j.by_skill || [];
-			earnState.revTimeseries = j.timeseries || [];
-		}
-	} catch (err) {
-		log.error('[marketplace] revenue chart', err);
-	} finally {
-		earnState.revLoading = false;
-	}
-	renderEarnChart();
-	renderEarnBreakdown();
 }
 
 function renderEarnSkeleton() {
@@ -3179,7 +3141,6 @@ function renderEarnSkeleton() {
 	).join('');
 	return `<div class="earn-skeleton">
 		<div class="earn-stats">${cards}</div>
-		<div class="earn-chart-sk"><div class="earn-sk-block"></div></div>
 		<div class="earn-txn-sk">${rows}</div>
 	</div>`;
 }
@@ -3263,22 +3224,6 @@ function renderEarnTab() {
 				<button class="earn-wallet-btn" data-action="earn-wallet-edit" aria-label="Edit payout wallet">${walletBtnLabel}</button>
 			</div>
 		</div>
-		<div class="earn-chart-section">
-			<div class="earn-section-header">
-				<h3 class="earn-section-title">Revenue</h3>
-				<div class="earn-period-chips" role="tablist" aria-label="Revenue period">
-					<button class="earn-chip${earnState.period === 7 ? ' active' : ''}" data-period="7" role="tab" aria-selected="${earnState.period === 7}">7d</button>
-					<button class="earn-chip${earnState.period === 30 ? ' active' : ''}" data-period="30" role="tab" aria-selected="${earnState.period === 30}">30d</button>
-					<button class="earn-chip${earnState.period === 90 ? ' active' : ''}" data-period="90" role="tab" aria-selected="${earnState.period === 90}">90d</button>
-					<button class="earn-chip${earnState.period === 'all' ? ' active' : ''}" data-period="all" role="tab" aria-selected="${earnState.period === 'all'}">All</button>
-				</div>
-			</div>
-			<div class="earn-chart" id="earn-chart"><div class="earn-chart-loading">Loading revenue data…</div></div>
-		</div>
-		<div class="earn-breakdown-section" id="earn-breakdown-section" hidden>
-			<h3 class="earn-section-title">Top Earners</h3>
-			<div class="earn-breakdown" id="earn-breakdown"></div>
-		</div>
 		<div class="earn-txns-section">
 			<div class="earn-section-header">
 				<h3 class="earn-section-title">Recent Transactions</h3>
@@ -3290,70 +3235,6 @@ function renderEarnTab() {
 	</div>`;
 
 	renderEarnTransactions();
-}
-
-function renderEarnChart() {
-	const el = $('earn-chart');
-	if (!el) return;
-
-	if (earnState.revLoading) {
-		el.innerHTML = '<div class="earn-chart-loading">Loading revenue data…</div>';
-		return;
-	}
-
-	const ts = earnState.revTimeseries;
-	if (!ts || !ts.length) {
-		el.innerHTML = '<div class="earn-chart-empty">No revenue data for this period</div>';
-		return;
-	}
-
-	const USDC_DIV = 1_000_000;
-	const maxVal = Math.max(...ts.map(d => d.net_total), 1);
-	const labelEvery = ts.length <= 7 ? 1 : ts.length <= 14 ? 2 : ts.length <= 30 ? 5 : 7;
-
-	const bars = ts.map((d, i) => {
-		const pct = Math.max((d.net_total / maxVal) * 100, d.net_total > 0 ? 3 : 0);
-		const showLabel = i % labelEvery === 0 || i === ts.length - 1;
-		const dateLabel = fmtChartDate(d.period);
-		const usd = d.net_total / USDC_DIV;
-		return `<div class="earn-bar" style="--h:${pct.toFixed(1)}%" title="${dateLabel}: ${fmtUsd(usd)}">
-			<div class="earn-bar-col"></div>
-			${showLabel ? `<span class="earn-bar-date">${escapeHtml(dateLabel)}</span>` : '<span class="earn-bar-date"></span>'}
-		</div>`;
-	}).join('');
-
-	const periodTotal = ts.reduce((s, d) => s + d.net_total, 0) / USDC_DIV;
-	const periodCount = ts.reduce((s, d) => s + d.count, 0);
-
-	el.innerHTML = `<div class="earn-chart-meta">
-		<span class="earn-chart-total">${fmtUsd(periodTotal)}</span>
-		<span class="earn-chart-count">${periodCount} payment${periodCount !== 1 ? 's' : ''} this period</span>
-	</div>
-	<div class="earn-chart-bars">${bars}</div>`;
-}
-
-function renderEarnBreakdown() {
-	const el = $('earn-breakdown');
-	const section = $('earn-breakdown-section');
-	if (!el || !section) return;
-
-	const skills = earnState.revBySkill;
-	if (!skills || !skills.length) { section.hidden = true; return; }
-	section.hidden = false;
-
-	const USDC_DIV = 1_000_000;
-	const maxVal = Math.max(...skills.map(s => s.net_total), 1);
-
-	el.innerHTML = skills.slice(0, 6).map(s => {
-		const pct = (s.net_total / maxVal) * 100;
-		const usd = s.net_total / USDC_DIV;
-		return `<div class="earn-bk-row">
-			<span class="earn-bk-name" title="${escapeHtml(s.skill || '')}">${escapeHtml(s.skill || '—')}</span>
-			<div class="earn-bk-track"><div class="earn-bk-fill" style="width:${pct.toFixed(1)}%"></div></div>
-			<span class="earn-bk-amount">${fmtUsd(usd)}</span>
-			<span class="earn-bk-count">${s.count}×</span>
-		</div>`;
-	}).join('');
 }
 
 function renderEarnTransactions() {
@@ -3431,19 +3312,6 @@ function bindEarnTab() {
 	const earnContent = $('earn-content');
 	if (earnContent) {
 		earnContent.addEventListener('click', (e) => {
-			const chip = e.target.closest('[data-period]');
-			if (chip) {
-				const p = chip.dataset.period === 'all' ? 'all' : parseInt(chip.dataset.period, 10);
-				if (p === earnState.period) return;
-				earnState.period = p;
-				earnContent.querySelectorAll('.earn-chip').forEach(c => {
-					const on = c.dataset.period === String(p);
-					c.classList.toggle('active', on);
-					c.setAttribute('aria-selected', on);
-				});
-				loadEarnRevenue();
-				return;
-			}
 			const btn = e.target.closest('[data-action]');
 			if (!btn) return;
 			const act = btn.dataset.action;

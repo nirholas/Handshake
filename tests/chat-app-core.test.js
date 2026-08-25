@@ -32,7 +32,7 @@ describe('chat/src/three-ui/site-routes.js', () => {
 	});
 
 	it('leaves the routes the chat SPA still owns alone', () => {
-		for (const route of ['chat', 'signin', 'signup', 'dashboard/revenue', '']) {
+		for (const route of ['chat', 'signin', 'signup', '']) {
 			expect(siteRouteFor(route)).toBeNull();
 		}
 	});

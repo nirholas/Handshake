@@ -35,7 +35,6 @@ export const NAV = [
 	// ── Monetize ────────────────────────────────────────────────────────
 	{ path: '/dashboard/three-token', label: '$THREE',          icon: 'three',     group: 'Monetize',   tags: ['token', 'utility', 'burn', 'revenue share', 'protocol', '$three', 'economy', 'holders'] },
 	{ path: '/dashboard/holders',     label: 'Holders',         icon: 'three',     group: 'Monetize',   tags: ['leaderboard', 'holders', 'rank', 'badge', '$three', 'whale', 'top holders', 'standing'] },
-	{ path: '/dashboard/analytics',   label: 'Analytics',       icon: 'chart',     group: 'Monetize',   tags: ['revenue', 'charts', 'metrics', 'funnel', 'performance', 'views', 'engagement'] },
 	{ path: '/dashboard/creator',     label: 'Creator Studio',  icon: 'creator',   group: 'Monetize',   tags: ['creator', 'earnings', 'pricing', 'price', 'payout', 'royalties', 'skill analytics', 'sell', 'income', 'make money', '$three discount'] },
 	{ path: '/dashboard/monetize',    label: 'Monetize',        icon: 'coin',      group: 'Monetize',   tags: ['revenue', 'payments', 'subscriptions', 'withdrawals', 'earnings', 'plan', 'billing'] },
 	{ path: '/payments',              label: 'Payment Sessions', icon: 'paysess',   group: 'Monetize',   tags: ['x402', 'agent pay', 'session', 'budget', 'usdc', 'autonomous', 'mcp', 'spend', 'governed'], external: true },

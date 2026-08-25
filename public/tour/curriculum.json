@@ -5,13 +5,13 @@
 	"title": "The three.ws Guided Tour",
 	"tagline": "A 3D guide walks you through every feature, live, on the real site.",
 	"estimatedMinutes": 100,
-	"stopCount": 264,
+	"stopCount": 263,
 	"tracks": [
 		{
 			"id": "full",
 			"title": "Full tour",
 			"description": "Every feature, chapter by chapter.",
-			"stopCount": 258,
+			"stopCount": 257,
 			"estimatedMinutes": 100
 		},
 		{
@@ -941,7 +941,7 @@
 			"path": "/receipts",
 			"section": "crypto",
 			"title": "Receipt Vault",
-			"narration": "Let's visit Receipt Vault. Every x402 payment you ever made to three.ws, retrievable forever. Connect a Solana or EVM wallet, sign one read-only message, and get back every signed proof-of-purchase receipt issued to that wallet: endpoint, network, settlement transaction with explorer link, and the full signed artifact as JSON, plus CSV export and search. The buyer-side mirror of Endpoint Revenue.",
+			"narration": "Let's visit Receipt Vault. Every x402 payment you ever made to three.ws, retrievable forever. Connect a Solana or EVM wallet, sign one read-only message, and get back every signed proof-of-purchase receipt issued to that wallet: endpoint, network, settlement transaction with explorer link, and the full signed artifact as JSON, plus CSV export and search. The buyer side of the platform ledger.",
 			"highlight": false
 		},
 		{
@@ -1230,14 +1230,6 @@
 			"section": "crypto",
 			"title": "Coins: Live Prices & Market Caps",
 			"narration": "Let's visit Coins: Live Prices & Market Caps. Live global cryptocurrency market data: total market cap, dominance, Fear & Greed, and the top coins with prices, 24h/7d moves, and 7d sparklines. Every coin links to a rich /coin/:id detail page with an interactive chart, market stats, related news, and official links.",
-			"highlight": false
-		},
-		{
-			"id": "x402-revenue",
-			"path": "/x402-revenue",
-			"section": "crypto",
-			"title": "Endpoint Revenue",
-			"narration": "Over here is Endpoint Revenue. The live revenue layer: real USDC flowing into three.ws's own x402 paid endpoints. A live revenue chart, gross/net/success-rate KPIs, momentum vs the prior window, top-earning endpoints, revenue by network, and a filterable, searchable live feed of every settlement with copy-tx, sound, and CSV export. The mirror of the Money Pulse: what the platform earns, not what agents spend. Every payment is real and explorer-verifiable.",
 			"highlight": false
 		},
 		{

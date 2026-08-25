@@ -96,7 +96,7 @@
 		</item>
 		<item>
 			<title>Dashboard Analytics fits a phone screen and its failure page can actually reload</title>
-			<link>https://three.ws/dashboard/analytics</link>
+			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-25:Dashboard Analytics fits a phone screen and its failure page can actually reload</guid>
 			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
@@ -1136,7 +1136,7 @@
 		</item>
 		<item>
 			<title>Mistyped filters on the revenue, checkout and ring endpoints answer plainly instead of failing</title>
-			<link>https://three.ws/x402-revenue</link>
+			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-16:Mistyped filters on the revenue, checkout and ring endpoints answer plainly instead of failing</guid>
 			<pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
@@ -3512,7 +3512,7 @@
 		</item>
 		<item>
 			<title>Endpoint Revenue names the chain each payment settled on, and its network filter works</title>
-			<link>https://three.ws/x402-revenue</link>
+			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-13:Endpoint Revenue names the chain each payment settled on, and its network filter works</guid>
 			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
@@ -6468,7 +6468,7 @@
 			<guid isPermaLink="false">2026-08-01:Agent Monitor</guid>
 			<pubDate>Sat, 01 Aug 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Ops-room dashboard for the 3D AI agent fleet: live agent activity with a 3D spotlight, on-chain money pulse, x402 revenue, agent-to-agent hires, coin launches, the community forge feed, crews and platform health on one screen.</description>
+			<description>Ops-room dashboard for the 3D AI agent fleet: live agent activity with a 3D spotlight, on-chain money pulse, agent-to-agent hires, coin launches, the community forge feed, crews and platform health on one screen.</description>
 		</item>
 		<item>
 			<title>Docs · Agent Monitor</title>
@@ -8132,7 +8132,7 @@
 			<guid isPermaLink="false">2026-07-28:Receipt Vault</guid>
 			<pubDate>Tue, 28 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Every x402 payment you ever made to three.ws, retrievable forever. Connect a Solana or EVM wallet, sign one read-only message, and get back every signed proof-of-purchase receipt issued to that wallet: endpoint, network, settlement transaction with explorer link, and the full signed artifact as JSON, plus CSV export and search. The buyer-side mirror of Endpoint Revenue.</description>
+			<description>Every x402 payment you ever made to three.ws, retrievable forever. Connect a Solana or EVM wallet, sign one read-only message, and get back every signed proof-of-purchase receipt issued to that wallet: endpoint, network, settlement transaction with explorer link, and the full signed artifact as JSON, plus CSV export and search. The buyer side of the platform ledger.</description>
 		</item>
 		<item>
 			<title>Claude 5 models land across chat, agent brains, and widgets</title>
@@ -14679,22 +14679,6 @@
 			<description>Polished the agent's live Treasury Autopilot dashboard so it reads as one product with the rest of the site. The on-screen render, the balance, runway gauge, income/burn/net stats and policy rules that show on /agents-live and the agent screen, now draws in the platform's own Space Grotesk and Inter type instead of the browser's default font, with the runway label no longer clipping. The interactive cockpit's status colours (armed/killed, healthy/warning/critical runway, buyback and distribution states) now come from the shared design tokens, so green/amber/red match everywhere. The Market Anchor lower-third dropped its off-brand blue and orange for the site's monochrome palette, and the whole cockpit reflows cleanly on phones.</description>
 		</item>
 		<item>
-			<title>Docs · x402 Revenue &amp; Receipts</title>
-			<link>https://three.ws/docs/x402-revenue</link>
-			<guid isPermaLink="false">2026-06-30:Docs · x402 Revenue &amp; Receipts</guid>
-			<pubDate>Tue, 30 Jun 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>Where settled x402 payments are recorded (x402_audit_log), how to read endpoint revenue, and how signed receipts work.</description>
-		</item>
-		<item>
-			<title>Endpoint Revenue</title>
-			<link>https://three.ws/x402-revenue</link>
-			<guid isPermaLink="false">2026-06-30:Endpoint Revenue</guid>
-			<pubDate>Tue, 30 Jun 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>The live revenue layer: real USDC flowing into three.ws's own x402 paid endpoints. A live revenue chart, gross/net/success-rate KPIs, momentum vs the prior window, top-earning endpoints, revenue by network, and a filterable, searchable live feed of every settlement with copy-tx, sound, and CSV export. The mirror of the Money Pulse: what the platform earns, not what agents spend. Every payment is real and explorer-verifiable.</description>
-		</item>
-		<item>
 			<title>Launch Studio: 50 ways to mint a coin</title>
 			<link>https://three.ws/launch-studio</link>
 			<guid isPermaLink="false">2026-06-30:Launch Studio: 50 ways to mint a coin</guid>
@@ -14792,7 +14776,7 @@
 		</item>
 		<item>
 			<title>Documented the x402 volume engine and the daily payment reconciliation job</title>
-			<link>https://three.ws/docs/x402-revenue</link>
+			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-06-30:Documented the x402 volume engine and the daily payment reconciliation job</guid>
 			<pubDate>Tue, 30 Jun 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
@@ -24685,14 +24669,6 @@
 			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Manage connected wallets, SNS, delegation, and action log.</description>
-		</item>
-		<item>
-			<title>Dashboard · Analytics</title>
-			<link>https://three.ws/dashboard/analytics</link>
-			<guid isPermaLink="false">2026-05-25:Dashboard · Analytics</guid>
-			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>Revenue over time, revenue by skill, widget views and chats, conversion funnel, and per-agent performance across your three.ws agents.</description>
 		</item>
 		<item>
 			<title>Dashboard · Settings</title>

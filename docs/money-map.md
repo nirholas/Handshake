@@ -6,7 +6,7 @@ treasury pays it forward. If you're adding a paid surface or auditing revenue,
 start here.
 
 Companion docs: [x402 endpoints](x402-endpoints.md) (the paid endpoint catalog),
-[x402 revenue & receipts](x402-revenue.md) (how settlements are recorded),
+[Financial controls](financial-controls.md) (how settlements are recorded),
 [Solana signers runbook](../api/_lib/solana-signers.js) (the
 signer/funder wallets and how to fund them).
 
@@ -180,7 +180,6 @@ that set `auto_fund_enabled = true` (default off). See
 
 - [Financial controls & audit register](financial-controls.md) — every ledger's integrity, reconciliation, retention, monitoring, and the ranked gap list.
 - [x402 endpoints](x402-endpoints.md) — the paid endpoint catalog and price overrides.
-- [x402 revenue & receipts](x402-revenue.md) — where settlements are recorded.
 - [x402 ring economy](x402-ring-economy.md) — the internal recirculation loop.
 - [Pump platform fee](pump-platform-fee.md) — the pump trade fee detail.
 - [Coin-launch wallets](ux-flows/08-coin-launch-wallets.md) — launch-time wallet flow.

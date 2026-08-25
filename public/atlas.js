@@ -8,7 +8,7 @@
  * starts. Atlas removes it. Cmd+K (Ctrl+K on Windows/Linux) anywhere on the
  * site opens a search over every route, and over a curated set of TASKS that
  * answer with ordered steps instead of a link, because "which page do I open to
- * get paid per API call" is a harder question than "where is /x402-revenue".
+ * get paid per API call" is a harder question than "where is /receipts".
  *
  * Design decisions worth keeping:
  *

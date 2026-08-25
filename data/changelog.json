@@ -48,8 +48,7 @@
 			"tags": [
 				"fix",
 				"improvement"
-			],
-			"link": "/dashboard/analytics"
+			]
 		},
 		{
 			"date": "2026-08-25",
@@ -1528,8 +1527,7 @@
 			"summary": "The public revenue feed, the checkout SKU API and the ring report all took values straight from the URL into the database. A timestamp that was not a timestamp, a checkout id that was not an id, and the query fell over: the caller got an opaque \"something went wrong\" with a support reference, and our own alerting logged a fault that was only ever a typo. All three now say what was wrong, in words, with the right status code. The ring report also stops treating an unrecognised period as \"show me everything\", which quietly answered the wrong question and ran the most expensive query it has. The revenue feed now echoes back the endpoint filter it actually applied rather than the raw text it was sent, and the paid-call lookup only accepts something shaped like a real transaction signature.",
 			"tags": [
 				"fix"
-			],
-			"link": "/x402-revenue"
+			]
 		},
 		{
 			"date": "2026-08-16",
@@ -3592,8 +3590,7 @@
 			"tags": [
 				"fix",
 				"improvement"
-			],
-			"link": "/x402-revenue"
+			]
 		},
 		{
 			"date": "2026-08-13",
@@ -14320,8 +14317,7 @@
 			"summary": "The developer docs now cover the two newest pieces of the x402 money machine. The Volume Bootstrap Loop, the autonomous sweep that pays every cheap paid endpoint a real on-chain micro-payment to prove it is live, is documented with its per-endpoint proof-of-volume ledger (x402_volume_metrics) and its budget knobs. The docs are explicit that this is synthetic liveness traffic, the platform paying its own endpoints from its own seed wallet, and must not be reported as organic marketplace demand; any published volume or facilitator-ranking number has to exclude the seed wallet. The new daily reconciliation job is documented too: it cross-checks every settlement our books claim against the actual Solana transaction and flags any row the chain does not corroborate, so a silently-failed settlement can't drift our accounting.",
 			"tags": [
 				"docs"
-			],
-			"link": "/docs/x402-revenue"
+			]
 		},
 		{
 			"date": "2026-06-30",

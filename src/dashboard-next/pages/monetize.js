@@ -1,13 +1,12 @@
 // dashboard-next — Monetize page.
 //
 // Agent monetization hub: skill pricing controls, payout wallet config,
-// revenue stats, withdrawal interface, subscription plans, and token earnings.
+// withdrawable balance, withdrawal interface, subscription plans, and token earnings.
 // All data from real /api/* endpoints.
 
 import { mountShell } from '../shell.js';
 import { requireUser, get, post, put, del, esc, relTime, formatUsdc, ApiError } from '../api.js';
 import { errorStateHTML, ensureStateKitStyles } from '../../shared/state-kit.js';
-import { skillLabel } from '../../shared/skill-label.js';
 
 const USDC_MINTS = {
 	solana: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
@@ -17,13 +16,6 @@ const MIN_WITHDRAWAL_USDC_ATOMICS = 1_000_000;
 
 const SOLANA_ADDR_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const EVM_ADDR_RE = /^0x[a-fA-F0-9]{40}$/;
-
-const RANGES = [
-	{ key: '7d',  days: 7,   label: 'Last 7 days',    granularity: 'day' },
-	{ key: '30d', days: 30,  label: 'Last 30 days',   granularity: 'day' },
-	{ key: '90d', days: 90,  label: 'Last 90 days',   granularity: 'day' },
-	{ key: '1y',  days: 365, label: 'Last 12 months', granularity: 'week' },
-];
 
 const PAYMENT_FILTERS = [
 	{ key: 'all',           label: 'All' },
@@ -99,28 +91,25 @@ function renderAgentSelector(host, agents, contentHost, me) {
 // -- Data loading --
 
 async function loadAndRender(host, me, agents) {
-	const since30 = new Date(Date.now() - 30 * 86400_000).toISOString();
 	const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 	const creatorParam = me.id && UUID_RE.test(me.id) ? encodeURIComponent(me.id) : null;
 
 	const agentParam = selectedAgentId ? `agent_id=${encodeURIComponent(selectedAgentId)}` : '';
 
 	const [
-		revenue, withdrawalsResp, walletsResp, summary, plans,
-		mineSubs, earningsResp, pricesResp, monWalletResp, monRevenueResp, feeInfo,
+		balanceResp, withdrawalsResp, walletsResp, summary, plans,
+		earningsResp, pricesResp, monWalletResp, feeInfo,
 	] = await Promise.all([
-		safe(() => get(`/api/billing/revenue?from=${encodeURIComponent(since30)}&granularity=day`)),
+		safe(() => get('/api/monetization/withdrawals?limit=1')),
 		safe(() => get('/api/billing/withdrawals?limit=50')),
 		safe(() => get('/api/billing/payout-wallets')),
 		safe(() => get('/api/billing/summary')),
 		creatorParam
 			? safe(() => get(`/api/subscriptions/plans?creator_id=${creatorParam}`))
 			: Promise.resolve(null),
-		safe(() => get('/api/subscriptions/mine')),
 		safe(() => get('/api/users/me/earnings')),
 		selectedAgentId ? safe(() => get(`/api/monetization/prices?${agentParam}`)) : Promise.resolve(null),
 		selectedAgentId ? safe(() => get(`/api/monetization/wallet?${agentParam}`)) : Promise.resolve(null),
-		selectedAgentId ? safe(() => get(`/api/monetization/revenue?${agentParam}&period=all`)) : Promise.resolve(null),
 		safe(() => get('/api/billing/fee-info')),
 	]);
 
@@ -129,10 +118,10 @@ async function loadAndRender(host, me, agents) {
 	// endpoint is unreachable so the UI never renders a misleading "0% fee".
 	const feeBps = Number.isFinite(Number(feeInfo?.fee_bps)) ? Number(feeInfo.fee_bps) : 250;
 
-	// If every primary revenue surface failed to load, the page would otherwise
+	// If every primary earnings surface failed to load, the page would otherwise
 	// render an all-zero hero and empty panels with no signal that the data is
 	// simply unreachable. Surface a single retryable error instead.
-	const allPrimaryFailed = revenue === null && withdrawalsResp === null
+	const allPrimaryFailed = balanceResp === null && withdrawalsResp === null
 		&& walletsResp === null && summary === null;
 	if (allPrimaryFailed) {
 		ensureStateKitStyles();
@@ -150,31 +139,32 @@ async function loadAndRender(host, me, agents) {
 	const withdrawals = withdrawalsResp?.withdrawals || [];
 	const wallets = walletsResp?.wallets || [];
 	const creatorPlans = plans?.plans || [];
-	const subscribedTo = mineSubs?.subscriptions || [];
 
-	const earned = Number(revenue?.summary?.net_total ?? 0);
-	const inflight = withdrawals
-		.filter((w) => w.status === 'pending' || w.status === 'processing')
-		.reduce((s, w) => s + Number(w.amount), 0);
+	// The withdrawal endpoint reports the same ledger it draws on (lifetime net
+	// earnings minus completed and in-flight withdrawals), so the balance shown
+	// here is exactly what a withdrawal request will be checked against.
+	const balance = balanceResp?.balance || {};
+	const toAtomics = (usd) => Math.round(Number(usd || 0) * 1_000_000);
+	const earnedAtomics = toAtomics(balance.earned_usdc);
+	const withdrawnAtomics = toAtomics(balance.withdrawn_usdc);
+	const inflightAtomics = toAtomics(balance.pending_usdc);
 	const pendingRoyaltyUsd = Number(earningsResp?.pending_usd ?? 0);
 	const pendingRoyaltyAtomics = Math.round(pendingRoyaltyUsd * 1_000_000);
-	const available = Math.max(0, earned + pendingRoyaltyAtomics - inflight);
+	const available = Math.max(0, toAtomics(balance.available_usdc) + pendingRoyaltyAtomics);
 
 	const skillPrices = pricesResp?.prices || pricesResp?.data?.prices || [];
 	const monWallet = monWalletResp?.wallet || monWalletResp?.data?.wallet || monWalletResp;
-	const monRevenue = monRevenueResp?.revenue || monRevenueResp?.data || monRevenueResp;
 
 	const payments = await fetchRecentPayments(agents);
 
 	host.innerHTML = '';
-	host.appendChild(renderHero({ available, revenue, creatorPlans, subscribedTo, pendingRoyaltyAtomics, monRevenue }));
+	host.appendChild(renderHero({ available, earnedAtomics, withdrawnAtomics, inflightAtomics, pendingRoyaltyAtomics }));
 
 	if (selectedAgentId) {
 		host.appendChild(renderSkillPricing(skillPrices, selectedAgentId, host, me, agents, feeBps));
 		host.appendChild(renderPayoutWalletPanel(monWallet, selectedAgentId, host, me, agents, wallets));
 	}
 
-	host.appendChild(renderRevenueChart({ initial: revenue, defaultRange: '30d' }));
 	host.appendChild(renderPaymentsPanel(payments));
 	host.appendChild(renderSubscriptionPlans({ creatorPlans, me }));
 	host.appendChild(renderWithdrawals({ withdrawals, wallets, available, host, me, agents }));
@@ -196,35 +186,17 @@ async function safe(fn) {
 
 // -- Hero metrics --
 
-function renderHero({ available, revenue, creatorPlans, subscribedTo, pendingRoyaltyAtomics, monRevenue }) {
+function renderHero({ available, earnedAtomics, withdrawnAtomics, inflightAtomics, pendingRoyaltyAtomics }) {
 	const wrap = document.createElement('div');
 	wrap.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px';
-
-	const revenue30 = Number(revenue?.summary?.net_total ?? 0);
-	const paymentCount = Number(revenue?.summary?.payment_count ?? 0);
-
-	const activePlans = creatorPlans.filter((p) => p.active).length;
-	const planMrrUsd = creatorPlans
-		.filter((p) => p.active && p.interval === 'monthly')
-		.reduce((s, p) => s + Number(p.price_usd || 0), 0)
-		+ creatorPlans
-			.filter((p) => p.active && p.interval === 'weekly')
-			.reduce((s, p) => s + Number(p.price_usd || 0) * 4.345, 0);
-	const planMrrAtomics = Math.round(planMrrUsd * 1_000_000);
-	const youSubscribeTo = subscribedTo.filter((s) => s.status === 'active').length;
-
-	const monTotal = Number(monRevenue?.total_earned ?? monRevenue?.total ?? 0);
-	const monWeek = Number(monRevenue?.earned_this_week ?? monRevenue?.week ?? 0);
-	const monFees = Number(monRevenue?.platform_fees ?? monRevenue?.fees ?? 0);
-	const monAvailable = Number(monRevenue?.available_for_withdrawal ?? monRevenue?.available ?? 0);
 
 	wrap.appendChild(
 		heroCard({
 			title: 'Available to withdraw',
-			value: formatUsdc(available || monAvailable),
+			value: formatUsdc(available),
 			sub: pendingRoyaltyAtomics > 0
-				? `Net revenue + ${formatUsdc(pendingRoyaltyAtomics)} pending royalties, minus inflight withdrawals.`
-				: 'Net revenue, minus inflight withdrawals.',
+				? `Net earnings + ${formatUsdc(pendingRoyaltyAtomics)} pending royalties, minus withdrawals.`
+				: 'Net earnings, minus completed and in-flight withdrawals.',
 			color: 'var(--nxt-success)',
 			button: { label: 'Withdraw', primary: true, action: 'open-withdraw' },
 		}),
@@ -233,45 +205,29 @@ function renderHero({ available, revenue, creatorPlans, subscribedTo, pendingRoy
 	wrap.appendChild(
 		heroCard({
 			title: 'Total earned',
-			value: monTotal > 0 ? formatUsdc(monTotal) : formatUsdc(revenue30),
-			sub: monTotal > 0
-				? `Lifetime earnings across all skills.`
-				: `${paymentCount} payment${paymentCount === 1 ? '' : 's'} in the last 30 days.`,
+			value: formatUsdc(earnedAtomics),
+			sub: 'Lifetime net earnings across all skills, after platform fees.',
 			color: 'var(--nxt-success)',
 		}),
 	);
 
 	wrap.appendChild(
 		heroCard({
-			title: 'Earned this week',
-			value: monWeek > 0 ? formatUsdc(monWeek) : '$0.00',
-			sub: 'Revenue from skill calls in the last 7 days.',
+			title: 'Withdrawn',
+			value: formatUsdc(withdrawnAtomics),
+			sub: 'Paid out to your payout wallets.',
 			color: 'var(--nxt-accent)',
 		}),
 	);
 
 	wrap.appendChild(
 		heroCard({
-			title: 'Platform fees',
-			value: monFees > 0 ? formatUsdc(monFees) : '$0.00',
-			sub: 'Fees deducted from earnings.',
+			title: 'In flight',
+			value: formatUsdc(inflightAtomics),
+			sub: inflightAtomics > 0
+				? 'Withdrawals queued or processing on-chain.'
+				: 'No withdrawals in progress.',
 			color: 'var(--nxt-warn)',
-		}),
-	);
-
-	// Subscription income is USD-denominated and settles straight to the creator's
-	// wallet (not part of the withdrawable platform balance), so it gets its own
-	// card rather than being folded into "Total earned" / "Available to withdraw".
-	const subIncomeUsd = Number(revenue?.subscriptions?.income_usd ?? 0);
-	const activeSubs = Number(revenue?.subscriptions?.active_subscribers ?? 0);
-	wrap.appendChild(
-		heroCard({
-			title: 'Subscription income',
-			value: formatUsd(subIncomeUsd),
-			sub: activeSubs > 0
-				? `${activeSubs} active subscriber${activeSubs === 1 ? '' : 's'} · paid directly to your wallet (last 30 days)`
-				: 'Recurring plan revenue, paid directly to your wallet.',
-			color: 'var(--nxt-accent)',
 		}),
 	);
 
@@ -698,218 +654,6 @@ function renderPayoutWalletPanel(wallet, agentId, host, me, agents, legacyWallet
 	return panel;
 }
 
-// -- Revenue chart --
-
-function renderRevenueChart({ initial, defaultRange }) {
-	const panel = document.createElement('div');
-	panel.className = 'dn-panel';
-	panel.innerHTML = `
-		<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap">
-			<div>
-				<div class="dn-panel-title">Revenue Over Time</div>
-				<div class="dn-panel-sub" style="margin:2px 0 0">Net earnings after platform fees.</div>
-			</div>
-			<select data-slot="range" class="mon-select" aria-label="Revenue time range">
-				${RANGES.map((r) => `<option value="${r.key}"${r.key === defaultRange ? ' selected' : ''}>${esc(r.label)}</option>`).join('')}
-			</select>
-		</div>
-		<div data-slot="chart" style="position:relative;width:100%;height:240px"></div>
-		<div data-slot="legend" style="display:flex;flex-wrap:wrap;gap:14px;margin-top:14px;font-size:12.5px;color:var(--nxt-ink-dim)"></div>
-	`;
-
-	const chartHost = panel.querySelector('[data-slot="chart"]');
-	const legendHost = panel.querySelector('[data-slot="legend"]');
-	const rangeSel = panel.querySelector('[data-slot="range"]');
-
-	function paint(data) {
-		const ts = data?.timeseries || [];
-		const bySkill = data?.by_skill || [];
-		const rangeMeta = RANGES.find((r) => r.key === rangeSel.value) || RANGES[1];
-		panel.querySelector('.dn-panel-title').textContent = `Revenue · ${rangeMeta.label.toLowerCase()}`;
-		paintCanvasChart(chartHost, ts);
-		legendHost.innerHTML = renderSkillLegend(bySkill);
-	}
-
-	paint(initial);
-
-	rangeSel.addEventListener('change', async () => {
-		const meta = RANGES.find((r) => r.key === rangeSel.value);
-		chartHost.innerHTML = `<div class="dn-skeleton" style="width:100%;height:100%;border-radius:8px"></div>`;
-		const from = new Date(Date.now() - meta.days * 86400_000).toISOString();
-		const data = await safe(() =>
-			get(`/api/billing/revenue?from=${encodeURIComponent(from)}&granularity=${meta.granularity}`),
-		);
-		paint(data || { timeseries: [], by_skill: [] });
-	});
-
-	return panel;
-}
-
-function paintCanvasChart(host, timeseries) {
-	if (!timeseries.length) {
-		host.innerHTML = `<div class="dn-empty" style="height:100%;padding:24px"><h3>No revenue yet</h3><p>Payments will appear here as your agents earn.</p></div>`;
-		return;
-	}
-
-	host.innerHTML = '';
-	const canvas = document.createElement('canvas');
-	canvas.style.cssText = 'width:100%;height:100%;display:block';
-	host.appendChild(canvas);
-
-	const dpr = window.devicePixelRatio || 1;
-	const rect = host.getBoundingClientRect();
-	canvas.width = Math.round(rect.width * dpr);
-	canvas.height = Math.round(rect.height * dpr);
-	const ctx = canvas.getContext('2d');
-	ctx.scale(dpr, dpr);
-
-	const W = rect.width;
-	const H = rect.height;
-	const PAD = { top: 20, right: 16, bottom: 32, left: 56 };
-	const innerW = W - PAD.left - PAD.right;
-	const innerH = H - PAD.top - PAD.bottom;
-
-	const data = timeseries.map(p => ({
-		label: formatChartPeriod(p.period),
-		value: Number(p.net_total ?? 0) / 1_000_000,
-	}));
-
-	const max = Math.max(0.01, ...data.map(d => d.value));
-
-	canvas.setAttribute('role', 'img');
-	canvas.setAttribute('aria-label', `Net revenue over time line chart, ${data.length} period${data.length !== 1 ? 's' : ''}, peak $${max.toFixed(max >= 100 ? 0 : 2)}`);
-
-	const points = data.map((d, i) => ({
-		x: PAD.left + (i / Math.max(1, data.length - 1)) * innerW,
-		y: PAD.top + innerH - (d.value / max) * innerH,
-	}));
-
-	// Animate draw — but honor a reduced-motion preference by painting the
-	// final frame immediately (no sweep) for motion-sensitive users.
-	const reduceMotion = typeof window.matchMedia === 'function'
-		&& window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-	let progress = 0;
-	const duration = reduceMotion ? 0 : 600;
-	const startTime = performance.now();
-
-	function draw(now) {
-		progress = Math.min(1, (now - startTime) / duration);
-		const eased = 1 - Math.pow(1 - progress, 3);
-		const visibleCount = Math.max(1, Math.ceil(eased * points.length));
-
-		ctx.clearRect(0, 0, W, H);
-
-		// Grid lines
-		ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-		ctx.lineWidth = 0.5;
-		for (let i = 0; i <= 4; i++) {
-			const y = PAD.top + (i / 4) * innerH;
-			ctx.beginPath();
-			ctx.moveTo(PAD.left, y);
-			ctx.lineTo(W - PAD.right, y);
-			ctx.stroke();
-
-			const val = ((4 - i) / 4) * max;
-			ctx.fillStyle = 'rgba(255,255,255,0.3)';
-			ctx.font = '10px Inter, system-ui, sans-serif';
-			ctx.textAlign = 'right';
-			ctx.fillText('$' + val.toFixed(val >= 100 ? 0 : 2), PAD.left - 8, y + 4);
-		}
-
-		// X labels
-		const showEvery = Math.max(1, Math.ceil(data.length / 10));
-		ctx.fillStyle = 'rgba(255,255,255,0.3)';
-		ctx.font = '10px Inter, system-ui, sans-serif';
-		ctx.textAlign = 'center';
-		data.forEach((d, i) => {
-			if (i % showEvery === 0 && i < visibleCount) {
-				ctx.fillText(d.label, points[i].x, H - 8);
-			}
-		});
-
-		// Gradient fill
-		const visible = points.slice(0, visibleCount);
-		if (visible.length >= 2) {
-			const gradient = ctx.createLinearGradient(0, PAD.top, 0, PAD.top + innerH);
-			gradient.addColorStop(0, 'rgba(74, 222, 128, 0.25)');
-			gradient.addColorStop(1, 'rgba(74, 222, 128, 0)');
-
-			ctx.beginPath();
-			ctx.moveTo(visible[0].x, PAD.top + innerH);
-			visible.forEach(p => ctx.lineTo(p.x, p.y));
-			ctx.lineTo(visible[visible.length - 1].x, PAD.top + innerH);
-			ctx.closePath();
-			ctx.fillStyle = gradient;
-			ctx.fill();
-
-			// Line
-			ctx.beginPath();
-			ctx.moveTo(visible[0].x, visible[0].y);
-			for (let i = 1; i < visible.length; i++) {
-				const prev = visible[i - 1];
-				const cur = visible[i];
-				const cpx = (prev.x + cur.x) / 2;
-				ctx.bezierCurveTo(cpx, prev.y, cpx, cur.y, cur.x, cur.y);
-			}
-			ctx.strokeStyle = '#4ade80';
-			ctx.lineWidth = 2;
-			ctx.stroke();
-
-			// Dots at last point
-			const last = visible[visible.length - 1];
-			ctx.beginPath();
-			ctx.arc(last.x, last.y, 4, 0, Math.PI * 2);
-			ctx.fillStyle = '#4ade80';
-			ctx.fill();
-			ctx.strokeStyle = 'rgba(0,0,0,0.4)';
-			ctx.lineWidth = 1;
-			ctx.stroke();
-		}
-
-		if (progress < 1) requestAnimationFrame(draw);
-	}
-
-	requestAnimationFrame(draw);
-
-	// Tooltip on hover
-	canvas.addEventListener('mousemove', (e) => {
-		const br = canvas.getBoundingClientRect();
-		const mx = e.clientX - br.left;
-		let closest = 0;
-		let closestDist = Infinity;
-		points.forEach((p, i) => {
-			const d = Math.abs(p.x - mx);
-			if (d < closestDist) { closestDist = d; closest = i; }
-		});
-		canvas.title = `${data[closest].label}: $${data[closest].value.toFixed(4)}`;
-	});
-}
-
-function formatChartPeriod(p) {
-	const d = new Date(p);
-	if (isNaN(d)) return String(p).slice(5, 10);
-	return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
-
-function renderSkillLegend(bySkill) {
-	if (!bySkill.length) {
-		return `<span style="color:var(--nxt-ink-fade)">Source breakdown unavailable for this range.</span>`;
-	}
-	const total = bySkill.reduce((s, r) => s + Number(r.net_total || 0), 0) || 1;
-	const swatches = ['#4ade80', '#fbbf24', '#60a5fa', '#f472b6', '#888888', '#fb923c'];
-	return bySkill
-		.slice(0, 6)
-		.map((r, i) => {
-			const pct = ((Number(r.net_total || 0) / total) * 100).toFixed(0);
-			return `<span style="display:inline-flex;align-items:center;gap:7px">
-				<span style="width:9px;height:9px;border-radius:2px;background:${swatches[i % swatches.length]}"></span>
-				<span style="color:var(--nxt-ink)">${esc(revenueSourceLabel(r.skill))}</span>
-				<span style="color:var(--nxt-ink-fade)">${esc(formatUsdc(r.net_total))} · ${pct}%</span>
-			</span>`;
-		})
-		.join('');
-}
-
 // Format a human-denominated USDC amount (not atomics) for the net-take note.
 // Skill prices range from sub-cent (0.001) to dollars, so show enough precision
 // to keep tiny per-call prices meaningful without trailing-zero noise on whole cents.
@@ -927,21 +671,6 @@ function formatUsd(amount) {
 	const n = Number(amount);
 	if (!Number.isFinite(n)) return '$0.00';
 	return n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-}
-
-// The revenue breakdown mixes platform revenue KINDS with real skill names in
-// one column, so the named kinds keep their own plural labels and anything else
-// falls through to the shared skill formatter (which was not applied here
-// before, so a skill named `nft-lookup` rendered as its raw slug).
-function revenueSourceLabel(source) {
-	const kinds = {
-		subscription: 'Subscriptions',
-		api: 'API calls',
-		tip: 'Tips',
-		skill_unlock: 'Skill unlocks',
-		token_royalty: 'Token royalties',
-	};
-	return kinds[source] || skillLabel(source, 'Other');
 }
 
 // -- Recent payments --

@@ -1,7 +1,6 @@
-/* Receipt Vault: the buyer-side mirror of /x402-revenue. Self-contained
+/* Receipt Vault: the buyer's side of the x402 ledger. Self-contained
    (rc- prefix); leans on the shared theme tokens so it tracks light/dark like
-   every other surface. Purple-tinted glass to distinguish "what you bought"
-   from the revenue page's green "what the platform earns". */
+   every other surface. Purple-tinted glass marks "what you bought". */
 
 .rc-shell {
 	--rc-accent: #8b7bf4;

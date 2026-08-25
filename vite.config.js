@@ -635,7 +635,6 @@ const appConfig = {
 				flow: resolve(__dirname, 'pages/flow.html'),
 				symphony: resolve(__dirname, 'pages/symphony.html'),
 				diorama: resolve(__dirname, 'pages/diorama.html'),
-				'x402-revenue': resolve(__dirname, 'pages/x402-revenue.html'),
 				receipts: resolve(__dirname, 'pages/receipts.html'),
 				fits: resolve(__dirname, 'pages/fits.html'),
 				viability: resolve(__dirname, 'pages/viability.html'),
@@ -1308,8 +1307,6 @@ const appConfig = {
 					'/flow/': resolve(root, 'pages/flow.html'),
 					'/symphony': resolve(root, 'pages/symphony.html'),
 					'/symphony/': resolve(root, 'pages/symphony.html'),
-					'/x402-revenue': resolve(root, 'pages/x402-revenue.html'),
-					'/x402-revenue/': resolve(root, 'pages/x402-revenue.html'),
 					'/receipts': resolve(root, 'pages/receipts.html'),
 					'/receipts/': resolve(root, 'pages/receipts.html'),
 					'/fits': resolve(root, 'pages/fits.html'),
@@ -1811,7 +1808,7 @@ const appConfig = {
 							'agent-pumpfun': '/dashboard/tokens',
 							x402: '/dashboard/monetize',
 							storage: '/dashboard/settings',
-							usage: '/dashboard/analytics',
+							usage: '/dashboard/billing',
 						};
 						const slug = path.replace(/^\/dashboard-classic\/?/, '').replace(/\/$/, '');
 						const dest = classicSlugMap[slug] || '/dashboard/';

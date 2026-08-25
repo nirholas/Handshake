@@ -153,9 +153,7 @@ automatically (and `tests/x402-ring-catalog.test.js` fails until it is cataloged
 > not external demand. Treat `x402_volume_metrics` as monitoring, and exclude the
 > seed wallet's `payer` from any "marketplace volume" or facilitator-ranking
 > number you publish. Scaling this loop to manufacture a big volume figure is wash
-> volume — real transactions, fake demand, and detectable on-chain. The full
-> reasoning lives in
-> [x402 revenue → Synthetic vs organic](x402-revenue.md#proof-of-volume--x402_volume_metrics).
+> volume: real transactions, fake demand, and detectable on-chain.
 > Drive *real* volume through external demand (the
 > [Circulation engine](circulation-engine.md), real `agent_hire` commerce,
 > discovery), not a heavier self-paid sweep.
@@ -201,7 +199,7 @@ claims an on-chain settlement — outbound `x402_autonomous_log` rows and inboun
 wallet configured (keyless RPC; the `/api/x402-status` probe it reads is free). A
 `reconciled = false` row means the books claim a settlement the chain does not
 corroborate — the ops financial-integrity surface alerts on those. Detail:
-[x402 revenue → Reconciliation](x402-revenue.md#reconciliation--payment_reconciliation).
+[Financial controls](financial-controls.md).
 
 ## Where results land
 
@@ -211,13 +209,13 @@ corroborate — the ops financial-integrity surface alerts on those. Detail:
 | `oracle_intel_signals` | `oracle` / `sniper` entries, keyed by source + topic; consumed by the sniper oracle gate. Each row carries `tx_signature`, the settle signature of the paid call that bought it, so a gate decision can cite its receipt (surfaced as `signal_receipts` on gate results). |
 | `forge_creations` | Every settled `POST /api/x402/forge` generation (any buyer, not just this loop). The row lands in the public community gallery with `x402_payer` / `x402_tx_sig` / `x402_price_atomic` provenance; the gallery renders a Solscan-linked "x402 · $price" badge. Inline-done lanes materialize immediately; async lanes store the full job token and `api/cron/forge-finalize` completes them server-side. |
 | `agent_custody_events` | The USDC spend, with `category: 'x402'` (see [Money feed](money-feed.md)). |
-| `x402_volume_metrics` | Per-endpoint proof-of-volume + liveness ledger from the Volume Bootstrap Loop (see [x402 revenue](x402-revenue.md#proof-of-volume--x402_volume_metrics)). |
-| `payment_reconciliation` | One verdict per settlement claim from the daily reconciliation job (see [x402 revenue](x402-revenue.md#reconciliation--payment_reconciliation)). |
+| `x402_volume_metrics` | Per-endpoint proof-of-volume + liveness ledger from the Volume Bootstrap Loop. |
+| `payment_reconciliation` | One verdict per settlement claim from the daily reconciliation job (see [Financial controls](financial-controls.md)). |
 | Dedicated stores | Pipeline-specific tables (pricing tracker, reputation snapshots, leaderboard, sniper analytics, …). |
 
 ## Related
 
 - [x402 endpoints](x402-endpoints.md) — the paid endpoints this loop calls.
-- [x402 revenue & receipts](x402-revenue.md) — where settlements land, the proof-of-volume ledger, and the reconciliation job.
+- [Financial controls](financial-controls.md): where settlements land and how the reconciliation job audits them.
 - [x402 buyer client](x402-buyer.md) — the client wrappers it pays with.
 - [Circulation engine](circulation-engine.md) — the separate SOL/$THREE activity loop.

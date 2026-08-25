@@ -3394,59 +3394,6 @@ const SELF_ENDPOINTS = [
 		extractSignal: null,
 	},
 
-	// ── Platform Revenue Analytics (USE-039, Oracle pipeline) ─────────────────
-	// Pays $0.001 USDC every 15 min to POST /api/x402/analytics
-	// ({ report:"revenue", period:"24h" }) and pulls the last 24 hours of real
-	// platform revenue from the settled-payment ledger (x402_audit_log) plus the
-	// measured settlement fee from cross_chain_cost_comparison. extractSignal lifts
-	// { total_usd, top_endpoint, fee_collected } into oracle_intel_signals with
-	// topic 'platform-revenue' so the sniper gate sees live platform health data.
-	// The oracle upsert carries signal ('healthy'|'active'|'quiet') and a human
-	// headline so the status dashboard can render it without re-querying.
-	// Cooldown 900s (15 min) → 96 calls/day ≈ $0.096/day, well inside the loop cap.
-	// Downstream consumers:
-	//   • oracle_intel_signals WHERE topic = 'platform-revenue' — sniper gate health
-	//   • x402_autonomous_log signal_data — autonomous loop status view
-	{
-		id: 'platform-revenue-analytics',
-		name: 'Platform Revenue Analytics',
-		path: '/api/x402/analytics',
-		method: 'POST',
-		body: { report: 'revenue', period: '24h' },
-		cooldown_s: 900,
-		priority: 87,
-		pipeline: 'oracle',
-		enabled: true,
-		extractSignal: (r) => {
-			const grossUsd = parseFloat(r?.totals?.gross_usd || '0');
-			const feeUsd = parseFloat(r?.fee_splits?.settlement_fee_usd || '0');
-			const payments = r?.totals?.total_payments ?? 0;
-			const topEndpoint = r?.top_endpoint?.endpoint ?? null;
-			const topCount = r?.top_endpoint?.count ?? 0;
-			const topGross = r?.top_endpoint?.gross_usd ?? '0';
-			const signal = grossUsd >= 0.10 ? 'healthy' : payments > 0 ? 'active' : 'quiet';
-			const headline = payments > 0
-				? `Platform earned $${grossUsd.toFixed(4)} gross in 24h across ${payments} payments${topEndpoint ? `; top: ${topEndpoint}` : ''}`
-				: 'No settled payments in the last 24h';
-			return {
-				topic: 'platform-revenue',
-				signal,
-				headline,
-				confidence: 1.0,
-				price_usd: grossUsd,
-				total_usd: grossUsd.toFixed(6),
-				top_endpoint: topEndpoint,
-				top_endpoint_count: topCount,
-				top_endpoint_gross: topGross,
-				fee_collected: feeUsd.toFixed(6),
-				net_platform_usd: r?.totals?.net_platform_usd ?? null,
-				total_payments: payments,
-				unique_payers: r?.totals?.unique_payers ?? 0,
-				period: r?.period ?? '24h',
-				generated_at: r?.generated_at ?? null,
-			};
-		},
-	},
 	// ── Sniper Trade Performance Analytics (USE-041) ──────────────────────────
 	// Pays $0.005 USDC every 5 minutes to POST /api/x402/analytics with
 	// { report: "sniper_trades", period: "24h" } to fetch the autonomous sniper's

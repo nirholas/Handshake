@@ -180,10 +180,8 @@ separate branch/DB, and there is no dead-letter for dropped writes.
 There is **no consolidated, admin-authenticated, all-flows ledger export** and no
 cost side, so **a full P&L / cash-flow cannot be produced today**. What exists:
 
-- `api/x402-revenue.js?view=export` → CSV, **x402 settlements only**.
-- `POST api/x402/analytics` body `{"report":"revenue"}` (a paid x402 endpoint) →
-  JSON, x402 only; **net is derived** (gross − count × measured avg per-tx
-  settlement cost over the window), not actual per-tx fees.
+- `x402_audit_log` and the signed `x402_receipts` rows hold every x402
+  settlement; there is no self-serve export of them.
 - `api/billing/invoices.js?format=csv` → per-user metered usage, owner-scoped only.
 - `api/x402/my-receipts.js` → a buyer's own signed receipts.
 
@@ -292,6 +290,5 @@ Ranked by accounting/regulatory risk. Each is a tracked remediation item.
 ## Related
 
 - [Money map](money-map.md) — who receives each payment.
-- [x402 revenue & receipts](x402-revenue.md) — the x402 recording detail.
 - [x402 endpoints](x402-endpoints.md) — the paid endpoint catalog.
 - [Solana signers runbook](../api/_lib/solana-signers.js) — the wallets + funding.

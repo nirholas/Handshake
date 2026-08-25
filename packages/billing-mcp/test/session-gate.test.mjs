@@ -19,7 +19,7 @@ import { TOOLS } from '../src/index.js';
 import { THREE_WS_SESSION } from '../src/config.js';
 
 const byName = Object.fromEntries(TOOLS.map((t) => [t.name, t]));
-const SESSION_SCOPED = ['get_billing_summary', 'query_usage', 'export_billing_history', 'get_receipt', 'get_revenue'];
+const SESSION_SCOPED = ['get_billing_summary', 'query_usage', 'export_billing_history', 'get_receipt'];
 const PUBLIC = ['get_fee_info'];
 
 test('the tool list is exactly the session-scoped reads plus the public one', () => {

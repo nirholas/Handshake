@@ -49,7 +49,7 @@ Query: "get paid"
   Meter any endpoint with x402 and let other agents pay to use it.
     1. Wire the paywall in x402 Studio.                        -> /x402/studio
     2. Follow the worked example of a paid endpoint end to end. -> /tutorials/paid-x402-endpoint
-    3. Watch the receipts and revenue come in.                 -> /x402-revenue
+    3. Watch the signed receipts come in.                      -> /receipts
 ```
 
 Tasks appear above page results and only on a real signal (an exact-ish match on

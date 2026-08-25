@@ -240,7 +240,7 @@ export const NAV_GROUPS = [
 						href: '/monitor',
 						badge: 'Live',
 						badgeTone: 'live',
-						desc: 'Ops-room board for the whole fleet: live activity, money pulse, x402 revenue & platform health on one screen',
+						desc: 'Ops-room board for the whole fleet: live activity, money pulse, agent hires & platform health on one screen',
 					},
 					{ title: 'Marketplace', href: '/marketplace', desc: 'Buy, sell & remix agents' },
 					{

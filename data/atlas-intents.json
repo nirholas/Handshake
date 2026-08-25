@@ -144,8 +144,7 @@
 			],
 			"steps": [
 				{ "do": "Wire the paywall in x402 Studio.", "to": "/x402/studio" },
-				{ "do": "Follow the worked example of a paid endpoint end to end.", "to": "/tutorials/paid-x402-endpoint" },
-				{ "do": "Watch the receipts and revenue come in.", "to": "/x402-revenue" }
+				{ "do": "Follow the worked example of a paid endpoint end to end.", "to": "/tutorials/paid-x402-endpoint" }
 			]
 		},
 		{

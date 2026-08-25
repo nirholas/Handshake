@@ -625,8 +625,8 @@ async function main() {
 		check('a sixth POST in a day is rate limited -> 429', r.status === 429, `status ${r.status}`);
 	}
 
-	// seeded revenue, then revenue.js and a live withdrawal
-	step('6. seeded revenue -> /api/monetization/revenue');
+	// seeded revenue events, then a live withdrawal against them
+	step('6. seed revenue events');
 	const { rows: [ownerRow] } = await db.query('select id from users where email = $1', [ownerEmail]);
 	// Revenue events reference a payment intent (FK), so seed real intents.
 	for (const [i, [skill, gross, fee, net]] of [
@@ -649,43 +649,6 @@ async function main() {
 		);
 	}
 	pass('seeded 3 real revenue events', '6.000000 USDC gross across 2 skills');
-
-	{
-		const r = await http.req('GET', '/api/monetization/revenue', { anonymous: true });
-		check('GET unauthenticated -> 401', r.status === 401, `status ${r.status}`);
-	}
-	{
-		const r = await http.req('GET', '/api/monetization/revenue?period=forever');
-		check('GET with an unknown period -> 400', r.status === 400, `status ${r.status}`);
-	}
-	{
-		const r = await http.req('GET', '/api/monetization/revenue?agent_id=not-a-uuid');
-		check('GET with a malformed agent_id -> 400', r.status === 400, `status ${r.status}`);
-	}
-	{
-		const r = await http.req('GET', `/api/monetization/revenue?agent_id=${GHOST}`);
-		check('GET for an unknown agent -> 404', r.status === 404, `status ${r.status}`);
-	}
-	{
-		const r = await other.req('GET', `/api/monetization/revenue?agent_id=${agentId}`);
-		check("GET scoped to someone else's agent -> 403", r.status === 403, `status ${r.status}`);
-	}
-	{
-		const r = await http.req('GET', `/api/monetization/revenue?agent_id=${agentId}&period=7d`);
-		const ok = r.status === 200 && r.json.total_usdc === 6 && r.json.total_fees_usdc === 0.15
-			&& r.json.net_usdc === 5.85 && r.json.event_count === 3 && r.json.by_skill.length === 2;
-		check('GET aggregates gross/fee/net and the per-skill split', ok,
-			`gross ${r.json?.total_usdc}, fees ${r.json?.total_fees_usdc}, net ${r.json?.net_usdc}, ${r.json?.by_skill?.length} skills, ${r.json?.by_day?.length} days`);
-	}
-	{
-		const r = await http.req('GET', `/api/monetization/revenue?agent_id=${agentId}&period=all`);
-		check('period=all uses the unbounded window', r.status === 200 && r.json.event_count === 3, `events ${r.json?.event_count}`);
-	}
-	{
-		const r = await other.req('GET', '/api/monetization/revenue?period=all');
-		check('a user with no agents sees zeroed totals', r.status === 200 && r.json.total_usdc === 0 && r.json.by_skill.length === 0,
-			`total ${r.json?.total_usdc}`);
-	}
 
 	step('7. /api/monetization/withdrawals (funded)');
 	{

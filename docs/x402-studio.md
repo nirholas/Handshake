@@ -95,7 +95,7 @@ const { tx_base64, blockhash } = await res.json();
 ## Related
 
 - [x402: paid agent skills](./x402.md): the payment protocol Studio sits on top of
-- [x402 revenue and receipts](./x402-revenue.md): where settled payments are recorded
+- [Financial controls](./financial-controls.md): where settled payments are recorded
 - [x402 paid endpoints](./x402-endpoints.md): the platform's own catalog of paid endpoints
 - [x402 buyer client](./x402-buyer.md): the caller side of a 402 challenge
 - [x402 developer tools](./x402-dev-tools.md) and [x402 distribution](./x402-distribution.md)

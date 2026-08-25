@@ -345,47 +345,6 @@ function renderLaunches(launches) {
 		.join('');
 }
 
-/* ---------------- x402 revenue ---------------- */
-
-let x402Period = '24h';
-
-async function loadX402() {
-	const body = $('x402-body');
-	const badge = $('x402-badge');
-	try {
-		const { data } = await getJson('/api/x402-revenue?view=stats&period=' + encodeURIComponent(x402Period));
-		badge.dataset.tone = '';
-		badge.textContent = 'USDC';
-		stamp(badge);
-		const t = data.totals || {};
-		const endpoints = (data.by_endpoint || []).slice(0, 5);
-		const top = Math.max(0.000001, ...endpoints.map((e) => Number(e.gross_usd) || 0));
-		body.innerHTML = `
-			<div class="rev-tiles">
-				<div class="tile"><div class="tile-val" data-tone="green">${usd(t.gross_usd)}</div><div class="tile-lbl">gross ${esc(x402Period)}</div></div>
-				<div class="tile"><div class="tile-val">${nf.format(t.total_payments ?? 0)}</div><div class="tile-lbl">settlements</div></div>
-				<div class="tile"><div class="tile-val">${nf.format(t.unique_payers ?? 0)}</div><div class="tile-lbl">payers</div></div>
-				<div class="tile"><div class="tile-val">${usd(t.avg_payment_usd, 4)}</div><div class="tile-lbl">avg payment</div></div>
-			</div>
-			${endpoints
-				.map((e) => {
-					const g = Number(e.gross_usd) || 0;
-					return `<div class="bar-row"><span class="bar-name">${esc((e.endpoint || '').replace('/api/x402/', '').replace('/api/', ''))}</span><span class="bar-val">${usd(g)} · ${nf.format(e.count || 0)}x</span><div class="bar-track"><div class="bar-fill" style="width:${Math.max(2, Math.round((g / top) * 100))}%"></div></div></div>`;
-				})
-				.join('') || `<div class="panel-empty">No settled endpoint revenue in the last ${esc(x402Period)}.</div>`}`;
-	} catch (err) {
-		showError(body, badge, 'Revenue ledger unreachable (' + err.message + ').', loadX402);
-	}
-}
-
-$('x402-period').addEventListener('click', (e) => {
-	const btn = e.target.closest('button[data-period]');
-	if (!btn || btn.getAttribute('aria-pressed') === 'true') return;
-	x402Period = btn.dataset.period;
-	$('x402-period').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'));
-	loadX402();
-});
-
 /* ---------------- agent-to-agent hires ---------------- */
 
 let a2aWindow = 30;
@@ -632,7 +591,6 @@ const JOBS = [
 	[loadFleet, 60],
 	[loadOnAir, 30],
 	[loadPulseStats, 60],
-	[loadX402, 90],
 	[loadA2A, 120],
 	[loadWire, 15],
 	[loadForge, 120],

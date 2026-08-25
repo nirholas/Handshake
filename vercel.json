@@ -922,10 +922,6 @@
 			"dest": "/symphony.html"
 		},
 		{
-			"src": "/x402-revenue/?",
-			"dest": "/x402-revenue.html"
-		},
-		{
 			"src": "/receipts/?",
 			"dest": "/receipts.html"
 		},
@@ -2115,7 +2111,7 @@
 		{
 			"src": "/dashboard-classic/usage",
 			"headers": {
-				"Location": "/dashboard/analytics"
+				"Location": "/dashboard/billing"
 			},
 			"status": 301
 		},
@@ -2177,10 +2173,6 @@
 		{
 			"src": "/dashboard/holders/?",
 			"dest": "/dashboard-next/holders.html"
-		},
-		{
-			"src": "/dashboard/analytics/?",
-			"dest": "/dashboard-next/analytics.html"
 		},
 		{
 			"src": "/dashboard/monetize/?",
@@ -2310,7 +2302,7 @@
 		{
 			"src": "/dashboard/usage",
 			"headers": {
-				"Location": "/dashboard/analytics"
+				"Location": "/dashboard/billing"
 			},
 			"status": 301
 		},
@@ -3365,10 +3357,6 @@
 		{
 			"src": "/api/pulse",
 			"dest": "/api/pulse.js"
-		},
-		{
-			"src": "/api/x402-revenue",
-			"dest": "/api/x402-revenue.js"
 		},
 		{
 			"src": "/api/pipeline",
@@ -4623,10 +4611,6 @@
 		{
 			"src": "/api/billing/summary",
 			"dest": "/api/billing/summary"
-		},
-		{
-			"src": "/api/billing/revenue",
-			"dest": "/api/billing/revenue"
 		},
 		{
 			"src": "/api/three-token/([^/]+)",

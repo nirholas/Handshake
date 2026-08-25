@@ -258,7 +258,7 @@ directory.
 
 | Endpoint                           | Default  | Returns                                                                                                                                                           |
 | ---------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/api/x402/analytics`              | $0.005   | Platform reports — pick `report=revenue` for the x402 endpoint-revenue summary (see [x402 revenue & receipts](x402-revenue.md)), plus club and listing analytics. |
+| `/api/x402/analytics`              | $0.005   | Platform reports: club and listing analytics.                                                                                                                     |
 | `/api/x402/mcp-tool-catalog`       | $0.001   | Snapshot of every MCP tool (name, paid/free, price, input shape) and a diff vs the last snapshot (added / removed / re-priced tools).                           |
 | **Free read surfaces**             | —        | —                                                                                                                                                                 |
 | `/api/x402/my-receipts`            | free     | A buyer's own settled receipts, gated by a wallet signature (SIWX) rather than a payment.                                                                         |
@@ -285,6 +285,6 @@ input and do not promote any specific token.
 - [Pump Launcher](pump-launcher.md) — the full launch flow, inputs/outputs, and the free `symbol` → launch → `launches` funnel.
 - [x402 protocol](x402.md) — the challenge/settle mechanics.
 - [x402 buyer client](x402-buyer.md) — how to pay these endpoints in code.
-- [x402 revenue & receipts](x402-revenue.md) — where settled payments are recorded and how to read endpoint revenue.
+- [Financial controls](financial-controls.md): where settled payments are recorded.
 - [Autonomous x402 loop](autonomous-x402.md) — the scheduled buyer that drives volume through these endpoints.
 - [MCP tools](mcp-tools.md) — the same capabilities exposed as paid MCP tools.

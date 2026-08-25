@@ -60,7 +60,6 @@ const STATE = {
 	wallet: null,
 	withdrawals: [],
 	earnings: null, // { pending_usd, settled_usd, entries }
-	revenue: null,
 	analytics: null,
 	firstSaleFired: false,
 };
@@ -79,7 +78,7 @@ const STATE = {
 				</div>
 				<div class="cs-head-controls">
 					<div data-slot="agent-selector"></div>
-					<select data-slot="period" class="cs-select" aria-label="Earnings period">
+					<select data-slot="period" class="cs-select" aria-label="Analytics period">
 						${PERIODS.map((p) => `<option value="${p.key}"${p.key === STATE.period ? ' selected' : ''}>${esc(p.label)}</option>`).join('')}
 					</select>
 				</div>
@@ -172,7 +171,7 @@ async function loadAndRender(host) {
 	const periodMeta = PERIODS.find((p) => p.key === STATE.period) || PERIODS[1];
 	const days = periodMeta.days;
 
-	const [prices, rulesResp, wallet, withdrawalsResp, earnings, revenue, analytics] = await Promise.all([
+	const [prices, rulesResp, wallet, withdrawalsResp, earnings, analytics] = await Promise.all([
 		safe(() => get(`/api/monetization/prices?agent_id=${encodeURIComponent(agentId)}`)),
 		safe(() => get(`/api/agents/${encodeURIComponent(agentId)}/pricing-rules`)),
 		safe(() => get(`/api/monetization/wallet?agent_id=${encodeURIComponent(agentId)}`)),
@@ -182,12 +181,11 @@ async function loadAndRender(host) {
 		// and answers "user not found" for a user literally named "earnings",
 		// which safe() then discards, leaving the panel silently empty.
 		safe(() => get('/api/users/me/earnings')),
-		safe(() => get(`/api/monetization/revenue?agent_id=${encodeURIComponent(agentId)}&period=${encodeURIComponent(STATE.period)}`)),
 		safe(() => get(`/api/creators/skill-analytics?agent_id=${encodeURIComponent(agentId)}&days=${days}`)),
 	]);
 
 	// If literally everything failed, this is a service problem — say so once.
-	if (!prices && !wallet && !revenue && !earnings && !analytics) {
+	if (!prices && !wallet && !earnings && !analytics) {
 		ensureStateKitStyles();
 		host.innerHTML = errorStateHTML({
 			title: "Couldn't load your Creator Studio",
@@ -206,25 +204,23 @@ async function loadAndRender(host) {
 	STATE.withdrawals = withdrawalsResp?.withdrawals || [];
 	STATE.balance = withdrawalsResp?.balance || null;
 	STATE.earnings = earnings || { pending_usd: 0, settled_usd: 0, entries: [] };
-	STATE.revenue = revenue || null;
 	STATE.analytics = analytics?.data || null;
 
-	const hasSale = Number(revenue?.event_count || 0) > 0 || (STATE.earnings.entries || []).length > 0;
+	const hasSale = Number(STATE.balance?.earned_usdc || 0) > 0 || (STATE.earnings.entries || []).length > 0;
 	const hasPayout = Boolean(STATE.wallet?.solana_address || STATE.wallet?.evm_address);
 
-	// Fire the first-sale funnel step once, when we first observe revenue.
+	// Fire the first-sale funnel step once, when we first observe a settled sale.
 	if (hasSale && !STATE.firstSaleFired) {
 		STATE.firstSaleFired = true;
 		trackFunnelStep('creator', ANALYTICS_EVENTS.CREATOR_FIRST_SALE, {
 			agent_id: agentId,
-			revenue_usd: Number(revenue?.net_usdc || 0),
+			revenue_usd: Number(STATE.balance?.earned_usdc || 0),
 		});
 	}
 
 	host.innerHTML = '';
 	host.appendChild(renderOnboarding({ hasPayout, hasSale }));
 	host.appendChild(renderEarningsHero());
-	host.appendChild(renderRevenueChart());
 	host.appendChild(renderPriceEditor(host));
 	host.appendChild(renderSkillAnalytics());
 	host.appendChild(renderPayoutPanel(host));
@@ -293,25 +289,20 @@ function renderOnboarding({ hasPayout, hasSale }) {
 // ── Earnings hero ────────────────────────────────────────────────────────────
 
 function renderEarningsHero() {
-	const r = STATE.revenue || {};
-	const gross = Number(r.total_usdc || 0);
-	const net = Number(r.net_usdc || 0);
-	const fees = Number(r.total_fees_usdc || 0);
-	const count = Number(r.event_count || 0);
 	// Unsettled = not yet in the author's wallet. 'settling' rows are claimed by
 	// an in-flight redeem pass, so counting only 'pending' understated what the
 	// author is still owed.
 	const pending = Number(STATE.earnings?.pending_usd || 0) + Number(STATE.earnings?.settling_usd || 0);
+	const earned = Number(STATE.balance?.earned_usdc || 0);
+	const withdrawn = Number(STATE.balance?.withdrawn_usdc || 0);
 	const available = Number(STATE.balance?.available_usdc || 0);
-	const periodLabel = (PERIODS.find((p) => p.key === STATE.period) || PERIODS[1]).label.toLowerCase();
 
 	const wrap = document.createElement('div');
 	wrap.className = 'cs-hero';
-	wrap.appendChild(heroCard({ title: 'Net earnings', value: usd(net), sub: `After platform fees · ${periodLabel}`, accent: 'good' }));
-	wrap.appendChild(heroCard({ title: 'Gross volume', value: usd(gross), sub: `${count} paid call${count === 1 ? '' : 's'} · ${periodLabel}` }));
-	wrap.appendChild(heroCard({ title: 'Platform fees', value: usd(fees), sub: 'Deducted from gross', accent: 'warn' }));
-	wrap.appendChild(heroCard({ title: 'Pending royalties', value: usd(pending), sub: pending > 0 ? 'Settling to your wallet on-chain' : 'No unsettled royalties', accent: 'accent' }));
 	wrap.appendChild(heroCard({ title: 'Available to withdraw', value: usd(available), sub: 'Settled balance, minus inflight', accent: 'good' }));
+	wrap.appendChild(heroCard({ title: 'Total earned', value: usd(earned), sub: 'Lifetime, after platform fees' }));
+	wrap.appendChild(heroCard({ title: 'Withdrawn', value: usd(withdrawn), sub: 'Paid out to your wallet' }));
+	wrap.appendChild(heroCard({ title: 'Pending royalties', value: usd(pending), sub: pending > 0 ? 'Settling to your wallet on-chain' : 'No unsettled royalties', accent: 'accent' }));
 	return wrap;
 }
 
@@ -324,99 +315,6 @@ function heroCard({ title, value, sub, accent }) {
 		<div class="cs-hero-value" style="color:${color}">${esc(value)}</div>
 		<div class="dn-panel-sub">${esc(sub)}</div>`;
 	return el;
-}
-
-// ── Revenue chart ────────────────────────────────────────────────────────────
-
-function renderRevenueChart() {
-	const panel = document.createElement('div');
-	panel.className = 'dn-panel';
-	const series = (STATE.revenue?.by_day || []).map((d) => ({ label: d.date, value: Number(d.total || 0) }));
-	panel.innerHTML = `
-		<div class="cs-panel-head">
-			<div>
-				<div class="dn-panel-title">Earnings over time</div>
-				<div class="dn-panel-sub">Net USDC per day from skill calls.</div>
-			</div>
-		</div>
-		<div data-slot="chart" class="cs-chart"></div>`;
-	const chartHost = panel.querySelector('[data-slot="chart"]');
-	if (!series.length) {
-		chartHost.innerHTML = `
-			<div class="dn-empty">
-				<h3>No sales yet</h3>
-				<p>Price a skill below, then embed your agent or share it. Your first earnings will chart here.</p>
-			</div>`;
-	} else {
-		requestAnimationFrame(() => paintChart(chartHost, series));
-	}
-	return panel;
-}
-
-function paintChart(host, series) {
-	host.innerHTML = '';
-	const canvas = document.createElement('canvas');
-	canvas.style.cssText = 'width:100%;height:100%;display:block';
-	host.appendChild(canvas);
-	const dpr = window.devicePixelRatio || 1;
-	const rect = host.getBoundingClientRect();
-	const W = rect.width || 600;
-	const H = rect.height || 220;
-	canvas.width = Math.round(W * dpr);
-	canvas.height = Math.round(H * dpr);
-	const ctx = canvas.getContext('2d');
-	ctx.scale(dpr, dpr);
-
-	const PAD = { t: 16, r: 14, b: 26, l: 52 };
-	const innerW = W - PAD.l - PAD.r;
-	const innerH = H - PAD.t - PAD.b;
-	const max = Math.max(0.01, ...series.map((d) => d.value));
-	const pts = series.map((d, i) => ({
-		x: PAD.l + (i / Math.max(1, series.length - 1)) * innerW,
-		y: PAD.t + innerH - (d.value / max) * innerH,
-		d,
-	}));
-
-	canvas.setAttribute('role', 'img');
-	canvas.setAttribute('aria-label', `Net earnings, ${series.length} day${series.length === 1 ? '' : 's'}, peak ${usd(max)}`);
-
-	ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-	ctx.fillStyle = 'rgba(255,255,255,0.32)';
-	ctx.font = '10px Inter, system-ui, sans-serif';
-	ctx.lineWidth = 0.5;
-	for (let i = 0; i <= 4; i++) {
-		const y = PAD.t + (i / 4) * innerH;
-		ctx.beginPath(); ctx.moveTo(PAD.l, y); ctx.lineTo(W - PAD.r, y); ctx.stroke();
-		ctx.textAlign = 'right';
-		ctx.fillText(usd(((4 - i) / 4) * max), PAD.l - 8, y + 3);
-	}
-	const every = Math.max(1, Math.ceil(series.length / 8));
-	ctx.textAlign = 'center';
-	series.forEach((d, i) => { if (i % every === 0) ctx.fillText(shortDate(d.label), pts[i].x, H - 8); });
-
-	if (pts.length >= 2) {
-		const grad = ctx.createLinearGradient(0, PAD.t, 0, PAD.t + innerH);
-		grad.addColorStop(0, 'rgba(74,222,128,0.25)');
-		grad.addColorStop(1, 'rgba(74,222,128,0)');
-		ctx.beginPath();
-		ctx.moveTo(pts[0].x, PAD.t + innerH);
-		pts.forEach((p) => ctx.lineTo(p.x, p.y));
-		ctx.lineTo(pts[pts.length - 1].x, PAD.t + innerH);
-		ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
-	}
-	ctx.beginPath();
-	pts.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
-	ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 2; ctx.stroke();
-	const last = pts[pts.length - 1];
-	ctx.beginPath(); ctx.arc(last.x, last.y, 3.5, 0, Math.PI * 2); ctx.fillStyle = '#4ade80'; ctx.fill();
-
-	canvas.addEventListener('mousemove', (e) => {
-		const br = canvas.getBoundingClientRect();
-		const mx = e.clientX - br.left;
-		let best = 0, bd = Infinity;
-		pts.forEach((p, i) => { const dd = Math.abs(p.x - mx); if (dd < bd) { bd = dd; best = i; } });
-		canvas.title = `${shortDate(series[best].label)}: ${usd(series[best].value)}`;
-	});
 }
 
 // ── Price editor (base price + $THREE ladder + dynamic rules) ─────────────────
@@ -1079,10 +977,10 @@ function renderNoAgents() {
 }
 
 function saleCountForSkill(skill) {
-	// Confirmed-sale count drives first_n / after_n rule evaluation. Use the
-	// real per-skill revenue breakdown from /api/monetization/revenue.
-	const row = (STATE.revenue?.by_skill || []).find((s) => s.skill === skill);
-	return Number(row?.count || 0);
+	// Confirmed-sale count drives first_n / after_n rule evaluation. It comes
+	// from the real per-skill call ledger behind /api/creators/skill-analytics.
+	const row = (STATE.analytics?.by_skill || []).find((s) => s.skill_name === skill);
+	return Number(row?.total_calls || 0);
 }
 
 function usd(n) {

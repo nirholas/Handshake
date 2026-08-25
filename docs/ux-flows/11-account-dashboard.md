@@ -14,7 +14,6 @@ Resolved from `vercel.json` (`routes`) and `vite.config.js` (`vercel-rewrites` d
 | `/reset-password` | `public/reset-password.html` | inline JS (atlas-adjacent; documented as the completion of forgot-password) |
 | `/dashboard` | `pages/dashboard-next/index.html` | `src/dashboard-next/pages/home.js` |
 | `/dashboard/account` | `pages/dashboard-next/account.html` | `src/dashboard-next/pages/account.js` |
-| `/dashboard/analytics` | `pages/dashboard-next/analytics.html` | `src/dashboard-next/pages/analytics.js` |
 | `/dashboard/settings` | `pages/dashboard-next/settings.html` | `src/dashboard-next/pages/settings.js` |
 | `/settings` | `public/settings/index.html` | inline module script |
 
@@ -116,7 +115,7 @@ Shared auth concepts:
   9. (optional) Use the sidebar to navigate to sub-pages (account, analytics, settings, agents, avatars, tokens, monetize, etc.); open the command palette; open the live-event drawer (pulses on new events); dismiss onboarding/announce banners.
   10. (optional) If the user arrived via a referral link, `claimPendingReferral()` attributes it now that a session exists (no-op otherwise). It runs from the shared shell (`src/dashboard-next/shell.js`), so it fires on every dashboard page, not just the overview.
 - **Decision points / branches:** New vs returning user (onboarding banner); each data slot renders, empties, or errors independently; referral-claim runs only with a pending code.
-- **External calls / dependencies:** `GET /api/auth/me`, `GET /api/avatars`, `GET /api/widgets`, `GET /api/agents`; the trading strip fetches `GET /api/sniper/strategy?limit=30`, `GET /api/copy/subscriptions`, `GET /api/oracle/stats`, `GET /api/oracle/feed?tier=prime&limit=3&network=mainnet`; KPI/activity refresh adds `GET /api/billing/revenue` and per-widget `GET /api/widgets/{id}/stats` / `.../transcripts`; shared `tour.js`, `crypto-optional.js`, `log.js`.
+- **External calls / dependencies:** `GET /api/auth/me`, `GET /api/avatars`, `GET /api/widgets`, `GET /api/agents`; the trading strip fetches `GET /api/sniper/strategy?limit=30`, `GET /api/copy/subscriptions`, `GET /api/oracle/stats`, `GET /api/oracle/feed?tier=prime&limit=3&network=mainnet`; KPI/activity refresh adds per-widget `GET /api/widgets/{id}/stats` / `.../transcripts`; shared `tour.js`, `crypto-optional.js`, `log.js`.
 - **Success state:** Authenticated overview rendered with live KPIs, hero avatars, and activity; navigation chrome fully wired.
 - **Empty / error states:** Per-slot skeletons during load; new-user onboarding panel as the "empty" guidance; failed data fetches degrade per slot (empty arrays) rather than failing the page; unauthenticated → redirect to `/login`.
 - **Step count:** 8 required (+2 optional)
@@ -144,23 +143,6 @@ Shared auth concepts:
 - **Step count:** 2 required (boot + render) (+7 optional management flows)
 
 ---
-
-### Analytics — `/dashboard/analytics`
-- **Source:** `src/dashboard-next/pages/analytics.js` (+ shell + `api.js` + shared `state-kit`). `/dashboard/usage` 301s here.
-- **Entry point:** Sidebar "Analytics"; "View analytics" links.
-- **Prerequisites / gates:** Signed-in required (`requireUser()`; 401 → `/login?return=…`).
-- **Steps (N):**
-  1. Boot: `mountShell()` → `requireUser()`; title "Analytics" + subtitle render.
-  2. Skeletons render (4 KPI bones + 3 panel bones).
-  3. Parallel fetch for the selected range (default **30 days**): `GET /api/billing/revenue?from&to&granularity`, `GET /api/agents?limit=50`, `GET /api/widgets`, `GET /api/billing/summary` (+ `GET /api/monetization/revenue?period=…`).
-  4. Secondary fetches: per-widget `GET /api/widgets/{id}/stats` (up to 20) and `GET /api/agents/{id}/payments?direction=received&limit=5` for the top 5 agents.
-  5. Render: **range bar** (7d / 30d / 90d / 12mo), **KPI cards** (Total Revenue, Total Callers, Avg Price/Call, Top Agent), **Revenue Over Time** canvas line chart (animated, hover tooltip), **Revenue by Skill** horizontal bars (top 8), **Agent Performance** table (Views / Chats / Conv.%), **Recent Activity** table (latest 20 payments with Settled/Failed/Pending badges).
-  6. **(optional)** Click a range button → refetch with new `from/to/granularity` → re-render with chart re-animation.
-- **Decision points / branches:** Time-range selection drives granularity (day vs week). Critical error only when all four primary surfaces fail; individual fetches degrade silently via a `safe()` wrapper.
-- **External calls / dependencies:** `GET /api/auth/me`, `/api/billing/revenue`, `/api/agents`, `/api/widgets`, `/api/billing/summary`, `/api/monetization/revenue`, `/api/widgets/{id}/stats`, `/api/agents/{id}/payments`.
-- **Success state:** Fully rendered metrics dashboard with live charts and tables for the chosen window.
-- **Empty / error states:** Panel-level empties — "No revenue data for this period. Set up monetization" (→ `/dashboard/monetize`), "No skill revenue yet", "No agents yet. Create one" (→ `/dashboard/agents`), "No revenue events yet…"; global "Couldn't load analytics" with a Reload button when all primary surfaces fail; skeletons during load.
-- **Step count:** 5 required (+1 optional)
 
 ---
 

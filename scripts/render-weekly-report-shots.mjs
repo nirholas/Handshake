@@ -34,7 +34,6 @@ const pages = [
   ['ar-studio', '/ar/studio'],
   ['character-library', '/character-library'],
   ['reputation-market', '/reputation/market'],
-  ['x402-revenue', '/x402-revenue'],
   ['pulse', '/pulse'],
   ['arena', '/arena'],
   ['launchpad', '/launchpad'],

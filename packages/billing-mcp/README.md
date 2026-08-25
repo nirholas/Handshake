@@ -72,10 +72,9 @@ npx -y @modelcontextprotocol/inspector npx @three-ws/billing-mcp
 | `query_usage`              | read · session    | Metered usage rolled into an invoice statement for a period, per-action line items, totals, and reconciliation.            |
 | `export_billing_history`   | read · session    | The same line items as a ready-to-save CSV payload (with a suggested filename and a parsed preview).                        |
 | `get_receipt`              | read · session    | One itemized receipt, per-charge by `event_id` (with settlement tx + explorer link) or a signed skill-purchase receipt by `purchase_id`. |
-| `get_revenue`              | read · session    | Earnings for the agents you own, gross/fee/net, per-skill and over time, plus creator-subscription income.                 |
 | `get_fee_info`             | read · **public** | The current platform fee rate (`fee_bps` + `fee_percent`). Needs no session.                                                |
 
-Everything reads live state: usage, invoices, and earnings all move between calls, so no tool is idempotent, and nothing here mutates anything.
+Everything reads live state: usage and invoices move between calls, so no tool is idempotent, and nothing here mutates anything.
 
 ### Input parameters
 
@@ -86,8 +85,6 @@ Everything reads live state: usage, invoices, and earnings all move between call
 **`export_billing_history`**: `period`, `from`, `to` (same as `query_usage`), `preview_rows` (0-100, default 5, how many parsed rows to echo in `preview`; the full CSV is always returned).
 
 **`get_receipt`**: exactly one of `event_id` (numeric, per-charge receipt) or `purchase_id` (UUID, signed skill-purchase receipt).
-
-**`get_revenue`**: `agent_id` (UUID, optional: narrow to one agent), `from` / `to` (ISO-8601, default last 30 days), `granularity` (`day` | `week` | `month`, default `day`).
 
 **`get_fee_info`**: none.
 
@@ -164,20 +161,16 @@ returning empty data:
   "message": "/api/billing/summary is account-scoped and needs your three.ws session. …" }
 ```
 
-## What you owe vs. what you earned
-
-Two sides of the same account, two tools:
+## What you owe
 
 - **"What did this cost me?"** → `query_usage` / `export_billing_history` / `get_receipt`, metered charges, the period statement, and the receipt behind any single charge.
-- **"What did my agents make?"** → `get_revenue`: gross/fee/net earnings, per-skill and over time, plus creator-subscription income.
 
-`get_billing_summary` sits above both: your plan, its quota ceilings, and how much headroom is left.
+`get_billing_summary` sits above them: your plan, its quota ceilings, and how much headroom is left.
 
 ## Money & units
 
 - Charge amounts are in **USDC atomics** (6 decimals) alongside a human `*_usd` string, e.g. `gross_atomics: "150000"` is `gross_usd: "0.15"`.
-- `get_revenue` earnings totals are in the **token's atomic units** (`currency_mint` / `chain` identify the token); creator-subscription income is reported separately in **USD** because it settles directly to your wallet, never mixing units with the withdrawable pool.
-- `reconciliation` on the usage and revenue reads tells you whether every metered charge maps to a real on-chain settlement (`all_reconciled`, plus counts).
+- `reconciliation` on the usage reads tells you whether every metered charge maps to a real on-chain settlement (`all_reconciled`, plus counts).
 
 ## Requirements
 

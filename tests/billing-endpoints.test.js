@@ -52,7 +52,6 @@ vi.mock('../api/_lib/metering.js', () => ({
 
 const { default: feeInfoHandler } = await import('../api/billing/fee-info.js');
 const { default: summaryHandler } = await import('../api/billing/summary.js');
-const { default: revenueHandler } = await import('../api/billing/revenue.js');
 const { default: receiptsHandler } = await import('../api/billing/receipts.js');
 const { default: invoicesHandler } = await import('../api/billing/invoices.js');
 const { default: payoutWalletsHandler } = await import('../api/billing/payout-wallets/index.js');
@@ -193,24 +192,6 @@ describe('GET /api/billing/summary', () => {
 		await summaryHandler(mkReq({ url: '/api/billing/summary' }), res);
 		expect(res.statusCode).toBe(401);
 		expect(parse(res).error).toBe('unauthorized');
-	});
-});
-
-describe('GET /api/billing/revenue', () => {
-	it('rejects a non-uuid agent_id with 400', async () => {
-		const res = mkRes();
-		await revenueHandler(
-			mkReq({ url: '/api/billing/revenue?agent_id=nope', query: { agent_id: 'nope' } }),
-			res,
-		);
-		expect(res.statusCode).toBe(400);
-		expect(parse(res).error).toBe('validation_error');
-	});
-
-	it('rejects an unsupported granularity with 400', async () => {
-		const res = mkRes();
-		await revenueHandler(mkReq({ url: '/api/billing/revenue', query: { granularity: 'hour' } }), res);
-		expect(res.statusCode).toBe(400);
 	});
 });
 

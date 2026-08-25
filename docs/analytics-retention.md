@@ -50,7 +50,7 @@ The table can answer "did this owner come back on this day, and did they talk to
 | `week2_converse` | Came back and **conversed** with a minted agent of theirs. This is the roadmap's number. |
 | `week2_return` | Came back at all, conversation or not. Useful as the ceiling the converse rate is chasing. |
 
-**Completeness.** A cohort's number keeps moving until every member's 14-day window has closed, which is up to 20 days after the cohort week starts. Rows carry `is_complete` for exactly that reason: only a complete cohort is a final number, and the dashboard draws the open ones muted so nobody quotes a half-formed week.
+**Completeness.** A cohort's number keeps moving until every member's 14-day window has closed, which is up to 20 days after the cohort week starts. Rows carry `is_complete` for exactly that reason: only a complete cohort is a final number, and a chart should draw the open ones muted so nobody quotes a half-formed week.
 
 ---
 
@@ -124,9 +124,9 @@ Response:
 
 `cohorts` is ordered oldest first, which is chart order. `summary.pooledRate` is owner-weighted across every complete cohort, not a mean of the weekly rates: a naive mean lets one tiny week swing the headline.
 
-### Dashboard
+### Reading it
 
-`/dashboard/analytics` renders a **Week-2 Retention · Minted Agents** panel under the revenue chart: one column per cohort week, a dashed line at the 30% target, green columns at or above it, amber below, and muted columns for cohorts whose window is still open. Hovering a column gives the exact `retained/minted` split and, for an open cohort, the date its window closes. The panel is fetched alongside everything else on the page, and a `403` simply means the panel is not appended, so a non-admin sees no error and no empty shell.
+`GET /api/analytics/retention` is the only consumer-facing surface: any admin tool or notebook charts it directly. Draw one column per cohort week against the 30% target and treat `is_complete = false` cohorts as provisional (mute them, do not quote them); a `403` means the caller is not an admin, so render nothing rather than an empty shell.
 
 ---
 
@@ -138,7 +138,6 @@ Response:
 | Tables | [api/_lib/migrations/20260811130000_agent_retention.sql](../api/_lib/migrations/20260811130000_agent_retention.sql) |
 | Weekly rollup | [api/cron/retention-rollup.js](../api/cron/retention-rollup.js) |
 | Read API | [api/analytics/retention.js](../api/analytics/retention.js) |
-| Chart | [src/dashboard-next/pages/analytics.js](../src/dashboard-next/pages/analytics.js) |
 | Tests | [tests/retention-cohorts.test.js](../tests/retention-cohorts.test.js) |
 | End-to-end proof | [scripts/retention-metric-proof.mjs](../scripts/retention-metric-proof.mjs) |
 
@@ -184,6 +183,6 @@ One visit in that run is written straight to the table rather than through the
 handler: a closed cohort needs a visit dated inside a window that ended days ago,
 and the handler can only ever stamp today. It is seeded at an absolute past date
 in the exact shape `recordAgentOwnerVisit` writes, and it is what gives the
-dashboard a completed cohort to draw.
+read API a completed cohort to return.
 
 If you extend the metric, keep two properties: the retention window must stay anchored to each owner's own mint instant, and every stored date must stay absolute. Both are what make a cohort row still readable a year later.

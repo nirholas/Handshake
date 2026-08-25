@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-25T18:12:14.260Z",
+	"generated_at": "2026-08-25T18:41:10.090Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -128,7 +128,7 @@
 			"type": "update",
 			"title": "Dashboard Analytics fits a phone screen and its failure page can actually reload",
 			"summary": "On a 320px phone the time-range buttons refused to wrap, which pushed every panel below them past the right edge of the screen; they wrap now and nothing scrolls sideways. The rare failure page showed a Reload button that did nothing when tapped, so it now reloads, and it explains what happened in plain language with a link to support instead of only printing a developer error string. A malformed response from one of the services behind the page no longer blanks the whole dashboard: the panel that depends on it degrades on its own and the rest still draws. The page also stops requesting a monetization report it never displayed, and its search-engine description finally says what the page shows: revenue over time, revenue by skill, widget views and chats, the conversion funnel, and per-agent performance.",
-			"link": "/dashboard/analytics",
+			"link": null,
 			"tags": [
 				"fix",
 				"improvement"
@@ -1531,7 +1531,7 @@
 			"type": "update",
 			"title": "Mistyped filters on the revenue, checkout and ring endpoints answer plainly instead of failing",
 			"summary": "The public revenue feed, the checkout SKU API and the ring report all took values straight from the URL into the database. A timestamp that was not a timestamp, a checkout id that was not an id, and the query fell over: the caller got an opaque \"something went wrong\" with a support reference, and our own alerting logged a fault that was only ever a typo. All three now say what was wrong, in words, with the right status code. The ring report also stops treating an unrecognised period as \"show me everything\", which quietly answered the wrong question and ran the most expensive query it has. The revenue feed now echoes back the endpoint filter it actually applied rather than the raw text it was sent, and the paid-call lookup only accepts something shaped like a real transaction signature.",
-			"link": "/x402-revenue",
+			"link": null,
 			"tags": [
 				"fix"
 			]
@@ -4740,7 +4740,7 @@
 			"type": "update",
 			"title": "Endpoint Revenue names the chain each payment settled on, and its network filter works",
 			"summary": "The live revenue page records every settlement with the chain identifier the ledger stores, which is a long machine string such as solana:5eykt4Us and eip155:8453. Those raw strings were being shown to readers as the chain name, and the filter that was supposed to narrow the feed to one chain compared them against short names like 'solana', so it matched nothing: picking a network emptied the feed even though thousands of Solana payments were sitting right there. Chains now read as Solana, Base and BNB Chain across the feed, the network breakdown and the filter chips, and filtering by one of them returns its real settlements. Each row's explorer link now points at that chain's own explorer, so a Base payment opens on Basescan instead of a Solana explorer that could never find it. The breakdown rows are clickable filters too, the CSV export carries the readable chain name and the explorer link alongside the raw id, and when the revenue service cannot be reached the page now says so and offers a retry instead of leaving an endless loading shimmer.",
-			"link": "/x402-revenue",
+			"link": null,
 			"tags": [
 				"fix",
 				"improvement"
@@ -8658,7 +8658,7 @@
 			"date": "2026-08-01",
 			"type": "launch",
 			"title": "Agent Monitor",
-			"summary": "Ops-room dashboard for the 3D AI agent fleet: live agent activity with a 3D spotlight, on-chain money pulse, x402 revenue, agent-to-agent hires, coin launches, the community forge feed, crews and platform health on one screen.",
+			"summary": "Ops-room dashboard for the 3D AI agent fleet: live agent activity with a 3D spotlight, on-chain money pulse, agent-to-agent hires, coin launches, the community forge feed, crews and platform health on one screen.",
 			"link": "/monitor",
 			"tags": [
 				"launch"
@@ -10830,7 +10830,7 @@
 			"date": "2026-07-28",
 			"type": "launch",
 			"title": "Receipt Vault",
-			"summary": "Every x402 payment you ever made to three.ws, retrievable forever. Connect a Solana or EVM wallet, sign one read-only message, and get back every signed proof-of-purchase receipt issued to that wallet: endpoint, network, settlement transaction with explorer link, and the full signed artifact as JSON, plus CSV export and search. The buyer-side mirror of Endpoint Revenue.",
+			"summary": "Every x402 payment you ever made to three.ws, retrievable forever. Connect a Solana or EVM wallet, sign one read-only message, and get back every signed proof-of-purchase receipt issued to that wallet: endpoint, network, settlement transaction with explorer link, and the full signed artifact as JSON, plus CSV export and search. The buyer side of the platform ledger.",
 			"link": "/receipts",
 			"tags": [
 				"launch"
@@ -19399,26 +19399,6 @@
 		{
 			"date": "2026-06-30",
 			"type": "launch",
-			"title": "Docs · x402 Revenue & Receipts",
-			"summary": "Where settled x402 payments are recorded (x402_audit_log), how to read endpoint revenue, and how signed receipts work.",
-			"link": "/docs/x402-revenue",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-06-30",
-			"type": "launch",
-			"title": "Endpoint Revenue",
-			"summary": "The live revenue layer: real USDC flowing into three.ws's own x402 paid endpoints. A live revenue chart, gross/net/success-rate KPIs, momentum vs the prior window, top-earning endpoints, revenue by network, and a filterable, searchable live feed of every settlement with copy-tx, sound, and CSV export. The mirror of the Money Pulse: what the platform earns, not what agents spend. Every payment is real and explorer-verifiable.",
-			"link": "/x402-revenue",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-06-30",
-			"type": "launch",
 			"title": "Launch Studio: 50 ways to mint a coin",
 			"summary": "A catalog of 50 coin-launch use cases: reward coins for trending GitHub repos and creators, and coins riding live cultural, news, and onchain narratives. Preview what each would mint right now from live data, then launch on pump.fun in one click.",
 			"link": "/launch-studio",
@@ -19544,7 +19524,7 @@
 			"type": "update",
 			"title": "Documented the x402 volume engine and the daily payment reconciliation job",
 			"summary": "The developer docs now cover the two newest pieces of the x402 money machine. The Volume Bootstrap Loop, the autonomous sweep that pays every cheap paid endpoint a real on-chain micro-payment to prove it is live, is documented with its per-endpoint proof-of-volume ledger (x402_volume_metrics) and its budget knobs. The docs are explicit that this is synthetic liveness traffic, the platform paying its own endpoints from its own seed wallet, and must not be reported as organic marketplace demand; any published volume or facilitator-ranking number has to exclude the seed wallet. The new daily reconciliation job is documented too: it cross-checks every settlement our books claim against the actual Solana transaction and flags any row the chain does not corroborate, so a silently-failed settlement can't drift our accounting.",
-			"link": "/docs/x402-revenue",
+			"link": null,
 			"tags": [
 				"docs"
 			]
@@ -32362,16 +32342,6 @@
 			"title": "Dashboard · Account",
 			"summary": "Manage connected wallets, SNS, delegation, and action log.",
 			"link": "/dashboard/account",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-05-25",
-			"type": "launch",
-			"title": "Dashboard · Analytics",
-			"summary": "Revenue over time, revenue by skill, widget views and chats, conversion funnel, and per-agent performance across your three.ws agents.",
-			"link": "/dashboard/analytics",
 			"tags": [
 				"launch"
 			]

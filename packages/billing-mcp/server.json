@@ -45,7 +45,7 @@
 				},
 				{
 					"name": "THREE_WS_SESSION",
-					"description": "Your three.ws session token (the value of the `__Host-sid` cookie from a signed-in browser). REQUIRED — it exposes private billing data, so every account-scoped read (get_billing_summary, query_usage, export_billing_history, get_receipt, get_revenue) resolves the calling user from it and returns only your data. Only the public get_fee_info works without it. Treat like a password.",
+					"description": "Your three.ws session token (the value of the `__Host-sid` cookie from a signed-in browser). REQUIRED: it exposes private billing data, so every account-scoped read (get_billing_summary, query_usage, export_billing_history, get_receipt) resolves the calling user from it and returns only your data. Only the public get_fee_info works without it. Treat like a password.",
 					"format": "string",
 					"isRequired": true,
 					"isSecret": true

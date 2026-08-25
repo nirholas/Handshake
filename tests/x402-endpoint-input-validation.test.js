@@ -4,9 +4,6 @@ import { describe, it, expect } from 'vitest';
 //
 // Every case here started as a real 500 (or a silently wrong answer) observed by
 // curling the running server on 2026-08-16:
-//   • /api/x402-revenue?since=notadate  → 22P02 "invalid input syntax for type
-//     timestamp with time zone" from the ::timestamptz cast, served as a 500 with
-//     a support ref for what is plainly a caller typo.
 //   • /api/x402-skus?id=notauuid        → 22P02 "invalid input syntax for type
 //     uuid", same 500, on GET/PATCH/DELETE alike.
 //   • /api/x402-ring?period=alll        → 200, silently widened to a lifetime
@@ -17,56 +14,10 @@ import { describe, it, expect } from 'vitest';
 const USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 process.env.X402_ASSET_MINT_SOLANA ||= USDC;
 
-const { endpointSlug, timestampParam } = await import('../api/x402-revenue.js');
 const { UUID_RE } = await import('../api/x402-skus.js');
 const { PERIODS, sinceFor } = await import('../api/x402-ring.js');
 const { TX_SIGNATURE_RE } = await import('../api/x402-pay.js');
 const { REPO_RE, SESSION_RE, normalizeEnvelope } = await import('../api/zauth-reposcan.js');
-
-describe('x402-revenue: timestamp params', () => {
-	it('normalizes a parseable timestamp to ISO for the ::timestamptz bind', () => {
-		expect(timestampParam('2026-08-01T00:00:00Z', 'since')).toBe('2026-08-01T00:00:00.000Z');
-		expect(timestampParam('2026-08-01T00:00:00.000Z', 'cursor')).toBe('2026-08-01T00:00:00.000Z');
-	});
-
-	it('treats an absent param as no bound rather than as an error', () => {
-		expect(timestampParam(null, 'since')).toBeNull();
-		expect(timestampParam('', 'cursor')).toBeNull();
-		expect(timestampParam(undefined, 'since')).toBeNull();
-	});
-
-	it('rejects an unparseable value with a 400-carrying, param-named error', () => {
-		expect(() => timestampParam('notadate', 'since')).toThrowError(/since/);
-		try {
-			timestampParam('zzz', 'cursor');
-			throw new Error('expected a throw');
-		} catch (err) {
-			expect(err.status).toBe(400);
-			expect(err.code).toBe('invalid_cursor');
-		}
-	});
-});
-
-describe('x402-revenue: endpoint filter', () => {
-	it('accepts a bare slug, a path, and a full route as the same filter', () => {
-		expect(endpointSlug('crypto-intel')).toBe('crypto-intel');
-		expect(endpointSlug('api/x402/crypto-intel')).toBe('crypto-intel');
-		expect(endpointSlug('/api/x402/crypto-intel')).toBe('crypto-intel');
-	});
-
-	it('reports the sanitized slug, never the raw string the caller sent', () => {
-		// The response echoes this back as `filter.endpoint`; echoing the raw value
-		// claimed a traversal string was the applied filter when it never was.
-		expect(endpointSlug('../../etc/passwd')).toBe('etcpasswd');
-		expect(endpointSlug('  token-intel  ')).toBe('token-intel');
-	});
-
-	it('collapses an empty or all-punctuation filter to no filter', () => {
-		expect(endpointSlug('')).toBeNull();
-		expect(endpointSlug(null)).toBeNull();
-		expect(endpointSlug('///')).toBeNull();
-	});
-});
 
 describe('x402-skus: id shape', () => {
 	it('accepts a uuid in either case', () => {

@@ -230,7 +230,6 @@ Partnership and distribution posts (not feature announcements): Google Cloud, Al
 | `/theater` | Live Trading Theater | 2026-06-23 | No |  |
 | `/pulse` | Money Pulse | 2026-06-23 | No |  |
 | `/flow` | Money Flow Map | 2026-07-31 | No |  |
-| `/x402-revenue` | Endpoint Revenue | 2026-06-30 | Passing | [2026-07-24](https://x.com/trythreews/status/2080779347359908347) |
 | `/fits` | Fits: the cosmetics economy | 2026-07-28 | No |  |
 | `/receipts` | Receipt Vault | 2026-07-28 | No |  |
 | `/viability` | Viability | 2026-06-30 | No |  |
@@ -374,7 +373,6 @@ Partnership and distribution posts (not feature announcements): Google Cloud, Al
 | `/dashboard/account` | Dashboard · Account | 2026-05-25 | No |  |
 | `/dashboard/data-api` | Dashboard · Data API | 2026-07-11 | No |  |
 | `/dashboard/billing` | Dashboard · Billing & Passes | 2026-07-11 | No |  |
-| `/dashboard/analytics` | Dashboard · Analytics | 2026-05-25 | No |  |
 | `/dashboard/settings` | Dashboard · Settings | 2026-05-25 | No |  |
 | `/settings` | Settings | 2026-04-28 | No |  |
 | `/profile` | Your creator portfolio | 2026-07-12 | No |  |

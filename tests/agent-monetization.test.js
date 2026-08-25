@@ -65,7 +65,6 @@ vi.mock('../api/_lib/skill-runtime.js', () => ({
 const { default: pricingSkillHandler } = await import('../api/agents/_id/pricing/[skill].js');
 const { default: pricingIndexHandler } = await import('../api/agents/_id/pricing/index.js');
 const { default: x402Handler } = await import('../api/agents/x402/[action].js');
-const { default: revenueHandler } = await import('../api/billing/revenue.js');
 const { default: withdrawalsHandler } = await import('../api/billing/withdrawals/index.js');
 
 // ── Reset between tests ───────────────────────────────────────────────────────
@@ -535,67 +534,6 @@ describe('Revenue Attribution', () => {
 		expect(updates[1]).toContain("set status = 'paid'");
 		// No revenue for a call that never delivered.
 		expect(sqlState.calls.some((c) => String(c.query).includes('agent_revenue_events'))).toBe(false);
-	});
-});
-
-// ── 4. Revenue Dashboard ──────────────────────────────────────────────────────
-
-describe('Revenue Dashboard', () => {
-	it('returns correct revenue totals', async () => {
-		authState.session = { id: 'user-1' };
-
-		// summary query
-		sqlState.queue.push([
-			{
-				gross_total: 1000000n,
-				fee_total: 25000n,
-				net_total: 975000n,
-				payment_count: 1,
-				currency_mint: 'USDC-MINT',
-				chain: 'solana',
-			},
-		]);
-		// by_skill query
-		sqlState.queue.push([{ skill: 'echo', net_total: 975000n, count: 1 }]);
-		// timeseries query
-		sqlState.queue.push([{ period: '2026-04-01T00:00:00.000Z', net_total: 975000n, count: 1 }]);
-
-		const { status, body } = await invoke(revenueHandler, {
-			method: 'GET',
-			url: '/api/billing/revenue',
-		});
-
-		expect(status).toBe(200);
-		expect(body.summary.gross_total).toBe(1000000);
-		expect(body.summary.net_total).toBe(975000);
-		expect(body.summary.payment_count).toBe(1);
-		expect(body.by_skill).toHaveLength(1);
-		expect(body.by_skill[0].skill).toBe('echo');
-		expect(body.timeseries).toHaveLength(1);
-	});
-
-	it('returns 401 when unauthenticated', async () => {
-		const { status, body } = await invoke(revenueHandler, {
-			method: 'GET',
-			url: '/api/billing/revenue',
-		});
-
-		expect(status).toBe(401);
-		expect(body.error).toBe('unauthorized');
-	});
-
-	it('returns 400 on invalid granularity param', async () => {
-		authState.session = { id: 'user-1' };
-
-		// granularity is read from req.query, pass it via query option
-		const { status, body } = await invoke(revenueHandler, {
-			method: 'GET',
-			url: '/api/billing/revenue',
-			query: { granularity: 'invalid' },
-		});
-
-		expect(status).toBe(400);
-		expect(body.error).toBe('validation_error');
 	});
 });
 

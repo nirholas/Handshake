@@ -54,9 +54,6 @@ vi.mock('../api/_lib/db.js', () => {
 vi.mock('../api/_lib/rate-limit.js', () => ({
 	limits: {
 		authIp: vi.fn(async () => ({ success: rlState.success })),
-		// Session-scoped reads (api/monetization/revenue.js) moved off the strict
-		// credential `authIp` bucket onto `authedReadIp`: without it here the
-		// handler throws "limits.authedReadIp is not a function" and 500s.
 		authedReadIp: vi.fn(async () => ({ success: rlState.success })),
 		publicIp: vi.fn(async () => ({ success: rlState.success })),
 		pricingPerIp: vi.fn(async () => ({ success: rlState.success })),
@@ -75,7 +72,6 @@ vi.mock('../api/_lib/csrf.js', () => ({
 const { recordRevenueEvent, getAvailableBalance } = await import('../api/_lib/monetization.js');
 const { calculateFee, getFeeBps } = await import('../api/_lib/fee.js');
 const { default: pricesHandler } = await import('../api/monetization/prices.js');
-const { default: revenueHandler } = await import('../api/monetization/revenue.js');
 const { default: walletHandler } = await import('../api/monetization/wallet.js');
 const { default: withdrawalsHandler } = await import('../api/monetization/withdrawals.js');
 
@@ -598,169 +594,7 @@ describe('prices endpoint (setSkillPrices)', () => {
 	});
 });
 
-// ── 5. getCreatorSalesData: api/monetization/revenue.js ────────────────────────
-
-describe('revenue endpoint (getCreatorSalesData)', () => {
-	it('aggregates totals, per-skill, and per-day breakdowns', async () => {
-		authState.session = { id: 'user-1' };
-
-		sqlState.queue.push([
-			{ gross_total: 3_000_000n, fee_total: 75_000n, net_total: 2_925_000n, event_count: 3 },
-		]); // summary
-		sqlState.queue.push([
-			{ skill: 'echo', net_total: 1_950_000n, count: 2 },
-			{ skill: 'summarize', net_total: 975_000n, count: 1 },
-		]); // by_skill
-		sqlState.queue.push([
-			{ period: '2026-06-17T00:00:00.000Z', net_total: 975_000n, count: 1 },
-			{ period: '2026-06-18T00:00:00.000Z', net_total: 1_950_000n, count: 2 },
-		]); // by_day
-
-		const { status, body } = await invoke(revenueHandler, {
-			method: 'GET',
-			url: '/api/monetization/revenue?period=7d',
-		});
-
-		expect(status).toBe(200);
-		expect(body.total_usdc).toBe(3); // 3_000_000 atomic → 3 USDC
-		expect(body.total_fees_usdc).toBe(0.075);
-		expect(body.net_usdc).toBe(2.925);
-		expect(body.event_count).toBe(3);
-		expect(body.net_atomic).toBe(2_925_000);
-		expect(body.by_skill).toHaveLength(2);
-		expect(body.by_skill[0]).toMatchObject({ skill: 'echo', total: 1.95, count: 2 });
-		expect(body.by_day).toHaveLength(2);
-		expect(body.by_day[0].date).toBe('2026-06-17');
-	});
-
-	it('returns zeroed totals when there is no revenue', async () => {
-		authState.session = { id: 'user-1' };
-
-		sqlState.queue.push([{ gross_total: 0n, fee_total: 0n, net_total: 0n, event_count: 0 }]);
-		sqlState.queue.push([]); // by_skill
-		sqlState.queue.push([]); // by_day
-
-		const { status, body } = await invoke(revenueHandler, {
-			method: 'GET',
-			url: '/api/monetization/revenue',
-		});
-
-		expect(status).toBe(200);
-		expect(body.total_usdc).toBe(0);
-		expect(body.event_count).toBe(0);
-		expect(body.by_skill).toEqual([]);
-		expect(body.by_day).toEqual([]);
-	});
-
-	it('bounds each period to its own window and leaves `all` unbounded', async () => {
-		const DAY_MS = 86_400_000;
-		for (const [period, expectedMs] of [['1d', DAY_MS], ['30d', 30 * DAY_MS], ['90d', 90 * DAY_MS]]) {
-			sqlState.calls = [];
-			sqlState.queue = [];
-			authState.session = { id: 'user-1' };
-			sqlState.queue.push([{ gross_total: 0n, fee_total: 0n, net_total: 0n, event_count: 0 }]);
-			sqlState.queue.push([]);
-			sqlState.queue.push([]);
-
-			const { status } = await invoke(revenueHandler, {
-				method: 'GET',
-				url: `/api/monetization/revenue?period=${period}`,
-			});
-
-			expect(status).toBe(200);
-			const [, fromDate, toDate] = sqlState.calls[0].values;
-			expect(toDate.getTime() - fromDate.getTime()).toBe(expectedMs);
-		}
-
-		sqlState.calls = [];
-		sqlState.queue = [];
-		sqlState.queue.push([{ gross_total: 0n, fee_total: 0n, net_total: 0n, event_count: 0 }]);
-		sqlState.queue.push([]);
-		sqlState.queue.push([]);
-		await invoke(revenueHandler, { method: 'GET', url: '/api/monetization/revenue?period=all' });
-		const [, allFrom] = sqlState.calls[0].values;
-		expect(allFrom.getFullYear()).toBeLessThanOrEqual(2020);
-	});
-
-	it('returns 401 when unauthenticated', async () => {
-		const { status, body } = await invoke(revenueHandler, {
-			method: 'GET',
-			url: '/api/monetization/revenue',
-		});
-
-		expect(status).toBe(401);
-		expect(body.error).toBe('unauthorized');
-	});
-
-	it('returns 400 on an unknown period', async () => {
-		authState.session = { id: 'user-1' };
-
-		const { status, body } = await invoke(revenueHandler, {
-			method: 'GET',
-			url: '/api/monetization/revenue?period=forever',
-		});
-
-		expect(status).toBe(400);
-		expect(body.error).toBe('validation_error');
-	});
-
-	it('returns 400 on a malformed agent_id', async () => {
-		authState.session = { id: 'user-1' };
-
-		const { status, body } = await invoke(revenueHandler, {
-			method: 'GET',
-			url: '/api/monetization/revenue?agent_id=not-a-uuid',
-		});
-
-		expect(status).toBe(400);
-		expect(body.error).toBe('validation_error');
-	});
-
-	it('returns 404 when scoped to an agent that does not exist', async () => {
-		const { agent } = createTestAgent();
-		authState.session = { id: 'user-1' };
-
-		sqlState.queue.push([]); // no agent row
-
-		const { status, body } = await invoke(revenueHandler, {
-			method: 'GET',
-			url: `/api/monetization/revenue?agent_id=${agent.id}`,
-		});
-
-		expect(status).toBe(404);
-		expect(body.error).toBe('not_found');
-	});
-
-	it('returns 403 when scoped to an agent owned by someone else', async () => {
-		const { agent } = createTestAgent();
-		authState.session = { id: 'user-1' };
-
-		sqlState.queue.push([{ id: agent.id, user_id: 'a-different-user' }]);
-
-		const { status, body } = await invoke(revenueHandler, {
-			method: 'GET',
-			url: `/api/monetization/revenue?agent_id=${agent.id}`,
-		});
-
-		expect(status).toBe(403);
-		expect(body.error).toBe('forbidden');
-	});
-
-	it('returns 429 when the rate limit is exceeded', async () => {
-		authState.session = { id: 'user-1' };
-		rlState.success = false;
-
-		const { status, body } = await invoke(revenueHandler, {
-			method: 'GET',
-			url: '/api/monetization/revenue',
-		});
-
-		expect(status).toBe(429);
-		expect(body.error).toBe('rate_limited');
-	});
-});
-
-// ── 6. payout wallets: api/monetization/wallet.js ──────────────────────────────
+// ── 5. payout wallets: api/monetization/wallet.js ──────────────────────────────
 
 describe('wallet endpoint (payout addresses)', () => {
 	const SOL_ADDRESS = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
@@ -932,7 +766,7 @@ describe('wallet endpoint (payout addresses)', () => {
 	});
 });
 
-// ── 7. withdrawals: api/monetization/withdrawals.js ────────────────────────────
+// ── 6. withdrawals: api/monetization/withdrawals.js ────────────────────────────
 
 describe('withdrawals endpoint', () => {
 	const SOL_ADDRESS = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';

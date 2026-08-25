@@ -331,20 +331,6 @@
 						</svg>
 						Default Agent
 					</a>
-					<a href="#revenue" data-page="revenue">
-						<svg
-							viewBox="0 0 16 16"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="1.4"
-							aria-hidden="true"
-						>
-							<path d="M2 13l3.5-4 3 2.5L13 5" />
-							<path d="M10 5h3v3" />
-						</svg>
-						Revenue
-					</a>
-
 					<div class="pd-nav-section">System</div>
 					<a href="#config" data-page="config">
 						<svg
@@ -1284,103 +1270,6 @@
 					</div>
 				</section>
 
-				<!-- ═══════ Revenue page ═══════ -->
-				<section class="pd-page" id="page-revenue" aria-label="Revenue">
-					<div class="pd-form-inline">
-						<div class="pd-form-group" style="flex: 2">
-							<label data-i18n="pump_dashboard.agent_2">Agent</label>
-							<select class="pd-select" id="pd-rev-agent">
-								<option value="" data-i18n="pump_dashboard.all_agents">All agents</option>
-							</select>
-						</div>
-						<div class="pd-form-group" style="flex: 1">
-							<label data-i18n="pump_dashboard.granularity">Granularity</label>
-							<select class="pd-select" id="pd-rev-granularity">
-								<option value="day" selected data-i18n="pump_dashboard.day">Day</option>
-								<option value="week" data-i18n="pump_dashboard.week">Week</option>
-								<option value="month" data-i18n="pump_dashboard.month">Month</option>
-							</select>
-						</div>
-						<div class="pd-form-group" style="flex: 1">
-							<label data-i18n="pump_dashboard.from">From</label>
-							<input class="pd-input" type="date" id="pd-rev-from" />
-						</div>
-						<div class="pd-form-group" style="flex: 1">
-							<label data-i18n="pump_dashboard.to">To</label>
-							<input class="pd-input" type="date" id="pd-rev-to" />
-						</div>
-						<button class="pd-btn is-primary" id="pd-rev-refresh" type="button" data-i18n="pump_dashboard.refresh_3">
-							Refresh
-						</button>
-					</div>
-
-					<div class="pd-stat-grid" id="pd-rev-summary" style="margin-bottom: 1rem">
-						<div class="pd-stat">
-							<div class="pd-stat-label">Gross</div>
-							<div class="pd-stat-value" id="pd-rev-gross">—</div>
-							<div class="pd-stat-sub" id="pd-rev-currency">—</div>
-						</div>
-						<div class="pd-stat">
-							<div class="pd-stat-label">Platform fees</div>
-							<div class="pd-stat-value" id="pd-rev-fees">—</div>
-							<div class="pd-stat-sub">Deducted</div>
-						</div>
-						<div class="pd-stat">
-							<div class="pd-stat-label">Net earnings</div>
-							<div class="pd-stat-value is-success" id="pd-rev-net">—</div>
-							<div class="pd-stat-sub">After fees</div>
-						</div>
-						<div class="pd-stat">
-							<div class="pd-stat-label">Payments</div>
-							<div class="pd-stat-value" id="pd-rev-count">—</div>
-							<div class="pd-stat-sub" id="pd-rev-chain">—</div>
-						</div>
-					</div>
-
-					<div class="pd-panel" style="margin-bottom: 1rem">
-						<div class="pd-panel-head"><h2 data-i18n="pump_dashboard.net_earnings_over_time">Net earnings over time</h2></div>
-						<div class="pd-panel-body">
-							<div
-								id="pd-rev-status"
-								style="
-									font-size: 0.85rem;
-									color: var(--ink-dim);
-									margin-bottom: 0.5rem;
-									min-height: 1.2rem;
-								"
-							></div>
-							<div style="position: relative">
-								<canvas
-									id="pd-rev-chart"
-									style="width: 100%; height: 260px; display: block"
-								></canvas>
-							</div>
-						</div>
-					</div>
-
-					<div class="pd-panel">
-						<div class="pd-panel-head"><h2 data-i18n="pump_dashboard.by_skill">By skill</h2></div>
-						<div class="pd-panel-body no-pad">
-							<table class="pd-table">
-								<thead>
-									<tr>
-										<th data-i18n="pump_dashboard.skill">Skill</th>
-										<th style="text-align: right" data-i18n="pump_dashboard.payments">Payments</th>
-										<th style="text-align: right" data-i18n="pump_dashboard.net">Net</th>
-									</tr>
-								</thead>
-								<tbody id="pd-rev-skill-table">
-									<tr>
-										<td colspan="3" class="pd-empty" data-i18n="pump_dashboard.open_the_revenue_tab_to_load">
-											Open the Revenue tab to load.
-										</td>
-									</tr>
-								</tbody>
-							</table>
-						</div>
-					</div>
-				</section>
-
 				<!-- ═══════ Config page ═══════ -->
 				<section class="pd-page" id="page-config" aria-label="Configuration">
 					<div class="pd-callout" style="margin-bottom: 1rem">
@@ -1841,7 +1730,6 @@
 				quoting: 'Quote Engine',
 				vanity: 'Vanity Generator',
 				animations: 'Default Agent',
-				revenue: 'Revenue',
 				config: 'Configuration',
 				api: 'API Reference',
 			};
@@ -2024,7 +1912,6 @@
 				if (page === 'animations') loadAgent();
 				if (page === 'watches') refreshWatches();
 				if (page === 'claims') refreshClaims();
-				if (page === 'revenue') loadRevenue();
 				if (page === 'api') loadApiKeys();
 				if (page === 'alerts') loadAlertConfig();
 				if (page === 'dashboard') {
@@ -4393,7 +4280,7 @@
 			}
 
 			// ════════════════════════════════════════════════════════════
-			//  Canvas helpers shared by the market + revenue charts
+			//  Canvas helpers for the market chart
 			// ════════════════════════════════════════════════════════════
 			function setupCanvas(canvas) {
 				const dpr = window.devicePixelRatio || 1;
@@ -4717,190 +4604,6 @@
 			}
 
 			// ════════════════════════════════════════════════════════════
-			//  Revenue (Task 08)
-			// ════════════════════════════════════════════════════════════
-			const KNOWN_DECIMALS = {
-				EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v: 6, // USDC mainnet
-				Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB: 6, // USDT mainnet
-				So11111111111111111111111111111111111111112: 9, // wSOL
-			};
-			const _decimalsCache = { ...KNOWN_DECIMALS };
-			async function getMintDecimals(mint) {
-				if (mint in _decimalsCache) return _decimalsCache[mint];
-				try {
-					const d = await rpcCall({
-						method: 'getAccountInfo',
-						params: [mint, { encoding: 'jsonParsed' }],
-					});
-					const dec = d.result?.value?.data?.parsed?.info?.decimals;
-					if (typeof dec === 'number') {
-						_decimalsCache[mint] = dec;
-						return dec;
-					}
-				} catch {
-					// rpcCall already logged + flagged the network panel; fall back to
-					// the SPL default so revenue math still renders.
-				}
-				return 6;
-			}
-
-			let _revAgentsLoaded = false;
-			async function loadRevenue() {
-				if (!_revAgentsLoaded) {
-					await loadRevenueAgents();
-					_revAgentsLoaded = true;
-				}
-				await fetchRevenue();
-			}
-			async function loadRevenueAgents() {
-				try {
-					const r = await apiFetch('/api/agents');
-					if (!r.ok) return;
-					const j = await r.json();
-					const agents = j.agents || j.data || [];
-					$('pd-rev-agent').innerHTML =
-						'<option value="">All agents</option>' +
-						agents
-							.map(
-								(a) =>
-									`<option value="${escapeHtml(a.id)}">${escapeHtml(a.name || a.id)}</option>`,
-							)
-							.join('');
-				} catch {
-					/* keep "All agents" */
-				}
-			}
-			async function fetchRevenue() {
-				const status = $('pd-rev-status');
-				const skillTbody = $('pd-rev-skill-table');
-				status.textContent = 'Loading…';
-				skillTbody.innerHTML = '<tr><td colspan="3" class="pd-empty">Loading…</td></tr>';
-				const params = new URLSearchParams();
-				const agent = $('pd-rev-agent').value;
-				if (agent) params.set('agent_id', agent);
-				params.set('granularity', $('pd-rev-granularity').value || 'day');
-				const from = $('pd-rev-from').value;
-				if (from) params.set('from', new Date(from).toISOString());
-				const to = $('pd-rev-to').value;
-				if (to) params.set('to', new Date(to + 'T23:59:59').toISOString());
-				try {
-					const r = await apiFetch('/api/billing/revenue?' + params.toString());
-					if (r.status === 401) {
-						status.innerHTML =
-							'Sign in to view revenue. <a href="/login" style="color:var(--accent)">Sign in</a>';
-						skillTbody.innerHTML =
-							'<tr><td colspan="3" class="pd-empty">Sign in required.</td></tr>';
-						['pd-rev-gross', 'pd-rev-fees', 'pd-rev-net', 'pd-rev-count'].forEach(
-							(id) => {
-								$(id).textContent = '—';
-							},
-						);
-						drawChartMessage($('pd-rev-chart'), 'Sign in to view revenue');
-						return;
-					}
-					if (!r.ok) {
-						const err = await r.json().catch(() => ({}));
-						status.textContent =
-							err.error_description || err.error || `Error ${r.status}`;
-						return;
-					}
-					await renderRevenue(await r.json());
-				} catch (e) {
-					status.textContent = 'Error: ' + (e.message || 'failed');
-				}
-			}
-			async function renderRevenue(d) {
-				const s = d.summary || {};
-				const mint = s.currency_mint;
-				const decimals = mint ? await getMintDecimals(mint) : 6;
-				const fmt = (v) =>
-					(Number(v || 0) / Math.pow(10, decimals)).toLocaleString(undefined, {
-						maximumFractionDigits: Math.min(decimals, 6),
-					});
-				$('pd-rev-gross').textContent = fmt(s.gross_total);
-				$('pd-rev-fees').textContent = fmt(s.fee_total);
-				$('pd-rev-net').textContent = fmt(s.net_total);
-				$('pd-rev-count').textContent = Number(s.payment_count || 0).toLocaleString();
-				$('pd-rev-currency').textContent = mint ? shortAddr(mint) : '—';
-				$('pd-rev-chain').textContent = s.chain || '—';
-				const skills = d.by_skill || [];
-				$('pd-rev-skill-table').innerHTML = skills.length
-					? skills
-							.map(
-								(r) =>
-									`<tr><td>${escapeHtml(r.skill)}</td><td style="text-align:right" class="pd-mono">${Number(r.count || 0).toLocaleString()}</td><td style="text-align:right" class="pd-mono">${fmt(r.net_total)}</td></tr>`,
-							)
-							.join('')
-					: '<tr><td colspan="3" class="pd-empty">No revenue events in this window.</td></tr>';
-				drawRevenueChart(d.timeseries || [], decimals);
-				$('pd-rev-status').textContent =
-					(s.payment_count || 0) === 0 ? 'No revenue events in this window.' : '';
-			}
-			function drawRevenueChart(series, decimals) {
-				const canvas = $('pd-rev-chart');
-				if (!series.length) {
-					drawChartMessage(canvas, 'No revenue events in this window');
-					return;
-				}
-				const { ctx, w, h } = setupCanvas(canvas);
-				ctx.clearRect(0, 0, w, h);
-				const x0 = 56,
-					x1 = w - 12,
-					y0 = 10,
-					y1 = h - 22;
-				const vals = series.map((s) => Number(s.net_total || 0) / Math.pow(10, decimals));
-				let vMax = Math.max(...vals, 0);
-				if (vMax === 0) vMax = 1;
-				const n = series.length;
-				const xFor = (i) => x0 + (n === 1 ? 0.5 : i / (n - 1)) * (x1 - x0);
-				const yFor = (v) => y1 - (v / vMax) * (y1 - y0);
-				ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-				ctx.fillStyle = 'rgba(255,255,255,0.42)';
-				ctx.font = '10px system-ui';
-				ctx.lineWidth = 1;
-				ctx.textAlign = 'right';
-				ctx.textBaseline = 'middle';
-				for (let i = 0; i <= 4; i++) {
-					const v = (vMax * i) / 4;
-					const y = yFor(v);
-					ctx.beginPath();
-					ctx.moveTo(x0, y);
-					ctx.lineTo(x1, y);
-					ctx.stroke();
-					ctx.fillText(
-						v.toLocaleString(undefined, { maximumFractionDigits: 2 }),
-						x0 - 6,
-						y,
-					);
-				}
-				ctx.textAlign = 'center';
-				ctx.textBaseline = 'top';
-				const step = Math.max(1, Math.floor(n / 6));
-				for (let i = 0; i < n; i += step) {
-					const x = xFor(i);
-					ctx.fillText(
-						String(series[i].period).slice(5),
-						Math.max(x0 + 12, Math.min(x1 - 12, x)),
-						y1 + 5,
-					);
-				}
-				ctx.strokeStyle = cssVar('--success');
-				ctx.lineWidth = 1.5;
-				ctx.beginPath();
-				vals.forEach((v, i) => {
-					const x = xFor(i),
-						y = yFor(v);
-					i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
-				});
-				ctx.stroke();
-				ctx.lineTo(xFor(n - 1), y1);
-				ctx.lineTo(xFor(0), y1);
-				ctx.closePath();
-				ctx.fillStyle = 'rgba(74,222,128,0.08)';
-				ctx.fill();
-			}
-
-			// ════════════════════════════════════════════════════════════
 			//  API keys (Task 09)
 			// ════════════════════════════════════════════════════════════
 			async function loadApiKeys() {
@@ -5176,12 +4879,6 @@
 						if (chart.candles.length) drawMarketChart(marketCanvas);
 					});
 				}).observe(marketCanvas);
-
-				// Revenue (Task 08)
-				$('pd-rev-refresh').addEventListener('click', fetchRevenue);
-				['pd-rev-agent', 'pd-rev-granularity', 'pd-rev-from', 'pd-rev-to'].forEach((id) => {
-					$(id).addEventListener('change', fetchRevenue);
-				});
 
 				// API keys (Task 09)
 				$('pd-key-create-form').addEventListener('submit', createApiKey);

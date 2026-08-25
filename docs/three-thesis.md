@@ -561,7 +561,7 @@ Every file referenced in this thesis, relative to the repository root:
 - `api/three-token/[action].js`, `api/pricing.js`, `api/forge.js`, `api/credits/index.js`
 - `src/three-access.js`, `src/three-lock.js`, `src/three-allowance.js`, `src/pump/verified-badge.js`, `src/solana/vanity/brand.js`
 - `docs/hold-to-access.md`, `docs/plan-checkout.md`, `docs/premium.md`, `docs/viability.md`, `docs/money-map.md`
-- `docs/circulation-engine.md`, `docs/three-microbuy.md`, `docs/autonomous-economy.md`, `docs/autonomous-x402.md`, `docs/x402-endpoints.md`, `docs/x402-revenue.md`, `docs/agent-economy-volume.md`
+- `docs/circulation-engine.md`, `docs/three-microbuy.md`, `docs/autonomous-economy.md`, `docs/autonomous-x402.md`, `docs/x402-endpoints.md`, `docs/agent-economy-volume.md`
 - `docs/labor-market.md`, `docs/agora.md`, `docs/in-game-economy.md`, `docs/token-gated-3d-embeds.md`, `docs/clash.md`, `docs/vaults.md`, `docs/trust-primitives.md`
 - `docs/coin-launches.md`, `docs/mint-mark.md`, `docs/agent-wallets.md`, `docs/risk-acknowledgment.md`, `docs/exit-lab.md`
 - `docs/listings.md`, `docs/partners.md`, `docs/coingecko-listing-update-2026-08.md`, `docs/okx-marketplace.md`, `docs/announcement-coverage.md`, `docs/api-reference.md`

@@ -8734,7 +8734,7 @@ A map of every user-facing route. [`STRUCTURE.md`](STRUCTURE.md) maps each produ
 | **Walk**             | `/walk`                                                                                         | Authoritative multiplayer walk scene (Colyseus on Fly.io)                                                       |
 | **Coin Communities** | `/communities`, `/communities/[mint]`, `/worlds`, `/play`, `/crews`                             | Live 3D world per Solana token: lobby, coin profile, the shared coin-keyed world, and crew HQ                   |
 | **City**             | `/city`                                                                                         | Free-roam walkable 3D city scene                                                                                |
-| **Bazaar (x402)**    | `/x402`, `/x402/studio`, `/x402-revenue`                                                        | Paid-API marketplace, listing studio, revenue dashboard                                                         |
+| **Bazaar (x402)**    | `/x402`, `/x402/studio`                                                                         | Paid-API marketplace and listing studio                                                                        |
 | **Artifacts**        | `/artifact`, `/artifact/snippet`, `/artifact-example`                                           | Claude Artifact viewer                                                                                          |
 | **Solana / DeFi**    | `/pumpfun`, `/pump-visualizer`, `/vanity-wallet`                                                | pump.fun launcher, live token visualizer, WASM vanity grinder                                                   |
 | **Mobile (Seeker)**  | Solana Mobile dApp Store                                                                        | MWA wallet wired into the web app + Seeker release pipeline                                                     |
@@ -10337,7 +10337,6 @@ Every CDP-settled endpoint ships a Permit2 sibling that accepts an EIP-2612 perm
 | ------------- | --------------------------------- | ------------------------------------------- |
 | Bazaar        | `/x402`                           | Browsable marketplace of paid endpoints     |
 | Listing studio | `/x402/studio`                   | Author and publish your own paid listing    |
-| Revenue       | `/x402-revenue`                   | Seller revenue dashboard                    |
 | Checkout      | `/api/x402-checkout`              | Stripe-style one-shot purchase              |
 | SKU catalog   | `/api/x402-skus`                  | Server-defined SKUs with per-row pricing    |
 | Dashboard     | `/dashboard/x402`                 | Seller + buyer dashboard, receipts, payouts |

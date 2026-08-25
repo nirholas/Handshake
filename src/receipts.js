@@ -8,8 +8,7 @@
  * settlement tx, timestamp, plus the full signed artifact as JSON and a CSV
  * export of the window.
  *
- * The seller-side mirror is /x402-revenue (what the platform earns); this is
- * what YOU bought. Solana wallets sign via the injected provider (Phantom,
+ * This is the buyer's side of the ledger: what YOU bought. Solana wallets sign via the injected provider (Phantom,
  * Backpack, Solflare); EVM wallets via personal_sign. The signature only
  * authorizes reads and is fresh for 5 minutes, matching the API window.
  */

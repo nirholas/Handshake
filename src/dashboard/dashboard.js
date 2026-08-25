@@ -85,14 +85,7 @@ export const api = {
 		j('PUT', `/api/agents/${encodeURIComponent(agentId)}/animations`, { animations }),
 	presignAnimation: (body) => j('POST', '/api/animations/presign', body),
 	listAgents: () => j('GET', '/api/agents'),
-	getRevenue: (params) => {
-		const q = new URLSearchParams();
-		if (params.from) q.set('from', params.from);
-		if (params.to) q.set('to', params.to);
-		if (params.agent_id) q.set('agent_id', params.agent_id);
-		if (params.granularity) q.set('granularity', params.granularity);
-		return j('GET', `/api/billing/revenue?${q.toString()}`);
-	},
+	getWithdrawalBalance: () => j('GET', '/api/monetization/withdrawals?limit=1'),
 	listWithdrawals: ({ status, limit, offset } = {}) => {
 		const q = new URLSearchParams();
 		if (status) q.set('status', status);
@@ -168,7 +161,6 @@ const KNOWN_TABS = [
 	'payments',
 	'subscriptions',
 	'billing',
-	'revenue',
 	'withdrawals',
 	'earnings',
 	'account',
@@ -274,7 +266,6 @@ const tabs = {
 	payments: renderPayments,
 	subscriptions: renderSubscriptions,
 	billing: renderBilling,
-	revenue: renderRevenue,
 	withdrawals: renderWithdrawals,
 	earnings: renderEarnings,
 	account: renderAccount,
@@ -3585,7 +3576,7 @@ async function renderBilling(root) {
 	`;
 }
 
-// ── Revenue dashboard ────────────────────────────────────────────────────────
+// ── USDC formatting ──────────────────────────────────────────────────────────
 function formatUSDC(lamports) {
 	return (
 		(lamports / 1_000_000).toLocaleString('en-US', {
@@ -3593,147 +3584,6 @@ function formatUSDC(lamports) {
 			maximumFractionDigits: 2,
 		}) + ' USDC'
 	);
-}
-
-function revenueBarChart(timeseries) {
-	if (!timeseries.length)
-		return '<div class="muted" style="text-align:center;padding:24px 0">No data for this period.</div>';
-	const W = 600,
-		H = 160,
-		PAD = { top: 12, right: 8, bottom: 28, left: 8 };
-	const max = Math.max(...timeseries.map((r) => r.net_total), 1);
-	const barW = Math.max(4, Math.floor((W - PAD.left - PAD.right) / timeseries.length) - 2);
-	const innerW = W - PAD.left - PAD.right;
-	const innerH = H - PAD.top - PAD.bottom;
-	const bars = timeseries.map((r, i) => {
-		const x = PAD.left + Math.round((i / timeseries.length) * innerW);
-		const barH = Math.max(2, Math.round((r.net_total / max) * innerH));
-		const y = PAD.top + innerH - barH;
-		const label = r.period.slice(5); // MM-DD
-		return `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" fill="#6c5cff" rx="2">
-			<title>${r.period}: ${formatUSDC(r.net_total)}</title></rect>
-			<text x="${x + barW / 2}" y="${H - 6}" text-anchor="middle" font-size="9" fill="var(--muted)">${label}</text>`;
-	});
-	return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${H}px;display:block">${bars.join('')}</svg>`;
-}
-
-async function renderRevenue(root) {
-	root.innerHTML = `
-		<h1>Revenue</h1>
-		<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px">
-			<select id="rev-agent" style="padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:inherit">
-				<option value="">All agents</option>
-			</select>
-			<select id="rev-range" style="padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:inherit">
-				<option value="7">Last 7 days</option>
-				<option value="30" selected>Last 30 days</option>
-				<option value="90">Last 90 days</option>
-			</select>
-		</div>
-		<div id="rev-body"><div class="muted">Loading…</div></div>
-	`;
-
-	const agentSel = root.querySelector('#rev-agent');
-	const rangeSel = root.querySelector('#rev-range');
-
-	// Populate agent list
-	try {
-		const { agents } = await api.listAgents();
-		for (const a of agents) {
-			const opt = document.createElement('option');
-			opt.value = a.id;
-			opt.textContent = a.name || a.id.slice(0, 8);
-			agentSel.appendChild(opt);
-		}
-	} catch {}
-
-	async function load() {
-		const body = root.querySelector('#rev-body');
-		body.innerHTML = '<div class="muted">Loading…</div>';
-		const days = parseInt(rangeSel.value, 10);
-		const from = new Date(Date.now() - days * 86400_000).toISOString();
-		const agentId = agentSel.value || null;
-		const gran = days <= 7 ? 'day' : days <= 90 ? 'day' : 'week';
-		let data;
-		try {
-			data = await api.getRevenue({ from, agent_id: agentId, granularity: gran });
-		} catch (e) {
-			body.innerHTML = `<div class="err">${esc(e.message)}</div>`;
-			return;
-		}
-		const { summary, by_skill, timeseries } = data;
-
-		if (summary.payment_count === 0 && !by_skill.length) {
-			body.innerHTML = `
-				<div class="card" style="text-align:center;padding:48px 24px">
-					<div style="font-size:40px;margin-bottom:12px">💰</div>
-					<h3 style="margin:0 0 8px">No revenue yet</h3>
-					<p class="muted" style="margin:0">Payments will appear here once your agent skills are called.</p>
-				</div>`;
-			return;
-		}
-
-		body.innerHTML = `
-			<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px">
-				<div class="card">
-					<div class="muted" style="font-size:12px;margin-bottom:4px">Gross earnings</div>
-					<div style="font-size:20px;font-weight:700">${esc(formatUSDC(summary.gross_total))}</div>
-				</div>
-				<div class="card">
-					<div class="muted" style="font-size:12px;margin-bottom:4px">Platform fees</div>
-					<div style="font-size:20px;font-weight:700;color:#ff5c5c">−${esc(formatUSDC(summary.fee_total))}</div>
-				</div>
-				<div class="card">
-					<div class="muted" style="font-size:12px;margin-bottom:4px">Net earnings</div>
-					<div style="font-size:20px;font-weight:700;color:#00e5a0">${esc(formatUSDC(summary.net_total))}</div>
-				</div>
-				<div class="card">
-					<div class="muted" style="font-size:12px;margin-bottom:4px">Payments</div>
-					<div style="font-size:20px;font-weight:700">${esc(String(summary.payment_count))}</div>
-				</div>
-			</div>
-			<div class="card" style="margin-bottom:20px">
-				<h3 style="margin:0 0 12px">Daily earnings</h3>
-				${revenueBarChart(timeseries)}
-			</div>
-			${
-				by_skill.length
-					? `
-			<div class="card">
-				<h3 style="margin:0 0 12px">Skill breakdown</h3>
-				<table style="width:100%;border-collapse:collapse">
-					<thead>
-						<tr style="text-align:left;border-bottom:1px solid var(--border)">
-							<th style="padding:6px 8px 10px;font-weight:600;font-size:13px">Skill</th>
-							<th style="padding:6px 8px 10px;font-weight:600;font-size:13px;text-align:right">Net earnings</th>
-							<th style="padding:6px 8px 10px;font-weight:600;font-size:13px;text-align:right">Transactions</th>
-						</tr>
-					</thead>
-					<tbody>
-						${by_skill
-							.map(
-								(s) => `<tr style="border-bottom:1px solid var(--border)">
-							<td style="padding:8px">${esc(s.skill)}</td>
-							<td style="padding:8px;text-align:right;font-variant-numeric:tabular-nums">${esc(formatUSDC(s.net_total))}</td>
-							<td style="padding:8px;text-align:right">${esc(String(s.count))}</td>
-						</tr>`,
-							)
-							.join('')}
-					</tbody>
-				</table>
-			</div>`
-					: ''
-			}
-		`;
-	}
-
-	agentSel.addEventListener('change', load);
-	rangeSel.addEventListener('change', load);
-	await load();
-
-	// Re-fetch on page focus (no WebSocket needed)
-	const onFocus = () => load();
-	window.addEventListener('focus', onFocus, { once: true });
 }
 
 // ── Withdrawals ─────────────────────────────────────────────────────────────
@@ -3794,10 +3644,10 @@ async function renderWithdrawals(root) {
 	`;
 	const body = root.querySelector('#wd-body');
 
-	let revenue, withdrawalsResp, walletsResp;
+	let balanceResp, withdrawalsResp, walletsResp;
 	try {
-		[revenue, withdrawalsResp, walletsResp] = await Promise.all([
-			api.getRevenue({ from: '1970-01-01T00:00:00Z', granularity: 'month' }),
+		[balanceResp, withdrawalsResp, walletsResp] = await Promise.all([
+			api.getWithdrawalBalance(),
 			api.listWithdrawals({ limit: 50 }),
 			api.listPayoutWallets(),
 		]);
@@ -3808,7 +3658,9 @@ async function renderWithdrawals(root) {
 
 	const withdrawals = withdrawalsResp.withdrawals || [];
 	const wallets = walletsResp.wallets || [];
-	const earned = Number(revenue.summary?.net_total || 0);
+	// Lifetime net earnings in USDC atomics, from the same ledger the withdrawal
+	// endpoint draws on, so the number here always matches what it will accept.
+	const earned = Math.round(Number(balanceResp.balance?.earned_usdc || 0) * 1_000_000);
 	const inflight = withdrawals
 		.filter((w) => w.status === 'pending' || w.status === 'processing')
 		.reduce((s, w) => s + Number(w.amount), 0);

@@ -13,8 +13,7 @@ control.
 > `discoverable: false` (never advertised on the public x402 bazaar /
 > agentic.market catalog). Do **not** present self-cycled ring volume as organic
 > third-party demand — that is the one thing this system is deliberately built
-> *not* to do. The public organic-revenue feed is a separate surface
-> ([/api/x402-revenue](../api/x402-revenue.js)).
+> *not* to do.
 
 ## The runway governor: funding IS the throttle
 
@@ -1087,9 +1086,6 @@ activation runbook above is the fix.
 ## Related
 
 - [STRUCTURE.md](../STRUCTURE.md) — surface map
-- [/api/x402-revenue](../api/x402-revenue.js) — the **public** organic-revenue
-  feed (self-cycled ring volume is excluded from the "organic" framing here)
-- [docs/x402-revenue.md](./x402-revenue.md) — revenue surface docs
 - [api/_lib/x402/ring-allowlist.js](../api/_lib/x402/ring-allowlist.js) — the
   controlled-wallet set + spend invariants
 - [api/cron/x402-ring-leak-scan.js](../api/cron/x402-ring-leak-scan.js) — the

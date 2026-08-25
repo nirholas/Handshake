@@ -5654,52 +5654,6 @@
 			"capturedAt": "2026-07-31T19:10:37.157Z"
 		},
 		{
-			"id": "x402-revenue",
-			"index": 92,
-			"title": "Endpoint Revenue",
-			"path": "/x402-revenue",
-			"section": "crypto",
-			"tracks": [
-				"full"
-			],
-			"highlight": false,
-			"narration": "Over here is Endpoint Revenue. The live revenue layer: real USDC flowing into three.ws's own x402 paid endpoints. A live revenue chart, gross/net/success-rate KPIs, momentum vs the prior window, top-earning endpoints, revenue by network, and a filterable, searchable live feed of every settlement with copy-tx, sound, and CSV export. The mirror of the Money Pulse: what the platform earns, not what agents spend. Every payment is real and explorer-verifiable.",
-			"status": 200,
-			"anchor": {
-				"state": "resolved",
-				"selector": "main h1, .hero h1, h1",
-				"source": "fallback",
-				"scope": "main",
-				"tag": "h1",
-				"rect": {
-					"left": 32,
-					"top": 153.875,
-					"width": 969.125,
-					"height": 73.59375
-				}
-			},
-			"consoleErrors": 0,
-			"consoleSamples": [],
-			"notes": [
-				"anchored by the director's generic fallback, not a curated selector for this page"
-			],
-			"media": {
-				"hero": {
-					"url": "/media/tour/x402-revenue.webp",
-					"width": 1200,
-					"height": 750,
-					"bytes": 24892
-				},
-				"thumb": {
-					"url": "/media/tour/x402-revenue.thumb.webp",
-					"width": 520,
-					"height": 325,
-					"bytes": 5856
-				}
-			},
-			"capturedAt": "2026-07-31T19:10:37.864Z"
-		},
-		{
 			"id": "launch-studio",
 			"index": 93,
 			"title": "Launch Studio: 50 ways to mint a coin",
@@ -6505,7 +6459,7 @@
 				"full"
 			],
 			"highlight": false,
-			"narration": "Let's visit Receipt Vault. Every x402 payment you ever made to three.ws, retrievable forever. Connect a Solana or EVM wallet, sign one read-only message, and get back every signed proof-of-purchase receipt issued to that wallet: endpoint, network, settlement transaction with explorer link, and the full signed artifact as JSON, plus CSV export and search. The buyer-side mirror of Endpoint Revenue.",
+			"narration": "Let's visit Receipt Vault. Every x402 payment you ever made to three.ws, retrievable forever. Connect a Solana or EVM wallet, sign one read-only message, and get back every signed proof-of-purchase receipt issued to that wallet: endpoint, network, settlement transaction with explorer link, and the full signed artifact as JSON, plus CSV export and search. The buyer side of the platform ledger.",
 			"status": 200,
 			"anchor": {
 				"state": "resolved",

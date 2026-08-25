@@ -1,7 +1,7 @@
 // dashboard-next — Overview / home page.
 //
 // Hero strip with live 3D avatar previews, KPI row with sparklines,
-// recent activity feed (stitched from transcripts + revenue events),
+// recent activity feed (stitched from widget transcripts),
 // and a 2x2 quick-actions grid. Polls KPIs + activity every 30s.
 
 import { mountShell } from '../shell.js';
@@ -27,7 +27,7 @@ const FORGE_ANNOUNCE_DISMISSED_KEY = 'twx_forge_announce_dismissed';
 const STATE = {
 	pollHandle: null,
 	relTimeHandle: null,
-	kpi: { revenue: null, views: null, transcripts: null, avatars: null },
+	kpi: { views: null, transcripts: null, avatars: null },
 };
 
 (async function boot() {
@@ -44,7 +44,7 @@ const STATE = {
 		<div class="dnx-welcome-row">
 			<div class="dnx-welcome-text">
 				<h1 class="dn-h1" style="margin-bottom:4px">Welcome back, ${esc(greeting)}.</h1>
-				<p class="dn-h1-sub" style="margin:0">Your 3D agents, revenue, and visitor activity — all in one place.</p>
+				<p class="dn-h1-sub" style="margin:0">Your 3D agents and visitor activity, all in one place.</p>
 			</div>
 			<div class="dnx-welcome-actions">
 				<span class="dnx-welcome-date" aria-hidden="true">${esc(todayLabel())}</span>
@@ -307,28 +307,9 @@ function renderHero(host, avatars, err) {
 // ── KPI row ───────────────────────────────────────────────────────────────
 
 async function refreshKpis(host, ctx) {
-	const fromIso = new Date(Date.now() - DAYS_WINDOW * 86400_000).toISOString();
-	const toIso = new Date().toISOString();
-
-	const [revenueRes, statsArrRes] = await Promise.allSettled([
-		get(`/api/billing/revenue?from=${encodeURIComponent(fromIso)}&to=${encodeURIComponent(toIso)}&granularity=day`),
-		Promise.all(ctx.widgets.map((w) =>
-			get(`/api/widgets/${encodeURIComponent(w.id)}/stats`).catch(() => null),
-		)),
-	]);
-
-	const revenue = revenueRes.status === 'fulfilled' ? revenueRes.value : null;
-	const widgetStats = statsArrRes.status === 'fulfilled' ? statsArrRes.value.filter(Boolean) : [];
-
-	const revSeries = padDailySeries(
-		(revenue?.timeseries ?? []).map((p) => ({
-			day: typeof p.period === 'string' ? p.period.slice(0, 10) : new Date(p.period).toISOString().slice(0, 10),
-			value: Number(p.net_total) / 1_000_000,
-		})),
-		DAYS_WINDOW,
-	);
-	const revTotal = revenue?.summary?.net_total ? Number(revenue.summary.net_total) / 1_000_000 : 0;
-	const revLabel = revTotal.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+	const widgetStats = (await Promise.all(ctx.widgets.map((w) =>
+		get(`/api/widgets/${encodeURIComponent(w.id)}/stats`).catch(() => null),
+	))).filter(Boolean);
 
 	const viewSeries = stackDailySeries(widgetStats.map((s) => s?.stats?.recent_views_7d ?? []));
 	const viewTotal = viewSeries.reduce((a, p) => a + p.value, 0);
@@ -340,15 +321,6 @@ async function refreshKpis(host, ctx) {
 	const avatarSeries = padDailySeries([], DAYS_WINDOW).map((p) => ({ ...p, value: avatarTotal }));
 
 	const cards = [
-		{
-			key: 'revenue',
-			label: 'Revenue · 7d',
-			value: revLabel,
-			numeric: revTotal,
-			series: revSeries,
-			empty: revTotal === 0,
-			emptyCta: { label: 'Set up monetization', href: '/dashboard/monetize' },
-		},
 		{
 			key: 'views',
 			label: 'Widget views · 7d',
@@ -619,17 +591,11 @@ async function refreshActivity(host, ctx) {
 }
 
 async function collectActivity(widgets) {
-	const fromIso = new Date(Date.now() - 14 * 86400_000).toISOString();
-	const calls = [
-		get(`/api/billing/revenue?from=${encodeURIComponent(fromIso)}&granularity=day`).catch(() => null),
-		...widgets.slice(0, 8).map((w) =>
-			get(`/api/widgets/${encodeURIComponent(w.id)}/transcripts?limit=3`)
-				.then((r) => ({ widget: w, threads: r?.threads ?? [] }))
-				.catch(() => null),
-		),
-	];
-	const results = await Promise.all(calls);
-	const [revenue, ...threadBundles] = results;
+	const threadBundles = await Promise.all(widgets.slice(0, 8).map((w) =>
+		get(`/api/widgets/${encodeURIComponent(w.id)}/transcripts?limit=3`)
+			.then((r) => ({ widget: w, threads: r?.threads ?? [] }))
+			.catch(() => null),
+	));
 
 	const out = [];
 
@@ -647,24 +613,6 @@ async function collectActivity(widgets) {
 					? `${visitor} on ${bundle.widget.name}: "${preview}"`
 					: `${visitor} chatted with ${bundle.widget.name}`,
 				href: `/dashboard/widgets?id=${encodeURIComponent(bundle.widget.id)}&thread=${encodeURIComponent(t.id)}`,
-			});
-		}
-	}
-
-	if (revenue?.timeseries?.length) {
-		const recent = [...revenue.timeseries]
-			.filter((p) => Number(p.net_total) > 0)
-			.sort((a, b) => new Date(b.period) - new Date(a.period))
-			.slice(0, 3);
-		for (const p of recent) {
-			const usd = (Number(p.net_total) / 1_000_000).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-			const iso = toIsoSafe(p.period);
-			if (!iso) continue;
-			out.push({
-				iso,
-				icon: ICON_COIN,
-				text: `${p.count} payment${p.count === 1 ? '' : 's'} · ${usd} earned`,
-				href: '/dashboard/monetize',
 			});
 		}
 	}
@@ -687,7 +635,6 @@ function repaintRelTimes(host) {
 }
 
 const ICON_CHAT = '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h10v7H6l-3 2.5V4z"/></svg>';
-const ICON_COIN = '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v6M6 7h3.2a1.2 1.2 0 010 2.4H7a1.2 1.2 0 000 2.4h3.2"/></svg>';
 
 // ── Launch announcement: text-to-3D ───────────────────────────────────────
 //
@@ -1671,7 +1618,7 @@ function injectStyles() {
 
 		.dnx-kpis {
 			display: grid;
-			grid-template-columns: repeat(4, minmax(0, 1fr));
+			grid-template-columns: repeat(3, minmax(0, 1fr));
 			gap: 14px;
 		}
 		@media (max-width: 920px) { .dnx-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

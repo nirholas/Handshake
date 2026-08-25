@@ -68,7 +68,6 @@ export const AUTHED_ROUTES = [
 	'/dashboard',
 	'/dashboard/actions',
 	'/dashboard/sessions',
-	'/dashboard/analytics',
 	'/dashboard/wallets',
 	'/dashboard/settings',
 	'/dashboard/memory',

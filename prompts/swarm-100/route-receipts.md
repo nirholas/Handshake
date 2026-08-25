@@ -43,7 +43,7 @@ Every claim below rots; step 0 re-measures, and what you measure wins.
 ## Task: audit this one route end to end, then fix everything found
 
 Route: /receipts ("Receipt Vault", section "crypto").
-Declared purpose: Every x402 payment you ever made to three.ws, retrievable forever. Connect a Solana or EVM wallet, sign one read-only message, and get back every signed proof-of-purchase receipt issued to that wallet: endpoint, network, settlement transaction with explorer link, and the full signed artifact as JSON, plus CSV export and search. The buyer-side mirror of Endpoint Revenue.
+Declared purpose: Every x402 payment you ever made to three.ws, retrievable forever. Connect a Solana or EVM wallet, sign one read-only message, and get back every signed proof-of-purchase receipt issued to that wallet: endpoint, network, settlement transaction with explorer link, and the full signed artifact as JSON, plus CSV export and search.
 
 Drive the page in a real headless browser. Playwright is already a dev
 dependency; keep your probe script in the session scratchpad, never in the

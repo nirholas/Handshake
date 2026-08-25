@@ -34,7 +34,6 @@ import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { priceFor } from '../_lib/x402-prices.js';
 import { sql } from '../_lib/db.js';
 import { solUsdPrice } from '../_lib/avatar-wallet.js';
-import { buildRevenueReport } from '../_lib/x402/revenue-analytics.js';
 import { buildSniperAnalytics } from '../_lib/x402/sniper-analytics-store.js';
 import { computeUserActivity, normalizePeriod } from '../_lib/x402/user-activity-analytics.js';
 import { getPaymentStats } from '../_lib/x402/audit-log.js';
@@ -53,10 +52,10 @@ const DESCRIPTION =
 // Supported reports + period windows. Both are strict whitelists — a value
 // outside the set is rejected BEFORE settlement (the buyer is never charged for
 // a report we can't produce).
-const REPORTS = new Set(['clubs', 'agent_leaderboard', 'marketplace', 'revenue', 'sniper_trades', 'user_activity', 'x402_volume']);
+const REPORTS = new Set(['clubs', 'agent_leaderboard', 'marketplace', 'sniper_trades', 'user_activity', 'x402_volume']);
 
 // period → window in seconds (null = all-time, no time filter).
-// '6h' is used by the revenue report (matches its resolvePeriod keys).
+// '6h' is a window the marketplace and sniper_trades reports resolve directly.
 const PERIODS = {
 	'1h': 3600,
 	'6h': 21600,
@@ -72,7 +71,7 @@ const INPUT_SCHEMA = {
 	properties: {
 		report: {
 			type: 'string',
-			enum: ['clubs', 'agent_leaderboard', 'marketplace', 'revenue', 'sniper_trades', 'user_activity', 'x402_volume'],
+			enum: ['clubs', 'agent_leaderboard', 'marketplace', 'sniper_trades', 'user_activity', 'x402_volume'],
 			default: 'clubs',
 			description: 'Which analytics report to return.',
 		},
@@ -80,7 +79,7 @@ const INPUT_SCHEMA = {
 			type: 'string',
 			enum: ['1h', '6h', '24h', '7d', '30d', 'all'],
 			default: '24h',
-			description: 'Aggregation window (clubs + revenue reports).',
+			description: 'Aggregation window (clubs, marketplace and sniper_trades reports).',
 		},
 		limit: {
 			type: 'integer',
@@ -623,11 +622,6 @@ export default paidEndpoint({
 				status: 400,
 				code: 'unknown_period',
 			});
-		}
-
-		// ── Revenue report — platform x402 earnings from the settled ledger. ────
-		if (report === 'revenue') {
-			return buildRevenueReport({ period });
 		}
 
 		// ── Agent leaderboard — top spenders from the hire ledger. ──────────────

@@ -36,7 +36,6 @@ The article marks each insertion point with `[IMAGE: name.png]`. Suggested capti
 - oracle.png: Oracle conviction feed.
 - markets.png, markets-news.png, markets-archive.png: the markets hub, news, and the 740k-article archive.
 - x402.png: the x402 storefront.
-- x402-revenue.png: live endpoint revenue.
 - pulse.png: Money Pulse, settled agent-to-agent payments.
 - agent-economy-volume.png: all-time USDC settled between agents.
 - reputation-market.png: the reputation staking market.

@@ -315,7 +315,6 @@ Announced: the drop-in x402 payment modal and the /club reputation demo (June 22
 86 commits through June 30, then 198 from July 1 to 5; 212 changelog entries.
 
 - A closed-loop agent economy on x402 with a self-hosted facilitator, replacing external settlement. The payment rail now runs entirely on three.ws infrastructure.
-- A public /x402-revenue page for real-time payment tracking with filters and export.
 - The x402 packages extracted into standalone repos with docs for npm and the VS Code extension.
 - The circulation engine refactored so that no external payouts exist by design.
 - Launch Studio with 50 coin-launch use cases and live previews.
@@ -334,11 +333,10 @@ Announced: the drop-in x402 payment modal and the /club reputation demo (June 22
 - Real funds now require a one-time risk acknowledgment.
 - A July 4th homepage with date-gated fireworks and festive avatar presets.
 
-Twenty-seven pages, including /x402-revenue, /mocap-studio, /autopilot, /diorama, /coins, /launch-studio, /agenc/embodied, /agenc/room, /agent-economy-volume, /legal/risk.
+Twenty-seven pages, including /mocap-studio, /autopilot, /diorama, /coins, /launch-studio, /agenc/embodied, /agenc/room, /agent-economy-volume, /legal/risk.
 
 Announced: the VS Code x402 extension with a built-in wallet (July 1).
 
-[IMAGE: x402-revenue.png]
 [IMAGE: pulse.png]
 
 ---

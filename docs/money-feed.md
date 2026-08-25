@@ -125,4 +125,4 @@ The same bus powers surfaces that are not tickers at all:
 - [Circulation engine](circulation-engine.md) — the largest producer of activity.
 - [Autonomous x402 loop](autonomous-x402.md) — treasury-paid intel purchases.
 - [Agent wallets](agent-wallets.md) — how spends are gated before they're recorded.
-- [x402 revenue & receipts](x402-revenue.md) — the *other* direction: money paid **to** our endpoints (`x402_audit_log`), not agent spend.
+- [x402 endpoints](x402-endpoints.md): the *other* direction: money paid **to** our endpoints (`x402_audit_log`), not agent spend.

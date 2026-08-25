@@ -152,22 +152,7 @@
 	.btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--border-strong); }
 	.btn.ghost:hover { background: var(--panel); color: var(--text); opacity: 1; }
 
-	/* Stats strip */
-	.stats {
-		display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px;
-		background: var(--border); border: 1px solid var(--border); border-radius: 14px;
-		overflow: hidden; margin-top: 40px;
-	}
-	@media (max-width: 720px) {
-		.stats { grid-template-columns: repeat(2, 1fr); }
-		/* Five stats in two columns leave a dead cell; let the last one fill it. */
-		.stats .stat:last-child { grid-column: 1 / -1; }
-	}
-	.stat { background: var(--panel); padding: 16px 18px; }
-	.stat .k { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted-2); margin-bottom: 7px; }
-	.stat .v { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
-	.stat .v small { font-size: 13px; color: var(--muted); font-weight: 500; }
-	.stat .v.skeleton, .sk { color: transparent; border-radius: 6px;
+	.sk { color: transparent; border-radius: 6px;
 		background: linear-gradient(90deg, var(--panel-2) 25%, var(--border) 50%, var(--panel-2) 75%);
 		background-size: 200% 100%; animation: shimmer 1.3s infinite;
 	}
@@ -258,7 +243,6 @@
 	.card .desc { color: var(--muted); font-size: 13px; line-height: 1.5; flex: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 	.card .meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-family: var(--mono); font-size: 11px; color: var(--muted-2); }
 	.card .verb { border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px; color: var(--muted); }
-	.card .calls { color: var(--accent-green); }
 	.card .run { margin-top: 2px; display: flex; align-items: center; justify-content: space-between; }
 	.card .run .go { font-size: 13px; font-weight: 600; color: var(--text); display: inline-flex; align-items: center; gap: 6px; }
 	.card .run .go svg { width: 14px; height: 14px; transition: transform 0.15s; }
@@ -462,13 +446,6 @@
 			<a class="btn" href="#catalog" data-i18n="x402_stripe.browse_the_catalog">Browse the catalog</a>
 			<a class="btn ghost" href="#install" data-i18n="x402_stripe.drop_it_into_your_site">Drop it into your site</a>
 		</div>
-		<div class="stats" id="stats" aria-label="Live 24-hour activity">
-			<div class="stat"><div class="k">Endpoints</div><div class="v skeleton" data-stat="endpoints">—</div></div>
-			<div class="stat"><div class="k">24h settled</div><div class="v skeleton" data-stat="settled">—</div></div>
-			<div class="stat"><div class="k">24h volume</div><div class="v skeleton" data-stat="volume">—</div></div>
-			<div class="stat"><div class="k">Success rate</div><div class="v skeleton" data-stat="success">—</div></div>
-			<div class="stat"><div class="k">Unique payers</div><div class="v skeleton" data-stat="payers">—</div></div>
-		</div>
 	</section>
 
 	<section id="catalog">
@@ -490,7 +467,6 @@
 				<span class="slash">/</span>
 			</div>
 			<select class="select" id="sortSelect" aria-label="Sort endpoints">
-				<option value="popular" data-i18n="x402_stripe.most_used">Most used</option>
 				<option value="price-asc" data-i18n="x402_stripe.price_low_to_high">Price: low to high</option>
 				<option value="price-desc" data-i18n="x402_stripe.price_high_to_low">Price: high to low</option>
 				<option value="name" data-i18n="x402_stripe.name_a_z">Name A–Z</option>
@@ -592,11 +568,6 @@
 		if (n < 1) return '$' + n.toFixed(n * 100 % 1 === 0 ? 2 : 3);
 		return '$' + n.toFixed(2);
 	};
-	const fmtNum = (n) => {
-		const v = Number(n);
-		if (n == null || !Number.isFinite(v)) return 'n/a';
-		return v >= 1000 ? (v / 1000).toFixed(v >= 10000 ? 0 : 1) + 'k' : String(v);
-	};
 
 	// ── Price labelling ────────────────────────────────────────────────────
 	// x402 endpoints price two ways: a fixed USDC amount, or `mode: "dynamic"`
@@ -655,8 +626,7 @@
 		.trim() || path;
 
 	let CATALOG = [];
-	let STATS = null;
-	const state = { q: '', cat: 'All', sort: 'popular' };
+	const state = { q: '', cat: 'All', sort: 'name' };
 
 	// ── Fetch catalog from the free OpenAPI discovery doc ──────────────────
 	async function loadCatalog() {
@@ -700,46 +670,6 @@
 		return Array.from(seen.values());
 	}
 
-	// The revenue report wraps its payload in `data` and keys per-endpoint rows
-	// by `endpoint`. Unwrap here so every reader below sees the report itself.
-	async function loadStats() {
-		try {
-			const r = await fetch('/api/x402-revenue?view=stats&period=24h', { headers: { accept: 'application/json' } });
-			if (!r.ok) return null;
-			const j = await r.json();
-			return (j && j.data) || null;
-		} catch (e) { return null; }
-	}
-
-	let CALLS = new Map();
-	function indexCalls() {
-		CALLS = new Map();
-		const rows = STATS && Array.isArray(STATS.by_endpoint) ? STATS.by_endpoint : [];
-		for (const row of rows) {
-			const n = Number(row.count);
-			if (row.endpoint && Number.isFinite(n)) CALLS.set(row.endpoint, n);
-		}
-	}
-	const callsFor = (path) => CALLS.get(path) || 0;
-
-	// ── Stats bar ──────────────────────────────────────────────────────────
-	function renderStats() {
-		const set = (k, v) => { const el = $(`[data-stat="${k}"]`); if (el) { el.classList.remove('skeleton'); el.innerHTML = v; } };
-		set('endpoints', String(CATALOG.length));
-		if (STATS) {
-			const totals = STATS.totals || {};
-			const health = STATS.settlement_health || {};
-			const settled = health.settled != null ? health.settled : totals.total_payments;
-			const gross = Number(totals.gross_usd || 0);
-			set('settled', fmtNum(settled));
-			set('volume', '$' + gross.toFixed(gross < 100 ? 2 : 0));
-			set('success', health.success_rate != null ? Math.round(health.success_rate * 100) + '<small>%</small>' : 'n/a');
-			set('payers', fmtNum(totals.unique_payers));
-		} else {
-			['settled', 'volume', 'success', 'payers'].forEach((k) => set(k, '<small style="font-size:15px">n/a</small>'));
-		}
-	}
-
 	// ── Category chips ───────────────────────────────────────────────────────
 	function renderChips() {
 		const counts = { All: CATALOG.length };
@@ -763,7 +693,7 @@
 		if (state.sort === 'price-asc') list.sort((a, b) => priceSort(a.price) - priceSort(b.price));
 		else if (state.sort === 'price-desc') list.sort((a, b) => priceSort(b.price) - priceSort(a.price));
 		else if (state.sort === 'name') list.sort((a, b) => a.title.localeCompare(b.title));
-		else list.sort((a, b) => callsFor(b.path) - callsFor(a.path) || a.title.localeCompare(b.title));
+		else list.sort((a, b) => a.title.localeCompare(b.title));
 		return list;
 	}
 
@@ -780,12 +710,11 @@
 		}
 		grid.style.display = 'grid';
 		grid.innerHTML = list.map((c, i) => {
-			const calls = callsFor(c.path);
 			return `<button class="card" data-id="${esc(c.id)}" style="animation-delay:${Math.min(i * 22, 300)}ms" aria-label="${esc(c.title)}, ${esc(priceFull(c.price))}, inspect and run">
 				<span class="top"><span class="cat">${catIcon(c.category)} ${esc(c.category)}</span><span class="price ${priceClass(c.price)}">${esc(priceChip(c.price))}</span></span>
 				<span class="title">${esc(c.title)}</span>
 				<span class="desc">${esc(c.desc)}</span>
-				<span class="meta"><span class="verb">${c.method}</span><span>USDC · Base · Solana</span>${calls ? `<span class="calls">${fmtNum(calls)} calls/24h</span>` : ''}</span>
+				<span class="meta"><span class="verb">${c.method}</span><span>USDC · Base · Solana</span></span>
 				<span class="run"><span class="go">Inspect &amp; run <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></span>
 			</button>`;
 		}).join('');
@@ -1006,7 +935,7 @@
 	function palPaint(q) {
 		q = q.toLowerCase();
 		palResults = (q ? CATALOG.filter((c) => (c.title + ' ' + c.desc + ' ' + c.path + ' ' + c.category).toLowerCase().includes(q)) : CATALOG.slice())
-			.sort((a, b) => callsFor(b.path) - callsFor(a.path)).slice(0, 40);
+			.sort((a, b) => a.title.localeCompare(b.title)).slice(0, 40);
 		palIdx = 0;
 		const list = $('#paletteList');
 		if (!palResults.length) { list.innerHTML = '<div class="pempty">No endpoints found</div>'; return; }
@@ -1080,6 +1009,7 @@
 		$('#drawerOverlay').addEventListener('click', closeDrawer);
 		$('#paletteInput').addEventListener('input', (e) => palPaint(e.target.value));
 		$('#searchInput').addEventListener('input', (e) => { state.q = e.target.value.trim(); renderGrid(); });
+		$('#sortSelect').value = state.sort;
 		$('#sortSelect').addEventListener('change', (e) => { state.sort = e.target.value; renderGrid(); });
 		$$('.copy-btn[data-copy]').forEach((btn) => btn.addEventListener('click', () => copyText($('#' + btn.dataset.copy).textContent, btn)));
 		const nav = $('#nav'); const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 8); onScroll(); window.addEventListener('scroll', onScroll, { passive: true });
@@ -1116,12 +1046,10 @@
 	// ── Boot ─────────────────────────────────────────────────────────────────
 	async function boot() {
 		skeletonGrid();
-		const [cat, stats] = await Promise.allSettled([loadCatalog(), loadStats()]);
-		STATS = stats.status === 'fulfilled' ? stats.value : null;
-		if (cat.status !== 'fulfilled' || !cat.value.length) { renderStats(); catalogError(); return; }
+		const [cat] = await Promise.allSettled([loadCatalog()]);
+		if (cat.status !== 'fulfilled' || !cat.value.length) { catalogError(); return; }
 		CATALOG = cat.value;
-		indexCalls();
-		renderStats(); renderChips(); renderGrid(); openFromHash();
+		renderChips(); renderGrid(); openFromHash();
 	}
 
 	wireGlobal();

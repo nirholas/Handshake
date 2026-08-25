@@ -6,7 +6,6 @@
 //   • query_usage              — metered usage rolled into an invoice statement
 //   • export_billing_history   — that statement as a downloadable CSV
 //   • get_receipt              — one itemized receipt (per-charge or per-purchase)
-//   • get_revenue              — earnings for the agents you own (the income side)
 //   • get_fee_info             — the current platform fee rate (public)
 //
 // Every read hits the live three.ws API (THREE_WS_BASE). The account-scoped reads
@@ -30,7 +29,6 @@ import { def as getBillingSummary } from './tools/billing-summary.js';
 import { def as queryUsage } from './tools/query-usage.js';
 import { def as exportBillingHistory } from './tools/export-billing-history.js';
 import { def as getReceipt } from './tools/get-receipt.js';
-import { def as getRevenue } from './tools/get-revenue.js';
 import { def as getFeeInfo } from './tools/fee-info.js';
 
 // Single source of truth for the advertised server version — package.json.
@@ -42,7 +40,6 @@ export const TOOLS = [
 	queryUsage,
 	exportBillingHistory,
 	getReceipt,
-	getRevenue,
 	getFeeInfo,
 ];
 
@@ -63,8 +60,7 @@ export function buildServer() {
 				'an invoice statement for a period — per-action line items, totals, and a reconciliation summary; ' +
 				'export_billing_history returns the same as a downloadable CSV. get_receipt fetches one itemized ' +
 				'receipt, either a per-charge receipt by event_id (with its settlement tx + explorer link) or the ' +
-				'signed receipt JSON of a skill purchase by purchase_id. get_revenue is the income side — earnings for ' +
-				'the agents you own, broken down by skill and over time, plus creator-subscription income. get_fee_info ' +
+				'signed receipt JSON of a skill purchase by purchase_id. get_fee_info ' +
 				'is the public platform fee rate. Every account-scoped read needs THREE_WS_SESSION (your `__Host-sid` ' +
 				'cookie); only get_fee_info is public. This server never signs or moves funds — it only reads.',
 		},

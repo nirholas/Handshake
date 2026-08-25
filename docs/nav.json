@@ -572,10 +572,6 @@
 					"path": "x402-dev-tools"
 				},
 				{
-					"label": "x402 revenue & receipts",
-					"path": "x402-revenue"
-				},
-				{
 					"label": "Market Data API (x402)",
 					"path": "market-data-api"
 				},

@@ -257,7 +257,7 @@ would hide it.
 
 ## Related
 
-- [x402 revenue and receipts](x402-revenue.md): the other side of the ledger. This
+- [x402 paid endpoints](x402-endpoints.md): the other side of the ledger. This
   page counts agent-to-agent payments recorded in `agent_hires`; endpoint revenue
   paid **to** the platform's own paid endpoints is recorded separately in
   `x402_audit_log`. Do not add the two together.

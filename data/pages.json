@@ -537,7 +537,7 @@
 				{
 					"path": "/monitor",
 					"title": "Agent Monitor",
-					"description": "Ops-room dashboard for the 3D AI agent fleet: live agent activity with a 3D spotlight, on-chain money pulse, x402 revenue, agent-to-agent hires, coin launches, the community forge feed, crews and platform health on one screen.",
+					"description": "Ops-room dashboard for the 3D AI agent fleet: live agent activity with a 3D spotlight, on-chain money pulse, agent-to-agent hires, coin launches, the community forge feed, crews and platform health on one screen.",
 					"indexable": true,
 					"added": "2026-08-01"
 				},
@@ -1261,14 +1261,6 @@
 					"showcase": true
 				},
 				{
-					"path": "/x402-revenue",
-					"title": "Endpoint Revenue",
-					"description": "The live revenue layer: real USDC flowing into three.ws's own x402 paid endpoints. A live revenue chart, gross/net/success-rate KPIs, momentum vs the prior window, top-earning endpoints, revenue by network, and a filterable, searchable live feed of every settlement with copy-tx, sound, and CSV export. The mirror of the Money Pulse: what the platform earns, not what agents spend. Every payment is real and explorer-verifiable.",
-					"priority": 0.7,
-					"changefreq": "always",
-					"added": "2026-06-30"
-				},
-				{
 					"path": "/fits",
 					"title": "Fits: the cosmetics economy",
 					"description": "The live cosmetics economy: the scarcest premium fits ranked by how few wallets own them, the top collectors wearing them, the creators actually getting paid in real settled USDC, and every cosmetic sale as it lands. Includes a free creator-earnings lookup for any Solana wallet, with per-cosmetic and per-coin-world breakdowns.",
@@ -1279,7 +1271,7 @@
 				{
 					"path": "/receipts",
 					"title": "Receipt Vault",
-					"description": "Every x402 payment you ever made to three.ws, retrievable forever. Connect a Solana or EVM wallet, sign one read-only message, and get back every signed proof-of-purchase receipt issued to that wallet: endpoint, network, settlement transaction with explorer link, and the full signed artifact as JSON, plus CSV export and search. The buyer-side mirror of Endpoint Revenue.",
+					"description": "Every x402 payment you ever made to three.ws, retrievable forever. Connect a Solana or EVM wallet, sign one read-only message, and get back every signed proof-of-purchase receipt issued to that wallet: endpoint, network, settlement transaction with explorer link, and the full signed artifact as JSON, plus CSV export and search. The buyer side of the platform ledger.",
 					"priority": 0.6,
 					"changefreq": "weekly",
 					"added": "2026-07-28"
@@ -2383,14 +2375,6 @@
 					"added": "2026-07-11"
 				},
 				{
-					"path": "/dashboard/analytics",
-					"title": "Dashboard · Analytics",
-					"description": "Revenue over time, revenue by skill, widget views and chats, conversion funnel, and per-agent performance across your three.ws agents.",
-					"auth": "required",
-					"indexable": false,
-					"added": "2026-05-25"
-				},
-				{
 					"path": "/dashboard/settings",
 					"title": "Dashboard · Settings",
 					"description": "Avatar storage modes (R2 vs IPFS), sessions, your notification inbox, per-category notification channel preferences (in-app/push/email/Telegram), and dashboard preferences.",
@@ -3130,12 +3114,6 @@
 					"title": "Docs · x402 Paid Endpoints",
 					"description": "The catalog of three.ws's own paid HTTP endpoints: what each charges, the price-override scheme, and what it returns.",
 					"added": "2026-06-29"
-				},
-				{
-					"path": "/docs/x402-revenue",
-					"title": "Docs · x402 Revenue & Receipts",
-					"description": "Where settled x402 payments are recorded (x402_audit_log), how to read endpoint revenue, and how signed receipts work.",
-					"added": "2026-06-30"
 				},
 				{
 					"path": "/docs/pump-launcher",
