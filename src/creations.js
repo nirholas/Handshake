@@ -68,6 +68,14 @@ function truncate(s, n) {
 
 // ── card rendering ───────────────────────────────────────────────────────────
 
+// A gallery thumbnail is deliberately control-free. model-viewer reads
+// `camera-controls` as a boolean attribute, so the old `camera-controls="false"`
+// switched controls ON: every card drag-orbited (and stayed wherever it was
+// flung), and on touch the mesh swallowed the vertical drag that scrolls the
+// grid, so the feed could not be scrolled past the first row. Dropping the
+// attribute leaves auto-rotate, which needs no controls, and lets a drag over a
+// leaderboard row reach the link that wraps it. The `disable-*` attributes went
+// with it; they only ever qualified camera-controls.
 function thumbHTML(glbUrl, alt, posterUrl) {
 	if (!glbUrl) return `<div class="cr-card-noglb" aria-hidden="true">3D</div>`;
 	// The feed ships a rendered still alongside every GLB, so paint that first
@@ -79,11 +87,7 @@ function thumbHTML(glbUrl, alt, posterUrl) {
 			class="cr-card-mv"
 			reveal="auto"
 			loading="lazy"
-			disable-zoom
-			disable-pan
-			disable-tap
 			interaction-prompt="none"
-			camera-controls="false"
 			auto-rotate
 			rotation-per-second="16deg"
 			environment-image="neutral"
@@ -207,6 +211,9 @@ async function loadFeed({ reset = false } = {}) {
 	if (reset && host) {
 		host.setAttribute('aria-busy', 'true');
 		host.innerHTML = skeleton();
+		// The old tally belongs to the slice being replaced; leaving it up next
+		// to a grid of skeletons reads as a count of the skeletons.
+		updateCount();
 		// The open lineage belongs to a card that this reload may drop.
 		$('cr-lineage-panel')?.classList.add('is-hidden');
 	}
@@ -515,9 +522,20 @@ function creatorRowHTML(row, i) {
 	`;
 }
 
+function lbSkeleton(rows) {
+	return Array.from({ length: rows })
+		.map(() => `<li class="cr-lb-skeleton" aria-hidden="true"></li>`)
+		.join('');
+}
+
 async function loadLeaderboards() {
 	const trendingHost = $('cr-trending-list');
 	const creatorsHost = $('cr-creators-list');
+	// Both columns start as empty <ol aria-busy>, which paints a 54px void for
+	// the length of the fetch. Fill them with the same skeleton language the
+	// feed uses so the page reads as loading rather than as already empty.
+	if (trendingHost) trendingHost.innerHTML = lbSkeleton(4);
+	if (creatorsHost) creatorsHost.innerHTML = lbSkeleton(4);
 	try {
 		const res = await fetch('/api/creations-leaderboard?limit=6', { headers: { accept: 'application/json' } });
 		const data = await res.json().catch(() => ({}));
