@@ -17,6 +17,7 @@ import {
 	emptyStateHTML,
 	errorStateHTML,
 	ensureStateKitStyles,
+	attachRetry,
 } from '../../shared/state-kit.js';
 
 const $ = (id) => document.getElementById(id);
@@ -43,7 +44,10 @@ const solscan = (sig) => `https://solscan.io/tx/${encodeURIComponent(sig)}`;
 function renderPremium(data) {
 	const el = $('bl-premium');
 	if (!data) {
-		el.innerHTML = errorStateHTML({ title: 'Couldn’t load your passes', body: 'The premium endpoint is unreachable — retry in a moment.' });
+		el.innerHTML = errorStateHTML({
+			title: 'Couldn’t load your passes',
+			body: 'The premium endpoint did not answer. Your passes and keys are unaffected; retry in a moment.',
+		});
 		return;
 	}
 	const { active, passes, keys, plan } = data;
@@ -126,14 +130,37 @@ function renderPremium(data) {
 
 // ── Creator subscriptions ────────────────────────────────────────────────────
 
+const SUB_STATUS_CLASS = { active: 'bl-ok', trialing: 'bl-ok', past_due: 'bl-warn', cancelled: 'bl-muted', canceled: 'bl-muted', expired: 'bl-muted' };
+
+function subStatusHTML(status) {
+	const key = String(status || '').toLowerCase();
+	const cls = SUB_STATUS_CLASS[key] || 'bl-muted';
+	return `<span class="${cls}">${esc(key.replace(/_/g, ' ') || 'unknown')}</span>`;
+}
+
+function subCreatorHTML(s) {
+	const name = s.creator_name || (s.creator_username ? `@${s.creator_username}` : '') || 'Creator';
+	return s.creator_username
+		? `<a href="/u/${encodeURIComponent(s.creator_username)}">${esc(name)}</a>`
+		: esc(name);
+}
+
+function subPriceHTML(s) {
+	if (s.price_usd == null) return '';
+	const interval = s.interval ? ` / ${esc(String(s.interval).replace(/ly$/, ''))}` : '';
+	return `$${Number(s.price_usd).toFixed(2)}${interval}`;
+}
+
 function renderSubscriptions(subs) {
 	const el = $('bl-subs');
 	if (subs === null) {
-		// Endpoint failed — say so quietly, don't fake an empty state.
 		el.innerHTML = `
 			<section class="dn-panel">
 				<div class="bl-panel-head"><h2>Creator subscriptions</h2></div>
-				<p class="bl-note">Couldn’t load your creator subscriptions right now — they’re unaffected; retry in a moment.</p>
+				${errorStateHTML({
+					title: 'Couldn’t load your creator subscriptions',
+					body: 'The subscriptions endpoint did not answer. Your subscriptions are unaffected; retry in a moment.',
+				})}
 			</section>`;
 		return;
 	}
@@ -151,17 +178,23 @@ function renderSubscriptions(subs) {
 			</section>`;
 		return;
 	}
-	const rows = list.map((s) => `
+	const rows = list.map((s) => {
+		const cancelled = /cancel/i.test(String(s.status || ''));
+		const renews = cancelled
+			? (s.cancelled_at ? `ended ${esc(fmtDate(s.cancelled_at))}` : 'not renewing')
+			: (s.current_period_end ? esc(fmtDate(s.current_period_end)) : '');
+		return `
 		<tr>
-			<td>${esc(s.plan_name || s.name || s.plan_id || 'plan')}</td>
-			<td>${esc(s.creator_handle || s.creator_id || s.agent_id || '—')}</td>
-			<td>${esc(String(s.status || '—'))}</td>
-			<td>${s.current_period_ends_at ? esc(fmtDate(s.current_period_ends_at)) : '—'}</td>
-			<td class="bl-num">${s.price_usd != null ? `$${Number(s.price_usd).toFixed(2)}` : '—'}</td>
-		</tr>`).join('');
+			<td>${esc(s.plan_name || s.plan_id || 'plan')}</td>
+			<td>${subCreatorHTML(s)}</td>
+			<td>${subStatusHTML(s.status)}</td>
+			<td>${renews}</td>
+			<td class="bl-num">${subPriceHTML(s)}</td>
+		</tr>`;
+	}).join('');
 	el.innerHTML = `
 		<section class="dn-panel">
-			<div class="bl-panel-head"><h2>Creator subscriptions</h2></div>
+			<div class="bl-panel-head"><h2>Creator subscriptions</h2><span class="bl-tagline">${list.length} plan${list.length === 1 ? '' : 's'}</span></div>
 			<div class="bl-scroll">
 				<table class="bl-table">
 					<thead><tr><th>Plan</th><th>Creator</th><th>Status</th><th>Renews</th><th class="bl-num">Price</th></tr></thead>
@@ -210,6 +243,8 @@ function injectStyles() {
 		.bl-num { text-align: right; font-variant-numeric: tabular-nums; }
 		.bl-ok { color: var(--nxt-success); font-weight: 600; }
 		.bl-bad { color: var(--nxt-danger); font-weight: 600; }
+		.bl-warn { color: var(--nxt-warn); font-weight: 600; }
+		.bl-muted { color: var(--nxt-ink-fade); }
 		.bl-linkgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: .7rem; }
 		.bl-link { display: flex; flex-direction: column; gap: .25rem; border: 1px solid var(--nxt-stroke); border-radius: var(--nxt-radius-sm); padding: .8rem .9rem; text-decoration: none; transition: border-color .15s ease, transform .15s ease; }
 		.bl-link:hover { border-color: var(--nxt-stroke-strong); transform: translateY(-1px); }
@@ -237,12 +272,18 @@ function injectStyles() {
 		</div>`;
 
 	renderLinks();
-	const [premium, subs] = await Promise.all([
-		get('/api/premium/mine').catch(() => null),
-		get('/api/subscriptions/mine').catch(() => null),
-	]);
-	renderPremium(premium);
-	renderSubscriptions(subs);
+
+	const loadPremium = async () => {
+		$('bl-premium').innerHTML = `<div class="dn-panel">${skeletonHTML(3, 'row')}</div>`;
+		renderPremium(await get('/api/premium/mine').catch(() => null));
+	};
+	const loadSubs = async () => {
+		$('bl-subs').innerHTML = `<div class="dn-panel">${skeletonHTML(2, 'row')}</div>`;
+		renderSubscriptions(await get('/api/subscriptions/mine').catch(() => null));
+	};
+	attachRetry($('bl-premium'), loadPremium);
+	attachRetry($('bl-subs'), loadSubs);
+	await Promise.all([loadPremium(), loadSubs()]);
 })().catch((err) => {
 	const main = document.querySelector('.dn-main-inner') || document.body;
 	main.innerHTML = `<h1 class="dn-h1">Billing &amp; Passes</h1><div class="dn-panel"><div class="dn-panel-title" style="color:var(--nxt-danger)">Failed to load</div><div class="dn-panel-sub">${String(err?.message || 'unknown').replace(/</g, '&lt;')}</div></div>`;
