@@ -37,7 +37,7 @@ let me = null;
 		return;
 	}
 	const main = document.querySelector('.dn-main-inner') || document.body;
-	main.innerHTML = `<h1 class="dn-h1">Analytics</h1><div class="dn-panel"><div class="dn-panel-title" style="color:var(--nxt-danger)">Failed to load</div><div class="dn-panel-sub">${esc(err?.message || 'unknown')}</div><button type="button" class="dn-btn" data-action="reload">Reload</button></div>`;
+	main.innerHTML = `<h1 class="dn-h1">Analytics</h1><div class="dn-panel"><div class="dn-panel-title" style="color:var(--nxt-danger)">Analytics could not be drawn</div><div class="dn-panel-sub">Something went wrong while building this page. Reloading usually clears it. If it keeps happening, <a href="/support">tell us</a> and quote the detail below.</div><div class="dn-panel-sub" style="margin-top:6px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;opacity:0.7">${esc(err?.message || 'unknown error')}</div><button type="button" class="dn-btn" data-action="reload" style="margin-top:12px">Reload</button></div>`;
 	main.querySelector('[data-action="reload"]')?.addEventListener('click', () => location.reload());
 });
 
@@ -88,8 +88,11 @@ async function loadAndRender(root) {
 		return;
 	}
 
-	const agentList = agents?.agents ?? [];
-	const widgetList = widgets?.widgets ?? [];
+	// Shape-guard the collections rather than trusting the payload: an upstream
+	// that answers 200 with a non-array (a deploy skew, a proxy error page parsed
+	// as JSON) would otherwise throw out of here and blank the whole page.
+	const agentList = Array.isArray(agents?.agents) ? agents.agents : [];
+	const widgetList = Array.isArray(widgets?.widgets) ? widgets.widgets : [];
 
 	const widgetStats = await Promise.all(
 		widgetList.slice(0, 20).map(w =>
@@ -110,8 +113,8 @@ async function loadAndRender(root) {
 
 	const revTotal = Number(revenue?.summary?.net_total ?? 0);
 	const revPayments = Number(revenue?.summary?.payment_count ?? 0);
-	const timeseries = revenue?.timeseries ?? [];
-	const bySkill = revenue?.by_skill ?? [];
+	const timeseries = Array.isArray(revenue?.timeseries) ? revenue.timeseries : [];
+	const bySkill = Array.isArray(revenue?.by_skill) ? revenue.by_skill : [];
 
 	// Fetch per-agent payments for the activity table
 	const recentPayments = await fetchRecentActivity(agentList);

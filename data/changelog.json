@@ -4,7 +4,7 @@
     {
       "date": "2026-08-25",
       "title": "Dashboard Analytics fits a phone screen and its failure page can actually reload",
-      "summary": "On a 320px phone the time-range buttons refused to wrap, which pushed every panel below them past the right edge of the screen; they wrap now and nothing scrolls sideways. The rare shell-level failure page showed a Reload button that did nothing when tapped, so it now reloads. The page also stops requesting a monetization report it never displayed, and its search-engine description finally says what the page shows: revenue over time, revenue by skill, widget views and chats, the conversion funnel, and per-agent performance.",
+      "summary": "On a 320px phone the time-range buttons refused to wrap, which pushed every panel below them past the right edge of the screen; they wrap now and nothing scrolls sideways. The rare failure page showed a Reload button that did nothing when tapped, so it now reloads, and it explains what happened in plain language with a link to support instead of only printing a developer error string. A malformed response from one of the services behind the page no longer blanks the whole dashboard: the panel that depends on it degrades on its own and the rest still draws. The page also stops requesting a monetization report it never displayed, and its search-engine description finally says what the page shows: revenue over time, revenue by skill, widget views and chats, the conversion funnel, and per-agent performance.",
       "tags": [
         "fix",
         "improvement"

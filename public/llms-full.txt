@@ -1781,7 +1781,7 @@ URL: https://three.ws/dashboard/analytics
 Auth: required (sign-in)
 Indexable: no (excluded from sitemap)
 
-API call volume, x402 spend, and per-agent usage breakdowns.
+Revenue over time, revenue by skill, widget views and chats, conversion funnel, and per-agent performance across your three.ws agents.
 
 ### Dashboard · Settings
 
