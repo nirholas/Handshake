@@ -22,6 +22,15 @@ describe('crews wiring', () => {
 		expect(read('vite.config.js')).toContain("crews: resolve(__dirname, 'pages/crews.html')");
 	});
 
+	it('serves /crews/<TAG> in dev too, not just in production', () => {
+		// vercel.json rewrites /crews/<TAG> to the page, so every directory card and
+		// every shared crew link works in production. Vite dev has its own route
+		// table, and while it had no rule for the tag URL those same links 404'd
+		// locally: the public-crew half of the page could not be opened at all
+		// without deploying it first.
+		expect(read('vite.config.js')).toContain("/^\\/crews\\/[A-Za-z0-9]{2,6}\\/?$/.test(path)");
+	});
+
 	it('declares the page so the sitemap, llms.txt and changelog pick it up', () => {
 		const pages = JSON.parse(read('data/pages.json'));
 		const entry = pages.sections.flatMap((s) => s.pages).find((p) => p.path === '/crews');
@@ -51,6 +60,35 @@ describe('crews wiring', () => {
 			const rendered = js.includes(`id="${id}"`);
 			expect(inPage || rendered, `#${id} is read by crews-page.js but nothing ever creates it`).toBe(true);
 		}
+	});
+
+	it('resolves the session before asking for a crew', () => {
+		// GET /api/crews is 401 by design for a signed-out visitor, and this is a
+		// public page. Asking anyway printed a red 401 in the console of every
+		// anonymous visitor; /api/auth/me answers 200 with { user: null } instead.
+		const js = read('src/crews-page.js');
+		expect(js).toContain('/api/auth/me');
+		expect(js).toMatch(/if \(\(await resolveSession\(\)\) === false\)/);
+	});
+
+	it('updates presence in place instead of rebuilding every figure', () => {
+		// The presence poll runs every 20 seconds. A full re-render on each tick
+		// rebuilt every <agent-3d>: four new WebGL contexts a minute against a cap
+		// of roughly sixteen, each rebuild evicting another canvas on the page.
+		const js = read('src/crews-page.js');
+		expect(js).toContain('const castKey =');
+		expect(js).toMatch(/if \(key === stageKey\) \{\s*\n\s*updatePresence/);
+		expect(js).toContain('function updatePresence(');
+		// And the poll must not re-flash the loading skeleton over a standing room.
+		expect(js).toContain("loadPublicCrew(state.publicTag, { skeleton: false })");
+	});
+
+	it("falls back to a still when a member's model fails to load", () => {
+		// A member's GLB can go missing. The figure becomes their portrait rather
+		// than an empty plinth, which is what the over-budget members already show.
+		const js = read('src/crews-page.js');
+		expect(js).toContain("addEventListener('agent:error'");
+		expect(js).toContain('stillHtml(el.dataset.still');
 	});
 
 	it('links the in-world friends drawer to the HQ', () => {
