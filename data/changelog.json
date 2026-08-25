@@ -3,6 +3,26 @@
   "entries": [
     {
       "date": "2026-08-25",
+      "title": "Dashboard Analytics fits a phone screen and its failure page can actually reload",
+      "summary": "On a 320px phone the time-range buttons refused to wrap, which pushed every panel below them past the right edge of the screen; they wrap now and nothing scrolls sideways. The rare shell-level failure page showed a Reload button that did nothing when tapped, so it now reloads. The page also stops requesting a monetization report it never displayed, and its search-engine description finally says what the page shows: revenue over time, revenue by skill, widget views and chats, the conversion funnel, and per-agent performance.",
+      "tags": [
+        "fix",
+        "improvement"
+      ],
+      "link": "/dashboard/analytics"
+    },
+    {
+      "date": "2026-08-25",
+      "title": "Describe it to 3D stops offering a retry that cannot work, and finally follows your light theme",
+      "summary": "Every attempt on this page costs about a minute of GPU time, so the page was handing out the wrong recovery. When your avatar library was full, it showed the failure and a Try again button that burned the same minute and hit the same ceiling; it now links straight to your dashboard to free a slot or to Pricing to raise it, and drops the retry entirely. When the image engine is throttled it quotes the wait the server actually asked for and counts the retry button down in place instead of letting you click into another rejection. A failed build no longer keeps spinning its orb and claiming it is still rendering, a dropped connection says so instead of showing a generic shrug, and the recovery links inside the error box are readable and keyboard focusable. Separately, the page had a light-theme hole: the toggle was live but only half the colours flipped, so the composer, the example chips and the result panel stayed near black on a white page and the main button rendered black text on blue, under the readable-contrast floor. Light mode is now a complete palette, and the site-wide theme switcher no longer decides a page cannot do light before the stylesheet that gives it light has loaded, which was silently serving dark to people who had chosen light on about a third of page loads. The prompt counter, placeholder and build clock were also too dim to read in either theme and are not any more.",
+      "tags": [
+        "fix",
+        "improvement"
+      ],
+      "link": "/create/prompt"
+    },
+    {
+      "date": "2026-08-25",
       "title": "Credits shows your $THREE discount tier, and no longer goes blank when it cannot load",
       "summary": "The Credits page had a hole where its error state should be: if the balance request failed, every panel disappeared and the page ended below the heading with nothing on it. There is now a designed card that says what happened, links to platform status, and retries in one click, and a dropped connection reads as a real sentence instead of the browser's \"Failed to fetch\". The page also finally states the thing it promises: a pill showing the $THREE tier you are actually charged at, with the discount you are getting or how much more $THREE reaches the next tier. On a 320px phone the whole layout used to be a hundred pixels wider than the screen with the right edge silently cut off, so nothing over there was reachable; the page now fits, and the history table scrolls inside its own box. Smaller fixes throughout: every button and field has a visible keyboard focus ring, the deposit address has a copy button, the $THREE unit price shows real decimals instead of rounding to $0.00, the amount field and the history controls stay translated when you switch asset or load another page, and the price list dropped the dashes from its labels.",
       "tags": [

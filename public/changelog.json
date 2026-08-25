@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-25T16:50:49.964Z",
+	"generated_at": "2026-08-25T17:06:41.379Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -85,6 +85,17 @@
 			"title": "Crew HQ keeps its 3D room standing, and crew links now open where they point",
 			"summary": "Crew HQ refreshes who is in the world every 20 seconds, and it used to rebuild the whole room to do it: every member's 3D figure was destroyed and recreated four times a minute, which burns through the handful of live 3D canvases a browser will give a page and could catch a figure mid-load. The room now writes the new state into the figures already standing and only rebuilds when the roster itself changes, and opening a shared crew link no longer flashes the loading skeleton over a room that is already there. A member whose model cannot be loaded now shows their portrait on the plinth instead of an empty space. Signed-out visitors get a clean page: the sign-in-only crew request is no longer fired at all, the crew directory loads beside the room rather than behind it, and it stops listing the crew you are already looking at. A tag nobody flies offers the founding form only to someone who can actually take it, and a dropped connection now says what happened and how to retry instead of showing the browser's \"Failed to fetch\".",
 			"link": "/crews",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-25",
+			"type": "update",
+			"title": "Describe it to 3D stops offering a retry that cannot work, and finally follows your light theme",
+			"summary": "Every attempt on this page costs about a minute of GPU time, so the page was handing out the wrong recovery. When your avatar library was full, it showed the failure and a Try again button that burned the same minute and hit the same ceiling; it now links straight to your dashboard to free a slot or to Pricing to raise it, and drops the retry entirely. When the image engine is throttled it quotes the wait the server actually asked for and counts the retry button down in place instead of letting you click into another rejection. A failed build no longer keeps spinning its orb and claiming it is still rendering, a dropped connection says so instead of showing a generic shrug, and the recovery links inside the error box are readable and keyboard focusable. Separately, the page had a light-theme hole: the toggle was live but only half the colours flipped, so the composer, the example chips and the result panel stayed near black on a white page and the main button rendered black text on blue, under the readable-contrast floor. Light mode is now a complete palette, and the site-wide theme switcher no longer decides a page cannot do light before the stylesheet that gives it light has loaded, which was silently serving dark to people who had chosen light on about a third of page loads. The prompt counter, placeholder and build clock were also too dim to read in either theme and are not any more.",
+			"link": "/create/prompt",
 			"tags": [
 				"fix",
 				"improvement"
