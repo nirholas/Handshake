@@ -20,8 +20,15 @@ vi.mock('../api/_lib/auth.js', () => ({
 	extractBearer: vi.fn(() => null),
 }));
 
+// Mirror the real `limits` surface these handlers touch: GETs use the generous
+// authed-read bucket and writes the strict credential bucket (376929cb1). A
+// mock that only knows authIp makes every GET throw on `undefined()` inside
+// wrap(), which reports as a 500 and hides the 400/200 this file exists to pin.
 vi.mock('../api/_lib/rate-limit.js', () => ({
-	limits: { authIp: vi.fn(async () => ({ success: true, reset: 1_000 })) },
+	limits: {
+		authIp: vi.fn(async () => ({ success: true, reset: 1_000 })),
+		authedReadIp: vi.fn(async () => ({ success: true, reset: 1_000 })),
+	},
 	clientIp: () => '203.0.113.8',
 }));
 
