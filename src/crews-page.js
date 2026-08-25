@@ -74,6 +74,21 @@ async function readError(res) {
 	);
 }
 
+// A fetch that never reached a server throws "Failed to fetch" (Chrome), "Load
+// failed" (Safari) or a NetworkError sentence (Firefox). None of those tell a
+// visitor anything, so they are replaced with what actually happened and what to
+// do about it. A message the server wrote is always kept.
+const NETWORK_NOISE = /^(failed to fetch|load failed|networkerror\b.*|network error)$/i;
+
+function humanError(err, subject) {
+	const message = String(err?.message || '').trim();
+	if (message && !NETWORK_NOISE.test(message)) return message;
+	if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+		return 'You are offline. Reconnect and try again.';
+	}
+	return `${subject} could not be reached. Check your connection and try again.`;
+}
+
 // ── session ───────────────────────────────────────────────────────────────────
 // Who is looking, resolved once per tab. GET /api/crews answers 401 for a
 // signed-out visitor by design, and this is a public page: asking anyway printed
@@ -220,11 +235,10 @@ function standeeHtml(m) {
 		: m.username
 			? `/u/${encodeURIComponent(m.username)}`
 			: '';
+	const still = m.standee?.thumbUrl || m.avatarUrl || '/favicon.svg';
 	const figure = live
-		? `<div class="cw-figure" data-model="${esc(model)}" data-label="${esc(label)}"></div>`
-		: `<div class="cw-figure"><img class="cw-figure-img" src="${esc(
-				m.standee?.thumbUrl || m.avatarUrl || '/favicon.svg',
-			)}" alt="" loading="lazy" decoding="async" /></div>`;
+		? `<div class="cw-figure" data-model="${esc(model)}" data-label="${esc(label)}" data-still="${esc(still)}"></div>`
+		: `<div class="cw-figure">${stillHtml(still)}</div>`;
 
 	const tag = href ? 'a' : 'div';
 	return (
@@ -264,6 +278,9 @@ function mountFigures(stage) {
 	pending.forEach((el) => io.observe(el));
 }
 
+const stillHtml = (src) =>
+	`<img class="cw-figure-img" src="${esc(src)}" alt="" loading="lazy" decoding="async" />`;
+
 function mountFigure(el) {
 	const model = el.dataset.model;
 	if (!model) return;
@@ -273,6 +290,13 @@ function mountFigure(el) {
 	tag.setAttribute('animation', 'idle');
 	tag.setAttribute('hide-chrome', '');
 	tag.setAttribute('aria-label', el.dataset.label || 'Crew member');
+	// A member's model can go missing (the agent's GLB was replaced, storage had a
+	// bad minute). The component says so rather than throwing, so the figure falls
+	// back to the same still the members past the WebGL budget already show: the
+	// person keeps standing in the room instead of leaving an empty plinth.
+	tag.addEventListener('agent:error', () => {
+		el.innerHTML = stillHtml(el.dataset.still || '/favicon.svg');
+	});
 	el.appendChild(tag);
 }
 
@@ -354,7 +378,7 @@ function fetchDirectory() {
 			const { data } = await res.json();
 			return { crews: data?.crews || [] };
 		})
-		.catch((err) => ({ error: err?.message || 'Try again in a moment.' }));
+		.catch((err) => ({ error: humanError(err, 'The crew directory') }));
 }
 
 async function renderDirectory(pending) {
@@ -448,7 +472,7 @@ function wireFoundForm() {
 			toast(`${tagInput.value.trim()} is yours. Invite your first member.`);
 			await refresh();
 		} catch (err) {
-			toast(err.message || 'Could not found the crew.', 'bad');
+			toast(humanError(err, 'The crew service'), 'bad');
 			submit.disabled = false;
 		} finally {
 			submit.textContent = 'Found the crew';
@@ -483,7 +507,7 @@ function wireInviteSearch() {
 				b.addEventListener('click', () => sendInvite(b.dataset.invite, b.dataset.name, b)),
 			);
 		} catch (err) {
-			results.innerHTML = `<li class="cw-empty">${esc(err.message || 'Search failed.')}</li>`;
+			results.innerHTML = `<li class="cw-empty">${esc(humanError(err, 'Account search'))}</li>`;
 		}
 	};
 
@@ -534,7 +558,7 @@ async function sendInvite(userId, name, btn) {
 	} catch (err) {
 		btn.disabled = false;
 		btn.textContent = 'Invite';
-		toast(err.message || 'Could not send that invite.', 'bad');
+		toast(humanError(err, 'The crew service'), 'bad');
 	}
 }
 
@@ -552,7 +576,7 @@ async function respondToInvite(action, crewId, btn) {
 		await refresh();
 	} catch (err) {
 		buttons.forEach((b) => (b.disabled = false));
-		toast(err.message || 'That did not go through.', 'bad');
+		toast(humanError(err, 'The crew service'), 'bad');
 	}
 }
 
@@ -578,7 +602,7 @@ async function leaveCrew() {
 		toast(data?.disbanded ? `${crew.name} has been disbanded.` : `You left ${crew.name}.`);
 		await refresh();
 	} catch (err) {
-		toast(err.message || 'Could not leave the crew.', 'bad');
+		toast(humanError(err, 'The crew service'), 'bad');
 	}
 }
 
@@ -594,7 +618,7 @@ async function kickMember(userId, name) {
 		toast(`${name} was removed.`);
 		await refresh();
 	} catch (err) {
-		toast(err.message || 'Could not remove that member.', 'bad');
+		toast(humanError(err, 'The crew service'), 'bad');
 	}
 }
 
@@ -670,7 +694,7 @@ async function loadPublicCrew(tag, { skeleton = true } = {}) {
 	} catch (err) {
 		$('cw-room').hidden = true;
 		clearStage();
-		showError(err.message || 'That crew could not be loaded.', () => loadPublicCrew(tag));
+		showError(humanError(err, 'That crew'), () => loadPublicCrew(tag));
 	}
 }
 
@@ -710,7 +734,7 @@ async function refresh() {
 		// only thing left saying what happened.
 		$('cw-room').hidden = true;
 		clearStage();
-		showError(err.message || 'Your crew could not be loaded.', refresh);
+		showError(humanError(err, 'Your crew'), refresh);
 		return;
 	}
 	renderMine();
