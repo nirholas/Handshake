@@ -561,8 +561,7 @@ Pages include /deploy-onchain, /ar/view, and docs for play vehicles, community, 
 - The pump.fun pill mascot shipped as a rigged, drivable 2.6 MB avatar with its own stage at /pill, and capsule mascots now auto-rig from their own geometry.
 - The full $THREE thesis was published as a single document, every utility, sink, listing, and risk sourced back to the code.
 - The Hugging Face article, avatar rigs, and Space were indexed in the docs.
-- The repo crossed 100 stars on GitHub (104 at the time of writing, 26 forks, 21 contributors, 60 pull requests).
-- The repo crossed 100 stars on GitHub, and the open-source footprint page went up: every registry, marketplace, community, and directory where three.ws code lives, each link verified live and each number pulled from the registry's own API.
+- The repo crossed 100 stars on GitHub (104 at the time of writing, 26 forks, 21 contributors, 60 pull requests), and the open-source footprint page went up: every registry, marketplace, community, and directory where three.ws code lives, each link verified live and each number pulled from the registry's own API.
 
 ---
 
