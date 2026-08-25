@@ -179,7 +179,15 @@ export default wrap(async (req, res) => {
 	const userId = await resolveUserId(req);
 	if (!userId) return error(res, 401, 'unauthorized', 'sign in to manage the sniper');
 
-	const rl = await limits.authIp(clientIp(req));
+	// GET is a session-scoped READ that fires on every dashboard page load and
+	// again on each poll tick, so it belongs in the generous read bucket. Sharing
+	// the strict credential bucket (50/10m, also gating login and register) is
+	// what let a single Capabilities page load 429 itself and lock the user out
+	// of signing in; see the authedReadIp note in api/_lib/rate-limit.js. Writes
+	// stay on the credential bucket, which is what it exists to protect.
+	const rl = req.method === 'POST'
+		? await limits.authIp(clientIp(req))
+		: await limits.authedReadIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	if (req.method === 'POST') return upsertStrategy(req, res, userId);

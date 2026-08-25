@@ -1,4 +1,7 @@
 // GET    /api/agent/market-maker?agentId=<uuid>  — list MM configs + recent trades
+// GET    /api/agent/market-maker?all=1           : same, across every agent the
+//                                                  caller owns (rows carry
+//                                                  agent_name + agent_image)
 // POST   /api/agent/market-maker                  — upsert MM config
 // DELETE /api/agent/market-maker?id=<config_id>  — disable MM config (soft-delete)
 //
@@ -59,13 +62,25 @@ export default wrap(async (req, res) => {
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'authentication required');
 
-	const rl = await limits.authIp(clientIp(req));
+	// Reads fire on every dashboard load and on each Capabilities poll tick, so
+	// they use the generous authed-read bucket rather than the strict credential
+	// bucket (50/10m, shared with login and register); see the authedReadIp note
+	// in api/_lib/rate-limit.js. Writes keep the credential bucket.
+	const rl = req.method === 'GET'
+		? await limits.authedReadIp(clientIp(req))
+		: await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl, 'too many market-maker requests');
 
 	// ── GET ───────────────────────────────────────────────────────────────────
 	if (req.method === 'GET') {
 		const url = new URL(req.url, 'http://x');
 		const agentId = url.searchParams.get('agentId');
+		// all=1 answers for every agent the caller owns in two queries. The
+		// Capabilities command center needs a whole-account view; without it the
+		// page fanned out one request per agent on every 30s poll, which scaled
+		// with the roster and drowned the per-IP budget.
+		const wantsAll = url.searchParams.get('all') === '1' || url.searchParams.get('all') === 'true';
+		if (!agentId && wantsAll) return getAllMarkets(res, auth.userId);
 		if (!agentId) return error(res, 400, 'validation_error', 'agentId query param required');
 		if (!isUuid(agentId)) return error(res, 400, 'validation_error', 'agentId must be a uuid');
 		if (!(await assertOwnsAgent(auth.userId, agentId))) {
@@ -168,3 +183,29 @@ export default wrap(async (req, res) => {
 
 	return json(res, 200, { ok: true, config });
 });
+
+// Account-wide variant of the GET above. Rows carry the owning agent's display
+// fields so a cross-agent table needs no second lookup.
+async function getAllMarkets(res, userId) {
+	const [configs, recent_trades] = await Promise.all([
+		sql`
+			SELECT c.*, a.name AS agent_name,
+			       COALESCE(a.profile_image_url, a.avatar_url) AS agent_image
+			FROM agent_market_maker_configs c
+			JOIN agent_identities a ON a.id = c.agent_id AND a.deleted_at IS NULL
+			WHERE a.user_id = ${userId}
+			ORDER BY c.created_at DESC
+			LIMIT 200
+		`,
+		sql`
+			SELECT t.*, a.name AS agent_name,
+			       COALESCE(a.profile_image_url, a.avatar_url) AS agent_image
+			FROM agent_market_maker_trades t
+			JOIN agent_identities a ON a.id = t.agent_id AND a.deleted_at IS NULL
+			WHERE a.user_id = ${userId}
+			ORDER BY t.created_at DESC
+			LIMIT 200
+		`,
+	]);
+	return json(res, 200, { configs, recent_trades, scope: 'all' });
+}

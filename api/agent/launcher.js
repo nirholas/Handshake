@@ -6,6 +6,11 @@
  *     configs = agent_launcher_configs rows for the owned agent
  *     coins   = last 50 agent_launched_coins for the agent, newest first
  *
+ *   GET    /api/agent/launcher?all=1
+ *     Account-wide view: every launcher config and launched coin across all
+ *     agents the caller owns, in two queries. Rows carry agent_name and
+ *     agent_image. Returns { configs, coins, scope: 'all' }.
+ *
  *   POST   /api/agent/launcher
  *     UPSERT a launcher config (one row per agent per network).
  *     Returns { ok: true, config: {...} }
@@ -62,7 +67,14 @@ export default wrap(async (req, res) => {
 	const userId = await resolveUserId(req);
 	if (!userId) return error(res, 401, 'unauthorized', 'authentication required');
 
-	const rl = await limits.authIp(clientIp(req));
+	// Reads fire on every dashboard load and on each Capabilities poll tick, so
+	// they use the generous authed-read bucket. Routing them through the strict
+	// credential bucket (50/10m, shared with login and register) is what made a
+	// single Capabilities load 429 itself; see the authedReadIp note in
+	// api/_lib/rate-limit.js. Writes keep the credential bucket.
+	const rl = req.method === 'GET'
+		? await limits.authedReadIp(clientIp(req))
+		: await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
 	if (req.method === 'GET') return getConfigs(req, res, userId);
@@ -75,9 +87,17 @@ export default wrap(async (req, res) => {
 
 // ── GET ──────────────────────────────────────────────────────────────────────
 
+const truthyParam = (v) => v === '1' || v === 'true';
+
 async function getConfigs(req, res, userId) {
 	const { searchParams } = new URL(req.url, 'http://localhost');
 	const agentId = searchParams.get('agentId');
+
+	// all=1 answers for every agent the caller owns in two queries. The
+	// Capabilities command center needs a whole-account view; without this it
+	// had to fan out one request per agent (2N per refresh, every 30s), which
+	// scaled linearly with the roster and drowned the per-IP budget.
+	if (!agentId && truthyParam(searchParams.get('all'))) return getAllConfigs(res, userId);
 
 	if (!agentId) return error(res, 400, 'missing_agent_id', 'agentId is required');
 	if (!isUuid(agentId)) return error(res, 400, 'invalid_agent_id', 'agentId must be a uuid');
@@ -101,6 +121,32 @@ async function getConfigs(req, res, userId) {
 	]);
 
 	return json(res, 200, { configs, coins });
+}
+
+// Account-wide variant of getConfigs. Rows carry the owning agent's display
+// fields so a caller rendering a cross-agent table needs no second lookup.
+async function getAllConfigs(res, userId) {
+	const [configs, coins] = await Promise.all([
+		sql`
+			SELECT c.*, a.name AS agent_name,
+			       COALESCE(a.profile_image_url, a.avatar_url) AS agent_image
+			FROM agent_launcher_configs c
+			JOIN agent_identities a ON a.id = c.agent_id AND a.deleted_at IS NULL
+			WHERE a.user_id = ${userId}
+			ORDER BY c.created_at ASC
+			LIMIT 200
+		`,
+		sql`
+			SELECT k.*, a.name AS agent_name,
+			       COALESCE(a.profile_image_url, a.avatar_url) AS agent_image
+			FROM agent_launched_coins k
+			JOIN agent_identities a ON a.id = k.agent_id AND a.deleted_at IS NULL
+			WHERE a.user_id = ${userId}
+			ORDER BY k.created_at DESC
+			LIMIT 200
+		`,
+	]);
+	return json(res, 200, { configs, coins, scope: 'all' });
 }
 
 // ── POST action=trigger — fire now ───────────────────────────────────────────
