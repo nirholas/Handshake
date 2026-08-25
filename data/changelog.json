@@ -24896,6 +24896,16 @@
         "improvement"
       ],
       "link": "/creations"
+    },
+    {
+      "date": "2026-08-25",
+      "title": "Billing & Passes names your creators, keeps its retry buttons live, and the dashboard fits a phone screen",
+      "summary": "On /dashboard/billing, creator subscriptions now show the creator's name (linked to their profile), the real renewal or end date, a colour-coded status, and the plan price with its interval, instead of a raw account id. When the passes or subscriptions feed cannot be reached, the Retry button now actually reloads that section. Across every dashboard page, the top bar no longer forces the layout wider than a 320px phone screen, so nothing is clipped off the right edge.",
+      "tags": [
+        "fix",
+        "improvement"
+      ],
+      "link": "/dashboard/billing"
     }
   ]
 }
