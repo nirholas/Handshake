@@ -80,14 +80,19 @@ Numbers measured directly from the repository on 2026-08-25:
 | Public pages (`data/pages.json`) | **723** across 10 sections (Crypto 137, Build 59, Learn 373, Main 52, Labs 22, Blog 39, and more) |
 | Changelog entries (`data/changelog.json`) | **2,673**, dated 2026-04-15 to 2026-08-24 |
 | Changelog tag mix | fix 1,190 · improvement 1,075 · feature 991 · infra 320 · docs 225 · security 216 · sdk 166 |
-| npm packages under `packages/` | **70** (53 declared workspaces) |
+| npm packages published under @three-ws | **101** (42 of them MCP servers, 6,225 downloads in the last 30 days); 70 live under `packages/` in this repo |
 | Root `package.json` | 257 scripts, 139 dependencies, version 1.5.2 |
-| MCP servers in the public catalog | **36** (including `three-token-mcp`, `threews-3d-studio`, `threews-pumpfun`, `x402-mcp`, `agora-mcp`, `metaplex-agent-mcp`) |
+| MCP servers in the official registry | **72** under `io.github.nirholas` (including `three-token-mcp`, `threews-3d-studio`, `threews-pumpfun`, `x402-mcp`, `agora-mcp`, `metaplex-agent`) |
 | Docs mentioning $THREE | 89 markdown files |
 | Cloud Scheduler crons | ~76 |
 | Crypto news archive | **660,000+ articles** from September 2017 onward, 192 publisher feeds in 18 languages |
 | DeFi pools indexed | ~15,000 live pools |
 | Individually priced x402 datapoints | **1,000,000+** at $0.0005 each |
+| Priced x402 endpoints in the live discovery catalog | **4,519** |
+| x402 settlements through the self-hosted facilitator | **110,416** on-chain, plus 803,483 payment verifications |
+| Validator attestations and custody proofs on Solana | **3,000** attestations, 126,522 custody proofs across 244 epochs |
+| GitHub | 104 stars, 26 forks, 21 contributors, 60 pull requests, 9,508 commits; 111 related open-source repos with 1,222 stars between them |
+| ERC-8004 registries | live at one CREATE2 address on **12 EVM mainnets** |
 
 The changelog cadence matters more than any single number. 2,673 holder-readable entries in roughly 130 days is about twenty shipped changes per day, every day, with 216 of them tagged security. This is what a team that is actually building looks like. The changelog is public at [three.ws/changelog](https://three.ws/changelog), with RSS and JSON feeds, and every entry is pushed automatically to the holders' Telegram channel (@three_ws) by a cron that diffs the feed against database state. Holders do not have to wonder whether development continues; it is announced to them twenty times a day.
 
@@ -365,6 +370,7 @@ PumpSwap three/SOL $48,861 · Meteora three/SOL $18,130 · Orca three/SOL $13,44
 
 - **Jupiter Verified** (the default Solana swap router's trust list)
 - **Phantom Verified** (the default Solana wallet's trust list)
+- **fomo** (fomo.family) in-app verification, which matters mostly as protection against lookalike mints
 - **pump.fun verified project** badge on the coin page, plus a pump.fun-published feature article, "Three Builds With Tech Giants," on the official coin page. The platform reads pump.fun's verification status live on every request to `/api/three-token/stats` rather than hardcoding it; the same shared badge component renders on `/three-token` and the dashboard so the two can never disagree. The copy is deliberately precise: "verified project," not partner, endorsement, or investment.
 - **CoinGecko** (id `three-ws`) and **CoinMarketCap** (live since 2026-05-17, with a community profile)
 - **Investing.com**
@@ -522,7 +528,7 @@ If buybacks never turn on, perks never activate, or revenue does not grow, the t
 
 ## 17. Summary of the bull case
 
-1. **A real, shipping, open-source product** with 723 pages, 70 packages, 36 MCP servers, and 2,673 changelog entries in four months. The code is public and every mechanic in this document can be read.
+1. **A real, shipping, open-source product** with 725 pages, 101 npm packages, 72 MCP servers in the official registry, 4,519 priced x402 endpoints with 110,416 on-chain settlements, and 2,674 changelog entries in four months. The code is public and every mechanic in this document can be read. The week-by-week record is in [the first weekly report](./weekly-report-1.md).
 2. **A complete agent-economy stack**: bodies (3D avatars), identities (ERC-8004 and Metaplex Core), wallets (custodial with a single spend-policy boundary), rails (x402 with a self-hosted Solana facilitator), trust (cross-chain reputation and identity verification), and markets (skills, assets, labor, bounties, vaults).
 3. **The token is wired into every layer**: hold-to-access tiers, 20% discounts on plans and passes, marketplace-only currency, labor and bounty escrow, game cosmetics, gated embeds, holder worlds, rider passes, deploy-fee waivers, x402 acceptance, and one-signature allowances.
 4. **Three simultaneous demand vectors**: standing demand from holding, spend demand from discounts, and buy-side demand from a published 50%-of-revenue buyback commitment plus a per-call micro-buy loop. The platform never sells and never burns.

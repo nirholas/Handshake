@@ -616,7 +616,7 @@ Because they are spread across nineteen weeks, here is the full list:
 
 ## Where $THREE sits in all of this
 
-Every week above added a place where the token does work. Collected:
+Every week above added a place where the token does work. Collected here; the full long-form case, with every mechanism sourced to the code and every risk the platform documents about itself, is the $THREE thesis at three.ws/docs/three-thesis.
 
 - Hold to access. Five tiers resolved from the live USD value of $THREE held, never spent: Bronze at $25, Silver at $100, Gold at $500, Genesis at $2,500. Compute discounts from 5% to 30%, free-quota multipliers from 2x to 10x. Live today on Forge high-quality generation and game-ready export, with private worlds, early drops, and first dibs on rare threews.sol names next in line.
 - Spend at a discount. Pro, Team, and Enterprise plans and the Premium Data API pass are 20% cheaper in $THREE than in USDC or SOL.
