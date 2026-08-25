@@ -53,6 +53,11 @@
 html[data-theme='light'] {
 	--cv-accent: #3b82f6;
 	--cv-accent-hover: #2563eb;
+	/* A solid accent fill and the text that sits on it. White on --cv-accent is
+	   3.7:1 in light and 2.2:1 in dark, both under the 4.5:1 AA floor, so a
+	   filled control picks its own pair: 6.7:1 here, 7.9:1 in dark. */
+	--cv-accent-solid: #1d4ed8;
+	--cv-on-accent: #fff;
 	--cv-surface: #fff;
 	--cv-surface-2: #f8fafc;
 	--cv-surface-3: #f1f5f9;
@@ -80,6 +85,8 @@ html[data-theme='dark'],
 html:not([data-theme='light']) {
 	--cv-accent: #60a5fa;
 	--cv-accent-hover: #93bbfc;
+	--cv-accent-solid: #60a5fa;
+	--cv-on-accent: #0a0a0a;
 	--cv-surface: #09090b;
 	--cv-surface-2: #131316;
 	--cv-surface-3: #1c1c21;
@@ -340,8 +347,8 @@ html.cv-page,
 .cv-rank-badge {
 	display: inline-flex;
 	align-items: center;
-	background: var(--cv-accent);
-	color: #fff;
+	background: var(--cv-accent-solid);
+	color: var(--cv-on-accent);
 	border-radius: 999px;
 	padding: 0.25rem 0.625rem;
 	font-size: 0.75rem;
@@ -457,8 +464,8 @@ html.cv-page,
 	background: var(--cv-surface-2);
 }
 .cv-range-btn[aria-pressed='true'] {
-	background: var(--cv-accent);
-	color: #fff;
+	background: var(--cv-accent-solid);
+	color: var(--cv-on-accent);
 }
 .cv-range-btn:focus-visible {
 	outline: 2px solid var(--cv-accent);
@@ -1283,8 +1290,8 @@ html.cv-page,
 	color: var(--cv-text);
 }
 .hm-seg button[aria-pressed='true'] {
-	background: var(--cv-accent);
-	color: #fff;
+	background: var(--cv-accent-solid);
+	color: var(--cv-on-accent);
 }
 .hm-seg button:focus-visible {
 	outline: 2px solid var(--cv-accent);
