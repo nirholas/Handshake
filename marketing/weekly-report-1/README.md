@@ -7,6 +7,8 @@ Header images for the X Article cover, rendered by `node scripts/render-weekly-r
 - header-x-article.png: 2400x1200 (2:1), black background, three.ws lockup, "Weekly Report #1". Use this as the article cover.
 - header-16x9.png: 2400x1350 (16:9) cut of the same header for the announcing post.
 
+The two open-source graphics referenced by the article live in `docs/media/` (rendered by `node scripts/render-github-stars-banner.mjs`): github-100-stars-x.png (the 100-stars milestone with twelve repo stats) and github-100-stars-ecosystem.png (where the open source stems beyond the repo).
+
 The article marks each insertion point with `[IMAGE: name.png]`. Suggested caption per file:
 
 - home.png: the homepage, text-to-3D in the hero, live avatar on the right.
