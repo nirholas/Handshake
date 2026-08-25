@@ -4,7 +4,7 @@
   "private": true,
   "description": "Build tooling for the docs/ gallery site. Each example under examples/ installs and runs standalone — this root package.json is repo tooling only, not a shipped package.",
   "type": "module",
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "author": "nirholas (https://x.com/nichxbt)",
   "scripts": {
     "docs:build": "node tools/build-docs.mjs"
