@@ -535,9 +535,9 @@ function renderTable() {
 	const head = ready
 		.map(
 			(c) =>
-				`<th scope="col"><a class="coin" href="/coin/${encodeURIComponent(c.id)}" style="text-decoration:none;color:inherit">
+				`<th scope="col"><a class="coin" href="/coin/${encodeURIComponent(c.id)}" style="--cmp-series:${c.color}">
 					${c.detail.image ? `<img loading="lazy" decoding="async" src="${esc(c.detail.image)}" alt="" data-no-dark-filter />` : ''}
-					<span style="color:${c.color}">${esc(c.detail.symbol || c.detail.name)}</span>
+					<span class="sym">${esc(c.detail.symbol || c.detail.name)}</span>
 				</a></th>`,
 		)
 		.join('');

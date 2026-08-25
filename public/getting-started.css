@@ -78,10 +78,14 @@
 .twg-pill-label { white-space: nowrap; letter-spacing: -0.01em; }
 .twg-pill-count {
 	font-variant-numeric: tabular-nums;
-	color: var(--ink-dim, #888888);
+	/* The pill is a permanently dark surface, so its ink cannot come from a token
+	   that flips with the page theme: in light mode --ink-dim resolves to #5a616f
+	   and reads at 2.6:1 on this background. Fixed light-on-dark, like the rest of
+	   the pill. */
+	color: #a1a1aa;
 	font-weight: 500;
 }
-.twg-pill.is-complete .twg-pill-count { color: var(--success, #4ade80); }
+.twg-pill.is-complete .twg-pill-count { color: #4ade80; }
 .twg-pill.is-complete {
 	border-color: rgba(74, 222, 128, 0.25);
 	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(74, 222, 128, 0.08);

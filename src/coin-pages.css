@@ -58,6 +58,11 @@ html[data-theme='light'] {
 	   filled control picks its own pair: 6.7:1 here, 7.9:1 in dark. */
 	--cv-accent-solid: #1d4ed8;
 	--cv-on-accent: #fff;
+	/* --cv-green reads at 3.3:1 on white, so a table that colours whole cells by
+	   sign needs a darker green for its text: 5.0:1 on the surface, 4.8:1 on the
+	   tinted winner cell. Red already clears AA and is kept as it is. */
+	--cv-green-text: #15803d;
+	--cv-red-text: #dc2626;
 	--cv-surface: #fff;
 	--cv-surface-2: #f8fafc;
 	--cv-surface-3: #f1f5f9;
@@ -87,6 +92,8 @@ html:not([data-theme='light']) {
 	--cv-accent-hover: #93bbfc;
 	--cv-accent-solid: #60a5fa;
 	--cv-on-accent: #0a0a0a;
+	--cv-green-text: #4ade80;
+	--cv-red-text: #f87171;
 	--cv-surface: #09090b;
 	--cv-surface-2: #131316;
 	--cv-surface-3: #1c1c21;
@@ -1699,6 +1706,15 @@ html.cv-page,
 	display: inline-flex;
 	align-items: center;
 	gap: 0.375rem;
+	color: var(--cv-text);
+	text-decoration: none;
+}
+/* The series colour identifies the column, but as text it is 2.1:1 for amber on
+   white. It rides under the symbol instead, so the tie to the chart line holds
+   and the label itself stays readable. */
+.cmp-table thead th .coin .sym {
+	border-bottom: 2px solid var(--cmp-series, var(--cv-text-3));
+	padding-bottom: 0.125rem;
 }
 .cmp-table thead th img {
 	width: 20px;
@@ -1726,13 +1742,13 @@ html.cv-page,
 	position: relative;
 }
 .cmp-table td.cv-up {
-	color: var(--cv-green);
+	color: var(--cv-green-text);
 }
 .cmp-table td.cv-down {
-	color: var(--cv-red);
+	color: var(--cv-red-text);
 }
 .cmp-table td.best:not(.cv-up):not(.cv-down) {
-	color: var(--cv-green);
+	color: var(--cv-green-text);
 }
 .cmp-legend {
 	display: flex;
