@@ -200,57 +200,114 @@ function toast(msg, type = 'ok') {
 
 // ── Data + render ─────────────────────────────────────────────────────────────
 
+// Four requests, whatever the roster size. This used to fan out one request per
+// agent per capability (3 + 2N per refresh, every 30s), which on a real account
+// tripped the per-IP rate limit mid-load: the failed calls were swallowed and
+// the page rendered a confident all-zero dashboard for an account that had data.
+// The `all=1` mode on both agent endpoints answers for the whole account in one
+// query each, and every failure below is now surfaced instead of coerced to [].
+const ENDPOINTS = [
+	{ key: 'status',    url: '/api/sniper/status' },
+	{ key: 'strategy',  url: '/api/sniper/strategy' },
+	{ key: 'launcher',  url: '/api/agent/launcher?all=1' },
+	{ key: 'mm',        url: '/api/agent/market-maker?all=1' },
+];
+
+/** Human-readable reason for a failed section fetch. */
+function failureText(err) {
+	if (err?.status === 429) return 'Rate limited. The data below is not available right now.';
+	if (err?.status === 401 || err?.status === 403) return 'Your session no longer covers this data. Sign in again to load it.';
+	if (err?.status >= 500) return 'The API returned an error. This is on our side, not yours.';
+	return err?.message || 'Could not reach the API.';
+}
+
 async function refresh(root) {
-	const [agentsRes, strategiesRes, statusRes] = await Promise.allSettled([
-		get('/api/agents?limit=50'),
-		get('/api/sniper/strategy'),
-		get('/api/sniper/status'),
-	]);
-
-	const agents     = agentsRes.status === 'fulfilled'    ? (agentsRes.value?.agents ?? []) : [];
-	const strategies = strategiesRes.status === 'fulfilled' ? (strategiesRes.value?.strategies ?? []) : [];
-	const workerStatus = statusRes.status === 'fulfilled'  ? statusRes.value : null;
-	const agentMap   = new Map(agents.map((a) => [a.id, a]));
-
-	const agentIds = agents.map((a) => a.id);
-	const [launcherResults, mmResults] = await Promise.allSettled([
-		Promise.all(agentIds.map((id) => get(`/api/agent/launcher?agentId=${id}`).catch(() => null))),
-		Promise.all(agentIds.map((id) => get(`/api/agent/market-maker?agentId=${id}`).catch(() => null))),
-	]);
-
-	const launcherData = launcherResults.status === 'fulfilled' ? launcherResults.value : [];
-	const mmData       = mmResults.status === 'fulfilled'       ? mmResults.value       : [];
-
-	const allLauncherConfigs = [], allCoins = [], allMMConfigs = [], allMMTrades = [];
-	agentIds.forEach((id, i) => {
-		const ag = agentMap.get(id);
-		const ld = launcherData[i];
-		if (ld) {
-			(ld.configs || []).forEach((c) => allLauncherConfigs.push({ ...c, _agent: ag }));
-			(ld.coins   || []).forEach((c) => allCoins.push({ ...c, _agent: ag }));
-		}
-		const md = mmData[i];
-		if (md) {
-			(md.configs       || []).forEach((c) => allMMConfigs.push({ ...c, _agent: ag }));
-			(md.recent_trades || []).forEach((t) => allMMTrades.push({ ...t, _agent: ag }));
-		}
+	const settled = await Promise.allSettled(ENDPOINTS.map((e) => get(e.url)));
+	const data = {}, errs = {};
+	ENDPOINTS.forEach((e, i) => {
+		const r = settled[i];
+		if (r.status === 'fulfilled') data[e.key] = r.value;
+		else errs[e.key] = failureText(r.reason);
 	});
 
-	const alphaStrategies = strategies.filter((s) => s.trigger === 'alpha_hunt');
+	// Every lane down means the API is unreachable, not that the account is
+	// empty. Say so once, loudly, rather than four times as a fake zero.
+	if (Object.keys(errs).length === ENDPOINTS.length) {
+		root.innerHTML = errorStateHTML({
+			title: 'Couldn’t reach the capabilities API',
+			body: esc(errs.status || 'No capability endpoint responded.'),
+			scope: 'capabilities',
+		});
+		root.removeAttribute('aria-busy');
+		root.removeAttribute('aria-label');
+		return;
+	}
 
+	const strategies = data.strategy?.strategies ?? [];
+	const launcherConfigs = withAgent(data.launcher?.configs);
+	const coins           = withAgent(data.launcher?.coins);
+	const mmConfigs       = withAgent(data.mm?.configs);
+	const mmTrades        = withAgent(data.mm?.recent_trades);
+
+	const ui = captureUiState(root);
 	root.innerHTML = [
-		renderWorkerStatus(workerStatus),
-		renderAlphaHunt(alphaStrategies, agentMap),
-		renderLauncher(allLauncherConfigs, allCoins),
-		renderAutoClaim(allCoins),
-		renderMarketMaker(allMMConfigs, allMMTrades),
+		renderWorkerStatus(data.status ?? null, errs.status),
+		renderAlphaHunt(strategies.filter((s) => s.trigger === 'alpha_hunt'), errs.strategy),
+		renderLauncher(launcherConfigs, coins, errs.launcher),
+		renderAutoClaim(coins, errs.launcher),
+		renderMarketMaker(mmConfigs, mmTrades, errs.mm),
 	].join('');
 	root.removeAttribute('aria-busy');
 	root.removeAttribute('aria-label');
 
 	wireTabSwitchers(root);
-	wireLaunchNow(root, agentIds, agentMap);
+	wireLaunchNow(root);
 	wireClaimNow(root);
+	restoreUiState(root, ui);
+}
+
+/** The `all=1` responses carry the owning agent inline, so shape it once here. */
+function withAgent(rows) {
+	return (rows || []).map((r) => ({ ...r, _agent: { name: r.agent_name, image: r.agent_image } }));
+}
+
+/** Section-level failure block: never a fake empty state. */
+function sectionErrorHTML(message) {
+	return errorStateHTML({ title: 'Couldn’t load this capability', body: esc(message), scope: 'capabilities' });
+}
+
+// ── Re-render continuity ──────────────────────────────────────────────────────
+//
+// The 30s poll replaces the whole subtree, which would otherwise snap an open
+// tab back to its default and drop keyboard focus mid-read. Capture the bits a
+// user can move, then put them back.
+
+function captureUiState(root) {
+	const tabs = {};
+	root.querySelectorAll('.cp-tab[aria-selected="true"]').forEach((t) => { tabs[t.dataset.tabGroup] = t.dataset.tab; });
+	const active = document.activeElement;
+	const focus = active && root.contains(active) && active.dataset?.tab
+		? { group: active.dataset.tabGroup, tab: active.dataset.tab }
+		: null;
+	const scrolls = {};
+	root.querySelectorAll('.cp-scroll[aria-label]').forEach((el) => { scrolls[el.getAttribute('aria-label')] = el.scrollTop; });
+	return { tabs, focus, scrolls };
+}
+
+function restoreUiState(root, ui) {
+	if (!ui) return;
+	for (const [group, tab] of Object.entries(ui.tabs)) {
+		const btn = root.querySelector(`.cp-tab[data-tab-group="${CSS.escape(group)}"][data-tab="${CSS.escape(tab)}"]`);
+		if (btn && btn.getAttribute('aria-selected') !== 'true') btn.click();
+	}
+	for (const [label, top] of Object.entries(ui.scrolls)) {
+		if (!top) continue;
+		const el = root.querySelector(`.cp-scroll[aria-label="${CSS.escape(label)}"]`);
+		if (el) el.scrollTop = top;
+	}
+	if (ui.focus) {
+		root.querySelector(`.cp-tab[data-tab-group="${CSS.escape(ui.focus.group)}"][data-tab="${CSS.escape(ui.focus.tab)}"]`)?.focus();
+	}
 }
 
 // ── Worker Status ──────────────────────────────────────────────────────────────
