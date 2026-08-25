@@ -35,9 +35,11 @@ Open [http://localhost:3000](http://localhost:3000) and verify the default model
 `npm run setup` finishes what `npm install` can't: it builds the local
 `solana-agent-sdk` (linked as a `file:` dependency, ships no prebuilt `dist/`)
 and generates the gitignored `data/_generated/*` artifacts that the app,
-sitemap, and test suite read. It also activates the repo's pre-push hook
-(`.githooks/pre-push`), which runs `npm run typecheck` before every push.
-It is idempotent — re-running it skips anything already up to date.
+sitemap, and test suite read. It also installs the repo's pre-push hook into
+`.git/hooks`, which checks the commits you are pushing (and only those) against
+the hard rules in `CLAUDE.md` and refuses to push credential material or a
+generic commit subject. It is idempotent: re-running it skips anything already
+up to date.
 
 ---
 

@@ -54,9 +54,17 @@ if (!existsSync(resolve(ROOT, 'agent-payments-sdk/dist/index.js'))) {
 	buildSdk('setup-agent-payments-sdk', 'agent-payments-sdk', 'agent-payments-sdk/dist/index.js');
 }
 
-// 2. Git hooks: no CI runs on this repo, so the pre-push typecheck in
-// .githooks/ is the only automated gate before the Vercel build.
-run('git config core.hooksPath .githooks');
+// 2. Git hooks. The pre-push hook lives in .git/hooks and is installed by
+// scripts/setup-git-hooks.mjs (postinstall runs it too); it enforces the
+// CLAUDE.md hard rules and the no-credentials rule on exactly the commits
+// being pushed. An earlier version of this script pointed core.hooksPath at a
+// separate .githooks/ directory, which silently REPLACED that hook with a
+// typecheck-only one on every machine that ran setup, so the mandated checks
+// never fired for anyone who followed the contributor docs. Undo that
+// redirect where it is still set, then (re)install the real hook.
+const hooksPath = run('git config --get core.hooksPath', { allowFail: true }).trim();
+if (hooksPath === '.githooks') run('git config --unset core.hooksPath');
+run('node scripts/setup-git-hooks.mjs');
 
 // 3. Generated data consumed by the app, sitemap, and tests.
 run('node scripts/build-news.mjs');
