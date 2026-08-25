@@ -41,7 +41,8 @@ No payment, no account, no key.
 # Machine-readable index: `services` is the listed line-up, `unlisted` is the back burner
 curl https://three.ws/api/okx/3d/catalog
 
-# Live health of the lanes behind the paid services (real probes, not a static ok)
+# Live health of the lanes behind the paid services (real probes, not a static ok),
+# including the median and p90 of the last hour's real forge_3d submits
 curl https://three.ws/api/okx/3d/health
 ```
 

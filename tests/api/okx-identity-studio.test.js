@@ -41,6 +41,14 @@ vi.mock('../../api/_lib/rate-limit.js', () => ({
 	clientIp: vi.fn(() => '203.0.113.9'),
 }));
 
+// The submit-latency probe reads usage_events; default to an empty window
+// (nothing to judge), and let a case install rows of its own.
+const usageRows = vi.hoisted(() => ({ rows: [] }));
+vi.mock('../../api/_lib/db.js', () => ({
+	sql: async () => usageRows.rows,
+	isDbUnavailableError: () => false,
+}));
+
 vi.mock('../../api/_lib/usage.js', () => ({
 	recordEvent: vi.fn(),
 	logger: () => ({ info: () => {}, warn: () => {}, error: () => {} }),
@@ -287,6 +295,7 @@ describe('free lanes over HTTP', () => {
 			'render',
 			'retarget',
 			'storage',
+			'submit-latency',
 		]);
 		const rail = body.subsystems.find((s) => s.name === 'payment-rail');
 		expect(rail.token).toBe('USD₮0');
@@ -299,6 +308,34 @@ describe('free lanes over HTTP', () => {
 		await handler(makeReq({ method: 'GET', service: 'health' }), res);
 		expect(res.statusCode).toBe(503);
 		expect(JSON.parse(res.body).ok).toBe(false);
+	});
+
+	// The static generation probe read all-green on 2026-08-25 while every text
+	// submit hung for 95 s+. The submit-latency probe judges the last hour of
+	// REAL forge_3d calls instead, so a stalled lane shows up here.
+	it('GET /health goes 503 when recent real submits are slow, even with every static probe green', async () => {
+		mountHealthyProbes();
+		usageRows.rows = [{ samples: 5, errors: 0, p50_ms: 96_000, p90_ms: 150_000 }];
+		try {
+			const res = makeRes();
+			await handler(makeReq({ method: 'GET', service: 'health' }), res);
+			expect(res.statusCode).toBe(503);
+			const probe = JSON.parse(res.body).subsystems.find((s) => s.name === 'submit-latency');
+			expect(probe.ok).toBe(false);
+			expect(probe.p50_ms).toBe(96_000);
+			expect(probe.error).toContain('median submit');
+		} finally {
+			usageRows.rows = [];
+		}
+	});
+
+	it('GET /health reports an empty submit window as nothing to judge, not as a failure', async () => {
+		mountHealthyProbes();
+		const res = makeRes();
+		await handler(makeReq({ method: 'GET', service: 'health' }), res);
+		const probe = JSON.parse(res.body).subsystems.find((s) => s.name === 'submit-latency');
+		expect(probe.ok).toBe(true);
+		expect(probe.samples).toBe(0);
 	});
 
 	// The generation probe used to GET /api/forge bare, which answers 400

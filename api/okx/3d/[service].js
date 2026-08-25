@@ -39,6 +39,8 @@ import {
 import { priceBatch, isDiscoveryOnlyBatch } from '../../_lib/mcp-batch-price.js';
 import { OKX_CATALOG, catalogIndex, catalogEntry, listingDescription } from '../../_lib/okx-catalog.js';
 import { headObject, putObject } from '../../_lib/r2.js';
+import { sql } from '../../_lib/db.js';
+import { FORGE_TOOL } from '../../_lib/okx-catalog.js';
 import {
 	PAYMENT_IDENTIFIER,
 	checkCache,
@@ -83,7 +85,8 @@ async function probe(name, fn) {
 		const detail = await fn();
 		return { name, ok: true, latency_ms: Date.now() - started, ...(detail || {}) };
 	} catch (err) {
-		return { name, ok: false, latency_ms: Date.now() - started, error: String(err?.message || err) };
+		const { message, stack, ...detail } = err && typeof err === 'object' ? err : {};
+		return { name, ok: false, latency_ms: Date.now() - started, error: String(err?.message || err), ...detail };
 	}
 }
 
@@ -106,6 +109,36 @@ async function healthReport() {
 			const backends = Array.isArray(catalog?.backends) ? catalog.backends.length : 0;
 			if (!tiers || !backends) throw new Error('forge catalog empty');
 			return { tiers, backends };
+		}),
+		// What a buyer actually experiences. The `generation` probe proves the
+		// front door is up; it read all-green on 2026-08-25 while every text
+		// submit hung for 95 s+, because a stalled lane looks fine from a static
+		// catalog. Every forge_3d call lands in usage_events with its latency and
+		// status (makeDispatcher records both), so the last hour of real submits
+		// is the honest reading: how long acceptance took, and how many failed.
+		probe('submit-latency', async () => {
+			const rows = await sql`
+				select
+					count(*)::int as samples,
+					count(*) filter (where status <> 'ok')::int as errors,
+					percentile_cont(0.5) within group (order by latency_ms)::int as p50_ms,
+					percentile_cont(0.9) within group (order by latency_ms)::int as p90_ms
+				from usage_events
+				where kind = 'tool_call' and tool = ${FORGE_TOOL}
+					and created_at > now() - interval '60 minutes'
+			`;
+			const r = rows[0] || {};
+			const samples = Number(r.samples) || 0;
+			const errors = Number(r.errors) || 0;
+			const p50 = r.p50_ms == null ? null : Number(r.p50_ms);
+			const p90 = r.p90_ms == null ? null : Number(r.p90_ms);
+			const detail = { window_minutes: 60, samples, errors, p50_ms: p50, p90_ms: p90 };
+			// Three or more real submits in the hour is enough to judge. A median
+			// past 45 s means a ChatGPT-class client never sees the accept; more
+			// failures than successes means the lane is not taking jobs.
+			if (samples >= 3 && p50 != null && p50 > 45_000) throw Object.assign(new Error(`median submit ${p50} ms over the last hour`), detail);
+			if (samples >= 3 && errors * 2 > samples) throw Object.assign(new Error(`${errors} of ${samples} submits failed in the last hour`), detail);
+			return detail;
 		}),
 		probe('render', async () => {
 			const res = await fetch(`${BASE}/api/render/avatar-clip`, {
