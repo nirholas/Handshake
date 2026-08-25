@@ -807,6 +807,18 @@
 				{
 					"label": "Contributing",
 					"path": "contributing"
+				},
+				{
+					"label": "Your first contribution",
+					"path": "first-contribution"
+				},
+				{
+					"label": "Triage",
+					"path": "triage"
+				},
+				{
+					"label": "Community",
+					"path": "community"
 				}
 			]
 		},

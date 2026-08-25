@@ -36,6 +36,8 @@ A maintainer runs the untriaged queue at least twice a week. Every new issue get
 | `documentation` | Docs defect or gap. `npm run audit:docs` findings land here. |
 | `question` | Usually gets converted to a Discussion so the answer is searchable. |
 | `duplicate` / `invalid` / `wontfix` | Closed, always with the reason written in the thread. Never closed silently. |
+| `triage` | Awaiting a maintainer's first pass. Comes off at the first response. |
+| `area: rig` / `area: animation` / `area: docs` / `area: tests` | Which part of the platform the work touches. One per issue, so you can filter for the area you know. Every curated first issue carries one. |
 
 ## Claiming work
 
@@ -54,7 +56,7 @@ If you claim something and life happens, say so and we will unassign it with zer
 
 ## Maintainers
 
-Day-to-day triage, review, and releases are handled by [@nirholas](https://github.com/nirholas), with [CODEOWNERS](../.github/CODEOWNERS) routing high-blast-radius paths (contracts, payment rails, published SDKs, security policy) to a required review.
+Day-to-day triage, review, and releases are handled by [@nirholas](https://github.com/nirholas), with [CODEOWNERS](../.github/CODEOWNERS) automatically requesting review from the owner on any pull request that touches a high-blast-radius path (contracts, payment rails, published SDKs, security policy).
 
 We are actively looking to grow this. The path is the normal one: land a few good PRs, help answer things in [Discussions](https://github.com/nirholas/three.ws/discussions), and we will hand you triage rights. There is no interview.
 
