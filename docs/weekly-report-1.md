@@ -24,6 +24,8 @@ Before the timeline, the totals as of August 25, 2026:
 - 3,000+ motion-capture animations, 500+ CC0 3D props, 106 rigged characters in the character library.
 - A self-hosted GPU fleet on Google Cloud Run: NVIDIA L4s and an RTX PRO 6000 Blackwell.
 - 44,122 wallet transactions scanned by our own leak scanners as of July 12, with zero leaks found, ever.
+- About 1,500 test files, about 53 Postgres tables, 101 scheduled jobs on Cloud Scheduler, a 21-page Demos Hub, and a walkable 3D city built on real Manhattan map data.
+- An OAuth 2.1 authorization server (PKCE, dynamic registration, revocation, introspection, discovery), an OpenAPI 3.1 spec at /openapi.json, and a hosted MCP endpoint any assistant can drive.
 - 3,145 peak concurrent avatars at the first $THREE holders meetup on August 7.
 - $THREE today, read live from the token page: 16,264 holders, about $2.3M market cap, about $538K 24h volume, verified project on pump.fun, Jupiter Verified, Phantom Verified, listed on MEXC, LBank, KCEX, Bybit Alpha, KuCoin Alpha, Binance Web3, Coinbase Wallet, CoinGecko, and CoinMarketCap.
 
@@ -411,7 +413,7 @@ Announced: 3D Studio inside ChatGPT, AR placement, the /irl world map (July 15).
 - The Object Library at /objects with hundreds of CC0 props, a GLB thumbnail pipeline, a CORS-open GLB proxy.
 - A security pass: same-site gates on cookie-authed mutations, fail-closed when CRON_SECRET is unset, facilitator-settleable mints pinned, SSRF-guarded fetch across scene graph and article extraction, open-redirect prevention.
 - The Sniper self-improvement stack: an evolution engine on a cron, an intra-arm optimizer that self-tunes from realized outcomes, a judgment ledger persisting every LLM verdict against coin outcomes, a recalibrated honeypot detector, a boost-ride arm, a new LLM arm in the bracket.
-- The 90-trade autonomous fleet postmortem published at /blog/all-90-trades and expanded into a full research report.
+- The 90-trade autonomous fleet postmortem published at /blog/all-90-trades and expanded into a full research report. The numbers, published in full: 11 agents, 90 trades, 25 wins, 1.932 SOL deployed, net -0.103 SOL. We published every decision because the point was the ledger, the gates, and the firewall that simulates the sell before the buy, and that data is what the self-tuning optimizer above learned from.
 - The CC0 anny parametric body with 472 morph targets vendored and wired into Avatar Studio.
 - The Avatar Composer for GLB composition and part selection; projective texturing reaching the 81% of the head the warp cannot.
 - Twelve Robinhood Chain sites rebuilt with an LLM strategist and an X transport.
@@ -457,7 +459,7 @@ Announced: 500+ free CC0 3D props (July 23); 10k+ x402 transactions (July 24); s
 
 Pages include /nvidia, /wallet, /play/economy, /play/solver, /mcp-tools, /avatar-cli, /receipts, /crews, /atlas, /press, /fits, /trading, /exit-lab, /economy-lab, /walkthroughs.
 
-Announced: sign language fingerspelling avatars, webcam sign reading, and the sign_text MCP tool (August 1). Blog: "Image-to-3D on NVIDIA L4 and Blackwell: Shipping Hunyuan3D 2.1 on Cloud Run GPUs" and "How to Monetize an MCP Server: Paid Tools with x402" (July 30).
+Announced: sign language fingerspelling avatars, webcam sign reading, and the sign_text MCP tool (August 1). Four video scripts were also written this stretch and the next: the platform film "Give your AI a body," the AR Studio launch, the browser agent deployer, and a shot-by-shot Veo sequence for the open-source agent infrastructure clip. Blog: "Image-to-3D on NVIDIA L4 and Blackwell: Shipping Hunyuan3D 2.1 on Cloud Run GPUs" and "How to Monetize an MCP Server: Paid Tools with x402" (July 30).
 
 [IMAGE: nvidia.png]
 [IMAGE: walkthroughs.png]
@@ -577,7 +579,10 @@ Because they are spread across nineteen weeks, here is the full list:
 - Coinbase x402 Bazaar and agentic.market (May 21), x402scan, the MCP Registry, VS Code Marketplace and Open VSX.
 - Solana Mobile dApp Store, Seeker-first.
 - MetaMask Agent Wallet early access, and SIWE sign-in.
-- pump.fun: a verified project badge, and an editorial feature on the coin page, "Three Builds With Tech Giants."
+- pump.fun: a verified project badge, and an editorial feature on the coin page, "Three Builds With Tech Giants," which also records the token's $16.6M peak market cap.
+- fomo (fomo.family), the self-custodial social trading app from ex-Uniswap, OpenSea, and dYdX builders: $THREE is verified in-app, which matters mostly as protection against lookalike mints.
+- Hugging Face: a published article, the avatar rigs, and a Space.
+- W3C membership, Product Hunt, hackathons, a podcast appearance, and press features, all logged in the announcement audit.
 - DEXTools Social Boost winner (June 8), with a $5,543 third-party buyback.
 
 ---
@@ -601,7 +606,7 @@ Every week above added a place where the token does work. Collected:
 
 The roadmap has four phases. Foundations are shipped. The selfie-to-avatar engine, agent personalization with voice cloning, the on-chain economy (agent tokens, reputation markets, royalties), and the open inference network are each live in core and being pushed further. Nearer term, the buyback and micro-buy engines are built, capped, and waiting on their switches; the next holder perks are specified down to the migration; the MEXC market is filed with CoinGecko; and the AWS listing, OKX resubmission, and OpenAI directory submission are in flight.
 
-Announcement coverage is the gap we are most aware of: an internal audit in August counted 410 shipped surfaces and only 47 ever announced on X. That is why this report exists. Weekly from now on.
+Announcement coverage is the gap we are most aware of: an internal audit in August counted 410 shipped surfaces and only 47 ever announced on X. Some of the strongest things on the platform have never had a post: three-token-mcp (the first MCP server whose actions burn a token), Forge Max, Motion Swap and Mocap Studio, Capture and the Splat viewer, Genome and Genesis, the Wardrobe and Fits, Oracle and the activity feed, Guardian, the Arena and Coin Clash and Coin Wars, Vaults and the Labor Market and Signals, Mirror and Swarms and Ghost Copy, Launch Studio, readme-3d, agent-memory and agent-runtime and agent-guards, Concierge and Assistant, the AgenC embodied room, Choreograph and Gestures, Portfolio and Airdrops and the master Wallet, Theater and Pulse and Flow, and skill-license. That is inventory, not a roadmap of promises, and it is why this report exists. Weekly from now on.
 
 Everything above is open source under Apache-2.0 at github.com/nirholas/three.ws. Read the code, check the endpoints, join the world at three.ws/play.
 
