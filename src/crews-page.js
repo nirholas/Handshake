@@ -131,6 +131,17 @@ function toast(message, tone = 'good') {
 }
 
 // ── the room ─────────────────────────────────────────────────────────────────
+// What the stage currently holds. The presence poll runs every 20 seconds and a
+// full re-render on each tick would tear down and rebuild every <agent-3d>: four
+// new WebGL contexts a minute against a browser cap of roughly sixteen, each
+// rebuild evicting another canvas on the page, and a figure destroyed mid-boot
+// leaves its loader finishing against a renderer that no longer exists. So the
+// cast is rebuilt only when the cast actually changes; who is in world is
+// written into the standing figures in place.
+let stageKey = '';
+
+const castKey = (crew, members) => `${crew.tag}|${members.map((m) => m.id).join(',')}`;
+
 function renderRoom(crew, members, { canManage }) {
 	const room = $('cw-room');
 	const stage = $('cw-stage');
@@ -154,12 +165,42 @@ function renderRoom(crew, members, { canManage }) {
 		(canManage ? '<button type="button" class="cw-btn sm danger" id="cw-leave">Leave crew</button>' : '') +
 		'</div>';
 
-	state.liveFigures = 0;
-	stage.innerHTML = members.map(standeeHtml).join('');
-	mountFigures(stage);
+	const key = castKey(crew, members);
+	if (key === stageKey) {
+		updatePresence(stage, members);
+	} else {
+		stageKey = key;
+		state.liveFigures = 0;
+		stage.innerHTML = members.map(standeeHtml).join('');
+		mountFigures(stage);
+	}
 
 	$('cw-share').addEventListener('click', () => shareCrew(crew.tag));
 	$('cw-leave')?.addEventListener('click', leaveCrew);
+}
+
+// Hiding the room is not enough to release its WebGL contexts: an <agent-3d>
+// that is merely display:none still holds its canvas. Emptying the stage is what
+// gives them back when a visitor leaves a crew or a load fails.
+function clearStage() {
+	stageKey = '';
+	$('cw-stage').innerHTML = '';
+}
+
+// Presence, written into figures that are already standing. Keyed by member id
+// rather than by position so it survives a roster reordering.
+function updatePresence(root, members) {
+	for (const m of members) {
+		const el = root.querySelector(`[data-member="${CSS.escape(String(m.id))}"]`);
+		if (!el) continue;
+		const line = presenceLine(m);
+		el.dataset.online = m.online ? 'true' : 'false';
+		if (el.dataset.label) el.title = `${el.dataset.label} · ${line}`;
+		const slot = el.querySelector('.cw-presence');
+		if (!slot) continue;
+		slot.textContent = slot.dataset.suffix ? `${line} · ${slot.dataset.suffix}` : line;
+		slot.classList.toggle('cw-live', !!m.online);
+	}
 }
 
 function standeeHtml(m) {
@@ -183,14 +224,15 @@ function standeeHtml(m) {
 
 	const tag = href ? 'a' : 'div';
 	return (
-		`<${tag} class="cw-standee" data-online="${m.online ? 'true' : 'false'}"` +
+		`<${tag} class="cw-standee" data-member="${esc(m.id)}" data-label="${esc(label)}"` +
+		` data-online="${m.online ? 'true' : 'false'}"` +
 		(href ? ` href="${esc(href)}"` : '') +
 		` title="${esc(label)} · ${esc(presenceLine(m))}">` +
 		figure +
 		'<span class="cw-plinth"></span>' +
 		'<span class="cw-nameplate">' +
 		`<b>${esc(m.name)}</b>` +
-		`<span class="${m.online ? 'cw-live' : ''}">${esc(presenceLine(m))}</span>` +
+		`<span class="cw-presence${m.online ? ' cw-live' : ''}">${esc(presenceLine(m))}</span>` +
 		'</span>' +
 		`</${tag}>`
 	);
@@ -231,17 +273,26 @@ function mountFigure(el) {
 }
 
 // ── roster ───────────────────────────────────────────────────────────────────
+// Same rule as the stage: rebuilt when the membership changes, updated in place
+// when only presence moved, so a poll cannot yank the Remove button out from
+// under a keyboard user mid-focus.
+let rosterKey = '';
+
 function renderRoster(members, { canKick }) {
 	const list = $('cw-roster');
+	const key = `${canKick ? 'kick' : 'read'}|${members.map((m) => m.id).join(',')}`;
+	if (key === rosterKey) return updatePresence(list, members);
+	rosterKey = key;
 	list.innerHTML = members
 		.map((m) => {
 			const joined = joinedLabel(m.joinedAt);
-			const meta = [presenceLine(m), joined ? `joined ${joined}` : ''].filter(Boolean).join(' · ');
+			const suffix = joined ? `joined ${joined}` : '';
+			const meta = [presenceLine(m), suffix].filter(Boolean).join(' · ');
 			return (
-				'<li class="cw-row">' +
+				`<li class="cw-row" data-member="${esc(m.id)}" data-online="${m.online ? 'true' : 'false'}">` +
 				`<img class="cw-avatar" src="${esc(m.avatarUrl || m.standee?.thumbUrl || '/favicon.svg')}" alt="" loading="lazy" decoding="async" />` +
 				'<span class="cw-row-main">' +
-				`<b>${esc(m.name)}</b><span>${esc(meta)}</span>` +
+				`<b>${esc(m.name)}</b><span class="cw-presence${m.online ? ' cw-live' : ''}" data-suffix="${esc(suffix)}">${esc(meta)}</span>` +
 				'</span>' +
 				(m.role === 'owner' ? '<span class="cw-tag-badge owner">Owner</span>' : '') +
 				(canKick && m.role !== 'owner'
@@ -583,6 +634,7 @@ async function loadPublicCrew(tag) {
 		const res = await apiFetch(`/api/crews/${encodeURIComponent(tag)}`, { allowAnonymous: true });
 		if (res.status === 404) {
 			$('cw-room').hidden = true;
+			clearStage();
 			$('cw-manage').hidden = true;
 			$('cw-roster-panel').hidden = true;
 			showError(`No crew flies the tag ${tag}. It is still available.`, () => loadPublicCrew(tag));
@@ -611,7 +663,7 @@ async function loadPublicCrew(tag) {
 			`Viewing <b>${esc(crew.name)}</b> as a visitor. <a href="/crews">Your own Crew HQ</a> is one click away.`;
 	} catch (err) {
 		$('cw-room').hidden = true;
-		$('cw-stage').innerHTML = '';
+		clearStage();
 		showError(err.message || 'That crew could not be loaded.', () => loadPublicCrew(tag));
 	}
 }
@@ -651,7 +703,7 @@ async function refresh() {
 		// failed it is a lie, so the room goes with it and the error box is the
 		// only thing left saying what happened.
 		$('cw-room').hidden = true;
-		$('cw-stage').innerHTML = '';
+		clearStage();
 		showError(err.message || 'Your crew could not be loaded.', refresh);
 		return;
 	}
@@ -671,6 +723,8 @@ function renderMine() {
 	$('cw-dir-panel').hidden = false;
 
 	renderInvites(signedOut ? [] : state.me?.invites || []);
+
+	if (!crew) clearStage();
 
 	if (crew) {
 		renderRoom(crew, members, { canManage: true });
