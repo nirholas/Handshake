@@ -62,7 +62,13 @@ if (!existsSync(resolve(ROOT, 'agent-payments-sdk/dist/index.js'))) {
 // typecheck-only one on every machine that ran setup, so the mandated checks
 // never fired for anyone who followed the contributor docs. Undo that
 // redirect where it is still set, then (re)install the real hook.
-const hooksPath = run('git config --get core.hooksPath', { allowFail: true }).trim();
+// `git config --get` exits 1 when the key is unset, which is the normal case.
+let hooksPath = '';
+try {
+	hooksPath = execSync('git config --get core.hooksPath', { cwd: ROOT, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+} catch {
+	hooksPath = '';
+}
 if (hooksPath === '.githooks') run('git config --unset core.hooksPath');
 run('node scripts/setup-git-hooks.mjs');
 
