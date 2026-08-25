@@ -1,6 +1,6 @@
 # three.ws Weekly Report #1: Everything We Have Shipped So Far
 
-Nineteen weeks. 9,495 commits. 2,674 changelog entries. 724 pages. 70 npm packages. 72 MCP servers in the official registry. One token.
+Nineteen weeks. 9,508 commits. 21 contributors. 2,674 changelog entries. 725 pages. 101 npm packages. 72 MCP servers in the official registry. 4,519 x402 endpoints. One token.
 
 This is the first weekly report, and because it is the first, it is also the whole story. It runs from the first commit on April 14, 2026 to today, August 25, 2026, week by week, and it covers everything: what we built, what we announced, what we partnered on, and where $THREE fits. Every number in it comes from the public repository, the public changelog, or a public listing.
 
@@ -14,10 +14,12 @@ If you only read one line: three.ws went from an empty repo to a live, open-sour
 
 Before the timeline, the totals as of August 25, 2026:
 
-- 9,495 commits on main since April 14. To be honest about the count: roughly 2,200 of those in one May week were per-file imports of two vendored workspaces, and about 250 were deliberate empty commits in another. Strip those and it is still north of 7,000 real changes in 19 weeks, about 50 a day, every day.
+- 9,508 commits on main since April 14 from 21 contributors, 60 pull requests, 104 stars, 26 forks. To be honest about the count: roughly 2,200 of those in one May week were per-file imports of two vendored workspaces, and about 250 were deliberate empty commits in another. Strip those and it is still north of 7,000 real changes in 19 weeks, about 50 a day, every day.
 - 2,674 holder-readable changelog entries: 991 features, 1,075 improvements, 1,190 fixes, 320 infrastructure, 226 docs, 216 security, 166 SDK. Every one is pushed to the holders' Telegram automatically.
 - 724 public pages across Build, Discover, Learn, Crypto, Labs, Blog, and Legal.
-- 70 packages under packages/, 53 npm workspaces, 72 distinct servers under one namespace in the official MCP registry.
+- 101 npm packages published under the @three-ws scope (42 of them MCP servers, 6,225 downloads in the last 30 days), 72 distinct servers under one namespace in the official MCP registry, 60 installable agent skills.
+- 4,519 priced x402 endpoints in the live discovery catalog, 110,416 on-chain settlements and 803,483 payment verifications through our own self-hosted facilitator, 3,000 validator attestations and 126,522 custody proofs on Solana.
+- 111 open-source repos spun out of three.ws with 1,222 stars between them, ERC-8004 registries live on 12 EVM mainnets, two Solana programs, 33 workers, 1,752 test files. All Apache-2.0.
 - 40 blog posts, 47 product announcements on X, and 21 more announcement drafts waiting in the queue.
 - A crypto news archive of 740,889 articles from 197 publishers going back to September 2017, updated hourly.
 - Over 1,000,000 individually priced x402 datapoints at $0.0005 each.
@@ -561,6 +563,22 @@ Pages include /deploy-onchain, /ar/view, and docs for play vehicles, community, 
 - The Hugging Face article, avatar rigs, and Space were indexed in the docs.
 
 ---
+
+## The open-source footprint, all in one place
+
+Everything three.ws ships is Apache-2.0, and it has not stayed inside one repository. Where it stems:
+
+- The main repo, github.com/nirholas/three.ws: 9,508 commits, 21 contributors, 60 pull requests, 104 stars, 26 forks, 70 packages, 33 workers (27 as Docker images), 31 specs, 323 docs, 1,752 test files, 4 Rust crates, 7 Solidity contracts, 2 Anchor programs.
+- npm: 101 packages under @three-ws, 42 of them MCP servers, 6,225 downloads in the last 30 days. Avatars, x402 payments, Solana agents, pump.fun tooling, voice, mocap, retargeting, sign language, the assistant and concierge widgets, readme-3d, 3d-ar-studio.
+- The official MCP registry: 72 servers under io.github.nirholas. Also listed on Smithery, Glama, and PulseMCP, and on x402scan.
+- 111 related public repos with 1,222 stars between them: a 50-repo x402 suite of standalone paid services, the Robinhood Chain family, the extracted x402 server, fetch, modal, bridge, and VS Code extension, the Metaplex agent MCP, on-chain agent wallets, the AR Studio, the news archive, the X Spaces voice agent, and more.
+- On-chain: ERC-8004 identity, reputation, and validation registries deployed by CREATE2 to the same address on 12 EVM mainnets (Ethereum, Optimism, BSC, Gnosis, Polygon, Mantle, Base, Arbitrum, Celo, Avalanche, Linea, Scroll), bytecode-verified; the ThreeWSFactory and payments contracts; two Solana programs for agent invocation and skill licensing.
+- x402: 4,519 priced endpoints in the live discovery catalog, 110,416 on-chain settlements and 803,483 verifications through the self-hosted facilitator, 3,000 validator attestations under the threews.validation.v1 memo envelope, 126,522 custody proofs across 244 epochs.
+- Hugging Face: the three-ws org, the avatar-viewer Space, the avatars model repo, and a published blog post, "Giving AI agents bodies and wallets."
+- Editors and stores: a Blender addon, ComfyUI nodes, the VS Code x402 extension on the VS Code Marketplace and Open VSX, a Chrome extension, and two Claude Code plugins in the plugin marketplace.
+- Three GitHub Pages apps that run with no server and no account: the AR Studio, the Metaplex agent deployer, and the on-chain agent wallets overview.
+- Open assets: 500+ CC0 3D props, 106 rigged characters, 3,000+ animations, and a free crypto news API over a 740,889-article archive.
+- Agent skills: 60 SKILL.md skills any agent can install.
 
 ## The partnerships, all in one place
 

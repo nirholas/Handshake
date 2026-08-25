@@ -1,8 +1,8 @@
 # X posts: 100 stars on GitHub
 
-Post copy for the 100-star milestone on X. Posting is owner-gated; these are ready-to-paste drafts. Attach [media/github-100-stars-x.png](../media/github-100-stars-x.png) (2400x1350, black background, three.ws lockup, twelve stat tiles) to the main post. [media/github-100-stars-square.png](../media/github-100-stars-square.png) (1620x1620) is the square cut for Telegram, Instagram, and LinkedIn.
+Post copy for the 100-star milestone on X. Posting is owner-gated; these are ready-to-paste drafts. Attach [media/github-100-stars-x.png](../media/github-100-stars-x.png) (2400x1350, black background, three.ws lockup, twelve stat tiles) to the main post, and [media/github-100-stars-ecosystem.png](../media/github-100-stars-ecosystem.png) (same size, the footprint beyond the repo) to reply 3. [media/github-100-stars-square.png](../media/github-100-stars-square.png) (1620x1620) is the square cut for Telegram, Instagram, and LinkedIn.
 
-Regenerate both images with `node scripts/render-github-stars-banner.mjs` after updating the `STATS` array in the script.
+Regenerate both images with `node scripts/render-github-stars-banner.mjs` after updating the `STATS` and `SURFACES` arrays in the script. The canonical link and number table both announcements (the post and the X article) must cite is [open-source-footprint.md](../open-source-footprint.md); keep the copy below in sync with it.
 
 ## Where every number comes from (as of August 25, 2026)
 
@@ -21,7 +21,13 @@ Regenerate both images with `node scripts/render-github-stars-banner.mjs` after 
 | 3,000 validator attestations | `solana_attestations` (SPL Memo envelope `threews.validation.v1`, see `specs/VALIDATORS.md`) |
 | 126,522 custody proofs across 244 epochs | `custody_attestation_leaves` / `custody_attestation_epochs` |
 | 725 public pages | `data/pages.json` |
-| 70 packages, 33 workers, 31 specs, 1,749 test files, 4 Rust crates, 7 Solidity contracts | the repo tree, all Apache-2.0 |
+| 70 packages, 33 workers (27 Docker images), 31 specs, 1,752 test files, 323 docs, 4 Rust crates, 7 Solidity contracts, 2 Anchor programs | the repo tree, all Apache-2.0 |
+| 111 related public repos, 1,222 stars between them (192 non-fork repos and 9,298 stars across the whole `nirholas` account) | `gh repo list nirholas`, filtered to repos spun out of or built for three.ws (x402 suite, Robinhood Chain family, MCP servers, SDKs, AR Studio, wallets, news archive) |
+| ERC-8004 registries live on 12 mainnet chains | `contracts/DEPLOYMENTS.md`, bytecode-verified 2026-06-19 (Ethereum, Optimism, BSC, Gnosis, Polygon, Mantle, Base, Arbitrum, Celo, Avalanche, Linea, Scroll) |
+| Hugging Face org, Space, model repo, blog post | `huggingface.co/three-ws`, `spaces/three-ws/avatar-viewer`, `three-ws/avatars`, `blog/three-ws/giving-ai-agents-bodies-and-wallets` |
+| MCP directories: official registry, Smithery, Glama, PulseMCP; x402scan | `docs/listings.md` |
+| Blender addon, ComfyUI nodes, VS Code and Open VSX extension, Chrome extension, 2 Claude Code plugins | `integrations/blender`, `integrations/comfyui`, `packages/vscode-x402`, `extensions/`, `marketplace/plugins` |
+| 3 GitHub Pages apps | `nirholas.github.io/3D-AR-Studio`, `/metaplex-agent-mcp`, `/onchain-agent-wallets` |
 
 ## Main post (@trythreews)
 
@@ -69,7 +75,23 @@ The x402 side of the repo is not a demo:
 Every line of that stack is public. Fork it and run your own.
 ```
 
-## Reply 3 (the ask)
+## Reply 3 (beyond this one repo)
+
+Attach: media/github-100-stars-ecosystem.png
+
+```
+And three.ws does not stop at one repo.
+
+111 open-source repos spun out of it, 1,222 stars between them: a 50-repo x402 suite, the Robinhood Chain family, standalone MCP servers, the AR Studio, on-chain agent wallets, the news archive.
+
+ERC-8004 identity, reputation, and validation registries live on 12 EVM mainnets. Two Solana programs. 33 GPU and CPU workers as Docker images.
+
+A Hugging Face org with a Space and a model repo. A Blender addon. ComfyUI nodes. A VS Code extension. Listed on the MCP registry, Smithery, Glama, PulseMCP, and x402scan.
+
+All Apache-2.0.
+```
+
+## Reply 4 (the ask)
 
 ```
 If you build AI agents, 3D, or on-chain payments, there is real open work waiting for you: the contributor guide hands out scoped issues, every package has a README, and every PR gets reviewed.
