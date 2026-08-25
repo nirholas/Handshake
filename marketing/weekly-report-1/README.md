@@ -2,6 +2,11 @@
 
 Screenshots of live three.ws surfaces captured from https://three.ws on 2026-08-25 at 1440x900, 2x device scale, for the X Article "three.ws Weekly Report #1" (`docs/weekly-report-1.md`). Regenerate with `node scripts/render-weekly-report-shots.mjs`.
 
+Header images for the X Article cover, rendered by `node scripts/render-weekly-report-header.mjs 1`:
+
+- header-x-article.png: 2400x1200 (2:1), black background, three.ws lockup, "Weekly Report #1". Use this as the article cover.
+- header-16x9.png: 2400x1350 (16:9) cut of the same header for the announcing post.
+
 The article marks each insertion point with `[IMAGE: name.png]`. Suggested caption per file:
 
 - home.png: the homepage, text-to-3D in the hero, live avatar on the right.

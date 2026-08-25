@@ -23,7 +23,7 @@ const html = ({ width, height }) => `<!doctype html><html><head><meta charset="u
     radial-gradient(ellipse 50% 60% at 85% 20%, rgba(140,120,255,.20), transparent 60%),
     radial-gradient(ellipse 40% 50% at 10% 95%, rgba(255,150,120,.12), transparent 60%); }
   .grid { position:absolute; inset:0; background-image:linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px); background-size:48px 48px; mask-image:radial-gradient(ellipse 70% 70% at 50% 50%, #000 30%, transparent 100%); }
-  .lockup { position:relative; height:${Math.round(height*0.11)}px; }
+  .lockup { position:relative; height:${Math.round(height*0.11)}px; width:auto; align-self:flex-start; }
   .kicker { position:relative; font-family:'JetBrains Mono', monospace; font-size:${Math.round(height*0.032)}px; letter-spacing:.18em; text-transform:uppercase; color:rgba(255,255,255,.55); margin-bottom:${Math.round(height*0.02)}px; }
   h1 { position:relative; font-size:${Math.round(height*0.19)}px; font-weight:800; line-height:.95; letter-spacing:-.045em; background:linear-gradient(120deg,#fff 0%,#dcd6ff 45%,#ffd9c7 100%); -webkit-background-clip:text; background-clip:text; color:transparent; }
   p { position:relative; margin-top:${Math.round(height*0.035)}px; font-size:${Math.round(height*0.046)}px; font-weight:500; color:rgba(255,255,255,.68); letter-spacing:-.01em; max-width:${Math.round(width*0.7)}px; }
