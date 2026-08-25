@@ -23,14 +23,23 @@
 		<meta
 			name="description"
 			content="Top up your three.ws balance with SOL or $THREE and spend credits on 3D generation, agents, and compute. Hold $THREE for a discount on every spend."
-		 data-i18n-attr="content:credits.meta_description"/>
-		<meta property="og:title" content="Credits · three.ws"  data-i18n-attr="content:credits.meta_og_title"/>
+			data-i18n-attr="content:credits.meta_description"
+		/>
+		<meta
+			property="og:title"
+			content="Credits · three.ws"
+			data-i18n-attr="content:credits.meta_og_title"
+		/>
 		<meta
 			property="og:description"
 			content="Deposit SOL or $THREE for credits. Spend on Forge, agents, and compute. Hold $THREE for up to 30% off."
-		 data-i18n-attr="content:credits.meta_og_description"/>
+			data-i18n-attr="content:credits.meta_og_description"
+		/>
 		<meta property="og:url" content="https://three.ws/credits" />
-		<meta property="og:image" content="https://three.ws/api/page-og?s=account&amp;t=Credits&amp;d=Top+up+with+SOL+or+%24THREE+and+spend+credits+on+3D+generation%2C+agents%2C+and+compute.+Hold+%24THREE+for+up+to+30%25+off+every+spend.&amp;p=%2Fcredits" />
+		<meta
+			property="og:image"
+			content="https://three.ws/api/page-og?s=account&amp;t=Credits&amp;d=Top+up+with+SOL+or+%24THREE+and+spend+credits+on+3D+generation%2C+agents%2C+and+compute.+Hold+%24THREE+for+up+to+30%25+off+every+spend.&amp;p=%2Fcredits"
+		/>
 		<meta name="twitter:card" content="summary_large_image" />
 		<link rel="canonical" href="https://three.ws/credits" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -43,8 +52,16 @@
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<link rel="stylesheet" href="/mobile.css" />
 		<style>
+			/* <body> is a column flexbox site-wide, so <main> is a flex item and
+			   inherits min-width:auto. That floors it at its min-content width and
+			   made the whole page 417px wide inside a 320px viewport, clipped
+			   (not scrolled) by the global overflow-x:clip. min-width:0 lets it
+			   shrink; the amount input below supplies the min-content that forced
+			   it. Same reason for the grid/card rules that follow. */
 			.credits-wrap {
 				max-width: 1040px;
+				width: 100%;
+				min-width: 0;
 				margin: 0 auto;
 				padding: clamp(1.25rem, 4vw, 3rem) 1.25rem 4rem;
 			}
@@ -72,6 +89,10 @@
 				grid-template-columns: 1.1fr 0.9fr;
 				gap: 1.1rem;
 				align-items: start;
+				min-width: 0;
+			}
+			.credits-grid > * {
+				min-width: 0;
 			}
 			@media (max-width: 820px) {
 				.credits-grid {
@@ -83,6 +104,7 @@
 				border: 1px solid var(--border, #262a33);
 				border-radius: 16px;
 				padding: 1.25rem 1.35rem;
+				min-width: 0;
 			}
 			.card h2 {
 				font-size: 0.82rem;
@@ -175,6 +197,7 @@
 			}
 			.amt-row input {
 				flex: 1;
+				min-width: 0;
 				background: var(--surface-2, #1c1f27);
 				border: 1px solid var(--border, #262a33);
 				border-radius: 10px;
@@ -403,24 +426,159 @@
 					grid-template-columns: 1fr;
 				}
 			}
+			/* Wide content scrolls inside its own box so the page itself never
+			   scrolls sideways on a phone. */
+			.ledger-scroll {
+				overflow-x: auto;
+				-webkit-overflow-scrolling: touch;
+			}
+			.ledger {
+				min-width: 22rem;
+			}
+			.addr-row {
+				display: flex;
+				align-items: stretch;
+				gap: 0.4rem;
+				margin: 0.6rem 0;
+			}
+			.addr-row .addr {
+				flex: 1;
+				min-width: 0;
+				margin: 0;
+			}
+			.copy-addr {
+				appearance: none;
+				flex: 0 0 auto;
+				border: 1px solid var(--border, #262a33);
+				background: var(--surface-2, #1c1f27);
+				color: var(--text-secondary, #9aa3b2);
+				border-radius: 8px;
+				padding: 0 0.7rem;
+				font: inherit;
+				font-size: 0.78rem;
+				font-weight: 600;
+				cursor: pointer;
+				transition:
+					color 0.15s,
+					border-color 0.15s;
+			}
+			.copy-addr:hover:not(:disabled) {
+				color: var(--text-primary, #e8ebf2);
+				border-color: var(--accent, #6c8cff);
+			}
+			.copy-addr:disabled {
+				opacity: var(--disabled-opacity, 0.4);
+				cursor: var(--disabled-cursor, not-allowed);
+			}
+			/* Error state: a designed, actionable card. Before this existed a failed
+			   /api/credits hid every panel and left the page blank below the h1. */
+			.state-msg {
+				text-align: center;
+				padding: 2.25rem 1.25rem;
+			}
+			.state-msg h2 {
+				text-transform: none;
+				letter-spacing: -0.01em;
+				font-size: 1.05rem;
+				color: var(--text-primary, #e8ebf2);
+				margin: 0 0 0.4rem;
+			}
+			.state-msg p {
+				margin: 0 auto;
+				max-width: 44ch;
+				color: var(--text-secondary, #9aa3b2);
+				font-size: 0.9rem;
+				line-height: 1.5;
+			}
+			.state-msg .btn {
+				max-width: 16rem;
+				margin-left: auto;
+				margin-right: auto;
+			}
+			.state-links {
+				margin-top: 0.9rem;
+				font-size: 0.85rem;
+			}
+			.state-links a {
+				color: var(--accent, #6c8cff);
+				font-weight: 600;
+			}
+			/* Keyboard users get the same affordance as the pointer hover states
+			   above; tokens are the site-wide focus ring. */
+			.seg button:focus-visible,
+			.quick button:focus-visible,
+			.btn:focus-visible,
+			.copy-addr:focus-visible,
+			.manual summary:focus-visible,
+			.amt-row input:focus-visible,
+			.manual input:focus-visible,
+			.ledger a:focus-visible,
+			.signin a:focus-visible,
+			.state-links a:focus-visible {
+				outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #6c8cff);
+				outline-offset: var(--focus-ring-offset, 2px);
+			}
+			.amt-row input:focus,
+			.manual input:focus {
+				border-color: var(--accent, #6c8cff);
+			}
+			.is-busy::after {
+				content: '\2026';
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.skel {
+					animation: none;
+				}
+			}
 			[hidden] {
 				display: none !important;
 			}
 		</style>
-	
-	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
-	<meta property="og:type" content="website">
-	<meta property="og:site_name" content="three.ws">
-	<meta property="og:locale" content="en_US">
-	<meta property="og:image:alt" content="Credits — three.ws">
-	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="Credits · three.ws" data-i18n-attr="content:credits.meta_twitter_title">
-	<meta name="twitter:description" content="Top up with SOL or $THREE and spend credits on 3D generation, agents, and compute. Hold $THREE for up to 30% off every spend." data-i18n-attr="content:credits.meta_twitter_description">
-	<meta name="twitter:image" content="https://three.ws/api/page-og?s=account&amp;t=Credits&amp;d=Top+up+with+SOL+or+%24THREE+and+spend+credits+on+3D+generation%2C+agents%2C+and+compute.+Hold+%24THREE+for+up+to+30%25+off+every+spend.&amp;p=%2Fcredits">
-	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Credits","description":"Top up with SOL or $THREE and spend credits on 3D generation, agents, and compute. Hold $THREE for up to 30% off every spend.","url":"https://three.ws/credits","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=account&t=Credits&d=Top+up+with+SOL+or+%24THREE+and+spend+credits+on+3D+generation%2C+agents%2C+and+compute.+Hold+%24THREE+for+up+to+30%25+off+every+spend.&p=%2Fcredits"}]}</script>
-</head>
+
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:image:alt" content="Credits — three.ws" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta
+			name="twitter:title"
+			content="Credits · three.ws"
+			data-i18n-attr="content:credits.meta_twitter_title"
+		/>
+		<meta
+			name="twitter:description"
+			content="Top up with SOL or $THREE and spend credits on 3D generation, agents, and compute. Hold $THREE for up to 30% off every spend."
+			data-i18n-attr="content:credits.meta_twitter_description"
+		/>
+		<meta
+			name="twitter:image"
+			content="https://three.ws/api/page-og?s=account&amp;t=Credits&amp;d=Top+up+with+SOL+or+%24THREE+and+spend+credits+on+3D+generation%2C+agents%2C+and+compute.+Hold+%24THREE+for+up+to+30%25+off+every+spend.&amp;p=%2Fcredits"
+		/>
+		<script type="application/ld+json">
+			{
+				"@context": "https://schema.org",
+				"@graph": [
+					{
+						"@type": "WebPage",
+						"name": "Credits",
+						"description": "Top up with SOL or $THREE and spend credits on 3D generation, agents, and compute. Hold $THREE for up to 30% off every spend.",
+						"url": "https://three.ws/credits",
+						"isPartOf": {
+							"@type": "WebSite",
+							"name": "three.ws",
+							"url": "https://three.ws"
+						},
+						"primaryImageOfPage": "https://three.ws/api/page-og?s=account&t=Credits&d=Top+up+with+SOL+or+%24THREE+and+spend+credits+on+3D+generation%2C+agents%2C+and+compute.+Hold+%24THREE+for+up+to+30%25+off+every+spend.&p=%2Fcredits"
+					}
+				]
+			}
+		</script>
+	</head>
 	<body>
-		<a href="#main-content" class="h-skip-link" data-i18n="credits.skip_to_main_content">Skip to main content</a>
+		<a href="#main-content" class="h-skip-link" data-i18n="credits.skip_to_main_content"
+			>Skip to main content</a
+		>
 		<header><div id="nav-container"></div></header>
 		<script src="/nav.js"></script>
 
@@ -435,9 +593,30 @@
 				</div>
 			</div>
 
+			<!-- Load failure: designed + actionable, with a real retry -->
+			<section id="error-state" class="card state-msg" hidden>
+				<h2 data-i18n="credits.we_could_not_load_your_credits">
+					We could not load your credits
+				</h2>
+				<p id="error-msg" data-i18n="credits.the_credits_service_did_not_respond">
+					The credits service did not respond. Your balance and history are safe; this
+					page just could not read them.
+				</p>
+				<button class="btn" id="retry-btn" type="button" data-i18n="credits.try_again">
+					Try again
+				</button>
+				<p class="state-links">
+					<a href="/status" data-i18n="credits.check_platform_status"
+						>Check platform status</a
+					>
+				</p>
+			</section>
+
 			<!-- Signed-out -->
 			<section id="signin-state" class="card signin" hidden>
-				<p data-i18n="credits.sign_in_to_view_your_balance_and">Sign in to view your balance and top up.</p>
+				<p data-i18n="credits.sign_in_to_view_your_balance_and">
+					Sign in to view your balance and top up.
+				</p>
 				<p data-i18n-html="credits.sign_in"><a href="/login?next=/credits">Sign in →</a></p>
 			</section>
 
@@ -463,6 +642,16 @@
 							<div>
 								<h2 data-i18n="credits.what_credits_buy">What credits buy</h2>
 								<div class="buys" id="buys"></div>
+								<div
+									class="muted"
+									id="buys-empty"
+									style="font-size: 0.85rem"
+									hidden
+									data-i18n="credits.pricing_is_unavailable_right_now"
+								>
+									Pricing is unavailable right now. Deposits still credit at the
+									live USD value.
+								</div>
 							</div>
 						</div>
 					</section>
@@ -471,13 +660,34 @@
 					<section class="card" aria-label="Add credits">
 						<h2 data-i18n="credits.add_credits">Add credits</h2>
 						<div class="seg" role="group" aria-label="Deposit asset">
-							<button type="button" data-asset="SOL" aria-pressed="true" data-i18n="credits.sol">SOL</button>
-							<button type="button" data-asset="THREE" aria-pressed="false" data-i18n="credits.three">
+							<button
+								type="button"
+								data-asset="SOL"
+								aria-pressed="true"
+								data-i18n="credits.sol"
+							>
+								SOL
+							</button>
+							<button
+								type="button"
+								data-asset="THREE"
+								aria-pressed="false"
+								data-i18n="credits.three"
+							>
 								$THREE
 							</button>
 						</div>
 						<div class="field">
-							<label for="amount" id="amount-label" data-i18n="credits.amount_sol">Amount (SOL)</label>
+							<label for="amount" id="amount-label"
+								><span data-asset-label="SOL" data-i18n="credits.amount_sol"
+									>Amount (SOL)</span
+								><span
+									data-asset-label="THREE"
+									data-i18n="credits.amount_three"
+									hidden
+									>Amount ($THREE)</span
+								></label
+							>
 							<div class="amt-row">
 								<input
 									id="amount"
@@ -486,27 +696,71 @@
 									step="0.001"
 									inputmode="decimal"
 									placeholder="0.0"
+									aria-describedby="estimate"
 								/>
-								<span class="unit" id="amount-unit" data-i18n="credits.sol_2">SOL</span>
+								<span class="unit" id="amount-unit"
+									><span data-asset-unit="SOL" data-i18n="credits.sol_2">SOL</span
+									><span
+										data-asset-unit="THREE"
+										data-i18n="credits.three_2"
+										hidden
+										>$THREE</span
+									></span
+								>
 							</div>
 							<div class="quick" id="quick"></div>
 							<div class="est" id="estimate"></div>
 						</div>
-						<button class="btn" id="deposit-btn" type="button" data-i18n="credits.connect_wallet_deposit">
+						<button
+							class="btn"
+							id="deposit-btn"
+							type="button"
+							data-i18n="credits.connect_wallet_deposit"
+						>
 							Connect wallet &amp; deposit
 						</button>
 						<div class="status" id="status" role="status" aria-live="polite"></div>
 
 						<details class="manual">
-							<summary data-i18n="credits.already_sent_it_yourself_verify_by_signature">Already sent it yourself? Verify by signature</summary>
-							<p class="muted" style="font-size: 0.82rem; margin: 0.6rem 0 0.3rem" data-i18n="credits.send_from_a_wallet_linked_to_your">
-								Send from a wallet linked to your account to this three.ws
-								deposit address, then paste the signature:
+							<summary
+								data-i18n="credits.already_sent_it_yourself_verify_by_signature"
+							>
+								Already sent it yourself? Verify by signature
+							</summary>
+							<p
+								class="muted"
+								style="font-size: 0.82rem; margin: 0.6rem 0 0.3rem"
+								data-i18n="credits.send_from_a_wallet_linked_to_your"
+							>
+								Send from a wallet linked to your account to this three.ws deposit
+								address, then paste the signature:
 							</p>
-							<div class="addr" id="deposit-addr">—</div>
+							<div class="addr-row">
+								<div
+									class="addr"
+									id="deposit-addr"
+									data-i18n="credits.loading_deposit_address"
+								>
+									Loading the deposit address
+								</div>
+								<button
+									class="copy-addr"
+									id="copy-addr"
+									type="button"
+									disabled
+									data-i18n="credits.copy"
+								>
+									Copy
+								</button>
+							</div>
+							<label for="manual-sig" data-i18n="credits.transaction_signature"
+								>Transaction signature</label
+							>
 							<input
 								id="manual-sig"
 								type="text"
+								autocomplete="off"
+								spellcheck="false"
 								placeholder="Paste transaction signature"
 							/>
 							<button
@@ -514,14 +768,19 @@
 								id="verify-btn"
 								type="button"
 								style="margin-top: 0.6rem"
-							 data-i18n="credits.verify_deposit">
+								data-i18n="credits.verify_deposit"
+							>
 								Verify deposit
 							</button>
-							<p class="muted" style="font-size: 0.76rem; margin: 0.5rem 0 0" data-i18n="credits.we_verify_on_chain_that_the_transaction">
-								We verify on-chain that the transaction was signed by your
-								linked wallet, so only you can claim your deposit — pasting
-								someone else's signature won't credit your balance. Sent from a
-								wallet that isn't linked yet? Sign in with it or link it first.
+							<p
+								class="muted"
+								style="font-size: 0.76rem; margin: 0.5rem 0 0"
+								data-i18n="credits.we_verify_on_chain_that_the_transaction"
+							>
+								We verify on-chain that the transaction was signed by your linked
+								wallet, so only you can claim your deposit. Pasting someone else's
+								signature won't credit your balance. Sent from a wallet that isn't
+								linked yet? Sign in with it or link it first.
 							</p>
 						</details>
 					</section>
@@ -531,29 +790,45 @@
 				<section class="card" style="margin-top: 1.1rem" aria-label="History">
 					<h2 data-i18n="credits.history">History</h2>
 					<div id="ledger-host">
-						<table class="ledger" id="ledger" hidden>
-							<thead>
-								<tr>
-									<th data-i18n="credits.when">When</th>
-									<th data-i18n="credits.activity">Activity</th>
-									<th style="text-align: right" data-i18n="credits.amount">Amount</th>
-									<th style="text-align: right" data-i18n="credits.balance_2">Balance</th>
-								</tr>
-							</thead>
-							<tbody id="ledger-body"></tbody>
-						</table>
-						<div class="empty" id="ledger-empty" hidden>
-							No activity yet. Add credits to get started.
+						<div class="ledger-scroll">
+							<table class="ledger" id="ledger" hidden>
+								<thead>
+									<tr>
+										<th data-i18n="credits.when">When</th>
+										<th data-i18n="credits.activity">Activity</th>
+										<th style="text-align: right" data-i18n="credits.amount">
+											Amount
+										</th>
+										<th style="text-align: right" data-i18n="credits.balance_2">
+											Balance
+										</th>
+									</tr>
+								</thead>
+								<tbody id="ledger-body"></tbody>
+							</table>
 						</div>
-						<button
-							class="btn secondary"
-							id="ledger-more"
-							type="button"
+						<div
+							class="empty"
+							id="ledger-empty"
 							hidden
-							data-i18n="credits.load_older"
+							data-i18n="credits.no_activity_yet_add_credits_to_get"
 						>
-							Load older activity
+							No activity yet. Add credits above and every deposit, spend, and refund
+							shows up here.
+						</div>
+						<button class="btn secondary" id="ledger-more" type="button" hidden>
+							<span data-i18n="credits.load_older">Load older activity</span>
 						</button>
+						<p
+							class="empty"
+							id="ledger-error"
+							role="alert"
+							hidden
+							style="padding-top: 0.6rem"
+							data-i18n="credits.older_activity_did_not_load_try_again"
+						>
+							Older activity did not load. Try the button again.
+						</p>
 					</div>
 				</section>
 			</div>
@@ -572,6 +847,6 @@
 		<script src="/footer.js"></script>
 		<script type="module" src="/src/credits.js"></script>
 		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
-	<script type="module" src="/i18n.js"></script>
-</body>
+		<script type="module" src="/i18n.js"></script>
+	</body>
 </html>

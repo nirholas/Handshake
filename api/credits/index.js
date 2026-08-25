@@ -15,6 +15,7 @@ import { getCreditAccount, listLedger } from '../_lib/credits.js';
 import { depositWallet } from '../_lib/credit-deposit.js';
 import { TOKEN_MINT, TOKEN_SYMBOL, TOKEN_DECIMALS } from '../_lib/token/config.js';
 import { publicCatalog } from '../_lib/pricing/catalog.js';
+import { resolveUserTier, nextTier } from '../_lib/three-tier.js';
 import { isUuid } from '../_lib/validate.js';
 
 async function resolveUser(req, res) {
@@ -28,6 +29,29 @@ async function resolveUser(req, res) {
 		return u || null;
 	}
 	return null;
+}
+
+async function resolveHolder(user) {
+	try {
+		const { tier, usd, next } = await resolveUserTier(user);
+		const nt = next ?? nextTier(tier);
+		return {
+			tier: {
+				level: tier.level,
+				id: tier.id,
+				label: tier.label,
+				discount_bps: tier.discountBps,
+			},
+			usd_held: Math.round((Number(usd) || 0) * 100) / 100,
+			discount_bps: tier.discountBps,
+			next_tier: nt ? { id: nt.id, label: nt.label, min_usd: nt.minUsd } : null,
+			usd_to_next: nt
+				? Math.max(0, Math.round((nt.minUsd - (Number(usd) || 0)) * 100) / 100)
+				: 0,
+		};
+	} catch {
+		return null;
+	}
 }
 
 export default wrap(async (req, res) => {
@@ -48,9 +72,16 @@ export default wrap(async (req, res) => {
 	if (cursor && !isUuid(cursor))
 		return error(res, 400, 'bad_request', 'cursor must be a ledger entry id');
 
-	const [acct, ledger] = await Promise.all([
+	// The $THREE holder discount is the headline promise of this surface ("hold
+	// $THREE for up to 30% off every spend"), and every debit already applies it
+	// (api/_lib/credits.js). Report it here so the page can show the tier the
+	// caller is actually being charged at, in the same `holder` shape /api/pricing
+	// uses. It reads a Solana balance, so it resolves alongside the DB work and
+	// degrades to null rather than failing the balance read.
+	const [acct, ledger, holder] = await Promise.all([
 		getCreditAccount(user.id),
 		listLedger({ userId: user.id, limit, before: cursor }),
+		resolveHolder(user),
 	]);
 
 	// What credits buy: the fixed-price compute actions (variable / marketplace
@@ -59,6 +90,7 @@ export default wrap(async (req, res) => {
 
 	return json(res, 200, {
 		balance_usd: acct.balanceUsd,
+		holder,
 		lifetime_deposited_usd: acct.lifetimeDepositedUsd,
 		lifetime_spent_usd: acct.lifetimeSpentUsd,
 		deposit: {
