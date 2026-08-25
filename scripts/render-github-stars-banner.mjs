@@ -39,13 +39,15 @@ const ECOSYSTEM = [
   { value: '1,752', label: 'test files', sub: '323 docs, 31 specs' },
   { value: '50', label: 'x402 suite repos', sub: 'standalone paid services' },
   { value: '3', label: 'Hugging Face', sub: 'org, Space, blog' },
-  { value: '4', label: 'MCP directories', sub: 'registry, Smithery, Glama, PulseMCP' },
+  { value: '3', label: 'MCP directories', sub: 'official registry, Glama, PulseMCP' },
   { value: '2', label: 'editor integrations', sub: 'Blender addon, ComfyUI nodes' },
   { value: '2', label: 'store extensions', sub: 'VS Code, Open VSX, Chrome' },
   { value: '3', label: 'GitHub Pages apps', sub: 'AR Studio, deployer, wallets' },
 ];
 
-function page({ width, height, square, stats = STATS, title = '100 stars', tagline = 'on GitHub. Thank you. Everything three.ws ships is open source.' }) {
+const SURFACES = ['IBM Community user group', 'AWS Builder Center', 'Alibaba Cloud Marketplace', 'NVIDIA Inception', 'NVIDIA Developer Forums', 'Google Cloud for Web3', 'OpenAI GPT Store', 'Quicknode', 'Hugging Face', 'VS Code Marketplace', 'Open VSX', 'Official MCP Registry', 'Claude Code plugins', 'Glama', 'PulseMCP', 'LobeHub', 'SperaxOS', 'x402scan', 'Coinbase Bazaar', '402index', 'BNB Dappbay', 'pump.fun', 'Jupiter', 'CoinGecko', 'Bybit Alpha', 'KuCoin Alpha', 'MEXC', 'LBank', 'KCEX'];
+
+function page({ width, height, square, surfaces = null, stats = STATS, title = '100 stars', tagline = 'on GitHub. Thank you. Everything three.ws ships is open source.' }) {
   const cols = square ? 3 : 4;
   return `<!doctype html><html><head><meta charset="utf-8">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
@@ -64,17 +66,21 @@ function page({ width, height, square, stats = STATS, title = '100 stars', tagli
   .pill svg { width:22px; height:22px; fill:#fff; }
   .hero { position:relative; display:flex; align-items:center; gap:${square ? 24 : 32}px; }
   .star { width:${square ? 96 : 108}px; height:${square ? 96 : 108}px; flex:none; filter:drop-shadow(0 0 40px rgba(255,220,120,.45)); }
-  .hero h1 { font-size:${square ? 84 : 100}px; font-weight:800; line-height:.92; letter-spacing:-.045em; background:linear-gradient(120deg,#fff 0%,#dcd6ff 45%,#ffd9c7 100%); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .hero h1 { font-size:${square ? 84 : surfaces ? 84 : 100}px; font-weight:800; line-height:.92; letter-spacing:-.045em; background:linear-gradient(120deg,#fff 0%,#dcd6ff 45%,#ffd9c7 100%); -webkit-background-clip:text; background-clip:text; color:transparent; }
   .hero p { margin-top:10px; font-size:${square ? 24 : 28}px; font-weight:500; color:rgba(255,255,255,.7); letter-spacing:-.01em; }
   .stats { position:relative; display:grid; grid-template-columns:repeat(${cols},1fr); gap:${square ? 10 : 12}px; }
-  .stat { padding:${square ? 11 : 12}px ${square ? 14 : 18}px; border:1px solid rgba(255,255,255,.12); border-radius:18px; background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); }
-  .stat b { display:block; font-size:${square ? 30 : 34}px; font-weight:700; letter-spacing:-.03em; line-height:1; font-variant-numeric:tabular-nums; }
+  .stat { padding:${square ? 11 : surfaces ? 9 : 12}px ${square ? 14 : 18}px; border:1px solid rgba(255,255,255,.12); border-radius:18px; background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); }
+  .stat b { display:block; font-size:${square ? 30 : surfaces ? 30 : 34}px; font-weight:700; letter-spacing:-.03em; line-height:1; font-variant-numeric:tabular-nums; }
   .stat span { display:block; margin-top:6px; font-size:${square ? 15 : 17}px; font-weight:600; color:rgba(255,255,255,.9); }
   .stat small { display:block; margin-top:2px; font-size:${square ? 12 : 13}px; color:rgba(255,255,255,.5); font-family:'JetBrains Mono', monospace; }
   .where { position:relative; }
   .where h2 { font-size:${square ? 13 : 14}px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.45); margin-bottom:${square ? 8 : 10}px; }
   .chips { display:flex; flex-wrap:wrap; gap:${square ? 6 : 8}px; }
   .chip { padding:${square ? 5 : 6}px ${square ? 11 : 13}px; border:1px solid rgba(255,255,255,.14); border-radius:999px; font-size:${square ? 14 : 16}px; font-weight:500; color:rgba(255,255,255,.82); background:rgba(255,255,255,.04); white-space:nowrap; }
+  .where { position:relative; }
+  .where h2 { font-size:14px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.45); margin-bottom:10px; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .chip { padding:6px 13px; border:1px solid rgba(255,255,255,.14); border-radius:999px; font-size:15px; font-weight:500; color:rgba(255,255,255,.82); background:rgba(255,255,255,.04); white-space:nowrap; }
   .foot { position:relative; display:flex; justify-content:space-between; align-items:center; font-size:${square ? 18 : 20}px; color:rgba(255,255,255,.55); font-family:'JetBrains Mono', monospace; }
   .foot b { color:rgba(255,255,255,.85); font-weight:500; }
 </style></head><body><div class="wrap">
@@ -88,6 +94,7 @@ function page({ width, height, square, stats = STATS, title = '100 stars', tagli
     <div><h1>${title}</h1><p>${tagline}</p></div>
   </div>
   <div class="stats">${stats.map(s => `<div class="stat"><b>${s.value}</b><span>${s.label}</span><small>${s.sub}</small></div>`).join('')}</div>
+  ${surfaces ? `<div class="where"><h2>Listed, published, or partnered</h2><div class="chips">${surfaces.map(n => `<span class="chip">${n}</span>`).join('')}</div></div>` : ''}
   <div class="foot"><span>Star the repo: <b>github.com/nirholas/three.ws</b></span><span><b>three.ws</b> · $THREE</span></div>
 </div></body></html>`;
 }
@@ -97,7 +104,7 @@ try {
   for (const v of [
     { file: 'github-100-stars-x.png', width: 1600, height: 900, square: false },
     { file: 'github-100-stars-square.png', width: 1080, height: 1080, square: true },
-    { file: 'github-100-stars-ecosystem.png', width: 1600, height: 900, square: false, stats: ECOSYSTEM, title: 'One repo, everywhere', tagline: 'Where the three.ws open-source ecosystem stems beyond github.com/nirholas/three.ws.' },
+    { file: 'github-100-stars-ecosystem.png', width: 1600, height: 900, square: false, stats: ECOSYSTEM, surfaces: SURFACES, title: 'One repo, everywhere', tagline: 'Where the three.ws open-source ecosystem stems beyond github.com/nirholas/three.ws.' },
   ]) {
     const ctx = await browser.newContext({ viewport: { width: v.width, height: v.height }, deviceScaleFactor: 1.5 });
     const p = await ctx.newPage();

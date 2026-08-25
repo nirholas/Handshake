@@ -25,7 +25,7 @@ Regenerate both images with `node scripts/render-github-stars-banner.mjs` after 
 | 111 related public repos, 1,222 stars between them (192 non-fork repos and 9,298 stars across the whole `nirholas` account) | `gh repo list nirholas`, filtered to repos spun out of or built for three.ws (x402 suite, Robinhood Chain family, MCP servers, SDKs, AR Studio, wallets, news archive) |
 | ERC-8004 registries live on 12 mainnet chains | `contracts/DEPLOYMENTS.md`, bytecode-verified 2026-06-19 (Ethereum, Optimism, BSC, Gnosis, Polygon, Mantle, Base, Arbitrum, Celo, Avalanche, Linea, Scroll) |
 | Hugging Face org, Space, model repo, blog post | `huggingface.co/three-ws`, `spaces/three-ws/avatar-viewer`, `three-ws/avatars`, `blog/three-ws/giving-ai-agents-bodies-and-wallets` |
-| MCP directories: official registry, Smithery, Glama, PulseMCP; x402scan | `docs/listings.md` |
+| MCP directories: official registry (72 servers), Glama (10), PulseMCP (18); x402scan server page. Smithery, Docker Hub, PyPI, crates.io: not published, do not claim | registry APIs, `docs/open-source-footprint.md` |
 | Blender addon, ComfyUI nodes, VS Code and Open VSX extension, Chrome extension, 2 Claude Code plugins | `integrations/blender`, `integrations/comfyui`, `packages/vscode-x402`, `extensions/`, `marketplace/plugins` |
 | 3 GitHub Pages apps | `nirholas.github.io/3D-AR-Studio`, `/metaplex-agent-mcp`, `/onchain-agent-wallets` |
 
@@ -86,12 +86,26 @@ And three.ws does not stop at one repo.
 
 ERC-8004 identity, reputation, and validation registries live on 12 EVM mainnets. Two Solana programs. 33 GPU and CPU workers as Docker images.
 
-A Hugging Face org with a Space and a model repo. A Blender addon. ComfyUI nodes. A VS Code extension. Listed on the MCP registry, Smithery, Glama, PulseMCP, and x402scan.
+A Hugging Face org with a Space and a model repo. A Blender addon. ComfyUI nodes. A VS Code extension. Listed on the official MCP registry, Glama, PulseMCP, and x402scan.
 
 All Apache-2.0.
 ```
 
-## Reply 4 (the ask)
+## Reply 4 (the partners and platforms)
+
+```
+And the places that noticed:
+
+IBM built a dedicated three.ws User Group on IBM Community and hosted our first in-world meetup (3,145 avatars at peak).
+AWS Builder Center: three published articles on metering, agents, and the agentic economy.
+NVIDIA: Inception member, two Developer Forum write-ups, L4 and Blackwell workers in production.
+OpenAI: three.ws 3D Studio is live in the GPT Store.
+Alibaba Cloud Marketplace: live listing. Google Cloud for Web3 Startups: member.
+
+Every link, with the number behind it: three.ws/docs/open-source-footprint
+```
+
+## Reply 5 (the ask)
 
 ```
 If you build AI agents, 3D, or on-chain payments, there is real open work waiting for you: the contributor guide hands out scoped issues, every package has a README, and every PR gets reviewed.
