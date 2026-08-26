@@ -98,37 +98,46 @@ The form (`osf-guest-invite.yml`) auto-titles as `Open Source Friday - [PROJECT 
 
 **LinkedIn URL:** owner to supply, or leave blank
 
-**Additional Information:**
-> three.ws turns a text prompt into a rigged, animation-ready 3D avatar and lets you drop it into any website with a single web component tag. It is browser-native (Three.js, glTF/GLB, no plugin, no game engine), and it ships an MCP server so coding agents can create and control avatars directly.
->
-> What I would like to show live:
-> 1. Prompt to rigged avatar in about a minute, then the same avatar animated by our retargeting layer.
-> 2. Embedding it on a blank HTML page with one `<agent-3d>` tag, and driving its mood and animation from page JavaScript.
-> 3. The part I most want contributors on: universal rig support. Every humanoid GLB in the wild uses a different bone naming convention (Mixamo, VRM, Daz, MakeHuman, Unreal, MikuMikuDance, plain Blender, and a dozen more). We map them all to one canonical skeleton so a shared clip library retargets onto anything. Adding a convention is a genuinely self-contained first contribution: a mapping entry, a test, and a docs row. We keep a curated list of them open, each naming the file to change and the command that proves it worked, and I would like to do one live on the stream.
->
-> Community: GitHub Discussions, a Telegram community, an X community, an IBM Community group, and a public changelog that ships to a Telegram channel on every release. Contributor onboarding and our triage process, including the response times we hold ourselves to, are documented at /docs/first-contribution and /docs/triage. Happy to pre-record if a Friday slot is tight, though live is preferred.
+**Topic and Additional Information:** the live issue is the record: [open-source-friday#254](https://github.com/githubevents/open-source-friday/issues/254). It carries a named topic ("Give your AI a body. Any rig, any page, one tag."), the rig problem in one sentence, a six-part outline in their Streaming Guide's order with the live-PR segment as the centrepiece, verified project facts with today's date on them, six links a reviewer can check in a minute, and logistics that pre-answer their prep checklist. Re-benchmarked against every approved request of the last year in section 4b.
 
 **Follow-up:** reply to Andrea's thread on X with the issue link once it is open. She asked for the issue; closing that loop publicly is the point.
 
 ---
 
-## 4. Stream runsheet (45 to 60 min, live at 1:00 PM ET)
+## 4. Stream runsheet (30 to 45 min, live at 1:00 PM ET, join 12:45 for tech check)
 
-Demo early, code live, end with a concrete ask.
+This follows the order and length in their own [Streaming Guide](https://github.com/githubevents/open-source-friday/blob/main/admin/guest-assets/Streaming-Guide.md) rather than inventing a format. The guide says the whole stream should not exceed 30 to 45 minutes and lists the questions the host will ask, so the plan is built around answering those with pixels.
 
-| Time | Segment | Notes |
+| Time | Their segment | What we do |
 |---|---|---|
-| 0:00-0:05 | Intro, who I am, what three.ws is | One sentence, then get to pixels |
-| 0:05-0:12 | Live demo: prompt to rigged avatar | Real generation, no pre-baked cache. Fallback GLB staged in case a worker is slow |
-| 0:12-0:20 | Embed it: one tag on a blank page | Blank `index.html` in a live editor, add `<agent-3d>`, avatar appears, drive mood from the console |
-| 0:20-0:28 | Under the hood: canonical skeleton and retargeting | The technical spine of the project, and the setup for the contribution ask |
-| 0:28-0:42 | Live contribution: add a rig convention | Take [#110](https://github.com/nirholas/three.ws/issues/110) or [#111](https://github.com/nirholas/three.ws/issues/111) live: write the mapping, write the test, run `npx vitest run tests/glb-canonicalize.test.js`, open the PR on air |
-| 0:42-0:50 | MCP server: an agent creating an avatar | Ties into the AI-agent audience the program has leaned toward in 2026 |
-| 0:50-0:60 | How to contribute, good first issues, Q&A | End on the issue list, on screen, by number |
+| 0:00-0:05 | Introduce yourself | Bio in two sentences, then the one-line pitch: every agent on the web is a text box, this gives it a body |
+| 0:05-0:08 | What is your project? | Prompt to rigged avatar to embedded on a blank page, narrated, no slides |
+| 0:08-0:18 | Demo | (a) generate an avatar live and watch it animate, (b) one `<agent-3d>` tag in an empty `index.html`, drive mood from the console, (c) upload an unsupported rig to [Rig Doctor](https://three.ws/rig-doctor) and show exactly which joints will not move. Fallback GLB staged in case a worker is slow |
+| 0:18-0:23 | Motivation / how it started | Why "3D agent" was a dead end until rendering and runtime could talk; what broke the first three times |
+| 0:23-0:33 | How can people contribute? | Done live: take [#110](https://github.com/nirholas/three.ws/issues/110) or [#111](https://github.com/nirholas/three.ws/issues/111), write the mapping, write the test, run `npx vitest run tests/glb-canonicalize.test.js`, open the PR on air, merge it on air |
+| 0:33-0:36 | Last thing pushed / next thing | Read it off the [public changelog](https://three.ws/changelog); it ships to Telegram on every release so the honest answer is the only one available |
+| 0:36-0:42 | Audience questions | End with the `good first issue` list on screen, by number |
+| 0:42-0:45 | Wrap-up questions | Best tip for new contributors: comment on the issue before you start, one line. They also ask favourite song, an emoji, and an ice cream flavour; have answers, do not improvise on air |
 
-**Prep checklist:** clean clone on a second machine or a fresh worktree so the demo path is the one a viewer gets; workers warm; fallback GLB staged; browser zoom up for readability; no `.env` and no wallet UI on screen at any point.
+**Their prep checklist, from the guide, done in advance:** wired ethernet; separate mic and headphones; 1920x1080; browser zoomed to 125% or more; fresh browser profile with no bookmarks bar or plugins; signed in and MFA-cleared on everything the demo touches; notifications off; menu bar and Dock auto-hidden; a template repo for the demo so it can be repeated. Ours on top: workers warm, fallback GLB staged, no `.env` and no wallet UI on screen at any point.
 
 **Downplay on stream:** the on-chain and payments surfaces. They are real and they are in the repo, but this audience is maintainers and contributors, and leading with crypto costs credibility with exactly the people we want opening PRs. If it comes up, one honest sentence: agents can hold a wallet and pay for their own compute, it is optional, here is where the code lives.
+
+---
+
+## 4b. What approved requests look like (read 2026-08-25)
+
+Read every approved or scheduled issue on [githubevents/open-source-friday](https://github.com/githubevents/open-source-friday/issues) from the last year, the comment threads after approval, and both rejections on record. What it says:
+
+**Approval is about the criteria, not the pitch.** Big names get approved with one line of bio (Remotion: "I make Remotion!"; Mastra: a job title and a list of previous companies). Both rejections on record were for the same two reasons, neither of which applies to us: a project under the minimum criteria ([#106](https://github.com/githubevents/open-source-friday/issues/106)), and a proposal about a personal contributor journey rather than a project ([#87](https://github.com/githubevents/open-source-friday/issues/87), told plainly that streams are "focused on the technical aspects, contributions and development of the projects themselves").
+
+**"Not yet" on the date is normal and does not slow approval.** cq ([#215](https://github.com/githubevents/open-source-friday/issues/215)), any-llm ([#185](https://github.com/githubevents/open-source-friday/issues/185)) and isomorphic-git ([#231](https://github.com/githubevents/open-source-friday/issues/231)) all submitted without a date and were approved; the bot sends the booking link on approval. The one date correction on record was a guest who put a Monday in the title. 09-11-2026 is a Friday (checked), as are the four after it.
+
+**The request that got the most engagement is the one to beat.** Pollinations ([#223](https://github.com/githubevents/open-source-friday/issues/223), 15 comments, Andrea: "Really looking forward to this one") wrote a named topic, a numbered outline of what the stream would cover, and a demo list. Everyone else left Additional Information empty or dropped a few press links (cq). Ours now has all three, mapped to the segment order in their own Streaming Guide.
+
+**What happens after approval, so nothing surprises us:** a bot posts the booking link; after booking, a bot posts the scheduled notice ("be ready with your demo, our audience strongly prefers technical demos"), generates a promo thumbnail as a workflow artifact, and opens a task list for the hosts (social card, StreamYard scheduling, social posts). Guests have had to chase the prep doc and the StreamYard link in the week of the stream ([#215](https://github.com/githubevents/open-source-friday/issues/215)), so plan to ask on the issue the Monday before if nothing has arrived. The host's on-air questions are posted to the issue the day before; answer them in the thread so the host has them.
+
+**What we cannot match and should not try:** LinkedIn is in every approved request and ours is blank; the owner can add it with one edit. Press coverage helped cq; we have none to cite and did not invent any.
 
 ---
 
