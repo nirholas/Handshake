@@ -62,7 +62,7 @@
 import { randomUUID } from 'node:crypto';
 import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
-import { textToImage, synthesizeTurnaroundViews } from './_mcp3d/text-to-image.js';
+import { textToImage, synthesizeTurnaroundViews, ladderBudgetMs } from './_mcp3d/text-to-image.js';
 import { createRegenProvider } from './_providers/replicate.js';
 import { createRegenProvider as createGcpProvider } from './_providers/gcp.js';
 import { BYOK_PROVIDER_FACTORIES } from './_providers/byok-registry.js';
@@ -382,6 +382,15 @@ function readForgeEnv(name) {
 // the module is absent or Vertex is unavailable. Returns { imageUrl, model } -
 // exactly textToImage()'s shape: so the call site is a drop-in swap.
 export async function seedReferenceImage({ prompt, aspect, seed, skipNim }) {
+	// The reference step and the text-to-image ladder share ONE budget
+	// (TEXT_TO_IMAGE_BUDGET_MS, default 60 s). The reference module is bounded
+	// internally; the race below is the backstop for anything it awaits that is
+	// not (a token mint, a cache read), so a submit can never outlive the
+	// caller's socket before a job exists. On a cap the ladder gets what is
+	// left, which is nothing, and answers a fast retryable 429.
+	const budget = ladderBudgetMs();
+	const startedAt = Date.now();
+	const remaining = () => budget - (Date.now() - startedAt);
 	if (readForgeEnv('FORGE_REFERENCE_IMAGE') !== 'off') {
 		try {
 			const mod = await import('./_lib/forge-reference-image.js');
@@ -394,7 +403,19 @@ export async function seedReferenceImage({ prompt, aspect, seed, skipNim }) {
 				// Positional signature: (prompt, { aspectRatio, seed, skipNim }). The module
 				// itself falls through to the standing text→image provider on a Vertex
 				// failure, so a returned result already reflects the best available lane.
-				const out = await fn(prompt, { aspectRatio: aspect, seed, skipNim });
+				let capTimer;
+				const cap = new Promise((_, reject) => {
+					capTimer = setTimeout(
+						() => reject(Object.assign(new Error(`reference image step exceeded its ${budget}ms budget`), { code: 'rate_limited', queued: true, retryAfter: 15 })),
+						Math.max(1_000, remaining()),
+					);
+				});
+				let out;
+				try {
+					out = await Promise.race([fn(prompt, { aspectRatio: aspect, seed, skipNim, budgetMs: budget }), cap]);
+				} finally {
+					clearTimeout(capTimer);
+				}
 				const imageUrl = out && (out.imageUrl || out.image_url || out.url);
 				if (imageUrl) {
 					return { imageUrl, model: out.model || 'vertex-reference', referenceModule: true };
@@ -406,7 +427,7 @@ export async function seedReferenceImage({ prompt, aspect, seed, skipNim }) {
 			console.warn(`[forge] reference-image module unavailable, using standing provider: ${err?.message || err}`);
 		}
 	}
-	const synthesized = await textToImage(prompt, { aspectRatio: aspect, skipNim, seed });
+	const synthesized = await textToImage(prompt, { aspectRatio: aspect, skipNim, seed, budgetMs: Math.max(5_000, remaining()) });
 	return { imageUrl: synthesized.imageUrl, model: synthesized.model, referenceModule: false };
 }
 

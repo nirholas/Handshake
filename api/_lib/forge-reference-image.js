@@ -59,7 +59,7 @@ import { getGcpAccessToken } from './gcp-auth.js';
 import { persistImageBase64 } from './image-persist.js';
 import { subjectNegativePrompt } from '../forge-enhance.js';
 import { isProviderRefusal } from './ai-image-lanes.js';
-import { textToImage } from '../_mcp3d/text-to-image.js';
+import { textToImage, ladderBudgetMs, laneTimeoutMs } from '../_mcp3d/text-to-image.js';
 import { parseJsonLoose } from './vision.js';
 import { getRedis } from './redis.js';
 
@@ -182,7 +182,14 @@ export function buildReferenceInstruction(prompt, negativePrompt) {
 // without imageConfig.imageSize if the tier rejects that field (defensive: the
 // field is accepted today, but a tier change must degrade to a valid request
 // rather than a hard failure that skips the whole Vertex lane).
-async function generateViaVertex({ instruction, aspectRatio }) {
+// `deadline` (epoch ms) bounds EVERY request this makes, the retry-without-size
+// and the no-image re-roll included. Before it, each request had its own 60 s
+// window and a single call could chain up to four of them.
+const VERTEX_REQUEST_CEILING_MS = 60_000;
+function msLeft(deadline) {
+	return deadline ? deadline - Date.now() : VERTEX_REQUEST_CEILING_MS;
+}
+async function generateViaVertex({ instruction, aspectRatio, deadline = null }) {
 	const project = process.env.GOOGLE_CLOUD_PROJECT;
 	const location = DEFAULT_LOCATION;
 	const model = DEFAULT_MODEL;
@@ -203,7 +210,7 @@ async function generateViaVertex({ instruction, aspectRatio }) {
 				contents: [{ role: 'user', parts: [{ text: instruction }] }],
 				generationConfig: { responseModalities: ['IMAGE'], imageConfig },
 			}),
-			signal: AbortSignal.timeout(60_000),
+			signal: AbortSignal.timeout(Math.max(1_000, Math.min(VERTEX_REQUEST_CEILING_MS, msLeft(deadline)))),
 		});
 		return res;
 	};
@@ -214,7 +221,7 @@ async function generateViaVertex({ instruction, aspectRatio }) {
 			// Peek at the error: only retry-without-size when it is specifically about
 			// imageConfig/imageSize, so a genuine bad request still fails fast.
 			const detail = await res.text().catch(() => '');
-			if (/imageSize|imageConfig/i.test(detail)) {
+			if (/imageSize|imageConfig/i.test(detail) && msLeft(deadline) > 5_000) {
 				res = await request(false);
 			} else {
 				throw Object.assign(new Error(`Vertex reference image 400: ${detail.slice(0, 200)}`), {
@@ -252,7 +259,7 @@ async function generateViaVertex({ instruction, aspectRatio }) {
 		// than a second attempt at this lane. Refusals and HTTP errors re-throw
 		// unchanged so genuine blocks and outages still fail fast.
 		const noImage = /produced no image/i.test(String(err?.message || ''));
-		if (!noImage || isProviderRefusal(err)) throw err;
+		if (!noImage || isProviderRefusal(err) || msLeft(deadline) < 10_000) throw err;
 		return await attempt();
 	}
 }
@@ -343,8 +350,17 @@ async function scoreReferenceImage({ b64, mime, prompt }) {
 // every lane is exhausted, exactly as textToImage does today.
 export async function generateReferenceImage(
 	prompt,
-	{ aspectRatio = '1:1', negativePrompt = null, seed, skipNim = false } = {},
+	{ aspectRatio = '1:1', negativePrompt = null, seed, skipNim = false, budgetMs } = {},
 ) {
+	// One budget for the whole reference step, shared with the fallthrough
+	// ladder: the Vertex lane gets the leader's share (it has a fallback behind
+	// it), QA scoring and the corrective retry only run while there is real time
+	// left, and whatever remains is handed to textToImage. Measured 2026-08-25:
+	// with no budget this step held a submit open for minutes before any job
+	// existed, on every text prompt.
+	const budget = ladderBudgetMs(budgetMs);
+	const startedAt = Date.now();
+	const remaining = () => budget - (Date.now() - startedAt);
 	const negatives =
 		negativePrompt && String(negativePrompt).trim()
 			? String(negativePrompt).trim()
@@ -363,8 +379,14 @@ export async function generateReferenceImage(
 	if (vertexImageEnabled()) {
 		try {
 			const instruction = buildReferenceInstruction(prompt, negatives);
-			let generated = await generateViaVertex({ instruction, aspectRatio });
-			let verdict = await scoreReferenceImage({ b64: generated.b64, mime: generated.mime, prompt });
+			const leaderMs = laneTimeoutMs(VERTEX_REQUEST_CEILING_MS, { budgetMs: budget, remainingMs: remaining(), laneRemains: true });
+			let generated = await generateViaVertex({ instruction, aspectRatio, deadline: Date.now() + leaderMs });
+			// Scoring is cheap insurance, not a gate: with the budget mostly spent
+			// the image ships unscored rather than blocking on one more call.
+			let verdict =
+				remaining() > budget * 0.25
+					? await scoreReferenceImage({ b64: generated.b64, mime: generated.mime, prompt })
+					: null;
 
 			// One retry with corrective feedback on a scoring failure: fold the
 			// vision model's own named issue into the instruction as an explicit
@@ -372,11 +394,11 @@ export async function generateReferenceImage(
 			// of the two attempts scored higher (best-of-2). GPU reconstruction
 			// time dwarfs the cost of one extra vision call, so this is cheap
 			// insurance against a bad reference wasting the expensive step downstream.
-			if (verdict && verdict.score < QA_PASS_SCORE) {
+			if (verdict && verdict.score < QA_PASS_SCORE && remaining() > budget * 0.5) {
 				const issue = verdict.issue || 'the subject was incomplete, off-center, not photoreal, or the background was cluttered';
 				const retryInstruction = `${instruction} IMPORTANT: a previous attempt at this shot failed on: ${issue}. Fix that specifically this time.`;
 				try {
-					const retried = await generateViaVertex({ instruction: retryInstruction, aspectRatio });
+					const retried = await generateViaVertex({ instruction: retryInstruction, aspectRatio, deadline: Date.now() + Math.floor(remaining() * 0.6) });
 					const retryVerdict = await scoreReferenceImage({ b64: retried.b64, mime: retried.mime, prompt });
 					if (!verdict || (retryVerdict && retryVerdict.score > verdict.score)) {
 						generated = retried;
@@ -411,6 +433,6 @@ export async function generateReferenceImage(
 	// Fallthrough: the current reference-image provider (NIM FLUX free → Vertex
 	// Imagen → Replicate). Same call the router makes today, so this can only ever
 	// add the Vertex-reference lane in front, never remove a path.
-	const served = await textToImage(prompt, { aspectRatio, skipNim, seed });
+	const served = await textToImage(prompt, { aspectRatio, skipNim, seed, budgetMs: Math.max(5_000, remaining()) });
 	return { ...served, lane: served.lane || (served.predictionId ? 'replicate' : 'fallthrough') };
 }
