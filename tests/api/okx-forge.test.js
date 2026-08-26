@@ -256,6 +256,12 @@ describe('402 challenge: the OKX Agent Payments Protocol integration', () => {
 		lane.poll = () => jsonResponse(200, { status: 'running' });
 		const res = await post('forge-status', rpc(FORGE_STATUS_TOOL, { job_id: 'f1.job.abc' }));
 		expect(res.statusCode).toBe(200);
+		// ...including on GET, which a reviewer probes first: a free row answering
+		// its discovery GET with a priced 402 reads as a paid service.
+		const get = makeRes();
+		await handler(makeReq({ method: 'GET', service: 'forge-status' }), get);
+		expect(get.statusCode).toBe(405);
+		expect(get.headers.allow).toBe('POST, DELETE');
 	});
 });
 

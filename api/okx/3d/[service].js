@@ -405,7 +405,18 @@ async function handleA2mcp(req, res, cfg) {
 	// envs being present. Prepended into the MCP challenge + verify path.
 	const xlayerAcceptsFor = (amount) => (xlayerSettleable() ? [okxXLayerAccept(resourceUrl, amount)] : []);
 
-	if (req.method === 'GET' || req.method === 'HEAD')
+	if (req.method === 'GET' || req.method === 'HEAD') {
+		// A free service has nothing to challenge for. Answering its GET with a
+		// 402 (the shared default price, no less) told a reviewer the "free" row
+		// costs money. This server holds no server-to-client stream, so the
+		// honest answer is the same 405 the authenticated branch gives, and the
+		// same shape the approved sellers on this marketplace answer GET with.
+		if (!listPrice) {
+			res.statusCode = 405;
+			res.setHeader('allow', 'POST, DELETE');
+			res.setHeader('cache-control', 'no-store');
+			return res.end();
+		}
 		return handleSse(req, res, {
 			resourcePath,
 			challenge,
@@ -413,6 +424,7 @@ async function handleA2mcp(req, res, cfg) {
 			x402Amount: listPrice,
 			paymentStatus: 402,
 		});
+	}
 	if (req.method === 'DELETE') return handleTerminate(req, res);
 	if (req.method !== 'POST') return send401(res, 'method not supported');
 
