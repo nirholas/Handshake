@@ -58,6 +58,11 @@ const SKIP_DIRS = new Set([
 	'coverage',
 	'playwright-report',
 	'.deploy-wt',
+	// Gitignored build output (scripts/build-notebook-corpus.mjs bundles every
+	// repo Markdown file into NotebookLM-sized volumes there). Its relative
+	// links are lifted verbatim from files that live elsewhere, so auditing it
+	// reports thousands of "missing" targets that exist at their real paths.
+	'exports',
 ]);
 // Generated aggregates: their links are produced by a generator, not authored.
 const SKIP_FILES = new Set(['docs/ALL.md', 'docs/EVERYTHING.md', 'EVERYTHING.md', 'CHANGELOG.md']);
@@ -295,6 +300,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['money-map', 'internal: revenue-share and treasury routing'],
 	['nvidia-nemotron-ask-the-experts-questions', 'internal: paste-ready live-chat copy drafted for an external stream'],
 	['native-launchpad', 'owner-gated: names a crypto project other than $THREE'],
+	['openai-community-3d-studio-post', 'internal: forum post drafted for an external developer community'],
 	['open-source-friday-plan', 'internal: program application plan and stream runsheet, not a reader-facing product doc'],
 	['oracle-trading-mcp-plan', 'internal: build order for the Oracle and trading-agent MCP servers, not a reader-facing product doc'],
 	['nvidia-apps-catalog-listing', 'internal: paste-ready listing copy and portal steps for the NVIDIA Inception catalog'],
