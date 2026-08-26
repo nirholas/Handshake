@@ -1,13 +1,13 @@
 {
 	"$generated": "npm run docs:freshness (scripts/doc-freshness.mjs)",
 	"$doc": "/docs/freshness",
-	"generatedAt": "2026-08-25T18:38:57.500Z",
-	"commit": "3d37ad6d2",
+	"generatedAt": "2026-08-26T19:16:51.105Z",
+	"commit": "d85e13f94",
 	"totals": {
-		"docs": 594,
-		"stale": 143,
-		"watch": 242,
-		"fresh": 98,
+		"docs": 596,
+		"stale": 134,
+		"watch": 233,
+		"fresh": 118,
 		"unverifiable": 111,
 		"trackedFiles": 3091
 	},
@@ -47,13 +47,6 @@
 			"f": 21,
 			"n": 76
 		},
-		"docs/ux-flows/11-account-dashboard.md": {
-			"s": "stale",
-			"g": 10.179,
-			"d": "2026-08-06",
-			"f": 26,
-			"n": 39
-		},
 		"docs/ux-flows/10-chat-brain-labs.md": {
 			"s": "stale",
 			"g": 9.716,
@@ -63,7 +56,7 @@
 		},
 		"docs/ux-flows/03-3d-editing-viewer.md": {
 			"s": "stale",
-			"g": 9.644,
+			"g": 9.643,
 			"d": "2026-08-06",
 			"f": 26,
 			"n": 53
@@ -77,7 +70,7 @@
 		},
 		"docs/ux-flows/12-home-and-content.md": {
 			"s": "stale",
-			"g": 8.87,
+			"g": 8.869,
 			"d": "2026-08-06",
 			"f": 22,
 			"n": 46
@@ -91,7 +84,7 @@
 		},
 		"docs/ux-flows/02-forge-text-to-3d.md": {
 			"s": "stale",
-			"g": 7.634,
+			"g": 7.631,
 			"d": "2026-08-13",
 			"f": 21,
 			"n": 53
@@ -105,7 +98,7 @@
 		},
 		"docs/forge-pipeline.md": {
 			"s": "stale",
-			"g": 6.663,
+			"g": 6.658,
 			"d": "2026-08-13",
 			"f": 19,
 			"n": 32
@@ -119,24 +112,10 @@
 		},
 		"docs/ops/gcp-credits.md": {
 			"s": "stale",
-			"g": 5.214,
+			"g": 5.213,
 			"d": "2026-08-15",
 			"f": 15,
 			"n": 62
-		},
-		"docs/agent-abilities/FULL-ARTICLE.md": {
-			"s": "stale",
-			"g": 5.151,
-			"d": "2026-08-16",
-			"f": 29,
-			"n": 146
-		},
-		"docs/agent-abilities/ABILITIES.md": {
-			"s": "stale",
-			"g": 5.106,
-			"d": "2026-08-16",
-			"f": 28,
-			"n": 145
 		},
 		"docs/site-performance.md": {
 			"s": "stale",
@@ -189,7 +168,7 @@
 		},
 		"docs/chatgpt-ar.md": {
 			"s": "stale",
-			"g": 3.52,
+			"g": 3.509,
 			"d": "2026-08-06",
 			"f": 13,
 			"n": 16
@@ -250,26 +229,12 @@
 			"f": 8,
 			"n": 16
 		},
-		"docs/ca2x402.md": {
-			"s": "stale",
-			"g": 2.716,
-			"d": "2026-08-14",
-			"f": 5,
-			"n": 12
-		},
 		"docs/agora/tasks/06-economy-visuals.md": {
 			"s": "stale",
 			"g": 2.7,
 			"d": "2026-07-10",
 			"f": 4,
 			"n": 5
-		},
-		"docs/monitor.md": {
-			"s": "stale",
-			"g": 2.541,
-			"d": "2026-08-14",
-			"f": 8,
-			"n": 12
 		},
 		"docs/agent-studio.md": {
 			"s": "stale",
@@ -343,21 +308,28 @@
 		},
 		"docs/agent-system.md": {
 			"s": "stale",
-			"g": 2.278,
+			"g": 2.277,
 			"d": "2026-07-30",
 			"f": 9,
 			"n": 17
 		},
 		"docs/mcp-studio.md": {
 			"s": "stale",
-			"g": 2.269,
+			"g": 2.258,
 			"d": "2026-08-06",
 			"f": 11,
 			"n": 13
 		},
+		"docs/guards.md": {
+			"s": "stale",
+			"g": 2.213,
+			"d": "2026-08-19",
+			"f": 8,
+			"n": 63
+		},
 		"docs/agora/tasks/00-INDEX.md": {
 			"s": "stale",
-			"g": 2.143,
+			"g": 2.141,
 			"d": "2026-08-06",
 			"f": 15,
 			"n": 24
@@ -368,13 +340,6 @@
 			"d": "2026-08-06",
 			"f": 6,
 			"n": 10
-		},
-		"docs/agent-abilities/chapters/09-the-agent-economy.md": {
-			"s": "stale",
-			"g": 2.136,
-			"d": "2026-07-18",
-			"f": 11,
-			"n": 12
 		},
 		"docs/agora/tasks/02-life-engine.md": {
 			"s": "stale",
@@ -397,6 +362,13 @@
 			"f": 3,
 			"n": 11
 		},
+		"docs/coin-pages.md": {
+			"s": "stale",
+			"g": 2.018,
+			"d": "2026-08-25",
+			"f": 4,
+			"n": 103
+		},
 		"docs/farcaster-memory-seeding.md": {
 			"s": "stale",
 			"g": 2.012,
@@ -418,20 +390,6 @@
 			"f": 9,
 			"n": 10
 		},
-		"docs/coin-pages.md": {
-			"s": "stale",
-			"g": 2,
-			"d": "2026-08-25",
-			"f": 3,
-			"n": 103
-		},
-		"docs/x402-studio.md": {
-			"s": "stale",
-			"g": 2,
-			"d": "2026-07-18",
-			"f": 5,
-			"n": 5
-		},
 		"docs/aws-builder-center.md": {
 			"s": "stale",
 			"g": 1.944,
@@ -448,7 +406,7 @@
 		},
 		"docs/agent-shell.md": {
 			"s": "stale",
-			"g": 1.885,
+			"g": 1.884,
 			"d": "2026-08-05",
 			"f": 9,
 			"n": 17
@@ -462,7 +420,7 @@
 		},
 		"docs/ops/production-log-triage.md": {
 			"s": "stale",
-			"g": 1.826,
+			"g": 1.825,
 			"d": "2026-08-13",
 			"f": 9,
 			"n": 38
@@ -495,13 +453,6 @@
 			"f": 4,
 			"n": 4
 		},
-		"docs/x402-endpoints.md": {
-			"s": "stale",
-			"g": 1.699,
-			"d": "2026-08-14",
-			"f": 7,
-			"n": 106
-		},
 		"docs/agora/tasks/08-humans-first-class.md": {
 			"s": "stale",
 			"g": 1.694,
@@ -511,7 +462,7 @@
 		},
 		"docs/openai-pr/04-openai-surface-test-coverage.md": {
 			"s": "stale",
-			"g": 1.688,
+			"g": 1.682,
 			"d": "2026-07-18",
 			"f": 9,
 			"n": 9
@@ -553,7 +504,7 @@
 		},
 		"docs/event-readiness/19-forge-props-live.md": {
 			"s": "stale",
-			"g": 1.633,
+			"g": 1.632,
 			"d": "2026-08-07",
 			"f": 9,
 			"n": 11
@@ -588,14 +539,14 @@
 		},
 		"docs/openai-pr/03-forge-free-tier-truth.md": {
 			"s": "stale",
-			"g": 1.55,
+			"g": 1.548,
 			"d": "2026-07-18",
 			"f": 4,
 			"n": 4
 		},
 		"docs/remix.md": {
 			"s": "stale",
-			"g": 1.525,
+			"g": 1.522,
 			"d": "2026-07-08",
 			"f": 5,
 			"n": 10
@@ -693,17 +644,10 @@
 		},
 		"docs/ops/x402-discovery-listings.md": {
 			"s": "stale",
-			"g": 1.337,
+			"g": 1.336,
 			"d": "2026-08-11",
 			"f": 8,
 			"n": 14
-		},
-		"docs/agent-abilities/chapters/14-the-developer-platform.md": {
-			"s": "stale",
-			"g": 1.334,
-			"d": "2026-07-18",
-			"f": 12,
-			"n": 16
 		},
 		"docs/agora/tasks/07-verify-and-passport.md": {
 			"s": "stale",
@@ -726,9 +670,16 @@
 			"f": 2,
 			"n": 4
 		},
+		"docs/agent-abilities/chapters/14-the-developer-platform.md": {
+			"s": "stale",
+			"g": 1.329,
+			"d": "2026-07-18",
+			"f": 12,
+			"n": 16
+		},
 		"docs/openai-pr/02-wellknown-manifest-conflict.md": {
 			"s": "stale",
-			"g": 1.278,
+			"g": 1.272,
 			"d": "2026-07-18",
 			"f": 4,
 			"n": 5
@@ -739,13 +690,6 @@
 			"d": "2026-07-29",
 			"f": 4,
 			"n": 4
-		},
-		"docs/agent-economy-volume.md": {
-			"s": "stale",
-			"g": 1.25,
-			"d": "2026-08-15",
-			"f": 2,
-			"n": 6
 		},
 		"docs/character-library.md": {
 			"s": "stale",
@@ -761,6 +705,13 @@
 			"f": 3,
 			"n": 13
 		},
+		"docs/character-studio.md": {
+			"s": "stale",
+			"g": 1.168,
+			"d": "2026-08-15",
+			"f": 5,
+			"n": 28
+		},
 		"docs/ops/gcp-production.md": {
 			"s": "stale",
 			"g": 1.166,
@@ -770,7 +721,7 @@
 		},
 		"docs/agent-abilities/chapters/07-skills.md": {
 			"s": "stale",
-			"g": 1.153,
+			"g": 1.152,
 			"d": "2026-07-18",
 			"f": 6,
 			"n": 24
@@ -791,17 +742,10 @@
 		},
 		"docs/agent-tasks/fix-x402-caller-mismatches.md": {
 			"s": "stale",
-			"g": 1.134,
+			"g": 1.133,
 			"d": "2026-07-25",
 			"f": 5,
 			"n": 5
-		},
-		"docs/irl.md": {
-			"s": "stale",
-			"g": 1.123,
-			"d": "2026-08-13",
-			"f": 4,
-			"n": 6
 		},
 		"docs/trading-copilot.md": {
 			"s": "stale",
@@ -810,9 +754,16 @@
 			"f": 4,
 			"n": 8
 		},
+		"docs/irl.md": {
+			"s": "stale",
+			"g": 1.122,
+			"d": "2026-08-13",
+			"f": 4,
+			"n": 6
+		},
 		"docs/developer-platform.md": {
 			"s": "stale",
-			"g": 1.118,
+			"g": 1.117,
 			"d": "2026-08-13",
 			"f": 4,
 			"n": 13
@@ -851,13 +802,6 @@
 			"d": "2026-08-15",
 			"f": 2,
 			"n": 10
-		},
-		"docs/atlas.md": {
-			"s": "stale",
-			"g": 1.04,
-			"d": "2026-08-14",
-			"f": 3,
-			"n": 8
 		},
 		"docs/event-readiness/15-live-hype-feed.md": {
 			"s": "stale",
@@ -907,13 +851,6 @@
 			"d": "2026-08-17",
 			"f": 2,
 			"n": 10
-		},
-		"docs/money-feed.md": {
-			"s": "stale",
-			"g": 1.011,
-			"d": "2026-08-13",
-			"f": 4,
-			"n": 7
 		},
 		"docs/agent-abilities/chapters/06-identity-reputation.md": {
 			"s": "stale",
@@ -1020,13 +957,6 @@
 			"f": 5,
 			"n": 7
 		},
-		"docs/guards.md": {
-			"s": "watch",
-			"g": 0.963,
-			"d": "2026-08-19",
-			"f": 6,
-			"n": 63
-		},
 		"docs/event-readiness/13-event-quests-leaderboard.md": {
 			"s": "watch",
 			"g": 0.96,
@@ -1076,13 +1006,6 @@
 			"f": 3,
 			"n": 8
 		},
-		"docs/openai-pr/00-START-HERE.md": {
-			"s": "watch",
-			"g": 0.893,
-			"d": "2026-08-06",
-			"f": 8,
-			"n": 9
-		},
 		"docs/tutorials/character-library-to-embed.md": {
 			"s": "watch",
 			"g": 0.893,
@@ -1090,19 +1013,19 @@
 			"f": 3,
 			"n": 7
 		},
-		"docs/api-reference.md": {
-			"s": "watch",
-			"g": 0.89,
-			"d": "2026-08-18",
-			"f": 7,
-			"n": 196
-		},
 		"docs/notifications.md": {
 			"s": "watch",
 			"g": 0.883,
 			"d": "2026-08-14",
 			"f": 4,
 			"n": 13
+		},
+		"docs/openai-pr/00-START-HERE.md": {
+			"s": "watch",
+			"g": 0.883,
+			"d": "2026-08-06",
+			"f": 8,
+			"n": 9
 		},
 		"CLAUDE.md": {
 			"s": "watch",
@@ -1148,7 +1071,7 @@
 		},
 		"docs/mcp-tools.md": {
 			"s": "watch",
-			"g": 0.828,
+			"g": 0.822,
 			"d": "2026-08-13",
 			"f": 8,
 			"n": 11
@@ -1169,14 +1092,14 @@
 		},
 		"docs/ops/forge-error-triage.md": {
 			"s": "watch",
-			"g": 0.792,
+			"g": 0.791,
 			"d": "2026-08-14",
 			"f": 4,
 			"n": 11
 		},
 		"docs/avatar-pipeline.md": {
 			"s": "watch",
-			"g": 0.785,
+			"g": 0.784,
 			"d": "2026-08-05",
 			"f": 5,
 			"n": 8
@@ -1187,6 +1110,13 @@
 			"d": "2026-08-14",
 			"f": 5,
 			"n": 11
+		},
+		"docs/oracle-trading-mcp-plan.md": {
+			"s": "watch",
+			"g": 0.753,
+			"d": "2026-08-20",
+			"f": 5,
+			"n": 36
 		},
 		"docs/erc8004.md": {
 			"s": "watch",
@@ -1232,7 +1162,7 @@
 		},
 		"docs/agora/tasks/04-professions.md": {
 			"s": "watch",
-			"g": 0.714,
+			"g": 0.712,
 			"d": "2026-07-10",
 			"f": 3,
 			"n": 3
@@ -1258,13 +1188,6 @@
 			"f": 3,
 			"n": 8
 		},
-		"docs/character-studio.md": {
-			"s": "watch",
-			"g": 0.668,
-			"d": "2026-08-15",
-			"f": 4,
-			"n": 28
-		},
 		"docs/free-crypto-apis.md": {
 			"s": "watch",
 			"g": 0.667,
@@ -1272,23 +1195,9 @@
 			"f": 2,
 			"n": 7
 		},
-		"docs/x402-ring-economy.md": {
-			"s": "watch",
-			"g": 0.667,
-			"d": "2026-08-15",
-			"f": 2,
-			"n": 48
-		},
-		"docs/money-map.md": {
-			"s": "watch",
-			"g": 0.649,
-			"d": "2026-08-14",
-			"f": 5,
-			"n": 16
-		},
 		"docs/daily-forge.md": {
 			"s": "watch",
-			"g": 0.648,
+			"g": 0.646,
 			"d": "2026-07-18",
 			"f": 4,
 			"n": 7
@@ -1314,13 +1223,6 @@
 			"f": 3,
 			"n": 6
 		},
-		"docs/x402-dev-tools.md": {
-			"s": "watch",
-			"g": 0.624,
-			"d": "2026-08-14",
-			"f": 3,
-			"n": 10
-		},
 		"docs/tutorials/build-a-site-concierge.md": {
 			"s": "watch",
 			"g": 0.622,
@@ -1330,24 +1232,24 @@
 		},
 		"docs/image-to-3d.md": {
 			"s": "watch",
-			"g": 0.618,
+			"g": 0.617,
 			"d": "2026-08-13",
 			"f": 4,
 			"n": 5
 		},
-		"docs/openai-pr/05-custom-gpt-openapi-serving.md": {
-			"s": "watch",
-			"g": 0.614,
-			"d": "2026-07-18",
-			"f": 6,
-			"n": 8
-		},
 		"docs/agent-abilities/chapters/01-the-body.md": {
 			"s": "watch",
-			"g": 0.613,
+			"g": 0.611,
 			"d": "2026-08-05",
 			"f": 6,
 			"n": 17
+		},
+		"docs/openai-pr/05-custom-gpt-openapi-serving.md": {
+			"s": "watch",
+			"g": 0.608,
+			"d": "2026-07-18",
+			"f": 6,
+			"n": 8
 		},
 		"docs/free-llm-providers.md": {
 			"s": "watch",
@@ -1379,7 +1281,7 @@
 		},
 		"docs/generation-watch.md": {
 			"s": "watch",
-			"g": 0.571,
+			"g": 0.567,
 			"d": "2026-08-15",
 			"f": 2,
 			"n": 3
@@ -1435,17 +1337,10 @@
 		},
 		"docs/ops/forge-multiview-migration-handoff.md": {
 			"s": "watch",
-			"g": 0.504,
+			"g": 0.503,
 			"d": "2026-07-10",
 			"f": 5,
 			"n": 7
-		},
-		"docs/oracle-trading-mcp-plan.md": {
-			"s": "watch",
-			"g": 0.503,
-			"d": "2026-08-20",
-			"f": 4,
-			"n": 36
 		},
 		"docs/agent-tasks/fix-x402-wallet-health.md": {
 			"s": "watch",
@@ -1559,13 +1454,6 @@
 			"f": 1,
 			"n": 1
 		},
-		"docs/x402.md": {
-			"s": "watch",
-			"g": 0.5,
-			"d": "2026-07-18",
-			"f": 1,
-			"n": 2
-		},
 		"docs/agent-abilities/wallet/15-pay.md": {
 			"s": "watch",
 			"g": 0.488,
@@ -1575,14 +1463,14 @@
 		},
 		"docs/partners.md": {
 			"s": "watch",
-			"g": 0.487,
+			"g": 0.482,
 			"d": "2026-08-14",
 			"f": 4,
 			"n": 5
 		},
 		"docs/openai-pr/01-orphan-widget-resolution.md": {
 			"s": "watch",
-			"g": 0.445,
+			"g": 0.443,
 			"d": "2026-08-06",
 			"f": 4,
 			"n": 5
@@ -1615,16 +1503,9 @@
 			"f": 2,
 			"n": 2
 		},
-		"docs/agent-abilities/chapters/13-agents-everywhere.md": {
-			"s": "watch",
-			"g": 0.425,
-			"d": "2026-07-18",
-			"f": 7,
-			"n": 7
-		},
 		"docs/agent-identities.md": {
 			"s": "watch",
-			"g": 0.418,
+			"g": 0.417,
 			"d": "2026-08-14",
 			"f": 3,
 			"n": 8
@@ -1635,6 +1516,13 @@
 			"d": "2026-07-30",
 			"f": 3,
 			"n": 9
+		},
+		"docs/agent-abilities/chapters/13-agents-everywhere.md": {
+			"s": "watch",
+			"g": 0.415,
+			"d": "2026-07-18",
+			"f": 7,
+			"n": 7
 		},
 		"docs/event-readiness/09-accessibility-i18n.md": {
 			"s": "watch",
@@ -1657,13 +1545,6 @@
 			"f": 2,
 			"n": 14
 		},
-		"docs/announcement-coverage.md": {
-			"s": "watch",
-			"g": 0.398,
-			"d": "2026-08-11",
-			"f": 3,
-			"n": 4
-		},
 		"docs/tutorials/mcp-server-for-your-agent.md": {
 			"s": "watch",
 			"g": 0.397,
@@ -1671,19 +1552,19 @@
 			"f": 3,
 			"n": 4
 		},
-		"docs/forge.md": {
-			"s": "watch",
-			"g": 0.394,
-			"d": "2026-08-13",
-			"f": 4,
-			"n": 11
-		},
 		"docs/tutorials/render-avatar-images.md": {
 			"s": "watch",
 			"g": 0.393,
 			"d": "2026-08-14",
 			"f": 2,
 			"n": 5
+		},
+		"docs/forge.md": {
+			"s": "watch",
+			"g": 0.391,
+			"d": "2026-08-13",
+			"f": 4,
+			"n": 11
 		},
 		"docs/recurring-payments.md": {
 			"s": "watch",
@@ -1720,13 +1601,6 @@
 			"f": 4,
 			"n": 17
 		},
-		"README.md": {
-			"s": "watch",
-			"g": 0.352,
-			"d": "2026-08-24",
-			"f": 4,
-			"n": 232
-		},
 		"docs/agent-abilities/wallet/04-deposit.md": {
 			"s": "watch",
 			"g": 0.345,
@@ -1743,7 +1617,7 @@
 		},
 		"docs/authentication.md": {
 			"s": "watch",
-			"g": 0.336,
+			"g": 0.335,
 			"d": "2026-08-14",
 			"f": 4,
 			"n": 13
@@ -1785,7 +1659,7 @@
 		},
 		"docs/tutorials/generate-3d-api.md": {
 			"s": "watch",
-			"g": 0.318,
+			"g": 0.316,
 			"d": "2026-08-13",
 			"f": 3,
 			"n": 3
@@ -1803,13 +1677,6 @@
 			"d": "2026-08-07",
 			"f": 2,
 			"n": 3
-		},
-		"docs/analytics-retention.md": {
-			"s": "watch",
-			"g": 0.271,
-			"d": "2026-08-14",
-			"f": 5,
-			"n": 12
 		},
 		"docs/event-readiness/10-event-day-runbook.md": {
 			"s": "watch",
@@ -1839,20 +1706,6 @@
 			"f": 4,
 			"n": 6
 		},
-		"docs/api/forge-x402.md": {
-			"s": "watch",
-			"g": 0.251,
-			"d": "2026-08-06",
-			"f": 4,
-			"n": 5
-		},
-		"docs/financial-controls.md": {
-			"s": "watch",
-			"g": 0.25,
-			"d": "2026-08-14",
-			"f": 1,
-			"n": 13
-		},
 		"docs/ops/repo-audit-2026-07.md": {
 			"s": "watch",
 			"g": 0.25,
@@ -1873,6 +1726,13 @@
 			"d": "2026-07-30",
 			"f": 1,
 			"n": 1
+		},
+		"docs/api/forge-x402.md": {
+			"s": "watch",
+			"g": 0.249,
+			"d": "2026-08-06",
+			"f": 4,
+			"n": 5
 		},
 		"docs/layers.md": {
 			"s": "watch",
@@ -1988,17 +1848,10 @@
 		},
 		"docs/mcp-x402-bazaar.md": {
 			"s": "watch",
-			"g": 0.191,
+			"g": 0.19,
 			"d": "2026-08-13",
 			"f": 2,
 			"n": 4
-		},
-		"docs/mcp-3d-studio.md": {
-			"s": "watch",
-			"g": 0.187,
-			"d": "2026-08-13",
-			"f": 4,
-			"n": 9
 		},
 		"docs/fact-check.md": {
 			"s": "watch",
@@ -2006,6 +1859,13 @@
 			"d": "2026-08-13",
 			"f": 2,
 			"n": 8
+		},
+		"docs/mcp-3d-studio.md": {
+			"s": "watch",
+			"g": 0.182,
+			"d": "2026-08-13",
+			"f": 4,
+			"n": 9
 		},
 		"docs/animations.md": {
 			"s": "watch",
@@ -2051,14 +1911,14 @@
 		},
 		"docs/openai-pr/06-docs-accuracy-reconciliation.md": {
 			"s": "watch",
-			"g": 0.161,
+			"g": 0.153,
 			"d": "2026-08-06",
 			"f": 3,
 			"n": 4
 		},
 		"docs/openai-pr/07-final-verification-and-submit.md": {
 			"s": "watch",
-			"g": 0.161,
+			"g": 0.153,
 			"d": "2026-08-06",
 			"f": 3,
 			"n": 4
@@ -2125,13 +1985,6 @@
 			"d": "2026-08-15",
 			"f": 1,
 			"n": 9
-		},
-		"docs/x402-distribution.md": {
-			"s": "watch",
-			"g": 0.125,
-			"d": "2026-08-15",
-			"f": 1,
-			"n": 16
 		},
 		"docs/tutorials/self-host-agent-backend.md": {
 			"s": "watch",
@@ -2224,16 +2077,9 @@
 			"f": 1,
 			"n": 4
 		},
-		"docs/viability.md": {
-			"s": "watch",
-			"g": 0.091,
-			"d": "2026-08-15",
-			"f": 1,
-			"n": 6
-		},
 		"docs/agent-skills.md": {
 			"s": "watch",
-			"g": 0.075,
+			"g": 0.072,
 			"d": "2026-08-13",
 			"f": 2,
 			"n": 4
@@ -2247,7 +2093,7 @@
 		},
 		"docs/agent-tasks/fix-x402-502-bursts.md": {
 			"s": "watch",
-			"g": 0.07,
+			"g": 0.069,
 			"d": "2026-07-25",
 			"f": 2,
 			"n": 2
@@ -2329,19 +2175,19 @@
 			"f": 1,
 			"n": 2
 		},
-		"docs/tutorials/first-prompt-to-3d.md": {
-			"s": "watch",
-			"g": 0.05,
-			"d": "2026-07-15",
-			"f": 1,
-			"n": 1
-		},
 		"docs/user-wallet.md": {
 			"s": "watch",
 			"g": 0.05,
 			"d": "2026-08-15",
 			"f": 1,
 			"n": 11
+		},
+		"docs/tutorials/first-prompt-to-3d.md": {
+			"s": "watch",
+			"g": 0.048,
+			"d": "2026-07-15",
+			"f": 1,
+			"n": 1
 		},
 		"docs/assistant-widget.md": {
 			"s": "watch",
@@ -2370,13 +2216,6 @@
 			"d": "2026-07-10",
 			"f": 1,
 			"n": 2
-		},
-		"docs/autonomous-x402.md": {
-			"s": "watch",
-			"g": 0.043,
-			"d": "2026-08-13",
-			"f": 1,
-			"n": 9
 		},
 		"docs/avatar-cli.md": {
 			"s": "watch",
@@ -2420,26 +2259,19 @@
 			"f": 1,
 			"n": 1
 		},
-		"docs/3d-api.md": {
+		"docs/announcement-coverage.md": {
 			"s": "watch",
 			"g": 0.04,
-			"d": "2026-08-15",
+			"d": "2026-08-25",
 			"f": 1,
-			"n": 11
+			"n": 4
 		},
-		"docs/agent-abilities/chapters/15-appendix.md": {
+		"docs/atlas.md": {
 			"s": "watch",
 			"g": 0.04,
-			"d": "2026-08-14",
+			"d": "2026-08-25",
 			"f": 1,
-			"n": 1
-		},
-		"docs/ar.md": {
-			"s": "watch",
-			"g": 0.04,
-			"d": "2026-08-19",
-			"f": 1,
-			"n": 13
+			"n": 8
 		},
 		"docs/big-tech-recognition-week.md": {
 			"s": "watch",
@@ -2448,27 +2280,6 @@
 			"f": 1,
 			"n": 7
 		},
-		"docs/chatgpt-3d-studio-gpt.md": {
-			"s": "watch",
-			"g": 0.04,
-			"d": "2026-08-06",
-			"f": 1,
-			"n": 2
-		},
-		"docs/cookbook/text-to-3d-cli.md": {
-			"s": "watch",
-			"g": 0.04,
-			"d": "2026-08-14",
-			"f": 1,
-			"n": 2
-		},
-		"docs/ibm-community.md": {
-			"s": "watch",
-			"g": 0.04,
-			"d": "2026-08-13",
-			"f": 1,
-			"n": 2
-		},
 		"docs/labor-market.md": {
 			"s": "watch",
 			"g": 0.04,
@@ -2476,17 +2287,17 @@
 			"f": 1,
 			"n": 11
 		},
-		"docs/tutorials/build-a-3d-asset-pipeline.md": {
+		"docs/three-thesis.md": {
 			"s": "watch",
 			"g": 0.04,
-			"d": "2026-08-13",
+			"d": "2026-08-25",
 			"f": 1,
-			"n": 1
+			"n": 29
 		},
-		"docs/tutorials/view-in-ar.md": {
+		"docs/x-posts/github-100-stars.md": {
 			"s": "watch",
 			"g": 0.04,
-			"d": "2026-08-15",
+			"d": "2026-08-26",
 			"f": 1,
 			"n": 2
 		},
@@ -2497,6 +2308,69 @@
 			"f": 1,
 			"n": 3
 		},
+		"README.md": {
+			"s": "watch",
+			"g": 0.04,
+			"d": "2026-08-25",
+			"f": 1,
+			"n": 232
+		},
+		"STRUCTURE.md": {
+			"s": "watch",
+			"g": 0.04,
+			"d": "2026-08-25",
+			"f": 1,
+			"n": 1137
+		},
+		"docs/3d-api.md": {
+			"s": "watch",
+			"g": 0.038,
+			"d": "2026-08-15",
+			"f": 1,
+			"n": 11
+		},
+		"docs/ar.md": {
+			"s": "watch",
+			"g": 0.038,
+			"d": "2026-08-19",
+			"f": 1,
+			"n": 13
+		},
+		"docs/chatgpt-3d-studio-gpt.md": {
+			"s": "watch",
+			"g": 0.038,
+			"d": "2026-08-06",
+			"f": 1,
+			"n": 2
+		},
+		"docs/cookbook/text-to-3d-cli.md": {
+			"s": "watch",
+			"g": 0.038,
+			"d": "2026-08-14",
+			"f": 1,
+			"n": 2
+		},
+		"docs/ibm-community.md": {
+			"s": "watch",
+			"g": 0.038,
+			"d": "2026-08-13",
+			"f": 1,
+			"n": 2
+		},
+		"docs/tutorials/build-a-3d-asset-pipeline.md": {
+			"s": "watch",
+			"g": 0.038,
+			"d": "2026-08-13",
+			"f": 1,
+			"n": 1
+		},
+		"docs/tutorials/view-in-ar.md": {
+			"s": "watch",
+			"g": 0.038,
+			"d": "2026-08-15",
+			"f": 1,
+			"n": 2
+		},
 		"docs/copy-trading.md": {
 			"s": "watch",
 			"g": 0.03,
@@ -2506,29 +2380,29 @@
 		},
 		"docs/3d-pipeline.md": {
 			"s": "watch",
-			"g": 0.025,
+			"g": 0.024,
 			"d": "2026-08-15",
 			"f": 1,
 			"n": 8
 		},
+		"docs/cookbook/mcp-3d-tool.md": {
+			"s": "watch",
+			"g": 0.024,
+			"d": "2026-08-01",
+			"f": 1,
+			"n": 1
+		},
 		"docs/diorama.md": {
 			"s": "watch",
-			"g": 0.025,
+			"g": 0.024,
 			"d": "2026-08-13",
 			"f": 1,
 			"n": 4
 		},
 		"docs/tutorials/nvidia-3d-free.md": {
 			"s": "watch",
-			"g": 0.025,
-			"d": "2026-08-13",
-			"f": 1,
-			"n": 1
-		},
-		"docs/cookbook/mcp-3d-tool.md": {
-			"s": "watch",
 			"g": 0.024,
-			"d": "2026-08-01",
+			"d": "2026-08-13",
 			"f": 1,
 			"n": 1
 		},
@@ -2721,12 +2595,26 @@
 			"f": 0,
 			"n": 0
 		},
+		"docs/agent-abilities/ABILITIES.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-25",
+			"f": 0,
+			"n": 145
+		},
 		"docs/agent-abilities/chapters/02-motion.md": {
 			"s": "unverifiable",
 			"g": 0,
 			"d": "2026-08-05",
 			"f": 0,
 			"n": 0
+		},
+		"docs/agent-abilities/chapters/09-the-agent-economy.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-25",
+			"f": 0,
+			"n": 12
 		},
 		"docs/agent-abilities/chapters/10-the-agent-wallet.md": {
 			"s": "unverifiable",
@@ -2742,6 +2630,20 @@
 			"f": 0,
 			"n": 0
 		},
+		"docs/agent-abilities/chapters/15-appendix.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-25",
+			"f": 0,
+			"n": 1
+		},
+		"docs/agent-abilities/FULL-ARTICLE.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-25",
+			"f": 0,
+			"n": 146
+		},
 		"docs/agent-abilities/PRODUCTION-NOTES.md": {
 			"s": "unverifiable",
 			"g": 0,
@@ -2755,6 +2657,13 @@
 			"d": "2026-07-10",
 			"f": 0,
 			"n": 0
+		},
+		"docs/agent-economy-volume.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-25",
+			"f": 0,
+			"n": 6
 		},
 		"docs/agent-tasks/new-trading-arm-x402-signals.md": {
 			"s": "unverifiable",
@@ -2791,6 +2700,13 @@
 			"f": 0,
 			"n": 5
 		},
+		"docs/analytics-retention.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-25",
+			"f": 0,
+			"n": 12
+		},
 		"docs/animation-studio.md": {
 			"s": "fresh",
 			"g": 0,
@@ -2804,6 +2720,20 @@
 			"d": "2026-08-10",
 			"f": 0,
 			"n": 0
+		},
+		"docs/api-reference.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-25",
+			"f": 0,
+			"n": 196
+		},
+		"docs/autonomous-x402.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-25",
+			"f": 0,
+			"n": 9
 		},
 		"docs/autopilot.md": {
 			"s": "fresh",
@@ -2903,6 +2833,13 @@
 			"f": 0,
 			"n": 7
 		},
+		"docs/ca2x402.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-25",
+			"f": 0,
+			"n": 12
+		},
 		"docs/capture.md": {
 			"s": "fresh",
 			"g": 0,
@@ -3001,13 +2938,6 @@
 			"f": 0,
 			"n": 0
 		},
-		"docs/contributing/discussion-seeds.md": {
-			"s": "unverifiable",
-			"g": 0,
-			"d": "2026-08-21",
-			"f": 0,
-			"n": 0
-		},
 		"docs/cookbook/asset-quality-gate.md": {
 			"s": "fresh",
 			"g": 0,
@@ -3098,6 +3028,13 @@
 			"d": "2026-08-16",
 			"f": 0,
 			"n": 6
+		},
+		"docs/financial-controls.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-25",
+			"f": 0,
+			"n": 13
 		},
 		"docs/ghost-copy.md": {
 			"s": "fresh",
@@ -3260,6 +3197,27 @@
 			"f": 0,
 			"n": 1
 		},
+		"docs/money-feed.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-25",
+			"f": 0,
+			"n": 7
+		},
+		"docs/money-map.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-25",
+			"f": 0,
+			"n": 16
+		},
+		"docs/monitor.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-25",
+			"f": 0,
+			"n": 12
+		},
 		"docs/motion-swap.md": {
 			"s": "fresh",
 			"g": 0,
@@ -3322,6 +3280,20 @@
 			"d": "2026-08-25",
 			"f": 0,
 			"n": 4
+		},
+		"docs/open-source-ecosystem.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-26",
+			"f": 0,
+			"n": 2
+		},
+		"docs/openai-community-3d-studio-post.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-26",
+			"f": 0,
+			"n": 7
 		},
 		"docs/ops/economy-wallet-rotation.md": {
 			"s": "fresh",
@@ -3662,7 +3634,7 @@
 		"docs/start-here.md": {
 			"s": "fresh",
 			"g": 0,
-			"d": "2026-08-25",
+			"d": "2026-08-26",
 			"f": 0,
 			"n": 3
 		},
@@ -3686,13 +3658,6 @@
 			"d": "2026-08-25",
 			"f": 0,
 			"n": 3
-		},
-		"docs/three-thesis.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-08-25",
-			"f": 0,
-			"n": 29
 		},
 		"docs/token-gated-3d-embeds.md": {
 			"s": "fresh",
@@ -3939,6 +3904,20 @@
 			"f": 0,
 			"n": 0
 		},
+		"docs/ux-flows/11-account-dashboard.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-25",
+			"f": 0,
+			"n": 39
+		},
+		"docs/viability.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-25",
+			"f": 0,
+			"n": 6
+		},
 		"docs/walk-leaderboard.md": {
 			"s": "fresh",
 			"g": 0,
@@ -4001,13 +3980,6 @@
 			"d": "2026-08-20",
 			"f": 0,
 			"n": 0
-		},
-		"docs/x-posts/github-100-stars.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-08-25",
-			"f": 0,
-			"n": 2
 		},
 		"docs/x-posts/ibm-skillsbuild-x-post.md": {
 			"s": "unverifiable",
@@ -4072,6 +4044,13 @@
 			"f": 0,
 			"n": 0
 		},
+		"docs/x-posts/open-source-ecosystem.md": {
+			"s": "unverifiable",
+			"g": 0,
+			"d": "2026-08-26",
+			"f": 0,
+			"n": 0
+		},
 		"docs/x-posts/oracle-trading-mcp-x-post.md": {
 			"s": "fresh",
 			"g": 0,
@@ -4121,12 +4100,54 @@
 			"f": 0,
 			"n": 0
 		},
+		"docs/x402-dev-tools.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-25",
+			"f": 0,
+			"n": 10
+		},
+		"docs/x402-distribution.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-25",
+			"f": 0,
+			"n": 16
+		},
+		"docs/x402-endpoints.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-25",
+			"f": 0,
+			"n": 106
+		},
+		"docs/x402-ring-economy.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-25",
+			"f": 0,
+			"n": 48
+		},
 		"docs/x402-solana-july-roundup-response.md": {
 			"s": "unverifiable",
 			"g": 0,
 			"d": "2026-08-20",
 			"f": 0,
 			"n": 0
+		},
+		"docs/x402-studio.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-25",
+			"f": 0,
+			"n": 5
+		},
+		"docs/x402.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-08-25",
+			"f": 0,
+			"n": 2
 		},
 		"docs/zauth/database.md": {
 			"s": "unverifiable",
@@ -4162,13 +4183,6 @@
 			"d": "2026-06-10",
 			"f": 0,
 			"n": 0
-		},
-		"STRUCTURE.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-08-25",
-			"f": 0,
-			"n": 1137
 		}
 	}
 }

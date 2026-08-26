@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-26T00:41:49.918Z",
+	"generated_at": "2026-08-26T19:17:01.581Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -153,6 +153,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-25",
+			"type": "update",
+			"title": "GitHub Discussions is open: say hello, show what you built, or steer the roadmap",
+			"summary": "The Discussions tab on the three.ws repo now has three real threads instead of an empty room. Welcome is where to introduce yourself and find every other channel we are in. Show and tell is for avatars, embeds, and experiments you built, with the good ones reposted with credit. Roadmap is an open thread on what to build next and what is in your way, and anything concrete raised there becomes a tracked issue linked back to the thread. The repo also passed 100 stars this week, which was the last thing standing between three.ws and GitHub's Open Source Friday livestream.",
+			"link": "/docs/community",
+			"tags": [
+				"feature",
+				"docs"
 			]
 		},
 		{

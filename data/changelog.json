@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-25",
+			"title": "GitHub Discussions is open: say hello, show what you built, or steer the roadmap",
+			"summary": "The Discussions tab on the three.ws repo now has three real threads instead of an empty room. Welcome is where to introduce yourself and find every other channel we are in. Show and tell is for avatars, embeds, and experiments you built, with the good ones reposted with credit. Roadmap is an open thread on what to build next and what is in your way, and anything concrete raised there becomes a tracked issue linked back to the thread. The repo also passed 100 stars this week, which was the last thing standing between three.ws and GitHub's Open Source Friday livestream.",
+			"tags": [
+				"feature",
+				"docs"
+			],
+			"link": "/docs/community"
+		},
+		{
+			"date": "2026-08-25",
 			"title": "The market tools now clear the WCAG AA contrast floor",
 			"summary": "An accessibility sweep of the compare page found four places where text did not have enough contrast against what sat behind it. The selected time-range button, the rank badge, and the heatmap's view switcher all put white on a blue too light to read; they now use a blue and a text colour chosen to clear the standard in both the light and the dark theme. The comparison table's green was too pale on a white background, the coin column headings were painted in their chart-line colour (worst of all for the amber series), and the Getting started pill's counter borrowed a colour meant for light backgrounds while sitting on a dark one. Every one of those is fixed, and the column headings keep their tie to the chart through a coloured rule under each symbol.",
 			"tags": [

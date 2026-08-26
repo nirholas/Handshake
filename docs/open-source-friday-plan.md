@@ -10,16 +10,16 @@
 
 ## 1. Where we stand against the criteria
 
-Verified 2026-08-21 against `gh repo view nirholas/three.ws` and the working tree, not from memory.
+Verified against `gh repo view nirholas/three.ws` and the working tree, not from memory. Last re-checked 2026-08-25.
 
 | Criterion | Status | Evidence |
 |---|---|---|
 | Code of conduct | PASS | [CODE_OF_CONDUCT.md](../CODE_OF_CONDUCT.md), Contributor Covenant, detected by GitHub |
 | Contributing guide | PASS | [CONTRIBUTING.md](../CONTRIBUTING.md), now opening with the community table and the 15-minute onboarding path |
 | License | **PASS** | Relicensed to Apache-2.0 on 2026-08-21. Verbatim [LICENSE](../LICENSE), a [NOTICE](../NOTICE) covering vendored and derived code, and all 102 first-party manifests set to `"license": "Apache-2.0"`. |
-| **100+ stars, hosted on GitHub** | **FAIL by 2** | 98 stargazers, 24 forks |
+| 100+ stars, hosted on GitHub | **PASS** | 104 stargazers, 26 forks as of 2026-08-25 (98 on 2026-08-21; the relicense closed the gap without a campaign) |
 | Open to outside contributions | PASS | 11 contributors, issue and PR templates, CODEOWNERS, and six curated open issues (see below) |
-| *Preferred:* community channel | **PASS** | Telegram community, X community, IBM Community group, GitHub Discussions, release channel. All five documented in [docs/community.md](community.md) and wired into the README, CONTRIBUTING, and the new-issue chooser. |
+| *Preferred:* community channel | **PASS** | Telegram community, X community, IBM Community group, GitHub Discussions (seeded 2026-08-25: [Welcome #122](https://github.com/nirholas/three.ws/discussions/122), [Show and tell #123](https://github.com/nirholas/three.ws/discussions/123), [Roadmap #124](https://github.com/nirholas/three.ws/discussions/124)), release channel. All five documented in [docs/community.md](community.md) and wired into the README, CONTRIBUTING, and the new-issue chooser. |
 | *Preferred:* triage team / contributor onboarding | **PASS** | [docs/triage.md](triage.md) (labels, claiming, published response targets) and [docs/first-contribution.md](first-contribution.md) (clone to PR in 15 minutes, worked example) |
 | Guest available Friday 1:00 PM ET | Owner to confirm | Pre-recording is allowed as an exception |
 | Booked at least two weeks ahead | Plan for it | Earliest realistic slot: **2026-09-11** |
@@ -39,9 +39,9 @@ What landed:
 
 Apache-2.0 over MIT for two reasons: CONTRIBUTING.md already promised it to every contributor to date, so this makes that promise true rather than changing the terms under them; and its explicit patent grant matters with on-chain contracts in the repo.
 
-### Clearing the two-star gap
+### The star gap: closed
 
-98 to 100 is noise, not a campaign. It closes on its own once the relicense is announced, because a license change is a real postable event and its audience is exactly the audience that stars repos. Do not buy, trade, or ask for stars: reviewers look at the repo, and a suspicious star curve is worse than being two short. If it is still under 100 at submit time, submit anyway and mention the relicense in Additional Information.
+On 2026-08-21 the repo sat at 98. The call was to treat that as noise rather than run a campaign, because a suspicious star curve reads worse to a reviewer than being two short. Four days and one relicense later it is 104, with no asks made. Every hard criterion in the table above now holds.
 
 ---
 
@@ -64,7 +64,7 @@ Apache-2.0 over MIT for two reasons: CONTRIBUTING.md already promised it to ever
 
 ### Still to do
 
-1. **Post the three seeded Discussions.** Written and ready in [contributing/discussion-seeds.md](contributing/discussion-seeds.md): a Welcome post (pin it), a Show and tell thread, and an open Roadmap thread. The workspace token has `issues: write` but not `discussions: write`, so this is 60 seconds of paste by a human. Zero threads is what reads as nobody being home; three real ones fixes it.
+1. **Pin the Welcome discussion.** The three seed threads are live ([#122](https://github.com/nirholas/three.ws/discussions/122), [#123](https://github.com/nirholas/three.ws/discussions/123), [#124](https://github.com/nirholas/three.ws/discussions/124)). GitHub exposes no API for pinning, so #122 needs one click from the Discussions tab.
 2. **The README front door is better than its file size suggests.** 8,402 of its 11,372 lines are one inline STL model that GitHub renders as an interactive 3D viewer, so a reader on github.com sees a widget, not 8,000 lines of vertex data. The prose is about 3,000 lines. The first screen now carries the license and good-first-issue badges and a contributor CTA alongside the user one. What is still worth doing is a 10-second demo GIF above the fold, since the current hero is a video attachment that does not autoplay in every context.
 3. **Record a 45-second demo clip** (prompt to rigged avatar to embedded on a page). Reusable: README, the issue body, and every amplification post. Per section 5, video and images are what move GitHub's own numbers.
 
@@ -166,13 +166,14 @@ Every one carries an image or video. No plain-text posts in this sequence. Cross
 
 ## 6. Timeline
 
-Every hard criterion is met. What remains is polish and scheduling.
+Every hard criterion is met, stars included. What remains is one click, polish, and scheduling.
 
 | Date | Milestone | Owner |
 |---|---|---|
 | 2026-08-21 | Community docs, triage, onboarding, six curated issues, labels, MMD rig support | Done |
 | 2026-08-21 | Relicensed to Apache-2.0: LICENSE, NOTICE, 102 manifests, README, changelog | Done |
-| 2026-08-22 | Post the three seeded Discussions, pin the Welcome post | Owner, 60 seconds |
+| 2026-08-25 | Three seed Discussions posted (#122, #123, #124) | Done |
+| 2026-08-25 | Pin #122 | Owner, one click |
 | 2026-08-26 | README front door trimmed, demo clip recorded | Agent |
 | 2026-08-27 | **Issue submitted**, reply posted to Andrea's X thread | Owner |
 | 2026-08-28+ | Booking link arrives on approval, book the slot | Owner |
