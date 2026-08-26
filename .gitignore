@@ -499,3 +499,6 @@ marketing/*/kit/*.zip
 marketing/*/kit/images/
 marketing/*/kit/*.png
 marketing/*/kit/*.html
+
+# NotebookLM corpus bundles (regenerate with scripts/build-notebook-corpus.mjs), never commit
+exports/notebook-corpus/
