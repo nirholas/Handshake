@@ -82,6 +82,8 @@ The form (`osf-guest-invite.yml`) auto-titles as `Open Source Friday - [PROJECT 
 **GitHub Handle:** `@nirholas`
 
 **Tell us about yourself:**
+> Double bachelors in Marketing and Computer Science from UW. Provided security research services to Apple, AT&T, Microsoft, Google, the U.S. Department of Defense, and the State of California government. Prior to three.ws I worked in full-stack development for some of the largest companies and brands. I am also an author and contributor at Entrepreneur Magazine.
+>
 > I build three.ws, an open source framework for 3D AI agents on the web. Background is full-stack and real-time graphics; most of my work now sits at the seam between Three.js rendering and agent runtimes, which is a place where very little tooling existed until recently. I maintain the project day to day: triage, reviews, releases, and docs.
 
 **Project Name:** `three.ws`
