@@ -3507,6 +3507,12 @@ URL: https://three.ws/docs/hold-to-access
 
 three.ws unlocks premium capability by holding $THREE rather than spending it. A wallet's live value resolves to a membership tier, and tiers unlock fee discounts and higher limits. How tiers are computed and refreshed.
 
+### Docs · The Open-Source Ecosystem
+
+URL: https://three.ws/docs/open-source-ecosystem
+
+100 stars on GitHub, and the complete map of the three.ws open-source developer ecosystem: every npm package, MCP server, contract, worker, skill, spec, integration, and registry where the code lives, with the number behind each.
+
 ### Docs · The First 19 Weeks
 
 URL: https://three.ws/docs/the-first-19-weeks

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-25T18:41:10.090Z",
+	"generated_at": "2026-08-26T00:41:49.918Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -32,6 +32,16 @@
 			"title": "Docs · The First 19 Weeks",
 			"summary": "The founding three.ws roundup: a week-by-week record of everything shipped from the first commit on 2026-04-14 through 2026-08-25, with every launch, partnership, announcement, and where $THREE fits.",
 			"link": "/docs/the-first-19-weeks",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-25",
+			"type": "launch",
+			"title": "Docs · The Open-Source Ecosystem",
+			"summary": "100 stars on GitHub, and the complete map of the three.ws open-source developer ecosystem: every npm package, MCP server, contract, worker, skill, spec, integration, and registry where the code lives, with the number behind each.",
+			"link": "/docs/open-source-ecosystem",
 			"tags": [
 				"launch"
 			]
@@ -153,6 +163,16 @@
 			"link": "/forge",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-25",
+			"type": "update",
+			"title": "The complete open-source ecosystem, written down in one place",
+			"summary": "To mark 100 GitHub stars, a new doc maps everything three.ws publishes as open source: 101 npm packages, 72 MCP servers in the official registry, the x402 stack and its 4,519 endpoints, the contracts on 12 chains, the 33 workers, 60 agent skills, 31 specs, every editor and store integration, and what is not published yet.",
+			"link": "/docs/open-source-ecosystem",
+			"tags": [
+				"docs"
 			]
 		},
 		{

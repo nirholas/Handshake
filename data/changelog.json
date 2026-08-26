@@ -24942,6 +24942,15 @@
 				"improvement"
 			],
 			"link": "/dashboard/billing"
+		},
+		{
+			"date": "2026-08-25",
+			"title": "The complete open-source ecosystem, written down in one place",
+			"summary": "To mark 100 GitHub stars, a new doc maps everything three.ws publishes as open source: 101 npm packages, 72 MCP servers in the official registry, the x402 stack and its 4,519 endpoints, the contracts on 12 chains, the 33 workers, 60 agent skills, 31 specs, every editor and store integration, and what is not published yet.",
+			"tags": [
+				"docs"
+			],
+			"link": "/docs/open-source-ecosystem"
 		}
 	]
 }

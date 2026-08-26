@@ -31,6 +31,14 @@
 			<description>The founding three.ws roundup: a week-by-week record of everything shipped from the first commit on 2026-04-14 through 2026-08-25, with every launch, partnership, announcement, and where $THREE fits.</description>
 		</item>
 		<item>
+			<title>Docs · The Open-Source Ecosystem</title>
+			<link>https://three.ws/docs/open-source-ecosystem</link>
+			<guid isPermaLink="false">2026-08-25:Docs · The Open-Source Ecosystem</guid>
+			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>100 stars on GitHub, and the complete map of the three.ws open-source developer ecosystem: every npm package, MCP server, contract, worker, skill, spec, integration, and registry where the code lives, with the number behind each.</description>
+		</item>
+		<item>
 			<title>Billing &amp; Passes names your creators, keeps its retry buttons live, and the dashboard fits a phone screen</title>
 			<link>https://three.ws/dashboard/billing</link>
 			<guid isPermaLink="false">2026-08-25:Billing &amp; Passes names your creators, keeps its retry buttons live, and the dashboard fits a phone screen</guid>
@@ -117,6 +125,14 @@
 			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Every text-to-3D generation starts by painting a concept image, and that step tried its image providers one after another with no overall time limit. When the first provider stalled, a request could sit for two and a half minutes before answering, and anything with a shorter patience (ChatGPT, agent clients) simply saw nothing. The painter now works to one shared budget: a slow provider hands off with real time left for the next one, and if the whole chain runs out you get a quick, honest retry-in-a-moment answer instead of a hang. Image-to-3D was never affected.</description>
+		</item>
+		<item>
+			<title>The complete open-source ecosystem, written down in one place</title>
+			<link>https://three.ws/docs/open-source-ecosystem</link>
+			<guid isPermaLink="false">2026-08-25:The complete open-source ecosystem, written down in one place</guid>
+			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>To mark 100 GitHub stars, a new doc maps everything three.ws publishes as open source: 101 npm packages, 72 MCP servers in the official registry, the x402 stack and its 4,519 endpoints, the contracts on 12 chains, the 33 workers, 60 agent skills, 31 specs, every editor and store integration, and what is not published yet.</description>
 		</item>
 		<item>
 			<title>The Data API console keeps working when one of its services is down, and its corpus numbers are now live</title>
