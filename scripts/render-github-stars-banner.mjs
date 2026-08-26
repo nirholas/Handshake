@@ -99,16 +99,74 @@ function page({ width, height, square, surfaces = null, stats = STATS, title = '
 </div></body></html>`;
 }
 
+// The people variant pulls the real contributor avatars from GitHub at render
+// time. The "claude" login is a misattributed noreply email, not a person.
+async function fetchContributors() {
+  const res = await fetch('https://api.github.com/repos/nirholas/three.ws/contributors?per_page=100', { headers: { 'User-Agent': 'three.ws-banner' } });
+  if (!res.ok) throw new Error(`GitHub contributors API ${res.status}`);
+  const list = (await res.json()).filter((c) => c.type === 'User' && c.login !== 'claude');
+  return Promise.all(list.map(async (c) => {
+    const img = await fetch(`${c.avatar_url}&s=200`);
+    if (!img.ok) throw new Error(`avatar ${c.login} ${img.status}`);
+    return { login: c.login, b64: Buffer.from(await img.arrayBuffer()).toString('base64') };
+  }));
+}
+
+const COMMANDS = [
+  ['npm i @three-ws/sdk', 'an avatar with a wallet, in any app'],
+  ['/plugin marketplace add nirholas/three.ws', 'four Claude Code plugins'],
+  ['npx -y @three-ws/x402-mcp', 'pay any x402 endpoint from an agent'],
+];
+
+function peoplePage({ width, height, people }) {
+  return `<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { width:${width}px; height:${height}px; background:#000; color:#fff; font-family:Inter, system-ui, sans-serif; overflow:hidden; }
+  .wrap { position:relative; width:100%; height:100%; padding:48px 64px; display:flex; flex-direction:column; justify-content:space-between; }
+  .glow { position:absolute; inset:0; background: radial-gradient(ellipse 55% 45% at 78% 18%, rgba(140,120,255,.22), transparent 60%), radial-gradient(ellipse 45% 40% at 12% 88%, rgba(255,150,120,.14), transparent 60%); }
+  .grid { position:absolute; inset:0; background-image:linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px); background-size:48px 48px; mask-image:radial-gradient(ellipse 70% 70% at 50% 50%, #000 30%, transparent 100%); }
+  .top { position:relative; display:flex; align-items:center; justify-content:space-between; }
+  .lockup { height:84px; }
+  .pill { display:inline-flex; align-items:center; gap:10px; padding:10px 18px; border:1px solid rgba(255,255,255,.18); border-radius:999px; font-size:20px; font-weight:500; color:rgba(255,255,255,.85); background:rgba(255,255,255,.04); }
+  .hero { position:relative; display:flex; align-items:center; gap:32px; }
+  .star { width:108px; height:108px; flex:none; filter:drop-shadow(0 0 40px rgba(255,220,120,.45)); }
+  h1 { font-size:100px; font-weight:800; line-height:.92; letter-spacing:-.045em; background:linear-gradient(120deg,#fff 0%,#dcd6ff 45%,#ffd9c7 100%); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .hero p { margin-top:10px; font-size:26px; font-weight:500; color:rgba(255,255,255,.7); }
+  .people { position:relative; }
+  .people h2, .try h2 { font-size:14px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.45); margin-bottom:12px; }
+  .faces { display:flex; gap:14px; flex-wrap:wrap; }
+  .face { display:flex; flex-direction:column; align-items:center; gap:8px; width:120px; }
+  .face img { width:88px; height:88px; border-radius:50%; border:2px solid rgba(255,255,255,.22); box-shadow:0 0 0 4px rgba(0,0,0,.6); object-fit:cover; }
+  .face span { font-family:'JetBrains Mono', monospace; font-size:14px; color:rgba(255,255,255,.7); max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .try { position:relative; display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  .cmd { padding:14px 18px; border:1px solid rgba(255,255,255,.12); border-radius:16px; background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); }
+  .cmd code { display:block; font-family:'JetBrains Mono', monospace; font-size:19px; color:#fff; white-space:nowrap; }
+  .cmd small { display:block; margin-top:6px; font-size:15px; color:rgba(255,255,255,.55); }
+  .foot { position:relative; display:flex; justify-content:space-between; font-size:18px; color:rgba(255,255,255,.55); font-family:'JetBrains Mono', monospace; }
+  .foot b { color:rgba(255,255,255,.85); font-weight:500; }
+</style></head><body><div class="wrap"><div class="glow"></div><div class="grid"></div>
+  <div class="top"><img class="lockup" src="data:image/png;base64,${lockup}" alt="three.ws"><div class="pill">github.com/nirholas/three.ws</div></div>
+  <div class="hero"><svg class="star" viewBox="0 0 24 24"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff6d6"/><stop offset=".55" stop-color="#ffd166"/><stop offset="1" stop-color="#ff9f7a"/></linearGradient></defs><path fill="url(#g)" d="M12 1.8l3.1 6.5 7.1.9-5.2 4.9 1.3 7.1L12 17.8l-6.3 3.4L7 14.1 1.8 9.2l7.1-.9z"/></svg>
+    <div><h1>100 stars. Thank you.</h1><p>Every star, fork, issue, and pull request came from someone who chose to build in the open with us.</p></div></div>
+  <div class="people"><h2>Built by</h2><div class="faces">${people.map((p) => `<div class="face"><img src="data:image/jpeg;base64,${p.b64}" alt="${p.login}"><span>${p.login}</span></div>`).join('')}<div class="face"><div style="width:88px;height:88px;border-radius:50%;border:2px dashed rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font-size:40px;color:rgba(255,255,255,.6)">+</div><span>you</span></div></div></div>
+  <div class="try"><h2 style="grid-column:1/-1;margin-bottom:0">Try it in 60 seconds</h2>${COMMANDS.map(([c, d]) => `<div class="cmd"><code>${c}</code><small>${d}</small></div>`).join('')}</div>
+  <div class="foot"><span>Star the repo: <b>github.com/nirholas/three.ws</b></span><span><b>three.ws</b> · Apache-2.0 · $THREE</span></div>
+</div></body></html>`;
+}
+
 const browser = await chromium.launch();
 try {
   for (const v of [
     { file: 'github-100-stars-x.png', width: 1600, height: 900, square: false },
     { file: 'github-100-stars-square.png', width: 1080, height: 1080, square: true },
     { file: 'github-100-stars-ecosystem.png', width: 1600, height: 900, square: false, stats: ECOSYSTEM, surfaces: SURFACES, title: 'One repo, everywhere', tagline: 'Where the three.ws open-source ecosystem stems beyond github.com/nirholas/three.ws.' },
+    { file: 'github-100-stars-people.png', width: 1600, height: 900, people: true },
   ]) {
     const ctx = await browser.newContext({ viewport: { width: v.width, height: v.height }, deviceScaleFactor: 1.5 });
     const p = await ctx.newPage();
-    await p.setContent(page(v), { waitUntil: 'networkidle' });
+    await p.setContent(v.people ? peoplePage({ ...v, people: await fetchContributors() }) : page(v), { waitUntil: 'networkidle' });
     await p.evaluate(() => document.fonts.ready);
     await p.screenshot({ path: resolve(outDir, v.file), type: 'png' });
     await ctx.close();

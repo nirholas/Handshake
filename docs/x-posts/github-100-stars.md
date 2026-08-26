@@ -1,6 +1,6 @@
 # X posts: 100 stars on GitHub
 
-Post copy for the 100-star milestone on X. Posting is owner-gated; these are ready-to-paste drafts. Attach [media/github-100-stars-x.png](../media/github-100-stars-x.png) (2400x1350, black background, three.ws lockup, twelve stat tiles) to the main post, and [media/github-100-stars-ecosystem.png](../media/github-100-stars-ecosystem.png) (same size, the footprint beyond the repo) to reply 3. [media/github-100-stars-square.png](../media/github-100-stars-square.png) (1620x1620) is the square cut for Telegram, Instagram, and LinkedIn.
+Post copy for the 100-star milestone on X. Posting is owner-gated; these are ready-to-paste drafts. Attach [media/github-100-stars-people.png](../media/github-100-stars-people.png) (2400x1350, real contributor avatars pulled from GitHub at render time, plus three install commands) to the Version A main post, [media/github-100-stars-x.png](../media/github-100-stars-x.png) (twelve stat tiles) to the Version B main post, and [media/github-100-stars-ecosystem.png](../media/github-100-stars-ecosystem.png) (same size, the footprint beyond the repo) to reply 3. [media/github-100-stars-square.png](../media/github-100-stars-square.png) (1620x1620) is the square cut for Telegram, Instagram, and LinkedIn.
 
 Regenerate both images with `node scripts/render-github-stars-banner.mjs` after updating the `STATS` and `SURFACES` arrays in the script. The canonical link and number table both announcements (the post and the X article) must cite is [open-source-footprint.md](../open-source-footprint.md); keep the copy below in sync with it.
 
@@ -29,7 +29,92 @@ Regenerate both images with `node scripts/render-github-stars-banner.mjs` after 
 | Blender addon, ComfyUI nodes, VS Code and Open VSX extension, Chrome extension, 2 Claude Code plugins | `integrations/blender`, `integrations/comfyui`, `packages/vscode-x402`, `extensions/`, `marketplace/plugins` |
 | 3 GitHub Pages apps | `nirholas.github.io/3D-AR-Studio`, `/metaplex-agent-mcp`, `/onchain-agent-wallets` |
 
-## Main post (@trythreews)
+## Which version to post
+
+The First 19 Weeks article post (August 25) already led with the headline numbers (9,508 commits, 21 contributors, 101 npm packages, 72 MCP servers, 4,519 x402 endpoints, 110,416 settlements). Do not repeat them six hours later. Post **Version A**, which is about the people and what you can do with the repo in a minute, and keeps the numbers out of the main post entirely. **Version B** is the numbers-first thread, kept here for a channel that has not seen the article post yet (LinkedIn, a newsletter, the IBM Community group).
+
+---
+
+## Version A: people and actions (post this on X)
+
+### Main post (@trythreews)
+
+Attach: media/github-100-stars-people.png
+
+```
+100 stars on GitHub. Thank you.
+
+Every one of them came from someone who chose to build in the open with us: nine contributors with commits on main, forks, issues, pull requests, and a lot of people who just read the code and told us where it was wrong.
+
+three.ws is Apache-2.0, end to end. The 3D avatars, the wallets, the x402 rails, the MCP servers, the GPU workers. Here is how to use it in the next 60 seconds.
+```
+
+### Reply 1 (60 seconds)
+
+```
+Three ways in, no account needed:
+
+npm i @three-ws/sdk
+An avatar with a wallet, in any app.
+
+/plugin marketplace add nirholas/three.ws
+Four Claude Code plugins: core, developer, pump.fun, 3D.
+
+npx -y @three-ws/x402-mcp
+Let your agent pay any x402 endpoint from its own wallet.
+```
+
+### Reply 2 (open work, for newcomers)
+
+```
+Want your name on the next 100? Five issues are tagged good first issue right now, all scoped to one file and one test:
+
+Map Apple ARKit skeletons so their avatars animate
+Map Kinect bone names
+Map Reallusion CC3/CC4 spines
+Bake a real "bow" clip
+Guard the rig docs against drift
+
+github.com/nirholas/three.ws/issues
+```
+
+### Reply 3 (the places that noticed)
+
+Attach: media/github-100-stars-ecosystem.png
+
+```
+Open source is why the rest happened.
+
+IBM built a three.ws User Group on IBM Community and hosted our first in-world meetup. AWS published three of our articles on Builder Center. NVIDIA took us into Inception. OpenAI put 3D Studio in the GPT Store. Alibaba Cloud listed us. Google Cloud backed the GPUs.
+
+None of that starts with a pitch deck. It starts with a repo anyone can read.
+```
+
+### Reply 4 (the ask)
+
+```
+Star it if it helped you. Fork it if you want to change it. Open a PR if you did.
+
+github.com/nirholas/three.ws
+
+$THREE is the coin in the middle of it.
+```
+
+### Telegram (@three_ws)
+
+Attach: media/github-100-stars-square.png
+
+```
+100 stars on GitHub. Thank you to everyone who starred, forked, filed, and shipped. Everything three.ws runs is open source under Apache-2.0, and five good-first-issues are open right now for anyone who wants their name in the next hundred.
+
+github.com/nirholas/three.ws
+```
+
+---
+
+## Version B: numbers first (for channels that have not seen the article post)
+
+### Main post
 
 Attach: media/github-100-stars-x.png
 
@@ -48,7 +133,7 @@ Thank you to everyone who starred, forked, opened an issue, or shipped a PR. Eve
 github.com/nirholas/three.ws
 ```
 
-## Reply 1 (the scale of it)
+### Reply 1 (the scale of it)
 
 ```
 100 stars understates it. In 19 weeks this one repo became:
@@ -64,7 +149,7 @@ ERC-8004 identity, reputation, and validation registries at one address on 12 EV
 All Apache-2.0. All in one place.
 ```
 
-## Reply 2 (the machine economy, in numbers)
+### Reply 2 (the machine economy, in numbers)
 
 ```
 The x402 side of the repo is not a demo:
@@ -77,7 +162,7 @@ The x402 side of the repo is not a demo:
 Every line of that stack is public. Fork it and run your own.
 ```
 
-## Reply 3 (beyond this one repo)
+### Reply 3 (beyond this one repo)
 
 Attach: media/github-100-stars-ecosystem.png
 
@@ -93,7 +178,7 @@ A Hugging Face org with a Space and a model repo. A Blender addon. ComfyUI nodes
 All Apache-2.0.
 ```
 
-## Reply 4 (the partners and platforms)
+### Reply 4 (the partners and platforms)
 
 ```
 And the places that noticed:
@@ -107,7 +192,7 @@ Alibaba Cloud Marketplace: live listing. Google Cloud for Web3 Startups: member.
 Every link, with the number behind it: three.ws/docs/open-source-footprint
 ```
 
-## Reply 5 (the ask)
+### Reply 5 (the ask)
 
 ```
 If you build AI agents, 3D, or on-chain payments, there is real open work waiting for you: the contributor guide hands out scoped issues, every package has a README, and every PR gets reviewed.
@@ -118,7 +203,7 @@ github.com/nirholas/three.ws
 $THREE is the coin in the middle of it.
 ```
 
-## Telegram (@three_ws)
+### Telegram (@three_ws)
 
 Attach: media/github-100-stars-square.png
 
