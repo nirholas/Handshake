@@ -45,6 +45,7 @@ explicit approval). Each file states what it's for and what has already been ver
 
 | File | What it covers |
 | --- | --- |
+| [`osf-issue-reply.md`](osf-issue-reply.md) | The reply to Andrea Griffiths closing the loop on the Open Source Friday request (open-source-friday#254), in a Premium-length and a 280-character form |
 | [`event-x-posts.md`](event-x-posts.md) | Event campaign copy, split by account (`@trythreews` institutional, `@nichxbt` personal) |
 | [`x-meetup-posts.md`](x-meetup-posts.md) | The in-platform community meetup announcement |
 | [`ibm-skillsbuild-x-post.md`](ibm-skillsbuild-x-post.md) | The IBM SkillsBuild badge |

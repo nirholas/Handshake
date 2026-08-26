@@ -5,6 +5,7 @@
 **Program page:** https://github.com/githubevents/open-source-friday
 **Criteria:** [admin/project-criteria.md](https://github.com/githubevents/open-source-friday/blob/main/admin/project-criteria.md)
 **Request form:** https://github.com/githubevents/open-source-friday/issues/new?template=osf-guest-invite.yml
+**Our request:** https://github.com/githubevents/open-source-friday/issues/254 (opened 2026-08-25)
 
 ---
 
@@ -70,7 +71,7 @@ On 2026-08-21 the repo sat at 98. The call was to treat that as noise rather tha
 
 ---
 
-## 3. The issue: exact field-by-field content
+## 3. The issue: exact field-by-field content (submitted as [#254](https://github.com/githubevents/open-source-friday/issues/254))
 
 The form (`osf-guest-invite.yml`) auto-titles as `Open Source Friday - [PROJECT NAME] - [MM-DD-YYYY]`, labels `open-source-friday, open-source, twitch, pending`, and assigns @AndreaGriffiths11, @KevinCrosby, @marlenezw, @madebygps. A date is not required to submit: check "Not yet" and they send the booking link on approval.
 
@@ -175,7 +176,8 @@ Every hard criterion is met, stars included. What remains is one click, polish, 
 | 2026-08-25 | Three seed Discussions posted (#122, #123, #124) | Done |
 | 2026-08-25 | Pin #122 | Owner, one click |
 | 2026-08-26 | README front door trimmed, demo clip recorded | Agent |
-| 2026-08-27 | **Issue submitted**, reply posted to Andrea's X thread | Owner |
+| 2026-08-25 | **Issue submitted**: [open-source-friday#254](https://github.com/githubevents/open-source-friday/issues/254) | Done |
+| 2026-08-25 | Reply to Andrea's X thread with the issue link (draft: [x-posts/osf-issue-reply.md](x-posts/osf-issue-reply.md)) | Owner |
 | 2026-08-28+ | Booking link arrives on approval, book the slot | Owner |
 | ~2026-09-11 | Stream (earliest date satisfying the two-week rule) | Owner |
 
