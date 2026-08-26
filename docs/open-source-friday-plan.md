@@ -96,7 +96,7 @@ The form (`osf-guest-invite.yml`) auto-titles as `Open Source Friday - [PROJECT 
 
 **Twitter URL:** `@nichxbt`
 
-**LinkedIn URL:** owner to supply, or leave blank
+**LinkedIn URL:** `https://linkedin.com/in/nixholas`
 
 **Topic and Additional Information:** the live issue is the record: [open-source-friday#254](https://github.com/githubevents/open-source-friday/issues/254). It carries a named topic ("Give your AI a body. Any rig, any page, one tag."), the rig problem in one sentence, a six-part outline in their Streaming Guide's order with the live-PR segment as the centrepiece, verified project facts with today's date on them, six links a reviewer can check in a minute, and logistics that pre-answer their prep checklist. Re-benchmarked against every approved request of the last year in section 4b.
 
@@ -137,7 +137,7 @@ Read every approved or scheduled issue on [githubevents/open-source-friday](http
 
 **What happens after approval, so nothing surprises us:** a bot posts the booking link; after booking, a bot posts the scheduled notice ("be ready with your demo, our audience strongly prefers technical demos"), generates a promo thumbnail as a workflow artifact, and opens a task list for the hosts (social card, StreamYard scheduling, social posts). Guests have had to chase the prep doc and the StreamYard link in the week of the stream ([#215](https://github.com/githubevents/open-source-friday/issues/215)), so plan to ask on the issue the Monday before if nothing has arrived. The host's on-air questions are posted to the issue the day before; answer them in the thread so the host has them.
 
-**What we cannot match and should not try:** LinkedIn is in every approved request and ours is blank; the owner can add it with one edit. Press coverage helped cq; we have none to cite and did not invent any.
+**What we cannot match and should not try:** press coverage helped cq; we have none to cite and did not invent any. LinkedIn, present on every approved request, is on ours as of 2026-08-25.
 
 ---
 
