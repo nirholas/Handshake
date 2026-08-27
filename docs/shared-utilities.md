@@ -93,6 +93,41 @@ timeAgo('2026-07-29T10:00:00Z'); // "3m ago"
 timeAgo(1783670400);             // unix seconds, handled
 ```
 
+### Browser-side fallbacks: never depend on one host
+
+Four helpers exist so no page hinges on a single third-party host. Reach for
+them instead of writing a CDN URL, a gateway URL, or a price feed inline.
+
+```js
+import { fetchFirst, fetchFirstOrNull } from './shared/failover-fetch.js';
+import { getSolPriceUsd, getTokenPriceUsd, getBtcPriceUsd } from './shared/usd-price.js';
+import { ensureModelViewer, ensureModelViewerOrFallback } from './shared/model-viewer-loader.js';
+import { loadVision, visionWasmBase, modelUrl } from './shared/mediapipe-assets.js';
+import { uriCandidates } from './ipfs.js';
+import { readProvider } from './erc8004/chain-meta.js';
+```
+
+| Helper | Covers | Behaviour when a host is down |
+|---|---|---|
+| `fetchFirst(providers, opts)` | any ordered provider list | 4s per attempt, 60s cooldown on a failing provider, throws only when all miss |
+| `getSolPriceUsd` / `getTokenPriceUsd(mint)` / `getBtcPriceUsd` | USD quotes | 4 feeds each; returns the last real price, or null. Never a hardcoded rate |
+| `ensureModelViewerOrFallback(root)` | the `<model-viewer>` element | 3 CDNs, then every viewer in `root` becomes its poster image or a caption |
+| `loadVision()` / `visionWasmBase()` / `modelUrl(path)` | MediaPipe | module is bundled; runtime prefers `public/vendor/mediapipe`, then 2 CDNs |
+| `uriCandidates(uri)` | IPFS / Arweave content | one URL per gateway, including for a URL whose gateway was already chosen |
+| `readProvider(chainId)` | browser EVM reads | ethers `FallbackProvider` over every keyless node in `CHAIN_META`, quorum 1 |
+
+Two rules that are easy to get wrong:
+
+- **Resolve asset paths against `import.meta.url`, not the site root.** Inside a
+  third-party `<agent-3d>` embed a `/vendor/...` path resolves against the
+  *embedding* page and 404s. `new URL('../../vendor/mediapipe', import.meta.url)`
+  points at whichever origin served the module, which is what you want.
+- **A file under `public/` that is not a Vite input cannot import from `src/`.**
+  It ships as a raw copy, so the `/src/*` reference 404s in production
+  (`public/forever.js` keeps its feed list inline for exactly this reason).
+  Either register the page as a Rollup input in `vite.config.js` or stay
+  self-contained.
+
 ---
 
 ## Backend
