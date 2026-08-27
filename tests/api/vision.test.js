@@ -5,6 +5,7 @@
 // consumer's DEGRADED path (vision unavailable / error must never hard-fail).
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { clearProviderCooldown } from '../../api/_lib/provider-health.js';
 
 // Capture recordEvent so we can assert spend tracking without a DB.
 const usageState = { events: [] };
@@ -63,8 +64,24 @@ function httpErr(status, body = 'err') {
 	return new Response(body, { status });
 }
 
-beforeEach(() => {
+// Every lane key describeImage can cool, so a test never inherits another's bench.
+const VISION_LANE_KEYS = [
+	'vision:nvidia:nvidia/nemotron-nano-12b-v2-vl',
+	'vision:nvidia:meta/llama-3.2-11b-vision-instruct',
+	'vision:vertex-gemini:gemini-2.5-flash',
+	'vision:openai:gpt-5.4-nano',
+];
+async function clearVisionCooldowns() {
+	await Promise.all(VISION_LANE_KEYS.map((k) => clearProviderCooldown(k)));
+}
+
+beforeEach(async () => {
 	usageState.events = [];
+	// Lane cooldowns are process-wide and outlive a single test, exactly as they
+	// do across requests in production. Clear them so each case asserts the
+	// chain's ORDER from a clean slate rather than inheriting the bench a
+	// previous case's failing lane earned.
+	await clearVisionCooldowns();
 	process.env.NVIDIA_API_KEY = 'nvapi-test';
 	delete process.env.OPENAI_API_KEY;
 	delete process.env.GOOGLE_CLOUD_PROJECT;
