@@ -43,14 +43,23 @@
 			var text = document.getElementById('status-text');
 			var retry = document.getElementById('retry');
 			function reload() { location.reload(); }
+			// This page is served by the service worker when a navigation fails.
+			// navigator.onLine can still read true (captive portal, server down),
+			// so reloading on load would loop. Only the online transition and the
+			// button trigger a reload; a probe confirms the origin answers first.
 			function paint() {
 				var on = navigator.onLine;
 				dot.className = 'dot' + (on ? ' online' : '');
-				text.textContent = on ? 'Back online, reloading' : 'Waiting for a connection';
-				if (on) setTimeout(reload, 400);
+				text.textContent = on ? 'Connected, but three.ws did not answer' : 'Waiting for a connection';
 			}
-			retry.addEventListener('click', reload);
-			window.addEventListener('online', paint);
+			function probeThenReload() {
+				text.textContent = 'Checking';
+				fetch('/manifest.webmanifest', { cache: 'no-store', mode: 'same-origin' })
+					.then(function (r) { if (r.ok) reload(); else paint(); })
+					.catch(paint);
+			}
+			retry.addEventListener('click', probeThenReload);
+			window.addEventListener('online', function () { paint(); setTimeout(probeThenReload, 600); });
 			window.addEventListener('offline', paint);
 			paint();
 		})();

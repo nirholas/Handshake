@@ -6,10 +6,22 @@
 // shows what is theirs: their agents, and whether the wallet holds the Seeker
 // Genesis Token (verified through /api/seeker/verify, a read-only check).
 
-import '../solana-mobile/src/index.js';
 import { isSolanaMobileTwa, isSolanaMobileDevice } from '../solana-mobile/src/seeker-detect.js';
 import { isUserRejection } from '../solana-mobile/src/mwa-errors.js';
-import { SolanaAdapter } from './onchain/adapters/solana.js';
+
+// The wallet stack (Mobile Wallet Adapter + @solana/web3.js) is ~700 KB. It
+// is only needed to sign in, so the home screen loads without it: inside the
+// TWA the MWA boot is started immediately (it resumes a remembered session
+// silently), everywhere else the stack loads on the first tap of Sign in.
+const walletBoot = (typeof window !== 'undefined' && isSolanaMobileTwa())
+	? import('../solana-mobile/src/index.js')
+	: null;
+
+async function loadAdapter() {
+	if (walletBoot) await walletBoot;
+	const { SolanaAdapter } = await import('./onchain/adapters/solana.js');
+	return new SolanaAdapter();
+}
 
 const $ = (id) => document.getElementById(id);
 
@@ -85,7 +97,7 @@ async function signIn() {
 	ui.signInLabel.textContent = 'Waiting for Seed Vault';
 	ui.heroCta.disabled = true;
 	try {
-		const adapter = new SolanaAdapter();
+		const adapter = await loadAdapter();
 		if (!adapter.isAvailable()) {
 			toast(onSeeker()
 				? 'Seed Vault did not respond. Open the Seed Vault wallet once, then try again.'

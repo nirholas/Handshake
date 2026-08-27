@@ -5067,6 +5067,10 @@
 			"dest": "/avatar-studio.html"
 		},
 		{
+			"src": "/create/share",
+			"dest": "/api/create-share"
+		},
+		{
 			"src": "/seeker",
 			"dest": "/seeker.html"
 		},

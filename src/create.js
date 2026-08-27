@@ -475,6 +475,14 @@ async function ingestSharedFile() {
 		showStatus("We couldn't read the shared file. Try again from the app you shared it from.", 'error');
 		return;
 	}
+	if (intent === 'nosw') {
+		// The share reached the server instead of the service worker: the app
+		// had not finished installing its worker yet (first launch), so the
+		// file could not be handed over. One visit fixes it.
+		clearSharedIntent();
+		showStatus('three.ws just finished setting up. Share the file again and it will land here.', 'error');
+		return;
+	}
 	if (intent === 'glb') {
 		clearSharedIntent();
 		let files = [];
