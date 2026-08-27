@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-27",
+			"title": "Every tap target on the marketplace and your agents pages now fits a thumb",
+			"summary": "On phones, the hearts, tags, author links and the write-with-agent button on marketplace cards were as small as 18 pixels tall, so browsing on a Seeker or any Android phone meant a lot of missed taps. All of them, plus the walk-companion controls and footer links, now sit inside 44 pixel tap areas without changing how the cards look. Measured on a real phone profile: the marketplace went from 1,352 undersized controls to zero.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/marketplace"
+		},
+		{
+			"date": "2026-08-27",
 			"title": "A real home screen for the Seeker app, and a Seeker verified badge",
 			"summary": "The three.ws app on Solana Seeker now opens on its own home screen at /seeker: one tap signs you in with Seed Vault, your agents are right there, and Create, Discover, and Chat are a thumb away. Seeker owners can prove it by checking for the Seeker Genesis Token in their wallet (a read, never a transaction); once verified, every agent they own shows a Seeker verified badge on its page.",
 			"tags": [

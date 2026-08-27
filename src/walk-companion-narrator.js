@@ -310,7 +310,10 @@ function syncToggleVisual(btn, mode) {
 	btn.setAttribute('aria-pressed', mode === 'off' ? 'false' : 'true');
 	btn.textContent = MODE_GLYPH[mode];
 	const active = mode !== 'off';
-	btn.style.background = active ? 'rgba(122,162,255,.45)' : 'rgba(12,14,20,.55)';
+	// Longhand on purpose: the `background` shorthand resets background-clip,
+	// which the coarse-pointer rule uses to keep the 22px disc inside a 44px
+	// tap box.
+	btn.style.backgroundColor = active ? 'rgba(122,162,255,.45)' : 'rgba(12,14,20,.55)';
 	btn.style.color = active ? '#fff' : 'rgba(255,255,255,.5)';
 }
 
