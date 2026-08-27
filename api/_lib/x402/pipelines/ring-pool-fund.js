@@ -25,7 +25,7 @@ import {
 	PublicKey, Keypair, SystemProgram, TransactionMessage, VersionedTransaction, ComputeBudgetProgram,
 } from '@solana/web3.js';
 import {
-	getAssociatedTokenAddressSync, getMint,
+	getAssociatedTokenAddressSync,
 	createTransferCheckedInstruction, createAssociatedTokenAccountIdempotentInstruction,
 	TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
@@ -34,6 +34,7 @@ import { sql as defaultSql } from '../../db.js';
 import { env } from '../../env.js';
 import { logger } from '../../usage.js';
 import { solanaConnection } from '../../solana/connection.js';
+import { blockhashKey, getRecentBlockhashInfo, mintDecimals } from '../../solana/read-guards.js';
 import { USDC_MINT } from '../pay.js';
 import { ringPoolEnabled, listEnabledPubkeys, recoverPoolKeypair, poolCount } from '../pool.js';
 import { ringAllowedAddresses } from '../ring-allowlist.js';
@@ -131,7 +132,11 @@ async function readBalances(conn, pubkeys, mint) {
 }
 
 async function sendIxs(conn, feePayer, signers, instructions) {
-	const { blockhash } = await conn.getLatestBlockhash('confirmed');
+	// A cron tick that cannot read a blockhash used to throw straight through the
+	// handler into an ops alert. The guard answers from a hash still inside its
+	// validity window when the chain is unreadable, and raises a typed
+	// rpc_unavailable only when there is genuinely nothing to sign with.
+	const { blockhash } = await getRecentBlockhashInfo(conn, blockhashKey({ url: env.SOLANA_RPC_URL }));
 	const msg = new TransactionMessage({ payerKey: feePayer.publicKey, recentBlockhash: blockhash, instructions }).compileToV0Message();
 	const vtx = new VersionedTransaction(msg);
 	vtx.sign(signers);
@@ -176,7 +181,9 @@ export async function run(ctx = {}) {
 
 	const conn = ctx.conn || solanaConnection({ url: env.SOLANA_RPC_URL, commitment: 'confirmed' });
 	const mint = new PublicKey(USDC_MINT);
-	const mintInfo = await getMint(conn, mint);
+	// USDC's decimals are a constant, so the ring never spends an RPC call, or a
+	// tick, on re-reading them.
+	const decimals = await mintDecimals(conn, mint);
 	const treasuryAta = getAssociatedTokenAddressSync(mint, treasury.publicKey, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
 
 	const pubkeys = await listEnabledPubkeys(sql);
@@ -221,7 +228,7 @@ export async function run(ctx = {}) {
 		for (const w of chunk) {
 			const ata = ataByPubkey.get(w.pk);
 			ixs.push(createAssociatedTokenAccountIdempotentInstruction(solFunder.publicKey, ata, new PublicKey(w.pk), mint, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID));
-			ixs.push(createTransferCheckedInstruction(treasuryAta, mint, ata, treasury.publicKey, BigInt(w.add), mintInfo.decimals, [], TOKEN_PROGRAM_ID));
+			ixs.push(createTransferCheckedInstruction(treasuryAta, mint, ata, treasury.publicKey, BigInt(w.add), decimals, [], TOKEN_PROGRAM_ID));
 		}
 		const signers = solFunderIsTreasury ? [treasury] : [solFunder, treasury];
 		const res = await sendIxs(conn, solFunder, signers, ixs);
@@ -243,7 +250,7 @@ export async function run(ctx = {}) {
 		const ixs = [
 			ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 5 }),
 			createAssociatedTokenAccountIdempotentInstruction(solFunder.publicKey, treasuryAta, treasury.publicKey, mint, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID),
-			createTransferCheckedInstruction(fromAta, mint, treasuryAta, kp.publicKey, w.take, mintInfo.decimals, [], TOKEN_PROGRAM_ID),
+			createTransferCheckedInstruction(fromAta, mint, treasuryAta, kp.publicKey, w.take, decimals, [], TOKEN_PROGRAM_ID),
 		];
 		const signers = solFunder.publicKey.equals(kp.publicKey) ? [kp] : [solFunder, kp];
 		const res = await sendIxs(conn, solFunder, signers, ixs);

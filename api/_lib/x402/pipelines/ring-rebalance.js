@@ -24,7 +24,7 @@ import {
 	PublicKey, Keypair, TransactionMessage, VersionedTransaction, ComputeBudgetProgram,
 } from '@solana/web3.js';
 import {
-	getAssociatedTokenAddressSync, getAccount, getMint,
+	getAssociatedTokenAddressSync, getAccount,
 	createTransferCheckedInstruction, createAssociatedTokenAccountIdempotentInstruction,
 	TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
@@ -33,6 +33,7 @@ import { sql as defaultSql } from '../../db.js';
 import { env } from '../../env.js';
 import { logger } from '../../usage.js';
 import { solanaConnection } from '../../solana/connection.js';
+import { blockhashKey, getRecentBlockhashInfo, mintDecimals } from '../../solana/read-guards.js';
 import { loadSeedKeypair, USDC_MINT } from '../pay.js';
 import { ECONOMY_MASTER_ADDRESS } from '../../economy-master.js';
 
@@ -205,8 +206,12 @@ export async function run(ctx = {}) {
 	const split = splitSweep(sweep, MASTER_REVSHARE_BPS, payerFloatDeficit(payerUsdc));
 	let masterCut = split.masterCut;
 	const payerCut = split.payerCut;
-	const mintInfo = await getMint(conn, mint);
-	const { blockhash } = await conn.getLatestBlockhash('confirmed');
+	const decimals = await mintDecimals(conn, mint);
+	// A cron tick that cannot read a blockhash used to throw straight through the
+	// handler into an ops alert. The guard answers from a hash still inside its
+	// validity window when the chain is unreadable, and raises a typed
+	// rpc_unavailable only when there is genuinely nothing to sign with.
+	const { blockhash } = await getRecentBlockhashInfo(conn, blockhashKey({ url: env.SOLANA_RPC_URL }));
 
 	const ixs = [
 		ComputeBudgetProgram.setComputeUnitLimit({ units: 90_000 }),
@@ -219,7 +224,7 @@ export async function run(ctx = {}) {
 	}
 	if (payerCut > 0n) {
 		ixs.push(createTransferCheckedInstruction(
-			treasuryAta, mint, payerAta, treasury.publicKey, payerCut, mintInfo.decimals, [], TOKEN_PROGRAM_ID,
+			treasuryAta, mint, payerAta, treasury.publicKey, payerCut, decimals, [], TOKEN_PROGRAM_ID,
 		));
 	}
 	let masterPub = null;
@@ -230,7 +235,7 @@ export async function run(ctx = {}) {
 			feePayerKp.publicKey, masterAta, masterPub, mint, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
 		));
 		ixs.push(createTransferCheckedInstruction(
-			treasuryAta, mint, masterAta, treasury.publicKey, masterCut, mintInfo.decimals, [], TOKEN_PROGRAM_ID,
+			treasuryAta, mint, masterAta, treasury.publicKey, masterCut, decimals, [], TOKEN_PROGRAM_ID,
 		));
 	} else {
 		masterCut = 0n;
@@ -314,11 +319,15 @@ export async function run(ctx = {}) {
  * `from` is the token-transfer authority (must sign); `feePayer` pays the SOL fee
  * (may be the same as `from`). Returns { ok, signature } | { ok:false, err }.
  */
-async function transferUsdcBetween({ conn, mint, mintInfo, fromKp, toPub, amountAtomic, feePayerKp }) {
+async function transferUsdcBetween({ conn, mint, decimals, fromKp, toPub, amountAtomic, feePayerKp }) {
 	const fromAta = getAssociatedTokenAddressSync(mint, fromKp.publicKey, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
 	const toAta = getAssociatedTokenAddressSync(mint, toPub, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
 	const toAtaInfo = await conn.getAccountInfo(toAta).catch(() => null);
-	const { blockhash } = await conn.getLatestBlockhash('confirmed');
+	// A cron tick that cannot read a blockhash used to throw straight through the
+	// handler into an ops alert. The guard answers from a hash still inside its
+	// validity window when the chain is unreadable, and raises a typed
+	// rpc_unavailable only when there is genuinely nothing to sign with.
+	const { blockhash } = await getRecentBlockhashInfo(conn, blockhashKey({ url: env.SOLANA_RPC_URL }));
 
 	const ixs = [
 		ComputeBudgetProgram.setComputeUnitLimit({ units: 60_000 }),
@@ -330,7 +339,7 @@ async function transferUsdcBetween({ conn, mint, mintInfo, fromKp, toPub, amount
 		));
 	}
 	ixs.push(createTransferCheckedInstruction(
-		fromAta, mint, toAta, fromKp.publicKey, BigInt(amountAtomic), mintInfo.decimals, [], TOKEN_PROGRAM_ID,
+		fromAta, mint, toAta, fromKp.publicKey, BigInt(amountAtomic), decimals, [], TOKEN_PROGRAM_ID,
 	));
 
 	const msg = new TransactionMessage({
@@ -396,7 +405,7 @@ export async function floatTopUp(ctx = {}) {
 
 	const conn = ctx.conn || solanaConnection({ url: env.SOLANA_RPC_URL, commitment: 'confirmed' });
 	const mint = new PublicKey(USDC_MINT);
-	const mintInfo = await getMint(conn, mint);
+	const decimals = await mintDecimals(conn, mint);
 	const band = floatBand();
 
 	// Sponsor pays fees when configured so SOL burn stays on one wallet.
@@ -441,7 +450,7 @@ export async function floatTopUp(ctx = {}) {
 			fromWallet = treasury.publicKey.toBase58();
 			toWallet = member.address;
 			res = await transferUsdcBetween({
-				conn, mint, mintInfo, fromKp: treasury, toPub: agentPub,
+				conn, mint, decimals, fromKp: treasury, toPub: agentPub,
 				amountAtomic: plan.amountAtomic, feePayerKp: sponsorKp || treasury,
 			});
 		} else {
@@ -455,7 +464,7 @@ export async function floatTopUp(ctx = {}) {
 			fromWallet = member.address;
 			toWallet = treasury.publicKey.toBase58();
 			res = await transferUsdcBetween({
-				conn, mint, mintInfo, fromKp: agentKp, toPub: treasury.publicKey,
+				conn, mint, decimals, fromKp: agentKp, toPub: treasury.publicKey,
 				amountAtomic: plan.amountAtomic, feePayerKp: sponsorKp || agentKp,
 			});
 		}

@@ -54,6 +54,7 @@ import { sql as defaultSql } from '../../db.js';
 import { env } from '../../env.js';
 import { logger } from '../../usage.js';
 import { solanaConnection } from '../../solana/connection.js';
+import { blockhashKey, getRecentBlockhashInfo } from '../../solana/read-guards.js';
 import { sendOpsAlert } from '../../alerts.js';
 import { loadSeedKeypair, USDC_MINT, SIGNATURE_FEE_LAMPORTS, RING_CU_LIMIT, ringPriorityMicrolamports } from '../pay.js';
 
@@ -275,7 +276,11 @@ async function confirmSignature(conn, signature, timeoutMs = 30_000) {
 async function closeEmptyAta(conn, { ownerKp, pubkey }) {
 	const account = new PublicKey(pubkey);
 	const owner = ownerKp.publicKey;
-	const { blockhash } = await conn.getLatestBlockhash('confirmed');
+	// A cron tick that cannot read a blockhash used to throw straight through the
+	// handler into an ops alert. The guard answers from a hash still inside its
+	// validity window when the chain is unreadable, and raises a typed
+	// rpc_unavailable only when there is genuinely nothing to sign with.
+	const { blockhash } = await getRecentBlockhashInfo(conn, blockhashKey({ url: env.SOLANA_RPC_URL }));
 	const ixs = [
 		ComputeBudgetProgram.setComputeUnitLimit({ units: RING_CU_LIMIT }),
 		ComputeBudgetProgram.setComputeUnitPrice({ microLamports: ringPriorityMicrolamports(0) }),
