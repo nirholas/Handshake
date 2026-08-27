@@ -19,6 +19,8 @@
 
 import { wrap, cors, method, json, error, readJson, rateLimited, setRateLimitHeaders } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
+import { lastGood } from '../_lib/upstream-fetch.js';
+import { withRetry } from '../_lib/resilience.js';
 
 const DEXSCREENER_SEARCH = 'https://api.dexscreener.com/latest/dex/search';
 
@@ -70,12 +72,26 @@ export function symbolSimilarity(a, b) {
 // a non-OK upstream so the caller can degrade that symbol gracefully.
 async function searchTokens(symbol, chain, fetchImpl) {
 	const url = `${DEXSCREENER_SEARCH}?q=${encodeURIComponent(symbol)}`;
-	const r = await fetchImpl(url, {
-		headers: { Accept: 'application/json' },
-		signal: AbortSignal.timeout(6000),
-	});
-	if (!r.ok) throw new Error(`dexscreener search ${r.status}`);
-	const data = await r.json();
+	// One collision source, and a bare 429 from it turned every answer on the
+	// page into "could not verify". A retry absorbs the common transient, and a
+	// last-known-good result for this exact symbol absorbs the rest: a
+	// ten-minute-old collision list is still an honest answer about whether a
+	// ticker is taken, and far more useful than a row of question marks.
+	const { value: data, stale } = await lastGood(
+		`symbol-search:${chain || 'any'}:${symbol.toLowerCase()}`,
+		() => withRetry(
+			async () => {
+				const r = await fetchImpl(url, {
+					headers: { Accept: 'application/json' },
+					signal: AbortSignal.timeout(6000),
+				});
+				if (!r.ok) throw Object.assign(new Error(`dexscreener search ${r.status}`), { status: r.status });
+				return r.json();
+			},
+			{ attempts: 2, label: 'dexscreener:search' },
+		),
+		{ maxAgeMs: 10 * 60_000 },
+	);
 	const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
 	const byMint = new Map();
 	for (const p of pairs) {
@@ -94,14 +110,15 @@ async function searchTokens(symbol, chain, fetchImpl) {
 			});
 		}
 	}
-	return [...byMint.values()];
+	return { tokens: [...byMint.values()], stale };
 }
 
 // Classify one candidate symbol against the live registry.
 async function checkOne(symbol, chain, fetchImpl) {
 	let candidates;
+	let stale = false;
 	try {
-		candidates = await searchTokens(symbol, chain, fetchImpl);
+		({ tokens: candidates, stale } = await searchTokens(symbol, chain, fetchImpl));
 	} catch {
 		// Registry source down for this symbol: degrade, never fail the batch.
 		// `available: null` signals "could not verify", distinct from a hard
@@ -134,9 +151,30 @@ async function checkOne(symbol, chain, fetchImpl) {
 	}
 	fuzzy.sort((a, b) => b.similarity - a.similarity);
 
+	// A stale answer is NOT a verdict here, and this is the one surface where
+	// that distinction has teeth: someone reads `available: true` and launches a
+	// ticker on it. A collision registered in the last few minutes is exactly
+	// what a cached answer cannot see, so availability stays null when the live
+	// source could not be reached. The remembered collisions still ship, as
+	// context rather than as a claim: "last time we could check, these existed"
+	// is worth showing, and it is a strictly better degraded state than the
+	// empty one this used to fall back to.
+	if (stale) {
+		return {
+			symbol,
+			available: null,
+			exactCollisions: exact.slice(0, MAX_COLLISIONS),
+			fuzzyCollisions: fuzzy.slice(0, MAX_COLLISIONS),
+			degraded: true,
+			stale: true,
+			note: 'collision source unavailable: showing the last known collisions, availability could not be verified live',
+		};
+	}
+
 	return {
 		symbol,
 		available: exact.length === 0,
+		stale: false,
 		exactCollisions: exact.slice(0, MAX_COLLISIONS),
 		fuzzyCollisions: fuzzy.slice(0, MAX_COLLISIONS),
 	};

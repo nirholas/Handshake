@@ -30,6 +30,7 @@
 // outage → 503.
 
 import { fetchGlobalMarket } from '../market-fallbacks.js';
+import { fetchUpstreamJson, lastGood } from '../upstream-fetch.js';
 import { isPlausibleCoinId } from '../coingecko.js';
 import { buildCoinDetail, MINT_RE } from '../../coin/detail.js';
 import { buildExchanges } from '../../coin/exchanges.js';
@@ -56,17 +57,29 @@ const finite = (n) => (Number.isFinite(n) ? n : null);
 const TTL_MS = 600_000;
 const _full = new Map(); // key → { value, expiresAt }
 
+// The positive-only TTL map above has no answer for a failed load, so a
+// DeFiLlama blip threw straight through every paid Market Data datapoint and the
+// free /api/x402/d enumerator with it. The retry absorbs the transient and the
+// last-known-good tier absorbs the rest: these feeds move slowly enough that an
+// hour-old protocol list is a good answer, and infinitely better than a 503 on
+// an endpoint a buyer has paid to call.
 async function fullSet(key, url, slim) {
 	const now = Date.now();
 	const hit = _full.get(key);
 	if (hit && hit.expiresAt > now) return hit.value;
-	const resp = await fetch(url, {
-		headers: { accept: 'application/json', 'user-agent': 'three.ws/1.0' },
-		signal: AbortSignal.timeout(15_000),
-	});
-	if (!resp.ok) throw new Error(`${key} upstream ${resp.status}`);
-	const value = slim(await resp.json());
-	_full.set(key, { value, expiresAt: now + TTL_MS });
+	const { value } = await lastGood(
+		`market-datapoints:${key}`,
+		async () => {
+			const raw = await fetchUpstreamJson(
+				url,
+				{ headers: { accept: 'application/json', 'user-agent': 'three.ws/1.0' } },
+				{ name: `market-datapoints:${key}`, timeoutMs: 15_000, attempts: 2 },
+			);
+			return slim(raw);
+		},
+		{ maxAgeMs: 60 * 60_000 },
+	);
+	_full.set(key, { value, expiresAt: Date.now() + TTL_MS });
 	return value;
 }
 

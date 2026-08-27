@@ -23,6 +23,7 @@ import { getBalances, heliusHealth } from '../_lib/balances.js';
 import { isValidAddressForChain } from '../_lib/splits.js';
 import { solChange24hPct } from '../_lib/sol-price.js';
 import { cacheWrap } from '../_lib/cache.js';
+import { fetchUpstreamJson, lastGood } from '../_lib/upstream-fetch.js';
 import { buildOverview } from '../_lib/portfolio-overview.js';
 
 const CHAIN_ALIASES = {
@@ -76,13 +77,23 @@ async function fetchDexScreenerChanges(tokens) {
 	for (let i = 0; i < mints.length; i += CHANGE_BATCH) {
 		batches.push(mints.slice(i, i + CHANGE_BATCH));
 	}
-	const settled = await Promise.allSettled(batches.map(async (batch) => {
-		const r = await fetch(`${DEXSCREENER_TOKENS}${batch.map(encodeURIComponent).join(',')}`, {
-			headers: { Accept: 'application/json' },
-			signal: AbortSignal.timeout(6000),
-		});
-		if (!r.ok) return [];
-		const data = await r.json().catch(() => null);
+	// Each batch retries and keeps its own last-known-good pair list. Before
+	// this, allSettled swallowed a failure into an empty array and every holding
+	// in that batch silently rendered a blank 24h change, indistinguishable from
+	// a token that genuinely has none. A short-lived remembered answer keeps the
+	// column populated through a throttle, and `staleBatches` records when it did.
+	let staleBatches = 0;
+	const settled = await Promise.allSettled(batches.map(async (batch, i) => {
+		const { value: data, stale } = await lastGood(
+			`portfolio-change:${batch.join(',')}`,
+			() => fetchUpstreamJson(
+				`${DEXSCREENER_TOKENS}${batch.map(encodeURIComponent).join(',')}`,
+				{ headers: { Accept: 'application/json' } },
+				{ name: `dexscreener:portfolio:${i}`, timeoutMs: 6_000, attempts: 2 },
+			),
+			{ maxAgeMs: 10 * 60_000 },
+		);
+		if (stale) staleBatches++;
 		return Array.isArray(data?.pairs) ? data.pairs : [];
 	}));
 

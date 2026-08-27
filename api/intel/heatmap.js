@@ -34,6 +34,7 @@
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { normalizeGatewayURL } from '../../src/ipfs.js';
+import { fetchUpstreamJson, lastGood } from '../_lib/upstream-fetch.js';
 
 // The one and only coin three.ws promotes. Always present, always featured.
 const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
@@ -54,15 +55,26 @@ export function _resetHeatmapCache() {
 	_cache = { value: null, storedAt: 0, expiresAt: 0, limit: 0 };
 }
 
-async function fetchJson(url, init) {
-	let res;
+// Every upstream read on this page goes through here, so this is where the
+// page's resilience lives. Two things it did not have: a retry (a single 429
+// from pump.fun or DexScreener blanked the field) and a memory (the in-process
+// stale tier at STALE_MAX_MS is per-instance, so a cold instance during an
+// outage had nothing at all and 502'd a public page). Both are added here
+// rather than at each call site, so the trending feed and the per-batch market
+// reads inherit them together.
+async function fetchJson(url, init, lastGoodKey = null) {
+	const load = () => fetchUpstreamJson(
+		String(url),
+		{ ...init },
+		{ name: 'intel-heatmap', timeoutMs: UPSTREAM_TIMEOUT_MS, attempts: 2 },
+	);
 	try {
-		res = await fetch(url, { ...init, signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS) });
+		if (!lastGoodKey) return await load();
+		const { value } = await lastGood(lastGoodKey, load, { maxAgeMs: 15 * 60_000 });
+		return value;
 	} catch {
 		return null;
 	}
-	if (!res.ok) return null;
-	return res.json().catch(() => null);
 }
 
 // Trending mints from the public pump.fun feed (no key). Returns mint pubkeys
@@ -74,7 +86,7 @@ async function fetchTrendingMints(limit) {
 	url.searchParams.set('sort', 'market_cap');
 	url.searchParams.set('order', 'DESC');
 	url.searchParams.set('includeNsfw', 'false');
-	const body = await fetchJson(url, { headers: { accept: 'application/json' } });
+	const body = await fetchJson(url, { headers: { accept: 'application/json' } }, `heatmap:trending:${limit}`);
 	const coins = Array.isArray(body) ? body : Array.isArray(body?.coins) ? body.coins : null;
 	if (!Array.isArray(coins)) return [];
 	return coins
@@ -89,7 +101,7 @@ async function fetchDexBatch(mints) {
 	for (let i = 0; i < mints.length; i += DS_BATCH) {
 		const chunk = mints.slice(i, i + DS_BATCH);
 		const url = `${DEXSCREENER_BASE}/latest/dex/tokens/${chunk.join(',')}`;
-		const data = await fetchJson(url, { headers: { accept: 'application/json' } });
+		const data = await fetchJson(url, { headers: { accept: 'application/json' } }, `heatmap:dex:${chunk.join(',')}`);
 		const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
 		for (const p of pairs) {
 			const mint = p?.baseToken?.address;
@@ -118,9 +130,13 @@ async function fetchDexBatch(mints) {
 // pump.fun metadata for a single mint (name/symbol/image): fills gaps when a
 // token has no Dexscreener pair yet, and supplies $THREE's canonical metadata.
 async function fetchPumpMeta(mint) {
-	const data = await fetchJson(`${PUMP_FRONTEND_BASE}/coins/${mint}`, {
-		headers: { accept: 'application/json' },
-	});
+	// Token metadata barely changes, so a remembered copy is as good as a live
+	// one and keeps names and images on the tiles through a pump.fun throttle.
+	const data = await fetchJson(
+		`${PUMP_FRONTEND_BASE}/coins/${mint}`,
+		{ headers: { accept: 'application/json' } },
+		`heatmap:meta:${mint}`,
+	);
 	if (!data || data.error) return null;
 	return {
 		symbol: data.symbol || null,
