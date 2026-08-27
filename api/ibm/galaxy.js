@@ -33,6 +33,7 @@ import {
 	unit,
 	dot,
 } from '../_lib/embedding-math.js';
+import { rankLexically } from '../_lib/lexical-rank.js';
 import { createHash } from 'node:crypto';
 
 // Hard cap on agents in one galaxy — keeps embedding cost bounded and the scene
@@ -431,10 +432,39 @@ async function handleSearch(req, res) {
 	if (!ids.length) return json(res, 200, { results: [], query, model: cfg.embedModel });
 
 	const vectorMap = await readAgentVectors(ids, { model: cfg.embedModel });
-	const { vectors, model } = await watsonxEmbed(cfg, { inputs: [query] });
-	const qvec = vectors[0];
-	if (!qvec?.length)
-		return error(res, 502, 'embed_failed', 'watsonx returned no query embedding');
+	// No provider failover exists for this read and none would be correct: the
+	// stored agent vectors live in Granite's space, so a vector minted by another
+	// lane would be a different dimension in a different geometry. Degrade the
+	// METHOD instead, ranking the same corpus lexically and saying so, rather
+	// than answering a search with a 502.
+	let qvec = null;
+	let model = cfg.embedModel;
+	let embedError = null;
+	try {
+		const out = await watsonxEmbed(cfg, { inputs: [query] });
+		qvec = out.vectors?.[0]?.length ? out.vectors[0] : null;
+		model = out.model || model;
+		if (!qvec) embedError = 'the embedder returned no vector for the query';
+	} catch (err) {
+		embedError = err?.message || 'the embedder is unreachable';
+	}
+	if (!qvec) {
+		const byId = new Map(rows.map((a) => [a.id, a]));
+		const lexical = rankLexically(
+			query,
+			rows.map((a) => ({ id: a.id, text: agentEmbedText(a) || '' })),
+			{ limit: 16 },
+		);
+		return json(res, 200, {
+			query,
+			model,
+			count: lexical.length,
+			best: lexical[0] || null,
+			results: lexical.map((r) => ({ ...r, name: byId.get(r.id)?.name || null })),
+			ranking: 'lexical',
+			degraded: { reason: 'embedder_unavailable', detail: embedError, retryable: true },
+		});
+	}
 
 	const ranked = [];
 	for (const [id, vec] of vectorMap) {
@@ -450,6 +480,7 @@ async function handleSearch(req, res) {
 		count: ranked.length,
 		best: top[0] || null,
 		results: top,
+		ranking: 'semantic',
 	});
 }
 

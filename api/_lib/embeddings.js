@@ -31,6 +31,13 @@ const OPENAI_EMBED_URL = 'https://api.openai.com/v1/embeddings';
 // it; "global" does not for this model family, unlike the Gemini chat/image
 // models elsewhere in the codebase) — default to the region every other
 // GCP-hosted worker in this platform already runs in.
+import {
+	AUTH_COOLDOWN_SECONDS,
+	clearProviderCooldown,
+	markProviderCooldown,
+	providersInCooldown,
+} from './provider-health.js';
+
 function vertexEmbedUrl() {
 	const project = process.env.GOOGLE_CLOUD_PROJECT;
 	const location = process.env.GOOGLE_CLOUD_LOCATION_EMBED || 'us-central1';
@@ -161,6 +168,78 @@ export async function embedWith(tag, texts, inputType) {
 /** Convenience: embed corpus chunks at ingest time. */
 export function embedPassages(tag, texts) {
 	return embedWith(tag, texts, 'passage');
+}
+
+// ── Ingest-time provider walk ───────────────────────────────────────────────
+//
+// embedWith is deliberately strict: a stored vector space has ONE embedder, and
+// the three lanes have three different dimensions (NIM 1024, Vertex 768, OpenAI
+// 256), so answering a query against an existing space with another lane's
+// vectors would compare points in unrelated geometries. Nothing here weakens
+// that, and this must never be used to query an existing space.
+//
+// What was missing is the case where no space is fixed yet. At INGEST the caller
+// is free to choose any lane, but defaultIngestEmbedderTag() picked the first
+// CONFIGURED one and embedWith threw when that provider was down, so a single
+// NIM 429 failed the whole embed with Vertex and OpenAI configured and idle
+// (the /api/watsonx/embed 502s of 2026-08-27). This walks the preference order
+// instead and returns the tag that actually answered, so the caller records the
+// space it really got rather than the one it asked for.
+const EMBED_LANE_COOLDOWN_SECONDS = 45;
+const embedLaneKey = (tag) => `embed:${tag}`;
+
+/**
+ * Embed `texts` as passages with the first lane that answers, preferring
+ * `preferredTag` and then the standard free-first order.
+ *
+ * @param {string|null} preferredTag  tried first when configured
+ * @param {string[]} texts
+ * @returns {Promise<{ tag: string, info: object, vectors: Float64Array[] }>}
+ * @throws the last lane's error, or { code: 'no_embedder' } when none is configured
+ */
+export async function embedPassagesAny(preferredTag, texts) {
+	const resolved = resolveEmbedderTag(preferredTag);
+	const order = [
+		...(resolved && EMBEDDERS[resolved].configured() ? [resolved] : []),
+		...INGEST_PREFERENCE.filter((t) => t !== resolved && EMBEDDERS[t].configured()),
+	];
+	if (!order.length) {
+		throw Object.assign(new Error('no embedding provider is configured'), { code: 'no_embedder' });
+	}
+	if (!texts.length) return { tag: order[0], info: EMBEDDERS[order[0]], vectors: [] };
+
+	// A lane a recent request found throttled goes to the back rather than being
+	// dropped, so a chain whose lanes are all cooling still answers.
+	let lanes = order;
+	if (order.length > 1) {
+		const cooling = await providersInCooldown(order.map(embedLaneKey));
+		if (cooling.size) {
+			const hot = order.filter((t) => !cooling.has(embedLaneKey(t)));
+			if (hot.length) lanes = [...hot, ...order.filter((t) => cooling.has(embedLaneKey(t)))];
+		}
+	}
+
+	let lastErr;
+	for (const tag of lanes) {
+		try {
+			const vectors = await embedWith(tag, texts, 'passage');
+			void clearProviderCooldown(embedLaneKey(tag));
+			return { tag, info: EMBEDDERS[tag], vectors };
+		} catch (err) {
+			// A misconfigured or unknown lane is not a health signal, it simply
+			// cannot serve; only a real upstream failure earns a cooldown.
+			if (err?.code !== 'no_embedder' && err?.code !== 'unknown_embedder') {
+				const authFault = err?.status === 401 || err?.status === 403 || err?.status === 402;
+				void markProviderCooldown(
+					embedLaneKey(tag),
+					authFault ? AUTH_COOLDOWN_SECONDS : EMBED_LANE_COOLDOWN_SECONDS,
+					authFault ? 'auth' : 'health',
+				);
+			}
+			lastErr = err;
+		}
+	}
+	throw lastErr || Object.assign(new Error('every embedding lane failed'), { code: 'embedder_error' });
 }
 
 /** Convenience: embed one search string; resolves to a single Float64Array. */

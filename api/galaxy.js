@@ -25,7 +25,8 @@ import { clampInt } from './_lib/http-params.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { thumbnailUrl } from './_lib/r2.js';
 import { watsonxConfig, watsonxEmbed, watsonxChatComplete } from './_lib/watsonx.js';
-import { ensureAgentEmbeddings, readAgentVectors } from './_lib/agent-embeddings.js';
+import { agentEmbedText, ensureAgentEmbeddings, readAgentVectors } from './_lib/agent-embeddings.js';
+import { rankLexically } from './_lib/lexical-rank.js';
 import {
 	assembleGalaxy,
 	rankBySimilarity,
@@ -184,14 +185,49 @@ async function handleSearch(req, res, cfg) {
 
 	// Embed the query with the same Granite model the agents were embedded with, so
 	// query and agent vectors share a space.
-	const { vectors } = await watsonxEmbed(cfg, { inputs: [query], model: cfg.embedModel });
-	const queryVec = vectors[0];
-	if (!queryVec?.length) {
-		return error(res, 502, 'embed_failed', 'watsonx returned no embedding for the query');
+	//
+	// There is no provider failover to reach for here, and that is not an
+	// oversight: the stored agent vectors live in Granite's space, so a vector
+	// from another lane would be compared against them in a different geometry
+	// and different dimension. The fallback is a different METHOD instead. When
+	// the embedder cannot answer, the same corpus is ranked lexically and the
+	// response says so, because a search page that returns keyword matches is
+	// useful and a search page that returns 502 is not.
+	let queryVec = null;
+	let embedError = null;
+	try {
+		const { vectors } = await watsonxEmbed(cfg, { inputs: [query], model: cfg.embedModel });
+		queryVec = vectors[0]?.length ? vectors[0] : null;
+		if (!queryVec) embedError = 'the embedder returned no vector for the query';
+	} catch (err) {
+		embedError = err?.message || 'the embedder is unreachable';
 	}
 
 	const agents = await loadPublishedAgents(1200);
 	const byId = new Map(agents.map((a) => [a.id, a]));
+
+	if (!queryVec) {
+		const ranked = rankLexically(
+			query,
+			agents.map((a) => ({ id: a.id, text: agentEmbedText(a) || `${a.name || ''} ${a.description || ''}` })),
+			{ limit: topK },
+		);
+		const results = ranked
+			.map(({ id, score, lexicalScore: lex }) => {
+				const a = byId.get(id);
+				return a ? { id: a.id, name: a.name, description: a.description || '', thumbnail: a.thumbnail || null, score, lexicalScore: lex } : null;
+			})
+			.filter(Boolean);
+		return json(res, 200, {
+			query,
+			model: cfg.embedModel,
+			count: results.length,
+			results,
+			ranking: 'lexical',
+			degraded: { reason: 'embedder_unavailable', detail: embedError, retryable: true },
+		});
+	}
+
 	const vectorsById = await readAgentVectors([...byId.keys()], { model: cfg.embedModel });
 
 	const ranked = rankBySimilarity(queryVec, vectorsById, { topK });
@@ -209,7 +245,7 @@ async function handleSearch(req, res, cfg) {
 		})
 		.filter(Boolean);
 
-	return json(res, 200, { query, model: cfg.embedModel, count: results.length, results });
+	return json(res, 200, { query, model: cfg.embedModel, count: results.length, results, ranking: 'semantic' });
 }
 
 // ── Shared: published-agent population ──────────────────────────────────────

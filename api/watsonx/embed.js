@@ -30,7 +30,7 @@ import { createHash } from 'node:crypto';
 import { cors, method, readJson, error, json, wrap, rateLimited } from '../_lib/http.js';
 import { watsonxConfig, watsonxEmbed } from '../_lib/watsonx.js';
 import {
-	embedPassages,
+	embedPassagesAny,
 	embeddingsConfigured,
 	defaultIngestEmbedderTag,
 	embedderInfo,
@@ -161,24 +161,38 @@ export default wrap(async function handler(req, res) {
 	if (!result && fallbackReady) {
 		// These texts are peers laid out against each other (not query-vs-corpus),
 		// so they all embed as 'passage': one consistent space per response.
-		const fallbackTag = defaultIngestEmbedderTag();
-		const fallback = embedderInfo(fallbackTag);
+		//
+		// The lane is chosen by embedPassagesAny, which walks the whole free-first
+		// order rather than failing on whichever lane happened to be preferred: a
+		// single NIM throttle used to 502 this endpoint with Vertex and OpenAI
+		// configured and idle. Every text in one response embeds through one lane,
+		// so the space stays consistent, and the response reports the model and
+		// dimension that actually answered.
+		const preferredTag = defaultIngestEmbedderTag();
 		try {
-			result = await embedBatch(texts, fallback.model, async (inputs) => {
-				const vecs = await embedPassages(fallbackTag, inputs);
+			let servedModel = embedderInfo(preferredTag)?.model || preferredTag;
+			result = await embedBatch(texts, servedModel, async (inputs) => {
+				const out = await embedPassagesAny(preferredTag, inputs);
+				servedModel = out.info.model;
 				return {
-					vectors: vecs.map((v) => Array.from(v)),
-					dimensions: vecs[0]?.length ?? 0,
+					vectors: out.vectors.map((v) => Array.from(v)),
+					dimensions: out.vectors[0]?.length ?? out.info.dim,
 				};
 			});
+			// embedBatch keys its cache by the model it was handed, so re-stamp the
+			// result with the lane that answered rather than the one we hoped for.
+			if (result) result.model = servedModel;
 		} catch (e) {
 			lastError = e;
 		}
 	}
 
 	if (!result) {
-		// Both tiers failed at the network level. Surface the real upstream cause.
-		return error(res, 502, 'embed_error', lastError?.message || 'embeddings failed');
+		// Every tier failed at the network level. This is upstream weather, not a
+		// bad request, so it is a retryable 503 with the real cause rather than a
+		// 502 the caller reads as permanent.
+		res.setHeader('retry-after', '15');
+		return error(res, 503, 'embed_unavailable', lastError?.message || 'embeddings failed');
 	}
 
 	// json() defaults to no-store, which is correct here: this is a POST whose
