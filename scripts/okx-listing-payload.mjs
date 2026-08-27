@@ -77,6 +77,9 @@ for (const s of live) {
 			serviceDescription: s.serviceDescription ?? s.description ?? '',
 			serviceType: s.serviceType ?? 'A2MCP',
 			fee: String(s.fee ?? '0'),
+			// The CLI validates every A2MCP entry's shape, delete included, and
+			// refuses one without its endpoint (observed 2026-08-27).
+			...(s.endpoint ? { endpoint: s.endpoint } : {}),
 		});
 	}
 }
