@@ -31,9 +31,15 @@ async function fetchSolPrice() {
  * Calls onTrade for every buy/sell whose USD value is >= minUsd.
  * Returns after the subscription is set up; runs until signal fires.
  *
- * @param {{ mint: string, minUsd?: number, onTrade: Function, signal: AbortSignal }} opts
+ * When no SOL price can be had from any provider, a USD threshold cannot be
+ * evaluated at all. Faking one silently mis-sizes every alert, and skipping in
+ * silence is worse still: the caller cannot tell a blind feed from a quiet
+ * market. `onStatus` is told once, so a UI can say so instead of showing an
+ * empty list that looks like calm.
+ *
+ * @param {{ mint: string, minUsd?: number, onTrade: Function, onStatus?: Function, signal: AbortSignal }} opts
  */
-export async function watchWhaleTrades({ mint, minUsd = 5000, onTrade, signal }) {
+export async function watchWhaleTrades({ mint, minUsd = 5000, onTrade, onStatus, signal }) {
 	const [{ Connection, PublicKey }, { EventParser, BorshCoder }, { PUMP_PROGRAM_ID, pumpIdl }] =
 		await Promise.all([
 			import('@solana/web3.js'),
@@ -51,6 +57,12 @@ export async function watchWhaleTrades({ mint, minUsd = 5000, onTrade, signal })
 
 	const solPrice = await fetchSolPrice();
 	if (signal?.aborted) return;
+	if (!(solPrice > 0)) {
+		onStatus?.({
+			code: 'usd_price_unavailable',
+			message: 'SOL/USD is unavailable from every provider, so the USD alert threshold cannot be applied right now.',
+		});
+	}
 
 	let subId = null;
 

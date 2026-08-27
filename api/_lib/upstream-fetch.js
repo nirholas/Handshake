@@ -190,6 +190,13 @@ export async function fetchUpstream(url, init = {}, opts = {}) {
  */
 export async function fetchUpstreamJson(url, init = {}, opts = {}) {
 	const res = await fetchUpstream(url, { headers: { accept: 'application/json' }, ...init }, opts);
+	// Read the raw text so a provider that starts serving an HTML error page is
+	// reported as an upstream fault with an excerpt, rather than as a bare
+	// SyntaxError from JSON.parse. A Response-like that only implements json()
+	// still works: this is the single wrapper for every third-party call in
+	// api/, so it accepts anything response-shaped rather than demanding the
+	// exact built-in.
+	if (typeof res.text !== 'function') return res.json();
 	const text = await res.text();
 	try {
 		return JSON.parse(text);

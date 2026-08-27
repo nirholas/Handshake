@@ -204,7 +204,10 @@ describe('GET /api/pump/curve', () => {
 		expect(res.statusCode).toBe(200);
 		const body = getJson(res);
 		expect(body.stale).toBe(true);
-		expect(typeof body.as_of).toBe('number');
+		// staleEnvelope() is the shared marker for every last-good tier and stamps
+		// as_of as an ISO 8601 string, the same shape the rest of the API dates use.
+		expect(typeof body.as_of).toBe('string');
+		expect(Number.isNaN(Date.parse(body.as_of))).toBe(false);
 		expect(body.curve.creator).toBe('CRE');
 		expect(body.price.priceSol).toBe('0.0002');
 		expect(res.getHeader('cache-control')).toMatch(/max-age=10/);

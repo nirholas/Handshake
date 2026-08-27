@@ -34,9 +34,10 @@ import { TRIANGULATION } from './triangulation.js';
 import { log } from '../shared/log.js';
 import { applyCinematicDefaults, detectQualityTier, loadEnvironment, updateGroundContactShadow } from '../shared/cinematic-render.js';
 
+import { modelUrl, visionWasmBase } from '../shared/mediapipe-assets.js';
 const MODEL_URL =
-	'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
-const WASM_BASE = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm';
+	modelUrl('face_landmarker/face_landmarker/float16/1/face_landmarker.task');
+// Runtime location comes from the shared resolver (see face-mocap.js).
 const DEFAULT_BODY = '/avatars/default.glb';
 
 const HEAD_BONE_PATTERNS = [
@@ -183,7 +184,7 @@ async function getLandmarker() {
 	if (landmarker) return landmarker;
 	if (landmarkerLoading) return landmarkerLoading;
 	landmarkerLoading = (async () => {
-		const fileset = await FilesetResolver.forVisionTasks(WASM_BASE);
+		const fileset = await FilesetResolver.forVisionTasks(await visionWasmBase());
 		landmarker = await FaceLandmarker.createFromOptions(fileset, {
 			baseOptions: { modelAssetPath: MODEL_URL, delegate: 'GPU' },
 			runningMode: 'IMAGE',

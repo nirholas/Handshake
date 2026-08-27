@@ -103,23 +103,29 @@ describe('GeckoTerminal OHLCV lib', () => {
 		expect(calls).toBe(2); // first 429 retried, second call served
 	});
 
+	// topPoolForToken falls back to DexScreener and Birdeye once GeckoTerminal is
+	// exhausted, and those rungs go through the same stubbed fetch. Count the
+	// GeckoTerminal calls specifically so these still assert its retry ladder
+	// rather than the total traffic of the whole chain.
+	const countGecko = (urls) => urls.filter((u) => String(u).includes('geckoterminal')).length;
+
 	it('throws a 429-tagged error once retries are exhausted', async () => {
-		let calls = 0;
-		global.fetch = vi.fn(async () => {
-			calls += 1;
+		const urls = [];
+		global.fetch = vi.fn(async (url) => {
+			urls.push(url);
 			return mres({ status: { error_code: 429 } }, false, 429);
 		});
 		await expect(topPoolForToken('MINTX-429-always')).rejects.toMatchObject({ status: 429 });
-		expect(calls).toBe(3); // MAX_ATTEMPTS exhausted, status preserved as 429
+		expect(countGecko(urls)).toBe(3); // MAX_ATTEMPTS exhausted, status preserved as 429
 	});
 
 	it('does not retry a 404 (fail fast)', async () => {
-		let calls = 0;
-		global.fetch = vi.fn(async () => {
-			calls += 1;
+		const urls = [];
+		global.fetch = vi.fn(async (url) => {
+			urls.push(url);
 			return mres({}, false, 404);
 		});
 		await expect(topPoolForToken('MINTX-404')).rejects.toMatchObject({ status: 404 });
-		expect(calls).toBe(1); // client error is not retried
+		expect(countGecko(urls)).toBe(1); // client error is not retried
 	});
 });

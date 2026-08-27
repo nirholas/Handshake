@@ -15,6 +15,13 @@ const state = vi.hoisted(() => ({
 	},
 }));
 
+// SOL/USD comes from the shared provider chain. Pin it so the USD thresholds
+// under test are arithmetic, not a live network read.
+vi.mock('../src/shared/usd-price.js', () => ({
+	getSolPriceUsd: vi.fn(async () => 200),
+	solToUsd: vi.fn(async (sol) => sol * 200),
+}));
+
 vi.mock('@solana/web3.js', () => ({
 	// Regular function (not arrow) for `new` compatibility; returns shared singleton.
 	Connection: vi.fn(function() { return state.conn; }),
@@ -71,6 +78,31 @@ describe('watchWhaleTrades', () => {
 	function fireLog(signature = 'sig1') {
 		state.logCallback?.({ signature, logs: [], err: null });
 	}
+
+	it('reports a blind feed instead of silently dropping every trade when SOL/USD is unavailable', async () => {
+		const { getSolPriceUsd } = await import('../src/shared/usd-price.js');
+		getSolPriceUsd.mockResolvedValueOnce(0);
+		const trades = [];
+		const statuses = [];
+		const ac = new AbortController();
+		state.fakeEvents = [makeTrade(MINT, 60_000_000_000)];
+
+		await watchWhaleTrades({
+			mint: MINT,
+			minUsd: 5000,
+			onTrade: (t) => trades.push(t),
+			onStatus: (s) => statuses.push(s),
+			signal: ac.signal,
+		});
+		fireLog();
+
+		// No USD price means no honest way to apply a USD threshold, so nothing
+		// fires; the caller is told why rather than being shown an empty list that
+		// is indistinguishable from a quiet market.
+		expect(trades).toHaveLength(0);
+		expect(statuses).toEqual([expect.objectContaining({ code: 'usd_price_unavailable' })]);
+		ac.abort();
+	});
 
 	it('calls onTrade for trades >= minUsd', async () => {
 		const trades = [];

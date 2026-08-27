@@ -95,11 +95,15 @@ afterEach(() => {
 });
 
 describe('GET /api/kol/wallets', () => {
-	it('requires a Birdeye key and says so', async () => {
+	it('still answers without a Birdeye key by reading holdings over the RPC chain', async () => {
+		// Birdeye is an accelerator here, not a dependency: with no key the wallet
+		// is read through the rotating Solana RPC chain and priced via Jupiter, so
+		// a missing or throttled key degrades to our own data instead of a 503.
 		delete process.env.BIRDEYE_API_KEY;
 		const res = await call(`/api/kol/wallets?addresses=${addrFor('a')}`);
-		expect(res.statusCode).toBe(503);
-		expect(res.body.error).toBe('birdeye_not_configured');
+		expect(res.statusCode).toBe(200);
+		expect(res.body.error).toBeUndefined();
+		expect(Array.isArray(res.body.data ?? res.body.wallets ?? [])).toBe(true);
 	});
 
 	it('rejects a request with no addresses', async () => {

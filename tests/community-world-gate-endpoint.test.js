@@ -150,13 +150,31 @@ describe('GET world-gate', () => {
 		expect((await call('GET')).json().data.canEdit).toBe(false);
 	});
 
-	it('still serves the requirement when the creator lookup fails', async () => {
+	it('still serves the requirement when the creator lookup fails, and keeps a verified creator editing', async () => {
+		// A pump.fun coin's creator is immutable, which is why the handler caches
+		// it. Once it has been resolved live, a pump.fun outage falls back to that
+		// remembered value rather than locking the real creator out of their own
+		// world. canEdit still requires their linked wallet to match it.
 		session.signedIn = true;
 		session.wallets = [CREATOR];
+		expect((await call('GET')).json().data.canEdit).toBe(true); // resolve once, live
 		pump.status = 502;
 		await writeWorldGate(MINT, { minTokens: 42 }, CREATOR);
 		const { data } = (await call('GET')).json();
-		expect(data).toMatchObject({ gated: true, minTokens: 42, canEdit: false });
+		expect(data).toMatchObject({ gated: true, minTokens: 42, canEdit: true });
+	});
+
+	it('withholds canEdit when the creator was never resolved and the lookup fails', async () => {
+		// Nothing has ever been verified for this mint, so there is no immutable
+		// fact to fall back on: the gate fails closed instead of open.
+		session.signedIn = true;
+		session.wallets = [CREATOR];
+		pump.status = 502;
+		const unseen = 'THREEsyntheticNeverSeen11111111111111pump';
+		await writeWorldGate(unseen, { minTokens: 42 }, CREATOR);
+		const res = makeRes();
+		await handler(makeReq('GET', { token: unseen }), res);
+		expect(res.json().data).toMatchObject({ gated: true, minTokens: 42, canEdit: false });
 	});
 
 	it('skips the upstream lookups entirely when signed out', async () => {
@@ -222,11 +240,15 @@ describe('POST world-gate', () => {
 		expect(await readWorldGate(MINT)).toBeNull();
 	});
 
-	it('502s when the creator cannot be resolved', async () => {
+	it('502s when the creator cannot be resolved and none was ever verified', async () => {
+		// Same rule as GET: with no remembered creator for this mint, an
+		// unreachable pump.fun means the write cannot be authorised at all.
 		session.signedIn = true;
 		session.wallets = [CREATOR];
 		pump.status = 502;
-		const res = await call('POST', { body: { minTokens: 1 } });
+		const unseen = 'THREEsyntheticNeverSeen22222222222222pump';
+		const res = makeRes();
+		await handler(makeReq('POST', { token: unseen, body: { minTokens: 1 } }), res);
 		expect(res.statusCode).toBe(502);
 		expect(res.json().error).toBe('creator_unresolved');
 	});
