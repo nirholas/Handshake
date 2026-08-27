@@ -16,18 +16,19 @@ Work top-to-bottom. Do not submit until every box is checked. A date after a box
 
 - [x] `scripts/build-apk.sh` has been run so the SHA-256 fingerprint is known. (2026-08-10; keystore at `solana-mobile/android.keystore`, password in `.env` `SOLANA_MOBILE_KEYSTORE_PASSWORD`; on a fresh headless machine run `scripts/setup-android-sdk.sh` first)
 - [x] `public/.well-known/assetlinks.json` contains the real fingerprint (no `{{RELEASE_SHA256}}` placeholder) and is on `main`. (2026-08-10)
-- [x] `https://three.ws/.well-known/assetlinks.json` returns 200 as `application/json`. (verified 2026-08-27)
-- [x] Google's statement list confirms it: `https://digitalassetlinks.googleapis.com/v1/statements:list?source.web.site=https://three.ws&relation=delegate_permission/common.handle_all_urls` returns the `ws.three.app` statement with fingerprint `49:84:9C:CC:...:DC:27`. (verified 2026-08-27)
+- [ ] `https://three.ws/.well-known/assetlinks.json` returns 200 as `application/json` AND carries the 2026-08-27 fingerprint `98:0A:...:13:D7` (the live file still shows the orphaned `49:84:...` key until the next deploy).
+- [ ] Google's statement list confirms the new key: `https://digitalassetlinks.googleapis.com/v1/statements:list?source.web.site=https://three.ws&relation=delegate_permission/common.handle_all_urls` must return `98:0A:...:13:D7` (it returned the old `49:84:...` on 2026-08-27, pre-deploy). Then `adb shell pm verify-app-links --re-verify ws.three.app`.
 - [ ] `cache-control` on `assetlinks.json` is at most one hour. The server now sends `max-age=3600` for `.well-known/*`; confirm on the live site after the next deploy (it read `max-age=86400` on 2026-08-27, from the image built before this change).
 
 ## 3. APK build
 
-- [ ] Release keystore is backed up offsite (lose it and the app can never be updated). The keystore was generated 2026-08-10 in the codespace; OFFSITE BACKUP STILL NEEDED: put `solana-mobile/android.keystore` and the `.env` password in the owner's password manager.
-- [x] `build/three-ws-release.apk` was produced by `scripts/build-apk.sh` and is signed. (2026-08-10, 4.5 MB; `build/` is gitignored, so rebuild on the release machine)
-- [x] `apksigner verify --print-certs` prints the SHA-256 that is in `assetlinks.json`. (verified 2026-08-10: `49:84:9C:CC:...:DC:27`)
-- [ ] APK installs cleanly on a Seeker: launches into three.ws full-screen, no Chrome address bar.
-- [ ] App icon, name, and splash colors match brand (`three.ws`, `#080814` background, `#000000` theme).
-- [ ] Long-press on the app icon shows Create / Discover / My agents, and each opens inside the app.
+- [x] Release keystore is backed up offsite. The 2026-08-10 keystore was lost with its codespace (never backed up), so a NEW key was generated 2026-08-27 and stored in Secret Manager (`three-ws-seeker-release-keystore`, base64, and `three-ws-seeker-keystore-password`, project `aerial-vehicle-466722-p5`; round trip verified by sha256). Nothing was ever published under the old key. Never generate another.
+- [x] `build/three-ws-release.apk` was produced by `scripts/build-apk.sh` and is signed. (2026-08-27, 4.1 MB, versionCode 1, targetSdk 36; `build/` is gitignored, so rebuild on the release machine)
+- [x] `apksigner verify --print-certs` prints the SHA-256 that is in `assetlinks.json`. (verified 2026-08-27: `98:0A:1A:AB:...:11:13:D7`)
+- [x] APK installs and launches on Android 14 (Pixel 7 emulator, 2026-08-27). Full-screen without the address bar needs Digital Asset Links for the NEW fingerprint, which go live with the next deploy; until then Chrome shows a custom-tab bar, by design.
+- [ ] App icon, name, and splash colors match brand on a real launcher (`three.ws`, `#080814` background, `#000000` theme).
+- [x] Long-press shortcuts Create / Discover / My agents are registered in the installed APK (`dumpsys shortcut`, 2026-08-27); each opens inside the app once DAL verifies.
+- [x] The Android share sheet target is registered (`shareTarget`, MIME types only) and an `ACTION_SEND` image intent opens the app (2026-08-27, emulator).
 
 ## 4. MWA integration
 

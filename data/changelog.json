@@ -3,6 +3,25 @@
 	"entries": [
 		{
 			"date": "2026-08-27",
+			"title": "A real home screen for the Seeker app, and a Seeker verified badge",
+			"summary": "The three.ws app on Solana Seeker now opens on its own home screen at /seeker: one tap signs you in with Seed Vault, your agents are right there, and Create, Discover, and Chat are a thumb away. Seeker owners can prove it by checking for the Seeker Genesis Token in their wallet (a read, never a transaction); once verified, every agent they own shows a Seeker verified badge on its page.",
+			"tags": [
+				"feature"
+			],
+			"link": "/seeker"
+		},
+		{
+			"date": "2026-08-27",
+			"title": "Share a photo or a 3D file straight into three.ws",
+			"summary": "On Android (and the Seeker app) three.ws now appears in the share sheet. Share a photo from your camera roll and it lands in the selfie-to-avatar flow already attached; share a .glb and it opens the upload flow. Going offline inside the app shows a three.ws screen that reloads on its own when the connection is back, instead of a browser error, and the home-screen icon no longer gets its corners cropped on round or squircle launchers.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/create"
+		},
+		{
+			"date": "2026-08-27",
 			"title": "Text-to-3D now has five independent image sources behind it",
 			"summary": "Every text-to-3D generation starts by painting a concept image, and until today that step leaned on two providers. When one of them was cut off and the other stalled, text prompts failed for hours. The painter now tries five independent sources in order: Google's image model, NVIDIA's FLUX.1-dev, two more FLUX providers routed through Hugging Face, and a keyless public service as the final fallback, all under one shared time budget so a slow provider hands off instead of holding your request. A finished model's status is also remembered, so checking on a done job answers instantly instead of re-scoring it every time.",
 			"tags": [

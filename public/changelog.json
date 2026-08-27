@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-27T05:37:58.249Z",
+	"generated_at": "2026-08-27T05:41:23.776Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -18,6 +18,26 @@
 		},
 		{
 			"date": "2026-08-27",
+			"type": "launch",
+			"title": "three.ws on Solana Seeker",
+			"summary": "What the Seeker app adds on top of the website: Seed Vault sign-in, share-sheet capture, an offline shell, home-screen shortcuts, and Seeker Genesis Token verification.",
+			"link": "/docs/seeker-app",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-27",
+			"type": "update",
+			"title": "A real home screen for the Seeker app, and a Seeker verified badge",
+			"summary": "The three.ws app on Solana Seeker now opens on its own home screen at /seeker: one tap signs you in with Seed Vault, your agents are right there, and Create, Discover, and Chat are a thumb away. Seeker owners can prove it by checking for the Seeker Genesis Token in their wallet (a read, never a transaction); once verified, every agent they own shows a Seeker verified badge on its page.",
+			"link": "/seeker",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-08-27",
 			"type": "update",
 			"title": "Seeker app: stay signed in across restarts, and a submission path that matches today's dApp Store",
 			"summary": "On Solana Seeker, the three.ws app now remembers your Seed Vault session when Android restarts the app in the background, so reopening it no longer asks you to approve again; a revoked session is dropped cleanly instead of failing every signature. The My Agents home-screen shortcut opens your own agents instead of the public index. Behind the scenes the store submission tooling was rebuilt for the Publisher Portal that Solana Mobile now uses, and the listing copy was rewritten to describe only what the app really does.",
@@ -26,6 +46,17 @@
 				"improvement",
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-27",
+			"type": "update",
+			"title": "Share a photo or a 3D file straight into three.ws",
+			"summary": "On Android (and the Seeker app) three.ws now appears in the share sheet. Share a photo from your camera roll and it lands in the selfie-to-avatar flow already attached; share a .glb and it opens the upload flow. Going offline inside the app shows a three.ws screen that reloads on its own when the connection is back, instead of a browser error, and the home-screen icon no longer gets its corners cropped on round or squircle launchers.",
+			"link": "/create",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{

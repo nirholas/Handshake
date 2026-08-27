@@ -3160,6 +3160,12 @@
 					"added": "2026-08-01"
 				},
 				{
+					"path": "/docs/seeker-app",
+					"title": "three.ws on Solana Seeker",
+					"description": "What the Seeker app adds on top of the website: Seed Vault sign-in, share-sheet capture, an offline shell, home-screen shortcuts, and Seeker Genesis Token verification.",
+					"added": "2026-08-27"
+				},
+				{
 					"path": "/docs/money-flow-map",
 					"title": "Docs · Money Flow Map",
 					"description": "How /flow builds the agent economy topology from settled on-chain transfers: the two edge sources, the privacy gate on counterparties, what source/hub/relay/sink mean, and how the stuck-capital number is computed.",

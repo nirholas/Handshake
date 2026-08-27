@@ -2379,6 +2379,12 @@ URL: https://three.ws/docs/monitor
 
 What each panel on /monitor reads and how often, every control on the board, how a failed panel degrades alone, and how to add a panel of your own.
 
+### three.ws on Solana Seeker
+
+URL: https://three.ws/docs/seeker-app
+
+What the Seeker app adds on top of the website: Seed Vault sign-in, share-sheet capture, an offline shell, home-screen shortcuts, and Seeker Genesis Token verification.
+
 ### Docs · Money Flow Map
 
 URL: https://three.ws/docs/money-flow-map

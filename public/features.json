@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-27T05:37:58.227Z",
+	"generated_at": "2026-08-27T05:41:23.760Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -3912,6 +3912,16 @@
 					"title": "Docs · Agent Monitor",
 					"description": "What each panel on /monitor reads and how often, every control on the board, how a failed panel degrades alone, and how to add a panel of your own.",
 					"added": "2026-08-01",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/seeker-app",
+					"title": "three.ws on Solana Seeker",
+					"description": "What the Seeker app adds on top of the website: Seed Vault sign-in, share-sheet capture, an offline shell, home-screen shortcuts, and Seeker Genesis Token verification.",
+					"added": "2026-08-27",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
