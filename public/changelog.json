@@ -1,11 +1,23 @@
 {
-	"generated_at": "2026-08-27T04:44:26.027Z",
+	"generated_at": "2026-08-27T04:58:40.313Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-08-27",
+			"type": "update",
+			"title": "Seeker app: stay signed in across restarts, and a submission path that matches today's dApp Store",
+			"summary": "On Solana Seeker, the three.ws app now remembers your Seed Vault session when Android restarts the app in the background, so reopening it no longer asks you to approve again; a revoked session is dropped cleanly instead of failing every signature. The My Agents home-screen shortcut opens your own agents instead of the public index. Behind the scenes the store submission tooling was rebuilt for the Publisher Portal that Solana Mobile now uses, and the listing copy was rewritten to describe only what the app really does.",
+			"link": "/my-agents",
+			"tags": [
+				"improvement",
+				"fix",
+				"infra"
+			]
+		},
 		{
 			"date": "2026-08-27",
 			"type": "update",

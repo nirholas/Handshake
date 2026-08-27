@@ -54,7 +54,7 @@ function makeWallet(overrides = {}) {
 }
 
 beforeEach(() => {
-	sessionStorage.clear();
+	localStorage.clear();
 	h.state.wallet = makeWallet();
 	h.state.transactCalls = 0;
 });
@@ -78,8 +78,8 @@ describe('MwaWallet.connect', () => {
 		expect(w.isConnected).toBe(true);
 		expect(onConnect).toHaveBeenCalledWith(w.publicKey);
 		// Auth token + address persisted for resume.
-		expect(sessionStorage.getItem('threews:mwa:authToken')).toBe('tok-1');
-		expect(sessionStorage.getItem('threews:mwa:address')).toBe(ADDR);
+		expect(localStorage.getItem('threews:mwa:authToken')).toBe('tok-1');
+		expect(localStorage.getItem('threews:mwa:address')).toBe(ADDR);
 	});
 
 	it('is a no-op when already connected (no second transport session)', async () => {
@@ -106,8 +106,8 @@ describe('MwaWallet.connect', () => {
 	});
 
 	it('reauthorizes (not authorize) when a stored token exists', async () => {
-		sessionStorage.setItem('threews:mwa:authToken', 'stored-tok');
-		sessionStorage.setItem('threews:mwa:address', ADDR);
+		localStorage.setItem('threews:mwa:authToken', 'stored-tok');
+		localStorage.setItem('threews:mwa:address', ADDR);
 		const w = new MwaWallet();
 		// Constructor rehydrated address, so it is already "connected"; force a
 		// resume through the transport by clearing the public key path.
@@ -120,8 +120,8 @@ describe('MwaWallet.connect', () => {
 		// A rehydrated wallet still holds a token, but signing forces a
 		// reauthorize; if the wallet revoked it, the operation must reject
 		// rather than sign against a dead session.
-		sessionStorage.setItem('threews:mwa:authToken', 'revoked');
-		sessionStorage.setItem('threews:mwa:address', ADDR);
+		localStorage.setItem('threews:mwa:authToken', 'revoked');
+		localStorage.setItem('threews:mwa:address', ADDR);
 		h.state.wallet = makeWallet({
 			reauthorize: vi.fn().mockRejectedValue(new Error('token revoked')),
 		});
@@ -130,6 +130,23 @@ describe('MwaWallet.connect', () => {
 		// Normalized to a stable MwaError; original preserved as cause.
 		expect(err.name).toBe('MwaError');
 		expect(err.cause?.message).toMatch(/revoked/);
+		// The dead token is dropped so the next call authorizes from scratch
+		// instead of re-presenting a revoked session forever.
+		expect(w.isConnected).toBe(false);
+		expect(localStorage.getItem('threews:mwa:authToken')).toBe(null);
+	});
+
+	it('emits disconnect when a signing reauthorize finds the token revoked', async () => {
+		localStorage.setItem('threews:mwa:authToken', 'revoked');
+		localStorage.setItem('threews:mwa:address', ADDR);
+		h.state.wallet = makeWallet({
+			reauthorize: vi.fn().mockRejectedValue(new Error('token revoked')),
+		});
+		const w = new MwaWallet();
+		const onDisconnect = vi.fn();
+		w.on('disconnect', onDisconnect);
+		await w.signAllTransactions([{}]).catch(() => {});
+		expect(onDisconnect).toHaveBeenCalledTimes(1);
 	});
 });
 
@@ -229,7 +246,7 @@ describe('MwaWallet.disconnect', () => {
 		expect(w.isConnected).toBe(false);
 		expect(w.publicKey).toBe(null);
 		expect(onDisconnect).toHaveBeenCalled();
-		expect(sessionStorage.getItem('threews:mwa:authToken')).toBe(null);
+		expect(localStorage.getItem('threews:mwa:authToken')).toBe(null);
 	});
 
 	it('is safe to call with no active session', async () => {
@@ -250,7 +267,14 @@ describe('MwaWallet.disconnect', () => {
 });
 
 describe('session persistence', () => {
-	it('rehydrates a connected wallet from sessionStorage', async () => {
+	it('survives sessionStorage loss (Android process death) via localStorage', async () => {
+		const first = new MwaWallet();
+		await first.connect();
+		sessionStorage.clear();
+		expect(new MwaWallet().isConnected).toBe(true);
+	});
+
+	it('rehydrates a connected wallet from localStorage', async () => {
 		const first = new MwaWallet();
 		await first.connect();
 		// A fresh instance (app relaunch) should already be connected.

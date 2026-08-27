@@ -1,20 +1,13 @@
-three.ws is built around three Seeker-specific capabilities. Each is the right answer to a problem that a generic Android or web build of the same app cannot solve cleanly.
+three.ws is built around three things the Seeker does better than a generic Android phone or a desktop browser.
 
-# 1. Seed Vault signing via Mobile Wallet Adapter
+1. Seed Vault signing through Mobile Wallet Adapter
 
-The wallet wrapper at `solana-mobile/src/mwa-wallet.js` detects that the user is running inside the three.ws TWA on a Solana Mobile device and routes every signing call — `signMessage`, `signTransaction`, `signAllTransactions`, `signAndSendTransaction` — through the MWA protocol to the on-device Seed Vault.
+Inside the app, every signing request (Sign-In With Solana, on-chain agent deploys, skill purchases, tips) is routed to the on-device Seed Vault. Sign-in is a single wallet interaction rather than a connect step followed by a signature step, and the private key never enters the application process. A session you approved once is remembered across app restarts; a session the wallet revokes is dropped cleanly and re-requested on the next action.
 
-Why it matters: the private key never enters the application process. SIWS authentication, agent mints, accessory purchases, and wallet linking all approve inside the TEE.
+2. On-device camera capture for avatar creation
 
-# 2. Camera-driven selfie capture for avatar generation
+The Create flow uses the Seeker's camera to capture one frontal selfie (plus optional left and right angles), uploads the frames to the three.ws reconstruction pipeline, and returns a rigged, animation-ready avatar in about a minute. On Seeker this is the shortest path from "I want an agent that looks like me" to "it is in my wallet".
 
-Phones have a camera the user trusts; desktops mostly don't. The `/create` flow uses the back-camera shutter sequence to capture three reference frames, uploads them to the three.ws reconstruction pipeline, and returns a glTF avatar within roughly a minute. On Seeker this is the fastest path from "I have an idea for an agent" to "the agent is in my wallet".
+3. Home-screen shortcuts and deep links
 
-# 3. Web Share Target for one-tap drops into Telegram, X, and Solana social
-
-The PWA manifest declares a `share_target` at `/create`, so an image or `.glb` shared from another app on Seeker opens directly inside three.ws with the file pre-attached. That powers two specific flows:
-
-- Drop a selfie from the camera roll → instant avatar mint.
-- Drop a glTF/GLB file → instant agent creation around it.
-
-These three together — Seed Vault signing, on-device capture, and Share Target ingest — are the reason this app exists on Seeker rather than only as a web app.
+Long-pressing the app icon offers Create, Discover, and My agents. Any three.ws link (an agent page, a marketplace listing, an embed) opens inside the app instead of a browser tab, verified through Digital Asset Links, so agents shared in Telegram or X land directly in the native experience.

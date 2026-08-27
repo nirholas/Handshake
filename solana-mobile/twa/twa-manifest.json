@@ -35,7 +35,7 @@
     {
       "name": "My agents",
       "shortName": "My agents",
-      "url": "https://three.ws/agents?utm_source=seeker_shortcut",
+      "url": "https://three.ws/my-agents?utm_source=seeker_shortcut",
       "chosenIconUrl": "https://three.ws/pwa-192x192.png"
     }
   ],

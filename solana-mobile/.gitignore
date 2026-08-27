@@ -1,8 +1,8 @@
 # Bubblewrap output — regenerated on every build, do not commit.
 build/
 
-# Release keystore. NEVER commit. Back this up to a password manager and to
-# the SEEKER_RELEASE_KEYSTORE_BASE64 GitHub secret instead.
+# Release keystore. NEVER commit. Back it up (file + password) to the owner's
+# password manager; losing it means the app can never be updated again.
 *.keystore
 *.jks
 
@@ -13,5 +13,8 @@ twa-manifest.json.bak
 # Captured screenshots that haven't been triaged yet.
 publish/media/_drafts/
 
-# Publishing API key cached by the CLI.
+# Publisher Portal API key, if ever written to disk.
 publish/.dapp-store-api-key
+# Local Node deps pulled in by scripts/publish.sh (dapp-store-cli).
+node_modules/
+package-lock.json

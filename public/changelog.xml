@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Seeker app: stay signed in across restarts, and a submission path that matches today's dApp Store</title>
+			<link>https://three.ws/my-agents</link>
+			<guid isPermaLink="false">2026-08-27:Seeker app: stay signed in across restarts, and a submission path that matches today's dApp Store</guid>
+			<pubDate>Thu, 27 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>On Solana Seeker, the three.ws app now remembers your Seed Vault session when Android restarts the app in the background, so reopening it no longer asks you to approve again; a revoked session is dropped cleanly instead of failing every signature. The My Agents home-screen shortcut opens your own agents instead of the public index. Behind the scenes the store submission tooling was rebuilt for the Publisher Portal that Solana Mobile now uses, and the listing copy was rewritten to describe only what the app really does.</description>
+		</item>
+		<item>
 			<title>Text-to-3D is generating again, and it answers in seconds</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-08-27:Text-to-3D is generating again, and it answers in seconds</guid>

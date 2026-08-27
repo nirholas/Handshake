@@ -1,9 +1,9 @@
 First Seeker release of three.ws.
 
-• Seed Vault sign-in via Mobile Wallet Adapter (SIWS).
-• Selfie → 3D avatar capture flow with on-device camera.
-• On-chain agent mint as a Metaplex Core NFT to your wallet.
-• Discover feed of community-minted agents.
-• Embed any agent in chat, X, or your own site with one URL.
+• One-tap Sign-In With Solana through Seed Vault (Mobile Wallet Adapter).
+• Selfie to rigged 3D avatar, captured with the on-device camera.
+• Deploy an agent on-chain as a Metaplex Core asset held by your wallet.
+• Marketplace of community agents, each with a live 3D viewer and chat.
+• Embed any agent in Telegram, X, or your own site with one URL.
 
-Built for Seeker. Signed by Seed Vault. No seed phrases ever leave the secure element.
+Built for Seeker. Signed by Seed Vault. Seed phrases never leave the secure element.

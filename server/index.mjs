@@ -289,6 +289,13 @@ function serveFile(req, res, file, headers, status) {
 	}
 	res.set(headers);
 	if (status) res.status(status);
+	// Android Digital Asset Links (and the other RFC 8615 discovery files) are
+	// re-fetched by Google and by devices on a schedule; a day-long edge TTL
+	// means a rotated release key stays unverified for up to 24 hours after a
+	// deploy. Google's own guidance caps the TTL at an hour.
+	if (file.includes(`${path.sep}.well-known${path.sep}`) && !res.get('cache-control')) {
+		res.set('cache-control', 'public, max-age=3600');
+	}
 	// RFC 8615 discovery files (agent-card.json, ai-plugin.json, security.txt)
 	// live under the `.well-known` dot-directory, which Express's dotfiles guard
 	// would reject as Forbidden — allow exactly that directory and keep every

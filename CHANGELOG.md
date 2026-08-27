@@ -6,6 +6,7 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 
 ## 2026-08-27
 
+- **Seeker app: stay signed in across restarts, and a submission path that matches today's dApp Store**: On Solana Seeker, the three.ws app now remembers your Seed Vault session when Android restarts the app in the background, so reopening it no longer asks you to approve again; a revoked session is dropped cleanly instead of failing every signature. The My Agents home-screen shortcut opens your own agents instead of the public index. Behind the scenes the store submission tooling was rebuilt for the Publisher Portal that Solana Mobile now uses, and the listing copy was rewritten to describe only what the app really does. (`/my-agents`) `[improvement, fix, infra]`
 - **Text-to-3D is generating again, and it answers in seconds**: For most of a day, describing something in the forge produced a long wait and then a busy message, on the site, in the ChatGPT app, and for agents buying through OKX. Two things had gone wrong at once: the image provider that paints the concept picture had stopped responding, and the free assistant that sharpens your description was asking for models that no longer exist. Both are fixed. The painter now runs on a model that answers in about five seconds, the assistant uses current models, and a text-to-3D request is accepted in three to eight seconds instead of never. Image-to-3D was never affected. (`/forge`) `[fix]`
 
 ## 2026-08-25

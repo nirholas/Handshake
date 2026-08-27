@@ -1,67 +1,62 @@
+# Publisher Portal worksheet for the three.ws dApp Store listing.
+#
+# Since dapp-store-cli 1.0 the listing is authored in the Publisher Portal
+# (https://publish.solanamobile.com), not read from this file. This is the
+# single source for the values the owner types or uploads there, so the portal
+# never drifts from what is in git. Text fields are the files under listing/;
+# media is under media/ (see ../docs/ASSETS.md for exact sizes).
+
 publisher:
   name: three.ws
-  address:
   website: https://three.ws
   email: support@three.ws
 
 app:
   name: three.ws
-  address:
   android_package: ws.three.app
   urls:
+    website: https://three.ws
+    privacy_policy_url: https://three.ws/legal/privacy
     license_url: https://three.ws/legal/eula
     copyright_url: https://three.ws/legal
-    privacy_policy_url: https://three.ws/legal/privacy
-    website: https://three.ws
+
+listing:
+  short_description: listing/short-description.txt
+  long_description: listing/description.md
+  new_in_version: listing/new-in-version.txt
+  saga_features: listing/saga-features.md
+  copyright: "© 2026 three.ws"
+  media:
+    icon: media/icon.png
+    banner: media/banner.png
+    feature_graphic: media/feature.png
+    screenshots:
+      - media/screen-1.png
+      - media/screen-2.png
+      - media/screen-3.png
+      - media/screen-4.png
+      - media/screen-5.png
 
 release:
-  address:
-  media:
-    - purpose: icon
-      uri: media/icon.png
-    - purpose: banner
-      uri: media/banner.png
-    - purpose: feature_graphic
-      uri: media/feature.png
-    - purpose: screenshot
-      uri: media/screen-1.png
-    - purpose: screenshot
-      uri: media/screen-2.png
-    - purpose: screenshot
-      uri: media/screen-3.png
-    - purpose: screenshot
-      uri: media/screen-4.png
-    - purpose: screenshot
-      uri: media/screen-5.png
-
-  catalog:
-    en-US:
-      name: three.ws
-      short_description: |
-        Mint a 3D agent to your Seed Vault. On-chain, Solana-native, signed by Seeker.
-      long_description: !include listing/description.md
-      new_in_version: !include listing/new-in-version.txt
-      saga_features: !include listing/saga-features.md
-      copyright: "© 2026 three.ws"
-
-  files:
-    - purpose: install
-      uri: ../build/three-ws-release.apk
-
-solana_mobile_dapp_publisher_portal:
+  apk: ../build/three-ws-release.apk
   google_store_package: ""
   testing_instructions: |
-    1. Open the app on a Seeker or Saga.
-    2. Tap "Discover" — the agent grid should load from https://three.ws/api/marketplace/agents.
-    3. Tap any agent → "Open" — a 3D viewer renders the agent in the WebGL canvas.
-    4. Tap "Create" → grant camera permission → capture 3 selfies. The app uploads to
-       https://three.ws/api/avatar/selfie and returns a job id.
-    5. Tap "Connect wallet" — the Seed Vault sheet appears. Approve.
-    6. Tap "Sign in" — the app produces a SIWS message; approve in Seed Vault.
-       The app then logs you in via POST /api/auth/siws/verify.
-    7. To mint, fund the connected wallet with at least 0.01 SOL on mainnet.
-       Tap "Mint to wallet" on any draft agent; Seed Vault approves the tx.
-    No off-chain test accounts are required — auth is wallet-only.
-
+    1. Open the app on a Seeker or Saga. It launches full-screen into three.ws.
+    2. Long-press the app icon: the Create, Discover, and My agents shortcuts
+       open /create, /marketplace, and /my-agents inside the app.
+    3. Tap "Sign in with Seed Vault" in the top bar. A single Seed Vault sheet
+       appears (Sign-In With Solana). Approve. The bar shows your shortened
+       address; the app is signed in via POST /api/auth/siws/verify.
+    4. Discover: /marketplace loads the agent grid from
+       /api/marketplace/agents. Tap an agent to open its page; the 3D viewer
+       renders it in WebGL. Drag to orbit.
+    5. Create: /create/selfie asks for camera permission, captures one frontal
+       selfie (left and right angles optional), uploads to
+       /api/avatars/reconstruct, and polls /api/avatars/regenerate-status
+       until the rigged avatar is ready (about 90 seconds).
+    6. On-chain: from an agent you own, "Deploy on Solana" mints a Metaplex
+       Core asset to the connected wallet. Fund it with at least 0.01 SOL on
+       mainnet first; the Seed Vault sheet approves the transaction.
+    No off-chain test accounts are required: auth is wallet-only.
   alpha_testers:
     - "@solana_mobile"

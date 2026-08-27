@@ -117,7 +117,7 @@ For end-to-end testing, build the APK with `scripts/build-apk.sh`, sideload it v
 | Scenario                                | Behaviour                                                                                        |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | User cancels the Seed Vault sheet       | Rejects with an `MwaError`, `reason: 'USER_REJECTED'`, `code: 4001` — indistinguishable from a Phantom cancel to callers. |
-| Auth token revoked (e.g. wallet wiped)  | `reauthorize` fails → wrapper clears `sessionStorage` and emits `disconnect`. Next call prompts. |
+| Auth token revoked (e.g. wallet wiped)  | `reauthorize` fails on connect OR on any signing call: the wrapper clears the stored token, emits `disconnect`, and the next call authorizes from scratch. |
 | MWA library fails to load (offline)     | `loadTransact()` rejects; the caller sees a `MwaWallet#connect` rejection with the original error.|
-| Page reloads mid-session                | `sessionStorage` retains `authToken`; next sign uses `reauthorize` (no prompt for the user).      |
+| Page reload, app suspend, or Android killing the TWA process | `localStorage` retains `authToken`; next sign uses `reauthorize` (no prompt for the user). |
 | Two tabs of the TWA simultaneously open | MWA serialises transactions per app — second tab waits for the first to release the connection.   |

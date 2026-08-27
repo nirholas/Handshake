@@ -38,32 +38,50 @@ async function loadTransact() {
 	return cachedTransact;
 }
 
+// MWA auth tokens are designed to be persisted: the wallet hands one back so
+// the app can reauthorize() silently on its next launch. Android kills a
+// backgrounded TWA process freely, and sessionStorage dies with it, which
+// turned every relaunch into a fresh Seed Vault prompt. localStorage survives
+// process death; sessionStorage is the fallback when it is unavailable.
+function storageAreas() {
+	const areas = [];
+	try { if (typeof localStorage !== 'undefined') areas.push(localStorage); } catch { /* blocked */ }
+	try { if (typeof sessionStorage !== 'undefined') areas.push(sessionStorage); } catch { /* blocked */ }
+	return areas;
+}
+
 function readStoredAuth() {
-	try {
-		const token = sessionStorage.getItem(SESSION_KEY);
-		const address = sessionStorage.getItem(ADDRESS_KEY);
-		if (token && address) return { authToken: token, address };
-	} catch {
-		/* sessionStorage may be unavailable */
+	for (const area of storageAreas()) {
+		try {
+			const token = area.getItem(SESSION_KEY);
+			const address = area.getItem(ADDRESS_KEY);
+			if (token && address) return { authToken: token, address };
+		} catch {
+			/* storage may be unavailable */
+		}
 	}
 	return null;
 }
 
 function writeStoredAuth(authToken, address) {
+	const [primary] = storageAreas();
+	if (!primary) return;
 	try {
-		sessionStorage.setItem(SESSION_KEY, authToken);
-		sessionStorage.setItem(ADDRESS_KEY, address);
+		primary.setItem(SESSION_KEY, authToken);
+		primary.setItem(ADDRESS_KEY, address);
 	} catch {
 		/* non-fatal */
 	}
 }
 
 function clearStoredAuth() {
-	try {
-		sessionStorage.removeItem(SESSION_KEY);
-		sessionStorage.removeItem(ADDRESS_KEY);
-	} catch {
-		/* non-fatal */
+	for (const area of storageAreas()) {
+		try {
+			area.removeItem(SESSION_KEY);
+			area.removeItem(ADDRESS_KEY);
+		} catch {
+			/* non-fatal */
+		}
 	}
 }
 
@@ -170,10 +188,9 @@ export class MwaWallet {
 				});
 			} catch (err) {
 				if (onlyResume) {
-					// reauthorize() failed because the wallet revoked the token
-					// — clear it and let the caller decide whether to prompt.
-					clearStoredAuth();
-					this.#authToken = null;
+					// reauthorize() failed because the wallet revoked the token.
+					// Drop it and let the caller decide whether to prompt.
+					this.#reset();
 				}
 				throw normalizeMwaError(err);
 			}
@@ -224,11 +241,7 @@ export class MwaWallet {
 		let signed = null;
 		try {
 			await transact(async (wallet) => {
-				const reauth = await wallet.reauthorize({
-					auth_token: this.#authToken,
-					identity: APP_IDENTITY,
-				});
-				this.#applyAuthResult(reauth);
+				await this.#reauthorize(wallet);
 				signed = await wallet.signMessages({
 					addresses: [this.#authResultAddressBase64()],
 					payloads: [messageBytes],
@@ -266,11 +279,7 @@ export class MwaWallet {
 		let signed = [];
 		try {
 			await transact(async (wallet) => {
-				const reauth = await wallet.reauthorize({
-					auth_token: this.#authToken,
-					identity: APP_IDENTITY,
-				});
-				this.#applyAuthResult(reauth);
+				await this.#reauthorize(wallet);
 				signed = await wallet.signTransactions({ transactions });
 			});
 		} catch (err) {
@@ -295,11 +304,7 @@ export class MwaWallet {
 		let signatures = null;
 		try {
 			await transact(async (wallet) => {
-				const reauth = await wallet.reauthorize({
-					auth_token: this.#authToken,
-					identity: APP_IDENTITY,
-				});
-				this.#applyAuthResult(reauth);
+				await this.#reauthorize(wallet);
 				signatures = await wallet.signAndSendTransactions({
 					transactions: [transaction],
 					...(minContextSlot ? { minContextSlot } : null),
@@ -367,6 +372,24 @@ export class MwaWallet {
 
 	/** Whether this provider can perform one-tap authorize-time sign-in. */
 	get supportsSignIn() { return true; }
+
+	// Every signing session re-presents the stored auth token. When the Seed
+	// Vault has revoked it (wallet wiped, app deauthorized from the wallet
+	// side), a dead token must not linger: clear it and emit disconnect so the
+	// next call authorizes from scratch instead of failing forever.
+	async #reauthorize(wallet) {
+		let result;
+		try {
+			result = await wallet.reauthorize({
+				auth_token: this.#authToken,
+				identity: APP_IDENTITY,
+			});
+		} catch (err) {
+			this.#reset();
+			throw err;
+		}
+		this.#applyAuthResult(result);
+	}
 
 	#applyAuthResult(result) {
 		if (!result || typeof result !== 'object') throw new Error('MWA returned invalid auth result');

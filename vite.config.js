@@ -3148,7 +3148,10 @@ const appConfig = {
 						name: 'My Agents',
 						short_name: 'My Agents',
 						description: 'Manage your AI agents',
-						url: '/agents?source=pwa-shortcut',
+						// /agents is the public index of every agent; the owner's own
+						// agents live at /my-agents. The shortcut said "My Agents" and
+						// opened the public list for months.
+						url: '/my-agents?source=pwa-shortcut',
 						icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }],
 					},
 				],
