@@ -63,6 +63,54 @@ function isFromAnyAndroidAppReferrer() {
 	return (document.referrer || '').startsWith('android-app://');
 }
 
+// The android-app:// referrer exists on the FIRST navigation only. Every page
+// the user reaches afterwards inside the TWA carries the previous page as its
+// referrer, so a detector that only reads the live referrer believes the login
+// page, the create flow, and every agent page are a plain browser and never
+// installs the Seed Vault wallet (observed in an Android 14 emulator: /app was
+// detected, the /login it linked to was not). Remember the signal for the
+// lifetime of the installed app instead: once a page has been entered from
+// the Android app, or through one of the app's own start/shortcut URLs, every
+// later standalone page on this device is the app too.
+const TWA_MEMORY_KEY = 'threews:twa';
+const APP_ENTRY_SOURCES = new Set(['seeker_app', 'seeker_shortcut', 'seeker_dapp_store']);
+
+function isFromAppEntryUrl() {
+	if (typeof location === 'undefined') return false;
+	try {
+		return APP_ENTRY_SOURCES.has(new URLSearchParams(location.search).get('utm_source') || '');
+	} catch {
+		return false;
+	}
+}
+
+function storageAreas() {
+	const areas = [];
+	try { if (typeof localStorage !== 'undefined') areas.push(localStorage); } catch { /* blocked */ }
+	try { if (typeof sessionStorage !== 'undefined') areas.push(sessionStorage); } catch { /* blocked */ }
+	return areas;
+}
+
+function rememberTwaSignal() {
+	for (const area of storageAreas()) {
+		try { area.setItem(TWA_MEMORY_KEY, '1'); return; } catch { /* next area */ }
+	}
+}
+
+function hasRememberedTwaSignal() {
+	for (const area of storageAreas()) {
+		try { if (area.getItem(TWA_MEMORY_KEY) === '1') return true; } catch { /* next area */ }
+	}
+	return false;
+}
+
+/** Forget the remembered app signal (tests, and a future "open in browser" affordance). */
+export function forgetTwaSignal() {
+	for (const area of storageAreas()) {
+		try { area.removeItem(TWA_MEMORY_KEY); } catch { /* ignore */ }
+	}
+}
+
 function isDeviceHintedSeeker() {
 	if (typeof navigator === 'undefined') return false;
 	const ua = navigator.userAgent || '';
@@ -92,7 +140,10 @@ function hasMwaIntent() {
 export function isSolanaMobileTwa() {
 	if (typeof window === 'undefined') return false;
 	// Hard signal: direct referrer from our TWA package.
-	if (isFromTwaReferrer()) return true;
+	if (isFromTwaReferrer()) {
+		rememberTwaSignal();
+		return true;
+	}
 	// Combined signals under standalone Android Chrome. Standalone alone isn't
 	// enough (installed PWAs on phones look identical) — each needs a second
 	// Android-app-context signal so desktop and plain mobile PWAs never match:
@@ -100,9 +151,15 @@ export function isSolanaMobileTwa() {
 	//   • the device advertises a Seeker/SAGA hint, or
 	//   • the MWA runtime is already present.
 	if (isStandalone() && isAndroidWebView()) {
-		if (isFromAnyAndroidAppReferrer()) return true;
+		if (isFromAnyAndroidAppReferrer() || isFromAppEntryUrl()) {
+			rememberTwaSignal();
+			return true;
+		}
 		if (isDeviceHintedSeeker()) return true;
 		if (hasMwaIntent()) return true;
+		// Later navigations inside the app: the entry signal was seen earlier
+		// on this device and the page is still a standalone Android display.
+		if (hasRememberedTwaSignal()) return true;
 	}
 	return false;
 }

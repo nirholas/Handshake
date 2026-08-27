@@ -3,6 +3,11 @@
 // Solana wallet uses our own SIWS backend (/api/auth/siws/*) directly.
 
 import Privy, { LocalStorage } from '@privy-io/js-sdk-core';
+// Seeker / Saga: installs the Seed Vault wallet at window.threeWsWallet inside
+// the three.ws app (a no-op everywhere else). getSolanaProvider() below already
+// looked for it, but nothing on this page loaded it, so the Solana button
+// answered "No Solana wallet detected" inside the app.
+import '../solana-mobile/src/index.js';
 
 const next =
 	window.__loginNext ||

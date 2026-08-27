@@ -7,7 +7,7 @@
 // no "Seeker"/"SAGA" hint (the referrer-based fix).
 
 import { describe, it, expect, afterEach } from 'vitest';
-import { isSolanaMobileTwa, isSolanaMobileDevice } from '../solana-mobile/src/seeker-detect.js';
+import { isSolanaMobileTwa, isSolanaMobileDevice, forgetTwaSignal } from '../solana-mobile/src/seeker-detect.js';
 
 function setEnv({ ua = '', referrer = '', standalone = false } = {}) {
 	Object.defineProperty(navigator, 'userAgent', { value: ua, configurable: true });
@@ -20,6 +20,8 @@ const DESKTOP_CHROME = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/53
 
 afterEach(() => {
 	delete window.matchMedia;
+	forgetTwaSignal();
+	window.history.replaceState(null, '', '/');
 });
 
 describe('isSolanaMobileTwa', () => {
@@ -53,6 +55,43 @@ describe('isSolanaMobileTwa', () => {
 	it('does not treat a generic android-app referrer as TWA without standalone', () => {
 		setEnv({ ua: ANDROID_CHROME, referrer: 'android-app://com.random.app', standalone: false });
 		expect(isSolanaMobileTwa()).toBe(false);
+	});
+});
+
+describe('isSolanaMobileTwa across in-app navigation', () => {
+	it('stays true on a later page whose referrer is the previous page', () => {
+		// First navigation: launched from the Android app.
+		setEnv({ ua: ANDROID_CHROME, referrer: 'android-app://ws.three.app', standalone: true });
+		expect(isSolanaMobileTwa()).toBe(true);
+		// The user taps a link: the referrer is now our own previous page and
+		// the UA carries no hint. This is exactly the /login case that showed
+		// "No Solana wallet detected" inside the app.
+		setEnv({ ua: ANDROID_CHROME, referrer: 'https://three.ws/app', standalone: true });
+		expect(isSolanaMobileTwa()).toBe(true);
+	});
+
+	it('treats the app start URL and shortcut URLs as the entry signal', () => {
+		window.history.replaceState(null, '', '/seeker?utm_source=seeker_app');
+		setEnv({ ua: ANDROID_CHROME, referrer: '', standalone: true });
+		expect(isSolanaMobileTwa()).toBe(true);
+		window.history.replaceState(null, '', '/login');
+		setEnv({ ua: ANDROID_CHROME, referrer: 'https://three.ws/seeker', standalone: true });
+		expect(isSolanaMobileTwa()).toBe(true);
+	});
+
+	it('never lets the memory leak into a non-standalone browser tab', () => {
+		setEnv({ ua: ANDROID_CHROME, referrer: 'android-app://ws.three.app', standalone: true });
+		expect(isSolanaMobileTwa()).toBe(true);
+		setEnv({ ua: ANDROID_CHROME, referrer: '', standalone: false });
+		expect(isSolanaMobileTwa()).toBe(false);
+		setEnv({ ua: DESKTOP_CHROME, referrer: '', standalone: true });
+		expect(isSolanaMobileTwa()).toBe(false);
+	});
+
+	it('does not remember anything for a plain installed PWA', () => {
+		setEnv({ ua: ANDROID_CHROME, referrer: '', standalone: true });
+		expect(isSolanaMobileTwa()).toBe(false);
+		expect(localStorage.getItem('threews:twa')).toBe(null);
 	});
 });
 
