@@ -42,6 +42,7 @@ import { cors, error, json, method, readBody, wrap, rateLimited } from '../_lib/
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { logEvent, resolvePayoutAddress } from '../_lib/purchase-confirm.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
+import { blockhashKey, getRecentBlockhashInfo } from '../_lib/solana/read-guards.js';
 import { resolveMarketplacePayer } from '../_lib/solana/gasless-tx.js';
 
 const REFERENCE_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/; // base58 Pubkey
@@ -235,7 +236,7 @@ export default wrap(async (req, res) => {
 	creatorIx.keys.push({ pubkey: referenceKey, isSigner: false, isWritable: false });
 	instructions.push(creatorIx);
 
-	const { blockhash } = await connection.getLatestBlockhash('confirmed');
+	const { blockhash } = await getRecentBlockhashInfo(connection, blockhashKey({ network: 'mainnet' }));
 	const tx = new Transaction({ feePayer, recentBlockhash: blockhash }).add(...instructions);
 	// Sponsored checkout: the platform signs as fee payer so a buyer holding only
 	// USDC can still pay. The buyer adds the authority signature in their wallet.

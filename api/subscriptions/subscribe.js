@@ -24,11 +24,11 @@ import {
 import {
 	getAssociatedTokenAddressSync,
 	createTransferCheckedInstruction,
-	getMint,
 } from '@solana/spl-token';
 import { z } from 'zod';
 
 import { solanaConnection } from '../_lib/solana/connection.js';
+import { blockhashKey, getRecentBlockhashInfo, mintDecimals } from '../_lib/solana/read-guards.js';
 import { sql } from '../_lib/db.js';
 import { authenticateBearer, extractBearer, getSessionUser } from '../_lib/auth.js';
 import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/http.js';
@@ -183,10 +183,12 @@ export default wrap(async (req, res) => {
 
 	// Build the SPL transfer (creator leg + reference, fee leg) the buyer signs.
 	const connection = solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed' });
-	const { blockhash } = await connection.getLatestBlockhash('confirmed');
+	const { blockhash } = await getRecentBlockhashInfo(connection, blockhashKey({ url: SOLANA_RPC }));
 	const mintKey = new PublicKey(checkout.currency_mint);
-	const mintInfo = await getMint(connection, mintKey);
-	const decimals = mintInfo.decimals;
+	// USDC and the other settlement mints have fixed, known decimals, so the
+	// common case costs no network read at all and a dead RPC cannot stall a
+	// checkout over a constant.
+	const decimals = await mintDecimals(connection, mintKey);
 
 	const buyer = new PublicKey(buyerPublicKey);
 	const fromAta = getAssociatedTokenAddressSync(mintKey, buyer);

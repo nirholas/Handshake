@@ -42,6 +42,7 @@ import { env } from '../_lib/env.js';
 import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { solanaConnection, loadAgentForSigning } from '../_lib/agent-pumpfun.js';
+import { blockhashKey, getRecentBlockhashInfo } from '../_lib/solana/read-guards.js';
 import { getSpendLimits } from '../_lib/agent-trade-guards.js';
 import { PARENT_LABEL } from '../_lib/threews-sns.js';
 import {
@@ -323,7 +324,7 @@ async function handlePrep(req, res, body) {
 	}
 	const conn = solanaConnection('mainnet');
 	const ixs = await buildTransferIxs({ payer, recipient, amountAtoms });
-	const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('confirmed');
+	const { blockhash, lastValidBlockHeight } = await getRecentBlockhashInfo(conn, blockhashKey({ network: 'mainnet' }));
 	const msg = new TransactionMessage({
 		payerKey: payer,
 		recentBlockhash: blockhash,

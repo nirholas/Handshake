@@ -12,6 +12,7 @@
 
 import { cors, json, method, readJson, wrap, error, validationError, rateLimited } from '../_lib/http.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
+import { ataExists, blockhashKey, getRecentBlockhashInfo } from '../_lib/solana/read-guards.js';
 import { evmFallbackProvider } from '../_lib/evm/rpc.js';
 import { limits } from '../_lib/rate-limit.js';
 import { getSessionUser, isSameSiteOrigin } from '../_lib/auth.js';
@@ -368,15 +369,18 @@ async function sendSolana({ agent, asset, recipient, amount, userId }) {
 
 		const senderAta = await getAssociatedTokenAddress(mintPk, kp.publicKey);
 		const recipientAta = await getAssociatedTokenAddress(mintPk, recipientPk);
-		const recipientAccount = await conn.getAccountInfo(recipientAta);
-		if (!recipientAccount) {
+		// Fails open to "missing" when the chain cannot be read: the worst case is
+		// an extra create instruction for an account that already exists, which the
+		// runtime treats as a no-op, whereas throwing here loses the whole transfer.
+		const recipientAccountExists = await ataExists(conn, recipientAta);
+		if (!recipientAccountExists) {
 			tx.add(createAssociatedTokenAccountInstruction(kp.publicKey, recipientAta, recipientPk, mintPk));
 		}
 		const amountUnits = parseAmountToBaseUnits(amount, decimals);
 		tx.add(createTransferInstruction(senderAta, recipientAta, kp.publicKey, amountUnits));
 	}
 
-	const { blockhash } = await conn.getLatestBlockhash();
+	const { blockhash } = await getRecentBlockhashInfo(conn, blockhashKey({ url: env.SOLANA_RPC_URL }), { commitment: 'finalized' });
 	tx.feePayer = kp.publicKey;
 	tx.recentBlockhash = blockhash;
 	tx.sign(kp);

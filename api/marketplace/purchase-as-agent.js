@@ -21,12 +21,12 @@
  */
 import { Keypair, PublicKey } from '@solana/web3.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
+import { mintDecimals } from '../_lib/solana/read-guards.js';
 import { submitProtected } from '../_lib/execution-engine.js';
 import {
 	getAssociatedTokenAddressSync,
 	createTransferCheckedInstruction,
 	createAssociatedTokenAccountIdempotentInstruction,
-	getMint,
 } from '@solana/spl-token';
 
 import { sql } from '../_lib/db.js';
@@ -232,7 +232,7 @@ export default wrap(async (req, res) => {
 	const connection = solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed' });
 	const mintKey  = new PublicKey(price.currency_mint);
 	const recipKey = new PublicKey(recipientAddr);
-	const mintInfo = await getMint(connection, mintKey);
+	const decimals = await mintDecimals(connection, mintKey);
 
 	const fromAta = getAssociatedTokenAddressSync(mintKey, buyerKeypair.publicKey);
 	const toAta   = getAssociatedTokenAddressSync(mintKey, recipKey);
@@ -245,7 +245,7 @@ export default wrap(async (req, res) => {
 	];
 	const transferIx = createTransferCheckedInstruction(
 		fromAta, mintKey, toAta, buyerKeypair.publicKey,
-		BigInt(price.amount), mintInfo.decimals,
+		BigInt(price.amount), decimals,
 	);
 	transferIx.keys.push({ pubkey: referenceKey, isSigner: false, isWritable: false });
 	ixs.push(transferIx);

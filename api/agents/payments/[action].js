@@ -13,6 +13,7 @@
 
 import { z } from 'zod';
 import { solanaConnection } from '../../_lib/solana/connection.js';
+import { blockhashKey, getRecentBlockhashInfo } from '../../_lib/solana/read-guards.js';
 import { PublicKey, Transaction, ComputeBudgetProgram } from '@solana/web3.js';
 import {
 	PumpAgentOffline,
@@ -117,7 +118,7 @@ async function handleCreatePrep(req, res) {
 		authority: owner,
 	});
 
-	const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('confirmed');
+	const { blockhash, lastValidBlockHeight } = await getRecentBlockhashInfo(conn, blockhashKey({ network: body.cluster }));
 	const tx = new Transaction({ feePayer: owner, blockhash, lastValidBlockHeight }).add(
 		ComputeBudgetProgram.setComputeUnitLimit({
 			units: PumpAgentOffline.DEFAULT_COMPUTE_UNIT_LIMIT_FOR_AGENT_PAYMENTS,
@@ -322,7 +323,7 @@ async function handlePayPrep(req, res) {
 		endTime: new BN(endTime),
 	});
 
-	const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('confirmed');
+	const { blockhash, lastValidBlockHeight } = await getRecentBlockhashInfo(conn, blockhashKey({ network: body.cluster }));
 	const tx = new Transaction({
 		feePayer: payerPk,
 		blockhash,
@@ -536,7 +537,7 @@ async function handleDistributePrep(req, res) {
 		user: wallet,
 		currencyMint: new PublicKey(body.currency_mint),
 	});
-	const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('confirmed');
+	const { blockhash, lastValidBlockHeight } = await getRecentBlockhashInfo(conn, blockhashKey({ network: body.cluster }));
 	const tx = new Transaction({ feePayer: wallet, blockhash, lastValidBlockHeight }).add(
 		ComputeBudgetProgram.setComputeUnitLimit({ units: 120_000 }),
 		ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100_000 }),
@@ -615,7 +616,7 @@ async function handleWithdrawPrep(req, res) {
 		: spl.getAssociatedTokenAddressSync(currency, authority);
 	const offline = PumpAgentOffline.load(new PublicKey(body.mint), conn);
 	const ix = await offline.withdraw({ authority, currencyMint: currency, receiverAta });
-	const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('confirmed');
+	const { blockhash, lastValidBlockHeight } = await getRecentBlockhashInfo(conn, blockhashKey({ network: body.cluster }));
 	const tx = new Transaction({ feePayer: authority, blockhash, lastValidBlockHeight }).add(
 		ComputeBudgetProgram.setComputeUnitLimit({ units: 100_000 }),
 		ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100_000 }),
