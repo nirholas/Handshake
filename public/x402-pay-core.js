@@ -349,7 +349,7 @@ export function buildEvmPaymentPayload({ accept, signature, authorization, resou
 let _solanaWeb3 = null;
 async function loadSolanaWeb3() {
 	if (_solanaWeb3) return _solanaWeb3;
-	// Dynamic import keeps the paywall tiny — web3.js is only fetched when a
+	// Dynamic import keeps the paywall tiny: web3.js is only fetched when a
 	// Solana payment is actually attempted. The shared loader tries esm.sh, then
 	// jsdelivr and unpkg for the same version, each under a deadline, and throws
 	// a typed error naming the hosts when all three are blocked.

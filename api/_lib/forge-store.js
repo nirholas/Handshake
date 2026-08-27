@@ -355,7 +355,7 @@ async function copyToBucket({ sourceUrl, key, fallbackContentType, maxBytes, com
 	// et al.) often serve ephemeral output blobs as `application/octet-stream`
 	// or another generic type regardless of the actual bytes. Trusting that
 	// verbatim into R2's stored Content-Type is what made every homepage
-	// forge thumbnail fail Chrome's Opaque Response Blocking — the browser
+	// forge thumbnail fail Chrome's Opaque Response Blocking (Opaque Response Blocking): the browser
 	// won't render a cross-origin <img> whose declared type isn't an image
 	// type. Callers that know the asset kind (e.g. the preview image, whose
 	// extension is already decided by imageExtFor) should force it.
