@@ -1613,9 +1613,18 @@ export const env = {
 	},
 
 	// Public Farcaster hub HTTP endpoint — the keyless rung of that same chain.
-	// Any hub that speaks the standard /v1 HTTP API works.
+	// Any hub that speaks the standard /v1 HTTP API works. Kept as the FIRST
+	// rung when set, so an operator's preferred hub still leads.
 	get FARCASTER_HUB_URL() {
 		return opt('FARCASTER_HUB_URL');
+	},
+
+	// Additional hubs, comma-separated, appended after FARCASTER_HUB_URL. Hubs
+	// replicate the same message set, so hubGet walks them until one answers and
+	// a single unreachable host no longer takes the whole Farcaster lane down.
+	// Optional: a built-in list of public hubs is always appended behind these.
+	get FARCASTER_HUB_URLS() {
+		return opt('FARCASTER_HUB_URLS');
 	},
 
 	// OpenAI API key — used by TTS proxy (/api/tts/speak) and chat endpoints.

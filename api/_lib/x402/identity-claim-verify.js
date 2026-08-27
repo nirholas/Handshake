@@ -68,6 +68,8 @@ const CAIP2_TO_EVM_CHAINID = {
 };
 
 // Etherscan V2 unified multichain API — one key covers every chain via `chainid`.
+import { fetchUpstreamJson, lastGood } from '../upstream-fetch.js';
+
 const ETHERSCAN_V2 = 'https://api.etherscan.io/v2/api';
 
 function normEvm(addr) {
@@ -188,9 +190,20 @@ export const realDeps = {
 		if (!key) return { deployer: null, txHash: null, reason: 'no_explorer_key' };
 		try {
 			const url = `${ETHERSCAN_V2}?chainid=${chainId}&module=contract&action=getcontractcreation&contractaddresses=${address}&apikey=${key}`;
-			const res = await fetch(url, { signal: AbortSignal.timeout(6000), headers: { accept: 'application/json' } });
-			if (!res.ok) return { deployer: null, txHash: null, reason: `explorer_http_${res.status}` };
-			const data = await res.json();
+			// A contract's deployer is immutable, so a remembered answer is not
+			// merely tolerable here, it is the same answer forever. That matters
+			// because this check fails CLOSED: without it an Etherscan blip rejects
+			// a legitimate deployer's identity claim, which is a far worse outcome
+			// than reading a fact that cannot change from a day-old cache.
+			const { value: data } = await lastGood(
+				`identity-claim:creation:${chainId}:${address.toLowerCase()}`,
+				() => fetchUpstreamJson(
+					url,
+					{ headers: { accept: 'application/json' } },
+					{ name: 'etherscan:contract-creation', timeoutMs: 6_000, attempts: 2 },
+				),
+				{ maxAgeMs: 24 * 60 * 60_000 },
+			);
 			const row = Array.isArray(data?.result) ? data.result[0] : null;
 			if (!row?.contractCreator) return { deployer: null, txHash: null, reason: 'no_creation_record' };
 			return {

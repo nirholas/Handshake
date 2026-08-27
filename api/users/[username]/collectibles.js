@@ -18,6 +18,7 @@
 // Public, no auth: the profile it backs is public.
 
 import { sql } from '../../_lib/db.js';
+import { fetchUpstreamJson, lastGood } from '../../_lib/upstream-fetch.js';
 import { cors, json, method, wrap, error, rateLimited } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { env } from '../../_lib/env.js';
@@ -276,9 +277,21 @@ async function fetchEvmNfts(wallet, chainId) {
 	};
 	const host = hosts[Number(chainId)] || 'eth-mainnet';
 	const url = `https://${host}.g.alchemy.com/nft/v3/${apiKey}/getNFTsForOwner?owner=${encodeURIComponent(wallet)}&withMetadata=true&pageSize=${NFT_CAP}&excludeFilters[]=SPAM`;
-	const resp = await fetch(url, { signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS) });
-	if (!resp.ok) throw new Error(`Alchemy ${resp.status}`);
-	const data = await resp.json();
+	// One indexer, and its failure used to empty a user's public collectibles
+	// panel outright. NFT ownership barely changes minute to minute, so a
+	// remembered response is a genuinely good answer during a blip, and the same
+	// last-known-good discipline api/nft/resolve.js already applies to single
+	// descriptors. The wallet and chain key it, so one user's stale panel can
+	// never leak into another's.
+	const { value: data } = await lastGood(
+		`collectibles:${chainId}:${wallet.toLowerCase()}`,
+		() => fetchUpstreamJson(
+			url,
+			{},
+			{ name: 'alchemy:nfts', timeoutMs: PROVIDER_TIMEOUT_MS, attempts: 2 },
+		),
+		{ maxAgeMs: 30 * 60_000 },
+	);
 	const base = explorerForEvm(chainId, '').replace(/\/address\/$/, '');
 	return (data.ownedNfts || [])
 		.map((n) => {

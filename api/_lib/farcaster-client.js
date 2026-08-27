@@ -52,33 +52,73 @@ async function neynar() {
 }
 
 export function hubUrl() {
-	return (env.FARCASTER_HUB_URL || 'https://hub.pinata.cloud').replace(/\/+$/, '');
+	return hubUrls()[0];
+}
+
+// Farcaster hubs are interchangeable: every one of them serves the same
+// replicated set, which is the whole point of the protocol. Pinning a single
+// host therefore bought nothing and cost everything, since one unreachable hub
+// took the entire Farcaster lane down with it. An operator can still pin or
+// reorder the list through FARCASTER_HUB_URLS (comma-separated), and
+// FARCASTER_HUB_URL stays honoured as the first rung so existing deploys keep
+// their preferred host.
+const DEFAULT_HUBS = [
+	'https://hub.pinata.cloud',
+	'https://hub.farcaster.standardcrypto.vc:2281',
+	'https://nemes.farcaster.xyz:2281',
+];
+
+export function hubUrls() {
+	const configured = [
+		...(env.FARCASTER_HUB_URL ? [env.FARCASTER_HUB_URL] : []),
+		...String(env.FARCASTER_HUB_URLS || '').split(',').map((u) => u.trim()).filter(Boolean),
+	];
+	const seen = new Set();
+	const out = [];
+	for (const u of [...configured, ...DEFAULT_HUBS]) {
+		const clean = u.replace(/\/+$/, '');
+		if (clean && !seen.has(clean)) {
+			seen.add(clean);
+			out.push(clean);
+		}
+	}
+	return out;
 }
 
 async function hubGet(path) {
-	let resp;
-	try {
-		resp = await fetch(`${hubUrl()}${path}`, {
-			headers: { accept: 'application/json' },
-			signal: AbortSignal.timeout(HUB_TIMEOUT_MS),
-		});
-	} catch (err) {
-		throw new FarcasterError(`Farcaster hub unreachable: ${err?.message || err}`);
-	}
-	if (resp.status === 404) throw new FarcasterError('Farcaster user not found', { status: 404, code: 'farcaster_user_not_found' });
-	if (!resp.ok) {
-		// A hub answers "no such fname" with 400 + a NotFound detail, not 404.
-		// Without this the caller cannot tell a typo'd handle from an outage.
-		const body = await resp.text().catch(() => '');
-		if (resp.status === 400 && /not\s*found/i.test(body)) {
-			throw new FarcasterError('Farcaster user not found', {
-				status: 404,
-				code: 'farcaster_user_not_found',
+	const hubs = hubUrls();
+	let lastErr;
+	for (const base of hubs) {
+		let resp;
+		try {
+			resp = await fetch(`${base}${path}`, {
+				headers: { accept: 'application/json' },
+				signal: AbortSignal.timeout(HUB_TIMEOUT_MS),
 			});
+		} catch (err) {
+			// Unreachable host: try the next hub rather than failing the read.
+			lastErr = new FarcasterError(`Farcaster hub unreachable: ${err?.message || err}`);
+			continue;
 		}
-		throw new FarcasterError(`Farcaster hub ${resp.status}`);
+		// "No such user" is the network's answer, not this hub's opinion, so it
+		// ends the walk immediately. Only infrastructure failures fail over.
+		if (resp.status === 404) throw new FarcasterError('Farcaster user not found', { status: 404, code: 'farcaster_user_not_found' });
+		if (!resp.ok) {
+			// A hub answers "no such fname" with 400 + a NotFound detail, not 404.
+			// Without this the caller cannot tell a typo'd handle from an outage.
+			const body = await resp.text().catch(() => '');
+			if (resp.status === 400 && /not\s*found/i.test(body)) {
+				throw new FarcasterError('Farcaster user not found', {
+					status: 404,
+					code: 'farcaster_user_not_found',
+				});
+			}
+			lastErr = new FarcasterError(`Farcaster hub ${resp.status}`);
+			continue;
+		}
+		return resp.json();
 	}
-	return resp.json();
+	throw lastErr || new FarcasterError('no Farcaster hub answered');
 }
 
 /** Page through a hub message endpoint until `limit` messages or the pages run out. */

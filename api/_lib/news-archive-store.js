@@ -13,6 +13,7 @@
 // meta/stats.json (last_article_date), which the appender keeps current.
 
 import { createCache } from './mem-cache.js';
+import { fetchUpstream, fetchUpstreamJson, lastGood } from './upstream-fetch.js';
 
 const GCS_BASE = 'https://storage.googleapis.com/three-ws-news-archive';
 const GCS_LIST =
@@ -63,18 +64,26 @@ export function compact(a) {
 	};
 }
 
-async function fetchJson(url, timeoutMs = 15_000) {
-	const resp = await fetch(url, {
-		headers: { accept: 'application/json' },
-		signal: AbortSignal.timeout(timeoutMs),
-	});
-	if (!resp.ok) throw new Error(`archive upstream ${resp.status}`);
-	return resp.json();
+// One bucket, one read, no recovery: a GCS blip took the archive index, the
+// month listing and the sitemap down together, and the in-process caches above
+// are empty on a cold instance, which is exactly when an outage hurts. A retry
+// absorbs the transient, and a last-known-good copy keyed per URL absorbs the
+// rest. Archive data is immutable once written, so a remembered copy is not
+// merely acceptable here, it is the same answer.
+async function fetchJson(url, timeoutMs = 15_000, lastGoodKey = null) {
+	const load = () => fetchUpstreamJson(
+		url,
+		{ headers: { accept: 'application/json' } },
+		{ name: 'news-archive', timeoutMs, attempts: 2 },
+	);
+	if (!lastGoodKey) return load();
+	const { value } = await lastGood(lastGoodKey, load, { maxAgeMs: 6 * 60 * 60_000 });
+	return value;
 }
 
 export async function getStats() {
 	if (statsCache && statsCache.expiresAt > Date.now()) return statsCache.value;
-	const value = await fetchJson(`${GCS_BASE}/meta/stats.json`);
+	const value = await fetchJson(`${GCS_BASE}/meta/stats.json`, 15_000, 'news-archive:stats');
 	statsCache = { value, expiresAt: Date.now() + META_TTL_MS };
 	return value;
 }
@@ -82,7 +91,7 @@ export async function getStats() {
 /** Queryable months, ascending YYYY-MM. */
 export async function getMonths() {
 	if (monthsCache && monthsCache.expiresAt > Date.now()) return monthsCache.value;
-	const listing = await fetchJson(GCS_LIST);
+	const listing = await fetchJson(GCS_LIST, 15_000, 'news-archive:months');
 	const value = (listing.items || [])
 		.map((o) => {
 			const m = /^articles\/(\d{4}-\d{2})\.jsonl$/.exec(o.name);
@@ -113,11 +122,21 @@ export async function loadMonth(month) {
 		monthCache.set(month, hit); // refresh LRU recency
 		return hit.records;
 	}
-	const resp = await fetch(`${GCS_BASE}/articles/${month}.jsonl`, {
-		signal: AbortSignal.timeout(30_000),
-	});
-	if (!resp.ok) throw new Error(`month ${month} → ${resp.status}`);
-	const text = await resp.text();
+	// A sealed month never changes, so its remembered body is byte-identical to
+	// the live one; the mutable current month is worth at most a few minutes of
+	// staleness against being unreadable altogether.
+	const { value: text } = await lastGood(
+		`news-archive:month:${month}`,
+		async () => {
+			const resp = await fetchUpstream(
+				`${GCS_BASE}/articles/${month}.jsonl`,
+				{},
+				{ name: 'news-archive:month', timeoutMs: 30_000, attempts: 2 },
+			);
+			return resp.text();
+		},
+		{ maxAgeMs: isMutableMonth(month) ? 10 * 60_000 : 6 * 60 * 60_000 },
+	);
 	const records = [];
 	for (const line of text.split('\n')) {
 		if (!line.trim()) continue;
