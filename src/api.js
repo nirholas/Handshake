@@ -6,15 +6,40 @@
 //   • transient 5xx retry on safe methods
 //   • 401 → /login?next=… redirect
 //
-// Every page that talks to /api MUST import apiFetch from here. The ESLint
-// rule no-restricted-syntax in .eslintrc blocks raw `fetch(`${API_BASE}…`)` to
-// prevent the kind of drift that left agent-edit.js without CSRF and silently
-// 403'ing every save until a user complained.
+//   • a per-attempt deadline (timeoutMs: 20s reads, 90s mutations) so a hung edge worker
+//     never leaves a spinner up forever
+//
+// Every page that talks to /api should import apiFetch from here, so it gets
+// CSRF, retry, the deadline and the 401 redirect for free. Raw `fetch('/api…')`
+// calls get none of that; the drift that left agent-edit.js without CSRF and
+// silently 403'ing every save is exactly what this module exists to prevent.
 
 import { trackError, track, ANALYTICS_EVENTS } from './analytics.js';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 const TRANSIENT_STATUSES = new Set([502, 503, 504]);
+// Reads get a tight deadline; mutations (uploads, job submits) get a long one
+// so a slow link never fails a 50 MB avatar upload that is still making progress.
+const DEFAULT_TIMEOUT_MS = 20_000;
+const DEFAULT_MUTATION_TIMEOUT_MS = 90_000;
+
+// Per-attempt deadline composed with whatever signal the caller passed, so a
+// caller's own abort (stale search, navigation) still wins immediately.
+function attemptSignal(callerSignal, timeoutMs) {
+	if (!(timeoutMs > 0) || typeof AbortSignal === 'undefined' || typeof AbortSignal.timeout !== 'function') {
+		return callerSignal;
+	}
+	const timeout = AbortSignal.timeout(timeoutMs);
+	if (!callerSignal) return timeout;
+	if (typeof AbortSignal.any === 'function') return AbortSignal.any([callerSignal, timeout]);
+	const ctrl = new AbortController();
+	const forward = (sig) => () => { if (!ctrl.signal.aborted) ctrl.abort(sig.reason); };
+	for (const sig of [callerSignal, timeout]) {
+		if (sig.aborted) { ctrl.abort(sig.reason); break; }
+		sig.addEventListener('abort', forward(sig), { once: true });
+	}
+	return ctrl.signal;
+}
 
 // Reduce an API path to a low-cardinality route for analytics: drop the query
 // string (may carry tokens) and collapse UUIDs / long ids to ':id' so the
@@ -99,10 +124,12 @@ function redirectToLogin() {
 
 // Drop-in fetch replacement. Pass allowAnonymous:true on endpoints where a
 // 401 is a legitimate answer the caller wants to inspect itself (e.g.
-// /api/auth/me on first paint).
+// /api/auth/me on first paint). Pass timeoutMs to change the per-attempt
+// deadline (0 disables it, for long-running job submits that stream).
 export async function apiFetch(path, options = {}) {
 	const { allowAnonymous = false, ...init } = options;
 	const method = (init.method || 'GET').toUpperCase();
+	const timeoutMs = options.timeoutMs ?? (SAFE_METHODS.has(method) ? DEFAULT_TIMEOUT_MS : DEFAULT_MUTATION_TIMEOUT_MS);
 	const canRetry = SAFE_METHODS.has(method);
 
 	const headers = new Headers(init.headers || {});
@@ -124,6 +151,7 @@ export async function apiFetch(path, options = {}) {
 			credentials: 'include',
 			...init,
 			headers,
+			signal: attemptSignal(init.signal, timeoutMs),
 		});
 
 	let res;
@@ -138,6 +166,10 @@ export async function apiFetch(path, options = {}) {
 		} catch (networkErr) {
 			lastErr = networkErr;
 			res = undefined;
+			// The caller gave up (its own signal fired): stop, do not retry on
+			// its behalf. A deadline we imposed is transient and retries like a
+			// dropped connection.
+			if (init.signal?.aborted) break;
 			continue;
 		}
 		if (canRetry && TRANSIENT_STATUSES.has(res.status)) continue;

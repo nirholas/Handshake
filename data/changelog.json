@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-27",
+			"title": "Every outside data source now has a backup",
+			"summary": "Prices, DeFi stats, token data, pump.fun feeds, RPC reads and 3D generation providers all had single points of failure: one rate limit or outage upstream turned into a blank section or an error page. Every one of those reads now has a deadline, retries only on transient faults, a second and third source where one exists, and keeps serving the last good value (marked as stale) when everything upstream is down. In the browser, API calls time out instead of spinning forever, script and model loads try mirror CDNs, and payment flows report a failed confirmation with the transaction signature instead of showing nothing.",
+			"tags": [
+				"improvement",
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-27",
 			"title": "Every tap target on the marketplace and your agents pages now fits a thumb",
 			"summary": "On phones, the hearts, tags, author links and the write-with-agent button on marketplace cards were as small as 18 pixels tall, so browsing on a Seeker or any Android phone meant a lot of missed taps. All of them, plus the walk-companion controls and footer links, now sit inside 44 pixel tap areas without changing how the cards look. Measured on a real phone profile: the marketplace went from 1,352 undersized controls to zero.",
 			"tags": [

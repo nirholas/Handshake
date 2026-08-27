@@ -124,6 +124,42 @@ a 400 or a `TypeError` is not retried. Pass `shouldRetry` to override.
 hand-rolled `sleep(base * 2 ** attempt)` loops had no jitter at all, so a shared
 upstream blip re-synchronized every caller into the same retry wave.
 
+### `api/_lib/upstream-fetch.js` — the one fetch for third-party calls
+
+```js
+import { fetchUpstream, fetchUpstreamJson, fetchAnyJson, lastGood } from './_lib/upstream-fetch.js';
+
+// Deadline (8s default), transient-only retries, Retry-After honoured, breaker.
+const body = await fetchUpstreamJson(url, {}, { timeoutMs: 6000, name: 'dexscreener' });
+
+// Equivalent mirrors, first one that answers wins; a dead mirror is benched.
+const { value } = await fetchAnyJson(['https://api.drand.sh/public/latest', 'https://api2.drand.sh/public/latest']);
+
+// Keep the page alive through a blip: serve the previous value, flagged stale.
+const { value: rows, stale } = await lastGood('llama:chains', () => fetchUpstreamJson(LLAMA));
+```
+
+A non-2xx response rejects with an `UpstreamError` carrying `status`, `url` and
+a body excerpt, so `isRetryableError` and handlers can branch on it. Solana and
+EVM RPC do not go through here: `api/_lib/solana/connection.js` and
+`api/_lib/evm/rpc.js` have method-aware rotation. Ordered lists of *different*
+providers (with per-provider parsers) use `fetchFirst` from
+`src/shared/failover-fetch.js` instead.
+
+### `api/_lib/cache.js` — `cacheWrapLastGood`
+
+```js
+import { cacheWrapLastGood } from './_lib/cache.js';
+
+// Fresh for 5 minutes; on a thrown refresh, the fleet-wide last-good copy (24h).
+const board = await cacheWrapLastGood('pump:board', 300, () => fetchBoard());
+const { value, stale } = await cacheWrapLastGood(key, 300, load, { withMeta: true });
+```
+
+Unlike `lastGood` above, the mirror lives in the shared store (Upstash), so a
+freshly started instance can ride out an outage on a value another instance
+fetched.
+
 ### `api/_lib/mem-cache.js` — bounded in-process cache
 
 Backed by [`lru-cache`](https://www.npmjs.com/package/lru-cache).
@@ -134,6 +170,8 @@ import { createCache, cached } from './_lib/mem-cache.js';
 const cache = createCache({ max: 512, ttlMs: 60_000 });
 
 // Read-through with single-flight: concurrent misses share one load().
+// When load() throws, the last value it returned for this key (kept 30 min,
+// `staleMs`) is served instead; pass `staleMs: 0` where the error must surface.
 const price = await cached(cache, mint, () => fetchPrice(mint));
 
 // Per-entry TTL when lifetimes vary by key:

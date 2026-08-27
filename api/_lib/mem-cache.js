@@ -50,13 +50,23 @@ export function createCache({ max = 512, ttlMs, updateAgeOnGet = false } = {}) {
  * the same key share one `load()` call instead of stampeding the upstream.
  * Four separate inflight-dedupe Maps existed across api/ before this.
  *
+ * Stale-on-error: every value that `load()` produces is also mirrored into a
+ * per-cache last-known-good tier that outlives the entry's TTL (default 30
+ * minutes, `staleMs`). When a later `load()` throws, the caller gets that
+ * last-good value instead of the rejection. Before this, eleven DefiLlama
+ * handlers and the Fear & Greed endpoint went straight from "upstream blipped"
+ * to a 502 while a sixty-second-old payload sat in the same process. Pass
+ * `staleMs: 0` to opt out where an error must surface (a write, a probe).
+ *
  * @template V
  * @param {LRUCache<string, V>} cache
  * @param {string} key
  * @param {() => Promise<V>} load
+ * @param {{ staleMs?: number, onStale?: (err: unknown) => void }} [opts]
  * @returns {Promise<V>}
  */
-export function cached(cache, key, load) {
+export function cached(cache, key, load, opts = {}) {
+	const { staleMs = DEFAULT_STALE_MS, onStale } = opts;
 	const hit = cache.get(key);
 	if (hit !== undefined) return Promise.resolve(hit);
 
@@ -71,8 +81,17 @@ export function cached(cache, key, load) {
 	const p = (async () => {
 		try {
 			const value = await load();
-			if (value !== undefined) cache.set(key, value);
+			if (value !== undefined) {
+				cache.set(key, value);
+				if (staleMs > 0) lastGoodTier(cache, staleMs).set(key, value, { ttl: staleMs });
+			}
 			return value;
+		} catch (err) {
+			const stale = staleMs > 0 ? lastGoodTier(cache, staleMs).get(key) : undefined;
+			if (stale === undefined) throw err;
+			if (onStale) onStale(err);
+			else warnStale(key, err);
+			return stale;
 		} finally {
 			inflight.delete(key);
 		}
@@ -81,5 +100,35 @@ export function cached(cache, key, load) {
 	return p;
 }
 
-// Per-cache in-flight maps, keyed weakly so a discarded cache is collectable.
+/** True when `cached()` has a last-good copy of `key` it could serve on error. */
+export function hasLastGood(cache, key) {
+	const tier = _lastGood.get(cache);
+	return tier ? tier.get(key) !== undefined : false;
+}
+
+const DEFAULT_STALE_MS = 30 * 60_000;
+
+// One last-good tier per cache, sized like its parent so it cannot outgrow it.
+function lastGoodTier(cache, staleMs) {
+	let tier = _lastGood.get(cache);
+	if (!tier) {
+		tier = new LRUCache({ max: cache.max || 512, ttl: staleMs, perf: { now: () => Date.now() }, ttlResolution: 0 });
+		_lastGood.set(cache, tier);
+	}
+	return tier;
+}
+
+// One warning per key per minute: an outage should be visible in the logs,
+// not fill them.
+const _warnedAt = new Map();
+function warnStale(key, err) {
+	const now = Date.now();
+	if ((_warnedAt.get(key) || 0) > now - 60_000) return;
+	_warnedAt.set(key, now);
+	console.warn(`[mem-cache] load failed for "${key}" (${err?.message || err}); serving last-good`);
+}
+
+// Per-cache in-flight maps and last-good tiers, keyed weakly so a discarded
+// cache is collectable.
 const _inflight = new WeakMap();
+const _lastGood = new WeakMap();

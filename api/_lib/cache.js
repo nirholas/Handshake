@@ -557,3 +557,38 @@ export async function cacheWrap(key, ttlSeconds, fn) {
 	}
 	return value;
 }
+
+/**
+ * `cacheWrap` with a last-known-good tier in the shared store. A fresh value is
+ * served for `ttlSeconds`; every fresh value is also mirrored under `<key>:lkg`
+ * for `staleTtlSeconds` (default 24h). When `fn()` throws and a mirror exists,
+ * the mirror is returned instead of the rejection, so a throttled or dead
+ * upstream degrades to minutes-stale data rather than a 5xx. The result is
+ * unwrapped; pass `{ withMeta: true }` to get `{ value, stale }`.
+ *
+ * @template T
+ * @param {string} key
+ * @param {number} ttlSeconds
+ * @param {() => Promise<T>} fn
+ * @param {{ staleTtlSeconds?: number, withMeta?: boolean }} [opts]
+ * @returns {Promise<T | { value: T, stale: boolean }>}
+ */
+export async function cacheWrapLastGood(key, ttlSeconds, fn, opts = {}) {
+	const { staleTtlSeconds = 24 * 3600, withMeta = false } = opts;
+	const lkgKey = `${key}:lkg`;
+	const hit = await cacheGet(key);
+	if (hit !== null && hit !== undefined) return withMeta ? { value: hit, stale: false } : hit;
+	try {
+		const value = await fn();
+		if (value !== null && value !== undefined) {
+			cacheSet(key, value, ttlSeconds).catch(() => {});
+			cacheSet(lkgKey, value, staleTtlSeconds).catch(() => {});
+		}
+		return withMeta ? { value, stale: false } : value;
+	} catch (err) {
+		const lkg = await cacheGet(lkgKey);
+		if (lkg === null || lkg === undefined) throw err;
+		console.warn(`[cache] "${key}" refresh failed (${err?.message || err}); serving last-good`);
+		return withMeta ? { value: lkg, stale: true } : lkg;
+	}
+}
