@@ -2,6 +2,15 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-08-27",
+			"title": "Text-to-3D is generating again, and it answers in seconds",
+			"summary": "For most of a day, describing something in the forge produced a long wait and then a busy message, on the site, in the ChatGPT app, and for agents buying through OKX. Two things had gone wrong at once: the image provider that paints the concept picture had stopped responding, and the free assistant that sharpens your description was asking for models that no longer exist. Both are fixed. The painter now runs on a model that answers in about five seconds, the assistant uses current models, and a text-to-3D request is accepted in three to eight seconds instead of never. Image-to-3D was never affected.",
+			"tags": [
+				"fix"
+			],
+			"link": "/forge"
+		},
+		{
 			"date": "2026-08-25",
 			"title": "GitHub Discussions is open: say hello, show what you built, or steer the roadmap",
 			"summary": "The Discussions tab on the three.ws repo now has three real threads instead of an empty room. Welcome is where to introduce yourself and find every other channel we are in. Show and tell is for avatars, embeds, and experiments you built, with the good ones reposted with credit. Roadmap is an open thread on what to build next and what is in your way, and anything concrete raised there becomes a tracked issue linked back to the thread. The repo also passed 100 stars this week, which was the last thing standing between three.ws and GitHub's Open Source Friday livestream.",

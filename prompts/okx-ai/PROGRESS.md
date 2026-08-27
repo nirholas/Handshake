@@ -155,6 +155,18 @@ lane because it reads the static tier matrix.
 - Watch: `onchainos agent get-agents --agent-ids 2632` until the approval state moves. A
   rejection reason arrives by email to `claude@three.ws`; `approvalRemark` stays empty.
 
+### 2026-08-27, later: the lane is back (deploy `8f16c071b`)
+
+Root cause of "every text submit ends in 429" was two dead providers, not the budgets: Vertex
+is billing-denied project-wide (`403 Lightning dunning decision is deny`, owner item) and the
+NIM `flux.1-schnell` endpoint stopped answering entirely, while the director's free chat rungs
+named models that no longer exist (Llama 3.x: 404 on Groq, 410 end-of-life on NIM as of
+2026-08-26). Fixes: NIM lane moved to `flux.1-dev` (serves in ~5 s, needs steps >= 5 and a
+cfg_scale), Groq on `qwen/qwen3.8-27b`, NVIDIA on `nemotron-3` with thinking disabled.
+Measured on production after purge: text submits accepted in **3.3 s and 8.2 s** (HTTP 200,
+real job ids), from 95 s+ hangs in the morning and 80 s 429s an hour earlier. Vertex is still
+the intended primary painter; it returns when billing is fixed.
+
 ### Still owner-gated (unchanged, and unchanged by this rebuild)
 
 Funding. (Correction 2026-08-27: the live relayer is `0xe81DE501Dd5D9299E2bA8964498858d3fAD0415B`,

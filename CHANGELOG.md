@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-08-27
+
+- **Text-to-3D is generating again, and it answers in seconds**: For most of a day, describing something in the forge produced a long wait and then a busy message, on the site, in the ChatGPT app, and for agents buying through OKX. Two things had gone wrong at once: the image provider that paints the concept picture had stopped responding, and the free assistant that sharpens your description was asking for models that no longer exist. Both are fixed. The painter now runs on a model that answers in about five seconds, the assistant uses current models, and a text-to-3D request is accepted in three to eight seconds instead of never. Image-to-3D was never affected. (`/forge`) `[fix]`
+
 ## 2026-08-25
 
 - **Docs · Open-Source Footprint** (`/docs/open-source-footprint`): Every registry, marketplace, community, and directory where three.ws code and listings live, with live links and the number behind each one.

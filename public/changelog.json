@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-08-26T19:17:01.581Z",
+	"generated_at": "2026-08-27T04:44:26.027Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-08-27",
+			"type": "update",
+			"title": "Text-to-3D is generating again, and it answers in seconds",
+			"summary": "For most of a day, describing something in the forge produced a long wait and then a busy message, on the site, in the ChatGPT app, and for agents buying through OKX. Two things had gone wrong at once: the image provider that paints the concept picture had stopped responding, and the free assistant that sharpens your description was asking for models that no longer exist. Both are fixed. The painter now runs on a model that answers in about five seconds, the assistant uses current models, and a text-to-3D request is accepted in three to eight seconds instead of never. Image-to-3D was never affected.",
+			"link": "/forge",
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-08-25",
 			"type": "launch",
