@@ -55,7 +55,7 @@ const FREE_CHAIN = [
 	{ provider: 'pollinations', host: HOSTS.pollinations, model: 'openai-fast' },
 	{ provider: 'llm7', host: HOSTS.llm7, model: 'gemini-3.1-flash-lite' },
 	{ provider: 'siliconflow', host: HOSTS.siliconflow, model: 'Qwen/Qwen3-8B' },
-	{ provider: 'groq#instant', host: HOSTS.groq, model: 'llama-3.1-8b-instant' },
+	{ provider: 'groq#instant', host: HOSTS.groq, model: 'openai/gpt-oss-20b' },
 ];
 
 const ENV_KEYS = [
