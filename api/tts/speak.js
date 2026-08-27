@@ -43,6 +43,12 @@ const FORMATS = {
 // Per-attempt budget for the free lane: generous enough for 4096 chars of
 // synthesis, small enough that the paid backstop still fits in maxDuration.
 const NVIDIA_TIMEOUT_MS = 30_000;
+// The backstop's OWN budget. It used to reuse NVIDIA_TIMEOUT_MS, which reads as
+// a shared 30s but is not: lane 1 can spend all of it before lane 2 starts, and
+// the platform kills the invocation while OpenAI is still allowed 30 more
+// seconds. A shorter, separate budget is what makes the second lane a real
+// fallback rather than one that exists only when the first fails instantly.
+const OPENAI_TIMEOUT_MS = 20_000;
 
 export default wrap(async function handler(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
@@ -127,7 +133,7 @@ export default wrap(async function handler(req, res) {
 			body: JSON.stringify({
 				model, voice, input: text, response_format: formatKey, speed,
 			}),
-			signal: AbortSignal.timeout(NVIDIA_TIMEOUT_MS),
+			signal: AbortSignal.timeout(OPENAI_TIMEOUT_MS),
 		});
 	} catch (e) {
 		laneErrors.push(`openai: ${e?.message || 'fetch failed'}`);

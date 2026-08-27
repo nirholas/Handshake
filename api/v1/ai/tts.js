@@ -20,9 +20,9 @@ import { declareHttpDiscovery, withService } from '../../_lib/x402/bazaar-helper
 import { installAccessControl } from '../../_lib/x402/access-control.js';
 import { TTS_VOICE_IDS, DEFAULT_VOICE } from '../../_lib/tts-voices.js';
 import {
-	nvidiaTtsConfigured,
 	ttsVoicesPayload,
 	readTtsInput,
+	ttsConfigured,
 	ttsSynthesize,
 	FREE_TTS_MAX_CHARS,
 	PAID_TTS_MAX_CHARS,
@@ -164,7 +164,7 @@ export default wrap(async function handler(req, res) {
 				data: {
 					endpoint: ROUTE,
 					description: 'POST text to synthesize speech. GET ?voices=1 lists voices.',
-					configured: nvidiaTtsConfigured(),
+					configured: ttsConfigured(),
 					free_tier: { per_day: 10, max_chars: FREE_TTS_MAX_CHARS },
 					paid: { price_usdc: Number(PRICE_ATOMICS) / 1e6, max_chars: PAID_TTS_MAX_CHARS, networks: ['base', 'solana'] },
 				},
@@ -174,8 +174,17 @@ export default wrap(async function handler(req, res) {
 	}
 
 	// ── POST: synthesize ──────────────────────────────────────────────────────
-	if (!nvidiaTtsConfigured()) {
-		return error(res, 503, 'not_configured', 'Text-to-speech is not configured (set NVIDIA_API_KEY)');
+	// ttsSynthesize falls through to the Gemini TTS lane when Magpie cannot
+	// serve, so the endpoint is available whenever EITHER is configured. Gating
+	// on the NVIDIA key alone used to 503 a request the Gemini lane could have
+	// answered on platform credits.
+	if (!ttsConfigured()) {
+		return error(
+			res,
+			503,
+			'not_configured',
+			'Text-to-speech is not configured (set NVIDIA_API_KEY, or GOOGLE_CLOUD_PROJECT for the Gemini lane)',
+		);
 	}
 
 	// Buffer the body once, then decide the lane — the paid rail reads the same

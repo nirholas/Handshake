@@ -24,6 +24,7 @@ import {
 	parseWav,
 } from './asr-nvidia.js';
 import { TTS_VOICES, TTS_VOICE_IDS, DEFAULT_VOICE } from './tts-voices.js';
+import { geminiTtsConfigured, synthesizeGeminiTts } from './tts-gemini.js';
 
 export { nvidiaTtsConfigured, nvidiaAsrConfigured };
 
@@ -110,11 +111,46 @@ export function readTtsInput(raw, { maxChars = PAID_TTS_MAX_CHARS } = {}) {
 // Synthesize on the free NVIDIA NIM Magpie lane. Returns a JSON-serializable
 // payload with base64 audio (uniform across the free + paid lanes so settlement
 // on the paid rail always emits JSON). Throws an HTTP-typed error on lane failure.
+/**
+ * True when speech synthesis can serve at all: the NIM Magpie lane, the Gemini
+ * TTS lane, or both. Callers gate on this rather than on one vendor's key, so
+ * an endpoint is never reported unavailable while a configured lane sits idle.
+ */
+export function ttsConfigured() {
+	return nvidiaTtsConfigured() || geminiTtsConfigured();
+}
+
 export async function ttsSynthesize({ text, voice, format, language }) {
 	let out;
 	try {
 		out = await synthesizeNvidiaTts({ text, voice, language, format, timeoutMs: TTS_TIMEOUT_MS });
 	} catch (e) {
+		// Magpie is the preferred lane, not the only one it is worth trying. A
+		// caller asked for speech, not for a vendor, so a NIM outage falls through
+		// to the Gemini TTS lane (platform GCP credits, no vendor quota) before the
+		// request is failed. The lane that answered is reported in `model` and
+		// `voice`, so nothing pretends the clip came from Magpie, and the voice
+		// name changes with it: that is the honest cost of still getting audio.
+		if (geminiTtsConfigured()) {
+			try {
+				const alt = await synthesizeGeminiTts({ text, timeoutMs: TTS_TIMEOUT_MS });
+				return {
+					audio: alt.audio.toString('base64'),
+					encoding: 'base64',
+					format: alt.format,
+					content_type: alt.contentType,
+					sample_rate: alt.sampleRateHz,
+					voice: alt.voiceName,
+					model: alt.model,
+					characters: text.length,
+					bytes: alt.audio.length,
+					lane: alt.lane,
+					fallback_from: 'nvidia',
+				};
+			} catch (fallbackErr) {
+				console.warn(`[ai-speech] gemini tts fallback failed: ${fallbackErr?.message || fallbackErr}`);
+			}
+		}
 		throw laneErrorToHttp(e, 'Speech synthesis');
 	}
 	return {

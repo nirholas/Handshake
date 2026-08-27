@@ -10,7 +10,7 @@
 import { cors, json, method, wrap } from './_lib/http.js';
 import { countRecentPayments } from './_lib/x402/audit-log.js';
 import { gatherSubsystemHealth } from './_lib/ops/subsystem-health.js';
-import { nvidiaTtsConfigured, nvidiaAsrConfigured } from './_lib/ai-speech.js';
+import { ttsConfigured, nvidiaAsrConfigured } from './_lib/ai-speech.js';
 import { alertsConfigured } from './_lib/alerts.js';
 
 const STARTED_AT = Date.now();
@@ -354,7 +354,7 @@ export default wrap(async (req, res) => {
 		// status so a missing NVIDIA key shows here instead of only surfacing as a
 		// 503 on the endpoint. Sync env reads, no upstream probe, no key material.
 		speech: {
-			tts: { configured: nvidiaTtsConfigured(), route: '/api/v1/ai/tts', requires: ['NVIDIA_API_KEY'] },
+			tts: { configured: ttsConfigured(), route: '/api/v1/ai/tts', requires: ['NVIDIA_API_KEY or GOOGLE_CLOUD_PROJECT'] },
 			asr: {
 				configured: nvidiaAsrConfigured(),
 				route: '/api/v1/ai/asr',
