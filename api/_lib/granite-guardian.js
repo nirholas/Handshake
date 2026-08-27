@@ -26,6 +26,7 @@
 
 import { createHash } from 'node:crypto';
 import { watsonxConfig, watsonxToken } from './watsonx.js';
+import { fetchUpstream } from './upstream-fetch.js';
 
 // The canonical Granite Guardian risk taxonomy. Keys are the model's risk_name
 // values; `definition` is the safety-risk text the model card injects for that
@@ -221,7 +222,12 @@ export async function assessRisk(cfg, { risk, input, signal } = {}) {
 		top_logprobs: 5,
 	};
 
-	const res = await fetch(`${cfg.wx.url}/ml/v1/text/chat?version=${cfg.wx.apiVersion}`, {
+	// A caller signal is optional here, so without a deadline of our own a stalled
+	// watsonx connection would hold a safety check open indefinitely. The wrapper
+	// composes the caller's signal with its own timeout, and hands back every
+	// status untouched so the precise errors below are unchanged. Classification
+	// is idempotent, so one transient failure is retried.
+	const res = await fetchUpstream(`${cfg.wx.url}/ml/v1/text/chat?version=${cfg.wx.apiVersion}`, {
 		method: 'POST',
 		headers: {
 			Authorization: `Bearer ${token}`,
@@ -230,7 +236,7 @@ export async function assessRisk(cfg, { risk, input, signal } = {}) {
 		},
 		body: JSON.stringify(body),
 		signal,
-	});
+	}, { timeoutMs: 20_000, attempts: 2, retryUnsafe: true, okWhen: () => true, label: 'granite-guardian' });
 	const textBody = await res.text();
 	if (!res.ok) {
 		throw new Error(`granite-guardian ${riskKey} failed (${res.status}): ${textBody.slice(0, 300)}`);

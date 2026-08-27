@@ -25,6 +25,7 @@ import { bech32m } from '@scure/base';
 import { cors, error, json, readJson, rateLimited } from '../_lib/http.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
 
 const ORDINALSBOT_BASE_URL =
 	process.env.ORDINALSBOT_BASE_URL || 'https://api.ordinalsbot.com';
@@ -145,11 +146,15 @@ async function createOrdinalsBotOrder({ message, receiveAddress, feeRate }) {
 	if (process.env.ORDINALSBOT_API_KEY) {
 		headers['x-api-key'] = process.env.ORDINALSBOT_API_KEY;
 	}
-	const res = await fetch(`${ORDINALSBOT_BASE_URL}/order`, {
+	// Placing an order is a paid, non-idempotent action: bound it with a deadline
+	// but never retry it, because a retry after a request that actually landed
+	// would buy a second inscription. Every status is returned untouched so the
+	// existing non-JSON and error-status handling below is unchanged.
+	const res = await fetchUpstream(`${ORDINALSBOT_BASE_URL}/order`, {
 		method: 'POST',
 		headers,
 		body: JSON.stringify(body),
-	});
+	}, { timeoutMs: 30_000, attempts: 1, okWhen: () => true, label: 'ordinalsbot-order' });
 	const text = await res.text();
 	let data;
 	try {

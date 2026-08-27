@@ -32,6 +32,7 @@ import { generateSearchQueries, analyzeResults } from '../../agents/fact-checker
 import { searchAll } from '../../agents/fact-checker/src/search-sources.js';
 import { authorityScore } from '../../agents/fact-checker/src/source-authority.js';
 import { imageEvidence } from '../../agents/fact-checker/src/image-evidence.js';
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
 
 const ROUTE = '/api/x402/fact-check';
 const CACHE_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days
@@ -76,9 +77,12 @@ async function redisGet(key) {
 	const { url, token } = getRedisCredentials();
 	if (!url || !token) return null;
 	try {
-		const r = await fetch(`${url}/get/${encodeURIComponent(key)}`, {
+		// This is a PAID endpoint: a stalled cache read must never hold the
+		// caller's request open. The cache is an optimisation, so a slow or dead
+		// Upstash degrades to a miss (the catch below) rather than to a hang.
+		const r = await fetchUpstream(`${url}/get/${encodeURIComponent(key)}`, {
 			headers: { authorization: `Bearer ${token}` },
-		});
+		}, { timeoutMs: 2_000, attempts: 2, label: 'fact-check-cache-get' });
 		const d = await r.json();
 		return d.result ? JSON.parse(d.result) : null;
 	} catch {
@@ -93,11 +97,11 @@ async function redisSet(key, value, ttlSeconds) {
 		// Upstash REST: the raw request body IS the stored value; TTL goes in the
 		// query string. A JSON envelope body would be stored verbatim and corrupt
 		// every subsequent read.
-		await fetch(`${url}/set/${encodeURIComponent(key)}?EX=${ttlSeconds}`, {
+		await fetchUpstream(`${url}/set/${encodeURIComponent(key)}?EX=${ttlSeconds}`, {
 			method: 'POST',
 			headers: { authorization: `Bearer ${token}` },
 			body: JSON.stringify(value),
-		});
+		}, { timeoutMs: 2_000, attempts: 1, label: 'fact-check-cache-set' });
 	} catch {
 		// Cache write failure is non-fatal.
 	}

@@ -31,6 +31,7 @@ import {
 	slotFit,
 } from '../../../src/runtime/motion-signature.js';
 import { SLOTS, DEFAULT_ANIMATION_MAP } from '../../../src/runtime/animation-slots.js';
+import { fetchUpstream } from '../../_lib/upstream-fetch.js';
 
 // Largest base64-encoded GLB we'll inline in a JSON-RPC response before falling
 // back to the (small) clip JSON. Keeps responses sane for very heavy avatars.
@@ -44,8 +45,22 @@ function rpcError(code, message, data) {
 }
 
 // ── Catalogue helpers ────────────────────────────────────────────────────────
+
+// The animation catalogue is static JSON served from our own origin, but it is
+// still an HTTP call that can hang: without a deadline one stalled read holds
+// the whole MCP tool invocation open. Idempotent GETs, so a transient blip is
+// retried. Every non-2xx is handed back untouched so each caller keeps throwing
+// the precise message its callers already match on.
+function catalogueFetch(url) {
+	return fetchUpstream(url, { cache: 'no-store' }, {
+		timeoutMs: 10_000,
+		attempts: 3,
+		okWhen: () => true,
+		label: 'animation-catalogue',
+	});
+}
 async function loadManifest(origin) {
-	const res = await fetch(`${origin}/animations/manifest.json`, { cache: 'no-store' });
+	const res = await catalogueFetch(`${origin}/animations/manifest.json`);
 	if (!res.ok) throw new Error(`manifest fetch failed (HTTP ${res.status})`);
 	const manifest = await res.json();
 	if (!Array.isArray(manifest) || !manifest.length)
@@ -54,7 +69,7 @@ async function loadManifest(origin) {
 }
 
 async function loadSignatures(origin) {
-	const res = await fetch(`${origin}/animations/signatures.json`, { cache: 'no-store' });
+	const res = await catalogueFetch(`${origin}/animations/signatures.json`);
 	if (!res.ok) throw new Error(`signatures fetch failed (HTTP ${res.status})`);
 	const index = await res.json();
 	if (!index?.clips || !Object.keys(index.clips).length) throw new Error('signature index is empty');
@@ -72,7 +87,7 @@ function signatureFor(index, clip) {
 
 async function loadClipJSON(origin, def) {
 	// def.url is a site-relative path like /animations/clips/idle.json
-	const res = await fetch(`${origin}${def.url}`, { cache: 'no-store' });
+	const res = await catalogueFetch(`${origin}${def.url}`);
 	if (!res.ok) throw new Error(`clip fetch failed (HTTP ${res.status})`);
 	return res.json();
 }
