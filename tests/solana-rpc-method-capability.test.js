@@ -266,12 +266,17 @@ describe('makeRotatingFetch: a method refusal demotes the method, never the lane
 		global.fetch = vi.fn(async () => (refuse ? resp(PUBLICNODE_403_BODY, 403) : resp(OK)));
 		const rf = makeRotatingFetch([a, b]);
 
-		await expect(rf(null, rpc('getTokenAccountsByOwner'))).rejects.toThrow();
+		// A distinct owner: the rotation now answers an idempotent read from its
+		// last-good body when every lane fails, and an earlier test already fed it
+		// the parameterless shape. This test is about the demotion bookkeeping, so
+		// it must ask something no lane has ever answered.
+		const ask = rpc('getTokenAccountsByOwner', ['cap-g-owner']);
+		await expect(rf(null, ask)).rejects.toThrow();
 		expect(isMethodDemoted(a, 'getTokenAccountsByOwner')).toBe(true);
 		expect(isMethodDemoted(b, 'getTokenAccountsByOwner')).toBe(true);
 
 		refuse = false;
-		const out = await rf(null, rpc('getTokenAccountsByOwner'));
+		const out = await rf(null, ask);
 		expect((await out.json()).result).toEqual({ ok: true });
 	});
 

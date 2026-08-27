@@ -201,6 +201,165 @@ const RATE_LIMIT_COOLDOWN_MS = 10 * 60_000; // 10m, transient 429
 const AUTH_COOLDOWN_MS = 30 * 60_000; // 30m: bad/expired key on this provider only
 const SERVER_COOLDOWN_MS = 2 * 60_000; // 2m: provider 5xx
 const NETWORK_COOLDOWN_MS = 30_000; // 30s: fetch threw (DNS/connection blip)
+
+// ---------------------------------------------------------------------------
+// Whole-chain transport failure: re-sweep, then serve last-good
+// ---------------------------------------------------------------------------
+// On 2026-08-27 the fleet logged "[solana-rpc] all 10 endpoints failed this
+// request, fetch failed" roughly 2,000 times an hour while a direct probe of the
+// same lanes from the same region answered fine. Ten unrelated hosts do not die
+// in the same millisecond; when every lane fails with a transport error (DNS,
+// refused socket, reset) inside one request, the weather is on OUR side of the
+// wire (instance egress, resolver, socket pool), and it clears in well under a
+// second. Three fallbacks stack here, cheapest first:
+//   1. The error carries the undici cause code (ECONNRESET, EAI_AGAIN, ...).
+//      "fetch failed" alone told nobody where to look for a week.
+//   2. One jittered re-sweep of every lane after a short pause, only when the
+//      first sweep was transport-only (an HTTP 429 or a quota body is a verdict
+//      about the lane, not the wire, and never triggers it).
+//   3. Idempotent READ methods answer from the last body a lane returned for the
+//      identical call, marked stale in a response header, instead of a 502. A
+//      holdings list from a few minutes ago is what the wallet hub should show
+//      during a thirty-second egress blip; "could not read the wallet balance"
+//      is not. Blockhash and slot reads are excluded on purpose: a stale
+//      blockhash produces a transaction that fails later and worse.
+const RESWEEP_DELAY_MIN_MS = 250;
+const RESWEEP_DELAY_MAX_MS = 700;
+const LAST_GOOD_TTL_SECONDS = 15 * 60;
+const LAST_GOOD_MAX_BYTES = 256 * 1024;
+// A success re-publishes its body at most this often per call shape, so the
+// steady state costs one cache write a minute per distinct read, not one per
+// RPC call.
+const LAST_GOOD_WRITE_INTERVAL_MS = 60_000;
+const LAST_GOOD_WRITE_MEMO_MAX = 4000;
+const LAST_GOOD_READ_METHODS = new Set([
+	'getBalance',
+	'getAccountInfo',
+	'getMultipleAccounts',
+	'getTokenAccountBalance',
+	'getTokenAccountsByOwner',
+	'getTokenAccountsByDelegate',
+	'getTokenSupply',
+	'getTokenLargestAccounts',
+	'getProgramAccounts',
+	'getSignaturesForAddress',
+	'getTransaction',
+	'getMinimumBalanceForRentExemption',
+	'getAsset',
+	'getAssetsByOwner',
+	'getAssetsByGroup',
+	'getTokenAccounts',
+]);
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * The network-level cause behind a thrown fetch, or '' when the error was not a
+ * transport failure (an abort, a timeout, an HTTP verdict already classified).
+ * undici wraps every socket/DNS failure as `TypeError: fetch failed` with the
+ * errno on `cause`; that code is the only diagnostic worth having.
+ */
+export function transportCause(err) {
+	if (!err) return '';
+	const code = err.cause?.code || err.code;
+	if (typeof code === 'string' && code) return code;
+	const msg = String(err.message || err);
+	if (/fetch failed|socket hang up|ECONNRESET|ECONNREFUSED|ETIMEDOUT|EAI_AGAIN|ENOTFOUND|network error/i.test(msg)) {
+		return 'transport';
+	}
+	return '';
+}
+
+/** djb2 over a string. Keys the last-good cache; collisions are made harmless by including the method and length in the key. */
+function hashText(text) {
+	let h = 5381;
+	for (let i = 0; i < text.length; i++) h = ((h * 33) ^ text.charCodeAt(i)) >>> 0;
+	return h.toString(36);
+}
+
+/**
+ * The last-good cache key for a single (non-batch) read call, or null when the
+ * body is a batch, a write, a subscription, or anything not on the read list.
+ * The JSON-RPC id is excluded so every caller of the same read shares one entry.
+ */
+export function lastGoodKey(body) {
+	if (typeof body !== 'string' || !body || body.length > LAST_GOOD_MAX_BYTES) return null;
+	let parsed;
+	try {
+		parsed = JSON.parse(body);
+	} catch {
+		return null;
+	}
+	if (!parsed || Array.isArray(parsed) || typeof parsed !== 'object') return null;
+	if (!LAST_GOOD_READ_METHODS.has(parsed.method)) return null;
+	const shape = JSON.stringify({ method: parsed.method, params: parsed.params ?? [] });
+	return `rpclastgood:v1:${parsed.method}:${shape.length}:${hashText(shape)}`;
+}
+
+const _lastGoodWrittenAt = new Map(); // key → epoch ms of the last publish
+async function publishLastGood(key, okBody) {
+	if (!key || okBody.length > LAST_GOOD_MAX_BYTES) return;
+	const now = Date.now();
+	if (now - (_lastGoodWrittenAt.get(key) || 0) < LAST_GOOD_WRITE_INTERVAL_MS) return;
+	let parsed;
+	try {
+		parsed = JSON.parse(okBody);
+	} catch {
+		return;
+	}
+	if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed) || parsed.error || !('result' in parsed)) return;
+	if (_lastGoodWrittenAt.size >= LAST_GOOD_WRITE_MEMO_MAX) _lastGoodWrittenAt.clear();
+	_lastGoodWrittenAt.set(key, now);
+	try {
+		const cache = await sharedCache();
+		if (!cache) return;
+		await cache.cacheSet(key, { result: parsed.result, at: now }, LAST_GOOD_TTL_SECONDS);
+	} catch {
+		/* best effort: the live answer already went out */
+	}
+}
+
+/**
+ * The last body a lane returned for this exact read, re-addressed to the
+ * caller's request id, or null. Returned as a Response so the rotation can hand
+ * it to web3.js unchanged; `x-solana-rpc-stale` carries the age in ms so a
+ * proxy or handler can surface "as of" to the user.
+ */
+async function serveLastGood(key, body) {
+	if (!key) return null;
+	try {
+		const cache = await sharedCache();
+		if (!cache) return null;
+		const hit = await cache.cacheGet(key);
+		if (!hit || typeof hit !== 'object' || !('result' in hit)) return null;
+		const id = JSON.parse(body).id ?? null;
+		return new Response(JSON.stringify({ jsonrpc: '2.0', id, result: hit.result }), {
+			status: 200,
+			headers: {
+				'content-type': 'application/json',
+				'x-solana-rpc-stale': String(Math.max(0, Date.now() - (Number(hit.at) || 0))),
+			},
+		});
+	} catch {
+		return null;
+	}
+}
+
+const _staleLogAt = new Map(); // method → epoch ms of the last stale-serve log
+function logStaleServe(method, ageMs, cause) {
+	const now = Date.now();
+	if (now - (_staleLogAt.get(method) || 0) < 30_000) return;
+	_staleLogAt.set(method, now);
+	console.warn(
+		`[solana-rpc] every lane failed ${method} (${cause}); serving last-good from ${formatCooldown(ageMs)} ago`,
+	);
+}
+
+/** Test hook: forget every last-good publish timestamp so a fresh write is observable. */
+export function _resetLastGoodMemo() {
+	_lastGoodWrittenAt.clear();
+	_staleLogAt.clear();
+}
 // A lane refusing ONE call shape is demoted for that method alone, never for the
 // lane. Short, because a policy block is a provider setting that can change and
 // re-probing costs exactly one request that transparently fails over, unlike a
@@ -1365,6 +1524,7 @@ export function makeRotatingFetch(endpoints) {
 							'content-type': resp.headers.get('content-type') || 'application/json',
 						},
 					}),
+					okBody,
 				};
 			} catch (err) {
 				const disposition = throwDisposition({
@@ -1376,6 +1536,15 @@ export function makeRotatingFetch(endpoints) {
 					penalise(url, 504, '', true, `no answer within ${Math.round(ATTEMPT_TIMEOUT_MS / 1000)}s`);
 				} else if (disposition === 'cool-lane') {
 					_endpointCooldown.set(url, Date.now() + NETWORK_COOLDOWN_MS);
+				}
+				// A transport failure is re-thrown with its errno and the lane on the
+				// message, so the exhausted-chain warning names the real fault
+				// (EAI_AGAIN is a resolver problem, ECONNRESET a socket one) instead of
+				// undici's bare "fetch failed". The original stays on `cause`.
+				const cause = disposition === 'cool-lane' ? transportCause(err) : '';
+				if (cause) {
+					const tagged = new Error(`${err?.message || 'fetch failed'} (${cause}) @ ${maskUrl(url)}`, { cause: err });
+					return { error: tagged, transport: true };
 				}
 				return { error: err };
 			}
@@ -1389,6 +1558,15 @@ export function makeRotatingFetch(endpoints) {
 		else hydrateEndpointCooldowns();
 
 		let lastErr = null;
+		// The last-good key for this call (null for a batch, a write, or a read not
+		// on the list), and whether every failed attempt so far was a transport
+		// error. Both feed the two whole-chain fallbacks after the passes.
+		const staleKey = lastGoodKey(typeof init?.body === 'string' ? init.body : '');
+		let transportOnly = true;
+		const succeed = (out) => {
+			if (out.okBody !== undefined) publishLastGood(staleKey, out.okBody);
+			return out.response;
+		};
 		// Passes widen the candidate set only when the narrower one had nothing to
 		// try. Pass 1 skips both lane cooldowns and lanes demoted for this call shape.
 		// Pass 2 forgives cooldowns so a just-recovered node still gets exercised but
@@ -1411,13 +1589,39 @@ export function makeRotatingFetch(endpoints) {
 				if (!pass.ignoreCapability && isAnyMethodDemoted(url, methods)) continue;
 				attempted = true;
 				const out = await tryEndpoint(url);
-				if (out.response) return out.response;
+				if (out.response) return succeed(out);
 				lastErr = out.error;
+				if (!out.transport) transportOnly = false;
 			}
 			// This pass actually exercised at least one candidate and they all failed
 			// this request: the chain is genuinely down for it right now, so don't
 			// force a wider sweep that would just re-hammer known-bad lanes.
 			if (attempted) break;
+		}
+		// Every lane died at the transport layer inside one request. That is not
+		// ten providers failing, it is this instance's egress hiccuping, and it is
+		// usually over before the caller's own timeout: one jittered re-sweep of
+		// every lane (the cooldowns just set were set by THIS request, so they are
+		// ignored) turns most of those into a normal answer. Never for a caller
+		// that has already walked away.
+		if (transportOnly && lastErr && init?.signal?.aborted !== true) {
+			await sleep(RESWEEP_DELAY_MIN_MS + Math.random() * (RESWEEP_DELAY_MAX_MS - RESWEEP_DELAY_MIN_MS));
+			for (const url of endpoints) {
+				if (init?.signal?.aborted === true) break;
+				if (isAnyMethodDemoted(url, methods)) continue;
+				const out = await tryEndpoint(url);
+				if (out.response) return succeed(out);
+				lastErr = out.error;
+			}
+		}
+		// Still nothing. A read that a lane answered recently is served from that
+		// answer, stale-marked, rather than as a 502: the page keeps its data and
+		// the caller can say "as of N minutes ago". Writes and blockhash reads fall
+		// through to the error, because a stale answer to those is worse than none.
+		const stale = await serveLastGood(staleKey, init?.body);
+		if (stale) {
+			logStaleServe(methods[0] || 'read', Number(stale.headers.get('x-solana-rpc-stale')) || 0, lastErr?.message || 'unknown error');
+			return stale;
 		}
 		// Reached the end with every provider failing in this one request, the caller
 		// gets a thrown error (→ a clean 502 from the proxy), never garbage. THIS is

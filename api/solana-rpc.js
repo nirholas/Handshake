@@ -181,5 +181,13 @@ export default wrap(async function handler(req, res) {
 	res.statusCode = upstream.status;
 	res.setHeader('content-type', 'application/json; charset=utf-8');
 	res.setHeader('cache-control', 'no-store');
+	// The rotation answers an idempotent read from its last-good body when every
+	// lane is down (api/_lib/solana/connection.js); pass the age through so a
+	// browser can render "as of N minutes ago" instead of trusting it as live.
+	const staleMs = upstream.headers.get('x-solana-rpc-stale');
+	if (staleMs) {
+		res.setHeader('x-solana-rpc-stale', staleMs);
+		res.setHeader('access-control-expose-headers', 'x-solana-rpc-stale');
+	}
 	res.end(text);
 });
