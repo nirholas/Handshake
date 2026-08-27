@@ -174,16 +174,39 @@ async function probeVertex() {
 			model: readEnv('VERTEX_IMAGEN_MODEL') || 'gemini-2.5-flash-image',
 		};
 	}
+	const model = readEnv('VERTEX_IMAGEN_MODEL') || 'gemini-2.5-flash-image';
+	const location = readEnv('GOOGLE_CLOUD_LOCATION') || 'us-central1';
 	try {
-		await getGcpAccessToken();
+		const token = await getGcpAccessToken();
+		// Minting a token proves the service account, NOT that Vertex will serve.
+		// A project in billing dunning hands out tokens happily and then 403s
+		// every generative call ("Lightning dunning decision is deny"), which
+		// this probe reported as `ok` for a lane that could not paint a single
+		// image (observed 2026-08-27). Ask the API itself: listing publisher
+		// models is free, needs no quota, and fails with the same project-level
+		// denial a real generate would.
+		const host = location === 'global' ? 'https://aiplatform.googleapis.com' : `https://${location}-aiplatform.googleapis.com`;
+		const res = await fetch(`${host}/v1/publishers/google/models?pageSize=1`, {
+			headers: { authorization: `Bearer ${token}` },
+			signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
+		});
+		if (res.ok) return { configured: true, status: 'ok', model, location };
+		const body = await res.text().catch(() => '');
+		// Name the billing hold explicitly: it reads like an IAM problem and
+		// sends operators chasing service-account roles instead of the console.
+		const dunning = /dunning/i.test(body);
 		return {
 			configured: true,
-			status: 'ok',
-			model: readEnv('VERTEX_IMAGEN_MODEL') || 'gemini-2.5-flash-image',
-			location: readEnv('GOOGLE_CLOUD_LOCATION') || 'us-central1',
+			status: 'down',
+			httpStatus: res.status,
+			detail: dunning
+				? 'project billing is in dunning: generative APIs denied until the billing account is settled'
+				: body.slice(0, 120) || `HTTP ${res.status}`,
+			model,
+			location,
 		};
 	} catch (err) {
-		return { configured: true, status: 'down', detail: err?.message?.slice(0, 120) };
+		return { configured: true, status: 'down', detail: err?.message?.slice(0, 120), model, location };
 	}
 }
 
