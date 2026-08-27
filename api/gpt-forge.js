@@ -127,6 +127,7 @@ import {
 } from './_lib/credits.js';
 import { markProviderCooldown, providersInCooldown } from './_lib/provider-health.js';
 import { acquireLock, releaseLock, cacheGet, cacheSet } from './_lib/cache.js';
+import { recallDoneFrame, rememberDoneFrame } from './_lib/forge-done-cache.js';
 import { sanitizeJobError } from './_lib/provider-job-error.js';
 import { normalizeForgeOptions, providerReconstructParams, summarizeForgeOptions } from './_lib/forge-options.js';
 import { bindJobToOptions, optionsForJob } from './_lib/forge-job-options.js';
@@ -2743,6 +2744,12 @@ async function pollJob(req, res, jobId) {
 		return pollPipeline(res, token.taskId, jobId);
 	}
 
+	// A finished job is terminal: answer every later poll with the frame the
+	// first done poll built, instead of re-materializing and re-scoring it
+	// (13-33 s per poll, measured 2026-08-27). See _lib/forge-done-cache.js.
+	const remembered = await recallDoneFrame(jobId);
+	if (remembered) return json(res, 200, remembered);
+
 	// Poll-time failover may have re-dispatched this generation onto another
 	// lane during an earlier poll (see _lib/forge-failover.js). The client keeps
 	// polling the ORIGINAL id; chase the successor chain to the live handle
@@ -2904,7 +2911,7 @@ async function pollJob(req, res, jobId) {
 				referenceImageUrl: meta?.preview_image_url || null,
 			});
 		}
-		return json(res, 200, {
+		const doneFrame = {
 			job_id: jobId,
 			creation_id: durable?.id ?? meta?.id ?? null,
 			status: 'done',
@@ -2914,7 +2921,9 @@ async function pollJob(req, res, jobId) {
 			quality_gate: qualityGate || undefined,
 			compression: durable?.compression || null,
 			...metaFields,
-		});
+		};
+		await rememberDoneFrame(jobId, doneFrame);
+		return json(res, 200, doneFrame);
 	}
 	if (result.status === 'failed') {
 		// Persist the RAW provider error for operators, but never relay it: the

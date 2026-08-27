@@ -238,9 +238,13 @@ export async function pollJob(base, jobId, { timeoutMs, intervalMs } = {}) {
 export async function pollOnce(base, jobId) {
 	let res;
 	try {
+		// The FIRST poll that finds a job done materializes the creation and runs
+		// the quality gate (20-30 s measured); every later poll of that job is
+		// served from the done-frame cache in milliseconds. 30 s covers the one
+		// slow read without letting a stalled upstream hold a buyer for a minute.
 		res = await fetch(`${base}/api/gpt-forge?job=${encodeURIComponent(jobId)}`, {
 			headers: { accept: 'application/json' },
-			signal: AbortSignal.timeout(15_000),
+			signal: AbortSignal.timeout(30_000),
 		});
 	} catch (err) {
 		if (err?.name === 'TimeoutError' || err?.name === 'AbortError')
