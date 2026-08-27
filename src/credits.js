@@ -10,7 +10,7 @@
 
 import { getAdapter } from './onchain/adapters/index.js';
 import { resolveTokenProgramId } from './shared/spl-token-program.js';
-import { solToUsd } from './shared/usd-price.js';
+import { solToUsd, getTokenPriceUsd } from './shared/usd-price.js';
 
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
 
@@ -231,12 +231,11 @@ async function loadPrices() {
 			const p = await solToUsd(1);
 			if (p > 0) state.prices[mint] = p;
 		} else {
-			const r = await fetch(`https://lite-api.jup.ag/price/v3?ids=${mint}`);
-			if (r.ok) {
-				const d = await r.json();
-				const p = Number(d?.[mint]?.usdPrice ?? d?.[mint]?.price);
-				if (p > 0) state.prices[mint] = p;
-			}
+			// Same shared chain as SOL, per mint: Jupiter -> DexScreener ->
+			// GeckoTerminal -> DefiLlama, each bounded. A single un-timed Jupiter
+			// call used to leave the estimate blank whenever Jupiter was slow.
+			const p = await getTokenPriceUsd(mint);
+			if (p > 0) state.prices[mint] = p;
 		}
 	} catch {
 		/* estimate is a nicety */

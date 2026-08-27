@@ -2294,10 +2294,35 @@ $('send-confirm').addEventListener('click', async () => {
   }
 });
 
+// Ordered QR services: qrserver first, quickchart as the backup. On the final
+// failure the <img> is hidden so the copyable address text stands alone.
+const QR_SERVICES = [
+  (data, px) => `https://api.qrserver.com/v1/create-qr-code/?size=${px}x${px}&data=${encodeURIComponent(data)}`,
+  (data, px) => `https://quickchart.io/qr?size=${px}&margin=1&text=${encodeURIComponent(data)}`,
+];
+
+function setQrSrc(img, data, px) {
+  if (!img) return;
+  let attempt = 0;
+  const tryNext = () => {
+    if (attempt < QR_SERVICES.length) {
+      img.hidden = false;
+      img.src = QR_SERVICES[attempt++](data, px);
+      return;
+    }
+    img.hidden = true;
+  };
+  img.onerror = tryNext;
+  tryNext();
+}
+
 $('wallet-fund-btn').addEventListener('click', () => {
   if (!walletInfo?.solAddr) { alert('Solana wallet not provisioned yet.'); return; }
   $('fund-address').textContent = walletInfo.solAddr;
-  $('fund-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(walletInfo.solAddr)}`;
+  // Two QR services, tried in order. The address is already rendered as text
+  // above, so an outage of both leaves the modal usable rather than showing a
+  // broken-image icon where the deposit QR belongs.
+  setQrSrc($('fund-qr'), walletInfo.solAddr, 240);
   $('fund-modal').hidden = false;
 });
 $('fund-close').addEventListener('click', () => { $('fund-modal').hidden = true; });

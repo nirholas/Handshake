@@ -72,6 +72,116 @@ export async function getSolPriceUsd() {
 	}
 }
 
+// Per-mint price feeds, all keyless and CORS-enabled, mirroring the server-side
+// chain in api/_lib/market/token-market.js. Jupiter knows pump.fun bonding
+// curves, DexScreener and GeckoTerminal index the pools directly, so a token
+// that is missing from one is usually present in another.
+function tokenFeeds(mint) {
+	return [
+		{
+			name: 'jupiter',
+			url: `https://lite-api.jup.ag/price/v3?ids=${mint}`,
+			parse: async (r) => {
+				const d = await r.json();
+				return asPrice(d?.[mint]?.usdPrice ?? d?.[mint]?.price);
+			},
+		},
+		{
+			name: 'dexscreener',
+			url: `https://api.dexscreener.com/latest/dex/tokens/${mint}`,
+			parse: async (r) => {
+				const pairs = (await r.json())?.pairs;
+				if (!Array.isArray(pairs) || !pairs.length) return null;
+				// Deepest pool is the honest quote; a thin pool can print anything.
+				const best = pairs.reduce((a, b) => ((Number(b?.liquidity?.usd) || 0) > (Number(a?.liquidity?.usd) || 0) ? b : a));
+				return asPrice(best?.priceUsd);
+			},
+		},
+		{
+			name: 'geckoterminal',
+			url: `https://api.geckoterminal.com/api/v2/networks/solana/tokens/${mint}`,
+			parse: async (r) => asPrice((await r.json())?.data?.attributes?.price_usd),
+		},
+		{
+			name: 'llama',
+			url: `https://coins.llama.fi/prices/current/solana:${mint}`,
+			parse: async (r) => asPrice((await r.json())?.coins?.[`solana:${mint}`]?.price),
+		},
+	];
+}
+
+const _tokenPrices = new Map(); // mint -> { price, at }
+
+/**
+ * Live USD price of one whole SPL token, across four independent feeds.
+ * Returns null (never throws, never guesses) when every feed misses, so a
+ * caller shows the raw token amount rather than a wrong dollar figure.
+ *
+ * @param {string} mint
+ * @returns {Promise<number|null>}
+ */
+export async function getTokenPriceUsd(mint) {
+	if (!mint) return null;
+	if (mint === SOL_MINT) return getSolPriceUsd().catch(() => null);
+	const hit = _tokenPrices.get(mint);
+	if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.price;
+	try {
+		const { value } = await fetchFirst(tokenFeeds(mint), { timeoutMs: 4000, label: `token-price:${mint.slice(0, 6)}` });
+		_tokenPrices.set(mint, { price: value, at: Date.now() });
+		return value;
+	} catch {
+		// Keep serving the last real price through a blip rather than blanking the
+		// estimate; the caller's own copy says the rate is applied at settlement.
+		return hit?.price ?? null;
+	}
+}
+
+// BTC/USD, same shape as the SOL chain. Used by the inscription flow's fee
+// estimate, which previously hung on a single un-timed CoinGecko call.
+const BTC_FEEDS = [
+	{
+		name: 'coingecko',
+		url: 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd',
+		parse: async (r) => asPrice((await r.json())?.bitcoin?.usd),
+	},
+	{
+		name: 'coinbase',
+		url: 'https://api.coinbase.com/v2/prices/BTC-USD/spot',
+		parse: async (r) => asPrice((await r.json())?.data?.amount),
+	},
+	{
+		name: 'kraken',
+		url: 'https://api.kraken.com/0/public/Ticker?pair=XBTUSD',
+		parse: async (r) => asPrice((await r.json())?.result?.XXBTZUSD?.c?.[0]),
+	},
+	{
+		name: 'llama',
+		url: 'https://coins.llama.fi/prices/current/coingecko:bitcoin',
+		parse: async (r) => asPrice((await r.json())?.coins?.['coingecko:bitcoin']?.price),
+	},
+];
+
+let _btcPrice = 0;
+let _btcPriceAt = 0;
+
+/**
+ * Live BTC/USD across four feeds. Returns null when all of them miss, so a
+ * caller can hide a fiat estimate instead of printing a stale or invented one.
+ *
+ * @returns {Promise<number|null>}
+ */
+export async function getBtcPriceUsd() {
+	if (Date.now() - _btcPriceAt < CACHE_TTL_MS && _btcPrice > 0) return _btcPrice;
+	try {
+		const { value } = await fetchFirst(BTC_FEEDS, { timeoutMs: 4000, label: 'btc-price-client' });
+		_btcPrice = value;
+		_btcPriceAt = Date.now();
+		return _btcPrice;
+	} catch {
+		return _btcPrice > 0 ? _btcPrice : null;
+	}
+}
+
 /** USDC → USD (1:1, pegged stablecoin). */
 export function usdcToUsd(amount) {
 	return Number(amount);

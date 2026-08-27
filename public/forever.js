@@ -113,36 +113,79 @@ els.feeRate.addEventListener('change', renderFeeEstimate);
 updateCounters();
 renderFeeEstimate();
 
-// ── btc/usd price (single fetch, best-effort) ───────────────────
+// ── btc/usd price (best-effort, four feeds) ─────────────────────
+// CoinGecko alone, un-timed, meant a rate-limited or slow CoinGecko silently
+// dropped the fiat fee estimate for everyone. Four keyless CORS-enabled feeds
+// are tried in order, each under its own deadline, so the estimate survives any
+// one of them being down. This file ships as a raw public/ copy (it is not a
+// Vite input), so the chain is inline rather than imported from src/shared.
+const BTC_FEEDS = [
+	{
+		url: 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd',
+		pick: (d) => d?.bitcoin?.usd,
+	},
+	{
+		url: 'https://api.coinbase.com/v2/prices/BTC-USD/spot',
+		pick: (d) => d?.data?.amount,
+	},
+	{
+		url: 'https://api.kraken.com/0/public/Ticker?pair=XBTUSD',
+		pick: (d) => d?.result?.XXBTZUSD?.c?.[0],
+	},
+	{
+		url: 'https://coins.llama.fi/prices/current/coingecko:bitcoin',
+		pick: (d) => d?.coins?.['coingecko:bitcoin']?.price,
+	},
+];
+
 async function fetchBtcPrice() {
-	try {
-		const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
-		if (!r.ok) return;
-		const d = await r.json();
-		const p = d?.bitcoin?.usd;
-		if (typeof p === 'number') {
-			BTC_USD = p;
-			renderFeeEstimate();
+	for (const feed of BTC_FEEDS) {
+		try {
+			const r = await fetch(feed.url, { signal: AbortSignal.timeout(4000) });
+			if (!r.ok) continue;
+			const p = Number(feed.pick(await r.json()));
+			if (Number.isFinite(p) && p > 0) {
+				BTC_USD = p;
+				renderFeeEstimate();
+				return;
+			}
+		} catch {
+			// Try the next feed; the estimate is a nicety, never a blocker.
 		}
-	} catch {
-		// Price is decoration; not required for the flow.
 	}
 }
 fetchBtcPrice();
 
 // ── QR rendering ────────────────────────────────────────────────
-// Uses Google's chart server as a zero-dep QR generator. The payload is the
-// BIP-21 URI so any Bitcoin wallet can scan it directly. Fallback to a plain
-// address QR if BIP-21 construction fails.
+// Two zero-dep QR services, tried in order. The payload is the BIP-21 URI so
+// any Bitcoin wallet can scan it directly. If both services are unreachable the
+// box shows the payment URI as selectable text instead of a broken-image icon:
+// the user is mid-payment and must never be left with nothing to act on.
+const QR_SERVICES = [
+	(data, px) => `https://api.qrserver.com/v1/create-qr-code/?size=${px}x${px}&margin=0&data=${encodeURIComponent(data)}`,
+	(data, px) => `https://quickchart.io/qr?size=${px}&margin=1&text=${encodeURIComponent(data)}`,
+];
+
 function renderQR(payload) {
 	els.qrBox.innerHTML = '';
 	const img = document.createElement('img');
 	img.alt = 'Bitcoin payment QR';
-	img.src =
-		'https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=0&data=' +
-		encodeURIComponent(payload);
 	img.loading = 'eager';
 	img.decoding = 'async';
+	let attempt = 0;
+	const tryNext = () => {
+		if (attempt < QR_SERVICES.length) {
+			img.src = QR_SERVICES[attempt++](payload, 400);
+			return;
+		}
+		const fallback = document.createElement('p');
+		fallback.className = 'qr-fallback';
+		fallback.style.cssText = 'word-break:break-all;font:500 12px/1.5 ui-monospace,monospace;user-select:all;';
+		fallback.textContent = payload;
+		img.replaceWith(fallback);
+	};
+	img.addEventListener('error', tryNext);
+	tryNext();
 	els.qrBox.appendChild(img);
 }
 
