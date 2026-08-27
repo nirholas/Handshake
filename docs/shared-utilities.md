@@ -124,7 +124,7 @@ a 400 or a `TypeError` is not retried. Pass `shouldRetry` to override.
 hand-rolled `sleep(base * 2 ** attempt)` loops had no jitter at all, so a shared
 upstream blip re-synchronized every caller into the same retry wave.
 
-### `api/_lib/upstream-fetch.js` — the one fetch for third-party calls
+### `api/_lib/upstream-fetch.js`: the one fetch for third-party calls
 
 ```js
 import { fetchUpstream, fetchUpstreamJson, fetchAnyJson, lastGood } from './_lib/upstream-fetch.js';
@@ -146,7 +146,7 @@ EVM RPC do not go through here: `api/_lib/solana/connection.js` and
 providers (with per-provider parsers) use `fetchFirst` from
 `src/shared/failover-fetch.js` instead.
 
-### `api/_lib/cache.js` — `cacheWrapLastGood`
+### `api/_lib/cache.js`: `cacheWrapLastGood`
 
 ```js
 import { cacheWrapLastGood } from './_lib/cache.js';
