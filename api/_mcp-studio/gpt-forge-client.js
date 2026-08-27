@@ -293,7 +293,13 @@ export async function rig(base, glbUrl, { timeoutEnv } = {}) {
 // teapot with a bamboo handle" to "A small,", which reconstructed as a coffee
 // tamper. Budget for a whole spec instead of a clipped one.
 const DIRECTOR_MAX_TOKENS = 400;
-const DIRECTOR_TIMEOUT_MS = 20_000;
+// ONE bound for the whole director step, watsonx and the fallback chain
+// together. Each leg used to carry its own 20 s, so a stalled watsonx followed
+// by a stalled chain cost 40 s before the paint step began; measured live on
+// 2026-08-27 as the gap between a 60 s paint budget and 110 s submits. The
+// director is a quality lever, not a requirement: past this it is skipped.
+const DIRECTOR_TIMEOUT_MS = 15_000;
+const DIRECTOR_WATSONX_SHARE_MS = 6_000;
 
 // Longest brief we forward. The director's own specs land near 800 characters;
 // beyond this the model has stopped writing a prompt and started writing prose.
@@ -336,6 +342,8 @@ export async function directPrompt(instruction, rawPrompt) {
 	// hung IAM or inference call must degrade to the free chain, not stall the
 	// whole generation submit.
 	const cfg = watsonxConfig();
+	const deadline = Date.now() + DIRECTOR_TIMEOUT_MS;
+	const remaining = () => deadline - Date.now();
 	if (cfg.configured) {
 		let timer;
 		try {
@@ -348,7 +356,10 @@ export async function directPrompt(instruction, rawPrompt) {
 					maxTokens: DIRECTOR_MAX_TOKENS,
 				}),
 				new Promise((_, reject) => {
-					timer = setTimeout(() => reject(new Error('watsonx director timed out')), DIRECTOR_TIMEOUT_MS);
+					timer = setTimeout(
+						() => reject(new Error('watsonx director timed out')),
+						Math.min(DIRECTOR_WATSONX_SHARE_MS, remaining()),
+					);
 				}),
 			]);
 			text = result?.text || null;
@@ -359,13 +370,13 @@ export async function directPrompt(instruction, rawPrompt) {
 		}
 	}
 
-	if (!text) {
+	if (!text && remaining() > 2_000) {
 		try {
 			const result = await llmComplete({
 				system: instruction,
 				user,
 				maxTokens: DIRECTOR_MAX_TOKENS,
-				timeoutMs: DIRECTOR_TIMEOUT_MS,
+				timeoutMs: remaining(),
 				track: { tool: 'forge-director' },
 			});
 			text = result?.text || null;
