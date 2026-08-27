@@ -8,6 +8,7 @@
 
 import { isSolanaMobileTwa, isSolanaMobileDevice } from '../solana-mobile/src/seeker-detect.js';
 import { isUserRejection } from '../solana-mobile/src/mwa-errors.js';
+import { apiFetch } from './api.js';
 
 // The wallet stack (Mobile Wallet Adapter + @solana/web3.js) is ~700 KB. It
 // is only needed to sign in, so the home screen loads without it: inside the
@@ -53,8 +54,10 @@ function escapeHtml(s) {
 	return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 }
 
+// apiFetch carries the session cookie and, on mutations, the x-csrf-token the
+// server requires; a plain fetch would be refused by /api/seeker/verify.
 async function fetchJson(url, init = {}) {
-	const res = await fetch(url, { credentials: 'include', ...init });
+	const res = await apiFetch(url, { credentials: 'include', ...init });
 	const body = await res.json().catch(() => null);
 	return { ok: res.ok, status: res.status, body };
 }

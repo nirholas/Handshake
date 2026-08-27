@@ -9,6 +9,7 @@
 import { z } from 'zod';
 import { sql } from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';
+import { requireCsrf } from '../_lib/csrf.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { parse } from '../_lib/validate.js';
@@ -69,6 +70,9 @@ async function handleVerify(req, res) {
 	if (!method(req, res, ['POST'])) return;
 	const user = await getSessionUser(req, res);
 	if (!user?.id) return error(res, 401, 'unauthorized', 'sign in to verify a Seeker');
+	// Same rule as every other session-mutating route: a cross-site form post
+	// must not be able to trigger a re-scan on the victim's behalf.
+	if (!(await requireCsrf(req, res, user.id))) return;
 
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl, 'too many verification attempts');
