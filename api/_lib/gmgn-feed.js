@@ -133,12 +133,28 @@ export async function gmgnSmartMoneySnapshot({
 	let result = await fetchRank({ chain, interval });
 	let source = 'gmgn';
 	// A 403 is Cloudflare refusing this egress IP, not an outage: fall back to the
-	// DexScreener board exactly as the poller does.
-	if (!result.ok && result.status === 403) {
+	// DexScreener board exactly as the poller does. Any other GMGN failure gets
+	// the same treatment, because "GMGN did not answer" and "GMGN answered 403"
+	// are the same thing from the caller's side and the board is right there.
+	if (!result.ok) {
 		result = await fetchDexScreener({ chain });
 		source = 'dexscreener';
 	}
 	if (!result.ok) {
+		// Both live sources are down. A remembered board is a far better answer
+		// than an empty one, because an empty smart-money feed reads as "nobody is
+		// buying anything" rather than "we cannot see". It ships marked stale so
+		// no caller can mistake the two.
+		const remembered = _lastGoodItems.get(`${chain}:${interval}`);
+		if (remembered && Date.now() - remembered.at < LAST_GOOD_MAX_MS) {
+			return {
+				ok: true,
+				source: remembered.source,
+				items: remembered.items.slice(0, limit),
+				stale: true,
+				as_of: new Date(remembered.at).toISOString(),
+			};
+		}
 		return { ok: false, source: null, items: [], status: result.status, error: result.error };
 	}
 	source = result.source || source;
@@ -152,7 +168,23 @@ export async function gmgnSmartMoneySnapshot({
 		items.push(normalize(item, smartCount, 0, chain, interval, source));
 		if (items.length >= limit) break;
 	}
-	return { ok: true, source, items };
+	if (items.length) _lastGoodItems.set(`${chain}:${interval}`, { items, source, at: Date.now() });
+	return { ok: true, source, items, stale: false };
+}
+
+// Last live board per (chain, interval). Small and per-instance on purpose: it
+// exists to ride out a throttle, not to be a cache.
+const LAST_GOOD_MAX_MS = 15 * 60_000;
+const _lastGoodItems = new Map();
+
+/**
+ * Test seam: forget every remembered board, so a suite can exercise the truly
+ * cold failure path (no live source AND nothing remembered) after a case that
+ * populated it. Module state outlives a single test exactly as it outlives a
+ * single request in production.
+ */
+export function _resetGmgnLastGood() {
+	_lastGoodItems.clear();
 }
 
 let _pollerId = 0;

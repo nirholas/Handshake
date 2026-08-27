@@ -10,7 +10,7 @@
  */
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { gmgnSmartMoneySnapshot } from '../api/_lib/gmgn-feed.js';
+import { gmgnSmartMoneySnapshot, _resetGmgnLastGood } from '../api/_lib/gmgn-feed.js';
 
 // $THREE, the only coin this platform references.
 const THREE = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
@@ -72,7 +72,26 @@ describe('gmgnSmartMoneySnapshot', () => {
 		expect(snap.items).toEqual([]);
 	});
 
-	it('reports ok:false when every upstream is down (failure path)', async () => {
+	it('serves the last live board, marked stale, when every upstream is down', async () => {
+		// An empty smart-money feed reads as "nobody is buying anything", which is a
+		// claim, not an absence of one. A remembered board says what it is.
+		globalThis.fetch = vi.fn(async () => jsonResponse({
+			data: { rank: [{ address: THREE, symbol: 'THREE', smart_buy_24h: 9 }] },
+		}));
+		const live = await gmgnSmartMoneySnapshot();
+		expect(live.ok).toBe(true);
+		expect(live.stale).toBe(false);
+
+		globalThis.fetch = vi.fn(async () => jsonResponse({}, 500));
+		const stale = await gmgnSmartMoneySnapshot();
+		expect(stale.ok).toBe(true);
+		expect(stale.stale).toBe(true);
+		expect(stale.as_of).toBeTruthy();
+		expect(stale.items).toHaveLength(1);
+	});
+
+	it('reports ok:false when every upstream is down and nothing was ever seen', async () => {
+		_resetGmgnLastGood();
 		globalThis.fetch = vi.fn(async () => jsonResponse({}, 500));
 
 		const snap = await gmgnSmartMoneySnapshot();

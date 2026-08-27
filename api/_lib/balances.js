@@ -17,6 +17,8 @@
 import { cacheGet, cacheSet, cacheDel } from './cache.js';
 import { getMetadataForMints } from './token-metadata.js';
 import { solPriceUsd } from './sol-price.js';
+import { fetchTokenPriceUsd } from './market/token-market.js';
+import { fetchCoinPriceUsdOrNull } from './market-fallbacks.js';
 import { solanaRpcEndpoints, makeRotatingFetch, markEndpointCooldown } from './solana/connection.js';
 
 const BALANCES_TTL_S = 60;
@@ -244,6 +246,16 @@ export async function solanaMintUsdPrice(mint) {
 		if (p > 0) return p;
 	} catch (err) {
 		console.warn('[balances] jupiter single-mint price failed:', err?.message);
+	}
+	// The shared market chain (Birdeye, tokens.xyz, DexScreener, GeckoTerminal,
+	// each with its own stale tier) sits between Jupiter and the pump.fun curve
+	// read below. Without it a Jupiter outage dropped straight to a curve price
+	// that only exists for pump mints, so every other token priced at zero.
+	try {
+		const p = Number(await fetchTokenPriceUsd(mint)) || 0;
+		if (p > 0) return p;
+	} catch (err) {
+		console.warn('[balances] market-chain single-mint price failed:', err?.message);
 	}
 	try {
 		const p = await pumpFunMintUsd(mint);
@@ -593,6 +605,15 @@ async function getEvmBalances(address) {
 		ethChange24h = cgEth?.ethereum?.usd_24h_change ?? 0;
 	} catch {
 		// best-effort
+	}
+	// CoinGecko's keyless tier is shared per egress IP and Cloud Run's is busy,
+	// so this leg throttles on its own schedule. Falling back to the multi-source
+	// price chain keeps the ETH leg of an EVM balance sheet valued instead of
+	// rendering a wallet full of holdings with no USD against any of them. The
+	// 24h change has no second source and stays absent rather than invented.
+	if (!(ethUsdPrice > 0)) {
+		const fallbackEth = await fetchCoinPriceUsdOrNull('ethereum');
+		if (fallbackEth > 0) ethUsdPrice = fallbackEth;
 	}
 
 	const tokens = rawTokens.map((t, i) => {
