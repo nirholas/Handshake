@@ -14,6 +14,7 @@ import { cors, method, wrap, setRateLimitHeaders } from './_lib/http.js';
 import { getSessionUser, authenticateBearer, extractBearer } from './_lib/auth.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { Bazaar } from './_lib/x402/bazaar-client.js';
+import { fetchUpstreamJson, lastGood } from './_lib/upstream-fetch.js';
 
 // ── Wallet imports (lazy, only when live mode is active) ─────────────────────
 async function walletDeps() {
@@ -24,12 +25,20 @@ async function walletDeps() {
 // ── Live crypto market briefing via GeckoTerminal (no API key needed) ────────
 async function fetchMarketBriefing() {
 	try {
-		const r = await fetch(
-			'https://api.geckoterminal.com/api/v2/networks/solana/trending_pools?page=1',
-			{ headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(8000) },
+		// Retried, breaker-guarded and backed by a last-known-good tier: the
+		// briefing is the product the demo actually transacts, so a single
+		// throttled GeckoTerminal read used to leave the whole demo with nothing
+		// to sell. A few minutes of staleness is a far better answer than that,
+		// and the payload says which it is.
+		const { value: data, stale, ageMs } = await lastGood(
+			'demo-economy:trending-pools',
+			() => fetchUpstreamJson(
+				'https://api.geckoterminal.com/api/v2/networks/solana/trending_pools?page=1',
+				{ headers: { Accept: 'application/json' } },
+				{ name: 'geckoterminal:trending-pools', timeoutMs: 8_000, attempts: 2 },
+			),
+			{ maxAgeMs: 30 * 60_000 },
 		);
-		if (!r.ok) throw new Error(`GeckoTerminal ${r.status}`);
-		const data = await r.json();
 		const pools = (data.data || []).slice(0, 5).map((p) => {
 			const attr = p.attributes || {};
 			const priceUsd = parseFloat(attr.base_token_price_usd || 0);
@@ -55,6 +64,8 @@ async function fetchMarketBriefing() {
 				: 'Live Solana market data',
 			pools,
 			fetchedAt: new Date().toISOString(),
+			stale,
+			as_of: stale ? new Date(Date.now() - ageMs).toISOString() : null,
 		};
 	} catch {
 		// No invented market data: a GeckoTerminal failure degrades to an explicit

@@ -10,7 +10,9 @@
 //   TELEGRAM_SNIPER_CHAT_ID     — dedicated sniper notifications channel (preferred)
 //   TELEGRAM_ALERTS_CHAT_ID     — ops fallback if the dedicated channel is absent
 
-const TIMEOUT_MS = 3000;
+import { fetchUpstream } from '../upstream-fetch.js';
+
+const TIMEOUT_MS = 5000;
 
 function defaultChatId() {
 	return process.env.TELEGRAM_SNIPER_CHAT_ID || process.env.TELEGRAM_ALERTS_CHAT_ID || null;
@@ -20,21 +22,26 @@ function send(text, chatIdOverride) {
 	const token = process.env.TELEGRAM_BOT_TOKEN;
 	const id = chatIdOverride || defaultChatId();
 	if (!token || !id) return;
-	const controller = new AbortController();
-	const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-	fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-		method: 'POST',
-		headers: { 'content-type': 'application/json' },
-		body: JSON.stringify({
-			chat_id: id,
-			text: text.slice(0, 4000),
-			disable_web_page_preview: true,
-		}),
-		signal: controller.signal,
-		keepalive: true,
-	})
-		.catch(() => {})
-		.finally(() => clearTimeout(timer));
+	// Still fire-and-forget so it never delays the trade path, but a single
+	// dropped packet no longer loses the notification silently: fetchUpstream
+	// retries a transient failure and honours Retry-After, and a final failure
+	// is logged instead of swallowed.
+	fetchUpstream(
+		`https://api.telegram.org/bot${token}/sendMessage`,
+		{
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({
+				chat_id: id,
+				text: text.slice(0, 4000),
+				disable_web_page_preview: true,
+			}),
+			keepalive: true,
+		},
+		{ name: 'telegram:sniper', timeoutMs: TIMEOUT_MS, attempts: 2 },
+	).catch((err) => {
+		console.warn(`[sniper-notify] telegram delivery failed after retries: ${err?.message || err}`);
+	});
 }
 
 const n2 = (v) => (v != null ? Number(v).toFixed(4) : '—');

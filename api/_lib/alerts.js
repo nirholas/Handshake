@@ -28,6 +28,7 @@
 
 import { createHash } from 'node:crypto';
 import { cacheGet, cacheSet } from './cache.js';
+import { fetchUpstream } from './upstream-fetch.js';
 
 const DEDUP_TTL_S = 60 * 60;
 const GLOBAL_LIMIT_PER_HOUR = 20;
@@ -101,22 +102,28 @@ async function persistAlert({ sig, title, detail, severity, environment }) {
 	}
 }
 
+// One dropped packet used to lose an ops alert outright: a bare fetch with
+// `.catch(() => {})` has no retry and leaves no trace of what went missing.
+// fetchUpstream keeps it fire-and-forget but adds the timeout, the
+// Retry-After-aware second attempt and the breaker every other Telegram sender
+// here already uses, and a final failure is logged rather than swallowed.
 function post(cfg, text) {
-	const controller = new AbortController();
-	const timer = setTimeout(() => controller.abort(), 2500);
-	fetch(`https://api.telegram.org/bot${cfg.token}/sendMessage`, {
-		method: 'POST',
-		headers: { 'content-type': 'application/json' },
-		body: JSON.stringify({
-			chat_id: cfg.chatId,
-			text: text.slice(0, 4000), // Telegram message hard limit is 4096
-			disable_web_page_preview: true,
-		}),
-		signal: controller.signal,
-		keepalive: true,
-	})
-		.catch(() => {})
-		.finally(() => clearTimeout(timer));
+	fetchUpstream(
+		`https://api.telegram.org/bot${cfg.token}/sendMessage`,
+		{
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({
+				chat_id: cfg.chatId,
+				text: text.slice(0, 4000), // Telegram message hard limit is 4096
+				disable_web_page_preview: true,
+			}),
+			keepalive: true,
+		},
+		{ name: 'telegram:ops-alert', timeoutMs: 5_000, attempts: 2 },
+	).catch((err) => {
+		console.warn(`[alerts] telegram delivery failed after retries: ${err?.message || err}`);
+	});
 }
 
 /**

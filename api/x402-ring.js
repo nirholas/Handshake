@@ -23,6 +23,7 @@ import { env } from './_lib/env.js';
 import { PublicKey } from '@solana/web3.js';
 import { getAccount, getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { solanaConnection } from './_lib/solana/connection.js';
+import { solPriceUsd } from './_lib/sol-price.js';
 import { loadSeedKeypair, USDC_MINT } from './_lib/x402/pay.js';
 import { SELF_FACILITATOR_ENABLED, SPONSOR_SOL_FLOOR_LAMPORTS } from './_lib/x402/self-facilitator.js';
 import { validateRingConfig, warnIfRingRoutesExternal } from './_lib/x402/ring-config.js';
@@ -55,19 +56,14 @@ function sol(lamports) {
 
 // Best-effort live SOL price for a USD figure on the burn — never blocks the
 // report if the quote is unreachable.
+//
+// This used to be a single keyless GeckoTerminal read, so one throttled host
+// silently dropped every USD figure off the ring report. api/_lib/sol-price.js
+// already runs the same question across ten providers with a cooldown and a
+// short TTL, which is both more reliable and cheaper than a per-request fetch.
 async function solUsd() {
-	try {
-		const r = await fetch(
-			'https://api.geckoterminal.com/api/v2/simple/networks/solana/token_price/So11111111111111111111111111111111111111112',
-			{ headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(4000) },
-		);
-		if (!r.ok) return null;
-		const d = await r.json();
-		const p = d?.data?.attributes?.token_prices?.So11111111111111111111111111111111111111112;
-		return p ? Number(p) : null;
-	} catch {
-		return null;
-	}
+	const price = await solPriceUsd();
+	return price > 0 ? price : null;
 }
 
 async function usdcBalance(conn, ownerB58) {

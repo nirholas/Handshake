@@ -152,12 +152,30 @@ async function request(path, { query, method = 'GET', body } = {}) {
 
 // Read-through cache around a GET. Cache keys are content-addressed by path +
 // query so distinct filters never collide. Errors are never cached.
+//
+// A separate last-known-good copy outlives the fresh TTL by design. Without it
+// an aixbt 5xx propagated straight through to /api/v1/market/intel and
+// /projects as a hard failure even when a perfectly serviceable answer from two
+// minutes ago was sitting right there. The LKG copy is returned marked stale,
+// so the caller can caption it rather than pass it off as live, and a failure
+// with nothing cached still throws honestly.
+const LKG_TTL_SECONDS = 6 * 60 * 60;
+
 async function cachedGet(cacheKey, ttl, path, query) {
 	const cached = await cacheGet(cacheKey).catch(() => null);
 	if (cached) return cached;
-	const fresh = await request(path, { query });
-	await cacheSet(cacheKey, fresh, ttl).catch(() => {});
-	return fresh;
+	const lkgKey = `${cacheKey}:lkg`;
+	try {
+		const fresh = await request(path, { query });
+		await cacheSet(cacheKey, fresh, ttl).catch(() => {});
+		await cacheSet(lkgKey, { ...fresh, at: Date.now() }, LKG_TTL_SECONDS).catch(() => {});
+		return fresh;
+	} catch (err) {
+		const lkg = await cacheGet(lkgKey).catch(() => null);
+		if (!lkg) throw err;
+		console.warn(`[aixbt] ${path} failed (${err?.message || err}); serving last-known-good`);
+		return { ...lkg, stale: true, as_of: new Date(Number(lkg.at) || Date.now()).toISOString() };
+	}
 }
 
 function num(v) {
