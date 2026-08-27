@@ -17,6 +17,7 @@
 
 import { isValidSolanaAddress, isValidEvmAddress } from './validate.js';
 import { fetchHoneypot, honeypotChainId } from './honeypot.js';
+import { fetchUpstreamJson, lastGood } from './upstream-fetch.js';
 
 const DEXSCREENER_TOKENS = 'https://api.dexscreener.com/latest/dex/tokens/';
 
@@ -77,12 +78,26 @@ export async function fetchTokenMarket(ca, opts = {}) {
 		? fetchHoneypot(ca, { chainId: pinnedHpChain ?? undefined }).catch(() => null)
 		: Promise.resolve(null);
 
-	const r = await fetch(`${DEXSCREENER_TOKENS}${encodeURIComponent(ca)}`, {
-		headers: { Accept: 'application/json' },
-		signal: opts.signal ?? AbortSignal.timeout(6000),
-	});
-	if (!r.ok) return null;
-	const data = await r.json().catch(() => null);
+	// One keyless DexScreener read used to decide whether a token exists at all,
+	// so a throttle there made a live token read as "not found" on /ca2x402 and
+	// 503'd the paid token-intel service. The call is now retried behind a
+	// breaker and backed by a last-known-good payload: a few minutes of
+	// staleness beats telling a caller their real token is unknown.
+	let data = null;
+	try {
+		const out = await lastGood(
+			`token-market:${ca.toLowerCase()}`,
+			() => fetchUpstreamJson(
+				`${DEXSCREENER_TOKENS}${encodeURIComponent(ca)}`,
+				{ headers: { Accept: 'application/json' }, signal: opts.signal },
+				{ name: 'dexscreener:tokens', timeoutMs: 6_000, attempts: 2 },
+			),
+			{ maxAgeMs: 15 * 60_000 },
+		);
+		data = out.value;
+	} catch {
+		return null;
+	}
 	let pairs = Array.isArray(data?.pairs) ? data.pairs : [];
 	if (opts.chain) pairs = pairs.filter((p) => p.chainId === opts.chain);
 	if (!pairs.length) return null;

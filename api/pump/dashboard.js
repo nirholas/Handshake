@@ -1,6 +1,8 @@
 import { sql } from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';
 import { json, error, wrap } from '../_lib/http.js';
+import { fetchTokenMarketData } from '../_lib/market/token-market.js';
+import { withBreaker } from '../_lib/resilience.js';
 
 const BIRDEYE_API_KEY = process.env.BIRDEYE_API_KEY;
 
@@ -59,28 +61,54 @@ export default wrap(async (req, res) => {
 	if (!tokenMint)
 		return error(res, 404, 'token_not_launched', 'token not launched for this agent');
 
-	if (!BIRDEYE_API_KEY) {
-		return error(res, 503, 'not_configured', 'On-chain data provider is not configured');
+	const headers = BIRDEYE_API_KEY ? { 'X-API-KEY': BIRDEYE_API_KEY } : null;
+
+	// The two halves fail independently now. Price comes from the shared market
+	// chain (Birdeye, then tokens.xyz, DexScreener and GeckoTerminal, with its own
+	// stale tier), so it survives a Birdeye outage and works with no Birdeye key
+	// at all, which is why the hard 503 above is gone. The recent-trades list has
+	// no second source, so it degrades to an empty list behind a breaker and says
+	// so, instead of taking the whole dashboard down with it: a price with no
+	// trade feed is most of the page, a 502 is none of it.
+	const [priceResult, historyResult] = await Promise.allSettled([
+		fetchTokenMarketData(tokenMint),
+		headers
+			? withBreaker(
+					'birdeye:txs',
+					() => fetchWithCache(`https://public-api.birdeye.so/defi/txs/latest?address=${tokenMint}`, { headers }),
+					{ fallback: null },
+				)
+			: Promise.resolve(null),
+	]);
+
+	const market = priceResult.status === 'fulfilled' ? priceResult.value : null;
+	const history = historyResult.status === 'fulfilled' ? historyResult.value : null;
+	const degraded = [];
+	if (!market?.price_usd) degraded.push('price');
+	if (!history) degraded.push('history');
+
+	if (!market?.price_usd && !history) {
+		console.error(`[pump-dashboard] no market source answered for ${tokenMint}`);
+		res.setHeader('retry-after', '15');
+		return error(res, 503, 'market_unavailable', 'on-chain market data is temporarily unavailable, retry shortly');
 	}
 
-	const headers = { 'X-API-KEY': BIRDEYE_API_KEY };
-
-	try {
-		const [price, history] = await Promise.all([
-			fetchWithCache(`https://public-api.birdeye.so/defi/price?address=${tokenMint}`, {
-				headers,
-			}),
-			fetchWithCache(`https://public-api.birdeye.so/defi/txs/latest?address=${tokenMint}`, {
-				headers,
-			}),
-		]);
-
-		return json(res, 200, {
-			price: price.data,
-			history: history?.data?.items ?? [],
-		});
-	} catch (e) {
-		console.error(`[pump-dashboard] Error fetching token data for ${tokenMint}:`, e);
-		return error(res, 502, 'bad_gateway', 'Failed to fetch on-chain data');
-	}
+	return json(res, 200, {
+		price: market?.price_usd == null
+			? null
+			: {
+					value: market.price_usd,
+					updateUnixTime: Math.floor(Date.now() / 1000),
+					priceChange24h: market.price_change_24h,
+					// The dashboard has always rendered a market cap slot; Birdeye's
+					// price endpoint does not carry one, so it read "N/A" for every
+					// token. The market chain does carry it, so the slot finally means
+					// something.
+					marketCap: market.market_cap,
+					liquidity: market.liquidity,
+					source: market.source,
+				},
+		history: history?.data?.items ?? [],
+		degraded: degraded.length ? degraded : null,
+	});
 });
