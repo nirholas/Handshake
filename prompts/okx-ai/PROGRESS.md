@@ -138,6 +138,23 @@ lane because it reads the static tier matrix.
   `PAYMENT-REQUIRED`, MCP headers included; `forge-status` GET 405; `/health` carries
   `submit-latency`; three-copy PASS; `smoke:prod` 724/724.
 
+### 2026-08-27, SUBMITTED: agent #2632 updated on-chain and sent for review
+
+- `onchainos agent update --agent-id 2632`: description replaced, 8 stale services deleted,
+  7 forge/free services created. **tx `0xb4b2f51dc34d4c8ed6adc2cfb55b0e21e2a6a29d787c02a8a9ca110e178415ba`**
+  (X Layer, chain 196). New service ids: 39975 Forge 3D Draft, 39976 Forge 3D Standard,
+  39977 Forge 3D HD, 39978 Forge 3D from Image, 39979 Forge Job Status, 39980 3D Studio
+  Service Catalog, 39981 3D Studio Health Status. `service-list` confirms exactly those 7.
+- `onchainos agent activate --agent-id 2632 --preferred-language en-US`: the `activate` leg
+  echoed the stored 2026-07-26 rejection (`approvalStatus: 5`), then `submitApproval`
+  returned `approvalStatus: 2, success: true`: **under review**.
+- Post-update hook run: `okx-a2a agent refresh --json` (agentCount 1, unchanged).
+- Two CLI facts for the next session: `agent update` requires `endpoint` on delete entries
+  (payload script fixed, `fa69ac85b`), and `onchainos` needs the `okx-a2a` daemon
+  (`npm i -g @okxweb3/a2a-node`, then `okx-a2a daemon start`) before any write.
+- Watch: `onchainos agent get-agents --agent-ids 2632` until the approval state moves. A
+  rejection reason arrives by email to `claude@three.ws`; `approvalRemark` stays empty.
+
 ### Still owner-gated (unchanged, and unchanged by this rebuild)
 
 Funding. Relayer `0x1F4a753c61b54Bdec7AE0AF338A887E63Cdbbb74` needs native OKB on X Layer

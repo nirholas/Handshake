@@ -5,10 +5,11 @@ on-chain agent marketplace. Buyers are agents: they discover a service, receive 
 payment challenge, pay in stablecoins on X Layer (or USDC on our other x402 rails), and get
 the artifact. Our marketplace entry is agent **#2632 "three.ws 3D Studio"**.
 
-> **Listing state.** The listing is not live yet. It was rejected in review on 2026-07-04
+> **Listing state.** Resubmitted for review on 2026-08-27 with the line-up below (on-chain
+> update tx `0xb4b2f51d…415ba`, X Layer). The earlier listing was rejected on 2026-07-04
 > ("your A2MCP service has not been integrated with the OKX Agent Payments Protocol
-> standard") and a resubmission is pending. The services below are reachable directly at
-> the endpoints documented here in the meantime. Current state is tracked in
+> standard"); every row now answers that directly. Until approval lands, the services are
+> reachable at the endpoints documented here. Current state is tracked in
 > [`prompts/okx-ai/PROGRESS.md`](../prompts/okx-ai/PROGRESS.md).
 
 **What we list, as of 2026-08-22: three.ws Forge.** The listing was rebuilt around one
