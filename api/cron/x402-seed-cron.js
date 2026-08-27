@@ -33,7 +33,7 @@ import {
 import { json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { getRedis, isRedisAuthError } from '../_lib/redis.js';
-import { solanaConnection } from '../_lib/solana/connection.js';
+import { isTransientRpcError, solanaConnection } from '../_lib/solana/connection.js';
 import { logger } from '../_lib/usage.js';
 import { SPONSOR_SOL_FLOOR_LAMPORTS } from '../_lib/x402/self-facilitator.js';
 import {
@@ -183,18 +183,36 @@ export default wrapCron(async (req, res) => {
 	const conn = solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed' });
 	// The two balance reads ride along in this batch, so the preflight below
 	// costs no extra wall-clock on a healthy tick.
-	const [{ blockhash }, mintInfo, receiverAtaInfo, sponsorSolLamports, payerUsdcAtomic] =
-		await Promise.all([
-			conn.getLatestBlockhash('confirmed'),
-			getMint(conn, new PublicKey(accept.asset)),
-			conn.getAccountInfo(getAssociatedTokenAddressSync(
-				new PublicKey(accept.asset),
-				new PublicKey(accept.payTo),
-				false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
-			)),
-			conn.getBalance(new PublicKey(accept.extra.feePayer), 'confirmed').catch(() => null),
-			readPayerUsdcAtomic(conn, buyer.publicKey),
-		]);
+	//
+	// The whole preflight is one RPC round and it is the cron's only network
+	// dependency, so an exhausted RPC chain used to escape as an unhandled
+	// throw: 608 HTTP 500s and as many ops alerts in the week to 2026-08-27,
+	// every one of them "failed to get recent blockhash: fetch failed". A tick
+	// that cannot read the chain has nothing to seed; it reports the skip like
+	// the Redis and keypair gates above and the next tick tries again.
+	let blockhash, mintInfo, receiverAtaInfo, sponsorSolLamports, payerUsdcAtomic;
+	try {
+		[{ blockhash }, mintInfo, receiverAtaInfo, sponsorSolLamports, payerUsdcAtomic] =
+			await Promise.all([
+				conn.getLatestBlockhash('confirmed'),
+				getMint(conn, new PublicKey(accept.asset)),
+				conn.getAccountInfo(getAssociatedTokenAddressSync(
+					new PublicKey(accept.asset),
+					new PublicKey(accept.payTo),
+					false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
+				)),
+				conn.getBalance(new PublicKey(accept.extra.feePayer), 'confirmed').catch(() => null),
+				readPayerUsdcAtomic(conn, buyer.publicKey),
+			]);
+	} catch (err) {
+		if (!isTransientRpcError(err)) throw err;
+		log.warn('rpc_unavailable_skip', { message: err?.message });
+		return json(res, 200, {
+			ok: false,
+			skipped: true,
+			reason: `rpc_unavailable: ${err?.message || 'solana rpc chain exhausted'}`,
+		});
+	}
 	const receiverAtaExists = receiverAtaInfo !== null;
 
 	// ── Pre-flight: never fire a batch whose outcome is already decided ───────
