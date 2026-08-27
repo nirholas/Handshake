@@ -148,7 +148,7 @@ describe('textToImage: Vertex quality lane leads by default', () => {
 		const textToImage = await freshTextToImage();
 		const result = await textToImage('a red teapot');
 
-		expect(result.model).toBe('black-forest-labs/flux.1-schnell');
+		expect(result.model).toBe('black-forest-labs/flux.1-dev');
 		expect(vertexState.generate).toHaveBeenCalledOnce();
 		expect(calls).toHaveLength(1);
 	});
@@ -164,7 +164,7 @@ describe('textToImage: Vertex quality lane leads by default', () => {
 		const textToImage = await freshTextToImage();
 		const result = await textToImage('a red teapot');
 
-		expect(result.model).toBe('black-forest-labs/flux.1-schnell');
+		expect(result.model).toBe('black-forest-labs/flux.1-dev');
 		expect(vertexState.generate).not.toHaveBeenCalled();
 		expect(calls).toHaveLength(1);
 	});
@@ -188,7 +188,7 @@ describe('textToImage: NIM FLUX free lane (legacy NIM-first order)', () => {
 		const textToImage = await freshTextToImage();
 		const result = await textToImage('a red teapot');
 
-		expect(result.model).toBe('black-forest-labs/flux.1-schnell');
+		expect(result.model).toBe('black-forest-labs/flux.1-dev');
 		// NIM output is JPEG, persisted bytes, key extension, and Content-Type
 		// must all say jpeg, not png (regression cover for the probe finding).
 		expect(result.imageUrl).toMatch(/^https:\/\/cdn\.example\/forge\/refs\/.+\.jpg$/);
@@ -199,9 +199,9 @@ describe('textToImage: NIM FLUX free lane (legacy NIM-first order)', () => {
 		expect(Buffer.compare(r2State.puts[0].body, NIM_JPEG_BYTES)).toBe(0);
 		expect(vertexState.generate).not.toHaveBeenCalled();
 		expect(calls).toHaveLength(1);
-		expect(calls[0].url).toContain('flux.1-schnell');
+		expect(calls[0].url).toContain('flux.1-dev');
 		expect(calls[0].body.prompt).toMatch(/^a red teapot/);
-		expect(calls[0].body).toMatchObject({ steps: 4 });
+		expect(calls[0].body).toMatchObject({ steps: 20, cfg_scale: 3.5 });
 		// schnell is guidance-distilled: the endpoint 422s on cfg_scale > 0
 		// (verified live), so the request must not send it at all.
 		expect(calls[0].body).not.toHaveProperty('cfg_scale');
@@ -284,7 +284,7 @@ describe('textToImage: NIM FLUX free lane (legacy NIM-first order)', () => {
 			const p = textToImage('a red teapot');
 			await vi.advanceTimersByTimeAsync(2_000); // let the retry backoff elapse
 			const result = await p;
-			expect(result.model).toBe('black-forest-labs/flux.1-schnell');
+			expect(result.model).toBe('black-forest-labs/flux.1-dev');
 			expect(calls.filter((c) => c.url.includes('ai.api.nvidia.com'))).toHaveLength(2);
 		} finally {
 			vi.useRealTimers();
@@ -316,12 +316,20 @@ describe('textToImage: NIM FLUX free lane (legacy NIM-first order)', () => {
 		expect(calls.filter((c) => c.url.includes('ai.api.nvidia.com'))).toHaveLength(1);
 	});
 
-	it('surfaces the NIM error when it is the only configured lane', async () => {
+	// There is no "only configured lane" any more: keyless Pollinations always
+	// sits behind the keyed rungs. NIM's failure is logged and the ladder walks
+	// on; the terminal error is the LAST rung's, so a diagnosis reads the warns.
+	it('walks past a NIM failure to the keyless rung, and the terminal error is the last rung\'s', async () => {
 		process.env.NVIDIA_API_KEY = 'nvapi-test';
-		stubFetch([['ai.api.nvidia.com', () => new Response('nope', { status: 401 })]]);
+		const calls = stubFetch([
+			['ai.api.nvidia.com', () => new Response('nope', { status: 401 })],
+			['image.pollinations.ai', () => new Response('down', { status: 503 })],
+		]);
+		vi.spyOn(console, 'warn').mockImplementation(() => {});
 
 		const textToImage = await freshTextToImage();
-		await expect(textToImage('a red teapot')).rejects.toThrow(/nim flux returned 401/);
+		await expect(textToImage('a red teapot')).rejects.toThrow(/pollinations returned 503/);
+		expect(calls.some((c) => c.url.includes('ai.api.nvidia.com'))).toBe(true);
 	});
 
 	it('skipNim bypasses the NIM lane entirely when a fallback exists', async () => {
@@ -338,15 +346,18 @@ describe('textToImage: NIM FLUX free lane (legacy NIM-first order)', () => {
 		expect(calls.some((c) => c.url.includes('ai.api.nvidia.com'))).toBe(false);
 	});
 
-	it('skipNim still uses NIM when it is the only lane (never skip into a dead end)', async () => {
+	it('skipNim with no keyed fallback still lands on the keyless rung, never a dead end', async () => {
 		process.env.NVIDIA_API_KEY = 'nvapi-test';
-		const calls = stubFetch([['ai.api.nvidia.com', () => nimSuccessResponse()]]);
+		const calls = stubFetch([
+			['ai.api.nvidia.com', () => nimSuccessResponse()],
+			['image.pollinations.ai', () => new Response(new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0]), { status: 200, headers: { 'content-type': 'image/jpeg' } })],
+		]);
 
 		const textToImage = await freshTextToImage();
 		const result = await textToImage('a red teapot', { skipNim: true });
 
-		expect(result.model).toBe('black-forest-labs/flux.1-schnell');
-		expect(calls.filter((c) => c.url.includes('ai.api.nvidia.com'))).toHaveLength(1);
+		expect(result.model).toBe('pollinations/flux');
+		expect(calls.some((c) => c.url.includes('ai.api.nvidia.com'))).toBe(false);
 	});
 
 	it('a degraded NIM failure cools the lane so the next call skips it', async () => {
@@ -450,13 +461,18 @@ describe('textToImage: Livepeer federation lane counts as a real fallback', () =
 		expect(calls.some((c) => c.url.includes('gateway.test/images/'))).toBe(true);
 	});
 
-	it('still surfaces the upstream error when Livepeer federation is off', async () => {
+	it('with Livepeer off, the keyless rung is what stands between NIM and a dead end', async () => {
 		delete process.env.LIVEPEER_FEDERATION_ENABLED;
 		process.env.NVIDIA_API_KEY = 'nvapi-test';
-		stubFetch([['ai.api.nvidia.com', () => new Response('nope', { status: 401 })]]);
+		const calls = stubFetch([
+			['ai.api.nvidia.com', () => new Response('nope', { status: 401 })],
+			['image.pollinations.ai', () => new Response('down', { status: 503 })],
+		]);
+		vi.spyOn(console, 'warn').mockImplementation(() => {});
 
 		const textToImage = await freshTextToImage();
-		await expect(textToImage('a red teapot')).rejects.toThrow(/nim flux returned 401/);
+		await expect(textToImage('a red teapot')).rejects.toThrow(/pollinations returned 503/);
+		expect(calls.some((c) => c.url.includes('gateway.test'))).toBe(false);
 	});
 });
 

@@ -135,7 +135,7 @@ describe('llmComplete — free platform providers', () => {
 		const out = await llm.llmComplete({ system: 's', user: 'u', preferNvidia: true });
 		expect(out.provider).toBe('nvidia');
 		expect(out.text).toBe('from nemotron');
-		expect(out.model).toBe('nvidia/nvidia-nemotron-nano-9b-v2');
+		expect(out.model).toBe('nvidia/nemotron-3-nano-30b-a3b');
 		// NVIDIA was hit first; Groq never needed.
 		expect(calls[0].url).toContain(NVIDIA_HOST);
 		expect(calls.some((c) => c.url.includes(GROQ_HOST))).toBe(false);

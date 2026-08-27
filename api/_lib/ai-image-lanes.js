@@ -51,11 +51,16 @@ export function imageLaneConfig() {
 	const nim = Boolean(readEnv('NVIDIA_API_KEY'));
 	const vertex = Boolean(readEnv('GOOGLE_CLOUD_PROJECT')) && vertexImagenEnabled();
 	const replicate = Boolean(readEnv('REPLICATE_API_TOKEN'));
+	const hf = Boolean(readEnv('HF_TOKEN'));
+	// Pollinations needs no key, so an image lane is always configured.
+	const pollinations = true;
 	return {
 		nim,
 		vertex,
 		replicate,
-		anyConfigured: nim || vertex || replicate,
+		hf,
+		pollinations,
+		anyConfigured: true,
 	};
 }
 
@@ -246,6 +251,13 @@ export async function imageLaneHealth() {
 		configured: anyConfigured,
 		healthy: anyReachable,
 		lanes,
-		missing_env: anyConfigured ? [] : missingLaneEnv(),
+		// The keyless rung means `configured` is always true, so this names the
+		// KEYED lanes an operator has not brought up, not "nothing at all".
+		missing_env: [
+			...(nim.configured ? [] : IMAGE_LANE_ENV.nim),
+			...(vertex.configured ? [] : IMAGE_LANE_ENV.vertex.slice(0, 2)),
+			...(hf.configured ? [] : ['HF_TOKEN']),
+			...(replicate.configured ? [] : IMAGE_LANE_ENV.replicate),
+		],
 	};
 }

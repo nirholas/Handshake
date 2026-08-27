@@ -198,15 +198,14 @@ describe('quota fall-through to x402', () => {
 });
 
 describe('no-lane honesty', () => {
-	it('returns 503 not_configured naming the env vars when no lane is set', async () => {
-		delete process.env.NVIDIA_API_KEY; // no lane configured at all
+	// Keyless Pollinations is always behind the keyed rungs, so "no key at all"
+	// is no longer "no lane": the request still runs, and the health surface is
+	// where the absent keyed lanes are named (see the GET ?health=1 case).
+	it('still serves with no keyed lane set, through the keyless rung', async () => {
+		delete process.env.NVIDIA_API_KEY;
 		const res = makeRes();
 		await handler(makeReq({ body: { prompt: 'a brass owl figurine' } }), res);
-		expect(res.statusCode).toBe(503);
-		const body = JSON.parse(res.body);
-		expect(body.error).toBe('not_configured');
-		expect(body.error_description).toContain('NVIDIA_API_KEY');
-		expect(body.error_description).toContain('GOOGLE_CLOUD_PROJECT');
+		expect(res.statusCode).toBe(200);
 	});
 });
 
@@ -235,13 +234,16 @@ describe('GET surfaces', () => {
 		expect(body.price_usdc).toBe('0.020000');
 	});
 
-	it('reports per-lane health on GET ?health=1 without a lane configured → 503', async () => {
+	// Keyless Pollinations means the image surface is never "unconfigured":
+	// with no key at all it still answers 200 and names the keyed lanes missing.
+	it('reports per-lane health on GET ?health=1 with no keyed lane: still configured via the keyless rung', async () => {
 		delete process.env.NVIDIA_API_KEY;
 		const res = makeRes();
 		await handler(makeReq({ method: 'GET', url: '/api/v1/ai/image?health=1' }), res);
-		expect(res.statusCode).toBe(503);
+		expect(res.statusCode).toBe(200);
 		const body = JSON.parse(res.body);
-		expect(body.configured).toBe(false);
+		expect(body.configured).toBe(true);
+		expect(body.lanes.pollinations.configured).toBe(true);
 		expect(body.lanes.nim.status).toBe('unconfigured');
 		expect(body.missing_env).toContain('NVIDIA_API_KEY');
 	});
