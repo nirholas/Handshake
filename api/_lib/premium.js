@@ -40,6 +40,7 @@ import { usdToUsdcAtomics, USDC_DECIMALS } from './subscription-pricing.js';
 import { createSubscription } from './x402/api-keys.js';
 import { siwxStorage } from './siwx-storage.js';
 import { solanaConnection } from './solana/connection.js';
+import { blockhashKey, getRecentBlockhashInfo } from './solana/read-guards.js';
 import { rpcFallbackFromEnv } from './solana/rpc-fallback.js';
 import { NETWORK_SOLANA_MAINNET } from './x402-spec.js';
 
@@ -248,7 +249,7 @@ export async function createQuote({ wallet, asset, planId = 'developer', userId 
 	}
 
 	const conn = solanaConnection();
-	const { blockhash } = await conn.getLatestBlockhash('confirmed');
+	const { blockhash } = await getRecentBlockhashInfo(conn, blockhashKey({ network: 'mainnet' }));
 	const message = new TransactionMessage({
 		payerKey: buyer,
 		recentBlockhash: blockhash,

@@ -14,6 +14,7 @@
 // degrade gracefully — nothing is ever inert-but-pretending.
 
 import { solanaConnection } from './agent-pumpfun.js';
+import { blockhashKey, getRecentBlockhashInfo, readBalanceOrNull, rpcUnavailableError } from './solana/read-guards.js';
 import { confirmOrThrow } from './solana/confirm.js';
 
 const SOL = 1_000_000_000;
@@ -95,7 +96,9 @@ export async function getTreasuryKeypair(overrideEnv) {
 /** Lamport balance of an address on the treasury's connection. */
 export async function lamportBalance(conn, address) {
 	const { PublicKey } = await import('@solana/web3.js');
-	return BigInt(await conn.getBalance(new PublicKey(address), 'confirmed'));
+	const lamports = await readBalanceOrNull(conn, new PublicKey(address), 'confirmed');
+	if (lamports == null) throw rpcUnavailableError(null, `treasury balance for ${address} is unreadable right now`);
+	return BigInt(lamports);
 }
 
 /**
@@ -116,7 +119,14 @@ export async function transferSol(conn, fromKp, toAddress, lamports) {
 	const MAX_ATTEMPTS = 2;
 	let lastErr;
 	for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-		const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('confirmed');
+		// The retry exists to escape an expired blockhash, so it forces a fresh
+		// read; the first attempt may take the cached one, and a chain that cannot
+		// be read at all still yields a hash inside its validity window.
+		const { blockhash, lastValidBlockHeight } = await getRecentBlockhashInfo(
+			conn,
+			blockhashKey({ network: treasuryNetwork() }),
+			{ forceFresh: attempt > 0 },
+		);
 		const message = new TransactionMessage({
 			payerKey: fromKp.publicKey,
 			recentBlockhash: blockhash,

@@ -20,6 +20,7 @@ import { sql } from './db.js';
 import { ensureAgentWallet, getOrCreateAgentSolanaWallet, recoverSolanaAgentKeypair } from './agent-wallet.js';
 import { transferNativeSol } from './solana-transfer.js';
 import { solanaConnection } from './solana/connection.js';
+import { readBalanceOrNull, rpcUnavailableError } from './solana/read-guards.js';
 import { recordCustodyEvent } from './agent-trade-guards.js';
 
 const LAMPORTS_PER_SOL = 1_000_000_000;
@@ -128,7 +129,11 @@ export function parseContributionLamports(body = {}) {
 export async function treasuryBalanceLamports(address, network = 'mainnet') {
 	const { PublicKey } = await import('@solana/web3.js');
 	const conn = solanaConnection({ network, commitment: 'confirmed' });
-	const lamports = await conn.getBalance(new PublicKey(address), 'confirmed');
+	// "Balance unknown" is the honest answer to an outage, and a caller must
+	// never read it as zero, so this raises a typed retryable error instead of
+	// letting a raw transport failure escape as a 500.
+	const lamports = await readBalanceOrNull(conn, new PublicKey(address), 'confirmed');
+	if (lamports == null) throw rpcUnavailableError(null, `treasury balance for ${address} is unreadable right now`);
 	return BigInt(lamports);
 }
 

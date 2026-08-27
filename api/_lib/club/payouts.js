@@ -19,10 +19,11 @@ import {
 	PublicKey,
 } from '@solana/web3.js';
 import { solanaConnection } from '../solana/connection.js';
+import { ataExists } from '../solana/read-guards.js';
 import { submitProtected } from '../execution-engine.js';
 import {
 	getAssociatedTokenAddress,
-	createAssociatedTokenAccountInstruction,
+	createAssociatedTokenAccountIdempotentInstruction,
 	createTransferInstruction,
 } from '@solana/spl-token';
 import {
@@ -70,9 +71,12 @@ export async function sendClubUsdcSolana({ recipient, amount }) {
 	const recipientAta = await getAssociatedTokenAddress(mint, to);
 
 	const instructions = [];
-	const recipientInfo = await connection.getAccountInfo(recipientAta);
-	if (!recipientInfo) {
-		instructions.push(createAssociatedTokenAccountInstruction(kp.publicKey, recipientAta, to, mint));
+	// Idempotent create paired with the fail-open probe: when the chain cannot be
+	// read the probe answers "missing", and an unnecessary create is a no-op
+	// rather than a transaction-killing error. It also closes the race where the
+	// ATA appears between the probe and the submit.
+	if (!(await ataExists(connection, recipientAta))) {
+		instructions.push(createAssociatedTokenAccountIdempotentInstruction(kp.publicKey, recipientAta, to, mint));
 	}
 	instructions.push(createTransferInstruction(senderAta, recipientAta, kp.publicKey, amt));
 

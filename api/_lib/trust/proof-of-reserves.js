@@ -21,6 +21,7 @@ import { PublicKey } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from '@solana/spl-token';
 import { sql } from '../db.js';
 import { solanaConnection } from '../agent-pumpfun.js';
+import { readBalanceOrNull, rpcUnavailableError } from '../solana/read-guards.js';
 import { solanaMintUsdPrice } from '../balances.js';
 import { solUsdPrice, explorerTxUrl, explorerAccountUrl } from '../avatar-wallet.js';
 import { cacheGet, cacheSet } from '../cache.js';
@@ -73,7 +74,14 @@ async function readReservesLive(address, network) {
 	const conn = solanaConnection(network);
 	const owner = new PublicKey(address);
 
-	const lamports = await conn.getBalance(owner, 'confirmed');
+	// A reserve line the chain cannot answer for is UNVERIFIED, which is a
+	// different claim from "zero" and from "the endpoint is broken". Throwing a
+	// raw transport error blanked the whole proof over one unreachable RPC; a
+	// typed rpc_unavailable lets the caller mark the line and retry.
+	const lamports = await readBalanceOrNull(conn, owner, 'confirmed');
+	if (lamports == null) {
+		throw rpcUnavailableError(null, `reserves for ${address} are unverifiable right now: the chain could not be read`);
+	}
 	const sol = lamports / 1e9;
 
 	const usdcMint = USDC_MINT_BY_CLUSTER[network];

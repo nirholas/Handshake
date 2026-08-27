@@ -33,10 +33,10 @@ import {
 	getAssociatedTokenAddressSync,
 	createTransferCheckedInstruction,
 	createAssociatedTokenAccountIdempotentInstruction,
-	getMint,
 } from '@solana/spl-token';
 
 import { sql } from './db.js';
+import { mintDecimals } from './solana/read-guards.js';
 import { submitProtected } from './execution-engine.js';
 import { ensureAgentWallet, recoverSolanaAgentKeypair } from './agent-wallet.js';
 
@@ -168,14 +168,14 @@ export async function sendAgentPurchaseTransfer({
 }) {
 	const mintKey = new PublicKey(currencyMint);
 	const recipKey = new PublicKey(recipient);
-	const mintInfo = await getMint(connection, mintKey);
+	const decimals = await mintDecimals(connection, mintKey);
 
 	const fromAta = getAssociatedTokenAddressSync(mintKey, keypair.publicKey);
 	const toAta = getAssociatedTokenAddressSync(mintKey, recipKey);
 
 	const transferIx = createTransferCheckedInstruction(
 		fromAta, mintKey, toAta, keypair.publicKey,
-		BigInt(amountAtomics), mintInfo.decimals,
+		BigInt(amountAtomics), decimals,
 	);
 	// The reference key is a non-signer, non-writable account on the transfer so
 	// findReference() can locate this exact payment on-chain afterwards.
