@@ -41,10 +41,10 @@ const HOSTS = {
 // last free rung (a separate per-model quota), so reaching it means every rung
 // between them was tried and skipped.
 const FREE_CHAIN = [
-	{ provider: 'groq', host: HOSTS.groq, model: 'llama-3.3-70b-versatile' },
+	{ provider: 'groq', host: HOSTS.groq, model: 'qwen/qwen3.8-27b' },
 	{ provider: 'cerebras', host: HOSTS.cerebras, model: 'llama-3.3-70b' },
 	{ provider: 'openrouter', host: HOSTS.openrouter, model: 'openai/gpt-oss-20b:free' },
-	{ provider: 'nvidia', host: HOSTS.nvidia, model: 'meta/llama-3.3-70b-instruct' },
+	{ provider: 'nvidia', host: HOSTS.nvidia, model: 'nvidia/nemotron-3-super-120b-a12b' },
 	{ provider: 'sambanova', host: HOSTS.sambanova, model: 'Meta-Llama-3.3-70B-Instruct' },
 	{ provider: 'mistral', host: HOSTS.mistral, model: 'mistral-small-latest' },
 	{ provider: 'zai', host: HOSTS.zai, model: 'glm-4.7-flash' },
