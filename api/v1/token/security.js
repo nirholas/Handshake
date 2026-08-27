@@ -235,7 +235,14 @@ export default defineEndpoint({
 			address,
 			account: { answered: answered(acct), result: answered(acct) ? acct.value?.result : undefined },
 			largest: { answered: answered(largest), result: answered(largest) ? largest.value?.result : undefined },
-			market: { answered: mkt.status === 'fulfilled', data: mkt.value },
+			// fetchTokenMarket answers null both for "this token has no indexed
+			// pair" and for "DexScreener could not be reached at all", so a
+			// fulfilled promise is not proof anything answered. Only a real payload
+			// counts, which keeps the definitive 404 below ("not a resolvable
+			// token") for cases where some source actually spoke: telling a caller
+			// their real token does not exist because every upstream was down is a
+			// worse answer than admitting we could not check.
+			market: { answered: mkt.status === 'fulfilled' && mkt.value != null, data: mkt.value },
 		});
 
 		if (resolved) {

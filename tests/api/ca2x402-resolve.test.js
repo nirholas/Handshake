@@ -144,9 +144,24 @@ describe('GET /api/ca2x402/resolve', () => {
 		expect(res.headers['cache-control']).toBe('no-store');
 	});
 
-	it('reports the same designed 404 when DexScreener itself is failing', async () => {
+	it('keeps answering from the remembered payload when DexScreener itself is failing', async () => {
+		// A throttled DexScreener used to make a live token read as "not found"
+		// here, which 503'd the paid token-intel service downstream. The market
+		// read now falls back to the last payload it saw for this mint, so a blip
+		// costs a few minutes of staleness instead of denying a real token.
+		const warm = await call({ query: `?mint=${MINT}` });
+		expect(warm.statusCode).toBe(200);
 		dexOk = false;
 		const res = await call({ query: `?mint=${MINT}` });
+		expect(res.statusCode).toBe(200);
+		expect(parse(res).ok).toBe(true);
+	});
+
+	it('still reports the designed 404 when DexScreener fails for a mint it has never seen', async () => {
+		// Nothing remembered for this mint, so there is no honest answer to give:
+		// the caller gets the designed miss rather than a fabricated one.
+		dexOk = false;
+		const res = await call({ query: '?mint=THREEsyntheticNeverSeen11111111111111111111' });
 		expect(res.statusCode).toBe(404);
 		expect(parse(res).error).toBe('token_not_found');
 	});

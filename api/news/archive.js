@@ -70,6 +70,12 @@ function httpErr(status, code, message) {
 	const e = new Error(message);
 	e.status = status;
 	e.code = code;
+	// Marks a status this endpoint chose deliberately. The shared upstream fetch
+	// synthesizes its own status on a transport failure (503 for an unreachable
+	// host), and without this flag that transport code would surface at the
+	// boundary in place of the 502 archive_unavailable contract this endpoint
+	// documents and its callers match on.
+	e.deliberate = true;
 	return e;
 }
 
@@ -421,6 +427,7 @@ export default wrap(async (req, res) => {
 			{ 'cache-control': 'public, max-age=120, s-maxage=300, stale-while-revalidate=3600' },
 		);
 	} catch (e) {
-		return error(res, e.status || 502, e.code || 'archive_unavailable', e.message);
+		const status = e.deliberate && e.status ? e.status : 502;
+		return error(res, status, e.code || 'archive_unavailable', e.message);
 	}
 });
