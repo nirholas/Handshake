@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>three.ws for Seeker</title>
+			<link>https://three.ws/seeker</link>
+			<guid isPermaLink="false">2026-08-27:three.ws for Seeker</guid>
+			<pubDate>Thu, 27 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The home screen of the three.ws app on Solana Seeker: one-tap Seed Vault sign-in, selfie to avatar, your agents, the marketplace, and Seeker Genesis Token verification.</description>
+		</item>
+		<item>
 			<title>Seeker app: stay signed in across restarts, and a submission path that matches today's dApp Store</title>
 			<link>https://three.ws/my-agents</link>
 			<guid isPermaLink="false">2026-08-27:Seeker app: stay signed in across restarts, and a submission path that matches today's dApp Store</guid>
@@ -21,6 +29,14 @@
 			<pubDate>Thu, 27 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>For most of a day, describing something in the forge produced a long wait and then a busy message, on the site, in the ChatGPT app, and for agents buying through OKX. Two things had gone wrong at once: the image provider that paints the concept picture had stopped responding, and the free assistant that sharpens your description was asking for models that no longer exist. Both are fixed. The painter now runs on a model that answers in about five seconds, the assistant uses current models, and a text-to-3D request is accepted in three to eight seconds instead of never. Image-to-3D was never affected.</description>
+		</item>
+		<item>
+			<title>Text-to-3D now has five independent image sources behind it</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-08-27:Text-to-3D now has five independent image sources behind it</guid>
+			<pubDate>Thu, 27 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every text-to-3D generation starts by painting a concept image, and until today that step leaned on two providers. When one of them was cut off and the other stalled, text prompts failed for hours. The painter now tries five independent sources in order: Google's image model, NVIDIA's FLUX.1-dev, two more FLUX providers routed through Hugging Face, and a keyless public service as the final fallback, all under one shared time budget so a slow provider hands off instead of holding your request. A finished model's status is also remembered, so checking on a done job answers instantly instead of re-scoring it every time.</description>
 		</item>
 		<item>
 			<title>Docs · Open-Source Footprint</title>

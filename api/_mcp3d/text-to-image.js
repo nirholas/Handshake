@@ -23,7 +23,7 @@
 
 import { markProviderCooldown, providersInCooldown } from '../_lib/provider-health.js';
 import { reserveProviderRateSlot, SCALE_LIMITS } from '../_lib/forge-scale.js';
-import { persistImageBase64 } from '../_lib/image-persist.js';
+import { persistImageBase64, persistImageBytes, looksLikeImageBytes } from '../_lib/image-persist.js';
 
 const REPLICATE_BASE = 'https://api.replicate.com/v1';
 const DEFAULT_TXT2IMG_MODEL = 'black-forest-labs/flux-schnell';
@@ -221,6 +221,122 @@ function parseRetryAfter(headers, message) {
 	const m = /resets in ~?(\d+)\s*s/i.exec(message || '');
 	if (m) return Number.parseInt(m[1], 10);
 	return 10;
+}
+
+// ── Hugging Face routed providers ──────────────────────────────────────────
+// HF's own inference backend deprecated every text-to-image model (410 on
+// FLUX and SDXL, verified 2026-08-27), but the same HF_TOKEN routes to the
+// inference providers HF fronts, billed through the HF account the 3D lane
+// already uses. Two independent providers, two rungs: a fal-ai outage does
+// not take nscale with it. Both serve FLUX.1-schnell in 2-5 s.
+const HF_ROUTER = 'https://router.huggingface.co';
+const HF_IMAGE_TIMEOUT_MS = 45_000;
+const HF_IMAGE_PROVIDERS = Object.freeze([
+	{
+		id: 'fal-ai',
+		model: 'hf/fal-ai/flux-schnell',
+		url: `${HF_ROUTER}/fal-ai/fal-ai/flux/schnell`,
+		body: (prompt, width, height, seed) => ({
+			prompt,
+			image_size: { width, height },
+			num_inference_steps: 4,
+			num_images: 1,
+			...(Number.isInteger(seed) ? { seed } : {}),
+		}),
+		// fal answers with a hosted URL; the bytes are fetched and persisted so the
+		// reference image lives on our storage like every other lane's.
+		extract: async (data, signal) => {
+			const url = data?.images?.[0]?.url;
+			if (!url || !/^https:\/\//.test(url)) throw new Error('fal-ai returned no image url');
+			const res = await fetch(url, { signal });
+			if (!res.ok) throw new Error(`fal-ai image fetch returned ${res.status}`);
+			return Buffer.from(await res.arrayBuffer());
+		},
+	},
+	{
+		id: 'nscale',
+		model: 'hf/nscale/flux-schnell',
+		url: `${HF_ROUTER}/nscale/v1/images/generations`,
+		body: (prompt, width, height, seed) => ({
+			model: 'black-forest-labs/FLUX.1-schnell',
+			prompt,
+			n: 1,
+			size: `${width}x${height}`,
+			response_format: 'b64_json',
+			...(Number.isInteger(seed) ? { seed } : {}),
+		}),
+		extract: async (data) => {
+			const b64 = data?.data?.[0]?.b64_json;
+			if (!b64) throw new Error('nscale returned no image');
+			return Buffer.from(b64, 'base64');
+		},
+	},
+]);
+
+async function hfRoutedImage(provider, prompt, aspectRatio, seed, { timeoutMs = HF_IMAGE_TIMEOUT_MS } = {}) {
+	const token = readEnv('HF_TOKEN');
+	const [width, height] = NIM_DIMENSIONS[aspectRatio] || NIM_DIMENSIONS['1:1'];
+	const signal = AbortSignal.timeout(Math.max(1_000, Math.min(HF_IMAGE_TIMEOUT_MS, timeoutMs)));
+	let res;
+	try {
+		res = await fetch(provider.url, {
+			method: 'POST',
+			headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json', accept: 'application/json' },
+			body: JSON.stringify(provider.body(prompt, width, height, seed)),
+			signal,
+		});
+	} catch (err) {
+		const aborted = err?.name === 'AbortError' || err?.name === 'TimeoutError';
+		throw Object.assign(new Error(aborted ? `hf ${provider.id} timed out` : `hf ${provider.id} unreachable: ${err?.message}`), {
+			code: aborted ? 'rate_limited' : 'provider_unreachable',
+		});
+	}
+	if (!res.ok) {
+		const detail = await res.text().catch(() => '');
+		const err = new Error(`hf ${provider.id} returned ${res.status}: ${detail.slice(0, 160)}`);
+		err.providerStatus = res.status;
+		if (res.status === 429 || res.status === 402) err.code = 'rate_limited';
+		throw err;
+	}
+	const bytes = await provider.extract(await res.json(), signal);
+	if (!looksLikeImageBytes(bytes)) throw new Error(`hf ${provider.id} returned a non-image body`);
+	return { imageUrl: await persistImageBytes(bytes), model: provider.model };
+}
+
+// ── Pollinations (keyless) ─────────────────────────────────────────────────
+// The last free rung. No key, no account, a real FLUX image in ~2-3 s, lower
+// fidelity than the keyed lanes, which is why it sits behind them. It exists
+// so that a day when every keyed provider is down still produces a model
+// instead of a 429; the text chain already relies on the same service.
+const POLLINATIONS_TIMEOUT_MS = 40_000;
+async function pollinationsImage(prompt, aspectRatio, seed, { timeoutMs = POLLINATIONS_TIMEOUT_MS } = {}) {
+	const [width, height] = NIM_DIMENSIONS[aspectRatio] || NIM_DIMENSIONS['1:1'];
+	const q = new URLSearchParams({
+		width: String(width),
+		height: String(height),
+		nologo: 'true',
+		model: 'flux',
+		...(Number.isInteger(seed) ? { seed: String(seed) } : {}),
+	});
+	const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt.slice(0, 1_000))}?${q}`;
+	let res;
+	try {
+		res = await fetch(url, { signal: AbortSignal.timeout(Math.max(1_000, Math.min(POLLINATIONS_TIMEOUT_MS, timeoutMs))) });
+	} catch (err) {
+		const aborted = err?.name === 'AbortError' || err?.name === 'TimeoutError';
+		throw Object.assign(new Error(aborted ? 'pollinations timed out' : `pollinations unreachable: ${err?.message}`), {
+			code: aborted ? 'rate_limited' : 'provider_unreachable',
+		});
+	}
+	if (!res.ok) {
+		const err = new Error(`pollinations returned ${res.status}`);
+		err.providerStatus = res.status;
+		if (res.status === 429) err.code = 'rate_limited';
+		throw err;
+	}
+	const bytes = Buffer.from(await res.arrayBuffer());
+	if (!looksLikeImageBytes(bytes)) throw new Error('pollinations returned a non-image body');
+	return { imageUrl: await persistImageBytes(bytes), model: 'pollinations/flux' };
 }
 
 // Image persistence moved to api/_lib/image-persist.js (shared by the NIM
@@ -429,7 +545,10 @@ export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false
 	// otherwise a NIM failure after a Vertex failure would "fall through" to a
 	// lane that was already tried and surface the wrong terminal error. Livepeer
 	// and Replicate both sit after NIM either way, so both always count.
-	const hasFallback = (!vertexFirst && hasVertex) || hasLivepeer || !!token;
+	const hasHf = !!readEnv('HF_TOKEN');
+	// Pollinations needs no key, so a fallback always exists past NIM and the
+	// keyed rungs: no single provider's failure is ever the terminal error.
+	const hasFallback = (!vertexFirst && hasVertex) || hasHf || hasLivepeer || !!token || true;
 
 	// One attempt at the Vertex lane, shared by both ladder positions. Returns
 	// null to mean "hand off to the next lane" (unconfigured, or a failure with a
@@ -498,6 +617,22 @@ export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false
 		if (served) return served;
 	}
 
+	// ── Hugging Face routed providers (fal-ai, then nscale) ──────────────────
+	if (hasHf) {
+		for (const provider of HF_IMAGE_PROVIDERS) {
+			if (!canTry()) break;
+			try {
+				return logImageProvider(
+					await hfRoutedImage(provider, prompt, aspectRatio, hasSeed ? seed : undefined, {
+						timeoutMs: laneMs(HF_IMAGE_TIMEOUT_MS, true),
+					}),
+				);
+			} catch (err) {
+				console.warn(`hf ${provider.id} failed, falling back: ${err?.message}`);
+			}
+		}
+	}
+
 	// ── Livepeer federation lane (Phase 4, behind LIVEPEER_FEDERATION_ENABLED) ──
 	// One class of GPU job routed to the decentralized compute network. Sits
 	// after the first-party free lanes (they cost nothing) and before the paid
@@ -515,6 +650,22 @@ export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false
 			if (!token) throw err;
 			console.warn(`livepeer federation failed, falling back: ${err?.message}`);
 		}
+	}
+
+	// ── Pollinations, keyless ─────────────────────────────────────────────────
+	if (canTry()) {
+		try {
+			return logImageProvider(
+				await pollinationsImage(prompt, aspectRatio, hasSeed ? seed : undefined, {
+					timeoutMs: laneMs(POLLINATIONS_TIMEOUT_MS, !!token),
+				}),
+			);
+		} catch (err) {
+			if (!token) throw err;
+			console.warn(`pollinations failed, falling back: ${err?.message}`);
+		}
+	} else if (!token) {
+		throw budgetExhausted(budget);
 	}
 
 	// ── Replicate fallback ───────────────────────────────────────────────────

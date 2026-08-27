@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-27",
+			"title": "Text-to-3D now has five independent image sources behind it",
+			"summary": "Every text-to-3D generation starts by painting a concept image, and until today that step leaned on two providers. When one of them was cut off and the other stalled, text prompts failed for hours. The painter now tries five independent sources in order: Google's image model, NVIDIA's FLUX.1-dev, two more FLUX providers routed through Hugging Face, and a keyless public service as the final fallback, all under one shared time budget so a slow provider hands off instead of holding your request. A finished model's status is also remembered, so checking on a done job answers instantly instead of re-scoring it every time.",
+			"tags": [
+				"fix",
+				"infra"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-08-27",
 			"title": "Seeker app: stay signed in across restarts, and a submission path that matches today's dApp Store",
 			"summary": "On Solana Seeker, the three.ws app now remembers your Seed Vault session when Android restarts the app in the background, so reopening it no longer asks you to approve again; a revoked session is dropped cleanly instead of failing every signature. The My Agents home-screen shortcut opens your own agents instead of the public index. Behind the scenes the store submission tooling was rebuilt for the Publisher Portal that Solana Mobile now uses, and the listing copy was rewritten to describe only what the app really does.",
 			"tags": [

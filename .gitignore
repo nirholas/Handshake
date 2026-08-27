@@ -502,3 +502,6 @@ marketing/*/kit/*.html
 
 # NotebookLM corpus bundles (regenerate with scripts/build-notebook-corpus.mjs), never commit
 exports/notebook-corpus/
+docs/marketing/articleee.md
+docs/marketing/posts.md
+docs/marketing/posts2.md

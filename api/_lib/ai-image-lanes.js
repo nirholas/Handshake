@@ -206,9 +206,39 @@ async function probeReplicate() {
  * network call. `healthy` is true when at least one lane is reachable, so the
  * probe distinguishes "not wired yet" from "wired but every lane is down".
  */
+async function probeHf() {
+	if (!readEnv('HF_TOKEN')) return { configured: false, status: 'unconfigured' };
+	try {
+		const res = await fetch('https://huggingface.co/api/whoami-v2', {
+			headers: { authorization: `Bearer ${readEnv('HF_TOKEN')}` },
+			signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
+		});
+		if (res.status === 200) return { configured: true, status: 'ok', providers: ['fal-ai', 'nscale'] };
+		if (res.status === 401) return { configured: true, status: 'down', detail: 'invalid token' };
+		return { configured: true, status: res.status < 500 ? 'ok' : 'down', httpStatus: res.status };
+	} catch (err) {
+		return { configured: true, status: 'down', detail: err?.message?.slice(0, 120) };
+	}
+}
+
+async function probePollinations() {
+	try {
+		const res = await fetch('https://image.pollinations.ai/', { method: 'HEAD', signal: AbortSignal.timeout(PROBE_TIMEOUT_MS) });
+		return { configured: true, status: res.status < 500 ? 'ok' : 'down', httpStatus: res.status };
+	} catch (err) {
+		return { configured: true, status: 'down', detail: err?.message?.slice(0, 120) };
+	}
+}
+
 export async function imageLaneHealth() {
-	const [nim, vertex, replicate] = await Promise.all([probeNim(), probeVertex(), probeReplicate()]);
-	const lanes = { nim, vertex, replicate };
+	const [nim, vertex, replicate, hf, pollinations] = await Promise.all([
+		probeNim(),
+		probeVertex(),
+		probeReplicate(),
+		probeHf(),
+		probePollinations(),
+	]);
+	const lanes = { nim, vertex, replicate, hf, pollinations };
 	const anyConfigured = Object.values(lanes).some((l) => l.configured);
 	const anyReachable = Object.values(lanes).some((l) => l.status === 'ok');
 	return {

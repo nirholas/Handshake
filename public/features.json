@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-27T04:44:26.020Z",
+	"generated_at": "2026-08-27T05:37:58.227Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -997,6 +997,16 @@
 					"title": "Selfie to Avatar",
 					"description": "One selfie. About a minute. A rigged 3D avatar that works everywhere.",
 					"added": "2026-05-25",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/seeker",
+					"title": "three.ws for Seeker",
+					"description": "The home screen of the three.ws app on Solana Seeker: one-tap Seed Vault sign-in, selfie to avatar, your agents, the marketplace, and Seeker Genesis Token verification.",
+					"added": "2026-08-27",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

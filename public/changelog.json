@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-08-27T04:58:40.313Z",
+	"generated_at": "2026-08-27T05:37:58.249Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-08-27",
+			"type": "launch",
+			"title": "three.ws for Seeker",
+			"summary": "The home screen of the three.ws app on Solana Seeker: one-tap Seed Vault sign-in, selfie to avatar, your agents, the marketplace, and Seeker Genesis Token verification.",
+			"link": "/seeker",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-08-27",
 			"type": "update",
@@ -26,6 +36,17 @@
 			"link": "/forge",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-08-27",
+			"type": "update",
+			"title": "Text-to-3D now has five independent image sources behind it",
+			"summary": "Every text-to-3D generation starts by painting a concept image, and until today that step leaned on two providers. When one of them was cut off and the other stalled, text prompts failed for hours. The painter now tries five independent sources in order: Google's image model, NVIDIA's FLUX.1-dev, two more FLUX providers routed through Hugging Face, and a keyless public service as the final fallback, all under one shared time budget so a slow provider hands off instead of holding your request. A finished model's status is also remembered, so checking on a done job answers instantly instead of re-scoring it every time.",
+			"link": "/forge",
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
