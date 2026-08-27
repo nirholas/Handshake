@@ -21,7 +21,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 // request body and the failure reporting, so stub the token out.
 vi.mock('../../api/_lib/gcp-auth.js', () => ({ getGcpAccessToken: async () => 'test-token' }));
 
-const { groundedSearch, webSearchAvailable } = await import('../../api/_lib/web-search.js');
+const { groundedSearch, webSearchAvailable, _resetWebSearchMemory } = await import('../../api/_lib/web-search.js');
 
 const OLD_ENV = { ...process.env };
 
@@ -122,5 +122,53 @@ describe('groundedSearch failure reporting', () => {
 		vi.stubGlobal('fetch', fetchSpy);
 		await expect(groundedSearch('   ')).rejects.toThrow(/empty query/);
 		expect(fetchSpy).not.toHaveBeenCalled();
+	});
+});
+
+// A single-provider surface cannot fail over, but it can remember. The line
+// that matters is WHICH failures a memory is allowed to cover: an unreachable
+// provider, yes; a safety block or an empty answer, never, because replaying an
+// older answer over one of those quietly overturns a decision made on purpose.
+describe('groundedSearch availability memory', () => {
+	const answered = (text) =>
+		jsonResponse({ candidates: [{ content: { parts: [{ text }] } }] });
+
+	beforeEach(() => {
+		_resetWebSearchMemory();
+	});
+
+	it('serves a remembered answer when the provider is unreachable', async () => {
+		vi.stubGlobal('fetch', async () => answered('cached answer'));
+		const live = await groundedSearch('memory-q');
+		expect(live.answer).toBe('cached answer');
+		expect(live.stale).toBeUndefined();
+
+		vi.stubGlobal('fetch', async () => {
+			throw new TypeError('fetch failed');
+		});
+		const stale = await groundedSearch('memory-q');
+		expect(stale.answer).toBe('cached answer');
+		expect(stale.stale).toBe(true);
+		expect(stale.as_of).toBeTruthy();
+	});
+
+	it('serves a remembered answer through a 503, but never through a safety block', async () => {
+		vi.stubGlobal('fetch', async () => answered('cached answer'));
+		await groundedSearch('memory-q2');
+
+		vi.stubGlobal('fetch', async () => jsonResponse({ error: 'busy' }, false, 503));
+		expect((await groundedSearch('memory-q2')).stale).toBe(true);
+
+		vi.stubGlobal('fetch', async () =>
+			jsonResponse({ candidates: [], promptFeedback: { blockReason: 'SAFETY' } }),
+		);
+		await expect(groundedSearch('memory-q2')).rejects.toThrow(/promptBlockReason=SAFETY/);
+	});
+
+	it('rethrows when the provider is unreachable and nothing was ever remembered', async () => {
+		vi.stubGlobal('fetch', async () => {
+			throw new TypeError('fetch failed');
+		});
+		await expect(groundedSearch('never-seen')).rejects.toThrow(/fetch failed/);
 	});
 });

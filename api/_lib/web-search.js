@@ -25,6 +25,7 @@
 //   VERTEX_GEMINI_MODEL          : model id (default: google/gemini-2.5-flash)
 
 import { getGcpAccessToken } from './gcp-auth.js';
+import { isRetryableError } from './resilience.js';
 import { vertexGeminiAvailable, vertexGeminiModel, vertexGeminiThinkingBudget } from './vertex-gemini.js';
 
 const FETCH_TIMEOUT_MS = 20_000;
@@ -78,6 +79,54 @@ export async function groundedSearch(query, { maxSources = 8, signal } = {}) {
 	const q = String(query || '').trim();
 	if (!q) throw new Error('web search: empty query');
 
+	// Grounded search has one provider and no second opinion worth the name: a
+	// different engine would answer a different question with different
+	// citations. What it can have is a memory. The same query asked twice inside
+	// a few minutes deserves the same answer, so a remembered result rides out a
+	// Vertex blip instead of turning a search box into a 502.
+	//
+	// The memory covers AVAILABILITY failures only. A safety block, an empty
+	// answer or a 4xx is the model's verdict on this request, and replaying an
+	// older answer over it would quietly overturn a decision that was made on
+	// purpose. Those still reject, exactly as before.
+	const key = `${q.toLowerCase()}::${maxSources}`;
+	try {
+		const value = await groundedSearchLive(q, { maxSources, signal });
+		_searchMemory.set(key, { value, at: Date.now() });
+		if (_searchMemory.size > SEARCH_MEMORY_MAX) {
+			_searchMemory.delete(_searchMemory.keys().next().value);
+		}
+		return value;
+	} catch (err) {
+		if (!isAvailabilityFailure(err)) throw err;
+		const hit = _searchMemory.get(key);
+		if (!hit || Date.now() - hit.at > SEARCH_MEMORY_MAX_AGE_MS) throw err;
+		console.warn(`[web-search] upstream unavailable (${err?.message || err}); serving a remembered answer`);
+		return { ...hit.value, stale: true, as_of: new Date(hit.at).toISOString() };
+	}
+}
+
+const SEARCH_MEMORY_MAX = 500;
+const SEARCH_MEMORY_MAX_AGE_MS = 10 * 60_000;
+const _searchMemory = new Map();
+
+/**
+ * Whether an error means "the provider could not answer right now" as opposed
+ * to "the provider answered, and this is the answer". Only the first kind may
+ * be papered over with a remembered result.
+ */
+function isAvailabilityFailure(err) {
+	if (isRetryableError(err)) return true;
+	const msg = String(err?.message || err);
+	return /fetch failed|network|socket hang up|ECONNRESET|ETIMEDOUT|EAI_AGAIN|timed? ?out/i.test(msg);
+}
+
+/** Test seam: forget every remembered answer. */
+export function _resetWebSearchMemory() {
+	_searchMemory.clear();
+}
+
+async function groundedSearchLive(q, { maxSources, signal }) {
 	const token = await getGcpAccessToken();
 	const think = vertexGeminiThinkingBudget();
 	const res = await fetch(groundedUrl(), {
@@ -104,7 +153,7 @@ export async function groundedSearch(query, { maxSources = 8, signal } = {}) {
 	});
 	if (!res.ok) {
 		const detail = (await res.text().catch(() => '')).slice(0, 300);
-		throw new Error(`web search upstream ${res.status}: ${detail}`);
+		throw Object.assign(new Error(`web search upstream ${res.status}: ${detail}`), { status: res.status });
 	}
 
 	const body = await res.json();
