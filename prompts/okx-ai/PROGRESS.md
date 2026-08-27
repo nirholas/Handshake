@@ -117,6 +117,27 @@ skipped, and exhaustion is a fast retryable `rate_limited`. Regression test:
 `tests/text-to-image-budget.test.js`. Still open: the health probe cannot see a saturated
 lane because it reads the static tier matrix.
 
+### 2026-08-27, deploy loop: three more blockers cleared, hang measured down from "never" to a bounded answer
+
+- **Signed in as `claude@three.ws` on the owner wallet (`0x75d0…cf69`).** `onchainos` v4.5.2
+  installed and checksum-verified; login is browser-based now (`--phase init` mints a URL,
+  `--phase poll` completes it), not an emailed code.
+- **Live listing actually has 8 services, all pointing at `/api/mcp-3d`**, and `soldCount` is
+  2. The delta is 8 deletes / 7 creates; `validate-listing` on the 7 creates: `pass: true`,
+  no findings. Diff card rendered; the on-chain write is waiting on the owner's confirm.
+- **Two `main` breakages found while deploying, both from other agents, both fixed here:**
+  a duplicated `fmtPctPoints` in `src/claim-wallet.js` failed every Vite build (`9ca79294a`),
+  and the `metaplex-agent-mcp` workspace was added without a lock update so `npm ci` failed
+  every Cloud Build (`67bb2ada7`).
+- **The hang had a third layer.** With the paint ladder AND the reference step bounded, live
+  text submits answered 429 in 101-110 s: the art-director ran watsonx (20 s cap) then the
+  whole LLM chain (another 20 s) before painting. One 15 s deadline now (`add00dab5`), and
+  `TEXT_TO_IMAGE_BUDGET_MS=40000` set on the Cloud Run service (revision `00394`), so the
+  worst case is director 15 + paint 40 + submit ~4.
+- Reviewer sweep on the deployed build: every paid row 402 with `eip155:196` first and
+  `PAYMENT-REQUIRED`, MCP headers included; `forge-status` GET 405; `/health` carries
+  `submit-latency`; three-copy PASS; `smoke:prod` 724/724.
+
 ### Still owner-gated (unchanged, and unchanged by this rebuild)
 
 Funding. Relayer `0x1F4a753c61b54Bdec7AE0AF338A887E63Cdbbb74` needs native OKB on X Layer
