@@ -29,21 +29,20 @@
 
 import { GATES } from './selfie-gates.js';
 import { log } from './shared/log.js';
+import { loadVision, modelUrl, visionWasmBase } from './shared/mediapipe-assets.js';
 
 // MediaPipe tasks-vision — same pinned build the face stack uses, so the WASM
 // runtime is shared/cached across the landmarker and the segmenter.
-const TASKS_VISION_URL =
-	'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/+esm';
-const WASM_ROOT =
-	'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/wasm';
+// tasks-vision is bundled from the npm dependency; the WASM runtime comes from
+// the shared resolver, which prefers our vendored copy over a CDN.
 // Official Google-hosted binary selfie segmenter (Apache-2.0). One confidence
 // mask: per-pixel probability the pixel belongs to the person.
 const SELFIE_MODEL_URL =
-	'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite';
+	modelUrl('image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite');
 // BlazeFace short-range detector (Apache-2.0): bounding boxes + count. Cheaper
 // than the 478-point landmarker and the right tool for "where/how many faces".
 const FACE_DETECTOR_MODEL_URL =
-	'https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/latest/blaze_face_short_range.tflite';
+	modelUrl('face_detector/blaze_face_short_range/float16/latest/blaze_face_short_range.tflite');
 
 // Working resolution: cap the longest edge so the matte + reframe stay fast on
 // phones. The output square is rendered at OUTPUT_SIZE regardless.
@@ -332,9 +331,9 @@ let _segmenterPromise = null;
 async function loadSegmenter() {
 	if (_segmenterPromise) return _segmenterPromise;
 	_segmenterPromise = (async () => {
-		const mod = await import(/* @vite-ignore */ TASKS_VISION_URL);
+		const mod = await loadVision();
 		const { FilesetResolver, ImageSegmenter } = mod;
-		const vision = await FilesetResolver.forVisionTasks(WASM_ROOT);
+		const vision = await FilesetResolver.forVisionTasks(await visionWasmBase());
 		return ImageSegmenter.createFromOptions(vision, {
 			baseOptions: { modelAssetPath: SELFIE_MODEL_URL, delegate: 'GPU' },
 			runningMode: 'IMAGE',
@@ -355,9 +354,9 @@ let _detectorPromise = null;
 async function loadFaceDetector() {
 	if (_detectorPromise) return _detectorPromise;
 	_detectorPromise = (async () => {
-		const mod = await import(/* @vite-ignore */ TASKS_VISION_URL);
+		const mod = await loadVision();
 		const { FilesetResolver, FaceDetector } = mod;
-		const vision = await FilesetResolver.forVisionTasks(WASM_ROOT);
+		const vision = await FilesetResolver.forVisionTasks(await visionWasmBase());
 		return FaceDetector.createFromOptions(vision, {
 			baseOptions: { modelAssetPath: FACE_DETECTOR_MODEL_URL, delegate: 'GPU' },
 			runningMode: 'IMAGE',

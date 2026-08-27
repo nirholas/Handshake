@@ -18,9 +18,10 @@
 
 import { FilesetResolver, HolisticLandmarker } from '@mediapipe/tasks-vision';
 
-const WASM_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm';
+import { modelUrl, visionWasmBase } from './shared/mediapipe-assets.js';
+// Runtime location comes from the shared resolver (see face-mocap.js).
 const MODEL_URL =
-	'https://storage.googleapis.com/mediapipe-models/holistic_landmarker/holistic_landmarker/float16/latest/holistic_landmarker.task';
+	modelUrl('holistic_landmarker/holistic_landmarker/float16/latest/holistic_landmarker.task');
 
 const COLUMN_RE = /^([xyz])_(face|left_hand|right_hand|pose)_(\d+)$/;
 
@@ -90,7 +91,7 @@ export class SignInput {
 		this.onState('loading');
 		const [schemaRes, fileset] = await Promise.all([
 			fetch(this.apiBase, { headers: { accept: 'application/json' } }),
-			FilesetResolver.forVisionTasks(WASM_URL),
+			visionWasmBase().then((base) => FilesetResolver.forVisionTasks(base)),
 		]);
 		if (!schemaRes.ok) {
 			const body = await schemaRes.json().catch(() => ({}));

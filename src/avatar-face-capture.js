@@ -21,23 +21,15 @@
  * but they ship, they respect licensing, and the user fine-tunes from the
  * Sculpt panel anyway.
  *
- * No bundling: tasks-vision + WASM model (~5 MB) load on demand from a CDN.
- * License: MediaPipe + face_landmarker.task are both Apache-2.0 — safe.
+ * Loading: tasks-vision is a dependency of this repo, so the module itself is
+ * bundled; the ~5 MB WASM runtime and model still load on demand, through the
+ * shared resolver that prefers our vendored copy over a CDN.
+ * License: MediaPipe + face_landmarker.task are both Apache-2.0, safe.
  */
 
-// We load tasks-vision via dynamic ESM import. Pinning to a specific version
-// avoids breaking changes from auto-upgraded CDN aliases; jsDelivr's `+esm`
-// suffix returns the ESM build.
-const TASKS_VISION_URL =
-	'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/+esm';
+import { loadVision, modelUrl, visionWasmBase } from './shared/mediapipe-assets.js';
 
-// Hosted by Google. They publish exactly one official URL per model — these
-// are the standard locations used in every MediaPipe sample, public CORS,
-// no auth.
-const WASM_ROOT =
-	'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/wasm';
-const MODEL_URL =
-	'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
+const MODEL_URL = modelUrl('face_landmarker/face_landmarker/float16/1/face_landmarker.task');
 
 let _landmarkerPromise = null;
 
@@ -123,9 +115,9 @@ detectFaceAll.loadLandmarker = loadLandmarker;
 function loadLandmarker() {
 	if (_landmarkerPromise) return _landmarkerPromise;
 	_landmarkerPromise = (async () => {
-		const mod = await import(/* @vite-ignore */ TASKS_VISION_URL);
+		const mod = await loadVision();
 		const { FilesetResolver, FaceLandmarker } = mod;
-		const vision = await FilesetResolver.forVisionTasks(WASM_ROOT);
+		const vision = await FilesetResolver.forVisionTasks(await visionWasmBase());
 		return FaceLandmarker.createFromOptions(vision, {
 			baseOptions: { modelAssetPath: MODEL_URL, delegate: 'GPU' },
 			outputFaceBlendshapes: true,

@@ -280,10 +280,11 @@ async function boot() {
 			if (!landmarker) {
 				setStatus('Loading the hand tracker (about 8 MB, once per browser).');
 				const { FilesetResolver, HandLandmarker } = await import('@mediapipe/tasks-vision');
-				const fileset = await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm');
+				const { modelUrl, visionWasmBase } = await import('./shared/mediapipe-assets.js');
+				const fileset = await FilesetResolver.forVisionTasks(await visionWasmBase());
 				landmarker = await HandLandmarker.createFromOptions(fileset, {
 					baseOptions: {
-						modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
+						modelAssetPath: modelUrl('hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task'),
 						delegate: 'GPU',
 					},
 					runningMode: 'VIDEO',

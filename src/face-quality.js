@@ -22,21 +22,18 @@
 
 import { SLOT_PRESETS, gradeFrame, grayFaceStats } from './selfie-gates.js';
 
-const TASKS_VISION_URL =
-	'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/+esm';
-const WASM_ROOT =
-	'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/wasm';
-const MODEL_URL =
-	'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
+import { loadVision, modelUrl, visionWasmBase } from './shared/mediapipe-assets.js';
+// The tasks-vision module is a real dependency, so it ships in our bundle
+// instead of being pulled from a CDN at runtime; the WASM runtime and model come
+// from the shared resolver (our vendored copy first).
+const MODEL_URL = modelUrl('face_landmarker/face_landmarker/float16/1/face_landmarker.task');
 
 let _modPromise = null;
 let _landmarkerPromise = null;
 let _imageLandmarkerPromise = null;
 
 function loadModule() {
-	if (!_modPromise) {
-		_modPromise = import(/* @vite-ignore */ TASKS_VISION_URL);
-	}
+	if (!_modPromise) _modPromise = loadVision();
 	return _modPromise;
 }
 
@@ -44,7 +41,7 @@ function loadLandmarker() {
 	if (_landmarkerPromise) return _landmarkerPromise;
 	_landmarkerPromise = (async () => {
 		const { FilesetResolver, FaceLandmarker } = await loadModule();
-		const vision = await FilesetResolver.forVisionTasks(WASM_ROOT);
+		const vision = await FilesetResolver.forVisionTasks(await visionWasmBase());
 		return FaceLandmarker.createFromOptions(vision, {
 			baseOptions: { modelAssetPath: MODEL_URL, delegate: 'GPU' },
 			outputFaceBlendshapes: false,
@@ -69,7 +66,7 @@ function loadImageLandmarker() {
 	if (_imageLandmarkerPromise) return _imageLandmarkerPromise;
 	_imageLandmarkerPromise = (async () => {
 		const { FilesetResolver, FaceLandmarker } = await loadModule();
-		const vision = await FilesetResolver.forVisionTasks(WASM_ROOT);
+		const vision = await FilesetResolver.forVisionTasks(await visionWasmBase());
 		return FaceLandmarker.createFromOptions(vision, {
 			baseOptions: { modelAssetPath: MODEL_URL, delegate: 'GPU' },
 			runningMode: 'IMAGE',

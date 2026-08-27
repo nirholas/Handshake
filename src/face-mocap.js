@@ -22,8 +22,10 @@ import { FaceLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
 import { Matrix4, Euler, MathUtils } from 'three';
 import { resolveMorphTargets, setCanonicalMorph, MORPH_ALIASES, ARKIT_52 } from './runtime/arkit52.js';
 
-const WASM_URL  = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm';
-const MODEL_URL = 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
+import { modelUrl, visionWasmBase } from './shared/mediapipe-assets.js';
+// Runtime + model locations come from the shared resolver: our vendored copy
+// first, CDNs only as a backstop (src/shared/mediapipe-assets.js).
+const MODEL_URL = modelUrl('face_landmarker/face_landmarker/float16/1/face_landmarker.task');
 const HEAD_MAX  = 40 * (Math.PI / 180);
 
 // ── One-Euro filter (Casiez et al. 2012) ─────────────────────────────────────
@@ -106,7 +108,7 @@ export class FaceMocap {
 	// ── Lifecycle ─────────────────────────────────────────────────────────────
 
 	async init() {
-		const fileset = await FilesetResolver.forVisionTasks(WASM_URL);
+		const fileset = await FilesetResolver.forVisionTasks(await visionWasmBase());
 		this._landmarker = await FaceLandmarker.createFromOptions(fileset, {
 			baseOptions: {
 				modelAssetPath: MODEL_URL,

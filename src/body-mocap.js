@@ -21,8 +21,9 @@ import { Quaternion } from 'three';
 import { solvePose } from './runtime/pose-solve.js';
 import { canonicalizeBoneName } from './glb-canonicalize.js';
 
-const WASM_URL  = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm';
-const MODEL_URL = 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task';
+import { modelUrl, visionWasmBase } from './shared/mediapipe-assets.js';
+// Runtime + model locations come from the shared resolver (see face-mocap.js).
+const MODEL_URL = modelUrl('pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task');
 
 // Canonical bones this module is allowed to drive. Head/neck stay with FaceMocap.
 const DRIVEN_BONES = Object.freeze([
@@ -73,7 +74,7 @@ export class BodyMocap {
 	// ── Lifecycle ─────────────────────────────────────────────────────────────
 
 	async init() {
-		const fileset = await FilesetResolver.forVisionTasks(WASM_URL);
+		const fileset = await FilesetResolver.forVisionTasks(await visionWasmBase());
 		this._landmarker = await PoseLandmarker.createFromOptions(fileset, {
 			baseOptions: { modelAssetPath: MODEL_URL, delegate: 'GPU' },
 			runningMode: 'VIDEO',
