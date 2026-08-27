@@ -361,7 +361,7 @@ async function sendSolana({ agent, asset, recipient, amount, userId }) {
 			e.status = 400;
 			throw e;
 		}
-		const { getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, createTransferInstruction } = await import('@solana/spl-token');
+		const { getAssociatedTokenAddress, createAssociatedTokenAccountIdempotentInstruction, createTransferInstruction } = await import('@solana/spl-token');
 		const mintPk = new PublicKey(asset);
 
 		const mintInfo = await conn.getParsedAccountInfo(mintPk);
@@ -374,7 +374,7 @@ async function sendSolana({ agent, asset, recipient, amount, userId }) {
 		// runtime treats as a no-op, whereas throwing here loses the whole transfer.
 		const recipientAccountExists = await ataExists(conn, recipientAta);
 		if (!recipientAccountExists) {
-			tx.add(createAssociatedTokenAccountInstruction(kp.publicKey, recipientAta, recipientPk, mintPk));
+			tx.add(createAssociatedTokenAccountIdempotentInstruction(kp.publicKey, recipientAta, recipientPk, mintPk));
 		}
 		const amountUnits = parseAmountToBaseUnits(amount, decimals);
 		tx.add(createTransferInstruction(senderAta, recipientAta, kp.publicKey, amountUnits));

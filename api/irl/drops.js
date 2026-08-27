@@ -20,11 +20,12 @@
 import { PublicKey, SystemProgram } from '@solana/web3.js';
 import {
 	getAssociatedTokenAddress,
-	createAssociatedTokenAccountInstruction,
+	createAssociatedTokenAccountIdempotentInstruction,
 	createTransferInstruction,
 } from '@solana/spl-token';
 
 import { cors, json, wrap, error, rateLimited, readJson } from '../_lib/http.js';
+import { ataExists } from '../_lib/solana/read-guards.js';
 import { limits, clientIp, limitFailClosedRead } from '../_lib/rate-limit.js';
 import { getSessionUser } from '../_lib/auth.js';
 import { readDeviceToken } from '../_lib/irl-auth.js';
@@ -328,8 +329,14 @@ async function fundEscrowFromAgent({ keypair, escrowAddress, asset, atomics, net
 		const mint = new PublicKey(mintFor(asset, network));
 		const fromATA = await getAssociatedTokenAddress(mint, keypair.publicKey);
 		const toATA = await getAssociatedTokenAddress(mint, recipient);
-		if (!(await conn.getAccountInfo(toATA))) {
-			instructions.push(createAssociatedTokenAccountInstruction(keypair.publicKey, toATA, recipient, mint));
+// The create is the IDEMPOTENT variant on purpose: it pairs with ataExists,
+// which fails open to "missing" when the chain cannot be read. With the plain
+// create that guess would be unsafe (a create for an account that already
+// exists fails the whole transaction); with this one an unnecessary create is a
+// no-op, so a dead RPC costs nothing and the probe-then-submit race disappears
+// with it.
+		if (!(await ataExists(conn, toATA))) {
+			instructions.push(createAssociatedTokenAccountIdempotentInstruction(keypair.publicKey, toATA, recipient, mint));
 		}
 		instructions.push(createTransferInstruction(fromATA, toATA, keypair.publicKey, amount));
 	}

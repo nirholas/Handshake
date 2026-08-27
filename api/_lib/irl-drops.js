@@ -22,12 +22,13 @@ import bs58 from 'bs58';
 import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
 import {
 	getAssociatedTokenAddress,
-	createAssociatedTokenAccountInstruction,
+	createAssociatedTokenAccountIdempotentInstruction,
 	createTransferInstruction,
 	getAccount,
 } from '@solana/spl-token';
 
 import { sql } from './db.js';
+import { ataExists } from './solana/read-guards.js';
 import { env } from './env.js';
 import { sha256 } from './crypto.js';
 import { encodeGeohash } from './geohash.js';
@@ -467,8 +468,14 @@ export async function releaseFromEscrow({ drop, toAddress, atomics }) {
 		const mint = new PublicKey(mintForAsset(drop.asset, drop.network));
 		const fromATA = await getAssociatedTokenAddress(mint, escrowKp.publicKey);
 		const toATA = await getAssociatedTokenAddress(mint, recipient);
-		if (!(await conn.getAccountInfo(toATA))) {
-			instructions.push(createAssociatedTokenAccountInstruction(feePayer.publicKey, toATA, recipient, mint));
+// The create is the IDEMPOTENT variant on purpose: it pairs with ataExists,
+// which fails open to "missing" when the chain cannot be read. With the plain
+// create that guess would be unsafe (a create for an account that already
+// exists fails the whole transaction); with this one an unnecessary create is a
+// no-op, so a dead RPC costs nothing and the probe-then-submit race disappears
+// with it.
+		if (!(await ataExists(conn, toATA))) {
+			instructions.push(createAssociatedTokenAccountIdempotentInstruction(feePayer.publicKey, toATA, recipient, mint));
 		}
 		instructions.push(createTransferInstruction(fromATA, toATA, escrowKp.publicKey, amount));
 	}
@@ -510,8 +517,8 @@ export async function sweepRefund({ drop }) {
 		try { amount = (await getAccount(conn, fromATA)).amount; } catch { amount = 0n; }
 		if (amount <= 0n) return 'empty';
 		const toATA = await getAssociatedTokenAddress(mint, recipient);
-		if (!(await conn.getAccountInfo(toATA))) {
-			instructions.push(createAssociatedTokenAccountInstruction(feePayer.publicKey, toATA, recipient, mint));
+		if (!(await ataExists(conn, toATA))) {
+			instructions.push(createAssociatedTokenAccountIdempotentInstruction(feePayer.publicKey, toATA, recipient, mint));
 		}
 		instructions.push(createTransferInstruction(fromATA, toATA, escrowKp.publicKey, amount));
 	}

@@ -40,12 +40,13 @@ import {
 } from '@solana/web3.js';
 import {
 	getAssociatedTokenAddress,
-	createAssociatedTokenAccountInstruction,
+	createAssociatedTokenAccountIdempotentInstruction,
 	createTransferInstruction,
 	getAccount,
 } from '@solana/spl-token';
 
 import { env } from './env.js';
+import { ataExists } from './solana/read-guards.js';
 import { solanaConnection } from './agent-pumpfun.js';
 import { submitProtected } from './execution-engine.js';
 import { SOLANA_USDC_MINT } from '../payments/_config.js';
@@ -196,9 +197,14 @@ export async function fundDropAddress({ toAddress, asset, atomics }) {
 		const mint = new PublicKey(mintForAsset(asset));
 		const fromATA = await getAssociatedTokenAddress(mint, payer.publicKey);
 		const toATA = await getAssociatedTokenAddress(mint, recipient);
-		const toInfo = await conn.getAccountInfo(toATA);
-		if (!toInfo) {
-			instructions.push(createAssociatedTokenAccountInstruction(payer.publicKey, toATA, recipient, mint));
+// The create is the IDEMPOTENT variant on purpose: it pairs with ataExists,
+// which fails open to "missing" when the chain cannot be read. With the plain
+// create that guess would be unsafe (a create for an account that already
+// exists fails the whole transaction); with this one an unnecessary create is a
+// no-op, so a dead RPC costs nothing and the probe-then-submit race disappears
+// with it.
+		if (!(await ataExists(conn, toATA))) {
+			instructions.push(createAssociatedTokenAccountIdempotentInstruction(payer.publicKey, toATA, recipient, mint));
 		}
 		instructions.push(createTransferInstruction(fromATA, toATA, payer.publicKey, amount));
 	}
@@ -294,9 +300,8 @@ export async function sweepReclaim({ record, dropSecretKey, toAddress }) {
 			return { reclaimTx: 'empty', alreadyReclaimed: false };
 		}
 		const toATA = await getAssociatedTokenAddress(mint, recipient);
-		const toInfo = await conn.getAccountInfo(toATA);
-		if (!toInfo) {
-			instructions.push(createAssociatedTokenAccountInstruction(feePayer.publicKey, toATA, recipient, mint));
+		if (!(await ataExists(conn, toATA))) {
+			instructions.push(createAssociatedTokenAccountIdempotentInstruction(feePayer.publicKey, toATA, recipient, mint));
 		}
 		instructions.push(createTransferInstruction(fromATA, toATA, dropKp.publicKey, amount));
 	}

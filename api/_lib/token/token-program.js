@@ -13,6 +13,7 @@
 // classification (and throws a typed 422 for a non-SPL owner).
 
 import { PublicKey } from '@solana/web3.js';
+import { readAccountInfoOrNull, rpcUnavailableError } from '../solana/read-guards.js';
 import { resolveTokenProgramForMintOwner } from '../pump-trade-args.js';
 
 const cache = new Map();
@@ -29,7 +30,13 @@ export async function tokenProgramIdForMint(connection, mint) {
 	const cached = cache.get(key);
 	if (cached) return cached;
 
-	const info = await connection.getAccountInfo(mintPk);
+	// An unreadable chain is NOT a missing mint. Reporting it as 422
+	// mint_not_found told the caller its input was invalid and sent it away for
+	// good, when the right answer is "ask again shortly": the two are
+	// indistinguishable from a bare getAccountInfo, so the transport failure has
+	// to be classified before the null is interpreted.
+	const { info, cause } = await readAccountInfoOrNull(connection, mintPk, { withCause: true });
+	if (cause) throw rpcUnavailableError(cause);
 	if (!info) {
 		const e = new Error(`mint account not found: ${key}`);
 		e.status = 422;

@@ -17,6 +17,7 @@
 // neither set the engine is fully inert.
 
 import { sql } from './db.js';
+import { blockhashKey, getRecentBlockhashInfo, mintDecimals } from './solana/read-guards.js';
 import { env } from './env.js';
 import { confirmOrThrow } from './solana/confirm.js';
 import { randomUUID } from 'node:crypto';
@@ -325,7 +326,15 @@ async function transferSol(conn, fromKp, toAddress, lamports) {
 	const MAX_ATTEMPTS = 2;
 	let lastErr;
 	for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-		const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('confirmed');
+		// The retry exists to escape an expired blockhash, so it forces a fresh
+		// read; the first attempt may take the cached one. When the chain cannot be
+		// read at all, the guard serves a cached hash that is still inside its
+		// validity window rather than failing the transfer outright.
+		const { blockhash, lastValidBlockHeight } = await getRecentBlockhashInfo(
+			conn,
+			blockhashKey({ url: env.SOLANA_RPC_URL }),
+			{ forceFresh: attempt > 0 },
+		);
 		const message = new TransactionMessage({
 			payerKey: fromKp.publicKey,
 			recentBlockhash: blockhash,
@@ -760,17 +769,18 @@ async function transferThreeWithReference(conn, fromKp, toAddress, atomic, refer
 		getAssociatedTokenAddressSync,
 		createTransferCheckedInstruction,
 		createAssociatedTokenAccountIdempotentInstruction,
-		getMint,
 	} = await import('@solana/spl-token');
 
 	const mintKey = new PublicKey(THREE_MINT());
 	const recipKey = new PublicKey(toAddress);
-	const mintInfo = await getMint(conn, mintKey);
+	// $THREE's decimals are a constant, so this costs no network read and a dead
+	// RPC cannot stall a circulation transfer over a value we already know.
+	const decimals = await mintDecimals(conn, mintKey);
 	const fromAta = getAssociatedTokenAddressSync(mintKey, fromKp.publicKey);
 	const toAta = getAssociatedTokenAddressSync(mintKey, recipKey);
 
 	const transferIx = createTransferCheckedInstruction(
-		fromAta, mintKey, toAta, fromKp.publicKey, atomic, mintInfo.decimals,
+		fromAta, mintKey, toAta, fromKp.publicKey, atomic, decimals,
 	);
 	transferIx.keys.push({ pubkey: referenceKey, isSigner: false, isWritable: false });
 
@@ -784,7 +794,7 @@ async function transferThreeWithReference(conn, fromKp, toAddress, atomic, refer
 		const feeAta = getAssociatedTokenAddressSync(mintKey, feeKey);
 		ixs.push(createAssociatedTokenAccountIdempotentInstruction(fromKp.publicKey, feeAta, feeKey, mintKey));
 		ixs.push(createTransferCheckedInstruction(
-			fromAta, mintKey, feeAta, fromKp.publicKey, feeLeg.atomics, mintInfo.decimals,
+			fromAta, mintKey, feeAta, fromKp.publicKey, feeLeg.atomics, decimals,
 		));
 	}
 
