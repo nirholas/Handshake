@@ -55,6 +55,14 @@
 			<description>On phones, the hearts, tags, author links and the write-with-agent button on marketplace cards were as small as 18 pixels tall, so browsing on a Seeker or any Android phone meant a lot of missed taps. All of them, plus the walk-companion controls and footer links, now sit inside 44 pixel tap areas without changing how the cards look. Measured on a real phone profile: the marketplace went from 1,352 undersized controls to zero.</description>
 		</item>
 		<item>
+			<title>Prices, wallets, search and speech keep answering when a data provider goes down</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-27:Prices, wallets, search and speech keep answering when a data provider goes down</guid>
+			<pubDate>Thu, 27 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>A single slow or rate-limited provider used to be enough to blank a page. Token pages, portfolios and dashboards now fall back to other market sources and, failing that, to the last good reading, clearly marked with when it was taken instead of passed off as live. Wallet and checkout pages survive a Solana node outage: a payment can still be built, a balance reads as unknown rather than zero, and a temporary outage says retry shortly instead of failing outright. Image understanding skips a provider that is rate-limiting instead of waiting on it, so it answers from a working one. Text-to-speech falls through to a second voice engine rather than failing. Agent search still returns keyword matches when the search index is unreachable. Ticker availability is the one thing deliberately never answered from cache, because a name claimed minutes ago has to show up as taken.</description>
+		</item>
+		<item>
 			<title>Seeker app: stay signed in across restarts, and a submission path that matches today's dApp Store</title>
 			<link>https://three.ws/my-agents</link>
 			<guid isPermaLink="false">2026-08-27:Seeker app: stay signed in across restarts, and a submission path that matches today's dApp Store</guid>

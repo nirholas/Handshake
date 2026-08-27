@@ -195,6 +195,56 @@ Unlike `lastGood` above, the mirror lives in the shared store (Upstash), so a
 freshly started instance can ride out an outage on a value another instance
 fetched.
 
+### `api/_lib/solana/read-guards.js`: chain reads that survive a dead RPC
+
+```js
+import {
+	ataExists, blockhashKey, getRecentBlockhashInfo, mintDecimals, readBalanceOrNull,
+} from './solana/read-guards.js';
+
+const { blockhash } = await getRecentBlockhashInfo(conn, blockhashKey({ network: 'mainnet' }));
+const decimals = await mintDecimals(conn, usdcMint);   // constant, no network read
+if (!(await ataExists(conn, ata))) ixs.push(createAssociatedTokenAccountIdempotentInstruction(...));
+const lamports = await readBalanceOrNull(conn, pubkey); // null means unknown, never zero
+```
+
+Every read here answers the question "what should this do when the chain cannot
+be read at all?", and each answer is different:
+
+- **Blockhash**: serve a cached one that is still inside its validity window.
+  Pass `{ forceFresh: true }` on an expired-blockhash retry so the retry means
+  something.
+- **Mint decimals**: USDC, USDT, wSOL and `$THREE` have fixed decimals, so the
+  common case never touches the network and cannot fail.
+- **ATA probe**: fail OPEN to "missing". This is safe **only** with
+  `createAssociatedTokenAccountIdempotentInstruction`; with the plain create, an
+  unnecessary create fails the whole transaction. Always pair the two.
+- **Balance**: `null` for unknown. Never let a caller read it as zero.
+
+Anything that cannot degrade raises `rpcUnavailableError`, which
+`respondRpcUnavailable` renders as a 503 with `Retry-After`, so a caller learns
+"ask again shortly" instead of a sanitized 500.
+
+### `api/_lib/lexical-rank.js`: the fallback for a search that cannot embed
+
+```js
+import { rankLexically } from './lexical-rank.js';
+
+const rows = rankLexically(query, docs, { limit: 20 }); // [{ id, score: null, lexicalScore, match: 'lexical' }]
+```
+
+Semantic search is the one place where a provider ladder is **wrong**: a stored
+vector space has one embedder, so another lane's vector is a different dimension
+in a different geometry. When the embedder is down, degrade the *method* instead
+of the provider. Every row is labelled `match: 'lexical'` with a null semantic
+score, so no caller can mistake the ordering for a vector one. Used by
+`/api/galaxy` and `/api/ibm/galaxy`.
+
+`api/_lib/embeddings.js` covers the other half: `embedPassagesAny(preferredTag,
+texts)` walks every configured embedder at **ingest** time (where no space is
+fixed yet) and returns the tag that actually answered, so the caller records the
+space it really got.
+
 ### `api/_lib/mem-cache.js` — bounded in-process cache
 
 Backed by [`lru-cache`](https://www.npmjs.com/package/lru-cache).

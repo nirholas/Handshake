@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-27T13:40:26.462Z",
+	"generated_at": "2026-08-27T13:48:04.512Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -67,6 +67,17 @@
 			"link": "/marketplace",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-27",
+			"type": "update",
+			"title": "Prices, wallets, search and speech keep answering when a data provider goes down",
+			"summary": "A single slow or rate-limited provider used to be enough to blank a page. Token pages, portfolios and dashboards now fall back to other market sources and, failing that, to the last good reading, clearly marked with when it was taken instead of passed off as live. Wallet and checkout pages survive a Solana node outage: a payment can still be built, a balance reads as unknown rather than zero, and a temporary outage says retry shortly instead of failing outright. Image understanding skips a provider that is rate-limiting instead of waiting on it, so it answers from a working one. Text-to-speech falls through to a second voice engine rather than failing. Agent search still returns keyword matches when the search index is unreachable. Ticker availability is the one thing deliberately never answered from cache, because a name claimed minutes ago has to show up as taken.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"infra"
 			]
 		},
 		{

@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-27",
+			"title": "Prices, wallets, search and speech keep answering when a data provider goes down",
+			"summary": "A single slow or rate-limited provider used to be enough to blank a page. Token pages, portfolios and dashboards now fall back to other market sources and, failing that, to the last good reading, clearly marked with when it was taken instead of passed off as live. Wallet and checkout pages survive a Solana node outage: a payment can still be built, a balance reads as unknown rather than zero, and a temporary outage says retry shortly instead of failing outright. Image understanding skips a provider that is rate-limiting instead of waiting on it, so it answers from a working one. Text-to-speech falls through to a second voice engine rather than failing. Agent search still returns keyword matches when the search index is unreachable. Ticker availability is the one thing deliberately never answered from cache, because a name claimed minutes ago has to show up as taken.",
+			"tags": [
+				"improvement",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-27",
 			"title": "Agent pages, embeds and the camera tools keep working when a CDN or gateway is down",
 			"summary": "The parts of the site that load files from someone else's server used to have exactly one place to get them. If that one host was slow, blocked by a corporate network, or rate-limiting the visitor, the result was a blank box with no explanation: an agent page with no avatar, a 3D preview that never appeared, mocap and sign-language input that refused to start, a deposit QR that showed a broken image. Each of those now tries every equivalent source in turn. Agent avatars retry across all four IPFS gateways, on-chain reads rotate through every public node for the chain, the 3D viewer loads its decoders from our own servers, the camera tools ship their code with the page, and a QR code that cannot be drawn falls back to text you can still copy.",
 			"tags": [

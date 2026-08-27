@@ -15,6 +15,7 @@
 // NIM_TRELLIS_URL at it.
 
 import { wrap, cors, json, method, readJson, rateLimited } from './_lib/http.js';
+import { withRetry } from './_lib/resilience.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 
 // NIM_TRELLIS_URL only. MODEL_TRELLIS_URL points at our own Cloud Run TRELLIS
@@ -139,14 +140,26 @@ export default wrap(async (req, res) => {
 	const t0 = Date.now();
 	let upstream;
 	try {
-		upstream = await fetch(url, {
-			method: 'POST',
-			headers,
-			body: JSON.stringify(payload),
-			signal: AbortSignal.timeout(INFER_TIMEOUT_MS),
-		});
+		// This route talks to ONE NIM by design (it is the self-host lane's own
+		// page, and its contract is synchronous: caller waits, GLB comes back).
+		// There is no sibling lane to fail over to without changing that contract,
+		// so the recovery here is a bounded retry for the transient half of the
+		// failures, and an explicit pointer to the multi-lane /forge for the rest.
+		upstream = await withRetry(
+			() => fetch(url, {
+				method: 'POST',
+				headers,
+				body: JSON.stringify(payload),
+				signal: AbortSignal.timeout(INFER_TIMEOUT_MS),
+			}),
+			{ attempts: 2, label: 'nim-forge' },
+		);
 	} catch (err) {
-		return json(res, 502, { error: 'nim_unreachable', message: `Could not reach the NIM: ${err?.message || err}` });
+		return json(res, 502, {
+			error: 'nim_unreachable',
+			message: `Could not reach the NIM: ${err?.message || err}`,
+			recovery: 'This page talks to a single self-hosted NIM. Generate at /forge instead, which runs the full provider ladder.',
+		});
 	}
 
 	if (!upstream.ok) {
@@ -162,6 +175,7 @@ export default wrap(async (req, res) => {
 			error: 'nim_error',
 			upstream_status: upstream.status,
 			message: detail || `NIM returned ${upstream.status}`,
+			recovery: 'This page talks to a single self-hosted NIM. Generate at /forge instead, which runs the full provider ladder.',
 		});
 	}
 
