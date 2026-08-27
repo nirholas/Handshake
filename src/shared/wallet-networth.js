@@ -24,7 +24,7 @@
  * influence the look generically, by their real USD proportion — never by name.
  */
 
-import { getSolPriceUsd } from './usd-price.js';
+import { getSolPriceUsd, getTokenPriceUsd } from './usd-price.js';
 
 // $THREE — the only coin three.ws features. Holding it earns the brand accent.
 export const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
@@ -39,6 +39,8 @@ const USDC_MINT_BY_CLUSTER = {
 };
 
 const JUP_PRICE_URL = 'https://lite-api.jup.ag/price/v3';
+// A wallet card must not wait on a stalled price feed; unpriced reads as $0.
+const PRICE_TIMEOUT_MS = 5_000;
 const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
 // ── Tiers ───────────────────────────────────────────────────────────────────
@@ -96,17 +98,34 @@ async function priceMints(mints, network) {
 		else need.push(m);
 	}
 	if (!need.length) return out;
+	// One batched Jupiter call is the cheap path (a whole wallet in one request).
+	// Anything it does not price falls back to the shared per-mint chain
+	// (DexScreener, GeckoTerminal, DefiLlama), so a Jupiter outage or a token it
+	// has never indexed no longer silently reports a funded wallet as $0.
+	let priced = new Set();
 	try {
-		const r = await fetch(`${JUP_PRICE_URL}?ids=${encodeURIComponent(need.join(','))}`);
+		const r = await fetch(`${JUP_PRICE_URL}?ids=${encodeURIComponent(need.join(','))}`, {
+			signal: AbortSignal.timeout(PRICE_TIMEOUT_MS),
+		});
 		if (r.ok) {
 			const data = await r.json();
 			for (const m of need) {
 				const p = data?.[m]?.usdPrice ?? data?.[m]?.price ?? null;
-				if (Number(p) > 0) out.set(m, Number(p));
+				if (Number(p) > 0) {
+					out.set(m, Number(p));
+					priced.add(m);
+				}
 			}
 		}
 	} catch {
-		/* feed down — those mints stay unpriced ($0); SOL still prices below */
+		/* batch feed down: every mint falls through to the per-mint chain below */
+	}
+	const missing = need.filter((m) => !priced.has(m));
+	if (missing.length) {
+		const resolved = await Promise.all(missing.map((m) => getTokenPriceUsd(m).catch(() => null)));
+		missing.forEach((m, i) => {
+			if (Number(resolved[i]) > 0) out.set(m, Number(resolved[i]));
+		});
 	}
 	return out;
 }

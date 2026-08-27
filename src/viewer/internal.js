@@ -6,6 +6,41 @@ export const Preset = { ASSET_GENERATOR: 'assetgenerator' };
 export const MANAGER = new LoadingManager();
 const THREE_PATH = `https://unpkg.com/three@0.${REVISION}.x`;
 
+// Decoder binaries. scripts/copy-three-decoders.mjs vendors them into
+// public/three/ on every install and audit-deploy-artifacts.mjs fails a deploy
+// that ships without them, so the same-origin copy is the reliable source and
+// unpkg is only the backstop. Resolving against import.meta.url rather than a
+// site-absolute path is what makes this correct inside a third-party
+// <agent-3d> embed: the URL points at the origin serving this module (three.ws),
+// not at the embedding page's origin, where /three/* would 404.
+const LOCAL_THREE_PATH = (() => {
+	try {
+		return new URL('../../three/', import.meta.url).href.replace(/\/$/, '');
+	} catch {
+		return '/three';
+	}
+})();
+
+// One probe, memoised: does the vendored copy actually answer here? A stale
+// deploy or a bundler that dropped public/three falls back to unpkg rather than
+// failing every compressed model with an opaque decoder error.
+let _decoderBase = null;
+async function decoderBase() {
+	if (_decoderBase) return _decoderBase;
+	try {
+		const res = await fetch(`${LOCAL_THREE_PATH}/draco/gltf/draco_decoder.wasm`, {
+			method: 'HEAD',
+			signal: AbortSignal.timeout(4000),
+		});
+		_decoderBase = res.ok
+			? { draco: `${LOCAL_THREE_PATH}/draco/gltf/`, basis: `${LOCAL_THREE_PATH}/basis/` }
+			: { draco: `${THREE_PATH}/examples/jsm/libs/draco/gltf/`, basis: `${THREE_PATH}/examples/jsm/libs/basis/` };
+	} catch {
+		_decoderBase = { draco: `${THREE_PATH}/examples/jsm/libs/draco/gltf/`, basis: `${THREE_PATH}/examples/jsm/libs/basis/` };
+	}
+	return _decoderBase;
+}
+
 /**
  * Lazy, memoized setup of the Draco/KTX2/Meshopt decoders. Dynamically imports
  * each module the first time a model is loaded, so the first-paint bundle does
@@ -20,13 +55,10 @@ export function getDecoders() {
 		import('three/addons/loaders/DRACOLoader.js'),
 		import('three/addons/loaders/KTX2Loader.js'),
 		import('three/addons/libs/meshopt_decoder.module.js'),
-	]).then(([dracoMod, ktx2Mod, meshoptMod]) => {
-		const dracoLoader = new dracoMod.DRACOLoader(MANAGER).setDecoderPath(
-			`${THREE_PATH}/examples/jsm/libs/draco/gltf/`,
-		);
-		const ktx2Loader = new ktx2Mod.KTX2Loader(MANAGER).setTranscoderPath(
-			`${THREE_PATH}/examples/jsm/libs/basis/`,
-		);
+		decoderBase(),
+	]).then(([dracoMod, ktx2Mod, meshoptMod, base]) => {
+		const dracoLoader = new dracoMod.DRACOLoader(MANAGER).setDecoderPath(base.draco);
+		const ktx2Loader = new ktx2Mod.KTX2Loader(MANAGER).setTranscoderPath(base.basis);
 		return { dracoLoader, ktx2Loader, meshoptDecoder: meshoptMod.MeshoptDecoder };
 	});
 	return _decodersPromise;
