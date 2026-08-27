@@ -6928,6 +6928,61 @@ match the quote), `410` (`checkout_expired`), `429`.
 
 ---
 
+## EVM RPC proxy
+
+```
+POST /api/evm-rpc?chainId=<id>
+```
+
+A browser-safe, read-only Ethereum JSON-RPC proxy. Browser code that reads a
+contract used to call a keyless public host directly, which meant every page
+depended on one endpoint staying up. Posting through this proxy instead
+inherits the server's failover chain for that chain: an explicit
+`RPC_URL_<chainId>` override first, then Alchemy where a key is configured,
+then the curated public tail, rotating to the next endpoint whenever one fails.
+
+No auth required. `chainId` must be a supported EVM chain (the same set
+`/api/erc8004/chains` lists).
+
+**Request** Any single JSON-RPC call, or a batch of up to 10:
+
+```bash
+curl -s 'https://three.ws/api/evm-rpc?chainId=8453' \
+  -H 'content-type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"eth_blockNumber","params":[]}'
+```
+
+**Response** The upstream JSON-RPC envelope, unchanged:
+
+```json
+{ "jsonrpc": "2.0", "id": 1, "result": "0x1a2b3c" }
+```
+
+**Allowed methods.** Reads only: `eth_call`, `eth_getBalance`,
+`eth_blockNumber`, `eth_getLogs`, `eth_getTransactionReceipt`,
+`eth_getTransactionByHash`, `eth_chainId`, `eth_estimateGas`, `eth_getCode`,
+`eth_getStorageAt`, `net_version`, `eth_gasPrice`, `eth_feeHistory`,
+`eth_maxPriorityFeePerGas`, `eth_getBlockByNumber`. Anything that broadcasts a
+transaction or opens a filter or subscription is refused: sign and send
+transactions from the user's own wallet, not through this proxy.
+
+**Errors**
+
+| Status | `error` | Meaning |
+|---|---|---|
+| 400 | `unknown_chain` | `chainId` missing or not a supported EVM chain |
+| 400 | `bad_body` | body was not valid JSON |
+| 400 | `batch_too_large` | more than 10 calls in one batch |
+| 403 | `method_not_allowed` | method is not on the read-only allowlist |
+| 429 | `rate_limited` | per-IP or global RPC budget exhausted |
+| 502 | `no_upstream` / `upstream_error` | no endpoint configured, or every endpoint for that chain failed |
+
+Browser code should use `src/shared/evm-rpc-fallback.js`, which builds a
+provider that tries this proxy first and falls back to public hosts when the
+page is embedded on a third-party origin.
+
+---
+
 ## Seeker verification
 
 Prove that a signed-in user owns a Solana Seeker phone. Every Seeker mints one soulbound Seeker Genesis Token (a Token-2022 token) into its owner's wallet; a user who holds it in a wallet linked to their three.ws account gets the "Seeker verified" badge. Verification scans the wallet through Helius (`getTokenAccountsByOwnerV2`) and checks the token's mint against the official Seeker mint authority (`GT2zuHVaZQYZSyQMgJPLzvkmyztfyXg2NJunqFp4p3A4`) and token group (`GT22s89nU4iWFkNXj1Bw6uYhJJWDRPpShHt4Bk8f99Te`). A wallet must be linked first (Sign-In with Solana, `/api/auth/siws/*`).
