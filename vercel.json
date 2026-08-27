@@ -3007,6 +3007,10 @@
 			"dest": "/api/auth/siws/[action]?action=$1"
 		},
 		{
+			"src": "/api/seeker/([^/]+)",
+			"dest": "/api/seeker/[action]?action=$1"
+		},
+		{
 			"src": "/api/auth/session/([^/]+)",
 			"dest": "/api/auth/session/[action]?action=$1"
 		},
@@ -5061,6 +5065,14 @@
 		{
 			"src": "/create/studio/",
 			"dest": "/avatar-studio.html"
+		},
+		{
+			"src": "/seeker",
+			"dest": "/seeker.html"
+		},
+		{
+			"src": "/seeker/",
+			"dest": "/seeker.html"
 		},
 		{
 			"src": "/create/selfie",

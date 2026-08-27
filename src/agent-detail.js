@@ -1249,6 +1249,13 @@ function render(agent) {
 	(agent.trust || []).forEach((t) =>
 		trustPills.appendChild(pill(t, TRUST_ACCENT[t.toLowerCase()] || '')),
 	);
+	// Seeker owners earn a badge on every agent they own: the Seeker Genesis
+	// Token in their Seed Vault was read on-chain by /api/seeker/verify.
+	if (agent.owner_seeker_verified) {
+		const seeker = pill('Seeker verified', 'seeker');
+		seeker.title = 'The owner holds a Seeker Genesis Token, the soulbound proof of a Solana Seeker phone.';
+		trustPills.appendChild(seeker);
+	}
 
 	const services = $('ad-services');
 	services.innerHTML = '';

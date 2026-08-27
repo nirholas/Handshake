@@ -626,7 +626,7 @@ function ensureStyles() {
 	style.textContent = `
 .walk-companion{position:fixed;right:16px;bottom:16px;width:${CANVAS_W}px;height:${CANVAS_H}px;z-index:2147483000;pointer-events:none;opacity:0;transform:translateY(12px);transition:opacity .35s ease,transform .35s ease;-webkit-user-select:none;user-select:none}
 .walk-companion.is-in{opacity:1;transform:translateY(0)}
-.walk-companion-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:auto;cursor:pointer;filter:drop-shadow(0 18px 22px rgba(0,0,0,.32))}
+.walk-companion-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:auto;cursor:pointer;touch-action:pan-y;filter:drop-shadow(0 18px 22px rgba(0,0,0,.32))}
 .walk-companion__skel{position:absolute;left:50%;bottom:8%;z-index:0;width:46%;height:70%;transform:translateX(-50%);border-radius:46% 46% 40% 40%/55% 55% 45% 45%;overflow:hidden;opacity:0;transition:opacity .25s ease;pointer-events:none;background:linear-gradient(180deg,rgba(122,162,255,.18),rgba(18,20,28,.10))}
 .walk-companion.is-loading .walk-companion__skel{opacity:1}
 .walk-companion.is-loading .walk-companion-canvas{opacity:0}
@@ -642,7 +642,7 @@ function ensureStyles() {
 .walk-companion-bubble.is-in{opacity:1;transform:translateX(-50%) translateY(0)}
 .walk-companion-bubble::after{content:'';position:absolute;left:50%;top:100%;transform:translateX(-50%);border:6px solid transparent;border-top-color:rgba(18,20,28,.94)}
 @media (max-width:520px){.walk-companion{width:148px;height:208px;right:10px;bottom:10px}.walk-companion-bubble{font-size:11.5px;max-width:min(156px,calc(100vw - 12px))}}
-@media (pointer:coarse){.walk-companion-close,.walk-companion-swap{opacity:1;width:26px;height:26px}.walk-companion-swap{right:32px}}
+@media (pointer:coarse){.walk-companion-close,.walk-companion-swap{opacity:1;width:44px;height:44px;top:-7px;border:9px solid transparent;background-clip:padding-box}.walk-companion-close{right:-7px}.walk-companion-swap{right:23px}}
 @keyframes walk-companion-shimmer{to{transform:translateX(120%)}}
 @media (prefers-reduced-motion:reduce){.walk-companion,.walk-companion-bubble{transition:none}.walk-companion__skel::after{animation:none;opacity:.5}}
 `;

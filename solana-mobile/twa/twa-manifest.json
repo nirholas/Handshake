@@ -4,7 +4,7 @@
   "name": "three.ws",
   "launcherName": "three.ws",
   "display": "standalone",
-  "orientation": "default",
+  "orientation": "portrait",
   "themeColor": "#000000",
   "themeColorDark": "#000000",
   "navigationColor": "#000000",
@@ -13,9 +13,9 @@
   "navigationDividerColorDark": "#080814",
   "backgroundColor": "#080814",
   "enableNotifications": true,
-  "startUrl": "/?utm_source=seeker_app",
+  "startUrl": "/seeker?utm_source=seeker_app",
   "iconUrl": "https://three.ws/pwa-512x512.png",
-  "maskableIconUrl": "https://three.ws/pwa-512x512.png",
+  "maskableIconUrl": "https://three.ws/pwa-maskable-512x512.png",
   "monochromeIconUrl": "https://three.ws/pwa-icon.svg",
   "appVersion": "1.0.0",
   "appVersionCode": 1,
@@ -39,24 +39,57 @@
       "chosenIconUrl": "https://three.ws/pwa-192x192.png"
     }
   ],
+  "shareTarget": {
+    "action": "/create/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "media",
+          "accept": [
+            "image/jpeg",
+            "image/png",
+            "image/webp",
+            "model/gltf-binary"
+          ]
+        }
+      ]
+    }
+  },
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://three.ws/manifest.webmanifest",
   "fallbackType": "customtabs",
   "features": {
-    "locationDelegation": { "enabled": false },
-    "playBilling": { "enabled": false },
-    "appsFlyer": { "enabled": false },
-    "firstRunFlag": { "enabled": false }
+    "locationDelegation": {
+      "enabled": false
+    },
+    "playBilling": {
+      "enabled": false
+    },
+    "appsFlyer": {
+      "enabled": false
+    },
+    "firstRunFlag": {
+      "enabled": false
+    }
   },
-  "alphaDependencies": { "enabled": false },
+  "alphaDependencies": {
+    "enabled": false
+  },
   "enableSiteSettingsShortcut": true,
   "isChromeOSOnly": false,
   "isMetaQuest": false,
   "fullScopeUrl": "https://three.ws/",
   "minSdkVersion": 23,
-  "orientationFlag": "default",
+  "orientationFlag": "portrait",
   "splashScreenFadeOutDuration": 300,
   "additionalTrustedOrigins": [],
   "retainedBundles": [],
-  "appLanguages": ["en"]
+  "appLanguages": [
+    "en"
+  ]
 }

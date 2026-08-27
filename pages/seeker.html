@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<title>three.ws for Seeker</title>
+		<meta name="theme-color" content="#000000" />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+		<meta name="apple-mobile-web-app-title" content="three.ws" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<meta
+			name="description"
+			content="The three.ws app on Solana Seeker: one-tap Seed Vault sign-in, selfie to 3D avatar, your agents, the marketplace, and Seeker Genesis Token verification."
+		/>
+		<meta name="robots" content="index, follow" />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/seeker" />
+		<meta property="og:title" content="three.ws for Seeker" />
+		<meta property="og:description" content="Mint a 3D agent to your Seed Vault. On-chain, Solana-native, signed by Seeker." />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=three.ws+for+Seeker&amp;d=The+home+screen+of+the+three.ws+app+on+Solana+Seeker%3A+one-tap+Seed+Vault+sign-in%2C+selfie+to+avatar%2C+your+agents%2C+the+marketplace%2C+and+Seeker+Genesis+Token&amp;p=%2Fseeker" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<link rel="canonical" href="https://three.ws/seeker" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<style>
+			*, *::before, *::after { box-sizing: border-box; }
+			:root {
+				color-scheme: dark;
+				--bg: #000;
+				--surface: #0a0a0a;
+				--surface-2: #111;
+				--border: #1c1c1c;
+				--border-2: #2a2a2a;
+				--text: #fafafa;
+				--text-2: #a1a1aa;
+				--text-3: #84848e;
+				--accent: #fff;
+				--accent-ink: #000;
+				--green: #4ade80;
+				--amber: #f59e0b;
+				--blue: #60a5fa;
+				--danger: #f87171;
+				--radius-sm: 10px;
+				--radius: 14px;
+				--radius-lg: 20px;
+				--safe-top: env(safe-area-inset-top, 0px);
+				--safe-bottom: env(safe-area-inset-bottom, 0px);
+			}
+			html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); }
+			body {
+				font-family: 'Inter', system-ui, -apple-system, sans-serif;
+				-webkit-font-smoothing: antialiased;
+				min-height: 100dvh;
+				display: flex;
+				flex-direction: column;
+				overscroll-behavior-y: contain;
+			}
+			a { color: inherit; }
+			button { font: inherit; }
+			.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+			:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; border-radius: 6px; }
+
+			/* Top bar: sticky, safe-area aware, translucent over the scroll. */
+			.bar {
+				position: sticky; top: 0; z-index: 10;
+				display: flex; align-items: center; justify-content: space-between; gap: 12px;
+				padding: calc(10px + var(--safe-top)) 16px 10px;
+				background: color-mix(in srgb, var(--bg) 82%, transparent);
+				backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+				border-bottom: 1px solid var(--border);
+			}
+			.logo { display: flex; align-items: center; gap: 8px; text-decoration: none; font-family: 'Space Grotesk', 'Inter', sans-serif; font-weight: 600; font-size: 1rem; }
+			.logo img { width: 26px; height: 26px; }
+			.sign-in {
+				display: inline-flex; align-items: center; gap: 8px;
+				min-height: 44px; padding: 0 14px; border-radius: 999px;
+				border: 1px solid var(--border-2); background: var(--surface-2); color: var(--text);
+				cursor: pointer; transition: background 140ms ease, transform 100ms ease, border-color 140ms ease;
+				max-width: 60vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+			}
+			.sign-in:hover { border-color: var(--text-3); }
+			.sign-in:active { transform: scale(0.97); }
+			.sign-in[data-state="connected"] { border-color: color-mix(in srgb, var(--green) 45%, var(--border-2)); }
+			.sign-in[data-state="busy"] { opacity: 0.7; pointer-events: none; }
+			.sign-in .tick { width: 8px; height: 8px; border-radius: 50%; background: var(--green); display: none; }
+			.sign-in[data-state="connected"] .tick { display: inline-block; }
+
+			main { flex: 1; width: 100%; max-width: 640px; margin: 0 auto; padding: 20px 16px calc(28px + var(--safe-bottom)); display: grid; gap: 22px; }
+			section { animation: rise 360ms ease-out both; }
+			section:nth-child(2) { animation-delay: 40ms; } section:nth-child(3) { animation-delay: 80ms; } section:nth-child(4) { animation-delay: 120ms; }
+			@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+			@media (prefers-reduced-motion: reduce) { section, .card, .agent { animation: none !important; transition: none !important; } }
+
+			/* Hero */
+			.hero { position: relative; overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 26px 20px 22px; background: radial-gradient(120% 90% at 20% 0%, #14142a 0%, var(--surface) 60%); }
+			.hero h1 { margin: 0 0 8px; font-family: 'Space Grotesk', 'Inter', sans-serif; font-size: clamp(1.55rem, 6vw, 2rem); line-height: 1.12; letter-spacing: -0.02em; }
+			.hero p { margin: 0 0 18px; color: var(--text-2); font-size: 0.97rem; line-height: 1.5; }
+			.hero .eyebrow { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border-2); color: var(--text-2); font-size: 0.74rem; letter-spacing: 0.04em; text-transform: uppercase; }
+			.cta {
+				display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+				width: 100%; min-height: 52px; padding: 0 18px; border-radius: var(--radius);
+				border: 0; background: var(--accent); color: var(--accent-ink); font-weight: 600; font-size: 1rem;
+				cursor: pointer; text-decoration: none; transition: transform 100ms ease, opacity 140ms ease;
+			}
+			.cta:hover { opacity: 0.92; }
+			.cta:active { transform: scale(0.98); }
+			.cta[disabled] { opacity: 0.6; pointer-events: none; }
+			.hero .note { margin: 12px 0 0; font-size: 0.8rem; color: var(--text-3); }
+			.hero[data-signed-in="true"] .cta, .hero[data-signed-in="true"] .note { display: none; }
+			.hero .welcome { display: none; align-items: center; gap: 12px; }
+			.hero[data-signed-in="true"] .welcome { display: flex; }
+			.welcome .addr { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.9rem; background: var(--surface-2); border: 1px solid var(--border-2); padding: 8px 12px; border-radius: 999px; }
+			.welcome a { color: var(--text-2); font-size: 0.85rem; }
+
+			/* Action grid */
+			h2 { margin: 0 0 12px; font-size: 0.82rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); font-weight: 600; }
+			.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+			.card {
+				display: flex; flex-direction: column; gap: 10px; min-height: 124px; padding: 16px 14px;
+				border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
+				text-decoration: none; transition: border-color 140ms ease, transform 100ms ease, background 140ms ease;
+			}
+			.card:hover { border-color: var(--border-2); background: var(--surface-2); }
+			.card:active { transform: scale(0.98); }
+			.card.primary { grid-column: 1 / -1; flex-direction: row; align-items: center; min-height: 0; background: linear-gradient(135deg, #15152a, var(--surface)); }
+			.card .icon { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); flex-shrink: 0; }
+			.card .icon svg { width: 20px; height: 20px; }
+			.card strong { font-size: 0.98rem; font-weight: 600; }
+			.card span { font-size: 0.82rem; color: var(--text-2); line-height: 1.4; }
+			.card .text { display: flex; flex-direction: column; gap: 3px; }
+
+			/* Your agents */
+			.agents-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+			.agents-head a { font-size: 0.85rem; color: var(--text-2); text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; }
+			.agents { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 2px 2px 8px; margin: 0 -2px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+			.agents::-webkit-scrollbar { display: none; }
+			.agent { flex: 0 0 150px; scroll-snap-align: start; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); text-decoration: none; overflow: hidden; transition: border-color 140ms ease, transform 100ms ease; }
+			.agent:hover { border-color: var(--border-2); }
+			.agent:active { transform: scale(0.98); }
+			.agent .thumb { aspect-ratio: 1; background: var(--surface-2) center / cover no-repeat; display: grid; place-items: center; color: var(--text-3); font-family: 'Space Grotesk', sans-serif; font-size: 2rem; }
+			.agent .meta { padding: 10px 12px 12px; }
+			.agent .name { display: block; font-weight: 600; font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+			.agent .sub { display: block; font-size: 0.78rem; color: var(--text-3); margin-top: 2px; }
+			.skeleton { background: linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 50%, var(--surface) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: var(--radius); }
+			@keyframes shimmer { to { background-position: -200% 0; } }
+			.agent.skeleton { height: 214px; border-color: transparent; }
+			.empty { border: 1px dashed var(--border-2); border-radius: var(--radius); padding: 18px 16px; color: var(--text-2); font-size: 0.92rem; display: grid; gap: 10px; }
+			.empty a { color: var(--text); font-weight: 600; text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; }
+			[hidden] { display: none !important; }
+
+			/* Seeker verified */
+			.verify { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: 16px; display: grid; gap: 12px; }
+			.verify .row { display: flex; align-items: center; gap: 12px; }
+			.badge { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--surface-2); border: 1px solid var(--border); flex-shrink: 0; transition: background 200ms ease, border-color 200ms ease; }
+			.badge svg { width: 22px; height: 22px; }
+			.verify[data-state="verified"] .badge { background: color-mix(in srgb, var(--green) 18%, var(--surface-2)); border-color: color-mix(in srgb, var(--green) 50%, var(--border)); color: var(--green); }
+			.verify strong { display: block; font-size: 0.98rem; }
+			.verify p { margin: 2px 0 0; font-size: 0.85rem; color: var(--text-2); line-height: 1.45; }
+			.verify .btn { min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--border-2); background: var(--surface-2); color: var(--text); cursor: pointer; transition: border-color 140ms ease, transform 100ms ease; }
+			.verify .btn:hover { border-color: var(--text-3); }
+			.verify .btn:active { transform: scale(0.97); }
+			.verify .btn[disabled] { opacity: 0.6; pointer-events: none; }
+			.verify .msg { font-size: 0.82rem; color: var(--text-3); min-height: 1.2em; }
+			.verify .msg[data-kind="error"] { color: var(--danger); }
+			.verify .msg[data-kind="ok"] { color: var(--green); }
+
+			footer { padding: 6px 16px calc(16px + var(--safe-bottom)); display: flex; flex-wrap: wrap; gap: 14px 18px; justify-content: center; font-size: 0.78rem; color: var(--text-3); }
+			footer a { color: inherit; text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; }
+			footer a:hover { color: var(--text-2); }
+
+			@media (min-width: 560px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .card.primary { grid-column: 1 / -1; } }
+			:root[data-theme="light"] { --bg: #fafafa; --surface: #fff; --surface-2: #f2f2f4; --border: #e5e5ea; --border-2: #d4d4da; --text: #0a0a0a; --text-2: #4b4b55; --text-3: #6b6b76; --accent: #0a0a0a; --accent-ink: #fff; color-scheme: light; }
+			:root[data-theme="light"] .hero { background: radial-gradient(120% 90% at 20% 0%, #e9e9f7 0%, var(--surface) 60%); }
+			:root[data-theme="light"] .card.primary { background: linear-gradient(135deg, #ececf8, var(--surface)); }
+		</style>
+	
+	<meta property="og:locale" content="en_US">
+	<meta property="og:image:alt" content="three.ws for Seeker - three.ws">
+	<meta name="twitter:title" content="three.ws for Seeker · three.ws">
+	<meta name="twitter:description" content="The home screen of the three.ws app on Solana Seeker: one-tap Seed Vault sign-in, selfie to avatar, your agents, the marketplace, and Seeker Genesis Token verification.">
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=three.ws+for+Seeker&amp;d=The+home+screen+of+the+three.ws+app+on+Solana+Seeker%3A+one-tap+Seed+Vault+sign-in%2C+selfie+to+avatar%2C+your+agents%2C+the+marketplace%2C+and+Seeker+Genesis+Token&amp;p=%2Fseeker">
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"three.ws for Seeker","description":"The home screen of the three.ws app on Solana Seeker: one-tap Seed Vault sign-in, selfie to avatar, your agents, the marketplace, and Seeker Genesis Token verification.","url":"https://three.ws/seeker","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=build&t=three.ws+for+Seeker&d=The+home+screen+of+the+three.ws+app+on+Solana+Seeker%3A+one-tap+Seed+Vault+sign-in%2C+selfie+to+avatar%2C+your+agents%2C+the+marketplace%2C+and+Seeker+Genesis+Token&p=%2Fseeker"}]}</script>
+</head>
+	<body>
+		<a class="sr-only" href="#main-content">Skip to content</a>
+		<header class="bar">
+			<a class="logo" href="/seeker" aria-label="three.ws home"><img src="/pwa-icon.svg" alt="" width="26" height="26" />three.ws</a>
+			<button type="button" class="sign-in" id="sign-in" data-state="idle" aria-live="polite">
+				<span class="tick" aria-hidden="true"></span>
+				<span id="sign-in-label">Sign in with Seed Vault</span>
+			</button>
+		</header>
+
+		<main id="main-content">
+			<section class="hero" id="hero" data-signed-in="false" aria-labelledby="hero-title">
+				<span class="eyebrow">Built for Seeker</span>
+				<h1 id="hero-title">Your 3D agents, signed by Seed Vault.</h1>
+				<p>Take a selfie, get a rigged avatar, give it a mind, and put it on Solana. Every signature stays inside your Seeker.</p>
+				<button type="button" class="cta" id="hero-cta">
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 4 6.5V12c0 4.4 3.4 8.3 8 9 4.6-.7 8-4.6 8-9V6.5L12 3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m9.5 12 1.8 1.8L15 10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+					<span>Sign in with Seed Vault</span>
+				</button>
+				<p class="note">One tap. No seed phrase, no browser extension, no transaction.</p>
+				<div class="welcome">
+					<span class="addr" id="welcome-addr"></span>
+					<a href="/settings">Manage account</a>
+				</div>
+			</section>
+
+			<section aria-labelledby="do-title">
+				<h2 id="do-title">Create</h2>
+				<nav class="grid" aria-label="Create">
+					<a class="card primary" href="/create/selfie?utm_source=seeker_home">
+						<span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6H8l1.2-2h5.6L16 6h1.5A2.5 2.5 0 0 1 20 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5v-8Z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12.5" r="3.2" stroke="currentColor" stroke-width="1.7"/></svg></span>
+						<span class="text"><strong>Selfie to avatar</strong><span>One photo with the Seeker camera. A rigged 3D avatar in about a minute.</span></span>
+					</a>
+					<a class="card" href="/create/prompt?utm_source=seeker_home">
+						<span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 19 16.5 7.5l.5-3 3-.5L8.5 15.5 5 19Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14 10l0 0" stroke="currentColor" stroke-width="1.7"/></svg></span>
+						<span class="text"><strong>Describe it</strong><span>Text prompt to avatar.</span></span>
+					</a>
+					<a class="card" href="/create?utm_source=seeker_home">
+						<span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3v11m0 0 4-4m-4 4-4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v2.5A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
+						<span class="text"><strong>Upload a GLB</strong><span>Or share one from any app.</span></span>
+					</a>
+				</nav>
+			</section>
+
+			<section aria-labelledby="go-title">
+				<h2 id="go-title">Explore</h2>
+				<nav class="grid" aria-label="Explore">
+					<a class="card" href="/marketplace?utm_source=seeker_home">
+						<span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 10h16l-1 10H5L4 10Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.7"/></svg></span>
+						<span class="text"><strong>Marketplace</strong><span>Agents from the community.</span></span>
+					</a>
+					<a class="card" href="/my-agents?utm_source=seeker_home">
+						<span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.7"/><path d="M5 20a7 7 0 0 1 14 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
+						<span class="text"><strong>My agents</strong><span>Everything you own.</span></span>
+					</a>
+					<a class="card" href="/chat?utm_source=seeker_home">
+						<span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.4 8.4 0 0 1 4 11.5 8.5 8.5 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></span>
+						<span class="text"><strong>Chat</strong><span>Talk to any agent.</span></span>
+					</a>
+				</nav>
+			</section>
+
+			<section aria-labelledby="mine-title" id="mine" hidden>
+				<div class="agents-head"><h2 id="mine-title">Your agents</h2><a href="/my-agents">See all</a></div>
+				<div class="agents" id="agents" role="list" aria-busy="true">
+					<div class="agent skeleton" aria-hidden="true"></div>
+					<div class="agent skeleton" aria-hidden="true"></div>
+					<div class="agent skeleton" aria-hidden="true"></div>
+				</div>
+				<div class="empty" id="agents-empty" hidden>
+					<span>No agents yet. Your first one takes about a minute.</span>
+					<a href="/create/selfie?utm_source=seeker_home">Create from a selfie &rarr;</a>
+				</div>
+				<div class="empty" id="agents-error" hidden>
+					<span>Couldn't load your agents.</span>
+					<button type="button" class="btn" id="agents-retry" style="min-height:44px;border-radius:999px;border:1px solid var(--border-2);background:var(--surface-2);color:var(--text);padding:0 16px;cursor:pointer;justify-self:start">Try again</button>
+				</div>
+			</section>
+
+			<section aria-labelledby="verify-title">
+				<h2 id="verify-title">Seeker owner</h2>
+				<div class="verify" id="verify" data-state="unknown">
+					<div class="row">
+						<span class="badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3 4 6.5V12c0 4.4 3.4 8.3 8 9 4.6-.7 8-4.6 8-9V6.5L12 3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m9.5 12 1.8 1.8L15 10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+						<div>
+							<strong id="verify-title-text">Verify your Seeker</strong>
+							<p id="verify-copy">Prove you own a Seeker with the Genesis Token in your Seed Vault. It is soulbound, so the check is a read, never a transaction.</p>
+						</div>
+					</div>
+					<div class="row">
+						<button type="button" class="btn" id="verify-btn">Check my wallet</button>
+						<span class="msg" id="verify-msg" role="status" aria-live="polite"></span>
+					</div>
+				</div>
+			</section>
+		</main>
+
+		<footer>
+			<a href="/docs">Docs</a>
+			<a href="/legal/privacy">Privacy</a>
+			<a href="/legal/eula">EULA</a>
+			<a href="/changelog">What's new</a>
+			<a href="https://github.com/nirholas/three.ws" rel="noopener" target="_blank">Open source</a>
+		</footer>
+
+		<script type="module" src="/src/seeker.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

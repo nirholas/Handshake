@@ -702,3 +702,120 @@
 		padding-bottom: max(18px, env(safe-area-inset-bottom));
 	}
 }
+
+/* ── /marketplace card controls on touch ──────────────────────────────
+ * The card grid is deliberately dense on desktop (hover reveals the compose
+ * CTA, the heart is a 16px glyph, tags are 18px pills). Under a thumb every
+ * one of those was below the 44px floor: 1358 of 1735 targets on the page.
+ * Each rule below grows the tappable box to 44px in its smaller dimension
+ * while the painted visual stays the size the card was designed around:
+ * transparent borders with `background-clip: padding-box` extend the box
+ * without extending the pill, and negative margins hand the extra height
+ * back so the card layout does not shift. Selectors repeat the page's own
+ * specificity because pages/marketplace.html styles the same controls with
+ * three-class selectors and this sheet only wins on a tie.
+ */
+@media (hover: none) and (pointer: coarse) {
+	/* Title link: the inline stylesheet floors it at 32px with a
+	   three-class selector, so match that specificity. */
+	.market-card-avatar .title-row .title.card-profile-link,
+	.market-card-agent .title.card-profile-link,
+	.market-grid .card-profile-link {
+		min-height: 44px;
+		line-height: 1.3;
+		display: flex;
+		align-items: center;
+	}
+
+	/* Heart: 17x21 glyph. The title row is already 44px tall, so the box
+	   grows sideways into a square centred on the glyph. */
+	.market-card-avatar .title-row .card-heart,
+	.card-heart {
+		min-width: 44px;
+		min-height: 44px;
+		margin-top: 0;
+		padding: 0;
+		display: inline-grid;
+		place-items: center;
+	}
+
+	/* Author: a 19px name in the byline. */
+	.market-card-avatar .byline .card-author,
+	a.card-author {
+		display: inline-flex;
+		align-items: center;
+		min-width: 44px;
+		min-height: 44px;
+		margin: -13px 0;
+	}
+
+	/* Tag pills: 18px tall. Vertical transparent border grows the box to
+	   44px, background-clip keeps the pill at its painted size, and the
+	   negative margin keeps the wrap rows where they were. */
+	.market-card-avatar .card-tags .tag-pill,
+	.market-grid button.tag-pill {
+		box-sizing: border-box;
+		min-height: 44px;
+		min-width: 44px;
+		border-color: transparent;
+		border-width: 13px 1px;
+		background-clip: padding-box;
+		/* The pill's 1px outline moves from the (now transparent) border to
+		   an inset shadow, which paints at the padding-box edge. */
+		box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+		margin: -13px 0;
+		position: relative;
+		z-index: 1;
+	}
+	.market-card-avatar .card-tags .tag-pill:active,
+	.market-card-avatar .card-tags .tag-pill:focus-visible {
+		box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+		border-color: transparent;
+	}
+
+	/* Compose CTA: hidden until hover on desktop, which a touch screen never
+	   fires, so it is both visible and tappable here. */
+	.market-card-avatar .footer .compose-cta {
+		color: #a5b4fc;
+		background: rgba(99, 102, 241, 0.15);
+		border-color: rgba(99, 102, 241, 0.3);
+		pointer-events: auto;
+		display: inline-flex;
+		align-items: center;
+		min-height: 44px;
+		padding: 0 10px;
+	}
+	.market-card-avatar .footer .compose-cta:active {
+		background: rgba(99, 102, 241, 0.25);
+	}
+	.market-card-avatar .footer .compose-cta:focus-visible {
+		outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #fff);
+		outline-offset: var(--focus-ring-offset, 2px);
+	}
+
+	/* Hero actions (287x37), slide dots (38x32: a 4px bar inside invisible
+	   padding, so grow the padding), the "All" chip (43px wide) and the
+	   leaderboard link (113x19). */
+	.market-hero-cta,
+	.market-hero-secondary,
+	a.market-hero-secondary {
+		min-height: 44px;
+	}
+	.market-hero-dots button,
+	.market-hero-dot {
+		padding: 20px 9px;
+	}
+	.market-chip {
+		min-width: 44px;
+		min-height: 44px;
+	}
+	.mkt-top-see-all {
+		display: inline-flex;
+		align-items: center;
+		min-height: 44px;
+	}
+	.tws-disc-x {
+		width: 44px;
+		height: 44px;
+	}
+}

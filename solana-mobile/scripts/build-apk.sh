@@ -160,11 +160,38 @@ BUILD_DIR="$(pwd)/build"
 mkdir -p "$BUILD_DIR"
 cp -f "$KEYSTORE_PATH" "$BUILD_DIR/android.keystore"
 
+# Bubblewrap downloads every icon it embeds from the URL in the manifest. Those
+# point at https://three.ws, which only serves what the LAST deploy shipped:
+# an icon added in this commit 404s until the site ships, and the APK's icon
+# would otherwise trail the repo by one deploy. Serve ../public locally for the
+# duration of the build and rewrite three.ws icon URLs to it whenever the file
+# exists in the working tree, so the APK always carries this commit's icons.
+ICON_PORT="${ICON_PORT:-47391}"
+PUBLIC_DIR="$(cd .. && pwd)/public"
+python3 -m http.server "$ICON_PORT" --bind 127.0.0.1 --directory "$PUBLIC_DIR" >/dev/null 2>&1 &
+ICON_SERVER_PID=$!
+trap 'kill "$ICON_SERVER_PID" 2>/dev/null || true' EXIT
+for _ in $(seq 1 30); do
+	curl -sf -o /dev/null "http://127.0.0.1:$ICON_PORT/pwa-512x512.png" && break
+	sleep 0.2
+done
+echo "[build-apk] serving $PUBLIC_DIR icons at http://127.0.0.1:$ICON_PORT"
+
 # Copy the manifest and inject the signing key + optional version overrides.
 node <<NODE
 const fs = require('fs');
+const path = require('path');
 const manifest = require('./twa/twa-manifest.json');
 manifest.signingKey = { path: './android.keystore', alias: '${KEY_ALIAS}' };
+const publicDir = '${PUBLIC_DIR}';
+const localOrigin = 'http://127.0.0.1:${ICON_PORT}';
+const localize = (url) => {
+	if (typeof url !== 'string' || !url.startsWith('https://three.ws/')) return url;
+	const rel = url.slice('https://three.ws/'.length).split('?')[0];
+	return fs.existsSync(path.join(publicDir, rel)) ? localOrigin + '/' + rel : url;
+};
+for (const key of ['iconUrl', 'maskableIconUrl', 'monochromeIconUrl']) manifest[key] = localize(manifest[key]);
+for (const s of manifest.shortcuts || []) s.chosenIconUrl = localize(s.chosenIconUrl);
 // Bubblewrap's JSON field for the Android versionName is "appVersion".
 if ('${VERSION_NAME:-}') manifest.appVersion = '${VERSION_NAME:-}';
 if ('${VERSION_CODE:-}') manifest.appVersionCode = Number('${VERSION_CODE:-}');

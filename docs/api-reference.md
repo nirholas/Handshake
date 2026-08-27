@@ -6928,6 +6928,75 @@ match the quote), `410` (`checkout_expired`), `429`.
 
 ---
 
+## Seeker verification
+
+Prove that a signed-in user owns a Solana Seeker phone. Every Seeker mints one soulbound Seeker Genesis Token (a Token-2022 token) into its owner's wallet; a user who holds it in a wallet linked to their three.ws account gets the "Seeker verified" badge. Verification scans the wallet through Helius (`getTokenAccountsByOwnerV2`) and checks the token's mint against the official Seeker mint authority (`GT2zuHVaZQYZSyQMgJPLzvkmyztfyXg2NJunqFp4p3A4`) and token group (`GT22s89nU4iWFkNXj1Bw6uYhJJWDRPpShHt4Bk8f99Te`). A wallet must be linked first (Sign-In with Solana, `/api/auth/siws/*`).
+
+### Seeker status
+
+```
+GET /api/seeker/status
+```
+
+Requires a session. Returns what the platform already knows; no RPC call is made.
+
+**Response**
+
+```json
+{
+	"verified": true,
+	"wallets": [
+		{ "address": "7Gq...seekerWallet", "tokenMint": "5Hn...deviceMint", "verifiedAt": "2026-08-27T12:00:00.000Z" }
+	],
+	"linkedSolanaWallets": ["7Gq...seekerWallet", "9Ab...otherWallet"]
+}
+```
+
+---
+
+### Verify Seeker ownership
+
+```
+POST /api/seeker/verify
+```
+
+Requires a session. Rate limited. Scans every linked Solana wallet (or only `wallet`, when given) for a Seeker Genesis Token, records each wallet that holds one, and forgets any previously verified wallet that no longer does.
+
+**Request body** (optional)
+
+```json
+{ "wallet": "7Gq...seekerWallet" }
+```
+
+**Response:** the same shape as `GET /api/seeker/status` plus `checked`, the number of wallets scanned.
+
+```json
+{
+	"verified": true,
+	"wallets": [{ "address": "7Gq...seekerWallet", "tokenMint": "5Hn...deviceMint", "verifiedAt": "2026-08-27T12:00:00.000Z" }],
+	"linkedSolanaWallets": ["7Gq...seekerWallet"],
+	"checked": 1
+}
+```
+
+**Errors**
+
+| Status | Code | Meaning |
+| --- | --- | --- |
+| 401 | `unauthorized` | No session. |
+| 400 | `wallet_not_linked` | `wallet` is not linked to this account as a Solana wallet. |
+| 503 | `not_configured` | The deployment has no Helius RPC endpoint. |
+| 502 | `rpc_failed` | Solana RPC failed; nothing was recorded (verification fails closed). |
+
+```bash
+curl -X POST https://three.ws/api/seeker/verify \
+	-H 'content-type: application/json' \
+	-b 'session=<your session cookie>' \
+	-d '{}'
+```
+
+---
+
 ## Pagination
 
 Paginated list endpoints use `limit`/`offset` query parameters unless noted otherwise (each endpoint's own parameter table is authoritative; some small per-user lists, like `/api/agents` and `/api/widgets`, return everything with no pagination).

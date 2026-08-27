@@ -596,6 +596,12 @@ div.ad-hero-avatar canvas {
 	border-color: rgba(74, 222, 128, 0.3);
 	background: rgba(74, 222, 128, 0.08);
 }
+.ad-pill-seeker {
+	color: var(--ad-green);
+	border-color: rgba(74, 222, 128, 0.35);
+	background: linear-gradient(135deg, rgba(74, 222, 128, 0.14), rgba(96, 165, 250, 0.1));
+	cursor: help;
+}
 .ad-pill-cyan {
 	color: var(--ad-cyan);
 	border-color: rgba(87, 199, 255, 0.3);

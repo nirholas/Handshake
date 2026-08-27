@@ -414,7 +414,11 @@ export async function handleGetOne(req, res, id) {
 			       u.avatar_url   as author_avatar,
 			       a.storage_key  AS avatar_storage_key,
 			       a.thumbnail_key AS avatar_thumbnail_key,
-			       a.visibility   AS avatar_visibility
+			       a.visibility   AS avatar_visibility,
+			       EXISTS (
+			         SELECT 1 FROM seeker_genesis_verifications sgv
+			         WHERE sgv.user_id = i.user_id
+			       ) AS owner_seeker_verified
 			FROM agent_identities i
 			LEFT JOIN users u   ON i.user_id = u.id
 			LEFT JOIN avatars a ON a.id = i.avatar_id AND a.deleted_at IS NULL
@@ -808,6 +812,9 @@ function decorate(row, isOwner = true) {
 		name: row.name,
 		description: row.description,
 		author_name: row.author_name || null,
+		// True when the owner has proven Seeker ownership (a Seeker Genesis Token
+		// in a linked wallet, see /api/seeker). Public: it is a badge, not a secret.
+		owner_seeker_verified: Boolean(row.owner_seeker_verified),
 		author_avatar: row.author_avatar || null,
 		chat_count: row.chat_count ?? 0,
 		avatar_id: row.avatar_id,

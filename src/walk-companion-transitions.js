@@ -429,9 +429,11 @@ function injectSettingsToggle(hostEl) {
 	btn.textContent = '✦';
 
 	// Position it to the left of the existing swap/close buttons. The host already
-	// styles `.walk-companion-swap` at right:28px; nudge this one further left so
-	// the three controls sit in a neat row.
-	btn.style.right = '54px';
+	// styles `.walk-companion-swap` at right:28px; a stylesheet (not an inline
+	// style) nudges this one further left so the three controls sit in a neat
+	// row, because the coarse-pointer rule below has to move it again once the
+	// buttons grow a transparent border to reach a 44px hit area.
+	injectToggleStyle();
 	syncToggleVisual(btn);
 
 	btn.addEventListener('click', (e) => {
@@ -443,13 +445,27 @@ function injectSettingsToggle(hostEl) {
 	hostEl.appendChild(btn);
 }
 
+const TOGGLE_STYLE_ID = 'walk-companion-fx-toggle-style';
+function injectToggleStyle() {
+	if (document.getElementById(TOGGLE_STYLE_ID)) return;
+	const s = document.createElement('style');
+	s.id = TOGGLE_STYLE_ID;
+	s.textContent =
+		'.walk-companion-swap.walk-companion-fx-toggle{right:54px}' +
+		'@media (pointer:coarse){.walk-companion-swap.walk-companion-fx-toggle{right:53px}}';
+	document.head.appendChild(s);
+}
+
 function syncToggleVisual(btn) {
 	const on = transitionsEnabled();
 	btn.setAttribute('aria-pressed', on ? 'true' : 'false');
 	btn.title = on ? 'Themed transitions: on' : 'Themed transitions: off';
 	btn.style.opacity = ''; // let the host's hover/focus rules own visibility
 	btn.style.color = on ? '#fff' : 'rgba(255,255,255,.5)';
-	btn.style.background = on ? 'rgba(122,162,255,.35)' : 'rgba(12,14,20,.55)';
+	// Longhand on purpose: the `background` shorthand resets background-clip,
+	// which the coarse-pointer rule relies on to keep the glyph disc at 26px
+	// inside the 44px tap box.
+	btn.style.backgroundColor = on ? 'rgba(122,162,255,.35)' : 'rgba(12,14,20,.55)';
 }
 
 // ── Public install / uninstall ────────────────────────────────────────────────

@@ -612,6 +612,12 @@ URL: https://three.ws/create/selfie
 
 One selfie. About a minute. A rigged 3D avatar that works everywhere.
 
+### three.ws for Seeker
+
+URL: https://three.ws/seeker
+
+The home screen of the three.ws app on Solana Seeker: one-tap Seed Vault sign-in, selfie to avatar, your agents, the marketplace, and Seeker Genesis Token verification.
+
 ### Import an avatar URL
 
 URL: https://three.ws/import/rpm

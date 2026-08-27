@@ -128,6 +128,7 @@ Create and customize an agent.
 - [Agent Exchange: AI Agents Paying Each Other](https://three.ws/features/agent-exchange): Watch two AI agents with 3D avatars autonomously negotiate and pay each other for crypto intelligence via x402 micropayments on Solana.
 - [Deploy: On-Chain Agent Identity](https://three.ws/features/deploy): Register your AI agent on Solana via ERC-8004 and Metaplex Core. Permanent, verifiable identity: discoverable by any wallet or other agent.
 - [Selfie to Avatar](https://three.ws/create/selfie): One selfie. About a minute. A rigged 3D avatar that works everywhere.
+- [three.ws for Seeker](https://three.ws/seeker): The home screen of the three.ws app on Solana Seeker: one-tap Seed Vault sign-in, selfie to avatar, your agents, the marketplace, and Seeker Genesis Token verification.
 - [Import an avatar URL](https://three.ws/import/rpm): Import any GLB or glTF avatar into three.ws and give it an agent brain.
 - [Claim threews.sol Subdomain](https://three.ws/threews/claim): Claim your own <name>.threews.sol subdomain and get a Brave-resolvable personal showcase page.
 - [Voice Lab](https://three.ws/voice): Browse hundreds of voices across Microsoft Edge, Gemini, NVIDIA, OpenAI and ElevenLabs, preview any of them, or clone your own from a short recording, then give it to your agent.

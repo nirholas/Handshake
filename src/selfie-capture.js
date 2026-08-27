@@ -16,6 +16,7 @@
 import { checkImageQuality, createQualitySession, preload } from './face-quality.js';
 import { GATES } from './selfie-gates.js';
 import { log } from './shared/log.js';
+import { clearSharedIntent, sharedIntent, takeSharedFiles } from './shared/share-target.js';
 
 const REQUIRED_SLOT = 'frontal';
 const OPTIONAL_SLOTS = /** @type {const} */ (['left', 'right']);
@@ -881,6 +882,26 @@ async function fileToScaledDataUrl(file) {
 	if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/')) return;
 	const file = dataUrlToFile(dataUrl, typeof parsed?.name === 'string' ? parsed.name : 'selfie.jpg');
 	if (file) setSlot(REQUIRED_SLOT, file);
+})();
+
+// ── Android share-sheet handoff ─────────────────────────────────────────────
+// On the Seeker app (and any installed PWA) a photo shared into three.ws is
+// POSTed to /create/share, parked in the Cache API by public/share-target-sw.js,
+// and the user lands here with ?shared=1. Fill frontal, then left and right,
+// with whatever images arrived; the read is one-shot, and the param is
+// stripped so a reload does not look like a fresh share.
+(async function ingestSharedPhotos() {
+	if (!sharedIntent()) return;
+	const order = [REQUIRED_SLOT, 'left', 'right'];
+	try {
+		const { files } = await takeSharedFiles();
+		const images = files.filter(isImage);
+		images.slice(0, order.length).forEach((file, i) => setSlot(order[i], file));
+	} catch (err) {
+		log.warn('[selfie] could not read shared photos:', err);
+	} finally {
+		clearSharedIntent();
+	}
 })();
 
 /**

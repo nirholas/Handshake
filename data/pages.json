@@ -823,6 +823,14 @@
 					"added": "2026-05-25"
 				},
 				{
+					"path": "/seeker",
+					"title": "three.ws for Seeker",
+					"description": "The home screen of the three.ws app on Solana Seeker: one-tap Seed Vault sign-in, selfie to avatar, your agents, the marketplace, and Seeker Genesis Token verification.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-08-27"
+				},
+				{
 					"path": "/import/rpm",
 					"title": "Import an avatar URL",
 					"description": "Import any GLB or glTF avatar into three.ws and give it an agent brain.",

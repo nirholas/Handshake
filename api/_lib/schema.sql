@@ -362,6 +362,21 @@ create index if not exists user_wallets_user on user_wallets(user_id);
 alter table user_wallets add column if not exists chain_type text not null default 'evm'
     check (chain_type in ('evm', 'solana'));
 
+-- Linked Solana wallets that hold a Seeker Genesis Token (soulbound Token-2022
+-- token minted per Solana Seeker phone). Written by /api/seeker/verify, read by
+-- /api/seeker/status and the "Seeker verified" badge.
+create table if not exists seeker_genesis_verifications (
+    user_id         uuid not null references users(id) on delete cascade,
+    wallet_address  text not null,
+    token_mint      text not null,
+    verified_at     timestamptz not null default now(),
+    last_checked_at timestamptz not null default now(),
+    primary key (user_id, wallet_address)
+);
+
+create index if not exists seeker_genesis_verifications_wallet
+    on seeker_genesis_verifications(wallet_address);
+
 -- ── Sessions (browser cookie auth) ──────────────────────────────────────────
 create table if not exists sessions (
     id              uuid primary key default gen_random_uuid(),

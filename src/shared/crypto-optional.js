@@ -152,6 +152,11 @@ const CSS = `
 .tws-copt-tag-q:hover::after,.tws-copt-tag-q:focus-visible::after{opacity:1;transform:translateX(-50%) translateY(0)}
 @media (max-width:560px){.tws-copt-tag-q::after{max-width:200px}}
 
+@media (pointer:coarse){
+	.tws-copt-learn{display:inline-flex;align-items:center;min-height:44px;margin:-12px 0}
+	.tws-copt--banner .tws-copt-learn{margin:-12px 0}
+}
+
 @media (prefers-reduced-motion:reduce){
 	.tws-copt-learn,.tws-copt-tag-q,.tws-copt-tag-q::after{transition:none}
 }`;

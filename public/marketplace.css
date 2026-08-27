@@ -4912,6 +4912,8 @@ body.market-page > header {
 .earn-show-more:focus-visible,
 .card-heart:focus-visible,
 .card-author:focus-visible,
+.market-card-avatar .card-tags .tag-pill:focus-visible,
+.market-card-avatar .footer .compose-cta:focus-visible,
 #avatar-modal-bookmark:focus-visible,
 .avatar-modal-author a:focus-visible,
 .d-embed-copy:focus-visible,

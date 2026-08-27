@@ -3,6 +3,7 @@ import { AvatarCreator } from './avatar-creator.js';
 import { stage as stageGuestAvatar } from './guest-avatar.js';
 import { createFromTemplate } from './shared/template-picker.js';
 import { log } from './shared/log.js';
+import { clearSharedIntent, sharedIntent, takeSharedFiles } from './shared/share-target.js';
 
 // GLB magic bytes: ASCII "glTF"
 const GLB_MAGIC = [0x67, 0x6c, 0x54, 0x46];
@@ -290,6 +291,8 @@ async function boot() {
 		await handleGlbFile(file);
 	});
 
+	await ingestSharedFile();
+
 	loadYourAvatars();
 
 	// The remix runs LAST, and only after every card above is live. It used to
@@ -459,6 +462,35 @@ function wireCard(id, handler) {
 			handler(e);
 		}
 	});
+}
+
+// Android share-sheet handoff. public/share-target-sw.js intercepts the share
+// POST to /create/share, stashes the files in the Cache API, and redirects here
+// with ?shared=glb (a .glb), ?shared=1 (anything else), or ?shared=error.
+async function ingestSharedFile() {
+	const intent = sharedIntent();
+	if (!intent) return;
+	if (intent === 'error') {
+		clearSharedIntent();
+		showStatus("We couldn't read the shared file. Try again from the app you shared it from.", 'error');
+		return;
+	}
+	if (intent === 'glb') {
+		clearSharedIntent();
+		let files = [];
+		try {
+			({ files } = await takeSharedFiles());
+		} catch (err) {
+			log.warn('[create] could not read shared file:', err);
+		}
+		const glb = files.find((f) => /\.glb$/i.test(f.name) || f.type === 'model/gltf-binary');
+		if (glb) await handleGlbFile(glb);
+		else showStatus('The shared file was not a .glb. Share a GLB avatar or a photo.', 'error');
+		return;
+	}
+	// A photo or unknown file: the selfie flow owns images. Hand the param
+	// over untouched so that page consumes the cache instead of this one.
+	location.replace('/create/selfie?shared=1');
 }
 
 async function handleGlbFile(file) {

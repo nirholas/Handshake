@@ -154,7 +154,7 @@ function ensureCaptionStyles() {
 .walk-companion:hover .walk-companion-narrate,.walk-companion:focus-within .walk-companion-narrate{opacity:1}
 .walk-companion-narrate:hover{background:rgba(122,162,255,.85)}
 .walk-companion-narrate:focus-visible{outline:2px solid #7aa2ff;outline-offset:2px;opacity:1}
-@media (pointer:coarse){.walk-companion-narrate{opacity:1;right:114px}}
+@media (pointer:coarse){.walk-companion-narrate{opacity:1;width:44px;height:44px;top:-9px;right:103px;border:11px solid transparent;background-clip:padding-box}}
 `;
 	document.head.appendChild(s);
 }

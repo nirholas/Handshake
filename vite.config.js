@@ -590,6 +590,7 @@ const appConfig = {
 				scene: resolve(__dirname, 'pages/scene.html'),
 				segment: resolve(__dirname, 'pages/segment.html'),
 				'create-selfie': resolve(__dirname, 'pages/create-selfie.html'),
+				seeker: resolve(__dirname, 'pages/seeker.html'),
 				'create-prompt': resolve(__dirname, 'pages/create-prompt.html'),
 				genesis: resolve(__dirname, 'pages/genesis.html'),
 				worlds: resolve(__dirname, 'pages/worlds.html'),
@@ -1187,6 +1188,8 @@ const appConfig = {
 					'/start/': resolve(root, 'pages/start.html'),
 					'/create': resolve(root, 'pages/create.html'),
 					'/create-agent': resolve(root, 'pages/create-agent.html'),
+					'/seeker': resolve(root, 'pages/seeker.html'),
+					'/seeker/': resolve(root, 'pages/seeker.html'),
 					'/create/selfie': resolve(root, 'pages/create-selfie.html'),
 					'/create/selfie/': resolve(root, 'pages/create-selfie.html'),
 					'/create/prompt': resolve(root, 'pages/create-prompt.html'),
@@ -3103,7 +3106,7 @@ const appConfig = {
 		},
 		VitePWA({
 			registerType: 'autoUpdate',
-			includeAssets: ['favicon.ico', 'pwa-192x192.png', 'pwa-512x512.png', 'pwa-icon.svg'],
+			includeAssets: ['favicon.ico', 'pwa-192x192.png', 'pwa-512x512.png', 'pwa-maskable-192x192.png', 'pwa-maskable-512x512.png', 'pwa-icon.svg'],
 			manifest: {
 				name: 'three.ws — Give Your AI a Body',
 				short_name: 'three.ws',
@@ -3122,13 +3125,31 @@ const appConfig = {
 				icons: [
 					{ src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
 					{ src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-					{
-						src: 'pwa-512x512.png',
-						sizes: '512x512',
-						type: 'image/png',
-						purpose: 'maskable',
-					},
+					// Maskable icons keep the glyph inside the central safe zone on a
+					// padded brand background; the plain icon has transparent corners
+					// that Android's circle/squircle masks used to crop into.
+					{ src: 'pwa-maskable-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
+					{ src: 'pwa-maskable-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
 				],
+				// Android share sheet target (Seeker app + installed PWA): photos
+				// land in the selfie flow, GLB files in the upload flow. The POST is
+				// handled by public/share-target-sw.js, imported into the SW below.
+				share_target: {
+					action: '/create/share',
+					method: 'POST',
+					enctype: 'multipart/form-data',
+					params: {
+						title: 'title',
+						text: 'text',
+						url: 'url',
+						files: [
+							{
+								name: 'media',
+								accept: ['image/jpeg', 'image/png', 'image/webp', 'model/gltf-binary', '.glb'],
+							},
+						],
+					},
+				},
 				shortcuts: [
 					{
 						name: 'Create Avatar',
@@ -3198,7 +3219,7 @@ const appConfig = {
 				// Pull in the Web Push handlers (push + notificationclick). Kept in
 				// public/push-sw.js as a classic script so the generated Workbox SW
 				// importScripts it without switching to an injectManifest build.
-				importScripts: ['/push-sw.js'],
+				importScripts: ['/push-sw.js', '/share-target-sw.js'],
 				// MPA: every route is a separate HTML file served by the server.
 				// No navigation fallback — uncached navigations go to the network.
 				// HTML is intentionally excluded from globPatterns so it is never
@@ -3220,7 +3241,7 @@ const appConfig = {
 				// SW install, leaving the user with no SW at all. Runtime caching makes
 				// a 404 non-fatal: it's just a missed fetch the page's own dynamic
 				// import handles, and autoUpdate still rolls the new SW forward.
-				globPatterns: ['**/*.{ico,woff2}'],
+				globPatterns: ['**/*.{ico,woff2}', 'offline.html', 'pwa-icon.svg'],
 				globIgnores: [
 					'pages/**',
 					'**/animations/**',
@@ -3322,6 +3343,18 @@ const appConfig = {
 							cacheName: 'gstatic-fonts-cache',
 							expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
 							cacheableResponse: { statuses: [0, 200] },
+						},
+					},
+					// Offline navigation fallback. Navigations stay network-only (no
+					// stale HTML, see navigateFallback above); only when the network
+					// itself fails does the precached /offline.html answer instead of
+					// Chrome's dinosaur. Inside the Seeker TWA that dinosaur page is
+					// the whole screen, so this is what "offline mode" means there.
+					{
+						urlPattern: ({ request }) => request.mode === 'navigate',
+						handler: 'NetworkOnly',
+						options: {
+							precacheFallback: { fallbackURL: '/offline.html' },
 						},
 					},
 					// NOTE: /api/* is intentionally NOT registered as a runtime

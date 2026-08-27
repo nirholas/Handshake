@@ -589,6 +589,20 @@
 		display: inline-flex;
 		align-items: center;
 	}
+	/* Privacy / Terms links measured 80x19: a 44px row keeps them thumb-sized
+	   without moving the text (negative margin gives the padding back). */
+	.h-footer-legal-links a {
+		display: inline-flex;
+		align-items: center;
+		min-height: 44px;
+		margin: -12px 0;
+	}
+}
+
+/* The footer bot lives inside a page the user still has to scroll, so the
+   vertical swipe belongs to the page and only horizontal drag to the canvas. */
+#footer-bot-canvas {
+	touch-action: pan-y;
 }
 
 @media (max-width: 720px) {

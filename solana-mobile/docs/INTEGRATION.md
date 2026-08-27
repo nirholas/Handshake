@@ -121,3 +121,42 @@ For end-to-end testing, build the APK with `scripts/build-apk.sh`, sideload it v
 | MWA library fails to load (offline)     | `loadTransact()` rejects; the caller sees a `MwaWallet#connect` rejection with the original error.|
 | Page reload, app suspend, or Android killing the TWA process | `localStorage` retains `authToken`; next sign uses `reauthorize` (no prompt for the user). |
 | Two tabs of the TWA simultaneously open | MWA serialises transactions per app — second tab waits for the first to release the connection.   |
+
+## 10. Share a photo or a GLB into three.ws
+
+three.ws is an Android Web Share Target. From any app on the Seeker (gallery, camera, file manager, a chat), pick "Share", choose three.ws, and the file lands directly in the right creation flow, already attached.
+
+**How it works**
+
+1. The web manifest (`vite.config.js`, `share_target`) and the TWA manifest (`solana-mobile/twa/twa-manifest.json`, `shareTarget`) register `POST /create/share` (multipart, file field `media`, accepting JPEG/PNG/WebP and `.glb` / `model/gltf-binary`). Bubblewrap turns the second one into the Android share activity; the first one covers a plain installed PWA.
+2. Android opens the app on `/create/share` with the files in the POST body. No server ever receives it: the service worker (`public/share-target-sw.js`, pulled into the Workbox SW via `importScripts`) intercepts the request.
+3. The worker reads the form, stores every `media` file in the Cache API cache `threews-share-target` under `/_share/0`, `/_share/1`, ... (with `x-share-filename` and `x-share-received` headers) and the title/text/url fields under `/_share/meta`, then answers `303` to:
+   - `/create/selfie?shared=1` when the first file is an image,
+   - `/create?shared=glb` when it is a `.glb`,
+   - `/create?shared=1` for anything else,
+   - `/create?shared=error` if reading the form failed (the page shows a retry hint), or `/create` when nothing was attached.
+4. The landing page calls `takeSharedFiles()` from `src/shared/share-target.js`. It rebuilds `File` objects from the cache, drops anything older than ten minutes, and deletes what it consumed: one share, one handoff. `/create/selfie` fills the frontal slot, then left and right, with the shared images; `/create` feeds the `.glb` straight into the same upload path as the "Upload GLB" card. Both then strip `?shared=` from the address bar so a reload is a normal page load.
+
+**Testing with adb**
+
+Push a file to the device, then fire the share intent at the TWA's launcher activity (Bubblewrap generates `LauncherActivity` inside the `ws.three.app` package; confirm with `adb shell dumpsys package ws.three.app | grep -A2 SEND` after installing):
+
+```bash
+adb push ./selfie.jpg /sdcard/Download/selfie.jpg
+adb shell am start -a android.intent.action.SEND -t image/jpeg \
+  --eu android.intent.extra.STREAM file:///sdcard/Download/selfie.jpg \
+  -n ws.three.app/.LauncherActivity
+```
+
+For a GLB, replace the type and path:
+
+```bash
+adb push ./avatar.glb /sdcard/Download/avatar.glb
+adb shell am start -a android.intent.action.SEND -t model/gltf-binary \
+  --eu android.intent.extra.STREAM file:///sdcard/Download/avatar.glb \
+  -n ws.three.app/.LauncherActivity
+```
+
+Expected: the app opens on `/create/selfie` with the photo in the frontal slot, or on `/create` with the GLB check running and the review screen following. If the app opens on `/create?shared=error`, inspect the SW console (`chrome://inspect` on a tethered desktop) for `[share-target-sw]`.
+
+Desktop check without a device: `npx vitest run tests/share-target.test.js` exercises the worker's routing and the cache round trip.

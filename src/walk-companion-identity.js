@@ -50,6 +50,7 @@ function ensureChipStyles() {
 		'.walk-companion-id-claim{color:#8ab4ff;text-decoration:none;font-weight:700;}',
 		'.walk-companion-id-claim:hover,.walk-companion-id-claim:focus-visible{color:#b7d1ff;text-decoration:underline;}',
 		'.walk-companion-id-claim:focus-visible{outline:2px solid #7aa2ff;outline-offset:2px;border-radius:4px;}',
+		'@media (pointer:coarse){.walk-companion-id-claim{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;margin:-16px 0;}}',
 	].join('');
 	document.head.appendChild(s);
 }
