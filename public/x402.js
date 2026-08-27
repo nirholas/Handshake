@@ -666,12 +666,14 @@ function base58encode(bytes) {
 // verification fails. So checksum here, then use the same string everywhere.
 //
 // Keccak-256 lives in @noble/hashes which the server already uses
-// (api/_lib/siws.js → @noble/curves). Pulled in dynamically via esm.sh only
-// when SIWX EVM sign-in is actually attempted, mirroring loadSolanaWeb3.
+// (api/_lib/siws.js -> @noble/curves). Pulled in dynamically only when SIWX EVM
+// sign-in is actually attempted, mirroring loadSolanaWeb3.
 let _evmChecksum = null;
 async function loadEvmChecksum() {
 	if (_evmChecksum) return _evmChecksum;
-	const sha3 = await import('https://esm.sh/@noble/hashes@1.4.0/sha3?bundle');
+	// Same mirror chain as the Solana loader: sign-in must not hinge on one CDN.
+	const { loadModule } = await import('./load-module.js');
+	const sha3 = await loadModule('https://esm.sh/@noble/hashes@1.4.0/sha3?bundle');
 	const keccak = sha3.keccak_256;
 	_evmChecksum = (addr) => {
 		const a = String(addr).toLowerCase().replace(/^0x/, '');
@@ -2129,12 +2131,13 @@ function friendlyError(err) {
 	if (/throttl|rate.?limit|too many requests|less than \$|in credit|\b429\b/i.test(msg)) {
 		return 'The service is briefly busy and your payment was not taken — retry in a few seconds.';
 	}
-	// The Solana and EVM-sign-in paths dynamic-import a library from esm.sh. A strict
-	// host Content-Security-Policy (or esm.sh being unreachable) blocks that import and
-	// the raw "Failed to fetch dynamically imported module" is opaque. The Base/EIP-3009
-	// payment path has no such dependency, so steer the buyer there.
-	if (/dynamically imported module|esm\.sh|module script failed/i.test(msg)) {
-		return 'A component this wallet path needs (loaded from esm.sh) was blocked — often by a strict host security policy. Pay with MetaMask on Base instead; it needs no third-party code.';
+	// The Solana and EVM-sign-in paths dynamic-import a library from a CDN, now
+	// across three mirrors. All three failing means a strict host Content-Security-
+	// Policy is blocking them (one unreachable CDN no longer gets this far), and
+	// the raw "Failed to fetch dynamically imported module" is opaque. The
+	// Base/EIP-3009 payment path has no such dependency, so steer the buyer there.
+	if (/dynamically imported module|esm\.sh|jsdelivr|unpkg|module script failed|module_unavailable/i.test(msg)) {
+		return 'A component this wallet path needs (loaded from a CDN) was blocked, usually by a strict host security policy. Pay with MetaMask on Base instead; it needs no third-party code.';
 	}
 	return msg.slice(0, 240);
 }
@@ -2230,9 +2233,21 @@ function randomHex(bytes) {
 let _solanaWeb3 = null;
 async function loadSolanaWeb3() {
 	if (_solanaWeb3) return _solanaWeb3;
-	// Dynamic import from esm.sh keeps the drop-in script tiny — Solana web3.js
-	// is only fetched when a Solana payment is actually attempted.
-	_solanaWeb3 = await import('https://esm.sh/@solana/web3.js@1.95.3?bundle');
+	// Dynamic import keeps the drop-in script tiny: Solana web3.js is only
+	// fetched when a Solana payment is actually attempted. The shared loader
+	// tries esm.sh, then jsdelivr and unpkg for the same version, each under a
+	// deadline, so a single blocked CDN can no longer take the paywall down.
+	const { loadModule } = await import('./load-module.js');
+	try {
+		_solanaWeb3 = await loadModule('https://esm.sh/@solana/web3.js@1.95.3?bundle');
+	} catch (err) {
+		if (err?.code === 'module_unavailable') {
+			throw new Error(
+				'The Solana wallet component could not be loaded (' + err.hosts.join(', ') + ' unreachable or blocked by this page\'s security policy). Pay with a Base wallet instead; that path needs no third-party code.',
+			);
+		}
+		throw err;
+	}
 	return _solanaWeb3;
 }
 
