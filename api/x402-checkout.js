@@ -34,13 +34,13 @@ import {
 	getAssociatedTokenAddressSync,
 	createAssociatedTokenAccountIdempotentInstruction,
 	createTransferCheckedInstruction,
-	getMint,
 } from '@solana/spl-token';
 import { cors, json, method, readJson, wrap, error, rateLimited } from './_lib/http.js';
 import { parse } from './_lib/validate.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { NETWORK_SOLANA_MAINNET, NETWORK_SOLANA_DEVNET } from './_lib/x402-spec.js';
 import { confirmSolanaPayment } from './_lib/x402-solana-confirm.js';
+import { ataExists, getRecentBlockhash, mintDecimals, respondRpcUnavailable } from './_lib/solana/read-guards.js';
 import { env } from './_lib/env.js';
 
 // Routed through env.* so the `api-mainnet.helius-rpc.com` misconfig is repaired
@@ -48,42 +48,13 @@ import { env } from './_lib/env.js';
 const SOLANA_RPC = env.SOLANA_RPC_URL;
 const SOLANA_DEVNET_RPC = env.SOLANA_RPC_URL_DEVNET;
 
-// Short-lived caches so repeated prepare calls don't re-issue identical RPC
-// round-trips. Mint decimals are effectively immutable; a blockhash is valid for
-// ~60-90s on Solana, so a few seconds of reuse cuts redundant traffic without
-// handing out a stale-enough blockhash for the buyer's signed tx to fail.
-const MINT_DECIMALS_TTL_MS = 5 * 60 * 1000;
-const BLOCKHASH_TTL_MS = 8 * 1000;
-// Cold-path fail-open window: a Solana blockhash stays valid on-chain for ~60-90s,
-// so if a live fetch fails we may still serve a cached one this much past its fetch
-// time rather than 500'ing the checkout. Conservatively under the cluster floor.
-const BLOCKHASH_STALE_FALLBACK_MS = 60 * 1000;
-const mintDecimalsCache = new Map(); // `${rpc}:${mint}` -> { decimals, at }
-const blockhashCache = new Map(); // rpc -> { blockhash, at }
-
-// Decimals for canonical mints are immutable and universally known. Resolving
-// them locally skips an RPC round-trip on the hot checkout path (USDC is the
-// default settlement asset) and immunizes prepare against a flaky/rate-limited
-// RPC returning 404 for getAccountInfo on the mint — the failure mode that
-// 500'd every USDC checkout when the public endpoint was cooling.
-const WELL_KNOWN_MINT_DECIMALS = new Map([
-	['EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', 6], // USDC (mainnet)
-	['Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', 6], // USDT (mainnet)
-	['So11111111111111111111111111111111111111112', 9], // wrapped SOL
-]);
-
-async function getMintDecimals(conn, rpc, mint) {
-	const mintStr = mint.toBase58();
-	const known = WELL_KNOWN_MINT_DECIMALS.get(mintStr);
-	if (known != null) return known;
-
-	const key = `${rpc}:${mintStr}`;
-	const hit = mintDecimalsCache.get(key);
-	if (hit && Date.now() - hit.at < MINT_DECIMALS_TTL_MS) return hit.decimals;
-	const info = await getMint(conn, mint);
-	mintDecimalsCache.set(key, { decimals: info.decimals, at: Date.now() });
-	return info.decimals;
-}
+// The three RPC reads on the prepare hot path (mint decimals, ATA existence, a
+// recent blockhash) go through the shared money-path guards: canonical mints
+// resolve locally, an ATA probe fails open to "missing" (the create is
+// idempotent), and a blockhash is served from cache inside its validity window
+// when every RPC endpoint fails. See api/_lib/solana/read-guards.js. The two
+// helpers stay exported from here because the checkout tests exercise them.
+export { ataExists, getRecentBlockhash };
 
 // Build a PublicKey from a (schema-trimmed) address, converting web3.js's raw
 // "Non-base58 character" / "Invalid public key" throw into a structured 400.
@@ -98,56 +69,6 @@ function toPubkey(value, field) {
 		err.status = 400;
 		err.code = 'invalid_address';
 		throw err;
-	}
-}
-
-// Resolve a recent blockhash for the payment tx. The one RPC call on the USDC
-// checkout hot path that isn't already fail-open (getMintDecimals resolves
-// canonical mints from a local map; ataExists fails open to "missing"), so a
-// transient *total* failover outage — every endpoint in solanaConnection's chain
-// failing within this single request — used to throw straight through wrap() as an
-// opaque "internal error, quote ref … to support" 500 at the modal's Authorize
-// step. Match the sibling fail-open posture: if the live fetch fails but we still
-// hold a cached blockhash inside the cluster's ~60-90s validity window, serve it.
-// Safe by construction — a blockhash only bounds how long the buyer has to land the
-// signed tx, never the amount or recipient, and a too-stale one simply fails to
-// confirm and prompts a clean retry, never a double charge. `now` is injectable so
-// the staleness branches are unit-testable without a real clock.
-export async function getRecentBlockhash(conn, rpc, { now = Date.now } = {}) {
-	const hit = blockhashCache.get(rpc);
-	if (hit && now() - hit.at < BLOCKHASH_TTL_MS) return hit.blockhash;
-	try {
-		const { blockhash } = await conn.getLatestBlockhash('confirmed');
-		blockhashCache.set(rpc, { blockhash, at: now() });
-		return blockhash;
-	} catch (err) {
-		if (hit && now() - hit.at < BLOCKHASH_STALE_FALLBACK_MS) {
-			console.warn(
-				`[x402-checkout] getLatestBlockhash failed across all RPC endpoints; serving ${Math.round(
-					(now() - hit.at) / 1000,
-				)}s-old cached blockhash so checkout still builds: ${err?.message || err}`,
-			);
-			return hit.blockhash;
-		}
-		throw err;
-	}
-}
-
-// Does an ATA already exist on-chain? web3.js decodes getAccountInfo's reply
-// through a superstruct union, so a flaky/misconfigured RPC returning a malformed
-// 200 (truncated body, proxy error page, wrong-cluster node) throws StructError
-// instead of a clean null — which 500'd the whole checkout at the prepare step.
-// Treat any probe failure as "missing": the only thing the answer gates is an
-// *idempotent* ATA-create instruction, a no-op when the account already exists,
-// so assuming-missing is always safe — same fail-open posture as getMintDecimals.
-export async function ataExists(conn, ata) {
-	try {
-		return (await conn.getAccountInfo(ata)) != null;
-	} catch (err) {
-		console.warn(
-			`[x402-checkout] getAccountInfo(${ata.toBase58()}) failed, assuming ATA missing: ${err?.message || err}`,
-		);
-		return false;
 	}
 }
 
@@ -256,7 +177,17 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, ['POST'])) return;
 
 	const action = req.query?.action;
-	if (action === 'prepare') return handlePrepare(req, res);
+	if (action === 'prepare') {
+		try {
+			return await handlePrepare(req, res);
+		} catch (err) {
+			// Every read on the prepare path is already fail-open or cache-backed, so
+			// reaching here means the chain was unreadable with nothing cached. Answer
+			// a typed 503 with Retry-After instead of an opaque internal_error.
+			if (respondRpcUnavailable(res, err)) return;
+			throw err;
+		}
+	}
 	if (action === 'encode') return handleEncode(req, res);
 	return error(res, 404, 'not_found', `unknown action: ${action ?? '(none)'}`);
 });
@@ -314,7 +245,7 @@ async function handlePrepare(req, res) {
 		TOKEN_PROGRAM_ID,
 		ASSOCIATED_TOKEN_PROGRAM_ID,
 	);
-	const mintDecimals = await getMintDecimals(conn, rpc, mint);
+	const decimals = await mintDecimals(conn, mint);
 
 	// Base payment needs ~60k CU; each donation adds a transfer (+ possibly an ATA
 	// create), so budget headroom per tip. Unused CU isn't charged — this only
@@ -343,7 +274,7 @@ async function handlePrepare(req, res) {
 			receiverAta,
 			buyerPubkey,
 			amount,
-			mintDecimals,
+			decimals,
 			[],
 			TOKEN_PROGRAM_ID,
 		),
@@ -365,7 +296,7 @@ async function handlePrepare(req, res) {
 				);
 			}
 			ixs.push(
-				createTransferCheckedInstruction(senderAta, mint, tipAta, buyerPubkey, v.amount, mintDecimals, [], TOKEN_PROGRAM_ID),
+				createTransferCheckedInstruction(senderAta, mint, tipAta, buyerPubkey, v.amount, decimals, [], TOKEN_PROGRAM_ID),
 			);
 		}
 	}
