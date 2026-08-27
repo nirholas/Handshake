@@ -57,6 +57,8 @@ export const MODEL_CATALOG = {
 	'claude-haiku-4-5-20251001':  { provider: 'anthropic', tools: true },
 
 	// ── Groq free tier — fast (sub-second) and first-attempt-reliable ─────────
+	'qwen/qwen3.8-27b':           { provider: 'groq', tools: true },
+	'openai/gpt-oss-20b':         { provider: 'groq', tools: true },
 	'llama-3.3-70b-versatile':    { provider: 'groq', tools: true },
 	'llama-3.1-8b-instant':       { provider: 'groq', tools: true },
 
@@ -103,6 +105,8 @@ export const MODEL_CATALOG = {
 	'ibm-granite/granite-4.1-8b': { provider: 'openrouter', tools: true, paid: true },
 
 	// ── NVIDIA NIM free tier — one nvapi key, OpenAI-compatible ───────────────
+	'nvidia/nemotron-3-super-120b-a12b':          { provider: 'nvidia', tools: true },
+	'nvidia/nemotron-3-nano-30b-a3b':             { provider: 'nvidia', tools: true },
 	'meta/llama-3.3-70b-instruct':               { provider: 'nvidia', tools: true },
 	'nvidia/llama-3.3-nemotron-super-49b-v1.5':  { provider: 'nvidia', tools: true },
 
@@ -297,8 +301,8 @@ export const DEFAULT_FREE_MODEL = 'openai/gpt-oss-20b:free';
 export const PROVIDER_MODEL_DEFAULTS = {
 	anthropic: 'claude-sonnet-5',
 	openrouter: DEFAULT_FREE_MODEL,
-	groq: 'llama-3.3-70b-versatile',
-	nvidia: 'meta/llama-3.3-70b-instruct',
+	groq: 'qwen/qwen3.8-27b',
+	nvidia: 'nvidia/nemotron-3-super-120b-a12b',
 	sambanova: 'Meta-Llama-3.3-70B-Instruct',
 	mistral: 'mistral-small-latest',
 	zai: 'glm-4.7-flash',

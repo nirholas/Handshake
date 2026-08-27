@@ -93,8 +93,15 @@ function isNimLaneDegraded(err) {
 // { artifacts: [{ base64, finishReason }] }. flux-schnell is the fast 4-step
 // distilled model, so a tight per-attempt timeout is safe: a hung free lane must
 // hand off to the paid lanes, never stall the whole text→3D pipeline.
-const NIM_FLUX_URL = 'https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-schnell';
-const NIM_FLUX_MODEL = 'black-forest-labs/flux.1-schnell';
+// FLUX.1-dev, not schnell. On 2026-08-27 the schnell endpoint stopped
+// answering at all (every call hung to the client timeout for hours) while
+// flux.1-dev on the same gateway served a real 1024x1024 image in ~5 s. dev
+// is guidance-trained: it wants steps >= 5 (the endpoint 422s below that) and
+// accepts a cfg_scale, both of which schnell refused.
+const NIM_FLUX_URL = 'https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-dev';
+const NIM_FLUX_MODEL = 'black-forest-labs/flux.1-dev';
+const NIM_FLUX_STEPS = 20;
+const NIM_FLUX_CFG_SCALE = 3.5;
 const NIM_TIMEOUT_MS = 60_000;
 
 // NVCF fronts the free NIM lane with a gateway that answers a cold model or a
@@ -252,15 +259,14 @@ async function nimFluxImage(prompt, aspectRatio, seed = 0, { timeoutMs = NIM_TIM
 					accept: 'application/json',
 					'content-type': 'application/json',
 				},
-				// No cfg_scale: schnell is guidance-distilled and the endpoint enforces
-				// cfg_scale <= 0 for it (sending 3.5 422s — verified live 2026-06-11).
 				body: JSON.stringify({
 					prompt,
 					mode: 'base',
 					width,
 					height,
 					seed,
-					steps: 4,
+					steps: NIM_FLUX_STEPS,
+					cfg_scale: NIM_FLUX_CFG_SCALE,
 				}),
 				signal: controller.signal,
 			});

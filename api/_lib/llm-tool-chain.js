@@ -32,7 +32,7 @@ import {
 export function providerChain() {
 	const chain = [];
 	if (env.GROQ_API_KEY) {
-		chain.push({ name: 'groq', url: 'https://api.groq.com/openai/v1/chat/completions', key: env.GROQ_API_KEY, model: 'llama-3.3-70b-versatile' });
+		chain.push({ name: 'groq', url: 'https://api.groq.com/openai/v1/chat/completions', key: env.GROQ_API_KEY, model: 'qwen/qwen3.8-27b' });
 	}
 	// Same Llama 3.3 70B on Cerebras' free tier: a second independent quota pool
 	// for the 70B class, so a throttled Groq does not take the whole class down.
@@ -56,7 +56,7 @@ export function providerChain() {
 		});
 	});
 	if (env.NVIDIA_API_KEY) {
-		chain.push({ name: 'nvidia', url: 'https://integrate.api.nvidia.com/v1/chat/completions', key: env.NVIDIA_API_KEY, model: 'meta/llama-3.3-70b-instruct' });
+		chain.push({ name: 'nvidia', url: 'https://integrate.api.nvidia.com/v1/chat/completions', key: env.NVIDIA_API_KEY, model: 'nvidia/nemotron-3-super-120b-a12b' });
 	}
 	// Three more free lanes, same OpenAI wire format including tools + streamed
 	// tool_calls: SambaNova (Llama 3.3 70B, own quota pool), Mistral (Experiment

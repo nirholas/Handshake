@@ -54,7 +54,7 @@ Everything on npm is installable today. Grouped by what it does:
 **Make and move 3D**
 - @three-ws/forge, text, image, or sketch to a textured rig-ready GLB in one call, with a free TRELLIS lane.
 - @three-ws/glb-tools, inspect, re-theme, and bake GLB models from a shell or CI.
-- @three-ws/retarget, retarget any animation onto any humanoid GLB (Mixamo, Avaturn, VRM, Daz, MMD, and more).
+- @three-ws/retarget, retarget any animation onto any humanoid GLB (Mixamo, VRM, Daz, MMD, and more).
 - @three-ws/pose, deterministic named pose seeds for rigged avatars.
 - @three-ws/mocap, webcam or video to face, pose, and hand animation clips.
 - @three-ws/sign-language, compile text into one continuous American Sign Language clip.

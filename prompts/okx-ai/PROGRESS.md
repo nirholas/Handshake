@@ -157,7 +157,9 @@ lane because it reads the static tier matrix.
 
 ### Still owner-gated (unchanged, and unchanged by this rebuild)
 
-Funding. Relayer `0x1F4a753c61b54Bdec7AE0AF338A887E63Cdbbb74` needs native OKB on X Layer
+Funding. (Correction 2026-08-27: the live relayer is `0xe81DE501Dd5D9299E2bA8964498858d3fAD0415B`,
+rotated 2026-07-12, and it already holds 0.02 OKB; the `0x1F4a…bb74` address below is the
+retired one.) Relayer `0x1F4a753c61b54Bdec7AE0AF338A887E63Cdbbb74` needs native OKB on X Layer
 for settle gas, and buyer `0x75d00a2713565171f33216e5aa2a375e076ecf69` needs USD₮0
 (`0x779ded0c9e1022225f8e0630b35a9b54be713736`). Re-checked live on 2026-08-22: **all three
 balances are 0**. That gates a real settlement, which gates the resubmission.

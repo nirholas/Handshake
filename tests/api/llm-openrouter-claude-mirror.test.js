@@ -124,7 +124,7 @@ describe('when on, it rides in the paid tail and never leads', () => {
 		expect(out.provider).toBe('openrouter:claude-mirror');
 		expect(out.text).toBe('claude via the mirror');
 		// The free lanes were all tried first.
-		expect(calls[0]).toBe('llama-3.3-70b-versatile');
+		expect(calls[0]).toBe('qwen/qwen3.8-27b');
 		expect(calls[calls.length - 1]).toBe('anthropic/claude-sonnet-5');
 	}, 20_000);
 });

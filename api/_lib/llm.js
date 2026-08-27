@@ -54,12 +54,14 @@ import {
 import { vertexGeminiBudget } from './vertex-gemini.js';
 import { DEFAULT_FREE_MODEL, promptCacheMinChars, isPaidModel } from './chat-models.js';
 
-const GROQ_MODEL = 'llama-3.3-70b-versatile';
+// Llama 3.x left Groq's catalog in 2026-08 (404 on every call); qwen3.8-27b is
+// the fastest non-reasoning model there and returns clean content.
+const GROQ_MODEL = 'qwen/qwen3.8-27b';
 // Second Groq rung on a different model: Groq free-tier quotas are PER MODEL,
 // so when the 70B lane is exhausted the instant lane usually still has budget.
 // Smaller model, so it sits at the END of the free section — every 70B-class
 // provider gets tried before the chain steps down in capability.
-const GROQ_INSTANT_MODEL = 'llama-3.1-8b-instant';
+const GROQ_INSTANT_MODEL = 'openai/gpt-oss-20b';
 // Same Llama 3.3 70B on Cerebras' free tier (cloud.cerebras.ai) — optional
 // rung, active when CEREBRAS_API_KEY is configured.
 const CEREBRAS_MODEL = 'llama-3.3-70b';
@@ -81,12 +83,18 @@ const VERTEX_GEMINI_MODEL = process.env.VERTEX_GEMINI_MODEL || 'google/gemini-2.
 // Same Llama 3.3 70B family on NVIDIA NIM (build.nvidia.com) — one free nvapi
 // key, OpenAI-compatible, so the chain degrades across providers without
 // changing model behavior.
-const NVIDIA_MODEL = 'meta/llama-3.3-70b-instruct';
+// meta/llama-3.x on NIM reached end of life 2026-08-26 (HTTP 410). The
+// nemotron-3 family is what serves now; it is a reasoning family, so the
+// provider entries below disable thinking to keep content clean.
+const NVIDIA_MODEL = 'nvidia/nemotron-3-super-120b-a12b';
 // Compact, reasoning-tuned Nemotron a caller can opt into when it wants the
 // NVIDIA-native model to lead (see `preferNvidia`/`nvidiaModel` below). Fast
 // enough for a single prompt-refine turn; the rest of the free chain still
 // backs it up if the NIM lane is down.
-const NVIDIA_NEMOTRON_MODEL = 'nvidia/nvidia-nemotron-nano-9b-v2';
+const NVIDIA_NEMOTRON_MODEL = 'nvidia/nemotron-3-nano-30b-a3b';
+// nemotron-3 puts its reasoning in a separate field only when thinking is off;
+// with it on, the chain of thought leaks into `content` (verified 2026-08-27).
+const NVIDIA_NO_THINK = Object.freeze({ chat_template_kwargs: { enable_thinking: false } });
 // OVH AI Endpoints anonymous tier: no key, no account, no signup — Llama 3.3
 // 70B served free by OVHcloud's officially documented trial lane (not a ToS
 // workaround). The tradeoff for needing zero setup is a tight 2 req/min per
@@ -452,6 +460,7 @@ export function providerChain({ anthropicKey, anthropicModel, grokKey = null, gr
 			key: env.NVIDIA_API_KEY,
 			url: 'https://integrate.api.nvidia.com/v1/chat/completions',
 			model: nvidiaModel || NVIDIA_NEMOTRON_MODEL,
+			extraBody: NVIDIA_NO_THINK,
 			// When a caller opts to LEAD with NVIDIA it wants that model to produce
 			// the result, so give the lane a longer leash than the fallback rung —
 			// but still bounded so a NIM queue stall can't hang the whole request.
@@ -521,6 +530,7 @@ export function providerChain({ anthropicKey, anthropicModel, grokKey = null, gr
 			key: env.NVIDIA_API_KEY,
 			url: 'https://integrate.api.nvidia.com/v1/chat/completions',
 			model: NVIDIA_MODEL,
+			extraBody: NVIDIA_NO_THINK,
 			// NIM free tier queues under load (observed hanging 25s on a 900-token
 			// prompt while every other free lane failed fast); cap it tight so the
 			// chain reaches the reliable Vertex anchor in seconds instead of blocking.
