@@ -98,7 +98,11 @@ export default wrap(async (req, res) => {
 			? null
 			: {
 					value: market.price_usd,
-					updateUnixTime: Math.floor(Date.now() / 1000),
+					// No `updateUnixTime` here. Birdeye's field means "when this price
+					// was observed", and the market chain can answer from a cached
+					// reading up to half an hour old, so stamping the response time
+					// would assert a freshness we cannot vouch for. `source` says which
+					// provider answered, which is a claim we can actually stand behind.
 					priceChange24h: market.price_change_24h,
 					// The dashboard has always rendered a market cap slot; Birdeye's
 					// price endpoint does not carry one, so it read "N/A" for every

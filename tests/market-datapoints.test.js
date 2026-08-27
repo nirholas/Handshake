@@ -21,6 +21,8 @@ const {
 	datapointDescription,
 	parseDatapointPath,
 	datapointEndpointCount,
+	readDatapoint,
+	_noteFetchedAtForTest,
 } = await import('../api/_lib/market-data/datapoints.js');
 
 function expectThrow(fn, { status, code }) {
@@ -309,5 +311,39 @@ describe('dynamic datapoint route', () => {
 		expect(body.families).toContain('global');
 		// An error is never cacheable, whatever the paid path advertises.
 		expect(String(res.headers['cache-control'])).toContain('no-store');
+	});
+});
+
+// A paid datapoint's `as_of` is when the DATA was read upstream, not when the
+// response was assembled. Those were the same thing until the last-good tier
+// landed under it; stamping the response time over an hour-old payload would
+// sell a stale number to a buyer as a live one.
+describe('readDatapoint freshness', () => {
+	it('reports as_of from the upstream read and flags a stale payload', async () => {
+		const fetchedAt = Date.now() - 45 * 60_000;
+		const familyDef = {
+			row: async () => {
+				_noteFetchedAtForTest(fetchedAt);
+				return { tvl: 123 };
+			},
+			metrics: {},
+		};
+		const metricDef = { label: 'TVL', unit: 'usd', extract: (r) => r.tvl };
+
+		const out = await readDatapoint({ family: 'protocol', familyDef, id: 'x', metric: 'tvl', metricDef });
+		expect(out.value).toBe(123);
+		expect(Date.parse(out.as_of)).toBeCloseTo(fetchedAt, -4);
+		expect(out.stale).toBe(true);
+		expect(out.age_seconds).toBeGreaterThan(600);
+	});
+
+	it('does not flag a fresh read, and stamps it now', async () => {
+		const familyDef = { row: async () => ({ tvl: 7 }), metrics: {} };
+		const metricDef = { label: 'TVL', unit: 'usd', extract: (r) => r.tvl };
+
+		const out = await readDatapoint({ family: 'protocol', familyDef, id: 'x', metric: 'tvl', metricDef });
+		expect(out.stale).toBeUndefined();
+		expect(out.age_seconds).toBeUndefined();
+		expect(Date.now() - Date.parse(out.as_of)).toBeLessThan(5_000);
 	});
 });

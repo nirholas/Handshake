@@ -66,8 +66,11 @@ const _full = new Map(); // key → { value, expiresAt }
 async function fullSet(key, url, slim) {
 	const now = Date.now();
 	const hit = _full.get(key);
-	if (hit && hit.expiresAt > now) return hit.value;
-	const { value } = await lastGood(
+	if (hit && hit.expiresAt > now) {
+		noteFetchedAt(hit.fetchedAt);
+		return hit.value;
+	}
+	const { value, stale, ageMs } = await lastGood(
 		`market-datapoints:${key}`,
 		async () => {
 			const raw = await fetchUpstreamJson(
@@ -79,8 +82,29 @@ async function fullSet(key, url, slim) {
 		},
 		{ maxAgeMs: 60 * 60_000 },
 	);
-	_full.set(key, { value, expiresAt: Date.now() + TTL_MS });
+	// When the last-good tier answered, the payload is as old as `ageMs`, and a
+	// buyer paying for this datapoint has to be told that rather than handed a
+	// timestamp claiming it was fetched just now.
+	const fetchedAt = stale ? Date.now() - ageMs : Date.now();
+	_full.set(key, { value, expiresAt: Date.now() + TTL_MS, fetchedAt });
+	noteFetchedAt(fetchedAt);
 	return value;
+}
+
+// The freshness of the upstream payload the CURRENT request read. A datapoint
+// is assembled from one family read, so recording it per request (rather than
+// threading a timestamp through every extractor) keeps `as_of` honest without
+// reshaping the family API. Reset by readDatapoint before the read it describes.
+let _readFetchedAt = null;
+
+/** Test seam: stand in for a family read that came from the last-good tier. */
+export function _noteFetchedAtForTest(at) {
+	noteFetchedAt(at);
+}
+
+function noteFetchedAt(at) {
+	if (at == null) return;
+	_readFetchedAt = _readFetchedAt == null ? at : Math.min(_readFetchedAt, at);
 }
 
 // slug → slim protocol row, over the FULL ~6k-protocol DeFiLlama feed.
@@ -647,8 +671,15 @@ export function parseDatapointPath(segments) {
 
 // Fetch + extract one datapoint. The paid handler's whole job.
 export async function readDatapoint({ family, familyDef, id, metric, metricDef }) {
+	_readFetchedAt = null;
 	const row = await familyDef.row(id);
 	const value = metricDef.extract(row);
+	// `as_of` is when the DATA was read from upstream, not when this response was
+	// assembled. Those were the same thing before the last-good tier existed;
+	// now they are not, and stamping the response time over an hour-old payload
+	// would sell a stale number as a live one.
+	const fetchedAt = _readFetchedAt ?? Date.now();
+	const staleMs = Date.now() - fetchedAt;
 	return {
 		family,
 		...(id != null ? { id } : {}),
@@ -656,7 +687,8 @@ export async function readDatapoint({ family, familyDef, id, metric, metricDef }
 		label: metricDef.label,
 		unit: metricDef.unit,
 		value: value === undefined ? null : value,
-		as_of: new Date().toISOString(),
+		as_of: new Date(fetchedAt).toISOString(),
+		...(staleMs > TTL_MS ? { stale: true, age_seconds: Math.round(staleMs / 1000) } : {}),
 		source: 'three.ws market-data',
 	};
 }
