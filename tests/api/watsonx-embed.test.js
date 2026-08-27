@@ -71,11 +71,28 @@ vi.mock('../../api/_lib/embeddings.js', () => ({
 		if (state.fallbackError) throw new Error(state.fallbackError);
 		return texts.map((_, i) => Float64Array.from(fallbackVec(i)));
 	}),
+	// The handler walks the whole free-first embedder order through this rather
+	// than pinning the preferred lane, so one throttled lane no longer fails the
+	// endpoint while other lanes sit idle. The mock mirrors that contract: it
+	// reports which lane answered alongside the vectors.
+	embedPassagesAny: vi.fn(async (_preferredTag, texts) => {
+		if (state.fallbackError) throw new Error(state.fallbackError);
+		return {
+			tag: 'nvidia/nv-embedqa-e5-v5@1024',
+			info: {
+				tag: 'nvidia/nv-embedqa-e5-v5@1024',
+				provider: 'nim',
+				model: 'nvidia/nv-embedqa-e5-v5',
+				dim: 4,
+			},
+			vectors: texts.map((_, i) => Float64Array.from(fallbackVec(i))),
+		};
+	}),
 }));
 
 import { limits } from '../../api/_lib/rate-limit.js';
 import { watsonxEmbed } from '../../api/_lib/watsonx.js';
-import { embedPassages } from '../../api/_lib/embeddings.js';
+import { embedPassages, embedPassagesAny } from '../../api/_lib/embeddings.js';
 
 const handler = (await import('../../api/watsonx/embed.js')).default;
 
@@ -240,15 +257,19 @@ describe('POST /api/watsonx/embed provider chain', () => {
 		expect(body.count).toBe(3);
 		expect(body.vectors).toHaveLength(3);
 		expect(body.vectors.every((v) => Array.isArray(v) && v.length === 4)).toBe(true);
-		expect(embedPassages).toHaveBeenCalledTimes(1);
+		// One call covers the whole batch, through whichever lane answers.
+		expect(embedPassagesAny).toHaveBeenCalledTimes(1);
 	});
 
-	it('502s with the upstream cause when every provider fails', async () => {
+	// Every tier failing at the network level is upstream weather, not a bad
+	// request, so the handler answers a retryable 503 + Retry-After rather than a
+	// 502 a caller reads as permanent. The cause still names the last provider.
+	it('503s with the upstream cause when every provider fails', async () => {
 		state.wxError = 'watsonx.ai error (401): unauthorized';
 		state.fallbackError = 'nim embedder unreachable';
 		const { status, body } = await invoke({ body: { texts: uniqueTexts(2) } });
-		expect(status).toBe(502);
-		expect(body.error).toBe('embed_error');
+		expect(status).toBe(503);
+		expect(body.error).toBe('embed_unavailable');
 		expect(body.error_description).toContain('nim embedder unreachable');
 		expect(body.vectors).toBeUndefined();
 	});
@@ -257,7 +278,7 @@ describe('POST /api/watsonx/embed provider chain', () => {
 		state.wxCoverage = 0;
 		state.fallbackError = 'nim embedder unreachable';
 		const { status, body } = await invoke({ body: { texts: uniqueTexts(2) } });
-		expect(status).toBe(502);
+		expect(status).toBe(503);
 		expect(body.vectors).toBeUndefined();
 	});
 });
