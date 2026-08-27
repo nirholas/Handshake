@@ -92,6 +92,71 @@
 			}
 			.card-link:hover { text-decoration: underline; }
 
+			.official {
+				border: 1px solid var(--stroke);
+				border-radius: 16px;
+				background: var(--bg-1);
+				padding: 28px 24px;
+			}
+			.official h2 { margin-bottom: 8px; }
+			.chan-list { list-style: none; margin: 22px 0 0; padding: 0; }
+			.chan {
+				display: grid;
+				grid-template-columns: 116px minmax(0, 1fr);
+				align-items: baseline;
+				gap: 6px 14px;
+				padding: 13px 0;
+				border-top: 1px solid var(--stroke);
+			}
+			.chan:first-child { border-top: 0; padding-top: 0; }
+			.chan-name {
+				color: var(--ink);
+				font-size: 12px;
+				font-weight: 600;
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+			}
+			.chan-body {
+				display: flex;
+				flex-wrap: wrap;
+				align-items: baseline;
+				gap: 6px 12px;
+			}
+			.chan-val {
+				font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+				font-size: 13.5px;
+				word-break: break-all;
+			}
+			.chan-note { color: var(--ink-dim); font-size: 13.5px; flex: 1 1 200px; }
+			@media (max-width: 640px) {
+				.chan { grid-template-columns: minmax(0, 1fr); }
+				/* Narrow enough that the note never shares a line: otherwise it wraps
+				   into the gap beside the copy button and reads as its caption. */
+				.chan-note { flex-basis: 100%; }
+			}
+			.copy-ca {
+				font: inherit;
+				font-size: 12px;
+				font-weight: 600;
+				color: var(--ink-dim);
+				background: transparent;
+				border: 1px solid var(--stroke);
+				border-radius: 8px;
+				padding: 3px 9px;
+				cursor: pointer;
+				transition: border-color 0.15s, color 0.15s, background 0.15s;
+			}
+			.copy-ca:hover { color: var(--ink); border-color: var(--stroke-strong); }
+			.copy-ca:active { transform: translateY(1px); }
+			.copy-ca:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+			.copy-ca[data-copied='1'] { color: var(--accent); border-color: var(--accent); }
+			.impostor {
+				margin-top: 24px;
+				padding-top: 20px;
+				border-top: 1px solid var(--stroke);
+			}
+			.impostor h3 { margin: 0 0 10px; font-size: 15px; font-weight: 600; }
+
 			.section { margin-bottom: 48px; }
 			.section h2 { font-size: 22px; margin: 0 0 16px; font-weight: 600; }
 			.section p { color: var(--ink-dim); font-size: 15px; line-height: 1.6; max-width: 620px; }
@@ -324,6 +389,49 @@
 				</div>
 			</div>
 
+			<div class="section official">
+				<h2 data-i18n="community.official_channels">Official channels</h2>
+				<p class="lede" data-i18n="community.check_anything_claiming_to_be_three_ws">Check anything claiming to be three.ws against this list. It is the complete set of accounts and addresses we operate, and it is the only place we update it.</p>
+				<ul class="chan-list">
+					<li class="chan" data-i18n-html="community.x_trythreews_the_only_x_account_we">
+						<span class="chan-name">X</span>
+						<span class="chan-body"><a class="chan-val" href="https://x.com/trythreews" target="_blank" rel="noopener noreferrer">@trythreews</a>
+						<span class="chan-note">The only X account we post from.</span></span>
+					</li>
+					<li class="chan" data-i18n-html="community.telegram_t_me_three_ws_every_release">
+						<span class="chan-name">Telegram</span>
+						<span class="chan-body"><a class="chan-val" href="https://t.me/three_ws" target="_blank" rel="noopener noreferrer">t.me/three_ws</a>
+						<span class="chan-note">Every release, pushed automatically on deploy. Chat lives in <a href="https://t.me/three_ws_community" target="_blank" rel="noopener noreferrer">t.me/three_ws_community</a>.</span></span>
+					</li>
+					<li class="chan" data-i18n-html="community.github_nirholas_three_ws_the_whole_platform">
+						<span class="chan-name">GitHub</span>
+						<span class="chan-body"><a class="chan-val" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener noreferrer">nirholas/three.ws</a>
+						<span class="chan-note">The whole platform, in public.</span></span>
+					</li>
+					<li class="chan" data-i18n-html="community.web_three_ws_every_product_surface_lives">
+						<span class="chan-name">Web</span>
+						<span class="chan-body"><a class="chan-val" href="https://three.ws">three.ws</a>
+						<span class="chan-note">Every product surface lives under this domain and no other.</span></span>
+					</li>
+					<li class="chan" data-i18n-html="community.email_support_three_ws_support_reaches_a">
+						<span class="chan-name">Email</span>
+						<span class="chan-body"><a class="chan-val" href="mailto:support@three.ws">support@three.ws</a>
+						<span class="chan-note">Support reaches a person here, not through a DM.</span></span>
+					</li>
+					<li class="chan">
+						<span class="chan-name" data-i18n="community.three">$THREE</span>
+						<span class="chan-body"><span class="chan-val" id="three-ca" translate="no" data-no-i18n>FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump</span>
+						<button class="copy-ca" type="button" data-copy-ca aria-label="Copy the $THREE contract address" data-label-copied="Copied" data-label-manual="Select and copy" data-i18n="community.copy" data-i18n-attr="aria-label:community.copy_the_three_contract_addr_arialabel;data-label-copied:community.copied;data-label-manual:community.select_and_copy">Copy</button>
+						<span class="chan-note" data-i18n="community.one_contract_on_solana_it_has_never">One contract, on Solana. It has never changed and there is no second one.</span></span>
+					</li>
+				</ul>
+				<div class="impostor">
+					<h3 data-i18n="community.two_things_we_never_do">Two things we never do</h3>
+					<p data-i18n-html="community.we_never_message_you_first_and_nobody"><strong>We never message you first</strong>, and nobody from three.ws will ever ask for a seed phrase, a private key, or a wallet signature in a DM. <strong>We never launch a second token.</strong> Any &quot;new&quot; or &quot;migrated&quot; $THREE contract is a theft, whatever it is posted under.</p>
+					<p style="margin-top: 12px;" data-i18n-html="community.the_founder_s_personal_x_account_nichxbt">The founder's personal X account, <span class="chan-val">@nichxbt</span>, has been unavailable since August 27, 2026. Nothing posted under that handle is us while it is down. Announcements continue as normal on <a href="https://x.com/trythreews" target="_blank" rel="noopener noreferrer">@trythreews</a>, <a href="https://t.me/three_ws" target="_blank" rel="noopener noreferrer">Telegram</a>, and <a href="/changelog">the changelog</a>, which publishes itself straight from the deploy.</p>
+				</div>
+			</div>
+
 			<div class="section">
 				<h2 data-i18n="community.ways_to_get_involved">Ways to get involved</h2>
 				<ul>
@@ -473,6 +581,42 @@
 			}
 
 			load();
+
+			const copyBtn = document.querySelector('[data-copy-ca]');
+			const caEl = document.getElementById('three-ca');
+			if (copyBtn && caEl) {
+				let resetTimer = 0;
+				let idleLabel = '';
+				copyBtn.addEventListener('click', async () => {
+					// Read the resting label off the button rather than hardcoding "Copy":
+					// i18n.js has already swapped it into the reader's language by now, and
+					// a hardcoded reset would flip the button back to English on every use.
+					if (!resetTimer) idleLabel = copyBtn.textContent;
+					const address = caEl.textContent.trim();
+					let copied = false;
+					try {
+						await navigator.clipboard.writeText(address);
+						copied = true;
+					} catch {
+						// Clipboard access is denied outside a secure context and in some
+						// embedded webviews. Selecting the address still lets the reader copy
+						// it by hand, which beats a button that silently does nothing.
+						const range = document.createRange();
+						range.selectNodeContents(caEl);
+						const selection = window.getSelection();
+						selection.removeAllRanges();
+						selection.addRange(range);
+					}
+					copyBtn.textContent = copied ? copyBtn.dataset.labelCopied : copyBtn.dataset.labelManual;
+					copyBtn.dataset.copied = copied ? '1' : '0';
+					clearTimeout(resetTimer);
+					resetTimer = setTimeout(() => {
+						copyBtn.textContent = idleLabel;
+						delete copyBtn.dataset.copied;
+						resetTimer = 0;
+					}, 2000);
+				});
+			}
 		</script>
 	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>

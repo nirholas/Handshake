@@ -5,10 +5,18 @@ staging only: nothing here is posted automatically, and posting is owner-gated p
 [`CLAUDE.md`](../../CLAUDE.md) (`git push` / publishing / posting to external channels needs
 explicit approval). Each file states what it's for and what has already been verified true.
 
+> **`@nichxbt` is suspended (reported 2026-08-27).** Nine of the drafts below pair a
+> `@trythreews` post with a personal-voice quote tweet from `@nichxbt`, and that second half
+> cannot be posted right now. Post the `@trythreews` half as written and hold the other one;
+> do not move its copy onto the platform account. [`x-accounts.md`](../x-accounts.md) has the
+> account status and the full rule.
+
 ## How these are written
 
 - **Paste-ready, not outlines.** No placeholders, no "insert link here". Every link in a draft
-  resolves today.
+  resolved when it was written. The one class that has since rotted is links into `@nichxbt`
+  posts, which now serve X's suspension interstitial; check any `x.com/nichxbt/status/...` link
+  before you paste a draft.
 - **Character counts are measured, not guessed**, against X's rule that any URL counts as 23
   characters regardless of length. Where a draft states a count, it was computed.
 - **Each file opens with a verified-claims block** and, where it matters, a "do not claim" list.

@@ -14,7 +14,17 @@ three.ws is built in the open and the conversation happens in public. Pick the r
 | **Issues** | Bugs and concrete feature requests | [github.com/nirholas/three.ws/issues](https://github.com/nirholas/three.ws/issues) |
 | **Security** | Vulnerabilities, privately | [Report an advisory](https://github.com/nirholas/three.ws/security/advisories/new) |
 
-Announcements also go out on [@trythreews](https://x.com/trythreews).
+Announcements also go out on [@trythreews](https://x.com/trythreews), which is the
+only X account three.ws posts from. The founder's personal account, `@nichxbt`, has
+been unavailable since August 27, 2026, so nothing posted under that handle is us
+while it is down.
+
+The table above is the complete set of rooms we run. [three.ws/community](https://three.ws/community)
+carries the same list alongside the one $THREE contract address, so anything claiming
+to be us can be checked against a single page. Two rules that never change: nobody
+from three.ws messages you first or asks for a seed phrase, a private key, or a wallet
+signature, and there is no second token, so a "new" or "migrated" $THREE contract is a
+theft whatever it is posted under.
 
 ## Which channel for which question
 

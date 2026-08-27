@@ -24,7 +24,7 @@ query parameter, `source`, which selects what the feed is built from:
 | --- | --- |
 | omitted, or `curated` | The hand-edited items in `data/rss/items.json`. This is what HackerNoon and every public subscriber reads. |
 | `trythreews` | Announcements archived from [@trythreews](https://x.com/trythreews). |
-| `nichxbt` | Announcements archived from [@nichxbt](https://x.com/nichxbt). |
+| `nichxbt` | Announcements archived from the `@nichxbt` account. The account is suspended (reported 2026-08-27) and the source is unaffected: the items are read from the archived JSON in `data/x-archive/`, never scraped live. Only the per-item links into X are dead. See [`x-accounts.md`](x-accounts.md). |
 | `archive` | Both archived accounts, merged and de-duplicated, newest first. |
 
 The value is case-insensitive. Anything else is a `400` with

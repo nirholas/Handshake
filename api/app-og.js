@@ -103,7 +103,7 @@ function renderHtml(p) {
 	<meta name="twitter:title" content="${t} — three.ws">
 	<meta name="twitter:description" content="${d}">
 	<meta name="twitter:image" content="${esc(p.ogImage)}">
-	<meta name="twitter:creator" content="@nichxbt">
+	<meta name="twitter:creator" content="@trythreews">
 
 	<meta property="fc:frame" content="vNext">
 	<meta property="fc:frame:image" content="${esc(p.ogImage)}">
