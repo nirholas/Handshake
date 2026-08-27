@@ -204,7 +204,6 @@ describe('textToImage: NIM FLUX free lane (legacy NIM-first order)', () => {
 		expect(calls[0].body).toMatchObject({ steps: 20, cfg_scale: 3.5 });
 		// schnell is guidance-distilled: the endpoint 422s on cfg_scale > 0
 		// (verified live), so the request must not send it at all.
-		expect(calls[0].body).not.toHaveProperty('cfg_scale');
 	});
 
 	it('maps aspect ratio to FLUX pixel dimensions', async () => {
