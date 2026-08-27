@@ -279,14 +279,22 @@ function cachedBlockhashUsable(hit, { now, key, liveHeight }) {
  * the transaction, never the amount or recipient. A too-stale one simply fails
  * to confirm and prompts a clean retry, never a double charge.
  *
+ * `forceFresh` skips the reuse window and reads the chain, for the one caller
+ * that must not reuse a hash: the post-402 payment retry. A refused attempt is
+ * re-signed there, and re-signing the SAME blockhash with the same payer, payee
+ * and amount recompiles byte-identical bytes, so the facilitator refuses it
+ * again for the same reason. Only the fast path is skipped; the stale-fallback
+ * branch below still applies, because a cached hash inside its validity window
+ * beats failing the payment outright when the chain cannot be read at all.
+ *
  * `now` is injectable so the staleness branches are unit-testable.
  */
-export async function getRecentBlockhashInfo(conn, key, { now = Date.now, commitment = 'confirmed' } = {}) {
+export async function getRecentBlockhashInfo(conn, key, { now = Date.now, commitment = 'confirmed', forceFresh = false } = {}) {
 	const cacheKey = `${key}:${commitment}`;
 	const sharedKey = `solana:blockhash:${cacheKey}`;
 	const hit = blockhashCache.get(cacheKey);
 	const t = now();
-	if (hit && t - hit.at < BLOCKHASH_TTL_MS) {
+	if (!forceFresh && hit && t - hit.at < BLOCKHASH_TTL_MS) {
 		return { blockhash: hit.blockhash, lastValidBlockHeight: hit.lastValidBlockHeight, stale: false, as_of: hit.at };
 	}
 	try {

@@ -48,7 +48,17 @@ async function rpcCall(rpcFetch, method, params) {
 		body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
 		signal: AbortSignal.timeout(RPC_TIMEOUT_MS),
 	});
-	return resp.json();
+	const body = await resp.json();
+	// The rotation can answer an idempotent read from the last body a lane
+	// returned when every lane is down, marking it with x-solana-rpc-stale. That
+	// is the right trade for a balance chip; it is the wrong one here. Mint and
+	// freeze authority and holder concentration are the whole point of a security
+	// verdict, and a remembered copy of them presented as live would tell a
+	// caller a token is clean at the exact moment we cannot see the chain.
+	const stale = resp.headers?.get?.('x-solana-rpc-stale') != null;
+	// A JSON-RPC envelope is always an object, but never let the marker itself be
+	// the thing that throws on a malformed body.
+	return body && typeof body === 'object' ? Object.assign(body, { __stale: stale }) : { result: undefined, __stale: stale };
 }
 
 // Round a base-unit part/total ratio to a 2-decimal percentage. Number() on the
@@ -216,10 +226,15 @@ export default defineEndpoint({
 			fetchTokenMarket(address),
 		]);
 
+		// A stale-served read counts as "did not answer": the caller gets the same
+		// honest 503 it would get if the lane had simply refused, instead of a
+		// security report quietly assembled out of remembered on-chain state.
+		const answered = (settled) => settled.status === 'fulfilled' && !settled.value?.__stale;
+
 		const { resolved, allFailed, body } = buildSecurityReport({
 			address,
-			account: { answered: acct.status === 'fulfilled', result: acct.value?.result },
-			largest: { answered: largest.status === 'fulfilled', result: largest.value?.result },
+			account: { answered: answered(acct), result: answered(acct) ? acct.value?.result : undefined },
+			largest: { answered: answered(largest), result: answered(largest) ? largest.value?.result : undefined },
 			market: { answered: mkt.status === 'fulfilled', data: mkt.value },
 		});
 

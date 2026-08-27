@@ -220,10 +220,13 @@ describe('GET /api/rider/check', () => {
 		expect(res.payload).toMatchObject({ has_pass: false, holder_pass: false, paid_pass: false });
 	});
 
-	it('answers 502 rather than a false negative when the RPC read fails', async () => {
+	it('refuses rather than returning a false negative when the RPC read fails for a wallet it has never judged', async () => {
+		// WALLET_B has no cached verdict, so there is nothing honest to answer
+		// with: reporting "no pass" here would deny a real holder. The boundary
+		// answers the typed 503 + Retry-After that rpc-degrade.js standardizes on.
 		rpcState.fail = new Error('failed to fetch https://mainnet.helius-rpc.com/?api-key=secret');
-		const res = await callGet(checkHandler, '/api/rider/check', { address: WALLET_A });
-		expect(res.statusCode).toBe(502);
+		const res = await callGet(checkHandler, '/api/rider/check', { address: WALLET_B });
+		expect(res.statusCode).toBe(503);
 		expect(res.payload.error).toBe('rpc_unavailable');
 		// The RPC URL carries the Helius key; it must never reach the caller.
 		expect(JSON.stringify(res.payload)).not.toMatch(/api-key/);

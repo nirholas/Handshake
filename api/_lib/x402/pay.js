@@ -302,7 +302,10 @@ async function currentBlockhash(conn, fallback, { forceFresh = false } = {}) {
 		// The shared guard serves its own cached blockhash (per process and via the
 		// shared cache) inside the validity window when every RPC lane is down, so
 		// this only reaches the fallback when nothing usable exists anywhere.
-		const blockhash = await getRecentBlockhash(conn, SOLANA_RPC);
+		// forceFresh has to travel INTO the guard as well: it keeps its own reuse
+		// window, so skipping only this module's cache would still hand the retry
+		// the very hash the facilitator just refused.
+		const blockhash = await getRecentBlockhash(conn, SOLANA_RPC, { forceFresh });
 		seedBlockhash(blockhash);
 		return blockhash;
 	} catch {

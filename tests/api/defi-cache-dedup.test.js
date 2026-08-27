@@ -139,22 +139,26 @@ describe('api/defi builders de-duplicate concurrent cold loads', () => {
 		});
 
 		it(`${file}: a failed load is not cached and the next call retries`, async () => {
-			let attempt = 0;
-			const fetchMock = vi.fn(async () => {
-				attempt += 1;
-				// First round trip fails the way a throttled or broken upstream does.
-				return attempt === 1 ? reply({ error: 'upstream down' }, 503) : reply(payload);
-			});
+			// The upstream stays down for the whole call, not just its first round
+			// trip: fetchUpstream retries a transient 503 on its own now, so a
+			// single blip followed by a good body is a SUCCESS by design and would
+			// never reach the caller as an error. What must still hold is that the
+			// failure itself is never cached.
+			let down = true;
+			const fetchMock = vi.fn(async () => (down ? reply({ error: 'upstream down' }, 503) : reply(payload)));
 			vi.stubGlobal('fetch', fetchMock);
 
 			const mod = await coldImport(file);
 			await expect(build(mod)).rejects.toThrow();
+			const afterFailure = fetchMock.mock.calls.length;
+			expect(afterFailure).toBeGreaterThan(0);
 
-			// The retry must reach the upstream again rather than replay the failure
-			// from cache for the rest of the TTL.
+			// The next call must reach the upstream again rather than replay the
+			// failure from cache for the rest of the TTL.
+			down = false;
 			const recovered = await build(mod);
 			expect(recovered).toBeTruthy();
-			expect(fetchMock).toHaveBeenCalledTimes(2);
+			expect(fetchMock.mock.calls.length).toBeGreaterThan(afterFailure);
 		});
 	}
 

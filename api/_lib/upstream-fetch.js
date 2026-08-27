@@ -70,6 +70,17 @@ export function safeUrl(url) {
 	}
 }
 
+// Body text for an error message, never throwing: a non-2xx is often an HTML
+// error page or an empty body, and some Response-likes (test doubles, older
+// fetch shims) have no text() at all.
+async function readBodyText(res) {
+	try {
+		return typeof res.text === 'function' ? await res.text() : '';
+	} catch {
+		return '';
+	}
+}
+
 function composeSignal(callerSignal, timeoutMs) {
 	const timeout = AbortSignal.timeout(timeoutMs);
 	if (!callerSignal) return timeout;
@@ -125,8 +136,14 @@ export async function fetchUpstream(url, init = {}, opts = {}) {
 			throw e;
 		}
 		if (okWhen(res)) return res;
-		const body = await res.text().catch(() => '');
-		const retryAfterMs = parseRetryAfter(res.headers.get('retry-after'));
+		// Read the body and the Retry-After defensively. This is the ERROR path of
+		// the one wrapper every third-party call in api/ goes through, so a throw
+		// raised while describing a failure would replace the upstream's real
+		// status with an opaque 503, and a 429 that reads as a 5xx changes what
+		// callers do next (back off versus fail over). Anything Response-shaped
+		// enough to have a status must still report that status.
+		const body = await readBodyText(res);
+		const retryAfterMs = parseRetryAfter(res.headers?.get?.('retry-after'));
 		const e = new UpstreamError(`${shown}: http ${res.status}${body ? ` ${body.slice(0, BODY_EXCERPT)}` : ''}`, {
 			status: res.status,
 			url: shown,

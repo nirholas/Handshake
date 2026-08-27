@@ -11,8 +11,16 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('../api/_lib/cache.js', () => ({
 	cacheGet: vi.fn(async () => null),
+	cacheGetFresh: vi.fn(async () => null),
 	cacheSet: vi.fn(async () => {}),
 	cacheDel: vi.fn(async () => {}),
+	// The market-data fallback chain single-flights through the shared lock and
+	// reads through cacheWrap; without these the chain dies on a missing export
+	// instead of on the upstream it is meant to be exercising.
+	acquireLock: vi.fn(async () => true),
+	releaseLock: vi.fn(async () => {}),
+	cacheWrap: vi.fn(async (_key, _ttl, fn) => fn()),
+	cacheWrapLastGood: vi.fn(async (_key, _ttl, fn) => fn()),
 }));
 
 vi.mock('../api/_lib/db.js', () => {
@@ -46,11 +54,18 @@ const mockFetch = (url, opts = {}) => {
 	if (!resp) throw new Error(`Unexpected fetch: ${url}`);
 	if (resp.error) return Promise.reject(resp.error);
 	const body = resp.body;
+	// text() has to serialize the SAME body json() returns: the upstream fetch
+	// wrapper reads text() and parses it, so a stub that answered with the status
+	// string made every parsed body come back as the number 200.
+	const asText = body === undefined
+		? String(resp.status ?? 200)
+		: (typeof body === 'string' ? body : JSON.stringify(body));
 	return Promise.resolve({
 		ok: resp.ok ?? true,
 		status: resp.status ?? 200,
+		headers: new Headers(resp.headers || {}),
 		json: async () => (typeof body === 'string' ? JSON.parse(body) : body),
-		text: async () => String(resp.status ?? 200),
+		text: async () => asText,
 	});
 };
 vi.stubGlobal('fetch', mockFetch);
