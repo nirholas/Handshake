@@ -12,9 +12,9 @@
  * Chain reads happen through public RPCs (CHAIN_META) so no wallet required.
  */
 
-import { JsonRpcProvider, Contract, Interface, isAddress, getAddress } from 'ethers';
+import { Contract, Interface, isAddress, getAddress } from 'ethers';
 import { IDENTITY_REGISTRY_ABI, REGISTRY_DEPLOYMENTS } from './abi.js';
-import { CHAIN_META, supportedChainIds } from './chain-meta.js';
+import { CHAIN_META, supportedChainIds, readProvider } from './chain-meta.js';
 import {
 	getReadProvider,
 	getReadRegistry,
@@ -379,7 +379,7 @@ export async function resolveByAgentURI(uri, ethProvider) {
  * @param {string} name
  */
 export async function resolveENSAddress(name) {
-	const provider = new JsonRpcProvider(CHAIN_META[1].rpcUrl, 1);
+	const provider = readProvider(1);
 	const addr = await provider.resolveName(name);
 	if (!addr) throw new Error(`ENS name does not resolve: ${name}`);
 	return getAddress(addr);

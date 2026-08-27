@@ -6,10 +6,10 @@
  * fetchAgentMetadata, findAvatar3D) — no new backend needed.
  */
 
-import { JsonRpcProvider, Contract } from 'ethers';
+import { Contract } from 'ethers';
 import { IDENTITY_REGISTRY_ABI, REGISTRY_DEPLOYMENTS } from './abi.js';
 import { listAgentsByOwner, fetchAgentMetadata, findAvatar3D } from './queries.js';
-import { CHAIN_META, supportedChainIds } from './chain-meta.js';
+import { CHAIN_META, supportedChainIds, readProvider } from './chain-meta.js';
 import { resolveURI } from '../ipfs.js';
 import { walletChipHTML, wireWalletChips } from '../shared/agent-wallet-chip.js';
 
@@ -172,7 +172,7 @@ async function resolveAgentCard({ chainId, agentId, address }) {
 		const meta = CHAIN_META[chainId];
 		if (!meta) return base;
 
-		const provider = new JsonRpcProvider(meta.rpcUrl, chainId);
+		const provider = readProvider(chainId);
 		const addr = REGISTRY_DEPLOYMENTS[chainId]?.identityRegistry;
 		if (!addr) return base;
 

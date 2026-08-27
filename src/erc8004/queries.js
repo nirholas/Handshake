@@ -8,13 +8,14 @@
  * the chain is the source of truth.
  */
 
-import { BrowserProvider, Contract, JsonRpcProvider } from 'ethers';
+import { BrowserProvider, Contract } from 'ethers';
 import { IDENTITY_REGISTRY_ABI, REGISTRY_DEPLOYMENTS } from './abi.js';
-import { CHAIN_META } from './chain-meta.js';
+import { CHAIN_META, readProvider } from './chain-meta.js';
 
 /**
  * Return a read-only ethers provider. Uses the connected wallet provider if
- * `ethProvider` is given, else falls back to the public RPC from CHAIN_META.
+ * `ethProvider` is given, else the chain's public RPC chain from CHAIN_META
+ * (readProvider fails over across every keyless node it lists).
  *
  * @param {number} chainId
  * @param {any} [ethProvider]  EIP-1193 provider (window.ethereum / Privy)
@@ -23,7 +24,7 @@ export function getReadProvider(chainId, ethProvider) {
 	if (ethProvider) return new BrowserProvider(ethProvider);
 	const meta = CHAIN_META[chainId];
 	if (!meta) throw new Error(`No RPC configured for chainId ${chainId}`);
-	return new JsonRpcProvider(meta.rpcUrl, chainId);
+	return readProvider(chainId);
 }
 
 /** @param {number} chainId @param {any} [ethProvider] */

@@ -8,7 +8,7 @@
 
 import { BrowserProvider, Contract } from 'ethers';
 import { IDENTITY_REGISTRY_ABI, REGISTRY_DEPLOYMENTS } from './abi.js';
-import { CHAIN_META } from './chain-meta.js';
+import { CHAIN_META, readProvider } from './chain-meta.js';
 import { fetchAgentMetadata, findAvatar3D } from './queries.js';
 import { buildRegistrationJSON, pinFile } from './agent-registry.js';
 import { resolveURI } from '../ipfs.js';
@@ -54,7 +54,7 @@ export async function mountChainEdit(rootEl, chainId, agentId) {
 	let currentGlbUrl = null;
 
 	try {
-		const provider = new JsonRpcProvider(chainMeta.rpcUrl, chainId);
+		const provider = readProvider(chainId);
 		const registry = new Contract(deployment.identityRegistry, IDENTITY_REGISTRY_ABI, provider);
 		currentTokenURI = await registry.tokenURI(agentId).catch(() => null);
 

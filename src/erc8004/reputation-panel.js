@@ -15,8 +15,8 @@
  * than a generic identity card.
  */
 
-import { JsonRpcProvider, BrowserProvider } from 'ethers';
-import { CHAIN_META, switchChain, txExplorerUrl } from './chain-meta.js';
+import { BrowserProvider } from 'ethers';
+import { CHAIN_META, switchChain, txExplorerUrl, readProvider } from './chain-meta.js';
 import { REGISTRY_DEPLOYMENTS } from './abi.js';
 import { submitReputation, stakeReputation, getTotalStake, getReputation, getRecentReviews } from './reputation.js';
 import { log } from '../shared/log.js';
@@ -86,9 +86,7 @@ export class ReputationPanel {
 			return;
 		}
 
-		const provider = new JsonRpcProvider(meta.rpcUrl, this._agent.chainId, {
-			staticNetwork: true,
-		});
+		const provider = readProvider(this._agent.chainId);
 
 		try {
 			[this._stats, this._totalStakeWei] = await Promise.all([

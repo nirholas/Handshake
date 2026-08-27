@@ -162,17 +162,21 @@ export async function getRegistrationHistory(registry, ownerAddress, opts = {}) 
  * Used by the Search tab when a user hasn't connected a wallet yet.
  *
  * @param {number} chainId
- * @param {string} rpcUrl
+ * @param {string} [rpcUrl]  override; omit to use the chain's failover node list
  * @returns {Promise<import('ethers').Contract>}
  */
 export async function getReadOnlyRegistry(chainId, rpcUrl) {
 	const { JsonRpcProvider, Contract } = await import('ethers');
+	const { readProvider } = await import('./chain-meta.js');
 	const { REGISTRY_DEPLOYMENTS, IDENTITY_REGISTRY_ABI } = await import('./abi.js');
 	const deployment = REGISTRY_DEPLOYMENTS[chainId];
 	if (!deployment?.identityRegistry) {
 		throw new Error(`No registry for chain ${chainId}`);
 	}
-	const provider = new JsonRpcProvider(rpcUrl);
+	// A caller-supplied URL is honoured as-is; otherwise the chain's failover
+	// list answers, so an unconnected visitor's search does not depend on one
+	// public node staying up.
+	const provider = rpcUrl ? new JsonRpcProvider(rpcUrl) : readProvider(chainId);
 	return new Contract(deployment.identityRegistry, IDENTITY_REGISTRY_ABI, provider);
 }
 
