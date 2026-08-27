@@ -1,13 +1,17 @@
 // WalletConnect v2 → SIWE bridge.
 // Lazy-loads @walletconnect/ethereum-provider from CDN so it never ships in
-// the main bundle unless the user explicitly triggers WC sign-in.
+// the main bundle unless the user explicitly triggers WC sign-in. The load
+// goes through the shared mirror chain (esm.sh, then jsdelivr and unpkg for
+// the same version) with a deadline, so one blocked CDN never strands sign-in.
+
+import { loadModule } from '../shared/load-module.js';
 
 const WC_CDN = 'https://esm.sh/@walletconnect/ethereum-provider@2.17.0';
 
 let _provider = null;
 
 async function _loadEthereumProvider() {
-	const { EthereumProvider } = await import(/* @vite-ignore */ WC_CDN);
+	const { EthereumProvider } = await loadModule(WC_CDN);
 	return EthereumProvider;
 }
 
@@ -58,7 +62,12 @@ export async function signInWithWalletConnect({ projectId, chains } = {}) {
 	try {
 		EthereumProvider = await _loadEthereumProvider();
 	} catch (e) {
-		throw _wcError('load_failed', `Failed to load WalletConnect provider: ${e.message}`);
+		throw _wcError(
+			'load_failed',
+			e.code === 'module_unavailable'
+				? `The WalletConnect component could not be loaded (${e.hosts.join(', ')} unreachable or blocked). Check your connection or ad blocker, or sign in with a browser wallet instead.`
+				: `Failed to load WalletConnect provider: ${e.message}`,
+		);
 	}
 
 	// 2. Init + open modal.

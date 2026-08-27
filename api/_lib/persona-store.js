@@ -28,6 +28,7 @@ import path from 'node:path';
 import { sql } from './db.js';
 import { databaseConfigured } from './env.js';
 import { putObject, copyObject, publicUrl } from './r2.js';
+import { fetchUpstream } from './upstream-fetch.js';
 
 const dbConfigured = () => databaseConfigured();
 const r2Configured = () => !!(process.env.S3_BUCKET && process.env.S3_PUBLIC_DOMAIN);
@@ -124,7 +125,7 @@ export async function persistPersonaGlb(sourceUrl, personaId, buffer = null) {
 			await putObject({ key, body: buffer, contentType: 'model/gltf-binary', metadata: { kind: 'persona', persona_id: personaId } });
 		} else if (/^https?:\/\//i.test(sourceUrl)) {
 			// Fetch + put (copyObject only works for keys already in our bucket).
-			const resp = await fetch(sourceUrl);
+			const resp = await fetchUpstream(sourceUrl, {}, { timeoutMs: 60_000, attempts: 3, okWhen: () => true });
 			if (!resp.ok) throw new Error(`fetch ${resp.status}`);
 			const body = Buffer.from(await resp.arrayBuffer());
 			await putObject({ key, body, contentType: 'model/gltf-binary', metadata: { kind: 'persona', persona_id: personaId } });

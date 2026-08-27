@@ -27,6 +27,7 @@ import { recoverSolanaAgentKeypair } from '../_lib/agent-wallet.js';
 import { solanaConnection, solanaPublicConnection } from '../_lib/agent-pumpfun.js';
 import { PublicKey } from '@solana/web3.js';
 import { cacheSet } from '../_lib/cache.js';
+import { isRpcOutageError } from '../_lib/rpc-degrade.js';
 import { logAudit } from '../_lib/audit.js';
 import { explorerTxUrl } from '../_lib/avatar-wallet.js';
 import {
@@ -620,7 +621,13 @@ export async function buildTradeInstructions({ side, conn, network, mintPk, owne
 			await import('@pump-fun/pump-sdk');
 		const online = new OnlinePumpSdk(conn);
 		const sdk = new PumpSdk();
-		const mintInfo = await conn.getAccountInfo(mintPk);
+		let mintInfo;
+		try {
+			mintInfo = await conn.getAccountInfo(mintPk);
+		} catch (err) {
+			if (isRpcOutageError(err)) throw typed(503, 'rpc_unavailable', 'Solana RPC is temporarily unavailable, retry shortly');
+			throw err;
+		}
 		if (!mintInfo) throw typed(404, 'mint_not_found', 'mint not found on this network');
 		const tokenProgram = resolveTokenProgramForMintOwner(mintInfo.owner);
 

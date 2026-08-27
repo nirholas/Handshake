@@ -26,6 +26,11 @@
 import { webcrypto } from 'node:crypto';
 import { encryptSecret, decryptSecret } from './secret-box.js';
 import { getGcpAccessToken } from './gcp-auth.js';
+import { fetchUpstream } from './upstream-fetch.js';
+
+// KMS encrypt/decrypt are idempotent (same DEK in, same wrap out), so a
+// transient failure is retried behind one breaker for the KMS host.
+const KMS_FETCH_OPTS = { name: 'gcp-kms', timeoutMs: 10_000, attempts: 3, okWhen: () => true };
 
 const subtle = globalThis.crypto?.subtle || webcrypto.subtle;
 const randomBytes = (n) => {
@@ -66,11 +71,11 @@ export function preferredScheme() {
 async function kmsEncrypt(dek) {
 	const token = await getGcpAccessToken();
 	const url = `https://cloudkms.googleapis.com/v1/${kmsKeyName()}:encrypt`;
-	const res = await fetch(url, {
+	const res = await fetchUpstream(url, {
 		method: 'POST',
 		headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
 		body: JSON.stringify({ plaintext: Buffer.from(dek).toString('base64') }),
-	});
+	}, KMS_FETCH_OPTS);
 	if (!res.ok) {
 		const detail = await res.text().catch(() => res.status);
 		throw new Error(`KMS encrypt failed (${res.status}): ${String(detail).slice(0, 300)}`);
@@ -82,11 +87,11 @@ async function kmsEncrypt(dek) {
 async function kmsDecrypt(wrappedDekB64) {
 	const token = await getGcpAccessToken();
 	const url = `https://cloudkms.googleapis.com/v1/${kmsKeyName()}:decrypt`;
-	const res = await fetch(url, {
+	const res = await fetchUpstream(url, {
 		method: 'POST',
 		headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
 		body: JSON.stringify({ ciphertext: wrappedDekB64 }),
-	});
+	}, KMS_FETCH_OPTS);
 	if (!res.ok) {
 		const detail = await res.text().catch(() => res.status);
 		throw new Error(`KMS decrypt failed (${res.status}): ${String(detail).slice(0, 300)}`);

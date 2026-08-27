@@ -78,7 +78,10 @@ const state = {
 	message: null, // { tone, text }
 };
 
-const publicClient = createPublicClient({ chain: BSC_TESTNET, transport: http() });
+const publicClient = createPublicClient({
+	chain: BSC_TESTNET,
+	transport: http(undefined, { timeout: 10_000, retryCount: 2 }),
+});
 
 function apiUrl(path, extra = {}) {
 	const u = new URL(path, location.origin);

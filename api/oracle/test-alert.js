@@ -18,6 +18,7 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { isUuid } from '../_lib/validate.js';
 
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
 const CHAT_ID_RE = /^-?\d{1,20}$|^@[A-Za-z0-9_]{3,32}$/;
 
 async function resolveUserId(req) {
@@ -70,7 +71,7 @@ export default wrap(async (req, res) => {
 	let tgOk = false;
 	let tgErr = null;
 	try {
-		const r = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+		const r = await fetchUpstream(`https://api.telegram.org/bot${token}/sendMessage`, {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
 			body: JSON.stringify({
@@ -80,7 +81,7 @@ export default wrap(async (req, res) => {
 				disable_web_page_preview: true,
 			}),
 			signal: ctrl.signal,
-		});
+		}, { name: 'telegram', timeoutMs: 10_000, attempts: 2, okWhen: () => true });
 		const result = await r.json().catch(() => null);
 		tgOk = result?.ok === true;
 		if (!tgOk) tgErr = result?.description || 'Telegram rejected the message';

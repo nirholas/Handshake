@@ -39,6 +39,8 @@ import {
 import { THREE_MINT } from './networth-model.js';
 import { llmComplete, llmConfigured } from './llm.js';
 import { logAudit } from './audit.js';
+import { fetchUpstream } from './upstream-fetch.js';
+import { withRetry } from './resilience.js';
 
 const WSOL_MINT = 'So11111111111111111111111111111111111111112';
 // Rent + network-fee headroom kept above any autopilot spend so a move can never
@@ -569,14 +571,28 @@ async function swapSolToToken({ keypair, lamports, outputMint, slippageBps, netw
 		throw Object.assign(new Error('token swaps are mainnet-only — this wallet is on devnet'), { code: 'devnet_no_swap' });
 	}
 	const qUrl = `${JUPITER_BASE}/quote?inputMint=${WSOL_MINT}&outputMint=${outputMint}&amount=${lamports.toString()}&slippageBps=${slippageBps}&swapMode=ExactIn`;
-	const qRes = await fetch(qUrl, { signal: AbortSignal.timeout(15_000) });
+	// The quote is an idempotent GET: a 429/5xx/network blip is retried with
+	// jittered backoff inside the same 15s per-attempt deadline. A 4xx (no route
+	// for this pair) is an answer and comes straight back as `no_route`, which the
+	// executor turns into an honest pause with the reason attached.
+	const qRes = await fetchUpstream(qUrl, { headers: { accept: 'application/json' } }, {
+		name: 'jupiter-treasury-quote',
+		timeoutMs: 15_000,
+		attempts: 3,
+		okWhen: (res) => res.ok || (res.status < 500 && res.status !== 429),
+	}).catch((err) => {
+		throw Object.assign(new Error(`no swap route (${err?.status || 'jupiter unreachable'}: ${err?.message || 'network error'})`), { code: 'no_route' });
+	});
 	if (!qRes.ok) throw Object.assign(new Error(`no swap route (${qRes.status})`), { code: 'no_route' });
 	const quote = await qRes.json();
 	if (!quote || !quote.outAmount) throw Object.assign(new Error('no swap route for this pair'), { code: 'no_route' });
 
-	const sRes = await fetch(`${JUPITER_BASE}/swap`, {
+	// The swap build returns an UNSIGNED transaction, so repeating it is safe;
+	// it is retried once, only on a 5xx/network failure, never on a 4xx. Signing
+	// and broadcasting happen below and are never retried here.
+	const buildSwap = () => fetchUpstream(`${JUPITER_BASE}/swap`, {
 		method: 'POST',
-		headers: { 'content-type': 'application/json' },
+		headers: { 'content-type': 'application/json', accept: 'application/json' },
 		body: JSON.stringify({
 			quoteResponse: quote,
 			userPublicKey: keypair.publicKey.toBase58(),
@@ -584,7 +600,17 @@ async function swapSolToToken({ keypair, lamports, outputMint, slippageBps, netw
 			dynamicComputeUnitLimit: true,
 			prioritizationFeeLamports: 'auto',
 		}),
-		signal: AbortSignal.timeout(20_000),
+	}, {
+		name: 'jupiter-treasury-swap',
+		timeoutMs: 20_000,
+		attempts: 1,
+		okWhen: (res) => res.ok || res.status < 500,
+	});
+	const sRes = await withRetry(buildSwap, {
+		attempts: 2,
+		shouldRetry: (err) => !err?.status || Number(err.status) >= 500,
+	}).catch((err) => {
+		throw Object.assign(new Error(`swap build failed (${err?.status || 'jupiter unreachable'}: ${err?.message || 'network error'})`), { code: 'swap_failed' });
 	});
 	if (!sRes.ok) throw Object.assign(new Error(`swap build failed (${sRes.status})`), { code: 'swap_failed' });
 	const { swapTransaction } = await sRes.json();

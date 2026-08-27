@@ -26,7 +26,7 @@ import { Contract, Wallet } from 'ethers';
 
 import { env } from './env.js';
 import { CHAIN_BY_ID, VALIDATION_REGISTRY_ABI, validationRegistryFor } from './erc8004-chains.js';
-import { evmRpcEndpoints } from './evm/rpc.js';
+import { evmFallbackProvider } from './evm/rpc.js';
 import { putObject, publicUrl } from './r2.js';
 import { assertSafePublicUrl, SsrfBlockedError } from './ssrf-guard.js';
 import { inspectModel, suggestOptimizations } from './model-inspect.js';
@@ -237,12 +237,10 @@ export async function attestValidation({ chainId, agentId, glbUrl, validatedAt, 
 	// 1. Validate the GLB (this part never throws on an invalid model).
 	const { report, passed, sha256 } = await validateGlb(glbUrl, validatedAt);
 
-	// 2. Provider + wallet. evmFallbackProvider is read-tuned; for the write we
-	//    use a plain JsonRpcProvider on the priority endpoint list.
-	const { JsonRpcProvider, Network } = await import('ethers');
-	const network = Network.from(chainId);
-	const endpoints = evmRpcEndpoints(chainId);
-	const provider = new JsonRpcProvider(endpoints[0], network, { staticNetwork: network });
+	// 2. Provider + wallet. The quorum-1 FallbackProvider tries the chain's
+	//    endpoints in priority order for reads and broadcasts the signed write
+	//    through whichever answers, so one dead RPC never blocks an attestation.
+	const provider = await evmFallbackProvider(chainId);
 	const wallet = new Wallet(pk, provider);
 	const registry = new Contract(registryAddr, VALIDATION_REGISTRY_ABI, wallet);
 

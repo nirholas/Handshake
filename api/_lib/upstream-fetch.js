@@ -251,6 +251,24 @@ export async function lastGood(key, load, opts = {}) {
 	}
 }
 
+/**
+ * lastGood() for callers that only want the value: the previous good value on
+ * failure (within `maxAgeMs`), else the loader's rejection. Fits directly into
+ * a read-through cache loader: `cached(cache, key, () => lastGoodValue(key, load))`.
+ *
+ * @template T
+ * @param {string} key
+ * @param {() => Promise<T>} load
+ * @param {{ maxAgeMs?: number }} [opts]
+ * @returns {Promise<T>}
+ */
+export async function lastGoodValue(key, load, opts = {}) {
+	return (await lastGood(key, load, {
+		...opts,
+		onFallback: (err, ageMs) => console.warn(`[upstream] ${key}: serving last good value (${Math.round(ageMs / 60_000)}m old) after ${err?.message || err}`),
+	})).value;
+}
+
 /** Test hook: forget every remembered value. */
 export function _resetLastGood() {
 	lastGoodStore.clear();

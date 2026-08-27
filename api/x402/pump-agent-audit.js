@@ -26,6 +26,7 @@ import { sql } from '../_lib/db.js';
 import { priceFor } from '../_lib/x402-prices.js';
 import { recentPumpLaunches } from '../_lib/pump-launch-feed.js';
 import { readBody } from '../_lib/http.js';
+import { pumpFetchJson } from '../_lib/pump-feed-fetch.js';
 
 const ROUTE = '/api/x402/pump-agent-audit';
 
@@ -451,31 +452,19 @@ const WHALE_LIMIT_MAX = 25;
 
 async function fetchTopCoins(limit) {
 	const url = `${PUMP_FRONTEND_BASE_AUDIT}/coins?offset=0&limit=${limit}&sort=market_cap&order=DESC&includeNsfw=false`;
-	const r = await fetch(url, {
-		headers: { accept: 'application/json', 'user-agent': 'three.ws-whale-oracle/1' },
-		signal: AbortSignal.timeout(7000),
-	});
-	if (!r.ok) return [];
-	const body = await r.json().catch(() => null);
+	const { ok, body } = await pumpFetchJson(url, { timeoutMs: 7000, retries: 1 });
+	if (!ok) return [];
 	const coins = Array.isArray(body) ? body : Array.isArray(body?.coins) ? body.coins : [];
 	return coins.filter((c) => c && typeof c.mint === 'string' && c.mint.length >= 32);
 }
 
 async function fetchCoinTrades(mint) {
-	try {
-		const r = await fetch(
-			`${PUMP_SWAP_BASE_AUDIT}/v2/coins/${mint}/trades?limit=50`,
-			{
-				headers: { accept: 'application/json', 'user-agent': 'three.ws-whale-oracle/1' },
-				signal: AbortSignal.timeout(6000),
-			},
-		);
-		if (!r.ok) return [];
-		const body = await r.json().catch(() => null);
-		return Array.isArray(body) ? body : Array.isArray(body?.trades) ? body.trades : [];
-	} catch {
-		return [];
-	}
+	const { ok, body } = await pumpFetchJson(
+		`${PUMP_SWAP_BASE_AUDIT}/v2/coins/${mint}/trades?limit=50`,
+		{ timeoutMs: 6000, retries: 1 },
+	);
+	if (!ok) return [];
+	return Array.isArray(body) ? body : Array.isArray(body?.trades) ? body.trades : [];
 }
 
 function parseNum(v) {

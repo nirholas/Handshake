@@ -41,6 +41,7 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { fetchUpstream } from './upstream-fetch.js';
 
 // Pinned to one opencv_zoo commit, not to `main`: a moving ref means a model
 // swap could land in a cron run nobody triggered, and every stored score before
@@ -109,7 +110,7 @@ async function modelBytes(spec) {
 	const cached = await readFile(file).catch(() => null);
 	if (cached && createHash('sha256').update(cached).digest('hex') === spec.sha256) return cached;
 
-	const res = await fetch(spec.url);
+	const res = await fetchUpstream(spec.url, {}, { timeoutMs: 60_000, attempts: 3, okWhen: () => true });
 	if (!res.ok) throw new Error(`face model ${spec.id} download failed: HTTP ${res.status}`);
 	const buf = Buffer.from(await res.arrayBuffer());
 	const got = createHash('sha256').update(buf).digest('hex');

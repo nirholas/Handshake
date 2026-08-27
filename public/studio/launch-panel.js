@@ -12,6 +12,31 @@
 
 import { mountFeesPanel } from './fees-panel.js';
 
+// Third-party modules (web3.js, qrcode) load through /load-module.js: the
+// pinned version is tried on esm.sh, then jsdelivr and unpkg, each under a
+// deadline, and a total miss throws `{ code: 'module_unavailable', hosts }`.
+const WEB3_URL = 'https://esm.sh/@solana/web3.js@1.98.4';
+const QRCODE_URL = 'https://esm.sh/qrcode@1.5.3';
+let _loaderPromise = null;
+function loader() {
+	if (!_loaderPromise) _loaderPromise = import('../load-module.js');
+	return _loaderPromise;
+}
+async function loadWeb3() {
+	const { loadModule } = await loader();
+	return loadModule(WEB3_URL);
+}
+async function loadQrcode() {
+	const { loadModule } = await loader();
+	const mod = await loadModule(QRCODE_URL);
+	return mod.default ?? mod;
+}
+function moduleUnavailableText(err, what) {
+	return err?.code === 'module_unavailable'
+		? `${what} could not be loaded (${err.hosts.join(', ')} unreachable or blocked). Check your connection or ad blocker and try again.`
+		: null;
+}
+
 // ── Pure validation ─────────────────────────────────────────────────────────
 
 export function validateLaunchForm({ name, symbol, description, initialBuy } = {}) {
@@ -728,7 +753,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 
 	async function fetchBalance(addr) {
 		try {
-			const { Connection, PublicKey } = await import('https://esm.sh/@solana/web3.js@1.98.4');
+			const { Connection, PublicKey } = await loadWeb3();
 			const conn = new Connection(RPC_URL, 'confirmed');
 			s.solBalance = (await conn.getBalance(new PublicKey(addr))) / 1e9;
 		} catch { s.solBalance = null; }
@@ -841,9 +866,8 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		bd.querySelector('#lp-dep-close').focus();
 
 		try {
-			const mod = await import('https://esm.sh/qrcode@1.5.3');
+			const QRCode = await loadQrcode();
 			if (closed) return;
-			const QRCode = mod.default ?? mod;
 			const canvas = document.createElement('canvas');
 			await QRCode.toCanvas(canvas, payUri, {
 				width: 220,
@@ -896,7 +920,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 	async function refreshAgentBalance() {
 		if (!s.agentWallet?.address) return;
 		try {
-			const { Connection, PublicKey } = await import('https://esm.sh/@solana/web3.js@1.98.4');
+			const { Connection, PublicKey } = await loadWeb3();
 			const conn = new Connection(RPC_URL, 'confirmed');
 			const lamports = await conn.getBalance(new PublicKey(s.agentWallet.address));
 			s.agentWallet = { ...s.agentWallet, lamports, sol: lamports / 1e9 };
@@ -998,9 +1022,8 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		addrEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); copyAddr(); } });
 
 		try {
-			const mod = await import('https://esm.sh/qrcode@1.5.3');
+			const QRCode = await loadQrcode();
 			if (closed) return;
-			const QRCode = mod.default ?? mod;
 			const canvas = document.createElement('canvas');
 			await QRCode.toCanvas(canvas, addr, { width: 220, margin: 1, color: { dark: '#0c0c0c', light: '#ffffff' } });
 			if (closed) return;
@@ -1325,7 +1348,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		s.resolvedAgentId = prep.agent_id;
 
 		const { VersionedTransaction, Keypair, Connection } =
-			await import('https://esm.sh/@solana/web3.js@1.98.4');
+			await loadWeb3();
 		const tx = VersionedTransaction.deserialize(
 			Uint8Array.from(atob(prep.tx_base64), (c) => c.charCodeAt(0)),
 		);
@@ -1607,7 +1630,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 			try {
 				if (!s.pendingConfirm) return;
 				// One more on-chain check before finalizing
-				const { Connection } = await import('https://esm.sh/@solana/web3.js@1.98.4');
+				const { Connection } = await loadWeb3();
 				const conn = new Connection(RPC_URL, 'confirmed');
 				const { value } = await conn.getSignatureStatuses([s.pendingConfirm.sig], { searchTransactionHistory: true });
 				const st = value?.[0];

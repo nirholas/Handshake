@@ -7,6 +7,7 @@
 // each reimplement them. Lazy: nothing here touches the network at import time.
 
 import { env } from './env.js';
+import { fetchUpstream } from './upstream-fetch.js';
 
 export const ELEVEN_BASE = 'https://api.elevenlabs.io/v1';
 
@@ -121,7 +122,7 @@ export async function listVoices({ force = false, apiKey: keyOverride = null } =
 
 	let resp;
 	try {
-		resp = await fetch(`${ELEVEN_BASE}/voices`, { headers: { 'xi-api-key': apiKey } });
+		resp = await fetchUpstream(`${ELEVEN_BASE}/voices`, { headers: { 'xi-api-key': apiKey } }, { name: 'elevenlabs', timeoutMs: 10_000, attempts: 2, okWhen: () => true });
 	} catch (e) {
 		throw upstreamError('Could not reach ElevenLabs', 502, { cause: e });
 	}
@@ -207,10 +208,10 @@ export async function deleteVoice(voiceId, { apiKey: keyOverride = null } = {}) 
 	const apiKey = keyOverride || elevenApiKey();
 	if (!apiKey || !voiceId) return;
 	try {
-		await fetch(`${ELEVEN_BASE}/voices/${encodeURIComponent(voiceId)}`, {
+		await fetchUpstream(`${ELEVEN_BASE}/voices/${encodeURIComponent(voiceId)}`, {
 			method: 'DELETE',
 			headers: { 'xi-api-key': apiKey },
-		});
+		}, { name: 'elevenlabs', timeoutMs: 10_000, attempts: 2, okWhen: () => true });
 		invalidateVoiceCache();
 	} catch (e) {
 		console.warn('[elevenlabs] deleteVoice failed', voiceId, e?.message);

@@ -29,6 +29,7 @@ import { attestValidation, AttestError } from '../_lib/validation-attest.js';
 import { fetchSafePublicUrlPinned, SsrfBlockedError, MaxBytesExceededError } from '../_lib/ssrf-guard.js';
 import { redactUrlSecrets } from '../_lib/scrub-secrets.js';
 
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
 export default wrap(async (req, res) => {
 	const action = req.query?.action;
 
@@ -616,13 +617,13 @@ async function uploadToWeb3Storage(token, ext, body, ct) {
 	const blob = new Blob([body], { type: ct });
 	formData.append('file', blob, filename);
 
-	const response = await fetch('https://api.web3.storage/upload', {
+	const response = await fetchUpstream('https://api.web3.storage/upload', {
 		method: 'POST',
 		headers: {
 			Authorization: `Bearer ${token}`,
 		},
 		body: formData,
-	});
+	}, { timeoutMs: 60_000, attempts: 2, okWhen: () => true });
 
 	if (!response.ok) {
 		throw new Error(`web3.storage upload failed: ${response.status} ${response.statusText}`);
@@ -645,13 +646,13 @@ async function uploadToNftStorage(token, ext, body, ct) {
 	const blob = new Blob([body], { type: ct });
 	formData.append('file', blob, filename);
 
-	const response = await fetch('https://api.nft.storage/upload', {
+	const response = await fetchUpstream('https://api.nft.storage/upload', {
 		method: 'POST',
 		headers: {
 			Authorization: `Bearer ${token}`,
 		},
 		body: formData,
-	});
+	}, { timeoutMs: 60_000, attempts: 2, okWhen: () => true });
 
 	if (!response.ok) {
 		throw new Error(`nft.storage upload failed: ${response.status} ${response.statusText}`);

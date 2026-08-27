@@ -9,7 +9,10 @@
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 
+import { fetchUpstreamJson, lastGood } from '../_lib/upstream-fetch.js';
 const FNG_BASE = 'https://api.alternative.me/fng/';
+// The index updates once a day, so a day-old reading is still the current one.
+const STALE_MAX_AGE_MS = 24 * 60 * 60_000;
 
 // One tiny per-instance cache keyed by limit shields the upstream from
 // concurrent cold-instance misses; CDN absorbs the rest.
@@ -29,17 +32,60 @@ async function fetchFng(limit) {
 	const hit = _cache.get(limit);
 	if (hit && hit.expiresAt > now) return hit.value;
 
-	const resp = await fetch(`${FNG_BASE}?limit=${limit}&format=json`, {
-		headers: { accept: 'application/json', 'user-agent': 'three.ws/1.0' },
-		signal: AbortSignal.timeout(8000),
+	const { value } = await lastGood(`fng:${limit}`, () => fetchFngLive(limit), {
+		maxAgeMs: STALE_MAX_AGE_MS,
+		onFallback: (err, ageMs) => console.warn(`[fear-greed] every source failed (${err?.message}); serving ${Math.round(ageMs / 60_000)}m-old reading`),
 	});
-	if (!resp.ok) {
-		const err = new Error(`fng ${resp.status}`);
-		err.status = resp.status;
-		throw err;
+	return value;
+}
+
+// alternative.me is the canonical index. CoinMarketCap publishes its own
+// (same 0-100 scale, same classification bands) behind a free key, so it is
+// the second rung whenever COINMARKETCAP_API_KEY is set. Both normalise to the
+// same {value, timestamp, value_classification} row shape.
+async function fetchFngRows(limit) {
+	const sources = [
+		{
+			name: 'alternative.me',
+			load: async () => {
+				const raw = await fetchUpstreamJson(`${FNG_BASE}?limit=${limit}&format=json`, {
+					headers: { 'user-agent': 'three.ws/1.0' },
+				}, { name: 'alternative-me-fng', timeoutMs: 8_000, attempts: 2 });
+				return Array.isArray(raw?.data) ? raw.data : [];
+			},
+		},
+		process.env.COINMARKETCAP_API_KEY && {
+			name: 'coinmarketcap',
+			load: async () => {
+				const raw = await fetchUpstreamJson(`https://pro-api.coinmarketcap.com/v3/fear-and-greed/historical?limit=${limit}`, {
+					headers: { 'X-CMC_PRO_API_KEY': process.env.COINMARKETCAP_API_KEY },
+				}, { name: 'cmc-fng', timeoutMs: 8_000, attempts: 2 });
+				const rows = Array.isArray(raw?.data) ? raw.data : [];
+				return rows.map((d) => ({
+					value: d.value,
+					timestamp: Math.floor(Date.parse(d.timestamp) / 1000),
+					value_classification: d.value_classification,
+				}));
+			},
+		},
+	].filter(Boolean);
+	let lastErr;
+	for (const src of sources) {
+		try {
+			const rows = await src.load();
+			if (rows.length) return rows;
+			lastErr = new Error(`${src.name}: empty payload`);
+		} catch (err) {
+			lastErr = err;
+			console.warn(`[fear-greed] ${src.name} failed: ${err?.message || err}`);
+		}
 	}
-	const raw = await resp.json();
-	const rows = Array.isArray(raw?.data) ? raw.data : [];
+	throw lastErr || new Error('no fear & greed source configured');
+}
+
+async function fetchFngLive(limit) {
+	const now = Date.now();
+	const rows = await fetchFngRows(limit);
 	// alternative.me returns newest-first; the chart wants oldest→newest.
 	const history = rows
 		.map((d) => {

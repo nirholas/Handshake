@@ -41,6 +41,7 @@ import {
 	collectionAuthoritySigner,
 } from '../../_lib/solana-collection.js';
 
+import { pinToIPFS, ipfsPinningConfigured } from '../../_lib/ipfs-pin.js';
 export default wrap(async (req, res) => {
 	const action = req.query?.action;
 	switch (action) {
@@ -94,7 +95,8 @@ const prepBodySchema = z.object({
 		.optional(),
 });
 
-// Pin a manifest. Try web3.storage first for true IPFS pinning. If unavailable,
+// Pin a manifest. Try the IPFS provider chain first (Pinata, then web3.storage,
+// api/_lib/ipfs-pin.js) for true IPFS pinning. If unavailable,
 // fall back to R2: compute the real CIDv1 (raw codec, sha2-256 multihash) from
 // the bytes so the cid is verifiable IPFS content-addressing, and return the
 // R2 HTTPS URL as the resolvable location. The on-chain registry accepts both
@@ -102,21 +104,12 @@ const prepBodySchema = z.object({
 // is a first-class result — never a stub.
 async function pinManifest(manifest) {
 	const bytes = Buffer.from(JSON.stringify(manifest), 'utf-8');
-	const token = process.env.WEB3_STORAGE_TOKEN;
-	if (token) {
+	if (ipfsPinningConfigured()) {
 		try {
-			const r = await fetch('https://api.web3.storage/upload', {
-				method: 'POST',
-				headers: { Authorization: `Bearer ${token}` },
-				body: bytes,
-			});
-			if (r.ok) {
-				const data = await r.json();
-				if (data.cid) return { cid: data.cid, uri: `ipfs://${data.cid}` };
-			}
-			console.warn('[onchain/prep] web3.storage returned', r.status);
+			const pinned = await pinToIPFS(bytes, 'agent-manifest.json');
+			if (pinned?.cid) return { cid: pinned.cid, uri: `ipfs://${pinned.cid}` };
 		} catch (e) {
-			console.warn('[onchain/prep] web3.storage pin failed:', e.message);
+			console.warn('[onchain/prep] IPFS pin failed:', e.message);
 		}
 	}
 	// R2-backed fallback: compute the real raw-codec CIDv1 so the bytes are

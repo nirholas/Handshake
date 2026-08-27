@@ -18,6 +18,7 @@
 
 import { sql, sqlValues } from './db.js';
 
+import { fetchUpstream } from './upstream-fetch.js';
 const REFRESH_AFTER_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
 
 function heliusRpcUrl() {
@@ -98,7 +99,7 @@ async function resolveViaHelius(mints) {
 	const rpc = heliusRpcUrl();
 	if (!rpc || mints.length === 0) return [];
 	try {
-		const r = await fetch(rpc, {
+		const r = await fetchUpstream(rpc, {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
 			body: JSON.stringify({
@@ -107,7 +108,7 @@ async function resolveViaHelius(mints) {
 				method: 'getAssetBatch',
 				params: { ids: mints },
 			}),
-		});
+		}, { name: 'helius-das', timeoutMs: 8_000, attempts: 2, okWhen: () => true });
 		if (!r.ok) {
 			console.warn('[token-metadata] helius getAssetBatch failed:', r.status);
 			return [];

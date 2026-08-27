@@ -4,17 +4,40 @@
 // Most x402 transfers today are USDC, which is already pegged 1:1 to USD
 // and whose `amount` is already in micro-USD (6 decimals). For tokens
 // pegged differently (e.g. USDT-on-BSC is still ~1:1 USD; SOL would not
-// be), this module exposes a lightweight price oracle that pulls from
-// Coinbase's spot API. Results are cached for 5 minutes so we don't
-// hammer the API in tight loops.
+// be), this module exposes a lightweight price oracle. It walks the shared
+// free-source chain (CoinGecko, DefiLlama, Kraken, Coinbase, Bitfinex, the
+// keyless CEX tail) for the headline assets and Coinbase spot for anything
+// else, caches the result for 5 minutes, and serves the last-known-good price
+// (up to a day old) when every source is down: a spend-cap check must not
+// fail closed on one exchange's outage. It only throws when no price for the
+// symbol has ever been observed.
 //
 // We deliberately avoid `import { fetch }` — Node 18+ + browsers ship
 // global fetch, and this module needs to run unchanged in both.
 
-import { cacheGet, cacheSet } from './cache.js';
+import { cacheWrapLastGood } from './cache.js';
+import { fetchCoinPriceUsd } from './market-fallbacks.js';
+import { fetchFirst } from '../../src/shared/failover-fetch.js';
 
 const PRICE_TTL_S = 5 * 60;
+const LAST_GOOD_TTL_S = 24 * 3600;
 const PRICE_API = 'https://api.coinbase.com/v2/prices';
+
+// Ticker symbols x402 requirements name for non-pegged assets, mapped to the
+// CoinGecko ids the shared price chain is keyed by. Wrapped forms price as the
+// underlying. An unmapped symbol goes straight to the Coinbase spot rung.
+const COINGECKO_IDS = {
+	SOL: 'solana',
+	WSOL: 'solana',
+	ETH: 'ethereum',
+	WETH: 'ethereum',
+	BTC: 'bitcoin',
+	WBTC: 'bitcoin',
+	BNB: 'binancecoin',
+	POL: 'polygon-ecosystem-token',
+	MATIC: 'polygon-ecosystem-token',
+	AVAX: 'avalanche-2',
+};
 
 // Tokens known to be 1:1 USD pegged. The asset address on the requirement
 // + the symbol from `extra.name` are matched against these.
@@ -65,43 +88,64 @@ function safeDecimals(raw) {
 // symbol is hit twice in one function invocation (e.g. multi-leg settlement).
 const localCache = new Map();
 
+/** Test seam: drop the per-process micro-cache between cases. */
+export function __resetLocalCache() {
+	localCache.clear();
+}
+
 function isStablecoin(name) {
 	if (!name) return false;
 	return USD_STABLECOINS.has(String(name).trim().toLowerCase());
 }
 
-// Pull a fresh spot price (in USD) for a symbol like 'SOL' or 'ETH'. Uses
-// Coinbase's public spot endpoint — no API key, ~30 req/sec rate limit.
-// Cached for PRICE_TTL_MS.
+function asPositive(raw) {
+	const n = Number(raw);
+	return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+// One live read for a symbol: the shared multi-source chain when the symbol
+// maps to a CoinGecko id, then Coinbase spot (no key, ~30 req/sec) as the
+// direct rung for every symbol. Throws only when every source is down.
+async function loadSpotUsd(key) {
+	const id = COINGECKO_IDS[key];
+	let chainErr = null;
+	if (id) {
+		try {
+			return await fetchCoinPriceUsd(id);
+		} catch (err) {
+			chainErr = err;
+		}
+	}
+	try {
+		const { value } = await fetchFirst(
+			[{
+				name: `spending-price:coinbase:${key}`,
+				url: `${PRICE_API}/${key}-USD/spot`,
+				parse: async (r) => asPositive((await r.json())?.data?.amount),
+			}],
+			{ timeoutMs: 5_000, label: `spending-price:${key}` },
+		);
+		return value;
+	} catch (err) {
+		throw new Error(`spending-price: every price source for ${key}-USD failed (${chainErr?.message ? `${chainErr.message}; ` : ''}${err.message})`);
+	}
+}
+
+// Spot price (in USD) for a symbol like 'SOL' or 'ETH': the per-process
+// micro-cache, then the shared cache, then a live read, then the last-known-good
+// value from the shared store when every live source fails. Cached for PRICE_TTL_S.
 async function fetchSpotUsd(symbol) {
 	const key = symbol.toUpperCase();
 	const local = localCache.get(key);
 	if (local && local.expiresAt > Date.now()) return local.value;
 	const cacheKey = `spot-usd:${key}`;
-	const shared = await cacheGet(cacheKey);
-	if (typeof shared === 'number' && Number.isFinite(shared) && shared > 0) {
-		localCache.set(key, { value: shared, expiresAt: Date.now() + PRICE_TTL_S * 1000 });
-		return shared;
-	}
-	let res;
-	try {
-		res = await fetch(`${PRICE_API}/${key}-USD/spot`, {
-			signal: AbortSignal.timeout(5_000),
-		});
-	} catch (err) {
-		throw new Error(`spending-price: spot fetch for ${key}-USD failed: ${err.message}`);
-	}
-	if (!res.ok) {
-		throw new Error(`spending-price: ${key}-USD returned ${res.status}`);
-	}
-	const json = await res.json();
-	const raw = json?.data?.amount;
-	const value = Number(raw);
+	const value = await cacheWrapLastGood(cacheKey, PRICE_TTL_S, () => loadSpotUsd(key), {
+		staleTtlSeconds: LAST_GOOD_TTL_S,
+	});
 	if (!Number.isFinite(value) || value <= 0) {
-		throw new Error(`spending-price: ${key}-USD invalid response: ${raw}`);
+		throw new Error(`spending-price: ${key}-USD invalid price: ${value}`);
 	}
 	localCache.set(key, { value, expiresAt: Date.now() + PRICE_TTL_S * 1000 });
-	await cacheSet(cacheKey, value, PRICE_TTL_S);
 	return value;
 }
 
@@ -111,7 +155,7 @@ async function fetchSpotUsd(symbol) {
 // tokens we multiply by the spot price.
 //
 // The function NEVER throws on a missing price for a stablecoin path —
-// that's the dominant flow. It only reaches out to Coinbase when the
+// that's the dominant flow. It only reaches out to the price chain when the
 // requirement explicitly declares a non-pegged token.
 export async function toMicroUsd(amount, requirement) {
 	const atomic = BigInt(amount);

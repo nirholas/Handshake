@@ -22,8 +22,9 @@ import {
 	SIGN_IN_WITH_X,
 } from '@x402/extensions/sign-in-with-x';
 
-import { createPublicClient, http } from 'viem';
+import { createPublicClient } from 'viem';
 import { base } from 'viem/chains';
+import { evmTransport } from './evm/rpc.js';
 
 import { env } from './env.js';
 import { siwxStorage, normalizeAddress } from './siwx-storage.js';
@@ -34,16 +35,19 @@ export { SIGN_IN_WITH_X };
 
 // Lazily build a viem PublicClient so verifySIWxSignature can verify
 // smart-contract wallets (EIP-1271) and counterfactual wallets (EIP-6492).
-// Uses our private RPC (env.BASE_RPC_URL) to avoid leaking buyer addresses
-// to a public node. Returns undefined when BASE_RPC_URL isn't configured —
-// the upstream verifier then falls back to EOA-only verification.
+// Uses our private RPC (env.BASE_RPC_URL) first so buyer addresses are not
+// broadcast to a public node on the happy path; the shared Base endpoint chain
+// only takes over when the private node fails, so it can never be the single
+// point that blocks every smart-wallet sign-in. Returns undefined when
+// BASE_RPC_URL isn't configured; the upstream verifier then falls back to
+// EOA-only verification.
 let _baseClient;
 function getEvmVerifier() {
 	if (!env.BASE_RPC_URL) return undefined;
 	if (!_baseClient) {
 		_baseClient = createPublicClient({
 			chain: base,
-			transport: http(env.BASE_RPC_URL),
+			transport: evmTransport(base.id, { primaryUrl: env.BASE_RPC_URL }),
 		});
 	}
 	return _baseClient.verifyMessage.bind(_baseClient);

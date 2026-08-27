@@ -366,10 +366,11 @@ export async function createOnchainSplit({ recipients, chain, mutable = false })
 	}
 	if (!SplitsClient) return null;
 
-	const [{ createPublicClient, http }, { privateKeyToAccount }, viemChains] = await Promise.all([
+	const [{ createPublicClient, createWalletClient }, { privateKeyToAccount }, viemChains, { evmTransport }] = await Promise.all([
 		import('viem'),
 		import('viem/accounts'),
 		import('viem/chains'),
+		import('./evm/rpc.js'),
 	]);
 	const chainMap = {
 		1: viemChains.mainnet, 8453: viemChains.base, 10: viemChains.optimism,
@@ -379,10 +380,11 @@ export async function createOnchainSplit({ recipients, chain, mutable = false })
 	if (!viemChain) return null;
 
 	const account = privateKeyToAccount(pk.startsWith('0x') ? pk : `0x${pk}`);
-	const rpcUrl = process.env[`EVM_RPC_URL_${chainId}`] || undefined;
-	const publicClient = createPublicClient({ chain: viemChain, transport: http(rpcUrl) });
-	const { createWalletClient } = await import('viem');
-	const walletClient = createWalletClient({ account, chain: viemChain, transport: http(rpcUrl) });
+	// The operator's EVM_RPC_URL_<chainId> stays primary; the shared keyed/public
+	// endpoints for the chain back it so one dead node cannot strand a split deploy.
+	const primaryUrl = process.env[`EVM_RPC_URL_${chainId}`] || null;
+	const publicClient = createPublicClient({ chain: viemChain, transport: evmTransport(chainId, { primaryUrl }) });
+	const walletClient = createWalletClient({ account, chain: viemChain, transport: evmTransport(chainId, { primaryUrl }) });
 
 	const client = new SplitsClient({ chainId, publicClient, walletClient }).splitV1;
 

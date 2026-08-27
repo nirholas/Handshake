@@ -28,7 +28,13 @@ import {
 } from './vanity-inventory-store.js';
 import { openSecret } from './vanity-vault.js';
 
+import { fetchUpstream } from './upstream-fetch.js';
+import { pinToIPFS, pinJsonToIPFS, ipfsPinningConfigured } from './ipfs-pin.js';
+
 const PUMP_IPFS_ENDPOINT = 'https://pump.fun/api/ipfs';
+// pump.fun's pinning endpoint is a third party we cannot fail over inside; a
+// stalled socket there used to hold the launch until Cloud Run killed it.
+const PUMP_IPFS_TIMEOUT_MS = 30_000;
 
 // Image guardrails for the upload path. pump.fun renders square images up to a
 // few hundred KB; we cap fetch size so a hostile imageUrl can't exhaust the
@@ -148,26 +154,93 @@ export async function uploadPumpMetadata({
 	form.append('website', website);
 	form.append('showName', showName ? 'true' : 'false');
 
-	let pinRes;
+	let pinRes = null;
+	let pumpFailure = null;
 	try {
-		pinRes = await fetch(PUMP_IPFS_ENDPOINT, { method: 'POST', body: form });
-	} catch (err) {
-		throw launchError(502, 'ipfs_upload_failed', `pump.fun IPFS upload failed: ${err.message}`);
-	}
-	if (!pinRes.ok) {
-		const detail = await pinRes.text().catch(() => '');
-		throw launchError(
-			502,
-			'ipfs_upload_failed',
-			`pump.fun IPFS upload returned ${pinRes.status}${detail ? `: ${detail.slice(0, 200)}` : ''}`,
+		pinRes = await fetchUpstream(
+			PUMP_IPFS_ENDPOINT,
+			{ method: 'POST', body: form },
+			{ name: 'pump-ipfs', timeoutMs: PUMP_IPFS_TIMEOUT_MS, attempts: 2, okWhen: () => true },
 		);
+	} catch (err) {
+		pumpFailure = `pump.fun IPFS upload failed: ${err.message}`;
 	}
-	const out = await pinRes.json().catch(() => null);
-	const metadataUri = out?.metadataUri || out?.metadata_uri || out?.uri;
-	if (!metadataUri) {
-		throw launchError(502, 'ipfs_upload_failed', 'pump.fun IPFS response had no metadataUri');
+	if (pinRes && !pinRes.ok) {
+		const detail = await pinRes.text().catch(() => '');
+		pumpFailure = `pump.fun IPFS upload returned ${pinRes.status}${detail ? `: ${detail.slice(0, 200)}` : ''}`;
 	}
+	let out = null;
+	if (!pumpFailure) {
+		out = await pinRes.json().catch(() => null);
+		if (!(out?.metadataUri || out?.metadata_uri || out?.uri)) {
+			pumpFailure = 'pump.fun IPFS response had no metadataUri';
+		}
+	}
+	if (pumpFailure) {
+		return pinMetadataViaProviderChain({
+			bytes,
+			mime,
+			ext,
+			name,
+			symbol,
+			description,
+			twitter,
+			telegram,
+			website,
+			showName,
+			pumpFailure,
+		});
+	}
+	const metadataUri = out.metadataUri || out.metadata_uri || out.uri;
 	return { metadataUri, image: out?.metadata?.image || out?.image || null };
+}
+
+/**
+ * Fallback for uploadPumpMetadata when pump.fun's own IPFS endpoint is down:
+ * pin the image and then a pump.fun-shaped metadata document through the
+ * platform's provider chain (api/_lib/ipfs-pin.js: Pinata, then web3.storage).
+ * The returned gateway URI is consumed exactly like pump's `metadataUri`: it
+ * becomes the on-chain `uri` of the create instruction, and wallets resolve
+ * it to the same {name, symbol, description, image, ...} document pump's
+ * frontend writes.
+ */
+async function pinMetadataViaProviderChain({
+	bytes,
+	mime,
+	ext,
+	name,
+	symbol,
+	description,
+	twitter,
+	telegram,
+	website,
+	showName,
+	pumpFailure,
+}) {
+	if (!ipfsPinningConfigured()) {
+		throw launchError(502, 'ipfs_upload_failed', `${pumpFailure}; no fallback IPFS provider is configured`);
+	}
+	console.warn(`[pump-launch] ${pumpFailure}; pinning metadata through the provider chain instead`);
+	let image;
+	let metadata;
+	try {
+		image = await pinToIPFS(bytes, `image.${ext}`);
+		const doc = {
+			name,
+			symbol,
+			description,
+			image: image.uri,
+			showName: Boolean(showName),
+			createdOn: 'https://pump.fun',
+		};
+		if (twitter) doc.twitter = twitter;
+		if (telegram) doc.telegram = telegram;
+		if (website) doc.website = website;
+		metadata = await pinJsonToIPFS(doc, 'metadata.json');
+	} catch (err) {
+		throw launchError(502, 'ipfs_upload_failed', `${pumpFailure}; fallback IPFS pin failed: ${err.message}`);
+	}
+	return { metadataUri: metadata.uri, image: image.uri, mime, provider: metadata.provider };
 }
 
 /**

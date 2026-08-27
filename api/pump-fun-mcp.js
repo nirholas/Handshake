@@ -49,6 +49,7 @@ import { scanFirstClaims } from './_lib/pump-claims.js';
 import { eventField } from './_lib/pump-onchain-trades.js';
 import { getSolPriceUsd } from '../src/shared/usd-price.js';
 
+import { pinToIPFS, ipfsPinningConfigured } from './_lib/ipfs-pin.js';
 // ── On-chain handlers ──────────────────────────────────────────────────────
 
 const TOTAL_PUMP_TOKEN_SUPPLY = 1_000_000_000; // 1B pump.fun standard
@@ -1059,41 +1060,26 @@ async function handleGetCoinIntel({ mint, network = 'mainnet' } = {}) {
 // their coin. Requires bearer auth (API key) so Pinata credits aren't open.
 //
 // Two-step: (1) pin the image, (2) build the metadata JSON with the image CID
-// and pin that too. Both steps use the same Pinata/Web3.Storage credentials
-// already wired for the pinning API — no new env vars needed.
+// and pin that too. Both steps go through the shared provider chain in
+// api/_lib/ipfs-pin.js (Pinata, then web3.storage, each with a deadline and a
+// breaker) so one provider's outage never fails the launch prep.
 
-const PINATA_PIN_API = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
-const W3S_PIN_API = 'https://api.web3.storage/upload';
 const IMG_MAX_BYTES = 5 * 1024 * 1024; // 5 MB
 const META_IMG_TIMEOUT_MS = 8_000;
 
 async function _pinBuffer(buf, filename) {
-	const pinataJwt = process.env.PINATA_JWT;
-	if (pinataJwt) {
-		const form = new FormData();
-		form.append('file', new Blob([buf]), filename);
-		const r = await fetch(PINATA_PIN_API, {
-			method: 'POST',
-			headers: { Authorization: `Bearer ${pinataJwt}` },
-			body: form,
-		});
-		if (!r.ok) throw Object.assign(new Error(`Pinata ${r.status}`), { rpcCode: -32004 });
-		return { cid: (await r.json()).IpfsHash, provider: 'pinata' };
+	if (!ipfsPinningConfigured()) {
+		throw rpcError(
+			-32004,
+			'no IPFS pinning provider configured (PINATA_JWT or WEB3_STORAGE_TOKEN)',
+		);
 	}
-	const w3sToken = process.env.WEB3_STORAGE_TOKEN;
-	if (w3sToken) {
-		const r = await fetch(W3S_PIN_API, {
-			method: 'POST',
-			headers: { Authorization: `Bearer ${w3sToken}`, 'X-NAME': filename },
-			body: buf,
-		});
-		if (!r.ok) throw Object.assign(new Error(`Web3.Storage ${r.status}`), { rpcCode: -32004 });
-		return { cid: (await r.json()).cid, provider: 'web3.storage' };
+	try {
+		const { cid, provider } = await pinToIPFS(buf, filename);
+		return { cid, provider };
+	} catch (err) {
+		throw Object.assign(new Error(`IPFS pin failed: ${err?.message || err}`), { rpcCode: -32004 });
 	}
-	throw rpcError(
-		-32004,
-		'no IPFS pinning provider configured (PINATA_JWT or WEB3_STORAGE_TOKEN)',
-	);
 }
 
 async function _fetchImgBuf(imageUrl) {

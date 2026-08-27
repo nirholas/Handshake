@@ -18,7 +18,30 @@
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { createCache, cached } from '../_lib/mem-cache.js';
+import { fetchUpstream, lastGood } from '../_lib/upstream-fetch.js';
 
+// DeFiLlama is this page's only upstream. A TTL cache alone still 502s the
+// moment it expires during an outage, so every loader also keeps its last good
+// result for hours and serves that (the handler's cache headers keep the
+// staleness honest to the CDN) rather than blanking the page.
+const STALE_MAX_AGE_MS = 6 * 60 * 60_000;
+// Keys currently served from a last-good copy (either tier), so the handler can
+// label the response `x-three-stale: 1` instead of passing it off as live. A key
+// leaves the set the moment its loader succeeds again.
+const _staleKeys = new Set();
+const cachedStale = (cache, key, load) => cached(cache, key, async () => {
+	const r = await lastGood(`defi-protocol:${key}`, load, {
+		maxAgeMs: STALE_MAX_AGE_MS,
+		onFallback: (err, ageMs) => console.warn(`[upstream] defi-protocol:${key}: serving last good value (${Math.round(ageMs / 60_000)}m old) after ${err?.message || err}`),
+	});
+	if (r.stale) _staleKeys.add(key);
+	else _staleKeys.delete(key);
+	return r.value;
+}, { onStale: (err) => {
+	_staleKeys.add(key);
+	console.warn(`[upstream] defi-protocol:${key}: serving in-memory last good after ${err?.message || err}`);
+} });
+const staleHeaders = (...keys) => (keys.some((k) => _staleKeys.has(k)) ? { 'x-three-stale': '1' } : {});
 // DeFiLlama slugs are not strictly [a-z0-9.-]: 14 of the ~6k protocols it tracks
 // carry parentheses, a plus or a bang (`dinero-(pxeth)`, `synthetix-v1+v2`,
 // `yay!`). Rejecting those characters turned every /yields row for such a
@@ -55,15 +78,9 @@ const SYNTH_SUFFIX = /-(borrowed|staking|pool2|vesting)$/i;
 const AGGREGATE_KEYS = new Set(['borrowed', 'staking', 'pool2', 'vesting']);
 
 async function fetchJson(url) {
-	const resp = await fetch(url, {
+	const resp = await fetchUpstream(url, {
 		headers: { accept: 'application/json', 'user-agent': UA },
-		signal: AbortSignal.timeout(10_000),
-	});
-	if (!resp.ok) {
-		const err = new Error(`llama ${resp.status}`);
-		err.status = resp.status;
-		throw err;
-	}
+	}, { timeoutMs: 10_000, attempts: 2 });
 	return resp.json();
 }
 
@@ -233,7 +250,7 @@ function build(slug, proto, fees, revenue, dexs) {
 }
 
 async function load(slug) {
-	return cached(_cache, slug, async () => {
+	return cachedStale(_cache, slug, async () => {
 		// Main call is required; the rest are best-effort enrichment fetched in
 		// parallel. The main fetch throwing a 400/404 propagates as not-found.
 		const [proto, fees, revenue, dexs] = await Promise.all([
@@ -264,6 +281,7 @@ export default wrap(async (req, res) => {
 		const payload = await load(slug);
 		return json(res, 200, payload, {
 			'cache-control': 'public, max-age=120, s-maxage=300, stale-while-revalidate=600',
+			...staleHeaders(slug),
 		});
 	} catch (err) {
 		// DeFiLlama answers an unknown slug with 400 "Protocol not found" (and 404

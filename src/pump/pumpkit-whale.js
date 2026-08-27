@@ -6,28 +6,24 @@
 //
 // All heavy imports are lazy so the module cold-starts cheaply.
 
+import { getSolPriceUsd } from '../shared/usd-price.js';
+
 const RPC_MAINNET = 'https://api.mainnet-beta.solana.com';
 const PUMP_PROGRAM = '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
 const LAMPORTS_PER_SOL = 1_000_000_000;
 const NATIVE_SOL = 'So11111111111111111111111111111111111111112';
-const PRICE_URL = `https://api.jup.ag/price/v2?ids=${NATIVE_SOL}`;
-const PRICE_TTL_MS = 60_000;
 
 let _cachedSolPrice = 0;
-let _priceAt = 0;
 
+// SOL/USD through the shared four-provider chain (Jupiter, CoinGecko, Coinbase,
+// DefiLlama). The previous single call hit Jupiter's retired price/v2 host and
+// then silently used a hard-coded 150, which made every USD threshold wrong
+// rather than merely stale. Now the last real price is reused, and with no
+// price ever seen the caller gets 0 so a threshold is skipped, not faked.
 async function fetchSolPrice() {
-	if (Date.now() - _priceAt < PRICE_TTL_MS && _cachedSolPrice > 0) return _cachedSolPrice;
-	try {
-		const r = await fetch(PRICE_URL);
-		const d = await r.json();
-		const p = Number(d?.data?.[NATIVE_SOL]?.price ?? 0);
-		if (p > 0) {
-			_cachedSolPrice = p;
-			_priceAt = Date.now();
-		}
-	} catch {}
-	return _cachedSolPrice || 150; // rough fallback if price API is down
+	const p = await getSolPriceUsd().catch(() => 0);
+	if (p > 0) _cachedSolPrice = p;
+	return _cachedSolPrice;
 }
 
 /**

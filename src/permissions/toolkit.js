@@ -11,10 +11,10 @@ import {
 	AbiCoder,
 	Contract,
 	getAddress,
-	JsonRpcProvider,
 	randomBytes,
 	TypedDataEncoder,
 } from 'ethers';
+import { getEvmProvider, isRpcTransportError } from '../shared/evm-rpc-fallback.js';
 import {
 	CAVEAT_ENFORCERS,
 	DELEGATION_MANAGER_ABI,
@@ -275,28 +275,42 @@ export async function redeemDelegation({ delegation, calls, signer, chainId }) {
  * Read-only check that a delegation hash is valid on-chain.
  * Checks: not disabled on-chain. Pass `delegation` for expiry + signature checks.
  *
+ * Three outcomes, not two: `valid: true`, `valid: false` with a reason that
+ * names what is wrong with the delegation, or `valid: null` with
+ * `reason: 'rpc_unavailable'` when the chain could not be reached at all. An
+ * RPC outage is not evidence that a permission was revoked, and a caller that
+ * treats null as false is choosing fail-closed deliberately.
+ *
  * @param {{
  *   hash:        string,
  *   chainId:     number,
  *   rpcUrl?:     string,
  *   delegation?: object,
  * }} opts
- * @returns {Promise<{ valid: boolean, reason?: string }>}
+ * @returns {Promise<{ valid: boolean|null, reason?: string }>}
  * @throws {PermissionError} chain_not_supported (if chain unknown)
  */
 export async function isDelegationValid({ hash, chainId, rpcUrl, delegation }) {
 	const addr = managerAddress(chainId); // throws if unsupported
 
-	const url =
-		rpcUrl ?? (typeof process !== 'undefined' ? process.env[`RPC_URL_${chainId}`] : undefined);
-	if (!url) return { valid: false, reason: 'no rpcUrl provided for on-chain check' };
+	const pinned =
+		rpcUrl ?? (typeof process !== 'undefined' ? process.env?.[`RPC_URL_${chainId}`] : undefined);
+
+	let disabled;
+	try {
+		// Pinned URL first, then the same-origin proxy and the public hosts.
+		const provider = await getEvmProvider(chainId, { primaryUrl: pinned || null });
+		const dm = new Contract(addr, DELEGATION_MANAGER_ABI, provider);
+		disabled = await dm.disabledDelegations(hash);
+	} catch (err) {
+		if (isRpcTransportError(err) || /no rpc configured/i.test(err?.message || '')) {
+			return { valid: null, reason: 'rpc_unavailable' };
+		}
+		return { valid: false, reason: err?.message ?? String(err) };
+	}
+	if (disabled) return { valid: false, reason: 'delegation_revoked' };
 
 	try {
-		const provider = new JsonRpcProvider(url);
-		const dm = new Contract(addr, DELEGATION_MANAGER_ABI, provider);
-
-		const disabled = await dm.disabledDelegations(hash);
-		if (disabled) return { valid: false, reason: 'delegation_revoked' };
 
 		// Expiry check if full delegation object available.
 		if (delegation?.expiry) {

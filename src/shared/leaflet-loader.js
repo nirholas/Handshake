@@ -7,24 +7,52 @@
 // app never pays for it.
 
 import { fetchFirstOrNull } from './failover-fetch.js';
+import { loadModule } from './load-module.js';
 
+// One pinned version, three CDNs each for the JS and the CSS. loadModule
+// expands the esm.sh URL to its jsdelivr / unpkg mirrors; the stylesheet
+// carries its own explicit list because a <link> is not an import().
 const LEAFLET_JS  = 'https://esm.sh/leaflet@1.9.4';
-const LEAFLET_CSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+const LEAFLET_CSS = [
+	'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+	'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css',
+	'https://esm.sh/leaflet@1.9.4/dist/leaflet.css',
+];
+const CSS_TIMEOUT_MS = 10_000;
+
+function loadStylesheet(href) {
+	return new Promise((resolve, reject) => {
+		const link = document.createElement('link');
+		link.rel = 'stylesheet';
+		link.href = href;
+		link.crossOrigin = '';
+		const timer = setTimeout(() => { link.remove(); reject(new Error(`timed out loading ${href}`)); }, CSS_TIMEOUT_MS);
+		link.onload = () => { clearTimeout(timer); resolve(link); };
+		link.onerror = () => { clearTimeout(timer); link.remove(); reject(new Error(`failed to load ${href}`)); };
+		document.head.appendChild(link);
+	});
+}
 
 let _cssPromise = null;
 export function ensureLeafletCss() {
 	if (_cssPromise) return _cssPromise;
-	_cssPromise = new Promise((resolve, reject) => {
-		if (document.getElementById('leaflet-css')) { resolve(); return; }
-		const link = document.createElement('link');
-		link.id = 'leaflet-css';
-		link.rel = 'stylesheet';
-		link.href = LEAFLET_CSS;
-		link.crossOrigin = '';
-		link.onload = () => resolve();
-		link.onerror = () => { link.remove(); reject(new Error('leaflet css failed to load')); };
-		document.head.appendChild(link);
-	}).catch((e) => { _cssPromise = null; throw e; });
+	_cssPromise = (async () => {
+		if (document.getElementById('leaflet-css')) return;
+		let lastErr;
+		for (const href of LEAFLET_CSS) {
+			try {
+				const link = await loadStylesheet(href);
+				link.id = 'leaflet-css';
+				return;
+			} catch (e) {
+				lastErr = e;
+			}
+		}
+		throw Object.assign(new Error('The map stylesheet could not be loaded from any mirror.'), {
+			code: 'module_unavailable',
+			cause: lastErr,
+		});
+	})().catch((e) => { _cssPromise = null; throw e; });
 	return _cssPromise;
 }
 
@@ -32,7 +60,7 @@ let _jsPromise = null;
 export function loadLeaflet() {
 	if (_jsPromise) return _jsPromise;
 	_jsPromise = (async () => {
-		const [mod] = await Promise.all([import(/* @vite-ignore */ LEAFLET_JS), ensureLeafletCss()]);
+		const [mod] = await Promise.all([loadModule(LEAFLET_JS), ensureLeafletCss()]);
 		const L = mod?.default || mod;
 		if (!L || typeof L.map !== 'function') throw new Error('leaflet module missing');
 		return L;

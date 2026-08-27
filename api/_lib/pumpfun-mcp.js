@@ -18,6 +18,7 @@
 
 import { env } from './env.js';
 import { getRedis } from './redis.js';
+import { fetchUpstream } from './upstream-fetch.js';
 
 const LIST_KEY = process.env.GRADUATIONS_LIST_KEY || 'pf:graduations';
 
@@ -81,11 +82,16 @@ async function jsonrpc(toolName, args) {
 	const token = process.env.PUMPFUN_BOT_TOKEN;
 	const headers = { 'content-type': 'application/json' };
 	if (token) headers.authorization = `Bearer ${token}`;
-	const res = await fetch(url, {
-		method: 'POST',
-		headers,
-		body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: toolName, arguments: args } }),
-	});
+	let res;
+	try {
+		res = await fetchUpstream(url, {
+			method: 'POST',
+			headers,
+			body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: toolName, arguments: args } }),
+		}, { name: 'pumpfun-bot', timeoutMs: 15_000, attempts: 1, okWhen: () => true });
+	} catch (err) {
+		return { ok: false, error: err?.message || 'bot unreachable' };
+	}
 	if (!res.ok) return { ok: false, error: `HTTP ${res.status}` };
 	const j = await res.json();
 	if (j.error) return { ok: false, error: j.error.message || JSON.stringify(j.error) };

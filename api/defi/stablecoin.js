@@ -15,6 +15,7 @@
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { createCache, cached } from '../_lib/mem-cache.js';
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
 
 const ID_RE = /^\d{1,6}$/;
 const UPSTREAM = (id) => `https://stablecoins.llama.fi/stablecoin/${id}`;
@@ -176,12 +177,9 @@ function shape(raw, id) {
 // the id is unknown upstream so the handler can map it to a clean 404.
 async function build(id) {
 	return cached(_cache, id, async () => {
-		const resp = await fetch(UPSTREAM(id), {
+		const resp = await fetchUpstream(UPSTREAM(id), {
 			headers: { accept: 'application/json', 'user-agent': 'three.ws/1.0' },
-			signal: AbortSignal.timeout(10_000),
-		});
-		if (resp.status === 404) throw Object.assign(new Error('not found'), { status: 404 });
-		if (!resp.ok) throw new Error(`llama ${resp.status}`);
+		}, { timeoutMs: 10_000, attempts: 2 });
 
 		const body = await resp.json();
 		if (!body || typeof body !== 'object' || body.id == null) {
@@ -190,6 +188,14 @@ async function build(id) {
 
 		return shape(body, id);
 	});
+}
+
+// `cached()` serves its last-good copy (without re-populating the fresh slot)
+// when the loader throws, so a fresh miss after a resolved value means the
+// payload is stale. Label it so the page can say so instead of passing it off
+// as live.
+function staleHeaders(id) {
+	return _cache.has(id) ? {} : { 'x-three-stale': '1' };
 }
 
 export default wrap(async (req, res) => {
@@ -208,6 +214,7 @@ export default wrap(async (req, res) => {
 		const payload = await build(id);
 		return json(res, 200, payload, {
 			'cache-control': 'public, max-age=120, s-maxage=300, stale-while-revalidate=600',
+			...staleHeaders(id),
 		});
 	} catch (err) {
 		if (err?.status === 404) {

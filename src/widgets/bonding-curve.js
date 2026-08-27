@@ -24,6 +24,7 @@
  */
 
 import { hasThreeWsMark } from '../solana/vanity/brand.js';
+import { solToUsd } from '../shared/usd-price.js';
 
 const LAMPORTS_PER_SOL = 1_000_000_000;
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
@@ -474,30 +475,11 @@ function injectStyles(doc) {
 // SOL/USD price — fetched once, refreshed lazily, shared across mounts.
 // ---------------------------------------------------------------------------
 
-let _solUsd = { value: null, at: 0, inflight: null };
-const SOL_USD_TTL = 60_000;
-
+// Shared, cached SOL/USD read through the five-feed chain in
+// src/shared/usd-price.js (Jupiter, CoinGecko, Coinbase, DefiLlama, Kraken).
+// Resolves null when every feed is down; the caller falls back to SOL-only.
 export async function getSolUsd() {
-	const now = Date.now();
-	if (_solUsd.value != null && now - _solUsd.at < SOL_USD_TTL) return _solUsd.value;
-	if (_solUsd.inflight) return _solUsd.inflight;
-	_solUsd.inflight = (async () => {
-		try {
-			const r = await fetch(`https://lite-api.jup.ag/price/v3?ids=${SOL_MINT}`);
-			if (!r.ok) throw new Error(`HTTP ${r.status}`);
-			const d = await r.json();
-			const usd = Number(d?.[SOL_MINT]?.usdPrice ?? d?.[SOL_MINT]?.price);
-			if (Number.isFinite(usd) && usd > 0) {
-				_solUsd = { value: usd, at: Date.now(), inflight: null };
-				return usd;
-			}
-		} catch {
-			/* graceful — caller falls back to SOL-only display */
-		}
-		_solUsd.inflight = null;
-		return _solUsd.value;
-	})();
-	return _solUsd.inflight;
+	return solToUsd(1);
 }
 
 const _easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);

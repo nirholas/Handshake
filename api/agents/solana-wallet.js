@@ -24,6 +24,7 @@ import { grindMintKeypair, estimateAttempts, BASE58_ALPHABET, addressMatchesPatt
 import { randomUUID } from 'node:crypto';
 import { recordEvent } from '../_lib/usage.js';
 import { cacheGet, cacheSet } from '../_lib/cache.js';
+import { withDeadline, staleEnvelope } from '../_lib/rpc-degrade.js';
 import { logAudit } from '../_lib/audit.js';
 import { explorerTxUrl } from '../_lib/avatar-wallet.js';
 import {
@@ -934,19 +935,40 @@ async function handleHoldings(req, res, id) {
 	const conn = solanaConnection(network);
 	const owner = new PublicKey(address);
 
+	// Last-good tier: the most recent holdings a fully successful read produced.
+	// During an RPC outage the asset picker shows the real (older) list marked
+	// stale instead of a 502; only a wallet never read successfully gets the 503.
+	const lkgKey = `sol:holdings:lkg:${network}:${address}`;
+	const serveLastGood = async (balanceError) => {
+		const lkg = await cacheGet(lkgKey);
+		if (lkg && lkg.data && typeof lkg.at === 'number') {
+			res.setHeader('cache-control', 'no-store');
+			return json(res, 200, {
+				data: staleEnvelope({ ...lkg.data, is_owner: isOwner, balance_error: balanceError }, lkg.at),
+			});
+		}
+		res.setHeader('Retry-After', '15');
+		return error(res, 503, 'rpc_unavailable', 'could not read the wallet balance right now, retry shortly', { retry_after: 15 });
+	};
+
 	let sol = null;
-	try {
-		sol = (await conn.getBalance(owner, 'confirmed')) / 1e9;
-	} catch {
-		return error(res, 502, 'rpc_error', 'could not read the wallet balance — try again');
-	}
+	const balResult = await _solRpcWithBackoffFallback(
+		conn,
+		solanaPublicConnection(network),
+		(c) => c.getBalance(owner, 'confirmed'),
+		'holdings.getBalance',
+	);
+	if (!balResult.ok) return serveLastGood(classifyBalanceError(balResult.error));
+	sol = balResult.value / 1e9;
 
 	const tokens = [];
 	const usdcMint = USDC_MINT_BY_CLUSTER[network];
+	let programsRead = 0;
 	for (const programId of [TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID]) {
 		let resp;
 		try {
 			resp = await conn.getParsedTokenAccountsByOwner(owner, { programId });
+			programsRead += 1;
 		} catch {
 			continue; // one token program failing shouldn't blank the whole list
 		}
@@ -966,7 +988,12 @@ async function handleHoldings(req, res, id) {
 	}
 	tokens.sort((a, b) => Number(b.ui_amount) - Number(a.ui_amount));
 
-	return json(res, 200, { data: { address, network, sol, tokens, is_owner: isOwner } });
+	// Only a FULL read (balance + both token programs) is worth remembering: a
+	// half-read list would later be served as if it were the whole wallet.
+	if (programsRead === 2) {
+		cacheSet(lkgKey, { data: { address, network, sol, tokens }, at: Date.now() }, 24 * 3600).catch(() => {});
+	}
+	return json(res, 200, { data: { address, network, sol, tokens, is_owner: isOwner, ...(programsRead < 2 ? { partial: true } : {}) } });
 }
 
 // ── custody audit trail ───────────────────────────────────────────────────────
@@ -1323,7 +1350,16 @@ async function sweepWalletToAddress({ conn, fromKeypair, toPubkey, network }) {
 // Build, sign, send and confirm a single v0 transaction. Throws on any failure or
 // an unconfirmed/erroring result so callers treat the leg as not-yet-final.
 async function sendV0({ conn, payer, ixs }) {
-	const bh = await conn.getLatestBlockhash('confirmed');
+	let bh;
+	try {
+		bh = await conn.getLatestBlockhash('confirmed');
+	} catch (err) {
+		// Same typed 502 the unsigned-withdraw builder answers, so the caller sees
+		// "RPC blip, retry" rather than a sanitized 500 with no code to act on.
+		const e = new Error('could not fetch a recent blockhash, try again');
+		e.status = 502; e.code = 'rpc_error'; e.cause = err;
+		throw e;
+	}
 	const msg = new TransactionMessage({
 		payerKey: payer.publicKey,
 		recentBlockhash: bh.blockhash,
@@ -1705,6 +1741,8 @@ function warnNetworthThrottled(agentId, msg) {
 //   chain reads + real DB counts, plus the owner's reactivity preferences.
 // PUT  /api/agents/:id/solana/networth — owner-only: persist the reactivity prefs
 //   (CSRF-gated). Visitors render the agent exactly as the owner configured it.
+const NETWORTH_BALANCE_DEADLINE_MS = 6_000;
+
 async function handleNetWorth(req, res, id) {
 	if (cors(req, res, { methods: 'GET,PUT,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET', 'PUT'])) return;
@@ -1776,7 +1814,10 @@ async function handleNetWorth(req, res, id) {
 
 	let balances = null;
 	try {
-		balances = await getBalances({ chain: 'solana', address });
+		// Hard deadline: getBalances walks the RPC chain lane by lane, and a lane
+		// that stalls (instead of failing) would hold this request past the gateway
+		// timeout. Failing fast here lands in the same typed 503 path below.
+		balances = await withDeadline(getBalances({ chain: 'solana', address }), NETWORTH_BALANCE_DEADLINE_MS, 'networth balances');
 	} catch (e) {
 		// Hold-last-state contract: getBalances already serves a stale last-known-good
 		// snapshot when the live read fails, so reaching here means we have never read

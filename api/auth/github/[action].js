@@ -29,6 +29,7 @@ import {
 } from '../../_lib/github-token.js';
 import { revokeGrant, verifyToken } from '../../_lib/github-api.js';
 
+import { fetchUpstream } from '../../_lib/upstream-fetch.js';
 /** Where to send someone to mint a token with exactly the grants we accept. */
 const TOKEN_CREATE_URL = `https://github.com/settings/tokens/new?description=three.ws%20agent%20memory&scopes=${RECOMMENDED_TOKEN_SCOPES.join(',')}`;
 const TOKEN_MANAGE_URL = 'https://github.com/settings/tokens';
@@ -126,7 +127,7 @@ async function handleCallback(req, res) {
 	}
 
 	// Exchange code for access token
-	const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
+	const tokenRes = await fetchUpstream('https://github.com/login/oauth/access_token', {
 		method: 'POST',
 		headers: { accept: 'application/json', 'content-type': 'application/json' },
 		body: JSON.stringify({
@@ -135,7 +136,7 @@ async function handleCallback(req, res) {
 			code,
 			redirect_uri: `${env.APP_ORIGIN}/api/auth/github/callback`,
 		}),
-	});
+	}, { name: 'github', timeoutMs: 10_000, attempts: 1, okWhen: () => true });
 	if (!tokenRes.ok) {
 		return redirect(res, `${env.APP_ORIGIN}/settings?tab=connected-accounts&github=error`);
 	}
@@ -145,12 +146,12 @@ async function handleCallback(req, res) {
 	}
 
 	// Fetch GitHub user profile
-	const profileRes = await fetch('https://api.github.com/user', {
+	const profileRes = await fetchUpstream('https://api.github.com/user', {
 		headers: {
 			authorization: `token ${tokenData.access_token}`,
 			'user-agent': 'three.ws/1.0',
 		},
-	});
+	}, { name: 'github', timeoutMs: 10_000, attempts: 2, okWhen: () => true });
 	if (!profileRes.ok) {
 		return redirect(res, `${env.APP_ORIGIN}/settings?tab=connected-accounts&github=error`);
 	}

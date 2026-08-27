@@ -14,6 +14,7 @@
 
 import { rpcFallbackFromEnv, getBondingCurveState, getTokenPrice, getGraduationProgress } from './solana/index.js';
 import { createCache } from './mem-cache.js';
+import { cacheGet, cacheSet } from './cache.js';
 import { hasThreeWsMark } from '../../src/solana/vanity/brand.js';
 
 // Mints that can never carry a pump.fun bonding curve. These are coin-agnostic
@@ -120,15 +121,33 @@ async function isRegisteredPlatformLaunch(mint, network) {
 // entry must remain readable to serve degraded data.
 const _lastGood = createCache({ max: 256 }); // `${network}:${mint}` → { body, at }
 const STALE_MAX_MS = 10 * 60_000;
+// The shared tier outlives a single instance: a cold Cloud Run instance used to
+// hold no memory copy at all, so the first read during an RPC outage answered
+// 502 no matter how recently a warm sibling had served the same mint.
+const SHARED_LKG_TTL_S = 24 * 3600;
 
-function rememberGood(network, mint, body) {
-	_lastGood.set(`${network}:${mint}`, { body, at: Date.now() });
+function lkgKey(network, mint) {
+	return `pump:curve:lkg:${network}:${mint}`;
 }
 
-function recallGood(network, mint) {
+function rememberGood(network, mint, body) {
+	const entry = { body, at: Date.now() };
+	_lastGood.set(`${network}:${mint}`, entry);
+	// Fire-and-forget: cacheSet never rejects, and the response is already in hand.
+	cacheSet(lkgKey(network, mint), entry, SHARED_LKG_TTL_S).catch(() => {});
+}
+
+async function recallGood(network, mint) {
 	const hit = _lastGood.get(`${network}:${mint}`);
-	if (!hit || Date.now() - hit.at > STALE_MAX_MS) return null;
-	return hit;
+	if (hit && Date.now() - hit.at <= STALE_MAX_MS) return hit;
+	let shared = null;
+	try {
+		shared = await cacheGet(lkgKey(network, mint));
+	} catch {
+		shared = null;
+	}
+	if (shared && shared.body && typeof shared.at === 'number') return shared;
+	return hit || null;
 }
 
 async function jupiterPriceFallback(mint) {
@@ -205,12 +224,12 @@ export async function getCurveView({ mint, network = 'mainnet' }) {
 		// for this mint marked stale, else a well-formed 502 the clients' existing
 		// error states already render.
 		console.error('[pump-curve-view] all RPC lanes failed', err?.message);
-		const stale = recallGood(network, mint);
+		const stale = await recallGood(network, mint);
 		if (stale) {
 			return {
 				httpStatus: 200,
 				cacheControl: 'public, max-age=10, s-maxage=10',
-				body: { ...stale.body, stale: true, as_of: Math.floor(stale.at / 1000) },
+				body: { ...stale.body, stale: true, as_of: new Date(stale.at).toISOString(), as_of_unix: Math.floor(stale.at / 1000) },
 			};
 		}
 		return {

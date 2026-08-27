@@ -16,7 +16,30 @@
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { createCache, cached } from '../_lib/mem-cache.js';
+import { fetchUpstream, lastGood } from '../_lib/upstream-fetch.js';
 
+// DeFiLlama is this page's only upstream. A TTL cache alone still 502s the
+// moment it expires during an outage, so every loader also keeps its last good
+// result for hours and serves that (the handler's cache headers keep the
+// staleness honest to the CDN) rather than blanking the page.
+const STALE_MAX_AGE_MS = 6 * 60 * 60_000;
+// Keys currently served from a last-good copy (either tier), so the handler can
+// label the response `x-three-stale: 1` instead of passing it off as live. A key
+// leaves the set the moment its loader succeeds again.
+const _staleKeys = new Set();
+const cachedStale = (cache, key, load) => cached(cache, key, async () => {
+	const r = await lastGood(`defi-hacks:${key}`, load, {
+		maxAgeMs: STALE_MAX_AGE_MS,
+		onFallback: (err, ageMs) => console.warn(`[upstream] defi-hacks:${key}: serving last good value (${Math.round(ageMs / 60_000)}m old) after ${err?.message || err}`),
+	});
+	if (r.stale) _staleKeys.add(key);
+	else _staleKeys.delete(key);
+	return r.value;
+}, { onStale: (err) => {
+	_staleKeys.add(key);
+	console.warn(`[upstream] defi-hacks:${key}: serving in-memory last good after ${err?.message || err}`);
+} });
+const staleHeaders = (...keys) => (keys.some((k) => _staleKeys.has(k)) ? { 'x-three-stale': '1' } : {});
 const UPSTREAM = 'https://api.llama.fi/hacks';
 const TTL_MS = 600_000;
 const YEAR_MS = 365 * 24 * 60 * 60 * 1000;
@@ -40,17 +63,15 @@ function normalizeChains(chain) {
 // sorted, normalized incident list plus the dataset-wide headline stats. The
 // per-request search/pagination happens on top of this cached whole.
 async function loadDataset() {
-	return cached(_cache, CACHE_KEY, buildDataset);
+	return cachedStale(_cache, CACHE_KEY, buildDataset);
 }
 
 async function buildDataset() {
 	const now = Date.now();
 
-	const resp = await fetch(UPSTREAM, {
+	const resp = await fetchUpstream(UPSTREAM, {
 		headers: { accept: 'application/json', 'user-agent': 'three.ws/1.0' },
-		signal: AbortSignal.timeout(10_000),
-	});
-	if (!resp.ok) throw new Error(`llama ${resp.status}`);
+	}, { timeoutMs: 10_000, attempts: 2 });
 	const raw = await resp.json();
 	if (!Array.isArray(raw)) throw new Error('unexpected upstream shape');
 
@@ -165,6 +186,7 @@ export default wrap(async (req, res) => {
 			{
 				'cache-control':
 					'public, max-age=120, s-maxage=600, stale-while-revalidate=1200',
+				...staleHeaders(CACHE_KEY),
 			},
 		);
 	} catch {

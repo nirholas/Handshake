@@ -74,6 +74,9 @@ import { pinToIPFS, ipfsPinningConfigured } from '../_lib/ipfs-pin.js';
 import { THREE_WS_VANITY, hasThreeWsMark } from '../../src/solana/vanity/brand.js';
 import { grindVanityNode, GrindExhaustedError } from '../../src/solana/vanity/grinder-node.js';
 import { logger } from '../_lib/usage.js';
+import { cacheGet, cacheSet } from '../_lib/cache.js';
+import { pumpFetchJson } from '../_lib/pump-feed-fetch.js';
+import { staleEnvelope } from '../_lib/rpc-degrade.js';
 
 const log = logger('pump.launch');
 import {
@@ -2346,7 +2349,11 @@ async function handlePortfolio(req, res) {
 	const conn = solanaConnection(network);
 	const owner = new PublicKey(address);
 
-	const [lamports, tokenResp, tradeRows, recentBuys] = await Promise.all([
+	// Each chain leg settles on its own: a throttled getBalance must not throw
+	// away a successful token-account read (or vice versa). A failed leg is
+	// named in `degraded` and the response carries `partial: true`; only when
+	// BOTH chain legs fail is there nothing honest to render.
+	const [lamportsRead, tokenRead, tradeRows, recentBuys] = await Promise.allSettled([
 		conn.getBalance(owner),
 		conn.getParsedTokenAccountsByOwner(owner, { programId: TOKEN_PROGRAM_ID }),
 		// Quote-aware cost basis from the trade ledger: net quote spent (buys −
@@ -2369,7 +2376,18 @@ async function handlePortfolio(req, res) {
 			ORDER BY created_at DESC
 			LIMIT 500
 		`.catch(() => []),
-	]);
+	]).then((settled) => settled.map((r) => (r.status === 'fulfilled' ? r.value : r)));
+
+	const degraded = [];
+	if (lamportsRead?.status === 'rejected') degraded.push('balance');
+	if (tokenRead?.status === 'rejected') degraded.push('token_accounts');
+	if (degraded.length === 2) {
+		console.warn(`[pump/portfolio] both chain legs failed agentId=${agentId}: ${lamportsRead.reason?.message || lamportsRead.reason}`);
+		res.setHeader('Retry-After', '15');
+		return error(res, 503, 'rpc_unavailable', 'Solana RPC is temporarily unavailable, retry shortly', { retry_after: 15 });
+	}
+	const lamports = lamportsRead?.status === 'rejected' ? null : lamportsRead;
+	const tokenResp = tokenRead?.status === 'rejected' ? { value: [] } : tokenRead;
 
 	const holdings = tokenResp.value
 		.map((acc) => {
@@ -2489,9 +2507,10 @@ async function handlePortfolio(req, res) {
 			address,
 			network,
 			lamports,
-			sol: lamports / LAMPORTS_PER_SOL,
+			sol: lamports == null ? null : lamports / LAMPORTS_PER_SOL,
 			holdings: priced,
 			subtotals,
+			...(degraded.length ? { partial: true, degraded } : {}),
 			totalValueSol,
 			totalCostBasisSol,
 			unrealizedPnlSol,
@@ -3655,6 +3674,22 @@ async function handleTrending(req, res) {
 
 const COIN_CACHE = new Map(); // mint → { at, body }
 const COIN_TTL_MS = 30_000;
+// Shared last-good tier: a cold instance holds no COIN_CACHE, and pump.fun's
+// frontend API rate-limits in windows longer than a request budget. The last
+// body a healthy fetch produced is served marked stale until pump.fun answers.
+const COIN_LKG_TTL_S = 24 * 3600;
+const coinLkgKey = (mint) => `pump:coin:lkg:${mint}`;
+
+async function serveStaleCoin(res, mint, status, code, message) {
+	const hit = COIN_CACHE.get(mint) || (await cacheGet(coinLkgKey(mint)));
+	if (hit && hit.body && typeof hit.at === 'number') {
+		res.setHeader('cache-control', 'public, max-age=10');
+		res.setHeader('x-pump-stale', '1');
+		return json(res, 200, staleEnvelope(hit.body, hit.at));
+	}
+	res.setHeader('Retry-After', '15');
+	return error(res, status, code, message, { retry_after: 15 });
+}
 
 async function handleCoin(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
@@ -3673,30 +3708,24 @@ async function handleCoin(req, res) {
 		return json(res, 200, hit.body);
 	}
 
-	let resp;
-	try {
-		resp = await fetch(new URL(`/coins/${mint}`, PUMP_FRONTEND_BASE), {
-			headers: { accept: 'application/json' },
-			signal: AbortSignal.timeout(8000),
-		});
-	} catch {
-		return error(res, 504, 'upstream_timeout', 'pump.fun did not respond');
+	// Bounded retry on 429/5xx with Retry-After honoured; never throws.
+	const r = await pumpFetchJson(new URL(`/coins/${mint}`, PUMP_FRONTEND_BASE).toString(), { timeoutMs: 8000 });
+	if (!r.ok) {
+		// pump.fun returns 200 with an empty body for an unknown/unmigrated mint;
+		// pumpFetchJson reports that as ok:false with the 200 status. That is a
+		// real "coin not found", not an outage, so it never falls to last-good.
+		if (r.status >= 200 && r.status < 300) return error(res, 404, 'coin_not_found', 'no pump.fun coin for that mint');
+		if (r.status === 0) return serveStaleCoin(res, mint, 504, 'upstream_timeout', 'pump.fun did not respond');
+		if (r.status === 404) return error(res, 404, 'coin_not_found', 'no pump.fun coin for that mint');
+		return serveStaleCoin(res, mint, 502, 'upstream_failed', `pump.fun returned ${r.status}`);
 	}
-	if (!resp.ok) return error(res, 502, 'upstream_failed', `pump.fun returned ${resp.status}`);
-	// pump.fun returns 200 with an empty body for an unknown/unmigrated mint;
-	// resp.json() then throws "Unexpected end of JSON input" → an unhandled 500.
-	// Treat an empty/invalid body as "coin not found" (404) instead.
-	let parsed;
-	try {
-		parsed = await resp.json();
-	} catch {
-		return error(res, 404, 'coin_not_found', 'no pump.fun coin for that mint');
-	}
+	const parsed = r.body;
 	if (!parsed || typeof parsed !== 'object') {
 		return error(res, 404, 'coin_not_found', 'no pump.fun coin for that mint');
 	}
 	const [body] = repairCoinImages([parsed]);
 	COIN_CACHE.set(mint, { at: now, body });
+	cacheSet(coinLkgKey(mint), { at: now, body }, COIN_LKG_TTL_S).catch(() => {});
 	res.setHeader('cache-control', 'public, max-age=15');
 	return json(res, 200, body);
 }
@@ -3799,28 +3828,29 @@ async function handleSearch(req, res) {
 	upstream.searchParams.set('sort', 'market_cap');
 	upstream.searchParams.set('order', 'DESC');
 	upstream.searchParams.set('includeNsfw', 'false');
-	let resp;
-	try {
-		resp = await fetch(upstream, {
-			headers: { accept: 'application/json' },
-			signal: AbortSignal.timeout(8000),
-		});
-	} catch {
-		// Upstream timeout/network blip: an empty result set beats a 500 on search.
-		return json(res, 200, []);
+	const searchLkgKey = `pump:search:lkg:${q.toLowerCase()}`;
+	// Bounded retry on 429/5xx with Retry-After honoured; never throws. A 200
+	// with an empty/truncated body reports ok:false with a 2xx status, which is
+	// "no results", not an outage.
+	const r = await pumpFetchJson(upstream.toString(), { timeoutMs: 8000 });
+	if (!r.ok) {
+		if (r.status >= 200 && r.status < 300) return json(res, 200, []);
+		// Outage or rate-limit window: the last result set this query produced
+		// beats both a 502 and a misleading empty list.
+		const lkg = await cacheGet(searchLkgKey);
+		if (lkg && Array.isArray(lkg.rows) && typeof lkg.at === 'number') {
+			res.setHeader('x-pump-stale', '1');
+			return json(res, 200, lkg.rows, { 'x-pump-as-of': new Date(lkg.at).toISOString() });
+		}
+		if (r.status === 0) return json(res, 200, []);
+		res.setHeader('Retry-After', '15');
+		return error(res, 502, 'upstream_failed', `pump.fun returned ${r.status}`, { retry_after: 15 });
 	}
-	if (!resp.ok) return error(res, 502, 'upstream_failed', `pump.fun returned ${resp.status}`);
-	// A 200 with an empty/truncated body makes resp.json() throw; degrade to "no
-	// results" rather than an unhandled 500.
-	let body;
-	try {
-		body = await resp.json();
-	} catch {
-		body = [];
-	}
+	const body = r.body;
 	const arr = repairCoinImages(
 		Array.isArray(body) ? body : Array.isArray(body?.coins) ? body.coins : [],
 	);
+	if (arr.length) cacheSet(searchLkgKey, { rows: arr, at: Date.now() }, 3600).catch(() => {});
 	return json(res, 200, arr);
 }
 
@@ -4974,6 +5004,21 @@ async function handleGithubResolve(req, res) {
 		return error(res, 400, 'validation_error', 'invalid github handle');
 	}
 
+	// A GitHub login maps to one numeric id for the account's whole life, so a
+	// resolved profile is safe to hold for days: a 60/hr unauthenticated rate
+	// limit window must not turn "rewards to @handle" into a 502.
+	const lkgKey = `github:user:lkg:${handle.toLowerCase()}`;
+	const GITHUB_LKG_TTL_S = 7 * 24 * 3600;
+	const serveLastGood = async (status, code, message) => {
+		const lkg = await cacheGet(lkgKey);
+		if (lkg && lkg.body && typeof lkg.at === 'number') {
+			res.setHeader('x-github-stale', '1');
+			return json(res, 200, staleEnvelope(lkg.body, lkg.at));
+		}
+		if (status === 429 || status === 502) res.setHeader('Retry-After', '15');
+		return error(res, status, code, message, ...(status === 429 || status === 502 ? [{ retry_after: 15 }] : []));
+	};
+
 	try {
 		const headers = { 'user-agent': 'three.ws', accept: 'application/vnd.github+json' };
 		if (process.env.GITHUB_TOKEN) headers.authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
@@ -4983,12 +5028,12 @@ async function handleGithubResolve(req, res) {
 		});
 		if (gh.status === 404)
 			return error(res, 404, 'github_user_not_found', `@${handle} not found on GitHub`);
-		if (gh.status === 403)
-			return error(res, 429, 'github_rate_limited', 'GitHub rate limit — try again shortly');
-		if (!gh.ok) return error(res, 502, 'github_error', `github responded ${gh.status}`);
+		if (gh.status === 403 || gh.status === 429)
+			return serveLastGood(429, 'github_rate_limited', 'GitHub rate limit, try again shortly');
+		if (!gh.ok) return serveLastGood(502, 'github_error', `github responded ${gh.status}`);
 		const j = await gh.json();
-		if (!j?.id) return error(res, 502, 'github_error', 'github id missing');
-		return json(res, 200, {
+		if (!j?.id) return serveLastGood(502, 'github_error', 'github id missing');
+		const body = {
 			ok: true,
 			login: j.login,
 			id: String(j.id), // social-fee user_id (≤20 chars, fits u64)
@@ -4996,9 +5041,17 @@ async function handleGithubResolve(req, res) {
 			avatar_url: j.avatar_url || null,
 			html_url: j.html_url || `https://github.com/${j.login}`,
 			type: j.type || 'User',
-		});
+		};
+		cacheSet(lkgKey, { body, at: Date.now() }, GITHUB_LKG_TTL_S).catch(() => {});
+		return json(res, 200, body);
 	} catch (e) {
-		return respondError(res, 502, 'github_error', e);
+		const lkg = await cacheGet(lkgKey);
+		if (lkg && lkg.body && typeof lkg.at === 'number') {
+			res.setHeader('x-github-stale', '1');
+			return json(res, 200, staleEnvelope(lkg.body, lkg.at));
+		}
+		res.setHeader('Retry-After', '15');
+		return respondError(res, 502, 'github_error', e, { retry_after: 15 });
 	}
 }
 

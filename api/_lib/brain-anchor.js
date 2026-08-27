@@ -22,7 +22,7 @@ import { Contract, Wallet, keccak256, toUtf8Bytes } from 'ethers';
 import { env } from './env.js';
 import { sql } from './db.js';
 import { CHAIN_BY_ID, VALIDATION_REGISTRY_ABI, validationRegistryFor } from './erc8004-chains.js';
-import { evmRpcEndpoints } from './evm/rpc.js';
+import { evmFallbackProvider } from './evm/rpc.js';
 import { explorerLink } from './onchain.js';
 import { putObject, publicUrl } from './r2.js';
 import { computeBrainHash } from './brain-bundle.js';
@@ -207,11 +207,9 @@ export async function anchorBrain({ agentId, anchoredAt, publicOnly = false }) {
 	}
 	const proofHash = keccak256(toUtf8Bytes(JSON.stringify(passport)));
 
-	// Provider + validator wallet + registry.
-	const { JsonRpcProvider, Network } = await import('ethers');
-	const network = Network.from(chainId);
-	const endpoints = evmRpcEndpoints(chainId);
-	const provider = new JsonRpcProvider(endpoints[0], network, { staticNetwork: network });
+	// Provider + validator wallet + registry. Quorum-1 failover across the
+	// chain's endpoints, so a single dead RPC never blocks an anchor.
+	const provider = await evmFallbackProvider(chainId);
 	const wallet = new Wallet(pk, provider);
 	const registry = new Contract(registryAddr, VALIDATION_REGISTRY_ABI, wallet);
 

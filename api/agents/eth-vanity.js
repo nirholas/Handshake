@@ -34,29 +34,20 @@ import { sql } from '../_lib/db.js';
 import { cors, json, method, error, readJson, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { keccak_256 } from '@noble/hashes/sha3';
+import { fetchAnyJson } from '../_lib/upstream-fetch.js';
+import { evmRpcEndpoints } from '../_lib/evm/rpc.js';
+import { CHAIN_BY_ID } from '../_lib/erc8004-chains.js';
 
 const HEX_RE  = /^0x[0-9a-f]+$/i;
 const ADDR_RE = /^0x[0-9a-f]{40}$/i;
 const HASH_RE = /^0x[0-9a-f]{64}$/i;
 const TX_RE   = /^0x[0-9a-f]{64}$/i;
 
-/**
- * Curated list of known-good public RPCs. We don't hold secrets here, and
- * anyone can spam these — but they're rate-limited per chain, and we only
- * call them on deploy confirmation (rare). If a chain isn't listed, the
- * deploy is recorded *unverified* with a warning flag.
- */
-const RPCS = {
-	1:        'https://eth.drpc.org', // cloudflare-eth.com is sunset (-32046)
-	8453:     'https://mainnet.base.org',
-	10:       'https://mainnet.optimism.io',
-	42161:    'https://arb1.arbitrum.io/rpc',
-	137:      'https://polygon-rpc.com',
-	56:       'https://bsc-dataseed.bnbchain.org',
-	43114:    'https://api.avax.network/ext/bc/C/rpc',
-	11155111: 'https://ethereum-sepolia-rpc.publicnode.com',
-	84532:    'https://sepolia.base.org',
-};
+// The chains a deployment can be verified on are exactly the chains the shared
+// EVM RPC layer knows (erc8004-chains.js): operator override, keyed Alchemy,
+// then the chain's curated public nodes, tried in that order. A chain outside
+// that table records the deploy *unverified* with a warning flag.
+const SUPPORTED_CHAIN_IDS = Object.keys(CHAIN_BY_ID).map(Number);
 
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
@@ -90,24 +81,27 @@ function _verifyCreate2(deployer, salt, initCodeHash, predicted) {
 
 /**
  * Verify on-chain that bytecode exists at `address` on `chainId`. Uses
- * eth_getCode against a public RPC. Returns:
+ * eth_getCode across the chain's priority-ordered RPC endpoints, each on its
+ * own deadline. Returns:
  *   { ok: true,  bytecodeHash }   → contract is deployed
  *   { ok: false, reason }         → not deployed / RPC unreachable / wrong chain
  *
- * We don't hard-fail when the chain isn't in our RPC table — the caller
+ * We don't hard-fail when the chain isn't in the shared table; the caller
  * can choose to record the deployment as unverified.
  */
 async function _verifyDeployed(chainId, address) {
-	const rpc = RPCS[Number(chainId)];
-	if (!rpc) return { ok: false, reason: 'unsupported_chain', supported: Object.keys(RPCS).map(Number) };
+	const endpoints = evmRpcEndpoints(Number(chainId));
+	if (!CHAIN_BY_ID[Number(chainId)] || !endpoints.length) {
+		return { ok: false, reason: 'unsupported_chain', supported: SUPPORTED_CHAIN_IDS };
+	}
 	try {
-		const r = await fetch(rpc, {
+		// Operator override, keyed Alchemy, then the chain's public nodes in turn,
+		// so one node rate-limiting us never records a real deployment as unverified.
+		const { value: data } = await fetchAnyJson(endpoints, {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
 			body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_getCode', params: [address, 'latest'] }),
-		});
-		if (!r.ok) return { ok: false, reason: `rpc_${r.status}` };
-		const data = await r.json();
+		}, { name: `evm-getcode:${chainId}`, timeoutMs: 6_000, label: 'eth_getCode' });
 		if (data.error) return { ok: false, reason: data.error.message || 'rpc_error' };
 		const code = String(data.result || '0x');
 		if (code === '0x' || code === '0x0') return { ok: false, reason: 'no_code_at_address' };

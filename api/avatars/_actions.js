@@ -74,6 +74,11 @@ function maskSubmitError(res, err) {
 // threw `ReferenceError: sanitizeJobError is not defined` at runtime. Import the
 // local binding and re-export it so both this module and its consumers resolve it.
 import { sanitizeJobError } from '../_lib/provider-job-error.js';
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
+
+// Per-rung deadline for the vision classifiers so a hung provider moves the
+// chain to its next lane instead of holding the request.
+const VISION_TIMEOUT_MS = 30_000;
 export { sanitizeJobError };
 
 // ── presign ───────────────────────────────────────────────────────────────────
@@ -870,7 +875,7 @@ Respond with nothing else — no markdown, no explanation.`;
 // vision provider is available so the caller can skip silently.
 async function classifyAvatarImage({ thumbUrl, prompt, env }) {
 	const openaiVision = (name, key, url, model, extraHeaders = {}) => async () => {
-		const r = await fetch(url, {
+		const r = await fetchUpstream(url, {
 			method: 'POST',
 			headers: { 'content-type': 'application/json', authorization: `Bearer ${key}`, ...extraHeaders },
 			body: JSON.stringify({
@@ -886,7 +891,7 @@ async function classifyAvatarImage({ thumbUrl, prompt, env }) {
 					},
 				],
 			}),
-		});
+		}, { name: `${name}:vision`, timeoutMs: VISION_TIMEOUT_MS, attempts: 1, okWhen: () => true });
 		if (!r.ok) throw Object.assign(new Error(`${name} vision ${r.status}`), { code: 'vision_api_error' });
 		const d = await r.json();
 		return d.choices?.[0]?.message?.content || '';
@@ -912,7 +917,7 @@ async function classifyAvatarImage({ thumbUrl, prompt, env }) {
 	}
 	if (env.ANTHROPIC_API_KEY) {
 		attempts.push(async () => {
-			const r = await fetch('https://api.anthropic.com/v1/messages', {
+			const r = await fetchUpstream('https://api.anthropic.com/v1/messages', {
 				method: 'POST',
 				headers: {
 					'content-type': 'application/json',
@@ -932,7 +937,7 @@ async function classifyAvatarImage({ thumbUrl, prompt, env }) {
 						},
 					],
 				}),
-			});
+			}, { name: 'anthropic:vision', timeoutMs: VISION_TIMEOUT_MS, attempts: 1, okWhen: () => true });
 			if (!r.ok) throw Object.assign(new Error(`anthropic vision ${r.status}`), { code: 'vision_api_error' });
 			const d = await r.json();
 			// Pick the first TEXT block rather than content[0]: on a thinking-capable

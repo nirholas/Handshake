@@ -37,6 +37,8 @@ import { recordEvent } from '../_lib/usage.js';
 import { costMicroUsd } from '../_lib/llm-pricing.js';
 import { openrouterUsageFetch } from '../_lib/openrouter-usage.js';
 
+const WATSONX_HEADERS_TIMEOUT_MS = 45_000;
+
 // Providers an anonymous (signed-out) caller may use: only the genuinely free
 // tiers — the OpenRouter-routed open-weight default and the free NVIDIA NIM
 // models. Every paid first-party model (Claude, GPT-5.x, o3, DashScope, DeepSeek)
@@ -693,11 +695,24 @@ async function streamWatsonx(res, { messages, system, maxTokens, t0 }) {
 		maxTokens,
 	});
 
-	const upstream = await fetch(url, {
-		method: 'POST',
-		headers,
-		body: JSON.stringify(body),
-	});
+	// Bound the wait for response HEADERS only: a streamed completion may run
+	// longer than any sensible deadline, so the timer is cleared once watsonx
+	// answers, and only a hung connection is cut.
+	const headersCtrl = new AbortController();
+	const headersTimer = setTimeout(() => headersCtrl.abort(), WATSONX_HEADERS_TIMEOUT_MS);
+	let upstream;
+	try {
+		upstream = await fetch(url, {
+			method: 'POST',
+			headers,
+			body: JSON.stringify(body),
+			signal: headersCtrl.signal,
+		});
+	} catch (err) {
+		throw new Error(`watsonx unreachable: ${err?.name === 'AbortError' ? `no response headers within ${WATSONX_HEADERS_TIMEOUT_MS}ms` : err?.message || 'network error'}`);
+	} finally {
+		clearTimeout(headersTimer);
+	}
 	if (!upstream.ok || !upstream.body) {
 		const detail = await upstream.text().catch(() => '');
 		throw new Error(`watsonx ${upstream.status}: ${detail.slice(0, 200)}`);

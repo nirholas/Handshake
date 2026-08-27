@@ -12,6 +12,8 @@
  * fall back to R2 HTTPS hosting, a valid metadata URI but not a CID.
  */
 
+import { fetchUpstream } from './upstream-fetch.js';
+
 const PINATA_FILE_ENDPOINT = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
 const WEB3_STORAGE_ENDPOINT = 'https://api.web3.storage/upload';
 
@@ -104,18 +106,22 @@ export async function fetchFromGateways(cid, { maxBytes = 1024 * 1024, gateways,
 }
 
 // Bounded so a hung provider cannot hold an interactive request (persona save
-// pins inline) open until the platform's own request timeout fires.
-const PIN_TIMEOUT_MS = 25000;
+// pins inline) open until the platform's own request timeout fires. A pin is
+// content-addressed, so a second attempt after a network failure is safe: the
+// same bytes yield the same CID. Each provider carries its own breaker so a
+// dead host fails fast and the chain moves on instead of paying the deadline
+// on every request during its outage.
+const PIN_TIMEOUT_MS = 30_000;
+const PIN_ATTEMPTS = 2;
 
 async function pinViaPinata(buf, filename) {
 	const form = new FormData();
 	form.append('file', new Blob([buf]), filename);
-	const resp = await fetch(PINATA_FILE_ENDPOINT, {
+	const resp = await fetchUpstream(PINATA_FILE_ENDPOINT, {
 		method: 'POST',
 		headers: { Authorization: `Bearer ${process.env.PINATA_JWT}` },
 		body: form,
-		signal: AbortSignal.timeout(PIN_TIMEOUT_MS),
-	});
+	}, { name: 'ipfs:pinata', timeoutMs: PIN_TIMEOUT_MS, attempts: PIN_ATTEMPTS, okWhen: () => true });
 	if (!resp.ok) {
 		const detail = await resp.text().catch(() => '');
 		throw Object.assign(new Error(`Pinata error ${resp.status}`), { status: 502, detail });
@@ -125,12 +131,11 @@ async function pinViaPinata(buf, filename) {
 }
 
 async function pinViaWeb3Storage(buf, filename) {
-	const resp = await fetch(WEB3_STORAGE_ENDPOINT, {
+	const resp = await fetchUpstream(WEB3_STORAGE_ENDPOINT, {
 		method: 'POST',
 		headers: { Authorization: `Bearer ${process.env.WEB3_STORAGE_TOKEN}`, 'X-NAME': filename },
 		body: buf,
-		signal: AbortSignal.timeout(PIN_TIMEOUT_MS),
-	});
+	}, { name: 'ipfs:web3.storage', timeoutMs: PIN_TIMEOUT_MS, attempts: PIN_ATTEMPTS, okWhen: () => true });
 	if (!resp.ok) {
 		const detail = await resp.text().catch(() => '');
 		throw Object.assign(new Error(`Web3.Storage error ${resp.status}`), { status: 502, detail });
@@ -145,7 +150,11 @@ export function ipfsPinningConfigured() {
 }
 
 /**
- * Pin a buffer to IPFS via the configured provider.
+ * Pin a buffer to IPFS through every configured provider in order (Pinata,
+ * then web3.storage) until one answers with a CID. A provider that is down,
+ * rate limited, or past its deadline is logged and the next rung is tried; the
+ * error thrown when the whole chain fails carries the last rung's status and
+ * detail so the caller reports the true cause.
  *
  * @param {Buffer} buf
  * @param {string} filename
@@ -153,13 +162,30 @@ export function ipfsPinningConfigured() {
  *   the pinned CID + gateway URI, or null when no provider is configured.
  */
 export async function pinToIPFS(buf, filename) {
-	if (process.env.PINATA_JWT) {
-		const { cid, provider } = await pinViaPinata(buf, filename);
-		return { cid, uri: ipfsGatewayUrl(cid), provider };
+	const rungs = [];
+	if (process.env.PINATA_JWT) rungs.push(pinViaPinata);
+	if (process.env.WEB3_STORAGE_TOKEN) rungs.push(pinViaWeb3Storage);
+	if (!rungs.length) return null;
+	let lastErr;
+	for (const rung of rungs) {
+		try {
+			const { cid, provider } = await rung(buf, filename);
+			return { cid, uri: ipfsGatewayUrl(cid), provider };
+		} catch (err) {
+			lastErr = err;
+			if (rungs.length > 1) console.warn(`[ipfs-pin] ${filename}: ${err?.message || err}; trying next provider`);
+		}
 	}
-	if (process.env.WEB3_STORAGE_TOKEN) {
-		const { cid, provider } = await pinViaWeb3Storage(buf, filename);
-		return { cid, uri: ipfsGatewayUrl(cid), provider };
-	}
-	return null;
+	throw lastErr;
+}
+
+/**
+ * Pin a JSON document (metadata, manifests) through the same provider chain.
+ *
+ * @param {object} doc
+ * @param {string} filename
+ * @returns {Promise<{cid: string, uri: string, provider: string} | null>}
+ */
+export function pinJsonToIPFS(doc, filename) {
+	return pinToIPFS(Buffer.from(JSON.stringify(doc), 'utf-8'), filename);
 }

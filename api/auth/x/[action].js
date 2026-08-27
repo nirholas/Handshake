@@ -27,6 +27,7 @@ import { env } from '../../_lib/env.js';
 import { revokeAllSeedConsentsForUser } from '../../_lib/x-seed-consent.js';
 import { resolveScopeSet } from '../../_lib/x-scopes.js';
 
+import { fetchUpstream } from '../../_lib/upstream-fetch.js';
 // ── Signed-cookie PKCE state ─────────────────────────────────────────────────
 
 const STATE_COOKIE = '__Host-xoa';
@@ -236,7 +237,7 @@ async function handleCallback(req, res) {
 	const creds = Buffer.from(`${env.X_OAUTH_CLIENT_ID}:${env.X_OAUTH_CLIENT_SECRET}`).toString(
 		'base64',
 	);
-	const tokenRes = await fetch('https://api.twitter.com/2/oauth2/token', {
+	const tokenRes = await fetchUpstream('https://api.twitter.com/2/oauth2/token', {
 		method: 'POST',
 		headers: {
 			'content-type': 'application/x-www-form-urlencoded',
@@ -249,7 +250,7 @@ async function handleCallback(req, res) {
 			redirect_uri: `${env.APP_ORIGIN}/api/auth/x/callback`,
 			code_verifier: codeVerifier,
 		}).toString(),
-	});
+	}, { name: 'x-api', timeoutMs: 15_000, attempts: 1, okWhen: () => true });
 
 	if (!tokenRes.ok) {
 		console.error('[x-oauth] token exchange failed', await tokenRes.text());
@@ -270,10 +271,7 @@ async function handleCallback(req, res) {
 	const expiresAt = new Date(Date.now() + (expires_in ?? 7200) * 1000).toISOString();
 
 	// Fetch X profile
-	const profileRes = await fetch(
-		'https://api.twitter.com/2/users/me?user.fields=name,username,description,public_metrics',
-		{ headers: { authorization: `Bearer ${access_token}` } },
-	);
+	const profileRes = await fetchUpstream('https://api.twitter.com/2/users/me?user.fields=name,username,description,public_metrics', { headers: { authorization: `Bearer ${access_token}` } }, { name: 'x-api', timeoutMs: 15_000, attempts: 2, okWhen: () => true });
 	if (!profileRes.ok) {
 		console.error('[x-oauth] profile fetch failed', await profileRes.text());
 		return redirect(res, errorRedirect);

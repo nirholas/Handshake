@@ -2,8 +2,8 @@
  * Client-side SOL/USD price helper — single source of truth for USD equivalents.
  *
  * USDC: treated as exactly $1 (it's a dollar-pegged stablecoin).
- * SOL:  four free, CORS-enabled feeds tried in order via the shared failover-
- *       fetch (Jupiter → CoinGecko → Coinbase → DefiLlama), cached 60 s. No
+ * SOL:  five free, CORS-enabled feeds tried in order via the shared failover-
+ *       fetch (Jupiter → CoinGecko → Coinbase → DefiLlama → Kraken), cached 60 s. No
  *       single feed is a point of failure — mirrors the server-side
  *       api/_lib/sol-price.js chain, limited here to browser-CORS-safe hosts.
  *
@@ -22,8 +22,8 @@ const asPrice = (v) => {
 };
 
 // Ordered, all keyless and CORS-enabled (Access-Control-Allow-Origin: *), so
-// they work from the browser. Kraken/Bitfinex are omitted here (no CORS header)
-// though the server chain uses them.
+// they work from the browser. Bitfinex is omitted here (no CORS header) though
+// the server chain uses it; Kraken's public Ticker does send the header.
 const SOL_FEEDS = [
 	{
 		name: 'jupiter',
@@ -47,6 +47,12 @@ const SOL_FEEDS = [
 		name: 'llama',
 		url: `https://coins.llama.fi/prices/current/solana:${SOL_MINT}`,
 		parse: async (r) => asPrice((await r.json())?.coins?.[`solana:${SOL_MINT}`]?.price),
+	},
+	{
+		name: 'kraken',
+		url: 'https://api.kraken.com/0/public/Ticker?pair=SOLUSD',
+		// `c` is [last trade price, lot volume].
+		parse: async (r) => asPrice((await r.json())?.result?.SOLUSD?.c?.[0]),
 	},
 ];
 

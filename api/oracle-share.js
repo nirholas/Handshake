@@ -22,6 +22,8 @@ import { cors, method, wrap } from './_lib/http.js';
 import { env } from './_lib/env.js';
 import { terminalLinks } from '../src/shared/trading-terminals.js';
 import { hitRateFor } from './_lib/oracle/conviction.js';
+import { pumpFetchJson } from './_lib/pump-feed-fetch.js';
+import { fetchUpstreamJson } from './_lib/upstream-fetch.js';
 
 const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const PUMP_V3 = 'https://frontend-api-v3.pump.fun';
@@ -115,17 +117,59 @@ export default wrap(async (req, res) => {
 });
 
 // Real pump.fun identity + bonding-curve snapshot for a mint. Keyless public
-// endpoint; mirrors the pump branch of api/_lib/oracle/market.js. Returns null on
-// any failure so the caller degrades gracefully.
+// endpoint; mirrors the pump branch of api/_lib/oracle/market.js. When pump.fun
+// does not answer, DexScreener's pair listing carries the identity fields the
+// share card renders (symbol, name, image, market cap, age, graduation), so the
+// card still names the coin instead of falling back to a bare mint. Returns null
+// only when both are down.
 async function fetchPumpIdentity(mint) {
+	const pump = await fetchPumpIdentityLive(mint);
+	if (pump) return pump;
+	return fetchDexScreenerIdentity(mint);
+}
+
+async function fetchDexScreenerIdentity(mint) {
 	try {
-		const r = await fetch(`${PUMP_V3}/coins-v2/${mint}`, {
-			headers: { accept: 'application/json' },
-			signal: AbortSignal.timeout(3500),
+		const data = await fetchUpstreamJson(`https://api.dexscreener.com/latest/dex/tokens/${mint}`, {}, {
+			timeoutMs: 3500, attempts: 2, name: 'dexscreener', label: 'dexscreener',
 		});
-		if (!r.ok) return null;
-		const d = await r.json();
-		if (!d || !d.mint) return null;
+		const pairs = (Array.isArray(data?.pairs) ? data.pairs : []).filter((p) => p?.chainId === 'solana');
+		if (!pairs.length) return null;
+		pairs.sort((a, b) => (b.liquidity?.usd ?? 0) - (a.liquidity?.usd ?? 0));
+		const p = pairs[0];
+		const socials = Array.isArray(p.info?.socials) ? p.info.socials : [];
+		const social = (type) => socials.find((s) => s?.type === type)?.url || null;
+		const mcap = Number(p.marketCap ?? p.fdv);
+		return {
+			symbol: p.baseToken?.symbol || null,
+			name: p.baseToken?.name || null,
+			image: p.info?.imageUrl || null,
+			description: null,
+			creator: null,
+			created_at: Number.isFinite(Number(p.pairCreatedAt)) ? new Date(Number(p.pairCreatedAt)).toISOString() : null,
+			// A pump.fun coin still on its curve trades on the "pumpfun" dex; any
+			// other venue means it has graduated.
+			complete: p.dexId !== 'pumpfun',
+			bonding_curve_pct: p.dexId !== 'pumpfun' ? 100 : null,
+			real_sol_reserves: null,
+			reply_count: null,
+			is_live: false,
+			market_cap_usd: Number.isFinite(mcap) && mcap > 0 ? mcap : null,
+			links: {
+				website: Array.isArray(p.info?.websites) ? p.info.websites[0]?.url || null : null,
+				twitter: social('twitter'),
+				telegram: social('telegram'),
+			},
+		};
+	} catch {
+		return null;
+	}
+}
+
+async function fetchPumpIdentityLive(mint) {
+	try {
+		const { ok, body: d } = await pumpFetchJson(`${PUMP_V3}/coins-v2/${mint}`, { timeoutMs: 3500, retries: 1 });
+		if (!ok || !d || !d.mint) return null;
 		const complete = Boolean(d.complete);
 		const realTok = Number(d.real_token_reserves);
 		let bondingPct = complete ? 100 : null;

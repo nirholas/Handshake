@@ -24,6 +24,15 @@
 
 import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
+import { fetchUpstream } from './_lib/upstream-fetch.js';
+
+// The worker is a Cloud Run service reached over public HTTPS: a submit is
+// not idempotent (it starts a GPU job), so it gets one attempt and a long
+// deadline; a job read is idempotent and retried. Both share one breaker so a
+// dead worker fails fast for every caller instead of each paying the deadline.
+const WORKER_BREAKER = 'garment-forge-worker';
+const GENERATE_TIMEOUT_MS = 60_000;
+const JOB_TIMEOUT_MS = 10_000;
 
 const GARMENT_SLOTS = [
 	'top', 'bottom', 'footwear', 'outerwear', 'hair', 'headwear', 'glasses', 'accessory',
@@ -69,14 +78,14 @@ async function startJob(req, res, cfg) {
 		});
 	}
 
-	const upstream = await fetch(`${cfg.base}/generate`, {
+	const upstream = await fetchUpstream(`${cfg.base}/generate`, {
 		method: 'POST',
 		headers: {
 			authorization: `Bearer ${cfg.key}`,
 			'content-type': 'application/json',
 		},
 		body: JSON.stringify({ prompt, slot }),
-	}).catch(() => null);
+	}, { name: WORKER_BREAKER, timeoutMs: GENERATE_TIMEOUT_MS, attempts: 1, okWhen: () => true }).catch(() => null);
 	if (!upstream || !upstream.ok) {
 		return json(res, 502, {
 			error: 'garment_forge_unavailable',
@@ -98,9 +107,9 @@ async function pollJob(req, res, cfg, jobId) {
 	const rl = await limits.mcp3dStatus(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	const upstream = await fetch(`${cfg.base}/jobs/${jobId}`, {
+	const upstream = await fetchUpstream(`${cfg.base}/jobs/${jobId}`, {
 		headers: { authorization: `Bearer ${cfg.key}` },
-	}).catch(() => null);
+	}, { name: WORKER_BREAKER, timeoutMs: JOB_TIMEOUT_MS, attempts: 3, okWhen: () => true }).catch(() => null);
 	if (!upstream) {
 		return json(res, 502, { error: 'garment_forge_unavailable', message: 'Worker unreachable.' });
 	}

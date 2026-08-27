@@ -17,6 +17,7 @@ import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { AbiCoder, getAddress, keccak256, toUtf8Bytes } from 'ethers';
 import { z } from 'zod';
 
+import { fetchUpstream } from '../../_lib/upstream-fetch.js';
 // ── prep ──────────────────────────────────────────────────────────────────────
 
 const prepSchema = z.object({
@@ -51,11 +52,11 @@ async function pinRegistrationJson(jsonObj) {
 	const web3Token = process.env.WEB3_STORAGE_TOKEN;
 	if (web3Token) {
 		try {
-			const res = await fetch('https://api.web3.storage/upload', {
+			const res = await fetchUpstream('https://api.web3.storage/upload', {
 				method: 'POST',
 				headers: { Authorization: `Bearer ${web3Token}` },
 				body: jsonBytes,
-			});
+			}, { timeoutMs: 60_000, attempts: 2, okWhen: () => true });
 			if (res.ok) {
 				const r = await res.json();
 				if (r.cid) {
@@ -76,11 +77,11 @@ async function pinRegistrationJson(jsonObj) {
 		try {
 			const form = new FormData();
 			form.append('file', new Blob([jsonBytes], { type: 'application/json' }), 'agent-manifest.json');
-			const res = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+			const res = await fetchUpstream('https://api.pinata.cloud/pinning/pinFileToIPFS', {
 				method: 'POST',
 				headers: { Authorization: `Bearer ${pinataJwt}` },
 				body: form,
-			});
+			}, { timeoutMs: 60_000, attempts: 2, okWhen: () => true });
 			if (res.ok) {
 				const r = await res.json();
 				if (r.IpfsHash) {

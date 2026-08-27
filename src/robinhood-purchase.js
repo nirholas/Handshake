@@ -87,7 +87,15 @@ const ERC20_ABI = [
 
 let publicClient;
 function getPublicClient() {
-	if (!publicClient) publicClient = createPublicClient({ chain: HOOD_MAINNET, transport: http() });
+	// Robinhood Chain (4663) is not in the server failover table, so there is no
+	// same-origin proxy rung for it; the vendor RPC is the chain, with a bounded
+	// per-call timeout and two retries instead of viem's open-ended defaults.
+	if (!publicClient) {
+		publicClient = createPublicClient({
+			chain: HOOD_MAINNET,
+			transport: http(undefined, { timeout: 10_000, retryCount: 2 }),
+		});
+	}
 	return publicClient;
 }
 

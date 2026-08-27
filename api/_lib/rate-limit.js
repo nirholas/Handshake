@@ -1382,6 +1382,12 @@ export const limits = {
 	solanaRpcIp: (ip) => getLimiter('solana-rpc:ip', { limit: 120, window: '1 m' }).limit(ip),
 	solanaRpcGlobal: () =>
 		getLimiter('solana-rpc:global', { limit: 12000, window: '1 h' }).limit('global'),
+	// Browser EVM JSON-RPC proxy (api/evm-rpc). Same shape as the Solana proxy:
+	// the chain may front a keyed Alchemy upstream, so cap per-IP burst and add a
+	// global hourly ceiling as the hard cost cap.
+	evmRpcIp: (ip) => getLimiter('evm-rpc:ip', { limit: 120, window: '1 m' }).limit(ip),
+	evmRpcGlobal: () =>
+		getLimiter('evm-rpc:global', { limit: 12000, window: '1 h' }).limit('global'),
 		// Helius DAS / enhanced-API endpoints (nft/resolve getAsset, tx/explain
 		// enhanced-tx, live holder cohorts getTokenAccounts). DAS is billed at a far
 		// higher credit multiplier than plain RPC, and these are public. Per-endpoint

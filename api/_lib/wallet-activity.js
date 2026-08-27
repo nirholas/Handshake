@@ -19,6 +19,7 @@ import { getBalances } from './balances.js';
 import { cacheWrap } from './cache.js';
 import { env } from './env.js';
 
+import { fetchUpstream } from './upstream-fetch.js';
 const DAY_MS = 86_400_000;
 const ACTIVITY_TTL_S = 3600;
 
@@ -113,10 +114,10 @@ export async function solanaWalletActivity(address) {
 async function etherscan(chainid, params) {
 	const key = env.ETHERSCAN_API_KEY;
 	const qs = new URLSearchParams({ ...params, chainid: String(chainid), apikey: key });
-	const r = await fetch(`${ETHERSCAN_V2}?${qs}`, {
+	const r = await fetchUpstream(`${ETHERSCAN_V2}?${qs}`, {
 		headers: { accept: 'application/json' },
 		signal: AbortSignal.timeout(15_000),
-	});
+	}, { name: 'etherscan', timeoutMs: 15_000, attempts: 2, okWhen: () => true });
 	if (!r.ok) return [];
 	const data = await r.json().catch(() => null);
 	// status "0" with "No transactions found" is a real empty answer, not an error.

@@ -15,6 +15,8 @@ import { installAccessControl } from '../_lib/x402/access-control.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { priceFor } from '../_lib/x402-prices.js';
 import listing from '../_lib/service-catalog/services/stablecoin-health.js';
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
+import { cacheWrapLastGood } from '../_lib/cache.js';
 
 const ROUTE = '/api/x402/stablecoin-health';
 const DESCRIPTION = listing.description;
@@ -23,6 +25,11 @@ const TTL_MS = 300_000;
 const DRIFT_BPS = 25;
 const DEPEG_BPS = 100;
 
+// A paid call refuses before settlement when its upstream is down, so the buyer
+// is never charged for nothing. That is right for a cold start and wrong for a
+// blip: the shared last-good copy below serves a recent board through a short
+// outage and the pre-settle 503 fires only when there has never been data.
+const STALE_TTL_S = 15 * 60;
 let _cache = null; // { coins, totalCirculating, expiresAt }
 
 const finite = (n) => (Number.isFinite(n) ? n : null);
@@ -74,12 +81,17 @@ export function toCoin(a) {
 async function loadStablecoins() {
 	const now = Date.now();
 	if (_cache && _cache.expiresAt > now) return _cache;
+	const { coins, totalCirculating } = await cacheWrapLastGood(
+		'x402:stablecoin-health', TTL_MS / 1000, buildStablecoins, { staleTtlSeconds: STALE_TTL_S },
+	);
+	_cache = { coins, totalCirculating, expiresAt: now + TTL_MS };
+	return _cache;
+}
 
-	const r = await fetch('https://stablecoins.llama.fi/stablecoins?includePrices=true', {
+async function buildStablecoins() {
+	const r = await fetchUpstream('https://stablecoins.llama.fi/stablecoins?includePrices=true', {
 		headers: { accept: 'application/json', 'user-agent': 'three.ws/1.0' },
-		signal: AbortSignal.timeout(10_000),
-	});
-	if (!r.ok) throw new Error(`llama stablecoins ${r.status}`);
+	}, { timeoutMs: 10_000, attempts: 2, label: 'llama stablecoins' });
 	const raw = await r.json();
 	if (!Array.isArray(raw?.peggedAssets)) throw new Error('unexpected upstream shape');
 
@@ -92,9 +104,7 @@ async function loadStablecoins() {
 		coins.push(coin);
 	}
 	coins.sort((a, b) => b.circulating_usd - a.circulating_usd);
-
-	_cache = { coins, totalCirculating, expiresAt: now + TTL_MS };
-	return _cache;
+	return { coins, totalCirculating };
 }
 
 export const INPUT_SCHEMA = {

@@ -14,7 +14,11 @@ import { REGISTRY_DEPLOYMENTS } from './abi.js';
  * @property {string} short       Short label (e.g. "BSC", "Base").
  * @property {string} symbol      Native token symbol.
  * @property {string} explorer    Block explorer base URL (no trailing slash).
- * @property {string} rpc         Public RPC URL (used for read-only calls).
+ * @property {string} rpc         First public RPC URL (wallet_addEthereumChain and legacy single-URL callers).
+ * @property {string[]} rpcUrls   Ordered keyless public RPC hosts; the same-origin
+ *                                /api/evm-rpc proxy is prepended at runtime by
+ *                                src/shared/evm-rpc-fallback.js. Never a host the
+ *                                server chain demotes (eth.llamarpc.com).
  * @property {'mainnet'|'testnet'} kind
  */
 
@@ -27,7 +31,12 @@ export const CHAIN_INFO = {
 		short: 'ETH',
 		symbol: 'ETH',
 		explorer: 'https://etherscan.io',
-		rpc: 'https://eth.llamarpc.com',
+		rpc: 'https://ethereum-rpc.publicnode.com',
+		rpcUrls: [
+			'https://ethereum-rpc.publicnode.com',
+			'https://eth.drpc.org',
+			'https://1rpc.io/eth',
+		],
 		kind: 'mainnet',
 	},
 	10: {
@@ -36,7 +45,12 @@ export const CHAIN_INFO = {
 		short: 'OP',
 		symbol: 'ETH',
 		explorer: 'https://optimistic.etherscan.io',
-		rpc: 'https://mainnet.optimism.io',
+		rpc: 'https://optimism-rpc.publicnode.com',
+		rpcUrls: [
+			'https://optimism-rpc.publicnode.com',
+			'https://mainnet.optimism.io',
+			'https://optimism.drpc.org',
+		],
 		kind: 'mainnet',
 	},
 	56: {
@@ -45,7 +59,12 @@ export const CHAIN_INFO = {
 		short: 'BSC',
 		symbol: 'BNB',
 		explorer: 'https://bscscan.com',
-		rpc: 'https://bsc-dataseed.bnbchain.org',
+		rpc: 'https://bsc-rpc.publicnode.com',
+		rpcUrls: [
+			'https://bsc-rpc.publicnode.com',
+			'https://bsc-dataseed.bnbchain.org',
+			'https://bsc.drpc.org',
+		],
 		kind: 'mainnet',
 	},
 	100: {
@@ -54,7 +73,12 @@ export const CHAIN_INFO = {
 		short: 'GNO',
 		symbol: 'xDAI',
 		explorer: 'https://gnosisscan.io',
-		rpc: 'https://rpc.gnosischain.com',
+		rpc: 'https://gnosis-rpc.publicnode.com',
+		rpcUrls: [
+			'https://gnosis-rpc.publicnode.com',
+			'https://rpc.gnosischain.com',
+			'https://gnosis.drpc.org',
+		],
 		kind: 'mainnet',
 	},
 	137: {
@@ -63,7 +87,12 @@ export const CHAIN_INFO = {
 		short: 'MATIC',
 		symbol: 'POL',
 		explorer: 'https://polygonscan.com',
-		rpc: 'https://polygon-rpc.com',
+		rpc: 'https://polygon-bor-rpc.publicnode.com',
+		rpcUrls: [
+			'https://polygon-bor-rpc.publicnode.com',
+			'https://polygon-rpc.com',
+			'https://polygon.drpc.org',
+		],
 		kind: 'mainnet',
 	},
 	250: {
@@ -72,7 +101,12 @@ export const CHAIN_INFO = {
 		short: 'FTM',
 		symbol: 'FTM',
 		explorer: 'https://ftmscan.com',
-		rpc: 'https://rpc.ftm.tools',
+		rpc: 'https://fantom-rpc.publicnode.com',
+		rpcUrls: [
+			'https://fantom-rpc.publicnode.com',
+			'https://rpc.ftm.tools',
+			'https://fantom.drpc.org',
+		],
 		kind: 'mainnet',
 	},
 	324: {
@@ -82,6 +116,11 @@ export const CHAIN_INFO = {
 		symbol: 'ETH',
 		explorer: 'https://explorer.zksync.io',
 		rpc: 'https://mainnet.era.zksync.io',
+		rpcUrls: [
+			'https://mainnet.era.zksync.io',
+			'https://zksync.drpc.org',
+			'https://1rpc.io/zksync2-era',
+		],
 		kind: 'mainnet',
 	},
 	1284: {
@@ -91,6 +130,11 @@ export const CHAIN_INFO = {
 		symbol: 'GLMR',
 		explorer: 'https://moonscan.io',
 		rpc: 'https://rpc.api.moonbeam.network',
+		rpcUrls: [
+			'https://rpc.api.moonbeam.network',
+			'https://moonbeam-rpc.publicnode.com',
+			'https://moonbeam.drpc.org',
+		],
 		kind: 'mainnet',
 	},
 	5000: {
@@ -100,6 +144,11 @@ export const CHAIN_INFO = {
 		symbol: 'MNT',
 		explorer: 'https://explorer.mantle.xyz',
 		rpc: 'https://rpc.mantle.xyz',
+		rpcUrls: [
+			'https://rpc.mantle.xyz',
+			'https://mantle-rpc.publicnode.com',
+			'https://mantle.drpc.org',
+		],
 		kind: 'mainnet',
 	},
 	8453: {
@@ -108,7 +157,12 @@ export const CHAIN_INFO = {
 		short: 'BASE',
 		symbol: 'ETH',
 		explorer: 'https://basescan.org',
-		rpc: 'https://mainnet.base.org',
+		rpc: 'https://base-rpc.publicnode.com',
+		rpcUrls: [
+			'https://base-rpc.publicnode.com',
+			'https://mainnet.base.org',
+			'https://base.drpc.org',
+		],
 		kind: 'mainnet',
 	},
 	42161: {
@@ -117,7 +171,12 @@ export const CHAIN_INFO = {
 		short: 'ARB',
 		symbol: 'ETH',
 		explorer: 'https://arbiscan.io',
-		rpc: 'https://arb1.arbitrum.io/rpc',
+		rpc: 'https://arbitrum-one-rpc.publicnode.com',
+		rpcUrls: [
+			'https://arbitrum-one-rpc.publicnode.com',
+			'https://arb1.arbitrum.io/rpc',
+			'https://arbitrum.drpc.org',
+		],
 		kind: 'mainnet',
 	},
 	42220: {
@@ -127,6 +186,11 @@ export const CHAIN_INFO = {
 		symbol: 'CELO',
 		explorer: 'https://celoscan.io',
 		rpc: 'https://forno.celo.org',
+		rpcUrls: [
+			'https://forno.celo.org',
+			'https://celo.drpc.org',
+			'https://1rpc.io/celo',
+		],
 		kind: 'mainnet',
 	},
 	43114: {
@@ -135,7 +199,12 @@ export const CHAIN_INFO = {
 		short: 'AVAX',
 		symbol: 'AVAX',
 		explorer: 'https://snowtrace.io',
-		rpc: 'https://api.avax.network/ext/bc/C/rpc',
+		rpc: 'https://avalanche-c-chain-rpc.publicnode.com',
+		rpcUrls: [
+			'https://avalanche-c-chain-rpc.publicnode.com',
+			'https://api.avax.network/ext/bc/C/rpc',
+			'https://avalanche.drpc.org',
+		],
 		kind: 'mainnet',
 	},
 	59144: {
@@ -145,6 +214,11 @@ export const CHAIN_INFO = {
 		symbol: 'ETH',
 		explorer: 'https://lineascan.build',
 		rpc: 'https://rpc.linea.build',
+		rpcUrls: [
+			'https://rpc.linea.build',
+			'https://linea-rpc.publicnode.com',
+			'https://linea.drpc.org',
+		],
 		kind: 'mainnet',
 	},
 	534352: {
@@ -154,6 +228,11 @@ export const CHAIN_INFO = {
 		symbol: 'ETH',
 		explorer: 'https://scrollscan.com',
 		rpc: 'https://rpc.scroll.io',
+		rpcUrls: [
+			'https://rpc.scroll.io',
+			'https://scroll-rpc.publicnode.com',
+			'https://scroll.drpc.org',
+		],
 		kind: 'mainnet',
 	},
 
@@ -164,7 +243,12 @@ export const CHAIN_INFO = {
 		short: 'tBSC',
 		symbol: 'tBNB',
 		explorer: 'https://testnet.bscscan.com',
-		rpc: 'https://data-seed-prebsc-1-s1.bnbchain.org:8545',
+		rpc: 'https://bsc-testnet-rpc.publicnode.com',
+		rpcUrls: [
+			'https://bsc-testnet-rpc.publicnode.com',
+			'https://data-seed-prebsc-1-s1.bnbchain.org:8545',
+			'https://bsc-testnet.drpc.org',
+		],
 		kind: 'testnet',
 	},
 	11155111: {
@@ -173,7 +257,12 @@ export const CHAIN_INFO = {
 		short: 'SEP',
 		symbol: 'ETH',
 		explorer: 'https://sepolia.etherscan.io',
-		rpc: 'https://rpc.sepolia.org',
+		rpc: 'https://ethereum-sepolia-rpc.publicnode.com',
+		rpcUrls: [
+			'https://ethereum-sepolia-rpc.publicnode.com',
+			'https://rpc.sepolia.org',
+			'https://sepolia.drpc.org',
+		],
 		kind: 'testnet',
 	},
 	84532: {
@@ -182,7 +271,12 @@ export const CHAIN_INFO = {
 		short: 'baseSep',
 		symbol: 'ETH',
 		explorer: 'https://sepolia.basescan.org',
-		rpc: 'https://sepolia.base.org',
+		rpc: 'https://base-sepolia-rpc.publicnode.com',
+		rpcUrls: [
+			'https://base-sepolia-rpc.publicnode.com',
+			'https://sepolia.base.org',
+			'https://base-sepolia.drpc.org',
+		],
 		kind: 'testnet',
 	},
 	421614: {
@@ -191,7 +285,12 @@ export const CHAIN_INFO = {
 		short: 'arbSep',
 		symbol: 'ETH',
 		explorer: 'https://sepolia.arbiscan.io',
-		rpc: 'https://sepolia-rollup.arbitrum.io/rpc',
+		rpc: 'https://arbitrum-sepolia-rpc.publicnode.com',
+		rpcUrls: [
+			'https://arbitrum-sepolia-rpc.publicnode.com',
+			'https://sepolia-rollup.arbitrum.io/rpc',
+			'https://arbitrum-sepolia.drpc.org',
+		],
 		kind: 'testnet',
 	},
 	11155420: {
@@ -200,7 +299,12 @@ export const CHAIN_INFO = {
 		short: 'opSep',
 		symbol: 'ETH',
 		explorer: 'https://sepolia-optimism.etherscan.io',
-		rpc: 'https://sepolia.optimism.io',
+		rpc: 'https://optimism-sepolia-rpc.publicnode.com',
+		rpcUrls: [
+			'https://optimism-sepolia-rpc.publicnode.com',
+			'https://sepolia.optimism.io',
+			'https://optimism-sepolia.drpc.org',
+		],
 		kind: 'testnet',
 	},
 	80002: {
@@ -209,7 +313,12 @@ export const CHAIN_INFO = {
 		short: 'Amoy',
 		symbol: 'POL',
 		explorer: 'https://amoy.polygonscan.com',
-		rpc: 'https://rpc-amoy.polygon.technology',
+		rpc: 'https://polygon-amoy-bor-rpc.publicnode.com',
+		rpcUrls: [
+			'https://polygon-amoy-bor-rpc.publicnode.com',
+			'https://rpc-amoy.polygon.technology',
+			'https://polygon-amoy.drpc.org',
+		],
 		kind: 'testnet',
 	},
 	43113: {
@@ -218,7 +327,12 @@ export const CHAIN_INFO = {
 		short: 'Fuji',
 		symbol: 'AVAX',
 		explorer: 'https://testnet.snowtrace.io',
-		rpc: 'https://api.avax-test.network/ext/bc/C/rpc',
+		rpc: 'https://avalanche-fuji-c-chain-rpc.publicnode.com',
+		rpcUrls: [
+			'https://avalanche-fuji-c-chain-rpc.publicnode.com',
+			'https://api.avax-test.network/ext/bc/C/rpc',
+			'https://avalanche-fuji.drpc.org',
+		],
 		kind: 'testnet',
 	},
 };

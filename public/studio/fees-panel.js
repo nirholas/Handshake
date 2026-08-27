@@ -101,9 +101,20 @@ function detectWallet() {
 	return window.phantom?.solana || window.solana || window.backpack || window.solflare || null;
 }
 
+// web3.js comes from the first reachable CDN (esm.sh, jsdelivr, unpkg) under
+// a deadline; a total miss throws a message friendlyError() passes through.
 let _web3;
 async function loadWeb3() {
-	if (!_web3) _web3 = await import('https://esm.sh/@solana/web3.js@1.98.4');
+	if (_web3) return _web3;
+	const { loadModule } = await import('../load-module.js');
+	try {
+		_web3 = await loadModule('https://esm.sh/@solana/web3.js@1.98.4');
+	} catch (err) {
+		if (err?.code === 'module_unavailable') {
+			throw new Error(`The Solana component could not be loaded (${err.hosts.join(', ')} unreachable or blocked). Check your connection or ad blocker and try again.`);
+		}
+		throw err;
+	}
 	return _web3;
 }
 

@@ -5,6 +5,7 @@
 //        <div id="agent3d" data-agent-id="123"></div>
 
 import { log } from '../shared/log.js';
+import { loadModule } from '../shared/load-module.js';
 (async function initArtifact() {
 	const container = document.getElementById('agent3d');
 	if (!container) return;
@@ -46,14 +47,20 @@ import { log } from '../shared/log.js';
 	}
 
 	try {
-		// Load three.js modules from CDN
-		const THREE = await import('https://esm.sh/three@0.176.0');
-		const { GLTFLoader } = await import(
-			'https://esm.sh/three@0.176.0/examples/jsm/loaders/GLTFLoader.js'
-		);
-		const { OrbitControls } = await import(
-			'https://esm.sh/three@0.176.0/examples/jsm/controls/OrbitControls.js'
-		);
+		// Load three.js modules from CDN. Each import races a deadline across
+		// esm.sh, jsdelivr and unpkg; a total miss lands in the caption below.
+		let THREE;
+		let GLTFLoader;
+		let OrbitControls;
+		try {
+			THREE = await loadModule('https://esm.sh/three@0.176.0');
+			({ GLTFLoader } = await loadModule('https://esm.sh/three@0.176.0/examples/jsm/loaders/GLTFLoader.js'));
+			({ OrbitControls } = await loadModule('https://esm.sh/three@0.176.0/examples/jsm/controls/OrbitControls.js'));
+		} catch (err) {
+			log.warn('[artifact] three.js unavailable', err);
+			caption.textContent = 'The 3D viewer could not be loaded: its library is blocked or unreachable here. Open this agent on three.ws to see it in 3D.';
+			return;
+		}
 
 		// Fetch agent data
 		const agentRes = await fetch(`${origin}/api/agents/${agentId}`, {

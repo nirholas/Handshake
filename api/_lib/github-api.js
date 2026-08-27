@@ -4,6 +4,8 @@
 // Upstream failures are tagged with `status` so wrap() reports them as 502
 // upstream errors rather than as our own 500.
 
+import { fetchUpstream } from './upstream-fetch.js';
+
 const API = 'https://api.github.com';
 const UA = 'three.ws/1.0';
 const TIMEOUT_MS = 15_000;
@@ -22,10 +24,10 @@ function upstream(message, status = 502) {
 }
 
 async function ghJson(path, token) {
-	const res = await fetch(`${API}${path}`, {
+	const res = await fetchUpstream(`${API}${path}`, {
 		headers: headers(token),
 		signal: AbortSignal.timeout(TIMEOUT_MS),
-	});
+	}, { name: 'github', timeoutMs: 10_000, attempts: 2, okWhen: () => true });
 	if (res.status === 401) throw upstream('GitHub rejected the stored token', 401);
 	if (!res.ok) throw upstream(`GitHub ${path} failed: ${res.status}`);
 	return res.json();
@@ -44,10 +46,10 @@ export function fetchProfile(token) {
  * an upstream outage to report.
  */
 export async function verifyToken(token) {
-	const res = await fetch(`${API}/user`, {
+	const res = await fetchUpstream(`${API}/user`, {
 		headers: headers(token),
 		signal: AbortSignal.timeout(TIMEOUT_MS),
-	});
+	}, { name: 'github', timeoutMs: 10_000, attempts: 2, okWhen: () => true });
 	if (res.status === 401 || res.status === 403) return { valid: false, status: res.status };
 	if (!res.ok) throw upstream(`GitHub token check failed: ${res.status}`);
 	const profile = await res.json();
@@ -84,12 +86,12 @@ const PINNED_QUERY = `query($login:String!){
  * empty pin list rather than failing the whole catalog.
  */
 export async function fetchPinnedRepos(token, login) {
-	const res = await fetch(`${API}/graphql`, {
+	const res = await fetchUpstream(`${API}/graphql`, {
 		method: 'POST',
 		headers: { ...headers(token), 'content-type': 'application/json' },
 		body: JSON.stringify({ query: PINNED_QUERY, variables: { login } }),
 		signal: AbortSignal.timeout(TIMEOUT_MS),
-	});
+	}, { name: 'github', timeoutMs: 10_000, attempts: 2, okWhen: () => true });
 	if (!res.ok) return [];
 	const body = await res.json().catch(() => null);
 	const nodes = body?.data?.user?.pinnedItems?.nodes;
@@ -113,10 +115,10 @@ export async function fetchPinnedRepos(token, login) {
  * that do have one.
  */
 export async function fetchReadme(token, repoKey) {
-	const res = await fetch(`${API}/repos/${repoKey}/readme`, {
+	const res = await fetchUpstream(`${API}/repos/${repoKey}/readme`, {
 		headers: headers(token, 'application/vnd.github.raw'),
 		signal: AbortSignal.timeout(TIMEOUT_MS),
-	});
+	}, { name: 'github', timeoutMs: 10_000, attempts: 2, okWhen: () => true });
 	if (res.status === 404) return null;
 	if (!res.ok) throw upstream(`GitHub README fetch failed for ${repoKey}: ${res.status}`);
 	return res.text();
@@ -125,7 +127,7 @@ export async function fetchReadme(token, repoKey) {
 /** Best-effort revocation of our OAuth grant on GitHub's side. */
 export async function revokeGrant(token, clientId, clientSecret) {
 	const creds = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-	const res = await fetch(`${API}/applications/${clientId}/grant`, {
+	const res = await fetchUpstream(`${API}/applications/${clientId}/grant`, {
 		method: 'DELETE',
 		headers: {
 			authorization: `Basic ${creds}`,
@@ -135,6 +137,6 @@ export async function revokeGrant(token, clientId, clientSecret) {
 		},
 		body: JSON.stringify({ access_token: token }),
 		signal: AbortSignal.timeout(TIMEOUT_MS),
-	});
+	}, { name: 'github', timeoutMs: 10_000, attempts: 1, okWhen: () => true });
 	return res.status === 204;
 }

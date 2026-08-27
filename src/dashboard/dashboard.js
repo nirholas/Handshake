@@ -5129,7 +5129,7 @@ async function openQrModal(url, title) {
 
 	const host = overlay.querySelector('#qr-host');
 	try {
-		const mod = await import('https://esm.sh/qrcode@1.5.3');
+		const mod = await import('qrcode');
 		const QRCode = mod.default || mod;
 		const canvas = document.createElement('canvas');
 		await QRCode.toCanvas(canvas, url, {
@@ -5140,7 +5140,9 @@ async function openQrModal(url, title) {
 		host.innerHTML = '';
 		host.appendChild(canvas);
 	} catch (err) {
-		host.innerHTML = `<div style="color:#a33;font-size:12px">QR generation failed: ${esc(err.message || 'error')}</div>`;
+		host.innerHTML =
+			`<div style="color:#a33;font-size:12px;line-height:1.5">The QR code could not be drawn (${esc(err.message || 'error')}). ` +
+			`Use <strong>Copy link</strong> above to share this address instead.</div>`;
 	}
 }
 

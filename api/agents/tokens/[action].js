@@ -49,6 +49,7 @@ import {
 	PLAN_LIMITS,
 } from '../../_lib/agent-token-plan.js';
 
+import { pinToIPFS, ipfsPinningConfigured } from '../../_lib/ipfs-pin.js';
 // Heavy SDKs (Solana web3, Pump.fun, AWS S3 commands) are dynamic-imported
 // inside the handlers that need them. Loading them at module top-level was
 // pushing the function over Vercel's cold-start budget and producing
@@ -545,20 +546,14 @@ async function launchBodyFromPlan(raw, agentId) {
 async function pinTokenMetadata(meta) {
 	const json = buildTokenMetadata(meta);
 	const bytes = Buffer.from(JSON.stringify(json), 'utf-8');
-	const token = process.env.WEB3_STORAGE_TOKEN;
-	if (token) {
+	// Pinata, then web3.storage, each with a deadline and a breaker
+	// (api/_lib/ipfs-pin.js); R2 below is the rung that never fails.
+	if (ipfsPinningConfigured()) {
 		try {
-			const r = await fetch('https://api.web3.storage/upload', {
-				method: 'POST',
-				headers: { Authorization: `Bearer ${token}` },
-				body: bytes,
-			});
-			if (r.ok) {
-				const data = await r.json();
-				if (data.cid) return { cid: data.cid, uri: `ipfs://${data.cid}` };
-			}
+			const pinned = await pinToIPFS(bytes, 'token-metadata.json');
+			if (pinned?.cid) return { cid: pinned.cid, uri: `ipfs://${pinned.cid}` };
 		} catch (e) {
-			console.warn('[token launch-prep] web3.storage pin failed:', e.message);
+			console.warn('[token launch-prep] IPFS pin failed:', e.message);
 		}
 	}
 	const hash = createHash('sha256').update(bytes).digest('hex');

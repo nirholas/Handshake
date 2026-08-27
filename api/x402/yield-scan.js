@@ -16,6 +16,8 @@ import { installAccessControl } from '../_lib/x402/access-control.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { priceFor } from '../_lib/x402-prices.js';
 import listing from '../_lib/service-catalog/services/yield-scan.js';
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
+import { cacheWrapLastGood } from '../_lib/cache.js';
 
 const ROUTE = '/api/x402/yield-scan';
 const DESCRIPTION = listing.description;
@@ -24,6 +26,11 @@ const TTL_MS = 600_000;
 const APY_SPIKE_RATIO = 3; // current APY > 3× its 30-day mean → likely transient
 const HIGH_SIGMA = 1; // upstream sigma above this → volatile APY
 
+// A paid call refuses before settlement when its upstream is down, so the buyer
+// is never charged for nothing. That is right for a cold start and wrong for a
+// blip: the shared last-good copy below serves a recent board through a short
+// outage and the pre-settle 503 fires only when there has never been data.
+const STALE_TTL_S = 15 * 60;
 let _cache = null; // { pools, expiresAt }
 
 const finite = (n) => (Number.isFinite(n) ? n : null);
@@ -31,12 +38,15 @@ const finite = (n) => (Number.isFinite(n) ? n : null);
 async function loadPools() {
 	const now = Date.now();
 	if (_cache && _cache.expiresAt > now) return _cache.pools;
+	const pools = await cacheWrapLastGood('x402:yield-scan', TTL_MS / 1000, buildPools, { staleTtlSeconds: STALE_TTL_S });
+	_cache = { pools, expiresAt: now + TTL_MS };
+	return pools;
+}
 
-	const r = await fetch('https://yields.llama.fi/pools', {
+async function buildPools() {
+	const r = await fetchUpstream('https://yields.llama.fi/pools', {
 		headers: { accept: 'application/json', 'user-agent': 'three.ws/1.0' },
-		signal: AbortSignal.timeout(15_000),
-	});
-	if (!r.ok) throw new Error(`llama yields ${r.status}`);
+	}, { timeoutMs: 15_000, attempts: 2, label: 'llama yields' });
 	const raw = await r.json();
 	if (!Array.isArray(raw?.data)) throw new Error('unexpected upstream shape');
 
@@ -59,7 +69,6 @@ async function loadPools() {
 			prediction: typeof p.predictions?.predictedClass === 'string' ? p.predictions.predictedClass : null,
 			outlier: p.outlier === true,
 		}));
-	_cache = { pools, expiresAt: now + TTL_MS };
 	return pools;
 }
 

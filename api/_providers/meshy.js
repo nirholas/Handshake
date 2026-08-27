@@ -17,6 +17,8 @@
 // BYOK only: the caller passes the user's Meshy API key (msy_…). No platform
 // key — when absent, the forge endpoint never reaches this module.
 
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
+
 const MESHY_BASE = 'https://api.meshy.ai';
 
 // Meshy accepts 100–300,000 for target_polycount. Clamp the tier budget into
@@ -63,11 +65,11 @@ export function createMeshyProvider(apiKey) {
 	async function postTask(path, body) {
 		let res;
 		try {
-			res = await fetch(`${MESHY_BASE}${path}`, {
+			res = await fetchUpstream(`${MESHY_BASE}${path}`, {
 				method: 'POST',
 				headers,
 				body: JSON.stringify(body),
-			});
+			}, { name: 'meshy', timeoutMs: 30_000, attempts: 2, okWhen: () => true });
 		} catch (err) {
 			throw Object.assign(new Error(`meshy unreachable: ${err?.message}`), {
 				code: 'provider_unreachable',
@@ -152,7 +154,7 @@ export function createMeshyProvider(apiKey) {
 			if (!base) return { status: 'failed', error: `unknown meshy task kind "${kind}"` };
 			let res;
 			try {
-				res = await fetch(`${MESHY_BASE}${base}/${encodeURIComponent(taskId)}`, { headers });
+				res = await fetchUpstream(`${MESHY_BASE}${base}/${encodeURIComponent(taskId)}`, { headers }, { name: 'meshy', timeoutMs: 15_000, attempts: 2, okWhen: () => true });
 			} catch (err) {
 				return { status: 'running', error: `meshy poll failed: ${err?.message}` };
 			}

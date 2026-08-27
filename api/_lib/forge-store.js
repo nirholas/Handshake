@@ -25,6 +25,7 @@ import { compressGlb } from './glb-compress.js';
 import { classifyModelCategory } from './forge-classify.js';
 import { cleanupGlb } from './glb-cleanup.js';
 import { derivePbrChannels } from './glb-pbr-derive.js';
+import { fetchUpstream } from './upstream-fetch.js';
 
 // Stable, non-secret salt so a leaked DB row can't be trivially reversed to the
 // raw browser-local id. The id is anonymous to begin with; this is hygiene, not
@@ -264,7 +265,9 @@ export async function findByJob({ replicateJobId, clientKey }) {
 // a generation. A hard 404/410 means the file is already gone, so retrying is
 // pointless: fail fast on those and let the caller fall back to the provider URL.
 const COPY_MAX_ATTEMPTS = 3;
-const COPY_RETRY_BASE_MS = 400;
+// A provider delivery blob can be tens of MB; the deadline covers the whole
+// body read, so it is sized for the 64 MB ceiling on a slow origin.
+const COPY_TIMEOUT_MS = 120_000;
 
 // Score, clean, and (optionally) compress a freshly-downloaded GLB before it
 // lands in the bucket. Every step is pure, local, and best-effort: a failure
@@ -341,53 +344,34 @@ function mediaTypeOr(header, fallback) {
 }
 
 async function copyToBucket({ sourceUrl, key, fallbackContentType, maxBytes, computeQuality = false, compress = null, cleanup = false, forceContentType = null }) {
-	let lastErr;
-	for (let attempt = 1; attempt <= COPY_MAX_ATTEMPTS; attempt++) {
-		try {
-			const resp = await fetch(sourceUrl);
-			if (!resp.ok) {
-				const err = new Error(`fetch ${sourceUrl}: ${resp.status}`);
-				err.status = resp.status;
-				// 404/410 = the ephemeral asset has already expired; no retry can recover it.
-				if (resp.status === 404 || resp.status === 410) throw err;
-				// 408/425/429/5xx are transient — retry within the loop.
-				if (attempt < COPY_MAX_ATTEMPTS) { lastErr = err; }
-				else throw err;
-			} else {
-				let buf = Buffer.from(await resp.arrayBuffer());
-				if (buf.length > maxBytes) throw new Error(`asset too large: ${buf.length} bytes`);
-				// forceContentType wins over the upstream header: providers (Replicate
-				// et al.) often serve ephemeral output blobs as `application/octet-stream`
-				// or another generic type regardless of the actual bytes. Trusting that
-				// verbatim into R2's stored Content-Type is what made every homepage
-				// forge thumbnail fail Chrome's Opaque Response Blocking — the browser
-				// won't render a cross-origin <img> whose declared type isn't an image
-				// type. Callers that know the asset kind (e.g. the preview image, whose
-				// extension is already decided by imageExtFor) should force it.
-				const contentType = forceContentType || mediaTypeOr(resp.headers.get('content-type'), fallbackContentType);
-				let quality = null;
-				let compression = null;
-				let cleaned = null;
-				if (computeQuality || compress || cleanup) {
-					const scored = await scoreAndCompress(buf, { computeQuality, compress, cleanup });
-					buf = scored.buf;
-					quality = scored.quality;
-					compression = scored.compression;
-					cleaned = scored.cleaned;
-				}
-				await putObject({ key, body: buf, contentType, metadata: { source: 'forge' } });
-				return { bytes: buf.length, publicUrl: publicUrl(key), quality, compression, cleaned };
-			}
-		} catch (err) {
-			// Permanent (404/410) or too-large: surface immediately. Network errors
-			// (fetch throw) are transient and retried until attempts are exhausted.
-			if (err?.status === 404 || err?.status === 410 || /asset too large/.test(err?.message || '')) throw err;
-			lastErr = err;
-			if (attempt >= COPY_MAX_ATTEMPTS) throw err;
-		}
-		await new Promise((r) => setTimeout(r, COPY_RETRY_BASE_MS * attempt));
+	// fetchUpstream retries network errors and 408/425/429/5xx with jittered
+	// backoff and gives up immediately on 404/410 (the ephemeral asset has
+	// already expired; no retry can recover it), rejecting with an error that
+	// carries `status` so callers keep classifying it the same way.
+	const resp = await fetchUpstream(sourceUrl, {}, { timeoutMs: COPY_TIMEOUT_MS, attempts: COPY_MAX_ATTEMPTS, label: 'forge asset copy' });
+	let buf = Buffer.from(await resp.arrayBuffer());
+	if (buf.length > maxBytes) throw new Error(`asset too large: ${buf.length} bytes`);
+	// forceContentType wins over the upstream header: providers (Replicate
+	// et al.) often serve ephemeral output blobs as `application/octet-stream`
+	// or another generic type regardless of the actual bytes. Trusting that
+	// verbatim into R2's stored Content-Type is what made every homepage
+	// forge thumbnail fail Chrome's Opaque Response Blocking — the browser
+	// won't render a cross-origin <img> whose declared type isn't an image
+	// type. Callers that know the asset kind (e.g. the preview image, whose
+	// extension is already decided by imageExtFor) should force it.
+	const contentType = forceContentType || mediaTypeOr(resp.headers.get('content-type'), fallbackContentType);
+	let quality = null;
+	let compression = null;
+	let cleaned = null;
+	if (computeQuality || compress || cleanup) {
+		const scored = await scoreAndCompress(buf, { computeQuality, compress, cleanup });
+		buf = scored.buf;
+		quality = scored.quality;
+		compression = scored.compression;
+		cleaned = scored.cleaned;
 	}
-	throw lastErr;
+	await putObject({ key, body: buf, contentType, metadata: { source: 'forge' } });
+	return { bytes: buf.length, publicUrl: publicUrl(key), quality, compression, cleaned };
 }
 
 function imageExtFor(url) {

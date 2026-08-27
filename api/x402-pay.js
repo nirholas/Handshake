@@ -27,8 +27,9 @@ import {
 import {
 	getAssociatedTokenAddressSync, createTransferCheckedInstruction,
 	createAssociatedTokenAccountIdempotentInstruction,
-	TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, getMint,
+	TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
+import { mintDecimals, ataExists, getRecentBlockhash, isRpcUnavailable, RPC_RETRY_AFTER_SECONDS } from './_lib/solana/read-guards.js';
 import { cors, json, readJson, wrap, rateLimited, setRateLimitHeaders, respondError } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { requireCsrf } from './_lib/csrf.js';
@@ -337,14 +338,17 @@ async function buildSolanaPaymentPayload({ accept, buyer, conn, resourceUrl }) {
 	const receiverAta = getAssociatedTokenAddressSync(
 		mint, payTo, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
 	);
-	const mintInfo = await getMint(conn, mint);
+	// Guarded reads (api/_lib/solana/read-guards.js): USDC decimals never touch the
+	// network, the ATA probe fails open to an idempotent create, and the blockhash
+	// is served from cache inside its validity window when every RPC lane is down.
+	// What still fails throws a typed 503 rpc_unavailable; no funds have moved yet.
+	const decimals = await mintDecimals(conn, mint);
 
 	const ixs = [
 		ComputeBudgetProgram.setComputeUnitLimit({ units: 60_000 }),
 		ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1 }),
 	];
-	const receiverInfo = await conn.getAccountInfo(receiverAta);
-	if (!receiverInfo) {
+	if (!(await ataExists(conn, receiverAta))) {
 		ixs.push(createAssociatedTokenAccountIdempotentInstruction(
 			feePayer, receiverAta, payTo, mint,
 			TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -352,10 +356,10 @@ async function buildSolanaPaymentPayload({ accept, buyer, conn, resourceUrl }) {
 	}
 	ixs.push(createTransferCheckedInstruction(
 		senderAta, mint, receiverAta, buyer.publicKey,
-		amount, mintInfo.decimals, [], TOKEN_PROGRAM_ID,
+		amount, decimals, [], TOKEN_PROGRAM_ID,
 	));
 
-	const { blockhash } = await conn.getLatestBlockhash('confirmed');
+	const blockhash = await getRecentBlockhash(conn, SOLANA_RPC);
 	const message = new TransactionMessage({
 		payerKey: feePayer,
 		recentBlockhash: blockhash,
@@ -880,6 +884,8 @@ function payErrorEnvelope(err) {
 		error_description = 'No payment was attempted, so no funds were transferred from the agent wallet.';
 	} else if (code === 'invalid_payment' || code === 'payment_required' || code === 'builder_code_tampered') {
 		error_description = 'The payment was rejected before settlement; no funds were transferred.';
+	} else if (code === 'rpc_unavailable') {
+		error_description = 'The Solana RPC is temporarily unavailable, so the payment could not be built. No funds were transferred; retry shortly.';
 	}
 	const envelope = {
 		ok: false,
@@ -898,6 +904,12 @@ function payErrorStatus(err) {
 	if (Number.isInteger(err?.status)) return err.status;
 	if (err?.mcpError) return 502;
 	return 500;
+}
+
+// Response headers for a flow error: an RPC outage advertises Retry-After so
+// callers and CDNs back off instead of hammering a dead chain.
+function payErrorHeaders(err) {
+	return isRpcUnavailable(err) ? { 'retry-after': String(RPC_RETRY_AFTER_SECONDS) } : {};
 }
 
 // Buy one of the in-house SHOWCASE_ENDPOINTS from the shared platform wallet and
@@ -964,7 +976,7 @@ async function handleShowcasePay(req, res, input, ip) {
 	try {
 		await runExternalFlow({ ...flowArgs, emit });
 	} catch (err) {
-		return json(res, payErrorStatus(err), payErrorEnvelope(err));
+		return json(res, payErrorStatus(err), payErrorEnvelope(err), payErrorHeaders(err));
 	}
 	return json(res, 200, final);
 }
@@ -1031,7 +1043,7 @@ async function handleExternalPay(req, res, input, ip) {
 				method,
 			});
 		} catch (err) {
-			return json(res, payErrorStatus(err), payErrorEnvelope(err));
+			return json(res, payErrorStatus(err), payErrorEnvelope(err), payErrorHeaders(err));
 		}
 	}
 
@@ -1080,7 +1092,7 @@ async function handleExternalPay(req, res, input, ip) {
 			serviceLabel: typeof input.service_label === 'string' ? input.service_label : null,
 		});
 	} catch (err) {
-		return json(res, payErrorStatus(err), payErrorEnvelope(err));
+		return json(res, payErrorStatus(err), payErrorEnvelope(err), payErrorHeaders(err));
 	}
 	return json(res, 200, final);
 }
@@ -1226,7 +1238,7 @@ export default wrap(async (req, res) => {
 	try {
 		await runFlow({ tool, args, emit, buyer, resourceUrl, spendGuard });
 	} catch (err) {
-		return json(res, payErrorStatus(err), payErrorEnvelope(err));
+		return json(res, payErrorStatus(err), payErrorEnvelope(err), payErrorHeaders(err));
 	}
 	return json(res, 200, final);
 });

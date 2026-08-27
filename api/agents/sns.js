@@ -31,6 +31,7 @@ import { submitProtected } from '../_lib/execution-engine.js';
 import { cors, json, method, error, readJson, rateLimited, serverError } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { env } from '../_lib/env.js';
+import { fetchUpstreamJson } from '../_lib/upstream-fetch.js';
 import { loadAgentForSigning, solanaConnection } from '../_lib/agent-pumpfun.js';
 
 const SNS_API = 'https://sns-api.bonfida.com';
@@ -50,10 +51,11 @@ function normalizeDomain(input) {
 	return trimmed;
 }
 
+// Bonfida's API is the only SNS indexer; on-chain resolution below is the
+// fallback for a single domain, so the indexer call just needs to fail fast
+// (timeout + breaker) rather than hang a profile page on a slow response.
 async function snsFetch(path) {
-	const r = await fetch(`${SNS_API}${path}`, { headers: { accept: 'application/json' } });
-	if (!r.ok) throw new Error(`sns api ${r.status}`);
-	return r.json();
+	return fetchUpstreamJson(`${SNS_API}${path}`, {}, { name: 'bonfida-sns', timeoutMs: 6_000, attempts: 2, label: 'sns api' });
 }
 
 async function fetchOwnedDomains(address) {

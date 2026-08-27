@@ -9,6 +9,7 @@
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { createCache, cached } from '../_lib/mem-cache.js';
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
 
 const UPSTREAM = 'https://api.llama.fi/v2/chains';
 const TTL_MS = 300_000;
@@ -27,11 +28,9 @@ export async function buildChains() {
 async function loadChains() {
 	const now = Date.now();
 
-	const resp = await fetch(UPSTREAM, {
+	const resp = await fetchUpstream(UPSTREAM, {
 		headers: { accept: 'application/json', 'user-agent': 'three.ws/1.0' },
-		signal: AbortSignal.timeout(10_000),
-	});
-	if (!resp.ok) throw new Error(`llama ${resp.status}`);
+	}, { timeoutMs: 10_000, attempts: 2 });
 	const raw = await resp.json();
 	if (!Array.isArray(raw)) throw new Error('unexpected upstream shape');
 
@@ -64,6 +63,14 @@ async function loadChains() {
 	};
 }
 
+// `cached()` serves its last-good copy (without re-populating the fresh slot)
+// when the loader throws, so a fresh miss after a resolved value means the
+// payload is stale. Label it so the page can say so instead of passing it off
+// as live.
+function staleHeaders() {
+	return _cache.has(CACHE_KEY) ? {} : { 'x-three-stale': '1' };
+}
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
@@ -75,6 +82,7 @@ export default wrap(async (req, res) => {
 		const payload = await buildChains();
 		return json(res, 200, payload, {
 			'cache-control': 'public, max-age=120, s-maxage=300, stale-while-revalidate=600',
+			...staleHeaders(),
 		});
 	} catch {
 		return error(

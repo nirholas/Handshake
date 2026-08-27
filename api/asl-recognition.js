@@ -20,6 +20,13 @@
 
 import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
+import { fetchUpstream } from './_lib/upstream-fetch.js';
+
+// One breaker for the worker: the schema read is idempotent and retried, a
+// transcribe is a GPU inference and gets a single attempt with a long deadline.
+const WORKER_BREAKER = 'asl-recognition-worker';
+const SCHEMA_TIMEOUT_MS = 10_000;
+const TRANSCRIBE_TIMEOUT_MS = 60_000;
 
 // 1500 frames × 390 floats serializes to ~10–20 MB; cap the body above that.
 const MAX_BODY_BYTES = 24_000_000;
@@ -54,9 +61,9 @@ export default wrap(async (req, res) => {
 		if (_schemaCache && Date.now() - _schemaAt < SCHEMA_TTL_MS) {
 			return json(res, 200, _schemaCache);
 		}
-		const r = await fetch(`${cfg.base}/schema`, {
+		const r = await fetchUpstream(`${cfg.base}/schema`, {
 			headers: { authorization: `Bearer ${cfg.key}` },
-		});
+		}, { name: WORKER_BREAKER, timeoutMs: SCHEMA_TIMEOUT_MS, attempts: 3, okWhen: () => true });
 		if (!r.ok) return json(res, 502, { error: 'worker_error', status: r.status });
 		_schemaCache = await r.json();
 		_schemaAt = Date.now();
@@ -69,14 +76,14 @@ export default wrap(async (req, res) => {
 	if (!body || !Array.isArray(body.frames)) {
 		return json(res, 400, { error: 'bad_request', message: 'Body must be { frames: [[…]] }.' });
 	}
-	const r = await fetch(`${cfg.base}/transcribe`, {
+	const r = await fetchUpstream(`${cfg.base}/transcribe`, {
 		method: 'POST',
 		headers: {
 			'content-type': 'application/json',
 			authorization: `Bearer ${cfg.key}`,
 		},
 		body: JSON.stringify({ frames: body.frames }),
-	});
+	}, { name: WORKER_BREAKER, timeoutMs: TRANSCRIBE_TIMEOUT_MS, attempts: 1, okWhen: () => true });
 	const out = await r.json().catch(() => ({}));
 	if (!r.ok) {
 		return json(res, r.status === 400 ? 400 : 502, {

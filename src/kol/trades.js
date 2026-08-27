@@ -25,6 +25,9 @@ const HELIUS_TX_API = 'https://api.helius.xyz/v0/addresses';
 const PER_WALLET_LIMIT = 100; // enhanced txns scanned per wallet
 const FETCH_TIMEOUT_MS = 8_000;
 const CACHE_TTL_S = 5; // trades move fast — a few seconds of memo is plenty
+// Last-good tier: the most recent feed a healthy fan-out produced, held long
+// enough to ride out a whole Helius outage. Served marked stale, never silently.
+const LKG_TTL_S = 24 * 3600;
 
 function sourceFromTags(tags = []) {
 	if (tags.includes('whale')) return 'whale';
@@ -63,7 +66,9 @@ async function fetchWalletTxns(wallet, apiKey) {
  * Fetch recent KOL-wallet trades for a mint.
  *
  * @param {{ mint: string, limit?: number }} opts
- * @returns {Promise<{ trades: Array<object>, source: 'helius'|null }>}
+ * @returns {Promise<{ trades: Array<object>, source: 'helius'|null, stale?: true, as_of?: string }>}
+ *   `stale: true` + `as_of` (ISO) mark a last-good feed served because every
+ *   provider lane failed just now; the rows are real, only older.
  *   `source: null` means the feed is unconfigured (no provider key) — an empty
  *   list there is "source off", distinct from a configured source that simply
  *   returned no matching trades. A configured source that *fails* throws (so the
@@ -88,6 +93,7 @@ export async function fetchKolTrades({ mint, limit = 20 } = {}) {
 	}
 
 	const cacheKey = `kol:trades:${mint}:${cap}`;
+	const lkgKey = `kol:trades:lkg:${mint}:${cap}`;
 	const cached = await cacheGet(cacheKey);
 	if (cached) return cached;
 
@@ -98,6 +104,11 @@ export async function fetchKolTrades({ mint, limit = 20 } = {}) {
 	);
 	if (results.length > 0 && results.every((r) => r.status === 'rejected')) {
 		const reason = results[0]?.reason;
+		const lkg = await cacheGet(lkgKey);
+		if (lkg && Array.isArray(lkg.trades) && typeof lkg.at === 'number') {
+			console.warn(`[kol/trades] every Helius lane failed (${reason?.message || 'unknown'}); serving last-good for ${mint}`);
+			return { trades: lkg.trades, source: 'helius', stale: true, as_of: new Date(lkg.at).toISOString() };
+		}
 		throw Object.assign(
 			new Error(`KOL trade provider unavailable: ${reason?.message || 'unknown'}`),
 			{ status: 502, code: 'provider_unavailable' },
@@ -145,5 +156,6 @@ export async function fetchKolTrades({ mint, limit = 20 } = {}) {
 
 	const payload = { trades, source: 'helius' };
 	await cacheSet(cacheKey, payload, CACHE_TTL_S);
+	cacheSet(lkgKey, { trades, at: Date.now() }, LKG_TTL_S).catch(() => {});
 	return payload;
 }

@@ -27,16 +27,13 @@ import { stage as stageGuestAvatar } from '../guest-avatar.js';
 import { openAvatarPicker } from '../avatar-gallery-picker.js';
 import { log } from './log.js';
 
+import { ensureModelViewerOrFallback } from './model-viewer-loader.js';
 const REVIEW_URL = '/create-review';
 
-let _mvLoaded = false;
+// Shared loader: three CDNs, a per-source timeout and a visible fallback on
+// every <model-viewer> in this picker when none of them can be reached.
 function ensureModelViewer() {
-	if (_mvLoaded || customElements.get('model-viewer')) return;
-	_mvLoaded = true;
-	const s = document.createElement('script');
-	s.type = 'module';
-	s.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js';
-	document.head.appendChild(s);
+	ensureModelViewerOrFallback(document);
 }
 
 function esc(s) {

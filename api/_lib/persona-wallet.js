@@ -42,6 +42,7 @@ import { valuateHoldings } from './portfolio.js';
 import { solUsdPrice, explorerAccountUrl, explorerTxUrl } from './avatar-wallet.js';
 import { solanaReputation } from '../_mcp/tools/solana.js';
 import { checkPersonaSpend, recordPersonaSpend, defaultSessionId, PERSONA_SPEND_CAPS } from './persona-spend-ledger.js';
+import { fetchUpstreamJson } from './upstream-fetch.js';
 
 const HMAC_DOMAIN = 'three.ws:persona-wallet:v1:';
 const SNS_API = 'https://sns-api.bonfida.com';
@@ -170,13 +171,10 @@ export async function getPersonaHoldings(address, network = 'mainnet') {
  */
 export async function getPersonaNameplate(address) {
 	try {
-		const r = await fetch(`${SNS_API}/v2/user/fav-domains/${address}`);
-		if (r.ok) {
-			const body = await r.json();
-			const fav = body?.[address] || body?.data?.[address] || null;
-			const name = typeof fav === 'string' ? fav : fav?.domain || fav?.name || null;
-			if (name) return { name: name.endsWith('.sol') ? name : `${name}.sol`, verified: true, source: 'sns' };
-		}
+		const body = await fetchUpstreamJson(`${SNS_API}/v2/user/fav-domains/${address}`, {}, { name: 'bonfida-sns', timeoutMs: 5_000, attempts: 2 });
+		const fav = body?.[address] || body?.data?.[address] || null;
+		const name = typeof fav === 'string' ? fav : fav?.domain || fav?.name || null;
+		if (name) return { name: name.endsWith('.sol') ? name : `${name}.sol`, verified: true, source: 'sns' };
 	} catch { /* best effort */ }
 	return { name: null, verified: false, source: 'sns' };
 }

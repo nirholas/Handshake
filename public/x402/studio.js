@@ -6,6 +6,8 @@
 // endpoints: /api/x402-merchant (settings), /api/x402-skus (products),
 // /api/x402/pay-by-name (USDC sends), /api/sns (name resolution). No mocks.
 
+// Loaded on demand through /load-module.js, which tries esm.sh, jsdelivr and
+// unpkg for this exact version under a deadline each.
 const SOLANA_WEB3 = 'https://esm.sh/@solana/web3.js@1.95.3?bundle';
 const USDC_DECIMALS = 6;
 
@@ -579,7 +581,17 @@ async function sendUsdc() {
 		status.textContent = 'Building transfer…';
 		const { data } = await api('/api/x402/pay-by-name', { method: 'POST', body: { name: to.replace(/^@/, ''), amount_usdc: Number(amt), mode: 'prep', payer_wallet: publicKey.toString() } });
 		status.innerHTML = `Sending <b>${data.amount_usdc} USDC</b> → ${shortAddr(data.recipient?.address)}. Approve in Phantom…`;
-		const web3 = await import(/* @vite-ignore */ SOLANA_WEB3);
+		let web3;
+		try {
+			const { loadModule } = await import('../load-module.js');
+			web3 = await loadModule(SOLANA_WEB3);
+		} catch (err) {
+			status.textContent = err?.code === 'module_unavailable'
+				? `The Solana signing component could not be loaded (${err.hosts.join(', ')} unreachable or blocked). Nothing was sent. Check your connection or ad blocker and try again.`
+				: `Failed: ${err?.message || err}`;
+			btn.disabled = false;
+			return;
+		}
 		const tx = web3.VersionedTransaction.deserialize(b64ToBytes(data.tx_base64));
 		const { signature } = await provider.signAndSendTransaction(tx);
 		status.innerHTML = `✓ Sent. <a href="https://solscan.io/tx/${signature}" target="_blank">View on Solscan ↗</a>`;

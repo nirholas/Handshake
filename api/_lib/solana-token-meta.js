@@ -15,6 +15,7 @@ import {
 	getTokenMetadata,
 } from '@solana/spl-token';
 import { getConnection, solanaPubkey } from './pump.js';
+import { isRpcOutageError, rpcUnavailableError } from './rpc-degrade.js';
 
 const METADATA_PROGRAM = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
 const NAME_MAX = 32;
@@ -36,7 +37,15 @@ async function fetchOnchainMetadata(connection, mintPk) {
 		[Buffer.from('metadata'), METADATA_PROGRAM.toBuffer(), mintPk.toBuffer()],
 		METADATA_PROGRAM,
 	);
-	const info = await connection.getAccountInfo(metadataPda);
+	// Metadata is decoration on top of the mint: an RPC blip here degrades the
+	// name/symbol/uri to null rather than failing the whole read.
+	let info;
+	try {
+		info = await connection.getAccountInfo(metadataPda);
+	} catch (err) {
+		console.warn(`[solana-token-meta] metadata PDA read failed for ${mintPk.toBase58()}: ${err?.message || err}`);
+		return null;
+	}
 	if (!info) return null;
 
 	// Layout: 1 key + 32 updateAuthority + 32 mint + name + symbol + uri.
@@ -70,7 +79,15 @@ async function fetchOnchainMetadata(connection, mintPk) {
  */
 async function fetchToken2022Metadata(connection, mintPk, ownerProgram) {
 	if (ownerProgram !== TOKEN_2022_PROGRAM_ID.toBase58()) return null;
-	const md = await getTokenMetadata(connection, mintPk, undefined, TOKEN_2022_PROGRAM_ID);
+	let md;
+	try {
+		md = await getTokenMetadata(connection, mintPk, undefined, TOKEN_2022_PROGRAM_ID);
+	} catch (err) {
+		// Same soft-null contract as the Metaplex reader: the caller still gets
+		// a token profile, just without the embedded name/symbol/uri.
+		console.warn(`[solana-token-meta] token-2022 metadata read failed for ${mintPk.toBase58()}: ${err?.message || err}`);
+		return null;
+	}
 	if (!md) return null;
 	return {
 		name: (md.name || '').trim(),
@@ -216,7 +233,15 @@ export async function fetchTokenMeta(mint, { network = 'mainnet', includeImage =
 
 	const connection = getConnection({ network });
 
-	const accountInfo = await connection.getAccountInfo(pk);
+	// The mint read is the one hard dependency: without it "not found" cannot be
+	// told apart from "RPC down", so an outage answers a typed retryable 503.
+	let accountInfo;
+	try {
+		accountInfo = await connection.getAccountInfo(pk);
+	} catch (err) {
+		if (isRpcOutageError(err)) throw rpcUnavailableError(`could not read the mint on ${network}: Solana RPC is temporarily unavailable`, err);
+		throw err;
+	}
 	if (!accountInfo) {
 		const err = new Error(`mint account not found on ${network}`);
 		err.code = 'mint_not_found';

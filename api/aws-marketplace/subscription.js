@@ -39,6 +39,7 @@ import {
 	markCustomerStatus,
 } from '../_lib/aws-marketplace-store.js';
 import { env } from '../_lib/env.js';
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
 
 // Delegates to the shared readBody (api/_lib/http.js), which prefers the
 // pre-parsed req.rawBody/req.body the Cloud Run server already captured —
@@ -182,7 +183,8 @@ async function handleSns(req, res, msg) {
 			return json(res, 400, { error: 'invalid_subscribe_url' });
 		}
 		try {
-			await fetch(subscribeUrl);
+			// Confirming is idempotent (the token is single-purpose), so one retry is safe.
+			await fetchUpstream(subscribeUrl, {}, { timeoutMs: 8_000, attempts: 2 });
 		} catch (err) {
 			console.error('[aws-marketplace/subscription] failed to confirm SNS subscription', err?.message);
 		}

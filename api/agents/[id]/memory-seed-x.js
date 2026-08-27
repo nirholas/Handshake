@@ -37,6 +37,7 @@ import { revokeAgentSeedConsent } from '../../_lib/x-seed-consent.js';
 import { X_SEED_REQUIRED_SCOPES, missingScopes } from '../../_lib/x-scopes.js';
 import { decryptToken, encryptToken } from '../../auth/x/[action].js';
 
+import { fetchUpstream } from '../../_lib/upstream-fetch.js';
 // ── Token refresh ─────────────────────────────────────────────────────────────
 
 async function refreshXToken(conn) {
@@ -45,7 +46,7 @@ async function refreshXToken(conn) {
 	const creds = Buffer.from(`${env.X_OAUTH_CLIENT_ID}:${env.X_OAUTH_CLIENT_SECRET}`).toString(
 		'base64',
 	);
-	const res = await fetch('https://api.twitter.com/2/oauth2/token', {
+	const res = await fetchUpstream('https://api.twitter.com/2/oauth2/token', {
 		method: 'POST',
 		headers: {
 			'content-type': 'application/x-www-form-urlencoded',
@@ -56,7 +57,7 @@ async function refreshXToken(conn) {
 			refresh_token: decRefresh,
 			client_id: env.X_OAUTH_CLIENT_ID,
 		}).toString(),
-	});
+	}, { name: 'x-api', timeoutMs: 15_000, attempts: 1, okWhen: () => true });
 	if (!res.ok) {
 		const txt = await res.text();
 		throw Object.assign(new Error('token refresh failed: ' + txt), { status: 502 });
@@ -346,10 +347,7 @@ async function handlePost(req, res, agentId) {
 		);
 	}
 
-	const profileRes = await fetch(
-		'https://api.twitter.com/2/users/me?user.fields=name,username,description,public_metrics',
-		{ headers: { authorization: `Bearer ${accessToken}` } },
-	);
+	const profileRes = await fetchUpstream('https://api.twitter.com/2/users/me?user.fields=name,username,description,public_metrics', { headers: { authorization: `Bearer ${accessToken}` } }, { name: 'x-api', timeoutMs: 15_000, attempts: 2, okWhen: () => true });
 	if (!profileRes.ok) {
 		const f = await describeXFailure(profileRes, 'profile');
 		return abandonSeed(res, agentId, f.status, f.code, f.description, f.extra);
@@ -371,11 +369,8 @@ async function handlePost(req, res, agentId) {
 		);
 	}
 
-	const postsRes = await fetch(
-		`https://api.twitter.com/2/users/${rawProfile.id}/tweets?max_results=${X_SEED_LIMITS.maxPosts}` +
-			'&exclude=retweets,replies&tweet.fields=text,created_at',
-		{ headers: { authorization: `Bearer ${accessToken}` } },
-	);
+	const postsRes = await fetchUpstream(`https://api.twitter.com/2/users/${rawProfile.id}/tweets?max_results=${X_SEED_LIMITS.maxPosts}` +
+			'&exclude=retweets,replies&tweet.fields=text,created_at', { headers: { authorization: `Bearer ${accessToken}` } }, { name: 'x-api', timeoutMs: 15_000, attempts: 2, okWhen: () => true });
 	if (!postsRes.ok) {
 		const f = await describeXFailure(postsRes, 'posts');
 		return abandonSeed(res, agentId, f.status, f.code, f.description, f.extra);

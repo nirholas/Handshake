@@ -20,6 +20,7 @@ import { cors, json, method, error, wrap, rateLimited, serverError } from '../_l
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
 import { dasRpcUrl } from '../_lib/nft-gate.js';
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
 
 const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
@@ -89,7 +90,7 @@ async function handlePortfolio(req, res) {
 		return error(res, e.status || 503, e.code || 'not_configured', e.message);
 	}
 
-	const resp = await fetch(rpcUrl, {
+	const resp = await fetchUpstream(rpcUrl, {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
 		body: JSON.stringify({
@@ -109,7 +110,7 @@ async function handlePortfolio(req, res) {
 				},
 			},
 		}),
-	});
+	}, { name: 'helius-das', timeoutMs: 10_000, attempts: 2, okWhen: () => true });
 
 	if (!resp.ok) {
 		const txt = await resp.text().catch(() => resp.status.toString());
@@ -160,7 +161,7 @@ async function handleActivity(req, res) {
 	}
 
 	const url = baseUrl.replace('{address}', encodeURIComponent(wallet)) + `&limit=${limit}`;
-	const resp = await fetch(url);
+	const resp = await fetchUpstream(url, {}, { name: 'helius-enhanced-tx', timeoutMs: 10_000, attempts: 2, okWhen: () => true });
 
 	if (!resp.ok) {
 		const txt = await resp.text().catch(() => resp.status.toString());

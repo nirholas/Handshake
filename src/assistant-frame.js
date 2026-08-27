@@ -596,12 +596,41 @@ async function chatErrorMessage(res) {
 	return description || `Chat failed (HTTP ${res.status}).`;
 }
 
+// A chat turn (request plus the whole stream) that has not finished by now is
+// abandoned, so the thinking bubble can never sit forever on a wedged upstream.
+const CHAT_DEADLINE_MS = 60_000;
+
+/**
+ * Run one chat turn under the deadline: `fn` receives an AbortSignal to pass to
+ * fetch (aborting the fetch also ends its body reader), and an abort surfaces
+ * as a readable error on the existing bubble path.
+ */
+async function withChatDeadline(fn) {
+	const ctrl = new AbortController();
+	const timer = setTimeout(() => ctrl.abort(), CHAT_DEADLINE_MS);
+	try {
+		return await fn(ctrl.signal);
+	} catch (err) {
+		if (ctrl.signal.aborted || err?.name === 'AbortError') {
+			throw new Error('The reply took longer than 60 seconds. Try again, or switch lanes under Settings.');
+		}
+		throw err;
+	} finally {
+		clearTimeout(timer);
+	}
+}
+
 /** Stream a reply from /api/chat (platform free chain). */
-async function chatFree(message, onChunk) {
+function chatFree(message, onChunk) {
+	return withChatDeadline((signal) => chatFreeStream(message, onChunk, signal));
+}
+
+async function chatFreeStream(message, onChunk, signal) {
 	const res = await fetch('/api/chat', {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
 		body: JSON.stringify({ message, history: history.slice(0, -1), system_prompt: systemPrompt() }),
+		signal,
 	});
 	if (!res.ok || !res.body) throw new Error(await chatErrorMessage(res));
 	const reader = res.body.getReader();
@@ -641,7 +670,11 @@ async function chatFree(message, onChunk) {
 }
 
 /** Stream a reply straight from the visitor's own provider (BYOK). */
-async function chatByok(lane, message, onChunk) {
+function chatByok(lane, message, onChunk) {
+	return withChatDeadline((signal) => chatByokStream(lane, message, onChunk, signal));
+}
+
+async function chatByokStream(lane, message, onChunk, signal) {
 	const key = settings.keys[lane];
 	const model = settings.models[lane] || BYOK_DEFAULT_MODELS[lane];
 	const messages = [
@@ -658,6 +691,7 @@ async function chatByok(lane, message, onChunk) {
 		method: 'POST',
 		headers,
 		body: JSON.stringify({ model, messages, stream: true, max_tokens: 1024 }),
+		signal,
 	});
 	if (!res.ok || !res.body) {
 		if (res.status === 401 || res.status === 403) {

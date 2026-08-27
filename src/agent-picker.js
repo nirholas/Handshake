@@ -26,16 +26,13 @@ import './ui-juice.css';
 import { enterStagger } from './ui-juice.js';
 import { onchainBadgeHTML } from './shared/onchain-badge.js';
 
+import { ensureModelViewerOrFallback } from './shared/model-viewer-loader.js';
 const PAGE_SIZE = 24;
 
-let _mvLoaded = false;
+// Shared loader: three CDNs, a per-source timeout and a visible fallback on
+// every <model-viewer> in this picker when none of them can be reached.
 function ensureModelViewer() {
-	if (_mvLoaded || customElements.get('model-viewer')) return;
-	_mvLoaded = true;
-	const s = document.createElement('script');
-	s.type = 'module';
-	s.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js';
-	document.head.appendChild(s);
+	ensureModelViewerOrFallback(document);
 }
 
 function esc(s) {

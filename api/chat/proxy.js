@@ -11,6 +11,8 @@ const UPGRADE_URL = `${env.APP_ORIGIN}/pricing`;
 // afterwards; rolling over to a live model keeps that chat working instead of
 // surfacing the upstream's raw "This model is unavailable for free" text.
 const MAX_MODEL_ATTEMPTS = 3;
+// How long to wait for OpenRouter to start answering before rotating keys/models.
+const UPSTREAM_HEADERS_TIMEOUT_MS = 25_000;
 
 /**
  * Seconds to wait after an upstream 429, when OpenRouter sent no Retry-After.
@@ -107,16 +109,34 @@ export default wrap(async (req, res) => {
 	for (let attempt = 0; attempt < MAX_MODEL_ATTEMPTS; attempt += 1) {
 		tried.push(activeModel);
 		for (const [i, key] of keys.entries()) {
-			upstream = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-				method: 'POST',
-				headers: {
-					Authorization: `Bearer ${key}`,
-					'Content-Type': 'application/json',
-					'HTTP-Referer': 'https://three.ws',
-					'X-Title': 'three.ws chat',
-				},
-				body: JSON.stringify({ ...body, model: activeModel }),
-			});
+			// Bound the wait for response HEADERS only: the timer is cleared once
+			// OpenRouter answers, so a long streamed completion is never cut off,
+			// but a hung connection can no longer stall the chat UI indefinitely.
+			// A timeout is treated like a rate-limit: try the next key, then the
+			// next model, and finally report a clean 504.
+			const headersCtrl = new AbortController();
+			const headersTimer = setTimeout(() => headersCtrl.abort(), UPSTREAM_HEADERS_TIMEOUT_MS);
+			try {
+				upstream = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+					method: 'POST',
+					headers: {
+						Authorization: `Bearer ${key}`,
+						'Content-Type': 'application/json',
+						'HTTP-Referer': 'https://three.ws',
+						'X-Title': 'three.ws chat',
+					},
+					body: JSON.stringify({ ...body, model: activeModel }),
+					signal: headersCtrl.signal,
+				});
+			} catch (err) {
+				upstream = new Response(JSON.stringify({ error: { message: `openrouter unreachable: ${err?.name === 'AbortError' ? 'timed out waiting for headers' : err?.message || 'network error'}` } }), {
+					status: 504,
+					headers: { 'content-type': 'application/json' },
+				});
+			} finally {
+				clearTimeout(headersTimer);
+			}
+			if (upstream.status === 504 && i < keys.length - 1) continue;
 			if (![401, 402, 403, 429].includes(upstream.status) || i === keys.length - 1) break;
 			// Release the abandoned response so its connection returns to the pool.
 			await upstream.body?.cancel()?.catch?.(() => {});

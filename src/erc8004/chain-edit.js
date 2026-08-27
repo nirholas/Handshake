@@ -54,7 +54,6 @@ export async function mountChainEdit(rootEl, chainId, agentId) {
 	let currentGlbUrl = null;
 
 	try {
-		const { JsonRpcProvider } = await import('ethers');
 		const provider = new JsonRpcProvider(chainMeta.rpcUrl, chainId);
 		const registry = new Contract(deployment.identityRegistry, IDENTITY_REGISTRY_ABI, provider);
 		currentTokenURI = await registry.tokenURI(agentId).catch(() => null);

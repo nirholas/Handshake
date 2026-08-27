@@ -14,6 +14,14 @@ import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { REQUIRED_AMOUNT } from '../_lib/rider.js';
 import { TOKEN_MINT as THREE_MINT } from '../_lib/token/config.js';
+import { cacheGet, cacheSet } from '../_lib/cache.js';
+import { staleEnvelope, RPC_RETRY_AFTER_S } from '../_lib/rpc-degrade.js';
+
+// Last verdict per wallet. A pass check gates a ride, so the window is short:
+// long enough to ride out an RPC blip mid-session, short enough that a wallet
+// that just sold its $THREE is re-read within minutes.
+const VERDICT_LKG_TTL_S = 10 * 60;
+const verdictKey = (address) => `rider:check:lkg:${address}`;
 
 async function heldBalance(owner) {
 	const connection = solanaConnection({ url: env.SOLANA_RPC_URL, commitment: 'confirmed' });
@@ -78,7 +86,17 @@ export default wrap(async (req, res) => {
 			// Never echo the rejection message: a web3.js network error embeds the
 			// keyed RPC URL, which would leak HELIUS_API_KEY to the caller.
 			console.error('[rider/check] $THREE balance read failed', balanceRead.reason);
-			return error(res, 502, 'rpc_unavailable', 'could not read the $THREE balance for this wallet');
+			// The last verdict this wallet got, marked stale, beats refusing the
+			// gate outright; a wallet never checked before gets the typed 503.
+			const lkg = await cacheGet(verdictKey(address));
+			if (lkg && lkg.body && typeof lkg.at === 'number') {
+				res.setHeader('x-rider-stale', '1');
+				return json(res, 200, staleEnvelope(lkg.body, lkg.at));
+			}
+			res.setHeader('Retry-After', String(RPC_RETRY_AFTER_S));
+			return error(res, 503, 'rpc_unavailable', 'could not read the $THREE balance for this wallet, retry shortly', {
+				retry_after: RPC_RETRY_AFTER_S,
+			});
 		}
 	}
 	if (!paidPass && paymentRead.status === 'rejected') {
@@ -87,7 +105,7 @@ export default wrap(async (req, res) => {
 		if (!holderPass) throw paymentRead.reason;
 	}
 
-	return json(res, 200, {
+	const body = {
 		has_pass: holderPass || paidPass,
 		holder_pass: holderPass,
 		paid_pass: paidPass,
@@ -96,5 +114,10 @@ export default wrap(async (req, res) => {
 		tx_signature: payment?.tx_signature ?? null,
 		required_amount: REQUIRED_AMOUNT,
 		mint: THREE_MINT,
-	});
+	};
+	// Only a verdict both sources actually answered is worth remembering.
+	if (balanceRead.status === 'fulfilled' && paymentRead.status === 'fulfilled') {
+		cacheSet(verdictKey(address), { body, at: Date.now() }, VERDICT_LKG_TTL_S).catch(() => {});
+	}
+	return json(res, 200, body);
 });

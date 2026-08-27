@@ -10,6 +10,7 @@ import { encodeFunctionData, parseAbi } from 'viem';
 import { sql } from './db.js';
 import { env } from './env.js';
 import { EVM_USDC, toUsdcAtomics } from '../payments/_config.js';
+import { fetchUpstream } from './upstream-fetch.js';
 
 // USDC transferFrom signature — the delegation manager calls this on the
 // USDC contract on behalf of the agent's wallet. The delegation grants the
@@ -256,7 +257,8 @@ async function _redeemForGroup(group, authorUserId) {
 	const cronSecret = env.CRON_SECRET;
 	const issuer = env.ISSUER ?? 'http://localhost:3000';
 
-	const resp = await fetch(`${issuer}/api/permissions/redeem`, {
+	// A redeem moves funds, so it is never retried: one attempt, bounded.
+	const resp = await fetchUpstream(`${issuer}/api/permissions/redeem`, {
 		method: 'POST',
 		headers: {
 			'content-type': 'application/json',

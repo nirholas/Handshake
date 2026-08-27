@@ -26,6 +26,11 @@
 
 import { getGcpAccessToken } from './gcp-auth.js';
 
+// Bounds the wait for response headers only. The Response may be a stream the
+// caller pipes through for minutes, so a whole-request deadline would cut
+// live completions; a hung connection is the only thing this needs to catch.
+const VERTEX_HEADERS_TIMEOUT_MS = 45_000;
+
 const DEFAULT_LOCATION = 'global';
 const ANTHROPIC_VERTEX_VERSION = 'vertex-2023-10-16';
 
@@ -105,9 +110,16 @@ export async function vertexRequestHeaders() {
 export async function vertexAnthropicMessages(body, { stream = false } = {}) {
 	const url = vertexMessagesUrl(body.model, { stream });
 	const headers = await vertexRequestHeaders();
-	return fetch(url, {
-		method: 'POST',
-		headers,
-		body: JSON.stringify(toVertexBody(body)),
-	});
+	const headersCtrl = new AbortController();
+	const headersTimer = setTimeout(() => headersCtrl.abort(), VERTEX_HEADERS_TIMEOUT_MS);
+	try {
+		return await fetch(url, {
+			method: 'POST',
+			headers,
+			body: JSON.stringify(toVertexBody(body)),
+			signal: headersCtrl.signal,
+		});
+	} finally {
+		clearTimeout(headersTimer);
+	}
 }

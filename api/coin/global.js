@@ -11,25 +11,30 @@
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { fetchGlobalMarket } from '../_lib/market-fallbacks.js';
+import { fetchUpstreamJson, lastGoodValue } from '../_lib/upstream-fetch.js';
 
 let _fng = null; // { value, expiresAt }
 const FNG_TTL_MS = 300_000;
+// The index updates once a day, so a day-old reading is still the current one.
+const FNG_STALE_MAX_AGE_MS = 24 * 60 * 60_000;
 
 // Exported for the paid Market Data API (api/_lib/market-data/) — the x402
 // market-global endpoint sells the same fear & greed reading this page renders.
 export async function fetchFearGreed() {
 	const now = Date.now();
 	if (_fng && _fng.expiresAt > now) return _fng.value;
-	const resp = await fetch('https://api.alternative.me/fng/?limit=1', {
-		headers: { accept: 'application/json', 'user-agent': 'three.ws/1.0' },
-		signal: AbortSignal.timeout(6000),
-	});
-	if (!resp.ok) throw new Error(`fng ${resp.status}`);
-	const raw = await resp.json();
+	const value = await lastGoodValue('coin-global:fng', fetchFearGreedLive, { maxAgeMs: FNG_STALE_MAX_AGE_MS });
+	_fng = { value, expiresAt: now + FNG_TTL_MS };
+	return value;
+}
+
+async function fetchFearGreedLive() {
+	const raw = await fetchUpstreamJson('https://api.alternative.me/fng/?limit=1', {
+		headers: { 'user-agent': 'three.ws/1.0' },
+	}, { name: 'alternative-me-fng', timeoutMs: 6000, attempts: 2 });
 	const d = raw?.data?.[0];
 	const value = d ? { value: Number(d.value), label: d.value_classification || null } : null;
 	if (!value || !Number.isFinite(value.value)) throw new Error('fng payload');
-	_fng = { value, expiresAt: now + FNG_TTL_MS };
 	return value;
 }
 

@@ -7,6 +7,7 @@ import { llmComplete, llmConfigured } from '../_lib/llm.js';
 import { cacheGet, cacheSet } from '../_lib/cache.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
 
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
 // Reduce a raw parsed transaction to the same shape Helius's enhanced endpoint
 // returns, so the fallback path is transparent to the LLM summary and the UI.
 // Native transfers come from lamport balance deltas; token transfers from the
@@ -133,13 +134,14 @@ export default wrap(async (req, res) => {
 		// the transfer shape ourselves, so a Helius outage still explains the tx.
 		let enhanced = null;
 		try {
-			const resp = await fetch(
+			const resp = await fetchUpstream(
 				`https://api.helius.xyz/v0/transactions/?api-key=${env.HELIUS_API_KEY}`,
 				{
 					method: 'POST',
 					headers: { 'content-type': 'application/json' },
 					body: JSON.stringify({ transactions: [sig] }),
 				},
+				{ name: 'helius-enhanced-tx', timeoutMs: 8_000, attempts: 2, okWhen: () => true },
 			);
 			if (resp.ok) {
 				const data = await resp.json();
@@ -191,12 +193,13 @@ export default wrap(async (req, res) => {
 			'https://ethereum-rpc.publicnode.com',
 		].filter(Boolean);
 
+		// Bounded per endpoint, or one hung node would starve the rest of the list.
 		const rpcAt = (url) => (id, methodName, params) =>
-			fetch(url, {
+			fetchUpstream(url, {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
 				body: JSON.stringify({ jsonrpc: '2.0', id, method: methodName, params }),
-			});
+			}, { timeoutMs: 6_000, attempts: 1, okWhen: () => true });
 
 		let txJson = null;
 		let receiptJson = null;

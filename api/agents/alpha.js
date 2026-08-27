@@ -31,6 +31,8 @@ import { getBondingCurveState, getBuyQuote, getGraduationProgress } from '../_li
 import { connectPumpFunFeed, recentBuffered, recentGraduations } from '../_lib/pumpfun-ws-feed.js';
 import { llmComplete, LlmUnavailableError } from '../_lib/llm.js';
 import { buildReadPrompt, parseReadJson, validateRead } from '../_lib/alpha-read.js';
+import { pumpFetchJson } from '../_lib/pump-feed-fetch.js';
+import { fetchUpstreamJson } from '../_lib/upstream-fetch.js';
 
 const NETWORKS = new Set(['mainnet', 'devnet']);
 const netOf = (v) => (NETWORKS.has(v) ? v : 'mainnet');
@@ -65,17 +67,23 @@ async function loadAgent(id, userId) {
 
 // ── live launch candidates ──────────────────────────────────────────────────────
 
+// The read only consumes `created_timestamp` (launch age). pump.fun is the
+// source of truth; when it does not answer, DexScreener's pair listing carries
+// the pair creation time for the same mint, so the age still comes from a real
+// record rather than going missing on a pump.fun blip.
 async function fetchPumpCoin(mint) {
-	const ctrl = new AbortController();
-	const tid = setTimeout(() => ctrl.abort(), 2500);
+	const { ok, body } = await pumpFetchJson(`${PUMPFUN_COIN_API}/${encodeURIComponent(mint)}`, { timeoutMs: 2500, retries: 1 });
+	if (ok && body && typeof body === 'object') return body;
 	try {
-		const r = await fetch(`${PUMPFUN_COIN_API}/${encodeURIComponent(mint)}`, {
-			signal: ctrl.signal,
-			headers: { accept: 'application/json', 'user-agent': 'three.ws-alpha-copilot/1' },
+		const data = await fetchUpstreamJson(`https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(mint)}`, {}, {
+			timeoutMs: 2500, attempts: 1, name: 'dexscreener',
 		});
-		if (!r.ok) return null;
-		return await r.json();
-	} catch { return null; } finally { clearTimeout(tid); }
+		const pairs = (Array.isArray(data?.pairs) ? data.pairs : []).filter((p) => p?.chainId === 'solana');
+		if (!pairs.length) return null;
+		pairs.sort((a, b) => (a.pairCreatedAt ?? Infinity) - (b.pairCreatedAt ?? Infinity));
+		const createdMs = Number(pairs[0].pairCreatedAt);
+		return Number.isFinite(createdMs) ? { mint, created_timestamp: createdMs } : null;
+	} catch { return null; }
 }
 
 // Briefly tap the live PumpPortal mint feed to gather fresh launches. Bounded so

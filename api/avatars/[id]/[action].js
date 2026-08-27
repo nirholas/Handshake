@@ -17,7 +17,7 @@ import { getAvatar, resolveAvatarUrl } from '../../_lib/avatars.js';
 import { r2, publicUrl, thumbnailUrl } from '../../_lib/r2.js';
 import { env } from '../../_lib/env.js';
 
-const PINATA_ENDPOINT = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
+import { pinToIPFS, ipfsPinningConfigured } from '../../_lib/ipfs-pin.js';
 export default wrap(async (req, res) => {
 	let action = req.query?.action;
 	// Expose the GLB proxy at a `.glb`-terminating URL as well. Standard glTF
@@ -181,20 +181,18 @@ async function handlePinIpfs(req, res) {
 	const mode = await readStorageMode(id);
 	if (!mode) return error(res, 500, 'internal', 'storage_mode unavailable');
 
-	const pinataJwt = env.PINATA_JWT;
 	let cid;
 	let isStub = false;
 
-	if (pinataJwt && row.storage_key) {
+	if (ipfsPinningConfigured() && row.storage_key) {
 		try {
-			cid = await pinToPinata({
-				jwt: pinataJwt,
+			cid = await pinAvatarObject({
 				key: row.storage_key,
 				name: row.name || `avatar-${id}`,
 				contentType: row.content_type || 'model/gltf-binary',
 			});
 		} catch (err) {
-			return error(res, 502, 'upstream_error', `Pinata upload failed: ${err.message}`);
+			return error(res, 502, 'upstream_error', `IPFS pin failed: ${err.message}`);
 		}
 	} else {
 		isStub = true;
@@ -210,27 +208,16 @@ async function handlePinIpfs(req, res) {
 	return json(res, 200, { storage_mode: next, stub: isStub });
 }
 
-async function pinToPinata({ jwt, key, name, contentType }) {
+// Read the stored object out of R2 and pin it through the shared provider
+// chain (Pinata, then web3.storage; api/_lib/ipfs-pin.js), so one provider's
+// outage fails over instead of failing the pin.
+async function pinAvatarObject({ key, name, contentType }) {
 	const obj = await r2.send(new GetObjectCommand({ Bucket: env.S3_BUCKET, Key: key }));
 	const bytes = await streamToBuffer(obj.Body);
-	const blob = new Blob([bytes], { type: contentType });
-
-	const form = new FormData();
-	form.append('file', blob, name);
-	form.append('pinataMetadata', JSON.stringify({ name }));
-
-	const res = await fetch(PINATA_ENDPOINT, {
-		method: 'POST',
-		headers: { Authorization: `Bearer ${jwt}` },
-		body: form,
-	});
-	if (!res.ok) {
-		const body = await res.text().catch(() => '');
-		throw new Error(`HTTP ${res.status} ${body.slice(0, 200)}`);
-	}
-	const data = await res.json();
-	if (!data?.IpfsHash) throw new Error('no IpfsHash in Pinata response');
-	return data.IpfsHash;
+	const filename = /\.(glb|gltf|vrm)$/i.test(name) ? name : `${name}.${contentType === 'model/gltf+json' ? 'gltf' : 'glb'}`;
+	const pinned = await pinToIPFS(bytes, filename);
+	if (!pinned?.cid) throw new Error('no CID in pinning response');
+	return pinned.cid;
 }
 
 async function streamToBuffer(stream) {

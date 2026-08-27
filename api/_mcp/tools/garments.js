@@ -11,6 +11,7 @@
 
 import { limits } from '../../_lib/rate-limit.js';
 
+import { fetchUpstream } from '../../_lib/upstream-fetch.js';
 const GARMENT_SLOTS = [
 	'top', 'bottom', 'footwear', 'outerwear', 'hair', 'headwear', 'glasses', 'accessory',
 ];
@@ -80,11 +81,11 @@ export const toolDefs = [
 				});
 			}
 			const { base, key } = workerConfig();
-			const res = await fetch(`${base}/generate`, {
+			const res = await fetchUpstream(`${base}/generate`, {
 				method: 'POST',
 				headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' },
 				body: JSON.stringify({ prompt: args.prompt, slot: args.slot }),
-			}).catch(() => null);
+			}, { name: 'garment-worker', timeoutMs: 30_000, attempts: 2, okWhen: () => true }).catch(() => null);
 			if (!res || !res.ok) {
 				throw new Error(`garment worker ${res ? `returned ${res.status}` : 'unreachable'}`);
 			}
@@ -132,9 +133,9 @@ export const toolDefs = [
 			}
 			if (!JOB_ID_RE.test(args.job_id)) throw new Error('malformed job id');
 			const { base, key } = workerConfig();
-			const res = await fetch(`${base}/jobs/${args.job_id}`, {
+			const res = await fetchUpstream(`${base}/jobs/${args.job_id}`, {
 				headers: { authorization: `Bearer ${key}` },
-			}).catch(() => null);
+			}, { name: 'garment-worker', timeoutMs: 15_000, attempts: 2, okWhen: () => true }).catch(() => null);
 			if (!res) throw new Error('garment worker unreachable');
 			if (res.status === 404) throw new Error('no such garment job');
 			if (!res.ok) throw new Error(`garment worker returned ${res.status}`);
@@ -201,7 +202,7 @@ export const toolDefs = [
 					retry_after: Math.ceil((rl.reset - Date.now()) / 1000),
 				});
 			}
-			const res = await fetch(CATALOG_URL).catch(() => null);
+			const res = await fetchUpstream(CATALOG_URL, {}, { name: 'gcs-garments', timeoutMs: 15_000, attempts: 2, okWhen: () => true }).catch(() => null);
 			if (!res || !res.ok) throw new Error('garment catalog unreachable');
 			const raw = await res.json();
 			const garments = (Array.isArray(raw) ? raw : [])

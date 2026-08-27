@@ -21,6 +21,7 @@ import { PublicKey } from '@solana/web3.js';
 import { solanaConnection } from './solana/connection.js';
 import { rpcFallbackFromEnv } from './solana/rpc-fallback.js';
 import { PUMP_PROGRAM_ID, PUMP_AGENT_PAYMENTS_PROGRAM_ID } from './solana/programs.js';
+import { isRpcOutageError, rpcUnavailableError } from './rpc-degrade.js';
 
 // @solana/web3.js calls console.error() on every 429 retry attempt. Those
 // retries succeed (callers see a resolved value, not a thrown error), but
@@ -293,11 +294,18 @@ export async function getAmmPoolState({ network = 'mainnet', mint, quoteMint = n
 		throw e;
 	}
 
-	const [baseAccInfo, quoteAccInfo, baseMintInfo] = await Promise.all([
-		connection.getAccountInfo(pool.poolBaseTokenAccount),
-		connection.getAccountInfo(pool.poolQuoteTokenAccount),
-		connection.getAccountInfo(pool.baseMint),
-	]);
+	let baseAccInfo, quoteAccInfo, baseMintInfo;
+	try {
+		[baseAccInfo, quoteAccInfo, baseMintInfo] = await Promise.all([
+			connection.getAccountInfo(pool.poolBaseTokenAccount),
+			connection.getAccountInfo(pool.poolQuoteTokenAccount),
+			connection.getAccountInfo(pool.baseMint),
+		]);
+	} catch (err) {
+		// A dead RPC lane is retryable and says nothing about the pool.
+		if (isRpcOutageError(err)) throw rpcUnavailableError('pool reserves could not be read: Solana RPC is temporarily unavailable', err);
+		throw err;
+	}
 	if (!baseAccInfo || !quoteAccInfo || !baseMintInfo) {
 		const e = new Error('pool token accounts unavailable');
 		e.status = 502;
@@ -333,12 +341,18 @@ export async function getAmmPoolState({ network = 'mainnet', mint, quoteMint = n
 	const effectiveQuoteReserve = quoteReserve.add(virtualQuoteReserves);
 
 	const offline = new PumpAmmSdk();
-	const [globalConfigInfo, feeConfigInfo] = await Promise.all([
-		connection.getAccountInfo((await import('@pump-fun/pump-swap-sdk')).GLOBAL_CONFIG_PDA),
-		connection.getAccountInfo(
-			(await import('@pump-fun/pump-swap-sdk')).PUMP_AMM_FEE_CONFIG_PDA,
-		),
-	]);
+	let globalConfigInfo, feeConfigInfo;
+	try {
+		[globalConfigInfo, feeConfigInfo] = await Promise.all([
+			connection.getAccountInfo((await import('@pump-fun/pump-swap-sdk')).GLOBAL_CONFIG_PDA),
+			connection.getAccountInfo(
+				(await import('@pump-fun/pump-swap-sdk')).PUMP_AMM_FEE_CONFIG_PDA,
+			),
+		]);
+	} catch (err) {
+		if (isRpcOutageError(err)) throw rpcUnavailableError('pool fee config could not be read: Solana RPC is temporarily unavailable', err);
+		throw err;
+	}
 	const globalConfig = globalConfigInfo ? offline.decodeGlobalConfig(globalConfigInfo) : null;
 	const feeConfig = feeConfigInfo ? offline.decodeFeeConfig(feeConfigInfo) : null;
 
@@ -366,7 +380,13 @@ export async function buildUnsignedTxBase64({ network, payer, instructions }) {
 		import('@solana/web3.js'),
 	]);
 	const connection = getConnection({ network });
-	const { blockhash } = await connection.getLatestBlockhash('confirmed');
+	let blockhash;
+	try {
+		({ blockhash } = await connection.getLatestBlockhash('confirmed'));
+	} catch (err) {
+		if (isRpcOutageError(err)) throw rpcUnavailableError('could not fetch a recent blockhash: Solana RPC is temporarily unavailable', err);
+		throw err;
+	}
 	const payerPk = payer instanceof PK ? payer : new PK(payer);
 	const msg = new TransactionMessage({
 		payerKey: payerPk,

@@ -40,6 +40,8 @@
 // The extJobId is a JSON envelope base64url-encoded so it can carry both
 // the service discriminator and the upstream task_id without another DB call.
 
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
+
 function readEnv(name) {
 	if (typeof process !== 'undefined' && process.env?.[name]) return process.env[name];
 	return null;
@@ -466,11 +468,11 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 			const url = `${baseUrl.replace(/\/$/, '')}${workerReq.path}`;
 			let response;
 			try {
-				response = await fetch(url, {
+				response = await fetchUpstream(url, {
 					method: 'POST',
 					headers: authHeaders,
 					body: JSON.stringify(workerReq.body),
-				});
+				}, { name: 'gcp-forge-worker', timeoutMs: 60_000, attempts: 2, okWhen: () => true });
 			} catch (err) {
 				throw Object.assign(
 					new Error(`gcp ${mode} service unreachable: ${err?.message}`),
@@ -534,10 +536,7 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 
 			let response;
 			try {
-				response = await fetch(
-					`${baseUrl.replace(/\/$/, '')}${pollPath}`,
-					{ headers: authHeaders },
-				);
+				response = await fetchUpstream(`${baseUrl.replace(/\/$/, '')}${pollPath}`, { headers: authHeaders }, { name: 'gcp-forge-worker', timeoutMs: 15_000, attempts: 2, okWhen: () => true });
 			} catch (err) {
 				return { status: 'running', error: `poll failed: ${err?.message}` };
 			}

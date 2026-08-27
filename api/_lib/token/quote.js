@@ -14,6 +14,7 @@
 import crypto from 'node:crypto';
 import { env } from '../env.js';
 import { randomToken } from '../crypto.js';
+import { isRpcOutageError, rpcUnavailableError } from '../rpc-degrade.js';
 import {
 	TOKEN_MINT,
 	TOKEN_DECIMALS,
@@ -83,7 +84,16 @@ export async function issueQuote({
 	refType = null,
 	refId = null,
 }) {
-	const priced = await quoteTokenForUsd(usd);
+	let priced;
+	try {
+		priced = await quoteTokenForUsd(usd);
+	} catch (err) {
+		// Already-typed pricing errors (price_unavailable, amount_too_*) pass
+		// through untouched. A raw RPC-chain exhaustion becomes the typed
+		// retryable 503 so no caller ever prices a payment off a guess.
+		if (err?.code || !isRpcOutageError(err)) throw err;
+		throw rpcUnavailableError('could not price the quote: Solana RPC is temporarily unavailable', err);
+	}
 	const legs = applySplit(priced.atomics, resolveSplitLegs(splitPolicy, { sellerWallet }));
 	const now = Math.floor(Date.now() / 1000);
 	const nonce = await randomToken(16);

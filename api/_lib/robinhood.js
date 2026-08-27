@@ -16,13 +16,15 @@
 //   • memecoin screener               — CoinGecko categories + DexScreener
 //   • launchpad activity              — on-chain eth_getLogs (NOXA / Odyssey factories)
 //
-// Failover: public RPC → Alchemy (when ROBINHOOD_ALCHEMY_KEY is set). All
+// Failover: Alchemy (when ROBINHOOD_ALCHEMY_KEY is set) → RPC_URL_4663 override
+// → the public sequencer RPC, as one viem fallback transport with per-request
+// retries, so no single vendor endpoint is the board's only lane. All
 // upstreams are wrapped in short-TTL caches so the board never fans out 95 RPC
 // calls per request (the Chainlink snapshot is one multicall behind a 20s TTL).
 
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { createPublicClient, http } from 'viem';
+import { createPublicClient, fallback, http } from 'viem';
 import { cacheWrap } from './cache.js';
 
 // ── Chain definitions (viem 2.52 predates the official robinhood chain defs) ──
@@ -63,17 +65,31 @@ export const USDG_ADDRESS = '0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168';
 export const FEED_DECIMALS = 8;
 export const STOCK_TOKEN_DECIMALS = 18;
 
-// Resolve the best RPC URL: Alchemy when a key is present (recommended paid
-// RPC), else the public sequencer RPC. Same env-at-module-load contract every
-// other provider on the platform uses.
-function rpcUrl(testnet) {
+// Priority-ordered RPC URLs: Alchemy when a key is present (recommended paid
+// RPC), then an explicit RPC_URL_<chainId> override, then the public sequencer
+// RPC. The keyed vendor stays primary; the public node is the safety net behind
+// it rather than the only lane. Same env-at-module-load contract every other
+// provider on the platform uses.
+export function rpcUrls(testnet) {
+	const chain = testnet ? HOOD_TESTNET : HOOD_MAINNET;
 	const key = process.env.ROBINHOOD_ALCHEMY_KEY;
-	if (key) {
-		return testnet
+	const urls = [
+		key ? (testnet
 			? `https://robinhood-testnet.g.alchemy.com/v2/${key}`
-			: `https://robinhood-mainnet.g.alchemy.com/v2/${key}`;
-	}
-	return (testnet ? HOOD_TESTNET : HOOD_MAINNET).rpcUrls.default.http[0];
+			: `https://robinhood-mainnet.g.alchemy.com/v2/${key}`) : null,
+		process.env[`RPC_URL_${chain.id}`] || null,
+		...chain.rpcUrls.default.http,
+	];
+	return urls.filter((u, i, a) => u && a.indexOf(u) === i);
+}
+
+// Per-endpoint timeout plus two backed-off retries on the same endpoint before
+// viem's fallback moves to the next one; `rank: false` keeps strict priority.
+function hoodTransport(testnet) {
+	const httpOpts = { batch: true, timeout: 12_000, retryCount: 2 };
+	const urls = rpcUrls(testnet);
+	if (urls.length === 1) return http(urls[0], httpOpts);
+	return fallback(urls.map((u) => http(u, httpOpts)), { rank: false });
 }
 
 let _clients = { mainnet: null, testnet: null };
@@ -85,7 +101,7 @@ export function publicClient(testnet = false) {
 	const chain = testnet ? HOOD_TESTNET : HOOD_MAINNET;
 	_clients[slot] = createPublicClient({
 		chain,
-		transport: http(rpcUrl(testnet), { batch: true, timeout: 12_000 }),
+		transport: hoodTransport(testnet),
 		batch: { multicall: { wait: 16 } },
 	});
 	return _clients[slot];

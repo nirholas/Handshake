@@ -6,7 +6,7 @@
  * review submissions with optimistic updates.
  */
 
-import { JsonRpcProvider } from 'ethers';
+import { getEvmProvider } from './shared/evm-rpc-fallback.js';
 import { getReputation, getRecentReviews, submitReputation, getTotalStake } from './erc8004/reputation.js';
 import { ensureWallet } from './erc8004/agent-registry.js';
 import { REGISTRY_DEPLOYMENTS } from './erc8004/abi.js';
@@ -103,9 +103,8 @@ export class ReputationDashboard {
 			throw new Error(`Chain ${this.chainId} is not supported.`);
 		}
 
-		// Pick an RPC URL per chain.
-		const rpcUrl = this._getRpcUrl(this.chainId);
-		const provider = new JsonRpcProvider(rpcUrl);
+		// Same-origin /api/evm-rpc proxy first, then the chain's public hosts.
+		const provider = await getEvmProvider(this.chainId);
 
 		const [reputation, reviews, totalStakeWei] = await Promise.all([
 			getReputation({ agentId: this.agentId, runner: provider, chainId: this.chainId }),
@@ -135,34 +134,6 @@ export class ReputationDashboard {
 				this.stakerEvents = [];
 			}
 		}
-	}
-
-	_getRpcUrl(chainId) {
-		const rpcMap = {
-			1: 'https://eth.llamarpc.com',
-			10: 'https://optimism.llamarpc.com',
-			56: 'https://bsc.llamarpc.com',
-			100: 'https://gnosischain.publicnode.com',
-			137: 'https://polygon.llamarpc.com',
-			250: 'https://fantom.publicnode.com',
-			324: 'https://zksync.publicnode.com',
-			1284: 'https://moonbeam.publicnode.com',
-			5000: 'https://mantle.publicnode.com',
-			8453: 'https://base.llamarpc.com',
-			42161: 'https://arbitrum.llamarpc.com',
-			42220: 'https://celo.publicnode.com',
-			43114: 'https://avalanche.publicnode.com',
-			59144: 'https://linea.publicnode.com',
-			534352: 'https://scroll.publicnode.com',
-			97: 'https://bsc-testnet.publicnode.com',
-			11155111: 'https://ethereum-sepolia.publicnode.com',
-			84532: 'https://base-sepolia.publicnode.com',
-			421614: 'https://arbitrum-sepolia.publicnode.com',
-			11155420: 'https://optimism-sepolia.publicnode.com',
-			80002: 'https://polygon-amoy.publicnode.com',
-			43113: 'https://avalanche-fuji.publicnode.com',
-		};
-		return rpcMap[chainId] || 'https://eth.llamarpc.com';
 	}
 
 	/**
@@ -229,19 +200,38 @@ export class ReputationDashboard {
 
 	async _pollForConfirmation() {
 		try {
-			const rpcUrl = this._getRpcUrl(this.chainId);
-			const provider = new JsonRpcProvider(rpcUrl);
+			const provider = await getEvmProvider(this.chainId);
 
 			const receipt = await provider.getTransactionReceipt(this.lastTxHash);
 			if (receipt) {
 				// Transaction confirmed; reload reviews.
+				this._clearPollNote();
 				await this._fetchReputation();
 				this._render();
 				this._stopPolling();
 			}
 		} catch (err) {
 			log.warn('[ReputationDashboard] poll failed:', err.message);
+			this._showPollNote();
 		}
+	}
+
+	// A failed confirmation poll used to vanish into the console, leaving the
+	// optimistic "pending" review looking stuck forever. Say so on the page.
+	_showPollNote() {
+		if (!this.container) return;
+		let note = this.container.querySelector('.rep-poll-note');
+		if (!note) {
+			note = document.createElement('p');
+			note.className = 'rep-poll-note';
+			note.setAttribute('role', 'status');
+			this.container.prepend(note);
+		}
+		note.textContent = 'Could not confirm your review on-chain; refresh to check.';
+	}
+
+	_clearPollNote() {
+		this.container?.querySelector('.rep-poll-note')?.remove();
 	}
 
 	onReviewAdded(fn) {

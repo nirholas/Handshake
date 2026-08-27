@@ -515,10 +515,15 @@ const MEMO_PROGRAM_ID = 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr';
  * agora_vouches edge and the 'vouched' activity row cite. Returns the tx sig.
  */
 export async function sendOnchainAttestation({ cluster, signer, memo }) {
-	const { Connection, Transaction, TransactionInstruction, PublicKey } =
-		await import('@solana/web3.js');
-	const rpc = pickRpc(cluster) || (cluster === 'devnet' ? 'https://api.devnet.solana.com' : 'https://api.mainnet-beta.solana.com');
-	const conn = new Connection(rpc, 'confirmed');
+	const { Transaction, TransactionInstruction, PublicKey } = await import('@solana/web3.js');
+	const { solanaConnection } = await import('./solana/connection.js');
+	// The cluster's configured RPC (AGENC_RPC_URL / SOLANA_RPC_URL*) stays primary;
+	// the shared failover chain for that network rotates in behind it.
+	const conn = solanaConnection({
+		url: pickRpc(cluster) || null,
+		network: cluster === 'devnet' ? 'devnet' : 'mainnet',
+		commitment: 'confirmed',
+	});
 	if (cluster === 'devnet') await ensureDevnetBalance(conn, signer, 5_000_000);
 	const ix = new TransactionInstruction({
 		keys: [{ pubkey: signer.publicKey, isSigner: true, isWritable: false }],

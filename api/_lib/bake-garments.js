@@ -30,6 +30,7 @@ import {
 } from '../../src/garment-taxonomy.js';
 import { sanitizeCatalog } from '../../src/garment-catalog.js';
 
+import { fetchUpstream } from './upstream-fetch.js';
 export const GARMENT_CATALOG_URL =
 	'https://storage.googleapis.com/three-ws-garments/garments/catalog.json';
 
@@ -40,7 +41,7 @@ const CATALOG_TTL_MS = 5 * 60_000;
 
 async function loadServerCatalog() {
 	if (_catalog && _catalog.expiresAt > Date.now()) return _catalog.garments;
-	const res = await fetch(GARMENT_CATALOG_URL, { headers: { accept: 'application/json' } });
+	const res = await fetchUpstream(GARMENT_CATALOG_URL, { headers: { accept: 'application/json' } }, { name: 'gcs-garments', timeoutMs: 15_000, attempts: 2, okWhen: () => true });
 	if (!res.ok) throw new Error(`garment catalog fetch failed: ${res.status}`);
 	const { garments } = sanitizeCatalog(await res.json());
 	_catalog = { garments, expiresAt: Date.now() + CATALOG_TTL_MS };
@@ -393,7 +394,7 @@ export async function applyGarments(io, doc, garmentRefs, mergeDocumentsFn, opts
 }
 
 async function fetchGarmentBytes(manifest) {
-	const res = await fetch(manifest.model.uri);
+	const res = await fetchUpstream(manifest.model.uri, {}, { timeoutMs: 60_000, attempts: 2, okWhen: () => true });
 	if (!res.ok) throw new Error(`garment download failed: ${res.status}`);
 	const bytes = await res.arrayBuffer();
 	const hex = createHash('sha256').update(Buffer.from(bytes)).digest('hex');

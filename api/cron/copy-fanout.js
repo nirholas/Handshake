@@ -23,6 +23,8 @@ import { json, method, wrapCron } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { planCopyOrder } from '../_lib/copy-engine.js';
 import { requireCron } from '../_lib/cron-auth.js';
+import { pumpFetchJson, PUMP_FRONTEND_BASE } from '../_lib/pump-feed-fetch.js';
+import { fetchTokenMarketData } from '../_lib/market/token-market.js';
 
 const NETWORKS = ['mainnet', 'devnet'];
 const lamToSol = (l) => (l == null ? 0 : Number(BigInt(l)) / 1e9);
@@ -85,12 +87,15 @@ async function coinContext(mint, oracleScore) {
 	}
 	let ctx = null;
 	try {
-		const r = await fetch(`https://frontend-api-v3.pump.fun/coins/${mint}`, {
-			headers: { accept: 'application/json' }, signal: AbortSignal.timeout(5000),
-		});
-		if (r.ok) {
-			const c = await r.json();
+		const { ok, body: c } = await pumpFetchJson(`${PUMP_FRONTEND_BASE}/coins/${mint}`, { timeoutMs: 5000, retries: 1 });
+		if (ok && c) {
 			ctx = { market_cap_usd: Number(c.usd_market_cap) || null, graduated: !!c.complete };
+		} else {
+			// pump.fun down: the shared multi-source reader still knows the market
+			// cap. Graduation is a pump.fun fact, so it stays unknown (null) rather
+			// than guessed; the engine treats a missing field as missing.
+			const md = await fetchTokenMarketData(mint);
+			if (md) ctx = { market_cap_usd: Number(md.market_cap) || null, graduated: null };
 		}
 	} catch { /* leave null — engine handles missing context */ }
 	_coinCache.set(mint, ctx);

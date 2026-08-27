@@ -10,6 +10,7 @@
 
 import { getAdapter } from './onchain/adapters/index.js';
 import { resolveTokenProgramId } from './shared/spl-token-program.js';
+import { solToUsd } from './shared/usd-price.js';
 
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
 
@@ -224,11 +225,18 @@ async function loadPrices() {
 	try {
 		const mint = state.asset === 'SOL' ? SOL_MINT : state.deposit?.three_mint;
 		if (!mint || state.prices[mint] != null) return updateEstimate();
-		const r = await fetch(`https://lite-api.jup.ag/price/v3?ids=${mint}`);
-		if (r.ok) {
-			const d = await r.json();
-			const p = Number(d?.[mint]?.usdPrice ?? d?.[mint]?.price);
+		if (state.asset === 'SOL') {
+			// Shared five-feed SOL/USD chain (src/shared/usd-price.js), null when
+			// every feed is down; never a single-source or hardcoded rate.
+			const p = await solToUsd(1);
 			if (p > 0) state.prices[mint] = p;
+		} else {
+			const r = await fetch(`https://lite-api.jup.ag/price/v3?ids=${mint}`);
+			if (r.ok) {
+				const d = await r.json();
+				const p = Number(d?.[mint]?.usdPrice ?? d?.[mint]?.price);
+				if (p > 0) state.prices[mint] = p;
+			}
 		}
 	} catch {
 		/* estimate is a nicety */

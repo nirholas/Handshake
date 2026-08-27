@@ -19,6 +19,8 @@
 // BYOK only: the caller supplies their own Rodin key. No platform key — when
 // absent, the forge endpoint never reaches this module.
 
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
+
 const RODIN_BASE = 'https://api.hyper3d.com/api/v2';
 
 // Quad mode accepts 1,000–200,000 for the poly target; clamp the tier budget
@@ -97,7 +99,7 @@ export function createRodinProvider(apiKey) {
 	async function submit(form) {
 		let res;
 		try {
-			res = await fetch(`${RODIN_BASE}/rodin`, { method: 'POST', headers: authHeader, body: form });
+			res = await fetchUpstream(`${RODIN_BASE}/rodin`, { method: 'POST', headers: authHeader, body: form }, { name: 'rodin', timeoutMs: 60_000, attempts: 2, okWhen: () => true });
 		} catch (err) {
 			throw Object.assign(new Error(`rodin unreachable: ${err?.message}`), {
 				code: 'provider_unreachable',
@@ -136,7 +138,7 @@ export function createRodinProvider(apiKey) {
 		async imageTo3d({ imageUrl, prompt, tier }) {
 			let imgRes;
 			try {
-				imgRes = await fetch(imageUrl);
+				imgRes = await fetchUpstream(imageUrl, {}, { timeoutMs: 20_000, attempts: 2, okWhen: () => true });
 			} catch (err) {
 				throw Object.assign(new Error(`could not fetch reference image: ${err?.message}`), {
 					code: 'bad_image',
@@ -167,11 +169,11 @@ export function createRodinProvider(apiKey) {
 		async status({ kind, taskId }) {
 			let res;
 			try {
-				res = await fetch(`${RODIN_BASE}/status`, {
+				res = await fetchUpstream(`${RODIN_BASE}/status`, {
 					method: 'POST',
 					headers: { ...authHeader, 'content-type': 'application/json' },
 					body: JSON.stringify({ subscription_key: kind }),
-				});
+				}, { name: 'rodin', timeoutMs: 15_000, attempts: 2, okWhen: () => true });
 			} catch (err) {
 				return { status: 'running', error: `rodin poll failed: ${err?.message}` };
 			}
@@ -190,11 +192,11 @@ export function createRodinProvider(apiKey) {
 			// Done — fetch the downloadable file list and pull the GLB url.
 			let dl;
 			try {
-				dl = await fetch(`${RODIN_BASE}/download`, {
+				dl = await fetchUpstream(`${RODIN_BASE}/download`, {
 					method: 'POST',
 					headers: { ...authHeader, 'content-type': 'application/json' },
 					body: JSON.stringify({ task_uuid: taskId }),
-				});
+				}, { name: 'rodin', timeoutMs: 15_000, attempts: 2, okWhen: () => true });
 			} catch (err) {
 				return { status: 'running', error: `rodin download list failed: ${err?.message}` };
 			}

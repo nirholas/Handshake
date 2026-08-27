@@ -20,6 +20,8 @@
 import { cors, wrap } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { isQuoteMint } from '../_lib/quote-mints.js';
+import { pumpFetchJson } from '../_lib/pump-feed-fetch.js';
+import { fetchTokenMarketData } from '../_lib/market/token-market.js';
 
 const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const PUMP_FRONTEND_V3 = 'https://frontend-api-v3.pump.fun';
@@ -155,18 +157,18 @@ async function buildCardData(mint) {
 // Live USD market cap for a coin still on the curve. pump.fun emits
 // `usd_market_cap` (with `market_cap_usd` as the v2 alias); this card used to ask
 // for a `market_cap_in_usd` key that does not exist, so the number was fetched on
-// every render and always came back null. Any failure returns null and the card
-// falls back to the recorded outcome cap, or omits the block.
+// every render and always came back null. When pump.fun does not answer, the
+// shared multi-source market reader (Birdeye, DexScreener, GeckoTerminal, ...)
+// supplies the same figure. Any failure returns null and the card falls back to
+// the recorded outcome cap, or omits the block.
 async function fetchLiveMarketCap(mint) {
 	try {
-		const r = await fetch(`${PUMP_FRONTEND_V3}/coins-v2/${mint}`, {
-			headers: { accept: 'application/json' },
-			signal: AbortSignal.timeout(3000),
-		});
-		if (!r.ok) return null;
-		const d = await r.json();
-		const mcap = Number(d?.usd_market_cap ?? d?.market_cap_usd);
-		return Number.isFinite(mcap) && mcap > 0 ? mcap : null;
+		const { ok, body: d } = await pumpFetchJson(`${PUMP_FRONTEND_V3}/coins-v2/${mint}`, { timeoutMs: 3000, retries: 1 });
+		const mcap = ok ? Number(d?.usd_market_cap ?? d?.market_cap_usd) : NaN;
+		if (Number.isFinite(mcap) && mcap > 0) return mcap;
+		const md = await fetchTokenMarketData(mint);
+		const fallback = Number(md?.market_cap);
+		return Number.isFinite(fallback) && fallback > 0 ? fallback : null;
 	} catch {
 		return null;
 	}

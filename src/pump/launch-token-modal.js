@@ -12,6 +12,7 @@ import { mountLaunchBondingCurve } from './bonding-curve-chart.js';
 import { log } from '../shared/log.js';
 import { ensureRiskAck } from '../shared/risk-ack.js';
 import { THREE_WS_MARK } from '../solana/vanity/brand.js';
+import { solToUsd } from '../shared/usd-price.js';
 
 const _isDev =
 	typeof location !== 'undefined' &&
@@ -134,20 +135,17 @@ export class LaunchTokenModal {
 	}
 
 	async _fetchSolPrice() {
-		try {
-			const r = await fetch(
-				'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd',
-			);
-			if (r.ok) {
-				const data = await r.json();
-				this._solPriceUsd = data?.solana?.usd || null;
-				// If modal is open on step 1, re-render to show price hints
-				if (this._overlay && this._step === 1) {
-					this._renderStep1();
-				}
-			}
-		} catch (e) {
-			log.warn('Could not fetch SOL price', e);
+		// Shared five-feed SOL/USD chain; null when every feed is down, in which
+		// case the SOL amounts render without a USD hint rather than a stale one.
+		const price = await solToUsd(1);
+		if (price == null) {
+			log.warn('Could not fetch SOL price: every feed unavailable');
+			return;
+		}
+		this._solPriceUsd = price;
+		// If modal is open on step 1, re-render to show price hints
+		if (this._overlay && this._step === 1) {
+			this._renderStep1();
 		}
 	}
 

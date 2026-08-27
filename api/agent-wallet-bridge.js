@@ -26,6 +26,7 @@ import { limits, clientIp } from './_lib/rate-limit.js';
 import { createSolanaSigner } from './_lib/x402/a2a-client.js';
 import { enforceCap, commit, rollbackReservation } from './_lib/x402-spending-cap.js';
 import { env } from './_lib/env.js';
+import { fetchUpstream } from './_lib/upstream-fetch.js';
 
 const SOLANA_RPC_URL = env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
 const USDC_MINT_SOLANA = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
@@ -115,11 +116,13 @@ async function walletStatus() {
 }
 
 async function fetch402(endpoint, method, body) {
-	const res = await fetch(endpoint, {
+	// Any status is a legitimate answer here (we are probing for a 402), so the
+	// wrapper only adds the timeout and a retry on a dropped connection.
+	const res = await fetchUpstream(endpoint, {
 		method,
 		headers: { accept: 'application/json', ...(body ? { 'content-type': 'application/json' } : {}) },
 		body: body ? JSON.stringify(body) : undefined,
-	});
+	}, { timeoutMs: 15_000, attempts: 2, okWhen: () => true });
 	if (res.status !== 402) {
 		const text = (await res.text()).slice(0, 300);
 		throw new Error(`expected a 402 challenge from ${endpoint}, got ${res.status}: ${text}`);
@@ -209,7 +212,9 @@ async function executePayment({ endpoint, method, body, payerAddress, emit }) {
 		if (echo) paymentPayload.extensions = { 'builder-code': echo };
 		emit({ stage: 'submitting' });
 
-		const paidRes = await fetch(endpoint, {
+		// A signed payment must never be re-sent (a retry could double-spend), so
+		// this is a single attempt: timeout only.
+		const paidRes = await fetchUpstream(endpoint, {
 			method,
 			headers: {
 				accept: 'application/json',
@@ -217,7 +222,7 @@ async function executePayment({ endpoint, method, body, payerAddress, emit }) {
 				...(body ? { 'content-type': 'application/json' } : {}),
 			},
 			body: body ? JSON.stringify(body) : undefined,
-		});
+		}, { timeoutMs: 30_000, attempts: 1, okWhen: () => true });
 		const resultText = await paidRes.text();
 		let result = null;
 		try { result = JSON.parse(resultText); } catch { result = { raw: resultText.slice(0, 1000) }; }

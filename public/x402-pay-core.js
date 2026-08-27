@@ -349,9 +349,21 @@ export function buildEvmPaymentPayload({ accept, signature, authorization, resou
 let _solanaWeb3 = null;
 async function loadSolanaWeb3() {
 	if (_solanaWeb3) return _solanaWeb3;
-	// Dynamic import from esm.sh keeps the paywall tiny — web3.js is only fetched
-	// when a Solana payment is actually attempted. Mirrors public/x402.js.
-	_solanaWeb3 = await import('https://esm.sh/@solana/web3.js@1.95.3?bundle');
+	// Dynamic import keeps the paywall tiny — web3.js is only fetched when a
+	// Solana payment is actually attempted. The shared loader tries esm.sh, then
+	// jsdelivr and unpkg for the same version, each under a deadline, and throws
+	// a typed error naming the hosts when all three are blocked.
+	const { loadModule } = await import('./load-module.js');
+	try {
+		_solanaWeb3 = await loadModule('https://esm.sh/@solana/web3.js@1.95.3?bundle');
+	} catch (err) {
+		if (err?.code === 'module_unavailable') {
+			throw new Error(
+				'The Solana wallet component could not be loaded (' + err.hosts.join(', ') + ' unreachable or blocked by this page\'s security policy). Pay with a Base wallet instead; that path needs no third-party code.',
+			);
+		}
+		throw err;
+	}
 	return _solanaWeb3;
 }
 

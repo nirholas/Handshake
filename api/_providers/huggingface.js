@@ -32,7 +32,17 @@
 //                                   is unset.
 //   HF_RECONSTRUCT_API_NAME       — legacy single-API alias.
 
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
+
 const HF_INFERENCE_TIMEOUT_MS = 280_000; // leave headroom for response framing
+// Per-call deadlines. The SSE read is bounded by HF_INFERENCE_TIMEOUT_MS in
+// consumeSseUntilComplete; its fetch deadline sits above that as a backstop
+// (the signal covers the body read too, so it must not be shorter). The
+// enqueue and the GLB download are single attempts: the outer Space chain and
+// candidate loop already decide what to retry.
+const HF_ENQUEUE_TIMEOUT_MS = 60_000;
+const HF_SSE_TIMEOUT_MS = HF_INFERENCE_TIMEOUT_MS + 10_000;
+const HF_GLB_DOWNLOAD_TIMEOUT_MS = 120_000;
 
 // A reconstructed GLB is served from the Space's ephemeral gradio /tmp path,
 // which is purged minutes (sometimes seconds) after the run. Every consumer of
@@ -377,7 +387,7 @@ async function rehostGlbToR2(glbUrls, token) {
 	for (const glbUrl of candidates) {
 		for (let attempt = 1; attempt <= REHOST_MAX_ATTEMPTS; attempt++) {
 			try {
-				const resp = await fetch(glbUrl, { headers: spaceAuthHeaders(token) });
+				const resp = await fetchUpstream(glbUrl, { headers: spaceAuthHeaders(token) }, { timeoutMs: HF_GLB_DOWNLOAD_TIMEOUT_MS, attempts: 1, okWhen: () => true });
 				if (!resp.ok) {
 					lastErr = Object.assign(new Error(`GLB fetch ${resp.status}`), { status: resp.status });
 					// 404/410 on this address = wrong route or the temp file is gone;
@@ -458,11 +468,11 @@ async function attemptOnSpace({ token, target, photos, params }) {
 	// Step 1 — POST /call/<api> to enqueue. Returns event_id.
 	let queueRes;
 	try {
-		queueRes = await fetch(`${spaceUrl}/call/${api}`, {
+		queueRes = await fetchUpstream(`${spaceUrl}/call/${api}`, {
 			method: 'POST',
 			headers: { ...spaceAuthHeaders(token), 'content-type': 'application/json' },
 			body: JSON.stringify({ data: payload }),
-		});
+		}, { timeoutMs: HF_ENQUEUE_TIMEOUT_MS, attempts: 1, okWhen: () => true });
 	} catch (err) {
 		throw tag(Object.assign(new Error(`enqueue failed: ${err?.message}`), {
 			code: 'provider_unreachable',
@@ -485,9 +495,9 @@ async function attemptOnSpace({ token, target, photos, params }) {
 	// Step 2 — GET /call/<api>/<event_id> SSE; block until complete.
 	let streamRes;
 	try {
-		streamRes = await fetch(`${spaceUrl}/call/${api}/${eventId}`, {
+		streamRes = await fetchUpstream(`${spaceUrl}/call/${api}/${eventId}`, {
 			headers: { ...spaceAuthHeaders(token), accept: 'text/event-stream' },
-		});
+		}, { timeoutMs: HF_SSE_TIMEOUT_MS, attempts: 1, okWhen: () => true });
 	} catch (err) {
 		throw tag(Object.assign(new Error(`SSE GET failed: ${err?.message}`), {
 			code: 'provider_unreachable',

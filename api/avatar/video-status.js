@@ -32,6 +32,11 @@
 import { cors, error, json, wrap } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
+
+// Job reads are idempotent: short deadline, retried, same breaker as the submit.
+const WORKER_BREAKER = 'longcat-worker';
+const STATUS_TIMEOUT_MS = 10_000;
 
 // Mirror of workerConfig() in api/avatar/video-generate.js: resolve address and
 // credential together and return null when either is unset. Throwing from inside
@@ -80,9 +85,9 @@ export default wrap(async (req, res) => {
 
 	let workerRes;
 	try {
-		workerRes = await fetch(`${worker.url}/jobs/${encodeURIComponent(jobId)}`, {
+		workerRes = await fetchUpstream(`${worker.url}/jobs/${encodeURIComponent(jobId)}`, {
 			headers: { authorization: `Bearer ${worker.key}` },
-		});
+		}, { name: WORKER_BREAKER, timeoutMs: STATUS_TIMEOUT_MS, attempts: 3, okWhen: () => true });
 	} catch (err) {
 		return error(res, 502, 'worker_unreachable', err?.message || 'worker request failed');
 	}

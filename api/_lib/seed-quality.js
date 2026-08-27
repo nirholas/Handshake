@@ -31,6 +31,7 @@
 
 import { judgeOnce, JUDGE_MODEL, RENDER_BACKGROUND } from './quality-bench.js';
 import { vertexGeminiAvailable, vertexGeminiChatUrl, vertexGeminiHeaders } from './vertex-gemini.js';
+import { fetchUpstream } from './upstream-fetch.js';
 import { copyObject, putObject } from './r2.js';
 
 // Stage 1 lives in its own module because it is the only part of this gate that
@@ -133,7 +134,7 @@ async function rigReadinessVertex({ png, prompt, category }) {
 			},
 		],
 	};
-	const res = await fetch(vertexGeminiChatUrl(), { method: 'POST', headers, body: JSON.stringify(body) });
+	const res = await fetchUpstream(vertexGeminiChatUrl(), { method: 'POST', headers, body: JSON.stringify(body) }, { name: 'vertex-gemini', timeoutMs: 45_000, attempts: 1, okWhen: () => true });
 	const data = await res.json().catch(() => ({}));
 	if (!res.ok) throw new Error(`rig-readiness call ${res.status}: ${JSON.stringify(data).slice(0, 300)}`);
 	return normalizeRigReadiness(parseJsonReply(data?.choices?.[0]?.message?.content || ''));

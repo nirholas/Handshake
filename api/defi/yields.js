@@ -19,7 +19,30 @@
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { createCache, cached } from '../_lib/mem-cache.js';
+import { fetchUpstream, lastGood } from '../_lib/upstream-fetch.js';
 
+// DeFiLlama is this page's only upstream. A TTL cache alone still 502s the
+// moment it expires during an outage, so every loader also keeps its last good
+// result for hours and serves that (the handler's cache headers keep the
+// staleness honest to the CDN) rather than blanking the page.
+const STALE_MAX_AGE_MS = 6 * 60 * 60_000;
+// Keys currently served from a last-good copy (either tier), so the handler can
+// label the response `x-three-stale: 1` instead of passing it off as live. A key
+// leaves the set the moment its loader succeeds again.
+const _staleKeys = new Set();
+const cachedStale = (cache, key, load) => cached(cache, key, async () => {
+	const r = await lastGood(`defi-yields:${key}`, load, {
+		maxAgeMs: STALE_MAX_AGE_MS,
+		onFallback: (err, ageMs) => console.warn(`[upstream] defi-yields:${key}: serving last good value (${Math.round(ageMs / 60_000)}m old) after ${err?.message || err}`),
+	});
+	if (r.stale) _staleKeys.add(key);
+	else _staleKeys.delete(key);
+	return r.value;
+}, { onStale: (err) => {
+	_staleKeys.add(key);
+	console.warn(`[upstream] defi-yields:${key}: serving in-memory last good after ${err?.message || err}`);
+} });
+const staleHeaders = (...keys) => (keys.some((k) => _staleKeys.has(k)) ? { 'x-three-stale': '1' } : {});
 const POOLS_UPSTREAM = 'https://yields.llama.fi/pools';
 const CHART_UPSTREAM = 'https://yields.llama.fi/chart/';
 const POOLS_TTL_MS = 600_000;
@@ -102,12 +125,10 @@ export async function loadYieldPools() {
 }
 
 async function loadPools() {
-	return cached(_pools, POOLS_KEY, async () => {
-		const resp = await fetch(POOLS_UPSTREAM, {
+	return cachedStale(_pools, POOLS_KEY, async () => {
+		const resp = await fetchUpstream(POOLS_UPSTREAM, {
 			headers: { accept: 'application/json', 'user-agent': 'three.ws/1.0' },
-			signal: AbortSignal.timeout(20_000),
-		});
-		if (!resp.ok) throw new Error(`llama yields ${resp.status}`);
+		}, { timeoutMs: 20_000, attempts: 2 });
 		const raw = await resp.json();
 		if (!Array.isArray(raw?.data)) throw new Error('unexpected upstream shape');
 
@@ -216,6 +237,7 @@ async function listMode(req, res, params) {
 	});
 	return json(res, 200, payload, {
 		'cache-control': 'public, max-age=120, s-maxage=300, stale-while-revalidate=600',
+		...staleHeaders(POOLS_KEY),
 	});
 }
 
@@ -238,17 +260,20 @@ function downsample(points, max) {
 }
 
 async function loadChart(pool) {
-	return cached(_charts, pool, async () => {
+	return cachedStale(_charts, pool, async () => {
 		const now = Date.now();
 
-		const resp = await fetch(`${CHART_UPSTREAM}${pool}`, {
-			headers: { accept: 'application/json', 'user-agent': 'three.ws/1.0' },
-			signal: AbortSignal.timeout(15_000),
-		});
 		// DeFiLlama answers an unknown pool id with a non-200 or an empty data set;
 		// both mean "no history for this pool", not an outage.
-		if (resp.status === 404 || resp.status === 400) return null;
-		if (!resp.ok) throw new Error(`llama chart ${resp.status}`);
+		let resp;
+		try {
+			resp = await fetchUpstream(`${CHART_UPSTREAM}${pool}`, {
+				headers: { accept: 'application/json', 'user-agent': 'three.ws/1.0' },
+			}, { timeoutMs: 15_000, attempts: 2 });
+		} catch (err) {
+			if (err?.status === 404 || err?.status === 400) return null;
+			throw err;
+		}
 		const raw = await resp.json();
 		if (!Array.isArray(raw?.data)) throw new Error('unexpected upstream shape');
 
@@ -293,6 +318,7 @@ async function chartMode(req, res, pool) {
 	}
 	return json(res, 200, value, {
 		'cache-control': 'public, max-age=300, s-maxage=600, stale-while-revalidate=1200',
+		...staleHeaders(pool.toLowerCase()),
 	});
 }
 

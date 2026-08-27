@@ -50,6 +50,10 @@ const SOLANA_MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const JUP_QUOTE_URL = 'https://lite-api.jup.ag/swap/v1/quote';
 const JUP_SWAP_URL  = 'https://lite-api.jup.ag/swap/v1/swap';
 const JUP_PRICE_URL = 'https://lite-api.jup.ag/price/v2';
+// A quote or swap build that has not answered by now is treated as failed, so
+// the modal's "Quoting…" / "Building swap transaction…" states can never stick.
+const QUOTE_TIMEOUT_MS = 12_000;
+const SWAP_BUILD_TIMEOUT_MS = 20_000;
 
 // Mainnet RPC for swap submission. We route through the same-origin proxy so
 // browser-side rate limits don't blow up the flow.
@@ -454,7 +458,7 @@ async function fetchQuote() {
 	$('sj-confirm').textContent = 'Quoting…';
 
 	try {
-		const resp = await fetch(`${JUP_QUOTE_URL}?${params}`);
+		const resp = await fetch(`${JUP_QUOTE_URL}?${params}`, { signal: AbortSignal.timeout(QUOTE_TIMEOUT_MS) });
 		if (!resp.ok) {
 			const text = await resp.text();
 			throw new Error(`Jupiter quote ${resp.status}: ${text.slice(0, 200)}`);
@@ -823,6 +827,7 @@ async function executeSwap() {
 				dynamicComputeUnitLimit: true,
 				prioritizationFeeLamports: { priorityLevelWithMaxLamports: { maxLamports: 1_000_000, priorityLevel: 'medium' } },
 			}),
+			signal: AbortSignal.timeout(SWAP_BUILD_TIMEOUT_MS),
 		});
 		if (!swapResp.ok) {
 			const text = await swapResp.text();

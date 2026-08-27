@@ -9,6 +9,7 @@ import { requireAdmin } from '../_lib/admin.js';
 import { createCache } from '../_lib/mem-cache.js';
 import { loadWallets, saveImportedWallets } from '../../src/kol/wallet-store.js';
 
+import { getBalances, walletUsdTotal } from '../_lib/balances.js';
 // ── wallets (Birdeye P&L proxy) ───────────────────────────────────────────────
 
 const BIRDEYE_BASE = 'https://public-api.birdeye.so';
@@ -41,6 +42,32 @@ function _setCache(addr, data) {
 // data. A miss entry is filtered out of the response and refreshed sooner.
 function _setCacheError(addr) {
 	_cache.set(addr, { error: true }, { ttl: NEG_CACHE_TTL_MS });
+}
+
+// Holdings without Birdeye: the shared balances module reads the wallet over
+// the rotating Solana RPC chain and prices every position through Jupiter, so a
+// missing or rate-limited Birdeye key degrades to our own data, not to a 503.
+async function _fetchOwnHoldings(addr) {
+	const bal = await getBalances({ chain: 'solana', address: addr });
+	const items = [];
+	const nativeUsd = Number(bal?.native?.usd) || 0;
+	if (nativeUsd > 0) items.push({ symbol: 'SOL', valueUsd: nativeUsd });
+	for (const t of bal?.tokens || []) {
+		const valueUsd = Number(t?.usd) || 0;
+		if (valueUsd > 0) items.push({ symbol: t?.symbol || t?.mint?.slice(0, 4) || '?', valueUsd });
+	}
+	return { items, totalUsd: walletUsdTotal(bal), stale: !!bal?.stale };
+}
+
+async function _fetchPortfolio(addr, apiKey) {
+	if (apiKey) {
+		try {
+			return await _fetchBirdeye(addr, apiKey);
+		} catch (err) {
+			console.warn(`[kol] birdeye portfolio failed for ${addr.slice(0, 4)}…, falling back to RPC balances: ${err?.message || err}`);
+		}
+	}
+	return _fetchOwnHoldings(addr);
 }
 
 async function _fetchBirdeye(addr, apiKey) {
@@ -126,8 +153,8 @@ async function handleWallets(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
 
-	const apiKey = process.env.BIRDEYE_API_KEY;
-	if (!apiKey) return error(res, 503, 'birdeye_not_configured', 'Birdeye API key not configured');
+	// Optional: without it every wallet is read through the RPC balances path.
+	const apiKey = process.env.BIRDEYE_API_KEY || null;
 
 	const rl = await limits.mcpIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
@@ -148,10 +175,10 @@ async function handleWallets(req, res) {
 		await Promise.allSettled(
 			uncached.map(async (addr) => {
 				try {
-					// _walletPnl never rejects, so only a Birdeye failure reaches the
-					// catch: the holdings half is what this endpoint exists to proxy.
+					// _walletPnl never rejects, so only a holdings failure on BOTH the
+					// Birdeye and RPC paths reaches the catch.
 					const [portfolio, pnl] = await Promise.all([
-						_fetchBirdeye(addr, apiKey),
+						_fetchPortfolio(addr, apiKey),
 						_walletPnl(addr),
 					]);
 					_setCache(addr, { ..._normalizeHoldings(addr, portfolio), ...pnl });

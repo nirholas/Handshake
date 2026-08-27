@@ -3,10 +3,59 @@
 // Usage: <div data-agent-id="YOUR_ID"></div>
 //        <script type="module" src="https://three.ws/artifact.js"></script>
 
-import * as THREE from 'https://esm.sh/three@0.160.0';
-import { GLTFLoader } from 'https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
-
 const BASE = 'https://three.ws/';
+
+// three.js is fetched at boot from the first reachable CDN. This file stays
+// self-contained (Claude artifacts load it cross-origin), so the mirror loop
+// is inlined here rather than imported from /load-module.js.
+const THREE_VERSION = '0.160.0';
+const MODULE_TIMEOUT_MS = 15000;
+const THREE_MIRRORS = {
+	three: [
+		`https://esm.sh/three@${THREE_VERSION}`,
+		`https://cdn.jsdelivr.net/npm/three@${THREE_VERSION}/+esm`,
+		`https://unpkg.com/three@${THREE_VERSION}?module`,
+	],
+	gltf: [
+		`https://esm.sh/three@${THREE_VERSION}/examples/jsm/loaders/GLTFLoader.js`,
+		`https://cdn.jsdelivr.net/npm/three@${THREE_VERSION}/examples/jsm/loaders/GLTFLoader.js/+esm`,
+		`https://unpkg.com/three@${THREE_VERSION}/examples/jsm/loaders/GLTFLoader.js?module`,
+	],
+};
+let THREE = null;
+let GLTFLoader = null;
+
+function importWithDeadline(url) {
+	let timer;
+	const deadline = new Promise((_, reject) => {
+		timer = setTimeout(() => reject(new Error(`timed out loading ${url}`)), MODULE_TIMEOUT_MS);
+	});
+	return Promise.race([import(url), deadline]).finally(() => clearTimeout(timer));
+}
+
+async function importFirst(urls) {
+	let lastErr;
+	for (const url of urls) {
+		try {
+			return await importWithDeadline(url);
+		} catch (err) {
+			lastErr = err;
+		}
+	}
+	const hosts = urls.map((u) => new URL(u).host).join(', ');
+	throw Object.assign(new Error(`3D library unreachable (${hosts})`), { code: 'module_unavailable', cause: lastErr });
+}
+
+let _threeReady = null;
+function ensureThree() {
+	if (_threeReady) return _threeReady;
+	_threeReady = (async () => {
+		THREE = await importFirst(THREE_MIRRORS.three);
+		({ GLTFLoader } = await importFirst(THREE_MIRRORS.gltf));
+	})();
+	_threeReady.catch(() => { _threeReady = null; });
+	return _threeReady;
+}
 const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const CSS = `
@@ -163,6 +212,16 @@ async function mount(container) {
 	}
 
 	container.classList.add('a3d-wrap');
+
+	try {
+		await ensureThree();
+	} catch (e) {
+		showError(
+			container,
+			`The 3D viewer could not be loaded: ${e.message}. Check the network or content security policy, or open this agent on three.ws.`,
+		);
+		return;
+	}
 
 	let manifestUrl;
 	try {

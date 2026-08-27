@@ -11,7 +11,11 @@ import { detectSolanaWallet, SOLANA_RPC } from '../erc8004/solana-deploy.js';
 export const WSOL_MINT = 'So11111111111111111111111111111111111111112';
 export const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
-const JUPITER_API_URL = 'https://quote-api.jup.ag/v6';
+// Jupiter consolidated quote-api.jup.ag/v6 and token.jup.ag onto lite-api.jup.ag;
+// the old hosts now fail every request.
+const JUPITER_API_URL = 'https://lite-api.jup.ag/swap/v1';
+const JUPITER_TOKENS_URL = 'https://lite-api.jup.ag/tokens/v2/tag?query=verified';
+const FETCH_TIMEOUT_MS = 10_000;
 const QUOTE_TTL_MS = 15_000;
 
 let _client = null;
@@ -127,7 +131,7 @@ const TOKEN_LIST_TTL = 5 * 60_000;
 
 export async function getJupiterTopTokens() {
 	if (_tokenListCache && Date.now() - _tokenListTs < TOKEN_LIST_TTL) return _tokenListCache;
-	const res = await fetch('https://token.jup.ag/strict');
+	const res = await fetch(JUPITER_TOKENS_URL, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
 	if (!res.ok) throw new Error(`Jupiter token list fetch failed: ${res.status}`);
 	_tokenListCache = await res.json();
 	_tokenListTs = Date.now();

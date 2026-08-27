@@ -13,6 +13,8 @@
 // BYOK only: the caller passes the user's Tripo key (tsk_…). The model version
 // defaults to v3.1 and is overridable via TRIPO_MODEL_VERSION.
 
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
+
 const TRIPO_BASE = 'https://api.tripo3d.ai/v2/openapi';
 const DEFAULT_MODEL_VERSION = 'v3.1-20260211';
 
@@ -90,11 +92,11 @@ export function createTripoProvider(apiKey) {
 	async function createTask(body) {
 		let res;
 		try {
-			res = await fetch(`${TRIPO_BASE}/task`, {
+			res = await fetchUpstream(`${TRIPO_BASE}/task`, {
 				method: 'POST',
 				headers,
 				body: JSON.stringify(body),
-			});
+			}, { name: 'tripo', timeoutMs: 30_000, attempts: 2, okWhen: () => true });
 		} catch (err) {
 			throw Object.assign(new Error(`tripo unreachable: ${err?.message}`), {
 				code: 'provider_unreachable',
@@ -151,11 +153,11 @@ export function createTripoProvider(apiKey) {
 		try {
 			// Let fetch set the multipart content-type (with boundary) itself — only
 			// forward the bearer, never the JSON content-type from `headers`.
-			res = await fetch(`${TRIPO_BASE}/upload`, {
+			res = await fetchUpstream(`${TRIPO_BASE}/upload`, {
 				method: 'POST',
 				headers: { authorization: headers.authorization },
 				body: form,
-			});
+			}, { name: 'tripo', timeoutMs: 60_000, attempts: 2, okWhen: () => true });
 		} catch (err) {
 			throw Object.assign(new Error(`tripo upload unreachable: ${err?.message}`), {
 				code: 'provider_unreachable',
@@ -235,7 +237,7 @@ export function createTripoProvider(apiKey) {
 		async status({ taskId }) {
 			let res;
 			try {
-				res = await fetch(`${TRIPO_BASE}/task/${encodeURIComponent(taskId)}`, { headers });
+				res = await fetchUpstream(`${TRIPO_BASE}/task/${encodeURIComponent(taskId)}`, { headers }, { name: 'tripo', timeoutMs: 15_000, attempts: 2, okWhen: () => true });
 			} catch (err) {
 				return { status: 'running', error: `tripo poll failed: ${err?.message}` };
 			}

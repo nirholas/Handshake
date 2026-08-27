@@ -20,6 +20,7 @@ import { sql } from '../_lib/db.js';
 import { gmgnTokenUrl, referralUrl, TERMINAL_LABELS } from '../../src/shared/trading-terminals.js';
 import { requireCron } from '../_lib/cron-auth.js';
 
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
 const TIER_EMOJI = { prime: '🟣', strong: '🔵', lean: '🟡', watch: '⚪', avoid: '🔴' };
 const ALERT_TIMEOUT_MS = 5000;
 
@@ -144,7 +145,7 @@ async function sendDigest(chatId, text) {
 	const ctrl = new AbortController();
 	const timer = setTimeout(() => ctrl.abort(), ALERT_TIMEOUT_MS);
 	try {
-		const r = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+		const r = await fetchUpstream(`https://api.telegram.org/bot${token}/sendMessage`, {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
 			body: JSON.stringify({
@@ -154,7 +155,7 @@ async function sendDigest(chatId, text) {
 				disable_web_page_preview: true,
 			}),
 			signal: ctrl.signal,
-		});
+		}, { name: 'telegram', timeoutMs: 10_000, attempts: 2, okWhen: () => true });
 		const result = await r.json().catch(() => null);
 		return result?.ok === true;
 	} catch {

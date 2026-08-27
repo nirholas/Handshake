@@ -30,6 +30,7 @@ import { loadAgentForSigning, solanaConnection } from '../../_lib/agent-pumpfun.
 import { submitProtected } from '../../_lib/execution-engine.js';
 import { reserveSpend, finalizeSpend, releaseSpend } from '../../_lib/agent-spend-policy.js';
 import { grindMintKeypair } from '../../_lib/pump-vanity.js';
+import { isRpcOutageError } from '../../_lib/rpc-degrade.js';
 import { sql } from '../../_lib/db.js';
 import { Keypair, PublicKey } from '@solana/web3.js';
 import { z } from 'zod';
@@ -1281,7 +1282,16 @@ async function handleSwap(req, res, id) {
 	// Detect graduation. If still on bonding curve, delegate to /buy or /sell.
 	const { PumpSdk, bondingCurvePda } = await import('@pump-fun/pump-sdk');
 	const pumpSdk = new PumpSdk();
-	const bcInfo = await conn.getAccountInfo(bondingCurvePda(mint));
+	let bcInfo;
+	try {
+		bcInfo = await conn.getAccountInfo(bondingCurvePda(mint));
+	} catch (err) {
+		// Graduation cannot be decided without the curve account: answer with a
+		// typed retryable 503 rather than guessing a venue or 500ing.
+		if (!isRpcOutageError(err)) throw err;
+		res.setHeader('Retry-After', '15');
+		return error(res, 503, 'rpc_unavailable', 'Solana RPC is temporarily unavailable, retry shortly', { retry_after: 15 });
+	}
 	const bc = bcInfo ? pumpSdk.decodeBondingCurveNullable(bcInfo) : null;
 	const graduated = !bc || bc.complete;
 

@@ -29,6 +29,7 @@ import {
 } from '@aws-sdk/client-marketplace-entitlement-service';
 import { createVerify, createPublicKey, timingSafeEqual } from 'node:crypto';
 import { env } from './env.js';
+import { fetchUpstream } from './upstream-fetch.js';
 
 function credentials() {
 	return {
@@ -248,7 +249,8 @@ async function fetchCert(url) {
 	// Only trust certs hosted on *.amazonaws.com over HTTPS.
 	assertAwsHttpsUrl(url, 'SNS signing cert URL');
 
-	const res = await fetch(url);
+	// The PEM is cached per URL above, so this is paid once per cert rotation.
+	const res = await fetchUpstream(url, {}, { name: 'aws-sns-cert', timeoutMs: 8_000, attempts: 3, okWhen: () => true });
 	if (!res.ok) throw new Error(`Failed to fetch SNS cert: ${res.status}`);
 	const pem = await res.text();
 	certCache.set(url, pem);

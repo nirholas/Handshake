@@ -20,8 +20,9 @@
 // audit after the fact even if we didn't verify in-process.
 
 import { sha256 } from '@noble/hashes/sha256';
+import { fetchUpstream } from '../upstream-fetch.js';
 
-const QUICKNET_CHAIN_HASH = '52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971';
+export const QUICKNET_CHAIN_HASH = '52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971';
 const QUICKNET_GENESIS = 1692803367;
 const QUICKNET_PERIOD = 3;
 const QUICKNET_PUBLIC_KEY_HEX =
@@ -29,7 +30,15 @@ const QUICKNET_PUBLIC_KEY_HEX =
 	'8c4b450b6a0a6c3ac6a5776a2d1064510d1fec758c921cc22b0e17e63aaf4bcb' +
 	'5ed66304de9cf809bd274ca73bab4af5a6e9c76a4bc09e76eae8991ef5ece45a';
 
-const DRAND_BASE = `https://api.drand.sh/${QUICKNET_CHAIN_HASH}/public`;
+// Public drand relays, all serving quicknet. api.drand.sh is the League of
+// Entropy's primary; the others are independent mirrors of the same beacon.
+export const DRAND_RELAYS = [
+	'https://api.drand.sh',
+	'https://api2.drand.sh',
+	'https://api3.drand.sh',
+	'https://drand.cloudflare.com',
+];
+const DRAND_BASE = `${DRAND_RELAYS[0]}/${QUICKNET_CHAIN_HASH}/public`;
 
 /**
  * Compute the Drand round number that will be live at or after the given unix
@@ -79,15 +88,34 @@ export function drandRoundMessage(round) {
  * @returns {Promise<{ round: number, randomness: string, signature: string }>}
  */
 export async function fetchDrandRound(round) {
-	const url = `${DRAND_BASE}/${round}`;
-	const resp = await fetch(url, { headers: { accept: 'application/json' } });
-	if (resp.status === 404) {
-		throw new Error(`drand_round_unavailable:${round}`);
+	// Every relay serves the same signed beacon, so any one of them is
+	// authoritative; the signature check below is what we trust, not the host.
+	// A 404 is a real answer (the round has not been published yet) and must
+	// not be retried on the next relay, so it short-circuits the chain.
+	let data = null;
+	let lastStatus = 0;
+	for (const base of DRAND_RELAYS) {
+		let resp;
+		try {
+			resp = await fetchUpstream(`${base}/${QUICKNET_CHAIN_HASH}/public/${round}`, { headers: { accept: 'application/json' } }, {
+				name: `drand:${base}`,
+				timeoutMs: 5_000,
+				attempts: 2,
+				okWhen: (r) => r.ok || r.status === 404,
+			});
+		} catch (err) {
+			lastStatus = err?.status || 0;
+			continue;
+		}
+		if (resp.status === 404) {
+			throw new Error(`drand_round_unavailable:${round}`);
+		}
+		data = await resp.json().catch(() => null);
+		if (data) break;
 	}
-	if (!resp.ok) {
-		throw new Error(`drand_fetch_failed:${resp.status}`);
+	if (!data) {
+		throw new Error(`drand_fetch_failed:${lastStatus || 'unreachable'}`);
 	}
-	const data = await resp.json();
 	if (!data || typeof data.round !== 'number' || !data.randomness || !data.signature) {
 		throw new Error('drand_response_malformed');
 	}

@@ -20,6 +20,7 @@
 
 import { parseMintAccount } from '../v1/token/security.js';
 import { solanaRpcEndpoints, makeRotatingFetch } from './solana/connection.js';
+import { withDeadline } from './rpc-degrade.js';
 
 // Budget for ONE JSON-RPC read across the WHOLE failover chain, not per
 // endpoint. makeRotatingFetch bounds each attempt itself (10s) and composes the
@@ -29,6 +30,13 @@ import { solanaRpcEndpoints, makeRotatingFetch } from './solana/connection.js';
 // this request" and answered 503, while a retry seconds later succeeded. Sized
 // to cover a couple of real attempts, matching the wallet-activity lane.
 const RPC_TIMEOUT_MS = 25_000;
+
+// Per-call wall clock for the keyless fan-out (largest accounts, then owner
+// resolution). Each read is bounded by RPC_TIMEOUT_MS, but two of them back to
+// back after a slow Helius walk could still outlive the gateway; this cap makes
+// the caller's upstream_down (and its last-good tier) fire while the response
+// can still be delivered.
+const KEYLESS_CALL_DEADLINE_MS = 20_000;
 
 // Helius DAS getTokenAccounts pages at up to 1000 accounts; cap the walk so a
 // mega-token (millions of accounts) can't burn the invocation. Within the cap
@@ -282,7 +290,7 @@ export async function composeTokenHolders({ address, limit = DEFAULT_LIMIT }, de
 	let largest = null;
 	let largestAnswered = false;
 	try {
-		const json = await deps.fetchLargestAccounts(address);
+		const json = await withDeadline(deps.fetchLargestAccounts(address), KEYLESS_CALL_DEADLINE_MS, 'getTokenLargestAccounts');
 		if (Array.isArray(json?.result?.value)) {
 			largestAnswered = true;
 			largest = json.result.value;
@@ -292,7 +300,7 @@ export async function composeTokenHolders({ address, limit = DEFAULT_LIMIT }, de
 	if (largest?.length) {
 		let owners = new Map();
 		try {
-			owners = await deps.fetchAccountOwners(largest.map((a) => a.address));
+			owners = await withDeadline(deps.fetchAccountOwners(largest.map((a) => a.address)), KEYLESS_CALL_DEADLINE_MS, 'getMultipleAccounts');
 		} catch { /* owner resolution is enrichment — top-N stands on account addresses */ }
 		const accounts = largest.map((a) => ({
 			address: a.address,

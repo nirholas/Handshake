@@ -37,6 +37,8 @@ export default wrap(async (req, res) => {
 	try {
 		result = await fetchKolTrades({ mint, limit });
 	} catch (err) {
+		// No last-good copy either: honest retryable error with a back-off hint.
+		if (!err.status || err.status >= 500) res.setHeader('Retry-After', '15');
 		return error(
 			res,
 			err.status || 502,
@@ -46,5 +48,11 @@ export default wrap(async (req, res) => {
 	}
 
 	res.setHeader('x-kol-source', result.source || 'unconfigured');
-	return json(res, 200, { mint, trades: result.trades, wallets: KOL_WALLETS?.length ?? 0 });
+	if (result.stale) res.setHeader('x-kol-stale', '1');
+	return json(res, 200, {
+		mint,
+		trades: result.trades,
+		wallets: KOL_WALLETS?.length ?? 0,
+		...(result.stale ? { stale: true, as_of: result.as_of } : {}),
+	});
 });

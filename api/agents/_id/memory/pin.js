@@ -5,6 +5,7 @@ import { cors, json, method, readJson, wrap, error, rateLimited } from '../../..
 import { limits, clientIp } from '../../../_lib/rate-limit.js';
 import { parse } from '../../../_lib/validate.js';
 
+import { pinToIPFS, ipfsPinningConfigured } from '../../../_lib/ipfs-pin.js';
 const MAX_BYTES = 512 * 1024; // 512 KB per encrypted file
 
 const bodySchema = z.object({
@@ -24,22 +25,6 @@ const bodySchema = z.object({
 		.regex(/^[A-Za-z0-9+/\r\n]+={0,2}$/, 'data must be base64')
 		.refine((s) => s.replace(/[\r\n]/g, '').length % 4 === 0, 'data must be base64'),
 });
-
-async function pinViaPinata(buf, filename) {
-	const form = new FormData();
-	form.append('file', new Blob([buf]), filename);
-	const resp = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
-		method: 'POST',
-		headers: { Authorization: `Bearer ${process.env.PINATA_JWT}` },
-		body: form,
-	});
-	if (!resp.ok) {
-		const detail = await resp.text().catch(() => '');
-		throw Object.assign(new Error(`Pinata error ${resp.status}`), { status: 502, detail });
-	}
-	const data = await resp.json();
-	return data.IpfsHash;
-}
 
 // POST /api/agents/:id/memory/pin
 // Body: { filename, data } — data is base64-encoded bytes
@@ -74,11 +59,14 @@ export default wrap(async (req, res) => {
 		return error(res, 413, 'payload_too_large', 'file exceeds 512 KB limit');
 	}
 
-	if (!process.env.PINATA_JWT) {
+	if (!ipfsPinningConfigured()) {
 		return error(res, 503, 'pinning_unconfigured', 'no pinning provider configured');
 	}
 
-	const cid = await pinViaPinata(buf, body.filename);
+	// Pinata first, web3.storage on failure: each rung carries its own deadline
+	// and breaker (api/_lib/ipfs-pin.js), so a sick provider fails over instead
+	// of holding this request open.
+	const { cid } = await pinToIPFS(buf, body.filename);
 
 	// Record the CID against this agent so the read proxy
 	// (GET /api/agents/:id/memory/:cid) can verify ownership of the CID itself,

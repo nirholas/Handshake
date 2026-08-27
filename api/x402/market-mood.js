@@ -25,6 +25,8 @@ import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { priceFor } from '../_lib/x402-prices.js';
 import { getNews } from '../_lib/news.js';
 import listing from '../_lib/service-catalog/services/market-mood.js';
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
+import { cacheWrapLastGood } from '../_lib/cache.js';
 
 const ROUTE = '/api/x402/market-mood';
 const DESCRIPTION = listing.description;
@@ -34,6 +36,13 @@ const NEWS_SAMPLE = 120;
 const FNG_WEIGHT = 0.6; // positioning
 const NEWS_WEIGHT = 0.4; // narrative
 const DRIVER_COUNT = 3;
+
+// A paid call refuses before settlement when a component is down, so the buyer
+// is never charged for a fabricated composite. That is right for a cold start
+// and wrong for a blip: the shared last-good copy below serves a recent reading
+// through a short outage and the pre-settle 503 fires only when there has never
+// been data.
+const STALE_TTL_S = 15 * 60;
 
 let _cache = null; // { value, expiresAt }
 
@@ -46,11 +55,9 @@ function classify(v) {
 }
 
 async function fetchFearGreed() {
-	const r = await fetch('https://api.alternative.me/fng/?limit=2', {
+	const r = await fetchUpstream('https://api.alternative.me/fng/?limit=2', {
 		headers: { accept: 'application/json' },
-		signal: AbortSignal.timeout(8000),
-	});
-	if (!r.ok) throw new Error(`fng ${r.status}`);
+	}, { timeoutMs: 8000, attempts: 2, label: 'fng' });
 	const raw = await r.json();
 	const rows = Array.isArray(raw?.data) ? raw.data : [];
 	const today = Number(rows[0]?.value);
@@ -131,12 +138,12 @@ export function summarizeDvol(rows) {
 async function fetchDvol(currency) {
 	const end = Date.now();
 	const start = end - 24 * 3_600_000;
-	const r = await fetch(
+	const r = await fetchUpstream(
 		`https://www.deribit.com/api/v2/public/get_volatility_index_data?currency=${currency}` +
 			`&start_timestamp=${start}&end_timestamp=${end}&resolution=3600`,
-		{ headers: { accept: 'application/json' }, signal: AbortSignal.timeout(8000) },
+		{ headers: { accept: 'application/json' } },
+		{ timeoutMs: 8000, attempts: 2, label: 'dvol' },
 	);
-	if (!r.ok) throw new Error(`dvol ${r.status}`);
 	return summarizeDvol((await r.json())?.result?.data);
 }
 
@@ -153,7 +160,12 @@ async function fetchVolatility() {
 async function loadMood() {
 	const now = Date.now();
 	if (_cache && _cache.expiresAt > now) return _cache.value;
+	const value = await cacheWrapLastGood('x402:market-mood', TTL_MS / 1000, buildMood, { staleTtlSeconds: STALE_TTL_S });
+	_cache = { value, expiresAt: now + TTL_MS };
+	return value;
+}
 
+async function buildMood() {
 	// Both components are required — Promise.all rejects if either is down and
 	// the caller refunds. A one-legged "composite" would be a fabricated signal.
 	// fetchVolatility never rejects (best-effort enrichment, null on outage).
@@ -194,7 +206,6 @@ async function loadMood() {
 		},
 		drivers: news.drivers,
 	};
-	_cache = { value, expiresAt: now + TTL_MS };
 	return value;
 }
 

@@ -29,6 +29,7 @@ import { inspectGlb, glbJsonChunkEnd } from './glb-inspect.js';
 import { conformanceFromNames, ARKIT_52 } from '../../src/runtime/arkit52.js';
 import { canonicalizeBoneName, CANONICAL_BONES } from '../../src/glb-canonicalize.js';
 import { MIN_COVERAGE } from '../../src/animation-retarget.js';
+import { fetchUpstream } from './upstream-fetch.js';
 
 // 256 KB covers the JSON chunk of essentially every real avatar in one read.
 // Same first-pass budget as rig-inspect.js, for the same reason.
@@ -72,7 +73,7 @@ const RIG_SIGNATURES = Object.freeze([
 
 async function readGlbPrefix(storageKey, length) {
 	if (/^https?:\/\//i.test(storageKey)) {
-		const r = await fetch(storageKey, { headers: { Range: `bytes=0-${length - 1}` } });
+		const r = await fetchUpstream(storageKey, { headers: { Range: `bytes=0-${length - 1}` } }, { timeoutMs: 60_000, attempts: 3, okWhen: () => true });
 		if (!r.ok) throw new Error(`http ${r.status}`);
 		return Buffer.from(await r.arrayBuffer());
 	}

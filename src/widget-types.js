@@ -377,19 +377,29 @@ export const CHAIN_SLUGS = {
 	'polygon-amoy': 80002,
 };
 
-export const PUBLIC_RPCS = {
-	1: 'https://eth.llamarpc.com',
-	10: 'https://mainnet.optimism.io',
-	56: 'https://bsc-dataseed.binance.org',
-	137: 'https://polygon-rpc.com',
-	8453: 'https://mainnet.base.org',
-	42161: 'https://arb1.arbitrum.io/rpc',
-	11155111: 'https://ethereum-sepolia-rpc.publicnode.com',
-	84532: 'https://sepolia.base.org',
-	11155420: 'https://sepolia.optimism.io',
-	421614: 'https://sepolia-rollup.arbitrum.io/rpc',
-	80002: 'https://rpc-amoy.polygon.technology',
+// Ordered keyless public RPC hosts per chain. Widgets run embedded on
+// third-party origins, so they cannot reach the same-origin /api/evm-rpc proxy
+// that three.ws pages use (src/shared/evm-rpc-fallback.js prepends it there);
+// this public tail is the whole chain for an embed. Never eth.llamarpc.com,
+// which bot-walls keyless POSTs.
+export const PUBLIC_RPC_URLS = {
+	1: ['https://ethereum-rpc.publicnode.com', 'https://eth.drpc.org', 'https://1rpc.io/eth'],
+	10: ['https://optimism-rpc.publicnode.com', 'https://mainnet.optimism.io', 'https://optimism.drpc.org'],
+	56: ['https://bsc-rpc.publicnode.com', 'https://bsc-dataseed.bnbchain.org', 'https://bsc.drpc.org'],
+	137: ['https://polygon-bor-rpc.publicnode.com', 'https://polygon-rpc.com', 'https://polygon.drpc.org'],
+	8453: ['https://base-rpc.publicnode.com', 'https://mainnet.base.org', 'https://base.drpc.org'],
+	42161: ['https://arbitrum-one-rpc.publicnode.com', 'https://arb1.arbitrum.io/rpc', 'https://arbitrum.drpc.org'],
+	11155111: ['https://ethereum-sepolia-rpc.publicnode.com', 'https://rpc.sepolia.org', 'https://sepolia.drpc.org'],
+	84532: ['https://base-sepolia-rpc.publicnode.com', 'https://sepolia.base.org', 'https://base-sepolia.drpc.org'],
+	11155420: ['https://optimism-sepolia-rpc.publicnode.com', 'https://sepolia.optimism.io', 'https://optimism-sepolia.drpc.org'],
+	421614: ['https://arbitrum-sepolia-rpc.publicnode.com', 'https://sepolia-rollup.arbitrum.io/rpc', 'https://arbitrum-sepolia.drpc.org'],
+	80002: ['https://polygon-amoy-bor-rpc.publicnode.com', 'https://rpc-amoy.polygon.technology', 'https://polygon-amoy.drpc.org'],
 };
+
+// First host of each list, for callers that still take a single URL.
+export const PUBLIC_RPCS = Object.fromEntries(
+	Object.entries(PUBLIC_RPC_URLS).map(([id, urls]) => [id, urls[0]]),
+);
 
 export const EXPLORERS = {
 	1: 'https://etherscan.io',

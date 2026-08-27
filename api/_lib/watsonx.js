@@ -11,7 +11,14 @@
 // `configured: false` so a proxy can mark the provider unavailable; any IAM or
 // upstream failure throws so the proxy reports the real cause to the caller.
 
+import { fetchUpstream } from './upstream-fetch.js';
+
 const IAM_TOKEN_URL = 'https://iam.cloud.ibm.com/identity/token';
+
+// The IAM exchange is idempotent (same key, same short-lived token) so it is
+// retried; an inference is not, and gets one attempt with a longer deadline.
+const IAM_TIMEOUT_MS = 10_000;
+const INFERENCE_TIMEOUT_MS = 45_000;
 
 // Refresh the IAM token this many ms before its stated expiry so an in-flight
 // request never races the hard expiry boundary.
@@ -60,7 +67,7 @@ export async function watsonxToken(cfg) {
 	if (inflight.has(cfg.apiKey)) return inflight.get(cfg.apiKey);
 
 	const p = (async () => {
-		const res = await fetch(cfg.iamUrl, {
+		const res = await fetchUpstream(cfg.iamUrl, {
 			method: 'POST',
 			headers: {
 				'content-type': 'application/x-www-form-urlencoded',
@@ -70,7 +77,7 @@ export async function watsonxToken(cfg) {
 				grant_type: 'urn:ibm:params:oauth:grant-type:apikey',
 				apikey: cfg.apiKey,
 			}),
-		});
+		}, { name: 'watsonx:iam', timeoutMs: IAM_TIMEOUT_MS, attempts: 3, okWhen: () => true });
 		const data = await res.json().catch(() => ({}));
 		if (!res.ok || !data.access_token) {
 			throw new Error(
@@ -118,11 +125,11 @@ async function jsonAuthHeaders(cfg) {
 // failure so callers report the true cause (auth, quota, unsupported model).
 async function watsonxPost(cfg, path, body, version) {
 	const headers = await jsonAuthHeaders(cfg);
-	const res = await fetch(`${cfg.url}${path}?version=${version || cfg.apiVersion}`, {
+	const res = await fetchUpstream(`${cfg.url}${path}?version=${version || cfg.apiVersion}`, {
 		method: 'POST',
 		headers,
 		body: JSON.stringify({ ...body, ...scope(cfg) }),
-	});
+	}, { name: 'watsonx', timeoutMs: INFERENCE_TIMEOUT_MS, attempts: 1, okWhen: () => true });
 	const text = await res.text();
 	if (!res.ok) {
 		let detail = text.slice(0, 300);

@@ -23,7 +23,14 @@ import { Keypair, PublicKey, TransactionMessage, VersionedTransaction } from '@s
 import bs58 from 'bs58';
 import { solanaConnection } from '../../api/_lib/solana/connection.js';
 
-const DEFAULT_RPC_URL = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+// Server-side: SOLANA_RPC_URL (typically Helius), which solanaConnection() below
+// rotates across the failover lanes. Browser-side: the same-origin proxy, like
+// the sibling sns.js, because public mainnet-beta 403s most browser origins.
+const DEFAULT_RPC_URL =
+	(typeof process !== 'undefined' && process.env?.SOLANA_RPC_URL) ||
+	(typeof window !== 'undefined' && window.location?.origin
+		? `${window.location.origin}/api/solana-rpc`
+		: 'https://three.ws/api/solana-rpc');
 
 // SNS on-chain constants — do not change without verifying against bonfida's source.
 const SNS_PROGRAM_ID = new PublicKey('namesLPneVptA9Z5rqUDD9tMTWEJwofgaYwp8cawRkX');

@@ -10,6 +10,9 @@
 // upstream status + message so the caller reports the true cause.
 
 import { watsonxToken } from './watsonx.js';
+import { fetchUpstream } from './upstream-fetch.js';
+
+const INFERENCE_TIMEOUT_MS = 45_000;
 
 // Granite TimeSeries (TinyTimeMixer) zero-shot forecasting models, keyed by the
 // minimum history (context) length each requires. All forecast 96 steps ahead.
@@ -35,7 +38,7 @@ function scope(cfg) {
 // real upstream status + message on failure.
 async function post(cfg, path, body, version) {
 	const token = await watsonxToken(cfg);
-	const res = await fetch(`${cfg.url}${path}?version=${version}`, {
+	const res = await fetchUpstream(`${cfg.url}${path}?version=${version}`, {
 		method: 'POST',
 		headers: {
 			Authorization: `Bearer ${token}`,
@@ -43,7 +46,7 @@ async function post(cfg, path, body, version) {
 			Accept: 'application/json',
 		},
 		body: JSON.stringify({ ...body, ...scope(cfg) }),
-	});
+	}, { name: 'watsonx', timeoutMs: INFERENCE_TIMEOUT_MS, attempts: 1, okWhen: () => true });
 	const text = await res.text();
 	if (!res.ok) {
 		let detail = text.slice(0, 300);

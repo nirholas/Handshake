@@ -46,6 +46,7 @@ import {
 	VersionedTransaction,
 } from '@solana/web3.js';
 import { pollConfirmation } from './solana/confirm.js';
+import { fetchUpstream } from './upstream-fetch.js';
 
 // Jito's published mainnet tip accounts. A bundle's tip must transfer SOL to one
 // of these — Jito only accepts a bundle that pays a tip to a known tip account.
@@ -63,6 +64,26 @@ const JITO_TIP_ACCOUNTS = [
 ];
 
 const DEFAULT_JITO_URL = 'https://mainnet.block-engine.jito.wtf';
+// Jito's public regional block engines. Every region serves the same bundle API
+// at the same path, so the configured (or default) engine leads and the others
+// are the alternates a network error or 5xx on the send fails over to. A bundle
+// is only ever re-sent when the first engine gave NO answer about it: a JSON-RPC
+// rejection or a 4xx is an answer and is never retried on another host.
+const JITO_REGION_URLS = [
+	DEFAULT_JITO_URL,
+	'https://ny.mainnet.block-engine.jito.wtf',
+	'https://amsterdam.mainnet.block-engine.jito.wtf',
+	'https://frankfurt.mainnet.block-engine.jito.wtf',
+	'https://tokyo.mainnet.block-engine.jito.wtf',
+	'https://slc.mainnet.block-engine.jito.wtf',
+];
+// Deadlines. The fee + tip-floor reads sit on the hot snipe path and have safe
+// fallbacks (the connection's own fee sample, the mode floor), so they get a
+// short budget; the bundle send is the one that matters and gets 10s.
+const HELIUS_FEE_TIMEOUT_MS = 4_000;
+const JITO_TIP_FLOOR_TIMEOUT_MS = 4_000;
+const JITO_SEND_TIMEOUT_MS = 10_000;
+const JITO_STATUS_TIMEOUT_MS = 4_000;
 const LAMPORTS_PER_SOL = 1_000_000_000;
 
 // ── adaptive tip sizing (lamports) ────────────────────────────────────────────
@@ -97,6 +118,12 @@ const _tipFloorCache = new Map(); // jitoUrl → { at, lamports }
 function jitoBlockEngineUrl() {
 	const u = (process.env.JITO_BLOCK_ENGINE_URL || DEFAULT_JITO_URL).trim();
 	return u.replace(/\/+$/, '');
+}
+
+/** The configured engine first, then every other public region, deduplicated. */
+function jitoBlockEngineUrls() {
+	const primary = jitoBlockEngineUrl();
+	return [primary, ...JITO_REGION_URLS.filter((u) => u !== primary)];
 }
 
 /** A Jito bundle route is only attempted on mainnet with a non-'off' tip mode. */
@@ -152,6 +179,7 @@ async function heliusPriorityFee(heliusKey, network) {
 			// is the right anchor.
 			params: [{ options: { recommended: true } }],
 		}),
+		signal: AbortSignal.timeout(HELIUS_FEE_TIMEOUT_MS),
 	});
 	if (!resp.ok) throw new Error(`helius pf ${resp.status}`);
 	const body = await resp.json();
@@ -202,17 +230,19 @@ async function estimateComputeUnits(connection, payer, instructions) {
 }
 
 // ── Jito Block Engine REST ────────────────────────────────────────────────────
-async function jitoRpc(method, params) {
-	const url = `${jitoBlockEngineUrl()}/api/v1/bundles`;
+async function jitoRpc(method, params, { baseUrl = jitoBlockEngineUrl(), timeoutMs = JITO_STATUS_TIMEOUT_MS } = {}) {
+	const url = `${baseUrl}/api/v1/bundles`;
 	const resp = await fetch(url, {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
 		body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+		signal: AbortSignal.timeout(timeoutMs),
 	});
 	if (!resp.ok) {
 		const text = await resp.text().catch(() => '');
 		const err = new Error(`jito ${method} ${resp.status}: ${text.slice(0, 160)}`);
 		err.code = 'JITO_HTTP';
+		err.status = resp.status;
 		throw err;
 	}
 	const body = await resp.json();
@@ -224,28 +254,62 @@ async function jitoRpc(method, params) {
 	return body.result;
 }
 
+// A failure that says nothing about the bundle itself: the engine never
+// answered (network error, deadline) or answered with a 5xx. Only these move
+// the send to another region; a JSON-RPC rejection or a 4xx is final.
+function isJitoFailoverError(err) {
+	if (err?.code === 'JITO_RPC') return false;
+	if (err?.code === 'JITO_HTTP') return Number(err.status) >= 500;
+	return true;
+}
+
+// sendBundle against the primary engine, then exactly one alternate region when
+// the primary gave no answer. Returns the engine that accepted the bundle so the
+// status polls ask the same one.
+async function jitoSendBundle(params) {
+	const urls = jitoBlockEngineUrls().slice(0, 2);
+	let lastErr;
+	for (const baseUrl of urls) {
+		try {
+			const bundleId = await jitoRpc('sendBundle', params, { baseUrl, timeoutMs: JITO_SEND_TIMEOUT_MS });
+			return { bundleId, baseUrl };
+		} catch (err) {
+			lastErr = err;
+			if (!isJitoFailoverError(err)) throw err;
+		}
+	}
+	throw lastErr;
+}
+
 // Live Jito tip-floor (lamports). Reads the tip-floor endpoint and uses the 50th
 // percentile of recent landed-tips as the baseline. Cached briefly. Returns null
-// when the endpoint is unreachable — the caller then uses the mode floor.
+// when no engine answers; the caller then uses the mode floor. The primary
+// engine and one alternate region are asked, each on a short deadline.
 async function fetchJitoTipFloorLamports() {
 	const url = jitoBlockEngineUrl();
 	const cached = _tipFloorCache.get(url);
 	if (cached && Date.now() - cached.at < TIP_FLOOR_TTL_MS) return cached.lamports;
-	try {
-		const resp = await fetch(`${url}/api/v1/bundles/tip_floor`, { method: 'GET' });
-		if (!resp.ok) return null;
-		const body = await resp.json();
-		const row = Array.isArray(body) ? body[0] : body;
-		// The endpoint reports tips in SOL; prefer the 50th percentile, fall back to
-		// the EMA of landed tips.
-		const sol = row?.landed_tips_50th_percentile ?? row?.ema_landed_tips_50th_percentile ?? null;
-		if (sol == null || !Number.isFinite(Number(sol))) return null;
-		const lamports = BigInt(Math.max(0, Math.round(Number(sol) * LAMPORTS_PER_SOL)));
-		_tipFloorCache.set(url, { at: Date.now(), lamports });
-		return lamports;
-	} catch {
-		return null;
+	for (const baseUrl of jitoBlockEngineUrls().slice(0, 2)) {
+		try {
+			const resp = await fetch(`${baseUrl}/api/v1/bundles/tip_floor`, {
+				method: 'GET',
+				signal: AbortSignal.timeout(JITO_TIP_FLOOR_TIMEOUT_MS),
+			});
+			if (!resp.ok) continue;
+			const body = await resp.json();
+			const row = Array.isArray(body) ? body[0] : body;
+			// The endpoint reports tips in SOL; prefer the 50th percentile, fall back to
+			// the EMA of landed tips.
+			const sol = row?.landed_tips_50th_percentile ?? row?.ema_landed_tips_50th_percentile ?? null;
+			if (sol == null || !Number.isFinite(Number(sol))) continue;
+			const lamports = BigInt(Math.max(0, Math.round(Number(sol) * LAMPORTS_PER_SOL)));
+			_tipFloorCache.set(url, { at: Date.now(), lamports });
+			return lamports;
+		} catch {
+			continue;
+		}
 	}
+	return null;
 }
 
 // Resolve the tip for this attempt: max(mode floor, live tip-floor) scaled by the
@@ -264,7 +328,7 @@ function resolveTipLamports(tipMode, tipFloorLamports, attempt) {
 // without an on-chain landing (the caller falls back to the protected route).
 async function sendJitoBundle(signedTx, signature, connection) {
 	const b64 = Buffer.from(signedTx.serialize()).toString('base64');
-	const bundleId = await jitoRpc('sendBundle', [[b64], { encoding: 'base64' }]);
+	const { bundleId, baseUrl } = await jitoSendBundle([[b64], { encoding: 'base64' }]);
 
 	const deadline = Date.now() + BUNDLE_POLL_TIMEOUT_MS;
 	while (Date.now() < deadline) {
@@ -283,7 +347,7 @@ async function sendJitoBundle(signedTx, signature, connection) {
 		}
 		// Cross-check Jito's bundle status: a 'Failed'/'Dropped' verdict ends the wait
 		// early so we fall back without burning the full timeout.
-		const jitoStatus = await jitoRpc('getBundleStatuses', [[bundleId]]).catch(() => null);
+		const jitoStatus = await jitoRpc('getBundleStatuses', [[bundleId]], { baseUrl }).catch(() => null);
 		const st = jitoStatus?.value?.[0]?.confirmation_status || jitoStatus?.value?.[0]?.status;
 		if (st === 'failed' || st === 'Failed' || st === 'dropped' || st === 'Dropped') {
 			return { landed: false, slot: null, bundleId };

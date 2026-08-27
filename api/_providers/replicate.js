@@ -33,6 +33,8 @@
 // polls Replicate to translate the predictions API state into our 4-state
 // machine.
 
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
+
 const REPLICATE_BASE = 'https://api.replicate.com/v1';
 
 function readEnv(name) {
@@ -93,7 +95,7 @@ const _latestVersionCache = new Map();
 async function resolveLatestVersion(owner, name, authHeaders) {
 	const slug = `${owner}/${name}`;
 	if (_latestVersionCache.has(slug)) return _latestVersionCache.get(slug);
-	const res = await fetch(`${REPLICATE_BASE}/models/${owner}/${name}`, { headers: authHeaders });
+	const res = await fetchUpstream(`${REPLICATE_BASE}/models/${owner}/${name}`, { headers: authHeaders }, { name: 'replicate', timeoutMs: 10_000, attempts: 2, okWhen: () => true });
 	const data = await res.json().catch(() => ({}));
 	if (!res.ok || !data?.latest_version?.id) {
 		throw Object.assign(
@@ -299,7 +301,7 @@ async function createPrediction(endpoint, body, authHeaders) {
 	for (let attempt = 0; attempt < THROTTLE_MAX_ATTEMPTS; attempt++) {
 		let response;
 		try {
-			response = await fetch(endpoint, { method: 'POST', headers: authHeaders, body });
+			response = await fetchUpstream(endpoint, { method: 'POST', headers: authHeaders, body }, { name: 'replicate', timeoutMs: 30_000, attempts: 2, okWhen: () => true });
 		} catch (err) {
 			throw Object.assign(new Error(`replicate submit failed: ${err?.message}`), {
 				code: 'provider_unreachable',
@@ -495,9 +497,9 @@ export function createRegenProvider({ apiToken } = {}) {
 
 			let response;
 			try {
-				response = await fetch(`${REPLICATE_BASE}/predictions/${encodeURIComponent(extJobId)}`, {
+				response = await fetchUpstream(`${REPLICATE_BASE}/predictions/${encodeURIComponent(extJobId)}`, {
 					headers: authHeaders,
-				});
+				}, { name: 'replicate', timeoutMs: 15_000, attempts: 2, okWhen: () => true });
 			} catch (err) {
 				return { status: 'running', error: `provider poll failed: ${err?.message}` };
 			}

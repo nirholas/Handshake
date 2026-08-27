@@ -21,6 +21,16 @@
 //   upstream ignores a limit param, so trimming happens client-side).
 // - /ultra/v1/shield: per-mint safety warnings.
 
+import { fetchUpstream } from '../upstream-fetch.js';
+import { withRetry } from '../resilience.js';
+
+// Deadlines per lane. A quote is a cheap GET that Jupiter answers in well under
+// a second, so 8s is generous; a swap build has to assemble a route and a
+// versioned transaction and legitimately takes longer under load.
+const JUP_QUOTE_TIMEOUT_MS = 8_000;
+const JUP_SWAP_TIMEOUT_MS = 15_000;
+const JUP_QUOTE_ATTEMPTS = 3;
+
 const JUP_QUOTE_URL = 'https://lite-api.jup.ag/swap/v1/quote';
 const JUP_SWAP_URL = 'https://lite-api.jup.ag/swap/v1/swap';
 const JUP_TOKENS_URL = 'https://lite-api.jup.ag/tokens/v2';
@@ -35,8 +45,21 @@ export const JUP_TOKEN_INTERVALS = ['5m', '1h', '6h', '24h'];
  * GET a Jupiter route + throw a coded error on a non-2xx / unparseable response,
  * so a caller records the precise reason instead of an opaque failure.
  */
-export async function fetchJson(url, opts) {
-	const r = await fetch(url, opts);
+export async function fetchJson(url, opts, { timeoutMs = JUP_QUOTE_TIMEOUT_MS, attempts = 2 } = {}) {
+	// Bounded by default (a caller signal still composes with the timeout) and
+	// retried on a transient failure. Jupiter is the only provider on the
+	// quote/swap path, so a hang here used to hang every paid swap.
+	const r = await fetchUpstream(url, opts || {}, {
+		name: 'jupiter',
+		timeoutMs,
+		attempts,
+		okWhen: (res) => res.ok || (res.status < 500 && res.status !== 429),
+	}).catch((err) => {
+		throw Object.assign(new Error(`jupiter ${err?.status || 'unreachable'}: ${err?.message || 'network error'}`), {
+			code: 'jupiter_error',
+			status: err?.status || 503,
+		});
+	});
 	const body = await r.json().catch(() => ({}));
 	if (!r.ok) {
 		throw Object.assign(new Error(`jupiter ${r.status}: ${JSON.stringify(body).slice(0, 200)}`), {
@@ -59,7 +82,22 @@ export async function jupiterQuote({ inputMint, outputMint, amount, slippageBps 
 	u.searchParams.set('amount', String(amount));
 	u.searchParams.set('slippageBps', String(slippageBps));
 	u.searchParams.set('swapMode', 'ExactIn');
-	return fetchJson(u.toString(), { headers: { accept: 'application/json' } });
+	// A quote is an idempotent GET: retry it through the transient statuses
+	// (429/5xx/network) so one rate-limited response never fails a paid swap.
+	return fetchJson(u.toString(), { headers: { accept: 'application/json' } }, {
+		timeoutMs: JUP_QUOTE_TIMEOUT_MS,
+		attempts: JUP_QUOTE_ATTEMPTS,
+	});
+}
+
+// A swap build is a POST, but it only returns an UNSIGNED transaction: nothing
+// is submitted on-chain by it, so repeating it is safe. It is still retried
+// exactly once and only when the failure says nothing about the request
+// itself (a network error, a timeout, a 5xx). A 4xx or a 429 is an answer and
+// is surfaced as-is. The signed transaction is broadcast by the caller, and
+// that step is never retried here.
+function isSwapBuildRetryable(err) {
+	return err?.code === 'jupiter_error' && Number(err.status) >= 500;
 }
 
 /**
@@ -75,20 +113,24 @@ export async function jupiterSwapTx({
 	maxPriorityLamports = 1_000_000,
 	priorityLevel = 'medium',
 }) {
-	const data = await fetchJson(JUP_SWAP_URL, {
-		method: 'POST',
-		headers: { 'content-type': 'application/json', accept: 'application/json' },
-		body: JSON.stringify({
-			quoteResponse: quote,
-			userPublicKey,
-			// USDC→$THREE never touches wrapped SOL; let Jupiter manage the $THREE ATA.
-			wrapAndUnwrapSol,
-			dynamicComputeUnitLimit: true,
-			prioritizationFeeLamports: {
-				priorityLevelWithMaxLamports: { maxLamports: maxPriorityLamports, priorityLevel },
-			},
-		}),
+	const body = JSON.stringify({
+		quoteResponse: quote,
+		userPublicKey,
+		// USDC→$THREE never touches wrapped SOL; let Jupiter manage the $THREE ATA.
+		wrapAndUnwrapSol,
+		dynamicComputeUnitLimit: true,
+		prioritizationFeeLamports: {
+			priorityLevelWithMaxLamports: { maxLamports: maxPriorityLamports, priorityLevel },
+		},
 	});
+	const data = await withRetry(
+		() => fetchJson(JUP_SWAP_URL, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json', accept: 'application/json' },
+			body,
+		}, { timeoutMs: JUP_SWAP_TIMEOUT_MS, attempts: 1 }),
+		{ attempts: 2, shouldRetry: isSwapBuildRetryable },
+	);
 	if (!data.swapTransaction) {
 		throw Object.assign(new Error('jupiter returned no swapTransaction'), { code: 'no_swap_tx' });
 	}

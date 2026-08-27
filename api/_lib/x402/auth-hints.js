@@ -30,8 +30,9 @@ import {
 	validateSIWxMessage,
 	verifySIWxSignature,
 } from '@x402/extensions/sign-in-with-x';
-import { createPublicClient, http } from 'viem';
+import { createPublicClient } from 'viem';
 import { base } from 'viem/chains';
+import { evmTransport } from '../evm/rpc.js';
 
 import { env } from '../env.js';
 import { authenticateBearer, hasScope } from '../auth.js';
@@ -213,7 +214,11 @@ let _baseClient;
 function getEvmVerifier() {
 	if (!env.BASE_RPC_URL) return undefined;
 	if (!_baseClient) {
-		_baseClient = createPublicClient({ chain: base, transport: http(env.BASE_RPC_URL) });
+		// BASE_RPC_URL stays primary (a private node, so buyer addresses are not
+		// broadcast to public RPCs on the happy path); the shared Base endpoints
+		// only take over when it fails, so a dead private node cannot block
+		// every smart-wallet sign-in.
+		_baseClient = createPublicClient({ chain: base, transport: evmTransport(base.id, { primaryUrl: env.BASE_RPC_URL }) });
 	}
 	return _baseClient.verifyMessage.bind(_baseClient);
 }

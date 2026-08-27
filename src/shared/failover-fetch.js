@@ -104,3 +104,44 @@ export async function fetchFirstOrNull(providers, opts = {}) {
 		return fallback;
 	}
 }
+
+const RETRYABLE_STATUSES = [408, 425, 429, 500, 502, 503, 504];
+
+/**
+ * fetch with a bounded retry for a single URL: network errors and retryable
+ * statuses (429, 5xx) are retried with exponential backoff; any other response
+ * is returned as-is on the first attempt. The last retryable response is
+ * returned (not thrown) once attempts are exhausted, so callers keep their
+ * normal `res.ok` handling. Use this for an idempotent GET against one host;
+ * a POST that must run exactly once (a swap build) stays single-shot.
+ *
+ * @param {string} url
+ * @param {RequestInit} [init]
+ * @param {object} [opts]
+ * @param {number} [opts.attempts=3]        Total attempts, including the first.
+ * @param {number} [opts.backoffMs=400]     Base delay; doubles per retry.
+ * @param {number} [opts.timeoutMs]         Per-attempt deadline (composes with init.signal).
+ * @param {number[]} [opts.retryOn]         Statuses that trigger a retry.
+ * @returns {Promise<Response>}
+ */
+export async function retryFetch(url, init = {}, { attempts = 3, backoffMs = 400, timeoutMs, retryOn = RETRYABLE_STATUSES } = {}) {
+	let lastErr;
+	for (let i = 0; i < attempts; i++) {
+		if (i > 0) await new Promise((r) => setTimeout(r, backoffMs * 2 ** (i - 1)));
+		const signals = [];
+		if (init.signal) signals.push(init.signal);
+		if (timeoutMs) signals.push(AbortSignal.timeout(timeoutMs));
+		const signal = signals.length > 1 ? AbortSignal.any(signals) : signals[0];
+		try {
+			const res = await fetch(url, signal ? { ...init, signal } : init);
+			if (!retryOn.includes(res.status) || i === attempts - 1) return res;
+			lastErr = new Error(`http_${res.status}`);
+		} catch (err) {
+			// The caller gave up (stale request): stop, and never mask that as a retry.
+			if (init.signal?.aborted) throw err;
+			lastErr = err;
+			if (i === attempts - 1) throw err;
+		}
+	}
+	throw lastErr;
+}

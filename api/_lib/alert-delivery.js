@@ -16,6 +16,7 @@ import { hmacSha256, randomToken } from './crypto.js';
 import { validatePublicUrl, resolvePublicHost, pinnedAgent, SsrfError } from './ssrf.js';
 import { formatAlertSummary } from './pump-alert-eval.js';
 
+import { fetchUpstream } from './upstream-fetch.js';
 const WEBHOOK_TIMEOUT_MS = 8_000;
 const TELEGRAM_TIMEOUT_MS = 5_000;
 
@@ -92,7 +93,7 @@ async function deliverWebhook(rule, payload) {
 			const sig = await hmacSha256(rule.webhook_secret, `${eventId}.${timestamp}.${body}`);
 			headers['webhook-signature'] = `v1,${sig}`;
 		}
-		const res = await fetch(target, {
+		const res = await fetchUpstream(target, {
 			method: 'POST',
 			redirect: 'manual',
 			// @ts-ignore — undici dispatcher option, pins the resolved address.
@@ -100,7 +101,7 @@ async function deliverWebhook(rule, payload) {
 			headers,
 			body,
 			signal: controller.signal,
-		});
+		}, { timeoutMs: 10_000, attempts: 2, okWhen: () => true });
 		if (res.status >= 300 && res.status < 400) {
 			return { attempted: true, ok: false, detail: `redirect_not_followed:${res.status}` };
 		}
@@ -125,7 +126,7 @@ async function deliverTelegram(rule, payload) {
 	const controller = new AbortController();
 	const timer = setTimeout(() => controller.abort(), TELEGRAM_TIMEOUT_MS);
 	try {
-		const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+		const res = await fetchUpstream(`https://api.telegram.org/bot${token}/sendMessage`, {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
 			body: JSON.stringify({
@@ -134,7 +135,7 @@ async function deliverTelegram(rule, payload) {
 				disable_web_page_preview: true,
 			}),
 			signal: controller.signal,
-		});
+		}, { name: 'telegram', timeoutMs: 10_000, attempts: 2, okWhen: () => true });
 		const data = await res.json().catch(() => ({}));
 		if (!res.ok || data?.ok === false) {
 			return { attempted: true, ok: false, detail: data?.description || `http_${res.status}` };

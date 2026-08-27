@@ -28,24 +28,39 @@ import {
 	UnconfiguredError,
 } from '../_lib/coin-communities.js';
 import { readWorldGate, writeWorldGate, normalizeMinTokens } from '../_lib/world-gate.js';
+import { pumpFetchJson, PUMP_FRONTEND_BASE } from '../_lib/pump-feed-fetch.js';
+import { cacheWrapLastGood } from '../_lib/cache.js';
 
-const PUMP_FRONTEND_BASE = process.env.PUMP_FRONTEND_BASE || 'https://frontend-api-v3.pump.fun';
+// A coin's creator never changes, so a resolved answer can be reused for a
+// while and, when pump.fun is down, served from the last good copy for an hour
+// rather than blocking every gate read and write behind the outage.
+export const CREATOR_CACHE_KEY = (mint) => `world-gate:creator:${mint}`;
+const CREATOR_TTL_S = 10 * 60;
+const CREATOR_LKG_TTL_S = 60 * 60;
 
 // Resolve a coin's on-chain creator from pump.fun. Returns '' when unknown (a
 // non-pump mint, or pump didn't answer) so the caller fails closed (not creator).
 async function resolveCoinCreator(mint) {
 	try {
-		const resp = await fetch(new URL(`/coins/${mint}`, PUMP_FRONTEND_BASE), {
-			headers: { accept: 'application/json' },
-			signal: AbortSignal.timeout(8000),
+		return await cacheWrapLastGood(CREATOR_CACHE_KEY(mint), CREATOR_TTL_S, () => fetchCoinCreator(mint), {
+			staleTtlSeconds: CREATOR_LKG_TTL_S,
 		});
-		if (!resp.ok) return '';
-		const body = await resp.json();
-		const creator = typeof body?.creator === 'string' ? body.creator.trim() : '';
-		return creator;
 	} catch {
 		return '';
 	}
+}
+
+// Live pump.fun read with the feed's deadline + one bounded retry. A coin pump
+// does not know (404) is a definite answer and is thrown as such so the
+// last-good layer never papers over it with an older lookup.
+async function fetchCoinCreator(mint) {
+	const url = new URL(`/coins/${mint}`, PUMP_FRONTEND_BASE).toString();
+	const { ok, status, body } = await pumpFetchJson(url, { timeoutMs: 8000, retries: 1 });
+	if (!ok && status === 404) return '';
+	if (!ok) throw new Error(`pump.fun ${status || 'unreachable'}`);
+	const creator = typeof body?.creator === 'string' ? body.creator.trim() : '';
+	if (!creator) throw new Error('pump.fun answered without a creator');
+	return creator;
 }
 
 // The signed-in user's linked Solana wallets, as { data: { wallets }, error }

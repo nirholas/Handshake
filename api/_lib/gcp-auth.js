@@ -15,43 +15,93 @@
 //
 // Never log the returned token or any service-account material.
 
+import { fetchUpstream } from './upstream-fetch.js';
+
 function readEnv(name) {
 	if (typeof process !== 'undefined' && process.env?.[name]) return process.env[name];
 	return null;
 }
 
-// Tokens are cached in-process for (expiry - 60s) to avoid hammering the token
-// endpoint on every request. The cloud-platform scope is broad enough to cover
-// both Imagen (:predict) and Claude (:rawPredict / :streamRawPredict).
-const _tokenCache = { token: null, expiresAt: 0 };
+// Tokens are cached in-process so the token endpoint is not hit on every
+// request. A refresh is attempted REFRESH_AHEAD_S before the token expires; if
+// that refresh fails (the metadata server or oauth2.googleapis.com blipping)
+// the cached token keeps being served while it still has more than
+// HARD_MARGIN_S of validity left, so a token-endpoint outage never takes every
+// Vertex call down for the four minutes a perfectly good token remains usable.
+// The cloud-platform scope is broad enough to cover both Imagen (:predict) and
+// Claude (:rawPredict / :streamRawPredict).
+const REFRESH_AHEAD_S = 300;
+const HARD_MARGIN_S = 60;
+const _tokenCache = { token: null, refreshAt: 0, expiresAt: 0 };
+
+function rememberToken(token, expiresInSeconds, now = Date.now()) {
+	const ttlMs = Number(expiresInSeconds) * 1000;
+	_tokenCache.token = token;
+	_tokenCache.expiresAt = now + ttlMs - HARD_MARGIN_S * 1000;
+	_tokenCache.refreshAt = Math.min(_tokenCache.expiresAt, now + ttlMs - REFRESH_AHEAD_S * 1000);
+	return token;
+}
+
+/** Test hook: forget the cached token. */
+export function _resetGcpTokenCache() {
+	_tokenCache.token = null;
+	_tokenCache.refreshAt = 0;
+	_tokenCache.expiresAt = 0;
+}
 
 // Obtain a Google OAuth 2.0 access token, cached until shortly before expiry.
 // Throws an error with code:'unconfigured' when no credentials are available so
 // callers can branch to a fallback provider instead of hard-failing.
 export async function getGcpAccessToken() {
 	const now = Date.now();
-	if (_tokenCache.token && now < _tokenCache.expiresAt) {
+	if (_tokenCache.token && now < _tokenCache.refreshAt) {
 		return _tokenCache.token;
 	}
+	try {
+		return await _mintToken(now);
+	} catch (err) {
+		if (err?.code === 'unconfigured') throw err;
+		if (_tokenCache.token && Date.now() < _tokenCache.expiresAt) {
+			const leftS = Math.round((_tokenCache.expiresAt - Date.now()) / 1000);
+			console.warn(`[gcp-auth] token refresh failed (${err?.message || err}); serving the cached token for up to ${leftS}s more`);
+			return _tokenCache.token;
+		}
+		throw err;
+	}
+}
 
+async function _mintToken(now) {
 	const saJson = readEnv('GCP_SERVICE_ACCOUNT_JSON');
 	if (saJson && saJson.trim() && saJson.trim() !== '""') {
 		return _tokenFromServiceAccount(parseServiceAccount(saJson));
 	}
 
 	// Fall back to the metadata server (Cloud Run / GCE).
-	const metaRes = await fetch(
+	// The metadata server answers in milliseconds on GCP and does not exist
+	// anywhere else: a short timeout keeps a local/dev boot from hanging on DNS.
+	// Three bounded attempts ride out the momentary 5xx it returns under a
+	// credential rotation; a host where it does not exist fails fast on DNS.
+	let metaErr = null;
+	const metaRes = await fetchUpstream(
 		'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token',
 		{ headers: { 'Metadata-Flavor': 'Google' } },
-	).catch(() => null);
+		{ name: 'gcp-metadata-token', timeoutMs: 3_000, attempts: 3 },
+	).catch((err) => {
+		metaErr = err;
+		return null;
+	});
 
 	if (metaRes?.ok) {
 		const data = await metaRes.json();
-		_tokenCache.token = data.access_token;
-		_tokenCache.expiresAt = now + (data.expires_in - 60) * 1000;
-		return _tokenCache.token;
+		return rememberToken(data.access_token, data.expires_in, now);
 	}
 
+	// A metadata server that answered before (a token is cached) but failed now
+	// is an outage, not a misconfiguration: surface it so the stale-token grace
+	// applies instead of the unconfigured branch.
+	if (_tokenCache.token && metaErr) {
+		throw Object.assign(new Error(`GCP metadata token refresh failed: ${metaErr.message}`), { code: 'metadata_unavailable' });
+	}
 	throw Object.assign(
 		new Error('No GCP credentials found. Set GCP_SERVICE_ACCOUNT_JSON or run on GCE/Cloud Run.'),
 		{ code: 'unconfigured' },
@@ -169,13 +219,23 @@ async function _tokenFromServiceAccount(sa) {
 	const sig = Buffer.from(sigBuffer).toString('base64url');
 	const jwt = `${signingInput}.${sig}`;
 
-	const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+	// 8s per attempt, three attempts with jittered backoff on 429/5xx/network.
+	// A 4xx is a definitive answer about the assertion (bad key, disabled
+	// account) and is surfaced at once rather than retried into a quota.
+	const tokenRes = await fetchUpstream('https://oauth2.googleapis.com/token', {
 		method: 'POST',
 		headers: { 'content-type': 'application/x-www-form-urlencoded' },
 		body: new URLSearchParams({
 			grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
 			assertion: jwt,
 		}),
+	}, {
+		name: 'google-oauth',
+		timeoutMs: 8_000,
+		attempts: 3,
+		okWhen: (res) => res.ok || (res.status < 500 && res.status !== 429),
+	}).catch((err) => {
+		throw new Error(`GCP token exchange failed: ${err?.body || err?.message || err}`);
 	});
 
 	if (!tokenRes.ok) {
@@ -184,9 +244,7 @@ async function _tokenFromServiceAccount(sa) {
 	}
 
 	const data = await tokenRes.json();
-	_tokenCache.token = data.access_token;
-	_tokenCache.expiresAt = Date.now() + (data.expires_in - 60) * 1000;
-	return _tokenCache.token;
+	return rememberToken(data.access_token, data.expires_in);
 }
 
 // True when a service-account credential is present in the environment. Cloud

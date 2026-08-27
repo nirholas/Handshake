@@ -12,6 +12,8 @@
 // supplies their own Stability key (sk-…); when absent the forge endpoint never
 // reaches this module.
 
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
+
 const STABILITY_BASE = 'https://api.stability.ai/v2beta/3d';
 const ENDPOINT = 'stable-fast-3d';
 
@@ -31,7 +33,7 @@ export function createStabilityProvider(apiKey) {
 		async imageTo3d({ imageUrl, tier }) {
 			let imgRes;
 			try {
-				imgRes = await fetch(imageUrl);
+				imgRes = await fetchUpstream(imageUrl, {}, { timeoutMs: 20_000, attempts: 2, okWhen: () => true });
 			} catch (err) {
 				throw Object.assign(new Error(`could not fetch reference image: ${err?.message}`), {
 					code: 'bad_image',
@@ -54,11 +56,11 @@ export function createStabilityProvider(apiKey) {
 
 			let res;
 			try {
-				res = await fetch(`${STABILITY_BASE}/${ENDPOINT}`, {
+				res = await fetchUpstream(`${STABILITY_BASE}/${ENDPOINT}`, {
 					method: 'POST',
 					headers: { authorization: `Bearer ${apiKey}`, accept: 'model/gltf-binary' },
 					body: form,
-				});
+				}, { name: 'stability', timeoutMs: 120_000, attempts: 1, okWhen: () => true });
 			} catch (err) {
 				throw Object.assign(new Error(`stability unreachable: ${err?.message}`), {
 					code: 'provider_unreachable',

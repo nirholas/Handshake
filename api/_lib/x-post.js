@@ -7,6 +7,19 @@ import { env } from './env.js';
 import { encryptToken, decryptToken } from '../auth/x/[action].js';
 import { X_POST_REQUIRED_SCOPES, missingScopes } from './x-scopes.js';
 
+import { fetchUpstream } from './upstream-fetch.js';
+
+// Every X call shares one breaker ('x:post') so a dead X API fails fast
+// instead of paying a deadline per step, and each step gets its own deadline.
+// The media flow is up to six sequential calls (INIT, APPENDs, FINALIZE,
+// STATUS polls) so it also carries one overall budget, passed as the caller
+// signal that fetchUpstream composes with the per-call timeout.
+const X_BREAKER = 'x:post';
+const X_TOKEN_TIMEOUT_MS = 10_000;
+const X_TWEET_TIMEOUT_MS = 15_000;
+const X_MEDIA_STEP_TIMEOUT_MS = 30_000;
+export const X_MEDIA_TOTAL_TIMEOUT_MS = 90_000;
+
 export const FREE_MONTHLY_QUOTA = 5;
 export const PRO_MONTHLY_QUOTA  = 100;
 export const MAX_TWEET_LEN      = 280;
@@ -45,11 +58,11 @@ async function refreshIfNeeded(conn) {
 
 	const refreshToken = decryptToken(conn.refresh_token);
 	const creds = Buffer.from(`${env.X_OAUTH_CLIENT_ID}:${env.X_OAUTH_CLIENT_SECRET}`).toString('base64');
-	const r = await fetch('https://api.twitter.com/2/oauth2/token', {
+	const r = await fetchUpstream('https://api.twitter.com/2/oauth2/token', {
 		method: 'POST',
 		headers: { 'content-type': 'application/x-www-form-urlencoded', authorization: `Basic ${creds}` },
 		body: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: refreshToken, client_id: env.X_OAUTH_CLIENT_ID }).toString(),
-	});
+	}, { name: X_BREAKER, timeoutMs: X_TOKEN_TIMEOUT_MS, attempts: 1, okWhen: () => true });
 	if (!r.ok) throw new XPostError('reauth_required', `X token refresh failed: ${await r.text()}`, 401);
 	const tok = await r.json();
 	const newExpiresAt = new Date(Date.now() + (tok.expires_in ?? 7200) * 1000).toISOString();
@@ -69,11 +82,11 @@ async function postOne({ accessToken, text, replyTo, mediaIds = null }) {
 	if (text) body.text = text;
 	if (replyTo) body.reply = { in_reply_to_tweet_id: replyTo };
 	if (mediaIds && mediaIds.length) body.media = { media_ids: mediaIds };
-	const r = await fetch('https://api.twitter.com/2/tweets', {
+	const r = await fetchUpstream('https://api.twitter.com/2/tweets', {
 		method: 'POST',
 		headers: { 'content-type': 'application/json', authorization: `Bearer ${accessToken}` },
 		body: JSON.stringify(body),
-	});
+	}, { name: X_BREAKER, timeoutMs: X_TWEET_TIMEOUT_MS, attempts: 1, okWhen: () => true });
 	if (!r.ok) throw new XPostError('tweet_failed', `X API error: ${(await r.text()).slice(0, 200)}`, 502);
 	return (await r.json()).data;
 }
@@ -92,16 +105,33 @@ function mediaCategoryFor(mimeType) {
 	return 'tweet_image';
 }
 
-export async function uploadMediaV2({ accessToken, buffer, mimeType }) {
+export async function uploadMediaV2({ accessToken, buffer, mimeType, deadlineMs = X_MEDIA_TOTAL_TIMEOUT_MS }) {
+	const overall = new AbortController();
+	const timer = setTimeout(() => overall.abort(), deadlineMs);
+	try {
+		return await uploadMediaSteps({ accessToken, buffer, mimeType, signal: overall.signal });
+	} catch (err) {
+		if (err instanceof XPostError) throw err;
+		if (overall.signal.aborted) {
+			throw new XPostError('media_upload_failed', `media upload exceeded its ${Math.round(deadlineMs / 1000)}s budget`, 504);
+		}
+		throw new XPostError('media_upload_failed', `media upload failed: ${err?.message || err}`, 502);
+	} finally {
+		clearTimeout(timer);
+	}
+}
+
+async function uploadMediaSteps({ accessToken, buffer, mimeType, signal }) {
 	const total = buffer.length;
 	const auth = { authorization: `Bearer ${accessToken}` };
+	const step = { name: X_BREAKER, timeoutMs: X_MEDIA_STEP_TIMEOUT_MS, attempts: 2, okWhen: () => true };
 
 	const initForm = new FormData();
 	initForm.set('command', 'INIT');
 	initForm.set('media_type', mimeType);
 	initForm.set('total_bytes', String(total));
 	initForm.set('media_category', mediaCategoryFor(mimeType));
-	const initRes = await fetch(X_MEDIA_UPLOAD_URL, { method: 'POST', headers: auth, body: initForm });
+	const initRes = await fetchUpstream(X_MEDIA_UPLOAD_URL, { method: 'POST', headers: auth, body: initForm, signal }, step);
 	if (!initRes.ok)
 		throw new XPostError('media_upload_failed', `media INIT failed: ${(await initRes.text()).slice(0, 200)}`, 502);
 	const initJson = await initRes.json();
@@ -116,7 +146,7 @@ export async function uploadMediaV2({ accessToken, buffer, mimeType }) {
 		appendForm.set('media_id', mediaId);
 		appendForm.set('segment_index', String(segment));
 		appendForm.set('media', new Blob([chunk], { type: 'application/octet-stream' }), 'chunk');
-		const appendRes = await fetch(X_MEDIA_UPLOAD_URL, { method: 'POST', headers: auth, body: appendForm });
+		const appendRes = await fetchUpstream(X_MEDIA_UPLOAD_URL, { method: 'POST', headers: auth, body: appendForm, signal }, step);
 		if (!appendRes.ok)
 			throw new XPostError('media_upload_failed', `media APPEND ${segment} failed: ${(await appendRes.text()).slice(0, 200)}`, 502);
 		segment++;
@@ -125,7 +155,7 @@ export async function uploadMediaV2({ accessToken, buffer, mimeType }) {
 	const finalizeForm = new FormData();
 	finalizeForm.set('command', 'FINALIZE');
 	finalizeForm.set('media_id', mediaId);
-	const finalizeRes = await fetch(X_MEDIA_UPLOAD_URL, { method: 'POST', headers: auth, body: finalizeForm });
+	const finalizeRes = await fetchUpstream(X_MEDIA_UPLOAD_URL, { method: 'POST', headers: auth, body: finalizeForm, signal }, step);
 	if (!finalizeRes.ok)
 		throw new XPostError('media_upload_failed', `media FINALIZE failed: ${(await finalizeRes.text()).slice(0, 200)}`, 502);
 	const finalizeJson = await finalizeRes.json();
@@ -133,9 +163,10 @@ export async function uploadMediaV2({ accessToken, buffer, mimeType }) {
 
 	// Async transcode (video): poll STATUS until the asset is ready or fails.
 	let tries = 0;
-	while (info && (info.state === 'pending' || info.state === 'in_progress') && tries < 30) {
+	while (info && (info.state === 'pending' || info.state === 'in_progress') && tries < 30 && !signal.aborted) {
 		await new Promise((r) => setTimeout(r, Math.min((info.check_after_secs || 1) * 1000, 5000)));
-		const statusRes = await fetch(`${X_MEDIA_UPLOAD_URL}?command=STATUS&media_id=${mediaId}`, { headers: auth });
+		if (signal.aborted) break;
+		const statusRes = await fetchUpstream(`${X_MEDIA_UPLOAD_URL}?command=STATUS&media_id=${mediaId}`, { headers: auth, signal }, step);
 		if (!statusRes.ok) break;
 		const statusJson = await statusRes.json();
 		info = statusJson?.data?.processing_info || statusJson?.processing_info || null;

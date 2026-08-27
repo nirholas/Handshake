@@ -11,6 +11,7 @@
 
 import { getObjectRange } from './r2.js';
 import { inspectGlb, glbJsonChunkEnd } from './glb-inspect.js';
+import { fetchUpstream } from './upstream-fetch.js';
 
 // 256 KB covers the JSON chunk of essentially every real avatar in one read.
 const INITIAL_PREFIX = 256 * 1024;
@@ -22,7 +23,7 @@ async function readGlbPrefix(storageKey, length) {
 	if (/^https?:\/\//i.test(storageKey)) {
 		// Externally-hosted / first-party absolute URLs (e.g. the built-in sample
 		// avatars at three.ws/avatars/*.glb) aren't bucket objects — range-fetch.
-		const r = await fetch(storageKey, { headers: { Range: `bytes=0-${length - 1}` } });
+		const r = await fetchUpstream(storageKey, { headers: { Range: `bytes=0-${length - 1}` } }, { timeoutMs: 60_000, attempts: 3, okWhen: () => true });
 		if (!r.ok) throw new Error(`http ${r.status}`);
 		return Buffer.from(await r.arrayBuffer());
 	}

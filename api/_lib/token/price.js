@@ -11,11 +11,12 @@ import { cacheGet, cacheSet } from '../cache.js';
 import { fetchTokenMarketData } from '../market/token-market.js';
 import { TOKEN_MINT, TOKEN_DECIMALS, ATOMICS_PER_TOKEN } from './config.js';
 
+import { fetchUpstreamJson } from '../upstream-fetch.js';
 const PRICE_TTL_S = 30;
 const PRICE_CACHE_KEY = `token:price:${TOKEN_MINT}`;
 
 // Last-known-good price, held far longer than the live cache. When EVERY feed
-// (Jupiter + the Birdeye→DexScreener→GeckoTerminal chain) misses on a single
+// (Jupiter + the Birdeye→DexScreener→GeckoTerminal→DefiLlama chain) misses on a single
 // request — a momentary simultaneous blip, not a real outage — falling back to a
 // recent price keeps a paid quote alive instead of 503-ing the user's action.
 // Bounded by STALE_PRICE_MAX_S: beyond that window a pump.fun token can have
@@ -26,14 +27,8 @@ const LAST_GOOD_TTL_S = 3_600;
 const STALE_PRICE_MAX_S = 300;
 
 async function fetchJson(url, opts = {}) {
-	const r = await fetch(url, opts);
-	if (!r.ok) {
-		const body = await r.text().catch(() => String(r.status));
-		throw Object.assign(new Error(`upstream ${r.status}: ${body.slice(0, 160)}`), {
-			status: 502,
-		});
-	}
-	return r.json();
+	// Bounded: a hung feed must throw so the market-data chain below gets its turn.
+	return fetchUpstreamJson(url, opts, { name: 'jupiter-price', timeoutMs: 6_000, attempts: 2 });
 }
 
 async function jupiterPrice(mint) {
@@ -42,6 +37,7 @@ async function jupiterPrice(mint) {
 	const n = Number(usd);
 	return Number.isFinite(n) && n > 0 ? n : null;
 }
+
 
 /**
  * Live USD price of one whole token. Throws 503 price_unavailable when no feed
@@ -64,7 +60,8 @@ export async function getTokenPriceUsd({ fresh = false } = {}) {
 		console.warn('[token] jupiter price failed:', err?.message);
 	}
 	if (!priceUsd) {
-		// Jupiter down → shared market module: Birdeye → DexScreener → GeckoTerminal.
+		// Jupiter down → shared market module: Birdeye → DexScreener → GeckoTerminal
+		// → DefiLlama (coins.llama.fi, keyed `solana:<mint>`), each on its own deadline.
 		const md = await fetchTokenMarketData(TOKEN_MINT, { fresh }).catch((err) => {
 			console.warn('[token] market-data fallback failed:', err?.message);
 			return null;

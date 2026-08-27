@@ -32,6 +32,7 @@
 import { sql } from './db.js';
 import { scanFirstClaims } from './pump-claims.js';
 
+import { fetchUpstream } from './upstream-fetch.js';
 const TELEGRAM_LIMIT = 10; // per run; Bot API allows ~20 msg/min per chat
 const TELEGRAM_PACE_MS = 3500;
 // How far back each tick scans. The cron runs every 5 minutes, so a 30-minute
@@ -174,7 +175,7 @@ export function formatTelegramMessage(claim) {
 }
 
 async function sendTelegram(botToken, chatId, text) {
-	const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+	const res = await fetchUpstream(`https://api.telegram.org/bot${botToken}/sendMessage`, {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
 		body: JSON.stringify({
@@ -186,7 +187,7 @@ async function sendTelegram(botToken, chatId, text) {
 			link_preview_options: { is_disabled: true },
 		}),
 		signal: AbortSignal.timeout(TELEGRAM_TIMEOUT_MS),
-	});
+	}, { name: 'telegram', timeoutMs: 10_000, attempts: 2, okWhen: () => true });
 	const body = await res.json().catch(() => ({}));
 	if (!res.ok || !body.ok) {
 		throw new Error(

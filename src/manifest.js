@@ -1,10 +1,11 @@
 // Manifest loader — resolves agent://, ipfs://, https:// into a normalized manifest.
 // See specs/AGENT_MANIFEST.md
 
-import { JsonRpcProvider, Contract } from 'ethers';
+import { Contract } from 'ethers';
 import { IDENTITY_REGISTRY_ABI, REGISTRY_DEPLOYMENTS } from './erc8004/abi.js';
 import { findAvatar3D } from './erc8004/queries.js';
 import { resolveURI, fetchWithFallback } from './ipfs.js';
+import { getEvmProvider } from './shared/evm-rpc-fallback.js';
 
 const CHAIN_ALIASES = {
 	base: 8453,
@@ -12,12 +13,6 @@ const CHAIN_ALIASES = {
 	'base-sepolia': 84532,
 	ethereum: 1,
 	mainnet: 1,
-};
-
-const DEFAULT_RPCS = {
-	8453: 'https://mainnet.base.org',
-	84532: 'https://sepolia.base.org',
-	1: 'https://eth.llamarpc.com',
 };
 
 export async function loadManifest(source, { rpcURL, registry: registryOverride } = {}) {
@@ -52,7 +47,9 @@ async function loadFromAgentURI(uri, { rpcURL, registryOverride }) {
 		throw new Error(`No registry deployed on chain ${chainId}. Pass registry= override.`);
 	}
 
-	const provider = new JsonRpcProvider(rpcURL || DEFAULT_RPCS[chainId]);
+	// Same-origin /api/evm-rpc proxy first (server failover), then the chain's
+	// public hosts; a caller-supplied rpcURL is pinned ahead of the public tail.
+	const provider = await getEvmProvider(chainId, { primaryUrl: rpcURL || null });
 	const registry = new Contract(registryAddr, IDENTITY_REGISTRY_ABI, provider);
 	const agentId = BigInt(agentIdStr);
 

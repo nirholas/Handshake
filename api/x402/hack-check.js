@@ -17,6 +17,8 @@ import { installAccessControl } from '../_lib/x402/access-control.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { priceFor } from '../_lib/x402-prices.js';
 import listing from '../_lib/service-catalog/services/hack-check.js';
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
+import { cacheWrapLastGood } from '../_lib/cache.js';
 
 const ROUTE = '/api/x402/hack-check';
 const DESCRIPTION = listing.description;
@@ -24,6 +26,11 @@ const DESCRIPTION = listing.description;
 const TTL_MS = 600_000;
 const YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 
+// A paid call refuses before settlement when its upstream is down, so the buyer
+// is never charged for nothing. That is right for a cold start and wrong for a
+// blip: the shared last-good copy below serves a recent board through a short
+// outage and the pre-settle 503 fires only when there has never been data.
+const STALE_TTL_S = 15 * 60;
 let _cache = null; // { hacks, stats, expiresAt }
 
 function normalizeChains(chain) {
@@ -35,12 +42,18 @@ function normalizeChains(chain) {
 async function loadDataset() {
 	const now = Date.now();
 	if (_cache && _cache.expiresAt > now) return _cache;
+	const { hacks, stats } = await cacheWrapLastGood(
+		'x402:hack-check', TTL_MS / 1000, buildDataset, { staleTtlSeconds: STALE_TTL_S },
+	);
+	_cache = { hacks, stats, expiresAt: now + TTL_MS };
+	return _cache;
+}
 
-	const r = await fetch('https://api.llama.fi/hacks', {
+async function buildDataset() {
+	const now = Date.now();
+	const r = await fetchUpstream('https://api.llama.fi/hacks', {
 		headers: { accept: 'application/json', 'user-agent': 'three.ws/1.0' },
-		signal: AbortSignal.timeout(10_000),
-	});
-	if (!r.ok) throw new Error(`llama hacks ${r.status}`);
+	}, { timeoutMs: 10_000, attempts: 2, label: 'llama hacks' });
 	const raw = await r.json();
 	if (!Array.isArray(raw)) throw new Error('unexpected upstream shape');
 
@@ -80,7 +93,7 @@ async function loadDataset() {
 		}
 	}
 
-	_cache = {
+	return {
 		hacks,
 		stats: {
 			total_stolen_all_time: totalAllTime,
@@ -88,9 +101,7 @@ async function loadDataset() {
 			incidents_12mo: incidents12mo,
 			bridge_hack_share_pct: totalAllTime > 0 ? (bridgeAllTime / totalAllTime) * 100 : 0,
 		},
-		expiresAt: now + TTL_MS,
 	};
-	return _cache;
 }
 
 export const INPUT_SCHEMA = {

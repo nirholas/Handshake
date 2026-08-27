@@ -28,7 +28,7 @@ import {
 	getAssociatedTokenAddressSync,
 	createTransferCheckedInstruction,
 	createAssociatedTokenAccountIdempotentInstruction,
-	TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, getMint,
+	TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 
 import { loadSeedKeypair } from '../_lib/x402/pay.js';
@@ -44,6 +44,7 @@ import {
 	USDC_SOLANA_MINT,
 } from '../_lib/pay/probe.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
+import { mintDecimals, ataExists, getRecentBlockhash, isRpcUnavailable, RPC_RETRY_AFTER_SECONDS } from '../_lib/solana/read-guards.js';
 import {
 	atomicsToUsd,
 	verifySessionToken,
@@ -198,24 +199,26 @@ async function buildSolanaPayload({ accept, amount, buyer, conn, resourceUrl }) 
 	const receiverAta = getAssociatedTokenAddressSync(
 		mint, payTo, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
 	);
-	const mintInfo = await getMint(conn, mint);
+	// Guarded reads (api/_lib/solana/read-guards.js): USDC decimals resolve
+	// locally, the ATA probe fails open to an idempotent create, and the blockhash
+	// is served from the shared cache inside its validity window during an outage.
+	const decimals = await mintDecimals(conn, mint);
 
 	const ixs = [
 		ComputeBudgetProgram.setComputeUnitLimit({ units: 60_000 }),
 		ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1 }),
 	];
-	const receiverInfo = await conn.getAccountInfo(receiverAta);
-	if (!receiverInfo) {
+	if (!(await ataExists(conn, receiverAta))) {
 		ixs.push(createAssociatedTokenAccountIdempotentInstruction(
 			feePayer, receiverAta, payTo, mint, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
 		));
 	}
 	ixs.push(createTransferCheckedInstruction(
 		senderAta, mint, receiverAta, buyer.publicKey,
-		amount, mintInfo.decimals, [], TOKEN_PROGRAM_ID,
+		amount, decimals, [], TOKEN_PROGRAM_ID,
 	));
 
-	const { blockhash } = await conn.getLatestBlockhash('confirmed');
+	const blockhash = await getRecentBlockhash(conn, SOLANA_RPC);
 	const message = new TransactionMessage({
 		payerKey: feePayer,
 		recentBlockhash: blockhash,
@@ -361,6 +364,13 @@ export default wrap(async (req, res) => {
 		});
 	} catch (err) {
 		await rollbackReservation(sessionRecord.id, amountAtomics).catch(() => {});
+		if (isRpcUnavailable(err)) {
+			// No funds moved: the chain could not be read and nothing was cached.
+			// Typed + retryable so the agent backs off instead of treating it as a
+			// broken endpoint.
+			res.setHeader('retry-after', String(RPC_RETRY_AFTER_SECONDS));
+			return error(res, 503, 'rpc_unavailable', 'Solana RPC temporarily unavailable; payment not built, retry shortly', { retryable: true, retry_after: RPC_RETRY_AFTER_SECONDS });
+		}
 		return error(res, 502, 'build_failed', `Failed to build Solana payment: ${err?.message}`);
 	}
 

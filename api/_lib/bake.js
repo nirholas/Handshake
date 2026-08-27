@@ -33,6 +33,7 @@ import { createHash } from 'node:crypto';
 import { isValidPresetId } from './accessories.js';
 import { env } from './env.js';
 import { getObjectBuffer, putObject } from './r2.js';
+import { fetchUpstream } from './upstream-fetch.js';
 
 // ── Public API ─────────────────────────────────────────────────────────────
 
@@ -496,7 +497,7 @@ async function loadAccessoryGlb(glbUrl) {
 		// On Vercel functions, public/ assets may not be bundled with the function.
 		// Fall back to fetching from the deployed site over HTTPS.
 		const base = env.APP_ORIGIN || 'https://three.ws';
-		const r = await fetch(base + glbUrl);
+		const r = await fetchUpstream(base + glbUrl, {}, { timeoutMs: 60_000, attempts: 3, okWhen: () => true });
 		if (!r.ok) {
 			throw new Error(`accessory fetch failed: ${base + glbUrl} → ${r.status}`);
 		}

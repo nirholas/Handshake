@@ -27,6 +27,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { sql } from './db.js';
 
+import { fetchUpstream } from './upstream-fetch.js';
 const CUTOFF_DAYS = 3;
 const TELEGRAM_LIMIT = 8; // per run; Bot API allows ~20 msg/min per chat
 const TELEGRAM_PACE_MS = 3500;
@@ -146,7 +147,7 @@ export function formatTelegramMessage(e) {
 }
 
 async function sendTelegram(botToken, chatId, text) {
-	const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+	const res = await fetchUpstream(`https://api.telegram.org/bot${botToken}/sendMessage`, {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
 		body: JSON.stringify({
@@ -156,7 +157,7 @@ async function sendTelegram(botToken, chatId, text) {
 			link_preview_options: { is_disabled: false, prefer_small_media: true },
 		}),
 		signal: AbortSignal.timeout(TELEGRAM_TIMEOUT_MS),
-	});
+	}, { name: 'telegram', timeoutMs: 10_000, attempts: 2, okWhen: () => true });
 	const body = await res.json().catch(() => ({}));
 	if (!res.ok || !body.ok) {
 		throw new Error(`Telegram sendMessage failed (${res.status}): ${body.description || 'unknown error'}`);

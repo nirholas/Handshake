@@ -25,6 +25,14 @@ import { cors, method, wrap, error, json, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { isValidSolanaAddress, isValidEvmAddress } from '../_lib/validate.js';
 import { composeTokenHolders, DEFAULT_LIMIT, MAX_LIMIT } from '../_lib/crypto-token-holders.js';
+import { cacheGet, cacheSet } from '../_lib/cache.js';
+import { staleEnvelope } from '../_lib/rpc-degrade.js';
+
+// Last-good tier: the previous successful report for this mint+limit, served
+// marked stale during an RPC/indexer outage. Concentration moves slowly, so a
+// day-old distribution is still a real position-sizing answer; a 503 is not.
+const HOLDERS_LKG_TTL_S = 24 * 3600;
+const holdersLkgKey = (address, limit) => `crypto:holders:lkg:${address}:${limit}`;
 
 const EXAMPLE = '/api/crypto/holders?address=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 
@@ -70,6 +78,13 @@ export default wrap(async (req, res) => {
 		});
 	}
 	if (result.status === 'upstream_down') {
+		const lkg = await cacheGet(holdersLkgKey(address, limit));
+		if (lkg && lkg.body && typeof lkg.at === 'number') {
+			return json(res, 200, staleEnvelope(lkg.body, lkg.at), {
+				'cache-control': 'public, s-maxage=30, stale-while-revalidate=60',
+				'x-holders-stale': '1',
+			});
+		}
 		return json(res, 503, {
 			error: 'upstream_unavailable',
 			error_description: 'holder data sources are temporarily unreachable, retry shortly',
@@ -90,6 +105,7 @@ export default wrap(async (req, res) => {
 		sources: result.sources,
 	};
 	if (result.note) body.note = result.note;
+	cacheSet(holdersLkgKey(address, limit), { body, at: Date.now() }, HOLDERS_LKG_TTL_S).catch(() => {});
 
 	// Distribution shifts trade by trade but a position-sizing read tolerates a
 	// minute of cache; this absorbs polling bursts without hammering the RPC.

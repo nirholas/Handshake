@@ -17,6 +17,7 @@ import { isAdminUser } from '../_lib/admin.js';
 import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { parse } from '../_lib/validate.js';
+import { isRpcOutageError } from '../_lib/rpc-degrade.js';
 import { publicConfig, ATOMICS_PER_TOKEN } from '../_lib/token/config.js';
 import { getTokenPriceUsd, quoteTokenForUsd } from '../_lib/token/price.js';
 import {
@@ -56,6 +57,7 @@ const QUOTE_UNAVAILABLE_DETAIL = {
 	price_unavailable: 'Live $THREE price is briefly unavailable. Try again in a moment.',
 	treasury_unavailable: 'The $THREE payment rail is briefly unavailable. Try again shortly.',
 	rewards_unavailable: 'The $THREE payment rail is briefly unavailable. Try again shortly.',
+	rpc_unavailable: 'Solana RPC is briefly unavailable, so a live quote cannot be priced. Try again shortly.',
 };
 
 // ── GET /api/token/config ────────────────────────────────────────────────────
@@ -137,12 +139,16 @@ async function handleQuote(req, res) {
 			refId: body.ref_id ?? null,
 		});
 	} catch (err) {
-		const detail = QUOTE_UNAVAILABLE_DETAIL[err?.code];
+		// A quote is never served stale: it prices a live payment. When the price
+		// or treasury read died because every RPC lane was exhausted, the honest
+		// answer is the same retryable 503 the named codes already get.
+		const code = QUOTE_UNAVAILABLE_DETAIL[err?.code] ? err.code : isRpcOutageError(err) ? 'rpc_unavailable' : null;
+		const detail = code ? QUOTE_UNAVAILABLE_DETAIL[code] : null;
 		if (detail) {
 			// Honest, safe-to-show 503 with the actionable code preserved + a back-off
 			// hint, so the client renders a clean "try again shortly" retry state.
 			res.setHeader('retry-after', '15');
-			return error(res, 503, err.code, detail, { retry_after: 15 });
+			return error(res, 503, code, detail, { retry_after: 15 });
 		}
 		throw err; // genuine fault → wrap() logs, alerts, and sanitizes it.
 	}

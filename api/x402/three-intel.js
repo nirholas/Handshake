@@ -23,6 +23,7 @@ import { installAccessControl } from '../_lib/x402/access-control.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { priceFor } from '../_lib/x402-prices.js';
 import { env } from '../_lib/env.js';
+import { fetchTokenMarketData } from '../_lib/market/token-market.js';
 import {
 	mppEnabled,
 	looksLikeMppPayment,
@@ -93,23 +94,21 @@ export const BAZAAR = {
 	}),
 };
 
+// The shared market reader fails over across Birdeye, tokens.xyz, DexScreener,
+// GeckoTerminal, DefiLlama and Raydium and keeps a stale copy, so one indexer
+// having a bad minute no longer refuses every paid call. The 24h change is the
+// one field only some rungs carry; without it the signal cannot be computed
+// honestly, and computeThreeIntel refuses before settlement as before.
 export async function fetchThreeMarket(mint) {
-	const r = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${mint}`, {
-		headers: { Accept: 'application/json' },
-		signal: AbortSignal.timeout(6000),
-	});
-	if (!r.ok) return null;
-	const data = await r.json();
-	const pairs = (data.pairs || []).filter((p) => p.chainId === 'solana');
-	if (!pairs.length) return null;
-	pairs.sort((a, b) => (b.liquidity?.usd ?? 0) - (a.liquidity?.usd ?? 0));
-	const p = pairs[0];
+	const md = await fetchTokenMarketData(mint);
+	if (!md || !(md.price_usd > 0)) return null;
+	const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : null);
 	return {
-		price_usd: parseFloat(p.priceUsd) || null,
-		change_24h: p.priceChange?.h24 ?? null,
-		market_cap_usd: p.marketCap ?? p.fdv ?? null,
-		liquidity_usd: p.liquidity?.usd ?? null,
-		volume_24h_usd: p.volume?.h24 ?? null,
+		price_usd: md.price_usd,
+		change_24h: num(md.price_change_24h),
+		market_cap_usd: num(md.market_cap),
+		liquidity_usd: num(md.liquidity),
+		volume_24h_usd: num(md.volume_24h),
 	};
 }
 

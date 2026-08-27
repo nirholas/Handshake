@@ -19,11 +19,12 @@ import {
 import {
 	getAssociatedTokenAddressSync, createTransferCheckedInstruction,
 	createAssociatedTokenAccountIdempotentInstruction,
-	TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, getMint,
+	TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 
 import { env } from '../env.js';
 import { solanaConnection } from '../solana/connection.js';
+import { mintDecimals, getRecentBlockhash } from '../solana/read-guards.js';
 import { assessFeeAdmission } from './wallet-fee-meter.js';
 
 export const USDC_MINT = env.X402_ASSET_MINT_SOLANA;
@@ -298,7 +299,10 @@ async function currentBlockhash(conn, fallback, { forceFresh = false } = {}) {
 	const age = Date.now() - blockhashCache.fetchedAt;
 	if (!forceFresh && blockhashCache.value && age < BLOCKHASH_TTL_MS) return blockhashCache.value;
 	try {
-		const { blockhash } = await conn.getLatestBlockhash('confirmed');
+		// The shared guard serves its own cached blockhash (per process and via the
+		// shared cache) inside the validity window when every RPC lane is down, so
+		// this only reaches the fallback when nothing usable exists anywhere.
+		const blockhash = await getRecentBlockhash(conn, SOLANA_RPC);
 		seedBlockhash(blockhash);
 		return blockhash;
 	} catch {
@@ -313,12 +317,16 @@ export async function bootstrapSolanaContext({ buyer } = {}) {
 	if (!USDC_MINT) throw new Error('x402 pay: X402_ASSET_MINT_SOLANA not configured');
 	const payer = buyer || loadSeedKeypair();
 	const conn = solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed' });
-	const [{ blockhash }, mintInfo] = await Promise.all([
-		conn.getLatestBlockhash('confirmed'),
-		getMint(conn, new PublicKey(USDC_MINT)),
+	// USDC decimals resolve locally (no network read) and the blockhash goes
+	// through the shared cached guard, so a dead RPC only fails the bootstrap when
+	// no blockhash inside its validity window exists anywhere in the fleet. That
+	// failure is a typed 503 rpc_unavailable rather than a raw fetch error.
+	const [blockhash, decimals] = await Promise.all([
+		getRecentBlockhash(conn, SOLANA_RPC),
+		mintDecimals(conn, new PublicKey(USDC_MINT)),
 	]);
 	seedBlockhash(blockhash);
-	return { buyer: payer, conn, blockhash, mintInfo };
+	return { buyer: payer, conn, blockhash, mintInfo: { decimals } };
 }
 
 // Settle a single x402 payment against `url`. Probes for the 402 challenge,

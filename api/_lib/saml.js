@@ -18,6 +18,7 @@ import { XMLParser } from 'fast-xml-parser';
 import { env } from './env.js';
 import { sql } from './db.js';
 import { hmacSha256, constantTimeEquals, sha256 } from './crypto.js';
+import { fetchUpstream } from './upstream-fetch.js';
 
 // Request IDs are valid for one login round-trip; an hour is generous slack for
 // a user who lands on the IdP, authenticates, and is redirected back. Must match
@@ -73,9 +74,9 @@ async function resolveIdpConfig() {
 
 async function fetchAndParseMetadata(url) {
 	try {
-		const res = await fetch(url, {
+		const res = await fetchUpstream(url, {
 			headers: { accept: 'application/samlmetadata+xml, application/xml, text/xml' },
-		});
+		}, { name: 'saml-idp-metadata', timeoutMs: 10_000, attempts: 3, okWhen: () => true });
 		if (!res.ok) return null;
 		return parseIdpMetadata(await res.text());
 	} catch {

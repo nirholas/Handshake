@@ -15,6 +15,7 @@
 
 import { stage as stageGuestAvatar } from '../../src/guest-avatar.js';
 
+import { ensureModelViewerOrFallback } from '../../src/shared/model-viewer-loader.js';
 const ENDPOINT = '/api/avatars/surprise';
 const REVIEW_URL = '/create-review';
 
@@ -33,11 +34,7 @@ function hueFromSeed(seed) {
 }
 
 function ensureModelViewer() {
-	if (customElements.get('model-viewer')) return;
-	const s = document.createElement('script');
-	s.type = 'module';
-	s.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js';
-	document.head.appendChild(s);
+	ensureModelViewerOrFallback(document);
 }
 
 function buildModal() {

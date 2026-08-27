@@ -600,9 +600,11 @@ export async function dailySolSpent(agentId) {
 
 /** Live native SOL balance (in SOL) for an address. Best-effort RPC read. */
 async function agentSolBalance(address) {
-	const { Connection, PublicKey } = await import('@solana/web3.js');
-	const url = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
-	const conn = new Connection(url, 'confirmed');
+	const { PublicKey } = await import('@solana/web3.js');
+	const { solanaConnection } = await import('./solana/connection.js');
+	// The operator's SOLANA_RPC_URL stays primary; the shared keyed/public lanes
+	// rotate in behind it so one provider's outage never blanks a balance check.
+	const conn = solanaConnection({ url: process.env.SOLANA_RPC_URL || null, network: 'mainnet', commitment: 'confirmed' });
 	const lamports = await conn.getBalance(new PublicKey(address), 'confirmed');
 	return lamports / LAMPORTS_PER_SOL;
 }

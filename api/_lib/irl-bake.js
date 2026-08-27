@@ -19,6 +19,7 @@
 import { bakeAppearance, appearanceHash, isBakeable } from './bake.js';
 import { putObject, publicUrl } from './r2.js';
 import { env } from './env.js';
+import { fetchUpstream } from './upstream-fetch.js';
 
 export { isBakeable };
 
@@ -35,7 +36,7 @@ async function fetchBaseGlb(baseUrl) {
 	const abs = /^https?:\/\//i.test(baseUrl)
 		? baseUrl
 		: `${env.APP_ORIGIN}${baseUrl.startsWith('/') ? '' : '/'}${baseUrl}`;
-	const r = await fetch(abs);
+	const r = await fetchUpstream(abs, {}, { timeoutMs: 60_000, attempts: 3, okWhen: () => true });
 	if (!r.ok) throw new Error(`base GLB fetch failed: ${abs} → ${r.status}`);
 	const declared = Number(r.headers.get('content-length') || 0);
 	if (declared && declared > MAX_BASE_GLB_BYTES) {

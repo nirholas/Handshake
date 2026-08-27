@@ -33,6 +33,12 @@ import { sql } from '../_lib/db.js';
 import { publicUrl, thumbnailUrl } from '../_lib/r2.js';
 import { getSessionUser } from '../_lib/auth.js';
 import { env } from '../_lib/env.js';
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
+
+// A submit starts a GPU job, so it is never retried; the deadline only bounds
+// the wait for the worker to accept it. Shared breaker with video-status.
+const WORKER_BREAKER = 'longcat-worker';
+const GENERATE_TIMEOUT_MS = 60_000;
 import { resolveRenderParams, renderAvatarImage } from '../_lib/avatar-render.js';
 
 // Rendering a fresh reference image runs headless chromium, so this handler can
@@ -279,7 +285,7 @@ export default wrap(async (req, res) => {
 	try {
 		let workerRes;
 		try {
-			workerRes = await fetch(`${worker.url}/generate`, {
+			workerRes = await fetchUpstream(`${worker.url}/generate`, {
 				method: 'POST',
 				headers: {
 					'content-type': 'application/json',
@@ -290,7 +296,7 @@ export default wrap(async (req, res) => {
 					audio_url: audioUrl,
 					prompt: prompt || 'A person talking naturally.',
 				}),
-			});
+			}, { name: WORKER_BREAKER, timeoutMs: GENERATE_TIMEOUT_MS, attempts: 1, okWhen: () => true });
 		} catch (err) {
 			await releaseReservation(reservationId);
 			return error(res, 502, 'worker_unreachable', err?.message || 'worker request failed');

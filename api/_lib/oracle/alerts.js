@@ -25,6 +25,7 @@
 import { sql } from '../db.js';
 import { gmgnTokenUrl, axiomTokenUrl } from '../../../src/shared/trading-terminals.js';
 
+import { fetchUpstream } from '../upstream-fetch.js';
 const ALERT_TIMEOUT_MS = 4000;
 // Minimum tier to alert on. 'prime' only = exclusive. 'strong' = more volume.
 const MIN_ALERT_TIER = process.env.ORACLE_ALERT_MIN_TIER || 'strong';
@@ -96,7 +97,7 @@ async function send(text) {
 	const ctrl = new AbortController();
 	const timer = setTimeout(() => ctrl.abort(), ALERT_TIMEOUT_MS);
 	try {
-		await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+		await fetchUpstream(`https://api.telegram.org/bot${token}/sendMessage`, {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
 			body: JSON.stringify({
@@ -106,7 +107,7 @@ async function send(text) {
 				disable_web_page_preview: true,
 			}),
 			signal: ctrl.signal,
-		});
+		}, { name: 'telegram', timeoutMs: 10_000, attempts: 2, okWhen: () => true });
 	} catch { /* fire-and-forget */ } finally {
 		clearTimeout(timer);
 	}
@@ -379,7 +380,7 @@ async function sendTo(chatId, text) {
 	const ctrl = new AbortController();
 	const timer = setTimeout(() => ctrl.abort(), ALERT_TIMEOUT_MS);
 	try {
-		await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+		await fetchUpstream(`https://api.telegram.org/bot${token}/sendMessage`, {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
 			body: JSON.stringify({
@@ -389,7 +390,7 @@ async function sendTo(chatId, text) {
 				disable_web_page_preview: true,
 			}),
 			signal: ctrl.signal,
-		});
+		}, { name: 'telegram', timeoutMs: 10_000, attempts: 2, okWhen: () => true });
 	} catch { /* fire-and-forget */ } finally {
 		clearTimeout(timer);
 	}

@@ -11,6 +11,7 @@
 
 import { env } from './env.js';
 
+import { fetchUpstream } from './upstream-fetch.js';
 const PRIVY_API_BASE = 'https://auth.privy.io/api/v1';
 
 function authHeaders() {
@@ -33,7 +34,7 @@ function authHeaders() {
 export async function fetchPrivyUser(did) {
 	const headers = authHeaders();
 	if (!headers || !did) return null;
-	const res = await fetch(`${PRIVY_API_BASE}/users/${encodeURIComponent(did)}`, { headers });
+	const res = await fetchUpstream(`${PRIVY_API_BASE}/users/${encodeURIComponent(did)}`, { headers }, { name: 'privy', timeoutMs: 8_000, attempts: 2, okWhen: () => true });
 	if (!res.ok) return null;
 	return res.json();
 }
