@@ -21,6 +21,10 @@ const IPFS_GATEWAYS = [
 
 const AR_GATEWAY = 'https://arweave.net/';
 
+// Per-gateway budget. Public gateways routinely accept a connection and then
+// never answer; without a deadline the first such host holds the whole chain.
+const GATEWAY_TIMEOUT_MS = 8_000;
+
 // Hosts that no longer resolve. Any HTTPS gateway URL using one of these is
 // rewritten onto the primary working gateway (preserving the /ipfs/<cid>/path).
 const DEAD_GATEWAY_HOST_RE = /^https?:\/\/(?:cf-ipfs\.com|cloudflare-ipfs\.com)\/ipfs\/(.+)$/i;
@@ -160,19 +164,52 @@ export function proxiedImageURL(url, seed = '') {
 	return `/api/img?${q.toString()}`;
 }
 
+// Pull the CID (plus any path) back out of a URL that already names a gateway,
+// so content whose gateway was baked in upstream can still be rotated. Matches
+// the /ipfs/<cid>[/path] form every gateway in the list serves.
+const GATEWAY_URL_RE = /^https?:\/\/[^/]+\/ipfs\/(.+)$/i;
+
+/**
+ * Every HTTPS URL that can serve one piece of decentralised content, in
+ * preference order. An `ipfs://` URI expands to one URL per gateway; so does a
+ * URL that already points at a gateway (its CID is re-extracted), which is what
+ * makes content whose gateway was chosen upstream recoverable. Anything else
+ * (a plain CDN URL, `ar://`) yields the single normalised URL, so callers can
+ * loop over the result unconditionally.
+ *
+ * @param {string} uri
+ * @returns {string[]}
+ */
+export function uriCandidates(uri) {
+	if (!uri) return [];
+	const ipfsMatch = String(uri).match(/^ipfs:\/\/(.+)$/i);
+	const cid = ipfsMatch ? ipfsMatch[1] : (String(uri).match(GATEWAY_URL_RE) || [])[1];
+	if (cid) {
+		const first = resolveURI(uri, 0);
+		const all = IPFS_GATEWAYS.map((gw) => gw + cid);
+		// Keep whatever the caller (or an upstream resolver) already chose at the
+		// head of the list: it is the one most likely to be warm in a CDN.
+		return [first, ...all.filter((u) => u !== first)];
+	}
+	const single = resolveURI(uri, 0);
+	return single ? [single] : [];
+}
+
 /**
  * Try to fetch from the primary gateway; on failure, cycle through fallbacks.
  *
- * @param {string} ipfsURI  An ipfs:// URI.
+ * @param {string} ipfsURI  An ipfs:// URI, or any URL uriCandidates understands.
  * @returns {Promise<Response>}
  */
 export async function fetchWithFallback(ipfsURI) {
 	let lastError;
-	for (let i = 0; i < IPFS_GATEWAYS.length; i++) {
-		const url = resolveURI(ipfsURI, i);
+	for (const url of uriCandidates(ipfsURI)) {
 		try {
-			const res = await fetch(url);
+			// Bounded per gateway: a black-holing gateway used to block the whole
+			// chain behind it, which made the fallback list decorative.
+			const res = await fetch(url, { signal: AbortSignal.timeout(GATEWAY_TIMEOUT_MS) });
 			if (res.ok) return res;
+			lastError = new Error(`${url} responded ${res.status}`);
 		} catch (err) {
 			lastError = err;
 		}

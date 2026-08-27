@@ -9,7 +9,7 @@ import { SceneController } from './runtime/scene.js';
 import { SkillRegistry } from './skills/index.js';
 import { Memory } from './memory/index.js';
 import { loadManifest, fetchRelative } from './manifest.js';
-import { resolveURI } from './ipfs.js';
+import { uriCandidates } from './ipfs.js';
 import {
 	resolveAgentById,
 	resolveByAgentId,
@@ -1626,9 +1626,26 @@ class Agent3DElement extends HTMLElement {
 				}
 			} catch {}
 
-			const bodyURI = resolveURI(manifest.body?.uri);
-			if (bodyURI) {
-				await viewer.load(bodyURI, '', new Map());
+			// Every gateway that can serve this body, in order. A single baked-in
+			// gateway (ipfs.io rate-limits browsers routinely) used to leave a
+			// third-party embed with a name and no avatar and no way to recover.
+			const bodyCandidates = uriCandidates(manifest.body?.uri);
+			if (bodyCandidates.length) {
+				let bodyErr;
+				let loaded = false;
+				for (const candidate of bodyCandidates) {
+					try {
+						await viewer.load(candidate, '', new Map());
+						loaded = true;
+						break;
+					} catch (err) {
+						bodyErr = err;
+						if (candidate !== bodyCandidates[bodyCandidates.length - 1]) {
+							console.warn('[agent-3d] body load failed on %s, trying the next gateway', candidate);
+						}
+					}
+				}
+				if (!loaded) throw bodyErr || new Error('avatar body could not be loaded from any gateway');
 				// Ensure walk + idle are hot before the first brain:stream fires.
 				// setAnimationDefs above registered the defs; ensureLoaded now
 				// actually fetches the clips (or returns immediately if cached).
