@@ -131,7 +131,11 @@ export function buildGlanceCard({ agent, activity = {}, last = null, now = new D
 		stats: [
 			{ label: 'This week', value: week },
 			{ label: 'All time', value: total },
-			{ label: 'Skills', value: skills },
+			// Skills only when the agent actually has some: a flat "Skills 0" tells
+			// the owner nothing, while "Days live" is true of every agent.
+			skills > 0
+				? { label: 'Skills', value: skills }
+				: { label: 'Days live', value: createdAt ? Math.max(0, Math.floor((now - createdAt) / 86_400_000)) : 0 },
 		],
 		lastAction: lastAt
 			? {
