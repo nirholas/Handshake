@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot - no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Model Diff &middot; What changed between two 3D models &middot; three.ws</title>
+		<meta
+			name="description"
+			content="Drop two .glb files and see exactly what changed: geometry, materials, textures, skeletons, and animation clips, with git-style rename and move detection and a severity you can gate a build on. Runs in your browser, nothing is uploaded."
+		/>
+		<meta name="theme-color" content="#000000" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Model Diff &middot; git diff for 3D" />
+		<meta
+			property="og:description"
+			content="Two models in, one change set out: what moved, what was renamed, which joints disappeared, and whether anything downstream just broke."
+		/>
+		<meta property="og:url" content="https://three.ws/diff" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Model+Diff&amp;d=Drop+two+.glb+files+and+see+exactly+what+changed%3A+geometry%2C+materials%2C+skeletons%2C+and+clips%2C+with+rename+detection+and+a+severity+you+can+gate+CI+on&amp;p=%2Fdiff" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="Model Diff &middot; three.ws" />
+		<meta name="twitter:description" content="git diff for 3D. Two models in, one change set out. Runs in your browser." />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Model+Diff&amp;d=Drop+two+.glb+files+and+see+exactly+what+changed%3A+geometry%2C+materials%2C+skeletons%2C+and+clips%2C+with+rename+detection+and+a+severity+you+can+gate+CI+on&amp;p=%2Fdiff" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:image:alt" content="Model Diff - three.ws" />
+
+		<link rel="canonical" href="https://three.ws/diff" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/mobile.css" />
+		<link rel="stylesheet" href="/model-diff.css" />
+		<script defer src="/footer-newsletter.js"></script>
+
+		<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"Model Diff","description":"Compare two glTF/GLB models in the browser. Reports geometry, material, texture, skeleton, and animation changes with git-style rename and move detection, and a severity you can gate a build on.","url":"https://three.ws/diff","applicationCategory":"DeveloperApplication","operatingSystem":"Any","browserRequirements":"Requires WebGL2","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Are my models uploaded anywhere?","acceptedAnswer":{"@type":"Answer","text":"Files you drop are read with the browser File API and compared on your machine. Nothing is sent to a server. Models given as URLs are fetched through the same-origin proxy at /api/glb so cross-origin CORS policies cannot block the comparison."}},{"@type":"Question","name":"Why does a re-export show as unchanged?","acceptedAnswer":{"@type":"Answer","text":"Vertex data is compared with a tolerance of 1e-4 units, so the float noise a re-export or a lossless recompression introduces does not register, while a genuine edit does. Objects are matched by name first, then by content hash, then by similarity, which is how a renamed mesh reads as a rename instead of a deletion plus an unrelated addition."}},{"@type":"Question","name":"What makes a change breaking?","acceptedAnswer":{"@type":"Answer","text":"Anything a consumer references by name that is now gone: a removed animation clip, a removed skeleton joint, a removed mesh. Clips address joints by name, so a dropped joint is a silent no-op at runtime rather than an error anyone sees, which is the most expensive failure in a 3D pipeline."}},{"@type":"Question","name":"Can I run this in CI?","acceptedAnswer":{"@type":"Answer","text":"Yes. npx @three-ws/glb-diff before.glb after.glb --fail-on breaking exits 1 when the severity reaches the threshold, or call GET /api/3d/diff?a=&b= which is free and keyless and can return a Markdown report for a pull-request comment."}}]}]}</script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+
+		<main>
+			<section class="dx-hero">
+				<span class="dx-badge"><span class="dx-badge-dot" aria-hidden="true"></span>Runs in your browser</span>
+				<h1 class="dx-title">What actually changed between these two models?</h1>
+				<p class="dx-sub">
+					A checksum says two files differ. It cannot tell a lossless recompression from a
+					rig that quietly lost three finger joints, and only one of those takes your
+					avatar off the screen. Drop a <code>.glb</code> on each side and get the change
+					set: geometry, materials, textures, skeletons, and clips, with renames and moves
+					detected the way <code>git</code> detects them.
+				</p>
+			</section>
+
+			<section class="dx-inputs" aria-label="Choose two models">
+				<div class="dx-slot" id="dx-slot-a" data-state="idle">
+					<div class="dx-slot-head">
+						<span class="dx-slot-role">Before</span>
+						<span class="dx-slot-meta" id="dx-meta-a"></span>
+					</div>
+					<label class="dx-drop" id="dx-drop-a">
+						<input type="file" id="dx-file-a" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" />
+						<span class="dx-slot-name" id="dx-name-a">Drop the baseline .glb</span>
+						<span class="dx-row-detail">or click to choose. Nothing is uploaded.</span>
+					</label>
+					<div class="dx-url-row">
+						<input type="url" class="dx-url" id="dx-url-a" placeholder="https://.../before.glb" aria-label="Baseline model URL" spellcheck="false" />
+						<button type="button" class="dx-btn" id="dx-load-a">Load</button>
+					</div>
+					<p class="dx-slot-error" id="dx-error-a" hidden></p>
+				</div>
+
+				<button type="button" class="dx-swap" id="dx-swap" title="Swap the two models" aria-label="Swap the two models">
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+						<path d="M7 4 4 7l3 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+						<path d="M4 7h13a3 3 0 0 1 3 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+						<path d="m17 20 3-3-3-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+						<path d="M20 17H7a3 3 0 0 1-3-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+					</svg>
+				</button>
+
+				<div class="dx-slot" id="dx-slot-b" data-state="idle">
+					<div class="dx-slot-head">
+						<span class="dx-slot-role">After</span>
+						<span class="dx-slot-meta" id="dx-meta-b"></span>
+					</div>
+					<label class="dx-drop" id="dx-drop-b">
+						<input type="file" id="dx-file-b" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" />
+						<span class="dx-slot-name" id="dx-name-b">Drop the candidate .glb</span>
+						<span class="dx-row-detail">or click to choose. Nothing is uploaded.</span>
+					</label>
+					<div class="dx-url-row">
+						<input type="url" class="dx-url" id="dx-url-b" placeholder="https://.../after.glb" aria-label="Candidate model URL" spellcheck="false" />
+						<button type="button" class="dx-btn" id="dx-load-b">Load</button>
+					</div>
+					<p class="dx-slot-error" id="dx-error-b" hidden></p>
+				</div>
+			</section>
+
+			<section class="dx-examples" id="dx-examples" aria-label="Example comparisons">
+				<span class="dx-examples-label">No files handy?</span>
+			</section>
+
+			<section class="dx-workbench">
+				<div class="dx-stage-card">
+					<div class="dx-stage" id="dx-stage">
+						<div class="dx-stage-empty" id="dx-stage-empty">
+							<strong>Both models render here</strong>
+							<span>Overlay the after on top of the before, wipe between them, or set them side by side.</span>
+						</div>
+					</div>
+					<div class="dx-stage-bar" id="dx-stage-bar" hidden>
+						<div class="dx-seg" role="group" aria-label="Comparison mode">
+							<button type="button" data-mode="overlay" aria-pressed="true">Overlay</button>
+							<button type="button" data-mode="wipe" aria-pressed="false">Wipe</button>
+							<button type="button" data-mode="split" aria-pressed="false">Side by side</button>
+						</div>
+						<label class="dx-toggle"><input type="checkbox" id="dx-highlight" checked /> Highlight changes</label>
+						<label class="dx-toggle" id="dx-play-wrap" hidden><input type="checkbox" id="dx-play" /> Play clips</label>
+						<input type="range" class="dx-wipe" id="dx-wipe" min="0" max="100" value="50" aria-label="Wipe position" hidden />
+					</div>
+					<div class="dx-legend" id="dx-legend" hidden>
+						<span><i style="background: #60a5fa"></i> before</span>
+						<span><i style="background: #e8e8e8"></i> after</span>
+						<span><i style="background: #fbbf24"></i> changed</span>
+						<span><i style="background: #4ade80"></i> added</span>
+						<span><i style="background: #f87171"></i> removed</span>
+					</div>
+				</div>
+
+				<div class="dx-report" id="dx-report">
+					<div class="dx-card">
+						<div class="dx-empty">
+							<strong>Load two models</strong>
+							Drop a file on each side, paste two URLs, or pick one of the example pairs
+							above. The comparison runs on your machine.
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section class="dx-explain">
+				<h2>How it decides</h2>
+				<article>
+					<h3>Renames, not churn</h3>
+					<p>
+						Objects are matched by name, then by content hash, then by similarity, the
+						same three-tier strategy git uses for file renames. An exporter that
+						renumbers <code>Mesh.001</code> reads as a rename, not as a rewrite.
+					</p>
+				</article>
+				<article>
+					<h3>Tolerant on noise, strict on edits</h3>
+					<p>
+						Vertex data is compared at a quantum of 1e-4 units, so the float drift a
+						re-export or a Draco round trip introduces does not register while a genuine
+						edit does.
+					</p>
+				</article>
+				<article>
+					<h3>Severity you can gate on</h3>
+					<p>
+						<code>none</code>, <code>cosmetic</code>, <code>minor</code>,
+						<code>major</code>, <code>breaking</code>. Breaking means something a
+						consumer references by name is gone: a clip, a joint, a mesh. That is the
+						failure that renders fine and never moves.
+					</p>
+				</article>
+				<article>
+					<h3>Same engine everywhere</h3>
+					<p>
+						This page, the <code>glb-diff</code> CLI, and
+						<a href="/docs/model-diff">the free API</a> all run
+						<a href="https://www.npmjs.com/package/@three-ws/glb-diff">@three-ws/glb-diff</a>,
+						so a verdict in CI can never disagree with what you see here.
+					</p>
+				</article>
+			</section>
+		</main>
+
+		<script src="/nav.js" defer></script>
+		<script type="module" src="/src/model-diff.js"></script>
+		<script src="/brand.js" defer></script>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>
