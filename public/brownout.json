@@ -1,0 +1,171 @@
+{
+	"generated_at": "2026-08-28T03:33:28.080Z",
+	"base": "http://127.0.0.1:8791",
+	"summary": "Every fallback below has been executed against a running server with the upstream it protects against genuinely broken.",
+	"counts": {
+		"pass": 4
+	},
+	"proven": 4,
+	"total": 4,
+	"results": [
+		{
+			"id": "heatmap-survives-pump-throttle",
+			"title": "The intel heatmap keeps its tiles when pump.fun throttles",
+			"surface": "/intel",
+			"endpoint": "/api/intel/heatmap",
+			"broke": {
+				"intel-heatmap": "http:429"
+			},
+			"why": "pump.fun answers a burst with 429 far more often than it goes down, and the board is the whole page. The retry honours Retry-After and the last-good tier carries the tiles through what is left, so a throttle costs freshness rather than the page.",
+			"verdict": "pass",
+			"problems": [],
+			"ms": 4626,
+			"observed": {
+				"status": 200,
+				"tier": "stale",
+				"degraded": true,
+				"failedSources": 3,
+				"trace": [
+					{
+						"name": "intel-heatmap",
+						"outcome": "429",
+						"ms": 2120
+					},
+					{
+						"name": "intel-heatmap",
+						"outcome": "429",
+						"ms": 2226
+					},
+					{
+						"name": "lastgood:heatmap:meta:FeMbDoX7R1Psc4GEcvJdsbNbZA",
+						"outcome": "stale",
+						"ms": 19354
+					},
+					{
+						"name": "intel-heatmap",
+						"outcome": "429",
+						"ms": 2273
+					}
+				]
+			}
+		},
+		{
+			"id": "coin-page-survives-coingecko",
+			"title": "A coin page still renders when CoinGecko is rate limiting",
+			"surface": "/coin/:id",
+			"endpoint": "/api/coin/detail",
+			"broke": {
+				"coingecko": "http:429"
+			},
+			"why": "CoinGecko's keyless tier is shared per egress IP and throttles on its own schedule, which is why /coin/:id 502'd for hours on 2026-07-28. CoinPaprika supplies the profile and DefiLlama the price series, so a throttle costs the page its primary source and nothing else.",
+			"verdict": "pass",
+			"problems": [],
+			"ms": 12,
+			"observed": {
+				"status": 200,
+				"tier": "live",
+				"degraded": true,
+				"failedSources": 1,
+				"trace": [
+					{
+						"name": "coingecko",
+						"outcome": "429",
+						"ms": 1
+					}
+				]
+			}
+		},
+		{
+			"id": "holders-survive-a-dead-rpc-lane",
+			"title": "Holder concentration survives a Solana RPC lane refusing",
+			"surface": "/token/:mint",
+			"endpoint": "/api/crypto/holders",
+			"broke": {
+				"solana-rpc": "http:429"
+			},
+			"why": "Every lane in the rotation throttles at some point, and free lanes refuse specific call shapes outright. The rotation walks them, demotes a lane per method rather than benching it wholesale, and answers an idempotent read from its last-good body when the whole chain is down.",
+			"verdict": "pass",
+			"problems": [],
+			"ms": 20,
+			"observed": {
+				"status": 200,
+				"tier": "stale",
+				"degraded": true,
+				"failedSources": 17,
+				"trace": [
+					{
+						"name": "solana-rpc:solana-rpc.publicnode.com",
+						"outcome": "429",
+						"ms": 1
+					},
+					{
+						"name": "solana-rpc:api.mainnet-beta.solana.com",
+						"outcome": "429",
+						"ms": 0
+					},
+					{
+						"name": "solana-rpc:solana.leorpc.com",
+						"outcome": "429",
+						"ms": 0
+					},
+					{
+						"name": "solana-rpc:public.rpc.solanavibestation.com",
+						"outcome": "429",
+						"ms": 3
+					},
+					{
+						"name": "solana-rpc:api.tatum.io",
+						"outcome": "429",
+						"ms": 0
+					},
+					{
+						"name": "solana-rpc:solana-mainnet.gateway.tatum.io",
+						"outcome": "429",
+						"ms": 0
+					},
+					{
+						"name": "solana-rpc:last-good",
+						"outcome": "stale",
+						"ms": 97466
+					},
+					{
+						"name": "solana-rpc:solana-rpc.publicnode.com",
+						"outcome": "429",
+						"ms": 0
+					}
+				]
+			}
+		},
+		{
+			"id": "token-page-survives-dexscreener",
+			"title": "A token page still resolves when DexScreener is throttling",
+			"surface": "/ca2x402",
+			"endpoint": "/api/ca2x402/resolve",
+			"broke": {
+				"dexscreener:tokens": "http:429"
+			},
+			"why": "One keyless read used to decide whether a token exists at all, so a throttle made a live token read as not found. It now retries behind a breaker with a last-known-good payload, and a definitive miss is reserved for cases where a source actually spoke.",
+			"verdict": "pass",
+			"problems": [],
+			"ms": 2252,
+			"observed": {
+				"status": 200,
+				"tier": "stale",
+				"degraded": true,
+				"failedSources": 1,
+				"trace": [
+					{
+						"name": "dexscreener:tokens",
+						"outcome": "429",
+						"ms": 2155
+					},
+					{
+						"name": "lastgood:token-market:fembdox7r1psc4gecvjdsbnbza",
+						"outcome": "stale",
+						"ms": 2166
+					}
+				]
+			}
+		}
+	]
+}

@@ -8,57 +8,103 @@
 			"title": "The intel heatmap keeps its tiles when pump.fun throttles",
 			"surface": "/intel",
 			"endpoint": "/api/intel/heatmap",
-			"query": { "limit": 6 },
-			"bust": { "param": "limit", "min": 6, "max": 40 },
+			"query": {
+				"limit": 6
+			},
+			"bust": {
+				"param": "limit",
+				"warm": 6,
+				"attempt": 40
+			},
 			"warm": true,
-			"break": { "intel-heatmap": "http:429" },
+			"break": {
+				"intel-heatmap": "http:429"
+			},
 			"expect": {
 				"status": 200,
-				"tier": ["cache", "stale", "fallback"],
+				"tier": [
+					"cache",
+					"stale",
+					"fallback"
+				],
 				"degraded": true,
-				"exercised": ["intel-heatmap"],
-				"jsonHas": ["tokens"]
+				"exercised": [
+					"intel-heatmap"
+				],
+				"jsonHas": [
+					"tokens"
+				]
 			},
 			"why": "pump.fun answers a burst with 429 far more often than it goes down, and the board is the whole page. The retry honours Retry-After and the last-good tier carries the tiles through what is left, so a throttle costs freshness rather than the page."
 		},
 		{
-			"id": "fear-greed-survives-its-source",
-			"title": "The market page keeps its fear and greed reading when alternative.me is down",
-			"surface": "/markets",
-			"endpoint": "/api/coin/global",
-			"warm": true,
-			"break": { "alternative-me-fng": "network" },
+			"id": "coin-page-survives-coingecko",
+			"title": "A coin page still renders when CoinGecko is rate limiting",
+			"surface": "/coin/:id",
+			"endpoint": "/api/coin/detail",
+			"query": {
+				"id": "avalanche-2"
+			},
+			"warm": false,
+			"break": {
+				"coingecko": "http:429"
+			},
 			"expect": {
 				"status": 200,
-				"exercised": ["alternative-me-fng"]
+				"degraded": true,
+				"exercised": [
+					"coingecko"
+				],
+				"jsonHas": [
+					"coin"
+				]
 			},
-			"why": "A single keyless index feed. The page is assembled from several independent reads, so one of them failing must cost that one figure and nothing else."
+			"why": "CoinGecko's keyless tier is shared per egress IP and throttles on its own schedule, which is why /coin/:id 502'd for hours on 2026-07-28. CoinPaprika supplies the profile and DefiLlama the price series, so a throttle costs the page its primary source and nothing else."
 		},
 		{
-			"id": "news-archive-survives-gcs",
-			"title": "The news archive still answers when its bucket does not",
-			"surface": "/news",
-			"endpoint": "/api/news/archive",
-			"query": { "limit": 5 },
-			"warm": true,
-			"break": { "news-archive": "http:503" },
-			"expect": {
-				"status": [200, 503],
-				"exercised": ["news-archive"]
+			"id": "holders-survive-a-dead-rpc-lane",
+			"title": "Holder concentration survives a Solana RPC lane refusing",
+			"surface": "/token/:mint",
+			"endpoint": "/api/crypto/holders",
+			"query": {
+				"address": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump"
 			},
-			"why": "Archive data is immutable once written, which is what makes a remembered copy exactly as correct as a live one. With nothing ever cached the honest answer is a retryable 503, so both outcomes are accepted and the tier says which happened."
+			"warm": false,
+			"break": {
+				"solana-rpc": "http:429"
+			},
+			"expect": {
+				"status": [
+					200,
+					503
+				],
+				"exercised": [
+					"solana-rpc"
+				]
+			},
+			"why": "Every lane in the rotation throttles at some point, and free lanes refuse specific call shapes outright. The rotation walks them, demotes a lane per method rather than benching it wholesale, and answers an idempotent read from its last-good body when the whole chain is down."
 		},
 		{
 			"id": "token-page-survives-dexscreener",
 			"title": "A token page still resolves when DexScreener is throttling",
 			"surface": "/ca2x402",
 			"endpoint": "/api/ca2x402/resolve",
-			"query": { "mint": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump" },
+			"query": {
+				"mint": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump"
+			},
 			"warm": true,
-			"break": { "dexscreener:tokens": "http:429" },
+			"break": {
+				"dexscreener:tokens": "http:429"
+			},
 			"expect": {
-				"status": [200, 404, 503],
-				"exercised": ["dexscreener:tokens"]
+				"status": [
+					200,
+					404,
+					503
+				],
+				"exercised": [
+					"dexscreener:tokens"
+				]
 			},
 			"why": "One keyless read used to decide whether a token exists at all, so a throttle made a live token read as not found. It now retries behind a breaker with a last-known-good payload, and a definitive miss is reserved for cases where a source actually spoke."
 		}

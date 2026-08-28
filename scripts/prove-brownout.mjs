@@ -86,16 +86,17 @@ export function wasExercised(prov, name) {
 }
 
 /** Build the request URL, applying the contract's cache-busting parameter. */
-export function contractUrl(base, contract, seed = Date.now()) {
+export function contractUrl(base, contract, phase = 'attempt') {
 	const url = new URL(contract.endpoint, base);
 	for (const [k, v] of Object.entries(contract.query || {})) url.searchParams.set(k, String(v));
 	const bust = contract.bust;
 	if (bust?.param) {
-		// A warm cache is the single biggest source of a false green here, so the
-		// request is deliberately steered off whatever key the last one used. The
-		// range is the contract's, because only it knows what stays meaningful.
-		const span = Math.max(1, (bust.max ?? 10) - (bust.min ?? 1) + 1);
-		url.searchParams.set(bust.param, String((bust.min ?? 1) + (seed % span)));
+		// A warm cache is the single biggest source of a false green here, so warm
+		// and attempt are steered onto DIFFERENT keys, and which value goes where
+		// is the contract's to state rather than the prover's to guess. Caches are
+		// not symmetric: the heatmap answers any smaller limit out of a larger
+		// cached field, so only warm-small then attempt-large actually misses.
+		url.searchParams.set(bust.param, String(phase === 'warm' ? bust.warm : bust.attempt));
 	}
 	return url.toString();
 }
@@ -149,21 +150,27 @@ export function judge(contract, { status, prov, body, chaosStatus }) {
 
 async function runContract(base, token, contract, timeoutMs) {
 	const started = Date.now();
-	const seed = Math.floor(Math.random() * 1e6);
 
 	// A contract whose fallback is a last-good tier needs something to fall back
 	// TO. One clean request first is not cheating: it is the state every real
 	// user's request arrives in, and a cold process with no memory is a different
 	// contract (the honest 503) that other entries assert.
+	//
+	// The warm-up deliberately uses a DIFFERENT bust value than the attempt. Warm
+	// and attempt on the same key would populate the very fresh-cache entry the
+	// attempt then hits, and the fault would never reach an upstream: the exact
+	// false green this prover exists to refuse. Different keys leave the
+	// attempt's fresh slot cold while still filling the shared per-entity
+	// last-good tiers that a real user's request would have filled.
 	if (contract.warm) {
 		try {
-			await fetch(contractUrl(base, contract, seed), { signal: AbortSignal.timeout(timeoutMs) });
+			await fetch(contractUrl(base, contract, 'warm'), { signal: AbortSignal.timeout(timeoutMs) });
 		} catch {
 			/* a failed warm-up is not a verdict; the real attempt below is */
 		}
 	}
 
-	const url = contractUrl(base, contract, seed);
+	const url = contractUrl(base, contract, 'attempt');
 	let res;
 	try {
 		res = await fetch(url, {
