@@ -100,7 +100,9 @@ function renderStage() {
 		node.setAttribute('background', 'transparent');
 		node.setAttribute('alt', `${event.contact_name || event.sender || 'Your companion'} delivering a message`);
 		viewer.appendChild(node);
+		guardStage(node);
 	}
+	renderStageFace(event);
 
 	line.textContent = event.spoken_line || event.title;
 	meta.innerHTML = `
@@ -122,6 +124,39 @@ function renderStage() {
 		</div>
 		${event.title && event.title !== event.spoken_line ? `<div class="hint" style="margin-top:12px">Original: ${esc(event.title)}</div>` : ''}
 	`;
+}
+
+// A stage with no body in it is a void, and a void reads as broken. If the 3D
+// element never defines (no WebGL, a blocked CDN, an extension that eats module
+// scripts) the viewer shows who is speaking instead: their face if they have
+// one, their initial if not. The delivery still reads, and still speaks.
+const STAGE_ELEMENT_TIMEOUT_MS = 6000;
+let stageGuarded = false;
+
+function guardStage(node) {
+	if (stageGuarded) return;
+	stageGuarded = true;
+	Promise.race([
+		customElements.whenDefined('agent-3d'),
+		new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), STAGE_ELEMENT_TIMEOUT_MS)),
+	]).catch(() => {
+		node.remove();
+		el('stage-viewer').dataset.fallback = '1';
+		renderStageFace(state.stageEvent);
+	});
+}
+
+function renderStageFace(event) {
+	const viewer = el('stage-viewer');
+	if (viewer.dataset.fallback !== '1' || !event) return;
+	const name = event.contact_name || event.sender || 'Your companion';
+	viewer.innerHTML = event.contact_avatar_image_url
+		? `<img class="stage-face" src="${esc(event.contact_avatar_image_url)}" alt="${esc(name)}" />`
+		: `<div class="stage-face stage-face-initial" aria-hidden="true">${esc(name.slice(0, 1).toUpperCase())}</div>`;
+	const caption = document.createElement('div');
+	caption.className = 'stage-empty';
+	caption.textContent = `${name} is speaking. The 3D stage could not start in this browser.`;
+	viewer.appendChild(caption);
 }
 
 async function sayStage() {

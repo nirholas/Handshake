@@ -8539,6 +8539,14 @@ three.ws is production-ready and serves [three.ws](https://three.ws) live on Goo
 
 ## Key Features
 
+**Companion (your notifications, delivered in person)**
+
+- [three.ws/companion](https://three.ws/companion): connect your own Telegram bot, the private iCal link your calendar publishes, your inbox over IMAP with an app password, or nothing but a token your phone, your Mac, a build script or an AI agent can POST to
+- Every message is scored out of 100 (a saved contact asking you something, a one-time code, a meeting in ten minutes, a payment that failed); what clears your bar is spoken out loud, and everything else is kept in a feed with the reason it stayed quiet
+- Give a contact an avatar and a voice, and their messages arrive wearing that body
+- Reaches you on the site, as a push on your phone, and on your desktop via the [companion app](apps/desktop), a character that walks across your screen
+- Developers: [`@three-ws/companion`](packages/companion-sdk) ships the client, the same triage rules the server runs (score your own mail locally), a drop-in 3D stage, a CLI, and an MCP server so an agent can interrupt a human in person
+
 **Text → 3D Generation (Forge)**
 
 - Prompt-to-3D at [three.ws/forge](https://three.ws/forge) — describe an object in a sentence and download a textured GLB
