@@ -38,3 +38,14 @@ The handoff is one-shot and expires after ten minutes, so a stale share can neve
 ## Testing without a Seeker
 
 The APK can be exercised in a stock Android emulator (Pixel 7, Android 14 image). Everything except the Seed Vault itself works there: install, launch, shortcuts, the share intent, deep-link verification state. The recipe is in [solana-mobile/README.md](../solana-mobile/README.md#emulator-qa). For the wallet flows, `tests/solana-mobile-*.test.js` drive the MWA wrapper against a fake transport, and the Solana Mobile reference wallet can be sideloaded into the emulator for an end-to-end sign-in.
+
+## What is next: a home screen widget
+
+The app currently earns its place on the home screen only while you are using it. The next
+piece is an Android app widget: your agent, one live number about it, and a tap that lands you
+back in the right screen, refreshed by the system without opening the app. The shell for it
+already exists (this APK) and so does the image source (`POST /api/render/avatar-clip`, the
+same headless renderer behind the OG cards), because no Android widget can run WebGL. Windows
+11 follows through the installed PWA's manifest, then macOS and iOS through a shared WidgetKit
+extension. The scoped work order is [prompts/roadmap/native-widgets.md](../prompts/roadmap/native-widgets.md),
+and it is Phase 5 of the [roadmap](../README.md#roadmap).

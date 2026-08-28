@@ -10643,7 +10643,7 @@ This is the direction three.ws is heading: **photo → avatar → agent → onch
 
 ## Roadmap
 
-three.ws ships in four phases. Each phase closes a specific gap between the current platform and the end-state vision: **anyone can mint a 3D agent of themselves, own it onchain, and embed it anywhere on the internet.**
+three.ws ships in five phases. Each phase closes a specific gap between the current platform and the end-state vision: **anyone can mint a 3D agent of themselves, own it onchain, and embed it anywhere on the internet.**
 
 | Phase | Theme                                                                                  | Status                                                                                                         |
 | ----- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -10652,6 +10652,7 @@ three.ws ships in four phases. Each phase closes a specific gap between the curr
 | **2** | Agent personalization + voice cloning                                                  | 🟡 In progress — voice clone, persona, memory seeds shipped behind `/demos`; main-flow integration next        |
 | **3** | Onchain economy (agent tokens, reputation markets, royalties)                          | 🟡 In progress: bonding-curve sim, EAS-reputation viewer, 0xsplits + EAS SDKs landed; per-call skill royalties accrue on paid skill calls (`royalty_ledger`); contracts + audits next |
 | **4** | Open inference network (decentralized GPU layer)                                       | 🟡 Live core: open node-operator client (CPU + CUDA images) + `/api/nodes` job queue with signed, server-recomputed receipts shipped; Livepeer federation behind a flag               |
+| **5** | Native widgets (agent on your home screen and desktop)                                  | 🔵 Planned: Android app widget inside the shipped `ws.three.app` TWA first, then Windows 11, then macOS and iOS                    |
 
 ---
 
@@ -10761,6 +10762,35 @@ The path a capture actually takes, end to end. Each hop is a real service; nothi
 
 ---
 
+### Phase 5: Native Widgets
+
+**Goal:** your agent lives on the home screen, not only in a browser tab. A glanceable widget that shows the agent you own, one live number about it, and a single tap back into the app.
+
+This is a different product from the embeddable web widgets at [three.ws/widgets](https://three.ws/widgets), which put a 3D agent on someone else's web page. Phase 5 is about the operating system surfaces: the Android home screen, the Windows 11 widgets board, and the macOS and iOS widget galleries.
+
+**Why it is next.** The Android shell already exists. three.ws ships as a signed Trusted Web Activity (`ws.three.app`) for the Solana dApp Store, Digital Asset Links verify against the live release key, and deep links, shortcuts and the share sheet already open the app. A widget is the piece that makes the app worth keeping installed between visits. The render side exists too: `POST /api/render/avatar-clip` already produces a posed, camera-framed PNG of any avatar from the headless renderer, which is exactly the image a widget needs, because no widget runtime on any of these platforms can execute WebGL.
+
+**Order of delivery**
+
+| # | Surface | Shell needed | Notes |
+| - | ------- | ------------ | ----- |
+| 1 | Android home screen | Already shipped (`ws.three.app`) | Native `AppWidgetProvider` overlay added to the Bubblewrap project, refreshed by `WorkManager`, tapping deep links into the TWA |
+| 2 | Windows 11 widgets board | None | The installed PWA declares a `widgets` manifest member and an Adaptive Card template; the service worker answers `widgetinstall` and `widgetclick` |
+| 3 | macOS | Small SwiftUI host app | WidgetKit extension plus a menu bar companion; needs an Apple Developer account |
+| 4 | iOS | App Store wrapper | Same WidgetKit extension target as macOS; gated on shipping the iOS app itself |
+
+**Deliverables**
+
+- A cacheable widget data endpoint: one signed, per-account URL returning the agent card as a PNG (Android, macOS, iOS) and as JSON for the Windows Adaptive Card, built on the existing render pipeline rather than a second renderer
+- Android app widget in three sizes, refreshed on a battery-aware schedule, degrading to the last cached card when the device is offline
+- Windows 11 widget through the PWA manifest, so it installs with no separate store submission
+- A native shell for Apple platforms, which is also the prerequisite for an iOS build of three.ws
+- Widget content that is worth a home screen slot: the agent, its recent activity, and a direct action (create, chat, open my agents)
+
+**Verification:** a widget installed from the Android app updates without opening the app, survives a reboot and airplane mode, and returns the user into the right screen on tap. Work order: [prompts/roadmap/native-widgets.md](prompts/roadmap/native-widgets.md).
+
+---
+
 ### What we need
 
 | Resource                   | Used for                                   | Phase |
@@ -10772,6 +10802,7 @@ The path a capture actually takes, end to end. Each hop is a real service; nothi
 | **Indexer infrastructure** | Multi-chain crawl + reputation aggregation | 3     |
 | **Node operator credits**  | Bootstrap the open inference network       | 4     |
 | **Engineering headcount**  | Capture pipeline, contracts, indexer, ops  | 1–4   |
+| **Apple Developer account** | macOS and iOS widget host app, App Store review | 5     |
 
 Phases 1 and 2 unblock the consumer story — _anyone gets an agent of themselves_. Phases 3 and 4 unblock the onchain story — _those agents are real economic actors that don't depend on any one company to keep running_. Both are required for the vision; neither is funded yet.
 

@@ -75,6 +75,7 @@ retired; they remain readable in git history
 | [creation-consolidation.md](creation-consolidation.md) | The last three creation-surface merges | Open. Two redirects are blocked behind real capability gaps, and closing those gaps is the work. |
 | [avatar-parametric-editor.md](avatar-parametric-editor.md) | Parametric avatar editor, phase 2 onward | Open. Phase 1 (122-slider parametric base) shipped 2026-07-22. |
 | [developer-resources-repos.md](developer-resources-repos.md) | The public examples satellite repo and its one-way export | Open. npm packages are published, so the blocker that stalled it is gone. |
+| [native-widgets.md](native-widgets.md) | Native widgets on the Android, Windows, macOS and iOS home screens | Open. The signed `ws.three.app` TWA and the server-side render endpoints already exist, so the shell and the image source are not the work. |
 
 ### Strategy and reference (read, do not execute)
 
