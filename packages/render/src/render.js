@@ -297,33 +297,7 @@ export function renderFrame(model, options = {}) {
 	}
 
 	// Background, with the shadow multiplied in underneath the model.
-	const transparent = bg === 'transparent' || bg === null;
-	let topColor = [0, 0, 0];
-	let bottomColor = [0, 0, 0];
-	if (!transparent) {
-		if (Array.isArray(bg)) {
-			topColor = parseColor(bg[0]);
-			bottomColor = parseColor(bg[1] ?? bg[0]);
-		} else {
-			topColor = parseColor(bg);
-			bottomColor = topColor;
-		}
-	}
-	for (let y = 0; y < h; y++) {
-		const t = h > 1 ? y / (h - 1) : 0;
-		const r = topColor[0] + (bottomColor[0] - topColor[0]) * t;
-		const g = topColor[1] + (bottomColor[1] - topColor[1]) * t;
-		const b = topColor[2] + (bottomColor[2] - topColor[2]) * t;
-		for (let x = 0; x < w; x++) {
-			const idx = y * w + x;
-			const occlusion = 1 - Math.min(1, fb.shadow[idx] * shadowStrength);
-			const ci = idx * 3;
-			fb.color[ci] = r * occlusion;
-			fb.color[ci + 1] = g * occlusion;
-			fb.color[ci + 2] = b * occlusion;
-			fb.alpha[idx] = transparent ? Math.min(1, fb.shadow[idx] * shadowStrength) : 1;
-		}
-	}
+	const transparent = paintBackground(fb, bg, shadowStrength);
 
 	const opaque = [];
 	const blended = [];
@@ -373,6 +347,52 @@ export function renderFrame(model, options = {}) {
 	}
 
 	return resolve(fb, width, height, ss, transparent);
+}
+
+/**
+ * Paint the backdrop and multiply the contact shadow into it.
+ * Accepts `'transparent'`, a hex string, a `[top, bottom]` vertical gradient,
+ * or `{ inner, outer }` for the radial stage the thumbnail pipeline uses.
+ * @returns {boolean} whether the frame keeps its alpha channel.
+ */
+function paintBackground(fb, bg, shadowStrength) {
+	const { width: w, height: h } = fb;
+	const transparent = bg === 'transparent' || bg === null || bg === undefined;
+	const radial = !transparent && !Array.isArray(bg) && typeof bg === 'object' && bg !== null;
+	let topColor = [0, 0, 0];
+	let bottomColor = [0, 0, 0];
+	if (!transparent) {
+		if (radial) {
+			topColor = parseColor(bg.inner);
+			bottomColor = parseColor(bg.outer ?? bg.inner);
+		} else if (Array.isArray(bg)) {
+			topColor = parseColor(bg[0]);
+			bottomColor = parseColor(bg[1] ?? bg[0]);
+		} else {
+			topColor = parseColor(bg);
+			bottomColor = topColor;
+		}
+	}
+	const cx = (w - 1) / 2;
+	const cy = (h - 1) / 2;
+	const maxRadius = Math.hypot(cx, cy) || 1;
+	for (let y = 0; y < h; y++) {
+		const linearT = h > 1 ? y / (h - 1) : 0;
+		for (let x = 0; x < w; x++) {
+			const idx = y * w + x;
+			const t = radial ? Math.min(1, Math.hypot(x - cx, y - cy) / maxRadius) : linearT;
+			const r = topColor[0] + (bottomColor[0] - topColor[0]) * t;
+			const g = topColor[1] + (bottomColor[1] - topColor[1]) * t;
+			const b = topColor[2] + (bottomColor[2] - topColor[2]) * t;
+			const occlusion = 1 - Math.min(1, fb.shadow[idx] * shadowStrength);
+			const ci = idx * 3;
+			fb.color[ci] = r * occlusion;
+			fb.color[ci + 1] = g * occlusion;
+			fb.color[ci + 2] = b * occlusion;
+			fb.alpha[idx] = transparent ? Math.min(1, fb.shadow[idx] * shadowStrength) : 1;
+		}
+	}
+	return transparent;
 }
 
 function centroidDepth({ entry }, vp) {

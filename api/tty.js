@@ -17,7 +17,7 @@
 import { createRenderer, loadModel } from '../packages/tty-3d/src/index.js';
 import { ansi, ColorMode } from '../packages/tty-3d/src/term.js';
 import { getAvatar } from './_lib/avatars.js';
-import { error, redirect, wantsHtmlNavigation, wrap } from './_lib/http.js';
+import { error, rateLimited, redirect, wantsHtmlNavigation, wrap } from './_lib/http.js';
 import { clientIp, limits } from './_lib/rate-limit.js';
 import { assertSafePublicUrl, SsrfBlockedError } from './_lib/ssrf-guard.js';
 
@@ -100,8 +100,10 @@ export default wrap(async function handler(req, res) {
 		return redirect(res, to, 302);
 	}
 
-	const rate = await limits.ttyIp(clientIp(req));
-	if (!rate.ok) return error(res, 429, 'rate_limited', 'too many terminal renders, try again shortly');
+	const rate = await limits.ttyIp(clientIp(req) || 'anon');
+	if (!rate.success) {
+		return rateLimited(res, rate, `Too many terminal renders. Limit: ${rate.limit} per 10m.`);
+	}
 
 	const origin = `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host || 'three.ws'}`;
 
