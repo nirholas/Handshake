@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T03:37:23.815Z",
+	"generated_at": "2026-08-28T03:39:58.125Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -6891,6 +6891,16 @@
 					"path": "/docs/agent-vitals",
 					"title": "Docs · Agent vitals: can it act?",
 					"description": "Every liveness check was green while ten of twelve autonomous agents had not acted in weeks. Capability attestation models an agent's preconditions as a causal graph and returns the root blocker plus the command that fixes it, instead of a checklist of symptoms.",
+					"added": "2026-08-28",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/tty",
+					"title": "Docs · Terminal renderer",
+					"description": "curl three.ws/tty and a rigged 3D agent walks in your terminal. The hosted streaming endpoint and its parameters, plus @three-ws/tty-3d, the CLI and library that render any GLB in a terminal with a pure-CPU rasterizer: real skeletal animation, half-block pixels, no GPU and no browser.",
 					"added": "2026-08-28",
 					"auth": null,
 					"indexable": true,

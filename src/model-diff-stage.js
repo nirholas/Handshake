@@ -22,7 +22,6 @@ import {
 	AmbientLight,
 	AnimationMixer,
 	Box3,
-	Clock,
 	Color,
 	DirectionalLight,
 	Group,
@@ -221,7 +220,10 @@ export async function createDiffStage(container) {
 		visible: true,
 	};
 
-	const clock = new Clock();
+	// Frame delta from the loop's own timestamp. three.js deprecated Clock in
+	// favour of Timer, and an addon import for one subtraction is not worth the
+	// bytes on a page that already lazy-loads the whole renderer.
+	let lastFrame = 0;
 	const planeA = new Plane();
 	const planeB = new Plane();
 	const right = new Vector3();
@@ -357,9 +359,13 @@ export async function createDiffStage(container) {
 
 	// ── Loop ───────────────────────────────────────────────────────────────
 
-	renderer.setAnimationLoop(() => {
-		if (state.disposed || !state.visible) return;
-		const delta = clock.getDelta();
+	renderer.setAnimationLoop((time) => {
+		if (state.disposed || !state.visible) {
+			lastFrame = time;
+			return;
+		}
+		const delta = lastFrame ? Math.min((time - lastFrame) / 1000, 0.1) : 0;
+		lastFrame = time;
 		if (state.playing) {
 			for (const side of Object.values(sides)) side.mixer?.update(delta);
 		}

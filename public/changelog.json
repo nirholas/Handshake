@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T03:37:23.829Z",
+	"generated_at": "2026-08-28T03:39:58.152Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -72,6 +72,16 @@
 			"title": "Docs · Terminal avatar",
 			"summary": "The @three-ws/tty-avatar package: any three.ws avatar or agent body rendered live in a terminal by a software rasterizer (truecolor half-blocks, braille, or plain ASCII), procedural moods, and Claude Code hooks that turn it into your coding agent's face.",
 			"link": "/docs/tty-avatar",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "launch",
+			"title": "Docs · Terminal renderer",
+			"summary": "curl three.ws/tty and a rigged 3D agent walks in your terminal. The hosted streaming endpoint and its parameters, plus @three-ws/tty-3d, the CLI and library that render any GLB in a terminal with a pure-CPU rasterizer: real skeletal animation, half-block pixels, no GPU and no browser.",
+			"link": "/docs/tty",
 			"tags": [
 				"launch"
 			]
@@ -283,6 +293,17 @@
 				"feature",
 				"improvement",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "update",
+			"title": "Your 3D agent now runs in a terminal, with nothing installed",
+			"summary": "Type curl three.ws/tty into any terminal and a rigged 3D character walks, turns and animates in the window, drawn entirely out of coloured text. There is nothing to download and no graphics card involved on either end: the frames are drawn by a plain software renderer on our servers and streamed to your shell as they are made, so the animation starts before the model has finished loading. Point it at an agent you own with three.ws/tty/<id>, or at any public 3D file. The same renderer is published as a package, so you can run it against your own models offline, orbit the camera with the arrow keys, or capture a single still frame to paste into a README. It reads a real skeleton and plays the model's real animation, so the character actually moves its limbs rather than spinning in place.",
+			"link": "/tty",
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{
