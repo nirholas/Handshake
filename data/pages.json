@@ -738,6 +738,14 @@
 					"added": "2026-04-17"
 				},
 				{
+					"path": "/glance",
+					"title": "Glance",
+					"description": "Your three.ws agent on every home screen: a live card for the Windows 11 widgets board, a README, Slack, or any page.",
+					"priority": 0.7,
+					"changefreq": "weekly",
+					"added": "2026-08-28"
+				},
+				{
 					"path": "/widgets",
 					"title": "Widgets Gallery",
 					"description": "Pre-built chat, voice, and 3D-avatar widgets you can drop into any page.",
@@ -1196,6 +1204,14 @@
 					"priority": 0.9,
 					"changefreq": "realtime",
 					"added": "2026-06-16"
+				},
+				{
+					"path": "/oracle-lab",
+					"title": "Oracle Lab: the model, published",
+					"description": "The Oracle's conviction model in full: every bucket weight with the number of labeled launches behind it and what happened to them, the held-out reliability curve for each tier, the version history of every refit including the ones that were refused, and a live scorer that runs the real weights in your browser. Download it and reproduce any score offline.",
+					"priority": 0.8,
+					"changefreq": "daily",
+					"added": "2026-08-28"
 				},
 				{
 					"path": "/oracle/docs",
@@ -3275,6 +3291,12 @@
 					"added": "2026-04-27"
 				},
 				{
+					"path": "/docs/companion",
+					"title": "Docs · Companion",
+					"description": "The personal companion: connect your own Telegram bot, calendar, inbox, or phone, give your contacts a face and a voice, and have a 3D character deliver what matters in person. Bridges, triage rules, the SDK, the CLI, the MCP server, and the desktop app.",
+					"added": "2026-08-28"
+				},
+				{
 					"path": "/docs/mcp",
 					"title": "Docs · MCP",
 					"description": "Expose your agent as an MCP server for Claude, ChatGPT, and other clients.",
@@ -4609,6 +4631,14 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/oracle-model",
+					"title": "Docs · The Oracle model, and how to run it yourself",
+					"description": "How the three.ws conviction model is fitted, what its three heads predict, why the outcome labels had to be made independent of the SOL price, how the promotion gate decides which model ships, and how to score launches locally with @three-ws/oracle-model.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-08-28"
+				},
+				{
 					"path": "/docs/x402-distribution",
 					"title": "Docs · x402 distribution",
 					"description": "three.ws sells dozens of pay-per-call services over x402. Building them is half the job; the other half is making sure every directory, crawler, and agent marketplace can find them. The distribution checklist.",
@@ -5266,14 +5296,14 @@
 					"changefreq": "monthly",
 					"added": "2026-08-24"
 				},
-    {
-      "path": "/docs/agent-vitals",
-      "title": "Docs \u00b7 Agent vitals: can it act?",
-      "description": "Every liveness check was green while ten of twelve autonomous agents had not acted in weeks. Capability attestation models an agent's preconditions as a causal graph and returns the root blocker plus the command that fixes it, instead of a checklist of symptoms.",
-      "priority": 0.6,
-      "changefreq": "monthly",
-      "added": "2026-08-28"
-    }
+				{
+					"path": "/docs/agent-vitals",
+					"title": "Docs · Agent vitals: can it act?",
+					"description": "Every liveness check was green while ten of twelve autonomous agents had not acted in weeks. Capability attestation models an agent's preconditions as a causal graph and returns the root blocker plus the command that fixes it, instead of a checklist of symptoms.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-08-28"
+				}
 			]
 		},
 		{
