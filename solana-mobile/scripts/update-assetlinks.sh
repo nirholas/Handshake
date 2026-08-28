@@ -32,21 +32,10 @@ if [[ -z "$FINGERPRINT" ]]; then
 	echo "[update-assetlinks] failed to extract SHA-256" >&2; exit 1
 fi
 
-mkdir -p "$(dirname "$ASSETLINKS_OUT")"
-node <<NODE > "$ASSETLINKS_OUT"
-const links = [{
-  relation: [
-    'delegate_permission/common.handle_all_urls',
-    'delegate_permission/common.use_as_origin',
-  ],
-  target: {
-    namespace: 'android_app',
-    package_name: '${PACKAGE_ID}',
-    sha256_cert_fingerprints: ['${FINGERPRINT}'],
-  },
-}];
-process.stdout.write(JSON.stringify(links, null, 2) + '\n');
-NODE
+# Includes every certificate from twa/extra-fingerprints.json (Play App
+# Signing) alongside this keystore's, so refreshing one channel's key never
+# silently un-verifies another channel's installs.
+node scripts/assetlinks.mjs --package "$PACKAGE_ID" --fingerprint "$FINGERPRINT" --out "$ASSETLINKS_OUT"
 
 echo "[update-assetlinks] wrote $ASSETLINKS_OUT (SHA-256: $FINGERPRINT)"
 echo "[update-assetlinks] deploy three.ws and verify https://three.ws/.well-known/assetlinks.json"

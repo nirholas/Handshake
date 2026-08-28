@@ -1,0 +1,4 @@
+{
+	"$comment": "Additional SHA-256 signing certificates that are allowed to act as ws.three.app, merged into public/.well-known/assetlinks.json alongside the release keystore's own fingerprint by solana-mobile/scripts/assetlinks.mjs. Google Play re-signs every new app with its own Play App Signing key, so a Play release presents a certificate that is NOT ours; without its fingerprint here, every Play install loses full-screen mode and shows the Chrome address bar. Copy the value from Play Console > Test and release > Setup > App integrity > App signing key certificate (SHA-256). Keep the list minimal: an entry here is a key that is trusted to be three.ws, and a rotated-out key must be DELETED, not left behind.",
+	"fingerprints": []
+}

@@ -88,22 +88,11 @@ fi
 
 echo "[build-apk] SHA-256: $FINGERPRINT"
 
-mkdir -p "$(dirname "$ASSETLINKS_OUT")"
-PACKAGE_ID=$(node -e "console.log(require('./twa/twa-manifest.json').packageId)")
-node <<NODE > "$ASSETLINKS_OUT"
-const links = [{
-  relation: [
-    'delegate_permission/common.handle_all_urls',
-    'delegate_permission/common.use_as_origin',
-  ],
-  target: {
-    namespace: 'android_app',
-    package_name: '${PACKAGE_ID}',
-    sha256_cert_fingerprints: ['${FINGERPRINT}'],
-  },
-}];
-process.stdout.write(JSON.stringify(links, null, 2) + '\n');
-NODE
+# Every certificate the app can legitimately be signed with goes in the file,
+# not just this keystore: Play App Signing re-signs the upload with Google's
+# key, and a Play install presenting an unlisted certificate loses full-screen
+# mode. Extra certificates are declared in twa/extra-fingerprints.json.
+node scripts/assetlinks.mjs --fingerprint "$FINGERPRINT" --out "$ASSETLINKS_OUT"
 
 echo "[build-apk] wrote assetlinks.json → $ASSETLINKS_OUT"
 
