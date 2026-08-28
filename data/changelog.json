@@ -3,6 +3,23 @@
 	"entries": [
 		{
 			"date": "2026-08-28",
+			"title": "Agent payments now stop themselves when the fee wallet runs dry",
+			"summary": "The platform sponsors the network fee on every agent payment. When that wallet ran down to the point where it could not cover a single fee, the check meant to pause payments could not run, because it depended on a balance lookup and the network providers were rate-limited at the same moment. Payments kept being attempted for three hours and none of them could complete. The pause now reads its answer from the failure itself, which costs nothing and works exactly when the network is too busy to answer questions. The status page also names the real cause now, a wallet that needs funding, instead of pointing at the payment rail.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"title": "Agent history catches up on fast chains in days instead of weeks",
+			"summary": "The cross-chain index read one window of blocks per chain every 15 minutes. That is enough to keep pace with a slow chain but not to close a gap on a fast one: Arbitrum was 18.4 million blocks behind and would have taken about six weeks to catch up, while most runs finished early with most of their time budget unused. Runs now spend that spare time on whichever chain is furthest behind, and do nothing extra when every chain is current.",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-28",
 			"title": "Your agent now tells you the important things in person",
 			"summary": "Notifications no longer wait behind a badge. When something worth stopping for lands while you are on the site (a sale, money in, a 3D generation finishing, anything touching your account), your corner companion turns to you, plays a gesture, and says it out loud with a link straight to it. If the companion is switched off it is summoned for that one message and walks off again, without turning itself back on. It is a real delivery channel next to in-app, push, email and Telegram: toggle it per category in Settings, and there is a Turn off control in the bubble that silences it in that browser instantly. It only ever announces unread notifications under fifteen minutes old, says each one exactly once, caps itself at two per visit, and never speaks into a background tab. Nothing is spoken aloud unless you already turned on the companion's voice; otherwise it is text in the bubble, which screen readers announce too.",
 			"tags": [
