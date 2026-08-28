@@ -1,0 +1,55 @@
+{
+  "name": "@three-ws/oracle-model",
+  "version": "0.1.0",
+  "description": "The three.ws Oracle conviction model, running locally. Download the real bucket weights once, then score any pump.fun launch offline with no API key: probability it runs, probability it rugs, and the probability it runs and hands it straight back.",
+  "type": "module",
+  "main": "./src/index.js",
+  "module": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js",
+      "default": "./src/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": [
+    "solana",
+    "pump.fun",
+    "memecoin",
+    "rug-detection",
+    "oracle",
+    "prediction",
+    "logistic-regression",
+    "explainable-ai",
+    "offline-inference",
+    "three.ws"
+  ],
+  "author": "nirholas <support@three.ws>",
+  "license": "Apache-2.0",
+  "homepage": "https://three.ws/oracle-lab",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/three.ws.git",
+    "directory": "packages/oracle-model"
+  },
+  "bugs": {
+    "url": "https://github.com/nirholas/three.ws/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {},
+  "publishConfig": {
+    "access": "public"
+  }
+}

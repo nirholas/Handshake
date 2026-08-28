@@ -196,8 +196,46 @@ function isGraduated(c) {
  * market cap we recorded when we first saw it.
  * @returns {{ outcome, graduated, rugged, ath_multiple, last_market_cap_usd, ath_market_cap_usd }}
  */
+// ── The label constants, and why they are what they are ──────────────────────
+//
+// A pump.fun bonding curve with no real reserves is worth a fixed number of SOL:
+// the launch parameters put 30 virtual SOL against 1,073,000,191 virtual tokens
+// over a 1e9 supply, so an untouched curve prices at
+//   30 * 1e9 / 1_073_000_191 = 27.958993 SOL
+// and no coin on the curve can ever be worth less. We first see a coin inside
+// its opening 90 seconds, when its cap is 28-38 SOL, which means the floor is
+// 73-99% of first sight.
+//
+// That single fact broke the old rug test. It asked whether a coin had fallen to
+// 25% of first sight, which the floor makes unreachable, and then fell back on
+// whether its market cap was under a hardcoded $3,000, i.e. on whether SOL was
+// above roughly $107.3 that day. Of 206,428 coins it called rugged, 206,419 were
+// under $3,000; of 25,180 it called survivors, the cheapest was exactly $3,000.
+// Same dead curves, sorted by the SOL price. Everything downstream that
+// subtracted rugs from a win rate was reading a price feed.
+//
+// The replacement is measured against what a holder paid, in ratios where the
+// SOL price cancels. See the migration
+// 20260828170000_oracle_price_independent_labels.sql for the full write-up.
+const CURVE_FLOOR_SOL = 30 * 1e9 / 1_073_000_191;
+const CURVE_FLOOR_TOLERANCE = 0.02;
+/** Down more than half from first sight is the line between a dud and a rug. */
+const RUG_HOLD_MULTIPLE = 0.5;
+/**
+ * Bumped whenever the labeling RULE changes, so a consumer can refuse rows an
+ * older rule produced instead of silently averaging two incompatible questions.
+ * 1 = the USD-threshold rule described above. 2 = price-independent ratios.
+ */
+export const LABEL_VERSION = 2;
+
 export function deriveOutcome(coin, mcSolFirstSeen) {
-	if (!coin) return { outcome: 'unknown', graduated: null, rugged: null, ath_multiple: null, last_market_cap_usd: null, ath_market_cap_usd: null };
+	if (!coin) {
+		return {
+			outcome: 'unknown', graduated: null, rugged: null, ath_multiple: null,
+			last_market_cap_usd: null, ath_market_cap_usd: null,
+			retained: null, hold_multiple: null, at_floor: null, label_version: LABEL_VERSION,
+		};
+	}
 
 	const graduated = isGraduated(coin);
 	const usdMc = typeof coin.usd_market_cap === 'number' ? coin.usd_market_cap : null;
@@ -210,23 +248,37 @@ export function deriveOutcome(coin, mcSolFirstSeen) {
 	const solPrice = usdMc != null && solMc ? usdMc / solMc : null;
 	const athSol = athUsd != null && solPrice ? athUsd / solPrice : null;
 	const ath_multiple = athSol != null && mcSolFirstSeen > 0 ? athSol / mcSolFirstSeen : null;
-	const lastMultiple = solMc != null && mcSolFirstSeen > 0 ? solMc / mcSolFirstSeen : null;
 
-	// The rugged flag is judged independently of the outcome label. A coin that
-	// pumped 3× and THEN collapsed is still outcome 'pumped' (the learner's
-	// "was buying at first sight good?" question), but it IS rugged - win-rate
-	// metrics downstream must not count a spike-then-collapse as a clean win.
-	const rugged = !graduated && (
-		(lastMultiple != null && lastMultiple <= 0.25) ||
-		(usdMc != null && usdMc < 3_000)
-	);
+	// Two ratios that the price of SOL cannot move, because both dollar figures
+	// come out of the same API response and the price cancels between them:
+	//   retained      what share of its own peak the coin still holds
+	//   hold_multiple what a holder who bought at first sight would have now
+	// This is the whole fix. See the header note on RUG_HOLD_MULTIPLE.
+	const retained = athUsd > 0 && usdMc != null ? usdMc / athUsd : null;
+	const hold_multiple = ath_multiple != null && retained != null ? ath_multiple * retained : null;
+
+	// Exact, and independent of both: a pump.fun curve holding no real reserves
+	// is worth CURVE_FLOOR_SOL, so a non-graduated coin sitting there has had
+	// every lamport taken back out of it. Only computable when the API returns a
+	// SOL market cap, which is why it is a bonus signal and not the label.
+	const at_floor = !graduated && solMc != null ? solMc <= CURVE_FLOOR_SOL * (1 + CURVE_FLOOR_TOLERANCE) : null;
+
+	// A rug is a collapse a holder eats, so it is measured against what they paid
+	// rather than against a dollar figure. A coin that never moved is a dud, not a
+	// rug: nobody was taken, there was nothing to take.
+	const rugged = !graduated && hold_multiple != null && hold_multiple <= RUG_HOLD_MULTIPLE;
+
 	let outcome;
 	if (graduated) outcome = 'graduated';
 	else if (ath_multiple != null && ath_multiple >= 3) outcome = 'pumped';
 	else if (rugged) outcome = 'rugged';
 	else outcome = 'flat';
 
-	return { outcome, graduated, rugged, ath_multiple, last_market_cap_usd: usdMc, ath_market_cap_usd: athUsd };
+	return {
+		outcome, graduated, rugged, ath_multiple,
+		last_market_cap_usd: usdMc, ath_market_cap_usd: athUsd,
+		retained, hold_multiple, at_floor, label_version: LABEL_VERSION,
+	};
 }
 
 /**
@@ -247,14 +299,24 @@ export function deriveOutcome(coin, mcSolFirstSeen) {
 export function applyGraduationTruth(outcome, grad) {
 	if (!grad) return outcome;
 	const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+	const ath = outcome.ath_market_cap_usd ?? num(grad.ath_market_cap);
+	const last = outcome.last_market_cap_usd ?? num(grad.market_cap_usd);
+	const retained = ath > 0 && last != null ? last / ath : outcome.retained;
 	return {
 		...outcome,
 		outcome: 'graduated',
 		graduated: true,
-		// A graduated coin is never a rug, same invariant deriveOutcome holds.
+		// A graduated coin is never a rug, same invariant deriveOutcome holds,
+		// and it is never sitting on an empty bonding curve either: it left one.
 		rugged: false,
-		ath_market_cap_usd: outcome.ath_market_cap_usd ?? num(grad.ath_market_cap),
-		last_market_cap_usd: outcome.last_market_cap_usd ?? num(grad.market_cap_usd),
+		at_floor: false,
+		ath_market_cap_usd: ath,
+		last_market_cap_usd: last,
+		retained,
+		hold_multiple: outcome.ath_multiple != null && retained != null
+			? outcome.ath_multiple * retained
+			: outcome.hold_multiple,
+		label_version: LABEL_VERSION,
 	};
 }
 
@@ -376,10 +438,11 @@ export async function labelOutcomes({ network = 'mainnet', limit = 100, minAgeMi
 			await sql`
 				insert into pump_coin_outcomes (
 					mint, graduated, rugged, ath_market_cap_usd, ath_multiple,
-					last_market_cap_usd, outcome
+					last_market_cap_usd, outcome, retained, hold_multiple, at_floor, label_version
 				)
 				select u.mint, u.graduated, u.rugged, u.ath_market_cap_usd,
-				       u.ath_multiple, u.last_market_cap_usd, u.outcome
+				       u.ath_multiple, u.last_market_cap_usd, u.outcome,
+				       u.retained, u.hold_multiple, u.at_floor, u.label_version
 				from unnest(
 					${batch.map((b) => b.row.mint)}::text[],
 					${batch.map((b) => b.o.graduated)}::boolean[],
@@ -387,14 +450,24 @@ export async function labelOutcomes({ network = 'mainnet', limit = 100, minAgeMi
 					${batch.map((b) => b.o.ath_market_cap_usd)}::double precision[],
 					${batch.map((b) => b.o.ath_multiple)}::double precision[],
 					${batch.map((b) => b.o.last_market_cap_usd)}::double precision[],
-					${batch.map((b) => b.o.outcome)}::text[]
-				) as u(mint, graduated, rugged, ath_market_cap_usd, ath_multiple, last_market_cap_usd, outcome)
+					${batch.map((b) => b.o.outcome)}::text[],
+					${batch.map((b) => b.o.retained)}::double precision[],
+					${batch.map((b) => b.o.hold_multiple)}::double precision[],
+					${batch.map((b) => b.o.at_floor)}::boolean[],
+					${batch.map((b) => b.o.label_version ?? LABEL_VERSION)}::smallint[]
+				) as u(mint, graduated, rugged, ath_market_cap_usd, ath_multiple, last_market_cap_usd,
+				       outcome, retained, hold_multiple, at_floor, label_version)
 				on conflict (mint) do update set
 					graduated = excluded.graduated, rugged = excluded.rugged,
 					ath_market_cap_usd = excluded.ath_market_cap_usd,
 					ath_multiple = excluded.ath_multiple,
 					last_market_cap_usd = excluded.last_market_cap_usd,
-					outcome = excluded.outcome, labeled_at = now()
+					outcome = excluded.outcome,
+					retained = excluded.retained,
+					hold_multiple = excluded.hold_multiple,
+					at_floor = excluded.at_floor,
+					label_version = excluded.label_version,
+					labeled_at = now()
 			`;
 			labeled += batch.length;
 			// A retry only counts as rescued when it came back with a real verdict;
@@ -413,11 +486,13 @@ export async function labelOutcomes({ network = 'mainnet', limit = 100, minAgeMi
 				insert into oracle_training_set (
 					mint, network, features, category,
 					creator_launches, creator_wins, creator_dump_rate,
-					outcome, graduated, rugged, ath_multiple, first_seen_at
+					outcome, graduated, rugged, ath_multiple, first_seen_at,
+					retained, hold_multiple, label_version
 				)
 				select u.mint, ${network}, u.features::jsonb, u.category,
 				       u.creator_launches, u.creator_wins, u.creator_dump_rate,
-				       u.outcome, u.graduated, u.rugged, u.ath_multiple, u.first_seen_at
+				       u.outcome, u.graduated, u.rugged, u.ath_multiple, u.first_seen_at,
+				       u.retained, u.hold_multiple, u.label_version
 				from unnest(
 					${judged.map((b) => b.row.mint)}::text[],
 					${judged.map((b) => JSON.stringify(b.row.signals || {}))}::text[],
@@ -429,10 +504,28 @@ export async function labelOutcomes({ network = 'mainnet', limit = 100, minAgeMi
 					${judged.map((b) => b.o.graduated)}::boolean[],
 					${judged.map((b) => b.o.rugged)}::boolean[],
 					${judged.map((b) => b.o.ath_multiple)}::double precision[],
-					${judged.map((b) => b.row.first_seen_at)}::timestamptz[]
+					${judged.map((b) => b.row.first_seen_at)}::timestamptz[],
+					${judged.map((b) => b.o.retained)}::double precision[],
+					${judged.map((b) => b.o.hold_multiple)}::double precision[],
+					${judged.map((b) => b.o.label_version ?? LABEL_VERSION)}::smallint[]
 				) as u(mint, features, category, creator_launches, creator_wins, creator_dump_rate,
-				       outcome, graduated, rugged, ath_multiple, first_seen_at)
-				on conflict (mint, network) do nothing
+				       outcome, graduated, rugged, ath_multiple, first_seen_at,
+				       retained, hold_multiple, label_version)
+				-- This clause used to do nothing on conflict, which meant a training
+				-- label could never be corrected once written: a row judged by a broken
+				-- rule stayed judged by it forever and the corpus could not heal even
+				-- after the rule was fixed. Only ever upgrade, never downgrade, so a
+				-- stale worker replaying an old rule cannot walk a corrected row back.
+				on conflict (mint, network) do update set
+					outcome = excluded.outcome,
+					graduated = excluded.graduated,
+					rugged = excluded.rugged,
+					ath_multiple = excluded.ath_multiple,
+					retained = excluded.retained,
+					hold_multiple = excluded.hold_multiple,
+					label_version = excluded.label_version,
+					labeled_at = now()
+				where excluded.label_version >= oracle_training_set.label_version
 			`;
 		} catch (err) {
 			console.warn('[coin-intel] training snapshot batch failed:', err?.message);

@@ -8,6 +8,7 @@ import { sql, isDbUnavailableError } from '../db.js';
 import { assembleIntel, walletProfile, coinOutcome } from './sources.js';
 import { classifyNarrative } from './narrative.js';
 import { convict, hitRateFor, PREDICTED_EVENT } from './conviction.js';
+import { ensureActiveModel, modelProvenance } from './model-store.js';
 import { summarizeActions } from './settle.js';
 import { evaluateExit } from './exit.js';
 import { knownWallet } from './known-wallets.js';
@@ -39,14 +40,17 @@ export async function upsertConviction({ mint, network, intel, verdict }) {
 		insert into oracle_conviction (
 			mint, network, symbol, name, image_uri,
 			score, tier, pedigree, structure, narrative, momentum, structure_cap,
-			badges, reasons, components, category, smart_wallet_count, coin_first_seen_at, scored_at
+			badges, reasons, components, category, smart_wallet_count, coin_first_seen_at, scored_at,
+			rug_risk, upside, give_back_risk, model_version_id
 		) values (
 			${mint}, ${network}, ${intel.symbol || null}, ${intel.name || null}, ${intel.image_uri || null},
 			${verdict.score}, ${verdict.tier}, ${verdict.pillars.pedigree}, ${verdict.pillars.structure},
 			${verdict.pillars.narrative}, ${verdict.pillars.momentum}, ${verdict.structureCap},
 			${JSON.stringify(verdict.badges)}::jsonb, ${JSON.stringify(verdict.reasons)}::jsonb,
 			${JSON.stringify(componentSummary(intel, verdict))}::jsonb, ${intel.category || null},
-			${intel.smartMoney?.smartWalletCount || 0}, ${intel.createdAt || null}, now()
+			${intel.smartMoney?.smartWalletCount || 0}, ${intel.createdAt || null}, now(),
+			${verdict.rugRisk ?? null}, ${verdict.upside ?? null}, ${verdict.giveBackRisk ?? null},
+			${modelProvenance().version_id}
 		)
 		on conflict (mint, network) do update set
 			symbol = excluded.symbol, name = excluded.name, image_uri = excluded.image_uri,
@@ -56,6 +60,9 @@ export async function upsertConviction({ mint, network, intel, verdict }) {
 			structure_cap = excluded.structure_cap, badges = excluded.badges,
 			reasons = excluded.reasons, components = excluded.components,
 			category = excluded.category, smart_wallet_count = excluded.smart_wallet_count,
+			rug_risk = excluded.rug_risk, upside = excluded.upside,
+			give_back_risk = excluded.give_back_risk,
+			model_version_id = excluded.model_version_id,
 			scored_at = now()
 		returning (xmax = 0) as inserted
 	`;
@@ -78,11 +85,13 @@ export async function upsertConviction({ mint, network, intel, verdict }) {
 	if (delta >= 3) {
 		await sql`
 			insert into oracle_conviction_history
-				(mint, network, score, tier, pedigree, structure, narrative, momentum)
+				(mint, network, score, tier, pedigree, structure, narrative, momentum,
+				 rug_risk, upside, give_back_risk)
 			values (
 				${mint}, ${network}, ${verdict.score}, ${verdict.tier},
 				${verdict.pillars.pedigree}, ${verdict.pillars.structure},
-				${verdict.pillars.narrative}, ${verdict.pillars.momentum}
+				${verdict.pillars.narrative}, ${verdict.pillars.momentum},
+				${verdict.rugRisk ?? null}, ${verdict.upside ?? null}, ${verdict.giveBackRisk ?? null}
 			)
 		`.catch(() => { /* non-fatal — history is a nice-to-have */ });
 	}
@@ -115,6 +124,13 @@ function componentSummary(intel, verdict) {
  * @param {object} opts { network, classify, persist }
  */
 export async function scoreCoin(mint, { network = 'mainnet', classify = true, persist = true } = {}) {
+	// Make sure this container is scoring with the newest promoted model before
+	// it forms an opinion. Cached for two minutes and shared across concurrent
+	// callers, so a batch sweep costs one query, and it never throws: a model
+	// lookup that fails leaves the installed model scoring rather than taking the
+	// whole feed down over a stale opinion.
+	await ensureActiveModel({ network });
+
 	let intel = await assembleIntel(mint, network);
 	if (!intel) return null;
 
@@ -151,7 +167,8 @@ export async function readFeed({ network = 'mainnet', limit = 50, minScore = 0, 
 		select c.mint, c.symbol, c.name, c.image_uri, c.score, c.tier,
 		       c.pedigree, c.structure, c.narrative, c.momentum,
 		       c.badges, c.reasons, c.category, c.smart_wallet_count, c.scored_at, c.coin_first_seen_at,
-		       o.graduated, o.rugged, o.ath_multiple,
+		       c.rug_risk, c.upside, c.give_back_risk,
+		       o.graduated, o.rugged, o.ath_multiple, o.hold_multiple,
 		       hist.spark
 		from oracle_conviction c
 		left join pump_coin_outcomes o on o.mint = c.mint
@@ -235,6 +252,12 @@ function rowToFeedItem(r) {
 		pillars: { pedigree: r.pedigree, structure: r.structure, narrative: r.narrative, momentum: r.momentum },
 		badges: r.badges || [],
 		reasons,
+		// The three v3 numbers, carried on every card. `give_back_risk` is the one
+		// that answers "why is this scored well when the chart is a cliff": it is
+		// the share of coins like this one that run and then hand it all back.
+		rug_risk: r.rug_risk ?? null,
+		upside: r.upside ?? null,
+		give_back_risk: r.give_back_risk ?? null,
 		hit_rate: odds.rate,
 		hit_rate_lift: odds.lift,
 		hit_rate_n: odds.n,

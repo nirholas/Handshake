@@ -1,274 +1,123 @@
-// Fit the Oracle conviction model from real outcomes.
+// Fit the Oracle conviction model from real outcomes, and report what it learned.
 //
-// Reads oracle_training_set (the durable launch-time-features + outcome
-// snapshot written by the intel labeler), fits a transparent bucketed logistic
-// model ("good" = graduated or pumped >= 3x ATH), validates on a time-split
-// holdout, and prints the fitted bucket weights as the JSON blob
-// api/_lib/oracle/conviction-model.json is built from, plus the calibration
-// table that maps model probability to the public tier ladder.
+// The fitting itself lives in api/_lib/oracle/fit.js, shared with the production
+// learning loop (api/cron/oracle-refit.js) so the terminal and the cron can
+// never disagree about what "the model" means. This file is the CLI around it:
+// load rows, fit, print a readable report, optionally write the bootstrap JSON
+// that ships in the container image.
 //
-// Rerun whenever the labeled set has grown meaningfully (it grows ~30k
-// coins/day now the labeler keeps up):
+//   node scripts/oracle-fit.mjs                 fit and report, write nothing
+//   node scripts/oracle-fit.mjs --write         also update conviction-model.json
+//   node scripts/oracle-fit.mjs --rows 200000   cap the training window
+//   node scripts/oracle-fit.mjs --epochs 16     more SGD passes per head
+//   node scripts/oracle-fit.mjs --json          machine-readable report on stdout
 //
-//   node scripts/oracle-fit.mjs            # fit + report
-//   node scripts/oracle-fit.mjs --write    # also update conviction-model.json
-//
-// The model is one-hot buckets -> logistic regression. Every weight is a
-// per-bucket log-odds contribution anyone can read, the exact opposite of a
-// black box: the fitted JSON ships with n / good-rate / lift per bucket.
+// Production does not need this script to stay current: the refit cron promotes
+// new weights into oracle_model_versions on its own schedule. Run it when you
+// want to see the numbers, or to refresh the bootstrap a cold container boots on.
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { neon } from '@neondatabase/serverless';
+import { buildModel, LABEL_VERSION, MIN_TRAINING_ROWS } from '../api/_lib/oracle/fit.js';
 
 const MODEL_PATH = new URL('../api/_lib/oracle/conviction-model.json', import.meta.url);
 
+// DATABASE_URL lives in .env.local, not .env (.env holds only the QA audit
+// login). Reading just one of them is why a plain run of this script died with
+// "DATABASE_URL not set" for weeks, which is a large part of why the model was
+// never refit. Read both, and let a real environment variable win over either.
 function loadEnvUrl() {
 	if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
-	try {
-		const env = readFileSync(new URL('../.env', import.meta.url), 'utf8');
-		const m = env.match(/^DATABASE_URL=(.+)$/m);
-		if (m) return m[1].trim();
-	} catch { /* fall through */ }
-	throw new Error('DATABASE_URL not set and not found in .env');
+	for (const name of ['../.env.local', '../.env']) {
+		const url = new URL(name, import.meta.url);
+		if (!existsSync(url)) continue;
+		const match = readFileSync(url, 'utf8').match(/^\s*DATABASE_URL\s*=\s*(.+)\s*$/m);
+		if (match) return match[1].trim().replace(/^["']|["']$/g, '');
+	}
+	throw new Error('DATABASE_URL is not set and was not found in .env.local or .env');
 }
+
+function flag(name, fallback = null) {
+	const i = process.argv.indexOf(`--${name}`);
+	return i >= 0 && process.argv[i + 1] && !process.argv[i + 1].startsWith('--') ? process.argv[i + 1] : fallback;
+}
+
+const write = process.argv.includes('--write');
+const asJson = process.argv.includes('--json');
+const maxRows = Number(flag('rows', 0)) || Infinity;
+const epochs = Number(flag('epochs', 0)) || 14;
 
 const sql = neon(loadEnvUrl());
 
-// ── Feature definition ────────────────────────────────────────────────────────
-// Buckets follow the empirically observed lift structure (2026-08-09 audit of
-// 92.5k labeled coins). Non-monotone signals (snipe, concentration) get buckets
-// that isolate their sweet spots instead of a linear penalty that fights the
-// data. Every getter reads the raw launch-time signals JSONB.
-const g = (k) => (r) => numOrNull(r.features?.[k]);
-function numOrNull(v) {
-	const n = Number(v);
-	return v == null || !Number.isFinite(n) ? null : n;
-}
-
-export const FEATURES = [
-	{ key: 'organic_score', pillar: 'structure', get: g('organic_score'), edges: [0.2, 0.4, 0.6, 0.8] },
-	{ key: 'bundle_score', pillar: 'structure', get: g('bundle_score'), edges: [0.1, 0.3, 0.5] },
-	{ key: 'snipe_ratio', pillar: 'structure', get: g('snipe_ratio'), edges: [0.1, 0.3, 0.7] },
-	{ key: 'coordination_score', pillar: 'structure', get: g('coordination_score'), edges: [0.1, 0.3] },
-	{ key: 'timing_entropy', pillar: 'structure', get: g('timing_entropy'), edges: [0.2, 0.4, 0.6, 0.8] },
-	{ key: 'concentration_top1', pillar: 'structure', get: g('concentration_top1'), edges: [0.05, 0.15, 0.3] },
-	{ key: 'concentration_top10', pillar: 'structure', get: g('concentration_top10'), edges: [0.3, 0.9] },
-	{ key: 'unique_buyers', pillar: 'momentum', get: g('unique_buyers'), edges: [1, 5, 15, 40] },
-	{ key: 'buy_sell_ratio', pillar: 'momentum', get: g('buy_sell_ratio'), edges: [0.5, 1, 2, 4] },
-	{ key: 'buy_volume_sol', pillar: 'momentum', get: g('buy_volume_sol'), edges: [0.5, 8, 25] },
-	{ key: 'largest_buy_sol', pillar: 'momentum', get: g('largest_buy_sol'), edges: [0.2, 2.5, 5] },
-	{ key: 'avg_buy_sol', pillar: 'momentum', get: g('avg_buy_sol'), edges: [0.05, 0.5] },
-	{ key: 'dev_buy_sol', pillar: 'pedigree', get: g('dev_buy_sol'), edges: [0.05, 0.5, 2] },
-	{ key: 'mc_sol_first_seen', pillar: 'momentum', get: g('mc_sol_first_seen'), edges: [28, 30, 35] },
-	{
-		key: 'dev_sold', pillar: 'pedigree',
-		get: (r) => (r.features?.dev_sold === true ? 1 : r.features?.dev_sold === false ? 0 : null),
-		edges: [0.5],
-	},
-	{
-		key: 'creator_record', pillar: 'pedigree',
-		// Categorical: the creator's launch history at label time.
-		categorical: true,
-		get: (r) => {
-			const launches = numOrNull({ features: { v: r.creator_launches } }.features.v);
-			const wins = numOrNull({ features: { v: r.creator_wins } }.features.v);
-			if (launches == null) return 'unknown';
-			if (wins != null && wins >= 1) return 'has_wins';
-			if (launches >= 5) return 'serial_no_wins';
-			if (launches >= 2) return 'repeat_no_wins';
-			return 'first_launch';
-		},
-	},
-	{
-		key: 'category', pillar: 'narrative',
-		categorical: true,
-		get: (r) => String(r.category || 'unknown').toLowerCase(),
-	},
-];
-
-function bucketLabel(f, v) {
-	if (f.categorical) return String(v);
-	if (v == null) return 'null';
-	for (let i = 0; i < f.edges.length; i++) {
-		if (v < f.edges[i]) return i === 0 ? `<${f.edges[0]}` : `${f.edges[i - 1]}-${f.edges[i]}`;
-	}
-	return `>=${f.edges[f.edges.length - 1]}`;
-}
-
-// ── Load data ─────────────────────────────────────────────────────────────────
+/**
+ * Load labeled launches, oldest first, so the holdout is genuinely the future.
+ * Only rows judged by the price-independent rule: version 1 rows carry a
+ * `rugged` flag that tracks the SOL price instead of the coin, and mixing them
+ * in would poison both the survival head and the win head that depends on it.
+ */
 async function loadRows() {
 	const PAGE = 20000;
 	const rows = [];
-	for (let off = 0; ; off += PAGE) {
+	for (let off = 0; rows.length < maxRows; off += PAGE) {
+		const take = Math.min(PAGE, maxRows - rows.length);
 		const page = await sql`
 			select mint, features, category, creator_launches, creator_wins,
-			       outcome, first_seen_at
+			       outcome, graduated, rugged, ath_multiple, hold_multiple, retained, first_seen_at
 			from oracle_training_set
-			where network = 'mainnet' and outcome <> 'unknown'
+			where network = 'mainnet' and outcome <> 'unknown' and label_version >= ${LABEL_VERSION}
 			order by first_seen_at asc, mint asc
-			limit ${PAGE} offset ${off}
+			limit ${take} offset ${off}
 		`;
 		rows.push(...page);
-		if (page.length < PAGE) break;
+		if (page.length < take) break;
 	}
 	return rows;
 }
 
-// ── Fit ───────────────────────────────────────────────────────────────────────
-function encode(rows) {
-	// Build the one-hot design: featureKey -> bucketLabel -> column index.
-	const columns = new Map();
-	const colOf = (fk, b) => {
-		const key = `${fk}\u0000${b}`;
-		if (!columns.has(key)) columns.set(key, columns.size);
-		return columns.get(key);
-	};
-	const X = rows.map((r) => FEATURES.map((f) => colOf(f.key, bucketLabel(f, f.get(r)))));
-	const y = rows.map((r) => (r.outcome === 'graduated' || r.outcome === 'pumped' ? 1 : 0));
-	return { X, y, columns };
-}
-
-function fitLogistic(X, y, nCols, { epochs = 40, lr = 0.05, l2 = 1e-4 } = {}) {
-	// Plain SGD logistic regression over one-hot rows (each row has exactly
-	// FEATURES.length active columns, all with value 1).
-	let b0 = Math.log((y.reduce((a, v) => a + v, 0) + 1) / (y.length - y.reduce((a, v) => a + v, 0) + 1));
-	const w = new Float64Array(nCols);
-	const idx = [...X.keys()];
-	let seed = 42;
-	const rand = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
-	for (let e = 0; e < epochs; e++) {
-		// Fisher-Yates with the deterministic LCG so runs are reproducible.
-		for (let i = idx.length - 1; i > 0; i--) {
-			const j = Math.floor(rand() * (i + 1));
-			[idx[i], idx[j]] = [idx[j], idx[i]];
-		}
-		const step = lr / (1 + e * 0.15);
-		for (const i of idx) {
-			let z = b0;
-			for (const c of X[i]) z += w[c];
-			const p = 1 / (1 + Math.exp(-z));
-			const err = y[i] - p;
-			b0 += step * err;
-			for (const c of X[i]) w[c] += step * (err - l2 * w[c]);
-		}
-	}
-	return { b0, w };
-}
-
-const sigmoid = (z) => 1 / (1 + Math.exp(-z));
-
-function predict(model, xRow) {
-	let z = model.b0;
-	for (const c of xRow) z += model.w[c];
-	return sigmoid(z);
-}
-
-// ── Evaluate ──────────────────────────────────────────────────────────────────
-function auc(scores, labels) {
-	const pairs = scores.map((s, i) => [s, labels[i]]).sort((a, b) => a[0] - b[0]);
-	let rank = 0, sumPosRanks = 0, nPos = 0, nNeg = 0;
-	for (let i = 0; i < pairs.length; ) {
-		let j = i;
-		while (j < pairs.length && pairs[j][0] === pairs[i][0]) j++;
-		const avgRank = (i + j + 1) / 2; // 1-based average rank of the tie group
-		for (let k = i; k < j; k++) {
-			if (pairs[k][1] === 1) { sumPosRanks += avgRank; nPos++; } else nNeg++;
-		}
-		i = j;
-	}
-	rank = sumPosRanks - (nPos * (nPos + 1)) / 2;
-	return nPos && nNeg ? rank / (nPos * nNeg) : 0.5;
-}
-
-function precisionAt(scores, labels, frac) {
-	const order = [...scores.keys()].sort((a, b) => scores[b] - scores[a]);
-	const n = Math.max(1, Math.round(order.length * frac));
-	let good = 0;
-	for (let i = 0; i < n; i++) good += labels[order[i]];
-	return { n, rate: good / n };
-}
-
-// ── Main ──────────────────────────────────────────────────────────────────────
-const write = process.argv.includes('--write');
 const rows = await loadRows();
-if (rows.length < 5000) {
-	console.error(`Only ${rows.length} training rows; refusing to fit on so little.`);
+if (rows.length < MIN_TRAINING_ROWS) {
+	console.error(`Only ${rows.length} rows carry label_version >= ${LABEL_VERSION}; refusing to fit on so little.`);
+	console.error('The intel labeler stamps that version as it relabels. Let it run, or check api/cron/intel-learn.js.');
 	process.exit(2);
 }
-console.log(`training rows: ${rows.length}`);
 
-const { X, y, columns } = encode(rows);
-const base = y.reduce((a, v) => a + v, 0) / y.length;
-console.log(`base good rate: ${(100 * base).toFixed(2)}%`);
+const startedAt = Date.now();
+const { model, report } = buildModel(rows, { epochs });
+const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
 
-// Time split: oldest 75% train, newest 25% holdout (rows arrive sorted).
-const cut = Math.floor(rows.length * 0.75);
-const model = fitLogistic(X.slice(0, cut), y.slice(0, cut), columns.size);
-
-const testScores = X.slice(cut).map((xr) => predict(model, xr));
-const testY = y.slice(cut);
-console.log(`holdout n=${testY.length}, AUC=${auc(testScores, testY).toFixed(4)}`);
-for (const frac of [0.01, 0.05, 0.10, 0.25]) {
-	const p = precisionAt(testScores, testY, frac);
-	console.log(`  precision@top${(frac * 100).toFixed(0)}%: ${(100 * p.rate).toFixed(1)}% (n=${p.n}, lift ${(p.rate / base).toFixed(2)})`);
-}
-
-// Per-probability-band calibration on the holdout (these anchor the tier map).
-console.log('holdout calibration by predicted probability:');
-const BANDS = [0, 0.05, 0.1, 0.2, 0.35, 0.55, 1.001];
-for (let i = 0; i + 1 < BANDS.length; i++) {
-	const sel = testScores.map((s, k) => [s, testY[k]]).filter(([s]) => s >= BANDS[i] && s < BANDS[i + 1]);
-	if (!sel.length) continue;
-	const rate = sel.reduce((a, [, l]) => a + l, 0) / sel.length;
-	console.log(`  p ${BANDS[i].toFixed(2)}-${BANDS[i + 1].toFixed(2)}: n=${sel.length} observed=${(100 * rate).toFixed(1)}%`);
-}
-
-// Refit on ALL rows for the shipped weights (holdout numbers above stay the
-// honest evaluation; the production model should not waste the newest quarter).
-const finalModel = fitLogistic(X, y, columns.size);
-
-// Emit the model JSON: per feature, per bucket -> weight + provenance stats.
-const features = FEATURES.map((f) => {
-	const buckets = {};
-	for (const [key, col] of columns) {
-		const [fk, b] = key.split('\u0000');
-		if (fk !== f.key) continue;
-		let n = 0, good = 0;
-		for (let i = 0; i < rows.length; i++) {
-			if (X[i][FEATURES.indexOf(f)] === col) { n++; good += y[i]; }
-		}
-		buckets[b] = {
-			w: Number(finalModel.w[col].toFixed(4)),
-			n,
-			good_rate: Number((good / Math.max(1, n)).toFixed(4)),
-		};
-	}
-	return {
-		key: f.key,
-		pillar: f.pillar,
-		categorical: !!f.categorical,
-		edges: f.edges || null,
-		buckets,
-	};
-});
-
-const out = {
-	version: 2,
-	fitted_at: new Date().toISOString(),
-	training_rows: rows.length,
-	base_good_rate: Number(base.toFixed(4)),
-	intercept: Number(finalModel.b0.toFixed(4)),
-	// Tier ladder: probability anchors chosen from the holdout calibration.
-	// score = monotone piecewise-linear map of p over these anchors, keeping the
-	// public 86/72/56/34 tier boundaries while grounding them in P(good).
-	tier_probability_anchors: { avoid: 0, watch: 0.05, lean: 0.12, strong: 0.30, prime: 0.55 },
-	features,
-};
-
-console.log(`\nfitted ${columns.size} bucket weights across ${FEATURES.length} features`);
-if (write) {
-	writeFileSync(MODEL_PATH, JSON.stringify(out, null, '\t') + '\n');
-	console.log(`wrote ${MODEL_PATH.pathname}`);
+if (asJson) {
+	console.log(JSON.stringify({ report, fit_seconds: Number(seconds) }, null, 2));
 } else {
-	console.log('(dry run; pass --write to update conviction-model.json)');
+	const pct = (v) => `${(100 * v).toFixed(2)}%`;
+	console.log(`training rows: ${report.rows.toLocaleString()}  (label_version >= ${LABEL_VERSION})`);
+	console.log(`fit in ${seconds}s: ${model.fit.features} features, ${model.fit.columns} bucket weights, ${model.fit.epochs_run} epochs`);
+	if (report.dropped.length) {
+		console.log('\ndropped as uninformative on this dataset:');
+		for (const d of report.dropped) {
+			const runner = d.runner_up ? `runner-up "${d.runner_up.bucket}" n=${d.runner_up.n}` : 'only one bucket';
+			console.log(`  ${d.key.padEnd(24)} ${(100 * d.share).toFixed(1)}% in "${d.bucket}", ${runner}`);
+		}
+	}
+	console.log('\nbase rates:');
+	for (const [head, rate] of Object.entries(report.base_rates)) console.log(`  ${head.padEnd(6)} ${pct(rate)}`);
+
+	for (const head of ['win', 'rug', 'moon']) {
+		const e = model.holdout[head];
+		if (!e) continue;
+		console.log(`\n[${head}] holdout n=${model.holdout.n.toLocaleString()}  AUC=${e.auc}  Brier=${e.brier}  base=${pct(e.base_rate)}`);
+		for (const [k, v] of Object.entries(e.precision)) {
+			console.log(`   precision@${k.padEnd(6)} ${(100 * v.rate).toFixed(1).padStart(5)}%  (n=${v.n}, lift ${v.lift}x)`);
+		}
+		console.log('   reliability (does a claim of X happen X of the time):');
+		for (const b of e.reliability) {
+			if (!b.n) continue;
+			console.log(`     p ${b.lo.toFixed(2)}-${b.hi.toFixed(2)}  n=${String(b.n).padStart(6)}  claimed ${(100 * b.predicted).toFixed(1).padStart(5)}%  observed ${(100 * b.observed).toFixed(1).padStart(5)}%`);
+		}
+	}
+	console.log(`\n${write ? 'writing' : 'dry run'}: pass --write to update the bootstrap model shipped in the image.`);
+}
+
+if (write) {
+	writeFileSync(MODEL_PATH, `${JSON.stringify(model, null, '\t')}\n`);
+	console.log(`wrote ${MODEL_PATH.pathname}`);
 }
