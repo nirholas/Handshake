@@ -7,6 +7,7 @@
 // /api/coin/* proxies (CoinGecko + the native three.ws news aggregator) —
 // never mocked.
 
+import { watchEmbed, renderEmbedFallback, DEFAULT_EMBED_TIMEOUT_MS } from './shared/embed-guard.js';
 import {
 	formatUsd,
 	formatPrice,
@@ -217,72 +218,11 @@ function ensureThemeRemount(coin) {
 	themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 }
 
-// How long a third-party embed gets to show something before we replace it
-// with an explanation. Generous: these are heavy terminals on someone else's
-// infrastructure. Short enough that a blocked embed does not leave a 300px
-// void for the length of the visit.
-const EMBED_TIMEOUT_MS = 12_000;
-
 /**
- * Replace a dead embed with a designed panel that says what happened and how to
- * see the chart anyway. A blocked or down terminal used to leave an empty box
- * with no text, which reads as a broken page rather than a blocked third party.
+ * A terminal iframe that replaces itself with a designed panel when the
+ * provider never renders. See src/shared/embed-guard.js for why `load` and
+ * `error` alone are not enough on a cross-origin embed.
  *
- * @param {HTMLElement} host
- * @param {{ name: string, href: string, label: string, onRetry: () => void }} opts
- */
-function embedFallback(host, { name, href, label, onRetry }) {
-	const panel = document.createElement('div');
-	panel.className = 'cv-chart-state col';
-	panel.setAttribute('role', 'status');
-	panel.innerHTML = `
-		<p>${esc(name)} did not load. It may be blocked by an ad blocker, an extension or your network.</p>
-		<p><a href="${esc(href)}" target="_blank" rel="noopener nofollow noreferrer">${esc(label)} ↗</a></p>`;
-	const retry = document.createElement('button');
-	retry.type = 'button';
-	retry.className = 'cv-range-btn';
-	retry.textContent = 'Try again';
-	retry.addEventListener('click', onRetry);
-	panel.appendChild(retry);
-	host.replaceChildren(panel);
-}
-
-/**
- * Run `onTimeout` unless `cancel()` is called first. Lazy iframes only start
- * fetching once they scroll into view, so the clock starts at first
- * intersection; starting it at mount would report every below-the-fold embed as
- * dead. Browsers without IntersectionObserver start immediately.
- *
- * @returns {() => void} cancel
- */
-function watchdog(el, ms, onTimeout) {
-	let timer = null;
-	let observer = null;
-	const start = () => {
-		if (timer === null) timer = setTimeout(onTimeout, ms);
-	};
-	const cancel = () => {
-		if (timer !== null) clearTimeout(timer);
-		timer = null;
-		observer?.disconnect();
-		observer = null;
-	};
-	if (typeof IntersectionObserver === 'function') {
-		observer = new IntersectionObserver((entries) => {
-			if (entries.some((e) => e.isIntersecting)) {
-				observer.disconnect();
-				observer = null;
-				start();
-			}
-		});
-		observer.observe(el);
-	} else {
-		start();
-	}
-	return cancel;
-}
-
-/**
  * @param {string} src
  * @param {string} title
  * @param {{ name: string, href: string, label: string, onRetry: () => void }} fallback
@@ -294,16 +234,17 @@ function iframeEl(src, title, fallback) {
 	iframe.loading = 'lazy';
 	iframe.allow = 'clipboard-write';
 	iframe.style.cssText = 'width:100%;height:100%;border:0;display:block';
-	// A cross-origin frame gives us `load` and `error` and nothing else, and a
-	// frame a blocker swallows often fires neither. The deadline is what
-	// actually catches that case; load/error just settle it sooner.
-	const cancel = watchdog(iframe, EMBED_TIMEOUT_MS, () => {
-		if (iframe.isConnected) embedFallback(iframe.parentElement || iframe, fallback);
+	const fail = () => renderEmbedFallback(iframe.parentElement || iframe, fallback);
+	const cancel = watchEmbed(iframe, {
+		timeoutMs: DEFAULT_EMBED_TIMEOUT_MS,
+		onTimeout: () => {
+			if (iframe.isConnected) fail();
+		},
 	});
 	iframe.addEventListener('load', cancel);
 	iframe.addEventListener('error', () => {
 		cancel();
-		embedFallback(iframe.parentElement || iframe, fallback);
+		fail();
 	});
 	return iframe;
 }
@@ -336,12 +277,15 @@ function mountTradingView(host, symbol, fallback) {
 	// chart asynchronously, so neither `onerror` alone nor a deadline alone is
 	// enough: onerror catches an outright block, and the deadline catches a
 	// script that loads and then never renders its iframe.
-	const cancel = watchdog(container, EMBED_TIMEOUT_MS, () => {
-		if (!widget.querySelector('iframe')) embedFallback(host, fallback);
+	const cancel = watchEmbed(container, {
+		timeoutMs: DEFAULT_EMBED_TIMEOUT_MS,
+		onTimeout: () => {
+			if (!widget.querySelector('iframe')) renderEmbedFallback(host, fallback);
+		},
 	});
 	script.onerror = () => {
 		cancel();
-		embedFallback(host, fallback);
+		renderEmbedFallback(host, fallback);
 	};
 	container.appendChild(script);
 	host.replaceChildren(container);
