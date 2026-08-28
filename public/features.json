@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T01:25:23.342Z",
+	"generated_at": "2026-08-28T01:47:28.243Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -294,6 +294,16 @@
 					"indexable": true,
 					"tags": [],
 					"showcase": false
+				},
+				{
+					"path": "/companion",
+					"title": "Companion",
+					"description": "A 3D companion that delivers your important messages in person. Connect your own Telegram bot, calendar, inbox, or phone, give each contact their own avatar and voice, and hear only what clears your bar.",
+					"added": "2026-08-28",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": true
 				},
 				{
 					"path": "/notifications",

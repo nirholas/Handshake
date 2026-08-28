@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Companion</title>
+			<link>https://three.ws/companion</link>
+			<guid isPermaLink="false">2026-08-28:Companion</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A 3D companion that delivers your important messages in person. Connect your own Telegram bot, calendar, inbox, or phone, give each contact their own avatar and voice, and hear only what clears your bar.</description>
+		</item>
+		<item>
 			<title>Agent history on Base, Ethereum and Gnosis is moving again</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-28:Agent history on Base, Ethereum and Gnosis is moving again</guid>
@@ -29,6 +37,14 @@
 			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>A handful of steps still had no time limit on the outside service they called. When that service accepted the connection and then went quiet, the request sat there until the platform killed it, and you got a spinner that ended in nothing: a photo-to-avatar upload that never came back, a saved model that never finished downloading, a coin launch stuck fetching its own thumbnail, an ordinals order whose status never loaded, a team task where one hired agent held up the whole run. Each of those now has a deadline and a clear answer when it is missed, and the ones that are safe to repeat retry once first. Anything that spends money or starts a generation is never repeated: it is bounded and then reported, so no upload is billed twice and no hire is paid twice. Saving a model from a link is also checked more tightly now, against the address it actually connects to and with the size limit applied while it downloads.</description>
+		</item>
+		<item>
+			<title>Your agent now tells you the important things in person</title>
+			<link>https://three.ws/notifications</link>
+			<guid isPermaLink="false">2026-08-28:Your agent now tells you the important things in person</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Notifications no longer wait behind a badge. When something worth stopping for lands while you are on the site (a sale, money in, a 3D generation finishing, anything touching your account), your corner companion turns to you, plays a gesture, and says it out loud with a link straight to it. If the companion is switched off it is summoned for that one message and walks off again, without turning itself back on. It is a real delivery channel next to in-app, push, email and Telegram: toggle it per category in Settings, and there is a Turn off control in the bubble that silences it in that browser instantly. It only ever announces unread notifications under fifteen minutes old, says each one exactly once, caps itself at two per visit, and never speaks into a background tab. Nothing is spoken aloud unless you already turned on the companion's voice; otherwise it is text in the bubble, which screen readers announce too.</description>
 		</item>
 		<item>
 			<title>three.ws for Seeker</title>

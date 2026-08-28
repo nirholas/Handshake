@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-08-28T01:25:23.358Z",
+	"generated_at": "2026-08-28T01:47:28.267Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-08-28",
+			"type": "launch",
+			"title": "Companion",
+			"summary": "A 3D companion that delivers your important messages in person. Connect your own Telegram bot, calendar, inbox, or phone, give each contact their own avatar and voice, and hear only what clears your bar.",
+			"link": "/companion",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-08-28",
 			"type": "update",
@@ -36,6 +46,16 @@
 				"improvement",
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "update",
+			"title": "Your agent now tells you the important things in person",
+			"summary": "Notifications no longer wait behind a badge. When something worth stopping for lands while you are on the site (a sale, money in, a 3D generation finishing, anything touching your account), your corner companion turns to you, plays a gesture, and says it out loud with a link straight to it. If the companion is switched off it is summoned for that one message and walks off again, without turning itself back on. It is a real delivery channel next to in-app, push, email and Telegram: toggle it per category in Settings, and there is a Turn off control in the bubble that silences it in that browser instantly. It only ever announces unread notifications under fifteen minutes old, says each one exactly once, caps itself at two per visit, and never speaks into a background tab. Nothing is spoken aloud unless you already turned on the companion's voice; otherwise it is text in the bubble, which screen readers announce too.",
+			"link": "/notifications",
+			"tags": [
+				"feature"
 			]
 		},
 		{
