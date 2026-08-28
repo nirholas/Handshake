@@ -613,6 +613,7 @@ const appConfig = {
 				// not the input key, so the page still emits dist/notifications.html.
 				'notifications-page': resolve(__dirname, 'pages/notifications.html'),
 				companion: resolve(__dirname, 'pages/companion.html'),
+				feedback: resolve(__dirname, 'pages/feedback.html'),
 				'agent-edit': resolve(__dirname, 'pages/agent-edit.html'),
 				'agent-mind': resolve(__dirname, 'pages/agent-mind.html'),
 				'avatar-edit': resolve(__dirname, 'pages/avatar-edit.html'),

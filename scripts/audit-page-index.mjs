@@ -61,6 +61,7 @@ const IGNORE = new Set([
 	'/paywall', // transactional gate, reached in-flow when access is required
 '/sperax/iframe', // partner chat embed iframe, not a discovery page
 	'/ibm/hello.live', // editable source variant of /ibm/hello (the canonical page is generated from it); not a separate discovery page
+	'/feedback', // admin-only visitor-feedback queue, noindex and gated by requireAdmin
 	'/profile', // "my profile" shortcut — resolves the signed-in user and redirects to /u/<me>, not a landing
 ]);
 

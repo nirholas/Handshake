@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<style>/* three.ws hidden-guard - make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<script>/* three.ws theme boot */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Feedback queue · three.ws</title>
+		<meta name="description" content="What visitors told the corner companion, grouped into one row per problem, scored by severity, and carrying the route, build, and console errors captured when it happened." />
+		<meta name="robots" content="noindex" />
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="canonical" href="https://three.ws/feedback">
+		<style>
+			:root {
+				--bg: #0d0d0d;
+				--card: #181818;
+				--line: rgba(255,255,255,0.07);
+				--line-2: rgba(255,255,255,0.12);
+				--text: #e7e9ee;
+				--muted: rgba(231,233,238,0.55);
+				--dim: rgba(231,233,238,0.35);
+				--blue: #3b82f6;
+				--green: #22c55e;
+				--amber: #f59e0b;
+				--red: #ef4444;
+			}
+			html[data-theme='light'] {
+				--bg: #fbfbfc;
+				--card: #fff;
+				--line: rgba(10,12,20,0.09);
+				--line-2: rgba(10,12,20,0.16);
+				--text: #14161c;
+				--muted: rgba(20,22,28,0.6);
+				--dim: rgba(20,22,28,0.4);
+			}
+			* { box-sizing: border-box; }
+			body {
+				margin: 0;
+				background: var(--bg);
+				color: var(--text);
+				font: 15px/1.6 'Inter', system-ui, -apple-system, sans-serif;
+				-webkit-font-smoothing: antialiased;
+			}
+			.shell { max-width: 1080px; margin: 0 auto; padding: 32px 20px 80px; }
+			.hero { margin-bottom: 24px; }
+			h1 { font-size: clamp(26px, 4vw, 34px); margin: 0 0 8px; letter-spacing: -0.02em; }
+			.hero p { color: var(--muted); margin: 0; max-width: 62ch; }
+			.stats { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0 16px; }
+			.stat {
+				background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+				padding: 10px 14px; min-width: 96px;
+			}
+			.stat b { display: block; font-size: 20px; letter-spacing: -0.01em; }
+			.stat span { color: var(--dim); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+			.filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
+			.filters button {
+				background: transparent; border: 1px solid var(--line-2); color: var(--muted);
+				border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 13px; cursor: pointer;
+				transition: background .15s ease, color .15s ease, border-color .15s ease;
+			}
+			.filters button:hover { color: var(--text); border-color: var(--text); }
+			.filters button[aria-pressed='true'] { background: var(--text); color: var(--bg); border-color: var(--text); }
+			.filters button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+			.cluster {
+				background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+				margin-bottom: 10px; overflow: hidden;
+			}
+			.cluster > summary {
+				list-style: none; cursor: pointer; padding: 14px 16px;
+				display: grid; grid-template-columns: 52px 1fr auto; gap: 14px; align-items: center;
+			}
+			.cluster > summary::-webkit-details-marker { display: none; }
+			.cluster > summary:hover { background: rgba(255,255,255,0.02); }
+			.cluster > summary:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+			.sev {
+				display: grid; place-items: center; width: 52px; height: 40px; border-radius: 8px;
+				font-weight: 700; font-size: 15px; font-variant-numeric: tabular-nums;
+			}
+			.sev[data-band='high'] { background: rgba(239,68,68,.16); color: var(--red); }
+			.sev[data-band='mid'] { background: rgba(245,158,11,.14); color: var(--amber); }
+			.sev[data-band='low'] { background: rgba(255,255,255,.05); color: var(--dim); }
+			.sum { font-weight: 500; margin: 0 0 3px; }
+			.meta { color: var(--dim); font-size: 12.5px; display: flex; flex-wrap: wrap; gap: 4px 10px; }
+			.meta code { font: 11.5px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); }
+			.tag { border: 1px solid var(--line-2); border-radius: 5px; padding: 0 6px; }
+			.count { text-align: right; color: var(--muted); font-size: 13px; white-space: nowrap; }
+			.count b { color: var(--text); font-size: 17px; display: block; }
+
+			.detail { border-top: 1px solid var(--line); padding: 14px 16px; }
+			.repro { color: var(--muted); margin: 0 0 12px; font-size: 13.5px; }
+			.report { border-left: 2px solid var(--line-2); padding: 0 0 0 12px; margin: 0 0 14px; }
+			.report q { display: block; color: var(--text); margin-bottom: 5px; }
+			.report .meta { font-size: 12px; }
+			.signals { margin: 6px 0 0; padding: 0; list-style: none; }
+			.signals li {
+				font: 11.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+				color: var(--muted); background: rgba(239,68,68,.07); border-radius: 5px;
+				padding: 3px 7px; margin-top: 3px; word-break: break-word;
+			}
+			.actions { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 4px; }
+			.actions button {
+				background: transparent; border: 1px solid var(--line-2); color: var(--muted);
+				border-radius: 8px; padding: 7px 13px; font: inherit; font-size: 13px; cursor: pointer;
+				transition: background .15s ease, color .15s ease, border-color .15s ease;
+			}
+			.actions button:hover { color: var(--text); border-color: var(--text); }
+			.actions button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+			.actions button[data-status='fixed']:hover { border-color: var(--green); color: var(--green); }
+			.actions button[data-status='dismissed']:hover { border-color: var(--red); color: var(--red); }
+
+			.skeleton { height: 68px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); margin-bottom: 10px; position: relative; overflow: hidden; }
+			.skeleton::after {
+				content: ''; position: absolute; inset: 0; transform: translateX(-100%);
+				background: linear-gradient(90deg, transparent, rgba(255,255,255,.045), transparent);
+				animation: shimmer 1.3s infinite;
+			}
+			@keyframes shimmer { to { transform: translateX(100%); } }
+			@media (prefers-reduced-motion: reduce) { .skeleton::after { animation: none; } }
+
+			.state { text-align: center; padding: 56px 20px; border: 1px dashed var(--line-2); border-radius: 12px; }
+			.state h2 { margin: 0 0 8px; font-size: 18px; }
+			.state p { color: var(--muted); margin: 0 auto; max-width: 46ch; }
+			.state a { color: var(--blue); }
+			@media (max-width: 640px) {
+				.cluster > summary { grid-template-columns: 44px 1fr; }
+				.count { grid-column: 2; text-align: left; }
+				.count b { display: inline; font-size: 13px; }
+			}
+		</style>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="shell">
+			<div class="hero">
+				<h1>Feedback queue</h1>
+				<p>
+					What visitors told the corner companion. One row per distinct problem, loudest first,
+					each carrying the route, the build it happened on, and the console errors the browser
+					captured at the time. Nothing here changes the product on its own: it is a list a
+					person reads and acts on.
+				</p>
+			</div>
+
+			<div class="stats" id="stats" hidden></div>
+
+			<div class="filters" role="group" aria-label="Filter by status">
+				<button type="button" data-status="open" aria-pressed="true">Open</button>
+				<button type="button" data-status="accepted" aria-pressed="false">Accepted</button>
+				<button type="button" data-status="fixed" aria-pressed="false">Fixed</button>
+				<button type="button" data-status="dismissed" aria-pressed="false">Dismissed</button>
+				<button type="button" data-status="all" aria-pressed="false">All</button>
+			</div>
+
+			<div id="list" aria-live="polite">
+				<div class="skeleton"></div>
+				<div class="skeleton"></div>
+				<div class="skeleton"></div>
+			</div>
+		</main>
+
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/src/feedback-page.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

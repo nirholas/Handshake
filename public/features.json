@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T01:47:28.243Z",
+	"generated_at": "2026-08-28T02:37:00.902Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -4902,6 +4902,16 @@
 					"title": "Docs: Notifications",
 					"description": "Everything that happens to your work on three.ws (a payment lands, a skill sells, someone remixes your model, follows you, a quest finishes, a royalty arrives) becomes a row in one per-user inbox.",
 					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/feedback",
+					"title": "Docs · Feedback",
+					"description": "Telling the corner companion what broke: the proactive ask at the moment of failure, the route, build SHA, and console errors captured for you, the severity and clustering rules, the report API, and the boundary that keeps untrusted visitor text from ever reaching anything with write access.",
+					"added": "2026-08-28",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

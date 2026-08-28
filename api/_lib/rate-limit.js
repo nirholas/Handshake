@@ -1821,6 +1821,15 @@ export const limits = {
 	// NOT be local: a per-instance counter multiplies by the instance count.
 	companionPoll: (userId) =>
 		getLimiter('companion:poll', { limit: 30, window: '10 m' }).limit(userId),
+	// Visitor feedback (POST /api/feedback/report). Deliberately generous: the
+	// cost of dropping a real bug report is far higher than the cost of storing a
+	// few extra rows, and the reporter may be anonymous and mid-outage. Keyed to
+	// the account, else a hashed browser key, else the IP.
+	feedbackWrite: (id) =>
+		getLimiter('feedback:write', { limit: 20, window: '1 h' }).limit(id),
+	// The admin review queue (/api/feedback). One admin refreshing a dashboard.
+	feedbackRead: (userId) =>
+		getLimiter('feedback:read', { limit: 240, window: '1 m', local: true }).limit(userId),
 	// The phone/desktop bridge (POST /api/companion/ingest). Keyed by the bridge
 	// token, since the poster is a Shortcut or a shell script with no session.
 	// A phone forwarding every notification it receives stays well under this;

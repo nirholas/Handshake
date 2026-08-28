@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-28",
+			"title": "Tell the agent in the corner what is broken",
+			"summary": "The companion that walks your pages now listens. When a page actually fails, it turns and asks what you were doing, and the report it sends carries what you should never have to type: the page, the exact build it happened on, your screen size, and the errors the browser recorded at that moment. You can also open it any time from the control beside the avatar, and dictate instead of typing. Reports are grouped so that twenty people hitting one problem read as one problem, and every one of them is read by a person before anything changes.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/docs/feedback"
+		},
+		{
+			"date": "2026-08-28",
 			"title": "Agent payments now stop themselves when the fee wallet runs dry",
 			"summary": "The platform sponsors the network fee on every agent payment. When that wallet ran down to the point where it could not cover a single fee, the check meant to pause payments could not run, because it depended on a balance lookup and the network providers were rate-limited at the same moment. Payments kept being attempted for three hours and none of them could complete. The pause now reads its answer from the failure itself, which costs nothing and works exactly when the network is too busy to answer questions. The status page also names the real cause now, a wallet that needs funding, instead of pointing at the payment rail.",
 			"tags": [

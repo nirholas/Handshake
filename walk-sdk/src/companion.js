@@ -744,7 +744,12 @@ function ensureStyles() {
 .walk-companion-bubble.is-in{opacity:1;transform:translateX(-50%) translateY(0)}
 .walk-companion-bubble.is-alert{background:rgba(20,18,32,.96);border-color:rgba(122,162,255,.5);box-shadow:0 10px 28px rgba(0,0,0,.45),0 0 0 1px rgba(122,162,255,.18)}
 .walk-companion-bubble.is-alert::after{border-top-color:rgba(20,18,32,.96)}
-.walk-companion-bubble.has-actions{pointer-events:auto}
+.walk-companion-bubble.has-actions{pointer-events:auto;z-index:4}
+/* z-index 4 puts an actionable bubble ABOVE the chrome control row (z-index 3).
+   Without it the controls sit over the bubble's own buttons and swallow the
+   click: the buttons render, highlight on hover, and do nothing. Only bubbles
+   that HAVE actions are raised, so a plain caption never covers the close or
+   swap controls. */
 .walk-companion-bubble-line{display:block}
 .walk-companion-bubble-actions{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:7px}
 .walk-companion-bubble-action{appearance:none;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#dbe6ff;font:600 11.5px/1 system-ui,-apple-system,'Segoe UI',sans-serif;padding:5px 9px;border-radius:999px;cursor:pointer;text-decoration:none;transition:background .15s ease,border-color .15s ease,color .15s ease}

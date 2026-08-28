@@ -18,6 +18,7 @@ import { installTransitions } from './walk-companion-transitions.js';
 import { createWalkTrails2D, createTrailSetting, TRAIL_STYLE_LABELS } from './walk-trails.js';
 import { installClickToWalk } from './walk-companion-click-to-walk.js';
 import { installNarrator } from './walk-companion-narrator.js';
+import { installFeedback } from './feedback-companion.js';
 import { installIdentity } from './walk-companion-identity.js';
 // The companion is the site-wide "your agent" body. Booting the mood embodiment
 // here makes it reflect the agent's live emotional state (aura + breathing) on
@@ -290,6 +291,20 @@ window.__walkNarrator = installNarrator({
 	getInstance: () => walk.instance,
 	getHostEl: companionHost,
 	storageKey: NARRATE_KEY,
+});
+
+// ── Feedback (the return channel) ────────────────────────────────────────────
+// Narration and the herald are the companion talking TO the visitor. This is
+// the visitor talking back: they tell the avatar what broke, and the report
+// arrives carrying the route, the build sha, and the console errors the browser
+// already captured, so a vague sentence lands as an actionable row. The
+// companion offers proactively at the one moment it is worth asking (right
+// after the page actually threw), and the chrome control is always there.
+// The handle is exposed so any surface can open the panel from its own button.
+// See src/feedback-companion.js.
+window.__walkFeedback = installFeedback({
+	getInstance: () => walk.instance,
+	getHostEl: companionHost,
 });
 
 // ── Identity ─────────────────────────────────────────────────────────────────

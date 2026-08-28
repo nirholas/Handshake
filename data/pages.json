@@ -3850,6 +3850,14 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/feedback",
+					"title": "Docs · Feedback",
+					"description": "Telling the corner companion what broke: the proactive ask at the moment of failure, the route, build SHA, and console errors captured for you, the severity and clustering rules, the report API, and the boundary that keeps untrusted visitor text from ever reaching anything with write access.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-08-28"
+				},
+				{
 					"path": "/docs/creator-portfolio",
 					"title": "Docs: Creator portfolio",
 					"description": "Everything a creator makes on three.ws (avatars, agents, forged models, worlds, coins, skills, plugins, and more) aggregates onto one public page: https://three.ws/u/<username>.",

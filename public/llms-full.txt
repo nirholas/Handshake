@@ -2973,6 +2973,12 @@ URL: https://three.ws/docs/notifications
 
 Everything that happens to your work on three.ws (a payment lands, a skill sells, someone remixes your model, follows you, a quest finishes, a royalty arrives) becomes a row in one per-user inbox.
 
+### Docs · Feedback
+
+URL: https://three.ws/docs/feedback
+
+Telling the corner companion what broke: the proactive ask at the moment of failure, the route, build SHA, and console errors captured for you, the severity and clustering rules, the report API, and the boundary that keeps untrusted visitor text from ever reaching anything with write access.
+
 ### Docs: Creator portfolio
 
 URL: https://three.ws/docs/creator-portfolio

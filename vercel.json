@@ -2605,6 +2605,14 @@
 			"dest": "/collection.html"
 		},
 		{
+			"src": "/feedback",
+			"dest": "/feedback.html"
+		},
+		{
+			"src": "/feedback/",
+			"dest": "/feedback.html"
+		},
+		{
 			"src": "/companion",
 			"dest": "/companion.html"
 		},
@@ -6139,6 +6147,10 @@
 		{
 			"path": "/api/cron/companion-poll",
 			"schedule": "*/2 * * * *"
+		},
+		{
+			"path": "/api/cron/feedback-triage",
+			"schedule": "*/5 * * * *"
 		}
 	]
 }
