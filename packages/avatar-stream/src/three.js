@@ -111,20 +111,51 @@ function growMorphAttribute(THREE, geometry, targetIndex, semantic, meta, bytes,
 /** Apply one primitive's patch to its geometry. */
 export function applyPrimitivePatch(THREE, mesh, entry, payload) {
 	const geometry = mesh.geometry;
+	let morphChanged = false;
 	for (const [key, meta] of Object.entries(entry.attributes)) {
 		const bytes = A3SStream.chunk(payload, meta);
+		// Each attribute carries its own window: morph deltas begin at zero in the
+		// patch that introduces them, base attributes resume where layer 0 stopped.
+		const start = meta.start ?? entry.newVertexStart;
+		const count = meta.count ?? entry.newVertexCount;
 		const morph = key.match(/^targets\/(\d+)\/(.+)$/);
 		if (morph) {
-			growMorphAttribute(THREE, geometry, Number(morph[1]), morph[2], meta, bytes, entry.newVertexStart, entry.newVertexCount);
+			growMorphAttribute(THREE, geometry, Number(morph[1]), morph[2], meta, bytes, start, count);
+			morphChanged = true;
 			continue;
 		}
 		const name = SEMANTIC_TO_ATTRIBUTE[key] || key.toLowerCase();
-		growAttribute(THREE, geometry, name, meta, bytes, entry.newVertexStart, entry.newVertexCount);
+		growAttribute(THREE, geometry, name, meta, bytes, start, count);
 	}
+	if (morphChanged) restoreMorphTargets(mesh, entry);
 	const indexBytes = A3SStream.chunk(payload, entry.indices);
 	geometry.setIndex(new THREE.BufferAttribute(typedArrayFrom(indexBytes, entry.indices.componentType), 1));
 	geometry.computeBoundingSphere();
 	geometry.computeBoundingBox();
+}
+
+/**
+ * Re-attach the morph plumbing three.js builds at parse time.
+ *
+ * The base layer ships no targets, so the loader created neither an influence
+ * array nor a name dictionary. Both are restored here, and the material is
+ * flagged so its shader is recompiled with morph support switched on.
+ */
+function restoreMorphTargets(mesh, entry) {
+	const count = entry.morphTargetCount || (mesh.geometry.morphAttributes.position || []).length;
+	if (!count) return;
+	if (!mesh.morphTargetInfluences || mesh.morphTargetInfluences.length !== count) {
+		const weights = entry.morphWeights;
+		mesh.morphTargetInfluences = Array.from({ length: count }, (_, i) => weights?.[i] ?? 0);
+	}
+	if (entry.morphTargetNames && !mesh.morphTargetDictionary) {
+		mesh.morphTargetDictionary = {};
+		entry.morphTargetNames.forEach((name, i) => {
+			mesh.morphTargetDictionary[name] = i;
+		});
+	}
+	const materials = Array.isArray(mesh.material) ? mesh.material : mesh.material ? [mesh.material] : [];
+	for (const material of materials) material.needsUpdate = true;
 }
 
 /** Decode a texture patch and bind it to every material slot that referenced it. */

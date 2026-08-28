@@ -290,7 +290,20 @@ export async function pack(glbBytes, options = {}) {
 			}
 
 			prim.setExtras({ ...(prim.getExtras() || {}), a3sPrim: ordinal });
-			primPlans.push({ ordinal, prim, entries, snapshot, chain: remapped, levelVertexCounts, vertexCount });
+			const morphTargetNames = mesh.getExtras()?.targetNames || null;
+			primPlans.push({
+				ordinal,
+				prim,
+				mesh,
+				entries,
+				snapshot,
+				chain: remapped,
+				levelVertexCounts,
+				vertexCount,
+				morphTargetCount: prim.listTargets().length,
+				morphTargetNames: Array.isArray(morphTargetNames) ? morphTargetNames : null,
+				morphWeights: mesh.getWeights() || null,
+			});
 		}
 	}
 
@@ -373,8 +386,12 @@ export async function pack(glbBytes, options = {}) {
 			const to = plan.levelVertexCounts[level];
 			const attributes = {};
 			for (const [key, meta] of Object.entries(plan.snapshot)) {
+				// Each attribute tracks its own high-water mark, because morph deltas
+				// start from zero here while base attributes resume from the base layer.
+				const start = plan.delivered[key] ?? 0;
+				if (to <= start) continue;
 				const stride = meta.elementSize;
-				const slice = meta.array.subarray(from * stride, to * stride);
+				const slice = meta.array.subarray(start * stride, to * stride);
 				const bytes = new Uint8Array(slice.buffer, slice.byteOffset, slice.byteLength);
 				attributes[key] = {
 					offset: cursor,
@@ -383,9 +400,12 @@ export async function pack(glbBytes, options = {}) {
 					type: meta.type,
 					normalized: meta.normalized,
 					elementSize: stride,
+					start,
+					count: to - start,
 				};
 				chunks.push(bytes);
 				cursor = align4(cursor + bytes.byteLength);
+				plan.delivered[key] = to;
 			}
 			const indices = indexArrayFor(to, plan.chain[level]);
 			const indexBytes = new Uint8Array(indices.buffer, indices.byteOffset, indices.byteLength);
@@ -394,6 +414,9 @@ export async function pack(glbBytes, options = {}) {
 				newVertexStart: from,
 				newVertexCount: to - from,
 				vertexCount: to,
+				morphTargetCount: plan.morphTargetCount,
+				morphTargetNames: plan.morphTargetNames,
+				morphWeights: plan.morphWeights,
 				attributes,
 				indices: {
 					offset: cursor,
@@ -534,12 +557,36 @@ function describeTextureSlots(root, texture) {
 	return slots;
 }
 
-/** Slice one primitive's accessors, morph targets included, down to a level. */
+/** A morph target delta, as opposed to a base vertex attribute. */
+const isMorphKey = (key) => key.startsWith('targets/');
+
+/**
+ * Slice one primitive down to a level for the base layer.
+ *
+ * Morph target deltas are dropped entirely rather than sliced. A blendshape is
+ * invisible until something drives it, so on a face-rigged avatar its deltas are
+ * pure weight in the first frame: they were up to 72% of the base layer before
+ * this. They arrive with the first geometry patch instead, and `delivered`
+ * records that nothing has been sent for them yet.
+ */
 function sliceToLevel(plan, level) {
 	const keep = plan.levelVertexCounts[level];
+	plan.delivered = {};
 	for (const { key, accessor } of plan.entries) {
 		const meta = plan.snapshot[key];
+		if (isMorphKey(key)) {
+			plan.delivered[key] = 0;
+			continue;
+		}
 		accessor.setArray(meta.array.slice(0, keep * meta.elementSize));
+		plan.delivered[key] = keep;
+	}
+	for (const target of plan.prim.listTargets()) plan.prim.removeTarget(target);
+	// A mesh may not keep a weights array once its targets are gone: the two must
+	// agree in length. The weights ride along in the patch and are restored with
+	// the deltas they describe.
+	if (plan.mesh.listPrimitives().every((p) => p.listTargets().length === 0)) {
+		plan.mesh.setWeights([]);
 	}
 	plan.prim.getIndices().setArray(indexArrayFor(keep, plan.chain[level]));
 }

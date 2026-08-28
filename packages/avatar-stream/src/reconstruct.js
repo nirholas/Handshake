@@ -82,13 +82,17 @@ export async function reconstruct(target, options = {}) {
 			const primitive = primitives.get(entry.prim);
 			if (!primitive) continue;
 			for (const [key, meta] of Object.entries(entry.attributes)) {
+				// An attribute carries its own window, since morph deltas begin at zero
+				// in the patch that introduces them while base attributes resume.
+				const start = meta.start ?? entry.newVertexStart;
+				const count = meta.count ?? entry.newVertexCount;
 				const incoming = typedArrayFrom(A3SStream.chunk(payload, meta), meta.componentType);
 				const stride = meta.elementSize;
 				const TypedArray = COMPONENT_ARRAYS[meta.componentType];
 				const existing = primitive.attributes[key]?.array;
-				const merged = new TypedArray((entry.newVertexStart + entry.newVertexCount) * stride);
-				if (existing) merged.set(existing.subarray(0, Math.min(existing.length, entry.newVertexStart * stride)), 0);
-				merged.set(incoming.subarray(0, entry.newVertexCount * stride), entry.newVertexStart * stride);
+				const merged = new TypedArray((start + count) * stride);
+				if (existing) merged.set(existing.subarray(0, Math.min(existing.length, start * stride)), 0);
+				merged.set(incoming.subarray(0, count * stride), start * stride);
 				primitive.attributes[key] = { array: merged, elementSize: stride };
 			}
 			primitive.indices = new Uint32Array(typedArrayFrom(A3SStream.chunk(payload, entry.indices), entry.indices.componentType));
