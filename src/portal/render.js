@@ -14,6 +14,7 @@
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { getMeshoptDecoder } from '../viewer/internal.js';
 import { AnimationManager } from '../animation-manager.js';
 import { collidersFor } from './layout.js';
 import { log } from '../shared/log.js';
@@ -72,7 +73,7 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 	renderer.toneMapping = THREE.ACESFilmicToneMapping;
 	renderer.toneMappingExposure = 1.05;
 	renderer.shadowMap.enabled = true;
-	renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+	renderer.shadowMap.type = THREE.PCFShadowMap;
 
 	const scene = new THREE.Scene();
 	scene.background = new THREE.Color(world.ground.sky);
@@ -285,8 +286,14 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 
 	(async () => {
 		try {
+			// Platform avatars ship meshopt-compressed, so the decoder has to be on
+			// the loader before the first byte is parsed. Without it the load throws
+			// and every visitor walks as the stand-in.
+			const loader = new GLTFLoader();
+			const meshopt = await getMeshoptDecoder().catch(() => null);
+			if (meshopt) loader.setMeshoptDecoder(meshopt);
 			const [gltf, defs] = await Promise.all([
-				new GLTFLoader().loadAsync(AVATAR_URL),
+				loader.loadAsync(AVATAR_URL),
 				fetch(MANIFEST_URL, { cache: 'force-cache' }).then((r) => (r.ok ? r.json() : [])),
 			]);
 			avatarModel = gltf.scene;
@@ -395,22 +402,45 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 		if (nearDoor && onDoor) onDoor(nearDoor, 'activate');
 	}
 
-	const clock = new THREE.Clock();
+	// The camera sits on the orbit ring around the player: behind them by
+	// default, and wherever a drag has moved it after that.
+	function cameraTargetFor() {
+		const flat = orbit.distance * Math.cos(orbit.pitch);
+		return new THREE.Vector3(
+			player.position.x + Math.sin(orbit.yaw) * flat,
+			EYE_HEIGHT + orbit.distance * Math.sin(orbit.pitch) + 0.9,
+			player.position.z + Math.cos(orbit.yaw) * flat,
+		);
+	}
+	// Start framed rather than flying in from the origin: a first frame that
+	// already shows the plaza reads as a place, not as a loading artifact.
+	camera.position.copy(cameraTargetFor());
+	camera.lookAt(player.position.x, EYE_HEIGHT, player.position.z);
+
+	// THREE.Clock is deprecated in this three version, and a world with its own
+	// clock is one fewer deprecation warning in every embedder's console.
+	let lastFrameMs = performance.now();
+	let elapsed = 0;
 	let raf = 0;
 	let disposed = false;
 
 	function frame() {
 		if (disposed) return;
 		raf = requestAnimationFrame(frame);
-		const dt = Math.min(0.05, clock.getDelta());
+		const now = performance.now();
+		const dt = Math.min(0.05, (now - lastFrameMs) / 1000);
+		lastFrameMs = now;
+		elapsed += dt;
 		const input = inputVector();
 		const running = keys.has('ShiftLeft') || keys.has('ShiftRight');
 		const speed = running ? RUN_SPEED : WALK_SPEED;
 
 		// Move relative to where the camera looks, which is what every player
-		// expects and what makes a third-person world feel like a place.
-		const forward = new THREE.Vector3(Math.sin(orbit.yaw), 0, Math.cos(orbit.yaw));
-		const right = new THREE.Vector3(forward.z, 0, -forward.x);
+		// expects and what makes a third-person world feel like a place. `orbit.yaw`
+		// is the camera's azimuth AROUND the player, so the way the player walks is
+		// the opposite of the offset that puts the camera behind them.
+		const forward = new THREE.Vector3(-Math.sin(orbit.yaw), 0, -Math.cos(orbit.yaw));
+		const right = new THREE.Vector3(-forward.z, 0, forward.x);
 		const wish = new THREE.Vector3()
 			.addScaledVector(forward, -input.y)
 			.addScaledVector(right, input.x);
@@ -440,11 +470,7 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 		anim.update?.(dt);
 
 		// Camera: behind the player, easing, never inside a wall it can avoid.
-		const camTarget = new THREE.Vector3(
-			player.position.x - Math.sin(orbit.yaw) * orbit.distance * Math.cos(orbit.pitch),
-			EYE_HEIGHT + orbit.distance * Math.sin(orbit.pitch) + 0.9,
-			player.position.z - Math.cos(orbit.yaw) * orbit.distance * Math.cos(orbit.pitch),
-		);
+		const camTarget = cameraTargetFor();
 		camera.position.lerp(camTarget, 1 - Math.exp(-9 * dt));
 		camera.lookAt(player.position.x, EYE_HEIGHT, player.position.z);
 
@@ -464,7 +490,7 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 			onDoor?.(best, 'near');
 		}
 
-		titleLabel.position.y = world.plaza.monument.h + 1.4 + Math.sin(clock.elapsedTime * 1.4) * 0.08;
+		titleLabel.position.y = world.plaza.monument.h + 1.4 + Math.sin(elapsed * 1.4) * 0.08;
 		renderer.render(scene, camera);
 	}
 	frame();

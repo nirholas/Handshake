@@ -67,6 +67,7 @@
 	object-fit: cover;
 	flex: none;
 }
+.pt-site__icon.is-blank { visibility: hidden; }
 .pt-site__text { min-width: 0; }
 .pt-site__title {
 	font-size: var(--text-ui);
