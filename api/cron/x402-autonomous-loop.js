@@ -52,7 +52,7 @@ import {
 	DAILY_CAP_ATOMIC,
 } from '../_lib/x402/autonomous-registry.js';
 import { assertRingSpendInvariants } from '../_lib/x402/ring-allowlist.js';
-import { SPONSOR_SOL_FLOOR_LAMPORTS } from '../_lib/x402/self-facilitator.js';
+import { SPONSOR_SOL_FLOOR_LAMPORTS, sponsorKnownBelowFloor } from '../_lib/x402/self-facilitator.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { requireCron } from '../_lib/cron-auth.js';
 
@@ -377,7 +377,13 @@ export default wrapCron(async (req, res) => {
 	// sponsor balance once per tick and treat below-floor as a hard pause on paid
 	// calls: free endpoints and run()-style monitors keep running, and ONE deduped
 	// CRITICAL alert names the wallet instead of a silent failure wave.
-	// `null` = balance read failed; unknown must not read as "paused".
+	// `null` = balance read failed. That used to read as "not paused", which is
+	// how this gate failed exactly when it was needed most: on 2026-08-28 all four
+	// paid Solana RPC lanes were over quota at the same moment the sponsor sat at
+	// 0.000899 SOL, so getBalance threw, sponsorSolLamports stayed null, and the
+	// loop spent three hours signing payments that could not settle. 95 attempts,
+	// 0 settled. An unreadable balance is not evidence of solvency, so the second
+	// opinion below decides it instead of a fail-open default.
 	const sponsorPubkey = env.X402_FEE_PAYER_SOLANA || null;
 	let sponsorSolLamports = null;
 	if (sponsorPubkey) {
@@ -387,13 +393,22 @@ export default wrapCron(async (req, res) => {
 			log.warn('sponsor_sol_read_failed', { message: err?.message });
 		}
 	}
-	const sponsorFloorPaused =
-		sponsorSolLamports !== null && sponsorSolLamports < SPONSOR_SOL_FLOOR_LAMPORTS;
+	// The floor guard is written by settle failures as well as by balance reads
+	// (noteSponsorRentFailure in self-facilitator.js), so it still answers when
+	// the RPC does not: a rent-exemption rejection IS the chain stating the
+	// sponsor cannot pay, and it costs no RPC call to observe.
+	const sponsorFloorPaused = sponsorSolLamports === null
+		? sponsorKnownBelowFloor()
+		: sponsorSolLamports < SPONSOR_SOL_FLOOR_LAMPORTS;
 	if (sponsorFloorPaused) {
 		log.warn('autonomous_sponsor_sol_floor', { sponsor: sponsorPubkey, lamports: sponsorSolLamports, floor: SPONSOR_SOL_FLOOR_LAMPORTS });
 		await sendOpsAlert(
 			'⛔ x402 autonomous loop paused: sponsor wallet below SOL settle floor',
-			`Sponsor ${sponsorPubkey} holds ${(sponsorSolLamports / 1e9).toFixed(6)} SOL, below the ` +
+			`Sponsor ${sponsorPubkey} ${
+				sponsorSolLamports === null
+					? 'could not be read (RPC unavailable) and the settle path has already reported it below floor'
+					: `holds ${(sponsorSolLamports / 1e9).toFixed(6)} SOL`
+			}, below the ` +
 				`${(SPONSOR_SOL_FLOOR_LAMPORTS / 1e9).toFixed(3)} SOL settle floor. The self-facilitator ` +
 				'fail-closes every settle at this level, so all paid calls are skipped this tick (free and ' +
 				'monitoring entries keep running). Fund the sponsor with SOL (or let treasury-topup refuel it) to resume.',
