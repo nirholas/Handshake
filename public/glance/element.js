@@ -1,5 +1,5 @@
 /**
- * <agent-glance> — a live three.ws agent card for any page.
+ * <agent-glance>: a live three.ws agent card for any page.
  *
  *   <script type="module" src="https://three.ws/glance/element.js"></script>
  *   <agent-glance agent="0f3a1c22-9b7e-4d51-8a10-2c6f5d90ab34"></agent-glance>
@@ -88,7 +88,8 @@ a.card:focus-visible{outline:2px solid var(--from);outline-offset:3px}
 :host([size="small"]) .stats,:host([size="small"]) .sub{display:none}
 :host([size="small"]) .metric b{font-size:32px}
 :host([size="medium"]) .stats{display:none}
-:host([size="medium"]) .rail{position:absolute;right:0;top:52px;text-align:right;font-size:12px;color:var(--muted);line-height:1.9}
+:host([size="medium"]) .who{padding-right:104px}
+:host([size="medium"]) .rail{position:absolute;right:0;top:58px;text-align:right;font-size:12px;color:var(--muted);line-height:1.9;pointer-events:none}
 :host([size="medium"]) .rail b{color:var(--text)}
 :host(:not([size="medium"])) .rail{display:none}
 .skel{animation:pulse 1.4s ease-in-out infinite;background:var(--panel);border-radius:8px;color:transparent}

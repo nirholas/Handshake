@@ -1,5 +1,5 @@
 /**
- * /glance — the live playground.
+ * /glance: the live playground.
  *
  * Everything on this page runs against the real endpoints. The agent it opens
  * on is, in order of preference:

@@ -1,4 +1,4 @@
-/* /glance — the Glance landing and live playground. */
+/* /glance: the Glance landing and live playground. */
 
 .glance-main {
 	max-width: 1100px;
@@ -49,11 +49,15 @@
 		opacity 0.16s ease;
 }
 .glance-main .btn.primary {
-	background: currentColor;
+	background: #f6f7fb;
+	color: #0b0b16;
 	border-color: transparent;
 }
-.glance-main .btn.primary > * {
-	color: canvas;
+@media (prefers-color-scheme: light) {
+	.glance-main .btn.primary {
+		background: #0b0b16;
+		color: #f6f7fb;
+	}
 }
 .glance-main .btn:hover {
 	transform: translateY(-1px);
