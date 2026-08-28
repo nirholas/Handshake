@@ -3,6 +3,12 @@
 // Solana wallet uses our own SIWS backend (/api/auth/siws/*) directly.
 
 import Privy, { LocalStorage } from '@privy-io/js-sdk-core';
+import {
+	makeCaptchaResolver,
+	captchaRequirement,
+	signInMessage,
+	CAPTCHA_UNKNOWN_MESSAGE,
+} from './auth/privy-captcha.js';
 // Seeker / Saga: installs the Seed Vault wallet at window.threeWsWallet inside
 // the three.ws app (a no-op everywhere else). getSolanaProvider() below already
 // looked for it, but nothing on this page loaded it, so the Solana button
@@ -68,74 +74,8 @@ if (appId === CONFIG_UNAVAILABLE) {
 // when the app has CAPTCHA enabled and no token is sent, so this must resolve
 // before sendCode and before the EVM wallet flow.
 
-// Three outcomes, and collapsing the last two is what produced the opaque
-// error. `null` means the app genuinely has no CAPTCHA, so proceed without a
-// token. CAPTCHA_UNAVAILABLE means we could not ask: proceeding blind is
-// exactly what Privy answers with 401 invalid_credentials, a message that tells
-// the visitor their credentials were wrong when nothing of the sort happened.
-const CAPTCHA_UNAVAILABLE = Symbol('captcha_unavailable');
-
-async function fetchCaptchaConfig(id) {
-	try {
-		// This gates the login form, so an unbounded call stalls sign-in on a slow
-		// network instead of degrading.
-		const r = await fetch(`https://auth.privy.io/api/v1/apps/${id}`, {
-			headers: { 'privy-app-id': id },
-			signal: AbortSignal.timeout(6000),
-		});
-		if (!r.ok) return CAPTCHA_UNAVAILABLE;
-		const cfg = await r.json();
-		if (!cfg?.captcha_enabled || !cfg.captcha_site_key) return null;
-		if (cfg.enabled_captcha_provider && cfg.enabled_captcha_provider !== 'turnstile') return null;
-		return {
-			// Privy prefixes Turnstile site keys with "t:".
-			siteKey: cfg.captcha_site_key.replace(/^t:/, ''),
-			// Apps with a custom auth domain serve every auth endpoint from it.
-			apiUrl: cfg.custom_api_url || 'https://auth.privy.io',
-		};
-	} catch {
-		return CAPTCHA_UNAVAILABLE;
-	}
-}
-
-/**
- * Resolve the CAPTCHA config, retrying once at the moment of use.
- *
- * The page-load probe can lose a race with a flaky network, and without a retry
- * that one failure would break sign-in for the whole page view. A button press
- * is a fresh chance, so take it before giving up.
- *
- * @param {string} id  Privy app id.
- * @returns {() => Promise<object|null|symbol>}
- */
-function makeCaptchaResolver(id) {
-	let pending = fetchCaptchaConfig(id);
-	return async () => {
-		const first = await pending;
-		if (first !== CAPTCHA_UNAVAILABLE) return first;
-		pending = fetchCaptchaConfig(id);
-		return pending;
-	};
-}
-
-/**
- * The CAPTCHA token for a sign-in attempt, or undefined when the app has none.
- * Throws a sentence a person can act on when the requirement is unknowable,
- * rather than letting Privy reply "invalid_credentials".
- *
- * @param {object|null|symbol} config
- * @param {(msg: string) => void} [setStatus]
- */
-async function captchaTokenFor(config, setStatus) {
-	if (config === CAPTCHA_UNAVAILABLE) {
-		throw new Error(
-			'We could not reach the sign-in service to check whether this step needs a CAPTCHA. Check your connection and try again.',
-		);
-	}
-	if (!config) return undefined;
-	setStatus?.();
-	return requestCaptchaToken(config.siteKey);
-}
+// CAPTCHA discovery lives in ./auth/privy-captcha.js (pure, tested); this file
+// owns the Turnstile widget it drives.
 
 let turnstilePromise = null;
 
@@ -260,28 +200,6 @@ async function verifyWithBackend(identity_token) {
 // timeout — a dead or reconnecting extension background port can leave the
 // promise permanently unsettled, stranding the button in "Connecting…" with
 // the catch block that resets it never firing.
-/**
- * Turn an SDK or network failure into something a person can act on.
- *
- * Privy answers a missing or rejected CAPTCHA token with `invalid_credentials`,
- * which reads as "your email or wallet is wrong" and sent people to reset a
- * password that was never the problem. An abort reads as nothing at all.
- *
- * @param {unknown} err
- * @param {string} fallback
- * @returns {string}
- */
-function signInMessage(err, fallback) {
-	const raw = err?.message || '';
-	if (err?.name === 'TimeoutError' || err?.name === 'AbortError') {
-		return 'The sign-in service did not respond in time. Check your connection and try again.';
-	}
-	if (/invalid_credentials/i.test(raw)) {
-		return 'The sign-in service rejected this attempt. This usually means its human-verification check did not go through, so try again.';
-	}
-	return raw || fallback;
-}
-
 function withTimeout(promise, ms, message) {
 	let timer;
 	const timeout = new Promise((_, reject) => {
@@ -381,9 +299,15 @@ function mountPrivyUI(privy, resolveCaptchaConfig) {
 		clearErr();
 		try {
 			const captcha = await resolveCaptchaConfig();
-			const captchaToken = await captchaTokenFor(captcha, () => {
+			const need = captchaRequirement(captcha);
+			// Sending without a token Privy requires is what produces the opaque
+			// 401 invalid_credentials, so refuse to guess and say why.
+			if (need === 'unknown') throw new Error(CAPTCHA_UNKNOWN_MESSAGE);
+			let captchaToken;
+			if (need === 'required') {
 				sendBtn.textContent = 'Verifying…';
-			});
+				captchaToken = await requestCaptchaToken(captcha.siteKey);
+			}
 			sendBtn.textContent = 'Sending…';
 			await privy.auth.email.sendCode(email, captchaToken);
 			pendingEmail = email;
@@ -459,10 +383,11 @@ function mountPrivyUI(privy, resolveCaptchaConfig) {
 
 			let message;
 			const captcha = await resolveCaptchaConfig();
-			const captchaToken = await captchaTokenFor(captcha, () => {
+			const need = captchaRequirement(captcha);
+			if (need === 'unknown') throw new Error(CAPTCHA_UNKNOWN_MESSAGE);
+			if (need === 'required') {
 				setWalletStatus('Checking you are human…');
-			});
-			if (captchaToken) {
+				const captchaToken = await requestCaptchaToken(captcha.siteKey);
 				setWalletStatus('Generating sign-in message…');
 				message = await withTimeout(
 					siweInitWithCaptcha(captcha.apiUrl, address, chainId, captchaToken),

@@ -252,7 +252,7 @@ function placeArm(pose, side, spec) {
 }
 
 /** How far short of a target a wrist may land before it counts as out of reach. */
-const REACH_SLACK = 0.02;
+const REACH_SLACK = 0.025;
 
 function poleDirection(pose, side, name) {
 	const spec = ELBOW_POLES[name];

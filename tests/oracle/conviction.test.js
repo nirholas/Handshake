@@ -69,21 +69,45 @@ const deadLaunch = () => ({
 
 describe('model', () => {
 	it('ships provenance: version, fit date, training size, base rate', () => {
-		expect(MODEL.version).toBeGreaterThanOrEqual(2);
+		expect(MODEL.version).toBeGreaterThanOrEqual(3);
 		expect(MODEL.training_rows).toBeGreaterThan(50_000);
-		expect(MODEL.base_good_rate).toBeGreaterThan(0);
-		expect(MODEL.base_good_rate).toBeLessThan(0.5);
-		expect(Number.isFinite(MODEL.intercept)).toBe(true);
+		expect(MODEL.fitted_at).toBeTruthy();
+		const head = MODEL.heads[MODEL.score_head];
+		expect(head.base_rate).toBeGreaterThan(0);
+		expect(head.base_rate).toBeLessThan(0.5);
+		expect(Number.isFinite(head.intercept)).toBe(true);
 	});
 
-	it('every bucket weight carries its sample size and observed good-rate', () => {
+	it('scores the survivable-win head, not the bare spike', () => {
+		// The whole point of v3. Ranking on `moon` alone counts a coin that ran 3x
+		// and went to zero as a hit, which is how a high score ends up sitting on a
+		// chart that is a cliff.
+		expect(MODEL.score_head).toBe('win');
+		for (const head of ['win', 'rug', 'moon']) {
+			expect(MODEL.heads[head], `missing ${head} head`).toBeTruthy();
+		}
+	});
+
+	it('every bucket weight carries its sample size and observed rates, per head', () => {
 		for (const f of MODEL.features) {
 			for (const [bucket, stats] of Object.entries(f.buckets)) {
-				expect(Number.isFinite(stats.w), `${f.key} ${bucket} w`).toBe(true);
 				expect(stats.n, `${f.key} ${bucket} n`).toBeGreaterThan(0);
-				expect(stats.good_rate).toBeGreaterThanOrEqual(0);
-				expect(stats.good_rate).toBeLessThanOrEqual(1);
+				for (const head of Object.keys(MODEL.heads)) {
+					expect(Number.isFinite(stats.w?.[head]), `${f.key} ${bucket} w.${head}`).toBe(true);
+					expect(stats.rate?.[head], `${f.key} ${bucket} rate.${head}`).toBeGreaterThanOrEqual(0);
+					expect(stats.rate[head]).toBeLessThanOrEqual(1);
+				}
 			}
+		}
+	});
+
+	it('names the features it dropped rather than silently omitting them', () => {
+		// A signal that stopped arriving is an outage upstream, and the model is
+		// where it becomes visible. Absence with no explanation hides that.
+		for (const d of MODEL.dropped_features) {
+			expect(typeof d.key).toBe('string');
+			expect(d.share).toBeGreaterThan(0);
+			expect(MODEL.features.some((f) => f.key === d.key)).toBe(false);
 		}
 	});
 
@@ -154,15 +178,21 @@ describe('evaluateModel', () => {
 });
 
 describe('smartMoneyOverlay', () => {
-	it('rewards proven wallets and proven-money share', () => {
+	it('stands down on smart money once the model fits it, instead of double-counting', () => {
+		// v2 added up to +0.75 log-odds by hand because proven wallets were too
+		// rare to fit. They are not any more: the model carries a fitted
+		// smart_money_count feature, so the hand-tuned bump has to disappear or the
+		// same wallets get counted twice.
 		const out = smartMoneyOverlay({
 			smartWalletCount: 3,
 			provenBuyLamports: 5e9,
 			totalBuyLamports: 1e10,
 			notable: [{ wallet: 'a', label: 'smart_money', score: 88 }],
 		});
-		expect(out.z).toBeGreaterThan(0);
-		expect(out.reasons.join(' ')).toMatch(/smart-money/);
+		expect(MODEL.features.some((f) => f.key === 'smart_money_count')).toBe(true);
+		expect(out.z).toBe(0);
+		expect(out.suppressed).toContain('smart_money_count');
+		expect(out.provenCount).toBe(3);
 	});
 
 	it('drags on flagged (rugger/dumper) wallets', () => {
@@ -184,8 +214,11 @@ describe('smartMoneyOverlay', () => {
 
 	it('caps a serial-rugger creator at 45', () => {
 		const out = smartMoneyOverlay({}, { launches: 5, launchWins: 0 });
+		// The CEILING is a product guarantee and survives; the log-odds nudge does
+		// not, because creator_record is a fitted feature.
 		expect(out.cap).toBe(45);
-		expect(out.z).toBeLessThan(0);
+		expect(out.suppressed).toContain('creator_record');
+		expect(out.reasons.join(' ')).toMatch(/rug pattern/);
 	});
 
 	it('a flagged creator label caps too', () => {
@@ -193,18 +226,45 @@ describe('smartMoneyOverlay', () => {
 		expect(out.cap).toBe(45);
 	});
 
-	it('a dumping creator drags without capping', () => {
+	it('a dumping creator does not cap, and defers to the fitted creator feature', () => {
 		const out = smartMoneyOverlay({}, { launches: 3, launchWins: 1, dumpRate: 0.7 });
-		expect(out.z).toBeLessThan(0);
 		expect(out.cap).toBe(100);
+		expect(out.z).toBe(0);
 	});
 });
 
 describe('convict (fusion)', () => {
-	it('a launch in the best-evidence buckets reads strong or prime', () => {
+	it('a launch in the best-evidence buckets outranks a dead one by a wide margin', () => {
+		// v3 is deliberately stricter than v2: it ranks P(runs AND holds), whose
+		// base rate is 2.94%, so a fixture that used to clear 72 no longer has to.
+		// What must hold is separation, which is what a ranking is for.
+		const strong = convict(strongLaunch());
+		const dead = convict(deadLaunch());
+		expect(strong.score).toBeGreaterThan(dead.score + 20);
+		expect(strong.probabilities.win).toBeGreaterThan(dead.probabilities.win * 5);
+	});
+
+	it('publishes upside, rug risk and give-back risk beside the score', () => {
 		const v = convict(strongLaunch());
-		expect(['strong', 'prime']).toContain(v.tier);
-		expect(v.score).toBeGreaterThanOrEqual(72);
+		for (const key of ['rugRisk', 'upside', 'giveBackRisk', 'survival']) {
+			expect(v[key], key).toBeGreaterThanOrEqual(0);
+			expect(v[key], key).toBeLessThanOrEqual(100);
+		}
+		expect(v.survival).toBe(100 - v.rugRisk);
+		// give-back is 1 - win/moon, so it is only 0 when every run is kept.
+		expect(v.giveBackRisk).toBe(
+			Math.max(0, Math.min(100, Math.round((1 - Math.min(1, v.probabilities.win / v.probabilities.moon)) * 100))),
+		);
+	});
+
+	it('separates a coin that runs from a coin that runs and keeps it', () => {
+		// The failure v3 exists to prevent: high upside, nothing left afterwards.
+		// Whatever the fixtures score, upside can never be below the survivable
+		// win, because keeping a run requires having one.
+		for (const fixture of [strongLaunch(), deadLaunch()]) {
+			const v = convict(fixture);
+			expect(v.probabilities.moon).toBeGreaterThanOrEqual(v.probabilities.win - 1e-9);
+		}
 	});
 
 	it('a dead launch reads avoid/watch', () => {
