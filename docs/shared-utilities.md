@@ -321,20 +321,32 @@ npm run check:fetch-timeouts          # wired into `npm run gate`
 node scripts/check-fetch-timeouts.mjs --json
 ```
 
-Fails the gate on any `fetch()` to a literal external host that carries no
-deadline. A fetch with no signal has no deadline at all: undici's defaults run
-to minutes, so one upstream that accepts a connection and then stalls holds the
-request until the platform kills the invocation, and takes the request budget of
-every fallback behind it with it. In production that does not read as "an
-upstream was slow", it reads as a dead endpoint, a dead cron, or a page that
-spins forever.
+Fails the gate on a `fetch()` that carries no deadline. A fetch with no signal
+has no deadline at all: undici's defaults run to minutes, so one upstream that
+accepts a connection and then stalls holds the request until the platform kills
+the invocation, and takes the request budget of every fallback behind it with
+it. In production that does not read as "an upstream was slow", it reads as a
+dead endpoint, a dead cron, or a page that spins forever.
 
 A call counts as bounded when it passes a `signal` or goes through a wrapper
-that supplies one (`fetchUpstream`, `fetchFirst`, `pumpFetchJson`, ...). Only
-the deadline is enforced, deliberately: retries, provider ladders and last-good
-tiers are the right thing to add on top, but which one fits is a judgement call
-per call site, while a deadline never is. Same-origin and relative calls are out
-of scope.
+that supplies one (`fetchUpstream`, `fetchFirst`, `pumpFetchJson`, ...). An init
+object assembled earlier in the function counts too: the checker resolves
+`fetch(url, init)` back to where `init` was built. Only the deadline is
+enforced, deliberately: retries, provider ladders and last-good tiers are the
+right thing to add on top, but which one fits is a judgement call per call site,
+while a deadline never is.
+
+**Scope differs by directory.** In browser code (`src`, `public`, `workers`) the
+rule covers literal external hosts only, since a page's fetch of our own API is
+bounded by the page lifecycle and by `src/api.js`. Under `api/` it covers EVERY
+call, whatever the URL is, because the two shapes that hang in practice are
+invisible to a literal-host scan: a handler calling its own `/api/forge` (a real
+socket between two serverless instances, not a free local call) and a download
+of a provider result URL that only exists at runtime. Three exemptions there,
+each for a call that cannot hang or is already bounded elsewhere: a `data:` URL
+(no socket), a client snippet quoted as a string (it runs in a browser), and a
+wrapper that spreads its caller's `init` (the deadline is the caller's, and a
+second one would silently shorten it).
 
 The checker reads each call's real extent by balancing parentheses rather than
 scanning a fixed window, because `signal` is conventionally the last key of an

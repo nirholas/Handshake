@@ -18,9 +18,16 @@
  * they are judgement calls per call site; a deadline is not, so only the
  * deadline is enforced here.
  *
- * Same-origin calls (three.ws, localhost, relative paths) are out of scope: a
- * browser call to our own API is bounded by the page's own lifecycle and by
- * src/api.js, and a server call to itself is a different kind of bug.
+ * In browser code (src, public, workers) that rule is limited to literal
+ * external hosts: a page's own fetch of our API is bounded by the page
+ * lifecycle and by src/api.js.
+ *
+ * Under api/ the rule covers EVERY call, whatever the URL is. Two of the three
+ * hangs this repo has actually paid for were invisible to a literal-host scan:
+ * a handler calling its own /api/forge (a real socket between two serverless
+ * instances, not a free local call) and a download of a provider result URL
+ * that only exists at runtime. A checker that only sees hardcoded hosts stops
+ * exactly where the risk starts.
  *
  *   node scripts/check-fetch-timeouts.mjs           # report and exit non-zero on a violation
  *   node scripts/check-fetch-timeouts.mjs --json    # machine-readable
@@ -46,6 +53,16 @@ const SIGNAL_RE = /signal\s*[:,)]|AbortSignal\.timeout|controller\.signal|\.sign
 const SKIP_PATH = /\/vendor\/|node_modules|public\/chat\/assets\/|\.min\.js$|\/dist\//;
 
 const OWN_HOST = /three\.ws|localhost|127\.0\.0\.1/;
+
+// A `data:` URL is decoded in memory: there is no socket, so there is nothing to
+// time out.
+const DATA_URL_RE = /fetch\(\s*[`'"]data:/;
+
+// A wrapper whose init object is spread in from its own caller inherits that
+// caller's deadline, and imposing a second one here would silently shorten it.
+// This is the shape of the pass-through wrappers (ssrf-guard, the Vertex fetch
+// override the AI SDK calls with its own abortSignal, the Solana RPC sender).
+const DELEGATED_INIT_RE = /\{\s*\.\.\.\s*(init|opts|options|requestInit)\b/;
 
 function listFiles() {
 	const cmd = `grep -rl 'fetch(' ${ROOTS.join(' ')} --include=*.js --include=*.mjs 2>/dev/null || true`;
@@ -90,7 +107,33 @@ function callExtent(lines, start) {
 	return `${head}\n${out.join('\n')}`;
 }
 
+// `fetch(url, init)` where the options were assembled further up the function is
+// a normal shape, and reading only the call itself reports it as unbounded. Find
+// where that identifier was built and judge THAT text: an init object carrying a
+// signal bounds the call wherever it was written.
+function initObjectBounded(lines, name) {
+	if (!/^[A-Za-z_$][\w$]*$/.test(name)) return false;
+	const decl = new RegExp(`(?:const|let|var)\\s+${name}\\s*=|\\b${name}\\.signal\\s*=|\\b${name}\\s*=\\s*\\{`);
+	for (let i = 0; i < lines.length; i++) {
+		if (!decl.test(lines[i])) continue;
+		// The declaration plus the statement that follows it: an options object is
+		// often filled in over the next few lines (`init.body = ...`).
+		const stmt = lines.slice(i, Math.min(lines.length, i + 20)).join('\n');
+		if (SIGNAL_RE.test(stmt)) return true;
+	}
+	return false;
+}
+
+// Lines that are quoted source code rather than executable code: some handlers
+// build a client-side snippet as a string array to hand to an agent, and the
+// fetch inside it runs in the reader's browser, not here.
+function isQuotedSource(line) {
+	return /^\s*[`'"]/.test(line);
+}
+
 export function scanFile(file, src) {
+	// Server handlers and helpers: every call is in scope, same-origin included.
+	const serverSide = /^api\//.test(file);
 	const lines = src.split('\n');
 	const consts = externalConsts(lines);
 	const out = [];
@@ -105,7 +148,8 @@ export function scanFile(file, src) {
 		const urlLiteral = call.match(/[`'"]https?:\/\/[^`'"]*/)?.[0] || '';
 		const inlineExternal = !!urlLiteral && !OWN_HOST.test(urlLiteral);
 		const constExternal = [...consts].some((c) => new RegExp(`\\b${c}\\b`).test(call));
-		if (!inlineExternal && !constExternal) continue;
+		if (!inlineExternal && !constExternal && !serverSide) continue;
+		if (serverSide && (DATA_URL_RE.test(call) || isQuotedSource(line))) continue;
 
 		// Read the ACTUAL extent of the call by balancing parentheses from `fetch(`
 		// rather than guessing a window: an options object can run for thirty
@@ -113,6 +157,9 @@ export function scanFile(file, src) {
 		// reports a bounded call as unbounded exactly when the options are long.
 		const win = callExtent(lines, i);
 		if (BOUNDED_RE.test(win) || SIGNAL_RE.test(win)) continue;
+		if (serverSide && DELEGATED_INIT_RE.test(win)) continue;
+		const initIdent = /fetch\([^,()]+,\s*([A-Za-z_$][\w$]*)\s*\)/.exec(win)?.[1];
+		if (initIdent && initObjectBounded(lines, initIdent)) continue;
 		out.push({ file, line: i + 1, code: line.trim().slice(0, 100) });
 	}
 	return out;
@@ -133,11 +180,11 @@ function main() {
 	}
 
 	if (!violations.length) {
-		console.log('check:fetch-timeouts: every external fetch is bounded by a deadline');
+		console.log('check:fetch-timeouts: every external fetch, and every fetch under api/, is bounded by a deadline');
 		process.exit(0);
 	}
 
-	console.error(`check:fetch-timeouts: ${violations.length} external fetch(es) with no deadline\n`);
+	console.error(`check:fetch-timeouts: ${violations.length} fetch(es) with no deadline\n`);
 	for (const v of violations) {
 		console.error(`  ${v.file}:${v.line}`);
 		console.error(`    ${v.code}`);

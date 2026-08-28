@@ -62,3 +62,55 @@ describe('check-fetch-timeouts', () => {
 		expect(out[0].code).toContain('api.example.com');
 	});
 });
+
+// Under api/ the rule is wider: a handler calling its own origin opens a real
+// socket between two instances, and the URLs that hang most often (a provider's
+// delivery URL, a worker artifact) only exist at runtime, so neither is visible
+// to a scan for literal hosts.
+describe('check-fetch-timeouts under api/', () => {
+	const scanApi = (src) => scanFile('api/thing.js', src);
+
+	it('flags a same-origin self-call with no deadline', () => {
+		const out = scanApi(`const r = await fetch(\`\${origin}/api/forge\`, { method: 'POST' });`);
+		expect(out).toHaveLength(1);
+	});
+
+	it('flags a fetch of a URL only known at runtime', () => {
+		expect(scanApi(`const resp = await fetch(sourceUrl);`)).toHaveLength(1);
+	});
+
+	it('accepts the same call once it is bounded', () => {
+		expect(scanApi(`const resp = await fetch(sourceUrl, { signal: AbortSignal.timeout(9000) });`)).toEqual([]);
+		expect(scanApi(`const resp = await fetchUpstream(sourceUrl, {}, { timeoutMs: 9000 });`)).toEqual([]);
+	});
+
+	it('accepts an init object assembled further up the function', () => {
+		const src = [
+			`const init = { method, headers, signal: AbortSignal.timeout(timeoutMs) };`,
+			`if (body != null) init.body = JSON.stringify(body);`,
+			`const a = 1;`,
+			`const b = 2;`,
+			`const c = 3;`,
+			`const d = 4;`,
+			`const e = 5;`,
+			`const upstream = await fetch(url, init);`,
+		].join('\n');
+		expect(scanApi(src)).toEqual([]);
+	});
+
+	it('accepts a wrapper that passes its caller\'s init straight through', () => {
+		// The deadline belongs to the caller; imposing a second one here would
+		// silently shorten it.
+		expect(scanApi(`const res = await fetch(url.toString(), { ...init, redirect: 'manual' });`)).toEqual([]);
+	});
+
+	it('ignores a data: URL and a client snippet quoted as a string', () => {
+		expect(scanApi(`const buf = await (await fetch('data:application/octet-stream;base64,' + b64)).arrayBuffer();`)).toEqual([]);
+		expect(scanApi(`\t\t"const _r = await fetch('/api/mcp', {",`)).toEqual([]);
+	});
+
+	it('leaves browser code judged on external hosts only', () => {
+		expect(scanFile('src/page.js', `await fetch('/api/thing');`)).toEqual([]);
+		expect(scanFile('src/page.js', `await fetch(someUrl);`)).toEqual([]);
+	});
+});
