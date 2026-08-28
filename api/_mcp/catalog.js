@@ -17,6 +17,7 @@ import { toolDefs as tokenizeDefs } from './tools/tokenize.js';
 import { toolDefs as cryptoDataDefs } from './tools/crypto-data.js';
 import { toolDefs as garmentDefs } from './tools/garments.js';
 import { toolDefs as signDefs } from './tools/sign.js';
+import { toolDefs as feedbackDefs } from './tools/feedback.js';
 
 const baseDefs = [
 	...avatarDefs,
@@ -33,6 +34,7 @@ const baseDefs = [
 	...tokenizeDefs,
 	...cryptoDataDefs,
 	...garmentDefs,
+	...feedbackDefs,
 ];
 
 // Free, public entry point — listed first so discovery clients see it up top.

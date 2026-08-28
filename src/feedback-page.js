@@ -67,6 +67,9 @@ function clusterRow(c) {
 		c.route ? `<code>${escape(c.route)}</code>` : '',
 		c.build_sha ? `<code>${escape(c.build_sha)}</code>` : '',
 		`<span>${ago(c.last_seen)}</span>`,
+		// A cluster with a recorded session can be reproduced in one command, so
+		// it is worth spotting from the collapsed row.
+		c.traced ? `<span class="replay">replayable</span>` : '',
 	]
 		.filter(Boolean)
 		.join('');
@@ -106,6 +109,94 @@ function reportBlock(r) {
 	`;
 }
 
+function confidenceBand(score) {
+	if (score >= 80) return 'high';
+	if (score >= 40) return 'mid';
+	return 'low';
+}
+
+// The reproduction panel. This is the part of the queue a maintainer actually
+// acts on: the session compiles into a Playwright spec that is red until the
+// bug is fixed, so "reproduce it" stops being the expensive first hour of the
+// work and "is it fixed" stops being a judgement call.
+function reproBlock(report) {
+	const score = report.replay_confidence ?? 0;
+	const steps = report.trace_steps ?? 0;
+	return `
+		<div class="repro-card" data-report="${escape(report.id)}">
+			<div class="repro-head">
+				<span class="repro-badge" data-band="${confidenceBand(score)}">${score}</span>
+				<div>
+					<strong>Recorded session</strong>
+					<span class="meta">${steps} step${steps === 1 ? '' : 's'} captured &middot; replay confidence ${score}/100</span>
+				</div>
+				<div class="repro-actions">
+					<button type="button" class="repro-view">Show test</button>
+					<button type="button" class="repro-copy">Copy test</button>
+					<a class="repro-download" href="/api/feedback/repro?id=${encodeURIComponent(report.id)}" download>Download</a>
+				</div>
+			</div>
+			<ol class="repro-steps"></ol>
+			<pre class="repro-source" hidden><code></code></pre>
+		</div>
+	`;
+}
+
+async function wireRepro(holder, reportId) {
+	const card = holder.querySelector('.repro-card');
+	if (!card) return;
+	const stepsEl = card.querySelector('.repro-steps');
+	const sourceEl = card.querySelector('.repro-source');
+	const codeEl = sourceEl.querySelector('code');
+	const viewBtn = card.querySelector('.repro-view');
+	const copyBtn = card.querySelector('.repro-copy');
+
+	let compiled = null;
+	async function load() {
+		if (compiled) return compiled;
+		const res = await fetch(`/api/feedback/repro?id=${encodeURIComponent(reportId)}&format=json`, {
+			credentials: 'same-origin',
+		});
+		const data = await res.json();
+		if (!res.ok) throw new Error(data?.message || 'Could not compile a reproduction.');
+		compiled = data;
+		return compiled;
+	}
+
+	try {
+		const data = await load();
+		stepsEl.innerHTML = data.steps.map((line) => `<li>${escape(line)}</li>`).join('');
+		codeEl.textContent = data.source;
+	} catch (err) {
+		stepsEl.innerHTML = `<li class="repro-error">${escape(err.message)}</li>`;
+		viewBtn.disabled = true;
+		copyBtn.disabled = true;
+	}
+
+	viewBtn.addEventListener('click', () => {
+		const open = !sourceEl.hidden;
+		sourceEl.hidden = open;
+		viewBtn.textContent = open ? 'Show test' : 'Hide test';
+	});
+
+	copyBtn.addEventListener('click', async () => {
+		try {
+			const data = await load();
+			await navigator.clipboard.writeText(data.source);
+			copyBtn.textContent = 'Copied';
+		} catch {
+			// Clipboard access can be denied outright. Reveal the source instead so
+			// the maintainer can still select it by hand.
+			sourceEl.hidden = false;
+			viewBtn.textContent = 'Hide test';
+			copyBtn.textContent = 'Select it above';
+		}
+		setTimeout(() => {
+			copyBtn.textContent = 'Copy test';
+		}, 2200);
+	});
+}
+
 async function loadDetail(details) {
 	const clusterKey = details.dataset.cluster;
 	const holder = details.querySelector('.detail');
@@ -116,8 +207,14 @@ async function loadDetail(details) {
 		const data = await res.json();
 		if (!res.ok) throw new Error(data?.message || 'Could not load the reports.');
 		const repro = data.reports.find((r) => r.repro)?.repro;
+		// The most replayable report in the cluster is the one worth compiling:
+		// a spec is only as good as the selectors in the session it came from.
+		const replayable = data.reports
+			.filter((r) => r.trace)
+			.sort((a, b) => (b.replay_confidence ?? 0) - (a.replay_confidence ?? 0))[0];
 		holder.innerHTML = `
 			${repro ? `<p class="repro"><strong>Repro guess:</strong> ${escape(repro)}</p>` : ''}
+			${replayable ? reproBlock(replayable) : ''}
 			${data.reports.map(reportBlock).join('')}
 			<div class="actions">
 				<button type="button" data-status="accepted">Accept as real</button>
@@ -128,6 +225,7 @@ async function loadDetail(details) {
 		for (const btn of holder.querySelectorAll('.actions button')) {
 			btn.addEventListener('click', () => updateStatus(clusterKey, btn.dataset.status, holder));
 		}
+		if (replayable) wireRepro(holder, replayable.id);
 	} catch (err) {
 		details.dataset.loaded = '';
 		holder.innerHTML = `<p class="repro">${escape(err.message)} <button type="button" class="retry">Retry</button></p>`;

@@ -35,8 +35,66 @@ function clampList(value, { max = 5, length = 400 } = {}) {
 		.filter(Boolean);
 }
 
+// A trace is machine-written, so it is validated by SHAPE rather than trusted
+// by origin: anyone can POST to the report endpoint. Anything past these caps
+// is a client that is broken or lying, and either way the row must stay small
+// enough to read. Values a person typed are never in here by construction
+// (packages/witness/src/redact.js), so there is nothing to strip, only to bound.
+const MAX_TRACE_EVENTS = 80;
+const TRACE_EVENT_TYPES = new Set([
+	'goto', 'navigate', 'click', 'fill', 'check', 'select', 'submit', 'key', 'xhr', 'error', 'rejection', 'resource',
+]);
+
+export function normalizeTrace(raw) {
+	if (!raw || typeof raw !== 'object' || !Array.isArray(raw.events)) return null;
+	const events = [];
+	for (const event of raw.events.slice(0, MAX_TRACE_EVENTS)) {
+		if (!event || typeof event !== 'object') continue;
+		if (!TRACE_EVENT_TYPES.has(event.type)) continue;
+		const out = { type: event.type };
+		const detail = clampText(event.detail, 300);
+		if (detail) out.detail = detail;
+		if (Number.isInteger(event.count) && event.count > 1) out.count = Math.min(event.count, 9999);
+		if (event.fatal === true) out.fatal = true;
+		if (event.el && typeof event.el === 'object') {
+			out.el = {
+				tag: clampText(event.el.tag, 20),
+				strategy: clampText(event.el.strategy, 20),
+				value: clampText(event.el.value, 200),
+				css: clampText(event.el.css, 300),
+				role: clampText(event.el.role, 40),
+				name: clampText(event.el.name, 120),
+				attr: clampText(event.el.attr, 40),
+				confidence: Number.isFinite(event.el.confidence) ? Math.max(0, Math.min(100, Math.round(event.el.confidence))) : null,
+			};
+		}
+		events.push(out);
+	}
+	if (!events.length) return null;
+	const env = raw.environment && typeof raw.environment === 'object' ? raw.environment : {};
+	const viewport = env.viewport && typeof env.viewport === 'object' ? env.viewport : {};
+	return {
+		version: 1,
+		environment: {
+			url: clampText(env.url, 300),
+			locale: clampText(env.locale, 40),
+			userAgent: clampText(env.userAgent, 300),
+			touch: env.touch === true,
+			reducedMotion: env.reducedMotion === true,
+			viewport: {
+				width: Number.isFinite(viewport.width) ? Math.round(viewport.width) : null,
+				height: Number.isFinite(viewport.height) ? Math.round(viewport.height) : null,
+				dpr: Number.isFinite(viewport.dpr) ? Number(viewport.dpr.toFixed(2)) : null,
+			},
+		},
+		recordedMs: Number.isFinite(raw.recordedMs) ? Math.max(0, Math.round(raw.recordedMs)) : 0,
+		events,
+	};
+}
+
 export function normalizeReport(input = {}) {
 	return {
+		trace: normalizeTrace(input.trace),
 		body: clampText(input.body, 4000),
 		transport: input.transport === 'voice' ? 'voice' : 'text',
 		route: clampText(input.route, 300),
@@ -50,18 +108,33 @@ export function normalizeReport(input = {}) {
 }
 
 export async function insertReport({ userId = null, clientKey = null, userAgent = null, report }) {
+	// The two trace summaries are denormalized on write so the queue can rank by
+	// "is this replayable" without opening every document.
+	const summary = report.trace ? summarizeTrace(report.trace) : { steps: null, confidence: null };
 	const [row] = await sql`
 		insert into feedback_reports
 			(user_id, client_key, body, transport, route, page_title, build_sha,
-			 viewport, user_agent, locale, console_errors, failed_requests)
+			 viewport, user_agent, locale, console_errors, failed_requests,
+			 trace, trace_steps, replay_confidence)
 		values (${userId}, ${clientKey}, ${report.body}, ${report.transport}, ${report.route},
 		        ${report.page_title}, ${report.build_sha}, ${report.viewport},
 		        ${clampText(userAgent, 400)}, ${report.locale},
 		        ${JSON.stringify(report.console_errors)}::jsonb,
-		        ${JSON.stringify(report.failed_requests)}::jsonb)
+		        ${JSON.stringify(report.failed_requests)}::jsonb,
+		        ${report.trace ? JSON.stringify(report.trace) : null}::jsonb,
+		        ${summary.steps}, ${summary.confidence})
 		returning id, created_at
 	`;
 	return row || null;
+}
+
+/** How many replayable steps a trace holds, and how well its weakest step is anchored. */
+export function summarizeTrace(trace) {
+	const events = trace?.events || [];
+	const actions = events.filter((e) => ['click', 'fill', 'check', 'select', 'submit', 'key', 'navigate'].includes(e.type));
+	const described = actions.filter((e) => e.el && Number.isFinite(e.el.confidence));
+	const confidence = described.length ? Math.min(...described.map((e) => e.el.confidence)) : null;
+	return { steps: Math.min(actions.length, 32767), confidence };
 }
 
 export async function untriagedReports(limit = 20) {
@@ -118,6 +191,8 @@ export async function listClusters({ status = 'open', limit = 50 } = {}) {
 		       (array_agg(route order by created_at desc))[1]     as route,
 		       (array_agg(build_sha order by created_at desc))[1] as build_sha,
 		       (array_agg(id order by created_at desc))[1]        as latest_id,
+		       max(replay_confidence)                             as replay_confidence,
+		       count(*) filter (where trace is not null)::int      as traced,
 		       count(distinct coalesce(user_id::text, client_key))::int as reporters
 		from feedback_reports
 		where true ${statusClause}
@@ -138,6 +213,7 @@ export async function listReports({ clusterKey = null, limit = 50 } = {}) {
 		select id, body, transport, route, page_title, build_sha, viewport, locale,
 		       console_errors, failed_requests, status, severity, kind, subsystem,
 		       summary, repro, cluster_key, resolution, created_at, triaged_at, resolved_at,
+		       trace, trace_steps, replay_confidence,
 		       user_id is not null as signed_in
 		from feedback_reports
 		where true ${clusterClause}
@@ -157,6 +233,16 @@ export function targetFromClusterKey(clusterKey) {
 	// which would 500 rather than simply matching nothing.
 	const id = key.slice('ungrouped:'.length);
 	return isUuid(id) ? { id } : {};
+}
+
+/** One report with its full trace, for the repro compiler. */
+export async function reportWithTrace(id) {
+	const [row] = await sql`
+		select id, body, summary, route, build_sha, trace, trace_steps, replay_confidence, created_at
+		from feedback_reports
+		where id = ${id}
+	`;
+	return row || null;
 }
 
 export async function setStatus({ id = null, clusterKey = null, status, resolution = null }) {

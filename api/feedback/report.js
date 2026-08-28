@@ -34,7 +34,10 @@ export default wrap(async (req, res) => {
 	const rl = await limits.feedbackWrite(user?.id || clientKey || clientIp(req));
 	if (!rl.success) return rateLimited(res, rl, 'You are sending feedback faster than we can read it. Try again shortly.');
 
-	const payload = await readJson(req, 16_000).catch(() => null);
+	// A trace of 80 bounded events plus the environment fits comfortably here;
+	// the store caps every field again on the way in, so this is only the outer
+	// guard against a client that streams.
+	const payload = await readJson(req, 96_000).catch(() => null);
 	const report = normalizeReport(payload || {});
 	if (!report.body) {
 		return error(res, 400, 'empty_report', 'Tell us what happened and we will look into it.');
@@ -47,7 +50,14 @@ export default wrap(async (req, res) => {
 			userAgent: req.headers['user-agent'] || null,
 			report,
 		});
-		return json(res, 201, { ok: true, id: row?.id ?? null, received_at: row?.created_at ?? null });
+		return json(res, 201, {
+			ok: true,
+			id: row?.id ?? null,
+			received_at: row?.created_at ?? null,
+			// Tell the page whether its session was replayable. The panel uses this
+			// to say "we captured the steps" instead of a generic thank-you.
+			replayable: !!report.trace,
+		});
 	} catch (err) {
 		// A visitor took the trouble to report something. If our own store is the
 		// thing that is down, say so plainly rather than swallowing it: the page

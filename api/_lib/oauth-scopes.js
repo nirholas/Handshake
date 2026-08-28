@@ -34,6 +34,12 @@ export const REGISTERABLE_SCOPES = Object.freeze([
 	// On-chain agent identity MCP tools (register_agent / identity_check).
 	'agents:read',
 	'agents:write',
+	// Visitor feedback MCP tools (list_feedback / get_feedback_repro). Read-only
+	// by design: the tools behind it compile a reported session into a failing
+	// test and can change nothing (api/_mcp/tools/feedback.js). The handlers also
+	// require an admin account, so granting this scope to a non-admin authorizes
+	// nothing extra.
+	'feedback:read',
 	// The wallet/services scopes gate the agent-wallet MCP server
 	// (api/mcp-agent). They are registerable because the user approves each one
 	// by name on the consent screen and every spend they authorize is still

@@ -114,6 +114,45 @@
 			.actions button[data-status='fixed']:hover { border-color: var(--green); color: var(--green); }
 			.actions button[data-status='dismissed']:hover { border-color: var(--red); color: var(--red); }
 
+			.repro-card {
+				border: 1px solid rgba(59,130,246,.28); background: rgba(59,130,246,.05);
+				border-radius: 10px; padding: 12px 14px; margin: 0 0 14px;
+			}
+			.repro-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+			.repro-head > div:first-of-type { flex: 1; min-width: 180px; }
+			.repro-head strong { display: block; font-size: 13.5px; }
+			.repro-badge {
+				display: grid; place-items: center; width: 38px; height: 38px; border-radius: 9px;
+				font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; flex: none;
+			}
+			.repro-badge[data-band='high'] { background: rgba(34,197,94,.16); color: var(--green); }
+			.repro-badge[data-band='mid'] { background: rgba(245,158,11,.14); color: var(--amber); }
+			.repro-badge[data-band='low'] { background: rgba(255,255,255,.05); color: var(--dim); }
+			.repro-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+			.repro-actions button, .repro-actions a {
+				background: transparent; border: 1px solid var(--line-2); color: var(--muted);
+				border-radius: 7px; padding: 6px 11px; font: inherit; font-size: 12.5px; cursor: pointer;
+				text-decoration: none; transition: background .15s ease, color .15s ease, border-color .15s ease;
+			}
+			.repro-actions button:hover, .repro-actions a:hover { color: var(--text); border-color: var(--blue); }
+			.repro-actions button:focus-visible, .repro-actions a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+			.repro-actions button:disabled { opacity: .45; cursor: not-allowed; }
+			.repro-steps {
+				margin: 10px 0 0; padding: 0 0 0 20px; font-size: 12.5px; line-height: 1.6; color: var(--muted);
+			}
+			.repro-steps .repro-error { color: var(--amber); list-style: none; margin-left: -20px; }
+			.repro-source {
+				margin: 10px 0 0; padding: 12px; border-radius: 8px; background: rgba(0,0,0,.35);
+				border: 1px solid var(--line); overflow-x: auto; max-height: 380px; overflow-y: auto;
+			}
+			.repro-source code {
+				font: 11.5px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; color: #cfe0ff; white-space: pre;
+			}
+			.replay {
+				border: 1px solid rgba(34,197,94,.4); color: var(--green); border-radius: 5px;
+				padding: 0 6px; font-size: 11.5px;
+			}
+
 			.skeleton { height: 68px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); margin-bottom: 10px; position: relative; overflow: hidden; }
 			.skeleton::after {
 				content: ''; position: absolute; inset: 0; transform: translateX(-100%);
@@ -144,8 +183,9 @@
 				<p>
 					What visitors told the corner companion. One row per distinct problem, loudest first,
 					each carrying the route, the build it happened on, and the console errors the browser
-					captured at the time. Nothing here changes the product on its own: it is a list a
-					person reads and acts on.
+					captured at the time. Where a session was recorded, the report compiles into a
+					Playwright test that is red until the bug is fixed. Nothing here changes the product
+					on its own: it is a list a person reads and acts on.
 				</p>
 			</div>
 

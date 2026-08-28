@@ -1,0 +1,66 @@
+{
+	"name": "@three-ws/witness",
+	"version": "0.1.0",
+	"description": "Turn a real user session into a runnable failing test. A tiny, privacy-first session recorder that captures intent (not pixels, not DOM mutations) and compiles it into a Playwright spec that stays red until the reported bug is fixed.",
+	"type": "module",
+	"main": "./src/index.js",
+	"module": "./src/index.js",
+	"exports": {
+		".": {
+			"import": "./src/index.js",
+			"default": "./src/index.js"
+		},
+		"./compile": {
+			"import": "./src/compile.js",
+			"default": "./src/compile.js"
+		},
+		"./selector": {
+			"import": "./src/selector.js",
+			"default": "./src/selector.js"
+		},
+		"./redact": {
+			"import": "./src/redact.js",
+			"default": "./src/redact.js"
+		},
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"src",
+		"README.md",
+		"LICENSE"
+	],
+	"sideEffects": false,
+	"scripts": {
+		"test": "node --test test/*.test.js"
+	},
+	"keywords": [
+		"bug-report",
+		"session-replay",
+		"playwright",
+		"repro",
+		"reproduction",
+		"testing",
+		"e2e",
+		"feedback",
+		"selector",
+		"privacy",
+		"three.ws"
+	],
+	"author": "nirholas <support@three.ws>",
+	"license": "Apache-2.0",
+	"homepage": "https://three.ws/docs/witness",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "packages/witness"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/three.ws/issues"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"engines": {
+		"node": ">=18"
+	}
+}
