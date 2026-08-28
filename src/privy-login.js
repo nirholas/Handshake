@@ -18,13 +18,22 @@ sessionStorage.removeItem('login_redirect');
 
 // ── Bootstrap ────────────────────────────────────────────────────────────────
 
+// "This deployment has no Privy app" and "we could not find out" are different
+// answers and used to collapse into the same null: the whole passwordless and
+// wallet block vanished with no explanation, and the visitor had no way to tell
+// a deliberate configuration from a failed probe.
+const CONFIG_UNAVAILABLE = Symbol('config_unavailable');
+
 async function getAppId() {
 	try {
-		const r = await fetch('/api/config');
+		// This module's top-level await blocks on it, so an unbounded fetch keeps
+		// the entire sign-in block unrendered for as long as the network hangs.
+		const r = await fetch('/api/config', { signal: AbortSignal.timeout(6000) });
+		if (!r.ok) return CONFIG_UNAVAILABLE;
 		const cfg = await r.json();
 		return cfg.privyAppId || null;
 	} catch {
-		return null;
+		return CONFIG_UNAVAILABLE;
 	}
 }
 
@@ -33,12 +42,25 @@ const appId = await getAppId();
 const section = document.getElementById('privy-section');
 const divider = document.getElementById('privy-or-divider');
 
-if (!appId) {
+if (appId === CONFIG_UNAVAILABLE) {
+	// Keep the section, drop the controls that cannot work, and say why. The
+	// password form below the divider still signs the visitor in.
+	for (const id of ['privy-step-email', 'privy-step-code', 'privy-wallet-wrap']) {
+		const node = document.getElementById(id);
+		if (node) node.hidden = true;
+	}
+	const err = document.getElementById('privy-inline-err');
+	if (err) {
+		err.textContent =
+			'Email and wallet sign-in could not load. Check your connection and reload, or sign in with your password below.';
+		err.hidden = false;
+	}
+} else if (!appId) {
 	if (section) section.style.display = 'none';
 	if (divider) divider.style.display = 'none';
 } else {
 	const privy = new Privy({ appId, storage: new LocalStorage() });
-	mountPrivyUI(privy, fetchCaptchaConfig(appId));
+	mountPrivyUI(privy, makeCaptchaResolver(appId));
 }
 
 // ── CAPTCHA (Cloudflare Turnstile) ───────────────────────────────────────────
@@ -46,16 +68,22 @@ if (!appId) {
 // when the app has CAPTCHA enabled and no token is sent, so this must resolve
 // before sendCode and before the EVM wallet flow.
 
+// Three outcomes, and collapsing the last two is what produced the opaque
+// error. `null` means the app genuinely has no CAPTCHA, so proceed without a
+// token. CAPTCHA_UNAVAILABLE means we could not ask: proceeding blind is
+// exactly what Privy answers with 401 invalid_credentials, a message that tells
+// the visitor their credentials were wrong when nothing of the sort happened.
+const CAPTCHA_UNAVAILABLE = Symbol('captcha_unavailable');
+
 async function fetchCaptchaConfig(id) {
 	try {
 		// This gates the login form, so an unbounded call stalls sign-in on a slow
-		// network instead of degrading. Failing to null is already the designed
-		// state (no captcha), the timeout just makes sure we reach it.
+		// network instead of degrading.
 		const r = await fetch(`https://auth.privy.io/api/v1/apps/${id}`, {
 			headers: { 'privy-app-id': id },
 			signal: AbortSignal.timeout(6000),
 		});
-		if (!r.ok) return null;
+		if (!r.ok) return CAPTCHA_UNAVAILABLE;
 		const cfg = await r.json();
 		if (!cfg?.captcha_enabled || !cfg.captcha_site_key) return null;
 		if (cfg.enabled_captcha_provider && cfg.enabled_captcha_provider !== 'turnstile') return null;
@@ -66,8 +94,47 @@ async function fetchCaptchaConfig(id) {
 			apiUrl: cfg.custom_api_url || 'https://auth.privy.io',
 		};
 	} catch {
-		return null;
+		return CAPTCHA_UNAVAILABLE;
 	}
+}
+
+/**
+ * Resolve the CAPTCHA config, retrying once at the moment of use.
+ *
+ * The page-load probe can lose a race with a flaky network, and without a retry
+ * that one failure would break sign-in for the whole page view. A button press
+ * is a fresh chance, so take it before giving up.
+ *
+ * @param {string} id  Privy app id.
+ * @returns {() => Promise<object|null|symbol>}
+ */
+function makeCaptchaResolver(id) {
+	let pending = fetchCaptchaConfig(id);
+	return async () => {
+		const first = await pending;
+		if (first !== CAPTCHA_UNAVAILABLE) return first;
+		pending = fetchCaptchaConfig(id);
+		return pending;
+	};
+}
+
+/**
+ * The CAPTCHA token for a sign-in attempt, or undefined when the app has none.
+ * Throws a sentence a person can act on when the requirement is unknowable,
+ * rather than letting Privy reply "invalid_credentials".
+ *
+ * @param {object|null|symbol} config
+ * @param {(msg: string) => void} [setStatus]
+ */
+async function captchaTokenFor(config, setStatus) {
+	if (config === CAPTCHA_UNAVAILABLE) {
+		throw new Error(
+			'We could not reach the sign-in service to check whether this step needs a CAPTCHA. Check your connection and try again.',
+		);
+	}
+	if (!config) return undefined;
+	setStatus?.();
+	return requestCaptchaToken(config.siteKey);
 }
 
 let turnstilePromise = null;
@@ -216,7 +283,7 @@ function getSolanaProvider() {
 
 // ── UI ───────────────────────────────────────────────────────────────────────
 
-function mountPrivyUI(privy, captchaConfigPromise) {
+function mountPrivyUI(privy, resolveCaptchaConfig) {
 	// Email OTP elements
 	const stepEmail    = document.getElementById('privy-step-email');
 	const stepCode     = document.getElementById('privy-step-code');
@@ -288,13 +355,11 @@ function mountPrivyUI(privy, captchaConfigPromise) {
 		sendBtn.textContent = 'Sending…';
 		clearErr();
 		try {
-			let captchaToken;
-			const captcha = await captchaConfigPromise;
-			if (captcha) {
+			const captcha = await resolveCaptchaConfig();
+			const captchaToken = await captchaTokenFor(captcha, () => {
 				sendBtn.textContent = 'Verifying…';
-				captchaToken = await requestCaptchaToken(captcha.siteKey);
-				sendBtn.textContent = 'Sending…';
-			}
+			});
+			sendBtn.textContent = 'Sending…';
 			await privy.auth.email.sendCode(email, captchaToken);
 			pendingEmail = email;
 			showStep('code');
@@ -368,10 +433,11 @@ function mountPrivyUI(privy, captchaConfigPromise) {
 			const chainId    = parseInt(chainIdHex, 16);
 
 			let message;
-			const captcha = await captchaConfigPromise;
-			if (captcha) {
+			const captcha = await resolveCaptchaConfig();
+			const captchaToken = await captchaTokenFor(captcha, () => {
 				setWalletStatus('Checking you are human…');
-				const captchaToken = await requestCaptchaToken(captcha.siteKey);
+			});
+			if (captchaToken) {
 				setWalletStatus('Generating sign-in message…');
 				message = await withTimeout(
 					siweInitWithCaptcha(captcha.apiUrl, address, chainId, captchaToken),

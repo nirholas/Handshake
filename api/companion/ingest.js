@@ -89,8 +89,13 @@ export default wrap(async (req, res) => {
 		sender: body.sender || body.app || 'Your phone',
 		sender_id: body.sender_id || null,
 		identity_candidates: [body.sender_id, body.sender].filter(Boolean),
-		title: body.app && body.sender ? `${body.sender} (${body.app})` : body.title,
-		body: body.body || (body.app && body.sender ? body.title : null),
+		// The title and body are stored exactly as the device sent them. An
+		// earlier version folded the app name into the title ("Sarah (Messages)")
+		// and pushed the real text down into the body, which read fine in the
+		// spoken line and terribly in the feed, where every row said the same
+		// four words. `app` already travels as its own field.
+		title: body.title,
+		body: body.body || null,
 		url: body.url || null,
 		occurs_at: occursAt,
 		priority_hint: body.priority || null,

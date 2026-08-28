@@ -52,6 +52,9 @@ function cacheSet(key, value) {
  */
 async function loadSource(src) {
 	if (/^https:\/\//i.test(src)) {
+		// Caller-supplied source URL: bounded so a host that accepts the connection
+		// and then stalls cannot hold the frame request open until the platform
+		// kills it. SSRF validation happens above; this is the time budget.
 		const response = await fetch(src, { redirect: 'follow' });
 		if (!response.ok) throw Object.assign(new Error(`upstream ${response.status}`), { status: 502 });
 		return new Uint8Array(await response.arrayBuffer());
