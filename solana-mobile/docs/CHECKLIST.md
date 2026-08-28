@@ -16,9 +16,9 @@ Work top-to-bottom. Do not submit until every box is checked. A date after a box
 
 - [x] `scripts/build-apk.sh` has been run so the SHA-256 fingerprint is known. (2026-08-10; keystore at `solana-mobile/android.keystore`, password in `.env` `SOLANA_MOBILE_KEYSTORE_PASSWORD`; on a fresh headless machine run `scripts/setup-android-sdk.sh` first)
 - [x] `public/.well-known/assetlinks.json` contains the real fingerprint (no `{{RELEASE_SHA256}}` placeholder) and is on `main`. (2026-08-10)
-- [ ] `https://three.ws/.well-known/assetlinks.json` returns 200 as `application/json` AND carries the 2026-08-27 fingerprint `98:0A:...:13:D7` (the live file still shows the orphaned `49:84:...` key until the next deploy).
-- [ ] Google's statement list confirms the new key: `https://digitalassetlinks.googleapis.com/v1/statements:list?source.web.site=https://three.ws&relation=delegate_permission/common.handle_all_urls` must return `98:0A:...:13:D7` (it returned the old `49:84:...` on 2026-08-27, pre-deploy). Then `adb shell pm verify-app-links --re-verify ws.three.app`.
-- [ ] `cache-control` on `assetlinks.json` is at most one hour. The server now sends `max-age=3600` for `.well-known/*`; confirm on the live site after the next deploy (it read `max-age=86400` on 2026-08-27, from the image built before this change).
+- [x] `https://three.ws/.well-known/assetlinks.json` returns 200 as `application/json` AND carries the 2026-08-27 fingerprint `98:0A:...:13:D7`. (verified live 2026-08-28)
+- [x] Google's statement list confirms the new key: `https://digitalassetlinks.googleapis.com/v1/statements:list?source.web.site=https://three.ws&relation=delegate_permission/common.handle_all_urls` returns `98:0A:...:13:D7` and nothing else. (verified 2026-08-28) On a device, follow with `adb shell pm verify-app-links --re-verify ws.three.app`.
+- [ ] `cache-control` on `assetlinks.json` is at most one hour. The live site still read `max-age=86400` on 2026-08-28 even though the server default is `max-age=3600`: the `/.well-known/(.*)` route in `vercel.json` sets its own header, and `server/index.mjs` only applies its default when no earlier layer set one. That route was changed to `max-age=3600` on 2026-08-28; confirm on the live site after the next deploy.
 
 ## 3. APK build
 

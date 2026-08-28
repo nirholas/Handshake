@@ -4917,7 +4917,7 @@
 		{
 			"src": "/\\.well-known/(.*)",
 			"headers": {
-				"cache-control": "max-age=86400, public"
+				"cache-control": "max-age=3600, public"
 			},
 			"dest": "/.well-known/$1"
 		},
