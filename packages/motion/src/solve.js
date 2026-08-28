@@ -237,18 +237,22 @@ function placeArm(pose, side, spec) {
 	const palm = spec.palm ? bodyDirection(pose, spec.palm, side) : null;
 	const fingers = spec.point ? bodyDirection(pose, spec.point, side) : null;
 
-	const shoulder = pose.worldPos(`${side}Arm`);
-	const distance = vLen(vSub(wrist, shoulder));
-	const reachable = distance <= (boneLength(`${side}Arm`) + boneLength(`${side}ForeArm`)) * 0.99;
-
 	solveArm(pose, side, {
 		wrist,
 		palm,
 		fingers,
 		...(pole ? { pole } : {}),
 	});
-	return reachable;
+
+	// Measured after the solve, not before: the clavicle assist moves the socket
+	// toward a long target, so a pre-solve distance check reports misses the arm
+	// went on to make. A few millimetres short is the soft-elbow cap doing its
+	// job, not a failure, so only a real shortfall is worth telling anyone about.
+	return vLen(vSub(pose.worldPos(`${side}Hand`), wrist)) <= REACH_SLACK;
 }
+
+/** How far short of a target a wrist may land before it counts as out of reach. */
+const REACH_SLACK = 0.02;
 
 function poleDirection(pose, side, name) {
 	const spec = ELBOW_POLES[name];

@@ -13,8 +13,11 @@
 // last step is the difference between a solved limb and a broken-looking one.
 
 import {
+	IDENTITY,
 	clamp,
 	orientQuat,
+	qBetween,
+	qSlerp,
 	qAxisAngle,
 	qConj,
 	qMul,
@@ -93,6 +96,40 @@ export function solveTwoBone(pose, chain, target, pole, reach) {
 	};
 }
 
+/** Longest the clavicle is allowed to swing toward a target, in degrees. */
+const MAX_CLAVICLE_ASSIST = 38;
+
+/**
+ * Let the shoulder girdle help.
+ *
+ * An arm is not two bones hanging off a fixed socket: the clavicle protracts,
+ * elevates, and rotates, and that is worth ten to fifteen centimetres of reach
+ * plus most of what makes a reach read as a whole body reaching. Without it the
+ * reference rig cannot put a wrist on its own thigh, which is not a limit of
+ * human anatomy, it is a limit of pretending the shoulder is bolted down.
+ *
+ * The assist only engages past a comfort radius and scales in from there, so a
+ * gesture inside easy reach keeps a still, quiet shoulder line.
+ */
+function assistWithClavicle(pose, side, target) {
+	const clavicle = `${side}Shoulder`;
+	if (!hasBone(clavicle)) return;
+	const shoulder = pose.worldPos(`${side}Arm`);
+	const reach = boneLength(`${side}Arm`) + boneLength(`${side}ForeArm`);
+	const distance = vLen(vSub(target, shoulder));
+	const comfort = reach * 0.82;
+	if (distance <= comfort) return;
+	const assist = clamp((distance - comfort) / (reach * 0.45), 0, 1);
+
+	// Aim the clavicle a fraction of the way from where it points to where the
+	// target is, which both carries the socket toward the target and gives the
+	// shoulder the rise a real reach has.
+	const from = pose.worldDir(clavicle);
+	const to = vNorm(vSub(target, pose.worldPos(clavicle)));
+	const swing = qSlerp(IDENTITY, qBetween(from, to), assist * (MAX_CLAVICLE_ASSIST / 90));
+	pose.setWorldQuat(clavicle, qMul(swing, pose.worldQuat(clavicle)));
+}
+
 /**
  * Place a `side` wrist at a world point with a natural elbow, then orient the
  * hand.
@@ -108,7 +145,9 @@ export function solveTwoBone(pose, chain, target, pole, reach) {
  *
  * @param {import('./pose.js').Pose} pose mutated in place
  * @param {'Left'|'Right'} side
- * @param {{ wrist: number[], fingers?: number[], palm?: number[], pole?: number[], reach?: number }} spec
+ * @param {{ wrist: number[], fingers?: number[], palm?: number[], pole?: number[], reach?: number, clavicle?: boolean }} spec
+ *   `clavicle` defaults to true and lets the shoulder girdle assist a long
+ *   reach; pass false when a caller is driving the clavicle itself.
  * @returns {import('./pose.js').Pose} the same pose
  */
 export function solveArm(pose, side, spec) {
@@ -117,6 +156,8 @@ export function solveArm(pose, side, spec) {
 	const hand = `${side}Hand`;
 	const outSign = side === 'Right' ? -1 : 1;
 	const pole = spec.pole ?? [outSign * 0.42, -1, -0.3];
+
+	if (spec.clavicle !== false) assistWithClavicle(pose, side, spec.wrist);
 
 	const solved = solveTwoBone(
 		pose,
