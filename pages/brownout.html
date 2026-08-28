@@ -18,11 +18,11 @@
 	<meta property="og:title" content="Brownout · three.ws" />
 	<meta property="og:description" content="Fallbacks are the least-tested code in any codebase, because the thing they protect against does not happen on demand. So we break it on purpose, and publish the receipts." />
 	<meta property="og:url" content="https://three.ws/brownout" />
-	<meta property="og:image" content="https://three.ws/api/page-og?s=learn&amp;t=Brownout&amp;d=Every+response+says+where+its+data+came+from.+Every+fallback+is+proven+by+breaking+the+upstream+it+protects+against.&amp;p=%2Fbrownout" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=learn&amp;t=Brownout&amp;d=Every+response+from+this+API+says+where+its+data+came+from+and+how+fresh+it+is%2C+and+every+declared+fallback+has+been+proven+by+breaking+the+upstream+it&amp;p=%2Fbrownout" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content="Brownout · three.ws" />
 	<meta name="twitter:description" content="We break our own providers on purpose, in the real request path, and publish what came back." />
-	<meta name="twitter:image" content="https://three.ws/api/page-og?s=learn&amp;t=Brownout&amp;d=Every+response+says+where+its+data+came+from.+Every+fallback+is+proven+by+breaking+the+upstream+it+protects+against.&amp;p=%2Fbrownout" />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=learn&amp;t=Brownout&amp;d=Every+response+from+this+API+says+where+its+data+came+from+and+how+fresh+it+is%2C+and+every+declared+fallback+has+been+proven+by+breaking+the+upstream+it&amp;p=%2Fbrownout" />
 	<style>
 		:root {
 			--bo-bg: #07080c;
@@ -188,6 +188,13 @@
 			.bo-trace-ms { grid-column: 2; }
 		}
 	</style>
+
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+	<meta property="og:site_name" content="three.ws">
+	<meta property="og:locale" content="en_US">
+	<meta property="og:image:alt" content="Brownout - three.ws">
+	<meta name="twitter:site" content="@trythreews">
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Brownout","description":"Every response from this API says where its data came from and how fresh it is, and every declared fallback has been proven by breaking the upstream it protects against, inside the real request path. Read the receipts: which provider refused, which one caught the request, and how old the answer was.","url":"https://three.ws/brownout","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=learn&t=Brownout&d=Every+response+from+this+API+says+where+its+data+came+from+and+how+fresh+it+is%2C+and+every+declared+fallback+has+been+proven+by+breaking+the+upstream+it&p=%2Fbrownout"}]}</script>
 </head>
 <body>
 	<header class="site-header"><div id="nav-container"></div></header>
