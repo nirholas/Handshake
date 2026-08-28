@@ -79,7 +79,7 @@ cd ios && npm install && npm run sync
 ## 5. On a Mac: archive, sign, upload
 
 ```bash
-cd ios && npm run open        # opens native/App/App.xcworkspace
+cd ios && npm run open        # opens native/App/App.xcodeproj
 ```
 
 In Xcode:
@@ -94,11 +94,14 @@ In Xcode:
    [`ASSETS.md`](ASSETS.md). Xcode rejects an archive with a missing icon.
 4. Product > Archive, then Distribute App > App Store Connect > Upload.
 
+Capacitor 8 resolves its plugins through Swift Package Manager, so there is no
+`.xcworkspace` and no CocoaPods step: `App.xcodeproj` is the whole project.
+
 Headless alternative once signing is configured, for a Mac build machine or
 Xcode Cloud:
 
 ```bash
-xcodebuild -workspace native/App/App.xcworkspace -scheme App \
+xcodebuild -project native/App/App.xcodeproj -scheme App \
   -configuration Release -archivePath build/App.xcarchive archive
 xcodebuild -exportArchive -archivePath build/App.xcarchive \
   -exportOptionsPlist ExportOptions.plist -exportPath build/export

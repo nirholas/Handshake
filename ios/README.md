@@ -73,7 +73,7 @@ What it installs, and the breakage each one fixes:
 cd ios
 npm install          # Capacitor CLI + plugins
 npm run sync         # copy shell/ into the Xcode project, resolve plugins
-npm run open         # open App.xcworkspace in Xcode (macOS only)
+npm run open         # open App.xcodeproj in Xcode (macOS only)
 ```
 
 `npm run sync` works on Linux: Capacitor 8 resolves plugins through Swift Package
