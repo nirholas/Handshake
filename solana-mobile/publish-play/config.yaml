@@ -1,0 +1,66 @@
+# Google Play Console worksheet for the three.ws listing.
+#
+# Same idea as ../publish/config.yaml (the Solana dApp Store worksheet): the
+# listing is authored in the console, so this file is the single source for the
+# values the owner types there, kept in git so the console never drifts from
+# what was reviewed. Play-specific answers that are long enough to need prose
+# live in listing/ next to the copy.
+
+developer:
+  # Which account type this is decides the whole timeline. See README.md.
+  account_type: organization        # organization | personal
+  name: three.ws
+  website: https://three.ws
+  email: support@three.ws
+
+app:
+  # Must match the dApp Store build exactly. One package id, one app, two
+  # distribution channels.
+  package_name: ws.three.app
+  default_language: en-US
+  app_or_game: app
+  free_or_paid: free
+  category: Art & Design
+  tags: [3D, AI, Avatars, Creation]
+  contact:
+    email: support@three.ws
+    website: https://three.ws
+  urls:
+    privacy_policy: https://three.ws/legal/privacy
+    terms: https://three.ws/legal/eula
+    support: https://three.ws/docs
+
+listing:
+  title: listing/title.txt                       # 30 char limit
+  short_description: listing/short-description.txt   # 80 char limit
+  full_description: listing/full-description.txt     # 4000 char limit
+  graphics:
+    # Play's sizes are NOT the dApp Store's. Do not reuse ../publish/media/
+    # without resizing; see README.md.
+    app_icon: media/icon-512.png                 # 512 x 512, 32-bit PNG, no alpha
+    feature_graphic: media/feature-1024x500.png  # 1024 x 500
+    phone_screenshots: media/phone/              # 2 to 8, min 320px, max 3840px
+    tablet_screenshots: media/tablet/            # optional, raises quality ranking
+
+release:
+  # Play App Signing is mandatory for new apps, so Play re-signs this bundle
+  # with Google's key and the installed app presents a certificate that is NOT
+  # ours. Its SHA-256 must be added to ../twa/extra-fingerprints.json or every
+  # Play install loses full-screen mode. See README.md step 6.
+  bundle: ../build/app-release-bundle.aab
+  track: closed-testing                # closed-testing -> production
+  release_notes: ../publish/listing/new-in-version.txt
+
+declarations:
+  # Every one of these is a required form on the App content page. The answers
+  # are in listing/; they are recorded here so a re-submission does not have to
+  # reconstruct them from memory.
+  privacy_policy: listing/data-safety.md
+  data_safety: listing/data-safety.md
+  content_rating: listing/content-rating.md
+  financial_features: listing/financial-features.md
+  ads: none                            # the app serves no ads
+  target_audience: 18+
+  news_app: false
+  covid_contact_tracing: false
+  data_deletion_url: https://three.ws/legal/privacy

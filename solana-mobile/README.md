@@ -1,6 +1,8 @@
-# `solana-mobile/`: three.ws on the Seeker dApp Store
+# `solana-mobile/`: the three.ws Android app
 
-Everything needed to package three.ws as a Solana Mobile (Seeker / Saga) app and publish it to the Solana dApp Store: the Mobile Wallet Adapter (MWA) wallet that signs through the on-device Seed Vault, the Trusted Web Activity (TWA) wrapper, the release pipeline, and the listing copy for the Publisher Portal.
+Everything needed to package three.ws as an Android app and publish it: the Mobile Wallet Adapter (MWA) wallet that signs through the on-device Seed Vault, the Trusted Web Activity (TWA) wrapper, the release pipeline, and the listing copy for both stores.
+
+**One package id, two channels.** `ws.three.app` ships to the Solana dApp Store (Seeker and Saga, listing copy in `publish/`) and to Google Play (every Android phone, listing copy and submission runbook in [`publish-play/`](publish-play/README.md)). Same build, same app, two store listings that must describe the same product. The Play path has one trap with no local symptom, and it is documented in `publish-play/README.md` step 6: Play re-signs the bundle with Google's own key, so Google's certificate fingerprint has to be added to `twa/extra-fingerprints.json` or every Play install loses full-screen mode.
 
 ## Layout
 
@@ -14,16 +16,22 @@ solana-mobile/
 │   ├── mwa-errors.js         #   normalizes MWA errors (user decline -> code 4001)
 │   ├── index.js              #   single-import boot; sets window.solana when on Seeker
 │   └── package.json          #   declares MWA peer/runtime deps
+│   └── extra-fingerprints.json # certificates OTHER than our keystore that may sign the app
 ├── scripts/
 │   ├── setup-android-sdk.sh  # headless machines: stage JDK 17 + Android SDK for Bubblewrap
 │   ├── build-apk.sh          # generate keystore (if needed), build + sign release APK
+│   ├── assetlinks.mjs        # build the Digital Asset Links file from every signing certificate
 │   ├── make-media.mjs        # generate icon/banner/feature listing assets from the live product
 │   ├── update-assetlinks.sh  # refresh /public/.well-known/assetlinks.json from the keystore
 │   └── publish.sh            # upload the APK to the Publisher Portal (dapp-store-cli 1.x)
-├── publish/                  # Publisher Portal worksheet + listing copy + media
+├── publish/                  # Solana dApp Store: Publisher Portal worksheet + listing + media
 │   ├── config.yaml           #   every value the owner enters in the portal, in one place
 │   ├── listing/              #   description, short description, what's new, Seeker features
 │   └── media/                #   icon, banner, feature graphic (screenshots need a real Seeker)
+├── publish-play/             # Google Play: submission runbook, worksheet, listing, declarations
+│   ├── README.md             #   the account-type decision that sets the timeline, then the steps
+│   ├── config.yaml           #   every value the owner enters in Play Console
+│   └── listing/              #   title/short/full copy, data safety, content rating, financial features
 └── docs/
     ├── ASSETS.md             # exact pixel specs for icon/banner/screenshots
     ├── CHECKLIST.md          # end-to-end submission checklist with verification dates
