@@ -747,6 +747,14 @@
 					"added": "2026-04-17"
 				},
 				{
+					"path": "/docs/glance",
+					"title": "Glance: agent cards for home screens",
+					"description": "Put a three.ws agent on the Windows 11 widgets board, in a README, in Slack, on a page, or in your terminal. Endpoint, element, widget worker and npm client.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-08-28"
+				},
+				{
 					"path": "/glance",
 					"title": "Glance",
 					"description": "Your three.ws agent on every home screen: a live card for the Windows 11 widgets board, a README, Slack, or any page.",
