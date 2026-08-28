@@ -873,6 +873,10 @@ export const limits = {
 		getLimiter('mcp:inspect', { limit: 30, window: '1 m', critical: true }).limit(key),
 	mcpOptimize: (key) =>
 		getLimiter('mcp:optimize', { limit: 10, window: '1 m', critical: true }).limit(key),
+	// Diffing fetches and fully parses TWO models per call, so it costs roughly
+	// double an inspect and gets half the budget.
+	mcpDiff: (key) =>
+		getLimiter('mcp:diff', { limit: 15, window: '1 m', critical: true }).limit(key),
 	// 3D Studio MCP. Generation submits a real GPU job on Replicate (text→image
 	// and/or image→3D reconstruction) that costs real money, so it gets a hard
 	// hourly ceiling per principal. Status polling is cheap and frequent.

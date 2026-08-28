@@ -18,7 +18,7 @@
 		},
 		{
 			"name": "persona_say",
-			"title": "Speak a reply through a persona — lip-sync + emotion + gesture",
+			"title": "Speak a reply through a persona \u2014 lip-sync + emotion + gesture",
 			"descHead": "dynamic",
 			"descHash": "dynamic",
 			"annotations": "ref:SAY_ANNOTATIONS",
@@ -399,6 +399,14 @@
 	],
 	"api/_mcp/tools/models.js": [
 		{
+			"name": "diff_models",
+			"title": "Diff two glTF/GLB models",
+			"descHead": "Compare two remote GLB or glTF models and return what changed: geometry,",
+			"descHash": "7258f23cf52e",
+			"annotations": "ref:INSPECTION_ANNOTATIONS",
+			"schemaHash": "449d45d54027"
+		},
+		{
 			"name": "inspect_model",
 			"title": "Inspect glTF/GLB model",
 			"descHead": "Parse a remote GLB or glTF and return structural stats: scene/node/mesh ",
@@ -640,7 +648,7 @@
 	"api/_mcp3d/tools/persona-identity.js": [
 		{
 			"name": "persona_identity",
-			"title": "Read a persona's on-chain identity — wallet, reputation, holdings",
+			"title": "Read a persona's on-chain identity \u2014 wallet, reputation, holdings",
 			"descHead": "dynamic",
 			"descHash": "dynamic",
 			"annotations": "ref:READ_ANNOTATIONS",
@@ -726,7 +734,7 @@
 		{
 			"name": "create_agent_persona",
 			"title": "Mint a persistent, living agent persona from a rigged GLB",
-			"descHead": "Turn a generated GLB into a NAMED, persistent agent body — a \"persona\" t",
+			"descHead": "Turn a generated GLB into a NAMED, persistent agent body \u2014 a \"persona\" t",
 			"descHash": "716809d092b0",
 			"annotations": "ref:PERSONA_CREATE_ANNOTATIONS",
 			"schemaHash": "7d650a9be810"
@@ -763,7 +771,7 @@
 		{
 			"name": "get_agent_persona",
 			"title": "Reload a persisted persona by id (continuity across sessions)",
-			"descHead": "Bring back a previously minted persona by its persona_id — the SAME body",
+			"descHead": "Bring back a previously minted persona by its persona_id \u2014 the SAME body",
 			"descHash": "04388b6c47b0",
 			"annotations": "ref:PERSONA_READ_ANNOTATIONS",
 			"schemaHash": "b8451da964a3"
@@ -778,7 +786,7 @@
 		},
 		{
 			"name": "persona_say",
-			"title": "Speak a reply through a persona — lip-sync + emotion + gesture",
+			"title": "Speak a reply through a persona \u2014 lip-sync + emotion + gesture",
 			"descHead": "Make a persona PERFORM a reply: the body lip-syncs the text and shows th",
 			"descHash": "7ce7c147f8f6",
 			"annotations": "ref:PERSONA_SAY_ANNOTATIONS",
@@ -800,7 +808,7 @@
 		{
 			"name": "preview_3d",
 			"title": "Preview any GLB as an interactive 3D artifact",
-			"descHead": "Render any public GLB URL as an inline <model-viewer> HTML artifact — or",
+			"descHead": "Render any public GLB URL as an inline <model-viewer> HTML artifact \u2014 or",
 			"descHash": "ed4b123a6d3e",
 			"annotations": {
 				"readOnlyHint": true,
@@ -1030,7 +1038,7 @@
 		{
 			"name": "get_feed_events",
 			"title": "Site-wide activity feed",
-			"descHead": "The site-wide activity ticker — recent things that just happened across ",
+			"descHead": "The site-wide activity ticker \u2014 recent things that just happened across ",
 			"descHash": "2bdbb0bc0a3a",
 			"annotations": {
 				"readOnlyHint": true,
@@ -1058,7 +1066,7 @@
 		{
 			"name": "get_tier_info",
 			"title": "$THREE holder tier ladder",
-			"descHead": "The $THREE holder tier ladder — the membership bands a wallet earns pure",
+			"descHead": "The $THREE holder tier ladder \u2014 the membership bands a wallet earns pure",
 			"descHash": "81281cff2892",
 			"annotations": {
 				"readOnlyHint": true,
@@ -1243,7 +1251,7 @@
 		{
 			"name": "agora_board",
 			"title": "Browse the Agora job board",
-			"descHead": "Browse the live Agora job board — the work an agent can claim and earn $",
+			"descHead": "Browse the live Agora job board \u2014 the work an agent can claim and earn $",
 			"descHash": "5dbb1bdad754",
 			"annotations": {
 				"readOnlyHint": true,
@@ -1257,7 +1265,7 @@
 		{
 			"name": "agora_citizens",
 			"title": "List Agora citizens",
-			"descHead": "List the citizens of Agora — the population of the agent + human economy",
+			"descHead": "List the citizens of Agora \u2014 the population of the agent + human economy",
 			"descHash": "9c8f5bf601b4",
 			"annotations": {
 				"readOnlyHint": true,
@@ -1271,7 +1279,7 @@
 		{
 			"name": "agora_claim_task",
 			"title": "Claim an open Agora task (on-chain)",
-			"descHead": "CLAIM an open job from the Agora board — a REAL on-chain AgenC claim sig",
+			"descHead": "CLAIM an open job from the Agora board \u2014 a REAL on-chain AgenC claim sig",
 			"descHash": "0bb79da5c125",
 			"annotations": {
 				"readOnlyHint": false,
@@ -1285,7 +1293,7 @@
 		{
 			"name": "agora_complete_task",
 			"title": "Complete an Agora task with a proof (on-chain)",
-			"descHead": "COMPLETE a task you claimed and GET PAID — a REAL on-chain AgenC complet",
+			"descHead": "COMPLETE a task you claimed and GET PAID \u2014 a REAL on-chain AgenC complet",
 			"descHash": "35535d8835f8",
 			"annotations": {
 				"readOnlyHint": false,
@@ -1299,7 +1307,7 @@
 		{
 			"name": "agora_passport",
 			"title": "Get one Agora citizen passport",
-			"descHead": "Fetch one citizen's living passport — the full record of a participant i",
+			"descHead": "Fetch one citizen's living passport \u2014 the full record of a participant i",
 			"descHash": "5427f717ba36",
 			"annotations": {
 				"readOnlyHint": true,
@@ -1327,7 +1335,7 @@
 		{
 			"name": "agora_professions",
 			"title": "List Agora professions (the capability bit map)",
-			"descHead": "List Agora's professions — the labor market's type system over AgenC's u",
+			"descHead": "List Agora's professions \u2014 the labor market's type system over AgenC's u",
 			"descHash": "65a97e8f01a0",
 			"annotations": {
 				"readOnlyHint": true,
@@ -1341,7 +1349,7 @@
 		{
 			"name": "agora_pulse",
 			"title": "Read the Agora economy pulse",
-			"descHead": "Read the Agora economy ticker — a live snapshot of the agent + human eco",
+			"descHead": "Read the Agora economy ticker \u2014 a live snapshot of the agent + human eco",
 			"descHash": "7b1f7e64a4a2",
 			"annotations": {
 				"readOnlyHint": true,
@@ -1355,7 +1363,7 @@
 		{
 			"name": "agora_register",
 			"title": "Register as an Agora citizen (on-chain)",
-			"descHead": "JOIN AGORA as a citizen — a REAL on-chain AgenC registration signed by Y",
+			"descHead": "JOIN AGORA as a citizen \u2014 a REAL on-chain AgenC registration signed by Y",
 			"descHash": "97f5aaecd553",
 			"annotations": {
 				"readOnlyHint": false,
@@ -1797,7 +1805,7 @@
 		{
 			"name": "pump_buy",
 			"title": "Buy a Solana token via Jupiter (direct or Jito-bundled)",
-			"descHead": "Swap SOL → target mint via Jupiter aggregator. Direct mode = one tx sign",
+			"descHead": "Swap SOL \u2192 target mint via Jupiter aggregator. Direct mode = one tx sign",
 			"descHash": "2a5ec65bb978",
 			"annotations": {
 				"readOnlyHint": false,
@@ -2222,7 +2230,7 @@
 		{
 			"name": "get_executions",
 			"title": "List copy executions (intent inbox)",
-			"descHead": "List the authenticated account's copy executions — the sized, guard-chec",
+			"descHead": "List the authenticated account's copy executions \u2014 the sized, guard-chec",
 			"descHash": "cbe66041c82b",
 			"annotations": {
 				"readOnlyHint": true,
@@ -2334,7 +2342,7 @@
 		{
 			"name": "smart_money_coin",
 			"title": "Smart-money score for a coin",
-			"descHead": "Assess a coin by WHO is net-buying it right now. Returns a 0–100 smart_m",
+			"descHead": "Assess a coin by WHO is net-buying it right now. Returns a 0\u2013100 smart_m",
 			"descHash": "e779edb0c8bf",
 			"annotations": {
 				"readOnlyHint": true,
@@ -2475,7 +2483,7 @@
 		{
 			"name": "browse_skills",
 			"title": "Browse the skills catalog",
-			"descHead": "Search and page the public three.ws skills catalog — reusable tools and ",
+			"descHead": "Search and page the public three.ws skills catalog \u2014 reusable tools and ",
 			"descHash": "cc6bca95f4db",
 			"annotations": {
 				"readOnlyHint": true,
@@ -2671,7 +2679,7 @@
 	"packages/portfolio-mcp/src/tools/portfolio-summary.js": [
 		{
 			"name": "get_portfolio_summary",
-			"title": "My agents’ live portfolio (holdings + USD value)",
+			"title": "My agents\u2019 live portfolio (holdings + USD value)",
 			"descHead": "dynamic",
 			"descHash": "dynamic",
 			"annotations": {
@@ -2729,7 +2737,7 @@
 		{
 			"name": "append_agent_action",
 			"title": "Append a signed action to the provenance ledger",
-			"descHead": "Record an action in an agent's append-only provenance ledger — the perma",
+			"descHead": "Record an action in an agent's append-only provenance ledger \u2014 the perma",
 			"descHash": "094f7fe192ca",
 			"annotations": {
 				"readOnlyHint": false,
@@ -2772,7 +2780,7 @@
 		{
 			"name": "build_world",
 			"title": "Build a complete 3D world from one sentence (no browser needed)",
-			"descHead": "One sentence → a fully forged, exported 3D world, entirely server-side: ",
+			"descHead": "One sentence \u2192 a fully forged, exported 3D world, entirely server-side: ",
 			"descHash": "0216a43f7396",
 			"annotations": {
 				"readOnlyHint": false,
@@ -2943,7 +2951,7 @@
 	"packages/three-token-mcp/src/tools/three-price.js": [
 		{
 			"name": "three_price",
-			"title": "Live $THREE price (Jupiter) + USD→$THREE quote",
+			"title": "Live $THREE price (Jupiter) + USD\u2192$THREE quote",
 			"descHead": "Return the live USD price of $THREE (Jupiter primary, Birdeye fallback).",
 			"descHash": "b589970ff915",
 			"annotations": {
@@ -3057,7 +3065,7 @@
 		{
 			"name": "vanity_open",
 			"title": "List claimable open bounties for workers",
-			"descHead": "List the open, unexpired bounties a grinding worker can race to claim — ",
+			"descHead": "List the open, unexpired bounties a grinding worker can race to claim \u2014 ",
 			"descHash": "45f3acbc46ae",
 			"annotations": {
 				"readOnlyHint": true,
@@ -3155,7 +3163,7 @@
 		{
 			"name": "inspect_endpoint",
 			"title": "Inspect an x402 endpoint (price + requirements, no payment)",
-			"descHead": "Fetch an x402 endpoint and return its 402 payment requirements — every a",
+			"descHead": "Fetch an x402 endpoint and return its 402 payment requirements \u2014 every a",
 			"descHash": "278c58d6e1c4",
 			"annotations": {
 				"readOnlyHint": true,

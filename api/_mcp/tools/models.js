@@ -1,6 +1,7 @@
 import { limits } from '../../_lib/rate-limit.js';
 import { fetchModel, FetchModelError } from '../../_lib/fetch-model.js';
 import { inspectModel, suggestOptimizations } from '../../_lib/model-inspect.js';
+import { describeModel, diffDescriptions, formatText } from '@three-ws/glb-diff';
 import { validateBytes } from 'gltf-validator';
 
 function rpcError(code, message, data) {
@@ -195,6 +196,50 @@ export const toolDefs = [
 			return {
 				content: [{ type: 'text', text: formatSuggestions(suggestions) }],
 				structuredContent: { url, filename, suggestions, info },
+			};
+		},
+	},
+	{
+		name: 'diff_models',
+		title: 'Diff two glTF/GLB models',
+		annotations: INSPECTION_ANNOTATIONS,
+		description:
+			'Compare two remote GLB or glTF models and return what changed: geometry, hierarchy, materials, textures, skeletons, and animation clips, each classified as added, removed, renamed, moved, or modified, with renames detected by content hash rather than by name. Every change carries a severity (none, cosmetic, minor, major, breaking) so an agent can decide whether an optimized, rigged, or re-exported model is still safe to ship. Breaking means something a consumer references by name is gone: a clip, a joint, a mesh.',
+		inputSchema: {
+			type: 'object',
+			properties: {
+				before: {
+					type: 'string',
+					format: 'uri',
+					description: 'Public https URL of the baseline .glb or .gltf file.',
+				},
+				after: {
+					type: 'string',
+					format: 'uri',
+					description: 'Public https URL of the candidate .glb or .gltf file.',
+				},
+			},
+			required: ['before', 'after'],
+			additionalProperties: false,
+		},
+		async handler(args, auth) {
+			const rl = await limits.mcpDiff(auth.userId || auth.rateKey);
+			if (!rl.success)
+				throw rpcError(-32000, 'rate_limited', {
+					retry_after: Math.ceil((rl.reset - Date.now()) / 1000),
+				});
+			// Sequential, so a caller who passed one bad URL learns which one
+			// without the server having spent a second full download first.
+			const a = await safeFetchModel(args.before);
+			const b = await safeFetchModel(args.after);
+			const [beforeDesc, afterDesc] = await Promise.all([
+				describeModel(a.bytes, { name: a.filename }),
+				describeModel(b.bytes, { name: b.filename }),
+			]);
+			const changeset = diffDescriptions(beforeDesc, afterDesc);
+			return {
+				content: [{ type: 'text', text: formatText(changeset, { color: false }) }],
+				structuredContent: { before: a.url, after: b.url, ...changeset },
 			};
 		},
 	},
