@@ -1,21 +1,24 @@
-// @three-ws/portal — any website as a walkable 3D world.
-//
-// Three things live here, and they are deliberately separable:
-//
-//   the layout       a pure function from a page's structure to a world
-//                    (./layout.js). No network, no DOM, no three.js. It runs
-//                    identically in a browser, in Node, in a worker, and on
-//                    three.ws itself, which is why a shared link always opens
-//                    the same city the sharer walked.
-//   the client       thin wrappers over the public Portal API, which does the
-//                    fetching, the robots.txt check and the caching for you.
-//   the embed        one call that puts a live, walkable world in your page.
-//
-// Nothing here needs a key, an account, or a wallet.
-//
-//   import { fetchWorld, mountPortal } from '@three-ws/portal';
-//   const { world } = await fetchWorld('example.com');
-//   mountPortal(document.querySelector('#stage'), { url: 'example.com' });
+/**
+ * `@three-ws/portal`: any website as a walkable 3D world.
+ *
+ * Three things live here, and they are deliberately separable:
+ *
+ *   the layout       a pure function from a page's structure to a world
+ *                    (./layout.js). No network, no DOM, no three.js. It runs
+ *                    identically in a browser, in Node, in a worker, and on
+ *                    three.ws itself, which is why a shared link always opens
+ *                    the same city the sharer walked.
+ *   the client       thin wrappers over the public Portal API, which does the
+ *                    fetching, the robots.txt check and the caching for you.
+ *   the embed        one call that puts a live, walkable world in your page.
+ *
+ * Nothing here needs a key, an account, or a wallet.
+ *
+ * @example
+ * import { fetchWorld, mountPortal } from '@three-ws/portal';
+ * const { world } = await fetchWorld('example.com');
+ * mountPortal(document.querySelector('#stage'), { url: 'example.com' });
+ */
 
 export * from './layout.js';
 
