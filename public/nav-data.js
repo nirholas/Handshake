@@ -69,6 +69,12 @@ export const NAV_GROUPS = [
 						tier: 'advanced',
 						desc: 'Author brain, memory, body, money & skills with a live avatar',
 					},
+					{
+						title: 'Companion',
+						href: '/companion',
+						badge: 'New',
+						desc: 'Your messages, calendar and phone, delivered in person by a 3D character',
+					},
 				],
 			},
 			{

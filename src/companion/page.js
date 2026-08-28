@@ -271,7 +271,23 @@ function openReplyBox(event, row) {
 	});
 }
 
+// First paint of the feed: the list is a network round trip away, and an empty
+// box for half a second reads as "nothing here" rather than "loading". Rows are
+// shaped like the real ones so nothing jumps when they arrive.
+function renderFeedSkeleton() {
+	el('feed-list').innerHTML = Array.from({ length: 4 }).map(() => `
+		<div class="event">
+			<div class="event-icon"><span class="skeleton" style="display:block;width:18px;height:18px;border-radius:50%"></span></div>
+			<div class="event-main">
+				<div class="skeleton" style="height:14px;width:62%"></div>
+				<div class="event-sub"><span class="skeleton" style="height:11px;width:28%"></span></div>
+			</div>
+		</div>
+	`).join('');
+}
+
 async function loadFeed({ append = false } = {}) {
+	if (!append && !state.events.length) renderFeedSkeleton();
 	const data = await companionApi.events({
 		limit: FEED_PAGE,
 		before: append ? state.feedCursor : null,
