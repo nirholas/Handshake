@@ -69,30 +69,18 @@ function durationMinutes(event) {
 	return Number.isFinite(mins) && mins > 0 ? Math.round(mins) : null;
 }
 
-export async function verifyCalendar(config) {
-	const text = await fetchIcs(config.ics_url);
-	const parsed = ical.sync.parseICS(text);
-	const events = Object.values(parsed).filter((e) => e.type === 'VEVENT');
-	const name = Object.values(parsed).find((e) => e.type === 'VCALENDAR')?.['WR-CALNAME'] || null;
-	return {
-		detail: `Read ${events.length} event${events.length === 1 ? '' : 's'} from ${name || 'the feed'}.`,
-		calendar_name: name,
-		event_count: events.length,
-	};
-}
-
 /**
- * Announce anything starting inside the lookahead window.
- * @returns {{ items: Array, cursor: object }}
+ * Everything in the feed that starts inside the window, as lane items.
+ * Pure: it takes the ICS text and a clock, so the announcement rules are
+ * testable without a network (tests/companion-calendar.test.js).
+ *
+ * @param {string} text raw iCalendar document
+ * @param {{ now?: number, lookaheadMinutes?: number }} [opts]
  */
-export async function pollCalendar({ config, cursor = {} }) {
-	const lookahead = Math.min(720, Math.max(5, Number(config.lookahead_minutes) || DEFAULT_LOOKAHEAD_MIN));
-	const text = await fetchIcs(config.ics_url);
+export function eventsFromIcs(text, { now = Date.now(), lookaheadMinutes = DEFAULT_LOOKAHEAD_MIN } = {}) {
 	const parsed = ical.sync.parseICS(text);
-
-	const now = Date.now();
 	const from = new Date(now - GRACE_MIN * 60_000);
-	const to = new Date(now + lookahead * 60_000);
+	const to = new Date(now + lookaheadMinutes * 60_000);
 	const items = [];
 
 	for (const event of Object.values(parsed)) {
@@ -119,6 +107,28 @@ export async function pollCalendar({ config, cursor = {} }) {
 			});
 		}
 	}
+	return items;
+}
 
+export async function verifyCalendar(config) {
+	const text = await fetchIcs(config.ics_url);
+	const parsed = ical.sync.parseICS(text);
+	const events = Object.values(parsed).filter((e) => e.type === 'VEVENT');
+	const name = Object.values(parsed).find((e) => e.type === 'VCALENDAR')?.['WR-CALNAME'] || null;
+	return {
+		detail: `Read ${events.length} event${events.length === 1 ? '' : 's'} from ${name || 'the feed'}.`,
+		calendar_name: name,
+		event_count: events.length,
+	};
+}
+
+/**
+ * Announce anything starting inside the lookahead window.
+ * @returns {{ items: Array, cursor: object }}
+ */
+export async function pollCalendar({ config, cursor = {} }) {
+	const lookahead = Math.min(720, Math.max(5, Number(config.lookahead_minutes) || DEFAULT_LOOKAHEAD_MIN));
+	const text = await fetchIcs(config.ics_url);
+	const items = eventsFromIcs(text, { lookaheadMinutes: lookahead });
 	return { items, cursor: { ...cursor, last_fetch: new Date().toISOString(), lookahead_minutes: lookahead } };
 }

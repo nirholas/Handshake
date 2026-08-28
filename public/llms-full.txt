@@ -181,6 +181,12 @@ URL: https://three.ws/collection
 
 View all the skills and subscriptions you've unlocked on three.ws.
 
+### Companion
+
+URL: https://three.ws/companion
+
+A 3D companion that delivers your important messages in person. Connect your own Telegram bot, calendar, inbox, or phone, give each contact their own avatar and voice, and hear only what clears your bar.
+
 ### Notifications
 
 URL: https://three.ws/notifications

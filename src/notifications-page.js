@@ -23,6 +23,7 @@ const TYPE_CATEGORY = {
 	quest_complete: 'social',
 	irl_interaction: 'irl', irl_reply: 'irl',
 	pump_alert: 'alerts',
+	companion_delivery: 'companion',
 	forge_complete: 'creations', forge_failed: 'creations',
 	withdrawal_completed: 'account', withdrawal_failed: 'account', payment_mismatch: 'account',
 	asset_payment_mismatch: 'account', skill_payment_mismatch: 'account', security_alert: 'account',

@@ -270,6 +270,19 @@ function ensureCompanion() {
 let _speaker = null;
 
 /**
+ * Hand the avatar over to the message: page-section narration stops and stays
+ * quiet for the length of the delivery, so its caption never covers the bubble
+ * and its voice never talks over the line.
+ */
+function quietTheNarrator(ms) {
+	try {
+		window.__walkNarrator?.api?.suspend?.(ms);
+	} catch {
+		/* narrator not installed on this page */
+	}
+}
+
+/**
  * Speak the line aloud, but only when the visitor already chose voice for the
  * companion's narration ("walk:companion:narrate" = voice, set from the
  * companion's own toggle). An announcement never introduces audio on its own.
@@ -278,9 +291,6 @@ async function speakAloud(text) {
 	try {
 		const mod = await import('./walk-companion-narrator.js');
 		if (mod.narrationMode() !== 'voice') return;
-		// Page-section narration and an announcement share one voice; the
-		// announcement wins.
-		window.__walkNarrator?.api?.silence?.();
 		if (!_speaker) _speaker = mod.createSpeaker();
 		_speaker.speak(text);
 	} catch {
@@ -341,6 +351,29 @@ async function run() {
 	}
 }
 
+/**
+ * The body that should deliver this line.
+ *
+ * A companion delivery carries whoever it is from: the contact's own avatar
+ * when the visitor gave that person one on /companion, the account's default
+ * companion body otherwise. `announce({ avatar })` swaps without persisting and
+ * restores the visitor's own avatar afterwards, so a message from Sarah really
+ * does arrive as Sarah and leaves your own companion where it was.
+ */
+async function guestAvatarFor(n) {
+	const url = n?.payload?.avatar_glb_url;
+	if (!url || typeof url !== 'string') return null;
+	if (!/^https?:\/\//i.test(url) && !url.startsWith('/')) return null;
+	try {
+		const { makeGuestAvatarEntry } = await import('../walk-sdk/src/roster.js');
+		return makeGuestAvatarEntry(url, { id: `companion:${url}`, name: n.payload.sender || 'Your contact' });
+	} catch {
+		// The roster module failed to load: deliver in the visitor's own body
+		// rather than losing the message.
+		return null;
+	}
+}
+
 async function deliver(item) {
 	const [{ TYPE_ICON, notifLabel, notifLink, trackInApp }, walk] = await Promise.all([
 		import('./notifications.js'),
@@ -374,14 +407,35 @@ async function deliver(item) {
 
 	if (!walk?.announce) return fallbackToast(line);
 
+	// Reserve the avatar for the length of the delivery plus its retraction.
+	quietTheNarrator(hold + 1200);
 	speakAloud(line);
 	const shown = await walk.announce(`${icon} ${line}`, {
 		hold,
 		tone: 'alert',
 		emote: n ? emoteFor(n.type) : 'wave',
 		actions,
+		avatar: n ? await guestAvatarFor(n) : null,
 	});
 	if (!shown) fallbackToast(line);
+	if (shown && n?.type === 'companion_delivery' && n.payload?.event_id) markCompanionDelivered(n.payload.event_id);
+}
+
+/**
+ * Tell the server the companion actually said this one out loud, so the same
+ * message is not waiting to be spoken again on the next device the visitor
+ * picks up. Fire and forget: the line has already been delivered either way.
+ */
+function markCompanionDelivered(eventId) {
+	import('./api.js')
+		.then(({ apiFetch }) => apiFetch(`/api/companion/events/${encodeURIComponent(eventId)}`, {
+			method: 'PATCH',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ delivered: true }),
+		}))
+		.catch(() => {
+			/* offline: the cron's own delivered_at stamp still covers it */
+		});
 }
 
 /**

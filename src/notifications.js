@@ -90,6 +90,7 @@ export const TYPE_ICON = {
 	forge_failed:             '⚠️',
 	quest_complete:           '🏆',
 	royalty_paid:             '💰',
+	companion_delivery:       '👋',
 };
 
 export function notifLabel(n) {
@@ -162,6 +163,11 @@ export function notifLabel(n) {
 			return p.mission
 				? `You finished "${p.mission}"${p.gold ? ` — earned ${p.gold} gold` : ''}`
 				: `You finished a quest`;
+		case 'companion_delivery':
+			// The spoken line the triage pass already wrote. It is the whole
+			// point of the delivery, so the inbox reads exactly like the avatar
+			// sounds. Falls back to the subject when a line never got written.
+			return p.line || (p.sender ? `${p.sender}: ${p.title || 'has something for you'}` : p.title || 'Something needs you');
 		case 'royalty_paid':
 			return p.usd
 				? `${p.actor || 'A fork of your avatar'} paid you $${Number(p.usd).toFixed(3)} in royalties`

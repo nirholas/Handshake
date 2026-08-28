@@ -15,6 +15,7 @@ this page picks up where that one leaves off.
 | Bell dropdown | The bell button in the header, on every page | [src/notifications.js](../src/notifications.js) |
 | Notification center | [/notifications](https://three.ws/notifications) | [pages/notifications.html](../pages/notifications.html), [src/notifications-page.js](../src/notifications-page.js) |
 | Preference editor | `/dashboard/settings` | [src/dashboard-next/pages/settings.js](../src/dashboard-next/pages/settings.js) |
+| Avatar announcements | The corner companion, on any page | [src/notification-herald.js](../src/notification-herald.js) |
 | Inbox API | `GET/POST/DELETE /api/notifications/*` | [api/notifications/](../api/notifications/README.md) |
 
 One inbox, two views. The dropdown holds the latest page for a quick glance;
@@ -79,6 +80,64 @@ Two details worth knowing:
 - **Tab filtering is client-side** over the pages already fetched. The API's
   own `?type=` parameter filters server-side by a single exact type (e.g.
   `?type=pump_alert`), not by category.
+
+## The avatar channel: delivered in person
+
+A badge waits to be noticed. Some notifications should not have to. When one
+of those lands while you are on the site, the corner companion (the avatar
+that already walks your pages) turns to you, plays a gesture, and says it out
+loud, with a link straight to the thing that happened.
+
+`avatar` is a real delivery channel next to `in_app`, `push`, `email`, and
+`telegram`. It is gated by the same per-category matrix, edited in the same
+place (`/dashboard/settings`), and measured in the same funnel.
+
+**What gets announced.** By default: **Sales & earnings**, **Creations**, and
+**Account**. Money landing, a generation finishing while you waited, and
+anything touching your account are worth an interruption. Purchases, social,
+in person, and market alerts are off by default because they are frequent.
+Every one of them is a toggle, so an inbox that should speak up more (or not
+at all) is two clicks away.
+
+**When it stays quiet.** The rules live in
+[src/notification-herald.js](../src/notification-herald.js):
+
+- Only **unread** notifications **under 15 minutes old**. Older rows are
+  history, and history belongs in the bell.
+- **Each notification exactly once per browser.** Delivered ids are remembered
+  in `localStorage`, so navigating, re-polling, or opening a second tab never
+  replays a line.
+- **Two lines per batch**, maximum. Anything past that becomes a single
+  "N more waiting" line pointing at `/notifications`, so a backlog never turns
+  into a monologue.
+- **Never into a background tab.** The point is telling someone who is here.
+- **Nothing is spoken aloud unless you asked for audio.** Announcements use
+  the companion's own narration setting (`walk:companion:narrate`, the toggle
+  on the companion itself). On the default caption-only setting the message is
+  text in the bubble, which is also an `aria-live` region, so screen readers
+  get it either way.
+
+**Controls.** The bubble carries "Turn off", which silences announcements in
+that browser instantly without touching the account-wide setting. Per-category
+control lives in the Notifications panel of `/dashboard/settings`.
+
+**No companion running?** It is summoned for that one message and walks off
+again afterwards, without turning itself on permanently. When an avatar cannot
+be rendered at all (no WebGL, inside an iframe, or a route that already owns
+the corner, such as `/play` or `/avatar-studio`) the line degrades to a normal
+toast, so the notification is never lost to a missing GPU.
+
+The delivery itself is one call into the walk SDK, which any surface can
+reuse:
+
+```js
+// walk-sdk/src/companion.js: mounts if needed, gestures, speaks, retreats.
+await window.__walkCompanion.announce('Your agent made a sale', {
+  tone: 'alert',
+  emote: 'dance',
+  actions: [{ label: 'Open', href: '/dashboard' }],
+});
+```
 
 ## How the bell and unread state work
 
@@ -218,12 +277,13 @@ row is not the caller's. Removal is permanent.
 
 ```
 POST /api/notifications/track
-{ "notification_id": "<uuid>", "channel": "push" | "in_app", "event": "opened" | "returned" }
+{ "notification_id": "<uuid>", "channel": "push" | "in_app" | "avatar", "event": "opened" | "returned" }
 ```
 
 An idempotent analytics beacon closing the sent-to-opened-to-returned loop:
-the service worker fires `opened` on a push click, the app fires `returned`
-when it boots from a push-sourced open. Session-cookie auth only (no bearer),
+the service worker fires `opened` on a push click, the corner companion fires
+`opened` when you click through from a line it announced, and the app fires
+`returned` when it boots from a push-sourced open. Session-cookie auth only (no bearer),
 CSRF-exempt, deduplicated server-side.
 
 > Source: [api/notifications/track.js](../api/notifications/track.js).
@@ -242,9 +302,12 @@ curl -s -X PUT 'https://three.ws/api/notifications/preferences' \
   -d '{ "categories": { "social": { "push": false } } }'
 ```
 
-GET returns `{ categories, channels, prefs, push: { subscribed_devices } }`:
-the seven categories from the table above, the four channels (`in_app`,
-`push`, `email`, `telegram`), and the caller's resolved matrix. PUT stores a
+GET returns
+`{ categories, channels, type_categories, prefs, push: { subscribed_devices } }`:
+the categories from the table above, the channels (`in_app`, `push`, `email`,
+`telegram`, `avatar`), the type-to-category map (so a browser client can
+resolve a category without a round trip per notification), and the caller's
+resolved matrix. PUT stores a
 sparse override; unknown categories, channels, and keys are dropped, and the
 response echoes the re-resolved matrix. The body also accepts
 `telegram_chat_id` (digits, settable and clearable) for the Telegram channel.
@@ -258,7 +321,7 @@ Delivery gating notes, all enforced in
   push left on still delivers the OS notification.
 - The `account` category's `in_app` channel is locked on. It is the durable
   record of withdrawals and security events, and the fallback bucket for
-  unmapped types; the other three channels stay fully mutable.
+  unmapped types; every other channel stays fully mutable.
 - A user who never saved gets the defaults, and new categories light up
   automatically without a backfill.
 

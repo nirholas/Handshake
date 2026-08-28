@@ -2605,6 +2605,14 @@
 			"dest": "/collection.html"
 		},
 		{
+			"src": "/companion",
+			"dest": "/companion.html"
+		},
+		{
+			"src": "/companion/",
+			"dest": "/companion.html"
+		},
+		{
 			"src": "/notifications",
 			"dest": "/notifications.html"
 		},
@@ -6127,6 +6135,10 @@
 		{
 			"path": "/api/cron/gpu-keepwarm",
 			"schedule": "*/10 14-23,0-4 * * *"
+		},
+		{
+			"path": "/api/cron/companion-poll",
+			"schedule": "*/2 * * * *"
 		}
 	]
 }

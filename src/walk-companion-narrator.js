@@ -385,6 +385,7 @@ export function installNarrator({ getInstance, getHostEl, storageKey } = {}) {
 
 	// ── Observer + active-section tracking ──────────────────────────────────────
 	let observer = null;
+	let suspendedUntil = 0;
 	let currentSection = null;
 	let debounceTimer = 0;
 	let sections = [];
@@ -414,6 +415,10 @@ export function installNarrator({ getInstance, getHostEl, storageKey } = {}) {
 	function narrate(el) {
 		const text = extractText(el);
 		if (!text || mode === 'off') return;
+		// Something more important is using the avatar right now (a delivered
+		// notification, see src/notification-herald.js). Section reading resumes
+		// on its own once the window passes.
+		if (Date.now() < suspendedUntil) return;
 
 		const wantVoice = mode === 'voice' && userGestureSeen;
 		// Caption is the always-on channel; show it immediately. When audio is
@@ -524,6 +529,13 @@ export function installNarrator({ getInstance, getHostEl, storageKey } = {}) {
 			speaker.cancel();
 			caption.hide();
 			currentSection = null;
+		},
+		// Silence, and stay quiet for `ms`, so a section scrolling into view
+		// cannot cover a message the avatar is in the middle of delivering. The
+		// mode is untouched: narration resumes by itself afterwards.
+		suspend(ms) {
+			suspendedUntil = Math.max(suspendedUntil, Date.now() + (Number(ms) || 0));
+			api.silence();
 		},
 	};
 

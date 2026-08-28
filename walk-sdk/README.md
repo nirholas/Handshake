@@ -160,10 +160,47 @@ control.disable(): void
 control.toggle(): void
 control.setAvatar(idOrEntry): void   // persist + hot-swap the live avatar
 control.openPicker(): void
+control.announce(message, opts?): Promise<boolean>  // deliver a line in person
 control.bootstrap(): void            // app-style auto-mount + ?walk= deep links
 control.instance                     // the live companion (or null)
 control.config                       // the resolved options, storage keys included
 ```
+
+### `control.announce(message, options?)`
+
+Deliver a message in person. The companion turns to the visitor, plays a
+gesture, and shows the line in its speech bubble. If it is not on screen (the
+visitor never turned it on, or closed it) it is summoned silently for this one
+message and walks off again afterwards, without flipping the persisted enabled
+flag: "off" stays off once the message is delivered.
+
+```js
+const walk = createWalkCompanion();
+
+const delivered = await walk.announce('Your model finished rendering', {
+  tone: 'alert',
+  emote: 'dance',
+  actions: [
+    { label: 'Open', href: '/creations', title: 'Open your finished model' },
+    { label: 'Turn off', onClick: () => muteAnnouncements() },
+  ],
+});
+if (!delivered) showYourOwnToast(); // no WebGL, an iframe, or an excluded route
+```
+
+| option    | default    | description                                                        |
+| --------- | ---------- | ------------------------------------------------------------------ |
+| `hold`    | `7000`     | ms the bubble stays up                                             |
+| `tone`    | `'alert'`  | `'alert'` tints the bubble; `'neutral'` is the ambient style       |
+| `emote`   | `'wave'`   | gesture on arrival, falling back to a wave on rigs without it      |
+| `actions` | none       | up to two links/buttons under the line (`label`, `href`/`onClick`) |
+
+Returns `false` when no avatar could be shown, so the caller can fall back to
+its own UI. The message is rendered as text, never HTML. A delivery outranks
+the companion's ambient chatter: a page greeting cannot overwrite it while it
+is on screen. `control.instance.say(text, opts)` and
+`control.instance.hideBubble()` drive the same bubble directly when you are
+managing the mount yourself.
 
 ### Roster helpers
 

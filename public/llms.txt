@@ -58,6 +58,7 @@ Entry points into the product.
 - [Marketplace Analytics](https://three.ws/marketplace/analytics): Real-time stats on the three.ws skill marketplace: top skills, top agents, and sales volume.
 - [Trial Conversions](https://three.ws/conversions): Both sides of the moment a metered free trial runs out: the trials you are holding with the runs you have left and the price to keep them, and the trials running on skills you sell with the revenue waiting in the queue.
 - [My Collection](https://three.ws/collection): View all the skills and subscriptions you've unlocked on three.ws.
+- [Companion](https://three.ws/companion): A 3D companion that delivers your important messages in person. Connect your own Telegram bot, calendar, inbox, or phone, give each contact their own avatar and voice, and hear only what clears your bar.
 - [Notifications](https://three.ws/notifications): Every payment, sale, remix, follow, quest, and royalty notification on three.ws: all in one place, filterable by category.
 - [Community](https://three.ws/community): Live platform activity plus where to follow, contribute, and connect with three.ws creators.
 - [Crew HQ](https://three.ws/crews): Found a crew, invite your people, and watch the whole roster stand in one 3D headquarters. Every member appears as their own agent, lit when they are live in the world.

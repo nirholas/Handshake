@@ -251,6 +251,15 @@
 					"added": "2026-06-17"
 				},
 				{
+					"path": "/companion",
+					"title": "Companion",
+					"description": "A 3D companion that delivers your important messages in person. Connect your own Telegram bot, calendar, inbox, or phone, give each contact their own avatar and voice, and hear only what clears your bar.",
+					"priority": 0.7,
+					"changefreq": "weekly",
+					"added": "2026-08-28",
+					"showcase": true
+				},
+				{
 					"path": "/notifications",
 					"title": "Notifications",
 					"description": "Every payment, sale, remix, follow, quest, and royalty notification on three.ws: all in one place, filterable by category.",

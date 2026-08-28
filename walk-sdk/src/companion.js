@@ -112,6 +112,9 @@ class WalkCompanion {
 		this._cursorX = window.innerWidth * 0.5;
 		this._cursorY = window.innerHeight * 0.5;
 		this._cursorMovedAt = 0;
+		// Bubble arbitration: what is on screen now and until when (see say()).
+		this._bubblePriority = 0;
+		this._bubbleUntil = 0;
 		this._yaw = 0;
 		this._targetYaw = 0;
 		this._lookAt = null;
@@ -542,10 +545,18 @@ class WalkCompanion {
 	 *   up until the next say()/hideBubble().
 	 * @param {'neutral'|'alert'} [opts.tone='neutral'] 'alert' tints the bubble.
 	 * @param {Array<{label:string, href?:string, title?:string, onClick?:Function}>} [opts.actions]
+	 * @param {number} [opts.priority=0] higher wins: a line at a lower priority
+	 *   is dropped while a higher-priority one is still showing. Deliveries
+	 *   (announce) speak at 1, ambient chatter at 0.
 	 * @returns {boolean} false when there is no bubble to render into.
 	 */
-	say(text, { hold = BUBBLE_HOLD_MS, tone = 'neutral', actions = null } = {}) {
+	say(text, { hold = BUBBLE_HOLD_MS, tone = 'neutral', actions = null, priority = 0 } = {}) {
 		if (!this.bubble || !text) return false;
+		// The companion has more than one voice: the page greeting, the invite
+		// nudge, the identity introduction, and a delivered message all reach for
+		// the same bubble. A lower-priority line must never overwrite a delivery
+		// while it is still on screen, whichever fires first.
+		if (priority < this._bubblePriority && Date.now() < this._bubbleUntil) return false;
 		const bubble = this.bubble;
 		clearTimeout(this._bubbleTimer);
 		bubble.textContent = '';
@@ -588,6 +599,8 @@ class WalkCompanion {
 		bubble.classList.toggle('has-actions', rendered.length > 0);
 		bubble.hidden = false;
 		bubble.classList.add('is-in');
+		this._bubblePriority = priority;
+		this._bubbleUntil = hold > 0 ? Date.now() + hold : Number.MAX_SAFE_INTEGER;
 		if (hold > 0) this._bubbleTimer = setTimeout(() => this.hideBubble(), hold);
 		return true;
 	}
@@ -595,6 +608,8 @@ class WalkCompanion {
 	/** Retract the speech bubble now. */
 	hideBubble() {
 		clearTimeout(this._bubbleTimer);
+		this._bubblePriority = 0;
+		this._bubbleUntil = 0;
 		if (!this.bubble) return;
 		const bubble = this.bubble;
 		bubble.classList.remove('is-in');
@@ -856,7 +871,7 @@ export function createWalkCompanion(opts = {}) {
 			} catch {
 				/* rig without emotes: the bubble still carries the message */
 			}
-			inst.say(message, { hold, tone, actions });
+			inst.say(message, { hold, tone, actions, priority: 1 });
 
 			const settle = async () => {
 				await new Promise((r) => setTimeout(r, hold + ANNOUNCE_RETREAT_MS));
