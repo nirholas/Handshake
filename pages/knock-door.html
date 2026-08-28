@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<style>/* three.ws hidden-guard - make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<script>/* three.ws theme boot */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Knock · three.ws</title>
+		<meta name="description" content="Pay someone's price and get one message through to them. Their 3D companion walks on screen and delivers it in person, with your name and what you paid." />
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<meta property="og:type" content="website">
+		<meta property="og:site_name" content="three.ws">
+		<meta property="og:title" content="Knock · three.ws">
+		<meta property="og:description" content="Pay someone's price and get one message through. Their 3D companion delivers it in person.">
+		<meta name="twitter:card" content="summary_large_image">
+		<meta name="twitter:site" content="@trythreews">
+		<meta name="robots" content="noindex, follow">
+		<meta property="og:locale" content="en_US">
+		<style>
+			:root{--bg:#0d0d0d;--bg-2:#141414;--card:#181818;--line:rgba(255,255,255,0.07);--line-2:rgba(255,255,255,0.12);--text:#e7e9ee;--muted:rgba(231,233,238,0.55);--dim:rgba(231,233,238,0.35);--blue:#3b82f6;--green:#22c55e;--amber:#f59e0b;--red:#ef4444;--radius:14px;--skeleton-base:rgba(255,255,255,0.04);--skeleton-sheen:rgba(255,255,255,0.08);}
+			[data-theme="light"]{--bg:#f5f5f5;--bg-2:#ffffff;--card:#ffffff;--line:rgba(0,0,0,0.07);--line-2:rgba(0,0,0,0.12);--text:#111;--muted:rgba(0,0,0,0.55);--dim:rgba(0,0,0,0.35);--skeleton-base:rgba(0,0,0,0.04);--skeleton-sheen:rgba(0,0,0,0.08);}
+			*{box-sizing:border-box;margin:0;padding:0;}
+			html,body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100vh;}
+			a{color:inherit;text-decoration:none;}
+			.shell{max-width:760px;margin:0 auto;padding:0 20px 120px;}
+			.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:600;padding:9px 15px;border-radius:9px;background:var(--card);color:var(--text);border:1px solid var(--line-2);cursor:pointer;transition:border-color .15s,background .15s,transform .1s;font-family:inherit;}
+			.btn:hover{border-color:var(--blue);}
+			.btn:active{transform:translateY(1px);}
+			.btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
+			.btn[disabled]{opacity:.5;cursor:not-allowed;}
+			.btn.is-ok{border-color:var(--green);color:var(--green);}
+			.btn-primary{background:var(--blue);border-color:var(--blue);color:#fff;}
+			.btn-primary:hover{background:#2f74e6;}
+			.btn-sm{font-size:12px;padding:6px 11px;}
+			.btn-lg{font-size:14px;padding:12px 20px;width:100%;}
+			.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px;}
+			.skeleton{background:linear-gradient(90deg,var(--skeleton-base) 25%,var(--skeleton-sheen) 37%,var(--skeleton-base) 63%);background-size:400% 100%;animation:sheen 1.3s ease infinite;border-radius:8px;}
+			@keyframes sheen{0%{background-position:100% 50%}100%{background-position:0 50%}}
+			.sk-row{height:14px;margin-bottom:10px;}
+			.who{display:flex;align-items:center;gap:14px;margin-bottom:18px;}
+			.face{width:56px;height:56px;border-radius:50%;overflow:hidden;background:var(--bg-2);border:1px solid var(--line-2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px;color:var(--muted);}
+			.face::after{content:attr(data-initial);}
+			.face:has(img:not([hidden]))::after{content:none;}
+			.face img{width:100%;height:100%;object-fit:cover;}
+			.who-text h1{font-size:21px;font-weight:700;letter-spacing:-0.02em;line-height:1.25;}
+			.who-text a{color:var(--muted);font-size:13px;}
+			.who-text a:hover{color:var(--blue);}
+			.verified{color:var(--blue);font-size:13px;margin-left:5px;}
+			.price{margin-left:auto;text-align:right;flex-shrink:0;}
+			.price-badge{display:inline-block;font-size:19px;font-weight:700;letter-spacing:-0.02em;padding:5px 12px;border-radius:999px;background:rgba(59,130,246,.14);color:var(--blue);border:1px solid rgba(59,130,246,.3);}
+			.price-badge.is-free{background:rgba(34,197,94,.14);color:var(--green);border-color:rgba(34,197,94,.3);}
+			.headline{font-size:15px;font-weight:600;margin-bottom:6px;}
+			.greeting{color:var(--muted);font-size:14px;line-height:1.6;white-space:pre-wrap;}
+			.price-note{color:var(--dim);font-size:12.5px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);line-height:1.55;}
+			form{margin-top:18px;display:grid;gap:14px;}
+			label{display:grid;gap:6px;font-size:12.5px;font-weight:600;color:var(--muted);}
+			input,textarea{width:100%;background:var(--bg-2);border:1px solid var(--line-2);border-radius:9px;padding:10px 12px;color:var(--text);font-family:inherit;font-size:14px;transition:border-color .15s;}
+			input:focus,textarea:focus{outline:none;border-color:var(--blue);}
+			textarea{min-height:130px;resize:vertical;line-height:1.55;}
+			.row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+			.counter{font-size:11.5px;color:var(--dim);text-align:right;font-variant-numeric:tabular-nums;}
+			.counter.is-full{color:var(--amber);}
+			.error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5;border-radius:9px;padding:10px 13px;font-size:13px;}
+			.sent{border:1px solid rgba(34,197,94,.35);background:rgba(34,197,94,.07);border-radius:var(--radius);padding:20px;margin-top:18px;}
+			.sent h2{font-size:16px;font-weight:700;margin-bottom:6px;}
+			.sent p{color:var(--muted);font-size:13.5px;line-height:1.6;}
+			.receipt{display:block;background:var(--bg-2);border:1px solid var(--line-2);border-radius:9px;padding:9px 11px;font-size:11.5px;word-break:break-all;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);margin:12px 0;}
+			.reply-box{background:var(--bg-2);border:1px solid var(--line-2);border-left:3px solid var(--blue);border-radius:9px;padding:11px 13px;font-size:13.5px;line-height:1.6;margin-top:12px;white-space:pre-wrap;}
+			.sent-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;}
+			details.agents{margin-top:26px;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);overflow:hidden;}
+			details.agents summary{cursor:pointer;padding:15px 20px;font-size:13.5px;font-weight:600;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+			details.agents summary::-webkit-details-marker{display:none;}
+			details.agents summary::after{content:'+';color:var(--muted);font-size:17px;font-weight:400;}
+			details.agents[open] summary::after{content:'\2212';}
+			details.agents summary:hover{background:var(--bg-2);}
+			details.agents summary:focus-visible{outline:2px solid var(--blue);outline-offset:-2px;}
+			.agents-body{padding:0 20px 20px;display:grid;gap:16px;}
+			.agents-body h3{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);margin-bottom:7px;}
+			pre{background:var(--bg-2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:11.5px;line-height:1.65;overflow-x:auto;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);white-space:pre;}
+			code.inline{background:var(--bg-2);border:1px solid var(--line);border-radius:7px;padding:7px 10px;font-size:11.5px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-all;display:block;color:var(--muted);}
+			.snip-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+			.empty{text-align:center;padding:60px 20px;}
+			.empty h2{font-size:18px;font-weight:700;margin-bottom:8px;}
+			.empty p{color:var(--muted);font-size:14px;line-height:1.6;max-width:420px;margin:0 auto 18px;}
+			.foot-note{color:var(--dim);font-size:12px;text-align:center;margin-top:26px;line-height:1.6;}
+			.foot-note a{color:var(--muted);text-decoration:underline;text-underline-offset:2px;}
+			.foot-note a:hover{color:var(--blue);}
+			@media(max-width:560px){.row{grid-template-columns:1fr;}.who{flex-wrap:wrap;}.price{margin-left:0;width:100%;text-align:left;}}
+			@media(prefers-reduced-motion:reduce){.skeleton{animation:none;}}
+		</style>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="shell">
+			<div id="loading" class="card" style="margin-top:40px;" aria-live="polite" aria-busy="true">
+				<div class="skeleton sk-row" style="width:45%;height:22px;"></div>
+				<div class="skeleton sk-row" style="width:70%;"></div>
+				<div class="skeleton sk-row" style="width:60%;"></div>
+				<span class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);">Loading this door</span>
+			</div>
+
+			<div id="not-found" class="empty" hidden>
+				<h2>No answer</h2>
+				<p data-msg></p>
+				<a class="btn" href="/knock">See who is open</a>
+			</div>
+
+			<section id="door-card" class="card" style="margin-top:40px;" hidden>
+				<div class="who">
+					<div class="face" data-initial="?"><img id="avatar" alt="" hidden /></div>
+					<div class="who-text">
+						<h1><span id="display-name"></span><span class="verified" id="verified" hidden title="Verified">&#10003;</span></h1>
+						<a id="handle" href="#"></a>
+					</div>
+					<div class="price"><span class="price-badge" id="price-badge"></span></div>
+				</div>
+
+				<p class="headline" id="headline" hidden></p>
+				<p class="greeting" id="greeting" hidden></p>
+				<p class="price-note" id="price-note"></p>
+
+				<form id="form" novalidate>
+					<div class="row">
+						<label>Who are you
+							<input id="from" type="text" maxlength="64" required autocomplete="name" placeholder="Ada, or Ada's research agent" />
+						</label>
+						<label>Link (optional)
+							<input id="url" type="url" maxlength="400" placeholder="https://" />
+						</label>
+					</div>
+					<label>One line they will hear out loud (optional)
+						<input id="subject" type="text" maxlength="120" placeholder="Why you are knocking, in a few words" />
+					</label>
+					<label>Your message
+						<textarea id="message" required placeholder="This is shown to them in full. Only the line above is spoken."></textarea>
+						<span class="counter" id="counter">0 / 600</span>
+					</label>
+					<div class="error" id="form-error" hidden></div>
+					<button type="submit" class="btn btn-primary btn-lg" id="submit">Knock</button>
+				</form>
+
+				<div class="sent" id="sent" hidden>
+					<h2>Through the door</h2>
+					<p id="sent-line"></p>
+					<code class="receipt" id="receipt-url" hidden></code>
+					<div class="reply-box" id="reply-box" hidden></div>
+					<div class="sent-actions">
+						<button type="button" class="btn btn-sm" id="copy-receipt" hidden>Copy receipt link</button>
+						<button type="button" class="btn btn-sm" id="check-reply" hidden>Check for a reply</button>
+						<button type="button" class="btn btn-sm" id="knock-again">Knock again</button>
+					</div>
+				</div>
+			</section>
+
+			<details class="agents" id="agent-panel">
+				<summary>Reach this person from an agent</summary>
+				<div class="agents-body">
+					<div>
+						<div class="snip-head">
+							<h3>Endpoint</h3>
+							<button type="button" class="btn btn-sm" id="copy-endpoint">Copy</button>
+						</div>
+						<code class="inline" id="agent-endpoint"></code>
+					</div>
+					<div>
+						<div class="snip-head">
+							<h3>curl</h3>
+							<button type="button" class="btn btn-sm" data-copy-target="curl-snippet">Copy</button>
+						</div>
+						<pre id="curl-snippet"></pre>
+					</div>
+					<div>
+						<div class="snip-head">
+							<h3>SDK</h3>
+							<button type="button" class="btn btn-sm" data-copy-target="sdk-snippet">Copy</button>
+						</div>
+						<pre id="sdk-snippet"></pre>
+					</div>
+					<div>
+						<div class="snip-head">
+							<h3>MCP (Claude, Cursor, any MCP client)</h3>
+							<button type="button" class="btn btn-sm" data-copy-target="mcp-snippet">Copy</button>
+						</div>
+						<pre id="mcp-snippet"></pre>
+					</div>
+				</div>
+			</details>
+
+			<p class="foot-note">
+				Knock is a priced door to a person. The money settles straight to them, never to three.ws.
+				<a href="/docs/knock">How it works</a> &middot; <a href="/knock">Open your own door</a>
+			</p>
+		</main>
+
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/x402.js"></script>
+		<script type="module" src="/src/knock/door.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>
