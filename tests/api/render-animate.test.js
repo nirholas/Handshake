@@ -1,4 +1,4 @@
-// GET /api/render/animate — the animated-avatar image endpoint.
+// GET /api/render/animate: the animated-avatar image endpoint.
 //
 // The render itself is covered by packages/render/tests; what matters here is
 // the public contract around it: a discoverable catalog, an honest error for an
