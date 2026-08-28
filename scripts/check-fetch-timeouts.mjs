@@ -131,6 +131,26 @@ function isQuotedSource(line) {
 	return /^\s*[`'"]/.test(line);
 }
 
+// True when the `fetch(` on this line sits INSIDE a string literal rather than
+// being a call. Documentation strings and usage examples embedded in an API
+// response ship real code as data, and reporting those trains people to ignore
+// this check, which is worse than the gap it would close.
+function fetchIsInsideString(line) {
+	const idx = line.search(/(?<![.\w$])fetch\s*\(/);
+	if (idx < 0) return false;
+	let quote = null;
+	for (let i = 0; i < idx; i++) {
+		const ch = line[i];
+		if (quote) {
+			if (ch === '\\') i += 1;
+			else if (ch === quote) quote = null;
+		} else if (ch === '\'' || ch === '"' || ch === '`') {
+			quote = ch;
+		}
+	}
+	return quote !== null;
+}
+
 export function scanFile(file, src) {
 	// Server handlers and helpers: every call is in scope, same-origin included.
 	const serverSide = /^api\//.test(file);
@@ -139,8 +159,12 @@ export function scanFile(file, src) {
 	const out = [];
 	for (let i = 0; i < lines.length; i++) {
 		const line = lines[i];
-		if (!/\bfetch\(/.test(line)) continue;
+		// A member call (`client.fetch(...)`, `Model.fetch()`) is somebody else's
+		// method, not the global fetch: an IMAP client and an SDK helper both
+		// spell it this way and neither opens an HTTP socket we control.
+		if (!/(?<![.\w$])fetch\s*\(/.test(line)) continue;
 		if (/^\s*(\/\/|\*|\/\*)/.test(line)) continue;
+		if (fetchIsInsideString(line)) continue;
 		// Definitions, stubs and re-assignments are not call sites.
 		if (/function fetch|globalThis\.fetch\s*=|global\.fetch\s*=|vi\.fn|fetchImpl\b|=\s*fetch\s*[;,)]/.test(line)) continue;
 
