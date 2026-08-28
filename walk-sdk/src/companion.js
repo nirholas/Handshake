@@ -398,7 +398,7 @@ class WalkCompanion {
 			if (chatter) this._say(`Say hi to ${active.name}!`);
 		} catch (err) {
 			log.warn('avatar swap failed:', err?.message || err);
-			if (chatter) this._say('Couldn’t load that one — try another.');
+			if (chatter) this._say('Couldn’t load that one. Try another.');
 		}
 	}
 
