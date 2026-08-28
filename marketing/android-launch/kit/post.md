@@ -16,14 +16,16 @@ through 13 are replies in order. Counts are X's own arithmetic, where a URL
 costs 23 characters however long it is, and all thirteen fit inside 280 without
 Premium.
 
-**1**, 226 characters. Attach the four tiles here, in the order in `IMAGE-ORDER.md`.
+**1**, 264 characters. Attach the four tiles here, in the order in `IMAGE-ORDER.md`.
 
 ```
 A 3D studio and an AI agent lab. In your pocket.
 
 three.ws for Android is live.
 
-Type anything, get a 3D model. One selfie, a character of you. Give it a mind and a voice. Put it in your room in AR. Send it out into the world.
+Type anything, get a 3D model. One selfie, a character of you. Give it a mind and a voice. Put it in your room in AR. Send it out to work for you.
+
+Everything it does, in this thread:
 ```
 
 Post 1 is the hook and nothing else. No link, no price, no "no account": those
