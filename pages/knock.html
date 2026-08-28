@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<style>/* three.ws hidden-guard - make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<script>/* three.ws theme boot */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Knock · three.ws</title>
+		<meta name="description" content="Put a price on reaching you. Anyone, human or agent, can pay it to get one message through, and your 3D companion delivers it in person. The USDC settles straight to your wallet." />
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="canonical" href="https://three.ws/knock">
+		<meta property="og:type" content="website">
+		<meta property="og:site_name" content="three.ws">
+		<meta property="og:title" content="Knock · three.ws">
+		<meta property="og:description" content="Put a price on reaching you. Anyone, human or agent, can pay it to get one message through, and your 3D companion delivers it in person.">
+		<meta property="og:url" content="https://three.ws/knock">
+		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Knock&amp;d=Put+a+price+on+reaching+you.+Anyone%2C+human+or+agent%2C+can+pay+it+to+get+one+message+through%2C+and+your+3D+companion+delivers+it+in+person&amp;p=%2Fknock">
+		<meta property="og:image:width" content="1200">
+		<meta property="og:image:height" content="630">
+		<meta property="og:image:alt" content="Knock - three.ws">
+		<meta name="twitter:card" content="summary_large_image">
+		<meta name="twitter:site" content="@trythreews">
+		<meta name="twitter:title" content="Knock · three.ws">
+		<meta name="twitter:description" content="Put a price on reaching you. Your 3D companion delivers what gets through, in person.">
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Knock&amp;d=Put+a+price+on+reaching+you.+Anyone%2C+human+or+agent%2C+can+pay+it+to+get+one+message+through&amp;p=%2Fknock">
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+		<meta property="og:locale" content="en_US">
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"three.ws Knock","applicationCategory":"CommunicationApplication","operatingSystem":"Web","description":"A priced, machine-payable door to a person. Pay someone's price to get one message through; their 3D companion delivers it in person.","url":"https://three.ws/knock","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
+		<style>
+			:root{--bg:#0d0d0d;--bg-2:#141414;--card:#181818;--line:rgba(255,255,255,0.07);--line-2:rgba(255,255,255,0.12);--text:#e7e9ee;--muted:rgba(231,233,238,0.55);--dim:rgba(231,233,238,0.35);--blue:#3b82f6;--green:#22c55e;--amber:#f59e0b;--red:#ef4444;--radius:14px;--skeleton-base:rgba(255,255,255,0.04);--skeleton-sheen:rgba(255,255,255,0.08);}
+			[data-theme="light"]{--bg:#f5f5f5;--bg-2:#ffffff;--card:#ffffff;--line:rgba(0,0,0,0.07);--line-2:rgba(0,0,0,0.12);--text:#111;--muted:rgba(0,0,0,0.55);--dim:rgba(0,0,0,0.35);--skeleton-base:rgba(0,0,0,0.04);--skeleton-sheen:rgba(0,0,0,0.08);}
+			*{box-sizing:border-box;margin:0;padding:0;}
+			html,body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100vh;}
+			a{color:inherit;text-decoration:none;}
+			.shell{max-width:1080px;margin:0 auto;padding:0 20px 120px;}
+			.hero{padding:48px 0 20px;}
+			.hero h1{font-size:32px;font-weight:700;letter-spacing:-0.025em;}
+			.hero p{color:var(--muted);margin-top:10px;font-size:15px;line-height:1.6;max-width:620px;}
+			.hero-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;}
+			.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:600;padding:9px 15px;border-radius:9px;background:var(--card);color:var(--text);border:1px solid var(--line-2);cursor:pointer;transition:border-color .15s,background .15s,transform .1s;font-family:inherit;}
+			.btn:hover{border-color:var(--blue);}
+			.btn:active{transform:translateY(1px);}
+			.btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
+			.btn[disabled]{opacity:.5;cursor:not-allowed;}
+			.btn.is-ok{border-color:var(--green);color:var(--green);}
+			.btn-primary{background:var(--blue);border-color:var(--blue);color:#fff;}
+			.btn-primary:hover{background:#2f74e6;}
+			.btn-sm{font-size:12px;padding:6px 11px;}
+			.btn-danger:hover{border-color:var(--red);color:#fca5a5;}
+			section{margin-top:36px;}
+			.sec-head{margin-bottom:14px;}
+			.sec-head h2{font-size:18px;font-weight:700;letter-spacing:-0.015em;}
+			.sec-head p{color:var(--muted);font-size:13.5px;margin-top:5px;line-height:1.55;}
+			.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px;}
+			.skeleton{background:linear-gradient(90deg,var(--skeleton-base) 25%,var(--skeleton-sheen) 37%,var(--skeleton-base) 63%);background-size:400% 100%;animation:sheen 1.3s ease infinite;border-radius:8px;height:14px;margin-bottom:10px;}
+			@keyframes sheen{0%{background-position:100% 50%}100%{background-position:0 50%}}
+			.empty{border:1px dashed var(--line-2);border-radius:var(--radius);padding:34px 22px;text-align:center;color:var(--muted);font-size:13.5px;line-height:1.6;}
+			.empty strong{display:block;color:var(--text);font-size:15px;margin-bottom:6px;}
+			.error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5;border-radius:9px;padding:10px 13px;font-size:13px;margin-top:12px;}
+			.ok-note{color:var(--green);font-size:12.5px;margin-top:10px;}
+			.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;}
+			.door-card{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;transition:border-color .15s,transform .1s;}
+			.door-card:hover{border-color:var(--blue);transform:translateY(-1px);}
+			.door-card:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
+			.face{width:40px;height:40px;border-radius:50%;overflow:hidden;background:var(--bg-2);border:1px solid var(--line-2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:var(--muted);}
+			.face::after{content:attr(data-initial);}
+			.face:has(img)::after{content:none;}
+			.face img{width:100%;height:100%;object-fit:cover;}
+			.door-card-body{min-width:0;flex:1;}
+			.door-card-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+			.door-card-handle{font-size:12px;color:var(--dim);}
+			.door-card-headline{font-size:12px;color:var(--muted);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+			.door-card-price{font-size:13px;font-weight:700;color:var(--blue);flex-shrink:0;font-variant-numeric:tabular-nums;}
+			.door-card-price.is-free{color:var(--green);}
+			.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px;}
+			.stat{background:var(--bg-2);border:1px solid var(--line);border-radius:11px;padding:14px;}
+			.stat b{display:block;font-size:22px;font-weight:700;letter-spacing:-0.02em;font-variant-numeric:tabular-nums;}
+			.stat span{font-size:11.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;}
+			.fields{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+			label{display:grid;gap:6px;font-size:12.5px;font-weight:600;color:var(--muted);}
+			label.wide{grid-column:1/-1;}
+			input[type=text],input[type=number],textarea{width:100%;background:var(--bg-2);border:1px solid var(--line-2);border-radius:9px;padding:10px 12px;color:var(--text);font-family:inherit;font-size:14px;transition:border-color .15s;}
+			input:focus,textarea:focus{outline:none;border-color:var(--blue);}
+			textarea{min-height:82px;resize:vertical;line-height:1.55;}
+			.hint{font-weight:400;font-size:11.5px;color:var(--dim);line-height:1.5;}
+			.toggle{display:flex;align-items:center;gap:9px;font-size:13.5px;font-weight:600;color:var(--text);cursor:pointer;}
+			.toggle input{width:17px;height:17px;accent-color:var(--blue);cursor:pointer;}
+			.toggles{display:flex;gap:22px;flex-wrap:wrap;grid-column:1/-1;}
+			.share{margin-top:18px;padding-top:18px;border-top:1px solid var(--line);display:grid;gap:10px;}
+			.share-row{display:flex;align-items:center;gap:8px;}
+			code.inline{flex:1;min-width:0;background:var(--bg-2);border:1px solid var(--line);border-radius:8px;padding:8px 11px;font-size:11.5px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-all;color:var(--muted);}
+			.save-row{margin-top:18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+			ul.inbox{list-style:none;display:grid;gap:10px;}
+			.knock{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;}
+			.knock.is-new{border-color:rgba(59,130,246,.4);box-shadow:0 0 0 1px rgba(59,130,246,.12);}
+			.knock-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:13.5px;}
+			.knock-amount{font-size:11.5px;font-weight:700;color:var(--blue);background:rgba(59,130,246,.12);border-radius:999px;padding:2px 8px;font-variant-numeric:tabular-nums;}
+			.knock-amount.is-free{color:var(--muted);background:var(--bg-2);}
+			.knock-head time{margin-left:auto;font-size:11.5px;color:var(--dim);}
+			.knock-body{margin-top:9px;}
+			.knock-subject{font-size:13.5px;font-weight:600;margin-bottom:5px;}
+			.knock-body p{color:var(--muted);font-size:13.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;}
+			.knock-link{display:inline-block;margin-top:7px;font-size:12px;color:var(--blue);text-decoration:underline;text-underline-offset:2px;word-break:break-all;}
+			.knock-reply{margin-top:10px;padding:9px 12px;border-left:3px solid var(--green);background:var(--bg-2);border-radius:0 8px 8px 0;font-size:13px;color:var(--muted);line-height:1.55;white-space:pre-wrap;}
+			.knock-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px;}
+			.reply-form{margin-top:12px;display:grid;gap:9px;}
+			.reply-row{display:flex;gap:8px;}
+			ul.blocks{list-style:none;display:grid;gap:7px;}
+			ul.blocks li{display:flex;align-items:center;gap:10px;background:var(--bg-2);border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-size:12.5px;}
+			ul.blocks li span{flex:1;min-width:0;word-break:break-all;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);}
+			.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;}
+			.how div{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;}
+			.how b{display:block;font-size:13.5px;margin-bottom:5px;}
+			.how p{color:var(--muted);font-size:12.5px;line-height:1.6;}
+			@media(max-width:700px){.fields{grid-template-columns:1fr;}.stats{grid-template-columns:1fr;}.hero h1{font-size:26px;}}
+			@media(prefers-reduced-motion:reduce){.skeleton{animation:none;}.door-card:hover{transform:none;}}
+		</style>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="shell">
+			<div class="hero">
+				<h1>Knock</h1>
+				<p>
+					Put a price on reaching you. Anyone, a person or an agent, can pay it to get exactly
+					one message through, and your 3D companion walks on screen and delivers it out loud,
+					with their name and what they paid. The USDC settles straight to your wallet.
+				</p>
+				<div class="hero-actions">
+					<a class="btn" href="/docs/knock">How it works</a>
+					<a class="btn" href="/companion">Your companion</a>
+				</div>
+			</div>
+
+			<section class="how" aria-label="How Knock works">
+				<div><b>1. Set your price</b><p>Anything from $0.001 to $1,000, or free. It is what one message from a stranger costs.</p></div>
+				<div><b>2. They pay it</b><p>A person pays with the wallet in their browser. An agent pays over x402 with no human in the loop.</p></div>
+				<div><b>3. You hear it in person</b><p>Your companion walks on wherever you are on the site and says who is at the door and what they paid.</p></div>
+			</section>
+
+			<section aria-labelledby="owner-h">
+				<div class="sec-head">
+					<h2 id="owner-h">Your door</h2>
+					<p>Shut until you open it. Nothing here is public except the price, your headline, and your greeting.</p>
+				</div>
+
+				<div id="owner-loading" class="card" aria-busy="true">
+					<div class="skeleton" style="width:35%;height:20px;"></div>
+					<div class="skeleton" style="width:70%;"></div>
+					<div class="skeleton" style="width:55%;"></div>
+				</div>
+
+				<div id="signed-out" class="empty" hidden>
+					<strong>Sign in to open your door</strong>
+					Your price, your wallet, and everything that comes through it stays private to your account.
+					<div class="hero-actions" style="justify-content:center;">
+						<a class="btn btn-primary" href="/login?next=/knock">Sign in</a>
+					</div>
+				</div>
+
+				<div id="owner" class="card" hidden>
+					<div class="stats">
+						<div class="stat"><b id="stat-pending">0</b><span>Waiting</span></div>
+						<div class="stat"><b id="stat-total">0</b><span>All time</span></div>
+						<div class="stat"><b id="stat-earned">$0.00</b><span>Earned</span></div>
+					</div>
+
+					<div class="fields">
+						<div class="toggles">
+							<label class="toggle"><input type="checkbox" id="door-open" /> Door open</label>
+							<label class="toggle"><input type="checkbox" id="door-listed" /> List me in the directory</label>
+						</div>
+						<label>Price per knock (USDC)
+							<input type="text" id="door-price" inputmode="decimal" placeholder="0.05" />
+							<span class="hint">0 makes it free. Otherwise between $0.001 and $1,000.</span>
+						</label>
+						<label>Knocks per day
+							<input type="number" id="door-cap" min="1" max="1000" />
+							<span class="hint">After this, the door answers "full for today" and charges nobody.</span>
+						</label>
+						<label>Solana wallet (paid to you)
+							<input type="text" id="door-solana" placeholder="Your USDC address on Solana" />
+							<span class="hint">The home chain, and the lane an agent settles on by default.</span>
+						</label>
+						<label>Base wallet (optional)
+							<input type="text" id="door-base" placeholder="0x…" />
+							<span class="hint">Offered alongside Solana only when you set it.</span>
+						</label>
+						<label class="wide">Headline
+							<input type="text" id="door-headline" maxlength="120" placeholder="What you are worth interrupting for" />
+						</label>
+						<label class="wide">Greeting
+							<textarea id="door-greeting" maxlength="600" placeholder="What a visitor reads before they write. Tell them what you actually want to hear about."></textarea>
+						</label>
+						<label>Message length limit
+							<input type="number" id="door-max" min="40" max="2000" />
+							<span class="hint">Characters. Long enough to be useful, short enough to read.</span>
+						</label>
+					</div>
+
+					<div class="error" id="settings-error" hidden></div>
+
+					<div class="save-row">
+						<button type="button" class="btn btn-primary" id="save">Save door</button>
+						<span class="ok-note" id="save-note" hidden></span>
+					</div>
+
+					<div class="empty" id="no-handle" hidden style="margin-top:18px;">
+						<strong>Pick a username first</strong>
+						Your door lives at /knock/&lt;username&gt;, so it needs one.
+						<div class="hero-actions" style="justify-content:center;"><a class="btn" href="/dashboard/settings">Choose a username</a></div>
+					</div>
+
+					<div class="share" id="share-block" hidden>
+						<div class="share-row">
+							<code class="inline" id="share-url"></code>
+							<button type="button" class="btn btn-sm" id="copy-share" data-copy="">Copy link</button>
+						</div>
+						<div class="share-row">
+							<code class="inline" id="endpoint-url"></code>
+							<button type="button" class="btn btn-sm" id="copy-endpoint" data-copy="">Copy endpoint</button>
+						</div>
+						<span class="hint">The first is for people. The second is what an agent pays.</span>
+					</div>
+				</div>
+			</section>
+
+			<section aria-labelledby="inbox-h">
+				<div class="sec-head">
+					<h2 id="inbox-h">Who knocked</h2>
+					<p>Every message that made it through, and what it was worth. Replying writes back to the receipt link the sender already holds.</p>
+				</div>
+				<div id="inbox-loading" class="card" aria-busy="true">
+					<div class="skeleton" style="width:40%;"></div>
+					<div class="skeleton" style="width:80%;"></div>
+				</div>
+				<div id="inbox-empty" class="empty" hidden>
+					<strong>Nobody has knocked yet</strong>
+					<span data-msg>Open your door and share the link. Anything that comes through lands here and gets announced by your companion.</span>
+				</div>
+				<ul class="inbox" id="inbox" hidden></ul>
+				<div class="hero-actions" style="justify-content:center;">
+					<button type="button" class="btn" id="load-more" hidden>Load more</button>
+				</div>
+			</section>
+
+			<section aria-labelledby="blocks-h">
+				<div class="sec-head">
+					<h2 id="blocks-h">Blocked</h2>
+					<p>Blocked senders get the same answer a shut door gives, so they cannot tell it was them.</p>
+				</div>
+				<div id="blocks-empty" class="empty" hidden><strong>Nobody blocked</strong>Block a sender from any knock in the list above.</div>
+				<ul class="blocks" id="blocks" hidden></ul>
+			</section>
+
+			<section aria-labelledby="dir-h">
+				<div class="sec-head">
+					<h2 id="dir-h">Open doors</h2>
+					<p>Everyone reachable right now, cheapest first.</p>
+				</div>
+				<div id="directory-loading" class="card" aria-busy="true">
+					<div class="skeleton" style="width:30%;"></div>
+					<div class="skeleton" style="width:60%;"></div>
+				</div>
+				<div id="directory-empty" class="empty" hidden>
+					<strong>No open doors yet</strong>
+					<span data-msg>Be the first. Open yours above and it appears here.</span>
+				</div>
+				<div class="grid" id="directory" hidden></div>
+			</section>
+		</main>
+
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/src/knock/page.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

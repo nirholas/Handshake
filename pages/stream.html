@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Progressive Avatars · three.ws</title>
+		<meta name="description" content="A 3D avatar should not be a blank box until the last byte arrives. A3S packs a GLB into layers whose first 50 KB is already a complete, skinned, spec-valid avatar, refined in place over plain HTTP range requests." />
+		<link rel="canonical" href="https://three.ws/stream" />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/stream" />
+		<meta property="og:title" content="Progressive Avatars · three.ws" />
+		<meta property="og:description" content="The first 50 KB of an A3S stream is already a complete, skinned avatar. Watch it race a classic GLB load." />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Progressive+Avatars&amp;d=The+first+50+KB+is+already+a+complete%2C+skinned+avatar.&amp;p=%2Fstream" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Progressive Avatars · three.ws" />
+		<meta name="twitter:description" content="The first 50 KB of an A3S stream is already a complete, skinned avatar. Watch it race a classic GLB load." />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Progressive+Avatars&amp;d=The+first+50+KB+is+already+a+complete%2C+skinned+avatar.&amp;p=%2Fstream" />
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<style>
+			.st-shell { max-width: 1180px; margin: 0 auto; padding: clamp(20px, 5vw, 44px) 18px 80px; }
+			.st-hero { margin-bottom: 26px; }
+			.st-kicker { display: inline-flex; align-items: center; gap: 8px; font-size: .72rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-dim, #888); margin: 0 0 10px; }
+			.st-kicker::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--success, #34d399); box-shadow: 0 0 8px color-mix(in srgb, var(--success, #34d399) 60%, transparent); }
+			.st-title { font-family: var(--font-display, system-ui); font-size: clamp(1.7rem, 4.4vw, 2.4rem); font-weight: 700; color: var(--ink-bright, #fff); margin: 0 0 10px; line-height: 1.08; }
+			.st-sub { color: var(--ink-dim, #999); font-size: .98rem; line-height: 1.65; margin: 0; max-width: 68ch; }
+			.st-sub code { font-family: var(--font-mono, ui-monospace, monospace); font-size: .88em; background: color-mix(in srgb, var(--ink, #e8e8e8) 8%, transparent); padding: 1px 5px; border-radius: 4px; }
+
+			.st-controls { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; margin: 26px 0 12px; }
+			.st-field { display: flex; flex-direction: column; gap: 6px; }
+			.st-field span { font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-dim, #888); font-weight: 600; }
+			.st-field select { background: color-mix(in srgb, var(--ink, #e8e8e8) 6%, transparent); color: var(--ink, #e8e8e8); border: 1px solid color-mix(in srgb, var(--ink, #e8e8e8) 16%, transparent); border-radius: 9px; padding: 9px 12px; font-size: .9rem; min-width: 160px; transition: border-color .18s ease, background .18s ease; }
+			.st-field select:hover { border-color: color-mix(in srgb, var(--ink, #e8e8e8) 30%, transparent); }
+			.st-field select:focus-visible { outline: 2px solid var(--accent, #6ea8ff); outline-offset: 2px; }
+			.st-run { background: var(--ink-bright, #fff); color: #0a0a0a; border: 0; border-radius: 9px; padding: 10px 20px; font-size: .9rem; font-weight: 650; cursor: pointer; transition: transform .16s ease, opacity .16s ease, box-shadow .16s ease; }
+			.st-run:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,.32); }
+			.st-run:active:not(:disabled) { transform: translateY(0); }
+			.st-run:focus-visible { outline: 2px solid var(--accent, #6ea8ff); outline-offset: 3px; }
+			.st-run:disabled { opacity: .55; cursor: progress; }
+			.st-note { color: var(--ink-dim, #888); font-size: .82rem; line-height: 1.55; margin: 0 0 22px; max-width: 76ch; }
+
+			.st-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; }
+			.st-panel { border: 1px solid color-mix(in srgb, var(--ink, #e8e8e8) 12%, transparent); border-radius: 14px; padding: 14px; background: color-mix(in srgb, var(--ink, #e8e8e8) 3%, transparent); transition: border-color .3s ease, box-shadow .3s ease; }
+			.st-panel[data-state='live'] { border-color: color-mix(in srgb, var(--accent, #6ea8ff) 45%, transparent); }
+			.st-panel[data-state='done'] { border-color: color-mix(in srgb, var(--success, #34d399) 40%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--success, #34d399) 12%, transparent); }
+			.st-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+			.st-panel-head h2 { font-size: .96rem; font-weight: 650; margin: 0; color: var(--ink-bright, #fff); }
+			.st-status { font-size: .7rem; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-dim, #888); font-variant-numeric: tabular-nums; }
+			.st-panel[data-state='done'] .st-status { color: var(--success, #34d399); }
+			.st-stage { position: relative; aspect-ratio: 1 / 1; border-radius: 10px; overflow: hidden; background: radial-gradient(ellipse at 50% 15%, color-mix(in srgb, var(--ink, #e8e8e8) 8%, transparent), transparent 70%); }
+			.st-stage canvas { display: block; width: 100%; height: 100%; }
+			.st-bar { height: 3px; border-radius: 2px; background: color-mix(in srgb, var(--ink, #e8e8e8) 10%, transparent); margin: 10px 0 12px; overflow: hidden; }
+			.st-bar i { display: block; height: 100%; width: 0; border-radius: 2px; background: var(--accent, #6ea8ff); transition: width .12s linear; }
+			.st-panel[data-state='done'] .st-bar i { background: var(--success, #34d399); }
+			.st-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 0 0 12px; }
+			.st-metrics div { display: flex; flex-direction: column; gap: 3px; }
+			.st-metrics dt { font-size: .66rem; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-dim, #888); }
+			.st-metrics dd { margin: 0; font-size: 1.02rem; font-weight: 650; color: var(--ink-bright, #fff); font-variant-numeric: tabular-nums; }
+			.st-log { list-style: none; margin: 0; padding: 8px 10px; height: 108px; overflow-y: auto; font-family: var(--font-mono, ui-monospace, monospace); font-size: .72rem; line-height: 1.7; color: var(--ink-dim, #888); background: color-mix(in srgb, var(--ink, #e8e8e8) 4%, transparent); border-radius: 8px; scrollbar-width: thin; }
+			.st-log li[data-tone='good'] { color: var(--success, #34d399); }
+			.st-log li[data-tone='bad'] { color: var(--danger, #f87171); }
+			.st-verdict { margin: 22px 0 0; font-size: 1.02rem; font-weight: 600; color: var(--ink-bright, #fff); min-height: 1.5em; }
+
+			.st-how { margin-top: 52px; border-top: 1px solid color-mix(in srgb, var(--ink, #e8e8e8) 10%, transparent); padding-top: 30px; }
+			.st-how h2 { font-size: 1.15rem; margin: 0 0 14px; color: var(--ink-bright, #fff); }
+			.st-how p { color: var(--ink-dim, #999); font-size: .93rem; line-height: 1.7; max-width: 74ch; margin: 0 0 14px; }
+			.st-how pre { background: color-mix(in srgb, var(--ink, #e8e8e8) 5%, transparent); border: 1px solid color-mix(in srgb, var(--ink, #e8e8e8) 10%, transparent); border-radius: 10px; padding: 14px 16px; overflow-x: auto; font-size: .8rem; line-height: 1.65; }
+			.st-how code { font-family: var(--font-mono, ui-monospace, monospace); }
+			.st-how a { color: var(--ink, #e8e8e8); }
+			.st-layers { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin: 18px 0 22px; }
+			.st-layer { border: 1px solid color-mix(in srgb, var(--ink, #e8e8e8) 12%, transparent); border-radius: 11px; padding: 13px 14px; }
+			.st-layer b { display: block; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-dim, #888); font-weight: 600; margin-bottom: 6px; }
+			.st-layer span { display: block; font-size: .88rem; color: var(--ink, #e8e8e8); line-height: 1.55; }
+			@media (prefers-reduced-motion: reduce) { .st-run, .st-bar i, .st-panel { transition: none; } }
+		</style>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="st-shell">
+			<section class="st-hero">
+				<p class="st-kicker">Progressive delivery</p>
+				<h1 class="st-title">A 3D avatar should not be a blank box</h1>
+				<p class="st-sub">
+					A GLB is atomic: nothing renders until the last byte lands. On a slow connection that is
+					several seconds of empty frame on every embed. <strong>A3S</strong> repacks the same asset
+					into nested layers, ordered so that any byte-prefix of the file is a complete, skinned,
+					spec-valid avatar. The first layer is typically 4 to 17 percent of the original. Everything
+					after it refines the mesh already on screen, over ordinary
+					<code>Range</code> requests that any CDN already serves.
+				</p>
+			</section>
+
+			<div id="stream-root"></div>
+
+			<section class="st-how">
+				<h2>How a prefix can be a whole avatar</h2>
+				<p>
+					The packer simplifies the mesh <em>successively</em>, finest to coarsest, so the vertices
+					surviving at each level are a strict subset of the level below it. Rank every vertex by the
+					coarsest level it reaches, sort the vertex buffer by that rank, and each level's vertices
+					become a contiguous prefix. A refinement then only ever appends bytes, never rewrites them.
+					Skinning rides along untouched, because a mesh simplifier only emits a new index buffer over
+					the vertex array it was given.
+				</p>
+				<div class="st-layers">
+					<div class="st-layer"><b>Layer 0</b><span>Coarse mesh, full skeleton, thumbnail textures. A valid GLB on its own.</span></div>
+					<div class="st-layer"><b>Layer 1</b><span>New vertices, finer indices, and the animation clips.</span></div>
+					<div class="st-layer"><b>Layer 2</b><span>More geometry, applied in place on the live scene.</span></div>
+					<div class="st-layer"><b>Layer 3</b><span>Full detail and full-resolution textures.</span></div>
+				</div>
+				<p>
+					Because layer 0 is a real GLB and not a custom blob, you can cut it out with nothing but
+					<code>curl</code> and open it in any glTF tool:
+				</p>
+				<pre><code>npx @three-ws/avatar-stream pack avatar.glb -o avatar.a3s
+npx @three-ws/avatar-stream inspect avatar.a3s
+npx @three-ws/avatar-stream extract avatar.a3s -o preview.glb   # a 50 KB avatar
+npx @three-ws/avatar-stream verify avatar.a3s --deep            # replays every layer</code></pre>
+				<p>
+					In a browser, the reader takes one ranged request to first frame and refines in the
+					background, mutating the geometry already on screen rather than rebuilding the scene:
+				</p>
+				<pre><code>import { A3SPlayer } from '@three-ws/avatar-stream/three';
+
+const player = await A3SPlayer.load('/api/avatar-stream?src=/avatars/michelle.glb', {
+  THREE, GLTFLoader,
+  onLayer: (l) =&gt; console.log(`level ${l.level}: ${l.triangleCount} triangles`),
+});
+scene.add(player.scene);   // already skinned and posed
+await player.refine();     // detail arrives without touching the camera or pose</code></pre>
+				<p>
+					The format is documented in
+					<a href="https://github.com/nirholas/three.ws/blob/main/specs/AVATAR_STREAM.md">specs/AVATAR_STREAM.md</a>
+					and the endpoint serving these streams is
+					<a href="/api/avatar-stream?src=/avatars/michelle.glb&amp;format=json">/api/avatar-stream</a>,
+					which will hand you the layer table as JSON.
+				</p>
+			</section>
+		</main>
+
+		<script type="module" src="/src/stream-demo.js"></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>
