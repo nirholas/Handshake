@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// portal — walk a website from the command line, or take the world with you.
+// portal: walk a website from the command line, or take the world with you.
 //
 //   npx @three-ws/portal example.com                 summary of the world
 //   npx @three-ws/portal example.com --glb site.glb  save it as a 3D file
@@ -12,7 +12,7 @@
 import { writeFile } from 'node:fs/promises';
 import { fetchWorld, fetchWorldGlb, describeWorld, PORTAL_API, PORTAL_PAGE, PortalError } from './index.js';
 
-const USAGE = `portal — turn a website into a walkable 3D world
+const USAGE = `portal: turn a website into a walkable 3D world
 
 Usage
   portal <url> [options]
