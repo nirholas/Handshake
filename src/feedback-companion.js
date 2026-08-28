@@ -41,109 +41,45 @@ const DECLINED_KEY = '3dagent:feedback-declined';
 const OFFERED_KEY = '3dagent:feedback-offered';
 const STYLE_ID = 'walk-companion-feedback-style';
 
-const MAX_ERRORS = 5;
-const MAX_FAILURES = 5;
 // Long enough that the visitor still knows what they were doing, short enough
 // that the error they see offered is the one they just caused.
 const OFFER_WINDOW_MS = 20_000;
 
 // ── Context capture ─────────────────────────────────────────────────────────
-// Installed once at module load so an error that happens before the companion
-// finishes mounting is still captured. Two bounded ring buffers, no timers, no
-// network: this costs nothing until something goes wrong.
+// The capture layer is @three-ws/witness (packages/witness), a standalone,
+// framework-agnostic recorder published for any site to use. It keeps a bounded
+// SEMANTIC trace: the sequence of intents plus the failures, with a stable
+// selector synthesized for every element touched and no typed value ever held.
+//
+// That trace is the difference between a report and a reproduction. It compiles
+// into a Playwright spec (GET /api/feedback/repro) that is red until the bug is
+// fixed, so a sentence a visitor typed arrives as a runnable regression test.
+//
+// It starts at module load, before the companion finishes mounting, so a page
+// that breaks during boot is still recorded.
 
-const errors = [];
-const failures = [];
-const listeners = new Set();
+import { witness } from '../packages/witness/src/index.js';
+import { failuresIn, narrate } from '../packages/witness/src/compile.js';
 
-function push(list, entry, max) {
-	if (!entry) return;
-	// Identical repeats are noise (a render loop can throw the same line a
-	// thousand times); count them instead of filling the buffer.
-	const last = list[list.length - 1];
-	if (last && last.text === entry) {
-		last.count += 1;
-		return;
-	}
-	list.push({ text: entry, count: 1, at: Date.now() });
-	if (list.length > max) list.shift();
-	for (const fn of listeners) {
-		try {
-			fn();
-		} catch {
-			/* a listener must never break capture */
-		}
-	}
+const recorder = witness.start({
+	// Our own report endpoint is excluded: a failing report must never become
+	// the next report's evidence.
+	ignore: (path) => path.startsWith('/api/feedback/'),
+});
+
+/** The failures the recorder saw, in the shape the report API already stores. */
+export function capturedSignals() {
+	const found = failuresIn(witness.trace());
+	return {
+		errors: [...found.errors].slice(-5),
+		failures: [...found.network, ...found.resources].slice(-5),
+	};
 }
 
-function describeError(value) {
-	if (!value) return null;
-	if (value instanceof Error) {
-		const where = value.stack?.split('\n')[1]?.trim().replace(/^at\s+/, '');
-		return `${value.name}: ${value.message}${where ? ` (${where})` : ''}`;
-	}
-	const text = typeof value === 'string' ? value : String(value?.message || value);
-	return text && text !== '[object Object]' ? text : null;
+/** The steps a person would read, straight from the same trace the spec compiles from. */
+export function capturedSteps() {
+	return narrate(witness.trace());
 }
-
-function serialize(list) {
-	return list.map((e) => (e.count > 1 ? `${e.text} (x${e.count})` : e.text));
-}
-
-let captureInstalled = false;
-
-function installCapture() {
-	if (captureInstalled || typeof window === 'undefined') return;
-	captureInstalled = true;
-
-	window.addEventListener('error', (event) => {
-		// Resource errors (a 404 image) bubble here with no `error` object and are
-		// far less interesting than a real exception, so they are recorded by the
-		// file that failed rather than an empty message.
-		if (event.target && event.target !== window && event.target.tagName) {
-			const src = event.target.currentSrc || event.target.src || event.target.href;
-			if (src) push(failures, `failed to load ${new URL(src, location.href).pathname}`, MAX_FAILURES);
-			return;
-		}
-		const where = event.filename ? ` (${event.filename.split('/').pop()}:${event.lineno})` : '';
-		push(errors, `${describeError(event.error) || event.message}${where}`, MAX_ERRORS);
-	}, true);
-
-	window.addEventListener('unhandledrejection', (event) => {
-		push(errors, `Unhandled rejection: ${describeError(event.reason) || 'unknown'}`, MAX_ERRORS);
-	});
-
-	// Wrap fetch to notice failed calls. The wrapper returns the original promise
-	// untouched in every path, so a bug here can never change what the page sees.
-	const nativeFetch = window.fetch;
-	if (typeof nativeFetch === 'function') {
-		window.fetch = function patchedFetch(input, init) {
-			const started = nativeFetch.apply(this, arguments);
-			try {
-				const method = (init?.method || input?.method || 'GET').toUpperCase();
-				const url = typeof input === 'string' ? input : input?.url || '';
-				const path = url ? new URL(url, location.href).pathname : '';
-				// Our own report endpoint is excluded: a failing report must not
-				// become the next report's evidence.
-				if (path && !path.startsWith('/api/feedback/')) {
-					started.then(
-						(res) => {
-							if (res && !res.ok) push(failures, `${method} ${path} -> ${res.status}`, MAX_FAILURES);
-						},
-						(err) => {
-							push(failures, `${method} ${path} -> ${describeError(err) || 'network error'}`, MAX_FAILURES);
-						},
-					);
-				}
-			} catch {
-				/* never let instrumentation break a request */
-			}
-			return started;
-		};
-	}
-}
-
-installCapture();
 
 // ── Environment facts ───────────────────────────────────────────────────────
 
@@ -191,19 +127,19 @@ function writeFlag(key, value) {
 }
 
 async function collectContext() {
+	const signals = capturedSignals();
 	return {
 		route: location.pathname + location.search,
 		page_title: document.title || null,
 		build_sha: await buildSha(),
 		viewport: `${window.innerWidth}x${window.innerHeight}@${window.devicePixelRatio || 1}`,
 		locale: navigator.language || null,
-		console_errors: serialize(errors),
-		failed_requests: serialize(failures),
+		console_errors: signals.errors,
+		failed_requests: signals.failures,
+		// The whole recorded session. The server bounds every field again and the
+		// compiler turns it into a runnable spec.
+		trace: witness.trace(),
 	};
-}
-
-export function capturedSignals() {
-	return { errors: serialize(errors), failures: serialize(failures) };
 }
 
 // ── Transport ───────────────────────────────────────────────────────────────
@@ -279,11 +215,21 @@ function ensureStyles() {
 .fb-note{margin:10px 0 0;font-size:12px;color:rgba(232,235,242,.55)}
 .fb-note[data-tone="error"]{color:#ff9b9b}
 .fb-note[data-tone="ok"]{color:#8fe0a8}
+.fb-steps-toggle{background:none;border:none;padding:0;font:inherit;font-size:12px;color:#9fc0ff;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.fb-steps-toggle:hover{color:#c2d6ff}
+.fb-steps-toggle:focus-visible{outline:2px solid #7aa2ff;outline-offset:2px;border-radius:3px}
+.fb-steps{margin:8px 0 0;padding:0 0 0 18px;max-height:132px;overflow-y:auto;font-size:11.5px;line-height:1.5;color:rgba(232,235,242,.62)}
+.fb-steps li{margin:1px 0}
+.fb-privacy{display:block;margin-top:8px;font-size:11px;color:rgba(232,235,242,.45)}
 .fb-done{padding:6px 0 2px;text-align:center}
 .fb-done p{margin:0 0 4px;font-size:14px}
 .fb-done small{color:rgba(232,235,242,.55)}
 `;
 	document.head.appendChild(style);
+}
+
+function escapeHtml(value) {
+	return String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 }
 
 function speechRecognizer() {
@@ -369,11 +315,27 @@ export function installFeedback({ getInstance, getHostEl } = {}) {
 		if (!ctx) return;
 		const signals = capturedSignals();
 		const sha = await buildSha();
+		const steps = capturedSteps();
 		const bits = [`<b>Page</b> <code>${location.pathname}</code>`];
 		if (sha) bits.push(`<b>Build</b> <code>${sha}</code>`);
 		if (signals.errors.length) bits.push(`<b>${signals.errors.length}</b> console error${signals.errors.length > 1 ? 's' : ''}`);
 		if (signals.failures.length) bits.push(`<b>${signals.failures.length}</b> failed request${signals.failures.length > 1 ? 's' : ''}`);
-		ctx.innerHTML = `Attached automatically: ${bits.join(' &middot; ')}`;
+		// Naming the step count is what makes the recorder feel like help rather
+		// than surveillance: the visitor can see exactly how much was kept, and
+		// open it to read every line before they send.
+		const stepLine = steps.length
+			? `<button type="button" class="fb-steps-toggle" aria-expanded="false">${steps.length} recorded step${steps.length > 1 ? 's' : ''}</button>`
+			: '';
+		ctx.innerHTML = `Attached automatically: ${bits.join(' &middot; ')}${stepLine ? ` &middot; ${stepLine}` : ''}
+			<ol class="fb-steps" hidden>${steps.map((line) => `<li>${escapeHtml(line)}</li>`).join('')}</ol>
+			<span class="fb-privacy">Nothing you typed into a field is recorded, only how much.</span>`;
+		const toggle = ctx.querySelector('.fb-steps-toggle');
+		const listEl = ctx.querySelector('.fb-steps');
+		toggle?.addEventListener('click', () => {
+			const open = toggle.getAttribute('aria-expanded') === 'true';
+			toggle.setAttribute('aria-expanded', String(!open));
+			listEl.hidden = open;
+		});
 	}
 
 	function stopDictation() {
@@ -475,13 +437,17 @@ export function installFeedback({ getInstance, getHostEl } = {}) {
 		sendBtn.textContent = 'Sending...';
 		stopDictation();
 		try {
-			await sendReport(body, { transport: micBtn?.dataset.wasUsed === '1' ? 'voice' : 'text' });
+			const result = await sendReport(body, { transport: micBtn?.dataset.wasUsed === '1' ? 'voice' : 'text' });
 			clearDraft();
 			input.value = '';
 			panel.querySelector('.fb-body').innerHTML = `
 				<div class="fb-done">
 					<p>Got it. That is on the list.</p>
-					<small>Every report is read by a person before anything changes.</small>
+					<small>${
+						result?.replayable
+							? 'Your steps came with it, so we can replay exactly what you hit.'
+							: 'Every report is read by a person before anything changes.'
+					}</small>
 				</div>
 			`;
 			const inst = resolveInst();
@@ -573,8 +539,7 @@ export function installFeedback({ getInstance, getHostEl } = {}) {
 		const route = location.pathname;
 		if (readFlag(DECLINED_KEY).includes(route)) return;
 		if (readFlag(OFFERED_KEY).includes(route)) return;
-		const fresh = [...errors, ...failures].some((e) => Date.now() - e.at < OFFER_WINDOW_MS);
-		if (!fresh) return;
+		if (!witness.hasFailure({ withinMs: OFFER_WINDOW_MS })) return;
 
 		const inst = resolveInst();
 		if (!inst?.say) return;
@@ -607,18 +572,18 @@ export function installFeedback({ getInstance, getHostEl } = {}) {
 		if (!shown) writeFlag(OFFERED_KEY, readFlag(OFFERED_KEY).filter((r) => r !== route));
 	}
 
-	const onSignal = () => {
+	// The recorder tells us the moment a failure lands. Debounced, because a
+	// burst of errors from one broken render is one thing to ask about.
+	const unsubscribe = witness.onFailure(() => {
 		clearTimeout(offerTimer);
-		// Debounced: a burst of errors from one broken render is one offer.
 		offerTimer = setTimeout(maybeOffer, 1200);
-	};
-	listeners.add(onSignal);
+	});
 
 	return {
 		open,
 		close,
 		uninstall() {
-			listeners.delete(onSignal);
+			unsubscribe();
 			clearInterval(hostWatch);
 			clearTimeout(offerTimer);
 			panel?.remove();

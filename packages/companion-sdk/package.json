@@ -1,0 +1,66 @@
+{
+	"name": "@three-ws/companion",
+	"version": "0.1.0",
+	"description": "Give a person's notifications a body. A BYOK harness that triages what actually matters out of Telegram, a calendar, an inbox, or a phone, and hands it to a 3D character that says it out loud: browser client, Node client, a CLI, and an MCP server so any agent can interrupt a human in person.",
+	"keywords": [
+		"three.ws",
+		"companion",
+		"3d-avatar",
+		"notifications",
+		"triage",
+		"assistant",
+		"byok",
+		"sse",
+		"mcp",
+		"desktop-pet"
+	],
+	"author": "three.ws <support@three.ws> (https://three.ws)",
+	"license": "Apache-2.0",
+	"homepage": "https://three.ws/companion",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "packages/companion-sdk"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/three.ws/issues"
+	},
+	"private": true,
+	"type": "module",
+	"main": "./src/index.js",
+	"module": "./src/index.js",
+	"exports": {
+		".": "./src/index.js",
+		"./triage": "./src/triage-rules.js",
+		"./stage": "./src/stage.js",
+		"./package.json": "./package.json",
+		"./config": "./src/config.js",
+		"./client": "./src/client.js"
+	},
+	"bin": {
+		"companion": "./src/cli.mjs"
+	},
+	"files": [
+		"src",
+		"README.md",
+		"LICENSE"
+	],
+	"engines": {
+		"node": ">=18"
+	},
+	"scripts": {
+		"test": "vitest run tests"
+	},
+	"peerDependencies": {
+		"@modelcontextprotocol/sdk": ">=1.0.0",
+		"imapflow": ">=1.0.0"
+	},
+	"peerDependenciesMeta": {
+		"@modelcontextprotocol/sdk": {
+			"optional": true
+		},
+		"imapflow": {
+			"optional": true
+		}
+	}
+}

@@ -11,6 +11,7 @@
 import { sql } from '../db.js';
 import { insertNotification } from '../notify.js';
 import { loadUserProviderKeys } from '../provider-keys.js';
+import { inQuietHours } from '@three-ws/companion/triage';
 import { triage } from './triage.js';
 import {
 	getSettings,
@@ -34,28 +35,10 @@ export function laneFor(kind) {
 	return LANES[kind] || null;
 }
 
-/**
- * Is it the middle of the user's night?
- * Quiet hours are evaluated in the user's own timezone, and a window that wraps
- * midnight (22 to 7) is the normal case rather than the exception.
- */
-export function inQuietHours(settings, now = new Date()) {
-	if (settings.quiet_start === null || settings.quiet_start === undefined) return false;
-	if (settings.quiet_end === null || settings.quiet_end === undefined) return false;
-	let hour;
-	try {
-		hour = Number(new Intl.DateTimeFormat('en-US', {
-			hour: 'numeric',
-			hour12: false,
-			timeZone: settings.timezone || 'UTC',
-		}).format(now));
-	} catch {
-		hour = now.getUTCHours();
-	}
-	const { quiet_start: start, quiet_end: end } = settings;
-	if (start === end) return true;
-	return start < end ? hour >= start && hour < end : hour >= start || hour < end;
-}
+// Quiet hours are evaluated in the user's own timezone, and a window that wraps
+// midnight (22 to 7) is the normal case. Re-exported from the rules package so
+// the server, the CLI, and any third-party body agree on when to stay silent.
+export { inQuietHours };
 
 async function anthropicKeyFor(userId) {
 	try {
