@@ -38,11 +38,22 @@ let _brownoutPromise;
 // here would let a record arrive after its own response had already gone out.
 // That is not a lost log line, it is a trace that omits the rung that answered.
 let _brownoutMod = null;
+// The specifier is assembled at runtime instead of written as a literal, and it
+// has to stay that way. The CDN lib target builds with
+// `rollupOptions.output.inlineDynamicImports` (vite.config.js), which flattens
+// EVERY dynamic import into the single bundle. That turns this server-only
+// branch into a static edge, and the build dies on
+// `"AsyncLocalStorage" is not exported by "__vite-browser-external"` even though
+// the guard above means a browser never evaluates it. Rollup resolves a string
+// literal here regardless of @vite-ignore, and constant-folds a `const` holding
+// one, so the path is joined from parts: an expression no optimizer folds.
+// Node resolves it relative to this module, which is what the server needs.
+const BROWNOUT_SPECIFIER = ['..', '..', 'api', '_lib', 'brownout', 'index.js'].join('/');
 function brownout() {
 	if (_brownoutPromise !== undefined) return _brownoutPromise;
 	_brownoutPromise = null;
 	if (typeof window === 'undefined') {
-		_brownoutPromise = import('../../api/_lib/brownout/index.js')
+		_brownoutPromise = import(/* @vite-ignore */ BROWNOUT_SPECIFIER)
 			.then((m) => {
 				_brownoutMod = m;
 				return m;
