@@ -117,7 +117,12 @@ describe('calibration bands', () => {
 		// prints instead is the probability the 90-100 band actually claims, which
 		// moved when v3 re-anchored the ladder for a harder target.
 		expect(top.predicted).toBeLessThan(95);
-		expect(top.predicted).toBe(Math.round(100 * probabilityFromScore(90)));
+		// It is the sample-weighted mean of what each score in the band claims,
+		// which is anchor-independent and therefore still true after a re-anchor.
+		const inBand = rows.filter((r) => r.score >= 90);
+		const weighted = inBand.reduce((a, r) => a + r.n * probabilityFromScore(r.score), 0)
+			/ inBand.reduce((a, r) => a + r.n, 0);
+		expect(top.predicted).toBe(Math.round(100 * weighted));
 	});
 
 	it('drops empty bands instead of inventing zero rows', () => {
