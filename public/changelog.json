@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T05:46:30.228Z",
+	"generated_at": "2026-08-28T05:48:20.975Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -278,6 +278,17 @@
 				"feature",
 				"sdk",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "update",
+			"title": "Herald: your terminal can now make a 3D character walk onto your screen and talk to you",
+			"summary": "We took the part of three.ws where an avatar delivers a notification in person and turned it into something anyone can use, on any website. @three-ws/herald is an open library: one line of code and a 3D character walks into the corner of your page, looks at the person using it, and tells them, with a link to the thing it is about. It is not a toast library. It is an interrupt budget: an importance floor, quiet hours, a rate limit, dedupe, freshness, batch collapse, and a stable reason for every message it refuses to deliver, so you can always answer why you did not hear about something. No GPU, an iframe, or reduced motion falls back to an accessible card that screen readers announce the same moment everyone else hears it. There is also a rail: with an API key, anything that can make an HTTPS request reaches the browser tab you already have open. Run npx @three-ws/herald watch -- npm test and your avatar tells you when the build finishes, keeping the exit code. Wire the MCP server into Claude or Cursor and an agent that worked for twenty minutes can walk on and tell you it is done. An announcement always goes to your own sessions, so no key can interrupt anyone but its owner. Try the whole thing, rules engine included, at three.ws/herald.",
+			"link": "/herald",
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{
