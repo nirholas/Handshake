@@ -7052,6 +7052,97 @@ curl -X POST https://three.ws/api/seeker/verify \
 
 ---
 
+## Herald API: deliver a message in person
+
+The rail behind [@three-ws/herald](./herald.md). Anything that can make an HTTPS
+request posts a line here, and the browser tab the caller has open says it out
+loud through their 3D companion.
+
+An announcement is **always** delivered to the authenticated caller's own
+sessions. There is no recipient field, so a key can never be used to interrupt
+somebody else.
+
+### Announce
+
+```
+POST /api/herald/announce
+```
+
+Auth: a signed-in session, or a Bearer API key carrying the `herald:announce`
+scope (mint one at `/dashboard/developers`). Rate limit: 60 per minute per
+account.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `text` (alias `message`) | string, 1-280 | Required. The line to say. |
+| `from` | string, max 60 | Attribution, spoken with the line. |
+| `importance` | int 0-100 | Default 70. The receiving client applies its own floor. |
+| `url` | string, max 2048 | Same-origin path or absolute `http(s)`; anything else is dropped. |
+| `tone` | `neutral` \| `alert` \| `celebrate` \| `error` | Default `alert`. |
+| `emote` | string, max 40 | `wave`, `dance`, `punch`, `backflip`. |
+| `key` | string, max 120 | Dedupe key; two announcements sharing one are said once. |
+| `meta` | object | Passed through to the client untouched. |
+
+```bash
+curl -X POST https://three.ws/api/herald/announce \
+	-H "Authorization: Bearer $THREE_WS_API_KEY" \
+	-H 'content-type: application/json' \
+	-d '{"text":"Deploy is green","importance":80,"url":"/dashboard","from":"CI"}'
+```
+
+```json
+{
+  "queued": true,
+  "id": "6a293426-8f48-4254-bc14-cef9ada17680",
+  "expires_in": 300,
+  "announcement": {
+    "id": "6a293426-8f48-4254-bc14-cef9ada17680",
+    "text": "Deploy is green",
+    "from": "CI",
+    "importance": 80,
+    "url": "/dashboard",
+    "tone": "alert",
+    "at": 1787888380209
+  }
+}
+```
+
+`202` means the line is queued for a live surface, not that a human heard it.
+
+| Status | Code | Meaning |
+| --- | --- | --- |
+| 400 | `validation_error` | No `text`, or a field outside its bounds. |
+| 401 | `unauthorized` | No session and no bearer credential. |
+| 403 | `insufficient_scope` | A valid key without `herald:announce`. |
+| 429 | `rate_limited` | More than 60 announcements in a minute. |
+| 503 | `service_unavailable` | The rail is not reachable; nothing was queued. |
+
+### Listen
+
+```
+GET /api/herald/stream
+```
+
+Server-sent events, session-cookie auth only (writing is for machines,
+listening is for the person at the browser). Emits `open` once, then one
+`announce` per queued line, with a `ping` every 15 seconds. The queue is
+drained rather than broadcast, so a line is said by exactly one open tab, and
+an undelivered one expires after about five minutes.
+
+```bash
+curl -N https://three.ws/api/herald/stream -b 'session=<your session cookie>'
+```
+
+```
+event: open
+data: {"ts":1787888542255}
+
+event: announce
+data: {"id":"6a29...","text":"Deploy is green","importance":80,"tone":"alert"}
+```
+
+---
+
 ## Pagination
 
 Paginated list endpoints use `limit`/`offset` query parameters unless noted otherwise (each endpoint's own parameter table is authoritative; some small per-user lists, like `/api/agents` and `/api/widgets`, return everything with no pagination).

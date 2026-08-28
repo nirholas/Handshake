@@ -148,7 +148,9 @@ export function glanceEmbedHtml(agentId, opts = {}) {
  */
 export function renderGlanceAnsi(card, opts = {}) {
 	const color = opts.color !== false;
-	const width = Math.max(34, Math.min(80, opts.width || 46));
+	// Wide enough that the agent URL fits whole: a card whose last line is a
+	// half-truncated uuid cannot be copied, which is most of why it is there.
+	const width = Math.max(40, Math.min(100, opts.width || 68));
 	const c = (code, text) => (color ? `\u001b[${code}m${text}\u001b[0m` : String(text));
 	const dot = { active: '32', idle: '33', new: '90' }[card.status] || '90';
 	const pad = (text) => {

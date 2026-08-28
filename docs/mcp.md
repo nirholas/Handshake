@@ -109,6 +109,7 @@ npx -y @three-ws/agent-sniper serve # the same engine as an x402-paid HTTP API (
 
 # Account, inbox & discovery
 npx -y @three-ws/notifications-mcp # inbox, read state, delivery prefs & Web Push devices
+npx -y @three-ws/herald-mcp        # tell your human in person: your avatar walks on and says it
 npx -y @three-ws/billing-mcp       # plan quotas, metered usage, invoices & receipts
 npx -y @three-ws/activity-mcp      # trending agents/coins, $THREE holder board & activity ticker
 
