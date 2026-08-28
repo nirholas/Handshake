@@ -5,15 +5,15 @@ the order wrong reassembles the composition scrambled.
 
 ## The thread
 
-Thirteen posts, written for someone who has never used a crypto app and had no
+Fourteen posts, written for someone who has never used a crypto app and had no
 plans to. No jargon, no version numbers, no acronyms: the specifics live in the
 replies below, and nobody needs them to understand what this is or to want it.
 
 The register is confident and grateful, never explanatory and never defensive.
 This community built the thing being launched, and the thread says so early, in
 post 2, before it asks anyone for anything. Post 1 carries the four images; 2
-through 13 are replies in order. Counts are X's own arithmetic, where a URL
-costs 23 characters however long it is, and all thirteen fit inside 280 without
+through 14 are replies in order. Counts are X's own arithmetic, where a URL
+costs 23 characters however long it is, and all fourteen fit inside 280 without
 Premium.
 
 **1**, 264 characters. Attach the four tiles here, in the order in `IMAGE-ORDER.md`.
@@ -79,17 +79,27 @@ One link embeds it on your site, in Telegram, in your posts, talking and answeri
 Every file is yours. Download it.
 ```
 
-**6**, 254 characters
+**6**, 200 characters
 
 ```
 When you are ready to own it, one tap.
 
-Deploy your agent on Solana as an asset in your own wallet. Launch it as a coin on pump.fun from the same screen. On a Seeker phone the signing happens inside the phone itself.
+Deploy your agent on Solana as an asset in your own wallet. On a Seeker phone the signing happens inside the phone itself.
 
 Nothing to install. No twelve words.
 ```
 
-**7**, 264 characters
+**7**, 260 characters
+
+```
+And the launchpad is in your pocket too.
+
+Launch a coin from your phone with a living 3D agent as its face. It talks to your community, walks in AR, and its world goes live the moment the coin does.
+
+Every launch shows up in one public feed. Yours can be next.
+```
+
+**8**, 264 characters
 
 ```
 Your agents are not decoration. They work.
@@ -99,7 +109,7 @@ They hold wallets. They trade. They sell services and pay each other over x402. 
 This is an economy, and it runs on your phone now.
 ```
 
-**8**, 246 characters
+**9**, 246 characters
 
 ```
 This is how the next million people arrive.
@@ -109,7 +119,7 @@ Not through an exchange signup. Through something they wanted to make anyway, wi
 Give people magic first. The wallet can come second.
 ```
 
-**9**, 196 characters
+**10**, 196 characters
 
 ```
 And to our holders: every new person who opens this app lands in the economy you have been building.
@@ -117,7 +127,7 @@ And to our holders: every new person who opens this app lands in the economy you
 $THREE is how you move up in it. You never spend it. You hold it, and your tier does the work.
 ```
 
-**10**, 179 characters
+**11**, 179 characters
 
 ```
 Bronze doubles your free limits and takes 5% off compute. Genesis multiplies them by 10 and takes 30% off.
@@ -128,7 +138,7 @@ $THREE
 FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump
 ```
 
-**11**, 239 characters
+**12**, 239 characters
 
 ```
 Generation is free here because serious people backed us early.
@@ -138,7 +148,7 @@ NVIDIA Inception. OpenAI Select Partner. A Google for Startups Web3 cloud grant 
 Thank you. We are just getting started.
 ```
 
-**12**, 219 characters
+**13**, 219 characters
 
 ```
 It is coming to Google Play and to the Solana dApp Store. Both are submitted and in review.
@@ -146,7 +156,7 @@ It is coming to Google Play and to the Solana dApp Store. Both are submitted and
 You do not have to wait. The app is live today, free, no account needed, Android 6 and up, 3.95 MB, open source top to bottom.
 ```
 
-**13**, 238 characters
+**14**, 238 characters
 
 ```
 How to install it right now:
@@ -168,13 +178,13 @@ cloud grant is what funds the GPU fleet.
 
 Three lines that must not drift when someone edits this:
 
-- Posts 9 and 10 say holding, never spending or burning. Hold-to-access is the
+- Posts 10 and 11 say holding, never spending or burning. Hold-to-access is the
   whole mechanism, and copy implying a burn describes a different product.
-- Post 10 quotes tier numbers. If the ladder in `docs/hold-to-access.md` moves,
+- Post 11 quotes tier numbers. If the ladder in `docs/hold-to-access.md` moves,
   this moves with it.
-- Post 12 says both store listings are **submitted and in review**. Neither is
+- Post 13 says both store listings are **submitted and in review**. Neither is
   live. Claiming otherwise ages badly in public, and a reviewer would see it
-  first. The link and the install steps live in post 13 and nowhere earlier.
+  first. The link and the install steps live in post 14 and nowhere earlier.
 
 Nothing in the thread is apologetic, explains an absence, or answers a critic.
 Gratitude here is confidence, not a concession, and there is no version of this
