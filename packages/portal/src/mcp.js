@@ -27,7 +27,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 
-import { fetchWorld, describeWorld, PORTAL_API, PORTAL_PAGE, PortalError } from './index.js';
+import { fetchWorld, fetchOutline, describeWorld, PORTAL_API, PORTAL_PAGE, PortalError } from './index.js';
 
 const endpoint = process.env.PORTAL_API || PORTAL_API;
 const page = process.env.PORTAL_PAGE || PORTAL_PAGE;
@@ -100,8 +100,7 @@ export function createServer() {
 		},
 		async ({ url }) => {
 			try {
-				const { outline, cached } = await fetchWorld(url, { endpoint, include: 'outline' });
-				if (!outline) throw new PortalError('no_outline', 'The API returned no outline for that page.', 502);
+				const { outline, cached } = await fetchOutline(url, { endpoint });
 				return ok({
 					source: url,
 					cached,

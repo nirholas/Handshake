@@ -69,6 +69,32 @@ export async function fetchWorld(url, opts = {}) {
 }
 
 /**
+ * Read a page's structure without building a world: the heading spine, the
+ * weight of each section, and where it links. Cheaper over the wire than a
+ * world, and the right call when you want to compare pages rather than walk one.
+ * @param {string} url
+ * @param {{ endpoint?: string, fetch?: typeof fetch, signal?: AbortSignal }} [opts]
+ * @returns {Promise<{ outline: object, cached: boolean, stale: boolean }>}
+ */
+export async function fetchOutline(url, opts = {}) {
+	const impl = opts.fetch || globalThis.fetch;
+	if (!impl) throw new PortalError('no_fetch', 'No fetch implementation available. Pass one as opts.fetch.', 0);
+	const res = await impl(endpointFor(url, { ...opts, include: 'outline' }), {
+		headers: { accept: 'application/json' },
+		signal: opts.signal,
+	});
+	const body = await res.json().catch(() => null);
+	if (!res.ok || !body?.outline) {
+		throw new PortalError(
+			body?.error || `http_${res.status}`,
+			body?.error_description || `Portal could not read ${url}.`,
+			res.status,
+		);
+	}
+	return { outline: body.outline, cached: !!body.cached, stale: !!body.stale };
+}
+
+/**
  * The same world as a glTF binary, ready for Blender, Unity, AR, or any viewer.
  * @param {string} url
  * @param {{ endpoint?: string, fetch?: typeof fetch, signal?: AbortSignal }} [opts]
