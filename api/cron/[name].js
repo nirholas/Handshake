@@ -287,6 +287,18 @@ async function handleErc8004Crawl(req, res) {
 		}
 	}
 
+	// Second pass: spend whatever budget the first pass left on the chains that
+	// are still behind head. One chunk per chain per tick is enough to HOLD a
+	// slow chain but cannot DRAIN a fast one, and the arithmetic is not close.
+	// Measured on 2026-08-28: Arbitrum One sat 18,375,509 blocks behind at a
+	// 8,000-block window. The cron runs every 15 minutes, so one chunk per tick
+	// buys 768,000 blocks a day against a chain that produces roughly 345,600,
+	// which drains the backlog in about six weeks. Meanwhile a tick that found
+	// every other chain at head returned with most of its 240 seconds unspent.
+	// This pass hands that idle budget to the worst backlog instead of throwing
+	// it away, and does nothing at all on a tick where every chain is current.
+	report.catchUp = await erc8004CatchUp(order, report, crawlStart);
+
 	if (Date.now() - crawlStart <= CRAWL_BUDGET_MS) {
 		try {
 			report.enriched = await erc8004EnrichMetadata(
@@ -299,6 +311,72 @@ async function handleErc8004Crawl(req, res) {
 	}
 
 	return json(res, 200, report);
+}
+
+// The first pass must always finish, so the catch-up pass only starts once the
+// sweep has left at least this much of the budget unspent, and it stops itself
+// this far from the deadline so metadata enrichment still gets its turn.
+const CRAWL_CATCHUP_RESERVE_MS = 45_000;
+
+/**
+ * Chains the catch-up pass should feed more chunks to, worst backlog first.
+ * A chain is a candidate only when its first-pass result says it is genuinely
+ * behind head AND that pass actually moved the cursor: a chain that scanned
+ * nothing hit its provider's floor or errored, and re-asking it in the same
+ * tick would just spin on the same rejection.
+ * Pure: no clock, no DB. This is the seam the tests drive.
+ * @param {object[]} results the first pass's report.chains entries
+ * @returns {object[]}
+ */
+export function catchUpCandidates(results) {
+	return (results || [])
+		.filter((r) => Number(r?.blocksBehind) > 0 && Number(r?.scanned) > 0)
+		.sort((a, b) => Number(b.blocksBehind) - Number(a.blocksBehind));
+}
+
+/**
+ * Feed extra chunks to the chains still behind head until the budget runs out.
+ * Re-reads the neediest chain each round rather than draining one to completion,
+ * so a single enormous backlog cannot starve the others of the same idle budget.
+ * @param {object[]} order the chain configs the first pass walked
+ * @param {{ chains: object[], errors: object[] }} report mutated in place
+ * @param {number} crawlStart
+ * @returns {Promise<{ rounds: number, scanned: number, chains: number[] }>}
+ */
+async function erc8004CatchUp(order, report, crawlStart) {
+	const summary = { rounds: 0, scanned: 0, chains: [] };
+	const byId = new Map(order.map((c) => [c.id, c]));
+	// Behind-ness as the first pass measured it, updated in place each round so
+	// the next round re-picks the worst without re-querying the cursor table.
+	const behind = new Map(
+		catchUpCandidates(report.chains).map((r) => [r.chainId, Number(r.blocksBehind)]),
+	);
+
+	while (behind.size) {
+		if (Date.now() - crawlStart > CRAWL_BUDGET_MS - CRAWL_CATCHUP_RESERVE_MS) break;
+		const [chainId] = [...behind.entries()].sort((a, b) => b[1] - a[1])[0];
+		const chain = byId.get(chainId);
+		if (!chain) {
+			behind.delete(chainId);
+			continue;
+		}
+		try {
+			const r = await erc8004CrawlChain(chain);
+			report.chains.push({ chainId: chain.id, name: chain.name, catchUp: true, ...r });
+			summary.rounds += 1;
+			summary.scanned += Number(r.scanned) || 0;
+			if (!summary.chains.includes(chain.id)) summary.chains.push(chain.id);
+			// Nothing scanned means the provider refused even the floor window, so
+			// drop the chain rather than spin on the same rejection for the rest of
+			// the budget.
+			if (Number(r.blocksBehind) > 0 && Number(r.scanned) > 0) behind.set(chainId, Number(r.blocksBehind));
+			else behind.delete(chainId);
+		} catch (err) {
+			report.errors.push({ chainId: chain.id, stage: 'catch-up', error: err.message || String(err) });
+			behind.delete(chainId);
+		}
+	}
+	return summary;
 }
 
 /**

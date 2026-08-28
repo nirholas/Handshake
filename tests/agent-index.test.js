@@ -26,7 +26,12 @@ import {
 	sanitizePayload,
 } from '../api/_lib/onchain-events.js';
 import { sweepCycleMin } from '../api/_lib/ops/index-lag.js';
-import { nextChunkSize, backoffChunkSize, isRangeRejection } from '../api/cron/[name].js';
+import {
+	nextChunkSize,
+	backoffChunkSize,
+	isRangeRejection,
+	catchUpCandidates,
+} from '../api/cron/[name].js';
 import { splitCapabilities } from '../api/explore-item.js';
 import { decodeReputationLog } from '../api/_lib/erc8004-reputation-events.js';
 
@@ -536,5 +541,35 @@ describe('decodeReputationLog', () => {
 
 	it('ignores a log from another topic', () => {
 		expect(decodeReputationLog({ topics: ['0x' + '11'.repeat(32)], data: '0x' })).toBe(null);
+	});
+});
+
+// ─── catchUpCandidates ───────────────────────────────────────────────────────
+
+// Measured on 2026-08-28: Arbitrum One sat 18,375,509 blocks behind at an
+// 8,000-block window. One chunk per 15-minute tick buys 768,000 blocks a day
+// against a chain producing roughly 345,600, so the backlog drained in about
+// six weeks while ticks that found every other chain at head returned with most
+// of their 240-second budget unspent.
+describe('catchUpCandidates', () => {
+	it('ranks the chains still behind head, worst backlog first', () => {
+		const picked = catchUpCandidates([
+			{ chainId: 8453, blocksBehind: 0, scanned: 4000 },
+			{ chainId: 42161, blocksBehind: 18_375_509, scanned: 8000 },
+			{ chainId: 421614, blocksBehind: 15_668_383, scanned: 8000 },
+		]);
+		expect(picked.map((r) => r.chainId)).toEqual([42161, 421614]);
+	});
+
+	it('drops a chain that scanned nothing', () => {
+		// scanned=0 is the provider refusing even the floor window. Re-asking it in
+		// the same tick spins on the identical rejection and burns the whole budget.
+		expect(catchUpCandidates([{ chainId: 56, blocksBehind: 900_000, scanned: 0 }])).toEqual([]);
+	});
+
+	it('returns nothing when every chain is at head, so a current tick does no extra work', () => {
+		expect(catchUpCandidates([{ chainId: 8453, blocksBehind: 0, scanned: 120 }])).toEqual([]);
+		expect(catchUpCandidates([])).toEqual([]);
+		expect(catchUpCandidates(undefined)).toEqual([]);
 	});
 });
