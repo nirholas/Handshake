@@ -33,6 +33,46 @@ production), screenshots each element with `omitBackground`, and writes:
 Commit the regenerated files with the source change. They ship with the site,
 so `/press` and the zip are always the current artwork.
 
+## Full-bleed wordmark
+
+The lockups above are trimmed artwork sized to themselves. When a slot wants an
+exact canvas instead (a wallpaper, a title card, a stage backdrop, a store
+banner), render the wordmark centred on one:
+
+```bash
+npm run build:wordmark
+```
+
+That runs [`scripts/render-wordmark.mjs`](../../scripts/render-wordmark.mjs) and writes:
+
+| Output | Size | Use |
+| --- | --- | --- |
+| `public/brand/three-ws-wordmark-on-dark-4096x2304.png` | 4096 x 2304 | White type on black. The default. |
+| `public/brand/three-ws-wordmark-on-light-4096x2304.png` | 4096 x 2304 | Dark type on white. |
+| `public/brand/three-ws-wordmark-transparent-4096x2304.png` | 4096 x 2304 | White type, alpha ground, to drop on your own colour. |
+
+Any canvas and framing:
+
+```bash
+node scripts/render-wordmark.mjs --width=1920 --height=1080 --fit=0.5
+node scripts/render-wordmark.mjs --variants=on-dark --out=/tmp/banner
+```
+
+`--fit` is the wordmark's ink width as a fraction of canvas width (default
+`0.46`, which leaves roughly a quarter of the width clear on each side).
+
+Three details are load-bearing:
+
+- The type is drawn on a 2D canvas rather than screenshotted, so the file is
+  exactly the pixel size asked for with no crop or rounding.
+- It is centred by the pixels that actually landed, not by the font metrics that
+  predicted them: the renderer draws once, reads back the alpha channel, and
+  redraws with the correction. Metrics and the rasteriser disagree by a pixel or
+  two, and lowercase with ascenders and no descenders rides visibly low when its
+  line box is centred instead of its ink box.
+- The two opaque variants ship with the alpha channel stripped. A store banner
+  slot (Play's feature graphic among them) rejects 32-bit PNG outright.
+
 ## Why it renders in a browser
 
 The wordmark is set in Space Grotesk, the display face the site already uses.
