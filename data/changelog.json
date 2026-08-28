@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-28",
+			"title": "Herald: your terminal can now make a 3D character walk onto your screen and talk to you",
+			"summary": "We took the part of three.ws where an avatar delivers a notification in person and turned it into something anyone can use, on any website. @three-ws/herald is an open library: one line of code and a 3D character walks into the corner of your page, looks at the person using it, and tells them, with a link to the thing it is about. It is not a toast library. It is an interrupt budget: an importance floor, quiet hours, a rate limit, dedupe, freshness, batch collapse, and a stable reason for every message it refuses to deliver, so you can always answer why you did not hear about something. No GPU, an iframe, or reduced motion falls back to an accessible card that screen readers announce the same moment everyone else hears it. There is also a rail: with an API key, anything that can make an HTTPS request reaches the browser tab you already have open. Run npx @three-ws/herald watch -- npm test and your avatar tells you when the build finishes, keeping the exit code. Wire the MCP server into Claude or Cursor and an agent that worked for twenty minutes can walk on and tell you it is done. An announcement always goes to your own sessions, so no key can interrupt anyone but its owner. Try the whole thing, rules engine included, at three.ws/herald.",
+			"tags": [
+				"feature",
+				"sdk"
+			],
+			"link": "/herald"
+		},
+		{
+			"date": "2026-08-28",
 			"title": "Every release note now shows you the code that shipped it",
 			"summary": "Until today this site kept two separate records of the same work: a changelog written for people, and a commit feed written by engineers, neither aware of the other. The new ship log joins them. Each release note now lists the commits that produced it, and says how confident it is in each match and why it made it, in plain words you can argue with. Commits nobody ever wrote up are grouped and shown too, so the work that shipped quietly is visible instead of lost. The announcements in the Telegram channel now carry a link to the exact code behind them, the raw commit feed reads in plain language instead of engineering shorthand, and it no longer posts merges or dependency bumps. The whole thing is a free, open-source package that works on anyone's repository.",
 			"tags": [

@@ -151,35 +151,62 @@ export function renderGlanceAnsi(card, opts = {}) {
 	// Wide enough that the agent URL fits whole: a card whose last line is a
 	// half-truncated uuid cannot be copied, which is most of why it is there.
 	const width = Math.max(40, Math.min(100, opts.width || 68));
+	const inner = width - 4;
 	const c = (code, text) => (color ? `\u001b[${code}m${text}\u001b[0m` : String(text));
 	const dot = { active: '32', idle: '33', new: '90' }[card.status] || '90';
-	const pad = (text) => {
-		const clipped = clip(text, width - 4);
-		return `${clipped}${' '.repeat(Math.max(0, width - 4 - visibleLength(clipped)))}`;
+	const line = (text) => {
+		const clipped = clipVisible(text, inner);
+		return `${c('90', '│')} ${clipped}${' '.repeat(Math.max(0, inner - visibleLength(clipped)))} ${c('90', '│')}`;
 	};
-	const line = (text) => `${c('90', '│')} ${pad(text)} ${c('90', '│')}`;
 	const stats = (card.stats || []).map((s) => `${s.label} ${c('1', s.value)}`).join('   ');
 
 	return [
 		c('90', `╭${'─'.repeat(width - 2)}╮`),
-		line(`${c('1', clip(card.name, 24))}  ${c(dot, '●')} ${c('90', card.status)}`),
-		line(c('90', clip(card.description || card.headline, width - 6))),
+		line(`${c('1', card.name)}  ${c(dot, '●')} ${c('90', card.status)}`),
+		line(c('90', card.description || card.headline)),
 		line(''),
 		line(`${c('1', String(card.metric.value))} ${c('90', card.metric.label.toLowerCase())}`),
-		line(c('90', stats)),
+		line(stats),
 		line(''),
 		line(c('90', card.url)),
 		c('90', `╰${'─'.repeat(width - 2)}╯`),
 	].join('\n');
 }
 
-function clip(text, max) {
+const ANSI_RE = /^\u001b\[[0-9;]*m/;
+
+/**
+ * Clip to a visible column count without cutting an escape sequence in half:
+ * colour codes take no columns, so counting them (the naive slice) truncates
+ * a coloured line early and leaves the terminal in the last colour it saw.
+ */
+function clipVisible(text, max) {
 	const value = String(text ?? '');
-	return value.length <= max ? value : `${value.slice(0, Math.max(1, max - 1))}…`;
+	let out = '';
+	let visible = 0;
+	let i = 0;
+	let colored = false;
+	while (i < value.length) {
+		const escape = ANSI_RE.exec(value.slice(i));
+		if (escape) {
+			out += escape[0];
+			i += escape[0].length;
+			colored = true;
+			continue;
+		}
+		if (visible >= max) {
+			// One column is spent on the ellipsis, so step back if we are exactly full.
+			const trimmed = out.replace(/.$/, '');
+			return `${visible > max - 1 ? trimmed : out}…${colored ? '\u001b[0m' : ''}`;
+		}
+		out += value[i];
+		visible += 1;
+		i += 1;
+	}
+	return out;
 }
 
 // Length as the terminal sees it: ANSI escapes take no columns.
 function visibleLength(text) {
-	// eslint-disable-next-line no-control-regex
 	return String(text).replace(/\u001b\[[0-9;]*m/g, '').length;
 }
