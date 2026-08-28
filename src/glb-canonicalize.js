@@ -441,6 +441,13 @@ function _lookupBone(name) {
 	// tables below. Without this an entire CC export maps zero bones and lands in
 	// a bind-pose T-pose.
 	s = s.replace(/^CC_Base_/i, '');
+	// Reallusion CC3/CC4 numbered spine: CC_Base_Spine01/02 -> Spine01/02 after strip.
+	// Unlike Unreal's spine_01 (spine02 collides with Mixamo Spine+_02 dedup), Spine01
+	// has no separator before digits, so we handle it explicitly before the general
+	// alias table to avoid colliding with Mixamo's `Spine_02` dedup (which normalizes
+	// to spine02 but should dedup to Spine, not Spine1). CC has Hips + 2 spine joints.
+	if (/^spine01$/i.test(s)) return 'Spine';
+	if (/^spine02$/i.test(s)) return 'Spine1';
 	// Sketchfab / Maya joint exports prefix every joint `j_` (`j_pelvis`, `j_L_hip`,
 	// `j_spine_0`). Stripping it leaves stems the canonical + sided tables resolve.
 	// The negative lookahead protects VRM/VRoid, whose `J_Bip_*` / `J_Sec_*` names
