@@ -26,6 +26,50 @@
 
 const _cooldowns = new Map(); // provider name -> epoch ms until which it is skipped
 
+// Brownout hooks. This module is isomorphic (the browser bundle imports it), and
+// provenance/chaos are node:async_hooks, so they are loaded lazily behind an
+// isServer() gate exactly as api/_lib/solana/connection.js loads the shared
+// cache. In a browser both resolve to no-ops, which is correct: there is no
+// request to attribute a source to, and nothing should be able to inject a
+// fault from the client side.
+let _brownoutPromise;
+// Resolved module, once the import lands. Recording has to be SYNCHRONOUS in the
+// hot path: the response header is written when the handler ends, and an await
+// here would let a record arrive after its own response had already gone out.
+// That is not a lost log line, it is a trace that omits the rung that answered.
+let _brownoutMod = null;
+function brownout() {
+	if (_brownoutPromise !== undefined) return _brownoutPromise;
+	_brownoutPromise = null;
+	if (typeof window === 'undefined') {
+		_brownoutPromise = import('../../api/_lib/brownout/index.js')
+			.then((m) => {
+				_brownoutMod = m;
+				return m;
+			})
+			.catch(() => null);
+	}
+	return _brownoutPromise;
+}
+// Warm the import at module load on the server, so by the time a request runs
+// the module is in hand and every record is written synchronously.
+brownout();
+
+function noteSource(rec) {
+	if (_brownoutMod) {
+		_brownoutMod.recordSource?.(rec);
+		return;
+	}
+	// Only on the very first call of a cold process, before the import lands.
+	const pending = brownout();
+	if (pending) void pending.then((m) => m?.recordSource?.(rec));
+}
+async function faultForProvider(name) {
+	if (_brownoutMod) return _brownoutMod.faultFor?.(name) ?? null;
+	const mod = await brownout();
+	return mod?.faultFor?.(name) ?? null;
+}
+
 /**
  * @typedef {object} Provider
  * @property {string} name                       Stable id; keys the cooldown map.
@@ -55,24 +99,51 @@ export async function fetchFirst(providers, { timeoutMs = 4000, cooldownMs = 60_
 
 	let lastErr;
 	for (const p of order) {
+		const startedAt = Date.now();
 		const ctrl = new AbortController();
 		const timer = setTimeout(() => ctrl.abort(), timeoutMs);
 		// A caller-supplied signal (stale-search abort) composes with the
 		// per-attempt timeout rather than being replaced by it.
 		const signal = p.init?.signal ? AbortSignal.any([ctrl.signal, p.init.signal]) : ctrl.signal;
 		try {
-			const res = await fetch(p.url, {
-				headers: { accept: 'application/json' },
-				...p.init,
-				signal,
-			});
+			// A declared fault stands in for the real one, in the same position the
+			// real failure would occupy, so the ladder below fails over identically.
+			const fault = await faultForProvider(p.name);
+			let res;
+			if (fault) {
+				const mod = _brownoutMod || (await brownout());
+				const injected = await mod.applyFault(fault, p.url);
+				if (injected) res = injected;
+			}
+			if (!res) {
+				res = await fetch(p.url, {
+					headers: { accept: 'application/json' },
+					...p.init,
+					signal,
+				});
+			}
 			if (!res.ok) throw new Error(`http_${res.status}`);
 			const value = await (p.parse ? p.parse(res) : res.json());
-			if (value != null) return { value, source: p.name };
+			if (value != null) {
+				// The rung that answered is `live`; the ones before it are recorded
+				// in the catch below, so a trace shows the whole walk, not just the
+				// winner. That is the difference between "we have a ladder" and
+				// "here is the ladder working".
+				noteSource({ name: p.name, outcome: 'ok', ms: Date.now() - startedAt, tier: 'live' });
+				return { value, source: p.name };
+			}
 			// Miss: provider is healthy but has no data for this query.
+			noteSource({ name: p.name, outcome: 'skip', ms: Date.now() - startedAt, tier: 'live', detail: 'no_data' });
 			lastErr = new Error(`${p.name}: no_data`);
 		} catch (err) {
 			lastErr = err instanceof Error ? err : new Error(String(err));
+			noteSource({
+				name: p.name,
+				outcome: 'fail',
+				ms: Date.now() - startedAt,
+				tier: 'live',
+				detail: /http_(\d{3})/.exec(lastErr.message)?.[1] || (lastErr.name === 'TimeoutError' ? 'timeout' : 'error'),
+			});
 			// Caller abandoned the request (stale search) — stop the whole chain
 			// and don't penalise the provider for it.
 			if (p.init?.signal?.aborted) {

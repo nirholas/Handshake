@@ -8,6 +8,8 @@
 // the upstream from concurrent cold-instance misses.
 
 import { cacheGet, cacheSet } from './cache.js';
+import { recordSource } from './brownout/provenance.js';
+import { applyFault, faultFor } from './brownout/chaos.js';
 import { createCache } from './mem-cache.js';
 
 export const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
@@ -104,15 +106,31 @@ function keyWasRejected(headersUsed, status) {
 export async function geckoFetch(path, { ttlMs = 60_000, timeoutMs = 8000 } = {}) {
 	const now = Date.now();
 	const hit = _cache.get(path);
-	if (hit && hit.expiresAt > now) return hit.value;
+	if (hit && hit.expiresAt > now) {
+		// A cache hit inside its TTL is `cache`, not `live`: the answer is correct
+		// and intended, but it did not come off the wire during this request, and a
+		// reader deciding how much to trust a number deserves to know which.
+		recordSource({ name: 'coingecko', outcome: 'ok', ms: 0, tier: 'cache' });
+		return hit.value;
+	}
 	// A still-usable stale entry lets us ride out a throttled/failing upstream.
 	const stale = hit && hit.staleUntil > now ? hit.value : null;
 
 	const url = `${COINGECKO_BASE}${path}`;
+	const startedAt = now;
 	let resp;
 	try {
 		const sent = geckoHeaders();
-		resp = await fetch(url, { headers: sent, signal: AbortSignal.timeout(timeoutMs) });
+		// CoinGecko's keyless tier is shared per egress IP and throttles constantly,
+		// which makes it the single most useful upstream to be able to break on
+		// purpose: most of this module exists to survive exactly that.
+		const fault = faultFor('coingecko');
+		if (fault) {
+			const injected = await applyFault(fault, url);
+			resp = injected ?? (await fetch(url, { headers: sent, signal: AbortSignal.timeout(timeoutMs) }));
+		} else {
+			resp = await fetch(url, { headers: sent, signal: AbortSignal.timeout(timeoutMs) });
+		}
 		// An exhausted/revoked demo key rejects requests the keyless tier would
 		// still answer. Bench the key and retry once without it before falling
 		// back to stale data — the live payload beats a cached one.
@@ -129,14 +147,17 @@ export async function geckoFetch(path, { ttlMs = 60_000, timeoutMs = 8000 } = {}
 		// Network failure or timeout — serve stale if we have it, else surface.
 		if (stale !== null) {
 			console.warn(`[coingecko] ${path} fetch failed (${netErr?.name || 'error'}); serving stale`);
+			recordSource({ name: 'coingecko', outcome: 'ok', ms: Date.now() - startedAt, tier: 'stale', detail: 'stale' });
 			return stale;
 		}
 		const durable = await durableStale(path);
 		if (durable !== null) {
 			console.warn(`[coingecko] ${path} fetch failed (${netErr?.name || 'error'}); serving durable last-good`);
 			_cache.set(path, { value: durable, expiresAt: now, staleUntil: now + STALE_MS });
+			recordSource({ name: 'coingecko', outcome: 'ok', ms: Date.now() - startedAt, tier: 'stale', detail: 'durable' });
 			return durable;
 		}
+		recordSource({ name: 'coingecko', outcome: 'fail', ms: Date.now() - startedAt, tier: 'live', detail: netErr?.name === 'TimeoutError' ? 'timeout' : 'network' });
 		throw netErr;
 	}
 	if (!resp.ok) {
@@ -145,6 +166,7 @@ export async function geckoFetch(path, { ttlMs = 60_000, timeoutMs = 8000 } = {}
 		// recent value beats an outage — serve it and keep the page alive.
 		if (resp.status !== 404 && stale !== null) {
 			console.warn(`[coingecko] ${path} → ${resp.status}; serving stale`);
+			recordSource({ name: 'coingecko', outcome: 'ok', ms: Date.now() - startedAt, tier: 'stale', detail: resp.status });
 			return stale;
 		}
 		if (resp.status !== 404) {
@@ -154,14 +176,17 @@ export async function geckoFetch(path, { ttlMs = 60_000, timeoutMs = 8000 } = {}
 			if (durable !== null) {
 				console.warn(`[coingecko] ${path} → ${resp.status}; serving durable last-good`);
 				_cache.set(path, { value: durable, expiresAt: now, staleUntil: now + STALE_MS });
+				recordSource({ name: 'coingecko', outcome: 'ok', ms: Date.now() - startedAt, tier: 'stale', detail: resp.status });
 				return durable;
 			}
 		}
+		recordSource({ name: 'coingecko', outcome: 'fail', ms: Date.now() - startedAt, tier: 'live', detail: resp.status });
 		const err = new Error(`CoinGecko ${resp.status} for ${path}`);
 		err.status = resp.status;
 		throw err;
 	}
 	const value = await resp.json();
+	recordSource({ name: 'coingecko', outcome: 'ok', ms: Date.now() - startedAt, tier: 'live' });
 	_cache.set(path, { value, expiresAt: now + ttlMs, staleUntil: now + ttlMs + STALE_MS });
 	// Fire-and-forget durable mirror, never let a cache fault fail a live fetch.
 	Promise.resolve(cacheSet(durableKey(path), value, DURABLE_STALE_S)).catch(() => {});

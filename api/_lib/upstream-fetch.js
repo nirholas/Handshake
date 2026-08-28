@@ -35,6 +35,8 @@
 
 import { withRetry, withBreaker, parseRetryAfter, isRetryableError } from './resilience.js';
 import { createCache } from './mem-cache.js';
+import { recordSource } from './brownout/provenance.js';
+import { applyFault, faultFor } from './brownout/chaos.js';
 
 export const DEFAULT_TIMEOUT_MS = 8_000;
 const DEFAULT_ATTEMPTS = 3;
@@ -123,10 +125,21 @@ export async function fetchUpstream(url, init = {}, opts = {}) {
 	} = opts;
 	const shown = safeUrl(url);
 
+	const t0 = Date.now();
 	const attempt = async () => {
 		let res;
 		try {
-			res = await fetch(url, { ...init, signal: composeSignal(init.signal, timeoutMs) });
+			// Brownout: a fault declared for this upstream, in this request only,
+			// is raised in the shape of the real failure it stands in for, from
+			// inside the same try that would have caught the genuine one. That
+			// placement is the whole point: retries, Retry-After handling and the
+			// breaker below all see it exactly as they would see the outage.
+			const fault = faultFor(name || shown);
+			if (fault) {
+				const injected = await applyFault(fault, shown);
+				if (injected) res = injected;
+			}
+			if (!res) res = await fetch(url, { ...init, signal: composeSignal(init.signal, timeoutMs) });
 		} catch (err) {
 			if (init.signal?.aborted) throw err;
 			const e = new UpstreamError(`${shown}: ${err?.name === 'TimeoutError' ? `timed out after ${timeoutMs}ms` : err?.message || 'network error'}`, { url: shown, cause: err });
@@ -162,8 +175,27 @@ export async function fetchUpstream(url, init = {}, opts = {}) {
 
 	const shouldRetry = (err) => !err?.tooLongToWait && !init.signal?.aborted && isRetryableError(err);
 	const run = () => withRetry(attempt, { attempts, shouldRetry, label });
+	// Every third-party call in api/ goes through here, which makes this the one
+	// place that can record what actually happened without every call site
+	// remembering to. `live` because a value that reaches this return came off
+	// the wire during this request; the cache tiers stamp their own.
+	const label_ = name || shown;
+	const noteOk = (v) => {
+		recordSource({ name: label_, outcome: 'ok', ms: Date.now() - t0, tier: 'live' });
+		return v;
+	};
+	const noteFail = (err) => {
+		recordSource({
+			name: label_,
+			outcome: 'fail',
+			ms: Date.now() - t0,
+			tier: 'live',
+			detail: err?.status ?? (err?.name === 'TimeoutError' ? 'timeout' : 'error'),
+		});
+		throw err;
+	};
 
-	if (!name) return run();
+	if (!name) return run().then(noteOk, noteFail);
 	let failure;
 	const value = await withBreaker(name, run, {
 		threshold: breakerThreshold,
@@ -173,8 +205,8 @@ export async function fetchUpstream(url, init = {}, opts = {}) {
 			return null;
 		},
 	});
-	if (value) return value;
-	throw failure instanceof Error ? failure : new UpstreamError(`${label || name}: circuit open`, { url: shown, status: 503 });
+	if (value) return noteOk(value);
+	return noteFail(failure instanceof Error ? failure : new UpstreamError(`${label || name}: circuit open`, { url: shown, status: 503 }));
 }
 
 /**
@@ -269,6 +301,9 @@ export async function lastGood(key, load, opts = {}) {
 		const ageMs = hit ? Date.now() - hit.at : Infinity;
 		if (hit && ageMs <= maxAgeMs) {
 			onFallback?.(err, ageMs);
+			// The single most important thing a caller can know about a response:
+			// this value is older than it was meant to be, and by how much.
+			recordSource({ name: `lastgood:${key}`.slice(0, 48), outcome: 'ok', ms: ageMs, tier: 'stale', detail: 'stale' });
 			return { value: hit.value, stale: true, ageMs, error: err };
 		}
 		throw err;

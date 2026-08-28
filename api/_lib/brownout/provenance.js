@@ -139,10 +139,13 @@ export function provenanceSummary() {
 		ok,
 		failed,
 		ms: Date.now() - ledger.startedAt,
-		// Degraded means "a reader should not treat this as a clean live answer":
-		// either something had to be retried or failed over, or what came back is
-		// not fresh. Both are worth surfacing; neither is an error.
-		degraded: failed > 0 || tier !== 'live',
+		// Degraded means "this answer is worse than the one the endpoint intends to
+		// give": something had to fail over, or what came back is older than its
+		// own TTL allows. A `cache` hit is NOT degraded, and getting that wrong
+		// would be fatal to the signal: almost every response on a healthy site is
+		// a cache hit, so counting those would mark the whole site degraded and
+		// train every reader to ignore the flag.
+		degraded: failed > 0 || tier === 'stale' || tier === 'fallback',
 		truncated: ledger.truncated || 0,
 		records: ledger.sources,
 	};

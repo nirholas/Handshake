@@ -8,6 +8,8 @@ import { sendOpsAlert } from './alerts.js';
 import { instrument as zauthInstrument, drain as zauthDrain } from './zauth.js';
 import { isDbUnavailableError, isDbCapacityError, isStoragePressured } from './db.js';
 import { redactUrlSecrets } from './scrub-secrets.js';
+import { provenanceHeaders, withProvenance } from './brownout/provenance.js';
+import { CHAOS_HEADER, CHAOS_STATUS_HEADER, chaosDecision, withChaos } from './brownout/chaos.js';
 
 // Secure-by-default caching: emit `no-store` UNLESS the handler already set a
 // Cache-Control header (e.g. `res.setHeader('cache-control', 'public, s-maxage=…')`
@@ -541,10 +543,49 @@ function isAllowedOrigin(origin, allowed) {
 	return allowed.some((pat) => (typeof pat === 'string' ? origin === pat : pat.test(origin)));
 }
 
+// Attach the request's data provenance to the response, and honour a chaos
+// directive if this request carries a valid one.
+//
+// This sits in wrap() because wrap() is the one seam every handler already goes
+// through: putting it here means a new endpoint reports its provenance without
+// its author doing anything, which is the only way a guarantee like this stays
+// true across hundreds of handlers. Headers are written just before the body
+// goes out; a response already streaming keeps whatever it had, since headers
+// cannot be added after the fact and a throw here must never cost a caller a
+// working answer.
+function attachProvenance(res) {
+	try {
+		if (res.headersSent || typeof res.setHeader !== 'function') return;
+		const headers = provenanceHeaders();
+		if (!headers) return;
+		res.setHeader('x-brownout', headers.summary);
+		if (headers.trace) res.setHeader('x-brownout-trace', headers.trace);
+		// Browsers cannot read a response header unless it is exposed, and the
+		// whole point of this is that a client can tell a degraded answer from a
+		// live one.
+		const exposed = res.getHeader('access-control-expose-headers');
+		const want = headers.trace ? 'x-brownout, x-brownout-trace' : 'x-brownout';
+		res.setHeader('access-control-expose-headers', exposed ? `${exposed}, ${want}` : want);
+	} catch {
+		/* provenance is telemetry: it never breaks a response */
+	}
+}
+
 // Wrap async handlers so uncaught errors return a consistent JSON envelope.
 export function wrap(handler) {
 	return async (req, res, ...rest) => {
 		const monitored = zauthInstrument(req, res);
+		const chaos = chaosDecision(req);
+		if (req?.headers?.[CHAOS_HEADER] && typeof res.setHeader === 'function') {
+			// Always answer the question the caller asked, including when the answer
+			// is no. A prover that believes it broke an upstream and did not would
+			// record a green proof for a fallback nothing exercised, which is worse
+			// than a red one.
+			try {
+				res.setHeader(CHAOS_STATUS_HEADER, chaos.allowed ? `applied;faults=${chaos.faults.size}` : `refused;reason=${chaos.reason}`);
+			} catch { /* header write is best-effort */ }
+		}
+		const run = () => withProvenance(() => withChaos(chaos.faults, async () => {
 		try {
 			await handler(req, res, ...rest);
 		} catch (err) {
@@ -653,6 +694,25 @@ export function wrap(handler) {
 					error(res, status, err.code || 'bad_request', err.message || 'error');
 				}
 			}
+		}
+		}));
+		// The provenance header has to be written while the ledger is still in
+		// scope AND before the body is flushed, so the res.end path is patched for
+		// the duration of the handler rather than read afterwards. Every helper in
+		// this module funnels through res.end, so one seam covers json(), error()
+		// and a hand-rolled stream alike.
+		const originalEnd = typeof res.end === 'function' ? res.end.bind(res) : null;
+		if (originalEnd) {
+			res.end = (...args) => {
+				attachProvenance(res);
+				res.end = originalEnd;
+				return originalEnd(...args);
+			};
+		}
+		try {
+			await run();
+		} finally {
+			if (originalEnd) res.end = originalEnd;
 		}
 		// Keep the lambda alive briefly so the zauth SDK's in-flight POST to
 		// back.zauthx402.com can finish. Cost: ~250ms of post-response runtime
