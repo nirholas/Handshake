@@ -1,6 +1,6 @@
 # Publishing three.ws to the Solana dApp Store
 
-How a release of the three.ws Seeker app gets from this repo onto the Solana dApp Store. This is the runbook; the app itself and what it adds over the website are described in [three.ws on Solana Seeker](./seeker-app.md), and the box-by-box submission gate lives in [solana-mobile/docs/CHECKLIST.md](../solana-mobile/docs/CHECKLIST.md).
+How a release of the three.ws Seeker app gets from this repo onto the Solana dApp Store. This is the runbook; the app itself and what it adds over the website are described in [three.ws on Solana Seeker](./seeker-app.md), and the box-by-box submission gate lives in [solana-mobile/docs/CHECKLIST.md](../solana-mobile/docs/CHECKLIST.md). If you are the owner sitting down to actually submit, follow [Submission day](./seeker-submission-day.md) instead: it inlines every field and value so you never open a file.
 
 Publishing changed shape in May 2026. `dapp-store-cli` 1.0 is **Publisher Portal backed**: the publisher identity, KYC, the App NFT, and all listing copy live in <https://publish.solanamobile.com>, and the CLI only uploads one signed APK per release. The old `dapp-store create publisher` / `create app` / `publish submit` chain is gone. Anything that still describes that flow is out of date.
 

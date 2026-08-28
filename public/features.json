@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T05:59:06.232Z",
+	"generated_at": "2026-08-28T06:25:09.735Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -4061,6 +4061,16 @@
 					"path": "/docs/seeker-publishing",
 					"title": "Publishing to the Solana dApp Store",
 					"description": "The release runbook for the three.ws Seeker app: Publisher Portal setup, the release keystore, building and verifying a signed APK, and submitting it for review.",
+					"added": "2026-08-28",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/seeker-submission-day",
+					"title": "Submission day: three.ws on the Seeker dApp Store",
+					"description": "The owner's step-by-step for submission day: funding the publisher wallet, every Publisher Portal field with the listing copy to paste, the five screenshots to capture on a Seeker, and the submit command.",
 					"added": "2026-08-28",
 					"auth": null,
 					"indexable": true,

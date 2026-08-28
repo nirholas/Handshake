@@ -207,6 +207,14 @@
 			<description>Every release note joined to the commits that produced it, with a confidence score and the reasoning behind every link.</description>
 		</item>
 		<item>
+			<title>Submission day: three.ws on the Seeker dApp Store</title>
+			<link>https://three.ws/docs/seeker-submission-day</link>
+			<guid isPermaLink="false">2026-08-28:Submission day: three.ws on the Seeker dApp Store</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The owner's step-by-step for submission day: funding the publisher wallet, every Publisher Portal field with the listing copy to paste, the five screenshots to capture on a Seeker, and the submit command.</description>
+		</item>
+		<item>
 			<title>Terminal renderer</title>
 			<link>https://three.ws/tty</link>
 			<guid isPermaLink="false">2026-08-28:Terminal renderer</guid>

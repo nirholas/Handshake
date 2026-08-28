@@ -3281,6 +3281,12 @@
 					"added": "2026-08-28"
 				},
 				{
+					"path": "/docs/seeker-submission-day",
+					"title": "Submission day: three.ws on the Seeker dApp Store",
+					"description": "The owner's step-by-step for submission day: funding the publisher wallet, every Publisher Portal field with the listing copy to paste, the five screenshots to capture on a Seeker, and the submit command.",
+					"added": "2026-08-28"
+				},
+				{
 					"path": "/docs/ios-app",
 					"title": "three.ws on iOS",
 					"description": "What the App Store app adds on top of the website: the native share sheet, universal links, wallet deep links back to the page you left, real permission prompts, and an offline screen that recovers on its own.",

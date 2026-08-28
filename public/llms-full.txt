@@ -2469,6 +2469,12 @@ URL: https://three.ws/docs/seeker-publishing
 
 The release runbook for the three.ws Seeker app: Publisher Portal setup, the release keystore, building and verifying a signed APK, and submitting it for review.
 
+### Submission day: three.ws on the Seeker dApp Store
+
+URL: https://three.ws/docs/seeker-submission-day
+
+The owner's step-by-step for submission day: funding the publisher wallet, every Publisher Portal field with the listing copy to paste, the five screenshots to capture on a Seeker, and the submit command.
+
 ### three.ws on iOS
 
 URL: https://three.ws/docs/ios-app

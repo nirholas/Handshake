@@ -173,6 +173,7 @@ Deeper references that don't fit a track above but answer real questions:
 - [Run an inference node](./inference-node-operator.md): join the supply side of the open inference network with your own hardware, from clone to a signed, verified result, on CPU or an NVIDIA GPU
 - [three.ws on Solana Seeker](./seeker-app.md): the Android app for Seeker and Saga, and what it adds on top of the website (Seed Vault sign-in, share-sheet capture, offline shell, Seeker verification)
 - [Publishing to the Solana dApp Store](./seeker-publishing.md): the release runbook for the Seeker app, from the Publisher Portal setup and the release keystore through building, verifying, and submitting a signed APK
+- [Submission day: getting three.ws onto the Seeker dApp Store](./seeker-submission-day.md): the owner's step-by-step, with every portal field, the listing copy to paste, and the five screenshots to capture on the phone
 - [three.ws on iOS](./ios-app.md): the App Store app, what it adds on top of the website (native share sheet, universal links, wallet deep links, offline shell), and how the web half of it ships on every deploy
 - [Free LLM providers](./free-llm-providers.md): the failover chain of a dozen free AI providers behind every text completion, what each free tier gives, and how to add the next rung
 - [Tokens API on three.ws](./tokens-xyz.md): the Solana Foundation asset layer that tells us which mints are the same asset, why it sits second in the market-data cascade, and the one env var that turns it on
