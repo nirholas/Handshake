@@ -90,6 +90,9 @@ function defaultSelect(body) {
  * @param {string[]} [opts.events=['message']] event names to listen for
  * @param {boolean} [opts.withCredentials=true]
  * @param {(data:any)=>any} [opts.map]
+ * @param {() => void} [opts.onOpen] the stream connected
+ * @param {(err:any) => void} [opts.onError] the stream dropped; EventSource
+ *   reconnects on its own, so this is for status, not for recovery
  * @param {typeof EventSource} [opts.EventSourceImpl]
  */
 export function sseSource({
@@ -97,13 +100,20 @@ export function sseSource({
 	events = ['message'],
 	withCredentials = true,
 	map = (x) => x,
+	onOpen,
+	onError,
 	EventSourceImpl = globalThis.EventSource,
 }) {
 	return {
 		name: `sse:${url}`,
 		start(emit) {
-			if (!EventSourceImpl) return () => {};
+			if (!EventSourceImpl) {
+				onError?.(new Error('EventSource is unavailable in this environment'));
+				return () => {};
+			}
 			const es = new EventSourceImpl(url, { withCredentials });
+			if (onOpen) es.addEventListener('open', () => onOpen());
+			if (onError) es.addEventListener('error', (e) => onError(e));
 			const handler = (e) => {
 				let payload = e.data;
 				try {
@@ -133,13 +143,17 @@ export function sseSource({
  *
  * @param {object} [opts]
  * @param {string} [opts.origin='https://three.ws'] rail origin
+ * @param {() => void} [opts.onOpen]
+ * @param {(err:any) => void} [opts.onError]
  * @param {typeof EventSource} [opts.EventSourceImpl]
  */
-export function railSource({ origin = 'https://three.ws', EventSourceImpl } = {}) {
+export function railSource({ origin = 'https://three.ws', onOpen, onError, EventSourceImpl } = {}) {
 	const base = String(origin || '').replace(/\/$/, '');
 	const source = sseSource({
 		url: `${base}/api/herald/stream`,
 		events: ['announce'],
+		onOpen,
+		onError,
 		EventSourceImpl,
 	});
 	return { ...source, name: 'rail' };

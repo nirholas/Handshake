@@ -92,20 +92,20 @@ function isAuthed() {
 function connectRail() {
 	if (!('EventSource' in window)) return setRail('off', 'This browser has no EventSource');
 	setRail('', 'Connecting…');
-	// Same-origin: the SDK's railSource defaults to three.ws, but on a preview
-	// origin (or localhost) the stream lives here, not there.
-	railStop = herald.source(railSource({ origin: window.location.origin }));
-
-	// EventSource reports readiness through its own events; the source hides the
-	// instance, so we probe the endpoint once for an honest label rather than
-	// claiming a connection we cannot see.
-	fetch('/api/herald/stream', { method: 'HEAD', credentials: 'include' })
-		.then((res) => {
-			if (res.status === 401) setRail('off', 'Sign in to use your rail');
-			else if (res.ok || res.status === 405) setRail('live', 'Listening on your rail');
-			else setRail('off', `Rail unavailable (${res.status})`);
-		})
-		.catch(() => setRail('off', 'Rail unreachable'));
+	// The stream itself is the status: EventSource tells us when it is open and
+	// when it drops, so the label is what is actually true rather than the
+	// result of a separate probe request.
+	railStop = herald.source(
+		railSource({
+			// Same-origin: the SDK defaults to three.ws, but on a preview origin
+			// (or localhost) the stream lives here, not there.
+			origin: window.location.origin,
+			onOpen: () => setRail('live', 'Listening on your rail'),
+			// EventSource reconnects on its own, so a drop is a status change, not
+			// a failure to recover from.
+			onError: () => setRail('off', 'Rail disconnected, retrying…'),
+		}),
+	);
 }
 
 function setRail(state, label) {

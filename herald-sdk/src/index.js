@@ -187,17 +187,22 @@ export function createHerald(options = {}) {
 
 		try {
 			const presenter = await pickPresenter();
-			const shown = await presenter.present(message, { dwellMs, actions });
-			// A presenter that reports it could not render is not a delivery: fall
-			// through to the card so the message still reaches a human.
-			if (shown === false && presenter.name !== 'card') {
-				await presenters.card.present(message, { dwellMs, actions });
-			}
+			// The presenter's promise resolves when the message LEAVES the screen
+			// (which is what keeps deliveries one at a time), so the delivery is
+			// counted when it goes UP. Anything else would report a message the
+			// person is looking at right now as undelivered for its whole dwell.
+			const showing = presenter.present(message, { dwellMs, actions });
 			stats.delivered += 1;
 			opts.onDeliver?.(message);
+			// A presenter that reports it could not render is not a delivery: fall
+			// through to the card so the message still reaches a human.
+			if ((await showing) === false && presenter.name !== 'card') {
+				await presenters.card.present(message, { dwellMs, actions });
+			}
 		} catch {
-			// A presenter that throws must not wedge the queue; the message is
-			// counted as dropped so `stats()` never over-reports delivery.
+			// A presenter that throws must not wedge the queue, and must not leave
+			// a delivery counted that nobody ever saw.
+			stats.delivered = Math.max(0, stats.delivered - 1);
 			record(message, 'presenter-failed');
 		} finally {
 			busy = false;
