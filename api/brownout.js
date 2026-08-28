@@ -1,4 +1,4 @@
-// GET /api/brownout — the platform's degradation posture, as data.
+// GET /api/brownout: the platform's degradation posture, as data.
 //
 // Two things, and the second is the one that matters:
 //
