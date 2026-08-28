@@ -1,0 +1,59 @@
+{
+  "name": "@three-ws/agent-vitals",
+  "version": "0.1.0",
+  "description": "Capability attestation for autonomous agents. Not \"is it up\" but \"can it act\": model an agent's preconditions as a causal graph, get back the root blocker and the command that fixes it.",
+  "type": "module",
+  "main": "./src/index.js",
+  "module": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js",
+      "default": "./src/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": [
+    "agent",
+    "autonomous",
+    "health-check",
+    "healthcheck",
+    "observability",
+    "root-cause",
+    "liveness",
+    "readiness",
+    "capability",
+    "attestation",
+    "monitoring",
+    "sre",
+    "ai-agent",
+    "three.ws"
+  ],
+  "author": "nirholas <support@three.ws>",
+  "license": "Apache-2.0",
+  "homepage": "https://three.ws",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/three.ws.git",
+    "directory": "packages/agent-vitals"
+  },
+  "bugs": {
+    "url": "https://github.com/nirholas/three.ws/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {},
+  "publishConfig": {
+    "access": "public"
+  }
+}
