@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>
+			/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l =
+						m === 'auto'
+							? window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
+							: m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+		<title>Portal: walk any website in 3D · three.ws</title>
+		<meta
+			name="description"
+			content="Paste any web address and walk through it. Portal reads the page's real structure and builds a 3D city from it: sections become buildings sized by what they say, links become doors you step into, images become billboards. Download the world as a GLB or embed it in your own site."
+		/>
+		<link rel="canonical" href="https://three.ws/portal" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Portal: walk any website in 3D" />
+		<meta
+			property="og:description"
+			content="Paste a web address and walk through it. Sections become buildings, links become doors, images become billboards. Download it as a GLB or embed it anywhere."
+		/>
+		<meta property="og:url" content="https://three.ws/portal" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Portal&amp;d=Paste+any+web+address+and+walk+through+it+in+3D.&amp;p=%2Fportal" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Portal: walk any website in 3D" />
+		<meta name="twitter:description" content="Paste a web address and walk through it. Links become doors you step into." />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Portal&amp;d=Paste+any+web+address+and+walk+through+it+in+3D.&amp;p=%2Fportal" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/src/portal/portal.css" />
+	</head>
+	<body>
+		<!--
+		  ────────────────────────────────────────────────────────────────────────
+		  DOM CONTRACT for src/portal/main.js. Renaming an id here without
+		  updating that module breaks the surface, so both sides list the same
+		  names in the same order.
+		  ────────────────────────────────────────────────────────────────────────
+		    #pt-canvas      → the WebGL world (src/portal/render.js mounts here)
+		    #pt-intro       → first-run panel: address form + examples
+		    #pt-loading     → build progress, one step per real phase
+		    #pt-error       → designed failure state, carries the API's own reason
+		    #pt-site        → the explored site's chip (icon, title, counts)
+		    #pt-address     → the in-world address bar
+		    #pt-door        → proximity prompt for the door you are standing at
+		    #pt-map         → minimap canvas
+		    #pt-stick       → touch joystick
+		    #pt-toast       → transient confirmations (copied, downloading)
+		  ────────────────────────────────────────────────────────────────────────
+		-->
+		<main class="pt-root" id="pt-root">
+			<canvas id="pt-canvas" class="pt-canvas" aria-label="The website you are exploring, as a walkable 3D world"></canvas>
+
+			<div class="pt-hud pt-top">
+				<div class="pt-glass pt-site" id="pt-site" hidden>
+					<img class="pt-site__icon" id="pt-site-icon" alt="" width="22" height="22" />
+					<div class="pt-site__text">
+						<div class="pt-site__title" id="pt-site-title">&nbsp;</div>
+						<div class="pt-site__meta" id="pt-site-meta"></div>
+					</div>
+				</div>
+				<div class="pt-actions" id="pt-actions" hidden>
+					<button class="pt-btn" id="pt-copy" type="button" title="Copy a link to this world">Copy link</button>
+					<button class="pt-btn" id="pt-embed" type="button" title="Copy an embed snippet for your own site">Embed</button>
+					<button class="pt-btn" id="pt-glb" type="button" title="Download this world as a glTF binary">Download GLB</button>
+					<button class="pt-btn pt-btn--primary" id="pt-new" type="button">New address</button>
+				</div>
+			</div>
+
+			<div class="pt-glass pt-keys" id="pt-keys" hidden>
+				<div>WASD or arrows to walk</div>
+				<div>Shift to run · drag to look</div>
+				<div>Enter at a door to travel</div>
+			</div>
+
+			<form class="pt-glass pt-hud pt-address" id="pt-address" hidden>
+				<input
+					class="pt-address__input"
+					id="pt-address-input"
+					type="text"
+					inputmode="url"
+					autocomplete="off"
+					spellcheck="false"
+					aria-label="Website address to explore"
+					placeholder="another-site.com"
+				/>
+				<button class="pt-btn pt-btn--primary" type="submit">Go</button>
+			</form>
+
+			<div class="pt-glass pt-hud pt-door" id="pt-door" data-open="0" role="status">
+				<span class="pt-door__key">Enter</span>
+				<span class="pt-door__label" id="pt-door-label"></span>
+				<span class="pt-door__kind" id="pt-door-kind"></span>
+			</div>
+
+			<div class="pt-glass pt-hud pt-map" id="pt-map" hidden>
+				<canvas id="pt-map-canvas" width="320" height="320" aria-label="Map of the world you are in"></canvas>
+			</div>
+
+			<div class="pt-glass pt-hud pt-stick" id="pt-stick" hidden aria-hidden="true">
+				<div class="pt-stick__knob" id="pt-stick-knob"></div>
+			</div>
+
+			<div class="pt-glass pt-toast" id="pt-toast" data-open="0" role="status"></div>
+
+			<section class="pt-overlay" id="pt-intro" aria-labelledby="pt-intro-title">
+				<div class="pt-glass pt-panel">
+					<p class="pt-eyebrow">three.ws · Portal</p>
+					<h1 class="pt-h1" id="pt-intro-title">Walk any website.</h1>
+					<p class="pt-lede">
+						Paste an address. Portal reads the page's real structure and builds a place
+						out of it: every section becomes a building sized by what it says, every link
+						becomes a door you can step through, every image becomes a billboard. Then
+						walk it, download it as a 3D file, or put it on your own site.
+					</p>
+					<form class="pt-form" id="pt-intro-form">
+						<label class="sr-only" for="pt-intro-input">Website address</label>
+						<input
+							id="pt-intro-input"
+							type="text"
+							inputmode="url"
+							autocomplete="off"
+							spellcheck="false"
+							placeholder="three.ws"
+						/>
+						<button class="pt-btn pt-btn--primary" type="submit">Build the world</button>
+					</form>
+					<div class="pt-examples" id="pt-examples">
+						<button class="pt-chip" type="button" data-url="three.ws">three.ws</button>
+						<button class="pt-chip" type="button" data-url="three.ws/docs">three.ws/docs</button>
+						<button class="pt-chip" type="button" data-url="developer.mozilla.org/en-US/docs/Web/API/WebGL_API">MDN WebGL</button>
+						<button class="pt-chip" type="button" data-url="en.wikipedia.org/wiki/Three.js">Wikipedia: three.js</button>
+					</div>
+				</div>
+			</section>
+
+			<section class="pt-overlay" id="pt-loading" hidden aria-live="polite">
+				<div class="pt-glass pt-panel">
+					<p class="pt-eyebrow">Building</p>
+					<h2 class="pt-h1" id="pt-loading-host">&nbsp;</h2>
+					<ul class="pt-steps" id="pt-steps">
+						<li class="pt-step" data-step="fetch"><span class="pt-step__dot"></span>Asking the site, and its robots.txt, for the page</li>
+						<li class="pt-step" data-step="read"><span class="pt-step__dot"></span>Reading its structure: headings, links, images, code</li>
+						<li class="pt-step" data-step="layout"><span class="pt-step__dot"></span>Laying out districts, doors and billboards</li>
+						<li class="pt-step" data-step="render"><span class="pt-step__dot"></span>Rendering the world and bringing your avatar in</li>
+					</ul>
+				</div>
+			</section>
+
+			<section class="pt-overlay" id="pt-error" hidden>
+				<div class="pt-glass pt-panel">
+					<p class="pt-error__code" id="pt-error-code">error</p>
+					<h2 class="pt-h1">That address did not become a world.</h2>
+					<p class="pt-lede" id="pt-error-message"></p>
+					<form class="pt-form" id="pt-error-form">
+						<label class="sr-only" for="pt-error-input">Try another address</label>
+						<input id="pt-error-input" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="try another address" />
+						<button class="pt-btn pt-btn--primary" type="submit">Try again</button>
+					</form>
+					<div class="pt-examples">
+						<button class="pt-chip" type="button" data-url="three.ws">walk three.ws instead</button>
+					</div>
+				</div>
+			</section>
+		</main>
+
+		<script type="module" src="/src/portal/main.js"></script>
+		<script type="application/ld+json">
+			{
+				"@context": "https://schema.org",
+				"@type": "WebApplication",
+				"name": "Portal on three.ws",
+				"applicationCategory": "BrowserApplication",
+				"operatingSystem": "Web",
+				"description": "Paste any web address and walk through it as a 3D world. Sections become buildings, links become doors, images become billboards, and the world downloads as a glTF binary.",
+				"url": "https://three.ws/portal",
+				"offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+				"isPartOf": { "@type": "WebSite", "name": "three.ws", "url": "https://three.ws" }
+			}
+		</script>
+	</body>
+</html>
