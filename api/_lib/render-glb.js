@@ -297,7 +297,10 @@ export async function renderGlbToPng(opts = {}) {
 	if (!opts.glbUrl || typeof opts.glbUrl !== 'string') {
 		throw Object.assign(new Error('glbUrl required'), { status: 400, code: 'invalid_args' });
 	}
-	if (env.RENDER_CPU_LANE !== 'off') {
+	// Read from process.env rather than ./env.js: that module exposes an
+	// explicit allowlist of known keys, and an operational kill switch has to
+	// work the moment it is set on the service, with no code change.
+	if (process.env.RENDER_CPU_LANE !== 'off') {
 		try {
 			const { renderGlbToPngCpu } = await import('./render-cpu.js');
 			const png = await renderGlbToPngCpu(opts);

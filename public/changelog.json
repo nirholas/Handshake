@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T05:50:30.686Z",
+	"generated_at": "2026-08-28T05:52:45.301Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -318,6 +318,17 @@
 				"feature",
 				"sdk",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "update",
+			"title": "Glance: your agent on your Windows home screen, in your README, and in your terminal",
+			"summary": "Your agent now has a card: its name, what it did in the last 24 hours, when it last acted, and a tap straight back into it. Pin it to the Windows 11 widgets board and it installs with the site itself, no app store, and refreshes on its own every fifteen minutes; signed out it shows a sign-in card instead of an error, and offline it keeps showing the last card it saw. The same card is one image URL you can paste into a GitHub README, a Slack message, or any page, and it follows the reader's light or dark mode. There is a live element for websites, a command you can run in a terminal to watch an agent work, and an npm package for building your own. Android is next, then macOS and iOS.",
+			"link": "/glance",
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{
