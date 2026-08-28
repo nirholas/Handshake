@@ -280,7 +280,41 @@ function onLoaded(gltf) {
 }
 
 /**
- * Render a GLB to a PNG buffer via headless chromium.
+ * Render a GLB to a PNG buffer.
+ *
+ * Tries the in-process software rasterizer first (./render-cpu.js, roughly
+ * 200-900 ms and no subprocess) and falls back to headless chromium for the
+ * models it cannot decode on its own: Draco-compressed geometry and KTX2/Basis
+ * textures, both of which need decoder binaries the CPU lane does not ship.
+ *
+ * Callers see one function and one PNG either way. Set RENDER_CPU_LANE=off to
+ * pin every render back onto chromium without a deploy.
+ *
+ * @param {object} opts same shape as renderGlbToPngBrowser
+ * @returns {Promise<Buffer>} PNG buffer
+ */
+export async function renderGlbToPng(opts = {}) {
+	if (!opts.glbUrl || typeof opts.glbUrl !== 'string') {
+		throw Object.assign(new Error('glbUrl required'), { status: 400, code: 'invalid_args' });
+	}
+	if (env.RENDER_CPU_LANE !== 'off') {
+		try {
+			const { renderGlbToPngCpu } = await import('./render-cpu.js');
+			const png = await renderGlbToPngCpu(opts);
+			if (png?.length) return png;
+		} catch (err) {
+			// Never fatal: the browser lane can render everything this one can,
+			// so a CPU miss costs latency, not a failed card. Logged with a stable
+			// prefix so the fallback rate is greppable in Cloud Logging.
+			console.warn('[render] cpu lane fell back to chromium:', err?.message || err);
+		}
+	}
+	return renderGlbToPngBrowser(opts);
+}
+
+/**
+ * Render a GLB to a PNG buffer via headless chromium. The failover lane: see
+ * renderGlbToPng below for the one callers should use.
  *
  * @param {object} opts
  * @param {string} opts.glbUrl  - publicly reachable URL of the .glb
@@ -292,7 +326,7 @@ function onLoaded(gltf) {
  *   thumbnail pipeline to give every avatar its own tinted stage.
  * @returns {Promise<Buffer>} PNG buffer
  */
-export async function renderGlbToPng({ glbUrl, width = 1200, height = 630, background = '#0a0a0a', backdrop = null, maxBytes = DEFAULT_MAX_GLB_BYTES } = {}) {
+export async function renderGlbToPngBrowser({ glbUrl, width = 1200, height = 630, background = '#0a0a0a', backdrop = null, maxBytes = DEFAULT_MAX_GLB_BYTES } = {}) {
 	if (!glbUrl || typeof glbUrl !== 'string') {
 		throw Object.assign(new Error('glbUrl required'), { status: 400, code: 'invalid_args' });
 	}

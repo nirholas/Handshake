@@ -191,7 +191,9 @@ export class A3SPlayer {
 	static async load(target, options = {}) {
 		const { THREE, GLTFLoader } = options;
 		if (!THREE || !GLTFLoader) throw new Error('a3s: pass { THREE, GLTFLoader } from the host app');
-		const stream = await A3SStream.open(target, options);
+		// Accept an already-open stream so a caller that inspected the header
+		// first does not pay for a second round trip to the same bytes.
+		const stream = target instanceof A3SStream ? target : await A3SStream.open(target, options);
 		const loader = new GLTFLoader();
 		const gltf = await loader.parseAsync(stream.base.slice().buffer, '');
 		const player = new A3SPlayer({ THREE, GLTFLoader, stream, gltf, onLayer: options.onLayer });

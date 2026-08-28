@@ -9,6 +9,7 @@
 
 import { qConj, qRotate, vAdd, vScale, vSub } from './math.js';
 import {
+	ARM_REACH,
 	BODY_FORWARD,
 	BODY_LEFT,
 	BODY_UP,
@@ -29,6 +30,9 @@ const shoulderR = restPos('RightArm');
 const chinY = neck[1] + (head[1] - neck[1]) * 0.55;
 // Half the shoulder span: the lateral unit every side-aware anchor is placed in.
 const halfSpan = SHOULDER_SPAN / 2;
+// How far below the shoulder a wrist hangs on a relaxed arm: not quite the full
+// reach, so the elbow keeps a soft bend instead of locking.
+const hang = ARM_REACH * 0.94;
 
 const lateral = (metres) => vScale(BODY_LEFT, metres);
 const ahead = (metres) => vScale(BODY_FORWARD, metres);
@@ -57,14 +61,23 @@ export const ANCHORS = Object.freeze({
 	waist: [0, waist[1], waist[2]],
 	hips,
 	shoulder: { Left: shoulderL, Right: shoulderR },
+	/**
+	 * Hands on hips. Placed at the iliac crest rather than the hip joint, which
+	 * is both where hands actually go and inside the arm's reach; the joint
+	 * itself is a few centimetres past a wrist's range on a real skeleton.
+	 */
 	hip: {
-		Left: vAdd(hips, lateral(halfSpan * 0.55)),
-		Right: vAdd(hips, lateral(-halfSpan * 0.55)),
+		Left: vAdd(hips, vAdd(lateral(halfSpan * 0.6), above(0.06))),
+		Right: vAdd(hips, vAdd(lateral(-halfSpan * 0.6), above(0.06))),
 	},
-	/** Arms hanging: where a relaxed wrist sits beside the thigh. */
+	/**
+	 * Arms hanging: where a relaxed wrist sits beside the thigh. Measured DOWN
+	 * FROM THE SHOULDER by the arm's own length, not up from the hips, so it is
+	 * always a place the arm can actually reach.
+	 */
 	side: {
-		Left: vAdd(hips, vAdd(lateral(halfSpan * 0.92), vAdd(above(-0.12), ahead(0.02)))),
-		Right: vAdd(hips, vAdd(lateral(-halfSpan * 0.92), vAdd(above(-0.12), ahead(0.02)))),
+		Left: vAdd(shoulderL, vAdd(above(-hang), vAdd(lateral(0.02), ahead(0.02)))),
+		Right: vAdd(shoulderR, vAdd(above(-hang), vAdd(lateral(-0.02), ahead(0.02)))),
 	},
 	/** Straight out in front at chest height: the offering, pointing, handshake zone. */
 	front: vAdd([0, chest[1] + 0.06, chest[2]], ahead(0.34)),
@@ -80,8 +93,8 @@ export const ANCHORS = Object.freeze({
 	},
 	/** Behind the hip: reaching back, hands clasped behind. */
 	behind: {
-		Left: vAdd(hips, vAdd(lateral(halfSpan * 0.7), vAdd(above(-0.04), ahead(-0.22)))),
-		Right: vAdd(hips, vAdd(lateral(-halfSpan * 0.7), vAdd(above(-0.04), ahead(-0.22)))),
+		Left: vAdd(shoulderL, vAdd(above(-hang * 0.86), vAdd(lateral(-0.02), ahead(-hang * 0.42)))),
+		Right: vAdd(shoulderR, vAdd(above(-hang * 0.86), vAdd(lateral(0.02), ahead(-hang * 0.42)))),
 	},
 	/** Knee height in front: reaching down without the hips moving. */
 	knee: {
@@ -115,7 +128,7 @@ const ANCHOR_BONE = Object.freeze({
 	hip: 'Hips',
 	side: 'Hips',
 	behind: 'Hips',
-	knee: 'Hips',
+	knee: { Left: 'LeftLeg', Right: 'RightLeg' },
 	shoulder: 'Spine2',
 	// The floor does not follow the body: that is what makes it the floor.
 	floor: null,
@@ -157,7 +170,9 @@ export function restAnchor(anchor, offset = {}) {
  */
 export function anchorPoint(pose, anchor, offset = {}) {
 	const rest = restAnchor(anchor, offset);
-	const bone = Array.isArray(anchor) ? null : ANCHOR_BONE[anchor];
+	let bone = Array.isArray(anchor) ? null : ANCHOR_BONE[anchor];
+	// A side-keyed carrier: the knee anchor rides whichever knee it belongs to.
+	if (bone && typeof bone === 'object') bone = bone[offset.side ?? 'Right'];
 	if (!bone || !hasBone(bone)) {
 		// An unattached anchor still rides the root, so a body that walks forward
 		// carries its gesture space with it, but a floor anchor stays on the floor.
