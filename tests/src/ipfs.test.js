@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isDecentralizedURI, resolveURI, normalizeGatewayURL } from '../../src/ipfs.js';
+import { isDecentralizedURI, resolveURI, normalizeGatewayURL, IPFS_GATEWAYS } from '../../src/ipfs.js';
 
 describe('isDecentralizedURI', () => {
 	it('matches ipfs:// URIs', () => {
@@ -66,9 +66,13 @@ describe('resolveURI', () => {
 	});
 
 	it('wraps gateway index modulo', () => {
+		// Derive the wrap point from the exported list rather than hardcoding it:
+		// adding a gateway is a routine improvement and should not need this test
+		// edited to stay true.
 		const zero = resolveURI('ipfs://QmCID', 0);
-		const three = resolveURI('ipfs://QmCID', 3);
-		expect(zero).toBe(three);
+		const wrapped = resolveURI('ipfs://QmCID', IPFS_GATEWAYS.length);
+		expect(zero).toBe(wrapped);
+		expect(resolveURI('ipfs://QmCID', 1)).not.toBe(zero);
 	});
 
 	it('is case-insensitive on the scheme', () => {

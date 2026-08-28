@@ -38,8 +38,16 @@ const accept = args.has('--accept');
 const SCAN_DIRS = ['api', 'src', 'server', 'workers', 'mcp-server/src', 'avatar-sdk/src', 'public'];
 // Built output is not source: grading a bundled asset reports findings nobody
 // can act on, because the fix belongs in the module it was compiled from.
+//
+// The content-hash suffix has to be matched precisely. An earlier version of
+// this pattern was `-[A-Za-z0-9_-]{8,}\.js$`, which also matched perfectly
+// ordinary kebab-case source names (`market-fallbacks.js`,
+// `guard-proof-upstream.js`) and silently dropped them from the audit. A
+// bundler hash always carries an uppercase letter or a digit; a hand-written
+// filename in this repo is lowercase words, so requiring one of those in the
+// final segment separates them without excluding real source.
 const SKIP_RE =
-	/(?:^|\/)(?:node_modules|dist|dist-lib|build|coverage|\.deploy-wt|assets|vendor)(?:\/|$)|\.min\.js$|\.test\.js$|\.spec\.js$|-[A-Za-z0-9_-]{8,}\.js$/;
+	/(?:^|\/)(?:node_modules|dist|dist-lib|build|coverage|\.deploy-wt|assets|vendor)(?:\/|$)|\.min\.js$|\.test\.js$|\.spec\.js$|-[a-z0-9_-]*[A-Z0-9][A-Za-z0-9_-]{7,}\.js$/;
 
 function sourceFiles() {
 	const out = [];
@@ -215,19 +223,30 @@ function main() {
 		if (GRADE_RANK[grade] < GRADE_RANK[was]) regressed.push({ site, grade, was });
 	}
 
-	// Improvements ratchet the baseline down on their own, so the floor only
-	// ever rises. Nobody has to remember to re-record a fix.
+	// Improvements ratchet the baseline down on their own, so the floor only ever
+	// rises and nobody has to remember to re-record a fix. New call sites are
+	// recorded at whatever grade they arrive with: a bounded one that goes in
+	// unrecorded could later weaken to D without tripping anything, because an
+	// unknown key is only checked against the F floor.
 	let improved = 0;
+	let added = 0;
+	let removed = 0;
 	const nextSites = { ...(baseline.sites || {}) };
 	for (const [key, grade] of Object.entries(index)) {
 		const was = nextSites[key];
-		if (was === undefined || GRADE_RANK[grade] > GRADE_RANK[was]) {
-			if (was !== undefined) improved += 1;
+		if (was === undefined) {
+			added += 1;
+			nextSites[key] = grade;
+		} else if (GRADE_RANK[grade] > GRADE_RANK[was]) {
+			improved += 1;
 			nextSites[key] = grade;
 		}
 	}
 	for (const key of Object.keys(nextSites)) {
-		if (!(key in index)) delete nextSites[key]; // call site removed
+		if (!(key in index)) {
+			delete nextSites[key]; // call site removed
+			removed += 1;
+		}
 	}
 
 	console.log(
@@ -259,12 +278,16 @@ function main() {
 		return 1;
 	}
 
-	if (improved) {
+	if (improved || added || removed) {
 		writeFileSync(
 			BASELINE,
 			`${JSON.stringify({ generated: 'scripts/audit-upstreams.mjs', summary, sites: nextSites }, null, '\t')}\n`,
 		);
-		console.log(`audit:upstreams: ${improved} call site(s) improved, baseline ratcheted up`);
+		const parts = [];
+		if (improved) parts.push(`${improved} improved`);
+		if (added) parts.push(`${added} new`);
+		if (removed) parts.push(`${removed} removed`);
+		console.log(`audit:upstreams: baseline updated (${parts.join(', ')})`);
 	}
 	console.log('audit:upstreams: no regressions');
 	return 0;

@@ -1048,6 +1048,27 @@
 				},
 				"expect": "app icon"
 			}
+		},
+		{
+			"id": "audit-upstreams",
+			"script": "scripts/audit-upstreams.mjs",
+			"npm": "audit:upstreams",
+			"title": "Upstream resilience ratchet",
+			"protects": "No new call to a third-party service can be added without a deadline, and no existing one can quietly get weaker.",
+			"why": "Adding a fallback is easy; knowing it made things better is not. An AST pass grades every outbound call site on five protections (deadline, retry, failover, last-good, breaker) and compares it against data/upstream-baseline.json. A ratchet rather than a threshold: a threshold gets rounded up until it means nothing, while a baseline lets the existing tail be paid down at its own pace and makes adding to it by accident impossible. Improving a call site lowers the baseline automatically; raising it back needs an explicit --accept, which is one reviewable line in a diff. It measures what check:fetch-timeouts cannot: that guard enforces the deadline floor, this one measures everything above it.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A new outbound call to a third-party host with no deadline behind it.",
+				"violation": {
+					"write": {
+						"api/_lib/guard-proof-upstream.js": "// Guard proof fixture: an unbounded third-party call.\nexport async function probeStatus() {\n\treturn fetch('https://guard-proof.example.com/status');\n}\n"
+					}
+				},
+				"expect": "guard-proof.example.com"
+			}
 		}
 	],
 	"exempt": [

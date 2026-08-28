@@ -90,8 +90,15 @@ describe('fetchFirst — ordered multi-provider failover', () => {
 		const ctrl = new AbortController();
 		const a = provider({ init: { signal: ctrl.signal } });
 		const b = provider({ init: { signal: ctrl.signal } });
+		// Real fetch rejects straight away when handed an already-aborted signal,
+		// and only fires the listener for an abort that arrives later. The stub has
+		// to do both: fetchFirst now awaits the fault lookup before calling fetch,
+		// so a caller that aborts immediately gets here with the signal already
+		// set, and a listen-only stub would simply never settle.
 		global.fetch = vi.fn((url, { signal }) => new Promise((_, reject) => {
-			signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+			const fail = () => reject(new DOMException('aborted', 'AbortError'));
+			if (signal.aborted) return fail();
+			signal.addEventListener('abort', fail, { once: true });
 		}));
 		const pending = fetchFirst([a, b]);
 		ctrl.abort();
@@ -107,7 +114,9 @@ describe('fetchFirst — ordered multi-provider failover', () => {
 		global.fetch = vi.fn((url, { signal }) => {
 			if (url === a.url) {
 				return new Promise((_, reject) => {
-					signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+					const fail = () => reject(new DOMException('aborted', 'AbortError'));
+					if (signal.aborted) return fail();
+					signal.addEventListener('abort', fail, { once: true });
 				});
 			}
 			return Promise.resolve(json({ v: 'fast' }));

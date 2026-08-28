@@ -20,11 +20,11 @@ no other protection ever gets a turn.
 
 ## Totals
 
-183 outbound call sites across 72 upstreams.
+224 outbound call sites across 79 upstreams.
 
 | A | B | C | D | F |
 |---|---|---|---|---|
-| 0 | 46 | 84 | 53 | 0 |
+| 0 | 54 | 91 | 79 | 0 |
 
 ## Weakest upstreams
 
@@ -33,58 +33,63 @@ the list to work down, worst first.
 
 | Upstream | Call sites | Worst grade |
 |---|---|---|
-| `api.telegram.org` | 10 | D |
-| `lite-api.jup.ag` | 9 | D |
-| `api.dexscreener.com` | 8 | D |
+| `api.telegram.org` | 13 | D |
+| `lite-api.jup.ag` | 12 | D |
+| `api.dexscreener.com` | 9 | D |
+| `storage.googleapis.com` | 8 | D |
+| `api.coinpaprika.com` | 8 | D |
+| `api.coingecko.com` | 8 | D |
 | `api.github.com` | 7 | D |
-| `api.coingecko.com` | 6 | D |
 | `frontend-api-v3.pump.fun` | 6 | D |
+| `api.replicate.com` | 5 | D |
+| `api.elevenlabs.io` | 5 | D |
+| `api.pinata.cloud` | 5 | D |
 | `openrouter.ai` | 5 | D |
 | `api.geckoterminal.com` | 5 | D |
-| `api.elevenlabs.io` | 4 | D |
-| `api.pinata.cloud` | 4 | D |
+| `ai.api.nvidia.com` | 4 | D |
 | `api.web3.storage` | 4 | D |
-| `api.replicate.com` | 4 | D |
+| `api.alternative.me` | 4 | D |
+| `api.openai.com` | 3 | D |
 | `integrate.api.nvidia.com` | 2 | D |
-| `api.openai.com` | 2 | D |
-| `auth.privy.io` | 2 | D |
-| `ai.api.nvidia.com` | 2 | D |
 | `api.sketchfab.com` | 2 | D |
-| `storage.googleapis.com` | 2 | D |
 | `api.nvcf.nvidia.com` | 2 | D |
 | `sns-api.bonfida.com__expr__` | 2 | D |
 | `api.anthropic.com` | 2 | D |
 | `raw.githubusercontent.com` | 2 | D |
-| `api.developer.coinbase.com` | 1 | D |
-| `bigquery.googleapis.com` | 1 | D |
-| `api.indexnow.org` | 1 | D |
+| `publish.twitter.com` | 2 | D |
+| `api.zauth.inc` | 2 | D |
 
 ## Every upstream
 
 | Upstream | Call sites | Worst grade | A | B | C | D | F |
 |---|---|---|---|---|---|---|---|
-| `api.telegram.org` | 10 | D | 0 | 0 | 7 | 3 | 0 |
-| `lite-api.jup.ag` | 9 | D | 0 | 5 | 0 | 4 | 0 |
-| `api.dexscreener.com` | 8 | D | 0 | 4 | 2 | 2 | 0 |
+| `api.telegram.org` | 13 | D | 0 | 0 | 10 | 3 | 0 |
+| `lite-api.jup.ag` | 12 | D | 0 | 5 | 2 | 5 | 0 |
+| `api.dexscreener.com` | 9 | D | 0 | 4 | 2 | 3 | 0 |
+| `storage.googleapis.com` | 8 | D | 0 | 1 | 2 | 5 | 0 |
+| `api.coinpaprika.com` | 8 | D | 0 | 0 | 0 | 8 | 0 |
+| `api.coingecko.com` | 8 | D | 0 | 7 | 0 | 1 | 0 |
 | `api.github.com` | 7 | D | 0 | 0 | 5 | 2 | 0 |
-| `api.coingecko.com` | 6 | D | 0 | 5 | 0 | 1 | 0 |
 | `frontend-api-v3.pump.fun` | 6 | D | 0 | 0 | 5 | 1 | 0 |
+| `api.replicate.com` | 5 | D | 0 | 0 | 2 | 3 | 0 |
+| `api.elevenlabs.io` | 5 | D | 0 | 0 | 2 | 3 | 0 |
+| `api.pinata.cloud` | 5 | D | 0 | 0 | 3 | 2 | 0 |
 | `openrouter.ai` | 5 | D | 0 | 0 | 0 | 5 | 0 |
 | `api.geckoterminal.com` | 5 | D | 0 | 3 | 0 | 2 | 0 |
-| `api.elevenlabs.io` | 4 | D | 0 | 0 | 2 | 2 | 0 |
-| `api.pinata.cloud` | 4 | D | 0 | 0 | 3 | 1 | 0 |
+| `ai.api.nvidia.com` | 4 | D | 0 | 0 | 0 | 4 | 0 |
 | `api.web3.storage` | 4 | D | 0 | 0 | 3 | 1 | 0 |
-| `api.replicate.com` | 4 | D | 0 | 0 | 2 | 2 | 0 |
+| `api.alternative.me` | 4 | D | 0 | 0 | 3 | 1 | 0 |
+| `api.openai.com` | 3 | D | 0 | 0 | 0 | 3 | 0 |
 | `integrate.api.nvidia.com` | 2 | D | 0 | 0 | 0 | 2 | 0 |
-| `api.openai.com` | 2 | D | 0 | 0 | 0 | 2 | 0 |
-| `auth.privy.io` | 2 | D | 0 | 0 | 1 | 1 | 0 |
-| `ai.api.nvidia.com` | 2 | D | 0 | 0 | 0 | 2 | 0 |
 | `api.sketchfab.com` | 2 | D | 0 | 0 | 0 | 2 | 0 |
-| `storage.googleapis.com` | 2 | D | 0 | 0 | 1 | 1 | 0 |
 | `api.nvcf.nvidia.com` | 2 | D | 0 | 0 | 0 | 2 | 0 |
 | `sns-api.bonfida.com__expr__` | 2 | D | 0 | 0 | 1 | 1 | 0 |
 | `api.anthropic.com` | 2 | D | 0 | 0 | 1 | 1 | 0 |
 | `raw.githubusercontent.com` | 2 | D | 0 | 1 | 0 | 1 | 0 |
+| `publish.twitter.com` | 2 | D | 0 | 0 | 0 | 2 | 0 |
+| `api.zauth.inc` | 2 | D | 0 | 0 | 0 | 2 | 0 |
+| `huggingface.co` | 1 | D | 0 | 0 | 0 | 1 | 0 |
+| `image.pollinations.ai` | 1 | D | 0 | 0 | 0 | 1 | 0 |
 | `api.developer.coinbase.com` | 1 | D | 0 | 0 | 0 | 1 | 0 |
 | `bigquery.googleapis.com` | 1 | D | 0 | 0 | 0 | 1 | 0 |
 | `api.indexnow.org` | 1 | D | 0 | 0 | 0 | 1 | 0 |
@@ -92,17 +97,16 @@ the list to work down, worst first.
 | `speech.platform.bing.com` | 1 | D | 0 | 0 | 0 | 1 | 0 |
 | `api.upstash.com` | 1 | D | 0 | 0 | 0 | 1 | 0 |
 | `qstash.upstash.io` | 1 | D | 0 | 0 | 0 | 1 | 0 |
+| `402index.io` | 1 | D | 0 | 0 | 0 | 1 | 0 |
 | `api.resend.com` | 1 | D | 0 | 0 | 0 | 1 | 0 |
-| `publish.twitter.com` | 1 | D | 0 | 0 | 0 | 1 | 0 |
 | `api.exchange.coinbase.com` | 1 | D | 0 | 0 | 0 | 1 | 0 |
-| `api.coinpaprika.com` | 1 | D | 0 | 0 | 0 | 1 | 0 |
+| `pump-fun-sdk.modelcontextprotocol.name` | 1 | D | 0 | 0 | 0 | 1 | 0 |
 | `kolscan.io` | 1 | D | 0 | 0 | 0 | 1 | 0 |
 | `api.twitter.com` | 8 | C | 0 | 0 | 8 | 0 | 0 |
 | `api.llama.fi` | 5 | C | 0 | 0 | 5 | 0 | 0 |
 | `api.x.com` | 4 | C | 0 | 0 | 4 | 0 | 0 |
 | `api.hyper3d.com` | 3 | C | 0 | 0 | 3 | 0 | 0 |
 | `api.tripo3d.ai` | 3 | C | 0 | 0 | 3 | 0 | 0 |
-| `api.alternative.me` | 3 | C | 0 | 0 | 3 | 0 | 0 |
 | `yields.llama.fi` | 3 | C | 0 | 0 | 3 | 0 | 0 |
 | `api.meshy.ai__expr__` | 2 | C | 0 | 0 | 2 | 0 | 0 |
 | `stablecoins.llama.fi` | 2 | C | 0 | 0 | 2 | 0 | 0 |
@@ -113,9 +117,11 @@ the list to work down, worst first.
 | `oauth2.googleapis.com` | 1 | C | 0 | 0 | 1 | 0 | 0 |
 | `api.github.com__expr__` | 1 | C | 0 | 0 | 1 | 0 | 0 |
 | `sns-api.bonfida.com` | 1 | C | 0 | 0 | 1 | 0 | 0 |
+| `auth.privy.io` | 1 | C | 0 | 0 | 1 | 0 | 0 |
 | `livestream-api.pump.fun__expr__` | 1 | C | 0 | 0 | 1 | 0 | 0 |
 | `pump.fun` | 1 | C | 0 | 0 | 1 | 0 | 0 |
 | `api.rugcheck.xyz` | 1 | C | 0 | 0 | 1 | 0 | 0 |
+| `api.etherscan.io` | 1 | C | 0 | 0 | 1 | 0 | 0 |
 | `api.stability.ai` | 1 | C | 0 | 0 | 1 | 0 | 0 |
 | `github.com` | 1 | C | 0 | 0 | 1 | 0 | 0 |
 | `pro-api.coinmarketcap.com` | 1 | C | 0 | 0 | 1 | 0 | 0 |
@@ -124,13 +130,14 @@ the list to work down, worst first.
 | `api.helius.xyz` | 1 | C | 0 | 0 | 1 | 0 | 0 |
 | `api.llama.fi__expr__` | 1 | C | 0 | 0 | 1 | 0 | 0 |
 | `www.deribit.com` | 1 | C | 0 | 0 | 1 | 0 | 0 |
-| `coins.llama.fi` | 6 | B | 0 | 6 | 0 | 0 | 0 |
+| `coins.llama.fi` | 9 | B | 0 | 9 | 0 | 0 | 0 |
+| `api.coinbase.com` | 5 | B | 0 | 5 | 0 | 0 | 0 |
 | `esm.sh` | 5 | B | 0 | 5 | 0 | 0 | 0 |
 | `api.kraken.com` | 4 | B | 0 | 4 | 0 | 0 | 0 |
-| `api.coinbase.com` | 4 | B | 0 | 4 | 0 | 0 | 0 |
 | `nominatim.openstreetmap.org` | 2 | B | 0 | 2 | 0 | 0 | 0 |
 | `photon.komoot.io` | 2 | B | 0 | 2 | 0 | 0 | 0 |
 | `api.hyperliquid.xyz` | 1 | B | 0 | 1 | 0 | 0 | 0 |
+| `api.coinlore.com` | 1 | B | 0 | 1 | 0 | 0 | 0 |
 | `api.diadata.org` | 1 | B | 0 | 1 | 0 | 0 | 0 |
 | `api-pub.bitfinex.com` | 1 | B | 0 | 1 | 0 | 0 | 0 |
 | `api.bigdatacloud.net` | 1 | B | 0 | 1 | 0 | 0 | 0 |

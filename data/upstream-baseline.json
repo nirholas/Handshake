@@ -1,20 +1,20 @@
 {
 	"generated": "scripts/audit-upstreams.mjs",
 	"summary": {
-		"total": 183,
+		"total": 224,
 		"grades": {
 			"A": 0,
-			"B": 46,
-			"C": 84,
-			"D": 53,
+			"B": 54,
+			"C": 91,
+			"D": 79,
 			"F": 0
 		},
 		"protections": {
-			"deadline": 183,
-			"retry": 88,
-			"failover": 42,
-			"lastGood": 4,
-			"breaker": 79
+			"deadline": 224,
+			"retry": 96,
+			"failover": 49,
+			"lastGood": 5,
+			"breaker": 87
 		}
 	},
 	"sites": {
@@ -145,7 +145,6 @@
 		"src/home-bento.js::lite-api.jup.ag::fetch": "D",
 		"src/kol/kolscan-live.js::kolscan.io::fetch": "D",
 		"src/pinning/pinata.js::api.pinata.cloud::fetch": "C",
-		"src/privy-login.js::auth.privy.io::fetch": "D",
 		"src/shared/leaflet-loader.js::esm.sh::loadModule": "B",
 		"src/shared/leaflet-loader.js::nominatim.openstreetmap.org::fetchFirstOrNull": "B",
 		"src/shared/leaflet-loader.js::photon.komoot.io::fetchFirstOrNull": "B",
@@ -162,6 +161,39 @@
 		"src/swap-jupiter.js::lite-api.jup.ag::fetch": "D",
 		"workers/agent-sniper/intel/learn.js::frontend-api-v3.pump.fun::fetch": "D",
 		"workers/agent-sniper/llm-judge.js::openrouter.ai::fetch": "D",
-		"workers/okx-chat-bot/state.js::storage.googleapis.com::fetch": "D"
+		"workers/okx-chat-bot/state.js::storage.googleapis.com::fetch": "D",
+		"api/_lib/ai-image-lanes.js::ai.api.nvidia.com::fetch": "D",
+		"api/_lib/ai-image-lanes.js::api.replicate.com::fetch": "D",
+		"api/_lib/ai-image-lanes.js::huggingface.co::fetch": "D",
+		"api/_lib/ai-image-lanes.js::image.pollinations.ai::fetch": "D",
+		"api/_lib/alert-delivery.js::api.telegram.org::fetchUpstream": "C",
+		"api/_lib/bake-garments.js::storage.googleapis.com::fetchUpstream": "C",
+		"api/_lib/coin-fallbacks.js::coins.llama.fi::fetchFirstOrNull": "B",
+		"api/_lib/coin-fallbacks.js::api.coinpaprika.com::paprikaGet": "D",
+		"api/_lib/coin-fallbacks.js::coins.llama.fi::fetchFirst": "B",
+		"api/_lib/commit-feed-push.js::api.telegram.org::fetchUpstream": "C",
+		"api/_lib/market-fallbacks.js::api.coingecko.com::fetchFirst": "B",
+		"api/_lib/market-fallbacks.js::coins.llama.fi::fetchFirst": "B",
+		"api/_lib/market-fallbacks.js::api.coinpaprika.com::paprikaGet": "D",
+		"api/_lib/market-fallbacks.js::api.coinlore.com::fetchFirst": "B",
+		"api/_lib/news-archive-store.js::storage.googleapis.com::fetchUpstream": "B",
+		"api/_lib/pump-claims-push.js::api.telegram.org::fetchUpstream": "C",
+		"api/_lib/pump-curve-view.js::lite-api.jup.ag::fetchUpstreamJson": "C",
+		"api/_lib/treasury-autopilot.js::lite-api.jup.ag::fetchUpstream": "C",
+		"api/_lib/trust/subject-reputation.js::api.dexscreener.com::fetch": "D",
+		"api/_lib/voice-providers.js::api.openai.com::fetch": "D",
+		"api/_lib/voice-providers.js::api.elevenlabs.io::fetch": "D",
+		"api/_lib/wallet-activity.js::api.etherscan.io::fetchUpstream": "C",
+		"api/_lib/x402-spending-price.js::api.coinbase.com::fetchFirst": "B",
+		"api/_mcp3d/text-to-image.js::ai.api.nvidia.com::fetch": "D",
+		"api/cron/garment-catalog-audit.js::storage.googleapis.com::fetch": "D",
+		"api/cron/news-archive-append.js::storage.googleapis.com::fetch": "D",
+		"api/cron/news-archive-append.js::api.alternative.me::fetch": "D",
+		"api/cron/x402-directory-registrar.js::402index.io::fetch": "D",
+		"api/zauth-reposcan.js::api.zauth.inc::fetch": "D",
+		"src/agent-skills-pumpfun-compose.js::pump-fun-sdk.modelcontextprotocol.name::fetch": "D",
+		"src/erc8004/agent-registry.js::api.pinata.cloud::fetch": "D",
+		"src/shared/wallet-networth.js::lite-api.jup.ag::fetch": "D",
+		"src/social/x-post-impact.js::publish.twitter.com::fetch": "D"
 	}
 }

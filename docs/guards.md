@@ -115,6 +115,7 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | Guard | Command | Protects |
 |---|---|---|
 | Documentation integrity | `npm run audit:docs` | No dead relative link, no command naming a missing script, no package without a README. |
+| Upstream resilience ratchet | `npm run audit:upstreams` | No new call to a third-party service without a deadline, and no existing one quietly getting weaker. |
 | Tutorial reachability | `npm run check:tutorials` | Every tutorial appears in the library manifest, has its markdown on disk, and is registered in `data/pages.json`. |
 | Runnable doc samples | `npm run check:runnable-docs` | Every sample a reader can press Run on still returns what the doc says it returns. |
 | Doc figures | `npm run check:doc-media` | Every figure a doc points at was really captured, still matches its recipe, and carries alt text. |
