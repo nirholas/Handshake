@@ -660,9 +660,19 @@ function thumbnailFor(glbUrl) {
 	return avatar?.thumbnail_url || null;
 }
 
+// Signed out: the page becomes an explanation of itself rather than a locked
+// door. The two buttons in the hero are for people who already have this set
+// up, so they go with the control room.
+function showPitch() {
+	el('auth-wall').hidden = false;
+	el('check-now').hidden = true;
+	document.querySelector('.hero p').textContent =
+		'A 3D character that walks on and tells you the things worth interrupting you for, from the accounts you already use.';
+}
+
 async function boot() {
 	if (!isAuthed()) {
-		el('auth-wall').hidden = false;
+		showPitch();
 		return;
 	}
 
@@ -681,7 +691,7 @@ async function boot() {
 		state.avatars = avatars.avatars || [];
 	} catch (err) {
 		if (err.status === 401) {
-			el('auth-wall').hidden = false;
+			showPitch();
 			return;
 		}
 		showError(`Could not load your companion: ${err.message}`);

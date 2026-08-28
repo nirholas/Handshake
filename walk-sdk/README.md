@@ -194,6 +194,30 @@ if (!delivered) showYourOwnToast(); // no WebGL, an iframe, or an excluded route
 | `tone`    | `'alert'`  | `'alert'` tints the bubble; `'neutral'` is the ambient style       |
 | `emote`   | `'wave'`   | gesture on arrival, falling back to a wave on rigs without it      |
 | `actions` | none       | up to two links/buttons under the line (`label`, `href`/`onClick`) |
+| `avatar`  | none       | deliver as somebody else: a roster id or a `makeGuestAvatarEntry()` entry |
+
+#### Delivering as somebody else
+
+A message from a person lands differently when that person delivers it. Pass
+`avatar` and the companion swaps into that body for the length of the message,
+then swaps back:
+
+```js
+import { createWalkCompanion, makeGuestAvatarEntry } from '@three-ws/walk';
+
+const walk = createWalkCompanion();
+
+await walk.announce('Sarah says she is downstairs and cannot find your door', {
+  avatar: makeGuestAvatarEntry('https://three.ws/api/avatars/<id>/glb', { name: 'Sarah' }),
+});
+// Sarah walks on, says it, and the visitor's own companion is back afterwards.
+```
+
+The swap is never persisted: the visitor's chosen avatar is still theirs when
+the delivery is over. A guest GLB that fails to load leaves the current body in
+place and the line is still delivered, so a missing avatar never costs the
+message. This is what powers [the three.ws Companion](https://three.ws/companion),
+where each contact has their own body and voice.
 
 Returns `false` when no avatar could be shown, so the caller can fall back to
 its own UI. The message is rendered as text, never HTML. A delivery outranks

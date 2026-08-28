@@ -17,6 +17,7 @@ import {
 	defaultAvatar,
 	listCategories,
 	makeApiAvatarEntry,
+	makeGuestAvatarEntry,
 	resolveAvatarUrl,
 } from '../src/roster.js';
 
@@ -133,4 +134,22 @@ test('resolveAvatarUrl: api entries hit the GLB proxy with apiBase + encoding', 
 test('resolveAvatarUrl: null entry and asset-less static entry resolve to null', () => {
 	assert.equal(resolveAvatarUrl(null), null);
 	assert.equal(resolveAvatarUrl({ source: 'static', asset: null }), null);
+});
+
+test('makeGuestAvatarEntry: a message from a contact can be delivered by their own GLB', () => {
+	const entry = makeGuestAvatarEntry('https://three.ws/api/avatars/abc/glb', { name: 'Sarah' });
+	assert.equal(entry.name, 'Sarah');
+	assert.equal(entry.rig, 'shared');
+	assert.deepEqual(entry.clips, DEFAULT_SHARED_CLIPS);
+	// The URL is used verbatim: a guest body is somebody else's avatar, not one
+	// of ours to resolve against assetBase.
+	assert.equal(resolveAvatarUrl(entry, { assetBase: 'https://cdn.example' }), 'https://three.ws/api/avatars/abc/glb');
+});
+
+test('makeGuestAvatarEntry: distinct URLs get distinct ids so a swap is detectable', () => {
+	const a = makeGuestAvatarEntry('/avatars/one.glb');
+	const b = makeGuestAvatarEntry('/avatars/two.glb');
+	assert.notEqual(a.id, b.id);
+	assert.equal(makeGuestAvatarEntry('/avatars/one.glb', { id: 'pinned' }).id, 'pinned');
+	assert.equal(resolveAvatarUrl(a, { assetBase: 'https://cdn.example' }), 'https://cdn.example/avatars/one.glb');
 });

@@ -142,9 +142,19 @@
 			.notice{background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.22);border-radius:10px;padding:14px 16px;font-size:13px;line-height:1.6;color:var(--muted);}
 			.skeleton{background:var(--skeleton-base);background-image:linear-gradient(90deg,var(--skeleton-base) 0%,var(--skeleton-sheen) 50%,var(--skeleton-base) 100%);background-size:200% 100%;border-radius:8px;animation:shimmer 1.4s ease-in-out infinite;}
 			@keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
-			.auth-wall{text-align:center;padding:110px 20px;}
-			.auth-wall h2{font-size:22px;font-weight:700;margin-bottom:12px;}
-			.auth-wall p{color:var(--muted);font-size:14px;margin-bottom:24px;line-height:1.6;}
+			/* Signed-out pitch */
+			.pitch{padding:32px 0 40px;}
+			.pitch-lead h2{font-size:30px;font-weight:700;letter-spacing:-0.02em;line-height:1.25;max-width:680px;}
+			.pitch-lead p{color:var(--muted);font-size:15.5px;line-height:1.65;margin:14px 0 22px;max-width:640px;}
+			.pitch-grid{list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(228px,1fr));gap:14px;margin-top:36px;}
+			.pitch-grid li{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;font-size:13.5px;color:var(--muted);line-height:1.6;}
+			.pitch-grid strong{display:block;color:var(--text);font-size:14.5px;font-weight:650;margin-bottom:7px;}
+			.pitch-steps{list-style:none;display:flex;flex-direction:column;gap:12px;margin-top:32px;counter-reset:step;}
+			.pitch-steps li{display:flex;gap:12px;align-items:flex-start;font-size:14px;color:var(--muted);line-height:1.6;}
+			.pitch-steps span{flex-shrink:0;width:24px;height:24px;border-radius:50%;background:rgba(59,130,246,.14);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;}
+			.pitch-foot{margin-top:30px;font-size:13.5px;color:var(--dim);line-height:1.65;max-width:640px;}
+			.pitch-foot a{color:var(--blue);}
+			@media(max-width:600px){.pitch-lead h2{font-size:24px;}}
 			/* Settings */
 			.settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;}
 			input[type=range]{width:100%;accent-color:var(--blue);}
@@ -185,10 +195,57 @@
 				</div>
 			</div>
 
-			<div id="auth-wall" class="auth-wall" hidden>
-				<h2>Sign in to set up your companion</h2>
-				<p>Your connections, contacts, and messages are private to your account and encrypted at rest.</p>
-				<a href="/login?next=/companion" class="btn btn-primary">Sign in</a>
+			<!-- Signed out, this page still has to explain itself: someone arriving
+			     from a link has never seen the idea before, and an empty sign-in
+			     box tells them nothing about what they would be signing in to. -->
+			<div id="auth-wall" hidden>
+				<section class="pitch">
+					<div class="pitch-lead">
+						<h2>Your phone buzzes forty times a day. Two of those mattered.</h2>
+						<p>
+							The companion reads what comes in from the accounts you already use, decides what a
+							person would actually want a tap on the shoulder for, and then walks over and says it.
+							Everything else stays quiet, in a feed, with the reason it stayed quiet.
+						</p>
+						<div class="hero-actions">
+							<a href="/login?next=/companion" class="btn btn-primary">Sign in and set it up</a>
+							<a href="/register?next=/companion" class="btn">Create an account</a>
+							<a href="/docs/companion" class="btn">Read the docs</a>
+						</div>
+					</div>
+					<ul class="pitch-grid">
+						<li>
+							<strong>📱 Your phone, your Mac, anything</strong>
+							One token, one endpoint. An Android profile, a Shortcut, a Mail rule, a build script,
+							or an agent that decided you need to know.
+						</li>
+						<li>
+							<strong>✈️ Telegram</strong>
+							A bot you create yourself relays only the chats you add it to. Revoke it and the
+							connection is gone, with nothing left behind here.
+						</li>
+						<li>
+							<strong>📅 Calendar</strong>
+							The private iCal link Google, Apple, Outlook and CalDAV all publish. It tells you the
+							meeting is starting while you can still make it.
+						</li>
+						<li>
+							<strong>✉️ Email</strong>
+							IMAP with an app password. Read only, headers and a preview, and your unread state is
+							never touched. Or triage it on your own machine and send nothing but the sentence.
+						</li>
+					</ul>
+					<ol class="pitch-steps">
+						<li><span>1</span> Connect what you already use. Every credential is yours, and encrypted here.</li>
+						<li><span>2</span> Give the people who matter a face and a voice. Their messages arrive as them.</li>
+						<li><span>3</span> Set the bar, and the hours you will not be disturbed. That is the whole product.</li>
+					</ol>
+					<p class="pitch-foot">
+						It reaches you here, as a push on your phone, and on your desktop as a character that walks
+						across your screen. Developers get all of it as
+						<a href="/docs/companion">an SDK, a CLI, and an MCP server</a>.
+					</p>
+				</section>
 			</div>
 
 			<div id="page-error" class="error" hidden></div>
