@@ -12,13 +12,91 @@ import { getSolPriceUsd } from '../shared/usd-price.js';
 // whale feed used to be dead on arrival with nothing on screen saying why. Every
 // other browser Solana caller goes through our own proxy, which fronts the
 // keyed, rotating server chain; do the same here and keep the public endpoint
-// only for a non-browser caller that has no origin to proxy from.
-const RPC_MAINNET = (() => {
+// as the fallback for a non-browser caller that has no origin to proxy from,
+// and for the case where our own proxy is the thing that is down.
+const RPC_HTTP_ENDPOINTS = (() => {
+	const list = [];
 	try {
-		if (typeof location !== 'undefined' && location.origin) return `${location.origin}/api/solana-rpc`;
-	} catch { /* fall through to the public endpoint */ }
-	return 'https://api.mainnet-beta.solana.com';
+		if (typeof location !== 'undefined' && location.origin) list.push(`${location.origin}/api/solana-rpc`);
+	} catch { /* no origin to proxy from; the public endpoint below still works */ }
+	list.push('https://api.mainnet-beta.solana.com');
+	return list;
 })();
+
+// The subscription leg is a SEPARATE list, and it has to be. /api/solana-rpc is
+// an HTTP-only proxy, so web3.js deriving its wsEndpoint from the http one
+// (wss://<origin>/api/solana-rpc) can never complete a logsSubscribe: the whale
+// feed would look calm forever instead of reporting that it is deaf. These are
+// the same free WS hosts src/pump/wallet-monitor.js rotates across.
+const WS_ENDPOINTS = [
+	'wss://api.mainnet-beta.solana.com',
+	'wss://solana-rpc.publicnode.com',
+	'wss://solana.drpc.org',
+];
+
+const RPC_ATTEMPT_TIMEOUT_MS = 10_000;
+const WS_PROBE_TIMEOUT_MS = 6_000;
+
+// A fetch for the Connection that walks RPC_HTTP_ENDPOINTS in order with a
+// per-attempt deadline. Without it a single stalled proxy hung every RPC read
+// the whale feed makes, with no second chance and no way to time out.
+function rotatingRpcFetch(endpoints) {
+	return async function rpcFetch(_url, init) {
+		let lastErr;
+		for (const endpoint of endpoints) {
+			try {
+				const res = await fetch(endpoint, { ...init, signal: AbortSignal.timeout(RPC_ATTEMPT_TIMEOUT_MS) });
+				if (res.ok) return res;
+				lastErr = new Error(`${endpoint} responded ${res.status}`);
+			} catch (err) {
+				lastErr = err;
+			}
+		}
+		throw new Error(`all ${endpoints.length} Solana RPC endpoints failed (${lastErr?.message || 'unknown'})`, {
+			cause: lastErr,
+		});
+	};
+}
+
+/**
+ * The first WS endpoint that completes a handshake, or null when none does.
+ *
+ * Only runs in a browser: outside one there is no blocked-origin problem to
+ * route around, the first endpoint is reachable, and a probe would turn every
+ * test run into a live network call.
+ *
+ * @param {string[]} endpoints
+ * @param {(url: string) => WebSocket} [factory]  Injectable for tests.
+ */
+export async function pickWsEndpoint(endpoints, factory) {
+	const open = factory || (typeof WebSocket !== 'undefined' ? (url) => new WebSocket(url) : null);
+	if (!open) return endpoints[0] ?? null;
+	for (const url of endpoints) {
+		const reached = await new Promise((resolve) => {
+			let settled = false;
+			let sock;
+			const done = (ok) => {
+				if (settled) return;
+				settled = true;
+				clearTimeout(timer);
+				if (!ok) { try { sock?.close(); } catch { /* already closing */ } }
+				resolve(ok);
+			};
+			const timer = setTimeout(() => done(false), WS_PROBE_TIMEOUT_MS);
+			try {
+				sock = open(url);
+			} catch {
+				done(false);
+				return;
+			}
+			sock.onopen = () => { try { sock.close(); } catch { /* already closing */ } done(true); };
+			sock.onerror = () => done(false);
+			sock.onclose = () => done(false);
+		});
+		if (reached) return url;
+	}
+	return null;
+}
 const PUMP_PROGRAM = '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
 const LAMPORTS_PER_SOL = 1_000_000_000;
 const NATIVE_SOL = 'So11111111111111111111111111111111111111112';
@@ -59,7 +137,25 @@ export async function watchWhaleTrades({ mint, minUsd = 5000, onTrade, onStatus,
 
 	if (signal?.aborted) return;
 
-	const connection = new Connection(RPC_MAINNET, 'confirmed');
+	// In a browser, find a WS host that actually answers before subscribing; on
+	// the server the first entry is reachable and no probe is needed.
+	const wsEndpoint = (typeof window !== 'undefined')
+		? await pickWsEndpoint(WS_ENDPOINTS)
+		: WS_ENDPOINTS[0];
+	if (signal?.aborted) return;
+	if (!wsEndpoint) {
+		onStatus?.({
+			code: 'subscription_unavailable',
+			message: 'No Solana WebSocket endpoint accepted a connection, so live whale trades cannot be streamed right now.',
+		});
+		return;
+	}
+
+	const connection = new Connection(RPC_HTTP_ENDPOINTS[0], {
+		commitment: 'confirmed',
+		wsEndpoint,
+		fetch: rotatingRpcFetch(RPC_HTTP_ENDPOINTS),
+	});
 	const coder = new BorshCoder(pumpIdl);
 	const parser = new EventParser(PUMP_PROGRAM_ID, coder);
 	const mintStr = mint instanceof PublicKey ? mint.toBase58() : String(mint);

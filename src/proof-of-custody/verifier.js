@@ -27,6 +27,11 @@ const PUBLIC_RPC = {
 	mainnet: ['https://api.mainnet-beta.solana.com', 'https://solana-rpc.publicnode.com'],
 };
 
+// Per-endpoint deadline. Generous enough for a cold getTransaction on a free
+// public node, short enough that walking all three endpoints stays inside the
+// patience of someone watching a verification badge.
+const RPC_ATTEMPT_TIMEOUT_MS = 10_000;
+
 function rpcEndpoints(network) {
 	const base = PUBLIC_RPC[network] || PUBLIC_RPC.mainnet;
 	return [...base, `/api/solana-rpc?network=${encodeURIComponent(network)}`];
@@ -47,6 +52,11 @@ async function fetchTransaction(signature, network) {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
 				body: JSON.stringify(body),
+				// Without a per-attempt deadline the ordered endpoint list is
+				// decorative: the first host to accept the connection and never
+				// answer holds the whole chain behind it, and the verifier sits on
+				// "Checking the chain…" instead of moving to the next endpoint.
+				signal: AbortSignal.timeout(RPC_ATTEMPT_TIMEOUT_MS),
 			});
 			if (!res.ok) { lastErr = new Error(`rpc ${res.status}`); continue; }
 			const j = await res.json();

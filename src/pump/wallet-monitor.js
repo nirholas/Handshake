@@ -27,6 +27,15 @@ const WS_URLS = {
 	],
 };
 
+// How long an endpoint gets to open its socket AND confirm the logsSubscribe.
+// Rotation used to be driven entirely by onclose, so a host that accepted the
+// TCP connection and then never answered the subscribe (a captive portal, a
+// rate-limited node holding the connection open, a stalled proxy) left the
+// monitor connected, silent, and permanently blind: no error, no rotation, no
+// trades. The deadline force-closes that socket, which routes it through the
+// existing unsubscribed-rotation path.
+const SUBSCRIBE_TIMEOUT_MS = 12_000;
+
 // Parse pump.fun structured log line: "Program log: {...json...}"
 function extractLogJson(log) {
 	if (!log.startsWith('Program log: {')) return null;
@@ -83,16 +92,30 @@ export class WalletMonitor extends EventTarget {
 
 	stop() {
 		this._closed = true;
-		this._ws?.close();
+		try { this._ws?.close(); } catch { /* already closing */ }
 		this._ws = null;
 	}
 
 	_connect() {
 		if (this._closed) return;
 
-		const ws = new WebSocket(this._wsUrls[this._urlIdx % this._wsUrls.length]);
+		const url = this._wsUrls[this._urlIdx % this._wsUrls.length];
+		const ws = new WebSocket(url);
 		this._ws = ws;
 		let subscribed = false;
+
+		const subscribeDeadline = setTimeout(() => {
+			if (subscribed || this._closed) return;
+			log.warn('[wallet-monitor] no subscription confirmation from', url, `within ${SUBSCRIBE_TIMEOUT_MS}ms; rotating endpoint`);
+			// close() fires onclose, which rotates and reconnects. Guard against a
+			// socket wedged in CONNECTING that never emits either event.
+			try { ws.close(); } catch { /* already closing */ }
+			if (this._ws === ws) {
+				this._ws = null;
+				this._urlIdx++;
+				setTimeout(() => this._connect(), 0);
+			}
+		}, SUBSCRIBE_TIMEOUT_MS);
 
 		ws.onopen = () => {
 			this._reconnectMs = 1000;
@@ -115,6 +138,7 @@ export class WalletMonitor extends EventTarget {
 			if (msg.id != null && typeof msg.result === 'number') {
 				this._subId = msg.result;
 				subscribed = true;
+				clearTimeout(subscribeDeadline);
 				return;
 			}
 
@@ -137,12 +161,14 @@ export class WalletMonitor extends EventTarget {
 			// diagnostics only, so a dead endpoint is visible instead of silent.
 			log.warn(
 				'[wallet-monitor] websocket error on',
-				this._wsUrls[this._urlIdx % this._wsUrls.length],
+				url,
 				subscribed ? '(subscribed; will back off and reconnect)' : '(unsubscribed; rotating endpoint)',
 			);
 		};
 
 		ws.onclose = () => {
+			clearTimeout(subscribeDeadline);
+			if (this._ws !== ws) return; // the deadline already rotated past this socket
 			this._ws = null;
 			// Never got a confirmed subscription on this endpoint — try the next
 			// one immediately rather than backing off against a dead host.
