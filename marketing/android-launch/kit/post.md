@@ -5,25 +5,27 @@ the order wrong reassembles the composition scrambled.
 
 ## The thread
 
-Eleven posts, written for someone who has never used a crypto app and had no
+Twelve posts, written for someone who has never used a crypto app and had no
 plans to. No jargon, no version numbers, no acronyms: the specifics live in the
 replies below, and nobody needs them to understand what this is or to want it.
 
 The register is confident and grateful, never explanatory and never defensive.
 This community built the thing being launched, and the thread says so early, in
 post 2, before it asks anyone for anything. Post 1 carries the four images; 2
-through 11 are replies in order. Counts are X's own arithmetic, where a URL
-costs 23 characters however long it is, and all eleven fit inside 280 without
+through 12 are replies in order. Counts are X's own arithmetic, where a URL
+costs 23 characters however long it is, and all twelve fit inside 280 without
 Premium.
 
-**1**, 212 characters. Attach the four tiles here, in the order in `IMAGE-ORDER.md`.
+**1**, 277 characters. Attach the four tiles here, in the order in `IMAGE-ORDER.md`.
 
 ```
-three.ws is an Android app.
+A 3D studio, an AI agent lab and a Solana launchpad. In your pocket.
 
-Point your phone at your face and get back a 3D character of yourself. Say what you want and watch it get built.
+three.ws for Android is live.
 
-Free. No account. No crypto needed to start.
+Type anything, get a 3D model. One selfie, a character of you. Give it a mind. Put it in your room in AR. Launch it as a coin.
+
+Free. No wallet needed.
 
 github.com/nirholas/three.ws/releases/tag/v1.0.0
 ```
@@ -48,41 +50,52 @@ Step one, install an extension. Step two, write down twelve secret words. Step t
 We threw that order out.
 ```
 
-**4**, 234 characters
+**4**, 277 characters
 
 ```
-Open the app and you can:
+Everything in the app, free, no wallet:
 
-Turn one selfie into a 3D character of yourself
-Describe an object and get a real 3D model
-Give your character a voice and a personality
-Talk to it
-Stand it in your room in AR
-
-No wallet. No signup. No cost.
+Forge: type or photograph anything, get a 3D model
+Scan: one selfie, a rigged character of you
+Agents: give it a mind, a voice, skills, memory
+Chat with it. Watch it walk.
+AR: stand it in your room
+Portal: walk any website as a 3D world
 ```
 
-**5**, 225 characters
+**5**, 271 characters
 
 ```
-And it does not stay locked in the app.
+And it goes wherever you go.
 
-One link puts your character on your site, in your Telegram, in your posts, where it moves and talks and answers for you.
+IRL puts your agent on a live map with everyone else's.
+Motion Swap replaces you in any video with your character.
+One link embeds it on your site, in Telegram, in your posts, talking and answering for you.
 
-Everything you make is a real file. Download it. It is yours.
+Every file is yours. Download it.
 ```
 
-**6**, 220 characters
+**6**, 254 characters
 
 ```
-Want to own it on-chain? One tap.
+When you are ready to own it, one tap.
 
-Your character becomes an asset in your own wallet on Solana. On a Seeker phone the signing happens inside the phone itself.
+Deploy your agent on Solana as an asset in your own wallet. Launch it as a coin on pump.fun from the same screen. On a Seeker phone the signing happens inside the phone itself.
 
-Nothing to install. Nothing to write down. No twelve words.
+Nothing to install. No twelve words.
 ```
 
-**7**, 246 characters
+**7**, 264 characters
+
+```
+Your agents are not decoration. They work.
+
+They hold wallets. They trade. They sell services and pay each other over x402. They compete in live arenas. They earn while you sleep, and every trade becomes content.
+
+This is an economy, and it runs on your phone now.
+```
+
+**8**, 246 characters
 
 ```
 This is how the next million people arrive.
@@ -92,7 +105,7 @@ Not through an exchange signup. Through something they wanted to make anyway, wi
 Give people magic first. The wallet can come second.
 ```
 
-**8**, 196 characters
+**9**, 196 characters
 
 ```
 And to our holders: every new person who opens this app lands in the economy you have been building.
@@ -100,7 +113,7 @@ And to our holders: every new person who opens this app lands in the economy you
 $THREE is how you move up in it. You never spend it. You hold it, and your tier does the work.
 ```
 
-**9**, 179 characters
+**10**, 179 characters
 
 ```
 Bronze doubles your free limits and takes 5% off compute. Genesis multiplies them by 10 and takes 30% off.
@@ -111,7 +124,7 @@ $THREE
 FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump
 ```
 
-**10**, 239 characters
+**11**, 239 characters
 
 ```
 Generation is free here because serious people backed us early.
@@ -121,7 +134,7 @@ NVIDIA Inception. OpenAI Select Partner. A Google for Startups Web3 cloud grant 
 Thank you. We are just getting started.
 ```
 
-**11**, 220 characters
+**12**, 220 characters
 
 ```
 The same build is in review for the Solana dApp Store, so soon it installs straight onto a Seeker.
@@ -141,11 +154,11 @@ cloud grant is what funds the GPU fleet.
 
 Three lines that must not drift when someone edits this:
 
-- Post 8 and 9 say holding, never spending or burning. Hold-to-access is the
+- Posts 9 and 10 say holding, never spending or burning. Hold-to-access is the
   whole mechanism, and copy implying a burn describes a different product.
-- Post 9 quotes tier numbers. If the ladder in `docs/hold-to-access.md` moves,
+- Post 10 quotes tier numbers. If the ladder in `docs/hold-to-access.md` moves,
   this moves with it.
-- Post 11 says the dApp Store listing is **in review**. It is not live. Claiming
+- Post 12 says the dApp Store listing is **in review**. It is not live. Claiming
   otherwise ages badly in public, and a reviewer would see it first.
 
 Nothing in the thread is apologetic, explains an absence, or answers a critic.
