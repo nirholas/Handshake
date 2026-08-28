@@ -153,7 +153,7 @@ export function formatTelegramMessage(e, provenance = null) {
 				]
 			: [];
 	return [
-		`<b>${escapeHtml(label)} — ${escapeHtml(e.title)}</b>`,
+		`<b>${escapeHtml(label)}: ${escapeHtml(e.title)}</b>`,
 		'',
 		escapeHtml(e.summary),
 		...shipped,

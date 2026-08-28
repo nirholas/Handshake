@@ -145,7 +145,7 @@ Two lanes post to the holders' channel, and they now share this one join.
 **Release announcements** (`/api/cron/changelog-push`, every 20 minutes) carry a provenance footer:
 
 ```
-Update — Text-to-3D now has five independent image sources behind it
+Update: Text-to-3D now has five independent image sources behind it
 
 Every text-to-3D generation starts by painting a concept image...
 
