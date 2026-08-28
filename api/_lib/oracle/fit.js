@@ -93,10 +93,10 @@ const RUG_HOLD_MULTIPLE = 0.5;
 const MOON_ATH_MULTIPLE = 3;
 
 const isMoon = (r) => r?.graduated === true || Number(r?.ath_multiple) >= MOON_ATH_MULTIPLE;
-const holdMultiple = (r) => {
-	const n = Number(r?.hold_multiple);
-	return Number.isFinite(n) ? n : null;
-};
+// Number(null) is 0, not NaN, so a plain Number()/isFinite() guard reads a
+// missing ratio as "down 100%" and labels every unmeasurable coin a rug. Route
+// it through the same null check the feature getters use.
+const holdMultiple = (r) => numOrNull(r?.hold_multiple);
 
 /**
  * The three labels, derived from one training row.
