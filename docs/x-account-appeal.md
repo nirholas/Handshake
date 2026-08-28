@@ -269,27 +269,40 @@ real appeal did.
   account". Both first-hand successes had reach suppressed for about eight
   days after restoration. Ramp up over a week.
 
-## 5. The appeal text
+## 5. The appeal text, as filed
 
-Filed through the form, logged in as `@nichxbt`, handle and email exactly as
-on the account. This is written to the pattern above: rule, why it does
-not apply, how to verify, what we will do, one ask.
+**Filed 2026-08-28 at 06:26** through the form, logged in as `@nichxbt`,
+handle and email pre-filled by X. The form answered: "Thank you! We've
+received your request. We'll review, and take further action if appropriate.
+In some cases, we may send an email with more information to the address you
+provided." This is the text that was submitted, verbatim:
 
 > My account @nichxbt was suspended on August 27, 2026 for "violating our
 > rules against authenticity" after being reported. I believe a real person's
 > account was suspended by mistake. I have held this account since 2014 and
-> post from it by hand; it has never used automation, third-party posting
-> tools, multiple accounts, or paid engagement. I am the founder of three.ws
+> post from it by hand; it has never used automation or engagement services,
+> and it has never been used to spam or deceive anyone. It is where I share
+> the open-source 3D and AI software I build and stay in touch with people I
+> have known for over a decade. I am the founder of three.ws
 > (github.com/nirholas/three.ws), and my identity is public and verifiable
 > through our published partner listings with IBM, AWS, OpenAI and Google
-> Cloud. I am happy to complete government-ID verification and to remove any
-> post you identify. Please have a person re-review the account and restore
-> access.
+> Cloud. I am glad to complete government-ID verification or any other check
+> you need. Please have a person re-review the account and restore access.
 
-Measured at 670 characters, six sentences. Each sentence answers one thing
-the policy lists: automation, tools, multiple accounts, paid engagement,
-identity. If a length limit bites, drop the GitHub URL; keep the
-ID-verification offer.
+Seven sentences. Rule, why it does not apply, what the account is for,
+verifiable identity, an offer of the one check that answers an authenticity
+charge directly, one ask.
+
+**Two things an earlier draft said that this one deliberately does not.**
+The draft claimed the account had "never used multiple accounts"; the same
+person operates `@trythreews`, which X permits (up to ten accounts for
+distinct purposes) but which makes a flat "never" falsifiable in one click,
+and a false statement in an appeal is the one thing that can turn a mistaken
+suspension into an upheld one. The draft also offered to "remove any post
+you identify", which reads as though a post is expected to exist; it became
+an offer of any further check instead. Every remaining claim is one the
+owner can stand behind if asked: the year, manual posting, no automation or
+engagement services, the company, the partner listings, the offer to verify.
 
 **Why the appeal says nothing about the company account.** X's ban-evasion
 clause lets it link any account "the same account holder or entity may be
@@ -301,12 +314,16 @@ was ever configured or used from three.ws, on either account (see the table
 in section 1; verified against production on 2026-08-28). So there is nothing
 to pre-empt, and volunteering the company account would only invite a
 reviewer to link two accounts that X has no reason to look at together.
-"Never used automation" is simply true, and the appeal should say it without
-qualification.
 
-If ID verification is offered at login before the form, complete it first
-and change the second-to-last sentence to "I have completed government-ID
-verification and will remove any post you identify."
+## Filing log
+
+Every contact with X about this suspension, in order. Append to it; never
+rewrite an earlier line.
+
+| When | What | Result |
+| --- | --- | --- |
+| 2026-08-27 06:29 | X emails: account "was reported and has been suspended" for "violating our rules against authenticity". | Suspension confirmed; public user endpoint answers "User is suspended". |
+| 2026-08-28 06:26 | Appeal #1 filed through the form with the text in section 5. | Form acknowledged receipt. Awaiting review. Next check: log in daily; earliest refiling if silent or auto-denied: 2026-08-31. |
 
 ## 6. The order of operations
 
@@ -317,9 +334,8 @@ verification and will remove any post you identify."
 2. **Log in as `@nichxbt` on desktop.** If X shows an identity-verification
    prompt, complete it (government ID plus selfie, via Persona). This is the
    highest-value single step for an authenticity case.
-3. **File the appeal above through the form**, logged in as `@nichxbt`, with
-   the handle including its `@` and the email exactly as on the account.
-   Screenshot the submission confirmation with its timestamp.
+3. **File the appeal through the form.** Done, 2026-08-28 06:26; see the
+   filing log. Keep the confirmation screenshot.
 4. **Wait a full 72 hours.** An automatic denial inside the first day is the
    documented norm and is not the end.
 5. **If denied or silent after 72 hours: refile, reworded, with one new

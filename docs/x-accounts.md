@@ -10,7 +10,7 @@ link to a page, and before deciding which handle a meta tag should name.
 | Handle | Role | Status |
 | --- | --- | --- |
 | [`@trythreews`](https://x.com/trythreews) | Institutional. The platform account. | Live. This is the only handle to link to or post from today. |
-| `@nichxbt` | Personal. The founder account. | **Suspended 2026-08-27.** Confirmed by X's own notification email, 06:29 that morning. Do not link to it and do not plan a post from it. |
+| `@nichxbt` | Personal. The founder account. | **Suspended 2026-08-27; appeal filed 2026-08-28 06:26, awaiting review.** Confirmed by X's own notification email. Do not link to it and do not plan a post from it. Status and filing log: [`x-account-appeal.md`](x-account-appeal.md). |
 
 The suspension is confirmed, not inferred. X emailed the account owner at
 06:29 on 2026-08-27: the account "was reported and has been suspended",
