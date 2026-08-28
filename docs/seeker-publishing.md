@@ -79,11 +79,11 @@ Two traps, both observed on 2026-08-28:
 Everything the portal asks for is generated and committed under [solana-mobile/publish/media/](../solana-mobile/publish/media/):
 
 ```bash
-npm run build:dapp-store-media      # icon.png, banner.png, feature.png
+npm run build:dapp-store-media      # icon.png, banner.png, feature.png, editors-choice.png
 npm run build:dapp-store-previews   # screen-1..5.png (the carousel)
 ```
 
-`build:dapp-store-media` writes the 512x512 icon from the shipped app mark, the 1200x600 banner (the wordmark drawn in a browser against the site's own Space Grotesk files, so store type matches product type), and the 1024x500 feature graphic, a live capture of a real agent page.
+`build:dapp-store-media` writes the 512x512 icon from the shipped app mark, the 1200x600 banner (the wordmark drawn in a browser against the site's own Space Grotesk files, so store type matches product type), the 1024x500 feature graphic (a live capture of a real agent page), and the 1200x1200 Editor's Choice card for the store's featured carousel.
 
 `build:dapp-store-previews` builds the five 1080x1920 previews as one 5400x1920 composition and slices it. Four of its nine phones sit exactly on a seam, so each upload carries one whole screen plus the two halves it shares with its neighbours and the strip reads as a single photograph while scrolling. **Upload them in numbered order** or the halves stop lining up. Every phone holds a real capture of three.ws at Seeker resolution; nothing is mocked or drawn to look like product UI.
 

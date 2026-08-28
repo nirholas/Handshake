@@ -5,7 +5,7 @@ Drop these files into `solana-mobile/publish/media/` (referenced from `config.ya
 Every asset here is generated from the repo root:
 
 ```bash
-npm run build:dapp-store-media      # icon.png, banner.png, feature.png
+npm run build:dapp-store-media      # icon.png, banner.png, feature.png, editors-choice.png
 npm run build:dapp-store-previews   # screen-1..5.png
 ```
 
@@ -16,6 +16,7 @@ The icon is the shipped app mark flattened onto the brand ground. The banner is 
 | `icon.png`        | App icon        | 512 × 512       | yes      | Same image as `/public/pwa-512x512.png`; no transparency.        |
 | `banner.png`      | App banner      | 1200 × 600      | yes      | Used in featured rows. Logo + tagline on dark background.        |
 | `feature.png`     | Feature graphic | 1024 × 500      | yes      | Hero image — captured agent in three.ws viewer.                  |
+| `editors-choice.png` | Editor's Choice | 1200 × 1200  | no       | Featured-carousel card. Lockup only: the 50-char headline is a separate portal field, so the artwork must not repeat it. |
 | `screen-1.png`    | dApp preview 1  | 1080 × 1920     | yes      | Seeker home screen. Upload first.                                |
 | `screen-2.png`    | dApp preview 2  | 1080 × 1920     | yes      | Marketplace grid.                                                |
 | `screen-3.png`    | dApp preview 3  | 1080 × 1920     | yes      | Agent page with the 3D viewer.                                   |

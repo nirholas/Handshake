@@ -46,7 +46,22 @@ Paste each value below exactly.
 | Privacy policy | `https://three.ws/legal/privacy` |
 | License / EULA | `https://three.ws/legal/eula` |
 | Copyright | `https://three.ws/legal` |
+| Terms of Use | `https://three.ws/legal/tos` |
+| Contact email | `support@three.ws` |
 | Support email | `support@three.ws` |
+| Languages | `English` |
+| Countries | `All countries` |
+
+The portal asks for **Terms of Use** and **Privacy Policy** under Compliance, and both must be public links: `https://three.ws/legal/tos` and `https://three.ws/legal/privacy`. The EULA and copyright links above are separate fields; do not paste the EULA into the Terms of Use box.
+
+On **Languages**: the app's interface auto-translates into 80+ locales, but this listing's text is English, so select English alone. Adding a language here without listing copy in it is what gets a listing flagged as incomplete.
+
+**Editor's Choice** (optional, the featured carousel on the store home screen). Fill it in: it costs one field and one upload.
+
+| Field | Value |
+|---|---|
+| Headline (50 char max) | `Turn a selfie into a 3D agent on Solana.` |
+| Graphic (1200x1200) | `solana-mobile/publish/media/editors-choice.png` |
 
 **Short description** (one line)
 
@@ -125,13 +140,14 @@ Built for Seeker. Signed by Seed Vault. Seed phrases never leave the secure elem
 No off-chain test accounts are required: auth is wallet-only.
 ```
 
-**Images.** All eight are ready to upload from the repo at `solana-mobile/publish/media/`:
+**Images.** All nine are ready to upload from the repo at `solana-mobile/publish/media/`:
 
 | Upload slot | File |
 |---|---|
 | App icon (512x512) | `icon.png` |
 | Banner (1200x600) | `banner.png` |
 | Feature graphic (1024x500) | `feature.png` |
+| Editor's Choice graphic (1200x1200) | `editors-choice.png` |
 | dApp preview 1 (1080x1920) | `screen-1.png` |
 | dApp preview 2 | `screen-2.png` |
 | dApp preview 3 | `screen-3.png` |
@@ -141,7 +157,7 @@ No off-chain test accounts are required: auth is wallet-only.
 **Upload the five previews in numbered order.** They are one 5400x1920 picture cut into five, with four phones sitting on the creases, so out of order they stop lining up. The portal wants matching dimensions across previews, and all five are 1080x1920 portrait. Open `solana-mobile/publish/media/carousel.png` to see the whole strip at once.
 
 - [ ] Every field above pasted
-- [ ] Three brand images and five previews uploaded, previews in order 1 to 5
+- [ ] Four brand images and five previews uploaded, previews in order 1 to 5
 - [ ] Saved, and the **App NFT minted** (you will approve one wallet transaction)
 
 ---

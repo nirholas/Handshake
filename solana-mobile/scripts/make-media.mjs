@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // Generates the buildable dApp Store listing assets into publish/media/:
-//   icon.png     512x512   flattened app icon (from /public/pwa-512x512.png)
-//   banner.png   1200x600  brand lockup, drawn in a browser with the site fonts
-//   feature.png  1024x500  live capture of a real agent in the three.ws viewer
+//   icon.png            512x512    flattened app icon (from /public/pwa-512x512.png)
+//   banner.png          1200x600   brand lockup, drawn in a browser with the site fonts
+//   feature.png         1024x500   live capture of a real agent in the three.ws viewer
+//   editors-choice.png  1200x1200  square card for the portal's Editor's Choice slot
 // The five 1080x1920 screenshots are NOT generated here: reviewers require
 // real Seeker device captures (see ../docs/ASSETS.md).
 //
@@ -84,6 +85,39 @@ p span{color:#8899bb}
   return sharp(shot).flatten({ background: BG }).removeAlpha().png({ compressionLevel: 9 }).toBuffer();
 }
 
+/* Editor's Choice card: a square slot in the dApp Store's featured carousel,
+   shown small and alongside a separate 50-character headline. It carries the
+   lockup and nothing else, so the headline is never duplicated inside the
+   artwork and nothing important is lost when the card is scaled down. */
+async function renderEditorsChoice(browser) {
+  const page = await browser.newPage({ viewport: { width: 1200, height: 1200 }, deviceScaleFactor: 1 });
+  await page.setContent(`<!doctype html><meta charset="utf-8"><style>
+${FONT_FACES}
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:1200px;height:1200px;overflow:hidden;background:${BG};
+  background-image:radial-gradient(70% 70% at 50% 38%, #17173c 0%, #0c0c22 52%, ${BG} 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:56px;
+  color:#fff;font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased}
+img{width:440px;height:440px;border-radius:96px;
+  box-shadow:0 40px 120px rgba(80,140,255,.30)}
+h1{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:132px;
+  letter-spacing:-.045em;line-height:1}
+.chip{margin-top:-18px;padding:16px 34px;border:1px solid rgba(184,232,255,.34);border-radius:999px;
+  font-size:28px;letter-spacing:.22em;text-transform:uppercase;color:#b8e8ff}
+</style><body><img src="${MARK_URI}" alt=""><h1>three.ws</h1>
+<span class="chip">Built for Seeker</span></body>`, { waitUntil: 'load' });
+
+  const loaded = await page.evaluate(async () => {
+    await document.fonts.ready;
+    return document.fonts.check('600 132px "Space Grotesk"') && document.fonts.check('400 28px "Inter"');
+  });
+  if (!loaded) throw new Error("[make-media] brand fonts did not load; the Editor's Choice card would render in a fallback face");
+
+  const shot = await page.screenshot({ type: 'png' });
+  await page.close();
+  return sharp(shot).flatten({ background: BG }).removeAlpha().png({ compressionLevel: 9 }).toBuffer();
+}
+
 // Default hero: first agent returned by the live marketplace API, so the
 // capture always reflects real, current product UI.
 let agentUrl = process.argv[2];
@@ -99,6 +133,7 @@ const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--ena
 let feature;
 try {
   await writeAsset('banner.png', await renderBanner(browser), 1200, 600, 'brand lockup in Space Grotesk');
+  await writeAsset("editors-choice.png", await renderEditorsChoice(browser), 1200, 1200, "square card for the Editor's Choice carousel");
 
   console.log(`[make-media] capturing ${agentUrl}`);
   const page = await browser.newPage({ viewport: { width: 1024, height: 500 }, deviceScaleFactor: 1 });
