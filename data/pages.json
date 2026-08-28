@@ -3225,6 +3225,14 @@
 					"added": "2026-06-29"
 				},
 				{
+					"path": "/docs/x402-preflight",
+					"title": "Docs · x402 Preflight",
+					"description": "Ask an x402 seller whether it can actually settle before you sign anything. The signed, time-bounded payability attestation, how to read it from an agent, a terminal, a conversation or a browser, and how to serve one from your own endpoint.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-08-28"
+				},
+				{
 					"path": "/docs/pump-launcher",
 					"title": "Docs · Pump Launcher",
 					"description": "Deploy a brand-new pump.fun token in one paid call: no SOL, no wallet, no account. Inputs, outputs, pricing, correctness guarantees, and the free symbol-check → launch → launch-feed funnel.",
