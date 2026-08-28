@@ -39,6 +39,19 @@ function rewriteSeoHead(pathname, html) {
 //   npm run build:all    → both
 const TARGET = process.env.TARGET || 'app';
 
+// Entries that render inside a third-party page. They get neither the service
+// worker (stripped after the build, below) nor the iOS bridge: both install
+// document-level behaviour that belongs to three.ws, not to an embedder.
+const IOS_BRIDGE_EXCLUDED = new Set([
+	'widget.html',
+	'embed.html',
+	'avatar-embed.html',
+	'agent-embed.html',
+	'a-embed.html',
+	'agent-token-page.html',
+	'assistant-frame.html',
+]);
+
 // Prepended to every emitted chunk (app AND lib). `Object.hasOwn` is an ES2022
 // *runtime API*, so esbuild's `target` never lowers it. It ships raw and throws
 // "Object.hasOwn is not a function" on anything older than Chrome 93 / Safari
@@ -991,6 +1004,71 @@ const appConfig = {
 		// transformIndexHtml, so this strip has to run *after* the bundle is
 		// emitted to disk — a closeBundle hook on the dist/ output directory
 		// is the only ordering that's stable across Vite versions.
+		// Injects the iOS app's web-side bridge into every page of the built
+		// site. The iOS app (ios/) is a Capacitor shell whose WebView loads the
+		// live https://three.ws, so the code that makes it behave like an app
+		// (native share sheet, off-site links to Safari, deep links, launch
+		// screen) has to ship with the SITE rather than with the .ipa. It is a
+		// no-op in every browser, gated on Capacitor.isNativePlatform().
+		//
+		// This runs on dist/ after the bundle is written rather than as a
+		// transformIndexHtml, because the two surfaces the app most needs it on
+		// (/viewer and /ar) are self-contained pages copied verbatim out of
+		// public/ and are never seen by Vite's HTML pipeline. The module has no
+		// imports, so it is copied rather than bundled, under a content-hashed
+		// name so a change to it can never be served stale from the CDN.
+		//
+		// Embed entries are excluded for the same reason they have the service
+		// worker stripped below: they render inside third-party pages, where
+		// installing document-level click capture and a navigator.share
+		// polyfill would be reaching into someone else's document. HTML
+		// fragments (nav, footer) are skipped because they have no <body> to
+		// inject into and are inlined into pages that already carry the tag.
+		{
+			name: 'three-ws-ios-native-bridge',
+			apply: 'build',
+			closeBundle: {
+				sequential: true,
+				order: 'post',
+				async handler() {
+					if (TARGET !== 'app') return;
+					const { readdirSync, statSync, readFileSync, writeFileSync, existsSync } =
+						await import('node:fs');
+					const { createHash } = await import('node:crypto');
+					const { join, resolve: resolvePath } = await import('node:path');
+					const outDir = resolvePath(__dirname, 'dist');
+					const source = resolvePath(__dirname, 'ios/src/native-bridge.js');
+					if (!existsSync(outDir) || !existsSync(source)) return;
+
+					const code = readFileSync(source, 'utf8');
+					const hash = createHash('sha256').update(code).digest('hex').slice(0, 8);
+					const assetName = `ios-bridge.${hash}.js`;
+					writeFileSync(join(outDir, assetName), code);
+
+					const tag = `<script type="module" src="/${assetName}"></script>`;
+					const injected = [];
+					const walk = (dir) => {
+						for (const entry of readdirSync(dir)) {
+							const full = join(dir, entry);
+							if (statSync(full).isDirectory()) {
+								walk(full);
+								continue;
+							}
+							if (!entry.endsWith('.html')) continue;
+							if (IOS_BRIDGE_EXCLUDED.has(entry)) continue;
+							const html = readFileSync(full, 'utf8');
+							// Fragments have no </body>; a page that somehow already
+							// carries the tag is left alone rather than doubled.
+							if (!html.includes('</body>') || html.includes('/ios-bridge.')) continue;
+							writeFileSync(full, html.replace('</body>', `\t\t${tag}\n\t</body>`));
+							injected.push(entry);
+						}
+					};
+					walk(outDir);
+					console.log(`[ios-bridge] ${assetName} injected into ${injected.length} page(s)`);
+				},
+			},
+		},
 		{
 			name: 'three-ws-strip-sw-from-embeds',
 			apply: 'build',

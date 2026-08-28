@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<title>three.ws</title>
+		<style>
+			:root {
+				color-scheme: dark;
+				--bg: #080814;
+				--fg: #f5f5ff;
+				--muted: #8a8aa8;
+				--accent: #6f5cff;
+				--edge: rgba(255, 255, 255, 0.1);
+			}
+			* { box-sizing: border-box; }
+			html, body { height: 100%; margin: 0; }
+			body {
+				background: radial-gradient(120% 80% at 50% 0%, #16163a 0%, var(--bg) 60%);
+				color: var(--fg);
+				font: 400 17px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+				display: grid;
+				place-items: center;
+				padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
+				text-align: center;
+				-webkit-user-select: none;
+				user-select: none;
+			}
+			main { max-width: 22rem; }
+			.mark {
+				width: 64px;
+				height: 64px;
+				margin: 0 auto 24px;
+				border-radius: 18px;
+				border: 1px solid var(--edge);
+				background: linear-gradient(145deg, #1d1d44, #0d0d22);
+				display: grid;
+				place-items: center;
+				font: 600 15px/1 "SF Mono", ui-monospace, monospace;
+				letter-spacing: 0.04em;
+				color: var(--accent);
+			}
+			h1 { font-size: 22px; font-weight: 600; margin: 0 0 10px; letter-spacing: -0.01em; }
+			p { color: var(--muted); margin: 0 0 28px; font-size: 15px; }
+			button {
+				appearance: none;
+				border: 0;
+				border-radius: 12px;
+				background: var(--accent);
+				color: #fff;
+				font: 600 16px/1 inherit;
+				padding: 15px 28px;
+				min-height: 48px;
+				width: 100%;
+				transition: transform 0.15s ease, opacity 0.15s ease;
+			}
+			button:active { transform: scale(0.97); opacity: 0.85; }
+			button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+			button[aria-busy='true'] { opacity: 0.6; }
+			.status { margin-top: 18px; font-size: 13px; color: var(--muted); min-height: 1.2em; }
+		</style>
+	</head>
+	<body>
+		<main>
+			<div class="mark" aria-hidden="true">3ws</div>
+			<h1>You are offline</h1>
+			<p>three.ws needs a connection to load your agents, avatars and worlds. Everything you have created is safe.</p>
+			<button id="retry" type="button">Try again</button>
+			<p class="status" id="status" role="status" aria-live="polite"></p>
+		</main>
+		<script>
+			const retry = document.getElementById('retry');
+			const status = document.getElementById('status');
+			const HOME = 'https://three.ws/?source=ios';
+
+			function go() {
+				retry.setAttribute('aria-busy', 'true');
+				status.textContent = 'Reconnecting…';
+				location.replace(HOME);
+			}
+
+			retry.addEventListener('click', go);
+
+			// Reachability, not navigator.onLine: iOS reports online on a captive
+			// portal and on a Wi-Fi network with no route out. A HEAD that actually
+			// lands is the only signal worth auto-retrying on.
+			async function reachable() {
+				try {
+					const res = await fetch('https://three.ws/api/healthz', {
+						method: 'HEAD',
+						cache: 'no-store',
+						signal: AbortSignal.timeout(4000),
+					});
+					return res.ok;
+				} catch {
+					return false;
+				}
+			}
+
+			let checking = false;
+			async function poll() {
+				if (checking) return;
+				checking = true;
+				if (await reachable()) go();
+				checking = false;
+			}
+
+			window.addEventListener('online', poll);
+			document.addEventListener('visibilitychange', () => {
+				if (document.visibilityState === 'visible') poll();
+			});
+			setInterval(poll, 5000);
+			poll();
+		</script>
+	</body>
+</html>

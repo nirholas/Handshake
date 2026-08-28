@@ -1,0 +1,32 @@
+{
+	"name": "three-ws-ios",
+	"private": true,
+	"version": "1.0.0",
+	"description": "three.ws iOS app: Capacitor shell + native extensions (share, push, widgets, App Intents) around the three.ws product.",
+	"type": "module",
+	"scripts": {
+		"sync": "cap sync ios",
+		"copy": "cap copy ios",
+		"open": "cap open ios",
+		"doctor": "cap doctor ios"
+	},
+	"dependencies": {
+		"@capacitor/app": "^8.0.0",
+		"@capacitor/browser": "^8.0.0",
+		"@capacitor/camera": "^8.0.0",
+		"@capacitor/core": "^8.0.0",
+		"@capacitor/device": "^8.0.0",
+		"@capacitor/filesystem": "^8.0.0",
+		"@capacitor/geolocation": "^8.0.0",
+		"@capacitor/haptics": "^8.0.0",
+		"@capacitor/ios": "^8.0.0",
+		"@capacitor/preferences": "^8.0.0",
+		"@capacitor/push-notifications": "^8.0.0",
+		"@capacitor/share": "^8.0.0",
+		"@capacitor/splash-screen": "^8.0.0",
+		"@capacitor/status-bar": "^8.0.0"
+	},
+	"devDependencies": {
+		"@capacitor/cli": "^8.0.0"
+	}
+}

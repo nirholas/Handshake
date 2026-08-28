@@ -506,6 +506,10 @@
 			"dest": "/api/wk?name=three-vanity"
 		},
 		{
+			"src": "/\\.well-known/apple-app-site-association",
+			"dest": "/api/wk?name=apple-app-site-association"
+		},
+		{
 			"src": "/\\.well-known/jwks\\.json",
 			"dest": "/api/auth/persona/[action]?action=jwks"
 		},

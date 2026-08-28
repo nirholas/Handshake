@@ -241,6 +241,17 @@ export const env = {
 		return normalizeAppOrigin(opt('PUBLIC_APP_ORIGIN'));
 	},
 
+	// Apple Developer Team ID (10 chars, e.g. "A1B2C3D4E5"). Prefixed onto the iOS
+	// bundle id to form the app identifier in /.well-known/apple-app-site-association,
+	// which is what lets a three.ws link open the iOS app instead of Safari. Unset
+	// everywhere until the Apple Developer account exists; the handler answers 503
+	// rather than publishing an association nobody can sign against. Trimmed because
+	// a Team ID copied out of the developer portal frequently carries whitespace,
+	// and a padded value produces an appID that silently matches nothing on device.
+	get APPLE_TEAM_ID() {
+		return (opt('APPLE_TEAM_ID') ?? '').trim();
+	},
+
 	// Runtime environment signals. NODE_ENV is set to 'production' by Vercel's
 	// build/runtime; VERCEL_ENV is 'production' | 'preview' | 'development' on
 	// Vercel deployments. Tests and local dev leave both unset, so prod-only

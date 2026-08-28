@@ -380,6 +380,8 @@
 		"okx:three-copy": "node scripts/okx-three-copy-check.mjs",
 		"okx:gauntlet": "node scripts/okx-e2e-gauntlet.mjs",
 		"check:conflicts": "node scripts/check-merge-conflicts.mjs",
+		"ios:sync": "npm --prefix ios install --silent && npm --prefix ios run sync",
+		"ios:open": "npm --prefix ios run open",
 		"clean:worktrees": "node scripts/clean-deploy-worktrees.mjs",
 		"prep:worktree": "node scripts/prepare-deploy-worktree.mjs",
 		"check:browser-graph": "node scripts/check-browser-graph.mjs",

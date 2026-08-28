@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<title>three.ws</title>
+		<meta http-equiv="refresh" content="0; url=https://three.ws/?source=ios" />
+		<style>
+			html, body { height: 100%; margin: 0; background: #080814; }
+		</style>
+	</head>
+	<body>
+		<!--
+			Bootstrap only. With server.url set in capacitor.config.ts the WebView
+			goes straight to https://three.ws and never renders this file; it exists
+			so that a bundle loaded on its own (a simulator run with the server
+			config stripped, a future local-first build) still reaches the product
+			instead of a blank frame. The designed no-network screen is
+			offline.html, wired as server.errorPath.
+		-->
+		<script>
+			location.replace('https://three.ws/?source=ios');
+		</script>
+	</body>
+</html>

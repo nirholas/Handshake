@@ -1,0 +1,26 @@
+# Capacitor workspace deps. The generated Xcode project resolves its Swift
+# packages from ios/native/App/CapApp-SPM, which is committed; this is only the
+# CLI + plugin JS used by `cap sync`.
+node_modules/
+
+# Xcode build state. DerivedData is machine-local and enormous; xcuserdata holds
+# one developer's window layout and breakpoints.
+native/App/build/
+native/App/DerivedData/
+**/xcuserdata/
+*.xcworkspace/xcuserdata/
+
+# Signing material never belongs in the repo.
+*.mobileprovision
+*.p12
+*.cer
+*.certSigningRequest
+AuthKey_*.p8
+
+# Archives and uploads.
+*.ipa
+*.dSYM.zip
+*.xcarchive/
+
+# `cap copy` writes the shell bundle in here; it is generated from ios/shell/.
+native/App/App/public/

@@ -1953,6 +1953,66 @@ async function handleThreeVanity(req, res) {
 	);
 }
 
+// ── apple-app-site-association (/.well-known/apple-app-site-association) ──────
+//
+// The file iOS fetches to decide whether a https://three.ws link opens the app
+// instead of Safari (universal links) and whether the login form in the app's
+// WebView may offer a saved three.ws password (webcredentials). Apple's CDN
+// requires it over TLS at exactly this path, with no redirect, no .json
+// extension, and a JSON content type; every one of those is why it is served
+// from here rather than dropped in public/.well-known/ next to assetlinks.json,
+// which the static route would hand back with the wrong headers.
+//
+// The app identifier is "<TeamID>.<bundle id>" and the Team ID is only knowable
+// once the Apple Developer account exists, so it comes from APPLE_TEAM_ID on the
+// Cloud Run service. Until that is set the endpoint answers 503 rather than
+// publishing an association for a team that cannot sign anything: a wrong
+// appIDs entry fails silently on device (links just keep opening in Safari),
+// and an honest 503 is the only version of this that is debuggable.
+const IOS_BUNDLE_ID = 'ws.three.app';
+
+function handleAppleAppSiteAssociation(req, res) {
+	const teamId = env.APPLE_TEAM_ID;
+	if (!teamId) {
+		return error(
+			res,
+			503,
+			'not_configured',
+			'APPLE_TEAM_ID is not set on this deployment, so no app association can be published',
+		);
+	}
+	const appId = `${teamId}.${IOS_BUNDLE_ID}`;
+	return json(
+		res,
+		200,
+		{
+			applinks: {
+				details: [
+					{
+						appIDs: [appId],
+						components: [
+							// The API is data, not a screen. Handing /api/* to the app
+							// would swallow OAuth redirects and x402 callbacks that have
+							// to complete in the browser that started them.
+							{ '/': '/api/*', exclude: true, comment: 'API surface stays in the browser' },
+							// Embeds are meant to render inside someone else's page.
+							{ '/': '/embed*', exclude: true, comment: 'third-party embeds stay on the web' },
+							{ '/': '/widget*', exclude: true, comment: 'third-party embeds stay on the web' },
+							{ '/': '/*' },
+						],
+					},
+				],
+			},
+			webcredentials: { apps: [appId] },
+		},
+		{
+			// Apple caches this aggressively at the CDN either way; a short TTL keeps
+			// a Team ID correction from taking a day to reach devices.
+			'cache-control': 'public, max-age=300',
+		},
+	);
+}
+
 const DISPATCH = {
 	'agent-attestation-schemas': handleAttestationSchemas,
 	'three-vanity': handleThreeVanity,
@@ -1962,6 +2022,7 @@ const DISPATCH = {
 	'oauth-protected-resource': handleOauthProtectedResource,
 	x402: handleX402,
 	'x402-discovery': handleX402Discovery,
+	'apple-app-site-association': handleAppleAppSiteAssociation,
 };
 
 // Public discovery docs (x402, x402-discovery, chat-plugin, agent-attestation-schemas)

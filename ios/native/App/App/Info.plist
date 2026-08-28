@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CAPACITOR_DEBUG</key>
+	<string>$(CAPACITOR_DEBUG)</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>three.ws</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+
+	<!--
+		Deep links. Universal links (https://three.ws/...) are the primary path and
+		are declared in App.entitlements + public/.well-known/apple-app-site-association;
+		this custom scheme is the fallback that wallet and OAuth redirects can always
+		reach, including from a Safari view controller that cannot resolve an
+		associated domain. Handled in AppDelegate -> Capacitor's App plugin ->
+		src/native-bridge.js.
+	-->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>ws.three.app</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>threews</string>
+			</array>
+		</dict>
+	</array>
+
+	<!--
+		Schemes the app is allowed to probe with canOpenURL. Phantom and Solflare
+		are how a Solana user signs on iOS: there is no Seed Vault outside Seeker,
+		so the wallet handoff is a deep link into the wallet app and back. Without
+		these entries canOpenURL always answers false and the sign-in sheet cannot
+		tell an installed wallet from a missing one.
+	-->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>phantom</string>
+		<string>solflare</string>
+		<string>metamask</string>
+		<string>https</string>
+	</array>
+
+	<!-- Selfie to avatar (/create/selfie), the AR camera passthrough (/ar/studio, /irl). -->
+	<key>NSCameraUsageDescription</key>
+	<string>three.ws uses the camera to turn a selfie into a 3D avatar and to place your agents in the room around you.</string>
+	<!-- Talk mode: speaking to an agent. -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>three.ws uses the microphone so you can talk to your agents out loud.</string>
+	<!-- Choosing a reference photo for avatar generation. -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>three.ws reads a photo you pick so it can build a 3D avatar from it.</string>
+	<!-- Saving an AR capture back to the camera roll. -->
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>three.ws saves the photos and videos you capture of your agents to your library.</string>
+	<!-- IRL pins: dropping and discovering an agent at a real place. -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>three.ws uses your location to pin agents to real places and to show you the ones pinned nearby.</string>
+	<!-- Gyro world-lock in the non-WebXR AR path (src/ar/multi-place.js). -->
+	<key>NSMotionUsageDescription</key>
+	<string>three.ws reads device motion to keep an agent anchored in place as you move the camera.</string>
+
+	<!-- Push notifications arriving while the app is backgrounded. -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
+
+	<!--
+		The product is dark-only. Leaving this unset lets iOS hand the WebView a
+		light system appearance, which flashes white behind every WebGL canvas
+		during a scene load.
+	-->
+	<key>UIUserInterfaceStyle</key>
+	<string>Dark</string>
+
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+		<key>UISceneConfigurations</key>
+		<dict>
+			<key>UIWindowSceneSessionRoleApplication</key>
+			<array>
+				<dict>
+					<key>UISceneConfigurationName</key>
+					<string>Default Configuration</string>
+					<key>UISceneDelegateClassName</key>
+					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+					<key>UISceneStoryboardFile</key>
+					<string>Main</string>
+				</dict>
+			</array>
+		</dict>
+	</dict>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIMainStoryboardFile</key>
+	<string>Main</string>
+	<!--
+		arm64, not the armv7 Capacitor's template still ships: armv7 is a 32-bit
+		capability no supported iOS device reports, and App Store Connect rejects
+		a build that requires it.
+	-->
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>arm64</string>
+	</array>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<true/>
+
+	<!--
+		Answers App Store Connect's export-compliance question at upload time
+		instead of blocking every TestFlight build on a manual form. three.ws uses
+		only HTTPS and the platform's own crypto, which is the exempt case.
+	-->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+</dict>
+</plist>
