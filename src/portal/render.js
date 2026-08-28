@@ -77,6 +77,8 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 
 	const scene = new THREE.Scene();
 	scene.background = new THREE.Color(world.ground.sky);
+	/** Every world-space label, faded by distance each frame so a dense city stays readable. */
+	const labels = [];
 	scene.fog = new THREE.Fog(world.ground.fog, 34, world.ground.radius * 1.5);
 
 	const camera = new THREE.PerspectiveCamera(58, 1, 0.1, world.ground.radius * 4);
@@ -85,6 +87,35 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 		disposables.push(obj);
 		return obj;
 	};
+
+	// ── sky ───────────────────────────────────────────────────────────────────
+	// A two-stop vertical gradient on the inside of a large sphere. Cheaper than
+	// an environment map, and it gives the horizon a real edge for the city to
+	// stand against instead of a flat clear colour.
+	const skyGeo = track(new THREE.SphereGeometry(world.ground.radius * 3, 32, 16));
+	const skyMat = track(new THREE.ShaderMaterial({
+		side: THREE.BackSide,
+		depthWrite: false,
+		fog: false,
+		uniforms: {
+			top: { value: new THREE.Color(world.ground.sky) },
+			bottom: { value: new THREE.Color(world.ground.fog) },
+			horizon: { value: new THREE.Color(world.palette.accent) },
+		},
+		vertexShader: `varying vec3 vWorld;
+			void main() {
+				vWorld = (modelMatrix * vec4(position, 1.0)).xyz;
+				gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+			}`,
+		fragmentShader: `uniform vec3 top; uniform vec3 bottom; uniform vec3 horizon; varying vec3 vWorld;
+			void main() {
+				float h = clamp(normalize(vWorld).y * 0.5 + 0.5, 0.0, 1.0);
+				vec3 base = mix(bottom, top, smoothstep(0.35, 0.85, h));
+				float glow = pow(1.0 - abs(h - 0.5) * 2.0, 6.0);
+				gl_FragColor = vec4(base + horizon * glow * 0.18, 1.0);
+			}`,
+	}));
+	scene.add(new THREE.Mesh(skyGeo, skyMat));
 
 	// ── lighting ──────────────────────────────────────────────────────────────
 	const hemi = new THREE.HemisphereLight(world.palette.accent, world.ground.color, 1.15);
@@ -140,10 +171,28 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 	monument.castShadow = true;
 	scene.add(monument);
 	const titleLabel = makeLabel(world.plaza.monument.label, { size: 52 });
-	titleLabel.position.set(0, world.plaza.monument.h + 1.4, 0);
-	titleLabel.scale.multiplyScalar(2.1);
+	titleLabel.position.set(0, world.plaza.monument.h + 1.5, 0);
+	titleLabel.scale.multiplyScalar(1.15);
 	scene.add(titleLabel);
+	labels.push({ sprite: titleLabel, far: 120 });
 	disposables.push({ dispose: () => titleLabel.userData.dispose() });
+
+	// A ring at the monument's foot, so the plaza reads as the centre of a place
+	// rather than as a disc that happens to have a block on it.
+	const ringGeo = track(new THREE.RingGeometry(world.plaza.radius * 0.94, world.plaza.radius, 96));
+	const ring = new THREE.Mesh(ringGeo, track(new THREE.MeshBasicMaterial({ color: world.palette.accent, transparent: true, opacity: 0.5, side: THREE.DoubleSide })));
+	ring.rotation.x = -Math.PI / 2;
+	ring.position.y = 0.03;
+	scene.add(ring);
+
+	// A faint grid over the ground: it gives the eye scale while walking and
+	// disappears into the fog, so it never reads as a debug overlay.
+	const grid = new THREE.GridHelper(world.ground.radius * 2, Math.round(world.ground.radius / 2), world.palette.accent, world.palette.accent);
+	grid.material.transparent = true;
+	grid.material.opacity = 0.06;
+	grid.position.y = 0.01;
+	scene.add(grid);
+	disposables.push(grid.material, grid.geometry);
 
 	// ── buildings ─────────────────────────────────────────────────────────────
 	const edgeMat = track(new THREE.LineBasicMaterial({ color: world.palette.accent, transparent: true, opacity: 0.55 }));
@@ -174,8 +223,9 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 
 		const label = makeLabel(b.label, { size: 40 });
 		label.position.set(b.x, b.h + 1.1, b.z);
-		label.scale.multiplyScalar(1.35);
+		label.scale.multiplyScalar(0.78);
 		scene.add(label);
+		labels.push({ sprite: label, far: 70 });
 		disposables.push({ dispose: () => label.userData.dispose() });
 	}
 
@@ -200,8 +250,10 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 		doorMeshes.push({ mesh, door: d, material: mat });
 
 		const label = makeLabel(d.label || new URL(d.href).host, { size: 34, color: d.internal ? '#eaf6ff' : '#ffeede' });
-		label.position.set(d.x, d.h + 0.75, d.z);
+		label.position.set(d.x, d.h + 0.7, d.z);
+		label.scale.multiplyScalar(0.62);
 		scene.add(label);
+		labels.push({ sprite: label, far: 26 });
 		disposables.push({ dispose: () => label.userData.dispose() });
 	}
 
@@ -234,7 +286,9 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 					if (p.label) {
 						const alt = makeLabel(p.label, { size: 30 });
 						alt.position.set(p.x, p.h + 1.6, p.z);
+						alt.scale.multiplyScalar(0.62);
 						scene.add(alt);
+						labels.push({ sprite: alt, far: 30 });
 						disposables.push({ dispose: () => alt.userData.dispose() });
 					}
 				},
@@ -490,7 +544,15 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 			onDoor?.(best, 'near');
 		}
 
-		titleLabel.position.y = world.plaza.monument.h + 1.4 + Math.sin(elapsed * 1.4) * 0.08;
+		// Labels fade with distance so a 24-district city reads as a skyline from
+		// the plaza and as signage up close, instead of as a wall of text.
+		for (const { sprite, far } of labels) {
+			const dist = Math.hypot(sprite.position.x - player.position.x, sprite.position.z - player.position.z);
+			const opacity = clamp(1 - (dist - far * 0.45) / (far * 0.55), 0, 1);
+			sprite.material.opacity = opacity;
+			sprite.visible = opacity > 0.02;
+		}
+		titleLabel.position.y = world.plaza.monument.h + 1.5 + Math.sin(elapsed * 1.4) * 0.08;
 		renderer.render(scene, camera);
 	}
 	frame();
