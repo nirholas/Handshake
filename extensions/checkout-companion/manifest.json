@@ -4,7 +4,7 @@
 	"short_name": "Checkout Companion",
 	"version": "1.0.0",
 	"description": "Your agent reads the checkout before you pay: what it really costs, whether it repeats, and what the fine print commits you to.",
-	"homepage_url": "https://three.ws/checkout-companion",
+	"homepage_url": "https://three.ws/companion",
 
 	"icons": {
 		"16": "icons/icon-16.png",

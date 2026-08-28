@@ -2351,6 +2351,14 @@
 					"priority": 0.6,
 					"changefreq": "daily",
 					"added": "2026-08-12"
+				},
+				{
+					"path": "/preflight",
+					"title": "x402 Preflight: can this seller actually settle?",
+					"description": "Check whether any x402 seller can complete a payment before you sign one. Fetches the seller's signed payability attestation and verifies the ed25519 signature, the expiry and the subject entirely in your browser. Free, open format, works against any origin.",
+					"priority": 0.7,
+					"changefreq": "weekly",
+					"added": "2026-08-28"
 				}
 			]
 		},

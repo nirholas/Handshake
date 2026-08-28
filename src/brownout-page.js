@@ -70,24 +70,54 @@ function humanAge(ms) {
 	return `${Math.round(m / 60)}h`;
 }
 
-function renderLivePanel(prov) {
+// A live read of a real data endpoint, made from the visitor's browser, right
+// now. The registry endpoint itself is a disk read and touches no upstream, so
+// reporting ITS provenance would show an empty trace and prove nothing. This
+// asks a market endpoint instead, which fans out across several providers, and
+// shows what actually happened. A claim about resilience is cheap; the same
+// claim measured on a request the reader just made is not.
+const PROBE_ENDPOINT = '/api/coin/global';
+
+async function renderLivePanel() {
 	const panel = document.getElementById('bo-live-panel');
 	const tierEl = document.getElementById('bo-live-tier');
 	const body = document.getElementById('bo-live-body');
-	if (!panel || !prov) return;
+	if (!panel || !tierEl || !body) return;
+
+	let res;
+	try {
+		res = await fetch(PROBE_ENDPOINT, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(20_000) });
+	} catch {
+		// The panel is a demonstration, not the page. If the probe cannot run, the
+		// page is still worth reading, so it simply does not appear.
+		return;
+	}
+	const prov = parseProvenance(res.headers);
+	if (!prov) {
+		// Every source answered from cache, so nothing was recorded. That is a real
+		// and healthy state, and saying so beats hiding the panel.
+		tierEl.dataset.tier = 'cache';
+		tierEl.textContent = 'cache';
+		body.textContent =
+			`A live call to ${PROBE_ENDPOINT} from your browser just now was answered entirely from cache, ` +
+			'so it touched no upstream at all. That is the healthy case: the fastest request is the one that never leaves.';
+		panel.hidden = false;
+		return;
+	}
 
 	const tier = prov.tier || 'none';
 	tierEl.dataset.tier = tier;
 	tierEl.textContent = tier;
 
-	const parts = [];
-	parts.push(
-		`The request that loaded this list touched ${prov.ok + prov.failed} source${prov.ok + prov.failed === 1 ? '' : 's'} ` +
-			`in ${prov.ms}ms, and what you are reading ${TIER_COPY[tier] || 'was served from an unknown tier'}.`,
-	);
+	const touched = prov.ok + prov.failed;
+	const parts = [
+		`A live call to ${PROBE_ENDPOINT} from your browser just now touched ${touched} source${touched === 1 ? '' : 's'} ` +
+			`in ${prov.ms}ms, and the answer ${TIER_COPY[tier] || 'came from an unknown tier'}.`,
+	];
 	if (prov.failed > 0) {
 		parts.push(
-			`${prov.failed} of them did not answer, and you still got a page: that is the whole point, and it is why the header exists.`,
+			`${prov.failed} of them did not answer, and the request succeeded anyway. ` +
+				'That is the whole point, and without the header nobody would ever have known it happened.',
 		);
 	}
 	body.textContent = parts.join(' ');
@@ -213,9 +243,9 @@ async function main() {
 		return;
 	}
 
-	// Read the provenance of THIS request before anything else: it is the most
-	// honest demonstration on the page, and it costs nothing.
-	renderLivePanel(parseProvenance(res.headers));
+	// Fire the live probe alongside the registry render rather than before it:
+	// it is a demonstration, and it must never delay the page it decorates.
+	void renderLivePanel();
 
 	if (!res.ok) {
 		if (status) status.textContent = 'The registry answered with an error.';
