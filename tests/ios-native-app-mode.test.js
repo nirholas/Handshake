@@ -17,7 +17,7 @@
  * its nav under the system clock.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 
 /** Minimal stand-in for the plugins Capacitor registers natively. */
 function fakeCapacitor() {
@@ -59,29 +59,48 @@ function fakeCapacitor() {
 }
 
 describe('ios native bridge, running inside the app', () => {
+	// Booted exactly once, in beforeAll, and not re-imported per test.
+	// bootNativeIOS installs listeners on `document`, and jsdom keeps one
+	// document for the whole file: re-importing the module per test would leave
+	// every previous instance's listener attached, so a single click would fire
+	// N handlers into N stale plugin objects. That is a property of the test
+	// environment, not of the bridge, but it produces confidently wrong results
+	// in both directions, so the fix is to boot once and clear the call log.
 	let cap;
 	let mod;
+	let bootCalls;
 
-	beforeEach(async () => {
-		vi.resetModules();
-		document.head.innerHTML = '';
-		document.body.innerHTML = '';
-		document.documentElement.className = '';
+	beforeAll(async () => {
 		cap = fakeCapacitor();
 		vi.stubGlobal('Capacitor', cap);
 		mod = await import('../ios/src/native-bridge.js');
 		mod.bootNativeIOS();
+		// The splash hide is deferred behind a double requestAnimationFrame, so
+		// the boot log is only complete after those frames have run.
+		await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+		bootCalls = cap.calls.slice();
 	});
 
-	afterEach(() => {
+	afterAll(() => {
 		vi.unstubAllGlobals();
-		delete navigator.share;
-		delete navigator.canShare;
-		delete globalThis.threeWsHaptic;
+	});
+
+	beforeEach(() => {
+		cap.calls.length = 0;
+		document.body.innerHTML = '';
 	});
 
 	it('marks the document so app-only CSS can apply', () => {
 		expect(document.documentElement.classList.contains('ios-app')).toBe(true);
+	});
+
+	it('asks for the light status-bar content a dark product needs', () => {
+		expect(bootCalls.find((c) => c[0] === 'StatusBar.setStyle')[1]).toEqual({ style: 'DARK' });
+		expect(bootCalls.some((c) => c[0] === 'StatusBar.setOverlaysWebView')).toBe(true);
+	});
+
+	it('subscribes to deep links so a wallet return lands on the right page', () => {
+		expect(bootCalls.some((c) => c[0] === 'App.addListener' && c[1] === 'appUrlOpen')).toBe(true);
 	});
 
 	it('pads the sticky header out from under the status bar', () => {
@@ -183,13 +202,10 @@ describe('ios native bridge, running inside the app', () => {
 		});
 	});
 
-	it('hides the launch screen rather than holding it forever', async () => {
-		vi.useFakeTimers();
-		vi.resetModules();
-		const fresh = await import('../ios/src/native-bridge.js');
-		fresh.bootNativeIOS();
-		vi.advanceTimersByTime(5000);
-		vi.useRealTimers();
-		expect(cap.calls.some((c) => c[0] === 'SplashScreen.hide')).toBe(true);
+	it('hides the launch screen rather than holding it forever', () => {
+		// Two independent triggers, so a page that never paints still reveals
+		// itself: a double rAF, and a hard ceiling. jsdom runs rAF, so the
+		// first one is what lands here.
+		expect(bootCalls.some((c) => c[0] === 'SplashScreen.hide')).toBe(true);
 	});
 });

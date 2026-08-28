@@ -201,9 +201,11 @@ function collectMaterials(root) {
 }
 
 export class A3SPlayer {
-	constructor({ THREE, GLTFLoader, stream, gltf, onLayer }) {
+	constructor({ THREE, GLTFLoader, stream, gltf, onLayer, configureLoader }) {
 		this.THREE = THREE;
 		this.GLTFLoader = GLTFLoader;
+		/** Applied to every loader this player builds, for decoders the host installs. */
+		this.configureLoader = configureLoader || null;
 		this.stream = stream;
 		this.gltf = gltf;
 		this.scene = gltf.scene;
@@ -226,8 +228,16 @@ export class A3SPlayer {
 		// first does not pay for a second round trip to the same bytes.
 		const stream = target instanceof A3SStream ? target : await A3SStream.open(target, options);
 		const loader = new GLTFLoader();
+		await options.configureLoader?.(loader);
 		const gltf = await loader.parseAsync(stream.base.slice().buffer, '');
-		const player = new A3SPlayer({ THREE, GLTFLoader, stream, gltf, onLayer: options.onLayer });
+		const player = new A3SPlayer({
+			THREE,
+			GLTFLoader,
+			stream,
+			gltf,
+			onLayer: options.onLayer,
+			configureLoader: options.configureLoader,
+		});
 		player.onLayer?.({
 			level: 0,
 			triangleCount: stream.header.layers[0].triangleCount,
@@ -269,6 +279,7 @@ export class A3SPlayer {
 		if (descriptor.animations) {
 			const bytes = A3SStream.chunk(payload, descriptor.animations);
 			const loader = new this.GLTFLoader();
+			await this.configureLoader?.(loader);
 			const companion = await loader.parseAsync(bytes.slice().buffer, '');
 			// Clip tracks address nodes by name, so they bind straight onto the
 			// skeleton the base layer already put on screen.

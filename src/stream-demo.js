@@ -23,8 +23,21 @@ import {
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as THREE from 'three';
 
+import { getMeshoptDecoder } from './viewer/internal.js';
 import { A3SPlayer } from '../packages/avatar-stream/src/three.js';
 import { A3SStream } from '../packages/avatar-stream/src/reader.js';
+
+/**
+ * Install the meshopt decoder on a loader.
+ *
+ * The platform's source avatars ship meshopt-compressed, so the classic panel
+ * cannot parse one without it. An A3S base layer deliberately needs no decoder
+ * at all, but the same configuration is applied to both panels so the
+ * comparison differs in delivery strategy and nothing else.
+ */
+async function configureLoader(loader) {
+	loader.setMeshoptDecoder(await getMeshoptDecoder());
+}
 
 /** Downlink profiles, in bytes per second, matching the browser devtools presets. */
 const CONNECTIONS = {
@@ -230,7 +243,9 @@ async function runClassic(panel, avatar, bytesPerSecond, signal) {
 	await meter(buffer.byteLength, bytesPerSecond, (delivered) => panel.progress(delivered, buffer.byteLength));
 	if (signal.aborted) return null;
 
-	const gltf = await new GLTFLoader().parseAsync(buffer.slice().buffer, '');
+	const loader = new GLTFLoader();
+	await configureLoader(loader);
+	const gltf = await loader.parseAsync(buffer.slice().buffer, '');
 	const elapsed = performance.now() - started;
 	panel.stage.add(gltf.scene);
 	panel.stage.playClips(gltf.animations);
@@ -270,7 +285,7 @@ async function runStream(panel, avatar, bytesPerSecond, signal) {
 	panel.log(`GET ${url}`);
 	panel.log(`Range: bytes=0-${stream.preamble.baseOffset + stream.preamble.baseLength - 1}`);
 
-	const player = await A3SPlayer.load(stream, { THREE, GLTFLoader });
+	const player = await A3SPlayer.load(stream, { THREE, GLTFLoader, configureLoader });
 
 	const elapsed = performance.now() - started;
 	panel.stage.add(player.scene);
