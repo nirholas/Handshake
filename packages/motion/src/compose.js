@@ -22,6 +22,13 @@
 
 import { EFFORTS } from './vocabulary.js';
 
+// Both hands resting on the thighs: the shape a body makes sitting down or
+// bracing on its legs, reused by every posture that needs it.
+const HANDS_ON_THIGHS = Object.freeze({
+	left: { at: 'thigh', forward: 0.04, palm: 'down', hand: 'relaxed', elbow: 'down' },
+	right: { at: 'thigh', forward: 0.04, palm: 'down', hand: 'relaxed', elbow: 'down' },
+});
+
 /**
  * Actions this lane can build without a model. Each is a function of the
  * parsed modifiers, returning beats.
@@ -82,13 +89,15 @@ const ACTIONS = {
 	],
 
 	point: ({ side, direction, effort }) => {
-		const at = direction === 'down' ? 'floor' : direction === 'up' ? 'overhead' : 'front';
+		// Pointing down means aiming an arm at the floor, not putting a wrist on
+		// it: the target stays inside the arm's reach and the finger does the rest.
+		const at = direction === 'up' ? 'overhead' : 'front';
 		return [
 			{ label: 'ready', posture: 'easy', in: 0.2, effort },
 			{
 				label: 'point',
 				posture: direction === 'down' ? 'lean_in' : 'easy',
-				arms: { [side]: { at, forward: direction === 'forward' ? 0.12 : 0, palm: 'down', point: direction === 'up' ? 'up' : 'forward', hand: 'point', elbow: 'down' } },
+				arms: { [side]: { at, up: direction === 'down' ? -0.3 : 0, forward: direction === 'forward' ? 0.12 : 0.04, palm: 'down', point: direction === 'up' ? 'up' : direction === 'down' ? 'down' : 'forward', hand: 'point', elbow: 'down' } },
 				gaze: direction === 'down' ? 'down' : direction === 'up' ? 'up' : 'forward',
 				in: 0.3,
 				hold: 0.6,
@@ -125,11 +134,11 @@ const ACTIONS = {
 	sit: ({ effort }) => [
 		{ label: 'stand', posture: 'easy', in: 0.25, effort },
 		{ label: 'lower', posture: 'crouch', gaze: 'down', in: 0.55, effort },
-		{ label: 'seated', posture: 'sit', gaze: 'forward', arms: { left: { at: 'knee', forward: 0.06, hand: 'relaxed' }, right: { at: 'knee', forward: 0.06, hand: 'relaxed' } }, in: 0.5, hold: 0.9, effort },
+		{ label: 'seated', posture: 'sit', torso: { lean: 18 }, gaze: 'forward', arms: { left: HANDS_ON_THIGHS.left, right: HANDS_ON_THIGHS.right }, in: 0.5, hold: 0.9, effort },
 	],
 
 	stand_up: ({ effort }) => [
-		{ label: 'seated', posture: 'sit', arms: { left: { at: 'knee', forward: 0.06, hand: 'relaxed' }, right: { at: 'knee', forward: 0.06, hand: 'relaxed' } }, in: 0.25, effort },
+		{ label: 'seated', posture: 'sit', torso: { lean: 18 }, arms: { left: HANDS_ON_THIGHS.left, right: HANDS_ON_THIGHS.right }, in: 0.25, effort },
 		{ label: 'lean out', posture: 'sit', torso: { lean: 26 }, gaze: 'down', in: 0.4, effort },
 		{ label: 'rise', posture: 'crouch', in: 0.45, effort },
 		{ label: 'stand', posture: 'easy', gaze: 'forward', in: 0.5, hold: 0.3, effort },
@@ -137,7 +146,7 @@ const ACTIONS = {
 
 	crouch: ({ effort }) => [
 		{ label: 'stand', posture: 'easy', in: 0.25, effort },
-		{ label: 'down', posture: 'crouch', gaze: 'down', arms: { left: { at: 'knee', hand: 'relaxed' }, right: { at: 'knee', hand: 'relaxed' } }, in: 0.55, hold: 0.7, effort },
+		{ label: 'down', posture: 'crouch', torso: { lean: 30 }, gaze: 'down', arms: { left: HANDS_ON_THIGHS.left, right: HANDS_ON_THIGHS.right }, in: 0.55, hold: 0.7, effort },
 		{ label: 'up', posture: 'easy', gaze: 'forward', in: 0.6, hold: 0.2, effort },
 	],
 
@@ -219,7 +228,7 @@ const ACTIONS = {
 		{
 			label: 'reach',
 			posture: direction === 'down' ? 'crouch' : 'lean_in',
-			arms: { [side]: { at: direction === 'up' ? 'overhead' : direction === 'down' ? 'floor' : 'front', forward: 0.1, palm: direction === 'down' ? 'down' : 'up', hand: 'open', elbow: 'down' } },
+			arms: { [side]: { at: direction === 'up' ? 'overhead' : 'front', up: direction === 'down' ? -0.3 : 0, forward: 0.1, palm: direction === 'down' ? 'down' : 'up', hand: 'open', elbow: 'down' } },
 			gaze: direction === 'down' ? 'down' : direction === 'up' ? 'up' : 'forward',
 			in: 0.5,
 			hold: 0.4,

@@ -7,7 +7,7 @@
 // owns it, so "at the chin" is still at the chin after the torso has turned
 // forty degrees and the hips have dropped into a crouch.
 
-import { qConj, qRotate, vAdd, vScale, vSub } from './math.js';
+import { qConj, qRotate, vAdd, vLerp, vScale, vSub } from './math.js';
 import {
 	ARM_REACH,
 	BODY_FORWARD,
@@ -96,7 +96,16 @@ export const ANCHORS = Object.freeze({
 		Left: vAdd(shoulderL, vAdd(above(-hang * 0.86), vAdd(lateral(-0.02), ahead(-hang * 0.42)))),
 		Right: vAdd(shoulderR, vAdd(above(-hang * 0.86), vAdd(lateral(0.02), ahead(-hang * 0.42)))),
 	},
-	/** Knee height in front: reaching down without the hips moving. */
+	/**
+	 * On the thigh, a third of the way from hip to knee: where a hand actually
+	 * rests when someone sits down or leans on their legs. The knee itself is
+	 * past a wrist's reach on a human skeleton, which is why hands go here.
+	 */
+	thigh: {
+		Left: vLerp(restPos('LeftUpLeg'), restPos('LeftLeg'), 0.35),
+		Right: vLerp(restPos('RightUpLeg'), restPos('RightLeg'), 0.35),
+	},
+	/** The knee joint itself: a place to look at, or to reach for in a crouch. */
 	knee: {
 		Left: vAdd(restPos('LeftLeg'), ahead(0.12)),
 		Right: vAdd(restPos('RightLeg'), ahead(0.12)),
@@ -126,9 +135,10 @@ const ANCHOR_BONE = Object.freeze({
 	waist: 'Spine',
 	hips: 'Hips',
 	hip: 'Hips',
-	side: 'Hips',
-	behind: 'Hips',
+	side: 'Spine2',
+	behind: 'Spine2',
 	knee: { Left: 'LeftLeg', Right: 'RightLeg' },
+	thigh: { Left: 'LeftUpLeg', Right: 'RightUpLeg' },
 	shoulder: 'Spine2',
 	// The floor does not follow the body: that is what makes it the floor.
 	floor: null,
