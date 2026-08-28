@@ -29,10 +29,17 @@ async function unwrap(res) {
 	return data;
 }
 
-async function authed(path, { method = 'GET', body = null } = {}) {
+// `allowAnonymous` matters more here than it looks. /knock is a public page
+// with a private half: a signed-out visitor must see the directory, not be
+// bounced to /login by apiFetch's session guard the moment the owner-side read
+// comes back 401. Reads therefore tolerate anonymity and surface the 401 to the
+// caller, which renders the sign-in card. Writes keep the redirect, because
+// saving a door while signed out really does mean "go sign in".
+async function authed(path, { method = 'GET', body = null, allowAnonymous = false } = {}) {
 	return unwrap(
 		await apiFetch(path, {
 			method,
+			allowAnonymous,
 			...(body ? { headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) } : {}),
 		}),
 	);
@@ -55,13 +62,13 @@ export const knockApi = {
 	receipt: (url) => open(url.replace(/^https?:\/\/[^/]+/, '')),
 
 	// Owner
-	settings: () => authed('/api/knock/settings'),
+	settings: () => authed('/api/knock/settings', { allowAnonymous: true }),
 	saveSettings: (patch) => authed('/api/knock/settings', { method: 'PATCH', body: patch }),
 	inbox: ({ limit = 30, before = null, status = null } = {}) => {
 		const params = new URLSearchParams({ limit: String(limit) });
 		if (before) params.set('before', before);
 		if (status) params.set('status', status);
-		return authed(`/api/knock/inbox?${params.toString()}`);
+		return authed(`/api/knock/inbox?${params.toString()}`, { allowAnonymous: true });
 	},
 	actOn: (id, patch) => authed(`/api/knock/inbox/${encodeURIComponent(id)}`, { method: 'PATCH', body: patch }),
 };

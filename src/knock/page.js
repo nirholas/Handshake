@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		'door-max', 'door-cap', 'door-listed', 'save', 'save-note', 'settings-error',
 		'share-url', 'copy-share', 'share-block', 'endpoint-url', 'copy-endpoint',
 		'stat-pending', 'stat-total', 'stat-earned', 'inbox', 'inbox-empty', 'inbox-loading',
-		'load-more', 'blocks', 'blocks-empty', 'no-handle',
+		'load-more', 'blocks', 'blocks-empty', 'no-handle', 'inbox-section', 'blocks-section',
 	]) {
 		els[id] = document.getElementById(id);
 	}
@@ -97,7 +97,13 @@ async function loadOwner() {
 	} catch (err) {
 		els['owner-loading'].hidden = true;
 		if (err.status === 401) {
+			// Signed out. The directory below stays public; the owner-only
+			// sections are hidden outright rather than left spinning on a
+			// request that will never be allowed to complete.
 			els['signed-out'].hidden = false;
+			els['inbox-loading'].hidden = true;
+			els['inbox-section'].hidden = true;
+			els['blocks-section'].hidden = true;
 			return;
 		}
 		els.owner.hidden = false;
