@@ -18,9 +18,13 @@ Try all of it at [three.ws/herald](https://three.ws/herald), which runs the real
 library in your own tab: change the rules, send a message, and watch the engine
 decide.
 
-three.ws uses this for its own notifications. The account-wide, per-category
-switch for that lives in the preference center, documented in
-[Notifications](./notifications.md#the-avatar-channel-delivered-in-person).
+three.ws delivers its own notifications the same way. That path has its own
+client ([src/notification-herald.js](../src/notification-herald.js), wired to
+the bell inbox and gated by the per-category `avatar` channel in the preference
+center, see
+[Notifications](./notifications.md#the-avatar-channel-delivered-in-person)), and
+it shares this one's body: both hand the line to the walk companion's
+`announce()`. The library here is the general form, for any site and any feed.
 
 ---
 
