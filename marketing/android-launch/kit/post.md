@@ -5,124 +5,152 @@ the order wrong reassembles the composition scrambled.
 
 ## The thread
 
-Ten posts, written for someone who has never used a crypto app and does not want
-to. No jargon, no version numbers, no acronyms: the specifics live in the
-optional replies below and in the GitHub release, and nobody needs them to
-understand what this is. Post 1 carries the four images; 2 through 10 are
-replies in order. Counts are X's own arithmetic, where a URL costs 23 characters
-however long it is, and all ten fit inside 280 without Premium.
+Eleven posts, written for someone who has never used a crypto app and had no
+plans to. No jargon, no version numbers, no acronyms: the specifics live in the
+replies below, and nobody needs them to understand what this is or to want it.
 
-**1**, 216 characters. Attach the four tiles here, in the order in `IMAGE-ORDER.md`.
+The register is confident and grateful, never explanatory and never defensive.
+This community built the thing being launched, and the thread says so early, in
+post 2, before it asks anyone for anything. Post 1 carries the four images; 2
+through 11 are replies in order. Counts are X's own arithmetic, where a URL
+costs 23 characters however long it is, and all eleven fit inside 280 without
+Premium.
+
+**1**, 212 characters. Attach the four tiles here, in the order in `IMAGE-ORDER.md`.
 
 ```
-three.ws is an Android app now.
+three.ws is an Android app.
 
-Point the camera at your face and get back a 3D character of yourself. Or just describe something and watch it get built.
+Point your phone at your face and get back a 3D character of yourself. Say what you want and watch it get built.
 
-Free. No account. No crypto needed.
+Free. No account. No crypto needed to start.
 
 github.com/nirholas/three.ws/releases/tag/v1.0.0
 ```
 
-**2**, 230 characters
+**2**, 190 characters
 
 ```
-Most people never make it into web3 because step one is: install an extension, write down twelve secret words, buy something.
+To everyone who has been building here with us: this one is yours.
 
-Nobody does that for fun.
+You made agents nobody asked you to make. You found the bugs at 3am. You held.
 
-So we moved step one somewhere else. Make something you actually want first.
+Today the whole thing fits in your pocket.
 ```
 
-**3**, 242 characters
+**3**, 224 characters
 
 ```
-What you can do in the app right now, with no wallet and no account:
+Here is why crypto keeps losing normal people at the door.
 
-Take one selfie, get a 3D character of yourself
-Describe an object, get a real 3D model
-Give your character a personality and a voice
+Step one, install an extension. Step two, write down twelve secret words. Step three, buy something, before you have made anything at all.
+
+We threw that order out.
+```
+
+**4**, 234 characters
+
+```
+Open the app and you can:
+
+Turn one selfie into a 3D character of yourself
+Describe an object and get a real 3D model
+Give your character a voice and a personality
 Talk to it
 Stand it in your room in AR
+
+No wallet. No signup. No cost.
 ```
 
-**4**, 237 characters
+**5**, 225 characters
 
 ```
-Your character does not stay stuck in the app.
+And it does not stay locked in the app.
 
-One link puts it on your website, in your Telegram, in your posts, where it walks and talks and answers questions.
+One link puts your character on your site, in your Telegram, in your posts, where it moves and talks and answers for you.
 
-Everything you make is a real 3D file you can download and open anywhere.
+Everything you make is a real file. Download it. It is yours.
 ```
 
-**5**, 261 characters
+**6**, 220 characters
 
 ```
-If you ever want the crypto part, it is one tap, and it is optional.
+Want to own it on-chain? One tap.
 
-Your character becomes something you own on Solana, held in your own wallet. On a Solana Seeker phone the signature happens inside the phone itself. Nothing to install, nothing to write down.
+Your character becomes an asset in your own wallet on Solana. On a Seeker phone the signing happens inside the phone itself.
+
+Nothing to install. Nothing to write down. No twelve words.
 ```
 
-**6**, 254 characters
+**7**, 246 characters
 
 ```
-That is the whole idea.
+This is how the next million people arrive.
 
-Nobody joins web3 for a wallet. They join for something they wanted to make anyway.
+Not through an exchange signup. Through something they wanted to make anyway, with the ownership waiting underneath for the day they care about it.
 
-Give people that first, make ownership a one-tap upgrade later, and the next million arrive without ever being asked to care about the plumbing.
+Give people magic first. The wallet can come second.
 ```
 
-**7**, 201 characters
+**8**, 196 characters
 
 ```
-For our community: every new person in the app is another creator in the same economy, and agents here can be paid for what they do.
+And to our holders: every new person who opens this app lands in the economy you have been building.
 
-$THREE is how you move up in it. Not by spending it. By holding it.
+$THREE is how you move up in it. You never spend it. You hold it, and your tier does the work.
 ```
 
-**8**, 193 characters
+**9**, 179 characters
 
 ```
-Your holding sets your tier: free limits multiply and compute costs drop.
+Bronze doubles your free limits and takes 5% off compute. Genesis multiplies them by 10 and takes 30% off.
 
-Bronze 2x and 5% off. Genesis 10x and 30% off. Hold, do not burn.
+Hold, do not burn.
 
 $THREE
 FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump
 ```
 
-**9**, 242 characters
+**10**, 239 characters
 
 ```
-Generation is free here for a reason, and it is not generosity.
+Generation is free here because serious people backed us early.
 
-three.ws is an NVIDIA Inception member, an OpenAI Select Partner, and runs on a Google for Startups Web3 cloud grant. That is what pays for the GPUs behind every model you make.
+NVIDIA Inception. OpenAI Select Partner. A Google for Startups Web3 cloud grant paying for the GPU fleet behind every model you make.
+
+Thank you. We are just getting started.
 ```
 
-**10**, 210 characters
+**11**, 220 characters
 
 ```
-The same app is in review for the Solana dApp Store, so before long it installs straight onto a Seeker.
+The same build is in review for the Solana dApp Store, so soon it installs straight onto a Seeker.
 
-Until then it is one link. 3.95 MB, Android 6 and up, open source top to bottom.
+Until then: one link, 3.95 MB, Android 6 and up, open source top to bottom.
+
+Go make something.
 
 github.com/nirholas/three.ws/releases/tag/v1.0.0
 ```
 
-Every claim above is checkable: the tier numbers are the live ladder in
-[`docs/hold-to-access.md`](../../../docs/hold-to-access.md), the partnerships are
-[`docs/nvidia-inception.md`](../../../docs/nvidia-inception.md), the OpenAI Select
-Partner status announced on 2026-07-15, and the Google for Startups Web3 cloud
-grant that funds the GPU fleet.
+Every claim is checkable: the tier numbers are the live ladder in
+[`docs/hold-to-access.md`](../../../docs/hold-to-access.md), the memberships are
+[`docs/nvidia-inception.md`](../../../docs/nvidia-inception.md) and the OpenAI
+Select Partner status announced on 2026-07-15, and the Google for Startups Web3
+cloud grant is what funds the GPU fleet.
 
-Two lines that must not drift when someone edits this:
+Three lines that must not drift when someone edits this:
 
-- Post 8 says holding, never spending or burning. Hold-to-access is the whole
-  mechanism, and a post that implies a burn describes a different product.
-- Post 10 says the dApp Store listing is **in review**. It is not live. Saying
-  otherwise ages badly in public, and it is the first thing a reviewer would see.
+- Post 8 and 9 say holding, never spending or burning. Hold-to-access is the
+  whole mechanism, and copy implying a burn describes a different product.
+- Post 9 quotes tier numbers. If the ladder in `docs/hold-to-access.md` moves,
+  this moves with it.
+- Post 11 says the dApp Store listing is **in review**. It is not live. Claiming
+  otherwise ages badly in public, and a reviewer would see it first.
+
+Nothing in the thread is apologetic, explains an absence, or answers a critic.
+Gratitude here is confidence, not a concession, and there is no version of this
+launch that opens by defending anything.
 
 ## Replies for anyone who asks the specifics
 
