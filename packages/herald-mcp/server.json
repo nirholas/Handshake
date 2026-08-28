@@ -1,0 +1,56 @@
+{
+	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+	"name": "io.github.nirholas/herald-mcp",
+	"title": "three.ws Herald",
+	"description": "Tell your human something in person: a 3D character walks onto the browser tab they have open and says it.",
+	"websiteUrl": "https://three.ws/herald",
+	"icons": [
+		{
+			"src": "https://three.ws/three-ws-mcp-icon.svg",
+			"mimeType": "image/svg+xml",
+			"sizes": [
+				"any"
+			]
+		}
+	],
+	"repository": {
+		"url": "https://github.com/nirholas/three.ws",
+		"source": "github",
+		"subfolder": "packages/herald-mcp"
+	},
+	"version": "0.1.0",
+	"packages": [
+		{
+			"registryType": "npm",
+			"identifier": "@three-ws/herald-mcp",
+			"version": "0.1.0",
+			"runtimeHint": "npx",
+			"transport": {
+				"type": "stdio"
+			},
+			"environmentVariables": [
+				{
+					"name": "THREE_WS_API_KEY",
+					"description": "A three.ws API key (sk_live_… / sk_test_…) with the herald:announce scope, or an OAuth access token for the same account, carried as Authorization: Bearer. Required: an announcement is always delivered to the key owner's own sessions. Aliases: THREE_WS_TOKEN, THREE_WS_BEARER. Treat like a password.",
+					"format": "string",
+					"isRequired": true,
+					"isSecret": true
+				},
+				{
+					"name": "THREE_WS_BASE",
+					"description": "Base URL of the three.ws API. Override only when self-hosting or targeting a preview deployment.",
+					"format": "string",
+					"isRequired": false,
+					"default": "https://three.ws"
+				},
+				{
+					"name": "THREE_WS_TIMEOUT_MS",
+					"description": "Per-request timeout in milliseconds for the announce call.",
+					"format": "number",
+					"isRequired": false,
+					"default": "20000"
+				}
+			]
+		}
+	]
+}

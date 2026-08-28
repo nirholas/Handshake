@@ -1,0 +1,56 @@
+{
+	"name": "@three-ws/herald-mcp",
+	"version": "0.1.0",
+	"mcpName": "io.github.nirholas/herald-mcp",
+	"description": "Let an AI agent tell its human something in person: a 3D character walks onto the browser tab they have open and says it out loud. Announce a line, report a finished task with the right urgency, or check the rail. Account-scoped over the live three.ws API via a Bearer API key.",
+	"type": "module",
+	"author": "nirholas <support@three.ws>",
+	"license": "Apache-2.0",
+	"homepage": "https://three.ws/herald",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "packages/herald-mcp"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/three.ws/issues"
+	},
+	"keywords": [
+		"mcp",
+		"three.ws",
+		"herald",
+		"notifications",
+		"avatar",
+		"agent",
+		"tts",
+		"alerts"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"src",
+		"server.json",
+		"README.md",
+		"LICENSE"
+	],
+	"bin": {
+		"herald-mcp": "src/index.js"
+	},
+	"main": "./src/index.js",
+	"exports": {
+		".": "./src/index.js"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"scripts": {
+		"start": "node src/index.js",
+		"test": "node --test \"test/**/*.test.mjs\"",
+		"inspect": "npx -y @modelcontextprotocol/inspector node src/index.js"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.29.0",
+		"zod": "^3.23.8"
+	}
+}

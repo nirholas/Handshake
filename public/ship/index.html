@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Ship log · three.ws</title>
+<meta name="description" content="Every three.ws release note joined to the commits that produced it, with a confidence score and the reasoning behind every link." />
+<link rel="canonical" href="https://three.ws/ship" />
+<link rel="alternate" type="application/rss+xml" title="three.ws ship log" href="/api/ship/feed?format=rss" />
+<link rel="stylesheet" href="/nav.css" />
+<link rel="stylesheet" href="/footer.css" />
+<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+<style>
+	body { margin: 0; background: var(--bg-0); color: var(--ink); font-family: var(--font-body); -webkit-font-smoothing: antialiased; }
+	.sl-wrap { max-width: 940px; margin: 0 auto; padding: 96px 24px 72px; }
+
+	.sl-hero h1 { font-size: clamp(34px, 5vw, 52px); margin: 0 0 12px; letter-spacing: -0.02em; color: var(--ink-bright); }
+	.sl-hero p { color: var(--ink-dim); font-size: 17px; margin: 0 0 8px; line-height: 1.55; max-width: 62ch; }
+	.sl-hero a { color: var(--ink); }
+
+	.sl-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 28px 0 0; }
+	.sl-stat { background: var(--surface-1); border: 1px solid var(--stroke); border-radius: var(--radius-lg); padding: 14px 16px; }
+	.sl-stat-value { font-size: 26px; font-weight: var(--weight-bold); color: var(--ink-bright); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+	.sl-stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); margin-top: 4px; }
+	.sl-spark { display: flex; align-items: flex-end; gap: 2px; height: 30px; margin-top: 6px; }
+	.sl-spark span { flex: 1 1 0; background: color-mix(in srgb, var(--success) 55%, transparent); border-radius: 2px 2px 0 0; min-height: 2px; transition: background var(--duration-fast) var(--ease-standard); }
+	.sl-spark span:hover { background: var(--success); }
+
+	.sl-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 26px 0 0; }
+	.sl-filter { background: var(--surface-1); border: 1px solid var(--stroke); color: var(--ink-dim); font-size: 12px; font-weight: var(--weight-semibold); letter-spacing: 0.03em; border-radius: var(--radius-pill); padding: 6px 14px; cursor: pointer; transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard); }
+	.sl-filter:hover { border-color: var(--stroke-strong); color: var(--ink-bright); }
+	.sl-filter:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
+	.sl-filter[aria-pressed="true"] { border-color: var(--success); color: var(--success); background: color-mix(in srgb, var(--success) 8%, transparent); }
+	.sl-spacer { flex: 1 1 auto; }
+
+	.sl-section-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-faint); margin: 48px 0 14px; }
+
+	.sl-release { background: var(--surface-1); border: 1px solid var(--stroke); border-radius: var(--radius-lg); padding: 18px 20px; margin-bottom: 12px; transition: border-color var(--duration-fast) var(--ease-standard); }
+	.sl-release:hover { border-color: var(--stroke-strong); }
+	.sl-release-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+	.sl-date { font-family: var(--font-mono); font-size: 12px; color: var(--ink-faint); letter-spacing: 0.04em; }
+	.sl-title { color: var(--ink-bright); font-weight: var(--weight-semibold); font-size: 17px; line-height: 1.35; margin: 0; }
+	.sl-title a { color: inherit; text-decoration: none; }
+	.sl-title a:hover, .sl-title a:focus-visible { text-decoration: underline; }
+	.sl-summary { color: var(--ink-dim); font-size: 14px; line-height: 1.6; margin: 8px 0 0; }
+	.sl-tags { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+	.sl-tag { font-size: 10px; font-weight: var(--weight-bold); letter-spacing: 0.05em; text-transform: uppercase; border-radius: var(--radius-pill); padding: 2px 8px; border: 1px solid var(--stroke); color: var(--ink-dim); }
+
+	details.sl-commits { margin-top: 14px; border-top: 1px solid var(--stroke); padding-top: 12px; }
+	details.sl-commits > summary { cursor: pointer; list-style: none; font-size: 12px; font-family: var(--font-mono); color: var(--ink-faint); display: flex; align-items: center; gap: 8px; }
+	details.sl-commits > summary::-webkit-details-marker { display: none; }
+	details.sl-commits > summary:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 3px; border-radius: 4px; }
+	details.sl-commits > summary::before { content: '+'; display: inline-block; width: 14px; text-align: center; color: var(--ink-dim); }
+	details.sl-commits[open] > summary::before { content: '-'; }
+	.sl-commit { display: grid; grid-template-columns: 74px 1fr auto; gap: 10px; align-items: baseline; padding: 7px 0; border-bottom: 1px dashed color-mix(in srgb, var(--stroke) 70%, transparent); }
+	.sl-commit:last-child { border-bottom: none; }
+	.sl-sha { font-family: var(--font-mono); font-size: 12px; color: var(--ink-faint); text-decoration: none; }
+	.sl-sha:hover, .sl-sha:focus-visible { color: var(--accent); text-decoration: underline; }
+	.sl-commit-text { font-size: 13px; line-height: 1.5; color: var(--ink-dim); }
+	.sl-commit-headline { color: var(--ink); font-weight: var(--weight-semibold); }
+	.sl-audience { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; border-radius: var(--radius-pill); padding: 1px 7px; border: 1px solid var(--stroke); color: var(--ink-faint); white-space: nowrap; }
+	.sl-audience-holder { color: var(--success); border-color: color-mix(in srgb, var(--success) 35%, transparent); }
+	.sl-audience-developer { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
+	.sl-why { background: none; border: none; padding: 0 0 0 6px; font: inherit; font-size: 11px; color: var(--ink-faint); cursor: pointer; font-family: var(--font-mono); }
+	.sl-why:hover { color: var(--ink-bright); }
+	.sl-why:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; border-radius: 3px; }
+	.sl-reasons { grid-column: 1 / -1; margin: 4px 0 6px 84px; font-size: 12px; color: var(--ink-faint); font-family: var(--font-mono); line-height: 1.6; }
+	.sl-reasons li { list-style: none; }
+	.sl-empty-note { color: var(--ink-faint); font-size: 12px; font-style: italic; margin-top: 12px; }
+
+	.sl-skeleton { background: var(--surface-1); border: 1px solid var(--stroke); border-radius: var(--radius-lg); height: 118px; margin-bottom: 12px; overflow: hidden; position: relative; }
+	.sl-skeleton::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--ink) 6%, transparent), transparent); animation: sl-shimmer 1.4s infinite; }
+	@keyframes sl-shimmer { 100% { transform: translateX(100%); } }
+	@media (prefers-reduced-motion: reduce) { .sl-skeleton::after { animation: none; } }
+
+	.sl-error { color: var(--ink-dim); font-size: 15px; line-height: 1.6; }
+	.sl-error a { color: var(--ink); }
+	@media (max-width: 560px) {
+		.sl-commit { grid-template-columns: 66px 1fr; }
+		.sl-audience { grid-column: 2; justify-self: start; }
+		.sl-reasons { margin-left: 0; }
+	}
+</style>
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+	<meta property="og:type" content="website">
+	<meta property="og:site_name" content="three.ws">
+	<meta property="og:locale" content="en_US">
+	<meta property="og:title" content="Ship log · three.ws">
+	<meta property="og:description" content="Every three.ws release note joined to the commits that produced it, with a confidence score and the reasoning behind every link.">
+	<meta property="og:url" content="https://three.ws/ship">
+	<meta property="og:image" content="https://three.ws/api/page-og?s=learn&amp;t=Ship+log&amp;d=Every+release+note%2C+joined+to+the+commits+that+produced+it.&amp;p=%2Fship">
+	<meta property="og:image:width" content="1200">
+	<meta property="og:image:height" content="630">
+	<meta property="og:image:type" content="image/png">
+	<meta property="og:image:alt" content="Ship log — three.ws">
+	<meta name="twitter:card" content="summary_large_image">
+	<meta name="twitter:site" content="@trythreews">
+	<meta name="twitter:title" content="Ship log · three.ws">
+	<meta name="twitter:description" content="Every three.ws release note joined to the commits that produced it, with a confidence score and the reasoning behind every link.">
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=learn&amp;t=Ship+log&amp;d=Every+release+note%2C+joined+to+the+commits+that+produced+it.&amp;p=%2Fship">
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Ship log","description":"Every three.ws release note joined to the commits that produced it, with a confidence score and the reasoning behind every link.","url":"https://three.ws/ship","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}]}</script>
+</head>
+<body>
+	<div id="nav-container"></div>
+	<script src="/nav.js"></script>
+	<main class="sl-wrap">
+		<div class="sl-hero">
+			<h1>Ship log</h1>
+			<p>The changelog says what shipped. The commit log says how. This page is the join: every release note with the code that produced it underneath, matched by <a href="/docs/shipfeed">an open-source scorer</a> that shows its reasoning and its confidence for every link.</p>
+			<p>Feeds: <a href="/api/ship/feed">JSON</a> · <a href="/api/ship/feed?format=rss">RSS</a> · <a href="/api/ship/feed?format=markdown">Markdown</a> · <a href="/changelog">plain changelog</a></p>
+			<div class="sl-stats" id="sl-stats" aria-live="polite"></div>
+		</div>
+
+		<div class="sl-controls" id="sl-controls" role="group" aria-label="Filter the ship log by audience"></div>
+
+		<div id="sl-content">
+			<div class="sl-skeleton" aria-hidden="true"></div>
+			<div class="sl-skeleton" aria-hidden="true"></div>
+			<div class="sl-skeleton" aria-hidden="true"></div>
+			<p class="sr-only" role="status">Loading the ship log.</p>
+		</div>
+	</main>
+
+	<script type="module">
+		const content = document.getElementById('sl-content');
+		const statsElt = document.getElementById('sl-stats');
+		const controls = document.getElementById('sl-controls');
+		const FILTERS = [
+			['internal', 'Everything'],
+			['developer', 'Developers'],
+			['holder', 'Product news'],
+		];
+		let audience = 'internal';
+		let feed = null;
+		let inFlight = null;
+
+		const esc = (s) => String(s ?? '').replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c]);
+
+		function fmtDate(iso) {
+			try {
+				return new Date(iso + 'T00:00:00Z').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+			} catch { return iso; }
+		}
+
+		function renderStats(f) {
+			const v = f.stats.velocity;
+			const max = Math.max(1, ...v.map((d) => d.count));
+			const bars = v.map((d) => `<span style="height:${Math.max(6, Math.round((d.count / max) * 100))}%" title="${esc(d.date)}: ${d.count} commits"></span>`).join('');
+			statsElt.innerHTML = [
+				['Commits read', f.stats.commits],
+				['Release notes', f.stats.releases],
+				['Linked to code', `${Math.round(f.stats.coverage * 100)}%`],
+				['Unannounced', f.stats.orphans],
+			].map(([label, value]) => `
+				<div class="sl-stat">
+					<div class="sl-stat-value">${esc(value)}</div>
+					<div class="sl-stat-label">${esc(label)}</div>
+				</div>`).join('') + `
+				<div class="sl-stat">
+					<div class="sl-spark" role="img" aria-label="Commits per day over the window">${bars}</div>
+					<div class="sl-stat-label">Daily commits</div>
+				</div>`;
+		}
+
+		function commitRow(c) {
+			const audienceClass = `sl-audience sl-audience-${esc(c.audience)}`;
+			const why = c.why && c.why.length
+				? `<button class="sl-why" type="button" data-sha="${esc(c.sha)}" aria-expanded="false">why ${Math.round((c.confidence || 0) * 100)}%</button>`
+				: '';
+			return `
+				<div class="sl-commit" id="c-${esc(c.shortSha)}">
+					<a class="sl-sha" href="${esc(c.url)}" rel="noreferrer">${esc(c.shortSha)}</a>
+					<div class="sl-commit-text"><span class="sl-commit-headline">${esc(c.headline)}</span> ${esc(c.summary)}${why}</div>
+					<span class="${audienceClass}">${esc(c.audience)}</span>
+				</div>`;
+		}
+
+		function releaseCard(r) {
+			const tags = r.tags.map((t) => `<span class="sl-tag">${esc(t)}</span>`).join('');
+			const commits = r.commits.map(commitRow).join('');
+			const body = r.commits.length
+				? `<details class="sl-commits"><summary>${r.commits.length} commit${r.commits.length === 1 ? '' : 's'}${r.stats.range ? ` · ${esc(r.stats.range)}` : ''}</summary>${commits}</details>`
+				: '<p class="sl-empty-note">No commit in this window matched this note with enough confidence to claim it.</p>';
+			return `
+				<article class="sl-release">
+					<div class="sl-release-head">
+						<span class="sl-date">${esc(fmtDate(r.date))}</span>
+						<h2 class="sl-title">${r.url ? `<a href="${esc(r.url)}">${esc(r.title)}</a>` : esc(r.title)}</h2>
+					</div>
+					${r.summary ? `<p class="sl-summary">${esc(r.summary)}</p>` : ''}
+					${tags ? `<div class="sl-tags">${tags}</div>` : ''}
+					${body}
+				</article>`;
+		}
+
+		function shipCard(s) {
+			return `
+				<article class="sl-release">
+					<div class="sl-release-head">
+						<span class="sl-date">${esc(fmtDate(String(s.start).slice(0, 10)))}</span>
+						<h2 class="sl-title">${esc(s.title)}</h2>
+					</div>
+					<p class="sl-summary">${esc(s.summary)}</p>
+					<details class="sl-commits"><summary>${s.commits.length} commit${s.commits.length === 1 ? '' : 's'} · ${esc(s.id)}</summary>${s.commits.map(commitRow).join('')}</details>
+				</article>`;
+		}
+
+		function render() {
+			if (!feed) return;
+			renderStats(feed);
+			const releases = feed.releases.filter((r) => r.commits.length || audience === 'internal');
+			const parts = [];
+			if (releases.length === 0 && feed.ships.length === 0) {
+				parts.push('<p class="sl-error">Nothing in this window yet. Try <a href="/changelog">the changelog</a>.</p>');
+			}
+			if (releases.length) {
+				parts.push('<h2 class="sl-section-title">Announced</h2>', releases.map(releaseCard).join(''));
+			}
+			if (feed.ships.length) {
+				parts.push(
+					'<h2 class="sl-section-title">Unannounced: shipped, never written up</h2>',
+					feed.ships.map(shipCard).join(''),
+				);
+			}
+			content.innerHTML = parts.join('');
+			content.querySelectorAll('.sl-why').forEach((btn) => {
+				btn.addEventListener('click', () => toggleReasons(btn));
+			});
+		}
+
+		function toggleReasons(btn) {
+			const row = btn.closest('.sl-commit');
+			const open = btn.getAttribute('aria-expanded') === 'true';
+			const existing = row.nextElementSibling;
+			if (open && existing && existing.classList.contains('sl-reasons')) existing.remove();
+			if (!open) {
+				const sha = btn.dataset.sha;
+				const commit = [...feed.releases.flatMap((r) => r.commits), ...feed.ships.flatMap((s) => s.commits)].find((c) => c.sha === sha);
+				const list = document.createElement('ul');
+				list.className = 'sl-reasons';
+				list.innerHTML = (commit?.why || []).map((w) => `<li>${esc(w)}</li>`).join('');
+				row.after(list);
+			}
+			btn.setAttribute('aria-expanded', String(!open));
+		}
+
+		function renderControls() {
+			controls.innerHTML = FILTERS.map(([value, label]) =>
+				`<button class="sl-filter" type="button" data-audience="${value}" aria-pressed="${value === audience}">${label}</button>`,
+			).join('') + '<span class="sl-spacer"></span>';
+			controls.querySelectorAll('.sl-filter').forEach((btn) => {
+				btn.addEventListener('click', () => {
+					if (btn.dataset.audience === audience) return;
+					audience = btn.dataset.audience;
+					renderControls();
+					load();
+				});
+			});
+		}
+
+		async function load() {
+			content.innerHTML = '<div class="sl-skeleton" aria-hidden="true"></div><div class="sl-skeleton" aria-hidden="true"></div><div class="sl-skeleton" aria-hidden="true"></div>';
+			inFlight?.abort();
+			const controller = new AbortController();
+			inFlight = controller;
+			try {
+				const res = await fetch(`/api/ship/feed?limit=200&audience=${audience}`, {
+					headers: { accept: 'application/json' },
+					signal: AbortSignal.any([controller.signal, AbortSignal.timeout(20000)]),
+				});
+				if (!res.ok) throw new Error('feed ' + res.status);
+				feed = await res.json();
+				render();
+			} catch (err) {
+				if (controller.signal.aborted) return;
+				content.innerHTML = '<p class="sl-error">The ship log could not be built right now. The <a href="/changelog">changelog</a> is always available, and the raw feed is at <a href="/api/ship/feed">/api/ship/feed</a>.</p>';
+				console.error('[ship]', err);
+			}
+		}
+
+		renderControls();
+		load();
+	</script>
+	<script src="/brand.js" defer></script>
+	<div id="footer-container"></div>
+	<script src="/footer.js"></script>
+	<script type="module" src="/i18n.js"></script>
+</body>
+</html>

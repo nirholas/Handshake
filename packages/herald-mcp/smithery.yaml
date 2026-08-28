@@ -1,0 +1,10 @@
+# Smithery deployment config for @three-ws/herald-mcp
+# https://smithery.ai/docs/config#smitheryyaml
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties: {}
+    required: []
+  commandFunction: |
+    (config) => ({ command: "npx", args: ["-y", "@three-ws/herald-mcp"], env: {} })
