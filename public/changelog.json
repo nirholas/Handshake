@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T05:52:45.301Z",
+	"generated_at": "2026-08-28T05:53:11.373Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -351,6 +351,18 @@
 			"tags": [
 				"feature",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "update",
+			"title": "Model Diff: see exactly what changed between two 3D models",
+			"summary": "Every 3D pipeline has one failure that costs more than all the others put together, and it is completely silent. Animation clips find a character's joints by name. Rename a bone, drop a joint, or run a file through a tool that renumbers things, and the model still loads, still renders, and never moves again. Nothing errors. You find out when somebody tells you the character is standing there frozen. Model Diff is the check that catches it. Drop two files and it tells you what actually changed: the geometry, the materials, the textures, the skeleton, the clips, with renames recognised as renames instead of one thing vanishing and an unrelated thing appearing. It ignores the meaningless noise a re-export always introduces and flags the edits that matter, and it grades every difference, so you can tell a recoloured jacket from a rig that just lost both eye joints. Both models load into the same 3D scene: lay one over the other, drag a line across to wipe between them, or stand them side by side, and click any line in the report to fly the camera to the thing it names. Nothing you drop is uploaded. The same engine is a free API anyone can call without a key, a command you can put in a build so a broken export fails it, and a tool your AI agent can use to check its own work before it publishes it.",
+			"link": "/diff",
+			"tags": [
+				"feature",
+				"sdk",
+				"improvement"
 			]
 		},
 		{
