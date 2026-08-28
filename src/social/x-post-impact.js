@@ -47,6 +47,7 @@ export async function correlateXPost({ postUrl, mint, windowMin = 30 }) {
 	try {
 		const oRes = await fetch(
 			`https://publish.twitter.com/oembed?url=${encodeURIComponent(postUrl)}&omit_script=true`,
+			{ signal: AbortSignal.timeout(8000) },
 		);
 		if (oRes.ok) {
 			const od = await oRes.json();

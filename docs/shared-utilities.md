@@ -314,6 +314,35 @@ visitor-supplied chat transcripts.
 
 ## Operations
 
+### `scripts/check-fetch-timeouts.mjs`: no unbounded third-party call
+
+```bash
+npm run check:fetch-timeouts          # wired into `npm run gate`
+node scripts/check-fetch-timeouts.mjs --json
+```
+
+Fails the gate on any `fetch()` to a literal external host that carries no
+deadline. A fetch with no signal has no deadline at all: undici's defaults run
+to minutes, so one upstream that accepts a connection and then stalls holds the
+request until the platform kills the invocation, and takes the request budget of
+every fallback behind it with it. In production that does not read as "an
+upstream was slow", it reads as a dead endpoint, a dead cron, or a page that
+spins forever.
+
+A call counts as bounded when it passes a `signal` or goes through a wrapper
+that supplies one (`fetchUpstream`, `fetchFirst`, `pumpFetchJson`, ...). Only
+the deadline is enforced, deliberately: retries, provider ladders and last-good
+tiers are the right thing to add on top, but which one fits is a judgement call
+per call site, while a deadline never is. Same-origin and relative calls are out
+of scope.
+
+The checker reads each call's real extent by balancing parentheses rather than
+scanning a fixed window, because `signal` is conventionally the last key of an
+options object and a windowed check reports a bounded call as unbounded exactly
+when its options are longest. `tests/check-fetch-timeouts.test.js` covers that
+case: a checker that silently stops catching things is worse than no checker,
+since the gate keeps passing while the protection erodes.
+
 ### `scripts/check-cron-drift.mjs` — cron config vs. reality
 
 Validates every cron expression in `vercel.json` with

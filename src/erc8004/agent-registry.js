@@ -261,14 +261,24 @@ export async function pinFile(blob, apiToken) {
 	if (apiToken) {
 		const form = new FormData();
 		form.append('file', blob, blob.name || 'upload');
-		const res = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
-			method: 'POST',
-			headers: { Authorization: `Bearer ${apiToken}` },
-			body: form,
-		});
-		if (!res.ok) throw new Error(`Pinata upload failed (${res.status})`);
-		const data = await res.json();
-		return `ipfs://${data.IpfsHash}`;
+		// A caller-supplied Pinata token is a preference, not a requirement: this
+		// runs mid-registration, so an unbounded upload used to leave the flow
+		// hanging with a half-built agent, and a Pinata outage failed it outright
+		// even though the platform's own pinning route was right there. Bound it,
+		// and fall through to that route rather than losing the registration.
+		try {
+			const res = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+				method: 'POST',
+				headers: { Authorization: `Bearer ${apiToken}` },
+				body: form,
+				signal: AbortSignal.timeout(60_000),
+			});
+			if (!res.ok) throw new Error(`Pinata upload failed (${res.status})`);
+			const data = await res.json();
+			return `ipfs://${data.IpfsHash}`;
+		} catch (err) {
+			console.warn('[agent-registry] direct Pinata pin failed, using the platform pinning route:', err?.message || err);
+		}
 	}
 
 	const res = await fetch('/api/erc8004/pin', {

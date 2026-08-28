@@ -565,9 +565,11 @@ export function mountFeesPanel(container, opts = {}) {
 	async function importGithubRepo(parsed) {
 		s.githubBusy = true; s.githubError = ''; render();
 		try {
+			// The panel shows a spinner while this runs, so an unbounded call leaves
+			// it spinning with no error the user can act on.
 			const r = await fetch(
 				`https://api.github.com/repos/${parsed.owner}/${parsed.repo}/contributors?per_page=10`,
-				{ headers: { accept: 'application/vnd.github+json' } });
+				{ headers: { accept: 'application/vnd.github+json' }, signal: AbortSignal.timeout(12_000) });
 			if (r.status === 404) throw new Error('Repository not found.');
 			if (r.status === 403) throw new Error('GitHub rate limit hit — try again in a minute.');
 			if (!r.ok) throw new Error(`GitHub error ${r.status}`);

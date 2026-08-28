@@ -619,7 +619,12 @@ function closePicker() {
 async function loadRemoteTokens() {
 	if (_remoteTokens.length) return;
 	try {
-		const resp = await fetch('https://lite-api.jup.ag/tokens/v1/tagged/verified', { mode: 'cors' });
+		// The picker already ships QUICK_TOKENS, so this list only widens it: an
+		// unbounded call meant the widening could hang the picker instead.
+		const resp = await fetch('https://lite-api.jup.ag/tokens/v1/tagged/verified', {
+			mode: 'cors',
+			signal: AbortSignal.timeout(8000),
+		});
 		if (!resp.ok) return;
 		const data = await resp.json();
 		if (Array.isArray(data)) {

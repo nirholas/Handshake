@@ -39,6 +39,7 @@ function cfg(ctx, key) {
 async function mcp(toolName, args) {
 	const res = await fetch(MCP_ENDPOINT, {
 		method: 'POST',
+		signal: AbortSignal.timeout(30_000),
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({
 			jsonrpc: '2.0',

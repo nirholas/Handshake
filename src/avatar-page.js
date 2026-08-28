@@ -358,8 +358,10 @@ async function fetchRelated() {
 	url.searchParams.set('source', 'avatar');
 	url.searchParams.set('limit', '12');
 	if (avatar.tags?.[0]) url.searchParams.set('q', avatar.tags[0]);
-	const r = await fetch(url);
-	if (!r.ok) return [];
+	// Related avatars are a side panel: an empty list is a designed state, but a
+	// stalled request that never resolves is not, so it is bounded.
+	const r = await fetch(url, { signal: AbortSignal.timeout(10_000) }).catch(() => null);
+	if (!r?.ok) return [];
 	const j = await r.json();
 	return (j.items || []).filter((it) => it.kind === 'avatar' && it.avatarId !== avatarId).slice(0, 8);
 }

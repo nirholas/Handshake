@@ -117,6 +117,7 @@ export class PinataPinner {
 			fetch(`${BASE}/pinning/unpin/${cid}`, {
 				method: 'DELETE',
 				headers: this._headers(),
+				signal: AbortSignal.timeout(15_000),
 			}).then(async (r) => {
 				if (!r.ok) {
 					const body = await r.text().catch(() => '');
