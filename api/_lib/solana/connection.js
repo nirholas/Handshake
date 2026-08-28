@@ -1371,13 +1371,31 @@ export function rpcBatchCaps(now = Date.now()) {
 // many refused first. Loaded the same lazy way as the shared cache above, for
 // the same reason: this module is in the browser bundle and node:async_hooks is
 // not. In a browser both hooks are inert.
+//
+// Unlike the shared cache above, the specifier is assembled at runtime rather
+// than written as a literal. cache.js can be a literal because it loads its own
+// built-ins lazily, so bundling it is harmless. brownout/ imports
+// node:async_hooks at module scope, and rollup binds a dynamically imported
+// LOCAL module like any other: the guard keeps a browser from evaluating it,
+// but not the bundler from resolving it, and the named import then fails
+// against __vite-browser-external.
+//
+// Joining the path from parts was the first attempt and it is NOT enough:
+// Rollup 4 folds `[…].join('/')`, which is exactly how the CDN lib build died
+// on 2026-08-28 through the sibling bridge in src/shared/failover-fetch.js.
+// Parking the path on `globalThis` and reading it back through a member
+// expression is unfoldable, because no bundler can know what else may have
+// written there. Node still resolves the relative specifier against THIS
+// module, and the key is module-specific because the two bridges sit at
+// different depths and must not share one path.
 let _brownoutMod = null;
 let _brownoutPromise;
+globalThis.__threewsSolanaBrownoutSpecifier ||= ['..', 'brownout', 'index.js'].join('/');
 function brownoutModule() {
 	if (_brownoutPromise !== undefined) return _brownoutPromise;
 	_brownoutPromise = null;
 	if (isServer()) {
-		_brownoutPromise = import('../brownout/index.js')
+		_brownoutPromise = import(/* @vite-ignore */ globalThis.__threewsSolanaBrownoutSpecifier)
 			.then((m) => {
 				_brownoutMod = m;
 				return m;

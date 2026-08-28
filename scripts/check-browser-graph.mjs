@@ -74,13 +74,21 @@ const IMPORT_RE =
 /**
  * Every specifier `file` imports, tagged static vs dynamic.
  *
- * The distinction is the whole point for built-ins. A STATIC
+ * The distinction matters for BUILT-IN specifiers only. A STATIC
  * `import { promisify } from 'node:util'` is what breaks the build: rollup
  * swaps the module for __vite-browser-external and then rejects the named
  * export. A DYNAMIC `await import('node:util')` is the sanctioned escape hatch
- * — it stays an external dynamic import with no module-level named bindings to
- * check, and it only evaluates on the server path that actually calls it. So
- * dynamic built-in imports are deliberately NOT leaks.
+ * (api/_lib/cache.js uses it): it stays an external dynamic import with no
+ * module-level named bindings to check, and it only evaluates on the server
+ * path that actually calls it. So dynamic BUILT-IN imports are not leaks.
+ *
+ * A dynamic import of a LOCAL module is a different thing entirely and IS
+ * followed. Rollup resolves and binds it like any other module, so a
+ * `typeof window === 'undefined'` guard around
+ * `import('../brownout/index.js')` stops the browser from evaluating it but not
+ * the bundler from binding its `import { AsyncLocalStorage } from
+ * 'node:async_hooks'`. That is the exact shape that broke build:lib:full and
+ * then `vite build` on 2026-08-28.
  */
 function specifiersOf(file) {
 	let src;
@@ -108,21 +116,22 @@ function builtinName(spec) {
 }
 
 // ── Two browser targets, two graphs ──────────────────────────────────────────
-// The APP target (vite build → dist/) code-splits, so a dynamic import stays a
-// separate chunk that only the server branch ever fetches. The LIB target
-// (dist-lib/agent-3d.js, the <agent-3d> CDN embed) builds with
-// `rollupOptions.output.inlineDynamicImports` so CDN consumers get one file,
-// and that flattens EVERY dynamic import into the bundle. A `import()` behind a
-// `typeof window === 'undefined'` guard is therefore safe in the app and a hard
-// build break in the lib: on 2026-08-28 `src/shared/failover-fetch.js` reached
-// api/_lib/brownout/ that way and killed build:lib:full with
-// `"AsyncLocalStorage" is not exported by "__vite-browser-external"`, three
-// steps before the app build this script had already cleared.
+// `npm run build:gcp` builds the browser twice, and this script has to cover
+// both or it only half-guards the deploy:
 //
-// So each target is walked under its own rule for dynamic edges.
+//   app  vite build → dist/, seeded by the HTML pages AND the extra JS entries
+//        in appConfig's rollupOptions.input (footer-bot, notifications, i18n
+//        and friends), which are entry points no HTML file references.
+//   lib  dist-lib/agent-3d.js, the <agent-3d> CDN embed, seeded by
+//        build.lib.entry alone.
+//
+// On 2026-08-28 both broke on the same leak and neither was covered:
+// api/_lib/brownout/ (node:async_hooks) was reachable through a server-guarded
+// dynamic import, and the build died with `"AsyncLocalStorage" is not exported
+// by "__vite-browser-external"`.
 
 /**
- * @param {{label: string, seeds: () => Array<[string, string]>, inlineDynamic: boolean}} target
+ * @param {{label: string, seeds: () => Array<[string, string]>}} target
  *   seeds() yields [absolute file, human-readable origin] pairs.
  */
 function walk(target) {
@@ -152,17 +161,17 @@ function walk(target) {
 	while (queue.length) {
 		const file = queue.shift();
 		for (const { spec, dynamic } of specifiersOf(file)) {
-			// A dynamic edge is followed only where the bundler inlines it.
-			const followed = !dynamic || target.inlineDynamic;
 			const builtin = builtinName(spec);
 			if (builtin) {
-				if (followed && !POLYFILLED.has(builtin)) {
+				// Dynamic is the sanctioned escape hatch for a built-in, and only
+				// for a built-in: it stays external with nothing to bind.
+				if (!dynamic && !POLYFILLED.has(builtin)) {
 					leaks.push({ file, spec, chain: chainTo(file) });
 				}
 				continue;
 			}
-			if (!followed) continue;
 			if (!spec.startsWith('.')) continue; // bare package, the bundler's problem and not ours
+			// Local edges are followed whether static or dynamic: rollup binds both.
 			const next = resolveLocal(file, spec);
 			if (next) enqueue(next, file);
 		}
@@ -173,7 +182,7 @@ function walk(target) {
 
 function htmlSeeds() {
 	const out = [];
-	for (const html of tracked(['pages/*.html', 'public/**/*.html', '*.html'])) {
+	for (const html of tracked(['pages/**/*.html', 'public/**/*.html', '*.html'])) {
 		let src;
 		try { src = readFileSync(html, 'utf8'); } catch { continue; }
 		const label = relative(ROOT, html);
@@ -197,7 +206,23 @@ function htmlSeeds() {
 	return out;
 }
 
-// build.lib.entry in vite.config.js. Kept as a check, not a silent skip: if the
+// Extra rollup entries, read out of the config rather than restated here: a
+// hand-copied list goes stale the first time someone adds an entry, and an
+// entry nobody walks is a leak nobody sees. Everything inside the `input: {`
+// block, which is `resolve(__dirname, '<path>')` for every entry.
+function configEntries() {
+	const config = readFileSync(resolve(ROOT, 'vite.config.js'), 'utf8');
+	const block = /\n\t*input: \{\n([\s\S]*?)\n\t*\},\n/.exec(config);
+	if (!block) return [];
+	const out = [];
+	for (const m of block[1].matchAll(/resolve\(__dirname, '([^']+)'\)/g)) {
+		const abs = resolve(ROOT, m[1]);
+		if (existsSync(abs)) out.push([abs, `vite.config.js input: ${m[1]}`]);
+	}
+	return out;
+}
+
+// build.lib.entry in vite.config.js. Checked, not silently skipped: if the
 // entry is ever renamed, this script must fail loudly rather than quietly stop
 // covering the CDN bundle.
 const LIB_ENTRY = resolve(ROOT, 'src/lib.js');
@@ -208,8 +233,8 @@ It is build.lib.entry in vite.config.js; update this script if it moved.`);
 }
 
 const TARGETS = [
-	{ label: 'app (dist/)', seeds: htmlSeeds, inlineDynamic: false },
-	{ label: 'lib (dist-lib/agent-3d.js)', seeds: () => [[LIB_ENTRY, 'build.lib.entry']], inlineDynamic: true },
+	{ label: 'app (dist/)', seeds: () => [...htmlSeeds(), ...configEntries()] },
+	{ label: 'lib (dist-lib/agent-3d.js)', seeds: () => [[LIB_ENTRY, 'build.lib.entry']] },
 ];
 
 const results = TARGETS.map((t) => ({ target: t, ...walk(t) }));
@@ -236,10 +261,6 @@ for (const { target, leaks } of failures) {
 		console.error(`  ${relative(ROOT, leak.file)} imports "${leak.spec}"`);
 		console.error(`    ${leak.chain.join('\n      -> ')}\n`);
 	}
-	if (target.inlineDynamic) {
-		console.error(`  (this target inlines dynamic imports, so a server-only \`import()\`
-  behind a window check counts here even though the app target tolerates it)\n`);
-	}
 }
 
 console.error(`This breaks the build (rollup resolves the built-in to
@@ -256,9 +277,10 @@ behind a server check, so the browser keeps correct local-only behaviour.
       return _mod;
     }
 
-If the leak is in the lib graph, that is not enough on its own: the specifier
-must also be unreadable to rollup, because inlineDynamicImports follows a
-literal one anyway. Build it at runtime, as src/shared/failover-fetch.js does:
+That alone is not enough when the server-only module imports a built-in at its
+own module scope: rollup binds a dynamically imported LOCAL module like any
+other, so the specifier must also be unreadable to it. Build it at runtime, as
+src/shared/failover-fetch.js and api/_lib/solana/connection.js do:
 
     const SPEC = ['.', 'server-only.js'].join('/');
     _mod = import(/* @vite-ignore */ SPEC).catch(() => null);
