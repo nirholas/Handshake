@@ -1,0 +1,71 @@
+// GET /api/knock/door?handle=<username>
+//
+// The public face of one person's door: what it costs to reach them, what they
+// want you to know before you write, and which lane to use. Unauthenticated on
+// purpose. This is the endpoint an agent reads before deciding whether a human
+// is worth the money, and the one the /knock/<handle> page renders from.
+//
+// A handle that matches nobody and a handle whose owner keeps their door shut
+// both answer 404 with the same body, so this cannot be used to enumerate
+// accounts.
+
+import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
+import { clientIp, limits } from '../_lib/rate-limit.js';
+import { env } from '../_lib/env.js';
+import { formatUsdc, normalizeHandle } from '../_lib/knock/policy.js';
+import { publicDoorByHandle } from '../_lib/knock/store.js';
+
+export default wrap(async (req, res) => {
+	if (cors(req, res, { origins: '*', methods: 'GET,OPTIONS' })) return;
+	if (!method(req, res, ['GET'])) return;
+
+	const rl = await limits.knockPublic(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+
+	const params = new URL(req.url, 'http://x').searchParams;
+	const handle = normalizeHandle(params.get('handle'));
+	if (!handle) return error(res, 400, 'bad_handle', 'pass ?handle=<username>');
+
+	const door = await publicDoorByHandle(handle);
+	if (!door) return error(res, 404, 'no_door', 'no open door for that handle');
+
+	return json(res, 200, { door: publicShape(door) }, { 'cache-control': 'public, max-age=30' });
+});
+
+/**
+ * The stranger-visible door. Exported so the page renderer and the SDK's
+ * fixtures agree on one shape, and so a payout address can never be added to
+ * it by accident: this function names every field that ships.
+ */
+export function publicShape(row) {
+	const priceAtomics = String(row.price_atomics ?? '0');
+	const free = priceAtomics === '0';
+	return {
+		handle: row.username,
+		display_name: row.display_name || row.username,
+		avatar_url: row.avatar_url || null,
+		verified: row.verified_type || null,
+		open: Boolean(row.open),
+		free,
+		price_atomics: priceAtomics,
+		price: formatUsdc(priceAtomics),
+		currency: 'USDC',
+		networks: free ? [] : networksFor(row),
+		headline: row.headline || null,
+		greeting: row.greeting || null,
+		max_chars: Number(row.max_chars ?? 600),
+		// The lane a caller should use. Free doors take a plain POST; priced
+		// doors answer 402 first and settle before the message is accepted.
+		endpoint: free ? `${env.APP_ORIGIN}/api/knock/send` : `${env.APP_ORIGIN}/api/x402/knock?to=${encodeURIComponent(row.username)}`,
+		protocol: free ? 'http' : 'x402',
+	};
+}
+
+// Solana leads because it is the home chain and the settle path we run
+// ourselves. Base is advertised only when the owner set an address for it.
+function networksFor(row) {
+	const nets = [];
+	if (row.has_solana_payout) nets.push('solana');
+	if (row.has_base_payout) nets.push('base');
+	return nets.length ? nets : ['solana'];
+}

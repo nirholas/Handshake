@@ -53,6 +53,11 @@ export const CATEGORIES = [
 		description: 'Your 3D companion has something from your own inbox, calendar, or phone worth hearing.',
 	},
 	{
+		key: 'knock',
+		label: 'Knocks at your door',
+		description: 'Someone paid your price to reach you through /knock. Your companion delivers it in person.',
+	},
+	{
 		key: 'account',
 		label: 'Account & security',
 		description: 'Withdrawals, payment issues, and security-sensitive events.',
@@ -116,6 +121,8 @@ const TYPE_CATEGORY = {
 
 	companion_delivery: 'companion',
 
+	knock_received: 'knock',
+
 	forge_complete: 'creations',
 	forge_failed: 'creations',
 
@@ -168,6 +175,7 @@ const DEFAULTS = {
 	// companion triaged as worth hearing (api/_lib/companion/triage.js). Email
 	// and telegram would just relay what the user already gets in that inbox.
 	companion: { in_app: true,  push: true,  email: false, telegram: false, avatar: true  },
+	knock:     { in_app: true,  push: true,  email: true,  telegram: false, avatar: true  },
 	account:   { in_app: true,  push: true,  email: true,  telegram: false, avatar: true  },
 };
 
@@ -281,6 +289,7 @@ const PUSH_COPY = {
 	irl_reply:                (p) => ['Agent replied 💬', p.message ? `“${p.message}”` : 'An agent replied to your message'],
 	pump_alert:               (p) => ['Market alert 📈', p.summary || 'A token alert you configured just fired'],
 	companion_delivery:       (p) => [p.sender ? `${p.sender} 👋` : 'Your companion 👋', p.line || p.title || 'Something worth your attention just came in'],
+	knock_received:           (p) => [p.sender ? `${p.sender} is at your door 🚪` : 'Someone is at your door 🚪', p.title || p.body || 'Someone paid to reach you'],
 	forge_complete:           (p) => ['Your 3D model is ready ✨', p.prompt ? `"${String(p.prompt).slice(0, 80)}" finished generating` : 'Your generation finished. Tap to view it'],
 	forge_failed:             (p) => ['Generation failed ⚠️', p.prompt ? `"${String(p.prompt).slice(0, 80)}" could not be generated. Tap to retry` : 'A generation could not be completed. Tap to retry'],
 	withdrawal_completed:     ()  => ['Withdrawal complete ✅', 'Your withdrawal has been sent'],

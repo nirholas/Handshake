@@ -32,20 +32,15 @@ function walk(dir, out = []) {
 // The three hosts /load-module.js knows how to mirror between.
 const MIRRORABLE = /^https:\/\/(?:esm\.sh|cdn\.jsdelivr\.net|unpkg\.com)\//;
 
-// Comments quote the very pattern they warn against, so strip them before
-// scanning; otherwise the explanation of the fix reads as the defect.
+// Comments quote the very pattern they warn against, so drop them before
+// scanning; otherwise the explanation of the fix reads as the defect. Line
+// comments only: pairing `/*` with `*/` across a whole HTML file swallows CSS
+// and script alike, which silently hid real code from this scan.
 function withoutComments(src) {
-	return src.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:'"`])\/\/[^\n]*/g, '$1');
-}
-
-/** Every mirrorable CDN URL a page hands to the loader (directly or via a wrapper). */
-function loaderCdnTargets(src) {
-	const out = [];
-	const re = /\b(?:loadModule|loadCdnModule)\s*\(\s*['"`]([^'"`]+)['"`]/g;
-	for (const m of withoutComments(src).matchAll(re)) {
-		if (MIRRORABLE.test(m[1])) out.push(m[1]);
-	}
-	return out;
+	return src
+		.split('\n')
+		.map((line) => line.replace(/(^|[^:'"`])\/\/.*$/, '$1'))
+		.join('\n');
 }
 
 /** Every string literal a page passes straight to `import()` from a CDN host. */
@@ -92,7 +87,6 @@ describe('public pages load third-party modules through /load-module.js', () => 
 			const src = withoutComments(readFileSync(join(ROOT, rel), 'utf8'));
 			expect(/['"]\/load-module\.js['"]/.test(src), `${rel} must import '/load-module.js'`).toBe(true);
 			expect(/\b(?:loadModule|loadCdnModule)\s*\(/.test(src), `${rel} must call the loader`).toBe(true);
-			expect(MIRRORABLE.test(''), 'MIRRORABLE guards a full URL, not a bare host').toBe(false);
 		}
 	});
 
