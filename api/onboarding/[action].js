@@ -8,6 +8,7 @@ import { requireCsrf } from '../_lib/csrf.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { parse } from '../_lib/validate.js';
 import { env } from '../_lib/env.js';
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
 
 // ── avaturn-session ───────────────────────────────────────────────────────────
 
@@ -111,11 +112,19 @@ async function handleAvaturnSession(req, res) {
 const CALLER_FIXABLE_UPSTREAM = new Set([400, 413, 415, 422]);
 
 async function createProviderSession(userId, body) {
-	const upstream = await fetch(`${env.AVATURN_API_URL}/api/v1/sessions`, {
-		method: 'POST',
-		headers: { authorization: `Bearer ${env.AVATURN_API_KEY}`, 'content-type': 'application/json', accept: 'application/json' },
-		body: JSON.stringify({ external_user_id: userId, photos: body.photos, body_type: body.body_type, version: body.avatar_type }),
-	});
+	// Bounded and never retried: this POST opens a provider session against the
+	// user's photos, so a replay would open a second one on the same upload. Every
+	// status below is classified here, so a non-2xx has to arrive as a Response.
+	let upstream;
+	try {
+		upstream = await fetchUpstream(`${env.AVATURN_API_URL}/api/v1/sessions`, {
+			method: 'POST',
+			headers: { authorization: `Bearer ${env.AVATURN_API_KEY}`, 'content-type': 'application/json', accept: 'application/json' },
+			body: JSON.stringify({ external_user_id: userId, photos: body.photos, body_type: body.body_type, version: body.avatar_type }),
+		}, { name: 'avaturn:sessions', timeoutMs: 20_000, attempts: 1, okWhen: () => true });
+	} catch (e) {
+		throw Object.assign(new Error(`avaturn unreachable: ${e?.message || 'network error'}`), { status: 502 });
+	}
 	if (!upstream.ok) {
 		const detail = (await upstream.text().catch(() => '')).slice(0, 200);
 		if (CALLER_FIXABLE_UPSTREAM.has(upstream.status)) {

@@ -18,7 +18,7 @@
 
 import { createHash } from 'node:crypto';
 import { limits } from '../../_lib/rate-limit.js';
-import { assertSafePublicUrl } from '../../_lib/ssrf-guard.js';
+import { assertSafePublicUrl, fetchSafePublicUrlPinned, MaxBytesExceededError } from '../../_lib/ssrf-guard.js';
 import { createRegenProvider as createReplicateProvider } from '../../_providers/replicate.js';
 import { createRegenProvider as createGcpProvider } from '../../_providers/gcp.js';
 import { BYOK_PROVIDER_FACTORIES, isByokGeometryBackend } from '../../_providers/byok-registry.js';
@@ -164,10 +164,35 @@ function pollHint(etaSeconds, fallback) {
 // reconstruct + forge pipelines so a runaway model can't ingest an unbounded blob.
 const MAX_GLB_BYTES = 64 * 1024 * 1024;
 
-// Fetch a provider GLB into a Buffer with a hard size cap, so save_avatar can
-// persist its own durable copy before the provider's delivery URL expires.
+// How long save_avatar will wait for one GLB download. A model URL that accepts
+// the connection and then stalls used to hold the MCP call open for the whole
+// invocation and return nothing; bounded, it fails with an answer the caller can
+// act on.
+const GLB_FETCH_TIMEOUT_MS = 30_000;
+
+// Fetch a caller-supplied GLB into a Buffer, so save_avatar can persist its own
+// durable copy before the provider's delivery URL expires. Routed through the
+// pinned SSRF guard rather than a bare fetch for three reasons: the hostname is
+// re-resolved and IP-pinned, closing the DNS-rebinding window that the
+// isPublicHttpsUrl() check at the call site leaves open; the size ceiling is
+// enforced WHILE streaming, so an oversized or lying host is torn down instead
+// of buffered; and redirects are re-validated hop by hop. The declared-length
+// and post-read checks stay as defense in depth.
 async function fetchGlbBuffer(url) {
-	const resp = await fetch(url);
+	let resp;
+	try {
+		resp = await fetchSafePublicUrlPinned(
+			url,
+			{ signal: AbortSignal.timeout(GLB_FETCH_TIMEOUT_MS) },
+			{ allowHttp: false, maxBytes: MAX_GLB_BYTES },
+		);
+	} catch (err) {
+		if (err instanceof MaxBytesExceededError) {
+			throw rpcError(-32000, `GLB too large to save (max ${MAX_GLB_BYTES} bytes).`);
+		}
+		const reason = err?.name === 'TimeoutError' ? 'timed out' : err?.message || 'unreachable';
+		throw rpcError(-32000, `Could not fetch the GLB (${reason}).`);
+	}
 	if (!resp.ok) throw rpcError(-32000, `Could not fetch the GLB (${resp.status}).`);
 	const declared = Number(resp.headers.get('content-length') || 0);
 	if (declared && declared > MAX_GLB_BYTES) {

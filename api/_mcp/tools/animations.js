@@ -704,7 +704,20 @@ async function generateMotionClip(provider, { prompt, duration_seconds }) {
 	}
 	if (!clipUrl) throw rpcError(-32000, 'motion generation timed out');
 
-	const res = await fetch(clipUrl);
+	// The clip URL comes back from the provider's own status payload, so reading
+	// it is idempotent: bound it and retry once, rather than letting a stalled
+	// delivery host consume what is left of the tool call after the poll loop.
+	let res;
+	try {
+		res = await fetchUpstream(clipUrl, {}, {
+			name: 'provider:motion-clip',
+			timeoutMs: 20_000,
+			attempts: 2,
+			okWhen: () => true,
+		});
+	} catch (err) {
+		throw rpcError(-32000, `could not fetch generated clip (${err?.message || 'unreachable'})`);
+	}
 	if (!res.ok) throw rpcError(-32000, `could not fetch generated clip (HTTP ${res.status})`);
 	return res.json();
 }

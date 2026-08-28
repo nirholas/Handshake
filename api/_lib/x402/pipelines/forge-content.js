@@ -49,6 +49,7 @@ import {
 	cosine,
 } from '../../embeddings.js';
 import { kmeans, suggestClusterCount, unit } from '../../embedding-math.js';
+import { fetchUpstream } from '../../upstream-fetch.js';
 import { PROP_CATALOG, STYLES, FINISHES, CATEGORIES } from './forge-catalog.js';
 
 const log = logger('x402-forge-content');
@@ -236,9 +237,11 @@ async function resolveQueuedJobs(origin) {
 	let resolved = 0;
 	for (const row of rows) {
 		try {
-			const res = await fetch(`${origin}/api/forge?job=${encodeURIComponent(row.job_id)}`, {
+			// Bounded: this resolver runs inside a cron tick over a batch of rows, so
+			// one hung status read used to cost every remaining row its resolution.
+			const res = await fetchUpstream(`${origin}/api/forge?job=${encodeURIComponent(row.job_id)}`, {
 				headers: { 'user-agent': 'threews-x402-autonomous/1.0' },
-			});
+			}, { name: 'self:forge-poll', timeoutMs: 10_000, attempts: 1, okWhen: () => true });
 			if (!res.ok) continue;
 			const job = await res.json();
 			if (job?.status === 'done' && job.glb_url) {

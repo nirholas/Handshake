@@ -9,18 +9,28 @@ process.env.S3_PUBLIC_DOMAIN ||= 'https://cdn.test';
 process.env.S3_BUCKET ||= 'test-bucket';
 
 // ── SSRF guard (DNS resolution breaks on fake test hostnames) ───────────────
+// save_avatar downloads the GLB through the guard's pinned fetch, which resolves
+// the hostname and opens a raw socket: neither works for `cdn.test` in a unit
+// test. Both entry points are stubbed to keep the guard's CONTRACT (https only,
+// no private hosts) while the transport falls through to the stubbed global
+// fetch below.
 vi.mock('../../api/_lib/ssrf-guard.js', async (importOriginal) => {
 	const mod = await importOriginal();
 	const { SsrfBlockedError } = mod;
+	const assertSafePublicUrl = vi.fn(async (url, opts = {}) => {
+		const parsed = new URL(url);
+		if (parsed.protocol === 'http:' && !opts.allowHttp)
+			throw new SsrfBlockedError('http:// not allowed — use https://');
+		if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1')
+			throw new SsrfBlockedError('host resolves to a blocked range');
+		return parsed;
+	});
 	return {
 		...mod,
-		assertSafePublicUrl: vi.fn(async (url, opts = {}) => {
-			const parsed = new URL(url);
-			if (parsed.protocol === 'http:' && !opts.allowHttp)
-				throw new SsrfBlockedError('http:// not allowed — use https://');
-			if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1')
-				throw new SsrfBlockedError('host resolves to a blocked range');
-			return parsed;
+		assertSafePublicUrl,
+		fetchSafePublicUrlPinned: vi.fn(async (url, init = {}, opts = {}) => {
+			await assertSafePublicUrl(String(url), opts);
+			return fetch(String(url), init);
 		}),
 	};
 });

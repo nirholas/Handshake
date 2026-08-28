@@ -26,6 +26,7 @@ import { env } from './_lib/env.js';
 import { runAgentDelegation, AgentNotFoundError } from './_lib/agent-delegate.js';
 import { listOffersWithStats } from './_lib/agent-economy.js';
 import { writeScreenFrame } from './_lib/agent-screen-frame.js';
+import { fetchUpstream } from './_lib/upstream-fetch.js';
 import {
 	orchestrateGoal,
 	clampBudget,
@@ -118,14 +119,19 @@ export default wrap(async (req, res) => {
 
 	const runHire = async ({ hirerAgentId, serviceSlug, input, maxUsd: nodeMax }) => {
 		if (!hireToken) throw Object.assign(new Error('agent spending unavailable'), { code: 'spend_disabled' });
-		const resp = await fetch(`${hireBase}/api/agents/a2a-hire`, {
+		// A hire is a real, paid call into another agent's service, so it is bounded
+		// but NEVER retried: a replay would pay twice for one node. 120s sits well
+		// under the 230s orchestration budget, so a teammate that stops answering
+		// costs this node and not the rest of the team task. The hire endpoint's
+		// own error payload is read below, so a non-2xx must return, not throw.
+		const resp = await fetchUpstream(`${hireBase}/api/agents/a2a-hire`, {
 			method: 'POST',
 			headers: {
 				'content-type': 'application/json',
 				authorization: `Bearer ${hireToken}`,
 			},
 			body: JSON.stringify({ hirerAgentId, serviceSlug, input, maxUsd: nodeMax }),
-		});
+		}, { name: 'self:a2a-hire', timeoutMs: 120_000, attempts: 1, okWhen: () => true });
 		const data = await resp.json().catch(() => ({}));
 		if (!resp.ok) {
 			throw Object.assign(new Error(data.error_description || data.error || 'hire failed'), {

@@ -37,6 +37,7 @@ import { limits, clientIp } from './_lib/rate-limit.js';
 import { visionConfigured, describeImage } from './_lib/vision.js';
 import { deleteObject } from './_lib/r2.js';
 import { env } from './_lib/env.js';
+import { fetchUpstream } from './_lib/upstream-fetch.js';
 
 export const maxDuration = 90; // vision validation × N images + generation submit
 
@@ -166,7 +167,10 @@ export default wrap(async (req, res) => {
 	const forgeOrigin = env.APP_ORIGIN;
 	let forgeResp;
 	try {
-		forgeResp = await fetch(`${forgeOrigin}/api/forge`, {
+		// Bounded, and deliberately never retried: this POST enqueues a generation,
+		// so a replay would queue a second job against the same photos. Forge's own
+		// error codes are mapped below, so a non-2xx returns rather than throws.
+		forgeResp = await fetchUpstream(`${forgeOrigin}/api/forge`, {
 			method: 'POST',
 			headers: {
 				'content-type': 'application/json',
@@ -174,7 +178,7 @@ export default wrap(async (req, res) => {
 				'x-forge-client': req.headers['x-forge-client'] || '',
 			},
 			body: JSON.stringify(forgeBody),
-		});
+		}, { name: 'self:forge-submit', timeoutMs: 30_000, attempts: 1, okWhen: () => true });
 	} catch {
 		return error(res, 502, 'generation_unreachable',
 			'Could not reach the generation service. Please try again.');

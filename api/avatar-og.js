@@ -131,7 +131,14 @@ async function renderAndCache({ avatar }) {
 	const promise = (async () => {
 		// Size precheck. A 50 MB GLB would blow the render budget and risk
 		// OOM; kick those out to the fallback before launching chromium.
-		const head = await fetch(avatar.model_url, { method: 'HEAD' }).catch(() => null);
+		// The precheck exists to save the render budget, so it must not spend it:
+		// a model host that accepts the connection and stalls fails the HEAD fast
+		// and the render proceeds without the size hint, exactly as it does when a
+		// host omits content-length.
+		const head = await fetch(avatar.model_url, {
+			method: 'HEAD',
+			signal: AbortSignal.timeout(8_000),
+		}).catch(() => null);
 		const contentLength = Number(head?.headers?.get('content-length') || 0);
 		if (head?.ok && contentLength > MAX_GLB_BYTES) {
 			throw Object.assign(new Error(`glb too large: ${contentLength} bytes`), {

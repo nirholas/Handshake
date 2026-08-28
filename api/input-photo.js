@@ -40,6 +40,7 @@ import { limits, clientIp } from './_lib/rate-limit.js';
 import { visionConfigured, describeImage } from './_lib/vision.js';
 import { deleteObject } from './_lib/r2.js';
 import { env } from './_lib/env.js';
+import { fetchUpstream } from './_lib/upstream-fetch.js';
 
 export const maxDuration = 60;
 
@@ -141,7 +142,13 @@ export default wrap(async (req, res) => {
 	const forgeOrigin = env.APP_ORIGIN;
 	let forgeResp;
 	try {
-		forgeResp = await fetch(`${forgeOrigin}/api/forge`, {
+		// The self-call is cheap (forge queues a job and answers with its id), but
+		// unbounded it could hold this handler until the platform killed it, which
+		// the client reads as a dead endpoint rather than a slow one. One attempt
+		// only: this POST enqueues a generation, so replaying it would queue a
+		// second job and bill the user twice. Forge's own status codes are handled
+		// below, so a non-2xx must come back as a Response rather than throw.
+		forgeResp = await fetchUpstream(`${forgeOrigin}/api/forge`, {
 			method: 'POST',
 			headers: {
 				'content-type': 'application/json',
@@ -150,7 +157,7 @@ export default wrap(async (req, res) => {
 				'x-forge-client': req.headers['x-forge-client'] || '',
 			},
 			body: JSON.stringify(forgeBody),
-		});
+		}, { name: 'self:forge-submit', timeoutMs: 30_000, attempts: 1, okWhen: () => true });
 	} catch {
 		return error(res, 502, 'generation_unreachable',
 			'Could not reach the generation service. Please try again.');

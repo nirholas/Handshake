@@ -16,6 +16,7 @@ import { readStorageMode, storageModeSchema, defaultStorageMode } from '../../_l
 import { getAvatar, resolveAvatarUrl } from '../../_lib/avatars.js';
 import { r2, publicUrl, thumbnailUrl } from '../../_lib/r2.js';
 import { env } from '../../_lib/env.js';
+import { fetchUpstream } from '../../_lib/upstream-fetch.js';
 
 import { pinToIPFS, ipfsPinningConfigured } from '../../_lib/ipfs-pin.js';
 export default wrap(async (req, res) => {
@@ -362,15 +363,26 @@ async function createAvaturnEditSession({ apiKey, apiUrl, userId, avatarUrl }) {
 		avatar_url: avatarUrl,
 	};
 
-	const upstream = await fetch(url, {
-		method: 'POST',
-		headers: {
-			authorization: `Bearer ${apiKey}`,
-			'content-type': 'application/json',
-			accept: 'application/json',
-		},
-		body: JSON.stringify(payload),
-	});
+	// Bounded, single attempt: opening an edit session is a create, so a retry
+	// would leave a second session behind. The status mapping below needs the
+	// Response itself, so a non-2xx returns rather than throws.
+	let upstream;
+	try {
+		upstream = await fetchUpstream(url, {
+			method: 'POST',
+			headers: {
+				authorization: `Bearer ${apiKey}`,
+				'content-type': 'application/json',
+				accept: 'application/json',
+			},
+			body: JSON.stringify(payload),
+		}, { name: 'avaturn:sessions', timeoutMs: 20_000, attempts: 1, okWhen: () => true });
+	} catch (e) {
+		const err = new Error(`avaturn unreachable: ${e?.message || 'network error'}`);
+		err.status = 502;
+		err.code = 'upstream_error';
+		throw err;
+	}
 
 	if (!upstream.ok) {
 		const text = await upstream.text().catch(() => '');

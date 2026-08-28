@@ -31,6 +31,7 @@ import { limits, clientIp } from './_lib/rate-limit.js';
 import { assertPublicHttpsUrl, SsrfError } from './_lib/ssrf.js';
 import { createRegenProvider } from './_providers/gcp.js';
 import { putObject, publicUrl } from './_lib/r2.js';
+import { fetchUpstream } from './_lib/upstream-fetch.js';
 import { requireFeatureAccess } from './_lib/require-three.js';
 import {
 	assertForgePurchase,
@@ -280,8 +281,14 @@ async function startJob(req, res) {
 // the copy fails — a real, working result either way, never a faked one.
 async function mirrorToR2(sourceUrl, key, format) {
 	try {
-		const resp = await fetch(sourceUrl);
-		if (!resp.ok) throw new Error(`fetch result ${resp.status}`);
+		// Bounded, with one retry: the artifact is a fresh worker upload, so a
+		// transient read failure is worth retrying, and a stalled one must not hold
+		// the poll open. Any failure falls through to the worker URL below.
+		const resp = await fetchUpstream(sourceUrl, {}, {
+			name: 'worker:gameready-artifact',
+			timeoutMs: 30_000,
+			attempts: 2,
+		});
 		const buf = Buffer.from(await resp.arrayBuffer());
 		await putObject({
 			key,

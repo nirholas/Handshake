@@ -28,6 +28,7 @@ import { llmComplete, llmConfigured } from './llm.js';
 import { putObject, publicUrl } from './r2.js';
 import { composeSceneGlb } from './scene-graph-compose.js';
 import { normalizeDiorama, MIN_OBJECTS, MAX_OBJECTS, MAX_PROMPT_LEN, ISLAND_RADIUS } from '../../src/diorama/schema.js';
+import { fetchUpstream } from './upstream-fetch.js';
 
 const SITE = process.env.PUBLIC_BASE_URL || 'https://three.ws';
 
@@ -205,11 +206,14 @@ export async function forgeDioramaObjects(diorama, { clientKey } = {}) {
 }
 
 async function runForge(prompt, clientKey) {
-	const res = await fetch(`${SITE}/api/forge`, {
+	// One attempt, bounded: this POST queues a paid generation, so a retry would
+	// forge (and bill) the same prop twice. Forge's own error payload is read
+	// below, so a non-2xx has to arrive as a Response rather than as a throw.
+	const res = await fetchUpstream(`${SITE}/api/forge`, {
 		method: 'POST',
 		headers: { 'content-type': 'application/json', 'x-forge-client': clientKey },
 		body: JSON.stringify({ prompt, tier: 'draft', path: 'image' }),
-	});
+	}, { name: 'self:forge-submit', timeoutMs: 30_000, attempts: 1, okWhen: () => true });
 	const data = await res.json().catch(() => ({}));
 	if (!res.ok) throw new Error(data?.message || data?.error || `forge returned HTTP ${res.status}`);
 	if (data.status === 'done' && data.glb_url) return data.glb_url;
@@ -222,10 +226,19 @@ async function pollForge(jobId, clientKey) {
 	const deadline = Date.now() + FORGE_DEADLINE_MS;
 	while (Date.now() < deadline) {
 		await sleep(POLL_INTERVAL_MS);
-		const res = await fetch(`${SITE}/api/forge?job=${encodeURIComponent(jobId)}`, {
-			headers: { 'x-forge-client': clientKey },
-		});
-		const data = await res.json().catch(() => ({}));
+		let data;
+		try {
+			// A status read is idempotent and cheap, so a stalled or failed poll is
+			// worth exactly one thing: skipping this tick. Before it was bounded, a
+			// single hung poll held the whole diorama build open past its deadline;
+			// now the loop keeps its own deadline as the only limit.
+			const res = await fetchUpstream(`${SITE}/api/forge?job=${encodeURIComponent(jobId)}`, {
+				headers: { 'x-forge-client': clientKey },
+			}, { name: 'self:forge-poll', timeoutMs: 10_000, attempts: 1 });
+			data = await res.json().catch(() => ({}));
+		} catch {
+			continue;
+		}
 		if (data.status === 'done' && data.glb_url) return data.glb_url;
 		if (data.status === 'failed') throw new Error(data.error || 'forge failed');
 	}

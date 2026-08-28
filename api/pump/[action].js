@@ -106,6 +106,7 @@ import {
 	releaseSpend,
 } from '../_lib/agent-spend-policy.js';
 import { SOLANA_USDC_MINT, SOLANA_USDC_MINT_DEVNET, toUsdcAtomics } from '../payments/_config.js';
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
 import {
 	classifyLaunchQuote,
 	usdcMintFor,
@@ -1019,7 +1020,15 @@ async function handleBuildMetadata(req, res) {
 			// Fetch the stored thumbnail so it too lands on IPFS; if that fails,
 			// fall back to referencing the R2 URL directly (still a valid image).
 			try {
-				const resp = await fetch(thumbUrl);
+				// Bounded: a launch waits on this download, and an unbounded read of a
+				// stalled object held the whole mint request open instead of falling
+				// through to the R2 URL below, which is a perfectly good answer.
+				const resp = await fetchUpstream(thumbUrl, {}, {
+					name: 'r2:thumbnail',
+					timeoutMs: 15_000,
+					attempts: 2,
+					okWhen: () => true,
+				});
 				if (resp.ok) {
 					imageBuf = Buffer.from(await resp.arrayBuffer());
 					imageContentType = resp.headers.get('content-type') || 'image/png';

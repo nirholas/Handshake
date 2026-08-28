@@ -64,6 +64,7 @@ import { isFreeBackend } from '../_lib/forge-tiers.js';
 import { circuitState, circuitRecordFailure, circuitRecordSuccess } from '../_lib/forge-scale.js';
 import { randomUUID } from 'node:crypto';
 import { requireCron } from '../_lib/cron-auth.js';
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
 
 const ORIGIN = () => env.APP_ORIGIN || 'https://three.ws';
 // Must be comfortably shorter than the function's maxDuration (70 s in vercel.json)
@@ -225,11 +226,17 @@ async function loadGlbBytes({ creationId, glbUrl }) {
 		if (key && !/^https?:\/\//i.test(key)) {
 			return { buf: await getObjectBuffer(key), key };
 		}
-		if (key) return { buf: Buffer.from(await (await fetch(key)).arrayBuffer()), key: null };
+		// An absolute key is a lane's public URL, so it is read like one: bounded,
+		// and rejected on a non-2xx. Unbounded and unchecked, a slow host stalled
+		// the gate for the rest of the tick and an error page was handed to the GLB
+		// parser as if it were mesh bytes.
+		if (key) {
+			const res = await fetchUpstream(key, {}, { name: 'lane:glb-read', timeoutMs: 30_000, attempts: 2 });
+			return { buf: Buffer.from(await res.arrayBuffer()), key: null };
+		}
 	}
 	if (!glbUrl) throw new Error('no glb key or url to gate');
-	const res = await fetch(glbUrl, { signal: AbortSignal.timeout(30_000) });
-	if (!res.ok) throw new Error(`glb fetch ${res.status}`);
+	const res = await fetchUpstream(glbUrl, {}, { name: 'lane:glb-read', timeoutMs: 30_000, attempts: 2 });
 	return { buf: Buffer.from(await res.arrayBuffer()), key: null };
 }
 

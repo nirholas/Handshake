@@ -27,6 +27,7 @@
 import { cors, error, json, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { getTransactionStatus, getTipHeight, isPlausibleTxid } from '../_lib/esplora.js';
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
 
 const ORDINALSBOT_BASE_URL =
 	process.env.ORDINALSBOT_BASE_URL || 'https://api.ordinalsbot.com';
@@ -148,7 +149,24 @@ async function fetchOrdinalsBotOrder(orderId) {
 		headers['x-api-key'] = process.env.ORDINALSBOT_API_KEY;
 	}
 	const url = `${ORDINALSBOT_BASE_URL}/order?id=${encodeURIComponent(orderId)}`;
-	const res = await fetch(url, { headers });
+	// An order lookup is a read, so it retries once, but it is bounded either way:
+	// unbounded, one slow OrdinalsBot response held a status poll open until the
+	// platform killed it, which reads to the caller as our endpoint being dead.
+	// Every status code below is still classified here, so a non-2xx must arrive
+	// as a Response rather than as a throw.
+	let res;
+	try {
+		res = await fetchUpstream(url, { headers }, {
+			name: 'ordinalsbot:order',
+			timeoutMs: 15_000,
+			attempts: 2,
+			okWhen: () => true,
+		});
+	} catch (e) {
+		const err = new Error(`OrdinalsBot unreachable: ${e?.message || 'network error'}`);
+		err.status = 502;
+		throw err;
+	}
 	const text = await res.text();
 	let data;
 	try {
