@@ -166,8 +166,12 @@ async function buildEnvelope({ ttl, endpointPath, origin }) {
 }
 
 export default wrap(async function handler(req, res) {
-	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
-	if (method(req, res, ['GET'])) return;
+	// Open to every origin on purpose. A browser-side agent, a third-party
+	// dashboard and the /preflight page all need to read this cross-origin, and an
+	// attestation is public, signed, and carries nothing secret. Locking it down
+	// would only stop the clients it exists to serve.
+	if (cors(req, res, { origins: '*', methods: 'GET,OPTIONS' })) return;
+	if (!method(req, res, ['GET'])) return;
 
 	const url = new URL(req.url, `https://${req.headers.host || 'three.ws'}`);
 	const ttl = Math.min(

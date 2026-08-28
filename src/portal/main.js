@@ -139,6 +139,9 @@ async function openWorld(rawUrl, { push = true } = {}) {
 
 	markStepsUpTo('render');
 	mountWorld(payload.world);
+	// A tiny read-only probe: the e2e spec walks the avatar and asserts the world
+	// actually moved under it, which no DOM assertion can see.
+	window.__portalPlayer = () => active?.player || null;
 	paintHud(payload.world, payload.outline, payload.cached);
 	show(els.loading, false);
 }
@@ -173,10 +176,15 @@ function paintHud(world, outline, cached) {
 		els.siteMeta.append(span);
 	}
 	if (outline?.icon) {
+		// A site's declared icon is often missing or unreadable; the chip keeps its
+		// shape either way rather than showing a broken-image glyph.
+		els.siteIcon.onerror = () => els.siteIcon.classList.add('is-blank');
+		els.siteIcon.classList.remove('is-blank');
 		els.siteIcon.src = `/api/img?url=${encodeURIComponent(outline.icon)}`;
 		els.siteIcon.alt = '';
 	} else {
 		els.siteIcon.removeAttribute('src');
+		els.siteIcon.classList.add('is-blank');
 	}
 	show(els.site, true);
 	show(els.actions, true);
