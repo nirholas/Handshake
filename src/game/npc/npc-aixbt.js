@@ -234,8 +234,12 @@ function closePanel() {
 	if (opener && typeof opener.focus === 'function') opener.focus();
 }
 
-async function fetchJson(path) {
-	const res = await fetch(path, { headers: { accept: 'application/json' } });
+// Bounded: the NPC panel shows a "Loading…" line before every one of these,
+// and a stalled upstream used to freeze the panel with no way to recover. The
+// abort surfaces through the same catch as any other failure, so the panel
+// gets its designed error state instead.
+async function fetchJson(path, { timeout = 8000 } = {}) {
+	const res = await fetch(path, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(timeout) });
 	const body = await res.json().catch(() => null);
 	if (!res.ok || !body || body.error) {
 		const err = new Error(body?.error_description || `request failed (${res.status})`);

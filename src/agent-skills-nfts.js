@@ -13,8 +13,10 @@
  * Docs: https://docs.helius.dev/compression-and-das-api/digital-asset-standard-api
  */
 
-async function fetchJson(url) {
-	const r = await fetch(url, { credentials: 'include' });
+// Bounded so a stalled DAS query cannot hang the agent's turn: the skill
+// awaits this inline, and without a deadline the chat sits mid-reply forever.
+async function fetchJson(url, { timeout = 8000 } = {}) {
+	const r = await fetch(url, { credentials: 'include', signal: AbortSignal.timeout(timeout) });
 	if (!r.ok) throw new Error(`request failed: ${r.status}`);
 	return r.json();
 }

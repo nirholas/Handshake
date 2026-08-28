@@ -11,8 +11,11 @@ import { onPageReady } from './shell/page-lifecycle.js';
 
 const $ = (id) => document.getElementById(id);
 
-async function getJson(url) {
-	const res = await fetch(url, { headers: { accept: 'application/json' } });
+// Every markets panel paints a skeleton before its request resolves, so each
+// one is time-bounded: a stalled edge now rejects and the panel shows its
+// designed error state with a retry instead of shimmering indefinitely.
+async function getJson(url, { timeout = 8000 } = {}) {
+	const res = await fetch(url, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(timeout) });
 	if (!res.ok) {
 		const err = new Error(`fetch ${url} → ${res.status}`);
 		err.status = res.status;

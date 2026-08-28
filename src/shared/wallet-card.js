@@ -60,8 +60,11 @@ function esc(s) {
 	);
 }
 
-async function fetchJson(url) {
-	const r = await fetch(url, { credentials: 'include' });
+// Bounded: the card renders a loading row for net worth and reputation before
+// these resolve, and an edge that never answers used to leave both rows
+// shimmering. On timeout the caller's catch paints the designed fallback.
+async function fetchJson(url, { timeout = 8000 } = {}) {
+	const r = await fetch(url, { credentials: 'include', signal: AbortSignal.timeout(timeout) });
 	if (!r.ok) {
 		const e = new Error(`http_${r.status}`);
 		e.status = r.status;

@@ -274,8 +274,14 @@ function resolveMint() {
 
 // ── data ─────────────────────────────────────────────────────────────────────
 
-async function fetchJson(url, { signal } = {}) {
-	const r = await fetch(url, { signal });
+// Time-bounded on every call: the coin page paints skeletons for the chart,
+// safety and trades panels before these resolve, and an edge that never
+// answers used to leave all three spinning forever. The per-call deadline
+// composes with the caller's own signal (a stale request being abandoned)
+// instead of replacing it, so both cancellation reasons still work.
+async function fetchJson(url, { signal, timeout = 8000 } = {}) {
+	const deadline = AbortSignal.timeout(timeout);
+	const r = await fetch(url, { signal: signal ? AbortSignal.any([signal, deadline]) : deadline });
 	if (!r.ok) {
 		// Carry the status and the API's machine-readable code so callers can tell
 		// an honest empty state ("this coin has no market yet") apart from an

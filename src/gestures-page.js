@@ -76,8 +76,20 @@ const sigFor = (clip) => state.signatures?.clips?.[clip] || null;
 
 /* ── data ──────────────────────────────────────────────────────────────── */
 
-async function fetchJson(url) {
-	const res = await fetch(url, { headers: { accept: 'application/json' } });
+// The gesture grid sets aria-busy before each of these loads. Without a
+// deadline a stalled CDN left the grid busy with no error and no content, so
+// every manifest/signature/hint fetch carries one and the catch below paints
+// the designed error box instead.
+async function fetchJson(url, { timeout = 8000 } = {}) {
+	let res;
+	try {
+		res = await fetch(url, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(timeout) });
+	} catch (err) {
+		// These messages are printed verbatim into the page's error boxes, so a
+		// deadline reads as a sentence rather than the platform's "signal timed out".
+		if (err?.name === 'TimeoutError') throw new Error(`${url} did not answer within ${timeout / 1000}s`, { cause: err });
+		throw err;
+	}
 	if (!res.ok) throw new Error(`${url} responded ${res.status}`);
 	return res.json();
 }

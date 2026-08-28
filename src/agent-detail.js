@@ -2962,8 +2962,12 @@ document.addEventListener('click', (e) => {
 	if (value && value !== '—') navigator.clipboard?.writeText(value)?.catch(() => {});
 });
 
-async function fetchJson(url) {
-	const res = await fetch(url, { credentials: 'include' });
+// Every agent-page fetch is time-bounded. A black-holed edge or a stalled
+// serverless cold start used to leave the profile parked on its skeleton with
+// no way out; on timeout the abort rejects, fetchAgentRecord retries once, and
+// a second failure lands on the designed "Couldn't load this agent" state.
+async function fetchJson(url, { timeout = 8000, ...opts } = {}) {
+	const res = await fetch(url, { credentials: 'include', ...opts, signal: AbortSignal.timeout(timeout) });
 	if (!res.ok) {
 		const err = new Error(`${url} → HTTP ${res.status}`);
 		err.status = res.status;

@@ -35,8 +35,10 @@ const _state = {
 /** Active whale-trade watchers keyed by mint. Value is the AbortController. */
 const _whaleWatchers = new Map();
 
-async function fetchJson(url) {
-	const r = await fetch(url, { credentials: 'include' });
+// Bounded so a stalled feed cannot hang the agent's turn: the watch skills
+// await this inline, and without a deadline the chat sits mid-reply forever.
+async function fetchJson(url, { timeout = 8000 } = {}) {
+	const r = await fetch(url, { credentials: 'include', signal: AbortSignal.timeout(timeout) });
 	if (!r.ok) throw new Error(`request failed: ${r.status}`);
 	return r.json();
 }

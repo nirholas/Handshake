@@ -54,8 +54,11 @@ export function createEnricher({ store }) {
 		});
 	}
 
-	async function fetchJson(url) {
-		const r = await fetch(url, { headers: { accept: 'application/json' } });
+	// Bounded per request. Enrichment runs behind a small concurrency queue, so
+	// a single stalled upstream would otherwise hold a queue slot forever and
+	// starve every later row of its enrichment.
+	async function fetchJson(url, { timeout = 8000 } = {}) {
+		const r = await fetch(url, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(timeout) });
 		if (!r.ok) throw new Error(`HTTP ${r.status}`);
 		return r.json();
 	}

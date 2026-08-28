@@ -56,8 +56,20 @@ function escapeHtml(s) {
 
 // apiFetch carries the session cookie and, on mutations, the x-csrf-token the
 // server requires; a plain fetch would be refused by /api/seeker/verify.
-async function fetchJson(url, init = {}) {
-	const res = await apiFetch(url, { credentials: 'include', ...init });
+//
+// apiFetch bounds each ATTEMPT but retries a safe method up to three times, so
+// a persistently black-holed edge could still hold the page for a minute. The
+// signal here is the whole-call ceiling on top of that: the verify button and
+// the agent list both paint a busy state before the call, and once the ceiling
+// fires the request rejects and the caller paints its designed error row.
+// Mutations get a longer ceiling because /api/seeker/verify reads the chain.
+const CALL_TIMEOUT_MS = 20_000;
+const MUTATION_TIMEOUT_MS = 45_000;
+
+async function fetchJson(url, { timeout, ...init } = {}) {
+	const isMutation = (init.method || 'GET').toUpperCase() !== 'GET';
+	const ceiling = timeout ?? (isMutation ? MUTATION_TIMEOUT_MS : CALL_TIMEOUT_MS);
+	const res = await apiFetch(url, { credentials: 'include', ...init, signal: AbortSignal.timeout(ceiling) });
 	const body = await res.json().catch(() => null);
 	return { ok: res.ok, status: res.status, body };
 }
@@ -68,7 +80,16 @@ let user = null;
 let signingIn = false;
 
 async function loadSession() {
-	const { ok, body } = await fetchJson('/api/auth/me');
+	// A timed-out or failed session probe means "we cannot prove you are signed
+	// in", which is the same paint as signed-out. Swallowing it here keeps the
+	// hero from being blocked behind an unhandled rejection.
+	let ok = false;
+	let body = null;
+	try {
+		({ ok, body } = await fetchJson('/api/auth/me'));
+	} catch (err) {
+		console.warn('[seeker] session probe failed', err);
+	}
 	user = ok ? body?.user || null : null;
 	paintSession();
 	return user;
@@ -160,7 +181,15 @@ async function loadAgents() {
 	ui.agentsError.hidden = true;
 	ui.agents.hidden = false;
 	ui.agents.setAttribute('aria-busy', 'true');
-	const { ok, body } = await fetchJson('/api/agents');
+	let ok = false;
+	let body = null;
+	try {
+		({ ok, body } = await fetchJson('/api/agents'));
+	} catch (err) {
+		// A ceiling abort throws rather than returning ok:false. Without this the
+		// list would stay aria-busy forever with no retry offered.
+		console.warn('[seeker] agents load failed', err);
+	}
 	ui.agents.setAttribute('aria-busy', 'false');
 	if (!ok) {
 		ui.agents.hidden = true;
@@ -207,8 +236,13 @@ function paintVerification(status) {
 
 async function loadVerification() {
 	if (!user) { paintVerification(null); return; }
-	const { ok, body } = await fetchJson('/api/seeker/status');
-	paintVerification(ok ? body : null);
+	try {
+		const { ok, body } = await fetchJson('/api/seeker/status');
+		paintVerification(ok ? body : null);
+	} catch (err) {
+		console.warn('[seeker] verification status failed', err);
+		paintVerification(null);
+	}
 }
 
 async function runVerification() {
@@ -242,7 +276,9 @@ async function runVerification() {
 	} catch (err) {
 		console.error('[seeker] verify failed', err);
 		ui.verifyMsg.dataset.kind = 'error';
-		ui.verifyMsg.textContent = 'Network error. Check your connection and try again.';
+		ui.verifyMsg.textContent = err?.name === 'TimeoutError'
+			? 'Verification took too long to answer. Try again in a moment.'
+			: 'Network error. Check your connection and try again.';
 	} finally {
 		ui.verifyBtn.disabled = false;
 	}
