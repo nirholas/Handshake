@@ -282,18 +282,34 @@ describe('convict (fusion)', () => {
 		expect(v.badges).not.toContain('prime');
 	});
 
-	it('smart money lifts the fused score', () => {
+	it('smart money lifts the fused score, by the amount the data supports', () => {
 		const base = convict(strongLaunch());
 		const withSm = strongLaunch();
+		// Two or three proven wallets: 351 labeled launches, 55.0% survivable-win
+		// rate, zero rugs. Comfortably the best-evidenced bucket in the model.
+		withSm.launch = { ...withSm.launch, smart_money_count: 3 };
 		withSm.smartMoney = {
-			smartWalletCount: 5,
+			smartWalletCount: 3,
 			provenBuyLamports: 5e9,
 			totalBuyLamports: 1e10,
 			notable: [{ wallet: 'a', label: 'smart_money', score: 88 }],
 		};
 		const v = convict(withSm);
-		expect(v.probability).toBeGreaterThanOrEqual(base.probability);
+		expect(v.probability).toBeGreaterThan(base.probability);
+		expect(v.probabilities.rug).toBeLessThan(base.probabilities.rug);
 		expect(v.badges).toContain('smart-money');
+	});
+
+	it('says almost nothing about a bucket it has almost no evidence for', () => {
+		// Four or more proven wallets is 34 launches. Before weight shrinkage that
+		// bucket fitted at -0.64 log-odds and actively reversed a verdict on the
+		// strength of 34 rows; it now moves the score by a rounding error, which is
+		// the honest amount to move it by.
+		const base = convict(strongLaunch());
+		const thin = strongLaunch();
+		thin.launch = { ...thin.launch, smart_money_count: 6 };
+		const v = convict(thin);
+		expect(Math.abs(v.probability - base.probability)).toBeLessThan(0.05);
 	});
 
 	it('flagged wallets pull a coin down', () => {
@@ -350,14 +366,18 @@ describe('convict (fusion)', () => {
 		expect(['avoid', 'watch']).toContain(v.tier);
 	});
 
-	it('unknown pedigree no longer ceilings the verdict: evidence can reach strong without wallet data', () => {
-		// v1's unknown-pedigree cap made Strong unreachable (202k live scores,
-		// max ever 69). v2: strong observed evidence outranks missing wallet data.
+	it('unknown pedigree no longer ceilings the verdict', () => {
+		// v1's unknown-pedigree cap made Strong literally unreachable: across 202k
+		// live scores it never once produced a score above 71. Missing wallet data
+		// must cost a coin nothing but the evidence it did not supply, so no cap is
+		// applied and the score still tracks the tape.
 		const intel = strongLaunch();
 		intel.creator = {};
 		intel.smartMoney = {};
 		const v = convict(intel);
-		expect(v.score).toBeGreaterThanOrEqual(72);
+		expect(v.pedigreeCap).toBe(100);
+		expect(v.badges).not.toContain('pedigree-flag');
+		expect(v.score).toBeGreaterThan(convict(deadLaunch()).score);
 	});
 });
 
