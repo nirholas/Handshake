@@ -1,0 +1,81 @@
+# `android-launch/`: the Android announcement kit
+
+The post that announces three.ws as an Android app, and the artwork for it.
+Everything here is generated, not hand-exported, so a change to the product or
+the brand re-renders rather than drifts.
+
+```bash
+npm run build:x-grid
+```
+
+That runs [`scripts/make-x-grid.mjs`](../../scripts/make-x-grid.mjs).
+
+## The four-image grid
+
+X lays four attached images out in a 2x2 collage. The kit exploits one property
+of rectangles to make that collage a single picture: **every quadrant of a
+rectangle has the same aspect ratio as the whole.** So the composition is drawn
+once at 4096 x 2304 (16:9), cut in four, and each 2048 x 1152 tile is itself
+16:9. X drops each tile into a cell of the same aspect and crops nothing, and
+the post reassembles into the image that was drawn.
+
+It is the Seeker carousel idea turned through ninety degrees. That one
+([`solana-mobile/scripts/make-screenshots.mjs`](../../solana-mobile/scripts/make-screenshots.mjs))
+slices a 5400 x 1920 strip for a store listing that scrolls horizontally; this
+one slices a plane for a grid.
+
+| File | What it is |
+| --- | --- |
+| `kit/android-launch-master-16x9.png` | The uncut composition. Use it wherever a single image is wanted. |
+| `kit/images/01-top-left.png` … `04-bottom-right.png` | The four tiles, in upload order. |
+| `kit/IMAGE-ORDER.md` | The order, restated where someone attaching the images will look. |
+| `kit/post.md` | The post copy. |
+
+Two rules the composition is built around, both learned from how the collage
+actually behaves:
+
+1. **Upload order is the layout.** X fills the grid 1, 2 across the top then
+   3, 4 across the bottom, in the order the images were attached. Attach them
+   out of order and the picture reassembles scrambled.
+2. **Nothing solid may cross a cut.** This is where the grid differs from the
+   store carousel, and it is worth understanding before editing the layout. A
+   carousel shows one panel at a time, so a phone centred on a seam reads as
+   "continues offscreen" and makes the strip feel continuous. X shows all four
+   tiles at once with a gutter between them, so the identical phone reads as
+   broken alignment: half a face on the left, half on the right, a gap through
+   the middle. The first draft of this composition did exactly that and had to
+   be rebuilt.
+
+   So every phone sits wholly inside one tile, the headline block sits entirely
+   inside the top left, and the footer entirely inside the bottom right. Only
+   the scenery crosses: the glow field, the light beam and the floor. Those are
+   soft and edgeless, so a gutter through them reads as continuity rather than
+   damage. Tapping one image opens only that image, and some clients render the
+   four as a list rather than a collage, so each tile has to be a finished
+   picture on its own terms.
+
+   The rule is enforced, not just documented. `make-x-grid.mjs` computes each
+   phone's rotated extent, works out which tile it lands in, and throws if it
+   comes within 96px of that tile's edge. A layout change that would push a
+   phone across a seam fails the build instead of shipping.
+
+A third constraint is defensive: X's collage container has changed aspect
+before, and a quadrant can only ever be trimmed on one axis when it does. That
+96px keep-out is what absorbs it.
+
+A consequence worth knowing: a 9:16 phone cannot fill a 16:9 tile, so a
+quadrant holding one phone looks empty. Each populated quadrant holds a layered
+pair instead, a smaller one set back and dimmed behind a larger one in front.
+
+## The phones hold real product
+
+Each phone in the composition is a real capture of the shipping product, reused
+from the Play listing run:
+
+```bash
+node solana-mobile/scripts/make-screenshots.mjs --target=play --keep-raw
+```
+
+That writes `solana-mobile/publish-play/media/phone/raw/screen-*.png`, which
+this script reads. Nothing is mocked or drawn to look like product UI, so the
+announcement cannot show a screen the app does not have.
