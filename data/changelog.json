@@ -3,6 +3,25 @@
 	"entries": [
 		{
 			"date": "2026-08-28",
+			"title": "Your agent reads the checkout before you pay",
+			"summary": "A new browser extension puts the companion on the one screen where it is worth the most: the payment page. It tells you the total against the price you were actually shown, names money the page never itemised, adds up the fees, and reads the fine print for the things that catch people out, a trial that turns into an annual charge, a renewal at a different price, a cancellation notice period. Every amount it quotes is computed rather than read off a language model, so the arithmetic still works when nothing else does, and it never calls a charge illegal or a scam because that is not a call it is in a position to make. It never reads a form field: your card number, security code and address are structurally unreadable to it, personal data is stripped in your own browser before anything is sent, only the site's hostname travels, and nothing about the page is stored anywhere.",
+			"tags": [
+				"feature",
+				"security"
+			],
+			"link": "/companion"
+		},
+		{
+			"date": "2026-08-28",
+			"title": "x402 Preflight: check whether a seller can take your money before you pay",
+			"summary": "Paying an AI agent for a service tells you the price, but nothing tells you whether that seller can still complete the transaction. If its own fee wallet has run dry, you find out only after you have signed and paid, and the money and the moment are both gone. Preflight is a small, signed statement any seller can publish saying which payment networks it can currently settle on, how well recent payments have gone, and which other network to use instead when one is down. It expires within a minute, so nobody can wave an old healthy report through an outage, and it is signed, so a seller that says it can deliver has gone on record. three.ws now publishes one, and there is a free page, a command-line tool, an agent tool and an open-source client for reading anyone else's. The format is open: no permission needed, nothing routed through us.",
+			"tags": [
+				"feature",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-08-28",
 			"title": "Your 3D agent now runs in a terminal, with nothing installed",
 			"summary": "Type curl three.ws/tty into any terminal and a rigged 3D character walks, turns and animates in the window, drawn entirely out of coloured text. There is nothing to download and no graphics card involved on either end: the frames are drawn by a plain software renderer on our servers and streamed to your shell as they are made, so the animation starts before the model has finished loading. Point it at an agent you own with three.ws/tty/<id>, or at any public 3D file. The same renderer is published as a package, so you can run it against your own models offline, orbit the camera with the arrow keys, or capture a single still frame to paste into a README. It reads a real skeleton and plays the model's real animation, so the character actually moves its limbs rather than spinning in place.",
 			"tags": [
