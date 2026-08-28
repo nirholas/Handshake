@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T05:53:11.373Z",
+	"generated_at": "2026-08-28T05:54:18.101Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -152,6 +152,16 @@
 			"title": "Glance",
 			"summary": "Your three.ws agent on every home screen: a live card for the Windows 11 widgets board, a README, Slack, or any page.",
 			"link": "/glance",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "launch",
+			"title": "Glance: agent cards for home screens",
+			"summary": "Put a three.ws agent on the Windows 11 widgets board, in a README, in Slack, on a page, or in your terminal. Endpoint, element, widget worker and npm client.",
+			"link": "/docs/glance",
 			"tags": [
 				"launch"
 			]

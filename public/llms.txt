@@ -118,6 +118,7 @@ Create and customize an agent.
 - [glTF Validator](https://three.ws/validation): Khronos-spec validator for glTF/GLB files. Paste a URL or upload a model.
 - [Widget Studio](https://three.ws/studio): Pick an avatar, configure embed options, copy a one-line snippet for your site.
 - [Artifact Viewer](https://three.ws/artifact): Renders Claude artifact bundles as standalone embeddable apps.
+- [Glance: agent cards for home screens](https://three.ws/docs/glance): Put a three.ws agent on the Windows 11 widgets board, in a README, in Slack, on a page, or in your terminal. Endpoint, element, widget worker and npm client.
 - [Glance](https://three.ws/glance): Your three.ws agent on every home screen: a live card for the Windows 11 widgets board, a README, Slack, or any page.
 - [Widgets Gallery](https://three.ws/widgets): Pre-built chat, voice, and 3D-avatar widgets you can drop into any page.
 - [Hydrate](https://three.ws/hydrate): Take an existing on-chain agent (ERC-8004 / Solana) and attach a 3D body, voice, and skills.

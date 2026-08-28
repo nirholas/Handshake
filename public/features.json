@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T05:53:11.216Z",
+	"generated_at": "2026-08-28T05:54:18.014Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -897,6 +897,16 @@
 					"title": "Artifact Viewer",
 					"description": "Renders Claude artifact bundles as standalone embeddable apps.",
 					"added": "2026-04-17",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/glance",
+					"title": "Glance: agent cards for home screens",
+					"description": "Put a three.ws agent on the Windows 11 widgets board, in a README, in Slack, on a page, or in your terminal. Endpoint, element, widget worker and npm client.",
+					"added": "2026-08-28",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

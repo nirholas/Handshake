@@ -127,6 +127,14 @@
 			<description>Your three.ws agent on every home screen: a live card for the Windows 11 widgets board, a README, Slack, or any page.</description>
 		</item>
 		<item>
+			<title>Glance: agent cards for home screens</title>
+			<link>https://three.ws/docs/glance</link>
+			<guid isPermaLink="false">2026-08-28:Glance: agent cards for home screens</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Put a three.ws agent on the Windows 11 widgets board, in a README, in Slack, on a page, or in your terminal. Endpoint, element, widget worker and npm client.</description>
+		</item>
+		<item>
 			<title>Herald</title>
 			<link>https://three.ws/herald</link>
 			<guid isPermaLink="false">2026-08-28:Herald</guid>

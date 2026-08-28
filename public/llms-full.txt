@@ -552,6 +552,12 @@ URL: https://three.ws/artifact
 
 Renders Claude artifact bundles as standalone embeddable apps.
 
+### Glance: agent cards for home screens
+
+URL: https://three.ws/docs/glance
+
+Put a three.ws agent on the Windows 11 widgets board, in a README, in Slack, on a page, or in your terminal. Endpoint, element, widget worker and npm client.
+
 ### Glance
 
 URL: https://three.ws/glance
