@@ -108,7 +108,7 @@ export default wrap(async function handler(req, res) {
 	// Authorization header rather than a cookie for that caller, and it writes
 	// nothing: there is no state for a hostile page to change by calling it.
 	if (cors(req, res, { origins: '*', methods: 'POST,OPTIONS' })) return;
-	if (method(req, res, ['POST'])) return;
+	if (!method(req, res, ['POST'])) return;
 
 	const user = await callerFor(req, res);
 	if (!user) {

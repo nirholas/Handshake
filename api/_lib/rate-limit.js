@@ -1910,6 +1910,14 @@ export const limits = {
 	// go through the x402 lane and are limited by their own cost.
 	knockSendIp: (ip) =>
 		getLimiter('knock:send:ip', { limit: 8, window: '1 h' }).limit(ip),
+	// Motion synthesis (/api/motion). Compiling a score is pure arithmetic and
+	// deterministic, so it gets a generous local bucket an editor can type into.
+	// Authoring one from a sentence can reach a language model, so it is metered
+	// the way every other model-backed surface here is.
+	motionCompile: (key) =>
+		getLimiter('motion:compile', { limit: 240, window: '1 m', local: true }).limit(key),
+	motionAuthor: (key) =>
+		getLimiter('motion:author', { limit: 60, window: '10 m' }).limit(key),
 	// Funnel tracking (opened/returned) — high local ceiling; one ping per
 	// notification interaction, deduped server-side anyway.
 	notifTrack: (userId) =>

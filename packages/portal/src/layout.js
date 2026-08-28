@@ -278,8 +278,13 @@ export function doorSlot(building, index, count) {
 	const withinFace = index % perFace;
 	const spread = count <= 1 ? 0 : (withinFace - (Math.min(perFace, count) - 1) / 2) * (building.w * 0.42);
 	const yaw = building.rot + (face * Math.PI) / 2;
-	const half = (face % 2 === 0 ? building.d : building.w) / 2;
-	const along = face % 2 === 0 ? building.w : building.d;
+	// `half` is the wall's distance from the centre ALONG the face normal, and
+	// `along` is the wall's width across it. Faces 0 and 2 look down the
+	// building's x axis, so they use w; faces 1 and 3 look down z and use d.
+	// Swapping the two puts a door inside a non-square building, which is exactly
+	// what tests/portal-layout.test.js checks for.
+	const half = (face % 2 === 0 ? building.w : building.d) / 2;
+	const along = face % 2 === 0 ? building.d : building.w;
 	const offset = count <= 1 ? 0 : clamp(spread, -along * 0.35, along * 0.35);
 	return {
 		x: building.x + Math.cos(yaw) * half + Math.cos(yaw + Math.PI / 2) * offset,

@@ -56,6 +56,9 @@ function build() {
 
 	herald = createHerald({
 		presenter: els.presenter.value,
+		// A visitor who never switched the companion on still gets a body: the
+		// site serves it at /walk-companion.js.
+		avatarOptions: { walkModule: '/walk-companion.js' },
 		voice: els.voice.checked ? 'always' : 'off',
 		rules: {
 			minImportance: Number(els.floor.value),

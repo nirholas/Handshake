@@ -16,6 +16,12 @@
 
 import { createHerald } from '../herald-sdk/src/index.js';
 
+// three.ws serves the companion at a stable, unhashed path (vite.config.js), so
+// a visitor who never turned it on still gets a body for a delivery: the module
+// installs `window.__walkCompanion` on import and the presenter picks it up.
+// Exported so a page building its own herald passes the same thing.
+export const WALK_ON_THREE_WS = { walkModule: '/walk-companion.js' };
+
 export {
 	createHerald,
 	createAvatarPresenter,
@@ -45,7 +51,7 @@ export default createHerald;
 // its own herald never pays for a second one.
 let ambient = null;
 function ensureAmbient() {
-	if (!ambient) ambient = createHerald({ voice: 'auto' });
+	if (!ambient) ambient = createHerald({ voice: 'auto', avatarOptions: WALK_ON_THREE_WS });
 	return ambient;
 }
 

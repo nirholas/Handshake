@@ -81,6 +81,9 @@ const PRUNE_EVERY = 20;
  * @param {(m: object) => Array<object>} [options.actionsFor] extra buttons on a
  *   delivery; the default gives "Open" for a message with a url.
  * @param {object} [options.companion] a live @three-ws/walk control to reuse
+ * @param {object} [options.avatarOptions] forwarded to createAvatarPresenter
+ *   (`walkModule`, `companionOptions`), for pages that serve their own build of
+ *   the companion rather than installing the package
  * @param {() => number} [options.now] clock seam, for tests
  */
 export function createHerald(options = {}) {
@@ -104,7 +107,9 @@ export function createHerald(options = {}) {
 	let sincePrune = 0;
 
 	const presenters = {
-		avatar: opts.presenters?.avatar || createAvatarPresenter({ companion: opts.companion }),
+		avatar:
+			opts.presenters?.avatar ||
+			createAvatarPresenter({ companion: opts.companion, ...(opts.avatarOptions || {}) }),
 		card: opts.presenters?.card || createCardPresenter(),
 	};
 	const voice =
