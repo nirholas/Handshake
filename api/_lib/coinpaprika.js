@@ -1,3 +1,5 @@
+import { recordSource } from './brownout/provenance.js';
+import { applyFault, faultFor } from './brownout/chaos.js';
 // Shared CoinPaprika client — one place that owns the free tier's budget.
 //
 // **The free tier allows sixty requests per HOUR** (hard cap 25k/month). Past
@@ -65,24 +67,58 @@ export const PAPRIKA_BASE = 'https://api.coinpaprika.com/v1';
  * @returns {Promise<any|null>} parsed body, or null on miss/budget/error
  */
 export async function paprikaGet(url, timeoutMs = 8000) {
-	if (isPaprikaBenched()) return null;
+	// `fallback` tier, always: nothing calls CoinPaprika first. It answers a
+	// question CoinGecko was supposed to answer, which is a different provider
+	// giving a different-but-comparable reading, and a reader deserves to know
+	// the number in front of them came from the understudy.
+	const startedAt = Date.now();
+	if (isPaprikaBenched()) {
+		recordSource({ name: 'coinpaprika', outcome: 'skip', ms: 0, tier: 'fallback', detail: 'benched' });
+		return null;
+	}
 	try {
-		const res = await fetch(url, {
-			headers: { accept: 'application/json', 'user-agent': 'three.ws/1.0' },
-			signal: AbortSignal.timeout(timeoutMs),
-		});
-		if (notePaprikaStatus(res.status)) return null;
-		if (!res.ok) return null;
+		const fault = faultFor('coinpaprika');
+		let res;
+		if (fault) {
+			const injected = await applyFault(fault, url);
+			res = injected;
+		}
+		if (!res) {
+			res = await fetch(url, {
+				headers: { accept: 'application/json', 'user-agent': 'three.ws/1.0' },
+				signal: AbortSignal.timeout(timeoutMs),
+			});
+		}
+		if (notePaprikaStatus(res.status)) {
+			recordSource({ name: 'coinpaprika', outcome: 'fail', ms: Date.now() - startedAt, tier: 'fallback', detail: res.status });
+			return null;
+		}
+		if (!res.ok) {
+			recordSource({ name: 'coinpaprika', outcome: 'fail', ms: Date.now() - startedAt, tier: 'fallback', detail: res.status });
+			return null;
+		}
 		const body = await res.json();
 		// The budget reply is JSON carrying this marker; honour it whatever status
 		// delivered it.
 		if (body?.type === 'payment_required') {
 			benchPaprika();
 			console.warn('[coinpaprika] payment_required — free-tier budget spent; benching for 1h');
+			recordSource({ name: 'coinpaprika', outcome: 'fail', ms: Date.now() - startedAt, tier: 'fallback', detail: 'budget' });
 			return null;
 		}
-		return body ?? null;
-	} catch {
+		if (body != null) {
+			recordSource({ name: 'coinpaprika', outcome: 'ok', ms: Date.now() - startedAt, tier: 'fallback' });
+			return body;
+		}
+		return null;
+	} catch (err) {
+		recordSource({
+			name: 'coinpaprika',
+			outcome: 'fail',
+			ms: Date.now() - startedAt,
+			tier: 'fallback',
+			detail: err?.name === 'TimeoutError' ? 'timeout' : 'network',
+		});
 		return null;
 	}
 }

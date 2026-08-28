@@ -23,6 +23,7 @@ import { priceFor } from '../_lib/x402-prices.js';
 import { env } from '../_lib/env.js';
 import {
 	fetchTokenMarket,
+	fetchTokenMarketResult,
 	buildTokenSignal,
 	buildTokenRisk,
 	isResolvableAddress,
@@ -87,11 +88,25 @@ async function handler(req, res) {
 		);
 	}
 
-	let market = null;
-	try {
-		market = await fetchTokenMarket(mint);
-	} catch {
-		/* upstream hiccup — fall through to the not-found envelope below */
+	// "The indexer says this token has no market" and "the indexer could not be
+	// reached" are different answers, and only the first one is the caller's
+	// business. fetchTokenMarket serves a remembered payload when it has one, so
+	// a throw here means a cold instance during an outage: answering the designed
+	// 404 there tells someone their real token does not exist, which is the exact
+	// claim the last-good tier was added to stop making.
+	const { market, unavailable } = await fetchTokenMarketResult(mint);
+	if (unavailable) {
+		res.setHeader('cache-control', 'no-store');
+		res.setHeader('Retry-After', '15');
+		return json(res, 503, {
+			ok: false,
+			mint,
+			chain: chainOf(mint),
+			error: 'market_unavailable',
+			error_description:
+				'The market indexer could not be reached, so this address could not be checked. Retry shortly.',
+			retry_after: 15,
+		});
 	}
 
 	if (!market) {

@@ -87,6 +87,27 @@ describe('provenance ledger', () => {
 		});
 	});
 
+	it('does NOT call an ordinary cache hit degraded', () => {
+		// Almost every response on a healthy site is a cache hit. Counting those as
+		// degraded would mark the whole platform degraded and train every reader to
+		// ignore the flag, which is worse than not having one.
+		withProvenance(() => {
+			recordSource({ name: 'coingecko', outcome: 'ok', ms: 0, tier: 'cache' });
+			const s = provenanceSummary();
+			expect(s.tier).toBe('cache');
+			expect(s.degraded).toBe(false);
+		});
+	});
+
+	it('calls a stale or fallback answer degraded, because it is worse than intended', () => {
+		for (const tier of ['stale', 'fallback']) {
+			withProvenance(() => {
+				recordSource({ name: 'src', outcome: 'ok', ms: 1, tier });
+				expect(provenanceSummary().degraded, tier).toBe(true);
+			});
+		}
+	});
+
 	it('counts a failure as degraded even when the answer that came back was live', () => {
 		// A ladder that failed over still tells the reader the chain was exercised.
 		withProvenance(() => {

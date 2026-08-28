@@ -1366,6 +1366,44 @@ export function rpcBatchCaps(now = Date.now()) {
 // chatter (the source of the recurring "[solana-rpc] … 429, cooling" warnings).
 // The genuinely actionable condition: every provider in the chain failing within
 // one request, so the caller gets nothing back: is the only WARN.
+// Brownout: report each lane attempt against the request that caused it, so a
+// response assembled through RPC failover can say which node answered and how
+// many refused first. Loaded the same lazy way as the shared cache above, for
+// the same reason: this module is in the browser bundle and node:async_hooks is
+// not. In a browser both hooks are inert.
+let _brownoutMod = null;
+let _brownoutPromise;
+function brownoutModule() {
+	if (_brownoutPromise !== undefined) return _brownoutPromise;
+	_brownoutPromise = null;
+	if (isServer()) {
+		_brownoutPromise = import('../brownout/index.js')
+			.then((m) => {
+				_brownoutMod = m;
+				return m;
+			})
+			.catch(() => null);
+	}
+	return _brownoutPromise;
+}
+brownoutModule();
+
+/** Record one lane attempt. Synchronous once the module is in hand, so a record can never arrive after its own response. */
+function noteRpc(url, outcome, ms, tier, detail) {
+	if (!_brownoutMod) return;
+	_brownoutMod.recordSource?.({ name: `solana-rpc:${maskUrl(url).replace(/^https?:\/\//, '')}`, outcome, ms, tier, detail });
+}
+
+/** A fault declared for the Solana RPC lane, or for one specific host in it. */
+function rpcFault(url) {
+	if (!_brownoutMod) return null;
+	return (
+		_brownoutMod.faultFor?.('solana-rpc') ??
+		_brownoutMod.faultFor?.(`solana-rpc:${maskUrl(url).replace(/^https?:\/\//, '')}`) ??
+		null
+	);
+}
+
 export function makeRotatingFetch(endpoints) {
 	return async function rotatingFetch(_info, init) {
 		// The call shapes in this request. Empty for an unreadable body, which makes
@@ -1443,6 +1481,7 @@ export function makeRotatingFetch(endpoints) {
 		};
 
 		const tryEndpoint = async (url) => {
+			const attemptStartedAt = Date.now();
 			// Bound every attempt so one hanging provider can never absorb the whole
 			// request budget (undici's default timeouts run to minutes): the attempt
 			// aborts, cools briefly, and the rotation moves on. A caller-supplied
@@ -1463,7 +1502,12 @@ export function makeRotatingFetch(endpoints) {
 				// probe request that only re-learns it and go straight to singles.
 				if (splittable && isBatchCapped(url, methods)) return { response: await sendUnbatched(url, signal) };
 
-				const resp = await fetch(url, { ...init, signal });
+				// A declared fault stands in for the lane failing, inside the same try
+				// the real failure would land in, so cooldowns, method demotion and
+				// the re-sweep all behave exactly as they would in an outage.
+				const fault = rpcFault(url);
+				const injected = fault ? await _brownoutMod.applyFault(fault, url) : null;
+				const resp = injected || (await fetch(url, { ...init, signal }));
 				// A per-batch cap is the lane's own policy, not a caller error and not a
 				// lane fault, so it neither rotates nor cools: unroll and re-send here.
 				if (splittable && !resp.ok) {
@@ -1495,6 +1539,7 @@ export function makeRotatingFetch(endpoints) {
 									.catch(() => '')
 							: '';
 					penalise(url, resp.status, bodyText, isMethodRefusal(bodyText), String(resp.status));
+					noteRpc(url, 'fail', Date.now() - attemptStartedAt, 'live', resp.status);
 					return { error: new Error(`solana rpc ${resp.status} @ ${maskUrl(url)}`) };
 				}
 				const okBody = await resp.text();
@@ -1516,6 +1561,7 @@ export function makeRotatingFetch(endpoints) {
 				// the same payload. Only content-type is preserved; copying
 				// content-encoding/content-length would mislead the consumer since the
 				// transport already decoded the body into `okBody`.
+				noteRpc(url, 'ok', Date.now() - attemptStartedAt, 'live');
 				return {
 					response: new Response(okBody, {
 						status: resp.status,
@@ -1541,6 +1587,7 @@ export function makeRotatingFetch(endpoints) {
 				// message, so the exhausted-chain warning names the real fault
 				// (EAI_AGAIN is a resolver problem, ECONNRESET a socket one) instead of
 				// undici's bare "fetch failed". The original stays on `cause`.
+				noteRpc(url, 'fail', Date.now() - attemptStartedAt, 'live', err?.name === 'TimeoutError' ? 'timeout' : 'network');
 				const cause = disposition === 'cool-lane' ? transportCause(err) : '';
 				if (cause) {
 					const tagged = new Error(`${err?.message || 'fetch failed'} (${cause}) @ ${maskUrl(url)}`, { cause: err });
@@ -1620,6 +1667,7 @@ export function makeRotatingFetch(endpoints) {
 		// through to the error, because a stale answer to those is worse than none.
 		const stale = await serveLastGood(staleKey, init?.body);
 		if (stale) {
+			noteRpc('last-good', 'ok', Number(stale.headers.get('x-solana-rpc-stale')) || 0, 'stale', 'stale');
 			logStaleServe(methods[0] || 'read', Number(stale.headers.get('x-solana-rpc-stale')) || 0, lastErr?.message || 'unknown error');
 			return stale;
 		}

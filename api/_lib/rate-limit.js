@@ -1022,6 +1022,27 @@ export const limits = {
 			window: '1 h',
 			critical: true,
 		}).limit('global'),
+	// Portal (api/portal): fetches a caller-supplied website once and builds a
+	// walkable world from it. The spend is other people's bandwidth rather than
+	// ours, which is exactly why it is capped: a build is one origin request plus
+	// a robots.txt read, and an uncapped endpoint would turn three.ws into a
+	// crawler someone else pays for. Cached worlds do not reach this limiter, so
+	// the cap governs distinct pages, not shares of the same link. Non-critical:
+	// a Redis blip degrades to the per-instance limiter rather than refusing a
+	// visitor a world we can build for free from cache.
+	portalBuildIp: (ip) =>
+		getLimiter('portal:build:ip', { limit: 30, window: '10 m' }).limit(ip),
+	// Fleet-wide brake, so no distribution of IPs can point Portal at one origin
+	// hard enough to look like an attack from three.ws.
+	portalBuildGlobal: () =>
+		getLimiter('portal:build:global', {
+			limit: Math.max(200, Number(process.env.PORTAL_BUILD_GLOBAL_HOURLY) || 1200),
+			window: '1 h',
+		}).limit('global'),
+	// GLB export of an already-built world: pure CPU on our side plus a download,
+	// so it gets its own, smaller cap.
+	portalExportIp: (ip) =>
+		getLimiter('portal:export:ip', { limit: 12, window: '10 m' }).limit(ip),
 	// Diorama save (api/diorama action:save) — persists a forged world to the
 	// public gallery table. Anonymous write, so cap per IP to stop one caller
 	// carpeting the gallery; non-critical so an infra hiccup never blocks a save.
@@ -1808,6 +1829,21 @@ export const limits = {
 	// Preference-center writes — debounced client, generous ceiling.
 	notifPrefsWrite: (userId) =>
 		getLimiter('notif:prefs:write', { limit: 60, window: '1 h' }).limit(userId),
+	// Herald delivery rail (/api/herald/*). Announces are machine-written (CI,
+	// crons, agents holding an API key) and land as a physical interruption on
+	// the owner's screen, so the ceiling is a spam guard on their own attention
+	// as much as on our Redis: 60/min is far above any sane integration and far
+	// below a runaway loop. NOT local: the whole point is a global cap on how
+	// often anything can interrupt one person, and a per-instance counter would
+	// multiply that by the instance count.
+	heraldAnnounce: (userId) =>
+		getLimiter('herald:announce', { limit: 60, window: '1 m' }).limit(userId),
+	// The SSE listener. One connection per open tab, re-established every ~5
+	// minutes when the stream hits its duration cap, so this only has to stop a
+	// reconnect storm. local: a connection budget per instance is the thing that
+	// actually protects that instance.
+	heraldStream: (userId) =>
+		getLimiter('herald:stream', { limit: 60, window: '5 m', local: true }).limit(userId),
 	// Companion (/api/companion/*). Reads are a page load plus a poll while the
 	// setup page is open, so they get the same generous local bucket the bell
 	// inbox uses. Writes touch encrypted credentials and are human-paced.
@@ -1836,6 +1872,22 @@ export const limits = {
 	// a loop does not.
 	companionIngest: (token) =>
 		getLimiter('companion:ingest', { limit: 120, window: '5 m' }).limit(token),
+	// Knock (/api/knock/*). The owner's own reads are a page load plus polling
+	// while the inbox is open.
+	knockRead: (userId) =>
+		getLimiter('knock:read', { limit: 120, window: '1 m', local: true }).limit(userId),
+	knockWrite: (userId) =>
+		getLimiter('knock:write', { limit: 90, window: '10 m' }).limit(userId),
+	// Public door + directory reads, keyed by IP. A door page is one read; a
+	// crawler walking the directory stays inside this.
+	knockPublic: (ip) =>
+		getLimiter('knock:public', { limit: 120, window: '5 m' }).limit(ip),
+	// Free-door knocks (POST /api/knock/send), keyed by IP. Free means there is
+	// no price to make a flood expensive, so the ceiling has to do that job:
+	// a person writing to a few people is fine, a script is not. Priced doors
+	// go through the x402 lane and are limited by their own cost.
+	knockSendIp: (ip) =>
+		getLimiter('knock:send:ip', { limit: 8, window: '1 h' }).limit(ip),
 	// Funnel tracking (opened/returned) — high local ceiling; one ping per
 	// notification interaction, deduped server-side anyway.
 	notifTrack: (userId) =>

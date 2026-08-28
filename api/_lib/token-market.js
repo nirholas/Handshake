@@ -95,7 +95,16 @@ export async function fetchTokenMarket(ca, opts = {}) {
 			{ maxAgeMs: 15 * 60_000 },
 		);
 		data = out.value;
-	} catch {
+	} catch (err) {
+		// Null keeps the contract every existing caller was written against, but
+		// the distinction is preserved on the error for the ones that must not
+		// confuse "no market exists" with "the indexer could not be reached".
+		// fetchTokenMarketResult below is how a caller asks for it.
+		if (opts.__surfaceUnavailable) throw Object.assign(new Error('market indexer unreachable'), {
+			code: 'market_unavailable',
+			status: 503,
+			cause: err,
+		});
 		return null;
 	}
 	let pairs = Array.isArray(data?.pairs) ? data.pairs : [];
@@ -377,4 +386,27 @@ export function buildTokenSignal(m) {
 	const rationale = `${sym} is ${change >= 0 ? 'up' : 'down'} ${cStr} over 24 h, trading at ${pStr}. ${flowLine}${pressureLine}${accelLine}`;
 	const confidence = Math.min(0.93, 0.64 + Math.min(Math.abs(change) / 20, 0.29));
 	return { signal, headline, rationale, confidence };
+}
+
+/**
+ * Like fetchTokenMarket, but tells apart the two ways it can come back empty.
+ *
+ * `fetchTokenMarket` answers null both for a token with no indexed pair and for
+ * an indexer that could not be reached at all, which is fine for a decorative
+ * price chip and wrong for anything that states a conclusion about the token.
+ * Reporting "no such token" during an outage denies real tokens; two endpoints
+ * shipped that bug before this existed.
+ *
+ * @param {string} ca
+ * @param {object} [opts] same options as fetchTokenMarket
+ * @returns {Promise<{ market: object | null, unavailable: boolean }>}
+ */
+export async function fetchTokenMarketResult(ca, opts = {}) {
+	try {
+		const market = await fetchTokenMarket(ca, { ...opts, __surfaceUnavailable: true });
+		return { market, unavailable: false };
+	} catch (err) {
+		if (err?.code === 'market_unavailable') return { market: null, unavailable: true };
+		throw err;
+	}
 }

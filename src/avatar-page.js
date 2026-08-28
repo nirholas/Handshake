@@ -1211,6 +1211,9 @@ function renderEmbedPanel(glbUrl) {
   allow="autoplay; xr-spatial-tracking"
 ></iframe>`;
 	const linkSnippet = fullUrl;
+	// The terminal viewer resolves an agent to its bound body through
+	// /api/agents/:id, so the agent id is the right handle in agent mode.
+	const ttySnippet = `npx @three-ws/tty-avatar ${mode === 'agent' ? `agent:${entityId}` : avatarId}`;
 	const wizardUrl = `/embed?${new URLSearchParams(
 		mode === 'agent' ? { agent: entityId, ...(avatarId ? { avatar: avatarId } : {}) } : { avatar: avatarId },
 	)}`;
@@ -1239,6 +1242,14 @@ function renderEmbedPanel(glbUrl) {
 				<button class="av-embed-copy" data-copy="link">Copy</button>
 			</div>
 			<pre class="av-embed-code" id="embed-link">${esc(linkSnippet)}</pre>
+		</div>
+		<div class="av-embed-section">
+			<div class="av-embed-label">
+				<span>Terminal</span>
+				<button class="av-embed-copy" data-copy="tty">Copy</button>
+			</div>
+			<pre class="av-embed-code" id="embed-tty">${esc(ttySnippet)}</pre>
+			<p class="av-embed-intro" style="margin:8px 0 0;font-size:12px;color:var(--ink-dim)">Runs this ${mode} live in any terminal, no browser or GPU. Add <code>install-hooks --write</code> and it becomes your Claude Code agent's face. <a href="/docs/tty-avatar" target="_blank" rel="noopener">How it works ↗</a></p>
 		</div>
 	`;
 }
@@ -1509,7 +1520,7 @@ function bindTabs() {
 		const btn = e.target.closest('.av-embed-copy');
 		if (!btn) return;
 		const which = btn.dataset.copy;
-		const sourceMap = { wc: 'embed-wc', iframe: 'embed-iframe', link: 'embed-link' };
+		const sourceMap = { wc: 'embed-wc', iframe: 'embed-iframe', link: 'embed-link', tty: 'embed-tty' };
 		const src = $(sourceMap[which]);
 		if (!src) return;
 		try {
