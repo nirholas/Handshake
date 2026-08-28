@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T02:37:00.919Z",
+	"generated_at": "2026-08-28T03:09:16.869Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -22,6 +22,26 @@
 			"title": "Docs · Feedback",
 			"summary": "Telling the corner companion what broke: the proactive ask at the moment of failure, the route, build SHA, and console errors captured for you, the severity and clustering rules, the report API, and the boundary that keeps untrusted visitor text from ever reaching anything with write access.",
 			"link": "/docs/feedback",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "launch",
+			"title": "Publishing to the Solana dApp Store",
+			"summary": "The release runbook for the three.ws Seeker app: Publisher Portal setup, the release keystore, building and verifying a signed APK, and submitting it for review.",
+			"link": "/docs/seeker-publishing",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "launch",
+			"title": "three.ws on iOS",
+			"summary": "What the App Store app adds on top of the website: the native share sheet, universal links, wallet deep links back to the page you left, real permission prompts, and an offline screen that recovers on its own.",
+			"link": "/docs/ios-app",
 			"tags": [
 				"launch"
 			]
@@ -88,6 +108,28 @@
 			"tags": [
 				"feature",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "update",
+			"title": "The iOS app now exists in the repo, and the web half of it ships today",
+			"summary": "three.ws is being packaged for the App Store as a native iOS app. The container and its Xcode project are in the repo, and the part that runs inside the website went live with this deploy: on iPhone the app will get a working share sheet, links that open the app instead of Safari, wallet sign-ins that return to the exact page you left, and a real offline screen. Nothing changes on the web. What is still outstanding is an Apple Developer organization account, app icons, and push notifications.",
+			"link": "/docs/ios-app",
+			"tags": [
+				"feature",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "update",
+			"title": "The Seeker app now runs full-screen, and its release process is written down",
+			"summary": "The three.ws app on Solana Seeker verifies against the site and opens full-screen on its own home screen, with no browser address bar. Two bugs found while testing it on a real Android build are fixed: the app only recognised your Seed Vault wallet on the first page you opened, so signing in from the login page said no wallet was found, and the login page never loaded the wallet at all. A new guide documents exactly how a release reaches the Solana dApp Store, from the publisher account through building and submitting the app.",
+			"link": "/docs/seeker-publishing",
+			"tags": [
+				"fix",
+				"docs"
 			]
 		},
 		{

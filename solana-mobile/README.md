@@ -61,6 +61,9 @@ Details: `docs/INTEGRATION.md`.
 
 ## Release pipeline
 
+The full runbook, including the Publisher Portal steps the owner does once, is [docs/seeker-publishing.md](../docs/seeker-publishing.md). The short version:
+
+
 Publishing is Publisher Portal backed (dapp-store-cli 1.0, May 2026). The publisher profile, KYC, the App NFT, and the listing live in <https://publish.solanamobile.com>; the CLI only uploads one signed APK per release and the portal matches it to the app by package name (`ws.three.app`).
 
 ```bash

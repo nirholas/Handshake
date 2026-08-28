@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-28",
+			"title": "The Seeker app now runs full-screen, and its release process is written down",
+			"summary": "The three.ws app on Solana Seeker verifies against the site and opens full-screen on its own home screen, with no browser address bar. Two bugs found while testing it on a real Android build are fixed: the app only recognised your Seed Vault wallet on the first page you opened, so signing in from the login page said no wallet was found, and the login page never loaded the wallet at all. A new guide documents exactly how a release reaches the Solana dApp Store, from the publisher account through building and submitting the app.",
+			"tags": [
+				"fix",
+				"docs"
+			],
+			"link": "/docs/seeker-publishing"
+		},
+		{
+			"date": "2026-08-28",
 			"title": "Tell the agent in the corner what is broken",
 			"summary": "The companion that walks your pages now listens. When a page actually fails, it turns and asks what you were doing, and the report it sends carries what you should never have to type: the page, the exact build it happened on, your screen size, and the errors the browser recorded at that moment. You can also open it any time from the control beside the avatar, and dictate instead of typing. Reports are grouped so that twenty people hitting one problem read as one problem, and every one of them is read by a person before anything changes.",
 			"tags": [
@@ -25128,6 +25138,16 @@
 				"docs"
 			],
 			"link": "/docs/open-source-ecosystem"
+		},
+		{
+			"date": "2026-08-28",
+			"title": "The iOS app now exists in the repo, and the web half of it ships today",
+			"summary": "three.ws is being packaged for the App Store as a native iOS app. The container and its Xcode project are in the repo, and the part that runs inside the website went live with this deploy: on iPhone the app will get a working share sheet, links that open the app instead of Safari, wallet sign-ins that return to the exact page you left, and a real offline screen. Nothing changes on the web. What is still outstanding is an Apple Developer organization account, app icons, and push notifications.",
+			"tags": [
+				"feature",
+				"infra"
+			],
+			"link": "/docs/ios-app"
 		}
 	]
 }

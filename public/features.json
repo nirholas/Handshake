@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T02:37:00.902Z",
+	"generated_at": "2026-08-28T03:09:16.844Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -3932,6 +3932,26 @@
 					"title": "three.ws on Solana Seeker",
 					"description": "What the Seeker app adds on top of the website: Seed Vault sign-in, share-sheet capture, an offline shell, home-screen shortcuts, and Seeker Genesis Token verification.",
 					"added": "2026-08-27",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/seeker-publishing",
+					"title": "Publishing to the Solana dApp Store",
+					"description": "The release runbook for the three.ws Seeker app: Publisher Portal setup, the release keystore, building and verifying a signed APK, and submitting it for review.",
+					"added": "2026-08-28",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/ios-app",
+					"title": "three.ws on iOS",
+					"description": "What the App Store app adds on top of the website: the native share sheet, universal links, wallet deep links back to the page you left, real permission prompts, and an offline screen that recovers on its own.",
+					"added": "2026-08-28",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

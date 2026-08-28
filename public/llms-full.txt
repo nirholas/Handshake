@@ -2391,6 +2391,18 @@ URL: https://three.ws/docs/seeker-app
 
 What the Seeker app adds on top of the website: Seed Vault sign-in, share-sheet capture, an offline shell, home-screen shortcuts, and Seeker Genesis Token verification.
 
+### Publishing to the Solana dApp Store
+
+URL: https://three.ws/docs/seeker-publishing
+
+The release runbook for the three.ws Seeker app: Publisher Portal setup, the release keystore, building and verifying a signed APK, and submitting it for review.
+
+### three.ws on iOS
+
+URL: https://three.ws/docs/ios-app
+
+What the App Store app adds on top of the website: the native share sheet, universal links, wallet deep links back to the page you left, real permission prompts, and an offline screen that recovers on its own.
+
 ### Docs · Money Flow Map
 
 URL: https://three.ws/docs/money-flow-map

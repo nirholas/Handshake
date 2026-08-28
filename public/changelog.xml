@@ -23,6 +23,22 @@
 			<description>Telling the corner companion what broke: the proactive ask at the moment of failure, the route, build SHA, and console errors captured for you, the severity and clustering rules, the report API, and the boundary that keeps untrusted visitor text from ever reaching anything with write access.</description>
 		</item>
 		<item>
+			<title>Publishing to the Solana dApp Store</title>
+			<link>https://three.ws/docs/seeker-publishing</link>
+			<guid isPermaLink="false">2026-08-28:Publishing to the Solana dApp Store</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The release runbook for the three.ws Seeker app: Publisher Portal setup, the release keystore, building and verifying a signed APK, and submitting it for review.</description>
+		</item>
+		<item>
+			<title>three.ws on iOS</title>
+			<link>https://three.ws/docs/ios-app</link>
+			<guid isPermaLink="false">2026-08-28:three.ws on iOS</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>What the App Store app adds on top of the website: the native share sheet, universal links, wallet deep links back to the page you left, real permission prompts, and an offline screen that recovers on its own.</description>
+		</item>
+		<item>
 			<title>Agent history catches up on fast chains in days instead of weeks</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-08-28:Agent history catches up on fast chains in days instead of weeks</guid>
@@ -69,6 +85,22 @@
 			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The companion that walks your pages now listens. When a page actually fails, it turns and asks what you were doing, and the report it sends carries what you should never have to type: the page, the exact build it happened on, your screen size, and the errors the browser recorded at that moment. You can also open it any time from the control beside the avatar, and dictate instead of typing. Reports are grouped so that twenty people hitting one problem read as one problem, and every one of them is read by a person before anything changes.</description>
+		</item>
+		<item>
+			<title>The iOS app now exists in the repo, and the web half of it ships today</title>
+			<link>https://three.ws/docs/ios-app</link>
+			<guid isPermaLink="false">2026-08-28:The iOS app now exists in the repo, and the web half of it ships today</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>three.ws is being packaged for the App Store as a native iOS app. The container and its Xcode project are in the repo, and the part that runs inside the website went live with this deploy: on iPhone the app will get a working share sheet, links that open the app instead of Safari, wallet sign-ins that return to the exact page you left, and a real offline screen. Nothing changes on the web. What is still outstanding is an Apple Developer organization account, app icons, and push notifications.</description>
+		</item>
+		<item>
+			<title>The Seeker app now runs full-screen, and its release process is written down</title>
+			<link>https://three.ws/docs/seeker-publishing</link>
+			<guid isPermaLink="false">2026-08-28:The Seeker app now runs full-screen, and its release process is written down</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The three.ws app on Solana Seeker verifies against the site and opens full-screen on its own home screen, with no browser address bar. Two bugs found while testing it on a real Android build are fixed: the app only recognised your Seed Vault wallet on the first page you opened, so signing in from the login page said no wallet was found, and the login page never loaded the wallet at all. A new guide documents exactly how a release reaches the Solana dApp Store, from the publisher account through building and submitting the app.</description>
 		</item>
 		<item>
 			<title>Your agent now tells you the important things in person</title>
