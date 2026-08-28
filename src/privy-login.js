@@ -231,9 +231,12 @@ async function siweInitWithCaptcha(apiUrl, address, chainId, captchaToken) {
 // ── Shared backend verify ─────────────────────────────────────────────────────
 
 async function verifyWithBackend(identity_token) {
+	// The last step of sign-in. Unbounded, a stalled edge left the Verify button
+	// reading "Signing in…" forever with no error and no way back.
 	const res = await fetch('/api/auth/privy/verify', {
 		method: 'POST',
 		credentials: 'include',
+		signal: AbortSignal.timeout(20_000),
 		headers: { 'content-type': 'application/json' },
 		// tosAccepted: the login/register pages show the agreement notice next
 		// to the Privy controls, so completing the flow affirms the Terms.
@@ -257,6 +260,28 @@ async function verifyWithBackend(identity_token) {
 // timeout — a dead or reconnecting extension background port can leave the
 // promise permanently unsettled, stranding the button in "Connecting…" with
 // the catch block that resets it never firing.
+/**
+ * Turn an SDK or network failure into something a person can act on.
+ *
+ * Privy answers a missing or rejected CAPTCHA token with `invalid_credentials`,
+ * which reads as "your email or wallet is wrong" and sent people to reset a
+ * password that was never the problem. An abort reads as nothing at all.
+ *
+ * @param {unknown} err
+ * @param {string} fallback
+ * @returns {string}
+ */
+function signInMessage(err, fallback) {
+	const raw = err?.message || '';
+	if (err?.name === 'TimeoutError' || err?.name === 'AbortError') {
+		return 'The sign-in service did not respond in time. Check your connection and try again.';
+	}
+	if (/invalid_credentials/i.test(raw)) {
+		return 'The sign-in service rejected this attempt. This usually means its human-verification check did not go through, so try again.';
+	}
+	return raw || fallback;
+}
+
 function withTimeout(promise, ms, message) {
 	let timer;
 	const timeout = new Promise((_, reject) => {
@@ -365,7 +390,7 @@ function mountPrivyUI(privy, resolveCaptchaConfig) {
 			showStep('code');
 			codeInput?.focus();
 		} catch (e) {
-			showErr(e?.message || 'Failed to send code. Try again.');
+			showErr(signInMessage(e, 'Failed to send code. Try again.'));
 			sendBtn.disabled = false;
 			sendBtn.textContent = 'Send code';
 		}
@@ -389,7 +414,7 @@ function mountPrivyUI(privy, resolveCaptchaConfig) {
 			verifyBtn.textContent = 'Signing in…';
 			await verifyWithBackend(identity_token);
 		} catch (e) {
-			showErr(e?.message || 'Verification failed. Check the code and try again.');
+			showErr(signInMessage(e, 'Verification failed. Check the code and try again.'));
 			verifyBtn.disabled = false;
 			verifyBtn.textContent = 'Verify';
 		}
@@ -471,7 +496,7 @@ function mountPrivyUI(privy, resolveCaptchaConfig) {
 			await verifyWithBackend(identity_token);
 		} catch (e) {
 			const raw = e?.message || '';
-			showErr(/reject|denied|cancel|refused/i.test(raw) ? 'Signature cancelled.' : raw || 'Wallet sign-in failed.');
+			showErr(/reject|denied|cancel|refused/i.test(raw) ? 'Signature cancelled.' : signInMessage(e, 'Wallet sign-in failed.'));
 			resetWalletBtns();
 		}
 	});
@@ -500,8 +525,11 @@ function mountPrivyUI(privy, resolveCaptchaConfig) {
 
 			setWalletStatus('Generating sign-in message…');
 			const fetchNonce = async () => {
-				const r = await fetch('/api/auth/siws/nonce', { credentials: 'include' });
-				if (!r.ok) throw new Error('Failed to get nonce');
+				const r = await fetch('/api/auth/siws/nonce', {
+					credentials: 'include',
+					signal: AbortSignal.timeout(10_000),
+				});
+				if (!r.ok) throw new Error('Could not reach the sign-in service. Try again.');
 				return r.json();
 			};
 			let { nonce, csrf, domain: serverDomain, uri: serverUri } = await fetchNonce();
@@ -515,6 +543,7 @@ function mountPrivyUI(privy, resolveCaptchaConfig) {
 			const postVerify = (message, signature, csrfToken) => fetch('/api/auth/siws/verify', {
 				method: 'POST',
 				credentials: 'include',
+				signal: AbortSignal.timeout(20_000),
 				headers: { 'content-type': 'application/json', 'x-csrf-token': csrfToken },
 				// tosAccepted: the signed statement carries the agreement; the flag
 				// tells the server to stamp acceptance on the user record.
@@ -591,7 +620,7 @@ function mountPrivyUI(privy, resolveCaptchaConfig) {
 			location.href = next;
 		} catch (e) {
 			const raw = e?.message || '';
-			showErr(/reject|denied|cancel|refused/i.test(raw) ? 'Signature cancelled.' : raw || 'Wallet sign-in failed.');
+			showErr(/reject|denied|cancel|refused/i.test(raw) ? 'Signature cancelled.' : signInMessage(e, 'Wallet sign-in failed.'));
 			resetWalletBtns();
 		}
 	});

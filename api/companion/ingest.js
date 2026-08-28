@@ -1,10 +1,11 @@
 // POST /api/companion/ingest - the phone and desktop bridge.
 //
 // This is the lane that needs no provider integration at all: anything that can
-// make an HTTP request can hand the companion a message. An iOS Shortcuts
-// automation on "when I receive a notification", a Tasker/MacroDroid profile on
-// Android, a macOS Mail rule or a shell script, an Apps Script trigger on a
-// Gmail label, a Zapier/n8n step. The recipes are in docs/companion.md.
+// make an HTTP request can hand the companion a message. A Tasker/MacroDroid
+// profile on Android (which has a real notification-listener trigger), an iOS
+// Shortcut posting from a Share Sheet or an automation, a macOS Mail rule, a
+// shell script at the end of a build, an Apps Script trigger on a Gmail label,
+// a Zapier/n8n step, an agent over MCP. The recipes are in docs/companion.md.
 //
 // Auth is the per-user bridge token (Authorization: Bearer, or `token` in the
 // body for senders that cannot set headers). It is not a session, so there is
