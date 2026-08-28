@@ -1,5 +1,5 @@
 // Unit tests for api/_lib/notify-prefs.js — the preference model that gates
-// every notification channel (in-app / push / email / telegram).
+// every notification channel (in-app / push / email / telegram / avatar).
 //
 // These are pure functions; resolvePrefs (the only DB-touching export) is not
 // exercised here. Importing the module is safe because api/_lib/db.js creates
@@ -18,11 +18,11 @@ import {
 } from '../api/_lib/notify-prefs.js';
 
 describe('category model', () => {
-	it('exposes the seven display categories and four channels', () => {
+	it('exposes the eight display categories and five channels', () => {
 		expect(CATEGORIES.map((c) => c.key)).toEqual([
-			'sales', 'purchases', 'social', 'irl', 'alerts', 'creations', 'account',
+			'sales', 'purchases', 'social', 'irl', 'alerts', 'creations', 'companion', 'account',
 		]);
-		expect(CHANNELS).toEqual(['in_app', 'push', 'email', 'telegram']);
+		expect(CHANNELS).toEqual(['in_app', 'push', 'email', 'telegram', 'avatar']);
 	});
 
 	it('every category has a label and description for the preference center', () => {
@@ -88,6 +88,28 @@ describe('defaultMatrix / mergeWithDefaults', () => {
 		const m = defaultMatrix();
 		expect(m.sales.telegram).toBe(false);
 		expect(m.alerts.telegram).toBe(true);
+	});
+
+	// The avatar channel physically interrupts: the corner companion walks on
+	// screen and speaks. It is on only where an interruption is welcome.
+	it('avatar defaults on for money, finished creations, and account events', () => {
+		const m = defaultMatrix();
+		expect(m.sales.avatar).toBe(true);
+		expect(m.creations.avatar).toBe(true);
+		expect(m.account.avatar).toBe(true);
+		expect(m.purchases.avatar).toBe(false);
+		expect(m.social.avatar).toBe(false);
+		expect(m.irl.avatar).toBe(false);
+		expect(m.alerts.avatar).toBe(false);
+	});
+
+	it('every category carries a value for every channel', () => {
+		const m = defaultMatrix();
+		for (const c of CATEGORIES) {
+			for (const ch of CHANNELS) {
+				expect(typeof m[c.key][ch]).toBe('boolean');
+			}
+		}
 	});
 
 	it('a fresh mutation of the default matrix does not leak across calls', () => {
