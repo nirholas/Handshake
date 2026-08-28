@@ -143,7 +143,8 @@ export function findWalletlessArms(rows) {
  * `fallback:` prefix never reaches that column. What the worker's judge writes
  * on the two paths (workers/agent-sniper/llm-judge.js):
  *   OpenRouter answered  -> answered_by === model (same string, same variable)
- *   free-chain fallback  -> answered_by = the raw free model name ("llama-3.1-8b-instant")
+ *   free-chain fallback  -> answered_by = the raw free model name (whichever rung in
+ *                           api/_lib/llm.js answered, e.g. "openai/gpt-oss-20b")
  * So the truth test is a MISMATCH between answered_by and model, not a prefix.
  * The first probe shipped prefix-only and read 0/225 fallbacks during a full
  * OpenRouter outage: a false negative from exactly the silence class this
