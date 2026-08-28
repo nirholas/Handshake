@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>@three-ws/portal example</title>
+		<style>
+			:root { color-scheme: dark; }
+			body {
+				margin: 0;
+				min-height: 100vh;
+				background: #07080c;
+				color: #e8e8e8;
+				font: 16px/1.6 system-ui, sans-serif;
+				display: grid;
+				place-items: center;
+				padding: 24px;
+			}
+			main { width: min(880px, 100%); }
+			h1 { font-size: 1.6rem; margin: 0 0 8px; }
+			p { color: #9aa0aa; margin: 0 0 20px; }
+			form { display: flex; gap: 8px; margin-bottom: 20px; }
+			input {
+				flex: 1; padding: 12px; border-radius: 10px; border: 1px solid #2a2d36;
+				background: #10121a; color: inherit; font-family: ui-monospace, monospace;
+			}
+			button { padding: 12px 18px; border-radius: 10px; border: 0; background: #fff; color: #111; font-weight: 600; cursor: pointer; }
+			#summary { font-family: ui-monospace, monospace; font-size: 13px; color: #9aa0aa; margin-bottom: 16px; white-space: pre-wrap; }
+			#stage { min-height: 520px; }
+		</style>
+	</head>
+	<body>
+		<main>
+			<h1>Walk a website</h1>
+			<p>Type an address. The summary comes from the SDK; the world below it is the live renderer.</p>
+			<form id="form">
+				<label class="sr-only" for="url">Website address</label>
+				<input id="url" value="example.com" spellcheck="false" />
+				<button type="submit">Build it</button>
+			</form>
+			<div id="summary">Nothing built yet.</div>
+			<div id="stage"></div>
+		</main>
+
+		<script type="module">
+			// From npm: import { fetchWorld, describeWorld, mountPortal } from '@three-ws/portal';
+			import { fetchWorld, describeWorld, mountPortal } from '../src/index.js';
+
+			const form = document.getElementById('form');
+			const input = document.getElementById('url');
+			const summary = document.getElementById('summary');
+			const stage = document.getElementById('stage');
+
+			async function build(url) {
+				summary.textContent = `Building ${url}…`;
+				stage.replaceChildren();
+				try {
+					const { world, cached } = await fetchWorld(url);
+					const d = describeWorld(world);
+					summary.textContent = [
+						`${d.title}`,
+						`${d.sections} districts · ${d.words} words · ${d.doors} doors · ${d.billboards} billboards${cached ? ' · cached' : ''}`,
+						d.tallest ? `tallest: ${d.tallest.name} (${d.tallest.words} words)` : '',
+					].filter(Boolean).join('\n');
+					mountPortal(stage, { url, height: 520 });
+				} catch (err) {
+					summary.textContent = `${err.code || 'error'}: ${err.message}`;
+				}
+			}
+
+			form.addEventListener('submit', (e) => {
+				e.preventDefault();
+				build(input.value.trim());
+			});
+			build(input.value);
+		</script>
+	</body>
+</html>
