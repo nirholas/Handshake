@@ -29,7 +29,9 @@ Two operational facts from that email, both load-bearing:
 - **An X Premium subscription is not cancelled by the suspension** and keeps
   billing until someone cancels it deliberately.
 
-An appeal through X support is the only path back to the handle. Nothing in
+An appeal through X support is the only path back to the handle. The full
+case, X's own process, the precedents, the exact text to file, and the order
+to do it in are in [`x-account-appeal.md`](x-account-appeal.md). Nothing in
 this repo should wait on it.
 
 The reader-facing version of the status table lives on
