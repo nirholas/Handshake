@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Checkout Companion</title>
+		<link rel="stylesheet" href="popup.css">
+	</head>
+	<body>
+		<header>
+			<img src="icons/icon-48.png" width="32" height="32" alt="">
+			<div>
+				<h1>Checkout Companion</h1>
+				<p id="connection" class="muted">Checking your account…</p>
+			</div>
+		</header>
+
+		<section class="controls">
+			<label class="row">
+				<span>
+					<strong>Read checkout pages</strong>
+					<small>Only pages that look like a payment step.</small>
+				</span>
+				<input type="checkbox" id="enabled">
+			</label>
+			<label class="row">
+				<span>
+					<strong>Say it out loud</strong>
+					<small>Speaks only when something is worth checking.</small>
+				</span>
+				<input type="checkbox" id="speak">
+			</label>
+			<label class="row">
+				<span>
+					<strong>Remember prices</strong>
+					<small>Compares the total against the price you were shown.</small>
+				</span>
+				<input type="checkbox" id="rememberPrices">
+			</label>
+		</section>
+
+		<footer>
+			<a href="options.html" target="_blank" rel="noopener">Account and privacy</a>
+			<a href="https://three.ws/checkout-companion" target="_blank" rel="noopener">How it works</a>
+		</footer>
+		<script src="popup.js" type="module"></script>
+	</body>
+</html>
