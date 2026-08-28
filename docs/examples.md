@@ -735,7 +735,7 @@ genuinely invested in the user's progress.
 
 ## Every runnable example in the repo
 
-The repo ships 45 examples: 11 web component demos, 10 end-to-end projects, and 24 package example sets. This table is generated from what is on disk, so it cannot list one that was deleted or miss one that was added. The machine-readable version is [data/examples.json](../data/examples.json).
+The repo ships 47 examples: 11 web component demos, 10 end-to-end projects, and 26 package example sets. This table is generated from what is on disk, so it cannot list one that was deleted or miss one that was added. The machine-readable version is [data/examples.json](../data/examples.json).
 
 ### Example projects
 
@@ -761,11 +761,13 @@ The repo ships 45 examples: 11 web component demos, 10 end-to-end projects, and 
 | [`avatar-sdk/examples`](../avatar-sdk/examples) | A self-contained page, no build step. It loads the SDK's @three-ws/avatar/agent entry from a CDN, awaits ensureAgent3D() to register the <agent-3d> element, and renders the real three.ws default avatar using the documented src and kiosk attributes. | `npm run dev, then open /avatar-sdk/examples/index.html` |
 | [`packages/avatar-schema/examples`](../packages/avatar-schema/examples) | JSON Schema and validator for three.ws on-chain avatar manifests - the canonical, hash-anchored format any cross-chain client can use to resolve an avatar. | Reference files, nothing to execute |
 | [`concierge-sdk/examples`](../concierge-sdk/examples) | Runnable examples for every way to use the concierge. The HTML files load the SDK from ../dist, build it first (npm run build in the package root), then serve this folder (npx serve .) and open each file. | `npm run dev, then open /concierge-sdk/examples/custom-avatar.html` |
+| [`herald-sdk/examples`](../herald-sdk/examples) | Three runnable examples, smallest first. Each one is a single file with no build step: open the HTML in a browser, or run the Node file with node. | `node herald-sdk/examples/ci-notify.mjs` |
 | [`packages/kol-mcp/examples`](../packages/kol-mcp/examples) | Two runnable examples. Both spawn this package's own MCP server over stdio (the same node src/index.js entry point the README documents), speak real MCP JSON-RPC to it, and read the live public KOL API. | `node packages/kol-mcp/examples/list-tools.mjs` |
 | [`packages/loom-mcp/examples`](../packages/loom-mcp/examples) | Two runnable examples. Both spawn this package's own MCP server over stdio (the same node src/index.js entry point the README documents), speak real MCP JSON-RPC to it, and read the live public Loom gallery. | `node packages/loom-mcp/examples/browse-loom.mjs` |
 | [`packages/marketplace-mcp/examples`](../packages/marketplace-mcp/examples) | Two runnable examples. Both spawn this package's own MCP server over stdio (the same node src/index.js entry point the README documents), speak real MCP JSON-RPC to it, and read the live public marketplace. | `node packages/marketplace-mcp/examples/browse-marketplace.mjs` |
 | [`mcp-server/examples`](../mcp-server/examples) | Two zero-dependency walkthroughs of the MCP Streamable HTTP lifecycle against the live three.ws server at https://three.ws/api/mcp (MCP 2025-06-18, JSON-RPC 2.0). | `node mcp-server/examples/client.mjs` |
 | [`page-agent-sdk/examples`](../page-agent-sdk/examples) | Run these from the package root with any static server so the import map can resolve the unbundled source from ../src: | `npm run dev, then open /page-agent-sdk/examples/custom-avatar.html` |
+| [`packages/portal/example`](../packages/portal/example) | Turn any website into a walkable 3D world. | `npm run dev, then open /packages/portal/example/index.html` |
 | [`packages/pumpfun-mcp/examples`](../packages/pumpfun-mcp/examples) | Two runnable examples. Both spawn this package's own MCP server over stdio (the same node src/index.js entry point the README documents), speak real MCP JSON-RPC to it, and read live Solana mainnet data through the canonical three.ws backend. | `node packages/pumpfun-mcp/examples/list-tools.mjs` |
 | [`sdk/example`](../sdk/example) | Ship a cross-chain 3D AI agent with EVM + Solana identity, a chat panel, and discoverable .well-known endpoints. | `npm run dev, then open /sdk/example/index.html` |
 | [`packages/sign-language/example`](../packages/sign-language/example) | American Sign Language for 3D avatars. | `node packages/sign-language/example/compile-utterance.mjs` |
