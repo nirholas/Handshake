@@ -19,16 +19,20 @@ Premium.
 **1**, 277 characters. Attach the four tiles here, in the order in `IMAGE-ORDER.md`.
 
 ```
-A 3D studio, an AI agent lab and a Solana launchpad. In your pocket.
+A 3D studio and an AI agent lab. In your pocket.
 
 three.ws for Android is live.
 
-Type anything, get a 3D model. One selfie, a character of you. Give it a mind. Put it in your room in AR. Launch it as a coin.
+Type anything, get a 3D model. One selfie, a character of you. Give it a mind and a voice. Put it in your room in AR. Send it out into the world.
 
-Free. No wallet needed.
+Free. No account needed.
 
 github.com/nirholas/three.ws/releases/tag/v1.0.0
 ```
+
+Post 1 never says Solana, wallet, coin or launchpad. Those words are the door
+that half the audience turns around at, and the thread earns them by post 6.
+The hook is what you can make, and that is universal.
 
 **2**, 190 characters
 
