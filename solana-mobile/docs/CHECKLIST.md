@@ -55,7 +55,7 @@ Work top-to-bottom. Do not submit until every box is checked. A date after a box
 
 ## 6. Publisher Portal (owner, one-time)
 
-- [ ] Publisher profile created at <https://publish.solanamobile.com> and KYC/KYB approved.
+- [x] Publisher profile created at <https://publish.solanamobile.com> as an Organization, KYB submitted 2026-08-27 and **Approved** (name `three.ws`, website `https://three.ws`). Confirmed in the portal 2026-08-28.
 - [ ] Publisher wallet connected (Phantom/Solflare/Backpack extension) and funded with at least 0.2 SOL for the App NFT, release NFT, and Arweave uploads.
 - [ ] Storage provider chosen (ArDrive recommended).
 - [ ] "Add a dApp" completed with `publish/config.yaml` values, `publish/listing/`, and `publish/media/` (all eight images); App NFT minted.
