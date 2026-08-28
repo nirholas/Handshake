@@ -182,26 +182,41 @@ async function probeVertex() {
 		// A project in billing dunning hands out tokens happily and then 403s
 		// every generative call ("Lightning dunning decision is deny"), which
 		// this probe reported as `ok` for a lane that could not paint a single
-		// image (observed 2026-08-27). Ask the API itself: listing publisher
-		// models is free, needs no quota, and fails with the same project-level
-		// denial a real generate would.
+		// image (observed 2026-08-27). Ask the API itself.
+		//
+		// countTokens, specifically: it is free, consumes no image quota, and
+		// runs the same project + publisher-model path a real generate does, so
+		// it fails with the identical project-level denial. The read-only
+		// endpoints (publishers/models) were tried first and are wrong for this:
+		// they 404 with an HTML body on the regional host whether or not the
+		// project is healthy, which would report a working lane as down.
 		const host = location === 'global' ? 'https://aiplatform.googleapis.com' : `https://${location}-aiplatform.googleapis.com`;
-		const res = await fetch(`${host}/v1/publishers/google/models?pageSize=1`, {
-			headers: { authorization: `Bearer ${token}` },
-			signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
-		});
+		const res = await fetch(
+			`${host}/v1/projects/${project}/locations/${location}/publishers/google/models/${model}:countTokens`,
+			{
+				method: 'POST',
+				headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+				body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'x' }] }] }),
+				signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
+			},
+		);
 		if (res.ok) return { configured: true, status: 'ok', model, location };
 		const body = await res.text().catch(() => '');
+		let message = body.slice(0, 120);
+		try {
+			message = JSON.parse(body)?.error?.message || message;
+		} catch {
+			/* a non-JSON body (an HTML gateway error) keeps the raw prefix */
+		}
 		// Name the billing hold explicitly: it reads like an IAM problem and
 		// sends operators chasing service-account roles instead of the console.
-		const dunning = /dunning/i.test(body);
 		return {
 			configured: true,
 			status: 'down',
 			httpStatus: res.status,
-			detail: dunning
+			detail: /dunning/i.test(message)
 				? 'project billing is in dunning: generative APIs denied until the billing account is settled'
-				: body.slice(0, 120) || `HTTP ${res.status}`,
+				: message.slice(0, 120) || `HTTP ${res.status}`,
 			model,
 			location,
 		};

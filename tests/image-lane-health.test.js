@@ -41,7 +41,25 @@ describe('vertex probe reports real serving ability', () => {
 	it('is ok when the API answers, not merely when a token mints', async () => {
 		const h = await imageLaneHealth();
 		expect(h.lanes.vertex.status).toBe('ok');
-		expect(globalThis.fetch).toHaveBeenCalled();
+		// countTokens specifically: free, no image quota, and the same project +
+		// publisher-model path a real generate takes. The read-only model-list
+		// endpoints 404 with HTML on the regional host even when the lane works.
+		const call = globalThis.fetch.mock.calls.find(([u]) => String(u).includes('aiplatform'));
+		expect(String(call[0])).toContain(':countTokens');
+		expect(call[1].method).toBe('POST');
+	});
+
+	it('reads the message out of a JSON error body rather than dumping the raw payload', async () => {
+		vertex.respond = () => new Response(JSON.stringify({ error: { message: 'Permission denied on resource project.' } }), { status: 403 });
+		const h = await imageLaneHealth();
+		expect(h.lanes.vertex.detail).toBe('Permission denied on resource project.');
+	});
+
+	it('survives a non-JSON gateway body without leaking a page of HTML into health', async () => {
+		vertex.respond = () => new Response('<!DOCTYPE html><html lang=en><title>Error 404</title>', { status: 404 });
+		const h = await imageLaneHealth();
+		expect(h.lanes.vertex.status).toBe('down');
+		expect(h.lanes.vertex.detail.length).toBeLessThanOrEqual(120);
 	});
 
 	it('is down, and names the billing hold, when the project is in dunning', async () => {
