@@ -1,0 +1,64 @@
+{
+	"name": "@three-ws/render",
+	"version": "0.1.0",
+	"description": "Render rigged, animated 3D avatars to PNG, GIF and truecolor terminal ANSI with no GPU, no WebGL and no headless browser. Pure JavaScript software rasterizer for glTF/GLB.",
+	"keywords": [
+		"3d",
+		"glb",
+		"gltf",
+		"software-renderer",
+		"rasterizer",
+		"headless",
+		"cpu-rendering",
+		"ansi",
+		"terminal",
+		"avatar",
+		"three.js",
+		"skinning",
+		"og-image"
+	],
+	"author": "three.ws <support@three.ws> (https://three.ws)",
+	"license": "Apache-2.0",
+	"homepage": "https://three.ws/tty",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "packages/render"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/three.ws/issues"
+	},
+	"type": "module",
+	"main": "./src/index.js",
+	"module": "./src/index.js",
+	"exports": {
+		".": "./src/index.js",
+		"./ansi": "./src/ansi.js",
+		"./encode": "./src/encode.js",
+		"./package.json": "./package.json"
+	},
+	"bin": {
+		"three-ws-tty": "./bin/tty.js"
+	},
+	"files": [
+		"src",
+		"bin",
+		"README.md",
+		"LICENSE"
+	],
+	"engines": {
+		"node": ">=18"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"dependencies": {
+		"three": "^0.184.0"
+	},
+	"optionalDependencies": {
+		"sharp": "^0.35.3"
+	},
+	"scripts": {
+		"test": "vitest run tests"
+	}
+}

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>Your agent, in your terminal · three.ws</title>
+	<meta name="description" content="curl three.ws/tty and a rigged 3D agent walks in your terminal. A real software rasterizer streams ANSI frames over HTTP: no GPU, no WebGL, no install. Plus @three-ws/tty-3d, the CLI and SDK that render any GLB in a terminal." />
+	<link rel="canonical" href="https://three.ws/tty" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="Your agent, in your terminal · three.ws" />
+	<meta property="og:description" content="curl three.ws/tty and a rigged 3D agent walks in your terminal. No GPU, no WebGL, no install." />
+	<meta property="og:url" content="https://three.ws/tty" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=dev&amp;t=Your+agent%2C+in+your+terminal&amp;d=curl+three.ws%2Ftty+and+a+rigged+3D+agent+walks+in+your+terminal.+A+software+rasterizer+streams+ANSI+frames+over+HTTP.&amp;p=%2Ftty" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="Your agent, in your terminal · three.ws" />
+	<meta name="twitter:description" content="curl three.ws/tty and a rigged 3D agent walks in your terminal. No GPU, no WebGL, no install." />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=dev&amp;t=Your+agent%2C+in+your+terminal&amp;d=curl+three.ws%2Ftty+and+a+rigged+3D+agent+walks+in+your+terminal.+A+software+rasterizer+streams+ANSI+frames+over+HTTP.&amp;p=%2Ftty" />
+	<style>
+		:root {
+			--tty-bg: #07080c;
+			--tty-panel: rgba(16, 18, 26, 0.9);
+			--tty-border: rgba(255, 255, 255, 0.1);
+			--tty-border-hi: rgba(255, 255, 255, 0.2);
+			--tty-text: #e9ebf2;
+			--tty-muted: #8a90a2;
+			--tty-faint: #5c6273;
+			--tty-accent: #7ee787;
+			--tty-accent-2: #8b5cf6;
+			--tty-screen: #05060a;
+		}
+		html, body { background: var(--tty-bg); color: var(--tty-text); margin: 0; }
+		body { font-family: var(--font-body, 'Inter', system-ui, sans-serif); min-height: 100vh; }
+		* { box-sizing: border-box; }
+
+		.wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px 96px; }
+		.hero { padding: 72px 0 28px; }
+		.eyebrow {
+			display: inline-flex; align-items: center; gap: 8px;
+			font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+			color: var(--tty-accent); border: 1px solid rgba(126, 231, 135, 0.28);
+			border-radius: 999px; padding: 6px 12px; margin-bottom: 20px;
+		}
+		h1 { font-size: clamp(30px, 5.4vw, 54px); line-height: 1.05; margin: 0 0 16px; letter-spacing: -0.02em; }
+		.lede { font-size: clamp(16px, 2.1vw, 19px); color: var(--tty-muted); max-width: 62ch; line-height: 1.6; margin: 0 0 28px; }
+
+		.cmd {
+			display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+			background: var(--tty-screen); border: 1px solid var(--tty-border-hi);
+			border-radius: 12px; padding: 16px 18px; margin: 0 0 14px;
+			font-family: var(--font-mono, ui-monospace, 'SF Mono', Menlo, monospace);
+			font-size: clamp(14px, 2.4vw, 20px);
+		}
+		.cmd .prompt { color: var(--tty-accent); user-select: none; }
+		.cmd code { flex: 1 1 auto; min-width: 0; overflow-x: auto; white-space: nowrap; color: var(--tty-text); }
+		.copy {
+			flex: 0 0 auto; background: rgba(255, 255, 255, 0.06); color: var(--tty-text);
+			border: 1px solid var(--tty-border); border-radius: 8px; padding: 8px 14px;
+			font: inherit; font-size: 13px; cursor: pointer;
+			transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+		}
+		.copy:hover { background: rgba(255, 255, 255, 0.12); border-color: var(--tty-border-hi); }
+		.copy:active { transform: translateY(1px); }
+		.copy:focus-visible { outline: 2px solid var(--tty-accent); outline-offset: 2px; }
+		.copy[data-copied="true"] { color: var(--tty-accent); border-color: rgba(126, 231, 135, 0.5); }
+
+		.screen-shell {
+			background: var(--tty-screen); border: 1px solid var(--tty-border);
+			border-radius: 14px; overflow: hidden; margin: 26px 0 12px;
+			box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+		}
+		.screen-bar {
+			display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+			border-bottom: 1px solid var(--tty-border); background: rgba(255, 255, 255, 0.02);
+		}
+		.dot { width: 11px; height: 11px; border-radius: 50%; background: #3a3f4d; }
+		.screen-bar .title {
+			margin-left: 8px; font-size: 12px; color: var(--tty-faint);
+			font-family: var(--font-mono, ui-monospace, monospace);
+		}
+		.screen-bar .status { margin-left: auto; font-size: 12px; color: var(--tty-faint); }
+		#screen {
+			margin: 0; padding: 14px; overflow-x: auto; line-height: 1.0;
+			font-family: var(--font-mono, ui-monospace, 'SF Mono', Menlo, monospace);
+			font-size: 11px; letter-spacing: 0; white-space: pre; min-height: 340px;
+			color: var(--tty-muted);
+		}
+		@media (max-width: 720px) { #screen { font-size: 7px; min-height: 240px; } }
+		.screen-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 40px; }
+		.btn {
+			background: rgba(255, 255, 255, 0.05); color: var(--tty-text);
+			border: 1px solid var(--tty-border); border-radius: 8px;
+			padding: 9px 15px; font: inherit; font-size: 13px; cursor: pointer;
+			transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+		}
+		.btn:hover { background: rgba(255, 255, 255, 0.1); border-color: var(--tty-border-hi); }
+		.btn:active { transform: translateY(1px); }
+		.btn:focus-visible { outline: 2px solid var(--tty-accent); outline-offset: 2px; }
+		.btn[aria-pressed="true"] { border-color: var(--tty-accent); color: var(--tty-accent); }
+
+		h2 { font-size: clamp(20px, 3vw, 27px); margin: 52px 0 14px; letter-spacing: -0.01em; }
+		h3 { font-size: 15px; margin: 26px 0 8px; color: var(--tty-text); }
+		p { color: var(--tty-muted); line-height: 1.65; max-width: 68ch; }
+		a { color: var(--tty-accent); }
+		pre.block {
+			background: var(--tty-screen); border: 1px solid var(--tty-border);
+			border-radius: 10px; padding: 15px 17px; overflow-x: auto;
+			font-family: var(--font-mono, ui-monospace, monospace); font-size: 13px;
+			line-height: 1.6; color: #cdd3e1;
+		}
+		.grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); margin: 18px 0; }
+		.card {
+			background: var(--tty-panel); border: 1px solid var(--tty-border);
+			border-radius: 12px; padding: 16px 18px;
+			transition: border-color 160ms ease, transform 160ms ease;
+		}
+		.card:hover { border-color: var(--tty-border-hi); transform: translateY(-2px); }
+		.card h3 { margin: 0 0 6px; font-size: 14px; }
+		.card p { margin: 0; font-size: 13.5px; }
+		table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; }
+		th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--tty-border); }
+		th { color: var(--tty-faint); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+		td code { color: var(--tty-accent); font-family: var(--font-mono, ui-monospace, monospace); font-size: 13px; }
+		.note {
+			border-left: 2px solid var(--tty-accent-2); padding: 2px 0 2px 16px;
+			margin: 18px 0; color: var(--tty-muted); font-size: 14.5px; line-height: 1.65;
+		}
+		footer { margin-top: 64px; padding-top: 26px; border-top: 1px solid var(--tty-border); color: var(--tty-faint); font-size: 13px; }
+		footer a { margin-right: 18px; }
+		@media (prefers-reduced-motion: reduce) { .card, .btn, .copy { transition: none; } }
+	</style>
+</head>
+<body>
+	<header class="site-header"><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+
+	<main class="wrap">
+		<section class="hero">
+			<span class="eyebrow">no gpu · no webgl · no install</span>
+			<h1>Your agent, in your terminal.</h1>
+			<p class="lede">
+				One command. A rigged 3D character loads, plays its animation, and turns on a
+				turntable, drawn entirely out of coloured text. There is nothing to install and
+				nothing to run: the frames are rasterized on our servers and streamed to your
+				shell as they are drawn.
+			</p>
+
+			<div class="cmd">
+				<span class="prompt" aria-hidden="true">$</span>
+				<code id="curl-cmd">curl three.ws/tty</code>
+				<button class="copy" type="button" data-copy-target="curl-cmd">Copy</button>
+			</div>
+			<p style="font-size:13.5px;margin-top:0">
+				Works in any terminal that renders colour. Press Ctrl-C to stop it.
+			</p>
+		</section>
+
+		<section aria-labelledby="demo-heading">
+			<h2 id="demo-heading" style="margin-top:22px">This is the actual output</h2>
+			<p>
+				Not a video and not a recording. The panel below opens the same HTTP stream
+				<code style="color:var(--tty-accent)">curl</code> would, and paints the escape
+				sequences it receives.
+			</p>
+			<div class="screen-shell">
+				<div class="screen-bar">
+					<span class="dot" aria-hidden="true"></span>
+					<span class="dot" aria-hidden="true"></span>
+					<span class="dot" aria-hidden="true"></span>
+					<span class="title">curl three.ws/tty</span>
+					<span class="status" id="stream-status" role="status" aria-live="polite">idle</span>
+				</div>
+				<pre id="screen" tabindex="0" aria-label="Live terminal render of a 3D agent"></pre>
+			</div>
+			<div class="screen-actions">
+				<button class="btn" type="button" id="btn-play">Run it</button>
+				<button class="btn" type="button" id="btn-spin" aria-pressed="true">Turntable</button>
+				<button class="btn" type="button" id="btn-color" aria-pressed="true">Colour</button>
+			</div>
+		</section>
+
+		<section>
+			<h2>Render any model, locally</h2>
+			<p>
+				The renderer is a published package. It takes a GLB, decodes it (including
+				<code style="color:var(--tty-accent)">EXT_meshopt_compression</code>, which most
+				real avatars ship with), evaluates the animation, applies linear blend skinning
+				on the CPU, and rasterizes with a z-buffer. No GPU is involved at any point, so
+				it runs the same over SSH, in CI, or in a container with no display.
+			</p>
+			<pre class="block"><code># a local file
+npx @three-ws/tty-3d ./avatar.glb
+
+# anything on the web
+npx @three-ws/tty-3d https://three.ws/avatars/default.glb --spin 1.4
+
+# a still frame, piped somewhere
+npx @three-ws/tty-3d avatar.glb --once --width 80 --color mono &gt; frame.txt</code></pre>
+			<p style="font-size:13.5px">
+				Arrow keys orbit, <code style="color:var(--tty-accent)">w</code>/<code style="color:var(--tty-accent)">s</code>
+				tilt, <code style="color:var(--tty-accent)">+</code>/<code style="color:var(--tty-accent)">-</code> zoom,
+				space pauses, <code style="color:var(--tty-accent)">q</code> quits.
+			</p>
+
+			<h2>Or as a library</h2>
+			<pre class="block"><code>import { loadModel, createRenderer } from '@three-ws/tty-3d';
+
+const model = await loadModel('./avatar.glb');
+const renderer = createRenderer(model, { width: 80, height: 40 });
+
+// One string per frame. Write it wherever you like.
+process.stdout.write(renderer.frame(1.25));</code></pre>
+		</section>
+
+		<section>
+			<h2>The hosted endpoint</h2>
+			<p>
+				<code style="color:var(--tty-accent)">GET /api/tty</code> streams frames as
+				<code style="color:var(--tty-accent)">text/plain</code>, paced in real time, so the
+				response itself is the animation. Every parameter is optional.
+			</p>
+			<table>
+				<thead><tr><th>Parameter</th><th>Meaning</th><th>Default</th></tr></thead>
+				<tbody>
+					<tr><td><code>avatar</code></td><td>A public three.ws avatar id. Also the path form, <code>/tty/&lt;id&gt;</code>.</td><td>the three.ws model</td></tr>
+					<tr><td><code>src</code></td><td>Any public GLB URL.</td><td>none</td></tr>
+					<tr><td><code>w</code>, <code>h</code></td><td>Columns and rows.</td><td>76 x 30</td></tr>
+					<tr><td><code>frames</code></td><td>How many frames to send. <code>1</code> gives a still.</td><td>8 seconds</td></tr>
+					<tr><td><code>fps</code></td><td>Frames per second, 4 to 30.</td><td>18</td></tr>
+					<tr><td><code>t</code></td><td>Where in the clip to start, in seconds.</td><td>0</td></tr>
+					<tr><td><code>spin</code></td><td>Turntable speed in radians per second. <code>0</code> holds still.</td><td>0.9</td></tr>
+					<tr><td><code>clip</code></td><td>Animation name to play.</td><td>the first clip</td></tr>
+					<tr><td><code>color</code></td><td><code>truecolor</code>, <code>ansi256</code>, or <code>mono</code>.</td><td>ansi256</td></tr>
+					<tr><td><code>zoom</code>, <code>pitch</code></td><td>Camera distance and elevation.</td><td>1, 0.08</td></tr>
+				</tbody>
+			</table>
+			<pre class="block"><code># your own avatar, wider, held still
+curl 'three.ws/tty/&lt;avatar-id&gt;?w=110&amp;spin=0'
+
+# a single frame in plain ASCII, for a README or a commit hook
+curl 'three.ws/tty?frames=1&amp;color=mono&amp;w=60'</code></pre>
+			<p class="note">
+				A browser asking for this URL is redirected here instead, because a browser would
+				show the escape codes as literal garbage. Pass
+				<code style="color:var(--tty-accent)">?raw=1</code> to see the bytes anyway.
+			</p>
+		</section>
+
+		<section>
+			<h2>How it works</h2>
+			<div class="grid">
+				<div class="card">
+					<h3>Half blocks, not ASCII art</h3>
+					<p>Each cell is a <code>▀</code> with its own foreground and background colour, so one character carries two pixels. That doubles vertical resolution and makes pixels square, which is why a sphere comes out round.</p>
+				</div>
+				<div class="card">
+					<h3>Real skinning</h3>
+					<p>Joint matrices are evaluated per frame and blended per vertex, so a rigged avatar actually moves its limbs. It is not a spinning static mesh.</p>
+				</div>
+				<div class="card">
+					<h3>Framing that holds still</h3>
+					<p>The camera radius is fixed from the widest frame of the clip and the centre tracks the pose, so a walk cycle with root motion neither breathes nor walks out of shot.</p>
+				</div>
+				<div class="card">
+					<h3>Silhouette-first shading</h3>
+					<p>A key light, a fill, and a rim term. At this resolution the outline carries the shape, so faces turning away are lifted rather than crushed to black.</p>
+				</div>
+			</div>
+		</section>
+
+		<footer>
+			<a href="/docs/tty">Docs</a>
+			<a href="/avatars">Avatars</a>
+			<a href="/create">Create an agent</a>
+			<a href="https://github.com/nirholas/three.ws/tree/main/packages/tty-3d">Source</a>
+		</footer>
+	</main>
+
+	<script type="module" src="/src/tty-page.js"></script>
+</body>
+</html>

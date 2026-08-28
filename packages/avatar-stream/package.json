@@ -1,0 +1,82 @@
+{
+  "name": "@three-ws/avatar-stream",
+  "version": "0.1.0",
+  "description": "Progressive 3D over plain HTTP. Pack a GLB into a layered A3S stream whose first 50 KB is already a complete, skinned, spec-valid avatar, then refine it in place with byte-range requests. No custom server, no WebSocket, no new codec.",
+  "type": "module",
+  "main": "./src/index.js",
+  "module": "./src/index.js",
+  "exports": {
+    ".": {
+      "import": "./src/index.js",
+      "default": "./src/index.js"
+    },
+    "./three": {
+      "import": "./src/three.js",
+      "default": "./src/three.js"
+    },
+    "./node": {
+      "import": "./src/node.js",
+      "default": "./src/node.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "a3s": "./bin/a3s.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": [
+    "3d",
+    "glb",
+    "gltf",
+    "progressive",
+    "streaming",
+    "lod",
+    "level-of-detail",
+    "meshopt",
+    "three.js",
+    "avatar",
+    "range-requests",
+    "three.ws"
+  ],
+  "author": "nirholas <support@three.ws>",
+  "license": "Apache-2.0",
+  "homepage": "https://three.ws/stream",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/three.ws.git",
+    "directory": "packages/avatar-stream"
+  },
+  "bugs": {
+    "url": "https://github.com/nirholas/three.ws/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "peerDependencies": {
+    "@gltf-transform/core": ">=4",
+    "@gltf-transform/extensions": ">=4",
+    "@gltf-transform/functions": ">=4",
+    "draco3dgltf": ">=1.5",
+    "meshoptimizer": ">=1.1",
+    "sharp": ">=0.33"
+  },
+  "peerDependenciesMeta": {
+    "@gltf-transform/core": { "optional": true },
+    "@gltf-transform/extensions": { "optional": true },
+    "@gltf-transform/functions": { "optional": true },
+    "draco3dgltf": { "optional": true },
+    "meshoptimizer": { "optional": true },
+    "sharp": { "optional": true }
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
