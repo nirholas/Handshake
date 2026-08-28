@@ -46,14 +46,20 @@ let _brownoutMod = null;
 // `"AsyncLocalStorage" is not exported by "__vite-browser-external"` even though
 // the guard above means a browser never evaluates it. Rollup resolves a string
 // literal here regardless of @vite-ignore, and constant-folds a `const` holding
-// one, so the path is joined from parts: an expression no optimizer folds.
-// Node resolves it relative to this module, which is what the server needs.
-const BROWNOUT_SPECIFIER = ['..', '..', 'api', '_lib', 'brownout', 'index.js'].join('/');
+// one.
+//
+// A local `['..', 'api', …].join('/')` was the first attempt and it stopped
+// working: Rollup 4 folds that expression too, and the deploy build died again
+// on the same line. So the path is parked on `globalThis` and read back from a
+// member expression, which no bundler can evaluate at build time because it
+// cannot know what else may have written there. Node resolves the relative
+// specifier against THIS module, which is what the server needs.
+globalThis.__threewsBrownoutSpecifier ||= ['..', '..', 'api', '_lib', 'brownout', 'index.js'].join('/');
 function brownout() {
 	if (_brownoutPromise !== undefined) return _brownoutPromise;
 	_brownoutPromise = null;
 	if (typeof window === 'undefined') {
-		_brownoutPromise = import(/* @vite-ignore */ BROWNOUT_SPECIFIER)
+		_brownoutPromise = import(/* @vite-ignore */ globalThis.__threewsBrownoutSpecifier)
 			.then((m) => {
 				_brownoutMod = m;
 				return m;
