@@ -74,9 +74,22 @@ Two traps, both observed on 2026-08-28:
 - **The header must be short-lived.** `.well-known/*` is served with `max-age=3600`. A day-long TTL means a rotated key stays unverified for up to a day after the deploy.
 - **Chrome caches a failed verification.** After the correct assetlinks goes live, an already-installed app can keep showing the address bar until Chrome's cache clears. Force it with `adb shell pm clear com.android.chrome`, or `adb shell pm verify-app-links --re-verify ws.three.app` followed by `adb shell pm get-app-links ws.three.app`, which should print `three.ws: verified`.
 
-## Screenshots
+## Listing media
 
-`publish/media/` carries `icon.png`, `banner.png`, and `feature.png`, all regenerable with `node scripts/make-media.mjs` (the feature graphic is a live Playwright capture of a real agent page). The five 1080x1920 screenshots are deliberately absent: reviewers reject emulator and desktop captures, and a placeholder is worse than a missing file. Capture them on a real Seeker following [solana-mobile/docs/ASSETS.md](../solana-mobile/docs/ASSETS.md), which lists the exact frame each one should show.
+Everything the portal asks for is generated and committed under [solana-mobile/publish/media/](../solana-mobile/publish/media/):
+
+```bash
+npm run build:dapp-store-media      # icon.png, banner.png, feature.png
+npm run build:dapp-store-previews   # screen-1..5.png (the carousel)
+```
+
+`build:dapp-store-media` writes the 512x512 icon from the shipped app mark, the 1200x600 banner (the wordmark drawn in a browser against the site's own Space Grotesk files, so store type matches product type), and the 1024x500 feature graphic, a live capture of a real agent page.
+
+`build:dapp-store-previews` builds the five 1080x1920 previews as one 5400x1920 composition and slices it. Four of its nine phones sit exactly on a seam, so each upload carries one whole screen plus the two halves it shares with its neighbours and the strip reads as a single photograph while scrolling. **Upload them in numbered order** or the halves stop lining up. Every phone holds a real capture of three.ws at Seeker resolution; nothing is mocked or drawn to look like product UI.
+
+Two useful flags: `--origin=http://localhost:3000` captures the working tree instead of production (the dev server proxies `/api` to production, so the data stays real), and `--keep-raw` also writes the untouched captures to `publish/media/raw/` for inspection.
+
+To ship true on-device frames instead, drop 1080x1920 Seeker captures into `publish/media/device/` as `screen-1.png` … `screen-5.png` and rerun: each one replaces its live capture and the carousel is rebuilt around it. Frame-by-frame guidance is in [solana-mobile/docs/ASSETS.md](../solana-mobile/docs/ASSETS.md).
 
 ## Verifying a build before submitting
 

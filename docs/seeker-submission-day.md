@@ -125,43 +125,39 @@ Built for Seeker. Signed by Seed Vault. Seed phrases never leave the secure elem
 No off-chain test accounts are required: auth is wallet-only.
 ```
 
-**Images.** Three are ready to upload from the repo at `solana-mobile/publish/media/`:
+**Images.** All eight are ready to upload from the repo at `solana-mobile/publish/media/`:
 
-| Upload slot | File | Size |
-|---|---|---|
-| App icon (512x512) | `icon.png` | 344 KB |
-| Banner (1200x600) | `banner.png` | 72 KB |
-| Feature graphic (1024x500) | `feature.png` | 170 KB |
+| Upload slot | File |
+|---|---|
+| App icon (512x512) | `icon.png` |
+| Banner (1200x600) | `banner.png` |
+| Feature graphic (1024x500) | `feature.png` |
+| dApp preview 1 (1080x1920) | `screen-1.png` |
+| dApp preview 2 | `screen-2.png` |
+| dApp preview 3 | `screen-3.png` |
+| dApp preview 4 | `screen-4.png` |
+| dApp preview 5 | `screen-5.png` |
 
-Screenshots are Step 3. If the portal will not let you save without them, do Step 3 first and come back.
+**Upload the five previews in numbered order.** They are one 5400x1920 picture cut into five, with four phones sitting on the creases, so out of order they stop lining up. The portal wants matching dimensions across previews, and all five are 1080x1920 portrait. Open `solana-mobile/publish/media/carousel.png` to see the whole strip at once.
 
 - [ ] Every field above pasted
-- [ ] Three images uploaded
+- [ ] Three brand images and five previews uploaded, previews in order 1 to 5
 - [ ] Saved, and the **App NFT minted** (you will approve one wallet transaction)
 
 ---
 
-## Step 3. Five screenshots, on the Seeker
+## Step 3. The phone check (previews are already built)
 
-This is the only part nothing can do for you: reviewers reject emulator and desktop captures, and they can tell.
+The five previews are generated, committed, and listed in Step 2. Every phone in them holds a real capture of three.ws rendered at Seeker resolution, which is exactly what the app draws, and the frames are composed into one continuous strip. Nothing here is mocked. You do not need to capture anything to submit.
 
-**Set up once:** Settings → Display → turn on gesture navigation, so the screenshots have no navigation bar across the bottom. Then open the three.ws app; it launches full-screen onto its home screen.
+**If you would rather ship true on-device captures**, take them and the generator will use them instead of capturing the web app, keeping the same carousel design:
 
-Capture with Power + Volume-Down. Five frames, 1080x1920 each:
+1. Settings → Display → turn on gesture navigation, so no navigation bar crosses the bottom.
+2. Open the app and capture with Power + Volume-Down: the home screen, the marketplace grid, an agent with the 3D viewer, the Seed Vault sheet (while it shows `three.ws` and a non-empty `Nonce:` line), and the selfie capture screen.
+3. Copy them into `solana-mobile/publish/media/device/` as `screen-1.png` through `screen-5.png`, 1080x1920 each.
+4. Run `npm run build:dapp-store-previews`. The five uploads are rebuilt around your captures.
 
-| # | Screen | How to get there |
-|---|---|---|
-| 1 | The home screen | Open the app. Capture the hero with "Sign in with Seed Vault" and the Create cards. |
-| 2 | Marketplace | Tap **Marketplace**. Wait for the agent grid to fill in. |
-| 3 | An agent with the 3D viewer | Tap any agent. Wait for the model to render, drag once to a good angle. |
-| 4 | The Seed Vault sheet | Tap **Sign in with Seed Vault**. Capture the sheet while it shows `three.ws` and a non-empty `Nonce:` line. |
-| 5 | Selfie capture | Tap **Selfie to avatar**, allow the camera, and capture the capture screen (or the finished avatar). |
-
-Rules that get listings rejected if broken: no placeholder or mocked UI, no other company's branding in frame, no notification shade pulled down, nothing personal in the status bar.
-
-- [ ] Five PNGs, 1080x1920, on the phone
-- [ ] Transferred to the laptop
-- [ ] Uploaded to the portal listing in this order
+Rules that get a listing rejected either way: no placeholder or mocked UI, no other company's branding in frame, no notification shade pulled down, nothing personal in the status bar.
 
 While you have the phone in hand, confirm these four (they are the last unchecked boxes in the submission checklist):
 

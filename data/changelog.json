@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-28",
+			"title": "Avatars now face you when a page opens",
+			"summary": "The 3D viewer used to seat its camera on one fixed side and call that the front, which only worked for characters whose rig happened to be built facing that way. Everyone else opened showing you the back of their head. The viewer now reads which way the body is actually turned, from the rig itself, and frames the face, so every avatar greets you the same way no matter which tool it was made in. A second fix ships with it: if you have asked your phone or computer to reduce motion, avatars no longer spin slowly on a turntable, they hold still while keeping their breathing and blinking.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/marketplace"
+		},
+		{
+			"date": "2026-08-28",
 			"title": "Embedded avatars load again on other people's websites",
 			"summary": "Anyone who dropped a three.ws avatar onto their own site with the <agent-3d> tag and pointed it straight at a model file got an error panel instead of the character: the embed code referred to something that was not there and gave up at the last step, right before it would have started the idle animation. It now loads and plays as documented. Two related repairs came with it: the compression decoders three.ws hosts can finally be used by other sites (they were being blocked, so every embed quietly fell back to a third-party CDN and logged errors doing it), and the code that runs on other people's pages is now checked for this exact class of mistake before it can ship again.",
 			"tags": [

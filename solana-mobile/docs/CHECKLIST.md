@@ -85,7 +85,7 @@ Work top-to-bottom. Do not submit until every box is checked. A date after a box
 - [ ] Airplane mode: the app shows a clear network error, not a broken white page.
 - [ ] Deep links (`https://three.ws/agents/...`) open inside the app, not in Chrome. (App-link state is `verified` on the emulator, so this should hold; confirm on the device.)
 - [ ] Share a photo from the device's Photos app into three.ws and confirm it lands in `/create/selfie` already attached, then share a `.glb` and confirm it lands in `/create`. This CANNOT be verified over adb: `am start --grant-read-uri-permission` cannot confer a MediaStore URI grant, so android-browser-helper's re-grant to Chrome throws `SecurityException: UID does not have permission to content://media/...` before the web layer runs (observed 2026-08-28). A real sharing app grants the URI first. The web half is covered by `tests/share-target.test.js` and by the live `POST /create/share` fallback answering 303 to `/create?shared=nosw`.
-- [ ] Five screenshots captured per `docs/ASSETS.md` and dropped into `publish/media/`.
+- [x] Five 1080x1920 previews built and committed to `publish/media/` (2026-08-28). They are one 5400x1920 carousel sliced into five, so upload them in numbered order; see `docs/ASSETS.md`. Optional upgrade: drop real Seeker captures into `publish/media/device/` and rerun `npm run build:dapp-store-previews`.
 
 ## 10. Post-submission
 
