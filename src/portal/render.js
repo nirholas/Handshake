@@ -30,8 +30,16 @@ const EYE_HEIGHT = 1.55;
 const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
 const lerp = (a, b, t) => a + (b - a) * t;
 
-/** A label drawn to a canvas and hung in the world as a sprite. */
-function makeLabel(text, { color = '#ffffff', background = 'rgba(6,8,14,0.72)', size = 44, maxWidth = 640 } = {}) {
+/**
+ * A label drawn to a canvas and hung in the world as a sprite.
+ *
+ * `worldWidth` is the size the sprite occupies IN THE WORLD, in metres, and the
+ * canvas aspect only decides its height. Sizing by aspect instead (the obvious
+ * first cut) makes a long title a 10 m billboard and a short one a postage
+ * stamp, which is exactly backwards: a label's importance is its role, not its
+ * character count.
+ */
+function makeLabel(text, { color = '#ffffff', background = 'rgba(6,8,14,0.72)', size = 44, maxWidth = 640, worldWidth = 3.2 } = {}) {
 	const canvas = document.createElement('canvas');
 	const ctx = canvas.getContext('2d');
 	const font = `600 ${size}px "Inter", system-ui, sans-serif`;
@@ -54,7 +62,7 @@ function makeLabel(text, { color = '#ffffff', background = 'rgba(6,8,14,0.72)', 
 	texture.colorSpace = THREE.SRGBColorSpace;
 	texture.anisotropy = 4;
 	const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false }));
-	sprite.scale.set((canvas.width / canvas.height) * 1.1, 1.1, 1);
+	sprite.scale.set(worldWidth, worldWidth * (canvas.height / canvas.width), 1);
 	sprite.userData.dispose = () => {
 		texture.dispose();
 		sprite.material.dispose();
@@ -184,9 +192,8 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 	halo.rotation.x = Math.PI / 2;
 	halo.position.y = 1.1;
 	scene.add(halo);
-	const titleLabel = makeLabel(world.plaza.monument.label, { size: 52 });
+	const titleLabel = makeLabel(world.plaza.monument.label, { size: 52, worldWidth: 6.4 });
 	titleLabel.position.set(0, world.plaza.monument.h + 1.1, 0);
-	titleLabel.scale.multiplyScalar(1.15);
 	scene.add(titleLabel);
 	labels.push({ sprite: titleLabel, far: 120 });
 	disposables.push({ dispose: () => titleLabel.userData.dispose() });
@@ -235,9 +242,8 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 			scene.add(band);
 		}
 
-		const label = makeLabel(b.label, { size: 40 });
+		const label = makeLabel(b.label, { size: 40, worldWidth: 4.2 });
 		label.position.set(b.x, b.h + 1.1, b.z);
-		label.scale.multiplyScalar(0.78);
 		scene.add(label);
 		labels.push({ sprite: label, far: 70 });
 		disposables.push({ dispose: () => label.userData.dispose() });
@@ -263,9 +269,8 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 		scene.add(mesh);
 		doorMeshes.push({ mesh, door: d, material: mat });
 
-		const label = makeLabel(d.label || new URL(d.href).host, { size: 34, color: d.internal ? '#eaf6ff' : '#ffeede' });
+		const label = makeLabel(d.label || new URL(d.href).host, { size: 34, color: d.internal ? '#eaf6ff' : '#ffeede', worldWidth: 2.4 });
 		label.position.set(d.x, d.h + 0.7, d.z);
-		label.scale.multiplyScalar(0.62);
 		scene.add(label);
 		labels.push({ sprite: label, far: 26 });
 		disposables.push({ dispose: () => label.userData.dispose() });
@@ -298,9 +303,8 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 					// useful than a blank panel and is exactly what the page meant.
 					mat.color.set(p.color);
 					if (p.label) {
-						const alt = makeLabel(p.label, { size: 30 });
+						const alt = makeLabel(p.label, { size: 30, worldWidth: 2.6 });
 						alt.position.set(p.x, p.h + 1.6, p.z);
-						alt.scale.multiplyScalar(0.62);
 						scene.add(alt);
 						labels.push({ sprite: alt, far: 30 });
 						disposables.push({ dispose: () => alt.userData.dispose() });

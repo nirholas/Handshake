@@ -126,12 +126,14 @@ class Side {
 	}
 
 	clear() {
+		// Put the authored materials back before disposing, so the walk below
+		// disposes the originals and their textures rather than a tinted clone
+		// that shares those same textures with nothing left to own them.
+		this.restore();
 		if (this.root) {
 			this.group.remove(this.root);
 			disposeObject(this.root);
 		}
-		for (const material of this.overrides) material.dispose();
-		this.overrides.clear();
 		this.originalMaterials.clear();
 		this.byPath.clear();
 		this.root = null;
@@ -287,17 +289,26 @@ export async function createDiffStage(container) {
 		});
 	}
 
+	// Marking a change by REPLACING the material with a flat colour destroys the
+	// thing you came to look at: two unrelated avatars end up as a red blob and a
+	// green blob. So the authored material is cloned and only its emissive is
+	// pushed to the marker colour. The model still looks like itself, and the
+	// changed parts glow. Cloning shares the source textures, and Material
+	// .dispose() never touches them, so the clone is free to throw away.
 	function tintMaterial(source, color, opacity = 1) {
-		const material = new MeshStandardMaterial({
-			color,
-			emissive: new Color(color).multiplyScalar(0.35),
-			roughness: 0.55,
-			metalness: 0.05,
-			transparent: opacity < 1,
-			opacity,
-			depthWrite: opacity >= 1,
-		});
-		if (source?.map) material.map = source.map;
+		const material = source && typeof source.clone === 'function' ? source.clone() : new MeshStandardMaterial();
+		if (material.emissive) {
+			material.emissive = new Color(color);
+			material.emissiveIntensity = 0.6;
+			material.emissiveMap = null;
+		} else {
+			material.color = new Color(color);
+		}
+		if (opacity < 1) {
+			material.transparent = true;
+			material.opacity = opacity;
+			material.depthWrite = false;
+		}
 		return material;
 	}
 

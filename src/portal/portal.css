@@ -132,7 +132,9 @@
 
 /* ── minimap ─────────────────────────────────────────────────────────────── */
 .pt-map {
-	bottom: max(var(--space-md), env(safe-area-inset-bottom));
+	/* Clear of the platform's own bottom-right omnibox pill, so two live
+	   surfaces never sit on top of each other. */
+	bottom: calc(max(var(--space-md), env(safe-area-inset-bottom)) + 3.4rem);
 	right: var(--space-md);
 	width: 168px;
 	height: 168px;
