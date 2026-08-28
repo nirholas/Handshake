@@ -1,0 +1,268 @@
+/* /glance — the Glance landing and live playground. */
+
+.glance-main {
+	max-width: 1100px;
+	margin: 0 auto;
+	padding: 64px 24px 96px;
+	display: grid;
+	gap: 72px;
+}
+
+.glance-hero .eyebrow {
+	text-transform: uppercase;
+	letter-spacing: 0.16em;
+	font-size: 12px;
+	opacity: 0.6;
+	margin: 0 0 12px;
+}
+.glance-hero h1 {
+	font-size: clamp(32px, 6vw, 56px);
+	line-height: 1.05;
+	letter-spacing: -0.03em;
+	margin: 0 0 16px;
+}
+.glance-hero .lede {
+	font-size: clamp(15px, 2.2vw, 18px);
+	line-height: 1.6;
+	max-width: 62ch;
+	opacity: 0.78;
+	margin: 0 0 24px;
+}
+.glance-hero-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+}
+.glance-main .btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 44px;
+	padding: 0 20px;
+	border-radius: 999px;
+	font-size: 14px;
+	font-weight: 600;
+	text-decoration: none;
+	border: 1px solid currentColor;
+	transition:
+		transform 0.16s ease,
+		opacity 0.16s ease;
+}
+.glance-main .btn.primary {
+	background: currentColor;
+	border-color: transparent;
+}
+.glance-main .btn.primary > * {
+	color: canvas;
+}
+.glance-main .btn:hover {
+	transform: translateY(-1px);
+}
+.glance-main .btn:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+	.glance-main .btn:hover {
+		transform: none;
+	}
+}
+
+.glance-demo-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 12px;
+	justify-content: space-between;
+	margin-bottom: 20px;
+}
+.glance-demo h2,
+.glance-snippets h2,
+.glance-install h2 {
+	font-size: clamp(22px, 3.4vw, 30px);
+	letter-spacing: -0.02em;
+	margin: 0;
+}
+.glance-source {
+	margin: 0;
+	font-size: 13px;
+	opacity: 0.62;
+}
+
+.glance-controls {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 12px;
+	margin-bottom: 10px;
+}
+.glance-controls .field {
+	display: grid;
+	gap: 6px;
+	font-size: 12px;
+	opacity: 0.9;
+}
+.glance-controls select,
+.glance-controls input {
+	font: inherit;
+	font-size: 14px;
+	min-height: 42px;
+	padding: 0 12px;
+	border-radius: 12px;
+	border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+	background: color-mix(in srgb, currentColor 5%, transparent);
+	color: inherit;
+	width: 100%;
+	box-sizing: border-box;
+}
+.glance-controls select:focus-visible,
+.glance-controls input:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: 2px;
+}
+.glance-controls input[aria-invalid='true'] {
+	border-color: #ef4444;
+}
+.glance-help {
+	font-size: 12.5px;
+	opacity: 0.6;
+	margin: 0 0 24px;
+}
+
+.glance-stage {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+	gap: 20px;
+}
+.glance-stage-panel {
+	border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+	border-radius: 20px;
+	padding: 20px;
+}
+.glance-stage-panel h3 {
+	margin: 0 0 4px;
+	font-size: 15px;
+}
+.glance-note {
+	margin: 0 0 16px;
+	font-size: 12.5px;
+	opacity: 0.6;
+}
+.glance-slot {
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	min-height: 220px;
+	padding: 8px;
+}
+.glance-slot img {
+	max-width: 100%;
+	height: auto;
+	border-radius: 20px;
+}
+
+.glance-snippet-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+	gap: 16px;
+	margin-top: 20px;
+}
+.glance-snippet {
+	border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+	border-radius: 18px;
+	overflow: hidden;
+}
+.glance-snippet header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 12px 16px;
+	border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+}
+.glance-snippet h3 {
+	margin: 0;
+	font-size: 13px;
+	font-weight: 600;
+}
+.glance-snippet pre {
+	margin: 0;
+	padding: 16px;
+	overflow-x: auto;
+	font-size: 12.5px;
+	line-height: 1.6;
+}
+.glance-snippet code {
+	white-space: pre;
+	word-break: normal;
+}
+button.copy {
+	font: inherit;
+	font-size: 12px;
+	padding: 6px 12px;
+	border-radius: 999px;
+	border: 1px solid color-mix(in srgb, currentColor 24%, transparent);
+	background: transparent;
+	color: inherit;
+	cursor: pointer;
+	transition: border-color 0.15s ease;
+}
+button.copy:hover {
+	border-color: currentColor;
+}
+button.copy:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: 2px;
+}
+button.copy[data-state='done'] {
+	border-color: #22c55e;
+	color: #22c55e;
+}
+
+.glance-surfaces {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+	gap: 16px;
+	margin-top: 20px;
+}
+.glance-surface {
+	border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+	border-radius: 18px;
+	padding: 20px;
+}
+.glance-surface h3 {
+	margin: 0 0 6px;
+	font-size: 16px;
+}
+.glance-status {
+	margin: 0 0 12px;
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.12em;
+	opacity: 0.55;
+}
+.glance-surface.is-live .glance-status {
+	color: #22c55e;
+	opacity: 1;
+}
+.glance-surface ol {
+	margin: 0 0 12px;
+	padding-left: 18px;
+	font-size: 13.5px;
+	line-height: 1.7;
+}
+.glance-surface p {
+	font-size: 13.5px;
+	line-height: 1.6;
+	opacity: 0.8;
+	margin: 0 0 8px;
+}
+.glance-surface code {
+	font-size: 12.5px;
+}
+
+@media (max-width: 640px) {
+	.glance-main {
+		padding: 40px 16px 72px;
+		gap: 56px;
+	}
+}

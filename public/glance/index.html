@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Glance — your agent on every home screen | three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+		<meta
+			name="description"
+			content="One three.ws agent, one live number, everywhere you have a slot: the Windows 11 widgets board, a README, a Slack message, or any page."
+		/>
+		<meta name="theme-color" content="#0a0a0a" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Glance — your agent on every home screen" />
+		<meta
+			property="og:description"
+			content="One three.ws agent, one live number, everywhere you have a slot: the Windows 11 widgets board, a README, a Slack message, or any page."
+		/>
+		<meta property="og:url" content="https://three.ws/glance" />
+		<meta property="og:image" content="https://three.ws/screenshots/glance-widget.png" />
+		<meta property="og:image:alt" content="An agent glance card" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="Glance — your agent on every home screen" />
+		<meta
+			name="twitter:description"
+			content="One three.ws agent, one live number, everywhere you have a slot."
+		/>
+		<meta name="twitter:image" content="https://three.ws/screenshots/glance-widget.png" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+
+		<link rel="canonical" href="https://three.ws/glance" />
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/glance/glance.css" />
+		<script type="module" src="/glance/element.js"></script>
+		<script type="application/ld+json">
+			{
+				"@context": "https://schema.org",
+				"@type": "WebPage",
+				"name": "Glance",
+				"description": "One three.ws agent, one live number, everywhere you have a slot.",
+				"url": "https://three.ws/glance",
+				"isPartOf": { "@type": "WebSite", "name": "three.ws", "url": "https://three.ws" }
+			}
+		</script>
+	</head>
+	<body class="glance-body">
+		<div id="nav-container"></div>
+		<script src="/nav.js"></script>
+
+		<main class="glance-main">
+			<section class="glance-hero">
+				<p class="eyebrow">Glance</p>
+				<h1>Your agent, on every home screen.</h1>
+				<p class="lede">
+					One agent, one live number, one tap back in. The same card renders on the Windows 11
+					widgets board, in a README, in a Slack message, and on any page, from one endpoint that
+					reads your real activity.
+				</p>
+				<div class="glance-hero-actions">
+					<a class="btn primary" href="#install">Put it on your home screen</a>
+					<a class="btn ghost" href="/docs/glance">Read the docs</a>
+				</div>
+			</section>
+
+			<section class="glance-demo" aria-labelledby="demo-heading">
+				<div class="glance-demo-head">
+					<h2 id="demo-heading">Live, from a real agent</h2>
+					<p id="glance-source" class="glance-source">Loading an agent…</p>
+				</div>
+
+				<div class="glance-controls" role="group" aria-label="Card options">
+					<label class="field">
+						<span>Agent</span>
+						<select id="agent-select" aria-describedby="agent-help">
+							<option value="">Loading…</option>
+						</select>
+					</label>
+					<label class="field">
+						<span>Or paste an agent id</span>
+						<input
+							id="agent-input"
+							type="text"
+							inputmode="text"
+							spellcheck="false"
+							placeholder="00000000-0000-0000-0000-000000000000"
+							aria-describedby="agent-help"
+						/>
+					</label>
+					<label class="field">
+						<span>Size</span>
+						<select id="size-select">
+							<option value="small">small</option>
+							<option value="medium" selected>medium</option>
+							<option value="large">large</option>
+						</select>
+					</label>
+					<label class="field">
+						<span>Theme</span>
+						<select id="theme-select">
+							<option value="auto" selected>auto</option>
+							<option value="light">light</option>
+							<option value="dark">dark</option>
+						</select>
+					</label>
+				</div>
+				<p id="agent-help" class="glance-help">
+					Any public agent works. Find one in the <a href="/agents">agent directory</a>, or
+					<a href="/create">create yours</a>.
+				</p>
+
+				<div class="glance-stage">
+					<div class="glance-stage-panel">
+						<h3>Live element</h3>
+						<p class="glance-note">Real DOM: hoverable, focusable, screen-reader readable.</p>
+						<div id="element-slot" class="glance-slot"></div>
+					</div>
+					<div class="glance-stage-panel">
+						<h3>Image</h3>
+						<p class="glance-note">One URL. Works in a README, Slack, or any &lt;img&gt;.</p>
+						<div class="glance-slot">
+							<img id="card-image" alt="Agent glance card" width="480" height="200" />
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section class="glance-snippets" aria-labelledby="snip-heading">
+				<h2 id="snip-heading">Take it with you</h2>
+				<div class="glance-snippet-grid">
+					<article class="glance-snippet">
+						<header><h3>A page</h3><button class="copy" type="button" data-copy="snippet-html">Copy</button></header>
+						<pre><code id="snippet-html"></code></pre>
+					</article>
+					<article class="glance-snippet">
+						<header><h3>A README</h3><button class="copy" type="button" data-copy="snippet-md">Copy</button></header>
+						<pre><code id="snippet-md"></code></pre>
+					</article>
+					<article class="glance-snippet">
+						<header><h3>Your terminal</h3><button class="copy" type="button" data-copy="snippet-cli">Copy</button></header>
+						<pre><code id="snippet-cli"></code></pre>
+					</article>
+					<article class="glance-snippet">
+						<header><h3>The API</h3><button class="copy" type="button" data-copy="snippet-api">Copy</button></header>
+						<pre><code id="snippet-api"></code></pre>
+					</article>
+				</div>
+			</section>
+
+			<section class="glance-install" id="install" aria-labelledby="install-heading">
+				<h2 id="install-heading">On your home screen</h2>
+				<div class="glance-surfaces">
+					<article class="glance-surface is-live">
+						<h3>Windows 11</h3>
+						<p class="glance-status">Live now</p>
+						<ol>
+							<li>Open three.ws in Edge and install it (the install icon in the address bar).</li>
+							<li>Open the widgets board (Win + W) and choose <b>Add widgets</b>.</li>
+							<li>Pick <b>Agent glance</b>. It refreshes itself every 15 minutes.</li>
+						</ol>
+						<p class="glance-note">
+							Signed out is handled: the widget shows a sign-in card rather than an error, and it
+							keeps the last card it saw when the machine is offline.
+						</p>
+					</article>
+					<article class="glance-surface is-live">
+						<h3>Any web page</h3>
+						<p class="glance-status">Live now</p>
+						<p>
+							The <code>&lt;agent-glance&gt;</code> element above is the whole integration: one
+							module script, one tag. It polls only while it is on screen and the tab is visible.
+						</p>
+					</article>
+					<article class="glance-surface">
+						<h3>Android</h3>
+						<p class="glance-status">Next</p>
+						<p>
+							The signed <code>ws.three.app</code> shell already ships. The app widget provider is
+							the remaining piece, and the card endpoint it needs is what this page is running on.
+						</p>
+					</article>
+					<article class="glance-surface">
+						<h3>macOS and iOS</h3>
+						<p class="glance-status">Planned</p>
+						<p>
+							A shared WidgetKit extension, gated on an Apple Developer account. Same card, same
+							endpoint. See the
+							<a href="https://github.com/nirholas/three.ws/blob/main/prompts/roadmap/native-widgets.md">work order</a>.
+						</p>
+					</article>
+				</div>
+			</section>
+		</main>
+
+		<footer class="h-footer">
+			<div class="h-footer-bottom">
+				<p class="h-footer-legal">© 2026 three.ws. All rights reserved.</p>
+				<div class="h-footer-badges">
+					<a class="h-footer-badge" href="/docs/glance"><span>Glance docs</span></a>
+					<a class="h-footer-badge" href="/widgets"><span>Embeddable 3D widgets</span></a>
+					<a
+						class="h-footer-badge"
+						href="https://github.com/nirholas/three.ws"
+						target="_blank"
+						rel="noopener"
+						><span>Open source</span></a
+					>
+				</div>
+			</div>
+		</footer>
+
+		<script type="module" src="/glance/glance-page.js"></script>
+		<script src="/brand.js" defer></script>
+	</body>
+</html>
