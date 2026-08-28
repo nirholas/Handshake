@@ -46,7 +46,7 @@
 		}
 	],
 
-	"permissions": ["storage", "alarms"],
+	"permissions": ["storage"],
 
 	"host_permissions": ["https://three.ws/*"],
 

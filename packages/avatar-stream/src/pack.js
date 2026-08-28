@@ -42,6 +42,9 @@ export const DEFAULT_BASE_TEXTURE_SIZE = 64;
 /** glTF primitive mode for triangles; the only mode a mesh simplifier can reason about. */
 const MODE_TRIANGLES = 4;
 
+/** Compression extensions the base layer deliberately does not depend on. */
+const COMPRESSION_EXTENSIONS = new Set(['EXT_meshopt_compression', 'KHR_draco_mesh_compression']);
+
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
 
 let ioPromise = null;
@@ -210,11 +213,18 @@ export async function pack(glbBytes, options = {}) {
 	await MeshoptSimplifier.ready;
 	const io = await getIO();
 	const doc = await io.readBinary(new Uint8Array(source));
+	const root = doc.getRoot();
 	// Positions arrive quantized on most platform avatars; the simplifier needs
 	// real floats, and the base layer is small enough that the trade is cheap.
 	await doc.transform(dequantize());
+	// Layer 0's whole promise is that it opens anywhere, so it must not require a
+	// decoder the reader may not have installed. Dropping the compression
+	// extensions the source declared costs a few kilobytes and buys a base layer
+	// that loads in a stock GLTFLoader, in Blender, and in the Khronos validator.
+	for (const extension of root.listExtensionsUsed()) {
+		if (COMPRESSION_EXTENSIONS.has(extension.extensionName)) extension.dispose();
+	}
 
-	const root = doc.getRoot();
 	const primPlans = [];
 	let skipped = 0;
 

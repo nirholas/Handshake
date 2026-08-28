@@ -53,10 +53,16 @@ async function rememberedPrice(origin) {
 
 async function rememberPrice(origin, amount) {
 	const { prices = {} } = await chrome.storage.local.get({ prices: {} });
-	prices[origin] = { value: amount.value, currency: amount.currency, at: Date.now() };
-	// Keep the map small: twenty origins is more than a browsing session needs
-	// and stops this from becoming a shopping history by accident.
-	const entries = Object.entries(prices).sort((a, b) => b[1].at - a[1].at).slice(0, 20);
+	const now = Date.now();
+	prices[origin] = { value: amount.value, currency: amount.currency, at: now };
+	// Expired entries are dropped on every write rather than left to rot until
+	// the site is visited again, and the map is capped at twenty origins: more
+	// than a browsing session needs, and few enough that this never quietly
+	// becomes a shopping history.
+	const entries = Object.entries(prices)
+		.filter(([, entry]) => now - entry.at <= PRICE_TTL_MS)
+		.sort((a, b) => b[1].at - a[1].at)
+		.slice(0, 20);
 	await chrome.storage.local.set({ prices: Object.fromEntries(entries) });
 }
 
