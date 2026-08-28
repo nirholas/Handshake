@@ -121,7 +121,7 @@ export async function assertSafePublicUrl(input, { allowHttp = false } = {}) {
 		throw new SsrfBlockedError('url is not a valid URL');
 	}
 	if (url.protocol === 'http:' && !allowHttp) {
-		throw new SsrfBlockedError('http:// not allowed — use https://');
+		throw new SsrfBlockedError('http:// not allowed, use https://');
 	}
 	if (url.protocol !== 'https:' && url.protocol !== 'http:') {
 		throw new SsrfBlockedError(`unsupported protocol ${url.protocol}`);

@@ -20,7 +20,7 @@ vi.mock('../../api/_lib/ssrf-guard.js', async (importOriginal) => {
 	const assertSafePublicUrl = vi.fn(async (url, opts = {}) => {
 		const parsed = new URL(url);
 		if (parsed.protocol === 'http:' && !opts.allowHttp)
-			throw new SsrfBlockedError('http:// not allowed — use https://');
+			throw new SsrfBlockedError('http:// not allowed, use https://');
 		if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1')
 			throw new SsrfBlockedError('host resolves to a blocked range');
 		return parsed;
