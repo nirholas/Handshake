@@ -7,6 +7,7 @@
 
 import { describe, it, expect, beforeAll } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { AvatarModel } from '../src/model.js';
 import { renderFrame, renderFrames, frameCamera, PRESETS } from '../src/render.js';
 import { parseClipJson } from '../src/clips.js';
@@ -150,7 +151,7 @@ describe('animation', () => {
 			spin: 360,
 		});
 		expect(frames).toHaveLength(4);
-		const hashes = new Set(frames.map((f) => Buffer.from(f.data).toString('base64').slice(0, 64)));
+		const hashes = new Set(frames.map((f) => createHash('sha256').update(Buffer.from(f.data)).digest('hex')));
 		expect(hashes.size).toBe(4);
 	}, 60_000);
 });
