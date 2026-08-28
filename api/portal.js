@@ -24,7 +24,9 @@ import { buildWorld } from '../src/portal/layout.js';
 export const maxDuration = 30;
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	// Open CORS on purpose: @three-ws/portal runs inside other people's pages,
+	// and every byte here is already public on the site it read.
+	if (cors(req, res, { origins: '*', methods: 'GET,OPTIONS' })) return;
 	if (!method(req, res, ['GET'])) return;
 
 	const url = new URL(req.url, 'http://x');
