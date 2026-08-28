@@ -97,13 +97,13 @@ export const ANCHORS = Object.freeze({
 		Right: vAdd(shoulderR, vAdd(above(-hang * 0.86), vAdd(lateral(0.02), ahead(-hang * 0.42)))),
 	},
 	/**
-	 * On the thigh, a third of the way from hip to knee: where a hand actually
+	 * On the thigh, a little under a third of the way from hip to knee: where a hand actually
 	 * rests when someone sits down or leans on their legs. The knee itself is
 	 * past a wrist's reach on a human skeleton, which is why hands go here.
 	 */
 	thigh: {
-		Left: vLerp(restPos('LeftUpLeg'), restPos('LeftLeg'), 0.35),
-		Right: vLerp(restPos('RightUpLeg'), restPos('RightLeg'), 0.35),
+		Left: vLerp(restPos('LeftUpLeg'), restPos('LeftLeg'), 0.28),
+		Right: vLerp(restPos('RightUpLeg'), restPos('RightLeg'), 0.28),
 	},
 	/** The knee joint itself: a place to look at, or to reach for in a crouch. */
 	knee: {

@@ -12,8 +12,8 @@
 // plainly as a failure, because a proof that did not run is not a pass.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { cors, json, method, wrap, error } from './_lib/http.js';
-import { limits, clientIp, rateLimited } from './_lib/rate-limit.js';
+import { cors, json, method, wrap, error, rateLimited } from './_lib/http.js';
+import { limits, clientIp } from './_lib/rate-limit.js';
 
 const ROOT = process.cwd();
 let _cached = null;

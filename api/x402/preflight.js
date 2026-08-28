@@ -173,14 +173,22 @@ export default wrap(async function handler(req, res) {
 	if (cors(req, res, { origins: '*', methods: 'GET,OPTIONS' })) return;
 	if (!method(req, res, ['GET'])) return;
 
-	const url = new URL(req.url, `https://${req.headers.host || 'three.ws'}`);
+	// TLS terminates at the load balancer, so the origin sees plain http and must
+	// take the client-visible scheme from the forwarded header. Getting this wrong
+	// is not cosmetic: `subject` is inside the signature, and a verifier that
+	// pinned the origin it asked about would reject every attestation as a
+	// subject_mismatch. Default https, which is what the production LB sends.
+	const proto = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim()
+		|| (req.socket?.encrypted ? 'https' : 'http');
+	const host = req.headers.host || 'three.ws';
+	const url = new URL(req.url, `${proto}://${host}`);
 	const ttl = Math.min(
 		PREFLIGHT_MAX_TTL_SECONDS,
 		Math.max(1, Number(url.searchParams.get('ttl')) || PREFLIGHT_TTL_SECONDS),
 	);
 	const network = url.searchParams.get('network');
 	const endpointPath = url.searchParams.get('endpoint');
-	const origin = `https://${req.headers.host || 'three.ws'}`;
+	const origin = `${proto}://${host}`;
 
 	const key = cacheKey(ttl, endpointPath);
 	const now = Date.now();
