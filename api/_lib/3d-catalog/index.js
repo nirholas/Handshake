@@ -27,6 +27,7 @@ import { pathToFileURL } from 'node:url';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import diffEntry from './diff.js';
 import generateEntry from './generate.js';
 import inspectEntry from './inspect.js';
 
@@ -40,6 +41,7 @@ import inspectEntry from './inspect.js';
 // >>> Adding an endpoint: drop `api/_lib/3d-catalog/<slug>.js` AND add its
 // >>> import + line here. The import is what makes it exist in production.
 const STATIC_ENTRIES = [
+	{ mod: diffEntry, source: 'diff.js' },
 	{ mod: generateEntry, source: 'generate.js' },
 	{ mod: inspectEntry, source: 'inspect.js' },
 ];

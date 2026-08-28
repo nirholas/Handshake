@@ -937,7 +937,15 @@ function extractGlbUrl(output) {
 	return null;
 }
 
+// Generous: a cold Replicate model can take a while to accept the job, and
+// failing early here wastes the user's prompt for nothing.
+const SUBMIT_TIMEOUT_MS = 30_000;
+
 async function submitPrediction({ version, input }) {
+	// The poll loop below is bounded per request, but the submit that starts it
+	// was not: a stalled connection here held the whole tool invocation open with
+	// no prediction to poll for. Submitting is not idempotent (a retry buys a
+	// second GPU run), so this is a deadline only, never a retry.
 	const res = await fetch(`${REPLICATE_BASE}/predictions`, {
 		method: 'POST',
 		headers: replicateAuthHeaders(),

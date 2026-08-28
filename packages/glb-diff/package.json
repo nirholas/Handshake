@@ -1,0 +1,69 @@
+{
+  "name": "@three-ws/glb-diff",
+  "version": "0.1.0",
+  "description": "Structural diff for glTF/GLB. Tells you what actually changed between two 3D models: geometry, materials, textures, skeletons, animations, with git-style rename and move detection. Isomorphic library plus a CI-ready CLI.",
+  "type": "module",
+  "main": "./src/index.js",
+  "module": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "bin": {
+    "glb-diff": "./src/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js",
+      "default": "./src/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "vitest run --root ../.. packages/glb-diff"
+  },
+  "keywords": [
+    "gltf",
+    "glb",
+    "diff",
+    "3d",
+    "gltf-transform",
+    "version-control",
+    "regression",
+    "ci",
+    "rename-detection",
+    "three.ws"
+  ],
+  "author": "nirholas <support@three.ws>",
+  "license": "Apache-2.0",
+  "homepage": "https://three.ws/diff",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/three.ws.git",
+    "directory": "packages/glb-diff"
+  },
+  "bugs": {
+    "url": "https://github.com/nirholas/three.ws/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@gltf-transform/core": "^4.4.0",
+    "@gltf-transform/extensions": "^4.4.0"
+  },
+  "peerDependencies": {
+    "meshoptimizer": "^1.1.1"
+  },
+  "peerDependenciesMeta": {
+    "meshoptimizer": {
+      "optional": true
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

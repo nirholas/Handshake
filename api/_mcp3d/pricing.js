@@ -111,6 +111,9 @@ export const FREE_TOOLS = Object.freeze(
 		'validate_spatial_response',
 		'export_ar',
 		'verify_provenance',
+		// Free on purpose and permanently. An assurance check that costs money is one
+		// nobody calls, and one nobody calls prevents nothing.
+		'x402_preflight',
 		'persona_identity',
 		'persona_tip',
 		'persona_send',
