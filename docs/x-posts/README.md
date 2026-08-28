@@ -38,6 +38,7 @@ explicit approval). Each file states what it's for and what has already been ver
 | [`oracle-trading-mcp-x-post.md`](oracle-trading-mcp-x-post.md) | The oracle trading MCP server launch |
 | [`sperax-staking-in-chat-x-post.md`](sperax-staking-in-chat-x-post.md) | SperaxOS chat-native staking, balance, and buy-SPA tool calls. The embedded `/staking` page is not working yet: do not announce until the blockers in the file clear |
 | [`news-archive-x-post.md`](news-archive-x-post.md) | The news archive |
+| [`proof-of-life-x-post.md`](proof-of-life-x-post.md) | A shipping-evidence post for the platform account: what landed this week, with public verification links. Names nothing about the personal account |
 | [`pumpfun-article-x-post.md`](pumpfun-article-x-post.md) | The pump.fun article |
 
 ## Video and narration scripts
