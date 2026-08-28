@@ -1,4 +1,4 @@
-// /tty — the live panel that proves the claim on the page.
+// /tty: the live panel that proves the claim on the page.
 //
 // It opens the same HTTP stream `curl three.ws/tty` opens and paints what comes
 // back. Nothing is pre-rendered and nothing is faked: if the endpoint breaks,
