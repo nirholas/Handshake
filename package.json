@@ -232,6 +232,7 @@
 		"audit:web:provision": "node scripts/provision-audit-account.mjs",
 		"snapshot:authed": "node scripts/page-snapshot.mjs --authed",
 		"ui:review": "node scripts/ui-review.mjs",
+		"bots:report": "node scripts/trading-bot-report.mjs",
 		"logs": "node scripts/gcp-logs.mjs",
 		"logs:tail": "node scripts/gcp-logs.mjs --follow",
 		"gpu": "node scripts/gpu-capacity.mjs",
