@@ -148,15 +148,19 @@ async function resolveViaJupiter(mints) {
 	for (let i = 0; i < mints.length; i += JUPITER_SEARCH_BATCH) {
 		const chunk = mints.slice(i, i + JUPITER_SEARCH_BATCH);
 		try {
-			const r = await fetch(
-				`https://lite-api.jup.ag/tokens/v2/search?query=${chunk.join(',')}`,
-				{ signal: AbortSignal.timeout(15_000) },
-			);
-			if (!r.ok) {
-				console.warn('[token-metadata] jupiter search failed:', r.status);
+			// One chunk failing leaves those mints unnamed in the DB cache for as
+			// long as the row lives, so it is worth a retry rather than a skip.
+			let rows;
+			try {
+				rows = await fetchUpstreamJson(
+					`https://lite-api.jup.ag/tokens/v2/search?query=${chunk.join(',')}`,
+					{},
+					{ name: 'jupiter:tokens-search', timeoutMs: 15_000, attempts: 2 },
+				);
+			} catch (err) {
+				console.warn('[token-metadata] jupiter search failed:', err?.message || err);
 				continue;
 			}
-			const rows = await r.json();
 			if (!Array.isArray(rows)) continue;
 			for (const t of rows) {
 				if (!t?.id || !(t.symbol || t.name)) continue;

@@ -15,6 +15,8 @@
 // `level` is RugCheck's own grading ("warn" / "danger"). Unknown or invalid
 // mints answer 400 with an error body.
 
+import { fetchUpstreamJson } from './upstream-fetch.js';
+
 const RUGCHECK_API = 'https://api.rugcheck.xyz/v1';
 const FETCH_TIMEOUT_MS = 6000;
 
@@ -59,12 +61,20 @@ export function rugcheckLevel(scoreNormalised) {
  * }>}
  */
 export async function fetchRugcheckSummary(mint, opts = {}) {
-	const r = await fetch(`${RUGCHECK_API}/tokens/${encodeURIComponent(mint)}/report/summary`, {
-		headers: { accept: 'application/json' },
-		signal: opts.signal ?? AbortSignal.timeout(FETCH_TIMEOUT_MS),
-	});
-	if (!r.ok) return null;
-	const d = await r.json().catch(() => null);
+	// Retried, because a null here reads downstream as "no risk data for this
+	// mint" rather than "we could not reach the risk source". Deliberately NOT
+	// kept as last-good: a risk report is a live verdict, and serving an old one
+	// for a token whose authority changed since is worse than having none.
+	let d;
+	try {
+		d = await fetchUpstreamJson(
+			`${RUGCHECK_API}/tokens/${encodeURIComponent(mint)}/report/summary`,
+			{ headers: { accept: 'application/json' }, signal: opts.signal },
+			{ name: 'rugcheck:summary', timeoutMs: FETCH_TIMEOUT_MS, attempts: 2 },
+		);
+	} catch {
+		return null;
+	}
 	if (!d || typeof d !== 'object') return null;
 	const score = num(d.score_normalised);
 	// A real report always carries the normalized score and/or a risks array;

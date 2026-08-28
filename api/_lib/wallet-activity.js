@@ -20,6 +20,7 @@ import { cacheWrap } from './cache.js';
 import { env } from './env.js';
 
 import { fetchUpstream } from './upstream-fetch.js';
+import { fetchCoinPriceUsdOrNull } from './market-fallbacks.js';
 const DAY_MS = 86_400_000;
 const ACTIVITY_TTL_S = 3600;
 
@@ -118,24 +119,25 @@ async function etherscan(chainid, params) {
 		headers: { accept: 'application/json' },
 		signal: AbortSignal.timeout(15_000),
 	}, { name: 'etherscan', timeoutMs: 15_000, attempts: 2, okWhen: () => true });
-	if (!r.ok) return [];
+	// A failed call is NOT an empty wallet. Returning [] for both meant an
+	// explorer outage read as "this address has never transacted", which is the
+	// input airdrop eligibility is computed from, so a blip silently denied a
+	// real user. Throwing lets the per-chain settle below record the chain as
+	// unread instead of as inactive.
+	if (!r.ok) {
+		throw Object.assign(new Error(`etherscan ${r.status} on chain ${chainid}`), { code: 'explorer_unavailable', status: r.status });
+	}
 	const data = await r.json().catch(() => null);
 	// status "0" with "No transactions found" is a real empty answer, not an error.
 	return Array.isArray(data?.result) ? data.result : [];
 }
 
 async function ethUsdPrice() {
-	try {
-		const r = await fetch(
-			'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd',
-			{ headers: { accept: 'application/json' }, signal: AbortSignal.timeout(8000) },
-		);
-		const data = await r.json().catch(() => null);
-		const p = Number(data?.ethereum?.usd);
-		return Number.isFinite(p) && p > 0 ? p : null;
-	} catch {
-		return null;
-	}
+	// CoinGecko's keyless tier is shared per egress IP, so this leg throttles on
+	// its own schedule; the shared fallback covers it with the other coin price
+	// sources and still returns null when every one of them misses.
+	const p = Number(await fetchCoinPriceUsdOrNull('ethereum'));
+	return Number.isFinite(p) && p > 0 ? p : null;
 }
 
 /**
@@ -198,6 +200,10 @@ export async function evmWalletActivity(address) {
 	if (!chains.length) {
 		throw Object.assign(new Error('every explorer call failed'), { code: 'upstream_unavailable' });
 	}
+	// Some chains answered and some did not. The scan is still worth returning,
+	// but it is a PARTIAL view, and a caller scoring eligibility on it has to be
+	// able to tell that from a wallet that is genuinely quiet on those chains.
+	const unreadChains = EVM_CHAIN_IDS.filter((id) => !chains.some((c) => c.chainid === id));
 
 	const days = new Set();
 	const tokens = new Set();
@@ -237,6 +243,15 @@ export async function evmWalletActivity(address) {
 		contract_interactions: contractCalls,
 		capped,
 		chains: activeChains.map((id) => ({ 1: 'ethereum', 10: 'optimism', 8453: 'base', 42161: 'arbitrum' })[id] || String(id)),
+		// Present only when a chain could not be read at all. A consumer scoring
+		// eligibility on this scan needs to tell "quiet on Base" from "we could
+		// not see Base", because the two look identical in every count above.
+		...(unreadChains.length
+			? {
+					partial: true,
+					unread_chains: unreadChains.map((id) => ({ 1: 'ethereum', 10: 'optimism', 8453: 'base', 42161: 'arbitrum' })[id] || String(id)),
+				}
+			: {}),
 	};
 }
 
