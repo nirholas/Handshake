@@ -17,7 +17,14 @@ import {
 	SOLANA_SWEEP_BATCH,
 	SOLANA_SWEEP_PERIOD_MIN,
 } from '../api/_lib/solana-agent-events.js';
-import { normalizeEvent, toDate, agentRef, EVENT_CLASSES } from '../api/_lib/onchain-events.js';
+import {
+	normalizeEvent,
+	toDate,
+	agentRef,
+	EVENT_CLASSES,
+	sanitizeText,
+	sanitizePayload,
+} from '../api/_lib/onchain-events.js';
 import { sweepCycleMin } from '../api/_lib/ops/index-lag.js';
 import { nextChunkSize, backoffChunkSize, isRangeRejection } from '../api/cron/[name].js';
 import { splitCapabilities } from '../api/explore-item.js';
@@ -285,6 +292,53 @@ describe('normalizeEvent', () => {
 
 	it('rejects an unknown event class', () => {
 		expect(normalizeEvent({ ...good, eventClass: 'airdrop' })).toBe(null);
+	});
+
+	// Measured on 2026-08-28: Base mainnet's crawl cursor had been frozen 310
+	// hours, Ethereum's 97 and Gnosis's 371, every one of them holding
+	// `unsupported Unicode escape sequence` in last_error. A NUL byte inside an
+	// on-chain metadata string failed the jsonb INSERT, recordEvents is awaited
+	// before the cursor advances, so the next tick re-read the same range and
+	// hit the same byte forever.
+	it('keeps an event whose on-chain strings carry bytes jsonb cannot store', () => {
+		const NUL = String.fromCharCode(0);
+		const row = normalizeEvent({
+			...good,
+			chain: 'evm',
+			chainId: 8453,
+			eventClass: 'metadata',
+			eventName: `MetadataSet${NUL}`,
+			actor: `0xabc${NUL}`,
+			payload: { [`ur${NUL}i`]: `ipfs://q${NUL}m`, tags: [`a${NUL}b`] },
+		});
+		expect(row).not.toBe(null);
+		expect(row.eventName).toBe('MetadataSet');
+		expect(row.actor).toBe('0xabc');
+		expect(row.payload).toEqual({ uri: 'ipfs://qm', tags: ['ab'] });
+		expect(JSON.stringify(row.payload)).not.toContain('\\u0000');
+	});
+});
+
+describe('sanitizeText', () => {
+	it('drops NUL and replaces a lone surrogate, leaving real text alone', () => {
+		expect(sanitizeText(`a${String.fromCharCode(0)}b`)).toBe('ab');
+		expect(sanitizeText(`a${String.fromCharCode(0xd800)}b`)).toBe('a\uFFFDb');
+		expect(sanitizeText('a\u{1F600}b')).toBe('a\u{1F600}b');
+	});
+});
+
+describe('sanitizePayload', () => {
+	it('walks arrays and nested objects, keys included', () => {
+		const NUL = String.fromCharCode(0);
+		expect(sanitizePayload({ [`k${NUL}`]: [{ v: `x${NUL}y` }] })).toEqual({ k: [{ v: 'xy' }] });
+	});
+
+	it('drops a subtree past the depth guard rather than passing it through raw', () => {
+		// Returning the unwalked object would hand unsanitized on-chain strings
+		// straight to jsonb, which is the failure this function exists to stop.
+		let deep = { v: `x${String.fromCharCode(0)}y` };
+		for (let i = 0; i < 12; i += 1) deep = { n: deep };
+		expect(JSON.stringify(sanitizePayload(deep))).not.toContain('\\u0000');
 	});
 });
 

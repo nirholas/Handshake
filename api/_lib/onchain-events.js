@@ -33,9 +33,58 @@ const CLASS_SET = new Set(EVENT_CLASSES);
 
 const MAX_TEXT = 256;
 
+// Deepest payload nesting the sanitizer walks. On-chain payloads are shallow
+// objects the crawlers build themselves, so this is a cycle guard, not a limit
+// any real event approaches.
+const MAX_PAYLOAD_DEPTH = 8;
+
+/**
+ * Strip the two code points Postgres refuses to store, from a string that came
+ * off a chain and is therefore arbitrary bytes decoded as UTF-8.
+ *
+ * A NUL (U+0000) inside a jsonb value fails the whole INSERT with
+ * `unsupported Unicode escape sequence`, and a lone surrogate fails it with an
+ * invalid-escape error of its own. Because recordEvents is awaited BEFORE the
+ * crawl cursor advances, one such byte in one log wedges that chain forever:
+ * every tick re-reads the same block range, hits the same log, throws, and
+ * leaves the cursor where it was. Measured on 2026-08-28: Base mainnet had been
+ * frozen 310 hours, Ethereum 97 and Gnosis 371, all three with
+ * `unsupported Unicode escape sequence` sitting in erc8004_crawl_cursor.last_error.
+ *
+ * The event is worth more than the unstorable byte, so drop the byte and keep
+ * the row rather than rejecting history the chain really contains.
+ * @param {string} s
+ * @returns {string}
+ */
+export function sanitizeText(s) {
+	return String(s)
+		.replace(/\u0000/g, '')
+		.replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '\uFFFD');
+}
+
+/**
+ * Apply sanitizeText to every string in a payload, keys included: a metadata
+ * key is as much on-chain bytes as its value is.
+ * @param {unknown} v
+ * @param {number} [depth]
+ * @returns {unknown}
+ */
+export function sanitizePayload(v, depth = 0) {
+	if (typeof v === 'string') return sanitizeText(v);
+	if (!v || typeof v !== 'object') return v;
+	// Past the guard the subtree is dropped rather than passed through: handing
+	// back an unwalked object would put unsanitized on-chain strings straight
+	// into jsonb, which is the exact failure this function exists to prevent.
+	if (depth >= MAX_PAYLOAD_DEPTH) return null;
+	if (Array.isArray(v)) return v.map((item) => sanitizePayload(item, depth + 1));
+	const out = {};
+	for (const [k, val] of Object.entries(v)) out[sanitizeText(k)] = sanitizePayload(val, depth + 1);
+	return out;
+}
+
 const clip = (v) => {
 	if (v == null) return null;
-	const s = String(v).trim();
+	const s = sanitizeText(v).trim();
 	if (!s) return null;
 	return s.length > MAX_TEXT ? s.slice(0, MAX_TEXT) : s;
 };
@@ -94,7 +143,7 @@ export function normalizeEvent(e) {
 		occurredAt,
 		actor: clip(e.actor),
 		counterparty: clip(e.counterparty),
-		payload: e.payload && typeof e.payload === 'object' ? e.payload : {},
+		payload: e.payload && typeof e.payload === 'object' ? sanitizePayload(e.payload) : {},
 	};
 }
 
