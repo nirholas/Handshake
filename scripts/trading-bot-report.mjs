@@ -9,6 +9,19 @@
 // its wallet, and the LIVE on-chain balance of that wallet (SOL + surviving
 // SPL token positions) read straight from a Solana RPC.
 //
+// It also answers the question the raw numbers hide: WHY a bot is not trading.
+// An armed bot with a dry wallet looks identical to a healthy one in every
+// count, so each bot carries two verdicts:
+//
+//   solvency: 'funded' / 'shrunk' / 'starved', decided by walletTradeState(),
+//              the same sizing rule the executor itself uses to place or skip
+//              an entry (api/_lib/sniper-solvency.js). Asked, never re-derived:
+//              a threshold copied here would drift into calling a wallet
+//              tradeable that the executor sits out.
+//   activity: STALLED when a bot is armed but has not attempted an entry in
+//              STALE_DAYS, which is how ten armed bots sat silent for weeks
+//              while every liveness check reported them fine.
+//
 // Read-only: it never signs, funds, or closes anything.
 //
 // Usage:
@@ -23,6 +36,7 @@
 import { readFileSync } from 'node:fs';
 import { neon } from '@neondatabase/serverless';
 import { solPriceUsd } from '../api/_lib/sol-price.js';
+import { summarizeFleetSolvency, describeSolvency, walletTradeState } from '../api/_lib/sniper-solvency.js';
 
 for (const file of ['.env.local', '.env']) {
 	try {
@@ -48,6 +62,9 @@ const RPC = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
 const SOL = 1e9;
 const TOKEN_PROGRAM = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
 const TOKEN_2022 = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb';
+// An armed bot that has not even ATTEMPTED an entry for this long is stalled,
+// not quiet: every arm here is wired to feeds that produce candidates daily.
+const STALE_DAYS = 7;
 
 const num = (v) => (v == null ? 0 : Number(v));
 const sol = (n, d = 4) => (n >= 0 ? ' ' : '') + n.toFixed(d);
@@ -163,17 +180,34 @@ async function loadSnipers() {
 async function loadEquips() {
 	return sql`
 		select e.id, e.agent_id, e.network, e.active, e.fires_count, e.last_eval_at, e.last_fired_at,
-		       i.name agent_name, st.name strategy_name,
+		       i.name agent_name,
+		       coalesce(k.engaged, false) owner_killed,
+		       st.name strategy_name,
 		       (select count(*)::int from agent_strategy_positions p where p.equip_id = e.id) positions,
 		       (select coalesce(sum(p.realized_pnl_lamports), 0)::float / 1e9 from agent_strategy_positions p
 		         where p.equip_id = e.id) realized_pnl_sol
 		  from agent_strategy_equips e
 		  left join agent_identities i on i.id = e.agent_id
 		  left join agent_strategies st on st.id = e.strategy_id
+		  left join strategy_kill_switch k on k.owner_id = e.owner_id
 		 order by e.active desc, e.fires_count desc`;
 }
 
-const [snipers, equips, price] = await Promise.all([loadSnipers(), loadEquips(), livePrice()]);
+// The funding master is the wallet the auto-funder refills every bot from, so
+// "starved fleet" and "starved fleet the auto-funder can heal on its own" are
+// different operational answers. Reading it needs the launcher signer, which is
+// absent from a plain checkout; null is a first-class value here (it turns
+// masterCanCover into null, not false) rather than a reason to fail the report.
+async function masterSol() {
+	try {
+		const { masterBalanceSol } = await import('../api/_lib/launcher-funding.js');
+		return await masterBalanceSol('mainnet');
+	} catch {
+		return null;
+	}
+}
+
+const [snipers, equips, price, master] = await Promise.all([loadSnipers(), loadEquips(), livePrice(), masterSol()]);
 
 const active = snipers.filter((b) => b.enabled || b.closed_count > 0 || b.open_count > 0);
 const reported = includeIdle ? snipers : active;
@@ -189,6 +223,28 @@ if (!skipChain) {
 		await sleep(250);
 	}
 }
+
+const staleBefore = Date.now() - STALE_DAYS * 86_400_000;
+for (const bot of reported) {
+	// The sniper arms answer to their OWN per-strategy kill_switch column only.
+	// The per-owner strategy_kill_switch table governs the Strategy Object runtime
+	// (api/_lib/agent-strategy-runtime.js engagedKillOwners()) and nothing reads it
+	// on this path, so joining it here would report an arm as halted while the
+	// executor keeps trading it.
+	bot.halted = Boolean(bot.kill_switch);
+	bot.stalled = Boolean(bot.enabled) && !bot.halted
+		&& (!bot.last_trade_at || new Date(bot.last_trade_at).getTime() < staleBefore);
+	bot.solvency = bot.solBalance == null ? 'unknown' : walletTradeState(bot.solBalance, num(bot.per_trade_sol));
+}
+
+// Fleet verdict over the ARMED wallets only: an off bot not trading is a
+// decision, not a fault, and folding it in would understate the deficit.
+const fleet = summarizeFleetSolvency({
+	wallets: reported
+		.filter((b) => b.enabled && !b.halted)
+		.map((b) => ({ agentId: b.agent_id, address: b.wallet, balanceSol: b.solBalance ?? null, perTradeSol: num(b.per_trade_sol) })),
+	masterSol: master,
+});
 
 const totals = reported.reduce(
 	(acc, b) => {
@@ -208,7 +264,7 @@ const totals = reported.reduce(
 );
 
 if (asJson) {
-	console.log(JSON.stringify({ generated_at: new Date().toISOString(), sol_price_usd: price, totals, snipers: reported, equips }, null, 2));
+	console.log(JSON.stringify({ generated_at: new Date().toISOString(), sol_price_usd: price, fleet, totals, snipers: reported, equips }, null, 2));
 	process.exit(0);
 }
 
@@ -221,7 +277,10 @@ console.log(`SOL reference price: ${price ? `$${price.toFixed(2)}` : 'unknown'} 
 console.log('\nPUMP.FUN SNIPERS');
 for (const b of reported) {
 	const posture = b.kill_switch ? 'KILLED' : b.enabled ? 'ARMED' : 'off';
-	console.log(`\n  ${b.agent_name || '(unnamed)'}  [${b.label || 'no label'}]  ${posture}`);
+	const flags = [b.stalled ? `STALLED (no entry attempt in ${STALE_DAYS}d)` : null, b.solvency === 'starved' ? 'STARVED (cannot fund an entry)' : b.solvency === 'shrunk' ? 'SHRUNK (trades below configured size)' : null]
+		.filter(Boolean)
+		.join('  ');
+	console.log(`\n  ${b.agent_name || '(unnamed)'}  [${b.label || 'no label'}]  ${posture}${flags ? `  ${flags}` : ''}`);
 	console.log(`    trigger ${b.trigger} · ${b.decision_mode || 'rules'} · ${b.network} · ${b.per_trade_sol} SOL/trade, ${b.daily_budget_sol} SOL/day, max ${b.max_concurrent_positions} open`);
 	console.log(`    trades: ${b.closed_count} closed (${b.wins}W/${b.losses}L), ${b.open_count} open, ${b.failed_count} failed entries · last ${when(b.last_trade_at)}`);
 	console.log(`    realized PnL: ${sol(num(b.realized_pnl_sol))} SOL${usd(num(b.realized_pnl_sol))} on ${num(b.deployed_sol).toFixed(3)} SOL deployed`);
@@ -244,11 +303,23 @@ for (const b of reported) {
 
 console.log('\nSTRATEGY OBJECT RUNTIME (task-05 equips)');
 for (const e of equips) {
-	console.log(`  ${e.active ? 'active' : 'off   '}  ${(e.agent_name || e.agent_id).slice(0, 24).padEnd(25)} ${(e.strategy_name || '-').slice(0, 22).padEnd(23)} fires ${String(e.fires_count).padStart(3)} · positions ${e.positions} · PnL ${sol(num(e.realized_pnl_sol))} SOL · last eval ${when(e.last_eval_at)}`);
+	console.log(`  ${e.owner_killed ? 'KILLED' : e.active ? 'active' : 'off   '}  ${(e.agent_name || e.agent_id).slice(0, 24).padEnd(25)} ${(e.strategy_name || '-').slice(0, 22).padEnd(23)} fires ${String(e.fires_count).padStart(3)} · positions ${e.positions} · PnL ${sol(num(e.realized_pnl_sol))} SOL · last eval ${when(e.last_eval_at)}`);
+}
+
+console.log('\nFLEET SOLVENCY (armed bots)');
+console.log(`  ${describeSolvency(fleet)}`);
+console.log(`  ${fleet.funded} funded · ${fleet.shrunk} shrunk · ${fleet.starved} starved · ${fleet.tradeable}/${fleet.agents} able to place an entry`);
+if (fleet.deficitSol > 0) console.log(`  SOL needed to lift every starved wallet to its refill target: ${fleet.deficitSol.toFixed(4)} SOL${usd(fleet.deficitSol)}`);
+console.log(`  Funding master: ${fleet.masterSol == null ? 'unread (launcher signer not in this environment)' : `${fleet.masterSol.toFixed(4)} SOL`}`);
+if (fleet.masterCanCover === false) console.log('  The master CANNOT cover the deficit: the auto-funder will not heal this, a human has to move SOL.');
+if (fleet.masterCanCover === true) console.log('  The master can cover the deficit; the auto-funder should heal this on its next tick.');
+const stalled = reported.filter((b) => b.stalled);
+if (stalled.length) {
+	console.log(`  Stalled and armed (${stalled.length}): ${stalled.map((b) => b.agent_name || b.agent_id).join(', ')}`);
 }
 
 console.log('\nTOTALS');
-console.log(`  Bots reported: ${reported.length} (${reported.filter((b) => b.enabled && !b.kill_switch).length} armed)`);
+console.log(`  Bots reported: ${reported.length} (${reported.filter((b) => b.enabled && !b.halted).length} armed)`);
 console.log(`  Closed trades: ${totals.wins + totals.losses} (${totals.wins}W / ${totals.losses}L${totals.wins + totals.losses ? `, ${((totals.wins / (totals.wins + totals.losses)) * 100).toFixed(1)}% win rate` : ''})`);
 console.log(`  Failed entries: ${totals.failed}`);
 console.log(`  Capital deployed into entries: ${totals.deployed.toFixed(3)} SOL${usd(totals.deployed)}`);
