@@ -1,25 +1,27 @@
-// @three-ws/herald: deliver a message in person.
-// =============================================================================
-// Notifications are a badge you have to notice, in a tray you have to open,
-// competing with forty others. This SDK delivers the ones that matter the way a
-// colleague would: a character walks into the corner of the page, looks at you,
-// and tells you, with a link to the thing it is about.
-//
-// Three lines to the whole feature:
-//
-//   import { createHerald } from '@three-ws/herald';
-//   const herald = createHerald();
-//   herald.announce({ text: 'Deploy is green', importance: 80, url: '/builds' });
-//
-// What you get for those three lines is not a toast library. It is a delivery
-// discipline: importance scoring, an interrupt floor, quiet hours, a rate
-// limit, dedupe with a TTL, freshness, batching with a collapse line, focus
-// awareness, an accessible fallback for machines that cannot render 3D, and an
-// audit trail of every message that did not make it and why.
-//
-// The avatar is optional and so is the network. Everything degrades: no
-// @three-ws/walk and no WebGL leaves you with an accessible DOM card; no audio
-// permission leaves you with text; no rules leaves you with sane defaults.
+/*
+ * @three-ws/herald: deliver a message in person.
+ * =============================================================================
+ * Notifications are a badge you have to notice, in a tray you have to open,
+ * competing with forty others. This SDK delivers the ones that matter the way a
+ * colleague would: a character walks into the corner of the page, looks at you,
+ * and tells you, with a link to the thing it is about.
+ *
+ * Three lines to the whole feature:
+ *
+ *   import { createHerald } from '@three-ws/herald';
+ *   const herald = createHerald();
+ *   herald.announce({ text: 'Deploy is green', importance: 80, url: '/builds' });
+ *
+ * What you get for those three lines is not a toast library. It is a delivery
+ * discipline: importance scoring, an interrupt floor, quiet hours, a rate
+ * limit, dedupe with a TTL, freshness, batching with a collapse line, focus
+ * awareness, an accessible fallback for machines that cannot render 3D, and an
+ * audit trail of every message that did not make it and why.
+ *
+ * The avatar is optional and so is the network. Everything degrades: no
+ * @three-ws/walk and no WebGL leaves you with an accessible DOM card; no audio
+ * permission leaves you with text; no rules leaves you with sane defaults.
+ */
 
 import {
 	DEFAULT_RULES,

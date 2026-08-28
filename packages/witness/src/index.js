@@ -1,19 +1,21 @@
-// @three-ws/witness
-//
-// Turn a real user session into a runnable failing test.
-//
-//   import { witness } from '@three-ws/witness';
-//   witness.start();
-//   // ... the person uses your site and something breaks ...
-//   const trace = witness.trace();
-//
-//   import { compileToPlaywright } from '@three-ws/witness/compile';
-//   const { source } = compileToPlaywright(trace, { title: 'Export does nothing' });
-//   // `source` is a Playwright spec that is RED until the bug is fixed.
-//
-// The recorder is browser-only. Everything under compile/narrate is pure and
-// runs anywhere, which is what lets the same trace produce the maintainer's
-// English steps in a dashboard and the engineer's spec file on disk.
+/*
+ * @three-ws/witness
+ *
+ * Turn a real user session into a runnable failing test.
+ *
+ *   import { witness } from '@three-ws/witness';
+ *   witness.start();
+ *   // ... the person uses your site and something breaks ...
+ *   const trace = witness.trace();
+ *
+ *   import { compileToPlaywright } from '@three-ws/witness/compile';
+ *   const { source } = compileToPlaywright(trace, { title: 'Export does nothing' });
+ *   // `source` is a Playwright spec that is RED until the bug is fixed.
+ *
+ * The recorder is browser-only. Everything under compile/narrate is pure and
+ * runs anywhere, which is what lets the same trace produce the maintainer's
+ * English steps in a dashboard and the engineer's spec file on disk.
+ */
 
 import { Recorder } from './recorder.js';
 

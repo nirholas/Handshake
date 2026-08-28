@@ -1,7 +1,7 @@
 // @ts-check
 // api/_lib/x402/preflight.js
 //
-// x402 Preflight — a signed, time-bounded statement that an endpoint can
+// x402 Preflight: a signed, time-bounded statement that an endpoint can
 // actually take your money and finish the job.
 //
 // The problem it exists for

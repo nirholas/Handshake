@@ -1,6 +1,6 @@
-// x402 Preflight — MCP tool.
+// x402 Preflight: MCP tool.
 //
-//   • x402_preflight(origin, network?) — FREE, read-only, public. Fetches any
+//   • x402_preflight(origin, network?): FREE, read-only, public. Fetches any
 //     x402 seller's signed payability attestation, verifies the ed25519
 //     signature, the expiry and the subject, and answers the only question that
 //     matters before an agent spends: can this seller actually settle?
@@ -162,7 +162,7 @@ async function handlePreflight(args) {
 	const lines = [`${origin} published a verified attestation, signed by ${envelope.issuer}.`];
 	for (const [id, n] of entries) {
 		const state = n.payable === true ? 'PAYABLE' : n.payable === false ? 'NOT PAYABLE' : 'UNKNOWN';
-		lines.push(`  ${id}: ${state} — ${REASON_COPY[n.reason] || n.reason}; ${describeSettle(n.settle)}.`);
+		lines.push(`  ${id}: ${state}: ${REASON_COPY[n.reason] || n.reason}; ${describeSettle(n.settle)}.`);
 	}
 	if (!report.payable_any) {
 		lines.push('No network on this origin can settle right now. Do not sign a payment for it.');

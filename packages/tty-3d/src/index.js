@@ -1,12 +1,14 @@
-// @three-ws/tty-3d — render a rigged 3D model into a terminal, with no GPU, no
-// browser and no display server.
-//
-// Public API:
-//   loadModel(source)                 -> Model            (file path, URL, or bytes)
-//   createRenderer(model, options)    -> Renderer
-//   renderOnce(source, options)       -> Promise<string>  (one frame, one call)
-//
-// See README.md for the CLI (`npx @three-ws/tty-3d`) and the hosted stream.
+/*
+ * @three-ws/tty-3d: render a rigged 3D model into a terminal, with no GPU, no
+ * browser and no display server.
+ *
+ * Public API:
+ *   loadModel(source)                 -> Model            (file path, URL, or bytes)
+ *   createRenderer(model, options)    -> Renderer
+ *   renderOnce(source, options)       -> Promise<string>  (one frame, one call)
+ *
+ * See README.md for the CLI (`npx @three-ws/tty-3d`) and the hosted stream.
+ */
 
 import { loadModelFromBytes, loadModelFromFile, poseModel } from './model.js';
 import { computeFraming, createFramebuffer, poseCenter, renderToFramebuffer } from './raster.js';

@@ -1,33 +1,35 @@
-// @three-ws/oracle-model
-//
-// The three.ws Oracle scores every pump.fun launch in its first ninety seconds.
-// This package is that scorer, running on your machine, with the real weights.
-//
-// Not a client for a scoring API. The model is a lookup table of bucket weights
-// (roughly 32KB of JSON), so `OracleModel.fetch()` downloads it once and every
-// score after that is local arithmetic: no key, no rate limit, no network, no
-// telemetry back to us. Pin a model version and you can reproduce any score the
-// platform has ever published, forever, offline.
-//
-// That is the point. A prediction product that publishes only its outputs is
-// asking to be believed. One that publishes the machine can be checked.
-//
-//   import { OracleModel } from '@three-ws/oracle-model';
-//
-//   const oracle = await OracleModel.fetch();
-//   const verdict = oracle.score({
-//     organic_score: 0.82, unique_buyers: 41, buy_volume_sol: 26,
-//     snipe_ratio: 0.12, smart_money_count: 2, dev_sold: false,
-//   });
-//
-//   verdict.score          // 0-100, anchored on P(runs and holds)
-//   verdict.tier           // avoid | watch | lean | strong | prime
-//   verdict.rugRisk        // P(a first-sight holder ends down more than half)
-//   verdict.giveBackRisk   // P(hands the run straight back | it runs)
-//   verdict.why            // every bucket that moved it, with its sample count
-//
-// Zero dependencies. Runs in Node 18+, Deno, Bun, Cloudflare Workers, and the
-// browser.
+/*
+ * @three-ws/oracle-model
+ *
+ * The three.ws Oracle scores every pump.fun launch in its first ninety seconds.
+ * This package is that scorer, running on your machine, with the real weights.
+ *
+ * Not a client for a scoring API. The model is a lookup table of bucket weights
+ * (roughly 32KB of JSON), so `OracleModel.fetch()` downloads it once and every
+ * score after that is local arithmetic: no key, no rate limit, no network, no
+ * telemetry back to us. Pin a model version and you can reproduce any score the
+ * platform has ever published, forever, offline.
+ *
+ * That is the point. A prediction product that publishes only its outputs is
+ * asking to be believed. One that publishes the machine can be checked.
+ *
+ *   import { OracleModel } from '@three-ws/oracle-model';
+ *
+ *   const oracle = await OracleModel.fetch();
+ *   const verdict = oracle.score({
+ *     organic_score: 0.82, unique_buyers: 41, buy_volume_sol: 26,
+ *     snipe_ratio: 0.12, smart_money_count: 2, dev_sold: false,
+ *   });
+ *
+ *   verdict.score          // 0-100, anchored on P(runs and holds)
+ *   verdict.tier           // avoid | watch | lean | strong | prime
+ *   verdict.rugRisk        // P(a first-sight holder ends down more than half)
+ *   verdict.giveBackRisk   // P(hands the run straight back | it runs)
+ *   verdict.why            // every bucket that moved it, with its sample count
+ *
+ * Zero dependencies. Runs in Node 18+, Deno, Bun, Cloudflare Workers, and the
+ * browser.
+ */
 
 const DEFAULT_ENDPOINT = 'https://three.ws/api/oracle/model';
 

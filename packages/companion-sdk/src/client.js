@@ -1,24 +1,26 @@
-// The companion client: push a message in, listen for deliveries out.
-//
-// Isomorphic on purpose. In a browser it uses the platform `fetch` and
-// `EventSource`; in Node 18+ it uses the built-in `fetch` and its own SSE
-// reader over the response body (Node has no EventSource), so the same object
-// works in a page, in an Electron renderer, in a CLI, and in a worker.
-//
-//   import { createCompanionClient } from '@three-ws/companion';
-//
-//   const companion = createCompanionClient({ token: process.env.COMPANION_TOKEN });
-//
-//   await companion.send({ title: 'Build finished', sender: 'CI', priority: 'high' });
-//
-//   const stop = companion.stream({
-//     onDelivery: (d) => console.log(`${d.speaker}: ${d.spoken_line}`),
-//   });
-//
-// The token is the bridge token from three.ws/companion. It can post messages
-// and receive that user's deliveries, and rotating it on that page revokes
-// every device at once. A browser page that already has a signed-in session can
-// omit it entirely and pass `credentials: 'include'` behaviour by default.
+/*
+ * The companion client: push a message in, listen for deliveries out.
+ *
+ * Isomorphic on purpose. In a browser it uses the platform `fetch` and
+ * `EventSource`; in Node 18+ it uses the built-in `fetch` and its own SSE
+ * reader over the response body (Node has no EventSource), so the same object
+ * works in a page, in an Electron renderer, in a CLI, and in a worker.
+ *
+ *   import { createCompanionClient } from '@three-ws/companion';
+ *
+ *   const companion = createCompanionClient({ token: process.env.COMPANION_TOKEN });
+ *
+ *   await companion.send({ title: 'Build finished', sender: 'CI', priority: 'high' });
+ *
+ *   const stop = companion.stream({
+ *     onDelivery: (d) => console.log(`${d.speaker}: ${d.spoken_line}`),
+ *   });
+ *
+ * The token is the bridge token from three.ws/companion. It can post messages
+ * and receive that user's deliveries, and rotating it on that page revokes
+ * every device at once. A browser page that already has a signed-in session can
+ * omit it entirely and pass `credentials: 'include'` behaviour by default.
+ */
 
 const DEFAULT_API_BASE = 'https://three.ws';
 

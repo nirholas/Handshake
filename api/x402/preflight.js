@@ -1,4 +1,4 @@
-// GET /api/x402/preflight — signed proof that this seller can settle right now.
+// GET /api/x402/preflight: signed proof that this seller can settle right now.
 // Also served at /.well-known/x402-preflight (see vercel.json).
 //
 //   GET /api/x402/preflight                          all networks

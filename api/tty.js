@@ -1,4 +1,4 @@
-// GET /api/tty — stream a 3D agent into the caller's terminal.
+// GET /api/tty: stream a 3D agent into the caller's terminal.
 //
 //   curl three.ws/tty
 //   curl three.ws/tty/<avatar-id>
@@ -100,7 +100,7 @@ export default wrap(async function handler(req, res) {
 		return redirect(res, to, 302);
 	}
 
-	const rate = await limits.renderIp(clientIp(req));
+	const rate = await limits.ttyIp(clientIp(req));
 	if (!rate.ok) return error(res, 429, 'rate_limited', 'too many terminal renders, try again shortly');
 
 	const origin = `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host || 'three.ws'}`;

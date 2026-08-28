@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// three-tty — render a 3D model in your terminal.
+// three-tty: render a 3D model in your terminal.
 //
 //   npx @three-ws/tty-3d ./avatar.glb
 //   npx @three-ws/tty-3d https://three.ws/avatars/default.glb --spin 1.4
@@ -14,7 +14,7 @@ import { ansi, detectColorMode, ColorMode } from '../src/term.js';
 
 const ESC = '\x1b';
 
-const USAGE = `three-tty — a 3D model in your terminal
+const USAGE = `three-tty: a 3D model in your terminal
 
 Usage
   three-tty <model.glb | https://...> [options]

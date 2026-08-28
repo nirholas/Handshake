@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// x402-preflight — ask any x402 seller whether it can settle, from a terminal.
+// x402-preflight: ask any x402 seller whether it can settle, from a terminal.
 //
 //   npx @three-ws/x402-preflight https://three.ws
 //   npx @three-ws/x402-preflight https://three.ws --network solana:mainnet
@@ -43,7 +43,7 @@ const timeoutMs = Number(flag('timeout')) || 5000;
 
 if (!origin || has('help') || has('h')) {
 	process.stdout.write(
-		`x402-preflight — can this seller actually settle?\n\n` +
+		`x402-preflight: can this seller actually settle?\n\n` +
 			`  x402-preflight <origin> [--network <caip2>] [--issuer <pubkey>]\n` +
 			`                          [--timeout <ms>] [--json]\n\n` +
 			`Exit codes: 0 payable, 1 not payable, 2 unverifiable.\n\n` +

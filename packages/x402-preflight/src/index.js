@@ -1,4 +1,4 @@
-// @three-ws/x402-preflight — ask an x402 seller whether it can settle, before
+// @three-ws/x402-preflight: ask an x402 seller whether it can settle, before
 // you sign anything.
 //
 // x402 tells you what a resource COSTS. It does not tell you whether the seller

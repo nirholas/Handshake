@@ -1,20 +1,22 @@
-// A body for the companion, in any web page.
-//
-//   import { createCompanionClient, createCompanionStage } from '@three-ws/companion';
-//
-//   const client = createCompanionClient({ token });
-//   const stage  = createCompanionStage({ client, corner: 'bottom-right' });
-//   stage.listen();   // deliveries now arrive in person, with a voice
-//
-// What it puts on the page: one <agent-3d> element (the published three.ws web
-// component, loaded on demand from the same origin the API lives on) and one
-// speech bubble. When a delivery arrives the stage swaps to whatever body that
-// message should be delivered by (the sender's own avatar when the user gave
-// them one), speaks the line, holds it long enough to read, and gets out.
-//
-// Everything degrades rather than disappears: a page with no WebGL still shows
-// the bubble, a browser that blocks autoplay still shows the text, and a device
-// with no hosted voice available falls back to the browser's own speech.
+/*
+ * A body for the companion, in any web page.
+ *
+ *   import { createCompanionClient, createCompanionStage } from '@three-ws/companion';
+ *
+ *   const client = createCompanionClient({ token });
+ *   const stage  = createCompanionStage({ client, corner: 'bottom-right' });
+ *   stage.listen();   // deliveries now arrive in person, with a voice
+ *
+ * What it puts on the page: one <agent-3d> element (the published three.ws web
+ * component, loaded on demand from the same origin the API lives on) and one
+ * speech bubble. When a delivery arrives the stage swaps to whatever body that
+ * message should be delivered by (the sender's own avatar when the user gave
+ * them one), speaks the line, holds it long enough to read, and gets out.
+ *
+ * Everything degrades rather than disappears: a page with no WebGL still shows
+ * the bubble, a browser that blocks autoplay still shows the text, and a device
+ * with no hosted voice available falls back to the browser's own speech.
+ */
 
 const STYLE_ID = 'three-ws-companion-stage-style';
 const ELEMENT_SRC = '/agent-3d/latest/agent-3d.js';

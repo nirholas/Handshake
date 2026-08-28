@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * agent-glance — a three.ws agent card, in your terminal or in your repo.
+ * agent-glance: a three.ws agent card, in your terminal or in your repo.
  *
  *   npx @three-ws/agent-glance <agent-id>              print the card
  *   npx @three-ws/agent-glance <agent-id> --json       the raw card model

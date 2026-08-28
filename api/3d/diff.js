@@ -1,4 +1,4 @@
-// GET/POST /api/3d/diff — FREE, keyless structural diff of two glTF/GLB models.
+// GET/POST /api/3d/diff: FREE, keyless structural diff of two glTF/GLB models.
 //
 // The question this answers is not "are these two files different" (a re-export
 // always is, down to the byte) but "what changed, and will it break anything

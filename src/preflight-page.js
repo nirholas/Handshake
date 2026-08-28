@@ -1,4 +1,4 @@
-// /preflight — check whether any x402 seller can actually settle, and verify the
+// /preflight: check whether any x402 seller can actually settle, and verify the
 // answer here rather than believing it.
 //
 // The verification runs in the visitor's browser against the seller's own
