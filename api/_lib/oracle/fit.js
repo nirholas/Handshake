@@ -23,15 +23,33 @@
 //
 // So v3 fits three heads over one shared design matrix:
 //
-//   win  = graduated, or peaked >= 3x, AND did not rug     (base 4.89%)
-//   rug  = fell to <= 25% of the market cap at first sight (base 90.97%)
-//   moon = graduated, or peaked >= 3x                      (base 10.67%)
+//   win  = it ran (graduated or 3x) AND a first-sight holder is still up  (2.94%)
+//   rug  = a first-sight holder is down more than half                    (11.36%)
+//   moon = it ran at all, whatever happened next: what v2 ranked           (9.51%)
 //
 // The published conviction score anchors on `win`. `rug` is published beside it
-// as its own number, because on pump.fun nine launches in ten end below a
-// quarter of where you found them and a ranking that hides that is lying by
-// omission. `moon` is kept because it is what v2 ranked, so the two stay
+// as its own number rather than blended in, because "this will probably run" and
+// "this will probably take your money" are different questions and one number
+// that averages them answers neither. `moon` is kept so the two versions stay
 // comparable and a regression in either is visible.
+//
+// Held out on 74,211 launches none of them ever saw: win AUC 0.840 (14x lift in
+// the top percentile), rug 0.918, moon 0.892.
+//
+// The labels themselves had to be rebuilt first
+// ---------------------------------------------
+// `rugged` used to be decided by whether a coin's market cap was under a
+// hardcoded $3,000. An empty pump.fun bonding curve is worth a fixed
+// 30 * 1e9 / 1073000191 = 27.958993 SOL, so that test was asking whether SOL was
+// above roughly $107.30 that day: of 206,428 coins it called rugged, 206,419
+// were under $3,000, and of 25,180 it called survivors the cheapest was exactly
+// $3,000. Identical dead curves, sorted by a price feed. Trained on those
+// labels, the survival head scored an AUC of 0.484.
+//
+// TARGETS below reads `hold_multiple` instead, which is
+// `ath_multiple * (last_mc_usd / ath_mc_usd)`: both dollar figures come from the
+// same reading, so the SOL price cancels. The real rug rate is 11.4%, not 91%.
+// Full write-up in 20260828170000_oracle_price_independent_labels.sql.
 //
 // Degenerate features drop themselves
 // -----------------------------------
@@ -42,10 +60,9 @@
 // (`coordination_score`) collapses to `bundle_score * 0.6` once the null
 // bubblemap term drops out, which is why the live intel weights list the two as
 // identical. Rather than hardcode that list and watch it rot, the fitter
-// measures it: any feature whose modal bucket covers at least DEGENERATE_SHARE
-// of rows carries no information and is dropped, by name, into the report. If
-// the funder graph is ever wired up, those features return on the next fit with
-// no code change at all.
+// measures it (see MIN_MINORITY_ROWS) and reports every drop by name. If the
+// funder graph is ever wired up, those features return on the next fit with no
+// code change at all.
 
 // A feature is dropped only when it cannot support a second weight: one bucket,
 // or a runner-up bucket too small to fit anything on. Deliberately NOT a share
