@@ -160,14 +160,14 @@ const DEFAULTS = {
 	social:    { in_app: true,  push: true,  email: false, telegram: false, avatar: false },
 	irl:       { in_app: true,  push: true,  email: false, telegram: false, avatar: false },
 	alerts:    { in_app: true,  push: true,  email: false, telegram: true,  avatar: false },
-	// The user's own inbox, calendar and phone, triaged by the companion. It is
-	// their material, not ours, so it never leaves the site by email; the avatar
-	// saying it out loud is the feature itself.
-	companion: { in_app: true,  push: true,  email: false, telegram: false, avatar: true  },
 	// Only unattended completions notify (api/cron/forge-finalize.js), so email
 	// defaulting on is the feature, not spam: the user left the page and asked
 	// to hear back.
 	creations: { in_app: true,  push: true,  email: true,  telegram: false, avatar: true  },
+	// The companion category exists to be spoken: a message the visitor's own
+	// companion triaged as worth hearing (api/_lib/companion/triage.js). Email
+	// and telegram would just relay what the user already gets in that inbox.
+	companion: { in_app: true,  push: true,  email: false, telegram: false, avatar: true  },
 	account:   { in_app: true,  push: true,  email: true,  telegram: false, avatar: true  },
 };
 
