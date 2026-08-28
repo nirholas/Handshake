@@ -3,6 +3,28 @@
 	"entries": [
 		{
 			"date": "2026-08-28",
+			"title": "We now prove our fallbacks work, instead of hoping they do",
+			"summary": "Adding a backup for an outside service is easy; knowing it made things better is not. A new audit reads the whole codebase and grades every call we make to an outside service on five protections, publishes the result as a public map, and fails the build if a new unprotected call is added or an existing one gets worse. On top of it, each endpoint now declares what it is allowed to tell you when a service it depends on is down, and a test proves it by actually breaking the service and checking the answer. That immediately caught a real bug: a token lookup was telling people a token did not exist when the price indexer was simply unreachable. Related fixes stop stale data reaching a payment retry, a token security verdict and an access check, where an out-of-date answer costs money or grants access.",
+			"tags": [
+				"feature",
+				"improvement",
+				"infra"
+			],
+			"link": "/docs/resilience"
+		},
+		{
+			"date": "2026-08-28",
+			"title": "Your notifications now have a body: meet your companion",
+			"summary": "Your phone buzzes forty times a day and two of those mattered. three.ws/companion is the other half of that problem. Connect what you already use, on your own keys: a Telegram bot you create, the private calendar link Google, Apple and Outlook all publish, your inbox over IMAP with an app password, or nothing at all but a token your phone, your Mac, your build script or an AI agent can post to. Everything that arrives is scored out of 100 against the things people actually want interrupting for (a saved contact asking you something, a one-time code, a meeting starting in ten minutes, a payment that failed) and the rest is kept quietly in a feed with the reason it stayed quiet. What clears your bar is delivered in person: a 3D character walks on, and if it is from someone you gave a face to, it arrives wearing their avatar and speaking in their voice. It reaches you on three.ws, as a push on your phone, and on your desktop, where a new companion app puts a character that walks across your screen and comes over to tell you. Quiet hours are absolute, the credentials are encrypted, and one button revokes every device. Developers get the whole thing as @three-ws/companion: a client, the same triage rules the server runs (so you can score your mail locally and never send the rest), a drop-in 3D stage for any page, a CLI, and an MCP server so an agent that finds something urgent can stand in front of you and say it.",
+			"tags": [
+				"feature",
+				"sdk",
+				"improvement"
+			],
+			"link": "/companion"
+		},
+		{
+			"date": "2026-08-28",
 			"title": "AI agents can now see the 3D models they make",
 			"summary": "Until today every 3D generator on the internet, ours included, answered with a link to a file an AI agent cannot open. A person clicks it; an agent is blind to it, which is why an agent that makes a 3D model has never been able to tell a clean one from a melted one. That changes now: ask to look at any model and it comes back rendered from four angles as actual pictures the agent sees, with the geometry explained in plain language. An agent can finally check its own work, spot that the back of the model was never finished, and try again saying exactly what was wrong. It works over MCP, over a plain web request, and through a new open-source package called @three-ws/see, and it is free, including for agents that bought a model from us and want to confirm they got what they paid for.",
 			"tags": [

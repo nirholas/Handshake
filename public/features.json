@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T03:32:47.833Z",
+	"generated_at": "2026-08-28T03:37:23.815Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -893,6 +893,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/glance",
+					"title": "Glance",
+					"description": "Your three.ws agent on every home screen: a live card for the Windows 11 widgets board, a README, Slack, or any page.",
+					"added": "2026-08-28",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/widgets",
 					"title": "Widgets Gallery",
 					"description": "Pre-built chat, voice, and 3D-avatar widgets you can drop into any page.",
@@ -1181,6 +1191,16 @@
 					"indexable": true,
 					"tags": [],
 					"showcase": false
+				},
+				{
+					"path": "/stream",
+					"title": "Progressive Avatars",
+					"description": "A3S packs a GLB into nested layers whose first 50 KB is already a complete, skinned, spec-valid avatar, then refines it in place over plain HTTP range requests. Live side-by-side against a classic GLB load.",
+					"added": "2026-08-28",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
 				}
 			]
 		},
@@ -1451,6 +1471,16 @@
 					"title": "Oracle: AI Conviction Engine",
 					"description": "A fused AI conviction engine for every pump.fun launch: pedigree (who's buying), structure (bundle vs organic), narrative (what story is it riding), and momentum: fused into a single 0-100 conviction score with transparent pillar reasoning.",
 					"added": "2026-06-16",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/oracle-lab",
+					"title": "Oracle Lab: the model, published",
+					"description": "The Oracle's conviction model in full: every bucket weight with the number of labeled launches behind it and what happened to them, the held-out reliability curve for each tier, the version history of every refit including the ones that were refused, and a live scorer that runs the real weights in your browser. Download it and reproduce any score offline.",
+					"added": "2026-08-28",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -4088,6 +4118,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/docs/companion",
+					"title": "Docs · Companion",
+					"description": "The personal companion: connect your own Telegram bot, calendar, inbox, or phone, give your contacts a face and a voice, and have a 3D character deliver what matters in person. Bridges, triage rules, the SDK, the CLI, the MCP server, and the desktop app.",
+					"added": "2026-08-28",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/docs/mcp",
 					"title": "Docs · MCP",
 					"description": "Expose your agent as an MCP server for Claude, ChatGPT, and other clients.",
@@ -5758,6 +5798,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/docs/resilience",
+					"title": "Docs · Upstream resilience map",
+					"description": "Every third-party service this platform calls and what happens to a user when it goes down. Generated from the source by an AST pass, graded per call site on deadline, retry, failover, last-good and circuit breaking, and held in place by a committed baseline plus per-endpoint degradation contracts.",
+					"added": "2026-08-28",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/docs/shared-utilities",
 					"title": "Docs · Shared utilities",
 					"description": "Small dependency-backed modules that exist so the same problem is not solved twice. Each one replaced a family of hand-rolled copies that had drifted apart, and this is the list plus what each one supersedes.",
@@ -5962,6 +6012,16 @@
 					"title": "Docs · Oracle, the conviction engine",
 					"description": "The complete story of Oracle: why it was built, how the scoring model works, the exact maths, the agent action loop, every platform feature that runs on it, and the paid integration other agents can call.",
 					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/oracle-model",
+					"title": "Docs · The Oracle model, and how to run it yourself",
+					"description": "How the three.ws conviction model is fitted, what its three heads predict, why the outcome labels had to be made independent of the SOL price, how the promotion gate decides which model ships, and how to score launches locally with @three-ws/oracle-model.",
+					"added": "2026-08-28",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -6682,6 +6742,16 @@
 					"title": "Repository guards",
 					"description": "Every mechanical guard that protects the three.ws codebase, and the stage each one runs in. This repository has no CI, so correctness is enforced by fast local checks wired into the prebuild, the gate, the deploy build, and the git pre-push hook. Filter by stage, search by command, and read the incident behind each one.",
 					"added": "2026-07-30",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/brownout",
+					"title": "Brownout",
+					"description": "Every response from this API says where its data came from and how fresh it is, and every declared fallback has been proven by breaking the upstream it protects against, inside the real request path. Read the receipts: which provider refused, which one caught the request, and how old the answer was.",
+					"added": "2026-08-28",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

@@ -1341,6 +1341,14 @@
 			"dest": "/autopilot.html"
 		},
 		{
+			"src": "/stream",
+			"dest": "/stream.html"
+		},
+		{
+			"src": "/stream/",
+			"dest": "/stream.html"
+		},
+		{
 			"src": "/avatar-sdk/?",
 			"dest": "/avatar-sdk.html"
 		},
@@ -2670,6 +2678,18 @@
 		{
 			"src": "/companion/",
 			"dest": "/companion.html"
+		},
+		{
+			"src": "/knock",
+			"dest": "/knock.html"
+		},
+		{
+			"src": "/knock/",
+			"dest": "/knock.html"
+		},
+		{
+			"src": "/knock/([A-Za-z0-9._-]{1,40})",
+			"dest": "/knock-door.html?to=$1"
 		},
 		{
 			"src": "/herald",

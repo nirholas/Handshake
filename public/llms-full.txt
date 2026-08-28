@@ -546,6 +546,12 @@ URL: https://three.ws/artifact
 
 Renders Claude artifact bundles as standalone embeddable apps.
 
+### Glance
+
+URL: https://three.ws/glance
+
+Your three.ws agent on every home screen: a live card for the Windows 11 widgets board, a README, Slack, or any page.
+
 ### Widgets Gallery
 
 URL: https://three.ws/widgets
@@ -720,6 +726,12 @@ URL: https://three.ws/tty
 
 curl three.ws/tty and a rigged 3D agent walks in your terminal. A software rasterizer streams ANSI frames over HTTP: no GPU, no WebGL, nothing to install. Also the @three-ws/tty CLI and library for rendering any GLB in a terminal.
 
+### Progressive Avatars
+
+URL: https://three.ws/stream
+
+A3S packs a GLB into nested layers whose first 50 KB is already a complete, skinned, spec-valid avatar, then refines it in place over plain HTTP range requests. Live side-by-side against a classic GLB load.
+
 ## Labs
 
 Experimental features actively shipping. Expect fast iteration.
@@ -883,6 +895,12 @@ The first AGI, narrow by design: a single autonomous agent that is genuinely sup
 URL: https://three.ws/oracle
 
 A fused AI conviction engine for every pump.fun launch: pedigree (who's buying), structure (bundle vs organic), narrative (what story is it riding), and momentum: fused into a single 0-100 conviction score with transparent pillar reasoning.
+
+### Oracle Lab: the model, published
+
+URL: https://three.ws/oracle-lab
+
+The Oracle's conviction model in full: every bucket weight with the number of labeled launches behind it and what happened to them, the held-out reliability curve for each tier, the version history of every refit including the ones that were refused, and a live scorer that runs the real weights in your browser. Download it and reproduce any score offline.
 
 ### Oracle Docs: the conviction engine, end to end
 
@@ -2481,6 +2499,12 @@ URL: https://three.ws/docs/web-component
 
 Reference for the <agent-3d> custom element.
 
+### Docs · Companion
+
+URL: https://three.ws/docs/companion
+
+The personal companion: connect your own Telegram bot, calendar, inbox, or phone, give your contacts a face and a voice, and have a 3D character deliver what matters in person. Bridges, triage rules, the SDK, the CLI, the MCP server, and the desktop app.
+
 ### Docs · MCP
 
 URL: https://three.ws/docs/mcp
@@ -3483,6 +3507,12 @@ URL: https://three.ws/docs/seed-quality
 
 Nobody asked for the assets the platform seeds into its own catalogue, so they have to earn their slot. The gate that decides whether a platform-generated model is published or discarded, and the metrics it scores.
 
+### Docs · Upstream resilience map
+
+URL: https://three.ws/docs/resilience
+
+Every third-party service this platform calls and what happens to a user when it goes down. Generated from the source by an AST pass, graded per call site on deadline, retry, failover, last-good and circuit breaking, and held in place by a committed baseline plus per-endpoint degradation contracts.
+
 ### Docs · Shared utilities
 
 URL: https://three.ws/docs/shared-utilities
@@ -3608,6 +3638,12 @@ The same live market data behind every three.ws markets page, packaged as pay-pe
 URL: https://three.ws/docs/oracle
 
 The complete story of Oracle: why it was built, how the scoring model works, the exact maths, the agent action loop, every platform feature that runs on it, and the paid integration other agents can call.
+
+### Docs · The Oracle model, and how to run it yourself
+
+URL: https://three.ws/docs/oracle-model
+
+How the three.ws conviction model is fitted, what its three heads predict, why the outcome labels had to be made independent of the SOL price, how the promotion gate decides which model ships, and how to score launches locally with @three-ws/oracle-model.
 
 ### Docs · x402 distribution
 
@@ -4040,6 +4076,12 @@ This repo has no CI, so a guard is the only thing between a mistake and producti
 URL: https://three.ws/guards
 
 Every mechanical guard that protects the three.ws codebase, and the stage each one runs in. This repository has no CI, so correctness is enforced by fast local checks wired into the prebuild, the gate, the deploy build, and the git pre-push hook. Filter by stage, search by command, and read the incident behind each one.
+
+### Brownout
+
+URL: https://three.ws/brownout
+
+Every response from this API says where its data came from and how fresh it is, and every declared fallback has been proven by breaking the upstream it protects against, inside the real request path. Read the receipts: which provider refused, which one caught the request, and how old the answer was.
 
 ### Docs · Write a repository guard
 

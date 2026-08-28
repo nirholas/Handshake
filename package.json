@@ -120,6 +120,7 @@
 		"packages/tool-sdk",
 		"packages/spatial-mcp",
 		"packages/agent-runtime",
+		"packages/render",
 		"packages/glb-diff",
 		"packages/tty-avatar"
 	],
@@ -190,6 +191,8 @@
 		"audit:pages": "node scripts/audit-page-index.mjs --strict",
 		"audit:meetup": "node scripts/meetup-audit.mjs",
 		"audit:docs": "node scripts/audit-docs.mjs",
+		"audit:upstreams": "node scripts/audit-upstreams.mjs",
+		"audit:upstreams:map": "node scripts/audit-upstreams.mjs --map",
 		"docs:freshness": "node scripts/doc-freshness.mjs",
 		"check:docs-freshness": "node scripts/doc-freshness.mjs --check",
 		"tutorials:media": "node scripts/capture-tutorial-media.mjs",
@@ -198,7 +201,7 @@
 		"audit:route-shadowing": "node scripts/audit-route-shadowing.mjs",
 		"audit:handlers": "node scripts/audit-empty-handlers.mjs",
 		"audit:x402-catalog": "node scripts/audit-x402-catalog.mjs",
-		"gate": "npm run check:conflicts && npm run check:claude && npm run check:vendored && npm run check:fetch-timeouts && npm run check:tdz-bootstrap && npm run check:event && npm run check:cron-syntax && npm run check:studio-openapi && npm run test:gate && npm run test:gate-3d && npm run audit:mcp && npm run audit:mcp-golden && npm run audit:mcp-safety && npm run audit:mcp-catalog && npm run audit:routes && npm run audit:handlers && npm run audit:pages && npm run audit:links && npm run audit:docs && npm run check:tutorials && npm run audit:hidden-guard && npm run audit:inline-handlers && npm run audit:x402-catalog && npm run audit:tokens && npm run audit:guards && npm run audit:tour-atlas",
+		"gate": "npm run check:conflicts && npm run check:claude && npm run check:vendored && npm run check:fetch-timeouts && npm run check:tdz-bootstrap && npm run check:event && npm run check:cron-syntax && npm run check:studio-openapi && npm run test:gate && npm run test:gate-3d && npm run audit:mcp && npm run audit:mcp-golden && npm run audit:mcp-safety && npm run audit:mcp-catalog && npm run audit:routes && npm run audit:handlers && npm run audit:pages && npm run audit:links && npm run audit:docs && npm run audit:upstreams && npm run check:tutorials && npm run audit:hidden-guard && npm run audit:inline-handlers && npm run audit:x402-catalog && npm run audit:tokens && npm run audit:guards && npm run audit:tour-atlas",
 		"test:gate-3d": "vitest run tests/glb-canonicalize.test.js tests/animation-retarget.test.js tests/animation-retarget-rest-pollution.test.js tests/viewer-framing.test.js",
 		"audit:mcp-golden": "node scripts/audit-mcp-golden.mjs",
 		"audit:mcp-safety": "node scripts/audit-mcp-safety.mjs",
@@ -401,7 +404,8 @@
 		"check:doc-media": "node scripts/check-doc-media.mjs",
 		"sync:studio-openapi": "node scripts/sync-studio-openapi.mjs",
 		"check:studio-openapi": "node scripts/sync-studio-openapi.mjs --check",
-		"token:volume": "node scripts/token-volume.mjs"
+		"token:volume": "node scripts/token-volume.mjs",
+		"companion:e2e": "node --env-file=.env.local --env-file=.env scripts/companion-e2e.mjs"
 	},
 	"dependencies": {
 		"@0xsplits/splits-sdk": "^6.5.0",

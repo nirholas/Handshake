@@ -975,6 +975,14 @@
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-08-28"
+				},
+				{
+					"path": "/stream",
+					"title": "Progressive Avatars",
+					"description": "A3S packs a GLB into nested layers whose first 50 KB is already a complete, skinned, spec-valid avatar, then refines it in place over plain HTTP range requests. Live side-by-side against a classic GLB load.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-08-28"
 				}
 			]
 		},
@@ -4481,6 +4489,14 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/resilience",
+					"title": "Docs · Upstream resilience map",
+					"description": "Every third-party service this platform calls and what happens to a user when it goes down. Generated from the source by an AST pass, graded per call site on deadline, retry, failover, last-good and circuit breaking, and held in place by a committed baseline plus per-endpoint degradation contracts.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-08-28"
+				},
+				{
 					"path": "/docs/shared-utilities",
 					"title": "Docs · Shared utilities",
 					"description": "Small dependency-backed modules that exist so the same problem is not solved twice. Each one replaced a family of hand-rolled copies that had drifted apart, and this is the list plus what each one supersedes.",
@@ -5192,6 +5208,14 @@
 					"priority": 0.6,
 					"changefreq": "weekly",
 					"added": "2026-07-30"
+				},
+				{
+					"path": "/brownout",
+					"title": "Brownout",
+					"description": "Every response from this API says where its data came from and how fresh it is, and every declared fallback has been proven by breaking the upstream it protects against, inside the real request path. Read the receipts: which provider refused, which one caught the request, and how old the answer was.",
+					"priority": 0.6,
+					"changefreq": "weekly",
+					"added": "2026-08-28"
 				},
 				{
 					"path": "/docs/tutorials/write-a-guard",
