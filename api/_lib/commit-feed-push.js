@@ -35,6 +35,7 @@
 import { sql } from './db.js';
 
 import { fetchUpstream } from './upstream-fetch.js';
+import { classify, headline, parseCommit, summaryLine } from '../../packages/shipfeed/src/index.js';
 const REPO = 'nirholas/three.ws';
 const BASE = 'https://three.ws';
 const TELEGRAM_LIMIT = 15; // per run; Bot API allows ~20 msg/min per chat
@@ -51,6 +52,32 @@ const TELEGRAM_PACE_MS = 3500;
 const LOCK_KEY = 'commit_feed_push_lock';
 const LOCK_TTL_S = 240;
 const STATE_KEY = 'commit_feed_push_telegram';
+// Parts of the product a reader has actually seen. Naming them lifts a commit
+// in one of them above the machinery around it when the lane scores what is
+// worth posting; everything unnamed is still scored on its own merits.
+const PRODUCT_SCOPES = [
+	'agent',
+	'agents',
+	'avatar',
+	'avatars',
+	'chat',
+	'companion',
+	'crews',
+	'discover',
+	'embed',
+	'embeds',
+	'forge',
+	'launch',
+	'marketplace',
+	'oracle',
+	'payments',
+	'pump',
+	'seeker',
+	'studio',
+	'viewer',
+	'wallet',
+	'x402',
+];
 // Every outbound call is bounded, and deliberately well under LOCK_TTL_S. The
 // lock is what stops two ticks posting the same commit twice, but it only holds
 // for its TTL: a request that hangs longer than that outlives its own lock, and
@@ -183,56 +210,27 @@ export function newCommitsSince(commits, { lastSha, lastDate } = {}, now = Date.
 const escapeHtml = (s) =>
 	String(s).replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[c]);
 
-// Most commit subjects in this repo follow a loose "scope: description"
-// convention ("agent-sniper: stop LLM judge calls…", "docs: cover ASL
-// fingerspelling…"). Split on the first colon when it looks like that
-// convention so the scope becomes the bold headline and the description the
-// body. Subjects without that convention get a generic "New commit" headline.
-// Only the subject line is ever posted: full commit bodies are hard-wrapped
-// by git and written for engineers, not holders, so they stay on GitHub.
-export function splitSubject(subjectLine) {
-	const idx = subjectLine.indexOf(': ');
-	if (idx > 0 && idx < 60) {
-		return { headline: subjectLine.slice(0, idx), body: subjectLine.slice(idx + 2) };
-	}
-	return { headline: 'New commit', body: subjectLine };
+// Headline and description come from @three-ws/shipfeed's conventional-commit
+// parser, so `feat(resilience): ...` reads as "Feature · resilience" instead of
+// the raw `feat(resilience)` this lane used to print, and a subject with no
+// convention at all still falls back to the repo's older "Scope: text" habit.
+// Only the subject line is ever posted: full commit bodies are hard-wrapped by
+// git and written for engineers, not holders, so they stay on GitHub.
+export function commitHeadline(commit) {
+	return headline(parseCommit(commit));
 }
 
-// Conventional-commit type prefixes are written for engineers ("feat", "fix",
-// "perf"). Holders following the feed read plain words, so map the known types
-// to friendly labels. Anything not in the map — a real scope like "Avatar
-// Studio" or "/cookbook" — is already readable and passes through untouched.
-const TYPE_LABELS = {
-	feat: 'Feature',
-	fix: 'Fix',
-	perf: 'Performance',
-	refactor: 'Refactor',
-	docs: 'Docs',
-	test: 'Tests',
-	tests: 'Tests',
-	build: 'Build',
-	ci: 'CI',
-	chore: 'Chore',
-	style: 'Style',
-	revert: 'Revert',
-};
-
-export function prettyHeadline(headline) {
-	return TYPE_LABELS[String(headline).toLowerCase()] || headline;
+export function commitSummary(commit) {
+	return summaryLine(parseCommit(commit));
 }
 
-// three.ws-branded social-share landing for one commit. Telegram scrapes its
-// OG tags to render the poster card, then redirects a human click to GitHub.
-// The GitHub link still lives in the message text, so both paths work.
 export function commitPreviewUrl(commit) {
-	const subjectLine = (commit.commit?.message || '').split('\n')[0];
-	const { headline, body } = splitSubject(subjectLine);
 	const author = commit.author?.login || commit.commit?.author?.name || 'unknown';
 	const date = (commit.commit?.author?.date || '').slice(0, 10);
 	const params = new URLSearchParams({
 		sha: commit.sha,
-		t: prettyHeadline(headline),
-		d: body,
+		t: commitHeadline(commit),
+		d: commitSummary(commit),
 		date,
 		author,
 	});
@@ -241,16 +239,14 @@ export function commitPreviewUrl(commit) {
 
 export function formatTelegramMessage(commit) {
 	const shortSha = commit.sha.slice(0, 7);
-	const subjectLine = (commit.commit?.message || '').split('\n')[0];
-	const { headline, body } = splitSubject(subjectLine);
 	const author = commit.author?.login || commit.commit?.author?.name || 'unknown';
 	const date = (commit.commit?.author?.date || '').slice(0, 10);
 	const url = commit.html_url || `https://github.com/${REPO}/commit/${commit.sha}`;
 	const linkText = `github.com/${REPO}/commit/${shortSha}`;
 	return [
-		`<b>${escapeHtml(prettyHeadline(headline))}</b>`,
+		`<b>${escapeHtml(commitHeadline(commit))}</b>`,
 		'',
-		escapeHtml(body),
+		escapeHtml(commitSummary(commit)),
 		'',
 		`<a href="${url}">${escapeHtml(linkText)}</a> · ${escapeHtml(date)} · ${escapeHtml(author)}`,
 	].join('\n');
@@ -316,9 +312,22 @@ export async function pushTelegramLane() {
 	}
 
 	let sent = 0;
+	let skipped = 0;
 	let { lastSha, lastDate } = state;
 	try {
 		for (const commit of batch) {
+			// A merge commit, a lockfile bump or a `chore(deps):` bump carries no
+			// content a reader can act on: the merged commits already said what
+			// changed, and nobody follows this channel to learn that `ws` moved a
+			// patch version. Skipping them still advances state, so the lane never
+			// re-reads a commit it decided not to post.
+			if (classify(commit, { productScopes: PRODUCT_SCOPES }).noise) {
+				lastSha = commit.sha;
+				lastDate = commitDate(commit);
+				skipped++;
+				await setState(STATE_KEY, { lastSha, lastDate });
+				continue;
+			}
 			await sendTelegram(botToken, chatId, formatTelegramMessage(commit), commitPreviewUrl(commit));
 			lastSha = commit.sha;
 			lastDate = commitDate(commit);
@@ -330,7 +339,7 @@ export async function pushTelegramLane() {
 			await sleep(TELEGRAM_PACE_MS);
 		}
 	} catch (err) {
-		return { posted: sent, backlog, error: String(err?.message || err) };
+		return { posted: sent, skipped, backlog, error: String(err?.message || err) };
 	}
-	return { posted: sent, backlog, resynced: Boolean(resynced) };
+	return { posted: sent, skipped, backlog, resynced: Boolean(resynced) };
 }

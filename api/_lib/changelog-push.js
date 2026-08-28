@@ -26,6 +26,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { sql } from './db.js';
+import { provenanceByEntry } from './ship-provenance.js';
 
 import { fetchUpstream } from './upstream-fetch.js';
 const CUTOFF_DAYS = 3;
@@ -133,14 +134,29 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const escapeHtml = (s) =>
 	String(s).replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[c]);
 
-export function formatTelegramMessage(e) {
+/**
+ * @param {object} e changelog entry
+ * @param {{count: number, compareUrl: string}} [provenance] the commits behind
+ *   this entry, from api/_lib/ship-provenance.js. Optional on purpose: an
+ *   announcement must still go out when GitHub cannot be read, so the footer
+ *   line simply does not appear rather than the message failing to send.
+ */
+export function formatTelegramMessage(e, provenance = null) {
 	const detailUrl = `https://three.ws/changelog/${slugify(e.title, e.date)}`;
 	const label = e.type === 'launch' ? 'New on three.ws' : 'Update';
 	const hashtags = (e.type === 'launch' ? ['launch'] : e.tags).map((t) => `#${t}`).join(' ');
+	const shipped =
+		provenance && provenance.count > 0
+			? [
+					'',
+					`shipped in <a href="${provenance.compareUrl}">${provenance.count} commit${provenance.count === 1 ? '' : 's'}</a>`,
+				]
+			: [];
 	return [
 		`<b>${escapeHtml(label)} — ${escapeHtml(e.title)}</b>`,
 		'',
 		escapeHtml(e.summary),
+		...shipped,
 		'',
 		`<a href="${detailUrl}">${escapeHtml(detailUrl.replace('https://', ''))}</a> · ${escapeHtml(e.date)} · ${escapeHtml(hashtags)}`,
 	].join('\n');
@@ -180,10 +196,14 @@ export async function pushTelegramLane(feed) {
 	const { pending, backlog } = pendingEntries(feed, posted, TELEGRAM_LIMIT, { newestWin: true });
 	if (pending.length === 0) return { posted: 0, backlog };
 
+	// One GitHub read covers the whole batch, and an unreachable GitHub simply
+	// means no footer: the announcement itself never waits on it.
+	const provenance = await provenanceByEntry(pending).catch(() => new Map());
+
 	let sent = 0;
 	try {
 		for (const e of pending) {
-			await sendTelegram(botToken, chatId, formatTelegramMessage(e));
+			await sendTelegram(botToken, chatId, formatTelegramMessage(e, provenance.get(entryKey(e))));
 			posted.add(entryKey(e));
 			sent++;
 			await setState('changelog_push_telegram', { posted: [...posted] });

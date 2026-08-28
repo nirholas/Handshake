@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
-	splitSubject,
-	prettyHeadline,
+	commitHeadline,
+	commitSummary,
 	commitPreviewUrl,
 	formatTelegramMessage,
 	commitDate,
@@ -21,36 +21,42 @@ const commit = (over = {}) => ({
 	...over,
 });
 
-describe('splitSubject', () => {
-	it('splits scope: description on an early colon', () => {
-		expect(splitSubject('feat: add a thing')).toEqual({ headline: 'feat', body: 'add a thing' });
-		expect(splitSubject('Avatar Studio: 122 sliders')).toEqual({
-			headline: 'Avatar Studio',
-			body: '122 sliders',
-		});
+describe('commitHeadline', () => {
+	it('reads a conventional type as a friendly label', () => {
+		expect(commitHeadline(commit())).toBe('Feature');
 	});
-	it('falls back to New commit when there is no early colon', () => {
-		expect(splitSubject('Escape a raw NUL byte in the test')).toEqual({
-			headline: 'New commit',
-			body: 'Escape a raw NUL byte in the test',
-		});
+
+	it('keeps the scope, which the raw type prefix used to swallow', () => {
+		expect(
+			commitHeadline(commit({ commit: { message: 'feat(resilience): add a breaker', author: {} } })),
+		).toBe('Feature · resilience');
 	});
-	it('does not split on a late colon', () => {
-		const s = 'this is a very long subject line that carries its only colon well past sixty: nope';
-		expect(splitSubject(s).headline).toBe('New commit');
+
+	it('marks a breaking change', () => {
+		expect(commitHeadline(commit({ commit: { message: 'feat(api)!: drop v1', author: {} } }))).toBe(
+			'Feature · api (breaking)',
+		);
+	});
+
+	it('falls back to the older "Scope: text" habit', () => {
+		expect(
+			commitHeadline(commit({ commit: { message: 'Avatar Studio: 122 sliders', author: {} } })),
+		).toBe('Avatar Studio');
+	});
+
+	it('says "New commit" when a subject carries no convention at all', () => {
+		expect(
+			commitHeadline(commit({ commit: { message: 'Escape a raw NUL byte in the test', author: {} } })),
+		).toBe('New commit');
 	});
 });
 
-describe('prettyHeadline', () => {
-	it('maps conventional-commit types to friendly labels', () => {
-		expect(prettyHeadline('feat')).toBe('Feature');
-		expect(prettyHeadline('fix')).toBe('Fix');
-		expect(prettyHeadline('PERF')).toBe('Performance');
-	});
-	it('passes real scopes through untouched', () => {
-		expect(prettyHeadline('Avatar Studio')).toBe('Avatar Studio');
-		expect(prettyHeadline('/cookbook')).toBe('/cookbook');
-		expect(prettyHeadline('New commit')).toBe('New commit');
+describe('commitSummary', () => {
+	it('drops the type prefix and keeps the description', () => {
+		expect(commitSummary(commit())).toBe('add a thing');
+		expect(
+			commitSummary(commit({ commit: { message: 'Avatar Studio: 122 sliders', author: {} } })),
+		).toBe('122 sliders');
 	});
 });
 
