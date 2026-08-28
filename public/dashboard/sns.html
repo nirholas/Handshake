@@ -155,8 +155,15 @@
 				}
 
 				const { tx_base64 } = prepJson.data;
-				const { VersionedTransaction } = await import(
-					'https://esm.sh/@solana/web3.js@1.95.3'
+				// Through /load-module.js, which races the same package version
+				// across esm.sh, jsdelivr and unpkg and rejects with a typed error
+				// naming every host it tried. A bare import('https://esm.sh/...')
+				// meant one CDN outage or one ad blocker stalled the registration
+				// silently; the error now lands in the caller's catch and is
+				// printed by setRegisterStatus.
+				const { loadModule } = await import('/load-module.js');
+				const { VersionedTransaction } = await loadModule(
+					'https://esm.sh/@solana/web3.js@1.95.3',
 				);
 				const txBytes = Uint8Array.from(atob(tx_base64), (c) => c.charCodeAt(0));
 				const tx = VersionedTransaction.deserialize(txBytes);

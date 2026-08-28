@@ -592,7 +592,11 @@
 		var qrLibPromise = null;
 		function loadQrLib() {
 			if (!qrLibPromise) {
-				qrLibPromise = import('https://cdn.jsdelivr.net/npm/qrcode@1.5.4/+esm')
+				// Through /load-module.js, which races the same package version
+				// across jsdelivr, esm.sh and unpkg. A single-host import meant one
+				// CDN outage silently cost the handoff QR on every desktop visit.
+				qrLibPromise = import('/load-module.js')
+					.then(function (loader) { return loader.loadModule('https://cdn.jsdelivr.net/npm/qrcode@1.5.4/+esm'); })
 					.then(function (m) { return m.default || m; });
 			}
 			return qrLibPromise;

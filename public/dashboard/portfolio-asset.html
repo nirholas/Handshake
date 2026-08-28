@@ -529,9 +529,19 @@
 				renderChart(asset.chart?.points || []);
 			}
 
+			// Every CDN module on this page goes through /load-module.js, which
+			// races the same package version across esm.sh, jsdelivr and unpkg and
+			// rejects with a typed error naming every host it tried. A bare
+			// import('https://esm.sh/...') made one CDN outage, one corporate
+			// proxy or one ad blocker enough to blank the feature with no message.
+			async function loadCdnModule(url) {
+				const { loadModule } = await import('/load-module.js');
+				return loadModule(url);
+			}
+
 			async function ensureChart() {
 				if (chart) return;
-				const mod = await import('https://esm.sh/lightweight-charts@4.2.3');
+				const mod = await loadCdnModule('https://esm.sh/lightweight-charts@4.2.3');
 				const { createChart, AreaSeries } = mod;
 				chartEl = $$('chart');
 				chartTooltip = $$('chart-tooltip');
@@ -588,7 +598,18 @@
 				}
 				$$('chart').style.display = 'block';
 				$$('chart-empty').style.display = 'none';
-				await ensureChart();
+				try {
+					await ensureChart();
+				} catch (err) {
+					// The price rows on this page are real and already rendered, so
+					// name what is missing instead of leaving an empty chart well.
+					$$('chart').style.display = 'none';
+					const empty = $$('chart-empty');
+					empty.style.display = 'flex';
+					empty.textContent = err?.message || 'The chart library could not be loaded.';
+					$$('chart-change').textContent = '';
+					return;
+				}
 				const sorted = [...points]
 					.map((p) => ({ time: Math.floor(new Date(p.t).getTime() / 1000), value: Number(p.price) }))
 					// lightweight-charts rejects NaN/null values — drop bad rows from upstream
@@ -638,9 +659,19 @@
 				`, async () => {
 					$$('close').onclick = closeModal;
 					$$('qr-copy').onclick = () => navigator.clipboard.writeText(w.address);
-					const mod = await import('https://esm.sh/qrcode@1.5.3');
-					const QR = mod.default ?? mod;
-					await QR.toCanvas($$('qr-canvas'), w.address, { width: 220, margin: 1, color: { dark: '#000', light: '#ffffff' } });
+					try {
+						const mod = await loadCdnModule('https://esm.sh/qrcode@1.5.3');
+						const QR = mod.default ?? mod;
+						await QR.toCanvas($$('qr-canvas'), w.address, { width: 220, margin: 1, color: { dark: '#000', light: '#ffffff' } });
+					} catch (err) {
+						// No QR code, but the address below it is the actual payload
+						// and stays readable and copyable, so the modal still works.
+						const note = document.createElement('p');
+						note.className = 'sub';
+						note.style.cssText = 'max-width:220px;text-align:center;margin:0';
+						note.textContent = `${err?.message || 'The QR code library could not be loaded.'} Copy the address below instead.`;
+						$$('qr-canvas').replaceWith(note);
+					}
 				});
 			}
 

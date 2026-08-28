@@ -883,6 +883,17 @@
 			};
 
 			let toastTimer;
+			// Every CDN module on this page goes through /load-module.js, which
+			// races the same package version across esm.sh, jsdelivr and unpkg and
+			// rejects with a typed error naming every host it tried. A bare
+			// import('https://esm.sh/...') made one CDN outage, one corporate
+			// proxy or one ad blocker enough to kill wallet signing and the vanity
+			// grinder with nothing on screen saying why.
+			async function loadCdnModule(url) {
+				const { loadModule } = await import('/load-module.js');
+				return loadModule(url);
+			}
+
 			function toast(msg, kind = 'ok') {
 				els.toast.textContent = msg;
 				els.toast.className = `toast show ${kind}`;
@@ -1209,7 +1220,7 @@
 						body: JSON.stringify({ domain, wallet_address: pubkey }),
 					});
 
-					const { VersionedTransaction } = await import('https://esm.sh/@solana/web3.js@1.98.4');
+					const { VersionedTransaction } = await loadCdnModule('https://esm.sh/@solana/web3.js@1.98.4');
 					const tx = VersionedTransaction.deserialize(
 						Uint8Array.from(atob(prep.tx_base64), (c) => c.charCodeAt(0)),
 					);
@@ -1684,7 +1695,16 @@
 					toast('Enter a prefix or suffix', 'err');
 					return;
 				}
-				const { Keypair } = await import('https://esm.sh/@solana/web3.js@1.98.4');
+				let Keypair;
+				try {
+					({ Keypair } = await loadCdnModule('https://esm.sh/@solana/web3.js@1.98.4'));
+				} catch (err) {
+					// The grinder cannot run without the keypair library. Say so in
+					// the page's own toast rather than leaving the Start button
+					// looking pressed and nothing happening.
+					toast(err?.message || 'The Solana library could not be loaded.', 'err');
+					return;
+				}
 				vgRunning = true;
 				vgAbort = false;
 				vg.start.hidden = true;

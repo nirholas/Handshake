@@ -1129,7 +1129,7 @@ async function runPhantomPayment(call, displayLabel) {
 
     // 3. Phantom signs
     setStep('built', 'active', 'sign the transaction in Phantom…');
-    const { VersionedTransaction } = await import('https://esm.sh/@solana/web3.js@1');
+    const { VersionedTransaction } = await loadCdnModule('https://esm.sh/@solana/web3.js@1');
     const vtxBytes = base64ToUint8Array(tx_base64);
     const vtx = VersionedTransaction.deserialize(vtxBytes);
     const signedVtx = await provider.signTransaction(vtx);
@@ -1470,6 +1470,17 @@ function resetSteps() {
     stepsEl.appendChild(el);
   }
 }
+// Third-party modules go through /load-module.js, which races the same package
+// version across esm.sh, jsdelivr and unpkg and rejects with a typed error
+// naming every host it tried. A bare import('https://esm.sh/...') meant one CDN
+// outage, one corporate proxy or one ad blocker stalled the payment at "sign
+// the transaction" with nothing on screen saying why. The error lands in the
+// caller's catch, which paints the failed step and the chat error line.
+async function loadCdnModule(url) {
+  const { loadModule } = await import('/load-module.js');
+  return loadModule(url);
+}
+
 function setStep(id, state, meta) {
   const el = $(`step-${id}`);
   if (!el) return;
