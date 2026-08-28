@@ -20,6 +20,7 @@
 import { getAgentOnchain, fetchAgentMetadata, findAvatar3D } from './queries.js';
 import { REGISTRY_DEPLOYMENTS, agentRegistryId } from './abi.js';
 import { CHAIN_META } from './chain-meta.js';
+import { uriCandidates } from '../ipfs.js';
 
 // ---------------------------------------------------------------------------
 // Parsing
@@ -100,12 +101,11 @@ export function toPublicUrl(ref, { embed = false, origin } = {}) {
 // URL fallback — tries direct, then rotates IPFS gateways, then Arweave
 // ---------------------------------------------------------------------------
 
-const IPFS_GATEWAYS = [
-	'https://ipfs.io/ipfs/',
-	'https://dweb.link/ipfs/',
-	'https://flk-ipfs.xyz/ipfs/',
-	'https://gateway.pinata.cloud/ipfs/',
-];
+// The single gateway `resolveUrl` picks first. The FALLBACK chain is not
+// duplicated here: src/ipfs.js owns the canonical, dead-host-free gateway list
+// and the CID re-extraction that makes an already-baked gateway URL rotatable,
+// so `resolveUrlCandidates` below delegates to it rather than drifting from it.
+const PRIMARY_IPFS_GATEWAY = 'https://ipfs.io/ipfs/';
 const AR_GATEWAY = 'https://arweave.net/';
 
 /**
@@ -118,27 +118,27 @@ const AR_GATEWAY = 'https://arweave.net/';
  */
 export function resolveUrl(uri) {
 	if (!uri) return '';
-	if (uri.startsWith('ipfs://')) return IPFS_GATEWAYS[0] + uri.slice(7);
+	if (uri.startsWith('ipfs://')) return PRIMARY_IPFS_GATEWAY + uri.slice(7);
 	if (uri.startsWith('ar://')) return AR_GATEWAY + uri.slice(5);
 	return uri;
 }
 
 /**
- * All HTTPS forms of an off-chain URI, in preference order. Use when you
- * want to try each in sequence — e.g. the `<img>` fallback chain or a
- * `fetch` retry loop.
+ * All HTTPS forms of an off-chain URI, in preference order. Use when you want
+ * to try each in sequence: the `<img>` fallback chain, a `fetch` retry loop, or
+ * a GLB load that should survive one dead gateway.
+ *
+ * The head of the list is always exactly what `resolveUrl` returns, so a
+ * consumer holding a single URL can find it here and continue past it. The tail
+ * is `uriCandidates` from src/ipfs.js, which owns the live gateway list and can
+ * also re-extract the CID from a URL whose gateway was already baked in
+ * upstream. Keeping two gateway lists is how one of them goes stale.
  *
  * @param {string} uri
  * @returns {string[]}
  */
 export function resolveUrlCandidates(uri) {
-	if (!uri) return [];
-	if (uri.startsWith('ipfs://')) {
-		const rest = uri.slice(7);
-		return IPFS_GATEWAYS.map((gw) => gw + rest);
-	}
-	if (uri.startsWith('ar://')) return [AR_GATEWAY + uri.slice(5)];
-	return [uri];
+	return uriCandidates(resolveUrl(uri));
 }
 
 // ---------------------------------------------------------------------------
@@ -251,6 +251,14 @@ export async function resolveOnchainAgent(input, { ethProvider, fresh = false } 
  * Mirrors the shape `resolveAgentById` returns so the rest of the boot path
  * (memory, skills, runtime) works unchanged.
  *
+ * `image` and `body.uri` stay single URLs, unchanged, so every existing
+ * consumer keeps working. Alongside them, `_gatewayCandidates.body` and
+ * `_gatewayCandidates.image` carry the full ordered gateway chain for the same
+ * content, each starting with the single URL above. A consumer that can retry
+ * (an `<img>` onerror chain, a GLB loader) should walk those instead of giving
+ * up on one dead gateway; `uriCandidates()` in src/ipfs.js produces the same
+ * list from any single URL, which is the right call when all you have is one.
+ *
  * @param {Awaited<ReturnType<typeof resolveOnchainAgent>>} resolved
  * @returns {object}
  */
@@ -261,6 +269,12 @@ export function toManifest(resolved) {
 
 	const glb = resolved.glbUrl ? resolveUrl(resolved.glbUrl) : '';
 	const img = resolved.image ? resolveUrl(resolved.image) : '';
+	// The single URLs above name ONE gateway. When that gateway is down the
+	// avatar or the image is simply missing, with nothing to retry against, so
+	// the manifest also carries the full ordered chain for each. `body[0]` and
+	// `image[0]` are the same strings as `body.uri` and `image`.
+	const bodyCandidates = resolveUrlCandidates(resolved.glbUrl || resolved.image || '');
+	const imageCandidates = resolveUrlCandidates(resolved.image || '');
 
 	return {
 		spec: 'agent-manifest/0.1',
@@ -279,6 +293,7 @@ export function toManifest(resolved) {
 		description: resolved.description,
 		image: img,
 		body: { uri: glb || img, format: 'gltf-binary' },
+		_gatewayCandidates: { body: bodyCandidates, image: imageCandidates },
 		brain: brainSvc
 			? { provider: 'remote', endpoint: brainSvc.endpoint }
 			: { provider: 'none' },
