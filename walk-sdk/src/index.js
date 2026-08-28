@@ -46,6 +46,7 @@ export {
 	defaultAvatar,
 	listCategories,
 	makeApiAvatarEntry,
+	makeGuestAvatarEntry,
 	resolveAvatarUrl,
 } from './roster.js';
 

@@ -261,6 +261,32 @@ export function makeApiAvatarEntry(id, { name, accent } = {}) {
 }
 
 /**
+ * Build a roster-shaped entry for a GLB served from anywhere: a contact's
+ * avatar, an avatar generated from a selfie, a customer's own character. The
+ * URL is used verbatim (absolute URLs pass through resolveAvatarUrl untouched),
+ * and the rig is driven by the shared retargeted library, which is what lets an
+ * arbitrary humanoid GLB walk and gesture without shipping its own clips.
+ *
+ * @param {string} url absolute or root-relative GLB URL.
+ * @param {{ id?:string, name?:string, accent?:string, rig?:'shared'|'embedded' }} [opts]
+ */
+export function makeGuestAvatarEntry(url, { id, name, accent, rig = 'shared' } = {}) {
+	return {
+		id: id || `guest:${url}`,
+		name: name || 'Guest',
+		emoji: '👤',
+		blurb: 'A guest avatar delivering a message.',
+		category: 'Guests',
+		asset: url,
+		source: 'static',
+		rig,
+		clips: DEFAULT_SHARED_CLIPS,
+		accent: accent || '#7aa2ff',
+		tags: ['guest'],
+	};
+}
+
+/**
  * Resolve the GLB URL for a roster entry.
  * - static entries: `assetBase` + the entry's asset path.
  * - api entries:    `apiBase` + `/api/avatars/<id>/glb`.

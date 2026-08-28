@@ -814,11 +814,16 @@ export function createWalkCompanion(opts = {}) {
 		 * @param {string} [opts.emote='wave'] gesture played on arrival; falls back
 		 *   to a wave on rigs that don't carry it.
 		 * @param {Array<{label:string, href?:string, onClick?:Function}>} [opts.actions]
+		 * @param {string|object} [opts.avatar] deliver as somebody else: a roster
+		 *   id, or an entry from `makeGuestAvatarEntry(glbUrl, { name })`. The
+		 *   swap is not persisted and the visitor's own avatar comes back once
+		 *   the message is over, which is what lets a message from a contact be
+		 *   delivered by that contact's own body.
 		 * @returns {Promise<boolean>} false when no avatar could be shown (route
 		 *   excluded, no WebGL, inside an iframe) so the caller can fall back to
 		 *   its own UI. True once the message is on screen.
 		 */
-		async announce(message, { hold = 7000, tone = 'alert', emote = 'wave', actions } = {}) {
+		async announce(message, { hold = 7000, tone = 'alert', emote = 'wave', actions, avatar = null } = {}) {
 			if (!message) return false;
 			const summoned = !instance?.mounted;
 			// Transient only when the visitor has not turned the companion on: an
@@ -831,17 +836,43 @@ export function createWalkCompanion(opts = {}) {
 				if (!instance.mounted) return false;
 			}
 			const inst = instance;
+
+			// Guest delivery: whoever the message is from arrives in their own
+			// body, and the visitor's companion is restored afterwards. A swap
+			// that fails leaves the current avatar in place and the line is
+			// still delivered, so a missing GLB never costs the message.
+			let restore = null;
+			if (avatar) {
+				const guest = typeof avatar === 'string' ? resolveAvatarEntry(avatar, config) : avatar;
+				const currentId = inst._currentEntry?.id || lsGet(config.keys.avatar) || config.defaultAvatarId;
+				if (guest && guest.id !== currentId) {
+					restore = inst._currentEntry || resolveAvatarEntry(currentId, config);
+					await inst.setAvatar(guest, { persist: false, chatter: false });
+				}
+			}
+
 			try {
 				if (!inst.controller?.playEmote?.(emote)) inst.controller?.playWave?.();
 			} catch {
 				/* rig without emotes: the bubble still carries the message */
 			}
 			inst.say(message, { hold, tone, actions });
-			if (!transient) return true;
-			await new Promise((r) => setTimeout(r, hold + ANNOUNCE_RETREAT_MS));
-			// The visitor may have turned the companion on (or swapped instances)
-			// while it was delivering; never yank it away in that case.
-			if (!isEnabled() && instance === inst && inst.mounted) inst.unmount();
+
+			const settle = async () => {
+				await new Promise((r) => setTimeout(r, hold + ANNOUNCE_RETREAT_MS));
+				if (instance !== inst || !inst.mounted) return;
+				if (restore) await inst.setAvatar(restore, { persist: false, chatter: false });
+				// The visitor may have turned the companion on (or swapped
+				// instances) while it was delivering; never yank it away then.
+				if (transient && !isEnabled() && instance === inst && inst.mounted) inst.unmount();
+			};
+			// A persistent companion returns as soon as the line is up; only a
+			// summoned-for-this-message one waits for its own retreat.
+			if (!transient) {
+				if (restore) settle();
+				return true;
+			}
+			await settle();
 			return true;
 		},
 
