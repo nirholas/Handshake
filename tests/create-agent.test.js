@@ -167,6 +167,13 @@ describe('scaffold', () => {
 			'a-friendly-cartoon-astronaut',
 		);
 		expect(titleFrom('a friendly cartoon astronaut')).toBe('Friendly Cartoon Astronaut');
+		// A name is the subject, not the first four words of the sentence: the
+		// real runs produced "Friendly Cartoon Astronaut In" and
+		// "Knight With Worn Steel" before this cut at the first preposition.
+		expect(titleFrom('a friendly cartoon astronaut in a glossy white suit')).toBe(
+			'Friendly Cartoon Astronaut',
+		);
+		expect(titleFrom('a knight with worn steel armor')).toBe('Knight');
 		expect(slugify('!!!')).toBe('agent');
 		expect(titleFrom('')).toBe('Agent');
 	});

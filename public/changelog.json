@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T06:34:45.458Z",
+	"generated_at": "2026-08-28T06:41:40.928Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -371,6 +371,17 @@
 		{
 			"date": "2026-08-28",
 			"type": "update",
+			"title": "Embedded avatars load again on other people's websites",
+			"summary": "Anyone who dropped a three.ws avatar onto their own site with the <agent-3d> tag and pointed it straight at a model file got an error panel instead of the character: the embed code referred to something that was not there and gave up at the last step, right before it would have started the idle animation. It now loads and plays as documented. Two related repairs came with it: the compression decoders three.ws hosts can finally be used by other sites (they were being blocked, so every embed quietly fell back to a third-party CDN and logged errors doing it), and the code that runs on other people's pages is now checked for this exact class of mistake before it can ship again.",
+			"link": "/docs/web-component",
+			"tags": [
+				"fix",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "update",
 			"title": "Every release note now shows you the code that shipped it",
 			"summary": "Until today this site kept two separate records of the same work: a changelog written for people, and a commit feed written by engineers, neither aware of the other. The new ship log joins them. Each release note now lists the commits that produced it, and says how confident it is in each match and why it made it, in plain words you can argue with. Commits nobody ever wrote up are grouped and shown too, so the work that shipped quietly is visible instead of lost. The announcements in the Telegram channel now carry a link to the exact code behind them, the raw commit feed reads in plain language instead of engineering shorthand, and it no longer posts merges or dependency bumps. The whole thing is a free, open-source package that works on anyone's repository.",
 			"link": "/ship",
@@ -608,7 +619,7 @@
 			"date": "2026-08-28",
 			"type": "update",
 			"title": "Your notifications now have a body: meet your companion",
-			"summary": "Your phone buzzes forty times a day and two of those mattered. three.ws/companion is the other half of that problem. Connect what you already use, on your own keys: a Telegram bot you create, the private calendar link Google, Apple and Outlook all publish, your inbox over IMAP with an app password, or nothing at all but a token your phone, your Mac, your build script or an AI agent can post to. Everything that arrives is scored out of 100 against the things people actually want interrupting for (a saved contact asking you something, a one-time code, a meeting starting in ten minutes, a payment that failed) and the rest is kept quietly in a feed with the reason it stayed quiet. What clears your bar is delivered in person: a 3D character walks on, and if it is from someone you gave a face to, it arrives wearing their avatar and speaking in their voice. It reaches you on three.ws, as a push on your phone, and on your desktop, where a new companion app puts a character that walks across your screen and comes over to tell you. Quiet hours are absolute, the credentials are encrypted, and one button revokes every device. Developers get the whole thing as @three-ws/companion: a client, the same triage rules the server runs (so you can score your mail locally and never send the rest), a drop-in 3D stage for any page, a CLI, and an MCP server so an agent that finds something urgent can stand in front of you and say it.",
+			"summary": "Your phone buzzes forty times a day and two of those mattered. three.ws/companion is the other half of that problem. Connect what you already use, on your own keys: a Telegram bot you create, the private calendar link Google, Apple and Outlook all publish, your inbox over IMAP with an app password, or nothing at all but a token your phone, your Mac, your build script or an AI agent can post to. Everything that arrives is scored out of 100 against the things people actually want interrupting for (a saved contact asking you something, a one-time code, a meeting starting in ten minutes, a payment that failed) and the rest is kept quietly in a feed with the reason it stayed quiet. What clears your bar is delivered in person: a 3D character walks on, and if it is from someone you gave a face to, it arrives wearing their avatar and speaking in their voice. It reaches you on three.ws, as a push on your phone, and on your desktop, where a new companion app puts a character that walks across your screen and comes over to tell you. You can answer straight from the message: a Telegram delivery carries a reply box that sends back into the same chat, so it is a conversation and not a receipt. Quiet hours are absolute, the credentials are encrypted, and one button revokes every device. Developers get the whole thing as @three-ws/companion: a client, the same triage rules the server runs (so you can score your mail locally and never send the rest), a drop-in 3D stage for any page, a CLI, and an MCP server so an agent that finds something urgent can stand in front of you and say it.",
 			"link": "/companion",
 			"tags": [
 				"feature",

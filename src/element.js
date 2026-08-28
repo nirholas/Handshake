@@ -1680,7 +1680,12 @@ class Agent3DElement extends HTMLElement {
 			// Initial playback. Chat avatars idle-loop (then walk on stream); bare
 			// decoration avatars honor the `clip` attribute, the clip's manifest
 			// loop flag, and prefers-reduced-motion via _startDecorationPlayback.
-			if (bodyURI) {
+			// `bodyCandidates` is the loaded body's gateway list. This read used to
+			// name a variable that only exists in manifest.js, so every boot that
+			// reached this line threw "bodyURI is not defined" and the element
+			// showed its error overlay instead of the avatar. eslint knew (no-undef),
+			// but it was a warning, so nothing stopped it shipping.
+			if (bodyCandidates.length) {
 				if (this._isChatMode()) {
 					this._scene.playClipByName('idle', { loop: true });
 				} else {

@@ -22,13 +22,27 @@ export function slugify(text, fallback = 'agent') {
 	return slug || fallback;
 }
 
+// A prompt is a sentence, and the subject is the part before its first
+// preposition: "a knight with worn steel armor" is a Knight. Cutting at a fixed
+// word count instead produced "Friendly Cartoon Astronaut In" on the first real
+// run, and "Knight With Worn Steel" on the second.
+const STOP_WORDS = new Set([
+	'in', 'on', 'at', 'of', 'with', 'and', 'or', 'for', 'to', 'a', 'an', 'the', 'wearing', 'holding',
+	'that', 'who', 'which', 'from', 'over', 'under', 'by',
+]);
+
 /** A display name from a prompt: "a friendly cartoon astronaut" -> "Friendly Cartoon Astronaut". */
 export function titleFrom(text, fallback = 'Agent') {
-	const words = String(text || '')
+	const all = String(text || '')
 		.replace(/^(a|an|the)\s+/i, '')
-		.split(/\s+/)
-		.filter(Boolean)
-		.slice(0, 4);
+		.split(/[\s,]+/)
+		.filter(Boolean);
+	const words = [];
+	for (const word of all) {
+		if (words.length && STOP_WORDS.has(word.toLowerCase())) break;
+		words.push(word);
+		if (words.length === 4) break;
+	}
 	if (!words.length) return fallback;
 	return words.map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
