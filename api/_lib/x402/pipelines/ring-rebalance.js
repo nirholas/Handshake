@@ -36,6 +36,7 @@ import { solanaConnection } from '../../solana/connection.js';
 import { blockhashKey, getRecentBlockhashInfo, mintDecimals } from '../../solana/read-guards.js';
 import { loadSeedKeypair, USDC_MINT } from '../pay.js';
 import { ECONOMY_MASTER_ADDRESS } from '../../economy-master.js';
+import { noteSponsorRentFailure } from '../self-facilitator.js';
 
 const log = logger('x402-ring-rebalance');
 
@@ -256,6 +257,11 @@ export async function run(ctx = {}) {
 	try {
 		signature = await conn.sendRawTransaction(vtx.serialize(), { skipPreflight: false, maxRetries: 5 });
 	} catch (err) {
+		// The sweep is fee-paid by the same sponsor the settle path uses, so a
+		// rent-exemption rejection here is the same platform condition and must
+		// reach the same guard. 86 of the 95 faults measured on 2026-08-28 arrived
+		// through this branch, not through settle simulation.
+		noteSponsorRentFailure(err?.message || err, feePayerKp.publicKey.toBase58());
 		return { success: false, amountAtomic: 0, errorMsg: `sweep_broadcast_failed:${String(err?.message || err).slice(0, 200)}` };
 	}
 

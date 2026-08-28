@@ -210,7 +210,7 @@ export function diagnoseSettleDrop({ noSolanaAccept, floorSignals, governorSkips
  * reconciliation below re-attributes status-only 5xx faults to the governor /
  * floor, clamped by min() so a window skew between the two logs can never
  * invent faults or attribute more than actually happened.
- * @param {Array<{ success: boolean, paid: boolean, reason: string, n: number }>} buckets
+ * @param {Array<{ success: boolean, paid: boolean, reason: string, rent?: boolean, n: number }>} buckets
  * @param {{ minAttempts?: number,
  *   facilitatorRejects?: { governor?: number, floor?: number } }} [opts]
  * @returns {{ status: 'ok'|'degraded'|'down'|'unknown', settled: number,
@@ -240,6 +240,19 @@ export function classifySettleBuckets(buckets, { minAttempts = MIN_ATTEMPTS, fac
 		if (b.reason === NO_SOLANA_ACCEPT) noSolanaAccept += n;
 		if (SPONSOR_FLOOR.test(String(b.reason || ''))) floorSignals += n;
 		if (FEE_GOVERNOR.test(String(b.reason || ''))) governorSkips += n;
+		// A rent-exemption failure on the fee payer wears a rail-shaped reason
+		// token (`simulation_failed`, `sweep_broadcast_failed`) while being the
+		// opposite of a rail fault: the transaction never reached the rail because
+		// the sponsor could not pay for it. Counting it as rail is what produced
+		// the wrong hint on 2026-08-28, when 3 hours of a dry sponsor were reported
+		// as `cause: rail` and the operator was pointed at duplicate signatures and
+		// RPC preflight instead of at a wallet holding 0.000899 SOL. The flag is
+		// computed from the full error_msg because the `:`-token this groups by
+		// throws the rent detail away.
+		if (b.rent) {
+			floorSignals += n;
+			continue;
+		}
 		if (isRailFault(b.reason)) {
 			faults += n;
 			faultBy[b.reason] = (faultBy[b.reason] || 0) + n;
@@ -274,6 +287,29 @@ export function classifySettleBuckets(buckets, { minAttempts = MIN_ATTEMPTS, fac
 		.sort((a, b) => b.n - a.n);
 
 	if (attempts < minAttempts) {
+		// A sponsor under its floor is a HARD stop, not an unjudgeable window. Every
+		// settle it touches fails closed, so the attempts that would have been
+		// judged are precisely the ones the empty wallet prevented, and moving them
+		// out of `faults` (which is correct: they never reached the rail) must not
+		// let the sensor answer `unknown`. On 2026-08-28 that would have reported a
+		// three-hour, zero-settle outage as "too few attempts to judge". Down rather
+		// than degraded, per the precedence in diagnoseSettleDrop: under the floor
+		// nothing settles at all, where a spent governor budget still settles at the
+		// paced rate.
+		if (floorSignals >= minAttempts) {
+			const { cause, hint } = diagnoseSettleDrop({
+				noSolanaAccept, floorSignals, governorSkips, settled, faults,
+			});
+			return {
+				status: 'down',
+				settled, faults, attempts, rate: null, faultClasses,
+				cause, noSolanaAccept, floorSignals, governorSkips,
+				detail:
+					`settle halted: ${floorSignals} attempt(s) refused with the sponsor under its SOL floor ` +
+					`in ${WINDOW_INTERVAL}, ${settled} settled`,
+				hint,
+			};
+		}
 		// A throttled rail is not an unjudgeable one. When the reason there is
 		// nothing to judge is that the governor skipped the calls, say so and report
 		// `degraded`: the funding action is identical to the low-rate case, and
@@ -354,15 +390,17 @@ export async function gatherX402SettleHealth() {
 	const base = { name: /** @type {const} */ ('x402_settle'), label: 'x402 settlement success' };
 	try {
 		const { sql } = await import('../db.js');
-		const buckets = /** @type {Array<{ success: boolean, paid: boolean, reason: string, n: number }>} */ (
+		const buckets = /** @type {Array<{ success: boolean, paid: boolean, reason: string, rent?: boolean, n: number }>} */ (
 			await sql`
 				SELECT success,
 				       (amount_atomic > 0) AS paid,
 				       COALESCE(NULLIF(split_part(error_msg, ':', 1), ''), 'none') AS reason,
+				       ((error_msg ILIKE '%InsufficientFundsForRent%' AND error_msg ILIKE '%"account_index":0%')
+				         OR error_msg ILIKE '%account (0) with insufficient funds for rent%') AS rent,
 				       count(*)::int AS n
 				FROM x402_autonomous_log
 				WHERE ts >= now() - ${WINDOW_INTERVAL}::interval
-				GROUP BY success, paid, reason
+				GROUP BY success, paid, reason, rent
 			`
 		);
 		// The facilitator's own book for the same window: the ring log only carries

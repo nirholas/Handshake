@@ -196,6 +196,35 @@ HTTP 502/503 GET|POST /api/x402/*, /api/mcp   ua: threews-x402-autonomous/1.0 or
   window, or `rail` for real payment-rail faults) and `detail` names the
   withdrawal, so the sensor no longer points at the facilitator for a funding
   problem.
+- **The loud variant: a rail-shaped storm that is really a dry sponsor
+  (`InsufficientFundsForRent`).** Observed 2026-08-28. This is the quiet
+  variant's opposite and it is easy to misread, because every symptom points at
+  the rail. The sponsor held 0.000899107 SOL against the 0.02 SOL floor, which
+  is 0.0000082 SOL of spendable headroom, less than two transaction fees, so
+  every transaction it fee-paid failed at simulation:
+  `simulation_failed:{"InsufficientFundsForRent":{"account_index":0}}` on the
+  verify path and `sweep_broadcast_failed:Simulation failed ... account (0) with
+  insufficient funds for rent` on the sweep path. **Account index 0 of a
+  compiled Solana message is the fee payer**, so that error is never about the
+  buyer's USDC: it is the sponsor being too poor to sign.
+
+  Why the quiet variant's guard did not catch it: `sponsorKnownBelowFloor()` was
+  only ever written by `getBalance`, and all four paid Solana RPC lanes were over
+  quota in the same window. `refreshSponsorFloorState()` fails open on an RPC
+  error by design, so the guard never learned the sponsor was dry and the ring
+  spent three hours attempting payments that could not settle: 95 attempts, 0
+  settled. Since 2026-08-28 the settle path reads the verdict off the failure
+  itself (`noteSponsorRentFailure()` in
+  [self-facilitator.js](../../api/_lib/x402/self-facilitator.js)), which costs no
+  RPC call and works precisely when the RPC is too degraded to answer one, and
+  the sensor counts a fee-payer rent failure as a floor signal rather than a rail
+  fault. Before that fix healthz reported `cause: rail` and its hint sent the
+  reader to duplicate signatures and RPC preflight.
+
+  **Confirm in one command, no logs needed:**
+  `curl -s https://api.mainnet-beta.solana.com -X POST -H 'content-type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"getBalance","params":["WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW"]}'`
+  Under 20,000,000 lamports is below the floor; under ~900,000 the wallet cannot
+  pay a single fee. Fix is the owner top-up below.
 - **Not a code bug.** The economy-rebalance keypair crash (assigned
   `loadSignerKeypair`'s wrapper to `keypair`, read `.publicKey` of undefined)
   is fixed and live in commit `bb02839f9`. When

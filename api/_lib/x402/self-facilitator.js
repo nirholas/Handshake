@@ -399,6 +399,59 @@ function noteFloorState(lamports, now) {
 	_floorState = { below: lamports < SPONSOR_SOL_FLOOR_LAMPORTS, at: now };
 }
 
+/**
+ * Is this simulation error the chain saying the FEE PAYER cannot afford the fee
+ * without dropping below rent exemption?
+ *
+ * Account index 0 of a compiled Solana message is the fee payer, by definition,
+ * so `InsufficientFundsForRent { account_index: 0 }` is never about the buyer's
+ * token balance: it is the sponsor being too poor to sign. Both spellings the
+ * RPCs use are matched, the structured `err` object and the human sentence that
+ * reaches the sweep path inside a SendTransactionError message.
+ * @param {unknown} simErr
+ * @returns {boolean}
+ */
+export function isFeePayerRentFailure(simErr) {
+	if (simErr == null) return false;
+	if (typeof simErr === 'object') {
+		return Number(/** @type {any} */ (simErr)?.InsufficientFundsForRent?.account_index) === 0;
+	}
+	const s = String(simErr);
+	if (/InsufficientFundsForRent/.test(s)) return /"account_index"\s*:\s*0/.test(s);
+	return /account \(0\) with insufficient funds for rent/i.test(s);
+}
+
+/**
+ * Trip the floor guard from a settle failure instead of a balance read.
+ *
+ * The guard was only ever written by getBalance, which is exactly the call that
+ * stops answering when the Solana RPC lanes are over quota, and
+ * refreshSponsorFloorState fails open on that error by design. So the two
+ * failures compounded: on 2026-08-28 all four paid lanes were exhausted at once
+ * while the sponsor sat at 0.000899 SOL against a 0.02 floor, the guard never
+ * learned it, and the ring spent three hours making payments that could not
+ * settle. 95 attempts, 0 settled, every one of them dying on this exact error.
+ *
+ * A rent-exemption failure on our own fee payer is strictly better evidence than
+ * the balance read it replaces: it is free, it is the chain's own verdict, and
+ * it arrives precisely when the RPC is too degraded to answer anything else.
+ *
+ * Only OUR sponsor counts. In a self-pay settle the buyer is the fee payer, and
+ * tripping the platform-wide guard because one buyer is broke would withdraw the
+ * Solana accept from every 402 challenge on the site.
+ * @param {unknown} simErr
+ * @param {string|null|undefined} feePayer the transaction's fee payer
+ * @param {number} [now]
+ * @returns {boolean} true when the guard was tripped
+ */
+export function noteSponsorRentFailure(simErr, feePayer, now = Date.now()) {
+	if (!isFeePayerRentFailure(simErr)) return false;
+	const sponsor = env.X402_FEE_PAYER_SOLANA;
+	if (!sponsor || !feePayer || String(feePayer) !== String(sponsor)) return false;
+	_floorState = { below: true, at: now };
+	return true;
+}
+
 // Keep the floor state warm on instances that never settle.
 //
 // The state above is per-process and was only written by the settle path, so a
@@ -769,6 +822,10 @@ async function assertSettleable({ tx, connection, requirement, decoded }) {
 		const simErr = sim?.value?.err ?? null;
 		if (simErr) {
 			const s = typeof simErr === 'object' ? JSON.stringify(simErr) : String(simErr);
+			// A dry sponsor is a platform condition, not this payment's fault: record
+			// it so the 402 challenge stops advertising a Solana accept that cannot
+			// settle, rather than rejecting one payment and inviting the next.
+			noteSponsorRentFailure(simErr, decoded?.feePayer);
 			return { ok: false, reason: `simulation_failed:${s}`.slice(0, 160) };
 		}
 		return { ok: true };

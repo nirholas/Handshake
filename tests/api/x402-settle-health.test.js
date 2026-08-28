@@ -372,3 +372,63 @@ describe('classifySettleBuckets: facilitator-book reconciliation of status-only 
 		expect(without.cause).toBe('rail');
 	});
 });
+
+describe('classifySettleBuckets: a dry sponsor is not a rail fault', () => {
+	// The 2026-08-28 outage, reproduced from the real aggregation. The sponsor
+	// held 0.000899107 SOL against a 0.02 floor, so every transaction it fee-paid
+	// died on InsufficientFundsForRent at account index 0. The reason TOKEN those
+	// rows carry is rail-shaped (`sweep_broadcast_failed`, `simulation_failed`)
+	// because the rent detail lives past the first `:`, so the sensor counted 95
+	// rail faults and answered `cause: rail`. The hint then sent the operator to
+	// hunt duplicate signatures and RPC preflight faults instead of funding a
+	// wallet that had 0.0000082 SOL of spendable headroom.
+	const rentWave = [
+		{ success: false, paid: false, reason: 'sweep_broadcast_failed', rent: true, n: 86 },
+		{ success: false, paid: false, reason: 'simulation_failed', rent: true, n: 5 },
+		{ success: false, paid: false, reason: 'rpc_preflight_failed', rent: false, n: 4 },
+	];
+
+	it('names the sponsor floor, not the rail, when the fee payer cannot afford rent', () => {
+		const v = classifySettleBuckets(rentWave);
+		expect(v.cause).toBe('sponsor_floor');
+		expect(v.floorSignals).toBe(91);
+		// The 4 genuine preflight faults stay on the rail where they belong.
+		expect(v.faults).toBe(4);
+		expect(v.hint).toMatch(/sponsor/i);
+	});
+
+	it('reports DOWN, never UNKNOWN, when the floor is why there is nothing to judge', () => {
+		// Moving rent rows out of `faults` is correct (they never reached the rail)
+		// but it drops `attempts` under MIN_ATTEMPTS. Without the floor branch the
+		// sensor would answer "too few attempts to judge" for a three-hour outage.
+		const v = classifySettleBuckets([
+			{ success: false, paid: false, reason: 'sweep_broadcast_failed', rent: true, n: 95 },
+		]);
+		expect(v.status).toBe('down');
+		expect(v.cause).toBe('sponsor_floor');
+		expect(v.detail).toMatch(/sponsor under its SOL floor/);
+	});
+
+	it('a handful of rent rows on an otherwise idle ring still reads UNKNOWN', () => {
+		// The floor branch keys off the same MIN_ATTEMPTS as every other verdict, so
+		// a couple of stray rows cannot declare an outage on a quiet ring.
+		const v = classifySettleBuckets([
+			{ success: false, paid: false, reason: 'simulation_failed', rent: true, n: 3 },
+		]);
+		expect(v.status).toBe('unknown');
+	});
+
+	it('a bucket with no rent flag behaves exactly as it always did', () => {
+		const withFlag = classifySettleBuckets([
+			{ success: true, paid: true, n: 90 },
+			{ success: false, paid: false, reason: 'http_502', rent: false, n: 10 },
+		]);
+		const without = classifySettleBuckets([
+			{ success: true, paid: true, n: 90 },
+			{ success: false, paid: false, reason: 'http_502', n: 10 },
+		]);
+		expect(withFlag.status).toBe(without.status);
+		expect(withFlag.faults).toBe(without.faults);
+		expect(withFlag.rate).toBe(without.rate);
+	});
+});
