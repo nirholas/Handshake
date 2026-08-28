@@ -1,0 +1,22 @@
+/* Positioning only. Everything the panel looks like lives in its shadow root,
+   so a merchant's stylesheet cannot reach it and ours cannot leak onto their
+   page. This file styles the host element and nothing else.
+
+   The host is pointer-transparent and the card inside takes events back (see
+   panel.js): the panel must never sit between a person and the button they came
+   to press. */
+.threews-checkout-companion {
+	position: fixed;
+	right: 16px;
+	bottom: 16px;
+	z-index: 2147483000;
+	pointer-events: none;
+}
+
+@media (max-width: 480px) {
+	.threews-checkout-companion {
+		right: 12px;
+		left: 12px;
+		bottom: 12px;
+	}
+}
