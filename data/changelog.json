@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-08-28",
+			"title": "three.ws is an Android app you can install today",
+			"summary": "The signed app is public on GitHub as v1.0.0 and installs on any phone from Android 6 up. It opens full-screen with no browser around it, and it adds four things the website on a phone cannot do: sign in with a single tap through your Solana wallet (on a Seeker that tap is Seed Vault and the key never leaves the secure element), point the camera at yourself and get back a rigged 3D avatar, share a photo into three.ws from any other app and have it land in the avatar flow already attached, and mint an agent on Solana mainnet from the phone. It is 3.95 MB and open source like the rest of the platform. The Solana dApp Store listing was submitted the same day and is in review.",
+			"tags": [
+				"feature"
+			],
+			"link": "/seeker"
+		},
+		{
+			"date": "2026-08-28",
 			"title": "Avatars now face you when a page opens",
 			"summary": "The 3D viewer used to seat its camera on one fixed side and call that the front, which only worked for characters whose rig happened to be built facing that way. Everyone else opened showing you the back of their head. The viewer now reads which way the body is actually turned, from the rig itself, and frames the face, so every avatar greets you the same way no matter which tool it was made in. A second fix ships with it: if you have asked your phone or computer to reduce motion, avatars no longer spin slowly on a turntable, they hold still while keeping their breathing and blinking.",
 			"tags": [

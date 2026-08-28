@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T21:34:32.470Z",
+	"generated_at": "2026-08-28T22:44:07.948Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -546,6 +546,16 @@
 			"tags": [
 				"fix",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "update",
+			"title": "three.ws is an Android app you can install today",
+			"summary": "The signed app is public on GitHub as v1.0.0 and installs on any phone from Android 6 up. It opens full-screen with no browser around it, and it adds four things the website on a phone cannot do: sign in with a single tap through your Solana wallet (on a Seeker that tap is Seed Vault and the key never leaves the secure element), point the camera at yourself and get back a rigged 3D avatar, share a photo into three.ws from any other app and have it land in the avatar flow already attached, and mint an agent on Solana mainnet from the phone. It is 3.95 MB and open source like the rest of the platform. The Solana dApp Store listing was submitted the same day and is in review.",
+			"link": "/seeker",
+			"tags": [
+				"feature"
 			]
 		},
 		{

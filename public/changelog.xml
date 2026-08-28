@@ -431,6 +431,14 @@ And all of it is public. Oracle Lab publishes the actual model: every weight, th
 			<description>The three.ws app on Solana Seeker verifies against the site and opens full-screen on its own home screen, with no browser address bar. Two bugs found while testing it on a real Android build are fixed: the app only recognised your Seed Vault wallet on the first page you opened, so signing in from the login page said no wallet was found, and the login page never loaded the wallet at all. A new guide documents exactly how a release reaches the Solana dApp Store, from the publisher account through building and submitting the app.</description>
 		</item>
 		<item>
+			<title>three.ws is an Android app you can install today</title>
+			<link>https://three.ws/seeker</link>
+			<guid isPermaLink="false">2026-08-28:three.ws is an Android app you can install today</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The signed app is public on GitHub as v1.0.0 and installs on any phone from Android 6 up. It opens full-screen with no browser around it, and it adds four things the website on a phone cannot do: sign in with a single tap through your Solana wallet (on a Seeker that tap is Seed Vault and the key never leaves the secure element), point the camera at yourself and get back a rigged 3D avatar, share a photo into three.ws from any other app and have it land in the avatar flow already attached, and mint an agent on Solana mainnet from the phone. It is 3.95 MB and open source like the rest of the platform. The Solana dApp Store listing was submitted the same day and is in review.</description>
+		</item>
+		<item>
 			<title>We now prove our fallbacks work, instead of hoping they do</title>
 			<link>https://three.ws/docs/resilience</link>
 			<guid isPermaLink="false">2026-08-28:We now prove our fallbacks work, instead of hoping they do</guid>
