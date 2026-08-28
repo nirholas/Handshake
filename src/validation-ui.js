@@ -12,6 +12,7 @@
 import { ensureWallet } from './erc8004/agent-registry.js';
 import { recordValidation, hashReport } from './erc8004/validation-recorder.js';
 import { fetchValidationState } from './shared/validation-badge.js';
+import { resolveURI } from './ipfs.js';
 
 /**
  * Latest on-chain verdict for an agent, shaped for renderRecord(). Returns null
@@ -384,12 +385,11 @@ export class ValidationDashboard {
 		}
 	}
 
+	// One hardcoded gateway is one outage away from every validation record
+	// rendering blank. resolveURI walks the shared gateway list in src/ipfs.js,
+	// which the rest of the platform already rotates through.
 	resolveIPFS(uri) {
-		if (uri?.startsWith('ipfs://')) {
-			const cid = uri.slice(7);
-			return `https://dweb.link/ipfs/${cid}`;
-		}
-		return uri;
+		return resolveURI(uri);
 	}
 
 	escapeHtml(str) {

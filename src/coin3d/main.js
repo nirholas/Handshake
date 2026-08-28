@@ -59,6 +59,7 @@ import {
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { fetchFirstOrNull } from '../shared/failover-fetch.js';
 import { applyCinematicDefaults, detectQualityTier, loadEnvironment } from '../shared/cinematic-render.js';
+import { resolveURI, IPFS_GATEWAYS } from '../ipfs.js';
 
 const MCP_ENDPOINT = '/api/pump-fun-mcp';
 // The one and only coin — featured on the no-mint landing.
@@ -274,7 +275,9 @@ async function resolveImage(d) {
 
 function ipfsToHttp(url) {
 	if (typeof url !== 'string') return null;
-	if (url.startsWith('ipfs://')) return `https://ipfs.io/ipfs/${url.slice(7)}`;
+	// Resolve through the shared gateway list so this page inherits every gateway
+	// the rest of the platform rotates through, instead of pinning one host.
+	if (url.startsWith('ipfs://')) return resolveURI(url);
 	return url;
 }
 
@@ -283,9 +286,14 @@ function ipfsToHttp(url) {
 // isn't a known gateway URL (nothing useful to retry).
 function altIpfsGateway(url) {
 	if (typeof url !== 'string') return null;
-	if (url.includes('ipfs.io/ipfs/')) return url.replace('ipfs.io/ipfs/', 'dweb.link/ipfs/');
-	if (url.includes('dweb.link/ipfs/')) return url.replace('dweb.link/ipfs/', 'ipfs.io/ipfs/');
-	return null;
+	// Find which shared gateway this URL currently uses and hand back the next
+	// one in the list, so a retry walks the whole chain rather than bouncing
+	// between the same two hosts.
+	const idx = IPFS_GATEWAYS.findIndex((gw) => url.startsWith(gw));
+	if (idx === -1) return null;
+	const cid = url.slice(IPFS_GATEWAYS[idx].length);
+	const next = IPFS_GATEWAYS[(idx + 1) % IPFS_GATEWAYS.length];
+	return next === IPFS_GATEWAYS[idx] ? null : `${next}${cid}`;
 }
 
 function numOrNull(v) {

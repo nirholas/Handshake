@@ -13,10 +13,12 @@
 // requests to either now fail DNS (ERR_NAME_NOT_RESOLVED). pump.fun metadata
 // still hands out cf-ipfs.com image URLs, so we keep this list dead-host-free
 // and rewrite any lingering dead-gateway URL via normalizeGatewayURL().
-const IPFS_GATEWAYS = [
+export const IPFS_GATEWAYS = [
 	'https://dweb.link/ipfs/',
 	'https://ipfs.io/ipfs/',
 	'https://flk-ipfs.xyz/ipfs/',
+	'https://w3s.link/ipfs/',
+	'https://nftstorage.link/ipfs/',
 ];
 
 const AR_GATEWAY = 'https://arweave.net/';

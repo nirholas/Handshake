@@ -120,13 +120,18 @@ describe('loadCatalog', () => {
 	});
 
 	it('does not cache a failed fetch', async () => {
+		// A dropped connection is retried before giving up, so the count is the
+		// attempt budget rather than one. What must hold is that the FAILURE is
+		// not cached: the next call fetches again and succeeds.
 		let calls = 0;
 		const failing = async () => { calls++; throw new Error('offline'); };
 		await expect(loadCatalog({ force: true, url: 'https://t.test/c.json', fetchImpl: failing }))
 			.rejects.toThrow('offline');
+		expect(calls).toBeGreaterThan(0);
+		const attemptsSpent = calls;
 		const ok = await loadCatalog({ url: 'https://t.test/c.json', fetchImpl: okFetch([validManifest()]) });
 		expect(ok.garments).toHaveLength(1);
-		expect(calls).toBe(1);
+		expect(calls).toBe(attemptsSpent);
 	});
 });
 

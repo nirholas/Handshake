@@ -8,7 +8,17 @@
 
 import { getSolPriceUsd } from '../shared/usd-price.js';
 
-const RPC_MAINNET = 'https://api.mainnet-beta.solana.com';
+// api.mainnet-beta.solana.com refuses most browser origins outright, so the
+// whale feed used to be dead on arrival with nothing on screen saying why. Every
+// other browser Solana caller goes through our own proxy, which fronts the
+// keyed, rotating server chain; do the same here and keep the public endpoint
+// only for a non-browser caller that has no origin to proxy from.
+const RPC_MAINNET = (() => {
+	try {
+		if (typeof location !== 'undefined' && location.origin) return `${location.origin}/api/solana-rpc`;
+	} catch { /* fall through to the public endpoint */ }
+	return 'https://api.mainnet-beta.solana.com';
+})();
 const PUMP_PROGRAM = '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
 const LAMPORTS_PER_SOL = 1_000_000_000;
 const NATIVE_SOL = 'So11111111111111111111111111111111111111112';

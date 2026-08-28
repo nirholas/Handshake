@@ -117,14 +117,73 @@ let _catalogPromise = null;
  * @param {typeof fetch} [opts.fetchImpl]
  * @returns {Promise<{ garments: object[], rejected: Array<{id: string, errors: string[]}> }>}
  */
+// One bounded attempt plus two retries: the catalog is a small static file, so a
+// transient 5xx or a dropped connection is worth re-asking before falling back.
+async function fetchCatalogPayload(fetchImpl, url) {
+	let lastErr;
+	for (let attempt = 0; attempt < 3; attempt++) {
+		if (attempt > 0) await new Promise((r) => setTimeout(r, 300 * attempt));
+		try {
+			const res = await fetchImpl(url, {
+				headers: { accept: 'application/json' },
+				signal: AbortSignal.timeout(10_000),
+			});
+			if (!res.ok) {
+				const err = new Error(`garment catalog fetch failed: ${res.status}`);
+				if (res.status < 500 && res.status !== 429) throw err;
+				lastErr = err;
+				continue;
+			}
+			return await res.json();
+		} catch (err) {
+			lastErr = err;
+			if (err?.message?.startsWith('garment catalog fetch failed')) throw err;
+		}
+	}
+	throw lastErr;
+}
+
+const CATALOG_CACHE_KEY = (url) => `three.ws:garment-catalog:${url}`;
+const CATALOG_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+
+function readCatalogCache(url) {
+	try {
+		const raw = localStorage.getItem(CATALOG_CACHE_KEY(url));
+		if (!raw) return null;
+		const { at, payload } = JSON.parse(raw);
+		return Date.now() - at < CATALOG_CACHE_TTL_MS ? payload : null;
+	} catch {
+		return null;
+	}
+}
+
+function writeCatalogCache(url, payload) {
+	try {
+		localStorage.setItem(CATALOG_CACHE_KEY(url), JSON.stringify({ at: Date.now(), payload }));
+	} catch {
+		// A private window or a full quota is not a reason to fail the load.
+	}
+}
+
 export function loadCatalog(opts = {}) {
 	if (_catalogPromise && !opts.force) return _catalogPromise;
 	const url = opts.url || GARMENT_CATALOG_URL;
 	const fetchImpl = opts.fetchImpl || fetch;
 	_catalogPromise = (async () => {
-		const res = await fetchImpl(url, { headers: { accept: 'application/json' } });
-		if (!res.ok) throw new Error(`garment catalog fetch failed: ${res.status}`);
-		const { garments, rejected } = sanitizeCatalog(await res.json());
+		let payload;
+		try {
+			payload = await fetchCatalogPayload(fetchImpl, url);
+			writeCatalogCache(url, payload);
+		} catch (err) {
+			// The catalog is a static manifest on one bucket. A blip there used to
+			// empty the garment picker outright; the copy this browser last loaded
+			// is a far better answer than no garments at all.
+			const cached = readCatalogCache(url);
+			if (!cached) throw err;
+			console.warn(`[garment-catalog] fetch failed (${err?.message || err}); using the last catalog this browser loaded`);
+			payload = cached;
+		}
+		const { garments, rejected } = sanitizeCatalog(payload);
 		if (rejected.length) {
 			console.warn(
 				`[garment-catalog] dropped ${rejected.length} invalid manifest(s):`,

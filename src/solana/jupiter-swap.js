@@ -7,6 +7,7 @@
 
 import { createJupiterApiClient } from '@jup-ag/api';
 import { detectSolanaWallet, SOLANA_RPC } from '../erc8004/solana-deploy.js';
+import { fetchFirst } from '../shared/failover-fetch.js';
 
 export const WSOL_MINT = 'So11111111111111111111111111111111111111112';
 export const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
@@ -14,6 +15,22 @@ export const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 // Jupiter consolidated quote-api.jup.ag/v6 and token.jup.ag onto lite-api.jup.ag;
 // the old hosts now fail every request.
 const JUPITER_API_URL = 'https://lite-api.jup.ag/swap/v1';
+// Every source above returns an array of token records; only these four fields
+// are read downstream, and a rung with none of them is treated as a miss so the
+// chain moves on rather than caching an empty picker.
+function normalizeTokenList(raw) {
+	const rows = Array.isArray(raw) ? raw : [];
+	const out = rows
+		.map((t) => ({
+			address: t?.address || t?.id || null,
+			symbol: t?.symbol || '',
+			name: t?.name || '',
+			decimals: Number.isFinite(t?.decimals) ? t.decimals : 0,
+		}))
+		.filter((t) => t.address && t.symbol);
+	return out.length ? out : null;
+}
+
 const JUPITER_TOKENS_URL = 'https://lite-api.jup.ag/tokens/v2/tag?query=verified';
 const FETCH_TIMEOUT_MS = 10_000;
 const QUOTE_TTL_MS = 15_000;
@@ -131,9 +148,27 @@ const TOKEN_LIST_TTL = 5 * 60_000;
 
 export async function getJupiterTopTokens() {
 	if (_tokenListCache && Date.now() - _tokenListTs < TOKEN_LIST_TTL) return _tokenListCache;
-	const res = await fetch(JUPITER_TOKENS_URL, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
-	if (!res.ok) throw new Error(`Jupiter token list fetch failed: ${res.status}`);
-	_tokenListCache = await res.json();
+	// The token picker is unusable without a list, and Jupiter's lite host is one
+	// box: fall through to its own mirror and then to the Solana Labs registry,
+	// normalising each shape to the fields the picker reads.
+	const list = await fetchFirst([
+		{
+			name: 'jup-lite',
+			url: JUPITER_TOKENS_URL,
+			parse: async (r) => normalizeTokenList(await r.json()),
+		},
+		{
+			name: 'jup-tokens',
+			url: 'https://tokens.jup.ag/tokens?tags=verified',
+			parse: async (r) => normalizeTokenList(await r.json()),
+		},
+		{
+			name: 'solana-labs',
+			url: 'https://raw.githubusercontent.com/solana-labs/token-list/main/src/tokens/solana.tokenlist.json',
+			parse: async (r) => normalizeTokenList((await r.json())?.tokens),
+		},
+	], { timeoutMs: FETCH_TIMEOUT_MS, label: 'jupiter-token-list' });
+	_tokenListCache = list;
 	_tokenListTs = Date.now();
 	return _tokenListCache;
 }
