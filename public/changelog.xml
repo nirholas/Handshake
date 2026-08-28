@@ -87,6 +87,14 @@
 			<description>Every third-party service this platform calls and what happens to a user when it goes down. Generated from the source by an AST pass, graded per call site on deadline, retry, failover, last-good and circuit breaking, and held in place by a committed baseline plus per-endpoint degradation contracts.</description>
 		</item>
 		<item>
+			<title>Docs · Witness</title>
+			<link>https://three.ws/docs/witness</link>
+			<guid isPermaLink="false">2026-08-28:Docs · Witness</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Bug reports that arrive as failing tests. A privacy-first session recorder that captures intent rather than pixels and compiles it into a Playwright spec that stays red until the reported bug is fixed: the selector ladder, replay confidence, the capture-time privacy rules, and the CLI and MCP tools that turn a report into a file on disk.</description>
+		</item>
+		<item>
 			<title>Docs: Checkout companion</title>
 			<link>https://three.ws/docs/checkout-companion</link>
 			<guid isPermaLink="false">2026-08-28:Docs: Checkout companion</guid>
@@ -213,6 +221,14 @@
 			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>A handful of steps still had no time limit on the outside service they called. When that service accepted the connection and then went quiet, the request sat there until the platform killed it, and you got a spinner that ended in nothing: a photo-to-avatar upload that never came back, a saved model that never finished downloading, a coin launch stuck fetching its own thumbnail, an ordinals order whose status never loaded, a team task where one hired agent held up the whole run. Each of those now has a deadline and a clear answer when it is missed, and the ones that are safe to repeat retry once first. Anything that spends money or starts a generation is never repeated: it is bounded and then reported, so no upload is billed twice and no hire is paid twice. Saving a model from a link is also checked more tightly now, against the address it actually connects to and with the size limit applied while it downloads.</description>
+		</item>
+		<item>
+			<title>Report a bug and it arrives as a test that fails until it is fixed</title>
+			<link>https://three.ws/docs/witness</link>
+			<guid isPermaLink="false">2026-08-28:Report a bug and it arrives as a test that fails until it is fixed</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>When you tell the agent in the corner that something is broken, it now sends what you actually did: the steps you took, the page, and the error the browser saw. Those steps compile into a real test that fails while the bug is there and passes once it is gone, so the slowest part of fixing anything (working out how to make it happen again) is done before anyone starts. You can see every step that gets attached before you send, and nothing you typed into a field is ever recorded, only how much. The recorder is open source and works on any site: install @three-ws/witness.</description>
 		</item>
 		<item>
 			<title>Tell the agent in the corner what is broken</title>

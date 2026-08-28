@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T03:51:58.575Z",
+	"generated_at": "2026-08-28T05:44:42.247Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -102,6 +102,16 @@
 			"title": "Docs · Upstream resilience map",
 			"summary": "Every third-party service this platform calls and what happens to a user when it goes down. Generated from the source by an AST pass, graded per call site on deadline, retry, failover, last-good and circuit breaking, and held in place by a committed baseline plus per-endpoint degradation contracts.",
 			"link": "/docs/resilience",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "launch",
+			"title": "Docs · Witness",
+			"summary": "Bug reports that arrive as failing tests. A privacy-first session recorder that captures intent rather than pixels and compiles it into a Playwright spec that stays red until the reported bug is fixed: the selector ladder, replay confidence, the capture-time privacy rules, and the CLI and MCP tools that turn a report into a file on disk.",
+			"link": "/docs/witness",
 			"tags": [
 				"launch"
 			]
@@ -268,6 +278,18 @@
 				"improvement",
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "update",
+			"title": "Report a bug and it arrives as a test that fails until it is fixed",
+			"summary": "When you tell the agent in the corner that something is broken, it now sends what you actually did: the steps you took, the page, and the error the browser saw. Those steps compile into a real test that fails while the bug is there and passes once it is gone, so the slowest part of fixing anything (working out how to make it happen again) is done before anyone starts. You can see every step that gets attached before you send, and nothing you typed into a field is ever recorded, only how much. The recorder is open source and works on any site: install @three-ws/witness.",
+			"link": "/docs/witness",
+			"tags": [
+				"feature",
+				"sdk",
+				"improvement"
 			]
 		},
 		{

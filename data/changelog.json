@@ -3,6 +3,17 @@
 	"entries": [
 		{
 			"date": "2026-08-28",
+			"title": "Report a bug and it arrives as a test that fails until it is fixed",
+			"summary": "When you tell the agent in the corner that something is broken, it now sends what you actually did: the steps you took, the page, and the error the browser saw. Those steps compile into a real test that fails while the bug is there and passes once it is gone, so the slowest part of fixing anything (working out how to make it happen again) is done before anyone starts. You can see every step that gets attached before you send, and nothing you typed into a field is ever recorded, only how much. The recorder is open source and works on any site: install @three-ws/witness.",
+			"tags": [
+				"feature",
+				"sdk",
+				"improvement"
+			],
+			"link": "/docs/witness"
+		},
+		{
+			"date": "2026-08-28",
 			"title": "Your agent reads the checkout before you pay",
 			"summary": "A new browser extension puts the companion on the one screen where it is worth the most: the payment page. It tells you the total against the price you were actually shown, names money the page never itemised, adds up the fees, and reads the fine print for the things that catch people out, a trial that turns into an annual charge, a renewal at a different price, a cancellation notice period. Every amount it quotes is computed rather than read off a language model, so the arithmetic still works when nothing else does, and it never calls a charge illegal or a scam because that is not a call it is in a position to make. It never reads a form field: your card number, security code and address are structurally unreadable to it, personal data is stripped in your own browser before anything is sent, only the site's hostname travels, and nothing about the page is stored anywhere.",
 			"tags": [

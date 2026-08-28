@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T03:51:58.565Z",
+	"generated_at": "2026-08-28T05:44:42.197Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -5031,6 +5031,16 @@
 					"path": "/docs/feedback",
 					"title": "Docs · Feedback",
 					"description": "Telling the corner companion what broke: the proactive ask at the moment of failure, the route, build SHA, and console errors captured for you, the severity and clustering rules, the report API, and the boundary that keeps untrusted visitor text from ever reaching anything with write access.",
+					"added": "2026-08-28",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/witness",
+					"title": "Docs · Witness",
+					"description": "Bug reports that arrive as failing tests. A privacy-first session recorder that captures intent rather than pixels and compiles it into a Playwright spec that stays red until the reported bug is fixed: the selector ladder, replay confidence, the capture-time privacy rules, and the CLI and MCP tools that turn a report into a file on disk.",
 					"added": "2026-08-28",
 					"auth": null,
 					"indexable": true,
