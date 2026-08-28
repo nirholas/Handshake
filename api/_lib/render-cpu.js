@@ -14,7 +14,7 @@
 // supplied URL gets exactly the same DNS-pinned, redirect-revalidated,
 // byte-capped treatment it got before.
 
-import { AvatarModel, renderFrame, renderFrames, encodePng, encodeApng } from '@three-ws/render';
+import { AvatarModel, renderFrame, renderFrames, encodePng, encodeApng, parseClipJson } from '@three-ws/render';
 import { fetchModel } from './fetch-model.js';
 
 // Framing constants shared with the chromium lane so a CPU render and a
@@ -95,6 +95,23 @@ async function loadCached(glbUrl, { maxBytes, animationUrl }) {
 }
 
 /**
+ * Retarget a serialized AnimationClip onto a cached model, once. The model
+ * cache outlives a request, so re-adding the same clip on every call would
+ * stack duplicates on the mixer.
+ *
+ * Returns the playable clip name, or null when the rig cannot take the clip
+ * (a non-humanoid body, or a skeleton with fewer than four matching bones).
+ * A null is not an error: the caller renders the model's own pose instead,
+ * which is a real render, not a failure page.
+ */
+function ensureClip(model, clipJson) {
+	if (!clipJson) return null;
+	const clip = parseClipJson(clipJson);
+	if (model.clipNames.includes(clip.name)) return clip.name;
+	return model.addClips([clip]) > 0 ? clip.name : null;
+}
+
+/**
  * Render a GLB to a PNG buffer on the CPU.
  * Signature-compatible with renderGlbToPng in ./render-glb.js.
  *
@@ -124,14 +141,16 @@ export async function renderGlbToPngCpu({
 	supersample = 2,
 	animationUrl = null,
 	clip = null,
+	clipJson = null,
 	time = 0,
 } = {}) {
 	if (!glbUrl || typeof glbUrl !== 'string') {
 		throw Object.assign(new Error('glbUrl required'), { status: 400, code: 'invalid_args' });
 	}
 	const model = await loadCached(glbUrl, { maxBytes, animationUrl });
-	if (clip !== null && clip !== undefined) {
-		model.play(clip);
+	const posed = clipJson ? ensureClip(model, clipJson) : clip;
+	if (posed !== null && posed !== undefined) {
+		model.play(posed);
 		model.setTime(time);
 	}
 	const frame = renderFrame(model, {
@@ -169,14 +188,17 @@ export async function renderGlbToApngCpu({
 	supersample = 2,
 	animationUrl = null,
 	clip = null,
+	clipJson = null,
 	frames = 24,
 	fps = 20,
 	spin = 0,
+	startTime = 0,
 } = {}) {
 	if (!glbUrl || typeof glbUrl !== 'string') {
 		throw Object.assign(new Error('glbUrl required'), { status: 400, code: 'invalid_args' });
 	}
 	const model = await loadCached(glbUrl, { maxBytes, animationUrl });
+	const playable = clipJson ? ensureClip(model, clipJson) : clip;
 	const rendered = await renderFrames(model, {
 		width,
 		height,
@@ -189,8 +211,11 @@ export async function renderGlbToApngCpu({
 		background: backdropToBackground(background, backdrop),
 		frames,
 		fps,
-		spin,
-		clip,
+		startTime,
+		// A rig that cannot take the clip still animates: the turntable carries
+		// the loop, so the answer is a moving avatar rather than an error.
+		spin: playable ? spin : Math.max(spin, 360),
+		clip: playable,
 	});
 	return encodeApng(rendered, { fps });
 }

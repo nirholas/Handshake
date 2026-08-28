@@ -217,7 +217,9 @@ export default wrap(async function handler(req, res) {
 	}
 
 	res.statusCode = 200;
-	res.setHeader('content-type', 'image/apng');
+	// APNG is a valid PNG. Serving it as image/png is what keeps it working in
+	// GitHub's image proxy and every unfurler that allowlists png bytes.
+	res.setHeader('content-type', 'image/png');
 	res.setHeader('content-length', String(png.length));
 	res.setHeader('cache-control', CACHE_OK);
 	res.setHeader('x-render-lane', 'cpu');

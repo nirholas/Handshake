@@ -1,0 +1,51 @@
+{
+  "name": "@three-ws/brownout",
+  "version": "0.1.0",
+  "description": "Read where an API's data came from and how fresh it is, and break its upstreams on purpose to prove your integration survives it. Data provenance headers plus request-scoped fault injection.",
+  "type": "module",
+  "main": "./src/index.js",
+  "module": "./src/index.js",
+  "exports": {
+    ".": {
+      "import": "./src/index.js",
+      "default": "./src/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": [
+    "chaos-engineering",
+    "fault-injection",
+    "resilience",
+    "observability",
+    "data-provenance",
+    "graceful-degradation",
+    "fallback",
+    "testing",
+    "three.ws"
+  ],
+  "license": "Apache-2.0",
+  "author": "nirholas <support@three.ws>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/three.ws.git",
+    "directory": "packages/brownout"
+  },
+  "homepage": "https://three.ws/brownout",
+  "bugs": {
+    "url": "https://github.com/nirholas/three.ws/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

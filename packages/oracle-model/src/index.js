@@ -273,6 +273,14 @@ export class OracleModel {
 		const probabilities = {};
 		for (const h of heads) probabilities[h] = Number(sigmoid(z[h]).toFixed(4));
 
+		// Coherence: a win is a run the holder kept, so it is a subset of a run and
+		// P(win) cannot exceed P(moon). The heads are fitted independently, so on
+		// thin launches this genuinely inverts; publishing a pair that contradicts
+		// its own definition is indefensible however small the numbers are.
+		if (probabilities.win != null && probabilities.moon != null && probabilities.win > probabilities.moon) {
+			probabilities.moon = probabilities.win;
+		}
+
 		const p = probabilities[this.scoreHead] ?? 0;
 		const score = this.scoreFromProbability(p);
 		const tier = this.tierFor(score);

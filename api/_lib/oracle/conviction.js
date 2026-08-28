@@ -717,6 +717,18 @@ export function convict(intel = {}) {
 	}
 	probabilities[head] = Number(p.toFixed(4));
 
+	// Coherence. `win` is "it ran AND the holder kept it", so a win is a subset of
+	// a run and P(win) can never exceed P(moon). The three heads are fitted
+	// independently, which is what lets each one use the evidence its own question
+	// needs, and it also means nothing in the arithmetic enforces that. On thin
+	// launches it genuinely inverts (0.0008 against 0.0001 on a dead fixture), and
+	// a published pair that violates its own definition is indefensible however
+	// small the numbers are. Raise the weaker claim rather than lower the stronger
+	// one: the run head is the one with less at stake here.
+	if (probabilities.win != null && probabilities.moon != null && probabilities.win > probabilities.moon) {
+		probabilities.moon = probabilities.win;
+	}
+
 	const rugRisk = probabilities.rug != null ? clamp(Math.round(probabilities.rug * 100)) : null;
 	const upside = probabilities.moon != null ? clamp(Math.round(probabilities.moon * 100)) : null;
 
