@@ -99,15 +99,34 @@ async function loadCached(glbUrl, { maxBytes, animationUrl }) {
  * cache outlives a request, so re-adding the same clip on every call would
  * stack duplicates on the mixer.
  *
+ * Retargeting runs through the platform's own animation engine
+ * (src/animation-retarget.js, the same one the browser viewer uses), so a
+ * server render and a client render of the same clip land in the same pose:
+ * canonical bone mapping, A-pose/T-pose rest correction, hip-height scaling
+ * and a coverage gate. @three-ws/render carries a simpler name-matching
+ * retargeter of its own for standalone use; it is the fallback here, never
+ * the first choice.
+ *
  * Returns the playable clip name, or null when the rig cannot take the clip
- * (a non-humanoid body, or a skeleton with fewer than four matching bones).
- * A null is not an error: the caller renders the model's own pose instead,
- * which is a real render, not a failure page.
+ * (a non-humanoid body, or too few matching bones). A null is not an error:
+ * the caller renders a turntable of the model's own pose instead, which is a
+ * real render, not a failure page.
  */
-function ensureClip(model, clipJson) {
+async function ensureClip(model, clipJson) {
 	if (!clipJson) return null;
 	const clip = parseClipJson(clipJson);
 	if (model.clipNames.includes(clip.name)) return clip.name;
+
+	try {
+		const { retargetClipToObject } = await import('../../src/animation-retarget.js');
+		const result = retargetClipToObject(clip, model.scene);
+		if (result?.clip) {
+			return model.addClips([result.clip], { retarget: false }) > 0 ? result.clip.name : null;
+		}
+	} catch (err) {
+		console.warn('[render] platform retarget unavailable, using the built-in:', err?.message || err);
+	}
+
 	return model.addClips([clip]) > 0 ? clip.name : null;
 }
 
@@ -148,7 +167,7 @@ export async function renderGlbToPngCpu({
 		throw Object.assign(new Error('glbUrl required'), { status: 400, code: 'invalid_args' });
 	}
 	const model = await loadCached(glbUrl, { maxBytes, animationUrl });
-	const posed = clipJson ? ensureClip(model, clipJson) : clip;
+	const posed = clipJson ? await ensureClip(model, clipJson) : clip;
 	if (posed !== null && posed !== undefined) {
 		model.play(posed);
 		model.setTime(time);
@@ -198,7 +217,7 @@ export async function renderGlbToApngCpu({
 		throw Object.assign(new Error('glbUrl required'), { status: 400, code: 'invalid_args' });
 	}
 	const model = await loadCached(glbUrl, { maxBytes, animationUrl });
-	const playable = clipJson ? ensureClip(model, clipJson) : clip;
+	const playable = clipJson ? await ensureClip(model, clipJson) : clip;
 	const rendered = await renderFrames(model, {
 		width,
 		height,

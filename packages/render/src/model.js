@@ -60,17 +60,24 @@ export class AvatarModel {
 	}
 
 	/**
-	 * Bind external clips (from an animation-only GLB) onto this skeleton by
-	 * bone name, so a Mixamo walk drives a Ready Player Me body.
+	 * Bind external clips (from an animation-only GLB, or a serialized clip)
+	 * onto this skeleton by bone name, so a Mixamo walk drives a Ready Player
+	 * Me body.
+	 *
+	 * @param {THREE.AnimationClip[]} clips
+	 * @param {{retarget?: boolean}} [options] Pass `retarget: false` for clips
+	 *   already bound to this rig's own bone names, which is how a caller
+	 *   plugs in a stronger retargeting engine of its own.
+	 * @returns {number} how many clips were bound
 	 */
-	addClips(clips) {
+	addClips(clips, { retarget = true } = {}) {
 		const skeleton = this._meshes.find((m) => m.skeleton)?.skeleton;
 		if (!skeleton) return 0;
 		let added = 0;
 		for (const clip of clips) {
-			const retargeted = retargetClip(clip, skeleton, this.scene);
-			if (retargeted) {
-				this.clips.push(retargeted);
+			const bound = retarget ? retargetClip(clip, skeleton, this.scene) : clip;
+			if (bound) {
+				this.clips.push(bound);
 				added++;
 			}
 		}
