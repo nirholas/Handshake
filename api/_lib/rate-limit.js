@@ -608,6 +608,15 @@ export const limits = {
 	// autoscale. Both renderers share one bucket because they share the browser.
 	renderIp: (ip) =>
 		getLimiter('render:ip', { limit: 60, window: '10 m' }).limit(ip),
+	// The terminal renderer (/api/tty). Deliberately its OWN bucket rather than
+	// sharing render:ip: it uses no chromium at all (a CPU software rasterizer),
+	// but it holds one connection open for up to 45 seconds while it streams
+	// frames. Sharing meant a burst of browser renders could starve `curl
+	// three.ws/tty`, and a burst of terminal streams could starve the OG cards.
+	// Different cost shape, different ceiling. Not local, for the same
+	// autoscale-bypass reason as render:ip.
+	ttyIp: (ip) =>
+		getLimiter('tty:ip', { limit: 40, window: '10 m' }).limit(ip),
 	// Auth buckets gate credential guessing / account-creation spam. They are
 	// sensitive (critical) but use degradeToMemory: on a Redis outage they fall
 	// back to the per-instance memory limiter rather than failing closed. Failing
@@ -1857,6 +1866,15 @@ export const limits = {
 	// NOT be local: a per-instance counter multiplies by the instance count.
 	companionPoll: (userId) =>
 		getLimiter('companion:poll', { limit: 30, window: '10 m' }).limit(userId),
+
+	// Reading a checkout page (POST /api/companion/checkout). One call per
+	// payment screen a person actually reaches, which is a handful a day for a
+	// heavy shopper, so the ceiling is set to catch a loop in a content script
+	// rather than to ration honest use. It is the only companion bucket that
+	// gates an LLM call on untrusted third-party page text, which is why it is
+	// tighter than companionWrite.
+	companionCheckout: (userId) =>
+		getLimiter('companion:checkout', { limit: 40, window: '10 m' }).limit(userId),
 	// Visitor feedback (POST /api/feedback/report). Deliberately generous: the
 	// cost of dropping a real bug report is far higher than the cost of storing a
 	// few extra rows, and the reporter may be anonymous and mid-outage. Keyed to
