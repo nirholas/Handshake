@@ -1476,8 +1476,16 @@ function resetSteps() {
 // outage, one corporate proxy or one ad blocker stalled the payment at "sign
 // the transaction" with nothing on screen saying why. The error lands in the
 // caller's catch, which paints the failed step and the chat error line.
+// The specifier is held in a variable, not written inline. /load-module.js is a
+// public/ asset served at the site root, so it has no module graph for Rollup to
+// resolve at build time; a literal specifier makes the build fail outright
+// ("Rollup failed to resolve import /load-module.js"), and @vite-ignore does not
+// help because it only silences the warning for a specifier Rollup cannot
+// analyse, and a string literal is one it can. Indirection is what actually
+// defers the resolution to the browser, where the path is correct.
+const LOAD_MODULE_URL = '/load-module.js';
 async function loadCdnModule(url) {
-  const { loadModule } = await import('/load-module.js');
+  const { loadModule } = await import(/* @vite-ignore */ LOAD_MODULE_URL);
   return loadModule(url);
 }
 
