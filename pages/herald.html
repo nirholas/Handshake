@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<style>/* three.ws hidden-guard — make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<script>/* three.ws theme boot */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Herald: deliver a message in person · three.ws</title>
+		<meta name="description" content="A 3D character walks onto your page and tells the user what happened. Open SDK, one line of code, an accessible fallback, and a CLI that announces when your build finishes." />
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<style>
+			:root {
+				--bg: #0b0c10;
+				--bg-2: #121420;
+				--card: #161927;
+				--line: rgba(255,255,255,0.08);
+				--line-2: rgba(255,255,255,0.14);
+				--text: #e9ecf5;
+				--muted: rgba(233,236,245,0.62);
+				--dim: rgba(233,236,245,0.38);
+				--accent: #7aa2ff;
+				--accent-2: #b388ff;
+				--good: #5ddc8f;
+				--warn: #ffb454;
+				--bad: #ff6b6b;
+				--radius: 14px;
+			}
+			[data-theme="light"] {
+				--bg: #f6f7fb;
+				--bg-2: #ffffff;
+				--card: #ffffff;
+				--line: rgba(10,12,20,0.09);
+				--line-2: rgba(10,12,20,0.16);
+				--text: #12141c;
+				--muted: rgba(18,20,28,0.62);
+				--dim: rgba(18,20,28,0.4);
+			}
+			*{box-sizing:border-box;margin:0;padding:0}
+			html,body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased}
+			a{color:var(--accent);text-decoration:none}
+			a:hover{text-decoration:underline}
+			.shell{max-width:960px;margin:0 auto;padding:0 20px 120px}
+
+			.hero{padding:64px 0 28px;position:relative}
+			.hero .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);border:1px solid var(--line-2);border-radius:999px;padding:6px 12px;margin-bottom:20px}
+			.hero h1{font-size:clamp(30px,5.2vw,46px);line-height:1.06;font-weight:800;letter-spacing:-0.03em;max-width:16ch}
+			.hero h1 em{font-style:normal;background:linear-gradient(100deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+			.hero p.lede{margin-top:16px;font-size:17px;line-height:1.6;color:var(--muted);max-width:60ch}
+			.hero-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+
+			.btn{display:inline-flex;align-items:center;gap:8px;font:600 14px/1 'Inter',system-ui,sans-serif;padding:12px 18px;border-radius:10px;border:1px solid var(--line-2);background:var(--card);color:var(--text);cursor:pointer;transition:border-color .15s,background .15s,transform .1s}
+			.btn:hover{border-color:var(--accent);text-decoration:none}
+			.btn:active{transform:translateY(1px)}
+			.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+			.btn.primary{background:linear-gradient(100deg,var(--accent),var(--accent-2));border-color:transparent;color:#0b0c10}
+			.btn.primary:hover{filter:brightness(1.08)}
+			.btn:disabled{opacity:.5;cursor:not-allowed}
+
+			section{margin-top:56px}
+			h2{font-size:22px;font-weight:700;letter-spacing:-0.02em}
+			h2 + p.sub{color:var(--muted);font-size:14.5px;margin-top:8px;max-width:66ch}
+			h3{font-size:15px;font-weight:650;margin-bottom:6px}
+
+			.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+			.grid-2{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;align-items:start}
+			@media(max-width:820px){.grid-2{grid-template-columns:1fr}}
+
+			label.field{display:block;margin-bottom:14px}
+			label.field > span{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:6px}
+			input[type=text],select,textarea{width:100%;font:400 14px/1.5 'Inter',system-ui,sans-serif;color:var(--text);background:var(--bg-2);border:1px solid var(--line-2);border-radius:10px;padding:10px 12px}
+			input[type=text]:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
+			input[type=range]{width:100%;accent-color:var(--accent)}
+			.row{display:flex;gap:12px;flex-wrap:wrap}
+			.row > *{flex:1 1 140px}
+			.checkline{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted);margin-bottom:10px}
+			.checkline input{accent-color:var(--accent);width:16px;height:16px}
+
+			.verdicts{font:400 12.5px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--bg-2);border:1px solid var(--line);border-radius:10px;padding:12px;max-height:230px;overflow:auto}
+			.verdict{display:flex;gap:8px;padding:3px 0;border-bottom:1px dashed var(--line)}
+			.verdict:last-child{border-bottom:0}
+			.verdict .tag{flex:0 0 auto;font-weight:700;letter-spacing:.02em}
+			.verdict.deliver .tag{color:var(--good)}
+			.verdict.hold .tag{color:var(--warn)}
+			.verdict.drop .tag{color:var(--bad)}
+			.verdict .why{color:var(--dim)}
+
+			.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:10px;margin-top:14px}
+			.stat{background:var(--bg-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+			.stat b{display:block;font-size:20px;font-weight:700;letter-spacing:-0.02em}
+			.stat span{font-size:11.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em}
+
+			pre.code{position:relative;background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:16px 16px;overflow-x:auto;font:400 12.5px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--text)}
+			pre.code .k{color:var(--accent-2)}
+			pre.code .s{color:var(--good)}
+			pre.code .c{color:var(--dim)}
+			.copy{position:absolute;top:8px;right:8px;font:600 11px/1 'Inter',system-ui;padding:6px 9px;border-radius:7px;border:1px solid var(--line-2);background:var(--card);color:var(--muted);cursor:pointer}
+			.copy:hover{color:var(--text);border-color:var(--accent)}
+			.copy:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+			.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:18px}
+			.mini{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+			.mini .ico{font-size:20px;margin-bottom:8px}
+			.mini p{font-size:13.5px;color:var(--muted);line-height:1.55}
+
+			table.rules{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:14px}
+			table.rules th{text-align:left;font-weight:600;color:var(--muted);padding:8px 10px;border-bottom:1px solid var(--line-2);font-size:12.5px}
+			table.rules td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+			table.rules code{font:400 12.5px ui-monospace,Menlo,monospace;color:var(--accent)}
+
+			.rail-state{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);border:1px solid var(--line-2);border-radius:999px;padding:7px 13px}
+			.dot{width:8px;height:8px;border-radius:50%;background:var(--dim)}
+			.dot.live{background:var(--good);box-shadow:0 0 0 4px rgba(93,220,143,.16)}
+			.dot.off{background:var(--bad)}
+
+			.foot-note{margin-top:14px;font-size:13px;color:var(--dim)}
+			@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+		</style>
+
+		<link rel="canonical" href="https://three.ws/herald">
+		<meta property="og:type" content="website">
+		<meta property="og:site_name" content="three.ws">
+		<meta property="og:title" content="Herald: deliver a message in person · three.ws">
+		<meta property="og:description" content="A 3D character walks onto your page and tells the user what happened. Open SDK, one line of code, an accessible fallback, and a CLI that announces when your build finishes.">
+		<meta property="og:url" content="https://three.ws/herald">
+		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Herald&amp;d=Deliver+a+message+in+person%3A+a+3D+character+walks+onto+your+page+and+tells+the+user+what+happened.&amp;p=%2Fherald">
+		<meta property="og:image:width" content="1200">
+		<meta property="og:image:height" content="630">
+		<meta name="twitter:card" content="summary_large_image">
+		<meta name="twitter:title" content="Herald: deliver a message in person · three.ws">
+		<meta name="twitter:description" content="A 3D character walks onto your page and tells the user what happened. One line of code, an accessible fallback, and a CLI that announces when your build finishes.">
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Herald&amp;d=Deliver+a+message+in+person%3A+a+3D+character+walks+onto+your+page+and+tells+the+user+what+happened.&amp;p=%2Fherald">
+		<meta name="twitter:site" content="@trythreews">
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareSourceCode","name":"@three-ws/herald","description":"Deliver a message in person: a 3D character walks onto your page and tells the user, with importance scoring, quiet hours, dedupe and an accessible fallback.","programmingLanguage":"JavaScript","codeRepository":"https://github.com/nirholas/three.ws/tree/main/herald-sdk","license":"https://www.apache.org/licenses/LICENSE-2.0","url":"https://three.ws/herald"}</script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="shell">
+			<div class="hero">
+				<span class="eyebrow">@three-ws/herald · Apache-2.0</span>
+				<h1>Deliver a message <em>in person</em>.</h1>
+				<p class="lede">
+					A notification is a badge you have to notice, in a tray you have to open, competing with
+					forty others. This is the opposite: a 3D character walks into the corner of your page,
+					looks at the person using it, and tells them, with a link to the thing it is about.
+					One line of code. An accessible fallback when there is no GPU. And a CLI that announces
+					when your build finishes.
+				</p>
+				<div class="hero-actions">
+					<button type="button" class="btn primary" id="demo-run">Deliver one now</button>
+					<a class="btn" href="https://github.com/nirholas/three.ws/tree/main/herald-sdk">Read the source</a>
+					<a class="btn" href="/docs/herald">Documentation</a>
+				</div>
+			</div>
+
+			<section id="playground">
+				<h2>The playground</h2>
+				<p class="sub">
+					Everything below runs the real library in this tab. Change the rules, send a message,
+					and watch what the engine decides. Nothing here is a mock.
+				</p>
+
+				<div class="grid-2" style="margin-top:18px">
+					<div class="panel">
+						<h3>Compose</h3>
+						<label class="field">
+							<span>Message</span>
+							<input type="text" id="f-text" value="Deploy is green" maxlength="200" />
+						</label>
+						<div class="row">
+							<label class="field">
+								<span>From (optional)</span>
+								<input type="text" id="f-from" placeholder="CI" maxlength="40" />
+							</label>
+							<label class="field">
+								<span>Link (optional)</span>
+								<input type="text" id="f-url" placeholder="/dashboard" maxlength="200" />
+							</label>
+						</div>
+						<div class="row">
+							<label class="field">
+								<span>Tone</span>
+								<select id="f-tone">
+									<option value="alert">alert</option>
+									<option value="celebrate">celebrate</option>
+									<option value="neutral">neutral</option>
+									<option value="error">error</option>
+								</select>
+							</label>
+							<label class="field">
+								<span>Gesture</span>
+								<select id="f-emote">
+									<option value="wave">wave</option>
+									<option value="dance">dance</option>
+									<option value="punch">punch</option>
+									<option value="backflip">backflip</option>
+								</select>
+							</label>
+							<label class="field">
+								<span>Body</span>
+								<select id="f-presenter">
+									<option value="auto">auto (avatar, then card)</option>
+									<option value="avatar">avatar only</option>
+									<option value="card">card only</option>
+								</select>
+							</label>
+						</div>
+						<label class="field">
+							<span>Importance: <b id="f-importance-out">80</b></span>
+							<input type="range" id="f-importance" min="0" max="100" value="80" />
+						</label>
+						<div class="checkline">
+							<input type="checkbox" id="f-voice" />
+							<label for="f-voice">Say it out loud (real text to speech)</label>
+						</div>
+						<div class="hero-actions" style="margin-top:6px">
+							<button type="button" class="btn primary" id="f-send">Deliver</button>
+							<button type="button" class="btn" id="f-burst">Send a burst of five</button>
+						</div>
+					</div>
+
+					<div class="panel">
+						<h3>Rules</h3>
+						<label class="field">
+							<span>Interrupt floor: <b id="r-floor-out">50</b></span>
+							<input type="range" id="r-floor" min="0" max="100" value="50" />
+						</label>
+						<label class="field">
+							<span>Max per minute: <b id="r-rate-out">4</b></span>
+							<input type="range" id="r-rate" min="1" max="10" value="4" />
+						</label>
+						<div class="checkline">
+							<input type="checkbox" id="r-quiet" />
+							<label for="r-quiet">Quiet hours 22:00 to 07:00 (only 90+ gets through)</label>
+						</div>
+						<div class="checkline">
+							<input type="checkbox" id="r-focus" checked />
+							<label for="r-focus">Hold while this tab is in the background</label>
+						</div>
+
+						<h3 style="margin-top:16px">Verdicts</h3>
+						<div class="verdicts" id="verdicts" aria-live="polite" aria-atomic="false">
+							<div class="verdict"><span class="why">Nothing yet. Send a message.</span></div>
+						</div>
+						<div class="stats" id="stats"></div>
+					</div>
+				</div>
+			</section>
+
+			<section id="terminal">
+				<h2>From your terminal, to your screen</h2>
+				<p class="sub">
+					Anything that can make an HTTPS request can reach the browser tab you already have open.
+					A message is always delivered to the caller's own sessions, so a key can never be used to
+					interrupt somebody else.
+				</p>
+
+				<div class="grid-2" style="margin-top:18px">
+					<div>
+						<pre class="code" id="code-cli"><button type="button" class="copy" data-copy="#code-cli">Copy</button><span class="c"># announce when a long command finishes, keeping its exit code</span>
+npx @three-ws/herald watch -- npm test
+
+<span class="c"># or say something directly</span>
+npx @three-ws/herald say <span class="s">"Migration finished"</span> --from db</pre>
+						<pre class="code" id="code-curl" style="margin-top:14px"><button type="button" class="copy" data-copy="#code-curl">Copy</button>curl -X POST https://three.ws/api/herald/announce \
+  -H <span class="s">"Authorization: Bearer $THREE_WS_API_KEY"</span> \
+  -H <span class="s">'content-type: application/json'</span> \
+  -d <span class="s">'{"text":"Deploy is green","importance":80}'</span></pre>
+					</div>
+
+					<div class="panel">
+						<h3>Your rail</h3>
+						<p style="font-size:13.5px;color:var(--muted);line-height:1.6">
+							This tab listens on your own delivery rail while you are signed in. Send the command
+							on the left from anywhere and your avatar will say it here.
+						</p>
+						<div style="margin:14px 0">
+							<span class="rail-state" id="rail-state"><span class="dot" id="rail-dot"></span><span id="rail-label">Checking…</span></span>
+						</div>
+						<a class="btn" href="/dashboard/developers" id="rail-key">Create an API key</a>
+						<p class="foot-note">
+							The key needs the <code>herald:announce</code> scope. Revoke it any time; nothing else
+							can address your avatar.
+						</p>
+					</div>
+				</div>
+			</section>
+
+			<section id="install">
+				<h2>Put it in your own product</h2>
+				<p class="sub">No build step required, and the 3D body is optional.</p>
+				<div class="grid-2" style="margin-top:18px">
+					<pre class="code" id="code-npm"><button type="button" class="copy" data-copy="#code-npm">Copy</button><span class="c">// npm install @three-ws/herald</span>
+<span class="k">import</span> { createHerald } <span class="k">from</span> <span class="s">'@three-ws/herald'</span>;
+
+<span class="k">const</span> herald = createHerald({
+  rules: { minImportance: <span class="s">70</span>, quietHours: [<span class="s">22</span>, <span class="s">7</span>] },
+  voice: <span class="s">'auto'</span>,
+});
+
+herald.announce({
+  text: <span class="s">'Payment received from Acme'</span>,
+  from: <span class="s">'Stripe'</span>,
+  importance: <span class="s">85</span>,
+  url: <span class="s">'/payments/inv_123'</span>,
+});</pre>
+					<pre class="code" id="code-cdn"><button type="button" class="copy" data-copy="#code-cdn">Copy</button><span class="c">&lt;!-- or with no bundler at all --&gt;</span>
+&lt;script type="module"&gt;
+  <span class="k">import</span> { createHerald, pollSource }
+    <span class="k">from</span> <span class="s">'https://three.ws/herald.js'</span>;
+
+  <span class="k">const</span> herald = createHerald();
+
+  <span class="c">// point it at any feed you already have</span>
+  herald.source(pollSource({
+    url: <span class="s">'/api/alerts'</span>,
+    map: (a) =&gt; ({ id: a.id, text: a.title,
+                   importance: a.severity * <span class="s">20</span> }),
+  }));
+&lt;/script&gt;</pre>
+				</div>
+
+				<div class="cards">
+					<div class="mini">
+						<div class="ico" aria-hidden="true">🎯</div>
+						<h3>An interrupt budget</h3>
+						<p>An importance floor, a rate limit, quiet hours, dedupe with a TTL, and a freshness
+						window. Scarcity is what keeps an interruption effective.</p>
+					</div>
+					<div class="mini">
+						<div class="ico" aria-hidden="true">🧾</div>
+						<h3>Never silently silent</h3>
+						<p>Every message that is not delivered comes back with a reason:
+						<code>duplicate</code>, <code>rate-limited</code>, <code>quiet-hours</code>,
+						<code>below-importance-floor</code>.</p>
+					</div>
+					<div class="mini">
+						<div class="ico" aria-hidden="true">♿</div>
+						<h3>Works without a GPU</h3>
+						<p>No WebGL, an iframe, reduced motion: the card presenter takes over, in a live region,
+						dismissible with Escape, in your theme.</p>
+					</div>
+					<div class="mini">
+						<div class="ico" aria-hidden="true">🔌</div>
+						<h3>Any feed</h3>
+						<p>Poll a JSON endpoint, subscribe to SSE, bridge your own event bus, or take the hosted
+						rail. A source is fifteen lines.</p>
+					</div>
+				</div>
+			</section>
+
+			<section id="rules">
+				<h2>The defaults, in full</h2>
+				<p class="sub">Chosen so that dropping this into a page cannot make it obnoxious.</p>
+				<table class="rules">
+					<thead><tr><th>Rule</th><th>Default</th><th>What it does</th></tr></thead>
+					<tbody>
+						<tr><td><code>minImportance</code></td><td>50</td><td>The interrupt floor. Below it, nothing is shown.</td></tr>
+						<tr><td><code>freshnessMs</code></td><td>15 min</td><td>Older than this is history, and history belongs in an inbox.</td></tr>
+						<tr><td><code>dedupeTtlMs</code></td><td>6 h</td><td>The same key is said once, however many times a feed repeats it.</td></tr>
+						<tr><td><code>quietHours</code></td><td>off</td><td>Local window, wrapping past midnight, e.g. <code>[22, 7]</code>.</td></tr>
+						<tr><td><code>maxPerWindow</code></td><td>4 / min</td><td>The rate limit on interruptions.</td></tr>
+						<tr><td><code>focusOnly</code></td><td>true</td><td>Hold while the tab is in the background.</td></tr>
+						<tr><td><code>batchSize</code></td><td>2</td><td>Said per burst, before the rest collapse into one line.</td></tr>
+					</tbody>
+				</table>
+				<p class="foot-note">
+					Full API, recipes and the rail contract are in the
+					<a href="/docs/herald">documentation</a>, and three.ws uses this to deliver its own
+					<a href="/notifications">notifications</a>.
+				</p>
+			</section>
+		</main>
+
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/src/herald-page.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>
