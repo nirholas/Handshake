@@ -886,6 +886,10 @@
 					"path": "avatar-cli"
 				},
 				{
+					"label": "Terminal avatar (tty)",
+					"path": "tty-avatar"
+				},
+				{
 					"label": "Rig Doctor (will my GLB animate?)",
 					"path": "rig-doctor"
 				},

@@ -181,11 +181,23 @@ URL: https://three.ws/collection
 
 View all the skills and subscriptions you've unlocked on three.ws.
 
+### Portal
+
+URL: https://three.ws/portal
+
+Paste any web address and walk through it in 3D. Portal reads the page's real structure and builds a place from it: sections become buildings sized by what they say, links become doors you step into, images become billboards. Download the world as a GLB or embed it in your own site.
+
 ### Companion
 
 URL: https://three.ws/companion
 
 A 3D companion that delivers your important messages in person. Connect your own Telegram bot, calendar, inbox, or phone, give each contact their own avatar and voice, and hear only what clears your bar.
+
+### Herald
+
+URL: https://three.ws/herald
+
+Deliver a message in person: a 3D character walks onto your page and tells the user what happened. Open SDK, one line of code, an accessible fallback, and a CLI that announces when your build finishes.
 
 ### Notifications
 
@@ -701,6 +713,12 @@ Drop a .glb and find out in one second whether it will animate on three.ws. Name
 URL: https://three.ws/bundles
 
 Sell several of an agent's skills as one purchase, priced from your own sales instead of a rule of thumb. three.ws finds the buyers who already bought two or more of those skills separately and backtests any price against what they really paid, so you see what the bundle would have earned before you publish it.
+
+### Terminal renderer
+
+URL: https://three.ws/tty
+
+curl three.ws/tty and a rigged 3D agent walks in your terminal. A software rasterizer streams ANSI frames over HTTP: no GPU, no WebGL, nothing to install. Also the @three-ws/tty CLI and library for rendering any GLB in a terminal.
 
 ## Labs
 
@@ -1826,6 +1844,12 @@ How a bundle of an agent's skills is priced from that agent's own sales rather t
 URL: https://three.ws/docs/avatar-artifact
 
 The standalone avatar viewer you paste into any site as a one-line iframe: its ?agent= and ?model= parameters, the hosts a model may come from, how a clip-less rig still comes to life, and the sentence the page shows for every way it can fail.
+
+### Docs · Terminal avatar
+
+URL: https://three.ws/docs/tty-avatar
+
+The @three-ws/tty-avatar package: any three.ws avatar or agent body rendered live in a terminal by a software rasterizer (truecolor half-blocks, braille, or plain ASCII), procedural moods, and Claude Code hooks that turn it into your coding agent's face.
 
 ### Docs · Site load performance
 
@@ -4094,6 +4118,12 @@ How incoming issues and pull requests get sorted, what every label means, how to
 URL: https://three.ws/docs/pill-mascot
 
 How a static capsule mascot with four nubs became a 52-bone, six-clip avatar: limb discovery from a distance transform, medial-axis skinning, and a bind pose that differs from the rest pose on purpose.
+
+### Docs · Agent vitals: can it act?
+
+URL: https://three.ws/docs/agent-vitals
+
+Every liveness check was green while ten of twelve autonomous agents had not acted in weeks. Capability attestation models an agent's preconditions as a causal graph and returns the root blocker plus the command that fixes it, instead of a checklist of symptoms.
 
 ## Blog
 

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T03:26:00.152Z",
+	"generated_at": "2026-08-28T03:32:47.846Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -29,6 +29,16 @@
 		{
 			"date": "2026-08-28",
 			"type": "launch",
+			"title": "Docs · Agent vitals: can it act?",
+			"summary": "Every liveness check was green while ten of twelve autonomous agents had not acted in weeks. Capability attestation models an agent's preconditions as a causal graph and returns the root blocker plus the command that fixes it, instead of a checklist of symptoms.",
+			"link": "/docs/agent-vitals",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "launch",
 			"title": "Docs · Feedback",
 			"summary": "Telling the corner companion what broke: the proactive ask at the moment of failure, the route, build SHA, and console errors captured for you, the severity and clustering rules, the report API, and the boundary that keeps untrusted visitor text from ever reaching anything with write access.",
 			"link": "/docs/feedback",
@@ -39,9 +49,49 @@
 		{
 			"date": "2026-08-28",
 			"type": "launch",
+			"title": "Docs · Terminal avatar",
+			"summary": "The @three-ws/tty-avatar package: any three.ws avatar or agent body rendered live in a terminal by a software rasterizer (truecolor half-blocks, braille, or plain ASCII), procedural moods, and Claude Code hooks that turn it into your coding agent's face.",
+			"link": "/docs/tty-avatar",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "launch",
+			"title": "Herald",
+			"summary": "Deliver a message in person: a 3D character walks onto your page and tells the user what happened. Open SDK, one line of code, an accessible fallback, and a CLI that announces when your build finishes.",
+			"link": "/herald",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "launch",
+			"title": "Portal",
+			"summary": "Paste any web address and walk through it in 3D. Portal reads the page's real structure and builds a place from it: sections become buildings sized by what they say, links become doors you step into, images become billboards. Download the world as a GLB or embed it in your own site.",
+			"link": "/portal",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "launch",
 			"title": "Publishing to the Solana dApp Store",
 			"summary": "The release runbook for the three.ws Seeker app: Publisher Portal setup, the release keystore, building and verifying a signed APK, and submitting it for review.",
 			"link": "/docs/seeker-publishing",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "launch",
+			"title": "Terminal renderer",
+			"summary": "curl three.ws/tty and a rigged 3D agent walks in your terminal. A software rasterizer streams ANSI frames over HTTP: no GPU, no WebGL, nothing to install. Also the @three-ws/tty CLI and library for rendering any GLB in a terminal.",
+			"link": "/tty",
 			"tags": [
 				"launch"
 			]
@@ -161,6 +211,29 @@
 			"link": "/notifications",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "update",
+			"title": "Your agents can now tell you why they are not doing anything",
+			"summary": "An audit found ten of twelve autonomous trading agents had not acted in weeks while every health check reported them perfectly fine: the container was up, the feed was streaming, every strategy was armed. Liveness measures the process, but acting needs a whole chain of preconditions the process knows nothing about. A new open-source package, @three-ws/agent-vitals, models those preconditions as a causal graph and answers the real question: can this agent act right now, and if not, what is the one thing to fix. It reports root causes instead of symptoms, so a stale deployment that killed a model chain that starved a decision queue reads as one item with one command, not three red rows to guess between. Run npm run agent:vitals for the fleet, or GET /api/agents/vitals.",
+			"link": "/docs/agent-vitals",
+			"tags": [
+				"feature",
+				"sdk",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "update",
+			"title": "Your avatar now runs in a terminal, and it can be your coding agent's face",
+			"summary": "A new package, @three-ws/tty-avatar, draws any three.ws avatar or agent body live in a terminal window: one npx command, no browser, no GPU, 24 frames a second in colour. It has moods (thinking, working, happy, error, asleep) that work on any model without a rig, and one command wires it to Claude Code so the avatar thinks while the agent reads your prompt, nods while it edits files, shakes when a tool fails and bounces when it finishes, with a caption naming what it is doing. Every avatar and agent page now has the command in its Embed tab.",
+			"link": "/docs/tty-avatar",
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{

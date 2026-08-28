@@ -514,6 +514,7 @@ const appConfig = {
 					chunk.name === 'walk-playground' ||
 					chunk.name === 'feature-tour' ||
 					chunk.name === 'notifications' ||
+					chunk.name === 'herald' ||
 					chunk.name === 'nav-tier-badge' ||
 					chunk.name === 'agent-bus' ||
 					chunk.name === 'i18n'
@@ -527,10 +528,14 @@ const appConfig = {
 				'walk-playground': resolve(__dirname, 'src/walk-playground.js'),
 				'feature-tour': resolve(__dirname, 'src/feature-tour.js'),
 				notifications: resolve(__dirname, 'src/notifications.js'),
+				// /herald.js: the CDN build of @three-ws/herald, imported by
+				// third-party pages and by /herald's own playground.
+				herald: resolve(__dirname, 'src/herald-embed.js'),
 				'nav-tier-badge': resolve(__dirname, 'src/nav-tier-badge.js'),
 				i18n: resolve(__dirname, 'src/i18n.js'),
 				app: resolve(__dirname, 'pages/app.html'),
 				proof: resolve(__dirname, 'pages/proof.html'),
+				preflight: resolve(__dirname, 'pages/preflight.html'),
 				'app-next': resolve(__dirname, 'pages/app-next.html'),
 				home: resolve(__dirname, 'pages/home.html'),
 				'what-is': resolve(__dirname, 'pages/what-is.html'),
@@ -625,7 +630,12 @@ const appConfig = {
 				// transitively. HTML output paths come from the source file path,
 				// not the input key, so the page still emits dist/notifications.html.
 				'notifications-page': resolve(__dirname, 'pages/notifications.html'),
+				// The @three-ws/herald playground. Key must NOT be `herald`: that is
+				// the CDN module entry above, and a duplicate key would silently
+				// replace it.
+				'herald-page': resolve(__dirname, 'pages/herald.html'),
 				companion: resolve(__dirname, 'pages/companion.html'),
+				portal: resolve(__dirname, 'pages/portal.html'),
 				feedback: resolve(__dirname, 'pages/feedback.html'),
 				'agent-edit': resolve(__dirname, 'pages/agent-edit.html'),
 				'agent-mind': resolve(__dirname, 'pages/agent-mind.html'),
@@ -717,9 +727,11 @@ const appConfig = {
 				arm: resolve(__dirname, 'pages/arm.html'),
 				ca2x402: resolve(__dirname, 'pages/ca2x402.html'),
 				activity: resolve(__dirname, 'pages/activity.html'),
+				tty: resolve(__dirname, 'pages/tty.html'),
 				guards: resolve(__dirname, 'pages/guards.html'),
 				pipeline: resolve(__dirname, 'pages/pipeline.html'),
 				'coin-intel': resolve(__dirname, 'pages/coin-intel.html'),
+				'oracle-lab': resolve(__dirname, 'pages/oracle-lab.html'),
 				coins: resolve(__dirname, 'pages/coins.html'),
 				coin: resolve(__dirname, 'pages/coin.html'),
 				drop: resolve(__dirname, 'pages/drop.html'),
@@ -1466,6 +1478,8 @@ const appConfig = {
 					'/ca2x402/': resolve(root, 'pages/ca2x402.html'),
 					'/activity': resolve(root, 'pages/activity.html'),
 					'/activity/': resolve(root, 'pages/activity.html'),
+					'/tty': resolve(root, 'pages/tty.html'),
+					'/tty/': resolve(root, 'pages/tty.html'),
 					'/tour/atlas': resolve(root, 'pages/tour-atlas.html'),
 					'/tour/atlas/': resolve(root, 'pages/tour-atlas.html'),
 					'/guards': resolve(root, 'pages/guards.html'),
@@ -1476,6 +1490,8 @@ const appConfig = {
 					'/trending/': resolve(root, 'pages/trending.html'),
 					'/coin-intel': resolve(root, 'pages/coin-intel.html'),
 					'/coin-intel/': resolve(root, 'pages/coin-intel.html'),
+					'/oracle-lab': resolve(root, 'pages/oracle-lab.html'),
+					'/oracle-lab/': resolve(root, 'pages/oracle-lab.html'),
 					'/coins': resolve(root, 'pages/coins.html'),
 					'/coins/': resolve(root, 'pages/coins.html'),
 					'/markets': resolve(root, 'pages/markets.html'),
@@ -2068,6 +2084,9 @@ const appConfig = {
 					// /changelog → public changelog page (mirrors vercel.json rewrite)
 					else if (!filePath && /^\/changelog\/?$/.test(path))
 						filePath = resolve(root, 'public/changelog/index.html');
+					// /ship → ship log: releases joined to their commits (mirrors vercel.json rewrite)
+					else if (!filePath && /^\/ship\/?$/.test(path))
+						filePath = resolve(root, 'public/ship/index.html');
 					// /town  → communities (alias; mirrors vercel.json rewrite)
 					else if (!filePath && /^\/town\/?$/.test(path))
 						filePath = resolve(root, 'pages/communities.html');
@@ -2295,6 +2314,12 @@ const appConfig = {
 					// /notifications.js — nav.js loads this module for the per-user inbox.
 					if (path === '/notifications.js') {
 						req.url = '/src/notifications.js';
+						return next();
+					}
+					// /herald.js: the @three-ws/herald CDN build, served from src in
+					// dev at the stable, unhashed name it ships under in production.
+					if (path === '/herald.js') {
+						req.url = '/src/herald-embed.js';
 						return next();
 					}
 					// /nav-tier-badge.js — nav.js loads this module for the $THREE
@@ -3230,6 +3255,35 @@ const appConfig = {
 						],
 					},
 				},
+				// Windows 11 widgets board. The host fetches the Adaptive Card
+				// template once from /api/glance/template and then asks the service
+				// worker (public/glance-sw.js) for data, which comes from
+				// /api/glance/mine. `auth: false` keeps the widget installable while
+				// signed out: the card itself renders a sign-in state rather than
+				// letting the host block the install behind an account.
+				widgets: [
+					{
+						name: 'Agent glance',
+						short_name: 'Agent',
+						description:
+							'Your three.ws agent at a glance: what it did today, and one tap back into it.',
+						tag: 'agent-glance',
+						template: 'agent-glance',
+						ms_ac_template: '/api/glance/template',
+						data: '/api/glance/mine',
+						type: 'application/json',
+						auth: false,
+						update: 900,
+						icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }],
+						screenshots: [
+							{
+								src: 'screenshots/glance-widget.png',
+								sizes: '480x200',
+								label: 'The Agent glance widget on the Windows 11 widgets board',
+							},
+						],
+					},
+				],
 				shortcuts: [
 					{
 						name: 'Create Avatar',
@@ -3299,7 +3353,7 @@ const appConfig = {
 				// Pull in the Web Push handlers (push + notificationclick). Kept in
 				// public/push-sw.js as a classic script so the generated Workbox SW
 				// importScripts it without switching to an injectManifest build.
-				importScripts: ['/push-sw.js', '/share-target-sw.js'],
+				importScripts: ['/push-sw.js', '/share-target-sw.js', '/glance-sw.js'],
 				// MPA: every route is a separate HTML file served by the server.
 				// No navigation fallback — uncached navigations go to the network.
 				// HTML is intentionally excluded from globPatterns so it is never

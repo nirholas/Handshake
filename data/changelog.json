@@ -25158,6 +25158,27 @@
 				"infra"
 			],
 			"link": "/docs/ios-app"
+		},
+		{
+			"date": "2026-08-28",
+			"title": "Your avatar now runs in a terminal, and it can be your coding agent's face",
+			"summary": "A new package, @three-ws/tty-avatar, draws any three.ws avatar or agent body live in a terminal window: one npx command, no browser, no GPU, 24 frames a second in colour. It has moods (thinking, working, happy, error, asleep) that work on any model without a rig, and one command wires it to Claude Code so the avatar thinks while the agent reads your prompt, nods while it edits files, shakes when a tool fails and bounces when it finishes, with a caption naming what it is doing. Every avatar and agent page now has the command in its Embed tab.",
+			"tags": [
+				"feature",
+				"sdk"
+			],
+			"link": "/docs/tty-avatar"
+		},
+		{
+			"date": "2026-08-28",
+			"title": "Your agents can now tell you why they are not doing anything",
+			"summary": "An audit found ten of twelve autonomous trading agents had not acted in weeks while every health check reported them perfectly fine: the container was up, the feed was streaming, every strategy was armed. Liveness measures the process, but acting needs a whole chain of preconditions the process knows nothing about. A new open-source package, @three-ws/agent-vitals, models those preconditions as a causal graph and answers the real question: can this agent act right now, and if not, what is the one thing to fix. It reports root causes instead of symptoms, so a stale deployment that killed a model chain that starved a decision queue reads as one item with one command, not three red rows to guess between. Run npm run agent:vitals for the fleet, or GET /api/agents/vitals.",
+			"tags": [
+				"feature",
+				"sdk",
+				"infra"
+			],
+			"link": "/docs/agent-vitals"
 		}
 	]
 }

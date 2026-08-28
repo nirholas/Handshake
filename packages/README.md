@@ -58,6 +58,7 @@ Publishable npm packages for the three.ws platform: client SDKs, agent tooling, 
 | [three-token-mcp](three-token-mcp/README.md) | MCP server that lets agents price, hold, and burn $THREE on-chain via the live token rail. |
 | [threews-avatar-mcp](threews-avatar-mcp/README.md) | MCP server that renders a live rotatable avatar inline, plus embed iframe and metadata. |
 | [tool-sdk](tool-sdk/README.md) | Typed tool authoring for three.ws MCP servers, with per-tool permission manifests. |
+| [tty-avatar](tty-avatar/README.md) | A live 3D avatar in the terminal: any GLB or three.ws avatar/agent rendered to truecolor half-blocks or braille, with moods, and Claude Code hooks that make it your coding agent's face. |
 | [tutor-mcp](tutor-mcp/README.md) | MCP server for the Pay-As-You-Learn tutor ledger: itemized running tab and attested invoice. |
 | [vanity](vanity/README.md) | WASM-accelerated Solana vanity address mining in the browser or Node, with a paid x402 fallback. |
 | [vanity-mcp](vanity-mcp/README.md) | Read-only MCP server for the vanity grind-bounty market and proof-of-grind rarity gallery. |

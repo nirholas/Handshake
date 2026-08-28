@@ -47,6 +47,7 @@ const PACKAGES = [
 	{ key: 'strategies', dir: 'packages/strategies' },
 	{ key: 'pumpfun-skills', dir: 'packages/pumpfun-skills' },
 	{ key: 'irl', dir: 'packages/irl' },
+	{ key: 'tty-avatar', dir: 'packages/tty-avatar' },
 	// Assistant widget SDK — the one-tag / npm loader for the 3D avatar
 	// assistant. Has a real build (build.mjs, run via prepublishOnly) that also
 	// mirrors the one-tag bundle to public/assistant/v1.js. Standalone dir, like

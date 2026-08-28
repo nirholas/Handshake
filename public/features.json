@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T03:26:00.137Z",
+	"generated_at": "2026-08-28T03:32:47.833Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -296,9 +296,29 @@
 					"showcase": false
 				},
 				{
+					"path": "/portal",
+					"title": "Portal",
+					"description": "Paste any web address and walk through it in 3D. Portal reads the page's real structure and builds a place from it: sections become buildings sized by what they say, links become doors you step into, images become billboards. Download the world as a GLB or embed it in your own site.",
+					"added": "2026-08-28",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": true
+				},
+				{
 					"path": "/companion",
 					"title": "Companion",
 					"description": "A 3D companion that delivers your important messages in person. Connect your own Telegram bot, calendar, inbox, or phone, give each contact their own avatar and voice, and hear only what clears your bar.",
+					"added": "2026-08-28",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": true
+				},
+				{
+					"path": "/herald",
+					"title": "Herald",
+					"description": "Deliver a message in person: a 3D character walks onto your page and tells the user what happened. Open SDK, one line of code, an accessible fallback, and a CLI that announces when your build finishes.",
 					"added": "2026-08-28",
 					"auth": null,
 					"indexable": true,
@@ -1147,6 +1167,16 @@
 					"title": "Skill Bundles",
 					"description": "Sell several of an agent's skills as one purchase, priced from your own sales instead of a rule of thumb. three.ws finds the buyers who already bought two or more of those skills separately and backtests any price against what they really paid, so you see what the bundle would have earned before you publish it.",
 					"added": "2026-07-31",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/tty",
+					"title": "Terminal renderer",
+					"description": "curl three.ws/tty and a rigged 3D agent walks in your terminal. A software rasterizer streams ANSI frames over HTTP: no GPU, no WebGL, nothing to install. Also the @three-ws/tty CLI and library for rendering any GLB in a terminal.",
+					"added": "2026-08-28",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -2992,6 +3022,16 @@
 					"title": "Docs · Avatar Artifact viewer",
 					"description": "The standalone avatar viewer you paste into any site as a one-line iframe: its ?agent= and ?model= parameters, the hosts a model may come from, how a clip-less rig still comes to life, and the sentence the page shows for every way it can fail.",
 					"added": "2026-08-16",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/tty-avatar",
+					"title": "Docs · Terminal avatar",
+					"description": "The @three-ws/tty-avatar package: any three.ws avatar or agent body rendered live in a terminal by a software rasterizer (truecolor half-blocks, braille, or plain ASCII), procedural moods, and Claude Code hooks that turn it into your coding agent's face.",
+					"added": "2026-08-28",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -6772,6 +6812,16 @@
 					"title": "Docs · Rigging the pump.fun pill mascot",
 					"description": "How a static capsule mascot with four nubs became a 52-bone, six-clip avatar: limb discovery from a distance transform, medial-axis skinning, and a bind pose that differs from the rest pose on purpose.",
 					"added": "2026-08-24",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/agent-vitals",
+					"title": "Docs · Agent vitals: can it act?",
+					"description": "Every liveness check was green while ten of twelve autonomous agents had not acted in weeks. Capability attestation models an agent's preconditions as a causal graph and returns the root blocker plus the command that fixes it, instead of a checklist of symptoms.",
+					"added": "2026-08-28",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

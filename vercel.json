@@ -454,6 +454,14 @@
 			"dest": "/api/platform/stats"
 		},
 		{
+			"src": "/ship",
+			"dest": "/ship/index.html"
+		},
+		{
+			"src": "/ship/",
+			"dest": "/ship/index.html"
+		},
+		{
 			"src": "/changelog",
 			"dest": "/changelog/index.html"
 		},
@@ -492,6 +500,14 @@
 		{
 			"src": "/\\.well-known/x402\\.json",
 			"dest": "/api/wk?name=x402-discovery"
+		},
+		{
+			"src": "/\\.well-known/x402-preflight",
+			"dest": "/api/x402/preflight"
+		},
+		{
+			"src": "/preflight/?$",
+			"dest": "/pages/preflight.html"
 		},
 		{
 			"src": "/\\.well-known/x402",
@@ -1062,6 +1078,10 @@
 			"dest": "/coin-intel.html"
 		},
 		{
+			"src": "/oracle-lab/?",
+			"dest": "/oracle-lab.html"
+		},
+		{
 			"src": "/coins/?",
 			"dest": "/coins.html"
 		},
@@ -1216,6 +1236,25 @@
 		{
 			"src": "/activity/?",
 			"dest": "/activity.html"
+		},
+		{
+			"src": "/tty/?",
+			"has": [
+				{
+					"type": "header",
+					"key": "accept",
+					"value": "(?i).*text/html.*"
+				}
+			],
+			"dest": "/tty.html"
+		},
+		{
+			"src": "/tty/?",
+			"dest": "/api/tty"
+		},
+		{
+			"src": "/tty/([^/]+)/?",
+			"dest": "/api/tty?avatar=$1"
 		},
 		{
 			"src": "/tour/atlas/?",
@@ -2617,12 +2656,28 @@
 			"dest": "/feedback.html"
 		},
 		{
+			"src": "/portal",
+			"dest": "/portal.html"
+		},
+		{
+			"src": "/portal/",
+			"dest": "/portal.html"
+		},
+		{
 			"src": "/companion",
 			"dest": "/companion.html"
 		},
 		{
 			"src": "/companion/",
 			"dest": "/companion.html"
+		},
+		{
+			"src": "/herald",
+			"dest": "/herald.html"
+		},
+		{
+			"src": "/herald/",
+			"dest": "/herald.html"
 		},
 		{
 			"src": "/notifications",
@@ -3205,6 +3260,10 @@
 		{
 			"src": "/api/oracle/stats",
 			"dest": "/api/oracle/stats.js"
+		},
+		{
+			"src": "/api/oracle/model",
+			"dest": "/api/oracle/model.js"
 		},
 		{
 			"src": "/api/oracle/test-alert",
@@ -4897,6 +4956,17 @@
 		{
 			"src": "/api/agent-3d/versions",
 			"dest": "/api/agent-3d/versions"
+		},
+		{
+			"src": "/herald\\.js",
+			"headers": {
+				"cache-control": "public, max-age=3600, s-maxage=300, stale-while-revalidate=86400",
+				"access-control-allow-origin": "*",
+				"access-control-allow-methods": "GET, HEAD, OPTIONS",
+				"cross-origin-resource-policy": "cross-origin",
+				"timing-allow-origin": "*"
+			},
+			"dest": "/herald.js"
 		},
 		{
 			"src": "/agent-3d/versions\\.json",

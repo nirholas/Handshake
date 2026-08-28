@@ -23,6 +23,14 @@
 			<description>Every text-to-3D API answers with a link to a binary an AI agent cannot open, so the agent that made the model cannot check its own work. This surface renders any GLB from several angles and hands the frames back as images a vision model actually sees, over MCP, REST or the @three-ws/see SDK.</description>
 		</item>
 		<item>
+			<title>Docs · Agent vitals: can it act?</title>
+			<link>https://three.ws/docs/agent-vitals</link>
+			<guid isPermaLink="false">2026-08-28:Docs · Agent vitals: can it act?</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Every liveness check was green while ten of twelve autonomous agents had not acted in weeks. Capability attestation models an agent's preconditions as a causal graph and returns the root blocker plus the command that fixes it, instead of a checklist of symptoms.</description>
+		</item>
+		<item>
 			<title>Docs · Feedback</title>
 			<link>https://three.ws/docs/feedback</link>
 			<guid isPermaLink="false">2026-08-28:Docs · Feedback</guid>
@@ -31,12 +39,44 @@
 			<description>Telling the corner companion what broke: the proactive ask at the moment of failure, the route, build SHA, and console errors captured for you, the severity and clustering rules, the report API, and the boundary that keeps untrusted visitor text from ever reaching anything with write access.</description>
 		</item>
 		<item>
+			<title>Docs · Terminal avatar</title>
+			<link>https://three.ws/docs/tty-avatar</link>
+			<guid isPermaLink="false">2026-08-28:Docs · Terminal avatar</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The @three-ws/tty-avatar package: any three.ws avatar or agent body rendered live in a terminal by a software rasterizer (truecolor half-blocks, braille, or plain ASCII), procedural moods, and Claude Code hooks that turn it into your coding agent's face.</description>
+		</item>
+		<item>
+			<title>Herald</title>
+			<link>https://three.ws/herald</link>
+			<guid isPermaLink="false">2026-08-28:Herald</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Deliver a message in person: a 3D character walks onto your page and tells the user what happened. Open SDK, one line of code, an accessible fallback, and a CLI that announces when your build finishes.</description>
+		</item>
+		<item>
+			<title>Portal</title>
+			<link>https://three.ws/portal</link>
+			<guid isPermaLink="false">2026-08-28:Portal</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Paste any web address and walk through it in 3D. Portal reads the page's real structure and builds a place from it: sections become buildings sized by what they say, links become doors you step into, images become billboards. Download the world as a GLB or embed it in your own site.</description>
+		</item>
+		<item>
 			<title>Publishing to the Solana dApp Store</title>
 			<link>https://three.ws/docs/seeker-publishing</link>
 			<guid isPermaLink="false">2026-08-28:Publishing to the Solana dApp Store</guid>
 			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>The release runbook for the three.ws Seeker app: Publisher Portal setup, the release keystore, building and verifying a signed APK, and submitting it for review.</description>
+		</item>
+		<item>
+			<title>Terminal renderer</title>
+			<link>https://three.ws/tty</link>
+			<guid isPermaLink="false">2026-08-28:Terminal renderer</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>curl three.ws/tty and a rigged 3D agent walks in your terminal. A software rasterizer streams ANSI frames over HTTP: no GPU, no WebGL, nothing to install. Also the @three-ws/tty CLI and library for rendering any GLB in a terminal.</description>
 		</item>
 		<item>
 			<title>three.ws on iOS</title>
@@ -125,6 +165,22 @@
 			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Notifications no longer wait behind a badge. When something worth stopping for lands while you are on the site (a sale, money in, a 3D generation finishing, anything touching your account), your corner companion turns to you, plays a gesture, and says it out loud with a link straight to it. If the companion is switched off it is summoned for that one message and walks off again, without turning itself back on. It is a real delivery channel next to in-app, push, email and Telegram: toggle it per category in Settings, and there is a Turn off control in the bubble that silences it in that browser instantly. It only ever announces unread notifications under fifteen minutes old, says each one exactly once, caps itself at two per visit, and never speaks into a background tab. Nothing is spoken aloud unless you already turned on the companion's voice; otherwise it is text in the bubble, which screen readers announce too.</description>
+		</item>
+		<item>
+			<title>Your agents can now tell you why they are not doing anything</title>
+			<link>https://three.ws/docs/agent-vitals</link>
+			<guid isPermaLink="false">2026-08-28:Your agents can now tell you why they are not doing anything</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>An audit found ten of twelve autonomous trading agents had not acted in weeks while every health check reported them perfectly fine: the container was up, the feed was streaming, every strategy was armed. Liveness measures the process, but acting needs a whole chain of preconditions the process knows nothing about. A new open-source package, @three-ws/agent-vitals, models those preconditions as a causal graph and answers the real question: can this agent act right now, and if not, what is the one thing to fix. It reports root causes instead of symptoms, so a stale deployment that killed a model chain that starved a decision queue reads as one item with one command, not three red rows to guess between. Run npm run agent:vitals for the fleet, or GET /api/agents/vitals.</description>
+		</item>
+		<item>
+			<title>Your avatar now runs in a terminal, and it can be your coding agent's face</title>
+			<link>https://three.ws/docs/tty-avatar</link>
+			<guid isPermaLink="false">2026-08-28:Your avatar now runs in a terminal, and it can be your coding agent's face</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new package, @three-ws/tty-avatar, draws any three.ws avatar or agent body live in a terminal window: one npx command, no browser, no GPU, 24 frames a second in colour. It has moods (thinking, working, happy, error, asleep) that work on any model without a rig, and one command wires it to Claude Code so the avatar thinks while the agent reads your prompt, nods while it edits files, shakes when a tool fails and bounces when it finishes, with a caption naming what it is doing. Every avatar and agent page now has the command in its Embed tab.</description>
 		</item>
 		<item>
 			<title>three.ws for Seeker</title>
