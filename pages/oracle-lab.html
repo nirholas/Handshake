@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="UTF-8" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Oracle Lab · three.ws</title>
+	<meta name="description" content="The Oracle's conviction model, published in full: every bucket weight with the sample count behind it, held-out reliability curves, the version history of what the machine learned and when, and a live scorer you can drive by hand." />
+	<link rel="canonical" href="https://three.ws/oracle-lab" />
+	<meta property="og:title" content="Oracle Lab: the model, published" />
+	<meta property="og:description" content="Every weight, every sample count, every version. Download the model and reproduce any score offline." />
+	<meta property="og:url" content="https://three.ws/oracle-lab" />
+	<meta property="og:type" content="website" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<style>
+		:root {
+			--lab-bg: #07080c;
+			--lab-panel: rgba(16, 18, 26, 0.86);
+			--lab-panel-2: rgba(255, 255, 255, 0.03);
+			--lab-border: rgba(255, 255, 255, 0.09);
+			--lab-border-strong: rgba(255, 255, 255, 0.16);
+			--lab-text: #e9ebf2;
+			--lab-muted: #8a90a2;
+			--lab-faint: #5c6273;
+			--lab-accent: #8b5cf6;
+			--lab-good: #34d399;
+			--lab-bad: #f87171;
+			--lab-warn: #fbbf24;
+			--lab-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+		}
+		html[data-theme="light"] {
+			--lab-bg: #f7f8fb;
+			--lab-panel: rgba(255, 255, 255, 0.92);
+			--lab-panel-2: rgba(15, 18, 30, 0.03);
+			--lab-border: rgba(15, 18, 30, 0.12);
+			--lab-border-strong: rgba(15, 18, 30, 0.22);
+			--lab-text: #12151f;
+			--lab-muted: #5b6376;
+			--lab-faint: #838b9d;
+		}
+		html, body { background: var(--lab-bg); color: var(--lab-text); }
+		body { margin: 0; min-height: 100vh; font-family: var(--font-body, 'Inter', system-ui, sans-serif); }
+		.wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px 96px; }
+
+		/* hero */
+		.hero { padding: 56px 0 28px; border-bottom: 1px solid var(--lab-border); }
+		.eyebrow { font-family: var(--lab-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--lab-accent); margin: 0 0 12px; }
+		.hero h1 { margin: 0 0 14px; font-size: clamp(30px, 5vw, 46px); line-height: 1.08; letter-spacing: -0.02em; }
+		.hero p { margin: 0; max-width: 68ch; color: var(--lab-muted); font-size: 16.5px; line-height: 1.62; }
+		.hero .lede-strong { color: var(--lab-text); }
+		.hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+		.btn {
+			display: inline-flex; align-items: center; gap: 8px; padding: 9px 15px; border-radius: 9px;
+			border: 1px solid var(--lab-border-strong); background: var(--lab-panel-2); color: var(--lab-text);
+			font-size: 13.5px; font-weight: 550; text-decoration: none; cursor: pointer;
+			transition: background .16s ease, border-color .16s ease, transform .16s ease;
+		}
+		.btn:hover { background: rgba(139, 92, 246, 0.14); border-color: var(--lab-accent); transform: translateY(-1px); }
+		.btn:focus-visible { outline: 2px solid var(--lab-accent); outline-offset: 2px; }
+		.btn.primary { background: var(--lab-accent); border-color: var(--lab-accent); color: #fff; }
+		.btn.primary:hover { background: #7c4ff0; }
+
+		/* generic panel */
+		section.block { margin-top: 44px; }
+		section.block > h2 { margin: 0 0 6px; font-size: 20px; letter-spacing: -0.01em; }
+		section.block > .sub { margin: 0 0 18px; color: var(--lab-muted); font-size: 14px; max-width: 74ch; line-height: 1.6; }
+		.panel { border: 1px solid var(--lab-border); border-radius: 14px; background: var(--lab-panel); padding: 18px; }
+
+		/* stat row */
+		.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+		.stat { border: 1px solid var(--lab-border); border-radius: 12px; background: var(--lab-panel); padding: 14px 15px; }
+		.stat .k { font-size: 11.5px; text-transform: uppercase; letter-spacing: .09em; color: var(--lab-faint); }
+		.stat .v { font-family: var(--lab-mono); font-size: 22px; margin-top: 6px; letter-spacing: -0.01em; }
+		.stat .n { font-size: 12px; color: var(--lab-muted); margin-top: 3px; }
+
+		/* tables */
+		.tablewrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+		table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+		th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--lab-border); white-space: nowrap; }
+		th { font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--lab-faint); font-weight: 600; }
+		tbody tr { transition: background .12s ease; }
+		tbody tr:hover { background: var(--lab-panel-2); }
+		td.num, th.num { text-align: right; font-family: var(--lab-mono); font-variant-numeric: tabular-nums; }
+		.pos { color: var(--lab-good); }
+		.neg { color: var(--lab-bad); }
+		.dim { color: var(--lab-faint); }
+
+		/* bar in a cell */
+		.bar { position: relative; height: 6px; border-radius: 3px; background: var(--lab-panel-2); min-width: 90px; overflow: hidden; }
+		.bar > i { position: absolute; top: 0; bottom: 0; border-radius: 3px; transition: width .3s ease; }
+		.bar > i.up { background: var(--lab-good); left: 50%; }
+		.bar > i.down { background: var(--lab-bad); right: 50%; }
+
+		/* scorer */
+		.scorer { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 340px); gap: 20px; align-items: start; }
+		.controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px 18px; }
+		.ctl label { display: block; font-size: 12.5px; color: var(--lab-muted); margin-bottom: 6px; }
+		.ctl label b { color: var(--lab-text); font-family: var(--lab-mono); font-weight: 600; float: right; }
+		.ctl input[type="range"] { width: 100%; accent-color: var(--lab-accent); cursor: pointer; }
+		.ctl input[type="range"]:focus-visible { outline: 2px solid var(--lab-accent); outline-offset: 3px; }
+		.ctl select {
+			width: 100%; padding: 7px 9px; border-radius: 8px; font-size: 13px;
+			background: var(--lab-panel-2); color: var(--lab-text); border: 1px solid var(--lab-border);
+		}
+		.verdict { border: 1px solid var(--lab-border-strong); border-radius: 14px; background: var(--lab-panel); padding: 18px; position: sticky; top: 84px; }
+		.verdict .score { font-family: var(--lab-mono); font-size: 54px; line-height: 1; letter-spacing: -0.03em; }
+		.tierpill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 650; letter-spacing: .03em; margin-left: 4px; vertical-align: middle; }
+		.t-prime { background: rgba(52,211,153,.16); color: var(--lab-good); }
+		.t-strong { background: rgba(52,211,153,.12); color: var(--lab-good); }
+		.t-lean { background: rgba(251,191,36,.14); color: var(--lab-warn); }
+		.t-watch { background: rgba(255,255,255,.08); color: var(--lab-muted); }
+		.t-avoid { background: rgba(248,113,113,.14); color: var(--lab-bad); }
+		.risks { display: grid; gap: 10px; margin-top: 16px; }
+		.risk { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; font-size: 13px; }
+		.risk .lbl { color: var(--lab-muted); }
+		.risk .val { font-family: var(--lab-mono); font-weight: 600; }
+		.risk .track { grid-column: 1 / -1; height: 5px; border-radius: 3px; background: var(--lab-panel-2); overflow: hidden; }
+		.risk .track > i { display: block; height: 100%; border-radius: 3px; transition: width .28s ease; }
+		.why { margin-top: 16px; border-top: 1px solid var(--lab-border); padding-top: 14px; }
+		.why h4 { margin: 0 0 9px; font-size: 11.5px; text-transform: uppercase; letter-spacing: .09em; color: var(--lab-faint); }
+		.why ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+		.why li { font-size: 12.5px; display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; }
+		.why li .t { color: var(--lab-text); }
+		.why li .w { font-family: var(--lab-mono); font-size: 12px; }
+		.why li .m { grid-column: 1 / -1; color: var(--lab-faint); font-size: 11.5px; }
+
+		/* code */
+		pre { margin: 0; padding: 15px 16px; border-radius: 12px; background: #0b0d14; border: 1px solid var(--lab-border); overflow-x: auto; }
+		html[data-theme="light"] pre { background: #12151f; }
+		code { font-family: var(--lab-mono); font-size: 12.6px; line-height: 1.65; color: #d7dbe8; }
+		.tok-k { color: #c084fc; } .tok-s { color: #86efac; } .tok-c { color: #64748b; } .tok-n { color: #fbbf24; }
+
+		/* misc */
+		.note { border-left: 2px solid var(--lab-accent); padding: 2px 0 2px 14px; color: var(--lab-muted); font-size: 13.5px; line-height: 1.65; margin: 14px 0 0; }
+		.note b { color: var(--lab-text); }
+		.pill { display: inline-block; font-family: var(--lab-mono); font-size: 11px; padding: 2px 7px; border-radius: 5px; background: var(--lab-panel-2); border: 1px solid var(--lab-border); color: var(--lab-muted); }
+		.pill.ok { color: var(--lab-good); border-color: rgba(52,211,153,.3); }
+		.pill.no { color: var(--lab-bad); border-color: rgba(248,113,113,.3); }
+		.skeleton { border-radius: 8px; background: linear-gradient(90deg, var(--lab-panel-2) 25%, rgba(255,255,255,.06) 50%, var(--lab-panel-2) 75%); background-size: 200% 100%; animation: sh 1.3s ease-in-out infinite; height: 14px; }
+		@keyframes sh { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+		@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } * { transition: none !important; } }
+		.empty { padding: 26px 18px; text-align: center; color: var(--lab-muted); font-size: 14px; line-height: 1.6; }
+		.empty b { display: block; color: var(--lab-text); font-size: 15px; margin-bottom: 6px; }
+		.err { border-color: rgba(248,113,113,.35); }
+		.selrow { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; font-size: 13px; color: var(--lab-muted); }
+		.selrow select { padding: 6px 9px; border-radius: 8px; background: var(--lab-panel-2); color: var(--lab-text); border: 1px solid var(--lab-border); font-size: 13px; }
+		@media (max-width: 860px) {
+			.scorer { grid-template-columns: 1fr; }
+			.verdict { position: static; }
+		}
+	</style>
+</head>
+<body>
+	<div id="nav-root"></div>
+
+	<main class="wrap">
+		<header class="hero">
+			<p class="eyebrow">Oracle Lab</p>
+			<h1>The model, published.</h1>
+			<p>
+				The Oracle watches every pump.fun launch for its first ninety seconds and scores it.
+				<span class="lede-strong">This page is the machine that makes the score</span>, not a summary of it:
+				every bucket weight with the number of labeled launches behind it, what actually happened to
+				those launches, the reliability curve it earned on data it had never seen, and the full history
+				of every version it has tried, including the ones that were refused.
+			</p>
+			<p style="margin-top:14px">
+				It is a lookup table, roughly 32KB. Download it and you can reproduce any score we have ever
+				published, offline, with no key.
+			</p>
+			<div class="hero-actions">
+				<a class="btn primary" href="/api/oracle/model" target="_blank" rel="noopener">Download the model</a>
+				<a class="btn" href="/docs/oracle-model">Read the docs</a>
+				<a class="btn" href="/oracle">Live feed</a>
+				<a class="btn" href="https://www.npmjs.com/package/@three-ws/oracle-model" target="_blank" rel="noopener">npm package</a>
+			</div>
+		</header>
+
+		<section class="block" id="summary">
+			<h2>What is scoring right now</h2>
+			<p class="sub">The exact model this platform is using this second, with the numbers it earned on launches held out of its own training.</p>
+			<div class="stats" id="stats"></div>
+			<div id="predicts" class="note"></div>
+		</section>
+
+		<section class="block" id="ladder-block">
+			<h2>Does each tier earn what it claims</h2>
+			<p class="sub">
+				The score line is not a percentage: 86 claims a 45% chance, not an 86% one. Each rung is a
+				public promise about measured frequency, so here is the promise next to the measurement, on
+				launches the model never saw. A model whose top band stops clearing its own claim is refused
+				by the promotion gate rather than shipped.
+			</p>
+			<div class="panel"><div class="tablewrap"><table id="ladder"></table></div></div>
+		</section>
+
+		<section class="block" id="scorer-block">
+			<h2>Drive it yourself</h2>
+			<p class="sub">
+				Every control below feeds the real weights, in your browser. Nothing is sent anywhere. This is
+				the same arithmetic that scores the live feed.
+			</p>
+			<div class="scorer">
+				<div class="panel">
+					<div class="controls" id="controls"></div>
+				</div>
+				<div class="verdict" id="verdict"></div>
+			</div>
+		</section>
+
+		<section class="block" id="weights-block">
+			<h2>Every weight, and the evidence for it</h2>
+			<p class="sub">
+				One row per bucket. <b>Log-odds</b> is what that bucket adds to the score. <b>Win</b>, <b>rug</b>
+				and <b>run</b> are what actually happened to the launches in it, and <b>n</b> is how many there
+				were. A claim with a small n is a weak claim, and you can see which is which.
+			</p>
+			<div class="selrow">
+				<label for="wsort">Sort by</label>
+				<select id="wsort">
+					<option value="impact">strongest influence</option>
+					<option value="win">highest win rate</option>
+					<option value="rug">highest rug rate</option>
+					<option value="n">most samples</option>
+					<option value="feature">feature name</option>
+				</select>
+				<span id="wcount" class="pill"></span>
+			</div>
+			<div class="panel"><div class="tablewrap"><table id="weights"></table></div></div>
+		</section>
+
+		<section class="block" id="registry-block">
+			<h2>What it has learned, and when</h2>
+			<p class="sub">
+				The model refits every six hours and only takes over if it beats the incumbent on held-out
+				ranking. Refused candidates are listed here too, with the reason: a registry that shows only the
+				winners is a highlight reel, not a record.
+			</p>
+			<div class="panel"><div class="tablewrap"><table id="registry"></table></div></div>
+			<div id="diff-block" style="margin-top:18px"></div>
+		</section>
+
+		<section class="block" id="use-block">
+			<h2>Use it</h2>
+			<p class="sub">Zero dependencies. Node, Deno, Bun, Workers, browser. One request, then it is local arithmetic forever.</p>
+			<pre><code id="snippet"></code></pre>
+			<p class="note">
+				<b>verify() is the important one.</b> Feed it launches with outcomes you collected yourself and
+				it re-measures our AUC, Brier score and reliability curve on your data. If our published numbers
+				do not survive an independent sample, you should be able to find that out from us.
+			</p>
+		</section>
+	</main>
+
+	<script type="module" src="/nav.js"></script>
+	<script type="module" src="/oracle-lab.js"></script>
+</body>
+</html>
