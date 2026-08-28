@@ -1168,23 +1168,11 @@ function renderDexChart(target) {
 	clearTimeout(state.dexFrameTimer);
 	const controls = el('div', { class: 'ld-chart-controls' }, [chartViewBar(), terminalLinksEl(), dexLink()]);
 	const wrap = el('div', { class: 'ld-dex-wrap' });
-	const iframe = el('iframe', {
-		class: 'ld-dex-frame',
-		src: dexEmbedUrl(),
-		title: 'DexScreener live chart',
-		loading: 'lazy',
-		onload: () => {
-			clearTimeout(state.dexFrameTimer);
-			wrap.classList.add('ld-dex-ready');
-		},
-	});
-	wrap.replaceChildren(el('div', { class: 'ld-skel ld-skel-chart' }), iframe);
-	section(target, 'Price', el('div', { class: 'ld-chart' }, [controls, wrap]), { tag: 'DexScreener · live' });
-
-	// Watchdog: if the embed never loads (blocked, offline, sandbox), don't leave a
-	// dead skeleton — surface a recoverable error with a retry and a direct link.
-	state.dexFrameTimer = setTimeout(() => {
+	// The recoverable state: a sentence, a retry, and a way to see the chart
+	// anyway. Reached from two places, so it lives in one.
+	const showFallback = () => {
 		if (wrap.classList.contains('ld-dex-ready')) return;
+		clearTimeout(state.dexFrameTimer);
 		wrap.replaceChildren(
 			el('div', { class: 'ld-empty ld-empty-sm' }, [
 				el('p', { text: "DexScreener's chart didn't load. It may be blocked or still indexing this coin." }),
@@ -1194,7 +1182,27 @@ function renderDexChart(target) {
 				]),
 			]),
 		);
-	}, 9000);
+	};
+	const iframe = el('iframe', {
+		class: 'ld-dex-frame',
+		src: dexEmbedUrl(),
+		title: 'DexScreener live chart',
+		loading: 'lazy',
+		onload: () => {
+			clearTimeout(state.dexFrameTimer);
+			wrap.classList.add('ld-dex-ready');
+		},
+		// An outright refusal (blocked host, DNS failure, a sandbox that rejects
+		// the frame) is knowable immediately. Without this the skeleton kept
+		// shimmering for the full watchdog window on a failure already decided.
+		onerror: showFallback,
+	});
+	wrap.replaceChildren(el('div', { class: 'ld-skel ld-skel-chart' }), iframe);
+	section(target, 'Price', el('div', { class: 'ld-chart' }, [controls, wrap]), { tag: 'DexScreener · live' });
+
+	// Watchdog: if the embed never loads (blocked, offline, sandbox), don't leave a
+	// dead skeleton — surface a recoverable error with a retry and a direct link.
+	state.dexFrameTimer = setTimeout(showFallback, 9000);
 }
 
 async function renderChart() {

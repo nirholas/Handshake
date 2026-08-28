@@ -217,17 +217,98 @@ function ensureThemeRemount(coin) {
 	themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 }
 
-function iframeEl(src, title) {
+// How long a third-party embed gets to show something before we replace it
+// with an explanation. Generous: these are heavy terminals on someone else's
+// infrastructure. Short enough that a blocked embed does not leave a 300px
+// void for the length of the visit.
+const EMBED_TIMEOUT_MS = 12_000;
+
+/**
+ * Replace a dead embed with a designed panel that says what happened and how to
+ * see the chart anyway. A blocked or down terminal used to leave an empty box
+ * with no text, which reads as a broken page rather than a blocked third party.
+ *
+ * @param {HTMLElement} host
+ * @param {{ name: string, href: string, label: string, onRetry: () => void }} opts
+ */
+function embedFallback(host, { name, href, label, onRetry }) {
+	const panel = document.createElement('div');
+	panel.className = 'cv-chart-state col';
+	panel.setAttribute('role', 'status');
+	panel.innerHTML = `
+		<p>${esc(name)} did not load. It may be blocked by an ad blocker, an extension or your network.</p>
+		<p><a href="${esc(href)}" target="_blank" rel="noopener nofollow noreferrer">${esc(label)} ↗</a></p>`;
+	const retry = document.createElement('button');
+	retry.type = 'button';
+	retry.className = 'cv-range-btn';
+	retry.textContent = 'Try again';
+	retry.addEventListener('click', onRetry);
+	panel.appendChild(retry);
+	host.replaceChildren(panel);
+}
+
+/**
+ * Run `onTimeout` unless `cancel()` is called first. Lazy iframes only start
+ * fetching once they scroll into view, so the clock starts at first
+ * intersection; starting it at mount would report every below-the-fold embed as
+ * dead. Browsers without IntersectionObserver start immediately.
+ *
+ * @returns {() => void} cancel
+ */
+function watchdog(el, ms, onTimeout) {
+	let timer = null;
+	let observer = null;
+	const start = () => {
+		if (timer === null) timer = setTimeout(onTimeout, ms);
+	};
+	const cancel = () => {
+		if (timer !== null) clearTimeout(timer);
+		timer = null;
+		observer?.disconnect();
+		observer = null;
+	};
+	if (typeof IntersectionObserver === 'function') {
+		observer = new IntersectionObserver((entries) => {
+			if (entries.some((e) => e.isIntersecting)) {
+				observer.disconnect();
+				observer = null;
+				start();
+			}
+		});
+		observer.observe(el);
+	} else {
+		start();
+	}
+	return cancel;
+}
+
+/**
+ * @param {string} src
+ * @param {string} title
+ * @param {{ name: string, href: string, label: string, onRetry: () => void }} fallback
+ */
+function iframeEl(src, title, fallback) {
 	const iframe = document.createElement('iframe');
 	iframe.src = src;
 	iframe.title = title;
 	iframe.loading = 'lazy';
 	iframe.allow = 'clipboard-write';
 	iframe.style.cssText = 'width:100%;height:100%;border:0;display:block';
+	// A cross-origin frame gives us `load` and `error` and nothing else, and a
+	// frame a blocker swallows often fires neither. The deadline is what
+	// actually catches that case; load/error just settle it sooner.
+	const cancel = watchdog(iframe, EMBED_TIMEOUT_MS, () => {
+		if (iframe.isConnected) embedFallback(iframe.parentElement || iframe, fallback);
+	});
+	iframe.addEventListener('load', cancel);
+	iframe.addEventListener('error', () => {
+		cancel();
+		embedFallback(iframe.parentElement || iframe, fallback);
+	});
 	return iframe;
 }
 
-function mountTradingView(host, symbol) {
+function mountTradingView(host, symbol, fallback) {
 	const container = document.createElement('div');
 	container.className = 'tradingview-widget-container';
 	container.style.height = '100%';
@@ -251,11 +332,22 @@ function mountTradingView(host, symbol) {
 		save_image: false,
 		support_host: 'https://www.tradingview.com',
 	});
+	// s3.tradingview.com is a common ad-blocker target and the script injects the
+	// chart asynchronously, so neither `onerror` alone nor a deadline alone is
+	// enough: onerror catches an outright block, and the deadline catches a
+	// script that loads and then never renders its iframe.
+	const cancel = watchdog(container, EMBED_TIMEOUT_MS, () => {
+		if (!widget.querySelector('iframe')) embedFallback(host, fallback);
+	});
+	script.onerror = () => {
+		cancel();
+		embedFallback(host, fallback);
+	};
 	container.appendChild(script);
 	host.replaceChildren(container);
 }
 
-function mountDexScreener(host, ref) {
+function mountDexScreener(host, ref, fallback) {
 	const t = chartTheme();
 	const p = new URLSearchParams({
 		embed: '1',
@@ -267,11 +359,11 @@ function mountDexScreener(host, ref) {
 		info: '0',
 	});
 	host.replaceChildren(
-		iframeEl(`https://dexscreener.com/${ref.ds}/${encodeURIComponent(ref.address)}?${p}`, 'DexScreener chart'),
+		iframeEl(`https://dexscreener.com/${ref.ds}/${encodeURIComponent(ref.address)}?${p}`, 'DexScreener chart', fallback),
 	);
 }
 
-function mountGeckoTerminal(host, ref, pool) {
+function mountGeckoTerminal(host, ref, pool, fallback) {
 	const p = new URLSearchParams({
 		embed: '1',
 		info: '0',
@@ -280,7 +372,7 @@ function mountGeckoTerminal(host, ref, pool) {
 		light_chart: chartTheme() === 'light' ? '1' : '0',
 	});
 	host.replaceChildren(
-		iframeEl(`https://www.geckoterminal.com/${ref.gt}/pools/${encodeURIComponent(pool)}?${p}`, 'GeckoTerminal chart'),
+		iframeEl(`https://www.geckoterminal.com/${ref.gt}/pools/${encodeURIComponent(pool)}?${p}`, 'GeckoTerminal chart', fallback),
 	);
 }
 
@@ -484,14 +576,28 @@ function embedChartBody(coin, source) {
 // transition); the other terminals mount synchronously.
 function mountActiveEmbed(coin, source) {
 	ensureThemeRemount(coin);
+	// Re-rendering the whole chart panel rebuilds the host node and remounts the
+	// embed, which is exactly what "Try again" should do.
+	const onRetry = () => renderChart(coin);
 	if (source.kind === 'tradingview') {
-		mountTradingView($('cv-adv'), tvSymbol(coin));
+		const sym = tvSymbol(coin);
+		mountTradingView($('cv-adv'), sym, {
+			name: 'The TradingView chart',
+			href: `https://www.tradingview.com/symbols/${sym}/`,
+			label: `Open ${coin.symbol || coin.name} on TradingView`,
+			onRetry,
+		});
 		return;
 	}
 	const ref = onchainRef(coin);
 	if (!ref) return;
 	if (source.kind === 'dexscreener') {
-		mountDexScreener($('cv-adv'), ref);
+		mountDexScreener($('cv-adv'), ref, {
+			name: 'The DexScreener chart',
+			href: `https://dexscreener.com/${ref.ds}/${ref.address}`,
+			label: 'Open in DexScreener',
+			onRetry,
+		});
 		return;
 	}
 	// geckoterminal
@@ -500,7 +606,12 @@ function mountActiveEmbed(coin, source) {
 		return;
 	}
 	if (chartState.gtState === 'ready' && chartState.gtPool) {
-		mountGeckoTerminal($('cv-adv'), ref, chartState.gtPool);
+		mountGeckoTerminal($('cv-adv'), ref, chartState.gtPool, {
+			name: 'The GeckoTerminal chart',
+			href: `https://www.geckoterminal.com/${ref.gt}/tokens/${ref.address}`,
+			label: 'Open in GeckoTerminal',
+			onRetry,
+		});
 	}
 }
 
