@@ -45,10 +45,30 @@ route the value-moving surfaces to Safari rather than removing them:
 | Talk mode, animation, rigging, exports | Wallet funding and withdrawal |
 | Read-only wallet and portfolio views | x402 payment flows |
 
-`src/native-bridge.js` already sends every off-site link to an in-app Safari
-sheet; the remaining work is a `data-external` opt-out on the same-origin
-surfaces above so they take that path too. That is a small, reversible change,
-and it is the difference between a review conversation and a rejection.
+**This is not a one-line change, and the reason matters.**
+`src/native-bridge.js` already sends every *off-site* link to an in-app Safari
+sheet, so routing a same-origin surface there looks like adding five paths to a
+list. It is not: `SFSafariViewController` runs on Safari's cookie jar, and the
+session cookie that authenticates the visitor was set in the app's `WKWebView`,
+which does not share it. Route `/pay` to the sheet as it stands and the visitor
+arrives signed out, on a page that exists to spend their money.
+
+Doing it properly needs a session handoff: the app mints a short-lived,
+single-use code against the live session and the Safari URL carries it, which
+the site exchanges for a cookie on first load. The closest existing thing is
+`POST /api/auth/extension-token` ([`../../api/auth/extension-token.js`](../../api/auth/extension-token.js)),
+which solves the same shape of problem for the browser extension but mints a
+scoped Bearer token, and a Bearer token cannot authenticate a page load. So this
+is a real, small feature, not a config flag. Size it before promising a date.
+
+The surfaces the list should hold, read off `data/pages.json` rather than
+guessed: `/launch`, `/launcher` and `/pumpfun` (they mint and trade),
+`/pay` and `/payments` (they spend). Deliberately NOT `/wallet` or
+`/agent-wallet`: Apple permits wallet storage and viewing from an organization
+account, and pushing the two most-used surfaces out to Safari would cost far
+more than it buys. Also not `/agent-trade`, `/coin3d`, `/launch-studio` or
+`/pay/simulator`, which read as transactional and are a visualisation, a
+visualisation, a catalogue and a dry run.
 
 ## 2. Guideline 4.2: minimum functionality.
 
@@ -78,6 +98,12 @@ move it from defensible to comfortable, in order of effect per unit of work:
 Push notifications count for 4.2 as well and are half-wired (entitlement and
 background mode present, APNs key and token endpoint absent).
 
+Edge-swipe back navigation, added in `MainViewController.swift`, is not a 4.2
+credit on its own, but its absence is a reliable rejection *and* a reliable
+one-star review: `WKWebView` ships with the gesture off and iOS has no back
+button, so without it a visitor who follows one link has no way out of the app
+except killing it.
+
 ## 3. Guideline 5.1.1: permissions and account deletion.
 
 - Every usage string in `Info.plist` says what the data is for in the user's
@@ -100,7 +126,26 @@ through the Safari sheet rather than the app's WebView. Keep it that way:
 running third-party sign-in inside an embedded WebView is both a review problem
 and a security one.
 
-## 5. What is not a risk here.
+## 5. Service workers are off, and that is the current trade.
+
+`limitsNavigationsToAppBoundDomains` is `false`, and `WKWebView` only runs
+service workers for **app-bound domains**. So inside the app the site's service
+worker never registers: no workbox precache, no offline page from
+`public/offline.html`, no `share_target` interception. That is why the app
+carries its own native offline screen (`shell/offline.html`, wired as
+`server.errorPath`) rather than relying on the web one.
+
+Flipping it is tempting and should not be done blind. Declaring
+`WKAppBoundDomains` in `Info.plist` and setting the flag `true` would restore
+service workers, and the app already keeps in-WebView navigation to three.ws
+hosts with everything else going to the Safari sheet, so the restriction is
+close to what the app does anyway. But the limit is ten domains, it cannot be
+changed after install without an app update, and app-bound mode also constrains
+the JavaScript-injection APIs that Capacitor's own bridge depends on. If it is
+wrong, the app does not degrade: it does not work at all. Test it on a real
+device before it ships, not after.
+
+## 6. What is not a risk here.
 
 - **AR.** ARKit Quick Look and WebXR usage are ordinary and uncontroversial.
 - **User-generated 3D content.** Standard UGC moderation expectations apply

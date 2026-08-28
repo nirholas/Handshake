@@ -19,11 +19,13 @@ ios/
 ├── capacitor.config.ts     # appId, server URL, iOS behaviour, plugin config
 ├── shell/                  # local bundle: bootstrap + the designed offline screen
 ├── src/native-bridge.js    # web-side half; ships with the SITE, not the .ipa
+├── scripts/make-icons.mjs  # derives the icon + launch images from the brand mark
 ├── native/App/             # the generated Xcode project (committed)
 │   ├── App.xcodeproj
-│   ├── App/Info.plist          # usage strings, URL scheme, orientations
-│   ├── App/App.entitlements    # associated domains + APNs
-│   └── CapApp-SPM/             # Swift Package Manager plugin graph
+│   ├── App/MainViewController.swift  # swipe-back, dark chrome, edge-to-edge insets
+│   ├── App/Info.plist                # usage strings, URL scheme, orientations
+│   ├── App/App.entitlements          # associated domains + APNs
+│   └── CapApp-SPM/                   # Swift Package Manager plugin graph
 └── docs/                   # SUBMISSION.md, REVIEW-RISK.md, ASSETS.md
 ```
 
@@ -65,7 +67,31 @@ What it installs, and the breakage each one fixes:
 | `appUrlOpen` routing (universal links + `threews://`) | A wallet or OAuth redirect reopens the app on whatever page it was last showing |
 | Splash hide on first paint | `launchAutoHide` fires on WebView load, minutes before a three.js scene renders |
 | `html.ios-app` + safe-area custom properties | Install prompts render inside the installed app; bottom controls sit under the home indicator |
-| Haptics on `[data-haptic]` | No tactile feedback anywhere |
+| Haptics on primary actions | No tactile feedback anywhere |
+| Status-bar padding on the sticky header | The nav renders under the system clock: the site's own compensation is behind `@media (display-mode: standalone)`, which a WKWebView loading a remote URL never matches |
+| 16px minimum on form fields | iOS zooms the page on focus and never zooms back out |
+
+## The native half
+
+`native/App/App/MainViewController.swift` replaces Capacitor's stock bridge
+controller in `Main.storyboard`. It exists for one thing JavaScript cannot do:
+
+- **Edge-swipe back and forward.** `WKWebView` ships with them off, and iOS has
+  no back button. Without this the app is a one-way trip: follow a link into a
+  detail page and the only way out is killing the app.
+- **Dark, edge-to-edge chrome.** The container, the WebView and its scroll view
+  all take the product's `#080814` so there is no white flash behind a loading
+  three.js scene and none at the edges of an over-scroll.
+- **`contentInsetAdjustmentBehavior = .never`**, which is what makes
+  `env(safe-area-inset-*)` non-zero inside the page. The padding the bridge
+  installs has nothing to react to without it.
+
+The app icon and launch images are generated, not hand-exported:
+
+```bash
+npm run ios:icons        # re-derive from public/pwa-512x512.png
+npm run check:ios-icons  # verify the committed assets match (wired into `npm run gate`)
+```
 
 ## Working on it
 
@@ -100,10 +126,17 @@ them at submission time:
   and the `aps-environment` entitlement are in place; the APNs key, the device
   token endpoint and the send path are not, and are deliberately absent rather
   than stubbed.
-- **App icons and launch screen art.** `native/App/App/Assets.xcassets` still
-  holds Capacitor's template. Specs in [`docs/ASSETS.md`](docs/ASSETS.md).
 - **Signing.** No team, no provisioning profile, no `ExportOptions.plist`. See
   [`docs/SUBMISSION.md`](docs/SUBMISSION.md).
+- **Screenshots** for the listing, which have to be captured on a real device.
+  Specs in [`docs/ASSETS.md`](docs/ASSETS.md).
+
+Two findings that are decisions rather than missing work, both written up in
+[`docs/REVIEW-RISK.md`](docs/REVIEW-RISK.md): the app currently has no service
+workers (`limitsNavigationsToAppBoundDomains: false` disables them in
+`WKWebView`, which is why the offline screen is native rather than the site's
+own), and routing a surface to the Safari sheet signs the visitor out, because
+`SFSafariViewController` does not share the app WebView's cookie jar.
 
 ## Related
 

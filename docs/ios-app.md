@@ -25,7 +25,10 @@ organization account, app icons, and push. See "What is missing" below.
 | Offline | A designed screen that polls `/api/healthz` and recovers on its own, instead of the WebKit error page | `ios/shell/offline.html`, `server.errorPath` |
 | Camera, mic, photos, location, motion | Real iOS permission prompts with real usage strings, which is what `/create/selfie`, `/ar/studio` and `/irl` need on iOS | `ios/native/App/App/Info.plist` |
 | Launch | The launch screen holds until the first real frame, so a three.js scene never opens onto a black void | `ios/src/native-bridge.js`, `SplashScreen` config |
-| Haptics | A tick on primary actions | `ios/src/native-bridge.js` (`[data-haptic]`) |
+| Haptics | A tick on primary and destructive actions, quiet on a disabled or busy one | `ios/src/native-bridge.js` |
+| Back navigation | Edge-swipe back and forward, which `WKWebView` ships with off and iOS has no button for | `ios/native/App/App/MainViewController.swift` |
+| Status bar | The sticky header clears the notch and the clock. The site's own compensation is behind `@media (display-mode: standalone)`, which a WebView loading a remote URL never matches | `ios/src/native-bridge.js` (injected stylesheet) |
+| Forms | Fields never fall below 16px, so focusing one cannot zoom the page and strand it zoomed | `ios/src/native-bridge.js` |
 
 ## How the web half reaches the app
 
@@ -74,10 +77,18 @@ and `/widget*` entries (they exist to render inside someone else's page).
 - **Push notifications.** The entitlement, background mode and plugin are in
   place; the APNs key, device-token endpoint and send path are not, and are
   absent rather than stubbed.
-- **App icons and launch screen art**, currently Capacitor's template.
+- **Listing screenshots**, which have to be captured on a real device. The icon
+  and launch images are generated from the brand mark (`npm run ios:icons`) and
+  a guard keeps them from drifting (`npm run check:ios-icons`).
 - **The App Review posture on crypto surfaces**, which is a product decision
-  and not a code one. It is written up in
+  and not a code one, and which costs a session handoff rather than a config
+  flag: `SFSafariViewController` does not share the app WebView's cookie jar, so
+  a surface routed to Safari arrives signed out. Written up in
   [`ios/docs/REVIEW-RISK.md`](../ios/docs/REVIEW-RISK.md).
+- **Service workers**, which `WKWebView` runs only for app-bound domains. The
+  app declares none, so the site's offline caching and share-target worker do
+  not run inside it; the native offline screen covers the case that matters.
+  Same doc has the trade.
 
 ## Related
 
