@@ -42,6 +42,7 @@ import { sql } from '../_lib/db.js';
 import { matchedSlurStem } from '../_lib/display-name-safety.js';
 import { submitProtected } from '../_lib/execution-engine.js';
 import { cors, error, json, method, wrapCron } from '../_lib/http.js';
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
 import { env } from '../_lib/env.js';
 import { llmComplete } from '../_lib/llm.js';
 import { CHAINS } from '../_lib/erc8004-chains.js';
@@ -4709,11 +4710,12 @@ async function handleFetchXMetrics(req, res) {
 
 		// X allows up to 100 ids per /2/tweets lookup.
 		const ids = posts.map((p) => p.tweet_id).join(',');
-		const r = await fetch(
+		// Unbounded, this held the whole cron invocation open whenever X was slow,
+		// and the loop below runs it once per account.
+		const r = await fetchUpstream(
 			`https://api.twitter.com/2/tweets?ids=${ids}&tweet.fields=public_metrics`,
-			{
-				headers: { authorization: `Bearer ${accessToken}` },
-			},
+			{ headers: { authorization: `Bearer ${accessToken}` } },
+			{ name: 'x:tweets-lookup', timeoutMs: 15_000, attempts: 2, okWhen: () => true },
 		);
 		if (!r.ok) {
 			report.errors++;

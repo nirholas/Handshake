@@ -29,6 +29,7 @@ import { json, method, wrapCron } from '../_lib/http.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { inventoryStats, sweepExpiredSecrets, isDbUnavailableError } from '../_lib/vanity-inventory-store.js';
 import { getGcpAccessToken, gcpAuthConfigured } from '../_lib/gcp-auth.js';
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
 import { requireCron } from '../_lib/cron-auth.js';
 
 // Below this many available items platform-wide, fire a replenishment run.
@@ -71,11 +72,14 @@ function jobConfigured() {
 async function triggerGrindJob() {
 	const token = await getGcpAccessToken();
 	const url = `https://run.googleapis.com/v2/projects/${PROJECT}/locations/${REGION}/jobs/${JOB}:run`;
-	const res = await fetch(url, {
+	// Cloud Run's Admin API is normally quick, but an unbounded POST inside a cron
+	// tick can hold the whole invocation until the platform kills it, which reads
+	// as a dead cron rather than a slow API call.
+	const res = await fetchUpstream(url, {
 		method: 'POST',
 		headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
 		body: JSON.stringify({}),
-	});
+	}, { name: 'gcp:jobs-run', timeoutMs: 20_000, attempts: 2, okWhen: () => true });
 	if (!res.ok) {
 		const detail = await res.text().catch(() => res.status);
 		throw new Error(`Cloud Run Jobs run failed (${res.status}): ${String(detail).slice(0, 300)}`);

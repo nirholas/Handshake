@@ -17,6 +17,7 @@ import { solanaPublicConnection } from './agent-pumpfun.js';
 import { assessTradeSafety } from './trade-firewall.js';
 import { getSmartMoneyForMint } from './smart-money.js';
 import { resolveSnsName } from '../../src/solana/sns.js';
+import { fetchUpstreamJson } from './upstream-fetch.js';
 
 const LAMPORTS_PER_SOL = 1_000_000_000;
 const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
@@ -42,12 +43,19 @@ export const AGENT_TOOLS = {
 		async handler(args) {
 			const query = str(args?.query, 400);
 			if (!query) throw new Error('query is required');
-			const res = await fetch(
-				`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1`,
-				{ signal: AbortSignal.timeout(8000) },
-			);
-			if (!res.ok) throw new Error(`search upstream ${res.status}`);
-			const d = await res.json();
+			// A tool that throws ends the agent's turn, so one blip on a free keyless
+			// endpoint costs the whole answer. Retry, then degrade to an empty
+			// result the model can narrate around.
+			let d;
+			try {
+				d = await fetchUpstreamJson(
+					`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1`,
+					{},
+					{ name: 'duckduckgo:instant', timeoutMs: 8000, attempts: 2 },
+				);
+			} catch (err) {
+				return { abstract: '', source: '', topics: [], unavailable: `search upstream unreachable: ${err?.message || err}` };
+			}
 			return {
 				abstract: d.AbstractText || '',
 				source: d.AbstractURL || '',

@@ -16,6 +16,7 @@
 import { sql } from './db.js';
 import { getRedis } from './redis.js';
 import { computeAchievements, isLaunchGraduated } from './agent-achievements.js';
+import { pumpFetchJson } from './pump-feed-fetch.js';
 
 const PUMP_FRONTEND_BASE = 'https://frontend-api-v3.pump.fun';
 const CACHE_TTL_S = 120;
@@ -28,12 +29,12 @@ const MARKET_LOOKUP_CAP = 30;
 /** Live pump.fun coin object for a mint, or null on any failure (best-effort). */
 async function fetchCoin(mint) {
 	try {
-		const resp = await fetch(new URL(`/coins/${mint}`, PUMP_FRONTEND_BASE), {
-			headers: { accept: 'application/json' },
-			signal: AbortSignal.timeout(7000),
-		});
+		// Called once per mint for up to thirty mints in a request, so a throttle
+		// silently un-awards a batch of achievements. Retrying on the lane's own
+		// Retry-After is what keeps that from happening on a busy launch day.
+		const resp = await pumpFetchJson(String(new URL(`/coins/${mint}`, PUMP_FRONTEND_BASE)), { timeoutMs: 7000 });
 		if (!resp.ok) return null;
-		return await resp.json();
+		return resp.body;
 	} catch {
 		return null;
 	}

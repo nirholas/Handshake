@@ -16,6 +16,8 @@ import { rpcFallbackFromEnv, getBondingCurveState, getTokenPrice, getGraduationP
 import { createCache } from './mem-cache.js';
 import { cacheGet, cacheSet } from './cache.js';
 import { hasThreeWsMark } from '../../src/solana/vanity/brand.js';
+import { fetchUpstreamJson } from './upstream-fetch.js';
+import { fetchTokenPriceUsd } from './market/token-market.js';
 
 // Mints that can never carry a pump.fun bonding curve. These are coin-agnostic
 // payment-rail / native tokens, listed only so we can *exclude* them from curve
@@ -152,12 +154,19 @@ async function recallGood(network, mint) {
 
 async function jupiterPriceFallback(mint) {
 	try {
-		const r = await fetch(`https://lite-api.jup.ag/price/v3?ids=${mint}`, { signal: AbortSignal.timeout(6000) });
-		if (!r.ok) return null;
-		const data = await r.json();
+		const data = await fetchUpstreamJson(
+			`https://lite-api.jup.ag/price/v3?ids=${mint}`,
+			{},
+			{ name: 'jupiter:price', timeoutMs: 6000, attempts: 2 },
+		);
 		const usd = data?.[mint]?.usdPrice ?? data?.[mint]?.price;
 		const n = Number(usd);
-		return Number.isFinite(n) && n > 0 ? { priceUsd: n, source: 'jupiter' } : null;
+		if (Number.isFinite(n) && n > 0) return { priceUsd: n, source: 'jupiter' };
+		// Jupiter has no price for this mint (or could not answer). The shared
+		// market chain covers the mints Jupiter misses, which for a bonding-curve
+		// token is most of the interesting ones.
+		const alt = Number(await fetchTokenPriceUsd(mint));
+		return Number.isFinite(alt) && alt > 0 ? { priceUsd: alt, source: 'market-chain' } : null;
 	} catch {
 		return null;
 	}

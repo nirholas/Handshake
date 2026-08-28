@@ -8,6 +8,8 @@
 // Verified reachable from US datacenter IPs (unlike Binance/Bybit/OKX, which
 // geo-block them; see the note in api/_lib/sol-price.js). No key, no account.
 
+import { fetchUpstreamJson, lastGood } from './upstream-fetch.js';
+
 const HL_INFO_URL = 'https://api.hyperliquid.xyz/info';
 
 const num = (v) => {
@@ -21,18 +23,21 @@ const num = (v) => {
  * @param {{ timeoutMs?: number }} [opts]
  */
 export async function hlInfo(body, { timeoutMs = 8000 } = {}) {
-	const res = await fetch(HL_INFO_URL, {
-		method: 'POST',
-		headers: { 'content-type': 'application/json', accept: 'application/json' },
-		body: JSON.stringify(body),
-		signal: AbortSignal.timeout(timeoutMs),
-	});
-	if (!res.ok) {
-		const err = new Error(`hyperliquid ${res.status}`);
-		err.status = res.status;
-		throw err;
-	}
-	return res.json();
+	// One venue, no alternative reporting the same contracts, and a throw here
+	// empties the derivatives view entirely. So: retry the transient half, and
+	// keep the last good answer per query shape to ride out the rest. The body is
+	// the cache key because each `type` is a different question.
+	const key = `hyperliquid:${JSON.stringify(body).slice(0, 200)}`;
+	const { value } = await lastGood(
+		key,
+		() => fetchUpstreamJson(HL_INFO_URL, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json', accept: 'application/json' },
+			body: JSON.stringify(body),
+		}, { name: 'hyperliquid:info', timeoutMs, attempts: 2 }),
+		{ maxAgeMs: 10 * 60_000 },
+	);
+	return value;
 }
 
 /**

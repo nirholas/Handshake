@@ -22,6 +22,7 @@
 // Replicate backstop: black-forest-labs/flux-schnell — same family, $0.003/run.
 
 import { markProviderCooldown, providersInCooldown } from '../_lib/provider-health.js';
+import { fetchUpstream } from '../_lib/upstream-fetch.js';
 import { reserveProviderRateSlot, SCALE_LIMITS } from '../_lib/forge-scale.js';
 import { persistImageBase64, persistImageBytes, looksLikeImageBytes } from '../_lib/image-persist.js';
 
@@ -248,8 +249,14 @@ const HF_IMAGE_PROVIDERS = Object.freeze([
 		extract: async (data, signal) => {
 			const url = data?.images?.[0]?.url;
 			if (!url || !/^https:\/\//.test(url)) throw new Error('fal-ai returned no image url');
-			const res = await fetch(url, { signal });
-			if (!res.ok) throw new Error(`fal-ai image fetch returned ${res.status}`);
+			// The caller's signal cancels an abandoned request, but it does not bound
+			// a hosted URL that accepts the connection and then stalls, so the
+			// download carries its own deadline and one retry on top.
+			const res = await fetchUpstream(
+				url,
+				{ signal },
+				{ name: 'fal:image-download', timeoutMs: 30_000, attempts: 2 },
+			);
 			return Buffer.from(await res.arrayBuffer());
 		},
 	},

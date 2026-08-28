@@ -34,6 +34,7 @@ import { publicUrl as r2PublicUrl } from '../_lib/r2.js';
 import { normalizeGatewayURL } from '../../src/ipfs.js';
 import { getTraderStats } from '../_lib/trader-stats.js';
 import { withBreaker } from '../_lib/resilience.js';
+import { pumpFetchJson } from '../_lib/pump-feed-fetch.js';
 
 const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const lamportsToSol = (v) => (v == null ? null : Number(BigInt(v)) / 1e9);
@@ -68,21 +69,22 @@ const PUMP_SWAP_API = 'https://swap-api.pump.fun';
 
 async function fetchCreatorFees(mint, network) {
 	if (network !== 'mainnet') return null;
-	const metaResp = await fetch(`${PUMP_FRONTEND_V3}/coins-v2/${mint}`, {
-		headers: { accept: 'application/json' },
-		signal: AbortSignal.timeout(5000),
-	});
-	if (!metaResp.ok) throw new Error(`pump.fun coin meta ${metaResp.status}`);
-	const meta = await metaResp.json();
+	// pump.fun answers a burst with 429 far more often than it goes down, and a
+	// bare fetch treated the two identically. pumpFetchJson honours Retry-After
+	// and retries once, which is the difference between a launch page rendering
+	// and a launch page erroring during someone else's mint.
+	const metaRes = await pumpFetchJson(`${PUMP_FRONTEND_V3}/coins-v2/${mint}`, { timeoutMs: 5000 });
+	if (!metaRes.ok) throw new Error(`pump.fun coin meta ${metaRes.status}`);
+	const meta = metaRes.body;
 	const creator = meta?.creator || meta?.creator_address;
 	if (!creator || typeof creator !== 'string') return null; // valid: no creator on file
 
-	const totResp = await fetch(
+	const totRes = await pumpFetchJson(
 		`${PUMP_SWAP_API}/v1/fee-sharing/account/${creator}/totals?mint=${mint}`,
-		{ headers: { accept: 'application/json' }, signal: AbortSignal.timeout(5000) },
+		{ timeoutMs: 5000 },
 	);
-	if (!totResp.ok) throw new Error(`pump.fun fee-sharing ${totResp.status}`);
-	const t = await totResp.json();
+	if (!totRes.ok) throw new Error(`pump.fun fee-sharing ${totRes.status}`);
+	const t = totRes.body;
 	const earnedSol = Number(t?.shareholderTotalEarned?.sol);
 	if (!Number.isFinite(earnedSol)) return null; // valid: creator has no fee-sharing earnings
 	return {
