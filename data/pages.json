@@ -5327,6 +5327,14 @@
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-08-28"
+				},
+				{
+					"path": "/docs/tty",
+					"title": "Docs · Terminal renderer",
+					"description": "curl three.ws/tty and a rigged 3D agent walks in your terminal. The hosted streaming endpoint and its parameters, plus @three-ws/tty-3d, the CLI and library that render any GLB in a terminal with a pure-CPU rasterizer: real skeletal animation, half-block pixels, no GPU and no browser.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-08-28"
 				}
 			]
 		},

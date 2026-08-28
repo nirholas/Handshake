@@ -1,0 +1,49 @@
+{
+	"name": "@three-ws/knock",
+	"version": "0.1.0",
+	"description": "Reach a real person, and pay their price to do it. Every three.ws account can publish a priced door; paying it buys one message through, delivered in person by their 3D companion. Wallet-agnostic: bring any x402 client.",
+	"type": "module",
+	"author": "nirholas <support@three.ws>",
+	"license": "Apache-2.0",
+	"homepage": "https://three.ws/knock",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "packages/knock-sdk"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/three.ws/issues"
+	},
+	"keywords": [
+		"x402",
+		"knock",
+		"attention",
+		"agent-to-human",
+		"payments",
+		"usdc",
+		"solana",
+		"three.ws"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"src",
+		"README.md",
+		"LICENSE"
+	],
+	"bin": {
+		"knock": "src/cli.js"
+	},
+	"main": "./src/index.js",
+	"exports": {
+		".": "./src/index.js"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"scripts": {
+		"test": "node --test \"test/**/*.test.mjs\""
+	},
+	"dependencies": {}
+}

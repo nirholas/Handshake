@@ -118,8 +118,12 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 	scene.add(new THREE.Mesh(skyGeo, skyMat));
 
 	// ── lighting ──────────────────────────────────────────────────────────────
-	const hemi = new THREE.HemisphereLight(world.palette.accent, world.ground.color, 1.15);
+	const hemi = new THREE.HemisphereLight(world.palette.accent, world.ground.color, 1.5);
 	scene.add(hemi);
+	// A dim fill opposite the sun, so the faces a walker sees are never black.
+	const fill = new THREE.DirectionalLight(new THREE.Color(world.palette.accent), 0.55);
+	fill.position.set(-24, 18, -20);
+	scene.add(fill);
 	const sun = new THREE.DirectionalLight(0xfff3e0, 2.2);
 	sun.position.set(28, 46, 18);
 	sun.castShadow = true;
@@ -128,7 +132,7 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 	Object.assign(sun.shadow.camera, { left: -shadowSpan, right: shadowSpan, top: shadowSpan, bottom: -shadowSpan, near: 1, far: 160 });
 	sun.shadow.bias = -0.0008;
 	scene.add(sun);
-	scene.add(new THREE.AmbientLight(world.palette.secondary, 0.25));
+	scene.add(new THREE.AmbientLight(world.palette.secondary, 0.45));
 
 	// ── ground, plaza, roads ──────────────────────────────────────────────────
 	const groundGeo = track(new THREE.CircleGeometry(world.ground.radius, 96));
@@ -159,7 +163,9 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 	}
 
 	// ── the monument: the page's own title, standing at the centre ────────────
-	const monumentGeo = track(new THREE.BoxGeometry(1.6, world.plaza.monument.h, 1.6));
+	// An obelisk rather than a slab: it marks the centre without walling off the
+	// view of the city, which is the first thing a visitor should see.
+	const monumentGeo = track(new THREE.CylinderGeometry(0.18, 0.62, world.plaza.monument.h, 4));
 	const monumentMat = track(new THREE.MeshStandardMaterial({
 		color: world.palette.primary,
 		emissive: new THREE.Color(world.palette.primary).multiplyScalar(0.35),
@@ -168,10 +174,18 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 	}));
 	const monument = new THREE.Mesh(monumentGeo, monumentMat);
 	monument.position.y = world.plaza.monument.h / 2;
+	monument.rotation.y = Math.PI / 4;
 	monument.castShadow = true;
 	scene.add(monument);
+	// A slow halo around the obelisk: the only moving thing in an empty plaza, so
+	// the world reads as live from the first frame.
+	const haloGeo = track(new THREE.TorusGeometry(1.5, 0.045, 8, 64));
+	const halo = new THREE.Mesh(haloGeo, track(new THREE.MeshBasicMaterial({ color: world.palette.accent, transparent: true, opacity: 0.75 })));
+	halo.rotation.x = Math.PI / 2;
+	halo.position.y = 1.1;
+	scene.add(halo);
 	const titleLabel = makeLabel(world.plaza.monument.label, { size: 52 });
-	titleLabel.position.set(0, world.plaza.monument.h + 1.5, 0);
+	titleLabel.position.set(0, world.plaza.monument.h + 1.1, 0);
 	titleLabel.scale.multiplyScalar(1.15);
 	scene.add(titleLabel);
 	labels.push({ sprite: titleLabel, far: 120 });
@@ -386,7 +400,7 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 	window.addEventListener('keydown', onKeyDown);
 	window.addEventListener('keyup', onKeyUp);
 
-	let orbit = { yaw: world.spawn.yaw + Math.PI, pitch: 0.34, distance: 9.5 };
+	let orbit = { yaw: world.spawn.yaw + Math.PI, pitch: 0.27, distance: 10.5 };
 	let dragging = false;
 	let lastPointer = { x: 0, y: 0 };
 	const onPointerDown = (e) => {
@@ -552,7 +566,9 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 			sprite.material.opacity = opacity;
 			sprite.visible = opacity > 0.02;
 		}
-		titleLabel.position.y = world.plaza.monument.h + 1.5 + Math.sin(elapsed * 1.4) * 0.08;
+		titleLabel.position.y = world.plaza.monument.h + 1.1 + Math.sin(elapsed * 1.4) * 0.08;
+		halo.rotation.z = elapsed * 0.35;
+		halo.position.y = 1.1 + Math.sin(elapsed * 0.9) * 0.12;
 		renderer.render(scene, camera);
 	}
 	frame();

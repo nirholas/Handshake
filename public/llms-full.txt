@@ -4167,6 +4167,12 @@ URL: https://three.ws/docs/agent-vitals
 
 Every liveness check was green while ten of twelve autonomous agents had not acted in weeks. Capability attestation models an agent's preconditions as a causal graph and returns the root blocker plus the command that fixes it, instead of a checklist of symptoms.
 
+### Docs · Terminal renderer
+
+URL: https://three.ws/docs/tty
+
+curl three.ws/tty and a rigged 3D agent walks in your terminal. The hosted streaming endpoint and its parameters, plus @three-ws/tty-3d, the CLI and library that render any GLB in a terminal with a pure-CPU rasterizer: real skeletal animation, half-block pixels, no GPU and no browser.
+
 ## Blog
 
 Long-form announcements, launches, and writing from three.ws.

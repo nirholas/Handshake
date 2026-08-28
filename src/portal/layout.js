@@ -83,7 +83,7 @@ export function paletteFor(outline) {
 		primary: hslToHex(hue, sat, 56),
 		secondary: hslToHex((hue + 28) % 360, sat, 44),
 		accent: hslToHex((hue + 186) % 360, Math.min(92, sat + 18), 62),
-		ground: hslToHex(hue, 18, 16),
+		ground: hslToHex(hue, 16, 21),
 		sky: hslToHex(hue, 30, 9),
 		fog: hslToHex(hue, 26, 12),
 		monolith: hslToHex((hue + 210) % 360, 24, 22),

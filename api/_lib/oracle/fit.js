@@ -324,6 +324,53 @@ export function fitLogistic(X, stride, y, nCols, {
 	return { intercept, w, epochs: done };
 }
 
+/**
+ * How many rows landed in each one-hot column.
+ *
+ * Needed to shrink weights by the evidence behind them, so it is measured on the
+ * exact slice a model was fitted on rather than on the whole corpus.
+ */
+export function columnCounts(X, stride, nCols, rowCount) {
+	const counts = new Int32Array(nCols);
+	const end = (rowCount ?? X.length / stride) * stride;
+	for (let i = 0; i < end; i++) counts[X[i]]++;
+	return counts;
+}
+
+/**
+ * Evidence to trust a bucket's own opinion over the population's. A bucket with
+ * SHRINK_PRIOR rows keeps half its fitted weight; one with ten times that keeps
+ * 91% of it; one with 34 rows keeps 15%.
+ */
+const SHRINK_PRIOR = 200;
+
+/**
+ * Pull thinly-evidenced weights toward zero, in proportion to their sample size.
+ *
+ * Without this, a bucket holding 34 launches can emit a -0.64 log-odds opinion
+ * that survives into production and reverses the verdict on a coin. That
+ * particular one was real: `smart_money_count >= 4` fitted NEGATIVE on the
+ * survivable-win head despite those launches winning at four times the base
+ * rate, because with 34 rows the regression happily assigns them whatever
+ * residual the correlated volume and buyer-count features leave behind.
+ *
+ * The shrinkage is the standard empirical-Bayes one, `n / (n + prior)`: a bucket
+ * with plenty of evidence keeps essentially all of its weight, and a bucket with
+ * almost none says almost nothing. Applied before evaluation, never after, so
+ * the holdout numbers describe the weights that actually ship.
+ *
+ * @param {{intercept:number, w:Float64Array, epochs:number}} model
+ * @param {Int32Array} counts rows per column, from columnCounts()
+ */
+export function shrinkWeights(model, counts, prior = SHRINK_PRIOR) {
+	const w = new Float64Array(model.w.length);
+	for (let c = 0; c < w.length; c++) {
+		const n = counts[c] || 0;
+		w[c] = model.w[c] * (n / (n + prior));
+	}
+	return { ...model, w };
+}
+
 /** Predicted probability for one row of the flat design matrix. */
 export function predictRow(model, X, stride, i) {
 	let z = model.intercept;
@@ -452,8 +499,14 @@ export function buildModel(rows, {
 	const holdout = { n: holdoutN, split_at: cut };
 	const heads = {};
 	let epochsRun = 0;
+	const trainCounts = columnCounts(X, stride, columns.size, cut);
+	const allCounts = columnCounts(X, stride, columns.size, rows.length);
+
 	for (const head of HEADS) {
-		const trained = fitLogistic(X, stride, ys[head], columns.size, { epochs, deadlineAt, rowCount: cut });
+		const trained = shrinkWeights(
+			fitLogistic(X, stride, ys[head], columns.size, { epochs, deadlineAt, rowCount: cut }),
+			trainCounts,
+		);
 		const scores = new Array(holdoutN);
 		const labels = new Array(holdoutN);
 		let holdoutPos = 0;
@@ -464,7 +517,10 @@ export function buildModel(rows, {
 		}
 		holdout[head] = evaluate(scores, labels, holdoutPos / Math.max(1, holdoutN));
 
-		const full = fitLogistic(X, stride, ys[head], columns.size, { epochs, deadlineAt });
+		const full = shrinkWeights(
+			fitLogistic(X, stride, ys[head], columns.size, { epochs, deadlineAt }),
+			allCounts,
+		);
 		epochsRun = Math.max(epochsRun, full.epochs);
 		heads[head] = {
 			intercept: Number(full.intercept.toFixed(4)),
@@ -520,6 +576,7 @@ export function buildModel(rows, {
 		holdout,
 		fit: {
 			epochs,
+			shrink_prior: SHRINK_PRIOR,
 			epochs_run: epochsRun,
 			columns: columns.size,
 			features: features.length,
