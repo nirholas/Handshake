@@ -31,6 +31,7 @@ import {
 	backoffChunkSize,
 	isRangeRejection,
 	catchUpCandidates,
+	rank,
 } from '../api/cron/[name].js';
 import { splitCapabilities } from '../api/explore-item.js';
 import { decodeReputationLog } from '../api/_lib/erc8004-reputation-events.js';
@@ -571,5 +572,52 @@ describe('catchUpCandidates', () => {
 		expect(catchUpCandidates([{ chainId: 8453, blocksBehind: 0, scanned: 120 }])).toEqual([]);
 		expect(catchUpCandidates([])).toEqual([]);
 		expect(catchUpCandidates(undefined)).toEqual([]);
+	});
+});
+
+// ─── rank ────────────────────────────────────────────────────────────────────
+
+describe('rank', () => {
+	const NOW = 1_787_877_609_500;
+	const minsAgo = (m) => new Date(NOW - m * 60_000).toISOString();
+
+	it('puts a never-crawled chain above everything', () => {
+		expect(rank(null, NOW)).toBeGreaterThan(rank({ blocks_behind: 18_375_509 }, NOW));
+	});
+
+	it('ranks a real backlog by its size', () => {
+		expect(rank({ blocks_behind: 18_375_509 }, NOW)).toBe(18_375_509);
+		expect(rank({ blocks_behind: 18_375_509 }, NOW)).toBeGreaterThan(
+			rank({ blocks_behind: 15_668_383 }, NOW),
+		);
+	});
+
+	it('separates caught-up chains by cursor age instead of collapsing them', () => {
+		// The old Math.min(ageMin, 1) returned exactly 1 for every chain older than
+		// a minute, and the cron runs every 15, so the sort fell through to the
+		// declared array order on every tick and the tail was served last forever.
+		const fresh = rank({ blocks_behind: 0, updated_at: minsAgo(15) }, NOW);
+		const stale = rank({ blocks_behind: 0, updated_at: minsAgo(60 * 24 * 122) }, NOW);
+		expect(stale).toBeGreaterThan(fresh);
+	});
+
+	it('lifts a chain that errors every tick above the healthy ones', () => {
+		// blocks_behind is only written by a SUCCESSFUL crawl, so a chain failing on
+		// every tick reports 0 behind forever and used to read as caught up. Polygon
+		// sat 122 days like this on 2026-08-28.
+		const broken = rank({ blocks_behind: 0, updated_at: minsAgo(60 * 24 * 122) }, NOW);
+		const healthy = rank({ blocks_behind: 0, updated_at: minsAgo(15) }, NOW);
+		expect(broken).toBeGreaterThan(healthy);
+	});
+
+	it('never lets mere staleness preempt a chain with a real backlog', () => {
+		const stale = rank({ blocks_behind: 0, updated_at: minsAgo(60 * 24 * 365) }, NOW);
+		expect(stale).toBeLessThan(rank({ blocks_behind: 18_375_509 }, NOW));
+		expect(stale).toBeLessThan(rank({ blocks_behind: 500_000 }, NOW));
+	});
+
+	it('treats a missing or future timestamp as no age, never a negative rank', () => {
+		expect(rank({ blocks_behind: 0, updated_at: null }, NOW)).toBe(0);
+		expect(rank({ blocks_behind: 0, updated_at: new Date(NOW + 60_000).toISOString() }, NOW)).toBe(0);
 	});
 });

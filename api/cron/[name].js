@@ -398,15 +398,41 @@ async function erc8004CrawlOrder() {
 	return [...CHAINS].sort((a, b) => rank(by.get(b.id)) - rank(by.get(a.id)));
 }
 
-// Never-crawled sorts above every backlog; otherwise the backlog itself ranks,
-// with cursor age breaking ties between two caught-up chains so the sweep still
-// rotates instead of re-serving the same head every tick.
-function rank(cursor) {
+// Ceiling on how far cursor age alone can lift a chain that reports no backlog.
+// It has to be high enough that a cursor stale for days outranks one crawled
+// minutes ago, and low enough that it never preempts a chain with a real
+// backlog to clear.
+const STALE_RANK_CAP = 10_000;
+
+/**
+ * Sweep priority for one chain's cursor. Never-crawled sorts above every
+ * backlog; otherwise the backlog itself ranks, and a chain reporting no backlog
+ * ranks by how long its cursor has been standing still.
+ *
+ * That last clause used to be `Math.min(ageMin, 1)`, which silently disabled
+ * itself. The cron runs every 15 minutes, so by the time it reads the table
+ * EVERY caught-up chain is older than the 1-minute cap and they all return
+ * exactly 1. The sort then falls through to the declared array order on every
+ * single tick, which is the starvation the tie-break was added to prevent.
+ *
+ * It also hid broken chains. blocks_behind is only written by a SUCCESSFUL
+ * crawl, so a chain erroring on every tick keeps reporting whatever its last
+ * good crawl left, which is 0, and reads as caught up forever. Measured
+ * 2026-08-28: Polygon's cursor had not advanced in 122 days and BNB Chain's in
+ * 89, both still reporting 0 blocks behind, both sorted to the bottom of every
+ * sweep. Ranking them by age puts the most-starved chains at the front of a
+ * tick that runs out of budget, which is the only time the order matters.
+ * Pure: the clock is injected. This is the seam the tests drive.
+ * @param {{ blocks_behind?: number|string|null, updated_at?: string|Date|null }|null|undefined} cursor
+ * @param {number} [now]
+ * @returns {number}
+ */
+export function rank(cursor, now = Date.now()) {
 	if (!cursor) return Number.MAX_SAFE_INTEGER;
 	const behind = Number(cursor.blocks_behind || 0);
 	if (behind > 0) return behind;
-	const ageMin = cursor.updated_at ? (Date.now() - new Date(cursor.updated_at).getTime()) / 60_000 : 0;
-	return Math.min(ageMin, 1);
+	const ageMin = cursor.updated_at ? (now - new Date(cursor.updated_at).getTime()) / 60_000 : 0;
+	return Math.min(Math.max(ageMin, 0), STALE_RANK_CAP);
 }
 
 // Concurrent eth_getBlockByNumber calls while stamping a range's event blocks.
