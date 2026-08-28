@@ -22,6 +22,7 @@ export { toHalfBlocks, toKitty, toITerm, detectTerminal, to256, CURSOR } from '.
 export { decodeImage, decodePng, buildMipmaps } from './image.js';
 export { parseGlb, packGlb, extractImages, stripImages } from './glb.js';
 export { retargetClip, normalizeBoneName } from './retarget.js';
+export { parseClipJson, loadClipJson } from './clips.js';
 
 import { AvatarModel } from './model.js';
 import { loadModel } from './load.js';
