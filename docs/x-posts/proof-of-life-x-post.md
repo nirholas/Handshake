@@ -70,3 +70,50 @@ channel at three.ws/community."
 One shipping post per day from `@trythreews` until the appeal resolves, each one naming a
 real feature from that day's changelog. Daily evidence of work is the only thing that
 answers "they left", and it costs nothing under X's policy.
+
+## Official-channels post (@trythreews), for the impersonation risk
+
+The community asked for a warning so scammers cannot trade on the personal account being
+down. This post gives them the warning without the platform account naming the suspended
+handle or the word "suspended" (see the appeal file for why that matters). What scammers
+actually do is DM holders about a "new token", a "migration", or an "airdrop" from a
+lookalike handle, so the post pre-empts exactly those three.
+
+```
+A reminder on what is official, because lookalike accounts are circulating:
+
+The only three.ws account on X is @trythreews. We are posting from no other account right now.
+
+$THREE has one contract address, and it is not changing:
+FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump
+
+There is no new token, no migration, no airdrop, and no presale. Anyone offering one is a scammer.
+
+Nobody from the team will ever DM you first or ask you to send tokens.
+
+Verify every channel and the address at three.ws/community
+```
+
+Count: 466 characters (URL as 23). Pin it.
+
+**What the post says about $THREE, and why only that:** the contract address, that it is
+unchanged, and the four things scammers offer (new token, migration, airdrop, presale).
+Those are provable from the chain. Do not add "the team is not selling" or anything about
+holdings or price: it cannot be verified from a post, and a claim that later looks wrong is
+what turns a panic into a rug narrative. Let the shipping post above carry the confidence.
+
+## Telegram and three.ws/community: the explicit version
+
+Telegram and the site are ours, not X's, so they can name the account:
+
+```
+Heads up: the founder's personal X account @nichxbt is currently suspended (an appeal is in with X). Until it is back, treat anything posted or DMed in that name as fake.
+
+Official X: @trythreews only.
+$THREE contract: FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump. Same address as always. No new token, no migration, no airdrop.
+Nobody from the team DMs first.
+
+Full list of channels: three.ws/community. The work has not stopped: three.ws/changelog.
+```
+
+Pin this in @three_ws alongside the shipping post.
