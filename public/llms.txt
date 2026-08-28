@@ -438,6 +438,7 @@ Docs, tutorials, and reference.
 - [Docs · x402 Protocol](https://three.ws/docs/x402): How three.ws implements x402 HTTP 402 paid agent skills: the challenge, verify, and settle mechanics.
 - [Premium Pass: Monthly Data API Access](https://three.ws/docs/premium): One Solana payment ($THREE at 20% off, SOL, or USDC) buys 30 days of unmetered Data API access with an API key: no per-call x402 payments.
 - [Docs · x402 Paid Endpoints](https://three.ws/docs/x402-endpoints): The catalog of three.ws's own paid HTTP endpoints: what each charges, the price-override scheme, and what it returns.
+- [Docs · x402 Preflight](https://three.ws/docs/x402-preflight): Ask an x402 seller whether it can actually settle before you sign anything. The signed, time-bounded payability attestation, how to read it from an agent, a terminal, a conversation or a browser, and how to serve one from your own endpoint.
 - [Docs · Pump Launcher](https://three.ws/docs/pump-launcher): Deploy a brand-new pump.fun token in one paid call: no SOL, no wallet, no account. Inputs, outputs, pricing, correctness guarantees, and the free symbol-check → launch → launch-feed funnel.
 - [Docs · x402 Developer Tools](https://three.ws/docs/x402-dev-tools): A free test bench for x402 developers: echo your payment envelope, debug a failed 402 exchange, and verify a receipt's attestation and settlement against a live server, all without spending anything.
 - [Docs · x402 Buyer Client](https://three.ws/docs/x402-buyer): How to settle a 402 challenge and pay three.ws's paid endpoints from code.

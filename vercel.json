@@ -4297,6 +4297,14 @@
 			"dest": "/api/widgets/page?id=$1"
 		},
 		{
+			"src": "/glance",
+			"dest": "/glance/index.html"
+		},
+		{
+			"src": "/glance/",
+			"dest": "/glance/index.html"
+		},
+		{
 			"src": "/widgets",
 			"dest": "/widgets-gallery/index.html"
 		},

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T05:54:18.014Z",
+	"generated_at": "2026-08-28T05:59:06.232Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -3972,6 +3972,16 @@
 					"title": "Docs · x402 Paid Endpoints",
 					"description": "The catalog of three.ws's own paid HTTP endpoints: what each charges, the price-override scheme, and what it returns.",
 					"added": "2026-06-29",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/x402-preflight",
+					"title": "Docs · x402 Preflight",
+					"description": "Ask an x402 seller whether it can actually settle before you sign anything. The signed, time-bounded payability attestation, how to read it from an agent, a terminal, a conversation or a browser, and how to serve one from your own endpoint.",
+					"added": "2026-08-28",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

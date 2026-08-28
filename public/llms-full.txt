@@ -2415,6 +2415,12 @@ URL: https://three.ws/docs/x402-endpoints
 
 The catalog of three.ws's own paid HTTP endpoints: what each charges, the price-override scheme, and what it returns.
 
+### Docs · x402 Preflight
+
+URL: https://three.ws/docs/x402-preflight
+
+Ask an x402 seller whether it can actually settle before you sign anything. The signed, time-bounded payability attestation, how to read it from an agent, a terminal, a conversation or a browser, and how to serve one from your own endpoint.
+
 ### Docs · Pump Launcher
 
 URL: https://three.ws/docs/pump-launcher

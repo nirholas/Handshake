@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T05:54:18.101Z",
+	"generated_at": "2026-08-28T05:59:06.568Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -132,6 +132,16 @@
 			"title": "Docs · Witness",
 			"summary": "Bug reports that arrive as failing tests. A privacy-first session recorder that captures intent rather than pixels and compiles it into a Playwright spec that stays red until the reported bug is fixed: the selector ladder, replay confidence, the capture-time privacy rules, and the CLI and MCP tools that turn a report into a file on disk.",
 			"link": "/docs/witness",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "launch",
+			"title": "Docs · x402 Preflight",
+			"summary": "Ask an x402 seller whether it can actually settle before you sign anything. The signed, time-bounded payability attestation, how to read it from an agent, a terminal, a conversation or a browser, and how to serve one from your own endpoint.",
+			"link": "/docs/x402-preflight",
 			"tags": [
 				"launch"
 			]
@@ -429,6 +439,18 @@
 			"tags": [
 				"feature",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "update",
+			"title": "The Oracle stopped grading itself on the wrong question, and started learning on a clock",
+			"summary": "The Oracle scores every pump.fun launch in its first ninety seconds. Two things were wrong with it, and the second one was worse than it sounds.\n\nFirst, it was ranking the wrong outcome. The score answered \"will this spike 3x or graduate\", which meant a coin that ran 3x and then went to zero counted as a hit. Prime-tier coins were hitting that target 58.2% of the time and rugging 53.0% of the time, and 27.8% did both. The engine was accurate and useless: it answered \"will this move\" while everyone reading it heard \"should I hold this\". The score now ranks the survivable win, meaning it ran AND you would still be up, and it publishes two more numbers beside it: rug risk, and give-back risk, which is the share of coins like this one that run and then hand the run straight back. That last number is the one that names the trap.\n\nSecond, and this is the part that took a while to find: the rug flag was a readout of the price of SOL. It was decided by whether a coin's market cap had fallen under a hardcoded $3,000, and an empty pump.fun bonding curve is worth a fixed 27.958993 SOL, so the test really asked whether SOL was above about $107.30 that day. Of 206,428 coins labeled rugged, 206,419 were under $3,000. Of 25,180 labeled survivors, the cheapest was exactly $3,000. Identical dead coins, sorted by a price feed. Every win rate that subtracted rugs was reading the SOL chart. Labels are now built from two ratios where the price cancels out, the whole history has been recomputed, and the real rug rate turns out to be 11.4%, not 91%.\n\nThe model also learns now. Its weights used to be a file baked into the build, so nothing but a person running a script could ever update it, and nobody did: it sat frozen for nineteen days while eight times more evidence piled up behind it. It refits every six hours against fresh outcomes and only takes over if it beats the incumbent on data it has never seen. Candidates that fail are kept too, with the reason.\n\nAnd all of it is public. Oracle Lab publishes the actual model: every weight, the number of launches behind it, what happened to them, the reliability curve for every tier claim, and the full version history. Install @three-ws/oracle-model and you can score launches locally with the real weights, no key and no rate limit, reproduce any score we have ever shown, and re-measure our accuracy against outcomes you collected yourself.",
+			"link": "/oracle-lab",
+			"tags": [
+				"improvement",
+				"feature",
+				"sdk"
 			]
 		},
 		{
