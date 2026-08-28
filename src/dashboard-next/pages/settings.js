@@ -313,7 +313,12 @@ function renderNotifications(resp, onRetry) {
 // api/_lib/notify.js checks this before sending push/email, so a toggle here
 // takes effect on the very next event, not just in the UI.
 
-const CHANNEL_LABEL = { in_app: 'In-app', push: 'Push', email: 'Email', telegram: 'Telegram' };
+const CHANNEL_LABEL = { in_app: 'In-app', push: 'Push', email: 'Email', telegram: 'Telegram', avatar: 'Avatar' };
+// One line of help per channel, shown under the table, because "Avatar" is not
+// self-explanatory the way Push and Email are.
+const CHANNEL_HINT = {
+	avatar: 'Avatar: your companion walks on screen and says it out loud while you are on the site. Turn it off for this browser only from the "Turn off" control in its bubble.',
+};
 
 function renderNotificationPrefs(resp, onRetry) {
 	const panel = document.createElement('div');
@@ -338,14 +343,14 @@ function renderNotificationPrefs(resp, onRetry) {
 
 	const body = resp.data || {};
 	const categories = Array.isArray(body.categories) ? body.categories : [];
-	const channels = Array.isArray(body.channels) ? body.channels : ['in_app', 'push', 'email', 'telegram'];
+	const channels = Array.isArray(body.channels) ? body.channels : ['in_app', 'push', 'email', 'telegram', 'avatar'];
 	const matrix = body.prefs?.categories || {};
 	const subscribedDevices = body.push?.subscribed_devices ?? 0;
 
 	panel.innerHTML = `
 		<div style="margin-bottom:14px">
 			<div class="dn-panel-title">Notification preferences</div>
-			<div class="dn-panel-sub" style="margin:2px 0 0">Mute noisy categories per channel. Account and security events always stay in your bell so nothing important is silently lost, but you can still quiet their push, email and Telegram.</div>
+			<div class="dn-panel-sub" style="margin:2px 0 0">Mute noisy categories per channel. Account and security events always stay in your bell so nothing important is silently lost, but you can still quiet their push, email, Telegram and avatar announcements.</div>
 		</div>
 		${!categories.length ? emptyStateHTML({
 			icon: '',
@@ -396,6 +401,11 @@ function renderNotificationPrefs(resp, onRetry) {
 					</tbody>
 				</table>
 			</div>
+			${channels.some((ch) => CHANNEL_HINT[ch]) ? `
+				<div style="margin-top:12px;font-size:12px;color:var(--nxt-ink-fade);display:grid;gap:4px">
+					${channels.filter((ch) => CHANNEL_HINT[ch]).map((ch) => `<div>${esc(CHANNEL_HINT[ch])}</div>`).join('')}
+				</div>
+			` : ''}
 			<div style="margin-top:12px;font-size:12px;color:var(--nxt-ink-fade)">
 				${subscribedDevices > 0
 					? `Push is enabled on ${subscribedDevices} device${subscribedDevices === 1 ? '' : 's'}.`

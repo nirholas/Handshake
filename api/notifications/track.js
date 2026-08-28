@@ -1,9 +1,11 @@
 // POST /api/notifications/track: record a re-engagement funnel event.
 //
-//   { notification_id, channel: 'push'|'in_app', event: 'opened'|'returned' }
+//   { notification_id, channel: 'push'|'in_app'|'avatar', event: 'opened'|'returned' }
 //
 // Closes the sent→opened→returned loop:
 //   • the service worker fires `opened` when a push notification is clicked,
+//   • the corner companion fires `opened` when a visitor clicks through from a
+//     notification it announced out loud (channel 'avatar'),
 //   • the app fires `returned` when it boots from a push-sourced open
 //     (?source=push), proving the notification actually pulled the user back.
 //
@@ -22,7 +24,7 @@ import { parse } from '../_lib/validate.js';
 
 const body = z.object({
 	notification_id: z.string().uuid().optional(),
-	channel: z.enum(['push', 'in_app']),
+	channel: z.enum(['push', 'in_app', 'avatar']),
 	event: z.enum(['opened', 'returned']),
 });
 

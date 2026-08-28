@@ -283,7 +283,10 @@ installClickToWalk({
 // survives avatar swaps and playground round-trips. Default is caption-only —
 // audio never plays without an explicit opt-in and a real user gesture.
 const NARRATE_KEY = `${(walk.config?.keys?.enabled || 'three:companion:enabled').split(':')[0]}:companion:narrate`;
-installNarrator({
+// The handle is exposed because narration is no longer the only thing that
+// speaks through this avatar: src/notification-herald.js silences an in-flight
+// section read before the avatar delivers a notification out loud.
+window.__walkNarrator = installNarrator({
 	getInstance: () => walk.instance,
 	getHostEl: companionHost,
 	storageKey: NARRATE_KEY,

@@ -282,6 +282,7 @@ class NotificationInbox {
 		this._unread = data.unread_count || 0;
 		this._updateBadge();
 		if (this._open) this._renderBody();
+		this._offerToHerald();
 		if (share) {
 			writeNotifCache(this._notifications, this._unread);
 			try {
@@ -291,6 +292,19 @@ class NotificationInbox {
 				});
 			} catch { /* channel closed */ }
 		}
+	}
+
+	// Hand the current inbox to the notification herald, which decides whether
+	// anything in it is worth the corner avatar walking on and saying out loud
+	// (src/notification-herald.js owns every rule: per-category preference,
+	// freshness, per-id dedupe, batch cap). Loaded on demand and only when there
+	// is something unread at all, so a quiet inbox costs nothing.
+	_offerToHerald() {
+		if (!this._notifications.some((n) => !n.read_at)) return;
+		const list = this._notifications;
+		import('./notification-herald.js')
+			.then((herald) => herald.consider(list))
+			.catch(() => { /* chunk unavailable: the bell badge still carries it */ });
 	}
 
 	start() {

@@ -78,6 +78,16 @@ function readMode() {
 	}
 	return 'caption'; // captions on, audio off, until the visitor opts in
 }
+/**
+ * The visitor's saved narration mode, for other surfaces that want to respect
+ * the same opt-in before they play audio through the companion (the
+ * notification herald does, see src/notification-herald.js).
+ * @returns {'off'|'caption'|'voice'}
+ */
+export function narrationMode() {
+	return readMode();
+}
+
 function writeMode(mode) {
 	try {
 		localStorage.setItem(PREF_KEY, mode);
@@ -221,12 +231,14 @@ function createCaption(getHost) {
 }
 
 // ── Spoken audio (real TTS, opt-in, autoplay-policy aware) ──────────────────────
+// Exported so other companion surfaces (the notification herald) speak through
+// the same endpoint, voice and autoplay discipline instead of minting their own.
 // Fetches a full clip from POST /api/tts/speak and plays it. Never autoplays
 // before a user gesture: the install flips a "gesture seen" flag on the first
 // pointer/key interaction, and the very act of choosing "voice" is itself a
 // gesture. If playback is rejected by autoplay policy we degrade silently to the
 // caption (which is already on screen) — no fake audio, no error noise.
-function createSpeaker() {
+export function createSpeaker() {
 	let audio = null;
 	let controller = null;
 	let objectUrl = null;
@@ -505,6 +517,14 @@ export function installNarrator({ getInstance, getHostEl, storageKey } = {}) {
 		setMode,
 		cycleMode,
 		rescan: scheduleRescan,
+		// Stop whatever is being read right now without changing the mode. The
+		// notification herald calls this before an announcement so the avatar is
+		// never reading a page section over its own message.
+		silence() {
+			speaker.cancel();
+			caption.hide();
+			currentSection = null;
+		},
 	};
 
 	function uninstall() {

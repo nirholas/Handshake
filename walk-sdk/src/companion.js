@@ -229,7 +229,7 @@ class WalkCompanion {
 			<button type="button" class="walk-companion-close" aria-label="Dismiss walk companion" title="Dismiss">×</button>
 			${pickerBtn}
 			<div class="walk-companion__skel" aria-hidden="true"></div>
-			<div class="walk-companion-bubble" hidden></div>
+			<div class="walk-companion-bubble" role="status" aria-live="polite" aria-atomic="true" hidden></div>
 			<canvas class="walk-companion-canvas" width="${CANVAS_W}" height="${CANVAS_H}"></canvas>
 		`;
 		document.body.appendChild(host);
@@ -350,14 +350,22 @@ class WalkCompanion {
 	}
 
 	// ── Live avatar swap (from the picker) ────────────────────────────────────
-	async setAvatar(idOrEntry) {
+	/**
+	 * @param {string|object} idOrEntry roster id, or a roster-shaped entry.
+	 * @param {object} [opts]
+	 * @param {boolean} [opts.persist=true] remember the choice for next page.
+	 *   A guest delivery (announce({ avatar })) swaps without persisting, so the
+	 *   visitor's own companion is still theirs after the message is over.
+	 * @param {boolean} [opts.chatter=true] say the "Switching…" / "Say hi" lines.
+	 */
+	async setAvatar(idOrEntry, { persist = true, chatter = true } = {}) {
 		const entry =
 			typeof idOrEntry === 'string' ? resolveAvatarEntry(idOrEntry, this.config) : idOrEntry;
 		if (!entry) return;
-		lsSet(this.config.keys.avatar, entry.id);
-		this._picker?.setCurrent(entry.id);
+		if (persist) lsSet(this.config.keys.avatar, entry.id);
+		if (persist) this._picker?.setCurrent(entry.id);
 		if (!this.mounted || !this.rig) return; // will apply on next mount
-		this._say('Switching…');
+		if (chatter) this._say('Switching…');
 		try {
 			const fallback = resolveAvatarEntry(this.config.defaultAvatarId, this.config);
 			const {
@@ -387,10 +395,10 @@ class WalkCompanion {
 			this.controller = controller;
 			this._currentEntry = active;
 			this._frame(model, this.rig, this.camera);
-			this._say(`Say hi to ${active.name}!`);
+			if (chatter) this._say(`Say hi to ${active.name}!`);
 		} catch (err) {
 			log.warn('avatar swap failed:', err?.message || err);
-			this._say('Couldn’t load that one — try another.');
+			if (chatter) this._say('Couldn’t load that one — try another.');
 		}
 	}
 
@@ -533,7 +541,7 @@ class WalkCompanion {
 	 * @param {number} [opts.hold=5200] ms before the bubble retracts; 0 keeps it
 	 *   up until the next say()/hideBubble().
 	 * @param {'neutral'|'alert'} [opts.tone='neutral'] 'alert' tints the bubble.
-	 * @param {Array<{label:string, href?:string, onClick?:Function}>} [opts.actions]
+	 * @param {Array<{label:string, href?:string, title?:string, onClick?:Function}>} [opts.actions]
 	 * @returns {boolean} false when there is no bubble to render into.
 	 */
 	say(text, { hold = BUBBLE_HOLD_MS, tone = 'neutral', actions = null } = {}) {
@@ -557,6 +565,12 @@ class WalkCompanion {
 				const el = document.createElement(action.href ? 'a' : 'button');
 				el.className = 'walk-companion-bubble-action';
 				el.textContent = action.label;
+				// A two-word pill is all that fits beside an avatar, so the full
+				// intent lives on the accessible name and the tooltip.
+				if (action.title) {
+					el.title = action.title;
+					el.setAttribute('aria-label', action.title);
+				}
 				if (action.href) el.href = action.href;
 				else el.type = 'button';
 				if (typeof action.onClick === 'function') {
