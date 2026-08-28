@@ -161,6 +161,54 @@ const BTC_FEEDS = [
 	},
 ];
 
+// ETH/USD across the same four independent feeds, for the surfaces that price
+// a stake or a balance in ether. Previously each caller made its own single
+// keyless CoinGecko call, so a throttle there (its free tier is shared per
+// egress IP) left USD figures blank next to real ETH amounts.
+const ETH_FEEDS = [
+	{
+		name: 'coingecko',
+		url: 'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd',
+		parse: async (r) => asPrice((await r.json())?.ethereum?.usd),
+	},
+	{
+		name: 'coinbase',
+		url: 'https://api.coinbase.com/v2/prices/ETH-USD/spot',
+		parse: async (r) => asPrice((await r.json())?.data?.amount),
+	},
+	{
+		name: 'kraken',
+		url: 'https://api.kraken.com/0/public/Ticker?pair=ETHUSD',
+		parse: async (r) => asPrice((await r.json())?.result?.XETHZUSD?.c?.[0]),
+	},
+	{
+		name: 'llama',
+		url: 'https://coins.llama.fi/prices/current/coingecko:ethereum',
+		parse: async (r) => asPrice((await r.json())?.coins?.['coingecko:ethereum']?.price),
+	},
+];
+
+let _ethPrice = 0;
+let _ethPriceAt = 0;
+
+/**
+ * Live ETH/USD across four feeds. Returns null when all of them miss, so a
+ * caller hides the fiat estimate rather than printing an invented one.
+ *
+ * @returns {Promise<number|null>}
+ */
+export async function getEthPriceUsd() {
+	if (Date.now() - _ethPriceAt < CACHE_TTL_MS && _ethPrice > 0) return _ethPrice;
+	try {
+		const { value } = await fetchFirst(ETH_FEEDS, { timeoutMs: 4000, label: 'eth-price-client' });
+		_ethPrice = value;
+		_ethPriceAt = Date.now();
+		return _ethPrice;
+	} catch {
+		return _ethPrice > 0 ? _ethPrice : null;
+	}
+}
+
 let _btcPrice = 0;
 let _btcPriceAt = 0;
 

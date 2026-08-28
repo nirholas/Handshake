@@ -48,8 +48,12 @@ if (!appId) {
 
 async function fetchCaptchaConfig(id) {
 	try {
+		// This gates the login form, so an unbounded call stalls sign-in on a slow
+		// network instead of degrading. Failing to null is already the designed
+		// state (no captcha), the timeout just makes sure we reach it.
 		const r = await fetch(`https://auth.privy.io/api/v1/apps/${id}`, {
 			headers: { 'privy-app-id': id },
+			signal: AbortSignal.timeout(6000),
 		});
 		if (!r.ok) return null;
 		const cfg = await r.json();

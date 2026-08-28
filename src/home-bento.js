@@ -377,7 +377,9 @@
 		var runners = {
 			jupiter: function(my) {
 				setLoading('jupiter_swap');
-				return fetch('https://lite-api.jup.ag/swap/v1/quote?inputMint=' + USDC + '&outputMint=' + WSOL + '&amount=10000000&slippageBps=50')
+				// Bounded: without a timeout the tile spins forever on a stalled
+				// connection, which reads as a broken page rather than a slow quote.
+				return fetch('https://lite-api.jup.ag/swap/v1/quote?inputMint=' + USDC + '&outputMint=' + WSOL + '&amount=10000000&slippageBps=50', { signal: AbortSignal.timeout(8000) })
 					.then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
 					.then(function(q) {
 						if (my !== seq) return;

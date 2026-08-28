@@ -20,6 +20,7 @@ import { CHAIN_META, switchChain, txExplorerUrl, readProvider } from './chain-me
 import { REGISTRY_DEPLOYMENTS } from './abi.js';
 import { submitReputation, stakeReputation, getTotalStake, getReputation, getRecentReviews } from './reputation.js';
 import { log } from '../shared/log.js';
+import { getEthPriceUsd } from '../shared/usd-price.js';
 
 const REVIEWS_LOOKBACK_BLOCKS = 50_000;
 const MIN_STAKE_ETH = 0.001;
@@ -31,11 +32,10 @@ async function fetchEthPriceUsd() {
 	const now = Date.now();
 	if (_ethPriceUsd && now - _ethPriceFetchedAt < 5 * 60 * 1000) return _ethPriceUsd;
 	try {
-		const res = await fetch(
-			'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd',
-		);
-		const data = await res.json();
-		_ethPriceUsd = data?.ethereum?.usd ?? null;
+		// Four feeds with per-provider cooldowns, not one un-timed CoinGecko call:
+		// a throttle there used to blank the USD figure printed beside a real ETH
+		// stake amount.
+		_ethPriceUsd = await getEthPriceUsd();
 		_ethPriceFetchedAt = now;
 	} catch {
 		/* best-effort */
