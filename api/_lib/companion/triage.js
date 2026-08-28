@@ -62,7 +62,14 @@ export function scoreByRules(event, contact = null) {
 		score += 18 + (contact.priority_boost || 0);
 		reasons.push(`from ${contact.display_name}, a saved contact`);
 	}
-	if (SECURITY.test(text)) { score += 30; reasons.push('looks like a security or login code'); }
+	// +40, not +30: this module's own scale calls 70-100 "interrupt the person
+	// now", and a one-time code is the canonical interrupt, someone is sitting
+	// at a sign-in screen waiting for it. At +30 a code arriving by email (the
+	// lowest baseline, 30) landed on 60, one band below the line, which is the
+	// one message you must never merely "glance at". A marketing mail that says
+	// "one-time offer" still floors out, because BULK and the unattended-address
+	// penalties subtract more than this adds.
+	if (SECURITY.test(text)) { score += 40; reasons.push('looks like a security or login code'); }
 	if (URGENT.test(text)) { score += 22; reasons.push('says it is urgent'); }
 	if (PERSONAL.test(text)) { score += 18; reasons.push('asks you for something directly'); }
 	if (MONEY.test(text)) { score += 14; reasons.push('concerns money or a payment'); }
