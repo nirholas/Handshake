@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Sign in to your companion</title>
+		<style>
+			:root { color-scheme: dark light; --bg: #101114; --fg: #eef1f6; --line: rgba(255,255,255,.14); --muted: rgba(238,241,246,.6); --blue: #3b82f6; }
+			@media (prefers-color-scheme: light) { :root { --bg: #fff; --fg: #14161a; --line: rgba(0,0,0,.12); --muted: rgba(20,22,26,.6); } }
+			* { box-sizing: border-box; margin: 0; padding: 0; }
+			body { background: var(--bg); color: var(--fg); font: 14px/1.55 Inter, -apple-system, system-ui, sans-serif; padding: 26px; }
+			h1 { font-size: 17px; margin-bottom: 8px; }
+			p { color: var(--muted); font-size: 13px; margin-bottom: 18px; }
+			label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+			input { width: 100%; background: transparent; color: inherit; border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; font: inherit; }
+			input:focus { outline: none; border-color: var(--blue); }
+			.row { display: flex; gap: 10px; margin-top: 18px; }
+			button { font: 600 13px/1 inherit; border-radius: 9px; padding: 11px 15px; border: 1px solid var(--line); background: transparent; color: inherit; cursor: pointer; }
+			button.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+			button:disabled { opacity: .5; cursor: default; }
+			button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+			#status { margin-top: 14px; font-size: 12.5px; min-height: 18px; }
+			#status[data-kind="error"] { color: #ff7a8a; }
+			#status[data-kind="ok"] { color: #43d6a0; }
+			.field + .field { margin-top: 14px; }
+		</style>
+	</head>
+	<body>
+		<h1>Connect this machine</h1>
+		<p>
+			Your bridge token lives at three.ws/companion. It lets this app receive
+			your deliveries and nothing else, and rotating it there disconnects every
+			device at once.
+		</p>
+
+		<form id="form">
+			<div class="field">
+				<label for="token">Bridge token</label>
+				<input id="token" name="token" type="password" placeholder="cmp_…" autocomplete="off" required />
+			</div>
+			<div class="field">
+				<label for="api">Server</label>
+				<input id="api" name="api" type="text" value="https://three.ws" />
+			</div>
+			<div class="row">
+				<button type="submit" class="primary" id="save">Connect</button>
+				<button type="button" id="open">Get my token</button>
+			</div>
+		</form>
+		<div id="status" aria-live="polite"></div>
+
+		<script>
+			const form = document.getElementById('form');
+			const status = document.getElementById('status');
+			const save = document.getElementById('save');
+
+			document.getElementById('open').addEventListener('click', () => {
+				const base = document.getElementById('api').value.trim() || 'https://three.ws';
+				window.companion.openExternal(`${base}/companion`);
+			});
+
+			window.companion.credentials().then((creds) => {
+				if (creds?.apiBase) document.getElementById('api').value = creds.apiBase;
+			});
+
+			form.addEventListener('submit', async (event) => {
+				event.preventDefault();
+				save.disabled = true;
+				status.dataset.kind = '';
+				status.textContent = 'Checking the token…';
+				const result = await window.companion.saveToken({
+					token: document.getElementById('token').value,
+					apiBase: document.getElementById('api').value.trim(),
+				});
+				save.disabled = false;
+				if (result.ok) {
+					status.dataset.kind = 'ok';
+					status.textContent = 'Connected. Your companion is listening.';
+					setTimeout(() => window.close(), 1200);
+				} else {
+					status.dataset.kind = 'error';
+					status.textContent = result.error;
+				}
+			});
+		</script>
+	</body>
+</html>

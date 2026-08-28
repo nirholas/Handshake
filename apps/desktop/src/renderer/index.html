@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>three.ws Companion</title>
+		<style>
+			:root {
+				color-scheme: dark light;
+				--bubble-bg: rgba(18, 18, 20, 0.94);
+				--bubble-fg: #f2f4f8;
+				--bubble-line: rgba(255, 255, 255, 0.14);
+			}
+			@media (prefers-color-scheme: light) {
+				:root {
+					--bubble-bg: rgba(255, 255, 255, 0.96);
+					--bubble-fg: #14161a;
+					--bubble-line: rgba(0, 0, 0, 0.1);
+				}
+			}
+			* { box-sizing: border-box; margin: 0; padding: 0; }
+			html, body {
+				height: 100%;
+				background: transparent;
+				overflow: hidden;
+				font-family: Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+				/* The window itself is click-through; only the character and the
+				   bubble opt back in, and main.js hands input over when the
+				   pointer is actually on them. */
+				cursor: default;
+			}
+
+			#stage {
+				position: absolute;
+				bottom: 0;
+				left: 40px;
+				width: 260px;
+				height: 340px;
+				transition: transform 6s cubic-bezier(0.4, 0, 0.2, 1), opacity .5s ease;
+				will-change: transform;
+			}
+			#stage[data-facing="left"] #body { transform: scaleX(-1); }
+			#stage[data-hidden="1"] { opacity: 0; pointer-events: none; }
+
+			#body {
+				width: 100%;
+				height: 260px;
+				border: 0;
+				display: block;
+				background: transparent;
+				pointer-events: auto;
+			}
+
+			#bubble {
+				position: absolute;
+				bottom: 250px;
+				left: 50%;
+				transform: translate(-50%, 8px);
+				width: 320px;
+				max-width: 90vw;
+				background: var(--bubble-bg);
+				color: var(--bubble-fg);
+				border: 1px solid var(--bubble-line);
+				border-radius: 16px;
+				padding: 14px 16px;
+				box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+				backdrop-filter: blur(12px);
+				opacity: 0;
+				pointer-events: none;
+				transition: opacity .28s ease, transform .28s ease;
+				font-size: 14px;
+				line-height: 1.5;
+			}
+			#bubble[data-visible="1"] { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+			#who {
+				font-size: 11px;
+				letter-spacing: .06em;
+				text-transform: uppercase;
+				opacity: .55;
+				margin-bottom: 5px;
+			}
+			#line { font-weight: 500; }
+			#why { font-size: 11.5px; opacity: .5; margin-top: 8px; }
+			#actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+			button {
+				font: 600 12px/1 Inter, system-ui, sans-serif;
+				color: inherit;
+				background: rgba(127, 127, 127, 0.16);
+				border: 1px solid var(--bubble-line);
+				border-radius: 8px;
+				padding: 7px 11px;
+				cursor: pointer;
+				transition: background .15s, border-color .15s;
+			}
+			button:hover { background: rgba(127, 127, 127, 0.3); }
+			button:focus-visible { outline: 2px solid #3b82f6; outline-offset: 2px; }
+
+			#hint {
+				position: absolute;
+				bottom: 16px;
+				left: 50%;
+				transform: translateX(-50%);
+				background: var(--bubble-bg);
+				color: var(--bubble-fg);
+				border: 1px solid var(--bubble-line);
+				border-radius: 12px;
+				padding: 12px 16px;
+				font-size: 13px;
+				pointer-events: auto;
+				display: none;
+			}
+			#hint[data-visible="1"] { display: block; }
+
+			@media (prefers-reduced-motion: reduce) {
+				#stage { transition: none; }
+				#bubble { transition: none; }
+			}
+		</style>
+	</head>
+	<body>
+		<div id="stage" data-facing="right">
+			<div id="bubble" role="status" aria-live="polite">
+				<div id="who"></div>
+				<div id="line"></div>
+				<div id="why"></div>
+				<div id="actions"></div>
+			</div>
+			<!-- The body itself: the three.ws walking-avatar embed, transparent,
+			     driven over the documented postMessage contract
+			     (https://three.ws/docs/walk-embed-api). -->
+			<iframe
+				id="body"
+				title="Your companion"
+				allow="autoplay"
+				referrerpolicy="no-referrer"
+			></iframe>
+		</div>
+
+		<div id="hint">
+			<strong>three.ws Companion</strong> is not signed in yet.
+			Open the tray icon and choose <em>Sign in</em>, or run <code>companion login</code>.
+		</div>
+
+		<script type="module" src="./companion.js"></script>
+	</body>
+</html>

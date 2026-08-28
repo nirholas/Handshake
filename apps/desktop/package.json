@@ -1,0 +1,63 @@
+{
+	"name": "three-ws-companion-desktop",
+	"productName": "three.ws Companion",
+	"version": "0.1.0",
+	"description": "A 3D companion that lives on your desktop, walks across it, and tells you the things worth interrupting you for.",
+	"author": "three.ws <support@three.ws> (https://three.ws)",
+	"license": "Apache-2.0",
+	"homepage": "https://three.ws/companion",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "apps/desktop"
+	},
+	"private": true,
+	"type": "module",
+	"main": "src/main.js",
+	"scripts": {
+		"start": "electron .",
+		"dev": "electron . --dev",
+		"dist": "electron-builder --publish never",
+		"dist:mac": "electron-builder --mac --publish never",
+		"dist:win": "electron-builder --win --publish never",
+		"dist:linux": "electron-builder --linux --publish never"
+	},
+	"dependencies": {
+		"@three-ws/companion": "file:../../packages/companion-sdk"
+	},
+	"devDependencies": {
+		"electron": "^33.2.0",
+		"electron-builder": "^25.1.8"
+	},
+	"build": {
+		"appId": "ws.three.companion",
+		"productName": "three.ws Companion",
+		"files": [
+			"src/**/*",
+			"assets/**/*",
+			"node_modules/**/*"
+		],
+		"mac": {
+			"category": "public.app-category.productivity",
+			"icon": "assets/icon.png",
+			"target": [
+				"dmg",
+				"zip"
+			]
+		},
+		"win": {
+			"icon": "assets/icon.png",
+			"target": [
+				"nsis"
+			]
+		},
+		"linux": {
+			"icon": "assets/icon.png",
+			"category": "Utility",
+			"target": [
+				"AppImage",
+				"deb"
+			]
+		}
+	}
+}
