@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot, no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>Brownout · three.ws</title>
+	<meta name="description" content="Every response this API sends says where its data came from and how fresh it is, and every fallback is proven by breaking the upstream it protects against. Read the receipts: which provider refused, which one caught the request, and how old the answer was." />
+	<link rel="canonical" href="https://three.ws/brownout" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="Brownout · three.ws" />
+	<meta property="og:description" content="Fallbacks are the least-tested code in any codebase, because the thing they protect against does not happen on demand. So we break it on purpose, and publish the receipts." />
+	<meta property="og:url" content="https://three.ws/brownout" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=learn&amp;t=Brownout&amp;d=Every+response+says+where+its+data+came+from.+Every+fallback+is+proven+by+breaking+the+upstream+it+protects+against.&amp;p=%2Fbrownout" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="Brownout · three.ws" />
+	<meta name="twitter:description" content="We break our own providers on purpose, in the real request path, and publish what came back." />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=learn&amp;t=Brownout&amp;d=Every+response+says+where+its+data+came+from.+Every+fallback+is+proven+by+breaking+the+upstream+it+protects+against.&amp;p=%2Fbrownout" />
+	<style>
+		:root {
+			--bo-bg: #07080c;
+			--bo-panel: rgba(17, 19, 27, 0.86);
+			--bo-panel-2: rgba(255, 255, 255, 0.028);
+			--bo-border: rgba(255, 255, 255, 0.09);
+			--bo-border-2: rgba(255, 255, 255, 0.17);
+			--bo-text: #e9ebf2;
+			--bo-muted: #8b91a3;
+			--bo-faint: #5d6374;
+			--bo-code-bg: rgba(255, 255, 255, 0.05);
+			--bo-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 34px rgba(0, 0, 0, 0.34);
+			/* One hue per freshness tier, reused for chip, dot and card accent. */
+			--bo-live: #34d399;
+			--bo-cache: #38bdf8;
+			--bo-stale: #fbbf24;
+			--bo-fallback: #a78bfa;
+			--bo-fail: #f87171;
+		}
+
+		html[data-theme='light'] {
+			--bo-bg: #f7f8fb;
+			--bo-panel: #ffffff;
+			--bo-panel-2: rgba(15, 18, 30, 0.026);
+			--bo-border: rgba(15, 18, 30, 0.1);
+			--bo-border-2: rgba(15, 18, 30, 0.2);
+			--bo-text: #131722;
+			--bo-muted: #5b6274;
+			--bo-faint: #838a9c;
+			--bo-code-bg: rgba(15, 18, 30, 0.05);
+			--bo-shadow: 0 1px 2px rgba(15, 18, 30, 0.06), 0 10px 30px rgba(15, 18, 30, 0.07);
+			--bo-live: #059669;
+			--bo-cache: #0284c7;
+			--bo-stale: #b45309;
+			--bo-fallback: #6d33e0;
+			--bo-fail: #dc2626;
+		}
+
+		body { background: var(--bo-bg); color: var(--bo-text); }
+
+		.bo-wrap { max-width: 1100px; margin: 0 auto; padding: 28px 20px 96px; }
+
+		.bo-hero { padding: 26px 0 20px; border-bottom: 1px solid var(--bo-border); margin-bottom: 26px; }
+		.bo-eyebrow {
+			display: inline-block; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+			color: var(--bo-faint); font-weight: 700; margin-bottom: 10px;
+		}
+		.bo-hero h1 { margin: 0 0 12px; font-size: clamp(30px, 5vw, 46px); line-height: 1.06; letter-spacing: -0.02em; }
+		.bo-hero p { margin: 0; max-width: 74ch; color: var(--bo-muted); font-size: 15.5px; line-height: 1.62; }
+		.bo-hero a { color: var(--bo-text); text-decoration: underline; text-underline-offset: 3px; }
+
+		.bo-stats { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+		.bo-stat {
+			background: var(--bo-panel-2); border: 1px solid var(--bo-border); border-radius: 11px;
+			padding: 10px 14px; min-width: 128px;
+		}
+		.bo-stat b { display: block; font-size: 21px; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+		.bo-stat span { display: block; font-size: 11.5px; color: var(--bo-faint); margin-top: 2px; }
+
+		/* The reader's own request, read back off this page's own API call. */
+		.bo-live-panel {
+			border: 1px solid var(--bo-border); border-radius: 14px; background: var(--bo-panel);
+			box-shadow: var(--bo-shadow); padding: 16px 18px; margin-bottom: 30px;
+		}
+		.bo-live-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+		.bo-live-head h2 { margin: 0; font-size: 15px; letter-spacing: -0.01em; }
+		.bo-live-body { color: var(--bo-muted); font-size: 13.5px; line-height: 1.6; margin: 0; }
+		.bo-live-body code { background: var(--bo-code-bg); border-radius: 5px; padding: 1px 5px; font-size: 12.5px; }
+
+		.bo-tier {
+			display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700;
+			letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px;
+			border: 1px solid currentColor;
+		}
+		.bo-tier::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+		.bo-tier[data-tier='live'] { color: var(--bo-live); }
+		.bo-tier[data-tier='cache'] { color: var(--bo-cache); }
+		.bo-tier[data-tier='stale'] { color: var(--bo-stale); }
+		.bo-tier[data-tier='fallback'] { color: var(--bo-fallback); }
+		.bo-tier[data-tier='none'] { color: var(--bo-faint); }
+
+		.bo-section-head { margin: 34px 0 14px; }
+		.bo-section-head h2 { margin: 0 0 6px; font-size: 20px; letter-spacing: -0.015em; }
+		.bo-section-head p { margin: 0; color: var(--bo-muted); font-size: 14px; max-width: 74ch; line-height: 1.6; }
+
+		.bo-grid { display: grid; gap: 14px; }
+
+		.bo-card {
+			border: 1px solid var(--bo-border); border-radius: 14px; background: var(--bo-panel);
+			box-shadow: var(--bo-shadow); padding: 18px; position: relative; overflow: hidden;
+		}
+		.bo-card::before {
+			content: ''; position: absolute; inset: 0 auto 0 0; width: 3px; background: var(--bo-faint);
+		}
+		.bo-card[data-verdict='pass']::before { background: var(--bo-live); }
+		.bo-card[data-verdict='fail']::before { background: var(--bo-fail); }
+		.bo-card[data-verdict='not_exercised']::before { background: var(--bo-stale); }
+
+		.bo-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+		.bo-card h3 { margin: 0 0 4px; font-size: 16.5px; letter-spacing: -0.012em; line-height: 1.3; }
+		.bo-endpoint { font-size: 12px; color: var(--bo-faint); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+		.bo-verdict {
+			font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+			padding: 4px 10px; border-radius: 999px; white-space: nowrap; border: 1px solid currentColor;
+		}
+		.bo-verdict[data-verdict='pass'] { color: var(--bo-live); }
+		.bo-verdict[data-verdict='fail'] { color: var(--bo-fail); }
+		.bo-verdict[data-verdict='not_exercised'] { color: var(--bo-stale); }
+		.bo-verdict[data-verdict='unrun'] { color: var(--bo-faint); }
+
+		.bo-break { margin: 12px 0 10px; font-size: 13.5px; color: var(--bo-muted); line-height: 1.6; }
+		.bo-break code {
+			background: var(--bo-code-bg); border-radius: 5px; padding: 1.5px 6px;
+			font-size: 12.5px; color: var(--bo-text);
+		}
+
+		/* The receipt: one row per source the request actually touched. */
+		.bo-trace { margin: 12px 0 0; border-top: 1px dashed var(--bo-border); padding-top: 12px; }
+		.bo-trace-row {
+			display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center;
+			padding: 5px 0; font-size: 12.5px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+			border-bottom: 1px solid var(--bo-panel-2);
+		}
+		.bo-trace-row:last-child { border-bottom: 0; }
+		.bo-trace-name { color: var(--bo-text); overflow-wrap: anywhere; }
+		.bo-trace-out { font-weight: 700; letter-spacing: 0.02em; }
+		.bo-trace-row[data-ok='0'] .bo-trace-out { color: var(--bo-fail); }
+		.bo-trace-row[data-ok='1'] .bo-trace-out { color: var(--bo-live); }
+		.bo-trace-row[data-ok='stale'] .bo-trace-out { color: var(--bo-stale); }
+		.bo-trace-ms { color: var(--bo-faint); font-variant-numeric: tabular-nums; }
+
+		.bo-why { margin: 12px 0 0; font-size: 13.5px; color: var(--bo-muted); line-height: 1.62; }
+		.bo-problems { margin: 10px 0 0; padding-left: 18px; color: var(--bo-fail); font-size: 13px; line-height: 1.55; }
+
+		.bo-more { margin-top: 42px; border-top: 1px solid var(--bo-border); padding-top: 26px; }
+		.bo-more h2 { margin: 0 0 10px; font-size: 19px; letter-spacing: -0.015em; }
+		.bo-more p { margin: 0 0 14px; color: var(--bo-muted); font-size: 14.5px; line-height: 1.65; max-width: 78ch; }
+		.bo-more code { background: var(--bo-code-bg); border-radius: 5px; padding: 1.5px 6px; font-size: 13px; }
+		.bo-links { display: flex; flex-wrap: wrap; gap: 10px; }
+		.bo-links a {
+			border: 1px solid var(--bo-border-2); border-radius: 9px; padding: 8px 13px;
+			font-size: 13.5px; text-decoration: none; color: var(--bo-text); transition: border-color 0.15s ease, transform 0.15s ease;
+		}
+		.bo-links a:hover { border-color: var(--bo-text); transform: translateY(-1px); }
+		.bo-links a:focus-visible { outline: 2px solid var(--bo-live); outline-offset: 2px; }
+
+		.bo-skeleton {
+			height: 132px; border-radius: 14px; border: 1px solid var(--bo-border);
+			background: linear-gradient(90deg, var(--bo-panel-2), var(--bo-code-bg), var(--bo-panel-2));
+			background-size: 200% 100%; animation: bo-shimmer 1.4s ease-in-out infinite;
+		}
+		@keyframes bo-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+		@media (prefers-reduced-motion: reduce) { .bo-skeleton { animation: none; } .bo-links a:hover { transform: none; } }
+
+		.bo-sr {
+			position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+			overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+		}
+
+		@media (max-width: 640px) {
+			.bo-trace-row { grid-template-columns: 1fr auto; }
+			.bo-trace-ms { grid-column: 2; }
+		}
+	</style>
+</head>
+<body>
+	<header class="site-header"><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+
+	<main class="bo-wrap">
+		<section class="bo-hero">
+			<span class="bo-eyebrow">Engineering</span>
+			<h1>Brownout</h1>
+			<p>
+				A fallback is code that only runs when something is broken, which makes it the least-tested code in
+				any codebase. So this platform does two things about it. Every response says where its data came from
+				and how fresh it is, in a header you can read. And every fallback below has been executed for real,
+				with the provider it protects against genuinely refusing, inside the same request path a user hits.
+				The receipts are underneath. Read the
+				<a href="/docs/brownout">reference</a> for the header grammar and how to run a probe yourself.
+			</p>
+			<div class="bo-stats" id="bo-stats"></div>
+		</section>
+
+		<section class="bo-live-panel" id="bo-live-panel" hidden>
+			<div class="bo-live-head">
+				<h2>This page load</h2>
+				<span class="bo-tier" id="bo-live-tier" data-tier="none">unknown</span>
+			</div>
+			<p class="bo-live-body" id="bo-live-body"></p>
+		</section>
+
+		<div class="bo-section-head">
+			<h2>Proven fallbacks</h2>
+			<p>
+				Each card names an upstream, the failure injected into it, and what the endpoint did anyway. A verdict
+				of <b>not exercised</b> is reported as plainly as a failure: it means the fault was accepted but a warm
+				cache answered before any upstream call happened, so nothing was actually proven. A proof that did not
+				run is not a pass.
+			</p>
+		</div>
+
+		<div id="bo-results" aria-live="polite">
+			<div class="bo-grid" id="bo-skeletons" aria-hidden="true">
+				<div class="bo-skeleton"></div>
+				<div class="bo-skeleton"></div>
+				<div class="bo-skeleton"></div>
+			</div>
+			<p class="bo-sr" id="bo-status">Loading the degradation registry.</p>
+		</div>
+
+		<section class="bo-more">
+			<h2>Reading a response</h2>
+			<p>
+				Every endpoint answers with <code>x-brownout</code>, and adds <code>x-brownout-trace</code> when
+				something degraded. Freshness is a lattice rather than a flag, and a response reports the
+				<b>worst</b> tier that contributed to it: <code>live</code> came off the wire during your request,
+				<code>cache</code> is a hit inside its intended lifetime, <code>stale</code> is older than that
+				because an upstream could not answer, and <code>fallback</code> means a different provider or a
+				different method answered the question. A page assembled from one live read and one half-hour-old
+				reading is not live, so it does not get to say it is.
+			</p>
+			<p>
+				The <code>@three-ws/brownout</code> package parses these headers, and gives your own tests the same
+				fault injection this page is built on, so you can assert that your integration degrades the way you
+				think it does.
+			</p>
+			<div class="bo-links">
+				<a href="/docs/brownout">Brownout reference</a>
+				<a href="/api/brownout">Registry as JSON</a>
+				<a href="/guards">Repository guards</a>
+				<a href="/docs/start-here">Start here</a>
+			</div>
+		</section>
+	</main>
+
+	<script type="module" src="/brownout-page.js"></script>
+	<script type="module" src="/i18n.js"></script>
+</body>
+</html>
