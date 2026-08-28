@@ -33,6 +33,12 @@ export class ForgeError extends Error {
 	}
 }
 
+/** The tool's human-readable line, when it sent one. */
+function textOf(result) {
+	const text = result?.content?.find?.((c) => c?.type === 'text')?.text;
+	return typeof text === 'string' ? text.split('\n')[0] : '';
+}
+
 /**
  * Normalize whatever the tool returned into one shape.
  * Exported because it is the part worth testing without a network.
@@ -45,11 +51,32 @@ export function readForgeResult(body, { kind }) {
 	}
 	const result = body?.result;
 	const structured = result?.structuredContent || result;
+
+	// A generation that outlives the endpoint's inline wait hands back a public
+	// poll handle instead of a model. That is the NORMAL path for a rigged
+	// character (generate plus rig is minutes of GPU time), not an error: collect
+	// the job rather than failing the command.
+	if (structured?.status === 'pending' && structured.jobId) {
+		return {
+			pending: true,
+			jobId: structured.jobId,
+			pollUrl: structured.pollUrl,
+			stage: structured.stage || 'mesh',
+			etaSeconds: Number(structured.etaRemainingSeconds) || null,
+		};
+	}
+	if (result?.isError) {
+		throw new ForgeError(textOf(result) || 'the forge could not build that', { code: 'tool_error' });
+	}
+
 	const glbUrl = structured?.glbUrl || structured?.riggedGlbUrl || structured?.modelUrl;
 	if (!glbUrl) {
-		throw new ForgeError('the forge answered without a model URL', { code: 'no_model' });
+		throw new ForgeError(textOf(result) || 'the forge answered without a model URL', {
+			code: 'no_model',
+		});
 	}
 	return {
+		pending: false,
 		kind: structured.kind || kind,
 		glbUrl,
 		meshUrl: structured.meshUrl || null,
@@ -119,13 +146,25 @@ export async function callForge({
 		if (!res.ok) {
 			throw new ForgeError(`three.ws answered ${res.status}`, { code: `http_${res.status}` });
 		}
-		const result = readForgeResult(await res.json(), {
-			kind: tool === 'forge_avatar' ? 'avatar' : 'model',
-		});
+		const kind = tool === 'forge_avatar' ? 'avatar' : 'model';
+		let result = readForgeResult(await res.json(), { kind });
+
+		if (result.pending) {
+			clearInterval(heartbeat);
+			result = await collectJob(result, {
+				kind,
+				doFetch,
+				origin,
+				signal: controller.signal,
+				startedAt,
+				onProgress,
+			});
+		}
+
 		onProgress({
 			phase: 'done',
 			elapsedMs: Date.now() - startedAt,
-			message: 'model ready',
+			message: result.rigged ? 'rigged model ready' : 'model ready',
 		});
 		return result;
 	} catch (err) {
@@ -145,6 +184,106 @@ export async function callForge({
 		clearTimeout(deadline);
 		signal?.removeEventListener('abort', onAbort);
 	}
+}
+
+
+// How often to ask a running job whether it is done. Long enough that a
+// ten-minute render is a handful of requests, short enough that the CLI reacts
+// within a few seconds of the model landing.
+const POLL_EVERY_MS = 5000;
+
+/**
+ * Collect a job that outlived the endpoint's inline wait.
+ *
+ * `stage` says what the job produces: a bare `mesh` (which still needs rigging)
+ * or the finished `rig`. Returning a T-posed mesh to someone who asked for a
+ * rigged character would be the quiet kind of wrong, so the mesh case is rigged
+ * here rather than reported as done.
+ */
+async function collectJob(pending, { kind, doFetch, origin, signal, startedAt, onProgress }) {
+	let job = pending;
+	let glbUrl = await pollUntilDone(job, { doFetch, signal, startedAt, onProgress });
+
+	if (kind === 'avatar' && job.stage === 'mesh') {
+		onProgress({
+			phase: 'working',
+			elapsedMs: Date.now() - startedAt,
+			message: 'mesh done, adding the skeleton',
+		});
+		const res = await doFetch(new URL(RPC_PATH, origin), {
+			method: 'POST',
+			headers: { 'content-type': 'application/json', accept: 'application/json' },
+			body: JSON.stringify({
+				jsonrpc: '2.0',
+				id: 2,
+				method: 'tools/call',
+				params: { name: 'rig_mesh', arguments: { glb_url: glbUrl } },
+			}),
+			signal,
+		});
+		if (!res.ok) throw new ForgeError(`three.ws answered ${res.status}`, { code: `http_${res.status}` });
+		const rigResult = readForgeResult(await res.json(), { kind: 'avatar' });
+		if (!rigResult.pending) return { ...rigResult, rigged: true };
+		job = rigResult;
+		glbUrl = await pollUntilDone(job, { doFetch, signal, startedAt, onProgress });
+	}
+
+	return {
+		pending: false,
+		kind,
+		glbUrl,
+		meshUrl: null,
+		viewerUrl: `${FORGE_ORIGIN}/viewer?src=${encodeURIComponent(glbUrl)}`,
+		studioUrl: null,
+		rigged: kind === 'avatar',
+		backend: null,
+		durationMs: Date.now() - startedAt,
+	};
+}
+
+async function pollUntilDone(job, { doFetch, signal, startedAt, onProgress }) {
+	const pollUrl = job.pollUrl || `${FORGE_ORIGIN}/api/gpt-forge?job=${encodeURIComponent(job.jobId)}`;
+	for (;;) {
+		if (signal?.aborted) throw new ForgeError('the wait was cancelled', { code: 'timeout' });
+		await sleep(POLL_EVERY_MS, signal);
+		const res = await doFetch(pollUrl, { headers: { accept: 'application/json' }, signal });
+		if (!res.ok) throw new ForgeError(`the job endpoint answered ${res.status}`, { code: `http_${res.status}` });
+		const body = await res.json();
+		const status = String(body?.status || '').toLowerCase();
+		if (status === 'done' || status === 'succeeded' || status === 'completed') {
+			const url = body.glb_url || body.glbUrl;
+			if (!url) throw new ForgeError('the job finished without a model URL', { code: 'no_model' });
+			return url;
+		}
+		if (status === 'error' || status === 'failed' || status === 'canceled') {
+			throw new ForgeError(body?.error || body?.message || 'the job failed', { code: 'job_failed' });
+		}
+		onProgress({
+			phase: 'working',
+			elapsedMs: Date.now() - startedAt,
+			message: describeJobWait(job, Date.now() - startedAt),
+		});
+	}
+}
+
+function describeJobWait(job, elapsedMs) {
+	const s = Math.round(elapsedMs / 1000);
+	const what = job.stage === 'rig' ? 'rigging' : 'sculpting the mesh';
+	return `${what} (${s}s)`;
+}
+
+function sleep(ms, signal) {
+	return new Promise((resolve, reject) => {
+		const t = setTimeout(resolve, ms);
+		signal?.addEventListener(
+			'abort',
+			() => {
+				clearTimeout(t);
+				reject(new ForgeError('the wait was cancelled', { code: 'timeout' }));
+			},
+			{ once: true },
+		);
+	});
 }
 
 function describeWait(elapsedMs, tool) {

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T06:25:09.735Z",
+	"generated_at": "2026-08-28T06:32:04.493Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -897,6 +897,16 @@
 					"title": "Artifact Viewer",
 					"description": "Renders Claude artifact bundles as standalone embeddable apps.",
 					"added": "2026-04-17",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/create-agent",
+					"title": "create-agent: one command, one 3D character",
+					"description": "npm create @three-ws/agent turns a sentence into a rigged, downloadable 3D character with a working demo page. No account, no API key.",
+					"added": "2026-08-28",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

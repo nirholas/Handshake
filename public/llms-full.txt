@@ -552,6 +552,12 @@ URL: https://three.ws/artifact
 
 Renders Claude artifact bundles as standalone embeddable apps.
 
+### create-agent: one command, one 3D character
+
+URL: https://three.ws/docs/create-agent
+
+npm create @three-ws/agent turns a sentence into a rigged, downloadable 3D character with a working demo page. No account, no API key.
+
 ### Glance: agent cards for home screens
 
 URL: https://three.ws/docs/glance

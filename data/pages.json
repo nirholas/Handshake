@@ -747,6 +747,14 @@
 					"added": "2026-04-17"
 				},
 				{
+					"path": "/docs/create-agent",
+					"title": "create-agent: one command, one 3D character",
+					"description": "npm create @three-ws/agent turns a sentence into a rigged, downloadable 3D character with a working demo page. No account, no API key.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-08-28"
+				},
+				{
 					"path": "/docs/glance",
 					"title": "Glance: agent cards for home screens",
 					"description": "Put a three.ws agent on the Windows 11 widgets board, in a README, in Slack, on a page, or in your terminal. Endpoint, element, widget worker and npm client.",

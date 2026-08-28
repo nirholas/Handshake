@@ -290,3 +290,83 @@ describe('createAgent', () => {
 		await expect(readdir(out)).rejects.toThrow();
 	});
 });
+
+describe('a job that outlives the inline wait', () => {
+	// The normal path for a rigged character: the endpoint hands back a public
+	// poll handle instead of a model, and the client has to collect it.
+	function pendingRpc(stage, jobId = 'job_1') {
+		return {
+			ok: true,
+			status: 200,
+			json: async () => ({
+				result: {
+					structuredContent: {
+						status: 'pending',
+						jobId,
+						pollUrl: `https://three.ws/api/gpt-forge?job=${jobId}`,
+						stage,
+						etaRemainingSeconds: 40,
+					},
+				},
+			}),
+		};
+	}
+	const jobDone = (glb) => ({ ok: true, status: 200, json: async () => ({ status: 'done', glb_url: glb }) });
+	const jobQueued = { ok: true, status: 200, json: async () => ({ status: 'queued' }) };
+
+	it('reads a pending answer as a job to collect, not as a failure', () => {
+		const body = { result: { structuredContent: { status: 'pending', jobId: 'j', pollUrl: 'p', stage: 'rig' } } };
+		expect(readForgeResult(body, { kind: 'avatar' })).toMatchObject({
+			pending: true,
+			jobId: 'j',
+			stage: 'rig',
+		});
+	});
+
+	it('polls the job until it is done, through a queued tick', async () => {
+		const calls = [];
+		const fetchImpl = vi.fn(async (url) => {
+			calls.push(String(url));
+			if (String(url).includes('mcp-studio')) return pendingRpc('rig');
+			return calls.filter((c) => c.includes('gpt-forge')).length === 1
+				? jobQueued
+				: jobDone('https://three.ws/cdn/x/rigged.glb');
+		});
+		const made = await callForge({ tool: 'forge_avatar', args: { prompt: 'a knight' }, fetchImpl });
+		expect(made).toMatchObject({ glbUrl: 'https://three.ws/cdn/x/rigged.glb', rigged: true });
+	}, 20_000);
+
+	it('rigs a collected mesh instead of handing back a T-posed figure', async () => {
+		const tools = [];
+		const fetchImpl = vi.fn(async (url, init) => {
+			if (String(url).includes('mcp-studio')) {
+				const name = JSON.parse(init.body).params.name;
+				tools.push(name);
+				return name === 'forge_avatar'
+					? pendingRpc('mesh')
+					: {
+							ok: true,
+							status: 200,
+							json: async () => ({
+								result: { structuredContent: { glbUrl: 'https://three.ws/cdn/x/rigged.glb', kind: 'avatar', rigged: true } },
+							}),
+						};
+			}
+			return jobDone('https://three.ws/cdn/x/mesh.glb');
+		});
+		const made = await callForge({ tool: 'forge_avatar', args: { prompt: 'a knight' }, fetchImpl });
+		expect(tools).toEqual(['forge_avatar', 'rig_mesh']);
+		expect(made).toMatchObject({ glbUrl: 'https://three.ws/cdn/x/rigged.glb', rigged: true });
+	}, 20_000);
+
+	it('surfaces a failed job with its reason', async () => {
+		const fetchImpl = vi.fn(async (url) =>
+			String(url).includes('mcp-studio')
+				? pendingRpc('rig')
+				: { ok: true, status: 200, json: async () => ({ status: 'failed', error: 'the rigger could not find a spine' }) },
+		);
+		await expect(callForge({ tool: 'forge_avatar', args: {}, fetchImpl })).rejects.toThrow(
+			/could not find a spine/,
+		);
+	}, 20_000);
+});

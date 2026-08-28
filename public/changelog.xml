@@ -23,6 +23,14 @@
 			<description>A 3D companion that delivers your important messages in person. Connect your own Telegram bot, calendar, inbox, or phone, give each contact their own avatar and voice, and hear only what clears your bar.</description>
 		</item>
 		<item>
+			<title>create-agent: one command, one 3D character</title>
+			<link>https://three.ws/docs/create-agent</link>
+			<guid isPermaLink="false">2026-08-28:create-agent: one command, one 3D character</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>npm create @three-ws/agent turns a sentence into a rigged, downloadable 3D character with a working demo page. No account, no API key.</description>
+		</item>
+		<item>
 			<title>Docs · 3D Vision: let an agent see the model</title>
 			<link>https://three.ws/docs/3d-vision</link>
 			<guid isPermaLink="false">2026-08-28:Docs · 3D Vision: let an agent see the model</guid>
@@ -317,6 +325,14 @@
 			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>A fifth phase has been added to the public roadmap: native widgets. Right now three.ws is something you open. The plan is for the agent you own to sit on your home screen and your desktop, showing itself and one live number about it, refreshed by the system without you opening anything, with a tap that drops you back into the right screen. Android is first, because the Android app is already built and signed: three.ws ships as a real app for Solana Seeker, and as of today Google confirms the app's release key against the site, so a three.ws link opens inside the app instead of a browser tab. Windows 11 follows through the installed web app, which needs no separate store submission, then macOS and iOS through a shared widget extension. None of it is shipped yet. It is written down, scoped and public so you can hold us to it, and the phase is on the roadmap in the repo along with the work order behind it.</description>
+		</item>
+		<item>
+			<title>One command turns a sentence into a rigged 3D character you can put on your site</title>
+			<link>https://three.ws/docs/create-agent</link>
+			<guid isPermaLink="false">2026-08-28:One command turns a sentence into a rigged 3D character you can put on your site</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Type `npm create @three-ws/agent &quot;a friendly cartoon astronaut&quot;` in a terminal and about a minute later you have a folder: the 3D model with a real skeleton so it can be posed and animated, a demo page that works when you double click it, and the two lines of HTML that put the character on your own website. No account, no API key, no signup, and nothing to install first. It also works from a photo, and it can make plain objects instead of characters. The same free lane the website uses is behind it, so what you get in the terminal is what you get on three.ws.</description>
 		</item>
 		<item>
 			<title>Photo uploads, avatar saves, launches and team tasks fail fast instead of hanging</title>

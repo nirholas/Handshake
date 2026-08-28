@@ -147,7 +147,7 @@ function toolError(message) {
 // quietly finished minutes later and the caller never learned. The job handle
 // is public (the free /api/forge poll endpoint takes it with no auth), so hand
 // it over and let the caller collect the result.
-function pendingResult({ base, jobId, what, prompt, etaRemainingSeconds }) {
+function pendingResult({ base, jobId, what, prompt, etaRemainingSeconds, stage = 'mesh' }) {
 	// The ChatGPT pipeline's own endpoint, not /api/forge: the whole point of
 	// the clone is that this surface can evolve independently.
 	const pollUrl = `${base}/api/gpt-forge?job=${encodeURIComponent(jobId)}`;
@@ -164,6 +164,11 @@ function pendingResult({ base, jobId, what, prompt, etaRemainingSeconds }) {
 			status: 'pending',
 			jobId,
 			pollUrl,
+			// Which half of the pipeline is still running. A client that collects
+			// the job needs this to know whether the GLB it gets back is a bare
+			// mesh (rig it) or the finished rig (use it). Identifier-free, so it
+			// costs the data-minimization rule nothing.
+			stage,
 			...(eta ? { etaRemainingSeconds: eta } : {}),
 			...(prompt ? { prompt } : {}),
 		},
@@ -424,7 +429,7 @@ async function handleRigMesh(args, _auth, req) {
 	} catch (err) {
 		return toolError(failureMessage(err));
 	}
-	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'rigged model', etaRemainingSeconds: job.eta_remaining_seconds });
+	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'rigged model', etaRemainingSeconds: job.eta_remaining_seconds, stage: 'rig' });
 	if (job._timedOut || !job.glb_url) return toolError('Rigging is taking longer than expected. Please try again.');
 	return ok({ glbUrl: job.glb_url, base, kind: 'rigged model', rigged: true });
 }
@@ -465,7 +470,7 @@ async function handleForgeAvatar(args, _auth, req) {
 	} catch (err) {
 		return toolError(failureMessage(err));
 	}
-	if (gen._timedOut && gen.job_id) return pendingResult({ base, jobId: gen.job_id, what: 'avatar mesh (rig it with rig_mesh once done)', prompt: prompt || undefined, etaRemainingSeconds: gen.eta_remaining_seconds });
+	if (gen._timedOut && gen.job_id) return pendingResult({ base, jobId: gen.job_id, what: 'avatar mesh (rig it with rig_mesh once done)', prompt: prompt || undefined, etaRemainingSeconds: gen.eta_remaining_seconds, stage: 'mesh' });
 	if (gen._timedOut || !gen.glb_url) return toolError('Generation is taking longer than expected. Please try again.');
 
 	// Stage 2 — auto-rig the generated mesh.
@@ -494,7 +499,7 @@ async function handleForgeAvatar(args, _auth, req) {
 			],
 		};
 	}
-	if (rigged._timedOut && rigged.job_id) return pendingResult({ base, jobId: rigged.job_id, what: 'avatar rig', prompt: prompt || undefined, etaRemainingSeconds: rigged.eta_remaining_seconds });
+	if (rigged._timedOut && rigged.job_id) return pendingResult({ base, jobId: rigged.job_id, what: 'avatar rig', prompt: prompt || undefined, etaRemainingSeconds: rigged.eta_remaining_seconds, stage: 'rig' });
 	if (rigged._timedOut || !rigged.glb_url) return toolError('Rigging is taking longer than expected. Please try again.');
 	return ok({ glbUrl: rigged.glb_url, base, kind: 'avatar', prompt: prompt || undefined, rigged: true, referenceImageUrl: gen.preview_image_url });
 }

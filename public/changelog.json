@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T06:25:09.789Z",
+	"generated_at": "2026-08-28T06:32:04.505Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -22,6 +22,16 @@
 			"title": "Companion",
 			"summary": "A 3D companion that delivers your important messages in person. Connect your own Telegram bot, calendar, inbox, or phone, give each contact their own avatar and voice, and hear only what clears your bar.",
 			"link": "/companion",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "launch",
+			"title": "create-agent: one command, one 3D character",
+			"summary": "npm create @three-ws/agent turns a sentence into a rigged, downloadable 3D character with a working demo page. No account, no API key.",
+			"link": "/docs/create-agent",
 			"tags": [
 				"launch"
 			]
@@ -403,6 +413,17 @@
 			"link": null,
 			"tags": [
 				"docs"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "update",
+			"title": "One command turns a sentence into a rigged 3D character you can put on your site",
+			"summary": "Type `npm create @three-ws/agent \"a friendly cartoon astronaut\"` in a terminal and about a minute later you have a folder: the 3D model with a real skeleton so it can be posed and animated, a demo page that works when you double click it, and the two lines of HTML that put the character on your own website. No account, no API key, no signup, and nothing to install first. It also works from a photo, and it can make plain objects instead of characters. The same free lane the website uses is behind it, so what you get in the terminal is what you get on three.ws.",
+			"link": "/docs/create-agent",
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{
