@@ -3654,6 +3654,19 @@
 					"changefreq": "daily"
 				},
 				{
+					"path": "/ship",
+					"title": "Ship log",
+					"description": "Every release note joined to the commits that produced it, with a confidence score and the reasoning behind every link.",
+					"priority": 0.7,
+					"changefreq": "daily",
+					"added": "2026-08-28"
+				},
+				{
+					"path": "/docs/shipfeed",
+					"title": "Docs · Ship log",
+					"description": "How three.ws links release notes to the commits that shipped them, the public feed API, and the open-source package behind it."
+				},
+				{
 					"path": "/docs/ar",
 					"title": "Docs: AR Viewing",
 					"description": "Documentation for augmented-reality viewing of three.ws models and avatars.",
