@@ -34,6 +34,24 @@ same day, because that clock is the critical path and nothing else in this file 
 
 1. **Create the account** ($25 one time) and complete identity or business verification. Set
    `developer.account_type` in `config.yaml` to whichever you chose.
+1a. **Device verification: do NOT use the Seeker that holds funds.** New personal
+   accounts must prove access to a real Android device by signing into the Play
+   Console mobile app on it. Any non-rooted physical device running Android 10 or
+   newer qualifies, an emulator does not, and the check takes under a minute.
+
+   Use a cheap dedicated handset, not the cold-storage Seeker. The Seed Vault is
+   a secure element, so a Google account on the device cannot read the seed and
+   no installed app can extract it. That is not the risk. The risk is that a
+   Google account on the device enables Find My Device, so a compromise of that
+   Google account can remotely wipe the phone, and a wipe with no offline seed
+   backup is a permanent loss that never touched the secure element. The same
+   compromise can push apps to the device from the web Play Store, which is the
+   setup for an overlay attack against a signing prompt the owner does approve.
+   A test device is needed for closed testing anyway.
+
+   Organization accounts appear to skip this step along with the 12-tester rule;
+   confirm it in the live flow before buying hardware.
+
 2. **Create the app** with the title in `listing/title.txt` and the default language in
    `config.yaml`.
 3. **Fill the App content forms.** Every answer is written down already: `listing/data-safety.md`,
