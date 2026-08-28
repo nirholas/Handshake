@@ -1006,6 +1006,27 @@
 				"kind": "live",
 				"reason": "Needs Playwright plus a running server, because the thing under test is how the page behaves when a specific request is aborted or rewritten mid-load. A static fixture cannot fail a fetch the page has not made yet."
 			}
+		},
+		{
+			"id": "check-fetch-timeouts",
+			"script": "scripts/check-fetch-timeouts.mjs",
+			"npm": "check:fetch-timeouts",
+			"title": "No outbound call without a deadline",
+			"protects": "Every fetch to a third-party host is bounded, so one stalled upstream cannot hold a request open until the platform kills it.",
+			"why": "A fetch with no signal has no deadline at all: undici's defaults run to minutes, so an upstream that accepts a connection and then stalls holds the whole invocation and takes the request budget of every fallback behind it. From the outside that is not a slow provider, it is a dead endpoint, a dead cron, or a page that spins forever. Only the deadline is enforced, because retries, provider ladders and last-good tiers are judgement calls per call site while a deadline never is. The checker balances parentheses to read each call's real extent, since signal is conventionally the last key of an options object and a fixed window would report a bounded call as unbounded exactly when its options are longest.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A fetch to a third-party host added with no signal and no bounding wrapper.",
+				"violation": {
+					"append": {
+						"api/_lib/rugcheck.js": "\n// Proof fixture: an unbounded call to a third-party host.\nexport async function _proofUnboundedFetch() {\n\treturn fetch('https://api.rugcheck.xyz/v1/proof');\n}\n"
+					}
+				},
+				"expect": "rugcheck.js"
+			}
 		}
 	],
 	"exempt": [

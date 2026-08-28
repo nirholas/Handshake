@@ -91,6 +91,7 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | Merge-conflict markers | `npm run check:conflicts` | No unresolved conflict marker can be built or deployed. |
 | CLAUDE.md truth check | `npm run check:claude` | Every script, path, count, and runbook step named in CLAUDE.md matches the repo. |
 | Vendored worker modules | `npm run check:vendored` | Every copy of a shared worker module (`worker_security.py`, `oin.py`, `oin_upload.py`, `gltf_meshopt.py` and its test) is byte-identical across all workers. |
+| No unbounded outbound call | `npm run check:fetch-timeouts` | Every fetch to a third-party host carries a deadline, so one stalled upstream cannot hold a request until the platform kills it. |
 | Hard rules, diff scoped | `npm run check:rules` | The CLAUDE.md hard rules on the lines you changed. |
 | The guard registry | `npm run audit:guards` | Every guard is registered and every stage claim is true. |
 | Design-token ratchet | `npm run audit:tokens` | Hardcoded colour hexes cannot creep back past a committed baseline. |
