@@ -45,6 +45,12 @@ npm install @three-ws/herald
 npm install @three-ws/walk three
 ```
 
+The avatar presenter finds a companion in three places, cheapest first: one you
+pass in (`createHerald({ companion })`), one already live on the page
+(`window.__walkCompanion`, which is what every three.ws page has), or a module
+URL you name (`avatarOptions: { walkModule: '/walk-companion.js' }`). None of
+them is a static import, so the optional 3D body can never break a build.
+
 ```js
 import { createHerald } from '@three-ws/herald';
 

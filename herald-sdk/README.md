@@ -159,8 +159,25 @@ Reasons are stable strings: `duplicate`, `stale`, `below-importance-floor`,
 
 | Presenter | Needs | Used when |
 | --- | --- | --- |
-| `avatar` | `@three-ws/walk` or the CDN build, WebGL | A body can be rendered |
+| `avatar` | A walk companion and WebGL | A body can be rendered |
 | `card` | Nothing | Everything else |
+
+The avatar presenter looks for a companion in three places, cheapest first: one
+you passed in, one already live on the page (`window.__walkCompanion`), or a
+module URL you name.
+
+```js
+import { createWalkCompanion } from '@three-ws/walk';
+
+const walk = createWalkCompanion();
+const herald = createHerald({ companion: walk });          // hand it over, or
+
+createHerald({ avatarOptions: { walkModule: '/walk-companion.js' } });  // name a build
+```
+
+The import is never a static specifier, so an optional 3D body can never become
+a hard build-time dependency: with none of the three available, deliveries use
+the card and nothing breaks.
 
 `presenter: 'auto'` (the default) tries the avatar and falls back to the card,
 per page, once. The card is not a consolation prize: it is theme-aware, honours

@@ -1027,6 +1027,27 @@
 				},
 				"expect": "rugcheck.js"
 			}
+		},
+		{
+			"id": "check-ios-icons",
+			"script": "ios/scripts/make-icons.mjs",
+			"npm": "check:ios-icons",
+			"title": "The iOS app icon still is the brand mark",
+			"protects": "The committed app icon and launch images are exactly what the current brand mark produces, and the icon carries no alpha channel.",
+			"why": "The iOS icon is the one asset that cannot be generated at build time: it is compiled into the .ipa from Assets.xcassets, so whatever is committed is what ships to every home screen. Both failure modes are silent. A hand-exported replacement drifts away from public/pwa-512x512.png and nothing anywhere notices, so the app wears a stale mark for a release cycle. And an icon that reaches App Store Connect with an alpha channel is rejected outright, which surfaces at upload time on someone else's Mac, hours after the change that caused it. Re-deriving the assets and comparing bytes catches both before either can leave the repository.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "The committed app icon replaced with bytes the brand mark does not produce.",
+				"violation": {
+					"write": {
+						"ios/native/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png": "not the brand mark\n"
+					}
+				},
+				"expect": "app icon"
+			}
 		}
 	],
 	"exempt": [
