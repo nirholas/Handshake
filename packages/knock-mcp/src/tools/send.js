@@ -1,4 +1,4 @@
-// `knock_send` — get one message through to a person.
+// `knock_send`: get one message through to a person.
 //
 // This tool deliberately CANNOT spend. A free door is sent immediately, because
 // nothing moves. A priced door returns the exact recipient, amount, token and

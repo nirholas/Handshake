@@ -1,8 +1,8 @@
-// GET /api/render/animate — an animated avatar as a single image file.
+// GET /api/render/animate: an animated avatar as a single image file.
 //
 //   https://three.ws/api/render/animate?avatar=<id>&clip=wave
 //   https://three.ws/api/render/animate?src=https://example.com/model.glb&clip=idle
-//   https://three.ws/api/render/animate                      → the clip catalog
+//   https://three.ws/api/render/animate                      (the clip catalog)
 //
 // The output is an animated PNG: one file, no player, no script, no WebGL. It
 // plays in every current browser, in a GitHub README, in a Notion page, in a
@@ -16,16 +16,16 @@
 // the whole sequence. Twenty frames cost about as much as one chromium boot.
 //
 // Query parameters:
-//   avatar  — avatar UUID (public avatars only), or
-//   src     — any public GLB URL (SSRF-guarded, byte-capped)
-//   clip    — clip name from the built-in motion library (default: idle)
-//   frames  — 1..48 (default 20)
-//   fps     — 1..30 (default 16)
-//   size    — 64..640 square (default 320); width/height override it
-//   bg      — 'transparent' or a hex colour (default: transparent)
-//   focus   — full | bust | head (default: full)
-//   spin    — 0..360 degrees of turntable spread across the loop (default: 0)
-//   t       — seconds into the clip for the first frame (default: 0)
+//   avatar  = avatar UUID (public avatars only), or
+//   src     = any public GLB URL (SSRF-guarded, byte-capped)
+//   clip    = clip name from the built-in motion library (default: idle)
+//   frames  = 1..48 (default 20)
+//   fps     = 1..30 (default 16)
+//   size    = 64..640 square (default 320); width/height override it
+//   bg      = 'transparent' or a hex colour (default: transparent)
+//   focus   = full | bust | head (default: full)
+//   spin    = 0..360 degrees of turntable spread across the loop (default: 0)
+//   t       = seconds into the clip for the first frame (default: 0)
 //
 // A caller that wants one still frame should use /api/render/glb or
 // /api/avatar/render; this route always returns a loop.
@@ -136,7 +136,7 @@ export default wrap(async function handler(req, res) {
 			res,
 			200,
 			{
-				renders: 'animated PNG (APNG) — plays in any <img> tag, README or embed',
+				renders: 'animated PNG (APNG). Plays in any <img> tag, README or embed.',
 				usage: '/api/render/animate?avatar=<id>&clip=<name>',
 				params: {
 					avatar: 'avatar UUID (public avatars only)',

@@ -1,4 +1,4 @@
-// `knock_act` — answer, dismiss, or block one knock. Authenticated write.
+// `knock_act`: answer, dismiss, or block one knock. Authenticated write.
 
 import { z } from 'zod';
 import { apiRequest } from '../lib/api.js';

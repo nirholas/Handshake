@@ -1,4 +1,4 @@
-// `knock_inbox` — the knocks YOUR door has taken. Authenticated, read-only.
+// `knock_inbox`: the knocks YOUR door has taken. Authenticated, read-only.
 
 import { z } from 'zod';
 import { apiRequest } from '../lib/api.js';

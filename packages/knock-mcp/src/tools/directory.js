@@ -1,4 +1,4 @@
-// `knock_directory` — everyone reachable right now. Read-only, no credential.
+// `knock_directory`: everyone reachable right now. Read-only, no credential.
 
 import { z } from 'zod';
 import { apiRequest } from '../lib/api.js';

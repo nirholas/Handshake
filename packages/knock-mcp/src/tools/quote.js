@@ -1,4 +1,4 @@
-// `knock_quote` — what it costs to reach one person. Read-only, no credential.
+// `knock_quote`: what it costs to reach one person. Read-only, no credential.
 
 import { z } from 'zod';
 import { apiRequest } from '../lib/api.js';

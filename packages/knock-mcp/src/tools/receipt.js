@@ -1,4 +1,4 @@
-// `knock_receipt` — what became of a knock you sent. Read-only, no credential.
+// `knock_receipt`: what became of a knock you sent. Read-only, no credential.
 
 import { z } from 'zod';
 import { apiRequest } from '../lib/api.js';
