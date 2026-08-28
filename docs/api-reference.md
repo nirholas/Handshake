@@ -1574,11 +1574,13 @@ GET  /api/render/glb?glbUrl=<url>&width=1200&height=630&background=%230a0a0a
 POST /api/render/glb   { "glbUrl": "...", "width": 1024, "height": 1024, "background": "#0a0a0a" }
 ```
 
-Public renderer: any public GLB URL in, a PNG out (headless chromium +
-`<model-viewer>`, the same pipeline the OG cards use). The GET form makes a
-render URL-addressable for `og:image` unfurls, `<img>` tags, and markdown
-embeds; responses CDN-cache for a day so crawlers hit chromium once per
-model. Dimensions clamp to 64-2048; GLBs over 10 MB are rejected before the
+Public renderer: any public GLB URL in, a PNG out, the same pipeline the OG
+cards use. Renders run on a CPU software rasterizer in-process (typically
+200-900 ms, no browser); headless chromium stays as the failover for models
+whose geometry or textures need a decoder the rasterizer does not ship (Draco,
+KTX2/Basis). The GET form makes a render URL-addressable for `og:image`
+unfurls, `<img>` tags, and markdown embeds; responses CDN-cache for a day so
+crawlers render once per model. Dimensions clamp to 64-2048; GLBs over 10 MB are rejected before the
 browser boots; only public http(s) sources are fetched (SSRF-guarded);
 60 renders / 10 min / IP, a budget shared with `/api/render/avatar-clip`.
 
@@ -1611,6 +1613,50 @@ failing. `cameraOrbit.theta`/`phi` are degrees (yaw, and pitch from the top);
 `radius` is meters, or `null` to auto-frame from the bounding box. An unknown
 `posePresetId` is `400 unknown_pose`. Same 10 MB cap, SSRF guard, and render
 budget as `/api/render/glb`.
+
+### Animated avatar renderer: `GET /api/render/animate`
+
+```
+GET /api/render/animate                                  (the clip catalog)
+GET /api/render/animate?avatar=<id>&clip=wave
+GET /api/render/animate?src=https://example.com/model.glb&clip=idle&size=256
+→ image/png (an animated PNG)
+```
+
+One URL, one file, a moving avatar. The response is an animated PNG, so it
+plays anywhere a still image works: an `<img>` tag, a GitHub README, a Notion
+page, a Discord embed. There is no player, no script and no WebGL involved on
+either side.
+
+```markdown
+![my agent](https://three.ws/api/render/animate?avatar=<id>&clip=wave&size=256)
+```
+
+| Parameter | Meaning |
+|---|---|
+| `avatar` | Avatar UUID. Public avatars only; a private one is `404`. |
+| `src` | Any public GLB URL instead of an avatar id (SSRF-guarded, 12 MB cap). |
+| `clip` | Clip name from the catalog above. Default `idle`. |
+| `frames` | 1-48, default 20. |
+| `fps` | 1-30, default 16. |
+| `size` | 64-640 square, default 320. `width`/`height` override it. |
+| `bg` | `transparent` (default) or a CSS colour. |
+| `focus` | `full`, `bust` or `head`. Default `full`. |
+| `spin` | 0-360 degrees of turntable spread across the loop. |
+| `t` | Seconds into the clip for the first frame. |
+
+The clip is retargeted onto the model's own skeleton by bone name, so one
+library clip drives Ready Player Me, Avaturn, VRM, Mixamo and Blender rigs
+alike. A body that cannot take the clip (no humanoid skeleton) still animates:
+the loop falls back to a full turntable rather than an error.
+
+Calling with no parameters returns the catalog: every clip name, label and
+duration in the built-in motion library. Unknown clip names are
+`400 unknown_clip` and list the alternatives. Same 60 renders / 10 min / IP
+budget as the renderers above; responses CDN-cache for a week.
+
+Rendering is done by [`@three-ws/render`](../packages/render/README.md), the
+GPU-free software rasterizer that also backs the OG cards.
 
 ### Forge-Off votes — `POST /api/forge-vote`
 

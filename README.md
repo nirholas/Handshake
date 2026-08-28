@@ -10652,7 +10652,7 @@ three.ws ships in five phases. Each phase closes a specific gap between the curr
 | **2** | Agent personalization + voice cloning                                                  | 🟡 In progress — voice clone, persona, memory seeds shipped behind `/demos`; main-flow integration next        |
 | **3** | Onchain economy (agent tokens, reputation markets, royalties)                          | 🟡 In progress: bonding-curve sim, EAS-reputation viewer, 0xsplits + EAS SDKs landed; per-call skill royalties accrue on paid skill calls (`royalty_ledger`); contracts + audits next |
 | **4** | Open inference network (decentralized GPU layer)                                       | 🟡 Live core: open node-operator client (CPU + CUDA images) + `/api/nodes` job queue with signed, server-recomputed receipts shipped; Livepeer federation behind a flag               |
-| **5** | Native widgets (agent on your home screen and desktop)                                  | 🔵 Planned: Android app widget inside the shipped `ws.three.app` TWA first, then Windows 11, then macOS and iOS                    |
+| **5** | Native widgets (agent on your home screen and desktop)                                  | 🟡 In progress: Glance shipped the card endpoint, the Windows 11 widget (installs from the PWA manifest, no store) and the `<agent-glance>` element; Android app widget next, then macOS and iOS |
 
 ---
 
@@ -10772,20 +10772,22 @@ This is a different product from the embeddable web widgets at [three.ws/widgets
 
 **Order of delivery**
 
-| # | Surface | Shell needed | Notes |
-| - | ------- | ------------ | ----- |
-| 1 | Android home screen | Already shipped (`ws.three.app`) | Native `AppWidgetProvider` overlay added to the Bubblewrap project, refreshed by `WorkManager`, tapping deep links into the TWA |
-| 2 | Windows 11 widgets board | None | The installed PWA declares a `widgets` manifest member and an Adaptive Card template; the service worker answers `widgetinstall` and `widgetclick` |
-| 3 | macOS | Small SwiftUI host app | WidgetKit extension plus a menu bar companion; needs an Apple Developer account |
-| 4 | iOS | App Store wrapper | Same WidgetKit extension target as macOS; gated on shipping the iOS app itself |
+| # | Surface | Shell needed | Status |
+| - | ------- | ------------ | ------ |
+| 1 | Windows 11 widgets board | None | **Shipped.** The installed PWA declares a `widgets` manifest member and an Adaptive Card template ([/api/glance/template](api/glance/template.js)); the service worker ([public/glance-sw.js](public/glance-sw.js)) answers `widgetinstall`, `widgetresume`, `widgetclick` and `periodicsync` |
+| 2 | Any web page | None | **Shipped.** `<agent-glance>` ([public/glance/element.js](public/glance/element.js)), plus one SVG URL for a README, a Slack unfurl, or any `<img>` |
+| 3 | Android home screen | Already shipped (`ws.three.app`) | Next. Native `AppWidgetProvider` overlay added to the Bubblewrap project, refreshed by `WorkManager`, tapping deep links into the TWA. The card endpoint it needs is live |
+| 4 | macOS | Small SwiftUI host app | WidgetKit extension plus a menu bar companion; needs an Apple Developer account |
+| 5 | iOS | App Store wrapper | Same WidgetKit extension target as macOS; gated on shipping the iOS app itself |
 
 **Deliverables**
 
-- A cacheable widget data endpoint: one signed, per-account URL returning the agent card as a PNG (Android, macOS, iOS) and as JSON for the Windows Adaptive Card, built on the existing render pipeline rather than a second renderer
+- ✅ A cacheable card endpoint, [/api/glance/card](api/glance/card.js), serving one model as JSON, SVG and Adaptive Card, plus [/api/glance/mine](api/glance/mine.js) for the signed-in owner's own agent. Spec: [specs/GLANCE_CARD.md](specs/GLANCE_CARD.md)
+- ✅ Windows 11 widget through the PWA manifest, so it installs with no separate store submission, degrading to the last cached card when the machine is offline and to a sign-in card when nobody is signed in
+- ✅ Card content that is worth a home screen slot: the agent, one live number (actions in the last 24 hours), its last action, and a direct way back in
+- ✅ A playground and install guide at [/glance](public/glance/index.html), and an npm client, [@three-ws/agent-glance](packages/agent-glance), with a terminal renderer
 - Android app widget in three sizes, refreshed on a battery-aware schedule, degrading to the last cached card when the device is offline
-- Windows 11 widget through the PWA manifest, so it installs with no separate store submission
 - A native shell for Apple platforms, which is also the prerequisite for an iOS build of three.ws
-- Widget content that is worth a home screen slot: the agent, its recent activity, and a direct action (create, chat, open my agents)
 
 **Verification:** a widget installed from the Android app updates without opening the app, survives a reboot and airplane mode, and returns the user into the right screen on tap. Work order: [prompts/roadmap/native-widgets.md](prompts/roadmap/native-widgets.md).
 
