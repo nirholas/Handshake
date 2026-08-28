@@ -43,10 +43,11 @@ the top of [`api/_lib/feedback/triage.js`](../api/_lib/feedback/triage.js).
 ## How a report travels
 
 1. **Capture.** [`src/feedback-companion.js`](../src/feedback-companion.js)
-   installs two bounded ring buffers at module load (window errors and
-   unhandled rejections in one, failed fetches and failed resource loads in the
-   other). No timers, no network, nothing sent anywhere: this costs nothing
-   until something goes wrong.
+   starts [`@three-ws/witness`](./witness.md) at module load, before the
+   companion finishes mounting. It keeps a bounded semantic trace: the sequence
+   of intents plus the failures, with a stable selector for every element
+   touched and no typed value ever held. No timers, no network, nothing sent
+   anywhere: this costs nothing until something goes wrong.
 2. **The ask.** On a real failure the companion offers, once per route per
    session, never in a background tab, and never again on a route where the
    visitor said "not now". The chrome control next to the narration and trails
@@ -64,8 +65,29 @@ the top of [`api/_lib/feedback/triage.js`](../api/_lib/feedback/triage.js).
    a fact and a model that decides it does not matter should not be able to
    bury it.
 5. **Read.** `/feedback` groups reports into one row per distinct problem,
-   loudest first, showing how many people hit each one. A maintainer accepts,
-   fixes, or dismisses.
+   loudest first, showing how many people hit each one. A cluster with a
+   recorded session carries a **Copy test** button. A maintainer accepts, fixes,
+   or dismisses.
+
+## From report to failing test
+
+Every report also carries the **session** the visitor recorded: the sequence of
+things they did, with a stable selector synthesized for each one, and the failure
+at the end. That trace compiles into a Playwright spec which asserts the failure
+is gone, so it is red while the bug exists and green once it is fixed.
+
+```bash
+npm run feedback:repro -- --list        # reports with a replayable session
+npm run feedback:repro -- <id> --run    # compile it and watch it fail
+```
+
+The reconstruction step, which is where most bug reports die, is done before a
+maintainer opens the queue. Full detail, including the selector ladder and the
+privacy rules: [Witness](./witness.md).
+
+Nothing about this changes the boundary above. The trace is machine-written data
+validated by shape at the API edge, the compiler is a pure function with no
+network and no filesystem, and the output is a file a human chooses to run.
 
 ## Severity
 
@@ -110,13 +132,19 @@ curl -X POST https://three.ws/api/feedback/report \
     "viewport": "390x844@3",
     "locale": "en-GB",
     "console_errors": ["TypeError: exportGLB is not a function (studio.js:412)"],
-    "failed_requests": ["POST /api/export -> 500"]
+    "failed_requests": ["POST /api/export -> 500"],
+    "trace": { "version": 1, "environment": {}, "events": [{ "type": "goto", "detail": "/avatar-studio" }] }
   }'
 ```
 
 ```json
-{ "ok": true, "id": "8c2f...", "received_at": "2026-08-28T14:02:11.884Z" }
+{ "ok": true, "id": "8c2f...", "received_at": "2026-08-28T14:02:11.884Z", "replayable": true }
 ```
+
+`trace` is optional and machine-written by [`@three-ws/witness`](./witness.md).
+It is validated by shape at this boundary (known event types only, 80 events,
+every string capped), because the endpoint is open to anyone. `replayable` says
+whether a usable trace survived that validation.
 
 Rate limited to 20 reports per hour per account, browser key, or IP. Every text
 field is capped server-side and the two signal lists keep their first five
@@ -135,14 +163,26 @@ entries.
 
 Pass `id` instead of `cluster` to move a single report.
 
+### `GET /api/feedback/repro?id=<report id>` (admin)
+
+The report as a runnable Playwright spec. `&format=json` returns the source
+alongside the narrated steps and the replay confidence; `&base=<origin>` points
+the replay somewhere other than production. See [Witness](./witness.md).
+
 ## What this deliberately does not do
 
 It does not write code, open pull requests, change configuration, or deploy.
 Those would each be a new decision with its own gate, and none of them should
-ever be triggered by text typed into a box by an anonymous visitor. If a
-proposal layer is ever built on top of this queue, the input to it must be the
-structured triage record a person has already accepted, never the raw report,
-and its output must be a pull request a person merges.
+ever be triggered by text typed into a box by an anonymous visitor.
+
+What it does instead is remove the reason people wanted that: the expensive part
+of acting on a bug report was never writing the fix, it was reproducing the bug.
+A compiled repro hands that over without handing over any authority. An agent
+with `feedback:read` can pull a reproduction over MCP, run it, change code in a
+branch, and run it again to prove the fix, and the pull request still needs a
+human to merge it. If a proposal layer is ever built here, that is its shape: the
+input is the structured triage record a person already accepted plus a spec that
+reproduces the failure, never the raw report, and the output is a pull request.
 
 ## Related
 
