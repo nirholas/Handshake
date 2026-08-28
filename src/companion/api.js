@@ -25,9 +25,13 @@ async function request(path, { method = 'GET', body = null, allowAnonymous = fal
 		}
 	}
 	if (!res.ok) {
-		const err = new Error(data?.message || data?.error || `request failed (${res.status})`);
+		// The platform's error envelope is { error: <machine code>,
+		// error_description: <sentence for a human> } (api/_lib/http.js). Reading
+		// `error` as the message is how a user ends up looking at
+		// "source_disconnected" instead of being told what to do about it.
+		const err = new Error(data?.error_description || data?.message || `request failed (${res.status})`);
 		err.status = res.status;
-		err.code = data?.code || null;
+		err.code = data?.error || data?.code || null;
 		throw err;
 	}
 	return data;
@@ -55,6 +59,7 @@ export const companionApi = {
 		if (loudOnly) params.set('min_importance', String(threshold));
 		return request(`/api/companion/events?${params.toString()}`);
 	},
+	reply: (id, text) => request(`/api/companion/events/${encodeURIComponent(id)}/reply`, { method: 'POST', body: { text } }),
 	markEvent: (id, patch) => request(`/api/companion/events/${encodeURIComponent(id)}`, { method: 'PATCH', body: patch }),
 
 	avatars: () => request('/api/avatars?limit=100'),

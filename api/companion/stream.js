@@ -115,6 +115,7 @@ export default async function handleCompanionStream(req, res) {
 			const rows = await sql`
 				select e.id, e.source_kind, e.sender, e.sender_id, e.title, e.body, e.url,
 				       e.importance, e.reason, e.spoken_line, e.occurs_at, e.created_at,
+				       (e.reply_to is not null) as can_reply,
 				       c.display_name as contact_name, c.avatar_glb_url as contact_avatar_glb_url,
 				       c.avatar_image_url as contact_avatar_image_url, c.voice as contact_voice
 				from companion_events e

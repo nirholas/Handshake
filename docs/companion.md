@@ -164,6 +164,23 @@ Above your threshold and outside quiet hours, it is **spoken**. Below it, it is
 **kept**, with the score and the reason, in the feed on
 [/companion](https://three.ws/companion).
 
+### Answering it
+
+The companion brings you a message; going to find the app to answer it is where
+the illusion breaks. Any delivery whose lane can carry an answer gets a **Reply**
+box in place, under the message, in the feed:
+
+- **Telegram** replies through your own bot, into the same chat, quoting the
+  message it answers. Enter sends, Shift+Enter is a newline.
+- A calendar reminder and a phone notification have nothing to reply to, so they
+  do not offer the box at all rather than offering one that fails.
+- Answering mail would need SMTP credentials this feature deliberately never
+  asks for, so email is read only.
+
+Programmatically: `POST /api/companion/events/:id/reply { text }`, or
+`companion.reply(id, text)` in the SDK. The reply is stored with the message, so
+the feed reads as a conversation rather than a receipt.
+
 ---
 
 ## Who gets a face
@@ -278,6 +295,7 @@ Everything the page does, you can do. Session cookie or bridge token.
 | `/api/companion/stream` | GET | Live deliveries as Server-Sent Events. |
 | `/api/companion/events` | GET | The feed, with scores and reasons. |
 | `/api/companion/events/:id` | PATCH | Mark delivered or dismissed. |
+| `/api/companion/events/:id/reply` | POST | Answer through the connection it arrived on. |
 | `/api/companion/sources` | GET, POST | List or connect a source (verified before saving). |
 | `/api/companion/sources/:id` | PATCH, DELETE, POST | Rename, pause, disconnect, or check now. |
 | `/api/companion/contacts` | GET, POST | The people who get a face. |
@@ -297,6 +315,7 @@ A delivery on the stream carries everything a body needs to perform it:
   "avatar_glb_url": "https://three.ws/api/avatars/…/glb",
   "voice": "nova",
   "source_kind": "telegram",
+  "can_reply": true,
   "created_at": "2026-08-28T12:04:11.221Z"
 }
 ```

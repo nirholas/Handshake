@@ -44,9 +44,10 @@ describe('createCompanionClient', () => {
 		expect(() => client.send({ body: 'no title' })).toThrow(CompanionError);
 	});
 
-	it('surfaces the server error message and status', async () => {
+	it('surfaces the human sentence, not the machine code, and keeps the status', async () => {
 		const fetchImpl = vi.fn().mockResolvedValue(
-			jsonResponse({ code: 'unauthorized', message: 'unknown bridge token' }, { status: 401 }),
+			// The real envelope three.ws sends (api/_lib/http.js error()).
+			jsonResponse({ error: 'unauthorized', error_description: 'unknown bridge token' }, { status: 401 }),
 		);
 		const client = createCompanionClient({ token: 'bad', fetch: fetchImpl });
 		await expect(client.send({ title: 'hi' })).rejects.toMatchObject({

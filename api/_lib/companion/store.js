@@ -232,15 +232,17 @@ export async function insertEvent(userId, event) {
 	const [row] = await sql`
 		insert into companion_events
 			(user_id, source_id, source_kind, external_id, contact_id, sender, sender_id,
-			 title, body, url, importance, reason, spoken_line, triage_engine, occurs_at)
+			 title, body, url, importance, reason, spoken_line, triage_engine, occurs_at, reply_to)
 		values (${userId}, ${event.source_id ?? null}, ${event.source_kind}, ${event.external_id},
 		        ${event.contact_id ?? null}, ${event.sender ?? null}, ${event.sender_id ?? null},
 		        ${event.title}, ${event.body ?? null}, ${event.url ?? null},
 		        ${event.importance}, ${event.reason ?? null}, ${event.spoken_line ?? null},
-		        ${event.triage_engine ?? 'rules'}, ${event.occurs_at ?? null})
+		        ${event.triage_engine ?? 'rules'}, ${event.occurs_at ?? null},
+		        ${event.reply_to ? JSON.stringify(event.reply_to) : null})
 		on conflict (user_id, source_kind, external_id) do nothing
 		returning id, source_kind, external_id, contact_id, sender, sender_id, title, body, url,
-		          importance, reason, spoken_line, triage_engine, occurs_at, delivered_at, created_at
+		          importance, reason, spoken_line, triage_engine, occurs_at, delivered_at, created_at,
+		          (reply_to is not null) as can_reply
 	`;
 	return row || null;
 }
@@ -252,6 +254,7 @@ export async function listEvents(userId, { limit = 30, before = null, pendingOnl
 		select e.id, e.source_kind, e.sender, e.sender_id, e.title, e.body, e.url,
 		       e.importance, e.reason, e.spoken_line, e.triage_engine, e.occurs_at,
 		       e.delivered_at, e.dismissed_at, e.created_at,
+		       (e.reply_to is not null) as can_reply, e.replied_at, e.reply_text,
 		       c.display_name as contact_name, c.avatar_glb_url as contact_avatar_glb_url,
 		       c.avatar_image_url as contact_avatar_image_url, c.voice as contact_voice
 		from companion_events e
@@ -271,6 +274,33 @@ export async function markEvent(userId, id, { delivered = false, dismissed = fal
 			dismissed_at = ${dismissed ? sql`coalesce(dismissed_at, now())` : sql`dismissed_at`}
 		where id = ${id} and user_id = ${userId}
 		returning id, delivered_at, dismissed_at
+	`;
+	return row || null;
+}
+
+// One event with everything a reply needs: the lane, the source's decrypted
+// credentials, and the routing the lane stored when the message arrived.
+export async function getReplyTarget(userId, eventId) {
+	const [row] = await sql`
+		select e.id, e.source_kind, e.reply_to, e.sender, e.replied_at,
+		       s.id as source_id, s.kind as source_kind_actual, s.config_encrypted, s.enabled
+		from companion_events e
+		left join companion_sources s on s.id = e.source_id
+		where e.id = ${eventId} and e.user_id = ${userId}
+	`;
+	if (!row) return null;
+	return {
+		...row,
+		config: row.config_encrypted ? await decryptConfig(row.config_encrypted) : null,
+	};
+}
+
+export async function recordReply(userId, eventId, text) {
+	const [row] = await sql`
+		update companion_events
+		set replied_at = now(), reply_text = ${text}
+		where id = ${eventId} and user_id = ${userId}
+		returning id, replied_at, reply_text
 	`;
 	return row || null;
 }

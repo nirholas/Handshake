@@ -157,7 +157,24 @@ try {
 	});
 	check('an unauthenticated source connect is refused', badSource.status === 401);
 
-	// 9. The SSE stream authenticates with the bridge token and replays.
+	// 9. Replying. The endpoint needs a session (the E2E has none, so it is
+	// checked for the refusal), and the routing that decides whether a reply is
+	// even possible is checked directly against the stored row.
+	const bridgeEvent = feed.find((e) => e.source_kind === 'bridge');
+	const replyUnauthed = await call('../api/companion/events/[id]/reply.js', {
+		method: 'POST',
+		url: `/api/companion/events/${bridgeEvent.id}/reply`,
+		query: { id: bridgeEvent.id },
+		body: { text: 'this should not send' },
+	});
+	check('replying needs a session', replyUnauthed.status === 401);
+
+	const { getReplyTarget } = await import('../api/_lib/companion/store.js');
+	const target = await getReplyTarget(user.id, bridgeEvent.id);
+	check('a phone notification has nothing to reply to', target !== null && target.reply_to === null);
+	check('the feed reports which messages can be replied to', feed.every((e) => e.can_reply === false));
+
+	// 10. The SSE stream authenticates with the bridge token and replays.
 	const streamMod = await import('../api/companion/stream.js');
 	const res = mockRes();
 	const req = mockReq({

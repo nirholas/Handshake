@@ -68,6 +68,23 @@ function textOf(message) {
 }
 
 /**
+ * Send an answer back into the conversation the message came from.
+ *
+ * @param {object} config  the source's stored config (bot token)
+ * @param {object} replyTo the event's stored reply_to
+ * @param {string} text    what the person typed
+ */
+export async function replyTelegram(config, replyTo, text) {
+	if (!replyTo?.chat_id) throw new Error('this message has nothing to reply to');
+	const sent = await callBot(config.bot_token, 'sendMessage', {
+		chat_id: replyTo.chat_id,
+		text,
+		...(replyTo.message_id ? { reply_parameters: { message_id: replyTo.message_id, allow_sending_without_reply: true } } : {}),
+	});
+	return { message_id: sent.message_id, chat: replyTo.chat_title || null };
+}
+
+/**
  * @returns {{ items: Array, cursor: object }}
  */
 export async function pollTelegram({ config, cursor = {} }) {
@@ -98,6 +115,12 @@ export async function pollTelegram({ config, cursor = {} }) {
 			body,
 			url: message.chat?.username ? `https://t.me/${message.chat.username}` : null,
 			occurs_at: message.date ? new Date(message.date * 1000).toISOString() : null,
+			// Everything a reply needs to land in the same conversation, quoting
+			// the message it answers. Telegram is the one lane here that can
+			// carry an answer back without a second credential.
+			reply_to: message.chat?.id
+				? { chat_id: message.chat.id, message_id: message.message_id, chat_title: message.chat.title || name }
+				: null,
 		});
 	}
 

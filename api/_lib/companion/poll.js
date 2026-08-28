@@ -21,12 +21,15 @@ import {
 	dueSources,
 } from './store.js';
 import { decryptConfig } from './crypto.js';
-import { pollTelegram, verifyTelegram } from './lanes/telegram.js';
+import { pollTelegram, verifyTelegram, replyTelegram } from './lanes/telegram.js';
 import { pollCalendar, verifyCalendar } from './lanes/calendar.js';
 import { pollEmail, verifyEmail } from './lanes/email.js';
 
+// A lane can poll, verify a credential, and (where the protocol allows it)
+// carry an answer back. Only Telegram can reply today: an ICS feed is read only,
+// and answering mail would need SMTP credentials this feature never asks for.
 const LANES = {
-	telegram: { poll: pollTelegram, verify: verifyTelegram },
+	telegram: { poll: pollTelegram, verify: verifyTelegram, reply: replyTelegram },
 	calendar: { poll: pollCalendar, verify: verifyCalendar },
 	email: { poll: pollEmail, verify: verifyEmail },
 };
@@ -77,6 +80,7 @@ export async function ingestItem(settings, raw, { anthropicKey = null } = {}) {
 		title: raw.title,
 		body: raw.body ?? null,
 		url: raw.url ?? null,
+		reply_to: raw.reply_to ?? null,
 		importance: verdict.importance,
 		reason: verdict.reason,
 		spoken_line: verdict.line,

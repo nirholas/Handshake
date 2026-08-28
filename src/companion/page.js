@@ -198,6 +198,7 @@ function renderFeed() {
 			<div class="event-icon">${SOURCE_ICON[event.source_kind] || '📨'}</div>
 			<div class="event-main">
 				<div class="event-line">${esc(event.spoken_line || event.title)}</div>
+				${event.replied_at ? `<div class="event-reply">You replied: ${esc(event.reply_text || '')}</div>` : ''}
 				<div class="event-sub">
 					<span>${esc(event.contact_name || event.sender || 'Unknown')}</span>
 					<span class="meter" title="${esc(event.reason || '')}"><span class="${importanceClass(event.importance)}" style="width:${Math.max(3, event.importance)}%"></span></span>
@@ -207,12 +208,67 @@ function renderFeed() {
 				</div>
 			</div>
 			<div class="event-actions">
+				${event.can_reply ? `<button type="button" class="btn btn-sm" data-feed-action="reply" data-id="${esc(event.id)}">Reply</button>` : ''}
 				<button type="button" class="btn btn-sm" data-feed-action="stage" data-id="${esc(event.id)}">Replay</button>
 				${event.dismissed_at ? '' : `<button type="button" class="btn btn-sm" data-feed-action="dismiss" data-id="${esc(event.id)}">Dismiss</button>`}
 			</div>
 		</div>
 	`).join('');
 	el('feed-more').hidden = state.events.length < FEED_PAGE;
+}
+
+// Replying to a delivery. Only messages whose lane can carry an answer offer
+// this, and the composer opens in place under the message rather than in a
+// modal: an answer to "are you coming?" is one line, and a dialog for one line
+// is the reason people go to the app instead.
+function openReplyBox(event, row) {
+	const existing = row.querySelector('.reply-box');
+	if (existing) {
+		existing.querySelector('textarea').focus();
+		return;
+	}
+	const box = document.createElement('form');
+	box.className = 'reply-box';
+	box.innerHTML = `
+		<textarea rows="2" maxlength="4000" placeholder="Reply to ${esc(event.contact_name || event.sender || 'them')}…" aria-label="Your reply"></textarea>
+		<div class="hero-actions">
+			<button type="submit" class="btn btn-sm btn-primary">Send</button>
+			<button type="button" class="btn btn-sm" data-cancel>Cancel</button>
+			<span class="hint" data-status></span>
+		</div>
+	`;
+	row.querySelector('.event-main').appendChild(box);
+	const textarea = box.querySelector('textarea');
+	const status = box.querySelector('[data-status]');
+	textarea.focus();
+
+	box.querySelector('[data-cancel]').addEventListener('click', () => box.remove());
+	// Enter sends, Shift+Enter is a newline: the shape every messaging app uses.
+	textarea.addEventListener('keydown', (e) => {
+		if (e.key === 'Enter' && !e.shiftKey) {
+			e.preventDefault();
+			box.requestSubmit();
+		}
+	});
+
+	box.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		const text = textarea.value.trim();
+		if (!text) return;
+		const send = box.querySelector('button[type=submit]');
+		send.disabled = true;
+		status.textContent = 'Sending…';
+		try {
+			const result = await companionApi.reply(event.id, text);
+			event.replied_at = new Date().toISOString();
+			event.reply_text = text;
+			toast(`Sent${result.to ? ` to ${result.to}` : ''}.`, { variant: 'success' });
+			renderFeed();
+		} catch (err) {
+			send.disabled = false;
+			status.textContent = err.message;
+		}
+	});
 }
 
 async function loadFeed({ append = false } = {}) {
@@ -571,6 +627,9 @@ function wireEvents() {
 		if (!button) return;
 		const event = state.events.find((row) => row.id === button.dataset.id);
 		if (!event) return;
+		if (button.dataset.feedAction === 'reply') {
+			return openReplyBox(event, button.closest('.event'));
+		}
 		if (button.dataset.feedAction === 'stage') {
 			state.stageEvent = event;
 			renderStage();

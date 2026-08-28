@@ -107,7 +107,20 @@ The stream reconnects on its own and resumes from the last delivery it saw, so a
 laptop that slept wakes up and catches what it missed (bounded server side to
 the last few hours, because a monologue is not a delivery).
 
-## 3. Put a body on a page
+## 3. Answer it
+
+A delivery whose lane can carry an answer comes back with `can_reply: true`:
+
+```js
+await companion.reply(delivery.id, 'on my way down');
+```
+
+It goes back through the same connection the message arrived on, into the same
+conversation, quoting the message it answers. Today that is Telegram, through
+the user's own bot; a calendar reminder and a phone notification have nothing to
+reply to and are refused with `not_repliable` rather than failing silently.
+
+## 4. Put a body on a page
 
 ```js
 import { createCompanionClient, createCompanionStage } from '@three-ws/companion';
@@ -135,7 +148,7 @@ stage.deliver({
 Inside a page that is already signed in to three.ws, omit the token entirely and
 the browser's session cookie is used instead.
 
-## 4. Judge a message locally, with no key
+## 5. Judge a message locally, with no key
 
 The triage rules are the same code the server runs. Import them when you want
 the judgement without sending anything anywhere:
@@ -162,7 +175,7 @@ is, and whatever priority the sending device already assigned.
 This is what makes a **local privacy mode** possible: score on your own machine,
 and send only the one line that earned an interruption.
 
-## 5. The command line
+## 6. The command line
 
 ```bash
 npx @three-ws/companion login --token cmp_…
@@ -227,7 +240,7 @@ Needs `@modelcontextprotocol/sdk` installed alongside this package.
 | `fetch` | platform | Override, for tests or a proxy. |
 | `retryMs` | `3000` | Stream reconnect delay. |
 
-Returns `{ send, list, markDelivered, dismiss, contacts, checkNow, stream }`.
+Returns `{ send, list, markDelivered, dismiss, reply, contacts, checkNow, stream }`.
 Every method rejects with a `CompanionError` carrying `.status` and `.code`.
 
 ### `createCompanionStage(options)`

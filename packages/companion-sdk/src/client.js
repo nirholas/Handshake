@@ -79,9 +79,12 @@ export function createCompanionClient({
 			}
 		}
 		if (!res.ok) {
-			throw new CompanionError(data?.message || data?.error || `request failed (${res.status})`, {
+			// three.ws answers errors as { error: <machine code>,
+			// error_description: <sentence> }. The sentence is what a person or a
+			// log reader needs; the code is what a program branches on.
+			throw new CompanionError(data?.error_description || data?.message || `request failed (${res.status})`, {
 				status: res.status,
-				code: data?.code || null,
+				code: data?.error || data?.code || null,
 			});
 		}
 		return data;
@@ -114,6 +117,19 @@ export function createCompanionClient({
 			return call(`/api/companion/events/${encodeURIComponent(id)}`, {
 				method: 'PATCH',
 				body: { delivered: true },
+			});
+		},
+
+		/**
+		 * Answer a delivery through the connection it arrived on. Only messages
+		 * that carry `can_reply` can take one (today: Telegram, through the
+		 * user's own bot); anything else is refused with `not_repliable`.
+		 */
+		reply(id, text) {
+			if (!String(text || '').trim()) throw new CompanionError('a reply needs some text');
+			return call(`/api/companion/events/${encodeURIComponent(id)}/reply`, {
+				method: 'POST',
+				body: { text },
 			});
 		},
 
