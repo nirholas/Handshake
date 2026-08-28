@@ -1209,9 +1209,15 @@
 			let web3Lib = null;
 			let rateState = { score: 0, asset: null, network: 'devnet', owner: null };
 
+			// Through /load-module.js, which races the same package version across
+			// esm.sh, jsdelivr and unpkg and rejects with a typed error naming
+			// every host it tried. A single-host import meant one CDN outage or one
+			// ad blocker killed the whole rate-and-vouch path; the error now lands
+			// in the submit handler's catch and is printed by setRateStatus.
 			async function loadWeb3() {
 				if (web3Lib) return web3Lib;
-				web3Lib = await import(/* @vite-ignore */ WEB3_CDN);
+				const { loadModule } = await import('/load-module.js');
+				web3Lib = await loadModule(WEB3_CDN);
 				return web3Lib;
 			}
 
