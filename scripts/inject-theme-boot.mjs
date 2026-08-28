@@ -8,7 +8,7 @@
  * key the dashboard Appearance setting and the nav toggle use), resolves 'auto'
  * against the OS scheme, and defaults to the brand dark when unset. The full
  * runtime (toggle wiring, persistence, cross-tab sync) lives in
- * public/theme-switcher.js — this is only the pre-paint apply.
+ * public/theme-switcher.js. This is only the pre-paint apply.
  *
  * Skips embed/widget/badge/artifact/kiosk contexts (they render inside hosts
  * that own their own theming) and any document without a viewport meta.
@@ -27,7 +27,7 @@ const ROOTS = [
 
 const MARKER = 'three.ws theme boot';
 const BOOT =
-	`<script>/* ${MARKER} — no-flash; runtime in /theme-switcher.js */` +
+	`<script>/* ${MARKER}: no-flash; runtime in /theme-switcher.js */` +
 	`(function(){try{var m=localStorage.getItem('twx_theme');` +
 	`var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';` +
 	`document.documentElement.setAttribute('data-theme',l?'light':'dark');}` +
