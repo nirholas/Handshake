@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Checkout Companion settings</title>
+		<link rel="stylesheet" href="popup.css">
+		<style>
+			body { width: auto; max-width: 640px; margin: 0 auto; padding: 32px 20px 64px; }
+			h2 { font-size: 15px; margin: 28px 0 8px; }
+			p { color: var(--muted); }
+			ul { color: var(--muted); padding-left: 18px; }
+			li { margin: 4px 0; }
+			.field { display: grid; gap: 6px; margin-top: 8px; }
+			input[type="password"], input[type="text"] {
+				font: inherit; padding: 9px 11px; border-radius: 9px;
+				border: 1px solid var(--line); background: transparent; color: var(--fg);
+			}
+			input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+			.actions { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+			button {
+				font: inherit; font-weight: 600; padding: 9px 14px; border-radius: 9px;
+				border: 0; background: var(--accent); color: #fff; cursor: pointer;
+				transition: filter 120ms ease;
+			}
+			button:hover { filter: brightness(1.08); }
+			button.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); }
+			button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+			#saved { font-size: 12.5px; }
+		</style>
+	</head>
+	<body>
+		<header>
+			<img src="icons/icon-48.png" width="40" height="40" alt="">
+			<div>
+				<h1>Checkout Companion</h1>
+				<p class="muted">Reads the payment page before you pay.</p>
+			</div>
+		</header>
+
+		<h2>Your account</h2>
+		<p>
+			If you are signed in to three.ws in this browser, it already works. To connect a
+			specific account instead, paste a companion bridge token from
+			<a href="https://three.ws/companion" target="_blank" rel="noopener">three.ws/companion</a>.
+			Rotating that token there disconnects every device at once.
+		</p>
+		<div class="field">
+			<label for="bridgeToken">Bridge token (optional)</label>
+			<input type="password" id="bridgeToken" autocomplete="off" spellcheck="false" placeholder="Leave blank to use your signed-in session">
+		</div>
+		<div class="actions">
+			<button id="save">Save</button>
+			<button id="clear" class="ghost">Disconnect</button>
+			<span id="saved" class="muted"></span>
+		</div>
+
+		<h2>What leaves your browser</h2>
+		<ul>
+			<li>The visible text of a page that looks like a checkout, with card numbers, bank accounts, emails, phone numbers, security codes and government ids stripped out first, in this browser.</li>
+			<li>The amounts shown on the page and the label beside each one.</li>
+			<li>The site's hostname. Never the full URL, never the query string.</li>
+		</ul>
+
+		<h2>What never leaves, and what is never kept</h2>
+		<ul>
+			<li>Anything you type. The reader refuses form fields structurally: there is no code path that reads an input, a textarea, a select, or an editable region.</li>
+			<li>Any page that is not a checkout. Those are filtered before a request exists.</li>
+			<li>Nothing about the page is stored on three.ws. The findings are computed and forgotten.</li>
+			<li>Remembered prices are one number per site, kept for an hour, and never leave this browser except as the single amount used to compare against the total.</li>
+		</ul>
+
+		<h2>Remembered prices</h2>
+		<p id="priceCount" class="muted">None.</p>
+		<div class="actions"><button id="forget" class="ghost">Forget all</button></div>
+
+		<script src="options.js" type="module"></script>
+	</body>
+</html>
