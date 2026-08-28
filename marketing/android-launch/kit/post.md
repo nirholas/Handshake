@@ -5,18 +5,18 @@ the order wrong reassembles the composition scrambled.
 
 ## The thread
 
-Twelve posts, written for someone who has never used a crypto app and had no
+Thirteen posts, written for someone who has never used a crypto app and had no
 plans to. No jargon, no version numbers, no acronyms: the specifics live in the
 replies below, and nobody needs them to understand what this is or to want it.
 
 The register is confident and grateful, never explanatory and never defensive.
 This community built the thing being launched, and the thread says so early, in
 post 2, before it asks anyone for anything. Post 1 carries the four images; 2
-through 12 are replies in order. Counts are X's own arithmetic, where a URL
-costs 23 characters however long it is, and all twelve fit inside 280 without
+through 13 are replies in order. Counts are X's own arithmetic, where a URL
+costs 23 characters however long it is, and all thirteen fit inside 280 without
 Premium.
 
-**1**, 277 characters. Attach the four tiles here, in the order in `IMAGE-ORDER.md`.
+**1**, 226 characters. Attach the four tiles here, in the order in `IMAGE-ORDER.md`.
 
 ```
 A 3D studio and an AI agent lab. In your pocket.
@@ -24,15 +24,13 @@ A 3D studio and an AI agent lab. In your pocket.
 three.ws for Android is live.
 
 Type anything, get a 3D model. One selfie, a character of you. Give it a mind and a voice. Put it in your room in AR. Send it out into the world.
-
-Free. No account needed.
-
-github.com/nirholas/three.ws/releases/tag/v1.0.0
 ```
 
-Post 1 never says Solana, wallet, coin or launchpad. Those words are the door
-that half the audience turns around at, and the thread earns them by post 6.
-The hook is what you can make, and that is universal.
+Post 1 is the hook and nothing else. No link, no price, no "no account": those
+are the reward for reading to the end, and a link in the opener is where the
+thread stops being read. It also never says Solana, wallet, coin or launchpad.
+Those words are the door that half the audience turns around at, and the thread
+earns them by post 6.
 
 **2**, 190 characters
 
@@ -138,14 +136,24 @@ NVIDIA Inception. OpenAI Select Partner. A Google for Startups Web3 cloud grant 
 Thank you. We are just getting started.
 ```
 
-**12**, 220 characters
+**12**, 219 characters
 
 ```
-The same build is in review for the Solana dApp Store, so soon it installs straight onto a Seeker.
+It is coming to Google Play and to the Solana dApp Store. Both are submitted and in review.
 
-Until then: one link, 3.95 MB, Android 6 and up, open source top to bottom.
+You do not have to wait. The app is live today, free, no account needed, Android 6 and up, 3.95 MB, open source top to bottom.
+```
 
-Go make something.
+**13**, 238 characters
+
+```
+How to install it right now:
+
+1. Open this link on your phone
+2. Tap Download anyway when Chrome warns you (it does that for every app outside a store)
+3. Open the download and tap Install
+
+Then go make something.
 
 github.com/nirholas/three.ws/releases/tag/v1.0.0
 ```
@@ -162,8 +170,9 @@ Three lines that must not drift when someone edits this:
   whole mechanism, and copy implying a burn describes a different product.
 - Post 10 quotes tier numbers. If the ladder in `docs/hold-to-access.md` moves,
   this moves with it.
-- Post 12 says the dApp Store listing is **in review**. It is not live. Claiming
-  otherwise ages badly in public, and a reviewer would see it first.
+- Post 12 says both store listings are **submitted and in review**. Neither is
+  live. Claiming otherwise ages badly in public, and a reviewer would see it
+  first. The link and the install steps live in post 13 and nowhere earlier.
 
 Nothing in the thread is apologetic, explains an absence, or answers a critic.
 Gratitude here is confidence, not a concession, and there is no version of this
@@ -206,7 +215,7 @@ screen reader, so each describes its own quadrant rather than the whole grid.
 
 ## Before posting
 
-- The Google Play listing is not live yet, so nothing here claims it is. Add the
-  Play badge to a follow-up once production access lands.
+- Neither store listing is live yet, so nothing here claims it is. Add the Play
+  and dApp Store badges to a follow-up once each one lands.
 - Owner approval is required before this goes out. See the external-channel gate
   in [`CLAUDE.md`](../../../CLAUDE.md).
