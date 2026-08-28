@@ -157,11 +157,24 @@ describe('GET /api/ca2x402/resolve', () => {
 		expect(parse(res).ok).toBe(true);
 	});
 
-	it('still reports the designed 404 when DexScreener fails for a mint it has never seen', async () => {
-		// Nothing remembered for this mint, so there is no honest answer to give:
-		// the caller gets the designed miss rather than a fabricated one.
+	it('says the indexer is unreachable, not "not found", for a mint it has never seen', async () => {
+		// Nothing remembered for this mint and the indexer is down, so there is no
+		// honest answer at all. Reporting the designed 404 here would tell someone
+		// their real token does not exist, which is exactly the claim the
+		// remembered-payload tier was added to stop making: it only ever helped a
+		// warm instance, and a cold one denied every token.
 		dexOk = false;
 		const res = await call({ query: '?mint=THREEsyntheticNeverSeen11111111111111111111' });
+		expect(res.statusCode).toBe(503);
+		expect(parse(res).error).toBe('market_unavailable');
+		expect(res.headers['retry-after']).toBeTruthy();
+	});
+
+	it('keeps the designed 404 when the indexer answers and the token genuinely has no market', async () => {
+		// The other half of the distinction: a reachable indexer reporting no
+		// pairs is a real answer about the caller's address, not an outage.
+		dexBody = { pairs: [] };
+		const res = await call({ query: '?mint=THREEsyntheticNeverSeen22222222222222222222' });
 		expect(res.statusCode).toBe(404);
 		expect(parse(res).error).toBe('token_not_found');
 	});
