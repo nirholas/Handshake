@@ -1,0 +1,56 @@
+{
+	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+	"name": "io.github.nirholas/knock-mcp",
+	"title": "three.ws Knock",
+	"description": "Reach a real person: quote their door, browse who is reachable, knock, and read the reply.",
+	"websiteUrl": "https://three.ws/knock",
+	"icons": [
+		{
+			"src": "https://three.ws/three-ws-mcp-icon.svg",
+			"mimeType": "image/svg+xml",
+			"sizes": [
+				"any"
+			]
+		}
+	],
+	"repository": {
+		"url": "https://github.com/nirholas/three.ws",
+		"source": "github",
+		"subfolder": "packages/knock-mcp"
+	},
+	"version": "0.1.0",
+	"packages": [
+		{
+			"registryType": "npm",
+			"identifier": "@three-ws/knock-mcp",
+			"version": "0.1.0",
+			"runtimeHint": "npx",
+			"transport": {
+				"type": "stdio"
+			},
+			"environmentVariables": [
+				{
+					"name": "THREE_WS_API_KEY",
+					"description": "A three.ws API key (sk_live_… / sk_test_…) or OAuth access token. Optional: needed only for knock_inbox and knock_act, which manage your own door. Quoting, browsing, knocking and reading a receipt all work without it. Treat like a password.",
+					"format": "string",
+					"isRequired": false,
+					"isSecret": true
+				},
+				{
+					"name": "THREE_WS_BASE",
+					"description": "Base URL of the three.ws API. Override only when self-hosting or targeting a preview deployment.",
+					"format": "string",
+					"isRequired": false,
+					"default": "https://three.ws"
+				},
+				{
+					"name": "THREE_WS_TIMEOUT_MS",
+					"description": "Per-request timeout in milliseconds.",
+					"format": "number",
+					"isRequired": false,
+					"default": "20000"
+				}
+			]
+		}
+	]
+}
