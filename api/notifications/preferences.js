@@ -1,7 +1,8 @@
 // Unified notification preference center.
 //
 //   GET /api/notifications/preferences
-//     → { categories: [...], channels: [...], prefs: {...}, push: {...} }
+//     → { categories: [...], channels: [...], type_categories: {...},
+//         prefs: {...}, push: {...} }
 //        the full resolved matrix + metadata the UI renders from.
 //   PUT /api/notifications/preferences   { categories: {...}, telegram_chat_id }
 //     → merge a sanitised sparse override onto what is already stored; unknown
@@ -25,6 +26,7 @@ import {
 	readStoredPrefs,
 	resolvePrefs,
 	sanitizePrefs,
+	typeCategoryMap,
 } from '../_lib/notify-prefs.js';
 
 const putBody = z.object({
@@ -55,6 +57,10 @@ export default wrap(async (req, res) => {
 		return json(res, 200, {
 			categories: CATEGORIES,
 			channels: CHANNELS,
+			// The avatar channel is delivered client-side (src/notification-herald.js),
+			// so the browser needs the same type to category mapping the server
+			// gates push and email with. Shipping it here keeps one source of truth.
+			type_categories: typeCategoryMap(),
 			prefs,
 			push: { subscribed_devices: pushRow?.count ?? 0 },
 		});

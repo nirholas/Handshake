@@ -46,6 +46,11 @@ const CORNER_RESERVE_KEY = 'walk-companion';
 const CURSOR_IDLE_MS = 450; // cursor still longer than this → stop walking
 const GAZE_IDLE_MS = 4000; // cursor still longer than this → gaze drifts back to the clip
 const GAZE_PX_PER_M = 260; // page pixels per scene metre when aiming the head at the cursor
+const BUBBLE_HOLD_MS = 5200; // default speech-bubble dwell before it retracts
+// An announced message the companion was summoned for retreats this long after
+// its bubble does, so the visitor sees the avatar acknowledge and walk off
+// rather than vanish mid-sentence.
+const ANNOUNCE_RETREAT_MS = 700;
 
 function isExcludedRoute(config) {
 	if (typeof window === 'undefined') return true;
@@ -157,7 +162,14 @@ class WalkCompanion {
 		});
 	}
 
-	async mount() {
+	/**
+	 * Mount the corner companion.
+	 * @param {{greet?: boolean}} [opts] `greet: false` skips the page greeting
+	 *   and the follow-up invite bubble, used when the companion is summoned to
+	 *   deliver a specific message (see the control object's `announce`), where a
+	 *   greeting would talk over it.
+	 */
+	async mount({ greet = true } = {}) {
 		if (this.mounted || isExcludedRoute(this.config)) return;
 		if (!webglSupported()) return;
 		this.mounted = true;
@@ -175,7 +187,8 @@ class WalkCompanion {
 		this.host?.classList.remove('is-loading');
 		this._restoreState();
 		this._bindEvents();
-		this._greetForRoute();
+		if (greet) this._greetForRoute();
+		else this._orientToContext();
 		this.clock = new Timer();
 		this._raf = requestAnimationFrame(this._tick);
 	}
@@ -504,17 +517,77 @@ class WalkCompanion {
 	}
 
 	_say(text) {
-		if (!this.bubble || !text) return;
-		this.bubble.textContent = text;
-		this.bubble.hidden = false;
-		this.bubble.classList.add('is-in');
+		this.say(text);
+	}
+
+	/**
+	 * Show a speech bubble over the companion.
+	 *
+	 * The greeting flow calls this with no options (5.2s, plain text). Callers
+	 * that deliver something the visitor may want to act on pass `actions`:
+	 * up to two links/buttons rendered under the line, which also switches the
+	 * bubble to pointer-events:auto so they are clickable.
+	 *
+	 * @param {string} text
+	 * @param {object} [opts]
+	 * @param {number} [opts.hold=5200] ms before the bubble retracts; 0 keeps it
+	 *   up until the next say()/hideBubble().
+	 * @param {'neutral'|'alert'} [opts.tone='neutral'] 'alert' tints the bubble.
+	 * @param {Array<{label:string, href?:string, onClick?:Function}>} [opts.actions]
+	 * @returns {boolean} false when there is no bubble to render into.
+	 */
+	say(text, { hold = BUBBLE_HOLD_MS, tone = 'neutral', actions = null } = {}) {
+		if (!this.bubble || !text) return false;
+		const bubble = this.bubble;
 		clearTimeout(this._bubbleTimer);
-		this._bubbleTimer = setTimeout(() => {
-			this.bubble.classList.remove('is-in');
-			setTimeout(() => {
-				if (this.bubble) this.bubble.hidden = true;
-			}, 300);
-		}, 5200);
+		bubble.textContent = '';
+
+		const line = document.createElement('span');
+		line.className = 'walk-companion-bubble-line';
+		line.textContent = text;
+		bubble.appendChild(line);
+
+		const rendered = (actions || []).filter((a) => a && a.label).slice(0, 2);
+		if (rendered.length) {
+			const row = document.createElement('span');
+			row.className = 'walk-companion-bubble-actions';
+			for (const action of rendered) {
+				// An href makes it a real link (middle-click, copy, keyboard);
+				// otherwise it is a button so it never navigates by accident.
+				const el = document.createElement(action.href ? 'a' : 'button');
+				el.className = 'walk-companion-bubble-action';
+				el.textContent = action.label;
+				if (action.href) el.href = action.href;
+				else el.type = 'button';
+				if (typeof action.onClick === 'function') {
+					el.addEventListener('click', (e) => {
+						e.stopPropagation();
+						action.onClick(e);
+					});
+				}
+				row.appendChild(el);
+			}
+			bubble.appendChild(row);
+		}
+
+		bubble.classList.toggle('is-alert', tone === 'alert');
+		bubble.classList.toggle('has-actions', rendered.length > 0);
+		bubble.hidden = false;
+		bubble.classList.add('is-in');
+		if (hold > 0) this._bubbleTimer = setTimeout(() => this.hideBubble(), hold);
+		return true;
+	}
+
+	/** Retract the speech bubble now. */
+	hideBubble() {
+		clearTimeout(this._bubbleTimer);
+		if (!this.bubble) return;
+		const bubble = this.bubble;
+		bubble.classList.remove('is-in');
+		setTimeout(() => {
+			// A newer say() may have re-opened it while this retraction ran.
+			if (bubble && !bubble.classList.contains('is-in')) bubble.hidden = true;
+		}, 300);
 	}
 
 	// ── Persistence ───────────────────────────────────────────────────────────
@@ -640,6 +713,16 @@ function ensureStyles() {
 .walk-companion-close:focus-visible,.walk-companion-swap:focus-visible{outline:2px solid #7aa2ff;outline-offset:2px;opacity:1}
 .walk-companion-bubble{position:absolute;left:50%;bottom:calc(100% - 38px);z-index:2;transform:translateX(-50%) translateY(6px);box-sizing:border-box;max-width:min(216px,calc(100vw - 16px));width:max-content;background:rgba(18,20,28,.94);color:#f2f4f8;font:500 12.5px/1.4 system-ui,-apple-system,'Segoe UI',sans-serif;padding:8px 11px;border-radius:12px;border:1px solid rgba(255,255,255,.1);box-shadow:0 10px 28px rgba(0,0,0,.35);pointer-events:none;opacity:0;transition:opacity .3s ease,transform .3s ease;text-align:center}
 .walk-companion-bubble.is-in{opacity:1;transform:translateX(-50%) translateY(0)}
+.walk-companion-bubble.is-alert{background:rgba(20,18,32,.96);border-color:rgba(122,162,255,.5);box-shadow:0 10px 28px rgba(0,0,0,.45),0 0 0 1px rgba(122,162,255,.18)}
+.walk-companion-bubble.is-alert::after{border-top-color:rgba(20,18,32,.96)}
+.walk-companion-bubble.has-actions{pointer-events:auto}
+.walk-companion-bubble-line{display:block}
+.walk-companion-bubble-actions{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:7px}
+.walk-companion-bubble-action{appearance:none;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#dbe6ff;font:600 11.5px/1 system-ui,-apple-system,'Segoe UI',sans-serif;padding:5px 9px;border-radius:999px;cursor:pointer;text-decoration:none;transition:background .15s ease,border-color .15s ease,color .15s ease}
+.walk-companion-bubble-action:hover{background:rgba(122,162,255,.22);border-color:rgba(122,162,255,.55);color:#fff}
+.walk-companion-bubble-action:active{background:rgba(122,162,255,.34)}
+.walk-companion-bubble-action:focus-visible{outline:2px solid #7aa2ff;outline-offset:2px}
+@media (pointer:coarse){.walk-companion-bubble-action{padding:9px 12px;font-size:12.5px}}
 .walk-companion-bubble::after{content:'';position:absolute;left:50%;top:100%;transform:translateX(-50%);border:6px solid transparent;border-top-color:rgba(18,20,28,.94)}
 @media (max-width:520px){.walk-companion{width:148px;height:208px;right:10px;bottom:10px}.walk-companion-bubble{font-size:11.5px;max-width:min(156px,calc(100vw - 12px))}}
 @media (pointer:coarse){.walk-companion-close,.walk-companion-swap{opacity:1;width:44px;height:44px;top:-7px;border:9px solid transparent;background-clip:padding-box}.walk-companion-close{right:-7px}.walk-companion-swap{right:23px}}
@@ -699,6 +782,53 @@ export function createWalkCompanion(opts = {}) {
 		},
 		openPicker() {
 			instance?.openPicker();
+		},
+
+		/**
+		 * Deliver a message in person.
+		 *
+		 * If the companion is already on screen it turns to the visitor, plays a
+		 * gesture and says the line. If it is not (the visitor never turned it on,
+		 * or closed it), it is summoned silently for this one message and walks
+		 * off again afterwards, without flipping the persisted enabled flag, so
+		 * "off" stays off once the message is delivered.
+		 *
+		 * @param {string} message the line to speak. Rendered as text, never HTML.
+		 * @param {object} [opts]
+		 * @param {number} [opts.hold=7000] ms the bubble stays up.
+		 * @param {'neutral'|'alert'} [opts.tone='alert']
+		 * @param {string} [opts.emote='wave'] gesture played on arrival; falls back
+		 *   to a wave on rigs that don't carry it.
+		 * @param {Array<{label:string, href?:string, onClick?:Function}>} [opts.actions]
+		 * @returns {Promise<boolean>} false when no avatar could be shown (route
+		 *   excluded, no WebGL, inside an iframe) so the caller can fall back to
+		 *   its own UI. True once the message is on screen.
+		 */
+		async announce(message, { hold = 7000, tone = 'alert', emote = 'wave', actions } = {}) {
+			if (!message) return false;
+			const summoned = !instance?.mounted;
+			// Transient only when the visitor has not turned the companion on: an
+			// enabled-but-unmounted companion (excluded route, playground) stays
+			// mounted afterwards exactly as if it had mounted normally.
+			const transient = summoned && !isEnabled();
+			if (summoned) {
+				if (!instance) instance = new WalkCompanion(config, control);
+				await instance.mount({ greet: false });
+				if (!instance.mounted) return false;
+			}
+			const inst = instance;
+			try {
+				if (!inst.controller?.playEmote?.(emote)) inst.controller?.playWave?.();
+			} catch {
+				/* rig without emotes: the bubble still carries the message */
+			}
+			inst.say(message, { hold, tone, actions });
+			if (!transient) return true;
+			await new Promise((r) => setTimeout(r, hold + ANNOUNCE_RETREAT_MS));
+			// The visitor may have turned the companion on (or swapped instances)
+			// while it was delivering; never yank it away in that case.
+			if (!isEnabled() && instance === inst && inst.mounted) inst.unmount();
+			return true;
 		},
 
 		// Re-mount the corner companion when the playground exits.

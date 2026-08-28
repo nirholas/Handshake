@@ -4,7 +4,8 @@
 // A notification has a `type` (e.g. 'skill_purchased'). Types roll up into a
 // small set of user-facing CATEGORIES. The user controls, per category, which
 // CHANNELS deliver it. Channels: in_app (the bell inbox), push (Web Push),
-// email (Resend transactional), telegram (per-account bot alerts).
+// email (Resend transactional), telegram (per-account bot alerts), avatar (the
+// corner companion walks on and says it out loud, see src/notification-herald.js).
 //
 // Preferences are stored sparsely in notification_preferences.prefs as
 //   { categories: { sales: { push: false }, ... }, telegram_chat_id: '123' }
@@ -59,7 +60,7 @@ export const CATEGORIES = [
 	},
 ];
 
-export const CHANNELS = ['in_app', 'push', 'email', 'telegram'];
+export const CHANNELS = ['in_app', 'push', 'email', 'telegram', 'avatar'];
 
 /**
  * Channels that always deliver for a category, regardless of preferences.
@@ -124,23 +125,39 @@ export function categoryForType(type) {
 	return TYPE_CATEGORY[type] || 'account';
 }
 
+/**
+ * The whole type to category map, for clients that have to resolve a category
+ * without a round trip per notification (the avatar channel runs in the
+ * browser). Served by GET /api/notifications/preferences so the browser never
+ * keeps its own copy of this table.
+ */
+export function typeCategoryMap() {
+	return { ...TYPE_CATEGORY };
+}
+
 // Default channel matrix. in_app is on everywhere (the bell is the baseline).
 // push is on by default *for users who have subscribed a device* — a user with
 // no push subscription simply never receives one, so defaulting it on is not
 // spammy. email defaults on only for money + security; off for the higher-
 // frequency social/irl/alerts categories. telegram is always opt-in (needs a
 // linked chat id) so it defaults off.
+// avatar is the most interruptive channel there is: the corner companion walks
+// on screen and says the line out loud. It defaults on only for the three
+// categories worth stopping the visitor for (money in, a creation that
+// finished while they waited, account and security), and off for the
+// higher-frequency ones. Every category stays togglable in the preference
+// center either way.
 const DEFAULTS = {
-	sales:     { in_app: true,  push: true,  email: true,  telegram: false },
-	purchases: { in_app: true,  push: true,  email: true,  telegram: false },
-	social:    { in_app: true,  push: true,  email: false, telegram: false },
-	irl:       { in_app: true,  push: true,  email: false, telegram: false },
-	alerts:    { in_app: true,  push: true,  email: false, telegram: true  },
+	sales:     { in_app: true,  push: true,  email: true,  telegram: false, avatar: true  },
+	purchases: { in_app: true,  push: true,  email: true,  telegram: false, avatar: false },
+	social:    { in_app: true,  push: true,  email: false, telegram: false, avatar: false },
+	irl:       { in_app: true,  push: true,  email: false, telegram: false, avatar: false },
+	alerts:    { in_app: true,  push: true,  email: false, telegram: true,  avatar: false },
 	// Only unattended completions notify (api/cron/forge-finalize.js), so email
 	// defaulting on is the feature, not spam: the user left the page and asked
 	// to hear back.
-	creations: { in_app: true,  push: true,  email: true,  telegram: false },
-	account:   { in_app: true,  push: true,  email: true,  telegram: false },
+	creations: { in_app: true,  push: true,  email: true,  telegram: false, avatar: true  },
+	account:   { in_app: true,  push: true,  email: true,  telegram: false, avatar: true  },
 };
 
 /** The full default matrix, used to seed the preference-center UI. */
