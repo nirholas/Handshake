@@ -1,0 +1,54 @@
+{
+  "name": "@three-ws/tty-avatar",
+  "version": "0.1.0",
+  "description": "A live 3D avatar in your terminal. Renders any GLB (or any three.ws avatar by id) with a software rasterizer to truecolor half-blocks or braille, animates it with moods, and reacts in real time to Claude Code hooks so your coding agent has a face.",
+  "keywords": [
+    "three.ws",
+    "terminal",
+    "tty",
+    "ansi",
+    "braille",
+    "3d",
+    "glb",
+    "gltf",
+    "avatar",
+    "software-rasterizer",
+    "claude-code",
+    "agent",
+    "cli"
+  ],
+  "author": "three.ws <support@three.ws> (https://three.ws)",
+  "license": "Apache-2.0",
+  "homepage": "https://three.ws/docs/tty-avatar",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/three.ws.git",
+    "directory": "packages/tty-avatar"
+  },
+  "type": "module",
+  "bin": {
+    "tty-avatar": "./bin/tty-avatar.js"
+  },
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "@gltf-transform/core": "^4.4.0",
+    "@gltf-transform/extensions": "^4.4.0",
+    "meshoptimizer": "^1.1.1"
+  }
+}

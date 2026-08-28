@@ -1,0 +1,69 @@
+{
+	"name": "@three-ws/tty-3d",
+	"version": "0.1.0",
+	"description": "The terminal 3D renderer core: GLB in, skinned and animated ANSI frames out. A software rasterizer with real glTF skeletal animation, no GPU, no browser and no display server, plus the three-tty CLI.",
+	"type": "module",
+	"main": "./src/index.js",
+	"module": "./src/index.js",
+	"types": "./src/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./src/index.d.ts",
+			"import": "./src/index.js",
+			"default": "./src/index.js"
+		},
+		"./model": "./src/model.js",
+		"./raster": "./src/raster.js",
+		"./term": "./src/term.js",
+		"./package.json": "./package.json"
+	},
+	"bin": {
+		"three-tty": "./bin/three-tty.js"
+	},
+	"files": [
+		"src",
+		"bin",
+		"README.md",
+		"LICENSE"
+	],
+	"scripts": {
+		"test": "vitest run --root ../.. packages/tty-3d/tests"
+	},
+	"keywords": [
+		"3d",
+		"terminal",
+		"ansi",
+		"cli",
+		"glb",
+		"gltf",
+		"rasterizer",
+		"software-rendering",
+		"skinning",
+		"animation",
+		"ascii-art",
+		"avatar",
+		"three.ws"
+	],
+	"author": "three.ws <support@three.ws> (https://three.ws)",
+	"license": "Apache-2.0",
+	"homepage": "https://three.ws/tty",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "packages/tty-3d"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/three.ws/issues"
+	},
+	"dependencies": {
+		"@gltf-transform/core": "^4.4.0",
+		"@gltf-transform/extensions": "^4.4.0",
+		"meshoptimizer": "^1.1.1"
+	},
+	"engines": {
+		"node": ">=18"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}
