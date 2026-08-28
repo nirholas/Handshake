@@ -917,6 +917,10 @@
 				{
 					"label": "Shared utilities",
 					"path": "shared-utilities"
+				},
+				{
+					"label": "Terminal renderer",
+					"path": "tty"
 				}
 			]
 		},
