@@ -1,26 +1,28 @@
-three.ws turns a photo into a 3D AI agent you own.
+three.ws turns a photo or a prompt into 3D models and AI agents you own.
 
-Take a selfie and get back a textured, rigged, animation-ready 3D avatar in about a minute. Give it a personality and a voice, talk to it, and put it anywhere on the internet with one line of HTML. No 3D software, no modelling skills, no account required to look around.
+Describe an object and get a textured 3D model back. Take a selfie and get a rigged, animation-ready 3D avatar in about a minute. Give a character a personality and a voice, talk to it, and put it anywhere on the internet with one line of HTML. No 3D software, no modelling skills, no account required to look around.
 
 WHAT YOU CAN DO
 
-Create from a selfie. One frontal photo becomes a rigged avatar; two optional side angles sharpen the likeness. Live quality gates tell you if the lighting, framing or focus will hurt the result before you spend a minute waiting.
+Make a 3D model from text. Describe a prop, an object or a scene and the free generation lane builds it, textured and ready to download as glTF. No key, no account, no cost.
 
-Create from text. No photo? Describe the character and the free generation lane builds it. Already have a model? Upload a GLB and it is rigged for you.
+Make an avatar from a selfie. One frontal photo becomes a rigged avatar; two optional side angles sharpen the likeness. Live quality gates tell you if the lighting, framing or focus will hurt the result before you spend a minute waiting.
+
+Make a character from a description. No photo? Describe the character and get a rigged avatar. Already have a model? Upload a GLB and it is rigged for you.
 
 Give it a mind. Attach a personality, a voice and skills, then hold a conversation with it. The agent answers in 3D, on your phone.
 
-Discover. Browse the whole community's agents. Drag to orbit, tap to inspect, open any agent to chat with it.
+Discover. Browse the whole community's models and agents. Drag to orbit, tap to inspect, open any agent to chat with it.
 
 Own it on-chain, if you want to. Deploy an agent as a Metaplex Core asset on Solana held by your own wallet. This is entirely optional: creating, chatting and browsing never touch a wallet.
 
 Embed anywhere. Every agent has a shareable link and a one-line embed snippet that works in a blog post, a docs site, Notion, or your own product.
 
-See it in your room. Point your camera and place any agent in real space through your browser's AR support. Nothing to install.
+See it in your room. Point your camera and place any model or agent in real space through your browser's AR support. Nothing to install.
 
 WALLETS ARE OPTIONAL
 
-You can use three.ws without ever connecting a wallet. If you do connect one, signing runs through Mobile Wallet Adapter, so it happens inside the wallet app you already trust and this app never sees a private key or a seed phrase. On a Solana Seeker, that is the hardware-isolated Seed Vault. three.ws is not a wallet, does not hold your funds, and does not operate an exchange.
+You can use three.ws without ever connecting a wallet. If you do connect one, signing runs through Mobile Wallet Adapter, so it happens inside the wallet app you already trust and this app never sees a private key or a seed phrase. three.ws is not a wallet, does not hold your funds, and does not operate an exchange.
 
 OPEN BY DEFAULT
 

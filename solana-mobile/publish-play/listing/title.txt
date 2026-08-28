@@ -1,1 +1,1 @@
-three.ws: 3D AI Agents
+three.ws: 3D Models & Agents

@@ -1,1 +1,1 @@
-Turn a selfie into a rigged 3D AI agent you own, talk to, and embed anywhere.
+Turn a photo or prompt into 3D models and AI agents you own and embed anywhere.
