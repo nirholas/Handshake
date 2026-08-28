@@ -87,6 +87,14 @@
 			<description>Every third-party service this platform calls and what happens to a user when it goes down. Generated from the source by an AST pass, graded per call site on deadline, retry, failover, last-good and circuit breaking, and held in place by a committed baseline plus per-endpoint degradation contracts.</description>
 		</item>
 		<item>
+			<title>Docs: Checkout companion</title>
+			<link>https://three.ws/docs/checkout-companion</link>
+			<guid isPermaLink="false">2026-08-28:Docs: Checkout companion</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The browser extension that reads a payment page before you pay: the total against the price you were shown, money the page never itemised, fees named and summed, and what the fine print commits you to. Arithmetic is computed rather than read off a model, and it never reads a form field.</description>
+		</item>
+		<item>
 			<title>Glance</title>
 			<link>https://three.ws/glance</link>
 			<guid isPermaLink="false">2026-08-28:Glance</guid>
@@ -149,6 +157,14 @@
 			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>What the App Store app adds on top of the website: the native share sheet, universal links, wallet deep links back to the page you left, real permission prompts, and an offline screen that recovers on its own.</description>
+		</item>
+		<item>
+			<title>x402 Preflight: can this seller actually settle?</title>
+			<link>https://three.ws/preflight</link>
+			<guid isPermaLink="false">2026-08-28:x402 Preflight: can this seller actually settle?</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Check whether any x402 seller can complete a payment before you sign one. Fetches the seller's signed payability attestation and verifies the ed25519 signature, the expiry and the subject entirely in your browser. Free, open format, works against any origin.</description>
 		</item>
 		<item>
 			<title>Agent history catches up on fast chains in days instead of weeks</title>
@@ -231,6 +247,14 @@
 			<description>Adding a backup for an outside service is easy; knowing it made things better is not. A new audit reads the whole codebase and grades every call we make to an outside service on five protections, publishes the result as a public map, and fails the build if a new unprotected call is added or an existing one gets worse. On top of it, each endpoint now declares what it is allowed to tell you when a service it depends on is down, and a test proves it by actually breaking the service and checking the answer. That immediately caught a real bug: a token lookup was telling people a token did not exist when the price indexer was simply unreachable. Related fixes stop stale data reaching a payment retry, a token security verdict and an access check, where an out-of-date answer costs money or grants access.</description>
 		</item>
 		<item>
+			<title>x402 Preflight: check whether a seller can take your money before you pay</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-28:x402 Preflight: check whether a seller can take your money before you pay</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Paying an AI agent for a service tells you the price, but nothing tells you whether that seller can still complete the transaction. If its own fee wallet has run dry, you find out only after you have signed and paid, and the money and the moment are both gone. Preflight is a small, signed statement any seller can publish saying which payment networks it can currently settle on, how well recent payments have gone, and which other network to use instead when one is down. It expires within a minute, so nobody can wave an old healthy report through an outage, and it is signed, so a seller that says it can deliver has gone on record. three.ws now publishes one, and there is a free page, a command-line tool, an agent tool and an open-source client for reading anyone else's. The format is open: no permission needed, nothing routed through us.</description>
+		</item>
+		<item>
 			<title>Your 3D agent now runs in a terminal, with nothing installed</title>
 			<link>https://three.ws/tty</link>
 			<guid isPermaLink="false">2026-08-28:Your 3D agent now runs in a terminal, with nothing installed</guid>
@@ -245,6 +269,14 @@
 			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Notifications no longer wait behind a badge. When something worth stopping for lands while you are on the site (a sale, money in, a 3D generation finishing, anything touching your account), your corner companion turns to you, plays a gesture, and says it out loud with a link straight to it. If the companion is switched off it is summoned for that one message and walks off again, without turning itself back on. It is a real delivery channel next to in-app, push, email and Telegram: toggle it per category in Settings, and there is a Turn off control in the bubble that silences it in that browser instantly. It only ever announces unread notifications under fifteen minutes old, says each one exactly once, caps itself at two per visit, and never speaks into a background tab. Nothing is spoken aloud unless you already turned on the companion's voice; otherwise it is text in the bubble, which screen readers announce too.</description>
+		</item>
+		<item>
+			<title>Your agent reads the checkout before you pay</title>
+			<link>https://three.ws/companion</link>
+			<guid isPermaLink="false">2026-08-28:Your agent reads the checkout before you pay</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new browser extension puts the companion on the one screen where it is worth the most: the payment page. It tells you the total against the price you were actually shown, names money the page never itemised, adds up the fees, and reads the fine print for the things that catch people out, a trial that turns into an annual charge, a renewal at a different price, a cancellation notice period. Every amount it quotes is computed rather than read off a language model, so the arithmetic still works when nothing else does, and it never calls a charge illegal or a scam because that is not a call it is in a position to make. It never reads a form field: your card number, security code and address are structurally unreadable to it, personal data is stripped in your own browser before anything is sent, only the site's hostname travels, and nothing about the page is stored anywhere.</description>
 		</item>
 		<item>
 			<title>Your agents can now tell you why they are not doing anything</title>

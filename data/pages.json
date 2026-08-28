@@ -3934,9 +3934,25 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/checkout-companion",
+					"title": "Docs: Checkout companion",
+					"description": "The browser extension that reads a payment page before you pay: the total against the price you were shown, money the page never itemised, fees named and summed, and what the fine print commits you to. Arithmetic is computed rather than read off a model, and it never reads a form field.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-08-28"
+				},
+				{
 					"path": "/docs/feedback",
 					"title": "Docs · Feedback",
 					"description": "Telling the corner companion what broke: the proactive ask at the moment of failure, the route, build SHA, and console errors captured for you, the severity and clustering rules, the report API, and the boundary that keeps untrusted visitor text from ever reaching anything with write access.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-08-28"
+				},
+				{
+					"path": "/docs/witness",
+					"title": "Docs · Witness",
+					"description": "Bug reports that arrive as failing tests. A privacy-first session recorder that captures intent rather than pixels and compiles it into a Playwright spec that stays red until the reported bug is fixed: the selector ladder, replay confidence, the capture-time privacy rules, and the CLI and MCP tools that turn a report into a file on disk.",
 					"priority": 0.7,
 					"changefreq": "monthly",
 					"added": "2026-08-28"

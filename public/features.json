@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T03:39:58.125Z",
+	"generated_at": "2026-08-28T03:51:58.565Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2882,6 +2882,16 @@
 					"indexable": true,
 					"tags": [],
 					"showcase": false
+				},
+				{
+					"path": "/preflight",
+					"title": "x402 Preflight: can this seller actually settle?",
+					"description": "Check whether any x402 seller can complete a payment before you sign one. Fetches the seller's signed payability attestation and verifies the ed25519 signature, the expiry and the subject entirely in your browser. Free, open format, works against any origin.",
+					"added": "2026-08-28",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
 				}
 			]
 		},
@@ -5002,6 +5012,16 @@
 					"title": "Docs: Notifications",
 					"description": "Everything that happens to your work on three.ws (a payment lands, a skill sells, someone remixes your model, follows you, a quest finishes, a royalty arrives) becomes a row in one per-user inbox.",
 					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/checkout-companion",
+					"title": "Docs: Checkout companion",
+					"description": "The browser extension that reads a payment page before you pay: the total against the price you were shown, money the page never itemised, fees named and summed, and what the fine print commits you to. Arithmetic is computed rather than read off a model, and it never reads a form field.",
+					"added": "2026-08-28",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
