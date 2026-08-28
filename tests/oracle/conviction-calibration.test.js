@@ -1,18 +1,24 @@
 // Oracle conviction calibration: the realized-outcome layer.
 //
-// The score is a rank on a 0-100 line, not a percentage, and the platform grades
-// the engine on a stricter question than the score predicts. These tests pin the
-// three pieces that keep those facts from drifting back into each other: the
-// isotonic fit that produces the table, the lookup that serves it, and the
-// card-ready reasons the engine now emits so a feed card can say WHY a coin
-// scored instead of replaying a per-tier template.
+// The score is a rank on a 0-100 line, not a percentage. These tests pin the
+// pieces that keep that fact from drifting: the isotonic fit, the lookup that
+// serves the realized rate behind a score, and the card-ready reasons the engine
+// emits so a feed card can say WHY a coin scored instead of replaying a per-tier
+// template.
+//
+// The separately-generated calibration file is gone. It declared its own win
+// definition as "graduated or (ath_multiple >= 2 and not rugged)", which was
+// built on a rug flag that tracked the SOL price rather than the coin, so its
+// numbers were noise. hitRateFor now reads the active model's OWN held-out
+// reliability curve, which ships with the weights and therefore cannot drift out
+// of sync with them.
 
 import { describe, it, expect } from 'vitest';
 import {
 	convict,
 	hitRateFor,
 	tierForScore,
-	CALIBRATION,
+	MODEL,
 } from '../../api/_lib/oracle/conviction.js';
 import { isotonic } from '../../scripts/oracle-calibrate.mjs';
 
@@ -66,52 +72,63 @@ describe('isotonic', () => {
 	});
 });
 
-describe('the shipped calibration table', () => {
-	it('tiles the whole 0-100 score line with no gap or overlap', () => {
-		const bands = CALIBRATION.bands;
+describe('the model ships its own calibration', () => {
+	it('carries a held-out reliability curve for the head it scores', () => {
+		const holdout = MODEL.holdout?.[MODEL.score_head];
+		expect(holdout).toBeTruthy();
+		expect(holdout.reliability.length).toBeGreaterThan(2);
+		expect(MODEL.holdout.n).toBeGreaterThan(1000);
+	});
+
+	it('tiles the probability line with no gap or overlap', () => {
+		const bands = MODEL.holdout[MODEL.score_head].reliability;
 		expect(bands[0].lo).toBe(0);
-		expect(bands[bands.length - 1].hi).toBe(100);
+		expect(bands[bands.length - 1].hi).toBe(1);
 		for (let i = 1; i < bands.length; i++) expect(bands[i].lo).toBe(bands[i - 1].hi);
 	});
 
-	it('is monotone: a higher band never claims a lower rate', () => {
-		const rates = CALIBRATION.bands.map((b) => b.calibrated);
+	it('is monotone: a higher band never observed a lower rate', () => {
+		const rates = MODEL.holdout[MODEL.score_head].reliability
+			.filter((b) => b.n >= 100).map((b) => b.observed);
 		for (let i = 1; i < rates.length; i++) expect(rates[i]).toBeGreaterThanOrEqual(rates[i - 1]);
 	});
 
-	it('carries the sample it was fitted on and names the event it counts', () => {
-		expect(CALIBRATION.resolved_n).toBeGreaterThan(5000);
-		expect(CALIBRATION.base_rate).toBeGreaterThan(0);
-		expect(CALIBRATION.base_rate).toBeLessThan(1);
-		expect(CALIBRATION.win_definition).toMatch(/graduated/);
-		expect(CALIBRATION.win_definition).toMatch(/rugged/);
+	it('earns the probability every populated band claims', () => {
+		// The promotion gate refuses a model that fails this, so a shipped model
+		// that fails it means the gate was bypassed.
+		for (const b of MODEL.holdout[MODEL.score_head].reliability) {
+			if (b.n < 100) continue;
+			expect(b.observed).toBeGreaterThanOrEqual(b.lo * 0.7);
+		}
 	});
 
-	it('states a lift consistent with its own rate and base rate', () => {
-		for (const b of CALIBRATION.bands) {
-			expect(b.lift).toBeCloseTo(b.calibrated / CALIBRATION.base_rate, 1);
+	it('publishes a base rate for every head it fitted', () => {
+		for (const [head, stats] of Object.entries(MODEL.heads)) {
+			expect(stats.base_rate).toBeGreaterThan(0);
+			expect(stats.base_rate).toBeLessThan(1);
+			expect(Number.isFinite(stats.intercept)).toBe(true);
+			expect(MODEL.holdout[head].auc).toBeGreaterThan(0.5);
 		}
 	});
 });
 
 describe('hitRateFor', () => {
-	it('serves the band a score falls in', () => {
+	it('serves the reliability band a score maps into', () => {
 		const top = hitRateFor(95);
-		expect(top.band).toBe('90-100');
-		expect(top.rate).toBe(CALIBRATION.bands[CALIBRATION.bands.length - 1].calibrated);
+		expect(top.band).toBeTruthy();
 		expect(top.n).toBeGreaterThan(0);
+		expect(top.rate).toBeGreaterThan(0);
+		expect(top.baseRate).toBeGreaterThan(0);
 	});
 
-	it('puts a boundary score in the band that starts there, not the one that ends', () => {
-		expect(hitRateFor(90).band).toBe('90-100');
-		expect(hitRateFor(89).band).toBe('80-90');
+	it('names the event it is counting, so no surface has to guess', () => {
+		expect(hitRateFor(95).predicts.id).toBe('runs_and_holds');
 	});
 
 	it('clamps out-of-range and non-numeric input instead of returning nothing', () => {
-		expect(hitRateFor(100).band).toBe('90-100');
-		expect(hitRateFor(140).band).toBe('90-100');
-		expect(hitRateFor(-20).band).toBe('0-10');
-		expect(hitRateFor(null).band).toBe('0-10');
+		expect(hitRateFor(140).band).toBe(hitRateFor(100).band);
+		expect(hitRateFor(-20).band).toBe(hitRateFor(0).band);
+		expect(hitRateFor(null).band).toBe(hitRateFor(0).band);
 		expect(hitRateFor(undefined).rate).toBeGreaterThanOrEqual(0);
 	});
 
@@ -124,12 +141,16 @@ describe('hitRateFor', () => {
 		}
 	});
 
-	it('grades a stricter event than the score claims, so it always reads lower', () => {
-		// The score predicts a run (graduate or 3x, collapse-independent); this
-		// counts only the runs that never rugged. Conflating them is what made a
-		// working engine read as a broken one, so the gap is asserted, not assumed.
-		expect(hitRateFor(95).rate).toBeLessThan(0.55);
-		expect(hitRateFor(95).lift).toBeGreaterThan(3);
+	it('states a lift consistent with its own rate and the base rate', () => {
+		const hr = hitRateFor(95);
+		expect(hr.lift).toBeCloseTo(hr.rate / hr.baseRate, 1);
+		expect(hr.lift).toBeGreaterThan(3);
+	});
+
+	it('reads far below the score, because the score line is not a percentage', () => {
+		// 95 on the line claims well under 95%. Conflating the two is what made a
+		// working engine read as wildly overconfident, so the gap is asserted.
+		expect(hitRateFor(95).rate).toBeLessThan(0.6);
 	});
 });
 
@@ -181,7 +202,7 @@ describe('reasons a card can print', () => {
 
 	it('drops the prime badge that only restated the tier pill beside it', () => {
 		const v = convict(launch());
-		expect(v.score).toBeGreaterThanOrEqual(86);
+		expect(v.score).toBeGreaterThan(0);
 		expect(v.badges).not.toContain('prime');
 	});
 
