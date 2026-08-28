@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>x402 Preflight · three.ws</title>
+		<meta name="description" content="Check whether any x402 seller can actually settle before you pay it. Fetches the seller's signed payability attestation and verifies the signature and expiry in your browser." />
+		<link rel="canonical" href="https://three.ws/preflight" />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/preflight" />
+		<meta property="og:title" content="x402 Preflight · three.ws" />
+		<meta property="og:description" content="x402 tells you what a resource costs. Preflight tells you whether the seller can actually take your money. Signed, time-bounded, verified in your browser." />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=x402+Preflight&amp;d=x402+tells+you+what+a+resource+costs.+Preflight+tells+you+whether+the+seller+can+actually+take+your+money.&amp;p=%2Fpreflight" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="x402 Preflight · three.ws" />
+		<meta name="twitter:description" content="x402 tells you what a resource costs. Preflight tells you whether the seller can actually take your money. Signed, time-bounded, verified in your browser." />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=x402+Preflight&amp;d=x402+tells+you+what+a+resource+costs.+Preflight+tells+you+whether+the+seller+can+actually+take+your+money.&amp;p=%2Fpreflight" />
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<style>
+			.pf-shell { max-width: 860px; margin: 0 auto; padding: clamp(20px, 5vw, 44px) 18px 80px; }
+			.pf-hero { margin-bottom: 26px; }
+			.pf-kicker { display: inline-flex; align-items: center; gap: 8px; font-size: .72rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-dim, #888); margin: 0 0 10px; }
+			.pf-kicker::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--success, #3fb950); box-shadow: 0 0 8px color-mix(in srgb, var(--success, #3fb950) 60%, transparent); }
+			.pf-title { font-family: var(--font-display, system-ui); font-size: clamp(1.6rem, 4vw, 2.3rem); font-weight: 700; color: var(--ink-bright, #fff); margin: 0 0 10px; line-height: 1.1; }
+			.pf-sub { color: var(--ink-dim, #888); font-size: .95rem; line-height: 1.65; margin: 0; max-width: 64ch; }
+			.pf-sub code { font-size: .86em; padding: 1px 5px; border-radius: 4px; background: var(--surface-2, #1a1a1a); }
+
+			.pf-form { display: flex; gap: 10px; margin: 26px 0 8px; flex-wrap: wrap; }
+			.pf-input { flex: 1 1 320px; min-width: 0; padding: 11px 14px; border-radius: 10px; font: inherit; font-size: .95rem; color: var(--ink-bright, #fff); background: var(--surface-1, #121212); border: 1px solid var(--line, #2a2a2a); transition: border-color .16s ease, box-shadow .16s ease; }
+			.pf-input:hover { border-color: var(--line-bright, #3a3a3a); }
+			.pf-input:focus-visible { outline: none; border-color: var(--accent, #6ea8fe); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #6ea8fe) 25%, transparent); }
+			.pf-go { padding: 11px 20px; border-radius: 10px; font: inherit; font-weight: 600; font-size: .92rem; cursor: pointer; color: #06121f; background: var(--accent, #6ea8fe); border: 1px solid transparent; transition: transform .12s ease, filter .16s ease; }
+			.pf-go:hover { filter: brightness(1.08); }
+			.pf-go:active { transform: translateY(1px); }
+			.pf-go:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #6ea8fe) 35%, transparent); }
+			.pf-go[disabled] { opacity: .55; cursor: progress; }
+			.pf-examples { display: flex; gap: 8px; flex-wrap: wrap; font-size: .8rem; color: var(--ink-dim, #888); align-items: center; }
+			.pf-chip { padding: 3px 9px; border-radius: 999px; cursor: pointer; font: inherit; font-size: .78rem; color: var(--ink, #ddd); background: var(--surface-2, #1a1a1a); border: 1px solid var(--line, #2a2a2a); transition: border-color .16s ease, color .16s ease; }
+			.pf-chip:hover { border-color: var(--accent, #6ea8fe); color: var(--ink-bright, #fff); }
+			.pf-chip:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #6ea8fe) 30%, transparent); }
+
+			#pf-out { margin-top: 26px; }
+			.pf-card { border: 1px solid var(--line, #2a2a2a); border-radius: 14px; background: var(--surface-1, #121212); padding: 18px 18px 6px; margin-bottom: 14px; animation: pf-in .22s ease both; }
+			@keyframes pf-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+			@media (prefers-reduced-motion: reduce) { .pf-card { animation: none; } }
+			.pf-cardhead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+			.pf-origin { font-weight: 650; color: var(--ink-bright, #fff); font-size: 1.02rem; word-break: break-all; }
+			.pf-meta { font-size: .76rem; color: var(--ink-dim, #888); font-family: var(--font-mono, ui-monospace, monospace); word-break: break-all; }
+			.pf-verified { display: inline-flex; align-items: center; gap: 6px; font-size: .76rem; font-weight: 600; color: var(--success, #3fb950); }
+			.pf-net { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 14px; padding: 13px 0; border-top: 1px solid var(--line, #2a2a2a); align-items: center; }
+			.pf-netid { font-family: var(--font-mono, ui-monospace, monospace); font-size: .86rem; color: var(--ink-bright, #fff); }
+			.pf-netwhy { grid-column: 1 / -1; font-size: .82rem; color: var(--ink-dim, #888); line-height: 1.5; }
+			.pf-badge { font-size: .7rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+			.pf-yes { color: #0b2a13; background: var(--success, #3fb950); }
+			.pf-no { color: #2b0d0d; background: var(--danger, #f85149); }
+			.pf-maybe { color: #2b1f04; background: var(--warning, #d29922); }
+			.pf-alt { color: var(--success, #3fb950); }
+			.pf-err { border-color: color-mix(in srgb, var(--danger, #f85149) 45%, var(--line, #2a2a2a)); }
+			.pf-empty { color: var(--ink-dim, #888); font-size: .9rem; line-height: 1.6; border: 1px dashed var(--line, #2a2a2a); border-radius: 14px; padding: 22px; text-align: center; }
+			.pf-empty strong { color: var(--ink, #ddd); font-weight: 600; }
+			.pf-skel { height: 92px; border-radius: 14px; border: 1px solid var(--line, #2a2a2a); background: linear-gradient(100deg, var(--surface-1, #121212) 30%, var(--surface-2, #1a1a1a) 50%, var(--surface-1, #121212) 70%); background-size: 220% 100%; animation: pf-shim 1.1s linear infinite; }
+			@keyframes pf-shim { to { background-position: -220% 0; } }
+			@media (prefers-reduced-motion: reduce) { .pf-skel { animation: none; } }
+
+			.pf-how { margin-top: 40px; border-top: 1px solid var(--line, #2a2a2a); padding-top: 26px; }
+			.pf-how h2 { font-size: 1.05rem; color: var(--ink-bright, #fff); margin: 0 0 10px; }
+			.pf-how p { color: var(--ink-dim, #888); font-size: .9rem; line-height: 1.7; margin: 0 0 12px; max-width: 68ch; }
+			.pf-how pre { overflow-x: auto; background: var(--surface-1, #121212); border: 1px solid var(--line, #2a2a2a); border-radius: 10px; padding: 14px 16px; font-size: .82rem; line-height: 1.6; }
+			.pf-how code { font-family: var(--font-mono, ui-monospace, monospace); }
+			.pf-how a { color: var(--accent, #6ea8fe); }
+		</style>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="pf-shell">
+			<section class="pf-hero">
+				<p class="pf-kicker">Don't trust · verify</p>
+				<h1 class="pf-title">Can this seller actually take your money?</h1>
+				<p class="pf-sub">
+					x402 tells an agent what a resource <em>costs</em>. It says nothing about whether the seller
+					can currently <em>settle</em> what it charges, and the gap is paid for by the buyer: a signed
+					transfer, a consumed blockhash, a 502, and no service. Preflight closes it. Paste any origin
+					below and this page fetches its <code>/.well-known/x402-preflight</code> attestation and
+					verifies the ed25519 signature, the expiry and the subject entirely in your browser. Nothing
+					is taken on our word.
+				</p>
+			</section>
+
+			<form class="pf-form" id="pf-form">
+				<label class="pf-input-label" for="pf-origin" hidden>Seller origin</label>
+				<input class="pf-input" id="pf-origin" name="origin" type="url" inputmode="url"
+					placeholder="https://three.ws" autocomplete="off" spellcheck="false" required />
+				<button class="pf-go" id="pf-go" type="submit">Check</button>
+			</form>
+			<div class="pf-examples">
+				<span>Try:</span>
+				<button class="pf-chip" type="button" data-origin="https://three.ws">three.ws</button>
+			</div>
+
+			<div id="pf-out" aria-live="polite"></div>
+
+			<section class="pf-how">
+				<h2>Use it from your own agent</h2>
+				<p>
+					The client is a package. It fetches, verifies, and refuses to let you pay a seller that cannot
+					settle, re-routing to a rail that works when one is available.
+				</p>
+				<pre><code>npm i @three-ws/x402-preflight
+
+import { guardedFetch } from '@three-ws/x402-preflight';
+
+// A drop-in fetch that will not spend your money on a seller who cannot deliver.
+const fetch402 = guardedFetch({ prefer: ['solana:mainnet'] });
+await fetch402('https://three.ws/api/x402/echo');</code></pre>
+				<p>Or from a terminal, where the exit code is the answer:</p>
+				<pre><code>npx @three-ws/x402-preflight https://three.ws --network solana:mainnet &amp;&amp; echo "safe to pay"</code></pre>
+				<p>
+					The wire format is public and unencumbered: any x402 seller can publish one and any client can
+					verify it. Read the <a href="/docs/x402-preflight">documentation</a> for the format, the
+					verification rules, and how to serve an attestation from your own endpoint.
+				</p>
+			</section>
+		</main>
+
+		<script type="module" src="/src/preflight-page.js"></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+	<script type="module" src="/i18n.js"></script>
+</body>
+</html>

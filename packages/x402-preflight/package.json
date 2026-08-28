@@ -1,0 +1,67 @@
+{
+  "name": "@three-ws/x402-preflight",
+  "version": "0.1.0",
+  "description": "Ask an x402 seller whether it can actually settle, before you sign anything. Fetches and verifies a signed, time-bounded payability attestation, then routes you to a rail that works. The missing reliability layer for agent payments.",
+  "type": "module",
+  "main": "./src/index.js",
+  "module": "./src/index.js",
+  "exports": {
+    ".": {
+      "import": "./src/index.js",
+      "default": "./src/index.js"
+    },
+    "./verify": {
+      "import": "./src/verify.js",
+      "default": "./src/verify.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "x402-preflight": "./bin/x402-preflight.mjs"
+  },
+  "files": [
+    "src",
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": [
+    "x402",
+    "agent-payments",
+    "micropayments",
+    "preflight",
+    "attestation",
+    "ed25519",
+    "solana",
+    "base",
+    "usdc",
+    "agent",
+    "reliability",
+    "three.ws"
+  ],
+  "author": "nirholas <support@three.ws>",
+  "license": "Apache-2.0",
+  "homepage": "https://three.ws/preflight",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/three.ws.git",
+    "directory": "packages/x402-preflight"
+  },
+  "bugs": {
+    "url": "https://github.com/nirholas/three.ws/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@noble/curves": "^2.2.0",
+    "@noble/hashes": "^1.8.0",
+    "bs58": "^6.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
