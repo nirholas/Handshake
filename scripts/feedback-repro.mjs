@@ -119,7 +119,9 @@ for (const step of steps) console.log(`  ${step}`);
 
 if (flags.has('--run')) {
 	console.log(`\nRunning it. It should FAIL while the reported bug is present.\n`);
-	const result = spawnSync('npx', ['playwright', 'test', relative(ROOT, outPath)], {
+	// Repros carry their own config: they live outside tests/e2e precisely so an
+	// unfixed bug does not turn `npm test` red for everyone.
+	const result = spawnSync('npx', ['playwright', 'test', '-c', 'tests/repros/playwright.config.mjs', relative(OUT_DIR, outPath)], {
 		cwd: ROOT,
 		stdio: 'inherit',
 	});
@@ -133,5 +135,5 @@ if (flags.has('--run')) {
 	process.exit(result.status ?? 0);
 }
 
-console.log(`\nRun it:  npx playwright test ${relative(ROOT, outPath)}`);
+console.log(`\nRun it:  npx playwright test -c tests/repros/playwright.config.mjs ${relative(OUT_DIR, outPath)}`);
 console.log('It is red until the bug is fixed.\n');

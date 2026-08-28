@@ -61,10 +61,11 @@ const OFFER_WINDOW_MS = 20_000;
 import { witness } from '../packages/witness/src/index.js';
 import { failuresIn, narrate } from '../packages/witness/src/compile.js';
 
-const recorder = witness.start({
-	// Our own report endpoint is excluded: a failing report must never become
-	// the next report's evidence.
-	ignore: (path) => path.startsWith('/api/feedback/'),
+witness.start({
+	// Requests the reporting flow makes itself are excluded. A failing report
+	// must never become the next report's evidence, and the build-info lookup
+	// the panel performs is our fetch, not the visitor's.
+	ignore: (path) => path.startsWith('/api/feedback/') || path === '/build-info.json',
 });
 
 /** The failures the recorder saw, in the shape the report API already stores. */
@@ -246,6 +247,10 @@ function createPanel() {
 	ensureStyles();
 	const panel = document.createElement('div');
 	panel.className = 'fb-panel';
+	// The act of reporting a bug is not part of the bug. Marking the panel with
+	// the recorder's own opt-out keeps the visitor's clicks inside this form out
+	// of the trace the form is about to send.
+	panel.setAttribute('data-witness', 'off');
 	panel.setAttribute('role', 'dialog');
 	panel.setAttribute('aria-modal', 'false');
 	panel.setAttribute('aria-label', 'Tell your agent what happened');
@@ -513,6 +518,8 @@ export function installFeedback({ getInstance, getHostEl } = {}) {
 		const btn = document.createElement('button');
 		btn.type = 'button';
 		btn.className = 'walk-companion-feedback';
+		// Same reason as the panel: opening the reporter is not a step in the bug.
+		btn.setAttribute('data-witness', 'off');
 		btn.title = 'Tell your agent what is wrong';
 		btn.setAttribute('aria-label', 'Tell your agent what is wrong');
 		btn.textContent = '!';
