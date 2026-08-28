@@ -1,0 +1,55 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>herald: the whole feature in one script tag</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  body { font: 16px/1.6 system-ui, sans-serif; max-width: 44rem; margin: 6vh auto; padding: 0 1.2rem;
+         background: #0d0f16; color: #e8ecf6; }
+  h1 { font-size: 1.6rem; margin-bottom: .2rem; }
+  p.sub { color: #98a2b8; margin-top: 0; }
+  button { font: 600 14px system-ui; padding: 10px 14px; border-radius: 10px; cursor: pointer;
+           border: 1px solid #2b3350; background: #161b2b; color: inherit; margin: 4px 6px 4px 0; }
+  button:hover { border-color: #7aa2ff; }
+  pre { background: #11141f; border: 1px solid #232a40; border-radius: 10px; padding: 12px; overflow-x: auto; }
+</style>
+
+<h1>Deliver a message in person</h1>
+<p class="sub">No bundler, no install, no CSS to import. Click a button and watch the corner.</p>
+
+<button id="normal">Ordinary news (importance 60)</button>
+<button id="big">Something that matters (85)</button>
+<button id="noise">Noise (10, dropped)</button>
+<button id="burst">A burst of five</button>
+
+<pre id="log">verdicts appear here</pre>
+
+<script type="module">
+  import { createHerald } from 'https://three.ws/herald.js';
+
+  const log = document.getElementById('log');
+  const herald = createHerald({
+    voice: 'auto',
+    onDrop: (m, reason) => print(`dropped: ${reason} (${m?.text ?? 'empty'})`),
+    onHold: (m, reason) => print(`held: ${reason} (${m.text})`),
+    onDeliver: (m) => print(`delivered: ${m.text}`),
+  });
+
+  function print(line) {
+    log.textContent = `${line}\n${log.textContent}`.split('\n').slice(0, 12).join('\n');
+  }
+
+  document.getElementById('normal').onclick = () =>
+    herald.announce({ text: 'Your export is ready', importance: 60, url: '#export' });
+
+  document.getElementById('big').onclick = () =>
+    herald.announce({ text: 'Payment received from Acme', from: 'Stripe', importance: 85, tone: 'celebrate' });
+
+  document.getElementById('noise').onclick = () =>
+    herald.announce({ text: 'Someone viewed your profile', importance: 10 });
+
+  document.getElementById('burst').onclick = () => {
+    for (let i = 1; i <= 5; i++) {
+      herald.announce({ id: `burst-${Date.now()}-${i}`, text: `Alert number ${i}`, importance: 60 + i });
+    }
+  };
+</script>

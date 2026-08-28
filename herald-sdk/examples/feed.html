@@ -1,0 +1,58 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>herald: from a live feed</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  body { font: 16px/1.6 system-ui, sans-serif; max-width: 46rem; margin: 6vh auto; padding: 0 1.2rem;
+         background: #0d0f16; color: #e8ecf6; }
+  code, pre { background: #11141f; border: 1px solid #232a40; border-radius: 8px; padding: 2px 6px; }
+  pre { padding: 12px; overflow-x: auto; }
+</style>
+
+<h1>Point it at a feed</h1>
+<p>
+  This page polls a public JSON endpoint, scores what comes back, and only
+  interrupts for the ones that clear the bar. Nothing is said twice, nothing is
+  said at night, and nothing is said while this tab is in the background.
+</p>
+
+<pre id="log">watching...</pre>
+
+<script type="module">
+  import { createHerald, pollSource } from 'https://three.ws/herald.js';
+
+  const log = document.getElementById('log');
+  const print = (line) => {
+    log.textContent = `${line}\n${log.textContent}`.split('\n').slice(0, 14).join('\n');
+  };
+
+  const herald = createHerald({
+    rules: {
+      minImportance: 65,
+      quietHours: [22, 7],
+      quietHoursMinImportance: 95,
+      maxPerWindow: 3,
+    },
+    voice: 'auto',
+    onDeliver: (m) => print(`said: ${m.text}`),
+    onDrop: (m, reason) => print(`skipped (${reason}): ${m?.text ?? ''}`),
+  });
+
+  // Anything that scores itself is easier to live with than anything that does not.
+  herald.rule((m) => (/\bfailed|down|breach\b/i.test(m.text) ? 96 : undefined));
+  herald.rule((m) => (m.from === 'status' ? 80 : undefined));
+
+  herald.source(pollSource({
+    url: 'https://three.ws/api/changelog',
+    intervalMs: 60_000,
+    select: (body) => body.entries?.slice(0, 5) ?? [],
+    map: (entry) => ({
+      id: entry.date + entry.title,
+      text: entry.title,
+      from: 'changelog',
+      importance: 70,
+      url: 'https://three.ws/changelog',
+      at: Date.parse(entry.date),
+    }),
+  }));
+</script>

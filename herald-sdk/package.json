@@ -1,0 +1,67 @@
+{
+	"name": "@three-ws/herald",
+	"version": "0.1.0",
+	"description": "Deliver a message in person: a 3D character walks onto your page and tells the user, with importance scoring, quiet hours, dedupe and an accessible fallback. Works with any feed, plus a CLI that announces when your build finishes.",
+	"keywords": [
+		"notifications",
+		"3d",
+		"avatar",
+		"agent",
+		"alerts",
+		"toast",
+		"sse",
+		"webhooks",
+		"tts",
+		"accessibility",
+		"cli",
+		"ci",
+		"three.js"
+	],
+	"author": "three.ws <support@three.ws> (https://three.ws)",
+	"license": "Apache-2.0",
+	"homepage": "https://three.ws/herald",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "herald-sdk"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/three.ws/issues"
+	},
+	"type": "module",
+	"main": "./src/index.js",
+	"module": "./src/index.js",
+	"exports": {
+		".": "./src/index.js",
+		"./rules": "./src/rules.js",
+		"./sources": "./src/sources/index.js",
+		"./presenters/card": "./src/presenters/card.js",
+		"./presenters/avatar": "./src/presenters/avatar.js",
+		"./voice": "./src/voice.js"
+	},
+	"bin": {
+		"herald": "./bin/herald.mjs"
+	},
+	"files": [
+		"src",
+		"bin",
+		"examples",
+		"README.md",
+		"LICENSE"
+	],
+	"sideEffects": false,
+	"peerDependencies": {
+		"@three-ws/walk": ">=0.3.0"
+	},
+	"peerDependenciesMeta": {
+		"@three-ws/walk": {
+			"optional": true
+		}
+	},
+	"engines": {
+		"node": ">=18"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}

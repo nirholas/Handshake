@@ -7,7 +7,7 @@ import { requireCsrf } from './_lib/csrf.js';
 import { parse } from './_lib/validate.js';
 import { z } from 'zod';
 
-const ALLOWED_SCOPES = new Set(['avatars:read', 'avatars:write', 'avatars:delete', 'profile', 'memory:read', 'memory:write', 'agents:read', 'agents:write']);
+const ALLOWED_SCOPES = new Set(['avatars:read', 'avatars:write', 'avatars:delete', 'profile', 'memory:read', 'memory:write', 'agents:read', 'agents:write', 'herald:announce']);
 
 const createSchema = z.object({
 	name: z.string().trim().min(1).max(80),
