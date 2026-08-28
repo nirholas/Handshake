@@ -1,11 +1,23 @@
 {
-	"generated_at": "2026-08-27T15:35:48.113Z",
+	"generated_at": "2026-08-28T00:50:10.235Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-08-28",
+			"type": "update",
+			"title": "Photo uploads, avatar saves, launches and team tasks fail fast instead of hanging",
+			"summary": "A handful of steps still had no time limit on the outside service they called. When that service accepted the connection and then went quiet, the request sat there until the platform killed it, and you got a spinner that ended in nothing: a photo-to-avatar upload that never came back, a saved model that never finished downloading, a coin launch stuck fetching its own thumbnail, an ordinals order whose status never loaded, a team task where one hired agent held up the whole run. Each of those now has a deadline and a clear answer when it is missed, and the ones that are safe to repeat retry once first. Anything that spends money or starts a generation is never repeated: it is bounded and then reported, so no upload is billed twice and no hire is paid twice. Saving a model from a link is also checked more tightly now, against the address it actually connects to and with the size limit applied while it downloads.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"fix",
+				"infra"
+			]
+		},
 		{
 			"date": "2026-08-27",
 			"type": "launch",
@@ -67,6 +79,17 @@
 			"tags": [
 				"improvement",
 				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-08-27",
+			"type": "update",
+			"title": "Every outside service the site talks to now has a time limit and a plan B",
+			"summary": "A follow-up sweep across the whole codebase, not just the pages that had already broken. Every call to an outside service is now bounded by a deadline, which a build check enforces from here on, so one slow provider can no longer hold a page or a scheduled job open until it is killed. Reads that used to get a single attempt now retry the failures worth retrying: launch pages and share cards during a busy mint, token names, bounty lookups, agent search, Telegram alerts and trade signals. Prices for ETH now come from four independent feeds instead of one. A wallet history scan that could not reach a block explorer used to report the wallet as having never transacted, which quietly affected airdrop eligibility; it now says which chains it could not read. Risk reports are pointedly not cached, since an old verdict on a token that has since changed hands is worse than none.",
+			"link": null,
+			"tags": [
+				"improvement",
 				"infra"
 			]
 		},

@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Photo uploads, avatar saves, launches and team tasks fail fast instead of hanging</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-28:Photo uploads, avatar saves, launches and team tasks fail fast instead of hanging</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>A handful of steps still had no time limit on the outside service they called. When that service accepted the connection and then went quiet, the request sat there until the platform killed it, and you got a spinner that ended in nothing: a photo-to-avatar upload that never came back, a saved model that never finished downloading, a coin launch stuck fetching its own thumbnail, an ordinals order whose status never loaded, a team task where one hired agent held up the whole run. Each of those now has a deadline and a clear answer when it is missed, and the ones that are safe to repeat retry once first. Anything that spends money or starts a generation is never repeated: it is bounded and then reported, so no upload is billed twice and no hire is paid twice. Saving a model from a link is also checked more tightly now, against the address it actually connects to and with the size limit applied while it downloads.</description>
+		</item>
+		<item>
 			<title>three.ws for Seeker</title>
 			<link>https://three.ws/seeker</link>
 			<guid isPermaLink="false">2026-08-27:three.ws for Seeker</guid>
@@ -53,6 +61,14 @@
 			<pubDate>Thu, 27 Aug 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>Prices, DeFi stats, token data, pump.fun feeds, RPC reads and 3D generation providers all had single points of failure: one rate limit or outage upstream turned into a blank section or an error page. Every one of those reads now has a deadline, retries only on transient faults, a second and third source where one exists, and keeps serving the last good value (marked as stale) when everything upstream is down. In the browser, API calls time out instead of spinning forever, script and model loads try mirror CDNs, and payment flows report a failed confirmation with the transaction signature instead of showing nothing.</description>
+		</item>
+		<item>
+			<title>Every outside service the site talks to now has a time limit and a plan B</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-08-27:Every outside service the site talks to now has a time limit and a plan B</guid>
+			<pubDate>Thu, 27 Aug 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>A follow-up sweep across the whole codebase, not just the pages that had already broken. Every call to an outside service is now bounded by a deadline, which a build check enforces from here on, so one slow provider can no longer hold a page or a scheduled job open until it is killed. Reads that used to get a single attempt now retry the failures worth retrying: launch pages and share cards during a busy mint, token names, bounty lookups, agent search, Telegram alerts and trade signals. Prices for ETH now come from four independent feeds instead of one. A wallet history scan that could not reach a block explorer used to report the wallet as having never transacted, which quietly affected airdrop eligibility; it now says which chains it could not read. Risk reports are pointedly not cached, since an old verdict on a token that has since changed hands is worse than none.</description>
 		</item>
 		<item>
 			<title>Every tap target on the marketplace and your agents pages now fits a thumb</title>
