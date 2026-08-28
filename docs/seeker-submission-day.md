@@ -14,6 +14,8 @@ Status as of 2026-08-28: publisher profile and KYB **Approved**, signed APK buil
 - [ ] Your Seeker, charged, signed into Seed Vault, on wifi
 - [ ] A password manager entry ready for the API key you are about to create
 
+If the portal's Sumsub panel still reads "business verification is in progress" while the **Status** field reads **Approved**, go by the Status field: that is what gates minting. Only if a step actually refuses is the banner worth waiting on.
+
 Already done, nothing to redo: publisher profile and KYB (Approved 2026-08-27), the signed APK, the release key, and the site side (`three.ws` is verified for the app, so it runs full-screen).
 
 ---
@@ -22,7 +24,7 @@ Already done, nothing to redo: publisher profile and KYB (Approved 2026-08-27), 
 
 In the portal, connect the wallet you want to own this listing forever. Every future release is signed by it, so use a wallet you control long-term, not a burner.
 
-- [ ] Wallet connected in the portal
+- [ ] Wallet connected in the portal (as of 2026-08-28 this is the Phantom wallet ending `krgd`)
 - [ ] Balance shows at least 0.2 SOL
 - [ ] Storage provider set to **ArDrive** (the recommended default)
 
@@ -30,7 +32,9 @@ In the portal, connect the wallet you want to own this listing forever. Every fu
 
 ## Step 2. Add the dApp
 
-**Add a dApp → New dApp.** Paste each value below exactly.
+**Add a dApp → New Dapp.** Not "Import Dapp": that one is for an app whose Publisher and App NFTs already exist on-chain, from the retired CLI flow. three.ws has never minted those, so there is nothing to import and New Dapp mints the App NFT fresh.
+
+Paste each value below exactly.
 
 **Basics**
 
