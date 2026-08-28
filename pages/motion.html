@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<script>/* three.ws theme boot, no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>Motion Studio · Type a sentence, get an animation · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+		<meta
+			name="description"
+			content="Describe a movement in plain language and watch any 3D avatar perform it. No motion capture, no model weights: a kinematics solver reads a Motion Score and produces a real animation clip you can scrub, edit beat by beat, and export as GLB."
+		/>
+		<meta name="theme-color" content="#000000" />
+		<link rel="canonical" href="https://three.ws/motion" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content="Motion Studio · three.ws" />
+		<meta property="og:description" content="Type a sentence, get a real full-body animation. No mocap, no model weights, no download." />
+		<meta property="og:url" content="https://three.ws/motion" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Motion+Studio&amp;d=Type+a+sentence%2C+get+a+real+full-body+animation.+No+motion+capture%2C+no+model+weights%2C+nothing+to+download&amp;p=%2Fmotion" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="Motion Studio · three.ws" />
+		<meta name="twitter:description" content="Type a sentence, get a real full-body animation. No mocap, no model weights, no download." />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Motion+Studio&amp;d=Type+a+sentence%2C+get+a+real+full-body+animation.+No+motion+capture%2C+no+model+weights%2C+nothing+to+download&amp;p=%2Fmotion" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"three.ws Motion Studio","applicationCategory":"DesignApplication","operatingSystem":"Any","description":"Describe a movement in plain language and get a real full-body 3D animation clip, synthesized by a kinematics solver with no motion-capture data and no model weights.","url":"https://three.ws/motion","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+
+		<style>
+			/* The visually-hidden utility is not in the shared stylesheet, so the
+			   labels this page needs for screen readers are defined here. */
+			.sr-only {
+				position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+				overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+			}
+
+			.mo-main { max-width: 1320px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px) 96px; }
+
+			.mo-chip {
+				display: inline-flex; align-items: center; gap: 8px;
+				padding: 5px 12px; border: 1px solid var(--stroke); border-radius: 999px;
+				background: var(--surface-1); font-size: 12px; letter-spacing: .04em;
+				text-transform: uppercase; color: var(--ink-dim); font-family: var(--font-mono);
+			}
+			.mo-chip-dot { width: 7px; height: 7px; border-radius: 50%; background: #34d399; box-shadow: 0 0 0 3px rgba(52,211,153,.18); }
+
+			.mo-head { padding: clamp(24px, 4vw, 52px) 0 clamp(14px, 2vw, 24px); max-width: 68ch; }
+			.mo-head h1 { font-size: clamp(30px, 4.6vw, 52px); line-height: 1.04; margin: 16px 0 12px; letter-spacing: -.02em; }
+			.mo-lede { color: var(--ink-dim); font-size: clamp(15px, 1.35vw, 18px); line-height: 1.6; margin: 0; }
+
+			/* Composer: the prompt is the whole interface until there is a result. */
+			.mo-composer { display: grid; gap: 10px; margin: 0 0 clamp(18px, 2.5vw, 28px); }
+			.mo-input-row { display: flex; gap: 10px; flex-wrap: wrap; }
+			.mo-input {
+				flex: 1 1 340px; min-width: 0; padding: 14px 16px; font-size: 16px;
+				background: var(--surface-1); color: var(--ink);
+				border: 1px solid var(--stroke); border-radius: 12px;
+				transition: border-color .18s ease, box-shadow .18s ease;
+			}
+			.mo-input::placeholder { color: var(--ink-faint, var(--ink-dim)); }
+			.mo-input:focus-visible { outline: none; border-color: #34d399; box-shadow: 0 0 0 3px rgba(52,211,153,.18); }
+			.mo-go {
+				padding: 14px 22px; border-radius: 12px; border: 1px solid transparent;
+				background: #34d399; color: #04120c; font-weight: 650; font-size: 15px;
+				cursor: pointer; transition: transform .12s ease, filter .18s ease, opacity .18s ease;
+			}
+			.mo-go:hover:not(:disabled) { filter: brightness(1.08); }
+			.mo-go:active:not(:disabled) { transform: translateY(1px); }
+			.mo-go:disabled { opacity: .55; cursor: progress; }
+			.mo-go:focus-visible { outline: 2px solid #34d399; outline-offset: 3px; }
+
+			.mo-examples { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+			.mo-examples-label { font-family: var(--font-mono); font-size: 12px; color: var(--ink-dim); text-transform: uppercase; letter-spacing: .05em; }
+			.mo-pill {
+				padding: 6px 12px; border-radius: 999px; border: 1px solid var(--stroke);
+				background: var(--surface-1); color: var(--ink-dim); font-size: 13px; cursor: pointer;
+				transition: color .16s ease, border-color .16s ease, background .16s ease, transform .12s ease;
+			}
+			.mo-pill:hover { color: var(--ink); border-color: #34d399; }
+			.mo-pill:active { transform: translateY(1px); }
+			.mo-pill:focus-visible { outline: 2px solid #34d399; outline-offset: 2px; }
+			.mo-pill[aria-pressed='true'] { color: var(--ink); border-color: #34d399; background: rgba(52,211,153,.1); }
+			.mo-pill:disabled { opacity: .5; cursor: not-allowed; }
+
+			/* Workbench: stage left, score right. */
+			.mo-work { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: clamp(16px, 2.2vw, 28px); align-items: start; }
+
+			.mo-stage-card { border: 1px solid var(--stroke); border-radius: 18px; overflow: hidden; background: var(--surface-1); }
+			.mo-stage-wrap { position: relative; aspect-ratio: 4 / 3; min-height: 360px; background: radial-gradient(120% 120% at 50% 0%, rgba(52,211,153,.10), transparent 62%), var(--surface-1); }
+			#mo-stage { position: absolute; inset: 0; }
+			.mo-stage-empty {
+				position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 10px;
+				padding: 24px; text-align: center; color: var(--ink-dim); font-size: 14px; line-height: 1.6;
+			}
+			.mo-stage-empty strong { color: var(--ink); font-size: 16px; font-weight: 600; }
+			.mo-stage-empty[hidden] { display: none; }
+			.mo-skeleton { width: 74px; height: 74px; border-radius: 50%; border: 2px dashed var(--stroke); display: grid; place-content: center; font-size: 26px; opacity: .8; }
+
+			.mo-status {
+				position: absolute; left: 0; right: 0; bottom: 0; padding: 10px 14px;
+				font-family: var(--font-mono); font-size: 12.5px; color: #fff;
+				background: linear-gradient(to top, rgba(0,0,0,.6), transparent);
+				pointer-events: none; min-height: 18px;
+			}
+
+			/* Transport */
+			.mo-transport { display: grid; gap: 10px; padding: 12px 14px 14px; border-top: 1px solid var(--stroke); }
+			.mo-transport-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+			.mo-icon-btn {
+				width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--stroke);
+				background: var(--surface-2, var(--surface-1)); color: var(--ink); cursor: pointer;
+				display: grid; place-content: center; font-size: 14px;
+				transition: border-color .16s ease, background .16s ease, transform .12s ease;
+			}
+			.mo-icon-btn:hover:not(:disabled) { border-color: #34d399; }
+			.mo-icon-btn:active:not(:disabled) { transform: translateY(1px); }
+			.mo-icon-btn:focus-visible { outline: 2px solid #34d399; outline-offset: 2px; }
+			.mo-icon-btn:disabled { opacity: .45; cursor: not-allowed; }
+			.mo-icon-btn[aria-pressed='true'] { border-color: #34d399; background: rgba(52,211,153,.12); }
+
+			.mo-scrub-wrap { position: relative; flex: 1 1 220px; min-width: 160px; }
+			.mo-scrub { width: 100%; accent-color: #34d399; cursor: pointer; }
+			.mo-scrub:focus-visible { outline: 2px solid #34d399; outline-offset: 4px; }
+			.mo-beats { position: relative; height: 16px; margin-top: -2px; }
+			.mo-beat-mark {
+				position: absolute; top: 0; transform: translateX(-50%);
+				width: 2px; height: 8px; background: var(--stroke); border-radius: 1px;
+			}
+			.mo-beat-mark[data-active='true'] { background: #34d399; height: 12px; }
+			.mo-time { font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-dim); min-width: 92px; text-align: right; }
+
+			.mo-speed { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink-dim); font-family: var(--font-mono); }
+			.mo-speed input { width: 88px; accent-color: #34d399; }
+
+			/* Right column */
+			.mo-panel { border: 1px solid var(--stroke); border-radius: 18px; background: var(--surface-1); overflow: hidden; }
+			.mo-panel + .mo-panel { margin-top: 14px; }
+			.mo-panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 13px 16px; border-bottom: 1px solid var(--stroke); }
+			.mo-panel-title { font-size: 13px; font-weight: 620; letter-spacing: .02em; }
+			.mo-panel-sub { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-dim); }
+			.mo-panel-body { padding: 14px 16px; }
+
+			.mo-beat-list { display: grid; gap: 6px; max-height: 340px; overflow-y: auto; }
+			.mo-beat {
+				display: grid; grid-template-columns: 52px 1fr auto; gap: 10px; align-items: center;
+				width: 100%; text-align: left; padding: 9px 10px; border-radius: 10px;
+				border: 1px solid transparent; background: transparent; color: var(--ink);
+				font: inherit; cursor: pointer;
+				transition: background .16s ease, border-color .16s ease;
+			}
+			.mo-beat:hover { background: var(--surface-2, rgba(127,127,127,.07)); border-color: var(--stroke); }
+			.mo-beat:focus-visible { outline: 2px solid #34d399; outline-offset: -2px; }
+			.mo-beat[aria-current='true'] { border-color: #34d399; background: rgba(52,211,153,.1); }
+			.mo-beat-t { font-family: var(--font-mono); font-size: 12px; color: var(--ink-dim); }
+			.mo-beat-label { font-size: 13.5px; }
+			.mo-beat-meta { font-family: var(--font-mono); font-size: 11px; color: var(--ink-dim); }
+
+			.mo-empty-note { color: var(--ink-dim); font-size: 13.5px; line-height: 1.6; margin: 0; }
+
+			.mo-source { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-dim); }
+			.mo-lane {
+				font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
+				padding: 3px 8px; border-radius: 999px; border: 1px solid var(--stroke); color: var(--ink);
+			}
+			.mo-lane[data-lane='composer'] { border-color: #34d399; color: #34d399; }
+			.mo-lane[data-lane='model'] { border-color: #a78bfa; color: #a78bfa; }
+			.mo-lane[data-lane='edited'] { border-color: #fbbf24; color: #fbbf24; }
+
+			.mo-warn { margin: 10px 0 0; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(251,191,36,.4); background: rgba(251,191,36,.08); color: var(--ink); font-size: 12.5px; line-height: 1.55; }
+			.mo-error { margin: 10px 0 0; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(248,113,113,.45); background: rgba(248,113,113,.1); color: var(--ink); font-size: 13.5px; line-height: 1.6; }
+			.mo-error strong { display: block; margin-bottom: 4px; }
+
+			.mo-score-editor {
+				width: 100%; min-height: 220px; max-height: 420px; resize: vertical;
+				font-family: var(--font-mono); font-size: 12px; line-height: 1.55;
+				padding: 12px; border-radius: 10px; border: 1px solid var(--stroke);
+				background: var(--surface-2, var(--surface-1)); color: var(--ink); tab-size: 2;
+			}
+			.mo-score-editor:focus-visible { outline: none; border-color: #34d399; box-shadow: 0 0 0 3px rgba(52,211,153,.16); }
+
+			.mo-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+			.mo-btn {
+				padding: 9px 14px; border-radius: 10px; border: 1px solid var(--stroke);
+				background: var(--surface-2, var(--surface-1)); color: var(--ink); font-size: 13px; cursor: pointer;
+				text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+				transition: border-color .16s ease, transform .12s ease, opacity .16s ease;
+			}
+			.mo-btn:hover:not(:disabled) { border-color: #34d399; }
+			.mo-btn:active:not(:disabled) { transform: translateY(1px); }
+			.mo-btn:focus-visible { outline: 2px solid #34d399; outline-offset: 2px; }
+			.mo-btn:disabled { opacity: .45; cursor: not-allowed; }
+			.mo-btn-primary { border-color: #34d399; background: rgba(52,211,153,.12); }
+
+			.mo-toggles { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--ink-dim); }
+			.mo-toggles label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+			.mo-toggles input { accent-color: #34d399; cursor: pointer; }
+
+			/* How it works */
+			.mo-how { margin-top: clamp(40px, 6vw, 80px); }
+			.mo-how h2 { font-size: clamp(22px, 2.6vw, 30px); margin: 0 0 8px; letter-spacing: -.01em; }
+			.mo-how-lede { color: var(--ink-dim); max-width: 66ch; line-height: 1.65; margin: 0 0 24px; }
+			.mo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+			.mo-card { border: 1px solid var(--stroke); border-radius: 14px; padding: 18px; background: var(--surface-1); }
+			.mo-card h3 { font-size: 15px; margin: 0 0 8px; }
+			.mo-card p { margin: 0; color: var(--ink-dim); font-size: 13.5px; line-height: 1.65; }
+			.mo-card code { font-family: var(--font-mono); font-size: 12px; color: var(--ink); }
+
+			.mo-order { font-family: var(--font-mono); font-size: 12.5px; line-height: 1.9; color: var(--ink-dim); margin: 0; }
+			.mo-order b { color: #34d399; font-weight: 600; }
+
+			@media (max-width: 940px) {
+				.mo-work { grid-template-columns: 1fr; }
+				.mo-stage-wrap { aspect-ratio: 1 / 1; min-height: 320px; }
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.mo-go, .mo-pill, .mo-btn, .mo-icon-btn, .mo-beat { transition: none; }
+			}
+		</style>
+	</head>
+	<body>
+		<header>
+			<div id="nav-container"></div>
+		</header>
+		<script src="/nav.js"></script>
+
+		<main class="mo-main">
+			<div class="mo-head">
+				<span class="mo-chip"><span class="mo-chip-dot"></span>Motion Studio</span>
+				<h1>Type a sentence. Get an animation.</h1>
+				<p class="mo-lede">
+					No motion capture, no model weights, nothing to download. Describe a
+					movement and a kinematics solver works out the joint rotations for
+					every frame: feet on the floor, weight over them, shoulders doing what
+					shoulders do. Scrub it, edit any beat, and export a clip that plays on
+					any humanoid rig.
+				</p>
+			</div>
+
+			<form class="mo-composer" id="mo-form">
+				<div class="mo-input-row">
+					<label class="sr-only" for="mo-prompt">Describe the movement</label>
+					<input
+						class="mo-input"
+						id="mo-prompt"
+						name="prompt"
+						type="text"
+						autocomplete="off"
+						maxlength="400"
+						placeholder="wave hello twice, excitedly"
+						aria-describedby="mo-prompt-help"
+					/>
+					<button class="mo-go" id="mo-go" type="submit">Animate</button>
+				</div>
+				<p class="sr-only" id="mo-prompt-help">
+					Describe a movement in plain language. Known movements answer instantly;
+					anything else is written by a language model into the same score format.
+				</p>
+				<div class="mo-examples">
+					<span class="mo-examples-label">Try</span>
+					<div id="mo-examples" role="group" aria-label="Example movements"></div>
+				</div>
+			</form>
+
+			<section class="mo-work" aria-label="Motion workbench">
+				<div>
+					<div class="mo-stage-card">
+						<div class="mo-stage-wrap">
+							<div id="mo-stage"></div>
+							<div class="mo-stage-empty" id="mo-empty">
+								<div class="mo-skeleton" aria-hidden="true">◍</div>
+								<strong>Nothing is moving yet</strong>
+								<span>Type a movement above, or pick one of the examples.</span>
+							</div>
+							<div class="mo-status" id="mo-status" role="status" aria-live="polite"></div>
+						</div>
+
+						<div class="mo-transport">
+							<div class="mo-transport-row">
+								<button class="mo-icon-btn" id="mo-play" type="button" title="Play or pause" aria-label="Play" disabled>▶</button>
+								<button class="mo-icon-btn" id="mo-loop" type="button" title="Loop the motion" aria-label="Loop" aria-pressed="false" disabled>↻</button>
+								<div class="mo-scrub-wrap">
+									<label class="sr-only" for="mo-scrub">Scrub the motion</label>
+									<input class="mo-scrub" id="mo-scrub" type="range" min="0" max="1000" value="0" step="1" disabled />
+									<div class="mo-beats" id="mo-beat-marks" aria-hidden="true"></div>
+								</div>
+								<span class="mo-time" id="mo-time">0.00 / 0.00s</span>
+							</div>
+							<div class="mo-transport-row">
+								<span class="mo-speed">
+									<label for="mo-speed">Speed</label>
+									<input id="mo-speed" type="range" min="25" max="200" value="100" step="5" disabled />
+									<span id="mo-speed-value">1.00x</span>
+								</span>
+								<span style="flex:1"></span>
+								<div id="mo-rigs" role="group" aria-label="Which avatar performs the motion" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+							</div>
+						</div>
+					</div>
+
+					<div class="mo-panel" style="margin-top:14px">
+						<div class="mo-panel-head">
+							<span class="mo-panel-title">Export</span>
+							<span class="mo-panel-sub" id="mo-export-sub">nothing to export yet</span>
+						</div>
+						<div class="mo-panel-body">
+							<div class="mo-toggles">
+								<label><input type="checkbox" id="mo-opt-loop" /> Loop</label>
+								<label><input type="checkbox" id="mo-opt-idle" checked /> Breathing</label>
+								<label><input type="checkbox" id="mo-opt-root" checked /> Travel (root motion)</label>
+								<label><input type="checkbox" id="mo-opt-fingers" checked /> Fingers</label>
+							</div>
+							<div class="mo-actions">
+								<button class="mo-btn" id="mo-dl-clip" type="button" disabled>Download clip JSON</button>
+								<button class="mo-btn" id="mo-dl-score" type="button" disabled>Download score</button>
+								<button class="mo-btn" id="mo-copy-link" type="button" disabled>Copy link</button>
+								<a class="mo-btn" id="mo-open-studio" href="/pose" hidden>Open in Animation Studio</a>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div>
+					<div class="mo-panel">
+						<div class="mo-panel-head">
+							<span class="mo-panel-title">The score</span>
+							<span class="mo-panel-sub" id="mo-score-sub">no beats yet</span>
+						</div>
+						<div class="mo-panel-body">
+							<div class="mo-source" id="mo-source" hidden>
+								<span class="mo-lane" id="mo-lane">composer</span>
+								<span id="mo-source-note"></span>
+							</div>
+							<div class="mo-beat-list" id="mo-beats" role="list"></div>
+							<p class="mo-empty-note" id="mo-beats-empty">
+								A motion is a handful of beats: where the body is at one instant,
+								how long it takes to get there, and how long it stays. Once you
+								animate something, every beat shows up here and you can jump to it.
+							</p>
+							<div id="mo-warnings"></div>
+						</div>
+					</div>
+
+					<div class="mo-panel">
+						<div class="mo-panel-head">
+							<span class="mo-panel-title">Edit it</span>
+							<span class="mo-panel-sub">recompiles on the spot</span>
+						</div>
+						<div class="mo-panel-body">
+							<label class="sr-only" for="mo-score-json">Motion Score JSON</label>
+							<textarea class="mo-score-editor" id="mo-score-json" spellcheck="false" disabled placeholder="Animate something first, then edit its score here."></textarea>
+							<div class="mo-actions">
+								<button class="mo-btn mo-btn-primary" id="mo-recompile" type="button" disabled>Recompile</button>
+								<button class="mo-btn" id="mo-revert" type="button" disabled>Revert</button>
+								<a class="mo-btn" href="/docs/motion" target="_blank" rel="noopener">Score reference</a>
+							</div>
+							<div id="mo-edit-error"></div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section class="mo-how">
+				<h2>How a sentence becomes a body</h2>
+				<p class="mo-how-lede">
+					Every other way to get a new animation needs data you do not have: a
+					capture stage, a licensed clip library, or a diffusion model trained on
+					one. This needs a sentence, because a human body is a solved kinematics
+					problem once somebody writes down where it should be and when.
+				</p>
+				<div class="mo-grid">
+					<div class="mo-card">
+						<h3>A score, not a keyframe dump</h3>
+						<p>
+							The intermediate format is anatomy and timing: <code>posture: "crouch"</code>,
+							<code>arms.right.at: "chin"</code>, <code>gaze: "aside"</code>. No bone names,
+							no quaternions. That is what makes it writable by a language model,
+							readable in a diff, and editable by hand in the box above.
+						</p>
+					</div>
+					<div class="mo-card">
+						<h3>Feet meet the floor, not the hips</h3>
+						<p>
+							Ankles are placed in world space against the ground. The hips are
+							then free to drop, lean and turn, and the legs absorb it through
+							inverse kinematics, which is exactly what a real body does and why
+							a crouch here looks like a crouch.
+						</p>
+					</div>
+					<div class="mo-card">
+						<h3>Balance is measured</h3>
+						<p>
+							The centre of mass is a mass-weighted sum over the segments that
+							carry a body's weight, and the hips move until it sits over
+							whichever feet are actually carrying weight. Lift one foot and the
+							body shifts over the other on its own.
+						</p>
+					</div>
+					<div class="mo-card">
+						<h3>The shoulder helps</h3>
+						<p>
+							An arm is not two bones on a fixed socket. The clavicle swings
+							toward a distant target, worth ten to fifteen centimetres of reach
+							and most of what makes a reach read as a whole body reaching
+							rather than an arm being extended.
+						</p>
+					</div>
+					<div class="mo-card">
+						<h3>Effort is not decoration</h3>
+						<p>
+							Weight, time and flow pick the easing curve, scale the travel, and
+							set how far a limb overshoots before it settles. It is what makes
+							the same three shapes read as a wave, a swat, or a salute.
+						</p>
+					</div>
+					<div class="mo-card">
+						<h3>Deterministic, so it is cacheable</h3>
+						<p>
+							The same score compiles to the same clip, byte for byte, forever.
+							That is what lets a motion be cached at the edge, diffed in review,
+							and pinned in a regression test.
+						</p>
+					</div>
+				</div>
+
+				<h2 style="margin-top:clamp(32px,4vw,56px)">The order each beat is solved in</h2>
+				<p class="mo-how-lede">
+					Reverse any two of these and the result is subtly wrong in a way that is
+					impossible to fix downstream. Solve the arms before the torso and every
+					gesture sits where the chest used to be.
+				</p>
+				<p class="mo-order">
+					<b>root</b> where the hips are, which everything below hangs from<br />
+					<b>turn</b> the body's heading, so limbs solve in the turned frame<br />
+					<b>torso</b> lean, twist and side-bend, shared along the spine<br />
+					<b>legs</b> ankles placed in world space, so dropping the hips bends the knees<br />
+					<b>balance</b> the hips nudged until the weight sits over the feet<br />
+					<b>arms</b> wrists placed against anchors that ride the posed chest<br />
+					<b>hands</b> shape, after the wrist is where it belongs<br />
+					<b>gaze</b> last, so a look is relative to the chest it ended up on
+				</p>
+
+				<div class="mo-grid" style="margin-top:24px">
+					<div class="mo-card">
+						<h3>Use it in your own code</h3>
+						<p>
+							<code>npm i @three-ws/motion</code> is the same compiler this page
+							runs, with zero dependencies and no renderer.
+							<a href="/docs/motion">Read the docs</a> or hit
+							<a href="/api/motion?prompt=wave%20hello&amp;lane=fast">the API</a> directly.
+						</p>
+					</div>
+					<div class="mo-card">
+						<h3>Refine it by hand</h3>
+						<p>
+							Send any motion to the <a href="/pose">Animation Studio</a> to
+							keyframe over it, then save it to your account, play it back across
+							the platform, or sell it.
+						</p>
+					</div>
+					<div class="mo-card">
+						<h3>Put it on your site</h3>
+						<p>
+							The clip plays on any humanoid rig through the
+							<a href="/walk">one-tag embed</a> and the
+							<a href="/docs/animations">retargeter</a>, which maps Mixamo,
+							Avaturn, VRM, Unreal and Daz bone names onto the same canonical set.
+						</p>
+					</div>
+				</div>
+			</section>
+		</main>
+
+		<script src="/footer.js" defer></script>
+		<script type="module" src="/src/motion-studio.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>
