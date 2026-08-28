@@ -364,7 +364,14 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 			const loader = new GLTFLoader();
 			const meshopt = await getMeshoptDecoder().catch(() => null);
 			if (meshopt) loader.setMeshoptDecoder(meshopt);
-			const gltf = await loader.loadAsync(AVATAR_URL);
+			// The mesh and the clip library are independent downloads, so they race
+			// together rather than in sequence.
+			const [gltf, defs] = await Promise.all([
+				loader.loadAsync(AVATAR_URL),
+				fetch(MANIFEST_URL, { cache: 'force-cache' })
+					.then((r) => (r.ok ? r.json() : []))
+					.catch(() => []),
+			]);
 			avatarModel = gltf.scene;
 			avatarModel.traverse((o) => {
 				if (o.isMesh) {
@@ -374,25 +381,33 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 			});
 			anim.setAvatarContext({ avatarUrl: AVATAR_URL });
 			anim.attach(avatarModel);
-			// Swap the body in the moment it exists. The clip library is several
-			// hundred kilobytes of keyframes and arrives later; waiting for it kept
-			// a visitor staring at the stand-in on a slow connection for no reason,
-			// and the rig idles correctly the instant the clips land.
-			player.remove(standIn);
-			player.add(avatarModel);
-			onReady?.();
 
-			const defs = await fetch(MANIFEST_URL, { cache: 'force-cache' })
-				.then((r) => (r.ok ? r.json() : []))
-				.catch(() => []);
+			// The avatar is only swapped in once it is ALIVE. A rigged mesh added
+			// before its idle clip plays stands in the authored bind pose, and a
+			// T-posed figure in the middle of the plaza is worse than the designed
+			// stand-in it would replace (CLAUDE.md: never ship the bind pose).
+			let alive = false;
 			if (Array.isArray(defs) && defs.length && anim.supportsCanonicalClips()) {
 				anim.setAnimationDefs(defs.filter((d) => d.name === 'idle' || d.name === 'walk'));
 				await anim.ensureLoaded('idle').catch(() => {});
-				await anim.ensureLoaded('walk').catch(() => {});
-				await anim.play(moving ? 'walk' : 'idle').catch(() => {});
+				alive = anim.canPlay('idle');
+				if (alive) await anim.play('idle').catch(() => { alive = false; });
 			}
+			if (!alive) {
+				log.warn('[portal] no idle clip for this rig, keeping the stand-in');
+				avatarModel = null;
+				anim.detach();
+				return;
+			}
+			player.remove(standIn);
+			player.add(avatarModel);
+			// Walking can arrive a moment later: the world is already walkable, and
+			// the first step crossfades into it as soon as it lands.
+			anim.ensureLoaded('walk').catch(() => {});
 		} catch (err) {
 			log.warn('[portal] avatar unavailable, keeping the stand-in:', err?.message || err);
+			avatarModel = null;
+		} finally {
 			onReady?.();
 		}
 	})();
