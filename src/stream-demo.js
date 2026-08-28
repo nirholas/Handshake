@@ -61,7 +61,12 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
  * Meter a byte payload against a downlink budget.
  * Resolves only once the last byte would have arrived at the given rate.
  */
-async function meter(byteLength, bytesPerSecond, onProgress) {
+function abortError() {
+	return new DOMException('The run was superseded', 'AbortError');
+}
+
+async function meter(byteLength, bytesPerSecond, onProgress, signal) {
+	if (signal?.aborted) throw abortError();
 	if (!Number.isFinite(bytesPerSecond)) {
 		onProgress?.(byteLength);
 		return;
@@ -69,15 +74,19 @@ async function meter(byteLength, bytesPerSecond, onProgress) {
 	const totalMs = (byteLength / bytesPerSecond) * 1000;
 	const started = performance.now();
 	let delivered = 0;
-	// Tick often enough to animate, rarely enough to stay cheap.
+	// Tick often enough to animate, rarely enough to stay cheap. Changing the
+	// avatar or the downlink mid-run must stop this loop, or a superseded run
+	// keeps writing into panels the new run has already reset.
 	while (delivered < byteLength) {
 		await sleep(Math.min(50, Math.max(8, totalMs / 40)));
+		if (signal?.aborted) throw abortError();
 		const elapsed = performance.now() - started;
 		delivered = Math.min(byteLength, (elapsed / 1000) * bytesPerSecond);
 		onProgress?.(delivered);
 	}
 	const remaining = totalMs - (performance.now() - started);
 	if (remaining > 0) await sleep(remaining);
+	if (signal?.aborted) throw abortError();
 	onProgress?.(byteLength);
 }
 
@@ -240,8 +249,7 @@ async function runClassic(panel, avatar, bytesPerSecond, signal) {
 	panel.log(`GET ${avatar.src}`);
 	panel.log(`${fmtBytes(buffer.byteLength)} to download before the first pixel`);
 
-	await meter(buffer.byteLength, bytesPerSecond, (delivered) => panel.progress(delivered, buffer.byteLength));
-	if (signal.aborted) return null;
+	await meter(buffer.byteLength, bytesPerSecond, (delivered) => panel.progress(delivered, buffer.byteLength), signal);
 
 	const loader = new GLTFLoader();
 	await configureLoader(loader);
@@ -270,7 +278,7 @@ async function runStream(panel, avatar, bytesPerSecond, signal) {
 		const buffer = new Uint8Array(await response.arrayBuffer());
 		await meter(buffer.byteLength, bytesPerSecond, (delivered) => {
 			panel.progress(transferred + delivered, totalBytes);
-		});
+		}, signal);
 		transferred += buffer.byteLength;
 		return {
 			ok: response.ok,
@@ -301,7 +309,6 @@ async function runStream(panel, avatar, bytesPerSecond, signal) {
 	};
 	panel.statusEl.textContent = 'refining';
 	await player.refine();
-	if (signal.aborted) return null;
 	panel.stage.playClips(player.animations);
 	panel.finish();
 	panel.bytesEl.textContent = fmtBytes(transferred);

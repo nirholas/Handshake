@@ -7,30 +7,39 @@
 // CDN build) and hand it a line.
 //
 // Resolution order, cheapest first:
-//   1. `window.__walkCompanion`: three.ws pages already run one, and reusing
+//   1. A companion the integrator passed in (`companion` option). If you
+//      already build one, hand it over: nothing else has to resolve.
+//   2. `window.__walkCompanion`: three.ws pages already run one, and reusing
 //      it means the visitor's own avatar delivers the message instead of a
 //      second character appearing beside it.
-//   2. A companion the integrator passed in (`companion` option).
-//   3. `import('@three-ws/walk')`: bundlers resolve this at build time.
-//   4. `import(cdn)`: a plain <script type="module"> page with no bundler.
+//   3. `walkModule`: a module URL (or bare specifier) to import at runtime.
+//      Either it exports `createWalkCompanion`, or it installs the global on
+//      import, which is how the three.ws build serves it at /walk-companion.js.
 // Every rung is optional. If none resolve, `ready()` is false and the runtime
 // falls back to the card presenter, which needs nothing at all.
-
-const DEFAULT_CDN = 'https://three.ws/agent-3d/latest/walk.mjs';
+//
+// The import is deliberately NOT a static specifier: a bundler that resolved
+// `@three-ws/walk` at build time would make an optional peer dependency a hard
+// build-time one, and a missing dist/ would fail the whole build rather than
+// costing one delivery its 3D body.
 
 /**
  * @param {object} [opts]
  * @param {object} [opts.companion] a control object from createWalkCompanion()
  * @param {object} [opts.companionOptions] options used when this presenter
  *   creates its own companion (avatars, defaultAvatarId, assetBase, apiBase...)
- * @param {string|null} [opts.cdn] module URL used when the package is absent
+ * @param {string|null} [opts.walkModule] module URL or specifier to import when
+ *   no companion was passed and none is live on the page
  * @param {(name: string) => any} [opts.globalLookup] test seam for window lookups
+ * @param {(spec: string) => Promise<any>} [opts.importModule] test seam for the
+ *   dynamic import
  */
 export function createAvatarPresenter({
 	companion = null,
 	companionOptions = null,
-	cdn = DEFAULT_CDN,
+	walkModule = null,
 	globalLookup = (name) => globalThis?.[name],
+	importModule = (spec) => import(/* @vite-ignore */ spec),
 } = {}) {
 	let control = companion;
 	let resolving = null;
@@ -41,13 +50,23 @@ export function createAvatarPresenter({
 		resolving = (async () => {
 			const live = globalLookup('__walkCompanion');
 			if (live && typeof live.announce === 'function') return live;
+			if (!walkModule) return null;
 
-			const mod = await importWalk(cdn);
-			if (!mod?.createWalkCompanion) return null;
-			const created = mod.createWalkCompanion(companionOptions || {});
-			// Never flip the visitor's persisted companion preference on: the
-			// SDK borrows the corner for a message and gives it straight back.
-			return created;
+			let mod = null;
+			try {
+				mod = await importModule(walkModule);
+			} catch {
+				return null;
+			}
+			if (typeof mod?.createWalkCompanion === 'function') {
+				// Never flip the visitor's persisted companion preference on: the
+				// SDK borrows the corner for a message and gives it straight back.
+				return mod.createWalkCompanion(companionOptions || {});
+			}
+			// A module that installs the global on import (the three.ws build at
+			// /walk-companion.js) rather than exporting a factory.
+			const installed = globalLookup('__walkCompanion');
+			return installed && typeof installed.announce === 'function' ? installed : null;
 		})()
 			.catch(() => null)
 			.then((resolved) => {
@@ -91,19 +110,4 @@ export function createAvatarPresenter({
 	}
 
 	return { name: 'avatar', ready, present, stop, get control() { return control; } };
-}
-
-// Kept separate so a bundler that cannot resolve the optional package still
-// produces a working build: the failure is caught and the CDN rung runs.
-async function importWalk(cdn) {
-	try {
-		return await import(/* @vite-ignore */ '@three-ws/walk');
-	} catch {
-		if (!cdn) return null;
-		try {
-			return await import(/* @vite-ignore */ cdn);
-		} catch {
-			return null;
-		}
-	}
 }

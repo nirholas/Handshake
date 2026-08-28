@@ -27,8 +27,19 @@ const patchBody = z.object({
 
 const postBody = z.object({ rotate_token: z.literal(true) });
 
+// The bridge URL is copy-pasted into an iOS Shortcut and a shell script, so it
+// has to be the one that actually works from where the page was served. Behind
+// the load balancer that is the forwarded proto; on a laptop talking to a local
+// server over http, guessing https produced a URL whose every request died with
+// ERR_SSL_PROTOCOL_ERROR, including the page's own "Send a test" button.
+function originOf(req) {
+	const forwarded = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim();
+	const proto = forwarded || (req.socket?.encrypted ? 'https' : 'http');
+	return `${proto}://${req.headers.host || 'three.ws'}`;
+}
+
 function shape(row, req) {
-	const origin = `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host || 'three.ws'}`;
+	const origin = originOf(req);
 	return {
 		settings: {
 			enabled: row.enabled,
