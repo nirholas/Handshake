@@ -52,21 +52,70 @@ function plugin(name) {
 	return globalThis.Capacitor?.Plugins?.[name] ?? null;
 }
 
+// App-only chrome, injected as one stylesheet rather than shipped in the site's
+// CSS, so it is loaded exactly where it applies and nowhere else.
+//
+// The bug it fixes is not cosmetic. In the app the WebView runs edge to edge
+// (`contentInset: 'never'` here, `contentInsetAdjustmentBehavior = .never` in
+// MainViewController.swift, `overlaysWebView` on the status bar), so the page
+// begins at y=0 underneath the notch and the clock. The site's own status-bar
+// padding lives behind `@media (display-mode: standalone)` in public/mobile.css,
+// which matches an installed PWA and NOT a WKWebView loading a remote URL, so
+// none of it applies here and the sticky header renders under the system clock.
+//
+// It targets `.nav` rather than the `<header>` that wraps it because `.nav` is
+// the element that is `position: sticky; top: 0`: padding the wrapper moves the
+// bar down once and then the sticky child slides back under the clock on the
+// first scroll.
+const APP_CHROME_CSS = `
+html.ios-app .nav {
+	padding-top: env(safe-area-inset-top, 0px);
+}
+/* The drawer opens below a header whose height is now inset by the status bar,
+   and 57px is the bar height public/nav.css hard-codes for the browser case. */
+html.ios-app .nav-drawer {
+	inset: calc(57px + env(safe-area-inset-top, 0px)) 0 0;
+}
+/* Anything pinned to the bottom edge has to clear the home indicator. */
+html.ios-app main,
+html.ios-app .stage {
+	padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+}
+/* Installing the app is the one thing a visitor inside the app cannot do. */
+html.ios-app [data-install-prompt],
+html.ios-app .pwa-install-prompt {
+	display: none !important;
+}
+/* iOS zooms the whole page when a font-size under 16px takes focus, and never
+   zooms back out. Every form on the platform is reachable in the app. */
+html.ios-app input,
+html.ios-app select,
+html.ios-app textarea {
+	font-size: max(16px, 1em);
+}
+`;
+
 /**
- * Marks the document so CSS can target the app.
+ * Marks the document and installs the app-only stylesheet.
  *
- * `html.ios-app` exists because a handful of surfaces need app-only chrome: the
- * install prompts and "add to home screen" nudges must not render inside an
- * app that is already installed, and the bottom-edge controls need the home
- * indicator's inset. `--ios-safe-top` / `--ios-safe-bottom` mirror the env()
- * values into custom properties so they can be used in calc() on browsers that
- * still mis-handle env() inside nested calc.
+ * `html.ios-app` is also a hook for any surface that needs to know: the
+ * `--ios-safe-top` / `--ios-safe-bottom` custom properties mirror the env()
+ * values so they can be used in nested calc(), which some WebKit versions still
+ * mis-handle when env() is written inline.
  */
 function markDocument() {
 	const root = document.documentElement;
 	root.classList.add('ios-app', 'native-app');
 	root.style.setProperty('--ios-safe-top', 'env(safe-area-inset-top, 0px)');
 	root.style.setProperty('--ios-safe-bottom', 'env(safe-area-inset-bottom, 0px)');
+
+	if (document.getElementById('three-ws-ios-chrome')) return;
+	const style = document.createElement('style');
+	style.id = 'three-ws-ios-chrome';
+	style.textContent = APP_CHROME_CSS;
+	// Into <head> ahead of nothing in particular: these are single-class rules
+	// that already outrank the element and utility selectors they correct.
+	(document.head || root).appendChild(style);
 }
 
 /**
@@ -275,15 +324,38 @@ export async function haptic(strength = 'light') {
 	await haptics.impact({ style }).catch(() => {});
 }
 
+// Actions worth a tick, and how hard. `[data-haptic]` is the explicit opt-in for
+// a surface that wants one somewhere else; the rest are the platform's real
+// primary-action classes from public/buttons.css, so the feedback arrives on
+// the buttons that commit something without any page having to be edited.
+// Deliberately not every button: a tick on a tab, a filter chip or a disclosure
+// toggle stops meaning anything, which is worse than no haptics at all.
+const HAPTIC_TARGETS = [
+	['[data-haptic]', null],
+	['.btn--danger', 'medium'],
+	['.btn--forge', 'medium'],
+	['.btn--primary', 'light'],
+	['button[type="submit"]', 'light'],
+];
+
 function installHaptics() {
 	if (!isNativeIOS()) return;
 	globalThis.threeWsHaptic = haptic;
 	document.addEventListener(
 		'click',
 		(ev) => {
-			const el = ev.target?.closest?.('[data-haptic]');
-			if (!el) return;
-			haptic(el.getAttribute('data-haptic') || 'light');
+			const target = ev.target;
+			if (!target?.closest) return;
+			for (const [selector, strength] of HAPTIC_TARGETS) {
+				const el = target.closest(selector);
+				if (!el) continue;
+				// A disabled or busy control did not do anything, so it must not
+				// feel as though it did.
+				if (el.disabled || el.getAttribute('aria-disabled') === 'true') return;
+				if (el.getAttribute('aria-busy') === 'true') return;
+				haptic(strength ?? el.getAttribute('data-haptic') ?? 'light');
+				return;
+			}
 		},
 		true,
 	);

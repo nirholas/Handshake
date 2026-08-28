@@ -370,7 +370,10 @@ export function solveGaze(pose, { yaw = 0, pitch = 0, roll = 0 } = {}) {
 		if (!hasBone(bone)) continue;
 		let world = pose.worldQuat(bone);
 		if (yaw) world = qMul(qAxisAngle(chestUp, yaw * share), world);
-		if (pitch) world = qMul(qAxisAngle(chestLeft, pitch * share), world);
+		// Negated: a positive rotation about the body's left tips a bone that
+		// points UP forward, which is what a spine lean wants, and tips a gaze
+		// that points FORWARD down, which is the opposite of what a look up means.
+		if (pitch) world = qMul(qAxisAngle(chestLeft, -pitch * share), world);
 		if (roll) world = qMul(qAxisAngle(chestForward, roll * share), world);
 		pose.setWorldQuat(bone, world);
 	}

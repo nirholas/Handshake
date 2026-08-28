@@ -1,0 +1,58 @@
+{
+	"name": "@three-ws/portal",
+	"version": "0.1.0",
+	"description": "Turn any website into a walkable 3D world. Reads a page's real structure and lays out a city from it: sections become buildings, links become doors, images become billboards. Pure layout in JS, a client for the three.ws Portal API, a CLI, and an MCP server.",
+	"keywords": [
+		"3d",
+		"webgl",
+		"gltf",
+		"glb",
+		"sitemap",
+		"visualization",
+		"web",
+		"crawler",
+		"mcp",
+		"model-context-protocol",
+		"three.ws"
+	],
+	"author": "three.ws <support@three.ws> (https://three.ws)",
+	"license": "Apache-2.0",
+	"homepage": "https://three.ws/portal",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "packages/portal"
+	},
+	"type": "module",
+	"main": "./src/index.js",
+	"module": "./src/index.js",
+	"exports": {
+		".": "./src/index.js",
+		"./layout": "./src/layout.js",
+		"./mcp": "./src/mcp.js",
+		"./package.json": "./package.json"
+	},
+	"bin": {
+		"portal": "./src/cli.js",
+		"portal-mcp": "./src/mcp.js"
+	},
+	"files": [
+		"src",
+		"example",
+		"README.md",
+		"LICENSE"
+	],
+	"engines": {
+		"node": ">=18"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.29.0",
+		"zod": "^3.23.8"
+	},
+	"scripts": {
+		"test": "vitest run --root ../.. tests/portal-layout.test.js"
+	}
+}
