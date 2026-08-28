@@ -507,7 +507,15 @@
 		},
 		{
 			"src": "/preflight/?$",
-			"dest": "/pages/preflight.html"
+			"dest": "/preflight.html"
+		},
+		{
+			"src": "/brownout/?$",
+			"dest": "/brownout.html"
+		},
+		{
+			"src": "/diff/?$",
+			"dest": "/diff.html"
 		},
 		{
 			"src": "/\\.well-known/x402",
