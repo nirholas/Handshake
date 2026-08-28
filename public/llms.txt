@@ -119,6 +119,8 @@ Create and customize an agent.
 - [Widget Studio](https://three.ws/studio): Pick an avatar, configure embed options, copy a one-line snippet for your site.
 - [Artifact Viewer](https://three.ws/artifact): Renders Claude artifact bundles as standalone embeddable apps.
 - [create-agent: one command, one 3D character](https://three.ws/docs/create-agent): npm create @three-ws/agent turns a sentence into a rigged, downloadable 3D character with a working demo page. No account, no API key.
+- [Brownout: proven fallbacks, not promised ones](https://three.ws/docs/brownout): Every response says where its data came from and how fresh it is, and every fallback the API claims has been executed for real against a genuinely refusing provider, inside the request path a user hits.
+- [Portal: walk any website in 3D](https://three.ws/docs/portal): Paste a web address and Portal builds a place out of it: sections become buildings sized by what they say, links become doors you step through, images become billboards. The API, the world spec, the npm package, the CLI and the MCP server behind /portal.
 - [Glance: agent cards for home screens](https://three.ws/docs/glance): Put a three.ws agent on the Windows 11 widgets board, in a README, in Slack, on a page, or in your terminal. Endpoint, element, widget worker and npm client.
 - [Glance](https://three.ws/glance): Your three.ws agent on every home screen: a live card for the Windows 11 widgets board, a README, Slack, or any page.
 - [Widgets Gallery](https://three.ws/widgets): Pre-built chat, voice, and 3D-avatar widgets you can drop into any page.

@@ -558,6 +558,18 @@ URL: https://three.ws/docs/create-agent
 
 npm create @three-ws/agent turns a sentence into a rigged, downloadable 3D character with a working demo page. No account, no API key.
 
+### Brownout: proven fallbacks, not promised ones
+
+URL: https://three.ws/docs/brownout
+
+Every response says where its data came from and how fresh it is, and every fallback the API claims has been executed for real against a genuinely refusing provider, inside the request path a user hits.
+
+### Portal: walk any website in 3D
+
+URL: https://three.ws/docs/portal
+
+Paste a web address and Portal builds a place out of it: sections become buildings sized by what they say, links become doors you step through, images become billboards. The API, the world spec, the npm package, the CLI and the MCP server behind /portal.
+
 ### Glance: agent cards for home screens
 
 URL: https://three.ws/docs/glance

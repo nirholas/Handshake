@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T06:32:04.493Z",
+	"generated_at": "2026-08-28T06:34:45.433Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -906,6 +906,26 @@
 					"path": "/docs/create-agent",
 					"title": "create-agent: one command, one 3D character",
 					"description": "npm create @three-ws/agent turns a sentence into a rigged, downloadable 3D character with a working demo page. No account, no API key.",
+					"added": "2026-08-28",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/brownout",
+					"title": "Brownout: proven fallbacks, not promised ones",
+					"description": "Every response says where its data came from and how fresh it is, and every fallback the API claims has been executed for real against a genuinely refusing provider, inside the request path a user hits.",
+					"added": "2026-08-28",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/portal",
+					"title": "Portal: walk any website in 3D",
+					"description": "Paste a web address and Portal builds a place out of it: sections become buildings sized by what they say, links become doors you step through, images become billboards. The API, the world spec, the npm package, the CLI and the MCP server behind /portal.",
 					"added": "2026-08-28",
 					"auth": null,
 					"indexable": true,

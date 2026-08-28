@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-08-28",
+			"title": "Portal: paste any web address and walk it in 3D",
+			"summary": "Type a website into /portal and it becomes a place you can walk. Every section of the page turns into a building whose height is how much that section actually says, every link becomes a door you step through (a door to the same site rebuilds the world there, so Back walks you through the sites you visited), every image becomes a billboard showing the real image, and every code block becomes a dark monolith. The colours come from the site's own theme colour, so a site looks like itself. You explore it with your own avatar, and the same world downloads as a 3D file you can open in Blender or view in AR, embeds in your own page with one line, and is readable by an AI agent through a new MCP server. Two things worth knowing: the same address always builds exactly the same city, so a link you share opens the world you walked, and Portal behaves like a polite crawler, reading each page once, saying who it is, and obeying robots.txt.",
+			"tags": [
+				"feature",
+				"sdk"
+			],
+			"link": "/portal"
+		},
+		{
+			"date": "2026-08-28",
 			"title": "One command turns a sentence into a rigged 3D character you can put on your site",
 			"summary": "Type `npm create @three-ws/agent \"a friendly cartoon astronaut\"` in a terminal and about a minute later you have a folder: the 3D model with a real skeleton so it can be posed and animated, a demo page that works when you double click it, and the two lines of HTML that put the character on your own website. No account, no API key, no signup, and nothing to install first. It also works from a photo, and it can make plain objects instead of characters. The same free lane the website uses is behind it, so what you get in the terminal is what you get on three.ws.",
 			"tags": [

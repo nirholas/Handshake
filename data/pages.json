@@ -755,6 +755,22 @@
 					"added": "2026-08-28"
 				},
 				{
+					"path": "/docs/brownout",
+					"title": "Brownout: proven fallbacks, not promised ones",
+					"description": "Every response says where its data came from and how fresh it is, and every fallback the API claims has been executed for real against a genuinely refusing provider, inside the request path a user hits.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-08-28"
+				},
+				{
+					"path": "/docs/portal",
+					"title": "Portal: walk any website in 3D",
+					"description": "Paste a web address and Portal builds a place out of it: sections become buildings sized by what they say, links become doors you step through, images become billboards. The API, the world spec, the npm package, the CLI and the MCP server behind /portal.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-08-28"
+				},
+				{
 					"path": "/docs/glance",
 					"title": "Glance: agent cards for home screens",
 					"description": "Put a three.ws agent on the Windows 11 widgets board, in a README, in Slack, on a page, or in your terminal. Endpoint, element, widget worker and npm client.",

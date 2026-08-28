@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T06:32:04.505Z",
+	"generated_at": "2026-08-28T06:34:45.458Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,16 @@
 			"title": "Brownout",
 			"summary": "Every response from this API says where its data came from and how fresh it is, and every declared fallback has been proven by breaking the upstream it protects against, inside the real request path. Read the receipts: which provider refused, which one caught the request, and how old the answer was.",
 			"link": "/brownout",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "launch",
+			"title": "Brownout: proven fallbacks, not promised ones",
+			"summary": "Every response says where its data came from and how fresh it is, and every fallback the API claims has been executed for real against a genuinely refusing provider, inside the request path a user hits.",
+			"link": "/docs/brownout",
 			"tags": [
 				"launch"
 			]
@@ -239,6 +249,16 @@
 		{
 			"date": "2026-08-28",
 			"type": "launch",
+			"title": "Portal: walk any website in 3D",
+			"summary": "Paste a web address and Portal builds a place out of it: sections become buildings sized by what they say, links become doors you step through, images become billboards. The API, the world spec, the npm package, the CLI and the MCP server behind /portal.",
+			"link": "/docs/portal",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "launch",
 			"title": "Progressive Avatars",
 			"summary": "A3S packs a GLB into nested layers whose first 50 KB is already a complete, skinned, spec-valid avatar, then refines it in place over plain HTTP range requests. Live side-by-side against a classic GLB load.",
 			"link": "/stream",
@@ -436,6 +456,17 @@
 				"improvement",
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "update",
+			"title": "Portal: paste any web address and walk it in 3D",
+			"summary": "Type a website into /portal and it becomes a place you can walk. Every section of the page turns into a building whose height is how much that section actually says, every link becomes a door you step through (a door to the same site rebuilds the world there, so Back walks you through the sites you visited), every image becomes a billboard showing the real image, and every code block becomes a dark monolith. The colours come from the site's own theme colour, so a site looks like itself. You explore it with your own avatar, and the same world downloads as a 3D file you can open in Blender or view in AR, embeds in your own page with one line, and is readable by an AI agent through a new MCP server. Two things worth knowing: the same address always builds exactly the same city, so a link you share opens the world you walked, and Portal behaves like a polite crawler, reading each page once, saying who it is, and obeying robots.txt.",
+			"link": "/portal",
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{

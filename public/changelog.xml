@@ -15,6 +15,14 @@
 			<description>Every response from this API says where its data came from and how fresh it is, and every declared fallback has been proven by breaking the upstream it protects against, inside the real request path. Read the receipts: which provider refused, which one caught the request, and how old the answer was.</description>
 		</item>
 		<item>
+			<title>Brownout: proven fallbacks, not promised ones</title>
+			<link>https://three.ws/docs/brownout</link>
+			<guid isPermaLink="false">2026-08-28:Brownout: proven fallbacks, not promised ones</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Every response says where its data came from and how fresh it is, and every fallback the API claims has been executed for real against a genuinely refusing provider, inside the request path a user hits.</description>
+		</item>
+		<item>
 			<title>Companion</title>
 			<link>https://three.ws/companion</link>
 			<guid isPermaLink="false">2026-08-28:Companion</guid>
@@ -191,6 +199,14 @@
 			<description>Paste any web address and walk through it in 3D. Portal reads the page's real structure and builds a place from it: sections become buildings sized by what they say, links become doors you step into, images become billboards. Download the world as a GLB or embed it in your own site.</description>
 		</item>
 		<item>
+			<title>Portal: walk any website in 3D</title>
+			<link>https://three.ws/docs/portal</link>
+			<guid isPermaLink="false">2026-08-28:Portal: walk any website in 3D</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Paste a web address and Portal builds a place out of it: sections become buildings sized by what they say, links become doors you step through, images become billboards. The API, the world spec, the npm package, the CLI and the MCP server behind /portal.</description>
+		</item>
+		<item>
 			<title>Progressive Avatars</title>
 			<link>https://three.ws/stream</link>
 			<guid isPermaLink="false">2026-08-28:Progressive Avatars</guid>
@@ -341,6 +357,14 @@
 			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>A handful of steps still had no time limit on the outside service they called. When that service accepted the connection and then went quiet, the request sat there until the platform killed it, and you got a spinner that ended in nothing: a photo-to-avatar upload that never came back, a saved model that never finished downloading, a coin launch stuck fetching its own thumbnail, an ordinals order whose status never loaded, a team task where one hired agent held up the whole run. Each of those now has a deadline and a clear answer when it is missed, and the ones that are safe to repeat retry once first. Anything that spends money or starts a generation is never repeated: it is bounded and then reported, so no upload is billed twice and no hire is paid twice. Saving a model from a link is also checked more tightly now, against the address it actually connects to and with the size limit applied while it downloads.</description>
+		</item>
+		<item>
+			<title>Portal: paste any web address and walk it in 3D</title>
+			<link>https://three.ws/portal</link>
+			<guid isPermaLink="false">2026-08-28:Portal: paste any web address and walk it in 3D</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Type a website into /portal and it becomes a place you can walk. Every section of the page turns into a building whose height is how much that section actually says, every link becomes a door you step through (a door to the same site rebuilds the world there, so Back walks you through the sites you visited), every image becomes a billboard showing the real image, and every code block becomes a dark monolith. The colours come from the site's own theme colour, so a site looks like itself. You explore it with your own avatar, and the same world downloads as a 3D file you can open in Blender or view in AR, embeds in your own page with one line, and is readable by an AI agent through a new MCP server. Two things worth knowing: the same address always builds exactly the same city, so a link you share opens the world you walked, and Portal behaves like a polite crawler, reading each page once, saying who it is, and obeying robots.txt.</description>
 		</item>
 		<item>
 			<title>Report a bug and it arrives as a test that fails until it is fixed</title>
