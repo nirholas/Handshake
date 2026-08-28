@@ -1,4 +1,4 @@
-// `check_rail` — prove the credential and the rail work, without interrupting.
+// `check_rail`: prove the credential and the rail work, without interrupting.
 
 import { z } from 'zod';
 

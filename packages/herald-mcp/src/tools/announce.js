@@ -1,4 +1,4 @@
-// `announce` — say one line, in person, on the owner's own screen.
+// `announce`: say one line, in person, on the owner's own screen.
 
 import { z } from 'zod';
 

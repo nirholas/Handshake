@@ -1,4 +1,4 @@
-// `announce_result` — report a finished task with the urgency it deserves.
+// `announce_result`: report a finished task with the urgency it deserves.
 //
 // The importance/tone choice is the part an agent gets wrong, so this tool
 // makes it for you from the outcome: a failure is loud enough to cut through

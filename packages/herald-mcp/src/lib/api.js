@@ -42,7 +42,7 @@ export async function apiRequest(path, { method = 'GET', body } = {}) {
 			headers: {
 				accept: 'application/json',
 				'user-agent': USER_AGENT,
-				// Capital-B "Bearer " — the server's CSRF guard exempts requests on
+				// Capital-B "Bearer ": the server's CSRF guard exempts requests on
 				// this exact prefix, so authenticated writes need no CSRF token.
 				authorization: `Bearer ${THREE_WS_API_KEY}`,
 				...(body !== undefined ? { 'content-type': 'application/json' } : {}),
