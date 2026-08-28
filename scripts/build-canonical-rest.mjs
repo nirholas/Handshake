@@ -205,5 +205,5 @@ const packageBody = out.slice(out.indexOf('export const CANONICAL_REST = '))
 // carries it.
 `);
 fs.writeFileSync(PACKAGE_OUT, packageHeader + packageBody);
-console.log(`wrote ${path.relative(ROOT, PACKAGE_OUT)} — the same tables for @three-ws/motion`);
+console.log(`wrote ${path.relative(ROOT, PACKAGE_OUT)}: the same tables for @three-ws/motion`);
 console.log('bones:', sorted.map(([b]) => b).join(', '));
