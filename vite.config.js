@@ -52,6 +52,10 @@ const IOS_BRIDGE_EXCLUDED = new Set([
 	'assistant-frame.html',
 ]);
 
+// Any previously injected bridge tag, whatever hash it names, plus the
+// whitespace the injector put in front of it.
+const STALE_BRIDGE_TAG = /\s*<script type="module" src="\/ios-bridge\.[0-9a-f]+\.js"><\/script>/g;
+
 // Prepended to every emitted chunk (app AND lib). `Object.hasOwn` is an ES2022
 // *runtime API*, so esbuild's `target` never lowers it. It ships raw and throws
 // "Object.hasOwn is not a function" on anything older than Chrome 93 / Safari
@@ -1074,10 +1078,17 @@ const appConfig = {
 							if (!entry.endsWith('.html')) continue;
 							if (IOS_BRIDGE_EXCLUDED.has(entry)) continue;
 							const html = readFileSync(full, 'utf8');
-							// Fragments have no </body>; a page that somehow already
-							// carries the tag is left alone rather than doubled.
-							if (!html.includes('</body>') || html.includes('/ios-bridge.')) continue;
-							writeFileSync(full, html.replace('</body>', `\t\t${tag}\n\t</body>`));
+							// Fragments have no </body> to inject into.
+							if (!html.includes('</body>')) continue;
+							// Strip any bridge tag already present rather than skipping
+							// the page. Skipping is only correct while every existing
+							// tag names the CURRENT hash, and it does not: a build over
+							// a dist/ the frontend step did not get to wipe leaves pages
+							// pointing at a bundle this run never wrote, which 404s the
+							// bridge on every one of them. Removing then re-adding is
+							// idempotent and hash-correct in both cases.
+							const cleaned = html.replace(STALE_BRIDGE_TAG, '');
+							writeFileSync(full, cleaned.replace('</body>', `\t\t${tag}\n\t</body>`));
 							injected.push(entry);
 						}
 					};
