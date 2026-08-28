@@ -14,6 +14,7 @@
 // without the network.
 
 import { clampInt } from './http-params.js';
+import { fetchUpstream } from './upstream-fetch.js';
 
 const REST_BASE = 'https://livestream-api.pump.fun';
 const PROGRAM_ID = 'goGzNYTYkSEe4hUqz6dPmY5uf3CTt36AQAoujXDrKiV';
@@ -35,17 +36,19 @@ export class PumpGoError extends Error {
 }
 
 async function pumpGoGet(path) {
+	// Retried on the transient statuses only. A 404 is a real answer about this
+	// bounty and must not be retried, and neither should a 4xx: repeating either
+	// just spends the caller's budget to be told the same thing again.
 	let res;
 	try {
-		res = await fetch(`${REST_BASE}${path}`, {
+		res = await fetchUpstream(`${REST_BASE}${path}`, {
 			headers: {
 				accept: 'application/json',
 				'user-agent': 'Mozilla/5.0 (compatible; three.ws/1.0; +https://three.ws)',
 				origin: 'https://pump.fun',
 				referer: 'https://pump.fun/',
 			},
-			signal: AbortSignal.timeout(TIMEOUT_MS),
-		});
+		}, { name: 'pumpfun:go', timeoutMs: TIMEOUT_MS, attempts: 2, okWhen: () => true });
 	} catch (e) {
 		throw new PumpGoError(`pump.fun GO unreachable: ${e.message}`, 504);
 	}
