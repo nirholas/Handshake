@@ -54,6 +54,7 @@ import { getCubeMapTexture } from './viewer/environment.js';
 import { takeScreenshot, captureScreenshot } from './viewer/screenshot.js';
 import { setClips, playAllClips } from './viewer/animation.js';
 import { computeFramingExtent, computeFramingWidth } from './viewer/framing.js';
+import { estimateFacingYaw, forwardFromYaw, horizontalExtentAt } from './viewer/facing.js';
 import { LightProbeGrid } from './light-probe-grid.js';
 import { AnimationManager } from './animation-manager.js';
 import { applyAvatarMaterialRealism, looksLikeAvatarMesh } from './shared/avatar-material-realism.js';
@@ -712,9 +713,14 @@ export class Viewer {
 		const framingMode = this.options?.framing === 'portrait' ? 'portrait' : 'full';
 		const { visH, baseY } = computeFramingExtent(bbSize.y, box.max.y, framingMode);
 
+		// Sit the camera in front of the avatar's face, whichever way its rig
+		// was authored; yaw 0 (no readable rig) keeps the historical +Z seat.
+		const yaw = estimateFacingYaw(this.content, bbSize.y) ?? 0;
+		const forward = forwardFromYaw(yaw);
+
 		const extentV = (visH / 2) * PAD_V / usableFrac;
 		const distV = extentV / Math.tan(vFovRad / 2);
-		const framingWidth = computeFramingWidth(bbSize.x, bbSize.y, framingMode);
+		const framingWidth = computeFramingWidth(horizontalExtentAt(bbSize.x, bbSize.z, yaw), bbSize.y, framingMode);
 		const distH = (framingWidth / 2) * PAD_H / Math.tan(hFovRad / 2);
 		const dist = Math.max(distV, distH);
 
@@ -722,7 +728,11 @@ export class Viewer {
 		// with a bottom panel, shift down so the avatar rises into the upper area.
 		const focusY = baseY - extentV * panelFrac;
 		const target = new Vector3(bbCenter.x, focusY, bbCenter.z);
-		const pos = new Vector3(bbCenter.x + dist * 0.12, focusY, bbCenter.z + dist);
+		const pos = new Vector3(
+			bbCenter.x + forward.x * dist,
+			focusY,
+			bbCenter.z + forward.z * dist,
+		);
 
 		if (animate) {
 			this._tweenCamera(pos, target, durationMs);
@@ -1343,9 +1353,14 @@ export class Viewer {
 		const framingMode = this.options?.framing === 'portrait' ? 'portrait' : 'full';
 		const { visH, baseY } = computeFramingExtent(bbSize.y, bbSize.y / 2, framingMode);
 
+		// Same front-on seat as frameContent(): read the rig's facing rather
+		// than assuming the avatar was authored looking down +Z.
+		const yaw = estimateFacingYaw(this.content, bbSize.y) ?? 0;
+		const forward = forwardFromYaw(yaw);
+
 		const extentV = (visH / 2) * PAD_V / usableFrac;
 		const distV = extentV / Math.tan(vFovRad / 2);
-		const framingWidth = computeFramingWidth(bbSize.x, bbSize.y, framingMode);
+		const framingWidth = computeFramingWidth(horizontalExtentAt(bbSize.x, bbSize.z, yaw), bbSize.y, framingMode);
 		const distH = (framingWidth / 2) * PAD_H / Math.tan(hFovRad / 2);
 		const dist = Math.max(distV, distH);
 
@@ -1355,14 +1370,13 @@ export class Viewer {
 		const focusY = baseY - extentV * panelFrac;
 
 		// Final framed camera (the position the user should end up at).
-		// Avatar sits dead-centered front-on by default — no lateral offset.
-		// (The legacy 6% 3/4 angle pan was an aesthetic choice; removing it so
-		// every embed opens with the character squarely facing the viewer.)
+		// Avatar sits dead-centered front-on by default: no lateral offset, and
+		// the seat rotates with the rig's facing so "front" means the face.
 		const framedPos = new Vector3();
 		if (this.options.cameraPosition) {
 			framedPos.fromArray(this.options.cameraPosition);
 		} else {
-			framedPos.set(0, focusY, dist);
+			framedPos.set(forward.x * dist, focusY, forward.z * dist);
 		}
 		const orbitalTarget = new Vector3(0, focusY, 0);
 

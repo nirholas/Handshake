@@ -35,6 +35,11 @@ function loadAnimationDefs() {
 	return _manifestPromise;
 }
 
+/** True when the reader asked the platform to hold decorative motion still. */
+function prefersReducedMotion() {
+	return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
 /**
  * Mount a living, idle-animated avatar into `container`.
  *
@@ -44,6 +49,7 @@ function loadAnimationDefs() {
  * @param {string} glbUrl  Avatar model URL.
  * @param {Object} [opts]
  * @param {boolean} [opts.autoRotate=true]  Slowly turn the figure on a turntable.
+ *   Held still regardless when the reader prefers reduced motion.
  * @param {string}  [opts.seed]  Stable seed so the idle phase is deterministic per agent.
  * @param {string}  [opts.environment='Neutral']  Lighting environment name.
  * @param {boolean} [opts.cameraControls=false]  Allow orbit/zoom (used in the modal).
@@ -83,7 +89,10 @@ export function mountIdleAvatar(container, glbUrl, opts = {}) {
 	}
 
 	viewer.state.environment = environment;
-	viewer.state.autoRotate = autoRotate;
+	// A turntable is decorative motion nobody asked for: a reader who set
+	// "reduce motion" gets the figure held still, and its idle life (breathing,
+	// blink) still plays because that is the content, not the decoration.
+	viewer.state.autoRotate = autoRotate && !prefersReducedMotion();
 	viewer.controls.enabled = cameraControls;
 	viewer.controls.enableZoom = cameraControls;
 	viewer.controls.enablePan = false;
