@@ -83,7 +83,7 @@
 	<main class="sm-wrap">
 		<div class="sm-hero">
 			<h1>Sitemap</h1>
-			<p>All 861 pages on three.ws, grouped by purpose. Looking for the machine-readable versions?</p>
+			<p>All 866 pages on three.ws, grouped by purpose. Looking for the machine-readable versions?</p>
 			<div class="sm-formats">
 				<a href="/sitemap.xml"><code>sitemap.xml</code> · for search engines</a>
 				<a href="/llms.txt"><code>llms.txt</code> · for AI agents</a>
@@ -95,7 +95,7 @@
 		</div>
 		<div class="sm-filter">
 			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-			<input id="sm-filter-input" type="search" placeholder="Filter 861 pages by name, path, or description…" aria-label="Filter pages" autocomplete="off" spellcheck="false" />
+			<input id="sm-filter-input" type="search" placeholder="Filter 866 pages by name, path, or description…" aria-label="Filter pages" autocomplete="off" spellcheck="false" />
 			<kbd aria-hidden="true">/</kbd>
 		</div>
 		<p class="sm-filter-count" id="sm-filter-count" role="status" aria-live="polite"></p>
@@ -120,6 +120,14 @@
 					</a>
 				</li>
 				<li>
+					<a href="/knock">
+						<span class="sm-new-date">Aug 28, 2026</span>
+						<span class="sm-title">Knock</span>
+						<span class="sm-path">/knock</span>
+						<span class="sm-desc">Put a price on reaching you. Anyone, a person or an agent, can pay it to get exactly one message through, and your 3D companion walks on screen and delivers it out loud with their name and what they paid. The USDC settles straight to your wallet.</span>
+					</a>
+				</li>
+				<li>
 					<a href="/herald">
 						<span class="sm-new-date">Aug 28, 2026</span>
 						<span class="sm-title">Herald</span>
@@ -133,6 +141,14 @@
 						<span class="sm-title">Glance</span>
 						<span class="sm-path">/glance</span>
 						<span class="sm-desc">Your three.ws agent on every home screen: a live card for the Windows 11 widgets board, a README, Slack, or any page.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/diff">
+						<span class="sm-new-date">Aug 28, 2026</span>
+						<span class="sm-title">Model Diff</span>
+						<span class="sm-path">/diff</span>
+						<span class="sm-desc">Drop two .glb files and see exactly what changed: geometry, materials, textures, skeletons and animation clips, with git-style rename and move detection and a severity you can gate a build on. Overlay, wipe, or set the two models side by side in 3D. Runs in your browser, nothing is uploaded.</span>
 					</a>
 				</li>
 				<li>
@@ -159,22 +175,6 @@
 						<span class="sm-desc">The Oracle's conviction model in full: every bucket weight with the number of labeled launches behind it and what happened to them, the held-out reliability curve for each tier, the version history of every refit including the ones that were refused, and a live scorer that runs the real weights in your browser. Download it and reproduce any score offline.</span>
 					</a>
 				</li>
-				<li>
-					<a href="/preflight">
-						<span class="sm-new-date">Aug 28, 2026</span>
-						<span class="sm-title">x402 Preflight: can this seller actually settle?</span>
-						<span class="sm-path">/preflight</span>
-						<span class="sm-desc">Check whether any x402 seller can complete a payment before you sign one. Fetches the seller's signed payability attestation and verifies the ed25519 signature, the expiry and the subject entirely in your browser. Free, open format, works against any origin.</span>
-					</a>
-				</li>
-				<li>
-					<a href="/docs/tty-avatar">
-						<span class="sm-new-date">Aug 28, 2026</span>
-						<span class="sm-title">Docs · Terminal avatar</span>
-						<span class="sm-path">/docs/tty-avatar</span>
-						<span class="sm-desc">The @three-ws/tty-avatar package: any three.ws avatar or agent body rendered live in a terminal by a software rasterizer (truecolor half-blocks, braille, or plain ASCII), procedural moods, and Claude Code hooks that turn it into your coding agent's face.</span>
-					</a>
-				</li>
 			</ul>
 		</section>
 		<nav class="sm-toc" aria-label="Sections">
@@ -192,7 +192,7 @@
 		</nav>
 		<section class="sm-section" id="main">
 			<header>
-				<h2>Main<span class="sm-count" data-count>55</span></h2>
+				<h2>Main<span class="sm-count" data-count>56</span></h2>
 				<p class="sm-section-desc">Entry points into the product.</p>
 			</header>
 			<ul class="sm-list">
@@ -407,6 +407,13 @@
 					</a>
 				</li>
 				<li>
+					<a href="/knock">
+						<span class="sm-title">Knock</span>
+						<span class="sm-path">/knock</span>
+						<span class="sm-desc">Put a price on reaching you. Anyone, a person or an agent, can pay it to get exactly one message through, and your 3D companion walks on screen and delivers it out loud with their name and what they paid. The USDC settles straight to your wallet.</span>
+					</a>
+				</li>
+				<li>
 					<a href="/herald">
 						<span class="sm-title">Herald</span>
 						<span class="sm-path">/herald</span>
@@ -586,7 +593,7 @@
 
 		<section class="sm-section" id="build">
 			<header>
-				<h2>Build<span class="sm-count" data-count>63</span></h2>
+				<h2>Build<span class="sm-count" data-count>64</span></h2>
 				<p class="sm-section-desc">Create and customize an agent.</p>
 			</header>
 			<ul class="sm-list">
@@ -1001,6 +1008,13 @@
 						<span class="sm-title">Render Lab</span>
 						<span class="sm-path">/render-lab</span>
 						<span class="sm-desc">Compose a real avatar render in the browser and copy the exact API call. Reads each model first (ARKit morph targets, canonical-skeleton coverage, geometry) and only offers controls that model will actually honor, so nothing you build here silently fails in production. Contact-sheet mode renders every framing, pose, or expression at once.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/diff">
+						<span class="sm-title">Model Diff</span>
+						<span class="sm-path">/diff</span>
+						<span class="sm-desc">Drop two .glb files and see exactly what changed: geometry, materials, textures, skeletons and animation clips, with git-style rename and move detection and a severity you can gate a build on. Overlay, wipe, or set the two models side by side in 3D. Runs in your browser, nothing is uploaded.</span>
 					</a>
 				</li>
 				<li>
@@ -2332,7 +2346,7 @@
 
 		<section class="sm-section" id="learn">
 			<header>
-				<h2>Learn<span class="sm-count" data-count>392</span></h2>
+				<h2>Learn<span class="sm-count" data-count>395</span></h2>
 				<p class="sm-section-desc">Docs, tutorials, and reference.</p>
 			</header>
 			<ul class="sm-list">
@@ -3107,6 +3121,13 @@
 					</a>
 				</li>
 				<li>
+					<a href="/docs/knock">
+						<span class="sm-title">Docs · Knock</span>
+						<span class="sm-path">/docs/knock</span>
+						<span class="sm-desc">A priced door to a person: open one at /knock/&lt;username&gt;, set what a single message from a stranger costs, and have your 3D companion deliver what gets through in person. The free and x402 lanes, the refuse-before-charging rule, receipts, the SDK and CLI, and the MCP server.</span>
+					</a>
+				</li>
+				<li>
 					<a href="/docs/mcp">
 						<span class="sm-title">Docs · MCP</span>
 						<span class="sm-path">/docs/mcp</span>
@@ -3730,6 +3751,13 @@
 					</a>
 				</li>
 				<li>
+					<a href="/docs/herald">
+						<span class="sm-title">Docs: Herald</span>
+						<span class="sm-path">/docs/herald</span>
+						<span class="sm-desc">Deliver a message in person: the open SDK where a 3D character walks onto your page and says what happened, its interrupt budget (importance floor, quiet hours, dedupe, batching), the accessible fallback, the delivery rail, and the CLI that announces when your build finishes.</span>
+					</a>
+				</li>
+				<li>
 					<a href="/docs/notifications">
 						<span class="sm-title">Docs: Notifications</span>
 						<span class="sm-path">/docs/notifications</span>
@@ -3741,6 +3769,13 @@
 						<span class="sm-title">Docs: Checkout companion</span>
 						<span class="sm-path">/docs/checkout-companion</span>
 						<span class="sm-desc">The browser extension that reads a payment page before you pay: the total against the price you were shown, money the page never itemised, fees named and summed, and what the fine print commits you to. Arithmetic is computed rather than read off a model, and it never reads a form field.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/model-diff">
+						<span class="sm-title">Docs · Model Diff</span>
+						<span class="sm-path">/docs/model-diff</span>
+						<span class="sm-desc">What actually changed between two glTF/GLB models: the three-pass matcher that reports renames instead of churn, the 1e-4 tolerance that ignores re-export noise, the severity ladder that calls a dropped joint breaking, and the four surfaces that share one engine (the page, the free API, the CLI, and the MCP tool).</span>
 					</a>
 				</li>
 				<li>

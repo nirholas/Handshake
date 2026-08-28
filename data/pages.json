@@ -269,6 +269,15 @@
 					"showcase": true
 				},
 				{
+					"path": "/knock",
+					"title": "Knock",
+					"description": "Put a price on reaching you. Anyone, a person or an agent, can pay it to get exactly one message through, and your 3D companion walks on screen and delivers it out loud with their name and what they paid. The USDC settles straight to your wallet.",
+					"priority": 0.7,
+					"changefreq": "weekly",
+					"added": "2026-08-28",
+					"showcase": true
+				},
+				{
 					"path": "/herald",
 					"title": "Herald",
 					"description": "Deliver a message in person: a 3D character walks onto your page and tells the user what happened. Open SDK, one line of code, an accessible fallback, and a CLI that announces when your build finishes.",
@@ -950,6 +959,15 @@
 					"priority": 0.8,
 					"changefreq": "weekly",
 					"added": "2026-07-31",
+					"showcase": true
+				},
+				{
+					"path": "/diff",
+					"title": "Model Diff",
+					"description": "Drop two .glb files and see exactly what changed: geometry, materials, textures, skeletons and animation clips, with git-style rename and move detection and a severity you can gate a build on. Overlay, wipe, or set the two models side by side in 3D. Runs in your browser, nothing is uploaded.",
+					"priority": 0.7,
+					"changefreq": "weekly",
+					"added": "2026-08-28",
 					"showcase": true
 				},
 				{
@@ -3313,6 +3331,12 @@
 					"added": "2026-08-28"
 				},
 				{
+					"path": "/docs/knock",
+					"title": "Docs · Knock",
+					"description": "A priced door to a person: open one at /knock/<username>, set what a single message from a stranger costs, and have your 3D companion deliver what gets through in person. The free and x402 lanes, the refuse-before-charging rule, receipts, the SDK and CLI, and the MCP server.",
+					"added": "2026-08-28"
+				},
+				{
 					"path": "/docs/mcp",
 					"title": "Docs · MCP",
 					"description": "Expose your agent as an MCP server for Claude, ChatGPT, and other clients.",
@@ -3940,6 +3964,13 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/herald",
+					"title": "Docs: Herald",
+					"description": "Deliver a message in person: the open SDK where a 3D character walks onto your page and says what happened, its interrupt budget (importance floor, quiet hours, dedupe, batching), the accessible fallback, the delivery rail, and the CLI that announces when your build finishes.",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
 					"path": "/docs/notifications",
 					"title": "Docs: Notifications",
 					"description": "Everything that happens to your work on three.ws (a payment lands, a skill sells, someone remixes your model, follows you, a quest finishes, a royalty arrives) becomes a row in one per-user inbox.",
@@ -3950,6 +3981,14 @@
 					"path": "/docs/checkout-companion",
 					"title": "Docs: Checkout companion",
 					"description": "The browser extension that reads a payment page before you pay: the total against the price you were shown, money the page never itemised, fees named and summed, and what the fine print commits you to. Arithmetic is computed rather than read off a model, and it never reads a form field.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-08-28"
+				},
+				{
+					"path": "/docs/model-diff",
+					"title": "Docs · Model Diff",
+					"description": "What actually changed between two glTF/GLB models: the three-pass matcher that reports renames instead of churn, the 1e-4 tolerance that ignores re-export noise, the severity ladder that calls a dropped joint breaking, and the four surfaces that share one engine (the page, the free API, the CLI, and the MCP tool).",
 					"priority": 0.7,
 					"changefreq": "monthly",
 					"added": "2026-08-28"

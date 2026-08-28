@@ -25262,6 +25262,16 @@
 				"infra"
 			],
 			"link": "/docs/agent-vitals"
+		},
+		{
+			"date": "2026-08-28",
+			"title": "Knock: put a price on reaching you, and hear what gets through in person",
+			"summary": "Every account can now open a door at three.ws/knock/<username> and set what one message from a stranger is worth, anywhere from a tenth of a cent to a thousand dollars, or free. Anyone can pay it to get exactly one message through: a person pays with the wallet already in their browser, and an agent pays over x402 with no human involved. The USDC settles straight to your own wallet; three.ws never holds it and takes none of it. What arrives is not another badge: your 3D companion walks on screen wherever you are on the site and says who is at the door and what they paid, ranked by that amount, so the expensive ones interrupt and the free ones wait in the feed. You set the price, the daily cap, the message length and a block list, and every one of those refusals happens before any payment, so a message that was never going to land is never one somebody was charged for. Only the one-line subject is ever read aloud. Senders get a receipt link they can check for your reply without an account here, which means answering someone never hands out your address. There is a browsable directory of open doors, an npm package and CLI for agents (@three-ws/knock), and an MCP server (@three-ws/knock-mcp) that deliberately holds no wallet: it quotes a paid door and stops, so a human always approves the spend.",
+			"tags": [
+				"feature",
+				"sdk"
+			],
+			"link": "/knock"
 		}
 	]
 }

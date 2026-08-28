@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T05:48:20.975Z",
+	"generated_at": "2026-08-28T05:50:30.686Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -62,6 +62,26 @@
 			"title": "Docs · Feedback",
 			"summary": "Telling the corner companion what broke: the proactive ask at the moment of failure, the route, build SHA, and console errors captured for you, the severity and clustering rules, the report API, and the boundary that keeps untrusted visitor text from ever reaching anything with write access.",
 			"link": "/docs/feedback",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "launch",
+			"title": "Docs · Knock",
+			"summary": "A priced door to a person: open one at /knock/<username>, set what a single message from a stranger costs, and have your 3D companion deliver what gets through in person. The free and x402 lanes, the refuse-before-charging rule, receipts, the SDK and CLI, and the MCP server.",
+			"link": "/docs/knock",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "launch",
+			"title": "Docs · Model Diff",
+			"summary": "What actually changed between two glTF/GLB models: the three-pass matcher that reports renames instead of churn, the 1e-4 tolerance that ignores re-export noise, the severity ladder that calls a dropped joint breaking, and the four surfaces that share one engine (the page, the free API, the CLI, and the MCP tool).",
+			"link": "/docs/model-diff",
 			"tags": [
 				"launch"
 			]
@@ -142,6 +162,26 @@
 			"title": "Herald",
 			"summary": "Deliver a message in person: a 3D character walks onto your page and tells the user what happened. Open SDK, one line of code, an accessible fallback, and a CLI that announces when your build finishes.",
 			"link": "/herald",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "launch",
+			"title": "Knock",
+			"summary": "Put a price on reaching you. Anyone, a person or an agent, can pay it to get exactly one message through, and your 3D companion walks on screen and delivers it out loud with their name and what they paid. The USDC settles straight to your wallet.",
+			"link": "/knock",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "launch",
+			"title": "Model Diff",
+			"summary": "Drop two .glb files and see exactly what changed: geometry, materials, textures, skeletons and animation clips, with git-style rename and move detection and a severity you can gate a build on. Overlay, wipe, or set the two models side by side in 3D. Runs in your browser, nothing is uploaded.",
+			"link": "/diff",
 			"tags": [
 				"launch"
 			]
@@ -286,6 +326,17 @@
 			"title": "Herald: your terminal can now make a 3D character walk onto your screen and talk to you",
 			"summary": "We took the part of three.ws where an avatar delivers a notification in person and turned it into something anyone can use, on any website. @three-ws/herald is an open library: one line of code and a 3D character walks into the corner of your page, looks at the person using it, and tells them, with a link to the thing it is about. It is not a toast library. It is an interrupt budget: an importance floor, quiet hours, a rate limit, dedupe, freshness, batch collapse, and a stable reason for every message it refuses to deliver, so you can always answer why you did not hear about something. No GPU, an iframe, or reduced motion falls back to an accessible card that screen readers announce the same moment everyone else hears it. There is also a rail: with an API key, anything that can make an HTTPS request reaches the browser tab you already have open. Run npx @three-ws/herald watch -- npm test and your avatar tells you when the build finishes, keeping the exit code. Wire the MCP server into Claude or Cursor and an agent that worked for twenty minutes can walk on and tell you it is done. An announcement always goes to your own sessions, so no key can interrupt anyone but its owner. Try the whole thing, rules engine included, at three.ws/herald.",
 			"link": "/herald",
+			"tags": [
+				"feature",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "update",
+			"title": "Knock: put a price on reaching you, and hear what gets through in person",
+			"summary": "Every account can now open a door at three.ws/knock/<username> and set what one message from a stranger is worth, anywhere from a tenth of a cent to a thousand dollars, or free. Anyone can pay it to get exactly one message through: a person pays with the wallet already in their browser, and an agent pays over x402 with no human involved. The USDC settles straight to your own wallet; three.ws never holds it and takes none of it. What arrives is not another badge: your 3D companion walks on screen wherever you are on the site and says who is at the door and what they paid, ranked by that amount, so the expensive ones interrupt and the free ones wait in the feed. You set the price, the daily cap, the message length and a block list, and every one of those refusals happens before any payment, so a message that was never going to land is never one somebody was charged for. Only the one-line subject is ever read aloud. Senders get a receipt link they can check for your reply without an account here, which means answering someone never hands out your address. There is a browsable directory of open doors, an npm package and CLI for agents (@three-ws/knock), and an MCP server (@three-ws/knock-mcp) that deliberately holds no wallet: it quotes a paid door and stops, so a human always approves the spend.",
+			"link": "/knock",
 			"tags": [
 				"feature",
 				"sdk"

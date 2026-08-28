@@ -55,6 +55,22 @@
 			<description>Telling the corner companion what broke: the proactive ask at the moment of failure, the route, build SHA, and console errors captured for you, the severity and clustering rules, the report API, and the boundary that keeps untrusted visitor text from ever reaching anything with write access.</description>
 		</item>
 		<item>
+			<title>Docs · Knock</title>
+			<link>https://three.ws/docs/knock</link>
+			<guid isPermaLink="false">2026-08-28:Docs · Knock</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A priced door to a person: open one at /knock/&lt;username&gt;, set what a single message from a stranger costs, and have your 3D companion deliver what gets through in person. The free and x402 lanes, the refuse-before-charging rule, receipts, the SDK and CLI, and the MCP server.</description>
+		</item>
+		<item>
+			<title>Docs · Model Diff</title>
+			<link>https://three.ws/docs/model-diff</link>
+			<guid isPermaLink="false">2026-08-28:Docs · Model Diff</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>What actually changed between two glTF/GLB models: the three-pass matcher that reports renames instead of churn, the 1e-4 tolerance that ignores re-export noise, the severity ladder that calls a dropped joint breaking, and the four surfaces that share one engine (the page, the free API, the CLI, and the MCP tool).</description>
+		</item>
+		<item>
 			<title>Docs · Terminal avatar</title>
 			<link>https://three.ws/docs/tty-avatar</link>
 			<guid isPermaLink="false">2026-08-28:Docs · Terminal avatar</guid>
@@ -117,6 +133,22 @@
 			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Deliver a message in person: a 3D character walks onto your page and tells the user what happened. Open SDK, one line of code, an accessible fallback, and a CLI that announces when your build finishes.</description>
+		</item>
+		<item>
+			<title>Knock</title>
+			<link>https://three.ws/knock</link>
+			<guid isPermaLink="false">2026-08-28:Knock</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Put a price on reaching you. Anyone, a person or an agent, can pay it to get exactly one message through, and your 3D companion walks on screen and delivers it out loud with their name and what they paid. The USDC settles straight to your wallet.</description>
+		</item>
+		<item>
+			<title>Model Diff</title>
+			<link>https://three.ws/diff</link>
+			<guid isPermaLink="false">2026-08-28:Model Diff</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Drop two .glb files and see exactly what changed: geometry, materials, textures, skeletons and animation clips, with git-style rename and move detection and a severity you can gate a build on. Overlay, wipe, or set the two models side by side in 3D. Runs in your browser, nothing is uploaded.</description>
 		</item>
 		<item>
 			<title>Oracle Lab: the model, published</title>
@@ -229,6 +261,14 @@
 			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>We took the part of three.ws where an avatar delivers a notification in person and turned it into something anyone can use, on any website. @three-ws/herald is an open library: one line of code and a 3D character walks into the corner of your page, looks at the person using it, and tells them, with a link to the thing it is about. It is not a toast library. It is an interrupt budget: an importance floor, quiet hours, a rate limit, dedupe, freshness, batch collapse, and a stable reason for every message it refuses to deliver, so you can always answer why you did not hear about something. No GPU, an iframe, or reduced motion falls back to an accessible card that screen readers announce the same moment everyone else hears it. There is also a rail: with an API key, anything that can make an HTTPS request reaches the browser tab you already have open. Run npx @three-ws/herald watch -- npm test and your avatar tells you when the build finishes, keeping the exit code. Wire the MCP server into Claude or Cursor and an agent that worked for twenty minutes can walk on and tell you it is done. An announcement always goes to your own sessions, so no key can interrupt anyone but its owner. Try the whole thing, rules engine included, at three.ws/herald.</description>
+		</item>
+		<item>
+			<title>Knock: put a price on reaching you, and hear what gets through in person</title>
+			<link>https://three.ws/knock</link>
+			<guid isPermaLink="false">2026-08-28:Knock: put a price on reaching you, and hear what gets through in person</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every account can now open a door at three.ws/knock/&lt;username&gt; and set what one message from a stranger is worth, anywhere from a tenth of a cent to a thousand dollars, or free. Anyone can pay it to get exactly one message through: a person pays with the wallet already in their browser, and an agent pays over x402 with no human involved. The USDC settles straight to your own wallet; three.ws never holds it and takes none of it. What arrives is not another badge: your 3D companion walks on screen wherever you are on the site and says who is at the door and what they paid, ranked by that amount, so the expensive ones interrupt and the free ones wait in the feed. You set the price, the daily cap, the message length and a block list, and every one of those refusals happens before any payment, so a message that was never going to land is never one somebody was charged for. Only the one-line subject is ever read aloud. Senders get a receipt link they can check for your reply without an account here, which means answering someone never hands out your address. There is a browsable directory of open doors, an npm package and CLI for agents (@three-ws/knock), and an MCP server (@three-ws/knock-mcp) that deliberately holds no wallet: it quotes a paid door and stops, so a human always approves the spend.</description>
 		</item>
 		<item>
 			<title>Next on the roadmap: your agent on your home screen</title>
