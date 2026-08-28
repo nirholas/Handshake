@@ -7,7 +7,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { scoreByRules, subsystemForRoute, clusterKey, shorten } from '../api/_lib/feedback/triage.js';
-import { normalizeReport } from '../api/_lib/feedback/store.js';
+import { normalizeReport, normalizeTrace, summarizeTrace } from '../api/_lib/feedback/store.js';
 
 const report = (over = {}) => ({
 	body: 'the button does nothing',
@@ -122,5 +122,88 @@ describe('shorten', () => {
 		const long = shorten('word '.repeat(80), 60);
 		expect(long.length).toBeLessThanOrEqual(63);
 		expect(long.endsWith('...')).toBe(true);
+	});
+});
+
+// The trace arrives from the open report endpoint, so it is untrusted input in
+// exactly the way the report body is. It is validated by SHAPE: anything past
+// these bounds is a client that is broken or lying, and either way the row has
+// to stay small enough for a person to read.
+describe('normalizeTrace', () => {
+	const ev = (over = {}) => ({ type: 'click', el: { tag: 'button', strategy: 'testid', value: 'go', confidence: 100 }, ...over });
+
+	it('keeps a well-formed trace', () => {
+		const trace = normalizeTrace({ version: 1, events: [{ type: 'goto', detail: '/x' }, ev()] });
+		expect(trace).not.toBeNull();
+		expect(trace.events.length).toBe(2);
+		expect(trace.events[1].el.strategy).toBe('testid');
+	});
+
+	it('rejects anything that is not a trace', () => {
+		for (const input of [null, undefined, 'a string', 42, {}, { events: 'nope' }, { events: [] }]) {
+			expect(normalizeTrace(input)).toBeNull();
+		}
+	});
+
+	it('drops event types it does not know rather than storing them', () => {
+		const trace = normalizeTrace({ events: [ev(), { type: 'exfiltrate', detail: 'x' }, { type: 'goto', detail: '/y' }] });
+		expect(trace.events.map((e) => e.type)).toEqual(['click', 'goto']);
+	});
+
+	it('caps the event count so one client cannot fill a row', () => {
+		const trace = normalizeTrace({ events: Array.from({ length: 500 }, () => ev()) });
+		expect(trace.events.length).toBeLessThanOrEqual(80);
+	});
+
+	it('clamps every string field', () => {
+		const trace = normalizeTrace({
+			events: [ev({ detail: 'd'.repeat(5000), el: { tag: 't'.repeat(500), strategy: 's', value: 'v'.repeat(5000), confidence: 100 } })],
+		});
+		expect(trace.events[0].detail.length).toBeLessThanOrEqual(300);
+		expect(trace.events[0].el.value.length).toBeLessThanOrEqual(200);
+		expect(trace.events[0].el.tag.length).toBeLessThanOrEqual(20);
+	});
+
+	it('bounds confidence to a real score whatever the client claims', () => {
+		const high = normalizeTrace({ events: [ev({ el: { tag: 'b', strategy: 'x', value: 'y', confidence: 9999 } })] });
+		const junk = normalizeTrace({ events: [ev({ el: { tag: 'b', strategy: 'x', value: 'y', confidence: 'lots' } })] });
+		expect(high.events[0].el.confidence).toBe(100);
+		expect(junk.events[0].el.confidence).toBeNull();
+	});
+
+	it('keeps only the environment fields the compiler reads', () => {
+		const trace = normalizeTrace({
+			events: [ev()],
+			environment: { url: '/x', locale: 'en', viewport: { width: 390, height: 844, dpr: 3 }, cookies: 'secret', touch: true },
+		});
+		expect(trace.environment.cookies).toBeUndefined();
+		expect(trace.environment.viewport.width).toBe(390);
+		expect(trace.environment.touch).toBe(true);
+	});
+
+	it('rides along with the rest of a normalized report', () => {
+		const report = normalizeReport({ body: 'broken', trace: { events: [ev()] } });
+		expect(report.trace.events.length).toBe(1);
+		expect(normalizeReport({ body: 'broken' }).trace).toBeNull();
+	});
+});
+
+describe('summarizeTrace', () => {
+	it('counts replayable steps and reports the weakest anchor', () => {
+		const summary = summarizeTrace({
+			events: [
+				{ type: 'goto', detail: '/x' },
+				{ type: 'click', el: { confidence: 100 } },
+				{ type: 'click', el: { confidence: 40 } },
+				{ type: 'xhr', detail: 'POST /x -> 500' },
+			],
+		});
+		// goto and xhr are not steps a replay performs, so they are not counted.
+		expect(summary.steps).toBe(2);
+		expect(summary.confidence).toBe(40);
+	});
+
+	it('reports no confidence when nothing was anchored', () => {
+		expect(summarizeTrace({ events: [{ type: 'goto', detail: '/x' }] })).toEqual({ steps: 0, confidence: null });
 	});
 });
