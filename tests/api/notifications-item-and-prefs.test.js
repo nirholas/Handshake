@@ -191,7 +191,11 @@ describe('GET /api/notifications/preferences', () => {
 		dbState.pushDevices = 2;
 		const { res, body } = await call(prefsHandler, { method: 'GET' });
 		expect(res.statusCode).toBe(200);
-		expect(body.channels).toEqual(['in_app', 'push', 'email', 'telegram']);
+		// Pinned deliberately as a literal, not derived from CHANNELS: this is the
+		// wire contract the notifications page and the SDK read, so adding a
+		// channel should have to come here and say so. 'avatar' landed with the
+		// corner-avatar delivery lane.
+		expect(body.channels).toEqual(['in_app', 'push', 'email', 'telegram', 'avatar']);
 		expect(body.categories.map((c) => c.key)).toContain('social');
 		expect(body.prefs.categories.social).toBeTruthy();
 		expect(body.push).toEqual({ subscribed_devices: 2 });
