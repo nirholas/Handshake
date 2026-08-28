@@ -33,6 +33,11 @@ export const MOTION_SCORE_VERSION = 1;
 /** Hard bounds, so a malformed score cannot ask for an hour-long clip. */
 export const LIMITS = Object.freeze({
 	maxBeats: 64,
+	/**
+	 * A clip shorter than this has nowhere to put the idle layer and nothing for
+	 * a mixer to interpolate, so a score of one held beat is extended to it.
+	 */
+	minDuration: 0.8,
 	maxDuration: 60,
 	maxBeatSeconds: 12,
 	minBeatSeconds: 0.02,
@@ -73,7 +78,7 @@ export function normalizeScore(input) {
 		throw new ScoreError('score.version', `unsupported version ${version}, this build reads ${MOTION_SCORE_VERSION}`);
 	}
 	const name = typeof input.name === 'string' && input.name.trim()
-		? input.name.trim().slice(0, LIMITS.maxName ?? LIMITS.maxNameLength)
+		? input.name.trim().slice(0, LIMITS.maxNameLength)
 		: 'motion';
 	const beatsIn = Array.isArray(input.beats) ? input.beats : null;
 	if (!beatsIn || !beatsIn.length) throw new ScoreError('score.beats', 'must be a non-empty array');
@@ -115,6 +120,12 @@ export function normalizeScore(input) {
 		};
 	});
 
+	// A single beat, or a last beat with no hold, would compile to a clip with no
+	// length: hold the final shape long enough to be worth playing.
+	const last = beats[beats.length - 1];
+	const played = last.at + last.hold;
+	if (played < LIMITS.minDuration) last.hold += LIMITS.minDuration - played;
+
 	return {
 		version: MOTION_SCORE_VERSION,
 		name,
@@ -122,7 +133,7 @@ export function normalizeScore(input) {
 		loop: input.loop === true,
 		effort: defaultEffort,
 		beats,
-		duration: beats[beats.length - 1].at + beats[beats.length - 1].hold,
+		duration: last.at + last.hold,
 	};
 }
 

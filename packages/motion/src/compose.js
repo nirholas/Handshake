@@ -313,7 +313,10 @@ export function composeScore(prompt, opts = {}) {
 	const text = String(prompt ?? '').toLowerCase().trim();
 	if (!text) return { score: null, matched: null, reason: 'empty prompt' };
 
-	const match = SYNONYMS.find(([phrase]) => text.includes(phrase));
+	// Phrases first, longest-intent first, then the bare action names, so
+	// "shake head" beats "shake" and "shake" still resolves on its own.
+	const match = SYNONYMS.find(([phrase]) => text.includes(phrase))
+		?? ACTION_NAMES.map((a) => [a.replace(/_/g, ' '), a]).find(([phrase]) => text.includes(phrase));
 	if (!match) {
 		return {
 			score: null,
@@ -339,7 +342,7 @@ export function composeScore(prompt, opts = {}) {
 
 	const repeats = readRepeats(text);
 
-	const beats = ACTIONS[action]({ side, direction, effort, repeats });
+	const beats = ACTIONS[action]({ side, direction, effort, repeats }).map((beat) => paced(beat, effort));
 	return {
 		score: {
 			version: 1,
@@ -353,6 +356,22 @@ export function composeScore(prompt, opts = {}) {
 		reason: null,
 	};
 }
+
+/**
+ * Scale a beat's authored timing by how sudden the effort is. The shapes an
+ * action makes are the same whether it is performed sharply or wearily; what
+ * changes is how long the body takes to get between them, and an action that
+ * ignored that would read as the same motion at the same speed every time.
+ */
+function paced(beat, effort) {
+	const factor = 1.45 - 0.9 * (EFFORTS[effort] ?? EFFORTS.neutral).time;
+	const out = { ...beat };
+	if (typeof out.in === 'number') out.in = round(out.in * factor);
+	if (typeof out.hold === 'number') out.hold = round(out.hold * factor);
+	return out;
+}
+
+const round = (n) => Math.round(n * 1000) / 1000;
 
 function readRepeats(text) {
 	const digits = text.match(/\b(\d{1,2})\s*(times|x)\b/);
