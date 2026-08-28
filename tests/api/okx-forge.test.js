@@ -158,6 +158,18 @@ describe('the listed line-up is the forge', () => {
 		expect(forgeSurface('forge-status').x402Amount(FORGE_TOOL)).toBe(null);
 	});
 
+	// A buyer that pays for a model receives a URL it cannot open. look_at_model
+	// renders it into MCP image blocks, free, on every endpoint: the buyer sees
+	// what it bought. No other seller on this marketplace can do that.
+	it('gives every endpoint the free look_at_model tool, priced at nothing', () => {
+		for (const id of FORGE_SERVICE_IDS) {
+			const surface = forgeSurface(id);
+			expect(surface.TOOL_CATALOG.map((t) => t.name)).toContain('look_at_model');
+			expect(surface.isPublicTool('look_at_model')).toBe(true);
+			expect(surface.x402Amount('look_at_model')).toBe(null);
+		}
+	});
+
 	it('exposes one client shape: the same tool names on every endpoint', () => {
 		for (const [id] of PAID_FORGE) {
 			const names = forgeSurface(id).TOOL_CATALOG.map((t) => t.name);

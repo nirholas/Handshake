@@ -43,6 +43,7 @@ import {
 	directPrompt,
 } from './gpt-forge-client.js';
 import { COMPONENT_URI } from './component.js';
+import { renderTurntable, describeGeometry } from '../_lib/3d-vision.js';
 import { buildSpatialArtifact } from '../_lib/spatial-mcp.js';
 // Pure, dependency-free lineage core — the SAME module the paid stdio server's
 // runRefineModel uses (mcp-server/src/tools/_lineage.js), so conversational
@@ -653,6 +654,88 @@ function widgetMeta(invoking, invoked) {
 	};
 }
 
+// look_at_model: the one tool in this server that hands the model back a
+// PICTURE instead of a link.
+//
+// MCP content blocks can carry images, and a multimodal client renders them
+// straight into the conversation, so the frames below are literally seen by the
+// model that asked for them. That is the whole point: until now an agent that
+// generated a 3D asset had no way to check its own work, because a .glb is
+// opaque to it. With frames in hand it can answer "is the subject complete, is
+// the back finished, did I get a teapot or a lump" and then fix it, which turns
+// one-shot generation into a loop.
+//
+// Frames are capped at 512 px and four views by default: enough for a model to
+// judge form and completeness, small enough not to flood the caller's context.
+// Geometry from the free inspector, best-effort: a hiccup there costs the
+// caller its numbers, never its frames.
+async function lookStats(base, glbUrl) {
+	try {
+		const res = await fetch(`${base}/api/3d/inspect?url=${encodeURIComponent(glbUrl)}`, {
+			headers: { accept: 'application/json' },
+			signal: AbortSignal.timeout(20_000),
+		});
+		if (!res.ok) return null;
+		const body = await res.json();
+		return body?.stats && typeof body.stats === 'object' ? body.stats : null;
+	} catch {
+		return null;
+	}
+}
+
+async function handleLookAtModel(args, _auth, req) {
+	const base = originFromReq(req);
+	const glbUrl = String(args?.glb_url || '').trim();
+	if (!/^https:\/\//i.test(glbUrl)) {
+		return toolError('glb_url must be a public https URL to a .glb file.');
+	}
+
+	let turntable;
+	try {
+		turntable = await renderTurntable({ glbUrl, views: args?.views, size: args?.size ?? 512 });
+	} catch (err) {
+		return toolError(String(err?.message || 'could not render this model').slice(0, 300));
+	}
+
+	const stats = await lookStats(base, glbUrl);
+	const notes = describeGeometry(stats);
+	const shown = turntable.frames.map((f) => f.view).join(', ');
+	const missing = turntable.failed.length ? ` Could not render: ${turntable.failed.map((f) => f.view).join(', ')}.` : '';
+
+	// The text block frames what the model is about to look at, then every frame
+	// follows as an image block, each announced by name so the model can talk
+	// about "the back view" rather than "the third image".
+	const content = [
+		{
+			type: 'text',
+			text:
+				`Rendered this model from ${turntable.frames.length} angle(s): ${shown}.${missing}\n` +
+				(notes.length ? `Geometry: ${notes.join(' ')}\n` : '') +
+				'Look at the frames below and judge the model: is the subject complete and recognisable, ' +
+				'is the far side finished, is anything melted, fused, or missing? If it needs work, generate ' +
+				'again with a prompt that names the specific fault.',
+		},
+	];
+	for (const frame of turntable.frames) {
+		content.push({ type: 'text', text: `View: ${frame.view} (theta ${frame.theta}, phi ${frame.phi})` });
+		content.push({ type: 'image', data: frame.png.toString('base64'), mimeType: 'image/png' });
+	}
+
+	return {
+		content,
+		structuredContent: {
+			ok: true,
+			model_url: glbUrl,
+			size: turntable.size,
+			views: turntable.frames.map((f) => ({ view: f.view, theta: f.theta, phi: f.phi })),
+			...(turntable.failed.length ? { missing_views: turntable.failed } : {}),
+			...(stats ? { stats, notes } : {}),
+			viewer_url: viewerUrl(base, glbUrl),
+			ar_url: arLaunchUrl(base, glbUrl),
+		},
+	};
+}
+
 const DEFS = [
 	{
 		name: 'forge_free',
@@ -837,6 +920,49 @@ const DEFS = [
 		},
 		_meta: widgetMeta('Checking your 3D model…', 'Here is your 3D model'),
 		handler: handleCheckJob,
+	},
+	{
+		name: 'look_at_model',
+		title: 'Look at a 3D model',
+		description:
+			'FREE. See a 3D model instead of just linking to it. Renders the GLB from several angles and returns ' +
+			'the frames as images you can actually look at, plus its geometry (triangles, materials, textures) and ' +
+			'a plain reading of what those numbers mean. Use it right after generating to check your own work: is ' +
+			'the subject complete, is the back finished, is anything melted or fused? Then regenerate naming the ' +
+			'fault you saw. Works on any public https .glb, not only ones made here.',
+		inputSchema: {
+			type: 'object',
+			additionalProperties: false,
+			required: ['glb_url'],
+			properties: {
+				glb_url: {
+					type: 'string',
+					minLength: 12,
+					maxLength: 2048,
+					description: 'Public https URL of the .glb to look at.',
+				},
+				views: {
+					type: 'array',
+					maxItems: 6,
+					items: { type: 'string', enum: ['front', 'three-quarter', 'side', 'back', 'top', 'bottom'] },
+					description: 'Angles to render. Default: three-quarter, front, side, back.',
+				},
+				size: {
+					type: 'integer',
+					minimum: 128,
+					maximum: 1024,
+					description: 'Pixel size of each square frame. Default 512.',
+				},
+			},
+		},
+		annotations: {
+			readOnlyHint: true, // renders a picture; changes nothing
+			destructiveHint: false,
+			idempotentHint: true,
+			openWorldHint: true,
+		},
+		_meta: widgetMeta('Looking at your 3D model…', 'Here is what the model looks like'),
+		handler: handleLookAtModel,
 	},
 ];
 

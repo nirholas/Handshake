@@ -4051,6 +4051,14 @@
 					"added": "2026-07-30"
 				},
 				{
+					"path": "/docs/3d-vision",
+					"title": "Docs \u00b7 3D Vision: let an agent see the model",
+					"description": "Every text-to-3D API answers with a link to a binary an AI agent cannot open, so the agent that made the model cannot check its own work. This surface renders any GLB from several angles and hands the frames back as images a vision model actually sees, over MCP, REST or the @three-ws/see SDK.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-08-28"
+				},
+				{
 					"path": "/docs/3d-api",
 					"title": "Docs · The three.ws 3D API",
 					"description": "Free, keyless 3D for AI agents. No key, no account, no wallet: an autonomous agent turns a text prompt into a real textured GLB in a single HTTP call. Endpoints, request shapes, and the response contract.",

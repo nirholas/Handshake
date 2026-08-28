@@ -15,6 +15,14 @@
 			<description>A 3D companion that delivers your important messages in person. Connect your own Telegram bot, calendar, inbox, or phone, give each contact their own avatar and voice, and hear only what clears your bar.</description>
 		</item>
 		<item>
+			<title>Docs · 3D Vision: let an agent see the model</title>
+			<link>https://three.ws/docs/3d-vision</link>
+			<guid isPermaLink="false">2026-08-28:Docs · 3D Vision: let an agent see the model</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Every text-to-3D API answers with a link to a binary an AI agent cannot open, so the agent that made the model cannot check its own work. This surface renders any GLB from several angles and hands the frames back as images a vision model actually sees, over MCP, REST or the @three-ws/see SDK.</description>
+		</item>
+		<item>
 			<title>Docs · Feedback</title>
 			<link>https://three.ws/docs/feedback</link>
 			<guid isPermaLink="false">2026-08-28:Docs · Feedback</guid>
@@ -61,6 +69,14 @@
 			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The platform sponsors the network fee on every agent payment. When that wallet ran down to the point where it could not cover a single fee, the check meant to pause payments could not run, because it depended on a balance lookup and the network providers were rate-limited at the same moment. Payments kept being attempted for three hours and none of them could complete. The pause now reads its answer from the failure itself, which costs nothing and works exactly when the network is too busy to answer questions. The status page also names the real cause now, a wallet that needs funding, instead of pointing at the payment rail.</description>
+		</item>
+		<item>
+			<title>AI agents can now see the 3D models they make</title>
+			<link>https://three.ws/docs/3d-vision</link>
+			<guid isPermaLink="false">2026-08-28:AI agents can now see the 3D models they make</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Until today every 3D generator on the internet, ours included, answered with a link to a file an AI agent cannot open. A person clicks it; an agent is blind to it, which is why an agent that makes a 3D model has never been able to tell a clean one from a melted one. That changes now: ask to look at any model and it comes back rendered from four angles as actual pictures the agent sees, with the geometry explained in plain language. An agent can finally check its own work, spot that the back of the model was never finished, and try again saying exactly what was wrong. It works over MCP, over a plain web request, and through a new open-source package called @three-ws/see, and it is free, including for agents that bought a model from us and want to confirm they got what they paid for.</description>
 		</item>
 		<item>
 			<title>Next on the roadmap: your agent on your home screen</title>

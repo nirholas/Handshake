@@ -41,11 +41,14 @@ import { catalogEntry, FORGE_TOOL, FORGE_STATUS_TOOL } from '../_lib/okx-catalog
 import { startForge, pollOnce, originFromReq } from '../_mcp-studio/gpt-forge-client.js';
 import { shapeSubmit, shapePoll, tierOf } from '../_mcp-studio/studio-shape.js';
 import { checkPromptSafety } from '../_mcp-studio/safety.js';
+import { renderTurntable, describeGeometry } from '../_lib/3d-vision.js';
 
 export { PROTOCOL_VERSION, FORGE_TOOL, FORGE_STATUS_TOOL };
 
 const BASE = 'https://three.ws';
 const STATUS_ENDPOINT = `${BASE}/api/okx/3d/forge-status`;
+// Free on every endpoint: the buyer can see what it bought.
+const LOOK_TOOL = 'look_at_model';
 const DOCS_URL = `${BASE}/docs/okx-marketplace`;
 
 // Every listed forge row. A row not in this set is not servable here.
@@ -345,19 +348,92 @@ function forgeBazaarExtension(entry, paidTool) {
 const ajv = new Ajv({ allErrors: false, strict: false });
 addFormats(ajv);
 
+
+// look_at_model: free on every forge endpoint.
+//
+// A buyer who pays for a model and receives a URL is in exactly the bind this
+// whole marketplace was built to solve: it cannot open the file it just bought.
+// MCP image content blocks can carry the render, so the buying agent LOOKS at
+// its purchase, confirms it got what it paid for, and can ask for a different
+// prompt if it did not. No other seller on this marketplace can hand an agent
+// a picture of the goods.
+function buildLookTool() {
+	return {
+		name: LOOK_TOOL,
+		title: 'Look at a 3D model (free)',
+		description:
+			'FREE. See a model instead of just holding a link to it. Renders the GLB from several angles and ' +
+			'returns the frames as images you can actually look at, plus its geometry and a plain reading of ' +
+			'what the numbers mean. Use it on anything this service returned to confirm you got what you paid ' +
+			'for, or on any other public https .glb.',
+		annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: true },
+		inputSchema: {
+			type: 'object',
+			required: ['glb_url'],
+			additionalProperties: false,
+			properties: {
+				glb_url: { type: 'string', minLength: 12, maxLength: 2048 },
+				views: {
+					type: 'array',
+					maxItems: 6,
+					items: { type: 'string', enum: ['front', 'three-quarter', 'side', 'back', 'top', 'bottom'] },
+				},
+				size: { type: 'integer', minimum: 128, maximum: 1024 },
+			},
+		},
+		async handler(args) {
+			const glbUrl = String(args?.glb_url || '').trim();
+			if (!/^https:\/\//i.test(glbUrl)) {
+				return toolError('invalid_url', 'glb_url must be a public https URL to a .glb file.');
+			}
+			let turntable;
+			try {
+				turntable = await renderTurntable({ glbUrl, views: args?.views, size: args?.size ?? 512 });
+			} catch (err) {
+				return toolError('render_failed', String(err?.message || 'could not render this model').slice(0, 300));
+			}
+			const shown = turntable.frames.map((f) => f.view).join(', ');
+			const content = [
+				{
+					type: 'text',
+					text:
+						`Rendered from ${turntable.frames.length} angle(s): ${shown}. ` +
+						'Look at the frames below: is the subject complete and recognisable, is the far side ' +
+						'finished, is anything melted or fused?',
+				},
+			];
+			for (const frame of turntable.frames) {
+				content.push({ type: 'text', text: `View: ${frame.view}` });
+				content.push({ type: 'image', data: frame.png.toString('base64'), mimeType: 'image/png' });
+			}
+			return {
+				content,
+				structuredContent: {
+					ok: true,
+					model_url: glbUrl,
+					size: turntable.size,
+					views: turntable.frames.map((f) => ({ view: f.view, theta: f.theta, phi: f.phi })),
+					...(turntable.failed.length ? { missing_views: turntable.failed } : {}),
+				},
+			};
+		},
+	};
+}
+
 function buildSurface(id) {
 	const entry = catalogEntry(id);
 	if (!entry) throw new Error(`okx forge: no catalog entry "${id}"`);
 	const paid = entry.priceUsd !== '0';
 	const paidTool = paid ? buildForgeTool(entry) : null;
 	const statusTool = buildStatusTool();
+	const lookTool = buildLookTool();
 
 	const gettingStarted = buildGettingStartedTool({
 		server: `three.ws Forge, ${entry.name}`,
 		tagline:
 			'Text or images to a real, downloadable 3D model (GLB), with a browser preview and an ' +
 			'augmented-reality link that places it in a real room.',
-		tools: [paidTool, statusTool].filter(Boolean),
+		tools: [paidTool, statusTool, lookTool].filter(Boolean),
 		priceFor: (name) => (paid && name === FORGE_TOOL ? { amount_usdc: Number(entry.priceUsd) } : null),
 		access: paid
 			? [
@@ -378,7 +454,7 @@ function buildSurface(id) {
 		},
 	});
 
-	const toolDefs = [gettingStarted, ...(paidTool ? [paidTool] : []), statusTool];
+	const toolDefs = [gettingStarted, ...(paidTool ? [paidTool] : []), statusTool, lookTool];
 	const TOOL_CATALOG = toolDefs.map(({ handler, scope, ...pub }) => pub);
 	const TOOLS = Object.fromEntries(
 		toolDefs.map((d) => [
@@ -410,7 +486,7 @@ function buildSurface(id) {
 		TOOLS,
 		// Free tools servable to the anonymous principal with no OAuth/x402:
 		// discovery plus status polling. The paid tool is deliberately not here.
-		isPublicTool: (name) => name === GETTING_STARTED_TOOL || name === FORGE_STATUS_TOOL,
+		isPublicTool: (name) => name === GETTING_STARTED_TOOL || name === FORGE_STATUS_TOOL || name === LOOK_TOOL,
 		// x402 price (atomic USDC string) for one tools/call, or null when free.
 		x402Amount: (toolName) => (paid && toolName === FORGE_TOOL ? entry.amountAtomics : null),
 		dispatch: makeDispatcher({

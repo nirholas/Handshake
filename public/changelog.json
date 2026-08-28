@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T03:09:16.869Z",
+	"generated_at": "2026-08-28T03:26:00.152Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,16 @@
 			"title": "Companion",
 			"summary": "A 3D companion that delivers your important messages in person. Connect your own Telegram bot, calendar, inbox, or phone, give each contact their own avatar and voice, and hear only what clears your bar.",
 			"link": "/companion",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "launch",
+			"title": "Docs · 3D Vision: let an agent see the model",
+			"summary": "Every text-to-3D API answers with a link to a binary an AI agent cannot open, so the agent that made the model cannot check its own work. This surface renders any GLB from several angles and hands the frames back as images a vision model actually sees, over MCP, REST or the @three-ws/see SDK.",
+			"link": "/docs/3d-vision",
 			"tags": [
 				"launch"
 			]
@@ -75,6 +85,17 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "update",
+			"title": "AI agents can now see the 3D models they make",
+			"summary": "Until today every 3D generator on the internet, ours included, answered with a link to a file an AI agent cannot open. A person clicks it; an agent is blind to it, which is why an agent that makes a 3D model has never been able to tell a clean one from a melted one. That changes now: ask to look at any model and it comes back rendered from four angles as actual pictures the agent sees, with the geometry explained in plain language. An agent can finally check its own work, spot that the back of the model was never finished, and try again saying exactly what was wrong. It works over MCP, over a plain web request, and through a new open-source package called @three-ws/see, and it is free, including for agents that bought a model from us and want to confirm they got what they paid for.",
+			"link": "/docs/3d-vision",
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{

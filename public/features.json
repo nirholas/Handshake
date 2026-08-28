@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T03:09:16.844Z",
+	"generated_at": "2026-08-28T03:26:00.137Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -5182,6 +5182,16 @@
 					"title": "Tutorial · Sell a Skill With a Free Trial That Converts",
 					"description": "List an agent skill for sale in $THREE, give buyers a metered free trial, and watch it expire into a real on-chain purchase. Covers choosing a trial length and the missing decrement that quietly makes a trialled skill impossible to sell.",
 					"added": "2026-07-30",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/3d-vision",
+					"title": "Docs · 3D Vision: let an agent see the model",
+					"description": "Every text-to-3D API answers with a link to a binary an AI agent cannot open, so the agent that made the model cannot check its own work. This surface renders any GLB from several angles and hands the frames back as images a vision model actually sees, over MCP, REST or the @three-ws/see SDK.",
+					"added": "2026-08-28",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

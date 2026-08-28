@@ -8,7 +8,7 @@ import { COMPONENT_URI, PERSONA_COMPONENT_URI, componentCsp } from '../api/_mcp-
 // The generation tools (render the model-viewer widget) + check_job (collects a
 // pending generation) + the three embodiment / persona tools (render the
 // living-body embed).
-const ALLOWED = ['forge_free', 'text_to_avatar', 'mesh_forge', 'rig_mesh', 'forge_avatar', 'refine_model', 'check_job'];
+const ALLOWED = ['forge_free', 'text_to_avatar', 'mesh_forge', 'rig_mesh', 'forge_avatar', 'refine_model', 'check_job', 'look_at_model'];
 const PERSONA = ['create_agent_persona', 'get_agent_persona', 'persona_say'];
 const ALL = [...ALLOWED, ...PERSONA];
 
@@ -33,10 +33,12 @@ describe('mcp-studio catalog', () => {
 		for (const t of TOOL_CATALOG) {
 			expect(typeof t.title).toBe('string');
 			expect(t.title.length).toBeGreaterThan(0);
-			// check_job is a status probe (read-only, idempotent); every generator
-			// creates a fresh asset per call.
+			// check_job is a status probe and look_at_model draws a picture of a
+			// model that already exists: both read-only and idempotent. Every
+			// generator creates a fresh asset per call.
+			const readOnly = t.name === 'check_job' || t.name === 'look_at_model';
 			expect(t.annotations).toMatchObject(
-				t.name === 'check_job'
+				readOnly
 					? { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true }
 					: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 			);

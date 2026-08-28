@@ -1,0 +1,45 @@
+{
+	"name": "@three-ws/see",
+	"version": "0.1.0",
+	"description": "Let an AI agent SEE a 3D model: render any GLB from several angles and get back frames it can actually look at, plus the geometry facts.",
+	"type": "module",
+	"main": "./src/index.js",
+	"exports": {
+		".": {
+			"import": "./src/index.js",
+			"default": "./src/index.js"
+		}
+	},
+	"files": [
+		"src",
+		"README.md",
+		"LICENSE"
+	],
+	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "packages/see"
+	},
+	"homepage": "https://three.ws/docs/3d-vision",
+	"keywords": [
+		"3d",
+		"glb",
+		"gltf",
+		"ai-agents",
+		"agent",
+		"vision",
+		"multimodal",
+		"mcp",
+		"render",
+		"turntable",
+		"text-to-3d",
+		"three.ws"
+	],
+	"engines": {
+		"node": ">=18"
+	},
+	"scripts": {
+		"test": "node --test test/"
+	}
+}
