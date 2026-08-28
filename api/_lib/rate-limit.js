@@ -1808,6 +1808,25 @@ export const limits = {
 	// Preference-center writes — debounced client, generous ceiling.
 	notifPrefsWrite: (userId) =>
 		getLimiter('notif:prefs:write', { limit: 60, window: '1 h' }).limit(userId),
+	// Companion (/api/companion/*). Reads are a page load plus a poll while the
+	// setup page is open, so they get the same generous local bucket the bell
+	// inbox uses. Writes touch encrypted credentials and are human-paced.
+	companionRead: (userId) =>
+		getLimiter('companion:read', { limit: 120, window: '1 m', local: true }).limit(userId),
+	companionWrite: (userId) =>
+		getLimiter('companion:write', { limit: 60, window: '10 m' }).limit(userId),
+	// "Check now" and connection tests each open a real connection to the user's
+	// provider (Telegram, an ICS host, an IMAP server), so this is a cost
+	// ceiling on somebody else's infrastructure as much as on ours, and it must
+	// NOT be local: a per-instance counter multiplies by the instance count.
+	companionPoll: (userId) =>
+		getLimiter('companion:poll', { limit: 30, window: '10 m' }).limit(userId),
+	// The phone/desktop bridge (POST /api/companion/ingest). Keyed by the bridge
+	// token, since the poster is a Shortcut or a shell script with no session.
+	// A phone forwarding every notification it receives stays well under this;
+	// a loop does not.
+	companionIngest: (token) =>
+		getLimiter('companion:ingest', { limit: 120, window: '5 m' }).limit(token),
 	// Funnel tracking (opened/returned) — high local ceiling; one ping per
 	// notification interaction, deduped server-side anyway.
 	notifTrack: (userId) =>
