@@ -17,7 +17,8 @@
  * Nothing is mocked or drawn to look like product UI.
  *
  * Usage:
- *   node solana-mobile/scripts/make-screenshots.mjs
+ *   node solana-mobile/scripts/make-screenshots.mjs                 # dApp Store panels
+ *   node solana-mobile/scripts/make-screenshots.mjs --target=play    # Google Play panels
  *   node solana-mobile/scripts/make-screenshots.mjs --origin=http://localhost:3000
  *   node solana-mobile/scripts/make-screenshots.mjs --keep-raw   # also write the raw captures
  */
@@ -28,15 +29,23 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const MEDIA = path.join(ROOT, 'solana-mobile/publish/media');
-const DEVICE = path.join(MEDIA, 'device');
-const RAW = path.join(MEDIA, 'raw');
 
 const args = Object.fromEntries(process.argv.slice(2).map((a) => {
   const m = a.match(/^--([^=]+)(?:=(.*))?$/);
   return m ? [m[1], m[2] ?? true] : [a, true];
 }));
 const ORIGIN = String(args.origin || 'https://three.ws').replace(/\/$/, '');
+
+/* Two stores, two sets of panels, one capture and composition pipeline.
+   The dApp Store listing may talk about Seeker and Seed Vault because it only
+   ever installs on one; the Play listing must not, because it installs on every
+   Android phone and Play rejects screenshots advertising a flow the user cannot
+   reach. Everything below the panel definitions is shared. */
+const TARGET = String(args.target || 'dapp');
+if (!['dapp', 'play'].includes(TARGET)) throw new Error(`--target must be dapp or play; got ${TARGET}`);
+const MEDIA = path.join(ROOT, TARGET === 'play' ? 'solana-mobile/publish-play/media/phone' : 'solana-mobile/publish/media');
+const DEVICE = path.join(MEDIA, 'device');
+const RAW = path.join(MEDIA, 'raw');
 
 /** Panel geometry. The store slot is 1080x1920; five of them make the strip. */
 const W = 1080;
@@ -54,7 +63,7 @@ const SHOT_DPR = 2.5;
  * Headlines describe what the panel actually shows; nothing here promises a
  * feature the frame does not display.
  */
-const PANELS = [
+const DAPP_PANELS = [
   {
     file: 'screen-1.png',
     path: '/seeker',
@@ -97,7 +106,7 @@ const PANELS = [
  * unrelated stills, so each one has to be a screen the hero panels do not
  * already show.
  */
-const SEAMS = [
+const DAPP_SEAMS = [
   { id: 'seam-1', path: '/chat' },
   /* /portal rather than /forge: the forge screen puts third-party engine names
      on chips, and ../docs/ASSETS.md keeps vendor branding out of store frames. */
@@ -105,6 +114,64 @@ const SEAMS = [
   { id: 'seam-3', path: '/create/selfie' },
   { id: 'seam-4', path: '/animations' },
 ];
+
+/**
+ * The Play panels. Same product, different audience: this listing installs on
+ * any Android phone, so nothing here may promise Seeker hardware or Seed Vault
+ * sign-in. The model lane leads, because the listing is now named for it.
+ */
+const PLAY_PANELS = [
+  {
+    file: 'screen-1.png',
+    path: '/create',
+    title: 'A 3D model\nfrom a prompt',
+    sub: 'Describe an object and get a textured glTF back. Free, and no account to try it.',
+  },
+  {
+    file: 'screen-2.png',
+    path: '/marketplace',
+    scrollTo: '#market-grid',
+    scrollBy: 620,
+    title: 'Browse what\neveryone built',
+    sub: 'Every listing is a real 3D model or character you can open, inspect, and own.',
+  },
+  {
+    file: 'screen-3.png',
+    path: null, // resolved to a currently listed agent
+    title: 'Real 3D,\non your phone',
+    sub: 'Rigged, animated glTF in your hand. Not a video, not a pre-rendered clip.',
+  },
+  {
+    file: 'screen-4.png',
+    path: '/create/selfie',
+    title: 'A selfie into\na rigged avatar',
+    sub: 'One photo becomes an animation-ready 3D character in about a minute.',
+  },
+  {
+    /* The agent's own chat view, not /chat. The assistant hub renders
+       trading-flavoured quick actions ("find new gems", "rug check") that read
+       as promoting potential earnings, which Play's blockchain policy forbids
+       in listing metadata. This view also actually shows what the headline
+       promises: the 3D character and the conversation in one frame. */
+    file: 'screen-5.png',
+    path: null,
+    view: 'chat',
+    title: 'Give it a mind,\nthen talk to it',
+    sub: 'Attach a personality, a voice and skills. The agent answers you in 3D.',
+  },
+];
+
+/* Seam screens for the Play strip: four surfaces none of the five hero panels
+   already shows, so the shelf reads as one photograph rather than a repeat. */
+const PLAY_SEAMS = [
+  { id: 'seam-1', path: '/animations' },
+  { id: 'seam-2', path: '/portal' },
+  { id: 'seam-3', path: '/discover' },
+  { id: 'seam-4', path: '/agents' },
+];
+
+const PANELS = TARGET === 'play' ? PLAY_PANELS : DAPP_PANELS;
+const SEAMS = TARGET === 'play' ? PLAY_SEAMS : DAPP_SEAMS;
 
 /* Floating product widgets that are useful in the app and noise in a store
    frame: the corner stack (onboarding pill, language picker, claim card), the
@@ -135,14 +202,24 @@ const PREFERRED_AGENTS = [
   '20ecfcc6-849e-4c12-b618-4c7c344cbc43',
 ];
 
-/** The agent whose page fills the middle panel. */
-async function resolveAgentPath() {
+/**
+ * The agents whose pages fill the panels that carry no path of their own.
+ * Returns as many distinct ids as asked for, preferring the vetted ones and
+ * falling back to whatever the marketplace currently lists. Two panels showing
+ * the same character in the same viewer reads as a duplicate slide, so each
+ * gets its own.
+ */
+async function resolveAgentIds(count) {
   const res = await fetch(`${ORIGIN}/api/marketplace/agents?limit=24`);
   const items = (await res.json())?.data?.items ?? [];
-  const ids = items.map((a) => a?.id).filter(Boolean);
-  if (ids.length === 0) throw new Error('[screenshots] marketplace API returned no agents to capture');
+  const listed = items.map((a) => a?.id).filter(Boolean);
+  if (listed.length === 0) throw new Error('[screenshots] marketplace API returned no agents to capture');
   const wanted = args.agent ? [String(args.agent)] : PREFERRED_AGENTS;
-  return `/agents/${wanted.find((id) => ids.includes(id)) ?? ids[0]}`;
+  const picked = [...wanted.filter((id) => listed.includes(id)), ...listed.filter((id) => !wanted.includes(id))];
+  if (picked.length < count) {
+    throw new Error(`[screenshots] need ${count} distinct agents to capture, the marketplace lists ${picked.length}`);
+  }
+  return picked.slice(0, count);
 }
 
 /**
@@ -287,7 +364,15 @@ ${headers}${seams}${heroes}
 }
 
 mkdirSync(MEDIA, { recursive: true });
-if (!PANELS[2].path) PANELS[2].path = await resolveAgentPath();
+/* Panels with no path of their own ride on one currently listed agent, so the
+   hero and its chat view are the same character rather than two strangers. */
+const pending = PANELS.filter((spec) => !spec.path);
+if (pending.length) {
+  const ids = await resolveAgentIds(pending.length);
+  pending.forEach((spec, i) => {
+    spec.path = `/agents/${ids[i]}` + (spec.view ? `?view=${spec.view}` : '');
+  });
+}
 
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-webgl'] });
 let strip;
@@ -300,7 +385,7 @@ try {
     /* Holds every entrance transition and the avatar turntable still, so the
        same page captured twice yields the same frame. */
     reducedMotion: 'reduce',
-    userAgent: 'Mozilla/5.0 (Linux; Android 14; Seeker) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36',
+    userAgent: `Mozilla/5.0 (Linux; Android 14; ${TARGET === 'play' ? 'Pixel 8' : 'Seeker'}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36`,
   });
   const heroShots = [];
   for (const spec of PANELS) heroShots.push(await sourceShot(ctx, spec));
@@ -323,9 +408,10 @@ for (const [i, spec] of PANELS.entries()) {
     .removeAlpha()
     .png({ compressionLevel: 9 })
     .toBuffer();
-  /* The portal caps a preview image at 3 MB. */
-  if (panel.length > 3 * 1024 * 1024) {
-    throw new Error(`[screenshots] ${spec.file} is ${(panel.length / 1024 / 1024).toFixed(2)} MB, the portal ceiling is 3 MB`);
+  /* The dApp Store portal caps a preview at 3 MB; Play allows 8 MB. */
+  const capMb = TARGET === 'play' ? 8 : 3;
+  if (panel.length > capMb * 1024 * 1024) {
+    throw new Error(`[screenshots] ${spec.file} is ${(panel.length / 1024 / 1024).toFixed(2)} MB, the ceiling is ${capMb} MB`);
   }
   await sharp(panel).toFile(path.join(MEDIA, spec.file));
   console.log(`[screenshots] ${spec.file}  ${W}x${H}  ${Math.round(panel.length / 1024)} KB`);
