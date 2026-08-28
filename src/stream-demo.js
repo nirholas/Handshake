@@ -19,7 +19,6 @@ import {
 	Vector3,
 	WebGLRenderer,
 	AnimationMixer,
-	Clock,
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as THREE from 'three';
@@ -87,7 +86,9 @@ class Stage {
 		rim.position.set(-3, 2, -2);
 		this.scene.add(rim);
 		this.mixer = null;
-		this.clock = new Clock();
+		// three.js deprecated Clock in favour of Timer; a plain timestamp delta
+		// needs neither and keeps the console clean.
+		this.lastFrame = performance.now();
 		this.root = null;
 		this.resize();
 		this.loop = this.loop.bind(this);
@@ -142,7 +143,9 @@ class Stage {
 
 	loop() {
 		if (!this.running) return;
-		const delta = this.clock.getDelta();
+		const now = performance.now();
+		const delta = Math.min((now - this.lastFrame) / 1000, 0.1);
+		this.lastFrame = now;
 		this.mixer?.update(delta);
 		if (this.root) this.root.rotation.y += delta * 0.35;
 		this.renderer.render(this.scene, this.camera);
@@ -338,10 +341,14 @@ function mount(root) {
 	});
 
 	let controller = null;
+	let runToken = 0;
 	async function run() {
 		controller?.abort();
 		controller = new AbortController();
 		const { signal } = controller;
+		// Changing avatar mid-run starts a new comparison; the old one must stop
+		// reporting rather than race the new one into the same panels.
+		const token = ++runToken;
 		const avatar = AVATARS.find((a) => a.id === avatarSelect.value);
 		const bytesPerSecond = CONNECTIONS[connectionSelect.value].bytesPerSecond;
 		runButton.disabled = true;
@@ -353,18 +360,22 @@ function mount(root) {
 				runClassic(panels.classic, avatar, bytesPerSecond, signal),
 				runStream(panels.stream, avatar, bytesPerSecond, signal),
 			]);
+			if (token !== runToken) return;
 			if (classic && streamed) {
 				const speedup = classic.firstFrameMs / streamed.firstFrameMs;
 				verdict.textContent = `${speedup.toFixed(1)}x faster to first frame: ${fmtBytes(streamed.baseBytes)} versus ${fmtBytes(classic.bytes)} before anything is on screen.`;
 			}
 		} catch (error) {
+			if (token !== runToken) return;
 			if (error.name !== 'AbortError') {
 				verdict.textContent = `Run failed: ${error.message}`;
 				panels.stream.log(error.message, 'bad');
 			}
 		} finally {
-			runButton.disabled = false;
-			runButton.textContent = 'Run comparison';
+			if (token === runToken) {
+				runButton.disabled = false;
+				runButton.textContent = 'Run comparison';
+			}
 		}
 	}
 

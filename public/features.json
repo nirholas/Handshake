@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T05:44:42.197Z",
+	"generated_at": "2026-08-28T05:46:30.138Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -4631,6 +4631,26 @@
 					"path": "/changelog",
 					"title": "Changelog",
 					"description": "What is new on three.ws: features, improvements, and releases, newest first.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/ship",
+					"title": "Ship log",
+					"description": "Every release note joined to the commits that produced it, with a confidence score and the reasoning behind every link.",
+					"added": "2026-08-28",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/shipfeed",
+					"title": "Docs · Ship log",
+					"description": "How three.ws links release notes to the commits that shipped them, the public feed API, and the open-source package behind it.",
 					"added": null,
 					"auth": null,
 					"indexable": true,

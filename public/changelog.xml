@@ -151,6 +151,14 @@
 			<description>The release runbook for the three.ws Seeker app: Publisher Portal setup, the release keystore, building and verifying a signed APK, and submitting it for review.</description>
 		</item>
 		<item>
+			<title>Ship log</title>
+			<link>https://three.ws/ship</link>
+			<guid isPermaLink="false">2026-08-28:Ship log</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Every release note joined to the commits that produced it, with a confidence score and the reasoning behind every link.</description>
+		</item>
+		<item>
 			<title>Terminal renderer</title>
 			<link>https://three.ws/tty</link>
 			<guid isPermaLink="false">2026-08-28:Terminal renderer</guid>
@@ -205,6 +213,14 @@
 			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Until today every 3D generator on the internet, ours included, answered with a link to a file an AI agent cannot open. A person clicks it; an agent is blind to it, which is why an agent that makes a 3D model has never been able to tell a clean one from a melted one. That changes now: ask to look at any model and it comes back rendered from four angles as actual pictures the agent sees, with the geometry explained in plain language. An agent can finally check its own work, spot that the back of the model was never finished, and try again saying exactly what was wrong. It works over MCP, over a plain web request, and through a new open-source package called @three-ws/see, and it is free, including for agents that bought a model from us and want to confirm they got what they paid for.</description>
+		</item>
+		<item>
+			<title>Every release note now shows you the code that shipped it</title>
+			<link>https://three.ws/ship</link>
+			<guid isPermaLink="false">2026-08-28:Every release note now shows you the code that shipped it</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Until today this site kept two separate records of the same work: a changelog written for people, and a commit feed written by engineers, neither aware of the other. The new ship log joins them. Each release note now lists the commits that produced it, and says how confident it is in each match and why it made it, in plain words you can argue with. Commits nobody ever wrote up are grouped and shown too, so the work that shipped quietly is visible instead of lost. The announcements in the Telegram channel now carry a link to the exact code behind them, the raw commit feed reads in plain language instead of engineering shorthand, and it no longer posts merges or dependency bumps. The whole thing is a free, open-source package that works on anyone's repository.</description>
 		</item>
 		<item>
 			<title>Next on the roadmap: your agent on your home screen</title>

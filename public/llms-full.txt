@@ -2811,6 +2811,18 @@ URL: https://three.ws/changelog
 
 What is new on three.ws: features, improvements, and releases, newest first.
 
+### Ship log
+
+URL: https://three.ws/ship
+
+Every release note joined to the commits that produced it, with a confidence score and the reasoning behind every link.
+
+### Docs · Ship log
+
+URL: https://three.ws/docs/shipfeed
+
+How three.ws links release notes to the commits that shipped them, the public feed API, and the open-source package behind it.
+
 ### Docs: AR Viewing
 
 URL: https://three.ws/docs/ar

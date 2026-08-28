@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T05:44:42.247Z",
+	"generated_at": "2026-08-28T05:46:30.228Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -189,6 +189,16 @@
 		{
 			"date": "2026-08-28",
 			"type": "launch",
+			"title": "Ship log",
+			"summary": "Every release note joined to the commits that produced it, with a confidence score and the reasoning behind every link.",
+			"link": "/ship",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "launch",
 			"title": "Terminal renderer",
 			"summary": "curl three.ws/tty and a rigged 3D agent walks in your terminal. A software rasterizer streams ANSI frames over HTTP: no GPU, no WebGL, nothing to install. Also the @three-ws/tty CLI and library for rendering any GLB in a terminal.",
 			"link": "/tty",
@@ -256,6 +266,18 @@
 			"tags": [
 				"feature",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "update",
+			"title": "Every release note now shows you the code that shipped it",
+			"summary": "Until today this site kept two separate records of the same work: a changelog written for people, and a commit feed written by engineers, neither aware of the other. The new ship log joins them. Each release note now lists the commits that produced it, and says how confident it is in each match and why it made it, in plain words you can argue with. Commits nobody ever wrote up are grouped and shown too, so the work that shipped quietly is visible instead of lost. The announcements in the Telegram channel now carry a link to the exact code behind them, the raw commit feed reads in plain language instead of engineering shorthand, and it no longer posts merges or dependency bumps. The whole thing is a free, open-source package that works on anyone's repository.",
+			"link": "/ship",
+			"tags": [
+				"feature",
+				"sdk",
+				"improvement"
 			]
 		},
 		{

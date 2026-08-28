@@ -162,6 +162,7 @@ Curious what happens between the prompt and the model? [How the Forge works](./h
 
 Deeper references that don't fit a track above but answer real questions:
 
+- [The ship log](./shipfeed.md): how every release note is joined to the commits that shipped it, the public feed at /api/ship/feed (JSON, Markdown, RSS, and a per-commit "why did you link that" endpoint), and the zero-dependency package that does it for any repository
 - [Docs World](./docs-world.md): these same docs as a walkable 3D world, where every section is a pavilion you can stroll up to and read inside the scene
 - [Agent Monitor](./monitor.md): the ops room at [/monitor](https://three.ws/monitor), twelve live panels covering fleet activity, money, revenue, creations and uptime, plus how to add a panel
 - [Design tokens](./DESIGN-TOKENS.md): the canonical design vocabulary (colors, spacing, type, motion) every surface builds from

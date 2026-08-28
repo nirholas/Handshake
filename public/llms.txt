@@ -504,6 +504,8 @@ Docs, tutorials, and reference.
 - [Docs · What Agents Can Do: The Complete Dossier](https://three.ws/docs/agent-abilities): The complete map of every agent ability, researched from the shipped code: body, motion, mind, voice, identity, skills, screens, economy, the 23-ability wallet, worlds, and the developer platform: 15 chapters plus a per-ability deep dive for the entire Agent Wallet.
 - [News and Announcements](https://three.ws/news): Product launches, integrations, and announcements from three.ws.
 - [Changelog](https://three.ws/changelog): What is new on three.ws: features, improvements, and releases, newest first.
+- [Ship log](https://three.ws/ship): Every release note joined to the commits that produced it, with a confidence score and the reasoning behind every link.
+- [Docs · Ship log](https://three.ws/docs/shipfeed): How three.ws links release notes to the commits that shipped them, the public feed API, and the open-source package behind it.
 - [Docs: AR Viewing](https://three.ws/docs/ar): Documentation for augmented-reality viewing of three.ws models and avatars.
 - [Docs: BNB Payments](https://three.ws/docs/bnb-payments): Documentation for paying with BNB on three.ws.
 - [Agent Sniper: Autonomous On-Chain Trading](https://three.ws/docs/agent-sniper): How three.ws agents trade autonomously: the new-mint trigger, entry gates, the simulate-the-sell trade firewall, the hash-chained decision ledger, the exit ladder, and the case study of the first live +42% trade.
