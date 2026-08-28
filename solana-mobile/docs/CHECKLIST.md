@@ -89,6 +89,8 @@ Work top-to-bottom. Do not submit until every box is checked. A date after a box
 
 ## 10. Post-submission
 
+- [x] Submitted 2026-08-28: v1.0.0 (versionCode 1), release `#331044442814`, In Review. Release NFT `25YeiFrv…khvcDDhQ` in app collection `GHJv3tR6…LUJSzTnD`, mint tx `3aCYSrDe…1gxSDdZj`, APK uploaded by URL from the `v1.0.0` GitHub release. Full record: `docs/seeker-submission-day.md`.
+
 - [ ] Review results arrive by email from `publishersupport@dappstore.solanamobile.com` within 3-5 business days; watch the portal dashboard.
 - [ ] On approval, verify the store listing renders all five screenshots and the feature graphic.
 - [ ] Add a `data/changelog.json` entry announcing the store listing with its link.

@@ -216,6 +216,24 @@ The APK being submitted is `three.ws` **1.0.0**, versionCode **1**, package `ws.
 
 ---
 
+## Submitted: 2026-08-28
+
+v1.0.0 (versionCode 1) went in on 2026-08-28 and sits at **In Review**. What the portal recorded:
+
+| | |
+|---|---|
+| Release | `#331044442814`, v1 |
+| Package / SDK | `ws.three.app`, 23 to 36 |
+| APK | 3.95 MB, from `https://github.com/nirholas/three.ws/releases/download/v1.0.0/three-ws-release.apk` |
+| Release NFT mint | `25YeiFrv…khvcDDhQ` |
+| App collection | `GHJv3tR6…LUJSzTnD` |
+| Mint transaction | `3aCYSrDe…1gxSDdZj` |
+| Storage | Cloudflare R2 |
+
+Two things on that page look alarming and are not. The **Languages** list runs to hundreds of entries because Android reports every locale bundled in the APK's resources, and android-browser-helper brings AndroidX's whole translation set with it; it has nothing to do with the Languages field on the listing form. The two **permissions** are `POST_NOTIFICATIONS` (push) and the dynamic-receiver permission Android generates for anything targeting SDK 34 or later.
+
+The APK was uploaded by URL rather than by file, from the public GitHub release cut for this submission. Keep that release in place: the portal stores its own copy, but the link is the provenance record for which bytes were reviewed.
+
 ## After you submit
 
 Review results arrive by email from `publishersupport@dappstore.solanamobile.com` in **3 to 5 business days**. The portal dashboard shows status meanwhile.
