@@ -2,6 +2,8 @@
 
 How a release of the three.ws Seeker app gets from this repo onto the Solana dApp Store. This is the runbook; the app itself and what it adds over the website are described in [three.ws on Solana Seeker](./seeker-app.md), and the box-by-box submission gate lives in [solana-mobile/docs/CHECKLIST.md](../solana-mobile/docs/CHECKLIST.md). If you are the owner sitting down to actually submit, follow [Submission day](./seeker-submission-day.md) instead: it inlines every field and value so you never open a file.
 
+**Status: v1.0.0 submitted 2026-08-28, in review** (release `#331044442814`, versionCode 1, package `ws.three.app`). What the portal recorded, including the release NFT mint and app collection, is in [Submission day](./seeker-submission-day.md).
+
 Publishing changed shape in May 2026. `dapp-store-cli` 1.0 is **Publisher Portal backed**: the publisher identity, KYC, the App NFT, and all listing copy live in <https://publish.solanamobile.com>, and the CLI only uploads one signed APK per release. The old `dapp-store create publisher` / `create app` / `publish submit` chain is gone. Anything that still describes that flow is out of date.
 
 ## Who does what
@@ -10,7 +12,8 @@ Publishing changed shape in May 2026. `dapp-store-cli` 1.0 is **Publisher Portal
 |---|---|---|
 | Publisher profile, KYC/KYB, App NFT, API key | Owner, once | Publisher Portal (browser) |
 | Screenshots on a physical Seeker | Owner, per listing change | Real device |
-| Keystore restore, APK build, submission | Any agent, per release | This repo |
+| Keystore restore and APK build | Any agent, per release | This repo |
+| Uploading the release | Owner, per release | Publisher Portal, or the CLI |
 
 Everything scriptable is in [solana-mobile/scripts/](../solana-mobile/scripts/). The parts that need a human need an identity, a funded wallet, or a phone.
 
@@ -30,6 +33,10 @@ Everything scriptable is in [solana-mobile/scripts/](../solana-mobile/scripts/).
 ## Per release (in this repo)
 
 The release keystore is gitignored and lives in Secret Manager. The 2026-08-10 key was lost with the codespace that generated it, so a new one was created on 2026-08-27 and backed up properly. **Never generate a second key while this one exists**: the dApp Store identifies the app by its signing certificate, and losing it means the app can never be updated.
+
+**Two ways to upload the release, and the browser one is preferable.** The portal's **New Version** page accepts the APK as a file or as a public URL and signs the release NFT with the wallet already connected in the browser. The CLI path below does the same thing but needs the publisher wallet's private key exported to a keypair file on disk, which is a real risk for no gain on a normal release. v1.0.0 went in through the browser, by URL, from the `v1.0.0` GitHub release.
+
+Either way the APK has to exist and be signed first:
 
 ```bash
 cd solana-mobile

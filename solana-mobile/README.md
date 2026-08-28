@@ -2,6 +2,8 @@
 
 Everything needed to package three.ws as an Android app and publish it: the Mobile Wallet Adapter (MWA) wallet that signs through the on-device Seed Vault, the Trusted Web Activity (TWA) wrapper, the release pipeline, and the listing copy for both stores.
 
+**Status: v1.0.0 submitted to the Solana dApp Store on 2026-08-28 and in review** (release `#331044442814`, versionCode 1). The reviewed bytes are the `v1.0.0` GitHub release. Identifiers and what the portal recorded: [../docs/seeker-submission-day.md](../docs/seeker-submission-day.md).
+
 **One package id, two channels.** `ws.three.app` ships to the Solana dApp Store (Seeker and Saga, listing copy in `publish/`) and to Google Play (every Android phone, listing copy and submission runbook in [`publish-play/`](publish-play/README.md)). Same build, same app, two store listings that must describe the same product. The Play path has one trap with no local symptom, and it is documented in `publish-play/README.md` step 6: Play re-signs the bundle with Google's own key, so Google's certificate fingerprint has to be added to `twa/extra-fingerprints.json` or every Play install loses full-screen mode.
 
 ## Layout
@@ -131,7 +133,8 @@ Until the commit that adds `/seeker` and the share handler is deployed, the emul
 
 ## What still needs a physical Seeker
 
-- **Screenshots** (`publish/media/screen-1..5.png`, 1080x1920): reviewers reject emulator or desktop captures, so none are checked in. `icon.png`, `banner.png`, and `feature.png` ARE checked in and regenerate with `node scripts/make-media.mjs` (the feature graphic is a live Playwright capture of a real agent page).
+Listing media is no longer on that list. Everything the portal asks for is generated and checked in under `publish/media/`: `npm run build:dapp-store-media` writes the icon, banner, feature graphic, and the 1200x1200 Editor's Choice card, and `npm run build:dapp-store-previews` builds the five 1080x1920 previews as one carousel (see `docs/ASSETS.md`). Real Seeker captures dropped into `publish/media/device/` replace the browser ones and the carousel rebuilds around them.
+
 - **Device smoke** (install, Seed Vault sheet, suspend/resume, deep links): section 3, 4, and 9 of `docs/CHECKLIST.md`.
 - **Promo video**: optional; `publish/media/video.mp4` if ever added.
 
