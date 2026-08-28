@@ -950,6 +950,7 @@ async function submitPrediction({ version, input }) {
 		method: 'POST',
 		headers: replicateAuthHeaders(),
 		body: JSON.stringify({ version, input }),
+		signal: AbortSignal.timeout(SUBMIT_TIMEOUT_MS),
 	});
 	const data = await res.json().catch(() => ({}));
 	if (!res.ok) {
