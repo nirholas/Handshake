@@ -1,0 +1,45 @@
+{
+	"name": "@three-ws/create-agent",
+	"version": "0.1.0",
+	"description": "One command from a sentence to a rigged, animated 3D agent you can embed anywhere. npm create @three-ws/agent \"a friendly cartoon astronaut\"",
+	"keywords": [
+		"three.ws",
+		"3d",
+		"avatar",
+		"agent",
+		"text-to-3d",
+		"glb",
+		"gltf",
+		"rigging",
+		"web-component",
+		"scaffold",
+		"create"
+	],
+	"author": "three.ws <support@three.ws> (https://three.ws)",
+	"license": "Apache-2.0",
+	"homepage": "https://three.ws/create",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "packages/create-agent"
+	},
+	"type": "module",
+	"main": "./src/index.js",
+	"exports": {
+		".": "./src/index.js"
+	},
+	"bin": {
+		"create-agent": "./bin/create-agent.js"
+	},
+	"files": [
+		"src",
+		"bin",
+		"README.md"
+	],
+	"engines": {
+		"node": ">=18"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}
