@@ -165,10 +165,17 @@ is present, because that reading is the one that closed the case.
 
 ## HTTP
 
-`GET /api/agents/vitals?network=mainnet&llm=1`, gated by `authorizeOps` (admin
-session or `x-ops-secret`, never `CRON_SECRET`). The response names wallet
-addresses, funding deficits and deploy commands, which is an operator view
-rather than a public one.
+`GET /api/agents/vitals?network=mainnet`, gated by `authorizeOps` (admin session
+or `x-ops-secret`, never `CRON_SECRET`). The response names wallet addresses,
+funding deficits and deploy commands, which is an operator view rather than a
+public one.
+
+The model probe sends a real completion, so it is **opt-in over HTTP**: pass
+`llm=1`. This is a board an operator leaves polling, and a token spend per poll
+is a bill nobody asked for. The CLI defaults the other way, because a human runs
+it once. With the probe off, an arm that needs a model reports
+`cognition: unknown`, which keeps its capability `unknown` rather than inventing
+a pass.
 
 ## Related
 

@@ -19,7 +19,13 @@
 //
 // Query:
 //   network=mainnet|devnet   (default mainnet)
-//   llm=0                    skip the model-chain probe (it spends a few tokens)
+//   llm=1                    also probe the model chain (OFF by default here)
+//
+// The model probe sends a real completion, so it is opt-in over HTTP: this is a
+// board an operator leaves polling, and a token spend per poll is a bill nobody
+// asked for. The CLI defaults the other way, because a human runs it once. With
+// the probe off, an arm that needs a model reports `cognition: unknown`, which
+// keeps its capability `unknown` rather than inventing a pass.
 //
 // Response: { ok, network, at, shared, summary, arms: [{ name, can, root_causes, ... }] }
 
@@ -50,7 +56,7 @@ export default wrap(async (req, res) => {
 	if (!NETWORKS.has(network)) {
 		return error(res, 400, 'invalid_network', `network must be one of: ${[...NETWORKS].join(', ')}`);
 	}
-	const includeCognition = url.searchParams.get('llm') !== '0';
+	const includeCognition = url.searchParams.get('llm') === '1';
 
 	const fleet = await attestFleet({ network, includeCognition });
 	const summary = summarizeFleet(fleet.arms);
