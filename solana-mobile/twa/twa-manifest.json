@@ -17,8 +17,8 @@
   "iconUrl": "https://three.ws/pwa-512x512.png",
   "maskableIconUrl": "https://three.ws/pwa-maskable-512x512.png",
   "monochromeIconUrl": "https://three.ws/pwa-icon.svg",
-  "appVersion": "1.0.0",
-  "appVersionCode": 1,
+  "appVersion": "1.1.0",
+  "appVersionCode": 2,
   "shortcuts": [
     {
       "name": "Create avatar",

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug variant only (never merged into the release APK): lets the emulator
+     recipe in solana-mobile/README.md point the glance widget at a local
+     server over plain http (threews://glance/link?token=...&origin=http://10.0.2.2:8080).
+     GlanceLinkActivity honours that origin only when the build is debuggable. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <application
+        android:usesCleartextTraffic="true"
+        tools:replace="android:usesCleartextTraffic" />
+</manifest>

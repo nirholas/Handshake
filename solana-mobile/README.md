@@ -2,6 +2,8 @@
 
 Everything needed to package three.ws as an Android app and publish it: the Mobile Wallet Adapter (MWA) wallet that signs through the on-device Seed Vault, the Trusted Web Activity (TWA) wrapper, the release pipeline, and the listing copy for both stores.
 
+**Next: v1.1.0 (versionCode 2) adds the Agent glance home screen widget** ([../docs/native-widgets.md](../docs/native-widgets.md)); it is built and emulator-verified (2026-08-29) and ships once its API lane is deployed.
+
 **Status: v1.0.0 submitted to the Solana dApp Store on 2026-08-28 and in review** (release `#331044442814`, versionCode 1). The reviewed bytes are the `v1.0.0` GitHub release. Identifiers and what the portal recorded: [../docs/seeker-submission-day.md](../docs/seeker-submission-day.md).
 
 **One package id, two channels.** `ws.three.app` ships to the Solana dApp Store (Seeker and Saga, listing copy in `publish/`) and to Google Play (every Android phone, listing copy and submission runbook in [`publish-play/`](publish-play/README.md)). Same build, same app, two store listings that must describe the same product. The Play path has one trap with no local symptom, and it is documented in `publish-play/README.md` step 6: Play re-signs the bundle with Google's own key, so Google's certificate fingerprint has to be added to `twa/extra-fingerprints.json` or every Play install loses full-screen mode.
@@ -130,6 +132,36 @@ adb exec-out screencap -p > shot.png
 ```
 
 Until the commit that adds `/seeker` and the share handler is deployed, the emulator opens production and shows the site's 404 for both; that is the deploy gate, not an app bug.
+
+### The home screen widget
+
+The release APK fetches its card from `https://three.ws`, so a widget in a release build shows "Fetching your agent" until `/api/glance/mine?format=png` is deployed. To exercise the whole loop against a local server before that, build the debug variant of the same overlaid project (only the debug variant allows plain http and honours the `origin` override; see `android-overlay/app/src/debug/AndroidManifest.xml`) and link it with a real token:
+
+```bash
+# After scripts/build-apk.sh (which applies android-overlay/ to build/):
+(cd build && JAVA_HOME=~/.bubblewrap/jdk/jdk-17.0.20.1+1 ./gradlew assembleDebug -q)
+adb install -r build/app/build/outputs/apk/debug/app-debug.apk
+
+# A local API on :8080 (from the repo root: PORT=8080 node --env-file=.env --env-file=.env.local server/index.mjs),
+# a session for the QA account, and a widget token from it:
+TOKEN=$(curl -s -c /tmp/j -H 'content-type: application/json' -H 'origin: https://three.ws' \
+  -d "{\"email\":\"$AUDIT_EMAIL\",\"password\":\"$AUDIT_PASSWORD\"}" http://127.0.0.1:8080/api/auth/login >/dev/null && \
+  curl -s -b /tmp/j -H 'content-type: application/json' -H 'origin: https://three.ws' \
+  -d '{"platform":"android","label":"emulator"}' http://127.0.0.1:8080/api/glance/token | jq -r .token)
+
+# Link the widget (the inner quotes keep the & away from the emulator's shell) and accept the launcher's pin dialog:
+adb shell am start -a android.intent.action.VIEW -d "'threews://glance/link?token=$TOKEN&origin=http://10.0.2.2:8080'"
+adb shell uiautomator dump /sdcard/ui.xml && adb shell cat /sdcard/ui.xml | grep -o 'text="Add to home screen"[^>]*bounds="[^"]*"'   # then `adb shell input tap` inside those bounds
+
+# The five checks (the widget lands on home screen page 2; `input swipe 900 1200 200 1200 300` gets there):
+adb logcat -d | grep WM-WorkerWrapper                                   # SUCCESS: refreshed with no app UI open
+adb shell run-as ws.three.app ls -la files/glance                        # the cached bitmap per size
+adb shell am force-stop ws.three.app                                     # widget keeps its card
+adb shell cmd connectivity airplane-mode enable                          # then tap "Updated …" on the widget: footer says "(offline)", card stays
+adb reboot && adb wait-for-device                                        # widget comes back with its card
+```
+
+`uiautomator dump` is the reliable way to read the widget's state headless: the card `ImageView` carries a content description of "<agent name>, <metric>" and the footer `TextView` (`ws.three.app:id/glance_updated`) carries the refresh time.
 
 ## What still needs a physical Seeker
 

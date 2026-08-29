@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 2x2: the square card and nothing else. The tap is the whole widget. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/glance_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/glance_widget_bg"
+    android:clipToOutline="true">
+
+    <ImageView
+        android:id="@+id/glance_card"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitCenter"
+        android:adjustViewBounds="true"
+        android:contentDescription="@string/glance_widget_description" />
+
+    <LinearLayout
+        android:id="@+id/glance_notice"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center_vertical"
+        android:padding="@dimen/glance_pad"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/glance_notice_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/glance_link_title"
+            android:textColor="@color/glance_text"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/glance_notice_body"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/glance_link_body"
+            android:textColor="@color/glance_muted"
+            android:textSize="12sp" />
+    </LinearLayout>
+</FrameLayout>

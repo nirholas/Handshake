@@ -71,6 +71,13 @@ Work top-to-bottom. Do not submit until every box is checked. A date after a box
 - [ ] Camera permission shows a visible justification at first prompt (device check on `/create/selfie`).
 - [x] A wallet rejection (`USER_REJECTED`) is handled without crashing: `src/wallet.js` swallows it with no toast, everything else gets a retry toast. (unit + code review 2026-08-27)
 
+## 7b. Home screen widget (1.1+)
+
+- [x] `build-apk.sh` printed `[apply-overlay] overlay applied` before `bubblewrap build` (2026-08-29, versionCode 2, 1.1.0, 4.4 MB, same release key `98:0A:1A:AB:…:11:13:D7`); a build without that line has no widget and must not ship.
+- [x] `aapt dump badging build/three-ws-release.apk` lists `ws.three.app.glance.GlanceWidget` as a receiver and `uses-permission: android.permission.INTERNET` (2026-08-29, read back from the R8-minified release APK).
+- [x] Emulator (Pixel 7, Android 14, 2026-08-29): the release APK registers **Agent glance** with the launcher (`dumpsys appwidget`), the link intent opens the pin dialog and places a 3x2 instance, and WorkManager runs the refresh with no app UI open. The debug variant against a local API with a real token then passed all five checks: card downloaded and painted (content description "My First Agent, 0 Moves today"), refreshed without opening the app, kept after `am force-stop`, back after `adb reboot`, and held with a "From 5:38 AM (offline). Tap to retry." footer in airplane mode, refreshing again once it was off. Recipe: `README.md#the-home-screen-widget`.
+- [ ] `/api/glance/mine?format=png` and `/api/glance/token` are deployed before the APK is published; the widget shows "Fetching your agent" until they are. (Not yet deployed as of 2026-08-29; deploys are owner-gated.)
+
 ## 8. Repeat builds
 
 - [ ] `KEYSTORE_PASSWORD=... ./scripts/build-apk.sh` runs end-to-end unattended on the release machine (no interactive prompts).

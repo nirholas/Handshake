@@ -1,0 +1,4 @@
+    <!-- glance widget (solana-mobile/android-overlay): fetched by WorkManager
+         from an OS process, so the app itself declares the network. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>

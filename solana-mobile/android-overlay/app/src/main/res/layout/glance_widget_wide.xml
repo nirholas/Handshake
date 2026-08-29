@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 4x2 and larger: the card bitmap, a footer with the refresh time, and on
+     4x3 two quick actions. Every view here is one RemoteViews supports. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/glance_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/glance_widget_bg"
+    android:clipToOutline="true">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <ImageView
+            android:id="@+id/glance_card"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true"
+            android:contentDescription="@string/glance_widget_description" />
+
+        <LinearLayout
+            android:id="@+id/glance_notice"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center_vertical"
+            android:padding="@dimen/glance_pad"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/glance_notice_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/glance_link_title"
+                android:textColor="@color/glance_text"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/glance_notice_body"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/glance_link_body"
+                android:textColor="@color/glance_muted"
+                android:textSize="13sp" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="@dimen/glance_pad"
+        android:paddingEnd="@dimen/glance_pad"
+        android:paddingBottom="8dp">
+
+        <TextView
+            android:id="@+id/glance_updated"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/glance_footer_never"
+            android:textColor="@color/glance_muted"
+            android:textSize="11sp"
+            android:singleLine="true"
+            android:ellipsize="end" />
+
+        <LinearLayout
+            android:id="@+id/glance_actions"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/glance_action_create"
+                style="@style/GlanceAction"
+                android:text="@string/glance_action_create" />
+
+            <TextView
+                android:id="@+id/glance_action_agents"
+                style="@style/GlanceAction"
+                android:layout_marginStart="6dp"
+                android:text="@string/glance_action_agents" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

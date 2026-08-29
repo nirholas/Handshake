@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="glance_widget_label">Agent glance</string>
+    <string name="glance_widget_description">Your three.ws agent, one live number, one tap back in.</string>
+
+    <string name="glance_link_title">Add your agent</string>
+    <string name="glance_link_body">Tap to link this widget to your three.ws account.</string>
+    <string name="glance_loading_title">Fetching your agent</string>
+    <string name="glance_loading_body">The card appears as soon as it is downloaded.</string>
+
+    <string name="glance_footer_never">Not refreshed yet</string>
+    <string name="glance_footer_updated">Updated %1$s. Tap to refresh.</string>
+    <string name="glance_footer_stale">From %1$s (offline). Tap to retry.</string>
+
+    <string name="glance_action_create">Create</string>
+    <string name="glance_action_agents">My agents</string>
+
+    <string name="glance_toast_linked">Widget linked to your three.ws account</string>
+    <string name="glance_toast_unlinked">Widget unlinked</string>
+    <string name="glance_toast_bad_link">That link is not a valid three.ws widget link</string>
+
+    <color name="glance_bg">#0B0B16</color>
+    <color name="glance_text">#F6F7FB</color>
+    <color name="glance_muted">#A2A7BD</color>
+    <color name="glance_line">#262842</color>
+    <color name="glance_panel">#15162A</color>
+
+    <dimen name="glance_pad">14dp</dimen>
+    <dimen name="glance_radius">20dp</dimen>
+
+    <style name="GlanceAction">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@drawable/glance_action_bg</item>
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:paddingEnd">10dp</item>
+        <item name="android:paddingTop">5dp</item>
+        <item name="android:paddingBottom">5dp</item>
+        <item name="android:textColor">@color/glance_text</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+</resources>

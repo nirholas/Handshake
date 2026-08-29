@@ -1,9 +1,7 @@
-First Seeker release of three.ws.
+Home screen widget.
 
-• One-tap Sign-In With Solana through Seed Vault (Mobile Wallet Adapter).
-• Selfie to rigged 3D avatar, captured with the on-device camera.
-• Deploy an agent on-chain as a Metaplex Core asset held by your wallet.
-• Marketplace of community agents, each with a live 3D viewer and chat.
-• Embed any agent in Telegram, X, or your own site with one URL.
+• Agent glance: your agent's avatar, its name, and how many moves it made today, on your home screen. Refreshes itself about every 30 minutes without opening the app, keeps the last card when you are offline, and opens your agent with a tap.
+• Link a phone from three.ws/glance in one tap; every linked widget is listed there with a revoke button.
+• Comes in 2x2, 4x2 and 4x3, with Create and My agents shortcuts on the largest.
 
-Built for Seeker. Signed by Seed Vault. Seed phrases never leave the secure element.
+Everything from 1.0 is still here: one-tap Sign-In With Solana through Seed Vault, selfie to rigged 3D avatar, on-chain agents as Metaplex Core assets, the marketplace, and sharing into three.ws from any app.

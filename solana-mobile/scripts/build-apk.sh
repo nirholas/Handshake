@@ -8,7 +8,8 @@
 #   KEYSTORE_PASSWORD='...' ./scripts/build-apk.sh
 #
 # Environment:
-#   KEYSTORE_PASSWORD    keystore password          (required)
+#   KEYSTORE_PASSWORD    keystore password          (required; SOLANA_MOBILE_KEYSTORE_PASSWORD,
+#                        the name used in the repo's .env, is accepted as a fallback)
 #   KEYSTORE_PATH        path to release.keystore   (default: ./android.keystore)
 #   KEY_ALIAS            release key alias          (default: threews)
 #   KEY_PASSWORD         key password               (defaults to KEYSTORE_PASSWORD)
@@ -41,8 +42,12 @@ require node
 require npx
 require keytool
 
-if [[ -z "${KEYSTORE_PASSWORD:-}" ]]; then
-	echo "[build-apk] KEYSTORE_PASSWORD must be set" >&2
+# The repo's .env stores the password as SOLANA_MOBILE_KEYSTORE_PASSWORD (a
+# name that cannot collide with any other keystore on the machine); accept it
+# so `set -a; . ../.env; set +a; ./scripts/build-apk.sh` just works.
+KEYSTORE_PASSWORD="${KEYSTORE_PASSWORD:-${SOLANA_MOBILE_KEYSTORE_PASSWORD:-}}"
+if [[ -z "$KEYSTORE_PASSWORD" ]]; then
+	echo "[build-apk] KEYSTORE_PASSWORD (or SOLANA_MOBILE_KEYSTORE_PASSWORD) must be set" >&2
 	exit 1
 fi
 
@@ -212,6 +217,20 @@ fs.writeFileSync(p, patched);
 console.log('[build-apk] patched ' + p + ' with resConfigs "en"');
 NODE
 fi
+
+# ── 5b. Lay the native overlay over the generated project ─────────────────
+# `bubblewrap update` regenerates everything, so the glance home screen widget
+# (an AppWidgetProvider, its layouts, a link activity, the WorkManager
+# dependency) is applied here, after update and before build. The script exits
+# non-zero on a missing overlay or a failed manifest merge: the store listing
+# says the app has a widget, so a widget-less APK must never ship silently.
+OVERLAY_DIR="$(cd .. && pwd)/android-overlay"
+if [[ ! -d "$OVERLAY_DIR" ]]; then
+	echo "[build-apk] ERROR: native overlay missing at $OVERLAY_DIR" >&2
+	exit 1
+fi
+echo "[build-apk] applying native overlay (home screen widget)"
+node ../scripts/apply-overlay.mjs --project "$BUILD_DIR" --overlay "$OVERLAY_DIR"
 
 # ── 6. Build & sign the APK ────────────────────────────────────────────────
 echo "[build-apk] building signed release APK"

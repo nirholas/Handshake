@@ -41,13 +41,20 @@ The handoff is one-shot and expires after ten minutes, so a stale share can neve
 
 The APK can be exercised in a stock Android emulator (Pixel 7, Android 14 image). Everything except the Seed Vault itself works there: install, launch, shortcuts, the share intent, deep-link verification state. The recipe is in [solana-mobile/README.md](../solana-mobile/README.md#emulator-qa). For the wallet flows, `tests/solana-mobile-*.test.js` drive the MWA wrapper against a fake transport, and the Solana Mobile reference wallet can be sideloaded into the emulator for an end-to-end sign-in.
 
-## What is next: a home screen widget
+## The home screen widget
 
-The app currently earns its place on the home screen only while you are using it. The next
-piece is an Android app widget: your agent, one live number about it, and a tap that lands you
-back in the right screen, refreshed by the system without opening the app. The shell for it
-already exists (this APK) and so does the image source (`POST /api/render/avatar-clip`, the
-same headless renderer behind the OG cards), because no Android widget can run WebGL. Windows
-11 follows through the installed PWA's manifest, then macOS and iOS through a shared WidgetKit
-extension. The scoped work order is [prompts/roadmap/native-widgets.md](../prompts/roadmap/native-widgets.md),
-and it is Phase 5 of the [roadmap](../README.md#roadmap).
+Version 1.1 adds **Agent glance**, an Android app widget: your agent's avatar, its name, and how
+many moves it made today, refreshed by the system about every 30 minutes without opening the app,
+with a tap that opens the agent inside the app. Link the phone from [three.ws/glance](https://three.ws/glance)
+(one tap, signed in), then add the widget from the launcher's picker. It keeps the last card it
+downloaded when the phone is offline and can be revoked from the same page. Everything about it,
+including every state it can be in and how it authenticates, is in
+[native-widgets.md](native-widgets.md#android); the native sources are in
+[solana-mobile/android-overlay/](../solana-mobile/android-overlay/README.md).
+
+## What is next
+
+Windows 11 already gets the same card through the installed PWA's manifest. macOS and iOS follow
+through a shared WidgetKit extension against the same endpoint and widget token; that is Phase 5
+of the [roadmap](../README.md#roadmap) and the scoped work order is
+[prompts/roadmap/native-widgets.md](../prompts/roadmap/native-widgets.md).
