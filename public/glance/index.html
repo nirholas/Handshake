@@ -178,12 +178,22 @@
 							module script, one tag. It polls only while it is on screen and the tab is visible.
 						</p>
 					</article>
-					<article class="glance-surface">
+					<article class="glance-surface is-live" id="android">
 						<h3>Android</h3>
-						<p class="glance-status">Next</p>
-						<p>
-							The signed <code>ws.three.app</code> shell already ships. The app widget provider is
-							the remaining piece, and the card endpoint it needs is what this page is running on.
+						<p class="glance-status">Live now</p>
+						<ol>
+							<li>Install the <a href="/seeker">three.ws app</a> (version 1.1 or later).</li>
+							<li>Open this page on the phone, signed in, and tap <b>Link this phone</b>.</li>
+							<li>Long-press the home screen, choose <b>Widgets</b>, and add <b>Agent glance</b>.</li>
+						</ol>
+						<p class="glance-link" id="android-link">
+							<button type="button" class="glance-btn" id="android-link-button">Link this phone</button>
+							<span class="glance-help" id="android-link-status"></span>
+						</p>
+						<p class="glance-note">
+							The widget refreshes itself about every 30 minutes without opening the app, keeps the
+							last card it saw when the phone is offline, and opens your agent on tap. It carries
+							its own token, which you can revoke below at any time.
 						</p>
 					</article>
 					<article class="glance-surface">
@@ -195,6 +205,14 @@
 							<a href="https://github.com/nirholas/three.ws/blob/main/prompts/roadmap/native-widgets.md">work order</a>.
 						</p>
 					</article>
+				</div>
+				<div class="glance-devices" id="devices" hidden>
+					<h3>Linked widgets</h3>
+					<p class="glance-help">
+						Every phone widget holds its own token that can only read your glance card. Revoke one
+						and that widget shows a "link again" card on its next refresh.
+					</p>
+					<ul id="device-list" class="glance-device-list" aria-live="polite"></ul>
 				</div>
 			</section>
 		</main>

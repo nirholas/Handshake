@@ -7,6 +7,22 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Native widgets: your agent on the home screen</title>
+			<link>https://three.ws/docs/native-widgets</link>
+			<guid isPermaLink="false">2026-08-29:Native widgets: your agent on the home screen</guid>
+			<pubDate>Sat, 29 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Put your three.ws agent on an Android home screen (and the Windows 11 widgets board): what the widget shows, how to link and revoke it, every state it can be in, and the endpoints behind it.</description>
+		</item>
+		<item>
+			<title>Your agent on the Android home screen</title>
+			<link>https://three.ws/docs/native-widgets</link>
+			<guid isPermaLink="false">2026-08-29:Your agent on the Android home screen</guid>
+			<pubDate>Sat, 29 Aug 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The three.ws Android app (1.1) now ships a home screen widget. It shows your agent's avatar, its name, and how many moves it made today, refreshes itself in the background about every half hour without opening the app, keeps the last card it saw when the phone is offline, and opens your agent with a tap. Link a phone from the Glance page in one tap; every linked widget is listed there with a revoke button, because each one carries its own token that can read your card and nothing else. The Glance card also comes as a PNG now, which is what any native widget host, chat client or image-only surface needs.</description>
+		</item>
+		<item>
 			<title>Brownout</title>
 			<link>https://three.ws/brownout</link>
 			<guid isPermaLink="false">2026-08-28:Brownout</guid>

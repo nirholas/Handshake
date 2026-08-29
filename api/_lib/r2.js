@@ -150,6 +150,24 @@ export async function getObjectBuffer(key) {
 	return Buffer.concat(chunks);
 }
 
+// Read an object together with the user metadata it was stored with. Used by
+// caches that key on a stable path and decide freshness from a stamp in the
+// metadata (the glance PNG cache stores the card's ETag there), so a stale
+// object is overwritten in place instead of piling up a new key per version.
+// Returns null when the object does not exist.
+export async function getObjectWithMetadata(key) {
+	let out;
+	try {
+		out = await r2.send(new GetObjectCommand({ Bucket: env.S3_BUCKET, Key: key }));
+	} catch (err) {
+		if (err?.$metadata?.httpStatusCode === 404 || err?.name === 'NoSuchKey') return null;
+		throw err;
+	}
+	const chunks = [];
+	for await (const chunk of out.Body) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+	return { body: Buffer.concat(chunks), metadata: out.Metadata || {}, contentType: out.ContentType || null };
+}
+
 // Read just the leading `length` bytes of an object via an HTTP Range request.
 // Used by the rig classifier to read a GLB's glTF JSON chunk (which lives at
 // the file head) without downloading the whole — potentially large — mesh.

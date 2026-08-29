@@ -4,6 +4,11 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-08-29
+
+- **Native widgets: your agent on the home screen** (`/docs/native-widgets`): Put your three.ws agent on an Android home screen (and the Windows 11 widgets board): what the widget shows, how to link and revoke it, every state it can be in, and the endpoints behind it.
+- **Your agent on the Android home screen**: The three.ws Android app (1.1) now ships a home screen widget. It shows your agent's avatar, its name, and how many moves it made today, refreshes itself in the background about every half hour without opening the app, keeps the last card it saw when the phone is offline, and opens your agent with a tap. Link a phone from the Glance page in one tap; every linked widget is listed there with a revoke button, because each one carries its own token that can read your card and nothing else. The Glance card also comes as a PNG now, which is what any native widget host, chat client or image-only surface needs. (`/docs/native-widgets`) `[feature]`
+
 ## 2026-08-28
 
 - **Brownout** (`/brownout`): Every response from this API says where its data came from and how fresh it is, and every declared fallback has been proven by breaking the upstream it protects against, inside the real request path. Read the receipts: which provider refused, which one caught the request, and how old the answer was.

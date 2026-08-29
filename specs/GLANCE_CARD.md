@@ -3,7 +3,8 @@
 The wire format behind [`/api/glance/card`](../docs/glance.md). One three.ws agent, reduced to what fits in an operating system widget slot, a README badge, or a chat unfurl.
 
 - **Endpoint:** `GET https://three.ws/api/glance/card?agent=<uuid>`
-- **Media types:** `application/json` (default), `image/svg+xml` (`format=svg`), Adaptive Card 1.6 JSON (`format=adaptive`)
+- **Media types:** `application/json` (default), `image/svg+xml` (`format=svg`), `image/png` (`format=png`), Adaptive Card 1.6 JSON (`format=adaptive`)
+- **Owner endpoint:** `GET https://three.ws/api/glance/mine` (session cookie or widget token), same encodings minus SVG and Adaptive
 - **Companion specs:** [3D_AGENT_CARD.md](3D_AGENT_CARD.md) (the on-chain identity document), [EMBED_SPEC.md](EMBED_SPEC.md) (the 3D embed)
 
 ## Why it exists
@@ -96,6 +97,32 @@ The SVG rendering serves three sizes, chosen to match the slots the widget board
 | `medium` | 480x200 | Android 4x2, Windows medium, README badge |
 | `large` | 480x300 | Windows large, a dashboard tile |
 
+## PNG encoding
+
+`format=png` rasterizes the SVG at `scale` (1, 2 or 3) times the size above, so `medium` at `scale=2` is 960x400 pixels. `theme` is `dark` or `light`; a renderer that cannot ask the reader for a preference (every native widget host) MUST request one explicitly, and the server resolves `auto` to `dark`. The avatar image is inlined before rasterizing; an image that cannot be fetched degrades to the monogram exactly as in the SVG conformance rule.
+
+## Notice cards
+
+A response that has no agent to show (signed out, an unlinked widget token, an account with no agent, an unknown id) carries a document with the same fields, `id` set to `"notice"` (or `"missing"` for an unknown id), `image` `null`, `status` `"new"`, every numeric field `0`, and `headline` and `url` set to the next step (sign in, relink, create). A renderer treats it as any other card; that is the point.
+
+## Owner endpoint and widget tokens
+
+`GET /api/glance/mine` answers for the caller rather than for an id. It identifies the caller by the session cookie or by a **widget token** presented as `Authorization: Bearer glw_…` (or `?token=`). Tokens are minted by the owner at `POST /api/glance/token`, are 36 characters (`glw_` plus 32 URL-safe characters), are stored hashed, read this one endpoint and nothing else, and are revocable at `DELETE /api/glance/token?id=`.
+
+The JSON answer is `{ signedIn, state, via, card, notice, agents, signInUrl, createUrl, linkUrl }` with `state` one of `agent`, `signed-out`, `unlinked`, `no-agent`. When `state` is `agent`, `card` is the document above and `notice` is `null`; otherwise `card` is `null` and `notice` is a notice card.
+
+The PNG answer is always status `200` and carries the same facts in headers, so a host that only downloads a bitmap still learns where a tap goes:
+
+| Header | Value |
+| --- | --- |
+| `x-glance-state` | the `state` above |
+| `x-glance-url` | the card's `url`, the tap target |
+| `x-glance-name` | `name`, ASCII-filtered |
+| `x-glance-metric` | `"<value> <label>"` |
+| `x-glance-agent` | the agent id, empty for a notice |
+| `x-glance-updated` | `updatedAt` |
+| `x-glance-width`, `x-glance-height` | bitmap pixels |
+
 ## Versioning
 
 New optional fields are additive and do not bump `version`. Removing a field, changing a type, or changing the meaning of `metric` requires v2 served alongside v1; the `version` field is what lets a widget pinned a year ago keep rendering.
@@ -105,5 +132,8 @@ New optional fields are additive and do not bump `version`. Removing a field, ch
 - Model: [api/_lib/glance-card.js](../api/_lib/glance-card.js)
 - SVG: [api/_lib/glance-svg.js](../api/_lib/glance-svg.js)
 - Adaptive Card: [api/_lib/glance-adaptive.js](../api/_lib/glance-adaptive.js)
-- Endpoint: [api/glance/card.js](../api/glance/card.js)
-- Conformance tests: [tests/glance-card.test.js](../tests/glance-card.test.js)
+- PNG: [api/_lib/glance-png.js](../api/_lib/glance-png.js)
+- Widget tokens: [api/_lib/glance-tokens.js](../api/_lib/glance-tokens.js), [api/glance/token.js](../api/glance/token.js)
+- Endpoints: [api/glance/card.js](../api/glance/card.js), [api/glance/mine.js](../api/glance/mine.js)
+- Android renderer: [solana-mobile/android-overlay/](../solana-mobile/android-overlay/README.md)
+- Conformance tests: [tests/glance-card.test.js](../tests/glance-card.test.js), [tests/glance-png.test.js](../tests/glance-png.test.js), [tests/glance-tokens.test.js](../tests/glance-tokens.test.js)

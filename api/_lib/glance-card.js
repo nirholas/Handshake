@@ -203,6 +203,43 @@ export function relativeTime(then, now = new Date()) {
 	return `${Math.floor(mo / 12)}y ago`;
 }
 
+/**
+ * A card that carries a message instead of an agent: the signed-out slot, the
+ * unlinked widget, the account with no agent yet, the id nobody owns. It is
+ * shaped exactly like an agent card so every renderer (SVG, PNG, Adaptive
+ * Card, the element) draws it with no special case, and it always says what
+ * to do next, because a widget that shows an error is a widget people remove.
+ *
+ * @param {{ name: string, headline: string, url: string, monogram?: string, description?: string|null }} notice
+ */
+export function noticeCard({ name, headline, url, monogram = '3', description = null }) {
+	const now = new Date();
+	return {
+		version: GLANCE_CARD_VERSION,
+		id: 'notice',
+		name: String(name).slice(0, 64),
+		description: description ? String(description).slice(0, 160) : null,
+		url,
+		createUrl: `${SITE}/create`,
+		image: null,
+		monogram: String(monogram).slice(0, 2),
+		accent: { from: '#64748b', to: '#334155', hue: 215 },
+		status: 'new',
+		headline: String(headline).slice(0, 160),
+		metric: { label: 'Moves today', value: 0 },
+		stats: [
+			{ label: 'This week', value: 0 },
+			{ label: 'All time', value: 0 },
+			{ label: 'Days live', value: 0 },
+		],
+		lastAction: null,
+		bornAt: null,
+		ageDays: null,
+		updatedAt: now.toISOString(),
+		ttl: GLANCE_CACHE_TTL_S,
+	};
+}
+
 export async function glanceEtag(card) {
 	const digest = await sha256(
 		[card.id, card.metric.value, card.stats.map((s) => s.value).join(','), card.status].join('|'),

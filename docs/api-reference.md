@@ -7189,6 +7189,46 @@ data: {"id":"6a29...","text":"Deploy is green","importance":80,"tone":"alert"}
 
 ---
 
+## Glance API
+
+One agent reduced to what fits in an operating-system widget slot: name, avatar, one live number (moves in the last 24 hours), and a link back. Powers the Windows 11 widget, the Android home screen widget, README badges and the `<agent-glance>` element. Spec: [specs/GLANCE_CARD.md](../specs/GLANCE_CARD.md). Guide: [glance.md](glance.md), [native-widgets.md](native-widgets.md).
+
+### Public card
+
+```
+GET /api/glance/card?agent=<uuid>&format=json|svg|png|adaptive&size=small|medium|large&theme=auto|light|dark&scale=1|2|3
+```
+
+No auth. `json` is the card model, `svg` a self-contained image, `png` a bitmap (`scale` is pixel density, `theme` resolves `auto` to dark), `adaptive` a bound Adaptive Card 1.6. Carries an `ETag` and answers `304` to `if-none-match`. An unknown agent answers `404`; for `svg` and `png` the body is still a real card that says so.
+
+### My card
+
+```
+GET /api/glance/mine?format=json|png&agent=<uuid>&size=…&theme=dark|light&scale=…
+Authorization: Bearer glw_…        (widget token)   or the session cookie
+```
+
+Always `200`. JSON: `{ signedIn, state, via, card, notice, agents, signInUrl, createUrl, linkUrl }`, `state` one of `agent`, `signed-out`, `unlinked`, `no-agent`. PNG: the card bitmap for whichever state applies, with `x-glance-state`, `x-glance-url` (tap target), `x-glance-name`, `x-glance-metric`, `x-glance-agent`, `x-glance-updated` headers. `cache-control: private, no-store`.
+
+### Widget tokens
+
+```
+POST   /api/glance/token            { label?, platform?: android|macos|ios|other, agent?: uuid }
+GET    /api/glance/token
+PATCH  /api/glance/token            { id, agent: uuid|null }
+DELETE /api/glance/token?id=<uuid>
+```
+
+Session cookie required; writes must be same-site. `POST` answers `201` with `{ id, prefix, label, platform, agentId, createdAt, lastUsedAt, token, links: { android } }`. `token` is shown exactly once; `links.android` is the `intent://glance/link?token=…#Intent;scheme=threews;package=ws.three.app;…;end` URL that hands it to the Android app. At most 12 live tokens per account (`409 too_many_tokens`). `GET` answers `{ tokens: [...] }` without plaintexts. `DELETE` answers `{ revoked: true, id }`, or `404` for an id that is not the caller's live token.
+
+| Error | Status | Meaning |
+| --- | --- | --- |
+| `unauthorized` | 401 | no session |
+| `forbidden` | 403 | write from another origin |
+| `not_found` | 404 | token or agent is not the caller's |
+| `too_many_tokens` | 409 | 12 live tokens already |
+| `rate_limited` | 429 | over the per-account write limit |
+
 ## Pagination
 
 Paginated list endpoints use `limit`/`offset` query parameters unless noted otherwise (each endpoint's own parameter table is authoritative; some small per-user lists, like `/api/agents` and `/api/widgets`, return everything with no pagination).

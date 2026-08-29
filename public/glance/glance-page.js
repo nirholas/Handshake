@@ -180,9 +180,150 @@ function wireControls() {
 	});
 }
 
+/**
+ * Android hand-off. The page mints a widget token (POST /api/glance/token)
+ * and opens the intent: URL the server returns; Chrome routes it to the app's
+ * link activity, which stores the token and offers to pin the widget. A
+ * visitor who arrives with ?link=android (the tap target of an unlinked
+ * widget) is walked through it without pressing anything.
+ */
+const android = {
+	button: document.getElementById('android-link-button'),
+	status: document.getElementById('android-link-status'),
+	devices: document.getElementById('devices'),
+	list: document.getElementById('device-list'),
+};
+
+function deviceLabel() {
+	const ua = navigator.userAgent;
+	const model = ua.match(/;\s*([^;)]+?)\s+Build\//);
+	if (model) return model[1].trim().slice(0, 40);
+	return /Android/i.test(ua) ? 'Android phone' : 'Home screen widget';
+}
+
+async function linkAndroid({ auto = false } = {}) {
+	android.button.disabled = true;
+	android.status.textContent = 'Linking…';
+	try {
+		const res = await fetch('/api/glance/token', {
+			method: 'POST',
+			credentials: 'same-origin',
+			headers: { 'content-type': 'application/json', accept: 'application/json' },
+			body: JSON.stringify({ platform: 'android', label: deviceLabel(), agent: state.agentId || null }),
+			signal: AbortSignal.timeout(TIMEOUT_MS),
+		});
+		if (res.status === 401) {
+			const next = encodeURIComponent('/glance?link=android');
+			android.status.innerHTML = `<a href="/login?next=${next}">Sign in</a> first, then come back here.`;
+			if (auto) location.assign(`/login?next=${next}`);
+			return;
+		}
+		const body = await res.json().catch(() => ({}));
+		if (!res.ok) {
+			android.status.textContent = body.message || body.error || `Could not link (${res.status}).`;
+			return;
+		}
+		android.status.textContent = 'Opening the three.ws app…';
+		await loadDevices();
+		location.assign(body.links.android);
+		setTimeout(() => {
+			android.status.textContent = 'Linked. Add "Agent glance" from your launcher\u2019s widget picker.';
+		}, 1500);
+	} catch (err) {
+		android.status.textContent = `Could not link: ${err.message}`;
+	} finally {
+		android.button.disabled = false;
+	}
+}
+
+function relative(iso) {
+	if (!iso) return 'never used';
+	const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
+	if (s < 60) return 'just now';
+	if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+	if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+	return `${Math.floor(s / 86400)}d ago`;
+}
+
+async function loadDevices() {
+	let tokens;
+	try {
+		const res = await fetch('/api/glance/token', {
+			credentials: 'same-origin',
+			headers: { accept: 'application/json' },
+			signal: AbortSignal.timeout(TIMEOUT_MS),
+		});
+		if (res.status === 401) {
+			android.devices.hidden = true;
+			return;
+		}
+		if (!res.ok) throw new Error(`${res.status}`);
+		tokens = (await res.json()).tokens || [];
+	} catch {
+		android.devices.hidden = true;
+		return;
+	}
+
+	android.devices.hidden = false;
+	android.list.innerHTML = '';
+	if (!tokens.length) {
+		const li = document.createElement('li');
+		li.className = 'glance-device-empty';
+		li.textContent = 'No widget is linked yet. Link a phone above and it appears here.';
+		android.list.append(li);
+		return;
+	}
+	for (const token of tokens) {
+		const li = document.createElement('li');
+		li.className = 'glance-device';
+		const name = document.createElement('b');
+		name.textContent = token.label;
+		const prefix = document.createElement('code');
+		prefix.textContent = `${token.prefix}…`;
+		const meta = document.createElement('span');
+		meta.className = 'meta';
+		meta.textContent = `${token.platform}, linked ${relative(token.createdAt)}, last seen ${relative(token.lastUsedAt)}`;
+		const revoke = document.createElement('button');
+		revoke.type = 'button';
+		revoke.className = 'glance-btn secondary';
+		revoke.textContent = 'Revoke';
+		revoke.setAttribute('aria-label', `Revoke the widget token ${token.label}`);
+		revoke.addEventListener('click', async () => {
+			revoke.disabled = true;
+			li.classList.add('is-going');
+			try {
+				const res = await fetch(`/api/glance/token?id=${encodeURIComponent(token.id)}`, {
+					method: 'DELETE',
+					credentials: 'same-origin',
+					signal: AbortSignal.timeout(TIMEOUT_MS),
+				});
+				if (!res.ok && res.status !== 404) throw new Error(`${res.status}`);
+				await loadDevices();
+			} catch (err) {
+				li.classList.remove('is-going');
+				revoke.disabled = false;
+				meta.textContent = `Could not revoke: ${err.message}`;
+			}
+		});
+		li.append(name, prefix, meta, revoke);
+		android.list.append(li);
+	}
+}
+
+function wireAndroid() {
+	android.button.addEventListener('click', () => linkAndroid());
+	loadDevices();
+	const params = new URL(location.href).searchParams;
+	if (params.get('link') === 'android') {
+		document.getElementById('android')?.scrollIntoView({ block: 'center' });
+		linkAndroid({ auto: true });
+	}
+}
+
 async function main() {
 	wireControls();
 	wireCopyButtons();
+	wireAndroid();
 
 	const fromUrl = new URL(location.href).searchParams.get('agent');
 	const { options, note } = await discoverAgents();

@@ -270,3 +270,91 @@ button.copy[data-state='done'] {
 		gap: 56px;
 	}
 }
+
+/* Linked widgets: the Android link button and the revoke list. */
+.glance-link {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.6rem 0.9rem;
+	margin: 0.9rem 0 0.6rem;
+}
+.glance-btn {
+	appearance: none;
+	border: 1px solid var(--line, #262842);
+	background: linear-gradient(135deg, #4f46e5, #7c3aed);
+	color: #fff;
+	font: inherit;
+	font-weight: 600;
+	padding: 0.55rem 1rem;
+	border-radius: 999px;
+	cursor: pointer;
+	transition:
+		transform 0.15s ease,
+		box-shadow 0.15s ease,
+		opacity 0.15s ease;
+}
+.glance-btn:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35);
+}
+.glance-btn:active {
+	transform: translateY(0);
+}
+.glance-btn:focus-visible {
+	outline: 2px solid #a5b4fc;
+	outline-offset: 3px;
+}
+.glance-btn[disabled] {
+	opacity: 0.6;
+	cursor: progress;
+}
+.glance-btn.secondary {
+	background: var(--panel, #15162a);
+	color: inherit;
+	font-weight: 500;
+	padding: 0.35rem 0.75rem;
+}
+.glance-devices {
+	margin-top: 2rem;
+	padding-top: 1.5rem;
+	border-top: 1px solid var(--line, #262842);
+}
+.glance-devices h3 {
+	margin: 0 0 0.3rem;
+}
+.glance-device-list {
+	list-style: none;
+	margin: 1rem 0 0;
+	padding: 0;
+	display: grid;
+	gap: 0.6rem;
+}
+.glance-device {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.4rem 1rem;
+	padding: 0.7rem 0.9rem;
+	border: 1px solid var(--line, #262842);
+	border-radius: 14px;
+	background: var(--panel, #15162a);
+	transition: opacity 0.2s ease;
+}
+.glance-device.is-going {
+	opacity: 0.4;
+}
+.glance-device b {
+	font-weight: 600;
+}
+.glance-device code {
+	font-size: 0.85em;
+}
+.glance-device .meta {
+	color: var(--muted, #a2a7bd);
+	font-size: 0.85rem;
+	flex: 1 1 12rem;
+}
+.glance-device-empty {
+	color: var(--muted, #a2a7bd);
+}

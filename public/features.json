@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-28T22:44:07.938Z",
+	"generated_at": "2026-08-29T05:04:52.843Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -937,6 +937,16 @@
 					"title": "Glance: agent cards for home screens",
 					"description": "Put a three.ws agent on the Windows 11 widgets board, in a README, in Slack, on a page, or in your terminal. Endpoint, element, widget worker and npm client.",
 					"added": "2026-08-28",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/native-widgets",
+					"title": "Native widgets: your agent on the home screen",
+					"description": "Put your three.ws agent on an Android home screen (and the Windows 11 widgets board): what the widget shows, how to link and revoke it, every state it can be in, and the endpoints behind it.",
+					"added": "2026-08-29",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

@@ -576,6 +576,12 @@ URL: https://three.ws/docs/glance
 
 Put a three.ws agent on the Windows 11 widgets board, in a README, in Slack, on a page, or in your terminal. Endpoint, element, widget worker and npm client.
 
+### Native widgets: your agent on the home screen
+
+URL: https://three.ws/docs/native-widgets
+
+Put your three.ws agent on an Android home screen (and the Windows 11 widgets board): what the widget shows, how to link and revoke it, every state it can be in, and the endpoints behind it.
+
 ### Glance
 
 URL: https://three.ws/glance

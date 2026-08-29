@@ -100,11 +100,19 @@ ${small ? smallBody(card, ns) : wideBody(card, ns, dim, large)}
 }
 
 function themeCss(theme, ns) {
+	// A fixed theme writes literal colors into the rules. Browsers would accept
+	// `var()` too, but librsvg (which rasterizes the PNG encoding through sharp)
+	// silently paints an unresolved custom property black and ignores
+	// `prefers-color-scheme`, so a fixed theme is the only shape every renderer
+	// agrees on. `auto` keeps the variables and the media query because that is
+	// the one case where the reader's browser has to pick the palette.
+	const rules = (t) =>
+		`.${ns} .bg{fill:${t.bg}}.${ns} .panel{fill:${t.panel}}.${ns} .t{fill:${t.text}}.${ns} .m{fill:${t.muted}}.${ns} .line{stroke:${t.line}}`;
+	if (theme === 'light') return rules(LIGHT);
+	if (theme === 'dark') return rules(DARK);
 	const vars = (t) =>
 		`--bg:${t.bg};--panel:${t.panel};--text:${t.text};--muted:${t.muted};--line:${t.line}`;
 	const base = `.${ns} .bg{fill:var(--bg)}.${ns} .panel{fill:var(--panel)}.${ns} .t{fill:var(--text)}.${ns} .m{fill:var(--muted)}.${ns} .line{stroke:var(--line)}`;
-	if (theme === 'light') return `.${ns}{${vars(LIGHT)}}${base}`;
-	if (theme === 'dark') return `.${ns}{${vars(DARK)}}${base}`;
 	return `.${ns}{${vars(LIGHT)}}@media (prefers-color-scheme:dark){.${ns}{${vars(DARK)}}}${base}`;
 }
 

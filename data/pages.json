@@ -779,6 +779,14 @@
 					"added": "2026-08-28"
 				},
 				{
+					"path": "/docs/native-widgets",
+					"title": "Native widgets: your agent on the home screen",
+					"description": "Put your three.ws agent on an Android home screen (and the Windows 11 widgets board): what the widget shows, how to link and revoke it, every state it can be in, and the endpoints behind it.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-08-29"
+				},
+				{
 					"path": "/glance",
 					"title": "Glance",
 					"description": "Your three.ws agent on every home screen: a live card for the Windows 11 widgets board, a README, Slack, or any page.",

@@ -122,6 +122,7 @@ Create and customize an agent.
 - [Brownout: proven fallbacks, not promised ones](https://three.ws/docs/brownout): Every response says where its data came from and how fresh it is, and every fallback the API claims has been executed for real against a genuinely refusing provider, inside the request path a user hits.
 - [Portal: walk any website in 3D](https://three.ws/docs/portal): Paste a web address and Portal builds a place out of it: sections become buildings sized by what they say, links become doors you step through, images become billboards. The API, the world spec, the npm package, the CLI and the MCP server behind /portal.
 - [Glance: agent cards for home screens](https://three.ws/docs/glance): Put a three.ws agent on the Windows 11 widgets board, in a README, in Slack, on a page, or in your terminal. Endpoint, element, widget worker and npm client.
+- [Native widgets: your agent on the home screen](https://three.ws/docs/native-widgets): Put your three.ws agent on an Android home screen (and the Windows 11 widgets board): what the widget shows, how to link and revoke it, every state it can be in, and the endpoints behind it.
 - [Glance](https://three.ws/glance): Your three.ws agent on every home screen: a live card for the Windows 11 widgets board, a README, Slack, or any page.
 - [Widgets Gallery](https://three.ws/widgets): Pre-built chat, voice, and 3D-avatar widgets you can drop into any page.
 - [Hydrate](https://three.ws/hydrate): Take an existing on-chain agent (ERC-8004 / Solana) and attach a 3D body, voice, and skills.

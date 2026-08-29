@@ -65,9 +65,10 @@ Public, cacheable, side-effect free, no session required.
 | Parameter | Values | Default |
 | --- | --- | --- |
 | `agent` | agent uuid (required) | |
-| `format` | `json`, `svg`, `adaptive` | `json` |
-| `size` | `small` (240x240), `medium` (480x200), `large` (480x300). SVG only | `medium` |
-| `theme` | `auto`, `light`, `dark`. SVG only | `auto` |
+| `format` | `json`, `svg`, `png`, `adaptive` | `json` |
+| `size` | `small` (240x240), `medium` (480x200), `large` (480x300). SVG and PNG | `medium` |
+| `theme` | `auto`, `light`, `dark`. SVG and PNG (`auto` renders dark as PNG) | `auto` |
+| `scale` | `1`, `2`, `3`: pixel density. PNG only | `2` |
 
 ```bash
 curl -s "https://three.ws/api/glance/card?agent=<agent-id>" | jq '.metric'
@@ -80,9 +81,19 @@ The response carries an `ETag`; send it back as `if-none-match` and you get a `3
 
 A missing agent answers `404` with a real card that says so, not a broken image. That matters when the card is sitting in someone's home screen slot.
 
+`format=png` is the same card as a bitmap, for hosts that cannot draw SVG (Android's RemoteViews, WidgetKit, chat clients that only unfurl raster images). It is rasterized with sharp from the SVG, cached in object storage per agent, size, theme and density, and re-rendered only when the card's ETag changes.
+
 ### `GET /api/glance/mine`
 
-Session-scoped. Returns `{ signedIn, card, agents, signInUrl, createUrl }` for the caller's own agent, plus the list of agents they own so a widget can be pointed at a different one. Signed out is a `200` with `signedIn: false`, not a `401`: a widget that renders an error is a widget people remove.
+The caller's own agent, plus the list of agents they own so a widget can be pointed at a different one. Two ways to say who is asking: the session cookie (what the Windows widget worker sends), or a widget token as `Authorization: Bearer glw_…` (what a native widget sends, because it has no session; see [native-widgets.md](native-widgets.md#how-the-widget-authenticates)).
+
+Every state is a `200` with a designed card, never a `401`: a widget that renders an error is a widget people remove. `state` is one of `agent`, `signed-out`, `unlinked` (a revoked or unknown token), or `no-agent`; for the three non-agent states `card` is `null` and `notice` carries a card that says what to do next, with a tap target that does it.
+
+`format=png` (with `size`, `theme`, `scale` as above) returns the bitmap for whichever state applies, with `x-glance-state`, `x-glance-url` (the tap target), `x-glance-name`, `x-glance-metric` and `x-glance-agent` in the headers, so a native widget learns everything from the one request that fetched the image.
+
+### `POST | GET | PATCH | DELETE /api/glance/token`
+
+The widget tokens. Session and same-site only. `POST { label?, platform?, agent? }` mints one and answers the plaintext exactly once, plus `links.android`, the `intent://` URL that hands it to the Android app. `GET` lists the caller's live tokens (prefix, label, platform, last seen), `PATCH { id, agent }` repoints one, `DELETE ?id=` revokes one. The revoke list on [/glance](https://three.ws/glance#devices) is this endpoint.
 
 ### `GET /api/glance/template`
 
@@ -150,8 +161,14 @@ Zero dependencies, bounded deadlines on every call, and a `GlanceError` that car
 
 ---
 
+## On an Android home screen
+
+The three.ws Android app (1.1 and later) ships an **Agent glance** home screen widget: link the phone from [/glance](https://three.ws/glance#android), then add the widget from the launcher's picker. It fetches `/api/glance/mine?format=png` with its own token through WorkManager, keeps the last card when offline, and opens the agent on tap. Sizes, states, revocation and the native sources are all in [native-widgets.md](native-widgets.md#android).
+
+---
+
 ## Where this is going
 
-Glance is phase 5 of the [roadmap](https://github.com/nirholas/three.ws/blob/main/README.md#roadmap). Windows 11 and the web are live. Android is next (the signed `ws.three.app` shell already ships, the app widget provider is the remaining piece), then macOS and iOS through a shared WidgetKit extension. The scoped work order is [prompts/roadmap/native-widgets.md](https://github.com/nirholas/three.ws/blob/main/prompts/roadmap/native-widgets.md).
+Glance is phase 5 of the [roadmap](https://github.com/nirholas/three.ws/blob/main/README.md#roadmap). Windows 11, Android and the web are live. macOS and iOS follow through a shared WidgetKit extension against the same PNG endpoint and the same widget token; the scoped work order is [prompts/roadmap/native-widgets.md](https://github.com/nirholas/three.ws/blob/main/prompts/roadmap/native-widgets.md).
 
 Every one of those surfaces consumes the endpoint documented above. The card is the contract; the hosts are just slots.

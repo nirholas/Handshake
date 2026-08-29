@@ -4,14 +4,18 @@
  * One agent, in whatever shape the surface asking for it can render.
  *
  *   ?agent=<uuid>                       required
- *   &format=json | svg | adaptive       default json
- *   &size=small | medium | large        svg only, default medium
- *   &theme=auto | light | dark          svg only, default auto
+ *   &format=json | svg | png | adaptive default json
+ *   &size=small | medium | large        svg and png, default medium
+ *   &theme=auto | light | dark          svg and png, default auto (png: dark)
+ *   &scale=1 | 2 | 3                    png only, pixel density, default 2
  *
  *   json      the glance card model. What the Windows 11 widgets board binds
  *             to its Adaptive Card template, and what <agent-glance> renders.
  *   svg       a self-contained card image for a README, a Slack unfurl, an
  *             <img>, or any widget host that only takes a picture.
+ *   png       the same card as a bitmap, for hosts that cannot draw SVG:
+ *             Android RemoteViews, WidgetKit, chat clients that unfurl only
+ *             raster images.
  *   adaptive  a fully bound Adaptive Card, for hosts that render one without
  *             doing their own templating.
  *
@@ -26,8 +30,9 @@
  * never a broken image in someone's home screen slot.
  */
 
-import { loadGlanceCard, glanceEtag } from '../_lib/glance-card.js';
+import { loadGlanceCard, glanceEtag, noticeCard } from '../_lib/glance-card.js';
 import { renderGlanceSvg, GLANCE_SIZES } from '../_lib/glance-svg.js';
+import { glancePng, pngOptions } from '../_lib/glance-png.js';
 import { adaptiveCardFor } from '../_lib/glance-adaptive.js';
 import { cors, json, error, wrap, method, varyOn } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
@@ -40,7 +45,7 @@ import { isUuid } from '../_lib/validate.js';
 const CACHE = 'public, max-age=60, s-maxage=120, stale-while-revalidate=600';
 const CACHE_MISS = 'public, max-age=30, s-maxage=60';
 
-const FORMATS = new Set(['json', 'svg', 'adaptive']);
+const FORMATS = new Set(['json', 'svg', 'png', 'adaptive']);
 const THEMES = new Set(['auto', 'light', 'dark']);
 
 export default wrap(async (req, res) => {
@@ -80,6 +85,7 @@ export default wrap(async (req, res) => {
 		res.setHeader('content-type', 'image/svg+xml; charset=utf-8');
 		return res.end(renderGlanceSvg(card, { size, theme }));
 	}
+	if (format === 'png') return sendPng(res, 200, card, url.searchParams);
 	if (format === 'adaptive') return json(res, 200, adaptiveCardFor(card));
 	return json(res, 200, card);
 });
@@ -90,27 +96,28 @@ export default wrap(async (req, res) => {
  * it can branch on.
  */
 function notFound(res, format, size, theme, message) {
-	if (format !== 'svg') return error(res, 404, 'not_found', message);
-	const placeholder = {
-		id: 'missing',
+	if (format !== 'svg' && format !== 'png') return error(res, 404, 'not_found', message);
+	const placeholder = noticeCard({
 		name: 'Agent not found',
 		description: message,
 		headline: message,
 		url: 'https://three.ws/agents',
-		image: null,
-		monogram: '3',
-		accent: { from: '#64748b', to: '#334155', hue: 215 },
-		status: 'new',
-		metric: { label: 'Moves today', value: 0 },
-		stats: [
-			{ label: 'This week', value: 0 },
-			{ label: 'All time', value: 0 },
-			{ label: 'Skills', value: 0 },
-		],
-		lastAction: null,
-	};
+	});
+	if (format === 'png') return sendPng(res, 404, placeholder, new URLSearchParams({ size, theme }));
 	res.statusCode = 404;
 	res.setHeader('content-type', 'image/svg+xml; charset=utf-8');
 	res.setHeader('cache-control', 'public, max-age=60');
 	return res.end(renderGlanceSvg(placeholder, { size, theme }));
+}
+
+async function sendPng(res, status, card, params) {
+	const { png, width, height, cache } = await glancePng(card, pngOptions(params));
+	res.statusCode = status;
+	res.setHeader('content-type', 'image/png');
+	res.setHeader('content-length', String(png.length));
+	res.setHeader('x-glance-width', String(width));
+	res.setHeader('x-glance-height', String(height));
+	res.setHeader('x-glance-cache', cache);
+	if (status !== 200) res.setHeader('cache-control', 'public, max-age=60');
+	return res.end(png);
 }

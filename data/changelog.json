@@ -2,6 +2,15 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-08-29",
+			"title": "Your agent on the Android home screen",
+			"summary": "The three.ws Android app (1.1) now ships a home screen widget. It shows your agent's avatar, its name, and how many moves it made today, refreshes itself in the background about every half hour without opening the app, keeps the last card it saw when the phone is offline, and opens your agent with a tap. Link a phone from the Glance page in one tap; every linked widget is listed there with a revoke button, because each one carries its own token that can read your card and nothing else. The Glance card also comes as a PNG now, which is what any native widget host, chat client or image-only surface needs.",
+			"tags": [
+				"feature"
+			],
+			"link": "/docs/native-widgets"
+		},
+		{
 			"date": "2026-08-28",
 			"title": "three.ws is an Android app you can install today",
 			"summary": "The signed app is public on GitHub as v1.0.0 and installs on any phone from Android 6 up. It opens full-screen with no browser around it, and it adds four things the website on a phone cannot do: sign in with a single tap through your Solana wallet (on a Seeker that tap is Seed Vault and the key never leaves the secure element), point the camera at yourself and get back a rigged 3D avatar, share a photo into three.ws from any other app and have it land in the avatar flow already attached, and mint an agent on Solana mainnet from the phone. It is 3.95 MB and open source like the rest of the platform. The Solana dApp Store listing was submitted the same day and is in review.",
