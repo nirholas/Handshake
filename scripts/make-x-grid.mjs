@@ -199,6 +199,9 @@ try {
 }
 
 writeFileSync(path.join(OUT, '..', 'android-launch-master-16x9.png'), await sharp(master).removeAlpha().png({ compressionLevel: 9 }).toBuffer());
+/* CoinMarketCap article covers are 640x360 (16:9), the master's own aspect, so the
+ * cover is the composition itself scaled down rather than a separate design. */
+writeFileSync(path.join(OUT, '..', 'cmc-cover-640x360.png'), await sharp(master).removeAlpha().resize(640, 360, { kernel: 'lanczos3' }).png({ compressionLevel: 9 }).toBuffer());
 
 /* Quadrants in X's fill order: 1,2 across the top, then 3,4. */
 const TILES = [
