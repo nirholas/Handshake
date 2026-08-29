@@ -505,3 +505,5 @@ exports/notebook-corpus/
 docs/marketing/articleee.md
 docs/marketing/posts.md
 docs/marketing/posts2.md
+marketing/*/kit/strip/*.png
+marketing/*/kit/cards/*.png

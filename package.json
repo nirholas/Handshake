@@ -165,6 +165,7 @@
 		"build:wordmark": "node scripts/render-wordmark.mjs",
 		"build:play-assets": "node scripts/render-play-assets.mjs",
 		"build:x-grid": "node scripts/make-x-grid.mjs",
+		"build:x-strip": "node scripts/make-x-strip.mjs",
 		"build:dapp-store-media": "node solana-mobile/scripts/make-media.mjs",
 		"build:dapp-store-previews": "node solana-mobile/scripts/make-screenshots.mjs",
 		"render:pumpfun-verified": "node scripts/render-pumpfun-verified.mjs",
