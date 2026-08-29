@@ -16,6 +16,7 @@ import {
 	MIN_CANONICAL_BONES,
 	CANONICAL_TOTAL,
 	LIMB_GROUPS,
+	CONVENTIONS,
 } from '../src/rig-report.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -27,6 +28,17 @@ function load(name) {
 
 function report(name) {
 	return analyzeGlb(load(name), { fileName: `${name}.glb` });
+}
+
+function documentedRigConventions() {
+	const doc = readFileSync(join(ROOT, 'docs/rig-doctor.md'), 'utf8');
+	const rows = [];
+	for (const match of doc.matchAll(/^\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*`([^`]+)`\s*\|$/gm)) {
+		const convention = match[1].trim();
+		if (convention === 'Convention' || /^-+$/.test(convention)) continue;
+		rows.push({ convention, detectedBy: match[2].trim(), schema: match[3].trim() });
+	}
+	return rows;
 }
 
 describe('readGlbJson', () => {
@@ -54,6 +66,19 @@ describe('readGlbJson', () => {
 
 describe('detectConvention fingerprints', () => {
 	const ctx = (joints, meshNames = []) => ({ joints, meshNames, json: {} });
+
+	it('keeps documented rig conventions in sync with the detector', () => {
+		const implemented = CONVENTIONS.filter((c) => c.id !== 'unknown');
+		const docs = documentedRigConventions();
+		const implementedLabels = implemented.map((c) => c.label);
+		const documentedLabels = docs.map((row) => row.convention);
+
+		expect(documentedLabels).toEqual(implementedLabels);
+		for (const convention of implemented) {
+			expect(convention.evidence, `${convention.label} evidence`).toEqual(expect.any(String));
+			expect(convention.evidence.trim(), `${convention.label} evidence`).not.toBe('');
+		}
+	});
 
 	it('identifies an MMD rig from its Japanese PMX bone names', () => {
 		const c = detectConvention(ctx(['センター', '上半身', '左腕', '左ひじ', '右ひざ']));
