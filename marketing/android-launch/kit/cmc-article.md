@@ -1,5 +1,7 @@
 # CoinMarketCap article: three.ws for Android
 
+**Published 2026-08-29:** <https://coinmarketcap.com/community/articles/6a926390b8e239054a8f42e6/>
+
 Paste-ready for the CoinMarketCap **Articles Management > Add a new article** form.
 Field limits are CMC's: title and meta description are capped at 191 characters, the body
 editor offers H2 and H3 only, and the cover must be 640x360 (or that proportion, under 10 MB).
