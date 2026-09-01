@@ -154,7 +154,7 @@ const STYLE = `
 	.lp-sec-head { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:26px; flex-wrap:wrap; }
 	.lp-sec-head h2 { margin:0; font-size:26px; font-weight:750; letter-spacing:-0.02em; }
 	.lp-sec-head p { margin:6px 0 0; color:var(--muted); font-size:15px; max-width:560px; }
-	/* `.more` is an anchor when it navigates (All launches) and a button when it
+	/* The .more class is an anchor when it navigates (All launches) and a button when it
 	   acts on this page (Build yours opens the builder), so style the class. */
 	.lp-sec-head .more { font-size:14px; color:var(--muted); text-decoration:none; white-space:nowrap;
 		appearance:none; background:none; border:0; padding:0; font-family:inherit; cursor:pointer; }
