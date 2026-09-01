@@ -101,6 +101,14 @@ const SKIP = [
 	// record the archive exists to preserve. The rule applies to prose we
 	// write, not to prose we transcribe.
 	/^data\/x-archive\//,
+	// The baked animation library. Every clip, the manifest, and the signature
+	// index are written by scripts/build-animations.mjs and
+	// scripts/compact-clips.mjs from FBX sources deliberately kept out of the
+	// repo, so nothing in them is prose anyone wrote. Skipping them also keeps a
+	// re-bake (117 files, hundreds of MB of diff) out of the diff this guard has
+	// to read.
+	/^public\/animations\/clips\//,
+	/^public\/animations\/(manifest|signatures)\.json$/,
 ];
 const skipped = (file) => SKIP.some((re) => re.test(file));
 
@@ -205,18 +213,43 @@ if (base) {
 	}
 }
 
-let diffArgs;
-if (base) diffArgs = ['diff', '--unified=0', `${base}...${head}`];
-else if (staged) diffArgs = ['diff', '--unified=0', '--staged'];
-else diffArgs = ['diff', '--unified=0', 'HEAD'];
-if (paths.length) diffArgs = [...diffArgs, '--', ...paths];
+// Which revisions to compare. The file list and the diff itself are read
+// against this same selector.
+let range;
+if (base) range = [`${base}...${head}`];
+else if (staged) range = ['--staged'];
+else range = ['HEAD'];
 
-let diff;
+// Read the changed file names first, then diff them in batches, rather than
+// asking git for one blob. Two reasons, both load-bearing at push time: the
+// SKIP list drops generated output BEFORE git prints it, and no single spawn
+// has to hold the whole diff. A push that re-baked the animation library
+// produced a 215 MB diff, which overflowed execFileSync's buffer and failed the
+// push with `spawnSync git ENOBUFS` (2026-09-01). That reads like a rule
+// violation and is not one, and the only way past it was to bypass the guard.
+const FILES_PER_DIFF = 100;
+
+const listArgs = ['diff', '--name-only', '-z', ...range];
+if (paths.length) listArgs.push('--', ...paths);
+let changedFiles;
 try {
-	diff = git(diffArgs);
+	changedFiles = git(listArgs).split('\0').filter(Boolean);
 } catch (err) {
-	console.error(`[check-rules] could not read the diff (${diffArgs.join(' ')}): ${err.message}`);
+	console.error(`[check-rules] could not list the changed files (${listArgs.join(' ')}): ${err.message}`);
 	process.exit(1);
+}
+const scannable = changedFiles.filter((f) => !skipped(f));
+
+let diff = '';
+for (let i = 0; i < scannable.length; i += FILES_PER_DIFF) {
+	const batch = scannable.slice(i, i + FILES_PER_DIFF);
+	const diffArgs = ['diff', '--unified=0', ...range, '--', ...batch];
+	try {
+		diff += git(diffArgs);
+	} catch (err) {
+		console.error(`[check-rules] could not read the diff for ${batch.length} file(s) starting at ${batch[0]}: ${err.message}`);
+		process.exit(1);
+	}
 }
 
 // A brand-new file is invisible to `git diff HEAD`: it has no tracked
