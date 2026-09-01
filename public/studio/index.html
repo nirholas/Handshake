@@ -7,7 +7,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 		<meta
 			name="description"
-			content="Turn any avatar into an embeddable 3D widget. Five types, brand controls, one-line embed."
+			content="Pick any three.ws avatar, choose a widget type, set brand colors and environment, and copy a one-line embed snippet for your site."
 		 data-i18n-attr="content:studio_index.meta_description"/>
 		<meta name="theme-color" content="#0a0a0a" />
 		<meta name="robots" content="noindex" />
@@ -132,6 +132,8 @@
 								type="search"
 								id="public-search"
 								placeholder="Search public avatars…"
+								aria-label="Search public avatars"
+								data-i18n-attr="aria-label:studio_index.public_search_arialabel"
 								autocomplete="off"
 								spellcheck="false"
 							/>
@@ -401,7 +403,7 @@
 				<details>
 					<summary data-i18n="studio_index.script_tag_embed">Script-tag embed</summary>
 					<div class="copy-row">
-						<textarea id="embed-script-snippet" rows="2" readonly></textarea>
+						<textarea id="embed-script-snippet" rows="2" readonly aria-label="Script-tag embed snippet" data-i18n-attr="aria-label:studio_index.script_snippet_arialabel"></textarea>
 						<button
 							type="button"
 							class="btn-ghost btn-sm"

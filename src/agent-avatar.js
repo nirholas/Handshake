@@ -588,8 +588,12 @@ export class AgentAvatar {
 				);
 				return;
 			}
-			// Clip not in library — warn once, try default slot fallback
-			if (!this._warnedSlots.has(clipName)) {
+			// Clip not in library: warn once, try default slot fallback. The
+			// manifest is registered asynchronously after the viewer boots
+			// (src/app.js fetches /animations/manifest.json), so a slot fired
+			// by LOAD_START can land before any def exists. That is not a
+			// missing clip; skip the warning and take the embedded fallback.
+			if (am.getAnimationDefs().length > 0 && !this._warnedSlots.has(clipName)) {
 				log.warn(
 					`[AgentAvatar] slot "${slot}" → "${clipName}" not in animation library`,
 				);

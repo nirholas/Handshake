@@ -819,6 +819,21 @@ a:hover {
 	flex-shrink: 0;
 }
 
+.preview-status-error {
+	color: #f2a7a7;
+	font-size: 0.85em;
+}
+.preview-status-error::before {
+	content: '';
+	display: inline-block;
+	width: 7px;
+	height: 7px;
+	margin-right: 6px;
+	border-radius: 50%;
+	background: #e5484d;
+	vertical-align: middle;
+}
+
 /* ── right column: tabs + form ─────────────────────────────────────────────── */
 .studio-right-tabs {
 	display: flex;

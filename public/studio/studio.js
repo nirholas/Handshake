@@ -202,6 +202,16 @@ formEl.addEventListener('submit', (event) => event.preventDefault());
 const errEl = $('#form-error');
 const previewIfr = $('#preview-iframe');
 const previewSt = $('#preview-status');
+// The status line ships with a data-i18n placeholder so the pre-render copy is
+// translated, but from the first script write onwards the script owns it:
+// the catalog pass lands after an async /api/locale fetch and would otherwise
+// revert "Loading preview…" or "Live preview" back to "Pick an avatar to preview".
+previewSt.setAttribute('data-i18n-owned', '1');
+// Preview lifecycle flags. The iframe `load` event fires when the widget shell
+// has painted, not when the model has arrived; the shell reports a failed GLB
+// fetch afterwards with a `widget:load:error` message (src/app.js).
+let previewLoading = false;
+let previewFailed = false;
 const captureBtn = $('#capture-camera-btn');
 const saveBtn = $('#save-draft-btn');
 const generateBtn = $('#generate-btn');
@@ -577,7 +587,10 @@ async function searchPublicAvatars(q) {
 			: 'No public avatars match that search.';
 	} catch (err) {
 		list.hidden = true;
-		status.textContent = `Couldn't search: ${err.message}`;
+		const code = /^search: (\d+)$/.exec(err.message)?.[1];
+		status.textContent = code
+			? `The avatar library answered with an error (${code}). Press Browse to try again.`
+			: "Couldn't reach the avatar library. Check your connection and press Browse to try again.";
 	}
 }
 
@@ -1681,7 +1694,8 @@ const previewFrameEl = $('#preview-frame');
 // Remove shimmer once iframe content has painted.
 previewIfr.addEventListener('load', () => {
 	previewFrameEl?.classList.remove('is-loading');
-	if (previewSt.textContent === 'Loading preview…') {
+	if (previewLoading) {
+		previewLoading = false;
 		if (state.avatarId) {
 			previewSt.className = 'preview-status-live';
 			previewSt.textContent = 'Live preview';
@@ -1740,6 +1754,8 @@ function updateWalkPreview(forceReload) {
 	if (forceReload || key !== previewSrcKey) {
 		previewSrcKey = key;
 		previewSt.className = 'muted';
+		previewLoading = true;
+		previewFailed = false;
 		previewSt.textContent = 'Loading preview…';
 		previewFrameEl?.classList.add('is-loading');
 		previewIfr.src = `/walk-embed?${query}&_=${Date.now()}`;
@@ -1798,6 +1814,8 @@ function updatePreview(forceReload) {
 	if (forceReload || key !== previewSrcKey) {
 		previewSrcKey = key;
 		previewSt.className = 'muted';
+		previewLoading = true;
+		previewFailed = false;
 		previewSt.textContent = 'Loading preview…';
 		previewFrameEl?.classList.add('is-loading');
 		// Cache-buster query forces a full reload. Without it, hash-only
@@ -1808,7 +1826,7 @@ function updatePreview(forceReload) {
 		// without site nav/footer/auth chrome in the DOM, so the preview
 		// doesn't flash the marketing site before the model renders.
 		previewIfr.src = `/widget?_=${Date.now()}#${hashStr}`;
-	} else {
+	} else if (!previewFailed) {
 		previewSt.className = state.avatarId ? 'preview-status-live' : 'muted';
 		previewSt.textContent = state.avatarId
 			? 'Live preview'
@@ -1816,6 +1834,21 @@ function updatePreview(forceReload) {
 	}
 	postConfigToPreview();
 }
+
+// Mirror a failed model fetch outside the iframe. The shell already renders
+// its own retry UI inside the frame; the studio status line and the camera
+// capture button would otherwise keep claiming a live preview.
+window.addEventListener('message', (event) => {
+	if (event.source !== previewIfr.contentWindow || event.origin !== location.origin) return;
+	if (event.data?.type !== 'widget:load:error') return;
+	previewLoading = false;
+	previewFailed = true;
+	previewFrameEl?.classList.remove('is-loading');
+	captureBtn.disabled = true;
+	previewSt.className = 'preview-status-error';
+	previewSt.textContent =
+		"Preview couldn't load this avatar's model. Retry inside the preview or pick another avatar.";
+});
 
 function postConfigToPreview() {
 	if (!previewIfr.contentWindow) return;
@@ -2061,14 +2094,30 @@ function copyFromSelector(sel, btn) {
 	const el = $(sel);
 	if (!el) return;
 	el.select?.();
-	navigator.clipboard.writeText(el.value).then(
-		() => {
-			const o = btn.textContent;
-			btn.textContent = 'Copied';
-			setTimeout(() => (btn.textContent = o), 1200);
-		},
-		() => toast('Copy failed', 'error'),
-	);
+	const flash = () => {
+		const o = btn.textContent;
+		btn.textContent = 'Copied';
+		setTimeout(() => (btn.textContent = o), 1200);
+	};
+	// The async clipboard API is denied without a permission grant in some
+	// embedded and in-app browsers; execCommand still copies a focused
+	// selection there, so it is the fallback rather than a failure toast.
+	const legacyCopy = () => {
+		try {
+			el.focus();
+			el.setSelectionRange?.(0, el.value.length);
+			return document.execCommand('copy');
+		} catch {
+			return false;
+		}
+	};
+	const write = navigator.clipboard?.writeText
+		? navigator.clipboard.writeText(el.value)
+		: Promise.reject(new Error('clipboard unavailable'));
+	write.then(flash, () => {
+		if (legacyCopy()) flash();
+		else toast('Copy failed. The text is selected: press Ctrl+C or Cmd+C.', 'error');
+	});
 }
 
 function showError(msg) {
