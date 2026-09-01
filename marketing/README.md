@@ -4,6 +4,7 @@ Campaign assets for three.ws announcements and distribution: video scripts and r
 
 | Campaign | Description |
 | --- | --- |
+| [huggingface-article](huggingface-article/post.md) | The X thread announcing the second Hugging Face community article and thanking every program and partner named in it, with the tagging rules each one requires. |
 | [imessage-video](imessage-video/README.md) | A 9:16 vertical video of a fake iMessage thread that lands the AR Forge and OpenAI collaboration beats, built for X, TikTok, and Reels. |
 | [nvidia-inception](nvidia-inception/README.md) | The NVIDIA Inception announcement pack: paste-ready X, LinkedIn, and Telegram copy for a membership that was never announced, plus the badge and no-endorsement rules. |
 | [openai-select-partner](openai-select-partner/README.md) | The OpenAI Select Partner announcement pack: draft press release, approved social copy, badge assets, and the usage rules that govern them. |

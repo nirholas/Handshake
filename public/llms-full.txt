@@ -4662,6 +4662,12 @@ URL: https://three.ws/news/
 
 Product launches, integrations, and announcements from three.ws.
 
+### Inside three.ws: our second Hugging Face article, and the whole stack in one piece
+
+URL: https://three.ws/news/huggingface-building-3d-ai-agents
+
+The whole stack in one article on Hugging Face: every 3D generation model and where it runs, rigging and retargeting for any humanoid, the motion library and motion models, the multi-model brain, typed memory, the seven-layer guard chain, x402 agent payments, MCP and ChatGPT distribution, and every program and partner behind it, with a live 3D model embedded in the page.
+
 ### How to Monetize an MCP Server: Paid Tools with x402
 
 URL: https://three.ws/news/monetize-mcp-server-x402-paid-tools

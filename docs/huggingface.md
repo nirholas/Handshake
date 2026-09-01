@@ -21,6 +21,17 @@ Four problems in order, each answered with a shipped surface: **the body problem
 - **Surfaces it covers:** [/forge](https://three.ws/forge), [/play](https://three.ws/play), [/agents-live](https://three.ws/agents-live), [the x402 manifest](https://three.ws/.well-known/x402.json)
 - **Code it documents:** [the avatar pipeline](./avatar-pipeline.md), [animation retargeting](./animations.md), [agent wallets](./agent-wallets.md), [autonomous x402](./autonomous-x402.md)
 
+### Inside three.ws: The Open-Source Stack That Gives AI Agents a Body, a Brain, a Wallet, and a Job
+
+Published 29 August 2026 as a Hugging Face community article. The whole stack in one piece, written to be checked: every 3D generation lane with its model and hardware, the selfie lane and its fidelity metric, rigging and retargeting for any humanoid, the motion library and motion models, the multi-model brain, typed memory, the Empathy Layer, the seven-layer guard chain, x402 agent payments, MCP and ChatGPT distribution, and every program and partner with its exact status. It embeds the avatar-viewer Space as a live 3D model and two animated-PNG avatars from `/api/render/animate`. Kept AI-focused per the Hugging Face blog rules: no coin, exchange, or listing content.
+
+> [Read it on Hugging Face](https://huggingface.co/blog/three-ws/building-3d-ai-agents-end-to-end)
+
+- **Source draft:** [`docs/huggingface-3d-ai-agent-platform.md`](./huggingface-3d-ai-agent-platform.md)
+- **Announcement thread:** [`marketing/huggingface-article/post.md`](../marketing/huggingface-article/post.md)
+- **Surfaces it covers:** [/forge](https://three.ws/forge), [/animations](https://three.ws/animations), [/brain](https://three.ws/brain), [/agent-studio](https://three.ws/agent-studio), [/irl](https://three.ws/irl), [/partners](https://three.ws/partners)
+- **Code it documents:** [the avatar pipeline](./avatar-pipeline.md), [the 3D asset pipeline](./3d-asset-pipeline.md), [the agent brain](./brain.md), [the agent runtime](./agent-runtime.md), [the partner ecosystem](./partners.md)
+
 ## Published models
 
 ### three-ws/avatars

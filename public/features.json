@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-29T05:04:52.843Z",
+	"generated_at": "2026-08-29T16:16:15.182Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -7699,6 +7699,16 @@
 					"path": "/news/",
 					"title": "News & Announcements",
 					"description": "Product launches, integrations, and announcements from three.ws.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/news/huggingface-building-3d-ai-agents",
+					"title": "Inside three.ws: our second Hugging Face article, and the whole stack in one piece",
+					"description": "The whole stack in one article on Hugging Face: every 3D generation model and where it runs, rigging and retargeting for any humanoid, the motion library and motion models, the multi-model brain, typed memory, the seven-layer guard chain, x402 agent payments, MCP and ChatGPT distribution, and every program and partner behind it, with a live 3D model embedded in the page.",
 					"added": null,
 					"auth": null,
 					"indexable": true,

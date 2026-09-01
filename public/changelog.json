@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-08-29T05:04:52.854Z",
+	"generated_at": "2026-08-29T16:16:15.194Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -14,6 +14,16 @@
 			"link": "/docs/native-widgets",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-08-29",
+			"type": "update",
+			"title": "Our second Hugging Face article: the whole 3D AI agent stack in one piece, with a live 3D model inside it",
+			"summary": "Building 3D AI Agents End to End is live on Hugging Face. It walks through every 3D generation model we run and where it runs, rigging and animation for any humanoid, the multi-model brain and its guard chain, agent payments, and every program and partner behind the platform. The article embeds a rigged avatar you can orbit in place and avatars that wave as animated PNGs, and every claim links to the code and the open model files.",
+			"link": "/news/huggingface-building-3d-ai-agents",
+			"tags": [
+				"docs"
 			]
 		},
 		{

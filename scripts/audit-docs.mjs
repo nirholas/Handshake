@@ -279,6 +279,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['coin-pages', 'owner-gated: names a crypto project other than $THREE'],
 	['coingecko-listing-update-2026-08', 'internal: dated listing-update notes prepared for an external venue'],
 	['coinmarketcap-article', 'internal: draft prepared for an external publisher'],
+	['huggingface-3d-ai-agent-platform', 'internal: draft prepared for an external publisher (Hugging Face community article)'],
 	['coinmarketcap-live-article', 'internal: draft prepared for an external publisher'],
 	['coinmarketcap-article-play', 'internal: draft prepared for an external publisher'],
 	['demo-routes', 'internal: dated route inventory'],

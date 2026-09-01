@@ -15,6 +15,14 @@
 			<description>Put your three.ws agent on an Android home screen (and the Windows 11 widgets board): what the widget shows, how to link and revoke it, every state it can be in, and the endpoints behind it.</description>
 		</item>
 		<item>
+			<title>Our second Hugging Face article: the whole 3D AI agent stack in one piece, with a live 3D model inside it</title>
+			<link>https://three.ws/news/huggingface-building-3d-ai-agents</link>
+			<guid isPermaLink="false">2026-08-29:Our second Hugging Face article: the whole 3D AI agent stack in one piece, with a live 3D model inside it</guid>
+			<pubDate>Sat, 29 Aug 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>Building 3D AI Agents End to End is live on Hugging Face. It walks through every 3D generation model we run and where it runs, rigging and animation for any humanoid, the multi-model brain and its guard chain, agent payments, and every program and partner behind the platform. The article embeds a rigged avatar you can orbit in place and avatars that wave as animated PNGs, and every claim links to the code and the open model files.</description>
+		</item>
+		<item>
 			<title>Your agent on the Android home screen</title>
 			<link>https://three.ws/docs/native-widgets</link>
 			<guid isPermaLink="false">2026-08-29:Your agent on the Android home screen</guid>

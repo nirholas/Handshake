@@ -2,6 +2,23 @@
   "_readme": "Curated RSS items for https://three.ws/rss/announcements.xml. Edit this file to control exactly what HackerNoon (and any RSS reader) sees. Each entry needs: id (stable slug), title, date (ISO 8601), body_html. Optional: link, author, summary, tags. Items are served newest-first by date; cap is 80. Last merged from data/archives/trythreews_tweets_2026-06-03.json on 2026-06-05 (102 total items, merged June 2026 posts).",
   "items": [
     {
+      "id": "huggingface-building-3d-ai-agents",
+      "slug": "huggingface-building-3d-ai-agents",
+      "title": "Inside three.ws: our second Hugging Face article, and the whole stack in one piece",
+      "date": "2026-08-29T12:00:00.000Z",
+      "author": "three.ws",
+      "link": "https://huggingface.co/blog/three-ws/building-3d-ai-agents-end-to-end",
+      "summary": "The whole stack in one article on Hugging Face: every 3D generation model and where it runs, rigging and retargeting for any humanoid, the motion library and motion models, the multi-model brain, typed memory, the seven-layer guard chain, x402 agent payments, MCP and ChatGPT distribution, and every program and partner behind it, with a live 3D model embedded in the page.",
+      "body_html": "<p><strong>Most AI agents are a text box. Ours walk into your room in AR, remember what you told them last week, and pay each other for work.</strong> That is how our second community article on Hugging Face opens, and the rest is the long version of what three.ws is, written to be checked: every claim links to the code, and the model files sit in the same account.</p>\n<h2>What the article covers</h2>\n<ul>\n<li><strong>The 3D pipeline:</strong> TRELLIS, Hunyuan3D 2.1, TripoSG, and TripoSR by lane and by hardware, the selfie lane and its fidelity metric, Make-It-Animatable rigging, retargeting across roughly twenty bone-naming families, the 3,000-clip motion library, and text- and video-to-motion.</li>\n<li><strong>The agent:</strong> a brain that routes across 20-plus models with deterministic failover, an eight-step tool loop, typed memory, the Empathy Layer, voice and lip-sync, and the seven-layer guard chain in front of every fund-moving call.</li>\n<li><strong>The economy:</strong> on-chain identity, x402 payments with the live settlement numbers, and the agent wallet.</li>\n<li><strong>Distribution:</strong> the web component, AR, seven hosted MCP servers, ChatGPT, Android, and the terminal.</li>\n<li><strong>Every partner and program</strong> named with the status it actually carries.</li>\n</ul>\n<p>The article embeds a rigged avatar you can orbit in place, rendered by <a href=\"https://huggingface.co/spaces/three-ws/avatar-viewer\" rel=\"noopener\">our Space</a>, and avatars that wave as animated PNGs from the platform's render API.</p>\n<p>Read it: <a href=\"https://huggingface.co/blog/three-ws/building-3d-ai-agents-end-to-end\" rel=\"noopener\">huggingface.co/blog/three-ws/building-3d-ai-agents-end-to-end</a></p>",
+      "tags": [
+        "huggingface",
+        "3d",
+        "agents",
+        "mcp",
+        "x402"
+      ]
+    },
+    {
       "id": "monetize-mcp-server-x402-paid-tools",
       "slug": "monetize-mcp-server-x402-paid-tools",
       "title": "How to Monetize an MCP Server: Paid Tools with x402",
