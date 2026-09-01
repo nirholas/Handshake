@@ -1,0 +1,24 @@
+# Mobile launch articles
+
+Five long-form articles announcing three.ws as three native apps (Solana Seeker on the Solana dApp Store, Android on Google Play, iPhone on the App Store), one per venue. Each is paste-ready for its venue and states the platform, the philosophy (why a body, why 3D, why AR, why on-chain, why mobile), the whole feature inventory, every programme and partner with its exact designation, and the roadmap.
+
+| File | Venue | Angle |
+| --- | --- | --- |
+| [x-article.md](x-article.md) | X long-form Article from @trythreews | Community and Seeker owners. Narrative, founder voice, the full $THREE section with the contract address. |
+| [coinmarketcap-article.md](coinmarketcap-article.md) | CoinMarketCap Community | Crypto-native reader. Ownership, the x402 economy, agent wallets, the launchpad, the full $THREE section. H2/H3 only and no tables, which is all the CMC editor supports. |
+| [aws-builder-center-article.md](aws-builder-center-article.md) | AWS Builder Center (@threews) | Engineers with a web product being asked for an app. Real source for every piece: MWA session persistence, Seeker Genesis Token verification, the share-target worker, deep-link routing, the widget token, the AWS SDK v3 S3 client, the Marketplace front door. |
+| [nvidia-forum-article.md](nvidia-forum-article.md) | NVIDIA Developer Forums showcase | GPU operators. The lanes on L4 and Blackwell, the memory ceilings, the NIM models around the generator, on-device gating before the GPU. |
+| [ibm-community-article.md](ibm-community-article.md) | IBM Community, Three.ws User Group blog | Developers running Granite on watsonx.ai as an agent brain. Every Granite surface, the pay-per-call path, the trust layer. |
+
+## Facts to know before posting
+
+- **Store status is written as live in all five, on the owner's instruction (2026-09-01).** As of writing, [seeker-app.md](../seeker-app.md) records the Solana dApp Store release as approved and live (v1.0.0, submitted 2026-08-28), [solana-mobile/publish-play/README.md](../../solana-mobile/publish-play/README.md) records the Google Play track as closed testing, and [ios-app.md](../ios-app.md) records the iOS app as in-repo and not yet submitted. Post each article only once its store claims are true; the copy does not hedge, so it will read as false if posted early.
+- **The iOS widget and push are described as next, not shipped.** Android and Windows 11 glance widgets are live ([native-widgets.md](../native-widgets.md)); the WidgetKit extension and the APNs path are roadmap.
+- **Partner designations are exact and must survive edits.** "OpenAI Select Partner", "member of NVIDIA Inception" (never "NVIDIA partner"), "IBM Business Partner" with the public-showcase caveat, "AWS Partner" with the Marketplace listing described as coming, "member of Google Cloud for Web3 Startups". The rules are in [partners.md](../partners.md).
+- **The IBM and NVIDIA pieces deliberately carry no token contract address.** [ibm.md](../ibm.md) sets the user group's content rule (standalone developer content, no crypto-cluster posts), and the NVIDIA venue is a developer showcase. Both describe the on-chain identity and x402 layers as architecture. The X and CoinMarketCap pieces carry the full $THREE section.
+- **Numbers are as of late August 2026** and come from [the-first-19-weeks.md](../the-first-19-weeks.md) and [three-thesis.md](../three-thesis.md). Refresh them from those two files before a later posting.
+- **Posting is owner-gated** (external-channel gate in [CLAUDE.md](../../CLAUDE.md)). When an article goes live, record its canonical URL here, add it to `data/rss/items.json`, and log it in `data/changelog.json` with the `docs` tag, following the checklist in [aws-builder-center.md](../aws-builder-center.md).
+
+## Sources
+
+The apps: [seeker-app.md](../seeker-app.md), [ios-app.md](../ios-app.md), [native-widgets.md](../native-widgets.md), [glance.md](../glance.md), [solana-mobile/README.md](../../solana-mobile/README.md), [ios/README.md](../../ios/README.md). The platform: [STRUCTURE.md](../../STRUCTURE.md), [how-it-works.md](../how-it-works.md), [forge-pipeline.md](../forge-pipeline.md), [selfie-to-avatar.md](../selfie-to-avatar.md), [ar.md](../ar.md), [irl.md](../irl.md), [x402.md](../x402.md), [onchain-agents.md](../onchain-agents.md), [hold-to-access.md](../hold-to-access.md). Partners and models: [partners.md](../partners.md), [nvidia-models.md](../nvidia-models.md), [nvidia-inception.md](../nvidia-inception.md), [ibm.md](../ibm.md), [ibm-x402-mcp.md](../ibm-x402-mcp.md), [aws-builder-center.md](../aws-builder-center.md). Earlier launch copy the tone follows: [marketing/seeker-launch/post.md](../../marketing/seeker-launch/post.md), [marketing/android-launch/kit/post.md](../../marketing/android-launch/kit/post.md).

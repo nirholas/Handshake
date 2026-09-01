@@ -56,6 +56,7 @@ Written and reviewed in this repo, not yet submitted:
 |---|---|
 | [aws-builder-center-agent-payment-sessions.md](./aws-builder-center-agent-payment-sessions.md) | Agent Payment Sessions: giving an agent a budget instead of a private key, and enforcing it atomically in Postgres |
 | [aws-builder-center-mcp-agents.md](./aws-builder-center-mcp-agents.md) | An MCP server whose paid tools settle per call in USDC over HTTP 402 |
+| [mobile-launch/aws-builder-center-article.md](./mobile-launch/aws-builder-center-article.md) | One web product, three native apps, zero forks: the Seeker, Android, and iPhone shells, with the AWS SDK v3 storage client and the Marketplace front door |
 
 ## Publishing checklist
 
