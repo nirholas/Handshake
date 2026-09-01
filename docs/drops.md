@@ -169,6 +169,17 @@ keyed by the layer's slug, adding a layer to a draft does not perturb the values
 already rolled on the layers beside it, and reordering the layer array changes
 nothing at all.
 
+## Not yet wired: minting a drop on-chain
+
+The schema carries `drops.collection_address` and the per-item `mint_address` /
+`owner_wallet` / `minted_at` columns, but nothing writes them yet: there is no
+endpoint that anchors a collection as a Metaplex Core collection or mints an
+item into it. Revealed items are real, exportable GLBs that a creator can mint
+one at a time through the existing [Minted 3D Assets](minted.md) path today.
+Wiring a drop-native mint (one Core collection per drop, each revealed item
+minted into it) is the next step, and the columns are there so it does not need
+a schema change.
+
 ## API reference
 
 All routes live under `/api/drops/`. Reads are public and rate-limited by IP;

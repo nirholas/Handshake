@@ -308,26 +308,6 @@ export async function releaseClaim(dropId, idx) {
 		where drop_id = ${dropId} and idx = ${idx} and status = 'revealing'
 	`;
 }
-
-export async function setCollectionAddress(dropId, ownerId, address) {
-	const rows = await sql`
-		update drops set collection_address = ${address}
-		where id = ${dropId} and owner_id = ${ownerId} and collection_address is null and deleted_at is null
-		returning *
-	`;
-	return rows[0] ? publicDrop(rows[0], { includeSeed: true, isOwner: true }) : null;
-}
-
-export async function markMinted(dropId, idx, { mintAddress, ownerWallet }) {
-	const rows = await sql`
-		update drop_items
-		set mint_address = ${mintAddress}, owner_wallet = ${ownerWallet}, minted_at = now()
-		where drop_id = ${dropId} and idx = ${idx} and mint_address is null
-		returning *
-	`;
-	return rows[0] ? publicItem(rows[0]) : null;
-}
-
 /* ────────────────────────────────────────────────────────────────────────── *
  * Shapes
  * ────────────────────────────────────────────────────────────────────────── */
