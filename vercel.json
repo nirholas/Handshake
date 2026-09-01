@@ -5887,6 +5887,10 @@
 			"schedule": "15 */6 * * *"
 		},
 		{
+			"path": "/api/cron/oracle-refit",
+			"schedule": "45 */6 * * *"
+		},
+		{
 			"path": "/api/cron/dead-man-switch",
 			"schedule": "0 5 * * *"
 		},
