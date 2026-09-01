@@ -1,0 +1,17 @@
+{
+	"tools": [
+		{
+			"name": "waveAndGreet",
+			"description": "Play the wave gesture and speak a short greeting. Pass `greeting` to override the default line from the skill config.",
+			"input_schema": {
+				"type": "object",
+				"properties": {
+					"greeting": {
+						"type": "string",
+						"description": "What to say while waving. Defaults to manifest.config.greeting."
+					}
+				}
+			}
+		}
+	]
+}

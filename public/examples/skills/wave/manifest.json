@@ -1,0 +1,25 @@
+{
+	"spec": "skill/0.1",
+	"name": "wave",
+	"version": "0.1.0",
+	"description": "Starter skill: wave and greet in one tool call. The smallest useful example of composing built-in runtime tools (wave + speak) into a new skill tool.",
+	"license": "MIT",
+	"tags": [
+		"starter",
+		"gesture",
+		"example"
+	],
+	"requires": {
+		"runtime": ">=0.1.0",
+		"capabilities": []
+	},
+	"provides": {
+		"tools": [
+			"waveAndGreet"
+		],
+		"triggers": []
+	},
+	"config": {
+		"greeting": "Hey there! Great to see you."
+	}
+}

@@ -1,0 +1,55 @@
+{
+	"$schema": "https://3d-agent.io/schemas/manifest/0.1.json",
+	"spec": "agent-manifest/0.1",
+	"name": "Coach Leo",
+	"description": "Football coach. Reviews your form, cheers you on.",
+	"image": "https://three.ws/avatars/cz.glb",
+	"tags": [
+		"coach",
+		"football",
+		"argentina"
+	],
+	"body": {
+		"uri": "https://three.ws/avatars/cz.glb",
+		"format": "gltf-binary",
+		"rig": "mixamo",
+		"boundingBoxHeight": 1.78
+	},
+	"brain": {
+		"provider": "anthropic",
+		"model": "claude-opus-4-6",
+		"instructions": "instructions.md",
+		"temperature": 0.8,
+		"maxTokens": 2048
+	},
+	"voice": {
+		"tts": {
+			"provider": "browser",
+			"rate": 1.05
+		},
+		"stt": {
+			"provider": "browser",
+			"language": "en-US"
+		}
+	},
+	"skills": [
+		{
+			"uri": "../skills/wave/",
+			"version": "0.1.0"
+		}
+	],
+	"memory": {
+		"mode": "local",
+		"index": "memory/MEMORY.md",
+		"maxTokens": 8192
+	},
+	"tools": [
+		"wave",
+		"lookAt",
+		"play_clip",
+		"setExpression",
+		"speak",
+		"remember"
+	],
+	"version": "0.1.0"
+}
