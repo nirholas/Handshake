@@ -57,3 +57,25 @@ Also cleared fix-queue 02 (lint) and retired its file.
 Left: this order stands (it retires only at campaign end). OWNER-ACTIONS row 1
 (the deploy) is satisfied for today; the event window 17:00-19:30 UTC is armed
 on production ahead of time.
+
+## 2026-09-01: map (retirement sweep across every pack)
+
+Measured: production `ad7b54c16` (2026-08-28 build, revision 00404) vs `main` `73c8ccbb7`,
+107 commits behind (`git log ad7b54c16..main --oneline | wc -l`); `smoke:prod` exit 1 with
+seven deploy-lag 404s; healthz `x402_settle` down (`cause: sponsor_floor`), `agent_index`
+down, `helius` and `sniper` degraded; benchmark live from the database (40%, 2026-08-10);
+`gcloud` auth dead; `npm run audit:docs` clean. Every open work order in the repo (58 numbered
+files across the packs plus the 157 swarm files and the 8 briefs then under `docs/openai-pr/`)
+was re-verified line by line against code, git history and the live site by eight read-only
+verification passes.
+
+Did: retired the verified-shipped orders (event 01/03/04/05/07 in `38812511e`, backlog
+02/03/04/06 in `c50037d79`, the fable-audit index folded into RESIDUALS in `20c381d92`, the
+OpenAI pack moved to `prompts/openai-pr/` with briefs 01 to 05 deleted in `09bfbb1b5`);
+rewrote event 08 to its recoverable remainder; wrote backlog 11 for the `agent_index` outage
+that nothing owned; rewrote the map in 00-INDEX from the measured verdicts; refreshed
+OWNER-ACTIONS (deleted the self-expired row, corrected rows 3, 4, 9, 10, added 13 to 17).
+
+Left: three verified-retirable files wait on the commit gate (row 14); everything else in
+the map is open for the measured reason next to it. The "Definition of 100%" now excludes
+`masters/` from line 1, since those prompts never retire by design.

@@ -47,85 +47,96 @@ CLAUDE.md hard rules. They exist because each failure mode below has happened mo
 
 ---
 
-## The map
+## The map (re-measured 2026-09-01)
 
-Categories are run-orderable: A gates everything user-visible, B gates platform health,
-C through G can run in parallel, H waits on owner gates, I is anytime. Within a category,
-top to bottom.
+Every row below was verified against the code, git history and the live site on
+2026-09-01, not copied from a pack's own status text. Orders verified shipped that day were
+deleted (event 01/03/04/05/07, backlog 02/03/04/06, the OpenAI pack's briefs 01 to 05, the
+fable-audit index); the ones listed here are what is genuinely open. Categories are
+run-orderable: A gates everything user-visible, B gates platform health, C through G can
+run in parallel, H waits on owner gates, I is anytime, J is the parallel swarm.
 
-### A. Ship (do these first; production is behind main until A is done)
+### A. Ship (do this first; production is 107 commits behind main)
 
-| Order | What |
+| Order | State |
 |---|---|
-| [01-ship-readiness.md](01-ship-readiness.md) | The standing deploy order: clean test run, preflight, staged build, one-command ship for the owner, post-ship verification. Retires last in this category. |
+| [01-ship-readiness.md](01-ship-readiness.md) | Open every cycle. Production `ad7b54c16` (2026-08-28) vs `main` `73c8ccbb7`; `smoke:prod` fails on seven routes that only exist in newer commits; no ship run has been logged here since 2026-08-09 although production was redeployed twice. Retires last in this category. |
 
-### B. Money rail (Solana first; the platform's observable health)
+### B. Money rail and platform health
 
-| Order | What |
+| Order | State |
 |---|---|
-| [../backlog/01-x402-settle-runway.md](../backlog/01-x402-settle-runway.md) | Settle runway. Agent slice largely landed (see the pack's PROGRESS.md); verify live post-deploy, then retire or rewrite to the remainder. Capital is an owner row. |
-| [../backlog/02-solana-rpc-capacity.md](../backlog/02-solana-rpc-capacity.md) | RPC capacity and call-shape routing. |
-| [../backlog/03-sponsor-runway-automation.md](../backlog/03-sponsor-runway-automation.md) | Runway measurement and alerting. Code complete per PROGRESS.md; verify live post-deploy, then retire. |
-| [02-stranded-wallet-reclaim.md](02-stranded-wallet-reclaim.md) | Kill the phantom dry-run reclaim plan; make stranded custodial funds visible; prepare the owner decision on the customer SOL. |
-| [03-master-key-hygiene.md](03-master-key-hygiene.md) | Move the plaintext master wallet secret into Secret Manager; sweep for siblings. |
+| [../backlog/01-x402-settle-runway.md](../backlog/01-x402-settle-runway.md) | Code complete; outcome false: settle 5.9%, `cause: sponsor_floor`. One code line left (the dry-run reclaim plan still counts sealed wallets). Capital is OWNER-ACTIONS row 2. |
+| [../backlog/11-agent-index-lag.md](../backlog/11-agent-index-lag.md) | New 2026-09-01: healthz reports `agent_index` down (1,092 of 1,602 Solana agents erroring, EVM cursors 3,039 hours stale) and nothing owned it. |
+| [02-stranded-wallet-reclaim.md](02-stranded-wallet-reclaim.md) | Open; nothing shipped. Its ops-card target was removed with the admin panel on 2026-08-05, so the visible surface is the JSON endpoint plus the brief. |
+| [03-master-key-hygiene.md](03-master-key-hygiene.md) | Open; the runbook section was never written and the cloud half needs a live `gcloud`. |
 
-### C. Repo and product defects (from the live 2026-08-01 sweep)
+### C. Repo and product defects
 
-| Order | What |
+| Order | State |
 |---|---|
-| [../fix-queue/03-cron-drift-garment-sweep.md](../fix-queue/03-cron-drift-garment-sweep.md) | A declared cron that has never run. |
+| [../fix-queue/03-cron-drift-garment-sweep.md](../fix-queue/03-cron-drift-garment-sweep.md) | Open; the scheduler comparison cannot run while `gcloud` auth is dead here (OWNER-ACTIONS row 15). |
 
-### D. Quality bar (the GCP-credit quality campaign)
+### D. Quality bar
 
-| Order | What |
+| Order | State |
 |---|---|
-| [../quality-bar/03-gpu-fleet-scaleout.md](../quality-bar/03-gpu-fleet-scaleout.md) | GPU fleet scale-out. |
-| [../quality-bar/04-pbr-texture-material-realism.md](../quality-bar/04-pbr-texture-material-realism.md) | PBR texture and material realism. |
-| [../quality-bar/06-forge-ux-flow.md](../quality-bar/06-forge-ux-flow.md) | Forge UX flow. |
-| [../quality-bar/07-design-system-sweep.md](../quality-bar/07-design-system-sweep.md) | Design-system sweep. |
-| [../quality-bar/08-mobile-performance.md](../quality-bar/08-mobile-performance.md) | Mobile performance. |
-| [../quality-bar/10-avatar-likeness-irl-people.md](../quality-bar/10-avatar-likeness-irl-people.md) | Avatar likeness for real people. |
+| [../quality-bar/03-gpu-fleet-scaleout.md](../quality-bar/03-gpu-fleet-scaleout.md) | Partial: cold-start UX and keep-warm shipped; load test and scale ceilings open. |
+| [../quality-bar/04-pbr-texture-material-realism.md](../quality-bar/04-pbr-texture-material-realism.md) | Mostly open; `api/_lib/glb-pbr-derive.js` exists and is imported but never called. |
+| [../quality-bar/06-forge-ux-flow.md](../quality-bar/06-forge-ux-flow.md) | Partial: the result-moment click-through table and the audits are still owed. |
+| [../quality-bar/07-design-system-sweep.md](../quality-bar/07-design-system-sweep.md) | Open and regressed: raw-hex count 4,787 to 5,426 since 2026-08-02; `audit:tokens` 10 vs a baseline of 0. |
+| [../quality-bar/08-mobile-performance.md](../quality-bar/08-mobile-performance.md) | Partial: touch targets shipped; the after-table, default GLB compression and the WebGL budget are open. |
+| [../quality-bar/10-avatar-likeness-irl-people.md](../quality-bar/10-avatar-likeness-irl-people.md) | Partial: animation dignity 10/10 rigs; the likeness audit's only complete run shows no improvement. |
 
 ### E. Roadmap features
 
-| Order | What |
+| Order | State |
 |---|---|
-| [../roadmap/generation-suite.md](../roadmap/generation-suite.md) | The generation suite. |
-| [../roadmap/creation-consolidation.md](../roadmap/creation-consolidation.md) | Creation-surface consolidation. |
-| [../roadmap/avatar-parametric-editor.md](../roadmap/avatar-parametric-editor.md) | Parametric avatar editor. |
-| [../roadmap/developer-resources-repos.md](../roadmap/developer-resources-repos.md) | Developer resources and repos. |
-| [../gcp-credits/05-catalog-animation-seeding.md](../gcp-credits/05-catalog-animation-seeding.md) | Catalog and animation-library seeding on credits. |
-| Trading trio (see [../roadmap/00-README.md](../roadmap/00-README.md)) | Three orders on the trading arena wedge. Their content is commit-gated (they reference a third-party launchpad); the files carry the gate. |
+| [../roadmap/generation-suite.md](../roadmap/generation-suite.md) | Partial: tools, smoke cron and gallery shipped; PBR map outputs, job webhooks and the API contract doc open. |
+| [../roadmap/creation-consolidation.md](../roadmap/creation-consolidation.md) | Partial: redirects and the save fix shipped; Studio wardrobe, the `/embed` retirement and the `/start` decision open. |
+| [../roadmap/avatar-parametric-editor.md](../roadmap/avatar-parametric-editor.md) | Partial: 122 sliders and client-side proportions; server bake, free sculpt and the spec open. |
+| [../roadmap/developer-resources-repos.md](../roadmap/developer-resources-repos.md) | Agent side shipped (`export:satellites` stages 70 files offline); blocked on OWNER-ACTIONS row 16, then the cross-links. |
+| [../roadmap/native-widgets.md](../roadmap/native-widgets.md) | Tasks 1 to 3 built (card endpoint, Android widget, Windows manifest); two commits await the deploy; task 4 needs row 17. |
+| [../gcp-credits/05-catalog-animation-seeding.md](../gcp-credits/05-catalog-animation-seeding.md) | Partial: the catalog seed runs at scale (56,898 avatars); the generated motion library has 0 clips. |
+| [../materialize/README.md](../materialize/README.md) | Six orders, zero code; design-only pack. |
+| [../simulation-ready/01-architecture.md](../simulation-ready/01-architecture.md) | Kernel, spec and schema exist; 0.5 of 8 build tasks done. |
+| Trading trio (see [../roadmap/00-README.md](../roadmap/00-README.md)) | Three plans, largely absorbed by shipped surfaces; every commit touching them is gated. |
 
 Strategy for what to run next inside E: [../roadmap/fable-playbook.md](../roadmap/fable-playbook.md).
 
 ### F. Trust and benchmarks
 
-| Order | What |
+| Order | State |
 |---|---|
-| [../backlog/04-fact-check-benchmark-run.md](../backlog/04-fact-check-benchmark-run.md) | Benchmark published to the DB; flips live with the next deploy. Verify `source: "database"` post-deploy, then retire. |
-| [04-fact-check-mixed-verdicts.md](04-fact-check-mixed-verdicts.md) | The `mixed` verdict class scores 0/10 and is the single biggest accuracy lever. |
+| [04-fact-check-mixed-verdicts.md](04-fact-check-mixed-verdicts.md) | Open; live run 2026-08-10 scores `mixed` 0/10 and 40% overall; verdict thresholds untouched since 2026-07-28. |
 
-### G. Event (window and closeout)
+### G. Event (closeout only)
 
-| Order | What |
+| Order | State |
 |---|---|
-| [../event/README.md](../event/README.md) | The Community Day pack. Code shipped; every surface is dark until the A-category deploy lands. Preflight is order 07. |
-| [../event/08-event-closeout.md](../event/08-event-closeout.md) | Post-event: export the standings before the Redis TTL eats them, recap, winner handoff to the owner. |
+| [../event/08-event-closeout.md](../event/08-event-closeout.md) | Run first in this pack: the souvenir grant count is readable from the multiplayer logs until about 2026-09-08; the standings board expired unexported. |
+| [../event/02-play-polish-sweep.md](../event/02-play-polish-sweep.md), [../event/06-photo-mode-share.md](../event/06-photo-mode-share.md) | The in-world walkthrough was never done; photo mode was built but never verified on both engines or announced. |
 
-### H. Distribution and listings (owner- or commit-gated; run when the gate clears)
+### H. Distribution and listings (owner- or commit-gated)
 
-| Order | What |
+| Order | State |
 |---|---|
-| [../store-submissions/01-submission-closeout.md](../store-submissions/01-submission-closeout.md) | MCP marketplace submission closeout. |
-| Marketplace listing pack (see the table in [../README.md](../README.md)) | Three orders to approved status; each batches its OTP and funding needs into one owner message. |
-| [../backlog/00-INDEX.md](../backlog/00-INDEX.md), orders 07 through 10 | Second-chain testnet deploys, the partner chat bot, feed-bot push, registry listing. All four are commit-gated (they reference third-party projects); their files say so. |
+| [../openai-pr/00-START-HERE.md](../openai-pr/00-START-HERE.md) | Briefs 06 (tool count drifted to 11 across the kit) and 07 (the go/no-go, never run); the portal submit is the owner's. |
+| [../store-submissions/01-submission-closeout.md](../store-submissions/01-submission-closeout.md) | Open; the tracker still reads 2026-07-15 and the server counts disagree (44 / 39 / 42). |
+| Marketplace listing pack (see the table in [../README.md](../README.md)) | Three open orders (04, 07, 08): the real-payment gauntlet waits on funding and a login; the relisting itself was submitted on chain 2026-08-27 and is under review. |
+| [../backlog/00-INDEX.md](../backlog/00-INDEX.md), orders 05 and 07 to 10 | One credential, one new funded testnet key, the chat-bot host, a sibling repo this workspace cannot see, and one verified-shipped file whose deletion waits on the commit gate (row 14). |
 
 ### I. Audit residuals (anytime)
 
-| Order | What |
+| Order | State |
 |---|---|
-| [../fable-audit/RESIDUALS.md](../fable-audit/RESIDUALS.md) | Three independent hardening tasks from the 2026-07-11 deep audit. |
+| [../fable-audit/RESIDUALS.md](../fable-audit/RESIDUALS.md) | Task 1 partial (guard test exists, no negative fixture, no OIDC step), task 2 API-only (its page was removed 2026-08-05), task 3 six seed drifts behind the commit gate. |
+
+### J. The swarm (parallel-safe, self-retiring)
+
+| Pack | State |
+|---|---|
+| [../swarm-100/README.md](../swarm-100/README.md) | 157 of 696 files remain: 151 route audits, 4 repo-wide sweeps, 1 roadmap slice. By the pack's protocol a file present is open (a finished order is deleted in its closing commit); 539 have retired that way since 2026-08-10. |
 
 ---
 
@@ -134,8 +145,8 @@ Strategy for what to run next inside E: [../roadmap/fable-playbook.md](../roadma
 Every line is a command or an observable, not an opinion. The campaign is complete when all
 of these hold at once:
 
-1. **No open work orders.** `find prompts -name '[0-9]*.md' -not -path '*production-100*'`
-   returns nothing, and this pack holds only this index, `OWNER-ACTIONS.md` (with no
+1. **No open work orders.** `find prompts -name '[0-9]*.md' -not -path '*production-100*' -not -path '*masters*'`
+   returns nothing (the masters are reusable prompts and never retire), and this pack holds only this index, `OWNER-ACTIONS.md` (with no
    unactioned rows), and `PROGRESS.md`. Every deletion followed the verify-then-retire rule.
 2. **The repo is green.** `npm run gate` exits 0, and one full `npm test` completes cleanly
    on a box that is not thrashing (load average under the core count).
