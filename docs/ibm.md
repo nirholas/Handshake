@@ -24,6 +24,13 @@ Do not describe the connector or the public demos as an official IBM release or 
 
 - **2026-06-18 — Co-marketing ramp-up.** Following a meeting on Monday (2026-06-15) and two separate IBM meetings today — one on the development side, one on the marketing side — three.ws and IBM are ramping up co-marketing. What's coming: more co-promotion on X from IBM, a dedicated three.ws page on the IBM domain, and a live IBM Community event (below). The dedicated page is not yet live and the partnership work lives on the IBM platform — distinct from the community-built public showcase under `/ibm/*`. Do not link to the page or present it as public until IBM ships it.
 
+### The next community event
+
+IBM is ready to host a second event. The formats considered, the recommendation (a two-week
+Granite Agent Jam that closes with a live demo night inside the three.ws world), the run of
+show, the division of labor, and the engineering plan are in [ibm-next-event.md](./ibm-next-event.md).
+No date is set: that is the first decision the proposal asks for.
+
 ### Community event (held 2026-06-23)
 
 **Building 3D AI Agents Live: From Prompt to Embeddable Agent in Minutes** — a live-build technical session in IBM's [Global AI & Data Science](https://community.ibm.com/community/user/events/event-description?CalendarEventKey=2767712c-6efd-47dc-aaeb-019ec4126e27&CommunityKey=f1c2cf2b-28bf-4b68-8570-b239473dcbbc) community, featuring a special guest from IBM.
