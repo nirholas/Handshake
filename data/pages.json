@@ -3337,6 +3337,12 @@
 					"added": "2026-08-28"
 				},
 				{
+					"path": "/docs/seeker-video",
+					"title": "Filming three.ws on a Seeker without a Seeker",
+					"description": "How to record a Seeker screen recording of the app with no device: why the Trusted Web Activity makes a browser capture at the real panel geometry a genuine capture, and which moments still have to come from an Android emulator.",
+					"added": "2026-09-01"
+				},
+				{
 					"path": "/docs/seeker-submission-day",
 					"title": "Submission day: three.ws on the Seeker dApp Store",
 					"description": "The owner's step-by-step for submission day: funding the publisher wallet, every Publisher Portal field with the listing copy to paste, the five screenshots to capture on a Seeker, and the submit command.",

@@ -41,6 +41,8 @@ The handoff is one-shot and expires after ten minutes, so a stale share can neve
 
 The APK can be exercised in a stock Android emulator (Pixel 7, Android 14 image). Everything except the Seed Vault itself works there: install, launch, shortcuts, the share intent, deep-link verification state. The recipe is in [solana-mobile/README.md](../solana-mobile/README.md#emulator-qa). For the wallet flows, `tests/solana-mobile-*.test.js` drive the MWA wrapper against a fake transport, and the Solana Mobile reference wallet can be sideloaded into the emulator for an end-to-end sign-in.
 
+Because the app is a TWA, filming it needs no device either: [Filming three.ws on a Seeker without a Seeker](./seeker-video.md) records the shipping page at the Seeker's real panel geometry and seats it in a device body, and says which moments genuinely have to come from the emulator.
+
 ## The home screen widget
 
 Version 1.1 adds **Agent glance**, an Android app widget: your agent's avatar, its name, and how
