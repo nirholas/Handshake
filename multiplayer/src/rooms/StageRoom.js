@@ -317,8 +317,9 @@ export class StageRoom extends Room {
 		// or the opener fired by the first arrival) speaks when nobody is present.
 		if (trigger === 'cadence' && this.state.audience.size === 0) return;
 		this._beatRunning = true;
+		let beat = null;
 		try {
-			const beat = this._director.nextBeat();
+			beat = this._director.nextBeat();
 			const context = this._buildContext(beat);
 			const { text, cue } = await this._fetchBeat(beat, context);
 			const words = clean(text, 600) || this._fallbackLine(beat);
@@ -326,6 +327,15 @@ export class StageRoom extends Room {
 			this._director.markSpoken(beat.kind);
 		} catch (err) {
 			console.warn(`${this._tag()} beat (${trigger}) failed: ${err?.message || err}`);
+			// A brain that is unreachable (transport error, non-2xx, timeout) must
+			// not silence the stage: an opener that never plays leaves the first
+			// arrival staring at a mute host. Perform the failsafe line for this
+			// beat, the same one an empty brain reply gets, and let the next beat
+			// retry the brain.
+			if (beat) {
+				this._performUtterance(beat, this._fallbackLine(beat), cueFor(beat.kind));
+				this._director.markSpoken(beat.kind);
+			}
 		} finally {
 			this._beatRunning = false;
 		}
@@ -413,13 +423,13 @@ export class StageRoom extends Room {
 	_fallbackLine(beat) {
 		const name = this.state.host.name || 'your host';
 		if (beat.kind === BEAT.TIP_SHOUTOUT && beat.tip) {
-			return `Huge love to ${beat.tip.label} for the tip — you keep this stage alive!`;
+			return `Huge love to ${beat.tip.label} for the tip. You keep this stage alive!`;
 		}
 		if (beat.kind === BEAT.ANSWER && beat.question) {
-			return `Good question from ${beat.question.from} — let me come back to that one.`;
+			return `Good question from ${beat.question.from}. Let me come back to that one.`;
 		}
-		if (beat.kind === BEAT.OPENER) return `Welcome in — ${name} on the stage. Pull up a seat.`;
-		return `Stay with me — more coming up right now.`;
+		if (beat.kind === BEAT.OPENER) return `Welcome in, ${name} on the stage. Pull up a seat.`;
+		return `Stay with me, more coming up right now.`;
 	}
 
 	onDispose() {

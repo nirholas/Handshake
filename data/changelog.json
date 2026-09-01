@@ -25384,92 +25384,13 @@
 		},
 		{
 			"date": "2026-09-01",
-			"title": "Guided Tour page: real track counts, a clean fit on small phones, and a proper fallback when the outline is slow",
-			"summary": "The Quick highlights and Full tour cards on /tour now show their real stop counts and minutes (they were being reset to placeholder text a moment after loading), the chapter list matches the tour itself and no longer lists the separate getting-started walkthrough as a chapter, the page no longer clips its right edge on 320px screens, and if the tour outline fails to load you get a clear message with a retry button instead of an empty section.",
+			"title": "Living Stages: the live feed connects in production, so the host actually performs",
+			"summary": "Every stage on three.ws/stage was reading \"feed offline\" in production: the page never told the browser where the realtime venue server lives, and even when pointed at it, the client tripped over an ordering quirk while subscribing to the host's state and dropped the opening line. The venue now connects the way /play does, subscribes correctly, and registers for the host's words before anything else, so you hear and read the host from the first beat, see who else is in the room, and get an acknowledgement when your question is queued. The feed pill is now a real control: when the feed drops, tap it to reconnect. A dead stage link explains itself and points back to the live marquee, a network blip retries in place without reloading, every button on the page has a visible keyboard focus ring, and the page description says what a Living Stage actually is.",
 			"tags": [
 				"fix",
 				"improvement"
 			],
-			"link": "/tour"
-		},
-		{
-			"date": "2026-09-01",
-			"title": "$THREE tiers page: the ladder now loads for everyone, signed in or not",
-			"summary": "Opening /three without a wallet connected or an account signed in showed an error card instead of the tiers, because the tier lookup refused anonymous requests. The page now shows every tier, its perks, and the exact $THREE threshold to any visitor, with a connect-wallet or sign-in prompt to see your own position. Signed-in accounts without a linked wallet get a clear prompt to connect one, and if the ladder genuinely fails to load the page keeps its heading and offers a retry.",
-			"tags": [
-				"fix"
-			],
-			"link": "/three"
-		},
-		{
-			"date": "2026-09-01",
-			"title": "Strategy Lab backtests and simulated runs find real launches again",
-			"summary": "In production, every Strategy Lab backtest and simulated session was scanning for candidates and coming back empty: the server-side strategy runtime was asking for pump.fun data with a page-relative address that only a browser can resolve, and the discovery tools behind it needed an indexer the platform never configured. The runtime now calls the pump.fun tools directly in-process, and the new-launch and trending scans read the live pump.fun feed with the platform's own launch recorder as backup, so a scan returns real mints on the first tick. The Lab page also tells a signed-out visitor exactly what signing in unlocks, links straight to it, shows a live \"session running\" state while a run streams, and explains a quiet session (every candidate filtered out, or the feed briefly unreachable) instead of a bare \"complete\".",
-			"tags": [
-				"fix",
-				"improvement"
-			],
-			"link": "/strategy-lab"
-		},
-		{
-			"date": "2026-09-01",
-			"title": "Claim threews.sol Subdomain: a clear account status in every case, a fit on small phones, and the light theme",
-			"summary": "The /threews/claim page now tells you where you stand the moment it loads: a loading placeholder while it checks your account, a sign-in prompt if you are signed out, a link to set a username if your account has none, and a plain explanation with a link to change it if your username has characters a .sol name cannot hold (before, that case ended in a bare validation error with nowhere to go). If the account check or the availability check cannot reach three.ws, the page says so and offers a retry instead of going quiet; a failed mint keeps its reason on screen with a retry when the failure was temporary and a link to create an agent when a wallet is what is missing. The .threews.sol suffix no longer spills off the edge on 320px screens, every control has a visible keyboard focus ring, and the page follows the light theme instead of staying black.",
-			"tags": [
-				"fix",
-				"improvement"
-			],
-			"link": "/threews/claim"
-		},
-		{
-			"date": "2026-09-01",
-			"title": "Widget Studio: an honest preview status, copy that works in every browser, and clearer errors",
-			"summary": "On /studio the preview status line now stays in sync with the preview: it no longer snaps back to \"Pick an avatar to preview\" after the language pass runs, and when an avatar's model cannot be fetched it says so and disables camera capture instead of reporting a live preview over an error screen. Copy buttons fall back to the browser's built-in copy when the clipboard API is denied, so the snippet lands on the clipboard in embedded and in-app browsers too. A failed public-avatar search explains what happened and how to retry, the search box and the script-tag snippet are labelled for screen readers, and the page description now matches what the studio does.",
-			"tags": [
-				"fix",
-				"improvement"
-			],
-			"link": "/studio"
-		},
-		{
-			"date": "2026-09-01",
-			"title": "Get Started wizard: avatars come back into the flow, the brain you pick is the brain you get, and sign-in happens at publish time",
-			"summary": "The 5-step wizard at /start now finishes what it starts. Taking a selfie, writing a prompt, building in the studio, or using the editor brings the finished avatar straight back into the wizard instead of stranding you on the avatar page, and Upload GLB uses the same storage path as every other upload, so it works. The AI model you choose is now applied to the agent (before, it was collected and dropped), the embed snippet points at the real loader, and a signed-out visitor who reaches the publish step gets a sign-in panel that resumes exactly where they left off rather than a cryptic error. Helper pills no longer sit on top of the Continue button, off-screen steps are no longer tabbable, the price and wallet fields have names for screen readers, and failed price or wallet saves are reported instead of swallowed.",
-			"tags": [
-				"fix",
-				"improvement"
-			],
-			"link": "/start"
-		},
-		{
-			"date": "2026-09-01",
-			"title": "Strategy Objects: signed-out visitors are sent to sign in instead of a half-open builder, and the view switcher is keyboard-visible",
-			"summary": "On /strategies, Equip, Fork, and New strategy now take a signed-out visitor straight to sign-in and bring them back to the page afterwards. Before, the page treated everyone as signed in, so the equip picker and the strategy builder opened for visitors who could not use them and Fork failed silently. The My library tab now shows its sign-in prompt without firing a request that could only fail, the Marketplace, Leaderboard, and My library switcher shows a visible focus ring when tabbed to and is announced correctly by screen readers, and the browser tab reads Strategy Objects.",
-			"tags": [
-				"fix",
-				"improvement"
-			],
-			"link": "/strategies"
-		},
-		{
-			"date": "2026-09-01",
-			"title": "Spatial MCP renderer: a clear message and a retry when a scene cannot be fetched",
-			"summary": "The reference renderer on /spatial-mcp now shows a shimmer while a GLB downloads and, if the asset cannot be fetched or decoded, replaces the empty frame with a message that names the host, explains what to check (reachable, https, CORS, a valid .glb), and offers a Try again button that re-renders in place. Any host that embeds the renderer gets the same loading, ready, error, and empty states through a data-spatial-state attribute on the mount. The page title and description now say plainly what the page is: the reference renderer for the open Spatial MCP standard.",
-			"tags": [
-				"improvement",
-				"fix"
-			],
-			"link": "/spatial-mcp"
-		},
-		{
-			"date": "2026-09-01",
-			"title": "Sperax page: readable on narrow phones, with a one-tap copy of the plugin manifest URL",
-			"summary": "On phones around 320px wide, the /sperax page was rendering nearly twice as wide as the screen and the right half was cut off: the headline stopped mid-word, the secondary button and the second claim step were invisible, and there was no way to scroll to them. The wide tool-call diagram was forcing the whole page to its width. The page now fits any screen and the diagram scrolls inside its own box (keyboard included). Step one of the claim flow also gained a Copy manifest URL button, so the SperaxOS plugin address lands on your clipboard in one tap; when a browser refuses clipboard access, the button selects the URL for you and says so.",
-			"tags": [
-				"fix",
-				"improvement"
-			],
-			"link": "/sperax"
+			"link": "/stage"
 		}
 	]
 }
