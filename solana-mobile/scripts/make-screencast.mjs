@@ -10,8 +10,16 @@
  * pixels the device would, and the tour below only touches links and sections
  * that exist on the live page.
  *
- * Two artefacts come out of one recording:
- *   seeker-screen.mp4   the raw 1200x2670 panel, for dropping into an edit
+ * Frames are STEPPED, not recorded in real time. Playwright's video recorder
+ * ignores deviceScaleFactor: ask it for a 1200x2670 video of a 400x890 CSS
+ * viewport and it draws the page at 400x890 in the corner and pads the rest
+ * grey. Screenshots do honour the scale factor, so the tour is advanced one
+ * output frame at a time and each frame is captured at full device resolution.
+ * Wall-clock capture time is then decoupled from playback time, which also
+ * makes a rerun of the same tour produce the same video.
+ *
+ * Two artefacts come out of one run:
+ *   seeker-screen.mp4   the bare 1200x2670 panel, for dropping into an edit
  *   seeker-device.mp4   the same panel seated in a Seeker-proportioned body,
  *                       1080x1920, ready to post
  *
@@ -28,7 +36,7 @@
 import sharp from 'sharp';
 import { chromium } from 'playwright';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, rmSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
@@ -41,6 +49,7 @@ const args = Object.fromEntries(process.argv.slice(2).map((a) => {
 const ORIGIN = String(args.origin || 'https://three.ws').replace(/\/$/, '');
 const OUT = path.resolve(ROOT, String(args.out || 'marketing/seeker-video'));
 const AUTH_STATE = path.join(ROOT, '.auth/audit-state.json');
+const FPS = Number(args.fps || 30);
 
 /* Seeker panel: 6.36" AMOLED, 1200x2670 at ~460ppi, which Android reports as a
    400x890 CSS viewport at density 3. Capturing at that density is what makes
@@ -70,50 +79,42 @@ const BG = '#080814';
  * page; a step that cannot find its target fails the run rather than silently
  * recording a still. A numeric `to` between 0 and 1 is a fraction of the page's
  * scrollable height, which keeps a step meaningful on pages of any length.
+ * `glide` and `hold` are milliseconds of finished video, not of capture time.
  */
 const TOUR = [
   { hold: 2600, note: 'hero and the Seed Vault sign-in' },
   { to: '#agents', glide: 1500, hold: 1800, note: 'agents rail' },
   { to: '#verify', glide: 1400, hold: 2200, note: 'Seeker verification' },
   { to: 0, glide: 1200, hold: 900, note: 'back to the hero' },
-  { click: 'a[href^="/marketplace"]', settle: 3600, note: 'tap Marketplace' },
+  { click: 'a[href^="/marketplace"]', hold: 3000, note: 'tap Marketplace' },
   { to: 0.35, glide: 2600, hold: 1400, note: 'marketplace grid' },
   { to: 0.7, glide: 2600, hold: 2000, note: 'deeper into the grid' },
 ];
 
 const log = (...m) => console.log('[screencast]', ...m);
+const frameCount = (ms) => Math.max(1, Math.round((ms / 1000) * FPS));
+const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
 
 function ffmpeg(argv) {
   const r = spawnSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', ...argv], { stdio: 'inherit' });
   if (r.error || r.status !== 0) throw new Error(`ffmpeg failed (${r.status ?? r.error?.message})`);
 }
 
-/** Eased scroll driven by rAF inside the page, so the capture sees real frames. */
-async function glide(page, target, ms) {
-  await page.evaluate(([t, d]) => new Promise((done) => {
-    const el = typeof t === 'string' ? document.querySelector(t) : null;
-    if (typeof t === 'string' && !el) { done(`missing:${t}`); return; }
-    const from = window.scrollY;
+/** Where a step wants the page scrolled to, resolved once before the glide. */
+async function resolveTarget(page, target) {
+  return page.evaluate((t) => {
     const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-    const want = el ? from + el.getBoundingClientRect().top - 72 : (t > 0 && t < 1 ? t * max : t);
-    const to = Math.max(0, Math.min(max, want));
-    const t0 = performance.now();
-    const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
-    (function step(now) {
-      const p = Math.min(1, (now - t0) / d);
-      window.scrollTo(0, from + (to - from) * ease(p));
-      p < 1 ? requestAnimationFrame(step) : done(null);
-    })(t0);
-  }), [target, ms]).then((miss) => {
-    if (miss) throw new Error(`tour target not on the page: ${String(miss).slice(8)}`);
-  });
+    if (typeof t === 'string') {
+      const el = document.querySelector(t);
+      if (!el) return { error: t };
+      return { y: Math.max(0, Math.min(max, window.scrollY + el.getBoundingClientRect().top - 72)) };
+    }
+    return { y: Math.max(0, Math.min(max, t > 0 && t < 1 ? t * max : t)) };
+  }, target);
 }
 
-async function record() {
-  mkdirSync(OUT, { recursive: true });
-  const raw = path.join(OUT, '.raw');
-  rmSync(raw, { recursive: true, force: true });
-  mkdirSync(raw, { recursive: true });
+async function capture(frames) {
+  mkdirSync(frames, { recursive: true });
 
   const browser = await chromium.launch();
   const ctx = await browser.newContext({
@@ -123,17 +124,23 @@ async function record() {
     hasTouch: true,
     colorScheme: 'dark',
     userAgent: 'Mozilla/5.0 (Linux; Android 15; Seeker) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36',
-    recordVideo: { dir: raw, size: PANEL },
-    ...(args.authed && existsSync(AUTH_STATE) ? { storageState: AUTH_STATE } : {}),
+    ...(args.authed ? { storageState: AUTH_STATE } : {}),
   });
   if (args.authed && !existsSync(AUTH_STATE)) {
     throw new Error(`--authed needs ${path.relative(ROOT, AUTH_STATE)}; mint it with: npm run audit:web:login`);
   }
 
   const page = await ctx.newPage();
+  let n = 0;
+  const shoot = () => page.screenshot({
+    path: path.join(frames, `${String(n++).padStart(6, '0')}.jpg`),
+    type: 'jpeg',
+    quality: 94,
+  });
+
   log(`opening ${ORIGIN}/seeker at ${PANEL.width}x${PANEL.height}`);
   /* `load` never settles on this page (the 3D scene keeps streaming), so the
-     ready signal is the hero being on screen plus a fixed beat for the avatar. */
+     ready signal is the hero being on screen plus a beat for the avatar. */
   await page.goto(`${ORIGIN}/seeker`, { waitUntil: 'domcontentloaded', timeout: 60_000 });
   await page.waitForSelector('#hero-title', { timeout: 30_000 });
   await page.waitForTimeout(4000);
@@ -143,24 +150,31 @@ async function record() {
     if (step.click) {
       const target = page.locator(step.click).first();
       await target.waitFor({ state: 'visible', timeout: 15_000 });
-      await target.scrollIntoViewIfNeeded();
-      await page.waitForTimeout(500);
       await target.click();
       await page.waitForLoadState('domcontentloaded', { timeout: 30_000 }).catch(() => {});
+      await page.waitForTimeout(2500);
     }
-    if (step.to !== undefined) await glide(page, step.to, step.glide ?? 1200);
-    await page.waitForTimeout(step.settle ?? step.hold ?? 600);
+    if (step.to !== undefined) {
+      const from = await page.evaluate(() => window.scrollY);
+      const { y, error } = await resolveTarget(page, step.to);
+      if (error) throw new Error(`tour target not on the page: ${error}`);
+      const total = frameCount(step.glide ?? 1200);
+      for (let i = 1; i <= total; i += 1) {
+        await page.evaluate((py) => window.scrollTo(0, py), from + (y - from) * ease(i / total));
+        await shoot();
+      }
+    }
+    for (let i = 0; i < frameCount(step.hold ?? 600); i += 1) await shoot();
   }
 
   await ctx.close();
   await browser.close();
-
-  const webm = readdirSync(raw).filter((f) => f.endsWith('.webm')).map((f) => path.join(raw, f));
-  if (webm.length !== 1) throw new Error(`expected one recording in ${raw}, found ${webm.length}`);
-  return webm[0];
+  log(`captured ${n} frames (${(n / FPS).toFixed(1)}s at ${FPS}fps)`);
+  return n;
 }
 
-async function frames() {
+/** The backdrop and the phone body, drawn once at output resolution. */
+async function chrome(dir) {
   const bg = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${OUT_W}" height="${OUT_H}">
   <defs><radialGradient id="g" cx="0.5" cy="0.4" r="0.66">
     <stop offset="0" stop-color="#4b32d6" stop-opacity="0.5"/>
@@ -185,33 +199,45 @@ async function frames() {
   <rect width="${OUT_W}" height="${OUT_H}" fill="url(#body)" mask="url(#hole)"/>
 </svg>`);
 
-  const bgPath = path.join(OUT, '.raw/bg.png');
-  const bezelPath = path.join(OUT, '.raw/bezel.png');
+  const bgPath = path.join(dir, 'bg.png');
+  const bezelPath = path.join(dir, 'bezel.png');
   await sharp(bg).png().toFile(bgPath);
   await sharp(bezel).png().toFile(bezelPath);
   return { bgPath, bezelPath };
 }
 
-const source = await record();
+mkdirSync(OUT, { recursive: true });
+const work = path.join(OUT, '.raw');
+rmSync(work, { recursive: true, force: true });
+const frames = path.join(work, 'frames');
+const count = await capture(frames);
+const seconds = (count / FPS).toFixed(3);
+const glob = path.join(frames, '%06d.jpg');
 const screenMp4 = path.join(OUT, 'seeker-screen.mp4');
 const deviceMp4 = path.join(OUT, 'seeker-device.mp4');
 
 log('encoding the raw panel');
-ffmpeg(['-i', source, '-r', '30', '-c:v', 'libx264', '-crf', '18', '-preset', 'slow', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', screenMp4]);
+ffmpeg(['-framerate', String(FPS), '-i', glob, '-c:v', 'libx264', '-crf', '20', '-preset', 'medium',
+  '-pix_fmt', 'yuv420p', '-movflags', '+faststart', screenMp4]);
 
 log('seating the panel in the device body');
-const { bgPath, bezelPath } = await frames();
+const { bgPath, bezelPath } = await chrome(work);
+/* Both stills are looped, so they never end on their own, and overlay's own
+   `shortest` does not reliably bound them: it left a composite growing past
+   50 MB on a 30 second capture. The frame count does bound them, so every
+   looped input and the output carry an explicit -t. */
 ffmpeg([
-  '-loop', '1', '-i', bgPath,
-  '-i', source,
-  '-loop', '1', '-i', bezelPath,
+  '-loop', '1', '-t', seconds, '-i', bgPath,
+  '-framerate', String(FPS), '-i', glob,
+  '-loop', '1', '-t', seconds, '-i', bezelPath,
   '-filter_complex',
   `[1:v]scale=${SCREEN_W}:${SCREEN_H}:flags=lanczos,setpts=PTS-STARTPTS[s];` +
-  `[0:v][s]overlay=${SCREEN_X}:${SCREEN_Y}:shortest=1[a];` +
+  `[0:v][s]overlay=${SCREEN_X}:${SCREEN_Y}[a];` +
   `[a][2:v]overlay=0:0,format=yuv420p[v]`,
-  '-map', '[v]', '-r', '30', '-c:v', 'libx264', '-crf', '18', '-preset', 'slow', '-movflags', '+faststart', deviceMp4,
+  '-map', '[v]', '-t', seconds, '-r', String(FPS), '-c:v', 'libx264', '-crf', '20', '-preset', 'medium',
+  '-movflags', '+faststart', deviceMp4,
 ]);
 
-rmSync(path.join(OUT, '.raw'), { recursive: true, force: true });
-log(`wrote ${path.relative(ROOT, screenMp4)} (${PANEL.width}x${PANEL.height})`);
-log(`wrote ${path.relative(ROOT, deviceMp4)} (${OUT_W}x${OUT_H})`);
+rmSync(work, { recursive: true, force: true });
+log(`wrote ${path.relative(ROOT, screenMp4)} (${PANEL.width}x${PANEL.height}, ${seconds}s)`);
+log(`wrote ${path.relative(ROOT, deviceMp4)} (${OUT_W}x${OUT_H}, ${seconds}s)`);

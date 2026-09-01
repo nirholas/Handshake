@@ -508,6 +508,11 @@ docs/marketing/posts2.md
 marketing/*/kit/strip/*.png
 marketing/*/kit/cards/*.png
 
+# Intermediate frames and stills from solana-mobile/scripts/make-screencast.mjs.
+# The script removes them on a clean run; a killed run leaves hundreds of JPEGs
+# behind, and one got swept into a commit before this rule existed.
+marketing/*/.raw/
+
 # Screenshot captures dropped in the repo root by browser and mobile checks.
 # Real assets belong in public/; scratch captures are never committed.
 /*.png
