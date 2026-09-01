@@ -272,12 +272,25 @@ function seedChips() {
 		if (!container) continue;
 		const chips = [...container.querySelectorAll('.chip:not(.chip--festive)')];
 		if (!chips.length) continue;
+		// The height the row already occupies on screen. The character budget
+		// below aims to keep a swap inside it, but characters are not pixels in a
+		// proportional font, so one label that renders a few pixels wider still
+		// wrapped the row onto another line and pushed the rest of the page down:
+		// 0.20 of /forge's CLS, on every load, because this runs after first paint.
+		const baseline = container.getBoundingClientRect().height;
 		pinRowHeight(container);
 		const fresh = generateChipSet(chips, used);
 		chips.forEach((chip, i) => {
 			if (!fresh[i]) return;
-			used.add(fresh[i]);
+			const previous = chip.textContent;
 			setChipPrompt(chip, fresh[i]);
+			// Measured, not predicted: keep the fresh label only when the row is
+			// still the height it was. One reflow per chip, once, on a single row.
+			if (container.getBoundingClientRect().height > baseline + 0.5) {
+				setChipPrompt(chip, previous);
+				return;
+			}
+			used.add(fresh[i]);
 		});
 	}
 }
