@@ -36,10 +36,16 @@ Two files land in `marketing/seeker-video/`:
 | `seeker-screen.mp4` | 1200x2670 | The bare panel, for dropping into your own edit or device frame |
 | `seeker-device.mp4` | 1080x1920 | The same panel seated in a Seeker-proportioned body on the three.ws backdrop, ready to post |
 
-The tour is scripted in the `TOUR` constant at the top of the script: the hero, the Create/Explore
-grid, the agents rail, the Seeker verification card, then a real tap on **Explore** through to the
-marketplace. Every selector in it resolves on the live page, and a step whose target is missing
-fails the run rather than quietly recording a still frame. Edit that array to change the story.
+The tour is scripted in the `TOUR` constant at the top of the script: the hero and the Seed Vault
+sign-in, the agents rail, the Seeker verification card, then back to the top. Every selector in it
+resolves on the live page, and a step whose target is missing fails the run rather than quietly
+recording a still frame. Edit that array to change the story.
+
+It stays on `/seeker` deliberately. That is the screen the app opens to and the only one composed
+for this aspect ratio. Continuing into the marketplace was tried and cut: the filter panel opens
+over the top half of the page, the corner stack (onboarding pill, language picker, claim card)
+lands on top of the grid, and its Connect Wallet button contradicts the Seed Vault story the rest
+of the video tells. Any page you add to the tour needs the same look before it earns a place.
 
 Useful flags:
 
@@ -48,9 +54,16 @@ Useful flags:
   `npm run audit:web:login`; it writes the `.auth/audit-state.json` this reads.
 - `--out=<dir>` writes somewhere other than `marketing/seeker-video/`.
 
-The recording needs `ffmpeg` on `PATH` (`sudo apt-get install -y ffmpeg`). Playwright ships its own
-ffmpeg for the raw webm capture, but that build is VP8-only with no filters, so it cannot do the
-H.264 encode or the device compositing.
+Frames are stepped rather than recorded in real time. Playwright's video recorder ignores
+`deviceScaleFactor`: ask it for a 1200x2670 video of a 400x890 CSS viewport and it draws the page
+at 400x890 in the corner and pads the rest grey. Screenshots do honour the scale factor, so the
+script advances the tour one output frame at a time and captures each at full device resolution.
+Capture time is then decoupled from playback time, and a rerun of the same tour gives the same
+video.
+
+That needs `ffmpeg` on `PATH` (`sudo apt-get install -y ffmpeg`) to assemble the frames. Playwright
+ships its own ffmpeg, but that build is VP8-only with no filters, so it can do neither the H.264
+encode nor the device compositing.
 
 ## Path 2: the Android surfaces around the app
 

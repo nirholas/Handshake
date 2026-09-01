@@ -80,15 +80,19 @@ const BG = '#080814';
  * recording a still. A numeric `to` between 0 and 1 is a fraction of the page's
  * scrollable height, which keeps a step meaningful on pages of any length.
  * `glide` and `hold` are milliseconds of finished video, not of capture time.
+ *
+ * The tour stays on /seeker on purpose. That is the screen the app opens to,
+ * and it is the only one composed for this aspect ratio. Carrying on into the
+ * marketplace was tried and cut: its filter panel opens over the top half, the
+ * corner stack (onboarding pill, language picker, claim card) lands on top of
+ * the grid, and its Connect Wallet button contradicts the Seed Vault story the
+ * rest of the video tells.
  */
 const TOUR = [
-  { hold: 2600, note: 'hero and the Seed Vault sign-in' },
-  { to: '#agents', glide: 1500, hold: 1800, note: 'agents rail' },
-  { to: '#verify', glide: 1400, hold: 2200, note: 'Seeker verification' },
-  { to: 0, glide: 1200, hold: 900, note: 'back to the hero' },
-  { click: 'a[href^="/marketplace"]', hold: 3000, note: 'tap Marketplace' },
-  { to: 0.35, glide: 2600, hold: 1400, note: 'marketplace grid' },
-  { to: 0.7, glide: 2600, hold: 2000, note: 'deeper into the grid' },
+  { hold: 2800, note: 'hero and the Seed Vault sign-in' },
+  { to: '#agents', glide: 2200, hold: 2000, note: 'agents rail' },
+  { to: '#verify', glide: 1800, hold: 2600, note: 'Seeker verification' },
+  { to: 0, glide: 1800, hold: 1200, note: 'back to the hero' },
 ];
 
 const log = (...m) => console.log('[screencast]', ...m);
