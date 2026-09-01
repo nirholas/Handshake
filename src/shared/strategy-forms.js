@@ -1,4 +1,4 @@
-// Shared Strategy Object UI primitives — the config editor, the equip picker, the
+// Shared Strategy Object UI primitives: the config editor, the equip picker, the
 // human-readable rule summary, plus the styles every strategy surface uses. Reused
 // by the /strategies library page and the agent-detail equip panel so the editor
 // and the design stay in one place.
@@ -14,7 +14,7 @@ export const VIOLET = 'var(--wallet-accent, #c4b5fd)';
 export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export const shortAddr = (a, h = 4, t = 4) => (a && a.length > h + t + 1 ? `${a.slice(0, h)}…${a.slice(-t)}` : a || '');
 export function fmtSol(n) {
-	if (n == null || !Number.isFinite(Number(n))) return '—';
+	if (n == null || !Number.isFinite(Number(n))) return '-';
 	const v = Number(n);
 	if (v === 0) return '0';
 	if (Math.abs(v) < 0.001) return v.toExponential(1);
@@ -48,7 +48,7 @@ export function toast(msg, ms = 2800) {
 	_toastTimer = setTimeout(() => { if (_toastEl) _toastEl.dataset.show = 'false'; }, ms);
 }
 
-// ── rule summary — a one-line, honest plain-language read of a config ──────────
+// ── rule summary: a one-line, honest plain-language read of a config ──────────
 export function configSummary(config) {
 	const c = config || {};
 	const e = c.entry || {}, s = c.sizing || {}, x = c.exits || {}, k = c.risk || {};
@@ -58,7 +58,7 @@ export function configSummary(config) {
 	if (e.min_market_cap_usd != null || e.max_market_cap_usd != null) {
 		const lo = e.min_market_cap_usd != null ? `$${fmtUsdShort(e.min_market_cap_usd)}` : '';
 		const hi = e.max_market_cap_usd != null ? `$${fmtUsdShort(e.max_market_cap_usd)}` : '';
-		parts.push(`MC ${lo}${lo && hi ? '–' : ''}${hi}`);
+		parts.push(`MC ${lo}${lo && hi ? ' to ' : ''}${hi}`);
 	}
 	if (e.require_socials) parts.push('has socials');
 	parts.push(`size ◎${fmtSol(s.amount_sol)}`);
@@ -71,7 +71,7 @@ export function configSummary(config) {
 }
 function fmtUsdShort(v) {
 	const n = Number(v);
-	if (!Number.isFinite(n)) return '—';
+	if (!Number.isFinite(n)) return '-';
 	if (n >= 1e9) return `${(n / 1e9).toFixed(1)}B`;
 	if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`;
 	if (n >= 1e3) return `${(n / 1e3).toFixed(0)}K`;
@@ -79,7 +79,7 @@ function fmtUsdShort(v) {
 }
 function formatMinutes(m) {
 	const n = Number(m);
-	if (!Number.isFinite(n)) return '—';
+	if (!Number.isFinite(n)) return '-';
 	if (n >= 1440) return `${Math.round(n / 1440)}d`;
 	if (n >= 60) return `${Math.round(n / 60)}h`;
 	return `${n}m`;
@@ -158,8 +158,8 @@ const numOrNull = (v) => { const s = String(v ?? '').trim(); if (s === '') retur
 
 // ── shared editor internals ────────────────────────────────────────────────────
 // One source of truth for the strategy form, used by both the modal editor
-// (openStrategyEditor — in-context editing on an agent profile) and the full-page
-// builder (mountStrategyComposer — the /strategies "New strategy" flow). The field
+// (openStrategyEditor: in-context editing on an agent profile) and the full-page
+// builder (mountStrategyComposer: the /strategies "New strategy" flow). The field
 // markup, parsing, live preview, and save all live here so the two surfaces can
 // never drift apart.
 function makeState(existing) {
@@ -189,7 +189,7 @@ function strategyFieldsHTML(state, { preview = true } = {}) {
 	return `<div class="so-field"><label>Name</label><input id="so-name" maxlength="80" placeholder="e.g. Fresh-launch sniper" value="${esc(state.name)}"></div>
 		<div class="so-field"><label>Description <span style="color:var(--ink-faint,#777)">(optional)</span></label><input id="so-desc" maxlength="2000" placeholder="What edge does this capture?" value="${esc(state.description)}"></div>
 
-		<fieldset class="so-group"><legend>Entry — when to buy</legend>
+		<fieldset class="so-group"><legend>Entry: when to buy</legend>
 			<div class="so-grid">
 				<div class="so-field"><label>Max launch age (min)</label><input type="number" min="1" max="10080" id="so-age" value="${numVal(state.entry.max_age_minutes)}"><div class="so-hint">only act on launches newer than this</div></div>
 				<div class="so-field"><label>Min liquidity (◎ SOL)</label><input type="number" min="0" step="0.1" id="so-liq" value="${numVal(state.entry.min_liquidity_sol)}"></div>
@@ -208,10 +208,10 @@ function strategyFieldsHTML(state, { preview = true } = {}) {
 			</div>
 		</fieldset>
 
-		<fieldset class="so-group"><legend>Exits — at least one upside exit + a stop-loss</legend>
+		<fieldset class="so-group"><legend>Exits: at least one upside exit + a stop-loss</legend>
 			<div class="so-grid">
 				<div class="so-field"><label>Take-profit (%)</label><input type="number" min="1" id="so-tp" value="${numVal(state.exits.take_profit_pct)}"><div class="so-hint">100 = sell at 2×</div></div>
-				<div class="so-field"><label>Stop-loss (%) — required</label><input type="number" min="1" max="99" id="so-sl" value="${numVal(state.exits.stop_loss_pct)}"></div>
+				<div class="so-field"><label>Stop-loss (%), required</label><input type="number" min="1" max="99" id="so-sl" value="${numVal(state.exits.stop_loss_pct)}"></div>
 				<div class="so-field"><label>Trailing stop (%)</label><input type="number" min="1" max="99" id="so-trail" value="${numVal(state.exits.trailing_stop_pct)}"><div class="so-hint">% drop from peak</div></div>
 				<div class="so-field"><label>Max hold (min)</label><input type="number" min="1" id="so-hold" value="${numVal(state.exits.max_hold_minutes)}"></div>
 			</div>
@@ -302,7 +302,7 @@ export function openStrategyEditor({ existing = null } = {}) {
 		back.className = 'so-modal-back';
 		back.innerHTML = `<div class="so-modal" role="dialog" aria-modal="true" aria-label="${existing ? 'Edit' : 'New'} strategy">
 			<h3>${existing ? 'Edit strategy' : 'New strategy'}</h3>
-			<p class="so-sub">A strategy is a real, rule-based plan. When equipped, your agent evaluates real launches and executes on-chain — always inside your spend policy.</p>
+			<p class="so-sub">A strategy is a real, rule-based plan. When equipped, your agent evaluates real launches and executes on-chain, always inside your spend policy.</p>
 			${strategyFieldsHTML(state)}
 			<div class="so-actions">
 				<button type="button" class="so-btn" id="so-cancel">Cancel</button>
@@ -337,7 +337,7 @@ export function openStrategyEditor({ existing = null } = {}) {
 }
 
 // ── the strategy builder (full page) ───────────────────────────────────────────
-// Renders the whole builder into `host` as a page — a two-column workspace with
+// Renders the whole builder into `host` as a page: a two-column workspace with
 // the rules on the left and a sticky live summary + Create button on the right.
 // This is the /strategies "New strategy" surface: a complex, multi-section form
 // deserves room to breathe, not a cramped modal. onSaved(saved) fires after a
@@ -349,7 +349,7 @@ export function mountStrategyComposer(host, { existing = null, onSaved, onCancel
 		<div class="so-compose-head">
 			<button type="button" class="so-compose-back" id="so-back">← Strategies</button>
 			<h1 class="so-compose-title">${existing ? 'Edit strategy' : 'New strategy'}</h1>
-			<p class="so-compose-lead">A strategy is a real, rule-based plan. When equipped, your agent evaluates real launches and executes on-chain — always inside your spend policy.</p>
+			<p class="so-compose-lead">A strategy is a real, rule-based plan. When equipped, your agent evaluates real launches and executes on-chain, always inside your spend policy.</p>
 		</div>
 		<div class="so-compose-grid">
 			<div class="so-compose-main">${strategyFieldsHTML(state, { preview: false })}</div>
@@ -358,9 +358,9 @@ export function mountStrategyComposer(host, { existing = null, onSaved, onCancel
 					<div class="so-side-h">Your strategy</div>
 					<div class="so-preview" id="so-preview">${previewText(state)}</div>
 					<ul class="so-side-points">
-						<li><b>Spend-policy gated</b> — every trade is capped by your agent</li>
-						<li><b>Real on-chain</b> — no backtested fiction</li>
-						<li><b>Kill switch</b> — halt everything at once</li>
+						<li><b>Spend-policy gated</b>: every trade is capped by your agent</li>
+						<li><b>Real on-chain</b>: no backtested fiction</li>
+						<li><b>Kill switch</b>: halt everything at once</li>
 					</ul>
 					<div class="so-err" id="so-err" hidden></div>
 					<button type="button" class="so-btn so-btn-primary so-side-save" id="so-save">${existing ? 'Save changes' : 'Create strategy'}</button>
@@ -395,7 +395,7 @@ function structuredCloneSafe(o) {
 	try { return structuredClone(o); } catch { return JSON.parse(JSON.stringify(o)); }
 }
 
-// ── equip picker — choose which of MY agents equips this strategy ──────────────
+// ── equip picker: choose which of MY agents equips this strategy ──────────────
 // Resolves true if an equip was created.
 export async function openEquipPicker({ strategy }) {
 	ensureStrategyStyles();
@@ -407,7 +407,7 @@ export async function openEquipPicker({ strategy }) {
 			mine = (j.agents || j.data?.agents || j.data || []).filter((a) => a && a.id);
 		}
 	} catch { /* handled below */ }
-	if (!mine.length) { toast('You need your own agent first — create or fork one'); return false; }
+	if (!mine.length) { toast('You need your own agent first. Create or fork one'); return false; }
 
 	if (mine.length === 1) return equipOn(mine[0], strategy);
 
@@ -416,7 +416,7 @@ export async function openEquipPicker({ strategy }) {
 		back.className = 'so-modal-back';
 		back.innerHTML = `<div class="so-modal" role="dialog" aria-modal="true" aria-label="Pick an agent to equip">
 			<h3>Equip “${esc(strategy.name)}”</h3>
-			<p class="so-sub">Pick the agent that will run these rules. It trades on-chain within <b style="color:var(--ink-bright,#fff)">its own</b> spend policy — no wallet access is shared.</p>
+			<p class="so-sub">Pick the agent that will run these rules. It trades on-chain within <b style="color:var(--ink-bright,#fff)">its own</b> spend policy. No wallet access is shared.</p>
 			<div>${mine.map((a) => `<button type="button" class="so-pick" data-id="${esc(a.id)}">${a.avatar_url || a.profile_image_url ? `<img loading="lazy" decoding="async" src="${esc(a.avatar_url || a.profile_image_url)}" alt="">` : '<div class="so-av"></div>'}<span class="so-pname">${esc(a.name || shortAddr(a.id))}</span></button>`).join('')}</div>
 			<div class="so-actions"><button type="button" class="so-btn" id="so-pick-cancel">Cancel</button></div>
 		</div>`;
@@ -442,7 +442,7 @@ async function equipOn(agent, strategy) {
 		});
 		const j = await res.json().catch(() => ({}));
 		if (!res.ok) throw new Error(j?.error?.message || 'Could not equip');
-		toast(`Equipped on ${agent.name || 'your agent'} — running within its limits`);
+		toast(`Equipped on ${agent.name || 'your agent'}, running within its limits`);
 		return true;
 	} catch (e) {
 		if (e?.redirected) return false;

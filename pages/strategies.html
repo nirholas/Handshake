@@ -4,20 +4,20 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title data-i18n="strategies.meta_title">Strategies · three.ws</title>
+		<title data-i18n="strategies.meta_title">Strategy Objects · three.ws</title>
 		<meta name="description" content="Trading know-how as a collectible. Equip a real, rule-based strategy on your agent and it trades for real, on-chain, strictly within your spend policy. Publish yours, fork the best, ranked by verified live performance."  data-i18n-attr="content:strategies.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/strategies" />
-		<meta property="og:title" content="Strategies · three.ws"  data-i18n-attr="content:strategies.meta_og_title"/>
-		<meta property="og:description" content="Equip a real, rule-based strategy on your agent — trades on-chain within your spend policy. Publish, fork, and rank by verified live performance."  data-i18n-attr="content:strategies.meta_og_description"/>
+		<meta property="og:title" content="Strategy Objects · three.ws"  data-i18n-attr="content:strategies.meta_og_title"/>
+		<meta property="og:description" content="Equip a real, rule-based strategy on your agent and it trades on-chain within your spend policy. Publish, fork, and rank by verified live performance."  data-i18n-attr="content:strategies.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Strategy+Objects&amp;d=A+marketplace+of+how+agents+trade%3A+ownable%2C+forkable%2C+leaderboard-ranked+trade+strategies+your+agent+can+equip+and+run+on-chain+within+your+spend+policy.&amp;p=%2Fstrategies" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Strategies · three.ws"  data-i18n-attr="content:strategies.meta_twitter_title"/>
-		<meta name="twitter:description" content="Ownable, forkable, leaderboard-ranked trade strategies — proven on real chain data. Equip one on your agent."  data-i18n-attr="content:strategies.meta_twitter_description"/>
+		<meta name="twitter:title" content="Strategy Objects · three.ws"  data-i18n-attr="content:strategies.meta_twitter_title"/>
+		<meta name="twitter:description" content="Ownable, forkable, leaderboard-ranked trade strategies, proven on real chain data. Equip one on your agent."  data-i18n-attr="content:strategies.meta_twitter_description"/>
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -43,14 +43,16 @@
 			.sp-safety b { color: #ccc; }
 			.sp-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: var(--space-lg, 24px) 0 var(--space-md, 16px); }
 			.sp-seg { display: inline-flex; gap: 4px; background: rgba(255,255,255,.03); padding: 4px; border-radius: var(--radius-pill, 999px); border: 1px solid rgba(255,255,255,.1); }
-			.sp-seg button { font: inherit; font-size: var(--text-2xs, .68rem); padding: 6px 14px; border-radius: 999px; border: none; background: transparent; color: #888; cursor: pointer; transition: all .15s; }
+			.sp-seg button { font: inherit; font-size: var(--text-2xs, .68rem); padding: 6px 14px; border-radius: 999px; border: none; background: transparent; color: #888; cursor: pointer; transition: background .15s, color .15s; }
 			.sp-seg button[aria-pressed="true"] { background: #fff; color: #0a0a0a; font-weight: 700; }
+			.sp-seg button:focus-visible { outline: 2px solid rgba(255,255,255,.6); outline-offset: 2px; }
 			.sp-spacer { flex: 1 1 auto; }
 			.sp-new { font: inherit; font-size: var(--text-2xs, .72rem); font-weight: 700; padding: 9px 16px; border-radius: var(--radius-pill, 999px); border: none; background: #fff; color: #0a0a0a; cursor: pointer; transition: background .15s; }
 			.sp-new:hover { background: #d4d4d4; }
 			.sp-new:focus-visible { outline: 2px solid rgba(255,255,255,.5); outline-offset: 2px; }
 			.sp-search { flex: 1 1 180px; min-width: 140px; font: inherit; font-size: var(--text-sm, .82rem); padding: 8px 12px; border-radius: var(--radius-pill, 999px); border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.03); color: #fff; }
 			.sp-search:focus { outline: none; border-color: rgba(255,255,255,.35); }
+			.sp-search:focus-visible { outline: 2px solid rgba(255,255,255,.5); outline-offset: 2px; }
 			.sp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--space-md, 14px); }
 			.sp-card { display: flex; flex-direction: column; gap: 8px; border: 1px solid rgba(255,255,255,.08); border-radius: var(--radius-lg, 14px); background: rgba(255,255,255,.025); padding: var(--space-md, 16px); transition: border-color .18s, transform .18s; }
 			.sp-card:hover { border-color: rgba(255,255,255,.25); transform: translateY(-1px); }
@@ -68,7 +70,7 @@
 			.sp-meta a { color: #aaa; text-decoration: none; }
 			.sp-meta a:hover { color: #fff; }
 			.sp-actions { display: flex; gap: 6px; margin-top: 2px; }
-			.sp-btn { flex: 1; font: inherit; font-size: var(--text-2xs, .7rem); padding: 8px 10px; border-radius: var(--radius-sm, 8px); border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.05); color: #e8e8e8; cursor: pointer; transition: all .16s; white-space: nowrap; }
+			.sp-btn { flex: 1; font: inherit; font-size: var(--text-2xs, .7rem); padding: 8px 10px; border-radius: var(--radius-sm, 8px); border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.05); color: #e8e8e8; cursor: pointer; transition: border-color .16s, color .16s, background .16s; white-space: nowrap; }
 			.sp-btn:hover { border-color: rgba(255,255,255,.35); color: #fff; }
 			.sp-btn:focus-visible { outline: 2px solid rgba(255,255,255,.5); outline-offset: 2px; }
 			.sp-btn-primary { background: #fff; color: #0a0a0a; border-color: transparent; font-weight: 700; }
@@ -95,17 +97,17 @@
 			<section class="sp-hero">
 				<p class="sp-kicker" data-i18n-html="strategies.ownable_alpha_proven_on_real_chain_data"><span class="sp-live-dot" aria-hidden="true"></span> Ownable alpha · proven on real chain data</p>
 				<h1 class="sp-title" data-i18n="strategies.equip_a_strategy_not_a_spreadsheet">Equip a strategy, not a spreadsheet</h1>
-				<p class="sp-sub" data-i18n-html="strategies.a_strategy_object_is_a_real_rule">A Strategy Object is a real, rule-based plan — entry conditions, sizing, take-profit, stop-loss — made into a <b>thing you own</b>. Equip it on your agent and it trades for real, on-chain, strictly inside your spend policy. Publish yours, fork the best, and watch the leaderboard rank them by <b>verified live performance</b> — numbers no one can fake.</p>
+				<p class="sp-sub" data-i18n-html="strategies.a_strategy_object_is_a_real_rule">A Strategy Object is a real, rule-based plan (entry conditions, sizing, take-profit, stop-loss) made into a <b>thing you own</b>. Equip it on your agent and it trades for real, on-chain, strictly inside your spend policy. Publish yours, fork the best, and watch the leaderboard rank them by <b>verified live performance</b>: numbers no one can fake.</p>
 				<div class="sp-safety">
-					<span data-i18n-html="strategies.spend_policy_gated_every_trade"><b>Spend-policy gated</b> — every trade</span>
-					<span data-i18n-html="strategies.real_on_chain_no_backtested_fiction"><b>Real on-chain</b> — no backtested fiction</span>
-					<span data-i18n-html="strategies.forkable_rules_only_never_wallet_access"><b>Forkable</b> — rules only, never wallet access</span>
-					<span data-i18n-html="strategies.kill_switch_halt_all_at_once"><b>Kill switch</b> — halt all at once</span>
+					<span data-i18n-html="strategies.spend_policy_gated_every_trade"><b>Spend-policy gated</b>: every trade</span>
+					<span data-i18n-html="strategies.real_on_chain_no_backtested_fiction"><b>Real on-chain</b>: no backtested fiction</span>
+					<span data-i18n-html="strategies.forkable_rules_only_never_wallet_access"><b>Forkable</b>: rules only, never wallet access</span>
+					<span data-i18n-html="strategies.kill_switch_halt_all_at_once"><b>Kill switch</b>: halt all at once</span>
 				</div>
 			</section>
 
 			<div class="sp-bar">
-				<div class="sp-seg" role="tablist" aria-label="Strategy view" id="sp-scope">
+				<div class="sp-seg" role="group" aria-label="Strategy view" id="sp-scope">
 					<button data-scope="published" aria-pressed="true" data-i18n="strategies.marketplace">Marketplace</button>
 					<button data-scope="leaderboard" aria-pressed="false" data-i18n="strategies.leaderboard">Leaderboard</button>
 					<button data-scope="mine" aria-pressed="false" data-i18n="strategies.my_library">My library</button>

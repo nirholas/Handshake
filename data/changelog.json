@@ -25440,6 +25440,16 @@
 				"improvement"
 			],
 			"link": "/start"
+		},
+		{
+			"date": "2026-09-01",
+			"title": "Strategy Objects: signed-out visitors are sent to sign in instead of a half-open builder, and the view switcher is keyboard-visible",
+			"summary": "On /strategies, Equip, Fork, and New strategy now take a signed-out visitor straight to sign-in and bring them back to the page afterwards. Before, the page treated everyone as signed in, so the equip picker and the strategy builder opened for visitors who could not use them and Fork failed silently. The My library tab now shows its sign-in prompt without firing a request that could only fail, the Marketplace, Leaderboard, and My library switcher shows a visible focus ring when tabbed to and is announced correctly by screen readers, and the browser tab reads Strategy Objects.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/strategies"
 		}
 	]
 }

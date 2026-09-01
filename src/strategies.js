@@ -1,15 +1,15 @@
-// /strategies — the Strategy Object library: a marketplace of HOW agents trade.
+// /strategies: the Strategy Object library, a marketplace of HOW agents trade.
 //
 // Three real surfaces, one page:
-//   • Marketplace — every published strategy, ranked honestly (proven first). Fork
+//   • Marketplace: every published strategy, ranked honestly (proven first). Fork
 //     into your library or equip on your own agent.
-//   • Leaderboard — proven strategies ranked by REAL live ROI from on-chain fills.
-//   • My library — your strategies: create, edit, publish, equip, delete.
+//   • Leaderboard: proven strategies ranked by REAL live ROI from on-chain fills.
+//   • My library: your strategies (create, edit, publish, equip, delete).
 //
 // Every number traces to a real fill (agent_strategy_positions). A strategy with no
-// closed trades is honestly "Unproven" — never a fabricated backtest curve.
+// closed trades is honestly "Unproven", never a fabricated backtest curve.
 
-import { apiFetch } from './api.js';
+import { apiFetch, noteSession } from './api.js';
 import {
 	esc, shortAddr, fmtSol, timeAgo, toast, configSummary,
 	mountStrategyComposer, openEquipPicker,
@@ -21,7 +21,7 @@ const searchInput = document.getElementById('sp-search');
 
 // ── full-page builder ──────────────────────────────────────────────────────────
 // The "New strategy" / "Edit" flow renders the builder inline as a page (not a
-// modal) — a multi-section form deserves room. State lives in the URL (?editor=new
+// modal): a multi-section form deserves room. State lives in the URL (?editor=new
 // or ?editor=<id>) so it survives reload and works with the back button.
 const shell = document.querySelector('.sp-shell');
 const heroEl = shell?.querySelector('.sp-hero');
@@ -59,7 +59,7 @@ function leaveComposeView() {
 	showLibraryChrome(true);
 }
 
-// Return to the library, cleaning ?editor from the URL (replaceState — no junk
+// Return to the library, cleaning ?editor from the URL (replaceState, so no junk
 // history entry). toScope optionally switches the active tab (e.g. to "mine"
 // after a create so the new strategy is visible).
 function exitCompose({ toScope } = {}) {
@@ -80,7 +80,7 @@ async function fetchStrategy(id) {
 	} catch { return null; }
 }
 
-// Reconcile the view with the URL — runs on first load and on every back/forward.
+// Reconcile the view with the URL. Runs on first load and on every back/forward.
 async function syncFromUrl() {
 	const editor = new URL(location.href).searchParams.get('editor');
 	if (!editor) { if (composing) leaveComposeView(); load(); return; }
@@ -109,7 +109,7 @@ function perfBadge(p) {
 		: '<span class="sp-badge unproven">Unproven</span>';
 }
 function statsLine(p) {
-	if (!p || !p.proven) return '<span>No closed trades yet — equip it to build a record</span>';
+	if (!p || !p.proven) return '<span>No closed trades yet. Equip it to build a record</span>';
 	const roi = p.roi_pct != null ? `<span class="${p.roi_pct >= 0 ? 'pos' : 'neg'}">${p.roi_pct >= 0 ? '+' : ''}${p.roi_pct}% ROI</span>` : '';
 	const pnl = `<span class="${p.pnl_sol >= 0 ? 'pos' : 'neg'}">${p.pnl_sol >= 0 ? '+' : ''}◎${fmtSol(p.pnl_sol)}</span>`;
 	const win = p.win_rate != null ? `<span>${p.win_rate}% win</span>` : '';
@@ -148,14 +148,22 @@ function card(s, isMine) {
 
 function renderEmpty() {
 	if (scope === 'mine') {
-		grid.innerHTML = `<div class="sp-empty"><strong>No strategies yet</strong>Build your first rule-based plan — entry, sizing, take-profit, stop-loss — then equip it on your agent.<br><br><button class="sp-btn sp-btn-primary" id="sp-empty-new" style="max-width:220px;margin:0 auto">+ Create a strategy</button></div>`;
+		grid.innerHTML = `<div class="sp-empty"><strong>No strategies yet</strong>Build your first rule-based plan (entry, sizing, take-profit, stop-loss), then equip it on your agent.<br><br><button class="sp-btn sp-btn-primary" id="sp-empty-new" style="max-width:220px;margin:0 auto">+ Create a strategy</button></div>`;
 		document.getElementById('sp-empty-new')?.addEventListener('click', createNew);
 	} else if (scope === 'leaderboard') {
-		grid.innerHTML = `<div class="sp-empty"><strong>No proven strategies yet</strong>The leaderboard ranks strategies by real, on-chain live performance. As equipped strategies close their first trades, they appear here — ranked by verified ROI, not promises.</div>`;
+		grid.innerHTML = `<div class="sp-empty"><strong>No proven strategies yet</strong>The leaderboard ranks strategies by real, on-chain live performance. As equipped strategies close their first trades, they appear here, ranked by verified ROI, not promises.</div>`;
 	} else {
 		grid.innerHTML = `<div class="sp-empty"><strong>No published strategies yet</strong>Be the first: build a strategy, prove it on real chain data, and publish it for others to fork and equip.<br><br><button class="sp-btn sp-btn-primary" id="sp-empty-new" style="max-width:220px;margin:0 auto">+ Create a strategy</button></div>`;
 		document.getElementById('sp-empty-new')?.addEventListener('click', createNew);
 	}
+}
+
+// The library tab for a signed-out visitor. Rendered without asking the API:
+// /api/strategies?scope=mine can only answer 401 without a session, and every
+// such request prints a red network error in the visitor's console.
+function renderSignIn() {
+	const next = encodeURIComponent('/strategies?scope=mine');
+	grid.innerHTML = `<div class="sp-empty"><strong>Sign in to see your library</strong>Your strategies live in your account. Sign in to create, edit, and equip them.<br><br><a class="sp-btn sp-btn-primary" href="/login?next=${next}" style="max-width:200px;margin:0 auto;text-decoration:none;display:block">Sign in</a></div>`;
 }
 
 async function load() {
@@ -163,12 +171,18 @@ async function load() {
 	grid.innerHTML = '<div class="sp-sk"></div><div class="sp-sk"></div><div class="sp-sk"></div>';
 	let strategies = [];
 	try {
+		if (scope === 'mine' && !(await ensureAuthed())) {
+			if (seq === _seq) renderSignIn();
+			return;
+		}
 		let path;
 		if (scope === 'leaderboard') path = '/api/strategies/leaderboard?limit=30';
 		else path = `/api/strategies?scope=${scope}&limit=40${query ? `&q=${encodeURIComponent(query)}` : ''}`;
 		const res = await apiFetch(path, { allowAnonymous: true });
 		if (res.status === 401 && scope === 'mine') {
-			grid.innerHTML = `<div class="sp-empty"><strong>Sign in to see your library</strong>Your strategies live in your account — sign in to create, edit, and equip them.<br><br><a class="sp-btn sp-btn-primary" href="/login?next=${encodeURIComponent('/strategies')}" style="max-width:200px;margin:0 auto;text-decoration:none;display:block">Sign in</a></div>`;
+			authed = false;
+			noteSession(false);
+			if (seq === _seq) renderSignIn();
 			return;
 		}
 		if (!res.ok) throw new Error('load failed');
@@ -217,7 +231,7 @@ async function doFork(s, btn) {
 		const res = await apiFetch(`/api/strategies/${s.id}/fork`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
 		const j = await res.json().catch(() => ({}));
 		if (!res.ok) throw new Error(j?.error?.message || 'Fork failed');
-		toast(`Forked “${s.name}” into your library — yours to tweak and equip`);
+		toast(`Forked “${s.name}” into your library. Yours to tweak and equip`);
 	} catch (e) { if (!e?.redirected) toast(e.message || 'Fork failed'); }
 	finally { btn.disabled = false; btn.textContent = '🍴 Fork'; }
 }
@@ -234,7 +248,7 @@ async function doPublish(s, btn) {
 		const res = await apiFetch(`/api/strategies/${s.id}/publish`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ published: !s.published }) });
 		const j = await res.json().catch(() => ({}));
 		if (!res.ok) throw new Error(j?.error?.message || 'Could not update');
-		toast(j.data?.published ? 'Published — others can fork & equip it' : 'Unpublished');
+		toast(j.data?.published ? 'Published. Others can fork & equip it' : 'Unpublished');
 		load();
 	} catch (e) { if (!e?.redirected) toast(e.message || 'Could not update'); btn.disabled = false; }
 }
@@ -255,12 +269,18 @@ async function createNew() {
 	enterCompose(null);
 }
 
+// /api/auth/me answers 200 for everyone and puts the answer in the body:
+// { user: {...} } with a session, { user: null } without one. Reading res.ok
+// here called every anonymous visitor signed in, which opened the equip picker
+// and the builder for them and let Fork fire a request that could only 401.
 async function ensureAuthed() {
 	if (authed != null) return authed;
 	try {
 		const res = await apiFetch('/api/auth/me', { allowAnonymous: true });
-		authed = res.ok;
+		const body = res.ok ? await res.json().catch(() => null) : null;
+		authed = !!body?.user;
 	} catch { authed = false; }
+	noteSession(authed);
 	return authed;
 }
 
