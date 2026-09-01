@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-01T04:36:08.861Z",
+	"generated_at": "2026-09-01T04:43:30.115Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -22,6 +22,16 @@
 			"title": "3D Drops",
 			"summary": "How generative 3D collections work on three.ws: weighted trait layers, a supply rolled from a published seed, rarity scored from the actual distribution, art forged per item on reveal, and a verify endpoint anyone can recompute the roll with.",
 			"link": "/docs/drops",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-01",
+			"type": "launch",
+			"title": "Page performance: the rules a three.ws page plays by",
+			"summary": "How three.ws keeps real 3D on ordinary pages without making them slow: previews that spin only while someone is looking, models that load when they are wanted, boxes reserved before late content arrives, and images fetched at the size they are shown.",
+			"link": "/docs/page-performance",
 			"tags": [
 				"launch"
 			]

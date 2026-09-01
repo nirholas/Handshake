@@ -23,6 +23,14 @@
 			<description>How generative 3D collections work on three.ws: weighted trait layers, a supply rolled from a published seed, rarity scored from the actual distribution, art forged per item on reveal, and a verify endpoint anyone can recompute the roll with.</description>
 		</item>
 		<item>
+			<title>Page performance: the rules a three.ws page plays by</title>
+			<link>https://three.ws/docs/page-performance</link>
+			<guid isPermaLink="false">2026-09-01:Page performance: the rules a three.ws page plays by</guid>
+			<pubDate>Tue, 01 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How three.ws keeps real 3D on ordinary pages without making them slow: previews that spin only while someone is looking, models that load when they are wanted, boxes reserved before late content arrives, and images fetched at the size they are shown.</description>
+		</item>
+		<item>
 			<title>$THREE tiers page: the ladder now loads for everyone, signed in or not</title>
 			<link>https://three.ws/three</link>
 			<guid isPermaLink="false">2026-09-01:$THREE tiers page: the ladder now loads for everyone, signed in or not</guid>

@@ -352,6 +352,7 @@ Sign-in, dashboard, billing.
 
 Docs, tutorials, and reference.
 
+- [Page performance: the rules a three.ws page plays by](https://three.ws/docs/page-performance): How three.ws keeps real 3D on ordinary pages without making them slow: previews that spin only while someone is looking, models that load when they are wanted, boxes reserved before late content arrives, and images fetched at the size they are shown.
 - [Docs](https://three.ws/docs): Full documentation: SDKs, API reference, embedding, agent system, smart contracts.
 - [Docs · Skill bundles](https://three.ws/docs/skill-bundles): How a bundle of an agent's skills is priced from that agent's own sales rather than a rule of thumb: the median-basket and flat-discount bases, the public pricing and backtest endpoint, the owner endpoints that publish and retire a bundle, and the on-chain checkout that unlocks every skill in one payment.
 - [Docs · Avatar Artifact viewer](https://three.ws/docs/avatar-artifact): The standalone avatar viewer you paste into any site as a one-line iframe: its ?agent= and ?model= parameters, the hosts a model may come from, how a clip-less rig still comes to life, and the sentence the page shows for every way it can fail.

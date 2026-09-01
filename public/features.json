@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-01T04:36:08.842Z",
+	"generated_at": "2026-09-01T04:43:30.100Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -3117,6 +3117,16 @@
 			"title": "Learn",
 			"description": "Docs, tutorials, and reference.",
 			"pages": [
+				{
+					"path": "/docs/page-performance",
+					"title": "Page performance: the rules a three.ws page plays by",
+					"description": "How three.ws keeps real 3D on ordinary pages without making them slow: previews that spin only while someone is looking, models that load when they are wanted, boxes reserved before late content arrives, and images fetched at the size they are shown.",
+					"added": "2026-09-01",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
 				{
 					"path": "/docs",
 					"title": "Docs",

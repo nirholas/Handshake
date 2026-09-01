@@ -2549,6 +2549,14 @@
 			"description": "Docs, tutorials, and reference.",
 			"pages": [
 				{
+					"path": "/docs/page-performance",
+					"title": "Page performance: the rules a three.ws page plays by",
+					"description": "How three.ws keeps real 3D on ordinary pages without making them slow: previews that spin only while someone is looking, models that load when they are wanted, boxes reserved before late content arrives, and images fetched at the size they are shown.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-09-01"
+				},
+				{
 					"path": "/docs",
 					"title": "Docs",
 					"description": "Full documentation: SDKs, API reference, embedding, agent system, smart contracts.",

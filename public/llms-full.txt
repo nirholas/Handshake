@@ -1899,6 +1899,12 @@ Your public three.ws portfolio: every avatar, agent, forged 3D model, world, coi
 
 Docs, tutorials, and reference.
 
+### Page performance: the rules a three.ws page plays by
+
+URL: https://three.ws/docs/page-performance
+
+How three.ws keeps real 3D on ordinary pages without making them slow: previews that spin only while someone is looking, models that load when they are wanted, boxes reserved before late content arrives, and images fetched at the size they are shown.
+
 ### Docs
 
 URL: https://three.ws/docs
