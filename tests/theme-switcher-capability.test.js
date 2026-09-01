@@ -103,6 +103,44 @@ describe('theme switcher light-capability probe', () => {
 		expect(document.documentElement.getAttribute('data-theme')).toBe('light');
 	});
 
+	it('suspends colour transitions for the whole probe and leaves nothing behind', () => {
+		// The probe flips data-theme to light and back inside one JS turn. Without
+		// a transition suspension the forced recalc arms a colour transition that
+		// starts FROM the light palette on every element with a `transition:
+		// color` (the shared nav), and the sheet watch re-arms it on each DOM
+		// mutation, so the nav sat at the light grey over the dark bar (3:1) for
+		// seconds on a cold load. jsdom has no adoptedStyleSheets, so this drives
+		// the <style> fallback: the suspension must be in place at the moment the
+		// body is read, and gone once the probe returns.
+		let suspendedDuringRead = null;
+		bodyBg = () => {
+			suspendedDuringRead = document.querySelector('style[data-twx-theme-probe]') !== null;
+			return 'rgb(255, 255, 255)';
+		};
+		boot();
+		expect(window.threeTheme.supportsLight()).toBe(true);
+		expect(suspendedDuringRead).toBe(true);
+		expect(document.querySelector('style[data-twx-theme-probe]')).toBeNull();
+		expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+	});
+
+	it('does not let its own probe stylesheet re-trigger the sheet watch', async () => {
+		// A dark island keeps a MutationObserver alive to re-probe when a sheet
+		// lands. The probe's fallback <style> is itself a childList mutation; if
+		// the watch reacted to it, every probe would schedule another probe and
+		// the page would never stop re-probing.
+		let probes = 0;
+		bodyBg = () => {
+			probes += 1;
+			return 'rgb(0, 0, 0)';
+		};
+		boot();
+		const afterBoot = probes;
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		expect(probes).toBe(afterBoot);
+		expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+	});
+
 	it('still honours an explicit dark preference on a light-capable page', () => {
 		localStorage.setItem('twx_theme', 'dark');
 		bodyBg = () => 'rgb(255, 255, 255)';

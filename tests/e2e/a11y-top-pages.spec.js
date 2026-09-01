@@ -45,6 +45,28 @@ const auditPages = [...top30, ...extraPages];
 // Keep this list short and named — it is an exception ledger, not a bypass.
 const KNOWN_EXCEPTIONS = new Set([]);
 
+// axe measures whatever frame it lands on. Feeds that stagger their rows in
+// (src/ui-juice.js enterStagger: opacity 0 to 1 over --duration-base, up to
+// 320ms of per-row delay, starting whenever the fetch resolves) can still be
+// mid-fade at the 500ms mark, and axe blends a half-opaque row's ink into
+// the background and reports the resting-state-correct text as a contrast
+// failure: /agi flaked on rows 5 to 8 this way. Waiting for every FINITE
+// animation and transition to finish measures the page a user actually
+// reads. Infinite loops (pulses, shimmers, marquee floors) are skipped, and
+// the whole wait is capped so a runaway effect can never stall the gate;
+// the axe assertion itself is untouched.
+async function settleFiniteAnimations(page, capMs = 5_000) {
+	await page.evaluate(async (cap) => {
+		const finite = document.getAnimations().filter((a) => {
+			const timing = a.effect && typeof a.effect.getTiming === 'function' ? a.effect.getTiming() : null;
+			return a.playState !== 'finished' && !!timing && Number.isFinite(timing.iterations);
+		});
+		if (finite.length === 0) return;
+		const settled = Promise.all(finite.map((a) => a.finished.catch(() => undefined)));
+		await Promise.race([settled, new Promise((resolve) => setTimeout(resolve, cap))]);
+	}, capMs);
+}
+
 for (const { path } of auditPages) {
 	test(`a11y floor: ${path}`, async ({ page }) => {
 		if (KNOWN_EXCEPTIONS.has(path)) test.skip();
@@ -58,6 +80,7 @@ for (const { path } of auditPages) {
 		// deciding the verdict, and still leaves 120s for the axe pass itself.
 		await page.goto(path, { waitUntil: 'domcontentloaded', timeout: 180_000 });
 		await page.waitForTimeout(500); // let above-the-fold async content settle
+		await settleFiniteAnimations(page);
 
 		const results = await new AxeBuilder({ page })
 			.withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])

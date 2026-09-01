@@ -25443,13 +25443,13 @@
 		},
 		{
 			"date": "2026-09-01",
-			"title": "Site header: readable navigation text from the first paint, on every page",
-			"summary": "On a cold load, the theme system's capability check could leave the header's navigation labels stuck on the light theme's grey over the dark bar for several seconds, well under the contrast people need to read them. The check now runs without triggering colour transitions, so Build, Discover, Learn, Search, Walk, Sign in and Console render in their intended colours the moment the header appears. The automated accessibility floor that caught it now measures pages once their entrance animations have finished, so it reports what a reader sees rather than a half-faded frame.",
+			"title": "Readable header navigation from the first paint, and a readable feed status on the terminal",
+			"summary": "On a cold load, the theme system's capability check could leave the header's navigation labels stuck on the light theme's grey over the dark bar for several seconds, well under the contrast people need to read them. The check now runs without triggering colour transitions, so Build, Discover, Learn, Search, Walk, Sign in and Console render in their intended colours the moment the header appears. On /terminal the \"Positions\" feed-status chip no longer fades its label along with its idle dot, so it stays readable against the bar. The automated accessibility floor that caught it now measures pages once their entrance animations have finished, so it reports what a reader sees rather than a half-faded frame.",
 			"tags": [
 				"fix",
 				"improvement"
 			],
-			"link": "/concierge"
+			"link": "/terminal"
 		},
 		{
 			"date": "2026-09-01",

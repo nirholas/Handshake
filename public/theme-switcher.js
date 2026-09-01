@@ -76,14 +76,59 @@
 	// Does this page honour the light palette? Probe synchronously: flip the
 	// attribute to 'light', read the body (forces a style recalc, NOT a paint),
 	// then restore — all in one JS turn, so nothing flashes on screen.
+	// The probe never paints, but the forced recalc is still a style change
+	// event, so every element with a colour transition (the whole shared nav)
+	// starts transitioning FROM the light palette when the attribute snaps
+	// back. The sheet watch below re-probes on every DOM mutation, which
+	// re-arms that transition before it can advance a frame, so on a cold load
+	// the nav sat at the light theme's grey (#5a616f on a near-black bar, 3:1)
+	// for as long as the page kept mutating: seconds, and a real WCAG AA
+	// failure the a11y floor caught on /concierge. Suspending transitions for
+	// the probe, and forcing one more recalc before lifting the suspension,
+	// means neither flip is ever observed as a transition start. The
+	// suspension sheet goes through adoptedStyleSheets where available so it
+	// is not a DOM mutation the watch would react to; the <style> fallback is
+	// tagged so the watch can ignore it.
+	var PROBE_CSS = '*,*::before,*::after{transition:none!important}';
+	var probeSheet = null;
+	function isProbeNode(node) {
+		return !!(node && node.nodeType === 1 && node.hasAttribute && node.hasAttribute('data-twx-theme-probe'));
+	}
+	function withTransitionsSuspended(fn) {
+		var el = document.documentElement;
+		var styleEl = null;
+		if (document.adoptedStyleSheets && typeof CSSStyleSheet === 'function' && 'replaceSync' in CSSStyleSheet.prototype) {
+			if (!probeSheet) {
+				probeSheet = new CSSStyleSheet();
+				probeSheet.replaceSync(PROBE_CSS);
+			}
+			document.adoptedStyleSheets = document.adoptedStyleSheets.concat([probeSheet]);
+		} else {
+			styleEl = document.createElement('style');
+			styleEl.setAttribute('data-twx-theme-probe', '');
+			styleEl.textContent = PROBE_CSS;
+			(document.head || el).appendChild(styleEl);
+		}
+		try {
+			return fn();
+		} finally {
+			void el.offsetWidth; // commit the restored theme while transitions are still off
+			if (styleEl) styleEl.remove();
+			else document.adoptedStyleSheets = document.adoptedStyleSheets.filter(function (sheet) { return sheet !== probeSheet; });
+		}
+	}
+
 	function pageSupportsLight() {
 		if (islandCache !== null && islandSettled) return !islandCache;
 		if (!document.body) return true; // can't tell yet — assume capable
 		var el = document.documentElement;
 		var prev = el.getAttribute('data-theme');
-		el.setAttribute('data-theme', 'light');
-		var dark = bodyIsDark();
-		el.setAttribute('data-theme', prev || 'dark');
+		var dark = withTransitionsSuspended(function () {
+			el.setAttribute('data-theme', 'light');
+			var result = bodyIsDark();
+			el.setAttribute('data-theme', prev || 'dark');
+			return result;
+		});
 		islandCache = dark; // true ⇒ island (light not supported)
 		// Capable is final; not-capable only once the stylesheets are all in.
 		islandSettled = !dark || document.readyState === 'complete';
@@ -179,23 +224,54 @@
 			islandSettled = true;
 			setToggleVisible(islandCache === false);
 		};
+		// Every probe flips the theme attribute and reads a computed style, which
+		// forces a style recalc of the whole document, twice. Reacting to any DOM
+		// mutation made that a recalc storm on pages that render their content
+		// with JS: /marketplace spent 8.7s of main-thread time in bodyIsDark()
+		// alone before Lighthouse gave up on the page. Only a stylesheet can
+		// change the verdict, so only a stylesheet node (a <link rel=stylesheet>
+		// finishing its load, or a <style> element landing or leaving) re-probes,
+		// and a burst of them costs one probe per frame.
+		var probeQueued = false;
 		var onSheet = function () {
-			if (reprobeCapability()) stopWatching();
+			if (probeQueued || (!sheetWatch && islandSettled)) return;
+			probeQueued = true;
+			var run = function () {
+				probeQueued = false;
+				if (reprobeCapability()) stopWatching();
+			};
+			if (typeof requestAnimationFrame === 'function') requestAnimationFrame(run);
+			else setTimeout(run, 16);
+		};
+		var isSheetNode = function (node) {
+			if (!node || node.nodeType !== 1 || isProbeNode(node)) return false;
+			if (node.tagName === 'STYLE') return true;
+			return node.tagName === 'LINK' && node.rel === 'stylesheet';
 		};
 		var watchLink = function (node) {
 			if (!node || node.tagName !== 'LINK' || node.rel !== 'stylesheet') return;
 			node.addEventListener('load', onSheet);
 		};
-		for (var i = 0; i < document.styleSheets.length; i++) onSheet();
+		if (document.styleSheets.length) onSheet();
 		var links = document.querySelectorAll('link[rel="stylesheet"]');
 		for (var j = 0; j < links.length; j++) watchLink(links[j]);
 		if (window.MutationObserver && islandCache !== false) {
 			sheetWatch = new MutationObserver(function (records) {
+				var relevant = false;
 				for (var r = 0; r < records.length; r++) {
 					var added = records[r].addedNodes;
-					for (var n = 0; n < added.length; n++) watchLink(added[n]);
+					var removed = records[r].removedNodes;
+					for (var n = 0; n < added.length; n++) {
+						watchLink(added[n]);
+						// A <link> re-probes from its load event, once its sheet
+						// (and that sheet's @imports) can actually answer.
+						if (added[n].tagName === 'STYLE' && isSheetNode(added[n])) relevant = true;
+					}
+					for (var m = 0; m < removed.length; m++) {
+						if (isSheetNode(removed[m])) relevant = true;
+					}
 				}
-				onSheet();
+				if (relevant) onSheet();
 			});
 			sheetWatch.observe(document.documentElement, { childList: true, subtree: true });
 		}
