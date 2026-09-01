@@ -1767,6 +1767,12 @@ URL: https://three.ws/agents
 
 Browse every registered agent on three.ws.
 
+### Agent Spotlight
+
+URL: https://three.ws/spotlight
+
+The three.ws community showcase: agents people actually built something with, written up by the builder and ranked by community upvotes. Filter by category, open any entry in 3D, upvote what you like, and submit your own.
+
 ### Reasoning Ledger
 
 URL: https://three.ws/ledger
@@ -2054,6 +2060,12 @@ How the counterfactual replay works: the two-phase walk over a recorded price pa
 URL: https://three.ws/docs/crews
 
 How crews work: the public directory of every crew with members, invite search with join-state annotations, the headquarters room, and how the friends drawer in the coin worlds links into it.
+
+### Docs · Agent Spotlight
+
+URL: https://three.ws/docs/spotlight
+
+How the Agent Spotlight community showcase works: what an entry stores versus what it reads live off the agent, the trending decay formula, curated versus community entries, and the full showcase API.
 
 ### Docs · The solved economy
 

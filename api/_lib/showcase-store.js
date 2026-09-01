@@ -40,20 +40,30 @@ export function showcaseConfigured() {
 
 /* ── ranking ──────────────────────────────────────────────────────────────── */
 
-// Hacker-News-shaped decay: score = (votes + 1) / (age_hours + 2)^1.5.
+// Decay: score = (votes + 1) / (age_days + 1)^1.2.
 //
-// The +1 is what makes this a showcase rather than a popularity contest: a
-// just-published entry with no votes yet still outranks a week-old entry with
-// two, so the newest work is seen at all. The exponent is the knob for how fast
-// yesterday's entries fall off; 1.5 puts a 24-hour-old entry at roughly a fifth
-// of the weight of a fresh one, which keeps a full first page turning over
-// daily at the volume this surface sees.
-export const GRAVITY = 1.5;
+// Two deliberate choices, both about the fact that this is a low-volume curated
+// board and not a firehose.
+//
+// The +1 in the numerator is what makes it a showcase rather than a popularity
+// contest: an entry published minutes ago with no votes yet still scores 1.0 and
+// lands on the first page, so new work is seen at all instead of waiting behind
+// whatever was already popular.
+//
+// The clock runs in DAYS, not hours. The hour-scaled decay every ranked feed
+// copies from Hacker News assumes enough vote volume that a good post
+// accumulates score faster than it loses it within a day; at this surface's
+// volume the same curve puts a 24-hour-old entry at ~2% of a fresh one, which
+// collapses "trending" into "newest" and buries genuinely popular work overnight.
+// On this curve a week-old entry with twenty upvotes still outranks a brand-new
+// one, and a month-old entry finally rotates off the front. That is the behaviour
+// a showcase wants: durable good work near the top, always room for the newest.
+export const GRAVITY = 1.2;
 
 export function trendingScore({ voteCount = 0, createdAt, now = Date.now() } = {}) {
 	const ms = now - new Date(createdAt).getTime();
-	const ageHours = Number.isFinite(ms) ? Math.max(0, ms) / 3_600_000 : 0;
-	return (Number(voteCount) + 1) / Math.pow(ageHours + 2, GRAVITY);
+	const ageDays = Number.isFinite(ms) ? Math.max(0, ms) / 86_400_000 : 0;
+	return (Number(voteCount) + 1) / Math.pow(ageDays + 1, GRAVITY);
 }
 
 /* ── shaping ──────────────────────────────────────────────────────────────── */
@@ -197,7 +207,7 @@ export async function listEntries({
 			case when ${sort}::text = 'top'      then coalesce(v.n, 0) end desc nulls last,
 			case when ${sort}::text = 'trending'
 			     then (coalesce(v.n, 0) + 1)::numeric
-			          / power(extract(epoch from (now() - s.created_at))::numeric / 3600.0 + 2, ${GRAVITY}::numeric)
+			          / power(extract(epoch from (now() - s.created_at))::numeric / 86400.0 + 1, ${GRAVITY}::numeric)
 			end desc nulls last,
 			s.created_at desc
 		limit ${limit} offset ${offset}

@@ -23,6 +23,22 @@
 			<description>How generative 3D collections work on three.ws: weighted trait layers, a supply rolled from a published seed, rarity scored from the actual distribution, art forged per item on reveal, and a verify endpoint anyone can recompute the roll with.</description>
 		</item>
 		<item>
+			<title>Agent Spotlight</title>
+			<link>https://three.ws/spotlight</link>
+			<guid isPermaLink="false">2026-09-01:Agent Spotlight</guid>
+			<pubDate>Tue, 01 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The three.ws community showcase: agents people actually built something with, written up by the builder and ranked by community upvotes. Filter by category, open any entry in 3D, upvote what you like, and submit your own.</description>
+		</item>
+		<item>
+			<title>Docs · Agent Spotlight</title>
+			<link>https://three.ws/docs/spotlight</link>
+			<guid isPermaLink="false">2026-09-01:Docs · Agent Spotlight</guid>
+			<pubDate>Tue, 01 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the Agent Spotlight community showcase works: what an entry stores versus what it reads live off the agent, the trending decay formula, curated versus community entries, and the full showcase API.</description>
+		</item>
+		<item>
 			<title>Filming three.ws on a Seeker without a Seeker</title>
 			<link>https://three.ws/docs/seeker-video</link>
 			<guid isPermaLink="false">2026-09-01:Filming three.ws on a Seeker without a Seeker</guid>
@@ -165,6 +181,14 @@
 			<pubDate>Tue, 01 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>On /strategies, Equip, Fork, and New strategy now take a signed-out visitor straight to sign-in and bring them back to the page afterwards. Before, the page treated everyone as signed in, so the equip picker and the strategy builder opened for visitors who could not use them and Fork failed silently. The My library tab now shows its sign-in prompt without firing a request that could only fail, the Marketplace, Leaderboard, and My library switcher shows a visible focus ring when tabbed to and is announced correctly by screen readers, and the browser tab reads Strategy Objects.</description>
+		</item>
+		<item>
+			<title>The community showcase is open</title>
+			<link>https://three.ws/spotlight</link>
+			<guid isPermaLink="false">2026-09-01:The community showcase is open</guid>
+			<pubDate>Tue, 01 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Agent Spotlight is live at /spotlight. The agents index lists everything anyone ever registered, which is thousands of agents and no way to tell which ones are actually good. The spotlight is the other half of that: you write up what your agent does, everyone else upvotes what they like, and the best work rises. Filter by category, search across write-ups and builders, and open any entry straight into the agent's 3D page to talk to it. Entries stay honest by construction: your card stores your pitch and reads the agent's live name, avatar, skills and on-chain identity on every visit, so it can never go stale. One entry per agent, one vote per person, and submitting again edits your entry instead of making a second card. It opens with fourteen agents the team picked out of what the community has already built, from an adversarial code reviewer to an autonomous Solana trader that runs with no language model in the loop.</description>
 		</item>
 		<item>
 			<title>The Story So Far loads again, and catches up to the Android launch</title>

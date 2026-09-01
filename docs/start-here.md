@@ -60,6 +60,8 @@ If you're here to create and share agents rather than write code, follow this pa
 
 Make something the community upvotes and it can reach beyond three.ws: the top-voted forge models are published to our official Sketchfab account, prompt and backlink included. See [Sketchfab showcase](./sketchfab.md).
 
+Built something worth showing? Put it on the wall. [Agent Spotlight](./spotlight.md) is the community showcase at [/spotlight](https://three.ws/spotlight): you write up what your agent does, everyone else votes, and the card stays in sync with the live agent forever.
+
 Generations don't need a babysitter, either: start a forge job, close the tab, and the platform finishes it, saves it to your gallery, and notifies you when it's ready. See [Background generation](./forge-background-generation.md).
 
 Curious what happens between the prompt and the model? [How the Forge works](./how-forge-works.md) tells the story in plain language; [the Forge pipeline](./forge-pipeline.md) is the full engineering deep dive.
@@ -171,6 +173,7 @@ Deeper references that don't fit a track above but answer real questions:
 - [The ship log](./shipfeed.md): how every release note is joined to the commits that shipped it, the public feed at /api/ship/feed (JSON, Markdown, RSS, and a per-commit "why did you link that" endpoint), and the zero-dependency package that does it for any repository
 - [Docs World](./docs-world.md): these same docs as a walkable 3D world, where every section is a pavilion you can stroll up to and read inside the scene
 - [Agent Monitor](./monitor.md): the ops room at [/monitor](https://three.ws/monitor), twelve live panels covering fleet activity, money, revenue, creations and uptime, plus how to add a panel
+- [Agent Spotlight](./spotlight.md): the community showcase at [/spotlight](https://three.ws/spotlight), what an entry stores versus what it reads live off the agent, the trending decay formula, and the full showcase API
 - [Design tokens](./DESIGN-TOKENS.md): the canonical design vocabulary (colors, spacing, type, motion) every surface builds from
 - [NVIDIA models on three.ws](./nvidia-models.md): the free hosted inference layer model by model, one key behind text-to-3D, chat, vision, embeddings, safety, and speech
 - [Run an inference node](./inference-node-operator.md): join the supply side of the open inference network with your own hardware, from clone to a signed, verified result, on CPU or an NVIDIA GPU
@@ -186,6 +189,7 @@ Deeper references that don't fit a track above but answer real questions:
 - [Big-tech recognition dispatch board](./big-tech-recognition-week.md): every big-tech surface ranked against every other by the odds of a published mention this week, which six are already one action from shipping, and what to stop chasing
 - [The generator was never the hard part](./nvidia-nemotron-spotlight.md): our Nemotron Nano write-up, published on the NVIDIA Developer Forums
 - [three.ws on the AWS Builder Center](./aws-builder-center.md): the index of our published AWS engineering writing, what code each article documents, and the checklist for publishing the next one
+- [Mobile launch articles](./mobile-launch/README.md): the five long-form pieces announcing the Seeker, Android, and iPhone apps, one per venue (X, CoinMarketCap, AWS Builder Center, NVIDIA Developer Forums, IBM Community)
 - [three.ws on Hugging Face](./huggingface.md): our organization account there, the community article on giving agents bodies and wallets, the published avatar rigs and the Space that renders them, and the checklist for publishing the next one
 - [The onboarding tier](./onboarding-tier.md): why a first-time visitor sees ~20 nav destinations instead of ~100, how the Simple ⇄ Everything switch works, and which tier a new page belongs in
 - [What an agent can do](./agent-abilities/ABILITIES.md): the full abilities dossier, generated from the source article

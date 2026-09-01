@@ -151,50 +151,82 @@ function loadAgent3d() {
 	document.head.appendChild(s);
 }
 
+// Hide the still only once <agent-3d> has painted a canvas of its own. There is
+// no documented ready event on the component, and a canvas in the DOM is the
+// one signal that means the model is genuinely on screen. Give up after a
+// bounded wait and leave the still in place, which is the correct outcome when
+// the GLB never arrives.
+function revealWhenPainted(viewer, still) {
+	let settled = false;
+	const done = () => {
+		if (settled) return;
+		settled = true;
+		observer.disconnect();
+		clearTimeout(timer);
+		still.classList.add('is-hidden');
+	};
+	const painted = () =>
+		Boolean(viewer.querySelector('canvas') || viewer.shadowRoot?.querySelector('canvas'));
+
+	const observer = new MutationObserver(() => {
+		if (painted()) done();
+	});
+	observer.observe(viewer, { childList: true, subtree: true });
+	const timer = setTimeout(() => {
+		observer.disconnect();
+	}, 15000);
+	if (painted()) done();
+}
+
 function stageFor(entry) {
 	const stage = el('div', { class: 'sp-stage' });
 	stage.append(el('span', { class: 'sp-stage-badge', text: "Editor's pick" }));
 
-	if (entry.agent.glb_url) {
-		// Mounted only when the stage is actually on screen. Below-the-fold WebGL
-		// on a browse page costs a visitor real frames for something they may
-		// never scroll to.
-		const mount = () => {
-			loadAgent3d();
-			stage.append(
-				el('agent-3d', {
-					body: entry.agent.glb_url,
-					autorotate: 'true',
-					'camera-controls': 'true',
-					'aria-label': `${entry.agent.name} in 3D`,
-				}),
-			);
-		};
-		if ('IntersectionObserver' in window) {
-			const io = new IntersectionObserver(
-				(entries, obs) => {
-					if (entries.some((e) => e.isIntersecting)) {
-						obs.disconnect();
-						mount();
-					}
-				},
-				{ rootMargin: '200px' },
-			);
-			io.observe(stage);
-		} else {
-			mount();
-		}
-	} else if (entry.agent.thumbnail) {
-		stage.append(
-			el('img', {
+	// The still image goes in first and stays until the 3D viewer has actually
+	// painted a canvas. A GLB can fail to load for reasons this page does not
+	// control (a cold CDN, a blocked origin, no WebGL on the device), and a
+	// silently empty hero is the worst version of that failure.
+	const still = entry.agent.thumbnail
+		? el('img', {
+				class: 'sp-stage-still',
 				src: entry.agent.thumbnail,
 				alt: `${entry.agent.name} avatar`,
 				loading: 'lazy',
 				decoding: 'async',
-			}),
+			})
+		: monogram(entry.agent);
+	stage.append(still);
+
+	if (!entry.agent.glb_url) return stage;
+
+	// Mounted only when the stage is actually on screen. Below-the-fold WebGL on
+	// a browse page costs a visitor real frames for something they may never
+	// scroll to.
+	const mount = () => {
+		loadAgent3d();
+		const viewer = el('agent-3d', {
+			body: entry.agent.glb_url,
+			autorotate: 'true',
+			'camera-controls': 'true',
+			'aria-label': `${entry.agent.name} in 3D`,
+		});
+		stage.append(viewer);
+		revealWhenPainted(viewer, still);
+	};
+
+	if ('IntersectionObserver' in window) {
+		const io = new IntersectionObserver(
+			(entries, obs) => {
+				if (entries.some((e) => e.isIntersecting)) {
+					obs.disconnect();
+					mount();
+				}
+			},
+			{ rootMargin: '200px' },
 		);
+		io.observe(stage);
 	} else {
-		stage.append(monogram(entry.agent));
+		mount();
 	}
 	return stage;
 }

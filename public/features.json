@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-01T17:41:21.583Z",
+	"generated_at": "2026-09-01T18:06:48.084Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2924,6 +2924,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/spotlight",
+					"title": "Agent Spotlight",
+					"description": "The three.ws community showcase: agents people actually built something with, written up by the builder and ranked by community upvotes. Filter by category, open any entry in 3D, upvote what you like, and submit your own.",
+					"added": "2026-09-01",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": true
+				},
+				{
 					"path": "/ledger",
 					"title": "Reasoning Ledger",
 					"description": "An agent's every consequential decision (what it decided, why, what it predicted, and what actually happened) in a tamper-evident, on-chain-anchored, independently verifiable ledger. Open any agent's at /ledger/<agentId>. Being wrong is visible; honesty is the trust signal.",
@@ -3372,6 +3382,16 @@
 					"title": "Docs · Crews",
 					"description": "How crews work: the public directory of every crew with members, invite search with join-state annotations, the headquarters room, and how the friends drawer in the coin worlds links into it.",
 					"added": "2026-08-01",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/spotlight",
+					"title": "Docs · Agent Spotlight",
+					"description": "How the Agent Spotlight community showcase works: what an entry stores versus what it reads live off the agent, the trending decay formula, curated versus community entries, and the full showcase API.",
+					"added": "2026-09-01",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

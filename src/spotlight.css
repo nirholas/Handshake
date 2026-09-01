@@ -303,17 +303,31 @@
 }
 
 .sp-stage agent-3d {
+	position: relative;
+	z-index: 1;
 	width: 100%;
 	height: 100%;
 	min-height: 320px;
 	display: block;
 }
 
-.sp-stage img {
+/* The still sits under the 3D viewer and is removed only once that viewer has
+   painted. A GLB that never loads therefore degrades to the avatar image
+   instead of an empty hero. */
+.sp-stage-still,
+.sp-stage .sp-mono {
+	position: absolute;
+	inset: 0;
 	width: 100%;
 	height: 100%;
-	min-height: 320px;
 	object-fit: cover;
+	transition: opacity var(--duration-slow, 420ms) var(--ease-out);
+}
+
+.sp-stage-still.is-hidden,
+.sp-stage .sp-mono.is-hidden {
+	opacity: 0;
+	pointer-events: none;
 }
 
 .sp-stage-badge {
@@ -339,6 +353,17 @@
 	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.1));
 	border-radius: var(--radius-lg, 14px);
 	background: var(--surface-1, rgba(255, 255, 255, 0.03));
+}
+
+.sp-featured-copy h3 a {
+	color: inherit;
+	text-decoration: none;
+	border-bottom: 1px solid transparent;
+	transition: border-color var(--duration-fast, 140ms) var(--ease-standard);
+}
+
+.sp-featured-copy h3 a:hover {
+	border-bottom-color: var(--stroke-strong, rgba(255, 255, 255, 0.35));
 }
 
 .sp-featured-copy h3 {
@@ -633,6 +658,25 @@
 	font-weight: var(--weight-medium, 500);
 }
 
+/* The builder credit sits above the card's full-surface title link, so it needs
+   its own stacking context to stay clickable. */
+.sp-card-meta a,
+.sp-featured-copy .sp-card-meta a {
+	position: relative;
+	z-index: 1;
+	color: var(--ink-dim, rgba(255, 255, 255, 0.62));
+	text-decoration: none;
+	border-bottom: 1px solid var(--stroke, rgba(255, 255, 255, 0.14));
+	transition:
+		color var(--duration-fast, 140ms) var(--ease-standard),
+		border-color var(--duration-fast, 140ms) var(--ease-standard);
+}
+
+.sp-card-meta a:hover {
+	color: var(--ink-bright, #fff);
+	border-bottom-color: var(--stroke-strong, rgba(255, 255, 255, 0.4));
+}
+
 .sp-tags {
 	display: flex;
 	flex-wrap: wrap;
@@ -690,6 +734,14 @@
 }
 
 /* ── vote ─────────────────────────────────────────────────────────────── */
+
+/* In the featured CTA row the vote button sits beside real buttons, so it
+   matches their height instead of shrink-wrapping to its two tiny lines. */
+.sp-ctas .sp-vote {
+	flex-direction: row;
+	gap: 6px;
+	padding: 10px var(--space-sm, 12px);
+}
 
 .sp-vote {
 	display: inline-flex;

@@ -1010,7 +1010,8 @@
 		"search_agents_label": "Search agents by name or description",
 		"search_placeholder": "Search agents…",
 		"solana": "Solana",
-		"sort_label": "Sort agents"
+		"sort_label": "Sort agents",
+		"spotlight": "Community Spotlight"
 	},
 	"agents_live": {
 		"browse_agents": "Browse agents",
@@ -2695,6 +2696,7 @@
 	},
 	"community": {
 		"a_public_group_on_ibm_community_for_developers": "A public group on IBM Community for developers building AI agents with 3D capabilities: spatial reasoning, generative 3D, agentic pipelines, and real-time interactive systems. Threads, blogs, and a platform tour to start from.",
+		"agent_spotlight": "Agent Spotlight",
 		"api_reference_embed_guides_sdk_quickstarts_a": "API reference, embed guides, SDK quickstarts, and the Solana agent-kit. Start here if you're integrating.",
 		"browse_tutorials": "Browse tutorials →",
 		"build_an_integration_the_mcp_server_a2a": "<strong>Build an integration.</strong> The MCP server, A2A protocol, and x402 payment layer are all open for third-party tools.",
@@ -2728,6 +2730,7 @@
 		"rankings": "Rankings",
 		"read_the_docs": "Read the docs →",
 		"report_bugs_open_an_issue_on_github": "<strong>Report bugs.</strong> Open an issue on <a href=\"https://github.com/nirholas/three.ws/issues\" target=\"_blank\" rel=\"noopener noreferrer\">GitHub</a> — we triage daily.",
+		"see_the_showcase": "See the showcase →",
 		"see_who_s_ranked": "See who's ranked →",
 		"select_and_copy": "Select and copy",
 		"share_feedback_tweet_at_us_open_a": "<strong>Share feedback.</strong> Tweet at us, open a discussion on GitHub, or email <a href=\"mailto:support@three.ws\">support@three.ws</a>.",
@@ -2737,6 +2740,7 @@
 		"telegram_t_me_three_ws_every_release": "<span class=\"chan-name\">Telegram</span> <span class=\"chan-body\"><a class=\"chan-val\" href=\"https://t.me/three_ws\" target=\"_blank\" rel=\"noopener noreferrer\">t.me/three_ws</a> <span class=\"chan-note\">Every release, pushed automatically on deploy. Chat lives in <a href=\"https://t.me/three_ws_community\" target=\"_blank\" rel=\"noopener noreferrer\">t.me/three_ws_community</a>.</span></span>",
 		"text": "𝕏",
 		"the_codebase_is_public_file_issues_read": "The codebase is public. File issues, read the source, or submit a PR. SDKs, examples, and the embed runtime all live here.",
+		"the_community_showcase_agents_people_actually": "The community showcase. Agents people actually built something with, written up by the builder and ranked by upvotes. Open any one of them in 3D, or put your own in front of everybody.",
 		"the_cross_surface_leaderboard_creations_remi": "The cross-surface leaderboard — creations, remixes, launches, followers, and walk distance. Build a daily streak and earn badges.",
 		"the_founder_s_personal_x_account_nichxbt": "The founder's personal X account, <span class=\"chan-val\">@nichxbt</span>, has been unavailable since August 27, 2026. Nothing posted under that handle is us while it is down. Announcements continue as normal on <a href=\"https://x.com/trythreews\" target=\"_blank\" rel=\"noopener noreferrer\">@trythreews</a>, <a href=\"https://t.me/three_ws\" target=\"_blank\" rel=\"noopener noreferrer\">Telegram</a>, and <a href=\"/changelog\">the changelog</a>, which publishes itself straight from the deploy.",
 		"three": "$THREE",

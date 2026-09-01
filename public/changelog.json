@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-01T17:41:21.602Z",
+	"generated_at": "2026-09-01T18:06:48.112Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -22,6 +22,26 @@
 			"title": "3D Drops",
 			"summary": "How generative 3D collections work on three.ws: weighted trait layers, a supply rolled from a published seed, rarity scored from the actual distribution, art forged per item on reveal, and a verify endpoint anyone can recompute the roll with.",
 			"link": "/docs/drops",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-01",
+			"type": "launch",
+			"title": "Agent Spotlight",
+			"summary": "The three.ws community showcase: agents people actually built something with, written up by the builder and ranked by community upvotes. Filter by category, open any entry in 3D, upvote what you like, and submit your own.",
+			"link": "/spotlight",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-01",
+			"type": "launch",
+			"title": "Docs · Agent Spotlight",
+			"summary": "How the Agent Spotlight community showcase works: what an entry stores versus what it reads live off the agent, the trending decay formula, curated versus community entries, and the full showcase API.",
+			"link": "/docs/spotlight",
 			"tags": [
 				"launch"
 			]
@@ -219,6 +239,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-01",
+			"type": "update",
+			"title": "The community showcase is open",
+			"summary": "Agent Spotlight is live at /spotlight. The agents index lists everything anyone ever registered, which is thousands of agents and no way to tell which ones are actually good. The spotlight is the other half of that: you write up what your agent does, everyone else upvotes what they like, and the best work rises. Filter by category, search across write-ups and builders, and open any entry straight into the agent's 3D page to talk to it. Entries stay honest by construction: your card stores your pitch and reads the agent's live name, avatar, skills and on-chain identity on every visit, so it can never go stale. One entry per agent, one vote per person, and submitting again edits your entry instead of making a second card. It opens with fourteen agents the team picked out of what the community has already built, from an adversarial code reviewer to an autonomous Solana trader that runs with no language model in the loop.",
+			"link": "/spotlight",
+			"tags": [
+				"feature"
 			]
 		},
 		{

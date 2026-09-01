@@ -2766,6 +2766,14 @@
 					"added": "2026-08-01"
 				},
 				{
+					"path": "/docs/spotlight",
+					"title": "Docs \u00b7 Agent Spotlight",
+					"description": "How the Agent Spotlight community showcase works: what an entry stores versus what it reads live off the agent, the trending decay formula, curated versus community entries, and the full showcase API.",
+					"priority": 0.6,
+					"changefreq": "weekly",
+					"added": "2026-09-01"
+				},
+				{
 					"path": "/docs/economy-solver",
 					"title": "Docs · The solved economy",
 					"description": "The closed-form model behind /play/solver: expected cash, XP and yield per hour for every gatherable node at every level, the optimal fish-and-cook split, store payback, and the exact assumptions the arithmetic rests on.",

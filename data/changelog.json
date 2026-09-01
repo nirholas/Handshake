@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-09-01",
+			"title": "The community showcase is open",
+			"summary": "Agent Spotlight is live at /spotlight. The agents index lists everything anyone ever registered, which is thousands of agents and no way to tell which ones are actually good. The spotlight is the other half of that: you write up what your agent does, everyone else upvotes what they like, and the best work rises. Filter by category, search across write-ups and builders, and open any entry straight into the agent's 3D page to talk to it. Entries stay honest by construction: your card stores your pitch and reads the agent's live name, avatar, skills and on-chain identity on every visit, so it can never go stale. One entry per agent, one vote per person, and submitting again edits your entry instead of making a second card. It opens with fourteen agents the team picked out of what the community has already built, from an adversarial code reviewer to an autonomous Solana trader that runs with no language model in the loop.",
+			"tags": [
+				"feature"
+			],
+			"link": "/spotlight"
+		},
+		{
+			"date": "2026-09-01",
 			"title": "three.ws is on the Solana dApp Store",
 			"summary": "The Seeker app is live. Open the dApp Store on a Seeker or Saga, search three.ws, and install it: a 3D agent studio that runs full-screen on the phone. Take a selfie and get a textured, rigged, animation-ready character in about a minute, or describe one in text, or upload a GLB you already have. Give it a personality, a voice and skills, then talk to it in 3D. Browse everyone else's agents in the marketplace, and deploy your own on-chain as a Metaplex Core asset your wallet holds. Every signature routes to the phone's Seed Vault through Mobile Wallet Adapter, so signing in is one tap and the private key never enters the app. Creating, chatting and browsing are free. Anything you make on the phone is waiting on the web app the moment you sign in there.",
 			"tags": [
