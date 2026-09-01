@@ -89,10 +89,10 @@ const BG = '#080814';
  * rest of the video tells.
  */
 const TOUR = [
-  { hold: 2800, note: 'hero and the Seed Vault sign-in' },
-  { to: '#agents', glide: 2200, hold: 2000, note: 'agents rail' },
-  { to: '#verify', glide: 1800, hold: 2600, note: 'Seeker verification' },
-  { to: 0, glide: 1800, hold: 1200, note: 'back to the hero' },
+  { hold: 3000, note: 'hero and the Seed Vault sign-in' },
+  { to: '.grid', glide: 1800, hold: 1600, note: 'the Create lane' },
+  { to: '#verify', glide: 1600, hold: 2800, note: 'Seeker verification' },
+  { to: 0, glide: 1600, hold: 1200, note: 'back to the hero' },
 ];
 
 const log = (...m) => console.log('[screencast]', ...m);
@@ -110,7 +110,14 @@ async function resolveTarget(page, target) {
     const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
     if (typeof t === 'string') {
       const el = document.querySelector(t);
-      if (!el) return { error: t };
+      if (!el) return { error: `${t} is not on the page` };
+      /* A section that is present but empty collapses to zero height and sits
+         at the top of the document, so scrolling to it resolves to y=0 and the
+         tour records a still of the hero while reporting success. Signed out,
+         #agents and #mine are exactly that. Refuse it. */
+      if (el.getBoundingClientRect().height < 1) {
+        return { error: `${t} is on the page but has no height, so there is nothing to scroll to` };
+      }
       return { y: Math.max(0, Math.min(max, window.scrollY + el.getBoundingClientRect().top - 72)) };
     }
     return { y: Math.max(0, Math.min(max, t > 0 && t < 1 ? t * max : t)) };
