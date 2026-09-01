@@ -79,3 +79,9 @@ OWNER-ACTIONS (deleted the self-expired row, corrected rows 3, 4, 9, 10, added 1
 Left: three verified-retirable files wait on the commit gate (row 14); everything else in
 the map is open for the measured reason next to it. The "Definition of 100%" now excludes
 `masters/` from line 1, since those prompts never retire by design.
+
+Addendum, same day: the swarm-100 probe finished after the map was first rewritten. Section J
+now carries its numbers (56 of 151 routes mechanically clean, 95 with a measured defect,
+none retirable on mechanical evidence) and the state of the four sweeps and the roadmap
+slice. Probe artifacts stayed in the session scratchpad; the reproducible method is in
+`docs/ops/swarm-100-audit.md`.

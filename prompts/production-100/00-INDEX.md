@@ -136,7 +136,35 @@ Strategy for what to run next inside E: [../roadmap/fable-playbook.md](../roadma
 
 | Pack | State |
 |---|---|
-| [../swarm-100/README.md](../swarm-100/README.md) | 157 of 696 files remain: 151 route audits, 4 repo-wide sweeps, 1 roadmap slice. By the pack's protocol a file present is open (a finished order is deleted in its closing commit); 539 have retired that way since 2026-08-10. |
+| [../swarm-100/README.md](../swarm-100/README.md) | 157 of 696 files remain: 151 route audits, 4 repo-wide sweeps, 1 roadmap slice. By the pack's protocol a file present is open (a finished order is deleted in its closing commit); 539 have retired that way since 2026-08-10. `docs/ops/swarm-100-audit.md` reconciles the ledger against git history. |
+
+A headless probe of all 151 remaining routes on 2026-09-01 (Chromium, local dev server,
+1440/768/320 px, then a reload with every `/api/*` request blocked) found: every route 200
+locally and in production, every route with a title, 150 with a meta description; 56 pass
+every mechanical check (zero console errors, zero failed requests, one h1, no horizontal
+overflow, a designed error state when the API is blocked) and 95 have at least one measured
+defect. Largest classes: no visible error state under a blocked API (64, of which the ten
+`/features/*` pages and other static pages make no API call and are false positives), real
+failed requests (31), console errors (29), h1 count not one (19), dead anchors (15), 320 px
+overflow (`/economy`, `/ibm/hello`, `/showcase`), an uncaught exception on load (`/launch`,
+`/launch-studio`: `/launch/launch.js` answers 500 on the dev server), and `/dashboard`
+rendering an empty shell signed out. Recurring root causes: `/three/draco/gltf/draco_decoder.wasm`
+404 on the 3D pages, ipfs.io images blocked on `/launches`, signed-out 401s on `/my-agents`,
+`/guardian` and `/temporary`, `/api/galaxy` 503. The probe cannot verify the DoD lines about
+every button working, empty and loading states, or `npm test`, so a mechanically clean route
+is not proven done and none was retired on that evidence. The other agent's audit doc counts
+125 clean with a looser check set; the two agree on status, title, meta and h1 and differ
+only on the error-state and failed-request heuristics.
+
+Of the five non-route files: `sweep-i18n.md` is untouched (`npm run i18n:lint` reports
+44,104 problems across 81 locales); `sweep-console.md` is open (the sweep still exits 1,
+`/fees` alone logs seven 404s); `sweep-authed-audit.md` is partial (its premise is stale,
+the QA login exists, and the last authed report of 2026-08-19 had 33 pages with error
+findings); `sweep-perf.md` is partial (eight pages measured 2026-08-15, three under 80 with
+documented irreducible costs, no re-measure after the 2026-09-01 fixes);
+`roadmap-p2-memory-seed-x.md` is built, tested and documented, and closes after one
+end-to-end run on a real account, which needs the X OAuth credentials that live only on the
+Cloud Run service.
 
 ---
 
