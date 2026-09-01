@@ -2,8 +2,14 @@
 // We don't spin up a real HTTP server — just unit-test the runtime dispatcher
 // and exercise the backtest endpoint's stub-invoke path through the handler.
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { makeRuntime } from '../../api/_lib/skill-runtime.js';
+
+// The in-process pump.fun tool dispatcher the server-side runtime routes the
+// pump-fun skill's relative /api/pump-fun-mcp fetch into. Each test decides
+// what a tool answers; the real module would pull the Solana SDK graph.
+const callPumpFunTool = vi.fn();
+vi.mock('../../api/pump-fun-mcp.js', () => ({ callPumpFunTool: (...a) => callPumpFunTool(...a) }));
 
 describe('skill runtime', () => {
 	it('dispatches validateStrategy through the runtime', async () => {
@@ -89,5 +95,44 @@ describe('backtest via runtime + sibling pump-fun stubs', () => {
 		expect(r.ok).toBe(true);
 		expect(r.data.tradeCount).toBe(1);
 		expect(r.data.realizedPnlSol).toBeGreaterThan(0);
+	});
+});
+
+describe('server-side fetch for the isomorphic pump-fun skill', () => {
+	it('dispatches the relative /api/pump-fun-mcp call in-process instead of failing to parse the URL', async () => {
+		callPumpFunTool.mockResolvedValueOnce({
+			tokens: [{ mint: 'THREEsynthetic1111111111111111111111111111' }],
+			source: 'pump.fun',
+		});
+		const rt = makeRuntime();
+		const r = await rt.invoke('pump-fun.getNewTokens', { limit: 3 });
+		expect(r.ok).toBe(true);
+		expect(callPumpFunTool).toHaveBeenCalledWith('getNewTokens', { limit: 3 });
+		expect(r.data.tokens[0].mint).toBe('THREEsynthetic1111111111111111111111111111');
+	});
+
+	it('surfaces a tool error as a clean { ok: false } result with the rpc message', async () => {
+		callPumpFunTool.mockRejectedValueOnce(
+			Object.assign(new Error('tool "get_new_tokens": every live pump.fun source is unavailable right now'), { rpcCode: -32004 }),
+		);
+		const rt = makeRuntime();
+		const r = await rt.invoke('pump-fun.getNewTokens', { limit: 3 });
+		expect(r.ok).toBe(false);
+		expect(r.error).toMatch(/every live pump\.fun source/);
+	});
+
+	it('leaves an explicit fetch override untouched', async () => {
+		const seen = [];
+		const fetchImpl = async (url, init) => {
+			seen.push({ url, method: init?.method });
+			return new Response(JSON.stringify({ jsonrpc: '2.0', id: 1, result: { content: [{ type: 'text', text: '{"tokens":[]}' }] } }), {
+				status: 200,
+				headers: { 'content-type': 'application/json' },
+			});
+		};
+		const rt = makeRuntime({ fetch: fetchImpl });
+		const r = await rt.invoke('pump-fun.getTrendingTokens', { limit: 2 });
+		expect(r.ok).toBe(true);
+		expect(seen).toEqual([{ url: '/api/pump-fun-mcp', method: 'POST' }]);
 	});
 });

@@ -58,7 +58,7 @@ There are two kinds. **Hosted remote servers** run over Streamable HTTP with not
 | 3D Studio (free) | `/api/mcp-studio` | Free text/image→3D and rigged avatars — no auth, no payment |
 | Agent wallet | `/api/mcp-agent` | The agent's custodial wallet: balance, find + pay services, and `monetize_endpoint` |
 | x402 Bazaar | `/api/mcp-bazaar` | Discover and price paid agent services across the facilitator network |
-| pump.fun | `/api/pump-fun-mcp` | Free pump.fun + Solana token tools; `pumpfun_upload_metadata` needs a key |
+| pump.fun | `/api/pump-fun-mcp` | Free pump.fun + Solana token tools; `get_new_tokens` and `get_trending_tokens` read the live pump.fun feed with no indexer needed; `pumpfun_upload_metadata` needs a key |
 | IBM x402 | `/api/ibm-mcp` | Pay-per-use IBM Granite AI |
 
 **Thirty-eight install-and-run servers** on npm under the `@three-ws` scope, each running over stdio with one command:

@@ -473,7 +473,9 @@
 	const walletInfo = $('walletInfo'), walletStatus = $('walletStatus');
 	const issuesEl = $('issues'), summaryBox = $('summaryBox'), charts = $('charts');
 
+	const LOGIN_HREF = '/login?next=' + encodeURIComponent('/strategy-lab');
 	let mode = 'simulate';
+	let signedIn = false;
 	let activeRun = null;
 	let currentWallet = null;        // { address, sol }
 	let lastBacktest = null;         // raw backtest data for export
@@ -493,6 +495,16 @@
 	function pn(n) { return n > 0 ? 'pos' : n < 0 ? 'neg' : ''; }
 	function explorerLink(addr, net) { return `https://explorer.solana.com/address/${addr}${net === 'devnet' ? '?cluster=devnet' : ''}`; }
 	function setStatus(msg, kind = 'info') { status.className = 'status ' + kind; status.textContent = msg; }
+	// fetch() rejects with the bare "Failed to fetch" / "Load failed" when the
+	// network is down or three.ws is unreachable; turn that into an instruction.
+	const NETWORK_MSG = 'three.ws could not be reached. Check your connection and try again.';
+	const BAD_REPLY_MSG = 'three.ws answered with something unexpected. Try again in a moment.';
+	function isNetworkError(e) { return e instanceof TypeError || /failed to fetch|load failed|network/i.test(String(e?.message || e)); }
+	function errMsg(e) {
+		if (isNetworkError(e)) return NETWORK_MSG;
+		if (e instanceof SyntaxError) return BAD_REPLY_MSG; // a non-JSON body from an edge or proxy error page
+		return e?.message || String(e);
+	}
 	function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
 
 	// ── Toasts ──────────────────────────────────────────────────────────────
@@ -658,7 +670,12 @@
 			method: 'POST', headers: { 'content-type': 'application/json' },
 			body: JSON.stringify({ strategy: s, network: netSel.value }),
 		}).then((r) => r.json()).catch(() => null);
-		if (!r) return; // network hiccup — leave last state
+		if (!r) {
+			// Network failure: say so instead of leaving a stale "Valid" verdict on
+			// a spec that may have changed since. Issues and summary are kept.
+			setStatus('Validation service unreachable. Check your connection; your spec is kept and re-checks on the next edit.', 'warn');
+			return;
+		}
 		if (r.error) {
 			const issues = r.issues || r.report?.issues || [{ level: 'error', field: '', message: r.error_description || r.error }];
 			const errCount = issues.filter((i) => i.level === 'error').length || 1;
@@ -676,11 +693,39 @@
 	$('validate').onclick = () => liveValidate();
 
 	// ── Agent + wallet bootstrap ────────────────────────────────────────────
+	// /api/auth/me answers 200 with { user: null } when signed out, so the
+	// session is resolved with one clean GET instead of a 401 on /api/agents in
+	// every anonymous visitor's console. Signed-out and agent-less visitors get a
+	// link to the next step rather than an inert "sign in" option.
+	function renderSignedOut(message) {
+		signedIn = false;
+		agentSel.innerHTML = '<option value="">Sign in to load agents</option>';
+		walletInfo.innerHTML = message
+			? `<span class="muted">${escapeHtml(message)}</span>`
+			: `<a href="${LOGIN_HREF}">Sign in</a><span class="muted"> to pick an agent, backtest on real on-chain history, and run live.</span>`;
+		provisionBtn.disabled = true;
+		renderPortfolio(null);
+	}
 	async function loadAgents() {
+		const me = await fetch('/api/auth/me', { credentials: 'include', headers: { accept: 'application/json' } })
+			.then((r) => (r.ok ? r.json() : null)).catch(() => null);
+		if (!me) { renderSignedOut('three.ws could not be reached. Check your connection and reload to load your agents.'); return; }
+		if (!me.user) { renderSignedOut(); return; }
+		signedIn = true;
 		const r = await fetch('/api/agents', { credentials: 'include' }).then((r) => r.json()).catch(() => null);
-		if (!r?.agents) { agentSel.innerHTML = '<option value="">— sign in to load agents —</option>'; return; }
+		if (!r?.agents) {
+			agentSel.innerHTML = '<option value="">Agents unavailable</option>';
+			walletInfo.innerHTML = '<span class="muted">Your agents could not be loaded. Reload to try again.</span>';
+			return;
+		}
+		if (!r.agents.length) {
+			agentSel.innerHTML = '<option value="">No agents yet</option>';
+			walletInfo.innerHTML = `<a href="/create">Create an agent</a><span class="muted"> to get a Solana wallet for live runs. Backtests work right away.</span>`;
+			return;
+		}
 		agentSel.innerHTML = '<option value="">— select agent —</option>' +
 			r.agents.map((a) => `<option value="${a.id}">${escapeHtml(a.name || a.id)}</option>`).join('');
+		walletInfo.innerHTML = '<span class="muted">Pick an agent to load its wallet.</span>';
 		const saved = localStorage.getItem('strategy-lab:agentId');
 		if (saved && r.agents.some((a) => a.id === saved)) { agentSel.value = saved; await onAgentChange(); }
 	}
@@ -744,13 +789,21 @@
 		const r = await fetch('/api/pump/strategy-backtest', {
 			method: 'POST', headers: { 'content-type': 'application/json' },
 			body: JSON.stringify({ strategy: s, network: netSel.value }),
-		}).then((r) => r.json()).catch((e) => ({ error: e.message }));
+		}).then((r) => r.json()).catch((e) => ({ error: 'network_error', error_description: errMsg(e) }));
 		$('backtest').disabled = false;
 		if (r.error) {
-			setStatus('Backtest failed: ' + (r.error_description || r.error), 'bad');
-			pushLog('error', '! ' + (r.error_description || r.error));
+			const msg = r.error_description || r.error;
+			pushLog('error', '! ' + msg);
+			if (r.error === 'unauthorized') {
+				setStatus('Sign in to backtest against real on-chain history.', 'warn');
+				showResultSignIn('Backtests replay your strategy against real holder, curve, and trade history, which takes a signed-in account.');
+				return;
+			}
+			setStatus('Backtest failed: ' + msg, 'bad');
 			if (r.issues) { spec.classList.add('invalid'); renderIssues(r.issues); }
-			showResultError(r.error_description || r.error);
+			showResultError(r.error === 'no_candidates'
+				? 'The scan returned no mints to replay. Widen the scan limit, switch between new and trending, or list mints explicitly.'
+				: msg);
 			return;
 		}
 		lastBacktest = r.data;
@@ -886,9 +939,25 @@
 			<div class="skel" style="height:60px"></div><div class="skel" style="height:110px"></div>
 			<div class="skel" style="height:24px"></div><div class="skel" style="height:24px"></div><div class="skel" style="height:24px"></div></div>`;
 	}
+	function emptyState(ic, title, bodyHtml) {
+		return `<div class="empty"><div class="ic">${ic}</div><div class="t">${escapeHtml(title)}</div><div class="d">${bodyHtml}</div></div>`;
+	}
 	function showResultError(msg) {
 		metrics.style.display = 'none'; charts.innerHTML = '';
-		resultPanel.innerHTML = `<div class="empty"><div class="ic">⚠️</div><div class="t">Couldn't complete</div><div class="d">${escapeHtml(msg)}</div></div>`;
+		resultPanel.innerHTML = emptyState('⚠️', "Couldn't complete", escapeHtml(msg));
+	}
+	function showResultSignIn(why) {
+		metrics.style.display = 'none'; charts.innerHTML = '';
+		resultPanel.innerHTML = emptyState('🔐', 'Sign in to continue', `${escapeHtml(why)} <a href="${LOGIN_HREF}">Sign in</a> and you land right back here.`);
+	}
+	function showRunInProgress(runMode, network, durationSec) {
+		metrics.style.display = 'none'; charts.innerHTML = '';
+		resultPanel.innerHTML = emptyState('📡', `${runMode === 'live' ? 'Live' : 'Simulated'} session running`,
+			`Scanning ${network} for up to ${durationSec}s. Every entry, exit, and skip streams into the Activity log below as it happens; the summary lands here when the session ends.`);
+	}
+	function showRunStopped() {
+		metrics.style.display = 'none'; charts.innerHTML = '';
+		resultPanel.innerHTML = emptyState('■', 'Session stopped', 'Open positions persist and appear in the Portfolio panel below. Start another run whenever you like.');
 	}
 
 	// ── Export / copy ───────────────────────────────────────────────────────
@@ -920,6 +989,7 @@
 		const durationSec = Number($('durSel').value) || 60;
 
 		if (mode === 'live') {
+			if (!signedIn) { setStatus('Sign in to run a strategy live.', 'warn'); showResultSignIn('Live runs sign real transactions from your agent\'s wallet, which takes a signed-in account.'); return; }
 			if (!agentId) { setStatus('Select an agent first.', 'bad'); return; }
 			if (!currentWallet) { setStatus('Provision a Solana wallet first.', 'bad'); return; }
 			if (currentWallet.sol < 0.02) { setStatus('Wallet balance below 0.02 SOL — fund it before going live.', 'bad'); return; }
@@ -934,6 +1004,7 @@
 		clearLog();
 		pushLog('start', `▶ ${mode === 'live' ? 'LIVE' : 'simulated'} run on ${network} · ${durationSec}s`);
 		setStatus(`Streaming ${mode}…`, 'info'); liveDot.classList.add('on');
+		showRunInProgress(mode, network, durationSec);
 		$('run').disabled = true; $('backtest').disabled = true; $('stop').disabled = false;
 
 		const ctrl = new AbortController(); activeRun = ctrl;
@@ -945,8 +1016,11 @@
 			});
 			if (!resp.ok) {
 				let body = null; try { body = JSON.parse(await resp.text()); } catch {}
-				if (body?.issues) { setStatus(`Run rejected — ${body.error_description || body.error}`, 'bad'); spec.classList.add('invalid'); renderIssues(body.issues); }
-				else setStatus('Run failed: HTTP ' + resp.status + (body?.error_description ? ' — ' + body.error_description : ''), 'bad');
+				const msg = body?.error_description || body?.error || ('HTTP ' + resp.status);
+				pushLog('error', '! ' + msg);
+				if (resp.status === 401) { setStatus('Sign in to run a strategy live.', 'warn'); showResultSignIn('Live runs sign real transactions from your agent\'s wallet, which takes a signed-in account.'); }
+				else if (body?.issues) { setStatus('Run rejected: ' + msg, 'bad'); spec.classList.add('invalid'); renderIssues(body.issues); showResultError('Fix the flagged rules in the spec, then run again.'); }
+				else { setStatus('Run failed: ' + msg, 'bad'); showResultError(msg); }
 				return;
 			}
 			const reader = resp.body.getReader(), dec = new TextDecoder();
@@ -961,13 +1035,20 @@
 			setStatus('Run complete', 'ok');
 			if (mode === 'live') refreshPortfolio();
 		} catch (e) {
-			if (e.name !== 'AbortError') setStatus('Stream error: ' + e.message, 'bad');
+			if (e.name !== 'AbortError') {
+				const started = logCounts.all > 1; // more than the local "run" line: the stream had opened
+				setStatus((started ? 'Stream error: ' : 'Run failed: ') + errMsg(e), 'bad');
+				pushLog('error', '! ' + (started ? 'stream dropped: ' : '') + errMsg(e));
+				showResultError(started
+					? 'The session stream dropped before it finished. Open positions persist in the Portfolio panel; start the run again to keep going.'
+					: errMsg(e));
+			}
 		} finally {
 			liveDot.classList.remove('on');
 			$('run').disabled = false; $('backtest').disabled = false; $('stop').disabled = true; activeRun = null;
 		}
 	};
-	$('stop').onclick = () => { activeRun?.abort(); pushLog('error', '■ stopped'); };
+	$('stop').onclick = () => { if (!activeRun) return; activeRun.abort(); pushLog('error', '■ stopped'); setStatus('Run stopped', 'warn'); showRunStopped(); };
 
 	function handleSse(chunk) {
 		const lines = chunk.split('\n');
@@ -989,14 +1070,34 @@
 	}
 	function renderRunSummary(d) {
 		metrics.style.display = ''; charts.innerHTML = '';
-		const enters = (d.log || []).filter((l) => l.action === 'enter').length;
-		const exits = (d.log || []).filter((l) => l.action === 'exit').length;
+		const log = d.log || [];
+		const count = (action) => log.filter((l) => l.action === action).length;
+		const enters = count('enter'), exits = count('exit'), skips = count('skip');
+		const scanErrors = log.filter((l) => l.action === 'scan-error');
+		const tradeErrors = log.filter((l) => typeof l.action === 'string' && l.action.endsWith('-error') && l.action !== 'scan-error');
 		metrics.innerHTML = `
 			<div class="metric"><div class="v">${fmt(d.spent, 3)}</div><div class="l">SOL deployed</div></div>
 			<div class="metric"><div class="v">${d.openPositions?.length ?? 0}</div><div class="l">open positions</div></div>
 			<div class="metric"><div class="v">${enters}</div><div class="l">entries</div></div>
-			<div class="metric"><div class="v">${exits}</div><div class="l">exits</div></div>`;
-		resultPanel.innerHTML = `<div class="empty"><div class="ic">✅</div><div class="t">Session complete</div><div class="d">Open positions persist across runs and appear in the Portfolio panel below.</div></div>`;
+			<div class="metric"><div class="v">${exits}</div><div class="l">exits</div></div>
+			<div class="metric"><div class="v">${skips}</div><div class="l">skipped</div></div>`;
+		if (!enters && scanErrors.length && !skips) {
+			resultPanel.innerHTML = emptyState('⚠️', 'No candidates reached the filters',
+				`Every scan failed: ${escapeHtml(scanErrors[0].error || 'unknown error')}. The live feed may be catching its breath; run again in a minute.`);
+			return;
+		}
+		if (!enters && skips) {
+			resultPanel.innerHTML = emptyState('🔍', 'Nothing passed the filters',
+				`${skips} candidate${skips === 1 ? '' : 's'} scanned, none met every entry rule. Loosen a threshold, drop a filter from the palette, or raise the scan limit, then run again.`);
+			return;
+		}
+		if (!enters) {
+			resultPanel.innerHTML = emptyState('🌙', 'Quiet session', 'No candidates surfaced during the window. Try a longer duration or switch the scan between new and trending launches.');
+			return;
+		}
+		const errNote = tradeErrors.length ? ` ${tradeErrors.length} trade${tradeErrors.length === 1 ? '' : 's'} hit an error; the Activity log has each one.` : '';
+		resultPanel.innerHTML = emptyState('✅', 'Session complete',
+			`${enters} entr${enters === 1 ? 'y' : 'ies'}, ${exits} exit${exits === 1 ? '' : 's'}, ${fmt(d.spent, 3)} SOL deployed.${errNote} Open positions persist across runs and appear in the Portfolio panel below.`);
 	}
 
 	// ── Portfolio ───────────────────────────────────────────────────────────
@@ -1004,14 +1105,20 @@
 		const id = agentSel.value, net = netSel.value;
 		if (!id) { renderPortfolio(null); return; }
 		$('refreshPortfolio').disabled = true; $('refreshPortfolio').textContent = 'Refreshing…';
-		const r = await fetch(`/api/pump/portfolio?agentId=${id}&network=${net}`, { credentials: 'include' }).then((r) => r.json()).catch(() => null);
+		const r = await fetch(`/api/pump/portfolio?agentId=${id}&network=${net}`, { credentials: 'include' }).then((r) => r.json()).catch((e) => ({ error: 'network_error', error_description: errMsg(e) }));
 		$('refreshPortfolio').disabled = false; $('refreshPortfolio').textContent = 'Refresh';
-		portfolioData = r?.data || null;
+		if (!r || r.error) {
+			portfolioData = null;
+			$('portfolio').innerHTML = emptyState('⚠️', 'Portfolio unavailable', `${escapeHtml(r?.error_description || r?.error || NETWORK_MSG)} Hit Refresh to try again.`);
+			return;
+		}
+		portfolioData = r.data || null;
 		renderPortfolio(portfolioData);
 	}
 	$('refreshPortfolio').onclick = refreshPortfolio;
 	$('closeAll').onclick = async () => {
 		const id = agentSel.value;
+		if (!signedIn) { setStatus('Sign in to manage positions.', 'warn'); showResultSignIn('Selling positions signs real transactions from your agent\'s wallet, which takes a signed-in account.'); return; }
 		if (!id) { setStatus('Select an agent first.', 'bad'); return; }
 		const net = netSel.value, netLabel = net === 'mainnet' ? 'mainnet' : 'devnet';
 		const ok = await confirmDialog({
@@ -1026,8 +1133,8 @@
 		const r = await fetch('/api/pump/strategy-close-all', {
 			method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' },
 			body: JSON.stringify({ agentId: id, network: net }),
-		}).then((r) => r.json()).catch((e) => ({ error: e.message }));
-		if (r.error) { setStatus('Close-all failed: ' + (r.error_description || r.error), 'bad'); return; }
+		}).then((r) => r.json()).catch((e) => ({ error: 'network_error', error_description: errMsg(e) }));
+		if (r.error) { setStatus('Close-all failed: ' + (r.error_description || r.error), 'bad'); pushLog('error', '! close-all: ' + (r.error_description || r.error)); return; }
 		(r.data?.log || []).forEach((e) => {
 			if (e.action === 'sold') pushLog('exit', `× sold   ${e.mint}  → ${e.sig?.slice(0, 12) ?? ''}…`);
 			else if (e.action === 'sell-error') pushLog('error', `! sell-error  ${e.mint}: ${e.error}`);

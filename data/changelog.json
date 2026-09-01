@@ -25400,6 +25400,16 @@
 				"fix"
 			],
 			"link": "/three"
+		},
+		{
+			"date": "2026-09-01",
+			"title": "Strategy Lab backtests and simulated runs find real launches again",
+			"summary": "In production, every Strategy Lab backtest and simulated session was scanning for candidates and coming back empty: the server-side strategy runtime was asking for pump.fun data with a page-relative address that only a browser can resolve, and the discovery tools behind it needed an indexer the platform never configured. The runtime now calls the pump.fun tools directly in-process, and the new-launch and trending scans read the live pump.fun feed with the platform's own launch recorder as backup, so a scan returns real mints on the first tick. The Lab page also tells a signed-out visitor exactly what signing in unlocks, links straight to it, shows a live \"session running\" state while a run streams, and explains a quiet session (every candidate filtered out, or the feed briefly unreachable) instead of a bare \"complete\".",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/strategy-lab"
 		}
 	]
 }

@@ -98,11 +98,16 @@ async function fetchBirdeye(limit) {
 // Fallback: pump.fun's public frontend feed (no API key). Mapped into the exact
 // same shape so every consumer keeps working. pump.fun doesn't expose a clean
 // per-token USD price here, so price_usd is left null rather than fabricated.
-async function fetchPumpFun(limit) {
+//
+// `sort` picks the feed: 'market_cap' is the trending list, 'created_timestamp'
+// the newest launches. Both come back in the same slim shape, plus the creator
+// wallet and creation time the frontend feed carries for free (null when a row
+// lacks them), which the strategy runtime's token-age metric reads.
+async function fetchPumpFun(limit, sort = 'market_cap') {
 	const url = new URL('/coins', PUMP_FRONTEND_BASE);
 	url.searchParams.set('offset', '0');
 	url.searchParams.set('limit', String(limit));
-	url.searchParams.set('sort', 'market_cap');
+	url.searchParams.set('sort', sort);
 	url.searchParams.set('order', 'DESC');
 	url.searchParams.set('includeNsfw', 'false');
 	let upstream;
@@ -123,6 +128,8 @@ async function fetchPumpFun(limit) {
 			logo: normalizeGatewayURL(c.image_uri || c.image || '') || null,
 			price_usd: null,
 			usd_market_cap: typeof c.usd_market_cap === 'number' ? c.usd_market_cap : null,
+			creator: typeof c.creator === 'string' && c.creator.length >= 32 ? c.creator : null,
+			created_at: typeof c.created_timestamp === 'number' ? c.created_timestamp : null,
 			rank: i + 1,
 		}))
 		.filter((t) => typeof t.mint === 'string' && t.mint.length >= 32);
@@ -193,5 +200,81 @@ export async function getTrendingSlim(limit) {
 	}
 
 	_cache = { value: data, storedAt: now, expiresAt: now + TTL_MS, limit: data.length };
+	return { data: data.slice(0, limit), stale: false };
+}
+
+// ── Newest launches ─────────────────────────────────────────────────────────
+// Same contract as trending, for the "most recently launched" feed the strategy
+// runtime scans (`scan.kind: 'newTokens'`) and the pump.fun MCP's get_new_tokens
+// tool serve. Rungs: pump.fun's public frontend feed sorted by creation time,
+// then the recorder database (pump_coin_intel ingests every launch the WS feed
+// sees, so it is the freshest thing the platform owns when egress is blocked),
+// then the stale cache. New launches churn by the second, so the TTL is short.
+let _newCache = { value: null, storedAt: 0, expiresAt: 0, limit: 0 };
+const NEW_TTL_MS = 10_000;
+const NEW_FETCH_LIMIT = 50;
+
+function serveStaleNew(limit, now) {
+	if (!_newCache.value) return null;
+	if (now - _newCache.storedAt > STALE_MAX_MS) return null;
+	return _newCache.value.slice(0, limit);
+}
+
+async function fetchDbNew(limit) {
+	try {
+		const rows = await sql`
+			SELECT mint, symbol, name, image_uri, creator, created_at, first_seen_at
+			FROM pump_coin_intel
+			WHERE first_seen_at > now() - interval '6 hours'
+			ORDER BY first_seen_at DESC
+			LIMIT ${limit}
+		`;
+		const data = rows
+			.map((r, i) => {
+				const created = r.created_at || r.first_seen_at;
+				return {
+					mint: r.mint || '',
+					symbol: r.symbol || '?',
+					name: r.name || r.symbol || '',
+					logo: normalizeGatewayURL(r.image_uri || '') || null,
+					price_usd: null,
+					usd_market_cap: null,
+					creator: typeof r.creator === 'string' && r.creator.length >= 32 ? r.creator : null,
+					created_at: created ? new Date(created).getTime() : null,
+					rank: i + 1,
+				};
+			})
+			.filter((t) => typeof t.mint === 'string' && t.mint.length >= 32);
+		return data.length ? data : null;
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * Get up to `limit` of the most recently launched pump.fun tokens (thin
+ * projection plus creator + created_at), cached 10s with a stale fallback across
+ * a pump.fun→recorder-DB failover.
+ *
+ * @param {number} limit
+ * @returns {Promise<{ data: object[]|null, stale: boolean }>}
+ *   `data: null` only when every live source is down AND no usable stale cache
+ *   exists.
+ */
+export async function getNewSlim(limit) {
+	const now = Date.now();
+	if (_newCache.value && _newCache.expiresAt > now && _newCache.limit >= limit) {
+		return { data: _newCache.value.slice(0, limit), stale: false };
+	}
+	const fetchN = Math.max(NEW_FETCH_LIMIT, limit);
+	let data = await fetchPumpFun(fetchN, 'created_timestamp');
+	if (!data) data = await fetchDbNew(fetchN);
+	if (!data) {
+		const stale = serveStaleNew(limit, now);
+		if (stale) return { data: stale, stale: true };
+		console.warn('[pump-trending] new-launch sources failed (pump.fun, recorder db) and no stale cache');
+		return { data: null, stale: false };
+	}
+	_newCache = { value: data, storedAt: now, expiresAt: now + NEW_TTL_MS, limit: data.length };
 	return { data: data.slice(0, limit), stale: false };
 }

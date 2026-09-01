@@ -12,9 +12,9 @@ works on any deployment of three.ws without third-party DNS or proxies.
 | `getTokenDetails` | Solana RPC + Metaplex metadata | Mint, supply, decimals, name, symbol. Always available. |
 | `getTokenHolders` | `connection.getTokenLargestAccounts` | Top holders + concentration. Always available. |
 | `searchTokens` | upstream pumpfun-claims-bot | Requires `PUMPFUN_BOT_URL`. |
-| `getTokenTrades` | upstream pumpfun-claims-bot | Requires `PUMPFUN_BOT_URL`. |
-| `getTrendingTokens` | upstream pumpfun-claims-bot | Requires `PUMPFUN_BOT_URL`. |
-| `getNewTokens` | upstream pumpfun-claims-bot | Requires `PUMPFUN_BOT_URL`. |
+| `getTokenTrades` | upstream pumpfun-claims-bot, else on-chain | Real trades decoded from Solana RPC when `PUMPFUN_BOT_URL` is unset. Always available. |
+| `getTrendingTokens` | upstream pumpfun-claims-bot, else live pump.fun feed | Falls through to pump.fun's public feed and the platform's launch recorder when `PUMPFUN_BOT_URL` is unset. Always available. |
+| `getNewTokens` | upstream pumpfun-claims-bot, else live pump.fun feed | Newest launches from pump.fun's public feed, with the platform's launch recorder as backup, when `PUMPFUN_BOT_URL` is unset. Always available. |
 | `getGraduatedTokens` | upstream pumpfun-claims-bot | Requires `PUMPFUN_BOT_URL`. |
 | `getKingOfTheHill` | upstream pumpfun-claims-bot | Requires `PUMPFUN_BOT_URL`. |
 | `getCreatorProfile` | upstream pumpfun-claims-bot | Requires `PUMPFUN_BOT_URL`. |

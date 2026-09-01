@@ -82,6 +82,14 @@ vi.mock('../../api/_lib/pumpfun-mcp.js', () => ({
 }));
 import { pumpfunBotEnabled } from '../../api/_lib/pumpfun-mcp.js';
 
+// The live pump.fun feed rung under get_trending_tokens / get_new_tokens. Each
+// test sets what the feed answers; `data: null` means every rung is down.
+vi.mock('../../api/_lib/pump-trending.js', () => ({
+	getTrendingSlim: vi.fn(async () => ({ data: null, stale: false })),
+	getNewSlim: vi.fn(async () => ({ data: null, stale: false })),
+}));
+import { getTrendingSlim, getNewSlim } from '../../api/_lib/pump-trending.js';
+
 // ── helpers ────────────────────────────────────────────────────────────────
 function makeReq(body) {
 	const stream = body ? Readable.from([Buffer.from(JSON.stringify(body))]) : Readable.from([]);
@@ -134,15 +142,16 @@ beforeEach(() => {
 
 // ── Tests ──────────────────────────────────────────────────────────────────
 
-// The six discovery tools that require the external indexer (PUMPFUN_BOT_URL).
+// The four discovery tools that require the external indexer (PUMPFUN_BOT_URL).
+// get_trending_tokens and get_new_tokens are NOT here: they fall through to the
+// live pump.fun feed and stay advertised without the indexer.
 const INDEXER_TOOL_NAMES = [
 	'search_tokens',
-	'get_trending_tokens',
-	'get_new_tokens',
 	'get_graduated_tokens',
 	'get_king_of_the_hill',
 	'get_creator_profile',
 ];
+const LIVE_FEED_TOOL_NAMES = ['get_trending_tokens', 'get_new_tokens'];
 
 describe('initialize', () => {
 	it('returns server info, protocol version, and indexerEnabled flag', async () => {
@@ -163,17 +172,18 @@ describe('initialize', () => {
 });
 
 describe('tools/list', () => {
-	it('excludes the six indexer tools (keeps pumpfun_bot_status) when unconfigured', async () => {
+	it('excludes the four indexer-only tools (keeps pumpfun_bot_status and the live-feed tools) when unconfigured', async () => {
 		pumpfunBotEnabled.mockReturnValue(false);
 		const { json } = await call({ jsonrpc: '2.0', id: 1, method: 'tools/list' });
 		expect(Array.isArray(json.result.tools)).toBe(true);
 		const names = json.result.tools.map((t) => t.name);
-		// None of the indexer-backed discovery tools are advertised…
+		// None of the indexer-only discovery tools are advertised…
 		for (const n of INDEXER_TOOL_NAMES) expect(names).not.toContain(n);
-		// …but the always-on metadata tool is.
+		// …but the always-on metadata tool and the live-feed discovery tools are.
 		expect(names).toContain('pumpfun_bot_status');
-		// 25 total declared − 6 indexer tools = 19 advertised.
-		expect(json.result.tools).toHaveLength(19);
+		for (const n of LIVE_FEED_TOOL_NAMES) expect(names).toContain(n);
+		// 25 total declared − 4 indexer-only tools = 21 advertised.
+		expect(json.result.tools).toHaveLength(21);
 		for (const t of json.result.tools) expect(t.inputSchema.type).toBe('object');
 	});
 
@@ -251,10 +261,72 @@ describe('tools/call indexer-required tools', () => {
 			jsonrpc: '2.0',
 			id: 1,
 			method: 'tools/call',
-			params: { name: 'getTrendingTokens', arguments: { limit: 5 } },
+			params: { name: 'searchTokens', arguments: { query: 'three', limit: 5 } },
 		});
 		expect(json.error.code).toBe(-32004);
 		expect(json.error.message).toMatch(/indexer/i);
+	});
+});
+
+describe('tools/call live-feed discovery tools', () => {
+	const row = (mint, i) => ({
+		mint,
+		symbol: `S${i}`,
+		name: `Coin ${i}`,
+		logo: null,
+		price_usd: null,
+		usd_market_cap: 1000 * (i + 1),
+		rank: i + 1,
+	});
+
+	it('getTrendingTokens answers from the live pump.fun feed without the indexer', async () => {
+		pumpfunBotEnabled.mockReturnValue(false);
+		getTrendingSlim.mockResolvedValueOnce({
+			data: ['THREEsynthetic1111111111111111111111111111', 'THREEsynthetic2222222222222222222222222222'].map(row),
+			stale: false,
+		});
+		const { json } = await call({
+			jsonrpc: '2.0',
+			id: 1,
+			method: 'tools/call',
+			params: { name: 'getTrendingTokens', arguments: { limit: 5 } },
+		});
+		expect(json.error).toBeUndefined();
+		expect(getTrendingSlim).toHaveBeenCalledWith(5);
+		const data = json.result.structuredContent;
+		expect(data.source).toBe('pump.fun');
+		expect(data.stale).toBe(false);
+		expect(data.tokens.map((t) => t.mint)).toEqual([
+			'THREEsynthetic1111111111111111111111111111',
+			'THREEsynthetic2222222222222222222222222222',
+		]);
+	});
+
+	it('get_new_tokens clamps the limit and flags a stale feed', async () => {
+		pumpfunBotEnabled.mockReturnValue(false);
+		getNewSlim.mockResolvedValueOnce({ data: [row('THREEsynthetic3333333333333333333333333333', 0)], stale: true });
+		const { json } = await call({
+			jsonrpc: '2.0',
+			id: 1,
+			method: 'tools/call',
+			params: { name: 'get_new_tokens', arguments: { limit: 500 } },
+		});
+		expect(getNewSlim).toHaveBeenCalledWith(50);
+		expect(json.result.structuredContent.stale).toBe(true);
+		expect(json.result.structuredContent.tokens).toHaveLength(1);
+	});
+
+	it('returns -32004 only when every live rung is down', async () => {
+		pumpfunBotEnabled.mockReturnValue(false);
+		getNewSlim.mockResolvedValueOnce({ data: null, stale: false });
+		const { json } = await call({
+			jsonrpc: '2.0',
+			id: 1,
+			method: 'tools/call',
+			params: { name: 'getNewTokens', arguments: { limit: 5 } },
+		});
+		expect(json.error.code).toBe(-32004);
+		expect(json.error.message).toMatch(/pump\.fun/i);
 	});
 });
 

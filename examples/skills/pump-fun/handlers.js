@@ -19,7 +19,10 @@ function _endpoint() {
 		return `${globalThis.location.origin}/api/pump-fun-mcp`;
 	}
 	// Skill workers run without window — fall back to a same-origin relative
-	// fetch which the host shell will resolve.
+	// fetch which the host shell will resolve. On the three.ws server the skill
+	// runtime (api/_lib/skill-runtime.js) hands this handler a fetch that
+	// dispatches the relative path in-process, so the same code serves
+	// backtests and strategy runs without a loopback HTTP hop.
 	return '/api/pump-fun-mcp';
 }
 

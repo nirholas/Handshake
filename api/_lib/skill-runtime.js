@@ -52,6 +52,54 @@ async function loadManifest(name) {
 	}
 }
 
+// ── Server-side fetch for isomorphic skills ────────────────────────────────
+// Skill handlers are shared with the browser, where a relative `/api/...` URL
+// resolves against the page origin. On the server there is no origin, and
+// Node's fetch throws `Failed to parse URL from /api/pump-fun-mcp`: that one
+// line was every scan tick of every strategy run in production (2026-09-01),
+// so no backtest or simulated session ever sourced a mint. Two rungs:
+//   1. POST /api/pump-fun-mcp tools/call dispatches IN-PROCESS to the same tool
+//      handlers the HTTP route runs, wrapped in the JSON-RPC envelope the skill
+//      unwraps. No loopback hop, and the strategy loop (four tools per mint,
+//      every few seconds) stops spending the server's own per-IP MCP limit.
+//   2. Any other relative path resolves against APP_ORIGIN.
+// Absolute URLs and Request objects pass straight through untouched.
+async function serverFetch(input, init) {
+	const url = typeof input === 'string' ? input : input?.url;
+	if (typeof url !== 'string' || !url.startsWith('/')) return globalThis.fetch(input, init);
+	const path = url.split('?')[0];
+	const isPost = String(init?.method || 'GET').toUpperCase() === 'POST';
+	let rpc = null;
+	if (path === '/api/pump-fun-mcp' && isPost) {
+		try { rpc = JSON.parse(typeof init?.body === 'string' ? init.body : '{}'); } catch { rpc = null; }
+	}
+	if (rpc?.method === 'tools/call') {
+		const id = rpc.id ?? null;
+		let envelope;
+		try {
+			const { callPumpFunTool } = await import('../pump-fun-mcp.js');
+			const data = await callPumpFunTool(rpc.params?.name, rpc.params?.arguments ?? {});
+			envelope = {
+				jsonrpc: '2.0',
+				id,
+				result: { content: [{ type: 'text', text: JSON.stringify(data) }], structuredContent: data },
+			};
+		} catch (err) {
+			envelope = {
+				jsonrpc: '2.0',
+				id,
+				error: { code: err?.rpcCode ?? -32603, message: err?.message ?? 'tool error' },
+			};
+		}
+		return new Response(JSON.stringify(envelope), {
+			status: 200,
+			headers: { 'content-type': 'application/json' },
+		});
+	}
+	const { env } = await import('./env.js');
+	return globalThis.fetch(new URL(url, env.APP_ORIGIN).href, init);
+}
+
 /**
  * Build a context for invoking skills from a serverless endpoint.
  *
@@ -59,13 +107,13 @@ async function loadManifest(name) {
  * @param {object} [opts.configOverrides] - per-skill config overrides keyed by skill name
  * @param {object} [opts.wallet] - solana wallet contract for signing skills
  * @param {(event: object) => void} [opts.onEvent] - notified on every memory.note call
- * @param {object} [opts.fetch] - fetch impl (defaults to globalThis.fetch)
+ * @param {object} [opts.fetch] - fetch impl (defaults to serverFetch: in-process for /api/pump-fun-mcp, APP_ORIGIN for other relative paths)
  * @param {string} [opts.agentId] - if set, every memory.note is persisted to agent_actions
  * @param {string} [opts.signerAddress] - persisted with each agent_actions row when agentId is set
  * @param {Record<string, { skill_id: string, author_id: string }>} [opts.skillMeta] - DB-sourced royalty metadata keyed by skill name
  */
 export function makeRuntime(opts = {}) {
-	const { configOverrides = {}, wallet, onEvent, fetch = globalThis.fetch, agentId, signerAddress, skillMeta = {} } = opts;
+	const { configOverrides = {}, wallet, onEvent, fetch = serverFetch, agentId, signerAddress, skillMeta = {} } = opts;
 	let _sql;
 	// Map skill-internal tags to canonical action types so existing
 	// aggregations (spend-policy, portfolio cost-basis) keep working.

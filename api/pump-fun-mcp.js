@@ -41,6 +41,7 @@ import { reservePaymentProof } from './_lib/x402/payment-identifier-server.js';
 import { getPumpSdk, getConnection, solanaPubkey, getAmmPoolState } from './_lib/pump.js';
 import { solPriceUsd } from './_lib/sol-price.js';
 import { pumpfunMcp, pumpfunBotEnabled } from './_lib/pumpfun-mcp.js';
+import { getTrendingSlim, getNewSlim } from './_lib/pump-trending.js';
 import { TOOLS, resolveToolName, rpcError, rpcEnvelope } from '../src/pump/mcp-tools.js';
 import { generateVanityKey } from '../src/pump/vanity-keygen.js';
 import bs58 from 'bs58';
@@ -231,15 +232,41 @@ async function handleSnsReverseLookup({ address }) {
 // reappear automatically once the env var is set, with no code change. The
 // -32004 guard in indexerOrUnavailable() stays as defence for any client that
 // calls one anyway (e.g. from a cached tool list). get_token_trades is NOT
-// here: it has a real on-chain fallback and works without the indexer.
+// here: it has a real on-chain fallback and works without the indexer. Neither
+// are get_trending_tokens and get_new_tokens: both fall through to the live
+// pump.fun feed (liveFeedOrIndexer below), so the strategy runtime's scans keep
+// sourcing real mints on a deployment that never configured the indexer.
 const INDEXER_TOOLS = new Set([
 	'search_tokens',
-	'get_trending_tokens',
-	'get_new_tokens',
 	'get_graduated_tokens',
 	'get_king_of_the_hill',
 	'get_creator_profile',
 ]);
+
+// Discovery tools with a rung below the indexer. The indexer is preferred when
+// configured (richer rows); when it is absent or fails, the shared pump.fun
+// feed (api/_lib/pump-trending.js: pump.fun frontend → recorder DB → stale
+// cache) answers in the `{ tokens: [...] }` shape every consumer already
+// unwraps (`r.tokens ?? r`, then `t.mint`). Only when every rung is down does
+// the call surface -32004, the same code the indexer path uses.
+function liveFeedOrIndexer(name, feed) {
+	const viaIndexer = indexerOrUnavailable(name);
+	return async (args = {}) => {
+		const limit = Math.min(50, Math.max(1, Math.floor(Number(args.limit) || 10)));
+		if (pumpfunBotEnabled()) {
+			try {
+				return await viaIndexer({ ...args, limit });
+			} catch (err) {
+				console.warn(`[pump-fun-mcp] ${name}: indexer failed, using live pump.fun feed`, err?.message);
+			}
+		}
+		const { data, stale } = await feed(limit);
+		if (!data) {
+			throw rpcError(-32004, `tool "${name}": every live pump.fun source is unavailable right now`);
+		}
+		return { tokens: data, source: 'pump.fun', stale: !!stale };
+	};
+}
 
 function indexerOrUnavailable(name) {
 	return async (args) => {
@@ -1409,8 +1436,8 @@ const HANDLERS = {
 	kol_leaderboard: handleKolLeaderboard,
 	search_tokens: indexerOrUnavailable('search_tokens'),
 	get_token_trades: handleGetTokenTrades,
-	get_trending_tokens: indexerOrUnavailable('get_trending_tokens'),
-	get_new_tokens: indexerOrUnavailable('get_new_tokens'),
+	get_trending_tokens: liveFeedOrIndexer('get_trending_tokens', getTrendingSlim),
+	get_new_tokens: liveFeedOrIndexer('get_new_tokens', getNewSlim),
 	get_graduated_tokens: indexerOrUnavailable('get_graduated_tokens'),
 	get_king_of_the_hill: indexerOrUnavailable('get_king_of_the_hill'),
 	social_cashtag_sentiment: handleSocialCashtagSentiment,
@@ -1427,6 +1454,28 @@ const HANDLERS = {
 	pumpfun_upload_metadata: handleUploadMetadata,
 	pumpfun_bot_status: handlePumpfunBotStatus,
 };
+
+/**
+ * In-process tool call for server-side callers (the skill runtime behind
+ * /api/pump/strategy-*). Same alias resolution and handler table as the HTTP
+ * route, without the loopback hop: a strategy loop polling four tools per mint
+ * every three seconds would otherwise spend the server's own per-IP MCP rate
+ * limit on itself. Gated tools (vanity grind, whale watch, metadata pin) stay
+ * HTTP-only because their bearer / x402 proof lives on the request.
+ *
+ * Resolves with the tool's data; rejects with an Error carrying `rpcCode` so a
+ * caller can wrap it in the JSON-RPC envelope the skills unwrap.
+ */
+export async function callPumpFunTool(requestedName, args = {}) {
+	const name = resolveToolName(requestedName);
+	const handler =
+		typeof name === 'string' && Object.hasOwn(HANDLERS, name) ? HANDLERS[name] : null;
+	if (!handler) throw rpcError(-32601, `unknown tool: ${requestedName}`);
+	if (AUTH_REQUIRED_TOOLS.has(name)) {
+		throw rpcError(-32001, `tool "${name}" needs a bearer or x402 payment: call it over HTTP`);
+	}
+	return handler(args && typeof args === 'object' ? args : {});
+}
 
 // ── HTTP entrypoint ────────────────────────────────────────────────────────
 
