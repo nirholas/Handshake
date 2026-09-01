@@ -5,7 +5,7 @@
 		<meta charset="utf-8" />
 		<title data-i18n="stage.meta_title">Living Stages · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-		<meta name="description" content="Live, embodied AI performances. An AI host performs in a 3D venue with spatial voice and lip-sync, reads the room, takes audience questions, and gets tipped in $THREE on the spot: the biggest tippers get the floor." data-i18n-attr="content:stage.meta_description"/>
+		<meta name="description" content="Live, embodied AI performances on three.ws — an AI host performs in a 3D venue with spatial voice and lip-sync, reads the room, and gets tipped in $THREE on the spot."  data-i18n-attr="content:stage.meta_description"/>
 		<meta name="theme-color" content="#07060d" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -13,10 +13,8 @@
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:title" content="Living Stages · three.ws"  data-i18n-attr="content:stage.meta_og_title"/>
-		<meta property="og:description" content="An AI host performs live in a 3D venue: spatial voice, lip-sync, a co-present crowd, and real $THREE tips it reacts to on the spot." data-i18n-attr="content:stage.meta_og_description"/>
+		<meta property="og:description" content="An AI host performs live in a 3D venue — spatial voice, lip-sync, a co-present crowd, and real $THREE tips it reacts to on the spot."  data-i18n-attr="content:stage.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/stage" />
-		<!-- The realtime performance feed (stage_world on the multiplayer Cloud Run service). Read by src/stage-net.js through the shared game-server chain; localhost dev ignores it and talks to :2567. -->
-		<meta name="game-server" content="wss://three-ws-multiplayer-93741856042.us-central1.run.app" />
 
 		<link rel="stylesheet" href="/tokens.css" />
 		<link rel="stylesheet" href="/buttons.css" />
@@ -73,10 +71,7 @@
 			.stage-phase { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; letter-spacing: .06em; color: var(--stage-dim); text-transform: uppercase; }
 			.stage-phase.is-live { color: #ff5db1; }
 			.stage-phase.is-live .dot { width: 8px; height: 8px; border-radius: 50%; background: #ff2d6f; animation: pulse 1.4s infinite; }
-			.stage-net-pill { pointer-events: auto; font: inherit; font-size: 11px; padding: 4px 9px; border-radius: 999px; border: 1px solid var(--stage-line); background: rgba(7,6,13,.6); color: var(--stage-dim); cursor: default; transition: background .15s, border-color .15s; }
-			.stage-net-pill.bad, .stage-net-pill.offline { cursor: pointer; }
-			.stage-net-pill.bad:hover { background: rgba(255,122,144,.14); }
-			.stage-net-pill:focus-visible { outline: 2px solid var(--stage-accent-2); outline-offset: 2px; }
+			.stage-net-pill { pointer-events: auto; font-size: 11px; padding: 4px 9px; border-radius: 999px; border: 1px solid var(--stage-line); background: rgba(7,6,13,.6); }
 			.stage-net-pill.ok { color: #6ee7a8; border-color: rgba(110,231,168,.4); }
 			.stage-net-pill.warn { color: var(--stage-gold); }
 			.stage-net-pill.bad { color: #ff7a90; }
@@ -85,10 +80,7 @@
 			.stage-caption.speaking { border-color: var(--stage-accent); box-shadow: 0 0 30px rgba(155,107,255,.25); }
 
 			.stage-overlay-bottom { position: absolute; left: 20px; bottom: 20px; display: flex; gap: 12px; align-items: center; }
-			.stage-sound { background: var(--stage-accent); color: #fff; border: 0; border-radius: 999px; padding: 9px 16px; font-weight: 600; cursor: pointer; transition: opacity .15s, transform .1s; }
-			.stage-sound:hover { opacity: .92; }
-			.stage-sound:active { transform: scale(.97); }
-			.stage-sound:focus-visible { outline: 2px solid var(--stage-accent-2); outline-offset: 2px; }
+			.stage-sound { background: var(--stage-accent); color: #fff; border: 0; border-radius: 999px; padding: 9px 16px; font-weight: 600; cursor: pointer; }
 			.stage-dolly { display: flex; align-items: center; gap: 8px; background: rgba(7,6,13,.6); border: 1px solid var(--stage-line); border-radius: 999px; padding: 4px 10px; font-size: 11px; color: var(--stage-dim); text-transform: uppercase; letter-spacing: .05em; }
 			.stage-dolly button { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--stage-line); background: rgba(155,107,255,.12); color: var(--stage-text); font-size: 18px; line-height: 1; cursor: pointer; transition: background .15s; }
 			.stage-dolly button:hover { background: rgba(155,107,255,.3); }
@@ -114,8 +106,6 @@
 			.stage-tip-presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 10px; }
 			.stage-tip-preset { padding: 8px 0; border-radius: 9px; border: 1px solid var(--stage-line); background: rgba(155,107,255,.08); color: var(--stage-text); font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s, border-color .15s; }
 			.stage-tip-preset:hover { background: rgba(155,107,255,.2); }
-			.stage-tip-preset:active { transform: scale(.97); }
-			.stage-tip-preset:focus-visible { outline: 2px solid var(--stage-accent-2); outline-offset: 1px; }
 			.stage-tip-preset.active { background: var(--stage-accent); border-color: var(--stage-accent); color: #fff; }
 			.stage-tip-row { display: flex; gap: 8px; margin-bottom: 8px; }
 			.stage-tip-row input, .stage-tip-msg, .stage-ask-row input { flex: 1; width: 100%; background: rgba(7,6,13,.6); border: 1px solid var(--stage-line); border-radius: 9px; padding: 9px 11px; color: var(--stage-text); font-size: 14px; }
@@ -123,8 +113,7 @@
 			input:focus-visible { outline: 2px solid var(--stage-accent-2); outline-offset: 0; }
 			.stage-tip-send, .stage-ask-row button { background: linear-gradient(90deg, var(--stage-accent), var(--stage-accent-2)); color: #fff; border: 0; border-radius: 9px; padding: 9px 18px; font-weight: 700; cursor: pointer; transition: opacity .15s, transform .1s; }
 			.stage-tip-send:hover, .stage-ask-row button:hover { opacity: .92; }
-			.stage-tip-send:active, .stage-ask-row button:active { transform: scale(.97); }
-			.stage-tip-send:focus-visible, .stage-ask-row button:focus-visible { outline: 2px solid var(--stage-accent-2); outline-offset: 2px; }
+			.stage-tip-send:active { transform: scale(.97); }
 			.stage-tip-send:disabled { opacity: .5; cursor: progress; }
 			.stage-tip-status, .stage-ask-status { margin: 8px 0 0; font-size: 12px; min-height: 16px; color: var(--stage-dim); }
 			.stage-tip-status.ok { color: #6ee7a8; }
@@ -144,10 +133,7 @@
 			.stage-empty { text-align: center; padding: 80px 24px; max-width: 480px; margin: 0 auto; }
 			.stage-empty h2 { margin: 0 0 8px; }
 			.stage-empty p { color: var(--stage-dim); line-height: 1.5; }
-			.stage-cta { display: inline-block; margin-top: 14px; background: var(--stage-accent); color: #fff; padding: 10px 20px; border-radius: 10px; text-decoration: none; border: 0; font: inherit; cursor: pointer; transition: opacity .15s, transform .1s; }
-			.stage-cta:hover { opacity: .92; }
-			.stage-cta:active { transform: scale(.97); }
-			.stage-cta:focus-visible { outline: 2px solid var(--stage-accent-2); outline-offset: 2px; }
+			.stage-cta { display: inline-block; margin-top: 14px; background: var(--stage-accent); color: #fff; padding: 10px 20px; border-radius: 10px; text-decoration: none; border: 0; font: inherit; cursor: pointer; }
 
 			@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
 			@keyframes shimmer { to { background-position: -200% 0; } }
@@ -168,13 +154,13 @@
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta property="og:image:type" content="image/png">
-	<meta property="og:image:alt" content="Living Stages - three.ws">
+	<meta property="og:image:alt" content="Living Stages — three.ws">
 	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:site" content="@trythreews">
 	<meta name="twitter:title" content="Living Stages · three.ws" data-i18n-attr="content:stage.meta_twitter_title">
-	<meta name="twitter:description" content="Live, embodied AI performances. An AI host performs in a 3D venue with spatial voice and lip-sync, reads the room, takes audience questions, and gets tipped in $THREE on the spot: the biggest tippers get the floor." data-i18n-attr="content:stage.meta_twitter_description">
+	<meta name="twitter:description" content="Live, embodied AI performances. An AI host performs in a 3D venue with spatial voice and lip-sync, reads the room, takes audience questions, and gets tipped in $THREE on the spot — the biggest tippers get the floor." data-i18n-attr="content:stage.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Living+Stages&amp;d=Live%2C+embodied+AI+performances.+An+AI+host+performs+in+a+3D+venue+with+spatial+voice+and+lip-sync%2C+reads+the+room%2C+takes+audience+questions%2C+and+gets+tipped+in&amp;p=%2Fstage">
-	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Living Stages","description":"Live, embodied AI performances. An AI host performs in a 3D venue with spatial voice and lip-sync, reads the room, takes audience questions, and gets tipped in $THREE on the spot: the biggest tippers get the floor.","url":"https://three.ws/stage","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=crypto&t=Living+Stages&d=Live%2C+embodied+AI+performances.+An+AI+host+performs+in+a+3D+venue+with+spatial+voice+and+lip-sync%2C+reads+the+room%2C+takes+audience+questions%2C+and+gets+tipped+in+&p=%2Fstage"}]}</script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Living Stages","description":"Live, embodied AI performances. An AI host performs in a 3D venue with spatial voice and lip-sync, reads the room, takes audience questions, and gets tipped in $THREE on the spot — the biggest tippers get the floor.","url":"https://three.ws/stage","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=crypto&t=Living+Stages&d=Live%2C+embodied+AI+performances.+An+AI+host+performs+in+a+3D+venue+with+spatial+voice+and+lip-sync%2C+reads+the+room%2C+takes+audience+questions%2C+and+gets+tipped+in+&p=%2Fstage"}]}</script>
 </head>
 	<body>
 		<main id="stage-app" aria-live="polite"></main>

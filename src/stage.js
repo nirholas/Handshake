@@ -62,7 +62,7 @@ async function bootDirectory() {
 	root.innerHTML = `
 		<header class="stage-dir-head">
 			<h1>Living Stages</h1>
-			<p>Live, embodied AI performances. Show up, hear the host, tip in $THREE: the biggest tippers get the floor.</p>
+			<p>Live, embodied AI performances. Show up, hear the host, tip in $THREE — the biggest tippers get the floor.</p>
 		</header>
 		<div id="stage-dir" class="stage-dir" aria-live="polite">${skeletonCards(6)}</div>`;
 	const grid = document.getElementById('stage-dir');
@@ -81,8 +81,8 @@ async function bootDirectory() {
 		// Live first — the marquee.
 		grid.innerHTML = stages.map(stageCard).join('');
 	} catch (err) {
-		grid.innerHTML = errorState('Could not load stages');
-		wireRetry(grid, () => bootDirectory());
+		grid.innerHTML = errorState('Could not load stages', () => bootDirectory());
+		wireRetry(grid);
 	}
 }
 
@@ -136,27 +136,14 @@ async function bootVenue(id) {
 	};
 
 	// Load stage config.
-	// Two different failures, two different answers: an id that resolves to
-	// nothing is a dead link (send them to the marquee), a request that never
-	// completed is a network blip (let them retry in place).
 	let detail;
 	try {
 		const res = await apiFetch(`/api/stage?id=${encodeURIComponent(id)}`, { allowAnonymous: true });
-		// 404 is an unknown stage, 400 is an id the API would never mint (a
-		// hand-edited or truncated link): both are dead links, not blips.
-		if (res.status === 404 || res.status === 400) {
-			els.stageWrap.innerHTML = emptyState(
-				'Stage not found',
-				'This stage does not exist or has been taken down. The live ones are on the marquee.',
-				'/stage', 'Browse live stages',
-			);
-			return;
-		}
 		if (!res.ok) throw new Error(`http ${res.status}`);
 		detail = await res.json();
 	} catch (err) {
-		els.stageWrap.innerHTML = errorState('Could not load this stage');
-		wireRetry(els.stageWrap, () => bootVenue(id));
+		els.stageWrap.innerHTML = errorState('Stage not found', () => bootVenue(id));
+		wireRetry(els.stageWrap);
 		return;
 	}
 	const stage = detail.stage;
@@ -221,18 +208,16 @@ class VenueController {
 	onNetStatus(status) {
 		const pill = this.els.netPill;
 		const map = {
-			online: ['● live feed', 'ok', 'Live feed connected'],
-			connecting: ['connecting…', 'warn', 'Connecting to the live feed'],
-			offline: ['reconnecting…', 'warn', 'Reconnecting to the live feed'],
-			failed: ['feed offline · tap to retry', 'bad', 'Live feed offline. Tap to reconnect'],
-			unavailable: ['feed offline · tap to retry', 'bad', 'Live feed offline. Tap to reconnect'],
-			idle: ['…', 'warn', 'Live feed'],
+			online: ['● live feed', 'ok'],
+			connecting: ['connecting…', 'warn'],
+			offline: ['reconnecting…', 'warn'],
+			failed: ['feed offline', 'bad'],
+			unavailable: ['feed offline', 'bad'],
+			idle: ['…', 'warn'],
 		};
-		const [label, cls, aria] = map[status] || ['…', 'warn', 'Live feed'];
+		const [label, cls] = map[status] || ['…', 'warn'];
 		pill.textContent = label;
 		pill.className = `stage-net-pill ${cls}`;
-		pill.setAttribute('aria-label', aria);
-		pill.disabled = cls !== 'bad';
 		pill.hidden = false;
 	}
 
@@ -261,7 +246,7 @@ class VenueController {
 	}
 
 	onTip(t) {
-		this.pushTicker(`${t.label} tipped ${fmtThree(t.amount)} $THREE${t.isNewTopTipper ? ', now the top tipper 👑' : ''}`, 'tip', t.explorer);
+		this.pushTicker(`${t.label} tipped ${fmtThree(t.amount)} $THREE${t.isNewTopTipper ? ' — new top tipper! 👑' : ''}`, 'tip', t.explorer);
 		if (this.three) this.three.burst(t.isNewTopTipper ? 'gold' : 'cheer');
 	}
 
@@ -274,7 +259,7 @@ class VenueController {
 
 	onReaction(r) {
 		if (r?.ack) {
-			this.els.askStatus.textContent = r.ack.ok ? 'Queued. The host will get to it.' : 'Slow down a moment.';
+			this.els.askStatus.textContent = r.ack.ok ? 'Queued — the host will get to it.' : 'Slow down a moment.';
 			return;
 		}
 		if (this.three && r?.emoji) this.three.floatEmoji(r.id, REACTION_EMOJI[r.emoji] || '✨');
@@ -374,7 +359,7 @@ class VenueController {
 		} catch (err) {
 			const code = err instanceof TipError ? err.code : '';
 			if (code === 'cancelled') this.tipStatus('Tip cancelled.', 'warn');
-			else this.tipStatus(err?.message || 'Tip failed. Try again.', 'bad');
+			else this.tipStatus(err?.message || 'Tip failed — try again.', 'bad');
 		} finally {
 			this.tipping = false;
 			this.els.tipSend.disabled = false;
@@ -402,7 +387,7 @@ class VenueController {
 			const text = this.els.askInput.value.trim();
 			if (!text) return;
 			const ok = this.net?.ask(text);
-			this.els.askStatus.textContent = ok ? 'Sent. The host picks from the queue.' : 'Live feed offline. Tap the feed pill to reconnect, then ask again.';
+			this.els.askStatus.textContent = ok ? 'Sent — the host picks from the queue.' : 'Feed offline — try again in a moment.';
 			if (ok) this.els.askInput.value = '';
 		};
 		this.els.askBtn.addEventListener('click', ask);
@@ -432,7 +417,7 @@ class VenueController {
 		el.className = 'stage-phase';
 		if (phase === 'live') { el.classList.add('is-live'); el.innerHTML = '<span class="dot"></span> LIVE'; }
 		else if (phase === 'between') { el.textContent = nextShowLabel(this.stage.next_show_at) || 'Between shows'; }
-		else if (phase === 'ended') { el.textContent = 'Show ended. Highlights below'; }
+		else if (phase === 'ended') { el.textContent = 'Show ended — highlights below'; }
 		else { el.textContent = this.stage.next_show_at ? nextShowLabel(this.stage.next_show_at) : 'Pre-show'; }
 	}
 
@@ -440,7 +425,7 @@ class VenueController {
 		this.renderLeaderboardRows(rows);
 		const total = show?.total_tips_atomic || 0;
 		const count = show?.tip_count || 0;
-		this.els.total.textContent = total ? `${fmtThree(total)} $THREE · ${count} tips` : 'No tips yet. Be the first';
+		this.els.total.textContent = total ? `${fmtThree(total)} $THREE · ${count} tips` : 'No tips yet — be the first';
 	}
 
 	renderLeaderboardRows(rows) {
@@ -478,8 +463,6 @@ class VenueController {
 			this.voice.resume();
 		};
 		this.els.soundBtn.addEventListener('click', resume);
-		// The feed pill doubles as the reconnect control once the feed is down.
-		this.els.netPill.addEventListener('click', () => this.net?.retry());
 		this.els.closer?.addEventListener('click', () => this.three?.dolly(-1));
 		this.els.farther?.addEventListener('click', () => this.three?.dolly(1));
 		// First interaction anywhere resumes audio (browsers gate autoplay).
@@ -746,7 +729,7 @@ function venueShell() {
 				<div class="stage-3d-fallback" hidden>
 					<div class="stage-fallback-card">
 						<h2>Audio + captions mode</h2>
-						<p>Your browser can't render the 3D venue, but the show goes on: you'll hear the host and read every line below, and you can still tip in $THREE.</p>
+						<p>Your browser can't render the 3D venue, but the show goes on — you'll hear the host and read every line below, and you can still tip in $THREE.</p>
 					</div>
 				</div>
 				<div id="stage-caption" class="stage-caption" hidden><span class="cap-text"></span></div>
@@ -756,14 +739,14 @@ function venueShell() {
 						<h1 id="stage-title">Live stage</h1>
 						<p class="stage-host">with <span id="stage-host-name">the host</span> · <span id="stage-aud-count">0 here</span></p>
 					</div>
-					<button id="stage-net-pill" type="button" class="stage-net-pill warn" aria-label="Live feed" hidden>…</button>
+					<span id="stage-net-pill" class="stage-net-pill warn" hidden>…</span>
 				</div>
 				<div class="stage-overlay-bottom">
-					<button id="stage-sound" type="button" class="stage-sound" hidden>🔊 Tap for sound</button>
+					<button id="stage-sound" class="stage-sound" hidden>🔊 Tap for sound</button>
 					<div class="stage-dolly">
-						<button id="stage-farther" type="button" aria-label="Step back">−</button>
+						<button id="stage-farther" aria-label="Step back">−</button>
 						<span>proximity</span>
-						<button id="stage-closer" type="button" aria-label="Step closer">+</button>
+						<button id="stage-closer" aria-label="Step closer">+</button>
 					</div>
 				</div>
 				<div id="stage-ticker" class="stage-ticker" aria-live="polite"></div>
@@ -776,7 +759,7 @@ function venueShell() {
 				<div id="stage-tip-presets" class="stage-tip-presets"></div>
 				<div class="stage-tip-row">
 					<input id="stage-tip-custom" type="number" min="1" step="1" placeholder="Custom" inputmode="numeric" aria-label="Custom tip amount" />
-					<button id="stage-tip-send" type="button" class="stage-tip-send">Tip</button>
+					<button id="stage-tip-send" class="stage-tip-send">Tip</button>
 				</div>
 				<input id="stage-tip-msg" class="stage-tip-msg" maxlength="140" placeholder="Add a message (optional)" aria-label="Tip message" />
 				<p id="stage-tip-status" class="stage-tip-status" aria-live="polite"></p>
@@ -789,7 +772,7 @@ function venueShell() {
 				<h2>Ask the host</h2>
 				<div class="stage-ask-row">
 					<input id="stage-ask-input" maxlength="240" placeholder="Type a question…" aria-label="Ask the host a question" />
-					<button id="stage-ask-btn" type="button">Ask</button>
+					<button id="stage-ask-btn">Ask</button>
 				</div>
 				<p id="stage-ask-status" class="stage-ask-status" aria-live="polite"></p>
 			</section>
@@ -843,12 +826,10 @@ function emptyState(title, body, href, cta) {
 	return `<div class="stage-empty"><h2>${esc(title)}</h2><p>${esc(body)}</p>${href ? `<a class="stage-cta" href="${href}">${esc(cta)}</a>` : ''}</div>`;
 }
 
-function errorState(title) {
-	return `<div class="stage-empty stage-error"><h2>${esc(title)}</h2><p>Something went wrong loading this. Check your connection and try again.</p><button type="button" class="stage-cta" data-retry>Try again</button></div>`;
+function errorState(title, _retry) {
+	return `<div class="stage-empty stage-error"><h2>${esc(title)}</h2><p>Something went wrong loading this. Check your connection and try again.</p><button class="stage-cta" data-retry>Try again</button></div>`;
 }
 
-// Retry in place: re-run the loader that failed instead of reloading the whole
-// page, so a venue keeps its 3D context and the directory keeps its scroll.
-function wireRetry(container, retry) {
-	container.querySelector('[data-retry]')?.addEventListener('click', retry);
+function wireRetry(container) {
+	container.querySelector('[data-retry]')?.addEventListener('click', () => location.reload());
 }

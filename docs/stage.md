@@ -135,7 +135,7 @@ The show's running total is rolled on each tip as a convenience; if that bump fa
 
 Every state on this surface is designed, because a live show has more failure modes than a static page:
 
-- **Realtime feed offline.** If no multiplayer server is configured or the socket cannot be reached after one retry, the connection pill honestly reads "feed offline · tap to retry" instead of pretending to be live, and tapping it reconnects. Tips and the leaderboard still work through the API; the caption you see is the last one the feed delivered. Asking a question while the feed is down tells you to reconnect first rather than silently dropping it.
+- **Realtime feed offline.** If no multiplayer server is configured or the socket cannot be reached after one retry, the connection pill honestly reads "feed offline" instead of pretending to be live. Captions, tips, and the leaderboard still work through the API.
 - **No WebGL.** The venue swaps to an "audio and captions mode" card: you still hear the host, read every line, and can still tip.
 - **No wallet on the host.** Tipping is disabled with a plain explanation rather than a failing transaction.
 - **Not live yet.** Tips are refused client-side and server-side with "tips open when the host goes live".
@@ -153,7 +153,7 @@ The venue is split across two deployments, so it needs both halves wired:
 | `MULTIPLAYER_SHARED_SECRET` | both | The HMAC secret for both directions of the bridge. Must match on both sides |
 | `THREEWS_API_BASE` or `MULTIPLAYER_API_BASE` | realtime server | Where the room reads stage config and fetches host beats from. Defaults to the production API |
 
-The browser resolves the realtime server from, in order: `window.STAGE_SERVER_URL`, a `stage-server` meta tag, `VITE_STAGE_SERVER_URL` at build time, and then the chain every other live world uses ([`src/shared/game-server-url.js`](../src/shared/game-server-url.js)): localhost always talks to the local server on port 2567, otherwise the `game-server` meta tag the page carries ([`pages/stage.html`](../pages/stage.html) bakes in the production multiplayer service, exactly like `/play`), then `VITE_GAME_SERVER_URL`, then a forwarded development port. In production with none of these set, the page runs in feed-offline mode rather than hanging on a socket. The client subscribes to the host's frame with `listen` on the root state rather than `onChange` on the child, because the join resolves before the first state patch lands and the child has no decoder reference yet; it also registers its message handlers before any state work, because the room opens the show the instant the first person arrives and that first line must not be dropped.
+The browser resolves the realtime server from, in order: `window.STAGE_SERVER_URL`, a `stage-server` meta tag, `VITE_STAGE_SERVER_URL` at build time, a forwarded development port, or the same host on port 2567 in local development. In production with none of these set, the page runs in feed-offline mode rather than hanging on a socket.
 
 ## Related
 
