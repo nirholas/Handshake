@@ -242,6 +242,45 @@ await el.play('dance', { loop: true });
 
 ---
 
+### `playClip(name, opts?)`
+
+Plays a clip from the platform's shared animation library, retargeted onto whatever skeleton the loaded GLB carries. Unlike `play()`, which needs a clip that already exists inside the GLB, this resolves names from the public clip manifest at [`/animations/manifest.json`](https://three.ws/animations/manifest.json), so the same call works on a Mixamo rig, a VRM, a body scan, or a mesh you generated a minute ago.
+
+```js
+const clips = await (await fetch('https://three.ws/animations/manifest.json')).json();
+el.playClip(clips[0].name, { userInitiated: true });
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `name` | string | Clip name from the manifest, e.g. `idle`, `facepalm`, `av-idle-breath`. |
+| `opts.fade_ms` | number | Cross-fade into the clip, in milliseconds. Defaults to `400`. |
+| `opts.userInitiated` | boolean | Play even when the visitor has `prefers-reduced-motion` set. Pass `true` only when a real user gesture asked for the motion; ambient autoplay stays suppressed. |
+
+The method honors each clip's own `loop` flag: looping clips loop, one-shot clips play once and settle back into idle without a snap at the boundary.
+
+---
+
+### `sign(text)`
+
+Performs `text` in American Sign Language on the avatar without sending it to a brain. Words in the lexicon are signed, everything else fingerspells, in one continuous motion. Turns the engine on if the `sign-language` attribute has not already.
+
+```js
+const result = await el.sign('happy to meet you');
+if (result) {
+	console.log(result.signed); // words that came from the lexicon
+	console.log(result.spelled); // words that fingerspelled
+}
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `text` | string | The utterance to perform. |
+
+Resolves once the motion finishes, with `{ signed, spelled }`, or with `null` when the loaded rig has no finger bones to sign with. Use it for captions, accessibility overlays, and any surface that has its own text; the `sign-language` attribute covers the conversational case, where every assistant reply is signed automatically.
+
+---
+
 ### `speak(text, opts?)`
 
 Triggers a speak animation on the avatar (lip-sync / talking gesture) without sending the text to the LLM. Use this to drive the avatar from your own logic.

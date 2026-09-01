@@ -149,7 +149,7 @@
 		"demo:agent-wallet-bridge": "node scripts/agent-wallet-x402-bridge.mjs",
 		"dev:lib": "TARGET=lib vite",
 		"presence": "node scripts/three-ws-presence.mjs",
-		"build:examples": "node scripts/build-examples-index.mjs && node scripts/mirror-examples-index.mjs",
+		"build:examples": "node scripts/build-examples-index.mjs && node scripts/mirror-examples-index.mjs && node scripts/build-hosted-examples.mjs",
 		"build:docs-search": "node scripts/build-docs-search-index.mjs",
 		"check:docs-search": "node scripts/build-docs-search-index.mjs --check",
 		"build:pages": "node scripts/build-page-index.mjs",

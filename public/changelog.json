@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-01T18:06:48.112Z",
+	"generated_at": "2026-09-01T18:36:39.158Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -105,6 +105,19 @@
 			"summary": "Every doc the freshness gate flagged as describing code that had moved since it was written (174 of them, from the UX flow walkthroughs and the Oracle model write-up to the ops runbooks, tutorials, and the agent-abilities chapters) was re-read against the current code. 164 were corrected or extended: renamed routes now point at /agents/:id, retired model names and provider ladders are current, counts and thresholds match what ships, and the resilience work of the last month (last-good caches, typed 503s with Retry-After, the RPC read guards) is described where it applies. Along the way three things the docs promised were made true in the product: the Herald posting scope can now be minted from the dashboard key form, the translation script defaults to a Groq model that still exists, and the home page OpenAPI link opens the spec directly.",
 			"link": "/docs/freshness",
 			"tags": [
+				"docs",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-01",
+			"type": "update",
+			"title": "Examples now show everything an agent can do, not just how to embed one",
+			"summary": "The examples page used to be six ways to put a 3D avatar on a page. It is now organised into four lanes covering the whole platform, and every example runs on the page against the live production APIs. Avatars and embeds keeps the inline viewer, the talking agent, the floating support bubble, your own chat UI, and the iframe widget. 3D models adds a free text-to-3D generator that returns a real mesh and renders it in place, a GLB inspector that measures any model against a triangle budget, the full 112-clip animation library playable on any rig, and the live feed of models autonomous agents bought with their own money. Agents adds an agent defined entirely as files, hosted so the manifest loads from any website, and an avatar that performs American Sign Language. Agent economy adds the x402 payment handshake, where a paid endpoint quotes its price, network, and asset without a request spending anything, and the record of coins launched through the platform. Two new methods came out of the work: sign() performs your own text in ASL for captions and accessibility overlays, and playClip() drives the shared animation library on any humanoid rig. A fix landed alongside them: an embedded avatar was painting an invisible block under itself that swallowed clicks on whatever the host page put below it.",
+			"link": "/examples",
+			"tags": [
+				"feature",
+				"improvement",
 				"docs",
 				"fix"
 			]

@@ -370,7 +370,7 @@ const EXAMPLES = [
 		id: 'animation-library',
 		lane: 'models',
 		title: 'The whole animation library, on any rig',
-		blurb: 'The clip manifest is public. Fetch it, build a control for every clip, and play them on a loaded avatar. Clips are retargeted onto whatever skeleton the GLB carries, so the same library drives a Mixamo rig, a VRM, an Avaturn scan, or a mesh you generated a minute ago.',
+		blurb: 'The clip manifest is public. Fetch it, build a control for every clip, and play them on a loaded avatar. Clips are retargeted onto whatever skeleton the GLB carries, so the same library drives a Mixamo rig, a VRM, a body scan, or a mesh you generated a minute ago.',
 		tags: ['animation', 'api'],
 		docs: [
 			{ label: 'Web component API', href: '/docs/web-component' },
@@ -690,12 +690,16 @@ const EXAMPLES = [
 
 			async function sign() {
 				report.textContent = 'Compiling the utterance...';
-				// sign() performs text you supply: no brain, no round trip.
-				var result = await signer.sign(phrase.value);
-				report.textContent = result
-					? 'signed: ' + (result.signed.join(', ') || 'none') +
-						' · fingerspelled: ' + (result.spelled.join(', ') || 'none')
-					: 'This rig has no finger bones, so it will not sign.';
+				try {
+					// sign() performs text you supply: no brain, no round trip.
+					var result = await signer.sign(phrase.value);
+					report.textContent = result
+						? 'signed: ' + (result.signed.join(', ') || 'none') +
+							' · fingerspelled: ' + (result.spelled.join(', ') || 'none')
+						: 'This rig has no finger bones, so it will not sign.';
+				} catch (err) {
+					report.textContent = 'Could not sign that: ' + err.message;
+				}
 			}
 
 			document.getElementById('go').addEventListener('click', sign);
