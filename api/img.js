@@ -35,6 +35,44 @@ import { limits, clientIp } from './_lib/rate-limit.js';
 import { fetchModel } from './_lib/fetch-model.js';
 import { safeFetchJson } from './_lib/ssrf.js';
 
+// `?w=<px>` resizes a raster upstream to at most that width and re-encodes it
+// as WebP. Gallery surfaces (the Forge showcase, the marketplace grid) paint
+// full-resolution renders (a 1 MB PNG per card was normal on /forge) into
+// 200-300 px boxes; served through here at the box's size they are ~20-40 KB.
+// Widths snap to a fixed ladder so a gallery cannot mint an unbounded set of
+// variants at the edge, and the result inherits the immutable cache below:
+// the same upstream URL at the same width is the same bytes forever.
+const RESIZE_WIDTHS = [64, 96, 128, 192, 256, 320, 480, 640, 960];
+const RESIZE_MAX_INPUT_PIXELS = 64_000_000;
+const RESIZE_WEBP_QUALITY = 82;
+const RESIZABLE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/avif', 'image/tiff']);
+
+function requestedWidth(raw) {
+	const n = Number.parseInt(raw ?? '', 10);
+	if (!Number.isFinite(n) || n <= 0) return 0;
+	return RESIZE_WIDTHS.find((w) => w >= n) ?? RESIZE_WIDTHS[RESIZE_WIDTHS.length - 1];
+}
+
+// Returns { bytes, contentType } for the delivered image: the resized WebP when
+// the request asked for a width and the upstream is a raster we can decode, the
+// untouched upstream bytes otherwise (SVG/GIF, an undecodable file, or a
+// resizer failure all fall back to the original so the loader still gets a 200).
+async function deliverable(image, width) {
+	const contentType = String(image.contentType || '').split(';')[0].trim().toLowerCase();
+	if (!width || !RESIZABLE_TYPES.has(contentType)) return { bytes: image.bytes, contentType: image.contentType };
+	try {
+		const sharp = (await import('sharp')).default;
+		const bytes = await sharp(Buffer.from(image.bytes), { limitInputPixels: RESIZE_MAX_INPUT_PIXELS })
+			.rotate()
+			.resize({ width, withoutEnlargement: true })
+			.webp({ quality: RESIZE_WEBP_QUALITY })
+			.toBuffer();
+		return { bytes, contentType: 'image/webp' };
+	} catch {
+		return { bytes: image.bytes, contentType: image.contentType };
+	}
+}
+
 const MAX_BYTES = 8 * 1024 * 1024; // 8 MB: generous for token art, bounded for abuse
 // Per-gateway attempt cap. Each candidate fetch (DNS + connect + body) is bounded
 // by this via the SSRF fetcher's own AbortController. Because the candidates are
@@ -248,6 +286,7 @@ export default wrap(async function handler(req, res) {
 	const directUrl = url.searchParams.get('url');
 	const metaUri = url.searchParams.get('meta');
 	const seed = url.searchParams.get('seed') || directUrl || metaUri || '';
+	const width = requestedWidth(url.searchParams.get('w'));
 
 	// Accept one of: ?url=<image>, ?meta=<metadata-json>, or ?seed=<x> (placeholder
 	// only). Callers streaming launch feeds pass `meta` so the real artwork is
@@ -320,11 +359,12 @@ export default wrap(async function handler(req, res) {
 		return;
 	}
 
+	const out = await deliverable(image, width);
 	res.statusCode = 200;
-	res.setHeader('content-type', image.contentType);
+	res.setHeader('content-type', out.contentType);
 	res.setHeader('access-control-allow-origin', '*');
 	// Immutable: a given upstream URL is content-addressed (IPFS) or a fixed CDN
 	// asset, so the bytes never change. Cache hard at the browser and the edge.
 	res.setHeader('cache-control', 'public, max-age=86400, s-maxage=604800, immutable');
-	res.end(Buffer.from(image.bytes));
+	res.end(Buffer.from(out.bytes));
 });

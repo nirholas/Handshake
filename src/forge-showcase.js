@@ -12,6 +12,7 @@
 // The section stays hidden when the deployment has no durable store or the
 // feed is empty — a first-time visitor never sees a broken or hollow strip.
 
+import { resizedImageUrl } from './shared/image-url.js';
 import { skeletonHTML, errorStateHTML, ensureStateKitStyles } from './shared/state-kit.js';
 ensureStateKitStyles();
 ensureShowcaseVoteStyles();
@@ -391,7 +392,8 @@ function buildCard(c) {
 		// deferring the decode cannot shift layout.
 		img.decoding = 'async';
 		img.alt = '';
-		img.src = c.preview_image_url;
+		// Full-resolution render, 200px-tall box: fetch it at the box's size.
+		img.src = resizedImageUrl(c.preview_image_url, 480);
 		img.onerror = () => {
 			// Drop the broken <img> the moment it fails. GLB capture is queued one
 			// at a time behind a 20s timeout, so leaving it in place parks a row of

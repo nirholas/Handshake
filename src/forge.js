@@ -1,4 +1,5 @@
 // Forge — text / image / multi-view → 3D generator (browser client).
+import { resizedImageUrl } from './shared/image-url.js';
 import { skeletonHTML, errorStateHTML, ensureStateKitStyles } from './shared/state-kit.js';
 import {
 	sleepUntilVisibleOrElapsed,
@@ -2087,8 +2088,11 @@ async function loadGallery() {
 			const img = document.createElement('img');
 			img.className = 'thumb';
 			img.loading = 'lazy';
+			img.decoding = 'async';
 			img.alt = '';
-			img.src = c.preview_image_url;
+			// The stored preview is a full-resolution render; the card box is a
+			// few hundred pixels wide. Fetch it at the box's size (2x for retina).
+			img.src = resizedImageUrl(c.preview_image_url, 480);
 			img.onerror = () => {
 				// Thumbnail URL broken — show gradient fallback.
 				img.replaceWith(makeGradientThumb(c.prompt));

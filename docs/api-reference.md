@@ -6668,6 +6668,42 @@ partial answer is still a partial answer.
 
 ---
 
+## Image proxy API
+
+```
+GET /api/img?url=<https-or-ipfs-image-url>
+GET /api/img?url=<image-url>&w=480
+GET /api/img?meta=<token-metadata-json-url>
+GET /api/img?seed=<any-string>
+```
+
+Same-origin delivery for remote artwork, so the browser only ever talks to
+three.ws. The upstream is fetched server-side through the SSRF-hardened
+fetcher (public hosts only, 8 MB cap, one shared 25 s budget); an IPFS URL is
+raced across several public gateways and the first valid image wins; a
+`?url=` that turns out to be a token *metadata* document is followed one hop to
+its `image` field (`?meta=` says so explicitly). When every source fails the
+endpoint still answers `200` with a deterministic, on-brand SVG placeholder
+derived from the seed, so an `<img>` or a Three.js texture loader never logs an
+error.
+
+`w` asks for a resized copy: the image is scaled to at most that width (never
+enlarged) and re-encoded as WebP at quality 82. Widths snap up to a fixed
+ladder (`64, 96, 128, 192, 256, 320, 480, 640, 960`), so a gallery cannot mint
+an unbounded set of variants at the edge. Only rasters are resized (PNG, JPEG,
+WebP, AVIF, TIFF); an SVG or GIF, or a file the resizer cannot decode, comes
+back as the original bytes. Ask for the width the box paints at 2x: the Forge
+showcase requests `w=480` for a card that renders at roughly 240 px, which
+turns a 1 MB stored render into a 20-40 KB tile
+([src/shared/image-url.js](../src/shared/image-url.js) builds the URL and
+leaves same-origin, `data:` and `blob:` sources untouched).
+
+Real images are cached immutably (`max-age=86400, s-maxage=604800, immutable`):
+the same upstream URL at the same width is the same bytes forever, so route a
+URL through here only when its content never changes in place. Placeholders
+cache for 5 minutes at the browser and an hour at the edge so a transiently
+down source can recover. Rate limit: 300 requests per 5 minutes per IP.
+
 ## Subscriptions API
 
 Recurring creator subscriptions. A creator publishes one or more **plans**
