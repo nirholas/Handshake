@@ -25420,6 +25420,16 @@
 				"improvement"
 			],
 			"link": "/threews/claim"
+		},
+		{
+			"date": "2026-09-01",
+			"title": "Widget Studio: an honest preview status, copy that works in every browser, and clearer errors",
+			"summary": "On /studio the preview status line now stays in sync with the preview: it no longer snaps back to \"Pick an avatar to preview\" after the language pass runs, and when an avatar's model cannot be fetched it says so and disables camera capture instead of reporting a live preview over an error screen. Copy buttons fall back to the browser's built-in copy when the clipboard API is denied, so the snippet lands on the clipboard in embedded and in-app browsers too. A failed public-avatar search explains what happened and how to retry, the search box and the script-tag snippet are labelled for screen readers, and the page description now matches what the studio does.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/studio"
 		}
 	]
 }
