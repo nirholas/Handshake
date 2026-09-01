@@ -26,9 +26,10 @@ Do not describe the connector or the public demos as an official IBM release or 
 
 ### The next community event
 
-IBM is ready to host a second event. The formats considered, the recommendation (a two-week
-Granite Agent Jam that closes with a live demo night inside the three.ws world), the run of
-show, the division of labor, and the engineering plan are in [ibm-next-event.md](./ibm-next-event.md).
+IBM is ready to host a second event. The formats considered, the recommendation (a one-week
+open creation contest on the existing Forge-Off board, entered with one sentence and no
+account, closing with a crowning ceremony inside the three.ws world), the run of show, the
+division of labor, and the engineering plan are in [ibm-next-event.md](./ibm-next-event.md).
 No date is set: that is the first decision the proposal asks for.
 
 ### Community event (held 2026-06-23)
