@@ -25460,6 +25460,16 @@
 				"fix"
 			],
 			"link": "/spatial-mcp"
+		},
+		{
+			"date": "2026-09-01",
+			"title": "Sperax page: readable on narrow phones, with a one-tap copy of the plugin manifest URL",
+			"summary": "On phones around 320px wide, the /sperax page was rendering nearly twice as wide as the screen and the right half was cut off: the headline stopped mid-word, the secondary button and the second claim step were invisible, and there was no way to scroll to them. The wide tool-call diagram was forcing the whole page to its width. The page now fits any screen and the diagram scrolls inside its own box (keyboard included). Step one of the claim flow also gained a Copy manifest URL button, so the SperaxOS plugin address lands on your clipboard in one tap; when a browser refuses clipboard access, the button selects the URL for you and says so.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/sperax"
 		}
 	]
 }

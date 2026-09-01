@@ -108,6 +108,8 @@
 			}
 			.spx main {
 				max-width: var(--spx-max);
+				width: 100%;
+				min-width: 0;
 				margin: 0 auto;
 				padding: clamp(1.25rem, 4vw, 3rem) 1.25rem 5rem;
 			}
@@ -337,6 +339,59 @@
 				background: var(--surface-3);
 				border-radius: var(--radius-sm);
 				padding: 0.1em 0.4em;
+				overflow-wrap: anywhere;
+			}
+
+			/* Copy control for the manifest URL in step 1 */
+			.spx-copy-row {
+				display: flex;
+				flex-wrap: wrap;
+				align-items: center;
+				gap: 0.5rem 0.75rem;
+				margin-top: 0.9rem;
+			}
+			.spx-copy {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.4rem;
+				font-family: var(--font-body);
+				font-size: 0.85rem;
+				font-weight: 550;
+				line-height: 1;
+				padding: 0.55rem 0.9rem;
+				border-radius: var(--radius-pill);
+				border: 1px solid var(--stroke-strong);
+				background: var(--surface-2);
+				color: var(--ink);
+				cursor: pointer;
+				transition:
+					background 0.15s ease,
+					border-color 0.15s ease,
+					color 0.15s ease,
+					transform 0.15s ease;
+			}
+			.spx-copy:hover {
+				background: var(--surface-3);
+				transform: translateY(-1px);
+			}
+			.spx-copy:active {
+				transform: translateY(0);
+			}
+			.spx-copy:focus-visible {
+				outline: var(--focus-ring-width) solid var(--focus-ring-color);
+				outline-offset: var(--focus-ring-offset);
+			}
+			.spx-copy.is-done {
+				border-color: rgba(52, 211, 153, 0.5);
+				color: #34d399;
+			}
+			.spx-copy-status {
+				font-size: 0.85rem;
+				line-height: 1.4;
+				color: var(--ink-dim);
+			}
+			.spx-copy-status:empty {
+				display: none;
 			}
 
 			/* ── Capability grid ──────────────────────────────────── */
@@ -510,11 +565,13 @@
 			@media (prefers-reduced-motion: reduce) {
 				.spx-btn,
 				.spx-card,
+				.spx-copy,
 				.spx-faq summary::after {
 					transition: none;
 				}
 				.spx-btn:hover,
-				.spx-card:hover {
+				.spx-card:hover,
+				.spx-copy:hover {
 					transform: none;
 				}
 			}
@@ -581,6 +638,20 @@
 							paste the manifest URL:
 							<code>https://three.ws/.well-known/sperax-plugin.json</code>
 						</p>
+						<div class="spx-copy-row">
+							<button
+								type="button"
+								class="spx-copy"
+								id="spx-copy-manifest"
+								data-url="https://three.ws/.well-known/sperax-plugin.json"
+								data-label-copied="Copied"
+								data-label-failed="Select the URL above and copy it"
+								data-i18n-attr="data-label-copied:sperax.copied;data-label-failed:sperax.select_the_url_above_and_copy_it"
+							>
+								<span data-i18n="sperax.copy_manifest_url">Copy manifest URL</span>
+							</button>
+							<span class="spx-copy-status" id="spx-copy-status" role="status" aria-live="polite"></span>
+						</div>
 					</li>
 					<li class="spx-step">
 						<h3 data-i18n="sperax.bind_your_agent">Bind your agent</h3>
@@ -654,7 +725,7 @@
 					tool arguments to the three.ws gateway for the model-facing result. Both run on
 					every call.
 				</p>
-				<div class="spx-flow" role="img" aria-label="Diagram: a SperaxOS tool call fans out to the avatar iframe and the three.ws gateway endpoint">
+				<div class="spx-flow" role="img" tabindex="0" aria-label="Diagram: a SperaxOS tool call fans out to the avatar iframe and the three.ws gateway endpoint">
 <pre><b>SperaxOS host</b>
   │  1. LLM calls a tool (speak / gesture / emote / render_agent)
   │
@@ -738,6 +809,53 @@
 			</section>
 		</main>
 
+		<script>
+			(function () {
+				var btn = document.getElementById('spx-copy-manifest');
+				var label = btn.querySelector('span');
+				var status = document.getElementById('spx-copy-status');
+				var timer = null;
+				var idleLabel = '';
+				function selectUrl() {
+					var code = btn.closest('.spx-step').querySelector('code');
+					if (!code || !window.getSelection) return;
+					var range = document.createRange();
+					range.selectNodeContents(code);
+					var sel = window.getSelection();
+					sel.removeAllRanges();
+					sel.addRange(range);
+				}
+				function settle(text, done) {
+					label.textContent = text;
+					status.textContent = text;
+					btn.classList.toggle('is-done', done);
+					clearTimeout(timer);
+					timer = setTimeout(function () {
+						timer = null;
+						label.textContent = idleLabel;
+						status.textContent = '';
+						btn.classList.remove('is-done');
+					}, 1800);
+				}
+				btn.addEventListener('click', function () {
+					if (timer === null) idleLabel = label.textContent;
+					var url = btn.getAttribute('data-url');
+					var write =
+						navigator.clipboard && navigator.clipboard.writeText
+							? navigator.clipboard.writeText(url)
+							: Promise.reject(new Error('clipboard unavailable'));
+					write.then(
+						function () {
+							settle(btn.getAttribute('data-label-copied'), true);
+						},
+						function () {
+							selectUrl();
+							settle(btn.getAttribute('data-label-failed'), false);
+						},
+					);
+				});
+			})();
+		</script>
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
