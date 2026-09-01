@@ -25381,6 +25381,16 @@
 				"improvement"
 			],
 			"link": "/stablecoins"
+		},
+		{
+			"date": "2026-09-01",
+			"title": "Guided Tour page: real track counts, a clean fit on small phones, and a proper fallback when the outline is slow",
+			"summary": "The Quick highlights and Full tour cards on /tour now show their real stop counts and minutes (they were being reset to placeholder text a moment after loading), the chapter list matches the tour itself and no longer lists the separate getting-started walkthrough as a chapter, the page no longer clips its right edge on 320px screens, and if the tour outline fails to load you get a clear message with a retry button instead of an empty section.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/tour"
 		}
 	]
 }

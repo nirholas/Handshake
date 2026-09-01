@@ -4,27 +4,27 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title data-i18n="tour.meta_title">Guided Tour — A 3D guide walks you through three.ws · three.ws</title>
+		<title data-i18n="tour.meta_title">Guided Tour: a 3D guide walks you through three.ws · three.ws</title>
 		<meta
 			name="description"
-			content="Take the three.ws guided tour: a 3D avatar walks across the live site, points at every feature, and narrates what each one does and how to use it — voice and on-screen captions, paced by you."
+			content="Take the three.ws guided tour: a 3D avatar walks across the live site, points at every feature, and narrates what each one does and how to use it, with voice plus an on-screen chat bubble, paced by you."
 		 data-i18n-attr="content:tour.meta_description"/>
 		<meta name="robots" content="index, follow" />
 		<link rel="canonical" href="https://three.ws/tour" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Guided Tour — A 3D guide walks you through three.ws"  data-i18n-attr="content:tour.meta_og_title"/>
+		<meta property="og:title" content="Guided Tour: a 3D guide walks you through three.ws"  data-i18n-attr="content:tour.meta_og_title"/>
 		<meta
 			property="og:description"
-			content="A 3D avatar walks the live site, points at every feature, and narrates how to use it. Roughly half an hour, paced by you."
+			content="A 3D avatar walks the live site, points at every feature, and narrates how to use it. Quick highlights in a few minutes, or the full tour, paced by you."
 		 data-i18n-attr="content:tour.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/tour" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Guided+Tour&amp;d=A+3D+guide+walks+across+the+live+site%2C+points+at+every+feature%2C+and+narrates+what+each+one+does+and+how+to+use+it%3A+voice+plus+an+on-screen+chat+bubble%2C+paced&amp;p=%2Ftour" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Guided Tour — A 3D guide walks you through three.ws"  data-i18n-attr="content:tour.meta_twitter_title"/>
+		<meta name="twitter:title" content="Guided Tour: a 3D guide walks you through three.ws"  data-i18n-attr="content:tour.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="A 3D avatar walks the live site, points at every feature, and narrates how to use it."
@@ -46,6 +46,8 @@
 				color: #e7eaf2;
 			}
 			.tour-wrap {
+				width: 100%;
+				min-width: 0;
 				max-width: 1040px;
 				margin: 0 auto;
 				padding: 0 20px 80px;
@@ -175,7 +177,8 @@
 				text-align: left;
 				appearance: none;
 				cursor: pointer;
-				width: 300px;
+				flex: 0 1 300px;
+				min-width: 0;
 				max-width: 100%;
 				padding: 16px 18px;
 				border-radius: 16px;
@@ -250,6 +253,12 @@
 				font-size: inherit;
 				cursor: pointer;
 				text-decoration: underline;
+				border-radius: 4px;
+			}
+			.tour-resume a:focus-visible,
+			.tour-resume button:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 3px;
 			}
 			/* Stats */
 			.tour-stats {
@@ -266,6 +275,12 @@
 				padding: 18px 26px;
 				min-width: 132px;
 				text-align: center;
+			}
+			.tour-stat__n .skeleton {
+				display: inline-block;
+				width: 2.2em;
+				height: 0.9em;
+				vertical-align: middle;
 			}
 			.tour-stat__n {
 				font-size: 1.8rem;
@@ -300,7 +315,7 @@
 			}
 			.tour-how {
 				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+				grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
 				gap: 16px;
 			}
 			.tour-how__card {
@@ -334,7 +349,7 @@
 			/* Chapters */
 			.tour-chapters {
 				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+				grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
 				gap: 14px;
 			}
 			.tour-chapter {
@@ -371,6 +386,48 @@
 				font-size: 13px;
 				color: #8b93a7;
 			}
+			.tour-chapter__count {
+				color: #7f8aa0;
+				font-weight: 500;
+				font-size: 12px;
+			}
+			.tour-chapter--skeleton {
+				pointer-events: none;
+			}
+			.tour-chapter--skeleton .tour-chapter__num {
+				background: none;
+			}
+			.tour-chapter--skeleton .tour-chapter__body {
+				flex: 1;
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+			}
+			.tour-chapters__error {
+				grid-column: 1 / -1;
+				display: flex;
+				flex-wrap: wrap;
+				align-items: center;
+				justify-content: space-between;
+				gap: 14px;
+				padding: 20px 22px;
+				border-radius: 14px;
+				border: 1px solid rgba(255, 138, 128, 0.35);
+				background: rgba(255, 138, 128, 0.07);
+				color: #e7eaf2;
+			}
+			.tour-chapters__error p {
+				margin: 0;
+				font-size: 14px;
+				line-height: 1.5;
+				color: #c9cfdb;
+				max-width: 560px;
+			}
+			.tour-chapters__error strong {
+				display: block;
+				color: #ffb4ab;
+				margin-bottom: 3px;
+			}
 			.tour-final {
 				text-align: center;
 				margin-top: 68px;
@@ -390,7 +447,7 @@
 		</style>
 	
 	<meta property="og:locale" content="en_US">
-	<meta property="og:image:alt" content="Guided Tour — three.ws">
+	<meta property="og:image:alt" content="Guided Tour - three.ws">
 	<meta name="twitter:site" content="@trythreews">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Guided Tour","description":"A 3D guide walks across the live site, points at every feature, and narrates what each one does and how to use it - voice plus an on-screen chat bubble, paced by you.","url":"https://three.ws/tour","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=main&t=Guided+Tour&d=A+3D+guide+walks+across+the+live+site%2C+points+at+every+feature%2C+and+narrates+what+each+one+does+and+how+to+use+it+-+voice+plus+an+on-screen+chat+bubble%2C+paced+b&p=%2Ftour"}]}</script>
 </head>
@@ -409,35 +466,37 @@
 					the real live site, and you set the pace.
 				</p>
 				<div class="tour-tracks" id="tour-tracks">
-					<button class="tour-track tour-track--primary" data-track="quick" id="tour-start-quick" data-i18n-html="tour.quick_highlights_the_best_of_every_chapter">
-						<span class="tour-track__icon">⚡</span>
+					<button class="tour-track tour-track--primary" data-track="quick" id="tour-start-quick">
+						<span class="tour-track__icon" aria-hidden="true">⚡</span>
 						<span class="tour-track__body">
-							<span class="tour-track__title">Quick highlights</span>
-							<span class="tour-track__meta" id="track-quick-meta">the best of every chapter</span>
+							<span class="tour-track__title" data-i18n="tour.quick_highlights">Quick highlights</span>
+							<span class="tour-track__meta" id="track-quick-meta" data-i18n="tour.the_best_of_every_chapter">the best of every chapter</span>
 						</span>
-						<span class="tour-track__go">▶</span>
+						<span class="tour-track__go" aria-hidden="true">▶</span>
 					</button>
-					<button class="tour-track" data-track="full" id="tour-start-full" data-i18n-html="tour.full_tour_every_feature_chapter_by_chapter">
-						<span class="tour-track__icon">🗺️</span>
+					<button class="tour-track" data-track="full" id="tour-start-full">
+						<span class="tour-track__icon" aria-hidden="true">🗺️</span>
 						<span class="tour-track__body">
-							<span class="tour-track__title">Full tour</span>
-							<span class="tour-track__meta" id="track-full-meta">every feature, chapter by chapter</span>
+							<span class="tour-track__title" data-i18n="tour.full_tour">Full tour</span>
+							<span class="tour-track__meta" id="track-full-meta" data-i18n="tour.every_feature_chapter_by_chapter">every feature, chapter by chapter</span>
 						</span>
-						<span class="tour-track__go">▶</span>
+						<span class="tour-track__go" aria-hidden="true">▶</span>
 					</button>
 				</div>
 				<div class="tour-cta-row" style="margin-top:18px">
 					<a class="tour-btn" href="#how" data-i18n="tour.how_it_works">How it works</a>
 				</div>
-				<p class="tour-resume" id="tour-resume" data-i18n-html="tour.you_have_a_tour_in_progress_pick">
-					You have a tour in progress. <button type="button" id="tour-resume-link">Pick it back up →</button>
+				<p class="tour-resume" id="tour-resume">
+					<span id="tour-resume-live" data-i18n="tour.you_have_a_tour_in_progress">You have a tour in progress.</span>
+					<span id="tour-resume-saved" hidden data-i18n="tour.welcome_back_your_tour_is_bookmarked">Welcome back, your tour is bookmarked.</span>
+					<button type="button" id="tour-resume-link" data-i18n="tour.pick_it_back_up">Pick it back up →</button>
 				</p>
 			</section>
 
-			<div class="tour-stats" id="tour-stats">
-				<div class="tour-stat"><div class="tour-stat__n" id="stat-features">—</div><div class="tour-stat__l">features visited</div></div>
-				<div class="tour-stat"><div class="tour-stat__n" id="stat-minutes">~30</div><div class="tour-stat__l">minutes, paced by you</div></div>
-				<div class="tour-stat"><div class="tour-stat__n" id="stat-chapters">6</div><div class="tour-stat__l">chapters</div></div>
+			<div class="tour-stats" id="tour-stats" aria-busy="true">
+				<div class="tour-stat"><div class="tour-stat__n" id="stat-features"><span class="skeleton skeleton--text" aria-hidden="true"></span></div><div class="tour-stat__l">features visited</div></div>
+				<div class="tour-stat"><div class="tour-stat__n" id="stat-minutes"><span class="skeleton skeleton--text" aria-hidden="true"></span></div><div class="tour-stat__l">minutes, paced by you</div></div>
+				<div class="tour-stat"><div class="tour-stat__n" id="stat-chapters"><span class="skeleton skeleton--text" aria-hidden="true"></span></div><div class="tour-stat__l">chapters</div></div>
 			</div>
 
 			<section class="tour-section" id="how">
@@ -491,7 +550,14 @@
 			<section class="tour-section">
 				<h2 class="tour-section__title" data-i18n="tour.what_you_ll_see">What you'll see</h2>
 				<p class="tour-section__lead" data-i18n="tour.the_tour_runs_as_chapters_from_building">The tour runs as chapters — from building your first agent to taking it on-chain.</p>
-				<div class="tour-chapters" id="tour-chapters"></div>
+				<div class="tour-chapters" id="tour-chapters" aria-busy="true">
+					<div class="tour-chapter tour-chapter--skeleton" aria-hidden="true"><div class="tour-chapter__num skeleton"></div><div class="tour-chapter__body"><span class="skeleton skeleton--text" style="width:45%"></span><span class="skeleton skeleton--text" style="width:85%"></span></div></div>
+					<div class="tour-chapter tour-chapter--skeleton" aria-hidden="true"><div class="tour-chapter__num skeleton"></div><div class="tour-chapter__body"><span class="skeleton skeleton--text" style="width:45%"></span><span class="skeleton skeleton--text" style="width:85%"></span></div></div>
+					<div class="tour-chapter tour-chapter--skeleton" aria-hidden="true"><div class="tour-chapter__num skeleton"></div><div class="tour-chapter__body"><span class="skeleton skeleton--text" style="width:45%"></span><span class="skeleton skeleton--text" style="width:85%"></span></div></div>
+					<div class="tour-chapter tour-chapter--skeleton" aria-hidden="true"><div class="tour-chapter__num skeleton"></div><div class="tour-chapter__body"><span class="skeleton skeleton--text" style="width:45%"></span><span class="skeleton skeleton--text" style="width:85%"></span></div></div>
+					<div class="tour-chapter tour-chapter--skeleton" aria-hidden="true"><div class="tour-chapter__num skeleton"></div><div class="tour-chapter__body"><span class="skeleton skeleton--text" style="width:45%"></span><span class="skeleton skeleton--text" style="width:85%"></span></div></div>
+					<div class="tour-chapter tour-chapter--skeleton" aria-hidden="true"><div class="tour-chapter__num skeleton"></div><div class="tour-chapter__body"><span class="skeleton skeleton--text" style="width:45%"></span><span class="skeleton skeleton--text" style="width:85%"></span></div></div>
+				</div>
 			</section>
 
 			<section class="tour-final">
@@ -563,14 +629,11 @@
 				const src = inProgress ? live : saved;
 				const resume = document.getElementById('tour-resume');
 				resume.style.display = 'block';
-				if (!inProgress) {
-					resume.firstChild.textContent = 'Welcome back — your tour is bookmarked. ';
-				}
-				// Delegate from the paragraph: the i18n pass replaces its innerHTML
-				// for localized users, which would orphan a listener bound to the
-				// button itself.
-				resume.addEventListener('click', (e) => {
-					if (!e.target.closest('#tour-resume-link')) return;
+				// Both sentences ship in the markup (each translatable on its own);
+				// the script only picks which one shows.
+				document.getElementById('tour-resume-live').hidden = !inProgress;
+				document.getElementById('tour-resume-saved').hidden = inProgress;
+				document.getElementById('tour-resume-link').addEventListener('click', () => {
 					fetch('/tour/curriculum.json', { cache: 'force-cache' })
 						.then((r) => r.json())
 						.then((c) => {
@@ -598,45 +661,121 @@
 				});
 			})();
 
-			// Populate stats + chapter cards from the live curriculum.
-			fetch('/tour/curriculum.json', { cache: 'force-cache' })
-				.then((r) => r.json())
-				.then((c) => {
-					document.getElementById('stat-features').textContent = c.stopCount || (c.stops || []).length;
-					document.getElementById('stat-minutes').textContent = '~' + (c.estimatedMinutes || 30);
-					document.getElementById('stat-chapters').textContent = (c.sections || []).length || 6;
+			// Populate stats, track cards, and chapter cards from the live curriculum.
+			// The track meta spans are annotated copy until the curriculum lands;
+			// from then on the script owns them (data-i18n-owned), so the i18n
+			// catalog pass, which arrives after its own async fetch and again on
+			// every locale switch, never reverts a real count to placeholder copy.
+			const ONBOARDING_SECTION = 'onboarding';
+			let curriculum = null;
 
-					// Fill the track-picker cards from the curriculum's track metadata.
-					const tracks = {};
-					(c.tracks || []).forEach((t) => (tracks[t.id] = t));
-					if (tracks.quick) {
-						document.getElementById('track-quick-meta').textContent =
-							tracks.quick.stopCount + ' picks · ~' + tracks.quick.estimatedMinutes + ' min';
-					}
-					if (tracks.full) {
-						document.getElementById('track-full-meta').textContent =
-							tracks.full.stopCount + ' features · ~' + tracks.full.estimatedMinutes + ' min';
-					}
+			// Counts are copy too: "{{count}} picks · ~{{minutes}} min" goes through the
+			// i18n runtime when it is up (its catalogs carry the templates per locale)
+			// and falls back to the English template before the runtime has booted.
+			function formatCounts(key, fallback, vars) {
+				const i18n = window.threewsI18n;
+				const localized = i18n ? i18n.t(key, vars) : null;
+				const template = localized && localized !== key ? localized : fallback;
+				return template.replace(/\{\{\s*(\w+)\s*\}\}/g, (m, k) => (k in vars ? String(vars[k]) : m));
+			}
 
-					const counts = {};
-					(c.stops || []).forEach((s) => (counts[s.section] = (counts[s.section] || 0) + 1));
-					const host = document.getElementById('tour-chapters');
-					host.innerHTML = '';
-					(c.sections || []).forEach((section, i) => {
-						const n = counts[section.id] || 0;
-						const card = document.createElement('div');
-						card.className = 'tour-chapter';
-						card.innerHTML =
-							'<div class="tour-chapter__num">' + (i + 1) + '</div>' +
-							'<div class="tour-chapter__body"><h3>' + escapeHtml(section.title) +
-							' <span style="color:#7f8aa0;font-weight:500;font-size:12px">· ' + n + ' stops</span></h3>' +
-							'<p>' + escapeHtml(CHAPTER_BLURB[section.id] || '') + '</p></div>';
-						host.appendChild(card);
+			function isChapter(section) {
+				// Same rule the engine's buildPlaylist uses: the onboarding walkthrough
+				// is its own track, never a chapter of the site tour.
+				return section && section.id !== ONBOARDING_SECTION;
+			}
+
+			function renderCurriculum(c) {
+				const tracks = {};
+				(c.tracks || []).forEach((t) => (tracks[t.id] = t));
+				const stops = (c.stops || []).filter((s) => s.section !== ONBOARDING_SECTION);
+				const chapters = (c.sections || []).filter(isChapter);
+				const full = tracks.full || { stopCount: stops.length, estimatedMinutes: c.estimatedMinutes };
+
+				const stats = document.getElementById('tour-stats');
+				stats.hidden = false;
+				stats.removeAttribute('aria-busy');
+				document.getElementById('stat-features').textContent = full.stopCount || stops.length;
+				document.getElementById('stat-minutes').textContent = '~' + (full.estimatedMinutes || c.estimatedMinutes);
+				document.getElementById('stat-chapters').textContent = chapters.length;
+
+				const quickMeta = document.getElementById('track-quick-meta');
+				if (tracks.quick && quickMeta) {
+					quickMeta.textContent = formatCounts('tour.quick_track_counts', '{{count}} picks · ~{{minutes}} min', {
+						count: tracks.quick.stopCount,
+						minutes: tracks.quick.estimatedMinutes,
 					});
-				})
-				.catch(() => {
-					/* curriculum not built yet — the static fallback stats still read well */
+					quickMeta.setAttribute('data-i18n-owned', '1');
+				}
+				const fullMeta = document.getElementById('track-full-meta');
+				if (tracks.full && fullMeta) {
+					fullMeta.textContent = formatCounts('tour.full_track_counts', '{{count}} features · ~{{minutes}} min', {
+						count: tracks.full.stopCount,
+						minutes: tracks.full.estimatedMinutes,
+					});
+					fullMeta.setAttribute('data-i18n-owned', '1');
+				}
+
+				const counts = {};
+				stops.forEach((s) => (counts[s.section] = (counts[s.section] || 0) + 1));
+				const host = document.getElementById('tour-chapters');
+				host.innerHTML = '';
+				host.removeAttribute('aria-busy');
+				chapters.forEach((section, i) => {
+					const n = counts[section.id] || 0;
+					const card = document.createElement('div');
+					card.className = 'tour-chapter';
+					card.innerHTML =
+						'<div class="tour-chapter__num">' + (i + 1) + '</div>' +
+						'<div class="tour-chapter__body"><h3>' + escapeHtml(section.title) +
+						' <span class="tour-chapter__count">· ' + n + ' stops</span></h3>' +
+						'<p>' + escapeHtml(CHAPTER_BLURB[section.id] || section.intro || '') + '</p></div>';
+					host.appendChild(card);
 				});
+			}
+
+			function renderCurriculumError() {
+				const stats = document.getElementById('tour-stats');
+				stats.hidden = true;
+				const host = document.getElementById('tour-chapters');
+				host.removeAttribute('aria-busy');
+				host.innerHTML = '';
+				const card = document.createElement('div');
+				card.className = 'tour-chapters__error';
+				card.setAttribute('role', 'alert');
+				card.innerHTML =
+					'<p><strong>The chapter list did not load.</strong>' +
+					'The tour outline could not be fetched, so chapter and feature counts are unavailable right now. ' +
+					'The guided tour itself still starts from the buttons above.</p>' +
+					'<button type="button" class="tour-btn" id="tour-chapters-retry">Try again</button>';
+				host.appendChild(card);
+				document.getElementById('tour-chapters-retry').addEventListener('click', () => {
+					host.setAttribute('aria-busy', 'true');
+					host.innerHTML = '';
+					loadCurriculum('no-cache');
+				});
+			}
+
+			function loadCurriculum(cache) {
+				fetch('/tour/curriculum.json', { cache: cache || 'force-cache' })
+					.then((r) => {
+						if (!r.ok) throw new Error('tour curriculum ' + r.status);
+						return r.json();
+					})
+					.then((c) => {
+						if (!c || !Array.isArray(c.stops) || !c.stops.length) throw new Error('tour curriculum empty');
+						curriculum = c;
+						renderCurriculum(c);
+					})
+					.catch(renderCurriculumError);
+			}
+			loadCurriculum();
+
+			// A locale switch re-translates the annotated copy but skips the owned
+			// count spans, so re-format those with the new locale's templates.
+			window.addEventListener('i18n:change', () => {
+				if (curriculum) renderCurriculum(curriculum);
+			});
 
 			function escapeHtml(s) {
 				return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({
