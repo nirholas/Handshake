@@ -23,6 +23,14 @@
 			<description>How generative 3D collections work on three.ws: weighted trait layers, a supply rolled from a published seed, rarity scored from the actual distribution, art forged per item on reveal, and a verify endpoint anyone can recompute the roll with.</description>
 		</item>
 		<item>
+			<title>Filming three.ws on a Seeker without a Seeker</title>
+			<link>https://three.ws/docs/seeker-video</link>
+			<guid isPermaLink="false">2026-09-01:Filming three.ws on a Seeker without a Seeker</guid>
+			<pubDate>Tue, 01 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How to record a Seeker screen recording of the app with no device: why the Trusted Web Activity makes a browser capture at the real panel geometry a genuine capture, and which moments still have to come from an Android emulator.</description>
+		</item>
+		<item>
 			<title>Page performance: the rules a three.ws page plays by</title>
 			<link>https://three.ws/docs/page-performance</link>
 			<guid isPermaLink="false">2026-09-01:Page performance: the rules a three.ws page plays by</guid>
@@ -165,6 +173,14 @@
 			<pubDate>Tue, 01 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The 3D history timeline at /timeline had been opening on its error screen in production since it shipped: the page itself was there, but the file holding the milestones never made it into the deployed build, so every visitor was told to check their connection. The file now ships with every build, and a build without it is refused before it can deploy. While there, the timeline gained the milestones since late July, from the first Hugging Face article to the Android app, the Glance home-screen card, and the CoinMarketCap coverage, each with a link to its source. The floating walk companion no longer parks itself on top of the auto-play button, keyboard users get visible focus rings on every control, and the closed detail panel stays out of the tab order.</description>
+		</item>
+		<item>
+			<title>three.ws is on the Solana dApp Store</title>
+			<link>https://three.ws/docs/seeker-app</link>
+			<guid isPermaLink="false">2026-09-01:three.ws is on the Solana dApp Store</guid>
+			<pubDate>Tue, 01 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The Seeker app is live. Open the dApp Store on a Seeker or Saga, search three.ws, and install it: a 3D agent studio that runs full-screen on the phone. Take a selfie and get a textured, rigged, animation-ready character in about a minute, or describe one in text, or upload a GLB you already have. Give it a personality, a voice and skills, then talk to it in 3D. Browse everyone else's agents in the marketplace, and deploy your own on-chain as a Metaplex Core asset your wallet holds. Every signature routes to the phone's Seed Vault through Mobile Wallet Adapter, so signing in is one tap and the private key never enters the app. Creating, chatting and browsing are free. Anything you make on the phone is waiting on the web app the moment you sign in there.</description>
 		</item>
 		<item>
 			<title>Widget Studio: an honest preview status, copy that works in every browser, and clearer errors</title>

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-01T05:23:34.603Z",
+	"generated_at": "2026-09-01T17:41:21.583Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -4132,6 +4132,16 @@
 					"title": "Publishing to the Solana dApp Store",
 					"description": "The release runbook for the three.ws Seeker app: Publisher Portal setup, the release keystore, building and verifying a signed APK, and submitting it for review.",
 					"added": "2026-08-28",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/seeker-video",
+					"title": "Filming three.ws on a Seeker without a Seeker",
+					"description": "How to record a Seeker screen recording of the app with no device: why the Trusted Web Activity makes a browser capture at the real panel geometry a genuine capture, and which moments still have to come from an Android emulator.",
+					"added": "2026-09-01",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

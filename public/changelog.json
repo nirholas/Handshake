@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-01T05:23:34.614Z",
+	"generated_at": "2026-09-01T17:41:21.602Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -22,6 +22,16 @@
 			"title": "3D Drops",
 			"summary": "How generative 3D collections work on three.ws: weighted trait layers, a supply rolled from a published seed, rarity scored from the actual distribution, art forged per item on reveal, and a verify endpoint anyone can recompute the roll with.",
 			"link": "/docs/drops",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-01",
+			"type": "launch",
+			"title": "Filming three.ws on a Seeker without a Seeker",
+			"summary": "How to record a Seeker screen recording of the app with no device: why the Trusted Web Activity makes a browser capture at the real panel geometry a genuine capture, and which moments still have to come from an Android emulator.",
+			"link": "/docs/seeker-video",
 			"tags": [
 				"launch"
 			]
@@ -220,6 +230,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-01",
+			"type": "update",
+			"title": "three.ws is on the Solana dApp Store",
+			"summary": "The Seeker app is live. Open the dApp Store on a Seeker or Saga, search three.ws, and install it: a 3D agent studio that runs full-screen on the phone. Take a selfie and get a textured, rigged, animation-ready character in about a minute, or describe one in text, or upload a GLB you already have. Give it a personality, a voice and skills, then talk to it in 3D. Browse everyone else's agents in the marketplace, and deploy your own on-chain as a Metaplex Core asset your wallet holds. Every signature routes to the phone's Seed Vault through Mobile Wallet Adapter, so signing in is one tap and the private key never enters the app. Creating, chatting and browsing are free. Anything you make on the phone is waiting on the web app the moment you sign in there.",
+			"link": "/docs/seeker-app",
+			"tags": [
+				"feature"
 			]
 		},
 		{

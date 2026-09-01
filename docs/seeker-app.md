@@ -2,7 +2,7 @@
 
 three.ws ships as a native Android app for the Solana Seeker (and Saga) through the Solana dApp Store. It is a Trusted Web Activity: the signed APK (`ws.three.app`) opens `https://three.ws/seeker` full-screen in Chrome's rendering engine with no browser chrome, and every wallet interaction is routed to the phone's Seed Vault through Mobile Wallet Adapter. For a WebGL product that is the right shape (it is what Solana Mobile recommends for web apps); what makes it feel like an app is everything around that shell. This page is the user-facing map of those pieces. The packaging and code layout live in [solana-mobile/README.md](../solana-mobile/README.md); how a release reaches the store is [Publishing to the Solana dApp Store](./seeker-publishing.md).
 
-**Status: v1.0.0 was submitted to the Solana dApp Store on 2026-08-28 and is in review** (release `#331044442814`). Until it is approved the app is installable from the [v1.0.0 GitHub release](https://github.com/nirholas/three.ws/releases/tag/v1.0.0); everything described below is live on the web at [/seeker](/seeker) today.
+**Status: v1.0.0 is approved and live on the Solana dApp Store** (submitted 2026-08-28, release `#331044442814`). Install it from the dApp Store on a Seeker or Saga, or sideload the [v1.0.0 GitHub release](https://github.com/nirholas/three.ws/releases/tag/v1.0.0); everything described below also runs on the web at [/seeker](/seeker).
 
 ## What the app does differently from the website
 

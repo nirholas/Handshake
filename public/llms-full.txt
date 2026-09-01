@@ -2511,6 +2511,12 @@ URL: https://three.ws/docs/seeker-publishing
 
 The release runbook for the three.ws Seeker app: Publisher Portal setup, the release keystore, building and verifying a signed APK, and submitting it for review.
 
+### Filming three.ws on a Seeker without a Seeker
+
+URL: https://three.ws/docs/seeker-video
+
+How to record a Seeker screen recording of the app with no device: why the Trusted Web Activity makes a browser capture at the real panel geometry a genuine capture, and which moments still have to come from an Android emulator.
+
 ### Submission day: three.ws on the Seeker dApp Store
 
 URL: https://three.ws/docs/seeker-submission-day
