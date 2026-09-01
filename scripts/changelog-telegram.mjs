@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Push new changelog entries to the $THREE holders Telegram channel.
+// Push new changelog entries to the three.ws community Telegram channel.
 //
 // NOTE: routine delivery is AUTOMATIC now: /api/cron/changelog-push (Cloud
 // Scheduler) posts new entries after every deploy, with its own DB state.

@@ -1,5 +1,5 @@
 // @ts-check
-// Automatic changelog delivery to the holder channels (Telegram + X).
+// Automatic changelog delivery to the community channels (Telegram + X).
 //
 // This is the server-side twin of scripts/changelog-telegram.mjs and
 // scripts/changelog-x.mjs. Those scripts are manual tools with repo-file
