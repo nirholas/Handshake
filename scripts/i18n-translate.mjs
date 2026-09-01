@@ -200,7 +200,7 @@ function chunkKeys(keys, budgetChars) {
 const PROVIDER_DEFAULT_MODEL = {
 	gemini: 'gemini-2.5-flash',
 	vertex: 'google/gemini-2.5-flash',
-	groq: 'llama-3.3-70b-versatile',
+	groq: 'qwen/qwen3.8-27b',
 	openrouter: 'openai/gpt-oss-20b:free',
 	nvidia: 'meta/llama-3.3-70b-instruct',
 	mistral: 'mistral-small-latest',
