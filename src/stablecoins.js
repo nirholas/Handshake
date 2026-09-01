@@ -9,14 +9,17 @@ import { formatUsd, formatPrice, escapeHtml as esc } from './shared/coin-format.
 
 const $ = (id) => document.getElementById(id);
 
+// The API marks a payload it served from its last-good copy (because DeFiLlama
+// did not answer) with `x-three-stale: 1`; the footer line says so rather than
+// passing a cached board off as live.
 async function getJson(url) {
 	const res = await fetch(url, { headers: { accept: 'application/json' } });
 	if (!res.ok) {
-		const err = new Error(`fetch ${url} → ${res.status}`);
+		const err = new Error(`fetch ${url} failed with ${res.status}`);
 		err.status = res.status;
 		throw err;
 	}
-	return res.json();
+	return { data: await res.json(), stale: res.headers.get('x-three-stale') === '1' };
 }
 
 // ── Stat cards ────────────────────────────────────────────────────────────────
@@ -112,6 +115,7 @@ const state = {
 	all: [],
 	total: 0,
 	updatedAt: null,
+	stale: false,
 	filter: 'all',
 	sortKey: 'rank',
 	sortDir: 'asc',
@@ -156,11 +160,6 @@ function renderTable() {
 	const el = $('sc-table');
 	const rows = visibleRows();
 
-	if (!state.all.length) {
-		el.innerHTML =
-			'<div class="cv-empty">Stablecoin data is temporarily unavailable. Please <a href="/stablecoins">try again</a> shortly.</div>';
-		return;
-	}
 	if (!rows.length) {
 		el.innerHTML = `<div class="cv-empty">No stablecoins match this filter. <button type="button" class="cv-linkbtn" data-reset="1">Show all</button>.</div>`;
 		el.querySelector('[data-reset]')?.addEventListener('click', () => {
@@ -241,6 +240,44 @@ function renderTable() {
 	});
 }
 
+// ── Unavailable states ──────────────────────────────────────────────────────────
+
+// The board is only as good as DeFiLlama's feed. When the feed cannot be
+// reached, or answers with nothing, the table says which one happened, offers
+// an in-place retry that re-runs the fetch without a full reload, and points at
+// the rest of Markets. The stat cards and the mechanism filter are cleared
+// rather than left showing $0.00 over an empty list.
+const UNAVAILABLE = {
+	error: {
+		title: 'Could not load the stablecoin feed.',
+		detail:
+			'DeFiLlama did not answer, or the request failed on the way. Nothing is cached yet, so there is nothing to show until it responds.',
+	},
+	empty: {
+		title: 'DeFiLlama returned no stablecoins right now.',
+		detail:
+			'The feed answered but its list was empty. That usually clears within a few minutes; the rest of Markets is unaffected.',
+	},
+};
+
+function renderUnavailable(kind) {
+	const copy = UNAVAILABLE[kind];
+	$('sc-stats').innerHTML = '';
+	$('sc-filter').innerHTML = '';
+	const el = $('sc-table');
+	el.innerHTML = `
+		<div class="cv-empty sc-unavailable" role="status">
+			<p class="sc-unavailable-title">${esc(copy.title)}</p>
+			<p class="sc-unavailable-detail">${esc(copy.detail)}</p>
+			<p class="sc-unavailable-actions">
+				<button type="button" class="cv-linkbtn" data-retry="1">Try again</button>
+				<span class="sep" aria-hidden="true">·</span>
+				<a href="/markets">Back to Markets</a>
+			</p>
+		</div>`;
+	el.querySelector('[data-retry]').addEventListener('click', () => load());
+}
+
 // ── Filters ─────────────────────────────────────────────────────────────────────
 
 function setFilter(value) {
@@ -307,6 +344,9 @@ function renderStats() {
 	el.innerHTML = `<div class="sc-stats-grid">${cards.join('')}</div>`;
 }
 
+// Once this line carries a live timestamp the script owns it: the i18n catalog
+// pass lands after an async /api/locale fetch and would otherwise put the static
+// "Data: DeFiLlama" placeholder back over the freshly rendered time.
 function renderUpdated() {
 	const el = $('sc-updated');
 	if (!el) return;
@@ -316,7 +356,14 @@ function renderUpdated() {
 				minute: '2-digit',
 			})
 		: null;
-	el.textContent = when ? `Data: DeFiLlama · updated ${when}` : 'Data: DeFiLlama';
+	if (!when) {
+		el.textContent = 'Data: DeFiLlama';
+		return;
+	}
+	el.setAttribute('data-i18n-owned', '1');
+	el.textContent = state.stale
+		? `Data: DeFiLlama · last refreshed ${when} · the live feed is unreachable, showing the last good copy`
+		: `Data: DeFiLlama · updated ${when}`;
 }
 
 // ── Boot ─────────────────────────────────────────────────────────────────────────
@@ -337,10 +384,19 @@ function skeletons() {
 		'</div>';
 }
 
+function reset() {
+	state.all = [];
+	state.total = 0;
+	state.count = null;
+	state.updatedAt = null;
+	state.stale = false;
+}
+
 async function load() {
 	skeletons();
+	$('sc-filter').innerHTML = '';
 	try {
-		const data = await getJson('/api/defi/stablecoins');
+		const { data, stale } = await getJson('/api/defi/stablecoins');
 		const list = Array.isArray(data.stablecoins) ? data.stablecoins : [];
 		state.all = list.map((c, i) => ({
 			...c,
@@ -350,14 +406,20 @@ async function load() {
 		state.total = Number.isFinite(data.total_mcap) ? data.total_mcap : 0;
 		state.count = Number.isFinite(data.count) ? data.count : state.all.length;
 		state.updatedAt = data.updated_at || null;
+		state.stale = stale;
+		if (!state.all.length) {
+			reset();
+			renderUnavailable('empty');
+			renderUpdated();
+			return;
+		}
 		renderStats();
 		renderFilters();
 		renderTable();
 		renderUpdated();
 	} catch {
-		state.all = [];
-		$('sc-stats').innerHTML = '';
-		renderTable();
+		reset();
+		renderUnavailable('error');
 		renderUpdated();
 	}
 }

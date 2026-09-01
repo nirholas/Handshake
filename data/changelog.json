@@ -25371,6 +25371,16 @@
 				"docs"
 			],
 			"link": "/news/huggingface-building-3d-ai-agents"
+		},
+		{
+			"date": "2026-09-01",
+			"title": "Stablecoins page: a clear message and a one-click retry when the feed is down",
+			"summary": "When DeFiLlama cannot be reached, /stablecoins now says so in plain words and offers a Try again button that refetches in place, instead of a reload link over blank stat cards. An empty answer from the feed gets its own message rather than $0.00 cards. When the page is showing the last good copy because the live feed is unreachable, the footer line says so, and the \"updated\" time no longer flickers back to a static label after the language pass runs. The page title and description now spell out what the board covers: market cap, peg health, backing mechanism, and chains.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/stablecoins"
 		}
 	]
 }
