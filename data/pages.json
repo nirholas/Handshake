@@ -1344,6 +1344,14 @@
 					"added": "2026-06-12"
 				},
 				{
+					"path": "/drops",
+					"title": "3D Drops",
+					"description": "Launch a supply-capped collection of AI-forged 3D characters. Pick a style, define weighted trait layers, and three.ws rolls the whole supply from a published seed: verifiable rarity, rigged animation-ready art, forged on reveal.",
+					"priority": 0.8,
+					"changefreq": "daily",
+					"added": "2026-09-01"
+				},
+				{
 					"path": "/minted",
 					"title": "Minted 3D Assets",
 					"description": "Live public gallery of every generated 3D avatar minted as a Metaplex Core NFT through three.ws: interactive viewer, baked provenance, and enforced creator royalties on every card.",
@@ -2815,6 +2823,14 @@
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-07-19"
+				},
+				{
+					"path": "/docs/drops",
+					"title": "3D Drops",
+					"description": "How generative 3D collections work on three.ws: weighted trait layers, a supply rolled from a published seed, rarity scored from the actual distribution, art forged per item on reveal, and a verify endpoint anyone can recompute the roll with.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-09-01"
 				},
 				{
 					"path": "/docs/forge",

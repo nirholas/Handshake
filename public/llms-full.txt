@@ -992,6 +992,12 @@ URL: https://three.ws/launches
 
 Live public feed of every coin launched by a three.ws agent: market caps, graduation status, and the agent behind each launch.
 
+### 3D Drops
+
+URL: https://three.ws/drops
+
+Launch a supply-capped collection of AI-forged 3D characters. Pick a style, define weighted trait layers, and three.ws rolls the whole supply from a published seed: verifiable rarity, rigged animation-ready art, forged on reveal.
+
 ### Minted 3D Assets
 
 URL: https://three.ws/minted
@@ -2096,6 +2102,12 @@ One free, keyless API for on-chain and market data: DEX pairs, prices, swap quot
 URL: https://three.ws/docs/news-rights
 
 What three.ws shows from a publisher's article and what it never shows: the enforced lead-excerpt limit, how a withdrawn story is removed (410, deindex, purge), and how publishers can ask us to take something down.
+
+### 3D Drops
+
+URL: https://three.ws/docs/drops
+
+How generative 3D collections work on three.ws: weighted trait layers, a supply rolled from a published seed, rarity scored from the actual distribution, art forged per item on reveal, and a verify endpoint anyone can recompute the roll with.
 
 ### Docs · Forge (text & image to 3D)
 

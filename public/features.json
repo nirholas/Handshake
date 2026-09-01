@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-01T03:33:57.354Z",
+	"generated_at": "2026-09-01T04:36:08.842Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1631,6 +1631,16 @@
 					"title": "Agent Launches",
 					"description": "Live public feed of every coin launched by a three.ws agent: market caps, graduation status, and the agent behind each launch.",
 					"added": "2026-06-12",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/drops",
+					"title": "3D Drops",
+					"description": "Launch a supply-capped collection of AI-forged 3D characters. Pick a style, define weighted trait layers, and three.ws rolls the whole supply from a published seed: verifiable rarity, rigged animation-ready art, forged on reveal.",
+					"added": "2026-09-01",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -3442,6 +3452,16 @@
 					"title": "Docs · Publisher rights in the news reader",
 					"description": "What three.ws shows from a publisher's article and what it never shows: the enforced lead-excerpt limit, how a withdrawn story is removed (410, deindex, purge), and how publishers can ask us to take something down.",
 					"added": "2026-07-19",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/drops",
+					"title": "3D Drops",
+					"description": "How generative 3D collections work on three.ws: weighted trait layers, a supply rolled from a published seed, rarity scored from the actual distribution, art forged per item on reveal, and a verify endpoint anyone can recompute the roll with.",
+					"added": "2026-09-01",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

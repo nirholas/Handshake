@@ -7,6 +7,22 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>3D Drops</title>
+			<link>https://three.ws/drops</link>
+			<guid isPermaLink="false">2026-09-01:3D Drops</guid>
+			<pubDate>Tue, 01 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Launch a supply-capped collection of AI-forged 3D characters. Pick a style, define weighted trait layers, and three.ws rolls the whole supply from a published seed: verifiable rarity, rigged animation-ready art, forged on reveal.</description>
+		</item>
+		<item>
+			<title>3D Drops</title>
+			<link>https://three.ws/docs/drops</link>
+			<guid isPermaLink="false">2026-09-01:3D Drops</guid>
+			<pubDate>Tue, 01 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How generative 3D collections work on three.ws: weighted trait layers, a supply rolled from a published seed, rarity scored from the actual distribution, art forged per item on reveal, and a verify endpoint anyone can recompute the roll with.</description>
+		</item>
+		<item>
 			<title>$THREE tiers page: the ladder now loads for everyone, signed in or not</title>
 			<link>https://three.ws/three</link>
 			<guid isPermaLink="false">2026-09-01:$THREE tiers page: the ladder now loads for everyone, signed in or not</guid>
@@ -53,6 +69,14 @@
 			<pubDate>Tue, 01 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The Quick highlights and Full tour cards on /tour now show their real stop counts and minutes (they were being reset to placeholder text a moment after loading), the chapter list matches the tour itself and no longer lists the separate getting-started walkthrough as a chapter, the page no longer clips its right edge on 320px screens, and if the tour outline fails to load you get a clear message with a retry button instead of an empty section.</description>
+		</item>
+		<item>
+			<title>Launch a 3D collection without a studio</title>
+			<link>https://three.ws/drops</link>
+			<guid isPermaLink="false">2026-09-01:Launch a 3D collection without a studio</guid>
+			<pubDate>Tue, 01 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>3D Drops is live. Give it a base style and a few trait layers with weights, and it rolls a whole supply-capped collection in one go: up to 10,000 unique characters, each one a real rigged, animation-ready model rather than a flat picture. The roll is instant and free at any size because the art is generated per item when you reveal it, not rendered in bulk up front. Rarity is computed from the supply that actually came out, ranked, and sorted into common, rare, epic and legendary. Every collection publishes a fingerprint of its own recipe and, once launched, the seed behind it, so anyone can recompute the entire supply and check it against what the site served them. There is a Verify button on every collection page that does exactly that.</description>
 		</item>
 		<item>
 			<title>Living Stages: the live feed connects in production, so the host actually performs</title>

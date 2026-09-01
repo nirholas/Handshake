@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot - no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Collection · three.ws Drops</title>
+		<meta
+			name="description"
+			content="A generative 3D collection on three.ws: every item is a rigged, animation-ready character rolled from a published seed, with rarity anyone can recompute from the spec."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Collection · three.ws Drops" />
+		<meta
+			property="og:description"
+			content="A generative 3D collection: rigged, animation-ready characters with verifiable rarity."
+		/>
+		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=3D+Drops&amp;d=A+generative+3D+collection+with+rigged+characters+and+verifiable+rarity&amp;p=%2Fdrops" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:image:alt" content="three.ws Drops" />
+		<meta property="og:locale" content="en_US" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="theme-color" content="#0a0a0a" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/drops.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
+		<script src="/model-viewer-meshopt.js"></script>
+		<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js" integrity="sha384-sr9b4Ux0WhAUGclJ0ym0FSY2zSOMmNSn0bP/SA0e6bNCrpn/5W3QL8mm+LdlQMKw" crossorigin="anonymous"></script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="dr-shell">
+			<div id="dr-page-state"></div>
+
+			<article id="dr-page" hidden>
+				<section class="dr-hero" style="border-bottom: none; padding-bottom: 0">
+					<p class="dr-kicker">
+						<a href="/drops" style="color: inherit">Drops</a>
+						<span aria-hidden="true">/</span>
+						<span id="dr-symbol"></span>
+						<span class="dr-status" id="dr-status"></span>
+					</p>
+					<h1 class="dr-title" id="dr-name"></h1>
+					<p class="dr-sub" id="dr-description"></p>
+				</section>
+
+				<div class="dr-detail">
+					<div>
+						<div class="dr-stage" id="dr-stage" aria-live="polite"></div>
+						<div class="dr-ctas" style="margin-top: var(--space-md, 16px)" id="dr-item-actions"></div>
+						<dl class="dr-traits" id="dr-item-traits"></dl>
+						<p class="dr-note" id="dr-item-note" role="status" aria-live="polite"></p>
+					</div>
+
+					<div>
+						<h2 class="dr-h2" style="font-size: var(--text-lg); margin-bottom: var(--space-sm, 12px)">Supply</h2>
+						<div class="dr-meter" id="dr-supply-meter" role="progressbar" aria-valuemin="0">
+							<div class="dr-meter-fill" id="dr-supply-fill" style="width: 0%"></div>
+						</div>
+						<p class="dr-card-meta" id="dr-supply-label" style="margin: 8px 0 var(--space-lg, 24px)"></p>
+
+						<h2 class="dr-h2" style="font-size: var(--text-lg); margin-bottom: var(--space-sm, 12px)">Trait rarity</h2>
+						<div id="dr-distribution"></div>
+
+						<section class="dr-provenance">
+							<h3 class="dr-h2" style="font-size: var(--text-ui); margin: 0">Provenance</h3>
+							<p class="dr-hint" style="margin: 6px 0 0">
+								Every item's traits come from the seed below and its index alone. Recompute them
+								yourself, or ask the server to recompute them for you.
+							</p>
+							<code class="dr-hash" id="dr-hash"></code>
+							<code class="dr-hash" id="dr-seed"></code>
+							<div class="dr-ctas" style="margin-top: var(--space-sm, 12px)">
+								<button type="button" class="dr-btn dr-btn-sm" id="dr-verify">Verify this roll</button>
+							</div>
+							<p class="dr-note" id="dr-verify-note" role="status" aria-live="polite"></p>
+						</section>
+					</div>
+				</div>
+
+				<section class="dr-section-head">
+					<h2 class="dr-h2">Items</h2>
+					<span class="dr-count" id="dr-items-count" aria-live="polite"></span>
+				</section>
+
+				<div class="dr-filters" id="dr-filters" role="group" aria-label="Filter items by rarity"></div>
+				<div class="dr-item-grid" id="dr-items" aria-busy="true"></div>
+				<div class="dr-ctas" style="margin-top: var(--space-md, 16px)">
+					<button type="button" class="dr-btn" id="dr-more" hidden>Load more</button>
+				</div>
+			</article>
+		</main>
+
+		<script type="module" src="/src/drop-collection.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

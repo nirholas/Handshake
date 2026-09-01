@@ -539,6 +539,8 @@ const appConfig = {
 				herald: resolve(__dirname, 'src/herald-embed.js'),
 				'nav-tier-badge': resolve(__dirname, 'src/nav-tier-badge.js'),
 				i18n: resolve(__dirname, 'src/i18n.js'),
+				drops: resolve(__dirname, 'pages/drops.html'),
+				'drop-collection': resolve(__dirname, 'pages/drop-collection.html'),
 				app: resolve(__dirname, 'pages/app.html'),
 				proof: resolve(__dirname, 'pages/proof.html'),
 				stream: resolve(__dirname, 'pages/stream.html'),
@@ -1434,6 +1436,8 @@ const appConfig = {
 					'/pill/': resolve(root, 'pages/pill.html'),
 					'/portfolio': resolve(root, 'pages/portfolio.html'),
 					'/portfolio/': resolve(root, 'pages/portfolio.html'),
+					'/drops': resolve(root, 'pages/drops.html'),
+					'/drops/': resolve(root, 'pages/drops.html'),
 					'/airdrops': resolve(root, 'pages/airdrops.html'),
 					'/airdrops/': resolve(root, 'pages/airdrops.html'),
 					'/launcher': resolve(root, 'pages/launcher.html'),
@@ -2142,6 +2146,11 @@ const appConfig = {
 						/^\/markets\/robinhood\/coin\/0x[0-9a-fA-F]{40}\/?$/.test(path)
 					)
 						filePath = resolve(root, 'pages/robinhood-coin.html');
+					// /drops/:slug  → one generative 3D collection. Declared ahead of the
+					// /drop/:id rule below so the singular sealed-gift route and this
+					// plural collection route can never shadow each other.
+					else if (!filePath && /^\/drops\/[a-z0-9][a-z0-9-]{1,47}\/?$/.test(path))
+						filePath = resolve(root, 'pages/drop-collection.html');
 					// /drop/:id  → sealed wallet gift claim page (24 lowercase hex chars,
 					// matching api/vanity/drops.js's id format)
 					else if (!filePath && /^\/drop\/[0-9a-f]{24}\/?$/.test(path))

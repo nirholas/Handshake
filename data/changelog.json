@@ -2,6 +2,15 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-09-01",
+			"title": "Launch a 3D collection without a studio",
+			"summary": "3D Drops is live. Give it a base style and a few trait layers with weights, and it rolls a whole supply-capped collection in one go: up to 10,000 unique characters, each one a real rigged, animation-ready model rather than a flat picture. The roll is instant and free at any size because the art is generated per item when you reveal it, not rendered in bulk up front. Rarity is computed from the supply that actually came out, ranked, and sorted into common, rare, epic and legendary. Every collection publishes a fingerprint of its own recipe and, once launched, the seed behind it, so anyone can recompute the entire supply and check it against what the site served them. There is a Verify button on every collection page that does exactly that.",
+			"tags": [
+				"feature"
+			],
+			"link": "/drops"
+		},
+		{
 			"date": "2026-08-29",
 			"title": "Your agent on the Android home screen",
 			"summary": "The three.ws Android app (1.1) now ships a home screen widget. It shows your agent's avatar, its name, and how many moves it made today, refreshes itself in the background about every half hour without opening the app, keeps the last card it saw when the phone is offline, and opens your agent with a tap. Link a phone from the Glance page in one tap; every linked widget is listed there with a revoke button, because each one carries its own token that can read your card and nothing else. The Glance card also comes as a PNG now, which is what any native widget host, chat client or image-only surface needs.",

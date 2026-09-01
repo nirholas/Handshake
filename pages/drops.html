@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot - no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>3D Drops · three.ws</title>
+		<meta
+			name="description"
+			content="Launch a supply-capped collection of AI-forged 3D characters. Pick a style, define weighted trait layers, and three.ws rolls the whole supply from a published seed: verifiable rarity, rigged and animation-ready art, minted on Solana."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/drops" />
+		<meta property="og:title" content="3D Drops · three.ws" />
+		<meta
+			property="og:description"
+			content="Launch a supply-capped collection of AI-forged, rigged 3D characters with verifiable rarity. No studio, no 18-month pipeline."
+		/>
+		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=3D+Drops&amp;d=Launch+a+supply-capped+collection+of+AI-forged+3D+characters.+Pick+a+style%2C+define+weighted+trait+layers%2C+and+three.ws+rolls+the+whole+supply+from+a+published&amp;p=%2Fdrops" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:image:alt" content="3D Drops - three.ws" />
+		<meta property="og:locale" content="en_US" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="3D Drops · three.ws" />
+		<meta
+			name="twitter:description"
+			content="Launch a supply-capped collection of AI-forged, rigged 3D characters with verifiable rarity."
+		/>
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=3D+Drops&amp;d=Launch+a+supply-capped+collection+of+AI-forged+3D+characters.+Pick+a+style%2C+define+weighted+trait+layers%2C+and+three.ws+rolls+the+whole+supply+from+a+published&amp;p=%2Fdrops" />
+		<meta name="theme-color" content="#0a0a0a" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/drops.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
+		<link rel="canonical" href="https://three.ws/drops" />
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"CollectionPage","name":"3D Drops","description":"Supply-capped collections of AI-forged, rigged 3D characters with verifiable rarity, launched on three.ws.","url":"https://three.ws/drops","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="dr-shell">
+			<section class="dr-hero">
+				<p class="dr-kicker"><span class="dr-dot" aria-hidden="true"></span> Generative collections</p>
+				<h1 class="dr-title">3D <em>Drops</em></h1>
+				<p class="dr-sub">
+					A 3D PFP collection used to need a studio and eighteen months. Give three.ws a style and a
+					set of weighted trait layers, and it rolls the entire supply from a published seed: every
+					item is a real, rigged, animation-ready character, its rarity is recomputable by anyone
+					holding the spec, and its art is forged on reveal rather than bulk-rendered up front.
+				</p>
+				<div class="dr-ctas">
+					<button type="button" class="dr-btn dr-btn-primary" id="dr-launch-toggle" aria-expanded="false" aria-controls="dr-launcher">
+						Launch a collection
+					</button>
+					<a class="dr-btn" href="/minted">See minted 3D assets</a>
+					<a class="dr-btn" href="/docs/drops">How drops work</a>
+				</div>
+
+				<form class="dr-panel" id="dr-launcher" hidden>
+					<div class="dr-row">
+						<div class="dr-field">
+							<label for="dr-name">Collection name</label>
+							<input class="dr-input" id="dr-name" name="name" required minlength="2" maxlength="60" placeholder="Clay Wardens" autocomplete="off" />
+						</div>
+						<div class="dr-field">
+							<label for="dr-symbol">Symbol</label>
+							<input class="dr-input" id="dr-symbol" name="symbol" required pattern="[A-Za-z0-9]{2,10}" maxlength="10" placeholder="WARDEN" autocomplete="off" />
+							<span class="dr-hint">2 to 10 letters or digits.</span>
+						</div>
+						<div class="dr-field">
+							<label for="dr-supply">Supply</label>
+							<input class="dr-input" id="dr-supply" name="supply" type="number" min="1" max="10000" value="250" required />
+							<span class="dr-hint">Up to 10,000. Rolled instantly; art is forged per item on reveal.</span>
+						</div>
+					</div>
+
+					<div class="dr-field">
+						<label for="dr-style">Base style</label>
+						<textarea class="dr-textarea" id="dr-style" name="style" required minlength="3" maxlength="400" placeholder="stylized matte-clay creature, soft rim light, chunky proportions"></textarea>
+						<span class="dr-hint">
+							The look every item shares. Each item's prompt is this plus its rolled trait fragments,
+							so the collection holds one silhouette instead of drifting item to item.
+						</span>
+					</div>
+
+					<div class="dr-field">
+						<label for="dr-description">Description <span class="dr-hint">(optional)</span></label>
+						<textarea class="dr-textarea" id="dr-description" name="description" maxlength="2000" placeholder="What this collection is, and who it is for."></textarea>
+					</div>
+
+					<div class="dr-section-head">
+						<h2 class="dr-h2" style="font-size: var(--text-lg)">Trait layers</h2>
+						<button type="button" class="dr-btn dr-btn-sm" id="dr-add-layer">Add layer</button>
+					</div>
+					<div id="dr-layers"></div>
+
+					<div class="dr-ctas" style="margin-top: var(--space-md, 16px)">
+						<button type="submit" class="dr-btn dr-btn-primary" id="dr-submit">Roll the supply</button>
+						<button type="button" class="dr-btn" id="dr-cancel">Cancel</button>
+					</div>
+					<p class="dr-note" id="dr-form-note" role="status" aria-live="polite"></p>
+				</form>
+			</section>
+
+			<section class="dr-section-head">
+				<h2 class="dr-h2">Live collections</h2>
+				<span class="dr-count" id="dr-count" aria-live="polite"></span>
+			</section>
+
+			<section class="dr-grid" id="dr-grid" aria-label="Generative 3D collections" aria-busy="true"></section>
+			<div id="dr-state"></div>
+		</main>
+
+		<script type="module" src="/src/drops.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>
