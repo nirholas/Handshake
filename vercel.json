@@ -938,6 +938,10 @@
 			"dest": "/drops.html"
 		},
 		{
+			"src": "/spotlight/?$",
+			"dest": "/spotlight.html"
+		},
+		{
 			"src": "/drops/([a-z0-9][a-z0-9-]*)/?$",
 			"dest": "/drop-collection.html"
 		},

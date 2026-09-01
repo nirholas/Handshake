@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot - no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Agent Spotlight · three.ws</title>
+		<meta
+			name="description"
+			content="The three.ws community showcase: real agents people built, written up by the people who built them, ranked by community upvotes. Browse by category, open any agent in 3D, and submit your own."
+		/>
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="canonical" href="https://three.ws/spotlight" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/spotlight.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="sp-shell">
+			<section class="sp-hero">
+				<p class="sp-kicker"><span class="sp-dot" aria-hidden="true"></span> Community showcase</p>
+				<h1 class="sp-title">Agent <em>Spotlight</em></h1>
+				<p class="sp-sub">
+					The agents index lists everything anyone ever registered. This is the other thing:
+					agents people actually built something with, written up by the builder, ranked by
+					what the community votes up. Open any one of them, talk to it, fork it, or put
+					your own in front of everybody.
+				</p>
+				<div class="sp-ctas">
+					<button
+						type="button"
+						class="sp-btn sp-btn-primary"
+						id="sp-submit-toggle"
+						aria-expanded="false"
+						aria-controls="sp-submit-panel"
+					>
+						Showcase your agent
+					</button>
+					<a class="sp-btn" href="/agents">Browse every agent</a>
+					<a class="sp-btn" href="/docs/spotlight">How the ranking works</a>
+				</div>
+				<dl class="sp-stats" id="sp-stats" aria-live="polite"></dl>
+			</section>
+
+			<!-- Submission. Server-validated on POST /api/showcase/submit; the client
+			     mirrors the same bounds so a builder learns about a too-long tagline
+			     while typing it rather than after a round trip. -->
+			<form class="sp-panel" id="sp-submit-panel" hidden>
+				<div class="sp-panel-head">
+					<h2 class="sp-h2">Put an agent in the spotlight</h2>
+					<p class="sp-panel-note">
+						Pick one of your public agents and say what it does. Everything else on the card
+						(its name, avatar, skills, on-chain identity, live chat count) is read from the
+						agent itself, so your entry never goes stale.
+					</p>
+				</div>
+
+				<div id="sp-submit-auth" class="sp-inline-state" hidden></div>
+
+				<div class="sp-field">
+					<label for="sp-agent">Agent</label>
+					<select class="sp-input" id="sp-agent" name="agentId" required></select>
+					<span class="sp-hint" id="sp-agent-hint"></span>
+				</div>
+
+				<div class="sp-row">
+					<div class="sp-field">
+						<label for="sp-title">Headline</label>
+						<input
+							class="sp-input"
+							id="sp-title"
+							name="title"
+							required
+							minlength="3"
+							maxlength="90"
+							placeholder="The rug detector that reads the chain before you ape"
+							autocomplete="off"
+						/>
+						<span class="sp-hint"><span data-count-for="sp-title">0</span>/90</span>
+					</div>
+					<div class="sp-field">
+						<label for="sp-category">Category</label>
+						<select class="sp-input" id="sp-category" name="category" required></select>
+					</div>
+				</div>
+
+				<div class="sp-field">
+					<label for="sp-tagline">One-liner</label>
+					<input
+						class="sp-input"
+						id="sp-tagline"
+						name="tagline"
+						required
+						minlength="10"
+						maxlength="160"
+						placeholder="What it does, in the words you would use out loud."
+						autocomplete="off"
+					/>
+					<span class="sp-hint"><span data-count-for="sp-tagline">0</span>/160</span>
+				</div>
+
+				<div class="sp-field">
+					<label for="sp-story">The write-up <span class="sp-hint">(optional)</span></label>
+					<textarea
+						class="sp-textarea"
+						id="sp-story"
+						name="story"
+						maxlength="4000"
+						placeholder="How you built it, what it is for, what surprised you. This is the part people read."
+					></textarea>
+					<span class="sp-hint"><span data-count-for="sp-story">0</span>/4000</span>
+				</div>
+
+				<div class="sp-row">
+					<div class="sp-field">
+						<label for="sp-demo">Demo link <span class="sp-hint">(optional)</span></label>
+						<input
+							class="sp-input"
+							id="sp-demo"
+							name="demoUrl"
+							type="url"
+							maxlength="500"
+							placeholder="https://your-site.com/where-it-lives"
+							autocomplete="off"
+						/>
+					</div>
+					<div class="sp-field">
+						<label for="sp-tags">Tags <span class="sp-hint">(optional, up to 6)</span></label>
+						<input
+							class="sp-input"
+							id="sp-tags"
+							name="tags"
+							maxlength="160"
+							placeholder="solana, on-chain, research"
+							autocomplete="off"
+						/>
+						<span class="sp-hint">Comma separated. Lowercase letters, digits and hyphens.</span>
+					</div>
+				</div>
+
+				<div class="sp-ctas">
+					<button type="submit" class="sp-btn sp-btn-primary" id="sp-submit">Publish to the showcase</button>
+					<button type="button" class="sp-btn" id="sp-cancel">Cancel</button>
+				</div>
+				<p class="sp-form-note" id="sp-form-note" role="status" aria-live="polite"></p>
+			</form>
+
+			<!-- Editor's picks. Rendered only when at least one entry is featured, so
+			     the page never shows an empty rail with a heading over it. -->
+			<section class="sp-featured" id="sp-featured" hidden aria-labelledby="sp-featured-head">
+				<h2 class="sp-h2" id="sp-featured-head">Featured</h2>
+				<div class="sp-featured-body" id="sp-featured-body"></div>
+			</section>
+
+			<section class="sp-controls" aria-label="Filter the showcase">
+				<div class="sp-sorts" role="tablist" aria-label="Sort">
+					<button type="button" class="sp-sort is-active" role="tab" aria-selected="true" data-sort="trending">Trending</button>
+					<button type="button" class="sp-sort" role="tab" aria-selected="false" data-sort="new">Newest</button>
+					<button type="button" class="sp-sort" role="tab" aria-selected="false" data-sort="top">Most upvoted</button>
+				</div>
+				<div class="sp-search">
+					<label class="sr-only" for="sp-q">Search the showcase</label>
+					<input
+						class="sp-input"
+						id="sp-q"
+						type="search"
+						placeholder="Search agents, write-ups, builders…"
+						autocomplete="off"
+					/>
+					<kbd class="sp-kbd" aria-hidden="true">/</kbd>
+				</div>
+			</section>
+
+			<nav class="sp-cats" id="sp-cats" aria-label="Categories"></nav>
+
+			<section class="sp-grid" id="sp-grid" aria-label="Showcased agents" aria-busy="true"></section>
+			<div id="sp-state"></div>
+			<div class="sp-more-wrap">
+				<button type="button" class="sp-btn" id="sp-more" hidden>Load more</button>
+			</div>
+		</main>
+
+		<div id="sp-live" class="sr-only" role="status" aria-live="polite"></div>
+
+		<script type="module" src="/src/spotlight.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

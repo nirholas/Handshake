@@ -1228,6 +1228,16 @@ export const limits = {
 		getLimiter('bounty:create', { limit: 15, window: '1 h' }).limit(userId),
 	bountySubmit: (userId) =>
 		getLimiter('bounty:submit', { limit: 40, window: '1 h' }).limit(userId),
+	// Agent Spotlight (api/showcase/[action].js). Writing a showcase entry is a
+	// considered act (a builder does it once per agent and edits it a few times),
+	// so the create bucket is deliberately tight. Voting is a browse-time
+	// gesture down a long page, so it gets a much wider one; both are keyed on
+	// the user id, because the abuse this guards against is one account
+	// astroturfing the ranking, not one office sharing an IP.
+	showcaseWrite: (userId) =>
+		getLimiter('showcase:write', { limit: 20, window: '1 h' }).limit(userId),
+	showcaseVote: (userId) =>
+		getLimiter('showcase:vote', { limit: 120, window: '10 m' }).limit(userId),
 	// Direct messages between friends — its own bucket so DM spam can't starve
 	// world-chat posting and vice versa. Mirrors world chat's order of magnitude.
 	dmSend: (userId) => getLimiter('dm:send', { limit: 30, window: '1 m' }).limit(userId),

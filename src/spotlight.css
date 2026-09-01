@@ -1,0 +1,830 @@
+/* Agent Spotlight: the community showcase (/spotlight).
+   Every value comes from public/tokens.css; nothing is hardcoded that a token
+   already expresses. The one place this sheet reaches for a literal is the
+   monogram gradient, which is derived per-agent in JS from the agent id. */
+
+.sp-shell {
+	max-width: 1180px;
+	margin: 0 auto;
+	padding: var(--space-xl, 32px) var(--space-lg, 24px) var(--space-3xl, 96px);
+}
+
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* ── hero ─────────────────────────────────────────────────────────────── */
+
+.sp-hero {
+	padding: var(--space-2xl, 56px) 0 var(--space-lg, 24px);
+	border-bottom: 1px solid var(--stroke, rgba(255, 255, 255, 0.08));
+}
+
+.sp-kicker {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-2, 8px);
+	margin: 0 0 var(--space-sm, 12px);
+	font-family: var(--font-mono);
+	font-size: var(--text-2xs, 11px);
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--ink-dim, rgba(255, 255, 255, 0.55));
+}
+
+.sp-dot {
+	width: 6px;
+	height: 6px;
+	border-radius: var(--radius-pill, 999px);
+	background: var(--success, #4ade80);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--success, #4ade80) 22%, transparent);
+}
+
+.sp-title {
+	margin: 0 0 var(--space-md, 16px);
+	font-family: var(--font-display);
+	font-size: var(--text-2xl, 42px);
+	line-height: var(--leading-tight, 1.15);
+	letter-spacing: -0.02em;
+	font-weight: var(--weight-bold, 700);
+	color: var(--ink-bright, #fff);
+}
+
+.sp-title em {
+	font-style: normal;
+	background: linear-gradient(100deg, var(--ink-bright, #fff), var(--ink-faint, rgba(255, 255, 255, 0.45)));
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+
+.sp-sub {
+	max-width: 66ch;
+	margin: 0 0 var(--space-lg, 24px);
+	font-size: var(--text-base, 16px);
+	line-height: var(--leading-normal, 1.618);
+	color: var(--ink-dim, rgba(255, 255, 255, 0.62));
+}
+
+.sp-ctas {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-sm, 12px);
+}
+
+.sp-stats {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-lg, 24px);
+	margin: var(--space-lg, 24px) 0 0;
+}
+
+.sp-stats > div {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.sp-stats dt {
+	order: 2;
+	font-family: var(--font-mono);
+	font-size: var(--text-2xs, 11px);
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--ink-faint, rgba(255, 255, 255, 0.45));
+}
+
+.sp-stats dd {
+	order: 1;
+	margin: 0;
+	font-family: var(--font-display);
+	font-size: var(--text-xl, 28px);
+	font-weight: var(--weight-semibold, 600);
+	color: var(--ink-bright, #fff);
+	font-variant-numeric: tabular-nums;
+}
+
+/* ── buttons ──────────────────────────────────────────────────────────── */
+
+.sp-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--space-2, 8px);
+	padding: 10px var(--space-md, 16px);
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.12));
+	border-radius: var(--radius-md, 10px);
+	background: var(--surface-1, rgba(255, 255, 255, 0.04));
+	color: var(--ink, rgba(255, 255, 255, 0.86));
+	font-family: var(--font-body);
+	font-size: var(--text-ui, 14px);
+	font-weight: var(--weight-medium, 500);
+	text-decoration: none;
+	cursor: pointer;
+	transition:
+		background var(--duration-fast, 140ms) var(--ease-standard),
+		border-color var(--duration-fast, 140ms) var(--ease-standard),
+		transform var(--duration-fast, 140ms) var(--ease-standard);
+}
+
+.sp-btn:hover {
+	background: var(--surface-2, rgba(255, 255, 255, 0.08));
+	border-color: var(--stroke-strong, rgba(255, 255, 255, 0.22));
+}
+
+.sp-btn:active {
+	transform: translateY(1px);
+}
+
+.sp-btn-primary {
+	background: var(--ink-bright, #fff);
+	border-color: var(--ink-bright, #fff);
+	color: var(--bg-0, #0a0a0a);
+}
+
+.sp-btn-primary:hover {
+	background: var(--ink, rgba(255, 255, 255, 0.88));
+	border-color: var(--ink, rgba(255, 255, 255, 0.88));
+}
+
+.sp-btn-sm {
+	padding: 6px var(--space-sm, 12px);
+	font-size: var(--text-md, 13px);
+}
+
+/* ── submission panel ─────────────────────────────────────────────────── */
+
+.sp-panel {
+	margin: var(--space-lg, 24px) 0 0;
+	padding: var(--space-lg, 24px);
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.1));
+	border-radius: var(--radius-lg, 14px);
+	background: var(--surface-1, rgba(255, 255, 255, 0.03));
+	display: grid;
+	gap: var(--space-md, 16px);
+}
+
+.sp-panel-head {
+	display: grid;
+	gap: var(--space-2, 8px);
+}
+
+.sp-h2 {
+	margin: 0;
+	font-family: var(--font-display);
+	font-size: var(--text-lg, 20px);
+	font-weight: var(--weight-semibold, 600);
+	color: var(--ink-bright, #fff);
+}
+
+.sp-panel-note {
+	margin: 0;
+	max-width: 70ch;
+	font-size: var(--text-md, 13px);
+	line-height: var(--leading-normal, 1.6);
+	color: var(--ink-dim, rgba(255, 255, 255, 0.6));
+}
+
+.sp-row {
+	display: grid;
+	gap: var(--space-md, 16px);
+	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.sp-field {
+	display: grid;
+	gap: 6px;
+	min-width: 0;
+}
+
+.sp-field label {
+	font-size: var(--text-md, 13px);
+	font-weight: var(--weight-medium, 500);
+	color: var(--ink, rgba(255, 255, 255, 0.84));
+}
+
+.sp-input,
+.sp-textarea {
+	width: 100%;
+	padding: 10px var(--space-sm, 12px);
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.12));
+	border-radius: var(--radius-md, 10px);
+	background: var(--bg-1, rgba(0, 0, 0, 0.25));
+	color: var(--ink-bright, #fff);
+	font-family: var(--font-body);
+	font-size: var(--text-ui, 14px);
+	transition: border-color var(--duration-fast, 140ms) var(--ease-standard);
+}
+
+.sp-input:hover,
+.sp-textarea:hover {
+	border-color: var(--stroke-strong, rgba(255, 255, 255, 0.2));
+}
+
+.sp-textarea {
+	min-height: 120px;
+	resize: vertical;
+	line-height: var(--leading-normal, 1.6);
+}
+
+.sp-hint {
+	font-size: var(--text-2xs, 11px);
+	color: var(--ink-faint, rgba(255, 255, 255, 0.45));
+}
+
+.sp-form-note {
+	margin: 0;
+	font-size: var(--text-md, 13px);
+	color: var(--ink-dim, rgba(255, 255, 255, 0.6));
+	min-height: 1.2em;
+}
+
+.sp-form-note[data-tone='error'] {
+	color: var(--danger, #f87171);
+}
+
+.sp-form-note[data-tone='success'] {
+	color: var(--success, #4ade80);
+}
+
+.sp-inline-state {
+	padding: var(--space-sm, 12px) var(--space-md, 16px);
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.1));
+	border-radius: var(--radius-md, 10px);
+	background: var(--surface-2, rgba(255, 255, 255, 0.05));
+	font-size: var(--text-md, 13px);
+	color: var(--ink-dim, rgba(255, 255, 255, 0.68));
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-sm, 12px);
+}
+
+/* ── featured ─────────────────────────────────────────────────────────── */
+
+.sp-featured {
+	margin: var(--space-xl, 32px) 0 0;
+	display: grid;
+	gap: var(--space-md, 16px);
+}
+
+.sp-featured-body {
+	display: grid;
+	gap: var(--space-md, 16px);
+	grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+	align-items: stretch;
+}
+
+@media (max-width: 860px) {
+	.sp-featured-body {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.sp-stage {
+	position: relative;
+	min-height: 320px;
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.1));
+	border-radius: var(--radius-lg, 14px);
+	background:
+		radial-gradient(120% 90% at 50% 0%, var(--accent-soft, rgba(255, 255, 255, 0.08)), transparent 70%),
+		var(--surface-1, rgba(255, 255, 255, 0.03));
+	overflow: hidden;
+	display: grid;
+	place-items: center;
+}
+
+.sp-stage agent-3d {
+	width: 100%;
+	height: 100%;
+	min-height: 320px;
+	display: block;
+}
+
+.sp-stage img {
+	width: 100%;
+	height: 100%;
+	min-height: 320px;
+	object-fit: cover;
+}
+
+.sp-stage-badge {
+	position: absolute;
+	top: var(--space-sm, 12px);
+	left: var(--space-sm, 12px);
+	padding: 4px 10px;
+	border-radius: var(--radius-pill, 999px);
+	background: var(--scrim, rgba(0, 0, 0, 0.55));
+	border: 1px solid var(--on-scrim-stroke, rgba(255, 255, 255, 0.16));
+	color: var(--on-scrim-bright, #fff);
+	font-family: var(--font-mono);
+	font-size: var(--text-2xs, 11px);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.sp-featured-copy {
+	display: grid;
+	align-content: center;
+	gap: var(--space-sm, 12px);
+	padding: var(--space-lg, 24px);
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.1));
+	border-radius: var(--radius-lg, 14px);
+	background: var(--surface-1, rgba(255, 255, 255, 0.03));
+}
+
+.sp-featured-copy h3 {
+	margin: 0;
+	font-family: var(--font-display);
+	font-size: var(--text-xl, 26px);
+	line-height: var(--leading-tight, 1.2);
+	font-weight: var(--weight-semibold, 600);
+	color: var(--ink-bright, #fff);
+}
+
+.sp-featured-copy p {
+	margin: 0;
+	max-width: 60ch;
+	font-size: var(--text-base, 16px);
+	line-height: var(--leading-normal, 1.6);
+	color: var(--ink-dim, rgba(255, 255, 255, 0.66));
+}
+
+.sp-featured-story {
+	font-size: var(--text-ui, 14px) !important;
+	color: var(--ink-faint, rgba(255, 255, 255, 0.5)) !important;
+	display: -webkit-box;
+	-webkit-line-clamp: 4;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+/* ── controls ─────────────────────────────────────────────────────────── */
+
+.sp-controls {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-md, 16px);
+	margin: var(--space-xl, 32px) 0 var(--space-md, 16px);
+}
+
+.sp-sorts {
+	display: inline-flex;
+	padding: 3px;
+	gap: 2px;
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.1));
+	border-radius: var(--radius-pill, 999px);
+	background: var(--surface-1, rgba(255, 255, 255, 0.03));
+}
+
+.sp-sort {
+	padding: 7px var(--space-sm, 14px);
+	border: 0;
+	border-radius: var(--radius-pill, 999px);
+	background: transparent;
+	color: var(--ink-dim, rgba(255, 255, 255, 0.6));
+	font-family: var(--font-body);
+	font-size: var(--text-md, 13px);
+	font-weight: var(--weight-medium, 500);
+	cursor: pointer;
+	transition:
+		background var(--duration-fast, 140ms) var(--ease-standard),
+		color var(--duration-fast, 140ms) var(--ease-standard);
+}
+
+.sp-sort:hover {
+	color: var(--ink-bright, #fff);
+	background: var(--surface-2, rgba(255, 255, 255, 0.06));
+}
+
+.sp-sort.is-active {
+	background: var(--ink-bright, #fff);
+	color: var(--bg-0, #0a0a0a);
+}
+
+.sp-search {
+	position: relative;
+	flex: 1 1 260px;
+	max-width: 380px;
+}
+
+.sp-search .sp-input {
+	padding-right: 34px;
+}
+
+.sp-kbd {
+	position: absolute;
+	right: 10px;
+	top: 50%;
+	transform: translateY(-50%);
+	padding: 1px 6px;
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.14));
+	border-radius: var(--radius-sm, 6px);
+	background: var(--surface-2, rgba(255, 255, 255, 0.06));
+	color: var(--ink-faint, rgba(255, 255, 255, 0.45));
+	font-family: var(--font-mono);
+	font-size: var(--text-2xs, 11px);
+	pointer-events: none;
+}
+
+.sp-cats {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2, 8px);
+	margin: 0 0 var(--space-lg, 24px);
+}
+
+.sp-cat {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 5px var(--space-sm, 12px);
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.1));
+	border-radius: var(--radius-pill, 999px);
+	background: var(--surface-1, rgba(255, 255, 255, 0.03));
+	color: var(--ink-dim, rgba(255, 255, 255, 0.62));
+	font-size: var(--text-md, 13px);
+	cursor: pointer;
+	transition:
+		border-color var(--duration-fast, 140ms) var(--ease-standard),
+		color var(--duration-fast, 140ms) var(--ease-standard),
+		background var(--duration-fast, 140ms) var(--ease-standard);
+}
+
+.sp-cat:hover {
+	color: var(--ink-bright, #fff);
+	border-color: var(--stroke-strong, rgba(255, 255, 255, 0.22));
+}
+
+.sp-cat[aria-pressed='true'] {
+	background: var(--accent-soft, rgba(255, 255, 255, 0.1));
+	border-color: var(--stroke-strong, rgba(255, 255, 255, 0.28));
+	color: var(--ink-bright, #fff);
+}
+
+.sp-cat-count {
+	font-family: var(--font-mono);
+	font-size: var(--text-2xs, 11px);
+	color: var(--ink-faint, rgba(255, 255, 255, 0.42));
+	font-variant-numeric: tabular-nums;
+}
+
+/* ── grid + cards ─────────────────────────────────────────────────────── */
+
+.sp-grid {
+	display: grid;
+	gap: var(--space-md, 16px);
+	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+.sp-card {
+	position: relative;
+	display: grid;
+	grid-template-rows: auto 1fr auto;
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.1));
+	border-radius: var(--radius-lg, 14px);
+	background: var(--surface-1, rgba(255, 255, 255, 0.03));
+	overflow: hidden;
+	transition:
+		border-color var(--duration-fast, 140ms) var(--ease-standard),
+		transform var(--duration-fast, 140ms) var(--ease-standard),
+		box-shadow var(--duration-fast, 140ms) var(--ease-standard);
+}
+
+.sp-card:hover {
+	border-color: var(--stroke-strong, rgba(255, 255, 255, 0.24));
+	transform: translateY(-2px);
+	box-shadow: var(--shadow-2, 0 8px 24px rgba(0, 0, 0, 0.35));
+}
+
+.sp-card:focus-within {
+	border-color: var(--stroke-strong, rgba(255, 255, 255, 0.3));
+}
+
+.sp-card-art {
+	position: relative;
+	aspect-ratio: 16 / 10;
+	background: var(--bg-1, rgba(0, 0, 0, 0.3));
+	display: grid;
+	place-items: center;
+	overflow: hidden;
+}
+
+.sp-card-art img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transition: transform var(--duration-base, 220ms) var(--ease-standard);
+}
+
+.sp-card:hover .sp-card-art img {
+	transform: scale(1.03);
+}
+
+/* Fallback art: a deterministic monogram, so an agent with no public avatar
+   still gets a card that looks designed rather than broken. The hue comes from
+   the agent id in JS, which keeps the same agent the same colour everywhere. */
+.sp-mono {
+	width: 100%;
+	height: 100%;
+	display: grid;
+	place-items: center;
+	font-family: var(--font-display);
+	font-size: var(--text-3xl, 48px);
+	font-weight: var(--weight-bold, 700);
+	color: var(--on-scrim-bright, #fff);
+	letter-spacing: -0.03em;
+}
+
+.sp-card-badges {
+	position: absolute;
+	top: var(--space-2, 8px);
+	left: var(--space-2, 8px);
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.sp-badge {
+	padding: 3px 8px;
+	border-radius: var(--radius-pill, 999px);
+	background: var(--scrim, rgba(0, 0, 0, 0.55));
+	border: 1px solid var(--on-scrim-stroke, rgba(255, 255, 255, 0.16));
+	color: var(--on-scrim, rgba(255, 255, 255, 0.86));
+	font-family: var(--font-mono);
+	font-size: var(--text-2xs, 11px);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	backdrop-filter: blur(var(--blur-sm, 8px));
+}
+
+.sp-badge-onchain {
+	color: var(--success, #4ade80);
+	border-color: color-mix(in srgb, var(--success, #4ade80) 40%, transparent);
+}
+
+.sp-badge-curated {
+	color: var(--warn, #fbbf24);
+	border-color: color-mix(in srgb, var(--warn, #fbbf24) 40%, transparent);
+}
+
+.sp-card-body {
+	display: grid;
+	gap: var(--space-2, 8px);
+	padding: var(--space-md, 16px);
+	align-content: start;
+}
+
+.sp-card-title {
+	margin: 0;
+	font-family: var(--font-display);
+	font-size: var(--text-lg, 18px);
+	font-weight: var(--weight-semibold, 600);
+	line-height: var(--leading-tight, 1.25);
+	color: var(--ink-bright, #fff);
+}
+
+.sp-card-title a {
+	color: inherit;
+	text-decoration: none;
+}
+
+/* The title link covers the card, so the whole surface is one big target while
+   the vote button and the secondary links below stay individually clickable. */
+.sp-card-title a::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+}
+
+.sp-card-tagline {
+	margin: 0;
+	font-size: var(--text-ui, 14px);
+	line-height: var(--leading-normal, 1.55);
+	color: var(--ink-dim, rgba(255, 255, 255, 0.64));
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.sp-card-meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	font-size: var(--text-md, 13px);
+	color: var(--ink-faint, rgba(255, 255, 255, 0.5));
+}
+
+.sp-card-meta strong {
+	color: var(--ink, rgba(255, 255, 255, 0.82));
+	font-weight: var(--weight-medium, 500);
+}
+
+.sp-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 5px;
+}
+
+.sp-tag {
+	padding: 2px 8px;
+	border-radius: var(--radius-sm, 6px);
+	background: var(--surface-2, rgba(255, 255, 255, 0.05));
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.08));
+	color: var(--ink-faint, rgba(255, 255, 255, 0.5));
+	font-family: var(--font-mono);
+	font-size: var(--text-2xs, 11px);
+	cursor: pointer;
+	position: relative;
+	z-index: 1;
+}
+
+.sp-tag:hover {
+	color: var(--ink-bright, #fff);
+	border-color: var(--stroke-strong, rgba(255, 255, 255, 0.22));
+}
+
+.sp-card-foot {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-sm, 12px);
+	padding: var(--space-sm, 12px) var(--space-md, 16px);
+	border-top: 1px solid var(--stroke, rgba(255, 255, 255, 0.08));
+	position: relative;
+	z-index: 1;
+}
+
+.sp-card-links {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2, 8px);
+	font-size: var(--text-md, 13px);
+}
+
+.sp-card-links a {
+	color: var(--ink-dim, rgba(255, 255, 255, 0.62));
+	text-decoration: none;
+	border-bottom: 1px solid transparent;
+	transition:
+		color var(--duration-fast, 140ms) var(--ease-standard),
+		border-color var(--duration-fast, 140ms) var(--ease-standard);
+}
+
+.sp-card-links a:hover {
+	color: var(--ink-bright, #fff);
+	border-bottom-color: var(--stroke-strong, rgba(255, 255, 255, 0.35));
+}
+
+/* ── vote ─────────────────────────────────────────────────────────────── */
+
+.sp-vote {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	min-width: 52px;
+	padding: 5px 10px;
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.14));
+	border-radius: var(--radius-md, 10px);
+	background: var(--surface-1, rgba(255, 255, 255, 0.04));
+	color: var(--ink, rgba(255, 255, 255, 0.82));
+	font-family: var(--font-mono);
+	font-size: var(--text-md, 13px);
+	line-height: 1.1;
+	cursor: pointer;
+	transition:
+		background var(--duration-fast, 140ms) var(--ease-standard),
+		border-color var(--duration-fast, 140ms) var(--ease-standard),
+		color var(--duration-fast, 140ms) var(--ease-standard);
+}
+
+.sp-vote:hover {
+	border-color: var(--stroke-strong, rgba(255, 255, 255, 0.3));
+	background: var(--surface-2, rgba(255, 255, 255, 0.08));
+}
+
+.sp-vote[aria-pressed='true'] {
+	border-color: color-mix(in srgb, var(--success, #4ade80) 55%, transparent);
+	background: color-mix(in srgb, var(--success, #4ade80) 14%, transparent);
+	color: var(--success, #4ade80);
+}
+
+.sp-vote-caret {
+	font-size: var(--text-2xs, 11px);
+	line-height: 1;
+	opacity: 0.8;
+}
+
+.sp-vote-count {
+	font-variant-numeric: tabular-nums;
+	font-weight: var(--weight-semibold, 600);
+}
+
+.sp-vote.is-busy {
+	opacity: 0.6;
+	pointer-events: none;
+}
+
+/* ── states ───────────────────────────────────────────────────────────── */
+
+.sp-skeleton {
+	height: 340px;
+	border-radius: var(--radius-lg, 14px);
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.06));
+	background: linear-gradient(
+		100deg,
+		var(--surface-1, rgba(255, 255, 255, 0.03)) 30%,
+		var(--surface-2, rgba(255, 255, 255, 0.07)) 50%,
+		var(--surface-1, rgba(255, 255, 255, 0.03)) 70%
+	);
+	background-size: 220% 100%;
+	animation: sp-shimmer 1.4s var(--ease-standard) infinite;
+}
+
+@keyframes sp-shimmer {
+	from {
+		background-position: 140% 0;
+	}
+	to {
+		background-position: -40% 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.sp-skeleton {
+		animation: none;
+	}
+}
+
+.sp-empty,
+.sp-error {
+	margin: var(--space-lg, 24px) 0;
+	padding: var(--space-2xl, 48px) var(--space-lg, 24px);
+	border: 1px dashed var(--stroke, rgba(255, 255, 255, 0.14));
+	border-radius: var(--radius-lg, 14px);
+	text-align: center;
+	display: grid;
+	justify-items: center;
+	gap: var(--space-sm, 12px);
+}
+
+.sp-empty h3,
+.sp-error h3 {
+	margin: 0;
+	font-family: var(--font-display);
+	font-size: var(--text-lg, 20px);
+	color: var(--ink-bright, #fff);
+}
+
+.sp-empty p,
+.sp-error p {
+	margin: 0;
+	max-width: 52ch;
+	font-size: var(--text-ui, 14px);
+	line-height: var(--leading-normal, 1.6);
+	color: var(--ink-dim, rgba(255, 255, 255, 0.6));
+}
+
+.sp-error h3 {
+	color: var(--danger, #f87171);
+}
+
+.sp-more-wrap {
+	display: flex;
+	justify-content: center;
+	margin: var(--space-xl, 32px) 0 0;
+}
+
+@media (max-width: 560px) {
+	.sp-shell {
+		padding-left: var(--space-md, 16px);
+		padding-right: var(--space-md, 16px);
+	}
+
+	.sp-title {
+		font-size: var(--text-xl, 30px);
+	}
+
+	.sp-controls {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.sp-search {
+		max-width: none;
+	}
+}
