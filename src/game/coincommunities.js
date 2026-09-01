@@ -212,13 +212,19 @@ const COIN_URL = '/api/pump/coin';
 
 // Normalize a raw pump.fun coin (trending feed or search results, both share
 // the same upstream shape) into the compact record the lobby/world consume.
+// Delivered width for coin art fetched through the image proxy.
+const COIN_ART_WIDTH = 512;
+
 function mapCoins(raw) {
 	const list = Array.isArray(raw) ? raw : raw.data || raw.coins || raw.items || [];
 	return list.map((c) => ({
 		mint: c.mint || c.address,
 		name: (c.name || '').trim() || 'Unnamed coin',
 		symbol: (c.symbol || '').trim(),
-		image: proxiedImageURL(c.image_uri || c.image || c.imageUri || c.logo || '', c.mint || c.address || ''),
+		// Coin art becomes a WebGL texture a few hundred pixels tall. 512 is
+		// generous for that and keeps a creator's full-size upload out of both
+		// the download and GPU memory.
+		image: proxiedImageURL(c.image_uri || c.image || c.imageUri || c.logo || '', c.mint || c.address || '', { width: COIN_ART_WIDTH }),
 		marketCap: c.usd_market_cap || c.market_cap_usd || c.marketCap || 0,
 	})).filter((c) => c.mint);
 }
@@ -902,7 +908,7 @@ export class CoinCommunities {
 				// upstream text, and the room server truncates it for every peer.
 				name: clampParam(c.name, 48),
 				symbol: clampParam(c.symbol, 16),
-				image: proxiedImageURL(c.image_uri || c.image || c.imageUri || c.logo || '', mint),
+				image: proxiedImageURL(c.image_uri || c.image || c.imageUri || c.logo || '', mint, { width: COIN_ART_WIDTH }),
 				marketCap: c.usd_market_cap || c.market_cap_usd || c.marketCap || 0,
 			};
 		} catch (err) {

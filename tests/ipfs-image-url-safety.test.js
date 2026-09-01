@@ -103,6 +103,22 @@ describe('isSafeImageURL', () => {
 });
 
 describe('proxiedImageURL', () => {
+	it('adds ?w= only when a width is asked for, and rounds it', () => {
+		const plain = new URL(proxiedImageURL('https://cdn.example/art.png', MINT), 'http://l');
+		expect(plain.searchParams.has('w')).toBe(false);
+		const sized = new URL(proxiedImageURL('https://cdn.example/art.png', MINT, { width: 512 }), 'http://l');
+		expect(sized.searchParams.get('w')).toBe('512');
+		expect(sized.searchParams.get('url')).toBe('https://cdn.example/art.png');
+		expect(sized.searchParams.get('seed')).toBe(MINT);
+		const rounded = new URL(proxiedImageURL('https://cdn.example/art.png', '', { width: 191.6 }), 'http://l');
+		expect(rounded.searchParams.get('w')).toBe('192');
+	});
+
+	it('ignores a width on a source that never reaches the proxy', () => {
+		expect(proxiedImageURL('data:image/png;base64,AAAA', '', { width: 512 })).toBe('data:image/png;base64,AAAA');
+		expect(proxiedImageURL('javascript:alert(1)', '', { width: 512 })).toBe('');
+	});
+
 	it('routes cross-origin art through the same-origin proxy, carrying the seed', () => {
 		const out = proxiedImageURL('https://ipfs.io/ipfs/bafyexample', MINT);
 		expect(out.startsWith('/api/img?')).toBe(true);

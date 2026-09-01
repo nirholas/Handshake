@@ -147,11 +147,19 @@ export function isSafeImageURL(url) {
  * file:, an over-long URL) resolves to '' so callers fall through to their own
  * "no art" branch instead of pushing a hostile value into an image sink.
  *
+ * `width` asks the proxy for a copy no wider than that many pixels, re-encoded
+ * as WebP (it snaps up to a fixed ladder, so a caller cannot mint unbounded
+ * edge variants). Token art is stored at whatever size its creator uploaded:
+ * four coins in the /play world pulled 2.7 MB of full-size PNGs for textures
+ * that are a few hundred pixels on screen. Pass the size the art is actually
+ * used at; leave it off to get the original bytes.
+ *
  * @param {string} url          Image URL (https://, ipfs:// or ar:// accepted).
  * @param {string} [seed]       Stable placeholder seed (e.g. the token mint).
+ * @param {{ width?: number }} [opts]  Max delivered width in pixels.
  * @returns {string}
  */
-export function proxiedImageURL(url, seed = '') {
+export function proxiedImageURL(url, seed = '', { width = 0 } = {}) {
 	if (typeof url !== 'string' || !url) return '';
 	// Protocol-relative art still deserves the proxy's CORS and gateway retry,
 	// so give it the scheme the page is already on before anything else looks
@@ -163,6 +171,7 @@ export function proxiedImageURL(url, seed = '') {
 	if (raw.length > MAX_SOURCE_URL) return '';
 	const q = new URLSearchParams({ url: resolveURI(raw) });
 	if (seed) q.set('seed', seed);
+	if (width > 0) q.set('w', String(Math.round(width)));
 	return `/api/img?${q.toString()}`;
 }
 

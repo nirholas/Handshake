@@ -962,7 +962,7 @@ export class CommunityUI {
 		}, [
 			a.thumbnail_url
 				? el('img', {
-						src: proxiedImageURL(a.thumbnail_url, a.id || ''), alt: a.name || 'Avatar', loading: 'lazy',
+						src: proxiedImageURL(a.thumbnail_url, a.id || '', { width: 192 }), alt: a.name || 'Avatar', loading: 'lazy',
 						// A stale thumbnail (e.g. a legacy OG key that 404s before the
 						// avatar self-heals) shouldn't leave a broken-image icon: drop it
 						// and let _renderChipPreview's live model render stand in. Removing
@@ -1005,7 +1005,7 @@ export class CommunityUI {
 			// stays clean. Same reason every other art surface on the platform proxies.
 			const fallback = p.thumb
 				? el('img', {
-						src: proxiedImageURL(p.thumb, p.url || ''), alt: p.label, loading: 'lazy',
+						src: proxiedImageURL(p.thumb, p.url || '', { width: 192 }), alt: p.label, loading: 'lazy',
 						// Broken thumb: drop it and render the real model instead, so the
 						// chip is never left empty (on mobile a live thumbnail is what lets
 						// us skip that render in the first place).
@@ -2474,7 +2474,7 @@ export class CommunityUI {
 	// show a real thumbnail (falling back to the glyph when a model has no render yet).
 	_propButton(p) {
 		const ico = p.thumbnail
-			? el('img', { class: 'cc-prop-thumb', src: proxiedImageURL(p.thumbnail, p.id || ''), alt: '', loading: 'lazy', decoding: 'async' })
+			? el('img', { class: 'cc-prop-thumb', src: proxiedImageURL(p.thumbnail, p.id || '', { width: 192 }), alt: '', loading: 'lazy', decoding: 'async' })
 			: el('span', { class: 'cc-prop-ico', 'aria-hidden': 'true', text: p.icon || '◆' });
 		const btn = el('button', {
 			class: 'cc-prop', type: 'button',
@@ -2797,7 +2797,7 @@ export class CommunityUI {
 			.filter(Boolean).join(' · ');
 		return el('a', { class: 'cc-fb-item', href, title: 'Enter this world' }, [
 			el('div', { class: 'cc-fb-thumb' }, [
-				b.thumb ? el('img', { src: proxiedImageURL(b.thumb, b.id || b.coinMint || ''), alt: b.title || 'Featured build', loading: 'lazy' })
+				b.thumb ? el('img', { src: proxiedImageURL(b.thumb, b.id || b.coinMint || '', { width: 320 }), alt: b.title || 'Featured build', loading: 'lazy' })
 					: el('div', { class: 'cc-fb-thumb-empty', 'aria-hidden': 'true', text: '🧱' }),
 			]),
 			el('div', { class: 'cc-fb-meta' }, [
