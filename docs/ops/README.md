@@ -18,6 +18,7 @@ Start with [gcp-production.md](gcp-production.md); it is the complete operationa
 | [solana-rpc-lanes.md](solana-rpc-lanes.md) | The Solana RPC tier end to end: one-sweep diagnosis, per-lane method capability, what must rotate vs fail, config traps, recovery. |
 | [llm-lanes.md](llm-lanes.md) | The LLM provider chain end to end: which rungs serve, why the paid ones are dead, how spend is metered, the one-command Claude rollout, and per-lane probes. |
 | [page-audit.md](page-audit.md) | `scripts/page-audit.mjs`: authed Chromium sweep of every public page, console-error gated. |
+| [swarm-100-audit.md](swarm-100-audit.md) | Reconciles the `prompts/swarm-100/` self-deleting work-order ledger against git history and measures every still-open order. |
 | [avatar-asset-orphans.md](avatar-asset-orphans.md) | Avatar rows whose model or thumbnail is gone from the bucket: why they happened, how to find and repair them. |
 | [avatar-reconstruction-capacity.md](avatar-reconstruction-capacity.md) | The photo-to-avatar lane sized to the 10k avatars/day launch target: measured numbers, the autoscaler-blindness trap, and the applied config. |
 | [db-retention.md](db-retention.md) | Keeping the Neon Postgres branch under its storage cap: what grows, what gets pruned. |
