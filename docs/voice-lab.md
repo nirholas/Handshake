@@ -24,7 +24,7 @@ An agent that speaks in a generic stock voice is a demo. An agent that speaks in
 | OpenAI | 11 | Credits | `gpt-4o-mini-tts` also takes a direction. |
 | ElevenLabs | your account + the public library | Credits or BYOK | The only lane that can clone your voice. |
 
-The `providers` array from `GET /api/tts/catalog` is the source of truth: it reports, per lane, whether this deployment can actually serve it and why not when it cannot, which models it offers, and whether it accepts a direction. The picker renders unavailable lanes with their reason rather than hiding them.
+The `providers` array from `GET /api/tts/catalog` is the source of truth: it reports, per lane, whether this deployment can actually serve it and why not when it cannot, which models it offers, and whether it accepts a direction. The picker renders unavailable lanes with their reason rather than hiding them: the lane pill stays fully legible (a greyed billing badge and a not-allowed cursor carry the state, never a faded label) and its `aria-label` reads the lane name plus the reason, so a screen reader hears what to do about it.
 
 ### The ElevenLabs Voice Library
 
@@ -96,7 +96,7 @@ curl -X POST 'https://three.ws/api/tts/eleven' \
   --output hello.mp3
 ```
 
-Note that agent-assigned voices always run on the platform account (the agent speaks server-side, where your browser key is not present), so a voice you want an agent to use must be cloned on the platform rungs, not under BYOK.
+Agent-assigned voices have their own rung. When an agent's voice was bound with the owner's saved ElevenLabs key (`agent_identities.voice_key_source = 'owner'`, set by `PUT /api/agents/:id/voice`), `/api/tts/eleven` with that `agentId` serves the clip on the owner's account (`x-tts-billing: agent_byok`), including to signed-out visitors on the chat and embed surfaces, rate-limited per IP; the requested `voiceId` must be the agent's own bound voice, so the credential can never be borrowed to synthesize anything else. An agent bound on the platform key speaks on the `credits` rung instead, and the agent lane falls back to that cleanly when the owner's key is absent. Your browser-side `x-eleven-key` is never involved in agent speech, so a voice an agent should use must be cloned either on the platform rungs or with the key you have saved to your account, not with a key that only lives in `localStorage`.
 
 ## Walkthrough
 
@@ -152,7 +152,7 @@ The agent-voice handler ([`api/agents/_id/voice.js`](../api/agents/_id/voice.js)
 - **"Add to an agent" on `/voice`** links to the dashboard; the actual assignment happens in the agent editor. The cloned `voice_id` lives in browser `localStorage` until you assign it.
 - **Error copy.** Mic denial, recorder failure, too-short recording, missing name, network failure, and clone failure each map to a specific message; the playground shows "Synthesizing...", then a size, a cached/generated tag, and the billing rung that served it, or an error. A lane's upstream failure is tagged with a code (`invalid_key`, `rate_limited`, `content_blocked`, `provider_unreachable`) that `/api/tts/synthesize` maps to a truthful HTTP status rather than a blanket 502. The message the picker renders is a written sentence, never the vendor's raw body: that ships alongside it in `detail` for debugging.
 - **A lane that goes down leaves the menu.** Configuration presence is not health, so what the last real synthesis learned decides what the catalog offers. A lane the provider refuses (expired key, billing hold upstream) is reported `available: false` with the reason for a few minutes, its voices drop out of the picker, and a synthesis aimed at it answers `503 lane_unavailable` with `retry_with: ["edge", "nvidia"]` rather than failing slowly again. The Voice Lab re-reads the catalog the moment a preview hits that 503, so the grid stops offering voices nobody can render while the explanation stays on screen. The window expires on its own and any successful call clears it, so recovery needs no deploy. Your own `x-eleven-key` is never gated by the platform key's outage.
-- **Catalog freshness.** The Edge catalog is fetched live from Microsoft and cached 6 hours per instance; the ElevenLabs account catalog 5 minutes. Nothing is a hardcoded snapshot, so a voice Microsoft or ElevenLabs adds shows up on its own.
+- **Catalog freshness.** The Edge catalog is fetched live from Microsoft and cached 6 hours per instance; the ElevenLabs account catalog 5 minutes. Nothing is a hardcoded snapshot, so a voice Microsoft or ElevenLabs adds shows up on its own. The ElevenLabs voice-list and voice-delete calls go through the shared `fetchUpstream` with a 10 s deadline and two attempts, so a slow upstream degrades the lane to empty-with-a-reason instead of holding the catalog request open.
 
 ## Related
 

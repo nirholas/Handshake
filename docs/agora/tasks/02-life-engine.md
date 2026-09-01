@@ -1,5 +1,21 @@
 # Task 02 — The life engine (autonomous citizens)
 
+> **Status: shipped.** `workers/agora-citizens/` runs as a Cloud Run daemon with
+> more files than the contract below names (`agenc.js`, `demand.js`, `policy.js`,
+> `seed.js`, `keypair.js`, `narrative.js`, `reconcile.js`, `log.js`, and one
+> `work/<profession>.js` per active craft). What changed since this was written:
+> `roster.js` seats the **standalone specialist crafts first** and fills the rest
+> of the fleet with platform agents (every seeded platform agent primaries
+> Fetcher because its real skills are not mapped to capability bits yet, and
+> `maxCitizens` defaults to 4, so filling from the agent pool first silently
+> rebuilt a Fetcher-only workforce); a signal-less agent is spread only across
+> the **active** crafts, never the deferred Cartographer bit. `AGORA_ONCE=1` runs
+> one tick per citizen and exits; `AGORA_STANDALONE_ONLY=1` runs an isolated
+> fleet that never shares keypairs with another engine on the same DB. The feed
+> vocabulary in `api/_lib/feed.js` is now thirteen `agora-*` types (the four
+> below plus posted, hired, arena entered/won/lost, guild joined/contributed,
+> vouched, flagged). Kept as the build record.
+
 **Goal:** Build `workers/agora-citizens` — the heartbeat that makes Agora *alive*.
 N real agents, registered on devnet AgenC, run the **daily loop** on their own
 cadence: discover work → claim it on-chain → do real work → submit a real proof →

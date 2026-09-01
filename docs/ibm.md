@@ -84,6 +84,7 @@ The shared server-side client lives in [`api/_lib/watsonx.js`](../api/_lib/watso
 2. **Project / space scoping.** Every inference body carries `project_id` (or `space_id`) — watsonx requires scoping on each call, so `watsonxConfig().configured` is only `true` when an API key **and** a project (or space) are both present.
 3. **Version stamping.** Calls are version-stamped via a `?version=` query param. The chat/embed/vision endpoints use `2024-05-31`; the Time Series Forecasting API (GA'd Feb 2025) uses `2025-02-11`. Both are overridable.
 4. **Real errors, surfaced.** Any IAM or upstream failure throws with the true status and message (auth, quota, model-not-enabled-in-region), so the calling endpoint reports the real cause rather than a generic 500.
+5. **Every call has a deadline.** Both legs go through the shared `fetchUpstream` wrapper: the IAM exchange is idempotent, so it gets a 10 s deadline and up to three attempts; an inference is not, so it gets one attempt with a 45 s deadline (`api/_lib/watsonx-forecast.js` uses the same 45 s for the Time Series API, and `/api/brain/chat` aborts a watsonx stream that has not returned headers within 45 s). A stalled watsonx connection can no longer hold a request open indefinitely.
 
 The streaming chat endpoint returns an OpenAI-shaped SSE stream (`choices[].delta.content`), so the avatar runtime reuses its existing OpenAI delta reader verbatim.
 
@@ -203,7 +204,7 @@ The Twin mirrors a live token's vitals (momentum, volatility, activity, liquidit
 
 The Galaxy embeds every public agent with `granite-embedding-278m-multilingual`, projects the vectors into 3D with PCA, clusters them with k-means, and asks Granite chat to name each cluster. The result is a 3D star-map layout where semantically similar agents sit near each other. A natural-language search ("a witty Solana trading assistant") embeds the query and returns the nearest agents by cosine similarity: matching on meaning, not keywords.
 
-The constellation is cached (keyed by a content hash of the agent set + model) so repeat visits are instant; `?refresh=1` forces a rebuild. The standalone embeddings endpoint, `POST /api/watsonx/embed`, exposes the same Granite vectors for your own semantic search or clustering:
+The constellation is cached (keyed by a content hash of the agent set + model) so repeat visits are instant; `?refresh=1` forces a rebuild. Search has no provider failover and none would be correct (the stored agent vectors live in Granite's space, so a vector from another lane would be a different geometry), so when the query cannot be embedded the endpoint degrades the *method* instead: it ranks the same corpus lexically and answers 200 with `ranking: "lexical"` and `degraded: { reason: "embedder_unavailable", retryable: true }`, rather than a 502. A normal search reports `ranking: "semantic"`. Each result's `home_url` is the agent's canonical `/agents/:id` page. The standalone embeddings endpoint, `POST /api/watsonx/embed`, exposes the same Granite vectors for your own semantic search or clustering:
 
 ```bash
 curl -s https://three.ws/api/watsonx/embed \
@@ -213,7 +214,7 @@ curl -s https://three.ws/api/watsonx/embed \
 
 It returns one vector per input (the response reports the model and its native `dimensions`), plus a `cachedHits` count: a warm process-local LRU keeps repeat embeddings free, and per-IP + global rate limits cap watsonx spend. The response itself is sent `cache-control: no-store`, because a POST body varies per request and must never be shared-cached.
 
-**Always read `model` from the response.** The endpoint leads with Granite on watsonx.ai and falls through to the platform's free-first embedding chain (NVIDIA NIM, then Vertex, then OpenAI) when watsonx cannot serve a full batch, so a 200 does not by itself mean Granite answered. Every vector in one response comes from one provider, so `dimensions` is uniform. Only when no provider at all is configured does it answer `503 embed_unconfigured`, which is what lets a caller show an honest "not configured" state instead of inventing vectors.
+**Always read `model` from the response.** The endpoint leads with Granite on watsonx.ai and falls through to the platform's free-first embedding chain (NVIDIA NIM, then Vertex, then OpenAI) when watsonx cannot serve a full batch, so a 200 does not by itself mean Granite answered. The fallback walks every configured lane in that order (`embedPassagesAny`), not just the preferred one, so a single NIM throttle no longer fails the request while Vertex and OpenAI sit idle. Every vector in one response comes from one provider, so `dimensions` is uniform. Only when no provider at all is configured does it answer `503 embed_unconfigured`, which is what lets a caller show an honest "not configured" state instead of inventing vectors; when every configured lane fails at the network level it answers `503 embed_unavailable` with the real upstream cause, a retryable status rather than a 502 the caller would read as permanent.
 
 ## watsonx Constellation
 

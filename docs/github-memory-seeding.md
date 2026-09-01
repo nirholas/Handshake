@@ -84,7 +84,7 @@ selection, so the promise and the code cannot drift apart.
 
 | Stored on the agent | Never stored |
 |---|---|
-| Up to 20 short distilled facts (max 600 characters each) about what you build, your stack, and how you describe your work | Repository file contents beyond the README excerpt |
+| Up to 20 short distilled facts (max 600 characters each) about what you build, your stack, and how you describe your work | Repository file contents beyond the README excerpt (the first 8,000 characters of a ticked README) |
 | Your GitHub handle and the exact selection manifest (profile on/off, repo keys, README keys) on every seeded row | Any GitHub credential; the access token stays HKDF-encrypted in the connection record and is never copied into a memory |
 
 ## What lands in memory
@@ -231,8 +231,8 @@ curl -s https://three.ws/api/agents/$AGENT_ID/memory/seed/github --cookie "$JAR"
 ### `POST /api/agents/:id/memory/seed/github`
 
 Seed from a selection. `repos` and `readmes` are `owner/name` keys from the
-catalog; a README key must also appear in `repos`. An empty selection is
-refused (`400 empty_selection`).
+catalog, at most 12 in each list; a README key must also appear in `repos`. An
+empty selection is refused (`400 empty_selection`).
 
 ```bash
 curl -s https://three.ws/api/agents/$AGENT_ID/memory/seed/github --cookie "$JAR" \
@@ -279,6 +279,7 @@ because no API can delete a personal access token using that token.
 | `csrf_missing` / `csrf_invalid` | 403 | A cookie-authenticated POST or DELETE arrived without a valid `x-csrf-token` |
 | `not_found` | 404 | No such agent, or it is not yours (a malformed id also answers 404, never a 500) |
 | `not_connected` | 412 | Connect GitHub first; the response carries `connect_url` |
+| `validation_error` | 400 | The body failed schema validation: more than 12 `repos` or `readmes`, a key that is not `owner/name`, or (on `/api/auth/github/token`) a pasted string that is not shaped like a GitHub token |
 | `invalid_token` | 400 | GitHub rejected the pasted token (mistyped, truncated, or expired) |
 | `token_scope_refused` | 400 | The pasted token carries scopes outside the allowlist; `refused_scopes` names them |
 | `invalid_selection` | 400 | A selected key is not in the catalog you were shown; `rejected` names each one |

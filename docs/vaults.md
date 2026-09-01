@@ -73,7 +73,7 @@ curl -sX POST https://three.ws/api/vaults \
 
 `201` returns the vault row including `vault_address`. Note the address: the vault also needs a little **SOL** to pay swap fees and open token accounts, and there is no vault-funding endpoint. Send roughly 0.01 SOL to `vault_address` yourself, for example from your master wallet (see [user-wallet.md](user-wallet.md)). Without it, trades are refused with `insufficient_sol_for_fees` before anything is signed.
 
-The browser flow is the "Open a vault" modal on [/vaults](https://three.ws/vaults), which is only shown to a signed-in user and pre-fills the same defaults.
+The browser flow is the "Open a vault" modal on [/vaults](https://three.ws/vaults), which is only shown to a signed-in user and pre-fills the same defaults. A signed-in user with no agents gets a disabled form pointing at [/create](https://three.ws/create) instead of a submit that can only fail.
 
 ## How the money is priced
 

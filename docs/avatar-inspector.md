@@ -27,7 +27,7 @@ All data is real and server-authoritative, the same public endpoints every
 other surface reads, so a number never disagrees across the platform:
 
 - **Identity**, display name, the three.ws agent the avatar pilots (with a
-  link to `/agent/<id>`), its bio, skills, creator, and ERC-8004 registration.
+  link to `/agents/<id>`), its bio, skills, creator, and ERC-8004 registration.
   From `GET /api/agents/:id`.
 - **Reputation**, the 0, 100 trust score with its full pillar breakdown
   (tenure, settled volume, tips, reliability, conduct, …) and verifiable
@@ -37,7 +37,10 @@ other surface reads, so a number never disagrees across the platform:
   USD net worth, SOL balance, $THREE holding, top tokens, and tips received.
   From `GET /api/agents/:id/solana/networth`. A player who signed in with a
   wallet but pilots no agent gets bare balances from
-  `POST /api/wallet/balances`.
+  `POST /api/wallet/balances`, which validates the address shape first (base58
+  Solana or 0x-prefixed EVM) and answers `400 validation_error` with a
+  field-level `issues` array instead of reporting a malformed address as an
+  empty wallet.
 - **World facts**, which world you met them in, an NPC's role and service,
   your live street location in `/city`.
 

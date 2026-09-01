@@ -4,9 +4,9 @@ A live world should feel alive even when you just stand there. The market alread
 
 ## Where the code lives
 
-- Market-to-world FX: `src/game/market-reactor.js`; trade feeds: `src/game/chart-screen.js` (`/api/pump/coin-trades`, `/api/robinhood/coin-trades` for hoodchain worlds)
+- Market-to-world FX: `src/game/market-reactor.js` (it already detonates a beam over the totem on a whale-sized trade, so the hype moment extends that hook rather than adding a second one); trade feeds: `src/game/chart-screen.js` (`/api/pump/coin-trades`, `/api/robinhood/coin-trades` for hoodchain worlds). The chart badge now has a `stale` state after three consecutive failed polls, with the tape's age drawn under it: the ticker must go quiet on a stale tape, never celebrate from it. `api/robinhood/coin-trades.js` drops a malformed firehose event instead of 500ing the poll, so a quiet ticker means a quiet market, not a dead feed
 - Player joins/leaves: the Colyseus room state in `src/game/community-net.js` (the HUD online count already consumes it)
-- In-world purchases worth celebrating: cosmetics buys, wheel wins, x402 payments (`agent-commerce.js`, `x402-jumbotron.js`)
+- In-world purchases worth celebrating: cosmetics buys, wheel wins, x402 payments (`agent-commerce.js`, `x402-jumbotron.js`); war results already reach the platform feed as `war-result` events (`multiplayer/src/feed.js`) and the war portal holds a 9 s win takeover on its board (`HYPE_MS` in `src/game/war-portal.js`), the nearest precedent for a hype moment with a cooldown
 - HUD layer + toast precedent: `src/game/coincommunities-ui.js`, styles in `src/game/coincommunities.css`
 
 ## What to build

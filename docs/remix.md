@@ -70,6 +70,13 @@ an iteration is a normal owned creation: gallery-listed, downloadable, and
 eligible to publish as remixable. It carries no payment surface of its own —
 iteration itself stays free.
 
+`/api/forge` holds the connection open while a saturated generator queues the
+job, so an accept can legitimately take minutes. `/api/forge-iterate` therefore
+waits up to `FORGE_ITERATE_SUBMIT_MS` (default 60000) for it, and when that
+window runs out it answers the way the generator itself would, `429 busy` with
+`retryAfter: 20`, rather than a `504` that both iterate UIs used to read as a
+wording problem and answer with "rephrase your instruction".
+
 ## Publish a model as remixable
 
 You must own the creation (same `x-forge-client` that generated it). Only finished
@@ -164,6 +171,14 @@ Response (after settlement):
 `royalty.creatorTx` is the real on-chain settlement reference. When a source has
 no payout wallet, or the royalty is below the 0.01 USDC dust floor, `paid` is
 `false` with an honest `reason` — never a fake pending.
+
+When the source belongs to a signed-in creator (anonymous `forge_creations`
+rows have no `user_id`), a settled remix also publishes a `remix` event to that
+creator's notification feed, folding "you were remixed" and the royalty outcome
+into one line, and awards the first-remix-received badge once. Both are
+fire-and-forget and never delay the response. A validation failure (bad source
+id, empty instruction) is answered before settlement with the error's own
+status and code, so the buyer is never charged for a request that could not run.
 
 ### Split math + caps
 

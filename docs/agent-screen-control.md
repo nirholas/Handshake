@@ -2,7 +2,7 @@
 
 Every agent on three.ws has a live screen. On the [agent screen](https://three.ws/agent-screen) and the [live wall](https://three.ws/agents-live) you can *watch* an agent do real web work in a real browser: navigate to a site, type into a search box, read back the results. This page is about the other half, **driving it yourself**.
 
-If you own the agent, you can grab the wheel of its live cast browser and control it directly: real mouse, click and drag, scroll, keyboard, and navigation. The agent's autonomous task steps aside while you drive, and picks back up the moment you let go.
+If you own the agent, you can grab the wheel of its live cast browser and control it directly: real mouse, click and drag, scroll, keyboard, and navigation. The agent's autonomous task steps aside while you drive, and picks back up a couple of seconds after you let go.
 
 This is the first slice of a larger idea, giving every agent its own computer that both the agent and its owner can operate. Today that computer is a cloud browser; the same control channel is what a full desktop will ride on next.
 
@@ -29,9 +29,9 @@ Remote-controlling a computer is exactly as dangerous as it sounds, so the desig
 
 - **Owner-only.** Watching an agent is public. Driving is not. Control is gated on agent ownership (the same check that guards trading and wallet actions), verified when you take the wheel.
 - **The cast browser holds no wallet and no keys.** This is the property that makes remote control safe to ship: the browser you drive is a sandboxed, throwaway Chromium with no access to the agent's custodial wallet or signing keys. Driving it **cannot** sign a transaction, move funds, or touch the chain. Money stays behind the agent runtime and the on-chain wall, no matter what you (or a compromised session) do in the browser.
-- **A short-lived capability lease, not your session.** Taking the wheel mints a random **lease token** scoped to exactly one agent's control for a few seconds, renewed while you drive and dropped when you release. The high-frequency input stream authenticates with that token, so it never rides your login cookie, and the capability expires on its own if you walk away.
+- **A short-lived capability lease, not your session.** Taking the wheel mints a random **lease token** scoped to exactly one agent's control for 15 seconds, refreshed by every input batch and by a renew every 8 seconds while you drive, and dropped when you release. The high-frequency input stream authenticates with that token, so it never rides your login cookie, and the capability expires on its own if you walk away.
 - **Every event is sanitized at the boundary.** Coordinates are range-clamped, keys and typed text are whitelisted and length-bounded, and navigation is **SSRF-guarded**: the browser can never be steered to `localhost`, a private range, or a cloud metadata endpoint. Only public `http(s)` destinations are allowed.
-- **One driver at a time.** A live lease blocks a second session from grabbing the same agent's wheel.
+- **One driver at a time.** A live lease held by another account answers `409 in_use` to anyone else who tries to acquire. The owner's own second tab is allowed to take over its lease, and the first tab's token stops working on its next input.
 
 ---
 
@@ -71,7 +71,7 @@ curl -s https://three.ws/api/agent-screen-control \
 # → { "ok": true, "accepted": 3 }
 ```
 
-`renew` refreshes an idle lease; `release` drops it immediately. Both take the bearer lease token.
+A batch carries at most 40 events (the page flushes every 80 ms), and one agent accepts at most 900 input calls a minute. `renew` refreshes an idle lease; `release` drops it immediately. Both take the bearer lease token.
 
 **Event shapes** (coordinates are normalized `0..1` against the streamed viewport):
 
@@ -106,7 +106,7 @@ The caster pool's read side, machine-to-machine only (authenticated with `SCREEN
  watch it move ◀──── frame stream (SSE) ◀──────── screenshot after each action
 ```
 
-The frame stream ([how the live screen works](./agent-shell.md)) carries pixels out; this control channel carries input back. Same agent, same browser, opposite directions.
+The frame stream (the caster pool in [workers/agent-screen-pool](../workers/agent-screen-pool/README.md)) carries pixels out; this control channel carries input back. Same agent, same browser, opposite directions.
 
 ---
 
@@ -116,4 +116,4 @@ The frame stream ([how the live screen works](./agent-shell.md)) carries pixels 
 - **One browser tab** per agent today. Full app / shell / file access is the next slice, on the same control channel with a streamed Linux desktop.
 - **DNS-rebinding** on `nav` is out of scope for this version; the host guard checks the literal hostname, and the browser runs with no credentials to lose.
 
-Related: [the agent shell and live screen](./agent-shell.md), the [live agents wall](https://three.ws/agents-live).
+Related: [the caster pool behind the live screen](../workers/agent-screen-pool/README.md), the [live agents wall](https://three.ws/agents-live).

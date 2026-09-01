@@ -175,6 +175,8 @@ limit).
 
 A `0` returned by any impact helper means "unknown", never "safe".
 
+An RPC outage is kept distinct from an exhausted pool. When the vault and mint accounts behind a pool cannot be read because the Solana RPC lane is down, `getAmmPoolState` throws a retryable `rpc_unavailable` error (HTTP 503 with a `Retry-After`) instead of a reserve figure, and `api/agents/solana-trade.js` answers `503 rpc_unavailable`; a depth refusal is only ever issued from reserves that were actually read.
+
 Regression coverage lives in
 [`tests/agent-sniper-amm-exit.test.js`](../../tests/agent-sniper-amm-exit.test.js)
 and [`tests/pump-swap-quote.test.js`](../../tests/pump-swap-quote.test.js): the

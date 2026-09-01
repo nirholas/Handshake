@@ -1,7 +1,7 @@
 # Button + Pill Migration Map (B04)
 
 **Canonical system:** the `.btn` base + BEM modifiers live in `public/buttons.css` (B03, a portable partial that `public/style.css` `@import`s; any surface can also `<link>` it directly). The `.pill` base + semantic modifiers live in `public/style.css` (B04).
-**Tokens:** B01 primitives in `public/tokens.css`; `--btn-*` and `--focus-ring-*` component tokens in `public/buttons.css`, `--badge-*` in `public/style.css`, `--disabled-*` in `public/tokens.css`.
+**Tokens:** B01 primitives in `public/tokens.css`, which also carries the `--focus-ring-*` and `--disabled-*` component tokens; `--btn-*` component tokens in `public/buttons.css`, `--badge-*` in `public/style.css`.
 
 ---
 
@@ -16,6 +16,7 @@
 | `.btn.btn--secondary` | Explicit secondary (same as base, for readability) |
 | `.btn.btn--ghost` | Transparent, text-only |
 | `.btn.btn--danger` | Red-tinted |
+| `.btn.btn--forge` | Gradient-bordered forge CTA with a live pulse dot (`.btn-forge-dot`); dark surfaces only |
 | `.btn.btn--sm` | Small size |
 | `.btn.btn--lg` | Large size |
 | `.btn.btn--block` | Full-width |
@@ -48,7 +49,7 @@ Linked pills: use `<a class="pill pill--onchain">` — gets hover/focus states a
 | `/deploy` (register-ui.js) | `erc8004-btn`, `erc8004-btn--primary`, `erc8004-btn--ghost`, `erc8004-btn--close`, `erc8004-btn--wallet`, `erc8004-btn--x` | Added `btn btn--primary/--ghost/--secondary/--icon` alongside |
 | Pump launch modal (launch-token-modal.js) | `ltm-btn`, `ltm-btn-primary` | Added `btn btn--secondary/--primary` alongside |
 | Homepage pump launcher (homepage-launcher.js) | `ltm-btn`, `ltm-btn-primary` | Added `btn btn--secondary/--primary` alongside |
-| Nav drawer (nav.html) | `btn primary` | Added `btn--primary` BEM modifier |
+| Nav drawer (public/nav.js renders it into the empty `nav-drawer` element in nav.html) | `btn primary` | Added `btn--primary` BEM modifier |
 | On-chain badge (onchain-badge.js) | `tws-ocb`, `tws-ocb--md`, `tws-ocb--devnet` | Added `pill pill--onchain/--devnet pill--md` |
 
 ---

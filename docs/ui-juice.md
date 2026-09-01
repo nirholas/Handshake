@@ -18,8 +18,13 @@ Three guarantees hold for every export:
   `public/tokens.css` (`--duration-*`, `--ease-*`). No raw millisecond literals.
 - **Reduced-motion-safe.** That token file zeroes every `--duration-*` under
   `@media (prefers-reduced-motion: reduce)`. `reducedMotion()` reads the computed
-  token, so each primitive lands on its correct final state with no animation —
-  automatically, with an explicit JS fallback path as belt-and-braces.
+  token, so each primitive lands on its correct final state with no animation,
+  automatically, with an explicit JS fallback path as belt-and-braces. The same
+  media block also floors every animation and transition on the page to 1ms,
+  whether or not it was authored through a token; only elements marked
+  `data-motion="essential"` (or `.motion-keep`), `aria-busy` regions, progress
+  bars, spinners and loaders keep their motion, because a frozen spinner reads as
+  a hung page.
 - **Real values only.** These are transition helpers over real numbers/series.
   They never fabricate or sample inputs.
 
@@ -47,6 +52,10 @@ and the ES module import. The classes the helpers attach all live under the
 Animate a number between two real values via `requestAnimationFrame`, preserving
 the caller's formatting. Cancels any in-flight count-up on the same element.
 Reduced motion → final value instantly. Stashes the target on `el.dataset.juiceVal`.
+The clock starts from the first frame's own timestamp and progress is clamped to
+`[0, 1]`, so no frame ever paints a value outside `[from, to]` (a `rAF` timestamp
+behind `performance.now()` used to drive the easing negative and flash garbage
+like "-42797%").
 
 ```js
 countUp(volEl, 1200, 1875, { format: (n) => '$' + Math.round(n).toLocaleString() });
@@ -116,6 +125,11 @@ flip.play();
 ### `liveDot(state?, opts?)` / `setLiveDot(el, state, label?)`
 Markup + in-place updater for an SSE status indicator mirroring the swarms
 `.sw-live` vocabulary. States: `live` | `connecting` | `idle` | `error`.
+`setLiveDot` also keeps the state pinned: when the badge sits inside a
+`data-i18n-html` line, the async translation pass rewrites that line from a
+frozen snapshot of the original markup (badge included), so the helper watches
+the container's child list and re-stamps the last requested state and label
+whenever the markup around the badge is replaced.
 
 ```js
 header.insertAdjacentHTML('beforeend', liveDot('connecting'));

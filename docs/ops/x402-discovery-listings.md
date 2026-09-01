@@ -148,7 +148,11 @@ CDP/x402 team. Not ERC-8004-based. Burden: none beyond section 2.
 - **Bazaar extension** (`"bazaar"` key in `extensions`): `description`,
   `input`, `inputSchema`, `output` (example + schema), `bodyType`, and for MCP
   `toolName`/`transport`. The description drives semantic-search ranking; the
-  example input must pass JSON-Schema validation or indexing is rejected.
+  example input must pass JSON-Schema validation or indexing is rejected. The
+  example is also what a buyer replays after settling, so it has to resolve:
+  the `/api/mcp` sample body (`bazaarExtension()` in `api/_lib/x402-spec.js`)
+  points `validate_model` at `https://three.ws/avatars/cesium-man.glb`, the
+  same GLB the agent card advertises, not an example.com placeholder.
 - **/.well-known conventions:** there is no ratified `.well-known/x402` in the
   core spec — the v2 Discovery extension (facilitator-crawled metadata) is the
   official direction (<https://www.x402.org/writing/x402-v2-launch>). In the
@@ -181,7 +185,7 @@ CDP/x402 team. Not ERC-8004-based. Burden: none beyond section 2.
 
 ## 6. The datapoint fabric: seeding settlements on ~4.4k granular URLs
 
-Most of our payable surface is not the ~68 named endpoints in `ring-catalog.js`. It
+Most of our payable surface is not the 84 named endpoints in `ring-catalog.js`. It
 is the **datapoint fabric**: one route (`api/x402/d/[...path].js`) that fans out a
 per-metric paid URL for every entity in every family defined in
 `api/_lib/market-data/datapoints.js`, at $0.0005 a call. `/.well-known/x402.json`
@@ -207,7 +211,12 @@ node scripts/x402-seed-datapoints.mjs --only=coin,protocol --per-family=25
 
 It pulls its seed list **live from the discovery doc**, so there is no hand-maintained
 URL list to drift, buckets by family, and settles core metrics (price, tvl, supply,
-volume) first so a bounded budget proves the whole surface is live. Payments are
+volume) first so a bounded budget proves the whole surface is live. The family reads
+behind those URLs retry once and keep an hour-long last-known-good copy, so a
+DeFiLlama or CoinGecko blip serves a slightly older row instead of a 503 on a paid
+call; a datapoint served that way stamps `as_of` with the time the data was actually
+fetched upstream and adds `stale: true` plus `age_seconds`, so a buyer is never sold
+an hour-old number as a live one. Payments are
 circular: the payer wallet pays our own treasury, so the USDC round-trips and only the
 Solana network fee (~$0.000005/tx) is actually burned. An `onAccept` gate refuses any
 payment whose `payTo` is not our configured treasury, so a compromised or mis-set
@@ -275,6 +284,13 @@ The path to being counted, all Solana, no Base required:
    with `ECONOMY_REBALANCE_ENABLED=1` (owner spend approval) or the payer
    drains and the whole ring halts with `insufficient_payer_usdc`, which is
    exactly what happened 2026-07-15.
+4. **Accept what the standard client builds.** The reference x402 SVM client
+   (`@x402/svm`, which our own payload builder delegates to) attaches an SPL
+   Memo instruction to every `exact` payment, so the self-facilitator's
+   anti-drain gate skips both live Memo program ids as carrying no fund
+   movement instead of rejecting the transaction. Without that, no
+   third-party buyer using the stock client could settle here, and none of
+   their volume would exist to be counted.
 
 ## Registration log
 
@@ -295,7 +311,16 @@ probe surfaced two classes of issue, fixed in code on 2026-07-12:
   WWW-Authenticate on a 402 as an MPP header and flags the missing
   `Payment` challenge. We speak x402, not MPP/Tempo, so the 402 branch of
   `api/_mcp/auth.js sendAuthChallenge()` no longer sends WWW-Authenticate
-  (the 401 OAuth branch keeps it).
+  (the 401 OAuth branch keeps it). A spec-compliant MCP client (one sending
+  `Accept: application/json, text/event-stream`) still reads as an OAuth
+  protocol client and gets that 401 by default; a surface whose buyers key
+  strictly on 402 (the OKX 3D tools under `api/okx/3d/`) passes
+  `paymentStatus: 402` to force the Payment Required answer for every caller.
+  Prepended rails are deduped against the shared builder's accepts so a
+  listing never advertises the same rail twice, and `DELETE /api/mcp` with an
+  `Mcp-Session-Id` this stateless server never issued answers `404
+  unknown_session` (the transport's "start a fresh session" signal) rather
+  than a 204 for a session it never held.
 - **Skipped "unprotected" endpoints**: the 29 free-tier `/api/v1/x/*`
   aggregator endpoints now declare `security: []` with no `x-payment-info`
   in `/openapi.json` (the auditor classifies x-payment-info as paid and then

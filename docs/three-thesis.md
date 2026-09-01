@@ -36,7 +36,7 @@
 
 ## 1. The one-paragraph version
 
-Most tokens are a story looking for a product. $THREE is the reverse: it is the coin of a shipping, open-source, revenue-generating platform that gives AI agents a 3D body, an on-chain identity, a wallet, and a way to get paid. The platform (three.ws) has published 2,673 changelog entries in about four months, exposes 723 public pages, ships 70 npm packages and 36 MCP servers, and runs a live pay-per-call economy (x402) with over one million individually priced datapoints. The token is wired into that machine at every level: hold-to-access tiers create standing demand, a 20% discount on plans and premium passes creates spend demand, a policy that commits 50% of platform revenue to market buybacks creates buy-side pressure, a micro-buy loop turns every settled x402 call into a small $THREE purchase, and on-chain agent deploys route their fee to the buyback wallet. Supply is never destroyed by the platform; instead the treasury buys. The token trades on MEXC, LBank, KCEX, Bybit Alpha, KuCoin Alpha, and every major Solana DEX, is Jupiter-verified, Phantom-verified, and a verified project on pump.fun. It is a real product's real coin, and the product is one of the more complete agent-economy stacks in the open-source world.
+Most tokens are a story looking for a product. $THREE is the reverse: it is the coin of a shipping, open-source, revenue-generating platform that gives AI agents a 3D body, an on-chain identity, a wallet, and a way to get paid. The platform (three.ws) has published 2,738 changelog entries in about four and a half months, exposes 761 public pages, ships 89 npm packages and 39 MCP servers, and runs a live pay-per-call economy (x402) with over one million individually priced datapoints. The token is wired into that machine at every level: hold-to-access tiers create standing demand, a 20% discount on plans and premium passes creates spend demand, a policy that commits 50% of platform revenue to market buybacks creates buy-side pressure, a micro-buy loop turns every settled x402 call into a small $THREE purchase, and on-chain agent deploys route their fee to the buyback wallet. Supply is never destroyed by the platform; instead the treasury buys. The token trades on MEXC, LBank, KCEX, Bybit Alpha, KuCoin Alpha, and every major Solana DEX, is Jupiter-verified, Phantom-verified, and a verified project on pump.fun. It is a real product's real coin, and the product is one of the more complete agent-economy stacks in the open-source world.
 
 The thesis is not "number go up." The thesis is: **if agents become economic actors, they need bodies, identities, wallets, and rails, and three.ws has shipped all four with $THREE in the middle.**
 
@@ -65,7 +65,7 @@ On top of those five, the platform layers an entire agent economy:
 - **A multiplayer world (`/play`)** with a strictly separated in-game currency and a $THREE cosmetics boutique.
 - **An MCP endpoint** at `https://three.ws/api/mcp` behind a full OAuth 2.1 authorization server, so any MCP-capable AI client can drive the platform.
 
-Infrastructure: a single Google Cloud Run container serves the frontend, the route table, and every API handler; Neon Postgres, Cloudflare R2, and Upstash Redis behind it; a self-hosted Cloud Run GPU fleet (L4s plus one RTX PRO 6000 Blackwell) for text-to-3D, rigging, and motion; roughly 76 Cloud Scheduler crons keep the economy ticking.
+Infrastructure: a single Google Cloud Run container serves the frontend, the route table, and every API handler; Neon Postgres, Cloudflare R2, and Upstash Redis behind it; a self-hosted Cloud Run GPU fleet (L4s plus one RTX PRO 6000 Blackwell) for text-to-3D, rigging, and motion; 110 Cloud Scheduler crons (the `crons` array in `vercel.json`) keep the economy ticking.
 
 The point of listing all of this: **$THREE is not attached to a landing page.** It is attached to a system with dozens of live, wired, money-moving surfaces.
 
@@ -73,18 +73,18 @@ The point of listing all of this: **$THREE is not attached to a landing page.** 
 
 ## 3. The scale of what has been built
 
-Numbers measured directly from the repository on 2026-08-25:
+Numbers measured directly from the repository on 2026-09-01 (the external figures, such as GitHub, npm downloads, registry counts, and settlement totals, are as of 2026-08-25):
 
 | Dimension | Figure |
 |---|---|
-| Public pages (`data/pages.json`) | **723** across 10 sections (Crypto 137, Build 59, Learn 373, Main 52, Labs 22, Blog 39, and more) |
-| Changelog entries (`data/changelog.json`) | **2,673**, dated 2026-04-15 to 2026-08-24 |
-| Changelog tag mix | fix 1,190 · improvement 1,075 · feature 991 · infra 320 · docs 225 · security 216 · sdk 166 |
-| npm packages published under @three-ws | **101** (42 of them MCP servers, 6,225 downloads in the last 30 days); 70 live under `packages/` in this repo |
-| Root `package.json` | 257 scripts, 139 dependencies, version 1.5.2 |
+| Public pages (`data/pages.json`) | **761** across 10 sections (Crypto 137, Build 69, Learn 397, Main 56, Labs 22, Blog 39, and more) |
+| Changelog entries (`data/changelog.json`) | **2,738**, dated 2026-04-15 to 2026-09-01 |
+| Changelog tag mix | fix 1,219 · improvement 1,107 · feature 1,016 · infra 330 · docs 234 · security 218 · sdk 182 |
+| npm packages published under @three-ws | **101** (42 of them MCP servers, 6,225 downloads in the last 30 days); 89 live under `packages/` in this repo |
+| Root `package.json` | 277 scripts, 142 dependencies, version 1.5.2 |
 | MCP servers in the official registry | **72** under `io.github.nirholas` (including `three-token-mcp`, `threews-3d-studio`, `threews-pumpfun`, `x402-mcp`, `agora-mcp`, `metaplex-agent`) |
 | Docs mentioning $THREE | 89 markdown files |
-| Cloud Scheduler crons | ~76 |
+| Cloud Scheduler crons | 110 |
 | Crypto news archive | **660,000+ articles** from September 2017 onward, 192 publisher feeds in 18 languages |
 | DeFi pools indexed | ~15,000 live pools |
 | Individually priced x402 datapoints | **1,000,000+** at $0.0005 each |
@@ -206,7 +206,7 @@ The fee rides inside the same transaction that creates the asset, so a failed de
 
 ### 5.11 The Rider pass
 
-`api/_lib/rider.js`: `REQUIRED_AMOUNT = 8000` $THREE. Granted two ways: by holding, or by paying 8,000 $THREE into the rider vault (recorded by a Helius webhook), so a payer who later sells is not revoked. Both sources are honored by `GET /api/rider/check`.
+`api/_lib/rider.js`: `REQUIRED_AMOUNT = 8000` $THREE. Granted two ways: by holding, or by paying 8,000 $THREE into the rider vault (recorded by a Helius webhook), so a payer who later sells is not revoked. Both sources are honored by `GET /api/rider/check`. The verdict is cached per wallet for ten minutes whenever both sources answered, so an RPC outage mid-session returns the wallet's last verdict marked stale (`x-rider-stale: 1`) instead of refusing the gate; a wallet never checked before gets a typed `503 rpc_unavailable` with `Retry-After`.
 
 ### 5.12 x402 rail acceptance
 
@@ -528,7 +528,7 @@ If buybacks never turn on, perks never activate, or revenue does not grow, the t
 
 ## 17. Summary of the bull case
 
-1. **A real, shipping, open-source product** with 725 pages, 101 npm packages, 72 MCP servers in the official registry, 4,519 priced x402 endpoints with 110,416 on-chain settlements, and 2,674 changelog entries in four months. The code is public and every mechanic in this document can be read. The week-by-week record is in [The First 19 Weeks](./the-first-19-weeks.md).
+1. **A real, shipping, open-source product** with 761 pages, 101 npm packages, 72 MCP servers in the official registry, 4,519 priced x402 endpoints with 110,416 on-chain settlements, and 2,738 changelog entries in four and a half months. The code is public and every mechanic in this document can be read. The week-by-week record is in [The First 19 Weeks](./the-first-19-weeks.md).
 2. **A complete agent-economy stack**: bodies (3D avatars), identities (ERC-8004 and Metaplex Core), wallets (custodial with a single spend-policy boundary), rails (x402 with a self-hosted Solana facilitator), trust (cross-chain reputation and identity verification), and markets (skills, assets, labor, bounties, vaults).
 3. **The token is wired into every layer**: hold-to-access tiers, 20% discounts on plans and passes, marketplace-only currency, labor and bounty escrow, game cosmetics, gated embeds, holder worlds, rider passes, deploy-fee waivers, x402 acceptance, and one-signature allowances.
 4. **Three simultaneous demand vectors**: standing demand from holding, spend demand from discounts, and buy-side demand from a published 50%-of-revenue buyback commitment plus a per-call micro-buy loop. The platform never sells and never burns.

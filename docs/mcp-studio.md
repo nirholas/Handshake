@@ -57,22 +57,25 @@ launcher, living avatars, link unfurls) is documented end to end in
 
 ## Tools
 
-`tools/list` returns exactly **ten** tools, and they split three ways:
+`tools/list` returns exactly **eleven** tools, and they split four ways:
 
 - **Six generation tools** (`forge_free`, `text_to_avatar`, `mesh_forge`,
   `rig_mesh`, `forge_avatar`, `refine_model`), in the table below.
 - **One collector**, `check_job`, also in the table below.
+- **One inspector**, `look_at_model`, also in the table below.
 - **Three persona/embodiment tools** (`create_agent_persona`,
   `get_agent_persona`, `persona_say`), in the **Embodiment** section further down.
 
-All ten are free and keyless.
+All eleven are free and keyless.
 
 The six generation tools run operator-funded on the platform's own generation
 pipeline. Annotations: `readOnlyHint:false`, `destructiveHint:false`,
 `idempotentHint:false`, `openWorldHint:true` (work runs against external model
 APIs; nothing is ever modified or deleted). `check_job` is the exception: it is a
 pure status probe (`readOnlyHint:true`, `idempotentHint:true`) and never counts
-against the generation quota.
+against the generation quota. `look_at_model` is read-only and idempotent too,
+but it renders frames server-side, so it rides the same per-IP generation
+quota as the six generators.
 
 | Tool | Title | Input | Returns |
 |---|---|---|---|
@@ -83,6 +86,7 @@ against the generation quota.
 | `forge_avatar` | Generate a rigged, animation-ready avatar | `prompt?` / `image_url?`, `allow_non_humanoid?` | rigged GLB avatar |
 | `refine_model` | Refine a 3D model by describing a change | `glb_url`, `instruction`, `parent_prompt?`, `parent_lineage?`, `parent_index?` | refined GLB + version lineage |
 | `check_job` | Check a pending 3D generation and collect it | `job_id` | GLB model, or an updated pending state |
+| `look_at_model` | Look at a 3D model | `glb_url`, `views?` (up to 6 of `front`, `three-quarter`, `side`, `back`, `top`, `bottom`; default three-quarter, front, side, back), `size?` (128 to 1024 px, default 512) | rendered frames as images, plus geometry stats (triangles, materials, textures) and a plain reading of them |
 
 ### Quality tiers
 
@@ -341,11 +345,14 @@ rows, cloned so the ChatGPT pipeline can be tuned without touching the forge or
 any surface that rides it. The agent-facing REST endpoints (`/api/3d/generate`,
 `/api/v1/ai/text-to-3d`) stay on `/api/forge`.
 
-The inline widget and the `/api/ar` launch page both load Google's
-`<model-viewer>` from one pinned URL in
+The inline widget loads Google's `<model-viewer>` from one pinned URL in
 [`api/_lib/model-viewer-cdn.js`](../api/_lib/model-viewer-cdn.js), which is also
 the origin the widget's `openai/widgetCSP` allowlists, so the script tag and its
-CSP entry cannot drift apart.
+CSP entry cannot drift apart. The `/api/ar` launcher no longer inlines a
+`<model-viewer>` of its own: Android gets a Scene Viewer intent, and every other
+device (and every live avatar) is sent on to `/ar/view`, a Vite-bundled page
+that generates a real USDZ from the GLB on the device so iPhone gets genuine
+Quick Look rather than a camera overlay (`api/_lib/ar-launch.js`).
 
 ## Related
 

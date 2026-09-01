@@ -265,6 +265,10 @@ When an emotion exceeds 0.6 and no one-shot gesture is active, the avatar automa
 
 Slot names resolve through the agent's animation override map (`meta.edits.animations`) before searching the animation library, with a final fallback to embedded clip search.
 
+### Choreography routines
+
+Beyond single gestures, an agent can carry named **routines**: sequences of gesture slots with per-step timing, authored on the [/choreograph](https://three.ws/choreograph) page and stored on the agent at `meta.choreographies`. `AgentAvatar.setChoreographies(list)` registers them (an invalid entry is logged and skipped rather than thrown, so one bad routine never costs the agent the rest of its body language), `getChoreographies()` lists them, `playChoreography(nameOrRoutine)` performs one, and `stopChoreography()` halts the one performing. The timing engine (`src/runtime/choreography.js`, `RoutinePlayer`) is shared with the authoring page and is driven from the same per-frame hook as the emotion blend, so what an owner composed there is frame-for-frame what the agent performs.
+
 ---
 
 ## 6. Agent Memory
@@ -288,7 +292,7 @@ Each entry has an `id`, `type`, `content`, `tags`, `context`, `salience` (0–1)
 
 `memory.query()` sorts by `salience × recencyBoost`, where recency uses exponential decay with a 7-day half-life. `feedback` and `user` memories are inherently higher salience (they are the most stable and generalizable). Additional tags boost salience slightly.
 
-The memory context is injected into the LLM system prompt in a `<memory>` block, capped at `manifest.memory.maxTokens` (default 8192) tokens.
+The memory context is injected into the LLM system prompt in a `<memory>` block, capped at `manifest.memory.maxTokens` (default 8192) tokens. In the file-based backend (`src/memory/index.js`) the `MEMORY.md` index is injected in full and bypasses that token budget by design, so it has its own ceiling: at injection time it is cut to the 200 lines `MEMORY_SPEC.md` allows, with a one-line note saying how many lines were dropped, so an oversized index on disk still yields a bounded prompt.
 
 ### Pruning
 
@@ -300,13 +304,13 @@ When `localStorage` quota is exceeded, the store prunes expired entries first, t
 
 `agent-identity.js` manages the agent's passport and action diary.
 
-**On startup**, it reads from `localStorage` first (instant), then fetches from `/api/agents/:id` or `/api/agents/me` (authoritative when signed in). Backend failures fall through gracefully — localStorage keeps the agent alive offline.
+**On startup**, it reads from `localStorage` first (instant), then fetches from `/api/agents/:id` or `/api/agents/me` (authoritative when signed in). Backend failures fall through gracefully: localStorage keeps the agent alive offline. The stored slot holds one agent (whichever loaded last), so when the caller named a specific `agentId` (an `/agent-studio?id=…` link, a profile route) the local copy is only reused if it is that same agent, and the backend probe always goes straight to `/api/agents/:id` for the requested one; a different agent is never silently loaded in its place. `identity.backendConfirmed` is `true` only when the last load reached the backend and got a real row back; `false` means the record in hand is a local copy or a synthesised default whose id may not exist server-side, so owner consoles refuse to render edit controls over it.
 
 **Passport fields:** `id`, `name`, `description`, `avatarId`, `homeUrl`, `walletAddress`, `chainId`, `skills[]`, `meta`, `isRegistered`.
 
 **Wallet linking:** `identity.linkWallet(address, chainId)` associates the agent with an Ethereum address, enabling signed actions. Wallet state is persisted locally and pushed to `/api/agents/:id/wallet`.
 
-**Action diary:** `identity.recordAction(action)` fires-and-forgets a `POST /api/agent-actions` with the action type and payload. This is how the agent builds a tamper-evident history. The following event types are automatically recorded: `speak`, `remember`, `sign`, `skill-done`, `validate`, `load-end`.
+**Action diary:** `identity.recordAction(action)` fires-and-forgets a `POST /api/agent-actions` with the action type and payload. This is how the agent builds a tamper-evident history. The following event types are automatically recorded: `speak`, `remember`, `sign`, `skill-done`, `validate`, `load-end`. Both `/api/agent-actions` and `/api/agent-memory` answer a non-uuid agent id with `400 validation_error` rather than letting it reach Postgres, and the memory read clamps `since` and `limit` into ranges the database accepts (limit at most 500, default 200).
 
 **On-chain registration:** `identity.register({ glbFile, name, description })` calls into `erc8004/agent-registry.js`, pins the bundle to IPFS, and stamps the CID into the ERC-8004 Identity Registry. Once registered, the agent is globally addressable as `agent://{chain}/{agentId}`.
 
@@ -354,6 +358,8 @@ For the full skill bundle format, see [SKILL_SPEC.md](../specs/SKILL_SPEC.md).
 | `none` | — | — | TTS disabled. |
 
 `BrowserTTS` picks a voice by name or falls back to the first voice matching the configured language prefix. `ElevenLabsTTS` maps the `rate` config (0.5–1.5) to ElevenLabs' `style` field because the API has no direct playback-rate control.
+
+An ElevenLabs config also carries `agentId`, the agent the voice belongs to. `Runtime` fills it in from its own agent id (an explicit manifest or `voiceConfig` value still wins) and `ElevenLabsTTS` forwards it to the proxy, because `/api/tts/eleven` only serves a voice cloned on the owner's own ElevenLabs key when the request names its agent; that is what lets a bound voice speak to embed visitors and signed-out listeners, not just the signed-in owner. `agentVoiceConfig(agent)` in `runtime/speech.js` turns a public agent record (`voice_provider`, `voice_id`, `voice_model`, `voice_settings`) into that config, and returns `null` when no ElevenLabs voice is bound so a caller can render a "no voice configured" state instead of guessing.
 
 ### Speech-to-Text
 

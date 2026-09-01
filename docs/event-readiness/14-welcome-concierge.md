@@ -4,8 +4,8 @@ Most event visitors will be first-timers landing from one shared link. The onboa
 
 ## Where the code lives
 
-- NPC layer: `src/game/npc/npc.js`, `npc-catalog.js`, `npc-chat.js` (already talks to `/api/brain/chat`), `nav-graph.js` (pathing), `economy-npcs.js` for placement precedent
-- Onboarding today: `src/game/play-onboard.js` (3-step overlay); intro card: `src/game/play-intro.js`
+- NPC layer: `src/game/npc/npc.js`, `npc-catalog.js`, `npc-chat.js` (already talks to `/api/brain/chat`), `nav-graph.js` (pathing), `economy-npcs.js` for placement precedent, and `citizens.js` / `world-life.js` (every ambient walker is now a real citizen you can open and talk to; the closest precedent for a greeter that approaches once). Mind the chat gate: `/api/brain/chat` clamps a signed-out caller to the free providers under an anonymous rate limit and answers 401 for the paid first-party models, so the concierge persona must pin a free provider or first-timers get a sign-in wall instead of a welcome
+- Onboarding today: `src/game/play-onboard.js` (3-step overlay; its control list is data with an `essential` flag, so a tour stop that teaches a key should reference that list rather than restate it); intro card: `src/game/play-intro.js`
 - Landmarks worth touring: the stations from `src/game/play-activities.js`, the chart jumbotron (`chart-screen.js`), the cosmetics boutique, the intel kiosk
 - First-visit detection: the same localStorage signals `play-onboard.js` uses
 

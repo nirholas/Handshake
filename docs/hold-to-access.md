@@ -166,6 +166,11 @@ feature **Live** vs **Planned**, so the platform never promises an unwired perk.
 - **Free-quota multiplier** — a verified tier pass lifts the anonymous free-generation
   ceiling by `rateMultiplier` in [`api/forge.js`](../api/forge.js) (`freeLaneMultiplier`),
   zero added latency.
+- **Charged-at tier on `/credits`**: every credit debit already applies the discount, and
+  `GET /api/credits` reports the caller's resolved tier as `holder` (the same shape
+  `/api/pricing` returns, degrading to `null` on an RPC hiccup rather than failing the
+  balance read), so the [`/credits`](../pages/credits.html) page shows the tier you are
+  actually being charged at and the next one up.
 
 ---
 

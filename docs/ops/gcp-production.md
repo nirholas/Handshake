@@ -35,7 +35,7 @@ Cloud Run service "three-ws-api" (us-central1, min 0, 2 vCPU / 2 Gi, timeout 900
 allow-unauthenticated, runtime SA three-ws@…)
   └─ one Express container (server/index.mjs) serving:
        • static frontend from dist/ (baked into the image)
-       • the vercel.json route table (1,236 rules as of 2026-08-13:
+       • the vercel.json route table (1,285 rules as of 2026-09-01:
          headers/rewrites/redirects/404)
        • all api/** handlers with Vercel-parity filesystem routing
         │
@@ -119,11 +119,13 @@ aerial-vehicle-466722-p5 --filter="bindings.members:three-ws-build@"`.
 
 ```bash
 # Frontend changed? Build first — dist/ ships from the local build.
-# build:gcp = check:conflicts -> check:browser-graph -> ensure:avatar-studio
-# -> build:info:snapshot -> build:chat -> site build -> agent-3d CDN lib
-# (build:lib:full) -> publish:lib -> build:info -> check:dist -> check:pages,
-# IN THAT ORDER. The order is load-bearing: the
-# site `vite build` WIPES dist/, so it must run before publish:lib mirrors the
+# build:gcp = check:conflicts -> check:browser-graph -> check:tdz-bootstrap
+# -> ensure:avatar-studio -> build:info:snapshot -> build:lib:full (the agent-3d
+# UMD lib) -> build:avatar-sdk -> build:chat -> build (the site `vite build`)
+# -> publish:lib -> build:info -> check:dist -> check:pages, IN THAT ORDER. The
+# order is load-bearing: build:lib:full and build:avatar-sdk must run BEFORE the
+# site build (it resolves avatar-sdk/src/agent.js against the copied bundle), and
+# the site `vite build` WIPES dist/, so it must run before publish:lib mirrors the
 # lib into dist/. Plain `npm run build` is NOT enough (skips the lib publish, so
 # /agent-3d/latest/agent-3d.js 404s and the hero avatar dies). Hand-running
 # `build:vercel` as the frontend build is also WRONG — it builds the SDK/lib
@@ -233,7 +235,7 @@ npm run smoke:prod
 > is a hard 404 at `/<slug>` unless `vercel.json` carries a rewrite. That
 > shipped twice in three days: `/timeline` (fixed by `5688277bd`, "page shipped
 > without a route entry") and `/tracker` (advertised 2026-07-23, 404 until a
-> route landed two days later). `check:pages` resolves all ~424 declared paths
+> route landed two days later). `check:pages` resolves all ~760 declared paths
 > through the real route table and fails the build on any that dead-end. When it
 > fires it tells you which of the two causes applies: a missing `vercel.json`
 > rewrite, or a page that was never built (missing `vite.config.js` input entry).
@@ -472,6 +474,16 @@ pattern-matching an RPC error string, whose wording varies by provider.
 To resume autonomous spend, fund the payer's USDC float. The loop self-recovers
 on the next tick — no redeploy, no flag flip.
 
+The sponsor's SOL floor gate has the opposite default. Its balance read can also
+come back `null`, and until 2026-08-28 that read as "not paused": all four paid
+RPC lanes were over quota at the moment the sponsor sat at 0.000899 SOL, so the
+loop spent three hours signing payments that could not settle (95 attempts, 0
+settled). An unreadable balance is not evidence of solvency, so a `null` read now
+defers to `sponsorKnownBelowFloor()` (`api/_lib/x402/self-facilitator.js`), which
+the settle path itself writes when the chain rejects the sponsor for
+rent-exemption. That second opinion costs no RPC call, so the gate still answers
+when the RPC does not.
+
 ### Ops alerts: dashboard-primary (2026-07-12)
 
 Ops alerting used to be Telegram-only, and Telegram-only meant that with no chat
@@ -493,7 +505,7 @@ Telegram is now an **optional extra push**, off by default. When both
 `TELEGRAM_BOT_TOKEN` and `TELEGRAM_ALERTS_CHAT_ID` are set, alerts also push to
 that private chat (deduped per signature for 1h, capped at 20/h). It is
 deliberately unset in production — the dashboard is the channel. `/api/healthz`
-reports `alerts.primary: "dashboard"` and `alerts.telegram_push:
+reports `alerts.primary: "ops_alerts"` and `alerts.telegram_push:
 "disabled"|"enabled"`; a disabled push is expected, not a fault. The
 `@threewsbot` token remains in Secret Manager (`telegram-bot-token`) for
 user-facing bot use (e.g. changelog push to holders); it is **not** wired to ops

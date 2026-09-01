@@ -35,6 +35,9 @@ parents and the same seed it always derives the identical child.
   mutate; pitch blends within a bounded range. The dominant `voice_id` comes from
   whichever parent carries a real cloned or ElevenLabs voice, and the child's blended
   settings are genuinely synthesized through `/api/tts/eleven`, not just labelled.
+  There is no free platform TTS lane: a preview clip bills the listener's prepaid
+  credit wallet, or their own ElevenLabs key when one is saved (see
+  [Voice Lab](./voice-lab.md)).
 - **Body.** Morph targets and colors blend; accessories and hidden parts recombine as
   sets. At breed time the dominant parent's GLB is copied into the child's namespace
   and the inherited appearance is baked into a real composite child GLB.
@@ -51,12 +54,17 @@ parents and the same seed it always derives the identical child.
   hash, generation, and pedigree tier. `verifyGenome` re-derives the child from the
   recorded seed plus the parent-genome snapshots captured at breed time and confirms
   the stored hash matches. Breeding is idempotent per `(parents, seed)` key: replaying
-  the same pairing returns the same child instead of minting twins.
+  the same pairing returns the same child (HTTP 200 with `deduped: true`) instead of
+  minting twins, and two concurrent commits of the same key race on the unique
+  breeding key, with the loser's provisional child retired and the winner's returned.
 
 ## Walkthrough
 
 1. **Open [/genome](https://three.ws/genome).** Your agents load from `/api/agents`;
-   public studs load from `/api/genome/stud`.
+   public studs load from `/api/genome/stud`. The **Your stud listings** section at
+   the bottom lists or unlists your own agents and sets their `$THREE` stud fee
+   (`POST /api/genome/stud`, owner-only; it has PATCH semantics, so sending only a
+   new fee keeps the listing open rather than silently unlisting the agent).
 2. **Pick two parents.** Choose two agents you own, or pair one of yours with a
    public stud. An agent cannot breed with itself.
 3. **Preview the offspring.** `POST /api/genome/preview` derives the child
@@ -112,11 +120,17 @@ curl -s "https://three.ws/api/genome/lineage?agentId=<child-uuid>&verify=1"
 - **Breeding cooldown.** A parent can breed at most once per 6-hour window
   (`BREED_COOLDOWN_MS`). Breeding a parent still on cooldown returns HTTP 409
   `breeding_cooldown` with the remaining minutes. Cooldowns keep deep pedigrees
-  scarce.
+  scarce. The cooldown is checked before the stud fee gate, so a breeding that will
+  be refused never takes a real payment first.
 - **Stud fee settlement.** When a stud fee applies and no valid payment signature is
-  attached, `/api/genome/breed` returns HTTP 402 with the required `$THREE` amount.
-  Presence of a signature is not proof of payment; the fee must actually land in the
-  stud's payout wallet, and a single payment cannot be reused across breedings.
+  attached, `/api/genome/breed` returns HTTP 402 `stud_fee_required` with the
+  required `$THREE` amount (`stud_fee_unverified` when a signature is present but the
+  fee did not land). Presence of a signature is not proof of payment; the fee must
+  actually land in the stud's payout wallet, and a single payment cannot be reused
+  across breedings: a unique index on `stud_fee_signature` makes the replay check
+  atomic, and a reused signature returns HTTP 409 `stud_fee_replayed`. Paid
+  breedings record the settled amount as `stud_fee_atomics` on the `genome_breedings`
+  row.
 - **Determinism.** Same parents plus same seed always yields the same child. Change
   the seed and you get a different (still valid) draw.
 - **Graceful birth.** A copy or bake hiccup never blocks the birth; the child still

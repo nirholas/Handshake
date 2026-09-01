@@ -134,7 +134,9 @@ The authority needs about 0.02 devnet SOL to cover the collection account, the
 mint, and the registry enrolment on a first run. Fund it at
 <https://faucet.solana.com>. The script writes an evidence JSON (asset,
 signature, explorer link, storage checksum, chain read-back, EVM calldata) to
-`DRAFT_MINT_E2E_OUT`, defaulting to your temp directory.
+`DRAFT_MINT_E2E_OUT`, defaulting to your temp directory. At the end it deletes
+the user, avatar, and agent rows it created (the chain artifacts are permanent
+by nature); set `DRAFT_MINT_E2E_KEEP=1` to keep them.
 
 ### Running it without cloud credentials
 
@@ -215,6 +217,9 @@ explorer link, so the evidence file never overstates what was proven.
 | Agent already minted on this network | `already`, with the existing asset address, no chain write |
 | Agent Registry enrolment fails | The mint still stands; the back-fill retries the enrolment later |
 | No EVM treasury key | EVM leg returns `dry_run` with real calldata and a real gas estimate |
+| `DRAFT_AGENT_MINT_EVM_CHAIN_ID` is not a chain in the table | EVM leg returns `skipped` / `unsupported_chain` |
+| Treasury cannot cover the agent wallet's gas top-up | EVM leg returns `skipped` / `treasury_low:<balance>`; nothing is broadcast |
+| Agent has no custodial EVM key to sign with | EVM leg returns `skipped` / `no_evm_key` |
 | Database write fails after a mint | The avatar stamp is skipped with a warning; the on-chain asset and the agent meta are already written |
 
 ## Related

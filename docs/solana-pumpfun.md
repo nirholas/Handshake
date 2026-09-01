@@ -71,11 +71,13 @@ SOLANA_RPC_URL_DEVNET=
 
 `PUMPFUN_BOT_URL` is an **optional enrichment layer**, not a hard dependency. When it's unset (the prod default), the `pumpfun-signals` cron still runs off the live WS-fed `pumpfun_graduations` table and the `pf:claims` / `pf:whales` / `pf:mints` Redis lanes — only the bot's richer claim intel (tier, GitHub account age) is skipped. The `op=claims` read proxy and watch skills soft-degrade to empty when the bot is absent. Solana agents that don't use it pay no cost.
 
+The read proxy validates its request before that degrade, so the contract does not depend on the deployment's env: an unknown `op`, or `op=token` without `mint` / `op=creator` without `wallet`, is `400 validation_error` whether or not the bot is configured.
+
 ---
 
 ## Skills
 
-All registered through `registerPumpFunWatchSkills` in [src/agent-skills.js](../src/agent-skills.js).
+All registered through `registerPumpFunWatchSkills` in [src/agent-skills.js](../src/agent-skills.js). The skills await their platform fetches inline in the agent's turn, so every one is bounded (8 s by default) and a stalled feed fails the skill instead of leaving the chat mid-reply forever.
 
 | Skill | MCP-exposed | Effect |
 |---|---|---|
@@ -139,7 +141,7 @@ These are **off-chain** signals — flagged as such, not on-chain attestations. 
 
 ## Widget
 
-The `pumpfun-feed` widget renders a stack of cards (claim or graduation) as an absolutely-positioned overlay on top of the 3D viewer. With `autoNarrate: true`, the avatar narrates each event through the protocol bus.
+The `pumpfun-feed` widget renders a stack of cards (claim or graduation) as an absolutely-positioned overlay on top of the 3D viewer. With `autoNarrate: true`, the avatar narrates each event through the protocol bus. Each card's trading-terminal links come from the shared builder in [src/shared/trading-terminals.js](../src/shared/trading-terminals.js) (`terminalLinks(mint)` and `referralOffers()`), the same one the copy pages use, so adding or re-pointing a terminal is one change. The overlay carries no inline event handlers (a broken token image hides through the `data-fallback="hide"` hook), which is what keeps it inside the site's CSP.
 
 Studio config schema (validated in `widget-types.js`):
 

@@ -8,23 +8,41 @@ The submission answer sheet and the code disagree about what quality tier
 `forge_free` returns by default.
 
 **The code** ([`api/_mcp-studio/tools.js`](../../api/_mcp-studio/tools.js),
-`handleForgeFree`) defaults to `standard` and degrades `high` to `standard` on
-402/timeout. Verbatim comment:
+`handleForgeFree`) defaults to `standard` and degrades an explicit `high` to
+`standard` on a 402 or submit timeout. When this task was written the comment above
+that line said the high tier was blocked on an async worker; today it reads
+(verbatim):
 
 ```
-// Fast free lane by default. The deployed high-tier free engine (Hunyuan3D
-// via HF Spaces) blocks the submit for 50-280s with no poll handle, which no
-// ChatGPT tool call survives ... True high-by-default lands when the async
-// self-host Hunyuan3D worker deploys (GCP_HUNYUAN3D_URL).
+// Standard by default, and every doc describing this tool says exactly that.
+// The high tier is a real, working option, not a stub: it runs on our own
+// async Hunyuan3D worker (GCP_HUNYUAN3D_URL) behind a genuine poll handle,
+// and a live production probe on 2026-08-06 returned a 2.69 MB high-tier GLB
+// from backend `hunyuan3d` end to end. It stays opt-in rather than default
+...
 const tier = VALID_TIER.has(args.tier) ? args.tier : 'standard';
 ```
 
+The two reasons it stays opt-in are in that comment: the worker is scale-to-zero,
+so a cold container adds a spin-up on top of the generation, and the high-tier
+access gate is cleared only by the platform seed token (`CRON_SECRET`), so a
+deployment without it would quietly serve standard under a "high by default" promise.
+A job that outlives `STUDIO_FORGE_TIMEOUT_MS` comes back as a pollable handle, never
+an error.
+
 **The submission doc**
 ([`prompts/store-submissions/_generated/openai-submission.md`](../../prompts/store-submissions/_generated/openai-submission.md))
-is internally inconsistent:
-- Line ~31 correctly says the tools "default to the standard tier."
-- Line ~146 (the tool table) says `forge_free` "Defaults to the highest quality tier
+was internally inconsistent:
+- Line ~31 correctly said the tools "default to the standard tier."
+- Line ~146 (the tool table) said `forge_free` "Defaults to the highest quality tier
   (dense geometry + PBR textures)."
+
+The tool table row now reads "Defaults to the standard tier (fast, reliable,
+textured); the caller may request `draft` (fastest) or `high` (best, slower; falls
+back to standard under load)", the tool's own `description` and its `tier` enum
+say the same, and the live evidence for both tiers is in
+`prompts/store-submissions/_generated/forge-free-tier-evidence.json` (a `d97e8e94d`
+attempt to make high the default was rolled back in `b39d6e2f7`).
 
 A reviewer who reads "highest quality tier" and then gets a standard-tier model has
 caught us in a misstatement. Pick the honest resolution and make ALL surfaces agree.
@@ -81,14 +99,22 @@ and a doc claiming it works.
 - A real `forge_free` call against `/api/mcp-studio` returns a tier consistent with
   every doc. Save the response JSON as evidence.
 - `npm test` green (run `tests/mcp-forge-free.test.js` and `tests/mcp-studio.test.js`).
+  Note which server each covers: `tests/mcp-studio.test.js` is the ChatGPT-facing
+  `/api/mcp-studio` tool (standard default). `tests/mcp-forge-free.test.js` is the
+  public `mcp-server` package's `forge_free` (`mcp-server/src/tools/forge-free.js`),
+  which defaults to `draft` and no longer pins a backend: the forge router's own
+  free-lane default (self-host TRELLIS, then Hunyuan3D, then HuggingFace, then NVIDIA
+  NIM as the last resort) picks the engine, never the paid Replicate lane.
 
 ## Definition of done
 
-- [ ] Every doc, the submission sheet, and the tool's own `description` agree with the
-      code on the default tier.
+- [x] Every doc, the submission sheet, and the tool's own `description` agree with the
+      code on the default tier (Path A: standard by default, high opt-in; the async
+      Hunyuan3D worker from Path B is deployed and proven, but the default stays
+      standard for the reasons in the code comment).
 - [ ] If Path B: worker deployed and proven with real evidence; default is genuinely
       high.
-- [ ] If Path A: no surface claims "highest quality by default" anymore.
+- [x] If Path A: no surface claims "highest quality by default" anymore.
 - [ ] `npm test` green.
 - [ ] `data/changelog.json` entry only if user-visible behavior changed (Path B yes;
       Path A is a docs/accuracy fix, `docs` tag).

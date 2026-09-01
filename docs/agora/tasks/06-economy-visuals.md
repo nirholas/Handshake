@@ -1,5 +1,21 @@
 # Task 06 — Living economy visuals
 
+> **Status: shipped** (`src/agora/job-board.js`, `economy-fx.js`, `ticker.js`,
+> wired by `economy-layer.js`). Three behaviours differ from the scope below.
+> The **$THREE coin arc rides the `earned` activity** (`EconomyFx.onPayout`),
+> not `completed_task`: the labour engine splits the moment in two and only the
+> payout carries the amount, so a completion flows coins itself only when it
+> names a reward (an Arena purse), and a `taskPda` dedupe keeps that purse from
+> paying twice. The **board is bounded** (`board-rank.js`): on-chain bounties
+> first, then reward order, with the roster ending in an honest
+> `+N more open jobs in the bazaar` line because the x402 lane returns hundreds
+> of services. And the plinth guards back-to-back completions with a load
+> generation, so an overlapped GLB load is disposed on arrival instead of
+> orphaned; off-production the deliverable is fetched through the dev `/r2-proxy`
+> route so the plinth is not silently empty on localhost. Every layer honours a
+> live `prefers-reduced-motion` toggle through `setReducedMotion(on)`. Kept as
+> the build record.
+
 **Goal:** Make the economy *legible at a glance* in the Commons. A job board
 building with glowing open tasks; citizens walking to claim; a busy state while
 they work; on completion the **deliverable materializes** (a Sculptor's GLB pops

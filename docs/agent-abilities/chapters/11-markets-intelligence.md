@@ -2,7 +2,7 @@
 
 The data layer agents and their owners trade on: live markets, news, scoring oracles, liquidations, and sentiment.
 
-three.ws pairs a full general-crypto markets surface (CoinGecko-grade prices, a native 191-feed news aggregator with a 662k-article archive, real-time exchange liquidation streams) with pump.fun-native intelligence: the Oracle conviction engine that scores every launch 0-100 within seconds, a coin-intelligence radar, the platform's own /launches directory, and live PumpPortal feeds that even drive 3D avatar reactions. Everything runs on real, mostly keyless data sources (CoinGecko, alternative.me, public Ethereum RPCs, Binance/Bybit/OKX futures WebSockets, publisher RSS feeds, the pump.fun firehose) with a hard no-fabricated-data policy (surfaces degrade to designed offline states rather than fake numbers).
+three.ws pairs a full general-crypto markets surface (CoinGecko-grade prices, a native 197-feed news aggregator with a 662k-article archive, real-time exchange liquidation streams) with pump.fun-native intelligence: the Oracle conviction engine that scores every launch 0-100 within seconds, a coin-intelligence radar, the platform's own /launches directory, and live PumpPortal feeds that even drive 3D avatar reactions. Everything runs on real, mostly keyless data sources (CoinGecko, alternative.me, public Ethereum RPCs, Binance/Bybit/OKX futures WebSockets, publisher RSS feeds, the pump.fun firehose) with a hard no-fabricated-data policy (surfaces degrade to designed offline states rather than fake numbers). Any API response built from upstream data also carries an `x-brownout` header naming the freshness tier of what it served (live, cache, stale, or fallback, always the worst tier that contributed) and how many sources answered or failed, so a client can tell a degraded answer from a fresh one.
 
 ## /markets hub
 
@@ -14,15 +14,15 @@ The front door for all market surfaces: live global stats (total market cap, dom
 
 ## Crypto news wing (feed, reader, archive)
 
-Live news aggregated natively from 191 real publisher RSS/Atom feeds across 27 categories (CoinDesk, The Block, Decrypt, Cointelegraph, Blockworks, Bitcoin Magazine, and more, including 33 international feeds in 17 languages) with category tabs, search, per-article sentiment, and ticker chips; a rich article reader with server-side extraction, AI summary and key points (extractive fallback), and related coverage; plus the largest open crypto-news archive: 662,047 enriched articles from Sept 2017 to today, English + Chinese.
+Live news aggregated natively from 197 real publisher RSS/Atom feeds across 27 categories (CoinDesk, The Block, Decrypt, Cointelegraph, Blockworks, Bitcoin Magazine, and more, including 34 international feeds in 17 languages) with category tabs, search, per-article sentiment, and ticker chips; a rich article reader with server-side extraction, AI summary and key points (extractive fallback), and related coverage; plus the largest open crypto-news archive: 662,047 enriched articles from Sept 2017 to today, English + Chinese.
 
 **How it works:** /markets/news, /markets/news/article, /markets/archive backed by api/news/{feed,article,archive,rss}.js over api/_lib/news.js + api/_lib/news-sources.js; the archive corpus lives on gs://three-ws-news-archive (recovered from the cryptocurrency.cv aggregator, which three.ws now runs natively).
 
-**Why it matters:** Real-time and nine-years-deep crypto news in one place, readable without visiting 191 different publisher sites, with machine-friendly JSON and RSS.
+**Why it matters:** Real-time and nine-years-deep crypto news in one place, readable without visiting 197 different publisher sites, with machine-friendly JSON and RSS.
 
 ## Global markets index + coin detail pages
 
-A CoinGecko-style /coins index (global stats bar, sortable top-coins table with 7d sparklines, debounced full-catalog search, load-more paging) and a shareable /coin/:id detail page per coin: interactive 24H-1Y chart with crosshair (switchable between the native CoinGecko chart and TradingView, DexScreener, and GeckoTerminal views where the coin qualifies), market stats, related news, official links, and per-chain contract addresses. Also a live perpetual-futures view (price, funding rate, open interest per contract).
+A CoinGecko-style /coins index (global stats bar, sortable top-coins table with 7d sparklines, debounced full-catalog search, load-more paging) and a shareable /coin/:id detail page per coin: interactive 24H-1Y chart with crosshair (switchable between the native CoinGecko chart and TradingView, DexScreener, and GeckoTerminal views where the coin qualifies; a third-party embed that is blocked or never renders is replaced within a deadline by a designed panel with a Try again button and a link to the provider, never a blank frame), market stats, related news, official links, and per-chain contract addresses. Also a live perpetual-futures view (price, funding rate, open interest per contract).
 
 **How it works:** pages/coins.html + src/coins-index.js and pages/coin.html + src/coin-page.js over api/coin/* (detail, ohlc, markets, news, global, derivatives) proxying CoinGecko via api/_lib/coingecko.js. :id accepts a CoinGecko slug OR a Solana mint; mint-shaped ids cross-link into Alpha Copilot, the live trade feed, /launches, and Coin Intelligence.
 
@@ -40,7 +40,7 @@ Real-time long/short liquidation pain across Binance, Bybit, and OKX: a dominant
 
 Four tools sharing one design system: /heatmap (squarified treemap, tiles sized by market cap and colored by 24h/7d move, top 50/100 toggle), /fear-greed (live 0-100 sentiment gauge with week-over-week delta and 30D/90D/1Y history chart), /gas (live Ethereum gas tracker), and /compare (up to 4 coins with normalized performance overlay and stat line-up, selection saved in the URL).
 
-**How it works:** Heatmap is computed client-side from the existing /api/coin/markets feed; Fear & Greed serves the alternative.me index through api/coin/fear-greed.js; gas reads eth_feeHistory over the last ~20 blocks from keyless public RPCs (publicnode, llamarpc, ankr, cloudflare-eth) via api/coin/gas.js; compare reuses the CoinGecko backend. All real, key-free data, cross-linked from the markets table.
+**How it works:** Heatmap is computed client-side from the existing /api/coin/markets feed; Fear & Greed serves the alternative.me index through api/coin/fear-greed.js (CoinMarketCap's index is the second rung when COINMARKETCAP_API_KEY is set, and the last good reading is served for up to a day if every source fails, since the index updates once a day); gas reads eth_feeHistory over the last ~20 blocks from keyless public RPCs (publicnode, llamarpc, ankr, cloudflare-eth) via api/coin/gas.js; compare reuses the CoinGecko backend. All real, key-free data, cross-linked from the markets table.
 
 **Why it matters:** At-a-glance answers to 'where is money flowing', 'what is the market mood', 'what will this transaction cost', and 'which of these coins is actually winning' — each shareable as a URL.
 
@@ -72,7 +72,7 @@ A public directory of every coin launched through three.ws by its agents: regist
 
 Real-time pump.fun event streams: /pump-live presents new token launches the instant they are created (fronted by a 3D agent), agent screens and dashboards subscribe to live per-mint trade streams, and the reactive-avatar skill drives <agent-3d> gestures, emotes, and speech directly from live market events — no LLM in the loop.
 
-**How it works:** The server fans the PumpPortal WebSocket (wss://pumpportal.fun/api/data) out to browsers as SSE via api/pump/trades-stream.js (per-mint subscribeTokenTrade) with api/pump/dex-trades.js covering post-graduation DEX trades in the same wire format; pump-fun-skills/reactive subscribes to new-launch and migration events and emits avatar actions every 2s with auto-reconnect.
+**How it works:** The server fans the PumpPortal WebSocket (wss://pumpportal.fun/api/data) out to browsers as SSE via api/pump/trades-stream.js (per-mint subscribeTokenTrade; a malformed mint is refused with a 400, and when PumpPortal declines the subscription, which it does unless its API key holds at least 0.02 SOL, the refusal is forwarded as an SSE `notice` event so a tape can show an honest degraded state instead of a lit live lamp over an empty panel) with api/pump/dex-trades.js covering post-graduation DEX trades in the same wire format; pump-fun-skills/reactive subscribes to new-launch and migration events and emits avatar actions every 2s with auto-reconnect.
 
 **Why it matters:** Watch the pump.fun firehose live inside three.ws — and give any embedded 3D agent a visible pulse that reacts to real market activity in real time.
 
@@ -86,9 +86,9 @@ Agents launched as pump.fun coins can charge for their services on-chain: build 
 
 ## Sentiment and narrative intel tools
 
-Token sentiment on demand: POST /api/sentiment scores any text (Positive/Negative/Neutral) with a deterministic lexicon scorer; /api/social/sentiment-pulse pulls the real comment thread for any Solana/pump.fun mint and returns an overall score with per-source breakdown and examples (also sold as the paid sentiment_pulse MCP tool); aixbt narrative intel and momentum-ranked project scans are exposed at api/aixbt/* and as aixbt_intel / aixbt_projects MCP tools. All packaged for developers as the @three-ws/intel npm module.
+Token sentiment on demand: POST /api/sentiment scores any text (Positive/Negative/Neutral) with a deterministic lexicon scorer; /api/social/sentiment-pulse pulls the real community commentary (pump.fun callouts) for any Solana/pump.fun mint and returns an overall score with per-source breakdown and examples (also sold as the paid sentiment_pulse MCP tool); aixbt narrative intel and momentum-ranked project scans are exposed at api/aixbt/* and as aixbt_intel / aixbt_projects MCP tools. All packaged for developers as the @three-ws/intel npm module.
 
-**How it works:** Sentiment-pulse fetches recent commentary from pump.fun's frontend-api-v3 comments endpoint (the same source the pump.fun coin page renders) plus caller-supplied snippets, scored by the in-repo lexicon engine (src/social/sentiment.js); aixbt endpoints proxy the aixbt market-intelligence service.
+**How it works:** Sentiment-pulse fetches the coin's most recent pump.fun callouts (the frontend-api-v3 `/callout/top/:mint` feed the pump.fun coin page renders; the older comments route was retired upstream) plus caller-supplied snippets, scored by the in-repo lexicon engine (src/social/sentiment.js, which matches terms on word boundaries so "partnered" never scores as "red"). A pump.fun outage with no caller-supplied texts answers 502 `upstream_unavailable` rather than a fabricated neutral score, while a coin that is simply quiet still answers 200 with `count: 0`; aixbt endpoints proxy the aixbt market-intelligence service.
 
 **Why it matters:** Read the crowd on any token before acting — from a free one-call API, an agent skill, an MCP tool, or a single npm import.
 
@@ -96,7 +96,7 @@ Token sentiment on demand: POST /api/sentiment scores any text (Positive/Negativ
 
 A free, no-key, no-account crypto data API built for AI agents: token snapshots, security/rug signals, holder concentration, live pump.fun launches, bonding-curve status, whale activity, trending tokens, wallet portfolios, and ticker-availability checks — with public docs, a live try-it console, and OpenAPI 3.1 discovery.
 
-**How it works:** pages/crypto.html documents /api/crypto/*; api/crypto/index.js and api/crypto/openapi.js assemble the catalog from self-describing descriptors in api/_lib/crypto-catalog/ (airdrops, bonding, holders, launches, portfolio, security, symbol, token, trending, wallet, whales), and the docs page probes production at runtime to mark each endpoint Live vs Coming soon.
+**How it works:** pages/crypto.html documents /api/crypto/*; api/crypto/index.js and api/crypto/openapi.js assemble the catalog from self-describing descriptors in api/_lib/crypto-catalog/ (airdrops, bonding, holders, launches, portfolio, security, symbol, token, trending, wallet, whales), and the docs page reads the discovery index (GET /api/crypto) at runtime, falling back to per-endpoint probes only if the index cannot be read, to mark each endpoint Live vs Coming soon.
 
 **Why it matters:** Agents and developers get real on-chain and market data with zero signup friction — the funnel-top for the platform's paid unique services.
 

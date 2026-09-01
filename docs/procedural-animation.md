@@ -120,7 +120,7 @@ Bone lengths are preserved exactly; the solve only ever rotates.
 | Surface | Layer | Where |
 |---|---|---|
 | Corner walk companion | Look-at (cursor gaze) | [`walk-sdk/src/companion.js`](../walk-sdk/src/companion.js) `_updateGaze()` |
-| The walkaround world (`/walk`) | Foot planting on terrain | [`src/walk.js`](../src/walk.js) `rebuildFootPlant()` |
+| The walkaround world (`/walk`) | Foot planting on terrain | [`src/walk.js`](../src/walk.js) `rebuildFootPlant()` (in AR mode the ground callback returns the flat `GROUND_Y`, so the layer stands down) |
 | `/walk` NPCs | Look-at (they watch the player) | [`src/walk-npcs.js`](../src/walk-npcs.js) `_updateGaze()` |
 | Agent avatars (`AgentAvatar`) | Look-at (`setLookTarget`, `LOOK_AT`) | [`src/agent-avatar.js`](../src/agent-avatar.js) `_applyLookTarget()` |
 | `<agent-3d>` web component | Look-at (`lookAt()` public API) | [`src/runtime/scene.js`](../src/runtime/scene.js) `lookAt()` |
@@ -153,6 +153,8 @@ The gaze is a **standing state**, not a one-off pose write: it re-applies after 
 ### `/walk` NPCs
 
 Every NPC watches the player within 14 m — wider than the 4 m greeting range, because noticing someone happens long before greeting them. A wanderer can glance over without breaking stride, since the gaze is an overlay on the walk cycle rather than a replacement for it. Past the clamp the layer releases rather than pinning the head, so an NPC the player has walked behind simply returns to its clip.
+
+The NPC gaze report (`gazeReport(target)` on the object `createWalkNpcs()` returns) lists each NPC's `dist`, `alignment` (null when the rig exposes no head chain), `tracking` (true while a headed rig is inside the 14 m gaze range), and `headYaw`, which is what the Playwright checks read to prove a gaze actually moved a head.
 
 ---
 

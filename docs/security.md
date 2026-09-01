@@ -237,7 +237,7 @@ The `skill-trust` attribute controls which skill URLs the element will load:
 
 Skills declare the permissions they need. Users must explicitly grant each permission before a skill can use it. The permission types (memory read/write, network, transaction signing) are independently grantable. An installed skill cannot escalate beyond its declared and granted permissions.
 
-Delegation validation is enforced before any redemption: `isDelegationValid({ hash, chainId })` from [src/permissions/toolkit.js](../src/permissions/toolkit.js) checks the on-chain `disabledDelegations` mapping, expiry, and EIP-712 signature recovery. An invalid or revoked delegation renders as inactive — it cannot be redeemed.
+Delegation validation is enforced before any redemption: `isDelegationValid({ hash, chainId, rpcUrl, delegation })` from [src/permissions/toolkit.js](../src/permissions/toolkit.js) checks the on-chain `disabledDelegations` mapping, expiry, and EIP-712 signature recovery, reaching the chain through the pinned `rpcUrl` (or `RPC_URL_<chainId>`) first and then the shared EVM fallback providers. It has three outcomes, not two: `valid: true`, `valid: false` with a reason (`delegation_revoked`, expiry, a bad signature), or `valid: null` with `reason: 'rpc_unavailable'` when no provider could be reached. An invalid or revoked delegation renders as inactive: it cannot be redeemed. An unreachable chain is not evidence of revocation; a caller that treats `null` as `false` is choosing fail-closed deliberately.
 
 ### Supply chain for skills
 
@@ -273,11 +273,15 @@ Requests through the `/api/chat` proxy are subject to the content policies of wh
 
 Server code that fetches user-supplied URLs (GLB validation, manifest pinning, avatar imports) goes through [api/_lib/ssrf-guard.js](../api/_lib/ssrf-guard.js) rather than raw `fetch`. `assertSafePublicUrl()` rejects non-HTTPS schemes and resolves the hostname up front, refusing private, loopback, link-local, CGNAT, and cloud-metadata addresses. `fetchSafePublicUrl()` validates DNS then fetches (acceptable where the response is only displayed); `fetchSafePublicUrlPinned()` additionally pins the TCP connection to the validated IP so a DNS rebind between check and connect cannot redirect the request into the internal network. Both re-validate every redirect hop and enforce a streaming byte cap (`MaxBytesExceededError`) so an unbounded body cannot exhaust memory.
 
+### Fault injection is token-gated
+
+Every `/api` response carries an `x-brownout` header (plus `x-brownout-trace` when a trace was recorded) naming where its data came from. `wrap()` in [api/_lib/http.js](../api/_lib/http.js) writes it for every handler, so a client can tell a degraded, last-good answer from a live one. The matching `x-brownout-chaos` request header lets a prover make named upstreams misbehave for that one request only, running the real handler, the real provider ladder, and the real cache tiers. It is gated three ways in [api/_lib/brownout/chaos.js](../api/_lib/brownout/chaos.js), and every gate must pass: `BROWNOUT_CHAOS_TOKEN` must be set and match (constant-time compare; unset means chaos is off everywhere, including locally), a money path is refused outright no matter who holds the token (a request carrying an x402 payment header, or addressed to a settle, withdraw, or transfer route), and only read-shaped requests qualify (GET/HEAD, or a POST that is a declared read). A refused directive is reported in `x-brownout-chaos-status` rather than silently ignored.
+
 ---
 
 ## Rate limiting
 
-Limits return `429 Too Many Requests` with a `Retry-After` header on breach. Money-moving and credential buckets are enforced through shared Upstash Redis so they hold across every instance; a few very hot read buckets (including the MCP limiters) are deliberately per-instance (`local: true` in [api/_lib/rate-limit.js](../api/_lib/rate-limit.js)) to keep Redis command volume down, and the credential buckets degrade to in-memory limiting rather than failing closed if Redis is unreachable.
+Limits return `429 Too Many Requests` with a `Retry-After` header on breach. Money-moving and credential buckets are enforced through shared Upstash Redis so they hold across every instance; a few very hot read buckets (including the MCP limiters) are deliberately per-instance (`local: true` in [api/_lib/rate-limit.js](../api/_lib/rate-limit.js)) to keep Redis command volume down. When Redis cannot answer, the money and credential buckets degrade onto a durable Postgres counter (`rate_limit_counters`) rather than failing closed, and the login and registration buckets fall back one step further to per-instance memory if Postgres is down too, so an infrastructure outage never locks everyone out (the full table is in [docs/ops/redis.md](./ops/redis.md)).
 
 | Endpoint class | Limit |
 |----------------|-------|

@@ -141,7 +141,10 @@ side), claim one themselves (WORK), or verify/vouch (PROVE/SPEND).
   plumbing only — never another real token. $THREE is the only coin Agora
   references or promotes.
 - **Escrow.** `createAgenCTask` locks the reward; `completeAgenCTask` releases it
-  to the worker on accepted proof. No trust required between strangers.
+  to the worker on accepted proof. No trust required between strangers. A posting
+  that expires unclaimed is cancelled on-chain (`cancelAgenCTask`) so the escrowed
+  reward returns to its creator instead of sitting stranded; the life engine's
+  reconcile sweep does this for every posting it can sign for.
 - **Reputation.** Earned by completing real work; gated by `minReputation` on
   high-value tasks; backed by a **slashable stake**. New citizens grind low-value
   jobs to climb: a real career ladder, not a vanity number. AgenC registers every
@@ -320,6 +323,15 @@ simulation).
   one of them had, and an abandoned hold ages out on its own. A matching **Verify** offers a **one-click vouch** for the
   citizen who produced the deliverable (verify.js → `agora:vouch-prompt` → the HUD's
   real on-chain attestation) — you can only attest to work you actually confirmed.
+  Malformed ids never reach the chain: a non-uuid citizen id answers 404 and a
+  non-base58 task PDA answers 400 before any wallet work. A Solana RPC outage is a
+  retryable `503 rpc_unavailable`, never an opaque 500, and a confirm timeout is
+  resolved from the ledger (`recoverTimedOutSignature`, `findCompletionSignature`
+  in `agora-human.js`): a claim or completion that did land is projected, and a
+  bounty whose confirmation timed out answers `409 escrow_pending` with its
+  signature rather than escrowing the reward twice. The public read model answers
+  a rate limit with `retry-after` and the limiter's reason, so the Commons' board
+  and pulse pollers back off correctly.
 
 **Phase 5 — Depth**
 - [x] **Competitive Arena + Collaborative Guilds** — real multi-worker tasks:

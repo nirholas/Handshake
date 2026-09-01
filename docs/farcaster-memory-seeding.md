@@ -98,10 +98,16 @@ Two rungs, tried in order:
 1. **Neynar** (`@neynar/nodejs-sdk`, MIT) when `NEYNAR_API_KEY` is set. Indexed
    data, so casts carry reaction counts and profiles carry follower counts. That
    is what makes engagement ranking possible.
-2. **A public Farcaster hub over its HTTP API, keyless.** Default
-   `https://hub.pinata.cloud`, override with `FARCASTER_HUB_URL`. Serves raw
-   protocol messages, so there are no reaction counts, but it needs no vendor
-   key and does not go dark when a billing plan lapses.
+2. **Public Farcaster hubs over their HTTP API, keyless.** Every hub serves
+   the same replicated set, so the lane walks a list rather than pinning one
+   host: `FARCASTER_HUB_URL` (if set) first, then any comma-separated
+   `FARCASTER_HUB_URLS`, then the built-in defaults (`https://hub.pinata.cloud`,
+   `https://hub.farcaster.standardcrypto.vc:2281`,
+   `https://nemes.farcaster.xyz:2281`). An unreachable hub or a non-2xx answer
+   moves to the next rung; a "no such user" answer ends the walk immediately,
+   because that is the network's verdict, not one hub's. Hubs serve raw
+   protocol messages, so there are no reaction counts, but they need no vendor
+   key and do not go dark when a billing plan lapses.
 
 Neither key is required for the feature to work. The SDK is imported lazily and
 only when a key is configured, so the keyless lane carries no dependency on the

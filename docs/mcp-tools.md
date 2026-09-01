@@ -83,8 +83,15 @@ and direction tools are flat per call.
 | `anchor_provenance` | $0.05 | Sign a content credential and anchor its hash on Solana. |
 
 Free studio helpers (no charge): `getting_started`, `generation_status`,
-`preview_3d`, `list_animations`, `inspect_model`, `optimize_model`, `save_avatar`,
+`preview_3d`, `list_animations`, `animation_signature`, `find_similar_animations`,
+`text_to_animation`, `inspect_model`, `optimize_model`, `save_avatar`, `export_ar`,
+`verify_provenance`, `x402_preflight` (asks any x402 seller's signed payability
+attestation whether it can actually settle before you pay it; free on purpose and
+permanently), the persona tools (`create_agent_persona`, `get_agent_persona`,
+`persona_say`, `persona_identity`, `persona_tip`, `persona_send`), and
 `validate_spatial_response` (the [Spatial MCP](spatial-mcp.md) conformance gate).
+Every catalog tool is either priced or on this explicit free list; a test fails
+the build if a new tool is neither.
 
 ## Agent & commerce tools — `3d-agent-local`
 

@@ -49,7 +49,7 @@ Free, keyless, real data only:
 | Endpoint | Returns |
 | --- | --- |
 | `GET /api/v1/robinhood/chain` | Block height, gas, tx/address counts, chain TVL + 90-day history |
-| `GET /api/v1/robinhood/stocks` | Every Stock Token: NAV, DEX price, premium, volume, liquidity (`?q=`, `?sort=`) |
+| `GET /api/v1/robinhood/stocks` | Every Stock Token: NAV, DEX price, premium, volume, liquidity (`?q=`; `sort`: `symbol` \| `volume` \| `liquidity` \| `premium` \| `price`; `dir`: `asc` \| `desc`, numeric columns default highest-first, symbol A-Z; rows with no value for the column sort last either way) |
 | `GET /api/v1/robinhood/stocks-detail?symbol=AAPL` | One Stock Token in depth: NAV history, all DEX pairs, holders, transfers, links |
 | `GET /api/v1/robinhood/coins?category=meme` | Memecoin screener (`category`: `meme` \| `stocks-ecosystem` \| `ecosystem`; `sort`: `market_cap` \| `volume` \| `gainers` \| `losers`) |
 | `GET /api/v1/robinhood/coins-detail?address=0x…` | One coin: pools, market stats, holders, transfers, links |
@@ -61,7 +61,7 @@ Paid via x402 ($0.002 USDC, Base or Solana):
 | --- | --- |
 | `GET /api/x402/robinhood-portfolio?address=0x…` | Multiplier-correct Stock Token portfolio: every held symbol's true position (raw balance × ERC-8056 `uiMultiplier`) priced at the live Chainlink NAV, plus a total USD value |
 
-Every response carries `source` and `asOf` fields. A miss is a structured error, never a bare 500.
+Every response carries `source` and `asOf` fields. A miss is a structured error, never a bare 500. An unknown `sort` (or `category`) falls back to the default instead of 400ing a screener read, and the response echoes the `sort` (and `dir`) that actually ran, never the caller's unknown value.
 
 ### Why the multiplier matters
 

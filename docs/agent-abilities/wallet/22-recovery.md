@@ -74,6 +74,8 @@ Owner-only tab; every write requires a fresh CSRF token and is rate-limited. Onl
 - `POST /api/agents/:id/recovery/checkin`
 - `POST /api/agents/:id/recovery/requests/:rid/cancel`
 - `POST /api/agents/:id/recovery/requests (+ /approve, /decline, /confirm, /complete — guardian console side)`
+- `GET /api/agents/:id/recovery/requests (owner: recent request history)`
+- `POST /api/agents/:id/recovery/inheritance/arm (beneficiary or guardian: arm the dead-man's switch once the owner's inactivity has crossed the threshold)`
 - `GET /api/agents/recovery-inbox (guardian console)`
 - `GET /api/cron/dead-man-switch (daily sweep, secret-gated)`
 

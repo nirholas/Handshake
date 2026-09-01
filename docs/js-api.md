@@ -85,7 +85,7 @@ Processes a fileset from a drag-and-drop or file input event.
 1. Iterates the `fileMap` to find the root `.gltf` or `.glb` file
 2. Extracts the `rootPath` (directory portion of the file path)
 3. Calls `this.view(rootFile, rootPath, fileMap)`
-4. Reports through `onError()` if no `.gltf`/`.glb` file is found
+4. If no `.gltf`/`.glb` file is found, hides the spinner, logs a warning, and shows the viewer-status overlay ("No .gltf or .glb file in that drop. Pick a model file to view it.") with a **Choose a file** action that re-opens the file picker
 
 #### `view(rootFile: File | string, rootPath: string, fileMap: Map<string, File>)`
 
@@ -110,7 +110,12 @@ Flow:
 Console-only diagnostic logging. The user-facing error surface is the
 viewer-status overlay driven by the `LOAD_END` protocol payload (see
 `_classifyLoadError` in `src/app.js`), which turns a failed load into a readable
-message with a recovery action instead of a browser dialog.
+message with a recovery action instead of a browser dialog. The overlay is
+rendered by `_showViewerError(label, onAction, opts)`; `opts.actionLabel` and
+`opts.busyLabel` reword the button for recoveries that are not a plain retry,
+and `opts.keepOpenUntilLoad` clears the overlay instead of showing a busy state.
+A failed `view()` keeps a replay handle (`_retryLastView`), so the Retry button
+works for anonymous visitors on `/app` who have no agent to re-fetch.
 
 #### `showSpinner()` / `hideSpinner()`
 
@@ -254,7 +259,7 @@ Adds a loaded model to the scene.
 
 1. Calls `this.clear()` to remove any existing model
 2. Computes bounding box and centers the model at origin
-3. Configures camera near/far planes and position based on model size
+3. Configures camera near/far planes and position based on model size; the seat is placed in front of the rig's face by reading its facing yaw (`estimateFacingYaw` in `src/viewer/facing.js`), so an avatar authored facing -Z or +X still opens front-on, and the historical +Z seat is used when no rig is readable
 4. Respects `options.cameraPosition` if provided
 5. Saves initial OrbitControls state
 6. Detects embedded lights (sets `state.punctualLights = false` if found)
@@ -461,10 +466,10 @@ Returns a `<footer>` with:
 
 - X link to [@trythreews](https://x.com/trythreews)
 - "showcase" link to `/showcase`
-- "validation" link to `/validation/`
-- "reputation" link to `/reputation/`
-- "help & feedback" link to GitHub issues
-- GitHub repository link
+- "validation" link to `/validation`
+- "reputation" link to `/reputation`
+- "help & feedback" link to the GitHub issue form (`nirholas/three.ws/issues/new`)
+- GitHub repository link (`nirholas/three.ws`); every external link carries `rel="noopener noreferrer"`
 - Pipe separators between items
 
 **No props.**

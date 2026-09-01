@@ -124,7 +124,7 @@ npm run optimize:glb                                # every GLB in assets/, publ
 npm run optimize:glb -- --dry                       # report only, no writes
 ```
 
-Source: [scripts/optimize-glb.mjs](../scripts/optimize-glb.mjs). Lossless geometry passes (`dedup`, `prune`, `weld`, `resample`) plus a WebP texture re-encode. Output stays within the **standard glTF 2.0 feature set** — no `KHR_draco_mesh_compression`, no `EXT_meshopt_compression` — so it loads in every `GLTFLoader` on the site without wiring a decoder. Typical result: **−90%** file size.
+Source: [scripts/optimize-glb.mjs](../scripts/optimize-glb.mjs). Lossless geometry passes (`dedup`, `prune`, `weld`, `resample`) plus a WebP texture re-encode. Compressed inputs are fine: the script registers the meshopt and Draco codecs with gltf-transform, so an `EXT_meshopt_compression` or `KHR_draco_mesh_compression` avatar (most of the ones in production) decodes instead of failing with "Please install extension dependency". Output stays within the **standard glTF 2.0 feature set** (the compression extensions are stripped after decoding, never re-encoded) so it loads in every `GLTFLoader` on the site without wiring a decoder. Typical result: **-90%** file size.
 
 ### The format reference
 
@@ -164,7 +164,7 @@ The build pipeline produces GLB + JSON; the browser stitches them back together.
 
 | Stage | Module | What it does |
 |---|---|---|
-| Load a GLB | [src/viewer.js](../src/viewer.js) | `GLTFLoader` (with DRACO/KTX2 support) loads the model, frames the camera, builds raycasting BVH, emits the scene to the animation panel. |
+| Load a GLB | [src/viewer.js](../src/viewer.js) | `GLTFLoader` (with DRACO/KTX2/meshopt support) loads the model, frames the camera in front of the rig's face (`estimateFacingYaw` in `src/viewer/facing.js` reads which way the skeleton was authored to face, so a -Z or +X rig is not framed from behind), builds raycasting BVH, emits the scene to the animation panel. |
 | Normalize an uploaded rig | [src/glb-canonicalize.js](../src/glb-canonicalize.js) | Rewrites bone names in the GLB JSON chunk to canonical form (see [the supported conventions](#supported-rig-conventions) below), folds the Mixamo +90°X armature rotation into children, repacks the GLB. |
 | Load a clip | [src/animation-manager.js](../src/animation-manager.js) | Fetches clip JSON, `AnimationClip.parse`, drives playback through a `THREE.AnimationMixer` with crossfades (0.35s default), one-shot + settle, and a "fallen pose" safety guard. |
 | Retarget a clip to the loaded rig | [src/animation-retarget.js](../src/animation-retarget.js) | Renames canonical tracks to the rig's actual bone names, applies per-bone bind-pose correction (`C = targetRest · sourceRest⁻¹`), rescales hip translation by height ratio, drops the clip if coverage < 50%. |
@@ -188,6 +188,7 @@ There is **no rig allowlist**. [src/glb-canonicalize.js](../src/glb-canonicalize
 | Unreal mannequin | `pelvis`, `clavicle_l`, `upperarm_l`, `thigh_l`, `calf_l`, `ball_l` |
 | VRM 0.x / VRoid | `J_Bip_C_Hips`, `J_Bip_L_UpperArm`, `J_Bip_L_Little1` |
 | VRM 1.0 | `leftUpperArm`, `rightLowerLeg`, `upperChest`, `leftToes` |
+| MikuMikuDance (PMX/PMD) | `センター`, `上半身`, `首`, `左腕`, `左ひじ`, `左ひざ` (Japanese names, `左`/`右` side prefix) |
 | UniGLTF / VRM converter | `5.joint_HipMaster`, `10.!joint_LeftToe` |
 | Daz3D / Genesis | `hip`, `abdomen`, `lShldr`, `lThigh`, `lShin`, `lCollar` |
 | Reallusion CC3 / CC4 | `CC_Base_Hip`, `CC_Base_L_Upperarm`, `CC_Base_NeckTwist01` |
@@ -209,6 +210,7 @@ Vendor prefixes (`mixamorig:`, `CC_Base_`, `Bip01 `, `j_`, Maya namespaces) and 
 - **Non-humanoid skeletons** (quadrupeds, prop rigs) — no safe correspondence exists.
 - **End effectors and leaf tips** (`HeadTop_End`, `LeftToe_End`, `LeftHandIndex4`) — the clip library drives no such bone.
 - **Metacarpals** (`Palm1.L`) — the canonical set has no metacarpal.
+- **MMD IK targets and twist bones** (`左足ＩＫ`, `左つま先ＩＫ`, `左腕捩`, `左手捩`). MMD drives the leg chain from the IK target, so binding a clip to it would fight the chain it solves, and the twist bones are secondary deformers that tear the mesh when rotated as a limb.
 - **Constraint-driven control rigs** (Auto-Rig-Pro / `cwf_` + `def_` + tracker families). Their deform bones are *leaves* hanging off tracker nodes — `def_arm_1.R` is not a child of `def_arm_0.R` — and glTF has no constraint system, so the Copy-Rotation/Damped-Track constraints that made the rig work in Blender are dropped at export. Rotating a mapped `def_` bone would move its own skin while the next segment stayed put, tearing the limb apart. These fall back to the default rig; the remedy is re-rigging through [workers/rig](../workers/rig), not name mapping.
 
 ### Measuring coverage against real avatars
@@ -286,7 +288,7 @@ text/image ──► mesh_forge ──► static GLB ──► rig_mesh ──�
 
 - **Don't ship raw converted GLBs.** A Mixamo character converts to 50+ MB; always run `optimize:glb`. The site streams these to every visitor.
 - **`trimesh` (the Python script) silently drops rigs.** It is for static geometry only. For anything animated, use `convert:fbx`.
-- **No Draco/meshopt in optimized output.** The main viewer and the studios wire Draco/KTX2/meshopt decoders (`getDecoders` in `src/viewer/internal.js`), but many lighter surfaces load GLBs with a bare `GLTFLoader` and no decoder. `optimize:glb` deliberately stays within plain glTF 2.0 so its output loads everywhere; WebP textures do the heavy lifting.
+- **No Draco/meshopt in optimized output.** The main viewer and the studios wire Draco/KTX2/meshopt decoders (`getDecoders` in `src/viewer/internal.js`, which serves the decoder binaries from our own origin under `public/three/`, vendored by `scripts/copy-three-decoders.mjs` on every install and checked by `scripts/audit-deploy-artifacts.mjs` at deploy, with unpkg only as the backstop when a HEAD probe of the local copy fails), but many lighter surfaces load GLBs with a bare `GLTFLoader` and no decoder. `optimize:glb` deliberately stays within plain glTF 2.0 so its output loads everywhere; WebP textures do the heavy lifting.
 - **FBX is build-time only.** Keep source FBX in `animation-sources/` (gitignored) so it never ships in the deploy bundle. `public/animations/` holds no FBX anymore; the six formerly-orphaned clips are built into the manifest (see `resolved_issues` in [public/animations/registry.json](../public/animations/registry.json)).
 - **Bone names matter.** A non-humanoid or oddly-named rig may fall below the 8-bone / 50%-coverage thresholds and refuse to animate. The canonicalizer handles the common conventions; truly custom skeletons need their bones renamed to the canonical set first.
 - **`.bak` files.** `optimize:glb` writes a `<name>.glb.bak` alongside its output — delete it before committing.

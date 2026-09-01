@@ -13,7 +13,8 @@ For every agent, one **Metaplex Core asset** that is:
 - **minted into the three.ws Agents collection** — authority-managed, so three.ws can curate on-chain metadata on the owner's behalf;
 - **owned by the agent** (its own custodial Solana wallet) or held in **authority custody** until claimed — see [Custody model](#custody-model);
 - carrying an on-chain **Attributes plugin** (platform, links, `$THREE`, schema — real bytes in the asset account) and an enforced **5% Royalties plugin**;
-- pointing at a pinned **manifest** (Metaplex token-metadata + `agent-manifest/0.1`) on IPFS, so Phantom / Solscan / Magic Eden render it.
+- pointing at a pinned **manifest** (Metaplex token-metadata + `agent-manifest/0.1`) on IPFS, so Phantom / Solscan / Magic Eden render it;
+- **enrolled in the Metaplex Agent Registry** right after the mint: an Agent Identity PDA, authority-signed, whose URI points at the agent's live `/api/agents/:id/registration` document (see [What gets recorded](#what-gets-recorded)).
 
 The live mainnet collection: [`56Gnsb7Jjg1N9c8V7EAnDC4HmQbQjsEueSUA3EK5272H`](https://solscan.io/account/56Gnsb7Jjg1N9c8V7EAnDC4HmQbQjsEueSUA3EK5272H).
 
@@ -48,6 +49,7 @@ Files:
 |---|---|
 | [api/_lib/onchain-deploy.js](../api/_lib/onchain-deploy.js) | Shared mint logic — collection resolution, manifest pin, Core mint, DB persist. |
 | [scripts/deploy-agents-onchain.mjs](../scripts/deploy-agents-onchain.mjs) | CLI runner — dry-run preview, canary, full fleet. |
+| [scripts/register-agents-onchain.mjs](../scripts/register-agents-onchain.mjs) | CLI back-fill: enrols already-minted agents that have a Core asset but no Agent Identity PDA (same `--network` / `--limit` / `--dry-run` / `--confirm` flags). |
 | [api/_lib/solana-collection.js](../api/_lib/solana-collection.js) | Collection authority + address helpers. |
 | [api/_lib/three-brand.js](../api/_lib/three-brand.js) | Manifest + on-chain attributes builders. |
 
@@ -89,8 +91,9 @@ One funded wallet does everything — it is the **collection authority**, the **
 |---|---|
 | Deploy the collection (once) | ~0.003 SOL |
 | Mint one agent asset | ~0.004 SOL (rent + fee) |
+| Register its Agent Identity PDA | ~0.003 SOL (rent + fee) |
 
-So ~0.05 SOL canaries a handful; **~0.004 × N** covers a fleet of N (≈ 7.5 SOL for ~1,850 agents). The runner checks the balance before each mint and pauses cleanly if it runs low — top up and re-run.
+So ~0.05 SOL canaries a handful; **~0.007 × N** covers a fleet of N (≈ 13 SOL for ~1,850 agents). The runner checks the balance before each mint and pauses cleanly if it runs low: top up and re-run.
 
 ---
 
@@ -118,7 +121,9 @@ On a confirmed mint, `deployAgentOnce()` writes to `agent_identities.meta`:
     "chain": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
     "family": "solana",
     "cluster": "mainnet",
+    "onchain_id": "<asset pubkey>",
     "sol_asset": "<asset pubkey>",
+    "contract_or_mint": "<asset pubkey>",
     "metadata_uri": "https://ipfs.io/ipfs/<cid>",
     "owner": "<owner pubkey>",
     "custody": true,
@@ -129,6 +134,8 @@ On a confirmed mint, `deployAgentOnce()` writes to `agent_identities.meta`:
 ```
 
 `sol_mint_address` is the canonical key every read path uses (explore, discover, profiles). It also makes re-runs **idempotent**: an agent that already has it is skipped. (Devnet runs are isolated under `meta.devnet` so they never block a real mainnet mint.) An `agent_actions` row (`type: solana.deploy`) is logged, and on mainnet a truthful `agent-onchain` feed event fires.
+
+Right after the mint, `registerAgentOnce()` enrols the asset in the Metaplex Agent Registry. The collection authority signs (the owner still never signs and needs no SOL), the Agent Identity PDA's URI is set to the agent's live `/api/agents/:id/registration` document rather than a pinned snapshot (the registry program has no instruction to change a URI later, so a mutable endpoint keeps `active`, services, and the model current), and an `agent_registry` block is merged into the same `meta` (`standard: metaplex-agent-registry`, `program`, `identity_pda`, `asset`, `collection`, `authority`, `registration_uri`, `network`, `tx_hash`, `registered_at`; under `meta.devnet` for devnet runs). A second `agent_actions` row (`type: solana.register`) is logged. A registry failure never undoes the mint: the asset and `sol_mint_address` are already persisted, the runner prints `registry skipped: <error> (back-fill later)`, and `scripts/register-agents-onchain.mjs` picks up every agent that has `sol_mint_address` but no `agent_registry.identity_pda`.
 
 ---
 
@@ -218,7 +225,7 @@ before and after the removal are identical.
 
 ## Tutorial 3: The full fleet
 
-Once the canary checks out and the funder holds enough SOL (~0.004 × N):
+Once the canary checks out and the funder holds enough SOL (~0.007 × N):
 
 ```bash
 # CLI, in batches:
@@ -265,6 +272,7 @@ A confirmed canary asset shows `inCollection=true`, `royalty=500bps`, `attrs=11`
 | `solana rpc 429` / send timeouts | The public endpoint is rate-limited. Set `SOLANA_RPC_URL` to a Helius/Quicknode/Triton endpoint for the full run. |
 | Manifest URI doesn't resolve | `PINATA_JWT` missing/invalid and no R2 configured. Set a valid `PINATA_JWT` (or `WEB3_STORAGE_TOKEN`, or the `S3_*` set). |
 | An agent re-deploys unexpectedly | It shouldn't — `meta.sol_mint_address IS NULL` is the skip guard. If you intentionally re-mint, clear `sol_mint_address`/`onchain` from its `meta` first. |
+| `↳ registry skipped: …` under a ✓ mint | The Core asset minted and persisted, but the Agent Registry enrolment failed (usually the RPC). Re-run `node --env-file=.env scripts/register-agents-onchain.mjs --confirm`; it only targets agents with `sol_mint_address` and no `agent_registry.identity_pda`, and already-registered assets short-circuit without a transaction. |
 
 ---
 

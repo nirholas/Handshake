@@ -69,7 +69,8 @@ the client clock is always in sync with the server's window.
 `GET /api/leaderboard/daily-match?limit=N`
 
 - `limit`: 1 to 50, default 20 (the page requests 25).
-- GET only, CORS-enabled, rate limited per client IP.
+- GET only, CORS-enabled for any origin (it is a public, anonymous board, so a
+  cross-origin fetch passes its preflight), rate limited per client IP.
 - Cached `public, max-age=15, s-maxage=30, stale-while-revalidate=60`.
 - Computed live per request over the daily window, the same pattern as
   [`api/leaderboard/unified.js`](../api/leaderboard/unified.js).

@@ -54,8 +54,10 @@ Arrow keys move through the menu, `Enter`/`Tab` selects, `Esc` closes.
   always visible and exact.
 - **Copy / Regenerate** — hover any reply to copy it or re-run the last turn.
 - **Stop** — the send button becomes a stop button while a reply streams.
-- **Voice** — 🎙 dictates your message (browser `SpeechRecognition`); 🔊 speaks replies
-  in the agent's configured voice (ElevenLabs, with a browser-speech fallback).
+- **Voice**: 🎙 dictates your message (browser `SpeechRecognition`); 🔊 speaks replies
+  in the agent's configured voice (ElevenLabs, with a browser-speech fallback). The
+  request names the agent, so an owner-cloned voice on the owner's saved ElevenLabs key
+  plays here too instead of silently degrading to browser speech.
 - **Persistence** — the conversation, its data cards, and the executed-action log are
   saved per wallet + network in `localStorage` and restored when you return. Live trade
   proposals are intentionally **not** persisted, so a reload never resurrects a
@@ -75,10 +77,16 @@ The model is **read-and-propose only**. It cannot sign, and it cannot bypass a g
    **structured proposal**, never executed on the server.
 3. The browser **re-quotes it live** and, only on your confirmation, calls the existing
    guarded endpoints:
-   - `POST /api/agents/:id/solana/trade` — enforces the spend guards
+   - `POST /api/agents/:id/solana/trade`: enforces the spend guards
      ([`api/_lib/agent-trade-guards.js`](../api/_lib/agent-trade-guards.js)), the
      rug/honeypot firewall ([`api/_lib/trade-firewall.js`](../api/_lib/trade-firewall.js)),
-     and the custody audit (`agent_custody_events`).
+     and the custody audit (`agent_custody_events`). The guards fail closed: a caller that
+     passes neither pre-read limits nor the agent's `meta` gets the policy read from the
+     agent's own row (a deleted agent has no policy and its spend is refused), and the
+     ledger also meters a `per_counterparty_daily_usd` ceiling on what one agent can send
+     to a single destination per day. The copilot's risk-limits card edits the per-trade
+     cap, daily budget, max price impact, and kill switch; the counterparty cap is set
+     from the wallet hub.
    - `PUT /api/agents/:id/trade/limits` — patches guardrails by key.
 
 A conversation can therefore never bypass a spend cap, the kill switch, or the firewall.
@@ -102,13 +110,16 @@ SSE events:
 | `done` | `{ reply, proposals, citations }` | final reply |
 | `error` | `{ code, message }` | turn failed |
 
-The provider chain is free-first and OpenAI-compatible (Groq → OpenRouter, including any
-`OPENROUTER_FALLBACK_KEYS` → NVIDIA, with paid OpenAI as the backstop), so the copilot
-works without any paid key. Whenever the GCP project is configured, a keyless,
-credits-billed **Vertex Gemini** rung is appended unconditionally as the final anchor,
-so the chain always ends on a provider that cannot be evicted by a dead key. A 15s heartbeat
-keeps the stream alive across slow tool rounds; the client aborts a genuinely dead stream
-and offers Retry rather than hanging.
+The provider chain is free-first and OpenAI-compatible, shared with the built-in chat
+agent loop in [`api/_lib/llm-tool-chain.js`](../api/_lib/llm-tool-chain.js): Groq →
+Cerebras → OpenRouter (including any `OPENROUTER_FALLBACK_KEYS`) → NVIDIA → SambaNova →
+Mistral → Z.ai → Gemini (API key), with paid OpenAI as the backstop, each rung present
+only when its key is set, so the copilot works without any paid key. Whenever the GCP
+project is configured, a keyless, credits-billed **Vertex Gemini** rung is appended
+unconditionally as the final anchor, so the chain always ends on a provider that cannot
+be evicted by a dead key. Each round has a 45s deadline and fails over to the next rung on
+any transport or non-2xx error. A 15s heartbeat keeps the stream alive across slow tool
+rounds; the client aborts a genuinely dead stream and offers Retry rather than hanging.
 
 ## $THREE
 
@@ -125,6 +136,7 @@ plumbing — and never suggests, shills, or names another token on its own initi
 | Client mount (chat UI, cards, slash, persistence, voice) | [`src/agent-copilot.js`](../src/agent-copilot.js) |
 | Wallet-hub tab wrapper | [`src/agent-wallet-hub/tabs/copilot.js`](../src/agent-wallet-hub/tabs/copilot.js) |
 | Server (tool loop, SSE, proposals) | [`api/agents/copilot.js`](../api/agents/copilot.js) |
+| Provider chain + streamed tool-call reader (shared with the chat agent loop) | [`api/_lib/llm-tool-chain.js`](../api/_lib/llm-tool-chain.js) |
 | Markdown renderer | [`src/md.js`](../src/md.js) |
 | UI contract tests | [`tests/agent-copilot-ui.test.js`](../tests/agent-copilot-ui.test.js) |
 

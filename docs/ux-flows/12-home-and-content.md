@@ -17,8 +17,8 @@ viewers), all confirmed against source.
   - Other lazy mounts referenced by inline scripts: `src/avatar-drop.js`, `src/walk-embed-preview.js`, `src/pump/homepage-launcher.js`, `src/api-playground.js`, `src/forge-embed-snippets.js`, `src/erc8004/qr.js`
   - Web component runtime: `<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js">` (near the top of `<head>`) + `/model-viewer-meshopt.js` (no `/embed.js` on this page)
   - Chrome: `/nav.js` + `/seasonal.js`; the footer is hardcoded inline in `home.html` (no `/footer.js` here)
-- **Entry point:** Root route. No auth. The hero `<agent-3d>` and the capability/press strips render immediately; every widget below the fold is lazy-loaded on `IntersectionObserver` to keep the initial payload light.
-- **Prerequisites / gates:** None. Fully public, no wallet/login. The mini-Forge uses an anonymous device `forge:cid` handle (localStorage); no sign-up required to generate a model. **Progressive disclosure:** first-time visitors get the "lite" page (`tws-lite` class unless `localStorage['tws:tier'] === 'full'`); nine advanced sections are tagged `data-tier="advanced"` and hidden behind an "advanced platform" gate section (`#advanced-gate`) that links each of them (sniper, capabilities, token economy, live economy, oracle, x402, dev platform, stack).
+- **Entry point:** Root route. No auth. The hero `<agent-3d>` and the capability/press strips render immediately (the capability strip is decorative: `aria-hidden` and unreachable by keyboard); every widget below the fold is lazy-loaded on `IntersectionObserver` to keep the initial payload light.
+- **Prerequisites / gates:** None. Fully public, no wallet/login. The mini-Forge uses an anonymous device `forge:cid` handle (localStorage); no sign-up required to generate a model. **Progressive disclosure:** first-time visitors get the "lite" page (`tws-lite` class unless `localStorage['tws:tier'] === 'full'`); eight advanced sections (plus the hero "Earn" bullet) are tagged `data-tier="advanced"` and hidden behind an "advanced platform" gate section (`#advanced-gate`) that links each of them (sniper, capabilities, token economy, live economy, oracle, x402, dev platform, stack).
 - **Steps (the landing flow is browse-and-branch, not linear; the "required" path is reach a CTA → click → leave to a product route):**
   1. Land on hero: headline "The 3D agent layer of the internet.", three hero bullets (the third, "Earn USDC per chat", is advanced-tier), a live `<agent-3d>` on stage, and the eyebrow link "New · Text → 3D is live…" → `/forge`.
   2. (Optional) Forge from the hero: `#hero-forge-form` is a live text-to-3D input ("describe anything…" + **"Forge it"** button + three Try chips: low-poly fox / sci-fi helmet / ceramic teapot) that types straight into the mini-Forge, which now sits directly under the hero. An "Open the full Forge →" note links `/forge`. A `<lang-switcher>` sits under the CTA row.
@@ -33,7 +33,7 @@ viewers), all confirmed against source.
   - Three Doors: "Start building" → `/create`; "Read the docs" → `/docs`; "Set up monetization" → `/dashboard/monetize`.
   - What You Get cards: "Open viewer" → `/playground`; "Widget Studio" → `/widgets`; "Claim your subdomain" → `/dashboard/account`.
   - Community Forge: "Generate yours →" → `/forge`.
-  - Autonomous trading (`#home-sniper`, via `src/home-sniper.js`): "Watch the arena →" → `/arena`; "Arm a strategy" → `/oracle/arm`.
+  - Autonomous trading (`#home-sniper`, via `src/home-sniper.js`): "Watch the arena →" → `/arena`; "Arm a strategy" → `/oracle/arm`. The engine pill is honest about solvency: a `starved` engine (no wallet can fund a trade) reads "Engine out of SOL" in the down style, and a degraded fleet shows "N/M wallets funded".
   - Pose Studio: "Pose Studio" → `/pose`; "Open this pose in the full studio →" → `/pose?…` (carries pose params).
   - Mini Forge: "open the full Forge →" → `/forge`.
   - AR: "Forge gallery"/"Generate your own model →" → `/forge`; "Open this model in AR →" → `/forge`; "Browse the avatar gallery →" → `/gallery`; "AR feature overview →" → `/features/ar`; "How AR works →" → `/blog/see-your-3d-in-ar`.
@@ -43,7 +43,7 @@ viewers), all confirmed against source.
   - Oracle: "Open Oracle →" / "View all conviction scores →" → `/oracle`; coin cards deep-link `/oracle/coin/<mint>`.
   - Pay-per-call: "Configure monetization →" → `/dashboard/monetize`.
   - Walk: "See walk mode →" → `/temporary` (the `/walk` route still exists but home points at `/temporary`).
-  - Developer platform: "Get a key ↗"/"Get API key →" → `/dashboard/api`; "Docs" → `/docs`; "GitHub" → github.com/nirholas/three.ws; "OpenAPI" → `/api/openapi-json.js` (currently a dead link; only `/openapi.json` is routed); "MCP server" → `/docs/mcp`.
+  - Developer platform: "Get a key ↗"/"Get API key →" → `/dashboard/api`; "Docs" → `/docs`; "GitHub" → github.com/nirholas/three.ws; "OpenAPI" → `/openapi.json` (the routed spec; the handler is `api/openapi-json.js`); "MCP server" → `/docs/mcp`.
   - The Stack: Studio → `/studio`; Registry → `/discover`; Embed → `/docs`; Pay-per-call → `/dashboard/monetize`; Walk → `/temporary`; SDK → `/docs/sdk`.
   - Showcase 3D: "Browse all" → `/discover`; "Make your own" → `/create`.
   - Avatar Drop & Vclose: "Build your agent →" → `/create`; "Text → 3D" → `/forge`; "Read the docs" → `/docs`.
@@ -55,9 +55,9 @@ viewers), all confirmed against source.
   - **Pose Studio (`#home-pose`, `src/home-pose.js`)** — drag-to-orbit rig, joint sliders, preset chips, reset/snapshot/copy-link/open-studio buttons.
   - **AR (`#home-ar`)**: `<model-viewer>` with `ar` modes (webxr/scene-viewer/quick-look), desktop QR (lazy `src/erc8004/qr.js`), model cycling (fed by a top-sorted `/api/forge-gallery` fetch).
   - **Live token card (`#hlt-card`, `src/home-live-token.js`)** — real Pump.fun data; plus homepage launcher.
-  - **Oracle feed**: `GET /api/oracle/feed?network=mainnet&limit=6&min_score=56`, renders top conviction coins ("Oracle is warming up…" empty state; error state renders an "Open Oracle →" button).
-  - **Community Forge gallery**: a live, sortable browse loop over `GET /api/forge-gallery?scope=community&…limit=24`: Fresh/Trending tabs (`sort=fresh` vs `sort=top&window=week`), a 25s background refresh that prepends genuinely-new models on Fresh (with a live chip), prompt-based dedupe, and a "Show more" button (12 shown initially, up to 24).
-  - **Showcase 3D grid**: `GET /api/explore?source=avatar&only3d=1&category=avatar,creature&limit=24&quality=high` (via `src/home-live-agents.js`), agent cards + CTA cards.
+  - **Oracle feed**: `GET /api/oracle/feed?network=mainnet&limit=6&min_score=56`, renders top conviction coins ("Oracle is warming up…" empty state; error state renders an "Open Oracle →" button). During a database outage the endpoint answers `503` with `Retry-After` instead of a confident empty feed, so the section shows the error state rather than a dead market presented as fact.
+  - **Community Forge gallery**: a live, sortable browse loop over `GET /api/forge-gallery?scope=community&…limit=24`: Fresh/Trending tabs (`sort=fresh` vs `sort=top&window=week`), a 25s background refresh that prepends genuinely-new models on Fresh (with a live chip), prompt-based dedupe, and a "Show more" button (12 shown initially, up to 24). Cards paint as poster images and upgrade to the live rotating mesh only as they near the viewport; community cards stay as posters.
+  - **Showcase 3D grid**: `GET /api/explore?source=avatar&only3d=1&category=avatar,creature&limit=24&quality=high` (via `src/home-live-agents.js`), agent cards + CTA cards; each card links the item's `detailUrl` (the canonical `/avatars/<id>` detail page with chat, skills, embed and launch actions), not the bare GLB viewer.
   - **Other live agents** — What-You-Get viewer (50+ animation chips), Bento mini-agents, Vclose agent, Avatar Drop canvas, Walk preview canvas.
 - **External calls / dependencies:** `POST/GET /api/forge` (+ `?catalog`/`?health` for the options panel), `GET /api/forge-gallery`, `GET /api/explore`, `GET /api/oracle/feed`; Pump.fun feed (live token card); `agent-3d` runtime + Google `model-viewer` CDN (lazy). Solana RPC indirectly via the launcher.
 - **Success state:** User reaches and clicks a CTA into a product route, or completes an in-page demo (e.g. a forged model rendered with a working toolbar; an embed snippet copied).
@@ -88,7 +88,7 @@ viewers), all confirmed against source.
 - **Source:** `pages/status.html` (dynamic).
 - **Entry point:** `vercel.json` `/status → /status.html`.
 - **Prerequisites / gates:** None.
-- **Steps (4):** 1) On load, fetch `GET /api/status` and render service cards (status dot, uptime %, avg latency, 90-day history bar). 2) Auto-poll every 5 min (`setInterval`, 300000 ms) updating the `aria-live` banner ("All systems operational" ↔ "X of Y services disrupted"). 3) Hover/focus a 90-day history cell for per-day tooltip. 4) Read the live build stamp: a `GET /api/version` fetch fills `#st-build` with the live commit (linked to GitHub), version, Cloud Run revision, and build time; it stays hidden if the endpoint is unreachable. Footer links to the SVG status badge (`/api/status?format=svg`) and `/changelog`.
+- **Steps (4):** 1) On load, fetch `GET /api/status` and render service cards (status dot, uptime %, avg latency, 90-day history bar); a subsystem that publishes structured `metrics` (today the agent index) also renders metric pills beside its sentence: Solana lag, Solana agents, EVM lag, Events indexed (`subMetrics`). 2) Auto-poll every 5 min (`setInterval`, 300000 ms) updating the `aria-live` banner ("All systems operational" ↔ "X of Y services disrupted"). 3) Hover/focus a 90-day history cell for per-day tooltip. 4) Read the live build stamp: a `GET /api/version` fetch fills `#st-build` with the live commit (linked to GitHub), version, Cloud Run revision, and build time; it stays hidden if the endpoint is unreachable. A "Last check …" stamp (`#st-checked`) sits beside the cadence sentence. Footer links to the SVG status badge (`/api/status?format=svg`) and `/changelog`.
 - **External calls:** `GET /api/status`, `GET /api/version`.
 - **Success state:** Live service grid rendered with current operational status + "last check" timestamp.
 - **Empty / error states:** Skeleton loaders on first paint; on fetch failure renders an error message with retry guidance.
@@ -103,13 +103,13 @@ viewers), all confirmed against source.
 ### Support — `/support`
 - **Source:** `pages/support.html` (static).
 - **Entry point:** `vercel.json` `/support → /support.html`.
-- **Steps (5):** 1) Read intro/channels. 2) Copy a contact email via `.copy-btn` (support, security, partnerships, privacy, legal, dmca, abuse @three.ws) → clipboard, "Copied ✓" 1600ms; clipboard-blocked fallback opens `mailto:`. 3) Open a channel card (GitHub Issues / Discussions — new tab). 4) Use a `mailto:` link. 5) Hover channel cards (border/translate/arrow microinteractions).
+- **Steps (5):** 1) Read intro/channels. 2) Copy a contact email via `.copy-btn` (support, security, partnerships, privacy, legal, dmca, abuse @three.ws) → clipboard, "Copied ✓" 1600ms; clipboard-blocked fallback opens `mailto:`. 3) Open a channel card in a new tab: GitHub Issues for bugs and feature requests, or "Questions & help", which opens a question issue template (`issues/new?template=question.yml`) in the same tracker; Discussions is no longer a channel. 4) Use a `mailto:` link. 5) Hover channel cards (border/translate/arrow microinteractions).
 - **Notes:** No contact form / no backend submission — email links + copy buttons only. No API.
 
 ### Events — Build 3D Agents Live — `/events/build-3d-agents-live`
 - **Source:** `pages/events/build-3d-agents-live.html` (static + realtime; `/embed.js`, `/footer-newsletter.js`).
 - **Entry point:** `vercel.json` `/events/([a-z0-9-]+) → /events/$1.html`.
-- **Steps (5):** 1) The countdown block reflects event phase (event was 2026-06-23 18:00 MT, 60 min, online; rAF tick → days/hrs/min/sec pre-event; "LIVE NOW" during; since EVENT_END passed it now renders the post-event headline "Thanks for joining" with the sub-label "replay coming soon"; no replay link exists yet). 2) Add to calendar (`#add-cal`/`#add-cal-2` build a Google Calendar render URL from EVENT_START/END, now a past date). 3) RSVP email signup (`#rsvp-form`, `data-newsletter-form` → `POST /api/newsletter/subscribe`, aria-live result). 4) Interact with the lazy-loaded hero `<agent-3d>` (deferred via `requestIdleCallback` → `/embed.js`). 5) Scroll-reveal sections.
+- **Steps (5):** 1) The countdown block reflects event phase (event was 2026-06-23 18:00 MT, 60 min, online; rAF tick → days/hrs/min/sec pre-event; "LIVE NOW" during; since EVENT_END passed it now renders the post-event headline "Thanks for joining" with the sub-label "this session has aired"; no replay link exists). Past-event mode also swaps the eyebrow to "Past event · hosted by three.ws" and strips the upcoming-event i18n hooks so the translation pass cannot paint the old copy back. 2) Add to calendar (`#add-cal`/`#add-cal-2` build a Google Calendar render URL from EVENT_START/END, re-applied on every `i18n:change`); both calendar controls are hidden once the event has passed, since adding a past event is a dead path. 3) RSVP email signup (`#rsvp-form`, `data-newsletter-form` → `POST /api/newsletter/subscribe`, aria-live result); after the event the section reads "Next session" / "Hear about the next live build" and asks for an email for the next scheduled session. 4) Interact with the lazy-loaded hero `<agent-3d>` (deferred via `requestIdleCallback` → `/embed.js`). 5) Scroll-reveal sections.
 - **Notes:** Schema.org Event. Countdown is local (no API); only newsletter POSTs.
 
 ### Legal hub and policy documents - `/legal`, `/legal/privacy`, `/legal/tos`, `/legal/eula`, `/legal/content-policy`, `/legal/risk`
@@ -141,21 +141,21 @@ viewers), all confirmed against source.
 - **Steps (5):** 1) Read hero (title/meta from manifest). 2) Hero CTA (manifest-driven, e.g. "Open the Forge"). 3) Read article: markdown fetched `GET /docs/tutorials/<slug>.md`, parsed with marked + highlight.js; per-`<pre>` **copy code** buttons ("Copy" → "Copied" 1700ms); `figure:` directives in the markdown resolve to real captured images via `/tutorial-figures.js` + `/tutorial-figures.css` (pipeline shared with the cookbook recipe viewer). 4) Use the sticky TOC (scroll-spy) and heading anchors. 5) Prev/Next pager (adjacent manifest entries); back-to-top button + top progress bar.
 - **External calls:** `GET /docs/tutorials/<slug>.md`.
 - **Success state:** Rendered article with working TOC, copy buttons, and pager.
-- **Empty / error states:** "Page not found." on failed markdown fetch.
+- **Empty / error states:** "Tutorial not found" on an unknown slug or failed markdown fetch.
 - **Step count:** 1 required (read) (+4 optional: CTA, copy, TOC nav, pager).
 - **Notes:** text-to-3d & image-to-3d tutorials use this same template (covered elsewhere).
 
 ### Docs (index + all subpages) — `/docs`, `/docs/start-here`, `/docs/make-your-agent`, `/docs/share-and-embed`, `/docs/do-i-need-crypto`, `/docs/quick-start`, `/docs/agent-system`, `/docs/erc8004`, `/docs/embedding`, `/docs/web-component`, `/docs/mcp`, `/docs/skills`, `/docs/api-reference`, `/docs/sdk`, `/docs/listings` (and ~50 more)
 - **Source:** Single SPA shell `docs/index.html` (served for `/docs`, `/docs/`, and `/docs/<slug>` per `vercel.json`); markdown content in `docs/*.md` and `docs/tutorials/*.md`. Marked + highlight.js via CDN.
 - **Entry point:** `vercel.json` `/docs → /docs/index.html`, `/docs/([^./]+) → /docs/index.html` (the slug becomes a hash route). `currentPath()` reads `location.hash` (or `/docs/<slug>`), defaulting to `start-here`.
-- **Steps (4):** 1) Land: the sidebar NAV is loaded from `GET /docs/nav.json` (currently 14 sections / ~273 links, with a designed failure state if the manifest 404s) + `start-here.md` fetched & rendered. 2) Sidebar **search** live-filters the nav by label AND surfaces a full-text results panel fed by the docs search index (with a Clear search control). 3) Click a sidebar link → hash route → `GET /docs/<slug>.md` rendered (headings get anchor IDs; internal `.md` links rewritten to hash routes; code highlighted). 4) Per-page tools: "Copy page" (markdown to clipboard), "View as Markdown" (`/docs/<slug>.md` new tab), "Open in Claude" (`claude.ai/new?q=…`); Prev/Next pager; mobile sidebar FAB/overlay; a lazy doc-freshness banner (`/doc-freshness.js`, backed by `public/docs-freshness*.json`).
+- **Steps (4):** 1) Land: the sidebar NAV is loaded from `GET /docs/nav.json` (currently 14 sections / ~286 links, with a designed failure state if the manifest 404s) + `start-here.md` fetched & rendered. 2) Sidebar **search** live-filters the nav by label AND surfaces a full-text results panel fed by the docs search index (with a Clear search control). 3) Click a sidebar link → hash route → `GET /docs/<slug>.md` rendered (headings get anchor IDs; internal `.md` links rewritten to hash routes; code highlighted). 4) Per-page tools: "Copy page" (markdown to clipboard), "View as Markdown" (`/docs/<slug>.md` new tab), "Open in Claude" (`claude.ai/new?q=…`); Prev/Next pager; mobile sidebar FAB/overlay; a lazy doc-freshness banner (`/doc-freshness.js`, backed by `public/docs-freshness*.json`).
 - **External calls:** `GET /docs/nav.json`; `GET /docs/<slug>.md` per page (e.g. `do-i-need-crypto.md`, `quick-start.md`, `agent-system.md`, `erc8004.md`, `embedding.md`, `web-component.md`, `mcp.md`, `skills.md`, `api-reference.md`, `sdk.md`, `listings.md`, `make-your-agent.md`, `start-here.md`); marked + highlight.js CDNs.
 - **Empty / error states:** Loading dots during fetch; "Page not found." on a missing slug; a designed nav-manifest failure state.
 - **Notes:** Nearly all `/docs/*` slugs share this one SPA; the route is one repeated pattern: navigate (hash/sidebar/search) → fetch markdown → render, with copy-page + pager + TOC behaviors. Real steps per page = 1 required (read) +3 optional (search, copy-page, pager). **Exceptions mapped before the generic rule:** `/docs/widgets` (standalone page, below), `/docs/3d-api` → `/3d.html`, `/docs/agent-3d` → 308 → `/docs/web-component`, and the `/docs/walk*` family.
 
 ### Docs — Widgets (standalone) — `/docs/widgets`
 - **Source:** `public/docs-widgets.html` (static; `vercel.json` `/docs/widgets → /docs-widgets.html`, mapped *before* the generic `/docs/*` rule).
-- **Steps (4):** 1) TOC anchor nav (`#quick-start`, `#widget-types`, `#urls`, `#embedding`, `#postmessage-api`, `#og-oembed`, `#csp-cors`, `#privacy`, `#faq`). 2) Read code blocks (iframe/script/oEmbed/postMessage). 3) Review reference tables (widget types, URL schemes, hash params, postMessage events, OG/oEmbed). 4) Follow links (`/studio`, `/widgets`, `/docs/deployment`, oembed.com); footer `<model-viewer>` demo (`/animations/robotexpressive.glb`).
+- **Steps (4):** 1) TOC anchor nav (`#quick-start`, `#widget-types`, `#urls`, `#embedding`, `#postmessage-api`, `#og-oembed`, `#csp-cors`, `#privacy`, `#faq`). 2) Read code blocks (iframe/script/oEmbed/postMessage). 3) Review reference tables (widget types, URL schemes, hash params, postMessage events, OG/oEmbed). 4) Follow links (`/studio`, `/widgets`, `/docs/deployment`, oembed.com). The former footer `<model-viewer>` demo is gone; the page loads the model-viewer runtime but renders no demo of its own.
 - **Notes:** Pure static docs, no API. Distinct from the docs SPA.
 
 ### Blog index — `/blog`
@@ -163,15 +163,15 @@ viewers), all confirmed against source.
 - **Entry point:** `/blog`.
 - **Prerequisites / gates:** None.
 - **Steps (2):** 1) Scan the hardcoded list of 35 post cards (each shows title, date, informational tag). 2) Click a post → `/blog/<slug>`. (Also: RSS link `/rss/announcements.xml`; X/GitHub external links.)
-- **Decision points / branches:** 35 indexed posts → individual article routes (37 post files exist; two are routable but unlinked from the index); RSS / social out.
+- **Decision points / branches:** 35 indexed posts → individual article routes (38 post files exist; three are routable but unlinked from the index); RSS / social out.
 - **External calls:** None — fully static list (no fetch, no pagination, no filter/search). Tags are display-only, not filterable.
 - **Success state:** User opens an article.
 - **Empty / error states:** N/A (static).
 - **Step count:** 1 required (click a post) (+ optional RSS/social).
 
-### Blog posts (37): `/blog/<slug>`
-- **Source:** `blog/<slug>.html`: 37 routable static HTML files, all on **one shared template** (`.post-wrap`, `.post-meta`, `.post-tag`, shared nav/footer containers). Routed via `vercel.json` `/blog/([a-z0-9-]+) → /blog/$1.html`. One legacy slug redirects: `/blog/all-90-trades` 308s to `/blog/autonomous-trading-experiment`.
-- **Slugs:** the routable set is exactly the `blog/*.html` filenames (37 today; enumerate with `ls blog/*.html`), which rots less than restating the list here. (`three-ws-alibaba-cloud-partnership` and `three-ws-play-coin-communities` are routable but not linked from the index.)
+### Blog posts (38): `/blog/<slug>`
+- **Source:** `blog/<slug>.html`: 38 routable static HTML files, all on **one shared template** (`.post-wrap`, `.post-meta`, `.post-tag`, shared nav/footer containers). Routed via `vercel.json` `/blog/([a-z0-9-]+) → /blog/$1.html`. One legacy slug redirects: `/blog/all-90-trades` 308s to `/blog/autonomous-trading-experiment`.
+- **Slugs:** the routable set is exactly the `blog/*.html` filenames (38 today; enumerate with `ls blog/*.html`), which rots less than restating the list here. (`three-ws-alibaba-cloud-partnership`, `three-ws-play-coin-communities` and `ibm-user-group-first-in-world-meetup-recap` are routable but not linked from the index.)
 - **Steps (1):** Read the article; follow the "← Blog" back link, inline links, and the occasional primary CTA (e.g. text-to-3d post → "Try Forge — type a prompt →" → `/forge`).
 - **Notes:** Repeated "read article" pattern. No embedded 3D demos / share / TOC / newsletter inside the post body in the sampled pages; copy-button CSS exists in the template but the sampled posts have no code blocks. No API.
 - **Source not exposed:** Several `.md` files under `blog/` (drafts and source material such as `decision-optimization-3d-ai-crypto.md`, `internets-second-species.md`, `we-are-the-provider.md`, the autonomous-trading X drafts, plus `README.md`) are NOT routed (no rule maps `.md` blog slugs) and are not in the index; source material only, not live pages.
@@ -188,9 +188,9 @@ viewers), all confirmed against source.
 - **Notes:** The header carries the subscribe row (`/changelog.xml` RSS, `/changelog.json`, `/llms.txt`, `/sitemap`). Delivery to the holders' Telegram channel is handled by the `changelog-push` cron off the same feed, not by this page.
 
 ### News index and articles - `/news`, `/news/<slug>`
-- **Source:** `public/news/index.html` plus 110 static article files `public/news/<slug>.html`.
+- **Source:** `public/news/index.html` plus 112 static article files `public/news/<slug>.html`.
 - **Entry point:** `vercel.json` `/news → /news/index.html`, `/news/([a-z0-9_-]+)/? → /news/$1.html`. The home page's press strip links straight into individual `/news/*` slugs, so most arrivals skip the index.
-- **Steps (2):** 1) Scan the index: 110 hardcoded `post-link` cards, newest first, each with a `<time>` date, headline, summary paragraph, and a display-only tag list. 2) Click through to an article and read it; a "News" breadcrumb returns to the index, and inline links point at product routes.
+- **Steps (2):** 1) Scan the index: 112 hardcoded `post-link` cards, newest first, each with a `<time>` date, headline, summary paragraph, and a display-only tag list. 2) Click through to an article and read it; a "News" breadcrumb returns to the index, and inline links point at product routes.
 - **External calls:** None. Fully static: no fetch, no pagination, no search, and the tags are not filterable.
 - **Success state:** User reads the announcement and follows its product link.
 - **Empty / error states:** N/A (static).
@@ -223,7 +223,9 @@ Agent/crawler endpoints — not user UX (0 user steps). All resolve via `vercel.
 | Agent attestation schemas | `/.well-known/agent-attestation-schemas` | `/api/wk?name=agent-attestation-schemas` | ERC-8004 attestation schema descriptors |
 | OAuth AS metadata | `/.well-known/oauth-authorization-server` | `/api/wk?name=oauth-authorization-server` | OAuth 2.0 Authorization Server metadata |
 | OAuth protected resource | `/.well-known/oauth-protected-resource` (also under `/api/mcp/`) | `/api/wk?name=oauth-protected-resource` | OAuth 2.0 Protected Resource metadata |
-| Chat plugin manifest | `/.well-known/chat-plugin.json` | `/api/wk?name=chat-plugin` | AI chat-plugin manifest |
+| Chat plugin manifest | `/.well-known/chat-plugin.json` | `/api/wk?name=chat-plugin` | AI chat-plugin manifest (the real LobeChat manifest) |
+| Sperax plugin manifest | `/.well-known/sperax-plugin.json` | `/api/wk?name=sperax-plugin` | Sperax plugin manifest |
+| Apple app-site association | `/.well-known/apple-app-site-association` | `/api/wk?name=apple-app-site-association` | iOS universal-link association for the App Store shell |
 | Vanity metadata | `/.well-known/three-vanity.json` | `/api/wk?name=three-vanity` | Vanity-wallet discovery metadata |
 | JWKS | `/.well-known/jwks.json` | `/api/auth/persona/[action]?action=jwks` | Signing keys |
 | DID document | `/.well-known/did.json` | `/api/x402/did` | x402 DID document |

@@ -65,7 +65,7 @@ A garment with no skin at all (hat, glasses) is parented to a single joint
 |---|---|---|
 | Attachment engine | [`src/avatar-garment.js`](../src/avatar-garment.js) | Skin rebind, occlusion, slot occupancy — the runtime core |
 | Shared taxonomy | [`src/garment-taxonomy.js`](../src/garment-taxonomy.js) | Slots, body regions, region→bone map, coverage gate |
-| Catalog loader | [`src/garment-catalog.js`](../src/garment-catalog.js) | Fetch + validate manifests; drops anything malformed or unlicensed |
+| Catalog loader | [`src/garment-catalog.js`](../src/garment-catalog.js) | Fetch (three bounded attempts, then the last copy this browser loaded) + validate manifests; drops anything malformed or unlicensed |
 | Closet UI + controller | [`src/garment-closet.js`](../src/garment-closet.js) | Racks/tiles in the editor, attach/detach queue, appearance sync |
 | Editor wiring | [`src/avatar-edit.js`](../src/avatar-edit.js) | Hydrate on load, persist `appearance.garments`, reset/save |
 | Region mask (pixel-exact occlusion) | Baker [`scripts/build-body-region-mask.mjs`](../scripts/build-body-region-mask.mjs) → `public/avatars/parametric-base.regions.png`, sampler [`src/garment-region-mask.js`](../src/garment-region-mask.js) | On the parametric base, worn garments cut the skin via a baked UV mask (alphaMap) instead of triangle culling; any other body falls back to bone-cull |
@@ -91,6 +91,15 @@ slot, unknown body region, malformed hash, or a licence outside the approved
 commercial set (CC0, CC-BY, MIT, Apache-2.0, BSD) drops the entry with a
 console warning. A broken manifest becomes a missing tile, not a broken avatar.
 
+`loadCatalog()` fetches the file with a 10 s deadline and retries a 5xx or a
+dropped connection twice more before giving up; a 4xx is final. When every
+attempt fails it falls back to the copy the browser last loaded (kept in
+`localStorage` under `three.ws:garment-catalog:<url>` for 24 hours) and logs a
+warning, so a bucket blip no longer empties the closet. Only with no cached copy
+does the load reject. The server-side baker reads the same URL through the shared
+`fetchUpstream` helper (15 s deadline, two attempts) and caches it for five
+minutes.
+
 ## Generating new garments
 
 The catalog is fed by the Garment Forge
@@ -104,6 +113,12 @@ POST /api/garment-forge   { "prompt": "a red varsity jacket", "slot": "outerwear
 GET  /api/garment-forge?job=<id>
                           → { status, stage, glb_url, manifest_url, coverage, occludes }
 ```
+
+The proxy gives a submit one attempt with a 60 s deadline (it starts a GPU job,
+so it is not safely repeatable) and a job read three attempts at 10 s each; both
+share the `garment-forge-worker` circuit breaker, so a dead worker answers every
+caller with `502 garment_forge_unavailable` at once instead of each paying the
+full deadline.
 
 `stage` walks `image → mesh → compose → rig → extract → validate → publish`.
 When the job reports `done`, the piece is already live in the catalog above;
@@ -147,8 +162,9 @@ bricking the avatar.
 
 - Garment can't reach the skeleton → refused with the measured coverage in the
   reason string; the slot keeps its previous occupant.
-- Catalog unreachable → closet shows a retry state; the rest of the editor is
-  unaffected.
+- Catalog unreachable → the closet serves the last catalog this browser loaded;
+  with no cached copy it shows a retry state. The rest of the editor is
+  unaffected either way.
 - Bake-time garment failure → logged and skipped; the bake always lands.
 - Non-humanoid model → the closet is withheld (`supportsWardrobe` gate), same
   policy as the animation library's humanoid gate.

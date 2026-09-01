@@ -27,6 +27,8 @@ Both render the same files. The world fetches the same `/docs/nav.json` manifest
 
 The **Index** chip (top left) lists every section; picking one teleports you to its pavilion and opens its page list. That list is fully keyboard-reachable, so nothing in the world requires mouse-precision walking.
 
+The **Search docs** chip (or `/`, or `Ctrl`+`K`) opens a palette over every page. `Enter` on a result opens the page at once; `Shift`+`Enter` hands you to the wayfinder, which walks your avatar to the right pavilion with a live route readout, a **Read now** shortcut that skips the walk, and a cancel button. The **?** chip holds the controls table and a **Replay the welcome tour** button.
+
 ## Your avatar
 
 By default you walk as the platform's default rigged body, the same one [/walk](/walk) uses, animated by the shared canonical clip library. Pass any rigged GLB with `?avatar=`:
@@ -39,7 +41,7 @@ Any humanoid rig works; bone names are mapped automatically, exactly as describe
 
 ## Devices and accessibility
 
-- **No WebGL?** The page detects it and offers the classic docs instead; nothing is lost, because the content is identical.
+- **No WebGL?** The page detects it and offers the classic docs instead; nothing is lost, because the content is identical. A failure a reload can fix (a dropped `/docs/nav.json` fetch, an exhausted WebGL context budget, an unexpected boot error) shows the same fallback with a **Try again** button, focused once it is visible; a device with no GPU never gets that button, because reloading cannot help it.
 - **`prefers-reduced-motion`** stills the ambient animation (floating labels, portal shimmer, drifting stars).
 - The reader panel is real DOM, not a texture: text is selectable, zoomable, and visible to screen readers.
 - Frame rate is governed like every three.ws 3D surface: 60fps focused, 30fps in the background or with the shared Power-saver preference on.
@@ -73,7 +75,7 @@ Every link carries a `label` plus exactly one of:
 
 Three rules the test suite enforces in [`tests/docs-world.test.js`](https://github.com/nirholas/three.ws/blob/main/tests/docs-world.test.js), so a bad entry fails CI rather than shipping a dead link:
 
-1. Every `path` must resolve to a markdown file that actually exists.
+1. Every `path` must resolve to a markdown file that actually exists, in `docs/` (copied into the build) or `public/docs/` (served verbatim); either one reaches `/docs/<slug>.md`.
 2. A link is a `path` **or** an `href`, never both and never neither.
 3. No `path` may point into `docs/internal/`, `docs/ops/`, or `docs/security/`. Those directories are written for operators and are deliberately excluded from the published site, so a nav entry into one would 404 in production.
 

@@ -8,7 +8,8 @@ every minute. When nothing hits them, the economy flat-lines while the site keep
 serving traffic.
 
 In production these endpoints are driven by **Google Cloud Scheduler** — one
-job per `vercel.json` cron entry (~76 jobs), each firing `GET /api/cron/<name>`
+job per `vercel.json` cron entry (the `crons` array there is the count; 110 at
+the 2026-08-28 sync), each firing `GET /api/cron/<name>`
 with the `Authorization: Bearer $CRON_SECRET` header. (We do **not** use GitHub
 Actions for any scheduling.)
 
@@ -33,16 +34,20 @@ that makes the economy move:
 | --- | --- | --- |
 | Payments & x402 | `x402-ring-tick`, `x402-seed-cron`, `x402-autonomous-loop`, `x402-ring-leak-scan`, `wallets-leak-scan`, `run-distribute-payments`, `payment-session-sweep` | ring settlements, micropayment feed, catalog spend, leak scans, payout distribution |
 | Money Pulse, Labor & delegation | `pulse-tick`, `/api/labor/tick`, `index-delegations` | live wallet-activity feed, bounty bids/awards/settlements, agent hiring/delegation |
-| Coin launches (pump.fun) | `launcher-tick`, `launcher-claimer`, `coin-intel-observe`, `pumpfun-monitor`, `pumpfun-graduations-sync`, `run-coin-cycle`, `run-coin-payouts` | autonomous minting, fee claims, launch intel, graduation sync, coin lifecycle + payouts |
+| Coin launches (pump.fun) | `launcher-tick`, `launcher-claimer`, `pumpfun-monitor`, `pumpfun-graduations-sync`, `run-coin-cycle`, `run-coin-payouts` | autonomous minting, fee claims, graduation sync, coin lifecycle + payouts |
 | Autonomous / copy / strategy trading | `copy-fanout`, `mirror-fanout`, `signal-fanout`, `strategy-fanout`, `run-dca` | copy trading, signal/strategy execution, DCA |
 | Tips, payouts, subscriptions, royalties | `club-payouts`, `run-subscriptions`, `process-subscriptions`, `settle-royalties`, `cosmetic-splits-sweep` | tipping payouts, subscription billing, royalty + cosmetic-split settlement |
-| $THREE buyback | `run-buyback`, `run-three-buyback` | revenue → buy → treasury (internally gated hourly/daily) |
-| Funding, treasury & reconcile | `treasury-topup`, `treasury-autopilot`, `treasury-sweepback`, `economy-reconcile`, `reflect-sweep` | master-wallet funding root, treasury autopilot, tamper reconciliation |
+| $THREE buyback | `run-buyback`, `run-three-buyback`, `three-buy-loop` | revenue → buy → treasury (internally gated hourly/daily), plus the x402-settled micro-buy loop |
+| Funding, treasury & reconcile | `treasury-topup`, `economy-rebalance`, `treasury-autopilot`, `treasury-sweepback`, `economy-reconcile`, `reflect-sweep` | master-wallet funding root, economy rebalance, treasury autopilot, tamper reconciliation |
 | $THREE market & holders | `three-market-refresh`, `three-holders-snapshot` | live coin market + holder snapshots |
 
 The snipers / autonomous trading experiment run as a **standalone always-on Cloud
 Run worker** ([workers/agent-sniper/](../workers/agent-sniper)), not a scheduled
 cron, so they are continuous and not part of this dispatch list.
+`coin-intel-observe` is also deliberately absent: it watches PumpPortal for 85s
+inside its own 120s budget and runs on its own `*/2 * * * *` cron, so firing it
+from the dispatcher aborted it at the 60s call timeout every minute and pinned
+the heartbeat to `failed: 1`.
 
 Every target engine is internally idempotent — per-tick spend caps, per-endpoint
 cooldowns, and daily ceilings absorb over-calling — so it is safe to fire
@@ -148,6 +153,12 @@ CRON_SECRET=… DURATION_MINUTES=10 node scripts/economy-heartbeat.mjs
   no-ops the extra calls.
 - **Undeployed endpoints are tolerated.** A target missing from the deployed
   build reports `status: 404` and never stops the others.
+- **A non-production process never drives production.** `APP_ORIGIN` falls
+  back to `https://three.ws` wherever `PUBLIC_APP_ORIGIN` is unset (a laptop,
+  CI, an audit session), so a process that is not a Cloud Run revision (no
+  `K_SERVICE`) and would fan out to a non-loopback origin answers
+  `200 { ok: true, skipped: "not_deployed" }` and fires nothing. Point
+  `PUBLIC_APP_ORIGIN` at a local server to exercise the fan-out for real.
 
 Related: [circulation engine](circulation-engine.md) ·
 [x402 ring economy](x402-ring-economy.md) ·

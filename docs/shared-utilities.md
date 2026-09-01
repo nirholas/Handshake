@@ -181,6 +181,21 @@ EVM RPC do not go through here: `api/_lib/solana/connection.js` and
 providers (with per-provider parsers) use `fetchFirst` from
 `src/shared/failover-fetch.js` instead.
 
+Because every third-party call in `api/` passes through one of these three
+(`fetchUpstream`, `fetchFirst`, or the Solana connection), they are also where
+[Brownout](./brownout.md) hooks in. Each attempt is recorded against the
+current request (`recordSource` from `api/_lib/brownout/`), and a `lastGood`
+hit records itself as `tier: 'stale'` with its age, which is what lets the
+response carry the `x-brownout` / `x-brownout-trace` headers saying which rung
+answered and how fresh it was. The same seam honours a declared fault
+(`faultFor(name)`): an `x-brownout-chaos` directive raises the fault in the
+shape of the real failure, from inside the same `try` the genuine outage would
+land in, so retries, `Retry-After` handling, cooldowns and the breaker all see
+it exactly as they would see the outage. `failover-fetch.js` and
+`connection.js` are isomorphic and load the brownout module lazily on the
+server only (the specifier is parked on `globalThis` so Rollup cannot fold it
+into the CDN bundle); in a browser both hooks are inert.
+
 ### `api/_lib/cache.js`: `cacheWrapLastGood`
 
 ```js
@@ -346,7 +361,10 @@ of a provider result URL that only exists at runtime. Three exemptions there,
 each for a call that cannot hang or is already bounded elsewhere: a `data:` URL
 (no socket), a client snippet quoted as a string (it runs in a browser), and a
 wrapper that spreads its caller's `init` (the deadline is the caller's, and a
-second one would silently shorten it).
+second one would silently shorten it). Two shapes are never counted as calls at
+all: a `fetch(` that sits inside a string literal (a usage example shipped as
+data in an API response), and a member call such as `client.fetch(...)`, which
+is somebody else's method rather than the global `fetch`.
 
 The checker reads each call's real extent by balancing parentheses rather than
 scanning a fixed window, because `signal` is conventionally the last key of an

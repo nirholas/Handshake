@@ -175,7 +175,12 @@ sessions would brick every wallet.
 **Remediation:** dedicated `WALLET_ENCRYPTION_KEY` independent of `JWT_SECRET`,
 random per-record salt stored with ciphertext, dual-read during migration so
 existing records keep decrypting. **Status: fixed (dual-read; new writes use the
-dedicated key).**
+dedicated key).** Since then: `WALLET_ENCRYPTION_KEY_PREVIOUS` keeps retired keys
+readable through a rotation, production refuses to encrypt or decrypt under the
+`JWT_SECRET` fallback at all (fail-closed when the dedicated key is missing or
+short), and as of 2026-08-11 an unset `JWT_SECRET` only drops the legacy decrypt
+candidate instead of breaking decryption of records written under the dedicated
+key.
 
 ### H9 — USD daily spend cap is read-then-write (TOCTOU)
 `api/_lib/agent-trade-guards.js:409-421,471-482`; enforced in
@@ -208,7 +213,12 @@ by any attacker → UI-redress on wallet/trade/launch actions.
 
 **Remediation:** global default `frame-ancestors 'self'` + `X-Frame-Options:
 SAMEORIGIN`; keep explicit `*` only on genuine embed/OG/widget routes.
-**Status: fixed.**
+**Status: fixed.** _Current shape:_ the global route's CSP is `frame-ancestors
+'self'` plus the IBM and Seismic partner origins (`https://ibm.com`,
+`https://*.ibm.com`, `https://*.seismic.com`) for their embeds, and
+`X-Frame-Options: SAMEORIGIN` rides on the auth, wallet, and dashboard route
+group rather than the global route, since that header cannot express the partner
+allowlist.
 
 ### H12 — CSP `script-src` allows `'unsafe-inline'` and `'unsafe-eval'`
 `vercel.json:202,209`. Neutralizes CSP's primary XSS mitigation; wide CDN
@@ -342,7 +352,10 @@ read-only assets. **Status: fixed (audited + migrated authenticated handlers).**
   through `enforceSpendLimit`. **Status: fixed.**
 - **M12 — buyer spending-cap trusts payee-supplied decimals/name**
   `api/_lib/x402-spending-price.js:86-107`. Derive decimals/asset from the
-  on-chain mint, not payee `extra`. **Status: fixed.**
+  on-chain mint, not payee `extra`. **Status: fixed** (a trusted asset registry
+  keyed by the on-chain mint/contract address is authoritative for the decimals
+  and stablecoin peg of the dominant x402 assets; an unknown asset falls back to
+  the payee's values with decimals clamped to a sane range).
 - **M13 — triggerSkillPayment EVM spend bypasses custody cap**
   `api/_lib/agent-wallet.js:222-316`. Route through `enforceSpendLimit`; validate
   `author_wallet` shape. **Status: fixed.**

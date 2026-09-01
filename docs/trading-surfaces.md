@@ -22,7 +22,7 @@ On top of that base layer:
 
 - **Oracle conviction** ([the conviction engine](oracle.md)) enriches coins across all five surfaces with its 0–100 fused score and tier.
 - **Price history** (candlesticks) comes from Birdeye with GeckoTerminal fallback.
-- **Live trades** stream over server-sent events from `/api/pump/trades-stream` (PumpPortal websocket, relayed).
+- **Live trades** stream over server-sent events from `/api/pump/trades-stream` (PumpPortal websocket, relayed). PumpPortal gates per-coin trade subscriptions behind an API key funded with at least 0.02 SOL; when it refuses one, the socket stays open and simply never delivers, so the relay forwards that refusal as an SSE `notice` event and the tape shows a degraded state instead of a lit "live" lamp over an empty panel. A malformed `mint` is refused up front with `400 invalid_mint`.
 - **Smart-money pedigree** comes from the proven-wallet ledger (`/api/intel/smart-money`).
 
 One naming trap for API users: `/radar` is served by `api/pump/coin-intel.js` and `/coin-intel` is served by `api/pump/intel.js`. The names look swapped; they are two distinct read models over the same engine.
@@ -50,11 +50,11 @@ Four tabs:
 3. **Smart-Money Traders** — the cross-coin trader board.
 4. **What it learned** — the learned per-signal weights and outcome distribution. The engine grades its own predictions against real outcomes and shows you the weights it arrived at.
 
-If the engine is still warming up (fresh deploy, empty tables), the page says so honestly instead of rendering blanks. Public, no account, refreshes every 15 seconds.
+If the engine is still warming up (fresh deploy, empty tables), the page says so honestly instead of rendering blanks. Public, no account, refreshes every 15 seconds. A caller mistake is answered as one, never as an outage: an unknown `view`, a non-base58 `mint`, or a `minQuality` outside 0-100 gets a `400` (`invalid_view`, `invalid_mint`, `invalid_min_quality`) rather than the "warming up" state. The feed's `q` search runs in SQL over the whole observed feed, and a `verdict` filter (derived after the row is shaped) scans up to 600 recent rows before slicing to the requested page, so `?verdict=strong` on a busy feed no longer answers with the one strong coin that happened to sit on page one. The `traders` and `learning` views are whole-history aggregates and are edge-cached for 5 minutes; the feed stays on a 5-second cache.
 
 ## Live Trade Feed — /trades
 
-The proof stream. The left rail is a public feed of closed positions where a platform agent turned a meaningful profit — realized PnL, hold time, exit reason, transaction signatures, Oracle context, and how many copiers followed the trade. Filter by time window (1h → all-time) and minimum PnL. $THREE is pinned at the top of the rail.
+The proof stream. The left rail is a public feed of closed positions where a platform agent turned a meaningful profit: realized PnL, hold time, exit reason, transaction signatures, Oracle context, and how many copiers followed the trade. Filter by time window (1h → all-time) and minimum PnL (`min_pnl_pct`, default 10). $THREE is pinned at the top of the rail. Each row's `multiple` is derived from the position's cumulative realized percentage rather than exit over entry, because a position that took initials first rewrites its cost basis and books only the closing leg's proceeds. Pages walk a `cursor` (an ISO 8601 timestamp; anything else is a `400 validation_error`) ordered by close time then position id, so two exits sharing a timestamp cannot reorder between pages.
 
 Click any trade (or paste any mint) and the center pane becomes a full analytics workstation for that coin:
 
@@ -116,9 +116,12 @@ All read endpoints are public and IP rate-limited:
 # Radar list + market pulse
 curl 'https://three.ws/api/pump/coin-intel?stats=1'
 
-# Intel engine: scored feed, leaderboard, learned weights, one coin
-curl 'https://three.ws/api/pump/intel?view=feed&limit=10'
+# Intel engine: scored feed, leaderboard, learned weights, cross-coin traders, one coin
+curl 'https://three.ws/api/pump/intel?view=feed&limit=10'   # views: feed | leaderboard | learning | traders
 curl 'https://three.ws/api/pump/intel?mint=<MINT>'
+
+# Proven-wallet pedigree for one coin, or one wallet's reputation (both base58-validated)
+curl 'https://three.ws/api/intel/smart-money?mint=<MINT>'
 
 # Winning-trade feed
 curl 'https://three.ws/api/trades/feed'

@@ -20,6 +20,7 @@ The full AWS Marketplace SaaS usage-based integration, end to end: `ResolveCusto
 
 - **Source draft in this repo:** [aws-builder-center-marketplace-x402.md](./aws-builder-center-marketplace-x402.md)
 - **Code it documents:** [`api/aws-marketplace/`](https://github.com/nirholas/three.ws/tree/main/api/aws-marketplace), [`api/_lib/aws-marketplace.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/aws-marketplace.js), [`api/_lib/aws-marketplace-bridge.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/aws-marketplace-bridge.js)
+- **Since publication:** on 2026-08-17 the integration moved to the updated SaaS integration AWS made mandatory for new products. `ResolveCustomer` now returns `CustomerAWSAccountId` + `LicenseArn` rather than a `CustomerIdentifier`, so the store keys buyers by license ARN (`api/_lib/aws-marketplace-store.js`) and the x402 bridge joins on the customer row id, with `CustomerIdentifier` kept only as a legacy lookup. Lifecycle notifications arrive as EventBridge agreement and license events; the SNS webhook path the article describes is still accepted and still signature-verified. [aws-marketplace.md](./aws-marketplace.md) is the current reference; the article stays accurate for the SDK calls it walks through.
 - **Announcement:** [three.ws Publishes on the AWS Builder Center Blog](https://three.ws/news/aws-builder-center-blog)
 
 ### 2. Build Autonomous AI Agents with 3D Bodies and On-Chain Payments | three.ws on AWS

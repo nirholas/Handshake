@@ -134,7 +134,11 @@ on the platform instead of a single model call. Per message it can:
 Every tool is read-only and every planned call is preflighted through the GuardChain in
 headless mode before it executes; a blacklisted call is fed back to the model as a blocked
 error, never run. The loop cannot move funds: no tool in the server registry transfers,
-swaps, or signs, and the wallet tools stay client-side behind the approval modal.
+swaps, or signs, and the wallet tools stay client-side behind the approval modal. A tool
+that throws ends the agent's turn, so the keyless upstreams behind these tools are called
+through the shared retrying fetch (`api/_lib/upstream-fetch.js`); web search in particular
+retries once and then returns an empty result with an `unavailable` note the model can
+narrate around, rather than costing the whole answer.
 
 For developers the endpoint speaks the **OpenAI chat-completions wire format** in both
 directions, so any OpenAI-compatible client can point at it:

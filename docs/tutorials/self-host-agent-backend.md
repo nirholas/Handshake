@@ -226,6 +226,8 @@ curl http://localhost:3000/api/healthz
 
 You should get a JSON body starting `{"status":"ok","service":"3d-agent",...}`, with `uptime`, the resolved `version`, and a per-subsystem readiness block (`x402`, mail, and so on). Anything other than `"status":"ok"` names the subsystem that is unhappy.
 
+Look at the response headers too. Every handler that goes through `wrap()` in `api/_lib/http.js` stamps its response with `x-brownout` (and `x-brownout-trace` when an upstream was involved), saying which provider or cache tier answered and how fresh the data is; the same seam honours an `x-brownout-chaos` directive for reproducing an outage on demand. Both are documented in [Brownout](../brownout.md), and neither needs any configuration on your fork.
+
 Now open `http://localhost:3000` in a browser. You should land on the platform's home page. Click into the editor — drag any GLB onto it — confirm the avatar loads. Open DevTools → Console. **There should be no red errors.** If there are, the most common causes:
 
 - Database tables missing → re-run the schema in Step 3
@@ -351,7 +353,7 @@ Up to this point, anyone embedding an agent from your platform is loading the bu
 
 **1. The embed generator derives its URL from the page origin.** The "Copy embed" output is built by `src/editor/publish.js`, which emits `` `${origin}/dist-lib/agent-3d.js` `` from the origin the dashboard is running on. Once your fork is served from `agent.yourcompany.com`, every copied snippet already points at your domain — no build constant to set.
 
-**2. The bundle itself self-locates.** The element derives its API base from the script's own URL (`new URL(import.meta.url).origin`, see `src/element.js:123`), falling back to the page origin, and can be overridden per element with the `api-base` attribute. A third party who pastes your embed on `their-site.com` will have the script fetch agents from *your* domain, not theirs, and you can move infrastructure later without breaking existing embeds.
+**2. The bundle itself self-locates.** The element derives its API base from the script's own URL (`new URL(import.meta.url).origin`, the `apiBase` resolution in `src/element.js`), falling back to the page origin, and can be overridden per element with the `api-base` attribute. A third party who pastes your embed on `their-site.com` will have the script fetch agents from *your* domain, not theirs, and you can move infrastructure later without breaking existing embeds.
 
 Verify with a smoke test: create a static HTML file and paste your embed:
 
@@ -374,24 +376,26 @@ Open it in a browser. The agent should load and chat correctly. Check the Networ
 
 ## Step 12 — Hardening: CORS
 
-`api/_lib/http.js` exposes a `cors()` helper used by every paid route. The default policy is permissive (`Access-Control-Allow-Origin: *`) because the platform is designed to be embedded from anywhere. That's the right call for the public CDN script and for x402 endpoints (anyone with a wallet should be able to pay you).
+`api/_lib/http.js` exposes a `cors()` helper that every route calls first. Its default policy is an allowlist, not a wildcard: with no `origins` option it reflects the request origin only when it is your `APP_ORIGIN`, one of the partner origins pinned in `isAllowedOrigin()` (x402scan, agentic.market, `*.ibm.com` and its Seismic CMS gateway), or `localhost` outside production. Any other origin gets no `access-control-allow-origin` header at all, so a session-cookie route is safe cross-origin by default.
 
-For **internal** routes that shouldn't be called cross-origin — admin actions, account routes, the dashboard API — tighten CORS to your domain:
+Two ways to widen it, both explicit at the call site:
 
 ```js
 import { cors } from '../_lib/http.js';
 
-export default async function handler(req, res) {
-  if (cors(req, res, {
-    origin: 'https://agent.yourcompany.com',
-    methods: 'GET,POST,OPTIONS',
-    credentials: true,
-  })) return;
-  // ... handler
-}
+// Public, embeddable from anywhere: the CC0 object manifest, x402 endpoints
+// (anyone with a wallet should be able to pay you), the CDN script.
+if (cors(req, res, { origins: '*', methods: 'GET,OPTIONS' })) return;
+
+// A named list. Strings match exactly; a RegExp matches a family of hosts.
+if (cors(req, res, {
+  origins: ['https://agent.yourcompany.com', /^https:\/\/[a-z0-9-]+\.yourcompany\.com$/],
+  methods: 'GET,POST,OPTIONS',
+  credentials: true,
+})) return;
 ```
 
-Audit which routes are sensitive. A simple rule: anything that uses the session cookie (`api/auth/*`, `api/dashboard/*`, account-scoped writes) should restrict CORS to your domain.
+`credentials: true` only takes effect on a matched, non-wildcard origin (the browser forbids cookies with `*`). On your fork the one thing to change is the partner list in `isAllowedOrigin()`: replace those pinned origins with the sites you actually embed on, and set `APP_ORIGIN` to your domain so the default reflects it.
 
 ---
 

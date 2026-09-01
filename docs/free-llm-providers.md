@@ -10,10 +10,10 @@ Free rungs run first, 70B-class models before smaller ones. A keyed rung is skip
 
 | # | Rung | Model | Key | Free tier |
 |---|------|-------|-----|-----------|
-| 1 | Groq | `llama-3.3-70b-versatile` | `GROQ_API_KEY` | Per-minute and per-day caps, no card. [console.groq.com](https://console.groq.com) |
+| 1 | Groq | `qwen/qwen3.8-27b` | `GROQ_API_KEY` | Per-minute and per-day caps, no card. Llama 3.x left Groq's catalog in August 2026; Qwen 3.8 27B is the fastest non-reasoning model left there. [console.groq.com](https://console.groq.com) |
 | 2 | Cerebras | `llama-3.3-70b` | `CEREBRAS_API_KEY` | About 1M tokens/day. [cloud.cerebras.ai](https://cloud.cerebras.ai) |
 | 3 | OpenRouter | `openai/gpt-oss-20b:free` | `OPENROUTER_API_KEY` (+ fallback keys) | `:free` models only; the platform key is never billed. [openrouter.ai](https://openrouter.ai) |
-| 4 | NVIDIA NIM | `meta/llama-3.3-70b-instruct` | `NVIDIA_API_KEY` | Free developer tier, about 40 req/min. [build.nvidia.com](https://build.nvidia.com) |
+| 4 | NVIDIA NIM | `nvidia/nemotron-3-super-120b-a12b` | `NVIDIA_API_KEY` | Free developer tier, about 40 req/min. `meta/llama-3.x` on NIM reached end of life on 2026-08-26 (HTTP 410); Nemotron 3 is a reasoning family, so the rung sends `enable_thinking: false` to keep the answer in `content`. [build.nvidia.com](https://build.nvidia.com) |
 | 5 | SambaNova | `Meta-Llama-3.3-70B-Instruct` | `SAMBANOVA_API_KEY` | About 20 req/min, 200K tokens/day per model, no card. [cloud.sambanova.ai](https://cloud.sambanova.ai) |
 | 6 | Mistral | `mistral-small-latest` | `MISTRAL_API_KEY` | Experiment tier: about 1B tokens/month at 1 req/sec (account opts into data training). [console.mistral.ai](https://console.mistral.ai) |
 | 7 | Z.AI | `glm-4.7-flash` | `ZAI_API_KEY` | Permanently free, rate-limited Flash models. [z.ai](https://z.ai), docs at [docs.z.ai](https://docs.z.ai) |
@@ -24,15 +24,15 @@ Free rungs run first, 70B-class models before smaller ones. A keyed rung is skip
 | 12 | Pollinations | `openai-fast` | none (keyless) | Anonymous, always on. |
 | 13 | LLM7.io | `gemini-3.1-flash-lite` | none (keyless) | Anonymous, about 30 req/min per IP. |
 | 14 | SiliconFlow | `Qwen/Qwen3-8B` | `SILICONFLOW_API_KEY` | Free-tier small model, own quota pool. [siliconflow.com](https://siliconflow.com) |
-| 15 | Groq instant | `llama-3.1-8b-instant` | `GROQ_API_KEY` | Separate per-model quota from rung 1. |
+| 15 | Groq instant | `openai/gpt-oss-20b` | `GROQ_API_KEY` | Separate per-model quota from rung 1. |
 
 After rung 15 come the paid backstops (Vertex Claude, Anthropic, OpenAI, Grok), which never lead and which no flow depends on.
 
-The interactive chat ladder (`/api/chat`) uses: groq → openrouter → nvidia → sambanova → mistral → zai → paid backstops, with the Vertex Gemini anchor always appended at the tail. SambaNova, Mistral, and Z.AI are also selectable as explicit `provider` values in the chat API, and anonymous callers may use them.
+The interactive chat ladder (`/api/chat`) uses: groq → openrouter → nvidia → sambanova → mistral → zai → paid backstops, with the Vertex Gemini anchor always appended at the tail. SambaNova, Mistral, and Z.AI are also selectable as explicit `provider` values in the chat API, and anonymous callers may use them. When every anonymous-eligible free lane is throttled or in cooldown at once, `/api/chat` answers `503 rate_limited` ("The AI chat is at capacity right now") with a `Retry-After: 20` header and the `providers_tried` list, never a 401 asking a signed-out visitor to sign in for a throttle they cannot fix.
 
 ## Why so many
 
-Every rung is an independent quota pool on independent infrastructure. Free tiers throttle, retire models without notice (OpenRouter dropped its whole `:free` Llama roster in one day, GitHub Models was retired outright in 2026), and queue under load (NVIDIA NIM). One provider failing costs nothing; the chain moves on in under a second. The platform's baseline reliability is the product of how many independent free lanes stand between a request and an error.
+Every rung is an independent quota pool on independent infrastructure. Free tiers throttle, retire models without notice (OpenRouter dropped its whole `:free` Llama roster in one day, Groq and NVIDIA NIM both removed Llama 3.x in August 2026, GitHub Models was retired outright in 2026), and queue under load (NVIDIA NIM). One provider failing costs nothing; the chain moves on in under a second. The platform's baseline reliability is the product of how many independent free lanes stand between a request and an error.
 
 Two providers were evaluated and deliberately excluded:
 

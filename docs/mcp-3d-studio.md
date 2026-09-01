@@ -67,6 +67,7 @@ analyze:  inspect_model · optimize_model        preview:  preview_3d
 | `optimize_model(url)`         | Actionable size/perf suggestions: Draco/Meshopt, KTX2, triangle budget.                                                        |
 | `preview_3d(glb_url, …)`      | Render any public GLB as an interactive `<model-viewer>` artifact (orbit, AR, auto-rotate).                                    |
 | `export_ar(glb_url, title?, kind?)` | Read-only: turn any public GLB into the device-aware AR link set (`arLaunchUrl`, `sceneViewerUrl`, `viewerUrl`, plus `irlUrl` when `kind: "avatar"`) and a [Spatial MCP](./spatial-mcp.md) artifact. Free. See [AR & WebXR](./ar.md#one-tap-ar-for-any-glb--get-apiar--export_ar). |
+| `x402_preflight(origin, network?)` | Read-only, free: fetch an x402 seller's signed payability attestation from `<origin>/.well-known/x402-preflight`, verify its ed25519 signature, expiry, and subject, and answer whether that seller can actually settle before you pay it. An attestation that does not verify is reported as unverified, never as health. Spec: [`specs/x402-preflight.md`](../specs/x402-preflight.md). |
 
 Generation, rigging, and most mesh ops are **asynchronous**: the tool returns a
 `job_id` immediately, then you poll `generation_status` (reconstruction is
@@ -143,6 +144,8 @@ timestamp.
 | `tripo`     | geometry, image | **BYOK**  | Cleanest quad topology.              |
 | `hunyuan3d` | image           | self-host | High-poly, image-conditioned (GCP).  |
 
+When no `backend` is named, the resolver walks the free lanes first: the tier's named free engine (the self-hosted TRELLIS worker at `draft` and `standard`, the self-hosted Hunyuan3D worker at `high`), then the per-path fallback chain (self-host TRELLIS, self-host Hunyuan3D, the free HuggingFace Spaces lane, and last the free NVIDIA NIM TRELLIS lane, which is text-only). The paid Replicate `trellis` lane is the standing default only when no free lane is live on the deployment. Lane health is consulted, so a cold or down free worker is skipped for the next healthy one before submit.
+
 **BYOK note:** the geometry backends (Meshy/Tripo) have no platform key. Supply
 your own via the `x-forge-provider-key` request header (or a key stored on your
 three.ws account). Without one, the geometry path returns a designed `needs_key`
@@ -170,8 +173,9 @@ For tool calls there are two lanes:
 | `text_to_3d` / `image_to_3d`               | by tier — $0.05 draft / $0.15 standard / $0.50 high |
 | `auto_rig_model`, `retexture_model`, `retexture_region` | $0.05                       |
 | `stylize_model`, `remesh_model`, `segment_model`         | $0.02                       |
+| `capture_scene`, `anchor_provenance`                    | $0.05                                     |
 | `remove_background`, `pose_model`, `apply_animation`, `direct_prompt`, `generate_material` | $0.01 |
-| `generation_status`, `preview_3d`, `list_animations`, `animation_signature`, `find_similar_animations`, `inspect_model`, `optimize_model`, `getting_started` | free |
+| `generation_status`, `preview_3d`, `list_animations`, `animation_signature`, `find_similar_animations`, `text_to_animation`, `inspect_model`, `optimize_model`, `save_avatar`, `export_ar`, `verify_provenance`, `x402_preflight`, the persona tools, `validate_spatial_response`, `getting_started` | free |
 
 Payment settles only after the work succeeds — a wholesale failure costs
 nothing, and the same signed payment cannot be replayed.

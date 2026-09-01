@@ -20,6 +20,8 @@ Influence and skill are different assets, and only one of them is priced into a 
 - **Followers**, only for verified handles; a wallet with no attached handle shows a blank, never a fabricated count.
 - **Volume**, **Win Rate**, and **Trades** for the window.
 
+The column set is data-driven: a column that every row leaves empty in the current window (followers when no verified handle ranks, volume when no wallet took the on-chain path) is dropped rather than rendered as a column of blanks, and the board's minimum width shrinks with it. The handle links to X, and the wallet address under every name links to its Solscan account. An "updated" stamp next to the row count says when the board was last fetched.
+
 A segmented control switches the window between 24H, 7D, and 30D (arrow keys work on it), and the column headers relabel to match. Loading renders skeleton rows; an empty tracked list renders a designed empty state; a failed fetch renders an error state. The board never falls back to placeholder rows.
 
 ## How ranking works (as coded)
@@ -100,7 +102,7 @@ Recent pump.fun buys and sells by the tracked wallets for one mint, via Helius, 
 curl 'https://three.ws/api/kol/trades?mint=<MINT_ADDRESS>&limit=20'
 ```
 
-Response: `{ mint, trades, wallets }` where each trade carries `wallet`, `side`, `amountSol`, `amountToken`, `price`, `signature`, `ts`, `time`, `usd`, `source` (`kol`, `whale`, or `smart-money` from the wallet's tags), and `label`. The `x-kol-source` response header is `helius` when the provider is configured; with no provider key the feed returns an empty list and `x-kol-source: unconfigured`, which is distinct from a configured provider outage (a `502 provider_unavailable` error).
+Response: `{ mint, trades, wallets }` where each trade carries `wallet`, `side`, `amountSol`, `amountToken`, `price`, `signature`, `ts`, `time`, `usd`, `source` (`kol`, `whale`, or `smart-money` from the wallet's tags), and `label`. The `x-kol-source` response header is `helius` when the provider is configured; with no provider key the feed returns an empty list and `x-kol-source: unconfigured`, which is distinct from a configured provider outage. When Helius fails but a last-good answer for that mint is still held, it is served with `x-kol-stale: 1` and `stale: true, as_of` in the body rather than blanking the feed; with no last-good copy either, the error (a `502 provider_unavailable`) carries `Retry-After: 15`.
 
 ### `GET /api/kol/wallets`
 

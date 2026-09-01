@@ -13,7 +13,7 @@ Routing recap (from `vercel.json`):
 | `/avatar-studio`, `/create/studio` | `pages/avatar-studio.html` (+ `src/avatar-studio.js`) — **Avatar Studio** (appearance builder; feeds the embed flows) |
 | `/w/<id>` | saved widget page (live widget) |
 | `/widget`, `/widget.html` | slim viewer shell (`/src/app.js`) used as Studio/gallery preview iframe + script-tag embed target |
-| `/agent/<id>/embed`, `/embed/avatar/<handle>`, `/embed`, `/a-embed.html` | embed iframe targets |
+| `/agents/<id>/embed` (the legacy `/agent/<id>/embed` still serves the same page), `/embed/avatar/<handle>`, `/embed`, `/a-embed.html` | embed iframe targets |
 | `/embed.js`, `/embed-sdk.js`, `/artifact.js`, `/dist-lib/agent-3d.js` | embed loader / SDK / web-component scripts |
 
 > Naming note: the prompt's "avatar-studio embeddable AI widget builder" maps to the **Widget Studio** at `/studio` (the talking-agent widget type is the embeddable AI widget). `/avatar-studio` is the **appearance builder** — it produces the avatar that the Studio and embed panels then wrap. Both are documented below.
@@ -41,7 +41,7 @@ Routing recap (from `vercel.json`):
   - `?edit=<id>` → `loadForEdit()` hydrates an existing widget (PATCH on save). `?template=<id>` → `cloneTemplate()` (config copied, avatar must be re-picked, POST creates new). `?model=<url>` / `?avatar=<id>` → preselect / auto-register R2 model (`autoRegisterAndSelect` HEADs the GLB then POSTs `/api/avatars`).
   - Embed-modal include toggles add `noAnimations=1` / `noChat=1` / `noControls=1` to the URL.
   - Right column tabs: **Brand** ↔ **⚡ Launch** (launch panel hides save/generate row).
-- **External calls / dependencies:** `/api/auth/me`, `/api/auth/logout`, `/api/avatars`, `/api/avatars/public`, `/api/avatars/:id` (POST to register), `/api/widgets` (GET/POST/PATCH/DELETE), preview iframe `/widget#…`, embed loader `/embed.js`, share/live `/w/<id>`, `/api/widgets/:id/og` (poster). Importmap loads `@solana/web3.js` + `@solana/spl-token` from esm.sh for the Launch tab.
+- **External calls / dependencies:** `/api/auth/me`, `/api/auth/logout`, `/api/avatars`, `/api/avatars/public`, `/api/avatars/:id` (POST to register), `/api/widgets` (GET/POST/PATCH/DELETE), preview iframe `/widget#…`, embed loader `/embed.js`, share/live `/w/<id>`, `/api/widgets/:id/og` (poster). The page importmap pins `@solana/web3.js` + `@solana/spl-token` to esm.sh; `launch-panel.js` loads its own web3.js and `qrcode` copies through `/load-module.js` (esm.sh, then jsdelivr, then unpkg, each under a deadline) and, if all three miss, reports "<what> could not be loaded (<hosts> unreachable or blocked). Check your connection or ad blocker and try again."
 - **Success state:** Embed modal open with a copyable iframe + script snippet and a live shareable `/w/<id>` URL; "View live" opens it in a new tab. Toast "Saved" on draft save.
 - **Empty / error states:** No avatars → empty card with "Make one from a selfie →" / "browse every way to build one →". Avatar load failure → inline error card with **Retry**. Public search failure → status line shows reason. Save failure → `#form-error` text. Preview without a model → a note that the avatar has no public URL (make it public/unlisted to preview). Pre-selected avatar missing → toast + falls back to demo. Pending-status types show a "ships in a later prompt" banner (currently none: all 10 are `ready`).
 - **Step count:** 10 required (+5 optional)
@@ -66,7 +66,7 @@ Routing recap (from `vercel.json`):
   - Preview iframe uses `reveal=interaction` + a `/api/widgets/<id>/og` poster to keep WebGL slots free on a dense page.
 - **External calls / dependencies:** `/widgets-gallery/showcase.json`, preview iframes at `/widget#widget=<id>…`, `/api/widgets/<id>/og` (poster), model-viewer 4.0.0 (footer avatar, from googleapis CDN with SRI). Mints used in defaults are SOL wrapped-mint and the `$THREE` CA.
 - **Success state:** Snippet copied to clipboard ("Copied!"); live preview rendered in card.
-- **Empty / error states:** Showcase fetch failure → error card "Could not load showcase config." with detail. Per-card iframe failure leaves the placeholder/play button. Hero count defaults to 15 in static HTML, overwritten by real count.
+- **Empty / error states:** Showcase fetch failure → `role=alert` card "The widget showcase could not load. Check your connection and try again." with the detail, a **Try again** button that re-runs the load (replacing the filter bar instead of stacking a second one) and a "Read the widget docs" link (`/docs/widgets`). A manifest with zero widgets → "No showcase widgets yet" empty state with **Open the Studio**. Per-card iframe failure leaves the placeholder/play button. Hero count defaults to 15 in static HTML, overwritten by the real count (and re-written whenever the i18n runtime repaints the badge).
 - **Step count:** 6 required (+3 optional)
 
 ---
@@ -89,48 +89,46 @@ Routing recap (from `vercel.json`):
 ### Claude.ai Artifact builder — `/artifact`
 - **Source:** `public/artifact/index.html` (self-contained, inline module script), `public/artifact/README.md`, `public/artifact/snippet.html`. Backend: `GET /api/artifact` (returns one self-contained HTML doc; see `specs/CLAUDE_ARTIFACT.md`). Also a `/artifact.js` loader script for in-artifact `<div data-agent-id>` mounting.
 - **Entry point:** Direct nav to `/artifact`; deep link `?agentId=<id>` (auto-generates on load).
-- **Prerequisites / gates:** None to use the builder. To produce a working artifact you need a valid **agent ID/handle** (or whitelisted-CDN `model` URL). GLB must be **≤ 6 MB** (server returns 413 otherwise). No auth/$THREE gate on the page itself.
+- **Prerequisites / gates:** None to use the builder. To produce a working artifact you need a valid **agent UUID** (a hand-typed handle is refused with `400 invalid_request`: "agent must be the agent UUID, copied from the agent profile page") or a whitelisted-CDN `model` URL. GLB must be **≤ 6 MB** (server returns 413 otherwise). No auth/$THREE gate on the page itself.
 - **Steps (6):**
-  1. Visitor lands; the page fetches and shows the live Claude sandbox CSP (`raw.githubusercontent.com/simonw/scrape-claude-artifacts/…`) in a `<details>`.
-  2. **Configure**: enter Agent ID; `(optional)` set Theme (dark/light), Idle clip name, Background hex.
-  3. Click **Generate** (or Enter) → `buildUrl()` assembles `/api/artifact?agent=…&theme=…&idle=…&bg=…`; overlay shows "Fetching artifact…"; `history.replaceState` adds `?agentId=`.
-  4. System fetches the artifact HTML, measures size + first-paint, checks the response CSP for `frame-ancestors *`, and renders it into a **sandboxed iframe** (`sandbox="allow-scripts"`, `srcdoc`). Stats panel fills in (Artifact size ok/warn/bad, First paint, Sandbox compliant/mismatch).
+  1. Visitor lands; the page shows the vendored Claude sandbox CSP (`/claude-artifact-csp.txt`, the same bytes `tests/api/artifact.test.js` pins the endpoint against) in a `<details>`, and a **"Public agents you can embed"** picker loads `GET /api/agents/public?sort=popular&limit=12&avatar=1` (four skeleton tiles → a grid of avatar tiles; "Browse all" → `/agents`).
+  2. **Configure**: click a picker tile (fills the ID and generates in one tap) or paste an agent UUID; `(optional)` set Theme (dark/light), Idle clip name, Background hex (six hex digits, validated live with an inline hint).
+  3. Click **Generate** (or Enter) → `buildUrl()` assembles `/api/artifact?agent=…&theme=…&idle=…&bg=…`; overlay shows "Fetching artifact…"; the query string is synced to `?agentId=` plus any non-default theme/idle/bg so the address bar carries the whole configuration.
+  4. System fetches the artifact HTML, measures size, fetch time and render time, checks the response CSP for `frame-ancestors *`, and renders it into a **sandboxed iframe** (`sandbox="allow-scripts"`, `srcdoc`). Stats panel fills in: Artifact (size, graded against the ~8.6 MB ceiling a 6 MB model produces once base64-inlined on top of the 565 KB viewer), Fetch, Render, Sandbox compliant/mismatch.
   5. **Copy** the result: **Copy URL** (the `/api/artifact?…` link), **Copy raw HTML** (the full self-contained doc), or **Open in tab**; `(optional)` expand the "Paste-into-Claude snippet" (`Here's my agent for this conversation:\n<url>`).
   6. Paste the URL into a Claude.ai conversation → Claude embeds the artifact and the 3D avatar renders inline (zero external fetches, CSP-compliant). Done.
 - **Decision points / branches:**
   - `agent` vs. `model` source (README); theme/idle/bg are optional refinements.
-  - Size thresholds: >5 MB = warn, >8 MB = bad (server caps at 6 MB → 413).
+  - Size thresholds: the stat grades the inlined HTML against the ceiling a legal 6 MB model produces (`ceil(6 MiB / 3) * 4 + 565 KB`): over 70% of it = warn, over 100% = bad; the server caps the model itself at 6 MB → 413. Fetch: >2s warn, >5s bad. Render: >3s warn, >8s bad, 30s timeout.
   - Two consumption paths: paste the **URL** directly, or paste the **raw HTML** / use the `/artifact.js` `<div data-agent-id>` snippet inside an existing artifact.
-- **External calls / dependencies:** `GET /api/artifact` (the bundle), Claude CSP mirror at `raw.githubusercontent.com/simonw/scrape-claude-artifacts/main/content-security-policy.txt`. Artifact bundle inlines three.js + GLTFLoader + GLB (~565 KB viewer overhead) — no runtime fetch.
+- **External calls / dependencies:** `GET /api/artifact` (the bundle; answers open CORS for GET/HEAD/OPTIONS so an embedder may fetch it as well as iframe it), `GET /api/agents/public` (the picker), `/claude-artifact-csp.txt` (same-origin vendored copy of Claude's sandbox CSP). Artifact bundle inlines three.js + GLTFLoader + GLB (~565 KB viewer overhead), no runtime fetch.
 - **Success state:** Live preview renders in the CSP-mirrored sandbox; stats show "compliant"; URL/HTML copied.
-- **Empty / error states:** No agent ID → overlay "Enter an agent ID first." Network error / non-OK → overlay shows `error_description`/HTTP status. CSP mirror unreachable → falls back to a note pointing at `specs/CLAUDE_ARTIFACT.md`. Sandbox mismatch → stat shows "mismatch" (bad).
+- **Empty / error states:** No agent ID → overlay "Enter an agent ID first." with the hint to pick a public agent on the left or paste an ID from a profile, and focus returns to the field. Network error / non-OK → error overlay with the server's `error_description`, a per-code next step (`not_found` pick a public agent or paste an ID; `no_avatar` generate one at `/create`; `invalid_request` "Agent IDs are UUIDs…"; `upstream_error` retry or use a different avatar) and a **Retry** button. Picker feed failure → note in the picker with a retry. CSP file unreachable → "Could not load /claude-artifact-csp.txt. The locked-in copy is in specs/CLAUDE_ARTIFACT.md." Sandbox mismatch → stat shows "mismatch" (bad).
 - **Step count:** 6 required (+2 optional)
 
 ---
 
-### Agent embed snippet (SharePanel / `<agent-3d>`) — share/embed panel flow
-- **Source:** `src/share-panel.js` (`SharePanel` class) + `src/share-panel-builders.js` (`buildEmbedUrl`, `buildIframeSnippet`, `buildWebComponentSnippet`) + `src/share-panel.css`. Mounted on the agent home page via `src/agent-home-orphans.js`. (`src/agent-detail.js` and `src/forge.js` use the lighter `showSharePanel` from `src/shared/share.js`, a different share sheet.) Embed targets: `/agent/<id>/embed` (CSP `frame-ancestors *`), web component `/dist-lib/agent-3d.js`. Preview iframe = same `/agent/<id>/embed?preview=1`.
-- **Entry point:** **Share** button on an agent profile/home page (`agent-home-orphans.js` injects it next to the title) → `new SharePanel({ agent }).open()`.
-- **Prerequisites / gates:** Must be on an **existing agent** (an `agent.id`/`slug`). No sign-in required to copy snippets — embedding is free ("no wallet or on-chain deployment required"). No $THREE gate.
-- **Steps (6):**
-  1. Click **Share** → modal opens with the agent's permalink `/a/<slug|id>`, a live preview iframe, and pre-rendered snippets.
-  2. `(optional)` **Copy link** or **Open ↗** the agent permalink.
-  3. **Customise embed** `(optional)`: Background (transparent/dark/light), Name plate (on/off), Size (small 320×420 / medium 420×520 / large 520×680). Each toggle re-renders the snippets and reloads the live preview (`?preview=1` bypasses the embed origin allow-list).
-  4. Choose a format and **Copy**: **iframe embed** (`<iframe src="/agent/<id>/embed?…">`) or **Web component** (`<script src="/dist-lib/agent-3d.js">` + `<agent-3d agent-id="…" background=… name-plate=off>`). Button flips to "Copied ✓".
-  5. `(optional)` **OG preview** + copy the `/api/a-og?id=<id>` card URL; **QR code** of the permalink is rendered (canvas, SVG fallback).
-  6. Paste the iframe or `<agent-3d>` snippet on any third-party site → the agent renders inline (the `/agent/<id>/embed` page runs `src/avatar-embed.js` / element runtime, exposing the `v1.avatar.*` postMessage bridge). Done.
+### Agent embed snippet (studio page / `<agent-3d>`): share/embed panel flow
+- **Source:** the canonical studio page `/agents/<id>` (`src/avatar-page.js`, `renderEmbedPanel`) and the long-form profile `/agents/<id>/profile` (`src/agent-detail.js` + `renderEmbed` in `src/agent-detail-market.js`, the `#ad-embed-card`). Both build their snippets inline; the **Share** button on those pages opens the lighter `showSharePanel` sheet from `src/shared/share.js` (Copy link, Share on X, Share on Farcaster, Remix, OG preview image). `src/share-panel.js` (`SharePanel` class) + `src/share-panel-builders.js` (`buildEmbedUrl`, `buildIframeSnippet`, `buildWebComponentSnippet`) remain in the tree as a tested library (`tests/share-panel.test.js`), but nothing mounts them since the `agent-home-orphans` helper was deleted on 2026-08-06. Embed targets: `/agents/<id>/embed` (CSP `frame-ancestors *`; the legacy `/agent/<id>/embed` serves the same page), web component `/dist-lib/agent-3d.js`.
+- **Entry point:** the **Embed** view in the studio page's action bar (`?view=embed`, alongside 3D · Chat · AR · Profile) reveals the embed panel; on the profile, `?view=embed` scrolls to and flashes the embed card (`focusEmbedSection`).
+- **Prerequisites / gates:** Must be on an **existing agent** with a public GLB. No sign-in required to copy snippets; embedding is free (no wallet or on-chain deployment required). No $THREE gate. An owner who switched embedding off in the embed policy (`/api/agents/<id>/embed-policy`) hides the profile card (`data-embed-disabled`).
+- **Steps (4):**
+  1. Open the agent's studio page → switch to the **Embed** view (or open the profile and scroll to "Embed").
+  2. Read the intro ("Drop this <agent|avatar> on any website. Use the wizard for a live preview and platform instructions.") and, `(optional)`, click **Configure in wizard ↗** → `/embed?…` (the walk-through embed wizard) in a new tab.
+  3. Choose a snippet and **Copy** (button flips to "Copied ✓", reverting after ~1.8s): **Web component** (`<script type="module" src="https://three.ws/dist-lib/agent-3d.js">` + `<agent-3d src="<glb>" agent-id="…">`), **iframe** (studio page: `<iframe src="/agents/<id>?embed=1">`, the page hides its chrome in embed mode; profile card: `<iframe src="/agents/<id>/embed" width="480" height="640">`), the **page link**, or (studio page) the **Terminal** snippet that runs the avatar in any terminal with no browser or GPU (see `/docs/tty-avatar`).
+  4. Paste the iframe or `<agent-3d>` snippet on any third-party site → the agent renders inline (`/agents/<id>/embed` runs `src/avatar-embed.js` / the element runtime, exposing the `v1.avatar.*` postMessage bridge). Done.
 - **Decision points / branches:**
-  - iframe vs. web-component snippet (web component observes `background` / `name-plate` attrs).
-  - Default options (transparent bg, name on, medium) are omitted from the URL to keep it canonical/short.
-  - Separate, simpler embed entry points exist: **Agent Hub** "Embed" button → `AgentEmbedModal` (`src/agent-embed-modal.js`, iframe / `<agent-3d>` / SDK tabs with width×height); **Dashboard** avatar/agent "Embed" → `openAvatarEmbedModal` (`src/dashboard/dashboard.js`, `/a-embed.html?avatar=<id>` with size/bg/name presets). See variants below.
-- **External calls / dependencies:** `/agent/<id>/embed` (preview + final), `/dist-lib/agent-3d.js` (web component), `/api/a-og?id=<id>` (OG image), `/a/<slug|id>` (permalink). QR rendered locally (`src/erc8004/qr.js`).
-- **Success state:** Snippet copied ("Copied ✓"); live preview shows the agent in the chosen size/bg.
-- **Empty / error states:** Preview iframe failure leaves the framed area blank with the chosen bg color visible; OG image alt text shown if it fails to load; QR falls back canvas → SVG → plain link text.
-- **Step count:** 6 required (+3 optional)
+  - iframe vs. web-component snippet (the web component observes `agent-id`, `background`, `name-plate` attrs).
+  - Studio page (`?embed=1`, full studio inside the frame) vs. profile card (`/agents/<id>/embed`, the chat-style embed).
+  - Separate, simpler embed entry points exist: the legacy **Agent Home** page (`public/agent/index.html`, only reachable at its literal `/agent/index.html` path now that `/agent/<id>` 301s to `/agents/<id>`) mounts `src/agent-hub-actions.js`, whose "Embed" button opens `AgentEmbedModal` (`src/agent-embed-modal.js`); **Dashboard** avatar/agent "Embed" → `openAvatarEmbedModal` (`src/dashboard/dashboard.js`, `/a-embed.html?avatar=<id>` with size/bg/name presets). See variants below.
+- **External calls / dependencies:** `/agents/<id>/embed` and `/agents/<id>?embed=1` (final), `/dist-lib/agent-3d.js` (web component), the agent's GLB URL, `/embed` (wizard), `/api/agents/<id>/embed-policy` (profile card gate).
+- **Success state:** Snippet copied ("Copied ✓"); the pasted snippet renders the agent inline on the host page.
+- **Empty / error states:** Agent without a 3D avatar → the profile card's web-component snippet reads `<!-- No 3D avatar attached yet -->`; embedding switched off by the owner → profile card hidden; a clipboard write that throws leaves the button reading "Copy" (the snippet stays selectable in its `<pre>`).
+- **Step count:** 4 required (+1 optional)
 
 #### Variant — Agent Hub embed modal (`AgentEmbedModal`)
 - **Source:** `src/agent-embed-modal.js`, triggered from `src/agent-hub-actions.js` (hub "Embed" button) and `src/dashboard/dashboard.js` (`openAgentEmbedModal`).
-- **Steps (4):** (1) Click "Embed" on the agent hub → modal opens (default 420×520). (2) `(optional)` adjust Width/Height. (3) Switch tab: **iframe** (`/agent/<id>/embed`), **`<agent-3d>`** (`/dist-lib/agent-3d.js` web component), or **SDK** (`/embed-sdk.js` + `Agent3D.connect()` bridge example). (4) **Copy** → paste on site. Snippets are pure-string built from `origin` + `id` + `w` + `h`; note: "Free to embed — no wallet or on-chain deployment required."
+- **Steps (4):** (1) Click "Embed" on the agent hub → modal opens (default 420×520). (2) `(optional)` adjust Width/Height. (3) Switch tab: **iframe** (`/agents/<id>/embed`), **`<agent-3d>`** (`/dist-lib/agent-3d.js` web component), **SDK** (`/embed-sdk.js` + `Agent3D.connect()` bridge example), or **walking avatar** (a live `/walk-embed` preview iframe that reloads as the options change). (4) **Copy** → paste on site. Snippets are pure-string built from `origin` + `id` + `w` + `h`; note: "Free to embed : no wallet or on-chain deployment required."
 - **Step count:** 4 required (+1 optional)
 
 #### Variant — Dashboard avatar embed (`openAvatarEmbedModal`)
@@ -147,15 +145,15 @@ Routing recap (from `vercel.json`):
 - **Steps (7):**
   1. Page boots → loads `BASE_GLB_URL` (`/avatars/default.glb`) into a `TalkScene` viewport with idle breathing/blinking; accessory presets load. In create mode a **Base switcher** offers Stylized (the default stylized humanoid body) or Parametric (`/avatars/parametric-base.glb`, a CC0 MakeHuman-derived base with ~120 identity morph sliders); Color/Layers panels adapt to the loaded base (dead slots hide).
   2. `(optional)` In **edit mode** (`?edit=<id>`) the saved appearance (colors/morphs/accessories/hidden layers) is hydrated onto the model.
-  3. **Customize**: switch tabs — Color (skin/hair/outfit swatches + hex), Hats, Glasses, Earrings (accessory presets), Face (sculpt morphs). Each change applies live to the scene graph; `(optional)` undo/redo (history up to 50).
+  3. **Customize**: switch tabs: Color (skin/hair/outfit swatches + hex), Hats, Glasses, Earrings (accessory presets from the catalog, each tab with its own loading / error / populated state), Sculpt (morphs), Animate. On narrow viewports the tab bar collapses to icons. Each change applies live to the scene graph; an accessory is recorded in the appearance only once it is actually on the rig, and the tap that adds one shows busy feedback while the GLB fetches. `(optional)` undo/redo (history up to 50; each step is stamped so a press superseded while its accessories were still loading is dropped rather than applied late).
   4. `(optional)` Show/hide garment layers; `(optional)` search accessories.
   5. **Save** → exports the live scene via GLTFExporter (colors/morphs/accessories already baked), optimizes/validates the GLB (`avatar-studio-optimize.js`), uploads via `account.js` (`/api/avatars`), and PATCHes the appearance JSON so it stays re-editable; uploads a snapshot thumbnail.
   6. The saved avatar now appears in the avatar library used by **Widget Studio** (`/studio` step 3) and the **embed/share panels**.
   7. Continue into an embed flow: open Widget Studio, the agent SharePanel, or a dashboard embed modal to generate the snippet. Done.
 - **Decision points / branches:** Create (from default) vs. Edit (`?edit=<id>`). Single-select tabs (hat/glasses) vs. multi (earrings). Save requires auth → otherwise prompts sign-in.
-- **External calls / dependencies:** `/avatars/default.glb`, accessory preset assets, `/api/avatars` (save/PATCH), avatar-snapshot upload, GLTFExporter. Hands off to `/studio`, SharePanel (`/agent/<id>/embed`), or `/a-embed.html`.
+- **External calls / dependencies:** `/avatars/default.glb`, accessory preset assets, `/api/avatars` (save/PATCH), avatar-snapshot upload, GLTFExporter. Hands off to `/studio`, the agent studio page's Embed view (`/agents/<id>/embed`), or `/a-embed.html`.
 - **Success state:** Avatar saved to account, re-editable, and selectable in the embed/Studio flows.
-- **Empty / error states:** Queued ops swallow + log failures (`queueOp`); GLB validation/optimize failures surface in the save path; signed-out save routes to login. Unsaved-changes tracking via `appearanceEqual`.
+- **Empty / error states:** Boot failure → "Avatar Studio couldn't load. Check your connection and try again." (a model that fails to load gets the same stage error with a retry). The accessory catalog is a separate fetch from the model: while it loads the three accessory tabs show "Loading hats…" etc.; if it fails they show a retryable error ("We couldn't load the hats catalog … Colors, sculpt and animation still work, and you can save your avatar without accessories") while Color, Sculpt, Animate and Save keep working. A single accessory that fails to load → status "Couldn't load <name>: … Tap it again to retry", and it is not written into the appearance. Queued ops hand their outcome back to the caller (`runQueued` → `{ ok, error }`) instead of swallowing it; GLB validation/optimize failures surface in the save path; signed-out save routes to login. Unsaved-changes tracking via `appearanceEqual`.
 - **Step count:** 7 required (+4 optional)
 
 ---

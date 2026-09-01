@@ -136,14 +136,16 @@ degrades nothing.
 
 ### Ops alert
 
-`api/cron/forge-smoke.js` (daily cron) reads the same burn number and pages the
-ops Telegram channel when the 30-day projection crosses a threshold:
+`api/cron/forge-smoke.js` (daily cron) reads the same burn number and raises an
+ops alert when the 30-day projection crosses a threshold:
 
 - **> 400,000 (80%)** → warning: "Redis on track to exceed quota …".
 - **> 450,000 (90%)** → critical: "forge + x402 outage imminent …".
 
-Requires `TELEGRAM_BOT_TOKEN` + `TELEGRAM_ALERTS_CHAT_ID` (shared with the rest
-of the ops alerting). The alert is advisory and never fails the smoke run.
+It goes through `sendOpsAlert` (`api/_lib/alerts.js`), so it always lands in the
+`ops_alerts` table and additionally pushes to Telegram when `TELEGRAM_BOT_TOKEN`
++ `TELEGRAM_ALERTS_CHAT_ID` are set (shared with the rest of the ops alerting).
+The alert is advisory and never fails the smoke run.
 
 ### Config
 
@@ -162,8 +164,9 @@ to `local` (no Redis command) or must stay Redis-backed.
 - **local** — per-instance in-memory is sufficient; spends zero Redis commands.
   Only for high-frequency, low-stakes flood guards where cross-instance
   coordination buys nothing.
-- **critical** — cost/money-moving or auth-security; must be Redis-backed and
-  **fail closed** when Redis is absent/exhausted.
+- **critical**: cost/money-moving or auth-security; must be Redis-backed. When
+  Redis is absent/exhausted it degrades onto the durable Postgres counter (see
+  _Fallback behaviour_ above) and only denies when Postgres is down too.
 - **cross-instance-required** — correctness depends on shared state across
   serverless instances (atomic spend ledgers, idempotency/replay dedup, shared
   feeds/caches). Redis-backed, but fails *open* or degrades rather than denying.
@@ -179,7 +182,7 @@ to `local` (no Redis command) or must stay Redis-backed.
 | `tokenPriceIp` | local | cache-served price reads; upstream Jupiter is rate-limit-free |
 | `widgetRead` | local | embedded-widget read fetch — continuous third-party-page polling |
 | `pinStatusIp` | local | pin-status progress poll |
-| `authIp`, `registerIp`, `verifyEmailIp`, `forgotPasswordEmail`, `resendVerifyUser` | critical | auth/credential-guessing — fail closed |
+| `authIp`, `registerIp`, `verifyEmailIp`, `forgotPasswordEmail`, `resendVerifyUser` | critical (`authIp` and `registerIp` also `degradeToMemory`) | auth/credential-guessing; Postgres fallback, then per-instance memory for the two login buckets so nobody is locked out |
 | `chatUser`, `chatIp`, `chatHostKeyGlobal`, `brainChatUser`, `brainChatIp`, `livepeerIp` | critical | paid LLM inference |
 | `mcp3dGenerate`, `mcpValidate`, `mcpInspect`, `mcpOptimize`, `mcpBazaar`, `mcpAgent`, `mcpAgentPay` | critical | paid compute / paid tools |
 | `avatarPayoutDaily`, `agentBuy`, `x402PayGlobal`, `videoGenerateUser`, `videoGenerateGlobal` | critical | real money movement |
@@ -190,7 +193,7 @@ to `local` (no Redis command) or must stay Redis-backed.
 
 | File | Class | Operation |
 | --- | --- | --- |
-| `api/_lib/cache.js` | cross-instance-required | shared cache GET/SET/DEL (read-memo + single-flight in front to cut burn) |
+| `api/_lib/cache.js` | cross-instance-required | shared cache GET/SET/DEL (read-memo + single-flight in front to cut burn); `cacheWrapLastGood()` keeps a `<key>:lkg` sibling (24h) that is served when a refresh throws, so an upstream blip returns last-good data instead of an error |
 | `api/_lib/feed.js` | cross-instance-required | activity feed LPUSH/LTRIM/LRANGE (8s read-coalesce window) |
 | `api/_lib/usage.js` | cross-instance-required | usage-event buffer RPUSH/LRANGE/LTRIM (batched flush) |
 | `api/_lib/x402-spending-ledger.js` | critical / cross-instance-required | atomic INCRBY spend caps per hour/day/address |

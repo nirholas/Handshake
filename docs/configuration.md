@@ -106,6 +106,9 @@ OPENROUTER_API_KEY=sk-or-xxxxx
 #### `NVIDIA_API_KEY`
 **Optional.** NVIDIA NIM free tier, a third independent free lane.
 
+#### `SAMBANOVA_API_KEY`, `MISTRAL_API_KEY`, `ZAI_API_KEY`
+**Optional.** Three more free lanes, tried after NVIDIA in that order: SambaNova Cloud, Mistral's Experiment tier, and Z.AI's GLM Flash lane. Each joins the ladder only when its key is present, so `/api/chat` degrades across providers without a code change. The server-side completion chain in [api/_lib/llm.js](../api/_lib/llm.js) also accepts optional Cerebras, Gemini AI Studio, Cloudflare Workers AI (`CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_AI_API_TOKEN`), and SiliconFlow lanes on the same free-first rule.
+
 #### `ANTHROPIC_API_KEY`
 **Optional (paid backstop).** Anthropic key, tried after the free lanes. Also accepted as a user-supplied BYOK key.
 
@@ -231,7 +234,7 @@ VITE_CHARACTER_STUDIO_URL=http://localhost:5173
 The three.ws avatar builder is an open-source 3D avatar editor (full body customisation — hair, clothing, accessories, skin tone, proportions). It runs as a separate Vite/React app under `character-studio/` in this monorepo and posts the exported GLB back to the parent via `postMessage`. It is fully compatible with the three.ws avatar runtime — same humanoid skeleton naming, ARKit `viseme_*` blendshapes, and Mixamo animation support.
 
 #### `AVATURN_API_KEY`
-**Optional.** API key for the photo-to-avatar pipeline. Used server-side by `/api/onboarding/avaturn-session` to exchange selfie photos for a session URL.
+**Optional.** API key for the photo-to-avatar pipeline. Used server-side by `/api/onboarding/avaturn-session` (`api/onboarding/[action].js`) to exchange selfie photos for a session URL.
 
 ```
 AVATURN_API_KEY=xxxxx
@@ -261,10 +264,10 @@ VITE_AVATURN_DEVELOPER_ID=xxxxx
 ```
 
 #### `AVATAR_REGEN_PROVIDER`
-**Optional.** Provider for avatar regeneration. Set to `stub` for testing. Defaults to `none` (API returns `501 regen_unconfigured`).
+**Optional.** Platform provider for avatar regeneration and reconstruction: `replicate`, `huggingface`, or `gcp` (`api/_lib/regen-provider.js`). When unset the provider is inferred from credentials, paid first: `REPLICATE_API_TOKEN` selects Replicate, then `GCP_RECONSTRUCTION_URL` the self-hosted Cloud Run worker, then `HF_TOKEN` the HF Spaces queue; with none of those the platform provider is `none` and the reconstruct endpoint falls back to a user's stored BYOK key (Meshy, Tripo) before answering `501`.
 
 ```
-AVATAR_REGEN_PROVIDER=none
+AVATAR_REGEN_PROVIDER=replicate
 ```
 
 ---
@@ -383,6 +386,8 @@ A **live configuration file** consumed at runtime by the Cloud Run server ([`ser
 **Key route patterns:**
 
 ```json
+{ "src": "/agents/([^/.]+)/edit",  "dest": "/agent-edit.html" }
+{ "src": "/agents/([^/.]+)/embed", "dest": "/agent-embed.html" }
 { "src": "/agent/([^/]+)/edit",  "dest": "/agent-edit.html" }
 { "src": "/agent/([^/]+)/embed", "dest": "/agent-embed.html" }
 { "src": "/agent/([^/]+)",       "status": 301, "headers": { "Location": "/agents/$1" } }
@@ -391,7 +396,7 @@ A **live configuration file** consumed at runtime by the Cloud Run server ([`ser
 { "src": "/studio",              "dest": "/studio/index.html" }
 ```
 
-**Embed routes** include security headers that allow cross-origin iframe embedding:
+**Embed routes** (both the `/agents/:id/embed` and legacy `/agent/:id/embed` spellings) include security headers that allow cross-origin iframe embedding:
 
 ```json
 {
@@ -459,7 +464,7 @@ dist-lib/agent-3d.umd.cjs  # UMD (CommonJS-compatible)
 
 Three.js and ethers are bundled (not externalized) so the web component works as a zero-install drop-in embed via `<script type="module">`.
 
-**VitePWA** generates a service worker for the app build. Only `**/*.{ico,woff2}` are precached; HTML, JS, and CSS are deliberately excluded so deploys take effect immediately. Google Fonts are cached with a `CacheFirst` strategy and a 1-year TTL, and `/api/*` is never intercepted by the service worker.
+**VitePWA** generates a service worker for the app build. Only `**/*.{ico,woff2}`, `offline.html` and `pwa-icon.svg` (the offline shell) are precached; HTML pages, JS, and CSS are deliberately excluded so deploys take effect immediately. Google Fonts are cached with a `CacheFirst` strategy and a 1-year TTL, and `/api/*` is never intercepted by the service worker.
 
 The dev server includes a rewrite middleware that mirrors the `vercel.json` route patterns, so `http://localhost:3000/agent/my-agent/edit` works the same as in production.
 

@@ -16,7 +16,7 @@ The page is a self-contained module inside `pages/smart-money.html` that polls `
 
 The numbers are produced by a cron rollup (`api/cron/smart-money-rollup.js`) in three phases that write to `wallet_reputation`, `coin_smart_money`, and a `smart_money_scored` dedupe ledger:
 
-**Phase A: judge and fold.** Six hours after launch, a coin's outcome is binary: present in `pumpfun_graduations` is a win, otherwise a dud. For the top 60 buyers of each judged coin, per-wallet deltas are folded into `wallet_reputation`. An entry counts as **early** when the wallet's first buy is within 180 seconds of the coin's first trade, and a **dump** when the wallet sold at least half of what it bought.
+**Phase A: judge and fold.** Six hours after launch, a coin's outcome is binary: present in `pumpfun_graduations` is a win, otherwise a dud. Each run judges up to 400 coins, oldest first; the budget has to outrun the firehose (about 32k mints a day), because a coin that ages past the 14-day retention window unjudged is pruned and its buyers never fold into anyone's record. For the top 60 buyers of each judged coin, per-wallet deltas are folded into `wallet_reputation`. An entry counts as **early** when the wallet's first buy is within 180 seconds of the coin's first trade, and a **dump** when the wallet sold at least half of what it bought.
 
 **Phase B: recompute reputation.** For each touched wallet the score is:
 
@@ -88,7 +88,8 @@ for (const c of conviction.slice(0, 5)) {
 - **Auth.** The read APIs are public and require no account. The rollup cron is Bearer-authenticated with `CRON_SECRET`.
 - **Rate limit.** 600 requests per minute per IP; over that returns 429.
 - **Warm-up window.** A coin is not judged until roughly 6 hours after launch, so a very fresh coin shows "not scored yet." The per-coin read deliberately returns `200 { found: false }` rather than a 404 for an unscored mint.
-- **Empty and error states.** The feed, leaderboard, and watchlist each have designed empty copy ("No proven money on a fresh coin yet," "No wallets ranked yet"). A wallet with no history returns 404 and renders "No track record yet." A failed full refresh shows a stale-data reconnecting bar with a Retry button and escalates its message after repeated failures.
+- **Input validation.** A `wallet` or `mint` that is not a base58 Solana address is refused at the boundary with `400 invalid_wallet` / `400 invalid_mint`, so "that is not an address" and "no track record yet" stay different answers. Every error on the route, the wallet 404 included, carries the shared `{ error, error_description }` shape.
+- **Empty and error states.** The feed, leaderboard, and watchlist each have designed empty copy ("No proven money on a fresh coin yet," "No wallets ranked yet"). A wallet with no history returns 404 and renders "No track record yet." A failed full refresh shows a stale-data reconnecting bar with a Retry button and escalates its message after repeated failures. The watchlist tells a network failure apart from an honest "not on the radar": when every lookup fails to reach the API (or answers 5xx), the grid shows one "Couldn't reach the radar" panel with a Retry and keeps the saved list, and a single unreachable coin gets a "Couldn't load this one" card rather than being labelled unscored.
 - **Two engines, one name.** This page reads `/api/pump/smart-money` (the graduation-outcome rollup). A sibling endpoint, `/api/intel/smart-money`, is a distinct funder-cluster and sybil-detection graph used by other surfaces. They answer related questions from different tables; do not conflate them.
 
 ## Related

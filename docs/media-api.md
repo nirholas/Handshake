@@ -532,7 +532,10 @@ staged as web-ready GLBs. Same pagination (`?limit=1..1000`, `?offset=`),
 same empty-until-staged behavior, no auth. One difference from the character
 library: this endpoint validates the cursors strictly, so a malformed
 `?limit`/`?offset` returns `400 invalid_limit` / `400 invalid_offset` instead
-of being coerced into a page. See [the object library doc](./object-library.md)
+of being coerced into a page. The manifest is served with
+`access-control-allow-origin: *`, so a studio embedded on another origin can
+render the object tray from it (the objects themselves already load cross-origin
+through `/cdn/<key>`). See [the object library doc](./object-library.md)
 for the full parameter table.
 
 ### Response
@@ -599,7 +602,7 @@ the mesh arrived static, queues an auto-rig so the avatar can animate.
 
 ### Response
 
-`201` with `{ "avatar": { ... }, "view_url": "https://three.ws/discover/avatar/<id>" }`.
+`201` with `{ "avatar": { ... }, "view_url": "https://three.ws/avatars/<id>" }` (the avatar detail page, the canonical link target across the platform).
 
 ### Errors
 
@@ -682,7 +685,11 @@ Poll the job on `/api/forge?job=<job_id>` like any forge generation.
 | Rate limit | `429` with `Retry-After` |
 
 When the vision lane is unconfigured or errors, the face check fails open and
-the submission proceeds; forge still validates the image.
+the submission proceeds; forge still validates the image. The hand-off to
+`/api/forge` is bounded to 30 seconds and is deliberately never retried, since
+that POST enqueues a generation and a replay would queue (and bill) a second
+job; a hang there surfaces as `502 generation_unreachable` rather than an
+endpoint that never answers.
 
 ### curl
 
@@ -739,6 +746,9 @@ policy as `/api/input-photo`. No auth; rate-limited per IP.
 | One or more images failed validation | `422 invalid_views`, with the full `validation` array (each failure carries an `issue` such as `no_subject`, `text_screenshot`, `too_dark_or_blurry`, or `abstract_or_diagram`, and an actionable `message`) plus an `override` hint (`skip_validation: true`) |
 | Generation service unreachable | `502 generation_unreachable` |
 | Rate limit | `429` with `Retry-After` |
+
+As with `/api/input-photo`, the hand-off to `/api/forge` is bounded to 30
+seconds and never retried, so the same photos can never be queued twice.
 
 ### curl
 

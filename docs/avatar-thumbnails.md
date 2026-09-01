@@ -90,12 +90,21 @@ via `adoptForgePreviews()` in the backfill.
 The browser captures the live viewer's canvas and uploads a PNG. Stored at
 `thumb/<avatarId>.png` with `Content-Type: image/png`. Owner or admin only.
 
-### 3. Server render (headless chromium)
+### 3. Server render (CPU rasterizer, chromium failover)
 
-Everything else — studio avatars, uploads, forge rows older than preview capture —
-is rendered server-side: the GLB is presigned, loaded into a headless chromium
-running a three.js viewer, and screenshotted to a 768×768 PNG, which is uploaded to
-`thumb/<avatarId>.png`. Costs ~3–6s per model, so it always runs in bounded batches.
+Everything else (studio avatars, uploads, forge rows older than preview capture)
+is rendered server-side through `renderGlbToPng()` in
+[`api/_lib/render-glb.js`](../api/_lib/render-glb.js): the GLB is presigned and
+rendered to a 768x768 PNG, which is uploaded to `thumb/<avatarId>.png`. The
+renderer tries the in-process software rasterizer first
+([`api/_lib/render-cpu.js`](../api/_lib/render-cpu.js), the `@three-ws/render`
+package, roughly 200-900 ms and no subprocess) and falls back to headless chromium
+running a three.js viewer only for the models the CPU lane cannot decode on its
+own (Draco-compressed geometry, KTX2/Basis textures). A CPU miss is logged as
+`[render] cpu lane fell back to chromium` and costs latency, never a failed
+thumbnail. Set `RENDER_CPU_LANE=off` on the service to pin every render back onto
+chromium without a deploy. A chromium render costs 3-15 s per model, so rendering
+always runs in bounded batches.
 
 All of this lives in [`api/_lib/avatar-thumbs.js`](../api/_lib/avatar-thumbs.js),
 the single owner of the invariant above.
@@ -156,15 +165,28 @@ So the runner distinguishes the two:
 - **Model failure** (`glb fetch failed: …`, `render failed: …`) — charge the
   attempt, record `last_error`, keep going.
 - **Infrastructure failure** (`Connection closed.`, `Target closed`, `Protocol
-  error`, …) — the model is blameless. Roll the attempt back, roll back every
+  error`, a `spawn EFAULT` / `ENOMEM` / `EAGAIN` launch refusal, or object storage
+  answering `Missing required env var: S3_…`, `InvalidAccessKeyId`, `NoSuchBucket`,
+  `ECONNREFUSED`, …): the model is blameless. Roll the attempt back, roll back every
   claim the aborted batch never reached, and **stop the batch**. `renderBatch()`
   returns `aborted: "<reason>"`; the cron logs `backfill_browser_died` and the next
   tick retries the same avatars on a fresh container.
 
-`isBrowserInfrastructureError()` in
-[`api/_lib/render-glb.js`](../api/_lib/render-glb.js) is the classifier, and the
-cached browser now evicts itself on `disconnected` so the next render relaunches
-instead of reusing a corpse.
+Two classifiers decide which side a failure lands on. `isBrowserInfrastructureError()`
+in [`api/_lib/render-glb.js`](../api/_lib/render-glb.js) covers the browser (its
+`INFRA_ERROR_PATTERN`), and `isStorageInfrastructureError()` in
+[`api/_lib/r2.js`](../api/_lib/r2.js) covers object storage (`STORAGE_ERROR_PATTERN`).
+Both are exported as pattern strings so the ledger repair below asks the same
+question in SQL with `~*` instead of maintaining a drifting copy, and
+[`tests/avatar-thumbs.test.js`](../tests/avatar-thumbs.test.js) imports the real
+classifiers rather than a stand-in for the same reason. The cached browser evicts
+itself on `disconnected` so the next render relaunches instead of reusing a corpse.
+
+Storage is also checked before any claim is made: both thumbnail crons return
+`{ ok: false, reason: "object_storage_unconfigured" }` and touch nothing when
+`objectStorageConfigured()` in `r2.js` reports the `S3_*` set incomplete, because
+three ticks of identical `S3_BUCKET` failures at `*/5` would otherwise retire every
+remaining avatar in under fifteen minutes.
 
 This is not hypothetical: before the classifier existed, one OOM-killed chromium
 retired **1,283 perfectly renderable avatars** in a single run. If you ever suspect
@@ -174,9 +196,12 @@ that happened again:
 node --env-file=.env.local scripts/backfill-avatar-thumbnails.mjs --reset-infra
 ```
 
-It deletes every ledger row whose `last_error` is an infrastructure error, returning
-those avatars to the candidate set. Rows recording a model-attributable error are
-left retired. Safe to run at any time.
+It deletes every ledger row whose `last_error` matches either infrastructure
+pattern (browser or storage), returning those avatars to the candidate set. Rows
+recording a model-attributable error are left retired. Safe to run at any time.
+Add `--repair-only` to run the repair (and any `--restyle`) and stop before anything
+touches R2: that mode needs only `DATABASE_URL`, so the undo stays reachable while
+object storage is exactly the thing that is broken.
 
 Running more than one bulk backfill at once is what causes the OOM in the first
 place. The claim ledger makes it *correct*, but not *free* — one runner at
@@ -209,10 +234,11 @@ node --env-file=.env.local scripts/backfill-avatar-thumbnails.mjs --restyle=200 
 ```
 
 Requires `DATABASE_URL` plus the `S3_*` credentials (`S3_BUCKET`,
-`S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_ENDPOINT`, `S3_PUBLIC_DOMAIN`).
-Only `DATABASE_URL` is in `.env.local`; the authoritative copy of the `S3_*` set
-lives on the Cloud Run service, so `--env-file=.env.local` alone exits with
-`S3_BUCKET is unset`. Export them into the shell first:
+`S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_ENDPOINT`, `S3_PUBLIC_DOMAIN`);
+`--status` and `--repair-only` need `DATABASE_URL` alone. Only `DATABASE_URL` is in
+`.env.local`; the authoritative copy of the `S3_*` set lives on the Cloud Run
+service, so `--env-file=.env.local` alone exits with `S3_BUCKET is unset` for any
+mode that renders or adopts. Export them into the shell first:
 
 ```bash
 eval "$(gcloud run services describe three-ws-api --region us-central1 \

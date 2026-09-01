@@ -31,8 +31,8 @@ Because it is one key for everything, a deployment either has the whole NVIDIA l
 | Capability | NVIDIA model(s) | Wired in | Free? |
 | --- | --- | --- | --- |
 | **Text → 3D** | `microsoft/trellis` | `api/_providers/nvidia.js`, `api/_lib/forge-tiers.js` | ✅ |
-| **Text → image** | `black-forest-labs/flux.1-schnell` | `api/_mcp3d/text-to-image.js` | ✅ |
-| **LLM (default lane)** | `meta/llama-3.3-70b-instruct` | `api/_lib/llm.js`, `api/_lib/chat-models.js` | ✅ |
+| **Text → image** | `black-forest-labs/flux.1-dev` | `api/_mcp3d/text-to-image.js` | ✅ |
+| **LLM (default lane)** | `nvidia/nemotron-3-super-120b-a12b` (compact rung: `nvidia/nemotron-3-nano-30b-a3b`) | `api/_lib/llm.js`, `api/_lib/chat-models.js` | ✅ |
 | **LLM (model garden)** | Nemotron 120B / 49B / Nano 9B, Llama 4 Maverick, DeepSeek V4 Pro, Kimi K2.6, MiniMax M2.7 | `api/brain/chat.js` | ✅ |
 | **Vision / VLM** | `nvidia/nemotron-nano-12b-v2-vl`, `meta/llama-3.2-11b-vision-instruct` | `api/_lib/vision.js` | ✅ |
 | **Embeddings** | `nvidia/nv-embedqa-e5-v5` | `api/_lib/embeddings.js` (and `api/agents/_id/embed.js`, which delegates to it) | ✅ |
@@ -65,18 +65,18 @@ This is the headline free model. **Microsoft TRELLIS hosted on NVIDIA NVCF gives
 
 ---
 
-## 2. Text → image — FLUX.1-schnell
+## 2. Text → image: FLUX.1-dev
 
-**Model:** `black-forest-labs/flux.1-schnell` · **Endpoint:** `ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-schnell`
+**Model:** `black-forest-labs/flux.1-dev` · **Endpoint:** `ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-dev`
 **Source:** [api/_mcp3d/text-to-image.js](../api/_mcp3d/text-to-image.js).
 
-FLUX.1-schnell is the **free, first-choice text-to-image lane**. It's a synchronous invoke — the image returns inline as base64 (no poll) in ~1–2 s — and it's Apache-2.0, commercial-OK.
+FLUX.1-dev is the **free NVIDIA text-to-image lane** (the hosted FLUX.1-schnell preview was retired, so the lane moved to the dev checkpoint at 20 steps, CFG 3.5). It is a synchronous invoke: the image returns inline as base64, no poll.
 
 **Where it's used:**
 - **The reference-image step of the image-intermediate 3D path.** When a prompt is reconstructed to a mesh, FLUX paints the reference view first, which the free reconstruction lanes (TRELLIS / Hunyuan3D) then turn into geometry. A photo-quality reference reconstructs into a far better mesh than a busy scene, so the lane steers FLUX toward a clean, centered subject.
 - General text→image wherever the platform needs a synthesized image.
 
-**Fallback order:** NVIDIA FLUX (free) → Vertex Imagen (`GOOGLE_CLOUD_PROJECT`) → Replicate `flux-schnell` ($0.003/image). The free NVIDIA lane always leads.
+**Ladder order.** When `GOOGLE_CLOUD_PROJECT` is set, Vertex Imagen leads by default because it outdraws distilled FLUX for photoreal reference images and spends the GCP credit pool the platform is funded to burn (`VERTEX_IMAGEN_FIRST=0` restores the NIM-first order). After that: NVIDIA FLUX.1-dev (free) → the Hugging Face router (`HF_TOKEN`; fal-ai, then nscale, both serving FLUX.1-schnell in 2-5 s) → the Livepeer federation lane (behind `LIVEPEER_FEDERATION_ENABLED`) → Pollinations (keyless, so a fallback always exists past every keyed rung) → Replicate `flux-schnell` ($0.003/image, the paid backstop). The whole ladder shares one budget, `TEXT_TO_IMAGE_BUDGET_MS` (default 60 s): each lane gets a bounded slice of what remains so a stalled provider cannot hold a Forge submit for minutes, and exhausting the budget returns a retryable `rate_limited` error (`retryAfter: 15`) rather than a hung request.
 
 ---
 
@@ -86,10 +86,10 @@ NVIDIA NIM hosts 100+ open-weight chat models behind the one key, all OpenAI-com
 
 ### 3a. The default production lane
 
-**Model:** `meta/llama-3.3-70b-instruct`
+**Model:** `nvidia/nemotron-3-super-120b-a12b` (with `nvidia/nemotron-3-nano-30b-a3b` as the compact Nemotron rung)
 **Source:** [api/_lib/llm.js](../api/_lib/llm.js), [api/_lib/chat-models.js](../api/_lib/chat-models.js).
 
-The platform's general LLM helper runs a **free-first ladder: Groq → Cerebras → OpenRouter → NVIDIA NIM**, followed by further keyless free rungs (OVH, Gemini, Pollinations) and only at the very end a paid backstop (Anthropic/OpenAI). NVIDIA serves the **same Llama 3.3 70B family** as the Groq/Cerebras/OpenRouter rungs but on an independent provider, so an outage on the other free lanes still answers here. It's tool/function-calling capable, so it's eligible for tool-required requests.
+The platform's general LLM helper runs a **free-first ladder: Groq → Cerebras → OpenRouter → NVIDIA NIM**, followed by further keyless free rungs (OVH, Gemini, Pollinations) and only at the very end a paid backstop (Anthropic/OpenAI). Every free rung was re-pointed on 2026-08-27 to models the providers still serve: Groq now runs `qwen/qwen3.8-27b` (instant tier `openai/gpt-oss-20b`), Cerebras keeps `llama-3.3-70b`, and the NVIDIA rung runs Nemotron 3 Super 120B, an NVIDIA MoE on an independent provider, so an outage on the other free lanes still answers here. Both NVIDIA rungs are called with thinking disabled (`chat_template_kwargs: { enable_thinking: false }`) so a chat turn answers instead of reasoning out loud. Both are tool/function-calling capable, so they are eligible for tool-required requests.
 
 This lane powers the platform's built-in AI surfaces — chat, embedded site widgets, the tutor, the fact-checker, persona tools, agent-to-agent talk, the transaction explainer — all of which lead with the free providers and only fall through to a paid model if every free lane fails.
 
@@ -107,7 +107,7 @@ This lane powers the platform's built-in AI surfaces — chat, embedded site wid
 | Llama 4 Maverick | `meta/llama-4-maverick-17b-128e-instruct` | balanced | Meta's 128-expert MoE — fast, multimodal-capable |
 | MiniMax M2.7 | `minimaxai/minimax-m2.7` | balanced | General reasoning and chat |
 
-For anonymous (signed-out) callers, only the genuinely free tiers (the OpenRouter open-weight default plus these NVIDIA NIM models) are selectable. Each shows "unavailable" until the key is set, and `nvidia/llama-3.3-nemotron-super-49b-v1.5` also appears in the routing catalog as a tool-capable fallback model.
+For anonymous (signed-out) callers, only the genuinely free tiers (the OpenRouter open-weight default plus these NVIDIA NIM models) are selectable. Each shows "unavailable" until the key is set. The routing catalog in `chat-models.js` also lists `nvidia/nemotron-3-super-120b-a12b`, `nvidia/nemotron-3-nano-30b-a3b`, and `nvidia/llama-3.3-nemotron-super-49b-v1.5` as tool-capable NVIDIA models, and the Brain's own fallback chain still appends `meta/llama-3.3-70b-instruct` on NIM behind the OpenRouter rungs when a chosen route is dead.
 
 > **Where the line is:** Nemotron and the `nvidia/…`-prefixed models are NVIDIA's own. The others in this table (DeepSeek, Kimi, Llama 4, MiniMax) are third-party open weights that NVIDIA *hosts and serves free* on NIM — so they ride the same key, but the model itself isn't NVIDIA's. The point of NIM is exactly this: one free key, a whole model garden.
 
@@ -127,6 +127,8 @@ Two free NIM vision lanes on the OpenAI-compatible chat host. Nemotron Nano VL l
 
 All three **fail safe**: if the vision lane is unavailable, the feature quietly switches off — it never blocks or breaks the primary flow.
 
+The chain is budgeted and remembers what hurt. Each attempt gets an even share of whatever remains on the caller's deadline (`laneAttemptTimeout`, never below 3.5 s), so the first rung cannot consume the budget of the rest, and the pre-chain inline image fetch is capped at a quarter of the deadline and 8 s. A lane that fails is cooled for 45 s through the shared provider-health ledger (`api/_lib/provider-health.js`) and moved behind the healthy rungs on the next call rather than re-picked; a `429` cools every sibling lane on that host and skips them for the rest of the call, and a `401`/`403`/`402` earns the longer auth cooldown. A success clears the lane's cooldown.
+
 ---
 
 ## 5. Embeddings — semantic retrieval
@@ -134,7 +136,7 @@ All three **fail safe**: if the vision lane is unavailable, the feature quietly 
 **Primary:** `nvidia/nv-embedqa-e5-v5` (1024-dim) · **Endpoint:** `integrate.api.nvidia.com/v1/embeddings`
 **Source:** [api/_lib/embeddings.js](../api/_lib/embeddings.js) (tag `nvidia/nv-embedqa-e5-v5@1024`).
 
-The default embedder for new vectors — **free with the one key, 1024 dimensions, hard-capped at 512 input tokens** (longer inputs are rejected upstream, so callers chunk to fit). Vectors are tagged with `model@dimension` so a later model swap can't silently mix incompatible spaces. Powers **agent memory and knowledge-widget retrieval**; the paid embedding provider is demoted to backup behind it.
+The default embedder for new vectors: **free with the one key, 1024 dimensions, hard-capped at 512 input tokens** (longer inputs are rejected upstream, so callers chunk to fit). Vectors are tagged with `model@dimension` so a later model swap can't silently mix incompatible spaces. Powers **agent memory and knowledge-widget retrieval**; the paid embedding provider is demoted to backup behind it. At ingest, `embedPassagesAny()` walks every configured embedder in free-first order (NIM → Vertex → OpenAI, the caller's preferred tag first), cooling a lane that fails for 45 s (longer on an auth fault) so the next ingest starts on a healthy rung, and returns the tag it actually used so the document set is stamped with the space its vectors live in. Search-side, the Agent Galaxy falls back to lexical ranking when the embedder cannot answer, because a query vector from another model cannot be compared against vectors stored in a different space.
 
 **Also:** the agent-embed endpoint [api/agents/_id/embed.js](../api/agents/_id/embed.js) does not carry a provider list of its own. It delegates to the registry above, so `POST /api/agents/:id/embed` serves this same model and returns the tag alongside the vector. It previously called `baai/bge-m3` directly; NVIDIA stopped serving that model on the hosted endpoint (500 on every request), which is exactly the failure mode a single registry prevents.
 
@@ -186,6 +188,9 @@ The free NVIDIA TTS lane: **Magpie multilingual on Riva**, selected by an NVCF `
 | `NVIDIA_API_KEY` | Every model on this page (`nvapi-…` from build.nvidia.com) |
 | `KNOWLEDGE_RERANK_ENABLED=1` | Turns on the rerank stage (§6) |
 | `FORGE_PREFER_FREE` | Free-first reconstruct ordering (default on) |
+| `TEXT_TO_IMAGE_BUDGET_MS` | Shared deadline for the whole text-to-image ladder (§2), default 60000 |
+| `VERTEX_IMAGEN_FIRST=0` | Puts the free NIM FLUX lane ahead of Vertex Imagen again (§2) |
+| `HF_TOKEN` | Unlocks the Hugging Face router rungs (fal-ai, nscale) in the text-to-image ladder (§2) |
 
 ---
 

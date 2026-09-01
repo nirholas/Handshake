@@ -7,7 +7,7 @@ Event visitors will not stay on /play; they will click around. Every page declar
 Run these against production first to find real user-facing breakage, then against `npm run dev` to fix:
 
 - `npm run smoke:prod`: sweeps every page in `data/pages.json` against the live site.
-- `npm run audit:web`: unauthenticated browser sweep. `npm run audit:web:login`: authed sweep using the QA account (`AUDIT_EMAIL`/`AUDIT_PASSWORD` in `.env`).
+- `npm run audit:web`: unauthenticated browser sweep. `npm run audit:web:login`: authed sweep using the QA account (`AUDIT_EMAIL`/`AUDIT_PASSWORD` in `.env`). Both accept route paths as arguments to narrow the sweep and `--engine webkit` or `--engine firefox` to run it outside Chromium (`npx playwright install webkit` once); a WebKit run counts one failed resource as one finding, not three. `npm run ui:review` is the visual sweep over the same route list.
 - `npm run audit:links`: dead links. `npm run audit:pages` and `npm run check:pages`: pages.json integrity.
 - `npm run audit:console`: console errors per page. `npm run audit:overlays`, `npm run audit:inline-handlers`, `npm run audit:routes`, `npm run audit:route-shadowing`: overlay/handler/route health.
 - `npm run audit:docs`: dead doc links and commands naming scripts that no longer exist.

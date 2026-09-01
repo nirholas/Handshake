@@ -796,6 +796,8 @@ Refusal reasons: `not_found`, `kill_switch`, `disarmed`, `no_rules`, `no_wallet`
 
 A cycle that ran returns `{ "ran": true, "trigger": "manual", "dryRun": false, "results": [ … ] }`, one entry per due rule, each stamped with its `last_status` and `last_note`. A rule whose weekday does not match today is reported as skipped rather than silently omitted. An unexpected failure is `500 run_failed`.
 
+The `dca` and `buyback` rules swap through Jupiter, and the engine treats the two halves of that call differently. The quote is an idempotent read, so a 429, a 5xx, or a network failure is retried up to three times with jittered backoff inside a 15 second per-attempt deadline, while a 4xx (no route for this pair) is taken as the answer and the rule pauses with `no_route` and the reason in its `last_note`. Building the swap returns an unsigned transaction, so it is retried once, and only on a 5xx or network failure (`swap_failed` otherwise). Signing and broadcasting are never retried.
+
 ## Portfolio: valuation, P&L, and risk
 
 Source: [`api/agents/portfolio.js`](../api/agents/portfolio.js), engine in [`api/_lib/portfolio.js`](../api/_lib/portfolio.js). Product tour: [Portfolio](agent-abilities/wallet/03-portfolio.md).

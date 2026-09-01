@@ -31,7 +31,7 @@ The same free lane ships into ChatGPT twice, because ChatGPT has two integration
 
 ### 1. The ChatGPT app (Apps SDK / MCP connector)
 
-The MCP connector at `https://three.ws/api/mcp-studio` (no authentication) exposes ten free tools: six generation tools (`forge_free`, `text_to_avatar`, `mesh_forge`, `rig_mesh`, `forge_avatar`, `refine_model`), the `check_job` collector that picks up a generation which outran the tool call, and three persona/embodiment tools (`create_agent_persona`, `get_agent_persona`, `persona_say`). Full server documentation: [3D Studio MCP](./mcp-studio.md).
+The MCP connector at `https://three.ws/api/mcp-studio` (no authentication) exposes eleven free tools: six generation tools (`forge_free`, `text_to_avatar`, `mesh_forge`, `rig_mesh`, `forge_avatar`, `refine_model`), the `check_job` collector that picks up a generation which outran the tool call (a pending result now names its `stage`, `mesh` or `rig`, so the collector knows which leg it is waiting on), the read-only `look_at_model` tool that renders any public GLB from several angles and returns the frames as images plus a plain reading of its geometry, so the assistant can judge its own output before printing a link, and three persona/embodiment tools (`create_agent_persona`, `get_agent_persona`, `persona_say`, in [api/_mcp-studio/persona-tools.js](../api/_mcp-studio/persona-tools.js)). Full server documentation: [3D Studio MCP](./mcp-studio.md).
 
 Every successful tool result carries `arUrl` in its `structuredContent`, and the inline 3D widget renders it as a **View in your space** button next to the rotatable model. When the result is a rigged avatar the response additionally carries `irlUrl` and the button becomes **Bring it to life**. Refined versions (`refine_model`) each carry their own `arUrl`, so any point in the version lineage can be placed in the room.
 
@@ -45,10 +45,10 @@ curl -s -X POST https://three.ws/api/3d/studio \
   -d '{"prompt":"a small ceramic robot figurine"}'
 ```
 
-Submit returns either the finished model or a job to poll:
+Submit returns either the finished model or a job to poll (the response shaping lives in [api/_mcp-studio/studio-shape.js](../api/_mcp-studio/studio-shape.js), shared with the tests):
 
 ```json
-{ "status": "pending", "job": "…", "poll": "/api/3d/studio?job=…&title=a%20small%20ceramic%20robot%20figurine", "format": "glb" }
+{ "status": "pending", "job": "…", "poll": "/api/3d/studio?job=…&title=a%20small%20ceramic%20robot%20figurine", "watchUrl": "https://three.ws/watch?job=…&title=…", "etaSeconds": 45, "format": "glb" }
 ```
 
 ```json
@@ -68,6 +68,7 @@ Design decisions on this endpoint, all deliberate:
 - **The title-carrying poll.** ChatGPT Actions never resend context, so the submit response embeds the prompt in the poll URL as `&title=`. When the poll finally returns `done`, the `arUrl` and `viewerUrl` are labeled with the original prompt without the GPT doing anything except calling the poll path verbatim.
 - **Timeout honesty.** Actions calls time out around 45 seconds; generation takes 20 to 60. The endpoint holds the request as long as it safely can and falls back to `pending` + poll rather than dying mid-request.
 - **Safety before GPU.** Every prompt passes an age-13+ appropriateness gate ([api/_mcp-studio/safety.js](../api/_mcp-studio/safety.js)) before any provider work; refusals return `400 prompt_rejected` with a clear message.
+- **An outage is an answer, not a 5xx.** When the poll finds the generation lane unconfigured upstream (`503`/`501` with `unconfigured` or `backend_unconfigured`), it answers `200 { "status": "error", "job": "…", "error": "3D generation is temporarily unavailable…" }`, so the GPT can tell the user plainly instead of surfacing a transport failure.
 
 The GPT's instructions tell it to present three links on every finished model, in this order: **See it in your space** (`arUrl`), **Preview in your browser** (`viewerUrl`), **Download** (`glbUrl`), and to never fabricate a URL an action did not return. The OpenAPI schema the GPT imports is served at [`https://three.ws/.well-known/3d-studio-openapi.yaml`](../public/.well-known/3d-studio-openapi.yaml) and describes `/api/ar` alongside the generation action, so the AR launch is part of the app's published contract rather than an undocumented link. The full GPT build sheet lives at [prompts/store-submissions/_generated/](../prompts/store-submissions/_generated/) (`openai-gpt-config.md`, plus `openai-actions.yaml`, which is regenerated from the served schema by `npm run sync:studio-openapi`).
 
@@ -79,13 +80,13 @@ The GPT's instructions tell it to present three links on every finished model, i
 
 | Device | What the user gets |
 |---|---|
-| **iPhone / iPad** | A launch page whose View in AR button opens Apple **Quick Look**. The USDZ Apple requires is generated from the GLB on the fly, in the page, by model-viewer's three.js `USDZExporter`. No server-side USD tooling exists or is needed. |
+| **iPhone / iPad** | A tiny interstitial carrying the model's real `og:image`/`og:title` (so a pasted link still unfurls; crawlers do not follow a bare redirect's JS) that refreshes straight into **`/ar/view?src=…&title=…`** ([pages/ar-view.html](../pages/ar-view.html), [src/ar-view.js](../src/ar-view.js)). That Vite-bundled page generates a real USDZ from the GLB on the device with three's `USDZExporter` and then offers Apple **Quick Look** with a genuine `ios-src`. No server-side USD tooling exists or is needed; `<model-viewer>` alone does not do the conversion, which is why the AR page is a bundled page rather than HTML the handler writes inline. |
 | **Android** (static model) | An HTTP `302` straight into Google **Scene Viewer** via an ARCore `intent://` URL, with a `browser_fallback_url` back to the WebGL viewer for devices without ARCore. |
-| **Desktop** | The launch page falls back to the interactive WebGL viewer. There is no dead end: the link is safe to open anywhere. |
+| **Desktop** | The same interstitial into `/ar/view`, which falls back to the interactive WebGL viewer. There is no dead end: the link is safe to open anywhere. |
 
 Responses set `vary: user-agent` so CDN caching stays correct per device class. Bad input (non-https, non-GLB, missing `src`) returns a designed error page, never a crash.
 
-The pure routing logic (`detectArTarget`, `buildSceneViewerUrl`, `planArLaunch`) lives dependency-free in [api/_lib/ar-launch.js](../api/_lib/ar-launch.js) and is covered by [tests/ar-export.test.js](../tests/ar-export.test.js). The deeper AR reference (WebXR sessions, USDZ pipeline details, optimization limits) is [docs/ar.md](./ar.md).
+The pure routing logic (`detectArTarget`, `buildSceneViewerUrl`, `buildArViewUrl`, `planArLaunch`) lives dependency-free in [api/_lib/ar-launch.js](../api/_lib/ar-launch.js) and is covered by [tests/ar-export.test.js](../tests/ar-export.test.js). `planArLaunch` now resolves every branch to a redirect target: Scene Viewer for a static model on Android, `/ar/view` for everything else, with `viewerUrl` and `sceneViewerUrl` still returned for callers such as the `export_ar` tool that want the raw URLs alongside the launch link. The deeper AR reference (WebXR sessions, USDZ pipeline details, optimization limits) is [docs/ar.md](./ar.md).
 
 ---
 
@@ -93,8 +94,8 @@ The pure routing logic (`detectArTarget`, `buildSceneViewerUrl`, `planArLaunch`)
 
 AR on three.ws is not a prop viewer; it is how agents cross into physical space. When the generated model is a rigged avatar (an agent's body), the pipeline appends `kind=avatar` to the `arUrl`, and the launcher changes behavior:
 
-- The launch page leads with a **Bring it to life** handoff into [`/irl?avatar=<glbUrl>`](/irl), where the avatar walks, animates, and talks with the user through the camera, standing in their real room. See [IRL](./irl.md).
-- Android is NOT blind-redirected into Scene Viewer, because that would hide the living path. It gets the launch page too, with static placement still one tap away.
+- `/ar/view` receives the handoff as `&irl=<irlUrl>` and leads with a **Bring it to life** button into [`/irl?avatar=<glbUrl>`](/irl), where the avatar walks, animates, and talks with the user through the camera, standing in their real room. See [IRL](./irl.md).
+- Android is NOT blind-redirected into Scene Viewer, because that would hide the living path. It lands on `/ar/view` too, with static placement still one tap away.
 
 In ChatGPT this happens automatically: the avatar-producing tools (`text_to_avatar`, `rig_mesh`, `forge_avatar`) set the flag and return `irlUrl` alongside `arUrl`, and the inline widget swaps its button label accordingly.
 
@@ -107,7 +108,7 @@ A place-in-your-room link is built to be forwarded. When it is pasted into a cha
 - `og:title`: "Place `<title>` in your room"
 - `og:image`: `https://three.ws/api/render/glb?glbUrl=<encoded GLB>&width=1200&height=630`
 
-`GET /api/render/glb` ([api/render/glb.js](../api/render/glb.js)) is a public, URL-addressable GLB-to-PNG renderer: point any image tag at it with a public GLB URL and get a PNG back (headless Chromium + model-viewer under the hood, the same pipeline as the platform's OG cards). It clamps dimensions to 64-2048, HEAD-checks the GLB at 10 MB max, is SSRF-guarded and per-IP rate-limited, and is CDN-cached for a day. The launch page itself ends with a "Create your own" link, so a shared model converts its recipient into a creator.
+`GET /api/render/glb` ([api/render/glb.js](../api/render/glb.js)) is a public, URL-addressable GLB-to-PNG renderer: point any image tag at it with a public GLB URL and get a PNG back (the shared `renderGlbToPng` in `api/_lib/render-glb.js`: an in-process software rasterizer first, headless Chromium as the failover for Draco/KTX2 models, the same pipeline as the platform's OG cards). It clamps dimensions to 64-2048, HEAD-checks the GLB at 10 MB max, accepts a `background` of `transparent` or any CSS color (markup or anything else that is not a color is rejected with `400 bad_request`), is SSRF-guarded and per-IP rate-limited, and is CDN-cached for a day. The launch page itself ends with a "Create your own" link, so a shared model converts its recipient into a creator.
 
 ---
 
@@ -132,6 +133,8 @@ The generation lane is operator-funded (NVIDIA NIM running Microsoft TRELLIS for
 | AR launcher (`/api/ar`) + unfurl tags | [api/ar.js](../api/ar.js) |
 | AR routing core (`buildArLaunchUrl`, device branch, IRL handoff) | [api/_lib/ar-launch.js](../api/_lib/ar-launch.js) |
 | MCP studio tools + response envelope | [api/_mcp-studio/tools.js](../api/_mcp-studio/tools.js) |
+| Studio Actions response shaping (`shapeSubmit`, `shapePoll`) | [api/_mcp-studio/studio-shape.js](../api/_mcp-studio/studio-shape.js) |
+| The on-device AR page (`/ar/view`) | [pages/ar-view.html](../pages/ar-view.html), [src/ar-view.js](../src/ar-view.js) |
 | Inline widget (View in your space / Bring it to life) | [api/_mcp-studio/component.js](../api/_mcp-studio/component.js) |
 | GLB-to-PNG renderer (og:image) | [api/render/glb.js](../api/render/glb.js) |
 | GPT OpenAPI schema (served, source of truth) | [public/.well-known/3d-studio-openapi.yaml](../public/.well-known/3d-studio-openapi.yaml) |

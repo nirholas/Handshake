@@ -11,13 +11,13 @@ The world's stickiness is its loops: gather, fight, trade, spin, buy cosmetics. 
 - Quests: `src/game/quests-ui.js`
 - Cosmetics: `src/game/cosmetics-shop.js`, `cosmetics-purchase.js`, `cosmetics-loadout.js`, `cosmetics-wardrobe.js`, `cosmetics-flex.js`
 - Items and persistence: `src/game/items.js`, `src/game/world-persist.js`
-- Published economy pages (must agree with the game): `/play/economy` and `/play/solver` (routes in `vercel.json`; both read from the same tables the game server prices with, so a mismatch means one side drifted)
+- Published economy pages (must agree with the game): `/play/economy` and `/play/solver` (routes in `vercel.json`; `api/play/economy.js` imports every number from the same modules WalkRoom prices with, `multiplayer/src/{shop,items,cosmetics-catalog,spin-wheel,economy}.js`, so nothing is transcribed and a mismatch means one side drifted)
 
 ## What to audit
 
 1. **Every loop end to end, with a real signed-in session.** Gather from a tree/rock/pond, sell at the store, bank cash, die and confirm the bank protected it, spin the wheel, complete a quest, buy and equip a cosmetic. Each step: correct payout, correct balance update in the HUD without a refresh, correct persistence across a reload.
 2. **Price truth.** Cross-check a sample of prices shown in-game against `/play/economy`. Any disagreement is a bug; find which side is stale.
-3. **The $THREE boutique.** The cosmetics boutique charges $THREE: verify the full purchase path including insufficient-balance handling (clear message + how to get $THREE, never a silent failure or a raw error toast).
+3. **The $THREE boutique.** The cosmetics boutique charges $THREE: verify the full purchase path including insufficient-balance handling (clear message + how to get $THREE, never a silent failure or a raw error toast). `boutique-purchase.js` already maps a short balance to "Not enough $THREE (or SOL for network fees) for this purchase. Get $THREE at three.ws/three-token, then try again.", times out a quote that never arrives, and only unlocks the item after the server's settle notice, never on the client's own "it worked"; verify that path holds rather than rebuilding it.
 4. **Race and double-spend.** Double-click every buy/spin/sell button fast. Balances must never go negative or double-charge; buttons must disable while a request is in flight.
 5. **Edge cases.** 0 inventory, full inventory, extremely long item names, network failure mid-purchase (the UI must reconcile with server state on reconnect, not trust its optimistic update).
 6. **Progression feel.** XP and skill levels visible, level-ups celebrated (even minimally), next-unlock always discoverable. If a loop pays out but gives no feedback (no sound/flash/toast), add the feedback; silent success reads as broken.

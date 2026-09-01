@@ -60,7 +60,7 @@ The top layer is what lets an agent live somewhere other than the canonical app.
 - **`widget-types.js`**: ten widget variants (Turntable Showcase, Animation Gallery, Talking Agent, ERC-8004 Passport, Hotspot Tour, Pump.fun Live Feed, Smart Money Feed, Live Trades Canvas, Bonding Curve, Walking Avatar) that share the underlying element but ship as separate ergonomic wrappers.
 - **`lib.js`** — the CDN entry. Imports the element, registers it, and re-exports the public surface.
 - **`app.js`** — the main SPA. URL routing happens here using hash params (`#model=`, `#agent=`, `#kiosk=`, `#brain=`, `#preset=`) and query params (`?agent=` for authenticated edit mode, `?pending=1` for post-login round-trips). The hash form stays in embed mode; the query form moves into edit mode.
-- **`vercel.json`** — the server's route and cron table. Maps clean URLs (`/agent/<id>`, `/agent/<id>/edit`, `/agent/<id>/embed`, `/a/<chainId>/<agentId>`) to the right HTML entry and mounts the `api/*` handlers. In production the single Cloud Run container ([`server/index.mjs`](../server/index.mjs)) reads this table at runtime — it's a live config file, not a Vercel-only artifact.
+- **`vercel.json`**: the server's route and cron table. Maps clean URLs (`/agents/<id>`, `/agents/<id>/edit`, `/agents/<id>/embed`, `/a/<chainId>/<agentId>`; the singular `/agent/<id>` forms are kept as permanent redirects to the plural canonical route) to the right HTML entry and mounts the `api/*` handlers. In production the single Cloud Run container ([`server/index.mjs`](../server/index.mjs)) reads this table at runtime: it is a live config file, not a Vercel-only artifact.
 
 ---
 
@@ -219,7 +219,7 @@ The flow:
 5. **Reputation.** Users can call `ReputationRegistry.submitFeedback(agentId, score, comment)` to attach reviews. The element exposes a small UI for this.
 6. **Validation attestations.** When the glTF validator runs, the report can be hashed and answered onto the agent's open request via `ValidationRegistry.validationResponse(requestHash, score, uri, hash, tag)` so anyone can verify the body has been spec-checked.
 
-Per-chain registry addresses, ABIs, and helpers live in `src/erc8004/`. RPC endpoints fall back to public defaults but can be overridden with `?rpcURL=...`.
+Per-chain registry addresses, ABIs, and helpers live in `src/erc8004/`. Every chain in `chains.js` carries an ordered `rpcUrls` list of keyless public hosts, and `src/shared/evm-rpc-fallback.js` prepends the same-origin `/api/evm-rpc?chainId=N` proxy (which inherits the server's own failover chain) whenever the page is served from a three.ws origin, so one dead public host never reads as "chain unsupported". A caller-pinned URL (`loadManifest(source, { rpcURL })`, or the `rpc-url` attribute on `<agent-3d>`) is tried ahead of the public tail.
 
 ---
 
@@ -241,7 +241,7 @@ To run the whole stack yourself, the minimum is:
 - **A Node.js host** for the SPA and the `api/*` handlers. Production runs a single container ([`server/index.mjs`](../server/index.mjs)) on Google Cloud Run that reads the `vercel.json` route table at runtime; any Node host works the same way, or reproduce the same path → handler map in your reverse proxy.
 - **Neon DB (PostgreSQL)** for agents, widgets, sessions, and the action log.
 - **Upstash Redis** for rate limiting, nonce storage, and short-lived caches.
-- **An S3-compatible object store** for hosted GLB and texture assets. The client in [api/_lib/r2.js](../api/_lib/r2.js) speaks the S3 API, so Cloudflare R2, AWS S3, and Backblaze B2 all work (configure `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`).
+- **An S3-compatible object store** for hosted GLB and texture assets. The client in [api/_lib/r2.js](../api/_lib/r2.js) speaks the S3 API, so Cloudflare R2, AWS S3, and Backblaze B2 all work (configure `S3_ENDPOINT`, `S3_BUCKET`, `S3_PUBLIC_DOMAIN`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`; `objectStorageConfigured()` is true only when all five are set, and the storage-dependent crons skip their tick rather than fail every item when it is not).
 - **Anthropic API key** for the default LLM provider. The runtime can also point at a self-hosted proxy (`#proxyURL=`) for billing, logging, or a non-Anthropic backend.
 - **Optional:** ElevenLabs for higher-quality TTS, Pinata or Filebase for IPFS pinning, Privy for non-wallet onboarding, an RPC endpoint for ERC-8004 reads.
 

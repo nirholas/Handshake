@@ -42,7 +42,7 @@ An id that is not registered renders a visible "this live step is not registered
 
 ### Redaction
 
-Fields whose names look like credentials (`sid`, `csrf`, any `*_token`, `authorization`, `cookie`, `api_key`, and friends) are replaced in the rendered copy, and the card says how many were hidden. This matters because documentation gets screenshotted, recorded, and pasted into issues, and a page that displays a working session identifier will eventually leak one.
+Fields whose names look like credentials are replaced in the rendered copy, and the card says how many were hidden. The match is on the exact key name, case-insensitively, against a fixed list: `sid`, `csrf`, `csrf_token`, `token`, `access_token`, `refresh_token`, `id_token`, `secret`, `session`, `password`, `authorization`, `cookie`, `api_key` / `apikey`, and `private_key` / `privatekey`. A key outside that list (`foo_token`, say) is shown as is, so name new credential fields from the list. This matters because documentation gets screenshotted, recorded, and pasted into issues, and a page that displays a working session identifier will eventually leak one.
 
 Redaction only touches the **display**. Chained exports read the raw response body, so a step can consume a value that was never shown on screen.
 

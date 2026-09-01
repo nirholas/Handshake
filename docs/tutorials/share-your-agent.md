@@ -22,7 +22,7 @@ Go to [https://three.ws/my-agents](https://three.ws/my-agents). Sign in if you'r
 You see a grid of every agent you own. Click the agent you want to share. The agent's profile page opens at a URL of this shape:
 
 ```
-https://three.ws/agent/d94d2a50-86fa-4d2e-b87b-580f7517aa4c
+https://three.ws/agents/d94d2a50-86fa-4d2e-b87b-580f7517aa4c
 ```
 
 The `<id>` is your agent's permanent identifier: a UUID, assigned when the agent is first saved. Copy the full URL from the browser's address bar and it works forever.
@@ -67,7 +67,7 @@ Both produce QR codes that work with every modern phone camera. For most uses, a
 If you don't want to leave the documentation flow, you can generate a code in two seconds using an inline service. Open this URL in a new tab, replacing the encoded URL with your agent link:
 
 ```
-https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=https%3A%2F%2Fthree.ws%2Fagent%2FYOUR_AGENT_ID
+https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=https%3A%2F%2Fthree.ws%2Fagents%2FYOUR_AGENT_ID
 ```
 
 The page returns a 400x400 PNG of the QR code. Right-click → Save As to download it.
@@ -75,7 +75,7 @@ The page returns a 400x400 PNG of the QR code. Right-click → Save As to downlo
 For an SVG (which scales infinitely without loss, important for print):
 
 ```
-https://api.qrserver.com/v1/create-qr-code/?size=400x400&format=svg&data=https%3A%2F%2Fthree.ws%2Fagent%2FYOUR_AGENT_ID
+https://api.qrserver.com/v1/create-qr-code/?size=400x400&format=svg&data=https%3A%2F%2Fthree.ws%2Fagents%2FYOUR_AGENT_ID
 ```
 
 ### Sizing the QR code for real-world use
@@ -109,17 +109,17 @@ three.ws builds those tags automatically. You do not configure anything for the 
 
 ### Share the `/share` URL, not the bare profile URL
 
-The agent profile page at `/agent/<id>` is a JavaScript app. Its HTML carries the generic three.ws card, because at the moment a crawler fetches it, the page has not yet loaded which agent it is about. So the platform serves a second, server-rendered address purely for crawlers:
+The agent profile page at `/agents/<id>` is a JavaScript app. Its HTML carries the generic three.ws card, because at the moment a crawler fetches it, the page has not yet loaded which agent it is about. So the platform serves a second, server-rendered address purely for crawlers:
 
 ```
-https://three.ws/agent/<id>/share
+https://three.ws/agents/<id>/share
 ```
 
-That page is plain HTML with your agent's real meta baked into the `<head>`, and a redirect that sends a human straight on to `/agent/<id>`. A recipient who taps the link never sees it; the unfurler does. This is the URL the Share button copies, and the one to paste anywhere a preview matters.
+That page is plain HTML with your agent's real meta baked into the `<head>`, and a redirect that sends a human straight on to `/agents/<id>`. The older singular form, `/agent/<id>/share`, serves the same page, so links already in the wild keep unfurling. A recipient who taps the link never sees it; the unfurler does. This is the URL the Share button copies, and the one to paste anywhere a preview matters.
 
 ### What the previews contain
 
-When a platform fetches `https://three.ws/agent/<id>/share`, it sees:
+When a platform fetches `https://three.ws/agents/<id>/share`, it sees:
 
 - **og:title**: `<agent name> · 3D AI Agent · three.ws`, or `<agent name> · 3D AI Agent on <chain> · three.ws` when the agent has been deployed on-chain.
 - **og:description**: Your agent's description (first 120 characters), the chain it is deployed on if any, then `3D AI Agent on three.ws`.
@@ -131,7 +131,7 @@ When a platform fetches `https://three.ws/agent/<id>/share`, it sees:
 
 Both image paths target the 1200x630 standard OG aspect.
 
-There is also a wallet variant, `/agent/<id>/share?wallet=1`, which swaps the copy and the deep link over to the agent's wallet view and always uses the generated card (the card is what carries the wallet identity). Use it when the thing you are sharing is the agent's wallet rather than the agent.
+There is also a wallet variant, `/agents/<id>/share?wallet=1`, which swaps the copy and the deep link over to the agent's wallet view and always uses the generated card (the card is what carries the wallet identity). Use it when the thing you are sharing is the agent's wallet rather than the agent.
 
 ### Preview freshness
 
@@ -151,7 +151,7 @@ Don't ship a link without testing the preview first. There are three levels of c
 **Read the tags yourself.** One command, no third party, no cache in the way:
 
 ```bash
-curl -s https://three.ws/agent/YOUR_AGENT_ID/share \
+curl -s https://three.ws/agents/YOUR_AGENT_ID/share \
   | grep -o '<meta[^>]*og:[^>]*>'
 ```
 
@@ -165,7 +165,7 @@ You should see your agent's name in `og:title` and a real image URL in `og:image
 
 If a preview looks wrong, the causes in order of likelihood are:
 
-- **You shared `/agent/<id>` instead of `/agent/<id>/share`.** That gets the generic three.ws card. This is by far the most common one.
+- **You shared `/agents/<id>` instead of `/agents/<id>/share`.** That gets the generic three.ws card. This is by far the most common one.
 - **The agent's name or description is unset** → set them in the editor and re-check.
 - **The avatar is private**, so the card falls back to the generated SVG rather than your avatar's thumbnail → set the avatar's visibility to unlisted or public in the [avatar dashboard](/dashboard/avatars).
 - **A platform cached an old version** → use its debugger's re-scrape button.
@@ -192,7 +192,7 @@ Each platform has its own conventions. Here is what works on each.
 A line of plain text at the bottom of your email signature is the most under-used share context for personal agents.
 
 ```
-Talk to my AI: https://three.ws/agent/YOUR_AGENT_ID/share
+Talk to my AI: https://three.ws/agents/YOUR_AGENT_ID/share
 ```
 
 The recipient sees the link and the email client unfurls a preview card if it supports OG (Gmail, Apple Mail, Outlook all do). For agents that represent you personally, this is a way to let every email recipient interact with your AI persona without an explicit invite.
@@ -202,7 +202,7 @@ The recipient sees the link and the email client unfurls a preview card if it su
 A simple post with the URL works, but the engagement is higher if you give context:
 
 ```
-Built a 3D AI agent that knows my work. Ask it anything → https://three.ws/agent/YOUR_AGENT_ID/share
+Built a 3D AI agent that knows my work. Ask it anything → https://three.ws/agents/YOUR_AGENT_ID/share
 ```
 
 X expands the URL into a large image card. The agent's preview image shows. Don't add a screenshot — let the auto-preview do the work; otherwise the platform sometimes hides the card.
@@ -214,7 +214,7 @@ LinkedIn's link unfurling is conservative. The post performs better if you write
 ```
 I built a personal AI assistant that visitors can talk to instead of reading my "About me" page. It knows my work, my availability, and what I'm building right now.
 
-Try it: https://three.ws/agent/YOUR_AGENT_ID/share
+Try it: https://three.ws/agents/YOUR_AGENT_ID/share
 ```
 
 LinkedIn shows the preview card below your post. Engagement is highest within the first few hours, so post during your network's morning timezone.
@@ -249,7 +249,7 @@ email@example.com             │   ▓▓▓▓▓▓▓▓▓▓▓   │
                               │                 │
                               └─────────────────┘
                               Talk to my AI:
-                              three.ws/agent/...
+                              three.ws/agents/...
 ```
 
 Include the short URL beneath the QR so people who can't scan in the moment can type it later.
@@ -298,11 +298,11 @@ Your share strategy:
 
 1. **Embed on your portfolio site** — Following [Embed in 30 seconds](/tutorials/embed-in-30-seconds), you've added the one-line embed to the home page of your portfolio. Visitors can talk to Mara without leaving your site.
 
-2. **Public link in your email signature.** At the bottom of every email you send: "Available 24/7 to chat about projects → https://three.ws/agent/<MARA_ID>/share". Recipients can talk to Mara even when you're asleep, and the mail client unfurls her card inline.
+2. **Public link in your email signature.** At the bottom of every email you send: "Available 24/7 to chat about projects → https://three.ws/agents/<MARA_ID>/share". Recipients can talk to Mara even when you're asleep, and the mail client unfurls her card inline.
 
 3. **QR on the back of your business card** — At networking events, instead of "I'll email you next week", you say "Scan my card, ask Mara about my work, and book a call directly through her if it's a fit". The conversation happens on your terms, on her schedule.
 
-4. **Social preview on launch posts** — Every quarter when you post a portfolio update on LinkedIn, you include the agent link. The auto-generated preview card shows Mara's 3D avatar with the title "Mara — Alex's UX consultant", which catches more attention than a plain text post.
+4. **Social preview on launch posts.** Every quarter when you post a portfolio update on LinkedIn, you include the agent link. The auto-generated preview card shows Mara's 3D avatar under the title "Mara · 3D AI Agent · three.ws", with the first 120 characters of her description as the card text, which catches more attention than a plain text post.
 
 Each channel uses the right format for its medium. The underlying agent is one thing, maintained in one place, that you've defined once.
 
@@ -333,9 +333,9 @@ So plan on the URL being reachable by anyone who has it. For genuinely internal 
 
 ## What you learned
 
-- Every agent has a permanent public URL at `https://three.ws/agent/<id>`, where the id is a UUID
+- Every agent has a permanent public URL at `https://three.ws/agents/<id>`, where the id is a UUID (the singular `/agent/<id>` form redirects there)
 - The URL is stable across body swaps, system prompt updates, and skill changes
-- Rich previews come from `https://three.ws/agent/<id>/share`, a server-rendered page that carries the agent's real Open Graph, Twitter Card, and Farcaster Frame meta and forwards humans to the profile
+- Rich previews come from `https://three.ws/agents/<id>/share`, a server-rendered page that carries the agent's real Open Graph, Twitter Card, and Farcaster Frame meta and forwards humans to the profile
 - The Share button on the profile page shows that card and copies the `/share` link for you
 - Nothing is pre-rendered and nothing needs purging: edits appear in new previews within minutes, and the stale copy you see is usually the sharing platform's own cache
 - A QR code generated from any standard service points to that URL for offline share

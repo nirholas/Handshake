@@ -1,6 +1,6 @@
 # Chapter 7 · Skills — what agents know how to do
 
-Skills are the agent’s installed abilities: trading rails, launch tooling, NFTs, blinks, sentiment, scenes — all wired to real APIs. Owners switch them on and off in the Agent Studio's Skills room (three.ws/agent-studio), and MCP-exposed skills are callable by other agents through /api/mcp.
+Skills are the agent’s installed abilities: trading rails, launch tooling, NFTs, blinks, sentiment, scenes, all wired to real APIs. Owners switch them on and off in the Agent Studio's Skills room (three.ws/agent-studio), and MCP-exposed skills are callable by other agents through /api/mcp. The enabled skill list also travels in the agent's signed manifest, pinned to IPFS whenever a public agent's persona is saved (private agents publish on request), so anyone can verify which skills an agent carries without an account ([agent manifest](/docs/agent-manifest)).
 
 The in-world agent skills system (src/agent-skills.js plus 13 family modules) is what a three.ws agent can DO — and what you can watch it doing. Each skill bundles an instruction, an animation hint, a voice template, and a real handler, so execution flows through the agent protocol bus and the avatar physically performs the action (gestures, speech, mood shifts) instead of silently returning JSON. Skill families span 3D work (present/validate models, build the scene), the full Solana economy (pump.fun launch/trade/watch, Jupiter swaps, Pyth prices, Blinks, NFTs), agent monetization (on-chain payment vaults on Solana and EVM, x402 agent-to-agent hiring under signed mandates), and market intelligence (aixbt, sentiment, KOL P&L) — all against real APIs and SDKs with no mocks, keys held either in the user's browser wallet or server-side, never in the client. MCP-exposed skills double as tools on /api/mcp, so the same registry powers both the living avatar and the developer API.
 
@@ -8,7 +8,7 @@ The in-world agent skills system (src/agent-skills.js plus 13 family modules) is
 
 Every agent carries a registry of named skills — each one an instruction, an animation hint, a voice template, a JSON-Schema input contract, and a real handler. When a skill runs, the avatar visibly performs it: the protocol bus emits PERFORM_SKILL (with the gesture hint), then SKILL_DONE or SKILL_ERROR, and the result text is auto-spoken with a sentiment score that moves the avatar's mood.
 
-**How it works:** src/agent-skills.js AgentSkills class: register/perform over a Map, emitting ACTION_TYPES events on the agent protocol; toMcpTools() exposes any mcpExposed skill as an MCP tool (skill_<name>) via /api/mcp, so external agents can call the same skills. Context includes the live Three.js viewer, agent memory, identity, and a default cross-agent call() that POSTs /api/agent-delegate.
+**How it works:** src/agent-skills.js AgentSkills class: register/perform over a Map, emitting ACTION_TYPES events on the agent protocol; toMcpTools() exposes any mcpExposed skill as an MCP tool (skill_<name>) via /api/mcp, so external agents can call the same skills. Context includes the live Three.js viewer, agent memory, identity, and a default cross-agent call() that POSTs /api/agent-delegate (which rejects a non-uuid toAgentId with a 400 validation_error instead of a misleading 502).
 
 **Why it matters:** The agent isn't a chat box — you watch it do things. The same primitive shape as Claude's skill.md system means skills are also machine-callable tools, so one implementation serves both the in-world performance and the MCP API.
 
@@ -40,7 +40,7 @@ A research layer alongside trading: compute realized+unrealized P&L for any wall
 
 The agent subscribes to live pump.fun activity and reacts in-world as events arrive: pumpfun-watch-start streams claims/mints/graduations and the avatar celebrates first-time claims, shows concern at fakes, and waves at graduations; pumpfun.watchWhales speaks each whale buy/sell above a USD threshold on a specific mint; pumpfun-watch-claims polls a creator wallet for fee-claim transactions; pumpfun-recent-claims and pumpfun-token-intel give on-demand reads.
 
-**How it works:** src/agent-skills-pumpfun-watch.js opens an SSE stream to /api/agents/pumpfun-feed and a WebSocket whale watcher (src/pump/pumpkit-whale.js), dispatching reactions through the protocol bus as SPEAK/EMOTE/gesture events. Read-only: no keys, no transactions.
+**How it works:** src/agent-skills-pumpfun-watch.js opens an SSE stream to /api/agents/pumpfun-feed and a WebSocket whale watcher (src/pump/pumpkit-whale.js), dispatching reactions through the protocol bus as SPEAK/EMOTE/gesture events. The whale watcher probes three public Solana WebSocket hosts for one that answers, routes its RPC reads through /api/solana-rpc with the public endpoint as fallback, prices SOL through the shared multi-provider USD chain instead of a hard-coded rate, and reports subscription_unavailable or usd_price_unavailable through an optional onStatus callback so a blind feed is never mistaken for a quiet market. Every feed read is bounded (8 s) so a dead edge cannot freeze the agent's turn. Read-only: no keys, no transactions.
 
 **Why it matters:** Your avatar becomes a living market ticker — you see whale trades and graduation moments performed in real time instead of scanning a feed yourself.
 
@@ -56,7 +56,7 @@ Skills where the agent acts with its OWN server-side Solana wallet, not the owne
 
 Higher-order loops that compose the read and trade skills into strategies: pumpfun-research-and-buy (vet a token against rug/holder filters, then buy), pumpfun-auto-snipe (poll new launches, vet each, auto-buy up to a session spend cap), pumpfun-copy-trade and pumpfun-copy-trade-live (mirror another wallet's buys with size scaling), and pumpfun-rug-exit-watch (auto-sell held mints when top-holder concentration or dev-wallet sells cross thresholds).
 
-**How it works:** src/agent-skills-pumpfun-compose.js reads market data via the pump-fun MCP server and executes via in-process skills.perform('pumpfun-buy'/'pumpfun-sell'). Every loop supports sessionId (seen/mirrored/spent/exited state persisted in agent memory, crash-safe within the spend cap), AbortSignal, onProgress for live UI counters, and dryRun with identical control flow.
+**How it works:** src/agent-skills-pumpfun-compose.js reads market data via the pump-fun MCP server (every read under a 30 s deadline) and executes via in-process skills.perform('pumpfun-buy'/'pumpfun-sell'). Every loop supports sessionId (seen/mirrored/spent/exited state persisted in agent memory, crash-safe within the spend cap), AbortSignal, onProgress for live UI counters, and dryRun with identical control flow.
 
 **Why it matters:** Set a budget and filters, and the agent runs a disciplined strategy 24/7 — with hard spend caps, rug-detection guards, dry-run rehearsal, and resumable sessions so a crash never double-spends.
 
@@ -72,7 +72,7 @@ A protocol-bus subscriber that automatically writes structured memories whenever
 
 Whole-of-Solana trading beyond pump.fun: jupiter-quote (read-only best-route quote for any SPL pair with price impact), jupiter-swap (execute with wallet approval), jupiter-tokens (resolve symbol to mint via Jupiter's list), and pyth-price (live USD prices with confidence intervals for SOL/BTC/ETH/USDC).
 
-**How it works:** src/agent-skills-jupiter.js delegates to src/solana/jupiter-swap.js (Jupiter aggregator API, versioned transactions signed by the browser wallet) and src/solana/pyth-price.js (Pyth Hermes API).
+**How it works:** src/agent-skills-jupiter.js delegates to src/solana/jupiter-swap.js (Jupiter aggregator API, versioned transactions signed by the browser wallet) and src/solana/pyth-price.js (Pyth Hermes API). The token list behind jupiter-tokens falls through Jupiter's lite host, its tokens mirror, and the Solana Labs registry, so symbol resolution survives any one of them being down.
 
 **Why it matters:** Ask the agent 'swap 1.5 SOL to USDC' in conversation and it quotes the best route across all Solana DEXes, warns on price impact, and executes — with oracle-grade prices for anything it says out loud.
 
@@ -88,7 +88,7 @@ The agent understands shareable on-chain action links: blink-parse fetches a Sol
 
 nft-portfolio lists the NFTs any Solana wallet (or .sol name) owns, with names and collections; wallet-activity summarizes a wallet's recent on-chain transactions in plain English.
 
-**How it works:** src/agent-skills-nfts.js calls /api/agents/nfts, which wraps the Helius DAS API and enhanced transaction parsing server-side (HELIUS_API_KEY never touches the client). Both read-only.
+**How it works:** src/agent-skills-nfts.js calls /api/agents/nfts, which wraps the Helius DAS API and enhanced transaction parsing server-side (HELIUS_API_KEY never touches the client). The endpoint rejects a non-base58 wallet with a 400, answers 503 not_configured when no Helius key is set (plain Solana RPC has no DAS), retries each upstream call once under a 10 s deadline, and the client bounds its own request at 8 s. Both read-only.
 
 **Why it matters:** Ask 'what does satoshi.sol hold?' or 'what has this whale been doing?' and get a human-readable answer instead of a block-explorer spelunking session.
 
@@ -120,7 +120,7 @@ The full monetization lifecycle for an agent: register it on-chain with the pump
 
 One agent autonomously discovers, pays, and calls a peer agent's paid A2A skill — under a signed Intent Mandate the user issued ahead of time, with optional ERC-8004 reputation gating (minimum average rating and review count) before any USDC moves. The payment is performed, not hidden: PAY_INTENT, then PAY_SETTLED with a celebration emote or PAY_FAILED with visible concern.
 
-**How it works:** src/agent-skills-a2a.js POSTs to /api/agents/a2a-call, where the server enforces the mandate, a budget ledger, and the peer's on-chain reputation; settlement flows over the x402 protocol and the receipt (amount, network, transaction, artifacts) comes back to be spoken in dollars.
+**How it works:** src/agent-skills-a2a.js POSTs to /api/agents/a2a-call, where the server enforces the mandate, a budget ledger, the peer's on-chain reputation, and the agent's own spend policy (the freeze switch and the per-transaction, rolling-daily, and per-counterparty ceilings), which a mandate cannot widen: a halted agent is refused with wallet_frozen before the peer is even quoted, and an agent deleted or transferred since the mandate was signed stops being spendable. Each payment writes a receipt to the agent's custody ledger (returned as receipt_id, readable at GET /api/agents/:id/solana/custody?category=x402) and releases it again on any failure; settlement flows over the x402 protocol and the receipt (amount, network, transaction, artifacts) comes back to be spoken in dollars.
 
 **Why it matters:** This is the agent economy made visible and safe: your agent can hire other agents within a budget you pre-authorized, refuse untrusted peers, and you literally watch the money move — every payment bounded by your signed mandate.
 

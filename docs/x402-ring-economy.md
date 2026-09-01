@@ -309,6 +309,16 @@ then kept in a verified, watched, auto-fundable state:
     the sponsor" attack **and** enforces "only our wallets settle here".
   - **SOL floor.** Below `X402_SPONSOR_SOL_FLOOR_LAMPORTS` (default 0.02 SOL) the
     facilitator refuses to settle, pausing the loop before it can drain your SOL.
+    The floor guard is written by two witnesses, not one: the balance read, and
+    the chain's own verdict. `noteSponsorRentFailure()` trips it whenever a
+    settle simulation (or the rebalancer's sweep broadcast) fails with
+    `InsufficientFundsForRent` on account index 0 and that fee payer is our
+    sponsor, so a dry wallet is caught even while every RPC lane is over quota
+    and `getBalance` cannot answer (on 2026-08-28 that gap cost three hours and
+    95 unsettleable payments). A buyer paying its own fee never trips it. The
+    autonomous loop reads the same guard (`sponsorKnownBelowFloor()`) when its
+    once-per-tick balance read fails, so an unreadable balance never reads as
+    solvent.
   - **Runway alert.** The floor says the rail is already dead. The runway says
     how long until it is, and it pages first: the ring monitor measures the
     sponsor's burn from `fee_lamports` over `X402_SPONSOR_BURN_WINDOW_DAYS`
@@ -328,7 +338,10 @@ then kept in a verified, watched, auto-fundable state:
   returns a real economic-tick receipt.
 - **Rebalancer** — [api/_lib/x402/pipelines/ring-rebalance.js](../api/_lib/x402/pipelines/ring-rebalance.js),
   registered in the autonomous loop. Sweeps treasury→payer so the float never
-  drains. Recirculation, not spend — never consumes the daily spend cap.
+  drains. Recirculation, not spend: never consumes the daily spend cap. A
+  sweep broadcast rejected for the sponsor's rent exemption feeds the floor
+  guard above (most of the 2026-08-28 faults arrived through this branch, not
+  through settle simulation).
 - **Net-position report** — [api/x402-ring.js](../api/x402-ring.js). `GET
   /api/x402-ring?period=24h|7d|30d|all`. Gross volume, tx count, SOL burned (in
   SOL + USD), sweep totals, live balances, the two fee-efficiency numbers
@@ -339,6 +352,11 @@ then kept in a verified, watched, auto-fundable state:
   registered as `fee-audit` (nightly). Measures the real per-settlement and
   per-$100 fee burn into `x402_fee_audit`, alerts on drift, and closes empty
   non-role ATAs to reclaim their rent. Audit + reclaim only — never a spend.
+  This pipeline, the rebalancer and the pool funder all take their blockhash
+  from the shared read guard (`api/_lib/solana/read-guards.js`), which answers
+  from a hash still inside its validity window when the chain is briefly
+  unreadable, so a short RPC blip no longer throws a cron tick straight into an
+  ops alert; USDC's decimals resolve locally and cost no RPC call at all.
 - **Endpoint catalog** —
   [api/_lib/x402/ring-catalog.js](../api/_lib/x402/ring-catalog.js) is the single
   source of truth for **every** paid x402 endpoint on the platform (84 entries as

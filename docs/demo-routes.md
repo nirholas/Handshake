@@ -93,7 +93,7 @@ that canonical `.html` form.
 
 | Route | Page file | What it does |
 |---|---|---|
-| `/demos/agents` | `public/demos/agents/index.html` | Hub for the lab below, linked from the `/demos/` index. `/demos/agents/` reaches it too, via the sitewide trailing-slash 301. |
+| `/demos/agents` | `public/demos/agents/index.html` | Hub for the lab below, linked from the `/demos/` index. `/demos/agents/` reaches it too: `vercel.json` carries an explicit rewrite for both forms. |
 | `/demos/agents/auto-rig.html` | `public/demos/agents/auto-rig.html` | Auto-rigging an imported mesh. |
 | `/demos/agents/builds-button.html` | `public/demos/agents/builds-button.html` | Agent assembles a CTA button. |
 | `/demos/agents/climb-title.html` | `public/demos/agents/climb-title.html` | Agent climbs the page title. |
@@ -187,8 +187,8 @@ Re-verified against production (`https://three.ws`) with `curl -sIL`:
   resolve, so the `/demos/` index linked a URL that could not be served.
   It stayed invisible because the dev server has explicit `fileMap`
   entries for both forms in `vite.config.js`. `vercel.json` now carries
-  a `/demos/agents` rewrite to `/demos/agents/index.html`, placed above
-  the generic slug rule so it wins. It ships with the next deploy.
+  a `/demos/agents` rewrite to `/demos/agents/index.html` (and one for
+  `/demos/agents/`), placed above the generic slug rule so it wins.
 - Directory URLs with a trailing slash (`/demos/`, `/demo/`,
   `/demo/avatar-os/`) return **301** to the slashless form, which serves
   the index with 200.

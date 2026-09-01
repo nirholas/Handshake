@@ -136,6 +136,12 @@ Retries surface as `gate_retry` entries in the tick's `gate_results`, with a
 `gate_retries` count on the response, so a lane that keeps blipping is visible
 without reading the table.
 
+Every read the gate makes is bounded so one slow host cannot stall the rest of
+the tick: a lane's public GLB URL is fetched through the shared `fetchUpstream`
+(30 s deadline, two attempts, and a non-2xx is a gate throw rather than an error
+page handed to the GLB parser as mesh bytes), and the in-process Vertex judge
+call carries a 45 s deadline with no retry.
+
 ## Rejects are kept, not deleted
 
 A reject is copied (never moved, so the creator's forge history stays coherent)

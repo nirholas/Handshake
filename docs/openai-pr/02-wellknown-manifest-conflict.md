@@ -13,7 +13,7 @@ asserts the app has a **zero payment surface** and no crypto capability. But a p
 reviewer-discoverable manifest at a well-known path says the opposite.
 
 [`public/.well-known/ai-plugin.json`](../../public/.well-known/ai-plugin.json)
-currently reads (verbatim):
+read, until commit `1dbbe0b6d` (2026-08-06) rewrote it (verbatim):
 
 ```
 "description_for_human": "three.ws — 3D avatar/world generation and live crypto intelligence APIs, pay-per-call via x402.",
@@ -24,9 +24,27 @@ And [`public/.well-known/openapi.yaml`](../../public/.well-known/openapi.yaml) (
 describes the general REST platform (Auth/Avatars/Keys/OAuth/MCP) and does **not**
 include the 3D Studio endpoints (`/api/3d/studio`, `/api/ar`, `forge_free`).
 
-An OpenAI reviewer hitting `https://three.ws/.well-known/ai-plugin.json` sees a
-crypto/payments pitch, directly contradicting the submission. This is the single
+An OpenAI reviewer hitting `https://three.ws/.well-known/ai-plugin.json` saw a
+crypto/payments pitch, directly contradicting the submission. This was the single
 most likely thing to sink the review.
+
+**Where it stands now.** The served manifest leads with the free lane: its
+`description_for_human` is "Free, keyless 3D avatar and world generation, plus an
+optional paid API catalog for agents.", and `description_for_model` names the free
+surface first (`POST /api/3d/studio`, the MCP lane at `/api/mcp-studio`, the viewer,
+`/api/ar`, the read-only `/api/crypto` index) and points free-lane callers at
+[`public/.well-known/3d-studio-openapi.yaml`](../../public/.well-known/3d-studio-openapi.yaml),
+before describing the paid `/api/x402/*` catalog as separate and optional. `logo_url`
+is `https://three.ws/pwa-512x512.png` and `legal_info_url` is `/legal/tos`. The
+3D Studio schema is served at that path and byte-pinned to
+`prompts/store-submissions/_generated/openai-actions.yaml` by
+`npm run check:studio-openapi` (`scripts/sync-studio-openapi.mjs` regenerates the copy).
+`tests/wellknown-manifests.test.js` asserts the served schema carries no
+crypto/payment token and that the platform manifest never advertises the free lane
+as paid; `tests/api/3d-studio-openapi.test.js` pins the schema to exactly
+`/api/3d/studio` and `/api/ar`, keyless, with the AR parameters `api/ar.js` reads.
+`openapi.yaml` still describes the general platform only, which is correct: the free
+lane has its own artifact.
 
 ## Important scoping decision (this is why the task is delicate)
 
@@ -62,9 +80,9 @@ manifest layer. Recommended approach (implement this unless you find it wrong):
 
 3. **Fix the misleading fields on the platform manifest that a 3D-app reviewer would
    see as conflicting**, without deleting the real x402 catalog:
-   - `logo_url` is `favicon.ico` (`ai-plugin.json:14`). The submission cites a
-     512x512 owned-IP icon. At minimum the logo should be a real branded PNG, not the
-     favicon.
+   - `logo_url` was `favicon.ico` (`ai-plugin.json:14`). The submission cites a
+     512x512 owned-IP icon, and the manifest now points at `pwa-512x512.png`;
+     `tests/wellknown-manifests.test.js` fails if it ever reverts to the favicon.
    - Make it unambiguous, in both the human and model descriptions, which
      capabilities are free and which are paid, so nothing reads as "the 3D app costs
      crypto." The 3D generation lane IS free and keyless. Say so plainly.
@@ -102,11 +120,12 @@ manifest layer. Recommended approach (implement this unless you find it wrong):
 
 ## Definition of done
 
-- [ ] The 3D Studio app has a served, payment-free, self-describing discovery artifact
-      (jointly with Task 05).
-- [ ] The platform `ai-plugin.json` no longer reads as "the 3D app is a paid crypto
+- [x] The 3D Studio app has a served, payment-free, self-describing discovery artifact
+      (jointly with Task 05): `/.well-known/3d-studio-openapi.yaml`.
+- [x] The platform `ai-plugin.json` no longer reads as "the 3D app is a paid crypto
       service"; free vs paid is explicit; logo is a real branded asset.
-- [ ] A test asserts the 3D-app schema is crypto/payment-free.
+- [x] A test asserts the 3D-app schema is crypto/payment-free
+      (`tests/wellknown-manifests.test.js`, `tests/api/3d-studio-openapi.test.js`).
 - [ ] `npm test` green.
 - [ ] Any commit that would trip the commit gate is prepared but NOT committed;
       flagged to the owner in your report with the exact diff.

@@ -120,7 +120,7 @@ The server then, in order:
 
 1. Confirms minting is configured (the platform parent key is present) — otherwise `503 config_missing`.
 2. Loads your user, confirms you have a username, and confirms it **matches the label** — otherwise `409`.
-3. Confirms nobody has claimed it through three.ws and nobody owns it on-chain — otherwise `409 conflict`.
+3. Confirms nobody has claimed it through three.ws and nobody owns it on-chain, otherwise `409 conflict`. Unlike the availability check, this on-chain lookup is a hard gate: if Solana RPC cannot answer, the mint stops with a retryable `503 upstream_unavailable` instead of attempting a transaction that would burn rent and fail.
 4. Picks the **recipient wallet**: if you pass `owner_wallet` it must be a Solana wallet **linked to your account** (else `403 forbidden`); otherwise it falls back to your **default agent's Solana wallet** (the oldest agent you own). No agent and no linked wallet → `409 no_wallet`.
 5. Runs the atomic mint + URL-record + transfer transaction and records the claim in `user_subdomains`.
 
@@ -169,6 +169,8 @@ const { data } = await r.json();
 ```
 
 `/api/sns` is the public resolver. A miss returns `resolved: false` with `address: null` (a `200`, not a `404`) — so if you see `resolved: false` right after minting, give the RPC cache its short TTL and retry.
+
+Add `&domains=1` to either direction (`?name=` or `?address=`) to also get the owner's full `.sol` holdings: the envelope gains `all_domains`, `favorite_domain`, and `domains_truncated`. It is opt-in because it costs two extra calls to the Bonfida index, and it is best-effort, so an index outage returns the plain envelope rather than an error.
 
 **In Brave:** type `nich.threews.sol` into the URL bar. Because the `URL` record was written at mint time, Brave's SNS resolver redirects you straight to `https://three.ws/u/nich` — your showcase, rendering your public agents, avatars, paid skills, and socials. No extension, no plugin.
 
@@ -277,6 +279,7 @@ Either way, the USDC lands in the wallet your `nich.threews.sol` points at — t
 - **`409 no_wallet`** — you passed no `owner_wallet` and have no agent. Create an agent (it provisions a Solana wallet) or link a Solana wallet and pass it as `owner_wallet`.
 - **`403 forbidden` on mint** — the `owner_wallet` you passed isn't linked to your account. Link it first; three.ws won't mint into an unlinked wallet.
 - **`503 config_missing`** — subdomain minting isn't configured on this deployment (the platform parent key is absent). This is an environment issue, not a request error.
+- **`503 upstream_unavailable` on mint**: the pre-mint on-chain ownership check could not reach Solana RPC. Nothing was minted; retry in a moment.
 - **`401 unauthorized`** — minting and `mode=send` need a signed-in session or bearer token. The availability check and `mode=prep` preview do not.
 - **`/api/sns` says `resolved: false` right after minting** — resolution is cached briefly; the negative cache TTL is short. Wait a few seconds and re-resolve.
 - **Pay-by-name `404 not_found`** — the name doesn't resolve. Confirm the exact spelling (`<label>.threews.sol`), or use the GET resolver to see what it points at.

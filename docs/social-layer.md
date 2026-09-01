@@ -129,13 +129,28 @@ PUT   /api/notifications/preferences   → update it
 
 Preferences are a category × channel matrix
 ([api/_lib/notify-prefs.js](../api/_lib/notify-prefs.js)): categories are
-sales, purchases, social, IRL, market alerts, creations, and account &
-security; channels are `in_app`, `push`, `email`, and `telegram`. Every
-channel is a per-category toggle (`in_app` defaults on everywhere, and is
-locked on for account & security so the bell record of security events never
-goes silent), edited from the Notifications panel in `/dashboard/settings`
+sales, purchases, social, IRL, market alerts, creations, companion
+deliveries, knocks at your door, and account & security; channels are
+`in_app`, `push`, `email`, `telegram`, and `avatar`. Every channel is a
+per-category toggle (`in_app` defaults on everywhere, and is locked on for
+account & security so the bell record of security events never goes silent),
+edited from the Notifications panel in `/dashboard/settings`
 ([src/dashboard-next/pages/settings.js](../src/dashboard-next/pages/settings.js)).
 Bell client: [src/notifications.js](../src/notifications.js).
+
+The `avatar` channel is the corner companion walking on screen and saying the
+notification out loud. It is delivered client-side: the bell hands its unread
+inbox to [src/notification-herald.js](../src/notification-herald.js), which
+owns every rule (the per-category preference, freshness, per-id dedupe, a
+batch cap), and `GET /preferences` ships the server's `type_categories` map so
+the browser gates on the same type-to-category table push and email use. It
+defaults on only for the categories worth interrupting for (sales, creations,
+companion, knock, account & security) and off for the rest. A click-through
+from a spoken notification is tracked as `channel: "avatar"` on
+`POST /api/notifications/track`. `PUT /preferences` is a merge, not a
+replacement: a body carries only the keys being changed, omitting a key keeps
+its stored value, and `telegram_chat_id` must be a numeric chat id (send
+`null` or `""` to disconnect).
 
 ## Leaderboard, streaks, and badges: `/rankings`
 
@@ -148,7 +163,11 @@ GET /api/leaderboard/unified?metric=creations&limit=50&offset=0
 `metric` is one of `creations`, `remixes_received`, `launches`, `followers`,
 `walk_distance` (limit 1..100, default 50). Sending the request with a session
 or Bearer token pins your own row into the response even when you are outside
-the page window.
+the page window. `remixes_received` counts only finished derivatives made by
+someone else: both the parent and the child must be `status = 'done'`, and a
+creator's own refines of their own model (which also write
+`parent_creation_id`) never count, so nobody climbs that board by re-refining
+their own work.
 
 The streak engine ([api/_lib/streaks.js](../api/_lib/streaks.js),
 `recordDailyActivity()`) is called from sign-in, forge saves, diorama saves,

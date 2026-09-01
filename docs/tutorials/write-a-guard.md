@@ -14,6 +14,8 @@ We will build `check-fetch-timeouts`: a guard that refuses to build when server 
 
 This is a real class of bug. A `fetch` with no timeout hangs until the platform's own limit kills it, so one slow upstream turns into stacked requests, then a cold pool, then a 502 on an endpoint that has nothing to do with the slow service. It is invisible in review because the line looks completely normal.
 
+This guard has since shipped for real: [`scripts/check-fetch-timeouts.mjs`](../../scripts/check-fetch-timeouts.mjs) runs in the `gate` chain as `npm run check:fetch-timeouts`, is registered in `data/guards.json` with an `append` proof, and is covered by [`tests/check-fetch-timeouts.test.js`](../../tests/check-fetch-timeouts.test.js). The shipped version is stricter than the one built below (it balances parentheses to read each call's real extent, treats the shared bounded wrappers such as `fetchUpstream` as satisfying the rule, judges every `fetch` under `api/` whatever its URL, and skips a `fetch` that only appears inside a string). Follow the steps here to learn the shape, using a throwaway id such as `check-fetch-timeouts-tutorial` for the files you create, then read the shipped guard for the finished form.
+
 ---
 
 ## Step 1: write the checker

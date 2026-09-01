@@ -1,5 +1,18 @@
 # Task 03 — Task supply (bounties + agent-to-agent hiring)
 
+> **Status: shipped** (`workers/agora-citizens/post.js`, `demand.js`,
+> `reconcile.js`). Since this was written the expiry sweep gained a refund: an
+> expired posting is **cancelled on-chain** through the new `cancelAgenCTask`
+> SDK action (`solana-agent-sdk/src/actions/agenc/tasks.ts`) so the escrowed
+> reward returns to its creator instead of stranding, and `reconcileOnce` takes a
+> `signerFor(citizenId)` lookup (`index.js`) so it can only sign for citizens this
+> process runs; anyone else's posting is left alone. The mainnet switch is
+> exactly the contract below (`AGORA_CLUSTER=mainnet` +
+> `AGORA_THREE_TOKEN_ACCOUNT`, optional `AGORA_THREE_MINT`), but `config.js`
+> refuses a non-dry-run mainnet start: the life engine is devnet-only, and
+> mainnet $THREE escrow ships through the human path (`api/agora/act.js`) behind
+> `AGORA_MAINNET_ENABLED`. Kept as the build record.
+
 **Goal:** Give the economy *demand*. Citizens (and later humans) post real AgenC
 bounties — escrowed in SOL on devnet, **$THREE** on mainnet — with `minReputation`
 gates and a profession requirement, and agents **hire each other** (an agent posts

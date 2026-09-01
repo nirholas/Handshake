@@ -310,6 +310,43 @@ BigQuery `blockchain-analytics-*` datasets are EVM chains plus analytics, so the
 "prefer GCP, credits are pre-approved" rule has nothing to offer this lane. Do not spend
 time re-checking it.
 
+## When every lane fails at the wire
+
+Ten unrelated hosts do not die in the same millisecond. On 2026-08-27 the fleet
+logged `all 10 endpoints failed this request, fetch failed` about 2,000 times an
+hour while a direct probe of the same lanes from the same region answered fine:
+when every lane fails with a transport error (DNS, refused socket, reset) inside
+one request, the weather is on our side of the wire (instance egress, resolver,
+socket pool) and it clears in well under a second. `connection.js` stacks three
+answers, cheapest first:
+
+- **The error names the errno.** A thrown fetch carries the undici cause code
+  (`ECONNRESET`, `EAI_AGAIN`, `ENOTFOUND`, ...) and the lane it died on, so
+  `fetch failed` alone no longer sends a reader hunting for a week. `EAI_AGAIN` is
+  a resolver problem, `ECONNRESET` a socket one.
+- **One jittered re-sweep.** When the first sweep was transport-only, every lane
+  is tried once more after a 250-700 ms pause. An HTTP 429 or a quota body is a
+  verdict about the lane, not the wire, and never triggers it.
+- **Last-good reads instead of a 502.** Idempotent read methods (`getBalance`,
+  `getAccountInfo`, `getMultipleAccounts`, `getTokenAccountsByOwner`,
+  `getTokenLargestAccounts`, `getProgramAccounts`, `getSignaturesForAddress`,
+  `getTransaction`, the DAS `getAsset*` family, and a few more) answer from the
+  last body a lane returned for the identical call, kept in the shared cache for
+  15 minutes and marked with an `x-solana-rpc-stale` header carrying its age in
+  ms. Blockhash and slot reads are excluded on purpose: a stale blockhash
+  produces a transaction that fails later and worse. A success republishes its
+  body at most once a minute per call shape, so the steady state costs one cache
+  write a minute per distinct read, not one per RPC call.
+
+A batch that a lane refuses for its own per-batch cap (`maximum number of calls
+in a batch`, `batch too large`) is split into at most 64 single requests, four at
+a time, instead of failing the whole call; the cap is remembered per (lane,
+method) for 30 minutes so the next batch goes straight to the split, and a batch
+too wide to split rotates to a lane that takes it whole.
+[tests/solana-rpc-transport-fallback.test.js](../../tests/solana-rpc-transport-fallback.test.js)
+and [tests/solana-rpc-rotating-fetch.test.js](../../tests/solana-rpc-rotating-fetch.test.js)
+pin this behaviour.
+
 ## Knock-on effects to expect
 
 RPC starvation does not stay in the RPC layer:

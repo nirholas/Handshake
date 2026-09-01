@@ -5,10 +5,10 @@ In-world chat is a pure relay: the server broadcasts and forgets, so everyone wh
 ## Where the code lives
 
 - The relay today: the chat handler in `multiplayer/src/rooms/WalkRoom.js` (700ms cooldown and slur gate already enforced there; keep both)
-- Persisted community chat (separate system): `api/community/messages.js`
-- Chat UI: the chat bar and message list in `src/game/coincommunities-ui.js`, styles in `src/game/coincommunities.css`
-- Name safety: `multiplayer/src/display-name-safety.js`
-- Storage precedents: Upstash Redis usage in `api/play/builds.js` and `multiplayer/src/social-hub.js`
+- Persisted community chat (separate system): `api/community/messages.js` (public GET; POST as the signed-in user now refreshes the 1 h access token off the refresh cookie first via `withAuthRefresh`, and a genuinely dead session answers `401 auth_required` rather than the `posting_locked` the composer renders as "this world does not take posts"; a bridge that writes in-world chat into this stream inherits that contract)
+- Chat UI: the chat bar and message list in `src/game/coincommunities-ui.js` (it already sticks to the bottom only when the reader is near it, so a history tail must not fight that), styles in `src/game/coincommunities.css`
+- Name safety: `multiplayer/src/display-name-safety.js` (`containsHateSlur`, applied to names on join and to every chat line in the relay)
+- Storage precedents: Upstash Redis usage behind `api/play/builds.js` (`api/_lib/builds-store.js`) and in `multiplayer/src/social-hub.js`
 
 ## What to build
 

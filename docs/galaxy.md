@@ -14,12 +14,12 @@ A flat directory of agents tells you what exists but nothing about how they rela
 The page ([`pages/galaxy.html`](../pages/galaxy.html)) loads [`src/galaxy.js`](../src/galaxy.js), a Three.js scene. The map itself is assembled server-side and cached.
 
 1. **Collect agents.** `GET /api/galaxy` ([`api/galaxy.js`](../api/galaxy.js)) loads published agents from Postgres (`agent_identities` joined to `avatars`, filtered to published, described, named agents, ordered by chat count), default 600 and capped at 1200.
-2. **Embed.** Each agent's text (name, description, tone tags) is embedded with IBM Granite through [`api/_lib/watsonx.js`](../api/_lib/watsonx.js). The default model is `ibm/granite-embedding-278m-multilingual`, called at `POST {WATSONX_URL}/ml/v1/text/embeddings` with an IAM bearer token minted from the watsonx API key. Vectors are cached durably per agent (`agent_embeddings`), so only changed agents re-embed.
+2. **Embed.** Each agent's text (name, description, tone tags) is embedded with IBM Granite through [`api/_lib/watsonx.js`](../api/_lib/watsonx.js). The default model is `ibm/granite-embedding-278m-multilingual`, called at `POST {WATSONX_URL}/ml/v1/text/embeddings` with an IAM bearer token minted from the watsonx API key (the IAM exchange is idempotent and gets three attempts at 10 s; an inference call gets one attempt with a 45 s deadline). Vectors are cached durably per agent (`agent_embeddings`), so only changed agents re-embed.
 3. **Project to 3D.** [`api/_lib/embedding-math.js`](../api/_lib/embedding-math.js) mean-centers the vectors, takes the top 3 principal components via power iteration (PCA, seeded and deterministic, not UMAP or t-SNE), whitens per axis, and maps them into a cube of half-width 120 world units. Determinism means cached rebuilds are stable.
 4. **Cluster into constellations.** Seeded k-means (Lloyd's with k-means++ seeding) over L2-normalized vectors groups agents into `clamp(round(n/8), 2, 8)` clusters. Each cluster is labeled by Granite chat (`ibm/granite-3-8b-instruct`, with a same-family OpenRouter fallback).
 5. **Render.** The client draws agents as a single `THREE.Points` cloud with a custom additive shader. Point size grows with chat count; a wealth glow (from real wallet net worth via `/api/agents/networth`) biases funded stars toward a violet tint. `OrbitControls` gives drag-to-orbit, scroll-to-zoom, and gentle auto-rotate that pauses on interaction. A raycaster powers hover tooltips.
-6. **Inspect.** Clicking a star opens an in-scene card with the agent's thumbnail, constellation, description, and meta chips (net worth, chat count, token), plus two actions: "View agent" (`/agents/:id`) and "Chat" (`/agent/:id`).
-7. **Search.** The search box POSTs `{ query }` to `/api/galaxy`, which embeds the query with the same Granite model and ranks stored agent vectors by cosine similarity. The client highlights matches and flies the camera to the best one.
+6. **Inspect.** Clicking a star opens an in-scene card with the agent's thumbnail, constellation, description, and meta chips (net worth, chat count, token), plus two actions: "View agent" and "Chat", both on the canonical `/agents/:id` route.
+7. **Search.** The search box POSTs `{ query }` to `/api/galaxy`, which embeds the query with the same Granite model and ranks stored agent vectors by cosine similarity (`ranking: "semantic"`). The client highlights matches and flies the camera to the best one. When the embedder cannot answer (unreachable, or no vector returned) there is deliberately no other embedding lane to fall back to, because the stored vectors live in Granite's space and a vector from another model would be compared in a different geometry; instead the same corpus is ranked lexically ([`api/_lib/lexical-rank.js`](../api/_lib/lexical-rank.js)) and the response says so with `ranking: "lexical"` and `degraded: { reason: "embedder_unavailable", detail, retryable: true }`, so a search still returns useful matches rather than a `502`.
 
 Only projected coordinates and cluster centroids are sent to the browser; raw high-dimensional vectors never leave the server.
 
@@ -54,8 +54,12 @@ curl -X POST 'https://three.ws/api/galaxy' \
 #   "query": "an agent that trades solana memecoins",
 #   "model": "ibm/granite-embedding-278m-multilingual",
 #   "count": 12,
-#   "results": [ { "id": "…", "name": "…", "description": "…", "thumbnail": "…", "score": 0.742 } ]
+#   "results": [ { "id": "…", "name": "…", "description": "…", "thumbnail": "…", "score": 0.742 } ],
+#   "ranking": "semantic"
 # }
+# When Granite cannot embed the query the same call answers 200 with
+# "ranking": "lexical", a "lexicalScore" per result, and
+# "degraded": { "reason": "embedder_unavailable", "detail": "…", "retryable": true }.
 ```
 
 `GET /api/galaxy` accepts `?refresh=1` to force a rebuild and `?limit=<n>` (default 600, max 1200). `POST /api/galaxy` takes `{ query, limit? }` (query trimmed to 200 chars, up to 30 results). Rankings apply a minimum similarity of 0.05.
@@ -63,7 +67,7 @@ curl -X POST 'https://three.ws/api/galaxy' \
 ## States and limits
 
 - **No auth.** Both endpoints are public and read-only, guarded by a per-IP rate limit. Embedding cost is bounded by design: agents embed once into the durable cache and map builds are snapshot-cached, so only a search query triggers a fresh Granite call.
-- **watsonx required.** With no credentials the endpoint returns `503 watsonx_unavailable` and the page shows "IBM Granite isn't connected" (no retry). Configure `WATSONX_API_KEY` and `WATSONX_PROJECT_ID` to light it up.
+- **watsonx required.** With no credentials the endpoint returns `503 watsonx_unavailable` and the page shows "IBM Granite isn't connected" (no retry). Configure `WATSONX_API_KEY` and `WATSONX_PROJECT_ID` to light it up. With credentials present but Granite failing on a search, the query degrades to lexical ranking as described above instead of erroring.
 - **Caching.** Three layers: a `galaxy_snapshots` server snapshot (6-hour TTL, with warm-instance rebuild coalescing), the durable per-agent `agent_embeddings` cache, and a 60-second cache on the published-agent query. Pass `?refresh=1` to bypass the snapshot.
 - **Population.** However many published agents exist, capped by the limit. There is no fixed count.
 - **Empty state.** With zero published agents the page shows "The galaxy is still forming" and a "Create an agent" CTA to `/create`.

@@ -4,10 +4,10 @@ Everyone at the event arrives through one link, and everyone who has fun should 
 
 ## Where the code lives
 
-- Deep-link contract: `coinWorldUrl()` (tested in `tests/fits-lib.test.js`); canonical URL emission in `src/game/coincommunities.js` (`history.replaceState` on entry)
-- OG image for /play links: `api/play-og.js`; house OG patterns: `api/page-og.js`, `api/og-leaderboard.js`
-- HUD mount + share precedent: `src/game/coincommunities-ui.js` and the build-share sheet
-- QR: check `package.json` for an existing QR dependency first (open-source-first rule); a tiny well-maintained encoder is fine if none exists, no heavyweight additions
+- Deep-link contract: `coinWorldUrl()` in `src/fits-lib.js` (tested in `tests/fits-lib.test.js`); canonical URL emission in `src/game/coincommunities.js` (`history.replaceState` in `enter()`, which keeps exactly `coin`, `name`, `symbol`, `image`, `tier` for a holders world, and `ui`; a bare `coin` link now resolves its name, symbol and image through `_fetchCoinIdentity` before the rewrite, so the canonical link is always complete)
+- OG image for /play links: `api/play-og.js` (GET-only since the fleet hardening pass; any other verb is refused before the satori render); house OG patterns: `api/page-og.js`, `api/og-leaderboard.js`
+- HUD mount + share precedent: `src/game/coincommunities-ui.js` and the build-share sheet. Do not confuse this with the friend invites in `src/game/friends-panel.js`, which are a social-graph request, not a world link
+- QR: `qrcode` is already a dependency (`src/wallet-deposit.js` and `src/marketplace.js` render with it); use it, no new encoder
 
 ## What to build
 

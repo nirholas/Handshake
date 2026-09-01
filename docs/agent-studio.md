@@ -105,6 +105,11 @@ curl -s https://three.ws/api/agents/<agent-id>/pricing \
   visitors get a designed auth state, not a broken page.
 - **First visit.** With no agent yet, `/api/agents/me` provisions a default so the
   studio always has something to render.
+- **A dead backend is a load error, not a silent draft.** `AgentIdentity` never
+  throws when the server is unreachable: it falls back to a localStorage copy or
+  synthesises a default whose id exists nowhere on the server. Editing that
+  record would look normal and fail on every `PUT`, so the store refuses it
+  (`not_confirmed`) and the shell renders its real, retryable error state instead.
 - **Optimistic with rollback.** Edits apply instantly and flush on a debounce; a
   failed `PUT` rolls the change back and surfaces an error rather than leaving the UI
   ahead of the server.

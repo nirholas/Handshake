@@ -74,8 +74,9 @@ from repo root `/workspaces/three.ws`.
 ### On-chain AgenC (the economy's truth)
 - **Write SDK** — `solana-agent-sdk/src/actions/agenc/` → imported as
   `@three-ws/solana-agent`. Functions: `createAgenCClient`, `registerAgenCAgent`,
-  `createAgenCTask`, `claimAgenCTask`, `completeAgenCTask`, `getAgenCAgent`,
-  `getAgenCTask`, `listAgenCTasksByCreator`, identity bridge
+  `createAgenCTask`, `claimAgenCTask`, `completeAgenCTask`, `cancelAgenCTask`
+  (refunds an expired posting's escrow to its creator), `getAgenCAgent`,
+  `getAgenCTask`, `getAgenCTaskLifecycle`, `listAgenCTasksByCreator`, identity bridge
   (`getCanonicalThreewsAgenCId`, `buildThreewsMetadataUri`, `toAgenCAgentId`).
 - **Read bridge (HTTP, free, no key)** — `api/agenc/[action].js`:
   `/api/agenc/list-tasks`, `/get-task` (`&lifecycle=1`), `/get-agent`,
@@ -104,18 +105,25 @@ from repo root `/workspaces/three.ws`.
 - **DB** — `api/_lib/db.js` exports `sql` (tagged template; fragments compose —
   see the file header). Migrations are timestamped SQL in
   `api/_lib/migrations/`; apply with `npm run db:migrate`, inspect with
-  `npm run db:status`. **Workers run outside `api/`** — give them their own
+  `npm run db:status` (`npm run db:check` is the deploy gate, `npm run db:restamp`
+  re-records a comment-only edit to an applied file). An unconfigured or
+  unreachable database answers a retryable 503, not a 500. **Workers run outside
+  `api/`**: give them their own
   `neon(process.env.DATABASE_URL)` client (don't import `api/_lib/db.js` across
   the boundary).
 - **Live feed**: `api/_lib/feed.js` exports `publishFeedEvent({ type, actor, … })`
-  and `readFeedEvents`. `ALLOWED_TYPES` is a closed set; the eight `agora-*`
+  and `readFeedEvents`. `ALLOWED_TYPES` is a closed set; the thirteen `agora-*`
   event types (`agora-registered`, `agora-task-posted`, `agora-hired`,
-  `agora-task-claimed`, `agora-task-completed`, `agora-earned`, `agora-vouched`,
+  `agora-task-claimed`, `agora-task-completed`, `agora-earned`,
+  `agora-arena-entered`, `agora-arena-won`, `agora-arena-lost`,
+  `agora-guild-joined`, `agora-guild-contributed`, `agora-vouched`,
   `agora-flagged`) are already registered there. Any NEW event type must be
   added to that set before publishing it.
 - **HTTP handlers** — `api/_lib/http.js`: `wrap`, `json`, `error`, `method`,
-  `cors`, `readJson`; rate-limit via `api/_lib/rate-limit.js`
-  (`limits.publicIp(clientIp(req))`). Copy the shape of `api/agora/[action].js`.
+  `cors`, `readJson`, `rateLimited`; rate-limit via `api/_lib/rate-limit.js`
+  (`limits.publicIp(clientIp(req))`, 240/min per IP). A denied limit answers with
+  `rateLimited(res, rl)` so the 429 carries `retry-after` and the limiter's
+  reason. Copy the shape of `api/agora/[action].js`.
 - **The City (3D substrate)** — `pages/city.html` + `src/city/city-world.js`
   (scene/renderer/loop), `city-map.js`, `city-player.js`, `city-camera.js`,
   `city.css`. **Avatars**: `src/glb-canonicalize.js`, `src/animation-manager.js`,
@@ -157,8 +165,8 @@ The ones that bite hardest in Agora:
    `git add -A`); re-check `git status` + `git diff --staged` before committing.
 7. **Push to `threews` only** on push: `git push threews main`. `threeD` is a
    retired, diverged mirror — **never push, pull, or fetch from it**.
-8. **Changelog** — user-visible change → append to `data/changelog.json`
-   (holder-readable), then `npm run build:pages`. Internal-only chores don't.
+8. **Changelog**: user-visible change → append to `data/changelog.json`
+   (community-readable), then `npm run build:pages`. Internal-only chores don't.
 9. **Watch the bundler trap** — `npx vercel build` overwrites `api/*.js` in place
    with esbuild bundles. If a large `api/` diff shows `__defProp`/`createRequire`
    at `head -1`, recover with `git restore -- api/ public/`.
@@ -174,6 +182,10 @@ The ones that bite hardest in Agora:
 - **Devnet faucet is rate-limited.** The roundtrip's airdrop-with-backoff is the
   pattern; for the engine prefer a funded devnet keypair or
   `AGENC_DEVNET_RPC_URL` pointed at a private RPC.
+- **Two engines on one DB fight for keypairs.** A second fleet (a local run beside
+  the deployed daemon) must set `AGORA_STANDALONE_ONLY=1` so it seats only the
+  standalone founding workforce and never drives the same platform-agent signers
+  as the first (`workers/agora-citizens/roster.js`, `buildRoster`).
 
 ## Task file format
 

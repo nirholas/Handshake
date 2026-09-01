@@ -106,7 +106,13 @@ purchase mint. A wallet that has never held the mint, or holds less than the
 price plus fee, gets a `409 insufficient_funds` naming the shortfall
 (`"this wallet is 0.35 short of …"`) instead of a transaction that can only fail
 in-wallet. If the RPC cannot answer, the transaction is built anyway and the
-chain decides, so a throttled node never blocks a payable purchase.
+chain decides, so a throttled node never blocks a payable purchase. The other
+chain reads on the checkout paths (the recent blockhash here and in the agent
+purchase, the mint decimals in `agent-purchase.js` and `purchase-as-agent.js`)
+go through the shared Solana read guards in `api/_lib/solana/read-guards.js`: a
+cached blockhash still inside its validity window answers when the chain cannot,
+and USDC-class mints resolve their decimals from a constant table without a
+network call, so an RPC blip degrades to a served request instead of a 500.
 
 The payment modal shows the sponsored QR first and offers a one-click swap to the
 direct-transfer QR for wallets that do not implement transaction requests.

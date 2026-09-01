@@ -23,14 +23,15 @@ look wildly overconfident.
 
 | Tier | Score | Claims | Observed on held-out data |
 |---|---|---|---|
-| Prime | 86+ | P(win) >= 45% | 46.4% (n=304) |
-| Strong | 72+ | P(win) >= 25% | 39.3% (n=858) |
-| Lean | 56+ | P(win) >= 12% | 23.3% (n=1,415) |
-| Watch | 34+ | P(win) >= 5% | 10.4% (n=2,790) |
-| Avoid | 0+ | below that | 1.8% (n=68,844) |
+| Prime | 86+ | P(win) >= 45% | 47.6% (n=267) |
+| Strong | 72+ | P(win) >= 25% | 40.3% (n=852) |
+| Lean | 56+ | P(win) >= 12% | 23.4% (n=1,418) |
+| Watch | 34+ | P(win) >= 5% | 10.7% (n=2,725) |
+| Avoid | 0+ | below that | 1.8% (n=68,949) |
 
-Those observed numbers come from 74,211 launches the model had never seen. They
-are recomputed on every refit and published live at
+Those observed numbers are the bootstrap model's holdout: 74,211 launches the
+model had never seen, from the fit shipped in `conviction-model.json`. They are
+recomputed on every refit and published live at
 [`/api/oracle/model?view=card`](/api/oracle/model?view=card), so the table above
 can go stale but the endpoint cannot.
 
@@ -123,7 +124,9 @@ win  = moon AND hold_multiple >= 1
 
 Neither ratio can be moved by the price of SOL, and both backfill exactly from
 columns we already stored, so the historical corpus was corrected in a single
-migration with no re-fetching.
+migration with no re-fetching. A row with no `hold_multiple` at all cannot
+answer the survival question, so it is neither a `win` nor a `rug` (it can
+still be a `moon`); it is never read as a 100% drawdown and counted as a rug.
 
 **The real rug rate is 11.4%, not 91%.** And it holds within two points across
 every observation-age bucket from 60 minutes to three days, which is what a
@@ -168,6 +171,20 @@ score = anchors(sigmoid(intercept + sum of one bucket weight per feature))
 The code is [`api/_lib/oracle/fit.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/oracle/fit.js),
 shared by the CLI and the production cron so the terminal and the server can
 never disagree about what "the model" means.
+
+### Thin buckets say less
+
+After the fit, every weight is shrunk toward zero in proportion to the evidence
+behind it: `w * n / (n + 200)`, where `n` is the number of rows in that bucket
+(`fit.shrink_prior` in the model document). A bucket with 200 rows keeps half
+its fitted weight, one with 2,000 keeps 91%, one with 34 keeps 15%. Without
+this, a 34-row bucket could emit a -0.64 log-odds opinion that reversed a
+verdict in production; `smart_money_count >= 4` did exactly that, fitting
+negative on the `win` head although those launches won at four times the base
+rate, because with so few rows the regression hands the bucket whatever
+residual the correlated volume and buyer-count features leave behind. The
+shrinkage is applied before evaluation, never after, so the holdout numbers
+describe the weights that actually ship.
 
 ### Features drop themselves
 
@@ -317,7 +334,7 @@ something) rather than being treated as zero.
 const { math } = oracle.explain(signals);
 
 math.formula        // 'p = 1 / (1 + exp(-(intercept + sum(term log_odds))))'
-math.intercept      // -3.8771
+math.intercept      // -3.9975
 math.terms          // one row per bucket, with its sample count
 math.total_log_odds // add the column up by hand; you will land here
 ```

@@ -14,7 +14,7 @@ feed/follow/rankings graph is covered in
 |---|---|
 | `/u/:username` | The public portfolio. No auth required; anyone can view it. |
 | `/profile` | Self-view resolver for the signed-in user (see below). |
-| `/u/0x<40 hex>` | Legacy wallet-address profile: the on-chain agent list for that address ([src/erc8004/user-profile.js](../src/erc8004/user-profile.js)). |
+| `/u/0x<40 hex>` | Legacy wallet-address profile: the on-chain agent list for that address ([src/erc8004/user-profile.js](../src/erc8004/user-profile.js)). Each chain is read through `readProvider()` from [src/erc8004/chain-meta.js](../src/erc8004/chain-meta.js), which fails over across keyless public RPC nodes so one rate-limited endpoint cannot blank the list. |
 
 All three are served by [pages/profile.html](../pages/profile.html); the page
 inspects the path segment and mounts the right view.
@@ -55,8 +55,9 @@ instead.
 
 **Walking-avatar hero.** The owner's primary avatar walks live in an embedded
 `/walk-embed` iframe with two real CTAs: "Say hi" opens the avatar's live
-chat surface, "Walk with me" opens the full walk experience alongside the
-owner ([src/profile-walk-hero.js](../src/profile-walk-hero.js)).
+chat surface (`/avatars/:id?view=chat` for an avatar, `/agents/:id#chat` for an
+agent), "Walk with me" opens the full walk experience alongside the owner
+([src/profile-walk-hero.js](../src/profile-walk-hero.js)).
 
 **Stats strip.** Followers and Following lead and are clickable (they open
 the follow-list modal). After them, one tile per non-zero count: Creations,
@@ -75,7 +76,7 @@ is active by default, and the bar hides when fewer than two tabs survive:
 |---|---|---|
 | Creations | Forged 3D models, saved worlds, and restyled models, merged by recency. Each card is a live rotating 3D thumbnail with the type badge (Model / World / Restyle), a remix tag where applicable, and a copy-the-prompt button. | `/viewer?src=<glb>` or `/diorama?id=<id>` |
 | Avatars | Public avatars with tags, file size, fork count, and a Fork button. | `/avatars/:id` |
-| Agents | Public agents with on-chain identity metadata (ERC-8004 id, wallet, `.sol` domain, X / Farcaster) and, when published, a Fork button. | `/agent/:id` |
+| Agents | Public agents with on-chain identity metadata (ERC-8004 id, wallet, `.sol` domain, X / Farcaster) and, when published, a Fork button. | `/agents/:id` |
 | Widgets | Public widgets with type and view count. | `/w/:id` |
 | Skills | Published marketplace skills with category, per-call price, and installs. | `/marketplace#<slug>` |
 | Plugins | Published plugins with installs and rating. | rendered in place |
@@ -175,7 +176,11 @@ The header's share button opens a small menu: the native share sheet where
 the browser supports it, share to X, and copy link. Page title, description,
 and the OG/Twitter card (rendered live by
 [api/u-og.js](../api/u-og.js)) are rewritten per profile, so a shared link
-unfurls with the creator's actual name and stats.
+unfurls with the creator's actual name and stats. Because that image URL is
+what a crawler resolves for `og:image`, a database blip while rendering it
+degrades to a real card of the handle already known, sent `Cache-Control:
+no-store`, rather than a JSON error body that a crawler would cache as the
+unfurl; an unknown handle is still a cached 404 card.
 
 ---
 

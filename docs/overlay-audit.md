@@ -161,4 +161,4 @@ only worth calling from a test.
 - [`tests/e2e/mobile-helper-overlays.spec.js`](../tests/e2e/mobile-helper-overlays.spec.js): the phone-width geometry, measured in a real browser
 - `npm run audit:mobile-touch`: touch-target sizes, the other half of "can I actually hit this"
 - `npm run audit:a11y`: keyboard and screen-reader coverage on the top pages
-- `npm run snapshot`: the daily full-page visual record of every route
+- `npm run snapshot`: the daily full-page visual record of every public route (`--authed` replays the `audit:web:login` session and widens it to the signed-in pages, writing to `reports/ui-shots/` instead of `snapshots/`)

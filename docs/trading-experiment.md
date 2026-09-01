@@ -240,11 +240,12 @@ is still fail-closed: unproven is never treated as safe.
 
 `isMayhemMode` lives on the pump.fun bonding curve, not the new-mint firehose, so
 it's read from the curve (one cached read per mint) and checked as **gate 0** in
-`executeBuy` — before any throttle, wallet decrypt, or position row — so it covers
+`executeBuy` (before any throttle, wallet decrypt, or position row) so it covers
 **every** trigger path (new_mint, intel, alpha, first_claim, radar, swarm). On by
-default (`SNIPER_MAYHEM_FILTER=0` disables; `SNIPER_MAYHEM_STRICT=1` also skips
-when the curve can't be read). A Mayhem mint is skipped with reason
-`mayhem_excluded`.
+default (`SNIPER_MAYHEM_FILTER=0` disables). A Mayhem mint is skipped with reason
+`mayhem_excluded`. The gate also fails closed by default: a curve that still can't
+be read after the RPC-chain retries is skipped with reason `mayhem_unknown`, and
+`SNIPER_MAYHEM_STRICT=0` restores allow-on-unknown.
 
 ## Funding it from the UI
 

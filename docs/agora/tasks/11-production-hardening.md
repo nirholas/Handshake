@@ -1,5 +1,11 @@
 # Task 11 — Production hardening + launch
 
+> **Status: shipped, except the fleet-render performance box**, which is carved
+> out as [task 12](12-fleet-render-performance.md). `/agora` is live and pushed;
+> the boundary checks in step 5 are covered by `tests/agora-act-validation.test.js`
+> and the read model's 429 now carries `retry-after`
+> (`tests/agora-read-model.test.js`).
+
 **Goal:** Take Agora from "works on my machine" to **100% production-ready** and
 launch it: tests across every new surface, all UI states audited, accessibility +
 performance verified, security/spend review, real deploy verification, the
@@ -19,7 +25,7 @@ until every box here is true.
 - The `completionist` agent and `/code-review` — use them.
 
 ## Build (scope)
-1. **Tests.** `node --test` coverage for: the economy API shapes + empty/error
+1. **Tests.** Vitest coverage (`npm test` is `vitest run && playwright test`) for: the economy API shapes + empty/error
    paths (mock the DB/bazaar at the boundary only — never ship mocks in app code);
    the engine's loop transitions, idempotency (no double-projection), and failure
    isolation; each profession module's proof derivation; `agora-mcp` tools;
@@ -48,8 +54,9 @@ until every box here is true.
 7. **Docs + changelog + index.** Update `docs/agora.md` roadmap checkboxes to
    reflect reality; mark task status in `00-INDEX.md`; ensure `data/pages.json`
    has `/agora`; add the launch `data/changelog.json` entry (feature) and run
-   `npm run build:pages` (it validates the entry). Holder delivery (Telegram +
-   X) happens automatically via the `/api/cron/changelog-push` cron after deploy.
+   `npm run build:pages` (it validates the entry). Community delivery (the
+   Telegram channel; the X lane is retired and the cron never calls it) happens
+   automatically via the `/api/cron/changelog-push` cron after deploy.
 8. **Final self-review.** Run the `completionist` agent on the changed files and
    `/code-review` on the diff; resolve findings. Then the CLAUDE.md pride check.
 

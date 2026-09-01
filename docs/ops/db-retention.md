@@ -19,7 +19,11 @@ Two families grow without bound:
    day** (≈30 MB/day), and its mint-keyed satellites grow in lockstep —
    `pump_coin_wallets`, `coin_smart_money`, `smart_money_scored`,
    `pump_coin_outcomes`, `oracle_conviction`, `oracle_conviction_history`. All
-   told the family adds **~60 MB/day**.
+   told the family adds **~60 MB/day**. The smart-money judge
+   (`api/cron/smart-money-rollup.js`) has to outrun this window: it walks unjudged
+   coins oldest-first at 400 per run (raised from 80 on 2026-08-16, when a 309k
+   backlog was ageing toward the cliff), because a coin pruned before it is judged
+   never folds its buyers into `wallet_reputation` at all.
 2. **`avatar_regen_jobs`.** Each reconstruct job's `params` carries the multi-MB
    base64 **source** images. The live path drops them once a job leaves
    reconstruction, but terminal jobs that took another route kept them — 346 rows
@@ -51,6 +55,17 @@ Bounded + idempotent. Each tick:
   works **even at the cap**, where an `UPDATE` would itself fail with 53100.
   `wallet_reputation` (the durable, wallet-keyed output) and `pumpfun_graduations`
   (win/loss ground truth) are **never** touched.
+- **Ledger windows with their own clocks.** The x402 audit ledger keeps a longer
+  window (`X402_AUDIT_RETENTION_DAYS`, tightening to
+  `X402_AUDIT_MIN_RETENTION_DAYS` under pressure), and `x402_spent_payments`, the
+  replay guard behind `api/_lib/x402/spent-payments.js`, keeps a **fixed** window
+  (`X402_SPENT_RETENTION_DAYS`) that the valve never shortens: a shorter window is
+  a shorter replay-protection window, and the rows are too small to be why the
+  branch is under pressure. `x402_self_facilitator_log` (the settle book, the
+  largest table this cron does not touch) is deliberately unmanaged because
+  `/api/x402-ring` aggregates it with no time filter for its `lifetime` totals;
+  pruning it is a product decision about published revenue figures, not a
+  retention one.
 - **Avatar job hygiene** — deletes terminal jobs past 30 days and strips base64
   source images from terminal jobs past a day.
 - **VACUUM** (plain) of the pruned tables so freed pages become reusable by
@@ -85,6 +100,9 @@ fires one deduped `db:retention-pressure` alert.
 | `DB_COMPACT_ENABLED` | `1` | Set `0` to disable the `VACUUM FULL` compaction step entirely. |
 | `DB_COMPACT_MIN_FREE_MB` | `25` | Only rewrite a table holding at least this much reclaimable space (and at least 30% of its file). |
 | `DB_COMPACT_MAX_TABLES` | `3` | Most tables one tick may rewrite. |
+| `X402_AUDIT_RETENTION_DAYS` | `90` | x402 audit ledger window (`x402_autonomous_log` and the audit log). Clamped `[7, 3650]`. |
+| `X402_AUDIT_MIN_RETENTION_DAYS` | `30` | Floor the valve tightens the audit window to. Clamped `[1, audit retention]`. |
+| `X402_SPENT_RETENTION_DAYS` | `90` | Fixed window for `x402_spent_payments` replay proofs. Clamped `[30, 3650]` so a typo cannot shrink the guard to hours; never tightened by the valve. |
 
 ### Sizing the high-water mark (read before changing it)
 

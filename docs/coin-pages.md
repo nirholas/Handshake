@@ -55,6 +55,16 @@ Grotesk display face).
 
   The picked source is remembered across coins and visits (localStorage
   `tws_coin_chart_source`), and the embeds follow the site's light/dark theme.
+
+  A third-party terminal that never renders is caught, not left as an empty
+  box: [`src/shared/embed-guard.js`](../src/shared/embed-guard.js) gives each
+  embed a 12 s deadline (started when it first scrolls into view, since a lazy
+  iframe below the fold has not begun loading), and a TradingView script that
+  is blocked outright or loads without ever injecting its chart trips the same
+  path. The panel that replaces it says the provider did not load (an ad
+  blocker, an extension or the network usually ate it), links to the same
+  chart on the provider's own site, and offers a "Try again" that remounts the
+  embed.
 - **Price performance matrix** — colored 1h / 24h / 7d / 14d / 30d / 60d /
   200d / 1y change cells, so the whole return curve is legible at a glance.
 - **Market stats** — market cap, 24h volume, circulating/total supply,
@@ -112,6 +122,9 @@ through the shared [`failover-fetch`](../src/shared/failover-fetch.js) primitive
   Each is normalized to the same shape in
   [`api/_lib/market-fallbacks.js`](../api/_lib/market-fallbacks.js); a fallback
   that only carries BTC dominance (CoinPaprika) simply shows one dominance chip.
+  The Fear & Greed reading is fetched with one retry and keeps its last good
+  value for a day (the index updates once daily), so an alternative.me blip
+  never blanks the gauge.
 - **Market table** (`/api/coin/markets`) — CoinGecko → CoinLore. CoinLore backs
   up the ranked top-N list (7d sparklines and category scoping stay
   CoinGecko-only and degrade to an empty chart / CoinGecko-only when it's down).
@@ -153,7 +166,10 @@ through the shared [`failover-fetch`](../src/shared/failover-fetch.js) primitive
 - **Derivatives table** (`/api/coin/derivatives`) — CoinGecko's cross-venue perp
   feed, falling back to Hyperliquid's keyless info API
   ([`api/_lib/hyperliquid.js`](../api/_lib/hyperliquid.js)): one venue instead of
-  dozens, but live price/funding/OI/volume for ~200 perps beats a 502. The
+  dozens, but live price/funding/OI/volume for ~200 perps beats a 502. Because
+  no other venue reports the same contracts, each Hyperliquid info query is
+  retried once and keeps its last good answer for ten minutes (keyed by the
+  query body), so a throw there never empties the derivatives view. The
   response carries a `source` marker. Riding alongside whichever source answered
   is a `deribit` block ([`api/_lib/deribit.js`](../api/_lib/deribit.js)): index
   prices, funding-carrying perp tickers, and per-asset options aggregates from
@@ -542,6 +558,19 @@ All data is real and fetched at runtime — nothing is hardcoded or sampled:
 | `/api/news/article`     | publisher page fetch (SSRF-guarded) → publisher feed body → preview; LLM analysis via the platform chain (`api/_lib/llm.js`) with extractive fallback | 1800 s |
 | `/api/news/archive`     | `gs://three-ws-news-archive` (662k-article JSONL corpus + indexes on GCS) | 300 s / 3600 s |
 | `/api/coin/liquidations`| `services/liquidation-collector` (Binance/Bybit/OKX public liquidation WebSocket streams) | 15 s, `503` no-fallback offline |
+
+The `/api/defi/*` handlers have DeFiLlama as their only upstream, so a TTL
+cache alone would still 502 the moment it expired during an outage. Every
+DeFiLlama read goes through the shared
+[`upstream-fetch`](../api/_lib/upstream-fetch.js) helper (one retry on a
+transient failure, `attempts: 2`) and each handler keeps its last good payload
+past the TTL: `/api/defi/chain`, `/api/defi/protocol`, `/api/defi/yields` and
+`/api/defi/hacks` hold theirs for six hours, the rest for the 30 minutes that
+[`mem-cache`](../api/_lib/mem-cache.js)'s `cached()` mirrors every value into
+its last-known-good tier. A response served from that copy carries an
+`x-three-stale: 1` header so the page can say the numbers are not live rather
+than pass them off as current; the header disappears the moment the loader
+succeeds again.
 
 Full request/response shapes: [api-reference.md → Coin Market Data API](api-reference.md#coin-market-data-api).
 

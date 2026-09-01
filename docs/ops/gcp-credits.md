@@ -361,7 +361,7 @@ Vertex speaks the Anthropic Messages API with four differences, all handled in
 
 - Model id in the **URL path**, not the body: `…/publishers/anthropic/models/<id>:streamRawPredict` (stream) / `:rawPredict` (non-stream). Regional endpoints prefix the host (`us-east5-aiplatform.googleapis.com`); `global` uses the bare host.
 - Body gains `"anthropic_version": "vertex-2023-10-16"` and drops `model` (+ `stream`).
-- Auth: `Authorization: Bearer <oauth>` (via `api/_lib/gcp-auth.js` — shared with Imagen) — no `x-api-key`, no `anthropic-version` header.
+- Auth: `Authorization: Bearer <oauth>` (via `api/_lib/gcp-auth.js`, shared with Imagen): no `x-api-key`, no `anthropic-version` header. The token is cached per process and refreshed five minutes ahead of expiry; if a refresh fails, the cached token is served until its hard expiry margin so a metadata-server blip does not fail a request.
 - Model id: bare aliases pass through (`claude-sonnet-4-6`); a dated first-party id converts to the `@` form (`claude-haiku-4-5-20251001` → `claude-haiku-4-5@20251001`) via `toVertexModelId()`.
 
 SSE event shapes are identical to first-party, so every existing stream parser works unchanged.
@@ -408,7 +408,7 @@ behavior is intact.
 
 - **Preview first:** set `VERTEX_CLAUDE_ENABLED=1` (and optionally `VERTEX_CLAUDE_PRIMARY=1`) in Vercel **preview** only. Production flags stay unset — flipping production changes the billing lane and is the owner's call.
 - **Production flip (owner):** `printf '1' | vercel env add VERTEX_CLAUDE_ENABLED production` (+ `VERTEX_CLAUDE_PRIMARY` for chain inversion), then redeploy.
-- **Rollback (instant, no code deploy):** unset `VERTEX_CLAUDE_ENABLED` / `VERTEX_CLAUDE_PRIMARY`. Every lane falls through to Groq → OpenRouter → NVIDIA → paid backstop exactly as before.
+- **Rollback (instant, no code deploy):** unset `VERTEX_CLAUDE_ENABLED` / `VERTEX_CLAUDE_PRIMARY`. Every lane falls through to the free lanes (Groq → OpenRouter → NVIDIA → SambaNova → Mistral → Z.AI, each present only when its key is) → paid backstop exactly as before.
 
 ---
 
@@ -444,10 +444,21 @@ location (un-prefixed host).
 | `VERTEX_IMAGEN_MODEL` | `gemini-2.5-flash-image` | Generation model. An `imagen-*` value uses the legacy `:predict` path. |
 | `VERTEX_IMAGEN_EDIT_MODEL` | `gemini-2.5-flash-image` | Edit model (`editImage()`); `imagen-*` routes to `:predict` inpainting. |
 
-Ladder is unchanged and fully preserved: **NIM FLUX → Vertex → Replicate**, with
-any Vertex error degrading cleanly to FLUX. Which provider served each image is
-logged (`[text-to-image] served by <model>`) and persisted on the forge job as
-`text_to_image_model`.
+The ladder today (`textToImage()` in `api/_mcp3d/text-to-image.js`): **Vertex
+Gemini first when the lane is configured** (`VERTEX_IMAGEN_FIRST=0` restores the
+legacy NIM-first order without touching the on/off gate) → NVIDIA NIM
+**FLUX.1-dev** (moved off `flux.1-schnell` on 2026-08-27 when that endpoint
+stopped answering) → Hugging Face-routed fal-ai and nscale FLUX.1-schnell
+(`HF_TOKEN`) → the Livepeer federation lane (flag-gated) → Pollinations
+(keyless, always present, lower fidelity) → Replicate (paid backstop). Every
+rung runs under one shared budget (`TEXT_TO_IMAGE_BUDGET_MS`, default 60 s): a
+lane with a fallback behind it is capped at max(25% of the budget, 60% of what
+is left), a lane with under 10% left is skipped, and an exhausted ladder answers
+a retryable `rate_limited` that the forge boundary maps to a 429. Any Vertex
+error degrades cleanly to the next rung, and because Pollinations needs no key,
+no single provider's failure is ever the terminal error. Which provider served
+each image is logged (`[text-to-image] served by <model>`) and persisted on the
+forge job as `text_to_image_model`.
 
 ### Verification status
 
@@ -509,14 +520,18 @@ Live FLUX side-by-side samples were not captured: the prod `/api/v1/ai/image` PO
 returned `FUNCTION_INVOCATION_TIMEOUT` during the run and there is no NVIDIA key in
 the local env, so FLUX could not be driven locally. The verdict rests on the
 inspected Gemini outputs plus the known FLUX.1-schnell characteristics; it does not
-depend on ranking the two lanes, because Gemini stays the **fallback** (NIM FLUX
-still leads the ladder) and its quality clears the bar for that role.
+depend on ranking the two lanes, because at the time Gemini was the **fallback**
+(NIM FLUX led the ladder until 2026-07-16) and its quality clears the bar for
+either role.
 
-**Recommendation:** quality is not a blocker. Keep **NIM FLUX primary** (free, fast,
-already carries prod) and Gemini as the credit-funded fallback that activates
-whenever NIM is absent/down. No quality carve-out (draft-lane-only) is needed. The
-GCP envs are already in Vercel prod, so the lane goes live on the next deployment;
-instant rollback stays available via `VERTEX_IMAGEN_ENABLED=0`.
+**Recommendation (2026-07-07, since superseded):** quality is not a blocker. The
+gate recommended keeping NIM FLUX primary with Gemini as the credit-funded
+fallback. On 2026-07-16 the order was inverted (`VERTEX_IMAGEN_FIRST`, on by
+default whenever the lane is configured) because the reference image is the sole
+source of the 3D model's texture and proportions, and the credit pool is funded
+to be spent on exactly that kind of quality. Instant rollback stays available via
+`VERTEX_IMAGEN_ENABLED=0`, and `VERTEX_IMAGEN_FIRST=0` demotes Gemini to fallback
+without switching it off.
 
 ### Deploy & rollback
 
@@ -526,7 +541,8 @@ instant rollback stays available via `VERTEX_IMAGEN_ENABLED=0`.
 - **Production** only after the quality gate passes cleanly:
   `printf '1' | vercel env add VERTEX_IMAGEN_ENABLED production`.
 - **Rollback (instant, no deploy):** set `VERTEX_IMAGEN_ENABLED=0` in the affected
-  environment — the lane drops to NIM FLUX → Replicate immediately. Removing
+  environment: the ladder continues from NIM FLUX.1-dev through the HF-routed,
+  Livepeer, Pollinations and Replicate rungs immediately. Removing
   `GOOGLE_CLOUD_PROJECT` also disables it but would break Vertex Claude/workers, so
   prefer the flag. To pin a specific model instead, set `VERTEX_IMAGEN_MODEL`.
 
@@ -777,8 +793,8 @@ change, never a code migration. Proven at the code level by
 
 | Lane | Gate (present ⇒ GCP lane live) | Reverts to | Code |
 |---|---|---|---|
-| **Vertex Claude** (chat/LLM) | `VERTEX_CLAUDE_ENABLED` (+`_PRIMARY`), needs `GOOGLE_CLOUD_PROJECT` | Groq → OpenRouter → NVIDIA → paid backstop | `api/_lib/vertex-claude.js`, `api/chat.js` `providerOrder()` |
-| **Vertex Imagen** (text→image) | `GOOGLE_CLOUD_PROJECT` (+`GCP_SERVICE_ACCOUNT_JSON`) | free NIM FLUX → Replicate | `api/_mcp3d/vertex-imagen.js`, `text-to-image.js` |
+| **Vertex Claude** (chat/LLM) | `VERTEX_CLAUDE_ENABLED` (+`_PRIMARY`), needs `GOOGLE_CLOUD_PROJECT` | free lanes (Groq → OpenRouter → NVIDIA → SambaNova → Mistral → Z.AI) → paid backstop | `api/_lib/vertex-claude.js`, `api/chat.js` `providerOrder()` |
+| **Vertex Imagen** (text→image) | `GOOGLE_CLOUD_PROJECT` (+`GCP_SERVICE_ACCOUNT_JSON`) | free NIM FLUX.1-dev → HF-routed FLUX → Livepeer → Pollinations → Replicate | `api/_mcp3d/vertex-imagen.js`, `text-to-image.js` |
 | **Forge TRELLIS self-host** | `MODEL_TRELLIS_URL` + `GCP_RECONSTRUCTION_KEY` | free NIM/HF → Replicate | `api/_lib/forge-tiers.js` |
 | **Forge Hunyuan3D self-host** | `GCP_HUNYUAN3D_URL` + `GCP_RECONSTRUCTION_KEY` | free HF Spaces → Replicate | `forge-tiers.js` |
 | **Forge TripoSG sketch** | `GCP_TRIPOSG_URL` + `GCP_RECONSTRUCTION_KEY` | none — option hides | `forge-tiers.js` |
@@ -878,7 +894,7 @@ standard $0.15, high $0.50; Game-Ready $0.10.** (The prompt's "$0.25/$0.45" are 
 | **Vertex Claude** | **Keep only if Vertex ≤ first-party Anthropic per token AND quality holds; else revert to free lanes** | Chat's free tier (Groq/OpenRouter/NVIDIA) costs $0 and already carries prod. Vertex Claude earns its keep only where quality needs a frontier model AND the Vertex partner-model token price beats calling Anthropic first-party. Compare `burn-report.mjs` vertex-claude spend ÷ tokens vs Anthropic list price. If Vertex ≈ Anthropic, revert to first-party (one less dependency); if free lanes suffice for the traffic, revert to free. |
 | **Forge self-host — FREE-tier gens** | **Kill (revert to NIM/HF)** | Self-host serves free-first, so most gens earn **$0**. On credits: ~100% margin. Post-expiry: **$0.012–0.039 GPU for $0 revenue = pure loss.** Free NIM/HF cost $0 and cover these. |
 | **Forge self-host — PAID x402 gens** | **Keep iff paid volume clears the floor** | Paid standard: **$0.15 − ~$0.012–0.024 ≈ 6–12× margin.** High: **$0.50 − ~$0.024–0.039 ≈ 13–20×.** Great per-call, but scale-to-zero means cold starts and near-idle GPU at low volume. Keep only if `burn-report.mjs` forge-gpu paid-gen volume beats Replicate (~$0.03–0.05/run, zero idle); else revert paid tiers to Replicate too. |
-| **Vertex Imagen** | **Kill (revert)** | Free **NIM FLUX already leads** the chain; Imagen only serves when NIM is absent/down. On credits it was a free quality bump (~$0.02–0.04/img); post-expiry it's real money for a rarely-leading lane. NIM (free) + Replicate ($0.003) cover it. |
+| **Vertex Imagen** | **Kill (revert)** | Gemini **leads** the chain today (`VERTEX_IMAGEN_FIRST`, on by default) for quality. On credits that is a free quality bump (~$0.02 to $0.04/img); post-expiry it is real money on every text→3D submit. Free NIM FLUX.1-dev, the HF-routed rungs, keyless Pollinations and Replicate ($0.003) cover it: `VERTEX_IMAGEN_FIRST=0` keeps Gemini as fallback only, `VERTEX_IMAGEN_ENABLED=0` drops it. |
 | **Avatar reconstruct/rerig** | **Revert to Replicate** | `resolveProviderName()` already prefers Replicate; its pinned reliability at per-run cost beats idle GPU unless reconstruct volume is high (check the report). |
 | **Editing workers** | **Revert / delete at teardown** | Auxiliary, low value; degrade to in-lane fallback or hide. No standing cost once min-instances=0. |
 | **Vanity inventory** | **Done — keep the assets** | One-shot batch already ground; inventory persists in the app store and sells down at **zero ongoing GCP cost.** |
@@ -1327,7 +1343,7 @@ flag alone — no code deploy:
 |---|---|---|
 | Vertex Claude | `vercel env rm VERTEX_CLAUDE_PRIMARY production` | chat falls back to free/BYOK lanes instantly (see prompt 02 section) |
 | Forge GPU fleet | `vercel env rm FORGE_SELFHOST_PRIMARY production` | routing stops preferring the self-host GPU workers |
-| Imagen | `vercel env add VERTEX_IMAGEN_ENABLED production` = `0` | text→image drops to the free NIM FLUX lane |
+| Imagen | `vercel env add VERTEX_IMAGEN_ENABLED production` = `0` | text→image continues from the free NIM FLUX.1-dev rung (`VERTEX_IMAGEN_FIRST=0` keeps Gemini as fallback instead) |
 
 **Fast "stop the bleed now" — `scripts/gcp/emergency-stop.sh`** (dry-run by
 default): drops **every** Cloud Run service + job to `--min-instances=0`, cancels
@@ -1459,7 +1475,7 @@ until today.
   defaults it on whenever `GOOGLE_CLOUD_PROJECT` is set (prompt 03's own design), so
   setting `GOOGLE_CLOUD_PROJECT` alone activates the Imagen fallback lane; the prompt-03
   quality gate already passed (see above), so this is live now, fallback-only, NIM FLUX
-  still leads.
+  still leads (as of that date; Gemini has led the ladder since 2026-07-16).
   **Not set** (matches every prompt's explicit fail-safe/owner-gate guardrail):
   `VERTEX_CLAUDE_PRIMARY`, `FORGE_SELFHOST_PRIMARY`, and the four other worker URLs
   (`GCP_HUNYUAN3D_URL`/`GCP_TRIPOSG_URL`/`GCP_RECONSTRUCTION_URL`/`GCP_TEXT2MOTION_URL`)

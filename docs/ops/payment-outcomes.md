@@ -78,6 +78,19 @@ window and names the dominant cause in `ring_settle.metrics.cause`:
 or `rail` (genuine settle faults). `governorSkips` is carried even on a healthy
 rate so a wallet sliding toward its budget shows up before the rate does.
 
+A rent-exemption failure on the fee payer (`InsufficientFundsForRent` on
+account index 0, in either spelling the RPCs use) wears a rail-shaped reason
+token (`simulation_failed`, `sweep_broadcast_failed`) while being the opposite
+of a rail fault: the transaction never reached the rail because the sponsor
+could not pay for it. The sensor flags those rows from the full `error_msg`
+and counts them as floor signals, not faults, so a dry sponsor reads as
+`cause: sponsor_floor` rather than pointing the operator at duplicate
+signatures and RPC preflight (which is what happened for three hours on
+2026-08-28). Because a sponsor under its floor is a hard stop, those attempts
+also override the "too few attempts to judge" `unknown` verdict: once the
+floor signals alone reach the minimum sample the status is `down` with a
+`settle halted` detail, since under the floor nothing settles at all.
+
 ### `sponsor` (live RPC + `x402_self_facilitator_log`)
 
 The fee wallet that pays every settle's SOL fee:

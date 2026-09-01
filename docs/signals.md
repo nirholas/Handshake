@@ -64,7 +64,7 @@ curl -s https://three.ws/api/signals/subscribe \
   }'
 ```
 
-The feed's numeric `feed_id` comes from the marketplace read; the subscription's network is inherited from the feed, so you do not pass one.
+The feed's numeric `feed_id` comes from the marketplace read; the subscription's network is inherited from the feed, so you do not pass one. `feed_id` and a subscription `id` must be numeric row ids: anything else is refused with `400 invalid_feed` / `400 invalid_id` before any query runs. The live SSE stream (`GET /api/signals/stream`) likewise takes its network from the feed it streams, not from a query parameter.
 
 Go live within your caps, then instantly kill if needed:
 

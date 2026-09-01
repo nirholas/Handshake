@@ -30,7 +30,8 @@ The page ([pages/forged.html](../pages/forged.html), rendered by
   happen client-side over the loaded feed.
 - **Designed empty, no-match, and error states.** The empty state explains that
   the autonomous loop pays the Forge for a new prop every hour; the error state
-  has a retry button.
+  names the reason the load failed (the API's own message) and has a retry
+  button.
 
 ## Where the assets come from
 

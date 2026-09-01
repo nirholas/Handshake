@@ -23,12 +23,20 @@ simply doesn't run; everything else on the platform keeps working.
   older version no longer count.
 - **Recorded server-side.** On accept, the client fires
   `POST /api/legal/risk-ack` ([`api/legal/risk-ack.js`](../api/legal/risk-ack.js)),
-  which writes a `risk-ack-accept` row into `audit_log` — user id when signed
+  which writes a `risk-ack-accept` row into `audit_log`: user id when signed
   in (null otherwise), disclosure version, the feature context, path, IP, and
-  user agent. The `audit-log-cleanup` cron prunes `audit_log` at 365 days but
-  exempts `risk-ack-accept` (and `tos-accept`) rows, so acceptance records
-  persist indefinitely. The write is fire-and-forget: a failed network call
-  never blocks the user's accepted state.
+  user agent. The handler awaits that write and answers
+  `200 { ok: true, recorded }`, where `recorded` says whether the row actually
+  landed; a dropped write still answers 200 because the user did accept. It
+  imports `RISK_ACK_VERSION` from the client gate and rejects any `version`
+  outside `1..RISK_ACK_VERSION` with `400 invalid_version`, so nobody can
+  record acceptance of a revision that does not exist yet; an unreadable body
+  gets its real cause (`413 payload_too_large`, `415 unsupported_media_type`,
+  or `400 bad_request`) instead of a version complaint. The
+  `audit-log-cleanup` cron prunes `audit_log` at 365 days but exempts
+  `risk-ack-accept` (and `tos-accept`) rows, so acceptance records persist
+  indefinitely. The client's call is fire-and-forget (`keepalive`, errors
+  swallowed): a failed network call never blocks the user's accepted state.
 - **Devnet stays friction-free.** Surfaces that know their network only gate
   when it isn't `devnet`. Simulation modes (e.g. Oracle arm's simulate mode)
   are never gated.

@@ -283,6 +283,8 @@ When CAPTCHA is enabled for the Privy app (Privy dashboard, Security tab), Privy
 
 If the app config declares a `custom_api_url` (three.ws uses `https://privy.three.ws`), every auth call above goes to that domain instead of `auth.privy.io`.
 
+The discovery step is factored into [src/auth/privy-captcha.js](../src/auth/privy-captcha.js), and the login page treats "CAPTCHA required" and "could not find out" as different answers: when the app config probe fails, the page refuses to send a code without a token Privy might require, and tells the user to reload rather than surfacing Privy's opaque `401 invalid_credentials`. The same distinction applies to `/api/config` itself: if that probe fails (it is bounded to six seconds), the email and wallet controls are hidden with an explanation and the password form still signs the visitor in, instead of the whole block silently vanishing as it does when the deployment genuinely has no Privy app.
+
 ### Configuration
 
 ```env
@@ -484,6 +486,7 @@ const res = await fetch('/api/agents', {
 | `memory:read` | Read agent memory |
 | `memory:write` | Write agent memory |
 | `profile` | Read/write profile data; required to manage API keys themselves |
+| `herald:announce` | Post announcements through the [Herald](herald.md) (`POST /api/herald/announce`); the scope the `herald-mcp` package's `THREE_WS_API_KEY` needs |
 
 Scopes are space-separated in the `scope` field. Default when unspecified: `avatars:read avatars:write`.
 

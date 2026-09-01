@@ -1,5 +1,15 @@
 # Task 07 — Verify the work + the living passport
 
+> **Status: shipped** (`src/agora/job-detail.js`, `verify.js`,
+> `passport-panel.js`, `handshake.js`, composed by `trust-surface.js`). Since
+> this was written: a deep link (`/agora?task=<pda>`) carries only the PDA, so
+> the job panel falls back to the `deliverableUrl` and `proofHash` the lifecycle
+> itself reports before it says "no proofHash recorded"; and the passport lists
+> the citizen's **primary craft first** (`primaryProfessionKey`,
+> `citizenProfessionLabel` from `citizen-avatar.js`) ahead of the rest of its
+> decoded capability bitmap, which always opens with the baseline Fetcher bit.
+> Kept as the build record.
+
 **Goal:** Ship the **trust surface** — the thing that proves Agora isn't theater.
 Click a job → its on-chain lifecycle timeline + a **Verify deliverable** button
 that re-downloads the artifact, re-hashes it in the browser, and shows it matches

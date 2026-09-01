@@ -20,20 +20,23 @@ The page ([`pages/ar-studio.html`](../pages/ar-studio.html)) only imports [`src/
 `addModel({ src, title })` normalizes the URL (https or site-relative only), enforces a 20-model cap, clones the loaded template (using SkeletonUtils for skinned rigs), and drops it on the floor in front of the camera. The "Add models" tray has five tabs:
 
 - **Recent forges**: read from local storage (`twx_ar_forge_recent`), shared with `/ar` so one forge history opens in two doors.
-- **Yours**: `GET /api/forge-gallery?limit=24` with an `x-forge-client` header (your anonymous browser id).
+- **Yours**: `GET /api/forge-gallery?limit=24` with an `x-forge-client` header (your anonymous browser id). Forge cards are titled with the first clause of the prompt they were generated from (`cardTitleFromPrompt`), with the whole prompt as the tooltip; a poster that fails to load falls back to the cube mark a poster-less item uses.
 - **Community**: `GET /api/forge-gallery?scope=community&limit=24`.
 - **Objects**: `GET /api/objects/library`, the CC0 prop library behind [/objects](https://three.ws/objects). The whole manifest is fetched once, so the tab's search box filters name and category client-side with no further requests, and renders matches 60 at a time.
+
+Both gallery reads and the objects manifest answer with `Access-Control-Allow-Origin: *`: they are public, keyless, read-only feeds, and the standalone studio (npm `3d-ar-studio`) offers them as its Community and Objects tabs from whatever origin a developer embedded it on. Rate limiting, not origin, is the control.
 - **GLB link**: paste any https `.glb`: a forge result, a viewer share link's `src`, or your own hosting.
 
 A sixth source is the **in-view forge**: the dock form calls `POST /api/forge` with `{ prompt, backend: 'nvidia' }` (the free NVIDIA NIM / TRELLIS lane), polls `GET /api/forge?job=<id>` until the GLB is ready, remembers it, and drops it into the scene. A seventh is deep links: repeatable `?src=` (paired with `?title=`) and `?forge=<prompt>` boot content on open.
 
 ### Device-capability ladder
 
-Best available mode wins:
+Best available mode wins. The dock's AR button (`#ars-xr-btn`) resolves one of three AR modes on load (`resolveArMode()`) and stays hidden when none applies:
 
-1. **WebXR immersive AR**: offered only when `navigator.xr.isSessionSupported('immersive-ar')` resolves true. The session requests `hit-test` (required) plus `anchors`, `local-floor`, `depth-sensing`, and `light-estimation`, with a DOM-overlay HUD. Each placed model gets an `XRAnchor`, and an always-armed reticle does tap-to-place.
-2. **Camera passthrough**: `getUserMedia({ video: { facingMode: { ideal: 'environment' } } })` becomes the background layer, with gyroscope world-lock look (DeviceOrientation, iOS permission-gated) and live light matching. Offered when `getUserMedia` exists.
-3. **Desktop 3D preview**: always available: a grid floor, drag-look, and a "Phone" QR handoff on non-touch devices.
+1. **WebXR immersive AR**: offered only when `navigator.xr.isSessionSupported('immersive-ar')` resolves true. The button reads **Immersive**. The session requests `hit-test` (required) plus `anchors`, `local-floor`, `depth-sensing`, and `light-estimation`, with a DOM-overlay HUD. Each placed model gets an `XRAnchor`, and an always-armed reticle does tap-to-place. This is the only mode that keeps the whole multi-model scene in the page.
+2. **The device's own AR viewer**, one model at a time, when there is no immersive session. The button reads **Place in AR** and hands the selected model (or the last one placed) to the platform viewer: on iPhone and iPad, AR Quick Look ([`src/ar/quick-look.js`](../src/ar/quick-look.js)), after the GLB is fetched and converted to USDZ on the device through three's `USDZExporter` ([`src/usdz-pipeline.js`](../src/usdz-pipeline.js), the same pipeline `/avatars/:id/ar` uses), with each stage reported in the status line ("Fetching the model…", "Preparing it for AR…", "Opening AR…"); on Android, Scene Viewer ([`src/ar/scene-viewer.js`](../src/ar/scene-viewer.js)) with the GLB URL directly. A device with neither is told to open the scene on a phone and offered the QR code. Before this existed, an iPhone was only ever offered the camera composite below, which looks right in a screenshot and not at all in the hand (no plane detection, no real scale, nothing occluding).
+3. **Camera passthrough**: `getUserMedia({ video: { facingMode: { ideal: 'environment' } } })` becomes the background layer, with gyroscope world-lock look (DeviceOrientation, iOS permission-gated) and live light matching. Offered when `getUserMedia` exists, and available alongside mode 2.
+4. **Desktop 3D preview**: always available: a grid floor with distance fog (removed the moment the camera becomes the backdrop), drag-look, and a "Phone" QR handoff on non-touch devices. Until you aim the camera yourself, the preview re-frames on the models you add so a model dropped on the floor never lands out of view.
 
 If WebGL is missing, the page never loads the module and shows a fallback linking to `/ar` and `/viewer`.
 
@@ -86,7 +89,7 @@ You can also hand-build a share link: append `?src=<https glb url>&title=<name>`
 - **No auth, fully free.** Identity is an anonymous per-browser id (`forge:cid`), shared with `/forge` and `/creations`; it scopes the Yours tab, attributes in-studio forges, and keys room ownership. No sign-in, no wallet, no payment.
 - **Placement caps.** 20 models per local scene; the shared room enforces its own per-room and per-owner caps and a per-client rate limit.
 - **Camera and motion.** Camera denial (`NotAllowedError`) shows "Camera permission is blocked... then try again"; no `getUserMedia` disables the camera button but keeps the 3D preview. Denied motion falls back to drag-look.
-- **XR unsupported.** The Immersive button simply never appears; a failed XR start shows "Camera mode still works." Lost tracking prompts you to move to a brighter, more textured spot.
+- **XR unsupported.** With no immersive session the button becomes Place in AR (Quick Look or Scene Viewer) or stays hidden; a failed XR start shows "Camera mode still works." A failed native handoff shows "Could not open AR for this model" with a Try again action. Lost tracking prompts you to move to a brighter, more textured spot.
 - **Rooms offline.** If the multiplayer server is unreachable or refuses the handshake, the studio drops back to single-player with "Shared rooms are offline right now, you can still build solo." and the room modal stays on its create/join panel. Departing authors' models remain until the room empties.
 - **Persistence.** Your own placed models are saved to local storage (`twx_ar_studio_scene_v1`); `#s=` links replace the working scene. Photo capture composites the camera and WebGL layers to a PNG.
 - **Forge failures.** `503`/unconfigured shows "The generator is offline"; `429` shows a busy message with a retry hint.

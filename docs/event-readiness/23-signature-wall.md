@@ -4,8 +4,8 @@ Events end; walls remember. Give the $THREE world a signature wall near spawn wh
 
 ## Where the code lives
 
-- Persistence precedents: `src/game/world-persist.js` (Postgres index plus blob store for builds), Upstash Redis in `api/play/builds.js`; pick the store that fits an append-only list of small records and state why
-- Canvas-rendered world screens: `src/game/screen-texture.js` (shared quality pattern), `src/game/chart-screen.js` and `src/game/x402-jumbotron.js` as CanvasTexture precedents
+- Persistence precedents: the per-world build doc behind `src/game/world-persist.js` (`api/world/[action].js` over `api/_lib/world-store.js`: a Postgres `world_docs` index row is always the source of truth, large docs offload to an R2 blob, and writes carry an etag with 409 on conflict; the browser only writes when no `walk_world` room is authoritative), Upstash Redis behind `api/play/builds.js` (`api/_lib/builds-store.js`); pick the store that fits an append-only list of small records and state why
+- Canvas-rendered world screens: `src/game/screen-texture.js` (shared quality pattern), `src/game/chart-screen.js`, `src/game/x402-jumbotron.js` and the marquee in `src/game/plaza-stage.js` as CanvasTexture precedents; the war portal's board in `src/game/war-portal.js` is the precedent for a screen that fetches nothing until a player is within reading range
 - Interaction and placement: landmark precedent in `src/game/wheel-station.js`; the contextual F interaction chain in `src/game/coincommunities.js`
 - Safety: the slur gate in `multiplayer/src/rooms/WalkRoom.js` and `multiplayer/src/display-name-safety.js` (reuse the same filters server-side on the write path)
 - Identity: the play pass from `src/game/play-auth.js` distinguishes signed-in wallets from guests

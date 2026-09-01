@@ -67,7 +67,7 @@ The Coin Clash state and leaderboard are also exposed read-only over MCP through
 - **Auth.** Viewing needs no login. Enlisting requires a connected Solana wallet and a message signature; rallying requires a valid war pass.
 - **Rate limits.** Enlist and enlist-verify are limited to 20 per 5 minutes per IP; rally is 40 per minute per wallet; state and leaderboard are 120 per minute per IP.
 - **Pass expiry.** A war pass lives 30 minutes; after that rally returns `401 pass_invalid` and the client transparently re-enlists if the wallet is still connected. Switching wallets drops the enlistment and prompts a re-enlist.
-- **Empty and degraded states.** Fewer than 2 active communities shows "No battles live right now" with a link to `/communities`; a bye faction is labeled. An unconfigured community source shows a temporarily-unavailable state and stops polling. A Redis outage degrades silently to per-instance tallies and still serves 200s.
+- **Empty and degraded states.** Fewer than 2 active communities shows "No battles live right now" with a link to `/communities`; a bye faction is labeled. An unconfigured community source shows a temporarily-unavailable state and stops polling. A request that never reaches the server (offline, blocked fetch) surfaces as a named connection error, "Couldn't reach the battle server", instead of the browser's raw "Failed to fetch". A Redis outage degrades silently to per-instance tallies and still serves 200s.
 - **Validation.** Taps must be a positive integer and are clamped to 50 per call. The ambient particle field is skipped under `prefers-reduced-motion`.
 
 ## Related

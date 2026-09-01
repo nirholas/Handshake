@@ -29,6 +29,9 @@ the UI.
 
 While a war involving your coin is live, anyone standing at the portal sees the
 score, the round clock and a kill feed on the board without joining the fight.
+A battle still in its lobby reads "waiting on both sides" until both communities
+have fielded a fighter, and a battle that has already ended is never flown as
+live: the portal skips it when it picks the running war to banner.
 
 ---
 

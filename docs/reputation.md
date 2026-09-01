@@ -74,6 +74,8 @@ The `ReputationPanel` class ([src/erc8004/reputation-panel.js](../src/erc8004/re
 
 Recent vouches are loaded by querying `FeedbackSubmitted` event logs for the last ~50,000 blocks (~7 days on most L2s). If the RPC rejects the log query (common on free-tier endpoints), the panel degrades gracefully — it still shows the aggregate stats but omits the individual review list.
 
+Reads go through `readProvider(chainId)` from [src/erc8004/chain-meta.js](../src/erc8004/chain-meta.js): every keyless public node listed for the chain becomes a pinned provider and they are combined in an ethers `FallbackProvider` with quorum 1, so the first healthy node answers and a stalled or rate-limited one is passed over after four seconds instead of blanking the panel. The USD figure printed beside a stake amount comes from `getEthPriceUsd()` ([src/shared/usd-price.js](../src/shared/usd-price.js)), which walks four price feeds with per-provider cooldowns; a throttled feed leaves the ETH amount in place and only drops the USD hint.
+
 ### Full reputation dashboard
 
 The `ReputationDashboard` class ([src/reputation-ui.js](../src/reputation-ui.js)) is used on the standalone [/reputation](https://three.ws/reputation) page. It shows:
@@ -81,7 +83,9 @@ The `ReputationDashboard` class ([src/reputation-ui.js](../src/reputation-ui.js)
 - Review count, average rating, time since last review
 - Up to 10 recent reviews with inline transaction links
 - A submit form for leaving a new review (wallet connection handled inline)
-- Optimistic updates: your review appears immediately as "Pending" while the transaction confirms, then is replaced with the confirmed on-chain data
+- Optimistic updates: your review appears immediately as "Pending" while the transaction confirms, then is replaced with the confirmed on-chain data. If a confirmation poll fails, the page says so ("Could not confirm your review on-chain; refresh to check.") rather than leaving the pending row looking stuck.
+
+The dashboard reads through `getEvmProvider(chainId)` from [src/shared/evm-rpc-fallback.js](../src/shared/evm-rpc-fallback.js): the same-origin `/api/evm-rpc?chainId=N` proxy first (which inherits the server's keyed and curated RPC failover), then the chain's keyless public hosts, combined into one `FallbackProvider`. There is no per-chain RPC URL hardcoded in the dashboard any more; one dead public endpoint no longer reads as "chain unsupported".
 
 ### Via the SDK
 
@@ -183,6 +187,8 @@ Contract addresses are the same on every supported EVM chain (CREATE2 determinis
 |---|---|
 | Mainnet (Base, Arbitrum, Optimism, Ethereum, Polygon, and more) | `0x8004BAa17C55a88189AE136b182e5fdA19dE9b63` |
 | Testnet (Base Sepolia, Arbitrum Sepolia, Optimism Sepolia, and more) | `0x8004B663056A597Dffe9eCcC1965A193B7388713` |
+
+One caveat, recorded in the comments of `abi.js`: the canonical addresses run the ERC-8004 reference implementation, not the three.ws source above. An `eth_call` sweep on 2026-08-15 found that deployment answering `readFeedback` / `getClients` on Base and Base Sepolia and reverting on every selector in `contracts/src/ReputationRegistry.sol` (`submitFeedback`, `getReputation`, `getFeedbackRange`, and the stake functions). The ABI and SDK helpers on this page match the three.ws source, so use them against an instance you deploy from `contracts/src` yourself; against the canonical addresses those calls revert.
 
 ---
 

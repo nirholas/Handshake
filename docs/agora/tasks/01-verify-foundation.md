@@ -1,5 +1,16 @@
 # Task 01 — Verify the Agora foundation
 
+> **Status: shipped.** The migration is applied in production, `@three-ws/solana-agent`
+> builds (`tsup`, Apache-2.0), and the read model is routed and covered by
+> `tests/agora-read-model.test.js`. Two things moved since this was written: the
+> endpoint now has **five** actions (`task`, the live Arena/Guild roster, joined
+> the four below), and the migration runner grew `npm run db:check` (the deploy
+> gate, exit 4 while anything is pending) and `npm run db:restamp` (re-records a
+> comment-only edit to an already-applied file). `api/_lib/db.js` answers an
+> unconfigured or unreachable database with a retryable 503 rather than a 500,
+> so an empty `DATABASE_URL` no longer reads as a code bug. Kept as the build
+> record.
+
 **Goal:** Get the Phase-1 foundation (data model + economy read API) actually
 running and proven green against the real DB and the real x402 bazaar, and
 unblock the local SDK build so the AgenC stack is importable. After this task,

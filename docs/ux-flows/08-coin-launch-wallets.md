@@ -48,7 +48,7 @@ real Solana/EVM RPC, pump.fun, and x402 — no mocks.
   - Wallet source: connected (client-grinds mark, client-signs) vs. agent (server-grinds, server-signs).
   - Connected path may require a one-time SIWS link, and a link may hit a takeover branch.
   - Confirmation timeout → escape-hatch screen ("Finalize once confirmed" re-checks signature status, "Start over").
-- **External calls / dependencies:** `/api/auth/me`, `/api/avatars`, `/api/pump/by-agent`, `/api/auth/wallets`, `/api/auth/wallets/nonce-solana`, `/api/auth/wallets/link-solana`, `/api/pump/agent-wallet`, `/api/pump/build-metadata`, `/api/pump/launch-prep`, `/api/pump/launch-confirm`, `/api/pump/launch-agent`, `/api/native-launch/config`, `/api/native-launch/launch-prep`, `/api/native-launch/launch-confirm`, `/api/solana-rpc` (Connection RPC). External: `esm.sh/@solana/web3.js@1.98.4`, `esm.sh/qrcode@1.5.3`, pump.fun (mint target), Solscan (links).
+- **External calls / dependencies:** `/api/auth/me`, `/api/avatars`, `/api/pump/by-agent`, `/api/auth/wallets`, `/api/auth/wallets/nonce-solana`, `/api/auth/wallets/link-solana`, `/api/pump/agent-wallet`, `/api/pump/build-metadata`, `/api/pump/launch-prep`, `/api/pump/launch-confirm`, `/api/pump/launch-agent`, `/api/native-launch/config`, `/api/native-launch/launch-prep`, `/api/native-launch/launch-confirm`, `/api/solana-rpc` (Connection RPC). External: `@solana/web3.js@1.98.4` and `qrcode@1.5.3`, both loaded through `/load-module.js` (the pinned version on esm.sh, then jsdelivr, then unpkg, each under a deadline; if all three miss the panel says "<what> could not be loaded (<hosts> unreachable or blocked). Check your connection or ad blocker and try again."; `fees-panel.js` loads web3.js the same way), pump.fun (mint target), Solscan (links).
 - **Success state:** `lp-ok` card — stamped mint, verified badge, pump.fun/Solscan/agent-page links, share-announcement copy, relaunch button. The coin appears in `/launches` within 60s via live refresh.
 - **Empty / error states:** signed-out / no-avatar guided onboarding (4-step explainer + coin-type legend + cost note); "Checking for existing token…"; per-phase `lp-phase` status line; `friendlyError()` maps rejections/insufficient SOL/no-wallet/rate-limit to plain copy; confirmation-timeout escape hatch; agent-wallet error/retry/provision states; insufficient-balance "Fund" CTA.
 - **Step count:** 15 required (+5 optional)
@@ -78,21 +78,21 @@ real Solana/EVM RPC, pump.fun, and x402 — no mocks.
 
 ### Claim Wallet (Trader Card) — `/claim-wallet`
 - **Source:** `pages/claim-wallet.html` → `src/claim-wallet.js`.
-- **Entry point:** `#cwInput` address field + `#cwBtn` Preview; results render in `#cwResult`.
+- **Entry point:** `#cwInput` address field + `#cwBtn` **Analyze**; results render in `#cwResult` (a polite live region).
 - **Prerequisites / gates:** Preview is public. Claiming requires sign-in AND control of the keypair (SIWS signature). The claimed wallet must equal the connected wallet.
 - **Steps (N):**
   1. Boot warms `GET /api/auth/me`. `?wallet=` param pre-fills + auto-previews.
   2. User pastes a base-58 Solana wallet; client validates with `WALLET_RE`.
-  3. Click **Preview** → `GET /api/traders/preview?wallet=` → renders the Trader Card: label, win rate / early-win / smart-money score / net PnL / dumps stats, and up to 60 recent pump.fun coins.
+  3. Click **Analyze** (button reads "Analyzing…" and is held by the page while busy so a late-landing locale catalog cannot overwrite it) → `GET /api/traders/preview?wallet=` (in parallel with a SOL price read) → skeleton, then the Trader Card: label, KPI row (win rate, early-entry win rate, smart-money score, net PnL, dump rate; the reputation rates arrive already in percentage points and are printed as-is), a 7D / 30D / ALL time-window toggle, and a **Trade ledger** of up to 60 recent pump.fun coins with sortable columns, filter chips (Hide dust, on by default / Open only / Created), a header that reads "N of M coins · window", and a per-row link to `/launches/<mint>`.
   4. CTA branches by state: claimed (View card + Share) / signed-in-unclaimed (Claim button) / signed-out (Sign-in-to-claim link). Claimed status verified via `GET /api/auth/wallets` (filtered to chain_type=solana).
   5. (claim) User clicks **Claim this wallet** → detect provider → `provider.connect()`. If connected pubkey ≠ previewed wallet, abort with a switch-wallet message.
   6. `POST /api/auth/wallets/nonce-solana` → `provider.signMessage` (gasless, no tx) → base64.
   7. `POST /api/auth/wallets/link-solana` with message+signature. A 409 `address_in_use` prompts a `window.confirm` takeover; on confirm, re-POST with `takeover:true`.
-  8. On success, re-read linked wallets (force) and re-render in the claimed state; message "Claimed — your Trader Card is live."
+  8. On success, re-read linked wallets (force) and re-render in the claimed state; message "Claimed" (or "Moved to your account" after a takeover) followed by "your Trader Card is live."
 - **Decision points / branches:** claimable-or-known vs. not-indexed (`notFoundHtml`); a wallet the indexer has seen trade is claimable even before the rollup grades it, so only a wallet with neither a reputation row nor a single indexed trade takes the not-indexed branch; signed-in vs out; wallet-mismatch; takeover confirm; share via Web Share API vs Twitter intent.
 - **External calls / dependencies:** `/api/auth/me`, `/api/traders/preview`, `/api/auth/wallets`, `/api/auth/wallets/nonce-solana`, `/api/auth/wallets/link-solana`. Wallet providers: Phantom/Solana/Backpack/Solflare.
 - **Success state:** "Your Trader Card is live" card with View (`/trader/:wallet`) + Share buttons; linked row reflected server-side.
-- **Empty / error states:** invalid-address inline error; "Wallet not yet indexed" not-found state; signature-cancelled message; per-step error toasts on the claim button.
+- **Empty / error states:** invalid-address inline error (`role=alert`); a dead or non-OK fetch → an error card in the results area with the server's message (or a connection explanation) and a **Try again** button, never a blank page; "Wallet not yet indexed" not-found state; an empty ledger explains itself ("No pump.fun trades from this wallet in the last 7/30 days" with **Widen to all-time →**; a wallet the brain has graded but whose per-coin rows are still being indexed says so; "No indexed pump.fun trades for this wallet yet"); filters that exclude every row → "None of this window's N coins match the active filters" + **Clear filters**; signature-cancelled message; per-step error toasts on the claim button.
 - **Step count:** 8 required (claim path; preview alone is 3)
 
 ---
@@ -109,11 +109,11 @@ real Solana/EVM RPC, pump.fun, and x402 — no mocks.
   5. On hit → result card: highlighted address, attempts/duration/rate stats, **Download keypair (Solana CLI JSON)**, **Copy public key**, and a "save before leaving" warning.
   6. (optional) **Assign to an agent**: `GET /api/agents`. If 401 → sign-in prompt; if none → create-agent prompt; else select an agent + check the custody-ack box.
   7. (optional, assign) If the agent already has a wallet, the flow switches to "Replace" — `DELETE /api/agents/:id/solana` first, then `POST /api/agents/:id/solana` with `secret_key` (array) + `vanity_prefix`/`vanity_suffix`. 409 handled. Success confirms "encrypted server-side" custody transfer.
-  8. (optional) **Send a sealed gift** (`sealed-drops.js`): compose a funded wallet drop (asset/amount, optional vanity pattern reusing the page's grind fields, seal mode "Bearer link" vs direct X25519 key, message/theme, expiry, optional reclaim address) → pays the x402 create fee → shareable `/drop/:id` link + QR + OG card. The recipient's claim page opens the ECIES sealed envelope entirely client-side (claim key rides the URL fragment in bearer mode), then offers import / download / sweep; three.ws never sees the plaintext key. "Gifts you've sent from this browser" lists sent drops with reclaim for expired ones.
+  8. (optional) **Send a sealed gift** (`sealed-drops.js`): the form first reads the drop config from `/api/vanity/drops` and applies it (the asset list is narrowed to what the funding wallet supports, the expiry field takes the server's min / max / default hours, and the hint states the create fee, or explains that sealed drops are unavailable when no funding wallet is configured); then compose a funded wallet drop (asset/amount, optional vanity pattern with its own "Starts with" / "Ends with" fields, seal mode "Bearer link" vs direct X25519 key, message/theme, expiry, optional reclaim address) → pays the x402 create fee → shareable `/drop/:id` link + QR + OG card. The recipient's claim page opens the ECIES sealed envelope entirely client-side (claim key rides the URL fragment in bearer mode), then offers import / download / sweep; three.ws never sees the plaintext key. "Gifts you've sent from this browser" lists sent drops with reclaim for expired ones.
 - **Decision points / branches:** prefix vs suffix vs both; case-sensitive vs insensitive; assign vs keep self-custody; replace-existing-wallet branch; gift seal mode bearer vs direct-key; gift claimed vs expired (reclaim).
 - **External calls / dependencies:** None for grinding (client-side WASM ed25519 workers). Assign: `/api/agents`, `/api/agents/:id/solana` (POST + DELETE). Gifts: `/api/vanity/drops` (+ x402 create fee, on-chain funding/reclaim server-side).
 - **Success state:** vanity address found + downloadable keypair; optionally "Assigned to <agent>" with an open-agent link.
-- **Empty / error states:** invalid-Base58 preview; combined-length-over-max warning; grind-failed error; assign 401/empty/409/network errors each handled inline.
+- **Empty / error states:** invalid-Base58 preview; combined-length-over-max warning; grind-failed error; assign 401 (sign-in link to `/login?next=/vanity-wallet`) / empty / 409 handled inline; an agent-list load failure says "Could not load your agents (…). Your wallet above is unaffected: download it now, then retry." with a **Retry** button, since only the assignment step is lost; sealed drops disabled when the funding wallet is not configured.
 - **Step count:** 3 required (+4 optional)
 
 ---
@@ -167,7 +167,7 @@ real Solana/EVM RPC, pump.fun, and x402 — no mocks.
   5. `POST` bridge `?pay=1` (SSE, `accept: text/event-stream`) streams stages: `challenge` (402) → `signing` (agent wallet signs the SPL USDC transfer) → `signed`/`submitting` (X-PAYMENT submitted, facilitator settles) → `done` (settled on Solana mainnet). Board, kiosk, and side-panel stepper animate in lockstep.
   6. On `done` → receipt: amount, payer (agent wallet) → payTo (endpoint), Solscan tx link, and the purchased crypto-intel payload (signal/headline/rationale). Avatar plays a celebrate emote, then walks home. Status refreshes; session total accrues.
 - **Decision points / branches:** local dev bridge vs hosted prod bridge (different URL shapes + auth model); `?bridge=`/`?endpoint=` overrides; 401 needs-auth vs 429 rate-limit vs generic failure; bridge online/offline/connecting.
-- **External calls / dependencies:** bridge `status`/`quote`/`pay` (`/api/agent-wallet-bridge` or local `:4402`); the paid endpoint `https://three.ws/api/x402/crypto-intel`; Solana mainnet settlement via the x402 facilitator; Solscan (tx link). External payment is **real** ($0.01 USDC leaves the wallet).
+- **External calls / dependencies:** bridge `status`/`quote`/`pay` (`/api/agent-wallet-bridge` or local `:4402`); the paid endpoint `https://three.ws/api/x402/crypto-intel` (the hosted bridge calls it through the shared upstream fetch: the 402 probe is bounded and retried on a dropped connection, while the re-send that carries the signed payment is a single attempt with a timeout only, because a retry could double-spend); Solana mainnet settlement via the x402 facilitator; Solscan (tx link). External payment is **real** ($0.01 USDC leaves the wallet).
 - **Success state:** "✓ $0.01 USDC settled on Solana" board + receipt card with tx link and purchased intel; avatar celebrates.
 - **Empty / error states:** "Bridge offline" banner (dev hint to run the bridge) with Retry; low-balance banner; "Sign in to pay" (needs-auth); rate-limit message; "Payment failed — no funds moved" with the stepper marking the failed stage red.
 - **Step count:** 6 required (+1 optional)
@@ -182,31 +182,31 @@ real Solana/EVM RPC, pump.fun, and x402 — no mocks.
   1. Boot configures the avatar iframe (`?id=`/`?handle=`/`?model=`, transparent bg, overlay mode) and posts a `v1.avatar.hello`; queued speech/gestures flush on `v1.avatar.ready` (or a 5s resilience timeout).
   2. `refreshWallet()` → `GET /api/agent/wallet` → renders balance (SOL + USD), network badge, short address + explorer link. The API reports an unreadable balance as `balanceAvailable: false` instead of failing the response, so an RPC blip shows "balance unavailable" while the address + explorer link survive.
   3. A "Fund your wallet" hint appears when the live balance can't cover a $1 send + fee buffer; user can copy the deposit address. An unknown balance never triggers the hint (unreachable RPC ≠ empty wallet).
-  4. User chats; `ask()` streams an assistant reply, the avatar speaks/gestures, and the model may emit actions.
+  4. User chats; `ask()` streams an assistant reply, the avatar speaks/gestures, and the model may emit actions. A turn that fails is not a dead sentence: the bot bubble is marked errored with the reason (the server's `error_description`, or "I couldn't reach my brain. Check your connection and try again." when the fetch itself died) and carries a **Try again** button that re-sends the same message.
   5. On a `sendSol` action → a payment card renders ("Signing & broadcasting…"); `POST /api/agent/send-sol` with `{ usd, to? }`.
   6. On success → card flips to "Confirmed on-chain" with SOL amount, recipient, and a Solscan signature link; the avatar celebrates and the wallet refreshes.
   7. If a send was held server-side, a governance chip explains the IBM Granite Guardian block (the action is already stripped from the stream — client never gates).
 - **Decision points / branches:** avatar-source param (id/handle/model); send governance allowed vs blocked; send success vs fail; optional shared-secret token.
 - **External calls / dependencies:** `/api/agent/wallet`, `/api/agent/send-sol`, the chat/stream endpoint, `/avatar-embed.html`; Solscan (links). Real on-chain SOL transfer on success.
 - **Success state:** "Confirmed on-chain" payment card with signature link; avatar verbal + gesture confirmation.
-- **Empty / error states:** "balance unavailable" chip (with fund hint suppressed) when the RPC is unreachable; fund-hint / low-balance states; payment-failed card + toast + avatar "didn't go through"; governance-blocked chip.
+- **Empty / error states:** "balance unavailable" chip (with fund hint suppressed) when the RPC is unreachable; fund-hint / low-balance states ("Only X SOL, not enough to cover a $1 send plus fees. Top it up at the address below."); errored chat bubble with **Try again**; payment-failed card + toast + avatar "didn't go through"; governance-blocked chip ("Send held by IBM Granite Guardian: <reason>").
 - **Step count:** 6 required (+1 optional)
 
 ---
 
 ### threews.sol Name Claim (SNS subdomain) — `/threews/claim`
 - **Source:** route `/threews/claim` → `pages/threews-claim.html` (self-contained inline module). Pay-by-name plumbing: `src/sns/pay-by-name.js`. Surfaced from the profile page's "Claim <username>.threews.sol" wallet pill (`pages/profile.html`).
-- **Entry point:** `#tw-label` label input + `#tw-mint` Mint button; `#tw-status` availability line; `#tw-result`.
-- **Prerequisites / gates:** Sign-in required to mint (CSRF token from `/api/csrf-token`; "not signed in" if absent). Minting an on-chain SNS subdomain under `*.threews.sol`.
+- **Entry point:** an **account card** (`#tw-account`, polite live region, skeleton while loading) above the mint card; `#tw-label` label input + `#tw-mint` Mint button; `#tw-status` availability line; `#tw-result`.
+- **Prerequisites / gates:** Sign-in required to mint (CSRF token from `/api/csrf-token`); the label is the account's username, so a username must be set and must be a valid `.sol` label (a-z, 0-9, hyphens, not starting or ending with a hyphen). Minting an on-chain SNS subdomain under `*.threews.sol`.
 - **Steps (N):**
-  1. User types a label; input is lowercased and stripped to `[a-z0-9-]`. Debounced 350ms availability check.
-  2. `GET /api/threews/subdomain?label=` → shows "<full> is available" (enables Mint) or "claimed by @user / owned by <addr>".
-  3. User clicks **Mint** → `getCsrf()` (`GET /api/csrf-token`) → `POST /api/threews/subdomain` with `{ label }` + `x-csrf-token`.
-  4. On success → "<full> minted" with the showcase URL and a Solscan tx link for the on-chain mint signature.
-- **Decision points / branches:** available vs taken; label must equal the account's username (the server 409s `username_mismatch` otherwise, and requires a username to be set); signed-in vs not; optional `owner_wallet` must be a Solana wallet already linked to the account.
-- **External calls / dependencies:** `/api/threews/subdomain` (GET check + POST mint), `/api/csrf-token`; Solscan (tx link). On-chain SNS mint.
-- **Success state:** Minted name card with showcase URL + tx signature link.
-- **Empty / error states:** "Type a label to check"; availability "bad" state for taken names; mint-failed (re-enables button); not-signed-in CSRF failure.
+  1. Boot checks the session (`GET /api/auth/me`, skipped for anonymous visitors so the 401 never logs) then `GET /api/threews/me` and renders the account card: anonymous → "Sign in to mint a subdomain. You can still check availability below." + Sign in; already claimed → "You already own <full>." with the owned-name card (showcase URL, tx link); no username → "Set a username before claiming a subdomain." + link to account settings; unmintable username → "Your username @x cannot be a .sol label…" + Change your username; ready → "Signed in as @handle. Your subdomain label must match your username.", the label input is pre-filled with the username and made read-only, and the availability check fires at once.
+  2. For an anonymous visitor the label input stays free-typed: lowercased, stripped to `[a-z0-9-]`, debounced 350ms availability check `GET /api/threews/subdomain?label=` → "<full> is available" (enables Mint) or "claimed by @user / owned by <addr>".
+  3. User clicks **Mint** → `getCsrf()` (`GET /api/csrf-token`) → `POST /api/threews/subdomain` with `{ label }` + `x-csrf-token`. Before minting, the server re-checks the on-chain owner as a hard gate (minting over a taken name burns rent and fails anyway); if that read fails it answers `503 upstream_unavailable` ("could not verify the name on Solana right now; retry in a moment") rather than a server error.
+  4. On success → "<full> minted." status, the account card flips to "You own <full>." with a **View your showcase** link, and the owned-name card shows the showcase URL and a Solscan tx link for the mint signature.
+- **Decision points / branches:** anonymous / claimed / needs-username / unmintable-username / ready account states; available vs taken; label must equal the account's username (the server 409s `username_mismatch` otherwise); optional `owner_wallet` must be a Solana wallet already linked to the account; `DELETE /api/threews/subdomain?label=` releases a stored subdomain.
+- **External calls / dependencies:** `/api/auth/me`, `/api/threews/me`, `/api/threews/subdomain` (GET check + POST mint + DELETE release), `/api/csrf-token`; Solscan (tx link). On-chain SNS mint.
+- **Success state:** Minted name card with showcase URL + tx signature link; account card in the claimed state.
+- **Empty / error states:** "Type a label to check availability."; availability check unreachable → "Could not reach three.ws to check availability…" with a retry; availability "bad" state for taken names; account lookup failure → account card error state with retry; mint `401` → "Your session has expired. Sign in again to mint." + Sign in; mint `no_wallet` → "Create an agent" link (`/create`); mint `429/502/503` → the server's message with a retry action; any other mint failure re-enables the button with the server's `error_description`.
 - **Step count:** 4 required
 
 ---
@@ -221,7 +221,7 @@ real Solana/EVM RPC, pump.fun, and x402 — no mocks.
   3. (optional) **Hold more $THREE** → opens the Jupiter swap modal (SOL → $THREE) in place.
   4. (optional) Per-feature access matrix from `/api/three/access` shows what each tier unlocks (`enforced` / `eligible` / `required`).
 - **Decision points / branches:** wallet connected or signed in (tier highlighted) vs neither (connect/sign-in prompt); ladder loaded vs outage (retry); holdings overflow handled gracefully at $10M+.
-- **External calls / dependencies:** `/api/three/tier`, `/api/three/access` (both `?wallet=`-aware), Jupiter swap modal, `/three-token` (price page link).
+- **External calls / dependencies:** `/api/three/tier`, `/api/three/access` (both `?wallet=`-aware), Jupiter swap modal (`src/swap-jupiter.js`: quote 12s, swap build 20s and verified-token list 8s deadlines, so a stalled Jupiter surfaces as an error instead of a hung modal), `/three-token` (price page link).
 - **Success state:** populated tier ladder with the visitor's real tier, delta to the next tier, and a working in-page path to hold more.
 - **Empty / error states:** all five states designed: skeleton ladder while loading, connect/sign-in prompt with the public ladder, actionable error with retry, populated ladder, $10M+ overflow formatting.
 - **Step count:** 1 required (+3 optional)
@@ -246,17 +246,18 @@ real Solana/EVM RPC, pump.fun, and x402 — no mocks.
 
 ### Coin 3D Snapshot — `/coin3d`
 - **Source:** `pages/coin3d.html` → `src/coin3d/main.js`. Deep-linked from `/launches` cards and the MCP tool `pumpfun_token_3d`.
-- **Entry point:** Full-screen Three.js scene seeded by `?mint=<base58>` (& optional `&network=`).
-- **Prerequisites / gates:** A valid `?mint=` param. Read-only.
+- **Entry point:** Full-screen Three.js scene seeded by `?mint=<base58>` (& optional `&network=`); without a mint the page is a landing card.
+- **Prerequisites / gates:** None. Read-only.
 - **Steps (N):**
-  1. Boot reads `mint` + `network`; shows a loading overlay.
-  2. Parallel MCP calls via `POST /api/pump-fun-mcp`: `getTokenDetails`, `getBondingCurve`, `getTokenHolders` (top 12). Token logo fetched from its metadata URI (IPFS→HTTP, 6s timeout).
-  3. Renders a spinning coin medallion (logo-textured), a galaxy of top holders (spheres sized by balance, tinted by concentration), and a graduation ring filled to bonding-curve progress. OrbitControls for interaction.
-  4. (optional) Watchlist toggle persists to localStorage (`ld_watchlist`, shared with `/launches`).
-- **Decision points / branches:** mainnet vs devnet; mint present vs missing; logo available vs fallback.
-- **External calls / dependencies:** `/api/pump-fun-mcp` (pump.fun MCP), IPFS gateway for the logo. All on-chain/live.
-- **Success state:** interactive 3D token scene (medallion + holder galaxy + graduation ring).
-- **Empty / error states:** designed loading / error / empty overlays (`?mint=` missing, MCP failure, no holders) via the status-overlay helper.
+  1. No `?mint=` → landing card: "See any token in 3D" with a paste-a-mint form (**View in 3D**, inline validation), a "View $THREE in 3D →" link, a "Recent launches on three.ws" grid of 8 cards from `/api/pump/launches?limit=8` (falling back to the encoded `/api/pump/%5Baction%5D?action=launches` form so a partial deploy never empties it; each card shows the launching agent's avatar or the symbol initials, no per-card fetch), and links to `/launches` and `/launch`.
+  2. With a mint: loading overlay, then the snapshot: `getTokenDetails` + `getBondingCurve` via `POST /api/pump-fun-mcp` (15s deadline each; a timeout or unreachable endpoint is kept apart from a JSON-RPC "no such token" answer) in parallel with GeckoTerminal token info (mainnet only: the reliable name / symbol / logo / market-cap source for graduated coins whose metadata authority is renounced, `$THREE` included). The logo is fetched from the metadata URI through the shared IPFS gateway chain (`src/ipfs.js`, 6s per fetch, walking the whole gateway list on retry).
+  3. The data HUD paints first and the overlay clears, then the scene: spinning coin medallion (logo-textured), graduation ring filled to bonding-curve progress, OrbitControls. If WebGL is unavailable the page degrades to the HUD + live tape instead of hanging on the spinner.
+  4. Async enrichment, none of it blocking the render: `getTokenHolders` (top 12, 25s deadline, best-effort; its HUD cell shows a pulsing bar until it lands and the holder galaxy fills in, spheres sized by balance and tinted by concentration; an empty scan says so), Oracle conviction (`/api/oracle/coin`), coin intel (`/api/pump/coin-intel`), market figures + sparkline (`/api/pump/price-history?interval=15m`, refreshed every 60s), and a live trade tape (`/api/pump/dex-trades?limit=40`, polled every 9s).
+  5. (optional) Watchlist toggle persists to localStorage (`ld_watchlist`, shared with `/launches`); HUD links out to the coin's 3D world (`/communities/<mint>`).
+- **Decision points / branches:** mint present vs missing (landing); mainnet vs devnet; every source unreachable vs a definite "not a token"; logo available vs fallback; WebGL available vs data-only fallback.
+- **External calls / dependencies:** `/api/pump-fun-mcp` (pump.fun MCP), GeckoTerminal token info, IPFS gateway chain for the logo, `/api/oracle/coin`, `/api/pump/coin-intel`, `/api/pump/price-history`, `/api/pump/dex-trades`, `/api/pump/launches` (landing grid). All on-chain/live.
+- **Success state:** interactive 3D token scene (medallion + holder galaxy + graduation ring) with a live HUD, sparkline and trade tape.
+- **Empty / error states:** landing card with a validated mint form; loading overlay; every live source failing to respond → "Every live source for this token failed to respond. Check your connection, then try again." + **Retry**; a definite miss → "Token not found" + **Browse coins** (`/launches`); empty holder scan, "No price history yet." / "Price history unavailable." sparkline slot, and "Live trades are unavailable right now. Retrying every few seconds." tape, each in place; recent-launches grid → "No launches yet. Be the first →" or a "Browse launches →" fallback.
 - **Step count:** 3 required (+1 optional)
 
 ---

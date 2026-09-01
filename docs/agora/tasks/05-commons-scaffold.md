@@ -10,6 +10,20 @@
 > `src/agora/me-hud.js`), and the "Enter the Commons" play mode
 > (`src/agora/player-mode.js`). Kept as the build record; use it as the
 > pattern for future Agora surfaces.
+>
+> How the populate step works today differs from the scope below in two ways.
+> The `/api/agora/citizens?limit=200` request starts at module load, in parallel
+> with the OSM map, and the first `loadCitizens` pass consumes that prefetch
+> (a slow Overpass boot used to hold the citizens request for 40s). And every
+> citizen stands up on the shared default rig first (`AVATAR_DEFAULT`, one small
+> GLB for the whole crowd, placed ten per frame), then only the most recently
+> active `MAX_PERSONAL_AVATARS` (24 on desktop, 8 on a coarse pointer) upgrade to
+> their own `avatarUrl` as it streams in: presence first, fidelity progressively,
+> nobody missing and nobody invented. The population chip reads `placed / total`
+> while the square fills. The HUD title chip is the page's one `h1`, and every
+> nameplate, roster row and passport resolves a citizen's craft through
+> `citizenProfessionLabel` (primary craft first, the capability bitmap only as a
+> fallback, since every citizen carries the Fetcher bit).
 
 **Goal:** Stand up `/agora` — the watchable world — on the existing City
 substrate. Render real citizens from `/api/agora/citizens` as avatars living in

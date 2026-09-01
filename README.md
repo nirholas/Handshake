@@ -9994,7 +9994,7 @@ The full OpenAPI 3.1 spec is available at `/openapi.json`. The key API surface i
 
 Cron schedules are declared in `vercel.json` (still the live cron/route config the server reads) and executed in production by **Google Cloud Scheduler**, which calls each endpoint on its schedule. All cron endpoints are fail-closed — a missing auth token aborts with an error rather than silently skipping (see [Security Hardening](#security-hardening)).
 
-The crons in `vercel.json` (110 entries on 2026-08-28) are routed through a single dynamic handler at [`api/cron/[name].js`](api/cron/[name].js); the `name` segment selects the handler function. Scheduler jobs are provisioned from the `vercel.json` cron list via [scripts/create-gcp-scheduler.mjs](scripts/create-gcp-scheduler.mjs). The table below is a selection of the notable jobs, each schedule quoted verbatim from `vercel.json`; that file is the complete list.
+The crons in `vercel.json` (111 entries on 2026-09-01) are routed through a single dynamic handler at [`api/cron/[name].js`](api/cron/[name].js); the `name` segment selects the handler function. Scheduler jobs are provisioned from the `vercel.json` cron list via [scripts/create-gcp-scheduler.mjs](scripts/create-gcp-scheduler.mjs). The table below is a selection of the notable jobs, each schedule quoted verbatim from `vercel.json`; that file is the complete list.
 
 | Schedule             | Endpoint                                | Purpose                                                                                                                      |
 | -------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -10261,7 +10261,7 @@ three.ws is available on major cloud marketplaces and open to infrastructure par
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **AWS**           | **AWS Partner** (APN Software Path). AWS Marketplace SaaS listing in review: see [docs/aws-marketplace.md](docs/aws-marketplace.md) and the public partner page at [three.ws/aws](https://three.ws/aws). Part of the stack runs on AWS `us-east-1` (the Forge sculptor Lambda `three-ws-forge` and the S3 avatar bucket), registered in AWS MyApplications under account `155407237916` (the main app runs on Google Cloud Run). We publish engineering write-ups on the AWS Builder Center as [@threews](https://builder.aws.com/community/@threews); the index is [docs/aws-builder-center.md](docs/aws-builder-center.md). |
 | **Alibaba Cloud** | Live: [product listing →](https://marketplace.alibabacloud.com/products/56724001/sgcmfw00036800.html) · [storefront →](https://marketplace.alibabacloud.com/store/3247293.html)                       |
-| **Google Cloud**  | Production runs on **Google Cloud Run** (`three-ws-api`, `us-central1`) fronted by a global HTTPS load balancer + Cloud CDN, with all 101 scheduled jobs on Cloud Scheduler and GPU inference workers on Cloud Run: a natural fit for GCP's AI infrastructure and Vertex AI. Open to co-listing, credits, and joint GTM. |
+| **Google Cloud**  | Production runs on **Google Cloud Run** (`three-ws-api`, `us-central1`) fronted by a global HTTPS load balancer + Cloud CDN, with all 110 scheduled jobs on Cloud Scheduler and GPU inference workers on Cloud Run: a natural fit for GCP's AI infrastructure and Vertex AI. Open to co-listing, credits, and joint GTM. |
 
 ## Ecosystem Directories
 
@@ -10660,7 +10660,7 @@ three.ws ships in five phases. Each phase closes a specific gap between the curr
 | **2** | Agent personalization + voice cloning                                                  | 🟡 In progress — voice clone, persona, memory seeds shipped behind `/demos`; main-flow integration next        |
 | **3** | Onchain economy (agent tokens, reputation markets, royalties)                          | 🟡 In progress: bonding-curve sim, EAS-reputation viewer, 0xsplits + EAS SDKs landed; per-call skill royalties accrue on paid skill calls (`royalty_ledger`); contracts + audits next |
 | **4** | Open inference network (decentralized GPU layer)                                       | 🟡 Live core: open node-operator client (CPU + CUDA images) + `/api/nodes` job queue with signed, server-recomputed receipts shipped; Livepeer federation behind a flag               |
-| **5** | Native widgets (agent on your home screen and desktop)                                  | 🟡 In progress: Glance shipped the card endpoint, the Windows 11 widget (installs from the PWA manifest, no store) and the `<agent-glance>` element; Android app widget next, then macOS and iOS |
+| **5** | Native widgets (agent on your home screen and desktop)                                  | 🟡 In progress: Glance shipped the card endpoint (JSON, SVG, PNG, Adaptive Card), the Windows 11 widget (installs from the PWA manifest, no store), the `<agent-glance>` element, and the Android home screen widget (app 1.1.0, linked from `/glance` with its own revocable token); macOS and iOS next |
 
 ---
 
@@ -10783,21 +10783,21 @@ This is a different product from the embeddable web widgets at [three.ws/widgets
 | # | Surface | Shell needed | Status |
 | - | ------- | ------------ | ------ |
 | 1 | Windows 11 widgets board | None | **Shipped.** The installed PWA declares a `widgets` manifest member and an Adaptive Card template ([/api/glance/template](api/glance/template.js)); the service worker ([public/glance-sw.js](public/glance-sw.js)) answers `widgetinstall`, `widgetresume`, `widgetclick` and `periodicsync` |
-| 2 | Any web page | None | **Shipped.** `<agent-glance>` ([public/glance/element.js](public/glance/element.js)), plus one SVG URL for a README, a Slack unfurl, or any `<img>` |
-| 3 | Android home screen | Already shipped (`ws.three.app`) | Next. Native `AppWidgetProvider` overlay added to the Bubblewrap project, refreshed by `WorkManager`, tapping deep links into the TWA. The card endpoint it needs is live |
+| 2 | Any web page | None | **Shipped.** `<agent-glance>` ([public/glance/element.js](public/glance/element.js)), plus one SVG or PNG URL for a README, a Slack unfurl, or any `<img>` |
+| 3 | Android home screen | Already shipped (`ws.three.app`) | **Shipped** in app 1.1.0. Native `AppWidgetProvider` overlay on the Bubblewrap project ([solana-mobile/android-overlay](solana-mobile/android-overlay/README.md)) in a 2x2 and a 4x2 / 4x3 layout, refreshed by `WorkManager` from `GET /api/glance/mine?format=png` about every 30 minutes, keeping the last card when the phone is offline, tapping deep links into the TWA. It carries its own `glw_` widget token, linked from [/glance](public/glance/index.html) ("Link this phone") and revocable there at any time |
 | 4 | macOS | Small SwiftUI host app | WidgetKit extension plus a menu bar companion; needs an Apple Developer account |
 | 5 | iOS | App Store wrapper | Same WidgetKit extension target as macOS; gated on shipping the iOS app itself |
 
 **Deliverables**
 
-- ✅ A cacheable card endpoint, [/api/glance/card](api/glance/card.js), serving one model as JSON, SVG and Adaptive Card, plus [/api/glance/mine](api/glance/mine.js) for the signed-in owner's own agent. Spec: [specs/GLANCE_CARD.md](specs/GLANCE_CARD.md)
+- ✅ A cacheable card endpoint, [/api/glance/card](api/glance/card.js), serving one model as JSON, SVG, PNG and Adaptive Card, plus [/api/glance/mine](api/glance/mine.js) for the owner's own agent, authenticated by the session cookie or by a widget's own bearer token, and answering every state (signed out, widget unlinked, no agent yet) as a designed card rather than a 401. Spec: [specs/GLANCE_CARD.md](specs/GLANCE_CARD.md)
 - ✅ Windows 11 widget through the PWA manifest, so it installs with no separate store submission, degrading to the last cached card when the machine is offline and to a sign-in card when nobody is signed in
 - ✅ Card content that is worth a home screen slot: the agent, one live number (actions in the last 24 hours), its last action, and a direct way back in
 - ✅ A playground and install guide at [/glance](public/glance/index.html), and an npm client, [@three-ws/agent-glance](packages/agent-glance), with a terminal renderer
-- Android app widget in three sizes, refreshed on a battery-aware schedule, degrading to the last cached card when the device is offline
+- ✅ Android app widget in two layouts (2x2, and 4x2 / 4x3), refreshed by WorkManager on a battery-aware schedule, degrading to the last cached card when the device is offline
 - A native shell for Apple platforms, which is also the prerequisite for an iOS build of three.ws
 
-**Verification:** a widget installed from the Android app updates without opening the app, survives a reboot and airplane mode, and returns the user into the right screen on tap. Work order: [prompts/roadmap/native-widgets.md](prompts/roadmap/native-widgets.md).
+**Verification:** a widget installed from the Android app updates without opening the app, survives a reboot and airplane mode, and returns the user into the right screen on tap. Product doc: [docs/native-widgets.md](docs/native-widgets.md). Work order: [prompts/roadmap/native-widgets.md](prompts/roadmap/native-widgets.md).
 
 ---
 
@@ -11076,7 +11076,7 @@ npm run build       # frontend build to dist/ (only when frontend changed)
 npm run deploy:gcp  # check:dist + db:check, gcloud builds submit, purge CDN
 ```
 
-`npm run deploy:gcp` runs `gcloud builds submit --config server/cloudbuild.yaml`. Routing, cache headers, and cron schedules are defined in `vercel.json`, which the server reads at runtime. The scheduled jobs (105 at time of writing, one per entry in the `crons` array of `vercel.json`) run on **Cloud Scheduler** (provisioned by [scripts/create-gcp-scheduler.mjs](scripts/create-gcp-scheduler.mjs)); the GPU inference workers run as their own Cloud Run services. Full ops runbook (load balancer, DNS/TLS, env, rollback, recovery): **[docs/ops/gcp-production.md](docs/ops/gcp-production.md)**.
+`npm run deploy:gcp` runs `gcloud builds submit --config server/cloudbuild.yaml`. Routing, cache headers, and cron schedules are defined in `vercel.json`, which the server reads at runtime. The scheduled jobs (110 at time of writing, one per entry in the `crons` array of `vercel.json`) run on **Cloud Scheduler** (provisioned by [scripts/create-gcp-scheduler.mjs](scripts/create-gcp-scheduler.mjs)); the GPU inference workers run as their own Cloud Run services. Full ops runbook (load balancer, DNS/TLS, env, rollback, recovery): **[docs/ops/gcp-production.md](docs/ops/gcp-production.md)**.
 
 **Environment variables** live on the Cloud Run service, not in `.env` files — inspect or update them with `gcloud run services describe/update three-ws-api --region us-central1`. See [Environment Variables](#environment-variables) for the full list.
 

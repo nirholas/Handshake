@@ -18,6 +18,15 @@ time cannot be read is rejected rather than stamped with the current time,
 because a fabricated timestamp corrupts every timeline and every freshness
 number computed from the table.
 
+Strings that came off a chain are arbitrary bytes, and Postgres refuses two of
+the code points they can carry: a NUL fails a jsonb insert outright and a lone
+surrogate fails it with an escape error. `sanitizeText()` and
+`sanitizePayload()` in the same module strip the NUL and replace the lone
+surrogate with U+FFFD in every text column and every payload string (keys
+included) before the row is written. Without that, one such byte in one log
+wedged the chain that produced it: the insert threw before the cursor advanced,
+so every tick re-read the same range and hit the same log.
+
 Seven event classes:
 
 | Class | What it means | Where it comes from |
@@ -130,7 +139,17 @@ The monitor reports both legs. Read them differently:
   falling further behind every tick. The monitor therefore reports **blocks
   behind head**, and the crawl grows its block window while a chain is behind
   (halving it when a provider rejects the range) so a fast chain can actually
-  close the gap.
+  close the gap. One window per chain per tick holds a slow chain but cannot
+  drain a fast one, so after the first pass over every chain the cron spends
+  whatever is left of its budget on a **catch-up pass**: it re-picks the chain
+  furthest behind head each round and feeds it another window, stops far enough
+  from the deadline that metadata enrichment still runs, drops a chain whose
+  provider refused even the floor window rather than spinning on it, and does
+  nothing on a tick where every chain is current. The first pass itself walks
+  chains worst backlog first, with a never-crawled chain ahead of everything
+  and a caught-up chain ranked by how long its cursor has stood still, so a
+  chain that errors on every tick (which keeps reporting the zero backlog its
+  last good crawl left) is not sorted to the back of the sweep forever.
 
 A leg that is reaching every agent and recording nothing counts as `down`, not
 as fresh. That shape (every cursor current, zero events) is what a crashing

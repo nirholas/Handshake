@@ -20,6 +20,21 @@ world requests 200 citizens (`src/agora/agora-world.js`, `loadCitizens`) and
 `CitizenPopulation` streams them in `MAX_CONCURRENT_LOADS = 4` at a time
 (`src/agora/citizen-avatar.js`). Steady-state frame cost is **~900-1400ms**.
 
+## What changed since the measurement
+
+The load path the numbers above describe no longer exists, so the ~50s cliff
+timing has to be re-measured before anything is concluded from it. Since
+2026-08-16 every citizen stands up on the shared default rig first (one small
+GLB for the whole crowd) and only the most recently active `MAX_PERSONAL_AVATARS`
+(24 on desktop, 8 on a coarse pointer) upgrade to their own model
+(`src/agora/citizen-avatar.js`, `_wearOwnAvatar`); the crowd is placed ten
+citizens per frame and the citizens request is prefetched in parallel with the
+map (`src/agora/agora-world.js`). The full 200 are therefore standing in
+seconds rather than minutes, which moves the cliff earlier, and the per-frame
+cost this task is about is unchanged: `CitizenPopulation.update` still runs
+`mixer.update(dt)` for every instance every frame, so the suspected per-object
+cost below applies to 200 skinned meshes exactly as before.
+
 ## What was ruled out
 
 | Hypothesis | Evidence against |

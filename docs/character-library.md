@@ -1,4 +1,4 @@
-# Character Library: 106 rigged characters, ready to animate
+# Character Library: rigged characters, ready to animate
 
 The Character Library is a free, curated gallery of professionally rigged humanoid 3D characters. Every character ships as a web-ready GLB with a full skeleton, skin weights, and textures, so it drives the entire three.ws animation library (idle, walk, run, wave, dance, and the rest of the canonical clip set) out of the box via animation retargeting. No account, no payment, no upload step: browse, preview live, and send any character into a studio in one click.
 
@@ -11,13 +11,13 @@ Source: [`pages/character-library.html`](../pages/character-library.html) · [`s
 
 ## What is in the library
 
-106 professionally rigged Mixamo humanoid characters (Y Bot, X Bot, Warrok, Remy, Vanguard, zombies, knights, and more), staged as optimized GLBs on the R2 CDN. The manifest can also merge additional CC0 characters from other sources (for example Quaternius), so the API's `total` field is the authoritative count and can exceed 106.
+A hundred-plus professionally rigged Mixamo humanoid characters (Y Bot, X Bot, Warrok, Remy, Vanguard, zombies, knights, and more), staged as optimized GLBs on the R2 CDN. The manifest can also merge additional CC0 characters from other sources (for example Quaternius), so the API's `total` field is the authoritative count. Nothing on the page hard-codes a number: the hero headline and the results counter render `total` from the manifest.
 
 Every entry is animation-ready: the GLB carries a skinned mesh, and the three.ws runtime retargets the canonical clip library onto it automatically (see [Animations](./animations.md) for how retargeting and the clip registry work). There is no per-character allowlist; any character in the library plays any clip.
 
 ## Using the gallery
 
-Each card renders the character live in an auto-rotating `<model-viewer>` (with the pre-rendered thumbnail as the poster) and offers three one-click routes:
+Each card renders the character live in an auto-rotating `<model-viewer>` (with the pre-rendered thumbnail slotted in as a lazy-loaded poster image that fades once the model loads), shows the entry's `source` and file size, and offers three one-click routes. The viewer is control-free (no orbit, no extra tab stop); the whole thumbnail is a link to the preview. A manifest row with no `url` renders as a plain, unlinked tile with no actions.
 
 | Button | Destination | What you get |
 |---|---|---|
@@ -29,7 +29,7 @@ Gallery controls:
 
 - **Search** filters by name; press `/` anywhere on the page to focus the search box.
 - **Sort** by name (A to Z, Z to A) or by file size (largest or smallest first). File size is shown on every card.
-- The library is small enough that the page fetches the whole manifest once and filters client-side, so search and sort are instant.
+- The library is small enough that the page fetches the whole manifest once and filters client-side, so search and sort are instant. Search, sort, card copy, and the deep links are pure functions of the manifest in [`src/shared/character-library-view.js`](../src/shared/character-library-view.js), covered by `tests/character-library-view.test.js`.
 - Loading shows a skeleton grid; an empty library, an empty search result, and a fetch error each have their own designed state with a recovery action.
 
 ## API: `GET /api/avatars/library`

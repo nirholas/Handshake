@@ -30,8 +30,9 @@ guard), when it was already uploaded, or when it failed three times.
 **Brand safety.** The official account never publishes firearms or explicit
 content, regardless of what the forge itself allows. A conservative
 word-boundary denylist filters the selection query and re-checks before
-upload, and the platform's NemoGuard content classifier runs as a second
-layer. Blocked creations are parked in the ledger (`blocked`) and never
+upload, and the NemoGuard content classifier in `api/_lib/publish-safety.js`
+runs as a second, fail-open layer. Both are limits on what this account
+publishes, not on what users may forge. Blocked creations are parked in the ledger (`blocked`) and never
 re-picked. Refinement children are also excluded from the creator-validated
 tier, since their prompts are instructions, not titles.
 
@@ -39,7 +40,14 @@ tier, since their prompts are instructions, not titles.
 
 Every published model carries:
 
-- **The generation prompt** at the top of the description, in quotes.
+- **The generation prompt** at the top of the description, in quotes. The
+  model's name is the prompt with a leading article stripped and clamped to
+  Sketchfab's display limit; a creation whose stored prompt is a placeholder
+  rather than a description (the image-to-3D path stores its route name,
+  `image-to-3d`, as the prompt) is named from its forge category instead
+  ("Forged Sci-Fi"), falling back to "3D Model" for the catch-all buckets, so
+  a winning image-derived model never reaches the account titled after a
+  route.
 - **AI disclosure**: the `ai-generated` tag plus a plain statement that the
   model was AI-generated on the three.ws Forge. Sketchfab has no dedicated
   AI-content field, so tag + statement is the correct marking.

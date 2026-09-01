@@ -77,7 +77,7 @@ The app bundle is not on screen yet while the boot loader is up, so the loader h
 - `name` is capped at 28 characters and `symbol` at 12, cut on a word boundary.
 - Anything unexpected throws into a `catch` that leaves the generic loader exactly as it shipped.
 
-The art has a designed failure path in both places it appears. In the loader, a monogram sits under the `<img>` and the image only fades in on `load`; an `error` removes the `<img>` and leaves the monogram. In the world, the HUD banner's `.cc-coin-img` does the same against `.cc-coin-mono` ([src/game/coincommunities-ui.js](../src/game/coincommunities-ui.js)). The 3D totem and jumbotron already degraded to text-only on a failed `TextureLoader` fetch. This matters on venue wifi, where the IPFS gateway behind `/api/img` is the single most likely thing to fail while everything else about the world works.
+The art has a designed failure path in both places it appears. In the loader, a monogram sits under the `<img>` and the image only fades in on `load`; an `error` removes the `<img>` and leaves the monogram. In the world, the HUD banner's `.cc-coin-img` does the same against `.cc-coin-mono` ([src/game/coincommunities-ui.js](../src/game/coincommunities-ui.js)). The 3D totem and jumbotron already degraded to text-only on a failed `TextureLoader` fetch. This matters on venue wifi, where the IPFS gateway behind `/api/img` is the single most likely thing to fail while everything else about the world works. A single gateway is also no longer the only try: `uriCandidates()` in [src/ipfs.js](../src/ipfs.js) expands an `ipfs://` source, or a URL that already names one gateway, into one candidate per gateway in preference order, and each fetch is bounded at 8 s, so one rate-limited gateway degrades to the next rather than to the monogram.
 
 The loader also sets a provisional `document.title` from the link and stashes the original in `documentElement.dataset.lobbyTitle`; `_setTabTitle()` in [src/game/coincommunities.js](../src/game/coincommunities.js) replaces it with the resolved coin on entry and restores the stashed original on leave, so the two writers never fight and the localised title is never re-spelled in JS.
 
@@ -237,6 +237,11 @@ npx vitest run tests/play-deeplink-safety.test.js tests/play-deeplink-identity.t
 # coin art and GLBs, a dead auth gate, an ad blocker, a total API outage.
 npm run audit:play-failures                       # local dev server
 BASE_URL=https://three.ws npm run audit:play-failures
+# A scenario the harness itself broke (a host transport reset, a starved
+# browser) is retried up to ATTEMPTS times (default 4) with a growing backoff
+# and reported NOT RUN if it never runs, never counted as a /play defect; the
+# sweep abandons itself if the origin under test stops answering. Authed
+# scenarios use AUDIT_EMAIL / AUDIT_PASSWORD (see docs/ops/page-audit.md).
 
 # Everything else that touches the surface.
 npx vitest run tests/play-gate.test.js tests/play-pass.test.js \

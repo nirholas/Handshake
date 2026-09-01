@@ -12,7 +12,7 @@ It is a rebranded fork of the open-source (MIT license) [M3-org/CharacterStudio]
 
 Where you meet it in the product:
 
-1. Open an agent's edit page (`https://three.ws/agent/<agent-id>/edit`)
+1. Open an agent's edit page (`https://three.ws/agents/<agent-id>/edit`)
 2. Click the avatar tile and choose **three.ws Studio** ("In-browser builder: hair, clothing, body") from the create menu
 3. The builder opens in a modal iframe; customize using the sections in the left panel
 4. Click **Save Avatar**; the finished GLB is handed back to the agent editor automatically
@@ -102,7 +102,7 @@ RightUpperLeg → RightLowerLeg → RightFoot
 This means:
 
 - **Mixamo animations work**: the fork retargets Mixamo FBX clips onto the VRM rig (`loadMixamoAnimation.js`, `VRMRigMapMixamo.js`)
-- **The three.ws animation library is fully compatible**: the platform's bone-name canonicalizer (`src/glb-canonicalize.js`) maps VRM rigs to the canonical set, so all built-in clips (idle, wave, walk, and the rest) work out of the box
+- **The three.ws animation library is fully compatible**: the platform's bone-name canonicalizer (`src/glb-canonicalize.js`) maps VRM rigs (and every other humanoid convention it knows, MikuMikuDance's Japanese bone names included) to the canonical set, so all built-in clips (idle, wave, walk, and the rest) work out of the box
 - **Retargeting** is handled automatically by the animation manager (`src/animation-retarget.js`)
 
 ---
@@ -177,8 +177,9 @@ offers three real paths, each ending in a GLB the world adopts immediately:
    editor mode, which loads the Avaturn selfie→3D SDK (`@avaturn/sdk`). No sign-in required;
    the exported GLB is staged locally and used as your avatar instantly, then uploaded in the
    background so peers can load it too (`play-handoff.js`).
-2. **Upload a .glb** — bring a model from Blender, Mixamo, VRoid, or any tool. Validated
-   client-side (`avatar-upload.js` `validateGlb`) before it becomes your avatar.
+2. **Upload a model**: bring a `.glb` or `.vrm` from Blender, Mixamo, VRoid, or any tool.
+   Validated client-side (`avatar-upload.js` `validateGlb`, which accepts both extensions
+   since a VRM file is a glTF binary) before it becomes your avatar.
 3. **Advanced studio**: opens the native Avatar Studio at `/create/studio` in a new
    tab for deep body/face/hair/clothing sculpting, then saves to your account
    (see [Avatar Studio (native)](/docs/avatar-studio)).

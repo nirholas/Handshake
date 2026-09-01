@@ -98,8 +98,10 @@ State lives in `app_settings` under `pump_claims_push_telegram`:
   Cloud Run request deadline is shorter than a full paced run) resumes at the
   next claim instead of repeating delivered ones.
 - **A DB lock** (`pump_claims_push_lock`, 240s TTL) stops overlapping ticks from
-  double-posting. Every outbound request is bounded well under that TTL, which
-  is what keeps the lock's guarantee true.
+  double-posting. Every outbound request is bounded well under that TTL (each
+  Telegram `sendMessage` goes through the shared `fetchUpstream` with a 10 s
+  deadline and at most two attempts), which is what keeps the lock's guarantee
+  true.
 - **All message fields are HTML-escaped.** Claim data is third-party on-chain
   data; unescaped text could otherwise smuggle a clickable link posted under the
   platform bot's identity.

@@ -2,7 +2,7 @@
 
 An agent is not locked to three.ws: embed it on any site, ship it in a chat plugin, put it in Claude via MCP, carry it on Solana mobile.
 
-An agent you build on three.ws doesn't live in a tab on three.ws — it travels. One copy-paste snippet puts a living 3D agent on any website; official plugins put it inside ChatGPT, Claude, LobeChat, Blender, VS Code, and Chrome; a packaged Solana Mobile app puts it in your pocket; and 42 MCP servers put every three.ws capability one command away from any AI assistant. Create once, deploy everywhere is not a tagline here — it's the product architecture.
+An agent you build on three.ws doesn't live in a tab on three.ws: it travels. One copy-paste snippet puts a living 3D agent on any website; official plugins put it inside ChatGPT, Claude, LobeChat, Blender, VS Code, and Chrome; a packaged Solana Mobile app puts it in your pocket; and 48 MCP servers put every three.ws capability one command away from any AI assistant. Create once, deploy everywhere is not a tagline here: it's the product architecture.
 
 ## The <agent-3d> web component — a 3D agent in one tag
 
@@ -108,9 +108,9 @@ A custom GPT in the OpenAI GPT Store generates textured 3D models from plain tex
 
 **Why it matters:** Anyone in ChatGPT can make and inspect real 3D assets without ever leaving the conversation.
 
-## 42 MCP servers — every capability one command from any AI assistant
+## 48 MCP servers: every capability one command from any AI assistant
 
-The entire platform is exposed through 42 Model Context Protocol servers, all listed in the official MCP registry: seven hosted servers you add by URL with nothing to install (including a completely free 3D Studio with no auth and no payment), and thirty-five npm packages that run locally with a single npx command. Claude, Cursor, and any MCP-compatible client can generate 3D models, drive avatars, pay for services, read market intel, and more through natural language.
+The entire platform is exposed through 48 Model Context Protocol servers, all listed in the official MCP registry: seven hosted servers you add by URL with nothing to install (including a completely free 3D Studio with no auth and no payment), and forty-one npm packages that run locally with a single npx command. Claude, Cursor, and any MCP-compatible client can generate 3D models, drive avatars, pay for services, read market intel, and more through natural language.
 
 **How it works:** Streamable-HTTP remote servers (e.g. /api/mcp, /api/mcp-studio, /api/mcp-agent) plus 35 stdio servers published under the @three-ws npm scope, registered on registry.modelcontextprotocol.io; paid tools quote USDC prices and settle via x402 in-band.
 

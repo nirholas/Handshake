@@ -78,6 +78,15 @@ maps to the same request, and a new model always gets its own.
 - **Verifying a proof.** `hashReport()` keccaks the report's compact JSON. Fetch
   the pinned file, `JSON.stringify(JSON.parse(bytes))`, keccak it, and compare
   against the chain's `responseHash`.
+- **One dead RPC never blocks an attestation.** The attestor signs against
+  `evmFallbackProvider(chainId)` from `api/_lib/evm/rpc.js`, a quorum-1
+  fallback over the chain's endpoint list in priority order, so both the reads
+  in step 4 and the broadcast in step 6 go through whichever endpoint answers.
+  On BSC Testnet that list leads with PublicNode, because the bnbchain data-seed
+  nodes refuse every `eth_getLogs` call outright.
+- **The `/validation` dashboard resolves `ipfs://` report links through the
+  shared gateway list** in `src/ipfs.js` (`resolveURI`), the same rotation the
+  rest of the platform uses, rather than one hardcoded gateway.
 
 ## Badge states
 

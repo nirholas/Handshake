@@ -331,7 +331,7 @@ TARGET=lib npm run build
 # Output: dist-lib/
 ```
 
-The Vite config handles multi-page routing, asset hashing, and the PWA manifest. Every JS file in `dist/assets/` is content-hashed, so you can serve them with long cache headers safely — the `vercel.json` route headers set `max-age=604800` on `/assets/*`, and the container (and any CDN in front of it) honors them.
+The Vite config handles multi-page routing, asset hashing, and the PWA manifest. Every JS file in `dist/assets/` is content-hashed, so you can serve them with long cache headers safely: the `vercel.json` route headers set `public, max-age=31536000, immutable` on `/assets/*`, and the container (and any CDN in front of it) honors them.
 
 ---
 
@@ -342,8 +342,10 @@ The Vite config handles multi-page routing, asset hashing, and the PWA manifest.
 ### Key rewrites
 
 ```
-/agent/:id/edit      → /agent-edit.html
-/agent/:id/embed     → /agent-embed.html   (frame-ancestors: * header)
+/agents/:id/edit     → /agent-edit.html
+/agents/:id/embed    → /agent-embed.html   (frame-ancestors: * header)
+/agent/:id/edit      → /agent-edit.html    (legacy spelling, still served)
+/agent/:id/embed     → /agent-embed.html   (legacy spelling, same headers)
 /agent/:id           → 301 → /agents/:id
 /agents/:id          → /agent-detail.html  (bot user-agents get the OG render)
 /dashboard           → /dashboard-next/index.html
@@ -369,7 +371,7 @@ The container does **not** schedule these itself — you need an external schedu
 
 ### Static asset caching
 
-Assets under `/assets/*` are served with a 7-day cache header. Versioned CDN bundles under `/agent-3d/x.y.z/*` are served with a 1-year immutable cache. Both are configured in `vercel.json` route headers.
+Assets under `/assets/*` are content-hashed and served with a 1-year immutable cache header. Versioned CDN bundles under `/agent-3d/x.y.z/*` are served with a 1-year immutable cache. Both are configured in `vercel.json` route headers.
 
 ---
 
@@ -460,7 +462,7 @@ server {
     }
 
     location /assets/ {
-        expires 7d;
+        expires 1y;
         add_header Cache-Control "public, immutable";
     }
 
@@ -538,7 +540,7 @@ After deploying, run through these checks to verify the instance is healthy:
 | Wallet sign-in | Connect MetaMask — SIWE challenge + verify |
 | Avatar creation | Navigate to `/create` — avatar builder iframe loads |
 | Agent page | Visit `/agents/:id`: 3D viewer with chat overlay (`/agent/:id` 301-redirects here) |
-| Embed | Check `/agent/:id/embed` loads without auth, can be iframed |
+| Embed | Check `/agents/:id/embed` loads without auth, can be iframed |
 | Dashboard | Navigate to `/dashboard` — shows your agents |
 | API health | `GET /api/agents` returns JSON (may be empty array) |
 | Auth metadata | `GET /.well-known/oauth-authorization-server` returns valid JSON |

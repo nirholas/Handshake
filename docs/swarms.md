@@ -201,6 +201,7 @@ Every failure returns `{ error, error_description }` with a specific code rather
 | 403 | `below_threshold` | `kill` from a member holding under `kill_threshold_bps` |
 | 415 | `bad_request` | A mutation sent without `Content-Type: application/json` |
 | 429 | `rate_limited` | Over 30 mutations per minute for this user |
+| 503 | `rpc_unavailable` | The treasury balance could not be read from Solana RPC, so `contribute` or `exit` refused to proceed rather than treat an unknown balance as zero; retry after the `Retry-After` window (15 seconds) |
 | 404 | `not_found` | No such swarm |
 | 404 | `agent_not_found` | No such agent |
 | 404 | `not_member` | `exit` from an agent that is not an active member |

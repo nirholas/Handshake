@@ -34,8 +34,8 @@ claims it.
 - Auto-summon is polite: it waits for `load` + idle, skips visitors with
   `prefers-reduced-motion` or `Save-Data`, skips full-screen 3D/camera routes
   (`/play`, `/tour`, `/scan`, …), and never re-summons after the visitor closes
-  the companion. The existing nav "Walk" toggle keeps working exactly as
-  before.
+  the companion. A page opts out with `data-walk-auto="off"` on its `html`
+  element. The existing nav "Walk" toggle keeps working exactly as before.
 
 Key modules: [src/agents/guest-agent.js](../src/agents/guest-agent.js) (draft
 store), [src/shared/agent-names.js](../src/shared/agent-names.js) (namer),
@@ -52,7 +52,7 @@ verbs and runs them in place against the real public APIs — no account needed:
 | `forge <prompt>` (also `make`, `generate`, `imagine`) | `forge a bronze dragon statue` | `POST /api/forge` on the free text→3D lane, polls to completion, returns open/download/refine links for the real GLB |
 | `digest` (also `briefing`, `what happened today`) | `digest` | `GET /api/news/digest` — the last 24h clustered into narratives, rendered as rows |
 | `price <coin>` or `$ticker` | `price btc`, `$sol` | `GET /api/coin/markets` + `/detail`, falling back to pump.fun token search |
-| `ask <question>` (or any query ending in `?`) | `ask what is x402?` | `POST /api/chat` — the site agent's answer streamed into the panel; honors the free lane's `retry_after` backoff when it's at capacity |
+| `ask <question>` (or any query of ten or more characters ending in `?`) | `ask what is x402?` | `POST /api/chat`: the site agent's answer streamed into the panel; honors the free lane's `retry_after` backoff when it's at capacity |
 
 Grammar rules: commands are strict verb-first parses — a bare verb (`forge`)
 or a plain search query is never hijacked. A natural question ("how do agents
@@ -124,4 +124,7 @@ while the companion is live.
 
 Related: [web-component.md](web-component.md) (the embeddable `agent-3d`
 avatar), [coin-pages.md](coin-pages.md) (the market surfaces the shell
-navigates), [STRUCTURE.md](../STRUCTURE.md) (surface map).
+navigates), [companion.md](companion.md) (the same corner companion delivering
+messages from connected sources in person), [feedback.md](feedback.md)
+(reporting what broke through the companion), [STRUCTURE.md](../STRUCTURE.md)
+(surface map).

@@ -474,7 +474,11 @@ array.
 - **No symbols** → `400 missing_symbols` with the cap and an `example`.
 - **More than 20 symbols** → `400 too_many_symbols` with the cap.
 - **Registry source down** → `200` with `degraded: true`; affected symbols get
-  `available: null` + a `note`. Never `500`.
+  `available: null` + a `note`. Never `500`. Each lookup is retried once and
+  keeps its last good DexScreener answer for 10 minutes, so through a throttle
+  the result still lists the last known `exactCollisions` / `fuzzyCollisions`
+  with `stale: true` (and `available: null`, because availability could not be
+  verified live); a fresh answer carries `stale: false`.
 - **Rate-limited** → `429 rate_limited` with `RateLimit-*` + `Retry-After` headers.
 
 ### Examples
@@ -825,8 +829,11 @@ surfaces can never contradict each other.
   `concentration: "unknown"`, and a note — a valid empty, not an error.
 - **Missing/EVM/invalid `address`** → `400` with a clear message + example.
 - **Valid address that isn't an on-chain mint** → `400 token_not_found`.
-- **Holder sources unreachable or throttled** → `503` + `Retry-After`. A throttled
-  RPC is never reported as "no holders". Never `500`.
+- **Holder sources unreachable or throttled** → the last good answer for that
+  `address` + `limit`, held for 24 hours, served as `200` with `stale: true`,
+  `as_of` (when it was computed), and an `x-holders-stale: 1` header; with no
+  last good copy, `503` + `Retry-After`. A throttled RPC is never reported as
+  "no holders". Never `500`.
 - **Rate-limited** → `429` with `RateLimit-*` + `Retry-After` headers.
 
 ### Examples
@@ -906,6 +913,10 @@ that layer, computed once server-side so every client renders the same numbers.
 - **`slot`** - a palette slot per top asset, so the same wallet colors the same
   way across reloads and across surfaces.
 - **`stale: true`** - present only when the balance source served a cached read.
+  The 24h-change column has its own continuity: each DexScreener batch is
+  retried once and keeps its last good pair list for 10 minutes, so a throttle
+  no longer blanks every `change24h` in the batch in a way indistinguishable
+  from a token that genuinely has none.
 
 ### Sources
 

@@ -18,7 +18,7 @@ npm run dev
 
 Open http://localhost:3000. You should see a 3D avatar you can orbit with the mouse.
 
-`npm run setup` is not optional and not the same as `npm install`. It builds the local `solana-agent-sdk` (linked as a `file:` dependency with no prebuilt `dist/`) and generates the gitignored `data/_generated/*` artifacts that the app, the sitemap, and the test suite read. It is idempotent, so re-running it is always safe.
+`npm run setup` is not optional and not the same as `npm install`. It builds the local `solana-agent-sdk` (linked as a `file:` dependency with no prebuilt `dist/`), generates the gitignored `data/_generated/*` artifacts that the app, the sitemap, and the test suite read, and installs the repo's pre-push hook into `.git/hooks` (the same one `npm install` sets up through `scripts/setup-git-hooks.mjs`). That hook lints the commits you push against the rules in section 4, so a rejected push is the hook doing its job, not a broken setup. It is idempotent, so re-running it is always safe.
 
 You do **not** need any API keys, a wallet, or a database to work on the rendering, rigging, animation, or docs layers. Those layers are pure client-side JavaScript and their tests run offline.
 
