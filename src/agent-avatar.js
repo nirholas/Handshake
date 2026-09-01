@@ -57,7 +57,7 @@ const DECAY = {
 	patience: 0.035, // half-life ~20s — sustained waiting state
 	curiosity: 0.12, // half-life ~8s  — alert, engaged
 	empathy: 0.055, // half-life ~13s — slow to fade, like real empathy
-	uncertain: 0.1, // half-life ~7s  — hedged speech signal
+	uncertain: 0.1, // half-life ~7s: hedged speech signal
 };
 
 // Vocabulary scored for emotional valence

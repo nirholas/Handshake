@@ -1113,7 +1113,7 @@ class Agent3DElement extends HTMLElement {
 				});
 			})
 			.catch(() => {
-				/* optional affordance — never break the viewer */
+				/* optional affordance, never break the viewer */
 			});
 	}
 
@@ -2956,8 +2956,8 @@ class Agent3DElement extends HTMLElement {
 	/**
 	 * Perform `text` in American Sign Language on the avatar, without sending it
 	 * to a brain. Turns the engine on if the `sign-language` attribute has not
-	 * already, and resolves with `{ signed, spelled }` — which words came from
-	 * the lexicon and which fingerspelled — or `null` when the loaded rig has no
+	 * already, and resolves with `{ signed, spelled }` (which words came from
+	 * the lexicon and which were fingerspelled), or `null` when the loaded rig has no
 	 * finger bones to sign with.
 	 *
 	 * @param {string} text
