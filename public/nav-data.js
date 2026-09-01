@@ -233,6 +233,12 @@ export const NAV_GROUPS = [
 			{
 				label: 'Agents & worlds',
 				items: [
+					{
+						title: 'Agent Spotlight',
+						href: '/spotlight',
+						badge: 'New',
+						desc: 'The community showcase: agents people actually built something with, ranked by upvotes',
+					},
 					{ title: 'Agents Index', href: '/agents', desc: 'Browse every registered agent' },
 					{
 						title: 'Live Agents',

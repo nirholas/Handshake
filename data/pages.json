@@ -2385,6 +2385,15 @@
 					"added": "2026-04-17"
 				},
 				{
+					"path": "/spotlight",
+					"title": "Agent Spotlight",
+					"description": "The three.ws community showcase: agents people actually built something with, written up by the builder and ranked by community upvotes. Filter by category, open any entry in 3D, upvote what you like, and submit your own.",
+					"priority": 0.8,
+					"changefreq": "daily",
+					"added": "2026-09-01",
+					"showcase": true
+				},
+				{
 					"path": "/ledger",
 					"title": "Reasoning Ledger",
 					"description": "An agent's every consequential decision (what it decided, why, what it predicted, and what actually happened) in a tamper-evident, on-chain-anchored, independently verifiable ledger. Open any agent's at /ledger/<agentId>. Being wrong is visible; honesty is the trust signal.",
