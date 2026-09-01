@@ -131,3 +131,11 @@ Ran as a second pass over what orders 01, 03 and 07 had already landed, verifyin
 **Blocked on the box, not on the code.**
 
 No complete frontend build has succeeded here today. Mine died `EXIT:143` (SIGTERM, killed, not a compile error) after clearing the transform stage, and `/workspaces/.preflight-ship/dist` holds only `chat/`. At the time of writing: load average 176 on 16 cores, 46 of 62 GB used, and a concurrent `npm ci` rewriting the shared `node_modules`. Residual 1 above ("one clean `npm test` is still owed") has the same cause. Whoever runs the ship should expect to retry the build on a quieter box rather than to debug it. `dist/` in the main worktree is currently a half-written build from that kill and should not be trusted or shipped; the deploy runbook builds in its own worktree anyway.
+
+## 2026-09-01 · Retirement sweep: 01, 03, 04, 05, 07 verified shipped and deleted; 08 rewritten to its remainder
+
+Every order was re-measured against the code, the changelog, and production (`ad7b54c16`) rather than against this log. Verified shipped and retired: 01 (`src/game/event-countdown.js` wired at `pages/play.html`, `src/home-event-banner.js` at `pages/home.html`, changelog 2026-08-07), 03 (`pages/event.html`, `src/event-page.js`, `api/play/population.js`, live `/event` 200), 04 (`multiplayer/src/event-window.js`, `event-leaderboard.js`, `api/play/event-leaderboard.js`, `tests/event-quests.test.js` 24 + `tests/event-leaderboard.test.js` 18), 05 (`multiplayer/src/event-drop.js`, `laurel-meetup` in the cosmetics catalog, `public/accessories/laurel-meetup.glb` 68,084 bytes, `docs/event-souvenirs.md`), 07 (ran 2026-08-08, NO-GO recorded above with per-stage evidence).
+
+Still open: 02 (the in-world half of the walkthrough was never done and no defect list exists), 06 (built, never verified on both engines, never announced in the changelog), 08 (rewritten: the leaderboard's Redis record expired about 2026-08-16 with nothing exported, `app_settings` holds no event key, so the standings are unrecoverable; the souvenir grant count is still readable from the multiplayer logs until about 2026-09-08, which makes 08 the first order to run).
+
+Correction to the pack's own dates: the window that actually ran was 2026-08-09 17:00 to 19:30 UTC (`git show 5616ff9b8^:public/event.json`), not 2026-08-08.
