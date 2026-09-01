@@ -1556,22 +1556,21 @@ function observeCardModelViewers() {
 				for (const entry of entries) {
 					const mv = entry.target;
 					if (!entry.isIntersecting) continue;
-					// Lazy promote data-src → src on first intersect (fires the GLB download).
-					if (mv.dataset.src && !mv.getAttribute('src')) {
-						mv.setAttribute('src', mv.dataset.src);
-						delete mv.dataset.src;
-					}
-					// Rotation has exactly one owner from here: attendRotation, which
-					// turns the card when it arrives, settles it once it has turned far
-					// enough to read as 3D, and turns it again on hover or focus.
-					// Toggling the attribute here too meant two owners of one attribute:
-					// this observer re-added auto-rotate after the settle, attendRotation
-					// saw its own state already matching and never took it away again, and
-					// the cards rotated for the life of the tab anyway (27 s of scripting
-					// in a 40 s desktop run).
+					// attendRotation owns both the model and its rotation from here. It
+					// promotes data-src on the first hover, focus or tap, turns the card
+					// while it is being looked at, and settles it once it has turned far
+					// enough to read as 3D.
+					//
+					// Promoting on intersect instead, which is what this did, downloaded
+					// and decoded a full avatar for every thumbnail-less card in view:
+					// four of them were 8.7 s of the page's blocking time, and decoding a
+					// GLB is one unbreakable main-thread task each. The card already
+					// renders its designed placeholder underneath (placeholderHtml), so
+					// nothing is blank in the meantime, and a card that carries a stored
+					// thumbnail never had a viewer in the first place.
 					if (mv.dataset.shouldRotate !== '0' && mv.dataset.attendedRotateBound !== '1') {
 						mv.setAttribute('auto-rotate', '');
-						attendRotation(mv);
+						attendRotation(mv, { attention: mv.closest('.market-card-avatar, .market-theme-pick') });
 					}
 				}
 			},

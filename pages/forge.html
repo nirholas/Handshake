@@ -598,6 +598,15 @@
 				row-gap: 2px;
 				justify-content: flex-start;
 			}
+			/* The engine buttons arrive with the catalog. An empty pill is 6px tall
+			   and a filled one is 54px, so the row it sits in used to grow half a
+			   second into the load and push the example chips down with it. Reserve
+			   the filled height while it is empty; `:empty` stops matching the
+			   moment buildEngineButtons() writes, so a taller set is free to be
+			   taller. Keep in step with `.aspect button` padding + font size. */
+			.engine-pill:empty {
+				min-height: 50px;
+			}
 			/* Shown by buildEngineButtons() when no lane can serve the active tab —
 			   keeps the pill from collapsing to an empty box. */
 			.engine-empty {
@@ -3394,7 +3403,14 @@
 						</button>
 						<!-- Hidden until the catalog reports a live sketch engine (TripoSG
 						     self-host) — no dead tab on deployments without the worker. -->
-						<button type="button" role="tab" id="tab-sketch" data-mode="sketch" aria-selected="false" aria-controls="sketch-pane" tabindex="-1" hidden data-i18n="forge.from_a_sketch">
+						<!-- Not `hidden`. revealSketchMode() hides this tab when the catalog
+						     reports no sketch lane, which is the minority deployment; on a
+						     deployment that has one, waiting for the catalog meant the tab
+						     appeared ~400 ms in, wrapped the tab row onto a second line and
+						     dropped the whole composer 38 px. That single shift was 0.19 of
+						     this page's 0.23 CLS. Ship the state production is in and let
+						     the catalog take it away where it does not apply. -->
+						<button type="button" role="tab" id="tab-sketch" data-mode="sketch" aria-selected="false" aria-controls="sketch-pane" tabindex="-1" data-i18n="forge.from_a_sketch">
 							From a sketch
 						</button>
 					</div>
