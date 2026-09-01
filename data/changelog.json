@@ -25510,6 +25510,16 @@
 				"fix"
 			],
 			"link": "/terminal"
+		},
+		{
+			"date": "2026-09-01",
+			"title": "Documentation sweep: 164 docs re-checked against the code they describe",
+			"summary": "Every doc the freshness gate flagged as describing code that had moved since it was written (174 of them, from the UX flow walkthroughs and the Oracle model write-up to the ops runbooks, tutorials, and the agent-abilities chapters) was re-read against the current code. 164 were corrected or extended: renamed routes now point at /agents/:id, retired model names and provider ladders are current, counts and thresholds match what ships, and the resilience work of the last month (last-good caches, typed 503s with Retry-After, the RPC read guards) is described where it applies. Along the way three things the docs promised were made true in the product: the Herald posting scope can now be minted from the dashboard key form, the translation script defaults to a Groq model that still exists, and the home page OpenAPI link opens the spec directly.",
+			"tags": [
+				"docs",
+				"fix"
+			],
+			"link": "/docs/freshness"
 		}
 	]
 }
