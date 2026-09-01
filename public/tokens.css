@@ -133,9 +133,9 @@
 	--header-h: 3.5rem;
 
 	/* Font stacks — families are self-hosted in /fonts/fonts.css */
-	--font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
-	--font-body: 'Inter', system-ui, sans-serif;
-	--font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', ui-monospace, monospace;
+	--font-display: 'Space Grotesk', 'Space Grotesk Fallback', 'Inter', system-ui, sans-serif;
+	--font-body: 'Inter', 'Inter Fallback', system-ui, sans-serif;
+	--font-mono: 'JetBrains Mono', 'JetBrains Mono Fallback', 'SF Mono', 'Fira Code', ui-monospace, monospace;
 
 	/* Accent */
 	--accent: #ffffff;
