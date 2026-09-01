@@ -7,6 +7,7 @@
  */
 
 
+import { attendRotation } from './shared/attended-rotation.js';
 import {
 	renderDetailAvatar,
 	renderDetailModelStage,
@@ -741,7 +742,10 @@ function hideThemeStrip() {
 		picks.innerHTML = '';
 		picks.hidden = true;
 	}
-	if (strip) strip.hidden = true;
+	if (strip) {
+		strip.hidden = true;
+		strip.removeAttribute('aria-busy');
+	}
 }
 
 // Show the strip with a shimmer immediately so the top of the page never pops
@@ -786,6 +790,9 @@ function renderTheme() {
 	}
 	renderThemePicks();
 	strip.hidden = false;
+	// Real lineup in place: the markup's shimmer, which held this box from the
+	// first frame, is done.
+	strip.removeAttribute('aria-busy');
 }
 
 // Render the randomized 3D lineup. Every agent here is guaranteed (by the API)
@@ -1019,9 +1026,13 @@ function renderHero() {
 	if (!hero) return;
 	if (!state.featured.length) {
 		hero.hidden = true;
+		hero.removeAttribute('aria-busy');
 		return;
 	}
 	hero.hidden = false;
+	// The markup ships the hero in place and busy so the page below it never
+	// shifts; it stops being busy the moment it holds real slides.
+	hero.removeAttribute('aria-busy');
 	const stage = $('market-hero-stage');
 	const dots = $('market-hero-dots');
 	stage.innerHTML = state.featured
@@ -1541,7 +1552,18 @@ function observeCardModelViewers() {
 							mv.setAttribute('src', mv.dataset.src);
 							delete mv.dataset.src;
 						}
-						if (mv.dataset.shouldRotate !== '0') mv.setAttribute('auto-rotate', '');
+						if (mv.dataset.shouldRotate !== '0') {
+							mv.setAttribute('auto-rotate', '');
+							// Stopping off-screen was not enough. A grid of on-screen cards
+							// all rotating at once never stops, and model-viewer blits every
+							// element's pixels every frame: 27 s of scripting in a 40 s
+							// desktop run, and the page never became interactive. Each card
+							// now turns when it arrives, settles, and turns again on hover
+							// or focus. attendRotation takes over this element's rotation
+							// from here (its own observer), so the branch below only has to
+							// handle a card that never qualified.
+							attendRotation(mv);
+						}
 					} else {
 						// Suspend rotation off-screen so model-viewer halts its raf loop.
 						mv.removeAttribute('auto-rotate');

@@ -3211,7 +3211,12 @@
 				     anchor for the page identity. -->
 				<h1 class="market-visually-hidden" data-i18n="marketplace.agent_marketplace">Agent Marketplace</h1>
 				<!-- Weekly curated theme strip (loads from /api/marketplace/theme) -->
-				<aside class="market-theme-strip" id="market-theme-strip" hidden>
+				<!-- Also not `hidden`: renderThemeSkeleton() in src/marketplace.js
+				     exists to keep this strip from popping in late, but it cannot run
+				     until the bundle does. Shipping the same shimmer in the markup is
+				     what actually holds the box from the first frame; hideThemeStrip()
+				     collapses it on an empty week. -->
+				<aside class="market-theme-strip" id="market-theme-strip" aria-busy="true">
 					<div class="market-theme-head">
 						<span class="market-theme-eyebrow" data-i18n="marketplace.this_week">This week</span>
 						<strong class="market-theme-title" id="market-theme-title">—</strong>
@@ -3225,14 +3230,29 @@
 						id="market-theme-picks"
 						role="list"
 						aria-label="Top picks this week"
-						hidden
-					></div>
+					>
+						<div class="market-theme-pick is-skeleton" aria-hidden="true"><div class="market-theme-pick-stage"></div><div class="market-theme-pick-meta"><span class="market-theme-pick-name">&nbsp;</span><span class="market-theme-pick-cat">&nbsp;</span></div></div>
+						<div class="market-theme-pick is-skeleton" aria-hidden="true"><div class="market-theme-pick-stage"></div><div class="market-theme-pick-meta"><span class="market-theme-pick-name">&nbsp;</span><span class="market-theme-pick-cat">&nbsp;</span></div></div>
+						<div class="market-theme-pick is-skeleton" aria-hidden="true"><div class="market-theme-pick-stage"></div><div class="market-theme-pick-meta"><span class="market-theme-pick-name">&nbsp;</span><span class="market-theme-pick-cat">&nbsp;</span></div></div>
+						<div class="market-theme-pick is-skeleton" aria-hidden="true"><div class="market-theme-pick-stage"></div><div class="market-theme-pick-meta"><span class="market-theme-pick-name">&nbsp;</span><span class="market-theme-pick-cat">&nbsp;</span></div></div>
+						<div class="market-theme-pick is-skeleton" aria-hidden="true"><div class="market-theme-pick-stage"></div><div class="market-theme-pick-meta"><span class="market-theme-pick-name">&nbsp;</span><span class="market-theme-pick-cat">&nbsp;</span></div></div>
+						<div class="market-theme-pick is-skeleton" aria-hidden="true"><div class="market-theme-pick-stage"></div><div class="market-theme-pick-meta"><span class="market-theme-pick-name">&nbsp;</span><span class="market-theme-pick-cat">&nbsp;</span></div></div>
+					</div>
 				</aside>
 				<!-- Live 3D hero carousel -->
+				<!-- Not `hidden`. The hero used to appear only once the bundle had
+				     fetched the featured avatars, which dropped everything below it
+				     (Top Performers, the whole grid) by the hero's height: the
+				     largest of the five layout shifts that made up this page's 0.60
+				     CLS. The stage carries its own designed backdrop and a 240px
+				     min-height, so an un-filled hero reads as loading and occupies
+				     exactly the box the filled one will. renderHero() still hides
+				     the section outright on the genuinely-empty case. Same
+				     reasoning as the podium skeleton further down. -->
 				<section
 					class="market-hero"
 					id="market-hero"
-					hidden
+					aria-busy="true"
 					aria-label="Featured 3D avatars"
 				>
 					<div class="market-hero-stage" id="market-hero-stage"></div>

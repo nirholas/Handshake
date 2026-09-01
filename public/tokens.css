@@ -269,6 +269,22 @@
 	   before first paint so there is no flash. See [data-theme='light'] below. */
 	color-scheme: dark;
 }
+/* ── Injected-nav height reservation ──────────────────────────────────────
+   nav.js renders the shared header into an empty `<div id="nav-container">`
+   after the page has already painted, and it injects nav.css at the same
+   time. A page whose only render-blocking stylesheet is style.css therefore
+   painted with a zero-height container and then dropped its whole <main> by
+   the header's height the moment the nav landed: one 0.83 layout shift, which
+   was the entire measured CLS on /forge. tokens.css is imported by BOTH
+   style.css and nav.css, so putting the reservation here reaches every
+   surface, render-blocking, before the first paint. `:empty` stops matching as
+   soon as the header is in, so the real header owns its height from then on.
+   Keep these two heights equal to the rendered `.nav` height in nav.css. */
+#nav-container:empty { min-height: 69px; }
+@media (max-width: 880px) {
+	#nav-container:empty { min-height: 65px; }
+}
+
 
 /* ════════════════════════════════════════════════════════════════════════════
  * INTERACTIVE-STATE FLOOR (B14)

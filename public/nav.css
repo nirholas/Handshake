@@ -11,12 +11,11 @@
    palette when a host page doesn't define them.
    ───────────────────────────────────────────────────────────────────────── */
 
-/* Reserve the header's height before nav.js injects it so pages (notably the
-   homepage hero) don't shift down when the nav arrives. */
-#nav-container:empty { min-height: 69px; }
-@media (max-width: 880px) {
-	#nav-container:empty { min-height: 65px; }
-}
+/* The header-height reservation that keeps a page from shifting when nav.js
+   injects the header lives in tokens.css, not here: nav.css is injected by
+   nav.js itself, so it always arrives too late to reserve anything on a page
+   that does not also link it in <head>. See "Injected-nav height reservation"
+   in public/tokens.css. */
 
 .nav,
 .nav-drawer {
