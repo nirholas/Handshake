@@ -67,10 +67,14 @@
    @capsizecss/metrics 3.5.0 with the same formula next/font uses:
    size-adjust = xWidthAvg(web) / xWidthAvg(local), each vertical override =
    metric / unitsPerEm / size-adjust. Referenced from the font stacks in
-   tokens.css; a system without the local face skips straight to system-ui. */
+   tokens.css; a system with none of the named faces skips straight to
+   system-ui. Every alternative listed is metric-compatible with the face the
+   numbers were derived from (Liberation Sans and Arimo with Arial, Liberation
+   Mono and Cousine with Courier New), which matters because Linux, where the
+   headless browsers run, ships no Arial at all. */
 @font-face {
   font-family: 'Inter Fallback';
-  src: local('Arial');
+  src: local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');
   size-adjust: 107.12%;
   ascent-override: 90.44%;
   descent-override: 22.52%;
@@ -78,7 +82,7 @@
 }
 @font-face {
   font-family: 'Space Grotesk Fallback';
-  src: local('Arial');
+  src: local('Arial'), local('Helvetica'), local('Liberation Sans'), local('Arimo');
   size-adjust: 109.69%;
   ascent-override: 89.71%;
   descent-override: 26.62%;
@@ -86,7 +90,7 @@
 }
 @font-face {
   font-family: 'JetBrains Mono Fallback';
-  src: local('Courier New');
+  src: local('Courier New'), local('Liberation Mono'), local('Cousine');
   size-adjust: 99.98%;
   ascent-override: 102.02%;
   descent-override: 30%;
