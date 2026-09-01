@@ -3591,9 +3591,19 @@
 				     holders, or a non-blocking upsell + a reachable wallet connect so a
 				     holder who hasn't connected can reveal their perk. Filled by forge.js
 				     (updatePerkLine) from the wallet-aware access matrix. -->
-				<div class="fq-perk-row" id="forge-perk-row" hidden>
-					<p class="fq-perk-line" id="forge-perk-line" aria-live="polite"></p>
-					<button type="button" class="fq-connect-btn" id="connect-wallet-btn" hidden data-i18n-html="forge.connect_wallet">
+				<!-- Ships in its default (no wallet, no tier) state rather than hidden.
+				     Waiting for /api/three/access to reveal the row inserted two blocks
+				     above the example chips half a second into the load and pushed the
+				     whole rail down: 0.20 of this page's CLS, on every visit.
+				     updatePerkLine() swaps the text in place when the matrix resolves,
+				     and hides the connect button for anyone who turns out to be
+				     connected, which is the rarer case and the one that can afford a
+				     reflow. -->
+				<div class="fq-perk-row" id="forge-perk-row">
+					<p class="fq-perk-line" id="forge-perk-line" aria-live="polite" data-state="upsell">
+						<a href="/three#tiers">Hold $THREE for up to 10× free generations →</a>
+					</p>
+					<button type="button" class="fq-connect-btn" id="connect-wallet-btn" data-i18n-html="forge.connect_wallet">
 						<span class="fq-connect-ico" aria-hidden="true">◎</span>
 						<span data-wallet-label>Connect wallet</span>
 					</button>

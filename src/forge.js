@@ -951,6 +951,9 @@ async function updatePerkLine() {
 	const data = await getAccess();
 	const level = Number(data?.tier?.level) || 0;
 	const connected = Boolean(getConnectedWalletAddress());
+	// The row already ships visible in its default state (see pages/forge.html);
+	// this only has to correct it. Kept for the surfaces that clone this markup
+	// with the row hidden.
 	els.perkRow.hidden = false;
 	if (level >= 1) {
 		const mult = FREE_MULT_BY_LEVEL[level] || 1;
