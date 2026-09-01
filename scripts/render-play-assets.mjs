@@ -36,7 +36,12 @@ const args = Object.fromEntries(process.argv.slice(2).map((a) => {
 	const m = a.match(/^--([^=]+)(?:=(.*))?$/);
 	return m ? [m[1], m[2] ?? true] : [a, true];
 }));
-const OUT_DIR = args.out ? resolve(String(args.out)) : join(PUBLIC, 'brand/play');
+/* Two destinations on purpose. The developer-page artwork is brand material and
+   lives with the other marks; the store-listing artwork lives beside the listing
+   worksheet, under the exact filenames publish-play/config.yaml names, so the
+   worksheet never points at a file that does not exist. */
+const BRAND_DIR = args.out ? resolve(String(args.out)) : join(PUBLIC, 'brand/play');
+const LISTING_DIR = args.out ? resolve(String(args.out)) : join(ROOT, 'solana-mobile/publish-play/media');
 
 /** Play's stated ceiling for both slots. */
 const MAX_BYTES = 1024 * 1024;
@@ -47,7 +52,8 @@ const GROUND = '#000000';
 const ICON_INSET = 0.82;
 const SOURCE_MARK = join(PUBLIC, 'pwa-512x512.png');
 
-mkdirSync(OUT_DIR, { recursive: true });
+mkdirSync(BRAND_DIR, { recursive: true });
+mkdirSync(LISTING_DIR, { recursive: true });
 
 /** Flatten onto the brand ground and drop the alpha channel Play refuses. */
 async function toOpaquePng(pipeline) {
@@ -78,7 +84,7 @@ const [header] = await renderWordmarks([
 	{ width: 4096, height: 2304, bg: GROUND, fg: '#ffffff' },
 ]);
 await assertPlayReady('header image', header.buffer, 4096, 2304);
-written.push(['three-ws-play-header-4096x2304.png', header.buffer, `wordmark ink ${header.ink.width}x${header.ink.height}, centred`]);
+written.push([BRAND_DIR, 'three-ws-play-header-4096x2304.png', header.buffer, `wordmark ink ${header.ink.width}x${header.ink.height}, centred`]);
 
 /* Developer icon: the shipped app mark, inset for the circular crop. */
 const inner = Math.round(512 * ICON_INSET);
@@ -91,7 +97,7 @@ const icon = await toOpaquePng(
 	}]).png(),
 );
 await assertPlayReady('developer icon', icon, 512, 512);
-written.push(['three-ws-play-developer-icon-512x512.png', icon, `mark inset to ${Math.round(ICON_INSET * 100)}% for the circular crop`]);
+written.push([BRAND_DIR, 'three-ws-play-developer-icon-512x512.png', icon, `mark inset to ${Math.round(ICON_INSET * 100)}% for the circular crop`]);
 
 /* App icon for the store listing. Same artwork as the dApp Store slot: the
    shipped mark flattened onto the brand ground. Play draws this one with its
@@ -99,7 +105,7 @@ written.push(['three-ws-play-developer-icon-512x512.png', icon, `mark inset to $
    developer icon gives up. */
 const appIcon = await toOpaquePng(sharp(SOURCE_MARK).resize(512, 512));
 await assertPlayReady('app icon', appIcon, 512, 512);
-written.push(['three-ws-play-app-icon-512x512.png', appIcon, 'shipped app mark on the brand ground']);
+written.push([LISTING_DIR, 'icon-512.png', appIcon, 'shipped app mark on the brand ground']);
 
 /* Feature graphic. Play's own guidance is to keep screenshots and small text
    out of this slot: it is scaled down hard in the store and cropped at the
@@ -127,10 +133,10 @@ const FEATURE_HTML = `
 </div>`;
 const feature = await renderPage(FEATURE_HTML, { width: 1024, height: 500 });
 await assertPlayReady('feature graphic', feature, 1024, 500);
-written.push(['three-ws-play-feature-1024x500.png', feature, 'lockup and one line of copy, no small text']);
+written.push([LISTING_DIR, 'feature-1024x500.png', feature, 'lockup and one line of copy, no small text']);
 
-for (const [name, buffer, note] of written) {
-	const out = join(OUT_DIR, name);
+for (const [dir, name, buffer, note] of written) {
+	const out = join(dir, name);
 	writeFileSync(out, buffer);
 	const meta = await sharp(out).metadata();
 	console.log(

@@ -39,35 +39,83 @@ actually behaves:
 1. **Upload order is the layout.** X fills the grid 1, 2 across the top then
    3, 4 across the bottom, in the order the images were attached. Attach them
    out of order and the picture reassembles scrambled.
-2. **Nothing solid may cross a cut.** This is where the grid differs from the
-   store carousel, and it is worth understanding before editing the layout. A
-   carousel shows one panel at a time, so a phone centred on a seam reads as
-   "continues offscreen" and makes the strip feel continuous. X shows all four
-   tiles at once with a gutter between them, so the identical phone reads as
-   broken alignment: half a face on the left, half on the right, a gap through
-   the middle. The first draft of this composition did exactly that and had to
-   be rebuilt.
+2. **What may cross a cut depends on how big it is.** This is the whole craft
+   of the format, and it is worth reading before editing the layout.
 
-   So every phone sits wholly inside one tile, the headline block sits entirely
-   inside the top left, and the footer entirely inside the bottom right. Only
-   the scenery crosses: the glow field, the light beam and the floor. Those are
-   soft and edgeless, so a gutter through them reads as continuity rather than
-   damage. Tapping one image opens only that image, and some clients render the
-   four as a list rather than a collage, so each tile has to be a finished
-   picture on its own terms.
+   X puts a hairline gutter between the cells, roughly half a percent of a
+   tile's width. Through a **large, bold shape** that hairline is invisible or
+   reads as intentional. Through **a face, or 12px of UI text**, it reads as
+   broken alignment: half a head on the left, half on the right, a line down the
+   middle. A store carousel has no such problem, because it shows one panel at a
+   time and an object leaving the frame simply continues offscreen. The grid
+   shows all four at once.
 
-   The rule is enforced, not just documented. `make-x-grid.mjs` computes each
-   phone's rotated extent, works out which tile it lands in, and throws if it
-   comes within 96px of that tile's edge. A layout change that would push a
-   phone across a seam fails the build instead of shipping.
+   So the composition splits by scale:
 
-A third constraint is defensive: X's collage container has changed aspect
-before, and a quadrant can only ever be trimmed on one axis when it does. That
-96px keep-out is what absorbs it.
+   - **The headline crosses**, and it is the reason the post reads as one
+     picture rather than four slides. It is drawn as two halves that meet at
+     the vertical seam with a word space between them, so the cut falls between
+     "Now an" and "Android app." and never through a glyph. Assembled it is one
+     line across the full width; split, each tile still reads as a complete
+     phrase.
+   - **The scenery crosses.** The glow field, the light beam and the floor are
+     soft and edgeless, so a gutter through them reads as continuity.
+   - **The phones never cross.** They carry faces and small type, which is
+     exactly what a gutter ruins.
 
-A consequence worth knowing: a 9:16 phone cannot fill a 16:9 tile, so a
-quadrant holding one phone looks empty. Each populated quadrant holds a layered
-pair instead, a smaller one set back and dimmed behind a larger one in front.
+   Both rules are enforced, not just written down. The renderer computes each
+   phone's *rotated* extent, works out which tile it lands in, and throws if it
+   comes within 96px of that tile's edge. It then measures the two headline
+   halves in the page and throws if either reaches the seam. A layout change
+   that would cut a phone, or close the word space, fails the build.
+
+A consequence worth knowing: a 9:16 phone cannot fill a 16:9 tile, so a tile
+holding one phone looks empty. The two bottom tiles hold a layered pair each, a
+smaller one set back and dimmed behind a larger one in front.
+
+The headline is sized by the page rather than hardcoded. The two halves are
+unequal ("Now an" against "Android app."), and each has the same room on its own
+side of the seam, so the wider half sets the size for both. Fitting their
+combined width instead runs the longer half off the canvas.
+
+## Why the ground is pure black
+
+X's dark timeline is `#000000`. Anything lighter behind the composition draws
+four visible rectangles into the feed, and the gutters between them announce
+where the cuts are. At true black the outer edges dissolve, the gutters stop
+reading as borders, and the post floats in the timeline as one image.
+
+Two consequences shape the whole design:
+
+- **Nothing may fill the frame with a colour.** The ground is radial glows over
+  black that fall off to nothing before the edges, never a filled gradient.
+- **The light has to stay dim.** The gutter itself is black, so wherever the
+  composition is brighter the gap cuts a visible line through it. Low contrast
+  across a seam hides it; a bright field turns it into a crosshair.
+
+Both are asserted after the render, because a colour tweak undoes them silently
+and the damage only appears once the post is live:
+
+```
+[x-grid] border 4/255, brightest seam pixel 29/255
+```
+
+The renderer samples the outer border and both seam lines and throws if the
+border exceeds 6/255 or the composition exceeds 40/255 anywhere a gutter falls.
+
+The phones are drawn in real 3D for the same reason: on a flat black field a
+2D-tilted rectangle looks like a sticker. Each is turned on its Y axis and
+pitched on its X under a 2600px perspective, lit from the upper left so the
+bezel has a bright edge and a dark one, with a specular sheen across the glass.
+The seam guard is unaffected, because a turn foreshortens the slab: a phone that
+clears the seam flat clears it turned.
+
+## The mark appears twice
+
+Once large at the top left of the first tile, once quietly at the bottom right
+of the last. Tiles are opened one at a time and some clients render them as a
+list, so the first and last both have to carry the brand alone. A single mark in
+one corner leaves three of the four tiles unbranded.
 
 ## The phones hold real product
 
