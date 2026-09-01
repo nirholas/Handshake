@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe код",
 		"include_in_embed": "Включи в кода за вграждане",
 		"launch": "⚡ Стартирай",
-		"meta_description": "Превърнете всеки аватар във вграждаем 3D уиджет. Пет типа, контроли за брандиране, вграждане с един ред код.",
 		"meta_og_description": "Изберете аватар, конфигурирайте опциите за вграждане, копирайте едноредов фрагмент за вашия сайт.",
 		"meta_og_title": "Студио за уиджети · three.ws",
 		"meta_title": "Студио за уиджети · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Идентификатор за плащане по име — всеки може да <code>POST /api/x402/pay-by-name</code> с <code>yourname.threews.sol</code>, за да ви изпрати USDC",
 		"claim_your_subdomain": "Заяви своя поддомейн",
-		"get_as_a_solana_name_service_subdomain": "Вземете <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> като поддомейн на Solana Name Service. Brave Browser го разрешава директно към вашата three.ws витрина. Вашите агенти, аватари и умения, всичко под едно име.",
+		"get_as_a_solana_name_service_subdomain": "Вземете <code class=\"tw-code\">yourname.threews.sol</code> като поддомейн на Solana Name Service. Brave Browser го разрешава директно към вашата three.ws витрина. Вашите агенти, аватари и умения, всичко под едно име.",
 		"meta_description": "Заявете свой собствен поддомейн на threews.sol и получете лична страница за представяне, разрешима от Brave.",
 		"meta_og_description": "Заявете свой собствен поддомейн <name>.threews.sol и получете лична страница за представяне, разрешима от Brave.",
 		"meta_og_title": "Заяви threews.sol поддомейн · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Собствеността се прехвърля към вашия портфейл; ние просто задаваме URL записа",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> се разрешава към вашата витрина в Brave",
 		"subdomain_label": "Етикет на поддомейн",
-		"verified_profile_badge_at": "Значка за потвърден профил в <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Значка за потвърден профил в <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Какво ви дава това"
 	},
 	"timeline": {

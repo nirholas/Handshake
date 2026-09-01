@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "Фрагмент iframe",
 		"include_in_embed": "Включити у вбудовування",
 		"launch": "⚡ Запустити",
-		"meta_description": "Перетворіть будь-який аватар на 3D-віджет, що вбудовується. П'ять типів, контроль бренду, вбудовування одним рядком.",
 		"meta_og_description": "Виберіть аватар, налаштуйте параметри вбудовування, скопіюйте однорядковий фрагмент для вашого сайту.",
 		"meta_og_title": "Студія віджетів · three.ws",
 		"meta_title": "Студія віджетів · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Ідентифікатор оплати за іменем — будь-хто може <code>POST /api/x402/pay-by-name</code> за допомогою <code>yourname.threews.sol</code>, щоб надіслати вам USDC",
 		"claim_your_subdomain": "Зареєструйте свій субдомен",
-		"get_as_a_solana_name_service_subdomain": "Отримайте <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> як субдомен Solana Name Service. Браузер Brave розпізнає його безпосередньо як вашу three.ws вітрину. Ваші агенти, аватари та навички — все під одним іменем.",
+		"get_as_a_solana_name_service_subdomain": "Отримайте <code class=\"tw-code\">yourname.threews.sol</code> як субдомен Solana Name Service. Браузер Brave розпізнає його безпосередньо як вашу three.ws вітрину. Ваші агенти, аватари та навички — все під одним іменем.",
 		"meta_description": "Зареєструйте власний субдомен на threews.sol та отримайте персональну сторінку-вітрину, що розпізнається Brave.",
 		"meta_og_description": "Зареєструйте власний субдомен <name>.threews.sol та отримайте персональну сторінку-вітрину, що розпізнається Brave.",
 		"meta_og_title": "Зареєструвати субдомен threews.sol · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Право власності передається на ваш гаманець; ми лише встановлюємо запис URL",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> розпізнається як ваша вітрина в Brave",
 		"subdomain_label": "Ярлик субдомену",
-		"verified_profile_badge_at": "Верифікований значок профілю на <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Верифікований значок профілю на <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Що це дає"
 	},
 	"timeline": {

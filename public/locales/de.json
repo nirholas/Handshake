@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe-Snippet",
 		"include_in_embed": "In Embed-Code aufnehmen",
 		"launch": "⚡ Starten",
-		"meta_description": "Verwandeln Sie jeden Avatar in ein einbettbares 3D-Widget. Fünf Typen, Markensteuerung, Einzeilen-Embed.",
 		"meta_og_description": "Wählen Sie einen Avatar, konfigurieren Sie die Einbettungsoptionen, kopieren Sie ein Einzeilen-Snippet für Ihre Website.",
 		"meta_og_title": "Widget Studio · three.ws",
 		"meta_title": "Widget Studio · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Ein Pay-by-Name-Handle – jeder kann <code>POST /api/x402/pay-by-name</code> mit <code>yourname.threews.sol</code> verwenden, um Ihnen USDC zu senden.",
 		"claim_your_subdomain": "Beanspruchen Sie Ihre Subdomain",
-		"get_as_a_solana_name_service_subdomain": "Erhalten Sie <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> als Solana Name Service Subdomain. Der Brave Browser leitet sie direkt zu Ihrem three.ws Showcase weiter. Ihre Agenten, Avatare und Fähigkeiten, alles unter einem Namen.",
+		"get_as_a_solana_name_service_subdomain": "Erhalten Sie <code class=\"tw-code\">yourname.threews.sol</code> als Solana Name Service Subdomain. Der Brave Browser leitet sie direkt zu Ihrem three.ws Showcase weiter. Ihre Agenten, Avatare und Fähigkeiten, alles unter einem Namen.",
 		"meta_description": "Beanspruchen Sie Ihre eigene Subdomain auf threews.sol und erhalten Sie eine Brave-auflösbare persönliche Showcase-Seite.",
 		"meta_og_description": "Beanspruchen Sie Ihre eigene <name>.threews.sol Subdomain und erhalten Sie eine Brave-auflösbare persönliche Showcase-Seite.",
 		"meta_og_title": "threews.sol Subdomain beanspruchen · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Das Eigentum wird auf Ihre Wallet übertragen; wir setzen lediglich den URL-Eintrag.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> leitet in Brave zu Ihrem Showcase weiter.",
 		"subdomain_label": "Subdomain-Label",
-		"verified_profile_badge_at": "Verifiziertes Profil-Badge unter <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Verifiziertes Profil-Badge unter <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Was dir das bringt"
 	},
 	"timeline": {

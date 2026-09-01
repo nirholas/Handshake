@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "קטע קוד iframe",
 		"include_in_embed": "כלול בהטמעה",
 		"launch": "⚡ הפעל",
-		"meta_description": "הפוך כל אווטאר לווידג'ט תלת-ממדי שניתן להטמיע. חמישה סוגים, בקרות מותג, הטמעה בשורה אחת.",
 		"meta_og_description": "בחר אווטאר, הגדר אפשרויות הטמעה, העתק קטע קוד בשורה אחת לאתר שלך.",
 		"meta_og_title": "סטודיו לווידג'טים · three.ws",
 		"meta_title": "סטודיו לווידג'טים · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "מזהה תשלום לפי שם — כל אחד יכול <code>POST /api/x402/pay-by-name</code> עם <code>yourname.threews.sol</code> כדי לשלוח לך USDC",
 		"claim_your_subdomain": "תבע את תת-הדומיין שלך",
-		"get_as_a_solana_name_service_subdomain": "קבל את <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> כתת-דומיין של שירות שמות Solana. דפדפן Brave מפנה אותו ישירות לthree.ws עמוד התצוגה שלך. הסוכנים, האווטארים והכישורים שלך, כולם תחת שם אחד.",
+		"get_as_a_solana_name_service_subdomain": "קבל את <code class=\"tw-code\">yourname.threews.sol</code> כתת-דומיין של שירות שמות Solana. דפדפן Brave מפנה אותו ישירות לthree.ws עמוד התצוגה שלך. הסוכנים, האווטארים והכישורים שלך, כולם תחת שם אחד.",
 		"meta_description": "תבע תת-דומיין משלך ב-threews.sol וקבל עמוד תצוגה אישי הניתן לפתרון על ידי Brave.",
 		"meta_og_description": "תבע תת-דומיין <name>.threews.sol משלך וקבל עמוד תצוגה אישי הניתן לפתרון על ידי Brave.",
 		"meta_og_title": "תבע תת-דומיין threews.sol · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "הבעלות עוברת לארנק שלך; אנחנו רק מגדירים את רשומת ה-URL",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> מפנה לעמוד התצוגה שלך ב-Brave",
 		"subdomain_label": "תווית תת-דומיין",
-		"verified_profile_badge_at": "תג פרופיל מאומת ב- <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "תג פרופיל מאומת ב- <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "מה זה נותן לך"
 	},
 	"timeline": {

@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "Kód iframe",
 		"include_in_embed": "Zahrnout do vkládacího kódu",
 		"launch": "⚡ Spustit",
-		"meta_description": "Proměňte libovolného avatara ve vkládací 3D widget. Pět typů, nastavení značky, vložení jedním řádkem.",
 		"meta_og_description": "Vyberte avatara, nakonfigurujte možnosti vložení, zkopírujte jednořádkový úryvek pro váš web.",
 		"meta_og_title": "Studio widgetů · three.ws",
 		"meta_title": "Studio widgetů · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Platební jméno — kdokoli může <code>POST /api/x402/pay-by-name</code> s <code>yourname.threews.sol</code> a poslat vám USDC",
 		"claim_your_subdomain": "Získejte svou subdoménu",
-		"get_as_a_solana_name_service_subdomain": "Získejte <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> jako subdoménu služby Solana Name Service. Prohlížeč Brave ji přímo přesměruje na vaši three.ws prezentaci. Vaši agenti, avataři a dovednosti, vše pod jedním jménem.",
+		"get_as_a_solana_name_service_subdomain": "Získejte <code class=\"tw-code\">yourname.threews.sol</code> jako subdoménu služby Solana Name Service. Prohlížeč Brave ji přímo přesměruje na vaši three.ws prezentaci. Vaši agenti, avataři a dovednosti, vše pod jedním jménem.",
 		"meta_description": "Získejte svou vlastní subdoménu na threews.sol a získejte osobní prezentační stránku rozpoznatelnou prohlížečem Brave.",
 		"meta_og_description": "Získejte svou vlastní subdoménu <name>.threews.sol a získejte osobní prezentační stránku rozpoznatelnou prohlížečem Brave.",
 		"meta_og_title": "Získat subdoménu threews.sol · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Vlastnictví se převádí do vaší peněženky; my jen nastavíme záznam URL",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> se v prohlížeči Brave přesměruje na vaši prezentaci",
 		"subdomain_label": "Štítek subdomény",
-		"verified_profile_badge_at": "Ověřený odznak profilu na <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Ověřený odznak profilu na <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Co získáte"
 	},
 	"timeline": {

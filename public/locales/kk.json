@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe үзіндісі",
 		"include_in_embed": "Енгізуге қосу",
 		"launch": "⚡ Іске қосу",
-		"meta_description": "Кез келген аватарды енгізілетін 3D виджетке айналдырыңыз. Бес түрі, брендті басқару, бір жолдық енгізу.",
 		"meta_og_description": "Аватарды таңдаңыз, енгізу параметрлерін реттеңіз, сайтыңыз үшін бір жолдық үзіндіні көшіріңіз.",
 		"meta_og_title": "Виджет студиясы · three.ws",
 		"meta_title": "Виджет студиясы · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Атауы бойынша төлеу хэндлі &mdash; кез келген адам <code>yourname.threews.sol</code> арқылы сізге USDC жіберу үшін <code>POST /api/x402/pay-by-name</code> жасай алады.",
 		"claim_your_subdomain": "Өз субдоменіңізді талап етіңіз",
-		"get_as_a_solana_name_service_subdomain": "<code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> субдоменін Solana Name Service субдомені ретінде алыңыз. Brave Browser оны тікелей сіздің three.ws көрсетіліміңізге шешеді. Сіздің агенттеріңіз, аватарларыңыз және дағдыларыңыз бір атаумен.",
+		"get_as_a_solana_name_service_subdomain": "<code class=\"tw-code\">yourname.threews.sol</code> субдоменін Solana Name Service субдомені ретінде алыңыз. Brave Browser оны тікелей сіздің three.ws көрсетіліміңізге шешеді. Сіздің агенттеріңіз, аватарларыңыз және дағдыларыңыз бір атаумен.",
 		"meta_description": "threews.sol-да өз субдоменіңізді талап етіңіз және Brave арқылы шешілетін жеке көрсетілім бетін алыңыз.",
 		"meta_og_description": "Өз <name>.threews.sol субдоменіңізді талап етіңіз және Brave арқылы шешілетін жеке көрсетілім бетін алыңыз.",
 		"meta_og_title": "threews.sol субдоменін талап ету · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Меншік сіздің әмияныңызға ауысады; біз тек URL жазбасын орнатамыз",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> Brave-те сіздің көрсетіліміңізге шешіледі.",
 		"subdomain_label": "Субдомен белгісі",
-		"verified_profile_badge_at": "Расталған профиль белгісі <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Расталған профиль белгісі <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Бұл сізге не береді"
 	},
 	"timeline": {

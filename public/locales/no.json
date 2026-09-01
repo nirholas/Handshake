@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe-snutt",
 		"include_in_embed": "Inkluder i embed",
 		"launch": "⚡ Lanser",
-		"meta_description": "Gjør enhver avatar om til en innbyggbar 3D-widget. Fem typer, merkevarekontroller, én-linjes embed.",
 		"meta_og_description": "Velg en avatar, konfigurer embed-alternativer, kopier en én-linjes snutt til nettstedet ditt.",
 		"meta_og_title": "Widget Studio · three.ws",
 		"meta_title": "Widget Studio · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "En betal-med-navn-håndterer — hvem som helst kan <code>POST /api/x402/pay-by-name</code> med <code>yourname.threews.sol</code> for å sende deg USDC",
 		"claim_your_subdomain": "Gjør krav på ditt subdomene",
-		"get_as_a_solana_name_service_subdomain": "Få <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> som et Solana Name Service subdomene. Brave Browser løser det direkte til din three.ws showcase. Dine agenter, avatarer og ferdigheter, alt under ett navn.",
+		"get_as_a_solana_name_service_subdomain": "Få <code class=\"tw-code\">yourname.threews.sol</code> som et Solana Name Service subdomene. Brave Browser løser det direkte til din three.ws showcase. Dine agenter, avatarer og ferdigheter, alt under ett navn.",
 		"meta_description": "Gjør krav på ditt eget subdomene på threews.sol og få en Brave-resolvable personlig showcase-side.",
 		"meta_og_description": "Gjør krav på ditt eget <name>.threews.sol subdomene og få en Brave-resolvable personlig showcase-side.",
 		"meta_og_title": "Gjør krav på threews.sol Subdomene · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Eierskap overføres til lommeboken din; vi setter bare URL-oppføringen",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> løser til din showcase i Brave",
 		"subdomain_label": "Subdomene-etikett",
-		"verified_profile_badge_at": "Verifisert profilmerke på <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Verifisert profilmerke på <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Dette får du"
 	},
 	"timeline": {

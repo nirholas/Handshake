@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "Fragment de cod iframe",
 		"include_in_embed": "Include în codul de încorporare",
 		"launch": "⚡ Lansează",
-		"meta_description": "Transformă orice avatar într-un widget 3D încorporabil. Cinci tipuri, controale de brand, încorporare dintr-o singură linie.",
 		"meta_og_description": "Alege un avatar, configurează opțiunile de încorporare, copiază un fragment de cod dintr-o singură linie pentru site-ul tău.",
 		"meta_og_title": "Studio Widget · three.ws",
 		"meta_title": "Studio Widget · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Un identificator de plată prin nume — oricine poate <code>POST /api/x402/pay-by-name</code> cu <code>yourname.threews.sol</code> pentru a-ți trimite USDC",
 		"claim_your_subdomain": "Revendică-ți subdomeniul",
-		"get_as_a_solana_name_service_subdomain": "Obține <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> ca subdomeniu Solana Name Service. Brave Browser îl rezolvă direct către three.ws pagina ta de prezentare. Agenții, avatarurile și abilitățile tale, toate sub un singur nume.",
+		"get_as_a_solana_name_service_subdomain": "Obține <code class=\"tw-code\">yourname.threews.sol</code> ca subdomeniu Solana Name Service. Brave Browser îl rezolvă direct către three.ws pagina ta de prezentare. Agenții, avatarurile și abilitățile tale, toate sub un singur nume.",
 		"meta_description": "Revendică-ți propriul subdomeniu pe threews.sol și obține o pagină personală de prezentare rezolvabilă de Brave.",
 		"meta_og_description": "Revendică-ți propriul subdomeniu <name>.threews.sol și obține o pagină personală de prezentare rezolvabilă de Brave.",
 		"meta_og_title": "Revendică Subdomeniul threews.sol · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Proprietatea se transferă în portofelul tău; noi doar setăm înregistrarea URL-ului",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> se rezolvă către pagina ta de prezentare în Brave",
 		"subdomain_label": "Etichetă subdomeniu",
-		"verified_profile_badge_at": "Insignă de profil verificat la <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Insignă de profil verificat la <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Ce îți oferă"
 	},
 	"timeline": {

@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe kodu",
 		"include_in_embed": "Embedə daxil et",
 		"launch": "⚡ Başlat",
-		"meta_description": "İstənilən avatarı daxil edilə bilən 3D vidcetə çevirin. Beş növ, brend nəzarətləri, bir sətirlik embed.",
 		"meta_og_description": "Bir avatar seçin, embed seçimlərini konfiqurasiya edin, saytınız üçün bir sətirlik kodu kopyalayın.",
 		"meta_og_title": "Vidcet Studiyası · three.ws",
 		"meta_title": "Vidcet Studiyası · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Adla ödəmə üçün bir handle &mdash; hər kəs sizə USDC göndərmək üçün <code>yourname.threews.sol</code> ilə <code>POST /api/x402/pay-by-name</code> edə bilər.",
 		"claim_your_subdomain": "Subdomeninizi əldə edin",
-		"get_as_a_solana_name_service_subdomain": "<code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code>-u bir Solana Name Service subdomeni kimi əldə edin. Brave Browser onu birbaşa sizin three.ws sərgiləmə səhifənizə yönləndirir. Agentləriniz, avatarlarınız və bacarıqlarınız, hamısı bir ad altında.",
+		"get_as_a_solana_name_service_subdomain": "<code class=\"tw-code\">yourname.threews.sol</code>-u bir Solana Name Service subdomeni kimi əldə edin. Brave Browser onu birbaşa sizin three.ws sərgiləmə səhifənizə yönləndirir. Agentləriniz, avatarlarınız və bacarıqlarınız, hamısı bir ad altında.",
 		"meta_description": "threews.sol üzərində öz subdomeninizi əldə edin və Brave tərəfindən yönləndirilə bilən şəxsi sərgiləmə səhifəsi əldə edin.",
 		"meta_og_description": "Öz <name>.threews.sol subdomeninizi əldə edin və Brave tərəfindən yönləndirilə bilən şəxsi sərgiləmə səhifəsi əldə edin.",
 		"meta_og_title": "threews.sol Subdomenini əldə edin · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Mülkiyyət sizin cüzdanınıza köçürülür; biz sadəcə URL qeydini təyin edirik.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> Brave-də sizin sərgiləmə səhifənizə yönləndirilir.",
 		"subdomain_label": "Subdomen etiketi",
-		"verified_profile_badge_at": "<code style=\"color:#69e16f\">/u/yourname</code> ünvanında təsdiqlənmiş profil nişanı",
+		"verified_profile_badge_at": "<code class=\"tw-showcase\">/u/yourname</code> ünvanında təsdiqlənmiş profil nişanı",
 		"what_this_gives_you": "Bu sizə nə verir"
 	},
 	"timeline": {

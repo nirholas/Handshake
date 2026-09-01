@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "Isiqeshana se-iframe",
 		"include_in_embed": "Faka kokufakiwe",
 		"launch": "⚡ Qalisa",
-		"meta_description": "Guqula noma iyiphi i-avatar ibe i-widget ye-3D efakwayo. Izinhlobo ezinhlanu, izilawuli zomkhiqizo, okufakiwe komugqa owodwa.",
 		"meta_og_description": "Khetha i-avatar, lungiselela izinketho zokufaka, kopisha isiqeshana somugqa owodwa sesayithi lakho.",
 		"meta_og_title": "I-Studio Yama-Widget · three.ws",
 		"meta_title": "I-Studio Yama-Widget · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "I-handle yokukhokha ngegama — noma ubani angakwazi <code>POST /api/x402/pay-by-name</code> nge-<code>yourname.threews.sol</code> ukuze akuthumelele USDC",
 		"claim_your_subdomain": "Funa i-subdomain yakho",
-		"get_as_a_solana_name_service_subdomain": "Thola <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> njenge-subdomain ye-Solana Name Service. I-Brave Browser iyixazulula ngqo ku-three.ws showcase yakho. Ama-agent akho, ama-avatar, namakhono, konke ngaphansi kwegama elilodwa.",
+		"get_as_a_solana_name_service_subdomain": "Thola <code class=\"tw-code\">yourname.threews.sol</code> njenge-subdomain ye-Solana Name Service. I-Brave Browser iyixazulula ngqo ku-three.ws showcase yakho. Ama-agent akho, ama-avatar, namakhono, konke ngaphansi kwegama elilodwa.",
 		"meta_description": "Funa i-subdomain yakho ku-threews.sol bese uthola ikhasi lakho le-showcase elixazululeka nge-Brave.",
 		"meta_og_description": "Funa i-subdomain yakho <name>.threews.sol bese uthola ikhasi lakho le-showcase elixazululeka nge-Brave.",
 		"meta_og_title": "Funa i-Subdomain ye-threews.sol · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Ubunikazi budluliselwa ku-wallet yakho; thina simane sibeka irekhodi le-URL.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> iyaxazululeka ku-showcase yakho ku-Brave.",
 		"subdomain_label": "Ilebula le-subdomain",
-		"verified_profile_badge_at": "Ibheji lephrofayela eligunyaziwe ku-<code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Ibheji lephrofayela eligunyaziwe ku-<code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Okukunikezwa yilokhu"
 	},
 	"timeline": {

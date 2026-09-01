@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe brokkie",
 		"include_in_embed": "Sluit in by inbedding",
 		"launch": "⚡ Lanseer",
-		"meta_description": "Verander enige avatar in 'n inbedbare 3D-widget. Vyf tipes, handelsmerkbeheer, eenlyn-inbedding.",
 		"meta_og_description": "Kies 'n avatar, stel inbeddingopsies op, kopieer 'n eenlyn-brokkie vir jou webwerf.",
 		"meta_og_title": "Widget Studio · three.ws",
 		"meta_title": "Widget Studio · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "'n Betaal-per-naam handvatsel — enigiemand kan <code>POST /api/x402/pay-by-name</code> met <code>yourname.threews.sol</code> gebruik om vir jou USDC te stuur.",
 		"claim_your_subdomain": "Eis jou subdomein op",
-		"get_as_a_solana_name_service_subdomain": "Kry <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> as 'n Solana Naamdiens-subdomein. Brave Browser los dit direk op na jou three.ws vertoonblad. Jou agente, avatars en vaardighede, alles onder een naam.",
+		"get_as_a_solana_name_service_subdomain": "Kry <code class=\"tw-code\">yourname.threews.sol</code> as 'n Solana Naamdiens-subdomein. Brave Browser los dit direk op na jou three.ws vertoonblad. Jou agente, avatars en vaardighede, alles onder een naam.",
 		"meta_description": "Eis jou eie subdomein op threews.sol en kry 'n Brave-oplosbare persoonlike vertoonblad.",
 		"meta_og_description": "Eis jou eie <name>.threews.sol subdomein en kry 'n Brave-oplosbare persoonlike vertoonblad.",
 		"meta_og_title": "Eis threews.sol Subdomein · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Eienaarskap word na jou beursie oorgedra; ons stel net die URL-rekord in.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> los op na jou vertoonblad in Brave.",
 		"subdomain_label": "Subdomein-etiket",
-		"verified_profile_badge_at": "Geverifieerde profielkenteken by <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Geverifieerde profielkenteken by <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Wat dit jou bied"
 	},
 	"timeline": {

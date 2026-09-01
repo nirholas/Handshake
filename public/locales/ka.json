@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe სნიპეტი",
 		"include_in_embed": "ჩაშენებაში ჩართვა",
 		"launch": "⚡ გაშვება",
-		"meta_description": "ნებისმიერი ავატარი აქციეთ ჩასაშენებელ 3D ვიჯეტად. ხუთი ტიპი, ბრენდის კონტროლი, ერთხაზიანი ჩაშენება.",
 		"meta_og_description": "აირჩიეთ ავატარი, დააკონფიგურირეთ ჩაშენების პარამეტრები, დააკოპირეთ ერთხაზიანი სნიპეტი თქვენი საიტისთვის.",
 		"meta_og_title": "ვიჯეტის სტუდია · three.ws",
 		"meta_title": "ვიჯეტის სტუდია · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "სახელობითი გადახდის სახელური — ნებისმიერს შეუძლია <code>POST /api/x402/pay-by-name</code>-ის გამოყენება <code>yourname.threews.sol</code>-ით, რათა გამოგიგზავნოთ USDC",
 		"claim_your_subdomain": "მოითხოვეთ თქვენი სუბდომენი",
-		"get_as_a_solana_name_service_subdomain": "მიიღეთ <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> როგორც Solana Name Service ქვედომენი. Brave ბრაუზერი მას პირდაპირ თქვენს three.ws ვიტრინაზე გადაამისამართებს. თქვენი აგენტები, ავატარები და უნარები — ყველაფერი ერთი სახელის ქვეშ.",
+		"get_as_a_solana_name_service_subdomain": "მიიღეთ <code class=\"tw-code\">yourname.threews.sol</code> როგორც Solana Name Service ქვედომენი. Brave ბრაუზერი მას პირდაპირ თქვენს three.ws ვიტრინაზე გადაამისამართებს. თქვენი აგენტები, ავატარები და უნარები — ყველაფერი ერთი სახელის ქვეშ.",
 		"meta_description": "მოითხოვეთ თქვენი საკუთარი ქვედომენი threews.sol-ზე და მიიღეთ Brave-ის მიერ გადასაწყვეტი პირადი ვიტრინის გვერდი.",
 		"meta_og_description": "მოითხოვეთ თქვენი საკუთარი <name>.threews.sol ქვედომენი და მიიღეთ Brave-ის მიერ გადასაწყვეტი პირადი ვიტრინის გვერდი.",
 		"meta_og_title": "მოითხოვეთ threews.sol ქვედომენი · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "საკუთრება გადადის თქვენს საფულეზე; ჩვენ უბრალოდ ვაყენებთ URL ჩანაწერს.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> გადადის თქვენს ვიტრინაზე Brave-ში.",
 		"subdomain_label": "ქვედომენის ლეიბლი",
-		"verified_profile_badge_at": "ვერიფიცირებული პროფილის სამკერდე ნიშანი <code style=\"color:#69e16f\">/u/yourname</code>-ზე",
+		"verified_profile_badge_at": "ვერიფიცირებული პროფილის სამკერდე ნიშანი <code class=\"tw-showcase\">/u/yourname</code>-ზე",
 		"what_this_gives_you": "რას გაძლევთ ეს"
 	},
 	"timeline": {

@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe 片段",
 		"include_in_embed": "包含在嵌入碼中",
 		"launch": "⚡ 啟動",
-		"meta_description": "將任何虛擬替身轉化為可嵌入的 3D 小工具。五種樣式、品牌控制、一行嵌入碼。",
 		"meta_og_description": "選擇一個虛擬替身，設定嵌入選項，複製一行程式碼片段到您的網站。",
 		"meta_og_title": "小工具工作室 · three.ws",
 		"meta_title": "小工具工作室 · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "一個按名稱支付的句柄 — 任何人都可以透過 <code>POST /api/x402/pay-by-name</code>，使用 <code>yourname.threews.sol</code> 向您發送 USDC",
 		"claim_your_subdomain": "領取您的子網域",
-		"get_as_a_solana_name_service_subdomain": "取得 <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> 作為 Solana 命名服務子網域。Brave 瀏覽器會直接將其解析至您的 three.ws 展示頁面。您的代理、虛擬替身和技能，都歸於一個名稱之下。",
+		"get_as_a_solana_name_service_subdomain": "取得 <code class=\"tw-code\">yourname.threews.sol</code> 作為 Solana 命名服務子網域。Brave 瀏覽器會直接將其解析至您的 three.ws 展示頁面。您的代理、虛擬替身和技能，都歸於一個名稱之下。",
 		"meta_description": "在 threews.sol 上領取您自己的子網域，並獲得一個 Brave 瀏覽器可解析的個人展示頁面。",
 		"meta_og_description": "領取您自己的 <name>.threews.sol 子網域，並獲得一個 Brave 瀏覽器可解析的個人展示頁面。",
 		"meta_og_title": "領取 threews.sol 子網域 · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "所有權將轉移至您的錢包；我們僅設定 URL 記錄。",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> 在 Brave 瀏覽器中解析至您的展示頁面。",
 		"subdomain_label": "子網域標籤",
-		"verified_profile_badge_at": "在 <code style=\"color:#69e16f\">/u/yourname</code> 取得認證個人檔案徽章",
+		"verified_profile_badge_at": "在 <code class=\"tw-showcase\">/u/yourname</code> 取得認證個人檔案徽章",
 		"what_this_gives_you": "您將獲得什麼"
 	},
 	"timeline": {

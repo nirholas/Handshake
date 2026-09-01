@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe исечок",
 		"include_in_embed": "Вклучи во вградување",
 		"launch": "⚡ Стартувај",
-		"meta_description": "Претвори кој било аватар во 3D виџет што може да се вгради. Пет типа, контроли на брендот, вградување со една линија.",
 		"meta_og_description": "Избери аватар, конфигурирај опции за вградување, копирај исечок со една линија за твојата страница.",
 		"meta_og_title": "Студио за виџети · three.ws",
 		"meta_title": "Студио за виџети · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Рачка за плаќање по име — секој може да <code>POST /api/x402/pay-by-name</code> со <code>yourname.threews.sol</code> за да ви испрати USDC",
 		"claim_your_subdomain": "Побарајте го вашиот поддомен",
-		"get_as_a_solana_name_service_subdomain": "Добијте <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> како поддомен на Solana Name Service. Brave прелистувачот го резолвира директно до вашата three.ws презентација. Вашите агенти, аватари и вештини, сè под едно име.",
+		"get_as_a_solana_name_service_subdomain": "Добијте <code class=\"tw-code\">yourname.threews.sol</code> како поддомен на Solana Name Service. Brave прелистувачот го резолвира директно до вашата three.ws презентација. Вашите агенти, аватари и вештини, сè под едно име.",
 		"meta_description": "Земете си свој поддомен на threews.sol и добијте лична страница за презентација која Brave може да ја резолвира.",
 		"meta_og_description": "Земете си свој <name>.threews.sol поддомен и добијте лична страница за презентација која Brave може да ја резолвира.",
 		"meta_og_title": "Земете threews.sol поддомен · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Сопственоста се пренесува на вашиот паричник; ние само го поставуваме URL записот.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> се резолвира до вашата презентација во Brave.",
 		"subdomain_label": "Ознака на поддомен",
-		"verified_profile_badge_at": "Значка за верификуван профил на <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Значка за верификуван профил на <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Што добивате со ова"
 	},
 	"timeline": {

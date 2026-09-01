@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "ଆଇଫ୍ରେମ୍ ସ୍ନିପେଟ୍",
 		"include_in_embed": "ଏମ୍ବେଡ୍‌ରେ ସାମିଲ୍ କରନ୍ତୁ",
 		"launch": "⚡ ଲଞ୍ଚ୍ କରନ୍ତୁ",
-		"meta_description": "ଯେକୌଣସି ଆଭାଟାରକୁ ଏକ ଏମ୍ବେଡ୍ ଯୋଗ୍ୟ 3D ୱିଜେଟ୍‌ରେ ପରିଣତ କରନ୍ତୁ। ପାଞ୍ଚ ପ୍ରକାର, ବ୍ରାଣ୍ଡ ନିୟନ୍ତ୍ରଣ, ଏକ ଧାଡ଼ିର ଏମ୍ବେଡ୍।",
 		"meta_og_description": "ଏକ ଆଭାଟାର ବାଛନ୍ତୁ, ଏମ୍ବେଡ୍ ବିକଳ୍ପଗୁଡ଼ିକୁ ସେଟ୍ କରନ୍ତୁ, ଆପଣଙ୍କ ସାଇଟ୍ ପାଇଁ ଏକ ଧାଡ଼ିର ସ୍ନିପେଟ୍ କପି କରନ୍ତୁ।",
 		"meta_og_title": "ୱିଜେଟ୍ ଷ୍ଟୁଡିଓ · three.ws",
 		"meta_title": "ୱିଜେଟ୍ ଷ୍ଟୁଡିଓ · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "ଏକ ପେ-ବାଇ-ନେମ୍ ହ୍ୟାଣ୍ଡେଲ୍ — ଯେକେହି <code>yourname.threews.sol</code> ସହିତ <code>POST /api/x402/pay-by-name</code> କରି ଆପଣଙ୍କୁ USDC ପଠାଇପାରିବେ।",
 		"claim_your_subdomain": "ଆପଣଙ୍କ ସବ୍‌ଡୋମେନ୍ ଦାବି କରନ୍ତୁ",
-		"get_as_a_solana_name_service_subdomain": "<code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> କୁ ଏକ Solana ନାମ ସେବା ସବ୍‌ଡୋମେନ୍ ଭାବରେ ପାଆନ୍ତୁ। ବ୍ରେଭ୍ ବ୍ରାଉଜର୍ ଏହାକୁ ସିଧାସଳଖ ଆପଣଙ୍କ three.ws ଶୋକେସ୍‌କୁ ରିଜଲ୍ଭ୍ କରେ। ଆପଣଙ୍କ ଏଜେଣ୍ଟ, ଅଭାଟାର୍ ଏବଂ ଦକ୍ଷତା, ସବୁ ଗୋଟିଏ ନାମରେ।",
+		"get_as_a_solana_name_service_subdomain": "<code class=\"tw-code\">yourname.threews.sol</code> କୁ ଏକ Solana ନାମ ସେବା ସବ୍‌ଡୋମେନ୍ ଭାବରେ ପାଆନ୍ତୁ। ବ୍ରେଭ୍ ବ୍ରାଉଜର୍ ଏହାକୁ ସିଧାସଳଖ ଆପଣଙ୍କ three.ws ଶୋକେସ୍‌କୁ ରିଜଲ୍ଭ୍ କରେ। ଆପଣଙ୍କ ଏଜେଣ୍ଟ, ଅଭାଟାର୍ ଏବଂ ଦକ୍ଷତା, ସବୁ ଗୋଟିଏ ନାମରେ।",
 		"meta_description": "threews.sol ଉପରେ ଆପଣଙ୍କ ନିଜର ସବ୍‌ଡୋମେନ୍ ଦାବି କରନ୍ତୁ ଏବଂ ଏକ ବ୍ରେଭ୍-ରିଜଲ୍ଭେବଲ୍ ବ୍ୟକ୍ତିଗତ ଶୋକେସ୍ ପୃଷ୍ଠା ପାଆନ୍ତୁ।",
 		"meta_og_description": "ଆପଣଙ୍କ ନିଜର <name>.threews.sol ସବ୍‌ଡୋମେନ୍ ଦାବି କରନ୍ତୁ ଏବଂ ଏକ ବ୍ରେଭ୍-ରିଜଲ୍ଭେବଲ୍ ବ୍ୟକ୍ତିଗତ ଶୋକେସ୍ ପୃଷ୍ଠା ପାଆନ୍ତୁ।",
 		"meta_og_title": "threews.sol ସବ୍‌ଡୋମେନ୍ ଦାବି କରନ୍ତୁ · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "ମାଲିକାନା ଆପଣଙ୍କ ୱାଲେଟ୍‌କୁ ସ୍ଥାନାନ୍ତରିତ ହୁଏ; ଆମେ କେବଳ URL ରେକର୍ଡ ସେଟ୍ କରୁ।",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> ବ୍ରେଭ୍‌ରେ ଆପଣଙ୍କ ଶୋକେସ୍‌କୁ ରିଜଲ୍ଭ୍ କରେ।",
 		"subdomain_label": "ସବ୍‌ଡୋମେନ୍ ଲେବଲ୍",
-		"verified_profile_badge_at": "<code style=\"color:#69e16f\">/u/yourname</code> ରେ ଯାଞ୍ଚ କରାଯାଇଥିବା ପ୍ରୋଫାଇଲ୍ ବ୍ୟାଜ୍",
+		"verified_profile_badge_at": "<code class=\"tw-showcase\">/u/yourname</code> ରେ ଯାଞ୍ଚ କରାଯାଇଥିବା ପ୍ରୋଫାଇଲ୍ ବ୍ୟାଜ୍",
 		"what_this_gives_you": "ଏହା ଆପଣଙ୍କୁ କ’ଣ ଦିଏ"
 	},
 	"timeline": {

@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "Snippet de iframe",
 		"include_in_embed": "Incluir no embed",
 		"launch": "⚡ Lançar",
-		"meta_description": "Transforme qualquer avatar em um widget 3D incorporável. Cinco tipos, controles de marca, embed de uma linha.",
 		"meta_og_description": "Escolha um avatar, configure as opções de embed, copie um snippet de uma linha para o seu site.",
 		"meta_og_title": "Widget Studio · three.ws",
 		"meta_title": "Widget Studio · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Um handle de pagamento por nome — qualquer pessoa pode <code>POST /api/x402/pay-by-name</code> com <code>yourname.threews.sol</code> para enviar a você USDC",
 		"claim_your_subdomain": "Reivindique seu subdomínio",
-		"get_as_a_solana_name_service_subdomain": "Obtenha <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> como um subdomínio do Solana Name Service. O Brave Browser o resolve diretamente para a sua three.ws vitrine. Seus agentes, avatares e habilidades, tudo sob um único nome.",
+		"get_as_a_solana_name_service_subdomain": "Obtenha <code class=\"tw-code\">yourname.threews.sol</code> como um subdomínio do Solana Name Service. O Brave Browser o resolve diretamente para a sua three.ws vitrine. Seus agentes, avatares e habilidades, tudo sob um único nome.",
 		"meta_description": "Reivindique seu próprio subdomínio em threews.sol e obtenha uma página de vitrine pessoal resolúvel pelo Brave.",
 		"meta_og_description": "Reivindique seu próprio subdomínio <name>.threews.sol e obtenha uma página de vitrine pessoal resolúvel pelo Brave.",
 		"meta_og_title": "Reivindicar Subdomínio threews.sol · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "A propriedade é transferida para sua carteira; nós apenas definimos o registro de URL",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> resolve para a sua vitrine no Brave",
 		"subdomain_label": "Rótulo do subdomínio",
-		"verified_profile_badge_at": "Selo de perfil verificado em <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Selo de perfil verificado em <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "O que isso te oferece"
 	},
 	"timeline": {

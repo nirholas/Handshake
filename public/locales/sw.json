@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "Kipande cha msimbo cha iframe",
 		"include_in_embed": "Jumuisha katika upachikaji",
 		"launch": "⚡ Zindua",
-		"meta_description": "Geuza avatari yoyote kuwa wijeti ya 3D inayoweza kupachikwa. Aina tano, vidhibiti vya chapa, upachikaji wa mstari mmoja.",
 		"meta_og_description": "Chagua avatari, sanidi chaguo za upachikaji, nakili kipande cha msimbo cha mstari mmoja kwa tovuti yako.",
 		"meta_og_title": "Studio ya Wijeti · three.ws",
 		"meta_title": "Studio ya Wijeti · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Kishikio cha kulipa kwa jina — mtu yeyote anaweza <code>POST /api/x402/pay-by-name</code> kwa kutumia <code>yourname.threews.sol</code> kukutumia USDC",
 		"claim_your_subdomain": "Dai subdomain yako",
-		"get_as_a_solana_name_service_subdomain": "Pata <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> kama subdomain ya Solana Name Service. Brave Browser huielekeza moja kwa moja kwenye three.ws onyesho lako. Wakala wako, avatari, na ujuzi wako, vyote chini ya jina moja.",
+		"get_as_a_solana_name_service_subdomain": "Pata <code class=\"tw-code\">yourname.threews.sol</code> kama subdomain ya Solana Name Service. Brave Browser huielekeza moja kwa moja kwenye three.ws onyesho lako. Wakala wako, avatari, na ujuzi wako, vyote chini ya jina moja.",
 		"meta_description": "Dai subdomain yako mwenyewe kwenye threews.sol na upate ukurasa wa onyesho wa kibinafsi unaoweza kutatuliwa na Brave.",
 		"meta_og_description": "Dai subdomain yako mwenyewe ya <name>.threews.sol na upate ukurasa wa onyesho wa kibinafsi unaoweza kutatuliwa na Brave.",
 		"meta_og_title": "Dai Subdomain ya threews.sol · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Umiliki unahamishiwa kwenye pochi yako; sisi huweka tu rekodi ya URL",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> huielekeza kwenye onyesho lako katika Brave",
 		"subdomain_label": "Lebo ya subdomain",
-		"verified_profile_badge_at": "Beji ya wasifu iliyothibitishwa kwenye <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Beji ya wasifu iliyothibitishwa kwenye <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Unachopata kutokana na hili"
 	},
 	"timeline": {

@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "snippet tal-iframe",
 		"include_in_embed": "Inkludi fl-embed",
 		"launch": "⚡ Tnedija",
-		"meta_description": "Ibdel kwalunkwe avatar fi widget 3D li jista' jiġi inkorporat. Ħames tipi, kontrolli tal-brand, embed b'linja waħda.",
 		"meta_og_description": "Agħżel avatar, ikkonfigura l-għażliet tal-embed, ikkopja snippet b'linja waħda għas-sit tiegħek.",
 		"meta_og_title": "Studio tal-Widget · three.ws",
 		"meta_title": "Studio tal-Widget · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Handle ta' pay-by-name — kulħadd jista' <code>POST /api/x402/pay-by-name</code> b'<code>yourname.threews.sol</code> biex jibgħatlek USDC",
 		"claim_your_subdomain": "Ikseb is-subdominju tiegħek",
-		"get_as_a_solana_name_service_subdomain": "Ikseb <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> bħala subdomain ta' Solana Name Service. Brave Browser jirriżolvih direttament għall-vetrina three.ws tiegħek. L-aġenti, l-avatars, u l-ħiliet tiegħek, kollha taħt isem wieħed.",
+		"get_as_a_solana_name_service_subdomain": "Ikseb <code class=\"tw-code\">yourname.threews.sol</code> bħala subdomain ta' Solana Name Service. Brave Browser jirriżolvih direttament għall-vetrina three.ws tiegħek. L-aġenti, l-avatars, u l-ħiliet tiegħek, kollha taħt isem wieħed.",
 		"meta_description": "Ikseb is-subdomain tiegħek fuq threews.sol u akkwista paġna ta' vetrina personali li tista' tiġi riżolta minn Brave.",
 		"meta_og_description": "Ikseb is-subdomain tiegħek <name>.threews.sol u akkwista paġna ta' vetrina personali li tista' tiġi riżolta minn Brave.",
 		"meta_og_title": "Ikseb Subdomain ta' threews.sol · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Is-sjieda tiġi trasferita fil-wallet tiegħek; aħna sempliċement nissettjaw ir-rekord tal-URL.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> jirriżolvi għall-vetrina tiegħek f'Brave",
 		"subdomain_label": "Tikketta tas-subdomain",
-		"verified_profile_badge_at": "Badge tal-profil verifikat fuq <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Badge tal-profil verifikat fuq <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "X'toffrilek din"
 	},
 	"timeline": {

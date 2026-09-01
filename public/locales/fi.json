@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe-koodinpätkä",
 		"include_in_embed": "Sisällytä upotukseen",
 		"launch": "⚡ Käynnistä",
-		"meta_description": "Muuta mikä tahansa avatari upotettavaksi 3D-widgetiksi. Viisi tyyppiä, brändiohjaimet, yhden rivin upotus.",
 		"meta_og_description": "Valitse avatari, määritä upotusasetukset, kopioi yhden rivin koodinpätkä sivustollesi.",
 		"meta_og_title": "Widget Studio · three.ws",
 		"meta_title": "Widget Studio · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Maksa nimellä -tunnus — kuka tahansa voi <code>POST /api/x402/pay-by-name</code> käyttäen <code>yourname.threews.sol</code> lähettääkseen sinulle USDC",
 		"claim_your_subdomain": "Lunasta aliverkkotunnuksesi",
-		"get_as_a_solana_name_service_subdomain": "Hanki <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> Solana Name Service -aliverkkotunnuksena. Brave-selain ohjaa sen suoraan three.ws-esittelysivullesi. Agenttisi, avatarisi ja taitosi, kaikki yhden nimen alla.",
+		"get_as_a_solana_name_service_subdomain": "Hanki <code class=\"tw-code\">yourname.threews.sol</code> Solana Name Service -aliverkkotunnuksena. Brave-selain ohjaa sen suoraan three.ws-esittelysivullesi. Agenttisi, avatarisi ja taitosi, kaikki yhden nimen alla.",
 		"meta_description": "Lunasta oma aliverkkotunnuksesi threews.sol-palvelussa ja hanki Brave-selaimella avautuva henkilökohtainen esittelysivu.",
 		"meta_og_description": "Lunasta oma <name>.threews.sol-aliverkkotunnuksesi ja hanki Brave-selaimella avautuva henkilökohtainen esittelysivu.",
 		"meta_og_title": "Lunasta threews.sol-aliverkkotunnus · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Omistajuus siirtyy lompakkoosi; me vain asetamme URL-tietueen",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> ohjautuu esittelysivullesi Brave-selaimessa",
 		"subdomain_label": "Aliverkkotunnuksen tunnus",
-		"verified_profile_badge_at": "Vahvistettu profiilimerkki osoitteessa <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Vahvistettu profiilimerkki osoitteessa <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Mitä saat tästä"
 	},
 	"timeline": {

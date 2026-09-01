@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe ਸਨਿੱਪਟ",
 		"include_in_embed": "ਐਮਬੈੱਡ ਵਿੱਚ ਸ਼ਾਮਲ ਕਰੋ",
 		"launch": "⚡ ਲਾਂਚ ਕਰੋ",
-		"meta_description": "ਕਿਸੇ ਵੀ ਅਵਤਾਰ ਨੂੰ ਇੱਕ ਐਮਬੈੱਡ ਕਰਨ ਯੋਗ 3D ਵਿਜੇਟ ਵਿੱਚ ਬਦਲੋ। ਪੰਜ ਕਿਸਮਾਂ, ਬ੍ਰਾਂਡ ਨਿਯੰਤਰਣ, ਇੱਕ-ਲਾਈਨ ਐਮਬੈੱਡ।",
 		"meta_og_description": "ਇੱਕ ਅਵਤਾਰ ਚੁਣੋ, ਐਮਬੈੱਡ ਵਿਕਲਪਾਂ ਨੂੰ ਕੌਂਫਿਗਰ ਕਰੋ, ਆਪਣੀ ਸਾਈਟ ਲਈ ਇੱਕ-ਲਾਈਨ ਸਨਿੱਪਟ ਕਾਪੀ ਕਰੋ।",
 		"meta_og_title": "ਵਿਜੇਟ ਸਟੂਡੀਓ · three.ws",
 		"meta_title": "ਵਿਜੇਟ ਸਟੂਡੀਓ · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "ਇੱਕ ਪੇ-ਬਾਈ-ਨੇਮ ਹੈਂਡਲ — ਕੋਈ ਵੀ ਤੁਹਾਨੂੰ USDC ਭੇਜਣ ਲਈ <code>yourname.threews.sol</code> ਨਾਲ <code>POST /api/x402/pay-by-name</code> ਕਰ ਸਕਦਾ ਹੈ।",
 		"claim_your_subdomain": "ਆਪਣਾ ਸਬਡੋਮੇਨ ਕਲੇਮ ਕਰੋ",
-		"get_as_a_solana_name_service_subdomain": "<code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> ਨੂੰ ਇੱਕ Solana ਨੇਮ ਸਰਵਿਸ ਸਬਡੋਮੇਨ ਵਜੋਂ ਪ੍ਰਾਪਤ ਕਰੋ। Brave ਬ੍ਰਾਊਜ਼ਰ ਇਸਨੂੰ ਸਿੱਧਾ ਤੁਹਾਡੇ three.ws ਸ਼ੋਅਕੇਸ 'ਤੇ ਰਿਜ਼ੌਲਵ ਕਰਦਾ ਹੈ। ਤੁਹਾਡੇ ਏਜੰਟ, ਅਵਤਾਰ, ਅਤੇ ਹੁਨਰ, ਸਾਰੇ ਇੱਕ ਨਾਮ ਹੇਠ।",
+		"get_as_a_solana_name_service_subdomain": "<code class=\"tw-code\">yourname.threews.sol</code> ਨੂੰ ਇੱਕ Solana ਨੇਮ ਸਰਵਿਸ ਸਬਡੋਮੇਨ ਵਜੋਂ ਪ੍ਰਾਪਤ ਕਰੋ। Brave ਬ੍ਰਾਊਜ਼ਰ ਇਸਨੂੰ ਸਿੱਧਾ ਤੁਹਾਡੇ three.ws ਸ਼ੋਅਕੇਸ 'ਤੇ ਰਿਜ਼ੌਲਵ ਕਰਦਾ ਹੈ। ਤੁਹਾਡੇ ਏਜੰਟ, ਅਵਤਾਰ, ਅਤੇ ਹੁਨਰ, ਸਾਰੇ ਇੱਕ ਨਾਮ ਹੇਠ।",
 		"meta_description": "threews.sol 'ਤੇ ਆਪਣਾ ਸਬਡੋਮੇਨ ਕਲੇਮ ਕਰੋ ਅਤੇ ਇੱਕ Brave-ਰਿਜ਼ੌਲਵੇਬਲ ਨਿੱਜੀ ਸ਼ੋਅਕੇਸ ਪੇਜ ਪ੍ਰਾਪਤ ਕਰੋ।",
 		"meta_og_description": "ਆਪਣਾ <name>.threews.sol ਸਬਡੋਮੇਨ ਕਲੇਮ ਕਰੋ ਅਤੇ ਇੱਕ Brave-ਰਿਜ਼ੌਲਵੇਬਲ ਨਿੱਜੀ ਸ਼ੋਅਕੇਸ ਪੇਜ ਪ੍ਰਾਪਤ ਕਰੋ।",
 		"meta_og_title": "threews.sol ਸਬਡੋਮੇਨ ਕਲੇਮ ਕਰੋ · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "ਮਾਲਕੀ ਤੁਹਾਡੇ ਵਾਲਿਟ ਵਿੱਚ ਟ੍ਰਾਂਸਫਰ ਹੋ ਜਾਂਦੀ ਹੈ; ਅਸੀਂ ਸਿਰਫ਼ URL ਰਿਕਾਰਡ ਸੈੱਟ ਕਰਦੇ ਹਾਂ",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> Brave ਵਿੱਚ ਤੁਹਾਡੇ ਸ਼ੋਅਕੇਸ 'ਤੇ ਰਿਜ਼ੌਲਵ ਹੁੰਦਾ ਹੈ",
 		"subdomain_label": "ਸਬਡੋਮੇਨ ਲੇਬਲ",
-		"verified_profile_badge_at": "<code style=\"color:#69e16f\">/u/yourname</code> 'ਤੇ ਪ੍ਰਮਾਣਿਤ ਪ੍ਰੋਫਾਈਲ ਬੈਜ",
+		"verified_profile_badge_at": "<code class=\"tw-showcase\">/u/yourname</code> 'ਤੇ ਪ੍ਰਮਾਣਿਤ ਪ੍ਰੋਫਾਈਲ ਬੈਜ",
 		"what_this_gives_you": "ਇਹ ਤੁਹਾਨੂੰ ਕੀ ਦਿੰਦਾ ਹੈ"
 	},
 	"timeline": {

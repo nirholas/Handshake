@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "fragmento de iframe",
 		"include_in_embed": "Incluír na incrustación",
 		"launch": "⚡ Lanzar",
-		"meta_description": "Converte calquera avatar nun widget 3D incrustable. Cinco tipos, controis de marca, incrustación nunha liña.",
 		"meta_og_description": "Escolle un avatar, configura as opcións de incrustación, copia un fragmento dunha liña para o teu sitio.",
 		"meta_og_title": "Estudo de Widgets · three.ws",
 		"meta_title": "Estudo de Widgets · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Un identificador de pago por nome — calquera pode <code>POST /api/x402/pay-by-name</code> con <code>yourname.threews.sol</code> para enviarche USDC",
 		"claim_your_subdomain": "Reclama o teu subdominio",
-		"get_as_a_solana_name_service_subdomain": "Obtén <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> como un subdominio do Solana Name Service. Brave Browser resólveo directamente ao teu escaparate three.ws. Os teus axentes, avatares e habilidades, todo baixo un mesmo nome.",
+		"get_as_a_solana_name_service_subdomain": "Obtén <code class=\"tw-code\">yourname.threews.sol</code> como un subdominio do Solana Name Service. Brave Browser resólveo directamente ao teu escaparate three.ws. Os teus axentes, avatares e habilidades, todo baixo un mesmo nome.",
 		"meta_description": "Reclama o teu propio subdominio en threews.sol e obtén unha páxina de escaparate persoal resoluble por Brave.",
 		"meta_og_description": "Reclama o teu propio subdominio <name>.threews.sol e obtén unha páxina de escaparate persoal resoluble por Brave.",
 		"meta_og_title": "Reclama o subdominio threews.sol · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "A propiedade transfírese á túa carteira; nós só establecemos o rexistro URL.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> resólvese ao teu escaparate en Brave.",
 		"subdomain_label": "Etiqueta do subdominio",
-		"verified_profile_badge_at": "Insignia de perfil verificado en <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Insignia de perfil verificado en <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Que che ofrece isto"
 	},
 	"timeline": {

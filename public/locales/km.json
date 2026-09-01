@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "កូដខ្លី iframe",
 		"include_in_embed": "រួមបញ្ចូលក្នុង embed",
 		"launch": "⚡ បើកដំណើរការ",
-		"meta_description": "បំប្លែងរូបតំណាងណាមួយទៅជា widget 3D ដែលអាចបង្កប់បាន។ ប្រាំប្រភេទ ការគ្រប់គ្រងម៉ាកយីហោ ការបង្កប់មួយជួរ។",
 		"meta_og_description": "ជ្រើសរើសរូបតំណាង កំណត់រចនាសម្ព័ន្ធជម្រើសបង្កប់ ចម្លងកូដខ្លីមួយជួរសម្រាប់គេហទំព័ររបស់អ្នក។",
 		"meta_og_title": "ស្ទូឌីយោ Widget · three.ws",
 		"meta_title": "ស្ទូឌីយោ Widget · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "ឈ្មោះសម្រាប់បង់ប្រាក់ (pay-by-name handle) — នរណាម្នាក់អាច <code>POST /api/x402/pay-by-name</code> ជាមួយ <code>yourname.threews.sol</code> ដើម្បីផ្ញើ USDC មកអ្នក។",
 		"claim_your_subdomain": "ទាមទារ subdomain របស់អ្នក។",
-		"get_as_a_solana_name_service_subdomain": "ទទួលបាន <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> ជា subdomain របស់ Solana Name Service។ Brave Browser ដោះស្រាយវាដោយផ្ទាល់ទៅកាន់ទំព័របង្ហាញ three.ws របស់អ្នក។ ភ្នាក់ងារ អាវ៉ាតា និងជំនាញរបស់អ្នក ទាំងអស់ស្ថិតក្រោមឈ្មោះតែមួយ។",
+		"get_as_a_solana_name_service_subdomain": "ទទួលបាន <code class=\"tw-code\">yourname.threews.sol</code> ជា subdomain របស់ Solana Name Service។ Brave Browser ដោះស្រាយវាដោយផ្ទាល់ទៅកាន់ទំព័របង្ហាញ three.ws របស់អ្នក។ ភ្នាក់ងារ អាវ៉ាតា និងជំនាញរបស់អ្នក ទាំងអស់ស្ថិតក្រោមឈ្មោះតែមួយ។",
 		"meta_description": "ទាមទារ subdomain ផ្ទាល់ខ្លួនរបស់អ្នកនៅលើ threews.sol និងទទួលបានទំព័របង្ហាញផ្ទាល់ខ្លួនដែលអាចដោះស្រាយបានដោយ Brave។",
 		"meta_og_description": "ទាមទារ subdomain <name>.threews.sol ផ្ទាល់ខ្លួនរបស់អ្នក និងទទួលបានទំព័របង្ហាញផ្ទាល់ខ្លួនដែលអាចដោះស្រាយបានដោយ Brave។",
 		"meta_og_title": "ទាមទារ Subdomain threews.sol · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "កម្មសិទ្ធិត្រូវបានផ្ទេរទៅកាន់កាបូបរបស់អ្នក; យើងគ្រាន់តែកំណត់កំណត់ត្រា URL ប៉ុណ្ណោះ។",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> ដោះស្រាយទៅកាន់ទំព័របង្ហាញរបស់អ្នកនៅក្នុង Brave។",
 		"subdomain_label": "ស្លាក Subdomain",
-		"verified_profile_badge_at": "ផ្លាកសញ្ញាប្រវត្តិរូបដែលបានផ្ទៀងផ្ទាត់នៅ <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "ផ្លាកសញ្ញាប្រវត្តិរូបដែលបានផ្ទៀងផ្ទាត់នៅ <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "អត្ថប្រយោជន៍ដែលអ្នកទទួលបាន"
 	},
 	"timeline": {

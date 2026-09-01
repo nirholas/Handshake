@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe'i koodijupp",
 		"include_in_embed": "Kaasa manustatavasse koodi",
 		"launch": "⚡ Käivita",
-		"meta_description": "Muuda iga avatar manustatavaks 3D vidinaks. Viis tüüpi, brändi juhtnupud, üherealine manustatav kood.",
 		"meta_og_description": "Vali avatar, konfigureeri manustamise valikud, kopeeri üherealine koodijupp oma saidile.",
 		"meta_og_title": "Vidina Stuudio · three.ws",
 		"meta_title": "Vidina Stuudio · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Nimepõhine maksekäepide – igaüks saab <code>POST /api/x402/pay-by-name</code> abil saata teile USDC kasutades <code>yourname.threews.sol</code>.",
 		"claim_your_subdomain": "Nõua oma alamdomeen",
-		"get_as_a_solana_name_service_subdomain": "Hangi <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> kui Solana nimesüsteemi alamdomeen. Brave'i brauser suunab selle otse sinu three.ws esitluslehele. Sinu agendid, avatarid ja oskused – kõik ühe nime all.",
+		"get_as_a_solana_name_service_subdomain": "Hangi <code class=\"tw-code\">yourname.threews.sol</code> kui Solana nimesüsteemi alamdomeen. Brave'i brauser suunab selle otse sinu three.ws esitluslehele. Sinu agendid, avatarid ja oskused – kõik ühe nime all.",
 		"meta_description": "Nõua endale threews.sol-is alamdomeen ja saa Brave'i kaudu lahendatav isiklik esitlusleht.",
 		"meta_og_description": "Nõua endale <name>.threews.sol alamdomeen ja saa Brave'i kaudu lahendatav isiklik esitlusleht.",
 		"meta_og_title": "Nõua threews.sol alamdomeen · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Omandiõigus kantakse üle sinu rahakotti; meie vaid seadistame URL-i kirje.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> suunab sinu esitluslehele Brave'is.",
 		"subdomain_label": "Alamdomeeni silt",
-		"verified_profile_badge_at": "Kinnitatud profiilimärk aadressil <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Kinnitatud profiilimärk aadressil <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Mida see sulle annab"
 	},
 	"timeline": {

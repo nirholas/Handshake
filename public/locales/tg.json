@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "Порчаи iframe",
 		"include_in_embed": "Ба коди дохилкунӣ дохил кунед",
 		"launch": "⚡ Оғоз кунед",
-		"meta_description": "Ҳар гуна аватарро ба виджети 3D-и дохилшаванда табдил диҳед. Панҷ намуд, идоракунии бренд, дохилкунии яксатра.",
 		"meta_og_description": "Аватарро интихоб кунед, имконоти дохилкуниро танзим кунед, порчаи яксатраро барои сайти худ нусхабардорӣ кунед.",
 		"meta_og_title": "Студияи виджет · three.ws",
 		"meta_title": "Студияи виджет · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Идентификатори пардохт-бо-ном — ҳар кас метавонад <code>POST /api/x402/pay-by-name</code>-ро бо <code>yourname.threews.sol</code> истифода бурда, ба шумо USDC фиристад.",
 		"claim_your_subdomain": "Зердомени худро даъво кунед",
-		"get_as_a_solana_name_service_subdomain": "Гиред <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> ҳамчун зердомени Solana Name Service. Brave Browser онро мустақиман ба намоиши three.ws-и шумо ҳал мекунад. Агентҳо, аватарҳо ва малакаҳои шумо, ҳама таҳти як ном.",
+		"get_as_a_solana_name_service_subdomain": "Гиред <code class=\"tw-code\">yourname.threews.sol</code> ҳамчун зердомени Solana Name Service. Brave Browser онро мустақиман ба намоиши three.ws-и шумо ҳал мекунад. Агентҳо, аватарҳо ва малакаҳои шумо, ҳама таҳти як ном.",
 		"meta_description": "Зердомени худро дар threews.sol талаб кунед ва саҳифаи намоишии шахсии бо Brave ҳалшавандаро ба даст оред.",
 		"meta_og_description": "Зердомени <name>.threews.sol-и худро талаб кунед ва саҳифаи намоишии шахсии бо Brave ҳалшавандаро ба даст оред.",
 		"meta_og_title": "Зердомени threews.sol-ро талаб кунед · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Моликият ба ҳамёни шумо интиқол дода мешавад; мо танҳо сабти URL-ро муқаррар мекунем.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> дар Brave ба намоиши шумо ҳал мешавад.",
 		"subdomain_label": "Нишони зердомен",
-		"verified_profile_badge_at": "Нишони профили тасдиқшуда дар <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Нишони профили тасдиқшуда дар <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Ин ба шумо чӣ медиҳад"
 	},
 	"timeline": {

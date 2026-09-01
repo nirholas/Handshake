@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe kódrészlet",
 		"include_in_embed": "Belefoglalás a beágyazásba",
 		"launch": "⚡ Indítás",
-		"meta_description": "Bármely avatárt beágyazható 3D widgetté alakíthatsz. Öt típus, márka vezérlők, egysoros beágyazás.",
 		"meta_og_description": "Válassz avatárt, konfiguráld a beágyazási opciókat, másolj egy egysoros kódrészletet a webhelyedre.",
 		"meta_og_title": "Widget Stúdió · three.ws",
 		"meta_title": "Widget Stúdió · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Egy név alapú fizetési azonosító — bárki <code>POST /api/x402/pay-by-name</code> kérést küldhet a <code>yourname.threews.sol</code> címmel, hogy USDC küldjön neked.",
 		"claim_your_subdomain": "Igényeld az aldomainedet",
-		"get_as_a_solana_name_service_subdomain": "Szerezd meg a <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> címet Solana Name Service aldoménként. A Brave böngésző közvetlenül a three.ws bemutatóoldaladra irányítja. Ügynökeid, avatárjaid és képességeid, mind egy név alatt.",
+		"get_as_a_solana_name_service_subdomain": "Szerezd meg a <code class=\"tw-code\">yourname.threews.sol</code> címet Solana Name Service aldoménként. A Brave böngésző közvetlenül a three.ws bemutatóoldaladra irányítja. Ügynökeid, avatárjaid és képességeid, mind egy név alatt.",
 		"meta_description": "Igényeld saját aldomainedet a threews.sol-on, és kapj egy Brave-ben feloldható személyes bemutatóoldalt.",
 		"meta_og_description": "Igényeld saját <name>.threews.sol aldomainedet, és kapj egy Brave-ben feloldható személyes bemutatóoldalt.",
 		"meta_og_title": "threews.sol aldomén igénylése · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "A tulajdonjog a tárcádra száll át; mi csak beállítjuk az URL rekordot.",
 		"resolves_to_your_showcase_in_brave": "A <code>yourname.threews.sol</code> a Brave böngészőben a bemutatóoldaladra mutat.",
 		"subdomain_label": "Aldomén címke",
-		"verified_profile_badge_at": "Ellenőrzött profiljelvény a <code style=\"color:#69e16f\">/u/yourname</code> címen",
+		"verified_profile_badge_at": "Ellenőrzött profiljelvény a <code class=\"tw-showcase\">/u/yourname</code> címen",
 		"what_this_gives_you": "Mit nyújt ez Önnek?"
 	},
 	"timeline": {

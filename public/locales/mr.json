@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "आयफ्रेम स्निपेट",
 		"include_in_embed": "एम्बेडमध्ये समाविष्ट करा",
 		"launch": "⚡ सुरू करा",
-		"meta_description": "कोणत्याही अवतारला एम्बेड करण्यायोग्य 3D विजेटमध्ये रूपांतरित करा. पाच प्रकार, ब्रँड नियंत्रणे, एका ओळीचे एम्बेड.",
 		"meta_og_description": "एक अवतार निवडा, एम्बेड पर्याय कॉन्फिगर करा, तुमच्या साइटसाठी एका ओळीचा स्निपेट कॉपी करा.",
 		"meta_og_title": "विजेट स्टुडिओ · three.ws",
 		"meta_title": "विजेट स्टुडिओ · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "पे-बाय-नेम हँडल — कोणीही <code>POST /api/x402/pay-by-name</code> <code>yourname.threews.sol</code> सह तुम्हाला USDC पाठवू शकते",
 		"claim_your_subdomain": "तुमचा सबडोमेन मिळवा",
-		"get_as_a_solana_name_service_subdomain": "<code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> हे Solana नेम सर्व्हिस सबडोमेन म्हणून मिळवा. ब्रेव्ह ब्राउझर ते थेट तुमच्या three.ws शोकेसवर रिझॉल्व्ह करते. तुमचे एजंट, अवतार आणि कौशल्ये, सर्व एकाच नावाखाली.",
+		"get_as_a_solana_name_service_subdomain": "<code class=\"tw-code\">yourname.threews.sol</code> हे Solana नेम सर्व्हिस सबडोमेन म्हणून मिळवा. ब्रेव्ह ब्राउझर ते थेट तुमच्या three.ws शोकेसवर रिझॉल्व्ह करते. तुमचे एजंट, अवतार आणि कौशल्ये, सर्व एकाच नावाखाली.",
 		"meta_description": "threews.sol वर तुमचा स्वतःचा सबडोमेन मिळवा आणि ब्रेव्ह-रिझॉल्व्ह करण्यायोग्य वैयक्तिक शोकेस पृष्ठ मिळवा.",
 		"meta_og_description": "तुमचा स्वतःचा <name>.threews.sol सबडोमेन मिळवा आणि ब्रेव्ह-रिझॉल्व्ह करण्यायोग्य वैयक्तिक शोकेस पृष्ठ मिळवा.",
 		"meta_og_title": "threews.sol सबडोमेन मिळवा · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "मालकी तुमच्या वॉलेटमध्ये हस्तांतरित होते; आम्ही फक्त यूआरएल रेकॉर्ड सेट करतो.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> ब्रेव्हमध्ये तुमच्या शोकेसवर रिझॉल्व्ह होते",
 		"subdomain_label": "सबडोमेन लेबल",
-		"verified_profile_badge_at": "सत्यापित प्रोफाइल बॅज येथे <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "सत्यापित प्रोफाइल बॅज येथे <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "यामुळे तुम्हाला काय मिळेल"
 	},
 	"timeline": {

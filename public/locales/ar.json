@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "مقتطف iframe",
 		"include_in_embed": "تضمين في الكود",
 		"launch": "⚡ إطلاق",
-		"meta_description": "حوّل أي صورة رمزية إلى أداة ثلاثية الأبعاد قابلة للتضمين. خمسة أنواع، تحكم بالعلامة التجارية، تضمين بسطر واحد.",
 		"meta_og_description": "اختر صورة رمزية، قم بتكوين خيارات التضمين، وانسخ مقتطفًا من سطر واحد لموقعك.",
 		"meta_og_title": "استوديو الأدوات · three.ws",
 		"meta_title": "استوديو الأدوات · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "معرّف دفع بالاسم — يمكن لأي شخص <code>POST /api/x402/pay-by-name</code> باستخدام <code>yourname.threews.sol</code> لإرسال USDC إليك",
 		"claim_your_subdomain": "احجز نطاقك الفرعي",
-		"get_as_a_solana_name_service_subdomain": "احصل على <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> كنطاق فرعي لخدمة أسماء Solana. متصفح Brave يحلّه مباشرة إلى صفحة عرضك three.ws. وكلاؤك، صورك الرمزية، ومهاراتك، كلها تحت اسم واحد.",
+		"get_as_a_solana_name_service_subdomain": "احصل على <code class=\"tw-code\">yourname.threews.sol</code> كنطاق فرعي لخدمة أسماء Solana. متصفح Brave يحلّه مباشرة إلى صفحة عرضك three.ws. وكلاؤك، صورك الرمزية، ومهاراتك، كلها تحت اسم واحد.",
 		"meta_description": "احجز نطاقك الفرعي الخاص على threews.sol واحصل على صفحة عرض شخصية قابلة للحل بواسطة Brave.",
 		"meta_og_description": "احجز نطاقك الفرعي الخاص <name>.threews.sol واحصل على صفحة عرض شخصية قابلة للحل بواسطة Brave.",
 		"meta_og_title": "احجز نطاق threews.sol الفرعي · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "تنتقل الملكية إلى محفظتك؛ نحن فقط نحدد سجل الرابط.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> يحل إلى صفحة عرضك في Brave",
 		"subdomain_label": "تسمية النطاق الفرعي",
-		"verified_profile_badge_at": "شارة ملف شخصي موثقة على <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "شارة ملف شخصي موثقة على <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "ما ستحصل عليه"
 	},
 	"timeline": {

@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "Fragment kodu iframe",
 		"include_in_embed": "Dołącz do osadzenia",
 		"launch": "⚡ Uruchom",
-		"meta_description": "Zmień dowolnego awatara w osadzalny widżet 3D. Pięć typów, kontrola marki, osadzanie w jednej linii.",
 		"meta_og_description": "Wybierz awatara, skonfiguruj opcje osadzania, skopiuj jednoliniowy fragment kodu na swoją stronę.",
 		"meta_og_title": "Studio Widżetów · three.ws",
 		"meta_title": "Studio Widżetów · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Uchwyt do płatności po nazwie — każdy może <code>POST /api/x402/pay-by-name</code> używając <code>yourname.threews.sol</code>, aby wysłać Ci USDC",
 		"claim_your_subdomain": "Zarejestruj swoją subdomenę",
-		"get_as_a_solana_name_service_subdomain": "Zdobądź <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> jako subdomenę usługi nazw Solana. Przeglądarka Brave kieruje ją bezpośrednio do Twojej prezentacji three.ws. Twoi agenci, awatary i umiejętności — wszystko pod jedną nazwą.",
+		"get_as_a_solana_name_service_subdomain": "Zdobądź <code class=\"tw-code\">yourname.threews.sol</code> jako subdomenę usługi nazw Solana. Przeglądarka Brave kieruje ją bezpośrednio do Twojej prezentacji three.ws. Twoi agenci, awatary i umiejętności — wszystko pod jedną nazwą.",
 		"meta_description": "Zarejestruj własną subdomenę na threews.sol i uzyskaj osobistą stronę prezentacyjną rozpoznawalną przez Brave.",
 		"meta_og_description": "Zarejestruj własną subdomenę <name>.threews.sol i uzyskaj osobistą stronę prezentacyjną rozpoznawalną przez Brave.",
 		"meta_og_title": "Zarejestruj subdomenę threews.sol · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Własność jest przenoszona do Twojego portfela; my tylko ustawiamy rekord URL",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> kieruje do Twojej prezentacji w Brave",
 		"subdomain_label": "Etykieta subdomeny",
-		"verified_profile_badge_at": "Odznaka zweryfikowanego profilu na <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Odznaka zweryfikowanego profilu na <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Co zyskujesz"
 	},
 	"timeline": {

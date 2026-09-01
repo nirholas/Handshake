@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe துணுக்கு",
 		"include_in_embed": "உட்பொதிவில் சேர்",
 		"launch": "⚡ தொடங்கு",
-		"meta_description": "எந்த அவதாரத்தையும் உட்பொதிக்கக்கூடிய 3D விட்ஜெட்டாக மாற்றுங்கள். ஐந்து வகைகள், பிராண்ட் கட்டுப்பாடுகள், ஒரு வரி உட்பொதிவு.",
 		"meta_og_description": "ஓர் அவதாரத்தைத் தேர்ந்தெடுங்கள், உட்பொதிவு விருப்பத்தேர்வுகளை உள்ளமைக்கவும், உங்கள் தளத்திற்கான ஒரு வரி துணுக்கை நகலெடுக்கவும்.",
 		"meta_og_title": "விட்ஜெட் ஸ்டுடியோ · three.ws",
 		"meta_title": "விட்ஜெட் ஸ்டுடியோ · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "பெயரால் பணம் செலுத்தும் முகவரி — <code>yourname.threews.sol</code> உடன் <code>POST /api/x402/pay-by-name</code> ஐப் பயன்படுத்தி எவரும் உங்களுக்கு USDC அனுப்பலாம்.",
 		"claim_your_subdomain": "உங்கள் துணை டொமைனை உரிமை கோருங்கள்",
-		"get_as_a_solana_name_service_subdomain": "<code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> ஐ ஒரு Solana பெயர் சேவை துணை டொமைனாகப் பெறுங்கள். பிரேவ் உலாவி அதை நேரடியாக உங்கள் three.ws காட்சிக்குத் தீர்க்கிறது. உங்கள் ஏஜென்ட்கள், அவதாரங்கள் மற்றும் திறன்கள், அனைத்தும் ஒரே பெயரில்.",
+		"get_as_a_solana_name_service_subdomain": "<code class=\"tw-code\">yourname.threews.sol</code> ஐ ஒரு Solana பெயர் சேவை துணை டொமைனாகப் பெறுங்கள். பிரேவ் உலாவி அதை நேரடியாக உங்கள் three.ws காட்சிக்குத் தீர்க்கிறது. உங்கள் ஏஜென்ட்கள், அவதாரங்கள் மற்றும் திறன்கள், அனைத்தும் ஒரே பெயரில்.",
 		"meta_description": "threews.sol இல் உங்கள் சொந்த துணை டொமைனை உரிமை கோருங்கள் மற்றும் பிரேவ்-தீர்க்கக்கூடிய தனிப்பட்ட காட்சிப் பக்கத்தைப் பெறுங்கள்.",
 		"meta_og_description": "உங்கள் சொந்த <name>.threews.sol துணை டொமைனை உரிமை கோருங்கள் மற்றும் பிரேவ்-தீர்க்கக்கூடிய தனிப்பட்ட காட்சிப் பக்கத்தைப் பெறுங்கள்.",
 		"meta_og_title": "threews.sol துணை டொமைனை உரிமை கோருங்கள் · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "உரிமை உங்கள் வாலட்டுக்கு மாற்றப்படுகிறது; நாங்கள் URL பதிவை மட்டும் அமைக்கிறோம்",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> பிரேவ்-இல் உங்கள் காட்சிக்குத் தீர்க்கப்படுகிறது",
 		"subdomain_label": "துணை டொமைன் லேபிள்",
-		"verified_profile_badge_at": "சரிபார்க்கப்பட்ட சுயவிவரப் பேட்ஜ் <code style=\"color:#69e16f\">/u/yourname</code> இல்",
+		"verified_profile_badge_at": "சரிபார்க்கப்பட்ட சுயவிவரப் பேட்ஜ் <code class=\"tw-showcase\">/u/yourname</code> இல்",
 		"what_this_gives_you": "இதன் மூலம் நீங்கள் பெறுவது என்ன"
 	},
 	"timeline": {

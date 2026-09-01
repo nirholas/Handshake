@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe isječak",
 		"include_in_embed": "Uključi u ugradnju",
 		"launch": "⚡ Pokreni",
-		"meta_description": "Pretvorite bilo koji avatar u 3D widget koji se može ugraditi. Pet vrsta, kontrole brenda, ugradnja u jednom retku.",
 		"meta_og_description": "Odaberite avatar, konfigurirajte opcije ugradnje, kopirajte isječak u jednom retku za svoju stranicu.",
 		"meta_og_title": "Widget Studio · three.ws",
 		"meta_title": "Widget Studio · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Ručka za plaćanje po imenu — svatko može <code>POST /api/x402/pay-by-name</code> s <code>yourname.threews.sol</code> da vam pošalje USDC",
 		"claim_your_subdomain": "Zatražite svoju poddomenu",
-		"get_as_a_solana_name_service_subdomain": "Dobijte <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> kao poddomenu Solana Name Service. Brave preglednik je izravno razrješava na vaš three.ws showcase. Vaši agenti, avatari i vještine, sve pod jednim imenom.",
+		"get_as_a_solana_name_service_subdomain": "Dobijte <code class=\"tw-code\">yourname.threews.sol</code> kao poddomenu Solana Name Service. Brave preglednik je izravno razrješava na vaš three.ws showcase. Vaši agenti, avatari i vještine, sve pod jednim imenom.",
 		"meta_description": "Zatražite vlastitu poddomenu na threews.sol i dobijte osobnu showcase stranicu koju Brave može razriješiti.",
 		"meta_og_description": "Zatražite vlastitu <name>.threews.sol poddomenu i dobijte osobnu showcase stranicu koju Brave može razriješiti.",
 		"meta_og_title": "Zatražite threews.sol poddomenu · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Vlasništvo se prenosi na vaš novčanik; mi samo postavljamo URL zapis",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> se razrješava na vaš showcase u Braveu",
 		"subdomain_label": "Oznaka poddomene",
-		"verified_profile_badge_at": "Značka potvrđenog profila na <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Značka potvrđenog profila na <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Što vam ovo donosi"
 	},
 	"timeline": {

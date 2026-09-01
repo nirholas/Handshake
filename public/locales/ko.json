@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe 스니펫",
 		"include_in_embed": "임베드에 포함",
 		"launch": "⚡ 시작",
-		"meta_description": "어떤 아바타든 임베드 가능한 3D 위젯으로 전환하세요. 다섯 가지 유형, 브랜드 제어, 한 줄 임베드.",
 		"meta_og_description": "아바타를 선택하고, 임베드 옵션을 구성한 다음, 사이트에 사용할 한 줄 스니펫을 복사하세요.",
 		"meta_og_title": "위젯 스튜디오 · three.ws",
 		"meta_title": "위젯 스튜디오 · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "이름으로 결제하는 핸들 — 누구나 <code>yourname.threews.sol</code>을 사용하여 <code>POST /api/x402/pay-by-name</code>으로 USDC를 보낼 수 있습니다.",
 		"claim_your_subdomain": "서브도메인 등록",
-		"get_as_a_solana_name_service_subdomain": "<code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code>을 Solana 네임 서비스 서브도메인으로 받으세요. Brave 브라우저는 이를 귀하의 three.ws 쇼케이스로 직접 연결합니다. 귀하의 에이전트, 아바타, 스킬이 모두 하나의 이름 아래에 있습니다.",
+		"get_as_a_solana_name_service_subdomain": "<code class=\"tw-code\">yourname.threews.sol</code>을 Solana 네임 서비스 서브도메인으로 받으세요. Brave 브라우저는 이를 귀하의 three.ws 쇼케이스로 직접 연결합니다. 귀하의 에이전트, 아바타, 스킬이 모두 하나의 이름 아래에 있습니다.",
 		"meta_description": "threews.sol에서 자신만의 서브도메인을 등록하고 Brave에서 연결 가능한 개인 쇼케이스 페이지를 받으세요.",
 		"meta_og_description": "자신만의 <name>.threews.sol 서브도메인을 등록하고 Brave에서 연결 가능한 개인 쇼케이스 페이지를 받으세요.",
 		"meta_og_title": "threews.sol 서브도메인 등록 · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "소유권은 귀하의 지갑으로 이전되며, 저희는 URL 기록만 설정합니다.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code>은 Brave에서 귀하의 쇼케이스로 연결됩니다.",
 		"subdomain_label": "서브도메인 레이블",
-		"verified_profile_badge_at": "<code style=\"color:#69e16f\">/u/yourname</code>에서 인증된 프로필 배지",
+		"verified_profile_badge_at": "<code class=\"tw-showcase\">/u/yourname</code>에서 인증된 프로필 배지",
 		"what_this_gives_you": "제공되는 혜택"
 	},
 	"timeline": {

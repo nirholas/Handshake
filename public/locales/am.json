@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "አይፍሬም ስኒፔት",
 		"include_in_embed": "በኢምቤድ ውስጥ አካትት",
 		"launch": "⚡ አስጀምር",
-		"meta_description": "ማንኛውንም አቫታር ወደ ሊካተት የሚችል 3D ዊጅት ይለውጡ። አምስት አይነቶች፣ የብራንድ መቆጣጠሪያዎች፣ የአንድ መስመር ኢምቤድ።",
 		"meta_og_description": "አቫታር ይምረጡ፣ የኢምቤድ አማራጮችን ያዋቅሩ፣ ለአካባቢዎ የአንድ መስመር ስኒፔት ይቅዱ።",
 		"meta_og_title": "ዊጅት ስቱዲዮ · three.ws",
 		"meta_title": "ዊጅት ስቱዲዮ · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "በስም የሚከፈል መለያ — ማንም ሰው <code>POST /api/x402/pay-by-name</code>ን በ<code>yourname.threews.sol</code> ተጠቅሞ USDC ሊልክልዎ ይችላል።",
 		"claim_your_subdomain": "የእርስዎን ንዑስ ጎራ ይያዙ",
-		"get_as_a_solana_name_service_subdomain": "<code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code>ን እንደ Solana ስም አገልግሎት ንዑስ ጎራ ያግኙ። ብሬቭ ብሮውዘር በቀጥታ ወደ three.ws ማሳያዎ ያመራዋል። የእርስዎ ወኪሎች፣ አምሳያዎች እና ችሎታዎች፣ ሁሉም በአንድ ስም ስር።",
+		"get_as_a_solana_name_service_subdomain": "<code class=\"tw-code\">yourname.threews.sol</code>ን እንደ Solana ስም አገልግሎት ንዑስ ጎራ ያግኙ። ብሬቭ ብሮውዘር በቀጥታ ወደ three.ws ማሳያዎ ያመራዋል። የእርስዎ ወኪሎች፣ አምሳያዎች እና ችሎታዎች፣ ሁሉም በአንድ ስም ስር።",
 		"meta_description": "በthreews.sol ላይ የራስዎን ንዑስ ጎራ ይጠይቁ እና በብሬቭ የሚፈታ የግል ማሳያ ገጽ ያግኙ።",
 		"meta_og_description": "የራስዎን <name>.threews.sol ንዑስ ጎራ ይጠይቁ እና በብሬቭ የሚፈታ የግል ማሳያ ገጽ ያግኙ።",
 		"meta_og_title": "threews.sol ንዑስ ጎራ ይጠይቁ · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "ባለቤትነት ወደ የኪስ ቦርሳዎ ይተላለፋል፤ እኛ የዩአርኤል መዝገቡን ብቻ እናስቀምጣለን።",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> በብሬቭ ውስጥ ወደ ማሳያዎ ያመራል።",
 		"subdomain_label": "ንዑስ ጎራ መለያ",
-		"verified_profile_badge_at": "የተረጋገጠ የመገለጫ ባጅ በ <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "የተረጋገጠ የመገለጫ ባጅ በ <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "ይህ ምን ይሰጥዎታል"
 	},
 	"timeline": {

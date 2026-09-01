@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe స్నిప్పెట్",
 		"include_in_embed": "ఎంబెడ్‌లో చేర్చు",
 		"launch": "⚡ ప్రారంభించు",
-		"meta_description": "ఏదైనా అవతార్‌ను ఎంబెడ్ చేయగల 3D విడ్జెట్‌గా మార్చండి. ఐదు రకాలు, బ్రాండ్ నియంత్రణలు, ఒకే లైన్ ఎంబెడ్.",
 		"meta_og_description": "ఒక అవతార్‌ను ఎంచుకోండి, ఎంబెడ్ ఎంపికలను కాన్ఫిగర్ చేయండి, మీ సైట్ కోసం ఒకే లైన్ స్నిప్పెట్‌ను కాపీ చేయండి.",
 		"meta_og_title": "విడ్జెట్ స్టూడియో · three.ws",
 		"meta_title": "విడ్జెట్ స్టూడియో · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "పేరు ద్వారా చెల్లింపు హ్యాండిల్ — ఎవరైనా <code>POST /api/x402/pay-by-name</code>ని <code>yourname.threews.sol</code>తో ఉపయోగించి మీకు USDC పంపవచ్చు.",
 		"claim_your_subdomain": "మీ సబ్‌డొమైన్‌ను క్లెయిమ్ చేయండి",
-		"get_as_a_solana_name_service_subdomain": "<code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code>ని Solana నేమ్ సర్వీస్ సబ్‌డొమైన్‌గా పొందండి. బ్రేవ్ బ్రౌజర్ దీన్ని నేరుగా మీ three.ws షోకేస్‌కు రిజాల్వ్ చేస్తుంది. మీ ఏజెంట్లు, అవతార్‌లు మరియు నైపుణ్యాలు అన్నీ ఒకే పేరుతో.",
+		"get_as_a_solana_name_service_subdomain": "<code class=\"tw-code\">yourname.threews.sol</code>ని Solana నేమ్ సర్వీస్ సబ్‌డొమైన్‌గా పొందండి. బ్రేవ్ బ్రౌజర్ దీన్ని నేరుగా మీ three.ws షోకేస్‌కు రిజాల్వ్ చేస్తుంది. మీ ఏజెంట్లు, అవతార్‌లు మరియు నైపుణ్యాలు అన్నీ ఒకే పేరుతో.",
 		"meta_description": "threews.solలో మీ స్వంత సబ్‌డొమైన్‌ను క్లెయిమ్ చేయండి మరియు బ్రేవ్-రిజాల్వబుల్ వ్యక్తిగత షోకేస్ పేజీని పొందండి.",
 		"meta_og_description": "మీ స్వంత <name>.threews.sol సబ్‌డొమైన్‌ను క్లెయిమ్ చేయండి మరియు బ్రేవ్-రిజాల్వబుల్ వ్యక్తిగత షోకేస్ పేజీని పొందండి.",
 		"meta_og_title": "threews.sol సబ్‌డొమైన్‌ను క్లెయిమ్ చేయండి · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "యాజమాన్యం మీ వాలెట్‌కు బదిలీ చేయబడుతుంది; మేము కేవలం URL రికార్డ్‌ను సెట్ చేస్తాము.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> బ్రేవ్‌లో మీ షోకేస్‌కు రిజాల్వ్ అవుతుంది.",
 		"subdomain_label": "సబ్‌డొమైన్ లేబుల్",
-		"verified_profile_badge_at": "ధృవీకరించబడిన ప్రొఫైల్ బ్యాడ్జ్ <code style=\"color:#69e16f\">/u/yourname</code> వద్ద",
+		"verified_profile_badge_at": "ధృవీకరించబడిన ప్రొఫైల్ బ్యాడ్జ్ <code class=\"tw-showcase\">/u/yourname</code> వద్ద",
 		"what_this_gives_you": "దీని వల్ల మీకు లభించేది"
 	},
 	"timeline": {

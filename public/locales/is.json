@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe kóðabútur",
 		"include_in_embed": "Hafa með í innfellingu",
 		"launch": "⚡ Ræsa",
-		"meta_description": "Gerðu hvaða avatar sem er að innfellanlegum 3D búnaði. Fimm gerðir, vörumerkjastýringar, innfelling á einni línu.",
 		"meta_og_description": "Veldu avatar, stilltu innfellingarvalkosti, afritaðu kóðabút á einni línu fyrir vefsíðuna þína.",
 		"meta_og_title": "Búnaðarstúdíó · three.ws",
 		"meta_title": "Búnaðarstúdíó · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Nafngreind greiðsluslóð — hver sem er getur <code>POST /api/x402/pay-by-name</code> með <code>yourname.threews.sol</code> til að senda þér USDC",
 		"claim_your_subdomain": "Skráðu undirlénið þitt",
-		"get_as_a_solana_name_service_subdomain": "Fáðu <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> sem Solana Name Service undirlén. Brave vafri vísar því beint á three.ws sýningarsíðuna þína. Umboðsmenn þínir, avatarar og færni, allt undir einu nafni.",
+		"get_as_a_solana_name_service_subdomain": "Fáðu <code class=\"tw-code\">yourname.threews.sol</code> sem Solana Name Service undirlén. Brave vafri vísar því beint á three.ws sýningarsíðuna þína. Umboðsmenn þínir, avatarar og færni, allt undir einu nafni.",
 		"meta_description": "Krefstu þíns eigin undirléns á threews.sol og fáðu persónulega sýningarsíðu sem Brave vísar á.",
 		"meta_og_description": "Krefstu þíns eigin <name>.threews.sol undirléns og fáðu persónulega sýningarsíðu sem Brave vísar á.",
 		"meta_og_title": "Krefstu threews.sol undirléns · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Eignarhald flyst í veskið þitt; við setjum bara URL færsluna.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> vísar á sýningarsíðuna þína í Brave",
 		"subdomain_label": "Undirlénamerki",
-		"verified_profile_badge_at": "Staðfest prófílmerki á <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Staðfest prófílmerki á <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Hvað þetta gefur þér"
 	},
 	"timeline": {

@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe iškarpa",
 		"include_in_embed": "Įtraukti į įterpimą",
 		"launch": "⚡ Paleisti",
-		"meta_description": "Paverskite bet kurį avatarą įterpiamu 3D valdikliu. Penki tipai, prekės ženklo valdymas, vienos eilutės įterpimas.",
 		"meta_og_description": "Pasirinkite avatarą, konfigūruokite įterpimo parinktis, nukopijuokite vienos eilutės iškarpą savo svetainei.",
 		"meta_og_title": "Valdiklių studija · three.ws",
 		"meta_title": "Valdiklių studija · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Mokėjimo pagal pavadinimą rankena – bet kas gali <code>POST /api/x402/pay-by-name</code> su <code>yourname.threews.sol</code>, kad atsiųstų jums USDC.",
 		"claim_your_subdomain": "Pasiimkite savo subdomeną",
-		"get_as_a_solana_name_service_subdomain": "Gaukite <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> kaip Solana vardo paslaugos subdomeną. Naršyklė „Brave“ nukreipia jį tiesiai į jūsų three.ws pristatymą. Jūsų agentai, avatarai ir įgūdžiai – viskas vienu pavadinimu.",
+		"get_as_a_solana_name_service_subdomain": "Gaukite <code class=\"tw-code\">yourname.threews.sol</code> kaip Solana vardo paslaugos subdomeną. Naršyklė „Brave“ nukreipia jį tiesiai į jūsų three.ws pristatymą. Jūsų agentai, avatarai ir įgūdžiai – viskas vienu pavadinimu.",
 		"meta_description": "Užsiimkite savo subdomeną threews.sol ir gaukite „Brave“ naršyklėje atidaromą asmeninį pristatymo puslapį.",
 		"meta_og_description": "Užsiimkite savo <name>.threews.sol subdomeną ir gaukite „Brave“ naršyklėje atidaromą asmeninį pristatymo puslapį.",
 		"meta_og_title": "Užsiimkite threews.sol subdomeną · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Nuosavybė perkeliama į jūsų piniginę; mes tik nustatome URL įrašą.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> nukreipia į jūsų pristatymą „Brave“ naršyklėje.",
 		"subdomain_label": "Subdomeno etiketė",
-		"verified_profile_badge_at": "Patvirtintas profilio ženklelis adresu <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Patvirtintas profilio ženklelis adresu <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Ką tai jums suteikia"
 	},
 	"timeline": {

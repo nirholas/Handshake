@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "اسنیپت iframe",
 		"include_in_embed": "شامل در کد جاسازی",
 		"launch": "⚡ راه‌اندازی",
-		"meta_description": "هر آواتاری را به یک ویجت سه‌بعدی قابل جاسازی تبدیل کنید. پنج نوع، کنترل‌های برند، جاسازی با یک خط کد.",
 		"meta_og_description": "یک آواتار انتخاب کنید، گزینه‌های جاسازی را پیکربندی کنید، یک اسنیپت تک‌خطی را برای سایت خود کپی کنید.",
 		"meta_og_title": "استودیوی ویجت · three.ws",
 		"meta_title": "استودیوی ویجت · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "یک شناسه پرداخت با نام — هر کسی می‌تواند با <code>yourname.threews.sol</code> به <code>POST /api/x402/pay-by-name</code> درخواست ارسال کند و USDC برای شما بفرستد.",
 		"claim_your_subdomain": "ساب‌دامین خود را ثبت کنید",
-		"get_as_a_solana_name_service_subdomain": "<code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> را به عنوان یک ساب‌دامین سرویس نام Solana دریافت کنید. مرورگر Brave آن را مستقیماً به three.ws نمایشگاه شما هدایت می‌کند. عامل‌ها، آواتارها و مهارت‌های شما، همه تحت یک نام.",
+		"get_as_a_solana_name_service_subdomain": "<code class=\"tw-code\">yourname.threews.sol</code> را به عنوان یک ساب‌دامین سرویس نام Solana دریافت کنید. مرورگر Brave آن را مستقیماً به three.ws نمایشگاه شما هدایت می‌کند. عامل‌ها، آواتارها و مهارت‌های شما، همه تحت یک نام.",
 		"meta_description": "ساب‌دامین خود را در threews.sol ثبت کنید و یک صفحه نمایش شخصی قابل حل توسط Brave دریافت کنید.",
 		"meta_og_description": "ساب‌دامین <name>.threews.sol خود را ثبت کنید و یک صفحه نمایش شخصی قابل حل توسط Brave دریافت کنید.",
 		"meta_og_title": "ثبت ساب‌دامین threews.sol · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "مالکیت به کیف پول شما منتقل می‌شود؛ ما فقط رکورد URL را تنظیم می‌کنیم.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> در Brave به نمایشگاه شما هدایت می‌شود.",
 		"subdomain_label": "برچسب ساب‌دامین",
-		"verified_profile_badge_at": "نشان تأیید پروفایل در <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "نشان تأیید پروفایل در <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "آنچه به دست می‌آورید"
 	},
 	"timeline": {

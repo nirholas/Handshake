@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe snippet",
 		"include_in_embed": "Isama sa embed",
 		"launch": "⚡ Ilunsad",
-		"meta_description": "Gawing embeddable na 3D widget ang anumang avatar. Limang uri, kontrol sa brand, one-line embed.",
 		"meta_og_description": "Pumili ng avatar, i-configure ang mga opsyon sa embed, kopyahin ang one-line snippet para sa iyong site.",
 		"meta_og_title": "Widget Studio · three.ws",
 		"meta_title": "Widget Studio · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Isang pay-by-name handle — kahit sino ay pwedeng <code>POST /api/x402/pay-by-name</code> gamit ang <code>yourname.threews.sol</code> para magpadala sa iyo ng USDC",
 		"claim_your_subdomain": "I-claim ang iyong subdomain",
-		"get_as_a_solana_name_service_subdomain": "Kunin ang <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> bilang isang Solana Name Service subdomain. Direktang nire-resolve ito ng Brave Browser sa iyong three.ws showcase. Ang iyong mga agent, avatar, at skills, lahat sa ilalim ng isang pangalan.",
+		"get_as_a_solana_name_service_subdomain": "Kunin ang <code class=\"tw-code\">yourname.threews.sol</code> bilang isang Solana Name Service subdomain. Direktang nire-resolve ito ng Brave Browser sa iyong three.ws showcase. Ang iyong mga agent, avatar, at skills, lahat sa ilalim ng isang pangalan.",
 		"meta_description": "I-claim ang sarili mong subdomain sa threews.sol at makakuha ng Brave-resolvable na personal showcase page.",
 		"meta_og_description": "I-claim ang sarili mong <name>.threews.sol subdomain at makakuha ng Brave-resolvable na personal showcase page.",
 		"meta_og_title": "I-claim ang threews.sol Subdomain · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Ang pagmamay-ari ay inililipat sa iyong wallet; kami lang ang nagse-set ng URL record",
 		"resolves_to_your_showcase_in_brave": "Ang <code>yourname.threews.sol</code> ay nire-resolve sa iyong showcase sa Brave",
 		"subdomain_label": "Label ng Subdomain",
-		"verified_profile_badge_at": "Na-verify na badge ng profile sa <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Na-verify na badge ng profile sa <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Ano ang hatid nito sa iyo"
 	},
 	"timeline": {

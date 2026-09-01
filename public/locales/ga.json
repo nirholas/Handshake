@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "Blúire iframe",
 		"include_in_embed": "Cuir san leabú",
 		"launch": "⚡ Seol",
-		"meta_description": "Déan avatar ar bith ina ghiuirléid 3D inleabaithe. Cúig chineál, rialuithe branda, leabú aonlíne.",
 		"meta_og_description": "Roghnaigh avatar, cumraigh roghanna leabaithe, cóipeáil blúire aonlíne do do shuíomh.",
 		"meta_og_title": "Stiúideo Giuirléidí · three.ws",
 		"meta_title": "Stiúideo Giuirléidí · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Láimhseáil íoc-le-ainm — is féidir le duine ar bith <code>POST /api/x402/pay-by-name</code> a dhéanamh le <code>yourname.threews.sol</code> chun USDC a sheoladh chugat.",
 		"claim_your_subdomain": "Éiligh do fho-fhearann",
-		"get_as_a_solana_name_service_subdomain": "Faigh <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> mar fho-fhearann Solana Name Service. Réitíonn Brabhsálaí Brave é díreach chuig do thaispeántas three.ws. Do ghníomhairí, avatáracha, agus scileanna, go léir faoi aon ainm amháin.",
+		"get_as_a_solana_name_service_subdomain": "Faigh <code class=\"tw-code\">yourname.threews.sol</code> mar fho-fhearann Solana Name Service. Réitíonn Brabhsálaí Brave é díreach chuig do thaispeántas three.ws. Do ghníomhairí, avatáracha, agus scileanna, go léir faoi aon ainm amháin.",
 		"meta_description": "Éiligh do fho-fhearann féin ar threews.sol agus faigh leathanach taispeántais pearsanta is féidir le Brave a réiteach.",
 		"meta_og_description": "Éiligh do fho-fhearann féin <name>.threews.sol agus faigh leathanach taispeántais pearsanta is féidir le Brave a réiteach.",
 		"meta_og_title": "Éiligh Fo-fhearann threews.sol · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Aistrítear úinéireacht chuig do sparán; ní dhéanaimid ach an taifead URL a shocrú.",
 		"resolves_to_your_showcase_in_brave": "Réitíonn <code>yourname.threews.sol</code> chuig do thaispeántas i Brave.",
 		"subdomain_label": "Lipéad fo-fhearainn",
-		"verified_profile_badge_at": "Suaitheantas próifíle fíoraithe ag <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Suaitheantas próifíle fíoraithe ag <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Cad a thugann sé seo duit"
 	},
 	"timeline": {

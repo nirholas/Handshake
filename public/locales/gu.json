@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe સ્નિપેટ",
 		"include_in_embed": "એમ્બેડમાં શામેલ કરો",
 		"launch": "⚡ લોન્ચ કરો",
-		"meta_description": "કોઈપણ અવતારને એમ્બેડ કરી શકાય તેવા 3D વિજેટમાં રૂપાંતરિત કરો. પાંચ પ્રકાર, બ્રાન્ડ નિયંત્રણો, એક-લાઇન એમ્બેડ.",
 		"meta_og_description": "એક અવતાર પસંદ કરો, એમ્બેડ વિકલ્પો ગોઠવો, તમારી સાઇટ માટે એક-લાઇન સ્નિપેટ કૉપિ કરો.",
 		"meta_og_title": "વિજેટ સ્ટુડિયો · three.ws",
 		"meta_title": "વિજેટ સ્ટુડિયો · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "એક પે-બાય-નેમ હેન્ડલ &mdash; કોઈપણ તમને USDC મોકલવા માટે <code>yourname.threews.sol</code> સાથે <code>POST /api/x402/pay-by-name</code> કરી શકે છે.",
 		"claim_your_subdomain": "તમારી સબડોમેન ક્લેમ કરો",
-		"get_as_a_solana_name_service_subdomain": "<code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> ને Solana નેમ સર્વિસ સબડોમેન તરીકે મેળવો. બ્રેવ બ્રાઉઝર તેને સીધા તમારા three.ws શોકેસ પર રિઝોલ્વ કરે છે. તમારા એજન્ટ્સ, અવતાર અને કૌશલ્યો, બધું એક જ નામ હેઠળ.",
+		"get_as_a_solana_name_service_subdomain": "<code class=\"tw-code\">yourname.threews.sol</code> ને Solana નેમ સર્વિસ સબડોમેન તરીકે મેળવો. બ્રેવ બ્રાઉઝર તેને સીધા તમારા three.ws શોકેસ પર રિઝોલ્વ કરે છે. તમારા એજન્ટ્સ, અવતાર અને કૌશલ્યો, બધું એક જ નામ હેઠળ.",
 		"meta_description": "threews.sol પર તમારી પોતાની સબડોમેન ક્લેમ કરો અને બ્રેવ-રિઝોલ્વેબલ પર્સનલ શોકેસ પેજ મેળવો.",
 		"meta_og_description": "તમારી પોતાની <name>.threews.sol સબડોમેન ક્લેમ કરો અને બ્રેવ-રિઝોલ્વેબલ પર્સનલ શોકેસ પેજ મેળવો.",
 		"meta_og_title": "threews.sol સબડોમેન ક્લેમ કરો · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "માલિકી તમારા વોલેટમાં ટ્રાન્સફર થાય છે; અમે ફક્ત URL રેકોર્ડ સેટ કરીએ છીએ.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> બ્રેવમાં તમારા શોકેસ પર રિઝોલ્વ થાય છે.",
 		"subdomain_label": "સબડોમેન લેબલ",
-		"verified_profile_badge_at": "<code style=\"color:#69e16f\">/u/yourname</code> પર વેરિફાઇડ પ્રોફાઇલ બેજ",
+		"verified_profile_badge_at": "<code class=\"tw-showcase\">/u/yourname</code> પર વેરિફાઇડ પ્રોફાઇલ બેજ",
 		"what_this_gives_you": "આ તમને શું આપે છે"
 	},
 	"timeline": {

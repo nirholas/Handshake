@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "আইফ্ৰেম স্নিপেট",
 		"include_in_embed": "এম্বেডত অন্তৰ্ভুক্ত কৰক",
 		"launch": "⚡ আৰম্ভ কৰক",
-		"meta_description": "যিকোনো অৱতাৰক এটা এম্বেড কৰিব পৰা 3D ৱিজেটলৈ ৰূপান্তৰ কৰক। পাঁচটা প্ৰকাৰ, ব্ৰেণ্ড নিয়ন্ত্ৰণ, এক-শাৰীৰ এম্বেড।",
 		"meta_og_description": "এটা অৱতাৰ বাছক, এম্বেড বিকল্পসমূহ কনফিগাৰ কৰক, আপোনাৰ চাইটৰ বাবে এটা এক-শাৰীৰ স্নিপেট কপি কৰক।",
 		"meta_og_title": "ৱিজেট ষ্টুডিঅ' · three.ws",
 		"meta_title": "ৱিজেট ষ্টুডিঅ' · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "এটা পে-বাই-নেম হেণ্ডেল &mdash; যিকোনোৱে <code>yourname.threews.sol</code> ব্যৱহাৰ কৰি <code>POST /api/x402/pay-by-name</code> কৰিব পাৰে আপোনাক USDC পঠিয়াবলৈ।",
 		"claim_your_subdomain": "আপোনাৰ ছাবডমেইন দাবী কৰক",
-		"get_as_a_solana_name_service_subdomain": "Solana নেম চাৰ্ভিচ ছাবডমেইন হিচাপে <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> লাভ কৰক। ব্ৰেভ ব্ৰাউজাৰে ইয়াক পোনপটীয়াকৈ আপোনাৰ three.ws শ্ব'কেচলৈ ৰিজলভ কৰে। আপোনাৰ এজেণ্ট, আভাটাৰ, আৰু দক্ষতা, সকলো এটা নামৰ অধীনত।",
+		"get_as_a_solana_name_service_subdomain": "Solana নেম চাৰ্ভিচ ছাবডমেইন হিচাপে <code class=\"tw-code\">yourname.threews.sol</code> লাভ কৰক। ব্ৰেভ ব্ৰাউজাৰে ইয়াক পোনপটীয়াকৈ আপোনাৰ three.ws শ্ব'কেচলৈ ৰিজলভ কৰে। আপোনাৰ এজেণ্ট, আভাটাৰ, আৰু দক্ষতা, সকলো এটা নামৰ অধীনত।",
 		"meta_description": "threews.sol ত আপোনাৰ নিজা ছাবডমেইন দাবী কৰক আৰু এটা ব্ৰেভ-ৰিজলভ কৰিব পৰা ব্যক্তিগত শ্ব'কেচ পৃষ্ঠা লাভ কৰক।",
 		"meta_og_description": "আপোনাৰ নিজা <name>.threews.sol ছাবডমেইন দাবী কৰক আৰু এটা ব্ৰেভ-ৰিজলভ কৰিব পৰা ব্যক্তিগত শ্ব'কেচ পৃষ্ঠা লাভ কৰক।",
 		"meta_og_title": "threews.sol ছাবডমেইন দাবী কৰক · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "মালিকীস্বত্ব আপোনাৰ ৱালেটলৈ স্থানান্তৰ হয়; আমি কেৱল URL ৰেকৰ্ড ছেট কৰোঁ।",
 		"resolves_to_your_showcase_in_brave": "ব্ৰেভত আপোনাৰ শ্ব'কেচলৈ <code>yourname.threews.sol</code> ৰিজলভ হয়।",
 		"subdomain_label": "ছাবডমেইন লেবেল",
-		"verified_profile_badge_at": "<code style=\"color:#69e16f\">/u/yourname</code> ত ভেৰিফাইড প্ৰফাইল বেজ",
+		"verified_profile_badge_at": "<code class=\"tw-showcase\">/u/yourname</code> ত ভেৰিফাইড প্ৰফাইল বেজ",
 		"what_this_gives_you": "ই আপোনাক কি দিয়ে"
 	},
 	"timeline": {

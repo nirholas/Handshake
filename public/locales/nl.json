@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe-fragment",
 		"include_in_embed": "Opnemen in embed",
 		"launch": "⚡ Starten",
-		"meta_description": "Verander elke avatar in een in te sluiten 3D-widget. Vijf typen, merkcontroles, éénregelige embed.",
 		"meta_og_description": "Kies een avatar, configureer embed-opties, kopieer een éénregelig fragment voor je site.",
 		"meta_og_title": "Widget Studio · three.ws",
 		"meta_title": "Widget Studio · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Een 'pay-by-name'-handle — iedereen kan <code>POST /api/x402/pay-by-name</code> gebruiken met <code>yourname.threews.sol</code> om je USDC te sturen.",
 		"claim_your_subdomain": "Claim je subdomein",
-		"get_as_a_solana_name_service_subdomain": "Krijg <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> als een Solana Name Service subdomein. Brave Browser verwijst het direct naar je three.ws showcase. Je agents, avatars en vaardigheden, allemaal onder één naam.",
+		"get_as_a_solana_name_service_subdomain": "Krijg <code class=\"tw-code\">yourname.threews.sol</code> als een Solana Name Service subdomein. Brave Browser verwijst het direct naar je three.ws showcase. Je agents, avatars en vaardigheden, allemaal onder één naam.",
 		"meta_description": "Claim je eigen subdomein op threews.sol en krijg een Brave-resolvable persoonlijke showcase-pagina.",
 		"meta_og_description": "Claim je eigen <name>.threews.sol subdomein en krijg een Brave-resolvable persoonlijke showcase-pagina.",
 		"meta_og_title": "Claim threews.sol Subdomein · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Eigendom wordt overgedragen aan je wallet; wij stellen alleen de URL-record in.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> verwijst naar je showcase in Brave.",
 		"subdomain_label": "Subdomeinlabel",
-		"verified_profile_badge_at": "Geverifieerde profielbadge op <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Geverifieerde profielbadge op <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Wat dit je oplevert"
 	},
 	"timeline": {

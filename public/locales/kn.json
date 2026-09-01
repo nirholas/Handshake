@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe ಸ್ನಿಪ್ಪೆಟ್",
 		"include_in_embed": "ಎಂಬೆಡ್‌ನಲ್ಲಿ ಸೇರಿಸಿ",
 		"launch": "⚡ ಪ್ರಾರಂಭಿಸಿ",
-		"meta_description": "ಯಾವುದೇ ಅವತಾರವನ್ನು ಎಂಬೆಡ್ ಮಾಡಬಹುದಾದ 3D ವಿಜೆಟ್ ಆಗಿ ಪರಿವರ್ತಿಸಿ. ಐದು ವಿಧಗಳು, ಬ್ರ್ಯಾಂಡ್ ನಿಯಂತ್ರಣಗಳು, ಒಂದು-ಸಾಲಿನ ಎಂಬೆಡ್.",
 		"meta_og_description": "ಒಂದು ಅವತಾರವನ್ನು ಆರಿಸಿ, ಎಂಬೆಡ್ ಆಯ್ಕೆಗಳನ್ನು ಕಾನ್ಫಿಗರ್ ಮಾಡಿ, ನಿಮ್ಮ ಸೈಟ್‌ಗಾಗಿ ಒಂದು-ಸಾಲಿನ ಸ್ನಿಪ್ಪೆಟ್ ಅನ್ನು ನಕಲಿಸಿ.",
 		"meta_og_title": "ವಿಜೆಟ್ ಸ್ಟುಡಿಯೋ · three.ws",
 		"meta_title": "ವಿಜೆಟ್ ಸ್ಟುಡಿಯೋ · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "ಹೆಸರಿನ ಮೂಲಕ ಪಾವತಿಸುವ ಹ್ಯಾಂಡಲ್ &mdash; ಯಾರಾದರೂ USDC ಕಳುಹಿಸಲು <code>yourname.threews.sol</code> ನೊಂದಿಗೆ <code>POST /api/x402/pay-by-name</code> ಮಾಡಬಹುದು.",
 		"claim_your_subdomain": "ನಿಮ್ಮ ಸಬ್‌ಡೊಮೇನ್ ಅನ್ನು ಕ್ಲೈಮ್ ಮಾಡಿ",
-		"get_as_a_solana_name_service_subdomain": "<code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> ಅನ್ನು Solana ನೇಮ್ ಸರ್ವಿಸ್ ಸಬ್‌ಡೊಮೇನ್ ಆಗಿ ಪಡೆಯಿರಿ. ಬ್ರೇವ್ ಬ್ರೌಸರ್ ಅದನ್ನು ನೇರವಾಗಿ ನಿಮ್ಮ three.ws ಶೋಕೇಸ್‌ಗೆ ಪರಿಹರಿಸುತ್ತದೆ. ನಿಮ್ಮ ಏಜೆಂಟ್‌ಗಳು, ಅವತಾರಗಳು, ಮತ್ತು ಕೌಶಲ್ಯಗಳು, ಎಲ್ಲವೂ ಒಂದೇ ಹೆಸರಿನಲ್ಲಿ.",
+		"get_as_a_solana_name_service_subdomain": "<code class=\"tw-code\">yourname.threews.sol</code> ಅನ್ನು Solana ನೇಮ್ ಸರ್ವಿಸ್ ಸಬ್‌ಡೊಮೇನ್ ಆಗಿ ಪಡೆಯಿರಿ. ಬ್ರೇವ್ ಬ್ರೌಸರ್ ಅದನ್ನು ನೇರವಾಗಿ ನಿಮ್ಮ three.ws ಶೋಕೇಸ್‌ಗೆ ಪರಿಹರಿಸುತ್ತದೆ. ನಿಮ್ಮ ಏಜೆಂಟ್‌ಗಳು, ಅವತಾರಗಳು, ಮತ್ತು ಕೌಶಲ್ಯಗಳು, ಎಲ್ಲವೂ ಒಂದೇ ಹೆಸರಿನಲ್ಲಿ.",
 		"meta_description": "threews.sol ನಲ್ಲಿ ನಿಮ್ಮದೇ ಆದ ಸಬ್‌ಡೊಮೇನ್ ಅನ್ನು ಕ್ಲೈಮ್ ಮಾಡಿ ಮತ್ತು ಬ್ರೇವ್-ಪರಿಹರಿಸಬಹುದಾದ ವೈಯಕ್ತಿಕ ಶೋಕೇಸ್ ಪುಟವನ್ನು ಪಡೆಯಿರಿ.",
 		"meta_og_description": "ನಿಮ್ಮದೇ ಆದ <name>.threews.sol ಸಬ್‌ಡೊಮೇನ್ ಅನ್ನು ಕ್ಲೈಮ್ ಮಾಡಿ ಮತ್ತು ಬ್ರೇವ್-ಪರಿಹರಿಸಬಹುದಾದ ವೈಯಕ್ತಿಕ ಶೋಕೇಸ್ ಪುಟವನ್ನು ಪಡೆಯಿರಿ.",
 		"meta_og_title": "threews.sol ಸಬ್‌ಡೊಮೇನ್ ಕ್ಲೈಮ್ ಮಾಡಿ · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "ಮಾಲೀಕತ್ವವು ನಿಮ್ಮ ವಾಲೆಟ್‌ಗೆ ವರ್ಗಾಯಿಸಲ್ಪಡುತ್ತದೆ; ನಾವು ಕೇವಲ URL ದಾಖಲೆಯನ್ನು ಹೊಂದಿಸುತ್ತೇವೆ.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> ಬ್ರೇವ್‌ನಲ್ಲಿ ನಿಮ್ಮ ಶೋಕೇಸ್‌ಗೆ ಪರಿಹರಿಸುತ್ತದೆ.",
 		"subdomain_label": "ಸಬ್‌ಡೊಮೇನ್ ಲೇಬಲ್",
-		"verified_profile_badge_at": "<code style=\"color:#69e16f\">/u/yourname</code> ನಲ್ಲಿ ಪರಿಶೀಲಿಸಿದ ಪ್ರೊಫೈಲ್ ಬ್ಯಾಡ್ಜ್.",
+		"verified_profile_badge_at": "<code class=\"tw-showcase\">/u/yourname</code> ನಲ್ಲಿ ಪರಿಶೀಲಿಸಿದ ಪ್ರೊಫೈಲ್ ಬ್ಯಾಡ್ಜ್.",
 		"what_this_gives_you": "ಇದು ನಿಮಗೆ ಏನು ನೀಡುತ್ತದೆ."
 	},
 	"timeline": {

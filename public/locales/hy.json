@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe հատված",
 		"include_in_embed": "Ներառել ներդրման մեջ",
 		"launch": "⚡ Launch",
-		"meta_description": "Ցանկացած ավատար վերածեք ներդրվող 3D վիդջեթի։ Հինգ տեսակ, բրենդի կառավարում, մեկ տողանոց ներդրում։",
 		"meta_og_description": "Ընտրեք ավատար, կարգավորեք ներդրման ընտրանքները, պատճենեք մեկ տողանոց հատված ձեր կայքի համար։",
 		"meta_og_title": "Վիդջեթի ստուդիա · three.ws",
 		"meta_title": "Վիդջեթի ստուդիա · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Վճարում-ըստ-անվան հասցե. ցանկացած մեկը կարող է <code>POST /api/x402/pay-by-name</code>՝ օգտագործելով <code>yourname.threews.sol</code>, ձեզ USDC ուղարկելու համար։",
 		"claim_your_subdomain": "Պահանջեք ձեր ենթադոմենը",
-		"get_as_a_solana_name_service_subdomain": "Ստացեք <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code>-ը որպես Solana Name Service ենթադոմեն։ Brave Browser-ը այն ուղղակիորեն լուծում է ձեր three.ws ցուցադրման էջին։ Ձեր գործակալները, ավատարները և հմտությունները՝ բոլորը մեկ անվան տակ։",
+		"get_as_a_solana_name_service_subdomain": "Ստացեք <code class=\"tw-code\">yourname.threews.sol</code>-ը որպես Solana Name Service ենթադոմեն։ Brave Browser-ը այն ուղղակիորեն լուծում է ձեր three.ws ցուցադրման էջին։ Ձեր գործակալները, ավատարները և հմտությունները՝ բոլորը մեկ անվան տակ։",
 		"meta_description": "Ստացեք ձեր սեփական ենթադոմենը threews.sol-ում և ստացեք Brave-ով լուծվող անձնական ցուցադրման էջ։",
 		"meta_og_description": "Ստացեք ձեր սեփական <name>.threews.sol ենթադոմենը և ստացեք Brave-ով լուծվող անձնական ցուցադրման էջ։",
 		"meta_og_title": "Ստացեք threews.sol ենթադոմեն · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Սեփականությունը փոխանցվում է ձեր դրամապանակին. մենք պարզապես սահմանում ենք URL գրառումը։",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code>-ը լուծվում է ձեր ցուցադրման էջին Brave-ում։",
 		"subdomain_label": "Ենթադոմենի պիտակ",
-		"verified_profile_badge_at": "Հաստատված պրոֆիլի կրծքանշան <code style=\"color:#69e16f\">/u/yourname</code> հասցեում։",
+		"verified_profile_badge_at": "Հաստատված պրոֆիլի կրծքանշան <code class=\"tw-showcase\">/u/yourname</code> հասցեում։",
 		"what_this_gives_you": "Ինչ է սա տալիս ձեզ"
 	},
 	"timeline": {

@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "Απόσπασμα iframe",
 		"include_in_embed": "Συμπερίληψη στην ενσωμάτωση",
 		"launch": "⚡ Εκκίνηση",
-		"meta_description": "Μετατρέψτε οποιοδήποτε avatar σε ενσωματώσιμο 3D widget. Πέντε τύποι, έλεγχοι επωνυμίας, ενσωμάτωση μιας γραμμής.",
 		"meta_og_description": "Επιλέξτε ένα avatar, διαμορφώστε τις επιλογές ενσωμάτωσης, αντιγράψτε ένα απόσπασμα μιας γραμμής για τον ιστότοπό σας.",
 		"meta_og_title": "Widget Studio · three.ws",
 		"meta_title": "Widget Studio · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Ένα αναγνωριστικό πληρωμής με όνομα — ο καθένας μπορεί <code>POST /api/x402/pay-by-name</code> με <code>yourname.threews.sol</code> για να σας στείλει USDC",
 		"claim_your_subdomain": "Διεκδικήστε τον υποτομέα σας",
-		"get_as_a_solana_name_service_subdomain": "Αποκτήστε το <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> ως υποτομέα Solana Name Service. Το Brave Browser το επιλύει απευθείας στην three.ws βιτρίνα σας. Οι agents, τα avatars και οι δεξιότητές σας, όλα κάτω από ένα όνομα.",
+		"get_as_a_solana_name_service_subdomain": "Αποκτήστε το <code class=\"tw-code\">yourname.threews.sol</code> ως υποτομέα Solana Name Service. Το Brave Browser το επιλύει απευθείας στην three.ws βιτρίνα σας. Οι agents, τα avatars και οι δεξιότητές σας, όλα κάτω από ένα όνομα.",
 		"meta_description": "Διεκδικήστε τον δικό σας υποτομέα στο threews.sol και αποκτήστε μια προσωπική σελίδα προβολής που επιλύεται από το Brave.",
 		"meta_og_description": "Διεκδικήστε τον δικό σας υποτομέα <name>.threews.sol και αποκτήστε μια προσωπική σελίδα προβολής που επιλύεται από το Brave.",
 		"meta_og_title": "Διεκδίκηση Υποτομέα threews.sol · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Η ιδιοκτησία μεταφέρεται στο πορτοφόλι σας· εμείς απλώς ορίζουμε την εγγραφή URL",
 		"resolves_to_your_showcase_in_brave": "Το <code>yourname.threews.sol</code> επιλύεται στη βιτρίνα σας στο Brave",
 		"subdomain_label": "Ετικέτα υποτομέα",
-		"verified_profile_badge_at": "Σήμα επαληθευμένου προφίλ στο <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Σήμα επαληθευμένου προφίλ στο <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Τι σου προσφέρει αυτό"
 	},
 	"timeline": {

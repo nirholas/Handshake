@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe කැබැල්ල",
 		"include_in_embed": "කාවැද්දීමට ඇතුළත් කරන්න",
 		"launch": "⚡ දියත් කරන්න",
-		"meta_description": "ඕනෑම අවතාරයක් කාවැද්දිය හැකි ත්‍රිමාණ විජට් එකක් බවට පත් කරන්න. වර්ග පහක්, සන්නාම පාලන, එක් පේළි කාවැද්දීම.",
 		"meta_og_description": "අවතාරයක් තෝරන්න, කාවැද්දීමේ විකල්ප වින්‍යාස කරන්න, ඔබේ වෙබ් අඩවිය සඳහා එක් පේළි කැබැල්ලක් පිටපත් කරන්න.",
 		"meta_og_title": "විජට් ස්ටුඩියෝ · three.ws",
 		"meta_title": "විජට් ස්ටුඩියෝ · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "නම අනුව ගෙවීමේ හැන්ඩලයක් — ඕනෑම කෙනෙකුට <code>yourname.threews.sol</code> සමඟ <code>POST /api/x402/pay-by-name</code> භාවිතයෙන් ඔබට USDC යැවිය හැක.",
 		"claim_your_subdomain": "ඔබේ උප-ඩොමේනය හිමිකරගන්න",
-		"get_as_a_solana_name_service_subdomain": "<code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> යනු Solana Name Service subdomain එකක් ලෙස ලබා ගන්න. Brave Browser මගින් එය ඔබගේ three.ws showcase වෙත සෘජුවම විසඳයි. ඔබගේ agents, avatars, සහ skills, සියල්ලම එකම නමක් යටතේ.",
+		"get_as_a_solana_name_service_subdomain": "<code class=\"tw-code\">yourname.threews.sol</code> යනු Solana Name Service subdomain එකක් ලෙස ලබා ගන්න. Brave Browser මගින් එය ඔබගේ three.ws showcase වෙත සෘජුවම විසඳයි. ඔබගේ agents, avatars, සහ skills, සියල්ලම එකම නමක් යටතේ.",
 		"meta_description": "threews.sol මත ඔබගේම subdomain එකක් හිමිකරගෙන Brave මගින් විසඳිය හැකි පුද්ගලික showcase පිටුවක් ලබා ගන්න.",
 		"meta_og_description": "ඔබගේම <name>.threews.sol subdomain එකක් හිමිකරගෙන Brave මගින් විසඳිය හැකි පුද්ගලික showcase පිටුවක් ලබා ගන්න.",
 		"meta_og_title": "threews.sol Subdomain එක හිමිකරගන්න · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "අයිතිය ඔබගේ wallet එකට මාරු වේ; අපි URL record එක සකසමු.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> Brave හි ඔබගේ showcase වෙත විසඳයි",
 		"subdomain_label": "Subdomain ලේබලය",
-		"verified_profile_badge_at": "තහවුරු කළ profile badge එක <code style=\"color:#69e16f\">/u/yourname</code> හි",
+		"verified_profile_badge_at": "තහවුරු කළ profile badge එක <code class=\"tw-showcase\">/u/yourname</code> හි",
 		"what_this_gives_you": "මෙයින් ඔබට ලැබෙන දේ"
 	},
 	"timeline": {

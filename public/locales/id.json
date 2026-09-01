@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "cuplikan iframe",
 		"include_in_embed": "Sertakan dalam sematan",
 		"launch": "⚡ Luncurkan",
-		"meta_description": "Ubah avatar apa pun menjadi widget 3D yang dapat disematkan. Lima jenis, kontrol merek, sematan satu baris.",
 		"meta_og_description": "Pilih avatar, konfigurasi opsi sematan, salin cuplikan satu baris untuk situs Anda.",
 		"meta_og_title": "Studio Widget · three.ws",
 		"meta_title": "Studio Widget · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Sebuah handle bayar-dengan-nama — siapa pun dapat <code>POST /api/x402/pay-by-name</code> dengan <code>yourname.threews.sol</code> untuk mengirimkan Anda USDC",
 		"claim_your_subdomain": "Klaim subdomain Anda",
-		"get_as_a_solana_name_service_subdomain": "Dapatkan <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> sebagai subdomain Solana Name Service. Brave Browser mengarahkannya langsung ke three.ws showcase Anda. Agen, avatar, dan skill Anda, semuanya di bawah satu nama.",
+		"get_as_a_solana_name_service_subdomain": "Dapatkan <code class=\"tw-code\">yourname.threews.sol</code> sebagai subdomain Solana Name Service. Brave Browser mengarahkannya langsung ke three.ws showcase Anda. Agen, avatar, dan skill Anda, semuanya di bawah satu nama.",
 		"meta_description": "Klaim subdomain Anda sendiri di threews.sol dan dapatkan halaman showcase pribadi yang dapat diresolusi Brave.",
 		"meta_og_description": "Klaim subdomain <name>.threews.sol Anda sendiri dan dapatkan halaman showcase pribadi yang dapat diresolusi Brave.",
 		"meta_og_title": "Klaim Subdomain threews.sol · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Kepemilikan ditransfer ke dompet Anda; kami hanya mengatur catatan URL",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> mengarah ke showcase Anda di Brave",
 		"subdomain_label": "Label subdomain",
-		"verified_profile_badge_at": "Lencana profil terverifikasi di <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Lencana profil terverifikasi di <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Ini yang Anda dapatkan"
 	},
 	"timeline": {

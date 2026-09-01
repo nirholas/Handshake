@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe-uddrag",
 		"include_in_embed": "Inkludér i indlejring",
 		"launch": "⚡ Start",
-		"meta_description": "Gør enhver avatar til en indlejringsbar 3D-widget. Fem typer, brand-kontrol, indlejring med én linje.",
 		"meta_og_description": "Vælg en avatar, konfigurer indlejringsindstillinger, kopiér et enkeltlinjet uddrag til dit website.",
 		"meta_og_title": "Widget Studio · three.ws",
 		"meta_title": "Widget Studio · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Et betal-ved-navn-alias — alle kan <code>POST /api/x402/pay-by-name</code> med <code>yourname.threews.sol</code> for at sende dig USDC",
 		"claim_your_subdomain": "Gør krav på dit subdomæne",
-		"get_as_a_solana_name_service_subdomain": "Få <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> som et Solana Name Service subdomæne. Brave Browser løser det direkte til din three.ws showcase. Dine agenter, avatarer og færdigheder, alt under ét navn.",
+		"get_as_a_solana_name_service_subdomain": "Få <code class=\"tw-code\">yourname.threews.sol</code> som et Solana Name Service subdomæne. Brave Browser løser det direkte til din three.ws showcase. Dine agenter, avatarer og færdigheder, alt under ét navn.",
 		"meta_description": "Gør krav på dit eget subdomæne på threews.sol og få en Brave-opløselig personlig showcase-side.",
 		"meta_og_description": "Gør krav på dit eget <name>.threews.sol subdomæne og få en Brave-opløselig personlig showcase-side.",
 		"meta_og_title": "Gør krav på threews.sol Subdomæne · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Ejerskab overføres til din wallet; vi sætter blot URL-posten",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> løser til din showcase i Brave",
 		"subdomain_label": "Subdomæne-label",
-		"verified_profile_badge_at": "Verificeret profilbadge på <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Verificeret profilbadge på <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Hvad du får ud af det"
 	},
 	"timeline": {

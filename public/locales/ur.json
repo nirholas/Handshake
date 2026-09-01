@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "آئی فریم سنپیٹ",
 		"include_in_embed": "ایمبیڈ میں شامل کریں",
 		"launch": "⚡ لانچ کریں",
-		"meta_description": "کسی بھی اوتار کو ایمبیڈ کرنے کے قابل 3D وجیٹ میں تبدیل کریں۔ پانچ اقسام، برانڈ کنٹرولز، ایک لائن کا ایمبیڈ۔",
 		"meta_og_description": "ایک اوتار منتخب کریں، ایمبیڈ کے اختیارات ترتیب دیں، اپنی سائٹ کے لیے ایک لائن کا سنپیٹ کاپی کریں۔",
 		"meta_og_title": "وجیٹ سٹوڈیو · three.ws",
 		"meta_title": "وجیٹ سٹوڈیو · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "ایک پے بائی نیم ہینڈل — کوئی بھی آپ کو USDC بھیجنے کے لیے <code>yourname.threews.sol</code> کے ساتھ <code>POST /api/x402/pay-by-name</code> کر سکتا ہے۔",
 		"claim_your_subdomain": "اپنا سب ڈومین حاصل کریں",
-		"get_as_a_solana_name_service_subdomain": "<code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> کو Solana نیم سروس سب ڈومین کے طور پر حاصل کریں۔ بریو براؤزر اسے براہ راست آپ کے three.ws شوکیس پر ریزولو کرتا ہے۔ آپ کے ایجنٹس، اوتار، اور مہارتیں، سب ایک نام کے تحت۔",
+		"get_as_a_solana_name_service_subdomain": "<code class=\"tw-code\">yourname.threews.sol</code> کو Solana نیم سروس سب ڈومین کے طور پر حاصل کریں۔ بریو براؤزر اسے براہ راست آپ کے three.ws شوکیس پر ریزولو کرتا ہے۔ آپ کے ایجنٹس، اوتار، اور مہارتیں، سب ایک نام کے تحت۔",
 		"meta_description": "threews.sol پر اپنا سب ڈومین حاصل کریں اور ایک بریو-ریزولو ایبل ذاتی شوکیس صفحہ حاصل کریں۔",
 		"meta_og_description": "اپنا <name>.threews.sol سب ڈومین حاصل کریں اور ایک بریو-ریزولو ایبل ذاتی شوکیس صفحہ حاصل کریں۔",
 		"meta_og_title": "threews.sol سب ڈومین حاصل کریں · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "ملکیت آپ کے والٹ میں منتقل ہو جاتی ہے؛ ہم صرف URL ریکارڈ سیٹ کرتے ہیں۔",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> بریو میں آپ کے شوکیس پر ریزولو ہوتا ہے",
 		"subdomain_label": "سب ڈومین لیبل",
-		"verified_profile_badge_at": "تصدیق شدہ پروفائل بیج <code style=\"color:#69e16f\">/u/yourname</code> پر",
+		"verified_profile_badge_at": "تصدیق شدہ پروفائل بیج <code class=\"tw-showcase\">/u/yourname</code> پر",
 		"what_this_gives_you": "اس کے فوائد"
 	},
 	"timeline": {

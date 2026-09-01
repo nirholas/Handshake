@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "Darn iframe",
 		"include_in_embed": "Cynnwys mewn mewnosodiad",
 		"launch": "⚡ Lansio",
-		"meta_description": "Trowch unrhyw avatar yn declyn 3D y gellir ei fewnosod. Pum math, rheolaethau brand, mewnosodiad un llinell.",
 		"meta_og_description": "Dewiswch avatar, ffurfweddwch opsiynau mewnosod, copïwch ddarn un llinell ar gyfer eich safle.",
 		"meta_og_title": "Stiwdio Teclynnau · three.ws",
 		"meta_title": "Stiwdio Teclynnau · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Handlen talu-yn-ôl-enw — gall unrhyw un <code>POST /api/x402/pay-by-name</code> gyda <code>yourname.threews.sol</code> i anfon USDC atoch",
 		"claim_your_subdomain": "Hawlio'ch is-barth",
-		"get_as_a_solana_name_service_subdomain": "Cael <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> fel is-barth Gwasanaeth Enwau Solana. Mae Porwr Brave yn ei ddatrys yn uniongyrchol i'ch arddangosfa three.ws. Eich asiantau, afatarau, a sgiliau, i gyd o dan un enw.",
+		"get_as_a_solana_name_service_subdomain": "Cael <code class=\"tw-code\">yourname.threews.sol</code> fel is-barth Gwasanaeth Enwau Solana. Mae Porwr Brave yn ei ddatrys yn uniongyrchol i'ch arddangosfa three.ws. Eich asiantau, afatarau, a sgiliau, i gyd o dan un enw.",
 		"meta_description": "Hawliwch eich is-barth eich hun ar threews.sol a chael tudalen arddangosfa bersonol y gellir ei datrys gan Brave.",
 		"meta_og_description": "Hawliwch eich is-barth <name>.threews.sol eich hun a chael tudalen arddangosfa bersonol y gellir ei datrys gan Brave.",
 		"meta_og_title": "Hawlio Is-barth threews.sol · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Mae perchnogaeth yn trosglwyddo i'ch waled; rydym ni'n gosod y cofnod URL yn unig.",
 		"resolves_to_your_showcase_in_brave": "Mae <code>yourname.threews.sol</code> yn datrys i'ch arddangosfa yn Brave.",
 		"subdomain_label": "Label is-barth",
-		"verified_profile_badge_at": "Bathodyn proffil wedi'i ddilysu yn <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Bathodyn proffil wedi'i ddilysu yn <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Beth mae hyn yn ei roi i chi"
 	},
 	"timeline": {

@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "ഐഫ്രെയിം സ്നിപ്പറ്റ്",
 		"include_in_embed": "എംബഡിൽ ഉൾപ്പെടുത്തുക",
 		"launch": "⚡ ലോഞ്ച് ചെയ്യുക",
-		"meta_description": "ഏത് അവതാറിനെയും എംബഡ് ചെയ്യാവുന്ന 3D വിഡ്ജറ്റാക്കി മാറ്റുക. അഞ്ച് തരം, ബ്രാൻഡ് നിയന്ത്രണങ്ങൾ, ഒറ്റവരി എംബഡ്.",
 		"meta_og_description": "ഒരു അവതാർ തിരഞ്ഞെടുക്കുക, എംബഡ് ഓപ്ഷനുകൾ ക്രമീകരിക്കുക, നിങ്ങളുടെ സൈറ്റിനായി ഒറ്റവരി സ്നിപ്പറ്റ് പകർത്തുക.",
 		"meta_og_title": "വിഡ്ജറ്റ് സ്റ്റുഡിയോ · three.ws",
 		"meta_title": "വിഡ്ജറ്റ് സ്റ്റുഡിയോ · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "ഒരു പേ-ബൈ-നെയിം ഹാൻഡിൽ — ആർക്കും USDC അയയ്ക്കാൻ <code>yourname.threews.sol</code> ഉപയോഗിച്ച് <code>POST /api/x402/pay-by-name</code> ചെയ്യാവുന്നതാണ്.",
 		"claim_your_subdomain": "നിങ്ങളുടെ സബ്ഡൊമെയ്ൻ സ്വന്തമാക്കുക",
-		"get_as_a_solana_name_service_subdomain": "<code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> ഒരു Solana നെയിം സർവീസ് സബ്ഡൊമെയ്നായി നേടുക. ബ്രേവ് ബ്രൗസർ ഇത് നിങ്ങളുടെ three.ws ഷോക്കേസിലേക്ക് നേരിട്ട് റീസോൾവ് ചെയ്യും. നിങ്ങളുടെ ഏജന്റുമാർ, അവതാറുകൾ, കഴിവുകൾ എന്നിവയെല്ലാം ഒരൊറ്റ പേരിൽ.",
+		"get_as_a_solana_name_service_subdomain": "<code class=\"tw-code\">yourname.threews.sol</code> ഒരു Solana നെയിം സർവീസ് സബ്ഡൊമെയ്നായി നേടുക. ബ്രേവ് ബ്രൗസർ ഇത് നിങ്ങളുടെ three.ws ഷോക്കേസിലേക്ക് നേരിട്ട് റീസോൾവ് ചെയ്യും. നിങ്ങളുടെ ഏജന്റുമാർ, അവതാറുകൾ, കഴിവുകൾ എന്നിവയെല്ലാം ഒരൊറ്റ പേരിൽ.",
 		"meta_description": "threews.sol-ൽ നിങ്ങളുടെ സ്വന്തം സബ്ഡൊമെയ്ൻ സ്വന്തമാക്കുക, കൂടാതെ ബ്രേവ്-റീസോൾവ് ചെയ്യാവുന്ന ഒരു വ്യക്തിഗത ഷോക്കേസ് പേജ് നേടുക.",
 		"meta_og_description": "നിങ്ങളുടെ സ്വന്തം <name>.threews.sol സബ്ഡൊമെയ്ൻ സ്വന്തമാക്കുക, കൂടാതെ ബ്രേവ്-റീസോൾവ് ചെയ്യാവുന്ന ഒരു വ്യക്തിഗത ഷോക്കേസ് പേജ് നേടുക.",
 		"meta_og_title": "threews.sol സബ്ഡൊമെയ്ൻ സ്വന്തമാക്കുക · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "ഉടമസ്ഥാവകാശം നിങ്ങളുടെ വാലറ്റിലേക്ക് കൈമാറ്റം ചെയ്യപ്പെടും; ഞങ്ങൾ URL റെക്കോർഡ് സജ്ജീകരിക്കുന്നു എന്ന് മാത്രം.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> ബ്രേവിൽ നിങ്ങളുടെ ഷോക്കേസിലേക്ക് റീസോൾവ് ചെയ്യും.",
 		"subdomain_label": "സബ്ഡൊമെയ്ൻ ലേബൽ",
-		"verified_profile_badge_at": "<code style=\"color:#69e16f\">/u/yourname</code>-ൽ വെരിഫൈഡ് പ്രൊഫൈൽ ബാഡ്ജ്.",
+		"verified_profile_badge_at": "<code class=\"tw-showcase\">/u/yourname</code>-ൽ വെരിഫൈഡ് പ്രൊഫൈൽ ബാഡ്ജ്.",
 		"what_this_gives_you": "ഇത് നിങ്ങൾക്ക് നൽകുന്നത്"
 	},
 	"timeline": {

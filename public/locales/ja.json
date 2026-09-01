@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframeスニペット",
 		"include_in_embed": "埋め込みに含める",
 		"launch": "⚡ 起動",
-		"meta_description": "どんなアバターも埋め込み可能な3Dウィジェットに。5種類のタイプ、ブランドコントロール、1行で埋め込み可能。",
 		"meta_og_description": "アバターを選択し、埋め込みオプションを設定し、サイト用の1行スニペットをコピー。",
 		"meta_og_title": "ウィジェットスタジオ・three.ws",
 		"meta_title": "ウィジェットスタジオ・three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "名前で支払うハンドル — <code>yourname.threews.sol</code>を使って<code>POST /api/x402/pay-by-name</code>で誰でもUSDCを送れます。",
 		"claim_your_subdomain": "サブドメインを申請",
-		"get_as_a_solana_name_service_subdomain": "<code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code>をSolanaネームサービスサブドメインとして取得しましょう。Braveブラウザは、それを直接あなたのthree.wsショーケースに解決します。あなたのエージェント、アバター、スキルをすべて一つの名前で。",
+		"get_as_a_solana_name_service_subdomain": "<code class=\"tw-code\">yourname.threews.sol</code>をSolanaネームサービスサブドメインとして取得しましょう。Braveブラウザは、それを直接あなたのthree.wsショーケースに解決します。あなたのエージェント、アバター、スキルをすべて一つの名前で。",
 		"meta_description": "threews.solで独自のサブドメインを申請し、Braveで解決可能なパーソナルショーケースページを取得。",
 		"meta_og_description": "独自の<name>.threews.solサブドメインを申請し、Braveで解決可能なパーソナルショーケースページを取得。",
 		"meta_og_title": "threews.solサブドメインを申請・three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "所有権はあなたのウォレットに転送されます。私たちはURLレコードを設定するだけです。",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code>はBraveであなたのショーケースに解決されます。",
 		"subdomain_label": "サブドメインラベル",
-		"verified_profile_badge_at": "<code style=\"color:#69e16f\">/u/yourname</code>で認証済みプロフィールバッジ",
+		"verified_profile_badge_at": "<code class=\"tw-showcase\">/u/yourname</code>で認証済みプロフィールバッジ",
 		"what_this_gives_you": "これで得られるもの"
 	},
 	"timeline": {

@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe хэсэг",
 		"include_in_embed": "Суулгах кодод оруулах",
 		"launch": "⚡ Эхлүүлэх",
-		"meta_description": "Дурын аватарыг суулгаж болох 3D виджет болгоно. Таван төрөл, брэндийн хяналт, нэг мөрийн суулгах код.",
 		"meta_og_description": "Аватар сонгож, суулгах сонголтуудыг тохируулж, сайтад зориулсан нэг мөрийн кодыг хуулна уу.",
 		"meta_og_title": "Виджет Студи · three.ws",
 		"meta_title": "Виджет Студи · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Нэрээр төлөх хаяг — хэн ч <code>POST /api/x402/pay-by-name</code>-г <code>yourname.threews.sol</code>-оор ашиглан танд USDC илгээх боломжтой.",
 		"claim_your_subdomain": "Өөрийн дэд домэйныг эзэмш",
-		"get_as_a_solana_name_service_subdomain": "<code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code>-ийг Solana Name Service-ийн дэд домэйн болгон аваарай. Brave Browser үүнийг таны three.ws танилцуулга руу шууд чиглүүлнэ. Таны агент, аватар, ур чадвар бүгд нэг нэрийн дор.",
+		"get_as_a_solana_name_service_subdomain": "<code class=\"tw-code\">yourname.threews.sol</code>-ийг Solana Name Service-ийн дэд домэйн болгон аваарай. Brave Browser үүнийг таны three.ws танилцуулга руу шууд чиглүүлнэ. Таны агент, аватар, ур чадвар бүгд нэг нэрийн дор.",
 		"meta_description": "threews.sol дээр өөрийн дэд домэйнийг аваад, Brave-ээр чиглүүлэгдэх хувийн танилцуулгын хуудастай болоорой.",
 		"meta_og_description": "Өөрийн <name>.threews.sol дэд домэйнийг аваад, Brave-ээр чиглүүлэгдэх хувийн танилцуулгын хуудастай болоорой.",
 		"meta_og_title": "threews.sol дэд домэйн авах · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Өмчлөл таны хэтэвч рүү шилжинэ; бид зөвхөн URL бичлэгийг тохируулна.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> нь Brave дээр таны танилцуулга руу чиглүүлнэ.",
 		"subdomain_label": "Дэд домэйний шошго",
-		"verified_profile_badge_at": "Баталгаажсан профайлын тэмдэг <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Баталгаажсан профайлын тэмдэг <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Энэ нь танд юу өгөх вэ"
 	},
 	"timeline": {

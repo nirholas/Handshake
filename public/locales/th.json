@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "โค้ด iframe",
 		"include_in_embed": "รวมในโค้ดฝัง",
 		"launch": "⚡ เปิดใช้งาน",
-		"meta_description": "เปลี่ยนอวตารใดก็ได้ให้เป็นวิดเจ็ต 3D ที่ฝังได้ มี 5 ประเภท, ควบคุมแบรนด์, ฝังได้ในบรรทัดเดียว",
 		"meta_og_description": "เลือกอวตาร, กำหนดค่าตัวเลือกการฝัง, คัดลอกโค้ดบรรทัดเดียวสำหรับเว็บไซต์ของคุณ",
 		"meta_og_title": "Widget Studio · three.ws",
 		"meta_title": "Widget Studio · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "แฮนเดิลสำหรับชำระเงินด้วยชื่อ — ใครก็สามารถ <code>POST /api/x402/pay-by-name</code> ด้วย <code>yourname.threews.sol</code> เพื่อส่ง USDC ให้คุณได้",
 		"claim_your_subdomain": "รับสิทธิ์ซับโดเมนของคุณ",
-		"get_as_a_solana_name_service_subdomain": "รับ <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> เป็นซับโดเมนของ Solana Name Service เบราว์เซอร์ Brave จะเชื่อมโยงโดยตรงไปยังหน้าแสดงผลงาน three.ws ของคุณ เอเจนต์, อวตาร และทักษะทั้งหมดของคุณ ภายใต้ชื่อเดียว",
+		"get_as_a_solana_name_service_subdomain": "รับ <code class=\"tw-code\">yourname.threews.sol</code> เป็นซับโดเมนของ Solana Name Service เบราว์เซอร์ Brave จะเชื่อมโยงโดยตรงไปยังหน้าแสดงผลงาน three.ws ของคุณ เอเจนต์, อวตาร และทักษะทั้งหมดของคุณ ภายใต้ชื่อเดียว",
 		"meta_description": "รับสิทธิ์ซับโดเมนของคุณเองบน threews.sol และรับหน้าแสดงผลงานส่วนตัวที่ Brave สามารถเชื่อมโยงได้",
 		"meta_og_description": "รับสิทธิ์ซับโดเมน <name>.threews.sol ของคุณเอง และรับหน้าแสดงผลงานส่วนตัวที่ Brave สามารถเชื่อมโยงได้",
 		"meta_og_title": "รับสิทธิ์ซับโดเมน threews.sol · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "ความเป็นเจ้าของจะถูกโอนไปยังวอลเล็ตของคุณ; เราเพียงแค่ตั้งค่าบันทึก URL",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> จะเชื่อมโยงไปยังหน้าแสดงผลงานของคุณใน Brave",
 		"subdomain_label": "ป้ายกำกับซับโดเมน",
-		"verified_profile_badge_at": "ป้ายยืนยันโปรไฟล์ที่ <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "ป้ายยืนยันโปรไฟล์ที่ <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "สิ่งที่คุณจะได้รับ"
 	},
 	"timeline": {

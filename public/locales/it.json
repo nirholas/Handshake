@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "Snippet iframe",
 		"include_in_embed": "Includi nell'embed",
 		"launch": "⚡ Avvia",
-		"meta_description": "Trasforma qualsiasi avatar in un widget 3D embeddabile. Cinque tipi, controlli brand, embed in una riga.",
 		"meta_og_description": "Scegli un avatar, configura le opzioni di embed, copia uno snippet in una riga per il tuo sito.",
 		"meta_og_title": "Widget Studio · three.ws",
 		"meta_title": "Widget Studio · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Un handle pay-by-name — chiunque può <code>POST /api/x402/pay-by-name</code> con <code>yourname.threews.sol</code> per inviarti USDC",
 		"claim_your_subdomain": "Richiedi il tuo sottodominio",
-		"get_as_a_solana_name_service_subdomain": "Ottieni <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> come sottodominio del Solana Name Service. Brave Browser lo risolve direttamente alla tua vetrina three.ws. I tuoi agenti, avatar e skill, tutto sotto un unico nome.",
+		"get_as_a_solana_name_service_subdomain": "Ottieni <code class=\"tw-code\">yourname.threews.sol</code> come sottodominio del Solana Name Service. Brave Browser lo risolve direttamente alla tua vetrina three.ws. I tuoi agenti, avatar e skill, tutto sotto un unico nome.",
 		"meta_description": "Richiedi il tuo sottodominio su threews.sol e ottieni una pagina vetrina personale risolvibile da Brave.",
 		"meta_og_description": "Richiedi il tuo sottodominio <name>.threews.sol e ottieni una pagina vetrina personale risolvibile da Brave.",
 		"meta_og_title": "Richiedi sottodominio threews.sol · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "La proprietà viene trasferita al tuo wallet; noi impostiamo solo il record URL",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> si risolve alla tua vetrina in Brave",
 		"subdomain_label": "Etichetta sottodominio",
-		"verified_profile_badge_at": "Badge profilo verificato su <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Badge profilo verificato su <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Cosa ti offre"
 	},
 	"timeline": {

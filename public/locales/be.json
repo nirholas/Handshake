@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "Фрагмент iframe",
 		"include_in_embed": "Уключыць ва ўбудаванне",
 		"launch": "⚡ Запусціць",
-		"meta_description": "Пераўтварыце любы аватар ва ўбудавальны 3D-віджэт. Пяць тыпаў, элементы кіравання брэндам, убудаванне ў адзін радок.",
 		"meta_og_description": "Выберыце аватар, наладзьце параметры ўбудавання, скапіруйце фрагмент у адзін радок для вашага сайта.",
 		"meta_og_title": "Студыя віджэтаў · three.ws",
 		"meta_title": "Студыя віджэтаў · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Ідэнтыфікатар для аплаты па імені — любы можа <code>POST /api/x402/pay-by-name</code> з <code>yourname.threews.sol</code>, каб адправіць вам USDC",
 		"claim_your_subdomain": "Забярыце свой субдамен",
-		"get_as_a_solana_name_service_subdomain": "Атрымайце <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> як субдамен Solana Name Service. Brave Browser накіроўвае яго непасрэдна на вашу вітрыну three.ws. Вашы агенты, аватары і навыкі — усё пад адным імем.",
+		"get_as_a_solana_name_service_subdomain": "Атрымайце <code class=\"tw-code\">yourname.threews.sol</code> як субдамен Solana Name Service. Brave Browser накіроўвае яго непасрэдна на вашу вітрыну three.ws. Вашы агенты, аватары і навыкі — усё пад адным імем.",
 		"meta_description": "Запатрабуйце свой уласны субдамен на threews.sol і атрымайце асабістую старонку-вітрыну, якая вырашаецца Brave.",
 		"meta_og_description": "Запатрабуйце свой уласны субдамен <name>.threews.sol і атрымайце асабістую старонку-вітрыну, якая вырашаецца Brave.",
 		"meta_og_title": "Запатрабуйце субдамен threews.sol · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Права ўласнасці пераходзіць на ваш кашалёк; мы проста ўсталёўваем запіс URL.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> накіроўваецца на вашу вітрыну ў Brave",
 		"subdomain_label": "Метка субдамена",
-		"verified_profile_badge_at": "Значок праверанага профілю на <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Значок праверанага профілю на <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Што гэта вам дае"
 	},
 	"timeline": {

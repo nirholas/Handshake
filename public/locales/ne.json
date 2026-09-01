@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe स्निपेट",
 		"include_in_embed": "एम्बेडमा समावेश गर्नुहोस्",
 		"launch": "⚡ लन्च गर्नुहोस्",
-		"meta_description": "कुनै पनि अवतारलाई एम्बेड गर्न मिल्ने थ्रीडी विजेटमा बदल्नुहोस्। पाँच प्रकार, ब्रान्ड नियन्त्रण, एक-लाइन एम्बेड।",
 		"meta_og_description": "एउटा अवतार छान्नुहोस्, एम्बेड विकल्पहरू कन्फिगर गर्नुहोस्, आफ्नो साइटका लागि एक-लाइन स्निपेट कपी गर्नुहोस्।",
 		"meta_og_title": "विजेट स्टुडियो · three.ws",
 		"meta_title": "विजेट स्टुडियो · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "नामद्वारा भुक्तानी ह्यान्डल &mdash; जो कोहीले पनि <code>yourname.threews.sol</code> प्रयोग गरेर <code>POST /api/x402/pay-by-name</code> मार्फत तपाईंलाई USDC पठाउन सक्छन्।",
 		"claim_your_subdomain": "आफ्नो सबडोमेन दाबी गर्नुहोस्",
-		"get_as_a_solana_name_service_subdomain": "<code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> लाई Solana नेम सर्भिस सबडोमेनको रूपमा प्राप्त गर्नुहोस्। Brave ब्राउजरले यसलाई सिधै तपाईंको three.ws शोकेसमा रिजल्भ गर्छ। तपाईंका एजेन्टहरू, अवतारहरू, र सीपहरू, सबै एउटै नाममा।",
+		"get_as_a_solana_name_service_subdomain": "<code class=\"tw-code\">yourname.threews.sol</code> लाई Solana नेम सर्भिस सबडोमेनको रूपमा प्राप्त गर्नुहोस्। Brave ब्राउजरले यसलाई सिधै तपाईंको three.ws शोकेसमा रिजल्भ गर्छ। तपाईंका एजेन्टहरू, अवतारहरू, र सीपहरू, सबै एउटै नाममा।",
 		"meta_description": "threews.sol मा आफ्नो सबडोमेन दाबी गर्नुहोस् र Brave-द्वारा रिजल्भ गर्न मिल्ने व्यक्तिगत शोकेस पृष्ठ प्राप्त गर्नुहोस्।",
 		"meta_og_description": "आफ्नो <name>.threews.sol सबडोमेन दाबी गर्नुहोस् र Brave-द्वारा रिजल्भ गर्न मिल्ने व्यक्तिगत शोकेस पृष्ठ प्राप्त गर्नुहोस्।",
 		"meta_og_title": "threews.sol सबडोमेन दाबी गर्नुहोस् · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "स्वामित्व तपाईंको वालेटमा हस्तान्तरण हुन्छ; हामी केवल URL रेकर्ड सेट गर्छौं।",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> Brave मा तपाईंको शोकेसमा रिजल्भ हुन्छ।",
 		"subdomain_label": "सबडोमेन लेबल",
-		"verified_profile_badge_at": "<code style=\"color:#69e16f\">/u/yourname</code> मा प्रमाणित प्रोफाइल ब्याज",
+		"verified_profile_badge_at": "<code class=\"tw-showcase\">/u/yourname</code> मा प्रमाणित प्रोफाइल ब्याज",
 		"what_this_gives_you": "यसले तपाईंलाई के दिन्छ"
 	},
 	"timeline": {

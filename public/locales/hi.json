@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "आईफ्रेम स्निपेट",
 		"include_in_embed": "एम्बेड में शामिल करें",
 		"launch": "⚡ लॉन्च करें",
-		"meta_description": "किसी भी अवतार को एम्बेड करने योग्य 3D विजेट में बदलें। पाँच प्रकार, ब्रांड नियंत्रण, एक-लाइन एम्बेड।",
 		"meta_og_description": "एक अवतार चुनें, एम्बेड विकल्प कॉन्फ़िगर करें, अपनी साइट के लिए एक-लाइन स्निपेट कॉपी करें।",
 		"meta_og_title": "विजेट स्टूडियो · three.ws",
 		"meta_title": "विजेट स्टूडियो · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "एक पे-बाय-नेम हैंडल — कोई भी आपको USDC भेजने के लिए <code>yourname.threews.sol</code> के साथ <code>POST /api/x402/pay-by-name</code> कर सकता है।",
 		"claim_your_subdomain": "अपना सबडोमेन क्लेम करें",
-		"get_as_a_solana_name_service_subdomain": "<code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> को एक Solana नेम सर्विस सबडोमेन के रूप में प्राप्त करें। ब्रेव ब्राउज़र इसे सीधे आपके three.ws शोकेस पर रिज़ॉल्व करता है। आपके एजेंट, अवतार और स्किल्स, सभी एक ही नाम के तहत।",
+		"get_as_a_solana_name_service_subdomain": "<code class=\"tw-code\">yourname.threews.sol</code> को एक Solana नेम सर्विस सबडोमेन के रूप में प्राप्त करें। ब्रेव ब्राउज़र इसे सीधे आपके three.ws शोकेस पर रिज़ॉल्व करता है। आपके एजेंट, अवतार और स्किल्स, सभी एक ही नाम के तहत।",
 		"meta_description": "threews.sol पर अपना खुद का सबडोमेन क्लेम करें और एक ब्रेव-रिज़ॉल्वेबल पर्सनल शोकेस पेज प्राप्त करें।",
 		"meta_og_description": "अपना खुद का <name>.threews.sol सबडोमेन क्लेम करें और एक ब्रेव-रिज़ॉल्वेबल पर्सनल शोकेस पेज प्राप्त करें।",
 		"meta_og_title": "threews.sol सबडोमेन क्लेम करें · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "स्वामित्व आपके वॉलेट में ट्रांसफर हो जाता है; हम बस यूआरएल रिकॉर्ड सेट करते हैं",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> ब्रेव में आपके शोकेस पर रिज़ॉल्व होता है",
 		"subdomain_label": "सबडोमेन लेबल",
-		"verified_profile_badge_at": "सत्यापित प्रोफ़ाइल बैज <code style=\"color:#69e16f\">/u/yourname</code> पर",
+		"verified_profile_badge_at": "सत्यापित प्रोफ़ाइल बैज <code class=\"tw-showcase\">/u/yourname</code> पर",
 		"what_this_gives_you": "इससे आपको क्या मिलता है"
 	},
 	"timeline": {

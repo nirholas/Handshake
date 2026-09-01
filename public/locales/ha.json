@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "ɓangaren iframe",
 		"include_in_embed": "Haɗa a cikin saka",
 		"launch": "⚡ Fara",
-		"meta_description": "Mayar da kowane avatar zuwa widget 3D mai iya sakawa. Nau'i biyar, sarrafa alama, saka layi ɗaya.",
 		"meta_og_description": "Zaɓi avatar, saita zaɓuɓɓukan saka, kwafi ɓangaren layi ɗaya don shafinka.",
 		"meta_og_title": "Widget Studio · three.ws",
 		"meta_title": "Widget Studio · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Wani suna mai iya biya — kowa na iya <code>POST /api/x402/pay-by-name</code> tare da <code>yourname.threews.sol</code> don aiko maka da USDC.",
 		"claim_your_subdomain": "Nemi subdomain naka",
-		"get_as_a_solana_name_service_subdomain": "Samu <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> a matsayin subdomain na Solana Name Service. Brave Browser yana warware shi kai tsaye zuwa nunin three.ws naka. Wakilanka, avatars, da ƙwarewarka, duk a ƙarƙashin suna ɗaya.",
+		"get_as_a_solana_name_service_subdomain": "Samu <code class=\"tw-code\">yourname.threews.sol</code> a matsayin subdomain na Solana Name Service. Brave Browser yana warware shi kai tsaye zuwa nunin three.ws naka. Wakilanka, avatars, da ƙwarewarka, duk a ƙarƙashin suna ɗaya.",
 		"meta_description": "Mallaki naka subdomain a kan threews.sol kuma ka samu shafin nuna aiki na kanka wanda Brave zai iya warwarewa.",
 		"meta_og_description": "Mallaki naka subdomain na <name>.threews.sol kuma ka samu shafin nuna aiki na kanka wanda Brave zai iya warwarewa.",
 		"meta_og_title": "Mallaki Subdomain na threews.sol · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Mallaka zai koma walat ɗinka; mu dai kawai muna saita rikodin URL ne.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> zai nuna shafin nuna aikinka a Brave.",
 		"subdomain_label": "Sunan subdomain",
-		"verified_profile_badge_at": "Alamar tabbatar da bayanin martaba a <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Alamar tabbatar da bayanin martaba a <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Abin da wannan zai ba ka"
 	},
 	"timeline": {

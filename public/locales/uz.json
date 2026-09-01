@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe kodi",
 		"include_in_embed": "Joylashtirish kodiga kiritish",
 		"launch": "⚡ Ishga tushirish",
-		"meta_description": "Har qanday avatarni joylashtiriladigan 3D vidjetga aylantiring. Besh tur, brend boshqaruvi, bir qatorli joylashtirish.",
 		"meta_og_description": "Avatarni tanlang, joylashtirish sozlamalarini oʻrnating, saytingiz uchun bir qatorli kodni nusxalang.",
 		"meta_og_title": "Vidjet Studiyasi · three.ws",
 		"meta_title": "Vidjet Studiyasi · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Ism orqali toʻlov tutqichi &mdash; har kim <code>yourname.threews.sol</code> bilan <code>POST /api/x402/pay-by-name</code> orqali sizga USDC yuborishi mumkin.",
 		"claim_your_subdomain": "Subdomeningizni oling",
-		"get_as_a_solana_name_service_subdomain": "<code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code>ni Solana Name Service subdomeni sifatida oling. Brave Browser uni toʻgʻridan-toʻgʻri sizning three.ws namoyish sahifangizga yoʻnaltiradi. Agentlaringiz, avatarlaringiz va koʻnikmalaringiz, barchasi bitta nom ostida.",
+		"get_as_a_solana_name_service_subdomain": "<code class=\"tw-code\">yourname.threews.sol</code>ni Solana Name Service subdomeni sifatida oling. Brave Browser uni toʻgʻridan-toʻgʻri sizning three.ws namoyish sahifangizga yoʻnaltiradi. Agentlaringiz, avatarlaringiz va koʻnikmalaringiz, barchasi bitta nom ostida.",
 		"meta_description": "threews.sol da oʻz subdomeningizni oling va Brave orqali ochiladigan shaxsiy namoyish sahifasiga ega boʻling.",
 		"meta_og_description": "Oʻzingizning <name>.threews.sol subdomeningizni oling va Brave orqali ochiladigan shaxsiy namoyish sahifasiga ega boʻling.",
 		"meta_og_title": "threews.sol Subdomenini oling · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Egalik hamyoningizga oʻtkaziladi; biz faqat URL yozuvini oʻrnatamiz.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> Brave brauzerida sizning namoyish sahifangizga yoʻnaltiriladi.",
 		"subdomain_label": "Subdomen yorligʻi",
-		"verified_profile_badge_at": "<code style=\"color:#69e16f\">/u/yourname</code> manzilida tasdiqlangan profil nishoni",
+		"verified_profile_badge_at": "<code class=\"tw-showcase\">/u/yourname</code> manzilida tasdiqlangan profil nishoni",
 		"what_this_gives_you": "Bu sizga nima beradi"
 	},
 	"timeline": {

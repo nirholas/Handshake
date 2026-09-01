@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "د آی فریم ټوټه",
 		"include_in_embed": "په ایمبیډ کې شامل کړئ",
 		"launch": "⚡ پیل کړئ",
-		"meta_description": "هر اوتار په یو ایمبیډ وړ 3D ویجټ بدل کړئ. پنځه ډوله، د برانډ کنټرولونه، یو کرښیز ایمبیډ.",
 		"meta_og_description": "یو اوتار غوره کړئ، د ایمبیډ اختیارونه تنظیم کړئ، ستاسو د سایټ لپاره یو کرښیز ټوټه کاپي کړئ.",
 		"meta_og_title": "ویجټ سټوډیو · three.ws",
 		"meta_title": "ویجټ سټوډیو · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "د نوم له مخې تادیې هینډل — هرڅوک کولی شي <code>POST /api/x402/pay-by-name</code> د <code>yourname.threews.sol</code> سره وکاروي ترڅو تاسو ته USDC واستوي.",
 		"claim_your_subdomain": "خپله فرعي ډومین ادعا کړئ",
-		"get_as_a_solana_name_service_subdomain": "<code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> د Solana نوم خدمت فرعي ډومین په توګه ترلاسه کړئ. بریو براوزر یې په مستقیم ډول ستاسو three.ws نندارې ته حل کوي. ستاسو ایجنټان، اوتارونه او مهارتونه، ټول تر یو نوم لاندې.",
+		"get_as_a_solana_name_service_subdomain": "<code class=\"tw-code\">yourname.threews.sol</code> د Solana نوم خدمت فرعي ډومین په توګه ترلاسه کړئ. بریو براوزر یې په مستقیم ډول ستاسو three.ws نندارې ته حل کوي. ستاسو ایجنټان، اوتارونه او مهارتونه، ټول تر یو نوم لاندې.",
 		"meta_description": "په threews.sol کې خپله فرعي ډومین ادعا کړئ او د بریو لخوا د حل وړ شخصي نندارې پاڼه ترلاسه کړئ.",
 		"meta_og_description": "خپل <name>.threews.sol فرعي ډومین ادعا کړئ او د بریو لخوا د حل وړ شخصي نندارې پاڼه ترلاسه کړئ.",
 		"meta_og_title": "د threews.sol فرعي ډومین ادعا وکړئ · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "مالکیت ستاسو والټ ته لیږدول کیږي؛ موږ یوازې د URL ریکارډ تنظیم کوو.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> په بریو کې ستاسو نندارې ته حل کیږي.",
 		"subdomain_label": "د فرعي ډومین لیبل",
-		"verified_profile_badge_at": "تایید شوی پروفایل بیج په <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "تایید شوی پروفایل بیج په <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "دا تاسو ته څه درکوي"
 	},
 	"timeline": {

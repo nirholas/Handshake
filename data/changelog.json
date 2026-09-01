@@ -25410,6 +25410,16 @@
 				"improvement"
 			],
 			"link": "/strategy-lab"
+		},
+		{
+			"date": "2026-09-01",
+			"title": "Claim threews.sol Subdomain: a clear account status in every case, a fit on small phones, and the light theme",
+			"summary": "The /threews/claim page now tells you where you stand the moment it loads: a loading placeholder while it checks your account, a sign-in prompt if you are signed out, a link to set a username if your account has none, and a plain explanation with a link to change it if your username has characters a .sol name cannot hold (before, that case ended in a bare validation error with nowhere to go). If the account check or the availability check cannot reach three.ws, the page says so and offers a retry instead of going quiet; a failed mint keeps its reason on screen with a retry when the failure was temporary and a link to create an agent when a wallet is what is missing. The .threews.sol suffix no longer spills off the edge on 320px screens, every control has a visible keyboard focus ring, and the page follows the light theme instead of staying black.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/threews/claim"
 		}
 	]
 }

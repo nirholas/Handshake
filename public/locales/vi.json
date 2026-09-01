@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "Đoạn mã iframe",
 		"include_in_embed": "Bao gồm trong mã nhúng",
 		"launch": "⚡ Khởi chạy",
-		"meta_description": "Biến bất kỳ avatar nào thành widget 3D có thể nhúng. Năm loại, kiểm soát thương hiệu, mã nhúng một dòng.",
 		"meta_og_description": "Chọn một avatar, cấu hình tùy chọn nhúng, sao chép đoạn mã một dòng cho trang web của bạn.",
 		"meta_og_title": "Studio Widget · three.ws",
 		"meta_title": "Studio Widget · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Một địa chỉ thanh toán theo tên — bất kỳ ai cũng có thể <code>POST /api/x402/pay-by-name</code> với <code>yourname.threews.sol</code> để gửi cho bạn USDC",
 		"claim_your_subdomain": "Đăng ký tên miền phụ của bạn",
-		"get_as_a_solana_name_service_subdomain": "Nhận <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> làm tên miền phụ của Dịch vụ tên Solana. Trình duyệt Brave phân giải trực tiếp nó đến trang giới thiệu three.ws của bạn. Các tác nhân, avatar và kỹ năng của bạn, tất cả dưới một tên duy nhất.",
+		"get_as_a_solana_name_service_subdomain": "Nhận <code class=\"tw-code\">yourname.threews.sol</code> làm tên miền phụ của Dịch vụ tên Solana. Trình duyệt Brave phân giải trực tiếp nó đến trang giới thiệu three.ws của bạn. Các tác nhân, avatar và kỹ năng của bạn, tất cả dưới một tên duy nhất.",
 		"meta_description": "Đăng ký tên miền phụ của riêng bạn trên threews.sol và nhận một trang giới thiệu cá nhân có thể phân giải bằng Brave.",
 		"meta_og_description": "Đăng ký tên miền phụ <name>.threews.sol của riêng bạn và nhận một trang giới thiệu cá nhân có thể phân giải bằng Brave.",
 		"meta_og_title": "Đăng ký tên miền phụ threews.sol · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Quyền sở hữu được chuyển đến ví của bạn; chúng tôi chỉ thiết lập bản ghi URL",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> phân giải đến trang giới thiệu của bạn trong Brave",
 		"subdomain_label": "Nhãn tên miền phụ",
-		"verified_profile_badge_at": "Huy hiệu hồ sơ đã xác minh tại <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Huy hiệu hồ sơ đã xác minh tại <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Lợi ích bạn có được"
 	},
 	"timeline": {

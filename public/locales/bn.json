@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "আইফ্রেম স্ন্যাপেট",
 		"include_in_embed": "এম্বেডে অন্তর্ভুক্ত করুন",
 		"launch": "⚡ চালু করুন",
-		"meta_description": "যেকোনো অবতারকে একটি এম্বেডযোগ্য 3D উইজেটে পরিণত করুন। পাঁচ প্রকার, ব্র্যান্ড নিয়ন্ত্রণ, এক-লাইনের এম্বেড।",
 		"meta_og_description": "একটি অবতার বেছে নিন, এম্বেড অপশন কনফিগার করুন, আপনার সাইটের জন্য একটি এক-লাইনের স্ন্যাপেট কপি করুন।",
 		"meta_og_title": "উইজেট স্টুডিও · three.ws",
 		"meta_title": "উইজেট স্টুডিও · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "একটি পে-বাই-নেম হ্যান্ডেল — যে কেউ <code>POST /api/x402/pay-by-name</code> ব্যবহার করে <code>yourname.threews.sol</code> এর মাধ্যমে আপনাকে USDC পাঠাতে পারে",
 		"claim_your_subdomain": "আপনার সাবডোমেইন দাবি করুন",
-		"get_as_a_solana_name_service_subdomain": "<code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> কে একটি Solana নেম সার্ভিস সাবডোমেইন হিসেবে পান। ব্রেভ ব্রাউজার এটিকে সরাসরি আপনার three.ws শোকেসে রেজলভ করে। আপনার এজেন্ট, অবতার এবং দক্ষতা, সবই একটি নামের অধীনে।",
+		"get_as_a_solana_name_service_subdomain": "<code class=\"tw-code\">yourname.threews.sol</code> কে একটি Solana নেম সার্ভিস সাবডোমেইন হিসেবে পান। ব্রেভ ব্রাউজার এটিকে সরাসরি আপনার three.ws শোকেসে রেজলভ করে। আপনার এজেন্ট, অবতার এবং দক্ষতা, সবই একটি নামের অধীনে।",
 		"meta_description": "threews.sol-এ আপনার নিজের সাবডোমেইন দাবি করুন এবং একটি ব্রেভ-রেজলভেবল ব্যক্তিগত শোকেস পেজ পান।",
 		"meta_og_description": "আপনার নিজের <name>.threews.sol সাবডোমেইন দাবি করুন এবং একটি ব্রেভ-রেজলভেবল ব্যক্তিগত শোকেস পেজ পান।",
 		"meta_og_title": "threews.sol সাবডোমেইন দাবি করুন · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "মালিকানা আপনার ওয়ালেটে স্থানান্তরিত হয়; আমরা শুধু URL রেকর্ড সেট করি",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> ব্রেভে আপনার শোকেসে রেজলভ করে",
 		"subdomain_label": "সাবডোমেইন লেবেল",
-		"verified_profile_badge_at": "যাচাইকৃত প্রোফাইল ব্যাজ <code style=\"color:#69e16f\">/u/yourname</code> এ",
+		"verified_profile_badge_at": "যাচাইকৃত প্রোফাইল ব্যাজ <code class=\"tw-showcase\">/u/yourname</code> এ",
 		"what_this_gives_you": "এটি আপনাকে যা দেবে"
 	},
 	"timeline": {

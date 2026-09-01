@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "Extrait iframe",
 		"include_in_embed": "Inclure dans l'intégration",
 		"launch": "⚡ Lancer",
-		"meta_description": "Transformez n'importe quel avatar en widget 3D intégrable. Cinq types, contrôles de marque, intégration en une ligne.",
 		"meta_og_description": "Choisissez un avatar, configurez les options d'intégration, copiez un extrait en une ligne pour votre site.",
 		"meta_og_title": "Studio de widgets · three.ws",
 		"meta_title": "Studio de widgets · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Un identifiant de paiement par nom — n'importe qui peut <code>POST /api/x402/pay-by-name</code> avec <code>yourname.threews.sol</code> pour vous envoyer USDC",
 		"claim_your_subdomain": "Réclamez votre sous-domaine",
-		"get_as_a_solana_name_service_subdomain": "Obtenez <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> comme sous-domaine du service de noms Solana. Le navigateur Brave le résout directement vers votre vitrine three.ws. Vos agents, avatars et compétences, le tout sous un seul nom.",
+		"get_as_a_solana_name_service_subdomain": "Obtenez <code class=\"tw-code\">yourname.threews.sol</code> comme sous-domaine du service de noms Solana. Le navigateur Brave le résout directement vers votre vitrine three.ws. Vos agents, avatars et compétences, le tout sous un seul nom.",
 		"meta_description": "Réclamez votre propre sous-domaine sur threews.sol et obtenez une page de vitrine personnelle résolvable par Brave.",
 		"meta_og_description": "Réclamez votre propre sous-domaine <name>.threews.sol et obtenez une page de vitrine personnelle résolvable par Brave.",
 		"meta_og_title": "Réclamer un sous-domaine threews.sol · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "La propriété est transférée à votre portefeuille ; nous ne faisons que définir l'enregistrement d'URL.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> se résout vers votre vitrine dans Brave",
 		"subdomain_label": "Label du sous-domaine",
-		"verified_profile_badge_at": "Badge de profil vérifié sur <code style=\"color:#69e16f\">/u/votre_nom</code>",
+		"verified_profile_badge_at": "Badge de profil vérifié sur <code class=\"tw-showcase\">/u/votre_nom</code>",
 		"what_this_gives_you": "Ce que cela vous apporte"
 	},
 	"timeline": {

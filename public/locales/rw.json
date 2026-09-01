@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "Agace ka iframe",
 		"include_in_embed": "Shyiramo muri embed",
 		"launch": "⚡ Tangiza",
-		"meta_description": "Hindura avatar iyo ariyo yose ibe widget ya 3D ishobora gushyirwamo. Ubwoko butanu, ubugenzuzi bw'ikirango, embed y'umurongo umwe.",
 		"meta_og_description": "Hitamo avatar, shyiraho uburyo bwa embed, kopi agace k'umurongo umwe ku rubuga rwawe.",
 		"meta_og_title": "Studio ya Widget · three.ws",
 		"meta_title": "Studio ya Widget · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Izina ryo kwishyura — umuntu wese ashobora <code>POST /api/x402/pay-by-name</code> akoresheje <code>yourname.threews.sol</code> kugira ngo akohereze USDC",
 		"claim_your_subdomain": "Saba subdomain yawe",
-		"get_as_a_solana_name_service_subdomain": "Kubona <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> nka subdomain ya Solana Name Service. Brave Browser iyerekeza ako kanya kuri three.ws showcase yawe. Abagenzi bawe, avatars, n'ubushobozi bwawe, byose munsi y'izina rimwe.",
+		"get_as_a_solana_name_service_subdomain": "Kubona <code class=\"tw-code\">yourname.threews.sol</code> nka subdomain ya Solana Name Service. Brave Browser iyerekeza ako kanya kuri three.ws showcase yawe. Abagenzi bawe, avatars, n'ubushobozi bwawe, byose munsi y'izina rimwe.",
 		"meta_description": "Iyandikishe subdomain yawe bwite kuri threews.sol maze ubone urupapuro rwa showcase yawe rushobora kuremezwa na Brave.",
 		"meta_og_description": "Iyandikishe subdomain yawe bwite <name>.threews.sol maze ubone urupapuro rwa showcase yawe rushobora kuremezwa na Brave.",
 		"meta_og_title": "Iyandikishe Subdomain ya threews.sol · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Uburenganzira bwo kuyitunga bujya kuri wallet yawe; twe dushyiraho gusa inyandiko ya URL.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> iyerekeza kuri showcase yawe muri Brave.",
 		"subdomain_label": "Izina rya subdomain",
-		"verified_profile_badge_at": "Ikimenyetso cy'umwirondoro wemejwe kuri <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Ikimenyetso cy'umwirondoro wemejwe kuri <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Icyo ibi biguha"
 	},
 	"timeline": {

@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "Àkójọpọ̀ iframe",
 		"include_in_embed": "Fi sínú ìfìwéhàn",
 		"launch": "⚡ Fìlọ́lẹ̀",
-		"meta_description": "Sọ àwòrán àṣojú èyíkéyìí di wíjíìtì 3D tí a lè fi wéhàn. Oríṣi márùn-ún, àwọn ìdarí àmì-ìdámọ̀, ìfìwéhàn ìlà kan.",
 		"meta_og_description": "Yan àwòrán àṣojú kan, ṣètò àwọn àṣàyàn ìfìwéhàn, daàkọ àkójọpọ̀ ìlà kan fún ojúlé rẹ.",
 		"meta_og_title": "Ilé-iṣẹ́ Wíjíìtì · three.ws",
 		"meta_title": "Ilé-iṣẹ́ Wíjíìtì · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Ọ̀nà ìsanwó-pẹ̀lú-orúkọ — ẹnikẹ́ni lè <code>POST /api/x402/pay-by-name</code> pẹ̀lú <code>yourname.threews.sol</code> láti fi USDC ránṣẹ́ sí ọ.",
 		"claim_your_subdomain": "Gbà subdomain rẹ",
-		"get_as_a_solana_name_service_subdomain": "Gba <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> gẹ́gẹ́ bíi subdomain Solana Name Service. Brave Browser yóò tọ́ka rẹ̀ tààrà sí ibi ìfihàn three.ws rẹ. Àwọn aṣojú rẹ, àwọn àwòrán rẹ, àti àwọn ìmọ̀ rẹ, gbogbo rẹ̀ lábẹ́ orúkọ kan ṣoṣo.",
+		"get_as_a_solana_name_service_subdomain": "Gba <code class=\"tw-code\">yourname.threews.sol</code> gẹ́gẹ́ bíi subdomain Solana Name Service. Brave Browser yóò tọ́ka rẹ̀ tààrà sí ibi ìfihàn three.ws rẹ. Àwọn aṣojú rẹ, àwọn àwòrán rẹ, àti àwọn ìmọ̀ rẹ, gbogbo rẹ̀ lábẹ́ orúkọ kan ṣoṣo.",
 		"meta_description": "Gba subdomain tirẹ̀ lórí threews.sol, kí o sì ní ojúewé ìfihàn ti ara ẹni tí Brave lè tọ́ka sí.",
 		"meta_og_description": "Gba subdomain <name>.threews.sol tirẹ̀, kí o sì ní ojúewé ìfihàn ti ara ẹni tí Brave lè tọ́ka sí.",
 		"meta_og_title": "Gba Subdomain threews.sol · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Ohun-ìní náà yóò lọ sí àpò-ìpamọ́ rẹ; àwa kàn ṣètò àkọsílẹ̀ URL náà ni.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> yóò tọ́ka sí ibi ìfihàn rẹ nínú Brave.",
 		"subdomain_label": "Àmì subdomain",
-		"verified_profile_badge_at": "Àmì ìdánilójú àkọọ́lẹ̀ ní <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Àmì ìdánilójú àkọọ́lẹ̀ ní <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Ohun tí èyí yóò fún ọ"
 	},
 	"timeline": {

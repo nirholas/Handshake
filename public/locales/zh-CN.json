@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe 代码片段",
 		"include_in_embed": "包含在嵌入代码中",
 		"launch": "⚡ 启动",
-		"meta_description": "将任意虚拟形象转化为可嵌入的 3D 小组件。五种类型，品牌控制，一行代码嵌入。",
 		"meta_og_description": "选择一个虚拟形象，配置嵌入选项，复制一行代码片段到您的网站。",
 		"meta_og_title": "小组件工作室 · three.ws",
 		"meta_title": "小组件工作室 · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "一个名称支付句柄 — 任何人都可以通过 <code>yourname.threews.sol</code> 使用 <code>POST /api/x402/pay-by-name</code> 向您发送 USDC",
 		"claim_your_subdomain": "认领您的子域名",
-		"get_as_a_solana_name_service_subdomain": "获取 <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> 作为 Solana 命名服务子域名。Brave 浏览器会将其直接解析到您的 three.ws 展示页。您的代理、虚拟形象和技能，尽归一处。",
+		"get_as_a_solana_name_service_subdomain": "获取 <code class=\"tw-code\">yourname.threews.sol</code> 作为 Solana 命名服务子域名。Brave 浏览器会将其直接解析到您的 three.ws 展示页。您的代理、虚拟形象和技能，尽归一处。",
 		"meta_description": "在 threews.sol 上认领您自己的子域名，并获得一个 Brave 可解析的个人展示页。",
 		"meta_og_description": "认领您自己的 <name>.threews.sol 子域名，并获得一个 Brave 可解析的个人展示页。",
 		"meta_og_title": "认领 threews.sol 子域名 · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "所有权将转移到您的钱包；我们只负责设置 URL 记录",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> 在 Brave 浏览器中解析到您的展示页",
 		"subdomain_label": "子域名标签",
-		"verified_profile_badge_at": "在 <code style=\"color:#69e16f\">/u/yourname</code> 上的认证资料徽章",
+		"verified_profile_badge_at": "在 <code class=\"tw-showcase\">/u/yourname</code> 上的认证资料徽章",
 		"what_this_gives_you": "您将获得什么"
 	},
 	"timeline": {

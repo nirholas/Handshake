@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "Fragment iframe",
 		"include_in_embed": "Përfshi në embed",
 		"launch": "⚡ Nis",
-		"meta_description": "Kthe çdo avatar në një widget 3D të integrueshëm. Pesë lloje, kontrolle marke, embed me një rresht.",
 		"meta_og_description": "Zgjidh një avatar, konfiguro opsionet e embed-it, kopjo një fragment me një rresht për faqen tënde.",
 		"meta_og_title": "Studio e Widget-eve · three.ws",
 		"meta_title": "Studio e Widget-eve · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Një handle pagese me emër — kushdo mund të <code>POST /api/x402/pay-by-name</code> me <code>yourname.threews.sol</code> për t'ju dërguar USDC",
 		"claim_your_subdomain": "Kërko nëndomenin tënd",
-		"get_as_a_solana_name_service_subdomain": "Merrni <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> si një nëndomen i Shërbimit të Emrave Solana. Shfletuesi Brave e zgjidh atë direkt në ekspozitën tuaj three.ws. Agjentët, avatarët dhe aftësitë tuaja, të gjitha nën një emër.",
+		"get_as_a_solana_name_service_subdomain": "Merrni <code class=\"tw-code\">yourname.threews.sol</code> si një nëndomen i Shërbimit të Emrave Solana. Shfletuesi Brave e zgjidh atë direkt në ekspozitën tuaj three.ws. Agjentët, avatarët dhe aftësitë tuaja, të gjitha nën një emër.",
 		"meta_description": "Rezervoni nëndomenin tuaj në threews.sol dhe merrni një faqe personale ekspozite të zgjidhshme nga Brave.",
 		"meta_og_description": "Rezervoni nëndomenin tuaj <name>.threews.sol dhe merrni një faqe personale ekspozite të zgjidhshme nga Brave.",
 		"meta_og_title": "Rezervoni nëndomenin threews.sol · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Pronësia transferohet në portofolin tuaj; ne vetëm vendosim regjistrimin e URL-së.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> zgjidhet në ekspozitën tuaj në Brave.",
 		"subdomain_label": "Etiketa e nëndomenit",
-		"verified_profile_badge_at": "Distinktiv profili i verifikuar në <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Distinktiv profili i verifikuar në <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Çfarë ju ofron kjo"
 	},
 	"timeline": {

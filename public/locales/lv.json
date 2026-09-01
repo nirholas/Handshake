@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe fragments",
 		"include_in_embed": "Iekļaut iegulšanā",
 		"launch": "⚡ Palaist",
-		"meta_description": "Pārvērtiet jebkuru avatāru par iegulstamu 3D logrīku. Pieci veidi, zīmola vadība, vienas rindiņas iegulšana.",
 		"meta_og_description": "Izvēlieties avatāru, konfigurējiet iegulšanas opcijas, nokopējiet vienas rindiņas fragmentu savai vietnei.",
 		"meta_og_title": "Logrīku studija · three.ws",
 		"meta_title": "Logrīku studija · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Maksājuma rokturis pēc nosaukuma — ikviens var <code>POST /api/x402/pay-by-name</code> ar <code>yourname.threews.sol</code>, lai nosūtītu jums USDC",
 		"claim_your_subdomain": "Pieprasiet savu apakšdomēnu",
-		"get_as_a_solana_name_service_subdomain": "Iegūstiet <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> kā Solana Name Service apakšdomēnu. Brave pārlūkprogramma to novirza tieši uz jūsu three.ws vitrīnu. Jūsu aģenti, avatāri un prasmes — viss zem viena vārda.",
+		"get_as_a_solana_name_service_subdomain": "Iegūstiet <code class=\"tw-code\">yourname.threews.sol</code> kā Solana Name Service apakšdomēnu. Brave pārlūkprogramma to novirza tieši uz jūsu three.ws vitrīnu. Jūsu aģenti, avatāri un prasmes — viss zem viena vārda.",
 		"meta_description": "Iegūstiet savu apakšdomēnu vietnē threews.sol un iegūstiet Brave pārlūkprogrammā atrisināmu personīgo vitrīnas lapu.",
 		"meta_og_description": "Iegūstiet savu <name>.threews.sol apakšdomēnu un iegūstiet Brave pārlūkprogrammā atrisināmu personīgo vitrīnas lapu.",
 		"meta_og_title": "Iegūstiet threews.sol apakšdomēnu · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Īpašumtiesības tiek pārsūtītas uz jūsu maku; mēs tikai iestatām URL ierakstu.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> novirza uz jūsu vitrīnu Brave pārlūkprogrammā.",
 		"subdomain_label": "Apakšdomēna nosaukums",
-		"verified_profile_badge_at": "Verificēta profila emblēma vietnē <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Verificēta profila emblēma vietnē <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Ko tas jums sniedz"
 	},
 	"timeline": {

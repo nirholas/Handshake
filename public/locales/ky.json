@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe үзүндүсү",
 		"include_in_embed": "Камтылган кодго кошуу",
 		"launch": "⚡ Ишке киргизүү",
-		"meta_description": "Каалаган аватарды камтылуучу 3D виджетине айландырыңыз. Беш түрү, бренд башкаруулары, бир саптык камтылган код.",
 		"meta_og_description": "Аватарды тандаңыз, камтылган коддун параметрлерин конфигурациялаңыз, сайтыңыз үчүн бир саптык үзүндүнү көчүрүңүз.",
 		"meta_og_title": "Виджет Студиясы · three.ws",
 		"meta_title": "Виджет Студиясы · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Аты-жөнү боюнча төлөө туткасы — каалаган адам <code>yourname.threews.sol</code> менен <code>POST /api/x402/pay-by-name</code> аркылуу сизге USDC жөнөтө алат.",
 		"claim_your_subdomain": "Субдомениңизди талап кылыңыз.",
-		"get_as_a_solana_name_service_subdomain": "Solana Name Service субдомени катары <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> алыңыз. Brave браузери аны түздөн-түз сиздин three.ws витринаңызга чечет. Сиздин агенттериңиз, аватарларыңыз жана жөндөмдөрүңүз бир аталыштын астында.",
+		"get_as_a_solana_name_service_subdomain": "Solana Name Service субдомени катары <code class=\"tw-code\">yourname.threews.sol</code> алыңыз. Brave браузери аны түздөн-түз сиздин three.ws витринаңызга чечет. Сиздин агенттериңиз, аватарларыңыз жана жөндөмдөрүңүз бир аталыштын астында.",
 		"meta_description": "threews.sol да өзүңүздүн субдомениңизди талап кылып, Brave чече ала турган жеке витрина баракчасын алыңыз.",
 		"meta_og_description": "Өзүңүздүн <name>.threews.sol субдомениңизди талап кылып, Brave чече ала турган жеке витрина баракчасын алыңыз.",
 		"meta_og_title": "threews.sol субдоменин талап кылуу · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Менчик укугу сиздин капчыгыңызга өтөт; биз жөн гана URL жазуусун орнотобуз.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> Brave'де сиздин витринаңызга чечилет.",
 		"subdomain_label": "Субдомен энбелгиси",
-		"verified_profile_badge_at": "<code style=\"color:#69e16f\">/u/yourname</code> дагы тастыкталган профиль белгиси",
+		"verified_profile_badge_at": "<code class=\"tw-showcase\">/u/yourname</code> дагы тастыкталган профиль белгиси",
 		"what_this_gives_you": "Бул сизге эмне берет"
 	},
 	"timeline": {

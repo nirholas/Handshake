@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "Qaybta iframe",
 		"include_in_embed": "Ku dar gundhigga",
 		"launch": "⚡ Bilow",
-		"meta_description": "U beddel avatar kasta widget 3D ah oo la gundhigi karo. Shan nooc, xakamaynta summadda, gundhig hal xariiq ah.",
 		"meta_og_description": "Dooro avatar, habee xulashooyinka gundhigga, koobiyeey qayb hal xariiq ah oo boggaaga ah.",
 		"meta_og_title": "Istuudiyaha Widget-ka · three.ws",
 		"meta_title": "Istuudiyaha Widget-ka · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Gacan-qabasho magac-ku-bixin ah — qof kasta wuu awoodaa <code>POST /api/x402/pay-by-name</code> oo leh <code>yourname.threews.sol</code> si uu kuu soo diro USDC",
 		"claim_your_subdomain": "Sheeg subdomain-kaaga",
-		"get_as_a_solana_name_service_subdomain": "Hel <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> sidii subdomainka Adeegga Magaca ee Solana. Brave Browser wuxuu si toos ah ugu xiraa bandhiggaaga three.ws. Wakiiladaada, avatars-kaaga, iyo xirfadahaaga, dhammaantood hal magac hoostooda.",
+		"get_as_a_solana_name_service_subdomain": "Hel <code class=\"tw-code\">yourname.threews.sol</code> sidii subdomainka Adeegga Magaca ee Solana. Brave Browser wuxuu si toos ah ugu xiraa bandhiggaaga three.ws. Wakiiladaada, avatars-kaaga, iyo xirfadahaaga, dhammaantood hal magac hoostooda.",
 		"meta_description": "Sheego subdomainkaaga gaarka ah ee threews.sol oo hel bog bandhig shakhsiyeed oo Brave-ku xiri karo.",
 		"meta_og_description": "Sheego subdomainkaaga gaarka ah ee <name>.threews.sol oo hel bog bandhig shakhsiyeed oo Brave-ku xiri karo.",
 		"meta_og_title": "Sheego Subdomainka threews.sol · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Lahaanshaha waxaa loo wareejiyaa boorsadaada; annaguna waxaan kaliya dejinaa diiwaanka URL-ka.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> wuxuu ku xiraa bandhiggaaga Brave.",
 		"subdomain_label": "Calaamadda subdomainka",
-		"verified_profile_badge_at": "Calaamadda profile-ka la xaqiijiyay ee <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Calaamadda profile-ka la xaqiijiyay ee <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Maxay tan ku siinaysaa?"
 	},
 	"timeline": {

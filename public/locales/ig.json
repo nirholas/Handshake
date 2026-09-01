@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "Ihe ntinye iframe",
 		"include_in_embed": "Tinye na koodu ntinye",
 		"launch": "⚡ Malite",
-		"meta_description": "Gbanwee avatar ọ bụla ka ọ bụrụ wijetị 3D enwere ike itinye. Ụdị ise, njikwa akara, ntinye otu ahịrị.",
 		"meta_og_description": "Họrọ avatar, hazie nhọrọ ntinye, detuo obere koodu otu ahịrị maka saịtị gị.",
 		"meta_og_title": "Ụlọ Ọrụ Wijetị · three.ws",
 		"meta_title": "Ụlọ Ọrụ Wijetị · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Akaụntụ ịkwụ ụgwọ site na aha — onye ọ bụla nwere ike <code>POST /api/x402/pay-by-name</code> na <code>yourname.threews.sol</code> iji zitere gị USDC",
 		"claim_your_subdomain": "Kwuo subdomain gị",
-		"get_as_a_solana_name_service_subdomain": "Nweta <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> dị ka subdomain Solana Name Service. Brave Browser na-edozi ya ozugbo na three.ws showcase gị. Ndị ọrụ gị, avatars, na nka gị, niile n'okpuru otu aha.",
+		"get_as_a_solana_name_service_subdomain": "Nweta <code class=\"tw-code\">yourname.threews.sol</code> dị ka subdomain Solana Name Service. Brave Browser na-edozi ya ozugbo na three.ws showcase gị. Ndị ọrụ gị, avatars, na nka gị, niile n'okpuru otu aha.",
 		"meta_description": "Chọọ subdomain nke gị na threews.sol ma nweta ibe ngosi nkeonwe Brave nwere ike idozi.",
 		"meta_og_description": "Chọọ subdomain <name>.threews.sol nke gị ma nweta ibe ngosi nkeonwe Brave nwere ike idozi.",
 		"meta_og_title": "Chọọ Subdomain threews.sol · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Ikike nwe na-aga na obere akpa gị; anyị na-edozi ndekọ URL ahụ.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> na-edozi na showcase gị na Brave.",
 		"subdomain_label": "Aha subdomain",
-		"verified_profile_badge_at": "Akara profaịlụ akwadoro na <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Akara profaịlụ akwadoro na <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Ihe nke a na-enye gị"
 	},
 	"timeline": {

@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe kodu",
 		"include_in_embed": "Gömme Koduna Dahil Et",
 		"launch": "⚡ Başlat",
-		"meta_description": "Herhangi bir avatarı gömülebilir 3D widget'a dönüştürün. Beş tür, marka kontrolü, tek satırlık gömme kodu.",
 		"meta_og_description": "Bir avatar seçin, gömme seçeneklerini yapılandırın, siteniz için tek satırlık kodu kopyalayın.",
 		"meta_og_title": "Widget Stüdyosu · three.ws",
 		"meta_title": "Widget Stüdyosu · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "İsimle ödeme tanıtıcısı — herkes <code>yourname.threews.sol</code> ile <code>POST /api/x402/pay-by-name</code> kullanarak size USDC gönderebilir",
 		"claim_your_subdomain": "Alt alan adınızı alın",
-		"get_as_a_solana_name_service_subdomain": "<code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> adresini bir Solana Ad Hizmeti alt alan adı olarak alın. Brave Tarayıcı, doğrudan three.ws vitrininize yönlendirir. Ajanlarınız, avatarlarınız ve yetenekleriniz, hepsi tek bir isim altında.",
+		"get_as_a_solana_name_service_subdomain": "<code class=\"tw-code\">yourname.threews.sol</code> adresini bir Solana Ad Hizmeti alt alan adı olarak alın. Brave Tarayıcı, doğrudan three.ws vitrininize yönlendirir. Ajanlarınız, avatarlarınız ve yetenekleriniz, hepsi tek bir isim altında.",
 		"meta_description": "threews.sol üzerinde kendi alt alan adınızı alın ve Brave tarafından çözülebilen kişisel bir vitrin sayfası edinin.",
 		"meta_og_description": "Kendi <name>.threews.sol alt alan adınızı alın ve Brave tarafından çözülebilen kişisel bir vitrin sayfası edinin.",
 		"meta_og_title": "threews.sol Alt Alan Adını Al · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Mülkiyet cüzdanınıza aktarılır; biz sadece URL kaydını ayarlarız",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> Brave'de vitrininize yönlendirilir",
 		"subdomain_label": "Alt alan adı etiketi",
-		"verified_profile_badge_at": "Doğrulanmış profil rozeti <code style=\"color:#69e16f\">/u/yourname</code> adresinde",
+		"verified_profile_badge_at": "Doğrulanmış profil rozeti <code class=\"tw-showcase\">/u/yourname</code> adresinde",
 		"what_this_gives_you": "Size sundukları"
 	},
 	"timeline": {

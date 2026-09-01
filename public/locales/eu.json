@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe zati",
 		"include_in_embed": "Txertaketan sartu",
 		"launch": "⚡ Abiarazi",
-		"meta_description": "Edozein avatar 3D widget txertagarri bihurtu. Bost mota, markaren kontrolak, lerro bakarreko txertaketa.",
 		"meta_og_description": "Aukeratu avatar bat, konfiguratu txertaketa aukerak, kopiatu lerro bakarreko zati bat zure gunerako.",
 		"meta_og_title": "Widget Estudioa · three.ws",
 		"meta_title": "Widget Estudioa · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Izenez ordaintzeko helbidea — edonork egin dezake <code>POST /api/x402/pay-by-name</code> <code>yourname.threews.sol</code> erabiliz, USDC zuri bidaltzeko.",
 		"claim_your_subdomain": "Erreklamatu zure azpidomeinua",
-		"get_as_a_solana_name_service_subdomain": "Lortu <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> Solana Name Service azpidomeinu gisa. Brave arakatzaileak zuzenean ebazten du zure three.ws erakusketara. Zure agenteak, avatarrak eta trebetasunak, guztiak izen bakar baten pean.",
+		"get_as_a_solana_name_service_subdomain": "Lortu <code class=\"tw-code\">yourname.threews.sol</code> Solana Name Service azpidomeinu gisa. Brave arakatzaileak zuzenean ebazten du zure three.ws erakusketara. Zure agenteak, avatarrak eta trebetasunak, guztiak izen bakar baten pean.",
 		"meta_description": "Erreklamatu zure azpidomeinua threews.sol-en eta lortu Brave-k ebazteko moduko erakusleiho pertsonal bat.",
 		"meta_og_description": "Erreklamatu zure <name>.threews.sol azpidomeinua eta lortu Brave-k ebazteko moduko erakusleiho pertsonal bat.",
 		"meta_og_title": "threews.sol azpidomeinua erreklamatu · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "Jabetza zure zorroara transferitzen da; guk URL erregistroa ezartzen dugu soilik.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> zure erakusketara ebazten da Brave-n",
 		"subdomain_label": "Azpidomeinuaren etiketa",
-		"verified_profile_badge_at": "Profil egiaztatuaren txapa hemen: <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Profil egiaztatuaren txapa hemen: <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Honek zer ematen dizun"
 	},
 	"timeline": {

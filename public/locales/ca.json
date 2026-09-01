@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "Fragment d'iframe",
 		"include_in_embed": "Incloure a la incrustació",
 		"launch": "⚡ Llançar",
-		"meta_description": "Converteix qualsevol avatar en un widget 3D incrustable. Cinc tipus, controls de marca, incrustació en una línia.",
 		"meta_og_description": "Tria un avatar, configura les opcions d'incrustació, copia un fragment d'una línia per al teu lloc.",
 		"meta_og_title": "Widget Studio · three.ws",
 		"meta_title": "Widget Studio · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "Un identificador de pagament per nom — qualsevol pot <code>POST /api/x402/pay-by-name</code> amb <code>yourname.threews.sol</code> per enviar-te USDC",
 		"claim_your_subdomain": "Reclama el teu subdomini",
-		"get_as_a_solana_name_service_subdomain": "Obtén <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> com a subdomini de Solana Name Service. Brave Browser el resol directament al teu aparador de three.ws. Els teus agents, avatars i habilitats, tot sota un mateix nom.",
+		"get_as_a_solana_name_service_subdomain": "Obtén <code class=\"tw-code\">yourname.threews.sol</code> com a subdomini de Solana Name Service. Brave Browser el resol directament al teu aparador de three.ws. Els teus agents, avatars i habilitats, tot sota un mateix nom.",
 		"meta_description": "Reclama el teu propi subdomini a threews.sol i obtén una pàgina d'aparador personal resoluble per Brave.",
 		"meta_og_description": "Reclama el teu propi subdomini <name>.threews.sol i obtén una pàgina d'aparador personal resoluble per Brave.",
 		"meta_og_title": "Reclama el subdomini threews.sol · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "La propietat es transfereix a la teva cartera; nosaltres només configurem el registre d'URL.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> es resol al teu aparador a Brave.",
 		"subdomain_label": "Etiqueta del subdomini",
-		"verified_profile_badge_at": "Insignia de perfil verificat a <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "Insignia de perfil verificat a <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "Què t'aporta això"
 	},
 	"timeline": {

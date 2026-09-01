@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "snippet iframe",
 		"include_in_embed": "ລວມຢູ່ໃນ embed",
 		"launch": "⚡ ເປີດຕົວ",
-		"meta_description": "ປ່ຽນຮູບແທນຕົວໃດກໍໄດ້ໃຫ້ເປັນ widget 3D ທີ່ສາມາດຝັງໄດ້. ຫ້າປະເພດ, ການຄວບຄຸມຍີ່ຫໍ້, ການຝັງແບບແຖວດຽວ.",
 		"meta_og_description": "ເລືອກຮູບແທນຕົວ, ຕັ້ງຄ່າຕົວເລືອກການຝັງ, ຄັດລອກ snippet ແຖວດຽວສໍາລັບເວັບໄຊຂອງທ່ານ.",
 		"meta_og_title": "ສະຕູດິໂອ Widget · three.ws",
 		"meta_title": "ສະຕູດິໂອ Widget · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "ທີ່ຢູ່ສຳລັບການຈ່າຍເງິນດ້ວຍຊື່ — ໃຜກໍຕາມສາມາດ <code>POST /api/x402/pay-by-name</code> ດ້ວຍ <code>yourname.threews.sol</code> ເພື່ອສົ່ງ USDC ໃຫ້ທ່ານ",
 		"claim_your_subdomain": "ອ້າງສິດໂດເມນຍ່ອຍຂອງທ່ານ",
-		"get_as_a_solana_name_service_subdomain": "ຮັບ <code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> ເປັນໂດເມນຍ່ອຍຂອງ Solana Name Service. Brave Browser ຈະແກ້ໄຂມັນໂດຍກົງໄປຫາໜ້າສະແດງຜົນ three.ws ຂອງທ່ານ. ຕົວແທນ, ຮູບແທນຕົວ, ແລະທັກສະຂອງທ່ານ, ທັງໝົດພາຍໃຕ້ຊື່ດຽວ.",
+		"get_as_a_solana_name_service_subdomain": "ຮັບ <code class=\"tw-code\">yourname.threews.sol</code> ເປັນໂດເມນຍ່ອຍຂອງ Solana Name Service. Brave Browser ຈະແກ້ໄຂມັນໂດຍກົງໄປຫາໜ້າສະແດງຜົນ three.ws ຂອງທ່ານ. ຕົວແທນ, ຮູບແທນຕົວ, ແລະທັກສະຂອງທ່ານ, ທັງໝົດພາຍໃຕ້ຊື່ດຽວ.",
 		"meta_description": "ອ້າງສິດໂດເມນຍ່ອຍຂອງທ່ານເອງເທິງ threews.sol ແລະໄດ້ຮັບໜ້າສະແດງຜົນສ່ວນຕົວທີ່ Brave ສາມາດແກ້ໄຂໄດ້.",
 		"meta_og_description": "ອ້າງສິດໂດເມນຍ່ອຍ <name>.threews.sol ຂອງທ່ານເອງ ແລະໄດ້ຮັບໜ້າສະແດງຜົນສ່ວນຕົວທີ່ Brave ສາມາດແກ້ໄຂໄດ້.",
 		"meta_og_title": "ອ້າງສິດໂດເມນຍ່ອຍ threews.sol · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "ການເປັນເຈົ້າຂອງຈະຖືກໂອນເຂົ້າກະເປົາເງິນຂອງທ່ານ; ພວກເຮົາພຽງແຕ່ຕັ້ງຄ່າບັນທຶກ URL.",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> ຈະແກ້ໄຂໄປຫາໜ້າສະແດງຜົນຂອງທ່ານໃນ Brave.",
 		"subdomain_label": "ປ້າຍຊື່ໂດເມນຍ່ອຍ",
-		"verified_profile_badge_at": "ປ້າຍຢັ້ງຢືນໂປຣໄຟລ໌ທີ່ <code style=\"color:#69e16f\">/u/yourname</code>",
+		"verified_profile_badge_at": "ປ້າຍຢັ້ງຢືນໂປຣໄຟລ໌ທີ່ <code class=\"tw-showcase\">/u/yourname</code>",
 		"what_this_gives_you": "ສິ່ງນີ້ໃຫ້ຫຍັງແກ່ເຈົ້າ"
 	},
 	"timeline": {

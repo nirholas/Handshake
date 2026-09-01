@@ -18173,7 +18173,6 @@
 		"iframe_snippet": "iframe ကုတ်စနစ်ပက်",
 		"include_in_embed": "ထည့်သွင်းကုဒ်တွင် ထည့်သွင်းပါ",
 		"launch": "⚡ စတင်ပါ",
-		"meta_description": "မည်သည့် အဗာတာကိုမဆို ထည့်သွင်းနိုင်သော 3D ဝစ်ဂျက်အဖြစ် ပြောင်းလဲပါ။ အမျိုးအစား ငါးမျိုး၊ အမှတ်တံဆိပ် ထိန်းချုပ်မှုများ၊ တစ်ကြောင်းတည်းသော ထည့်သွင်းကုဒ်။",
 		"meta_og_description": "အဗာတာတစ်ခု ရွေးချယ်ပါ၊ ထည့်သွင်းကုဒ် ရွေးချယ်စရာများကို စီစဉ်သတ်မှတ်ပါ၊ သင့်ဆိုက်အတွက် တစ်ကြောင်းတည်းသော ကုတ်စနစ်ပက်ကို ကူးယူပါ။",
 		"meta_og_title": "ဝစ်ဂျက် စတူဒီယို · three.ws",
 		"meta_title": "ဝစ်ဂျက် စတူဒီယို · three.ws",
@@ -18552,7 +18551,7 @@
 	"threews_claim": {
 		"a_pay_by_name_handle_anyone_can": "pay-by-name handle တစ်ခု — မည်သူမဆို <code>yourname.threews.sol</code> ဖြင့် <code>POST /api/x402/pay-by-name</code> ကို အသုံးပြု၍ သင့်ထံ USDC ပေးပို့နိုင်သည်။",
 		"claim_your_subdomain": "သင်၏ subdomain ကို ရယူပါ။",
-		"get_as_a_solana_name_service_subdomain": "<code style=\"background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;\">yourname.threews.sol</code> ကို Solana Name Service subdomain အဖြစ် ရယူလိုက်ပါ။ Brave Browser က သင့်ရဲ့ three.ws showcase ကို တိုက်ရိုက် ဖြေရှင်းပေးပါတယ်။ သင့်ရဲ့ agent တွေ၊ avatar တွေနဲ့ skill တွေအားလုံးကို နာမည်တစ်ခုတည်းအောက်မှာ ထားရှိနိုင်ပါတယ်။",
+		"get_as_a_solana_name_service_subdomain": "<code class=\"tw-code\">yourname.threews.sol</code> ကို Solana Name Service subdomain အဖြစ် ရယူလိုက်ပါ။ Brave Browser က သင့်ရဲ့ three.ws showcase ကို တိုက်ရိုက် ဖြေရှင်းပေးပါတယ်။ သင့်ရဲ့ agent တွေ၊ avatar တွေနဲ့ skill တွေအားလုံးကို နာမည်တစ်ခုတည်းအောက်မှာ ထားရှိနိုင်ပါတယ်။",
 		"meta_description": "threews.sol ပေါ်မှာ သင့်ရဲ့ကိုယ်ပိုင် subdomain ကို ရယူပြီး Brave က ဖြေရှင်းပေးနိုင်တဲ့ ကိုယ်ပိုင် showcase စာမျက်နှာကို ရယူလိုက်ပါ။",
 		"meta_og_description": "သင့်ရဲ့ကိုယ်ပိုင် <name>.threews.sol subdomain ကို ရယူပြီး Brave က ဖြေရှင်းပေးနိုင်တဲ့ ကိုယ်ပိုင် showcase စာမျက်နှာကို ရယူလိုက်ပါ။",
 		"meta_og_title": "threews.sol Subdomain ကို ရယူပါ · three.ws",
@@ -18564,7 +18563,7 @@
 		"ownership_transfers_to_your_wallet_we_just": "ပိုင်ဆိုင်မှုက သင့် wallet သို့ လွှဲပြောင်းသွားပါမယ်။ ကျွန်ုပ်တို့က URL record ကိုသာ သတ်မှတ်ပေးတာပါ။",
 		"resolves_to_your_showcase_in_brave": "<code>yourname.threews.sol</code> က Brave မှာရှိတဲ့ သင့် showcase ကို ဖြေရှင်းပေးပါတယ်။",
 		"subdomain_label": "Subdomain label",
-		"verified_profile_badge_at": "<code style=\"color:#69e16f\">/u/yourname</code> တွင် အတည်ပြုပြီးသား profile badge ကို ရရှိနိုင်ပါသည်။",
+		"verified_profile_badge_at": "<code class=\"tw-showcase\">/u/yourname</code> တွင် အတည်ပြုပြီးသား profile badge ကို ရရှိနိုင်ပါသည်။",
 		"what_this_gives_you": "ဒါက ဘာတွေရရှိစေမလဲ။"
 	},
 	"timeline": {
