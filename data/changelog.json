@@ -25540,6 +25540,16 @@
 				"infra"
 			],
 			"link": "/"
+		},
+		{
+			"date": "2026-09-01",
+			"title": "3D previews now wake up when you look at them",
+			"summary": "Second half of the performance sweep. Every rotating 3D preview on the site (the Marketplace grid, the Discover directory, the home page's community strip, the Create page's base-avatar card) used to spin for as long as the tab stayed open, which kept the page busy even when nobody was watching. They now turn when they scroll into view, settle once they have turned far enough to read as 3D, and turn again when you hover or focus them, with no motion at all if your system asks for reduced motion. The Create page's card shows a picture of the base avatar straight away and loads the live, rotatable model when you reach for it, so opening the page no longer waits on a 748 KB download. Forge stops downloading the 3D viewer until you actually generate something. Three things that used to appear late and shove the page down (the site header, the Marketplace hero, the weekly theme strip) now hold their space from the first frame. Coin art in the /play world and Marketplace card art are fetched at the size they are displayed instead of at full resolution.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/marketplace"
 		}
 	]
 }

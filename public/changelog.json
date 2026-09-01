@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-01T04:43:30.115Z",
+	"generated_at": "2026-09-01T04:57:30.550Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -43,6 +43,17 @@
 			"summary": "Opening /three without a wallet connected or an account signed in showed an error card instead of the tiers, because the tier lookup refused anonymous requests. The page now shows every tier, its perks, and the exact $THREE threshold to any visitor, with a connect-wallet or sign-in prompt to see your own position. Signed-in accounts without a linked wallet get a clear prompt to connect one, and if the ladder genuinely fails to load the page keeps its heading and offers a retry.",
 			"link": "/three",
 			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-01",
+			"type": "update",
+			"title": "3D previews now wake up when you look at them",
+			"summary": "Second half of the performance sweep. Every rotating 3D preview on the site (the Marketplace grid, the Discover directory, the home page's community strip, the Create page's base-avatar card) used to spin for as long as the tab stayed open, which kept the page busy even when nobody was watching. They now turn when they scroll into view, settle once they have turned far enough to read as 3D, and turn again when you hover or focus them, with no motion at all if your system asks for reduced motion. The Create page's card shows a picture of the base avatar straight away and loads the live, rotatable model when you reach for it, so opening the page no longer waits on a 748 KB download. Forge stops downloading the 3D viewer until you actually generate something. Three things that used to appear late and shove the page down (the site header, the Marketplace hero, the weekly theme strip) now hold their space from the first frame. Coin art in the /play world and Marketplace card art are fetched at the size they are displayed instead of at full resolution.",
+			"link": "/marketplace",
+			"tags": [
+				"improvement",
 				"fix"
 			]
 		},
