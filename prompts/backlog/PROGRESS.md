@@ -648,3 +648,57 @@ DB row and page wiring surface together with the next deploy, no further action.
 
 Left: one deploy (owner-gated, and gcloud auth is dead again). After it lands,
 re-read the endpoint and confirm `source: "database"` with accuracy 0.55.
+
+## 2026-09-01: retirement sweep, every order re-measured against code and production
+
+Production `ad7b54c16` (2026-08-28), `main` `73c8ccbb7`. Nothing below was taken from
+earlier entries in this log; each line was re-read.
+
+Retired (deleted after verification):
+
+- 02 Solana RPC capacity: `scripts/probe-rpc-lanes.mjs` runs and prints the lane x method
+  matrix with verbatim refusals; `api/_lib/solana/connection.js` routes per-method
+  capability (`blockedMethods`) with `tests/solana-rpc-method-capability.test.js`; healthz
+  `rpc_lanes.lanes[]` exposes `recoversAt` / `recoversIn`; `docs/ops/solana-rpc-lanes.md`
+  documents the matrix and the `getHealth` trap; changelog 2026-08-02. This log never had an
+  entry for 02; the code shipped in `893c9f49d` and `801be9857`.
+- 03 Sponsor runway: `api/_lib/x402/sponsor-runway.js` (`measureSponsorBurn`,
+  `formatSponsorRunwayAlert`) with `tests/x402-sponsor-runway.test.js` and
+  `tests/x402-sponsor-runway-monitor.test.js`; `x402-settle-health.js` separates
+  `sponsor_floor` from `rail` and healthz reports `cause: sponsor_floor` today; failed
+  reclaims write `inflow_failed` ledger rows (71,998 present); `docs/ops/payment-outcomes.md`
+  "The runway alert"; changelog 2026-08-01.
+- 04 Benchmark run: `GET /api/fact-check-benchmark` answers `ran: true`,
+  `source: "database"`, 40 claims, generated 2026-08-10; `docs/fact-check.md` documents the
+  bypass; changelog 2026-08-02 (two entries). Observation for the next accuracy pass: the
+  weekly cron's lock key was touched 2026-08-31 but `latest_run` has not advanced since
+  2026-08-10, and the live score is 40%, not the 55% recorded above.
+- 06 LLM lanes: `tests/api/llm-free-chain-reachability.test.js` injects transport failures
+  on every free rung; `scripts/audit-llm-metering.mjs` + `api/_lib/llm-metering-rule.js`
+  fail a lane that reports $0 with traffic; `docs/ops/llm-lanes.md` carries the key-arrival
+  command and the corrected Vertex Claude status; the OpenRouter Claude mirror is behind
+  `isPaidModel()` and off by default; changelog 2026-08-02. Owner rows unchanged
+  (Model Garden terms, OpenAI billing, OpenRouter funding, revoke fallback key #1).
+
+Kept, with the measured reason:
+
+- 01: `x402_settle` 5.9% with `cause: sponsor_floor`; `fee_runway_exhausted` is 98% of
+  failures since boot. The recurrence guard, fee admission, key rotation and their tests are
+  all live. Still open in code: `reclaimIdleAgentSol` in `api/_lib/economy-sweepback.js`
+  returns the dry-run plan before `recoverSolanaAgentKeypair` runs, so the plan still counts
+  sealed wallets. Owner: fund the sponsor wallet.
+- 05: `ISSUES.md` item 9 still open; `scripts/set-r2-cors.mjs` is ready; needs the R2 admin
+  token in `.env.local`.
+- 07: testnet config endpoint answers `deployed: false`; `contracts/.env` does not exist, so
+  the 2026-08-02 throwaway deployer has no key here and its on-chain balance is zero. Any
+  funding must go to a freshly generated key.
+- 08: the chat-bot worker directory is committed with its Cloud Run config and 29 tests;
+  `bot_heartbeat` has no row for it and healthz reports "no heartbeat reported yet", so the
+  host has never run. Owner: the deploy, the OTP login, an AI-provider key on the service.
+- 09: premise is a sibling repository that is not present in this workspace; unverifiable
+  from here. The 2026-08-01 entry above claims both feeds run on Cloud Run; nothing in this
+  repo can confirm or refute that.
+- 10: upstream pull request merged 2026-08-11 (state MERGED, checks green); live
+  `/discovery/resources` paging and `/supported` match what it registered. Verified shipped.
+  The file's content and this pack's index row sit behind the CLAUDE.md commit gate, so the
+  deletion waits for the owner's yes; nothing else remains.
