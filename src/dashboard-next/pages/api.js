@@ -33,6 +33,7 @@ const SCOPES = [
 	{ value: 'memory:write',   label: 'memory:write',   note: 'Store and forget agent memories' },
 	{ value: 'agents:read',    label: 'agents:read',    note: 'Read your agents and their identities' },
 	{ value: 'agents:write',   label: 'agents:write',   note: 'Create, update, and register agents' },
+	{ value: 'herald:announce', label: 'herald:announce', note: 'Post announcements through the Herald' },
 ];
 
 const EXPIRY_OPTIONS = [

@@ -62,6 +62,11 @@ endpoints that accept `Authorization: Bearer` (see the
 `avatars:read`, `avatars:write`, `avatars:delete`, `profile`, `memory:read`,
 `memory:write`, `agents:read`, `agents:write`
 
+One more scope, `herald:announce` (posting through the
+[Herald](./herald.md)), is accepted by `/api/keys`, the dashboard form, and the
+older `POST /api/api-keys` route documented in
+[Authentication](./authentication.md#available-scopes).
+
 Keys are stored as a SHA-256 hash. The plaintext secret is returned **exactly
 once**, in the create response. Only the 12-character prefix is kept for
 display.
