@@ -57,7 +57,7 @@ const DECAY = {
 	patience: 0.035, // half-life ~20s — sustained waiting state
 	curiosity: 0.12, // half-life ~8s  — alert, engaged
 	empathy: 0.055, // half-life ~13s — slow to fade, like real empathy
-	uncertain: 0.10, // half-life ~7s  — hedged speech signal
+	uncertain: 0.1, // half-life ~7s  — hedged speech signal
 };
 
 // Vocabulary scored for emotional valence
@@ -262,7 +262,15 @@ export class AgentAvatar {
 	/** Call after viewer.setContent() loads the avatar model */
 	attach() {
 		// Reset emotion to neutral so re-attaching a previously emotional avatar starts clean
-		this._emotion = { neutral: 1.0, concern: 0, celebration: 0, patience: 0, curiosity: 0, empathy: 0, uncertain: 0 };
+		this._emotion = {
+			neutral: 1.0,
+			concern: 0,
+			celebration: 0,
+			patience: 0,
+			curiosity: 0,
+			empathy: 0,
+			uncertain: 0,
+		};
 
 		// Build the morph mesh cache once instead of traversing every frame
 		this._buildMorphCache();
@@ -355,7 +363,9 @@ export class AgentAvatar {
 		this._lipSync?.disconnect();
 		this._lipSync = null;
 		if (this._positionalAudio) {
-			try { this._positionalAudio.disconnect(); } catch {}
+			try {
+				this._positionalAudio.disconnect();
+			} catch {}
 			this._positionalAudio.parent?.remove(this._positionalAudio);
 			this._positionalAudio = null;
 		}
@@ -441,7 +451,7 @@ export class AgentAvatar {
 			if (name in this._morphTarget) this._morphTarget[name] = 0;
 		}
 		this._morphTarget['mouthOpen'] = 0;
-		this._morphTarget['jawOpen']   = 0;
+		this._morphTarget['jawOpen'] = 0;
 		// Drop out of the talk state. If the avatar was in walk before speaking,
 		// the state machine's return-stack restores it (see AnimationStateMachine).
 		this._sm?.fire('speak-end');
@@ -594,9 +604,7 @@ export class AgentAvatar {
 			// by LOAD_START can land before any def exists. That is not a
 			// missing clip; skip the warning and take the embedded fallback.
 			if (am.getAnimationDefs().length > 0 && !this._warnedSlots.has(clipName)) {
-				log.warn(
-					`[AgentAvatar] slot "${slot}" → "${clipName}" not in animation library`,
-				);
+				log.warn(`[AgentAvatar] slot "${slot}" → "${clipName}" not in animation library`);
 				this._warnedSlots.add(clipName);
 			}
 			const fallback = DEFAULT_ANIMATION_MAP[slot];
@@ -696,6 +704,28 @@ export class AgentAvatar {
 		return !!this._signLanguage;
 	}
 
+	/**
+	 * Sign one piece of text on demand, independent of any conversation.
+	 * Enables the engine on first use (so a caller does not have to set the
+	 * attribute first) and resolves with { signed, spelled } once the motion
+	 * finishes, or null when the rig cannot sign (no finger bones).
+	 *
+	 * This is the entry point for captions, accessibility overlays, and any
+	 * surface that has its own text and wants it performed in ASL rather than
+	 * waiting for an assistant reply.
+	 *
+	 * @param {string} text
+	 * @returns {Promise<{ signed: string[], spelled: string[] } | null>}
+	 */
+	async sign(text) {
+		if (!text) return null;
+		if (!this._signSpeaker) {
+			const enabled = await this.setSignLanguage(true);
+			if (!enabled) return null;
+		}
+		return this._signSpeaker.speak(text);
+	}
+
 	// ── Protocol Handlers ─────────────────────────────────────────────────────
 
 	_onSpeak(action) {
@@ -712,7 +742,8 @@ export class AgentAvatar {
 
 		// Hedging language → uncertain
 		const uncertainScore = this._scoreVocab(text, 'uncertain');
-		if (uncertainScore > 0) this._injectStimulus('uncertain', Math.min(uncertainScore * 0.4, 0.8));
+		if (uncertainScore > 0)
+			this._injectStimulus('uncertain', Math.min(uncertainScore * 0.4, 0.8));
 
 		// Trigger mouth/talk animation hint
 		const duration = Math.max(1.5, text.split(' ').length * 0.3);
@@ -971,10 +1002,16 @@ export class AgentAvatar {
 				// other gesture, so `meta.edits.animations` overrides still apply and
 				// an unregistered clip name can never be selected.
 				const { valence, arousal } = this._moodApplied;
-				if (valence > MOOD_GESTURE_THRESHOLD.positiveValence && arousal > MOOD_GESTURE_THRESHOLD.energeticArousal) {
+				if (
+					valence > MOOD_GESTURE_THRESHOLD.positiveValence &&
+					arousal > MOOD_GESTURE_THRESHOLD.energeticArousal
+				) {
 					// Sustained up + energetic mood → lively, energetic body language.
 					this._playSlot('celebrate', 2.5);
-				} else if (valence < -MOOD_GESTURE_THRESHOLD.positiveValence && arousal < MOOD_GESTURE_THRESHOLD.calmArousal) {
+				} else if (
+					valence < -MOOD_GESTURE_THRESHOLD.positiveValence &&
+					arousal < MOOD_GESTURE_THRESHOLD.calmArousal
+				) {
 					// Sustained down + subdued mood → concerned stillness — the
 					// opposite bias, never the energetic gesture.
 					this._playSlot('concern', 2.5);
@@ -1034,7 +1071,10 @@ export class AgentAvatar {
 		this._setMorphTarget('mouthFrown', w.concern * 0.55);
 		this._setMorphTarget('mouthPressLeft', w.uncertain * 0.35);
 		this._setMorphTarget('mouthPressRight', w.uncertain * 0.35);
-		this._setMorphTarget('browInnerUp', Math.max(w.concern * 0.6, w.uncertain * 0.45, w.empathy * 0.5));
+		this._setMorphTarget(
+			'browInnerUp',
+			Math.max(w.concern * 0.6, w.uncertain * 0.45, w.empathy * 0.5),
+		);
 		this._setMorphTarget('browOuterUpLeft', w.curiosity * 0.7);
 		this._setMorphTarget('browOuterUpRight', w.curiosity * 0.5);
 		this._setMorphTarget('eyeSquintLeft', w.empathy * 0.4);
@@ -1460,7 +1500,6 @@ export class AgentAvatar {
 		};
 	}
 
-
 	/**
 	 * Score a single emotion bucket against the text.
 	 * Mirrors the per-bucket logic inside _analyzeSentiment.
@@ -1487,7 +1526,6 @@ export class AgentAvatar {
 		this.protocol.on(type, handler);
 		this._listeners.push([type, handler]);
 	}
-
 }
 
 function _lerp(a, b, t) {

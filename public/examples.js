@@ -19,40 +19,34 @@ const LANES = [
 		id: 'avatars',
 		label: 'Avatars & embeds',
 		heading: 'Put a body on any page',
-		blurb:
-			'One script tag turns a GLB into a rendered, animated, conversational avatar. These are the embed shapes: inline viewer, talking agent, floating support bubble, your own chat UI, and iframe widgets for platforms that block scripts.',
+		blurb: 'One script tag turns a GLB into a rendered, animated, conversational avatar. These are the embed shapes: inline viewer, talking agent, floating support bubble, your own chat UI, and iframe widgets for platforms that block scripts.',
 	},
 	{
 		id: 'models',
 		label: '3D models',
 		heading: 'Make, inspect, and animate the 3D itself',
-		blurb:
-			'The model pipeline is a public API. Generate a mesh from a sentence on the free lane, measure any GLB against a triangle budget before it ships, drive a 112-clip animation library, and read the live feed of models autonomous agents paid for.',
+		blurb: 'The model pipeline is a public API. Generate a mesh from a sentence on the free lane, measure any GLB against a triangle budget before it ships, drive a 112-clip animation library, and read the live feed of models autonomous agents paid for.',
 	},
 	{
 		id: 'agents',
 		label: 'Agents',
 		heading: 'An agent is a file, not a framework',
-		blurb:
-			'A manifest declares the body, the brain, the voice, the memory policy, and the installed skills. Point the element at that file and the agent boots, including capabilities most stacks have no answer for, like signing every reply in ASL.',
+		blurb: 'A manifest declares the body, the brain, the voice, the memory policy, and the installed skills. Point the element at that file and the agent boots, including capabilities most stacks have no answer for, like signing every reply in ASL.',
 	},
 	{
 		id: 'economy',
 		label: 'Agent economy',
 		heading: 'Agents that discover, pay, and launch',
-		blurb:
-			'Machine-payable endpoints answer an unpaid request with the exact price, network, and asset an agent needs to settle. These snippets read that handshake and the platform launch record without spending anything.',
+		blurb: 'Machine-payable endpoints answer an unpaid request with the exact price, network, and asset an agent needs to settle. These snippets read that handshake and the platform launch record without spending anything.',
 	},
 ];
 
 const EXAMPLES = [
-
 	{
 		id: 'minimal-viewer',
 		lane: 'avatars',
 		title: 'Minimal viewer',
-		blurb:
-			'One script tag, one element, zero build step. Drag to rotate, scroll to zoom, full PBR rendering. No API key, no account.',
+		blurb: 'One script tag, one element, zero build step. Drag to rotate, scroll to zoom, full PBR rendering. No API key, no account.',
 		tags: ['viewer', 'no-build'],
 		docs: [
 			{ label: 'Web component docs', href: '/docs/web-component' },
@@ -81,8 +75,7 @@ const EXAMPLES = [
 		id: 'talking-agent',
 		lane: 'avatars',
 		title: 'Talking agent, inline instructions',
-		blurb:
-			'Add brain and instructions attributes and the viewer becomes a conversational agent. The chat input and mic button appear automatically.',
+		blurb: 'Add brain and instructions attributes and the viewer becomes a conversational agent. The chat input and mic button appear automatically.',
 		tags: ['agent', 'chat', 'llm'],
 		docs: [
 			{ label: 'Agent system docs', href: '/docs/agent-system' },
@@ -119,8 +112,7 @@ const EXAMPLES = [
 		id: 'floating-bubble',
 		lane: 'avatars',
 		title: 'Floating bubble (support widget)',
-		blurb:
-			'Pin the agent to a corner so it persists as users scroll. position accepts bottom-right, bottom-left, top-right, or top-left.',
+		blurb: 'Pin the agent to a corner so it persists as users scroll. position accepts bottom-right, bottom-left, top-right, or top-left.',
 		tags: ['agent', 'widget'],
 		docs: [
 			{ label: 'Embed on your website', href: '/tutorials/embed-on-website' },
@@ -157,12 +149,14 @@ const EXAMPLES = [
 		id: 'custom-chat-ui',
 		lane: 'avatars',
 		title: 'Custom chat UI over the JS API',
-		blurb:
-			'Hide the built-in chrome with kiosk mode and drive the agent from your own input using say(), events, and the rest of the element API.',
+		blurb: 'Hide the built-in chrome with kiosk mode and drive the agent from your own input using say(), events, and the rest of the element API.',
 		tags: ['agent', 'js-api'],
 		docs: [
 			{ label: 'JS API and events', href: '/tutorials/js-api-events' },
-			{ label: 'Embed spec', href: 'https://github.com/nirholas/three.ws/blob/main/specs/EMBED_SPEC.md' },
+			{
+				label: 'Embed spec',
+				href: 'https://github.com/nirholas/three.ws/blob/main/specs/EMBED_SPEC.md',
+			},
 		],
 		github: 'https://github.com/nirholas/three.ws/blob/main/examples/two-agents.html',
 		height: 700,
@@ -174,7 +168,7 @@ const EXAMPLES = [
 			body { margin: 0; background: #0a0a0a; color: #e8e8ee;
 				font-family: system-ui, sans-serif; display: grid;
 				place-items: center; min-height: 100vh; gap: 12px; }
-			.row { display: flex; gap: 8px; }
+			.row { display: flex; gap: 8px; position: relative; z-index: 1; }
 			input { padding: 10px 12px; border-radius: 8px; border: 1px solid #333;
 				background: #16161c; color: inherit; width: 280px; }
 			button { padding: 10px 16px; border-radius: 8px; border: 0;
@@ -212,8 +206,7 @@ const EXAMPLES = [
 		id: 'iframe-widget',
 		lane: 'avatars',
 		title: 'iframe widget (Notion, Substack, Webflow)',
-		blurb:
-			'No script tag at all: a widget URL in a plain iframe. Generate the src from Widget Studio, then paste it anywhere iframes are allowed.',
+		blurb: 'No script tag at all: a widget URL in a plain iframe. Generate the src from Widget Studio, then paste it anywhere iframes are allowed.',
 		tags: ['widget', 'iframe'],
 		docs: [
 			{ label: 'Widget Studio', href: '/studio' },
@@ -246,8 +239,7 @@ const EXAMPLES = [
 		id: 'copy-paste-widget',
 		lane: 'avatars',
 		title: 'Dead-simple copy-paste widget',
-		blurb:
-			'The loader mounts a rotatable 3D viewer into every [data-agent-id] element on the page. Great for WordPress, Ghost, or any static site.',
+		blurb: 'The loader mounts a rotatable 3D viewer into every [data-agent-id] element on the page. Great for WordPress, Ghost, or any static site.',
 		tags: ['widget', 'no-build'],
 		docs: [
 			{ label: 'Embed editor', href: '/embed' },
@@ -269,12 +261,12 @@ const EXAMPLES = [
 		<script type="module" src="https://three.ws/artifact.js"><\/script>
 	</body>
 </html>`,
-	},	{
+	},
+	{
 		id: 'text-to-3d',
 		lane: 'models',
 		title: 'Text to a real 3D model, free',
-		blurb:
-			'Type a sentence, get a textured GLB back, and render it in the viewer on the same page. Public endpoint, CORS-open, no key and no account: 10 generations per IP per day on the free NVIDIA lane. This is the whole pipeline in one file.',
+		blurb: 'Type a sentence, get a textured GLB back, and render it in the viewer on the same page. Public endpoint, CORS-open, no key and no account: 10 generations per IP per day on the free NVIDIA lane. This is the whole pipeline in one file.',
 		tags: ['forge', 'api', 'free'],
 		docs: [
 			{ label: 'Text to 3D API', href: '/docs/api-reference#ai-api--text3d' },
@@ -378,8 +370,7 @@ const EXAMPLES = [
 		id: 'animation-library',
 		lane: 'models',
 		title: 'The whole animation library, on any rig',
-		blurb:
-			'The clip manifest is public. Fetch it, build a control for every clip, and play them on a loaded avatar. Clips are retargeted onto whatever skeleton the GLB carries, so the same library drives a Mixamo rig, a VRM, an Avaturn scan, or a mesh you generated a minute ago.',
+		blurb: 'The clip manifest is public. Fetch it, build a control for every clip, and play them on a loaded avatar. Clips are retargeted onto whatever skeleton the GLB carries, so the same library drives a Mixamo rig, a VRM, an Avaturn scan, or a mesh you generated a minute ago.',
 		tags: ['animation', 'api'],
 		docs: [
 			{ label: 'Web component API', href: '/docs/web-component' },
@@ -397,7 +388,7 @@ const EXAMPLES = [
 				font-family: system-ui, sans-serif; padding: 24px;
 				display: grid; gap: 14px; align-content: start; }
 			#clips { display: flex; flex-wrap: wrap; gap: 6px; max-height: 132px;
-				overflow-y: auto; }
+				overflow-y: auto; position: relative; z-index: 1; }
 			#clips button { padding: 6px 12px; border-radius: 999px; cursor: pointer;
 				border: 1px solid #333; background: #16161c; color: inherit;
 				font: inherit; font-size: 13px; }
@@ -447,12 +438,14 @@ const EXAMPLES = [
 		id: 'inspect-glb',
 		lane: 'models',
 		title: 'Measure a GLB before you ship it',
-		blurb:
-			'Paste any GLB URL and read its real geometry: triangles, materials, textures, skins, and the glTF extensions it depends on. This is the check to run in CI so an asset that blows the triangle budget fails the build instead of the frame rate.',
+		blurb: 'Paste any GLB URL and read its real geometry: triangles, materials, textures, skins, and the glTF extensions it depends on. This is the check to run in CI so an asset that blows the triangle budget fails the build instead of the frame rate.',
 		tags: ['quality', 'api', 'ci'],
 		docs: [
 			{ label: 'Gate 3D assets in CI', href: '/cookbook/asset-quality-gate' },
-			{ label: 'Quality check API', href: '/docs/api-reference#model-quality-gate--postapiforge-quality-check' },
+			{
+				label: 'Quality check API',
+				href: '/docs/api-reference#model-quality-gate--postapiforge-quality-check',
+			},
 		],
 		github: 'https://github.com/nirholas/three.ws/blob/main/api/3d/inspect.js',
 		height: 520,
@@ -490,8 +483,8 @@ const EXAMPLES = [
 			// Your budget. Fail the build when a model busts it.
 			var MAX_TRIANGLES = 60000;
 
-			document.getElementById('check').addEventListener('submit', async function (event) {
-				event.preventDefault();
+			async function inspect(event) {
+				if (event) event.preventDefault();
 				var verdict = document.getElementById('verdict');
 				var stats = document.getElementById('stats');
 				verdict.textContent = 'Reading the file...';
@@ -523,7 +516,10 @@ const EXAMPLES = [
 					verdict.textContent = 'Failed: ' + err.message;
 					verdict.className = 'verdict fail';
 				}
-			});
+			}
+
+			document.getElementById('check').addEventListener('submit', inspect);
+			inspect();
 		<\/script>
 	</body>
 </html>`,
@@ -532,12 +528,14 @@ const EXAMPLES = [
 		id: 'agent-forged',
 		lane: 'models',
 		title: 'The models agents bought with their own money',
-		blurb:
-			'A live feed of meshes that autonomous agents commissioned by paying for them over x402: the prompt, the price in USDC, the payer wallet, and the settled transaction. No human pressed a button for any of these.',
+		blurb: 'A live feed of meshes that autonomous agents commissioned by paying for them over x402: the prompt, the price in USDC, the payer wallet, and the settled transaction. No human pressed a button for any of these.',
 		tags: ['x402', 'api', 'live'],
 		docs: [
 			{ label: 'Agent-forged gallery', href: '/forged' },
-			{ label: 'Forged feed API', href: '/docs/api-reference#agent-forged-gallery-feed--getapiforged' },
+			{
+				label: 'Forged feed API',
+				href: '/docs/api-reference#agent-forged-gallery-feed--getapiforged',
+			},
 		],
 		github: 'https://github.com/nirholas/three.ws/blob/main/api/forged.js',
 		height: 540,
@@ -600,15 +598,17 @@ const EXAMPLES = [
 		id: 'agent-from-files',
 		lane: 'agents',
 		title: 'An agent defined entirely as files',
-		blurb:
-			'No SDK, no build step, no backend. A manifest declares the body GLB, the brain and its system prompt, the voice, the memory policy, and the skills to install; the element loads it and boots the agent. Copy the directory, swap the GLB, rewrite the prompt: that is the whole authoring model.',
+		blurb: 'No SDK, no build step, no backend. A manifest declares the body GLB, the brain and its system prompt, the voice, the memory policy, and the skills to install; the element loads it and boots the agent. Copy the directory, swap the GLB, rewrite the prompt: that is the whole authoring model.',
 		tags: ['manifest', 'agent'],
 		docs: [
-			{ label: 'Manifest spec', href: 'https://github.com/nirholas/three.ws/blob/main/specs/AGENT_MANIFEST.md' },
+			{
+				label: 'Manifest spec',
+				href: 'https://github.com/nirholas/three.ws/blob/main/specs/AGENT_MANIFEST.md',
+			},
 			{ label: 'Build your first agent', href: '/walkthroughs/build-your-first-agent' },
 		],
 		github: 'https://github.com/nirholas/three.ws/tree/main/examples/coach-leo',
-		height: 620,
+		height: 700,
 		code: `<!doctype html>
 <html lang="en">
 	<head>
@@ -624,14 +624,6 @@ const EXAMPLES = [
 		</style>
 	</head>
 	<body>
-		<script type="module" src="${CDN}"><\/script>
-		<agent-3d
-			manifest="${API}/examples/coach-leo/manifest.json"
-			mode="inline"
-			width="380px"
-			height="480px"
-			eager
-		></agent-3d>
 		<pre>manifest.json
   body     -> a Mixamo-rigged GLB
   brain    -> model + instructions.md
@@ -641,6 +633,14 @@ const EXAMPLES = [
 		<a href="${API}/examples/coach-leo/manifest.json" target="_blank" rel="noopener"
 			>Read the manifest this page just loaded</a
 		>
+		<script type="module" src="${CDN}"><\/script>
+		<agent-3d
+			manifest="${API}/examples/coach-leo/manifest.json"
+			mode="inline"
+			width="380px"
+			height="480px"
+			eager
+		></agent-3d>
 	</body>
 </html>`,
 	},
@@ -648,8 +648,7 @@ const EXAMPLES = [
 		id: 'sign-language',
 		lane: 'agents',
 		title: 'An avatar that signs in ASL',
-		blurb:
-			'One boolean attribute and every reply is signed in American Sign Language: words in the lexicon are signed, everything else is fingerspelled, in one continuous motion. A rig without finger bones is refused with an explanation rather than signing something wrong.',
+		blurb: 'One boolean attribute and every assistant reply is signed in American Sign Language; sign() performs text you supply yourself, for captions and accessibility overlays. Words in the lexicon are signed, everything else is fingerspelled, in one continuous motion, and the call reports which words went each way. A rig with no finger bones returns null instead of signing something wrong.',
 		tags: ['accessibility', 'animation'],
 		docs: [
 			{ label: 'Sign language engine', href: '/docs/sign-language' },
@@ -666,11 +665,13 @@ const EXAMPLES = [
 			body { margin: 0; min-height: 100vh; background: #0a0a0a; color: #e8e8ee;
 				font-family: system-ui, sans-serif; display: grid;
 				place-items: center; gap: 12px; padding: 24px; }
-			.row { display: flex; gap: 8px; }
+			.row { display: flex; gap: 8px; position: relative; z-index: 1; }
 			input { padding: 10px 12px; border-radius: 8px; border: 1px solid #333;
 				background: #16161c; color: inherit; width: 280px; }
 			button { padding: 10px 16px; border-radius: 8px; border: 0;
 				background: #fff; color: #000; font-weight: 600; cursor: pointer; }
+			#report { margin: 0; color: #9a9aa4; font-size: 13px; min-height: 18px;
+				max-width: 460px; text-align: center; }
 		</style>
 	</head>
 	<body>
@@ -679,17 +680,25 @@ const EXAMPLES = [
 			style="width:400px;height:480px;display:block"></agent-3d>
 		<div class="row">
 			<input id="phrase" value="hello friend" aria-label="Text to sign" />
-			<button id="sign" type="button">Sign it</button>
+			<button id="go" type="button">Sign it</button>
 		</div>
+		<p id="report"></p>
 		<script>
 			var signer = document.getElementById('signer');
 			var phrase = document.getElementById('phrase');
-			function sign() {
-				// speak() drives the body without sending anything to a brain, so
-				// the signing runs on text you supply.
-				signer.speak(phrase.value);
+			var report = document.getElementById('report');
+
+			async function sign() {
+				report.textContent = 'Compiling the utterance...';
+				// sign() performs text you supply: no brain, no round trip.
+				var result = await signer.sign(phrase.value);
+				report.textContent = result
+					? 'signed: ' + (result.signed.join(', ') || 'none') +
+						' · fingerspelled: ' + (result.spelled.join(', ') || 'none')
+					: 'This rig has no finger bones, so it will not sign.';
 			}
-			document.getElementById('sign').addEventListener('click', sign);
+
+			document.getElementById('go').addEventListener('click', sign);
 			phrase.addEventListener('keydown', function (event) {
 				if (event.key === 'Enter') sign();
 			});
@@ -701,12 +710,14 @@ const EXAMPLES = [
 		id: 'x402-handshake',
 		lane: 'economy',
 		title: 'Ask a paid endpoint what it charges',
-		blurb:
-			'Call a machine-payable endpoint with no payment and it answers 402 with the price, the network, the asset, and the address to pay: everything an autonomous buyer needs to decide and settle without a human. This snippet reads that answer and spends nothing.',
+		blurb: 'Call a machine-payable endpoint with no payment and it answers 402 with the price, the network, the asset, and the address to pay: everything an autonomous buyer needs to decide and settle without a human. This snippet reads that answer and spends nothing.',
 		tags: ['x402', 'payments', 'api'],
 		docs: [
 			{ label: 'x402 on three.ws', href: '/x402' },
-			{ label: 'Paid endpoints', href: '/docs/api-reference#x402-paid-endpoints--sign-in-with-x-siwx' },
+			{
+				label: 'Paid endpoints',
+				href: '/docs/api-reference#x402-paid-endpoints--sign-in-with-x-siwx',
+			},
 		],
 		github: 'https://github.com/nirholas/three.ws/blob/main/api/x402/forge.js',
 		height: 520,
@@ -743,13 +754,20 @@ const EXAMPLES = [
 					document.getElementById('status').innerHTML =
 						'HTTP <code>' + res.status + '</code>: the endpoint quoted its terms.';
 					var accepts = (body.accepts || [])[0] || {};
+					var extra = accepts.extra || {};
+					// amount is in the asset's base units; decimals makes it human.
+					var decimals = Number(extra.decimals || 0);
+					var price = accepts.amount
+						? (Number(accepts.amount) / Math.pow(10, decimals)) + ' ' + (extra.name || 'units')
+						: null;
 					var rows = {
 						resource: body.resource && body.resource.url,
-						price: accepts.maxAmountRequired,
+						price: price,
 						asset: accepts.asset,
 						network: accepts.network,
 						'pay to': accepts.payTo,
 						scheme: accepts.scheme,
+						'settle within': accepts.maxTimeoutSeconds ? accepts.maxTimeoutSeconds + 's' : null,
 						'x402 version': body.x402Version
 					};
 					var table = document.createElement('table');
@@ -773,8 +791,7 @@ const EXAMPLES = [
 		id: 'platform-launches',
 		lane: 'economy',
 		title: 'Coins launched through the platform',
-		blurb:
-			'Agents can mint a token as part of their own workflow. This reads the platform launch record: every mint created through three.ws, straight from the production API, with a link to its on-chain page.',
+		blurb: 'Agents can mint a token as part of their own workflow. This reads the platform launch record: every mint created through three.ws, straight from the production API, with a link to its on-chain page.',
 		tags: ['solana', 'api', 'live'],
 		docs: [
 			{ label: 'Launches', href: '/launches' },
@@ -976,7 +993,12 @@ if (root) {
 	const populated = LANES.filter((lane) => counts.get(lane.id));
 	root.appendChild(laneNav(populated, counts));
 	for (const lane of populated) {
-		root.appendChild(laneSection(lane, EXAMPLES.filter((ex) => ex.lane === lane.id)));
+		root.appendChild(
+			laneSection(
+				lane,
+				EXAMPLES.filter((ex) => ex.lane === lane.id),
+			),
+		);
 	}
 }
 

@@ -81,6 +81,108 @@
 	margin-top: 40px;
 }
 
+/* Lane nav: a sticky jump list over the four capability lanes. Every card stays
+   in the document, so deep links and in-page search keep working. */
+.exg-lane-nav {
+	position: sticky;
+	top: 0;
+	z-index: 2;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 36px;
+	padding: 12px 0;
+	background: linear-gradient(to bottom, var(--bg, #0a0a0a) 72%, rgba(10, 10, 10, 0));
+	backdrop-filter: blur(6px);
+	/* The band spans the column and sits over whatever scrolls under it,
+	   including a running example. Only the pills themselves take clicks. */
+	pointer-events: none;
+}
+
+.exg-lane-link {
+	pointer-events: auto;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 14px;
+	border: 1px solid var(--border, #26262e);
+	border-radius: 999px;
+	color: var(--text, #ececf2);
+	text-decoration: none;
+	font-size: 14px;
+	transition:
+		border-color 0.15s ease,
+		background 0.15s ease,
+		transform 0.1s ease;
+}
+
+.exg-lane-link:hover {
+	border-color: #7c8cff;
+	background: var(--surface, rgba(255, 255, 255, 0.04));
+}
+
+.exg-lane-link:active {
+	transform: translateY(1px);
+}
+
+.exg-lane-link:focus-visible {
+	outline: 2px solid #7c8cff;
+	outline-offset: 2px;
+}
+
+.exg-lane-link-count {
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+	color: var(--text-dim, #9a9aa4);
+	border: 1px solid var(--border, #26262e);
+	border-radius: 999px;
+	padding: 1px 7px;
+}
+
+.exg-lane {
+	margin-top: 56px;
+	scroll-margin-top: 72px;
+}
+
+.exg-lane-head {
+	border-top: 1px solid var(--border, #26262e);
+	padding-top: 28px;
+}
+
+.exg-lane-label {
+	margin: 0;
+	font-size: 12px;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: #7c8cff;
+}
+
+.exg-lane-title {
+	font-family: var(--font-display, inherit);
+	font-size: clamp(24px, 3.4vw, 32px);
+	line-height: 1.15;
+	letter-spacing: -0.02em;
+	margin: 10px 0 10px;
+}
+
+.exg-lane-blurb {
+	margin: 0;
+	max-width: 68ch;
+	color: var(--text-dim, #9a9aa4);
+	line-height: 1.65;
+}
+
+.exg-card {
+	scroll-margin-top: 80px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.exg-lane-link,
+	.exg-btn {
+		transition: none;
+	}
+}
+
 .exg-card {
 	border: 1px solid var(--border, #26262e);
 	border-radius: 16px;
@@ -712,4 +814,8 @@ html[data-theme='light'] .exg-card {
 html[data-theme='light'] .exg-btn--primary {
 	background: #111;
 	color: #fff;
+}
+
+.exg-lane .exg-grid {
+	margin-top: 24px;
 }

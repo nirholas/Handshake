@@ -26,10 +26,7 @@ const OUT_DIR = join(root, 'public/examples');
 const TREES = ['examples/coach-leo', 'examples/skills/wave'];
 
 // Manifest fields that must be absolute for an off-site embed to resolve them.
-const ABSOLUTE_FIELDS = [
-	['body', 'uri'],
-	['image'],
-];
+const ABSOLUTE_FIELDS = [['body', 'uri'], ['image']];
 
 // README.md is written for a repository reader and nothing at runtime fetches
 // it, so it stays out of the published tree.

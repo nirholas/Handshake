@@ -50,18 +50,14 @@ const FREE_BRAIN_MODEL = 'openai/gpt-oss-20b:free';
 // user is actually looking at is never evicted.
 const MAX_LIVE_VIEWERS = (() => {
 	try {
-		const n = Number(
-			typeof window !== 'undefined' ? window.AGENT3D_MAX_LIVE_VIEWERS : 0,
-		);
+		const n = Number(typeof window !== 'undefined' ? window.AGENT3D_MAX_LIVE_VIEWERS : 0);
 		if (Number.isFinite(n) && n > 0) return Math.floor(n);
 	} catch {}
 	return 8;
 })();
 const _liveViewers = new Set();
 const _nowMs = () =>
-	typeof performance !== 'undefined' && performance.now
-		? performance.now()
-		: Date.now();
+	typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
 
 function _trackLiveViewer(el) {
 	_liveViewers.add(el);
@@ -79,9 +75,7 @@ function _untrackLiveViewer(el) {
 function _effectiveViewerBudget() {
 	let reserved = 0;
 	try {
-		const n = Number(
-			typeof window !== 'undefined' ? window.__agent3dReservedContexts : 0,
-		);
+		const n = Number(typeof window !== 'undefined' ? window.__agent3dReservedContexts : 0);
 		if (Number.isFinite(n) && n > 0) reserved = Math.floor(n);
 	} catch {}
 	return Math.max(1, MAX_LIVE_VIEWERS - reserved);
@@ -559,6 +553,23 @@ const BASE_STYLE = `
 	/* Kiosk mode: hide dat.GUI debug controls entirely */
 	:host([kiosk]) .gui-wrap { display: none !important; }
 	:host([kiosk]) .gui-toggle { display: none !important; }
+	/* Model-info overlay. src/model-info.js appends it to the viewer element, but
+	   its CSS lives in the page stylesheet (public/style.css), which a shadow root
+	   does not inherit. Unstyled it lays out as a STATIC block below the canvas:
+	   it overflows the element's declared height by its own ~250px and, being
+	   hit-testable, swallows every click on whatever the host page renders under
+	   the embed. Restore the overlay positioning here, and hide it wherever the
+	   other debug chrome is hidden. */
+	.model-info {
+		position: absolute;
+		bottom: 20px;
+		left: 20px;
+		z-index: 5;
+		pointer-events: none;
+	}
+	:host([data-bare]) .model-info { display: none !important; }
+	:host([kiosk]) .model-info { display: none !important; }
+	:host([viewer]) .model-info { display: none !important; }
 	/* Remove the dat.GUI color-picker hue strip globally — the saturation/value
 	   field carries the picker; the vertical hue knob is suppressed in-shadow too. */
 	.dg .cr.color .selector .hue-field,
@@ -765,7 +776,11 @@ class Agent3DElement extends HTMLElement {
 		this._teardown();
 		this._cleanupReducedMotion();
 		if (this._walletMount) {
-			try { this._walletMount.destroy(); } catch { /* already gone */ }
+			try {
+				this._walletMount.destroy();
+			} catch {
+				/* already gone */
+			}
 			this._walletMount = null;
 			this._walletAgentId = null;
 		}
@@ -977,14 +992,18 @@ class Agent3DElement extends HTMLElement {
 			this._thoughtTextEl = thoughtBubble.querySelector('.text');
 
 			// Walk when the chat is scrolling — user-initiated or auto
-			chat.addEventListener('scroll', () => {
-				if (
-					this.getAttribute('avatar-chat') !== 'off' &&
-					this.getAttribute('avatar-walk') !== 'off'
-				) {
-					this._onStreamChunk();
-				}
-			}, { passive: true });
+			chat.addEventListener(
+				'scroll',
+				() => {
+					if (
+						this.getAttribute('avatar-chat') !== 'off' &&
+						this.getAttribute('avatar-walk') !== 'off'
+					) {
+						this._onStreamChunk();
+					}
+				},
+				{ passive: true },
+			);
 
 			// Voice state ring — wired by VoiceClient when voice-server attr is set
 			this.addEventListener('voiceStateChange', (e) => {
@@ -1051,11 +1070,17 @@ class Agent3DElement extends HTMLElement {
 	_mountWalletAffordance() {
 		if (!this.hasAttribute('wallet') || !this.shadowRoot) return;
 		const agentId = this.getAttribute('agent-id') || this._manifest?.id?.agentId || '';
-		const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(agentId);
+		const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+			agentId,
+		);
 		if (!isUuid) return; // wait for a real id; boot will call us again
 		if (this._walletAgentId === agentId && this._walletMount) return;
 		if (this._walletMount) {
-			try { this._walletMount.destroy(); } catch { /* already gone */ }
+			try {
+				this._walletMount.destroy();
+			} catch {
+				/* already gone */
+			}
 			this._walletMount = null;
 			this._walletHostEl?.remove();
 		}
@@ -1064,7 +1089,10 @@ class Agent3DElement extends HTMLElement {
 		host.className = 'wallet-affordance';
 		host.part = 'wallet-affordance';
 		Object.assign(host.style, {
-			position: 'absolute', left: '10px', bottom: '10px', zIndex: '14',
+			position: 'absolute',
+			left: '10px',
+			bottom: '10px',
+			zIndex: '14',
 			maxWidth: 'calc(100% - 20px)',
 		});
 		this.shadowRoot.appendChild(host);
@@ -1084,7 +1112,9 @@ class Agent3DElement extends HTMLElement {
 					name: this._manifest?.name || this.getAttribute('name') || null,
 				});
 			})
-			.catch(() => { /* optional affordance — never break the viewer */ });
+			.catch(() => {
+				/* optional affordance — never break the viewer */
+			});
 	}
 
 	_renderSuggestions() {
@@ -1498,12 +1528,7 @@ class Agent3DElement extends HTMLElement {
 	}
 
 	_hasActiveSession() {
-		return !!(
-			this._livekitVoice ||
-			this._voiceClient ||
-			this._listening ||
-			this._pillActive
-		);
+		return !!(this._livekitVoice || this._voiceClient || this._listening || this._pillActive);
 	}
 
 	_releaseForBudget() {
@@ -1641,11 +1666,15 @@ class Agent3DElement extends HTMLElement {
 					} catch (err) {
 						bodyErr = err;
 						if (candidate !== bodyCandidates[bodyCandidates.length - 1]) {
-							console.warn('[agent-3d] body load failed on %s, trying the next gateway', candidate);
+							console.warn(
+								'[agent-3d] body load failed on %s, trying the next gateway',
+								candidate,
+							);
 						}
 					}
 				}
-				if (!loaded) throw bodyErr || new Error('avatar body could not be loaded from any gateway');
+				if (!loaded)
+					throw bodyErr || new Error('avatar body could not be loaded from any gateway');
 				// Ensure walk + idle are hot before the first brain:stream fires.
 				// setAnimationDefs above registered the defs; ensureLoaded now
 				// actually fetches the clips (or returns immediately if cached).
@@ -1748,10 +1777,9 @@ class Agent3DElement extends HTMLElement {
 			if (_backendId) {
 				try {
 					const detailBase = _scriptOrigin || window.location.origin;
-					const r = await fetch(
-						`${detailBase}/api/agents/${_backendId}/skill-access`,
-						{ credentials: 'include' },
-					);
+					const r = await fetch(`${detailBase}/api/agents/${_backendId}/skill-access`, {
+						credentials: 'include',
+					});
 					if (r.ok) {
 						const a = (await r.json())?.data;
 						if (a && (a.skill_prices || a.purchased_skills)) {
@@ -1813,7 +1841,7 @@ class Agent3DElement extends HTMLElement {
 				}
 
 				if (this._runtime.tts) {
-					const tts    = this._runtime.tts;
+					const tts = this._runtime.tts;
 					const avatar = this._avatar;
 					tts.onStart = () => {
 						if (tts.analyserNode) avatar.connectLipSync(tts.analyserNode);
@@ -1825,7 +1853,10 @@ class Agent3DElement extends HTMLElement {
 			} catch (e) {
 				// Empathy is non-essential — embed still works without it. Log so
 				// integrators can see the failure during development.
-				log.warn('[agent-3d] AgentAvatar attach failed; continuing without empathy/lipsync', e);
+				log.warn(
+					'[agent-3d] AgentAvatar attach failed; continuing without empathy/lipsync',
+					e,
+				);
 				this._avatar = null;
 			}
 
@@ -1901,7 +1932,8 @@ class Agent3DElement extends HTMLElement {
 								this._thoughtBubbleEl.dataset.active = 'true';
 								// Show "Thinking..." text immediately
 								this._thoughtBubbleEl.dataset.streaming = 'true';
-								if (this._thoughtTextEl) this._thoughtTextEl.textContent = 'Thinking...';
+								if (this._thoughtTextEl)
+									this._thoughtTextEl.textContent = 'Thinking...';
 							} else {
 								this._clearThoughtBubble();
 							}
@@ -1998,10 +2030,9 @@ class Agent3DElement extends HTMLElement {
 						// Refresh skillAccess so next call goes through without re-prompting.
 						try {
 							const base = _scriptOrigin || window.location.origin;
-							const r = await fetch(
-								`${base}/api/agents/${_backendId}/skill-access`,
-								{ credentials: 'include' },
-							);
+							const r = await fetch(`${base}/api/agents/${_backendId}/skill-access`, {
+								credentials: 'include',
+							});
 							if (r.ok) {
 								const a = (await r.json())?.data;
 								if (a) {
@@ -2009,9 +2040,13 @@ class Agent3DElement extends HTMLElement {
 								}
 							}
 						} catch {}
-						this.dispatchEvent(new CustomEvent('skill:purchased', {
-							detail: e.detail, bubbles: true, composed: true,
-						}));
+						this.dispatchEvent(
+							new CustomEvent('skill:purchased', {
+								detail: e.detail,
+								bubbles: true,
+								composed: true,
+							}),
+						);
 					}
 				});
 			}
@@ -2078,7 +2113,11 @@ class Agent3DElement extends HTMLElement {
 			// shows the error card, a bare decoration avatar shows its poster (or
 			// stays transparent). Both also emit agent:error below.
 			this._showError(err);
-			this._emit('agent:error', { phase: 'boot', error: err }, { bubbles: true, composed: true });
+			this._emit(
+				'agent:error',
+				{ phase: 'boot', error: err },
+				{ bubbles: true, composed: true },
+			);
 		} finally {
 			this._booting = false;
 		}
@@ -2123,10 +2162,7 @@ class Agent3DElement extends HTMLElement {
 			try {
 				return await resolveByAvatarId(avatarIdAttr, { origin: apiBase });
 			} catch (err) {
-				log.warn(
-					'[agent-3d] avatar-id resolve failed, using default avatar:',
-					err,
-				);
+				log.warn('[agent-3d] avatar-id resolve failed, using default avatar:', err);
 				return this._defaultFallbackManifest();
 			}
 		}
@@ -2295,8 +2331,11 @@ class Agent3DElement extends HTMLElement {
 			}
 			this._streamingMsgEl = msg.querySelector('.body');
 			this._chatAutoScroll = true;
-			if (!this._walkMovedX && this._scene?.viewer?.content &&
-					!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+			if (
+				!this._walkMovedX &&
+				this._scene?.viewer?.content &&
+				!window.matchMedia('(prefers-reduced-motion: reduce)').matches
+			) {
 				this._walkHomeX = this._scene.viewer.content.position.x;
 				this._walkMovedX = true;
 				this._scene.moveTo({ x: this._walkHomeX + 0.35 }, { duration: 900 });
@@ -2839,7 +2878,13 @@ class Agent3DElement extends HTMLElement {
 		} catch {}
 		this._mounted = false;
 		this._pillActive = false;
-		this._runtime = this._viewer = this._scene = this._memory = this._skills = this._avatar = null;
+		this._runtime =
+			this._viewer =
+			this._scene =
+			this._memory =
+			this._skills =
+			this._avatar =
+				null;
 	}
 
 	// --- Public JS API ---
@@ -2906,6 +2951,21 @@ class Agent3DElement extends HTMLElement {
 		sc.playAnimationByHint('talk', { duration }) ||
 			sc.playAnimationByHint('yes', { duration }) ||
 			sc.playAnimationByHint('wave', { duration });
+	}
+
+	/**
+	 * Perform `text` in American Sign Language on the avatar, without sending it
+	 * to a brain. Turns the engine on if the `sign-language` attribute has not
+	 * already, and resolves with `{ signed, spelled }` — which words came from
+	 * the lexicon and which fingerspelled — or `null` when the loaded rig has no
+	 * finger bones to sign with.
+	 *
+	 * @param {string} text
+	 * @returns {Promise<{ signed: string[], spelled: string[] } | null>}
+	 */
+	async sign(text) {
+		if (!this._avatar) await this._waitForReady();
+		return this._avatar?.sign?.(text) ?? null;
 	}
 
 	async ask(text, opts = {}) {
