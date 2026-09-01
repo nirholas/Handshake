@@ -507,3 +507,7 @@ docs/marketing/posts.md
 docs/marketing/posts2.md
 marketing/*/kit/strip/*.png
 marketing/*/kit/cards/*.png
+
+# Screenshot captures dropped in the repo root by browser and mobile checks.
+# Real assets belong in public/; scratch captures are never committed.
+/*.png
