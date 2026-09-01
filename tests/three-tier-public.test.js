@@ -74,6 +74,21 @@ beforeAll(async () => {
 	({ verifyTierPass } = await import('../api/_lib/three-tier.js'));
 });
 
+describe('GET /api/three/tier (no session, no wallet)', () => {
+	it('answers the public ladder at the Member floor instead of a 401, so /three renders for every visitor', async () => {
+		const res = mockRes();
+		await handler(mockReq({ url: '/api/three/tier' }), res);
+		expect(res.statusCode).toBe(200);
+		expect(res.json.signed_in).toBe(false);
+		expect(res.json.wallet_linked).toBe(false);
+		expect(res.json.source).toBe('public');
+		expect(res.json.tier.id).toBe('member');
+		expect(res.json.held_usd).toBe(0);
+		expect(res.json.next).toMatchObject({ id: 'bronze', min_usd: 25, usd_to_go: 25 });
+		expect(res.json.ladder.map((t) => t.id)).toEqual(['member', 'bronze', 'silver', 'gold', 'genesis']);
+	});
+});
+
 describe('GET /api/three/tier?wallet=', () => {
 	it('resolves Member for a zero-balance wallet, no account needed', async () => {
 		getBalances.mockResolvedValue({ tokens: [] });

@@ -1,22 +1,25 @@
 // The canonical $THREE holder-value surface (/three).
 //
 // One page that renders the whole hold-to-access ladder: every tier, its perks,
-// the live fee discount + free-quota multiplier, and — for the connected
-// wallet / signed-in holder — the current tier highlighted with the exact
-// $-to-next-tier delta and a real "Hold more $THREE" action. Every locked state
-// across the platform routes here (the nav tier chip, the in-place lock panels),
-// so this is the single upgrade path the token's promise rests on.
+// the live fee discount + free-quota multiplier, and, for the connected wallet or
+// signed-in holder, the current tier highlighted with the exact $-to-next-tier
+// delta and a real "Hold more $THREE" action. Every locked state across the
+// platform routes here (the nav tier chip, the in-place lock panels), so this is
+// the single upgrade path the token's promise rests on.
 //
 // Truth comes from the server, never the client:
-//   • GET /api/three/tier    → { tier, held_usd, next:{usd_to_go}, ladder:[…] }
-//   • GET /api/three/access  → per-feature { enforced, eligible, required, … }
+//   GET /api/three/tier    -> { signed_in, wallet_linked, tier, held_usd, next:{usd_to_go}, ladder:[...] }
+//   GET /api/three/access  -> per-feature { enforced, eligible, required, ... }
 // Both accept ?wallet= so an account-less visitor who has connected Phantom sees
-// their real on-chain tier. Both degrade to the Member floor on any hiccup, so a
-// price/RPC outage shows the ladder and the upgrade path — never a dead screen.
+// their real on-chain tier. With no wallet and no session, /tier still answers the
+// public ladder at the Member floor, so a first-time visitor sees every tier and
+// its threshold; the hero then asks them to connect or sign in for their own spot.
+// Both degrade to the Member floor on any price/RPC hiccup, so an outage shows the
+// ladder and the upgrade path rather than a dead screen.
 //
 // All five states are designed: a skeleton ladder while loading, a connect/sign-in
-// prompt when there's no wallet in hand, an actionable error with retry, the
-// populated ladder, and graceful overflow at $10M+ holdings.
+// prompt when there's no wallet in hand, an actionable error with retry that keeps
+// the page heading, the populated ladder, and graceful overflow at $10M+ holdings.
 
 import { getConnectedWalletAddress, getConnectedWallet, connectWallet } from './wallet.js';
 import { openSwapModal } from './swap-jupiter.js';
@@ -90,26 +93,31 @@ async function loadState() {
 
 // ── render ──────────────────────────────────────────────────────────────────
 
+// Who we are showing a tier for. 'wallet' means a Solana wallet is in hand (connected
+// on this page or linked to the session) and its real on-chain tier is highlighted;
+// 'signed_in' is an account with no wallet yet; 'anonymous' is a plain visitor.
+function resolveIdentity({ tier, access, wallet }) {
+	const linked = Boolean(wallet) || Boolean(tier?.wallet_linked ?? access?.wallet_linked);
+	if (linked) return 'wallet';
+	const signedIn = Boolean(tier?.signed_in ?? access?.signed_in);
+	return signedIn ? 'signed_in' : 'anonymous';
+}
+
 function render(root, state) {
-	const { tier, access, wallet } = state;
+	const { tier, access } = state;
 	if (!tier || !Array.isArray(tier.ladder) || tier.ladder.length === 0) {
-		// No ladder at all → a real (rare) outage. Offer a retry; the ladder is the
-		// page, so there's nothing useful to show without it.
-		root.innerHTML = errorStateHTML({
-			title: "Couldn't load the $THREE tiers",
-			body: 'The tier ladder is resolved live on-chain. Check your connection and try again.',
-		});
-		const retry = root.querySelector('[data-sk-retry]');
-		if (retry) retry.addEventListener('click', () => boot(root));
+		// No ladder at all: a real (rare) outage, since the server answers the public
+		// ladder even to anonymous callers. Keep the heading, offer a retry.
+		renderFailure(root, 'The tier ladder is resolved live on-chain. Check your connection and try again.');
 		return;
 	}
 
 	const ladder = tier.ladder;
 	const heldUsd = Number(tier.held_usd) || 0;
-	const signedOut = !wallet && !(access?.wallet_linked);
-	// With no wallet in hand we don't claim a tier — show the neutral ladder + a
+	const identity = resolveIdentity(state);
+	// With no wallet in hand we don't claim a tier: show the neutral ladder and a
 	// connect prompt rather than presumptuously marking Member as "You're here".
-	const currentLevel = signedOut ? -1 : Number(tier.tier?.level) || 0;
+	const currentLevel = identity === 'wallet' ? Number(tier.tier?.level) || 0 : -1;
 
 	// Group the gated features by the tier level that unlocks them, so each ladder
 	// card lists the concrete things it turns on (with Live vs Planned honesty).
@@ -121,7 +129,7 @@ function render(root, state) {
 	}
 
 	root.innerHTML =
-		renderHero({ tier, heldUsd, currentLevel, signedOut }) +
+		renderHero({ tier, heldUsd, currentLevel, identity }) +
 		`<ol class="tt-ladder" role="list" aria-label="$THREE holder tiers">` +
 		ladder.map((t) => renderTier(t, { currentLevel, heldUsd, featuresByLevel })).join('') +
 		`</ol>` +
@@ -131,18 +139,23 @@ function render(root, state) {
 	enableRovingFocus(root);
 }
 
-function renderHero({ tier, heldUsd, currentLevel, signedOut }) {
+function renderHero({ tier, heldUsd, currentLevel, identity }) {
 	const cur = tier.tier || { id: 'member', label: 'Member' };
 	const next = tier.next; // { id, label, min_usd, usd_to_go } | null
 	const isHolder = currentLevel >= 1;
 
 	let statusLine;
 	let cta;
-	if (signedOut) {
+	if (identity === 'anonymous') {
 		statusLine = `Connect your wallet or sign in to see your tier and what you've unlocked.`;
 		cta =
 			`<button type="button" class="tt-btn tt-btn--primary" data-tt-connect>Connect wallet</button>` +
 			`<a class="tt-btn tt-btn--ghost" href="${SIGN_IN_URL}">Sign in</a>`;
+	} else if (identity === 'signed_in') {
+		statusLine = `You're signed in, but no Solana wallet is linked yet. Connect one and your tier resolves live from the $THREE it holds.`;
+		cta =
+			`<button type="button" class="tt-btn tt-btn--primary" data-tt-connect>Connect wallet</button>` +
+			`<a class="tt-btn tt-btn--ghost" href="${PRICE_URL}">Price &amp; chart</a>`;
 	} else if (next) {
 		const toGo = Number(next.usd_to_go) || Math.max(0, (Number(next.min_usd) || 0) - heldUsd);
 		statusLine = isHolder
@@ -152,24 +165,33 @@ function renderHero({ tier, heldUsd, currentLevel, signedOut }) {
 			`<button type="button" class="tt-btn tt-btn--primary" data-tt-buy>Hold more $THREE</button>` +
 			`<a class="tt-btn tt-btn--ghost" href="${PRICE_URL}">Price &amp; chart</a>`;
 	} else {
-		// Top of the ladder — nothing left to upgrade to.
-		statusLine = `You're <strong>${esc(cur.label)}</strong>, holding ${fmtCompactUsd(heldUsd)} of $THREE — the top tier. Every holder perk is unlocked.`;
+		// Top of the ladder : nothing left to upgrade to.
+		statusLine = `You're <strong>${esc(cur.label)}</strong>, holding ${fmtCompactUsd(heldUsd)} of $THREE: the top tier. Every holder perk is unlocked.`;
 		cta =
 			`<button type="button" class="tt-btn tt-btn--primary" data-tt-buy>Add to your bag</button>` +
 			`<a class="tt-btn tt-btn--ghost" href="${PRICE_URL}">Price &amp; chart</a>`;
 	}
 
-	const chip = !signedOut && currentLevel >= 1
+	const chip = identity === 'wallet' && currentLevel >= 1
 		? `<span class="tt-hero-chip ${tone(cur.id)}"><span aria-hidden="true">◆</span> ${esc(cur.label)}</span>`
 		: '';
 
+	return heroShell(
+		`<p class="tt-lede">${statusLine}</p>` +
+			`<div class="tt-hero-actions">${cta}</div>` +
+			`<p class="tt-hero-foot">Holding (not spending) $THREE is the status lever: fee discounts on compute, higher free quotas, and private worlds. $THREE is the only coin on three.ws. Draft &amp; Standard generation stay free, forever.</p>`,
+		chip,
+	);
+}
+
+// The eyebrow + h1 every state shares (loading, failure, populated), so the page
+// always has exactly one heading and a reader always knows where they are.
+function heroShell(body = '', chip = '') {
 	return (
 		`<header class="tt-hero">` +
 		`<p class="tt-eyebrow">$THREE · Hold-to-access</p>` +
 		`<h1 class="tt-h1">Hold $THREE. Unlock more.${chip}</h1>` +
-		`<p class="tt-lede">${statusLine}</p>` +
-		`<div class="tt-hero-actions">${cta}</div>` +
-		`<p class="tt-hero-foot">Holding (not spending) $THREE is the status lever — fee discounts on compute, higher free quotas, and private worlds. $THREE is the only coin on three.ws. Draft &amp; Standard generation stay free, forever.</p>` +
+		body +
 		`</header>`
 	);
 }
@@ -203,7 +225,7 @@ function renderTier(t, { currentLevel, heldUsd, featuresByLevel }) {
 				: `<span class="tt-status tt-status--togo">${fmtUsd(toGo, toGo < 1 ? 2 : 0)} to go</span>`;
 
 	const perks = (t.perks || [])
-		.map((p) => `<li class="tt-perk"><span class="tt-perk-tick" aria-hidden="true">✦</span>${esc(p)}</li>`)
+		.map((p) => `<li class="tt-perk"><span class="tt-perk-tick" aria-hidden="true">✦</span><span class="tt-perk-text">${esc(p)}</span></li>`)
 		.join('');
 
 	// Concrete gated features that unlock at this tier, with Live/Planned honesty
@@ -222,7 +244,7 @@ function renderTier(t, { currentLevel, heldUsd, featuresByLevel }) {
 	return (
 		`<li class="tt-tier ${tone(t.id)}${isCurrent ? ' tt-tier--current' : ''}${isCleared ? ' tt-tier--cleared' : ''}" ` +
 		`tabindex="-1" aria-current="${isCurrent ? 'true' : 'false'}" ` +
-		`aria-label="${esc(t.label)} tier — ${esc(threshold)}${isCurrent ? ', your current tier' : ''}">` +
+		`aria-label="${esc(t.label)} tier, ${esc(threshold)}${isCurrent ? ', your current tier' : ''}">` +
 		`<div class="tt-tier-head">` +
 		`<span class="tt-tier-mark" aria-hidden="true">◆</span>` +
 		`<div class="tt-tier-id"><span class="tt-tier-name">${esc(t.label)}</span>` +
@@ -239,7 +261,7 @@ function renderTier(t, { currentLevel, heldUsd, featuresByLevel }) {
 function renderFooter() {
 	return (
 		`<footer class="tt-page-foot">` +
-		`<p>Your tier is resolved live from the USD value of $THREE your wallet holds — nothing is stored, nothing is spent. Sell and your tier adjusts; the lever rewards holding.</p>` +
+		`<p>Your tier is resolved live from the USD value of $THREE your wallet holds: nothing is stored, nothing is spent. Sell and your tier adjusts; the lever rewards holding.</p>` +
 		`<p class="tt-mint">Contract: <a href="https://solscan.io/token/${THREE_MINT}" target="_blank" rel="noopener">${THREE_MINT}</a></p>` +
 		`</footer>`
 	);
@@ -348,11 +370,19 @@ function renderLoading(root) {
 		`<span class="tt-sk tt-sk--line"></span><span class="tt-sk tt-sk--line tt-sk--short"></span>` +
 		`</li>`;
 	root.innerHTML =
-		`<header class="tt-hero"><p class="tt-eyebrow">$THREE · Hold-to-access</p>` +
-		`<h1 class="tt-h1">Hold $THREE. Unlock more.</h1>` +
-		`<span class="tt-sk tt-sk--lede"></span></header>` +
+		heroShell(`<span class="tt-sk tt-sk--lede"></span>`) +
 		`<ol class="tt-ladder" role="list" aria-busy="true">${card().repeat(5)}</ol>` +
 		`<span class="tt-sr" role="status">Loading your $THREE tier…</span>`;
+}
+
+// The failure state keeps the page heading above the error card, so the h1 and
+// the page's identity survive an outage, and Retry re-runs the whole boot.
+function renderFailure(root, body) {
+	root.innerHTML =
+		heroShell() +
+		errorStateHTML({ title: "Couldn't load the $THREE tiers", body });
+	const retry = root.querySelector('[data-sk-retry]');
+	if (retry) retry.addEventListener('click', () => boot(root));
 }
 
 async function boot(root) {
@@ -362,12 +392,7 @@ async function boot(root) {
 		const state = await loadState();
 		render(root, state);
 	} catch {
-		root.innerHTML = errorStateHTML({
-			title: "Couldn't load the $THREE tiers",
-			body: 'Something went wrong resolving your tier. Try again.',
-		});
-		const retry = root.querySelector('[data-sk-retry]');
-		if (retry) retry.addEventListener('click', () => boot(root));
+		renderFailure(root, 'Something went wrong resolving your tier. Try again.');
 	}
 }
 
@@ -390,7 +415,7 @@ function mount() {
 	}
 	boot(root);
 
-	// A wallet connect/disconnect/switch changes whose tier we're showing — re-resolve.
+	// A wallet connect/disconnect/switch changes whose tier we're showing, so re-resolve.
 	if (typeof window !== 'undefined') {
 		let last = null;
 		try {
@@ -478,6 +503,7 @@ function injectStyles() {
 
 	.tt-perks{list-style:none;margin:13px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:7px 16px;}
 	.tt-perk{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.45;color:#c7c7d0;}
+	.tt-perk-text{flex:1;min-width:0;}
 	.tt-perk-tick{flex-shrink:0;color:#6ee7a8;font-size:11px;line-height:1.5;}
 	.tt-gold .tt-perk-tick{color:#f5c451;}
 	.tt-silver .tt-perk-tick{color:#cfd6e4;}

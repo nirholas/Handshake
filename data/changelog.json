@@ -25391,6 +25391,15 @@
 				"improvement"
 			],
 			"link": "/tour"
+		},
+		{
+			"date": "2026-09-01",
+			"title": "$THREE tiers page: the ladder now loads for everyone, signed in or not",
+			"summary": "Opening /three without a wallet connected or an account signed in showed an error card instead of the tiers, because the tier lookup refused anonymous requests. The page now shows every tier, its perks, and the exact $THREE threshold to any visitor, with a connect-wallet or sign-in prompt to see your own position. Signed-in accounts without a linked wallet get a clear prompt to connect one, and if the ladder genuinely fails to load the page keeps its heading and offers a retry.",
+			"tags": [
+				"fix"
+			],
+			"link": "/three"
 		}
 	]
 }

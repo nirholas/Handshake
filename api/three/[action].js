@@ -3,7 +3,8 @@
 //
 //   GET  /api/three/catalog   — public price list (display)
 //   POST /api/three/charge    — issue a $THREE quote, or settle a paid one (auth)
-//   GET  /api/three/tier      — the signed-in holder's $THREE tier + perks (auth)
+//   GET  /api/three/tier      : the caller's $THREE tier + perks + the public ladder
+//                               (session, ?wallet=, or the anonymous Member floor)
 //   POST /api/three/tier-pass — mint a signed tier pass for world gating (auth)
 //   GET  /api/three/earnings  — creator's settled $THREE earnings ledger (auth)
 //   GET  /api/three/name-quote?name=… — rarity + $THREE floor price for a name
@@ -214,10 +215,27 @@ async function handleTier(req, res) {
 
 	// Authed path: the signed-in user's linked wallet (also carries the discount).
 	const user = await getSessionUser(req, res);
-	if (!user) return error(res, 401, 'unauthorized', 'sign in or pass ?wallet= to read a tier');
+	if (!user) {
+		// No identity at all. The ladder itself is public information and the /three
+		// page draws it for every first-time visitor, so answer with the Member floor
+		// (nothing held, Bronze next) instead of a 401 that renders as an outage.
+		// Not CDN-cacheable: the same URL answers signed-in sessions with their own tier.
+		const rl = await limits.tokenPriceIp(clientIp(req));
+		if (!rl.success) return rateLimited(res, rl);
+		const floor = TIERS[0];
+		return json(res, 200, {
+			signed_in: false,
+			wallet_linked: false,
+			...tierPayload({ tier: floor, usd: 0, amount: 0, priceUsd: null, next: nextTier(floor), source: 'public' }),
+		});
+	}
 
 	const resolved = await resolveUserTier(user);
-	return json(res, 200, tierPayload({ ...resolved, source: 'session' }));
+	return json(res, 200, {
+		signed_in: true,
+		wallet_linked: Boolean(user.wallet_address),
+		...tierPayload({ ...resolved, source: 'session' }),
+	});
 }
 
 // ── POST /api/three/tier-pass ─────────────────────────────────────────────────────
