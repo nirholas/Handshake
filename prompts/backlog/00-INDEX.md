@@ -46,6 +46,7 @@ observable health, so 01 to 03 come first.
 | 08 | [OKX chat bot: move off the codespace](08-okx-chat-bot-always-on.md) | nothing | one email OTP login |
 | 09 | [Telegram bots: durable hosting for both feeds](09-telegram-bots-durability.md) | nothing | none |
 | 10 | [x402scan listing: finish the last three steps](10-x402scan-listing.md) | one PAT or one comment | classic PAT, or the owner comments |
+| 11 | [Agent index: bring the on-chain crawl back from `down`](11-agent-index-lag.md) | nothing | none |
 
 ---
 
