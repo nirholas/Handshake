@@ -1,4 +1,4 @@
-# Task 06 — Fix doc accuracy and reconcile the tool-count story (P1)
+# Task 06: Fix doc accuracy and reconcile the tool-count story (P1)
 
 Read [`00-START-HERE.md`](00-START-HERE.md) first. This task cleans up the
 documentation drift the audit found, EXCEPT the two docs owned by other tasks
@@ -18,7 +18,7 @@ claim is Task 03). Do not fight those tasks for those specific edits; coordinate
      refine_model)"; `tests/mcp-studio.test.js` comment says "five allowed generation
      tools" while the asserted array has six.
    Reconcile these so every count is consistent and correct. The authoritative number
-   is whatever the running server returns from `tools/list` — verify it, then make all
+   is whatever the running server returns from `tools/list`; verify it, then make all
    docs and comments match.
 
 2. **model-viewer version is not single-sourced.** Three surfaces load different

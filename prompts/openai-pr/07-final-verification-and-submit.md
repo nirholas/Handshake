@@ -1,4 +1,4 @@
-# Task 07 — Final live verification and submit checklist (P2, runs last)
+# Task 07: Final live verification and submit checklist (P2, runs last)
 
 Read [`00-START-HERE.md`](00-START-HERE.md) first. **Run this only after tasks
 01-06 are merged.** This is the go/no-go gate before the app is submitted to OpenAI.
@@ -6,7 +6,7 @@ Read [`00-START-HERE.md`](00-START-HERE.md) first. **Run this only after tasks
 ## Purpose
 
 The submission answer sheet
-([`prompts/store-submissions/_generated/openai-submission.md`](../../prompts/store-submissions/_generated/openai-submission.md))
+([`prompts/store-submissions/_generated/openai-submission.md`](../store-submissions/_generated/openai-submission.md))
 asserts many "verified live" facts, dated 2026-07-14. Deployments move. Before we put
 this in front of OpenAI, re-verify every claim against the *currently deployed*
 production, close the loose `[HUMAN: ...]` items where you can, and produce a clean

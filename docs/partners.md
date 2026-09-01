@@ -37,7 +37,7 @@ The page's stat bar reads 8 partners, 22 chains, and an infinity glyph for scale
 - **AR handoff** works from any of these: every generation carries a place-in-your-room link, and the whole pipeline is public and keyless rather than ChatGPT-exclusive. See [AR in ChatGPT](./chatgpt-ar.md).
 - **Spatial MCP** is the open, CC0 response shape that makes a 3D scene a native MCP result instead of a URL in text. three.ws is the reference implementation; the shape is renderer-agnostic and carries no payment, wallet, or coin surface. See [Spatial MCP](./spatial-mcp.md).
 
-**Saying it correctly.** Write the status as "OpenAI Select Partner". three.ws is an independent member of the network at the Select tier: not an OpenAI product, and not endorsed by OpenAI beyond the partner designation. Badge rules, the required independence line, and every asset are in [`marketing/openai-select-partner/badge-usage.md`](../marketing/openai-select-partner/badge-usage.md); the graphics cleared for editorial use are in [Press kit](./press-kit.md). The pre-submission verification pack is [`docs/openai-pr/00-START-HERE.md`](./openai-pr/00-START-HERE.md).
+**Saying it correctly.** Write the status as "OpenAI Select Partner". three.ws is an independent member of the network at the Select tier: not an OpenAI product, and not endorsed by OpenAI beyond the partner designation. Badge rules, the required independence line, and every asset are in [`marketing/openai-select-partner/badge-usage.md`](../marketing/openai-select-partner/badge-usage.md); the graphics cleared for editorial use are in [Press kit](./press-kit.md). The pre-submission verification pack is [`prompts/openai-pr/00-START-HERE.md`](../prompts/openai-pr/00-START-HERE.md).
 
 ---
 
