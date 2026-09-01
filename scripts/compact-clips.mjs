@@ -25,8 +25,7 @@ const SIGNIFICANT_DIGITS = 7;
 
 export function compactNumber(n) {
 	if (!Number.isFinite(n) || Number.isInteger(n)) return n;
-	const rounded = Number(n.toPrecision(SIGNIFICANT_DIGITS));
-	return Object.is(rounded, -0) ? 0 : rounded;
+	return Number(n.toPrecision(SIGNIFICANT_DIGITS));
 }
 
 // Deep copy with every number compacted. Track arrays (times/values) are the
