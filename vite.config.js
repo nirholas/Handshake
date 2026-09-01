@@ -3544,26 +3544,35 @@ const appConfig = {
 // `/*#__PURE__*/` annotations for their tree-shaker. Our lib output is not an
 // npm dependency: it is the CDN bundle browsers download from
 // /agent-3d/latest/agent-3d.js, and the option is forced, so no `build.minify`
-// or `esbuild` setting can turn it back on. This renderChunk pass strips the
-// whitespace esbuild left behind, which took the shipped bundle from 4.24 MB to
-// 2.77 MB raw (1.03 MB → 792 KB gzipped) and cut the parse cost that dominated
-// the homepage's blocking time. Identifiers and syntax are already minified by
-// Vite's own pass, so only whitespace is touched here.
+// or `esbuild` setting can turn it back on. This pass strips the whitespace
+// esbuild leaves behind. Identifiers and syntax are already minified by Vite's
+// own pass, so only whitespace is touched here.
+//
+// It has to run in generateBundle, not renderChunk. Vite's own esbuild
+// transpile plugin is a renderChunk hook that runs AFTER user plugins and
+// re-prints the chunk with indentation, so a renderChunk pass here was undone
+// before the file was written: production shipped 3.46 MB / 69,759 lines of
+// pretty-printed code as the "minified" CDN bundle (2026-09-01). generateBundle
+// runs once every renderChunk hook is finished, so what it writes is what ships.
 function minifyLibWhitespace() {
 	return {
 		name: 'threews-lib-minify-whitespace',
 		apply: 'build',
-		async renderChunk(code, chunk) {
+		async generateBundle(_options, bundle) {
 			const { transform } = await import('esbuild');
-			const res = await transform(code, {
-				loader: 'js',
-				minifyWhitespace: true,
-				minifyIdentifiers: false,
-				minifySyntax: false,
-				legalComments: 'none',
-				sourcefile: chunk.fileName,
-			});
-			return { code: res.code, map: null };
+			for (const chunk of Object.values(bundle)) {
+				if (chunk.type !== 'chunk') continue;
+				const res = await transform(chunk.code, {
+					loader: 'js',
+					minifyWhitespace: true,
+					minifyIdentifiers: false,
+					minifySyntax: false,
+					legalComments: 'none',
+					sourcefile: chunk.fileName,
+				});
+				chunk.code = res.code;
+				chunk.map = null;
+			}
 		},
 	};
 }

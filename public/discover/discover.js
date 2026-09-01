@@ -231,6 +231,32 @@ if ('IntersectionObserver' in window && els.sentinel) {
 	io.observe(els.sentinel);
 }
 
+// Card previews render one frame and hold still; a card spins only while the
+// visitor is on it. A continuously auto-rotating <model-viewer> re-renders and
+// copies its pixels every frame for as long as the tab is open, and four of
+// them in one grid cost 31 s of main-thread time in a 40 s Lighthouse run.
+function setCardRotation(mv, on) {
+	if (!mv) return;
+	if (on) mv.setAttribute('auto-rotate', '');
+	else mv.removeAttribute('auto-rotate');
+}
+const cardViewer = (target) => (target && target.closest ? target.closest('model-viewer.explore-card-mv') : null);
+els.grid.addEventListener('pointerover', (e) => setCardRotation(cardViewer(e.target), true));
+els.grid.addEventListener('pointerout', (e) => {
+	const mv = cardViewer(e.target);
+	if (mv && !(e.relatedTarget && mv.contains(e.relatedTarget))) setCardRotation(mv, false);
+});
+els.grid.addEventListener('focusin', (e) => {
+	const card = e.target && e.target.closest ? e.target.closest('article') : null;
+	setCardRotation(card && card.querySelector('model-viewer.explore-card-mv'), true);
+});
+els.grid.addEventListener('focusout', (e) => {
+	const card = e.target && e.target.closest ? e.target.closest('article') : null;
+	if (card && !(e.relatedTarget && card.contains(e.relatedTarget))) {
+		setCardRotation(card.querySelector('model-viewer.explore-card-mv'), false);
+	}
+});
+
 // Delegated copy-URI click
 els.grid.addEventListener('click', (e) => {
 	const btn = e.target.closest('[data-role="card-copy-uri"]');
@@ -461,7 +487,6 @@ function renderThumb({ image, glbUrl, has3d, alt }) {
 			disable-tap
 			interaction-prompt="none"
 			camera-controls="false"
-			auto-rotate
 			rotation-per-second="20deg"
 			environment-image="neutral"
 			shadow-intensity="0"

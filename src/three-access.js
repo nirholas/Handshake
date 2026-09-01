@@ -27,7 +27,6 @@
 // Everything degrades to a safe locked/anonymous state on any network failure —
 // the UI never throws and the server stays the only authority on eligibility.
 
-import { getConnectedWallet, getConnectedWalletAddress } from './wallet.js';
 import { safeUrl } from './safe-url.js';
 import { track, trackFunnelStep, ANALYTICS_EVENTS } from './analytics.js';
 
@@ -51,9 +50,23 @@ const PRICE_URL = '/three-token';
 // mobile), or null when none is connected — in which case every read falls back to
 // the session identity. Seeded on import and kept current by the wallet:changed
 // listener below. Reading is best-effort: a wallet module hiccup degrades to session.
+// The wallet module (with the @solana/web3.js + Mobile Wallet Adapter bundle behind it)
+// loads on demand. The connected address it publishes is mirrored onto the nav's
+// connect button (`data-address`, see updateWalletState) and broadcast on
+// wallet:changed, so reading it needs no import; only the signature path below,
+// a connected holder minting a pass, pulls the module in. Before this the tier
+// badge, which mounts on every page, dragged ~290 KB (gzipped) of wallet code
+// onto pages that never touch a wallet.
+let _walletModule = null;
+function loadWalletModule() {
+	if (!_walletModule) _walletModule = import('./wallet.js');
+	return _walletModule;
+}
 function readConnectedWallet() {
 	try {
-		return getConnectedWalletAddress() || null;
+		if (typeof document === 'undefined') return null;
+		const btn = document.getElementById('connect-wallet-btn');
+		return (btn && btn.dataset.address) || null;
 	} catch {
 		return null;
 	}
@@ -194,6 +207,7 @@ export async function getTierPass({ interactive = false } = {}) {
 // changed mid-mint, so a wallet switch can't leave a stale pass on the header.
 async function mintWalletTierPass(wallet) {
 	try {
+		const { getConnectedWallet } = await loadWalletModule();
 		const provider = getConnectedWallet();
 		if (!provider?.signMessage) return null;
 		const message = buildTierPassMessage(wallet, new Date().toISOString());

@@ -232,8 +232,25 @@
 			canvas.focus();
 		});
 
+		// The arena redraws its grid and every visitor dot each frame. It used
+		// to run from page load until the tab closed, offscreen included, which
+		// cost ~1.5s of main-thread time per page view on a section most
+		// visitors never scroll to. It now runs only while the canvas is on
+		// screen and the tab is visible.
+		var running = false;
+		var rafId = 0;
+		var onScreen = !('IntersectionObserver' in window);
+		function setRunning(on) {
+			if (on === running) return;
+			running = on;
+			if (on && !rafId) rafId = requestAnimationFrame(tick);
+		}
+		function syncRunning() {
+			setRunning(onScreen && !document.hidden);
+		}
 		function tick() {
-			requestAnimationFrame(tick);
+			if (!running) { rafId = 0; return; }
+			rafId = requestAnimationFrame(tick);
 			var speed = 0.006;
 			if (keys['w'] || keys['arrowup']) player.y -= speed;
 			if (keys['s'] || keys['arrowdown']) player.y += speed;
@@ -282,7 +299,14 @@
 			ctx.font = '8px monospace';
 			ctx.fillText('you', player.x * W + 8, player.y * H + 3);
 		}
-		tick();
+		if ('IntersectionObserver' in window) {
+			new IntersectionObserver(function(entries) {
+				onScreen = entries.some(function(e) { return e.isIntersecting; });
+				syncRunning();
+			}, { rootMargin: '100px 0px' }).observe(canvas);
+		}
+		document.addEventListener('visibilitychange', syncRunning);
+		syncRunning();
 	})();
 
 	// ── 4. x402 Payments: interactive flow ──────────────────────────

@@ -1,4 +1,3 @@
-import { ensureWallet } from './erc8004/agent-registry.js';
 import {
 	identifyUser,
 	resetIdentity,
@@ -30,6 +29,11 @@ export async function signInWithWallet() {
 	let chainId;
 	let address;
 	try {
+		// agent-registry carries ethers (140 KB gzipped). Only a real sign-in
+		// click needs it, so it loads here rather than with the page: /create
+		// imports this module for its sign-in button and was shipping the whole
+		// EVM stack to every visitor who never pressed it.
+		const { ensureWallet } = await import('./erc8004/agent-registry.js');
 		const wallet = await ensureWallet();
 		address = wallet.address;
 		chainId = wallet.chainId;

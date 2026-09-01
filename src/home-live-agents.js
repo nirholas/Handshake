@@ -91,6 +91,21 @@
 		if (!glb) throw new Error('no renderable avatar found');
 		return glb;
 	}
+	function showHeroSlowNotice(heroInner) {
+		const copy = heroInner.querySelector('.hero-stage-loading-copy');
+		if (!copy || heroInner.querySelector('#hero-retry')) return;
+		copy.textContent = 'Still loading the live agent ';
+		const retry = document.createElement('button');
+		retry.type = 'button';
+		retry.className = 'btn btn--sm';
+		retry.id = 'hero-retry';
+		retry.textContent = 'Retry';
+		retry.addEventListener('click', () => {
+			heroInner.innerHTML = '';
+			bootHeroAvatar();
+		});
+		copy.appendChild(retry);
+	}
 	function showHeroFallback(heroInner) {
 		heroInner.innerHTML = '<div class="hero-stage-fallback" role="status">'
 			+ '<p>The live preview couldn’t load right now.</p>'
@@ -156,15 +171,25 @@
 				// Append alongside the loading overlay (which sits on top via z-index
 				// and fades out on ready), so the stage never blinks back to empty
 				// between clearing the placeholder and the model's first frame.
+				// A boot failure (GLB fetch or decode, renderer) is reported by the
+				// element itself, and that is the only signal that retires a booting
+				// hero. A 22-second wall-clock timer used to do it, and on a slow
+				// device or connection it fired while the avatar was still loading:
+				// the visitor saw "couldn't load" for a model that was about to
+				// appear, and tearing down a mid-boot viewer forces a WebGL context
+				// loss, which under Lighthouse froze the page for the rest of the run.
+				heroEl.addEventListener('agent:error', () => {
+					if (!ready) showHeroFallback(heroInner);
+				}, { once: true });
 				heroInner.appendChild(heroEl);
 				initHeroWalk(heroEl);
 				initHeroChips(heroEl);
-				// Safety net: if the element upgraded but never signals ready (an
-				// internal GLB decode / render failure), don't leave "Summoning…" up
-				// forever. Surface the retryable fallback the same as a hard failure.
+				// Unusually slow but not failed: keep the element booting (a teardown
+				// would discard the work already done) and hand the visitor the
+				// choice to retry instead of making it for them.
 				setTimeout(() => {
-					if (!ready && heroInner.querySelector('.hero-stage-loading')) showHeroFallback(heroInner);
-				}, 22000);
+					if (!ready && heroInner.querySelector('.hero-stage-loading')) showHeroSlowNotice(heroInner);
+				}, 45000);
 			}
 		} catch (e) {
 			console.warn('[home] avatar boot failed', e);
@@ -545,9 +570,16 @@
 				btn.appendChild(initial);
 				if (a.thumb) {
 					var img = document.createElement('img');
-					img.src = a.thumb;
-					img.alt = a.name || '';
+					// Lazy-load must be declared before src: setting src first starts
+					// the fetch immediately, and the strip's full-size thumbnails
+					// (100-300 KB each) were all downloading on page load for a row
+					// three screens down.
 					img.loading = 'lazy';
+					img.decoding = 'async';
+					img.width = 28;
+					img.height = 28;
+					img.alt = a.name || '';
+					img.src = a.thumb;
 					img.onerror = function() { this.style.display = 'none'; initial.style.display = 'flex'; };
 					btn.appendChild(img);
 				} else {
@@ -809,12 +841,28 @@
 			}
 		});
 
-		fetchGlb(state.avatarId).then(function(glb) {
-			state.glbUrl = glb;
-			syncCode();
-			updatePreview();
-			loadAvatars();
-		}).catch(function() { showPreviewMessage(); });
+		// The preview is a full <agent-3d> viewer (its own WebGL context, a GLB
+		// decode, a shader compile) three screens below the hero. Booting it on
+		// page load had it competing with the hero for the main thread while
+		// nobody could see it; it boots as the playground scrolls near instead.
+		function bootPlayground() {
+			fetchGlb(state.avatarId).then(function(glb) {
+				state.glbUrl = glb;
+				syncCode();
+				updatePreview();
+				loadAvatars();
+			}).catch(function() { showPreviewMessage(); });
+		}
+		if ('IntersectionObserver' in window) {
+			var pgObs = new IntersectionObserver(function(entries) {
+				if (!entries.some(function(e) { return e.isIntersecting; })) return;
+				pgObs.disconnect();
+				bootPlayground();
+			}, { rootMargin: '400px 0px' });
+			pgObs.observe(preview);
+		} else {
+			bootPlayground();
+		}
 	})();
 
 	// ── Showcase 3D — live agent grid ──────────────────────────────

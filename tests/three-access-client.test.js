@@ -11,8 +11,10 @@
 //   • the session path still mints silently (no wallet, no body);
 //   • mountTierBadge renders for a connected-wallet holder even when signed_in:false.
 //
-// src/wallet.js is mocked so we drive the connected identity + provider directly; the
-// live endpoint + signature verifier are covered by tests/three-tier-public.test.js.
+// src/wallet.js is mocked for the provider (signature path); the connected address is
+// read from the nav connect button's data-address mirror, exactly as wallet.js
+// publishes it, so loadModule() seeds that from the same state. The live endpoint +
+// signature verifier are covered by tests/three-tier-public.test.js.
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
@@ -46,6 +48,12 @@ function jsonRes(body, { ok = true, status = 200 } = {}) {
 // Fresh module instance per test so the in-memory caches don't leak across cases.
 async function loadModule() {
 	vi.resetModules();
+	if (state.addr) {
+		const btn = document.createElement('button');
+		btn.id = 'connect-wallet-btn';
+		btn.dataset.address = state.addr;
+		document.body.appendChild(btn);
+	}
 	return import('../src/three-access.js');
 }
 
@@ -144,6 +152,9 @@ describe('getTierPass — signature path for a connected wallet', () => {
 
 		const a = getTierPass({ interactive: true });
 		const b = getTierPass({ interactive: true });
+		// The provider is reached through the lazily-loaded wallet module, so the
+		// signature prompt lands a few microtasks after the calls, not synchronously.
+		await vi.waitFor(() => expect(state.provider.signMessage).toHaveBeenCalled());
 		resolveSig({ signature: new Uint8Array(64) });
 		const [ra, rb] = await Promise.all([a, b]);
 		expect(ra).toBe(rb);
