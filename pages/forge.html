@@ -41,16 +41,14 @@
 		<link rel="preload" href="/fonts/space-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin />
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="preconnect" href="https://ajax.googleapis.com" />
-		<!-- Deferred, and placed BEFORE the model-viewer module: defer scripts and
-		     module scripts execute in document order, so the meshopt shim still
-		     registers its decoder before model-viewer's define runs. -->
+		<!-- The meshopt decoder shim has to register before any model-viewer
+		     starts loading, so it stays a plain deferred script here. model-viewer
+		     itself is NOT loaded on arrival: this page's landing state has no 3D on
+		     screen, and parsing the 955 KB CDN bundle ahead of the first paint was
+		     the whole of its 1.5 s FCP. src/shared/model-viewer-loader.js fetches
+		     it (with CDN failover) the moment a generation starts, or when a
+		     showcase card needs a live preview. -->
 		<script src="/model-viewer-meshopt.js" defer></script>
-		<script
-			type="module"
-			src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
-			integrity="sha384-sr9b4Ux0WhAUGclJ0ym0FSY2zSOMmNSn0bP/SA0e6bNCrpn/5W3QL8mm+LdlQMKw"
-			crossorigin="anonymous"
-		></script>
 		<style>
 			/* No per-surface accent override — forge uses the global monochrome tokens. */
 

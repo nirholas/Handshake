@@ -1,4 +1,5 @@
 // Forge — text / image / multi-view → 3D generator (browser client).
+import { ensureModelViewerOrFallback } from './shared/model-viewer-loader.js';
 import { resizedImageUrl } from './shared/image-url.js';
 import { skeletonHTML, errorStateHTML, ensureStateKitStyles } from './shared/state-kit.js';
 import {
@@ -350,6 +351,14 @@ const REDUCED_MOTION =
 	typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function showState(name) {
+	// The 3D viewer only exists in the generating/result states, and the CDN
+	// bundle is 955 KB, so it is fetched the first time the page heads there
+	// rather than on arrival (see the head of pages/forge.html). Fire and
+	// forget: #viewer reads its attributes when the element finally upgrades,
+	// and the loader has its own CDN failover and error state.
+	if (name === 'generating' || name === 'result') {
+		ensureModelViewerOrFallback(els.states.result || document);
+	}
 	for (const [key, node] of Object.entries(els.states)) {
 		node.classList.toggle('is-hidden', key !== name);
 	}

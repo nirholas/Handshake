@@ -1,4 +1,5 @@
 import { apiFetch } from './account.js';
+import { attendRotationIn } from './shared/attended-rotation.js';
 import { AvatarCreator } from './avatar-creator.js';
 import { stage as stageGuestAvatar } from './guest-avatar.js';
 import { createFromTemplate } from './shared/template-picker.js';
@@ -238,6 +239,9 @@ function showFatal({ title, body, retryLabel, onRetry }) {
 }
 
 async function boot() {
+	// The hero card's rotating avatar is decorative: spin it while the visitor
+	// is on it, not for the life of the tab (src/shared/attended-rotation.js).
+	attendRotationIn(document);
 	probeFeatures();
 	const creator = new AvatarCreator(document.body, (blob, meta = {}) => {
 		const provider = meta.provider || 'avaturn';

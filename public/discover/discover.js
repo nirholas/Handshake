@@ -231,31 +231,65 @@ if ('IntersectionObserver' in window && els.sentinel) {
 	io.observe(els.sentinel);
 }
 
-// Card previews render one frame and hold still; a card spins only while the
-// visitor is on it. A continuously auto-rotating <model-viewer> re-renders and
-// copies its pixels every frame for as long as the tab is open, and four of
-// them in one grid cost 31 s of main-thread time in a 40 s Lighthouse run.
+// Attended rotation, the same policy as src/shared/attended-rotation.js (this
+// file ships from public/ verbatim, so it cannot import it). A card turns when
+// it scrolls into view, settles once it has turned far enough to read as 3D,
+// and turns again on hover or focus. Before this every card in the grid rotated
+// for the life of the tab, and model-viewer blits each element's pixels every
+// frame: four of them cost 31 s of main-thread time in a 40 s Lighthouse run
+// and the page never went quiet enough to answer input.
+const MV_SEL = 'model-viewer.explore-card-mv';
+const SETTLE_MS = 12_000;
+const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 function setCardRotation(mv, on) {
 	if (!mv) return;
-	if (on) mv.setAttribute('auto-rotate', '');
+	if (on && !reduceMotion) mv.setAttribute('auto-rotate', '');
 	else mv.removeAttribute('auto-rotate');
 }
-const cardViewer = (target) => (target && target.closest ? target.closest('model-viewer.explore-card-mv') : null);
-els.grid.addEventListener('pointerover', (e) => setCardRotation(cardViewer(e.target), true));
+function turnCard(mv) {
+	if (!mv || reduceMotion) return;
+	setCardRotation(mv, true);
+	clearTimeout(mv._settleTimer);
+	mv._settleTimer = setTimeout(() => {
+		if (!mv.matches(':hover') && !mv.closest('article')?.contains(document.activeElement)) {
+			setCardRotation(mv, false);
+		}
+	}, SETTLE_MS);
+}
+const cardViewer = (target) => (target && target.closest ? target.closest(MV_SEL) : null);
+els.grid.addEventListener('pointerover', (e) => turnCard(cardViewer(e.target)));
 els.grid.addEventListener('pointerout', (e) => {
 	const mv = cardViewer(e.target);
 	if (mv && !(e.relatedTarget && mv.contains(e.relatedTarget))) setCardRotation(mv, false);
 });
 els.grid.addEventListener('focusin', (e) => {
 	const card = e.target && e.target.closest ? e.target.closest('article') : null;
-	setCardRotation(card && card.querySelector('model-viewer.explore-card-mv'), true);
+	turnCard(card && card.querySelector(MV_SEL));
 });
 els.grid.addEventListener('focusout', (e) => {
 	const card = e.target && e.target.closest ? e.target.closest('article') : null;
 	if (card && !(e.relatedTarget && card.contains(e.relatedTarget))) {
-		setCardRotation(card.querySelector('model-viewer.explore-card-mv'), false);
+		setCardRotation(card.querySelector(MV_SEL), false);
 	}
 });
+// Cards arrive from an infinite-scroll feed, so the observer is re-applied
+// after every page render (see renderPage below); bound viewers are skipped.
+const cardTurnObserver = 'IntersectionObserver' in window && !reduceMotion
+	? new IntersectionObserver((entries) => {
+		for (const entry of entries) {
+			if (entry.isIntersecting) turnCard(entry.target);
+			else setCardRotation(entry.target, false);
+		}
+	}, { rootMargin: '80px 0px' })
+	: null;
+function observeCardTurns() {
+	if (!cardTurnObserver) return;
+	for (const mv of els.grid.querySelectorAll(MV_SEL)) {
+		if (mv.dataset.turnObserved === '1') continue;
+		mv.dataset.turnObserved = '1';
+		cardTurnObserver.observe(mv);
+	}
+}
 
 // Delegated copy-URI click
 els.grid.addEventListener('click', (e) => {
@@ -370,6 +404,7 @@ async function loadPage() {
 		for (const item of items) {
 			els.grid.appendChild(renderCard(item));
 		}
+		observeCardTurns();
 		state.cursor = data.nextCursor;
 		els.loadMore.hidden = !state.cursor;
 

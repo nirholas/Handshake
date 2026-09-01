@@ -12,6 +12,7 @@
 // The section stays hidden when the deployment has no durable store or the
 // feed is empty — a first-time visitor never sees a broken or hollow strip.
 
+import { ensureModelViewer } from './shared/model-viewer-loader.js';
 import { resizedImageUrl } from './shared/image-url.js';
 import { skeletonHTML, errorStateHTML, ensureStateKitStyles } from './shared/state-kit.js';
 ensureStateKitStyles();
@@ -149,7 +150,15 @@ function enqueueCaptureFromGlb(card, glbUrl) {
 }
 
 async function captureFromGlb(card, glbUrl) {
-	if (!window.customElements?.get('model-viewer')) return null;
+	// This page no longer ships model-viewer on arrival, so Plan B fetches it
+	// the first time a card actually needs a capture. If every CDN is blocked
+	// the loader rejects and the card keeps its gradient (Plan C), which is
+	// what used to happen silently whenever the element was simply absent.
+	try {
+		await ensureModelViewer();
+	} catch {
+		return null;
+	}
 	return new Promise((resolve) => {
 		const viewer = document.createElement('model-viewer');
 		// Render at a real resolution off-screen — model-viewer sizes its WebGL
@@ -545,14 +554,23 @@ function teardownHoverPreview() {
 }
 
 function attachHoverPreview(card, c) {
-	if (!c.glb_url || !window.customElements?.get('model-viewer')) return;
+	if (!c.glb_url) return;
 	if (matchMedia('(hover: none)').matches) return;
 
 	card.addEventListener('mouseenter', () => {
 		teardownHoverPreview();
-		previewTimer = setTimeout(() => {
+		// Hovering for 300 ms is the signal that this card is worth a live
+		// preview, and it is also when the viewer bundle is worth fetching.
+		previewTimer = setTimeout(async () => {
+			try {
+				await ensureModelViewer();
+			} catch {
+				return;
+			}
 			const thumb = card.querySelector('.thumb');
-			if (!thumb) return;
+			// The pointer can leave during the load; teardownHoverPreview() clears
+			// previewTimer, so a cleared timer means this hover is stale.
+			if (!thumb || previewTimer === null) return;
 			const viewer = document.createElement('model-viewer');
 			viewer.className = 'showcase-preview';
 			viewer.setAttribute('src', c.glb_url);

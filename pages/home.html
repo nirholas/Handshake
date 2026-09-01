@@ -1352,6 +1352,7 @@
 	</div>
 </section>
 <script type="module">
+import { attendRotation } from '/src/shared/attended-rotation.js';
 (function() {
 	var track = document.getElementById('hcf-track');
 	if (!track) return;
@@ -1421,6 +1422,10 @@
 		var poster = wrap.querySelector('.hcf-poster');
 		if (poster) poster.remove();
 		wrap.appendChild(mv);
+		// The strip holds a card per community model. Left alone every one of
+		// them rotates for the life of the tab, and model-viewer blits each
+		// element's pixels every frame; they spin while looked at instead.
+		attendRotation(mv);
 	}
 
 	// A card with its real prompt, link and gradient, but a poster image instead
@@ -2300,6 +2305,7 @@
 	</div>
 </section>
 <script type="module">
+import { attendRotation } from '/src/shared/attended-rotation.js';
 (async () => {
 	let renderQRToCanvas;
 	try {
@@ -2575,6 +2581,9 @@
 
 		skeleton.style.display = 'none';
 		wrap.insertBefore(mv, nav);
+		// One showcase viewer, but the same perpetual-rotation cost: turn while
+		// the section is on screen and being looked at, then settle.
+		attendRotation(mv);
 
 		buildDots();
 		loadModel(models[0]);

@@ -1448,8 +1448,16 @@
 							</span>
 						</div>
 						<div class="hero-card-preview">
+							<!-- data-src, not src: decoding this 748 KB avatar is one
+							     unbreakable 852 ms main-thread task, and it used to run while
+							     the page was still trying to become usable. The poster is a
+							     render of the same model at the same camera, so the card
+							     looks finished from the first frame; the live, rotatable
+							     model loads the moment the visitor hovers, focuses or taps
+							     the card (src/shared/attended-rotation.js). -->
 							<model-viewer
-								src="/avatars/default.glb"
+								data-src="/avatars/default.glb"
+								poster="/avatars/default-poster.webp"
 								alt="Customizable 3D base avatar"
 								auto-rotate
 								auto-rotate-delay="0"
@@ -1464,6 +1472,7 @@
 								environment-image="neutral"
 								camera-orbit="15deg 80deg auto"
 								loading="eager"
+								data-attended-rotate=".hero-card"
 							></model-viewer>
 						</div>
 					</div>
