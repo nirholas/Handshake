@@ -123,6 +123,30 @@ the physical logistics can fail without the event failing: if there is no room, 
 still happens in-world and streams into the IBM Community group exactly as the first event
 did. One decision by IBM, made late, changes the finale and nothing else.
 
+### Why this one does not depend on IBM
+
+Worth being explicit, because it changes how the ask is made. We are an IBM Business
+Partner and we own every surface this event runs on: the venue, the build tooling, the
+gallery, the judging, the prize pool, the stream, and the date. A hackathon is the format
+that benefits most from that, because every piece IBM might contribute is upside rather
+than a dependency.
+
+| IBM contribution | If it does not happen |
+| --- | --- |
+| The community group as the front door and the event listing | We run the kickoff on our own stream and the jam is promoted from three.ws, the blog, Telegram and the social lane |
+| Judges from the Granite or advocacy side | Our own judges score it, and the public gallery is the real verdict either way |
+| watsonx.ai credits for entrants | `/api/ibm-mcp` already gives entrants Granite with no IBM account and no credit grant |
+| A physical room for the finale | Demo night runs in-world exactly as designed |
+
+So the ask to IBM is not "will you approve this format". It is "here is a program with a
+date, here is what it produces for Granite, pick the parts you want in". That is a much
+easier conversation, it cannot stall on their calendar, and it means the event ships even
+if the partnership side goes quiet for a fortnight.
+
+The one thing worth waiting on: an IBM Community listing has a real lead time, and it is
+the single highest-leverage thing they can give us. Set the date far enough out to make
+that listing possible, then treat everything else as optional.
+
 ### Run of show
 
 | Phase | When | Where | What happens |
@@ -187,8 +211,9 @@ Item 6 is the upgrade.
 
 ## What the owner needs to decide
 
-1. A date for the kickoff, which sets everything else. IBM Community events are listed well
-   in advance, so this is the long pole and the only true dependency.
+1. A date for the kickoff, which sets everything else. We can set it unilaterally, so the
+   only reason to wait is leaving IBM enough lead time to list the kickoff in their
+   community. That is a promotion lane, not a dependency.
 2. Whether to ask IBM for a physical room for the finale, which is the difference between a
    very good event and one nobody in that community has seen before.
 3. The size of the $THREE prize pool.
