@@ -91,7 +91,7 @@ The reference renderer is framework-free and reusable independent of three.ws:
 </script>
 ```
 
-It applies `camera`/`environment`/`affordances`, plays `animation` when present, offers AR when `ar` (or the GLB) supports it, and shows a designed fallback for an unusable payload — never a blank frame.
+It applies `camera`/`environment`/`affordances`, plays `animation` when present, offers AR when `ar` (or the GLB) supports it, and never shows a blank frame: an unusable payload gets a designed fallback (`.spatial-empty`), a downloading GLB gets a skeleton under the viewer (`.spatial-loading`), and a GLB that cannot be fetched or decoded gets an error message that names the host, says what to check (reachable, https, `Access-Control-Allow-Origin`, a valid `.glb`), and offers a `.spatial-retry` button that re-renders in place (`.spatial-error`). The mount carries `data-spatial-state` (`empty`, `loading`, `ready`, `error`) so a host can style each state; the renderer ships no CSS of its own, so style those classes the way [`/spatial-mcp`](https://three.ws/spatial-mcp) does or the way your host already styles its own empty and error cards.
 
 ## Data minimization (required for store-safe adoption)
 

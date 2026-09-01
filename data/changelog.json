@@ -25450,6 +25450,16 @@
 				"improvement"
 			],
 			"link": "/strategies"
+		},
+		{
+			"date": "2026-09-01",
+			"title": "Spatial MCP renderer: a clear message and a retry when a scene cannot be fetched",
+			"summary": "The reference renderer on /spatial-mcp now shows a shimmer while a GLB downloads and, if the asset cannot be fetched or decoded, replaces the empty frame with a message that names the host, explains what to check (reachable, https, CORS, a valid .glb), and offers a Try again button that re-renders in place. Any host that embeds the renderer gets the same loading, ready, error, and empty states through a data-spatial-state attribute on the mount. The page title and description now say plainly what the page is: the reference renderer for the open Spatial MCP standard.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/spatial-mcp"
 		}
 	]
 }

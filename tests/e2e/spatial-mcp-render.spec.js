@@ -38,16 +38,20 @@ const STAGES = [
 // Vite's HMR socket cannot reach the dev server through a proxied port (Codespaces,
 // any remote container), which surfaces as a failed ws request and an uncaught
 // "WebSocket closed without opened." Both are dev-server plumbing that does not
-// exist in the built page, so they are the only ignored signals here. Anything a
-// visitor's browser could hit counts as a failure.
-const DEV_SERVER_NOISE = /^ws|\/@vite\//;
+// exist in the built page. The analytics loader under /ingest is the third
+// exemption: in dev it is a vite proxy to PostHog's asset host, which
+// intermittently answers 500 from a remote container, and the page is designed
+// to run without analytics (the snippet fails silently), so its outage is not a
+// rendering failure this spec guards. Anything else a visitor's browser could
+// hit counts as a failure.
+const DEV_SERVER_NOISE = /^ws|\/@vite\/|\/ingest\//;
 const DEV_SERVER_ERROR = /WebSocket closed without opened/;
 
 /** Collect every response that failed, plus uncaught page errors. */
 function watchFailures(page) {
 	const failures = [];
 	page.on('response', (r) => {
-		if (r.status() >= 400) failures.push(`HTTP ${r.status()} ${r.url()}`);
+		if (r.status() >= 400 && !DEV_SERVER_NOISE.test(r.url())) failures.push(`HTTP ${r.status()} ${r.url()}`);
 	});
 	page.on('pageerror', (e) => {
 		if (DEV_SERVER_ERROR.test(e.message)) return;
@@ -126,4 +130,43 @@ test('the checker names the offending field on a broken payload', async ({ page 
 
 	// An unusable payload gets the designed fallback, never a blank frame.
 	await expect(page.locator('#stage-check .spatial-empty')).toHaveCount(1);
+	await expect(page.locator('#stage-check')).toHaveAttribute('data-spatial-state', 'empty');
+});
+
+// The other way a frame goes blank: the payload is conformant but the asset
+// behind it is unreachable (host down, CORS missing, a dead CDN path). A
+// visitor must get told what failed and be able to retry without reloading,
+// so this blocks every GLB, demands the designed error state on every stage,
+// then lifts the block and proves the retry button renders the scene.
+test('an unreachable GLB gets a designed error state, and its retry renders the scene', async ({ page }) => {
+	test.setTimeout(180_000);
+	let blocked = true;
+	await page.route(/\.glb(\?|$)/, (route) => (blocked ? route.abort() : route.continue()));
+
+	await page.goto('/spatial-mcp', { waitUntil: 'load' });
+
+	for (const stage of STAGES) {
+		const error = page.locator(`#${stage.id} .spatial-error`);
+		await expect(error, `${stage.label}: no error state after the GLB fetch failed`).toBeVisible({
+			timeout: 60_000,
+		});
+		await expect(error).toContainText('could not be loaded');
+		await expect(error.locator('.spatial-retry')).toBeVisible();
+		await expect(page.locator(`#${stage.id} model-viewer`)).toHaveCount(0);
+		await expect(page.locator(`#${stage.id}`)).toHaveAttribute('data-spatial-state', 'error');
+	}
+
+	blocked = false;
+	await page.locator('#stage-native .spatial-retry').click();
+	const viewer = page.locator('#stage-native model-viewer');
+	await expect(viewer).toHaveCount(1);
+	await expect
+		.poll(() => viewer.evaluate((el) => el.loaded === true), {
+			message: 'retry did not load the GLB once the network came back',
+			timeout: 60_000,
+		})
+		.toBe(true);
+	await expect(page.locator('#stage-native')).toHaveAttribute('data-spatial-state', 'ready');
+	await expect(page.locator('#stage-native .spatial-loading')).toHaveCount(0);
+	await expect(page.locator('#stage-native .spatial-error')).toHaveCount(0);
 });
