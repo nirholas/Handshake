@@ -6,7 +6,12 @@
 	};
 	function devProxyGlb(url) {
 		if (!url) return url;
-		const isDev = location.hostname === 'localhost' || location.hostname.includes('.github.dev') || location.hostname.includes('.gitpod.io');
+		// The bucket allows only https://three.ws, so any other origin is refused
+		// by CORS and the hero fails to load. 127.0.0.1 belongs on this list for
+		// the same reason localhost does: serving a production build locally is
+		// how the page gets profiled, and without it every such run measures the
+		// failure path instead of the page.
+		const isDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname.includes('.github.dev') || location.hostname.includes('.gitpod.io');
 		if (isDev && url.includes('r2.dev')) {
 			try { return '/r2-proxy' + new URL(url).pathname; } catch (_) {}
 		}
@@ -106,14 +111,32 @@
 		});
 		copy.appendChild(retry);
 	}
-	function showHeroFallback(heroInner) {
-		heroInner.innerHTML = '<div class="hero-stage-fallback" role="status">'
-			+ '<p>The live preview couldn’t load right now.</p>'
-			+ '<button type="button" class="btn btn--sm" id="hero-retry">Retry</button></div>';
-		heroInner.querySelector('#hero-retry')?.addEventListener('click', () => {
+	// The failure state used to wipe the stage, which disconnects whatever viewer
+	// was in it. Disposing a WebGL context is synchronous and expensive: tearing
+	// down a hero that was still mid-boot cost 1.16 s of unbroken main thread,
+	// so the handler for a failure was more expensive than the failure. Lay the
+	// retry card over the stage instead and leave the element alone; the visitor
+	// pays that teardown only if they actually press Retry.
+	function showHeroFallback(heroInner, failedEl) {
+		if (!heroInner || heroInner.querySelector('.hero-stage-fallback')) return;
+		heroInner.querySelector('.hero-stage-loading')?.remove();
+		if (failedEl) failedEl.hidden = true;
+		const card = document.createElement('div');
+		card.className = 'hero-stage-fallback';
+		card.setAttribute('role', 'status');
+		const line = document.createElement('p');
+		line.textContent = 'The live preview couldn’t load right now.';
+		const retry = document.createElement('button');
+		retry.type = 'button';
+		retry.className = 'btn btn--sm';
+		retry.id = 'hero-retry';
+		retry.textContent = 'Retry';
+		retry.addEventListener('click', () => {
 			heroInner.innerHTML = '';
 			bootHeroAvatar();
 		});
+		card.append(line, retry);
+		heroInner.appendChild(card);
 	}
 	// The <agent-3d> loader is a separate CDN script — if it fails (network
 	// blip, missing local dist-lib build in dev), the element never upgrades
@@ -179,7 +202,7 @@
 				// appear, and tearing down a mid-boot viewer forces a WebGL context
 				// loss, which under Lighthouse froze the page for the rest of the run.
 				heroEl.addEventListener('agent:error', () => {
-					if (!ready) showHeroFallback(heroInner);
+					if (!ready) showHeroFallback(heroInner, heroEl);
 				}, { once: true });
 				heroInner.appendChild(heroEl);
 				initHeroWalk(heroEl);
