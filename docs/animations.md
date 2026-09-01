@@ -30,6 +30,7 @@ There are 5 animation collections across the codebase. They are separate and use
 1. Drop the FBX into `animation-sources/` (the build's first-choice source directory, gitignored so raw sources never ship). Dropping it into `public/animations/` also resolves, but that directory is served publicly, so the multi-megabyte FBX would be deployed to production alongside the built clip.
 2. Add an entry to `scripts/animations.config.json`
 3. Run `node scripts/build-animations.mjs` (or `npm run build:animations`) — retargets to the Avaturn rig, writes a JSON clip to `public/animations/clips/`, and updates `manifest.json`
+   - Clips are written compact: every number at 7 significant digits (lossless for float32 keyframes), which is about half the bytes of double-precision output. `node scripts/compact-clips.mjs` rewrites the committed clips the same way and `--check` fails if any is not compact; run `npm run build:motion-signatures` afterwards, since the signature index is computed from the clip bytes.
 4. Update `public/animations/registry.json` so the new clip is catalogued under the `clips` collection
 5. Optionally wire a slot in `src/runtime/animation-slots.js` so the agent plays it automatically
 

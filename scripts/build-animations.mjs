@@ -16,6 +16,7 @@
  * Run via: npm run build:animations
  */
 import { readFileSync, writeFileSync, mkdirSync, existsSync, rmSync } from 'node:fs';
+import { compactClipJson } from './compact-clips.mjs';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve, basename } from 'node:path';
@@ -418,7 +419,9 @@ async function main() {
 					);
 				}
 			}
-			const text = JSON.stringify(json);
+			// 7 significant digits per number: lossless for float32 keyframes and
+			// about half the bytes of double-precision output (scripts/compact-clips.mjs).
+			const text = JSON.stringify(compactClipJson(json));
 			writeFileSync(outPath, text);
 			hashCache[def.name] = cacheKey;
 			manifest.push({
