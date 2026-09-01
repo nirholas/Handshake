@@ -54,6 +54,14 @@
 	     scripts execute in document order, so the meshopt shim still registers its
 	     decoder before any model-viewer/agent-3d define runs. -->
 	<script src="/model-viewer-meshopt.js" defer></script>
+	<!-- Absolute, and it has to stay absolute. dist/agent-3d/ is written by
+	     `npm run publish:lib` AFTER the frontend build, so a root-relative
+	     module src fails the build outright ("Failed to resolve
+	     /agent-3d/latest/agent-3d.js"), and moving the tag to a runtime-injected
+	     script would hide it from the preload scanner and delay the hero.
+	     Consequence worth knowing when profiling: a local or preview build loads
+	     PRODUCTION's copy of the library, not the one just built, so a
+	     Lighthouse run against them measures the deployed bundle here. -->
 	<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://three.ws/#organization","name":"three.ws","url":"https://three.ws","logo":"https://three.ws/og-image.png","description":"three.ws is the AI-agent layer for the open web: build, embed, monetize, and trade autonomous agents with real 3D avatars, on-chain identity (ERC-8004), pay-per-call (x402), and pump.fun token launches.","sameAs":["https://x.com/trythreews","https://github.com/nirholas/three.ws","https://www.coingecko.com/en/coins/three-ws","https://www.npmjs.com/package/three.ws","https://registry.modelcontextprotocol.io/?q=threews","https://coinmarketcap.com/community/profile/three_ws","https://hackernoon.com/u/three-ws","https://t.me/three_ws"]},{"@type":"WebSite","@id":"https://three.ws/#website","name":"three.ws","url":"https://three.ws","description":"Give your AI a body.","publisher":{"@id":"https://three.ws/#organization"},"potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://three.ws/discover?q={search_term_string}"},"query-input":"required name=search_term_string"}}]}</script>
