@@ -25520,6 +25520,17 @@
 				"fix"
 			],
 			"link": "/docs/freshness"
+		},
+		{
+			"date": "2026-09-01",
+			"title": "Faster pages: the home page stops freezing itself, and every page sheds code it never ran",
+			"summary": "A performance sweep of the home page, Create, Forge, Marketplace, Play, Docs, Discover and Chat, measured with Lighthouse and a CPU profiler. The home page's live agent no longer gets torn down by a 22-second timer while it is still loading (the teardown forced a WebGL context loss that froze the tab, and showed a false \"couldn't load\" message on slow connections), and the playground preview and the visitor-arena animation below the fold now wait until you scroll to them. The theme switcher stopped re-checking the page's light-mode support on every DOM change, which had cost the Marketplace almost nine seconds of main-thread time. The embed script at /agent-3d/latest is 25% smaller: its whitespace minifier was being undone by a later build step. The animation clip library is half its previous size with no visible change (numbers are stored at float precision instead of 17 digits). Web fonts now swap in without moving text, Forge gallery thumbnails load as small WebP tiles instead of full renders, and pages that only show the wallet tier badge no longer download the Solana wallet stack.",
+			"tags": [
+				"improvement",
+				"fix",
+				"infra"
+			],
+			"link": "/"
 		}
 	]
 }
