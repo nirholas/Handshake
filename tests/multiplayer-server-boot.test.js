@@ -127,6 +127,10 @@ beforeAll(async () => {
 			HOST: '127.0.0.1',
 			NODE_ENV: 'development',
 			MULTIPLAYER_SHARED_SECRET: SECRET,
+			// StageRoom pulls its show config and the host's words from the three.ws
+			// API. Point it at this server so the suite never reaches production:
+			// every call 404s here, which exercises the room's own fallbacks.
+			THREEWS_API_BASE: `http://127.0.0.1:${port}`,
 			// Never let a developer's real Redis/Upstash creds leak a test room's
 			// state into shared storage: this suite runs memory-only by construction.
 			UPSTASH_REDIS_REST_URL: '',
@@ -207,6 +211,47 @@ describe('multiplayer entry point', () => {
 			// existing caller already parses.
 			const plain = await (await fetch(`${base}/population`)).json();
 			expect(Object.keys(plain).sort()).toEqual(['coin', 'ok', 'players', 'rooms']);
+		} finally {
+			await room.leave();
+		}
+	});
+
+	it('serves a real stage_world join wired the way /stage wires it', async () => {
+		const { Client, getStateCallbacks } = await import('colyseus.js');
+		const client = new Client(`ws://127.0.0.1:${port}`);
+		// No root-schema class, like src/stage-net.js: state decodes from the
+		// schema the server reflects during the handshake.
+		const room = await client.joinOrCreate('stage_world', { stageId: 'boot-suite-stage', name: 'BootSuite' });
+		try {
+			// The first arrival opens the show and that `utterance` lands right after
+			// JOIN_ROOM, so the handler has to exist before any state work.
+			const utterances = [];
+			room.onMessage('utterance', (m) => utterances.push(m));
+
+			// The join resolves before the first state patch, so `state.host` has no
+			// decoder ref yet and `onChange` on it throws. `listen` on the root is the
+			// contract the browser client relies on: it defers until the host lands.
+			const $ = getStateCallbacks(room);
+			const host = await new Promise((resolve) => {
+				$(room.state).listen('host', (h) => { if (h) resolve(h); });
+			});
+			expect(host.name, 'config 404s here, so the room falls back to a generic host').toBe('The Host');
+
+			await new Promise((resolve) => {
+				$(room.state).audience.onAdd((_m, key) => { if (key === room.sessionId) resolve(); });
+			});
+			const me = room.state.audience.get(room.sessionId);
+			expect(me.name).toBe('BootSuite');
+			expect(Math.hypot(me.x, me.z), 'the server seats each arrival on the ring').toBeGreaterThan(0);
+
+			// The brain 404s here too; the room performs its fallback line rather
+			// than going silent, and the caption in synced state matches the broadcast.
+			const deadline = Date.now() + 10_000;
+			while (!utterances.length && Date.now() < deadline) await sleep(100);
+			expect(utterances.length, 'the opening beat reached a handler registered before state wiring').toBeGreaterThan(0);
+			expect(utterances[0].text).toBeTruthy();
+			expect(room.state.host.caption).toBe(utterances[0].text);
+			expect(room.state.phase).toBe('live');
 		} finally {
 			await room.leave();
 		}

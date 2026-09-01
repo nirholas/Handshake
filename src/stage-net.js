@@ -18,42 +18,33 @@
 // honest "performance feed offline" state — captions/tips still work via polling.
 
 import { Client, getStateCallbacks } from 'colyseus.js';
-import { StageState } from '../multiplayer/src/stage-schemas.js';
 import { joinRoomWithTimeout } from './shared/colyseus-connect.js';
+import { defaultGameServerUrl } from './shared/game-server-url.js';
 import { log } from './shared/log.js';
 
 const ROOM_NAME = 'stage_world';
 const MAX_RETRIES = 1;
 
-// Same resolution chain as irl-net: explicit override → meta → env → Codespaces
-// port forwarding → same-host:2567 in dev. '' in prod with none set ⇒ poll mode.
+// Resolution order: an explicit stage override (window.STAGE_SERVER_URL, the
+// stage-server meta, VITE_STAGE_SERVER_URL), then the shared game-server chain
+// every other realtime surface uses (src/shared/game-server-url.js): localhost
+// always talks to the local server, production reads the game-server meta baked
+// into the page, and '' with nothing configured means "stay offline" rather than
+// loop on a dead socket. Before this shared the chain, production resolved to ''
+// because /stage never carried its own meta, so every live show read "feed
+// offline" while the room kept performing to nobody.
 function defaultServerUrl() {
-	if (typeof window !== 'undefined') {
-		if (window.STAGE_SERVER_URL) return String(window.STAGE_SERVER_URL).trim().replace(/\/$/, '');
-		if (window.WALK_SERVER_URL) return String(window.WALK_SERVER_URL).trim().replace(/\/$/, '');
-	}
+	const trim = (v) => String(v).trim().replace(/\/$/, '');
+	if (typeof window !== 'undefined' && window.STAGE_SERVER_URL) return trim(window.STAGE_SERVER_URL);
 	if (typeof document !== 'undefined') {
-		for (const name of ['stage-server', 'walk-server']) {
-			const v = document.querySelector(`meta[name="${name}"]`)?.getAttribute('content')?.trim();
-			if (v) return v.replace(/\/$/, '');
-		}
+		const v = document.querySelector('meta[name="stage-server"]')?.getAttribute('content')?.trim();
+		if (v) return trim(v);
 	}
 	try {
-		const envUrl = import.meta?.env?.VITE_STAGE_SERVER_URL || import.meta?.env?.VITE_WALK_SERVER_URL;
-		if (envUrl) return String(envUrl).trim().replace(/\/$/, '');
-	} catch (_) {}
-	if (typeof location !== 'undefined') {
-		const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-		const host = location.hostname;
-		const fwd = host.match(/^(.*)-(\d+)\.(app\.github\.dev|githubpreview\.dev|gitpod\.io)$/);
-		if (fwd) return `${proto}//${fwd[1]}-2567.${fwd[3]}`;
-		let isProd = false;
-		try { isProd = import.meta?.env?.PROD === true; } catch (_) {}
-		const isLocalHost = host === 'localhost' || host === '127.0.0.1';
-		if (!isProd || isLocalHost) return `${proto}//${host}:2567`;
-		return '';
-	}
-	return '';
+		const envUrl = import.meta?.env?.VITE_STAGE_SERVER_URL;
+		if (envUrl) return trim(envUrl);
+	} catch (_) { /* import.meta.env is absent outside the bundler */ }
+	return defaultGameServerUrl();
 }
 
 export class StageNet {
@@ -124,11 +115,14 @@ export class StageNet {
 		this._setStatus('connecting');
 		try {
 			this.client = new Client(this.url);
+			// No root-schema class passed on purpose: the client decodes state from
+			// the schema the server reflects during the handshake, so a field the
+			// deployed room adds never desyncs a bundle that predates it.
 			const room = await joinRoomWithTimeout(this.client, ROOM_NAME, {
 				stageId: this.stageId,
 				name: this.name,
 				avatar: this.avatar,
-			}, StageState);
+			});
 			if (this._destroyed || gen !== this._connectGen) {
 				try { room.leave(); } catch {}
 				return;
@@ -137,34 +131,38 @@ export class StageNet {
 			this.sessionId = room.sessionId;
 			this._retries = 0;
 
-			const $ = getStateCallbacks(this.room);
-
-			// Host performance frame — emit the full host snapshot on any change.
-			const $host = $(this.room.state)?.host;
-			if ($host) {
-				$host.onChange(() => this._emit('host', snapshotHost(this.room.state.host)));
-			}
-
-			// Audience — coalesce the join-time burst into one emit.
-			const $aud = $(this.room.state)?.audience;
-			if ($aud) {
-				$aud.onAdd((m) => { $(m).onChange(() => this._queueAudience()); this._queueAudience(); });
-				$aud.onRemove(() => this._queueAudience());
-			}
-
-			// Leaderboard — the synced top-tippers array.
-			const $lb = $(this.room.state)?.leaderboard;
-			if ($lb) {
-				$lb.onAdd(() => this._emitLeaderboard());
-				$lb.onRemove(() => this._emitLeaderboard());
-				$lb.onChange?.(() => this._emitLeaderboard());
-			}
-
-			// Transient broadcasts.
+			// Message handlers first: the room opens the show the instant the first
+			// audience member joins, and that `utterance` lands before any state work
+			// below completes. A handler registered late drops the opening line.
 			this.room.onMessage('utterance', (msg) => this._emit('utterance', msg));
 			this.room.onMessage('tip', (msg) => this._emit('tip', msg));
 			this.room.onMessage('reaction', (msg) => this._emit('reaction', msg));
 			this.room.onMessage('question_ack', (msg) => this._emit('reaction', { ack: msg }));
+
+			const $ = getStateCallbacks(this.room);
+
+			// Host performance frame. The join resolves on JOIN_ROOM, before the first
+			// state patch, so `state.host` has no decoder ref yet and `onChange` on it
+			// throws ("Can't addCallback on 'REPLACE'"). `listen` on the root defers
+			// until the child lands and fires at once when it is already there, which
+			// also hands a late joiner the current caption.
+			$(this.room.state).listen('host', (host) => {
+				if (!host) return;
+				$(host).onChange(() => this._emit('host', snapshotHost(host)));
+				this._emit('host', snapshotHost(host));
+			});
+
+			// Audience: coalesce the join-time burst into one emit. Collection
+			// proxies defer on their own until the map is decoded.
+			const $aud = $(this.room.state).audience;
+			$aud.onAdd((m) => { $(m).onChange(() => this._queueAudience()); this._queueAudience(); });
+			$aud.onRemove(() => this._queueAudience());
+
+			// Leaderboard: the synced top-tippers array.
+			const $lb = $(this.room.state).leaderboard;
+			$lb.onAdd(() => this._emitLeaderboard());
+			$lb.onRemove(() => this._emitLeaderboard());
+			$lb.onChange(() => this._emitLeaderboard());
 
 			this.room.onLeave((code) => {
 				if (this._destroyed || code === 1000) return;
@@ -173,8 +171,8 @@ export class StageNet {
 			});
 			this.room.onError((code, message) => log.warn('[stage-net] room.onError', code, message));
 
-			// Initial full snapshots + a heartbeat so the reaper keeps us.
-			this._emit('host', snapshotHost(this.room.state.host));
+			// Initial snapshots (a no-op until the first patch decodes the state) +
+			// a heartbeat so the reaper keeps us.
 			this._emitLeaderboard();
 			this._queueAudience();
 			// connection.isOpen catches the CLOSING/CLOSED window before onLeave
@@ -188,6 +186,9 @@ export class StageNet {
 		} catch (err) {
 			const reason = err?.message || (err?.code != null ? `code ${err.code}` : String(err));
 			log.warn('[stage-net] connect failed:', reason);
+			// A join that succeeded but failed to wire must not leave a live socket
+			// behind: the next attempt would double-deliver every broadcast.
+			this._closeRoom();
 			this._setStatus('failed', reason);
 			this._scheduleReconnect();
 		}
@@ -258,6 +259,7 @@ export class StageNet {
 	}
 
 	retry() {
+		if (this._destroyed || this.status === 'connecting' || this.status === 'online') return;
 		if (this._reconnectTimer) { clearTimeout(this._reconnectTimer); this._reconnectTimer = null; }
 		this._retries = 0;
 		this.connect();
