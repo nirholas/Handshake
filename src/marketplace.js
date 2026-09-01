@@ -1221,6 +1221,15 @@ function promoteHeroSlide(slide) {
 		mv.setAttribute('src', mv.dataset.src);
 		delete mv.dataset.src;
 	}
+	// Only the slide on screen turns. Nothing used to stop the one being
+	// advanced past, so every rotation of the carousel left another loaded
+	// viewer rendering behind the current slide for the life of the tab.
+	const stage = slide.parentElement;
+	if (stage) {
+		for (const other of stage.querySelectorAll('model-viewer')) {
+			if (other !== mv) other.removeAttribute('auto-rotate');
+		}
+	}
 	mv.setAttribute('auto-rotate', '');
 }
 
@@ -1546,27 +1555,23 @@ function observeCardModelViewers() {
 			(entries) => {
 				for (const entry of entries) {
 					const mv = entry.target;
-					if (entry.isIntersecting) {
-						// Lazy promote data-src → src on first intersect (fires the GLB download).
-						if (mv.dataset.src && !mv.getAttribute('src')) {
-							mv.setAttribute('src', mv.dataset.src);
-							delete mv.dataset.src;
-						}
-						if (mv.dataset.shouldRotate !== '0') {
-							mv.setAttribute('auto-rotate', '');
-							// Stopping off-screen was not enough. A grid of on-screen cards
-							// all rotating at once never stops, and model-viewer blits every
-							// element's pixels every frame: 27 s of scripting in a 40 s
-							// desktop run, and the page never became interactive. Each card
-							// now turns when it arrives, settles, and turns again on hover
-							// or focus. attendRotation takes over this element's rotation
-							// from here (its own observer), so the branch below only has to
-							// handle a card that never qualified.
-							attendRotation(mv);
-						}
-					} else {
-						// Suspend rotation off-screen so model-viewer halts its raf loop.
-						mv.removeAttribute('auto-rotate');
+					if (!entry.isIntersecting) continue;
+					// Lazy promote data-src → src on first intersect (fires the GLB download).
+					if (mv.dataset.src && !mv.getAttribute('src')) {
+						mv.setAttribute('src', mv.dataset.src);
+						delete mv.dataset.src;
+					}
+					// Rotation has exactly one owner from here: attendRotation, which
+					// turns the card when it arrives, settles it once it has turned far
+					// enough to read as 3D, and turns it again on hover or focus.
+					// Toggling the attribute here too meant two owners of one attribute:
+					// this observer re-added auto-rotate after the settle, attendRotation
+					// saw its own state already matching and never took it away again, and
+					// the cards rotated for the life of the tab anyway (27 s of scripting
+					// in a 40 s desktop run).
+					if (mv.dataset.shouldRotate !== '0' && mv.dataset.attendedRotateBound !== '1') {
+						mv.setAttribute('auto-rotate', '');
+						attendRotation(mv);
 					}
 				}
 			},
