@@ -25430,6 +25430,16 @@
 				"improvement"
 			],
 			"link": "/studio"
+		},
+		{
+			"date": "2026-09-01",
+			"title": "Get Started wizard: avatars come back into the flow, the brain you pick is the brain you get, and sign-in happens at publish time",
+			"summary": "The 5-step wizard at /start now finishes what it starts. Taking a selfie, writing a prompt, building in the studio, or using the editor brings the finished avatar straight back into the wizard instead of stranding you on the avatar page, and Upload GLB uses the same storage path as every other upload, so it works. The AI model you choose is now applied to the agent (before, it was collected and dropped), the embed snippet points at the real loader, and a signed-out visitor who reaches the publish step gets a sign-in panel that resumes exactly where they left off rather than a cryptic error. Helper pills no longer sit on top of the Continue button, off-screen steps are no longer tabbable, the price and wallet fields have names for screen readers, and failed price or wallet saves are reported instead of swallowed.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/start"
 		}
 	]
 }

@@ -11,7 +11,7 @@ This guide walks you through creating a 3D AI agent in the browser — no code, 
 
 Go to [three.ws/start](/start). This is the new-agent wizard.
 
-You'll be asked to sign in if you haven't already. See [Do I need crypto?](./do-i-need-crypto.md) if you're not sure which sign-in option to choose.
+You can walk through the whole setup before signing in: the avatar, the name, the brain, and the skills are kept in the tab. The wizard asks you to sign in (or create a free account) at the publish step, then picks up exactly where you left off. See [Do I need crypto?](./do-i-need-crypto.md) if you're not sure which sign-in option to choose.
 
 ---
 
@@ -77,6 +77,17 @@ Everything is editable after publishing. Go to your agent's page and click **Edi
 Changes take effect immediately — no republishing needed for most settings.
 
 ---
+
+## How the avatar step hands back to the wizard
+
+Step 1 of the wizard sends you to one of the avatar pages (`/create/selfie`, `/create`, `/create/prompt`, `/create/studio`) and expects the finished avatar back. Those pages share one small contract, implemented in [src/shared/wizard-return.js](../src/shared/wizard-return.js):
+
+1. The wizard links out with `?wizard=1&next=/start?from=selfie`.
+2. The first page in the chain calls `captureWizardReturn()`, which keeps the `next` path in `sessionStorage` and removes it from the address bar. Only a same-origin path under `/start` is ever stored; anything else is ignored.
+3. Whichever page finally saves the avatar calls `pendingWizardReturn()`. When a return is pending, it offers "Use this avatar and continue setup" (the selfie and prompt pages) or goes straight back (the review and studio pages) via `returnToWizard({ avatarId, avatarName, avatarThumb })`, instead of its usual post-save destination. The wizard creates the agent itself, so the avatar page must not attach the avatar to an agent on this path.
+4. The wizard reads `?avatarId=&avatarName=&avatarThumb=` on arrival, attaches the avatar, and moves to step 2.
+
+Entries expire after two hours so an abandoned setup never hijacks a later, unrelated avatar save. A new avatar-producing page joins the flow by calling `captureWizardReturn()` on boot and `returnToWizard()` at its save point.
 
 ## What's next
 

@@ -1,16 +1,21 @@
 /**
- * /start — Onboarding wizard
+ * /start: onboarding wizard
  *
- * 5-step flow: avatar → name/brain → skills → deploy → earn
- * State is persisted in sessionStorage so users can navigate away and back.
+ * 5-step flow: avatar, name and brain, skills, deploy, earn.
+ * State is persisted in sessionStorage so users can navigate away and back,
+ * including the round trip to an avatar-producing page and the sign-in hop
+ * before deploy. See src/shared/wizard-return.js for the avatar hand-back.
  */
 
 import { formatUsdcEq } from './shared/usd-price.js';
 import { TEMPLATES, TEMPLATES_BY_ID } from './templates.js';
 import { log } from './shared/log.js';
+import { apiFetch, noteSession } from './api.js';
+import { saveRemoteGlbToAccount } from './account.js';
 
 const STORAGE_KEY = 'wz:state';
 const TOTAL_STEPS = 5;
+const START_PATH = '/start';
 
 // ── Personality presets ────────────────────────────────────────────────────
 
@@ -40,6 +45,18 @@ const PRESETS = {
 		bio: 'A DeFi expert fluent in liquidity pools, yield strategies, blockchain analytics, and protocol mechanics across Solana and EVM networks.',
 	},
 };
+
+// ── Brain models ──────────────────────────────────────────────────────────
+// Every id here is a route the embed brain can actually serve (api/llm/anthropic.js
+// MODELS) and an option the dashboard's embed-policy page offers, so the choice
+// made here is the same setting the owner later sees under Dashboard.
+
+const MODELS = {
+	'claude-sonnet-4-6': { label: 'Claude Sonnet 4.6' },
+	'openai/gpt-oss-20b:free': { label: 'GPT-OSS 20B' },
+	'llama-3.3-70b-versatile': { label: 'Llama 3.3 70B' },
+};
+const DEFAULT_MODEL = 'claude-sonnet-4-6';
 
 // ── Skill → backend skills mapping ───────────────────────────────────────
 
@@ -74,7 +91,9 @@ function initState() {
 	const url = new URL(location.href);
 	const saved = loadState();
 
-	// Check if returning from avatar creation
+	// Returning from an avatar-producing page (src/shared/wizard-return.js).
+	// URLSearchParams already decodes the values; decoding again would throw
+	// on a name that legitimately contains a percent sign.
 	const avatarId = url.searchParams.get('avatarId');
 	const avatarName = url.searchParams.get('avatarName');
 	const avatarThumb = url.searchParams.get('avatarThumb');
@@ -88,31 +107,60 @@ function initState() {
 		widgetId: null,
 		name: '',
 		description: '',
-		model: 'claude-sonnet-4-5',
+		model: DEFAULT_MODEL,
 		enabledSkills: ['memory', 'think'],
 		cryptoMode: false,
 		price: '',
 		wallet: '',
 		deployed: false,
+		modelApplied: null,
 		embedCode: '',
 		liveUrl: '',
 	};
 	if (base.cryptoMode === undefined) base.cryptoMode = false;
+	// A session saved before the model list changed may hold an id no lane serves.
+	if (!MODELS[base.model]) base.model = DEFAULT_MODEL;
 
 	if (avatarId) {
 		base.avatarId = avatarId;
-		if (avatarName) base.avatarName = decodeURIComponent(avatarName);
-		if (avatarThumb) base.avatarThumb = decodeURIComponent(avatarThumb);
+		if (avatarName) base.avatarName = avatarName;
+		if (avatarThumb) base.avatarThumb = avatarThumb;
 		// Advance to step 2 if returning from avatar creation
 		if (base.step === 1) base.step = 2;
-		// Remove avatar params from URL cleanly
-		url.searchParams.delete('avatarId');
-		url.searchParams.delete('avatarName');
-		url.searchParams.delete('avatarThumb');
-		history.replaceState(null, '', url.toString());
 	}
+	for (const key of ['avatarId', 'avatarName', 'avatarThumb', 'from']) url.searchParams.delete(key);
+	if (url.href !== location.href) history.replaceState(null, '', url.toString());
 
 	return base;
+}
+
+// ── Session ───────────────────────────────────────────────────────────────
+// null = not resolved yet, true/false once /api/auth/me answered. The deploy
+// step reads this to offer sign-in instead of firing requests that can only 401.
+
+let authed = null;
+
+async function resolveAuth() {
+	try {
+		const r = await apiFetch('/api/auth/me', { allowAnonymous: true });
+		if (r.status === 401) {
+			authed = false;
+		} else if (r.ok) {
+			const j = await r.json();
+			authed = Boolean(j && j.user);
+		} else {
+			throw new Error(`auth/me ${r.status}`);
+		}
+		noteSession(authed);
+	} catch (err) {
+		log.warn('[wizard] session probe failed; deploy will find out', err?.message || err);
+		authed = null;
+	}
+	return authed;
+}
+
+function loginHref(target = '/login') {
+	return `${target}?next=${encodeURIComponent(START_PATH)}`;
 }
 
 // ── Templates gallery ─────────────────────────────────────────────────────
@@ -122,9 +170,9 @@ const wizardEl = document.getElementById('wizard');
 const startFreshBtn = document.getElementById('btn-start-fresh');
 
 function showWizard({ fromTemplate = false } = {}) {
-	// Show "← Templates" button only when the gallery was bypassed (stale state).
-	// When triggered by a template card click, the gallery is already visible so
-	// no need to offer a way back.
+	// Show "← Templates" only when the gallery was bypassed (saved state or a
+	// returning avatar). When a template card was clicked the gallery was just
+	// on screen, so there is nothing to offer a way back to.
 	if (startFreshBtn) startFreshBtn.style.display = fromTemplate ? 'none' : '';
 
 	if (templatesScreen) {
@@ -132,9 +180,9 @@ function showWizard({ fromTemplate = false } = {}) {
 		setTimeout(() => {
 			templatesScreen.classList.add('tpl-hidden');
 			templatesScreen.classList.remove('tpl-exit');
-			// Reveal wizard only after template screen is gone — avoids a black
-			// flash caused by both full-height elements being in the DOM at once
-			// with overflow:hidden on body hiding the below-fold wizard.
+			// Reveal the wizard only after the template screen is gone: both are
+			// full-height, and body has overflow:hidden, so showing both at once
+			// flashes black while the below-fold wizard is clipped.
 			if (wizardEl) wizardEl.classList.remove('wz-offstage');
 		}, 200);
 	} else {
@@ -145,14 +193,14 @@ function showWizard({ fromTemplate = false } = {}) {
 if (startFreshBtn) {
 	startFreshBtn.addEventListener('click', () => {
 		try { sessionStorage.removeItem(STORAGE_KEY); } catch {}
-		location.reload();
+		location.href = START_PATH;
 	});
 }
 
 function applyTemplate(tpl) {
 	state.description = tpl.bio;
 	state.enabledSkills = [...tpl.skills];
-	if (tpl.model) state.model = tpl.model;
+	if (tpl.model && MODELS[tpl.model]) state.model = tpl.model;
 	state.cryptoMode = Boolean(tpl.cryptoMode);
 	// Jump to step 2 (Name & Brain) so the user immediately sees the prefilled persona
 	state.step = 2;
@@ -189,20 +237,20 @@ function initTemplateGallery() {
 	const hasSavedState = Boolean(loadState());
 
 	// If a specific template is requested via ?template=id, apply it immediately.
-	// applyTemplate() calls renderStep() — return true so caller skips its own call.
+	// applyTemplate() calls renderStep(), so return true and the caller skips its own call.
 	if (tplParam && TEMPLATES_BY_ID[tplParam]) {
 		applyTemplate(TEMPLATES_BY_ID[tplParam]);
 		return true;
 	}
 
-	// If there's an in-progress wizard session, skip the gallery and let caller renderStep.
-	// Show "← Templates" so the user can always reset back to the template gallery.
-	if (hasSavedState) {
+	// An in-progress session, or an avatar that just came back from a creation
+	// page, skips the gallery. "← Templates" stays available to reset.
+	if (hasSavedState || state.avatarId) {
 		showWizard({ fromTemplate: false });
 		return false;
 	}
 
-	// Show the gallery — renderStep still runs so wizard state is primed behind the overlay.
+	// Show the gallery; renderStep still runs so wizard state is primed behind the overlay.
 	templatesScreen.classList.remove('tpl-hidden');
 
 	const grid = document.getElementById('tpl-grid');
@@ -219,31 +267,29 @@ function initTemplateGallery() {
 	return false;
 }
 
-// ── CSRF helper ───────────────────────────────────────────────────────────
+// ── API helper ────────────────────────────────────────────────────────────
+// apiFetch carries the CSRF token for mutations. allowAnonymous keeps a 401
+// in our hands (the deploy step turns it into a sign-in panel) instead of
+// letting the shared client bounce the tab to /login mid-wizard.
 
-let _csrf = null;
-
-async function getCsrfToken() {
-	if (_csrf && _csrf.expiresAt > Date.now() + 5_000) return _csrf.token;
-	const r = await fetch('/api/csrf-token', { credentials: 'include' });
-	if (!r.ok) throw new Error('Could not get CSRF token. Please sign in again.');
-	const j = await r.json();
-	_csrf = { token: j.data.token, expiresAt: Date.now() + (j.data.expires_in - 30) * 1000 };
-	return _csrf.token;
-}
-
-async function apiPost(url, body) {
-	const token = await getCsrfToken();
-	_csrf = null;
-	const r = await fetch(url, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': token },
-		credentials: 'include',
+async function apiJson(method, url, body) {
+	const r = await apiFetch(url, {
+		method,
+		allowAnonymous: true,
+		headers: { 'content-type': 'application/json' },
 		body: JSON.stringify(body),
 	});
-	const j = await r.json();
-	if (!r.ok) throw new Error(j.error_description || j.error || `Server error ${r.status}`);
+	const j = await r.json().catch(() => ({}));
+	if (!r.ok) {
+		const err = new Error(j.error_description || j.error || `Server error ${r.status}`);
+		err.status = r.status;
+		throw err;
+	}
 	return j;
+}
+
+function isSignedOut(err) {
+	return err?.status === 401 || err?.code === 'not_signed_in' || err?.redirected === true;
 }
 
 // ── Toast helper ──────────────────────────────────────────────────────────
@@ -251,11 +297,18 @@ async function apiPost(url, body) {
 const toast = document.getElementById('wz-toast');
 let _toastTimer = null;
 
-function showError(msg) {
+function showError(msg, action) {
 	if (_toastTimer) clearTimeout(_toastTimer);
 	toast.textContent = msg;
+	if (action) {
+		const a = document.createElement('a');
+		a.className = 'wz-toast-action';
+		a.href = action.href;
+		a.textContent = action.label;
+		toast.append(' ', a);
+	}
 	toast.classList.add('show');
-	_toastTimer = setTimeout(() => toast.classList.remove('show'), 4000);
+	_toastTimer = setTimeout(() => toast.classList.remove('show'), action ? 8000 : 4000);
 }
 
 // ── DOM helpers ───────────────────────────────────────────────────────────
@@ -313,9 +366,15 @@ function setCryptoMode(on) {
 function renderStep() {
 	steps.forEach((s, i) => {
 		const stepNum = i + 1;
+		const on = stepNum === state.step;
 		s.classList.remove('active', 'exit-left');
-		if (stepNum === state.step) s.classList.add('active');
+		if (on) s.classList.add('active');
 		else if (stepNum < state.step) s.classList.add('exit-left');
+		// Off-screen steps slide out visually but stayed in the tab order and the
+		// accessibility tree, so a keyboard user tabbed through five screens of
+		// controls they could not see. inert removes them from both.
+		s.inert = !on;
+		s.setAttribute('aria-hidden', String(!on));
 	});
 
 	dots.forEach((d, i) => {
@@ -326,16 +385,18 @@ function renderStep() {
 	});
 
 	$('btn-back').hidden = state.step <= 1;
-	$('btn-next').hidden = state.step === 4 && !state.deployed;
 
 	const nextBtn = $('btn-next');
+	nextBtn.disabled = false;
 	if (state.step === 5) {
 		nextBtn.textContent = hasCryptoSkills() ? 'Save & finish' : 'Go to dashboard';
+		nextBtn.hidden = false;
 	} else if (state.step === 4) {
 		nextBtn.textContent = 'Continue';
 		nextBtn.hidden = !state.deployed;
 	} else {
 		nextBtn.textContent = state.step === 3 ? 'Continue to deploy' : 'Continue';
+		nextBtn.hidden = false;
 	}
 
 	// Skip button: show on step 1 always; on step 5 only when crypto skills selected (skip wallet setup)
@@ -345,8 +406,7 @@ function renderStep() {
 	if (state.step === 1) renderStep1();
 	if (state.step === 2) { renderStep2(); updateCryptoUI(); }
 	if (state.step === 3) { renderStep3(); updateCryptoUI(); }
-	if (state.step === 4 && !state.deployed) startDeploy();
-	if (state.step === 4 && state.deployed) showDeploySuccess();
+	if (state.step === 4) renderStep4();
 	if (state.step === 5) renderStep5();
 
 	// Announce progress to screen readers
@@ -435,10 +495,51 @@ function renderStep5() {
 
 // ── Step 4: Deploy ─────────────────────────────────────────────────────────
 
-async function startDeploy() {
-	$('deploy-status').style.display = 'block';
+function setStep4Copy(headline, sub) {
+	const h = $('step4-headline');
+	const p = $('step4-sub');
+	// The i18n pass lands after an async catalog fetch; marking the element as
+	// script-owned stops it from reverting this state-specific copy.
+	if (h) { h.textContent = headline; h.setAttribute('data-i18n-owned', '1'); }
+	if (p) { p.textContent = sub; p.setAttribute('data-i18n-owned', '1'); }
+}
+
+function renderStep4() {
+	if (state.deployed) {
+		showDeploySuccess();
+	} else if (authed === false) {
+		showDeploySignIn();
+	} else {
+		startDeploy();
+	}
+}
+
+function showDeploySignIn() {
+	$('deploy-status').style.display = 'none';
 	$('deploy-success').classList.remove('show');
+	$('deploy-signin').hidden = false;
 	$('btn-next').hidden = true;
+	setStep4Copy('Publish your agent', 'One more thing before it goes live.');
+	$('deploy-signin-login').href = loginHref('/login');
+	$('deploy-signin-register').href = loginHref('/register');
+}
+
+let _deploying = false;
+
+async function startDeploy() {
+	if (_deploying) return;
+	_deploying = true;
+	const status = $('deploy-status');
+	status.style.display = 'block';
+	status.querySelectorAll('.wz-deploy-retry').forEach((b) => b.remove());
+	const spinner = status.querySelector('.wz-deploy-spinner');
+	if (spinner) spinner.style.display = '';
+	const label = $('deploy-label');
+	label.style.color = '';
+	$('deploy-success').classList.remove('show');
+	$('deploy-signin').hidden = true;
+	$('btn-next').hidden = true;
+	setStep4Copy('Publishing your agent', 'Creating the agent, applying its brain, and building the embed widget.');
 
 	try {
 		// Build skills list
@@ -447,80 +548,116 @@ async function startDeploy() {
 			(SKILL_MAP[key] || []).forEach((s) => skillSet.add(s));
 		}
 
-		// 1. Create agent
-		$('deploy-label').textContent = 'Creating your agent…';
-		const agentBody = {
-			name: state.name || 'My Agent',
-			description: state.description || null,
-			skills: [...skillSet],
-		};
-		if (state.avatarId) agentBody.avatar_id = state.avatarId;
+		// 1. Create agent (idempotent across retries: a created agent is kept)
+		let agentId = state.agentId;
+		if (!agentId) {
+			label.textContent = 'Creating your agent…';
+			const agentBody = {
+				name: state.name || 'My Agent',
+				description: state.description || null,
+				skills: [...skillSet],
+			};
+			if (state.avatarId) agentBody.avatar_id = state.avatarId;
 
-		const agentRes = await apiPost('/api/agents', agentBody);
-		const agentId = agentRes.agent?.id;
-		if (!agentId) throw new Error('Agent creation failed — no ID returned.');
-		state.agentId = agentId;
-		saveState(state);
+			const agentRes = await apiJson('POST', '/api/agents', agentBody);
+			agentId = agentRes.agent?.id;
+			if (!agentId) throw new Error('Agent creation failed: no ID returned.');
+			state.agentId = agentId;
+			saveState(state);
+		}
 
-		// 2. Create widget
-		$('deploy-label').textContent = 'Building your embed widget…';
-		const widgetBody = {
-			type: 'talking-agent',
-			name: (state.name || 'My Agent') + ' — Chat',
-			config: { agent_id: agentId },
-			is_public: true,
-		};
-		if (state.avatarId) widgetBody.avatar_id = state.avatarId;
+		// 2. Apply the chosen brain. The embed policy is the per-agent model
+		// setting every chat lane reads (talk, embed brain, delegate), and the
+		// same field the dashboard's embed-policy page edits.
+		label.textContent = `Setting the brain to ${MODELS[state.model].label}…`;
+		try {
+			await apiJson('PUT', `/api/agents/${agentId}/embed-policy`, { brain: { model: state.model } });
+			state.modelApplied = true;
+		} catch (err) {
+			if (isSignedOut(err)) throw err;
+			log.warn('[wizard/deploy] embed-policy update failed; agent keeps the platform default model', err);
+			state.modelApplied = false;
+		}
 
-		const widgetRes = await apiPost('/api/widgets', widgetBody);
-		const widgetId = widgetRes.widget?.id;
-		if (!widgetId) throw new Error('Widget creation failed — no ID returned.');
-		state.widgetId = widgetId;
+		// 3. Create widget
+		if (!state.widgetId) {
+			label.textContent = 'Building your embed widget…';
+			const widgetBody = {
+				type: 'talking-agent',
+				name: `${state.name || 'My Agent'} chat`,
+				config: { agent_id: agentId },
+				is_public: true,
+			};
+			if (state.avatarId) widgetBody.avatar_id = state.avatarId;
 
-		// 3. Build embed code
+			const widgetRes = await apiJson('POST', '/api/widgets', widgetBody);
+			const widgetId = widgetRes.widget?.id;
+			if (!widgetId) throw new Error('Widget creation failed: no ID returned.');
+			state.widgetId = widgetId;
+		}
+
+		// 4. Build embed code (same snippet the dashboard's Widgets page hands out)
 		const origin = location.origin;
-		const embedCode = `<script src="${origin}/widget.js" data-widget="${widgetId}" async><\/script>`;
-		const liveUrl = `${origin}/agents/${agentId}`;
-
-		state.liveUrl = liveUrl;
-		state.embedCode = embedCode;
+		state.embedCode =
+			`<script async src="${origin}/embed.js"\n` +
+			`        data-widget="${state.widgetId}"\n` +
+			`        data-reveal="interaction"\n` +
+			`        data-poster="auto"><\/script>`;
+		state.liveUrl = `${origin}/agents/${agentId}`;
 		state.deployed = true;
 		saveState(state);
+
+		try {
+			window.__twsGuide?.complete('brain', { silent: true });
+			window.__twsGuide?.complete('embed', { silent: true });
+		} catch {}
 
 		showDeploySuccess();
 
 	} catch (err) {
 		log.error('[wizard/deploy]', err);
-		$('deploy-label').textContent = err.message || 'Deployment failed. Please try again.';
-		$('deploy-label').style.color = '#f87171';
-		const spinner = document.querySelector('.wz-deploy-spinner');
+		saveState(state);
+		if (isSignedOut(err)) {
+			authed = false;
+			noteSession(false);
+			showDeploySignIn();
+			return;
+		}
+		setStep4Copy('Publishing hit a snag', 'Nothing you entered was lost. Retry, or go back and adjust.');
+		label.textContent = err.message || 'Deployment failed. Please try again.';
+		label.style.color = '#f87171';
 		if (spinner) spinner.style.display = 'none';
-		// Show a retry button
 		const retryBtn = document.createElement('button');
 		retryBtn.type = 'button';
 		retryBtn.textContent = 'Try again';
-		retryBtn.className = 'wz-btn wz-btn-ghost';
-		retryBtn.style.margin = '16px auto 0';
-		retryBtn.style.display = 'block';
-		retryBtn.onclick = () => {
-			retryBtn.remove();
-			$('deploy-label').style.color = '';
-			if (spinner) spinner.style.display = '';
-			startDeploy();
-		};
-		$('deploy-status').appendChild(retryBtn);
+		retryBtn.className = 'wz-btn wz-btn-ghost wz-deploy-retry';
+		retryBtn.addEventListener('click', () => startDeploy());
+		status.appendChild(retryBtn);
+		retryBtn.focus();
+	} finally {
+		_deploying = false;
 	}
 }
 
 function showDeploySuccess() {
 	$('deploy-status').style.display = 'none';
+	$('deploy-signin').hidden = true;
 	const success = $('deploy-success');
 	success.classList.add('show');
+	setStep4Copy('Your agent is live', 'We created your agent and generated an embeddable widget.');
 
 	$('deploy-agent-name').textContent = `${state.name || 'Your agent'} is live 🎉`;
 	$('deploy-live-url').textContent = state.liveUrl;
 	const liveLink = $('deploy-live-link');
 	liveLink.href = state.liveUrl;
+
+	const brain = $('deploy-brain');
+	if (brain) {
+		const label = MODELS[state.model]?.label || state.model;
+		brain.textContent = state.modelApplied === false
+			? `Brain: platform default. ${label} could not be applied; change it any time under Dashboard → Embed policy.`
+			: `Brain: ${label}. Change it any time under Dashboard → Embed policy.`;
+	}
 
 	const codeEl = $('embed-code');
 	if (codeEl) codeEl.textContent = state.embedCode;
@@ -536,37 +673,44 @@ function detectChain(addr) {
 	return 'SOL';
 }
 
+// Returns a list of human-readable problems; empty when everything saved.
 async function saveEarnSettings() {
 	const price = parseFloat($('earn-price')?.value || '0') || 0;
 	const wallet = ($('earn-wallet')?.value || '').trim();
-
-	const promises = [];
+	const problems = [];
 
 	if (price > 0 && state.agentId) {
 		const amountAtomics = Math.round(price * 1_000_000);
-		promises.push(
-			apiPost(`/api/agents/${state.agentId}/skills/set-price`, {
+		try {
+			await apiJson('POST', `/api/agents/${state.agentId}/skills/set-price`, {
 				skill: 'chat',
 				amount: amountAtomics,
 				currency_mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
 				chain: 'solana',
 				mint_decimals: 6,
-			}).catch(() => {}),
-		);
+			});
+		} catch (err) {
+			if (isSignedOut(err)) throw err;
+			problems.push(`the price (${err.message})`);
+		}
 	}
 
 	if (wallet) {
-		const chain = detectChain(wallet).toLowerCase().includes('eth') ? 'base' : 'solana';
-		promises.push(
-			apiPost('/api/billing/payout-wallets', {
+		const chain = detectChain(wallet) === 'ETH/BASE' ? 'base' : 'solana';
+		try {
+			await apiJson('POST', '/api/billing/payout-wallets', {
 				chain,
 				address: wallet,
-				label: 'Wizard setup',
-			}).catch(() => {}),
-		);
+				agent_id: state.agentId,
+				is_default: true,
+			});
+		} catch (err) {
+			if (isSignedOut(err)) throw err;
+			problems.push(`the payout wallet (${err.message})`);
+		}
 	}
 
-	await Promise.allSettled(promises);
+	return problems;
 }
 
 // ── Navigation logic ───────────────────────────────────────────────────────
@@ -585,17 +729,37 @@ function validateStep() {
 	return true;
 }
 
+function finishWizard() {
+	try { sessionStorage.removeItem(STORAGE_KEY); } catch {}
+	location.href = '/dashboard?welcome=1';
+}
+
 async function goNext() {
 	if (!validateStep()) return;
 
 	if (state.step === 5) {
-		$('btn-next').disabled = true;
-		$('btn-next').textContent = 'Saving…';
+		const nextBtn = $('btn-next');
+		const originalLabel = nextBtn.textContent;
+		nextBtn.disabled = true;
+		nextBtn.textContent = 'Saving…';
 		if (hasCryptoSkills()) {
-			await saveEarnSettings().catch(() => {});
+			let problems;
+			try {
+				problems = await saveEarnSettings();
+			} catch (err) {
+				nextBtn.disabled = false;
+				nextBtn.textContent = originalLabel;
+				showError('Your session ended. Sign in to save these settings.', { href: loginHref('/login'), label: 'Sign in' });
+				return;
+			}
+			if (problems.length) {
+				nextBtn.disabled = false;
+				nextBtn.textContent = originalLabel;
+				showError(`We could not save ${problems.join(' and ')}. Fix it and try again, or skip this step.`);
+				return;
+			}
 		}
-		sessionStorage.removeItem(STORAGE_KEY);
-		location.href = '/dashboard?welcome=1';
+		finishWizard();
 		return;
 	}
 
@@ -617,9 +781,7 @@ function skipStep() {
 		saveState(state);
 		renderStep();
 	} else if (state.step === 5) {
-		// Skip earning setup, go to dashboard
-		sessionStorage.removeItem(STORAGE_KEY);
-		location.href = '/dashboard?welcome=1';
+		finishWizard();
 	}
 }
 
@@ -638,19 +800,17 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ── Step 1: Avatar method selection ───────────────────────────────────────
+// The creation pages capture ?next= (src/shared/wizard-return.js) and bring
+// the finished avatar back here as ?avatarId=&avatarName=&avatarThumb=.
 
-$('btn-selfie').addEventListener('click', () => {
+function leaveForAvatar(path, from) {
 	saveState(state);
-	// Navigate to selfie flow, expect return with ?avatarId=
-	const returnUrl = encodeURIComponent(location.origin + '/start?from=selfie');
-	location.href = `/create/selfie?wizard=1&next=${returnUrl}`;
-});
+	const returnUrl = encodeURIComponent(`${START_PATH}?from=${from}`);
+	location.href = `${path}?wizard=1&next=${returnUrl}`;
+}
 
-$('btn-editor').addEventListener('click', () => {
-	saveState(state);
-	const returnUrl = encodeURIComponent(location.origin + '/start?from=editor');
-	location.href = `/create?wizard=1&next=${returnUrl}`;
-});
+$('btn-selfie').addEventListener('click', () => leaveForAvatar('/create/selfie', 'selfie'));
+$('btn-editor').addEventListener('click', () => leaveForAvatar('/create', 'editor'));
 
 $('btn-upload').addEventListener('click', () => {
 	$('glb-file-input').click();
@@ -660,46 +820,56 @@ $('glb-file-input').addEventListener('change', async (e) => {
 	const file = e.target.files?.[0];
 	if (!file) return;
 	if (file.size > 50 * 1024 * 1024) {
-		showError('File too large — maximum 50 MB.');
+		showError('File too large: the maximum is 50 MB.');
+		e.target.value = '';
+		return;
+	}
+	if (!/\.(glb|gltf)$/i.test(file.name)) {
+		showError('Choose a .glb or .gltf file.');
+		e.target.value = '';
 		return;
 	}
 
 	const btn = $('btn-upload');
-	const origLabel = btn.querySelector('.wz-avatar-card-label').textContent;
-	btn.querySelector('.wz-avatar-card-label').textContent = 'Uploading…';
+	const labelEl = btn.querySelector('.wz-avatar-card-label');
+	const origLabel = labelEl.textContent;
+	labelEl.textContent = 'Uploading… 0%';
 	btn.disabled = true;
 
 	try {
-		// Get CSRF token first
-		const token = await getCsrfToken();
-		_csrf = null;
+		const name = file.name.replace(/\.(glb|gltf)$/i, '') || 'My Avatar';
+		// Presign, upload to storage, then register the record: the same path
+		// every other upload surface uses. /api/avatars itself only accepts
+		// the registration step, never a multipart body.
+		const avatar = await saveRemoteGlbToAccount(
+			file,
+			{
+				name,
+				source: 'direct-upload',
+				visibility: 'private',
+				source_meta: { generator: 'start-wizard' },
+			},
+			{
+				onProgress: (pct) => { labelEl.textContent = `Uploading… ${Math.round(pct)}%`; },
+			},
+		);
 
-		const fd = new FormData();
-		fd.append('file', file);
-		fd.append('name', file.name.replace(/\.(glb|gltf)$/i, '') || 'My Avatar');
-		fd.append('visibility', 'private');
-
-		const r = await fetch('/api/avatars', {
-			method: 'POST',
-			headers: { 'X-CSRF-Token': token },
-			credentials: 'include',
-			body: fd,
-		});
-		const j = await r.json();
-		if (!r.ok) throw new Error(j.error_description || j.error || `Upload failed ${r.status}`);
-
-		const av = j.avatar || j;
-		state.avatarId = av.id;
-		state.avatarName = av.name || file.name;
-		state.avatarThumb = av.thumbnail_url || '';
+		state.avatarId = avatar.id;
+		state.avatarName = avatar.name || name;
+		state.avatarThumb = avatar.thumbnail_url || '';
 		saveState(state);
 		renderStep1();
+		try { window.__twsGuide?.complete('create', { silent: true }); } catch {}
 
 	} catch (err) {
 		log.error('[wizard/upload]', err);
-		showError(err.message || 'Upload failed. Please try again.');
+		if (isSignedOut(err)) {
+			showError('Sign in to upload your own model.', { href: loginHref('/login'), label: 'Sign in' });
+		} else {
+			showError(err.message || 'Upload failed. Please try again.');
+		}
 	} finally {
-		btn.querySelector('.wz-avatar-card-label').textContent = origLabel;
+		labelEl.textContent = origLabel;
 		btn.disabled = false;
 		e.target.value = '';
 	}
@@ -739,6 +909,7 @@ document.querySelectorAll('[data-preset]').forEach((btn) => {
 
 document.querySelectorAll('[data-model]').forEach((btn) => {
 	btn.addEventListener('click', () => {
+		if (!MODELS[btn.dataset.model]) return;
 		document.querySelectorAll('[data-model]').forEach((b) => {
 			b.classList.remove('active');
 			b.setAttribute('aria-pressed', 'false');
@@ -813,8 +984,8 @@ $('earn-wallet').addEventListener('input', () => {
 });
 
 // ── Step 5: Earn price USD equivalent ────────────────────────────────────
-// USDC is pegged 1:1 to USD — show "≈ $X.XXX per call" so users know
-// exactly what they're charging in dollars.
+// USDC is pegged 1:1 to USD, so the "≈ $0.001 per call" hint tells users exactly what
+// they are charging in dollars.
 
 function updateEarnPriceHint() {
 	const hint = $('earn-price-usd-hint');
@@ -828,9 +999,46 @@ function updateEarnPriceHint() {
 $('earn-price').addEventListener('input', updateEarnPriceHint);
 updateEarnPriceHint();
 
+// ── Helper-widget clearance ───────────────────────────────────────────────
+// The shared corner stack (public/corner-stack.js) lifts itself above the
+// sticky footer, but on a phone its pills still float over the bottom of the
+// scrolling step. Mirror its live height into a CSS variable the steps use
+// as extra bottom padding, so the last control can always scroll clear.
+
+function trackHelperClearance() {
+	const root = document.documentElement;
+	let observed = null;
+	const apply = () => {
+		const stack = document.getElementById('tws-corner-stack');
+		const h = stack ? stack.getBoundingClientRect().height : 0;
+		root.style.setProperty('--wz-helper-clearance', h > 0 ? `${Math.round(h) + 12}px` : '0px');
+	};
+	const watch = () => {
+		const stack = document.getElementById('tws-corner-stack');
+		if (!stack || stack === observed) return;
+		observed = stack;
+		if ('ResizeObserver' in window) new ResizeObserver(apply).observe(stack);
+		apply();
+	};
+	watch();
+	// The stack mounts lazily, after the deferred helper scripts run.
+	if ('MutationObserver' in window) {
+		new MutationObserver(watch).observe(document.body, { childList: true });
+	}
+	window.addEventListener('tws-corner-stack:ready', watch);
+	window.addEventListener('resize', apply);
+}
+
+trackHelperClearance();
+
 // ── Initial render ─────────────────────────────────────────────────────────
 
-// initTemplateGallery may call renderStep() itself (template apply or ?template= param).
-// Only call renderStep() here if the gallery didn't already do it.
-const _galleryRendered = initTemplateGallery();
-if (!_galleryRendered) renderStep();
+// Resolve the session first so a signed-out visitor who lands on step 4 (a
+// saved session, or the sign-in round trip) sees the sign-in panel instead of
+// a request that can only fail. The probe is one fast GET; when it errors the
+// deploy step still discovers a 401 on its own.
+resolveAuth().finally(() => {
+	// initTemplateGallery may call renderStep() itself (template apply or ?template= param).
+	const galleryRendered = initTemplateGallery();
+	if (!galleryRendered) renderStep();
+});

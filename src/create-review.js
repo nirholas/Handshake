@@ -38,6 +38,7 @@ import {
 	toggleEmoteStrip,
 } from './create-review-features.js';
 import { log } from './shared/log.js';
+import { captureWizardReturn, pendingWizardReturn, clearWizardReturn, wizardReturnUrl } from './shared/wizard-return.js';
 
 const RESUME_KEY = '3dagent:guest-avatar-resume';
 const $ = (sel) => document.querySelector(sel);
@@ -103,6 +104,7 @@ let viewerIdle = /** @type {IdleAnimation | null} */ (null);
 let viewerIdleDispose = /** @type {(() => void) | null} */ (null);
 
 async function boot() {
+	captureWizardReturn();
 	staged = await loadGuest();
 	if (!staged) {
 		location.replace('/create');
@@ -406,6 +408,25 @@ async function onSave({ auto = false } = {}) {
 		});
 		setSaveProgress(null);
 		setSaveCancellable(false);
+
+		// Came from the /start wizard: hand the avatar back and let the wizard
+		// create the agent. Attaching it to a default agent here would leave the
+		// user with two agents for one setup.
+		const wizardNext = pendingWizardReturn();
+		if (wizardNext) {
+			updateSaveOverlay('Back to setup…', '');
+			await clearGuest();
+			await captureAndUploadThumbnail(avatar.id).catch(() => {});
+			releaseObjectUrl();
+			try { window.__twsGuide?.complete('create'); } catch (_) {}
+			clearWizardReturn();
+			window.location.href = wizardReturnUrl(wizardNext, {
+				avatarId: avatar.id,
+				avatarName: name,
+				avatarThumb: avatar.thumbnail_url || '',
+			});
+			return;
+		}
 
 		if (isObject) {
 			updateSaveOverlay('Saving to library…', '');

@@ -5,21 +5,21 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-	<title data-i18n="start.meta_title">Get started · three.ws</title>
-	<meta name="description" content="Create your 3D AI agent in minutes. Give it a body, a brain, and a revenue stream."  data-i18n-attr="content:start.meta_description"/>
+	<title data-i18n="start.meta_title_wizard">Get started: build your 3D AI agent in 5 steps · three.ws</title>
+	<meta name="description" content="A 5-step onboarding wizard: create a 3D avatar, name your agent, enable skills, deploy an embed widget, and set up monetization, all in under 5 minutes." data-i18n-attr="content:start.meta_description_wizard" />
 	<meta name="robots" content="noindex" />
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/start" />
-	<meta property="og:title" content="Get started · three.ws" data-i18n-attr="content:start.meta_og_title" />
-	<meta property="og:description" content="Create your 3D AI agent in minutes. Give it a body, a brain, and a revenue stream." data-i18n-attr="content:start.meta_og_description" />
+	<meta property="og:title" content="Get started: build your 3D AI agent in 5 steps · three.ws" data-i18n-attr="content:start.meta_og_title_wizard" />
+	<meta property="og:description" content="A 5-step onboarding wizard: create a 3D avatar, name your agent, enable skills, deploy an embed widget, and set up monetization, all in under 5 minutes." data-i18n-attr="content:start.meta_og_description_wizard" />
 	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Get+Started&amp;d=5-step+onboarding+wizard%3A+create+a+3D+avatar%2C+name+your+agent%2C+enable+skills%2C+deploy+an+embed+widget%2C+and+set+up+monetization%2C+all+in+under+5+minutes.&amp;p=%2Fstart" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="Get started · three.ws" data-i18n-attr="content:start.meta_twitter_title" />
-	<meta name="twitter:description" content="Create your 3D AI agent in minutes. Give it a body, a brain, and a revenue stream." data-i18n-attr="content:start.meta_twitter_description" />
+	<meta name="twitter:title" content="Get started: build your 3D AI agent in 5 steps · three.ws" data-i18n-attr="content:start.meta_twitter_title_wizard" />
+	<meta name="twitter:description" content="A 5-step onboarding wizard: create a 3D avatar, name your agent, enable skills, deploy an embed widget, and set up monetization, all in under 5 minutes." data-i18n-attr="content:start.meta_twitter_description_wizard" />
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Get+Started&amp;d=5-step+onboarding+wizard%3A+create+a+3D+avatar%2C+name+your+agent%2C+enable+skills%2C+deploy+an+embed+widget%2C+and+set+up+monetization%2C+all+in+under+5+minutes.&amp;p=%2Fstart" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -128,7 +128,10 @@
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			padding: 32px 24px;
+			/* Bottom clearance tracks the live height of the shared helper-widget
+			   stack (set by the script), so the last controls of a scrolled step
+			   can always move out from under the pills. */
+			padding: 32px 24px calc(32px + var(--wz-helper-clearance, 0px));
 			overflow-y: auto;
 			opacity: 0;
 			transform: translateX(40px);
@@ -139,6 +142,13 @@
 			opacity: 1;
 			transform: translateX(0);
 			pointer-events: auto;
+		}
+		/* Inactive steps stay in the DOM for the slide transition but must not
+		   be reachable: visibility flips after the motion, inert (set by the
+		   script) drops them from the tab order and the accessibility tree. */
+		.wz-step:not(.active) {
+			visibility: hidden;
+			transition: opacity 0.35s ease, transform 0.35s ease, visibility 0s linear 0.35s;
 		}
 		.wz-step.exit-left {
 			opacity: 0;
@@ -467,6 +477,22 @@
 			gap: 16px;
 		}
 		.wz-deploy-success.show { display: flex; }
+		.wz-deploy-meta { font-size: 13px; color: var(--text-2); line-height: 1.5; }
+		.wz-deploy-signin {
+			display: flex;
+			flex-direction: column;
+			gap: 14px;
+			align-items: center;
+			text-align: center;
+			padding: 28px 20px;
+			border: 1px solid var(--border);
+			border-radius: var(--radius-lg);
+			background: var(--surface);
+		}
+		.wz-deploy-signin .wz-sub { margin: 0; max-width: 42ch; }
+		.wz-deploy-signin-actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+		.wz-deploy-retry { margin: 16px auto 0; display: block; }
+		.wz-toast-action { color: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
 		.wz-success-icon {
 			font-size: 40px;
 			text-align: center;
@@ -635,6 +661,13 @@
 		/* ── Footer buttons ────────────────────────────────────────── */
 		.wz-footer {
 			flex-shrink: 0;
+			/* Sticky (never merely in-flow) so the shared corner stack
+			   (public/corner-stack.js) detects it as a bottom dock and lifts its
+			   helper pills clear of the Continue button. */
+			position: sticky;
+			bottom: 0;
+			z-index: 2;
+			background: var(--bg);
 			padding: 16px 24px;
 			border-top: 1px solid var(--border);
 			display: flex;
@@ -653,6 +686,8 @@
 			font-family: inherit;
 		}
 		.wz-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+		a.wz-btn { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+		.wz-btn:focus-visible, .wz-btn-skip:focus-visible, .wz-toast-action:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 		.wz-btn-primary {
 			background: var(--accent);
 			color: var(--accent-ink);
@@ -1148,17 +1183,17 @@
 
 				<p class="wz-label" style="margin-bottom:10px" data-i18n="start.ai_model">AI model</p>
 				<div class="wz-model-grid" id="model-grid">
-					<button type="button" class="wz-model-card active" data-model="claude-sonnet-4-5" aria-pressed="true">
-						<div class="wz-model-name">Claude Sonnet</div>
-						<div class="wz-model-desc">Smart & fast</div>
+					<button type="button" class="wz-model-card active" data-model="claude-sonnet-4-6" aria-pressed="true">
+						<div class="wz-model-name">Claude Sonnet 4.6</div>
+						<div class="wz-model-desc" data-i18n="start.model_claude_desc">Best quality, hosted by three.ws</div>
 					</button>
-					<button type="button" class="wz-model-card" data-model="gpt-5.6-sol" aria-pressed="false">
-						<div class="wz-model-name">GPT-5.6 Sol</div>
-						<div class="wz-model-desc">OpenAI flagship</div>
+					<button type="button" class="wz-model-card" data-model="openai/gpt-oss-20b:free" aria-pressed="false">
+						<div class="wz-model-name">GPT-OSS 20B</div>
+						<div class="wz-model-desc" data-i18n="start.model_gpt_oss_desc">OpenAI open-weight, free</div>
 					</button>
-					<button type="button" class="wz-model-card" data-model="llama-3.3-70b" aria-pressed="false">
-						<div class="wz-model-name">Llama 3.3</div>
-						<div class="wz-model-desc">Open source</div>
+					<button type="button" class="wz-model-card" data-model="llama-3.3-70b-versatile" aria-pressed="false">
+						<div class="wz-model-name">Llama 3.3 70B</div>
+						<div class="wz-model-desc" data-i18n="start.model_llama_desc">Open source, fastest</div>
 					</button>
 				</div>
 			</div>
@@ -1238,12 +1273,22 @@
 		<section class="wz-step" id="step-4" aria-label="Step 4: Deploy your agent">
 			<div class="wz-step-inner">
 				<p class="wz-eyebrow" data-i18n="start.step_4_of_5">Step 4 of 5</p>
-				<h1 class="wz-headline" data-i18n="start.your_agent_is_live">Your agent is live</h1>
-				<p class="wz-sub" data-i18n="start.we_created_your_agent_and_generated_an">We created your agent and generated an embeddable widget.</p>
+				<h1 class="wz-headline" id="step4-headline" data-i18n="start.your_agent_is_live">Your agent is live</h1>
+				<p class="wz-sub" id="step4-sub" data-i18n="start.we_created_your_agent_and_generated_an">We created your agent and generated an embeddable widget.</p>
 
-				<div class="wz-deploy-status" id="deploy-status">
+				<div class="wz-deploy-status" id="deploy-status" role="status" aria-live="polite">
 					<div class="wz-deploy-spinner"></div>
 					<div class="wz-deploy-label" id="deploy-label">Creating your agent…</div>
+				</div>
+
+				<div class="wz-deploy-signin" id="deploy-signin" hidden>
+					<div class="wz-success-icon" aria-hidden="true">🔐</div>
+					<div class="wz-success-title" data-i18n="start.sign_in_to_publish_your_agent">Sign in to publish your agent</div>
+					<p class="wz-sub" data-i18n="start.your_setup_is_saved_in_this_tab">Your avatar, name, and skills are saved in this tab. Sign in or create a free account and we pick up right here.</p>
+					<div class="wz-deploy-signin-actions">
+						<a class="wz-btn wz-btn-primary" id="deploy-signin-login" href="/login?next=%2Fstart" data-i18n="start.sign_in">Sign in</a>
+						<a class="wz-btn wz-btn-ghost" id="deploy-signin-register" href="/register?next=%2Fstart" data-i18n="start.create_a_free_account">Create a free account</a>
+					</div>
 				</div>
 
 				<div class="wz-deploy-success" id="deploy-success">
@@ -1252,12 +1297,14 @@
 
 					<div>
 						<p class="wz-code-label" data-i18n="start.live_page">Live page</p>
-						<a class="wz-live-link" id="deploy-live-link" target="_blank" rel="noopener">
+						<a class="wz-live-link" id="deploy-live-link" href="/agents" target="_blank" rel="noopener">
 							<span class="wz-live-link-icon">🔗</span>
 							<span class="wz-live-link-text" id="deploy-live-url">…</span>
 							<span class="wz-live-link-arrow">↗</span>
 						</a>
 					</div>
+
+					<div class="wz-deploy-meta" id="deploy-brain"></div>
 
 					<div>
 						<p class="wz-code-label" data-i18n="start.embed_snippet">Embed snippet</p>
@@ -1300,13 +1347,13 @@
 						<div class="wz-earn-row">
 							<div class="wz-earn-icon">💰</div>
 							<div class="wz-earn-row-body">
-								<div class="wz-earn-row-label">Price per API call</div>
+								<div class="wz-earn-row-label" id="earn-price-label">Price per API call</div>
 								<div class="wz-earn-row-desc">Others pay <span data-term="usdc" data-i18n="start.usdc_a_1_digital_dollar">USDC (a $1 digital dollar)</span> every time they call your agent's API</div>
 							</div>
 							<div>
 								<div class="wz-earn-input-wrap">
 									<span class="wz-earn-prefix">$</span>
-									<input type="number" class="wz-earn-num" id="earn-price" min="0" max="100" step="0.001" placeholder="0.001" />
+									<input type="number" class="wz-earn-num" id="earn-price" min="0" max="100" step="0.001" placeholder="0.001" aria-labelledby="earn-price-label" inputmode="decimal" />
 									<span class="wz-earn-suffix" data-i18n="start.usdc">USDC</span>
 								</div>
 								<div class="wz-earn-usd-hint" id="earn-price-usd-hint"></div>
@@ -1316,13 +1363,13 @@
 						<div class="wz-earn-row">
 							<div class="wz-earn-icon">◎</div>
 							<div class="wz-earn-row-body">
-								<div class="wz-earn-row-label">Payout wallet</div>
+								<div class="wz-earn-row-label" id="earn-wallet-label">Payout wallet</div>
 								<div class="wz-earn-row-desc">Wallet address for withdrawals</div>
 							</div>
 						</div>
 						<div style="padding: 0 0 4px;">
 							<div class="wz-wallet-input-wrap">
-								<input type="text" class="wz-wallet-input" id="earn-wallet" placeholder="Solana or wallet address" />
+								<input type="text" class="wz-wallet-input" id="earn-wallet" placeholder="Solana or wallet address" aria-labelledby="earn-wallet-label" autocomplete="off" spellcheck="false" />
 								<span class="wz-wallet-chain" id="earn-chain" data-i18n="start.sol">SOL</span>
 							</div>
 						</div>

@@ -30,6 +30,11 @@ import {
 } from './avatar-proportions.js';
 import { canonicalBoneNodesFromObject } from './animation-retarget.js';
 import { saveRemoteGlbToAccount, apiFetch } from './account.js';
+import { captureWizardReturn, returnToWizard } from './shared/wizard-return.js';
+
+// The /start wizard links here with ?next=; remember it so the saved avatar
+// can be handed straight back into the setup flow.
+captureWizardReturn();
 import { uploadAvatarSnapshot } from './voice/avatar-snapshot.js';
 import { optimizeAndValidateGlb } from './avatar-studio-optimize.js';
 import { poseSkeletonsToBind, captureBoneTransforms, restoreBoneTransforms } from './glb-bind-pose.js';
@@ -1983,6 +1988,9 @@ async function finishSave(avatar) {
 
 	await new Promise((r) => setTimeout(r, 700));
 	hideSaveOverlay();
+
+	// Mid-wizard: skip the toast and hand the avatar straight back to /start.
+	if (returnToWizard({ avatarId: avatar.id, avatarName: name, avatarThumb: avatar.thumbnail_url || '' })) return;
 
 	// Show a save-success toast with next-step CTAs (launch a coin / view).
 	// Give the user time to choose; fall back to the avatar page if they don't.

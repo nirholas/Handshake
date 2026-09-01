@@ -2001,6 +2001,11 @@
 		</div>
 
 		<script type="module">
+			import { captureWizardReturn, pendingWizardReturn, clearWizardReturn, wizardReturnUrl } from '/src/shared/wizard-return.js';
+			// The /start wizard links here with ?next=; remember it so the finished
+			// avatar can be handed straight back into the setup flow.
+			captureWizardReturn();
+
 			function showStep(name) {
 				document.querySelectorAll('.step[data-step]').forEach((s) => {
 					const isTarget = s.dataset.step === name;
@@ -2167,6 +2172,7 @@
 			// In 'platform' mode the camera step is already the default active step.
 
 			let _avatarId = null;
+			let _wizardThumb = null;
 			let _modelUrl = null;
 			let _docTitleBase = document.title;
 			let _notifyPermission =
@@ -2228,6 +2234,43 @@
 					s.className = 'build-step completed';
 				});
 
+				// Mid-wizard: the primary action is to take this avatar back to /start.
+				const wizardNext = pendingWizardReturn();
+				if (wizardNext && !document.getElementById('done-wizard-btn')) {
+					const actions = document.querySelector('.done-actions');
+					const wizardBtn = document.createElement('button');
+					wizardBtn.id = 'done-wizard-btn';
+					wizardBtn.type = 'button';
+					wizardBtn.className = 'btn-save';
+					wizardBtn.textContent = 'Use this avatar and continue setup →';
+					wizardBtn.addEventListener('click', async () => {
+						if (!_avatarId) return;
+						wizardBtn.disabled = true;
+						wizardBtn.textContent = 'Back to setup…';
+						const nameEl = /** @type {HTMLInputElement|null} */ (document.getElementById('done-name'));
+						const name = nameEl?.value?.trim();
+						if (name) {
+							try {
+								await fetch(`/api/avatars/${encodeURIComponent(_avatarId)}`, {
+									method: 'PATCH',
+									credentials: 'include',
+									headers: { 'content-type': 'application/json' },
+									body: JSON.stringify({ name }),
+								});
+							} catch (_) {}
+						}
+						clearWizardReturn();
+						window.location.assign(wizardReturnUrl(wizardNext, {
+							avatarId: _avatarId,
+							avatarName: name || '',
+							avatarThumb: _wizardThumb || '',
+						}));
+					});
+					actions?.prepend(wizardBtn);
+					const saveBtn = document.getElementById('done-save-btn');
+					if (saveBtn) saveBtn.className = 'btn-secondary';
+				}
+
 				const viewer = document.querySelector('.done-viewer');
 				viewer?.classList.add('loading');
 				viewer?.classList.remove('failed');
@@ -2242,6 +2285,7 @@
 						const modelEl = document.getElementById('done-model');
 						const modelUrl = avatar?.model_url || avatar?.url;
 						_modelUrl = modelUrl || null;
+						_wizardThumb = avatar?.thumbnail_url || null;
 						if (modelEl && modelUrl) {
 							modelEl.addEventListener(
 								'load',

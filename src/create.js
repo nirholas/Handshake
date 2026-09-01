@@ -4,6 +4,14 @@ import { stage as stageGuestAvatar } from './guest-avatar.js';
 import { createFromTemplate } from './shared/template-picker.js';
 import { log } from './shared/log.js';
 import { clearSharedIntent, sharedIntent, takeSharedFiles } from './shared/share-target.js';
+import { captureWizardReturn } from './shared/wizard-return.js';
+
+// The /start wizard links here with ?next=; remember it before anything else
+// loads, so whichever creation page finishes the avatar can hand it back
+// (src/shared/wizard-return.js). Top level, not boot(): this hub pulls in
+// heavy modules first and a visitor can click through to a sub-page before
+// boot() ever runs.
+captureWizardReturn();
 
 // GLB magic bytes: ASCII "glTF"
 const GLB_MAGIC = [0x67, 0x6c, 0x54, 0x46];

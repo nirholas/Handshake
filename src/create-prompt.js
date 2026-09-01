@@ -17,6 +17,11 @@
 import { log } from './shared/log.js';
 import { injectFestivePresets } from './shared/festive-presets.js';
 import { mountPromptDictation } from './voice/prompt-dictation.js';
+import { captureWizardReturn, pendingWizardReturn, clearWizardReturn, wizardReturnUrl } from './shared/wizard-return.js';
+
+// The /start wizard links here with ?next=; remember it so the finished avatar
+// can be handed straight back into the setup flow.
+captureWizardReturn();
 
 const SUBMIT_ENDPOINT = '/api/avatars/reconstruct';
 const STATUS_ENDPOINT = '/api/avatars/regenerate-status';
@@ -475,6 +480,23 @@ async function renderDone(avatarId, run) {
 		return;
 	}
 	showStep('done');
+	// Mid-wizard: the primary action is to take this avatar back to /start.
+	const wizardNext = pendingWizardReturn();
+	const editorLink = $('#open-editor');
+	if (wizardNext && editorLink && !document.getElementById('done-wizard-link')) {
+		const back = document.createElement('a');
+		back.id = 'done-wizard-link';
+		back.className = 'btn-primary';
+		back.href = wizardReturnUrl(wizardNext, {
+			avatarId,
+			avatarName: avatar?.display_name || avatar?.name || '',
+			avatarThumb: avatar?.thumbnail_url || '',
+		});
+		back.textContent = 'Use this avatar and continue setup →';
+		back.addEventListener('click', () => clearWizardReturn());
+		editorLink.className = 'btn-ghost';
+		editorLink.parentNode.insertBefore(back, editorLink);
+	}
 	// Let the site-wide discovery layer offer the natural next steps
 	// (Studio, agent wizard, Walk) with this avatar pre-loaded.
 	document.dispatchEvent(
