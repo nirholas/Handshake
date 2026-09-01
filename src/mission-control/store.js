@@ -48,7 +48,7 @@ function writeLocal(key, value) {
 	}
 }
 
-export function createStore({ bus, userId = 'anon' }) {
+export function createStore({ bus, userId = 'anon', signedIn = false }) {
 	const order = []; // mints, newest first
 	const rows = new Map(); // mint -> row
 	let filters = { ...DEFAULT_FILTERS };
@@ -177,7 +177,9 @@ export function createStore({ bus, userId = 'anon' }) {
 			bus.emit('select', mint);
 		},
 
-		// ── agent / network ───────────────────────────────────────────────────
+		// ── session / agent / network ─────────────────────────────────────────
+		/** Whether a user is signed in (drives the sign-in vs create-wallet CTAs). */
+		isSignedIn: () => signedIn,
 		getAgent: () => agent,
 		setAgent(next) {
 			agent = next;

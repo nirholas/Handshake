@@ -28,15 +28,20 @@ const CSS = `
 .mc-topbar { display: flex; align-items: center; gap: var(--space-3,12px); padding: 8px 14px; border-bottom: 1px solid var(--stroke, rgba(255,255,255,.08)); background: var(--surface-1, rgba(255,255,255,.02)); flex: none; min-height: 50px; }
 .mc-brand { display: flex; align-items: center; gap: 9px; font-weight: 700; color: var(--ink-bright, #fff); letter-spacing: .02em; text-decoration: none; white-space: nowrap; }
 .mc-brand-logo { width: 22px; height: 22px; border-radius: 6px; }
-.mc-brand b { font-family: var(--font-display, system-ui); font-size: var(--text-md,.8125rem); }
+.mc-brand h1 { margin: 0; font-family: var(--font-display, system-ui); font-size: var(--text-md,.8125rem); font-weight: 700; line-height: 1; }
 .mc-brand span { color: var(--ink-dim,#888); font-weight: 600; font-size: var(--text-2xs,.6875rem); text-transform: uppercase; letter-spacing: .08em; padding: 2px 6px; border: 1px solid var(--stroke,rgba(255,255,255,.1)); border-radius: var(--radius-pill,999px); }
 .mc-topbar-spacer { flex: 1 1 auto; }
 .mc-conn-group { display: flex; align-items: center; gap: 10px; }
+.mc-topbar lang-switcher { display: inline-flex; align-items: center; min-width: 0; }
 .mc-conn { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-2xs,.6875rem); color: var(--ink-dim,#888); white-space: nowrap; }
 .mc-conn-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-faint,#8a8a8a); flex: none; transition: background var(--duration-fast,140ms); }
 .mc-conn[data-state="live"] .mc-conn-dot { background: var(--success,#4ade80); box-shadow: 0 0 6px color-mix(in srgb, var(--success,#4ade80) 70%, transparent); animation: mc-breathe 2.4s ease-in-out infinite; }
 .mc-conn[data-state="reconnecting"] .mc-conn-dot { background: var(--warn,#fbbf24); animation: mc-pulse 1s ease-in-out infinite; }
 .mc-conn[data-state="down"] .mc-conn-dot { background: var(--danger,#f87171); }
+/* Idle dims the dot, never the label: at 11px the label needs the full
+   --ink-dim to clear 4.5:1 on the bar, and a whole-chip opacity of .55 put
+   "Positions" at 2.41:1 (the a11y floor caught it on /terminal). */
+.mc-conn[data-state="idle"] .mc-conn-dot { background: var(--ink-faint,#8a8a8a); opacity: .55; }
 .mc-ctrl { display: inline-flex; align-items: center; gap: 6px; }
 .mc-select, .mc-iconbtn { font: inherit; font-size: var(--text-sm,.764rem); color: var(--ink,#e8e8e8); background: var(--surface-2, rgba(255,255,255,.05)); border: 1px solid var(--stroke,rgba(255,255,255,.1)); border-radius: var(--radius-sm,6px); padding: 5px 9px; cursor: pointer; }
 .mc-select:hover, .mc-iconbtn:hover { border-color: var(--stroke-strong, rgba(255,255,255,.18)); }
@@ -207,6 +212,9 @@ const CSS = `
 .mc-btn--buy:hover:not(:disabled) { background: color-mix(in srgb, var(--success,#4ade80) 88%, #fff); }
 .mc-btn--sell { background: color-mix(in srgb, var(--danger,#f87171) 18%, transparent); color: var(--danger,#f87171); border-color: color-mix(in srgb, var(--danger,#f87171) 45%, transparent); }
 .mc-btn--sell:hover:not(:disabled) { background: color-mix(in srgb, var(--danger,#f87171) 28%, transparent); }
+a.mc-btn { text-decoration: none; }
+.mc-trade-cta { display: flex; flex-direction: column; gap: 10px; }
+.mc-trade-cta p { margin: 0; color: var(--ink-dim,#888); font-size: var(--text-sm,.764rem); line-height: 1.5; }
 .mc-btn kbd { font-family: var(--font-mono,ui-monospace,monospace); font-size: .8em; opacity: .7; border: 1px solid currentColor; border-radius: 4px; padding: 0 4px; }
 .mc-trade-note { font-size: var(--text-sm,.764rem); line-height: 1.45; min-height: 1.2em; }
 .mc-trade-note.is-err { color: var(--danger,#f87171); } .mc-trade-note.is-warn { color: var(--warn,#fbbf24); } .mc-trade-note.is-ok { color: var(--success,#4ade80); } .mc-trade-note.is-dim { color: var(--ink-dim,#888); }

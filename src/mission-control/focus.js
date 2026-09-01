@@ -21,6 +21,7 @@
  */
 
 import { createSafetyPanel } from '../shared/safety-panel.js';
+import { proxiedImageURL } from '../ipfs.js';
 import { mountPriceChart } from './chart.js';
 import { mountTradesTape } from './trades-tape.js';
 import { buy, sell, quote } from './trade.js';
@@ -110,11 +111,29 @@ export function createFocusPane({ store, bus, enrich, mount }) {
 		});
 	}
 
-	async function fetchCoin(mint) {
+	// A seconds-old launch can be missing from pump.fun for a moment, in which
+	// case the server answers 5xx with a Retry-After. The head already renders
+	// from the feed row, so the detail is retried once when upstream says to,
+	// and only if this coin is still the one in focus.
+	let coinRetryTimer = null;
+	async function fetchCoin(mint, { retry = true } = {}) {
+		clearTimeout(coinRetryTimer);
 		try {
-			const r = await fetch(`/api/pump/coin?mint=${encodeURIComponent(mint)}`, { headers: { accept: 'application/json' } });
-			if (!r.ok) return null;
-			return await r.json();
+			const r = await fetch(`/api/pump/coin?mint=${encodeURIComponent(mint)}`, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(10_000) });
+			if (r.ok) return await r.json();
+			if (retry && r.status >= 500) {
+				const after = Math.min(60, Math.max(5, Number(r.headers.get('retry-after')) || 15)) * 1000;
+				const mySeq = seq;
+				coinRetryTimer = setTimeout(() => {
+					if (mySeq !== seq || currentMint !== mint) return;
+					fetchCoin(mint, { retry: false }).then((coin) => {
+						if (mySeq !== seq || !coin) return;
+						coinDetail = coin;
+						updateHead(store.getRow(mint) || { mint });
+					});
+				}, after);
+			}
+			return null;
 		} catch { return null; }
 	}
 
@@ -185,7 +204,11 @@ export function createFocusPane({ store, bus, enrich, mount }) {
 		const mint = row.mint;
 		const sym = escapeHtml(row.symbol || coin.symbol || mint.slice(0, 4));
 		const name = escapeHtml(row.name || coin.name || '');
-		const img = row.image_uri || coin.image_uri || coin.image || '';
+		// Token art lives on public IPFS gateways that refuse browser image
+		// requests (ipfs.io answers 403 with a same-origin resource policy), so
+		// it is served through the same-origin /api/img proxy, which always
+		// returns a valid image and never logs a blocked request.
+		const img = proxiedImageURL(row.image_uri || coin.image_uri || coin.image || '', mint);
 		const mcUsd = coin.usd_market_cap ?? coin.market_cap ?? row.market_cap_usd ?? null;
 		const created = coin.created_timestamp ? Math.floor(coin.created_timestamp / 1000) : row.created_at;
 		const intel = row.intel && !row.intel._none ? row.intel : null;
@@ -197,7 +220,7 @@ export function createFocusPane({ store, bus, enrich, mount }) {
 		].filter(Boolean);
 
 		head.innerHTML = `
-			${img ? `<img class="mc-focus-img" src="${escapeHtml(img)}" alt="" loading="lazy" data-fallback="invisible" />` : '<div class="mc-focus-img" aria-hidden="true"></div>'}
+			${img ? `<img class="mc-focus-img" src="${escapeHtml(img)}" alt="" loading="lazy" decoding="async" />` : '<div class="mc-focus-img" aria-hidden="true"></div>'}
 			<div class="mc-focus-id">
 				<h2>${sym} <span class="mc-focus-name">${name}</span></h2>
 				<div class="mc-focus-addr">
@@ -328,6 +351,20 @@ export function createFocusPane({ store, bus, enrich, mount }) {
 	function mountTrade() {
 		const host = $('[data-host="trade"]');
 		if (!host) return;
+		if (!store.getAgent()) {
+			// No wallet to trade from: say exactly what unlocks the desk instead of
+			// rendering buy/sell buttons that can only refuse.
+			const cta = store.isSignedIn()
+				? { href: '/create-agent', label: 'Create an agent wallet', body: 'Trades are signed by an agent wallet you own. Create one and it appears in the top bar.' }
+				: { href: '/login?next=%2Fterminal', label: 'Sign in to trade', body: 'Sign in to buy and sell from your agent wallet, firewall and MEV gated on every order.' };
+			host.innerHTML = `
+				<div class="mc-section-h">Trade</div>
+				<div class="mc-trade-cta">
+					<p>${cta.body}</p>
+					<a class="mc-btn mc-btn--buy" href="${cta.href}">${cta.label}</a>
+				</div>`;
+			return;
+		}
 		const presets = store.getPresets();
 		const active = store.getActiveSize();
 		host.innerHTML = `
@@ -425,6 +462,7 @@ export function createFocusPane({ store, bus, enrich, mount }) {
 			teardownChart();
 			teardownTape();
 			clearTimeout(quoteTimer);
+			clearTimeout(coinRetryTimer);
 			unsubs.forEach((u) => u());
 		},
 	};

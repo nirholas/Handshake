@@ -154,6 +154,14 @@ export function createPositionsPane({ store, bus, mount }) {
 
 	// ── stream ───────────────────────────────────────────────────────────────────
 	function startStream() {
+		if (!agentId) {
+			// Nothing to follow without an agent: holding an SSE connection open
+			// for an anonymous visitor would only burn a stream slot. The pill
+			// reads "idle" rather than pretending to reconnect forever.
+			connState = 'idle';
+			bus.emit('conn:positions', 'idle');
+			return;
+		}
 		sse = createSseClient({
 			url: `/api/sniper/stream?network=${store.getNetwork()}`,
 			onState: (s) => { connState = s; bus.emit('conn:positions', s); scheduleRender(); },
@@ -223,7 +231,9 @@ export function createPositionsPane({ store, bus, mount }) {
 		tweenSummaryTo(unreal);
 
 		if (!store.getAgent()) {
-			body.innerHTML = stateHtml('◎', 'No agent selected', 'Pick a trading agent in the top bar to see its live positions.');
+			body.innerHTML = store.isSignedIn()
+				? stateHtml('◎', 'No agent wallet yet', 'Create an agent wallet and its live positions and PnL stream here.', { href: '/create-agent', label: 'Create an agent wallet' })
+				: stateHtml('◎', 'Sign in to see positions', 'Your agent wallet\'s open positions, live PnL, and recent exits stream here once you sign in.', { href: '/login?next=%2Fterminal', label: 'Sign in' });
 			return;
 		}
 		if (!open.length && !closed.length) {
@@ -298,8 +308,9 @@ export function createPositionsPane({ store, bus, mount }) {
 			</div>`;
 	}
 
-	function stateHtml(ico, title, msg) {
-		return `<div class="mc-empty"><div class="mc-empty-ico" aria-hidden="true">${ico}</div><h3>${title}</h3><p>${msg}</p></div>`;
+	function stateHtml(ico, title, msg, link = null) {
+		const action = link ? `<a class="mc-chipbtn" href="${escapeHtml(link.href)}">${escapeHtml(link.label)}</a>` : '';
+		return `<div class="mc-empty"><div class="mc-empty-ico" aria-hidden="true">${ico}</div><h3>${title}</h3><p>${msg}</p>${action}</div>`;
 	}
 	function cssEscape(s) { return (window.CSS && CSS.escape) ? CSS.escape(s) : String(s).replace(/"/g, '\\"'); }
 

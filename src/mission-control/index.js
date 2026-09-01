@@ -40,22 +40,23 @@ export function mountMissionControl(root, opts = {}) {
 	let balanceTimer = null;
 	const cleanups = [];
 	let destroyed = false;
+	let autoSelecting = false;
 
 	root.innerHTML = `<div class="mc-root" data-host="mc"><div class="mc-empty" style="height:100%"><div class="mc-empty-ico">◎</div><h3>Booting Mission Control…</h3><p>Connecting to the live launch firehose.</p></div></div>`;
 	const rootEl = root.querySelector('[data-host="mc"]');
 
 	(async () => {
-		// Resolve session + agents in parallel; either failing degrades gracefully
+		// Resolve the session first and ask for agents only when someone is
+		// signed in: /api/agents answers 401 to an anonymous visitor, and the
+		// browser logs every 4xx to the console. Either call failing degrades
 		// to a read-only cockpit rather than a dead page.
-		const [user, agents] = await Promise.all([
-			getMe().catch(() => null),
-			loadUserAgents().catch(() => []),
-		]);
+		const user = await getMe().catch(() => null);
+		const agents = user ? await loadUserAgents().catch(() => []) : [];
 		if (destroyed) return;
 
 		const tradable = (agents || []).filter((a) => a && (a.solana_address || a.meta?.solana_address || a.wallet_ready || a.walletReady));
 
-		store = createStore({ bus, userId: user?.id || 'anon' });
+		store = createStore({ bus, userId: user?.id || 'anon', signedIn: !!user });
 		enricher = createEnricher({ store });
 		if (opts.network === 'devnet') store.setNetwork('devnet');
 		if (tradable[0]) store.setAgent(normalizeAgent(tradable[0]));
@@ -86,6 +87,11 @@ export function mountMissionControl(root, opts = {}) {
 			</div>
 		`;
 
+		// The connection pills subscribe before any pane exists, so the very
+		// first state a pane publishes (the positions pane's "idle" for a visitor
+		// with no agent, emitted synchronously on creation) is never lost.
+		wireConnPills();
+
 		// panes
 		const feed = createFeedPane({ store, bus, enrich: enricher, mount: rootEl.querySelector('[data-host="feed"]') });
 		const focus = createFocusPane({ store, bus, enrich: enricher, mount: rootEl.querySelector('[data-host="focus"]') });
@@ -95,12 +101,16 @@ export function mountMissionControl(root, opts = {}) {
 
 		wireTopbar({ agents });
 		wireMobileBar();
-		wireConnPills();
 		wireExpressBadge();
 
-		// Auto-select the first launch that streams in (one-shot) for instant signal.
+		// Auto-select the first launch that streams in (one-shot) for instant
+		// signal. It is flagged so the phone layout keeps showing the feed the
+		// user just opened; only a selection the user makes jumps to Focus.
 		const offFirst = bus.on('feed:add', (row) => {
-			if (!store.getSelected()) { store.select(row.mint); }
+			if (!store.getSelected()) {
+				autoSelecting = true;
+				try { store.select(row.mint); } finally { autoSelecting = false; }
+			}
 			offFirst();
 		});
 		cleanups.push(offFirst);
@@ -127,7 +137,7 @@ export function mountMissionControl(root, opts = {}) {
 			<div class="mc-topbar">
 				<a class="mc-brand" href="/" title="three.ws home">
 					<img class="mc-brand-logo" src="/three.svg" alt="" width="22" height="22" loading="eager" decoding="async" />
-					<b>Mission Control</b><span>Terminal</span>
+					<h1>Mission Control</h1><span>Terminal</span>
 				</a>
 				<span class="mc-topbar-spacer"></span>
 				<span class="mc-balance" data-host="balance" hidden>◎ <b data-host="balsol">—</b></span>
@@ -138,6 +148,7 @@ export function mountMissionControl(root, opts = {}) {
 						<option value="devnet">Devnet</option>
 					</select>
 				</label>
+				<lang-switcher compact></lang-switcher>
 				<div class="mc-conn-group">
 					<span class="mc-conn" data-host="conn-feed" data-state="reconnecting"><span class="mc-conn-dot"></span>Feed</span>
 					<span class="mc-conn" data-host="conn-pos" data-state="reconnecting"><span class="mc-conn-dot"></span>Positions</span>
@@ -174,6 +185,7 @@ export function mountMissionControl(root, opts = {}) {
 		setActive('feed');
 		// jump to Focus on the phone when a coin is picked
 		cleanups.push(bus.on('select', () => {
+			if (autoSelecting) return;
 			if (window.matchMedia('(max-width: 760px)').matches) setActive('focus');
 		}));
 	}
