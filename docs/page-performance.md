@@ -109,7 +109,7 @@ that is a layout shift for every pixel it moves.
   lives in [`public/tokens.css`](../public/tokens.css) instead, which both
   `style.css` and `nav.css` import, so it is render-blocking everywhere.
   `#nav-container:empty` stops matching the moment the header lands. Missing
-  this was one 0.83 shift on `/forge` — that page's entire CLS.
+  this was one 0.83 shift on `/forge`, that page's entire CLS.
 - **Async sections.** Ship the skeleton in the HTML, not `hidden`. `/marketplace`
   revealed its hero and its weekly theme strip from the bundle and moved
   everything below them across five shifts (0.60 CLS). Both now ship in place
@@ -159,7 +159,7 @@ the tab closed, on a section most visitors never scroll to.
 ## 6. Do not re-probe the document on every mutation
 
 `public/theme-switcher.js` decides whether a page supports the light palette by
-flipping `data-theme` and reading a computed style — a full style recalc, twice
+flipping `data-theme` and reading a computed style: a full style recalc, twice
 per probe. It used to re-probe on any DOM mutation, which on a JS-rendered page
 became a recalc storm: 8.7 s of main-thread time on `/marketplace` alone, enough
 that Lighthouse gave up on the page. Only a stylesheet can change that verdict,
@@ -170,7 +170,7 @@ frame.
 
 ## Measuring
 
-Build the production bundle and serve `dist/` — never measure the dev server,
+Build the production bundle and serve `dist/`. Never measure the dev server,
 which ships unbundled modules:
 
 ```bash
