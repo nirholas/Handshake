@@ -3,9 +3,11 @@ import { resolve } from 'path';
 import {
 	readFileSync,
 	readdirSync,
+	copyFileSync,
 	cpSync,
 	createReadStream,
 	existsSync,
+	mkdirSync,
 	statSync,
 	rmSync,
 } from 'fs';
@@ -2851,6 +2853,19 @@ const appConfig = {
 				if (existsSync(blogSrc)) {
 					cpSync(blogSrc, resolve(__dirname, 'dist/blog'), { recursive: true });
 				}
+			},
+		},
+		{
+			// /timeline fetches its milestones from /data/timeline.json at runtime.
+			// The dev server resolves that against the repo root, but production
+			// serves dist/ alone, so without this copy the page shipped for weeks
+			// with a working shell and a 404 behind its one fetch: every visitor
+			// landed on the "Could not load the timeline" state. check:dist now
+			// refuses a build that lacks the copy.
+			name: 'copy-timeline-data',
+			closeBundle() {
+				mkdirSync(resolve(__dirname, 'dist/data'), { recursive: true });
+				copyFileSync(resolve(__dirname, 'data/timeline.json'), resolve(__dirname, 'dist/data/timeline.json'));
 			},
 		},
 		{

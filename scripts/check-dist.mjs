@@ -9,6 +9,10 @@ const required = [
 	'dist/agent-3d/latest/agent-3d.js',
 	'dist/agent-3d/latest/agent-3d.umd.cjs',
 	'dist/agent-3d/versions.json',
+	// The one runtime fetch behind /timeline (copied by vite.config.js's
+	// copy-timeline-data hook). It was missing from every production build
+	// until 2026-09-01, which left the page on its error state.
+	'dist/data/timeline.json',
 ];
 
 let ok = true;

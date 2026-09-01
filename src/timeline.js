@@ -15,7 +15,6 @@ import {
 	BufferGeometry,
 	CanvasTexture,
 	CatmullRomCurve3,
-	Clock,
 	Color,
 	CylinderGeometry,
 	DirectionalLight,
@@ -36,6 +35,7 @@ import {
 	ACESFilmicToneMapping,
 	Sprite,
 	SpriteMaterial,
+	Timer,
 	Vector2,
 	Vector3,
 	WebGLRenderer,
@@ -61,8 +61,14 @@ const boot = document.getElementById('timeline-boot');
 // ── Styles (injected once; keeps pages/timeline.html to a plain shell) ─────
 
 function injectStyles() {
+	if (document.getElementById('tl-styles')) return;
 	const css = `
 		.tl-canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; touch-action: none; outline: none; }
+		.tl-canvas:focus-visible { outline: 2px solid rgba(154, 208, 255, 0.7); outline-offset: -3px; }
+		.tl-mode-btn:focus-visible, .tl-filter-chip:focus-visible, .tl-nav-btn:focus-visible, .tl-tick:focus-visible,
+		.tl-panel-close:focus-visible, .tl-panel-src:focus-visible, .tl-error button:focus-visible {
+			outline: 2px solid #9ad0ff; outline-offset: 2px;
+		}
 
 		.tl-topbar {
 			position: absolute; top: 0.85rem; left: 50%; transform: translateX(-50%);
@@ -90,7 +96,16 @@ function injectStyles() {
 			z-index: 20; display: flex; flex-direction: column; padding: 1.3rem 1.25rem;
 			color: #eef2fa; overflow-y: auto;
 		}
-		.tl-panel.is-open { transform: translateX(0); }
+		/* Open, the panel is a surface the visitor asked for, so it sits above
+		   the ambient bottom-right helper stack (language pill, discovery card)
+		   on the ladder public/corner-stack.js publishes; on a phone that stack
+		   otherwise lands squarely on the milestone text in the sheet. */
+		.tl-panel.is-open { transform: translateX(0); z-index: var(--z-overlay-modal, 2147483600); }
+		/* The open panel owns the right edge, so the scrubber bar (a later
+		   sibling) gives up that column: Next and Play stay clickable while a
+		   milestone is being read instead of sitting under the panel. */
+		.tl-panel.is-open ~ .tl-bottombar { right: min(380px, 100%); }
+		.tl-panel.is-open ~ .tl-hint { display: none; }
 		.tl-panel-close {
 			position: absolute; top: 0.8rem; right: 0.8rem; width: 30px; height: 30px; border-radius: 50%;
 			background: rgba(255,255,255,0.08); border: none; color: #fff; font-size: 1rem; cursor: pointer;
@@ -109,6 +124,7 @@ function injectStyles() {
 			font: 600 0.84rem system-ui, sans-serif; margin-top: auto; padding-top: 0.6rem;
 		}
 		.tl-panel-src:hover { text-decoration: underline; }
+		.tl-panel-src[hidden] { display: none; }
 		.tl-panel-counter { font: 600 0.72rem system-ui, sans-serif; color: rgba(255,255,255,0.4); margin-top: 0.4rem; }
 
 		.tl-bottombar {
@@ -133,7 +149,7 @@ function injectStyles() {
 		}
 		.tl-tick:hover { opacity: 0.9; }
 		.tl-tick.is-active { height: 30px; opacity: 1; transform: translateY(-4px); }
-		.tl-tick.is-dim { opacity: 0.12; }
+		.tl-tick.is-dim { opacity: 0.12; cursor: default; }
 		.tl-scrub-label { text-align: center; font: 600 0.7rem system-ui, sans-serif; color: rgba(255,255,255,0.5); }
 
 		.tl-hint {
@@ -145,14 +161,20 @@ function injectStyles() {
 		.tl-error button { font: 650 0.82rem system-ui, sans-serif; background: #7aa2ff; color: #06080f; border: none; border-radius: 999px; padding: 0.55rem 1.2rem; cursor: pointer; }
 
 		@media (max-width: 640px) {
-			.tl-panel { width: 100%; height: min(62vh, 420px); top: auto; bottom: 0; right: 0;
-				transform: translateY(100%); border-left: none; border-top: 1px solid rgba(255,255,255,0.1); border-radius: 16px 16px 0 0; }
+			/* Bottom sheet, parked ABOVE the scrubber bar (its measured height is
+			   published as --tl-bar-h) so prev / next / play stay reachable while
+			   a milestone is open, and the bar keeps its full width. */
+			.tl-panel { width: 100%; height: min(56vh, 400px); top: auto; bottom: var(--tl-bar-h, 108px); right: 0;
+				background: rgba(8, 10, 18, 0.97);
+				transform: translateY(calc(100% + var(--tl-bar-h, 108px))); border-left: none; border-top: 1px solid rgba(255,255,255,0.1); border-radius: 16px 16px 0 0; }
 			.tl-panel.is-open { transform: translateY(0); }
+			.tl-panel.is-open ~ .tl-bottombar { right: 0; }
 			.tl-bottombar { padding-bottom: 0.7rem; }
 			.tl-hint { display: none; }
 		}
 	`;
 	const tag = document.createElement('style');
+	tag.id = 'tl-styles';
 	tag.textContent = css;
 	document.head.appendChild(tag);
 }
@@ -263,14 +285,25 @@ function showError(message, onRetry) {
 	root.appendChild(wrap);
 }
 
+const EMPTY_MESSAGE = 'No milestones have been published yet. Check back soon.';
+const OFFLINE_MESSAGE = 'Could not load the timeline. Check your connection and try again.';
+
 async function loadData() {
-	const res = await fetch(DATA_URL, { cache: 'force-cache' });
+	// Default HTTP caching, not force-cache: the file changes with every
+	// deploy and the server already sets a bounded max-age on it.
+	const res = await fetch(DATA_URL);
 	if (!res.ok) throw new Error(`HTTP ${res.status} loading timeline data`);
 	const json = await res.json();
 	if (!json || !Array.isArray(json.events) || json.events.length === 0) {
-		throw new Error('Timeline data is empty');
+		const err = new Error('Timeline data is empty');
+		err.code = 'EMPTY';
+		throw err;
 	}
 	return json;
+}
+
+function loadErrorMessage(err) {
+	return err?.code === 'EMPTY' ? EMPTY_MESSAGE : OFFLINE_MESSAGE;
 }
 
 async function boot_() {
@@ -279,8 +312,8 @@ async function boot_() {
 		try {
 			const data = await loadData();
 			renderFallback(data.events, 'Your browser can’t run the 3D scene.');
-		} catch {
-			showError('Could not load the timeline. Check your connection and try again.', () => location.reload());
+		} catch (err) {
+			showError(loadErrorMessage(err), () => location.reload());
 		}
 		return;
 	}
@@ -290,7 +323,7 @@ async function boot_() {
 		mountTimeline(root, data);
 	} catch (err) {
 		log.warn('[timeline] load failed:', err?.message);
-		showError('Could not load the timeline. Check your connection and try again.', boot_);
+		showError(loadErrorMessage(err), boot_);
 	}
 }
 
@@ -521,7 +554,10 @@ function mountTimeline(container, data) {
 			m.beam.material.opacity = dim ? 0.06 : 0.35;
 			m.label.material.opacity = dim ? 0.15 : 1;
 			const tick = scrubTicks[m.index];
-			if (tick) tick.classList.toggle('is-dim', dim);
+			if (tick) {
+				tick.classList.toggle('is-dim', dim);
+				tick.setAttribute('aria-disabled', String(dim));
+			}
 		});
 	}
 
@@ -539,9 +575,10 @@ function mountTimeline(container, data) {
 		<div class="tl-panel-date" id="tl-panel-date"></div>
 		<h2 class="tl-panel-title" id="tl-panel-title"></h2>
 		<p class="tl-panel-summary" id="tl-panel-summary"></p>
-		<a class="tl-panel-src" id="tl-panel-src" target="_blank" rel="noopener noreferrer" style="display:none">Read the source ↗</a>
+		<a class="tl-panel-src" id="tl-panel-src" target="_blank" rel="noopener noreferrer" hidden>Read the source ↗</a>
 		<div class="tl-panel-counter" id="tl-panel-counter"></div>
 	`;
+	panel.inert = true;
 	container.appendChild(panel);
 	panel.querySelector('.tl-panel-close').addEventListener('click', () => setPanelOpen(false));
 
@@ -549,6 +586,9 @@ function mountTimeline(container, data) {
 		state.panelOpen = open;
 		panel.classList.toggle('is-open', open);
 		panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+		// A closed panel is off-screen; keep its close button and source link
+		// out of the tab order so keyboard users never focus something invisible.
+		panel.inert = !open;
 		if (open && state.mode === 'orbit') controls.autoRotate = false;
 	}
 
@@ -577,8 +617,11 @@ function mountTimeline(container, data) {
 		const tick = document.createElement('button');
 		tick.className = 'tl-tick';
 		tick.style.background = categories[m.event.category]?.color || '#7aa2ff';
-		tick.setAttribute('aria-label', `${m.event.date} — ${m.event.title}`);
+		tick.setAttribute('aria-label', `${m.event.date}: ${m.event.title}`);
 		tick.addEventListener('click', () => {
+			// Same rule as clicking a marker: a filtered-out milestone is not a
+			// destination until its category is switched back on.
+			if (!state.visibleCategories.has(m.event.category)) return;
 			togglePlay(false);
 			focusEvent(m.index, { fly: true });
 		});
@@ -659,9 +702,10 @@ function mountTimeline(container, data) {
 		const srcLink = panel.querySelector('#tl-panel-src');
 		if (m.event.source_url) {
 			srcLink.href = m.event.source_url;
-			srcLink.style.display = 'inline-flex';
+			srcLink.hidden = false;
 		} else {
-			srcLink.style.display = 'none';
+			srcLink.removeAttribute('href');
+			srcLink.hidden = true;
 		}
 		panel.querySelector('#tl-panel-counter').textContent = `Milestone ${index + 1} of ${events.length}`;
 		setPanelOpen(true);
@@ -730,12 +774,37 @@ function mountTimeline(container, data) {
 	ro.observe(container);
 	resize();
 
+	// ── keep the shared bottom-right helper stack off the scrubber ──
+	// public/corner-stack.js lifts itself over a page's own bottom chrome by
+	// probing for position:fixed boxes. This bar is absolute inside the scene
+	// root, so it is invisible to that probe and the "Getting started" pill
+	// landed on the auto-play button. Reserve the bar's live footprint the way
+	// the concierge demo does, and re-measure whenever the bar changes size.
+	const CORNER_KEY = 'timeline-scrubber';
+	function syncCornerReserve() {
+		if (state.destroyed) return;
+		const r = bottombar.getBoundingClientRect();
+		container.style.setProperty('--tl-bar-h', `${Math.ceil(r.height)}px`);
+		const stack = window.twsCornerStack;
+		if (!stack?.reserve) return;
+		if (!r.height) {
+			stack.release(CORNER_KEY);
+			return;
+		}
+		stack.reserve(CORNER_KEY, { height: Math.max(0, Math.ceil(window.innerHeight - r.top)) });
+	}
+	const barRo = new ResizeObserver(syncCornerReserve);
+	barRo.observe(bottombar);
+	window.addEventListener('tws-corner-stack:ready', syncCornerReserve);
+	syncCornerReserve();
+
 	// ── render loop ──
-	const clock = new Clock();
+	const timer = new Timer();
 	let raf = 0;
 	function tick() {
 		if (state.destroyed) return;
-		guideAnim?.update(clock.getDelta());
+		timer.update();
+		guideAnim?.update(timer.getDelta());
 
 		if (state.mode === 'walk') {
 			const t = currentWalkT();
@@ -787,6 +856,9 @@ function mountTimeline(container, data) {
 		cancelAnimationFrame(raf);
 		clearTimeout(state.playTimer);
 		ro.disconnect();
+		barRo.disconnect();
+		window.removeEventListener('tws-corner-stack:ready', syncCornerReserve);
+		window.twsCornerStack?.release?.(CORNER_KEY);
 		canvas.removeEventListener('pointerdown', onPointerDown);
 		window.removeEventListener('keydown', onKeydown);
 		controls.dispose();

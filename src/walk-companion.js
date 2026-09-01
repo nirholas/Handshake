@@ -39,7 +39,10 @@ const walk = createWalkCompanion({
 	// is a persistent live stage of THIS user's agent, so the corner mascot is a
 	// second copy of the same body, and its 218px corner reservation pushed the
 	// stack's chips into the middle of the editing panel at 320px.
-	excludedRoutes: [...DEFAULT_EXCLUDED_PREFIXES, '/concierge', '/agent-studio'],
+	// /timeline is a full-screen 3D scene with its own idle-animated guide
+	// walking the path, and its bottom-right corner is the auto-play button:
+	// the corner mascot sat exactly on top of it and swallowed the click.
+	excludedRoutes: [...DEFAULT_EXCLUDED_PREFIXES, '/concierge', '/agent-studio', '/timeline'],
 });
 
 // public/nav.js drives the companion through this global (toggle from the nav
