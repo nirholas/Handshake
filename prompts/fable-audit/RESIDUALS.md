@@ -108,3 +108,22 @@ touched and leave the entrypoint intact. Do not schedule it as its own session.
 
 Per task: what shipped, what is staged for approval, the exact owner commands if any, and the
 verification output. No recap of this file.
+
+## History of the pack (kept here since the index file retired 2026-09-01)
+
+The 2026-07-11 maximum-depth audit produced one work order per finding: C1, C2, H1 to H7,
+M1 to M7, plus two batch records (`ENHANCEMENTS.md`, `LEAN-deletions.md`). Every numbered
+finding shipped and its order was retired; the sixteen finding files were deleted in
+`ab6b52c5a` (2026-07-28) and the two batch records in `96a06c6c9` (2026-08-01). Each is
+readable with `git show <sha>^:prompts/fable-audit/<file>.md`, and
+`git log --diff-filter=D --name-only -- prompts/fable-audit/` lists them all. The pack's
+index duplicated this file's three-item table and pointed at a snapshot ref that no longer
+resolves, so it was folded in here rather than kept.
+
+Measured state of the three tasks on 2026-09-01: task 1 has its guard test
+(`tests/api/cron-auth-sweep.test.js`) but no negative fixture and no OIDC step executed;
+task 2 shipped the API (`api/ops/payment-outcomes.js`, live and auth-gated) and its doc,
+while the page that rendered it was removed with the admin panel on 2026-08-05, so its
+definition of done is the API-only scope unless a new surface is chosen; task 3's seed drift
+stands at six differences (`npm run -s check:skills-seed` exits 1) and ends at the commit gate
+as designed.
