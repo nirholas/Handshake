@@ -23,6 +23,7 @@ import {
 	rollSupply,
 	scoreRarity,
 	slugify,
+	tierCutoff,
 	tierForRank,
 	traitDistribution,
 	verifyItem,
@@ -245,6 +246,30 @@ describe('tierForRank', () => {
 
 	it('degrades safely on an empty supply', () => {
 		expect(tierForRank(1, 0)).toBe('common');
+	});
+
+	// A raw percentile test gives every collection under 100 an empty legendary
+	// tier, so the top of a 60-item ranking would read as merely "epic".
+	it('always gives the scarcest tier at least one item', () => {
+		for (const supply of [1, 7, 60, 99, 100]) {
+			expect(tierForRank(1, supply)).toBe('legendary');
+		}
+	});
+
+	it('keeps the bands ordered as supply shrinks', () => {
+		expect(tierForRank(1, 60)).toBe('legendary');
+		expect(tierForRank(2, 60)).toBe('epic');
+		expect(tierForRank(6, 60)).toBe('epic');
+		expect(tierForRank(7, 60)).toBe('rare');
+		expect(tierForRank(21, 60)).toBe('rare');
+		expect(tierForRank(22, 60)).toBe('common');
+		expect(tierForRank(60, 60)).toBe('common');
+	});
+
+	it('exposes the cutoff it uses, floored at one item', () => {
+		expect(tierCutoff(1000, 0.01)).toBe(10);
+		expect(tierCutoff(60, 0.01)).toBe(1);
+		expect(tierCutoff(60, 1)).toBe(60);
 	});
 });
 

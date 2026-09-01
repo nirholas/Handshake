@@ -234,11 +234,22 @@ export function scoreRarity(items, supply = items.length) {
  */
 export function tierForRank(rank, supply) {
 	if (!(supply > 0)) return 'common';
-	const percentile = rank / supply;
 	for (const { tier, maxPercentile } of RARITY_TIERS) {
-		if (percentile <= maxPercentile) return tier;
+		if (rank <= tierCutoff(supply, maxPercentile)) return tier;
 	}
 	return 'common';
+}
+
+/**
+ * How many items a tier's band holds, counted from the top of the ranking.
+ *
+ * The `max(1, ...)` is what stops a small collection from having no legendary
+ * at all: a raw percentile test leaves every supply under 100 with an empty
+ * scarcest tier, which reads as a bug to anyone looking at the top of the
+ * ranking and quietly punishes creators for launching something small.
+ */
+export function tierCutoff(supply, maxPercentile) {
+	return Math.max(1, Math.ceil(supply * maxPercentile));
 }
 
 /**

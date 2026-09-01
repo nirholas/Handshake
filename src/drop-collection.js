@@ -17,6 +17,11 @@ const PAGE_SIZE = 48;
 const POLL_MS = 4000;
 const TIERS = ['legendary', 'epic', 'rare', 'common'];
 
+// Grid cells are ~132px wide, so the footer pill gets an abbreviation rather
+// than the full tier name. These are explicit because slicing the word to a
+// fixed length renders "legendary" as the meaningless "LEGE".
+const TIER_SHORT = { legendary: 'LEG', epic: 'EPIC', rare: 'RARE', common: 'COM' };
+
 const el = {
 	page: document.getElementById('dr-page'),
 	pageState: document.getElementById('dr-page-state'),
@@ -256,7 +261,7 @@ function itemButton(item) {
 	rank.textContent = `#${item.rarity_rank}`;
 	const pill = document.createElement('span');
 	pill.className = `dr-pill dr-pill--${item.rarity_tier}`;
-	pill.textContent = item.rarity_tier.slice(0, 4);
+	pill.textContent = TIER_SHORT[item.rarity_tier] || item.rarity_tier;
 	foot.append(rank, pill);
 
 	b.append(art, foot);
