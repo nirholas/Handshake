@@ -1,14 +1,105 @@
 {
   "base": "https://three.ws",
   "dryRun": true,
-  "ranAt": "2026-09-02T19:13:15.061Z",
+  "ranAt": "2026-09-02T19:19:52.751Z",
   "results": [
+    {
+      "id": "1",
+      "title": "free lane serves live data, no payment demanded",
+      "ok": true,
+      "detail": "health 200 (6 subsystems, real latencies), catalog 200 (7 rows), free tools on a paid row: forge_status 200, getting_started 200",
+      "evidence": "prompts/okx-ai/e2e-evidence/30-case1-free-lane.json"
+    },
     {
       "id": "1d",
       "title": "MCP discovery is free to a spec-compliant client",
       "ok": false,
       "detail": "forge-draft=402/402, forge-standard=402/402, forge-hd=402/402, forge-image=402/402",
       "evidence": "prompts/okx-ai/e2e-evidence/33-case1d-mcp-discovery.json"
+    },
+    {
+      "id": "2",
+      "title": "cheapest paid row delivers a real GLB",
+      "ok": false,
+      "detail": "dry run: signing skipped",
+      "evidence": null
+    },
+    {
+      "id": "2b",
+      "title": "mid paid row delivers a real GLB",
+      "ok": false,
+      "detail": "dry run: signing skipped",
+      "evidence": null
+    },
+    {
+      "id": "3",
+      "title": "flagship listed row delivers a real GLB",
+      "ok": false,
+      "detail": "dry run: signing skipped",
+      "evidence": null
+    },
+    {
+      "id": "3i",
+      "title": "image lane rebuilds a GLB from a reference image",
+      "ok": false,
+      "detail": "dry run: signing skipped",
+      "evidence": null
+    },
+    {
+      "id": "3r",
+      "title": "rigged row delivers a GLB with a skeleton and skin weights",
+      "ok": false,
+      "detail": "dry run: signing skipped",
+      "evidence": null
+    },
+    {
+      "id": "5a",
+      "title": "replayed authorization buys no second job",
+      "ok": false,
+      "detail": "dry run",
+      "evidence": null
+    },
+    {
+      "id": "5b",
+      "title": "cheap authorization cannot buy a dearer service",
+      "ok": false,
+      "detail": "dry run",
+      "evidence": null
+    },
+    {
+      "id": "5c",
+      "title": "expired authorization is rejected, fresh challenge offered",
+      "ok": false,
+      "detail": "dry run",
+      "evidence": null
+    },
+    {
+      "id": "5d",
+      "title": "garbage payment header gets a clean 4xx, runs no tool",
+      "ok": true,
+      "detail": "notBase64=400, wrongShape=402, emptyString=402, truncatedJson=400",
+      "evidence": "prompts/okx-ai/e2e-evidence/53-case5d-garbage.json"
+    },
+    {
+      "id": "6",
+      "title": "failed job leaves the authorization unspent",
+      "ok": false,
+      "detail": "dry run",
+      "evidence": null
+    },
+    {
+      "id": "7",
+      "title": "legacy rail still answers and pays its own challenge",
+      "ok": true,
+      "detail": "accepts: eip155:196@10000, solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp@10000, solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp@10000000, eip155:8453@10000; paid leg: not attempted",
+      "evidence": "prompts/okx-ai/e2e-evidence/70-case7-legacy-rails.json"
+    },
+    {
+      "id": "4",
+      "title": "settlement verified on-chain",
+      "ok": false,
+      "detail": "no settlements to verify (paid cases did not run or did not settle)",
+      "evidence": null
     }
   ],
   "settlements": []

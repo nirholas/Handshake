@@ -137,13 +137,17 @@ const setupState = (() => {
 step('runtime setup', setupState);
 
 // 5. The AI workspace: this is the cwd the daemon spawns the AI CLI in, so its
-//    CLAUDE.md and .claude/skills are what the chat subsession actually sees.
+//    briefing and .claude/skills are what the chat subsession actually sees.
+//    Both filenames are written because the provider is chosen by whichever CLI
+//    is credentialed: claude reads CLAUDE.md, codex reads AGENTS.md, and a
+//    fallback to the other provider must not silently drop the briefing.
 mkdirSync(join(WORKSPACE, '.claude', 'skills'), { recursive: true });
 
 const briefing = execFileSync(process.execPath, [join(REPO, 'scripts', 'okx-listing-payload.mjs'), '--briefing'], {
 	encoding: 'utf8',
 });
 writeFileSync(join(WORKSPACE, 'CLAUDE.md'), briefing);
+writeFileSync(join(WORKSPACE, 'AGENTS.md'), briefing);
 step('briefing', `${briefing.length} chars from the live catalog module`);
 
 let linked = 0;

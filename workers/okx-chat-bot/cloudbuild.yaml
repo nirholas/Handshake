@@ -14,6 +14,10 @@
 # no HTTP request is in flight.
 #
 # ── ONE-TIME SETUP (run once per project, never commit secret values) ─────────
+# Steps 1 and 2 were run on 2026-09-02 and are DONE: the bucket exists and is
+# versioned, and okx-chat-bot-database-url was created from the project's own
+# DATABASE_URL secret. Both grant three-ws@ the role below. The AI-provider
+# secret is the only one left, and its value is owner-only.
 #   # 1. State bucket. Versioning is the undo button for a torn snapshot.
 #   gcloud storage buckets create gs://three-ws-okx-bot-state \
 #     --location=us-central1 --uniform-bucket-level-access --project aerial-vehicle-466722-p5

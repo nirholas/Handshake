@@ -164,12 +164,16 @@ someone has to go find.
 ## Deploying
 
 **Status: running as a stopgap on a developer codespace, not yet deployed.**
-There is no `okx-chat-bot` Cloud Run service in `aerial-vehicle-466722-p5`, and
-none of the one-time setup below has been run: `gs://three-ws-okx-bot-state`,
-`okx-chat-bot-database-url` and `anthropic-api-key` all still have to be
-created. Deploys are owner-gated, so the setup below plus the build submit are
-the whole remaining path, and the only value not already on this machine is the
-Anthropic key.
+There is no `okx-chat-bot` Cloud Run service in `aerial-vehicle-466722-p5`.
+Two of the three one-time prerequisites now exist (created 2026-09-02):
+`gs://three-ws-okx-bot-state` (versioned, `three-ws@` holds `objectAdmin`) and
+the `okx-chat-bot-database-url` secret (copied from the project's existing
+`DATABASE_URL` secret so the two cannot drift, `three-ws@` holds
+`secretAccessor`). **The one thing still missing is the AI-provider secret**,
+`anthropic-api-key`, whose value exists nowhere on this machine. The deploy
+references it in `--set-secrets` and will fail loudly without it, which is the
+intended trade: a bot that receives buyer chat and cannot answer is worse than a
+refused deploy.
 
 Since 2026-09-02 this worker has beat for the first time, from a codespace, so
 `/api/healthz` reports the `okx_chat_bot` subsystem instead of `unknown`. That
