@@ -281,7 +281,7 @@ Measured: `gcloud` was dead on the first three calls of this session
 OWNER-ACTIONS row 15) and then started answering again a few minutes later with no
 intervention, so row 15's premise is intermittent, not standing. With it working:
 `ECONOMY_MASTER_SECRET_BASE58` was a plaintext `value:` on `three-ws-api` exactly as the
-order described, and it was not alone: **57 more credential-bearing vars** were literals
+order described, and it was not alone: **58 more credential-bearing vars** were literals
 too, including `DATABASE_URL`, `WALLET_ENCRYPTION_KEY`, `JWT_SECRET`, `CRON_SECRET`,
 `OPENAI_API_KEY`, four wallet secret keys and the `OFFER_RECEIPT_JWK` signing key. Any
 principal with `run.services.get` on the project could read all of them out of the service
@@ -294,7 +294,9 @@ instead of minting a copy, grants the runtime SA `secretAccessor` on that one se
 flips in one update, then re-reads the service and asserts the end state). Migrated the
 master first and verified it alone, then swept the rest.
 
-**End state: 81 Secret Manager references, ZERO plaintext credentials, 100% of traffic on
+**End state: 59 credentials migrated (the master plus 58), 81 Secret Manager references in
+all against the 22 that predated this, ZERO plaintext credentials, and 126 of the service's
+207 variables correctly left as plaintext config. 100% of traffic on
 `three-ws-api-00407-m7c`.** `--verify` reports `Verify: clean` and exits 0.
 
 Two verifications, both read live rather than assumed:

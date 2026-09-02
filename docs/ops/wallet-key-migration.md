@@ -173,9 +173,10 @@ Read the current state at any time with `node scripts/migrate-plaintext-secrets.
 ### The rest of the service went with it
 
 The master key was not the only credential sitting in the config. The same sweep moved
-**57 more**, in two updates (`three-ws-api-00406-nlg`, then `00407-m7c` for one that a
-killed earlier run had left as a version-less secret shell). The service now carries **81
-Secret Manager references and zero plaintext credentials**; `node
+**58 more**, in two updates (`three-ws-api-00406-nlg`, then `00407-m7c` for one that a
+killed earlier run had left as a version-less secret shell). The service now carries **81 Secret
+Manager references (22 of them predating this work) and zero plaintext credentials**, with
+126 of its 207 variables correctly still plaintext config; `node
 scripts/migrate-plaintext-secrets.mjs --verify` reports `Verify: clean` and exits 0.
 
 Four vars were pointed at a secret that already existed rather than a fresh copy, because
