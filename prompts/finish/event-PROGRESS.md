@@ -139,3 +139,126 @@ Every order was re-measured against the code, the changelog, and production (`ad
 Still open: 02 (the in-world half of the walkthrough was never done and no defect list exists), 06 (built, never verified on both engines, never announced in the changelog), 08 (rewritten: the leaderboard's Redis record expired about 2026-08-16 with nothing exported, `app_settings` holds no event key, so the standings are unrecoverable; the souvenir grant count is still readable from the multiplayer logs until about 2026-09-08, which makes 08 the first order to run).
 
 Correction to the pack's own dates: the window that actually ran was 2026-08-09 17:00 to 19:30 UTC (`git show 5616ff9b8^:public/event.json`), not 2026-08-08.
+
+## 2026-09-02 · Order 08 · Closeout: the client-side event ran, the server-side event did not
+
+**World determination: split, and the split is the finding.** The order framed this as (a) the event
+build served both the API and the multiplayer server before the window, or (b) neither. Neither is
+what happened. The API and frontend shipped ahead of the window. The world server never shipped at
+all, so every server-authoritative part of the event was absent from the running process while the
+countdown it had been announced under ticked in front of visitors.
+
+**The API and frontend half: shipped, ahead of time (world a).** Cloud Build `015cc079` (SUCCESS,
+22m37s) put `three-ws-api` revision `00365` live at `4a748fbde` on 2026-08-09 morning; a concurrent
+agent's build superseded it minutes later as revision `00366` at `2841ab5df`. Both contain the
+preflight's pinned SHA (`git merge-base --is-ancestor 2bae5d8c2 4a748fbde` and the same against
+`2841ab5df` both exit 0). Recorded in `prompts/finish/production-100-PROGRESS.md`, 2026-08-09 entry,
+with `/event` 200, `/event.json` serving and `smoke:prod` green across 691 pages. So the lobby and
+in-world countdown (`src/game/event-countdown.js`), the home banner (`src/home-event-banner.js`), the
+`/event` landing page and the whole in-world meetup layer (`src/game/meetup-event.js`: agenda drawer,
+go-live moments, fireworks finale, commemorative photo) were live for the 17:00 to 19:30 UTC window.
+All of that is client-side and reads `/event.json` from the deployed frontend.
+
+**The world server half: never shipped (world b).**
+
+- `docs/event-readiness/LIVE-OPS.md`, last edited 2026-08-08 16:59 UTC, names the running image as
+  built 2026-08-06, revision `three-ws-multiplayer-00010-g89`, and states plainly that it "predates
+  every event commit". Its "Ship the release" section lists `cd multiplayer && ./deploy-cloudrun.sh`
+  as a second, separate, owner-gated command.
+- The three server modules the event needed all landed 2026-08-07, after that image was built:
+  `multiplayer/src/event-drop.js` (`015a08513`), `multiplayer/src/event-window.js` and
+  `multiplayer/src/event-leaderboard.js` (`57c8bc1c4`).
+- The 2026-08-09 ship entry records exactly one deploy, the API/frontend Cloud Build above, and
+  closes OWNER-ACTIONS row 1 on that basis. No commit, doc, or progress entry anywhere in the repo
+  records `deploy-cloudrun.sh` being run that day.
+- The world server was redeployed only later: it now answers `/population?by=coin` with a `byCoin`
+  map, and `by=coin`/`byCoin` entered `multiplayer/src/index.js` on 2026-08-17 in `ad4d3b713`. So the
+  image serving today is from 2026-08-17 or later, eight days after the event.
+
+**Souvenir grant count: zero, by construction.** The grant is `WalkRoom._grantEventSouvenir`, which
+calls `currentEventDrop()` from `multiplayer/src/event-drop.js`. That file was not in the running
+image, so no code path could grant `laurel-meetup` to anyone during the window. Nobody left the event
+with a souvenir.
+
+**Correction to this order's own premise about the leaderboard.** The rewritten order said the board
+key `event:lb:three-first-meetup` expired around 2026-08-16 because `BOARD_TTL_S = 7d` ran out "from
+its last write". There was no last write. The board is written only by the game server through
+`POST /api/internal/event-score`, from a module (`multiplayer/src/event-score.js`, added in
+`57c8bc1c4` on 2026-08-07) that the running image did not contain. The standings are not lost to a
+TTL; they never existed. The outcome for the owner is the same, the reason is not, and the reason is
+what changes the lesson.
+
+**The log read the order asked for could not be run, and is no longer the best source anyway.**
+`gcloud` auth is dead in this workspace: `gcloud run services list` fails with
+`Reauthentication failed. cannot prompt during non-interactive execution`, application-default
+credentials fail the same way (`gcloud auth application-default print-access-token` returns nothing
+and a direct REST call to `run.googleapis.com` answers 401 `CREDENTIALS_MISSING`), and an in-session
+`gcloud auth login --no-launch-browser` is refused by this environment's tool policy. The query, for
+whoever has a live token before Cloud Run's 30-day retention drops the window around 2026-09-08:
+
+```bash
+export PATH="$HOME/google-cloud-sdk/bin:$PATH"
+gcloud logging read 'resource.type="cloud_run_revision"
+  resource.labels.service_name="three-ws-multiplayer"
+  textPayload:"souvenir laurel-meetup"' \
+  --freshness=30d --project aerial-vehicle-466722-p5 --format='value(textPayload)'
+```
+
+Two notes on that query. The order named the service `hyperfy-world`; the service is
+`three-ws-multiplayer` (`docs/event-readiness/LIVE-OPS.md`, `STRUCTURE.md`). And the log line is
+`souvenir laurel-meetup <arrow> <playerId> (<eventId>)` written with a Unicode arrow, not the ASCII
+`->` that `docs/event-souvenirs.md` shows, so match on the `textPayload:"souvenir laurel-meetup"`
+prefix rather than on the arrow.
+
+**A better recovery path that outlives the logs.** A granted souvenir is not only a log line, it is
+persisted state. `grantCosmetic` writes into the player profile and `_persistEcon` flushes it to
+Upstash under `player:<accountId>` as one JSON value with `cosmetics.owned` containing the id
+(`multiplayer/src/playerStore.js`). The key carries a 90-day TTL refreshed on every flush, so for an
+account that last played on event day the floor is about 2026-11-07, and later for anyone who came
+back. Scanning `player:*` for `laurel-meetup` gives the real distinct-account list with no 2026-09-08
+deadline. It also falsifies this entry cleanly: a single hit there would prove the world server did
+carry the event build and that this determination is wrong. `UPSTASH_REDIS_REST_URL` and
+`UPSTASH_REDIS_REST_TOKEN` are not in `.env` or `.env.local`; they live on the `three-ws-multiplayer`
+Cloud Run service, so this read needs the same live `gcloud` token the log read does.
+
+**No community recap was written, and that is deliberate.** Attendance is unknown and unknowable from
+here, nothing was granted, and no standing exists. A recap entry claiming a turnout would be
+invented, which the order forbids and the hard rules forbid. The three 2026-08-08 changelog entries
+that announced these features to the community ("Show up to a live event and you keep something from
+it", "The meetup has its own jobs, and a live leaderboard to race on", "One link to share for the
+live event, with a real headcount") are left standing and need no correction: the world server has
+since been redeployed with all of that code, so those features are real on production today and are
+waiting on the next `public/event.json` window. They were simply not real during the one window that
+has run so far.
+
+**The lesson, and it is not the one the order predicted.** The order expected the lesson to be "the
+leaderboard export must be a cron or a post-window hook, never a manual work order". That is still
+true, but it is second. The first lesson is that **this platform ships from two independent
+deployments and the event checklist treated them as one.** The preflight correctly established that
+the world server needed no redeploy for the event *window* to take effect, because
+`event-window.js` reads `/event.json` over HTTP. That true statement was allowed to stand in for a
+different and false one, that the world server needed no redeploy at all, when in fact it did not
+yet contain `event-window.js` to do the reading. A go/no-go gate that had asserted a live property
+(`/api/play/population` returning `ok:true`, which is only possible from an image built after
+2026-08-07) instead of a code property would have caught it in one curl.
+
+**A live production defect found while re-deriving state, unrelated to the event but worth the row.**
+`https://three.ws/api/play/population?coin=FeMb...pump` answers `{"ok":false,"reason":"unavailable"}`
+while the world server's own `/population` answers `{"ok":true,...}` on the same query. The proxy is
+not broken: `api/play/population.js` returns exactly that when `env.MULTIPLAYER_INTERNAL_URL` is
+unset, and production is at `ad7b54c16`, which contains the handler. So the variable is missing from
+the `three-ws-api` service env. Consequence: the `/event` page's live headcount and the lobby's
+per-world "N inside" counts degrade to no number at all, silently, and would have done so during an
+event. One `--update-env-vars` fixes it, and it needs the same live `gcloud` token.
+
+**Evidence.** `curl https://three.ws/api/version` → `ad7b54c16`, revision `three-ws-api-00404-ph7`.
+`curl https://three.ws/event.json` → the explicit no-event state.
+`git show 5616ff9b8^:public/event.json` → the window that ran, 2026-08-09 17:00 to 19:30 UTC, souvenir
+`laurel-meetup`. `git log --diff-filter=A -- multiplayer/src/event-drop.js` → `015a08513`, 2026-08-07.
+`git log -S"byCoin" -- multiplayer/src/index.js` → `ad4d3b713`, 2026-08-17.
+World server `/health` → `{"ok":true,"name":"three.ws-multiplayer"}`;
+`/population?by=coin` → `{"ok":true,"coin":null,"rooms":0,"players":0,"byCoin":{}}`.
+
+**Remains.** Two reads that need a live `gcloud` token, both now OWNER-ACTIONS rows: the log
+confirmation (deadline about 2026-09-08) and the Upstash `player:*` scan (floor about 2026-11-07),
+either of which would confirm or overturn the zero above. Orders 02 and 06 are handled separately.
