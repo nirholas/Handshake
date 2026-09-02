@@ -119,6 +119,14 @@ const BUILD_COPIED_ROOTS = ['blog', 'docs', 'pump-fun-skills', 'avatar-sdk'];
 // scripts/write-build-info.mjs writes dist/build-info.json, the static file the
 // build stamps the running commit into and /api/version reads back.
 const GENERATED_TARGETS = new Set(['/manifest.webmanifest', '/build-info.json']);
+// Route dests written by a build step rather than committed, so they are absent
+// in any tree that has not built and present in one that has. Left unlisted, the
+// dangling check passes only where a stale build artifact happens to survive,
+// which is the opposite of what this audit is for.
+//   /news/index.html: scripts/build-news.mjs, run from `prebuild`; public/news/
+//   is gitignored. scripts/verify-routes.mjs models the same file from
+//   data/rss/items.json, and check:dist runs after the build to confirm it landed.
+const GENERATED_DESTS = new Set(['/news/index.html']);
 
 // Does a clean path resolve to a real source file (what the catch-all serves)?
 function fileForCleanPath(path) {
@@ -477,6 +485,7 @@ function danglingRoutes() {
 		const dest = r.dest.split('?')[0];
 		if (!dest.endsWith('.html')) continue;
 		if (dest.includes('$')) continue; // dest uses a capture group — resolved per-request
+		if (GENERATED_DESTS.has(dest)) continue; // written by a build step, see above
 		const p = dest.replace(/^\/+/, '');
 		// pages/ and public/ cover most dests, but a few top-level content trees
 		// (docs/, blog/) sit directly at the repo root as siblings of pages/ —
