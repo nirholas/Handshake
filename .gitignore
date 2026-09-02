@@ -519,3 +519,6 @@ marketing/*/.raw/
 # Screenshot captures dropped in the repo root by browser and mobile checks.
 # Real assets belong in public/; scratch captures are never committed.
 /*.png
+
+# Avatar seeding checkpoints and rejected-candidate dumps (scripts/gcp/seed-avatars.mjs).
+.seed-batches/
