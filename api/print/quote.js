@@ -32,6 +32,7 @@ import { analyzeMesh } from '../_lib/print/analyze.js';
 import { loadCatalog, materialFits, quotePrint, signQuote } from '../_lib/print/quote.js';
 import { getPublicCreation } from '../_lib/forge-store.js';
 import { loadLineage, runFabricationGate } from '../_lib/print/gate.js';
+import { editionState, PrintEditionError } from '../_lib/print/editions.js';
 import { holderDiscountBps, holderUsd, tierForUsd } from '../_lib/three-tier.js';
 
 // One analysis per source model, held for an hour. The report is deterministic
@@ -119,6 +120,20 @@ export default wrap(async (req, res) => {
 	// runs BEFORE any money is quoted: a refusal at this point costs the buyer
 	// nothing. The paid order is screened again, thoroughly, on the way to the
 	// printer. See api/_lib/print/gate.js and specs/PRINT_PIPELINE.md.
+	// Scarcity is checked where the price is set: a sold-out edition is refused
+	// before a buyer is ever shown a number, not after they have paid.
+	let edition = { seriesKey: null, limit: null, issued: 0, remaining: null, soldOut: false };
+	if (source.creationId) {
+		try {
+			edition = await editionState({ creationId: source.creationId });
+		} catch (err) {
+			// A scarcity read that fails must not take down pricing: an open
+			// edition is the truthful default and the checkout transition
+			// re-checks the cap against the database anyway.
+			if (!(err instanceof PrintEditionError)) throw err;
+		}
+	}
+
 	const lineage = await loadLineage(source.creationId);
 	const gate = await runFabricationGate({
 		stage: 'quote',
@@ -154,10 +169,45 @@ export default wrap(async (req, res) => {
 		// screening pass will run after payment, rather than discovering it as a
 		// surprise rejection later.
 		screening: { verdict: gate.verdict, stage: gate.stage, policy_url: gate.policy_url },
+		// Physical scarcity, read from the certificates that have actually shipped
+		// rather than from open orders, so a cancelled checkout never strands the
+		// last copy of a limited edition. `limit: null` is an open edition.
+		edition,
 	};
 
 	// No material chosen: this is the analyze call. Free, keyless, no price.
 	if (!body.materialId) return json(res, 200, base, { 'cache-control': 'no-store' });
+
+	// A sold-out edition is a rejection, not a price. It rides the same shape as
+	// every other rejection so the page renders it through its designed path.
+	const wanted = Math.max(1, Math.floor(Number(body.quantity) || 1));
+	if (edition.limit !== null && edition.remaining !== null && edition.remaining < wanted) {
+		return json(
+			res,
+			200,
+			{
+				...base,
+				quote: null,
+				token: null,
+				rejection: (() => {
+					const message =
+						edition.remaining === 0
+							? `This is a limited edition of ${edition.limit} and every copy has shipped.`
+							: `Only ${edition.remaining} of this ${edition.limit}-piece edition ${edition.remaining === 1 ? 'is' : 'are'} left, so ${wanted} cannot be ordered.`;
+					const fix =
+						edition.remaining === 0
+							? 'The creator caps how many physical copies of this model can exist, and every one now carries a numbered certificate. Print a different model, or ask the creator to raise the cap.'
+							: `Lower the quantity to ${edition.remaining} to take the rest of the edition.`;
+					return {
+						code: 'edition_sold_out',
+						message,
+						failures: [{ code: 'edition_sold_out', message, fix }],
+					};
+				})(),
+			},
+			{ 'cache-control': 'no-store' },
+		);
+	}
 
 	// The holder discount reads the signed-in user's $THREE tier. Anonymous
 	// buyers quote at list price and the panel says so, rather than showing a

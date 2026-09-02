@@ -8,7 +8,7 @@
 // worst one a physical product has: an order that is genuinely finished sits in
 // `printing` forever and nobody finds out until the buyer asks.
 //
-// Three passes, deliberately separate:
+// Four passes, deliberately separate:
 //
 //   1. RECONCILE. For every order a configured adapter still owns, ask the
 //      adapter what it thinks the status is and apply the answer through the
@@ -28,6 +28,13 @@
 //      it makes a model call: a buyer's checkout must not wait on an LLM, and
 //      an LLM outage must not fail a payment that already settled.
 //
+//   4. ATTEST. For every certificate whose Solana memo never landed, backfill
+//      its QR and retry the send. Issuing a certificate is fail-soft on purpose
+//      (a shipment is a physical fact and is never rolled back because an RPC
+//      had a bad minute), which is only honest if something retries; this is
+//      that something. A mainnet certificate waiting on the owner approval
+//      comes back `refused` rather than `failed`: nothing is wrong with it.
+//
 // A provider being down must not fail the sweep: each order is reconciled
 // independently and its failure is counted, not thrown, so one broken lane
 // never hides a stall in another. The same holds for screening.
@@ -43,6 +50,7 @@ import {
 import { reconcileOrder } from '../_lib/print/fulfillment.js';
 import { jobSummaryLines, notifyOperators } from '../_lib/print/ops-notify.js';
 import { listOrdersAwaitingScreening, screenPaidOrder } from '../_lib/print/gate.js';
+import { certCluster, retryPendingAttestations } from '../_lib/print/certificate.js';
 
 // A job is a stall once it is this many days past its recorded lead time. Two
 // days absorbs a weekend and a slow carrier scan without crying wolf.
@@ -56,6 +64,12 @@ const STALL_BATCH = 25;
 // slow provider cannot push the sweep past its schedule. Anything left over is
 // picked up by the next tick, which is minutes away.
 const SCREEN_BATCH = 10;
+// Each retry is one Solana transaction. Ten per tick clears a backlog within
+// minutes without turning a bad RPC hour into a rate-limit incident.
+const ATTEST_BATCH = Number(process.env.PRINT_CERT_RETRY_BATCH) || 10;
+// A certificate that has failed this many times is not going to land on its own:
+// it stops burning transactions and stays visible with its recorded error.
+const ATTEST_MAX_ATTEMPTS = Number(process.env.PRINT_CERT_MAX_ATTEMPTS) || 8;
 
 export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;
@@ -115,6 +129,15 @@ export default wrapCron(async (req, res) => {
 		}
 	}
 
+	let certificates = { scanned: 0, attested: 0, refused: 0, failed: 0, qrBackfilled: 0 };
+	try {
+		certificates = await retryPendingAttestations({ limit: ATTEST_BATCH, maxAttempts: ATTEST_MAX_ATTEMPTS });
+	} catch (err) {
+		// The attestation lane is the least urgent of the four: a certificate
+		// without its signature is still a certificate, and the page says so.
+		failures.push({ order_id: 'certificates', error: `attest: ${String(err?.message || err).slice(0, 280)}` });
+	}
+
 	return json(res, 200, {
 		ok: true,
 		open: open.length,
@@ -124,6 +147,8 @@ export default wrapCron(async (req, res) => {
 		alerted,
 		screening_pending: awaiting.length,
 		screened,
+		cluster: certCluster(),
+		certificates,
 		failures,
 	});
 });

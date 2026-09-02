@@ -6,10 +6,12 @@
 // unnoticed, which is a finished order sitting in `printing` until the buyer
 // asks.
 //
-// Two behaviours are load-bearing and both are pinned here: an unreachable
+// Three behaviours are load-bearing and all are pinned here: an unreachable
 // provider must not abort the sweep (the stall pass is exactly what catches the
-// orders that provider is sitting on), and a stalled order must page the
-// operator once rather than on every tick.
+// orders that provider is sitting on), a stalled order must page the operator
+// once rather than on every tick, and the certificate attestation lane must
+// retry what shipping could not send without ever being able to take the sweep
+// down with it.
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -32,6 +34,14 @@ vi.mock('../api/_lib/print/fulfillment.js', () => ({
 	applyProviderEvent: vi.fn(),
 	cancelWithProvider: vi.fn(),
 	FulfillmentError: class FulfillmentError extends Error {},
+}));
+
+const retryPendingAttestations = vi.fn(async () => ({
+	scanned: 0, attested: 0, refused: 0, failed: 0, qrBackfilled: 0,
+}));
+vi.mock('../api/_lib/print/certificate.js', () => ({
+	retryPendingAttestations,
+	certCluster: () => 'devnet',
 }));
 
 const notifyOperators = vi.fn(async () => {});
@@ -95,6 +105,7 @@ beforeEach(() => {
 	listStalledOrders.mockResolvedValue([]);
 	markStallAlerted.mockImplementation(async (ids) => ids.length);
 	reconcileOrder.mockImplementation(async (o) => ({ applied: false, order: o, reason: '', polled: true }));
+	retryPendingAttestations.mockResolvedValue({ scanned: 0, attested: 0, refused: 0, failed: 0, qrBackfilled: 0 });
 });
 
 describe('the sweep is scheduler-only', () => {
@@ -191,5 +202,38 @@ describe('stall detection', () => {
 		const serialized = JSON.stringify(notifyOperators.mock.calls[0][0]);
 		expect(serialized).not.toContain('1 Test Way');
 		expect(serialized).not.toContain('A Buyer');
+	});
+});
+
+describe('the certificate attestation pass', () => {
+	it('reports what it attested, alongside the cluster it attested on', async () => {
+		retryPendingAttestations.mockResolvedValue({ scanned: 3, attested: 2, refused: 1, failed: 0, qrBackfilled: 1 });
+		const res = await sweep({ authorized: true });
+		expect(res.statusCode).toBe(200);
+		expect(res.json.certificates).toEqual({ scanned: 3, attested: 2, refused: 1, failed: 0, qrBackfilled: 1 });
+		expect(res.json.cluster).toBe('devnet');
+	});
+
+	it('bounds each tick so a backlog cannot become a rate-limit incident', async () => {
+		await sweep({ authorized: true });
+		expect(retryPendingAttestations).toHaveBeenCalledWith(
+			expect.objectContaining({ limit: expect.any(Number), maxAttempts: expect.any(Number) }),
+		);
+		const { limit, maxAttempts } = retryPendingAttestations.mock.calls[0][0];
+		expect(limit).toBeGreaterThan(0);
+		expect(limit).toBeLessThanOrEqual(50);
+		expect(maxAttempts).toBeGreaterThan(0);
+	});
+
+	it('counts an attestation outage as a failure rather than losing the whole sweep', async () => {
+		retryPendingAttestations.mockRejectedValue(new Error('solana rpc unreachable'));
+		const res = await sweep({ authorized: true });
+		expect(res.statusCode).toBe(200);
+		expect(res.json.ok).toBe(true);
+		expect(res.json.failures).toContainEqual(
+			expect.objectContaining({ order_id: 'certificates' }),
+		);
+		// The passes that matter more still ran.
+		expect(listStalledOrders).toHaveBeenCalled();
 	});
 });
