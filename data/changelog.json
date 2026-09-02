@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-09-02",
+			"title": "A single page now shows every way an x402 payment can fail, before it stops the economy",
+			"summary": "The platform already recorded every rejected, failed and replayed payment, but nothing displayed them, so the first sign of trouble was usually the economy halting. The new payment-outcomes board reads that record live: how many payments settled and how many failed, how many were refused as invalid before settling, how many were replayed copies of an earlier payment, the reasons behind each, and the balance of every wallet that funds a settlement against the floor it stops working at. That last panel matters most during an outage, because a starved fee wallet and a broken payment rail look identical from outside and need opposite fixes. Where a number could not actually be measured the board says so rather than showing a reassuring zero. Operator tooling, behind the same sign-in as the other internal boards.",
+			"tags": [
+				"feature",
+				"infra"
+			],
+			"link": "/docs/x402-endpoints"
+		},
+		{
+			"date": "2026-09-02",
 			"title": "The 3D Studio connector for ChatGPT is documented as the eleven tools it actually serves",
 			"summary": "The free 3D Studio connector grew to eleven tools when look_at_model landed alongside check_job, but a lot of the writing about it had not caught up: the connector page, the press kit, the partner page, the blog summary, the announcement copy, the press release and the store-submission package still said nine or ten, and the social card enumerated only nine tool names. Every one of those now matches a fresh pull from the live server, the social card lists all eleven, and the module headers inside the connector describe the real catalog including which tools spend generation quota. A test now pins the total, so the next tool to land fails the suite instead of quietly re-opening the same drift. The standalone viewer also stopped crediting the AR launch endpoint with a renderer it no longer loads.",
 			"tags": [

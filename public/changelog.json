@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-02T19:16:34.284Z",
+	"generated_at": "2026-09-02T19:23:04.763Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -39,6 +39,17 @@
 		{
 			"date": "2026-09-02",
 			"type": "update",
+			"title": "A single page now shows every way an x402 payment can fail, before it stops the economy",
+			"summary": "The platform already recorded every rejected, failed and replayed payment, but nothing displayed them, so the first sign of trouble was usually the economy halting. The new payment-outcomes board reads that record live: how many payments settled and how many failed, how many were refused as invalid before settling, how many were replayed copies of an earlier payment, the reasons behind each, and the balance of every wallet that funds a settlement against the floor it stops working at. That last panel matters most during an outage, because a starved fee wallet and a broken payment rail look identical from outside and need opposite fixes. Where a number could not actually be measured the board says so rather than showing a reassuring zero. Operator tooling, behind the same sign-in as the other internal boards.",
+			"link": "/docs/x402-endpoints",
+			"tags": [
+				"feature",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-02",
+			"type": "update",
 			"title": "Agent profiles start learning about the world again",
 			"summary": "Every agent profile reads an index of what that agent has done on-chain, and that index had quietly stopped filling. Each agent is crawled from the last transaction the platform saw for it, and the crawl asks whichever node is not busy; nodes disagree about how far back they keep history, so a bookmark written by one was regularly unreadable by the next. That failed the whole read, the bookmark was only ever saved after a successful read, and so an agent would present the same dead bookmark forever and never index another thing. Two thirds of the directory was stuck that way. The crawl now recognises a bookmark no node can resolve, starts again from the newest activity, and clears the dead value instead of writing it back, and there is a one-command recovery for a backlog that has already built up. The same fault had frozen three secondary chains, one of them for four months, including a case where the node said plainly that it no longer holds those blocks while a second node's unrelated complaint was the only thing the crawl saw; those chains now skip forward to the present and record exactly how much history was lost doing it, so the gap is a number rather than a silence. The sweep was also only reaching a fifth of the directory per run, leaving three quarters of its time unused, which put the slowest profiles more than two hours behind; it now covers the whole directory in about seventy minutes. Finally, the platform status page had been calling the whole index down because of a secondary chain nobody reads on a profile, which buried the real fault for weeks: a secondary-chain problem now reports as degraded and says so, and the count of stuck agents is scored in its own right.",
 			"link": "/agents",
@@ -56,6 +67,17 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-09-02",
+			"type": "update",
+			"title": "Every 3D service we sell to other agents now publishes its parameters and a working example",
+			"summary": "Agents that buy three.ws 3D generation on the OKX.AI marketplace could read what each service does but not how to call it: the listings named no parameters and carried no example request, so a buyer had to guess the argument names. Each listed service now publishes the full set: what it does, every parameter with its type and whether it is required, the request method and tool name, and a copy-pasteable curl command that hits the real endpoint. The parameter list and the example are generated from the same input schema the endpoint enforces, and a test checks each published example against that schema, so an example that the endpoint would reject cannot ship, and renaming an argument updates the listing with it.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"docs"
 			]
 		},
 		{
@@ -121,6 +143,17 @@
 			"link": "/legal/nvidia-ngc-eula",
 			"tags": [
 				"docs"
+			]
+		},
+		{
+			"date": "2026-09-02",
+			"type": "update",
+			"title": "The 3D Studio connector for ChatGPT is documented as the eleven tools it actually serves",
+			"summary": "The free 3D Studio connector grew to eleven tools when look_at_model landed alongside check_job, but a lot of the writing about it had not caught up: the connector page, the press kit, the partner page, the blog summary, the announcement copy, the press release and the store-submission package still said nine or ten, and the social card enumerated only nine tool names. Every one of those now matches a fresh pull from the live server, the social card lists all eleven, and the module headers inside the connector describe the real catalog including which tools spend generation quota. A test now pins the total, so the next tool to land fails the suite instead of quietly re-opening the same drift. The standalone viewer also stopped crediting the AR launch endpoint with a renderer it no longer loads. Two smaller corrections rode along: the pending-generation example now shows the field that tells a client whether the model coming back is a bare mesh or a finished rig, and the three places the platform pins the 3D viewer library are now explained in one comment, so nobody has to guess why an embed and a standalone page load different builds.",
+			"link": "/docs/mcp-studio",
+			"tags": [
+				"docs",
+				"fix"
 			]
 		},
 		{

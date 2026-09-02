@@ -31,6 +31,14 @@
 			<description>Check the certificate of authenticity that ships with every three.ws physical print. Scan the code on the box or type the certificate number to see the original 3D model spinning, its edition number, the SHA-256 of the exact bytes that went to the printer, and the Solana transaction attesting both. Each certificate lives at /cert/&lt;id&gt;.</description>
 		</item>
 		<item>
+			<title>A single page now shows every way an x402 payment can fail, before it stops the economy</title>
+			<link>https://three.ws/docs/x402-endpoints</link>
+			<guid isPermaLink="false">2026-09-02:A single page now shows every way an x402 payment can fail, before it stops the economy</guid>
+			<pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The platform already recorded every rejected, failed and replayed payment, but nothing displayed them, so the first sign of trouble was usually the economy halting. The new payment-outcomes board reads that record live: how many payments settled and how many failed, how many were refused as invalid before settling, how many were replayed copies of an earlier payment, the reasons behind each, and the balance of every wallet that funds a settlement against the floor it stops working at. That last panel matters most during an outage, because a starved fee wallet and a broken payment rail look identical from outside and need opposite fixes. Where a number could not actually be measured the board says so rather than showing a reassuring zero. Operator tooling, behind the same sign-in as the other internal boards.</description>
+		</item>
+		<item>
 			<title>Agent profiles start learning about the world again</title>
 			<link>https://three.ws/agents</link>
 			<guid isPermaLink="false">2026-09-02:Agent profiles start learning about the world again</guid>
@@ -45,6 +53,14 @@
 			<pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Two thirds of the agents in the directory had quietly stopped picking up new on-chain activity. The indexer resumes each agent from the last transaction it saw, and once the RPC provider answering the call no longer held that transaction, the whole read failed and the agent was stuck there permanently: its profile kept loading, it just never learned anything new again. The crawl now notices that its bookmark has gone stale, re-reads from the top and carries on, and the same recovery landed for the secondary chains, where one had been parked on pruned blocks since April. The 1,083 stuck agents have been unstuck. The status page also learned to score this: an index that is erroring rather than lagging used to look perfectly fresh, and a lagging secondary chain no longer reports a platform outage nobody is having.</description>
+		</item>
+		<item>
+			<title>Every 3D service we sell to other agents now publishes its parameters and a working example</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-02:Every 3D service we sell to other agents now publishes its parameters and a working example</guid>
+			<pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Agents that buy three.ws 3D generation on the OKX.AI marketplace could read what each service does but not how to call it: the listings named no parameters and carried no example request, so a buyer had to guess the argument names. Each listed service now publishes the full set: what it does, every parameter with its type and whether it is required, the request method and tool name, and a copy-pasteable curl command that hits the real endpoint. The parameter list and the example are generated from the same input schema the endpoint enforces, and a test checks each published example against that schema, so an example that the endpoint would reject cannot ship, and renaming an argument updates the listing with it.</description>
 		</item>
 		<item>
 			<title>Every paid endpoint now appears in the public API document</title>
@@ -93,6 +109,14 @@
 			<pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>three.ws is preparing to publish its image-to-3D inference server in NVIDIA's NGC catalog, so the licence that will cover those container images is now public. It states plainly what you get: Apache-2.0 source, no model weights inside the image (you bring your own, under the upstream licence), and a container that carries no analytics or telemetry and sends nothing back to us. It sits alongside the other policies on the legal page.</description>
+		</item>
+		<item>
+			<title>The 3D Studio connector for ChatGPT is documented as the eleven tools it actually serves</title>
+			<link>https://three.ws/docs/mcp-studio</link>
+			<guid isPermaLink="false">2026-09-02:The 3D Studio connector for ChatGPT is documented as the eleven tools it actually serves</guid>
+			<pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>The free 3D Studio connector grew to eleven tools when look_at_model landed alongside check_job, but a lot of the writing about it had not caught up: the connector page, the press kit, the partner page, the blog summary, the announcement copy, the press release and the store-submission package still said nine or ten, and the social card enumerated only nine tool names. Every one of those now matches a fresh pull from the live server, the social card lists all eleven, and the module headers inside the connector describe the real catalog including which tools spend generation quota. A test now pins the total, so the next tool to land fails the suite instead of quietly re-opening the same drift. The standalone viewer also stopped crediting the AR launch endpoint with a renderer it no longer loads. Two smaller corrections rode along: the pending-generation example now shows the field that tells a client whether the model coming back is a bare mesh or a finished rig, and the three places the platform pins the 3D viewer library are now explained in one comment, so nobody has to guess why an embed and a standalone page load different builds.</description>
 		</item>
 		<item>
 			<title>The treasury's self-heal plan now only promises SOL it can actually move</title>
