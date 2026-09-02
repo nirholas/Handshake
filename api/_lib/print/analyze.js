@@ -21,8 +21,8 @@
 import * as THREE from 'three';
 import { MeshBVH, ExtendedTriangle } from 'three-mesh-bvh';
 import { boundsOf, weldPositions } from './mesh-io.js';
-import { edgeCensus, shells, signedVolume, surfaceArea } from './topology.js';
-import { toManifold, isNotManifoldError } from './manifold.js';
+import { edgeTopology, connectedShells, signedVolume, surfaceArea } from './topology.js';
+import { toSolid } from './manifold-kernel.js';
 
 export const REPORT_VERSION = 1;
 
@@ -269,8 +269,15 @@ export async function analyzeMesh(mesh, opts = {}) {
 		throw new Error('mesh has no finite bounds');
 	}
 
-	const census = edgeCensus(welded.indices);
-	const shellInfo = shells(welded.indices, welded.positions.length / 3);
+	const topology = edgeTopology(welded.indices);
+	const shellList = connectedShells(welded.indices, topology.edges);
+	const census = {
+		openEdges: topology.openEdges,
+		nonManifoldEdges: topology.nonManifoldEdges,
+		edgeCount: topology.edgeCount,
+		degenerateTriangles: 0,
+	};
+	const shellInfo = { count: shellList.length };
 	const triangleCount = welded.indices.length / 3;
 
 	// The manifold kernel is the arbiter of "is this a solid". When it accepts
@@ -280,15 +287,14 @@ export async function analyzeMesh(mesh, opts = {}) {
 	let volumeM3 = null;
 	let volumeSource = 'signed_sum';
 	let genus = null;
-	try {
-		const solid = await toManifold(welded.positions, welded.indices);
+	const solid = await toSolid(welded.positions, welded.indices);
+	if (solid) {
 		manifold = true;
 		volumeM3 = Math.abs(solid.volume());
 		volumeSource = 'manifold';
 		genus = solid.genus();
 		solid.delete?.();
-	} catch (err) {
-		if (!isNotManifoldError(err)) throw err;
+	} else {
 		volumeM3 = Math.abs(signedVolume(welded.positions, welded.indices));
 	}
 
