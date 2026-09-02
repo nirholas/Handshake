@@ -152,10 +152,21 @@ async function fetchCommunity() {
 	return out.slice(0, COMMUNITY_MAX).map(normalizeCommunityClip);
 }
 
-async function fetchFullLibrary() {
-	// Page through the catalog with the endpoint's opt-in ?limit/?offset so each
-	// response is bounded and individually CDN-cacheable. The endpoint returns
-	// `next_offset: null` on the last page; the page ceiling is a runaway guard.
+/**
+ * Page through the full CDN catalog with the endpoint's opt-in ?limit/?offset so
+ * each response is bounded and individually CDN-cacheable. `next_offset: null`
+ * marks the last page; the page ceiling is a runaway guard.
+ *
+ * Each page is handed to `onPage` as soon as it lands rather than being held
+ * back until the whole catalog is in hand. The grid used to wait for every page
+ * before painting a single card, so time-to-first-card was the size of the
+ * entire library: 1.1 MB at 2,874 clips, and growing with every seeding batch.
+ * Streaming makes first paint cost one page no matter how large the catalog
+ * gets, which is the whole reason the endpoint pages at all.
+ *
+ * @param {(clips: object[]) => void} [onPage]
+ */
+async function fetchFullLibrary(onPage) {
 	const out = [];
 	let offset = 0;
 	for (let i = 0; i < LIBRARY_MAX_PAGES; i++) {
@@ -165,11 +176,13 @@ async function fetchFullLibrary() {
 		if (!res.ok) throw new Error(`HTTP ${res.status}`);
 		const data = await res.json();
 		const clips = Array.isArray(data.clips) ? data.clips : [];
-		out.push(...clips);
+		const normalized = clips.map(normalizeFullLibraryClip);
+		out.push(...normalized);
+		if (onPage && normalized.length) onPage(normalized);
 		if (data.next_offset == null || clips.length === 0) break;
 		offset = data.next_offset;
 	}
-	return out.map(normalizeFullLibraryClip);
+	return out;
 }
 
 function normalizeLibraryClip(clip) {
@@ -227,20 +240,45 @@ function normalizeCommunityClip(clip) {
 
 async function loadAll() {
 	showState('loading');
-	const [libRes, comRes, fullRes] = await Promise.allSettled([
-		fetchLibrary(),
-		fetchCommunity(),
-		fetchFullLibrary(),
-	]);
-
-	const results = [libRes, comRes, fullRes];
+	// The curated manifest and the community feed are both small and bounded, so
+	// they are awaited together. The full CDN catalog is the unbounded one and is
+	// streamed in behind them: the first page paints, the rest merge in as they
+	// land. A user is looking at cards after one page instead of after the whole
+	// library, which is what keeps first paint flat as seeding grows the catalog.
+	const [libRes, comRes] = await Promise.allSettled([fetchLibrary(), fetchCommunity()]);
 	const library = libRes.status === 'fulfilled' ? libRes.value : [];
 	const community = comRes.status === 'fulfilled' ? comRes.value : [];
-	const full = fullRes.status === 'fulfilled' ? fullRes.value : [];
+
 	// Community clips lead (fresh, human-authored); the curated library follows;
 	// the full catalog trails, minus anything the curated set already surfaces.
 	const curatedNames = new Set(library.map((c) => c.id));
-	state.all = [...community, ...library, ...full.filter((c) => !curatedNames.has(c.id))];
+	state.all = [...community, ...library];
+
+	let painted = false;
+	const paint = () => {
+		state.loaded = true;
+		renderHeroStats();
+		renderChips();
+		applyFilters();
+		painted = true;
+	};
+
+	let fullFailed = false;
+	try {
+		await fetchFullLibrary((clips) => {
+			const fresh = clips.filter((c) => !curatedNames.has(c.id));
+			if (!fresh.length) return;
+			state.all = state.all.concat(fresh);
+			// The first page is what ends the loading state; later pages refresh a
+			// grid the user is already reading, so they only re-render what the
+			// counts and filters depend on.
+			paint();
+		});
+	} catch {
+		fullFailed = true;
+	}
+
+	const results = [libRes, comRes, { status: fullFailed ? 'rejected' : 'fulfilled' }];
 	state.loaded = true;
 
 	// Nothing to show AND at least one source errored is a failure, not an empty
@@ -252,9 +290,12 @@ async function loadAll() {
 		return;
 	}
 
-	renderHeroStats();
-	renderChips();
-	applyFilters();
+	if (!painted) paint();
+	else {
+		renderHeroStats();
+		renderChips();
+		applyFilters();
+	}
 
 	// ?clip= deep link → open the modal once data exists.
 	const wanted = new URLSearchParams(location.search).get('clip');
