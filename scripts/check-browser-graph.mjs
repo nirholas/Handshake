@@ -215,7 +215,9 @@ function configEntries() {
 	const block = /\n\t*input: \{\n([\s\S]*?)\n\t*\},\n/.exec(config);
 	if (!block) return [];
 	const out = [];
-	for (const m of block[1].matchAll(/resolve\(__dirname, '([^']+)'\)/g)) {
+	// Whitespace-tolerant: a formatter wrapping one long entry across lines must
+	// not quietly drop that page's module graph from the walk.
+	for (const m of block[1].matchAll(/resolve\(\s*__dirname,\s*'([^']+)'\s*,?\s*\)/g)) {
 		const abs = resolve(ROOT, m[1]);
 		if (existsSync(abs)) out.push([abs, `vite.config.js input: ${m[1]}`]);
 	}

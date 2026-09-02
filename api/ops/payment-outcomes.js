@@ -14,6 +14,13 @@
 //   sponsor      : fee-wallet SOL vs its floor plus measured burn (fee_lamports
 //                  over a stated window) and the runway in days that implies,
 //                  including the threshold the scheduled monitor alerts on.
+//   stranded_custody : custodial wallets whose secret no longer decrypts, with
+//                  the SOL behind them split platform vs customer. Capital the
+//                  treasury cannot reclaim and customers cannot withdraw is a
+//                  payment-outcome fact, and it was previously visible only to
+//                  whoever ran a CLI audit by hand. Snapshot-cached for six
+//                  hours (custody loss is a rotation event, not a live metric),
+//                  so polling this board never turns into fleet-wide RPC load.
 //
 // The panels are read independently and a failed one does not blank the others.
 // `ok` says whether all three rendered (never whether payments are healthy, which
@@ -30,6 +37,7 @@ import { sql } from '../_lib/db.js';
 import { authorizeOps } from '../_lib/ops-auth.js';
 import { gatherX402SettleHealth } from '../_lib/ops/x402-settle-health.js';
 import { checkRingWallets } from '../_lib/x402/wallet-balance-monitor.js';
+import { strandedCustodyPanel } from '../_lib/custodial-key-health.js';
 
 export const maxDuration = 30;
 
@@ -201,12 +209,13 @@ export default wrap(async (req, res) => {
 	const auth = await authorizeOps(req);
 	if (!auth.ok) return error(res, 401, 'unauthorized', 'ops secret or admin session required');
 
-	// The three boards are independent reads; one failing must not blank the
-	// others (an RPC outage is exactly when the settle panels matter most).
-	const [inbound, ringSettle, sponsor] = await Promise.allSettled([
+	// The panels are independent reads; one failing must not blank the others
+	// (an RPC outage is exactly when the settle panels matter most).
+	const [inbound, ringSettle, sponsor, stranded] = await Promise.allSettled([
 		inboundBoard(),
 		gatherX402SettleHealth(),
 		sponsorBoard(),
+		strandedCustodyPanel(),
 	]);
 	const unwrap = (r) => (r.status === 'fulfilled' ? r.value : { error: r.reason?.message || 'unavailable' });
 
@@ -214,11 +223,12 @@ export default wrap(async (req, res) => {
 		inbound: unwrap(inbound),
 		ring_settle: unwrap(ringSettle),
 		sponsor: unwrap(sponsor),
+		stranded_custody: unwrap(stranded),
 	};
 	// `ok` reports whether the BOARD rendered, not whether payments are healthy
 	// (that verdict is per panel). It used to be the literal `true`, so a read
-	// where all three panels threw still answered 200 ok:true with three error
-	// objects in the body: a monitoring surface that reports success while it is
+	// where every panel threw still answered 200 ok:true with a body full of
+	// error objects: a monitoring surface that reports success while it is
 	// blind. A failed panel now names itself in `degraded` and the response is
 	// 207 Multi-Status, the same convention /api/ops/health uses.
 	const degraded = Object.keys(panels).filter((k) => panels[k]?.error);

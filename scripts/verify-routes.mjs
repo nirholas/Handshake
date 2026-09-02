@@ -73,7 +73,11 @@ function walk(dir, base = dir, exts = null) {
 // Which pages/*.html actually reach dist: rollup inputs + dashboard-next glob + ibm copy.
 const viteSrc = readFileSync(resolve(ROOT, 'vite.config.js'), 'utf8');
 const viteInputs = new Set();
-for (const m of viteSrc.matchAll(/resolve\(__dirname,\s*['"]([^'"]+\.html)['"]\)/g)) viteInputs.add(m[1]);
+// Whitespace-tolerant on purpose: a formatter wrapping one long entry across
+// lines used to drop it from this set, which reads downstream as a real 404 for
+// a page the build actually emits (/events/build-3d-agents-live, 2026-09-02).
+for (const m of viteSrc.matchAll(/resolve\(\s*__dirname,\s*['"]([^'"]+\.html)['"]\s*,?\s*\)/g))
+	viteInputs.add(m[1]);
 
 const served = new Set(); // dist-relative file paths that will exist on disk
 for (const f of walk(resolve(ROOT, 'pages'), resolve(ROOT, 'pages'), ['.html'])) {

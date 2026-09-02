@@ -65,3 +65,50 @@ describe('link audit coverage', () => {
 		expect(pkg.scripts.gate).toContain('audit:links');
 	});
 });
+
+// The audit's own classification rules. Each one below was a false positive the
+// audit reported against correct code, and a false positive in a gate is not
+// harmless: it trains everyone to read a red audit as noise, which is how a real
+// dead link ships behind three fake ones. These pin the rules narrowly, so
+// widening one into a blanket ignore fails here.
+describe('link audit classification', () => {
+	function source() {
+		return readFileSync(SCRIPT, 'utf8');
+	}
+
+	it('exempts only build outputs that something actually writes', () => {
+		const m = source().match(/const GENERATED_TARGETS = new Set\(\[([^\]]*)\]\)/);
+		expect(m, 'audit-links.mjs must declare GENERATED_TARGETS').not.toBeNull();
+		const targets = (m[1].match(/'([^']+)'/g) || []).map((t) => t.slice(1, -1));
+		expect(targets).toContain('/build-info.json');
+		// The exemption is a claim that the build emits the file. Hold it to the
+		// script that makes the claim true, so a target cannot linger here after
+		// whatever produced it is gone.
+		const writer = readFileSync(join(ROOT, 'scripts', 'write-build-info.mjs'), 'utf8');
+		expect(writer).toContain('build-info.json');
+	});
+
+	it('masks comments in the fetch scanner, like the two scanners beside it', () => {
+		// A module header warning against a call pattern quotes that pattern. The
+		// fetch scanner was the only extractor that never consulted the mask, so
+		// src/api.js was reported as fetching the path its own comment says not to.
+		const body = source().match(/fetchRe\.lastIndex = 0;[\s\S]*?\n\t\}/);
+		expect(body, 'audit-links.mjs must scan fetch() calls').not.toBeNull();
+		expect(body[0]).toContain('inComment(m.index)');
+	});
+
+	it('treats an empty object-literal href as absence, and a DOM assignment as a stub', () => {
+		const m = source().match(/const jsNavRe = (\/.*\/[gimsuy]*);/);
+		expect(m, 'audit-links.mjs must declare jsNavRe').not.toBeNull();
+		const prefixOf = (code) => {
+			const re = new RegExp(m[1].slice(1, m[1].lastIndexOf('/')), 'gi');
+			return re.exec(code)?.[1] ?? null;
+		};
+		// The exemption keys off the prefix the regex captures, anchored at the
+		// end, which is the whole reason it cannot swallow a DOM assignment.
+		expect(source()).toMatch(/target === '' && \/href\\s\*:\$\/i\.test\(m\[1\]\)/);
+		expect(prefixOf("{ href: '' }")).toMatch(/href\s*:$/);
+		expect(prefixOf("el.href = ''")).not.toMatch(/href\s*:$/);
+		expect(prefixOf("location.assign('')")).not.toMatch(/href\s*:$/);
+	});
+});

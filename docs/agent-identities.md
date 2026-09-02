@@ -4,7 +4,7 @@ Every AI agent deserves a face. The Agent Identity Studio takes an agent's name 
 
 Page: [/agent-identities](https://three.ws/agent-identities) (the showcase) · Endpoint: `https://three.ws/api/okx/3d/identity-studio`
 
-> The buyer-facing contract for this service (price, the payment challenge and replay flow, the payment guarantees, the rails it settles on) lives in [OKX.AI Marketplace Services](./okx-marketplace.md#agent-identity-studio-150-per-identity). This document is the other half: what the pipeline actually does between the brief and the deliverables, what the showcase page renders, and the shape of the job API. Read the marketplace doc first if you are buying; read this one if you are building on it or changing it.
+> The buyer-facing contract for this service (price, the payment challenge and replay flow, the payment guarantees, the rails it settles on) lives in [OKX.AI Marketplace Services](./okx-marketplace.md#back-burner). This document is the other half: what the pipeline actually does between the brief and the deliverables, what the showcase page renders, and the shape of the job API. Read the marketplace doc first if you are buying; read this one if you are building on it or changing it.
 
 ## Why it exists
 

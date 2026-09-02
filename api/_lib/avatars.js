@@ -7,6 +7,55 @@ import { publicUrl, thumbnailUrl, presignGet, deleteObject } from './r2.js';
 import { defaultStorageMode } from './storage-mode.js';
 import { isUuid } from './validate.js';
 
+/**
+ * Build the row-selection half of listAvatars.
+ *
+ * With `includePublic` the caller sees their own avatars AND the public
+ * catalog, which used to be one `(owner_id = $1 or visibility = 'public')`
+ * predicate. That OR is unindexable: Postgres fell back to a parallel seq scan
+ * plus a full sort of every row it kept, so the query cost grew with the
+ * catalog instead of with the page. Measured on the live table at 58k avatars,
+ * a 50-row page read 7,605 heap pages and took 48.7 ms, and it got slower every
+ * day the seed cron ran.
+ *
+ * Each half is perfectly indexed on its own (`avatars_owner_idx`, and the
+ * partial `avatars_public_idx` on (visibility, created_at desc)), so the
+ * listing is a UNION ALL of two already-ordered, already-limited branches that
+ * Postgres merges with a Merge Append. Same rows, same order, and the public
+ * branch excludes the caller's own rows with `is distinct from` so a
+ * self-owned public avatar appears exactly once while a NULL owner_id (which a
+ * plain `<>` would silently drop) still shows. Same page on the same table:
+ * 0.17 ms and 2 page reads.
+ *
+ * Only ids and the sort key pass through the union; the wide column list and
+ * the agent-identity lateral are applied to the resulting page, so neither
+ * branch carries the join.
+ *
+ * @param {{ includePublic: boolean, visibility?: string, cursor?: string,
+ *           limit: number, params: unknown[] }} opts  `params` starts as
+ *        [userId] and is appended to in place.
+ * @returns {string} a subquery yielding (id, created_at), unordered across the
+ *          union (the caller applies the final order + limit).
+ */
+function ownerVisibleRowsSql({ includePublic, visibility, cursor, limit, params }) {
+	const shared = ['deleted_at is null'];
+	if (visibility) {
+		params.push(visibility);
+		shared.push(`visibility = $${params.length}`);
+	}
+	if (cursor) {
+		params.push(new Date(cursor));
+		shared.push(`created_at < $${params.length}`);
+	}
+	params.push(limit);
+	const lim = `$${params.length}`;
+	const where = shared.join(' and ');
+	const own = `(select id, created_at from avatars where owner_id = $1 and ${where} order by created_at desc limit ${lim})`;
+	if (!includePublic) return own;
+	const pub = `(select id, created_at from avatars where visibility = 'public' and owner_id is distinct from $1 and ${where} order by created_at desc limit ${lim})`;
+	return `${own} union all ${pub}`;
+}
+
 export async function listAvatars({
 	userId,
 	limit = 50,
@@ -16,17 +65,13 @@ export async function listAvatars({
 }) {
 	limit = Math.min(Math.max(limit, 1), 200);
 	const params = [userId];
-	const conds = ['a.deleted_at is null'];
-	conds.push(includePublic ? `(a.owner_id = $1 or a.visibility = 'public')` : `a.owner_id = $1`);
-	if (visibility) {
-		params.push(visibility);
-		conds.push(`a.visibility = $${params.length}`);
-	}
-	if (cursor) {
-		params.push(new Date(cursor));
-		conds.push(`a.created_at < $${params.length}`);
-	}
-	params.push(limit + 1);
+	const rowsSql = ownerVisibleRowsSql({
+		includePublic,
+		visibility,
+		cursor,
+		limit: limit + 1,
+		params,
+	});
 	// usdz_key / halfbody_key are intentionally NOT selected here yet — the
 	// 20260515 migration adds them but is rolled out separately. The decorate()
 	// helper falls back to null if the columns are missing from the row, so
@@ -42,7 +87,8 @@ export async function listAvatars({
 		        ai.solana_address as agent_solana_address,
 		        ai.solana_vanity_prefix as agent_solana_vanity_prefix,
 		        ai.solana_vanity_suffix as agent_solana_vanity_suffix
-		 from avatars a
+		 from (${rowsSql}) v
+		 join avatars a on a.id = v.id
 		 left join lateral (
 		   select id, wallet_address,
 		          meta->>'solana_address' as solana_address,
@@ -52,8 +98,7 @@ export async function listAvatars({
 		   where avatar_id = a.id and user_id = $1 and deleted_at is null
 		   order by created_at asc limit 1
 		 ) ai on true
-		 where ${conds.join(' and ')}
-		 order by a.created_at desc limit $${params.length}`,
+		 order by v.created_at desc limit $${params.length}`,
 		params,
 	);
 	const hasMore = rows.length > limit;

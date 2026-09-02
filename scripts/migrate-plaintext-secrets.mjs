@@ -162,6 +162,12 @@ export function classify(name) {
 	if (publicSegment) return { secret: false, reason: `public identifier (${publicSegment})` };
 	const secretSegment = segments.find((s) => SECRET_SEGMENTS.has(s));
 	if (secretSegment) return { secret: true, reason: `credential-bearing name (${secretSegment})` };
+	// A provider URL routinely carries its key in the query string (Helius, Alchemy,
+	// QuickNode all do). The name cannot say whether this one does, so it is
+	// surfaced for a human call instead of being silently filed as public config.
+	if (/_(URL|URI|ENDPOINT|DSN)$/.test(name)) {
+		return { secret: false, review: true, reason: 'URL: may embed a key in its query string' };
+	}
 	return { secret: false, reason: 'no credential marker in the name' };
 }
 
@@ -224,6 +230,7 @@ function partition(env) {
 	const alreadySecret = [];
 	const credentials = [];
 	const config = [];
+	const review = [];
 	for (const entry of env) {
 		const name = entry.name;
 		if (ONLY.length && !ONLY.includes(name)) continue;
@@ -234,7 +241,7 @@ function partition(env) {
 		const value = entry.value ?? '';
 		const verdict = classify(name);
 		if (!verdict.secret) {
-			config.push({ name, reason: verdict.reason });
+			(verdict.review ? review : config).push({ name, reason: verdict.reason });
 			continue;
 		}
 		if (!value) {
@@ -243,7 +250,7 @@ function partition(env) {
 		}
 		credentials.push({ name, value, reason: verdict.reason, secretName: NAME_MAP.get(name) || defaultSecretName(name) });
 	}
-	return { alreadySecret, credentials, config };
+	return { alreadySecret, credentials, config, review };
 }
 
 async function secretExists(name) {
@@ -357,7 +364,7 @@ async function main() {
 	if (!before.serviceAccount) {
 		fail(`${SERVICE} has no explicit runtime service account; refusing to guess who to grant access to`);
 	}
-	const { alreadySecret, credentials, config } = partition(before.env);
+	const { alreadySecret, credentials, config, review } = partition(before.env);
 
 	console.log(`\nService: ${SERVICE} (${REGION}, ${PROJECT})`);
 	console.log(`Runtime service account: ${before.serviceAccount}`);
@@ -369,6 +376,11 @@ async function main() {
 
 	console.log(`\nPlaintext, left as config (${config.length}):`);
 	for (const e of config) console.log(`  ${e.name}  (${e.reason})`);
+
+	if (review.length) {
+		console.log(`\nPlaintext, needs a human call (${review.length}):`);
+		for (const e of review) console.log(`  ${e.name}  (${e.reason}; --include ${e.name} to migrate it)`);
+	}
 
 	console.log(`\nPlaintext credentials to migrate (${credentials.length}):`);
 	for (const e of credentials) console.log(`  ${e.name}  ->  ${e.secretName}  (${e.reason})`);

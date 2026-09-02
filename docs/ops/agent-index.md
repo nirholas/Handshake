@@ -9,8 +9,11 @@ it, and both are crons:
 | EVM (secondary) | `/api/cron/erc8004-crawl` | 15 min | `erc8004_crawl_cursor` | `erc8004CrawlChain` in `api/cron/[name].js` |
 
 The Solana cron does two things in one tick: the attestation crawl first, then
-`solanaEventSweep()`, which is the half that fills `agent_event_cursor`. Its
-batch is `SOLANA_SWEEP_BATCH` and its wall-clock budget is `SOL_EVENT_BUDGET_MS`.
+`sweepAgentEvents()`, which is the half that fills `agent_event_cursor`. Its
+batch, its worker pool and its wall-clock budget are `SOLANA_SWEEP_BATCH`,
+`SOLANA_SWEEP_CONCURRENCY` and `SOLANA_SWEEP_BUDGET_MS`, all three exported from
+`api/_lib/solana-agent-events.js` beside the crawl they bound, because the
+freshness sensor derives the index's cycle time from those same constants.
 
 The freshness sensor is `api/_lib/ops/index-lag.js`. It reports on
 `/api/healthz` and `/status` as `agent_index`, and reads only the cursor tables:
@@ -30,7 +33,10 @@ same bug on both chains, and it is silent by construction:
   retention, so a cursor written by one lane is regularly unreadable by the next.
 - EVM resumes at `last_block + 1`. A provider that has pruned that height answers
   `History has been pruned for this block`, and no smaller window fixes it,
-  because the data is gone rather than the request being too wide.
+  because the data is gone rather than the request being too wide. A keyless node
+  that serves recent blocks and answers older ones with
+  `Archive requests require a personal token` has drawn the same wall behind a
+  paywall, so `isPrunedHistoryRejection()` treats both as retention.
 
 In both cases the cursor is only written on the success path, so the next tick
 presents the same dead value and gets the same error, forever. Nothing pages:
@@ -41,6 +47,26 @@ Both legs now recover on their own:
 `api/_lib/solana/cursor-recovery.js` drops `until` and re-scans from the head,
 and `isPrunedHistoryRejection()` skips the EVM cursor forward to the head. Both
 are safe to replay, because every row lands through `on conflict do nothing`.
+
+Two things had to change before the EVM half could actually fire. `erc8004RpcCall`
+now reads the JSON-RPC body **before** the HTTP status, because the providers that
+gate archive ranges answer with a real error message under a 403 and throwing on
+the status alone reduced it to `HTTP 403 from <host>`, which no predicate can
+classify. And it now surfaces a retention diagnosis from **any** lane rather than
+whichever error the LAST lane happened to return: on 2026-09-02 one chain's first
+lane said plainly that the blocks were pruned while its final lane answered a
+generic `limit exceeded`, the crawl saw only the second, and the chain sat stale
+for eight days.
+
+Skipping the wall closes the backlog, which is exactly why the skipped span is
+banked on the cursor rather than only reported in the cron response: the moment
+the cursor reaches the head the chain reports zero blocks behind and reads as
+healthy. `erc8004_crawl_cursor.history_gap_blocks` accumulates every block the
+crawl gave up on, `history_gap_to` names where the newest skip resumed, and
+`history_gap_at` when. The sensor reports the total (`evm.historyGapChains`,
+`evm.historyGapBlocks`) and deliberately never scores it: the gap is history that
+is already lost, and scoring it would pin the subsystem red over something no
+tick can fix. Only an archive provider for that chain can backfill it.
 
 ## Diagnose in three reads
 
@@ -73,10 +99,10 @@ gcloud logging read 'resource.type="cloud_run_revision" resource.labels.service_
 | `solana rpc provider error -16401 @ <host>` | The lane gates this method behind a paid tier. | Per-method capability routing in `api/_lib/solana/connection.js`. Add the method to that lane's blocked set. |
 | `fetch failed (…) @ <host>` | Transport fault on one lane. | Transient. Persistent means the lane is dead: drop it. |
 | `agent_ref is not a Solana account key` | A directory row whose ref is not an account. | Never crawlable. It is recorded once rather than retried every tick. |
-| EVM `has been pruned` | The provider dropped the blocks the cursor points at. | Self-healing: the crawl resumes at the head and reports the skipped span as `prunedSkip`. That span is a permanent gap; only an archive node can backfill it. |
+| EVM `has been pruned` / `Archive requests require a personal token` | The provider will not serve the blocks the cursor points at, whether it dropped them or paywalled them. | Self-healing: the crawl resumes at the head, reports the skipped span as `prunedSkip`, and banks it in `history_gap_blocks`. That span is a permanent gap; only an archive node can backfill it. |
 | EVM `block range` / `response size` / `query returned more than` | The window was too wide. | Self-healing: `backoffChunkSize()` halves it in place and the width is persisted in `chunk_size`. |
 | EVM `limit exceeded` | A plan or compute limit, **not** a range ceiling. | Shrinking does not help. Deliberately excluded from `isRangeRejection`. |
-| EVM `HTTP 403 from <host>` | The last-resort keyless lane refused us. | Not recoverable in code. The chain needs a lane that answers from a datacenter IP; see the `rpcUrls` note in `api/_lib/erc8004-chains.js`. |
+| EVM `HTTP 403 from <host>` | A lane refused us with no readable JSON-RPC body. | The body is read first now, so a bare status here means the lane returned nothing to classify. The chain needs a lane that answers from a datacenter IP; see the `rpcUrls` note in `api/_lib/erc8004-chains.js`. |
 
 ## Recovery: drain a wedged backlog now
 
@@ -101,6 +127,7 @@ that is months behind changes nothing they can see.
 | Solana cursors carrying an error | `SOLANA_ERROR_RATE_DEGRADED` | `SOLANA_ERROR_RATE_DOWN` |
 | EVM worst cursor age | `EVM_LAG_DEGRADED_MIN` | `EVM_LAG_DOWN_MIN` |
 | EVM worst backlog | `EVM_BLOCKS_BEHIND_DEGRADED` | `EVM_BLOCKS_BEHIND_DOWN` |
+| EVM permanent history gap | reported only | reported only |
 
 Read the numbers from `index-lag.js`; they are exported so nothing has to quote
 them. Two rules shape the verdict:
@@ -120,10 +147,35 @@ rather than against a live database.
 ## Sweep cycle
 
 A queue drained oldest-first sits at half its cycle time, so the median lag is
-`sweepCycleMin(agents) / 2`. `sweepCycleMin()` derives the cycle from
-`SOLANA_SWEEP_BATCH` and `SOLANA_SWEEP_PERIOD_MIN`, which means a directory that
-outgrows its batch shows up as a number on the status surface instead of as an
-unexplained median. Raising the batch costs one `getSignaturesForAddress` per
-agent per tick; the real ceiling is `SOL_EVENT_BUDGET_MS`, not the constant, and
-the sweep reports `truncated: true` when it runs out of budget mid-batch. Check
+`sweepCycleMin(agents) / 2`, and the OLDEST agent waits a whole cycle. Both
+numbers matter: a cycle longer than `SOLANA_LAG_DEGRADED_MIN` means part of the
+directory is always stale by the sensor's own definition, even when the median
+looks fine. `sweepCycleMin()` derives the cycle from `SOLANA_SWEEP_BATCH` and
+`SOLANA_SWEEP_PERIOD_MIN`, so a directory that outgrows its batch shows up as a
+number on the status surface instead of as an unexplained median.
+
+The batch, not the budget, was the cap. Measured against the live lane router on
+2026-09-02, one agent costs about 370 ms end to end, so a 120-second budget
+drains roughly 320 agents serially and far more through the worker pool, while
+the sweep was taking 120 per tick and leaving three quarters of its tick idle.
+The 1,604-agent directory therefore cycled in 140 minutes against a 90-minute
+threshold. Re-sizing it is a two-constant decision:
+
+```
+sweepCycleMin = ceil(agents / SOLANA_SWEEP_BATCH) * SOLANA_SWEEP_PERIOD_MIN
+```
+
+Keep that at or under `SOLANA_LAG_DEGRADED_MIN` with headroom for the directory
+to grow, and keep `SOLANA_SWEEP_BATCH * 0.37s / SOLANA_SWEEP_CONCURRENCY` well
+inside `SOLANA_SWEEP_BUDGET_MS`. `tests/agent-index.test.js` asserts both the
+cycle and the concurrency ceiling, so an over-large batch fails the suite rather
+than quietly truncating in production.
+
+Concurrency is deliberately small. Every agent is one `getSignaturesForAddress`
+plus its transaction reads, so the sweep spends nearly all its wall clock waiting
+on the RPC and a small pool converts that into throughput; a wide fan-out earns
+429s from the shared lanes faster than it earns signatures, and those show up
+immediately in the sensor's error rate. The sweep reports `truncated: true` when
+the budget runs out mid-batch, which is the signal that the batch has finally
+outgrown the budget and the sensor's cycle number has become optimistic. Check
 that flag before raising the batch again.

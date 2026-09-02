@@ -104,6 +104,9 @@ export const USER_EVENT_TYPES = new Set([
 	'asset_payment_mismatch',
 	'skill_payment_mismatch',
 	'referral_earned',
+	// Materialize: one type for the whole print lifecycle, carrying the status
+	// and, once the box ships, its certificate link.
+	'print_update',
 ]);
 
 function redis() { return getRedis(); }

@@ -7,6 +7,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import openapiHandler from '../api/openapi-json.js';
 import { providerCatalog } from '../api/v1/_providers.js';
+import { PAID_SERVICES } from '../api/_lib/service-catalog/services/index.js';
 
 function mockRes() {
 	return {
@@ -206,5 +207,114 @@ describe('GET /openapi.json — aggregator coverage', () => {
 		// document into a client. The repo LICENSE is proprietary.
 		expect(doc.info.license?.name).toBeTruthy();
 		expect(doc.info.license?.url || doc.info.license?.identifier).toBeTruthy();
+	});
+});
+
+describe('GET /openapi.json: paid service-catalog coverage', () => {
+	let doc;
+
+	beforeAll(async () => {
+		const res = mockRes();
+		await openapiHandler(mockReq(), res);
+		doc = JSON.parse(res._body);
+	});
+
+	// The drift this closes: /openapi.json is what x402scan reads when it
+	// registers an origin, and what AgentCash's validator reads to find payable
+	// operations. Its /api/x402/* operations were hand-authored, so 24 of the
+	// catalog's 75 live paid services had an entry and the rest were invisible
+	// to both directories while answering a perfectly valid 402 in production.
+	// Projecting them from the catalog fixed it; this keeps it fixed.
+	it('covers every live paid service in the catalog', () => {
+		const cdp = Boolean(process.env.CDP_API_KEY_ID && process.env.CDP_API_KEY_SECRET);
+		let covered = 0;
+		for (const service of PAID_SERVICES) {
+			if (service.free || service.status !== 'live') continue;
+			// Unpayable without CDP credentials, so deliberately unadvertised.
+			if (service.acceptsBuilder === 'permit2-only' && !cdp) {
+				expect(doc.paths[service.path]).toBeUndefined();
+				continue;
+			}
+			const pathItem = doc.paths[service.path];
+			expect(pathItem, `missing OpenAPI path for ${service.path}`).toBeTruthy();
+
+			const operation = pathItem[service.method.toLowerCase()];
+			expect(
+				operation,
+				`missing ${service.method} operation for ${service.path}`,
+			).toBeTruthy();
+			expect(operation.responses?.['402'], `${service.path} documents no 402`).toBeTruthy();
+			// Both halves are required together: AgentCash's
+			// StructuredPaymentInfoSchema silently drops a price with no sibling
+			// protocols and reports the operation as unpriced.
+			expect(operation['x-payment-info']?.price, `${service.path} price`).toBeTruthy();
+			expect(operation['x-payment-info']?.protocols, `${service.path} protocols`).toBeTruthy();
+			covered += 1;
+		}
+		// Sanity: the catalog is not empty, which would make this vacuous.
+		expect(covered).toBeGreaterThan(50);
+	});
+
+	it('prices every projected operation from the catalog, never a hand-copied number', () => {
+		// Only fixed-price entries are compared to the catalog. Six hand-authored
+		// operations quote a difficulty- or size-tiered price instead
+		// (`mode: 'dynamic'` with min/max, e.g. vanity at $0.01 for one character
+		// and $0.25 for three); the live 402 quotes the exact figure per request,
+		// and the catalog's single priceAtomics is the floor, not the price. The
+		// projection never overwrites a hand-authored operation, so those keep
+		// their range and are asserted as a range.
+		for (const service of PAID_SERVICES) {
+			if (service.free || service.status !== 'live') continue;
+			const operation = doc.paths[service.path]?.[service.method.toLowerCase()];
+			if (!operation) continue;
+			const price = operation['x-payment-info']?.price;
+			expect(price, `${service.path} declares no price`).toBeTruthy();
+			if (price.mode === 'dynamic') {
+				expect(Number(price.min), `${service.path} dynamic min`).toBeGreaterThan(0);
+				expect(Number(price.max), `${service.path} dynamic max`).toBeGreaterThanOrEqual(
+					Number(price.min),
+				);
+				continue;
+			}
+			expect(
+				Number(price.amount),
+				`${service.path} price drift (declared ${price.amount})`,
+			).toBeCloseTo(Number(service.priceAtomics) / 1e6, 6);
+		}
+	});
+
+	it('keeps every hand-authored operation exactly as written', () => {
+		// The projection is spread before the hand-authored paths, so a route
+		// with a richer hand-written entry keeps it. agent-reputation is one:
+		// its typed uuid query parameter would be a plain string if the
+		// projection had won.
+		const handAuthored = doc.paths['/api/x402/agent-reputation']?.get;
+		expect(handAuthored.operationId).toBe('x402_agent_reputation');
+		const agentId = handAuthored.parameters.find((p) => p.name === 'agent_id');
+		expect(agentId.schema.format).toBe('uuid');
+	});
+
+	it('projects GET inputs as query parameters and POST inputs as a request body', () => {
+		const getOp = doc.paths['/api/x402/market-coin']?.get;
+		expect(Array.isArray(getOp.parameters)).toBe(true);
+		expect(getOp.parameters.some((p) => p.name === 'id')).toBe(true);
+		expect(getOp.requestBody).toBeUndefined();
+
+		const postOp = doc.paths['/api/x402/pipeline-rig']?.post;
+		expect(postOp.requestBody?.content?.['application/json']?.schema?.properties?.glb_url).toBeTruthy();
+		expect(postOp.requestBody.required).toBe(true);
+		expect(postOp.parameters).toBeUndefined();
+	});
+
+	it('carries the JSON Schema required list onto the query parameters', () => {
+		// token-intel's inputSchema requires `mint`; a projection that dropped the
+		// required list would document every parameter as optional and agents
+		// would call it without one.
+		const parameters = doc.paths['/api/x402/token-intel'].get.parameters;
+		expect(parameters.find((p) => p.name === 'mint').required).toBe(true);
+		// market-coin requires nothing (id or contract, either one), so its
+		// parameters must not be forced.
+		const optional = doc.paths['/api/x402/market-coin'].get.parameters;
+		expect(optional.every((p) => p.required === false)).toBe(true);
 	});
 });

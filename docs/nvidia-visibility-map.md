@@ -183,6 +183,16 @@ Write it against [api/_lib/a2f-nvidia.js](../api/_lib/a2f-nvidia.js) and
 behind it, and follow the house rule the existing two follow: real numbers,
 real latencies, no marketing voice.
 
+**It is written: [nvidia-forum-browser-digital-human.md](./nvidia-forum-browser-digital-human.md)** (drafted
+2026-09-02). It covers the NVCF bidirectional stream, the 44.1 kHz to 16 kHz
+resampling contract and why playback must use the original audio, the derived
+blendshape path that lets a VRM or Oculus-viseme rig lip-sync from an ARKit-52
+track, the double-stacking and 30-to-60 fps interpolation bugs that only appear
+on real uploads, and the function-id rotation that took the lane down once.
+Latencies in it were measured against the live endpoint the day it was written,
+not estimated. It is owner-gated under the external-channel rule: paste and post
+when approved.
+
 ## Benefits we are entitled to and have never requested
 
 Straight from NVIDIA's [Inception program page](https://www.nvidia.com/en-us/startups/).

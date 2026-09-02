@@ -121,21 +121,34 @@ function cacheKey(claim, strictness, imageUrl) {
 // ── Verdict logic ─────────────────────────────────────────────────────────────
 
 // Verdict = direction of the stance-BEARING evidence, gated by how much of the
-// evidence engaged the claim at all. The previous version divided by TOTAL
+// evidence engaged the claim at all. The pre-2026-08 version divided by TOTAL
 // weight (neutral sources included), so three tangential results could drown
 // two clear confirmations below the 0.65 bar, and an all-neutral result set
-// still returned "mixed" — which is how the 2026-07-08 benchmark collapsed to
+// still returned "mixed", which is how the 2026-07-08 benchmark collapsed to
 // 20% (every class predicted "mixed"). Rules now:
-//   • <2 sources, zero weight, or zero stance-bearing weight → insufficient:
+//   • <2 sources, zero weight, or zero stance-bearing weight -> insufficient:
 //     evidence that never engages the claim is absence of evidence, not
 //     disagreement.
 //   • A single stance-bearing source lost in otherwise-silent evidence
-//     (coverage <30%) is also insufficient — one loosely-matched page must not
+//     (coverage <30%) is also insufficient: one loosely-matched page must not
 //     decide a verdict on its own.
-//   • Direction is judged over stance-bearing weight only: ≥70% one way →
-//     supported/contradicted; a real split → mixed.
+//   • Direction is judged over stance-bearing weight only: >=70% one way ->
+//     supported/contradicted; anything else -> mixed.
+//   • `partial` weight is stance-bearing but takes neither side. A source that
+//     reports the claim as true in one respect and wrong in another is not a
+//     confirmation, so it dilutes dominance and pushes the result toward mixed.
+//     This is the SECOND route to a mixed verdict and the one that matters:
+//     before the stance existed, `mixed` was reachable only when sources
+//     disagreed with EACH OTHER, which well-sourced evidence about a well-known
+//     half-truth ("a tomato is a vegetable", "Napoleon was short") never does.
+//     Every source reads the same nuance and the old vocabulary forced each of
+//     them to project it onto one side, so the 2026-08-10 benchmark scored the
+//     whole mixed class 0/10 with 7 of them landing on `contradicted`.
 //   • Confidence blends dominance with coverage, so a unanimous verdict from
-//     thin engagement scores lower than one from broad engagement.
+//     thin engagement scores lower than one from broad engagement. For `mixed`
+//     the dominance term is how strongly the evidence establishes mixedness
+//     itself (partial weight, plus opposed stances counted as the joint
+//     evidence of a split that they are), never how lopsided the split was.
 function computeVerdict(sources) {
 	if (sources.length < 2) {
 		return { verdict: 'insufficient', confidence: 0.2 };
@@ -143,6 +156,7 @@ function computeVerdict(sources) {
 
 	let weightedSupport = 0;
 	let weightedContra = 0;
+	let weightedPartial = 0;
 	let totalWeight = 0;
 	let stanceBearing = 0;
 
@@ -154,10 +168,13 @@ function computeVerdict(sources) {
 		} else if (s.stance === 'contradicts') {
 			weightedContra += s.weight;
 			stanceBearing++;
+		} else if (s.stance === 'partial') {
+			weightedPartial += s.weight;
+			stanceBearing++;
 		}
 	}
 
-	const stanceWeight = weightedSupport + weightedContra;
+	const stanceWeight = weightedSupport + weightedContra + weightedPartial;
 	if (totalWeight === 0 || stanceWeight === 0) {
 		return { verdict: 'insufficient', confidence: 0.3 };
 	}
@@ -169,6 +186,7 @@ function computeVerdict(sources) {
 
 	const supportRatio = weightedSupport / stanceWeight;
 	const contraRatio = weightedContra / stanceWeight;
+	const partialRatio = weightedPartial / stanceWeight;
 	const confidence = (dominance) =>
 		Math.round(Math.min(0.98, dominance * (0.6 + 0.4 * Math.min(1, coverage * 2))) * 100) / 100;
 
@@ -178,7 +196,12 @@ function computeVerdict(sources) {
 	if (contraRatio >= 0.7) {
 		return { verdict: 'contradicted', confidence: confidence(contraRatio) };
 	}
-	return { verdict: 'mixed', confidence: confidence(Math.max(supportRatio, contraRatio)) };
+	// Neither side owns the evidence. How strongly is that established? Weight
+	// that says "partly true" states it outright; a pair of opposed stances states
+	// it jointly, so the smaller side counts twice (its mirror on the other side
+	// is the other half of the same fact about the evidence).
+	const mixedness = Math.min(1, partialRatio + 2 * Math.min(supportRatio, contraRatio));
+	return { verdict: 'mixed', confidence: confidence(mixedness) };
 }
 
 // ── Core fact-check pipeline ───────────────────────────────────────────────────
@@ -516,7 +539,7 @@ const OUTPUT_SCHEMA = {
 					url: { type: 'string' },
 					title: { type: 'string' },
 					excerpt: { type: 'string' },
-					stance: { type: 'string', enum: ['supports', 'contradicts', 'neutral'] },
+					stance: { type: 'string', enum: ['supports', 'contradicts', 'partial', 'neutral'] },
 					weight: { type: 'number' },
 					retrievedAt: { type: 'string', format: 'date-time' },
 				},
@@ -538,7 +561,7 @@ const OUTPUT_SCHEMA = {
 				url: { type: 'string' },
 				description: { type: ['string', 'null'] },
 				visibleText: { type: ['string', 'null'] },
-				stance: { type: 'string', enum: ['supports', 'contradicts', 'neutral'] },
+				stance: { type: 'string', enum: ['supports', 'contradicts', 'partial', 'neutral'] },
 				reason: { type: ['string', 'null'] },
 				provider: { type: 'string' },
 			},
@@ -669,4 +692,8 @@ export default wrap(async function handler(req, res) {
 	}
 });
 
-export { parseFactCheckBody as _parseFactCheckBody, checkClaim as _checkClaim };
+export {
+	parseFactCheckBody as _parseFactCheckBody,
+	checkClaim as _checkClaim,
+	computeVerdict as _computeVerdict,
+};
