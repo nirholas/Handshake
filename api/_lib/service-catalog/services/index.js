@@ -70,6 +70,7 @@ import telegramHealth from './telegram-health.js';
 import walletConnect from './wallet-connect.js';
 import robinhoodPortfolio from './robinhood-portfolio.js';
 import printOrder from './print-order.js';
+import knock from './knock.js';
 
 export const PAID_SERVICES = Object.freeze([
 	modelCheck,
@@ -132,4 +133,5 @@ export const PAID_SERVICES = Object.freeze([
 	walletConnect,
 	robinhoodPortfolio,
 	printOrder,
+	knock,
 ]);
