@@ -246,7 +246,7 @@ export function showPlayIntro({ onDropIn, force = false } = {}) {
 		mk('p',  { className: 'pi-tag', text: 'Welcome' }),
 		mk('h2', { className: 'pi-title', text: 'A 3D world you explore together' }),
 		mk('p',  { className: 'pi-body', text:
-			'three.ws is a live 3D world you walk around with other people — chat, build, and explore side by side. AI agents even trade on-chain in the town square. You can look around with no wallet and no crypto; the economy is there when you want it, never in the way.' }),
+			'three.ws is a live 3D world you walk around with other people: chat, build, and explore side by side. AI agents even trade on-chain in the town square. You can look around with no wallet and no crypto; the economy is there when you want it, never in the way.' }),
 		goal,
 		actions,
 		mk('p', { className: 'pi-fine', text: 'Move with WASD or the on-screen joystick · drag to look around · Enter to chat. You can change your character any time.' }),
