@@ -102,12 +102,19 @@ try {
 	await sleep(8000);
 	console.log(at(), 'world up');
 
-	// The cold-open intro sits over the HUD on a first visit; dismiss it so the
-	// button is clickable and so the shot is of the world, not of a modal.
-	await page.evaluate(() => {
-		document.querySelector('.po-close, .po-skip')?.click();
-	});
-	await sleep(1200);
+	// The cold-open intro sits over the HUD on a first visit, and /play's key
+	// handler hands the keyboard to whatever overlay is on its stack, so an intro
+	// that is still up swallows P silently. It also mounts a beat AFTER the HUD
+	// unhides, so a single click right at world-up can land before it exists:
+	// poll it away instead, and only then trust a key press.
+	for (let i = 0; i < 20 && await page.$('#po-overlay'); i++) {
+		await page.evaluate(() => document.querySelector('#po-overlay .po-close')?.click());
+		await sleep(700);
+	}
+	await sleep(1500);
+	const introGone = !(await page.$('#po-overlay'));
+	check('the cold-open intro is dismissed before the keyboard test', introGone,
+		introGone ? '' : 'the onboarding overlay is still up and owns the keyboard');
 
 	// ── 1. lazy: nothing photo-shaped is fetched before the first press ───────
 	check('photo-mode chunk is not loaded before the first press', photoChunkRequests().length === 0,
@@ -139,10 +146,24 @@ try {
 	check('HUD photo button meets the 40px touch bar', btn.w >= 40 && btn.h >= 40, `${btn.w}x${btn.h}`);
 
 	// ── 3. press P: the keyboard path, which is the one the hint promises ─────
+	// Focus the body first: the probe above left focus on the HUD button, and a
+	// key press is a fairer test of the global binding when nothing is focused.
+	await page.evaluate(() => document.activeElement instanceof HTMLElement && document.activeElement.blur());
 	await page.keyboard.press('p');
-	const shotImg = await page.waitForSelector('#cc-photo .cc-photo-shot', { timeout: 90000 }).catch(() => null);
-	check('pressing P opens the preview card', !!shotImg, shotImg ? '' : 'no #cc-photo .cc-photo-shot appeared');
-	if (!shotImg) throw new Error('preview never opened');
+	const shotImg = await page.waitForSelector('#cc-photo .cc-photo-shot', { timeout: 120000 }).catch(() => null);
+	if (!shotImg) {
+		// Name what took the key rather than reporting a bare miss: an overlay on
+		// the stack and a world that never reached its playable phase look
+		// identical from outside and have completely different fixes.
+		const why = await page.evaluate(() => ({
+			overlays: [...document.querySelectorAll('#po-overlay, .cc-modal, [role="dialog"]')]
+				.filter((n) => n.offsetParent).map((n) => n.id || String(n.className).slice(0, 40)),
+			active: document.activeElement?.tagName + '.' + String(document.activeElement?.className || '').slice(0, 30),
+		}));
+		check('pressing P opens the preview card', false, `open overlays: ${why.overlays.join(', ') || 'none'} · focus: ${why.active}`);
+		throw new Error('preview never opened');
+	}
+	check('pressing P opens the preview card', true);
 	check('photo-mode chunk loaded on the first press, not before', photoChunkRequests().length > 0,
 		photoChunkRequests()[0]?.split('/').pop() || 'none');
 
