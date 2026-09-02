@@ -240,10 +240,34 @@ try {
 }
 const scannable = changedFiles.filter((f) => !skipped(f));
 
+// Where a file MOVED, batch its old path alongside its new one. Git pairs the
+// two into a rename and diffs only the lines that actually changed, but that
+// pairing needs both paths inside the same pathspec: limit the diff to the new
+// path alone (which is all `--name-only` prints) and git falls back to calling
+// it a brand-new file, so every legacy line in a file someone merely moved
+// reads as an added line. That turned the 2026-09-02 move of 228 work orders
+// into `prompts/finish/` into 293 phantom em-dash violations in prose nobody
+// wrote that day, which is the exact "rewrite the world to move a file"
+// outcome this guard's diff scoping exists to prevent.
+const renamedFrom = new Map();
+try {
+	const statusArgs = ['diff', '--name-status', '--find-renames', '-z', ...range];
+	if (paths.length) statusArgs.push('--', ...paths);
+	const fields = git(statusArgs).split('\0').filter(Boolean);
+	for (let i = 0; i < fields.length; i += 1) {
+		if (!/^R\d*$/.test(fields[i])) continue;
+		renamedFrom.set(fields[i + 2], fields[i + 1]);
+		i += 2;
+	}
+} catch {
+	// Rename detection is an optimization; without it the diff is merely noisier.
+}
+
 let diff = '';
 for (let i = 0; i < scannable.length; i += FILES_PER_DIFF) {
 	const batch = scannable.slice(i, i + FILES_PER_DIFF);
-	const diffArgs = ['diff', '--unified=0', ...range, '--', ...batch];
+	const sources = batch.map((f) => renamedFrom.get(f)).filter(Boolean);
+	const diffArgs = ['diff', '--unified=0', '--find-renames', ...range, '--', ...batch, ...sources];
 	try {
 		diff += git(diffArgs);
 	} catch (err) {
