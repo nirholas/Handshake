@@ -35,6 +35,20 @@ const WAITING_COPY = {
 
 let timer = null;
 
+// Material id to display name, filled from the public catalog on first load.
+const catalogNames = new Map();
+
+async function loadCatalogNames() {
+	try {
+		const res = await fetch('/api/print/catalog');
+		if (!res.ok) return;
+		const body = await res.json();
+		for (const m of body.materials || []) catalogNames.set(m.id, m.name);
+	} catch {
+		// The order still reads correctly with the raw id; this is only polish.
+	}
+}
+
 function orderIdFromPath() {
 	const match = location.pathname.match(/\/materialize\/orders\/([0-9a-f-]{36})/i);
 	return match ? match[1] : null;
@@ -106,12 +120,18 @@ function render(order, events) {
 	$('mo-main').hidden = false;
 
 	const quote = order.quote || {};
-	const materialName = quote.material?.name || order.material_id;
+	// The frozen quote names the material; a very early order may only carry the
+	// id, and the catalog turns that into the name the buyer chose. "pla-draft"
+	// is a database key, not something anyone ordered.
+	const materialName = quote.material?.name || catalogNames.get(order.material_id) || order.material_id;
+	// lead_time_days is only stamped on the row when the job is submitted, so
+	// until then the number the buyer agreed to is the one in their own quote.
+	const leadDays = order.lead_time_days ?? quote.leadTimeDays ?? null;
 
 	document.title = `${materialName} print · ${order.status} · three.ws`;
 	$('mo-eyebrow').textContent = `Materialize order ${order.id.slice(0, 8)}`;
 	$('mo-title').textContent = statusHeadline(order);
-	$('mo-sub').textContent = subtitleFor(order);
+	$('mo-sub').textContent = subtitleFor(order, leadDays);
 
 	$('mo-specs').innerHTML = [
 		['Material', materialName],
@@ -149,10 +169,12 @@ function statusHeadline(order) {
 	return map[order.status] || 'Your print';
 }
 
-function subtitleFor(order) {
+function subtitleFor(order, leadDays) {
 	if (order.status === 'delivered') return 'Printed from your model and delivered. The certificate below links the object back to the exact file it was made from.';
 	if (TERMINAL.has(order.status)) return 'Nothing further will happen on this order. Any refund is recorded on the timeline below.';
-	return `${formatLeadTime(order.lead_time_days)} from the day it was paid. Every step below carries the moment it actually happened.`;
+	return leadDays
+		? `${formatLeadTime(leadDays)} from the day it is paid. Every step below carries the moment it actually happened.`
+		: 'Every step below carries the moment it actually happened.';
 }
 
 function renderModel(order) {
@@ -272,6 +294,6 @@ document.addEventListener('visibilitychange', () => {
 	else load();
 });
 
-load();
+loadCatalogNames().finally(load);
 
 export { ORDER_STEPS };

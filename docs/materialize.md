@@ -109,6 +109,73 @@ timeline you can read at `GET /api/print/orders/:id`, and the page at
 
 ---
 
+## Using the page
+
+Everything above is one screen at [/materialize](https://three.ws/materialize).
+There is no wizard and no step counter: the model, the material, the size and
+the price are all on screen at once, and changing any of them re-prices the
+others in front of you.
+
+**Getting a model onto it**, in the order most people arrive:
+
+| Where you start | What to click |
+|---|---|
+| A model page, `/m/:id` | **Materialize**, next to Download GLB |
+| A finished generation on [/forge](https://three.ws/forge) | **Materialize** in the result bar |
+| A card in [/creations](https://three.ws/creations) | **Materialize** on the card |
+| Nothing in particular | Open `/materialize` and pick from the rail, paste a `.glb` URL, or drop a file |
+
+A deep link works too: `/materialize?creation=<id>` for a forge creation and
+`/materialize?glb=<url>` for anything else. Both preselect the model, so a link
+you send someone opens on the thing you meant.
+
+**What the page does with it.** The mesh is measured on the server the moment it
+is selected, and the printability card shows the result as facts a buyer can act
+on: whether it is a closed solid, how many separate pieces it is, the thinnest
+wall **at the size currently selected**, and whether it carries colour. Anything
+the analyzer deducted points for is listed underneath, and the ones a repair pass
+can actually fix are marked. **Repair** runs `POST /api/print/prepare`, swaps the
+viewer to the rebuilt solid, and lists exactly what changed: holes closed,
+vertices merged, slivers dropped, faces re-wound, and the score before and after.
+
+**Material cards are measured against your model, not just listed.** A material
+that cannot take this mesh at any printable height says why on its own face and
+cannot be selected, so a full-colour card on an untextured model reads
+"this model has no texture" rather than failing after you click it.
+
+**The size slider ends where reality does.** Its bounds come from
+`fitHeightRange()` on the server: the low end is the height at which the mesh's
+thinnest wall reaches the material's minimum, the high end is where its widest
+axis fills the print bed. Both ends are labelled with the constraint that set
+them. Beside the model, a silhouette of an everyday object (a coin, a mug, a
+hand, a person) is drawn at true proportion against the print, so "140 mm" is
+also "about one and a half times a coffee mug". Height is what you choose, but
+the footprint is shown beside it: a model whose long axis is not vertical is much
+wider than it is tall, and the doorstep is the wrong place to discover that.
+
+### True-scale AR
+
+The **See it at true size** button places the object on your actual floor at the
+exact height you are ordering. It is not an approximation: the viewer is given
+`ar-scale="fixed"` and a `scale` factor taken from the same number the price was
+computed from, so the thing on your desk is the thing in the cart.
+
+Desktop browsers cannot place objects in a room, so on a desktop the same button
+hands over a QR code to this page instead of disappearing. Scan it and the phone
+opens with the same model, material and size.
+
+### Checkout
+
+Signed out, the order button opens a sign-in step that carries your quote back
+with it, so nothing is lost. Signed in, it asks for the minimum a courier needs
+(name, street, city, postal code, country, and optionally a second line, a region
+and a phone) and nothing else. Changing the country re-prices shipping before
+anything is charged, because shipping is zone-based. The payment step shows the
+Solana Pay link and a QR for a phone wallet, and watches the chain for the
+payment itself; you can close it and follow the order from its own page instead.
+
+---
+
 ## Materials
 
 `GET /api/print/catalog` is the live source of truth. As of catalog version 1:
@@ -228,6 +295,71 @@ company, or any block explorer staying online.
 
 A certificate whose signature is still in flight is a real certificate whose
 proof has not landed yet, and the page says exactly that rather than pretending.
+The reconciliation sweep (`/api/cron/print-orders-sync`) retries the send and
+backfills the QR, so a bad RPC minute at shipping time costs nothing.
+
+### Verifying one yourself
+
+Nothing here needs an account, and none of it trusts us:
+
+```bash
+# 1. Read the certificate. It is public: the QR on the box resolves to it.
+curl -s https://three.ws/api/print/certs/<certId> | jq '.certificate | {glb_sha256, memo, solana_signature, network}'
+
+# 2. Download the model it names and hash the bytes.
+curl -sL "<creation.glb_url from the response>" | shasum -a 256
+
+# 3. The two hashes match, or this is not the model that was printed.
+```
+
+The `memo` field is the exact string that was signed on-chain, rendered on the
+certificate page too, so the last step is reading the transaction's memo
+instruction and confirming it is character-for-character the same. `/cert` with
+no id is the lookup page: type the number printed on the card.
+
+### Editions
+
+`edition_of` is the creator's, not ours. On any model you forged, `/m/<id>` shows
+a **Physical editions** panel where you set one number: how many physical copies
+of that model may ever exist. Leave it empty and it is an open edition, which is
+every model's default.
+
+```bash
+# Read the scarcity of a model (public).
+curl -s "https://three.ws/api/print/editions?creation_id=<uuid>"
+# → { "edition": { "limit": 25, "issued": 3, "remaining": 22, "soldOut": false } }
+
+# Cap it (the creator's session only).
+curl -s -X POST https://three.ws/api/print/editions \
+  -H 'content-type: application/json' --cookie "$SESSION" \
+  -d '{"creation_id":"<uuid>","edition_of":25}'
+```
+
+Three rules make the number mean something:
+
+- **It is enforced where the price is set.** A sold-out model is refused by
+  `/api/print/quote` and by both checkout lanes with a message naming how many
+  are left, so nobody pays for a copy that cannot exist.
+- **It counts shipped certificates, not open orders**, so an abandoned checkout
+  never strands the last copy of an edition.
+- **It cannot shrink below its own history.** Capping a series at 5 after 7 have
+  shipped is refused, because a certificate reading "edition 7 of 5" would be a
+  lie that is already in someone's hands.
+
+A print of a model that was uploaded rather than forged still gets an edition
+number: those series are keyed by the content hash, so identical bytes belong to
+one series instead of each upload minting its own "edition 1 of 1".
+
+### The cluster, and the mainnet gate
+
+Certificates attest on **devnet** unless `PRINT_CERT_CLUSTER=mainnet` says
+otherwise, and anything unrecognised in that variable stays devnet rather than
+guessing its way onto real money. Mainnet needs a second key,
+`PRINT_CERT_MAINNET_APPROVAL`, carrying the owner's recorded approval: an
+irreversible on-chain send is an owner decision, not a deploy-time default.
+Without it a mainnet certificate is issued, hashed, and left unattested with the
+reason recorded, rather than quietly downgraded to a devnet signature that would
+misrepresent what the certificate says it is.
 
 ---
 

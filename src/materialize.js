@@ -24,6 +24,7 @@ import {
 	arScaleAttribute,
 	clampHeight,
 	defaultHeight,
+	editionNote,
 	formatLeadTime,
 	formatMm,
 	formatUsdc,
@@ -180,6 +181,7 @@ function wireStatic() {
 	$('mz-size')?.addEventListener('input', () => {
 		state.heightMm = Number($('mz-size').value);
 		renderSizeReadout();
+		renderPrintability();
 		scheduleQuote();
 	});
 	$('mz-qty')?.addEventListener('change', () => {
@@ -207,7 +209,7 @@ function wireStatic() {
 		scheduleQuote();
 	});
 	$('mz-repair')?.addEventListener('click', runRepair);
-	$('mz-ar-btn')?.addEventListener('click', () => $('mz-viewer')?.activateAR?.());
+	$('mz-ar-btn')?.addEventListener('click', openAr);
 
 	$('mz-sheet-close')?.addEventListener('click', closeSheet);
 	$('mz-sheet')?.addEventListener('click', (e) => {
@@ -235,7 +237,10 @@ function fillCountries() {
 async function whoAmI() {
 	try {
 		const body = await api('/api/auth/me');
-		state.user = body?.user || body || null;
+		// It answers 200 with { user: null } when nobody is signed in, so the
+		// envelope is never the fallback: reading it as the user made an
+		// anonymous visitor look authenticated and skipped the sign-in gate.
+		state.user = body?.user ?? null;
 	} catch {
 		state.user = null;
 	}
@@ -244,37 +249,83 @@ async function whoAmI() {
 
 // ── the creations rail ──────────────────────────────────────────────────────
 
+/**
+ * The rail of things you can print right now, in the order a person would want
+ * them: this browser's own forged models first, then the account's, then the
+ * public feed.
+ *
+ * Three sources rather than one because "your creations" has three different
+ * meanings here. The forge persists anonymously against a browser handle, so a
+ * signed-out visitor still has creations; a signed-in account with a claimed
+ * username has a profile feed; and someone arriving with neither should still
+ * be one click from printing something, which is what the community feed is
+ * for. A picker that can only ever say "nothing here" is a dead end, and this
+ * page is too expensive to arrive at and bounce off.
+ */
 async function loadRail() {
 	const rail = $('mz-rail');
 	if (!rail) return;
-	const username = state.user?.username;
-	if (!username) {
-		rail.innerHTML = `<p class="mz-rail-empty">Sign in and your own creations appear here, ready to print. Or <a href="/create" style="color:inherit">generate one now</a>, or drop a file on the left.</p>`;
+
+	const sources = [
+		{
+			label: 'Your creations',
+			load: async () => {
+				const body = await api('/api/forge-gallery', { headers: { 'x-forge-client': forgeClientKey() } });
+				return body?.creations || [];
+			},
+		},
+	];
+	if (state.user?.username) {
+		sources.push({
+			label: 'Your creations',
+			load: async () => {
+				const body = await api(`/api/users/${encodeURIComponent(state.user.username)}/creations?type=model`);
+				return body?.creations || body?.items || [];
+			},
+		});
+	}
+	sources.push({
+		label: 'Fresh from the forge',
+		load: async () => {
+			const body = await api('/api/forge-gallery?scope=community&limit=12');
+			return body?.creations || [];
+		},
+	});
+
+	let reachedAny = false;
+	for (const source of sources) {
+		let items = [];
+		try {
+			items = (await source.load()).filter((c) => c.id && (c.glb_url || c.model_url || c.glbUrl));
+			reachedAny = true;
+		} catch {
+			continue;
+		}
+		if (!items.length) continue;
+		$('mz-rail-title').textContent = source.label;
+		renderRail(rail, items);
 		return;
 	}
-	try {
-		const body = await api(`/api/users/${encodeURIComponent(username)}/creations?type=model`);
-		const items = (body?.creations || body?.items || []).filter((c) => c.glb_url || c.model_url);
-		if (!items.length) {
-			rail.innerHTML = `<p class="mz-rail-empty">Nothing forged yet. <a href="/create" style="color:inherit">Make your first model</a> and it will show up here.</p>`;
-			return;
-		}
-		rail.innerHTML = items
-			.slice(0, 12)
-			.map((c) => {
-				const poster = c.preview_image_url || c.thumbnail_url || '';
-				const label = esc((c.prompt || c.title || 'Untitled').slice(0, 70));
-				return `<button type="button" class="mz-rail-card" data-creation="${esc(c.id)}" title="${label}">
-					${poster ? `<img src="${esc(poster)}" alt="" loading="lazy" />` : ''}
-					<figcaption>${label}</figcaption>
-				</button>`;
-			})
-			.join('');
-		for (const card of rail.querySelectorAll('[data-creation]')) {
-			card.addEventListener('click', () => selectSource({ creationId: card.dataset.creation, label: 'your creation' }));
-		}
-	} catch {
-		rail.innerHTML = `<p class="mz-rail-empty">Your creations could not be loaded just now. Paste a model URL or drop a file on the left, and try this panel again shortly.</p>`;
+
+	rail.innerHTML = reachedAny
+		? `<p class="mz-rail-empty">Nothing forged yet. <a href="/create" style="color:inherit">Generate a model</a> and it appears here, or drop a .glb on the left.</p>`
+		: `<p class="mz-rail-empty">The gallery could not be reached just now. Paste a model URL or drop a file on the left, and this panel will fill in on the next visit.</p>`;
+}
+
+function renderRail(rail, items) {
+	rail.innerHTML = items
+		.slice(0, 12)
+		.map((c) => {
+			const poster = c.preview_image_url || c.thumbnail_url || c.previewImageUrl || '';
+			const label = esc((c.prompt || c.title || 'Untitled').slice(0, 70));
+			return `<button type="button" class="mz-rail-card" data-creation="${esc(c.id)}" title="${label}">
+				${poster ? `<img src="${esc(poster)}" alt="" loading="lazy" />` : ''}
+				<figcaption>${label}</figcaption>
+			</button>`;
+		})
+		.join('');
+	for (const card of rail.querySelectorAll('[data-creation]')) {
+		card.addEventListener('click', () => selectSource({ creationId: card.dataset.creation, label: 'your creation' }));
 	}
 }
 
@@ -332,9 +383,11 @@ async function selectSource(source) {
 		state.fits = body.fits || [];
 		state.source = { ...source, url: body.sourceUrl, creation: body.creation || null };
 		showModel(body.sourceUrl);
-		renderPrintability();
 		renderMaterials();
+		// pickInitialMaterial settles the size, and the printability card reads
+		// the thinnest wall AT that size, so the card is rendered after it.
 		pickInitialMaterial();
+		renderPrintability();
 		setStageBusy(null);
 	} catch (err) {
 		setStageBusy(null);
@@ -408,7 +461,7 @@ function showModel(url) {
 // ── printability ────────────────────────────────────────────────────────────
 
 function renderPrintability() {
-	const view = printabilityView(state.report);
+	const view = printabilityView(state.report, { targetHeightMm: state.heightMm });
 	if (!view) return;
 
 	const CIRCUMFERENCE = 2 * Math.PI * 19;
@@ -622,16 +675,19 @@ function applySliderBounds() {
 	$('mz-size-min').textContent = `${formatMm(bounds.min)} · ${bounds.minNote}`;
 	$('mz-size-max').textContent = `${bounds.maxNote} · ${formatMm(bounds.max)}`;
 
-	$('mz-presets').innerHTML = (state.catalog.sizePresets || [])
-		.map((p) => {
-			const inRange = p.heightMm >= bounds.min && p.heightMm <= bounds.max;
-			return `<button type="button" class="mz-chip" data-preset="${p.heightMm}" ${inRange ? '' : 'disabled'}
-				aria-pressed="${state.heightMm === p.heightMm}"
-				title="${esc(inRange ? p.blurb : `${p.name} is outside what this material can print for this model`)}">
-				${esc(p.name)} · ${formatMm(p.heightMm)}
-			</button>`;
-		})
-		.join('');
+	const presets = (state.catalog.sizePresets || []).filter((p) => p.heightMm >= bounds.min && p.heightMm <= bounds.max);
+	$('mz-presets').innerHTML = presets.length
+		? presets
+				.map(
+					(p) => `<button type="button" class="mz-chip" data-preset="${p.heightMm}"
+						aria-pressed="${state.heightMm === p.heightMm}" title="${esc(p.blurb)}">
+						${esc(p.name)} · ${formatMm(p.heightMm)}
+					</button>`,
+				)
+				.join('')
+		// A row of presets nobody can click is noise. When this model in this
+		// material only prints across a narrow band, say what the band is.
+		: `<p class="mz-meta" style="margin:0;">This model prints between ${formatMm(bounds.min)} and ${formatMm(bounds.max)} in ${esc(materialById(state.materialId)?.name || 'this material')}, so none of the standard sizes apply.</p>`;
 	for (const chip of $('mz-presets').querySelectorAll('[data-preset]')) {
 		chip.addEventListener('click', () => {
 			state.heightMm = clampHeight(Number(chip.dataset.preset), bounds);
@@ -641,10 +697,24 @@ function applySliderBounds() {
 		});
 	}
 	renderSizeReadout();
+	if (state.report) renderPrintability();
 }
 
 function renderSizeReadout() {
 	$('mz-size-value').textContent = formatMm(state.heightMm);
+	// Height is what a buyer chooses, but it is not what arrives: a model whose
+	// long axis is not vertical is far wider than it is tall, and finding that
+	// out at the doorstep is the wrong time. The footprint comes from the report,
+	// so it is right even before the first quote lands.
+	const bbox = state.report?.bbox_mm;
+	const note = $('mz-size-foot');
+	if (note && bbox?.y > 0 && state.heightMm) {
+		const scale = state.heightMm / bbox.y;
+		note.textContent = `${formatMm(bbox.x * scale, { unit: false })} x ${formatMm(bbox.z * scale)} footprint`;
+		note.hidden = false;
+	} else if (note) {
+		note.hidden = true;
+	}
 	for (const chip of $('mz-presets').querySelectorAll('[data-preset]')) {
 		chip.setAttribute('aria-pressed', String(Number(chip.dataset.preset) === state.heightMm));
 	}
@@ -747,8 +817,15 @@ function applyArScale() {
 	}
 	viewer.setAttribute('scale', attr);
 	viewer.setAttribute('ar-scale', 'fixed');
-	button.hidden = !(viewer.canActivateAR ?? true);
-	button.title = `Places it on your floor at ${formatMm(state.heightMm)} tall, the exact size you are ordering.`;
+	// The button is always offered. A desktop browser cannot place anything, but
+	// hiding it there would mean the single best reason to open this page on a
+	// phone is invisible on the machine most people arrive with, so the desktop
+	// path hands over a QR instead of disappearing.
+	button.hidden = false;
+	state.canPlaceAr = Boolean(viewer.canActivateAR);
+	button.title = state.canPlaceAr
+		? `Places it on your floor at ${formatMm(state.heightMm)} tall, the exact size you are ordering.`
+		: 'Open this page on a phone to place it on your desk at true size.';
 }
 
 function renderQuoteBody(html) {
@@ -779,6 +856,7 @@ function renderQuote(body) {
 	if (!quote) return;
 	const rows = quoteRows(quote);
 	const holderLine = rows.find((r) => r.id === 'holder_discount');
+	const edition = editionNote(body.edition);
 
 	renderQuoteBody(
 		`<ul class="mz-quote-lines">
@@ -797,6 +875,7 @@ function renderQuote(body) {
 			<span class="mz-total-amount">${esc(formatUsdc(quote.total))} <span style="font-size:13px;font-weight:600;">${esc(quote.currency)}</span></span>
 		</div>
 		<p class="mz-total-note">${esc(formatLeadTime(quote.leadTimeDays))} · ${esc(formatMm(quote.geometry.boxMm.x, { unit: false }))} x ${esc(formatMm(quote.geometry.boxMm.y, { unit: false }))} x ${esc(formatMm(quote.geometry.boxMm.z))} boxed · ${esc(String(quote.geometry.massGramsEach))} g each</p>
+		${edition ? `<p class="mz-total-note">${esc(edition)}</p>` : ''}
 		${
 			quote.quoteOnRequest
 				? `<div class="mz-notice mz-notice-info" style="margin-top:0.9rem;"><h3>This one is priced by hand</h3><p>Metal is quoted against the actual geometry by an engineer, not by the calculator. The number above is an estimate; ask for a firm quote and we will come back with it.</p></div>
@@ -831,6 +910,33 @@ function closeSheet() {
 	$('mz-sheet').hidden = true;
 	$('mz-sheet-body').innerHTML = '';
 	sheetReturnFocus?.focus?.();
+}
+
+/**
+ * Put it on the buyer's floor, or hand them the way to.
+ *
+ * On a phone this is one tap into WebXR, Scene Viewer or Quick Look at the exact
+ * ordered size. On a desktop, where no browser can place anything, it becomes a
+ * QR to this same page: the buyer keeps their material, size and quantity and
+ * simply continues on the device that has a camera.
+ */
+async function openAr() {
+	const viewer = $('mz-viewer');
+	if (state.canPlaceAr && viewer?.activateAR) {
+		viewer.activateAR();
+		return;
+	}
+	openSheet(
+		'Open it on your phone',
+		`It places at ${formatMm(state.heightMm)} tall, the exact size you are ordering.`,
+		`<p style="font-size:13.5px;line-height:1.6;color:var(--mz-ink-2);margin:0 0 0.5rem;">
+			This browser cannot place objects in a room. Scan this with a phone and the page opens
+			with the same model, material and size, ready to put on your desk.
+		</p>
+		<canvas class="mz-qr" id="mz-ar-qr" width="240" height="240" aria-label="QR code to open this page on a phone"></canvas>
+		<p class="mz-mono" style="text-align:center;">${esc(location.href)}</p>`,
+	);
+	await drawQrInto('mz-ar-qr', location.href);
 }
 
 function openCheckout() {
@@ -934,10 +1040,15 @@ async function submitOrder(shipping) {
 			});
 			return;
 		}
+		const platformSide = err.code === 'checkout_unavailable';
 		openSheet(
-			'The order could not be opened',
+			platformSide ? 'Checkout is offline right now' : 'The order could not be opened',
 			'Nothing was charged.',
-			`<div class="mz-notice mz-notice-error"><p>${esc(err.message)}</p></div>
+			`<div class="mz-notice mz-notice-error"><p>${esc(
+				platformSide
+					? 'This is on our side, not yours: the payment rail is not answering. Your quote stays valid for 24 hours, so this exact price and size will still be here shortly.'
+					: err.message,
+			)}</p></div>
 			<button type="button" class="mz-btn mz-btn-block" id="mz-order-back" style="margin-top:0.9rem;">Back to the address</button>`,
 		);
 		$('mz-order-back')?.addEventListener('click', () => renderShippingStep(shipping));
@@ -970,8 +1081,12 @@ function renderPaymentStep(result) {
 	pollPayment(order.id, result.track_url);
 }
 
-async function drawQr(url) {
-	const canvas = $('mz-qr');
+function drawQr(url) {
+	return drawQrInto('mz-qr', url);
+}
+
+async function drawQrInto(id, url) {
+	const canvas = $(id);
 	if (!canvas) return;
 	try {
 		const mod = await import('qrcode');

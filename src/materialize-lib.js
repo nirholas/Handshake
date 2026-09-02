@@ -159,10 +159,15 @@ const SCORE_BANDS = [
  * The printability card's whole content: the band, the headline facts a buyer
  * actually asks about, and the deductions as fixable line items.
  */
-export function printabilityView(report) {
+export function printabilityView(report, { targetHeightMm } = {}) {
 	if (!report) return null;
 	const score = Math.max(0, Math.min(100, Math.round(Number(report.score) || 0)));
 	const band = SCORE_BANDS.find((b) => score >= b.min) || SCORE_BANDS[SCORE_BANDS.length - 1];
+	const nativeHeight = report.bbox_mm?.y;
+	const wallAtSize =
+		report.min_wall_mm > 0 && nativeHeight > 0
+			? report.min_wall_mm * ((targetHeightMm || nativeHeight) / nativeHeight)
+			: null;
 	const facts = [
 		{
 			id: 'solid',
@@ -178,9 +183,12 @@ export function printabilityView(report) {
 		},
 		{
 			id: 'wall',
+			// A wall thickness only means something at a size. The analyzer measures
+			// the mesh at whatever scale the generator emitted, so the number shown
+			// is that measurement carried to the height actually being ordered.
 			label: 'Thinnest wall',
-			value: report.min_wall_mm ? `${(report.min_wall_mm / (report.bbox_mm?.y || 1) * 100).toFixed(2)} percent of height` : 'Not measured',
-			ok: Boolean(report.min_wall_mm),
+			value: wallAtSize === null ? 'Not measured' : `${formatMm(wallAtSize)}${targetHeightMm ? ` at ${formatMm(targetHeightMm)} tall` : ''}`,
+			ok: wallAtSize === null ? false : wallAtSize >= 0.6,
 		},
 		{
 			id: 'colour',
@@ -189,30 +197,38 @@ export function printabilityView(report) {
 			ok: true,
 		},
 	];
-	const issues = (report.deductions || []).map((d) => ({
-		id: d.id,
-		label: d.label || d.id,
-		detail: d.detail || d.message || '',
-		points: d.points,
-		// Repair closes shells, drops slivers and re-winds faces. It cannot invent
-		// colour data or decide a mesh is one object, so those are stated as facts
-		// rather than offered as a button that would do nothing.
-		repairable: REPAIRABLE.has(d.id),
-	}));
+	const issues = (report.deductions || []).map((d) => {
+		const known = DEDUCTIONS[d.id];
+		return {
+			id: d.id,
+			label: d.label || known?.label || 'Flagged by the analyzer',
+			detail: d.detail || d.message || '',
+			points: d.points,
+			// Repair closes holes, drops slivers and re-winds faces. It cannot decide
+			// that four separate bodies are one object, so that is stated as a fact
+			// rather than offered as a button that would do nothing.
+			repairable: Boolean(known?.repairable),
+		};
+	});
 	return { score, tone: band.tone, label: band.label, facts, issues, repairableCount: issues.filter((i) => i.repairable).length };
 }
 
-const REPAIRABLE = new Set([
-	'not_manifold',
-	'open_edges',
-	'open_shell',
-	'non_manifold_edges',
-	'self_intersections',
-	'degenerate_triangles',
-	'inconsistent_winding',
-	'triangle_budget',
-	'thin_walls',
-]);
+// Every deduction api/_lib/print/analyze.js can emit, in the buyer's words, and
+// whether the repair pass can actually resolve it. The analyzer names issues by
+// id and explains them in `detail`; the id itself is not a sentence, and showing
+// it raw ("multiple_shells") is how a measured report starts reading like a
+// stack trace. `repairable` gates the Repair button: offering it for something a
+// repair cannot change is worse than not offering it at all.
+const DEDUCTIONS = {
+	non_manifold: { label: 'Not a solid yet', repairable: true },
+	open_edges: { label: 'Holes in the surface', repairable: true },
+	non_manifold_edges: { label: 'Edges shared by too many faces', repairable: true },
+	self_intersections: { label: 'The surface crosses itself', repairable: true },
+	degenerate_triangles: { label: 'Sliver triangles', repairable: true },
+	thin_walls: { label: 'Thin walls', repairable: true },
+	triangle_budget: { label: 'Heavier than any printer needs', repairable: true },
+	multiple_shells: { label: 'Separate pieces', repairable: false },
+};
 
 /**
  * The `scale` attribute that makes model-viewer place the object at its real
@@ -248,6 +264,25 @@ export function rejectionView(rejection) {
 		// are answered by a different size or a different material.
 		offerRepair: failures.some((f) => f.code === 'walls_too_thin'),
 	};
+}
+
+/**
+ * The scarcity line under the total. Silent for the common case, an open
+ * edition nobody has printed: a "0 of unlimited" row would be noise on every
+ * quote. It speaks the moment the number means something.
+ *
+ * @param {{ limit: number|null, issued: number, remaining: number|null }|null|undefined} edition
+ * @returns {string}
+ */
+export function editionNote(edition) {
+	if (!edition) return '';
+	if (edition.limit === null) {
+		return edition.issued
+			? `Open edition · ${edition.issued} printed so far, each with its own numbered certificate`
+			: '';
+	}
+	if (edition.remaining === 0) return `Limited edition of ${edition.limit} · sold out`;
+	return `Limited edition of ${edition.limit} · you would be number ${edition.issued + 1}, ${edition.remaining} left`;
 }
 
 /** Order timeline steps, in the order they happen, with the ones that branch. */

@@ -20,6 +20,7 @@ import {
 	sliderBounds,
 	timelineView,
 	validateShipping,
+	editionNote,
 } from '../src/materialize-lib.js';
 
 const REFERENCES = [
@@ -299,5 +300,29 @@ describe('validateShipping', () => {
 	it('offers only countries the quote engine can price', () => {
 		expect(SHIPPING_COUNTRIES.every((c) => /^[A-Z]{2}$/.test(c.code))).toBe(true);
 		expect(SHIPPING_COUNTRIES.some((c) => c.code === 'US')).toBe(true);
+	});
+});
+
+describe('editionNote', () => {
+	it('says nothing about an open edition nobody has printed', () => {
+		expect(editionNote({ limit: null, issued: 0, remaining: null })).toBe('');
+		expect(editionNote(null)).toBe('');
+		expect(editionNote(undefined)).toBe('');
+	});
+
+	it('counts an open edition once copies exist', () => {
+		expect(editionNote({ limit: null, issued: 4, remaining: null })).toBe(
+			'Open edition · 4 printed so far, each with its own numbered certificate',
+		);
+	});
+
+	it('tells a buyer which number they would be', () => {
+		expect(editionNote({ limit: 25, issued: 2, remaining: 23 })).toBe(
+			'Limited edition of 25 · you would be number 3, 23 left',
+		);
+	});
+
+	it('says sold out rather than offering a number that cannot exist', () => {
+		expect(editionNote({ limit: 5, issued: 5, remaining: 0 })).toBe('Limited edition of 5 · sold out');
 	});
 });
