@@ -20,19 +20,14 @@
 import { error, json, method, readJson, wrap } from '../../_lib/http.js';
 import { sql } from '../../_lib/db.js';
 import { requireOperator } from '../../_lib/print/ops-auth.js';
+import { PrintStoreError, appendEvent, getOrder, getOrderWithEvents, transition } from '../../_lib/print-store.js';
 import {
-	PrintOrderNotFoundError,
-	PrintTransitionError,
 	allowedTransitions,
-	appendOrderEvent,
 	countOrdersByStatus,
-	getOrder,
-	listOrderEvents,
 	listOrders,
 	listWebhookDeliveries,
 	printStoreEnabled,
-	transitionOrder,
-} from '../../_lib/print-store.js';
+} from '../../_lib/print/fulfillment-queries.js';
 import { adapterSummaries } from '../../_lib/print/adapters/index.js';
 import { FulfillmentError, cancelWithProvider, submitOrder } from '../../_lib/print/fulfillment.js';
 import { AdapterContractError, AdapterUpstreamError } from '../../_lib/print/adapters/contract.js';
@@ -117,15 +112,13 @@ function queueRow(order) {
 async function handleOrderDetail(req, res) {
 	const order = await loadOrder(req, res);
 	if (!order) return;
-	const [events, deliveries] = await Promise.all([
-		listOrderEvents(order.id),
+	const [withEvents, deliveries] = await Promise.all([
+		getOrderWithEvents(order.id),
 		listWebhookDeliveries(order.id),
 	]);
+	const { events, ...row } = withEvents || { ...order, events: [] };
 	return json(res, 200, {
-		order: {
-			...order,
-			next: allowedTransitions(order.status),
-		},
+		order: { ...row, next: allowedTransitions(row.status) },
 		events,
 		webhook_deliveries: deliveries,
 		adapters: adapterSummaries(),
@@ -153,7 +146,7 @@ async function handleTransition(req, res, operator) {
 		return error(res, 400, 'validation_error', 'use /api/print/ops/submit to hand an order to a fulfillment lane');
 	}
 
-	const { order: updated, event } = await transitionOrder({
+	const { order: updated, event } = await transition({
 		orderId: order.id,
 		to,
 		note: note || `Operator moved the order to ${to}.`,
@@ -205,7 +198,7 @@ async function handleTracking(req, res, operator) {
 		: `Tracking ${trackingNumber}${carrier ? ` via ${carrier}` : ''}.`;
 
 	if (ship) {
-		const { order: updated, event } = await transitionOrder({
+		const { order: updated, event } = await transition({
 			orderId: order.id,
 			to: 'shipped',
 			note,
@@ -220,7 +213,7 @@ async function handleTracking(req, res, operator) {
 	const rows = await sql`
 		update print_orders set tracking_number = ${trackingNumber}, carrier = ${carrier || null}
 		where id = ${order.id} returning *`;
-	const event = await appendOrderEvent({
+	const event = await appendEvent({
 		orderId: order.id,
 		status: order.status,
 		note,
@@ -247,7 +240,7 @@ async function handleCancel(req, res, operator) {
 	if (order.provider && order.provider_order_id) {
 		const result = await cancelWithProvider(order, reason);
 		if (!result.ok) {
-			await appendOrderEvent({
+			await appendEvent({
 				orderId: order.id,
 				status: order.status,
 				note: `Cancellation refused by ${order.provider}: ${result.note}`,
@@ -259,7 +252,7 @@ async function handleCancel(req, res, operator) {
 		providerNote = result.note;
 	}
 
-	const { order: updated, event } = await transitionOrder({
+	const { order: updated, event } = await transition({
 		orderId: order.id,
 		to: 'canceled',
 		note: reason ? `Canceled: ${reason}. ${providerNote}` : `Canceled by operator. ${providerNote}`,
@@ -283,7 +276,7 @@ async function handleRefund(req, res, operator) {
 	const note = typeof body.note === 'string' ? body.note.slice(0, 2000) : '';
 
 	const recipient = order.payer_wallet || null;
-	const { order: updated, event } = await transitionOrder({
+	const { order: updated, event } = await transition({
 		orderId: order.id,
 		to: 'refunded',
 		note: note || 'Refund approved by operator.',
@@ -352,8 +345,10 @@ export default wrap(async (req, res) => {
 	try {
 		return await route.fn(req, res, operator);
 	} catch (err) {
-		if (err instanceof PrintOrderNotFoundError) return error(res, 404, 'not_found', err.message);
-		if (err instanceof PrintTransitionError) return error(res, 409, 'illegal_transition', err.message);
+		if (err instanceof PrintStoreError) {
+			const status = err.code === 'order_not_found' ? 404 : 409;
+			return error(res, status, err.code, err.message);
+		}
 		if (err instanceof FulfillmentError) return error(res, 409, err.code, err.message);
 		if (err instanceof AdapterUpstreamError) return error(res, 502, 'provider_unreachable', err.message);
 		if (err instanceof AdapterContractError) return error(res, 502, 'provider_contract', err.message);

@@ -1,0 +1,363 @@
+/* Materialize certificate of authenticity (/cert, /cert/:id).
+   Every value comes from public/tokens.css; the sheet holds no literal a token
+   already expresses. The proof block is deliberately monospace and selectable:
+   its whole job is to be copied out and hashed against by a stranger. */
+
+.ct-shell {
+	max-width: 1080px;
+	margin: 0 auto;
+	padding: var(--space-xl, 32px) var(--space-lg, 24px) var(--space-3xl, 96px);
+}
+
+.ct-sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.ct-back {
+	display: inline-block;
+	margin-bottom: var(--space-md, 16px);
+	font-size: var(--text-sm, 13px);
+	color: var(--ink-dim, rgba(255, 255, 255, 0.55));
+	text-decoration: none;
+	transition: color 0.15s ease;
+}
+.ct-back:hover,
+.ct-back:focus-visible {
+	color: var(--ink-bright, #fff);
+}
+
+/* ── header ───────────────────────────────────────────────────────────── */
+
+.ct-kicker {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-2, 8px);
+	margin: 0 0 var(--space-sm, 12px);
+	font-family: var(--font-mono);
+	font-size: var(--text-2xs, 11px);
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--ink-dim, rgba(255, 255, 255, 0.55));
+}
+
+.ct-dot {
+	width: 6px;
+	height: 6px;
+	border-radius: var(--radius-pill, 999px);
+	background: var(--success, #4ade80);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--success, #4ade80) 22%, transparent);
+}
+.ct-dot--pending {
+	background: var(--warn, #fbbf24);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--warn, #fbbf24) 22%, transparent);
+}
+
+.ct-title {
+	margin: 0 0 var(--space-xs, 6px);
+	font-family: var(--font-display);
+	font-size: var(--text-2xl, 42px);
+	line-height: var(--leading-tight, 1.15);
+	letter-spacing: -0.02em;
+	font-weight: var(--weight-bold, 700);
+	color: var(--ink-bright, #fff);
+}
+
+.ct-sub {
+	margin: 0 0 var(--space-lg, 24px);
+	color: var(--ink-dim, rgba(255, 255, 255, 0.62));
+	font-size: var(--text-md, 15px);
+	max-width: 62ch;
+}
+
+/* ── layout ───────────────────────────────────────────────────────────── */
+
+.ct-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+	gap: var(--space-xl, 32px);
+	align-items: start;
+}
+
+@media (max-width: 900px) {
+	.ct-grid {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.ct-card {
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.08));
+	border-radius: var(--radius-lg, 16px);
+	background: var(--surface-1, rgba(255, 255, 255, 0.03));
+	padding: var(--space-lg, 24px);
+	margin-bottom: var(--space-lg, 24px);
+}
+
+.ct-card h2 {
+	margin: 0 0 var(--space-md, 16px);
+	font-size: var(--text-xs, 12px);
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	font-family: var(--font-mono);
+	color: var(--ink-dim, rgba(255, 255, 255, 0.55));
+	font-weight: var(--weight-medium, 500);
+}
+
+/* ── viewer ───────────────────────────────────────────────────────────── */
+
+.ct-stage {
+	position: relative;
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.08));
+	border-radius: var(--radius-lg, 16px);
+	overflow: hidden;
+	background: var(--surface-2, rgba(255, 255, 255, 0.05));
+	aspect-ratio: 4 / 3;
+}
+
+.ct-stage model-viewer,
+.ct-stage img {
+	width: 100%;
+	height: 100%;
+	display: block;
+	object-fit: cover;
+	--poster-color: transparent;
+}
+
+.ct-stage-empty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	padding: var(--space-lg, 24px);
+	text-align: center;
+	color: var(--ink-dim, rgba(255, 255, 255, 0.55));
+	font-size: var(--text-sm, 13px);
+}
+
+.ct-edition {
+	position: absolute;
+	top: var(--space-sm, 12px);
+	left: var(--space-sm, 12px);
+	display: inline-flex;
+	align-items: baseline;
+	gap: 6px;
+	padding: 6px 12px;
+	border-radius: var(--radius-pill, 999px);
+	background: color-mix(in srgb, var(--bg, #0a0a0a) 78%, transparent);
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.14));
+	backdrop-filter: blur(8px);
+	font-family: var(--font-mono);
+	font-size: var(--text-xs, 12px);
+	color: var(--ink-bright, #fff);
+	letter-spacing: 0.02em;
+}
+.ct-edition strong {
+	font-size: var(--text-md, 15px);
+	font-weight: var(--weight-bold, 700);
+}
+
+/* ── facts ────────────────────────────────────────────────────────────── */
+
+.ct-facts {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+	gap: var(--space-md, 16px);
+}
+
+.ct-fact dt {
+	margin: 0 0 4px;
+	font-family: var(--font-mono);
+	font-size: var(--text-2xs, 11px);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--ink-dim, rgba(255, 255, 255, 0.5));
+}
+
+.ct-fact dd {
+	margin: 0;
+	color: var(--ink, rgba(255, 255, 255, 0.88));
+	font-size: var(--text-md, 15px);
+	overflow-wrap: anywhere;
+}
+
+/* ── proof ────────────────────────────────────────────────────────────── */
+
+.ct-proof-state {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-2, 8px);
+	margin-bottom: var(--space-md, 16px);
+	font-size: var(--text-sm, 13px);
+	color: var(--ink, rgba(255, 255, 255, 0.88));
+}
+
+.ct-code {
+	display: block;
+	margin: 0 0 var(--space-sm, 12px);
+	padding: var(--space-sm, 12px);
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.08));
+	border-radius: var(--radius-md, 10px);
+	background: var(--surface-2, rgba(255, 255, 255, 0.05));
+	font-family: var(--font-mono);
+	font-size: var(--text-xs, 12px);
+	line-height: 1.6;
+	color: var(--ink, rgba(255, 255, 255, 0.88));
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	user-select: all;
+}
+
+.ct-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2, 8px);
+}
+
+.ct-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 9px 14px;
+	border-radius: var(--radius-pill, 999px);
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.14));
+	background: transparent;
+	color: var(--ink, rgba(255, 255, 255, 0.88));
+	font: inherit;
+	font-size: var(--text-sm, 13px);
+	cursor: pointer;
+	text-decoration: none;
+	transition:
+		background 0.15s ease,
+		border-color 0.15s ease,
+		transform 0.1s ease;
+}
+.ct-btn:hover {
+	background: var(--surface-2, rgba(255, 255, 255, 0.06));
+	border-color: var(--stroke-strong, rgba(255, 255, 255, 0.24));
+}
+.ct-btn:active {
+	transform: translateY(1px);
+}
+.ct-btn:focus-visible {
+	outline: 2px solid var(--accent, #7c9cff);
+	outline-offset: 2px;
+}
+.ct-btn--primary {
+	background: var(--ink-bright, #fff);
+	color: var(--bg, #0a0a0a);
+	border-color: transparent;
+	font-weight: var(--weight-medium, 500);
+}
+.ct-btn--primary:hover {
+	background: var(--ink, rgba(255, 255, 255, 0.88));
+}
+
+.ct-steps {
+	margin: 0;
+	padding-left: 1.2em;
+	color: var(--ink-dim, rgba(255, 255, 255, 0.62));
+	font-size: var(--text-sm, 13px);
+	line-height: 1.7;
+}
+.ct-steps li + li {
+	margin-top: var(--space-2, 8px);
+}
+.ct-steps code {
+	font-family: var(--font-mono);
+	font-size: var(--text-xs, 12px);
+	padding: 1px 5px;
+	border-radius: var(--radius-sm, 6px);
+	background: var(--surface-2, rgba(255, 255, 255, 0.06));
+	overflow-wrap: anywhere;
+}
+
+.ct-qr {
+	display: block;
+	width: 132px;
+	height: 132px;
+	border-radius: var(--radius-md, 10px);
+	background: #fff;
+	padding: 8px;
+}
+
+.ct-note {
+	margin: var(--space-sm, 12px) 0 0;
+	font-size: var(--text-xs, 12px);
+	color: var(--ink-dim, rgba(255, 255, 255, 0.5));
+	line-height: 1.6;
+}
+
+/* ── lookup, empty, error ─────────────────────────────────────────────── */
+
+.ct-lookup {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2, 8px);
+	margin-top: var(--space-md, 16px);
+}
+
+.ct-input {
+	flex: 1 1 240px;
+	min-width: 0;
+	padding: 10px 14px;
+	border-radius: var(--radius-pill, 999px);
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.14));
+	background: var(--surface-2, rgba(255, 255, 255, 0.05));
+	color: var(--ink-bright, #fff);
+	font-family: var(--font-mono);
+	font-size: var(--text-sm, 13px);
+}
+.ct-input:focus-visible {
+	outline: 2px solid var(--accent, #7c9cff);
+	outline-offset: 1px;
+}
+
+.ct-message {
+	margin: var(--space-sm, 12px) 0 0;
+	font-size: var(--text-sm, 13px);
+	color: var(--danger, #f87171);
+	min-height: 1.2em;
+}
+
+/* ── skeleton ─────────────────────────────────────────────────────────── */
+
+.ct-skeleton {
+	border-radius: var(--radius-lg, 16px);
+	background: linear-gradient(
+		90deg,
+		var(--surface-1, rgba(255, 255, 255, 0.04)) 25%,
+		var(--surface-2, rgba(255, 255, 255, 0.08)) 37%,
+		var(--surface-1, rgba(255, 255, 255, 0.04)) 63%
+	);
+	background-size: 400% 100%;
+	animation: ct-shimmer 1.4s ease infinite;
+}
+.ct-skeleton--stage {
+	aspect-ratio: 4 / 3;
+}
+.ct-skeleton--copy {
+	height: 220px;
+	margin-top: var(--space-lg, 24px);
+}
+
+@keyframes ct-shimmer {
+	0% {
+		background-position: 100% 50%;
+	}
+	100% {
+		background-position: 0 50%;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ct-skeleton {
+		animation: none;
+	}
+}

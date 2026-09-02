@@ -2021,6 +2021,22 @@
 			"dest": "/constellation.html"
 		},
 		{
+			"src": "/cert/?",
+			"dest": "/certificate.html"
+		},
+		{
+			"src": "/cert/([0-9a-f]{24})/?",
+			"dest": "/certificate.html"
+		},
+		{
+			"src": "/materialize/ops/?",
+			"dest": "/materialize-ops.html"
+		},
+		{
+			"src": "/materialize/insert/([0-9a-f]{24})/?",
+			"dest": "/print-insert.html"
+		},
+		{
 			"src": "/p/([a-z0-9-]+)/?",
 			"dest": "/p/index.html"
 		},
@@ -3339,6 +3355,14 @@
 		{
 			"src": "/api/social/sentiment-pulse",
 			"dest": "/api/social/sentiment-pulse.js"
+		},
+		{
+			"src": "/api/print/ops/(queue|order|adapters|transition|submit|tracking|cancel|refund)",
+			"dest": "/api/print/ops/[action]?action=$1"
+		},
+		{
+			"src": "/api/print/webhook/([a-z][a-z0-9-]{1,31})",
+			"dest": "/api/print/webhook/[provider]?provider=$1"
 		},
 		{
 			"src": "/api/irl/drops/([^/]+)/([^/]+)",
@@ -6300,6 +6324,10 @@
 		{
 			"path": "/api/cron/feedback-triage",
 			"schedule": "*/5 * * * *"
+		},
+		{
+			"path": "/api/cron/print-orders-sync",
+			"schedule": "*/15 * * * *"
 		}
 	]
 }

@@ -26,7 +26,7 @@ import {
 	getOrderByProviderId,
 	markWebhookApplied,
 	printStoreEnabled,
-} from '../../_lib/print-store.js';
+} from '../../_lib/print/fulfillment-queries.js';
 import { getAdapter } from '../../_lib/print/adapters/index.js';
 import { normalizeWebhookEvent } from '../../_lib/print/adapters/contract.js';
 import { applyProviderEvent } from '../../_lib/print/fulfillment.js';
