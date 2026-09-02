@@ -1,5 +1,5 @@
 // @ts-check
-// POST /api/print/webhook/:provider — a fulfillment provider reporting in.
+// POST /api/print/webhook/:provider: a fulfillment provider reporting in.
 //
 // Three properties, in the order they are enforced:
 //

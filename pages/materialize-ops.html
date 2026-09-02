@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot - no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Fulfillment console · three.ws</title>
+		<meta name="description" content="Internal operator console for Materialize print fulfillment." />
+		<meta name="robots" content="noindex, nofollow" />
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/materialize-ops.css" />
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="mo-shell" id="mo-app">
+			<div class="mo-head">
+				<div>
+					<p class="mo-kicker"><span class="mo-dot" aria-hidden="true"></span> Materialize fulfillment</p>
+					<h1 class="mo-title">Operator console</h1>
+				</div>
+				<div class="mo-head-meta">
+					<span id="mo-updated" aria-live="polite"></span>
+					<button type="button" class="mo-btn" id="mo-refresh">Refresh</button>
+				</div>
+			</div>
+
+			<div class="mo-body">
+				<nav class="mo-rail" id="mo-rail" aria-label="Order queues">
+					<p class="mo-rail-head">Queues</p>
+				</nav>
+
+				<section class="mo-panel" aria-label="Print order queue">
+					<div class="mo-panel-head">
+						<h2 class="mo-panel-title" id="mo-queue-title">Needs action</h2>
+					</div>
+					<div class="mo-scroll">
+						<table class="mo-table">
+							<thead>
+								<tr>
+									<th scope="col">Order</th>
+									<th scope="col">Status</th>
+									<th scope="col">Material</th>
+									<th scope="col">Qty</th>
+									<th scope="col">USDC</th>
+									<th scope="col">Lane</th>
+									<th scope="col">To</th>
+									<th scope="col">Placed</th>
+								</tr>
+							</thead>
+							<tbody id="mo-rows"></tbody>
+						</table>
+					</div>
+				</section>
+			</div>
+		</main>
+
+		<div class="mo-drawer-scrim" id="mo-scrim" data-open="false"></div>
+		<aside class="mo-drawer" id="mo-drawer" data-open="false" aria-hidden="true" aria-label="Order detail">
+			<div class="mo-drawer-head">
+				<h2 class="mo-drawer-title" id="mo-drawer-title">Order</h2>
+				<button type="button" class="mo-btn" id="mo-close" style="margin-left:auto">Close</button>
+			</div>
+			<div class="mo-drawer-body" id="mo-drawer-body"></div>
+		</aside>
+
+		<script type="module" src="/src/materialize-ops.js"></script>
+	</body>
+</html>

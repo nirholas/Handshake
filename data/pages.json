@@ -1041,6 +1041,14 @@
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-08-28"
+				},
+				{
+					"path": "/docs/animation-seeding",
+					"title": "Generated animation seeding",
+					"description": "How three.ws generates its own animation clips: the text-to-motion GPU lane, the world-space quality gate that judges joint positions instead of raw rotations, the resumable bulk runner, and the rotating free subset.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-09-02"
 				}
 			]
 		},
@@ -1358,6 +1366,14 @@
 					"priority": 0.7,
 					"changefreq": "daily",
 					"added": "2026-07-08"
+				},
+				{
+					"path": "/cert",
+					"title": "Print Certificates",
+					"description": "Check the certificate of authenticity that ships with every three.ws physical print. Scan the code on the box or type the certificate number to see the original 3D model spinning, its edition number, the SHA-256 of the exact bytes that went to the printer, and the Solana transaction attesting both. Each certificate lives at /cert/<id>.",
+					"priority": 0.6,
+					"changefreq": "weekly",
+					"added": "2026-09-02"
 				},
 				{
 					"path": "/creations",
@@ -2767,7 +2783,7 @@
 				},
 				{
 					"path": "/docs/spotlight",
-					"title": "Docs \u00b7 Agent Spotlight",
+					"title": "Docs · Agent Spotlight",
 					"description": "How the Agent Spotlight community showcase works: what an entry stores versus what it reads live off the agent, the trending decay formula, curated versus community entries, and the full showcase API.",
 					"priority": 0.6,
 					"changefreq": "weekly",
@@ -5893,6 +5909,14 @@
 					"priority": 0.2,
 					"changefreq": "yearly",
 					"added": "2026-07-14"
+				},
+				{
+					"path": "/legal/nvidia-ngc-eula",
+					"title": "NVIDIA NGC Container EULA",
+					"description": "License terms for three.ws container images distributed through the NVIDIA NGC catalog: what the license covers, the model weights the image does not ship, and the data the container does not collect.",
+					"priority": 0.2,
+					"changefreq": "yearly",
+					"added": "2026-09-02"
 				},
 				{
 					"path": "/legal/tos",

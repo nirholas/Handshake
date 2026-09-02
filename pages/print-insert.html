@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Package insert · three.ws</title>
+		<meta name="description" content="Operator tool: the print-ready certificate card that goes in the box with a three.ws physical print." />
+		<meta name="robots" content="noindex, nofollow" />
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/src/print-insert.css" />
+	</head>
+	<body>
+		<main class="pi-root" id="pi-root" aria-busy="true">
+			<!-- Hydrated by /src/print-insert.js from /api/print/ops/insert-card.
+			     Operator-gated server side; this page is never the security boundary. -->
+			<div class="pi-status" id="pi-status">Loading the insert card…</div>
+			<noscript>
+				<p class="pi-status">This operator tool renders the package insert card. Enable JavaScript to use it.</p>
+			</noscript>
+		</main>
+		<div id="pi-live" class="pi-sr-only" role="status" aria-live="polite"></div>
+		<script type="module" src="/src/print-insert.js"></script>
+	</body>
+</html>

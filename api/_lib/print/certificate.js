@@ -192,16 +192,22 @@ async function readAsset(url) {
 }
 
 /**
- * Claim the next edition number for a series and insert the certificate, in one
- * statement, retrying on the unique-index collision that a concurrent claim
- * produces. The HAVING clause is what enforces the cap atomically: when the
- * series is full the insert selects zero rows rather than writing an
- * over-numbered certificate.
+ * Claim the next edition number for a series and insert the certificate in one
+ * statement, retrying the collision a concurrent claim produces.
+ *
+ * Two things make this atomic without a transaction, which matters because the
+ * serverless driver has none: the unique index on (series_key, edition_no)
+ * means only one of two simultaneous "max + 1" writers can win, and the HAVING
+ * clause means a full series selects zero rows rather than writing an
+ * over-numbered certificate. The loser recomputes and takes the next number, or
+ * is told the edition is sold out. Exported because it is the primitive the
+ * concurrency test exercises directly.
  *
  * @param {object} row
- * @returns {Promise<any>}
+ * @returns {Promise<any>} the inserted certificate, or the one that already
+ *   existed for this order.
  */
-async function claimEdition(row) {
+export async function claimEdition(row) {
 	for (let attempt = 1; attempt <= EDITION_CLAIM_ATTEMPTS; attempt++) {
 		try {
 			const inserted = await sql`
@@ -231,17 +237,13 @@ async function claimEdition(row) {
 			}
 			return inserted[0];
 		} catch (err) {
-			// 23505 on the order index means someone else already certified this
-			// order: that is the idempotent answer, not a failure.
-			if (err?.code === '23505' && String(err?.constraint || '').includes('order_uniq')) {
-				const [existing] = await sql`select * from print_certificates where order_id = ${row.order_id} limit 1`;
-				if (existing) return existing;
-			}
-			// 23505 on the series index means a concurrent claim took this number.
-			// Recompute and try again; the loop is bounded so a pathological
-			// series cannot spin forever.
-			if (err?.code === '23505' && attempt < EDITION_CLAIM_ATTEMPTS) continue;
-			throw err;
+			if (err?.code !== '23505') throw err;
+			// A unique violation is one of two things, and the row tells us which:
+			// this order was already certified (the idempotent answer), or a
+			// concurrent claim took the number we computed (recompute and retry).
+			const [existing] = await sql`select * from print_certificates where order_id = ${row.order_id} limit 1`;
+			if (existing) return existing;
+			if (attempt >= EDITION_CLAIM_ATTEMPTS) throw err;
 		}
 	}
 	throw new PrintCertificateError(

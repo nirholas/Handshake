@@ -108,7 +108,7 @@ function queueRow(order) {
 
 // ── order detail ─────────────────────────────────────────────────────────────
 
-/** GET /api/print/ops/order?id=… — everything needed to run one job. */
+/** GET /api/print/ops/order?id=…: everything needed to run one job. */
 async function handleOrderDetail(req, res) {
 	const order = await loadOrder(req, res);
 	if (!order) return;
@@ -311,7 +311,7 @@ async function handleRefund(req, res, operator) {
 	});
 }
 
-/** GET /api/print/ops/adapters — the lanes this deployment can route to. */
+/** GET /api/print/ops/adapters: the lanes this deployment can route to. */
 async function handleAdapters(_req, res) {
 	return json(res, 200, { adapters: adapterSummaries() });
 }

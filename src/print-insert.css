@@ -1,0 +1,229 @@
+/* The package insert card (/materialize/insert/:certId).
+   Two audiences, one sheet: an operator on screen, and a sheet of card stock
+   coming out of a printer. The @media print block is the real deliverable, so
+   nothing here uses a screen-only trick (dark surfaces, backdrop filters) that
+   a printer renders as a slab of toner. */
+
+.pi-sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.pi-root {
+	max-width: 860px;
+	margin: 0 auto;
+	padding: var(--space-xl, 32px) var(--space-lg, 24px) var(--space-3xl, 96px);
+	color: var(--ink, rgba(255, 255, 255, 0.88));
+}
+
+.pi-status {
+	padding: var(--space-lg, 24px);
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.08));
+	border-radius: var(--radius-lg, 16px);
+	background: var(--surface-1, rgba(255, 255, 255, 0.03));
+	color: var(--ink-dim, rgba(255, 255, 255, 0.62));
+	font-size: var(--text-sm, 13px);
+	line-height: 1.6;
+}
+
+.pi-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-2, 8px);
+	margin-bottom: var(--space-lg, 24px);
+}
+
+.pi-toolbar-note {
+	flex: 1 1 220px;
+	min-width: 0;
+	font-size: var(--text-xs, 12px);
+	color: var(--ink-dim, rgba(255, 255, 255, 0.5));
+	line-height: 1.6;
+}
+
+.pi-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 9px 14px;
+	border-radius: var(--radius-pill, 999px);
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.14));
+	background: transparent;
+	color: var(--ink, rgba(255, 255, 255, 0.88));
+	font: inherit;
+	font-size: var(--text-sm, 13px);
+	text-decoration: none;
+	cursor: pointer;
+	transition:
+		background 0.15s ease,
+		border-color 0.15s ease,
+		transform 0.1s ease;
+}
+.pi-btn:hover {
+	background: var(--surface-2, rgba(255, 255, 255, 0.06));
+	border-color: var(--stroke-strong, rgba(255, 255, 255, 0.24));
+}
+.pi-btn:active {
+	transform: translateY(1px);
+}
+.pi-btn:focus-visible {
+	outline: 2px solid var(--accent, #7c9cff);
+	outline-offset: 2px;
+}
+.pi-btn--primary {
+	background: var(--ink-bright, #fff);
+	color: var(--bg, #0a0a0a);
+	border-color: transparent;
+	font-weight: var(--weight-medium, 500);
+}
+
+/* ── the card ─────────────────────────────────────────────────────────── */
+
+.pi-card {
+	/* A5 landscape: the size a print bureau's card stock cuts to without waste. */
+	width: 210mm;
+	max-width: 100%;
+	min-height: 148mm;
+	margin: 0 auto;
+	padding: 14mm;
+	box-sizing: border-box;
+	display: grid;
+	grid-template-columns: 1fr auto;
+	grid-template-rows: auto 1fr auto;
+	gap: 8mm;
+	background: #ffffff;
+	color: #111111;
+	border-radius: 3mm;
+	border: 1px solid rgba(0, 0, 0, 0.12);
+	font-family: var(--font-sans, system-ui, sans-serif);
+}
+
+.pi-mark {
+	grid-column: 1 / -1;
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 8mm;
+	border-bottom: 0.4mm solid #111111;
+	padding-bottom: 4mm;
+}
+
+.pi-wordmark {
+	font-family: var(--font-display, system-ui, sans-serif);
+	font-size: 7mm;
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	margin: 0;
+}
+
+.pi-kicker {
+	font-family: var(--font-mono, ui-monospace, monospace);
+	font-size: 2.8mm;
+	letter-spacing: 0.18em;
+	text-transform: uppercase;
+	color: #555555;
+	margin: 0;
+}
+
+.pi-body h1 {
+	margin: 0 0 3mm;
+	font-family: var(--font-display, system-ui, sans-serif);
+	font-size: 8mm;
+	line-height: 1.15;
+	letter-spacing: -0.02em;
+}
+
+.pi-edition {
+	margin: 0 0 6mm;
+	font-family: var(--font-mono, ui-monospace, monospace);
+	font-size: 4.6mm;
+	letter-spacing: 0.02em;
+}
+
+.pi-facts {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 4mm 8mm;
+	margin: 0;
+}
+.pi-facts dt {
+	margin: 0 0 1mm;
+	font-family: var(--font-mono, ui-monospace, monospace);
+	font-size: 2.6mm;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: #666666;
+}
+.pi-facts dd {
+	margin: 0;
+	font-size: 3.4mm;
+	line-height: 1.4;
+	overflow-wrap: anywhere;
+}
+
+.pi-qr-block {
+	text-align: center;
+	align-self: center;
+}
+.pi-qr {
+	width: 42mm;
+	height: 42mm;
+	display: block;
+	margin: 0 auto 2mm;
+}
+.pi-qr-caption {
+	margin: 0;
+	font-family: var(--font-mono, ui-monospace, monospace);
+	font-size: 2.6mm;
+	letter-spacing: 0.06em;
+	color: #444444;
+}
+
+.pi-foot {
+	grid-column: 1 / -1;
+	border-top: 0.3mm solid rgba(0, 0, 0, 0.2);
+	padding-top: 3mm;
+	font-size: 2.7mm;
+	line-height: 1.5;
+	color: #444444;
+	display: flex;
+	justify-content: space-between;
+	gap: 6mm;
+}
+.pi-foot code {
+	font-family: var(--font-mono, ui-monospace, monospace);
+	overflow-wrap: anywhere;
+}
+
+/* ── print ────────────────────────────────────────────────────────────── */
+
+@page {
+	size: A5 landscape;
+	margin: 0;
+}
+
+@media print {
+	.pi-toolbar,
+	.pi-status {
+		display: none !important;
+	}
+	.pi-root {
+		padding: 0;
+		max-width: none;
+	}
+	.pi-card {
+		border: 0;
+		border-radius: 0;
+		width: 100%;
+		min-height: 100vh;
+		page-break-inside: avoid;
+	}
+}

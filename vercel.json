@@ -1765,6 +1765,10 @@
 			"dest": "/likeness-bench.html"
 		},
 		{
+			"src": "/payment-outcomes/?",
+			"dest": "/payment-outcomes.html"
+		},
+		{
 			"src": "/examples/?",
 			"dest": "/examples.html"
 		},
@@ -5385,6 +5389,10 @@
 			"dest": "/legal/risk.html"
 		},
 		{
+			"src": "/legal/nvidia-ngc-eula/?",
+			"dest": "/legal/nvidia-ngc-eula.html"
+		},
+		{
 			"src": "/content-policy/?",
 			"dest": "/legal/content-policy.html"
 		},
@@ -6320,6 +6328,10 @@
 		{
 			"path": "/api/cron/companion-poll",
 			"schedule": "*/2 * * * *"
+		},
+		{
+			"path": "/api/cron/print-orders-sync",
+			"schedule": "17 * * * *"
 		},
 		{
 			"path": "/api/cron/feedback-triage",

@@ -31,6 +31,7 @@ import { loadMeshFromUrl, MeshIoError } from '../_lib/print/mesh-io.js';
 import { analyzeMesh } from '../_lib/print/analyze.js';
 import { loadCatalog, materialFits, quotePrint, signQuote } from '../_lib/print/quote.js';
 import { getPublicCreation } from '../_lib/forge-store.js';
+import { loadLineage, runFabricationGate } from '../_lib/print/gate.js';
 import { holderDiscountBps } from '../_lib/three-tier.js';
 
 // One analysis per source model, held for an hour. The report is deterministic
@@ -111,6 +112,31 @@ export default wrap(async (req, res) => {
 		throw err;
 	}
 
+	// The fabrication gate, first run point. It is deterministic here (no model
+	// call) so a price is never gated on a third-party provider being up, and it
+	// runs BEFORE any money is quoted: a refusal at this point costs the buyer
+	// nothing. The paid order is screened again, thoroughly, on the way to the
+	// printer. See api/_lib/print/gate.js and specs/PRINT_PIPELINE.md.
+	const lineage = await loadLineage(source.creationId);
+	const gate = await runFabricationGate({
+		stage: 'quote',
+		lineageText: lineage.text || source.creation?.prompt || '',
+		modelTitle: typeof body.title === 'string' ? body.title : '',
+		buyerNote: typeof body.note === 'string' ? body.note : '',
+		analysis: report,
+	});
+	if (gate.verdict === 'refuse') {
+		// 451 rather than a 200 with a flag: an agent lane must be able to branch
+		// on the status alone, and a refused order must never reach a paid call.
+		return error(res, 451, 'fabrication_refused', gate.message, {
+			category: gate.category,
+			label: gate.label,
+			allowed: gate.allowed,
+			policy_url: gate.policy_url,
+			stage: gate.stage,
+		});
+	}
+
 	const catalog = loadCatalog();
 	const base = {
 		report,
@@ -122,6 +148,10 @@ export default wrap(async (req, res) => {
 		// and bounds its size slider from this, so a buyer never drags into a
 		// rejection the server could have predicted.
 		fits: materialFits({ report, catalog: loadCatalog() }),
+		// The verdict rides along so the page and the agent lane can see that a
+		// screening pass will run after payment, rather than discovering it as a
+		// surprise rejection later.
+		screening: { verdict: gate.verdict, stage: gate.stage, policy_url: gate.policy_url },
 	};
 
 	// No material chosen: this is the analyze call. Free, keyless, no price.
