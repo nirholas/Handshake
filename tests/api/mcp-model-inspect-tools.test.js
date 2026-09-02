@@ -59,15 +59,28 @@ beforeEach(() => {
 });
 
 describe('model MCP tools: registration', () => {
-	it('registers three deterministic, public inspection tools', () => {
-		expect(toolDefs.map((t) => t.name)).toEqual(['validate_model', 'inspect_model', 'optimize_model']);
+	it('registers four deterministic, public inspection tools', () => {
+		expect(toolDefs.map((t) => t.name)).toEqual([
+			'validate_model',
+			'inspect_model',
+			'optimize_model',
+			'diff_models',
+		]);
 		for (const t of toolDefs) {
 			expect(t.scope).toBeUndefined();
 			expect(t.annotations).toEqual({
 				readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true,
 			});
+		}
+		// The three single-model tools take one url; diff_models is the only one
+		// that reads two, so it names them rather than reusing `url`.
+		for (const t of toolDefs.filter((x) => x.name !== 'diff_models')) {
 			expect(t.inputSchema.required).toEqual(['url']);
 		}
+		expect(toolDefs.find((t) => t.name === 'diff_models').inputSchema.required).toEqual([
+			'before',
+			'after',
+		]);
 	});
 });
 

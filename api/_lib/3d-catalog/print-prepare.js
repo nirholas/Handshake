@@ -95,9 +95,9 @@ export default {
 			'POST /api/print/prepare {"creationId":"6f1b…","materialId":"resin-standard","targetHeightMm":120,"hollow":true}',
 		response: {
 			assets: {
-				stl: 'https://cdn.three.ws/print/6f1b….stl',
-				threemf: 'https://cdn.three.ws/print/6f1b….3mf',
-				glb: 'https://cdn.three.ws/print/6f1b….glb',
+				stl: 'https://three.ws/cdn/print/prepared/6f1b…/model.stl',
+				threemf: 'https://three.ws/cdn/print/prepared/6f1b…/model.3mf',
+				glb: 'https://three.ws/cdn/print/prepared/6f1b…/model.glb',
 				bytes: { stl: 233684, threemf: 118220, glb: 402113 },
 			},
 			before: { version: 1, manifold: false, open_edges: 214, score: 62 },

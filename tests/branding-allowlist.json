@@ -568,5 +568,35 @@
 		"pattern": "Mixamo (`mixamorigHead`), VRM, Avaturn, Unreal, Daz, MakeHuman, or Blender",
 		"file": "docs/tutorials/upload-custom-glb.md",
 		"reason": "The repair instruction has to name the conventions the canonicalizer recognizes so a reader knows what to rename their bones to; technical identifiers rather than product copy."
+	},
+	{
+		"pattern": "Avaturn, VRM, Unreal and Daz bone names",
+		"file": "pages/motion.html",
+		"reason": "Names a supported skeleton naming convention, not a partner or product. src/glb-canonicalize.js maps this rig format onto the canonical set, and CLAUDE.md's universal-animation rule requires documenting the conventions we accept, so the list is a technical identifier the way the existing \"Mixamo, Avaturn, Unreal\" entries are."
+	},
+	{
+		"pattern": "Ready Player Me, Avaturn, VRM, Mixamo and Blender rigs",
+		"file": "docs/api-reference.md",
+		"reason": "Names a supported skeleton naming convention, not a partner or product. src/glb-canonicalize.js maps this rig format onto the canonical set, and CLAUDE.md's universal-animation rule requires documenting the conventions we accept, so the list is a technical identifier the way the existing \"Mixamo, Avaturn, Unreal\" entries are."
+	},
+	{
+		"pattern": "Mixamo, Avaturn, VRM, Unreal, Daz, MakeHuman, and Blender conventions",
+		"file": "docs/mobile-launch/aws-builder-center-article.md",
+		"reason": "Names a supported skeleton naming convention, not a partner or product. src/glb-canonicalize.js maps this rig format onto the canonical set, and CLAUDE.md's universal-animation rule requires documenting the conventions we accept, so the list is a technical identifier the way the existing \"Mixamo, Avaturn, Unreal\" entries are."
+	},
+	{
+		"pattern": "Mixamo, Avaturn, VRM and VRoid, Unreal, Daz and Genesis",
+		"file": "docs/mobile-launch/x-article.md",
+		"reason": "Names a supported skeleton naming convention, not a partner or product. src/glb-canonicalize.js maps this rig format onto the canonical set, and CLAUDE.md's universal-animation rule requires documenting the conventions we accept, so the list is a technical identifier the way the existing \"Mixamo, Avaturn, Unreal\" entries are."
+	},
+	{
+		"pattern": "Mixamo, Avaturn, Unreal, VRM, Daz, MakeHuman and plain",
+		"file": "docs/nvidia-forum-browser-digital-human.md",
+		"reason": "Names a supported skeleton naming convention, not a partner or product. src/glb-canonicalize.js maps this rig format onto the canonical set, and CLAUDE.md's universal-animation rule requires documenting the conventions we accept, so the list is a technical identifier the way the existing \"Mixamo, Avaturn, Unreal\" entries are."
+	},
+	{
+		"pattern": "the RPM, Avaturn, and MetaHuman spellings",
+		"file": "docs/nvidia-forum-browser-digital-human.md",
+		"reason": "Names a supported blendshape naming convention, not a partner or product. src/voice/arkit-blendshapes.js canonicalizes these morph-name spellings onto the ARKit set; same category as the skeleton-convention entries."
 	}
 ]

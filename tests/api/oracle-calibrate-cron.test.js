@@ -74,18 +74,23 @@ describe('GET/POST /api/cron/oracle-calibrate', () => {
 	});
 
 	it('a confident winning band computes factor = observed / predicted', async () => {
-		// Five closed trades scored 90, four of them winners: observed 0.8. The
+		// Five closed trades scored 90, three of them winners: observed 0.6. The
 		// prediction is what the score CLAIMS, not the score over 100: a 90 claims
-		// P=0.679, so the factor is 0.8/0.679, comfortably inside the clamp.
+		// P=0.607, so the factor is 0.6/0.607, comfortably inside the clamp. Four
+		// winners would read 0.8/0.607 = 1.32 and hit the ceiling instead, which is
+		// the next test's job, not this one's.
 		sqlMock.mockResolvedValueOnce(
-			Array.from({ length: 5 }, (_, i) => ({ score: 90, win: i < 4 ? 1 : 0, pnl_pct: 10 })),
+			Array.from({ length: 5 }, (_, i) => ({ score: 90, win: i < 3 ? 1 : 0, pnl_pct: 10 })),
 		);
 		const res = await call();
 		const band = res.body.bands.find((b) => b.band === '85-100');
 		expect(band.samples).toBe(5);
-		expect(band.observed_rate).toBe(0.8);
-		expect(band.correction_factor).toBeCloseTo(0.8 / probabilityFromScore(90), 3);
+		expect(band.observed_rate).toBe(0.6);
+		expect(band.correction_factor).toBeCloseTo(0.6 / probabilityFromScore(90), 3);
+		// Untouched by either end of the [0.7, 1.3] clamp, so the assertion above
+		// is measuring the ratio and not the ceiling.
 		expect(band.correction_factor).toBeLessThan(1.3);
+		expect(band.correction_factor).toBeGreaterThan(0.7);
 	});
 
 	it('clamps the factor at 1.3 for a band that always wins', async () => {
