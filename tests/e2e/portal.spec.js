@@ -5,14 +5,18 @@
 // It runs against the Vite dev server, whose /api/* is proxied to a real API
 // (production by default), so the world under test is built from a real page.
 import { test, expect } from '@playwright/test';
+import { collectPageErrors } from './_support.js';
 
 const TARGET = 'example.com';
 
 test.describe('/portal', () => {
 	test('builds a world from an address and lets a visitor walk it', async ({ page }) => {
 		test.setTimeout(180_000);
-		const failures = [];
-		page.on('pageerror', (err) => failures.push(err.message));
+		// Product errors only. The Vite dev client's HMR websocket cannot reach a
+		// forwarded Codespace port, so it throws "WebSocket closed without opened"
+		// on every run; that client does not exist in the built site this spec is
+		// standing in for. collectPageErrors filters that class and nothing else.
+		const failures = collectPageErrors(page);
 
 		await page.goto(`/portal?url=${encodeURIComponent(TARGET)}`);
 
