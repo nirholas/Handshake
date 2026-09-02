@@ -1,7 +1,7 @@
 ---
 name: four-meme-ai
 description: >-
-  Full-featured Four.meme AI agent skill for BSC meme token operations — create tokens,
+  Full-featured Four.meme AI agent skill for BSC meme token operations: create tokens,
   buy/sell execution, rankings, quotes, tax info, on-chain events, send BNB/ERC-20,
   and ERC-8004 agent identity registration. Installable via CLI or npm.
 license: MIT-0

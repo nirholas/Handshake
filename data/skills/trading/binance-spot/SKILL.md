@@ -251,7 +251,7 @@ Environment: Mainnet
 
 ### Listing Accounts
 
-When listing accounts, show names and environment only — never keys:
+When listing accounts, show names and environment only, never keys:
 Binance Accounts:
 * main (Mainnet/Testnet)
 * testnet-dev (Testnet)
