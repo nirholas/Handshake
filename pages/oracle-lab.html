@@ -31,8 +31,8 @@
 			--lab-faint: #5c6273;
 			--lab-accent: #8b5cf6;
 			--lab-good: #34d399;
-			--lab-bad: #f87171;
-			--lab-warn: #fbbf24;
+			--lab-bad: var(--danger);
+			--lab-warn: var(--warn);
 			--lab-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
 		}
 		html[data-theme="light"] {
@@ -135,7 +135,7 @@
 		pre { margin: 0; padding: 15px 16px; border-radius: 12px; background: #0b0d14; border: 1px solid var(--lab-border); overflow-x: auto; }
 		html[data-theme="light"] pre { background: #12151f; }
 		code { font-family: var(--lab-mono); font-size: 12.6px; line-height: 1.65; color: #d7dbe8; }
-		.tok-k { color: #c084fc; } .tok-s { color: #86efac; } .tok-c { color: #64748b; } .tok-n { color: #fbbf24; }
+		.tok-k { color: #c084fc; } .tok-s { color: #86efac; } .tok-c { color: #64748b; } .tok-n { color: var(--warn); }
 
 		/* misc */
 		.note { border-left: 2px solid var(--lab-accent); padding: 2px 0 2px 14px; color: var(--lab-muted); font-size: 13.5px; line-height: 1.65; margin: 14px 0 0; }
