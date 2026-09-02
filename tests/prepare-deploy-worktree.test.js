@@ -28,9 +28,16 @@ function plan(args) {
 }
 
 describe('ARTIFACTS', () => {
-	it('covers all three artifacts the runbook requires, none of them optional', () => {
+	it('covers every artifact a fresh worktree cannot produce, none of them optional', () => {
 		const required = ARTIFACTS.filter((a) => !a.optional).map((a) => a.rel);
-		expect(required).toEqual(['node_modules', 'chat/node_modules', 'character-studio/build']);
+		expect(required).toEqual([
+			'node_modules',
+			'chat/node_modules',
+			'character-studio/build',
+			// Gitignored, so a fresh worktree has agent-payments-sdk/ source with
+			// no entry behind its package.json main/module/exports.
+			'agent-payments-sdk/dist',
+		]);
 	});
 
 	it('can regenerate every required artifact except the root dependency tree', () => {

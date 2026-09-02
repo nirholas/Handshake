@@ -86,6 +86,23 @@ export const ARTIFACTS = [
 		optional: true,
 		why: 'an in-worktree avatar-studio rebuild',
 	},
+	{
+		// The workspace symlink node_modules/@three-ws/agent-payments resolves to
+		// ../../agent-payments-sdk, whose package.json main/module/exports all
+		// point into dist/. dist/ is gitignored, so a fresh worktree carries the
+		// package source with no entry behind it, and every importer dies with
+		// "Failed to resolve entry for package @three-ws/agent-payments" rather
+		// than naming the artifact that is actually missing.
+		rel: 'agent-payments-sdk/dist',
+		build: ['npm', ['run', 'build', '--prefix', 'agent-payments-sdk']],
+		why: 'anything importing @three-ws/agent-payments, which otherwise fails to resolve its entry',
+	},
+	{
+		rel: 'agent-payments-sdk/node_modules',
+		build: null,
+		optional: true,
+		why: 'an in-worktree agent-payments-sdk rebuild',
+	},
 ];
 
 /** Env files copied (never hardlinked: a deploy tree must not share their inode). */

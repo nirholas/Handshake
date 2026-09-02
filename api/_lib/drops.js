@@ -201,7 +201,7 @@ export function scoreRarity(items, supply = items.length) {
 	const counts = new Map();
 	for (const item of items) {
 		for (const t of item.traits) {
-			const k = `${t.layer} ${t.value}`;
+			const k = `${t.layer}\u0000${t.value}`;
 			counts.set(k, (counts.get(k) || 0) + 1);
 		}
 	}
@@ -209,7 +209,7 @@ export function scoreRarity(items, supply = items.length) {
 	const scored = items.map((item) => {
 		let score = 0;
 		for (const t of item.traits) {
-			const seen = counts.get(`${t.layer} ${t.value}`) || 1;
+			const seen = counts.get(`${t.layer}\u0000${t.value}`) || 1;
 			score += supply / seen;
 		}
 		return { ...item, rarity_score: round4(score) };
@@ -344,14 +344,14 @@ export function itemPrompt({ style, traits, layers }) {
 	const promptByPair = new Map();
 	for (const layer of layers) {
 		for (const option of layer.options) {
-			promptByPair.set(`${layer.key} ${option.value}`, option.prompt);
+			promptByPair.set(`${layer.key}\u0000${option.value}`, option.prompt);
 		}
 	}
 
 	const order = new Map(layers.map((l, i) => [l.key, i]));
 	const fragments = [...traits]
 		.sort((a, b) => (order.get(a.layer) ?? 0) - (order.get(b.layer) ?? 0))
-		.map((t) => promptByPair.get(`${t.layer} ${t.value}`) || t.value)
+		.map((t) => promptByPair.get(`${t.layer}\u0000${t.value}`) || t.value)
 		.filter(Boolean);
 
 	const base = String(style || '').trim();
