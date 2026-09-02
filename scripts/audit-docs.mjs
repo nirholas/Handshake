@@ -71,6 +71,14 @@ const SKIP_FILES = new Set(['docs/ALL.md', 'docs/EVERYTHING.md', 'EVERYTHING.md'
 // files that no longer exist. Audited only when named explicitly.
 const SKIP_TREES = ['prompts', 'tasks'];
 
+// Link targets a build step writes rather than git tracking. .gitignore excludes
+// them on purpose (marketing/*/kit/*.png and its images/ are rebuilt by
+// `npm run build:x-grid`), so they are absent in a fresh clone or deploy worktree
+// and present only where someone has already run the generator. Requiring them on
+// disk makes this audit pass on build state instead of on the docs, and the doc
+// that links one already tells the reader which command regenerates it.
+const GENERATED_LINK_TARGETS = [/^marketing\/[^/]+\/kit\/(images\/)?[^/]+\.(png|jpg|jpeg|webp|gif|mp4)$/];
+
 const readJson = (p) => JSON.parse(readFileSync(resolve(root, p), 'utf8'));
 
 // ---------------------------------------------------------------- route table
@@ -200,6 +208,8 @@ const auditFile = (file) => {
 			} catch {
 				continue; // malformed escape, not our business to guess
 			}
+			const fromRoot = relative(root, resolve(dir, decoded));
+			if (GENERATED_LINK_TARGETS.some((rx) => rx.test(fromRoot))) continue; // built, not tracked
 			if (!existsSync(resolve(dir, decoded))) report(file, lineNo, 'dead-link', target);
 		}
 
