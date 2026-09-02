@@ -4,7 +4,7 @@ Everything needed to package three.ws as an Android app and publish it: the Mobi
 
 **Next: v1.1.0 (versionCode 2) adds the Agent glance home screen widget** ([../docs/native-widgets.md](../docs/native-widgets.md)); it is built and emulator-verified (2026-08-29) and ships once its API lane is deployed.
 
-**Status: v1.0.0 submitted to the Solana dApp Store on 2026-08-28 and in review** (release `#331044442814`, versionCode 1). The reviewed bytes are the `v1.0.0` GitHub release. Identifiers and what the portal recorded: [../docs/seeker-submission-day.md](../docs/seeker-submission-day.md).
+**Status: v1.0.0 approved and live on the Solana dApp Store** (submitted 2026-08-28, approved 2026-09-01) (release `#331044442814`, versionCode 1). The reviewed bytes are the `v1.0.0` GitHub release. Identifiers and what the portal recorded: [../docs/seeker-submission-day.md](../docs/seeker-submission-day.md).
 
 **One package id, two channels.** `ws.three.app` ships to the Solana dApp Store (Seeker and Saga, listing copy in `publish/`) and to Google Play (every Android phone, listing copy and submission runbook in [`publish-play/`](publish-play/README.md)). Same build, same app, two store listings that must describe the same product. The Play path has one trap with no local symptom, and it is documented in `publish-play/README.md` step 6: Play re-signs the bundle with Google's own key, so Google's certificate fingerprint has to be added to `twa/extra-fingerprints.json` or every Play install loses full-screen mode.
 
