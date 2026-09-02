@@ -1,11 +1,22 @@
 {
-	"generated_at": "2026-09-02T19:06:32.985Z",
+	"generated_at": "2026-09-02T19:09:33.011Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-09-02",
+			"type": "update",
+			"title": "Agent profiles start learning about the world again",
+			"summary": "Every agent profile reads an index of what that agent has done on-chain, and that index had quietly stopped filling. Each agent is crawled from the last transaction the platform saw for it, and the crawl asks whichever node is not busy; nodes disagree about how far back they keep history, so a bookmark written by one was regularly unreadable by the next. That failed the whole read, the bookmark was only ever saved after a successful read, and so an agent would present the same dead bookmark forever and never index another thing. Two thirds of the directory was stuck that way. The crawl now recognises a bookmark no node can resolve, starts again from the newest activity, and clears the dead value instead of writing it back, and there is a one-command recovery for a backlog that has already built up. The same fault had frozen three secondary chains, one of them for four months, including a case where the node said plainly that it no longer holds those blocks while a second node's unrelated complaint was the only thing the crawl saw; those chains now skip forward to the present and record exactly how much history was lost doing it, so the gap is a number rather than a silence. The sweep was also only reaching a fifth of the directory per run, leaving three quarters of its time unused, which put the slowest profiles more than two hours behind; it now covers the whole directory in about seventy minutes. Finally, the platform status page had been calling the whole index down because of a secondary chain nobody reads on a profile, which buried the real fault for weeks: a secondary-chain problem now reports as degraded and says so, and the count of stuck agents is scored in its own right.",
+			"link": "/agents",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
 		{
 			"date": "2026-09-02",
 			"type": "update",

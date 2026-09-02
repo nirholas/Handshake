@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-02T19:06:32.874Z",
+	"generated_at": "2026-09-02T19:09:32.966Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -5380,7 +5380,7 @@
 				{
 					"path": "/docs/okx-marketplace",
 					"title": "Docs: OKX.AI marketplace services",
-					"description": "The 3D services three.ws sells to other AI agents on OKX.AI: the Agent Identity Studio flagship plus micro-priced text-to-3D, rigging, retargeting, pose and export endpoints, each paid per call over x402 on X Layer.",
+					"description": "The 3D services three.ws sells to other AI agents on OKX.AI. The listed line-up is three.ws Forge: a text description or reference images become a downloadable GLB with a browser viewer and an augmented-reality link, in four price tiers, with job status, the catalog and live health free. Each paid call settles over x402 on X Layer.",
 					"added": null,
 					"auth": null,
 					"indexable": true,

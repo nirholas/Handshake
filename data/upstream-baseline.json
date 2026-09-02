@@ -1,20 +1,20 @@
 {
 	"generated": "scripts/audit-upstreams.mjs",
 	"summary": {
-		"total": 224,
+		"total": 225,
 		"grades": {
 			"A": 0,
 			"B": 54,
-			"C": 91,
+			"C": 92,
 			"D": 79,
 			"F": 0
 		},
 		"protections": {
-			"deadline": 224,
-			"retry": 96,
+			"deadline": 225,
+			"retry": 97,
 			"failover": 49,
 			"lastGood": 5,
-			"breaker": 87
+			"breaker": 88
 		}
 	},
 	"sites": {
@@ -194,6 +194,7 @@
 		"src/agent-skills-pumpfun-compose.js::pump-fun-sdk.modelcontextprotocol.name::fetch": "D",
 		"src/erc8004/agent-registry.js::api.pinata.cloud::fetch": "D",
 		"src/shared/wallet-networth.js::lite-api.jup.ag::fetch": "D",
-		"src/social/x-post-impact.js::publish.twitter.com::fetch": "D"
+		"src/social/x-post-impact.js::publish.twitter.com::fetch": "D",
+		"api/_lib/print/ops-notify.js::api.telegram.org::fetchUpstream": "C"
 	}
 }

@@ -194,7 +194,10 @@ export class PlayOnboard {
 
 		this._keyFn = (e) => {
 			if (!this._overlay) return;
-			if (e.key === 'Escape') { e.preventDefault(); this._dismiss(); }
+			// Escape tears the card down, which nulls `_overlay`. Return on the spot:
+			// the focus check below dereferences it, and falling through threw
+			// "Cannot read properties of null" on every Escape.
+			if (e.key === 'Escape') { e.preventDefault(); this._dismiss(); return; }
 			// Arrows page the card ONLY while it holds focus. They are also the
 			// avatar's movement keys, and this card is deliberately non-blocking
 			// ("start walking the moment the world loads"), so swallowing left/right
