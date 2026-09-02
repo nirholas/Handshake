@@ -31,7 +31,7 @@ production are routinely dead and a chain that depends on them fails:
 | 10 | Gemini Flash-Lite (AI Studio) | `GEMINI_API_KEY` | free | not configured in prod |
 | 11 | **Vertex Gemini Flash** | GCP service account | GCP credits | **serving**, the reliability anchor |
 | 12 | Pollinations `openai-fast` | none (keyless) | free | **serving** (200, ~3.7s, 2026-08-02) |
-| 13 | LLM7.io `gemini-3.1-flash-lite` | none (keyless) | free | added 2026-08-05, the third keyless rung |
+| 13 | LLM7.io `gemini-3.1-flash-lite` | `LLM7_API_KEY` | free | **dead without a key**: llm7.io retired the anonymous tier it was added on, and every unauthenticated call answers 401 `invalid_api_key` (measured 2026-09-02, the `unused` token its docs used to accept included). Key-gated since, so a deployment without the key skips it. Free key at https://dash.llm7.io/#/api-keys |
 | 14 | SiliconFlow `Qwen/Qwen3-8B` | `SILICONFLOW_API_KEY` | free | added 2026-08-05; skipped when the key is unset |
 | 15 | Groq `llama-3.1-8b-instant` | `GROQ_API_KEY` | free | serving (separate per-model quota) |
 | 16 | Vertex Claude | GCP service account + `VERTEX_CLAUDE_ENABLED=1` | GCP credits | **off and unentitled** (see below) |
@@ -42,7 +42,11 @@ production are routinely dead and a chain that depends on them fails:
 
 The 2026-08-05 widening (SambaNova, Mistral, Z.AI, Cloudflare, LLM7,
 SiliconFlow) added six independent free quota pools; each is documented with
-its tier limits in `docs/free-llm-providers.md`.
+its tier limits in `docs/free-llm-providers.md`. LLM7 joined that round as a
+keyless rung and is no longer one (row 13), so the keyless floor a zero-env
+deployment falls to is OVH and Pollinations, two rungs rather than three. Both
+answered 429 from this workspace's shared egress IP on 2026-09-02, so treat the
+keyless floor as best-effort: it is a real lane, not a substitute for a key.
 
 Rungs 1 to 15 are not a degradation path any more. They are production. Every
 one of them is covered by a transport-level failover test

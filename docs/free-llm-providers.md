@@ -6,7 +6,7 @@ The chain lives in [`api/_lib/llm.js`](../api/_lib/llm.js) (`providerChain()` + 
 
 ## The chain, in order
 
-Free rungs run first, 70B-class models before smaller ones. A keyed rung is skipped when its env var is unset; the three keyless rungs are always present, so the chain can never be empty.
+Free rungs run first, 70B-class models before smaller ones. A keyed rung is skipped when its env var is unset; the two keyless rungs (OVH, Pollinations) are always present, so the chain can never be empty.
 
 | # | Rung | Model | Key | Free tier |
 |---|------|-------|-----|-----------|
@@ -22,7 +22,7 @@ Free rungs run first, 70B-class models before smaller ones. A keyed rung is skip
 | 10 | Gemini (AI Studio) | `gemini-2.5-flash-lite` | `GEMINI_API_KEY` | AI Studio free tier, no card. [aistudio.google.com](https://aistudio.google.com) |
 | 11 | Vertex Gemini | `google/gemini-2.5-flash` | GCP service account | The reliability anchor: billed to platform GCP credits, no third-party quota. |
 | 12 | Pollinations | `openai-fast` | none (keyless) | Anonymous, always on. |
-| 13 | LLM7.io | `gemini-3.1-flash-lite` | none (keyless) | Anonymous, about 30 req/min per IP. |
+| 13 | LLM7.io | `gemini-3.1-flash-lite` | `LLM7_API_KEY` | About 30 req/min per IP. Was keyless until llm7.io retired its anonymous tier; unauthenticated calls answer 401 `invalid_api_key` (measured 2026-09-02), so the rung is skipped without a key. Free key at https://dash.llm7.io/#/api-keys |
 | 14 | SiliconFlow | `Qwen/Qwen3-8B` | `SILICONFLOW_API_KEY` | Free-tier small model, own quota pool. [siliconflow.com](https://siliconflow.com) |
 | 15 | Groq instant | `openai/gpt-oss-20b` | `GROQ_API_KEY` | Separate per-model quota from rung 1. |
 

@@ -603,7 +603,7 @@ describe('llmComplete — failure modes', () => {
 			},
 			text: async () => 'not json',
 		};
-		// Every reachable lane (groq + the three keyless rungs) returns garbage.
+		// Every reachable lane (groq + the two keyless rungs) returns garbage.
 		installFetch({ [GROQ_HOST]: badBody, [OVH_HOST]: badBody, [POLLINATIONS_HOST]: badBody, [LLM7_HOST]: badBody });
 		await expect(llm.llmComplete({ system: 's', user: 'u' })).rejects.toMatchObject({
 			status: 502,
