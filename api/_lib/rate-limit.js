@@ -2005,6 +2005,13 @@ export const limits = {
 	// self-pay tx — tighter than a generic read bucket, keyed per IP since the
 	// whole point is a caller with no wallet history to key on.
 	bnbRegisterIp: (ip) => getLimiter('bnb:register:ip', { limit: 10, window: '10 m', critical: true }).limit(ip),
+
+	// Materialize printability + quote (api/print/quote.js). Each miss downloads a
+	// GLB and runs the mesh analysis, so the bucket is sized for a human moving the
+	// size slider (results are cached per model, so only the first call costs) while
+	// stopping a script from using the analyzer as a free mesh-processing service.
+	printQuoteIp: (ip) =>
+		getLimiter('print:quote:ip', { limit: 90, window: '5 m', local: true }).limit(ip),
 };
 
 // ── Fail-closed limiter call for privacy-boundary reads (H7) ─────────────────

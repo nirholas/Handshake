@@ -10,7 +10,7 @@
 //   - the quote path calls assertEditionAvailable() BEFORE any money moves, so
 //     a sold-out model refuses at the price, never after the payment;
 //   - the certificate issuer claims the next edition number atomically at ship
-//     time (api/_lib/print/certificate.js) and freezes the cap onto the row,
+//     time (api/_lib/print/certificate.js) and freezes the cap onto the row;
 //   - the creator sets it through setEditionLimit(), which refuses to cap a
 //     series below what has already shipped.
 //
