@@ -44,6 +44,23 @@
 // authoritative copy, and the only source on a machine whose .env lacks it).
 // It is never hardcoded.
 
+// `--oidc` additionally attaches a Cloud Scheduler OIDC identity token, the
+// second lock the edge gate (server/cron-edge-auth.mjs) can verify. It exists
+// as a flag rather than a default because of a trap that would otherwise take
+// the whole fleet down at once: Cloud Scheduler puts its OIDC token in the
+// `Authorization` header, so attaching one DESTROYS the `Authorization: Bearer
+// $CRON_SECRET` the jobs authenticate with today. `--oidc` therefore moves the
+// secret to `X-Cron-Secret` (which api/_lib/cron-auth.js has always accepted)
+// in the same update, so both credentials arrive and nothing is ever running on
+// only one of them:
+//
+//   node scripts/create-gcp-scheduler.mjs --env-file <prod.env> --oidc --only uptime-check   # one job first
+//   node scripts/create-gcp-scheduler.mjs --env-file <prod.env> --oidc                        # then the fleet
+//
+// The audience defaults to the Cloud Run service URL and must match
+// CRON_OIDC_AUDIENCE on the service; the service account defaults to the
+// runtime SA and must match CRON_OIDC_SERVICE_ACCOUNT.
+
 import { readFileSync } from 'node:fs';
 import { execFile, execFileSync } from 'node:child_process';
 import './lib/gcloud-path.mjs';
@@ -60,6 +77,13 @@ const SERVICE_URL = 'https://three-ws-api-lp642k3kpa-uc.a.run.app';
 const CONCURRENCY = 8;
 // Scheduler's own request deadline; the longest handler maxDuration is 300s.
 const ATTEMPT_DEADLINE = '320s';
+
+// The identity `--oidc` asks Cloud Scheduler to mint. The service account is
+// the Cloud Run runtime SA (server/cloudbuild.yaml pins the same one), and the
+// audience is the service URL. Both are echoed by the edge gate's env vars; a
+// mismatch on either is a 401 at the edge, not a silent pass.
+const OIDC_SERVICE_ACCOUNT = 'three-ws@aerial-vehicle-466722-p5.iam.gserviceaccount.com';
+const OIDC_AUDIENCE = SERVICE_URL;
 
 /**
  * Scheduler job id for a cron path: `/api/cron/economy-tick` →
@@ -177,7 +201,36 @@ async function gcloud(cmdArgs) {
 	);
 }
 
-async function syncJob({ path: cronPath, schedule }, { secret, stateAction }) {
+/**
+ * The credential flags for one job.
+ *
+ * Without `--oidc` this is what it has always been: the secret as an
+ * `Authorization: Bearer`. With it, the secret moves to `X-Cron-Secret` and the
+ * Authorization header is REMOVED, because Cloud Scheduler owns that header
+ * once an OIDC token is attached and gcloud refuses a job that sets both. The
+ * move is the whole reason this is one function: emitting the OIDC flags
+ * without relocating the secret would leave every job authenticating on a
+ * header the scheduler is about to overwrite, and the fleet 401s in one sync.
+ *
+ * Exported for tests/cron-scheduler-sync.test.js, which asserts exactly that
+ * pairing rather than trusting the comment.
+ */
+export function credentialFlags(secret, { oidc = false, create = false } = {}) {
+	if (!oidc) {
+		return [create ? `--headers=Authorization=Bearer ${secret}` : `--update-headers=Authorization=Bearer ${secret}`];
+	}
+	const flags = [
+		create ? `--headers=X-Cron-Secret=${secret}` : `--update-headers=X-Cron-Secret=${secret}`,
+		`--oidc-service-account-email=${OIDC_SERVICE_ACCOUNT}`,
+		`--oidc-token-audience=${OIDC_AUDIENCE}`,
+	];
+	// A created job has no Authorization header to remove, and gcloud rejects
+	// --remove-headers for one that was never set.
+	if (!create) flags.push('--remove-headers=Authorization');
+	return flags;
+}
+
+async function syncJob({ path: cronPath, schedule }, { secret, stateAction, oidc }) {
 	const id = jobId(cronPath);
 	const common = [
 		`--schedule=${schedule}`,
@@ -189,11 +242,11 @@ async function syncJob({ path: cronPath, schedule }, { secret, stateAction }) {
 	let action;
 	try {
 		await gcloud(['describe', id]);
-		await gcloud(['update', 'http', id, ...common, `--update-headers=Authorization=Bearer ${secret}`]);
+		await gcloud(['update', 'http', id, ...common, ...credentialFlags(secret, { oidc })]);
 		action = 'updated';
 	} catch {
 		// gcloud creates a job ENABLED, which is what a freshly declared cron wants.
-		await gcloud(['create', 'http', id, ...common, `--headers=Authorization=Bearer ${secret}`]);
+		await gcloud(['create', 'http', id, ...common, ...credentialFlags(secret, { oidc, create: true })]);
 		action = 'created';
 	}
 	let state = action === 'created' ? 'ENABLED' : 'unchanged';
@@ -217,6 +270,8 @@ async function main() {
 		console.error(err.message);
 		process.exit(1);
 	}
+
+	const oidc = argv.includes('--oidc');
 
 	const secret = cronSecretFromArgs(argv) || process.env.CRON_SECRET || cronSecretFromService();
 	if (!secret) {
@@ -251,7 +306,7 @@ async function main() {
 			while (queue.length) {
 				const cron = queue.shift();
 				try {
-					const r = await syncJob(cron, { secret, stateAction });
+					const r = await syncJob(cron, { secret, stateAction, oidc });
 					results.push(r);
 					console.log(`${r.action} ${r.id} [${r.state}] (${cron.schedule})`);
 				} catch (err) {
@@ -270,6 +325,13 @@ async function main() {
 		stateAction
 			? `Run state: every synced job ${stateAction === 'pause' ? 'PAUSED' : 'RESUMED'} by --${stateAction}.`
 			: 'Run state: left untouched on existing jobs (pass --pause or --resume to change it).',
+	);
+	console.log(
+		oidc
+			? `Credentials: OIDC (${OIDC_SERVICE_ACCOUNT}, audience ${OIDC_AUDIENCE}) plus the secret moved to X-Cron-Secret.\n` +
+					'The edge gate accepts it once the service carries ' +
+					`CRON_OIDC_AUDIENCE=${OIDC_AUDIENCE} and CRON_OIDC_SERVICE_ACCOUNT=${OIDC_SERVICE_ACCOUNT}.`
+			: 'Credentials: Authorization: Bearer $CRON_SECRET (pass --oidc to also attach a Cloud Scheduler identity token).',
 	);
 	if (failures.length) process.exit(1);
 }

@@ -21,6 +21,7 @@ import {
 	cronSecretFromArgs,
 	cronSecretFromService,
 	selectCrons,
+	credentialFlags,
 } from '../scripts/create-gcp-scheduler.mjs';
 
 describe('runStateAction', () => {
@@ -196,5 +197,50 @@ describe('the documented cron count', () => {
 		expect(quotes, 'the count pattern matched nothing; the prose was reworded').toBeGreaterThanOrEqual(
 			QUOTING_FILES.length,
 		);
+	});
+});
+
+// The third way to take the fleet down in one command, and the one that reads
+// like an improvement while it does it. Cloud Scheduler owns the Authorization
+// header once an OIDC token is attached, so `--oidc` destroys the
+// `Authorization: Bearer $CRON_SECRET` the jobs authenticate with unless the
+// secret is relocated in the SAME update. api/_lib/cron-auth.js accepts
+// X-Cron-Secret precisely so it can be.
+describe('credentialFlags', () => {
+	const SECRET = 'sekrit';
+
+	it('sends the secret as a Bearer by default', () => {
+		expect(credentialFlags(SECRET, {})).toEqual([`--update-headers=Authorization=Bearer ${SECRET}`]);
+		expect(credentialFlags(SECRET, { create: true })).toEqual([`--headers=Authorization=Bearer ${SECRET}`]);
+	});
+
+	it('moves the secret to X-Cron-Secret whenever it attaches OIDC', () => {
+		for (const create of [false, true]) {
+			const flags = credentialFlags(SECRET, { oidc: true, create });
+			expect(
+				flags.some((f) => f.includes(`X-Cron-Secret=${SECRET}`)),
+				'--oidc without relocating the secret leaves every job authenticating on a header Cloud Scheduler overwrites',
+			).toBe(true);
+			expect(flags.some((f) => f.includes('Authorization=Bearer'))).toBe(false);
+			expect(flags.some((f) => f.startsWith('--oidc-service-account-email='))).toBe(true);
+			expect(flags.some((f) => f.startsWith('--oidc-token-audience='))).toBe(true);
+		}
+	});
+
+	it('clears the stale Authorization header on an update and not on a create', () => {
+		// gcloud refuses a job that sets Authorization alongside an OIDC token, and
+		// equally refuses removing a header a freshly created job never had.
+		expect(credentialFlags(SECRET, { oidc: true })).toContain('--remove-headers=Authorization');
+		expect(credentialFlags(SECRET, { oidc: true, create: true })).not.toContain('--remove-headers=Authorization');
+	});
+
+	it('names the same runtime service account Cloud Run is deployed with', () => {
+		// The edge gate matches CRON_OIDC_SERVICE_ACCOUNT against this exact email;
+		// a drift between the two is a 401 on every cron.
+		const deployed = readFileSync('server/cloudbuild.yaml', 'utf8');
+		const email = credentialFlags(SECRET, { oidc: true })
+			.find((f) => f.startsWith('--oidc-service-account-email='))
+			.split('=')[1];
+		expect(deployed).toContain(email);
 	});
 });
