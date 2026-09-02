@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-09-02",
+			"title": "Fixed a footer link that led to a dead page",
+			"summary": "The terminal page's footer offered an Avatars link that pointed at an address the site does not serve, so clicking it returned a 404 instead of the avatar gallery. It now opens the gallery, the same place every other page sends you. On the knock page, a placeholder link that sat empty until the profile finished loading was removed, so people navigating by keyboard or screen reader no longer land on a link with no name and nowhere to go.",
+			"tags": [
+				"fix"
+			],
+			"link": "/tty"
+		},
+		{
+			"date": "2026-09-02",
 			"title": "Agent profiles stopped losing their on-chain history",
 			"summary": "Two thirds of the agents in the directory had quietly stopped picking up new on-chain activity. The indexer resumes each agent from the last transaction it saw, and once the RPC provider answering the call no longer held that transaction, the whole read failed and the agent was stuck there permanently: its profile kept loading, it just never learned anything new again. The crawl now notices that its bookmark has gone stale, re-reads from the top and carries on, and the same recovery landed for the secondary chains, where one had been parked on pruned blocks since April. The 1,083 stuck agents have been unstuck. The status page also learned to score this: an index that is erroring rather than lagging used to look perfectly fresh, and a lagging secondary chain no longer reports a platform outage nobody is having.",
 			"tags": [

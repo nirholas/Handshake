@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Agent profiles stopped losing their on-chain history</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-02:Agent profiles stopped losing their on-chain history</guid>
+			<pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Two thirds of the agents in the directory had quietly stopped picking up new on-chain activity. The indexer resumes each agent from the last transaction it saw, and once the RPC provider answering the call no longer held that transaction, the whole read failed and the agent was stuck there permanently: its profile kept loading, it just never learned anything new again. The crawl now notices that its bookmark has gone stale, re-reads from the top and carries on, and the same recovery landed for the secondary chains, where one had been parked on pruned blocks since April. The 1,083 stuck agents have been unstuck. The status page also learned to score this: an index that is erroring rather than lagging used to look perfectly fresh, and a lagging secondary chain no longer reports a platform outage nobody is having.</description>
+		</item>
+		<item>
 			<title>Every showcased agent now has its own page</title>
 			<link>https://three.ws/spotlight</link>
 			<guid isPermaLink="false">2026-09-02:Every showcased agent now has its own page</guid>
@@ -21,6 +29,14 @@
 			<pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Three more runnable examples and a way to find them. The avatar can now speak a line you type: the free text-to-speech lane synthesizes it and a new speakAudio() method routes the audio through the same analyser the built-in voice uses, so the mouth follows the real waveform instead of miming. A second example calls the look_at_model tool on the public MCP server and shows exactly what an AI assistant sees when it inspects a mesh: four rendered angles plus a plain-language read on the geometry, which is how an agent judges its own output and decides to try again. A third reads the live tool list off that same server, so the page can never advertise a tool that was renamed or dropped. With seventeen examples the page also gets a filter: type to search names, descriptions and tags, or narrow by tag, and the lanes fold away as they empty. A deep link always wins over an active filter.</description>
+		</item>
+		<item>
+			<title>Fixed a footer link that led to a dead page</title>
+			<link>https://three.ws/tty</link>
+			<guid isPermaLink="false">2026-09-02:Fixed a footer link that led to a dead page</guid>
+			<pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The terminal page's footer offered an Avatars link that pointed at an address the site does not serve, so clicking it returned a 404 instead of the avatar gallery. It now opens the gallery, the same place every other page sends you. On the knock page, a placeholder link that sat empty until the profile finished loading was removed, so people navigating by keyboard or screen reader no longer land on a link with no name and nowhere to go.</description>
 		</item>
 		<item>
 			<title>The treasury's self-heal plan now only promises SOL it can actually move</title>
