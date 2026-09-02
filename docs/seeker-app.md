@@ -59,4 +59,4 @@ including every state it can be in and how it authenticates, is in
 Windows 11 already gets the same card through the installed PWA's manifest. macOS and iOS follow
 through a shared WidgetKit extension against the same endpoint and widget token; that is Phase 5
 of the [roadmap](../README.md#roadmap) and the scoped work order is
-[prompts/roadmap/native-widgets.md](../prompts/roadmap/native-widgets.md).
+[prompts/finish/roadmap-native-widgets.md](../prompts/finish/roadmap-native-widgets.md).

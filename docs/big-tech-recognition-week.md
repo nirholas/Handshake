@@ -76,11 +76,11 @@ submission target is the free keyless connector at
 Actions surface, all of which are live and re-verified.
 
 - **Package:** [`prompts/store-submissions/_generated/openai-submission.md`](../prompts/store-submissions/_generated/openai-submission.md) (7/7 policy PASS, real screenshots, real captured tool responses)
-- **Pre-submission verification pack:** [`prompts/openai-pr/00-START-HERE.md`](../prompts/openai-pr/00-START-HERE.md), with task 07 as the go/no-go gate
+- **Pre-submission verification pack:** [`prompts/finish/openai-pr-00-START-HERE.md`](../prompts/finish/openai-pr-00-START-HERE.md), with task 07 as the go/no-go gate
 - **Standing status:** Partner Network accepted 2026-07-14; organization verified; GPT Store listing live and public
 - **Open item:** the final submit in the partner portal
 
-Before the submit, run [`prompts/openai-pr/07-final-verification-and-submit.md`](../prompts/openai-pr/07-final-verification-and-submit.md) against the currently deployed
+Before the submit, run [`prompts/finish/openai-pr-07-final-verification-and-submit.md`](../prompts/finish/openai-pr-07-final-verification-and-submit.md) against the currently deployed
 revision. Its checklist exists precisely because the answer sheet asserts
 "verified live" facts dated 2026-07-14 and deployments move. That is a
 one-session job, not a blocker.
@@ -285,7 +285,7 @@ Ordered so that the items with the longest external latency go out first.
 
 | Day | Action | Owner |
 |---|---|---|
-| Mon 08-17 | Run [openai-pr task 07](../prompts/openai-pr/07-final-verification-and-submit.md) against the live revision, then **submit the OpenAI App Directory package** | Owner (portal) |
+| Mon 08-17 | Run [openai-pr task 07](../prompts/finish/openai-pr-07-final-verification-and-submit.md) against the live revision, then **submit the OpenAI App Directory package** | Owner (portal) |
 | Mon 08-17 | Approve and run the staged **MCP Registry** publish; submit **`three-ws-3d`** to the Claude plugin marketplace | Owner (approval), agent (commands) |
 | Tue 08-18 | Correct the **NVIDIA Inception portal product record** | Owner |
 | Tue 08-18 | Send the **five-ask Inception email** to `inceptionprogram@nvidia.com` | Owner |
@@ -328,4 +328,4 @@ Publishing, posting, and sending are owner-gated under stop-and-ask gate 2 in
 - [Listings and distribution](./listings.md): the canonical program and directory inventory
 - [Announcement coverage](./announcement-coverage.md): which surfaces have been announced on X and which have not
 - [Press kit](./press-kit.md): marks, boilerplate, and the rules governing co-branded graphics
-- [OpenAI submission handoff pack](../prompts/openai-pr/00-START-HERE.md): the pre-submission task briefs
+- [OpenAI submission handoff pack](../prompts/finish/openai-pr-00-START-HERE.md): the pre-submission task briefs

@@ -10,7 +10,7 @@ the artifact. Our marketplace entry is agent **#2632 "three.ws 3D Studio"**.
 > ("your A2MCP service has not been integrated with the OKX Agent Payments Protocol
 > standard"); every row now answers that directly. Until approval lands, the services are
 > reachable at the endpoints documented here. Current state is tracked in
-> [`prompts/okx-ai/PROGRESS.md`](../prompts/okx-ai/PROGRESS.md).
+> [`prompts/finish/okx-ai-PROGRESS.md`](../prompts/finish/okx-ai-PROGRESS.md).
 
 **What we list, as of 2026-08-22: three.ws Forge.** The listing was rebuilt around one
 thing done extremely well, turning a description into a real 3D model, because that is the
@@ -200,7 +200,7 @@ unit tests in [`tests/api/okx-forge.test.js`](../tests/api/okx-forge.test.js).
 > payer wallet is unfunded, so every real attempt returns `insufficient_balance`. Treat the
 > bullets above as the implemented and unit-tested contract, not as a claim of an observed
 > on-chain settlement. The first settled transaction hash gets recorded in
-> [`prompts/okx-ai/PROGRESS.md`](../prompts/okx-ai/PROGRESS.md).
+> [`prompts/finish/okx-ai-PROGRESS.md`](../prompts/finish/okx-ai-PROGRESS.md).
 
 ---
 

@@ -10797,7 +10797,7 @@ This is a different product from the embeddable web widgets at [three.ws/widgets
 - ✅ Android app widget in two layouts (2x2, and 4x2 / 4x3), refreshed by WorkManager on a battery-aware schedule, degrading to the last cached card when the device is offline
 - A native shell for Apple platforms, which is also the prerequisite for an iOS build of three.ws
 
-**Verification:** a widget installed from the Android app updates without opening the app, survives a reboot and airplane mode, and returns the user into the right screen on tap. Product doc: [docs/native-widgets.md](docs/native-widgets.md). Work order: [prompts/roadmap/native-widgets.md](prompts/roadmap/native-widgets.md).
+**Verification:** a widget installed from the Android app updates without opening the app, survives a reboot and airplane mode, and returns the user into the right screen on tap. Product doc: [docs/native-widgets.md](docs/native-widgets.md). Work order: [prompts/finish/roadmap-native-widgets.md](prompts/finish/roadmap-native-widgets.md).
 
 ---
 

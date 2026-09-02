@@ -183,7 +183,7 @@ describe('assessWalletFeeBudget', () => {
 // production constants, so a future default change that re-creates a sub-day
 // budget fails CI instead of failing the rail.
 describe('recurrence guard: default config sustains a full day at measured burn', () => {
-	// Measured 2026-08-01 (see prompts/backlog/01-x402-settle-runway.md):
+	// Measured 2026-08-01 (see prompts/finish/backlog-01-x402-settle-runway.md):
 	// per-settle fee 6,000-8,000 lamports (pin the upper bound), total fee burn
 	// 0.06-0.09 SOL/day over successful settles (pin the upper bound), and the
 	// treasury self-heal holds the master wallet at ECONOMY_MASTER_OPERATING_SOL

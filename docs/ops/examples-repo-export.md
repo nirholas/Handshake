@@ -1,7 +1,7 @@
 # Examples satellite repo: export and publish runbook
 
 How the public `three-ws/examples` developer repo is assembled from this
-monorepo and published. Plan of record: `prompts/roadmap/developer-resources-repos.md`.
+monorepo and published. Plan of record: `prompts/finish/roadmap-developer-resources-repos.md`.
 This directory (`docs/ops/`) is excluded from the public docs build by the
 `PRIVATE_DOCS` filter in `vite.config.js`, so publish mechanics live here verbatim.
 

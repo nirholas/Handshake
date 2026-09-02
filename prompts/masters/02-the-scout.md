@@ -27,12 +27,12 @@ reuse map: capability by capability, what to adopt, what to wrap, what to genuin
 ```bash
 cat package.json | node -e "const p=JSON.parse(require('fs').readFileSync(0));console.log(Object.keys({...p.dependencies,...p.devDependencies}).join('\n'))"
 ls packages/                                # in-house packages that may already cover a capability
-cat prompts/roadmap/REUSE-MAP.md 2>/dev/null | head -50   # license-vetted OSS already evaluated
+cat prompts/finish/roadmap-REUSE-MAP.md 2>/dev/null | head -50   # license-vetted OSS already evaluated
 grep -rn "<key nouns>" api/_lib/ src/ --include=*.js -l | head   # in-repo prior art
 ```
 
 The first dependency to check is always the one already installed. The second is the one
-already vetted in `prompts/roadmap/REUSE-MAP.md`. Only then go external.
+already vetted in `prompts/finish/roadmap-REUSE-MAP.md`. Only then go external.
 
 ## Method
 
@@ -63,7 +63,7 @@ already vetted in `prompts/roadmap/REUSE-MAP.md`. Only then go external.
       evidence), wrap (same, plus what the wrapper isolates), or build (why).
 - [ ] Every adopted package proven live against real data, installed, lockfile committed.
 - [ ] Zero adopted packages duplicating an existing dependency; zero disqualified licenses.
-- [ ] The reuse map appended to `prompts/roadmap/REUSE-MAP.md` if it adds a vetted entry
+- [ ] The reuse map appended to `prompts/finish/roadmap-REUSE-MAP.md` if it adds a vetted entry
       (extend the existing file's format; do not fork a second map).
 - [ ] `npm test` still green after installs (piped through nothing; read the real exit code).
 - [ ] `npm run check:rules -- --paths <files you touched>` clean.

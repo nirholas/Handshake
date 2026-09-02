@@ -1860,7 +1860,7 @@ const appConfig = {
 						res.setHeader('Location', '/studio');
 						return res.end();
 					}
-					// Creation-surface consolidation (prompts/roadmap/creation-consolidation.md
+					// Creation-surface consolidation (prompts/finish/roadmap-creation-consolidation.md
 					// Phase 2). Each of these mirrors a vercel.json rule so dev matches prod.
 					//
 					// C1: /scan merged into /create/selfie — the selfie flow owns both the

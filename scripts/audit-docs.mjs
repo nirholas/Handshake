@@ -37,7 +37,7 @@
  * completed (an owner directive, recorded by the retirement notes in each
  * pack's index), so dangling index links there are the documented convention
  * rather than rot. Pass an explicit path to audit them anyway:
- *   node scripts/audit-docs.mjs prompts/roadmap/00-README.md
+ *   node scripts/audit-docs.mjs prompts/finish/roadmap-00-README.md
  */
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { resolve, dirname, join, relative } from 'node:path';

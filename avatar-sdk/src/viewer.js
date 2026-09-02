@@ -51,7 +51,7 @@ function getMeshoptDecoder() {
 // KHR_draco_mesh_compression decoder — lazy + memoized alongside meshopt so a
 // consumer that only ever loads meshopt (or uncompressed) assets never pays
 // for the wasm init. Draco-compressed GLBs (max-compression tier, per
-// prompts/roadmap/REUSE-MAP.md §1) throw without this wired.
+// prompts/finish/roadmap-REUSE-MAP.md §1) throw without this wired.
 let _dracoPromise = null;
 function getDracoLoader() {
 	if (!_dracoPromise) {

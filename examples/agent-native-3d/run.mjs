@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Agent-native 3D — end to end, no browser, no mocks.
 // ====================================================
-// Roadmap prompt 10 (prompts/roadmap/10-agent-native-3d-and-embed.md), track A:
+// Roadmap campaign, work order 10 (retired; readable in git history), track A:
 // an agent given a goal generates the 3D assets it needs and uses them, chaining
 // real MCP tool calls against the live three.ws "Free 3D Studio"
 // (`/api/mcp-studio` — see docs/mcp-studio.md). Every call in this script is a

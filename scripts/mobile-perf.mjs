@@ -87,7 +87,7 @@ const NET_PROFILES = {
 	none: { label: 'unthrottled network', downloadThroughput: -1, uploadThroughput: -1, latency: 0 },
 };
 
-// ── The top-15 preset (prompts/quality-bar/08-mobile-performance.md task 1) ──
+// ── The top-15 preset (prompts/finish/quality-bar-08-mobile-performance.md task 1) ──
 // A coin page and an agent profile need concrete ids. The coin is $THREE (the
 // only coin this platform promotes). The agent id is resolved at runtime from
 // the live marketplace feed so the preset never rots; AGENT_FALLBACK is used

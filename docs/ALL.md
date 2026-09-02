@@ -34184,7 +34184,7 @@ curl 'https://three.ws/api/avatars/<avatarId>' -H 'cookie: <session>'
 
 - **No selfie, no camera.** This is the from-scratch path. To build an avatar from a photo, use the platform's selfie-to-avatar flow under [/create](https://three.ws/create) instead.
 - **Two base bodies.** Create mode starts from the Stylized feminine base or the bare Parametric base (which covers masculine, feminine, and everything between via its body sliders). Switching base reloads the studio, so it asks before discarding unsaved changes. The posable primitive with a build toggle lives in [Animation Studio](#sec-094).
-- **The Parametric base ships bare.** No hair or outfit meshes yet, so the hair/outfit color slots and the Layers block do not appear on it; hats, glasses, and earrings attach normally. Conforming hair and garments are the next phase of the parametric roadmap ([prompts/roadmap/avatar-parametric-editor.md](../prompts/roadmap/avatar-parametric-editor.md)).
+- **The Parametric base ships bare.** No hair or outfit meshes yet, so the hair/outfit color slots and the Layers block do not appear on it; hats, glasses, and earrings attach normally. Conforming hair and garments are the next phase of the parametric roadmap ([prompts/finish/roadmap-avatar-parametric-editor.md](../prompts/finish/roadmap-avatar-parametric-editor.md)).
 - **Sculpt depends on the base's morphs.** The face/body sliders render against whatever morph targets the base GLB exposes; a slot with no matching morph simply does not appear. Proportions are independent of morphs: they need only a canonical humanoid skeleton, so they work on a rig with no blendshapes at all. Height is the one parameter that needs an armature node above the hips, and is hidden on rigs whose hips sit directly in the scene.
 - **Save requires an account.** Export happens client-side, but persisting the avatar to your library needs sign-in. Optimization is best-effort: if compression fails, the original export is saved untouched so the save always completes.
 - **What you see is what you save.** Because the save exports the live scene graph, the stored GLB matches the viewport exactly, colors, morphs, accessories, and the chosen idle included.
@@ -58292,7 +58292,7 @@ The three.ws Android app (1.1 and later) ships an **Agent glance** home screen w
 
 ## Where this is going
 
-Glance is phase 5 of the [roadmap](https://github.com/nirholas/three.ws/blob/main/README.md#roadmap). Windows 11, Android and the web are live. macOS and iOS follow through a shared WidgetKit extension against the same PNG endpoint and the same widget token; the scoped work order is [prompts/roadmap/native-widgets.md](https://github.com/nirholas/three.ws/blob/main/prompts/roadmap/native-widgets.md).
+Glance is phase 5 of the [roadmap](https://github.com/nirholas/three.ws/blob/main/README.md#roadmap). Windows 11, Android and the web are live. macOS and iOS follow through a shared WidgetKit extension against the same PNG endpoint and the same widget token; the scoped work order is [prompts/finish/roadmap-native-widgets.md](https://github.com/nirholas/three.ws/blob/main/prompts/finish/roadmap-native-widgets.md).
 
 Every one of those surfaces consumes the endpoint documented above. The card is the contract; the hosts are just slots.
 
@@ -73873,7 +73873,7 @@ the artifact. Our marketplace entry is agent **#2632 "three.ws 3D Studio"**.
 > ("your A2MCP service has not been integrated with the OKX Agent Payments Protocol
 > standard"); every row now answers that directly. Until approval lands, the services are
 > reachable at the endpoints documented here. Current state is tracked in
-> [`prompts/okx-ai/PROGRESS.md`](../prompts/okx-ai/PROGRESS.md).
+> [`prompts/finish/okx-ai-PROGRESS.md`](../prompts/finish/okx-ai-PROGRESS.md).
 
 **What we list, as of 2026-08-22: three.ws Forge.** The listing was rebuilt around one
 thing done extremely well, turning a description into a real 3D model, because that is the
@@ -74063,7 +74063,7 @@ unit tests in [`tests/api/okx-forge.test.js`](../tests/api/okx-forge.test.js).
 > payer wallet is unfunded, so every real attempt returns `insufficient_balance`. Treat the
 > bullets above as the implemented and unit-tested contract, not as a claim of an observed
 > on-chain settlement. The first settled transaction hash gets recorded in
-> [`prompts/okx-ai/PROGRESS.md`](../prompts/okx-ai/PROGRESS.md).
+> [`prompts/finish/okx-ai-PROGRESS.md`](../prompts/finish/okx-ai-PROGRESS.md).
 
 ---
 
@@ -88384,7 +88384,7 @@ including every state it can be in and how it authenticates, is in
 Windows 11 already gets the same card through the installed PWA's manifest. macOS and iOS follow
 through a shared WidgetKit extension against the same endpoint and widget token; that is Phase 5
 of the [roadmap](../README.md#roadmap) and the scoped work order is
-[prompts/roadmap/native-widgets.md](../prompts/roadmap/native-widgets.md).
+[prompts/finish/roadmap-native-widgets.md](../prompts/finish/roadmap-native-widgets.md).
 
 ---
 

@@ -7,7 +7,7 @@
 // silently. This audit catches that drift OFFLINE by statically parsing the
 // tool-definition sources with acorn and comparing against a committed golden
 // fixture. It never imports the catalog modules: project doctrine (see
-// prompts/roadmap/00-README.md) forbids that — importing a hosted catalog pulls
+// prompts/finish/roadmap-00-README.md) forbids that — importing a hosted catalog pulls
 // in DB/RPC clients that block without live credentials.
 //
 // What it captures per statically-declared tool def (an object literal with

@@ -2,7 +2,7 @@
 
 An agent given a goal ("get yourself a body") generates the 3D assets it needs
 and uses them — no browser, no mocks, no human in the loop. This is the
-roadmap-10 demo (`prompts/roadmap/10-agent-native-3d-and-embed.md`): the closing
+roadmap campaign's work order 10 demo (retired; readable in git history): the closing
 proof that three.ws's MCP tools compose into a real autonomous create-and-use
 loop, and that the result is trivially distributable everywhere.
 

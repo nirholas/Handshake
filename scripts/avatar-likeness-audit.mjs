@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Avatar likeness audit (prompts/quality-bar/10-avatar-likeness-irl-people.md, task 1/7).
+// Avatar likeness audit (prompts/finish/quality-bar-10-avatar-likeness-irl-people.md, task 1/7).
 //
 // Fires six SYNTHETIC personas through the REAL production avatar chain on
 // https://three.ws twice each — once on the Standard tier (the "before": the

@@ -90,5 +90,5 @@ Tests: [`tests/api/okx-forge.test.js`](../../tests/api/okx-forge.test.js) (the l
 - [`docs/okx-marketplace.md`](../../docs/okx-marketplace.md), the buyer-facing docs: endpoints, prices, payment walkthrough.
 - [`api/okx/3d/[service].js`](../okx/3d/%5Bservice%5D.js), the route that fronts these engines (transport, x402, OKX 402 dialect, payment replay cache).
 - [`../_lib/okx-catalog.js`](../_lib/okx-catalog.js), the single source of truth for services, prices, and schemas.
-- [`prompts/okx-ai/08-forge-relisting.md`](../../prompts/okx-ai/08-forge-relisting.md), the executable work order that resubmits agent #2632 with this line-up.
+- [`prompts/finish/okx-ai-08-forge-relisting.md`](../../prompts/finish/okx-ai-08-forge-relisting.md), the executable work order that resubmits agent #2632 with this line-up.
 - [`STRUCTURE.md`](../../STRUCTURE.md), the OKX.AI marketplace row maps this whole surface.

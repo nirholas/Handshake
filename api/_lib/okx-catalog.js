@@ -10,7 +10,8 @@
 // count 2 and everything else counts 1 (OKX rejects over-length listings).
 // `validateCatalog()` enforces this; tests/okx-catalog.test.js runs it in CI.
 //
-// Work order 03 (prompts/okx-ai/03-service-decomposition.md) decomposes the
+// The okx-ai campaign's work order 03 (retired; readable in git history)
+// decomposes the
 // rest of the 3D studio into rows of this catalog; work order 06 seeded it
 // with the Agent Identity Studio flagship plus the free discovery lane.
 
@@ -301,7 +302,7 @@ export const OKX_CATALOG = Object.freeze([
 	// Micro-priced REST services, one capability per endpoint, all backed by
 	// the same engines /api/mcp-3d runs on (api/_okx3d/rest-services.js maps
 	// each id to its engine, no logic duplicated). Prices clear worst-case
-	// lane cost; the math is recorded in prompts/okx-ai/PROGRESS.md.
+	// lane cost; the math is recorded in prompts/finish/okx-ai-PROGRESS.md.
 	{
 		id: 'text-to-3d',
 		listed: false,
