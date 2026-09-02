@@ -536,10 +536,20 @@ have turned into a revert of committed work, once including 67 lines of the clos
 Both were cleared with a path-scoped `git reset` after confirming the worktree already matched
 `HEAD`, which touches no file on disk.
 
-**Remains.** World mode cannot complete on this box: the capture never returns inside a 240s budget
-under software GL at these load averages, so its last five checks (zen mode, the button path,
-overflow) are unverified by this harness and are covered instead by the other session's
-`tests/e2e/play-photo-mode.spec.js`. It needs a real GPU or a quiet machine. `ENGINE=firefox` needs
-`npx playwright install firefox` (the installed build is not the one this Playwright expects).
+**Correction to the above, from the last world run.** World mode's own diagnostic caught the thing
+its headline was denying: it printed `sheet=true` with focus on the Download link, so **the card did
+open in the real world**, roughly a minute past the 240s `CAPTURE_MS` budget. Two bugs in the check
+had hidden that (`10f377b10`): `waitForResponse` only sees responses that arrive after it is
+attached, so a module returning in the gap between the key press and the await was invisible to it
+and the loop called a live key binding dead, and a preview that lands after the budget was reported
+as "no card" rather than as a slow capture. The failure line now distinguishes the two and names the
+knob. So the honest statement is that the world capture works and this box cannot photograph it
+inside four minutes, not that world mode cannot complete.
+
+**Remains.** World mode still does not finish here, so its last five checks (zen mode, the HUD
+button path, overflow) go unverified by this harness at these load averages; they are covered by the
+other session's `tests/e2e/play-photo-mode.spec.js`. A real GPU, a quiet machine, or a raised
+`CAPTURE_MS` gets the rest. `ENGINE=firefox` needs `npx playwright install firefox` (the installed
+build is not the one this Playwright expects).
 Sample cards for eyeballing: `photo-scene-chromium/card.png` and `photo-scene-webkit/card.png` under
 `/tmp/claude-1000/-workspaces-three-ws/ca2699d0-9f18-493e-ad30-4677e38f0a7f/scratchpad/`.
