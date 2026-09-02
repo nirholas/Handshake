@@ -1212,8 +1212,10 @@ dispatcher and `ring-settle` as the internal volume primitive); that was checked
 assuming drift, and no descriptors were added for them.
 
 Left:
-- **The deploy.** Production runs `ad7b54c16` (2026-08-28), so registration still sees 24
-  endpoints until the `/openapi.json` fix ships. Owner-gated.
+- **The deploy.** A deploy landed mid-session (`7f0ef6251`, revision `three-ws-api-00405-z6c`)
+  but predates this fix, so `curl -s https://three.ws/openapi.json` still reports 24 paid
+  paths against the tree's 79. Registration sees 24 endpoints until the next deploy ships.
+  Owner-gated.
 - **One SIWX wallet signature** (no funds move) to re-register origin `https://three.ws` at
   `https://www.x402scan.com/resources/register` after that deploy. The 53 endpoints that
   answer a valid 402 today and are missing from the listing: `/api/agents/endpoint-shopper-run`,
@@ -1245,3 +1247,74 @@ One note the owner needs: the `api/openapi-json.js` change was swept into commit
 concurrent agent's `git add -A` at 19:07:29 UTC, before the gate could be cleared and under a
 message that describes it as "schema entries for the newly listed tools", which it is not.
 Nothing was amended or reset in response.
+
+## 2026-09-02: 08 OKX chat bot: move off the codespace
+
+Measured, all live, not remembered:
+- `npm run okx:bot` -> **exit 0**, not the exit 2 the work order describes. The wallet
+  session is logged in as `claude@three.ws`, doctor 8/8, daemon running, 12 skills linked.
+- `onchainos agent get-agents --agent-ids 2632` (first successful read since the logged-out
+  wall): `onlineStatus: 1`, **`soldCount: 2`**, `communicationAddress`
+  `0xfaBDeadF019267576a155E166110eDdA8BeE9729`. The listing has sales.
+- `service-list` `agentInfo` carries `approvalStatus: 3` and a real `approvalRemark`:
+  "missing a complete description, parameter details, and usage examples". That field was
+  documented as always empty; it is not, and it is the brief WO-05 has to answer.
+- `okx-a2a session query --my-agent-id 2632` -> `sessions: []`. No marketplace chat has ever
+  landed on this identity, so the two sales came through the paid endpoints, not chat.
+- `/api/healthz` before: `okx_chat_bot` `unknown`, "no heartbeat reported yet". No host had
+  ever beat since the worker was built on 2026-08-02.
+
+Did:
+- **Ran the worker itself as the resident host** instead of leaving the daemon parentless:
+  `PORT=8080 OKX_BOT_REPO_ROOT=/workspaces/three.ws node --env-file=.env.local
+  workers/okx-chat-bot/index.js`. It supervises `okx-a2a run`, `/readyz` answers 200 with
+  `health.ready`, and `/api/healthz` now carries the `okx_chat_bot` subsystem for the first
+  time. `--env-file` matters: sourcing `.env.local` in bash splits the Neon URL on its `&`
+  and the heartbeat dies with `DATABASE_URL` unset.
+- **Made the beat say where it comes from.** `resolveHost()` labels the host and marks
+  durability (`K_SERVICE` = Cloud Run = durable; a codespace never is), the label rides on
+  every heartbeat and the status body, and `classifyOkxChatBotBeat` now reports a
+  non-durable host as **degraded with the deploy command**, never `ok`. An online stopgap
+  and an online always-on host are not the same news, and painting both green rebuilds the
+  false-green this worker exists to kill. Beats with no host field still read `ok`.
+- **Fixed a false red.** The provider check read env only, so a developer host, whose claude
+  CLI is logged in interactively and demonstrably authors replies, reported
+  `ai_provider_uncredentialed` and failed readiness. An existing
+  `$OKX_BOT_HOME/.claude/.credentials.json` now counts as a credential.
+- `scripts/okx-bot-revive.mjs` writes `AGENTS.md` alongside `CLAUDE.md`, matching the
+  worker. The stopgap previously left a codex subsession with no briefing at all.
+- **Created two of the three deploy prerequisites** (reversible, no deploy):
+  `gs://three-ws-okx-bot-state` (versioned, `three-ws@` objectAdmin) and the
+  `okx-chat-bot-database-url` secret, copied from the project's own `DATABASE_URL` secret so
+  they cannot drift, `three-ws@` secretAccessor. Verified absent first: no `okx-chat-bot`
+  service, no bucket, no secret. The `workers` Artifact Registry repo already exists.
+- Verified the workspace answers a real platform question: through the real adapter
+  (`okx-a2a ai exec`, 13.4s) it answered a Mixamo-rig question with the correct endpoints,
+  prices and the 402 flow, no invented services.
+- Built the image locally (`docker build -f workers/okx-chat-bot/Dockerfile .`) so the
+  owner's submit is not the first time the Dockerfile runs.
+- 44 tests pass in `tests/okx-chat-bot.test.js`.
+
+Left:
+- **Owner, one command:** `printf '%s' "$ANTHROPIC_API_KEY" | gcloud secrets create
+  anthropic-api-key --data-file=- --project aerial-vehicle-466722-p5`, then grant
+  `three-ws@` secretAccessor on it. The value exists nowhere on this machine. The deploy
+  references it in `--set-secrets` and fails loudly without it, deliberately.
+- **Owner, one command:** the deploy itself (gate 2), exactly as printed in
+  `workers/okx-chat-bot/cloudbuild.yaml`.
+- **Owner, once after the first boot:** the email OTP as `claude@three.ws`. The Cloud Run
+  host boots with no snapshot, so it starts logged out and pages with the commands on
+  `/readyz`.
+- Not verifiable here: end-to-end chat delivery needs an inbound message from a real buyer
+  agent, and minting a second on-chain identity to play buyer is an on-chain action behind
+  gate 1. What is proven is the listener side: 1 XMTP client bound to our address, an
+  `xmtp-test` window with zero stream or connection failures, and the adapter authoring a
+  correct answer.
+- The codespace host dies with this workspace. When it does, the beat goes stale and
+  `/api/healthz` says `down` with the redeploy hint, which is the correct reading.
+
+Commit gate: everything in this entry names the OKX marketplace, so nothing is staged.
+The diff is `workers/okx-chat-bot/{config,index,health-server}.js`,
+`api/_lib/ops/subsystem-health.js`, `tests/okx-chat-bot.test.js`,
+`scripts/okx-bot-revive.mjs`, `workers/okx-chat-bot/{README.md,cloudbuild.yaml}` and the
+three prompt files.

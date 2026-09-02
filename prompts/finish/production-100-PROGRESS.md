@@ -125,3 +125,41 @@ waits on cannot be written from this workspace at all, because the wallet list n
 
 Left: no row was cleared, because none of them is an agent's to clear. Row 15 is now the
 highest-leverage one on the board.
+
+## 2026-09-02: 02 stranded-wallet-reclaim (shipped; the decision is now the owner's)
+
+Measured: task 1 (the lying dry run) was already fixed in `afd349790` and is pinned by
+`tests/economy-reclaim-dryrun-key-gate.test.js` (48 tests green across the four sweepback
+suites), so this run verified it and moved on. Production's own records carry the rest,
+which is what let the brief be written without `gcloud` (row 15 is still dead):
+`economy_master_ledger` holds 71,475 `inflow_failed` rows with reason
+`secret_undecryptable`, all of them against exactly TWO platform wallets, Atlas #22
+(`6FL9viFy2WrYMWPd3HAQA4Bxm5qxQWoQMn3T9GbcwxEB`, 0.078390963 SOL) and Echo #22
+(`8u5raEaz7Qjm5hRzNxwzXiZtjTkdgQ3Co6G6S5WNxFTs`, 0.064484542 SOL), 35,736 and 35,739
+attempts each, the most recent at 19:00 UTC today. `agent_custody_events` names 15 agents
+that hit `wallet_key_retired` on the withdraw path in July, 14 platform bots and one
+CUSTOMER: `My First Agent` (`5e05f68f-...`, `GemVS5fT958FKRe5fpgizohUYUKE8cUDueEdmB1bmXnm`,
+0.250001 SOL on chain today). Fleet inventory: 725 custodial wallets, 112 platform / 613
+customer.
+
+Did: extracted the measurement into `api/_lib/custodial-key-health.js`, shared by
+`scripts/audit-custodial-key-health.mjs` and a new `stranded_custody` panel on
+`GET /api/ops/payment-outcomes` (snapshot-cached 6h, single-flight: 13.9s cold, 0.5s warm,
+verified rendered in Chromium with no console errors). Fixed real drift in the process: the
+audit carried its own ownership predicate with the house account spelled `agents@three.ws`
+instead of the `three-ws@users.three.ws.local` the reclaim leg enforces in SQL, so 12
+platform wallets were being filed as CUSTOMER ones in the very report that sizes the
+customer obligation; `economy-sweepback.js` and the audit now share one definition. The
+panel refuses to publish an unattributable total: a keyless or fleet-wide-failure reading
+returns `status: unknown` with the SOL fields `null` rather than a number with a caveat.
+Wrote the owner brief `docs/ops/stranded-wallets.md` (measurement, why recovery is
+impossible, cost of credit vs contact vs write-off, exact commands for each), linked from
+`docs/ops/README.md` and the payment-outcomes runbook. 17 new tests in
+`tests/custodial-key-health.test.js`, 2 more in `tests/api/ops-endpoints.test.js`.
+`npm run audit:docs` clean, `check:rules` clean on the touched paths.
+
+Left: the DECISION, which is OWNER-ACTIONS row 3 (rewritten to point at the brief):
+credit the customers (recommended), contact them first, or write the balance off. Naming
+the second customer wallet needs one keyed `node scripts/audit-custodial-key-health.mjs
+--json` run on a machine with `WALLET_ENCRYPTION_KEY` (row 15); the decision itself does
+not wait on it. Order file deleted.
