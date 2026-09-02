@@ -177,6 +177,11 @@ export default async function handler(req, res) {
 		method: 'POST',
 		priceAtomics: String(door.price_atomics),
 		networks: networksFor(payout),
+		// This route's USDC price is per request, and the $THREE accept the rail
+		// adds alongside it carries a FIXED env amount. Advertising it here would
+		// let any order settle at that flat token price regardless of what it was
+		// quoted, so this route sells in USDC only.
+		acceptThree: false,
 		description: `${DESCRIPTION} Currently quoting: ${door.display_name || handle} at ${formatUsdc(door.price_atomics)}.`,
 		bazaar: BAZAAR,
 		service: withService({

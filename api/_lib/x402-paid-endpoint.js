@@ -150,7 +150,7 @@ function buildAccept(network, priceAtomics, resourceUrl, payToOverride) {
 	throw new X402Error('unsupported_network', `paidEndpoint: unsupported network ${network}`, 500);
 }
 
-function buildRequirements({ priceAtomics, networks, resourceUrl, payToOverride }) {
+function buildRequirements({ priceAtomics, networks, resourceUrl, payToOverride, acceptThree = true }) {
 	const out = [];
 	for (const name of networks) {
 		const net = resolveNetwork(name);
@@ -203,7 +203,13 @@ function buildRequirements({ priceAtomics, networks, resourceUrl, payToOverride 
 		// above already confirmed solTo + fee payer + USDC mint — so holders can
 		// pay this endpoint in the platform token; the modal shows a token chooser.
 		// USDC stays first, so first-accept clients keep settling USDC.
-		if (net === NETWORK_SOLANA_MAINNET && env.X402_ACCEPT_THREE_SOLANA) {
+		// `acceptThree: false` opts a route out. The $THREE amount is a FIXED
+		// env value, so on a route whose USDC price varies per request (a print
+		// order priced from its own quote token, a knock priced by the
+		// recipient's door) it would let a $40 good settle for a flat token
+		// amount. A fixed-price route is unaffected, which is why the default
+		// stays on.
+		if (acceptThree && net === NETWORK_SOLANA_MAINNET && env.X402_ACCEPT_THREE_SOLANA) {
 			out.push({
 				scheme: 'exact',
 				network: NETWORK_SOLANA_MAINNET,
@@ -325,6 +331,12 @@ export function paidEndpoint(spec) {
 		// Missing keys fall back to env so a single override doesn't disable
 		// the other networks.
 		payTo,
+		// Advertise the $THREE accept alongside USDC on Solana (default true,
+		// still gated on env.X402_ACCEPT_THREE_SOLANA). Set false on a route
+		// whose USDC price varies per request: the $THREE amount comes from a
+		// FIXED env value, so a variable-price good would be purchasable at a
+		// flat token price no matter what its USDC quote said.
+		acceptThree = true,
 		// Optional SIWX (Sign-In-With-X, CAIP-122) opt-in. See file header.
 		siwx,
 		// Optional post-settlement hook for per-job metering (Roadmap phase 4:
@@ -463,6 +475,7 @@ export function paidEndpoint(spec) {
 				networks,
 				resourceUrl,
 				payToOverride: payTo,
+				acceptThree,
 			});
 		} catch (err) {
 			return error(

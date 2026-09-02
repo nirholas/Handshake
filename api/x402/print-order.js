@@ -33,6 +33,7 @@ import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { cors, error, readBody } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { loadCatalog, verifyQuote } from '../_lib/print/quote.js';
+import { assertEditionAvailable, PrintEditionError } from '../_lib/print/editions.js';
 import {
 	PrintStoreError,
 	createOrder,
@@ -211,6 +212,20 @@ export default async function handler(req, res) {
 		});
 	}
 
+	// Physical scarcity is part of pre-settle validation, not a surprise after
+	// the money lands: a limited edition whose last copy has shipped refuses the
+	// order for free, the same as a bad address does.
+	if (quote.creationId) {
+		try {
+			await assertEditionAvailable({ creationId: quote.creationId, quantity: quote.quantity || 1 });
+		} catch (err) {
+			if (err instanceof PrintEditionError) {
+				return error(res, 409, err.code, err.message);
+			}
+			throw err;
+		}
+	}
+
 	const priceAtomics = usdcAtomics(quote.total);
 	const note = typeof body.note === 'string' ? body.note.slice(0, 500) : null;
 
@@ -223,6 +238,11 @@ export default async function handler(req, res) {
 		// Solana leads and is the rail we settle ourselves. Base follows so an
 		// EVM-native agent can still buy a print.
 		networks: ['solana', 'base'],
+		// This route's USDC price is per request, and the $THREE accept the rail
+		// adds alongside it carries a FIXED env amount. Advertising it here would
+		// let any order settle at that flat token price regardless of what it was
+		// quoted, so this route sells in USDC only.
+		acceptThree: false,
 		description: `${DESCRIPTION} Currently quoting: ${quote.quantity} x ${quote.materialId} at ${quote.targetHeightMm} mm to ${quote.country}, ${Number(quote.total).toFixed(2)} USDC.`,
 		bazaar: BAZAAR,
 		service: withService({ serviceName: SERVICE_NAME, tags: TAGS }),

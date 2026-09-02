@@ -1927,14 +1927,57 @@ the post-repair report, so you can see exactly what changed.
 ### Order (human checkout)
 
 ```http
-POST /api/print/orders          # session + CSRF
-GET  /api/print/orders/:id      # the order and its full timeline
+POST /api/print/orders                  # session + CSRF: open an order, get a payment intent
+GET  /api/print/orders                  # your own orders, newest first
+GET  /api/print/orders/:id              # one order and its full timeline
+POST /api/print/orders/:id/confirm      # session + CSRF: prove the USDC landed
 ```
 
 Body: the quote `token` plus a `shipping` object (`name`, `line1`, `line2`,
 `city`, `region`, `postal_code`, `country`, `phone`). Minimum fields only: this
 is the sole personal data the platform stores for a print, it is never logged,
-and it never enters an analytics event.
+and it never enters an analytics event. `shipping.country` must match the
+country the quote was priced for, or the order is refused with a `422`
+(`destination_mismatch`): shipping is part of the signed total.
+
+Every priced field is re-derived from the token's HMAC, never read from the
+body, so an edited price is refused with `422 quote_invalid`. An expired token
+and a forged one fail identically.
+
+The response opens the order in `quoted` and hands back a Solana Pay intent:
+
+```json
+{
+  "order": { "id": "ea80b0a6-…", "status": "quoted", "price_usdc": "39.130000" },
+  "payment": {
+    "chain": "solana",
+    "recipient": "wwwww…crU",
+    "mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+    "amount": "39.13",
+    "amount_atomics": "39130000",
+    "reference": "CZGB2JWpFfAcJPHfPfuSHKRgoneDQFP9ZGa72XASKLUG",
+    "url": "solana:wwwww…crU?spl-token=EPjFW…&amount=39.13&reference=CZGB…",
+    "confirm_url": "/api/print/orders/ea80b0a6-…/confirm"
+  }
+}
+```
+
+Pay it from any wallet with the `reference` attached, then call `confirm_url`.
+Pass `buyer_public_key` on the create call and the platform sponsors the network
+fee and pre-signs the transfer, so the buyer needs USDC and no SOL.
+
+Confirmation is a chain **read**: it finds the transaction carrying the order's
+reference and validates the mint, the recipient and the amount, then moves the
+order `paid` and on to `screening`. It never signs or sends anything.
+
+| Status | Meaning |
+| --- | --- |
+| `200` | Confirmed. Returns the order, the signature, and the updated timeline. |
+| `202` | `pending`: no payment carrying this reference has confirmed yet. Poll. |
+| `410` | `quote_expired`: the quote expired before it was paid. Re-quote. |
+| `422` | `payment_mismatch`: a transaction carried the reference but did not transfer the quoted USDC to the platform wallet. The signature is returned so you can inspect it. |
+
+USDC on Solana is the only way to pay. There is no card processor.
 
 ### Order (agent checkout, x402)
 
@@ -1966,7 +2009,10 @@ curl -s -X POST https://three.ws/api/x402/print-order \
 }
 ```
 
-Track it with `GET /api/print/orders/:id`, which needs no account.
+An order is visible to the account that placed it, so `GET /api/print/orders/:id`
+needs that session; it answers `404` rather than `403` to anyone else, because
+confirming an id exists to a stranger is itself a leak. An agent order carries
+no session, so the `order_id` in the settled response is its receipt.
 
 ### Certificates
 

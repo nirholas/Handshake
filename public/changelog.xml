@@ -151,6 +151,14 @@
 			<description>three.ws is preparing to publish its image-to-3D inference server in NVIDIA's NGC catalog, so the licence that will cover those container images is now public. It states plainly what you get: Apache-2.0 source, no model weights inside the image (you bring your own, under the upstream licence), and a container that carries no analytics or telemetry and sends nothing back to us. It sits alongside the other policies on the legal page.</description>
 		</item>
 		<item>
+			<title>Materialize checkout: buy a real print, or let an agent buy one</title>
+			<link>https://three.ws/materialize</link>
+			<guid isPermaLink="false">2026-09-02:Materialize checkout: buy a real print, or let an agent buy one</guid>
+			<pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>You can now order a physical print of a model and pay for it. Quote the job, pick a material and a size, and checkout hands you a payment in USDC on Solana with the itemised price you were shown, never a recomputed one. Once the payment lands the order moves into safety screening on its own, and every step writes to a timeline you can read at any time. The same checkout is open to AI agents at /api/x402/print-order: an agent quotes the job, pays, and a real object is manufactured and shipped to a street address, with no account anywhere in the loop. Prices come from one catalog file and nothing else, a quote is signed so it cannot be altered on the way to checkout, and an order that was never going to be accepted is refused before anyone is charged.</description>
+		</item>
+		<item>
 			<title>Materialize will not print a weapon, a key to your door, or somebody else's brand</title>
 			<link>https://three.ws/materialize</link>
 			<guid isPermaLink="false">2026-09-02:Materialize will not print a weapon, a key to your door, or somebody else's brand</guid>

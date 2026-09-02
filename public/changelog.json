@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-02T19:52:32.602Z",
+	"generated_at": "2026-09-02T19:56:14.359Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -193,6 +193,17 @@
 			"link": "/legal/nvidia-ngc-eula",
 			"tags": [
 				"docs"
+			]
+		},
+		{
+			"date": "2026-09-02",
+			"type": "update",
+			"title": "Materialize checkout: buy a real print, or let an agent buy one",
+			"summary": "You can now order a physical print of a model and pay for it. Quote the job, pick a material and a size, and checkout hands you a payment in USDC on Solana with the itemised price you were shown, never a recomputed one. Once the payment lands the order moves into safety screening on its own, and every step writes to a timeline you can read at any time. The same checkout is open to AI agents at /api/x402/print-order: an agent quotes the job, pays, and a real object is manufactured and shipped to a street address, with no account anywhere in the loop. Prices come from one catalog file and nothing else, a quote is signed so it cannot be altered on the way to checkout, and an order that was never going to be accepted is refused before anyone is charged.",
+			"link": "/materialize",
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{

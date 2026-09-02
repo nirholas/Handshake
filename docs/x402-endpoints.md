@@ -189,6 +189,7 @@ named in its description:
 | `/api/x402/market-dex-volumes`  | $0.001  | Top 100 DEXes by 24h volume, with 7d volume, WoW change, chains, and market-share.               |
 | `/api/x402/market-hacks`        | $0.001  | Full DeFiLlama hack history — amount stolen, technique, chains, funds returned; searchable, with all-time/12mo loss stats. |
 | `/api/x402/market-pulse`        | $0.005  | Flagship one-call market bundle: global stats, Fear & Greed, top-10 coins, trending, ETH gas, DeFi TVL, stablecoin supply, DEX volume, protocol fees — each section degrades independently. |
+| `/api/x402/print-order`         | from $12 | **Physical manufacturing.** Pay to have a 3D model printed in resin, nylon or full-colour sandstone and shipped to a street address. Quote free at `POST /api/print/quote`, then post that signed token plus an address: the 402 quotes that order's exact total, because every print is its own object. Settles into a real job with safety screening, tracked shipping and an on-chain certificate. |
 
 Beneath the named endpoints sits the **datapoint fabric**: `/api/x402/d/<family>/…`
 (one route, `api/x402/d/[...path].js`) serves 1,000,000+ individually priced
