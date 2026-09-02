@@ -107,7 +107,7 @@ Strategy for what to run next inside E: [../roadmap/fable-playbook.md](roadmap-f
 
 | Order | State |
 |---|---|
-| [04-fact-check-mixed-verdicts.md](production-100-04-fact-check-mixed-verdicts.md) | Open; live run 2026-08-10 scores `mixed` 0/10 and 40% overall; verdict thresholds untouched since 2026-07-28. |
+| [04b-fact-check-publish-run.md](production-100-04b-fact-check-publish-run.md) | Open; the `mixed` fix shipped 2026-09-02 (a fourth `partial` stance, counted by `computeVerdict`) but nothing has measured it: the in-process runner needs an LLM lane this machine does not have. |
 
 ### G. Event (two polish orders)
 
