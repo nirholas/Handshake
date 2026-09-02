@@ -170,3 +170,59 @@ describe(`api/cron auth sweep (${FILES.length} handlers)`, () => {
 		}, 120_000);
 	});
 });
+
+// The sweep above only has value if it FAILS on a handler that forgot the
+// guard. A behavioral check that silently degrades into a no-op (a probe that
+// never reaches the body, an assertion that accepts anything) reads exactly
+// like a passing suite, so the sweep is pointed at deliberately broken
+// fixtures here and required to reject each one. These are the four ways a
+// cron file has actually gone wrong, not hypotheticals: no guard at all, a
+// guard whose verdict is discarded, a body that answers before the guard, and
+// a handler that starts real work and never responds.
+describe('the sweep fails on an unguarded handler', () => {
+	const label = 'fixture.js';
+	const url = '/api/cron/fixture';
+
+	async function expectSweepRejects(handler, why) {
+		await expect(
+			assertFailClosed(handler, url, label),
+			`the sweep accepted ${why}: it is no longer enforcing anything`,
+		).rejects.toThrow();
+	}
+
+	it('rejects a handler with no guard at all', async () => {
+		await expectSweepRejects(async (_req, res) => {
+			res.status(200).json({ ok: true, swept: 3 });
+		}, 'a handler that runs its body for an anonymous caller');
+	});
+
+	it('rejects a handler that computes the verdict and ignores it', async () => {
+		// The real-world shape: `isCronAuthorized(req)` called without `if (!...)`.
+		await expectSweepRejects(async (req, res) => {
+			const authorized = String(req.headers.authorization || '').startsWith('Bearer ');
+			res.status(200).json({ ok: true, authorized });
+		}, 'a handler that evaluates auth but never acts on it');
+	});
+
+	it('rejects a handler that answers 200 before reaching its guard', async () => {
+		// A health/ping short-circuit placed above the guard: fail-open for any
+		// caller that does not send the method the guard sits behind.
+		await expectSweepRejects(async (req, res) => {
+			if (req.method === 'GET') return res.status(200).json({ ok: true, ping: true });
+			return res.status(401).json({ error: 'unauthorized' });
+		}, 'a handler whose GET path bypasses the guard');
+	});
+
+	it('rejects a handler that starts work and never responds', async () => {
+		// Never terminating is not "closed": the body is already running.
+		await expectSweepRejects(() => new Promise(() => {}), 'a handler that hangs while doing work');
+	}, 20_000);
+
+	it('accepts a correctly guarded handler', async () => {
+		// The positive control: without it, a sweep that rejected everything
+		// would also pass all four cases above.
+		await assertFailClosed(async (_req, res) => {
+			res.status(401).json({ error: 'unauthorized', message: 'invalid cron secret' });
+		}, url, label);
+	});
+});
