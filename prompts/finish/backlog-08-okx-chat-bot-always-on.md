@@ -14,8 +14,11 @@ the daemon (observed alive at 21:09, stale pid by 03:13). The marketplace's own
 tests then report "timeout, no delivery in 30 min", which is what got the listing
 flagged offline once already.
 
-Right now the daemon is staged with skills linked and the wallet session is logged
-out.
+**State on 2026-09-02.** The wallet session is logged in (`claude@three.ws`), the daemon
+is running under the worker's own supervisor rather than the codespace autostart unit, and
+`/api/healthz` shows the `okx_chat_bot` subsystem for the first time. It is still a
+codespace, so every beat says so: `hostDurable=false` reads as degraded on the ops surface,
+not green. What is left is the deploy itself.
 
 ## Immediate revive (do this first, it takes one command)
 
@@ -28,6 +31,14 @@ npm run okx:bot        # scripts/okx-bot-revive.mjs
 The login needs a human: email OTP as `claude@three.ws`. Run this immediately
 before any retest window. The wiring table is in
 [../okx-ai/RUNBOOK.md](okx-ai-RUNBOOK.md) section 0.5.
+
+Then hand the daemon to the worker instead of leaving it parentless, so the fleet can see
+it and an expired session pages instead of going quiet:
+
+```sh
+PORT=8080 OKX_BOT_REPO_ROOT=/workspaces/three.ws \
+  node --env-file=.env.local workers/okx-chat-bot/index.js
+```
 
 ## The durable fix
 

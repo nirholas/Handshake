@@ -32,7 +32,13 @@ Three ingestion paths:
 1. **Facilitator/Bazaar crawl** — consumes the resource lists of known
    facilitators (including the CDP Bazaar `/discovery/resources` catalog).
    Facilitators are hand-maintained in `facilitators/config.ts` in their repo;
-   a PR there is how a new facilitator gets tracked.
+   a PR there is how a new facilitator gets tracked. **This path is paused
+   upstream** and has been since before our facilitator merged:
+   `FACILITATOR_SYNC_PAUSED = true` returns early in
+   `apps/scan/src/app/api/resources/sync/route.ts`, re-checked 2026-09-02. Being
+   a registered facilitator therefore buys settlement attribution (path 2), not
+   catalog ingestion. Our endpoints get listed through path 3, which reads
+   `/openapi.json`.
 2. **On-chain settlement tracking** — seller/volume stats accrue from observed
    USDC settlements attributed to facilitator contracts on Base and Solana.
    Not submitted; earned by real paid traffic.
@@ -50,9 +56,16 @@ metadata (og-tags, favicon) on the resource page, so those must be clean.
 - Every paid endpoint returns a spec-valid 402 `accepts` payload with a real
   description (the service catalog guarantees this — don't hand-edit).
 - Submit each top-level resource at `/resources/register` (wallet signature,
-  no account).
-- Route settlements through the CDP facilitator so both the Bazaar crawl and
-  on-chain volume attribute to us.
+  no account). What their flow actually reads is `/openapi.json`, so an
+  endpoint absent from that document cannot be registered no matter how valid
+  its live 402 is. Since 2026-09-02 every paid service in
+  `api/_lib/service-catalog/` is projected into it automatically
+  (`catalogPaidPaths()` in `api/openapi-json.js`), guarded by
+  `tests/openapi-aggregator.test.js`.
+- Solana volume needs no third party: since PR #1032 merged, x402scan
+  attributes our own facilitator's settlements to us directly (section 7).
+  Routing through the CDP facilitator is the separate, additive Base leg that
+  section 2 covers, and it must never replace the self-hosted Solana rail.
 
 **Burden:** wallet signature only; crawlable otherwise.
 
@@ -274,8 +287,12 @@ The path to being counted, all Solana, no Base required:
    `<name>Discovery` const from `src/discovery/index.ts`, or the package's
    `knip` check fails the PR on an unused export. Once merged, their sync
    backfills from `dateOfFirstTransaction`.
-   Status: <https://github.com/Merit-Systems/x402scan/pull/1032>, open,
-   checks green after the discovery re-export landed 2026-08-11.
+   Status: <https://github.com/Merit-Systems/x402scan/pull/1032>, **merged
+   2026-08-11**, with no review requested and no verification comment needed.
+   Live since: <https://www.x402scan.com/facilitator/three-ws> renders both
+   addresses and, measured 2026-09-02, attributes 18,636 transactions and
+   $1,055.01 of USDC volume to `three-ws`, current to the same day. Their
+   transfer sync is doing exactly what step 1 set it up to do.
 3. **Keep the ring settling.** The ring payer (`x402-ring-payer`,
    `X4o2UuVNMxnrgkzVy97kPF5gmS6CLRCVJGB48VastML`) spends USDC into the treasury,
    the treasury sweeps to the economy master, and the payer is refilled by the
@@ -293,6 +310,43 @@ The path to being counted, all Solana, no Base required:
    their volume would exist to be counted.
 
 ## Registration log
+
+**2026-09-02: re-verification after the facilitator merge (measured, no
+credentials used).** PR #1032 merged 2026-08-11 with zero reviews, so the
+reviewer-verification comment that blocked this for six weeks was never needed.
+Everything the PR declares resolves live: `/api/x402-facilitator/supported`
+200, the logo at `x402scan.com/three-ws.png` 200, and `docsUrl`
+`three.ws/docs/x402-distribution` 200. Their facilitator page renders both fee
+payers and attributes 18,636 transactions / $1,055.01 USDC to `three-ws`, and
+our origin page carries 60 active resources, none deprecated, last re-crawled
+by them on 2026-08-27 (so they do re-probe on their own, contrary to the
+2026-07-12 note above).
+
+Replayed their exact crawler against production
+(`listAllFacilitatorResources`, limit 100, page until
+`total <= offset + limit`): 46 pages, 4,519 items fetched for a `total` that
+stayed 4,519 for the whole sweep, 4,519 unique identities, zero duplicates.
+The 2026-08-02 paging fix holds under a real crawl.
+
+The gap the re-verify found was on our side and is now closed: `/openapi.json`
+hand-enumerated 24 of the 75 live paid services, and their registration flow
+reads that document, which is why the origin has sat at 60 resources. 52 paid
+endpoints answered a spec-valid 402 in production while being invisible to it.
+`catalogPaidPaths()` now projects all of them from the service catalog.
+
+Five endpoints answer 503 `settlement_unavailable` rather than a 402 while the
+sponsor wallet is under its SOL settle floor (`dance-tip`, `feed-health`,
+`ring-settle`, `spend-session`, `three-buy`). That is correct behavior, not a
+bug: they are Solana-only, so the floor removes their only rail while every
+Base-carrying endpoint keeps its 402. They cannot be probe-registered until the
+sponsor is refunded.
+
+Base leg, measured the same day: three.ws appears in 0 of the CDP Bazaar's
+15,127 catalog resources (paged the whole catalog). Expected, per section 2:
+indexing is triggered by a settle through the CDP facilitator on Base and
+production has no `X402_BUYER_PRIVATE_KEY` to pay from. Solana settlement is
+unchanged and still self-hosted.
+
 
 **2026-07-11 — x402scan registration (owner, SIWX signature): 23/23 resources
 registered** for origin three.ws; 2 stale resources auto-deprecated. The

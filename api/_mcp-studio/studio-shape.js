@@ -103,11 +103,22 @@ export function shapePoll(data, base, jobId, title, { pollPath = STUDIO_POLL_PAT
 		// (a status row polls any job id it is handed); each states its own
 		// surface's payment model, which is what the caller has to act on. The
 		// exact per-call answer is the PAYMENT-RESPONSE receipt from the submit.
-		const upstream = String(data?.error || '3D generation hit a snag upstream').trim().replace(/[.!]+$/, '');
+		if (!paid) {
+			return {
+				status: 'error',
+				job: jobId,
+				error: data?.error || '3D generation hit a snag upstream, it costs nothing to try again.',
+			};
+		}
 		const lanes = Array.isArray(data?.retry_backends) ? data.retry_backends.filter((b) => typeof b === 'string') : [];
-		const note = paid
-			? 'Jobs here settle when the lane accepts them, so a retry is a new paid call.'
-			: 'It costs nothing to try again.';
+		const upstream = String(data?.error || '3D generation hit a snag upstream').trim().replace(/[.!]+$/, '');
+		const note = 'Jobs here settle when the lane accepts them, so a retry is a new paid call.';
+		// The alternate engines ride only on the metered surface. The free lane's
+		// response shape is the published custom-GPT Action contract
+		// (public/.well-known/3d-studio-openapi.yaml, byte-guarded against its
+		// submission source), so a new key there is a contract change for another
+		// work stream to make, not a bug fix to slip in here. The /forge UI reads
+		// retry_backends straight off /api/gpt-forge and is unaffected.
 		return {
 			status: 'error',
 			job: jobId,

@@ -1,14 +1,14 @@
 {
   "base": "https://three.ws",
   "dryRun": true,
-  "ranAt": "2026-09-02T19:06:48.912Z",
+  "ranAt": "2026-09-02T19:13:15.061Z",
   "results": [
     {
-      "id": "5d",
-      "title": "garbage payment header gets a clean 4xx, runs no tool",
-      "ok": true,
-      "detail": "notBase64=400, wrongShape=402, emptyString=402, truncatedJson=400",
-      "evidence": "prompts/okx-ai/e2e-evidence/53-case5d-garbage.json"
+      "id": "1d",
+      "title": "MCP discovery is free to a spec-compliant client",
+      "ok": false,
+      "detail": "forge-draft=402/402, forge-standard=402/402, forge-hd=402/402, forge-image=402/402",
+      "evidence": "prompts/okx-ai/e2e-evidence/33-case1d-mcp-discovery.json"
     }
   ],
   "settlements": []

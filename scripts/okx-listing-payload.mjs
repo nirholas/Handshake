@@ -53,7 +53,22 @@ if (!wantDelta) {
 
 let raw = '';
 for await (const chunk of process.stdin) raw += chunk;
-const parsed = JSON.parse(raw);
+if (!raw.trim()) {
+	// --delta diffs the LIVE listing against the catalog, so it reads that
+	// listing on stdin. Run bare it just hangs or dies inside JSON.parse, which
+	// reads as a broken script rather than a missing pipe.
+	console.error('--delta reads the live listing on stdin. Run:');
+	console.error('  onchainos agent service-list --agent-id 2632 | node scripts/okx-listing-payload.mjs --delta');
+	process.exit(1);
+}
+let parsed;
+try {
+	parsed = JSON.parse(raw);
+} catch (err) {
+	console.error(`stdin is not JSON (${err.message}). Expected the output of \`onchainos agent service-list --agent-id 2632\`.`);
+	console.error(`Got: ${raw.trim().slice(0, 200)}`);
+	process.exit(1);
+}
 // service-list shape: { ok, data: [{ total, rows|list|services: [...] }] } or a bare array.
 const container = Array.isArray(parsed) ? parsed : (parsed.data?.[0] ?? parsed.data ?? parsed);
 const live =

@@ -429,11 +429,31 @@ describe('what a buying agent actually receives', () => {
 	});
 
 	it('a failed job is an error the buyer can act on, not a silent pending', async () => {
-		lane.poll = () => jsonResponse(200, { status: 'failed', error: 'upstream lane died' });
+		lane.poll = () =>
+			jsonResponse(200, {
+				status: 'failed',
+				error: 'upstream lane died',
+				retry_backends: ['trellis_selfhost', 'hunyuan3d'],
+			});
 		const out = await callTool('forge-status', FORGE_STATUS_TOOL, { job_id: 'f1.job.abc' });
 		expect(out.isError).toBe(true);
 		expect(out.structuredContent.status).toBe('error');
-		expect(out.structuredContent.error).toBe('upstream lane died');
+		expect(out.structuredContent.error).toContain('upstream lane died');
+		// The alternate engines the generator named reach the buyer, so "an error
+		// the buyer can act on" means something the buyer can actually act on.
+		expect(out.structuredContent.retryBackends).toEqual(['trellis_selfhost', 'hunyuan3d']);
+	});
+
+	// These rows settle when the lane accepts a job, so a generation failure
+	// after that point HAS been charged. The shared shaper's free-lane wording
+	// ("it costs nothing to try again") is true on /api/3d/studio and false
+	// here, and it was being served to paying buyers until 2026-09-02.
+	it('a failed job never tells a paying buyer the retry is free', async () => {
+		lane.poll = () => jsonResponse(200, { status: 'failed', error: 'upstream lane died' });
+		const out = await callTool('forge-status', FORGE_STATUS_TOOL, { job_id: 'f1.job.abc' });
+		expect(out.structuredContent.error).not.toContain('costs nothing');
+		expect(out.structuredContent.error).toContain('new paid call');
+		expect(out.content[0].text).toContain('new paid call');
 	});
 
 	it('an unknown job id is reported as unknown_job rather than a generic failure', async () => {

@@ -100,6 +100,8 @@ locally with no code change. Defaults are the production posture.
 | `OKX_BOT_STATE_OBJECT` | `okx-chat-bot/state.tar.gz` | Object name within that bucket. |
 | `OKX_BOT_REPO_ROOT` | `/app` | Where the briefing and skills are read from. |
 | `OKX_BOT_AI_PROVIDER` | auto | Pin the provider (`claude`, `codex`, `hermes`, `openclaw`). |
+| `OKX_BOT_HOST_LABEL` | auto | Name this host on every beat. Cloud Run names itself from `K_SERVICE`. |
+| `OKX_BOT_HOST_DURABLE` | unset | Set to `1` to claim a non-Cloud-Run host stays up on its own. |
 | `OKX_BOT_DAEMON_BIN` | `okx-a2a` | The XMTP daemon binary the supervisor owns. |
 | `OKX_BOT_HEARTBEAT_MS` | `30000` | How often the `bot_heartbeat` row is written. Its own timer, not the probe's. |
 | `OKX_BOT_SESSION_PROBE_MS` | `60000` | How often health is re-probed. |
@@ -113,8 +115,10 @@ no key spawns, fails to authenticate, and produces exactly the symptom this
 worker exists to kill: silence on the buyer's side. So an explicit
 `OKX_BOT_AI_PROVIDER` wins; otherwise `ANTHROPIC_API_KEY` or
 `CLAUDE_CODE_OAUTH_TOKEN` selects `claude`, and `OPENAI_API_KEY` selects
-`codex`. With no credential at all the worker boots, logs an error, and reports
-`ai_provider_uncredentialed` rather than pretending to be healthy.
+`codex`. A developer host carries no key at all: its claude CLI was logged in by
+a human, so an existing `$OKX_BOT_HOME/.claude/.credentials.json` also counts as
+a credential. With no credential at all the worker boots, logs an error, and
+reports `ai_provider_uncredentialed` rather than pretending to be healthy.
 
 `DATABASE_URL` is also required, for the heartbeat row.
 
@@ -159,14 +163,21 @@ someone has to go find.
 
 ## Deploying
 
-**Status: built and tested, not yet deployed.** There is no `okx-chat-bot`
-Cloud Run service in `aerial-vehicle-466722-p5`, and none of the one-time setup
-below has been run: `gs://three-ws-okx-bot-state`, `okx-chat-bot-database-url`
-and `anthropic-api-key` all still have to be created. `/api/healthz` accordingly
-reports the `okx_chat_bot` subsystem as `unknown` with `no heartbeat reported
-yet`, which is the honest reading: no host has ever beat. Deploys are
-owner-gated, so the setup below plus the build submit are the whole remaining
-path, and the only value not already on this machine is the Anthropic key.
+**Status: running as a stopgap on a developer codespace, not yet deployed.**
+There is no `okx-chat-bot` Cloud Run service in `aerial-vehicle-466722-p5`, and
+none of the one-time setup below has been run: `gs://three-ws-okx-bot-state`,
+`okx-chat-bot-database-url` and `anthropic-api-key` all still have to be
+created. Deploys are owner-gated, so the setup below plus the build submit are
+the whole remaining path, and the only value not already on this machine is the
+Anthropic key.
+
+Since 2026-09-02 this worker has beat for the first time, from a codespace, so
+`/api/healthz` reports the `okx_chat_bot` subsystem instead of `unknown`. That
+is a stopgap and says so on the wire: every beat carries `host` and
+`hostDurable`, and a beat whose host cannot survive on its own reads as
+**degraded**, never `ok`, with the deploy command as its hint. Calling a
+codespace green would rebuild, one level up, the false-green this worker exists
+to kill.
 
 The service must run `--min-instances=1 --max-instances=1`. This is not a
 capacity choice: the GCS snapshot has exactly one writer, and concurrent

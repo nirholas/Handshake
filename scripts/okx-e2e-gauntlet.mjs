@@ -20,6 +20,7 @@
  *
  * Cases (each runs individually, none is "covered by" another):
  *   1   free lane serves live data with no payment demanded
+ *   1d  MCP discovery is free to a spec-compliant client (the reviewer's probe)
  *   2   cheapest paid row ($0.01 forge-draft) delivers a real GLB
  *   2b  mid paid row ($0.05 forge-standard) delivers a real GLB
  *   3   flagship listed row ($0.25 forge-hd) delivers a real GLB
@@ -353,6 +354,39 @@ async function case1Free() {
 		`health ${health.status} (${healthBody.subsystems?.length} subsystems, real latencies), catalog ${catalog.status} (${catalogBody.services?.length} rows), free tools on a paid row: forge_status ${freePoll.status}, getting_started ${gettingStarted.status}`,
 		ref,
 	);
+}
+
+// Discovery must be free to the client an OKX reviewer actually probes with. A
+// spec-compliant MCP client sends `Accept: text/event-stream` and
+// `MCP-Protocol-Version`; curl sends neither, which is how a paywalled
+// initialize/tools/list stayed invisible through every earlier verification and
+// cost the listing a rejection for "missing a complete description, parameter
+// details, and usage examples". Paid work is untouched: tools/call is never a
+// discovery method.
+async function case1dDiscovery() {
+	const mcpHeaders = { accept: 'application/json, text/event-stream', 'mcp-protocol-version': '2025-06-18' };
+	const out = {};
+	let ok = true;
+	for (const serviceId of ['forge-draft', 'forge-standard', 'forge-hd', 'forge-image']) {
+		const entry = catalogEntry(serviceId);
+		const init = await post(entry.endpoint, { jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'okx-gauntlet', version: '1' } } }, { extraHeaders: mcpHeaders });
+		const list = await post(entry.endpoint, { jsonrpc: '2.0', id: 2, method: 'tools/list' }, { extraHeaders: mcpHeaders });
+		const tools = list.body?.result?.tools;
+		const paidTool = Array.isArray(tools) ? tools.find((t) => t.name === FORGE_TOOL) : null;
+		// A tool a buyer can call is one whose description and input schema it can
+		// read, so "discovery works" means the schema arrived, not just a 200.
+		const usable = Boolean(paidTool?.description && paidTool?.inputSchema?.properties);
+		const rowOk = init.status === 200 && list.status === 200 && usable;
+		if (!rowOk) ok = false;
+		out[serviceId] = {
+			initialize: { status: init.status, protocolVersion: init.body?.result?.protocolVersion ?? null },
+			toolsList: { status: list.status, tools: Array.isArray(tools) ? tools.map((t) => t.name) : null },
+			paidToolDocumented: usable,
+		};
+		log(`      ${rowOk ? 'ok  ' : 'FAIL'} ${serviceId}: initialize ${init.status}, tools/list ${list.status}, ${FORGE_TOOL} documented: ${usable}`);
+	}
+	const ref = evidence('33-case1d-mcp-discovery.json', out);
+	return record('1d', 'MCP discovery is free to a spec-compliant client', ok, Object.entries(out).map(([k, v]) => `${k}=${v.initialize.status}/${v.toolsList.status}`).join(', '), ref);
 }
 
 // The full A2MCP buy: 402 -> sign -> replay -> job id -> free poll -> artifact
@@ -785,6 +819,7 @@ async function main() {
 	}
 
 	if (wanted('1')) await case1Free();
+	if (wanted('1d')) await case1dDiscovery();
 	if (wanted('2')) await buyForge({ id: '2', serviceId: 'forge-draft', title: 'cheapest paid row delivers a real GLB', toolArgs: { prompt: 'a brass steampunk owl, full body' } });
 	if (wanted('2b')) await buyForge({ id: '2b', serviceId: 'forge-standard', title: 'mid paid row delivers a real GLB', toolArgs: { prompt: 'a weathered wooden fishing boat' } });
 	if (wanted('3')) await buyForge({ id: '3', serviceId: 'forge-hd', title: 'flagship listed row delivers a real GLB', toolArgs: { prompt: 'an ornate Venetian carnival mask, gold leaf' } });

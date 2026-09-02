@@ -1,0 +1,46 @@
+{
+  "forge-draft": {
+    "initialize": {
+      "status": 402,
+      "protocolVersion": null
+    },
+    "toolsList": {
+      "status": 402,
+      "tools": null
+    },
+    "paidToolDocumented": false
+  },
+  "forge-standard": {
+    "initialize": {
+      "status": 402,
+      "protocolVersion": null
+    },
+    "toolsList": {
+      "status": 402,
+      "tools": null
+    },
+    "paidToolDocumented": false
+  },
+  "forge-hd": {
+    "initialize": {
+      "status": 402,
+      "protocolVersion": null
+    },
+    "toolsList": {
+      "status": 402,
+      "tools": null
+    },
+    "paidToolDocumented": false
+  },
+  "forge-image": {
+    "initialize": {
+      "status": 402,
+      "protocolVersion": null
+    },
+    "toolsList": {
+      "status": 402,
+      "tools": null
+    },
+    "paidToolDocumented": false
+  }
+}
