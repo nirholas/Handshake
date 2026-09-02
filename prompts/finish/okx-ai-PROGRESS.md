@@ -6,6 +6,115 @@ Work Order 04 session, no earlier entries existed because no earlier work order 
 
 ---
 
+## 2026-09-02, Work Order 07: independent audit, docs closure, memory; the 402 was still speaking x402 v1
+
+Third session on this stream today. Ran WO-07 against production without reading the other
+two sessions' conclusions first, so the overlap below is independent corroboration, not a
+copy. Where they got there first I verified their claim and moved on rather than redoing it.
+
+### Re-verified today, live, and it held
+
+- **Approval state: `approvalDisplayStatus: 2`, `approvalLabel: "Listing under review"`,
+  `status: 2` (not listed), `soldCount: 2`.** Day 6 since the 2026-08-27 resubmission. Read via
+  `agent get-my-agents`; `get-agents` no longer carries the field, and `service-list`'s
+  `agentInfo.approvalStatus: 3` plus its stale `approvalRemark` are not the verdict. **Branch
+  executed: still pending.** Nothing submitted, no on-chain write attempted, no daemon left
+  polling.
+- **Four-way catalog identity**, checked by diffing the payloads rather than eyeballing them:
+  `catalogIndex()` in `api/_lib/okx-catalog.js` is byte-identical to live
+  `GET /api/okx/3d/catalog` (`JSON.stringify` equality, not a field spot-check), and all 7
+  listed rows match `agent service-list` on name, price, endpoint and both description parts.
+  `validateCatalog()` true.
+- **402 on the cheapest and the flagship**, sent with real MCP client headers: `forge-draft`,
+  `forge-standard`, `forge-hd`, `forge-image` all answer 402 with `accepts[0]` =
+  `{scheme:"exact", network:"eip155:196"}` at their own atomic amounts (10000 / 50000 / 250000
+  / 250000), asset USD₮0, payTo `0x4022de2D…f402`, `extra.decimals: 6`. Solana and Base follow.
+  `access-control-expose-headers` carries `PAYMENT-REQUIRED, PAYMENT-RESPONSE`, per spec §1.1.
+- **Free lane honest.** `/health` 200 with all six subsystems ok (`payment-rail settleable:true`,
+  block 69606444); `getting_started` and `forge_status` served free on paid rows; a bogus job id
+  answers `unknown_job` rather than an exception.
+- **All 8 back-burner REST rows** answer GET 200 with a descriptor and unpaid POST 402, at
+  exactly the prices `docs/okx-marketplace.md` quotes (0.01 / 0.30 / 0.30 / 0.25 / 0.50 / 0.10 /
+  0.02 / 0.10). The doc's back-burner table is accurate line by line.
+
+### Defect found and FIXED: our 402 named an x402 v1 header on a v2-only rail (`7e1b931ea`)
+
+Every OKX service answered an unpaid call with `"error": "X-PAYMENT header is required"`, the
+platform-wide default from `api/_lib/x402-spec.js`. That is the x402 **v1** header name. OKX
+implements **v2**, whose buyer header is `PAYMENT-SIGNATURE`, and per this repo's own spec
+research the OKX SDK's `extractPayment` reads only `payment-signature` with no v1 fallback. So
+on the one surface whose 2026-07-04 rejection was literally "not integrated with the OKX Agent
+Payments Protocol standard", the single string a reviewer is guaranteed to read named the
+version we do not implement. Our handlers accept both header names on the wire, so the message
+now names both, v2 first: `X402_HEADER_ERROR` in `api/_lib/x402-xlayer-okx.js`, threaded into
+every forge row's challenge and the Identity Studio's. The platform-wide v1 default is
+untouched, because the Solana and Base rails genuinely do read `X-PAYMENT`. Regression test:
+`tests/api/okx-402-dialect.test.js` (4 cases, green). **Ships on the next deploy, which is
+owner-gated**; it is one `npm run deploy:gcp:full` behind the same deploy that carries the
+discovery fix from the sibling session.
+
+### Replay and cross-service payment, proven live without funds
+
+Case 5a (replay a *settled* proof) still needs a funded payment and stays blocked, but two of
+its neighbours are provable today and were:
+
+- A forged EIP-3009 proof sent twice to `forge-draft` was rejected both times at verify
+  (`"EIP-3009 signature does not verify for authorization.from"`), no job started either time.
+- The same draft-priced proof replayed against the flagship answers **`"signed payment amount
+  10000 is below required 250000"`**, so a cheap challenge cannot buy an expensive row. That is
+  case 5b, closed from evidence instead of intention.
+
+### Docs closure (Part 2), each item verified rather than assumed
+
+- `specs/okx-agent-payments.md` §1.1 matches the live challenge field for field, including the
+  CORS expose header and the `payTo` correction note. No stale claim found.
+- `docs/okx-marketplace.md`: every curl in it was executed. Free lane, poll example and the
+  back-burner table are correct; the "not yet demonstrated end to end" note is still true and
+  stays until a tx hash exists.
+- **`docs/agent-identities.md` and `docs/api-reference.md` both linked
+  `okx-marketplace.md#agent-identity-studio-150-per-identity`, an anchor that stopped existing
+  when the 2026-08-22 rebuild moved the Identity Studio under "Back burner".** Two dead links on
+  live doc pages; repointed to `#back-burner`.
+- **`data/pages.json` still described `/docs/okx-marketplace` as "the Agent Identity Studio
+  flagship plus micro-priced text-to-3D, rigging, retargeting, pose and export endpoints".**
+  That description feeds the sitemap, `llms.txt` and `features.json`, so the listing we no
+  longer sell was what crawlers and LLMs were told we sell. Rewritten around the forge line-up;
+  `npm run build:pages` regenerated all five artifacts and validated the changelog.
+- `STRUCTURE.md` rows for the OKX surface and the chat-bot worker are current.
+  `workers/okx-chat-bot/README.md` exists. `data/changelog.json` carries 14 OKX entries, well
+  formed, including the 2026-08-22 rebuild announcement; no entry claims a settled payment.
+- `npm run audit:docs`: 1 finding across 1474 files, and it is another stream's untracked
+  `docs/nvidia-forum-browser-digital-human.md`. Nothing on this stream.
+
+### Corrected: `okx-ai-00-CONTEXT.md` said the 3D category was empty
+
+It is not, and that claim was steering strategy. The same query that returned **1** result on
+2026-07-06 returns **112** today; the category now holds real sellers with real volume (#6731
+Agent Reel 576 sales, #5331 BrandCanvas 98, #6180 KULT 66, #5063 "3D Element" 18 with a $0.02
+"Quick 3D Model" row). The section now leads with the live pull, keeps the July reading as
+labelled history, and says to re-pull before quoting. What survives: volume sits on cheap
+sharply-scoped rows, and nothing found sells a rigged animation-ready GLB with an AR link.
+
+### Hygiene
+
+`npm run check:rules` clean on every path touched. No TODOs, no banned dashes, no scratch files
+from this stream; nothing this stream owns sits in the repo root. (The root does hold other
+streams' untracked scratch: three `*_tweets_*.json` files and `mobile-final.png`. Left alone,
+they are not ours and not committed.)
+
+**Agent-memory file written** at `~/.claude/projects/-workspaces-three-ws/memory/okx-ai-agent-2632-listing.md`
+and indexed in `MEMORY.md`: agent state, the 7-row line-up, where the runbook and evidence
+live, the wallet roles, and the five CLI traps that each cost a session.
+
+### Owner action, unchanged and still the only one
+
+Fund buyer `0x75d00a2713565171f33216e5aa2a375e076ecf69` on X Layer (chain 196) with about $5 of
+USD₮0 `0x779ded0c9e1022225f8e0630b35a9b54be713736`. Re-read live today at block 69606531: buyer
+0 USD₮0 / 0 OKB, seller `0x4022de2D…f402` 2.427731 / 0.839596, relayer `0xe81DE501…415B`
+0 / 0.02. That unblocks WO-04's settled payment and nothing else; it does not gate the review.
+
+---
+
 ## 2026-09-02, RUNBOOK repaired: the daily status check had been broken since the CLI moved its approval fields
 
 Companion to the "Work Order 05 dispatched" entry below, same day, different session. That

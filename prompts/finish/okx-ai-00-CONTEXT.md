@@ -50,7 +50,21 @@ of truth for facts every work order depends on. Do not re-derive these; do not c
 This tells us the wire shapes OKX buyers can sign. The SELLER-side contract (which facilitator
 verifies/settles, exact required fields) is what prompt 01 pins down.
 
-## Competitive intelligence (live marketplace pull, 2026-07-06)
+## Competitive intelligence
+
+**Re-pulled live 2026-09-02, and the headline claim below has expired. Do not plan against
+the 2026-07-06 reading.** The same query, `onchainos agent search --query "3D model avatar
+rendering game asset"`, returned **1** result in July and returns **112** today; "text to 3D
+model GLB generation" returns 38. The category filled in while we were in review, and the
+sales are real: #6731 Agent Reel 576 sales (from $0.10), #5331 BrandCanvas 98, #6180 KULT
+Agent Creator 66, #3633 PixStudio 27, #5063 "3D Element" 18 (a "Quick 3D Model" row at
+$0.02, the closest thing to a direct competitor), #9854 Omni2D 11. Agent #2632 is absent from
+both result sets, which is correct while `status` is "not listed". Two things survive from
+July and still hold: the volume sits on cheap, sharply-scoped rows, and nothing found sells a
+rigged, animation-ready GLB with an AR link, which is what our forge rows return. Re-pull
+before quoting any of these numbers; this section has gone stale once already.
+
+### The 2026-07-06 pull (historical, superseded above)
 
 - **3D category is EMPTY.** Query "3D model avatar rendering game asset" → 1 result, a novelty
   trading-card generator. No text→3D, no rigging, no avatars. We would be first and only.
