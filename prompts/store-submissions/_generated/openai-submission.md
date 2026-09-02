@@ -368,11 +368,25 @@ The landscape shots must show the **shipped ChatGPT inline widget** (`api/_mcp-s
 resource `ui://widget/three-studio-model.html`) rendering the GLB produced by a real `forge_free` call
 — not a standalone page and not a mockup.
 
-`[HUMAN: re-capture the landscape widget shots against the shipped inline widget (render a real
-forge_free GLB in the ChatGPT-app sandbox, or the widget resource loaded standalone), and confirm the
-App Directory form's exact required screenshot dimensions/aspect. Earlier captures were taken against a
-now-removed standalone viewer bundle and must not be reused. The widget renders any GLB at any
-viewport.]`
+**Status 2026-09-02 (task 07).** Two of the three sub-items are now resolved, one is blocked:
+
+- **Resolved: no stale viewer references.** Nothing in the kit points at the retired
+  `https://three.ws/apps-sdk/` viewer as "the widget". The only `apps-sdk/` strings left in
+  `_generated/` are OpenAI's own developer-docs URLs and a repo source path, neither of which is a
+  capture target.
+- **Resolved: the capture harness works.** The shipped widget resource was driven end to end in a
+  `window.openai`-less Chromium off a real live tool payload and reached its ready state with
+  `<model-viewer>.loaded === true`, so a re-capture is a mechanical step, not an open question.
+- **Blocked on B3 (§0): no submission-grade model to photograph.** The three generations run for this
+  checklist returned, respectively, a flat slab, an untextured blob, and a recognizable cat carrying a
+  baked-in ground plane and a floating backdrop panel. A screenshot is the single most scrutinized
+  artifact in the listing and must not advertise the defect. **Re-capture once the B3 fix is deployed
+  and a generation comes back clean.**
+
+`[HUMAN: confirm the App Directory form's exact required screenshot dimensions and aspect ratio. The
+current files are 1440x1520 portrait, 1600x1000 and 1280x800 landscape; only the portal states the
+requirement, so this cannot be checked from here. The widget renders any GLB at any viewport, so
+re-capturing to whatever the form asks for is trivial once B3 clears.]`
 
 ---
 
@@ -439,9 +453,10 @@ curl -s -X POST https://three.ws/api/mcp-studio -H 'content-type: application/js
 - [x] Served discovery schema is live: `https://three.ws/.well-known/3d-studio-openapi.yaml` returns
       200 in production, as do `/.well-known/ai-plugin.json`, `/legal/privacy`, `/legal/tos` and
       `/support` (re-verified 2026-09-02).
-- [ ] Screenshots — **re-capture the landscape widget shots against the shipped inline widget**
-      (`api/_mcp-studio/component.js`); the earlier standalone-viewer captures were removed as part of
-      collapsing the duplicate viewers. Confirm the form's required dimensions. `[HUMAN]`
+- [ ] Screenshots: re-capture against the shipped inline widget (`api/_mcp-studio/component.js`).
+      Verified 2026-09-02 that no evidence file still cites the retired `apps-sdk/` viewer, and that the
+      widget drives correctly for capture. Held on B3: no generation clean enough to photograph yet (§4).
+      Required dimensions still need the portal. `[HUMAN: confirm required dimensions]`
 - [x] Inline widget re-verified live 2026-09-02 in a `window.openai`-less Chromium: the skybridge
       resource paints its empty state ("No model yet"), accepts a real tool payload over `postMessage`,
       shows the generating state, and reaches ready with `<model-viewer>.loaded === true` on the real

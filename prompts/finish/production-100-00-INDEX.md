@@ -109,12 +109,13 @@ Strategy for what to run next inside E: [../roadmap/fable-playbook.md](roadmap-f
 |---|---|
 | [04-fact-check-mixed-verdicts.md](production-100-04-fact-check-mixed-verdicts.md) | Open; live run 2026-08-10 scores `mixed` 0/10 and 40% overall; verdict thresholds untouched since 2026-07-28. |
 
-### G. Event (closeout only)
+### G. Event (two polish orders)
 
 | Order | State |
 |---|---|
-| [../event/08-event-closeout.md](event-08-event-closeout.md) | Run first in this pack: the souvenir grant count is readable from the multiplayer logs until about 2026-09-08; the standings board expired unexported. |
-| [../event/02-play-polish-sweep.md](event-02-play-polish-sweep.md), [../event/06-photo-mode-share.md](event-06-photo-mode-share.md) | The in-world walkthrough was never done; photo mode was built but never verified on both engines or announced. |
+| Closeout | Done 2026-09-02, order file retired. The world server never shipped the event build, so nothing was granted and no standing ever existed: [../event/PROGRESS.md](event-PROGRESS.md). Its remainder is OWNER-ACTIONS rows 13, 15 and 18. |
+| [../event/02-play-polish-sweep.md](event-02-play-polish-sweep.md) | Open, rewritten to its remainder. The world does boot headless here and the existing harness reaches every surface; what is left is one run on a quiet box. |
+| [../event/06-photo-mode-share.md](event-06-photo-mode-share.md) | Open, with another agent actively on it as of 2026-09-02. Cross-engine verification and the changelog entry remain. |
 
 ### H. Distribution and listings (owner- or commit-gated)
 

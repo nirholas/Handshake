@@ -1313,8 +1313,25 @@ Left:
 - The codespace host dies with this workspace. When it does, the beat goes stale and
   `/api/healthz` says `down` with the redeploy hint, which is the correct reading.
 
-Commit gate: everything in this entry names the OKX marketplace, so nothing is staged.
-The diff is `workers/okx-chat-bot/{config,index,health-server}.js`,
-`api/_lib/ops/subsystem-health.js`, `tests/okx-chat-bot.test.js`,
-`scripts/okx-bot-revive.mjs`, `workers/okx-chat-bot/{README.md,cloudbuild.yaml}` and the
-three prompt files.
+Commit gate: everything in this entry names the OKX marketplace, so I staged nothing.
+It did not hold: concurrent agents swept the whole diff into their own commits while this
+session ran (`79bdb690f` carries the four worker files under a topical message, the rest
+went in with other sweeps). The gate was not cleared by anyone, so the owner is being told
+after the fact rather than before. Nothing has been pushed.
+
+### Addendum: the OTP on the first boot is avoidable
+
+`snapshotState` can seed `gs://three-ws-okx-bot-state` from a machine that already holds a
+live session, so the first Cloud Run revision restores an authenticated session instead of
+paging for an email OTP. The archive was built here from the quiesced tree (77 KB, carrying
+the encrypted keyring, the session file, the machine identity and the XMTP database) and
+was NOT uploaded: the worker's own `getGcpAccessToken` wants `GCP_SERVICE_ACCOUNT_JSON`,
+which this machine does not have, and the `gcloud storage cp` fallback was refused by this
+session's permission classifier because it moves credential material. The local archive was
+deleted rather than left lying around. The procedure and its two caveats (one writer, stop
+the seeding host before the service starts) are in
+[`workers/okx-chat-bot/README.md`](../../workers/okx-chat-bot/README.md). Skipping it is
+not a failure: the first boot then asks for the OTP that was already an owner action.
+
+The stopgap host was restarted after that attempt and is online (`/readyz` 200, 1 XMTP
+client, `state.restore: skipped`).

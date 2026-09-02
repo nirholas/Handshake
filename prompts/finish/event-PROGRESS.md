@@ -322,3 +322,61 @@ even though `9cff4cb2a` had already committed it. Reset with
 in-world browser walkthrough it has always needed, and the box is at load average 62 on 16 cores,
 the same contention that defeated the order-04 and order-07 agents; a walkthrough run under that
 would not be trustworthy evidence even if it completed. The pack therefore cannot retire yet.
+
+## 2026-09-02 · Order 02 · The in-world walk was driven for the first time, and the box refused to let it be measured
+
+**The residual that has blocked this order since 2026-08-08 is retired: the /play world DOES boot
+headless on this machine.** Both the order-04 and order-07 agents recorded that it would not (`page.goto`
+timeout, `Page crashed`, "the 3D boot OOMs the browser under load") and verified their work against
+harnesses instead. It boots. `scripts/play-journey-audit.mjs` under headless Chromium with
+`--use-gl=swiftshader --enable-unsafe-swiftshader` drove a real cold load, the lobby, search, the create
+modal, the gallery, entry into the $THREE world, the HUD, and the store / bank / wheel / emote panel
+probes. There is no need for anyone to build a new harness for this order; the one in `scripts/` reaches
+every surface the order asks about.
+
+**What it could not do is measure, and the reason is the box, not the code.** Two runs:
+
+1. **Load average 43 on 16 cores.** Reached the world at +332s. The shared Vite dev server on port 3000
+   died at +67s and never came back inside the run, so from there every line is
+   `net::ERR_CONNECTION_REFUSED`: the store panel's lazy chunk, `/avatars/default.glb`, the animation
+   clips, `/api/auth/me`, the world save. A `LOADER NEVER CLEARED` and a "failed to load dynamically
+   imported module" in that run are artifacts of a dead server, not defects, and it would have been easy
+   and wrong to file them.
+2. **Load average 220 on 16 cores.** The harness printed `LOBBY NEVER BECAME VISIBLE` at +125s and then
+   `[state:lobby-first-paint] {"cards":21,"skeletons":0}` at +211s, and printed
+   `GRID NEVER RESOLVED (no cards, no empty state, no error state)` about a grid holding 21 cards. Every
+   verdict in that run is a false negative. Stopped it rather than let it add load and produce a defect
+   list made of contention.
+
+The harness measures with wall-clock waits, so contention does not slow it down, it makes it lie. That
+is now written into the order as a precondition with the numbers above, so the next agent checks
+`uptime` before believing anything it prints.
+
+**What was verified anyway, from the uncontended first minutes:** `[focus:lobby] 114 tabbable, 0 kinds
+without a focus ring, 0 that refuse focus` at 1440x900, 21 coin cards, 0 skeletons, no empty state. That
+agrees with the preflight's independent lobby pass (130 desktop / 91 mobile tab stops, 0 missing rings).
+
+**Two harness readings documented as noise rather than filed as defects,** because a later agent would
+otherwise chase them: the `[overflow:panel:*]` rows for `div.cc-label.ac-name`, `div.ac-prompt`,
+`span.ac-key`, `div.tik-prompt`, `div.npc-prompt` and `div.cc-label.npc-name` are world-space billboard
+labels, so an `x` of 5746 or -287 is them behaving correctly when their subject is off camera; and
+`[panel:bank] no trigger visible` is right, because the bank is proximity-gated behind its ATM by design
+and has no HUD button, as is the Wheel of Fortune behind its station.
+
+**Shipped:** `prompts/finish/event-02-play-polish-sweep.md` rewritten to its remainder. It now carries
+the quiet-box precondition with the measured failure modes, the three exact runs to make (desktop, 375,
+320), the two readings to ignore, and the same task list scoped to the in-world half only, with the
+lobby half marked verified and off limits.
+
+**Remains:** the in-world defect list itself, one quiet-box session. Nothing about it is blocked on a
+credential, a deploy, or an owner.
+
+**Not mine, in flight.** Order 06 is being worked by a concurrent agent in this same worktree right now
+(`1c7410eef` 19:01Z, `37f60a291` 19:07Z, `ad129473d` 19:19Z, `ac68136d4` 19:25Z: the retake fix, unit
+tests, a photo-mode check script, and an e2e driving the real capture path). Left entirely alone. Its
+changelog entry was still absent at 19:26Z and belongs to that agent's run, not to a second hand.
+
+**Order 08 is complete and its file is deleted.** Its closeout is the entry above this one; its two
+blocked cloud reads are OWNER-ACTIONS rows 13 and 15, and the production defect it turned up is row 18.
+Its last task, retiring the pack, is now a line in [README.md](event-README.md), since it can only happen
+after 02 and 06 land.

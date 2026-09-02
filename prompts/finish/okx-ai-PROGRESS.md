@@ -6,6 +6,124 @@ Work Order 04 session, no earlier entries existed because no earlier work order 
 
 ---
 
+## 2026-09-02, Work Order 04: gauntlet rebuilt for the forge listing, one false promise removed, funding is the only gate
+
+Fourth session on this stream today. WO-04 is the funded end-to-end payment test, so the
+paid half stays gated; everything that does not move money is finished, and the harness that
+runs the moment funding lands was rebuilt, because it would not have worked.
+
+### The gauntlet was buying a listing that no longer exists
+
+`scripts/okx-e2e-gauntlet.mjs` was written against the pre-2026-08-22 line-up: plain-JSON
+REST POSTs to `text-to-3d`, `avatar` and `fbx-export`, reading a `model_url` straight out of
+a 200. The listed product has been seven A2MCP rows since then. A funded run would have
+signed a real authorization, sent an MCP JSON-RPC call the old code never built, and failed
+on the first case with the money already committed. Rewritten around what OKX actually
+sells:
+
+- Every paid case now does the real buyer loop: unpaid `tools/call forge_3d` to 402, sign
+  through the TEE wallet, replay, take the job id, poll the FREE `forge_status` tool to
+  `done`, then verify the GLB bytes. Generation is asynchronous, so a case that stopped at
+  the 200 would have proved nothing.
+- Four paid rows covered individually (`forge-draft` 0.01, `forge-standard` 0.05, `forge-hd`
+  0.25, `forge-image` 0.25), none "covered by" another.
+- **Case 3r keeps the rigged-artifact assertion alive.** The listed forge rows deliver a
+  static mesh by design, so the work order's "flagship ships a skeleton and skin weights"
+  check would have quietly evaporated with the relisting. It now buys the back-burner
+  `avatar` row ($0.50), which is the row that actually rigs, and verifies bones and non-empty
+  skin weights with `scripts/okx-verify-glb.mjs --rigged`.
+- **Case 1d is new and it FAILS against production**, on all four paid rows: a spec-compliant
+  MCP client (`Accept: text/event-stream` + `MCP-Protocol-Version`) is answered **402 on
+  `initialize` and `tools/list`**, so it can never read a tool description or a parameter
+  schema. That is the sibling session's discovery-paywall fix, already in the tree with unit
+  tests, not yet deployed. The unit tests prove the fix; case 1d is the production-side proof
+  that it has not shipped, and it will flip to PASS on the deploy. Payment is unaffected:
+  `tools/call` is never a discovery method.
+- **A budget preflight that refuses to start.** `--budget` prices a run off the catalog
+  module, and a paid run reads `balanceOf(buyer)` first and exits rather than half-running.
+  A half-funded run burns the cheap cases and then fails the dear ones on balance, which
+  reads exactly like a rail defect and is not one.
+- Case 5d's assertion was rewritten. It judged "no tool ran" by string-matching the response
+  body, and the 402 body legitimately carries the bazaar discovery block whose worked example
+  contains a specimen job id. It now reads the structured result and the receipt header.
+
+Dry run against production: **1, 5d and 7 PASS, 1d FAILS as described**, everything else
+reports "dry run" as designed. Evidence in `prompts/okx-ai/e2e-evidence/`.
+
+### Defect found and FIXED: we told paying buyers a failed job was free to retry
+
+`shapePoll()` in `api/_mcp-studio/studio-shape.js` is shared by the free ChatGPT surface and
+the paid OKX rows. Its failed-job message was written for the free lane and served verbatim
+to both:
+
+> 3D generation hit a snag upstream, it costs nothing to try again.
+
+On the OKX rows that is false about the buyer's money. Settlement happens when the lane
+accepts the job (`anySuccess` in `api/okx/3d/[service].js` judges the submit, which returns
+`pending` with a job id), so a generation failure after acceptance **has been charged**, and
+a retry is a new paid call. Measured, not assumed: over the 30 days to today, **255 of 10,278
+`forge_creations` rows (2.5%) ended `failed`** after acceptance, so this was reaching roughly
+one in forty paying buyers.
+
+`shapePoll` now takes `paid`, the OKX surface passes it, and the free lane's wording and
+response shape are byte-for-byte unchanged (its shape is the published custom-GPT Action
+contract, byte-guarded against its submission source, so a new key there belongs to that work
+stream, not to this fix). The paid message states the settlement model instead, and carries
+`retryBackends`, the alternate engines `/api/gpt-forge` already names on a terminal failure,
+so "an error the buyer can act on" now means something the buyer can act on. Two regression
+tests in `tests/api/okx-forge.test.js`; the free-surface tests in `tests/api/3d-studio.test.js`
+still pass untouched, which is the point.
+
+`docs/okx-marketplace.md` carried the same false claim ("Generation failures are free to
+retry"). Corrected in both places it appears, with the measured failure rate stated. The
+on-chain listing copy and every catalog description already said the accurate thing ("You pay
+only when a job is accepted"), so the doc and the runtime message were the outliers, not the
+promise. **This is the work order's "fix the code or fix the promise" release blocker, and
+both halves are done.** Ships on the same owner-gated deploy.
+
+Also fixed: `scripts/okx-listing-payload.mjs --delta` died inside `JSON.parse` when run
+without its stdin pipe, which reads as a broken script rather than a missing pipe. It now
+names the pipe it wants.
+
+### Verified live today (not re-deriving the sibling sessions, adding to them)
+
+- Wallet **logged in** as `claude@three.ws`, buyer address confirmed unchanged at
+  `0x75d00a2713565171f33216e5aa2a375e076ecf69`. The OTP owner action from every earlier
+  version of the funding request is discharged.
+- Three-copy check PASS (module 16 rows / 7 listed == live == listing submission), and
+  `--delta` against the live `service-list` is **7 updates, 0 creates, 0 deletes**: the
+  on-chain listing is exactly our catalog.
+- Balances at block 69607441: buyer **0 USD₮0, 0 OKB**; payTo 2.427731 USD₮0, 0.839596 OKB;
+  relayer 0 USD₮0, 0.02 OKB. Gas priced at 0.02 gwei, so one settle costs 0.000002 OKB and
+  the relayer covers roughly 10,000 of them. The buyer needs no OKB.
+- The buyer's Solana account is `9PirGw9wVLLNFgVyjgAt5jvuFQwJ3pYUBWt9n3vZfnyc` and its Base
+  account is the same EVM address; both are empty. The Solana accept carries a `feePayer`, so
+  case 7's real paid legacy leg needs the fee and no SOL.
+
+### Blocked, and it is exactly one thing
+
+**Funding the buyer.** `prompts/okx-ai/e2e-evidence/FUNDING-REQUEST.md` is rewritten against
+the current catalog: **5.0 USD₮0 on X Layer (196) to `0x75d0…cf69`**. A clean run settles
+$1.07 and needs a starting float of **$1.32** (the floor, not the sum: verify refuses any
+authorization above `balanceOf`, including the ones designed to be rejected); the rest is the
+fix loop. The money largely returns, because the buyer pays our own merchant wallet, so the
+net platform cost of a full run is the gas. `payTo` holds 2.427731 USD₮0 and could fund it
+without an external transfer, but its key is in Secret Manager and `gcloud` auth is expired
+on this box, so either route is an owner action.
+
+### Next
+
+1. Owner funds the buyer. Then `node scripts/okx-e2e-gauntlet.mjs --yes` runs cases 1, 1d, 2,
+   2b, 3, 3i, 3r, 5a, 5b, 5c, 5d, 6, 7 and finally case 4 (on-chain verification of every
+   settlement the run produced), with the fix loop per phase 3.
+2. Case 1d stays red until the pending deploy ships. That deploy now carries three fixes from
+   three sessions today: the discovery paywall, the x402 v1 header string, and this session's
+   failed-job wording.
+3. `docs/okx-marketplace.md` gets its "verified behavior" section, and its "Not yet
+   demonstrated end to end" note comes out, when the first tx hash exists. Not before.
+
+---
+
 ## 2026-09-02, Work Order 07: independent audit, docs closure, memory; the 402 was still speaking x402 v1
 
 Third session on this stream today. Ran WO-07 against production without reading the other
