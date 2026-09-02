@@ -2,7 +2,7 @@
 	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
 	"name": "io.github.nirholas/herald-mcp",
 	"title": "three.ws Herald",
-	"description": "Tell your human something in person: a 3D character walks onto the browser tab they have open and says it.",
+	"description": "Tell your human in person: a 3D character walks onto their open browser tab and says it out loud.",
 	"websiteUrl": "https://three.ws/herald",
 	"icons": [
 		{

@@ -21,11 +21,13 @@ import {
 	personaComponentCsp,
 } from './component.js';
 
-// The full catalog the free studio advertises: the generation tools (five
-// generators + refine_model + the check_job collector) + three embodiment/
-// persona tools. The persona tools render the persona widget (the living-body
-// embed) rather than the model-viewer widget; they and check_job aren't in the
-// generation-quota set — see api/mcp-studio.js callsGenerationTool.
+// The full catalog the free studio advertises, eleven tools in all: the eight in
+// ./tools.js (five generators + refine_model + the check_job collector + the
+// look_at_model inspector) plus three embodiment/persona tools. The persona
+// tools render the persona widget (the living-body embed) rather than the
+// model-viewer widget; they and check_job aren't in the generation-quota set,
+// see api/mcp-studio.js callsGenerationTool. look_at_model is read-only but
+// renders frames server-side, so it does ride that quota.
 const ALL_TOOL_CATALOG = [...TOOL_CATALOG, ...PERSONA_TOOL_CATALOG];
 const ALL_TOOLS = { ...TOOLS, ...PERSONA_TOOLS };
 

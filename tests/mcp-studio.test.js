@@ -5,9 +5,11 @@ import { PERSONA_TOOL_CATALOG, PERSONA_TOOL_NAMES } from '../api/_mcp-studio/per
 import { dispatch } from '../api/_mcp-studio/dispatch.js';
 import { COMPONENT_URI, PERSONA_COMPONENT_URI, componentCsp } from '../api/_mcp-studio/component.js';
 
-// The generation tools (render the model-viewer widget) + check_job (collects a
-// pending generation) + the three embodiment / persona tools (render the
-// living-body embed).
+// The eight tools in api/_mcp-studio/tools.js: six generators (which render the
+// model-viewer widget) + check_job (collects a pending generation) +
+// look_at_model (renders frames of an existing model). PERSONA adds the three
+// embodiment tools from api/_mcp-studio/persona-tools.js (which render the
+// living-body embed), for the eleven the connector advertises in total.
 const ALLOWED = ['forge_free', 'text_to_avatar', 'mesh_forge', 'rig_mesh', 'forge_avatar', 'refine_model', 'check_job', 'look_at_model'];
 const PERSONA = ['create_agent_persona', 'get_agent_persona', 'persona_say'];
 const ALL = [...ALLOWED, ...PERSONA];
@@ -27,6 +29,16 @@ describe('mcp-studio catalog', () => {
 		const names = TOOL_CATALOG.map((t) => t.name).sort();
 		expect(names).toEqual([...ALLOWED].sort());
 		expect(TOOL_NAMES.sort()).toEqual([...ALLOWED].sort());
+	});
+
+	// The published count. Every doc, manifest and listing that quotes a number
+	// for this connector quotes eleven (docs/mcp-studio.md, the /openai page, the
+	// OpenAI submission answer sheet). Adding or removing a tool without updating
+	// them is the drift this pins.
+	it('advertises exactly eleven tools across both catalogs', () => {
+		expect(ALLOWED.length).toBe(8);
+		expect(PERSONA.length).toBe(3);
+		expect(TOOL_CATALOG.length + PERSONA_TOOL_CATALOG.length).toBe(11);
 	});
 
 	it('every tool has a title and correct annotations', () => {

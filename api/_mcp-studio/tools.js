@@ -1,11 +1,12 @@
 // three.ws 3D Studio (free) — tool catalog + handlers.
 //
-// This module holds seven of the connector's ten tools: five generators +
-// refine_model + check_job. The other three (create_agent_persona,
-// get_agent_persona, persona_say) live in ./persona-tools.js, and dispatch.js
-// merges both catalogs into the single tools/list the endpoint serves.
+// This module holds eight of the connector's eleven tools: five generators +
+// refine_model + check_job + look_at_model. The other three
+// (create_agent_persona, get_agent_persona, persona_say) live in
+// ./persona-tools.js, and dispatch.js merges both catalogs into the single
+// tools/list the endpoint serves.
 //
-// All seven are FREE (no x402, no
+// All eight are FREE (no x402, no
 // wallet, no API key): the platform's server-side keys cover provider cost via
 // /api/forge (the public, auth-free twin of the paid pipeline). refine_model adds
 // conversational iteration — describe a change and it re-generates a new version

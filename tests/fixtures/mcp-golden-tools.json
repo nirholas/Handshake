@@ -18,7 +18,7 @@
 		},
 		{
 			"name": "persona_say",
-			"title": "Speak a reply through a persona \u2014 lip-sync + emotion + gesture",
+			"title": "Speak a reply through a persona — lip-sync + emotion + gesture",
 			"descHead": "dynamic",
 			"descHash": "dynamic",
 			"annotations": "ref:SAY_ANNOTATIONS",
@@ -54,6 +54,19 @@
 			"descHash": "dynamic",
 			"annotations": "ref:GEN_ANNOTATIONS",
 			"schemaHash": "c515ce38f402"
+		},
+		{
+			"name": "look_at_model",
+			"title": "Look at a 3D model",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": true,
+				"openWorldHint": true
+			},
+			"schemaHash": "b6586b6e2865"
 		},
 		{
 			"name": "mesh_forge",
@@ -313,6 +326,34 @@
 				"openWorldHint": true
 			},
 			"schemaHash": "f6bbfa126bf8"
+		}
+	],
+	"api/_mcp/tools/feedback.js": [
+		{
+			"name": "get_feedback_repro",
+			"title": "Compile a feedback report into a failing test",
+			"descHead": "Compile one feedback report into a runnable Playwright spec from the ses",
+			"descHash": "31b006412fd0",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": true,
+				"openWorldHint": false
+			},
+			"schemaHash": "dd3a30158595"
+		},
+		{
+			"name": "list_feedback",
+			"title": "List feedback",
+			"descHead": "What visitors reported is broken, grouped into one row per distinct prob",
+			"descHash": "8a5b2ac8fc06",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": true,
+				"openWorldHint": false
+			},
+			"schemaHash": "1454dfbf4396"
 		}
 	],
 	"api/_mcp/tools/garments.js": [
@@ -648,7 +689,7 @@
 	"api/_mcp3d/tools/persona-identity.js": [
 		{
 			"name": "persona_identity",
-			"title": "Read a persona's on-chain identity \u2014 wallet, reputation, holdings",
+			"title": "Read a persona's on-chain identity — wallet, reputation, holdings",
 			"descHead": "dynamic",
 			"descHash": "dynamic",
 			"annotations": "ref:READ_ANNOTATIONS",
@@ -669,6 +710,21 @@
 			"descHash": "dynamic",
 			"annotations": "ref:VALUE_ANNOTATIONS",
 			"schemaHash": "f4e3dc8d161c"
+		}
+	],
+	"api/_mcp3d/tools/preflight.js": [
+		{
+			"name": "x402_preflight",
+			"title": "Check whether an x402 seller can actually settle before paying it",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": true,
+				"openWorldHint": true
+			},
+			"schemaHash": "e4c9a9154062"
 		}
 	],
 	"api/_mcp3d/tools/provenance.js": [
@@ -734,7 +790,7 @@
 		{
 			"name": "create_agent_persona",
 			"title": "Mint a persistent, living agent persona from a rigged GLB",
-			"descHead": "Turn a generated GLB into a NAMED, persistent agent body \u2014 a \"persona\" t",
+			"descHead": "Turn a generated GLB into a NAMED, persistent agent body — a \"persona\" t",
 			"descHash": "716809d092b0",
 			"annotations": "ref:PERSONA_CREATE_ANNOTATIONS",
 			"schemaHash": "7d650a9be810"
@@ -771,7 +827,7 @@
 		{
 			"name": "get_agent_persona",
 			"title": "Reload a persisted persona by id (continuity across sessions)",
-			"descHead": "Bring back a previously minted persona by its persona_id \u2014 the SAME body",
+			"descHead": "Bring back a previously minted persona by its persona_id — the SAME body",
 			"descHash": "04388b6c47b0",
 			"annotations": "ref:PERSONA_READ_ANNOTATIONS",
 			"schemaHash": "b8451da964a3"
@@ -786,7 +842,7 @@
 		},
 		{
 			"name": "persona_say",
-			"title": "Speak a reply through a persona \u2014 lip-sync + emotion + gesture",
+			"title": "Speak a reply through a persona — lip-sync + emotion + gesture",
 			"descHead": "Make a persona PERFORM a reply: the body lip-syncs the text and shows th",
 			"descHash": "7ce7c147f8f6",
 			"annotations": "ref:PERSONA_SAY_ANNOTATIONS",
@@ -808,7 +864,7 @@
 		{
 			"name": "preview_3d",
 			"title": "Preview any GLB as an interactive 3D artifact",
-			"descHead": "Render any public GLB URL as an inline <model-viewer> HTML artifact \u2014 or",
+			"descHead": "Render any public GLB URL as an inline <model-viewer> HTML artifact — or",
 			"descHash": "ed4b123a6d3e",
 			"annotations": {
 				"readOnlyHint": true,
@@ -1038,7 +1094,7 @@
 		{
 			"name": "get_feed_events",
 			"title": "Site-wide activity feed",
-			"descHead": "The site-wide activity ticker \u2014 recent things that just happened across ",
+			"descHead": "The site-wide activity ticker — recent things that just happened across ",
 			"descHash": "2bdbb0bc0a3a",
 			"annotations": {
 				"readOnlyHint": true,
@@ -1066,7 +1122,7 @@
 		{
 			"name": "get_tier_info",
 			"title": "$THREE holder tier ladder",
-			"descHead": "The $THREE holder tier ladder \u2014 the membership bands a wallet earns pure",
+			"descHead": "The $THREE holder tier ladder — the membership bands a wallet earns pure",
 			"descHash": "81281cff2892",
 			"annotations": {
 				"readOnlyHint": true,
@@ -1251,7 +1307,7 @@
 		{
 			"name": "agora_board",
 			"title": "Browse the Agora job board",
-			"descHead": "Browse the live Agora job board \u2014 the work an agent can claim and earn $",
+			"descHead": "Browse the live Agora job board — the work an agent can claim and earn $",
 			"descHash": "5dbb1bdad754",
 			"annotations": {
 				"readOnlyHint": true,
@@ -1265,7 +1321,7 @@
 		{
 			"name": "agora_citizens",
 			"title": "List Agora citizens",
-			"descHead": "List the citizens of Agora \u2014 the population of the agent + human economy",
+			"descHead": "List the citizens of Agora — the population of the agent + human economy",
 			"descHash": "9c8f5bf601b4",
 			"annotations": {
 				"readOnlyHint": true,
@@ -1279,7 +1335,7 @@
 		{
 			"name": "agora_claim_task",
 			"title": "Claim an open Agora task (on-chain)",
-			"descHead": "CLAIM an open job from the Agora board \u2014 a REAL on-chain AgenC claim sig",
+			"descHead": "CLAIM an open job from the Agora board — a REAL on-chain AgenC claim sig",
 			"descHash": "0bb79da5c125",
 			"annotations": {
 				"readOnlyHint": false,
@@ -1293,7 +1349,7 @@
 		{
 			"name": "agora_complete_task",
 			"title": "Complete an Agora task with a proof (on-chain)",
-			"descHead": "COMPLETE a task you claimed and GET PAID \u2014 a REAL on-chain AgenC complet",
+			"descHead": "COMPLETE a task you claimed and GET PAID — a REAL on-chain AgenC complet",
 			"descHash": "35535d8835f8",
 			"annotations": {
 				"readOnlyHint": false,
@@ -1307,7 +1363,7 @@
 		{
 			"name": "agora_passport",
 			"title": "Get one Agora citizen passport",
-			"descHead": "Fetch one citizen's living passport \u2014 the full record of a participant i",
+			"descHead": "Fetch one citizen's living passport — the full record of a participant i",
 			"descHash": "5427f717ba36",
 			"annotations": {
 				"readOnlyHint": true,
@@ -1335,7 +1391,7 @@
 		{
 			"name": "agora_professions",
 			"title": "List Agora professions (the capability bit map)",
-			"descHead": "List Agora's professions \u2014 the labor market's type system over AgenC's u",
+			"descHead": "List Agora's professions — the labor market's type system over AgenC's u",
 			"descHash": "65a97e8f01a0",
 			"annotations": {
 				"readOnlyHint": true,
@@ -1349,7 +1405,7 @@
 		{
 			"name": "agora_pulse",
 			"title": "Read the Agora economy pulse",
-			"descHead": "Read the Agora economy ticker \u2014 a live snapshot of the agent + human eco",
+			"descHead": "Read the Agora economy ticker — a live snapshot of the agent + human eco",
 			"descHash": "7b1f7e64a4a2",
 			"annotations": {
 				"readOnlyHint": true,
@@ -1363,7 +1419,7 @@
 		{
 			"name": "agora_register",
 			"title": "Register as an Agora citizen (on-chain)",
-			"descHead": "JOIN AGORA as a citizen \u2014 a REAL on-chain AgenC registration signed by Y",
+			"descHead": "JOIN AGORA as a citizen — a REAL on-chain AgenC registration signed by Y",
 			"descHash": "97f5aaecd553",
 			"annotations": {
 				"readOnlyHint": false,
@@ -1805,7 +1861,7 @@
 		{
 			"name": "pump_buy",
 			"title": "Buy a Solana token via Jupiter (direct or Jito-bundled)",
-			"descHead": "Swap SOL \u2192 target mint via Jupiter aggregator. Direct mode = one tx sign",
+			"descHead": "Swap SOL → target mint via Jupiter aggregator. Direct mode = one tx sign",
 			"descHash": "2a5ec65bb978",
 			"annotations": {
 				"readOnlyHint": false,
@@ -2230,7 +2286,7 @@
 		{
 			"name": "get_executions",
 			"title": "List copy executions (intent inbox)",
-			"descHead": "List the authenticated account's copy executions \u2014 the sized, guard-chec",
+			"descHead": "List the authenticated account's copy executions — the sized, guard-chec",
 			"descHash": "cbe66041c82b",
 			"annotations": {
 				"readOnlyHint": true,
@@ -2280,6 +2336,48 @@
 				"openWorldHint": true
 			},
 			"schemaHash": "e1050aace9f4"
+		}
+	],
+	"packages/herald-mcp/src/tools/announce-result.js": [
+		{
+			"name": "announce_result",
+			"title": "Report a finished task in person",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": false,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "35663b044542"
+		}
+	],
+	"packages/herald-mcp/src/tools/announce.js": [
+		{
+			"name": "announce",
+			"title": "Tell your human, in person",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": false,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "731e5a9934d8"
+		}
+	],
+	"packages/herald-mcp/src/tools/check-rail.js": [
+		{
+			"name": "check_rail",
+			"title": "Check the delivery rail",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"idempotentHint": true,
+				"openWorldHint": true
+			},
+			"schemaHash": "08dee57d80d1"
 		}
 	],
 	"packages/intel-mcp/src/tools/copy-smart-wallets.js": [
@@ -2342,7 +2440,7 @@
 		{
 			"name": "smart_money_coin",
 			"title": "Smart-money score for a coin",
-			"descHead": "Assess a coin by WHO is net-buying it right now. Returns a 0\u2013100 smart_m",
+			"descHead": "Assess a coin by WHO is net-buying it right now. Returns a 0–100 smart_m",
 			"descHash": "e779edb0c8bf",
 			"annotations": {
 				"readOnlyHint": true,
@@ -2364,6 +2462,92 @@
 				"openWorldHint": true
 			},
 			"schemaHash": "e8343ba727ea"
+		}
+	],
+	"packages/knock-mcp/src/tools/act.js": [
+		{
+			"name": "knock_act",
+			"title": "Act on a knock",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": false,
+				"destructiveHint": false,
+				"idempotentHint": true,
+				"openWorldHint": true
+			},
+			"schemaHash": "42dff307ed87"
+		}
+	],
+	"packages/knock-mcp/src/tools/directory.js": [
+		{
+			"name": "knock_directory",
+			"title": "Browse open doors",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"idempotentHint": true,
+				"openWorldHint": true
+			},
+			"schemaHash": "dceb916c3712"
+		}
+	],
+	"packages/knock-mcp/src/tools/inbox.js": [
+		{
+			"name": "knock_inbox",
+			"title": "Read your knocks",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"idempotentHint": true,
+				"openWorldHint": true
+			},
+			"schemaHash": "bce7c7c9ccd6"
+		}
+	],
+	"packages/knock-mcp/src/tools/quote.js": [
+		{
+			"name": "knock_quote",
+			"title": "Quote a door",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"idempotentHint": true,
+				"openWorldHint": true
+			},
+			"schemaHash": "b3e938335434"
+		}
+	],
+	"packages/knock-mcp/src/tools/receipt.js": [
+		{
+			"name": "knock_receipt",
+			"title": "Read a knock receipt",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"idempotentHint": true,
+				"openWorldHint": true
+			},
+			"schemaHash": "0afe3a56c8c6"
+		}
+	],
+	"packages/knock-mcp/src/tools/send.js": [
+		{
+			"name": "knock_send",
+			"title": "Knock on a door",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": false,
+				"destructiveHint": false,
+				"idempotentHint": true,
+				"openWorldHint": true
+			},
+			"schemaHash": "7841cd368a34"
 		}
 	],
 	"packages/kol-mcp/src/tools/get-wallet-portfolio.js": [
@@ -2483,7 +2667,7 @@
 		{
 			"name": "browse_skills",
 			"title": "Browse the skills catalog",
-			"descHead": "Search and page the public three.ws skills catalog \u2014 reusable tools and ",
+			"descHead": "Search and page the public three.ws skills catalog — reusable tools and ",
 			"descHash": "cc6bca95f4db",
 			"annotations": {
 				"readOnlyHint": true,
@@ -2505,6 +2689,135 @@
 				"openWorldHint": true
 			},
 			"schemaHash": "44136fa355b3"
+		}
+	],
+	"packages/metaplex-agent-mcp/src/tools/agent-wallet.js": [
+		{
+			"name": "agent_wallet",
+			"title": "An agent's built-in wallet, or the signer wallet, with balance",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "7612cb51391c"
+		}
+	],
+	"packages/metaplex-agent-mcp/src/tools/build-registration.js": [
+		{
+			"name": "build_registration",
+			"title": "Build an EIP-8004 registration document (no chain access)",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"idempotentHint": true,
+				"openWorldHint": false
+			},
+			"schemaHash": "0d42d9793eb9"
+		}
+	],
+	"packages/metaplex-agent-mcp/src/tools/get-onchain-agent.js": [
+		{
+			"name": "get_onchain_agent",
+			"title": "Read an on-chain agent (asset, registration, wallet)",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "e488aa716aeb"
+		}
+	],
+	"packages/metaplex-agent-mcp/src/tools/list-onchain-agents.js": [
+		{
+			"name": "list_onchain_agents",
+			"title": "List the latest on-chain agent registrations",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "a0102321b847"
+		}
+	],
+	"packages/metaplex-agent-mcp/src/tools/mint-onchain-agent.js": [
+		{
+			"name": "mint_onchain_agent",
+			"title": "Mint an on-chain agent into the Metaplex Agent Registry",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": false,
+				"destructiveHint": true,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "0ee1f0a920c3"
+		}
+	],
+	"packages/metaplex-agent-mcp/src/tools/prepare-agent-mint.js": [
+		{
+			"name": "prepare_agent_mint",
+			"title": "Prepare an agent mint for a Phantom/Solflare wallet to sign",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "2d7533d802ff"
+		}
+	],
+	"packages/metaplex-agent-mcp/src/tools/register-agent-identity.js": [
+		{
+			"name": "register_agent_identity",
+			"title": "Register an existing Core asset in the Metaplex Agent Registry",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": false,
+				"destructiveHint": true,
+				"idempotentHint": true,
+				"openWorldHint": true
+			},
+			"schemaHash": "dba72b11f8a6"
+		}
+	],
+	"packages/metaplex-agent-mcp/src/tools/send-signed-transaction.js": [
+		{
+			"name": "send_signed_transaction",
+			"title": "Broadcast signed Solana transactions in order and confirm them",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": false,
+				"destructiveHint": true,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "50cf7f326c85"
+		}
+	],
+	"packages/metaplex-agent-mcp/src/tools/three-status.js": [
+		{
+			"name": "three_status",
+			"title": "Deploy fee, $THREE holder tier, and the live buyback ledger",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "2e757348c7d1"
 		}
 	],
 	"packages/naming-mcp/src/tools/sns-resolve.js": [
@@ -2679,7 +2992,7 @@
 	"packages/portfolio-mcp/src/tools/portfolio-summary.js": [
 		{
 			"name": "get_portfolio_summary",
-			"title": "My agents\u2019 live portfolio (holdings + USD value)",
+			"title": "My agents’ live portfolio (holdings + USD value)",
 			"descHead": "dynamic",
 			"descHash": "dynamic",
 			"annotations": {
@@ -2737,7 +3050,7 @@
 		{
 			"name": "append_agent_action",
 			"title": "Append a signed action to the provenance ledger",
-			"descHead": "Record an action in an agent's append-only provenance ledger \u2014 the perma",
+			"descHead": "Record an action in an agent's append-only provenance ledger — the perma",
 			"descHash": "094f7fe192ca",
 			"annotations": {
 				"readOnlyHint": false,
@@ -2745,7 +3058,7 @@
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
-			"schemaHash": "fef696e12ba3"
+			"schemaHash": "c7917684590e"
 		}
 	],
 	"packages/provenance-mcp/src/tools/list-agent-actions.js": [
@@ -2759,7 +3072,7 @@
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
-			"schemaHash": "d01cadbc72e4"
+			"schemaHash": "d22f1dd2fe65"
 		}
 	],
 	"packages/provenance-mcp/src/tools/query-action.js": [
@@ -2773,14 +3086,14 @@
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
-			"schemaHash": "4324bb5ace2b"
+			"schemaHash": "6f719059ed29"
 		}
 	],
 	"packages/scene-mcp/src/tools/build-world.js": [
 		{
 			"name": "build_world",
 			"title": "Build a complete 3D world from one sentence (no browser needed)",
-			"descHead": "One sentence \u2192 a fully forged, exported 3D world, entirely server-side: ",
+			"descHead": "One sentence → a fully forged, exported 3D world, entirely server-side: ",
 			"descHash": "0216a43f7396",
 			"annotations": {
 				"readOnlyHint": false,
@@ -2951,7 +3264,7 @@
 	"packages/three-token-mcp/src/tools/three-price.js": [
 		{
 			"name": "three_price",
-			"title": "Live $THREE price (Jupiter) + USD\u2192$THREE quote",
+			"title": "Live $THREE price (Jupiter) + USD→$THREE quote",
 			"descHead": "Return the live USD price of $THREE (Jupiter primary, Birdeye fallback).",
 			"descHash": "b589970ff915",
 			"annotations": {
@@ -3065,7 +3378,7 @@
 		{
 			"name": "vanity_open",
 			"title": "List claimable open bounties for workers",
-			"descHead": "List the open, unexpired bounties a grinding worker can race to claim \u2014 ",
+			"descHead": "List the open, unexpired bounties a grinding worker can race to claim — ",
 			"descHash": "45f3acbc46ae",
 			"annotations": {
 				"readOnlyHint": true,
@@ -3163,7 +3476,7 @@
 		{
 			"name": "inspect_endpoint",
 			"title": "Inspect an x402 endpoint (price + requirements, no payment)",
-			"descHead": "Fetch an x402 endpoint and return its 402 payment requirements \u2014 every a",
+			"descHead": "Fetch an x402 endpoint and return its 402 payment requirements — every a",
 			"descHash": "278c58d6e1c4",
 			"annotations": {
 				"readOnlyHint": true,
