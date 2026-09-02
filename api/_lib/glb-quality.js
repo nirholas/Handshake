@@ -25,6 +25,13 @@ function intEnv(name, fallback) {
 	return Number.isFinite(n) && n >= 0 ? Math.floor(n) : fallback;
 }
 
+// Same, for a 0..1 ratio threshold that must keep its fractional part.
+function ratioEnv(name, fallback) {
+	const v = typeof process !== 'undefined' ? process.env?.[name] : null;
+	const n = v == null || v === '' ? NaN : Number(v);
+	return Number.isFinite(n) && n >= 0 && n <= 1 ? n : fallback;
+}
+
 export const QUALITY_THRESHOLDS = Object.freeze({
 	// Below this triangle count the mesh is treated as degenerate (effectively empty).
 	degenerateTriangles: intEnv('FORGE_QUALITY_MIN_TRIS', 80),
@@ -33,6 +40,16 @@ export const QUALITY_THRESHOLDS = Object.freeze({
 	// A bounding-box diagonal at or below this (in the mesh's own units) is a
 	// collapsed / zero-volume result — the classic "black dot" TRELLIS failure.
 	minBboxDiagonal: 1e-4,
+	// At or below this flatness (thinnest extent / longest extent) the mesh is a
+	// slab, not a solid. This is NOT degeneracy on its own: a plate, a coin, a rug
+	// and a poster are all legitimately flat. It means the cheap scorer cannot
+	// vouch for the result, so the mesh must escalate to vision QA rather than be
+	// trusted. See the `planar` note on shouldEscalateToVisionQA.
+	planarFlatness: ratioEnv('FORGE_QUALITY_PLANAR_FLATNESS', 0.2),
+	// The same test for a mesh thin in X or Z rather than in Y. Upright subjects are
+	// legitimately narrow front-to-back (a standing figure runs about 0.19), so this
+	// bar is far stricter: only a sliver no solid object could be.
+	sliverFlatness: ratioEnv('FORGE_QUALITY_SLIVER_FLATNESS', 0.05),
 });
 
 // Pull the per-attribute vertex count and union the POSITION bounding box across
@@ -88,6 +105,17 @@ function summarizeGeometry(gltf) {
 		? [max[0] - min[0], max[1] - min[1], max[2] - min[2]].map((d) => (Number.isFinite(d) ? Math.abs(d) : 0))
 		: [0, 0, 0];
 	const bboxDiagonal = Math.sqrt(size[0] ** 2 + size[1] ** 2 + size[2] ** 2);
+	// Flatness = thinnest extent / longest extent. 1 is a cube, 0 is a plane.
+	// The diagonal above measures how BIG the mesh is; this measures whether it
+	// has any depth at all, which is the axis a collapsed reconstruction fails on
+	// while staying large enough to look healthy by every other metric.
+	const longest = Math.max(size[0], size[1], size[2]);
+	const shortest = Math.min(size[0], size[1], size[2]);
+	const flatness = haveBounds && longest > 0 ? shortest / longest : null;
+	// Which axis is the thin one matters. glTF is Y-up, so a mesh thin in Y is a
+	// pancake lying on the ground, while a mesh thin in X or Z is usually just a
+	// slim upright subject (a standing figure is genuinely narrow front-to-back).
+	const thinAxis = flatness == null ? null : ['x', 'y', 'z'][size.indexOf(shortest)];
 
 	return {
 		vertexCount,
@@ -97,6 +125,8 @@ function summarizeGeometry(gltf) {
 		texturedPrimitives,
 		bbox: haveBounds ? { min, max, size } : null,
 		bboxDiagonal: Number.isFinite(bboxDiagonal) ? bboxDiagonal : 0,
+		flatness: Number.isFinite(flatness) ? flatness : null,
+		thinAxis,
 	};
 }
 
@@ -241,6 +271,19 @@ export function scoreGlbQuality(buf, { allowPartial = false } = {}) {
 		reasons.push('zero_volume');
 	}
 
+	// A slab-shaped result: large and dense enough to pass every check above, but
+	// with no depth. An image-to-3D reconstruction that loses its conditioning
+	// collapses to exactly this (a full-footprint relief), and it is otherwise the
+	// highest-confidence output the scorer can produce. Recorded as a signal, not
+	// a verdict: legitimately flat subjects exist, so vision QA makes the call.
+	// Thin in Y is the shape a lost reconstruction takes (a pancake on the ground).
+	// Thin in X or Z is usually a real slim upright subject, so it only counts when
+	// it is so extreme that no solid object could have that profile.
+	const planar =
+		geo.flatness != null &&
+		(geo.thinAxis === 'y' ? geo.flatness <= t.planarFlatness : geo.flatness <= t.sliverFlatness);
+	if (planar) reasons.push('planar');
+
 	// Soft quality checks → flag low.
 	let low = false;
 	if (!degenerate && geo.triangleCount < t.lowTriangles) {
@@ -279,6 +322,9 @@ export function scoreGlbQuality(buf, { allowPartial = false } = {}) {
 			meshCount: base.meshCount,
 			primitiveCount: geo.primitiveCount,
 			bboxDiagonal: Math.round(geo.bboxDiagonal * 1e6) / 1e6,
+			flatness: geo.flatness == null ? null : Math.round(geo.flatness * 1e6) / 1e6,
+			thinAxis: geo.thinAxis ?? null,
+			planar,
 			hasMaterials: mat.hasMaterials,
 			hasTextures: mat.hasTextures,
 			materialCount: mat.materialCount,
@@ -322,6 +368,13 @@ const ADAPTIVE_TRUST_SCORE = (() => {
 //   • an `ok` mesh scoring below the trust threshold: structurally fine but
 //     mediocre, the "valid but doesn't look like what I asked for" middle that
 //     the structural scorer alone can't catch.
+//   • a `planar` mesh: dense, textured and large, but with no depth. An
+//     image-to-3D reconstruction that loses its conditioning collapses to a
+//     full-footprint slab that scores near the top of this scale (0.976 measured
+//     on a live free-lane result), so density and texture presence actively
+//     vouch for the one failure they cannot see. Flatness alone cannot convict
+//     it either, because plates, coins, rugs and posters are genuinely flat, so
+//     the decision belongs to the render-based judge.
 // A missing quality signal escalates (we cannot vouch for what we did not score).
 //
 // This is what lets the free lane gain a semantic quality floor without turning
@@ -330,6 +383,7 @@ export function shouldEscalateToVisionQA(quality, { minScore = ADAPTIVE_TRUST_SC
 	if (!quality || typeof quality !== 'object') return true;
 	if (quality.flag !== 'ok') return true;
 	if (quality.metrics && quality.metrics.hasTextures === false) return true;
+	if (quality.metrics && quality.metrics.planar === true) return true;
 	const score = Number(quality.score);
 	if (!Number.isFinite(score)) return true;
 	return score < minScore;

@@ -621,6 +621,17 @@ export const env = {
 		return opt('SILICONFLOW_API_KEY');
 	},
 
+	// LLM7.io key (dash.llm7.io). This rung was added 2026-08-05 as a KEYLESS
+	// anonymous tier; llm7.io retired that tier and the endpoint now answers
+	// every unauthenticated request with 401 invalid_api_key (measured
+	// 2026-09-02, including the "unused" token its docs used to accept). The
+	// rung is therefore key-gated like every other optional one, so a
+	// deployment without the key skips it instead of spending a guaranteed
+	// round trip on it at the tail of the free chain.
+	get LLM7_API_KEY() {
+		return opt('LLM7_API_KEY');
+	},
+
 	// Cloudflare account id for Workers AI (dash.cloudflare.com). The Workers
 	// AI OpenAI-compatible URL embeds the account id, so the LLM rung needs
 	// this AND CLOUDFLARE_AI_API_TOKEN; with either half missing the rung is

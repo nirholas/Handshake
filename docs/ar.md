@@ -497,4 +497,4 @@ the wild can load.
 - [Walk feature](/features/walk) — WebXR immersive walk mode (different from placement AR)
 - [Web component reference](/docs/web-component): full `<agent-3d>` attribute list
 - [Embedding guide](/docs/embedding) — iframe setup with XR permissions
-- [Tutorial: Place your model in AR](/docs/tutorials/view-in-ar)
+- [Tutorial: Place your model in AR](/tutorials/view-in-ar)

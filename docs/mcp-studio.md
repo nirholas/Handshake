@@ -154,10 +154,16 @@ carrying a pollable handle, and the job keeps running server-side.
   "status": "pending",
   "jobId": "f1.eyJwIjoiZ2NwIiw…",
   "pollUrl": "https://three.ws/api/gpt-forge?job=f1.eyJwIjoiZ2NwIiw…",
+  "stage": "mesh",
   "etaRemainingSeconds": 42,
   "prompt": "a friendly round robot mascot, glossy white plastic"
 }
 ```
+
+`stage` names which half of the pipeline is still running, `mesh` or `rig`, so a
+client that collects the job knows whether the GLB it gets back is a bare mesh
+still to be rigged or the finished rig. It carries no identifier, so it costs the
+data-minimization rule nothing.
 
 `etaRemainingSeconds` is the live estimate for the lane actually running the job
 (its typical duration minus time already elapsed), so the assistant knows how
@@ -348,7 +354,15 @@ any surface that rides it. The agent-facing REST endpoints (`/api/3d/generate`,
 The inline widget loads Google's `<model-viewer>` from one pinned URL in
 [`api/_lib/model-viewer-cdn.js`](../api/_lib/model-viewer-cdn.js), which is also
 the origin the widget's `openai/widgetCSP` allowlists, so the script tag and its
-CSP entry cannot drift apart. The `/api/ar` launcher no longer inlines a
+CSP entry cannot drift apart. That module pins 3.5.0 for every server-rendered
+embed, the build the rest of the platform's embeddable bundles ship, so a host
+page that already loaded one three.ws embed reuses the same module instead of
+registering a second, conflicting custom element. The standalone
+[`/viewer`](../public/viewer.html) page and the Vite-bundled first-party pages
+deliberately sit on 4.0.0 instead: they own their whole document and have no
+custom-element collision to avoid. The header comment in
+`api/_lib/model-viewer-cdn.js` names all three pins and why each surface takes
+the build it takes. The `/api/ar` launcher no longer inlines a
 `<model-viewer>` of its own: Android gets a Scene Viewer intent, and every other
 device (and every live avatar) is sent on to `/ar/view`, a Vite-bundled page
 that generates a real USDZ from the GLB on the device so iPhone gets genuine

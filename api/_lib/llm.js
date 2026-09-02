@@ -126,11 +126,13 @@ const CLOUDFLARE_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 // of the free section; enable_thinking:false (extraBody below) keeps Qwen3's
 // reasoning mode off so message.content carries the actual answer.
 const SILICONFLOW_MODEL = 'Qwen/Qwen3-8B';
-// LLM7.io keyless anonymous tier (api.llm7.io): community-run gateway, no
-// key and no signup, about 30 req/min per IP. Free catalog probed live
-// 2026-08-05; gemini-3.1-flash-lite returned real content there, while the
-// gpt-oss route spends its token budget on reasoning and can hand back an
-// empty content field, so it is deliberately not used.
+// LLM7.io (api.llm7.io): community-run gateway, about 30 req/min per IP. Free
+// catalog probed live 2026-08-05; gemini-3.1-flash-lite returned real content
+// there, while the gpt-oss route spends its token budget on reasoning and can
+// hand back an empty content field, so it is deliberately not used. Added as a
+// KEYLESS rung; llm7.io has since retired its anonymous tier and answers every
+// unauthenticated request with 401 invalid_api_key (measured 2026-09-02), so
+// the rung is now gated on LLM7_API_KEY and skipped without one.
 const LLM7_MODEL = 'gemini-3.1-flash-lite';
 // Pollinations' keyless anonymous tier: also no key, routes to a hosted
 // gpt-oss-20b. Smaller than the 70B rungs above it, so it sits in the
@@ -612,14 +614,18 @@ export function providerChain({ anthropicKey, anthropicModel, grokKey = null, gr
 		url: 'https://text.pollinations.ai/openai',
 		model: POLLINATIONS_MODEL,
 	}));
-	// LLM7.io keyless anonymous tier: the third no-key rung. Sits with the
-	// step-down group (flash-lite class) right after Pollinations, so even a
-	// zero-env deployment has three independent keyless lanes to fall through.
-	chain.push(openaiCompatProvider({
-		name: 'llm7',
-		url: 'https://api.llm7.io/v1/chat/completions',
-		model: LLM7_MODEL,
-	}));
+	// LLM7.io: sits with the step-down group (flash-lite class) right after
+	// Pollinations. Skipped without a key, because an unauthenticated call here
+	// is now a guaranteed 401: leaving it in the chain unconditionally spends a
+	// round trip per exhaustion for an answer that cannot arrive.
+	if (env.LLM7_API_KEY) {
+		chain.push(openaiCompatProvider({
+			name: 'llm7',
+			key: env.LLM7_API_KEY,
+			url: 'https://api.llm7.io/v1/chat/completions',
+			model: LLM7_MODEL,
+		}));
+	}
 	// SiliconFlow free tier: keyed 8B step-down on its own quota pool.
 	// enable_thinking:false forces Qwen3 out of reasoning mode so the answer
 	// lands in message.content instead of a reasoning field.
