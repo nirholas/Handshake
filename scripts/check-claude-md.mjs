@@ -54,6 +54,17 @@ const artifactPaths = new Set([
 	'chat/node_modules',
 	'character-studio/build',
 	'.github/workflows/', // named only to be forbidden; must not be required to exist
+	// Build outputs of the build:gcp chain. CLAUDE.md names them to explain why
+	// that chain's order is load-bearing, so requiring them on disk makes this
+	// gate pass only on a machine that already built, and report four phantom
+	// drift errors on a fresh clone or in the detached deploy worktree the
+	// runbook itself tells agents to build in.
+	'dist-lib/agent-3d.js',
+	'avatar-sdk/dist',
+	'avatar-sdk/dist/index.mjs',
+	// Git plumbing, not a repo path: in a linked worktree `.git` is a FILE
+	// pointing at the main checkout, so this never resolves there.
+	'.git/hooks',
 ]);
 const candidates = new Set();
 for (const m of md.matchAll(/`([^`\n]+)`/g)) candidates.add(m[1]);
