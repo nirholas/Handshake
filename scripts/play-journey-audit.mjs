@@ -276,10 +276,26 @@ async function touchScan(label) {
 			if (r.width === 0 || r.height === 0) continue;
 			const cs = getComputedStyle(n);
 			if (cs.visibility === 'hidden' || cs.display === 'none' || Number(cs.opacity) === 0) continue;
+			// A control inside a closed overlay is not a touch target. The emote
+			// wheel fades its whole container to opacity 0 and turns off pointer
+			// events while keeping its buttons laid out, so measuring the element
+			// alone reported its close button as undersized when nothing was on
+			// screen at all (and at the container's 0.88 resting scale, which is
+			// also why it measured 35px rather than the 40px it is when open).
+			let hidden = false;
+			for (let a = n.parentElement; a && a !== document.body; a = a.parentElement) {
+				const acs = getComputedStyle(a);
+				if (Number(acs.opacity) === 0 || acs.visibility === 'hidden' || acs.pointerEvents === 'none') { hidden = true; break; }
+			}
+			if (hidden) continue;
 			// Inline links inside a paragraph are exempt (WCAG 2.5.8).
 			const inlineLink = n.tagName === 'A' && cs.display.startsWith('inline') && n.closest('p, li, small');
 			if (inlineLink) continue;
-			if (r.width < min || r.height < min) {
+			// Half a pixel of tolerance. A control given exactly `min-height: 40px`
+			// measures 39.99x through getBoundingClientRect on a fractional device
+			// pixel ratio, and reporting that as under the bar sends the next reader
+			// chasing a target that is already the right size.
+			if (r.width < min - 0.5 || r.height < min - 0.5) {
 				out.push({
 					sel: n.id ? `#${n.id}` : `${n.tagName.toLowerCase()}.${String(n.className).split(' ').slice(0, 2).join('.')}`,
 					label: (n.getAttribute('aria-label') || n.textContent || '').trim().slice(0, 24),
