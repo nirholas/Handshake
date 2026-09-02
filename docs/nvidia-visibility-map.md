@@ -66,7 +66,7 @@ Real listings, real effort, honest gates. Do not pitch these before the code exi
 
 | Surface | Intake | The gate |
 |---|---|---|
-| **NGC Catalog** (via the [NGC Software Partner program](https://www.nvidia.com/en-us/gpu-cloud/ngc-software-partners/)) | Partner legal agreement, then push to an NGC private staging repo, pass security scanning and QA, final sign-off | **The closest Tier 2 surface to reachable.** Prerequisites are a CUDA 9+ base image, GPU acceleration, Pascal or newer, an EULA, and no personal-data collection. Our GPU workers are already `nvidia/cuda` 12.1 to 12.8 containers, so the technical bar is met; what is missing is the EULA and the legal agreement. This converts work we have already done into a permanent NVIDIA-hosted listing. |
+| **NGC Catalog** (via the [NGC Software Partner program](https://www.nvidia.com/en-us/gpu-cloud/ngc-software-partners/)) | A **self-serve "Become an NGC Software Partner" form** on that page, then the partner legal agreement, a push to an NGC private staging repo, security scanning and QA, final sign-off | **The closest Tier 2 surface to reachable, and the only NVIDIA directory with a self-serve door.** It now has its own kit: [nvidia-ngc-listing.md](./nvidia-ngc-listing.md) audits all four prerequisites against the code, names the publishable container ([model-trellis](../workers/model-trellis), MIT upstream, no baked weights, no telemetry), and carries the paste-ready listing copy. The EULA prerequisite is closed ([/legal/nvidia-ngc-eula](https://three.ws/legal/nvidia-ngc-eula)). What remains is one Cloud Build run to make the image runnable outside our GCP project, plus the owner-signed legal agreement. |
 | **ACE / digital-human ecosystem** | No public form found. Ask for the redirect in the Showcase email | Genuinely strong: Riva, Magpie, and Audio2Face-3D are shipping, and a **browser-native** A2F demo is rare (most A2F work lives in Unreal or Omniverse). This is our most differentiated technical story. Do not overclaim: we consume ACE microservices, we do not self-host NIM. |
 | **NVIDIA Technical Blog** ([developer.nvidia.com/blog](https://developer.nvidia.com/blog/)) | No public guest-submission process. Route via the forum Technical Blog category and the program team | Editorially controlled by NVIDIA. The realistic path is a forum post that performs, then a pitch. Our two live forum posts are the audition tape. |
 | **Omniverse Exchange** | [Omniverse Exchange Publishing Portal](https://developer.nvidia.com/omniverse-exchange-publishing-portal) (early access), plus a GitHub repo tagged with the `omniverse-kit-extension` topic | **Blocked and should stay blocked.** OpenUSD interop is roadmap, not shipping, and [nvidia-apps-catalog-listing.md](./nvidia-apps-catalog-listing.md) already rules that Omniverse Kit stays under "Considering". Note the Omniverse Launcher was deprecated 2025-10-01, so old guides mislead. |
@@ -221,9 +221,12 @@ Recorded so the next person does not repeat the search.
 - **NVIDIA Connect for ISVs.** `nvidia.com/en-us/programs/isv/` 301-redirects to
   `developer.nvidia.com`. The standalone ISV program has been folded into the
   Developer Program. There is no separate ISV listing to apply for.
-- **A self-serve "list my product" form.** None exists on any NVIDIA surface
-  reviewed here. Every listing runs through the portal record plus a human at
-  `inceptionprogram@nvidia.com`. Stop looking for a form.
+- **A self-serve "list my product" form, on the marketing surfaces.** None
+  exists for the Apps Catalog, the Showcase, or any other surface on this page:
+  each runs through the portal record plus a human at
+  `inceptionprogram@nvidia.com`. The single exception is NGC, which does publish
+  a partner intake form; see [nvidia-ngc-listing.md](./nvidia-ngc-listing.md).
+  Stop looking for a form anywhere else.
 - **Omniverse Launcher guides.** Deprecated 2025-10-01. Any tutorial routing
   through it is stale.
 - **build.nvidia.com as a publishing target.** It is where we *get* our
@@ -268,6 +271,7 @@ record, save it, then send and stamp the date in the request doc.
 | `/nvidia` never announced on X | Read [announcement-coverage.md](./announcement-coverage.md) inventory | Column empty for `/nvidia`, populated for `/openai` |
 | Jensen Huang engagement has no source | `data/timeline.json`, event `2026-07-18-jensen-huang` | `source_url: null`, as are 4 other NVIDIA events |
 | GPU fleet shape | `gcloud run services list` across all regions, filtered to accelerator node selectors | 8 workers, 12 deployments, 11 L4 + 1 RTX PRO 6000 |
+| GPU fleet shape, re-counted 2026-09-02 | Same command, isolated `CLOUDSDK_CONFIG` | Unchanged: 8 services, 12 deployments, 11 L4 + 1 RTX PRO 6000. `model-trellis` is live in `us-central1` and `us-east4`. |
 
 Recount the fleet before quoting it anywhere:
 
@@ -281,7 +285,8 @@ gcloud run services list --project aerial-vehicle-466722-p5 \
 
 - [Big-tech recognition dispatch board](./big-tech-recognition-week.md): this map ranked against every other big-tech surface (OpenAI, Anthropic, AWS, IBM) by the odds of a published mention this week. Read that first if you are deciding where a week goes, and this one once NVIDIA is the answer.
 - [NVIDIA Inception membership](./nvidia-inception.md): what membership is, and the rule that it is a program and not a partnership or an endorsement
-- [Apps Catalog listing kit](./nvidia-apps-catalog-listing.md) and [inclusion request](./nvidia-apps-catalog-request.md): the one surface with its own dedicated docs
+- [Apps Catalog listing kit](./nvidia-apps-catalog-listing.md) and [inclusion request](./nvidia-apps-catalog-request.md): the curated marketing listing
+- [NGC Catalog listing kit](./nvidia-ngc-listing.md): the self-serve software listing, its prerequisite audit, and the container that clears it
 - [NVIDIA models on three.ws](./nvidia-models.md): the source of truth for every NVIDIA technical claim made in any pitch
 - [Listings and distribution](./listings.md): the canonical program and directory inventory
 - [Announcement coverage](./announcement-coverage.md): which surfaces have been announced and which have not

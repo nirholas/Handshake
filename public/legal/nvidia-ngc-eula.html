@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot: no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title data-i18n="legal_nvidia_ngc_eula.meta_title">NVIDIA NGC Container EULA · three.ws</title>
+	<meta name="description" content="License terms for three.ws container images distributed through the NVIDIA NGC catalog: what the license covers, the model weights it does not ship, and the data the container does not collect."  data-i18n-attr="content:legal_nvidia_ngc_eula.meta_description"/>
+	<link rel="icon" href="/favicon.ico" />
+	<link rel="stylesheet" href="/tokens.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/footer.css" />
+	<style>
+		* { box-sizing: border-box; }
+		body {
+			font: 16px/1.7 -apple-system, system-ui, 'Segoe UI', sans-serif;
+			background: var(--bg-0);
+			color: var(--ink);
+			margin: 0;
+		}
+		.wrap { max-width: 720px; margin: 0 auto; padding: 48px 24px 80px; }
+		main.wrap:focus { outline: none; }
+		h1 { font-size: 32px; color: var(--ink-bright); margin: 0 0 6px; letter-spacing: -.02em; }
+		.meta { color: var(--ink-faint); font-size: 14px; margin: 0 0 40px; }
+		h2 { font-size: 18px; color: var(--ink-bright); margin: 40px 0 10px; }
+		p, li { color: var(--ink); font-size: 15px; }
+		ul { padding-left: 20px; }
+		li { margin-bottom: 6px; }
+		a { color: var(--ink-bright); }
+		hr { border: none; border-top: 1px solid var(--stroke); margin: 48px 0; }
+		.foot { color: var(--ink-faint); font-size: 13px; }
+	</style>
+</head>
+<body>
+	<header><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+<main id="main-content" class="wrap" tabindex="-1">
+	<h1 data-i18n="legal_nvidia_ngc_eula.nvidia_ngc_container_end_user_license_agreem">NVIDIA NGC Container End User License Agreement</h1>
+	<p class="meta" data-i18n-html="legal_nvidia_ngc_eula.effective_september_2_2026_terms_of_service">Effective: September 2, 2026 &nbsp;·&nbsp; <a href="/legal/tos">Terms of Service</a> &nbsp;·&nbsp; <a href="/legal/privacy">Privacy Policy</a></p>
+
+	<p data-i18n="legal_nvidia_ngc_eula.this_end_user_license_agreement_eula_is">This End User License Agreement ("EULA") is a binding agreement between three.ws ("we", "us", "our") and the individual or entity ("you") that pulls, runs, or otherwise uses a three.ws container image published in the NVIDIA NGC catalog (each, the "Container"). By pulling or running the Container, you agree to this EULA. If you do not agree, do not pull or run it.</p>
+
+	<h2 data-i18n="legal_nvidia_ngc_eula.1_relationship_to_nvidia">1. Relationship to NVIDIA</h2>
+	<p data-i18n="legal_nvidia_ngc_eula.the_container_is_distributed_through_the_ngc">The Container is distributed through the NGC catalog, operated by NVIDIA Corporation and its affiliates ("NVIDIA"). NVIDIA is not a party to this EULA and is not responsible for the Container. Your use of the NGC catalog is also governed by NVIDIA's own terms. This EULA governs your use of the Container itself. Nothing in this EULA makes three.ws an NVIDIA partner, and distribution through NGC is not an NVIDIA endorsement of three.ws or of any output the Container produces.</p>
+
+	<h2 data-i18n="legal_nvidia_ngc_eula.2_license_grant">2. License Grant</h2>
+	<p data-i18n="legal_nvidia_ngc_eula.the_three_ws_source_code_inside_the">The three.ws source code inside the Container is licensed under the Apache License, Version 2.0, and your rights in that code are the rights that license grants you. Subject to your compliance with this EULA and with the third-party terms in Section 4, we additionally grant you a worldwide, non-exclusive, non-transferable, revocable license to pull, run, and internally modify the Container image as a whole, for your own use. We reserve all rights not expressly granted.</p>
+
+	<h2 data-i18n="legal_nvidia_ngc_eula.3_what_the_container_is">3. What the Container Is</h2>
+	<p data-i18n-html="legal_nvidia_ngc_eula.the_container_packages_a_gpu_inference_serve">The Container packages a GPU inference server: our serving code, its Python dependencies, and CUDA build artifacts compiled at image build time. It exposes an HTTP API documented in the listing overview and in the repository at <a href="https://github.com/nirholas/three.ws">github.com/nirholas/three.ws</a>. It is inference software, not a hosted service: you run it on your own hardware, under your own control, and we have no access to it or to anything it produces.</p>
+
+	<h2 data-i18n="legal_nvidia_ngc_eula.4_model_weights_and_third_party_components">4. Model Weights and Third-Party Components</h2>
+	<p data-i18n="legal_nvidia_ngc_eula.the_container_ships_no_machine_learning_mode">The Container ships no machine-learning model weights. Weights are obtained by you, at run time, from the upstream publisher named in the listing overview, and your use of them is governed by the upstream license that accompanies them, not by this EULA. You are responsible for reading and complying with that license, including any non-commercial or field-of-use restriction it carries.</p>
+	<p data-i18n="legal_nvidia_ngc_eula.the_container_also_includes_open_source_comp">The Container also includes open-source components licensed by their respective owners, including the NVIDIA CUDA base image and the NVIDIA software it contains, which remain subject to the NVIDIA license terms shipped with them. A complete component and license listing is included in the image and in the repository. Where a third-party license conflicts with this EULA for that component, the third-party license governs that component.</p>
+
+	<h2 data-i18n="legal_nvidia_ngc_eula.5_no_fees">5. No Fees</h2>
+	<p data-i18n="legal_nvidia_ngc_eula.the_container_is_offered_free_of_charge">The Container is offered free of charge. No license fees, subscription fees, or usage fees are payable to us for it, and accordingly no refunds apply. You bear the cost of the hardware, cloud capacity, and bandwidth you use to run it. Because the Container is provided at no cost, you acknowledge that you receive it without payment and bear all risk of its use.</p>
+
+	<h2 data-i18n="legal_nvidia_ngc_eula.6_no_service_levels_no_support_obligation">6. No Service Levels; No Support Obligation</h2>
+	<p data-i18n="legal_nvidia_ngc_eula.the_container_is_provided_without_any_servic">The Container is provided without any service-level agreement, uptime commitment, or guaranteed support. We may change, re-tag, deprecate, or withdraw any published image at any time and without liability. Support, if any, is best-effort through the public repository, and we are under no obligation to provide it.</p>
+
+	<h2 data-i18n="legal_nvidia_ngc_eula.7_acceptable_use">7. Acceptable Use</h2>
+	<p data-i18n="legal_nvidia_ngc_eula.you_agree_not_to">You agree not to:</p>
+	<ul>
+		<li data-i18n="legal_nvidia_ngc_eula.use_the_container_in_violation_of_any">Use the Container in violation of any applicable law, regulation, or third-party right, including the upstream model license described in Section 4.</li>
+		<li data-i18n="legal_nvidia_ngc_eula.generate_from_the_container_content_that_inf">Generate, from the Container, content that infringes another party's intellectual property or likeness rights, or that is unlawful, deceptive, or abusive.</li>
+		<li data-i18n="legal_nvidia_ngc_eula.remove_obscure_or_alter_any_copyright_licens">Remove, obscure, or alter any copyright, license, or attribution notice shipped in the image.</li>
+		<li data-i18n="legal_nvidia_ngc_eula.redistribute_the_container_as_your_own_produ">Redistribute the Container as your own product, or represent modified builds as unmodified three.ws images.</li>
+		<li data-i18n="legal_nvidia_ngc_eula.use_the_container_in_the_operation_of">Use the Container in the operation of safety-critical systems, including life support, medical devices, aircraft navigation, or nuclear facilities.</li>
+	</ul>
+	<p data-i18n="legal_nvidia_ngc_eula.we_may_terminate_the_license_in_section">We may terminate the license in Section 2 immediately for any breach of this Section, without notice and without liability.</p>
+
+	<h2 data-i18n="legal_nvidia_ngc_eula.8_data_and_privacy">8. Data and Privacy</h2>
+	<p>The Container collects no personal data. It contains no analytics, telemetry, usage reporting, or phone-home behavior, and it sends nothing to three.ws. It processes only the inputs you send to its API and writes only the outputs you configure it to write, on infrastructure you control. Where you configure it to fetch an input over the network or write an output to your own storage, those are your systems and your data, and you are the controller of any personal data involved. Our <a href="/legal/privacy" data-i18n="legal_nvidia_ngc_eula.privacy_policy">Privacy Policy</a> describes how we handle personal data on the three.ws hosted platform; it does not apply to a container running on your infrastructure, because that traffic never reaches us.</p>
+
+	<h2 data-i18n="legal_nvidia_ngc_eula.9_intellectual_property">9. Intellectual Property</h2>
+	<p data-i18n="legal_nvidia_ngc_eula.we_and_our_licensors_retain_all_right">We and our licensors retain all right, title, and interest in the three.ws code and marks in the Container, except as expressly licensed in Section 2. You own the outputs you generate with the Container, to the extent the upstream model license permits, and we claim no rights in them. Feedback you provide may be used by us without restriction or obligation to you.</p>
+
+	<h2 data-i18n="legal_nvidia_ngc_eula.10_disclaimer_of_warranties">10. Disclaimer of Warranties</h2>
+	<p data-i18n="legal_nvidia_ngc_eula.the_container_is_provided_as_is_and">THE CONTAINER IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS, IMPLIED, OR STATUTORY, INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT. WE DO NOT WARRANT THAT THE CONTAINER WILL BE UNINTERRUPTED, SECURE, OR ERROR-FREE, THAT IT WILL RUN ON ANY PARTICULAR HARDWARE, OR THAT ITS OUTPUT WILL BE ACCURATE, ORIGINAL, OR FIT FOR ANY PURPOSE. GENERATIVE MODELS PRODUCE UNPREDICTABLE OUTPUT, AND YOU ASSUME ALL RISK ARISING FROM YOUR USE OF THE CONTAINER AND OF ANYTHING IT GENERATES.</p>
+
+	<h2 data-i18n="legal_nvidia_ngc_eula.11_limitation_of_liability">11. Limitation of Liability</h2>
+	<p data-i18n="legal_nvidia_ngc_eula.to_the_maximum_extent_permitted_by_law">TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT WILL THREE.WS OR ITS OFFICERS, DIRECTORS, EMPLOYEES, OR AGENTS BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE DAMAGES, OR FOR ANY LOSS OF PROFITS, REVENUE, DATA, GOODWILL, OR OTHER INTANGIBLE LOSSES, ARISING OUT OF OR RELATED TO THE CONTAINER OR THIS EULA, WHETHER IN CONTRACT, TORT, OR OTHERWISE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.</p>
+	<p data-i18n="legal_nvidia_ngc_eula.because_the_container_is_provided_free_of">BECAUSE THE CONTAINER IS PROVIDED FREE OF CHARGE, OUR TOTAL AGGREGATE LIABILITY ARISING OUT OF OR RELATED TO IT AND THIS EULA WILL NOT EXCEED ONE HUNDRED U.S. DOLLARS (US$100). SOME JURISDICTIONS DO NOT ALLOW CERTAIN LIMITATIONS, SO SOME OF THE ABOVE MAY NOT APPLY TO YOU.</p>
+
+	<h2 data-i18n="legal_nvidia_ngc_eula.12_indemnification">12. Indemnification</h2>
+	<p data-i18n="legal_nvidia_ngc_eula.you_agree_to_indemnify_defend_and_hold">You agree to indemnify, defend, and hold harmless three.ws and its officers, directors, employees, and agents from any claims, liabilities, damages, judgments, losses, and expenses (including reasonable legal fees) arising out of or related to your use of the Container, the inputs you process with it, the outputs you generate, or your violation of this EULA, of any upstream model license, or of any applicable law or third-party right.</p>
+
+	<h2 data-i18n="legal_nvidia_ngc_eula.13_term_and_termination">13. Term and Termination</h2>
+	<p data-i18n="legal_nvidia_ngc_eula.this_eula_applies_for_as_long_as">This EULA applies for as long as you retain or run the Container. You may end it at any time by deleting the image and ceasing all use. We may terminate the license in Section 2 for breach. On termination you must stop running the Container and delete it; the Apache-2.0 rights in the underlying source code survive on their own terms. Sections 4 and 8 through 15 survive termination.</p>
+
+	<h2 data-i18n="legal_nvidia_ngc_eula.14_export_and_compliance">14. Export and Compliance</h2>
+	<p data-i18n="legal_nvidia_ngc_eula.you_represent_that_you_are_not_located">You represent that you are not located in, and will not use the Container in, any country or by any party subject to U.S. or other applicable sanctions or export restrictions, and that you will comply with all applicable export-control and sanctions laws, including those NVIDIA applies to the CUDA components in the image.</p>
+
+	<h2 data-i18n="legal_nvidia_ngc_eula.15_governing_law">15. Governing Law</h2>
+	<p data-i18n="legal_nvidia_ngc_eula.this_eula_is_governed_by_the_laws">This EULA is governed by the laws of the State of Delaware, USA, without regard to its conflict-of-law provisions. Any dispute will be resolved exclusively in the state or federal courts located in Delaware, and you consent to their jurisdiction.</p>
+
+	<h2 data-i18n="legal_nvidia_ngc_eula.16_entire_agreement">16. Entire Agreement</h2>
+	<p data-i18n-html="legal_nvidia_ngc_eula.this_eula_together_with_the_three_ws">This EULA, together with the three.ws <a href="/legal/tos">Terms of Service</a> and <a href="/legal/privacy">Privacy Policy</a> (incorporated by reference), is the entire agreement between you and us regarding the Container and supersedes any prior agreements on that subject. If any provision is held unenforceable, the remaining provisions remain in effect. Our failure to enforce any right is not a waiver of it.</p>
+
+	<h2 data-i18n="legal_nvidia_ngc_eula.17_contact">17. Contact</h2>
+	<p data-i18n-html="legal_nvidia_ngc_eula.questions_about_this_eula_email_legal_three">Questions about this EULA? Email <a href="mailto:legal@three.ws">legal@three.ws</a>.</p>
+
+	<hr>
+	<p class="foot" data-i18n-html="legal_nvidia_ngc_eula.three_ws_terms_of_service_privacy_policy">three.ws &nbsp;·&nbsp; <a href="/legal/tos">Terms of Service</a> &nbsp;·&nbsp; <a href="/legal/privacy">Privacy Policy</a> &nbsp;·&nbsp; <a href="/">Home</a></p>
+</main>
+	<div id="footer-container"></div>
+	<script src="/footer.js"></script>
+	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
+</html>
