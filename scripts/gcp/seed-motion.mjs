@@ -16,6 +16,13 @@
 //   # real run: needs R2 + DATABASE_URL, so it runs where those live
 //   node scripts/gcp/seed-motion.mjs --count 200 --concurrency 6
 //
+// Transport: with GCP_TEXT2MOTION_URL set the runner calls the provider in
+// process, which is the only way a bulk run works. /api/forge-motion is rate
+// limited per IP (it is a public endpoint), so driving a few hundred clips
+// through it earns a 429 with a 49 minute retry-after after roughly the first
+// two. Pass --origin to force the HTTP path anyway, which is useful for proving
+// the deployed route end to end on a handful of clips.
+//
 // Safety: the lane is asserted per job. /api/forge-motion returns a base64url
 // envelope naming the worker it dispatched to, and a job that did not land on
 // our own self-hosted Cloud Run text2motion service aborts the whole run rather
@@ -51,6 +58,8 @@ function parseArgs(argv) {
 		dryRun: false,
 		origin: process.env.SEED_MOTION_ORIGIN || 'https://three.ws',
 		checkpoint: resolve(REPO, '.seed-motion-checkpoint.json'),
+		// Default to the provider directly when this process can reach it.
+		transport: process.env.GCP_TEXT2MOTION_URL ? 'in-process' : 'http',
 		price: 0.75,
 		currency: 'USDC',
 		freeSize: FREE_ROTATION.SIZE,
@@ -65,13 +74,17 @@ function parseArgs(argv) {
 			case '--concurrency': out.concurrency = Math.min(12, Math.max(1, Number(next()) || out.concurrency)); break;
 			case '--categories': out.categories = String(next() || '').split(',').map((s) => s.trim()).filter(Boolean); break;
 			case '--dry-run': out.dryRun = true; break;
-			case '--origin': out.origin = String(next() || out.origin).replace(/\/$/, ''); break;
+			case '--origin':
+				out.origin = String(next() || out.origin).replace(/\/$/, '');
+				out.transport = 'http';
+				break;
+			case '--in-process': out.transport = 'in-process'; break;
 			case '--checkpoint': out.checkpoint = resolve(String(next())); break;
 			case '--price': out.price = Math.max(0, Number(next()) || 0); break;
 			case '--free-size': out.freeSize = Math.max(0, Number(next()) || 0); break;
 			case '--retry': out.retry = Math.max(0, Math.min(3, Number(next()) || 0)); break;
 			case '--help':
-				console.log('Usage: seed-motion.mjs [--count N] [--concurrency N] [--categories a,b] [--dry-run] [--price N] [--free-size N] [--checkpoint PATH]');
+				console.log('Usage: seed-motion.mjs [--count N] [--concurrency N] [--categories a,b] [--dry-run] [--in-process] [--origin URL] [--price N] [--free-size N] [--checkpoint PATH]');
 				process.exit(0);
 				break;
 			default:
@@ -145,10 +158,65 @@ export function assertSelfHostedLane(jobId) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+let providerPromise = null;
+function motionProvider() {
+	if (!providerPromise) {
+		providerPromise = import('../../api/_providers/gcp.js').then(({ createRegenProvider }) => {
+			const provider = createRegenProvider();
+			if (!provider.supportsMode('text2motion')) {
+				throw new Error('the text2motion lane is not configured: set GCP_TEXT2MOTION_URL and GCP_RECONSTRUCTION_KEY');
+			}
+			return provider;
+		});
+	}
+	return providerPromise;
+}
+
+/** Submit + poll straight against the provider, with no public endpoint in between. */
+async function generateInProcess(prompt, opts, duration, fps) {
+	const provider = await motionProvider();
+	const job = await provider.submit({
+		mode: 'text2motion',
+		sourceUrl: null,
+		params: { prompt: prompt.prompt, duration_seconds: duration, fps },
+	});
+	const lane = assertSelfHostedLane(job.extJobId);
+
+	const deadline = Date.now() + opts.pollTimeoutMs;
+	let delay = 4_000;
+	while (Date.now() < deadline) {
+		await sleep(delay);
+		delay = Math.min(delay * 1.3, 12_000);
+		const state = await provider.poll(job.extJobId);
+		if (state.status === 'done' || state.status === 'succeeded') {
+			// The provider surfaces a finished motion job as resultClipUrl (a
+			// three.js AnimationClip JSON), alongside the frame count and fps the
+			// worker actually produced.
+			const clipUrl = state.resultClipUrl;
+			if (!clipUrl) throw new Error('worker reported done with no clip');
+			const res = await fetch(clipUrl, { signal: AbortSignal.timeout(60_000) });
+			if (!res.ok) throw new Error(`clip fetch failed: HTTP ${res.status}`);
+			return {
+				clip: await res.json(),
+				lane,
+				duration,
+				fps: typeof state.fps === 'number' ? state.fps : fps,
+				clipUrl,
+			};
+		}
+		if (state.status === 'failed' || state.status === 'error') {
+			throw new Error(`worker failed: ${state.error || 'unknown'}`);
+		}
+	}
+	throw new Error('timed out waiting for the worker');
+}
+
 async function generateOne(prompt, opts) {
 	const defaults = motionPromptLibrary().defaults ?? {};
 	const duration = Number(prompt.duration_seconds) || Number(defaults.duration_seconds) || 4;
 	const fps = Number(defaults.fps) || 30;
+
+	if (opts.transport === 'in-process') return generateInProcess(prompt, opts, duration, fps);
 
 	const started = await fetch(`${opts.origin}/api/forge-motion`, {
 		method: 'POST',
@@ -156,6 +224,11 @@ async function generateOne(prompt, opts) {
 		body: JSON.stringify({ prompt: prompt.prompt, duration_seconds: duration, fps }),
 		signal: AbortSignal.timeout(60_000),
 	});
+	if (started.status === 429) {
+		throw new Error(
+			'rate limited by /api/forge-motion: run with --in-process (GCP_TEXT2MOTION_URL) for a bulk batch',
+		);
+	}
 	if (started.status === 503) throw new Error('text2motion lane is unconfigured (GCP_TEXT2MOTION_URL)');
 	if (!started.ok) throw new Error(`submit failed: HTTP ${started.status} ${(await started.text()).slice(0, 160)}`);
 	const job = await started.json();
@@ -290,8 +363,9 @@ async function main() {
 		return;
 	}
 
+	const via = opts.transport === 'in-process' ? 'the provider in process' : opts.origin;
 	console.log(
-		`seeding ${todo.length} clips via ${opts.origin} (concurrency ${opts.concurrency}, ${opts.dryRun ? 'DRY RUN, nothing published' : 'publishing'})`,
+		`seeding ${todo.length} clips via ${via} (concurrency ${opts.concurrency}, ${opts.dryRun ? 'DRY RUN, nothing published' : 'publishing'})`,
 	);
 
 	const accepted = [];
