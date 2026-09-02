@@ -209,6 +209,13 @@ export function okxXLayerAccept(resourceUrl, amount) {
 	};
 }
 
+// What an unpaid caller on this rail must send back. x402 v2 (which OKX
+// implements, and whose SDK reads only `payment-signature`) renamed v1's
+// `X-PAYMENT` to `PAYMENT-SIGNATURE`. Our handlers accept either header, so the
+// message names both with the v2 name first; the platform-wide default in
+// x402-spec.js still names v1 for the v1 rails that earned it.
+export const X402_HEADER_ERROR = 'PAYMENT-SIGNATURE header is required (X-PAYMENT is also accepted)';
+
 // Send the OKX-dialect 402: the minimal {x402Version, resource:{url,mimeType},
 // accepts[, error]} envelope as BOTH body and base64 PAYMENT-REQUIRED header.
 // Deliberately not build402Body(): the OKX validator's reference sellers emit

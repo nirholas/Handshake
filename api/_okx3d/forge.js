@@ -37,6 +37,7 @@ import { makeDispatcher, PROTOCOL_VERSION } from '../_lib/mcp-dispatch.js';
 import { buildGettingStartedTool, GETTING_STARTED_TOOL } from '../_lib/mcp-getting-started.js';
 import { buildBazaarSchema } from '../_lib/x402-spec.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
+import { X402_HEADER_ERROR } from '../_lib/x402-xlayer-okx.js';
 import { catalogEntry, FORGE_TOOL, FORGE_STATUS_TOOL } from '../_lib/okx-catalog.js';
 import { startForge, pollOnce, originFromReq } from '../_mcp-studio/gpt-forge-client.js';
 import { shapeSubmit, shapePoll, tierOf } from '../_mcp-studio/studio-shape.js';
@@ -472,6 +473,14 @@ function buildSurface(id) {
 
 	const challenge = {
 		description,
+		// The 402 body's `error` names the header the buyer must send back. The
+		// platform-wide default names `X-PAYMENT`, which is x402 **v1**; OKX
+		// buyers speak v2 and send `PAYMENT-SIGNATURE` (their SDK reads only
+		// that name). Leaving the v1 default here told a reviewer of an
+		// x402-v2 listing, in the one string they are guaranteed to read, that
+		// we implement the version we do not. Both names are accepted on the
+		// wire, so the message names both, v2 first.
+		error: X402_HEADER_ERROR,
 		bazaar: forgeBazaarExtension(entry, paidTool),
 		...withService({
 			serviceName: `three.ws Forge, ${entry.name}`,

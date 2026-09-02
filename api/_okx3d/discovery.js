@@ -11,6 +11,7 @@
 
 import { buildBazaarSchema } from '../_lib/x402-spec.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
+import { X402_HEADER_ERROR } from '../_lib/x402-xlayer-okx.js';
 import { catalogEntry } from '../_lib/okx-catalog.js';
 
 const ENTRY = catalogEntry('identity-studio');
@@ -128,6 +129,9 @@ function identityBazaarExtension() {
 // found on OKX.AI.
 export const IDENTITY_CHALLENGE = {
 	description: RESOURCE_DESCRIPTION,
+	// Name the x402 v2 header an OKX buyer actually sends, not the v1 default.
+	// See the same override on every forge row in api/_okx3d/forge.js.
+	error: X402_HEADER_ERROR,
 	bazaar: identityBazaarExtension(),
 	...withService({
 		serviceName: 'three.ws Agent Identity Studio',
