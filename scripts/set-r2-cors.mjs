@@ -29,9 +29,9 @@
  *   - --probe needs NONE of them. With no credentials it discovers the public
  *     host from a live listing endpoint and the presigned-upload host from the
  *     auth-free /api/forge-upload, which is exactly what a browser sees.
- *   - Production runtime values live on the Cloud Run service, readable with
- *     `gcloud run services describe three-ws-api --region us-central1
- *      --project aerial-vehicle-466722-p5 --format=yaml`. Those are the same
+ *   - Production runtime values live on the Cloud Run service, where credentials
+ *     are Secret Manager references rather than literals; read one with
+ *     `node scripts/read-service-env.mjs '^S3_' `. Those are the same
  *     object-scoped keys, so they do not unlock --get either.
  *   - Do NOT use `vercel env pull`: it returns empty for secret-type vars, and
  *     production has not run on Vercel since 2026-07-07.
@@ -93,7 +93,7 @@ if (missing.length && !flag('--probe') && !flag('--dry-run')) {
 	// Deploy-time invocation: missing env is not a deploy failure. Local-dev
 	// invocation: surface the hint. Either way, exit 0 so a CI step can chain.
 	console.log(`[set-r2-cors] skipped, missing env: ${missing.join(', ')}`);
-	console.log('[set-r2-cors] (local: drop R2_ACCOUNT_ID/R2_ACCESS_KEY_ID/R2_SECRET_ACCESS_KEY/R2_BUCKET in .env.local. Production values: gcloud run services describe three-ws-api --region us-central1 --project aerial-vehicle-466722-p5 --format=yaml)');
+	console.log("[set-r2-cors] (local: drop R2_ACCOUNT_ID/R2_ACCESS_KEY_ID/R2_SECRET_ACCESS_KEY/R2_BUCKET in .env.local. Production values: node scripts/read-service-env.mjs '^S3_')");
 	console.log('[set-r2-cors] (to measure the LIVE policy without any bucket credentials: node scripts/set-r2-cors.mjs --probe)');
 	process.exit(0);
 }

@@ -71,6 +71,7 @@ const APPLY = argv.includes('--apply');
 const VERIFY_ONLY = argv.includes('--verify');
 const FORCE_NEW_VERSION = argv.includes('--force-new-version');
 const REUSE = !argv.includes('--no-reuse');
+const CONCURRENCY = Math.max(1, Number(optValue('--concurrency', 6)) || 6);
 
 function optValue(flag, fallback) {
 	const i = argv.indexOf(flag);
@@ -149,6 +150,21 @@ const EXTRA_SECRETS = new Set([
 	'REDIS_URL',
 	'A2A_PAYER_SOLANA_SECRET',
 ]);
+
+// gcloud is a Python process per invocation, so a fan-out has to be bounded or a
+// sweep of a few dozen secrets spawns a few dozen interpreters at once and the
+// machine starts swapping. Everything here runs through this pool.
+async function mapLimit(items, limit, fn) {
+	const results = new Array(items.length);
+	let next = 0;
+	const worker = async () => {
+		for (let i = next++; i < items.length; i = next++) {
+			results[i] = await fn(items[i], i);
+		}
+	};
+	await Promise.all(Array.from({ length: Math.max(1, Math.min(limit, items.length)) }, worker));
+	return results;
+}
 
 function fail(msg) {
 	console.error(`\n  FAILED: ${msg}\n`);
@@ -278,7 +294,7 @@ async function buildValueIndex() {
 	} catch {
 		return index;
 	}
-	const digests = await Promise.all(names.map((n) => latestVersionDigest(n)));
+	const digests = await mapLimit(names, CONCURRENCY, (n) => latestVersionDigest(n));
 	names.forEach((name, i) => {
 		const d = digests[i];
 		if (!d) return;
@@ -458,20 +474,26 @@ async function main() {
 		return;
 	}
 
-	const updates = [];
-	for (const item of credentials) {
+	// Each var's secret work is independent, and every step of it is idempotent
+	// (an existing secret holding the same value is reused, a repeated IAM binding
+	// is a no-op), so this runs a few at a time. Serially, a full sweep of the
+	// service spends over an hour in gcloud process startup alone, which is long
+	// enough that an interrupted run becomes likely.
+	const prepared = await mapLimit(credentials, CONCURRENCY, async (item) => {
 		const result = await prepareSecret(item);
 		if (result.error) {
 			console.log(`\n  SKIPPED ${item.name}: ${result.error}`);
-			continue;
+			return null;
 		}
 		const grant = await grantAccessor(item.secretName, before.serviceAccount);
 		console.log(`\n  ${item.name}`);
 		console.log(`    secret: ${item.secretName}`);
 		console.log(`    ${result.action}`);
 		console.log(`    ${grant}`);
-		updates.push(item);
-	}
+		return item;
+	});
+	// mapLimit preserves input order, so the update reads the way the plan did.
+	const updates = prepared.filter(Boolean);
 
 	if (!updates.length) fail('no var could be prepared; nothing was flipped on the service');
 
