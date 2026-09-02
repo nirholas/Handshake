@@ -15,12 +15,7 @@
 // caller gets a 200 that says `applied: false`.
 
 import { sql } from '../db.js';
-import {
-	PrintTransitionError,
-	appendOrderEvent,
-	getOrder,
-	transitionOrder,
-} from '../print-store.js';
+import { PrintStoreError, appendEvent, getOrder, transition } from '../print-store.js';
 import {
 	normalizeCancelResult,
 	normalizeStatusResult,
