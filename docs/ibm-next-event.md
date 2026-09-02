@@ -244,3 +244,201 @@ Items 1 through 3 are the event. Item 4 is a convenience a query could replace b
    overall winner.
 
 Everything else in this document proceeds without an answer.
+
+---
+
+# Appendix: the wider idea bank
+
+The Forge-Off Open above is the recommendation because it is the cheapest path to the most
+new users. It is not the only good event, and a few of the ideas below beat it on other
+axes: press, partner fit, retention, or sheer novelty. Everything here rides a surface that
+already runs in production, so any of them can be the next one rather than a someday.
+
+## The one structural point: a season beats an event
+
+An event is a spike. Three days later the graph is where it was. The pattern that actually
+moves usage is three things running at once, and we already own all three:
+
+- **A daily habit.** `/daily` is a new 3D creative challenge every day, free, no sign-up,
+  with a streak. That is the retention engine, and it is already built.
+- **A recurring show.** `/stage` puts an embodied AI host in a 3D venue with spatial voice
+  that reads the room and takes audience questions. A monthly show is a reason to come back
+  on a date.
+- **One headline event per quarter.** The Open, or any of the ideas below.
+
+Pick the headline event to recruit, the daily challenge to retain, and the show to keep a
+rhythm. Judging any single event on its own spike is how good programs get cancelled.
+
+## The ideas
+
+| # | Idea | Rides | Audience | Lift | Why it might beat the Open |
+| --- | --- | --- | --- | --- | --- |
+| 1 | **Sign Week** | `/sign-language`, `/asl-alphabet`, `/sign-mirror` | Anyone, plus the deaf and accessibility communities | Low | The best partner fit on this list, and nothing like it exists anywhere |
+| 2 | **The 30-Day Forge Streak** | `/daily` | Anyone with a browser | Almost none | Retention rather than a spike: a daily habit with a streak, no sign-up |
+| 3 | **World Lines: the global hunt** | `/world-lines`, `/irl` | Anyone with a phone, city by city | Medium | Physically real, genuinely novel, and it photographs itself |
+| 4 | **Portal Day** | `/portal` | Anyone who has a website they care about | Low | The entry action is pasting a URL, which is the lowest bar we can offer |
+| 5 | **Opening Night** | `/compose`, `/play`, `/creations` | Art and design audiences, press | Medium | Reframes AI output as an exhibition, which press covers and a contest is not |
+| 6 | **Mascot Week** | `/create`, `/studio`, `/glance` | Companies, including IBM's enterprise base | Low | The only idea here that converts directly into embeds on other companies' sites |
+| 7 | **Crews Cup** | `/crews` | Teams, chapters, user groups, offices | Low | A team layer that multiplies any other idea on this list |
+| 8 | **The Living Stage show** | `/stage` | The existing community, monthly | Low | Not an event: a rhythm, and the cheapest recurring reason to return |
+| 9 | **The Family Portrait drive** | `/create/selfie`, `/dad`, `/create/video` | The most non-technical audience there is | Low | Emotional rather than competitive, and it produces gifts people actually send |
+| 10 | **The Collective Drop** | `/drops`, `/creations` | Creators and collectors | Medium | The community co-authors one supply-capped collection instead of competing |
+| 11 | **Build Night in the plaza** | `/play` voxel building, `multiplayer/` | Anyone who has played a building game | Low | Collaborative rather than competitive: one landmark, built together, live |
+| 12 | **The 60-Second Speedrun** | `/forge`, `/studio` | Livestream audiences | Almost none | A perfect stream segment, not a whole event: use it inside another one |
+
+### 1. Sign Week
+
+**What happens.** Five days, one signed word a day. The avatar forms the letter, your camera
+watches your hand, and the page grades the handshape live and names the finger that is off.
+Everything runs on-device and no video is ever uploaded, which is the part that makes a
+public learning event with a webcam ethically simple rather than a privacy negotiation. It
+closes with a signed-word relay in the world.
+
+**Why it is the best partner fit on this list.** Accessibility is one of the few areas where
+IBM's institutional history is genuinely deep, and an AI avatar that teaches fingerspelling
+with live on-device feedback is a demonstrably useful thing rather than a demo. It is also
+the one idea here that a journalist would write about without being asked, and the one most
+likely to attract collaborators (schools, deaf educators, accessibility orgs) who bring
+their own audiences.
+
+**Watch out for.** Sign language is a real language with real communities and a long history
+of hearing people building tools for it badly. Any version of this needs deaf collaborators
+involved before it is announced, not after, and it should teach fingerspelling honestly as
+one narrow slice of ASL rather than implying the avatar signs the language.
+
+### 2. The 30-Day Forge Streak
+
+**What happens.** `/daily` already posts a new creative challenge every day and tracks a
+streak, free and with no sign-up. Wrap thirty days of it in a public leaderboard, a prize
+per week, and a badge for a perfect month. The whole event is a page, a schedule of themes
+and a prize list.
+
+**Why it matters more than it looks.** A daily challenge with a visible streak is the
+strongest retention mechanic consumer software has, and the surface is already shipped. Run
+this underneath whatever headline event we pick, permanently. It is the difference between a
+spike and a line that goes up.
+
+### 3. World Lines: the global hunt
+
+**What happens.** Agents are placed at real coordinates in a set of cities. Walk to one,
+complete its AR challenge on your phone, and earn an agent-signed proof of presence that
+only ever records an approximate area, never your exact position. Cities compete on a
+leaderboard. Anyone with a phone can play, and every capture is a photo someone posts.
+
+**Why it is the answer to the original brief.** This is the "genuinely new, IRL or hybrid"
+idea in its strongest form: not a meetup with a video call bolted on, but a game whose board
+is the actual world, with cryptographic proof you were there. If IBM has offices willing to
+host a pin, the hunt has anchor points with real foot traffic and a reason for their staff
+to play.
+
+**Watch out for.** Geographic coverage. A hunt with pins in three cities is a hunt most of
+the audience can only read about, so pair every physical pin with a virtual one in the world
+so nobody is locked out by geography.
+
+### 4. Portal Day
+
+**What happens.** Paste any web address into `/portal` and walk through it in 3D: sections
+become buildings sized by what they say, links become doors you step into. The event is a
+day of people portaling sites they love, sites they built, and sites they hate, with a live
+tour of the strangest ones on stream.
+
+**Why it is worth a day.** The entry action is pasting a URL, which is the lowest possible
+bar, and the output is instantly personal because it is *their* site. It is also the single
+best demo we have for an audience that does not care about 3D generation as a category.
+
+### 5. Opening Night
+
+**What happens.** Curate the strongest community creations of the preceding month into a
+built exhibition space, then open it on a specific night with a host, a walkthrough, and the
+creators present as avatars beside their work. If IBM has a room, the same pieces stand in
+it in AR.
+
+**Why it is different from a contest.** A contest produces a winner and a leaderboard. An
+exhibition produces a place, a catalog and a night, and it treats the people who made things
+as artists rather than entrants. Press writes about openings. It also gives the runners-up of
+every previous contest somewhere to end up.
+
+### 6. Mascot Week
+
+**What happens.** Companies submit their mascot, character or logo and get it back as a
+rigged, talking 3D agent with a one-line embed for their own site, plus a live card for a
+Slack channel or a widgets board. A week of them, published as a gallery, with a best-in-show.
+
+**Why it is the commercial one.** Every other idea here produces creations. This one
+produces *embeds on other companies' websites*, which is the actual business, and it aims at
+exactly the enterprise audience IBM's community is full of. It doubles as a lead list.
+
+### 7. Crews Cup
+
+**What happens.** Not an event by itself: a team layer over any of the others. Found a crew,
+invite your people, and the whole roster stands in one 3D headquarters, lit when they are
+live. Score the contest by crew as well as by individual, so an office, a university club or
+a user group can enter together.
+
+**Why to bolt it on.** Individual contests recruit one person at a time. Team contests
+recruit whoever that person can drag in, and the drag-in is done by them, not by us.
+
+### 8. The Living Stage show
+
+**What happens.** A monthly hour on `/stage`: an embodied AI host in a 3D venue with spatial
+voice, taking audience questions live, with a human guest each month. Anyone can attend as
+an avatar.
+
+**Why it is the highest-leverage low-effort item.** It is a date on a calendar that repeats,
+which is the thing a community needs most and the thing we do not currently have. Guests are
+the recruitment mechanism: every guest brings their own audience once.
+
+### 9. The Family Portrait drive
+
+**What happens.** One photo becomes a recognizable, rigged, animated 3D avatar that idles,
+walks and waves, with a permalink to send. `/dad` is this exact flow, already built, for one
+occasion. Point it at a holiday, or at nothing in particular, and make the artifact a gift
+rather than an entry.
+
+**Why it reaches people no contest reaches.** Competing is a niche behavior. Sending your
+mother something you made of her is not. This is the most non-technical idea on the list and
+the one most likely to be used by someone who never returns, which is a fine outcome when the
+thing they made has our name on the permalink.
+
+### 10. The Collective Drop
+
+**What happens.** Instead of competing, the community co-authors one supply-capped
+collection: contributed traits, weighted layers, and the whole supply rolled from a published
+seed so rarity is verifiable. Everyone who contributed a trait is in the collection.
+
+**Why it is different.** It is the only idea here where entrants end up with a shared
+artifact rather than a ranking, and shared artifacts create the group identity a leaderboard
+actively prevents.
+
+### 11. Build Night in the plaza
+
+**What happens.** One evening, one landmark, built live and together with the voxel building
+in the world, hosted on stream. It stays standing afterwards.
+
+**Why it works.** Collaborative building is the format that made the sandbox genre, it needs
+no skill to join, and the result is a permanent thing in a place people already visit. The
+cheapest possible community night.
+
+### 12. The 60-Second Speedrun
+
+**What happens.** A timed race from a blank prompt to a live, embedded, talking agent on a
+page, on stream, with a leaderboard.
+
+**Why it is a segment, not an event.** It is a spectacle that proves the product is fast, and
+it belongs in the middle of a kickoff, not on its own page.
+
+## If we ran three of these
+
+A defensible season, in order, and each one is independently cancellable:
+
+1. **Now:** the 30-Day Forge Streak, running quietly underneath everything else. It is nearly
+   free and it is the only item that compounds.
+2. **The headline:** the Forge-Off Open, with the Crews Cup layered on so teams recruit for
+   us, or Sign Week instead if the partner conversation wants the accessibility story more
+   than the volume.
+3. **The rhythm:** the Living Stage show, monthly from then on, with Opening Night as the
+   quarter's version once there is a month of work worth exhibiting.
+
+World Lines is the one to hold for the moment we want a story nobody else can tell, because
+it is the only idea here that needs the physical world and the only one that cannot be
+copied by a competitor with a text box.
