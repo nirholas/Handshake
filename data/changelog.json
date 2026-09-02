@@ -25723,6 +25723,34 @@
 				"improvement"
 			],
 			"link": "/fact-checker"
+		},
+		{
+			"date": "2026-09-02",
+			"title": "Materialize: your generation, printed and posted to you",
+			"summary": "Everything the forge makes has lived on a screen. Materialize prints it and ships it. Point it at any model, yours or one from the gallery, and it measures the mesh first: whether it is a closed solid, how many separate pieces it is, where the holes are, how thin the thinnest wall gets, and its exact volume. That measurement is the price, so nothing is guessed. Pick a material and a height and you get an itemized quote, every line shown, in resin, tough resin, nylon, full-colour sandstone, draft plastic or stainless steel. Before it prints, the model is rebuilt as a watertight solid, its holes filled, scaled to the size you chose, and hollowed with drain holes if that saves you money. Full-colour prints carry the colour sampled from the model's own texture, which is what lets a printer reproduce what you see on screen. Checkout is USDC on Solana, holders get up to fifteen percent off, and you can follow the order from screening to production to the tracking number. An AI agent can order one too, over x402, with nobody in the loop: as far as we know that makes this the first API where an agent pays and a real object turns up at a real address.",
+			"tags": [
+				"feature"
+			],
+			"link": "/materialize"
+		},
+		{
+			"date": "2026-09-02",
+			"title": "Every print ships with proof it is the one you ordered",
+			"summary": "A certificate of authenticity is usually a card with a logo on it, which proves nothing. Every object Materialize ships now carries a real one. Its edition number is enforced in the database, so the third one that ships really is edition three. It records the fingerprint of the exact file the printer was given, and of the model you looked at. And both of those are written into a transaction on Solana, signed by the platform. The QR on the box opens a page showing the original model spinning, the prompt it came from, the edition, and the raw payload that went on chain, so you can hash the file yourself and compare. That check does not depend on our database, our company, or any block explorer staying online, which is the entire point.",
+			"tags": [
+				"feature"
+			],
+			"link": "/materialize"
+		},
+		{
+			"date": "2026-09-02",
+			"title": "Materialize will not print a weapon, a key to your door, or somebody else's brand",
+			"summary": "Printing something is not like generating a picture of it. A refused image costs nobody anything; a printed firearm part is a crime in most of the places we ship to, and a working copy of a key is a burglary tool. So Materialize checks every order twice, and the rules are code rather than a polite request. It refuses firearm components, suppressors, ammunition and magazines, keys and lock picks, counterfeit goods and other people's brand marks, concealed and spring-loaded blades, drug paraphernalia, and realistic firearm likenesses at life size. The first check runs before you are ever asked to pay, so a refusal costs nothing, and it names the category, links the policy, and says what you can print instead. The second runs on the paid order on its way to the printer, and an order that fails it is refunded rather than quietly shipped. What this deliberately does not do is refuse the ordinary: a tabletop miniature carrying a weapon prints, a blunt prop sword prints, your own logo prints. Full policy is in the docs.",
+			"tags": [
+				"feature",
+				"security"
+			],
+			"link": "/materialize"
 		}
 	]
 }
