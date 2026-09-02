@@ -36,6 +36,7 @@ const state = {
 	comments: [],
 	commentsTotal: 0,
 	commentsNext: null,
+	edition: null, // { limit, issued, remaining, soldOut } from /api/print/editions
 };
 
 function esc(s) {
@@ -113,6 +114,7 @@ async function boot() {
 	renderSuggested();
 	loadGeometry();
 	loadComments();
+	loadEdition();
 	if (shell) shell.setAttribute('aria-busy', 'false');
 }
 
@@ -236,10 +238,120 @@ function renderInfo() {
 		<p class="mp-desc">${esc(c.prompt)}</p>
 		<div class="mp-published" title="${esc(publishedAbs)}">🕒 Published ${esc(timeAgo(c.created_at))}</div>
 		${chips ? `<div class="mp-chips">${chips}</div>` : ''}
-		<div class="mp-liked-line" id="mp-liked-line">${likeCount ? `${formatCount(likeCount)} ${likeCount === 1 ? 'person likes' : 'people like'} this model` : ''}</div>`;
+		<div class="mp-liked-line" id="mp-liked-line">${likeCount ? `${formatCount(likeCount)} ${likeCount === 1 ? 'person likes' : 'people like'} this model` : ''}</div>
+		<section class="mp-edition" id="mp-edition" hidden aria-label="Physical editions"></section>`;
 
 	wireActions();
 	wireFollow();
+	renderEdition();
+}
+
+// ── physical editions ────────────────────────────────────────────────────────
+//
+// Materialize turns a model into an object, and an object is a collectible only
+// if its supply is knowable. The creator sets one number here; every print of
+// this model then claims the next edition out of it, and each shipped print's
+// certificate (/cert/:id) renders "3 of 25" forever.
+//
+// The block stays hidden for the common case: an open edition nobody has
+// printed yet, viewed by someone who cannot change it. It appears the moment
+// there is something true to say.
+
+function viewerIsCreator() {
+	const c = state.creation;
+	return Boolean(state.viewer?.username && c?.creatorUsername && state.viewer.username === c.creatorUsername);
+}
+
+async function loadEdition() {
+	const c = state.creation;
+	if (!c) return;
+	try {
+		const res = await fetch(`/api/print/editions?creation_id=${encodeURIComponent(c.id)}`);
+		if (!res.ok) return;
+		const body = await res.json();
+		if (!body?.edition) return;
+		state.edition = body.edition;
+		renderEdition();
+	} catch (err) {
+		// A model page is not worth breaking over a scarcity badge.
+		log.error('edition load failed', err);
+	}
+}
+
+function editionSummary(e) {
+	if (!e) return '';
+	if (e.limit === null) {
+		return e.issued
+			? `Open edition · ${formatCount(e.issued)} printed`
+			: 'Open edition · none printed yet';
+	}
+	if (e.soldOut) return `Limited edition of ${formatCount(e.limit)} · sold out`;
+	return `Limited edition of ${formatCount(e.limit)} · ${formatCount(e.issued)} printed, ${formatCount(e.remaining)} left`;
+}
+
+function renderEdition() {
+	const host = $('mp-edition');
+	const e = state.edition;
+	if (!host) return;
+	const owner = viewerIsCreator();
+	if (!e || (!owner && e.limit === null && !e.issued)) {
+		host.hidden = true;
+		return;
+	}
+	host.hidden = false;
+	host.innerHTML = `
+		<h2 class="mp-edition-title">Physical editions</h2>
+		<p class="mp-edition-line" id="mp-edition-line">${esc(editionSummary(e))}</p>
+		${
+			owner
+				? `<form class="mp-edition-form" id="mp-edition-form">
+						<label class="mp-edition-label" for="mp-edition-input">Cap this edition</label>
+						<input class="mp-edition-input" id="mp-edition-input" type="number" inputmode="numeric"
+							min="${e.issued > 0 ? e.issued : 1}" max="10000" step="1"
+							placeholder="Open" value="${e.limit === null ? '' : esc(String(e.limit))}"
+							aria-describedby="mp-edition-help" />
+						<button class="mp-action" type="submit" id="mp-edition-save">Save</button>
+						<p class="mp-edition-help" id="mp-edition-help">
+							Leave it empty for an open edition. Once set, orders past the cap are refused at
+							the price, and every certificate reads "n of ${e.limit === null ? 'N' : esc(String(e.limit))}".
+						</p>
+					</form>`
+				: '<p class="mp-edition-help">Set by the creator. Every print carries a numbered certificate of authenticity.</p>'
+		}`;
+	if (owner) wireEditionForm();
+}
+
+function wireEditionForm() {
+	const form = $('mp-edition-form');
+	form?.addEventListener('submit', async (event) => {
+		event.preventDefault();
+		const input = $('mp-edition-input');
+		const save = $('mp-edition-save');
+		const raw = String(input?.value ?? '').trim();
+		if (save) {
+			save.disabled = true;
+			save.textContent = 'Saving…';
+		}
+		try {
+			const res = await apiFetch('/api/print/editions', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json', 'x-forge-client': clientId() },
+				body: JSON.stringify({ creation_id: state.creation.id, edition_of: raw === '' ? null : Number(raw) }),
+			});
+			const body = await res.json().catch(() => null);
+			if (!res.ok || !body?.edition) throw new Error(body?.error || `HTTP ${res.status}`);
+			state.edition = body.edition;
+			renderEdition();
+			toast(body.edition.limit === null ? 'This model is an open edition' : `Capped at ${body.edition.limit} prints`);
+		} catch (err) {
+			log.error('edition save failed', err);
+			toast(String(err?.message || 'Could not save the edition size'));
+			if (save) {
+				save.disabled = false;
+				save.textContent = 'Save';
+			}
+		}
+	});
 }
 
 function wireActions() {

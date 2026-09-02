@@ -465,3 +465,70 @@ a.mp-comment-author:hover { text-decoration: underline; }
 	.mp-skeleton { animation: none; }
 	.mp-action, .mp-sugg-card, .mp-viewer-btn { transition: none; }
 }
+
+/* ── physical editions ───────────────────────────────────────────────────────
+   Materialize scarcity on the model page: what the series is, how much of it
+   is gone, and, for the creator, the one field that caps it. Hidden entirely
+   for an open edition nobody has printed, so 23k models do not each grow a
+   "0 printed" row. */
+
+.mp-edition {
+	margin-top: var(--space-lg, 24px);
+	padding: var(--space-md, 16px);
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.08));
+	border-radius: var(--radius-lg, 16px);
+	background: var(--surface-1, rgba(255, 255, 255, 0.03));
+}
+
+.mp-edition-title {
+	margin: 0 0 var(--space-2, 8px);
+	font-family: var(--font-mono);
+	font-size: var(--text-2xs, 11px);
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	font-weight: var(--weight-medium, 500);
+	color: var(--ink-dim, rgba(255, 255, 255, 0.55));
+}
+
+.mp-edition-line {
+	margin: 0;
+	font-size: var(--text-md, 15px);
+	color: var(--ink, rgba(255, 255, 255, 0.88));
+}
+
+.mp-edition-form {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-2, 8px);
+	margin-top: var(--space-sm, 12px);
+}
+
+.mp-edition-label {
+	font-size: var(--text-sm, 13px);
+	color: var(--ink-dim, rgba(255, 255, 255, 0.62));
+}
+
+.mp-edition-input {
+	width: 110px;
+	padding: 8px 12px;
+	border-radius: var(--radius-pill, 999px);
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.14));
+	background: var(--surface-2, rgba(255, 255, 255, 0.05));
+	color: var(--ink-bright, #fff);
+	font: inherit;
+	font-family: var(--font-mono);
+	font-size: var(--text-sm, 13px);
+}
+.mp-edition-input:focus-visible {
+	outline: 2px solid var(--accent, #7c9cff);
+	outline-offset: 1px;
+}
+
+.mp-edition-help {
+	flex: 1 1 100%;
+	margin: 0;
+	font-size: var(--text-xs, 12px);
+	line-height: 1.6;
+	color: var(--ink-dim, rgba(255, 255, 255, 0.5));
+}
