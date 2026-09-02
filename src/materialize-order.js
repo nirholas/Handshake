@@ -102,7 +102,11 @@ async function load() {
 			timer = setTimeout(load, POLL_MS * 2);
 			return;
 		}
-		showError('This order could not be loaded', `${esc(err.message)} It is safe to reload this page.`, '<button type="button" class="mo-btn" onclick="location.reload()">Try again</button>');
+		showError(
+			'This order could not be loaded',
+			`${esc(err.message)} It is safe to reload this page.`,
+			'<button type="button" class="mo-btn" data-mo-action="retry">Try again</button>',
+		);
 	}
 }
 
@@ -112,6 +116,17 @@ function showError(title, message, actions = '') {
 	const box = $('mo-error');
 	box.hidden = false;
 	box.innerHTML = `<div class="mo-notice"><h2>${esc(title)}</h2><p>${message}</p>${actions ? `<div class="mo-row">${actions}</div>` : ''}</div>`;
+	// The site CSP carries no 'unsafe-inline' in script-src, so an onclick
+	// attribute on generated markup never runs: the Try again button would look
+	// like a way out of the error state and do nothing. Delegate off a data
+	// attribute instead, bound once rather than per render.
+	if (!box.dataset.moBound) {
+		box.addEventListener('click', (event) => {
+			const action = event.target.closest('[data-mo-action]');
+			if (action?.dataset.moAction === 'retry') location.reload();
+		});
+		box.dataset.moBound = '1';
+	}
 }
 
 function render(order, events) {
