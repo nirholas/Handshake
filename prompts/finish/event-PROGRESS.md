@@ -393,3 +393,70 @@ this campaign, once nothing else in `prompts/finish/` references it:
 While any sibling prompt of this campaign is still on disk, leave this file in
 place and keep it accurate instead. The shrinking directory is the only signal
 to the next agent that a campaign is closed.
+
+## 2026-09-02 · Order 06 · Photo mode was shipped broken; fixed, proven in two engines, documented
+
+**The finding.** Photo mode already existed (`a8b75a1a5`), so step 0's "extend rather than
+duplicate" applied. Reading it before touching it turned up the reason nobody had ever been handed
+a photo: **every single press failed.** `src/game/photo-mode.js` carries its own copy of the `el()`
+helper from `coincommunities-ui.js`, and the copy had drifted, losing two features the card
+actually uses. `el('button', {...}, ['✕'])` called `appendChild('✕')`, which throws
+`TypeError: parameter 1 is not of type 'Node'` in every browser; `takePhoto`'s own catch swallowed
+it and toasted "Couldn't photograph the world just now". The second loss was quieter: `html:` fell
+through to `setAttribute`, so the hint line rendered as `<p html="...">` with no visible text.
+Reproduced against jsdom before changing anything, so the fix was aimed at a measured failure.
+
+**Shipped** (all swept into other agents' `git add -A` commits before staging, content verified at
+HEAD; the last three are mine end to end):
+
+- `1c7410eef` the `el()` fix, plus two defects the fix exposed: a retake left the outgoing sheet
+  fading for 220ms under its replacement, where a click on the stale backdrop dismissed the fresh
+  card (`closePhotoPreview({ immediate: true })` on the retake path, `pointer-events: none` on a
+  sheet that is not `.cc-on`).
+- `2a8f58946` the hint promises `P` takes another, and the card's capture-phase key handler was
+  swallowing it. `P` is now let through to /play's own handler, which routes it back into
+  `takePhoto`, so the promise is true.
+- `37f60a291`, `ac68136d4`, `ea67086e7` the tests.
+- `9647898af` a busy state on the HUD button (below).
+- `e84ea35d9` / `46c61547f` the changelog entry; `0f37c78ef` the `STRUCTURE.md` row.
+
+**Verified, in this order.** `tests/photo-mode.test.js` (13 cases, jsdom: compositor geometry at
+landscape/portrait/tiny, the preview sheet, Escape, the clipboard fallback, the event stamp) and
+`tests/e2e/play-photo-mode.spec.js` (8 cases, **real Chromium and real WebKit**, the half a unit
+test cannot own: it builds a live WebGL world on a known clear colour, presses the shutter through
+the real module, decodes the PNG the player would download and samples it). The black-frame bug is
+measured three ways, and the clear colour round-trips as exactly `18,92,176,255`, which also pins
+the render target's colour space. Then the whole thing driven in the real `/play` world: the card
+opens, the hint reads "The world keeps running behind this card. P takes another.", the close glyph
+is `✕`, the file is `threews-three-2026-09-02_205528.png` at `1440 × 970` (a 1440x900 world plus a
+70px signature bar).
+
+**Two things the browser run taught that no test would have.**
+
+1. **The capture is not free.** End to end it took **59.5s** on this box (`toBlob` alone 5.1s):
+   software GL, several agents sharing the machine. A 260ms shutter flash followed by a minute of
+   nothing reads as a dead button, so the HUD control now holds `aria-busy` for the whole press
+   (`cc-photo-working`, `cursor: progress`, still under `prefers-reduced-motion`). Confirmed live:
+   `aria-busy` true 3s in, cleared on open, transitions `true|false` then `null|true`.
+2. **`phase`, not the HUD, is when the world is playable.** `/play` unhides `#cc-hud` while still
+   `phase === 'loading'`, and every world hotkey is gated on `phase === 'world'`, which landed
+   **142s after** the HUD appeared here (the local Colyseus join retries; the world becomes playable
+   independently, by design). A harness that waits on the HUD presses `P` into a handler correctly
+   ignoring it and reports a working feature as broken, which is exactly what the first walkthrough
+   run did. A concurrent agent hit the same wall in `scripts/play-photo-mode-check.mjs` and solved
+   it better, by retrying the press and reporting the dead window as the measurement, so their
+   script was left alone.
+
+**Evidence on disk (not committed, per the no-screenshots hygiene rule):** the real downloaded share
+card plus the preview sheet at 1440 and 390 in
+`/tmp/claude-1000/-workspaces-three-ws/e041b23d-2096-4e66-a073-67542a5717a3/scratchpad/photo-evidence/`.
+
+**Suite.** `npx vitest run`: 27,304 passed, 12 failed across 10 files, none of them photo-mode
+(`x402-discovery-parity`, `x402-discovery-green`, `cron-scheduler-sync`, `branding`,
+`deploy-artifacts`, `asset-host-liveness`, `no-nul-bytes`, `mcp-model-inspect-tools`,
+`oracle-calibrate-cron`, `vanity-grinder-progress`), all other agents' in-flight work in this shared
+worktree. `npm run check:rules` clean on every file touched.
+
+**Remains.** Nothing in this order. It is behind the deploy gap like everything else on `main`:
+production still serves the broken shutter until the next deploy carries these commits, and deploys
+are owner-gated.
