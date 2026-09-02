@@ -125,7 +125,8 @@
 		"packages/glb-diff",
 		"packages/witness",
 		"packages/portal",
-		"packages/tty-avatar"
+		"packages/tty-avatar",
+		"packages/home-bridge"
 	],
 	"main": "src/app.js",
 	"browserslist": [
