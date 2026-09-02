@@ -155,11 +155,18 @@
 }
 
 @media (max-width: 480px) {
-	.ec-card { width: 100%; }
+	/* Fixed height, not content height. The card is centred, so every time its
+	   body swapped a five-row skeleton for a full jobs board it grew and its top
+	   edge climbed: measured at 320px, that one swap was a 0.246 layout shift,
+	   almost all of the page's CLS. At this width the panel is effectively a
+	   sheet, so giving it the full height it was going to reach anyway costs
+	   nothing and the body scrolls inside it instead of resizing it. */
+	.ec-card { width: 100%; height: min(640px, 88vh); }
 	/* Thumb-sized targets on a phone: the WCAG 2.5.5 bar is 44px, and these are
 	   the controls a player taps mid-session with one hand. */
 	.ec-x { width: 40px; height: 40px; }
-	.ec-tab { padding: 12px 0; }
+	/* Padding alone landed this a hair under 40px. */
+	.ec-tab { padding: 12px 0; min-height: 40px; }
 	/* Padding alone left this at 36px, under the 40px bar: the jobs board's
 	   Accept button is the one control a player taps most in a run. */
 	.ec-row-btn { padding: 11px 14px; min-height: 40px; }

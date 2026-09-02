@@ -1350,9 +1350,13 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 }
 
 /* chat bubbles over avatars + name labels */
+/* Parked off-screen until _updateLabels projects it. Anchored at left:0 with a
+   -50% shift, a nameplate otherwise sits half over the left edge of the screen
+   for the frames between being created and being placed. The placement code
+   writes `transform` inline, so this only applies before that first write. */
 .cc-label, .cc-bubble {
 	position: fixed; left: 0; top: 0; z-index: 15; pointer-events: none;
-	transform: translate(-50%, -100%); white-space: nowrap;
+	transform: translate(-50%, -100%) translate(-9999px, -9999px); white-space: nowrap;
 }
 .cc-label {
 	font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: #fff;
@@ -3449,7 +3453,10 @@ select.npc-svc-input { cursor: pointer; appearance: none; -webkit-appearance: no
 .cc-it-marker {
 	position: fixed; left: 0; top: 0; z-index: 18;
 	pointer-events: none;
-	transform: translate(-50%, -100%);
+	/* Off-screen until the projection places it, for the same reason as .cc-label
+	   above: anchored at left:0 with a -50% shift, it otherwise spends its first
+	   frames straddling the left edge of the screen. */
+	transform: translate(-50%, -100%) translate(-9999px, -9999px);
 	background: rgba(220, 30, 30, 0.88);
 	color: #fff;
 	font-size: 11px; font-weight: 700; letter-spacing: 0.03em;
