@@ -6,6 +6,68 @@ Work Order 04 session, no earlier entries existed because no earlier work order 
 
 ---
 
+## 2026-09-02, Work Order 05 dispatched: RETIRED at the gate, listing verified under review, nothing submitted
+
+Asked to execute `okx-ai-05-relisting-resubmission.md`. **It was not executed, deliberately, and
+the file now carries a retirement banner** so the next session does not repeat the dispatch.
+Running it would have been destructive: WO-05 submits the 11-row `identity-studio` catalog,
+every row of which is `listed: false` since the 2026-08-22 forge rebuild, so an `agent update`
+built from it deletes seven live forge rows and replaces them with a retired set.
+`okx-ai-08-forge-relisting.md` is the live successor and already ran on 2026-08-27.
+
+### Agent #2632 state, read live today
+
+| Field | Value |
+|---|---|
+| `approvalDisplayStatus` / `approvalLabel` | **2 / "Listing under review"** |
+| `status` / `statusLabel` | 2 / not listed |
+| `soldCount` | 2 |
+| Services on the listing | 7 (ids 39975 to 39981), the forge line-up |
+| `approvalRemark` | the 2026-07-26 rejection text, carried forward and stale; it is not a new verdict |
+
+Under review means there is nothing to resubmit: `activate` on an agent already at
+`approvalStatus: 2` is where the identity skill says to stop. Agent #2632 was not updated,
+not activated, not deactivated. No on-chain write of any kind was attempted this session.
+
+### Reviewer sweep, live against production (`ad7b54c16`, revision `00404-ph7`)
+
+- All four paid rows answer **402** to an unpaid `tools/call forge_3d` sent with real MCP
+  client headers, `accepts[0]` = `{scheme:"exact", network:"eip155:196"}` at the row's own
+  amount (`10000` / `50000` / `250000` / `250000`), asset USDT0
+  `0x779ded0c9e1022225f8e0630b35a9b54be713736`, payTo `0x4022de2D36C334E73C7a108805Cea11C0564f402`.
+  Each rail appears exactly once; Solana and Base follow X Layer.
+- `catalog` and `health` GET 200; all six health subsystems ok, `payment-rail settleable:true`
+  at block 69606537. `forge_status` and `getting_started` served free on every row.
+- `node scripts/okx-three-copy-check.mjs`: **PASS** (module == live == submission payload).
+- **Fourth copy checked, which the three-copy script does not cover:** the seven rows actually
+  stored on-chain, pulled with `agent service-list`, are byte-identical to the module across
+  `serviceName`, `serviceDescription`, `endpoint`, `serviceType` and `fee`. Zero drift between
+  what a reviewer reads on the listing and what our endpoints serve.
+
+### One defect found, and it was already being fixed in this worktree
+
+A real MCP client cannot complete a handshake with any OKX row: `initialize`, `tools/list`,
+`resources/list` and `prompts/list` all answered **402**, including on the free `forge-status`
+row. `allowFree` scoped free discovery to `!isMcpProtocolClient(req)`, a rule that belongs on
+the surfaces with an OAuth story and paywalls discovery on this one. Every prior verification
+used curl, which sends neither `mcp-protocol-version` nor `Accept: text/event-stream`, so the
+sweeps all passed while a reviewer with a real client saw a server that charges to say hello
+and a free service that charges to list its tools. The tool schemas are the parameter details
+the rejection email asked for, and they were unreachable.
+
+A concurrent session in this worktree landed the fix in `api/okx/3d/[service].js` while this
+sweep was running (free discovery for every caller, plus a `sellsNothing` guard so a free row
+never quotes a null amount). Confirmed present in the tree, **not yet deployed**: production
+still answers 402 on `initialize`. Left to that session rather than edited twice.
+
+### Next
+
+Nothing to submit while the review is open. Watch with `onchainos agent get-my-agents`
+(RUNBOOK section 1, not `get-agents`, which no longer carries the approval fields on v4.5.2).
+On a rejection, the discovery fix above ships first, then a resubmission through WO-08.
+
+---
+
 ## 2026-08-22, Listing REBUILT around the forge (owner directive): new A2MCP line-up shipped in-repo
 
 **Owner directive this session:** put the current submission on the back burner and ship

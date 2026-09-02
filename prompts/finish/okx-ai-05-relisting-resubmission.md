@@ -5,6 +5,21 @@
 Read `prompts/finish/okx-ai-00-CONTEXT.md`, all of `prompts/finish/okx-ai-PROGRESS.md`,
 `prompts/finish/okx-ai-RUNBOOK.md` and `CLAUDE.md` first.
 
+> **RETIRED 2026-09-02. Do not run this work order.** It submits the 11-row
+> `identity-studio` catalog, which was put on the back burner by the 2026-08-22 owner
+> directive and replaced by the seven-row three.ws Forge line-up. Those eleven rows are
+> `listed: false` in `api/_lib/okx-catalog.js` today, so `scripts/okx-listing-payload.mjs`
+> no longer emits them and the Step 0 sweep below reads slugs that are not on the listing.
+> Running it anyway would delete seven live, reviewed forge rows and replace them with a
+> retired set. The live successor is
+> [`okx-ai-08-forge-relisting.md`](okx-ai-08-forge-relisting.md), which executed and
+> submitted on 2026-08-27 (X Layer tx
+> `0xb4b2f51dc34d4c8ed6adc2cfb55b0e21e2a6a29d787c02a8a9ca110e178415ba`). Agent #2632 has
+> read `approvalLabel: "Listing under review"` ever since, so there is nothing to resubmit:
+> `activate` on an agent already under review is a no-op the CLI stops on. Watch with
+> `onchainos agent get-my-agents` (RUNBOOK section 1), and if the review rejects, open the
+> next work order against the stated reason rather than reviving this file.
+
 ## Binding operating clause
 
 1. Finish 100% of everything that is not an on-chain write or an OTP. Never end with a question
