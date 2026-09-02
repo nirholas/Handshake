@@ -3,6 +3,7 @@
 
 import { createHash } from 'node:crypto';
 import { sql } from './db.js';
+import { cacheWrap } from './cache.js';
 import { publicUrl, thumbnailUrl, presignGet, deleteObject } from './r2.js';
 import { defaultStorageMode } from './storage-mode.js';
 import { isUuid } from './validate.js';
@@ -322,6 +323,10 @@ function normalizeRigFilter(rigged) {
 	return null;
 }
 
+// Matches the `s-maxage=60` the public gallery endpoint already sets, so a
+// cached total is never staler than the response body it is reported with.
+const PUBLIC_TOTALS_TTL_SECONDS = 60;
+
 export async function searchPublicAvatars({
 	q,
 	tag,
@@ -419,14 +424,38 @@ export async function searchPublicAvatars({
 		next_cursor: hasMore ? new Date(page[page.length - 1].created_at).toISOString() : null,
 	};
 	if (withTotals) {
-		const totalsRow = await sql(
-			`select count(*)::int as total,
-			        coalesce(sum(view_count), 0)::bigint as total_views
-			 from avatars where ${filterConds}`,
-			filterParams,
+		// Catalog-wide totals are an aggregate over every matching row, and no
+		// index makes that cheap: on the live 58k-avatar table the unfiltered
+		// count + view-count sum is a 42 ms sequential scan of 7,673 heap pages,
+		// and it grows in lockstep with the catalog the seed cron is filling.
+		//
+		// The number it produces is a headline stat, not a correctness input, and
+		// /api/avatars/public already tells browsers and the CDN to cache the
+		// whole response for 60 s. Caching the aggregate for the same 60 s makes
+		// it one scan per minute per instance instead of one per request, so the
+		// gallery's cost stops tracking the catalog size. The key carries the
+		// filter set, so a filtered gallery view never reads the unfiltered
+		// numbers.
+		const totals = await cacheWrap(
+			`avatars:public-totals:${createHash('sha1')
+				.update(`${filterConds}\u0000${JSON.stringify(filterParams)}`)
+				.digest('hex')}`,
+			PUBLIC_TOTALS_TTL_SECONDS,
+			async () => {
+				const totalsRow = await sql(
+					`select count(*)::int as total,
+					        coalesce(sum(view_count), 0)::bigint as total_views
+					 from avatars where ${filterConds}`,
+					filterParams,
+				);
+				return {
+					total: totalsRow[0]?.total ?? 0,
+					total_views: Number(totalsRow[0]?.total_views ?? 0),
+				};
+			},
 		);
-		result.total = totalsRow[0]?.total ?? 0;
-		result.total_views = Number(totalsRow[0]?.total_views ?? 0);
+		result.total = totals.total;
+		result.total_views = totals.total_views;
 	}
 	return result;
 }

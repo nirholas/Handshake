@@ -308,6 +308,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['nvidia-apps-catalog-listing', 'internal: paste-ready listing copy and portal steps for the NVIDIA Inception catalog'],
 	['nvidia-apps-catalog-request', 'internal: outbound email asking NVIDIA to publish the catalog listing'],
 	['nvidia-visibility-map', 'internal: outreach priorities and unclaimed program benefits across every NVIDIA surface'],
+	['nvidia-forum-browser-digital-human', 'internal: forum post drafted for the NVIDIA Developer Forums, owner-gated until posted'],
 	['openai-listing-channels', 'internal: submission strategy and a candid post-mortem of our own stalled Cookbook PR'],
 	['okx-marketplace', 'owner-gated: names a crypto project other than $THREE'],
 	['pay-skills-listing', 'internal: listing metadata, not prose'],

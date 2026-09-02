@@ -64,6 +64,13 @@ function windowStats(counts) {
 	// are reported but excluded from both denominators.
 	const verifyAttempts = settled + settleFailed + verifyRejected;
 	const settleAttempts = settled + settleFailed;
+	// The replay rate needs its OWN denominator, and it is the only one that
+	// counts replays: they are refused above verify, so measuring them against
+	// verifyAttempts would report a rate above 1 during exactly the flood it
+	// exists to detect. Everything that arrived is the honest base. Defined here
+	// rather than in a renderer so the board, the page, and any ops script that
+	// reads this endpoint all quote one number computed one way.
+	const inboundAttempts = verifyAttempts + replayRejected;
 	return {
 		settled,
 		settle_failed: settleFailed,
@@ -72,6 +79,8 @@ function windowStats(counts) {
 		unsettled_flush: unsettledFlush,
 		settle_success_rate: rate(settled, settleAttempts),
 		verify_reject_rate: rate(verifyRejected, verifyAttempts),
+		replay_reject_rate: rate(replayRejected, inboundAttempts),
+		inbound_attempts: inboundAttempts,
 	};
 }
 

@@ -18,7 +18,7 @@ const TIMEOUT_MS = 20_000;
 // it sits between a low-authority and a mainstream web source in the weighting.
 const IMAGE_SOURCE_WEIGHT = 0.6;
 
-const STANCES = new Set(['supports', 'contradicts', 'neutral']);
+const STANCES = new Set(['supports', 'contradicts', 'partial', 'neutral']);
 
 function buildPrompt(claim) {
 	return (
@@ -27,10 +27,12 @@ function buildPrompt(claim) {
 		'Examine the image and reply ONLY with compact JSON, no prose, in exactly this shape:\n' +
 		'{"description":"<one sentence describing what the image shows>",' +
 		'"visible_text":"<any text legible in the image, verbatim; empty string if none>",' +
-		'"stance":"supports"|"contradicts"|"neutral",' +
+		'"stance":"supports"|"contradicts"|"partial"|"neutral",' +
 		'"reason":"<one short clause: how the image relates to the claim>"}\n\n' +
 		'stance = supports if the image is genuine evidence FOR the claim, contradicts if it ' +
-		'is evidence AGAINST it, neutral if it is unrelated, ambiguous, or clearly manipulated. ' +
+		'is evidence AGAINST it, partial if it bears out one part of the claim while showing ' +
+		'another part to be wrong or overstated, neutral if it is unrelated, ambiguous, or ' +
+		'clearly manipulated. ' +
 		'Do not speculate beyond what is visibly in the image.'
 	);
 }

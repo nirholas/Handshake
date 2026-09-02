@@ -20,6 +20,10 @@
 //  5. all three boards spent the strict `authIp` credential budget, so polling
 //     a dashboard could 429 the operator's login from the same IP. They use the
 //     `authedReadIp` polled-read bucket.
+//  6. custody lost to a key rotation was measurable only by running a CLI audit
+//     by hand, so it stayed invisible for weeks at a time. payment-outcomes
+//     carries it as a panel, and a failed read names itself rather than
+//     rendering as zero stranded.
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -56,6 +60,11 @@ vi.mock('../../api/_lib/x402/wallet-balance-monitor.js', () => ({
 	checkRingWallets: () => ringWalletsImpl(),
 }));
 
+let strandedImpl = async () => ({ status: 'clear', sol_stranded: 0, stranded_funded: 0 });
+vi.mock('../../api/_lib/custodial-key-health.js', () => ({
+	strandedCustodyPanel: () => strandedImpl(),
+}));
+
 const health = await import('../../api/ops/health.js');
 const { default: moneyHealthHandler, lastActivity } = await import('../../api/ops/money-health.js');
 const { default: paymentOutcomesHandler } = await import('../../api/ops/payment-outcomes.js');
@@ -87,6 +96,7 @@ beforeEach(() => {
 	sqlImpl = async () => [];
 	settleHealthImpl = async () => ({ name: 'x402_settle', status: 'ok' });
 	ringWalletsImpl = async () => ({ wallets: [], sponsorRunway: null });
+	strandedImpl = async () => ({ status: 'clear', sol_stranded: 0, stranded_funded: 0 });
 });
 
 describe('cron staleness windows derived from vercel.json', () => {
@@ -224,6 +234,30 @@ describe('GET /api/ops/payment-outcomes', () => {
 		expect(res.statusCode).toBe(200);
 		expect(body.ok).toBe(true);
 		expect(body.degraded).toEqual([]);
+	});
+
+	it('carries the stranded-custody panel, so lost custody is visible without a CLI run', async () => {
+		// Capital sealed behind a retired encryption key is a payment-outcome fact:
+		// the treasury cannot reclaim it and the customers holding it cannot
+		// withdraw. Before this panel the only way to see the number was running
+		// scripts/audit-custodial-key-health.mjs by hand, so nobody did.
+		strandedImpl = async () => ({
+			status: 'stranded', stranded_funded: 2, sol_stranded: 0.122875505,
+			sol_stranded_platform: 0.122875505, sol_stranded_customer: 0,
+			brief: null, top_stranded: [],
+		});
+		const { res, body } = await call(paymentOutcomesHandler, '/api/ops/payment-outcomes');
+		expect(res.statusCode).toBe(200);
+		expect(body.stranded_custody.status).toBe('stranded');
+		expect(body.stranded_custody.sol_stranded).toBe(0.122875505);
+	});
+
+	it('names the stranded panel in degraded when its read fails, instead of rendering a silent zero', async () => {
+		strandedImpl = async () => { throw new Error('db unreachable'); };
+		const { res, body } = await call(paymentOutcomesHandler, '/api/ops/payment-outcomes');
+		expect(res.statusCode).toBe(207);
+		expect(body.degraded).toEqual(['stranded_custody']);
+		expect(body.stranded_custody.error).toBe('db unreachable');
 	});
 });
 
