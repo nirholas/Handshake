@@ -127,6 +127,7 @@ Two guards keep a bad run from becoming a published number:
 
 - **Errored-claim ceiling.** Above 10% unreachable claims the run measured provider availability, not verdict accuracy. Nothing is written and the previous run stays up.
 - **Degraded checks count as errors.** The chain does not throw when its LLM providers are exhausted: stance extraction falls back to all-neutral and every claim resolves to `insufficient`. That would publish roughly 25% as the product's accuracy with zero apparent errors. Both runners read the `degraded` field on the response and count such a check as unreachable, which is what makes the ceiling above fire during an outage.
+- **An answer nobody could read counts too.** A provider can reply and still leave the stage with nothing usable, which lands on the same all-neutral fallback while looking like a healthy check. Both LLM stages now say so (`stance extraction unreadable`, `query generation unreadable`) instead of returning a silent `insufficient`, so the ceiling fires on a parsing fault exactly as it does on an outage, and `checkClaim()` keeps the result out of the 7-day cache rather than pinning a wrong verdict on a checkable claim for a week.
 
 ## States and limits
 

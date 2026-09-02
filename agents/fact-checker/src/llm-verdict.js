@@ -35,13 +35,27 @@ export const STANCES = Object.freeze(['supports', 'contradicts', 'partial', 'neu
  * every stance "neutral".
  *
  * This scans for a BALANCED array instead, string-literal aware so a `]` inside
- * an excerpt cannot close it early, and retries at each later `[` so a leading
- * `[1]` citation is skipped rather than fatal.
+ * an excerpt cannot close it early, and keeps scanning past candidates of the
+ * wrong shape. `[1]` is itself valid JSON, so a response opening with a
+ * citation marker would otherwise resolve to the citation and starve the stage
+ * of the payload sitting right behind it.
  *
  * @param {string} text
+ * @param {{of?: 'string' | 'object'}} [opts]  What the caller's payload holds.
+ *   Given, a non-empty array of that element type wins; an empty array is
+ *   returned only when nothing better is present (callers read that as "the
+ *   provider had nothing to say", which is a degradation, not a verdict).
  * @returns {unknown[] | null} the parsed array, or null when there is none.
  */
-export function extractJsonArray(text) {
+export function extractJsonArray(text, opts = {}) {
+	const want = opts.of;
+	const matches = (arr) =>
+		!want ||
+		(arr.length > 0 &&
+			arr.every((v) =>
+				want === 'string' ? typeof v === 'string' : typeof v === 'object' && v !== null,
+			));
+	let empty = null;
 	if (typeof text !== 'string' || !text) return null;
 	// Reasoning models emit their scratchpad first; it is prose, not payload.
 	// Drop closed blocks, and drop an unterminated tail (a truncated turn).
@@ -72,7 +86,10 @@ export function extractJsonArray(text) {
 				if (depth === 0) {
 					try {
 						const parsed = JSON.parse(body.slice(start, i + 1));
-						if (Array.isArray(parsed)) return parsed;
+						if (Array.isArray(parsed)) {
+							if (matches(parsed)) return parsed;
+							if (parsed.length === 0 && !empty) empty = parsed;
+						}
 					} catch {
 						// Not valid JSON from this `[`; try the next one.
 					}
@@ -81,7 +98,7 @@ export function extractJsonArray(text) {
 			}
 		}
 	}
-	return null;
+	return empty;
 }
 
 /**
@@ -149,7 +166,7 @@ Example output: ["query one", "query two", "query three"]`;
 		return { queries: [claim], tokens: 0, degraded: `query generation unavailable: ${failure}` };
 	}
 
-	const parsed = extractJsonArray(text);
+	const parsed = extractJsonArray(text, { of: 'string' });
 	let queries = Array.isArray(parsed)
 		? parsed.slice(0, 3).map((q) => String(q).trim()).filter(Boolean)
 		: [];
@@ -234,7 +251,7 @@ Example (for 2 results): [{"excerpt":"The tower stands at 330m","stance":"suppor
 		};
 	}
 
-	const parsed = extractJsonArray(text);
+	const parsed = extractJsonArray(text, { of: 'object' });
 	if (!parsed || parsed.length === 0) {
 		// The provider ANSWERED and its answer could not be read. That is not the
 		// same thing as "the sources were silent", but the all-neutral fallback
