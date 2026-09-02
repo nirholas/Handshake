@@ -15,6 +15,14 @@
 			<description>How three.ws generates its own animation clips: the text-to-motion GPU lane, the world-space quality gate that judges joint positions instead of raw rotations, the resumable bulk runner, and the rotating free subset.</description>
 		</item>
 		<item>
+			<title>Materialize</title>
+			<link>https://three.ws/materialize</link>
+			<guid isPermaLink="false">2026-09-02:Materialize</guid>
+			<pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Turn any 3D model into a real printed object. Live printability analysis and automatic repair, a true-scale AR preview on your own desk, an itemized price from the mesh's own measured volume, and USDC checkout on Solana.</description>
+		</item>
+		<item>
 			<title>NVIDIA NGC Container EULA</title>
 			<link>https://three.ws/legal/nvidia-ngc-eula</link>
 			<guid isPermaLink="false">2026-09-02:NVIDIA NGC Container EULA</guid>
@@ -29,6 +37,30 @@
 			<pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Check the certificate of authenticity that ships with every three.ws physical print. Scan the code on the box or type the certificate number to see the original 3D model spinning, its edition number, the SHA-256 of the exact bytes that went to the printer, and the Solana transaction attesting both. Each certificate lives at /cert/&lt;id&gt;.</description>
+		</item>
+		<item>
+			<title>A fact check can now say a claim is partly true</title>
+			<link>https://three.ws/fact-checker</link>
+			<guid isPermaLink="false">2026-09-02:A fact check can now say a claim is partly true</guid>
+			<pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The fact checker grades every claim as supported, contradicted, mixed or not enough evidence, but the sources behind it could only ever be read as agreeing, disagreeing, or silent. That left no way to record what a source usually says about a half-truth: that the claim is right about the fact and wrong about its scale, its cause, or how universally it holds. Every source reading the same nuance was forced to pick a side, they all picked the same side, and the claim came back as a flat true or false. &quot;A tomato is a vegetable&quot; and &quot;Napoleon was unusually short&quot; were scored plain wrong rather than partly right, and on the published accuracy benchmark not one of the forty claims that deserved a mixed verdict ever got one. Sources can now be marked as partly bearing the claim out, they show up that way in the source list, and evidence that takes neither side no longer counts toward either. A claim every source calls half-true now reads as mixed on its own, without the sources having to contradict each other, and the confidence next to a mixed verdict finally measures how sure the evidence is that the answer is &quot;both&quot;, instead of how close it came to breaking one way.</description>
+		</item>
+		<item>
+			<title>A generated model that came back as a flat slab no longer passes as the best possible result</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-02:A generated model that came back as a flat slab no longer passes as the best possible result</guid>
+			<pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Text-to-3D occasionally lost the reference image partway through and returned a pancake: a flat, textured relief the width of the whole frame instead of the object you asked for. Nothing caught it. The automatic quality check counted triangles, textures and overall size, and a slab has plenty of all three, so it scored higher than most good models and skipped the visual review that would have spotted it. The check now also measures whether a model has any depth at all. A model with none is sent for visual review instead of being trusted, which is what triggers a regeneration. Genuinely flat things (a plate, a coin, a rug) and slim upright characters are unaffected, because the test asks which direction is flat and how extreme it is rather than treating thinness alone as a fault.</description>
+		</item>
+		<item>
+			<title>A polish pass over the coin worlds, from the friends drawer to every button on a phone</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-09-02:A polish pass over the coin worlds, from the friends drawer to every button on a phone</guid>
+			<pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>A sweep through the whole /play journey, from the lobby to the world and back out, fixing what a measured run found rather than what looked wrong. The friends drawer is the big one: it used to do nothing at all for the first moment after you tapped it, because the panel's code was still being fetched, and if you gave up and pressed Escape in that gap the drawer ignored you and slid open anyway a few seconds later. It now answers the tap on the spot with a roster loading in place, closes when you tell it to, and if the panel genuinely cannot be fetched it says so and gives you a Try again button instead of sitting there empty. On a phone, every control in the world has grown to a proper thumb-sized target: the heads-up bar, the leave and voice and zen buttons, the reaction pills, the shop chips and every close cross, plus the sort buttons and footer links back in the lobby. Several of these were half the size a thumb needs, which is why they were easy to miss mid-session. Two things that used to jump are now still: the lobby no longer shoves the community grid down when your saved avatars arrive, and the emote tray no longer flashes as an empty pill before it fills. And pressing Escape on the welcome card no longer throws an error behind the scenes. Nothing about the desktop layout changed; the roomier targets apply only where you are actually using a finger.</description>
 		</item>
 		<item>
 			<title>A single page now shows every way an x402 payment can fail, before it stops the economy</title>
@@ -103,20 +135,20 @@
 			<description>three.ws is preparing to publish its image-to-3D inference server in NVIDIA's NGC catalog, so the licence that will cover those container images is now public. It states plainly what you get: Apache-2.0 source, no model weights inside the image (you bring your own, under the upstream licence), and a container that carries no analytics or telemetry and sends nothing back to us. It sits alongside the other policies on the legal page.</description>
 		</item>
 		<item>
+			<title>Photo mode in the coin worlds now actually hands you the photo</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-09-02:Photo mode in the coin worlds now actually hands you the photo</guid>
+			<pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Press P in a coin world, or the camera button on the heads-up display, and you get a picture of the world on a share card: the scene itself, the three.ws mark, the coin you are standing in, and, during a live event, that event's name stamped on it. The card was there but the shutter went nowhere. Every single press answered &quot;Couldn't photograph the world just now&quot; and showed nothing, because of a fault in the code that builds the preview, so nobody has ever actually been handed one of these. Pressing it now opens the card, with Download and Copy image next to it. The picture is taken as a separate render rather than grabbed off the screen, so no panel, name tag or chat line is ever in the frame, and it works the same in zen mode, which is when most people will want it. It costs nothing when you are not using it: none of photo mode is loaded until the first press. Two smaller things fixed alongside: taking a second photo while the first card is open now replaces it cleanly instead of briefly stacking two sheets, where a click landing in the wrong moment could dismiss the shot you just took; and the line promising that P takes another one is true now, and visible, having previously rendered as nothing at all. Verified end to end in both Chrome and Safari, on a laptop frame and a phone frame, down to the pixels in the saved file, so the black rectangle that a mishandled 3D screenshot usually produces cannot come back unnoticed.</description>
+		</item>
+		<item>
 			<title>The 3D Studio connector for ChatGPT is documented as the eleven tools it actually serves</title>
 			<link>https://three.ws/docs/mcp-studio</link>
 			<guid isPermaLink="false">2026-09-02:The 3D Studio connector for ChatGPT is documented as the eleven tools it actually serves</guid>
 			<pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
-			<description>The free 3D Studio connector grew to eleven tools when look_at_model landed alongside check_job, but a lot of the writing about it had not caught up: the connector page, the press kit, the partner page, the blog summary, the announcement copy, the press release and the store-submission package still said nine or ten, and the social card enumerated only nine tool names. Every one of those now matches a fresh pull from the live server, the social card lists all eleven, and the module headers inside the connector describe the real catalog including which tools spend generation quota. A test now pins the total, so the next tool to land fails the suite instead of quietly re-opening the same drift. The standalone viewer also stopped crediting the AR launch endpoint with a renderer it no longer loads.</description>
-		</item>
-		<item>
-			<title>The docs now agree on how many tools the free ChatGPT connector has</title>
-			<link>https://three.ws/openai</link>
-			<guid isPermaLink="false">2026-09-02:The docs now agree on how many tools the free ChatGPT connector has</guid>
-			<pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
-			<category>docs</category>
-			<description>The free 3D Studio connector for ChatGPT gained an inspector tool that renders a finished model from several angles, and a collector that picks up a generation which outran its tool call. The pages describing it had not all caught up: the partner page, the press boilerplate, the announcement post and the OpenAI submission pack still counted nine or ten tools between them, and the partner page's tool list was missing the inspector entirely. Every one of those now says eleven and lists the same eleven tools, checked against a live call to the connector, and a test pins the number so the next tool cannot quietly re-open the gap. Alongside it: the pending-generation example now shows the field that tells a client whether the model coming back is a bare mesh or a finished rig, and the three places the 3D viewer library is pinned are documented in one comment so nobody has to guess why a page loads a different build.</description>
+			<description>The free 3D Studio connector grew to eleven tools when look_at_model landed alongside check_job, but a lot of the writing about it had not caught up: the connector page, the press kit, the partner page, the blog summary, the announcement copy, the press release and the store-submission package still said nine or ten, and the social card enumerated only nine tool names. Every one of those now matches a fresh pull from the live server, the social card lists all eleven, and the module headers inside the connector describe the real catalog including which tools spend generation quota. A test now pins the total, so the next tool to land fails the suite instead of quietly re-opening the same drift. The standalone viewer also stopped crediting the AR launch endpoint with a renderer it no longer loads. Two smaller corrections rode along: the pending-generation example now shows the field that tells a client whether the model coming back is a bare mesh or a finished rig, and the three places the platform pins the 3D viewer library are now explained in one comment, so nobody has to guess why an embed and a standalone page load different builds.</description>
 		</item>
 		<item>
 			<title>The treasury's self-heal plan now only promises SOL it can actually move</title>

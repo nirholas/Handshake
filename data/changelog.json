@@ -3,6 +3,34 @@
 	"entries": [
 		{
 			"date": "2026-09-02",
+			"title": "A polish pass over the coin worlds, from the friends drawer to every button on a phone",
+			"summary": "A sweep through the whole /play journey, from the lobby to the world and back out, fixing what a measured run found rather than what looked wrong. The friends drawer is the big one: it used to do nothing at all for the first moment after you tapped it, because the panel's code was still being fetched, and if you gave up and pressed Escape in that gap the drawer ignored you and slid open anyway a few seconds later. It now answers the tap on the spot with a roster loading in place, closes when you tell it to, and if the panel genuinely cannot be fetched it says so and gives you a Try again button instead of sitting there empty. On a phone, every control in the world has grown to a proper thumb-sized target: the heads-up bar, the leave and voice and zen buttons, the reaction pills, the shop chips and every close cross, plus the sort buttons and footer links back in the lobby. Several of these were half the size a thumb needs, which is why they were easy to miss mid-session. Two things that used to jump are now still: the lobby no longer shoves the community grid down when your saved avatars arrive, and the emote tray no longer flashes as an empty pill before it fills. And pressing Escape on the welcome card no longer throws an error behind the scenes. Nothing about the desktop layout changed; the roomier targets apply only where you are actually using a finger.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-09-02",
+			"title": "Photo mode in the coin worlds now actually hands you the photo",
+			"summary": "Press P in a coin world, or the camera button on the heads-up display, and you get a picture of the world on a share card: the scene itself, the three.ws mark, the coin you are standing in, and, during a live event, that event's name stamped on it. The card was there but the shutter went nowhere. Every single press answered \"Couldn't photograph the world just now\" and showed nothing, because of a fault in the code that builds the preview, so nobody has ever actually been handed one of these. Pressing it now opens the card, with Download and Copy image next to it. The picture is taken as a separate render rather than grabbed off the screen, so no panel, name tag or chat line is ever in the frame, and it works the same in zen mode, which is when most people will want it. It costs nothing when you are not using it: none of photo mode is loaded until the first press. Two smaller things fixed alongside: taking a second photo while the first card is open now replaces it cleanly instead of briefly stacking two sheets, where a click landing in the wrong moment could dismiss the shot you just took; and the line promising that P takes another one is true now, and visible, having previously rendered as nothing at all. Verified end to end in both Chrome and Safari, on a laptop frame and a phone frame, down to the pixels in the saved file, so the black rectangle that a mishandled 3D screenshot usually produces cannot come back unnoticed.",
+			"tags": [
+				"fix",
+				"feature"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-09-02",
+			"title": "A generated model that came back as a flat slab no longer passes as the best possible result",
+			"summary": "Text-to-3D occasionally lost the reference image partway through and returned a pancake: a flat, textured relief the width of the whole frame instead of the object you asked for. Nothing caught it. The automatic quality check counted triangles, textures and overall size, and a slab has plenty of all three, so it scored higher than most good models and skipped the visual review that would have spotted it. The check now also measures whether a model has any depth at all. A model with none is sent for visual review instead of being trusted, which is what triggers a regeneration. Genuinely flat things (a plate, a coin, a rug) and slim upright characters are unaffected, because the test asks which direction is flat and how extreme it is rather than treating thinness alone as a fault.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-02",
 			"title": "A single page now shows every way an x402 payment can fail, before it stops the economy",
 			"summary": "The platform already recorded every rejected, failed and replayed payment, but nothing displayed them, so the first sign of trouble was usually the economy halting. The new payment-outcomes board reads that record live: how many payments settled and how many failed, how many were refused as invalid before settling, how many were replayed copies of an earlier payment, the reasons behind each, and the balance of every wallet that funds a settlement against the floor it stops working at. That last panel matters most during an outage, because a starved fee wallet and a broken payment rail look identical from outside and need opposite fixes. Where a number could not actually be measured the board says so rather than showing a reassuring zero. Operator tooling, behind the same sign-in as the other internal boards.",
 			"tags": [
@@ -25683,6 +25711,15 @@
 			"summary": "A fact check reads five sources and asks a language model where each one stands on the claim. When that model answered in a shape the reader could not parse, every source was quietly recorded as saying nothing, the check reported \"not enough evidence\", and nothing anywhere said the reading had failed. A live check on whether a tomato is a vegetable came back that way while holding the Supreme Court case that settles the question. The reader now copes with the formats models actually use, including the thinking-out-loud preamble and code fences it used to choke on, and it no longer stops at the first square bracket it sees. When a reply genuinely cannot be read, the check now says it was degraded instead of presenting a verdict it did not earn, which also keeps that answer out of the week-long cache and out of the published accuracy score. The same fault had been collapsing the three search angles behind each check down to one.",
 			"tags": [
 				"fix",
+				"improvement"
+			],
+			"link": "/fact-checker"
+		},
+		{
+			"date": "2026-09-02",
+			"title": "A fact check can now say a claim is partly true",
+			"summary": "The fact checker grades every claim as supported, contradicted, mixed or not enough evidence, but the sources behind it could only ever be read as agreeing, disagreeing, or silent. That left no way to record what a source usually says about a half-truth: that the claim is right about the fact and wrong about its scale, its cause, or how universally it holds. Every source reading the same nuance was forced to pick a side, they all picked the same side, and the claim came back as a flat true or false. \"A tomato is a vegetable\" and \"Napoleon was unusually short\" were scored plain wrong rather than partly right, and on the published accuracy benchmark not one of the forty claims that deserved a mixed verdict ever got one. Sources can now be marked as partly bearing the claim out, they show up that way in the source list, and evidence that takes neither side no longer counts toward either. A claim every source calls half-true now reads as mixed on its own, without the sources having to contradict each other, and the confidence next to a mixed verdict finally measures how sure the evidence is that the answer is \"both\", instead of how close it came to breaking one way.",
+			"tags": [
 				"improvement"
 			],
 			"link": "/fact-checker"

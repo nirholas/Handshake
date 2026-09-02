@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-02T19:26:27.280Z",
+	"generated_at": "2026-09-02T19:36:31.042Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1187,6 +1187,16 @@
 					"title": "Avatar SDK",
 					"description": "The @three-ws/avatar package: embed the platform 3D avatars in any site with a few lines of JavaScript.",
 					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/materialize",
+					"title": "Materialize",
+					"description": "Turn any 3D model into a real printed object. Live printability analysis and automatic repair, a true-scale AR preview on your own desk, an itemized price from the mesh's own measured volume, and USDC checkout on Solana.",
+					"added": "2026-09-02",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
