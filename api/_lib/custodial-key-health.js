@@ -31,7 +31,7 @@
 //     that says a zero is not yet trustworthy.
 
 import { sql } from './db.js';
-import { decryptSecret } from './secret-box.js';
+import { decryptSecret, secretBoxKeyCandidates } from './secret-box.js';
 
 /** The platform's own agent-owner account. Anything else is a customer. */
 export const PLATFORM_AGENT_OWNER_EMAIL = 'three-ws@users.three.ws.local';
@@ -220,6 +220,11 @@ export function summarizeCustodialKeyHealth({ wallets, balances, readErrors = []
  * @returns {Promise<object>} the report shape summarizeCustodialKeyHealth builds
  */
 export async function gatherCustodialKeyHealth({ connection, platformOnly = false, rpcUrl = null, topN = 20, keyCandidates = null } = {}) {
+	// How many keys a decrypt may try, straight from secret-box's own precedence
+	// so this can never drift from what decryptSecret() actually does. Zero means
+	// this process holds no key at all, and every verdict below would be an
+	// artifact of that rather than a fact about custody.
+	const keys = keyCandidates == null ? secretBoxKeyCandidates().length : keyCandidates;
 	const wallets = await readCustodialWalletRows({ platformOnly });
 	await classifyCustodialSecrets(wallets);
 	// The rotating multi-lane connection production reads balances through, not a
@@ -238,7 +243,7 @@ export async function gatherCustodialKeyHealth({ connection, platformOnly = fals
 		readErrors,
 		rpc: rpcUrl || process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
 		topN,
-		keyCandidates,
+		keyCandidates: keys,
 	});
 }
 
@@ -276,7 +281,11 @@ export async function strandedCustodyPanel({ ttlMs = STRANDED_SNAPSHOT_TTL_MS, f
 		inFlight = (async () => {
 			const report = await gather();
 			const panel = buildStrandedPanel(report);
-			cached = { at: Date.now(), panel };
+			// Stamped with the clock the CALLER passed, not a second reading of the
+			// wall clock: the age this panel reports and the TTL it is judged
+			// against then come from one timeline, which is also what makes the
+			// cache testable without faking timers.
+			cached = { at: now, panel };
 			return panel;
 		})().finally(() => {
 			inFlight = null;
@@ -303,31 +312,59 @@ export function buildStrandedPanel(report) {
 	const sol = report?.sol || {};
 	const unread = counts.stranded_unread || 0;
 	const funded = counts.stranded_funded || 0;
-	// A total is only a total when every sealed wallet actually got a balance
-	// read. While any is unread the SOL figures are a FLOOR, and the panel says
-	// so rather than letting a partial read render as a clean number.
-	const status = unread > 0 ? 'unknown' : funded > 0 ? 'stranded' : 'clear';
+	const wallets = report?.wallets ?? 0;
+	const undecryptable = report?.undecryptable ?? 0;
+	const keys = report?.key_candidates;
+
+	// Three ways a stranded number can be a lie, each answered before the honest
+	// verdicts below:
+	//   • no key configured at all: every wallet reads sealed here regardless of
+	//     production state (secret-box fails closed in production, so this is a
+	//     misconfigured non-prod process, not a custody event).
+	//   • EVERY wallet failed: almost never 700 separately sealed wallets, almost
+	//     always one wrong key for this deployment. Reporting it as a mass
+	//     customer incident sends operators after the wrong problem.
+	//   • some sealed wallet never got a balance read: the totals are a floor.
+	// Only when none of those hold is the SOL figure a measurement.
+	let status = 'clear';
+	let reason = 'clear';
+	let detail = 'No funded custodial wallet sits behind an undecryptable key.';
+	if (keys === 0) {
+		status = 'unknown';
+		reason = 'no_decryption_key';
+		detail = 'This process holds no custodial decryption key, so every wallet reads as sealed here. The reading says nothing about custody.';
+	} else if (wallets > 0 && undecryptable === wallets) {
+		status = 'unknown';
+		reason = 'key_mismatch';
+		detail = `All ${wallets} custodial wallets failed to decrypt under the ${keys ?? 'configured'} key(s). A fleet-wide failure means the key is wrong for this deployment, not that every wallet is sealed.`;
+	} else if (unread > 0) {
+		status = 'unknown';
+		reason = 'partial_read';
+		detail = `${unread} sealed wallet(s) never got a balance read, so the stranded total is a floor, not a measurement.`;
+	} else if (funded > 0) {
+		status = 'stranded';
+		reason = 'sealed';
+		detail = `${funded} custodial wallet(s) hold ${sol.stranded ?? 0} SOL behind a retired encryption key (platform ${sol.stranded_platform ?? 0}, customer ${sol.stranded_customer ?? 0}).`;
+	}
+
 	return {
 		status,
+		reason,
 		checked_at: report?.checked_at || null,
+		key_candidates: keys ?? null,
 		wallets: report?.wallets ?? null,
-		undecryptable: report?.undecryptable ?? 0,
+		undecryptable,
 		stranded_funded: funded,
 		stranded_unread: unread,
 		sol_stranded: sol.stranded ?? 0,
 		sol_stranded_platform: sol.stranded_platform ?? 0,
 		sol_stranded_customer: sol.stranded_customer ?? 0,
 		customer_wallets_stranded: (report?.top_stranded || []).filter((w) => !w.platform).length,
-		detail:
-			status === 'clear'
-				? 'No funded custodial wallet sits behind an undecryptable key.'
-				: status === 'unknown'
-					? `${unread} sealed wallet(s) never got a balance read, so the stranded total is a floor, not a measurement.`
-					: `${funded} custodial wallet(s) hold ${sol.stranded ?? 0} SOL behind a retired encryption key (platform ${sol.stranded_platform ?? 0}, customer ${sol.stranded_customer ?? 0}).`,
+		detail,
 		// Customer money that cannot be withdrawn is a support obligation, not an
 		// ops number: the board names the decision doc rather than leaving the
 		// reader to rediscover that recovery is impossible.
-		brief: (sol.stranded_customer || 0) > 0 ? 'docs/ops/stranded-wallets.md' : null,
+		brief: status === 'stranded' && (sol.stranded_customer || 0) > 0 ? 'docs/ops/stranded-wallets.md' : null,
 		top_stranded: (report?.top_stranded || []).slice(0, 10).map((w) => ({
 			address: w.address,
 			sol: w.sol,
