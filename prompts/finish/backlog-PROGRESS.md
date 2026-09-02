@@ -1335,3 +1335,25 @@ not a failure: the first boot then asks for the OTP that was already an owner ac
 
 The stopgap host was restarted after that attempt and is online (`/readyz` 200, 1 XMTP
 client, `state.restore: skipped`).
+
+### Order 11 follow-up: the hour-apart reads, taken
+
+The definition of done asked for two `/api/healthz` reads an hour apart with the Solana leg's
+error rate under 5%. Taken against production, which is still on `ad7b54c16`:
+
+| Read | Time (UTC) | `solana.errored` / `agents` | rate | median lag |
+|---|---|---|---|---|
+| A | 19:14 | 0 / 1,604 | 0.00% | 24 min |
+| B | 19:26 | 1 / 1,604 | 0.06% | 27 min |
+| C | 20:15 | 10 / 1,604 | 0.62% | 62 min |
+
+Both A and C are far inside the threshold an hour apart, and the re-accumulation rate is 10
+cursors an hour rather than the 14 estimated earlier. Read the median moving 24 -> 62 min
+correctly: that is NOT a regression, it is the old 140-minute cycle reasserting its floor once
+this session stopped sweeping by hand. Production is still running batch 120; the 70-minute
+cycle arrives with the deploy, not before.
+
+`evm.worstBlocksBehind` is byte-identical across reads B and C (17,396,220). That is the frozen
+number of a chain whose crawl errors before it can advance, not a stable one, and it is the
+last thing the deploy changes: the first post-deploy tick should skip that chain to head and
+bank the span into `history_gap_blocks`.
