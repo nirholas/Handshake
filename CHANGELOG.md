@@ -4,10 +4,6 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
-## 2026-09-02
-
-- **Examples gains a voice, an AI's eye on 3D, and a filter**: Three more runnable examples and a way to find them. The avatar can now speak a line you type: the free text-to-speech lane synthesizes it and a new speakAudio() method routes the audio through the same analyser the built-in voice uses, so the mouth follows the real waveform instead of miming. A second example calls the look_at_model tool on the public MCP server and shows exactly what an AI assistant sees when it inspects a mesh: four rendered angles plus a plain-language read on the geometry, which is how an agent judges its own output and decides to try again. A third reads the live tool list off that same server, so the page can never advertise a tool that was renamed or dropped. With seventeen examples the page also gets a filter: type to search names, descriptions and tags, or narrow by tag, and the lanes fold away as they empty. A deep link always wins over an active filter. (`/examples`) `[feature, improvement, sdk]`
-
 ## 2026-09-01
 
 - **3D Drops** (`/drops`): Launch a supply-capped collection of AI-forged 3D characters. Pick a style, define weighted trait layers, and three.ws rolls the whole supply from a published seed: verifiable rarity, rigged animation-ready art, forged on reveal.

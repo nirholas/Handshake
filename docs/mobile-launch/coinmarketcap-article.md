@@ -8,7 +8,7 @@ status: draft, owner approval required before posting (external-channel gate in 
 
 # CoinMarketCap article: three.ws on Seeker, Android, and iPhone
 
-Paste-ready for the CoinMarketCap form. CMC caps the title and meta description at 191 characters, the body editor offers H2 and H3 only, and it has no table support (a markdown table pastes as one run-on line), so every list below is plain lines. Cover: 640x360, under 10 MB; `marketing/android-launch/kit/cmc-cover-640x360.png` fits until a three-phone composition replaces it.
+Paste-ready for the CoinMarketCap form. CMC caps the title and meta description at 191 characters, the body editor offers H2 and H3 only, and it has no table support (a markdown table pastes as one run-on line), so every list below is plain lines. Cover: 640x360 or that proportion, under 10 MB. Upload `marketing/mobile-launch/cmc-cover-1280x720.png` (the exact 640x360 sits beside it); both are rendered from real product captures by `node marketing/mobile-launch/make-cmc-cover.mjs`.
 
 ## Title (108 characters)
 
