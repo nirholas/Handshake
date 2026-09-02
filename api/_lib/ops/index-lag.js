@@ -79,7 +79,7 @@ function withTimeout(promise, ms) {
  *   evm: { lagMin: number|null, chains: number, configuredChains: number,
  *          uncrawledChains: number, staleChains: number, worstBlocksBehind: number,
  *          behindChains: number, worstChainId: number|null, worstChainName: string|null,
- *          events: number },
+ *          historyGapChains: number, historyGapBlocks: number, events: number },
  *   lastEventAt: string|null,
  *   lastIndexedAt: string|null,
  * }>}
@@ -111,6 +111,8 @@ export async function readIndexLag() {
 					count(*) FILTER (WHERE blocks_behind >= ${EVM_BLOCKS_BEHIND_DEGRADED})::int AS behind_chains,
 					max(extract(epoch FROM now() - updated_at) / 60)::int AS lag_min,
 					coalesce(max(blocks_behind), 0)::bigint AS worst_blocks_behind,
+					count(*) FILTER (WHERE history_gap_blocks > 0)::int AS gap_chains,
+					coalesce(sum(history_gap_blocks), 0)::bigint AS gap_blocks,
 					(
 						SELECT chain_id FROM erc8004_crawl_cursor
 						ORDER BY blocks_behind DESC LIMIT 1
@@ -162,6 +164,13 @@ export async function readIndexLag() {
 			worstBlocksBehind: Number(e.worst_blocks_behind ?? 0),
 			worstChainId,
 			worstChainName: CHAINS.find((c) => c.id === worstChainId)?.name ?? null,
+			// Blocks the crawl skipped past a provider that no longer serves them.
+			// Reported, never scored: the gap is history that is already lost, so
+			// letting it drive the verdict would keep the subsystem red forever
+			// over something no tick can fix. It belongs on the surface anyway,
+			// because skipping is what MAKES a chain report zero backlog again.
+			historyGapChains: e.gap_chains ?? 0,
+			historyGapBlocks: Number(e.gap_blocks ?? 0),
 			events: t.evm_events ?? 0,
 		},
 		lastEventAt: t.last_event_at ? new Date(t.last_event_at).toISOString() : null,
@@ -262,6 +271,9 @@ export function indexLagVerdict(lag) {
 				(lag.evm.behindChains ? `, ${lag.evm.behindChains} behind` : '') +
 				(lag.evm.staleChains ? `, ${lag.evm.staleChains} stale` : '') +
 				(lag.evm.uncrawledChains ? `, ${lag.evm.uncrawledChains} never crawled` : '') +
+				(lag.evm.historyGapChains
+					? `, ${lag.evm.historyGapChains} carrying a permanent ${lag.evm.historyGapBlocks.toLocaleString('en-US')}-block history gap`
+					: '') +
 				`, ${lag.evm.events} events`;
 
 	const detail =

@@ -549,6 +549,63 @@ export const SOLANA_SWEEP_BUDGET_MS = 120_000;
  *   failed: number, truncated: boolean, batch: number, concurrency: number,
  *   elapsedMs: number, error?: string }>}
  */
+/**
+ * Run `handle` over `items` through a small worker pool, stopping on a
+ * wall-clock budget rather than on the list.
+ *
+ * Split out from the sweep because the pool is the part with the edge cases and
+ * the sweep is the part that needs a database and twenty RPC providers: this
+ * way the ordering, the budget and the truncation flag are exercised directly,
+ * with a real list and a real clock function, instead of being reasoned about.
+ *
+ * `truncated` means the budget expired with items still queued. It is read
+ * BEFORE the clock on purpose, so a run that consumed its last item on the
+ * final millisecond reports completion rather than phantom unfinished work.
+ *
+ * @template T
+ * @param {T[]} items
+ * @param {(item: T, index: number) => Promise<void>} handle
+ * @param {{ concurrency?: number, budgetMs?: number, now?: () => number }} [opts]
+ * @returns {Promise<{ processed: number, truncated: boolean, workers: number, elapsedMs: number }>}
+ */
+export async function drainWithBudget(items, handle, { concurrency = 1, budgetMs = Infinity, now = Date.now } = {}) {
+	const startedAt = now();
+	const workers = Math.max(1, Math.min(Math.trunc(concurrency) || 1, items.length || 1));
+	let next = 0;
+	let truncated = false;
+
+	const drain = async () => {
+		for (;;) {
+			if (next >= items.length) return;
+			if (now() - startedAt > budgetMs) {
+				truncated = true;
+				return;
+			}
+			const index = next++;
+			await handle(items[index], index);
+		}
+	};
+
+	await Promise.all(Array.from({ length: workers }, drain));
+	return { processed: next, truncated, workers, elapsedMs: now() - startedAt };
+}
+
+/**
+ * Crawl one tick's worth of the Solana agent directory.
+ *
+ * Drains the oldest-cursor-first batch through the pool above, stops on the
+ * budget rather than on the batch, and stamps a failure onto every agent it
+ * could not read so one unreadable account cannot hold the queue head forever.
+ *
+ * A `truncated` tick is the signal that the batch has outgrown the budget: the
+ * cycle time the freshness sensor derives from SOLANA_SWEEP_BATCH assumes a
+ * batch that drains, so from that point on the sensor's cycle is optimistic.
+ *
+ * @param {{ budgetMs?: number, limit?: number, concurrency?: number, now?: () => number }} [opts]
+ * @returns {Promise<{ agents: number, scanned: number, inserted: number, rejected: number,
+ *   failed: number, truncated: boolean, batch: number, concurrency: number,
+ *   elapsedMs: number, error?: string }>}
+ */
 export async function sweepAgentEvents({
 	budgetMs = SOLANA_SWEEP_BUDGET_MS,
 	limit = SOLANA_SWEEP_BATCH,
@@ -574,23 +631,11 @@ export async function sweepAgentEvents({
 	} catch (err) {
 		return { ...summary, elapsedMs: now() - startedAt, error: err?.message || String(err) };
 	}
-
 	summary.batch = batch.length;
-	const workers = Math.max(1, Math.min(concurrency, batch.length));
-	summary.concurrency = workers;
 
-	let next = 0;
-	const drain = async () => {
-		for (;;) {
-			// Read the queue position BEFORE the clock, so a tick that finished its
-			// batch on the last millisecond of the budget is reported as complete
-			// rather than as truncated work that never existed.
-			if (next >= batch.length) return;
-			if (now() - startedAt > budgetMs) {
-				summary.truncated = true;
-				return;
-			}
-			const row = batch[next++];
+	const run = await drainWithBudget(
+		batch,
+		async (row) => {
 			try {
 				const r = await crawlAgentEvents({ agentRef: row.agent_ref, network: row.network });
 				summary.agents += 1;
@@ -605,10 +650,12 @@ export async function sweepAgentEvents({
 					error: err?.message || String(err),
 				}).catch(() => {});
 			}
-		}
-	};
+		},
+		{ concurrency, budgetMs, now },
+	);
 
-	await Promise.all(Array.from({ length: workers }, drain));
-	summary.elapsedMs = now() - startedAt;
+	summary.truncated = run.truncated;
+	summary.concurrency = run.workers;
+	summary.elapsedMs = run.elapsedMs;
 	return summary;
 }

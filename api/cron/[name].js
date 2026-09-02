@@ -794,16 +794,32 @@ async function erc8004CrawlChain(chain) {
 	// ran, and a chain producing blocks faster than the crawl consumes them keeps
 	// a fresh updated_at forever while falling further behind every tick.
 	const blocksBehind = Math.max(0, latestBlock - toBlock);
+	// A skip closes the backlog, which is exactly why the gap has to be banked
+	// here. The moment the cursor reaches the head this chain reports zero blocks
+	// behind and reads as perfectly healthy, so the span it jumped over would
+	// otherwise exist only in one cron response that rotates out of the logs.
+	// Accumulated, never overwritten: a provider that keeps pruning under the
+	// crawl shows up as a number that grows.
+	const gapBlocks = prunedSkip ? prunedSkip.blocks : 0;
 	await sql`
-		INSERT INTO erc8004_crawl_cursor (chain_id, last_block, updated_at, head_block, blocks_behind, chunk_size, last_error)
-		VALUES (${chain.id}, ${toBlock}, now(), ${latestBlock}, ${blocksBehind}, ${chunkSize}, null)
+		INSERT INTO erc8004_crawl_cursor (
+			chain_id, last_block, updated_at, head_block, blocks_behind, chunk_size, last_error,
+			history_gap_blocks, history_gap_to, history_gap_at
+		)
+		VALUES (
+			${chain.id}, ${toBlock}, now(), ${latestBlock}, ${blocksBehind}, ${chunkSize}, null,
+			${gapBlocks}, ${prunedSkip ? prunedSkip.to : null}, ${prunedSkip ? new Date() : null}
+		)
 		ON CONFLICT (chain_id) DO UPDATE SET
 			last_block    = GREATEST(erc8004_crawl_cursor.last_block, ${toBlock}),
 			updated_at    = now(),
 			head_block    = excluded.head_block,
 			blocks_behind = excluded.blocks_behind,
 			chunk_size    = excluded.chunk_size,
-			last_error    = null
+			last_error    = null,
+			history_gap_blocks = erc8004_crawl_cursor.history_gap_blocks + excluded.history_gap_blocks,
+			history_gap_to     = COALESCE(excluded.history_gap_to, erc8004_crawl_cursor.history_gap_to),
+			history_gap_at     = COALESCE(excluded.history_gap_at, erc8004_crawl_cursor.history_gap_at)
 	`;
 
 	return {

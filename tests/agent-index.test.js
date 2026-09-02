@@ -16,6 +16,8 @@ import {
 	WRAPPED_SOL_MINT,
 	SOLANA_SWEEP_BATCH,
 	SOLANA_SWEEP_PERIOD_MIN,
+	SOLANA_SWEEP_CONCURRENCY,
+	drainWithBudget,
 } from '../api/_lib/solana-agent-events.js';
 import {
 	normalizeEvent,
@@ -30,6 +32,7 @@ import {
 	indexLagVerdict,
 	SOLANA_ERROR_RATE_DEGRADED,
 	SOLANA_ERROR_RATE_DOWN,
+	SOLANA_LAG_DEGRADED_MIN,
 } from '../api/_lib/ops/index-lag.js';
 import {
 	nextChunkSize,
@@ -432,6 +435,20 @@ describe('isPrunedHistoryRejection', () => {
 		expect(isPrunedHistoryRejection('missing trie node 0xabc (path )')).toBe(true);
 	});
 
+	it('reads a paywalled archive range as the same retention wall', () => {
+		// Verbatim from the lane that held the busiest secondary chain 17,396,220
+		// blocks behind head. A keyless node that serves the last few thousand
+		// blocks and charges for anything older has drawn exactly the wall a
+		// pruning node draws: no window down to the 100-block floor gets past it,
+		// so the shrink loop spun on it for months.
+		expect(
+			isPrunedHistoryRejection(
+				'RPC -32602: Archive requests require a personal token. Get one at: https://www.allnodes.com/publicnode',
+			),
+		).toBe(true);
+		expect(isPrunedHistoryRejection('this method requires an archive node')).toBe(true);
+	});
+
 	it('does NOT claim a range rejection or a plan limit is pruned history', () => {
 		// These have their own recovery (shrink the window). Reading them as
 		// pruned would skip the cursor to the head and silently drop real blocks.
@@ -448,6 +465,7 @@ describe('isPrunedHistoryRejection', () => {
 			'block range is too wide (maximum 1024)',
 			'query returned more than 10000 results',
 			'missing trie node',
+			'RPC -32602: Archive requests require a personal token',
 		]) {
 			expect(isPrunedHistoryRejection(msg) && isRangeRejection(msg)).toBe(false);
 		}
@@ -492,8 +510,106 @@ describe('sweepCycleMin', () => {
 		expect(sweepCycleMin(1576) / 2).toBeLessThan(90);
 	});
 
+	it('finishes a full cycle inside the fresh threshold, not just the median', () => {
+		// The median passing is not enough. The oldest agent in the queue waits a
+		// WHOLE cycle, so a cycle longer than the fresh threshold means part of the
+		// directory is always stale by the sensor's own definition. Measured on
+		// 2026-09-02: 1,604 agents at 120 per tick cycled in 140 minutes against a
+		// 90-minute threshold, and the batch, not the cron's budget, was the cap.
+		expect(sweepCycleMin(1604)).toBeLessThanOrEqual(SOLANA_LAG_DEGRADED_MIN);
+	});
+
+	it('leaves the directory room to grow before the batch has to move again', () => {
+		// Headroom is the point: a batch sized exactly to today's directory goes
+		// stale the week it grows. This is the size at which someone must revisit.
+		expect(sweepCycleMin(2000)).toBeLessThanOrEqual(SOLANA_LAG_DEGRADED_MIN);
+	});
+
 	it('is null when nothing is queued', () => {
 		expect(sweepCycleMin(0)).toBe(null);
+	});
+});
+
+describe('drainWithBudget', () => {
+	// A hand-cranked clock, not a timer: the budget cases have to be exact, and
+	// a real clock would make them race on a loaded machine.
+	const clockFrom = (ticks) => {
+		let i = 0;
+		return () => ticks[Math.min(i++, ticks.length - 1)];
+	};
+
+	it('runs every item once, in order, when the budget is not the constraint', async () => {
+		const seen = [];
+		const run = await drainWithBudget([1, 2, 3, 4, 5], async (n) => void seen.push(n), { concurrency: 1 });
+		expect(seen).toEqual([1, 2, 3, 4, 5]);
+		expect(run.processed).toBe(5);
+		expect(run.truncated).toBe(false);
+	});
+
+	it('overlaps work across the pool instead of serialising it', async () => {
+		let inFlight = 0;
+		let peak = 0;
+		const run = await drainWithBudget(
+			Array.from({ length: 12 }, (_, i) => i),
+			async () => {
+				inFlight += 1;
+				peak = Math.max(peak, inFlight);
+				await Promise.resolve();
+				await Promise.resolve();
+				inFlight -= 1;
+			},
+			{ concurrency: 4 },
+		);
+		expect(peak).toBe(4);
+		expect(run.workers).toBe(4);
+		expect(run.processed).toBe(12);
+	});
+
+	it('never opens more workers than there is work for them to do', async () => {
+		const run = await drainWithBudget([1, 2], async () => {}, { concurrency: 8 });
+		expect(run.workers).toBe(2);
+		expect(run.processed).toBe(2);
+	});
+
+	it('stops on the budget and says the rest is still queued', async () => {
+		// Clock: start at 0, then jump past the budget on the second check.
+		const seen = [];
+		const run = await drainWithBudget([1, 2, 3, 4], async (n) => void seen.push(n), {
+			concurrency: 1,
+			budgetMs: 100,
+			now: clockFrom([0, 0, 500]),
+		});
+		expect(seen).toEqual([1]);
+		expect(run.truncated).toBe(true);
+		expect(run.processed).toBe(1);
+	});
+
+	it('reports a run that consumed its last item on the deadline as complete', async () => {
+		// The queue is read before the clock precisely so this is not truncated:
+		// a tick that finished everything has no remainder to report, and calling
+		// it truncated would tell the sweep to shrink a batch that was fine.
+		const run = await drainWithBudget([1, 2], async () => {}, {
+			concurrency: 1,
+			budgetMs: 100,
+			now: clockFrom([0, 0, 50, 9999]),
+		});
+		expect(run.processed).toBe(2);
+		expect(run.truncated).toBe(false);
+	});
+
+	it('does nothing, and claims nothing, for an empty queue', async () => {
+		const run = await drainWithBudget([], async () => {
+			throw new Error('an empty queue must not reach the handler');
+		});
+		expect(run.processed).toBe(0);
+		expect(run.truncated).toBe(false);
+	});
+
+	it('keeps the shipped concurrency low enough not to outrun the RPC lanes', () => {
+		// The lane router parks a cooling provider; a wide fan-out earns 429s
+		// faster than it earns signatures. This is a ceiling, not a target.
+		expect(SOLANA_SWEEP_CONCURRENCY).toBeGreaterThan(1);
+		expect(SOLANA_SWEEP_CONCURRENCY).toBeLessThanOrEqual(8);
 	});
 });
 
@@ -693,6 +809,8 @@ function lagFixture({ solana = {}, evm = {} } = {}) {
 			worstBlocksBehind: 0,
 			worstChainId: null,
 			worstChainName: null,
+			historyGapChains: 0,
+			historyGapBlocks: 0,
 			events: 107296,
 			...evm,
 		},
@@ -745,6 +863,24 @@ describe('indexLagVerdict', () => {
 
 		const clear = indexLagVerdict(lagFixture({ solana: { agents, errored: 10 } }));
 		expect(clear.status).toBe('ok');
+	});
+
+	it('names a permanent history gap that skipping the retention wall left behind', () => {
+		// Skipping is what MAKES the chain report zero backlog again, so without
+		// this line the 17M blocks the crawl gave up on vanish from every surface
+		// the moment the recovery works.
+		const verdict = indexLagVerdict(
+			lagFixture({ evm: { historyGapChains: 2, historyGapBlocks: 19_881_607 } }),
+		);
+		expect(verdict.detail).toContain('2 carrying a permanent 19,881,607-block history gap');
+	});
+
+	it('does not let a history gap alone score the index unhealthy', () => {
+		// The gap is history that is already lost. Scoring it would pin the
+		// subsystem red forever over something no tick can ever fix.
+		expect(
+			indexLagVerdict(lagFixture({ evm: { historyGapChains: 3, historyGapBlocks: 25_000_000 } })).status,
+		).toBe('ok');
 	});
 
 	it('reports a never-crawled index as warming up rather than broken', () => {
