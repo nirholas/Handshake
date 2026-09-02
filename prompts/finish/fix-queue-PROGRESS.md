@@ -116,3 +116,20 @@ accounts, and .env carries only AUDIT_EMAIL/AUDIT_PASSWORD), so neither the job
 creation nor the live drift comparison can run here. Needs one owner
 `gcloud auth login` plus CRON_SECRET | `npm run check:cron-syntax` exit 0, "All
 cron expressions are valid (offline mode: live jobs not compared)"
+
+2026-09-02 | 03-cron-drift-garment-sweep | Still NOT retired, still one owner
+action, but step 1 no longer needs the owner. An unauthenticated probe of
+https://three.ws/api/cron/garment-job-sweep answers 401 (not 404) on revision
+three-ws-api-00404-ph7, which is the exact distinction `classifyMissing()` in
+scripts/check-cron-drift.mjs draws: the handler is live in the running revision,
+so only the Cloud Scheduler write is missing and the job can be created now
+rather than waiting for a deploy. Work order updated with that finding, and its
+"Done when" no longer pins the fleet at the stale 101 (vercel.json declares 111
+and the checker derives the count). gcloud is still dead here: `gcloud auth
+list` shows nich@sperax.io but both `gcloud auth print-access-token` and the
+application-default variant fail with "Reauthentication failed. cannot prompt
+during non-interactive execution", so steps 3 and 4 remain owner-gated on one
+interactive login | `curl -o /dev/null -w '%{http_code}'` on the cron path = 401;
+`npm run check:cron-syntax` exit 0 with 111 declared crons all valid;
+`npx vitest run tests/cron-scheduler-sync.test.js tests/cron-drift-classify.test.js`
+25 passed
