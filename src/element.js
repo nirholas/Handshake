@@ -655,6 +655,7 @@ class Agent3DElement extends HTMLElement {
 		this._memory = null;
 		this._skills = null;
 		this._avatar = null; // empathy + lipsync layer; attached after runtime mounts
+		this._spokenAudio = null; // caller-supplied clip driving speakAudio()
 		this._manifest = null;
 		this._mounted = false;
 		this._booting = false;
@@ -2871,6 +2872,17 @@ class Agent3DElement extends HTMLElement {
 			this._runtime?.destroy();
 		} catch {}
 		try {
+			this._stopSpokenAudio();
+		} catch {}
+		try {
+			// The speakAudio() graph outlives a single clip, so it has to be
+			// closed here or a torn-down embed leaks an AudioContext (browsers
+			// cap them per document, and the cap is low).
+			this._speakSource?.disconnect();
+			this._speakCtx?.close?.();
+		} catch {}
+		this._speakSource = this._speakAnalyser = this._speakCtx = null;
+		try {
 			this._avatar?.detach();
 		} catch {}
 		try {
@@ -2966,6 +2978,95 @@ class Agent3DElement extends HTMLElement {
 	async sign(text) {
 		if (!this._avatar) await this._waitForReady();
 		return this._avatar?.sign?.(text) ?? null;
+	}
+
+	/**
+	 * Speak audio the caller supplies, with real viseme lipsync.
+	 *
+	 * The built-in voice pipeline already drives the mouth from its own TTS, but
+	 * an embed that synthesises elsewhere (its own provider, a recorded clip, a
+	 * cached line) had no way in: speak() only plays a talking gesture, and the
+	 * analyser the lipsync layer reads was private. This wires the caller's audio
+	 * through the same analyser, so the mouth follows the actual waveform rather
+	 * than approximating it.
+	 *
+	 * Resolves when playback finishes. The mouth returns to neutral on end, on
+	 * error, and on a second call that supersedes this one.
+	 *
+	 * @param {string|HTMLAudioElement} audio Audio URL (any format the browser
+	 *   plays) or an audio element you already control. A cross-origin URL must
+	 *   be CORS-readable, or the browser refuses to analyse it and only the
+	 *   amplitude-free talking gesture remains.
+	 * @param {{ volume?: number }} [opts]
+	 * @returns {Promise<void>}
+	 */
+	async speakAudio(audio, { volume = 1 } = {}) {
+		if (!audio) return;
+		if (!this._avatar) await this._waitForReady();
+
+		const el = typeof audio === 'string' ? Object.assign(new Audio(), { src: audio }) : audio;
+		el.crossOrigin = el.crossOrigin || 'anonymous';
+		el.volume = volume;
+
+		// A second call supersedes the first: stop the old clip and drop its
+		// analyser before the new one claims the avatar's mouth.
+		this._stopSpokenAudio();
+
+		const analyser = this._analyserFor(el);
+		if (analyser) this._avatar?.connectLipSync?.(analyser);
+		this._spokenAudio = el;
+
+		try {
+			await el.play();
+			await new Promise((resolve) => {
+				el.addEventListener('ended', resolve, { once: true });
+				el.addEventListener('error', resolve, { once: true });
+			});
+		} finally {
+			if (this._spokenAudio === el) this._stopSpokenAudio();
+		}
+	}
+
+	/** @private Stop caller-supplied audio and return the mouth to neutral. */
+	_stopSpokenAudio() {
+		const el = this._spokenAudio;
+		this._spokenAudio = null;
+		if (el) {
+			try {
+				el.pause();
+			} catch {}
+		}
+		this._avatar?.disconnectLipSync?.();
+	}
+
+	/**
+	 * @private Build (once) the Web Audio graph the lipsync analyser reads.
+	 * Mirrors src/runtime/speech.js `_setupAnalyser`: one context and one
+	 * analyser for the element's lifetime, a fresh MediaElementSource per audio
+	 * element (an element can only ever be captured once). Returns null when the
+	 * browser refuses, in which case playback still works without visemes.
+	 */
+	_analyserFor(audioEl) {
+		const AC = window.AudioContext || window.webkitAudioContext;
+		if (!AC) return null;
+		try {
+			if (!this._speakCtx || this._speakCtx.state === 'closed') {
+				this._speakCtx = new AC();
+				this._speakAnalyser = this._speakCtx.createAnalyser();
+				this._speakAnalyser.fftSize = 256;
+				this._speakAnalyser.smoothingTimeConstant = 0.7;
+				this._speakAnalyser.connect(this._speakCtx.destination);
+			}
+			this._speakSource?.disconnect();
+			this._speakSource = this._speakCtx.createMediaElementSource(audioEl);
+			this._speakSource.connect(this._speakAnalyser);
+			this._speakCtx.resume().catch(() => {});
+			return this._speakAnalyser;
+		} catch {
+			// Autoplay policy, CORS, or an element already captured by another
+			// graph. Playback is unaffected; only the visemes are lost.
+			return null;
+		}
 	}
 
 	async ask(text, opts = {}) {

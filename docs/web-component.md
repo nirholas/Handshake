@@ -281,6 +281,29 @@ Resolves once the motion finishes, with `{ signed, spelled }`, or with `null` wh
 
 ---
 
+### `speakAudio(audio, opts?)`
+
+Plays audio you supply and drives the avatar's mouth from it. The built-in voice pipeline already lip-syncs its own TTS; this is the way in for audio synthesized somewhere else, a recorded clip, or a line you cached. The audio is routed through the same analyser the internal path uses, so the visemes follow the real waveform rather than approximating it from the text.
+
+```js
+const res = await fetch('https://three.ws/api/v1/ai/tts', {
+	method: 'POST',
+	headers: { 'content-type': 'application/json' },
+	body: JSON.stringify({ text: 'Give your AI a body.', voice: 'nova' }),
+});
+const { data } = await res.json();
+await el.speakAudio(`data:${data.content_type};base64,${data.audio}`);
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `audio` | string \| HTMLAudioElement | Audio URL in any format the browser plays, or an audio element you already control. |
+| `opts.volume` | number | Playback volume, `0` to `1`. Defaults to `1`. |
+
+Resolves when playback finishes. The mouth returns to neutral on end, on error, and when a second call supersedes the first. A cross-origin URL has to be CORS-readable or the browser refuses to analyse it, in which case the clip still plays and only the visemes are lost; a `data:` URL (what the text-to-speech API returns) is always readable.
+
+---
+
 ### `speak(text, opts?)`
 
 Triggers a speak animation on the avatar (lip-sync / talking gesture) without sending the text to the LLM. Use this to drive the avatar from your own logic.

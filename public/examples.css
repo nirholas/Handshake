@@ -83,6 +83,130 @@
 
 /* Lane nav: a sticky jump list over the four capability lanes. Every card stays
    in the document, so deep links and in-page search keep working. */
+/* Filter bar: text + tag chips over every lane. */
+.exg-filter {
+	margin-top: 40px;
+	display: grid;
+	gap: 12px;
+}
+
+.exg-filter-field {
+	display: flex;
+	gap: 8px;
+}
+
+.exg-filter-input {
+	flex: 1;
+	min-width: 0;
+	font: inherit;
+	font-size: 15px;
+	padding: 11px 14px;
+	border-radius: 10px;
+	border: 1px solid var(--border, #26262e);
+	background: var(--surface, rgba(255, 255, 255, 0.02));
+	color: var(--text, #ececf2);
+}
+
+.exg-filter-input::placeholder {
+	color: var(--text-dim, #9a9aa4);
+}
+
+.exg-filter-input:focus-visible {
+	outline: 2px solid #7c8cff;
+	outline-offset: 2px;
+	border-color: transparent;
+}
+
+.exg-filter-clear {
+	appearance: none;
+	font: inherit;
+	font-size: 14px;
+	padding: 0 16px;
+	border-radius: 10px;
+	cursor: pointer;
+	border: 1px solid var(--border, #26262e);
+	background: transparent;
+	color: var(--text, #ececf2);
+}
+
+.exg-filter-clear:hover {
+	border-color: var(--border-strong, #3a3a46);
+	background: var(--surface, rgba(255, 255, 255, 0.04));
+}
+
+.exg-filter-clear:focus-visible {
+	outline: 2px solid #7c8cff;
+	outline-offset: 2px;
+}
+
+.exg-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.exg-chip {
+	appearance: none;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font: inherit;
+	font-size: 13px;
+	padding: 5px 12px;
+	border-radius: 999px;
+	cursor: pointer;
+	border: 1px solid var(--border, #26262e);
+	background: transparent;
+	color: var(--text-dim, #9a9aa4);
+	transition:
+		border-color 0.15s ease,
+		color 0.15s ease,
+		background 0.15s ease;
+}
+
+.exg-chip:hover {
+	border-color: #7c8cff;
+	color: var(--text, #ececf2);
+}
+
+.exg-chip:focus-visible {
+	outline: 2px solid #7c8cff;
+	outline-offset: 2px;
+}
+
+.exg-chip[aria-pressed='true'] {
+	background: var(--text, #ececf2);
+	border-color: transparent;
+	color: var(--bg, #0a0a0a);
+}
+
+.exg-chip-count {
+	font-size: 11px;
+	font-variant-numeric: tabular-nums;
+	opacity: 0.65;
+}
+
+.exg-empty {
+	margin: 32px 0 0;
+	padding: 28px;
+	border: 1px dashed var(--border, #26262e);
+	border-radius: 14px;
+	text-align: center;
+	color: var(--text-dim, #9a9aa4);
+}
+
+/* Announced to screen readers, never painted. */
+.exg-sr {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
 .exg-lane-nav {
 	position: sticky;
 	top: 0;
@@ -90,7 +214,7 @@
 	display: flex;
 	flex-wrap: wrap;
 	gap: 8px;
-	margin-top: 36px;
+	margin-top: 4px;
 	padding: 12px 0;
 	background: linear-gradient(to bottom, var(--bg, #0a0a0a) 72%, rgba(10, 10, 10, 0));
 	backdrop-filter: blur(6px);
