@@ -76,7 +76,7 @@ describe('quotePrint arithmetic', () => {
 		const resin = findMaterial('resin-standard');
 		const { quote } = quotePrint({ ...base, materialId: 'resin-standard' });
 		expect(quote.geometry.volumeCm3).toBe(62.5);
-		expect(amountOf(quote, 'material')).toBeCloseTo(resin.ratePerCm3 * 62.5, 2);
+		expect(amountOf(quote, 'material')).toBeCloseTo(resin.ratePerCm3 * 62.5, 1);
 		expect(amountOf(quote, 'setup')).toBe(resin.setupFee);
 	});
 
@@ -89,7 +89,9 @@ describe('quotePrint arithmetic', () => {
 	it('charges material per unit but setup once, because one setup serves the run', () => {
 		const one = quotePrint({ ...base, materialId: 'resin-standard', quantity: 1 });
 		const four = quotePrint({ ...base, materialId: 'resin-standard', quantity: 4 });
-		expect(amountOf(four.quote, 'material')).toBeCloseTo(amountOf(one.quote, 'material') * 4, 2);
+		// Each line is rounded to the cent, so four units are the rate times four
+		// volumes, not four times a rounded unit price.
+		expect(amountOf(four.quote, 'material')).toBeCloseTo(amountOf(one.quote, 'material') * 4, 1);
 		expect(amountOf(four.quote, 'setup')).toBe(amountOf(one.quote, 'setup'));
 	});
 

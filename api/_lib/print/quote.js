@@ -308,8 +308,11 @@ export function quotePrint({
 	if (!finish) {
 		return { ok: false, rejection: { code: 'unknown_finish', message: `No finish "${finishId}" for ${material.name}.`, failures: [] } };
 	}
-	const qty = Math.floor(Number(quantity) || 1);
-	if (!(qty >= 1 && qty <= 500)) {
+	// An explicit 0, -3 or "many" is a caller error worth naming; only an absent
+	// quantity defaults to one. Coercing a bad value silently would quote a
+	// different order than the one that was asked for.
+	const qty = quantity === null || quantity === undefined ? 1 : Math.floor(Number(quantity));
+	if (!Number.isFinite(qty) || !(qty >= 1 && qty <= 500)) {
 		return { ok: false, rejection: { code: 'invalid_quantity', message: 'Quantity must be between 1 and 500.', failures: [] } };
 	}
 	const height = Number(targetHeightMm);
