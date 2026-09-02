@@ -23,7 +23,7 @@ import { _computeVerdict as computeVerdict } from '../../api/x402/fact-check.js'
 const of = (stance, n, weight = 0.8) =>
 	Array.from({ length: n }, (_v, i) => ({ url: `https://example.com/${stance}/${i}`, stance, weight }));
 
-describe('computeVerdict — clear-cut distributions keep their verdicts', () => {
+describe('computeVerdict: clear-cut distributions keep their verdicts', () => {
 	it('unanimous support is supported', () => {
 		expect(computeVerdict(of('supports', 5)).verdict).toBe('supported');
 	});
@@ -86,7 +86,7 @@ describe('computeVerdict — clear-cut distributions keep their verdicts', () =>
 	});
 });
 
-describe('computeVerdict — mixed by inter-source disagreement', () => {
+describe('computeVerdict: mixed by inter-source disagreement', () => {
 	it('an even split is mixed', () => {
 		expect(computeVerdict([...of('supports', 3), ...of('contradicts', 3)]).verdict).toBe('mixed');
 	});
@@ -104,7 +104,7 @@ describe('computeVerdict — mixed by inter-source disagreement', () => {
 	});
 });
 
-describe('computeVerdict — mixed by intra-source partiality', () => {
+describe('computeVerdict: mixed by intra-source partiality', () => {
 	it('unanimous partial evidence is mixed, not contradicted', () => {
 		// The defect this stance exists to fix: every source reads the same
 		// nuance ("a tomato is botanically a fruit and culinarily a vegetable"),
@@ -132,7 +132,7 @@ describe('computeVerdict — mixed by intra-source partiality', () => {
 	});
 });
 
-describe('computeVerdict — confidence semantics', () => {
+describe('computeVerdict: confidence semantics', () => {
 	it('broad engagement outscores thin engagement at the same dominance', () => {
 		const broad = computeVerdict(of('supports', 5, 0.8));
 		const thin = computeVerdict([...of('supports', 2, 0.8), ...of('neutral', 8, 0.8)]);

@@ -8,9 +8,9 @@
 //
 // Structure, deliberately not one regex blob:
 //
-//   tier 'hard'  — refused outright. The object has no lawful hobby use that
+//   tier 'hard' : refused outright. The object has no lawful hobby use that
 //                  a print bureau would accept, and no phrasing exempts it.
-//   tier 'soft'  — refused unless the request is unambiguously a display piece
+//   tier 'soft' : refused unless the request is unambiguously a display piece
 //                  AND the geometry agrees (a tabletop miniature is centimetres
 //                  tall; a functional part is life-size). A platform whose main
 //                  output is AI figurines cannot refuse the word "sword", so
@@ -128,6 +128,20 @@ export const FABRICATION_RULES = Object.freeze([
 			'three.ws does not manufacture working weapon mechanisms, concealed blades, or impact and area-denial weapons.',
 		allowed:
 			'Prop and costume weapons with blunt edges, printed as a single non-articulating piece, are fine.',
+	},
+	{
+		id: 'drug_paraphernalia',
+		tier: 'hard',
+		label: 'drug paraphernalia and production equipment',
+		terms: [
+			'bong', 'water pipe', 'crack pipe', 'meth pipe', 'dab rig', 'grinder for weed',
+			'pill press', 'tablet press die', 'punch and die set for pills', 'capsule filler',
+			'meth lab', 'drug press mold', 'stash can', 'diversion safe',
+		],
+		message:
+			'three.ws does not manufacture drug paraphernalia or equipment used to produce or press controlled substances.',
+		allowed:
+			'Ordinary containers, jars, storage boxes and lab-style glassware models for display are fine.',
 	},
 	{
 		id: 'weapon_likeness',

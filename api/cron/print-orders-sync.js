@@ -1,5 +1,5 @@
 // @ts-check
-// GET /api/cron/print-orders-sync — reconcile live print jobs and surface
+// GET /api/cron/print-orders-sync: reconcile live print jobs and surface
 // stalls.
 //
 // Webhooks are the fast path and they are not enough on their own. A delivery

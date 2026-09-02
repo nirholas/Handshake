@@ -175,12 +175,18 @@ describe('ops panel verdict', () => {
 		const p = buildStrandedPanel(report({ key_candidates: 0, undecryptable: 725, counts: { stranded_funded: 700, stranded_unread: 0 } }));
 		expect(p.status).toBe('unknown');
 		expect(p.reason).toBe('no_decryption_key');
+		// The SOL figure is withheld, not published with a caveat: an
+		// unattributable total is exactly the phantom number this surface exists
+		// to stop shipping.
+		expect(p.sol_stranded).toBe(null);
+		expect(p.top_stranded).toEqual([]);
 	});
 
 	it('calls a fleet-wide decrypt failure a wrong key, not a mass customer incident', () => {
 		const p = buildStrandedPanel(report({ undecryptable: 725, counts: { stranded_funded: 168, stranded_unread: 0 } }));
 		expect(p.status).toBe('unknown');
 		expect(p.reason).toBe('key_mismatch');
+		expect(p.sol_stranded_customer).toBe(null);
 		expect(p.brief).toBe(null);
 	});
 
