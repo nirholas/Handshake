@@ -104,12 +104,20 @@ as-is, every one of those clips would visibly pop once a cycle.
    holds at frame 0, so the seam closes exactly. The root's height is matched the same
    way while its horizontal travel is preserved, so a travelling walk still travels.
 
-It **self-verifies**: closing a seam moves joints, and on a clip that barely needed it
-the correction can cost more than the seam did. If the result is less continuous than
-the gate allows while the original was fine, the original is returned untouched.
+The blend length is **adaptive**. Blending is tried shortest first (8 frames, then 16,
+24, 36, 48) and the first length that closes the seam without costing more continuity
+than the gate allows is taken. A short blend keeps the motion crisp; a wide seam needs
+a longer one, because spreading a big correction over more frames is exactly what stops
+it reading as a pop. A fixed 8-frame blend left a 0.378 m seam on a sneaking walk and
+the clip was rejected; at 36 frames the same clip closes to 0.000 and passes.
 
-Measured on four real clips: seams of 0.029, 0.171, 0.251 and 0.267 m all close to
-**0.000**, and all four pass the gate as loops.
+It **self-verifies**: if every blend length still costs more continuity than the gate
+allows and the clip was fine to begin with, the original is returned untouched with a
+reason attached, rather than publishing something this made worse.
+
+Measured on seven real clips, seams from 0.029 m to 0.378 m all close to **0.000** and
+all seven pass the gate as loops. On one live batch this took the accepted share of
+loop prompts from 3 of 6 to 6 of 6.
 
 Seam distance is measured in world space, hips-relative, for the same reason the
 continuity test is. Compared on local rotations, a clip whose joints are 2.9 cm apart

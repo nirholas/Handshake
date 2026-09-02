@@ -802,9 +802,12 @@ export const LOOP_SEAM = Object.freeze({
 	// Never cut away more than this fraction of the clip hunting for a cycle: a
 	// clip trimmed to a third of its length is a different clip.
 	MAX_TRIM_FRACTION: 0.35,
-	// Frames blended back toward the start. Long enough to hide the correction,
-	// short enough not to smear the motion.
-	BLEND_FRAMES: 8,
+	// Frames blended back toward the start, tried shortest first. A short blend
+	// keeps the motion crisp; a long one spreads a big correction over enough
+	// frames that it does not read as a pop. A clip with a wide seam needs the
+	// longer end, and the alternative to accepting some smear is rejecting the
+	// clip outright.
+	BLEND_LADDER: Object.freeze([8, 16, 24, 36, 48]),
 	// A seam this small is already invisible; authored loops sit at 0.000.
 	TARGET: 0.02,
 	// A trim must beat the untrimmed seam by at least this much to be worth
@@ -831,15 +834,17 @@ export const LOOP_SEAM = Object.freeze({
  * work with is returned unchanged, so this is always safe to call.
  */
 export function closeLoopSeam(clip, opts = {}) {
-	const blendFrames = opts.blendFrames ?? LOOP_SEAM.BLEND_FRAMES;
+	const ladder = opts.blendFrames ? [opts.blendFrames] : LOOP_SEAM.BLEND_LADDER;
 	const maxTrim = opts.maxTrimFraction ?? LOOP_SEAM.MAX_TRIM_FRACTION;
 	const frames = frameCount(clip);
-	if (frames < blendFrames * 3) return { clip, trimmedFrames: 0, seamBefore: 0, seamAfter: 0 };
+	const shortest = ladder[0];
+	if (frames < shortest * 3) return { clip, trimmedFrames: 0, seamBefore: 0, seamAfter: 0 };
 
 	const seamBefore = seamDistanceBetween(clip, 0, frames - 1);
+	const original = worldMotionMetrics(clip);
 
 	// 1. Find the best cycle end in the tail.
-	const earliest = Math.max(blendFrames * 2, Math.floor(frames * (1 - maxTrim)));
+	const earliest = Math.max(shortest * 2, Math.floor(frames * (1 - maxTrim)));
 	let bestEnd = frames - 1;
 	let bestDistance = seamBefore;
 	for (let k = earliest; k < frames; k += 1) {
@@ -854,8 +859,49 @@ export function closeLoopSeam(clip, opts = {}) {
 		bestEnd = frames - 1;
 	}
 
-	// 2. Rebuild the clip up to that frame, blending the tail back to the start.
+	// 2. Blend the tail back onto the opening pose, shortest blend first, taking
+	//    the first one that closes the seam without costing more continuity than
+	//    the gate allows. Spreading a wide correction over more frames is what
+	//    keeps it from reading as a pop.
 	const keep = bestEnd + 1;
+	const fps = frames > 1 ? (frames - 1) / Math.max(clip.duration, 1e-6) : 30;
+	let fallback = null;
+
+	for (const blendFrames of ladder) {
+		const closed = rebuildWithBlend(clip, keep, blendFrames, fps);
+		const after = worldMotionMetrics(closed);
+		const result = {
+			clip: closed,
+			trimmedFrames: frames - keep,
+			seamBefore,
+			seamAfter: loopSeamDistance(closed),
+			blendFrames,
+		};
+		if (after.continuity <= MOTION_GATE.MAX_WORLD_STEP_RATIO) return result;
+		// Keep the least-bad attempt in case every rung overshoots.
+		if (!fallback || after.continuity < fallback.continuity) {
+			fallback = { ...result, continuity: after.continuity };
+		}
+	}
+
+	// Every blend length cost more continuity than the gate allows. If the clip
+	// was fine before, leave it alone and say why; if it was not, the closed clip
+	// is still the better of two bad options.
+	if (original.continuity <= MOTION_GATE.MAX_WORLD_STEP_RATIO) {
+		return {
+			clip,
+			trimmedFrames: 0,
+			seamBefore,
+			seamAfter: seamBefore,
+			rejected: 'closing the seam would have cost more continuity than it bought',
+		};
+	}
+	const { continuity, ...rest } = fallback;
+	return rest;
+}
+
+/** Rebuild a clip trimmed to `keep` frames with its tail blended onto frame 0. */
+function rebuildWithBlend(clip, keep, blendFrames, fps) {
 	const tracks = [];
 	for (const track of clip.tracks ?? []) {
 		const stride = track.type === 'quaternion' ? 4 : 3;
@@ -868,47 +914,19 @@ export function closeLoopSeam(clip, opts = {}) {
 		const blend = Math.min(blendFrames, n - 1);
 		for (let i = 0; i < blend; i += 1) {
 			const index = n - blend + i;
-			// Ramp to a full match on the final frame.
 			const t = (i + 1) / blend;
 			const at = index * stride;
 			if (track.type === 'quaternion') {
 				const blended = slerp(values.slice(at, at + 4), first, t);
 				for (let c = 0; c < 4; c += 1) values[at + c] = blended[c];
 			} else {
-				// Height and depth-of-stance are matched; horizontal travel is kept,
-				// so a travelling loop still covers ground.
+				// Height is matched; horizontal travel is kept, so a travelling loop
+				// still covers ground.
 				values[at + 1] += (first[1] - values[at + 1]) * t;
 			}
 		}
 		tracks.push({ ...track, times, values });
 	}
-
-	const fps = frames > 1 ? (frames - 1) / Math.max(clip.duration, 1e-6) : 30;
-	const closed = { ...clip, duration: (keep - 1) / fps, tracks };
-
-	// Self-verify. Closing a seam moves joints, and on a clip that barely needed
-	// it the correction can cost more than the seam did. If the result is less
-	// continuous than the gate allows while the original was fine, keep the
-	// original and say so rather than publishing a clip this made worse.
-	const after = worldMotionMetrics(closed);
-	const original = worldMotionMetrics(clip);
-	if (
-		after.continuity > MOTION_GATE.MAX_WORLD_STEP_RATIO &&
-		original.continuity <= MOTION_GATE.MAX_WORLD_STEP_RATIO
-	) {
-		return {
-			clip,
-			trimmedFrames: 0,
-			seamBefore,
-			seamAfter: seamBefore,
-			rejected: 'closing the seam would have cost more continuity than it bought',
-		};
-	}
-
-	return {
-		clip: closed,
-		trimmedFrames: frames - keep,
-		seamBefore,
-		seamAfter: loopSeamDistance(closed),
-	};
+	return { ...clip, duration: (keep - 1) / fps, tracks };
 }
+

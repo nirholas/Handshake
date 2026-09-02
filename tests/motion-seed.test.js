@@ -400,6 +400,32 @@ describe('loop seams', () => {
 		expect(verdict.reasons.some((r) => r.startsWith('world_discontinuity'))).toBe(false);
 	});
 
+	it('spreads a wider correction over more frames rather than giving up', () => {
+		// A short blend cannot absorb a wide seam without popping, so the ladder
+		// should reach for a longer one instead of returning the clip unclosed.
+		const wide = buildClip({
+			frames: 150,
+			mutate: (c) => {
+				for (const track of c.tracks) {
+					if (track.type !== 'quaternion') continue;
+					const n = track.values.length / 4;
+					for (let i = Math.floor(n * 0.5); i < n; i += 1) {
+						const q = quatX(1.4);
+						for (let k = 0; k < 4; k += 1) track.values[i * 4 + k] = q[k];
+					}
+				}
+			},
+		});
+		const result = closeLoopSeam(wide);
+		expect(result.seamAfter).toBeLessThanOrEqual(LOOP_SEAM.TARGET);
+		expect(LOOP_SEAM.BLEND_LADDER).toContain(result.blendFrames);
+	});
+
+	it('tries the shortest blend first, so a small seam is not over-smoothed', () => {
+		const result = closeLoopSeam(openSeam());
+		expect(result.blendFrames).toBe(LOOP_SEAM.BLEND_LADDER[0]);
+	});
+
 	it('is safe to call on a clip too short to work with', () => {
 		const tiny = { name: 't', duration: 0.1, tracks: [], uuid: 'u', blendMode: 0 };
 		expect(closeLoopSeam(tiny).clip).toBe(tiny);
