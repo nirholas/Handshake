@@ -1,11 +1,22 @@
 {
-	"generated_at": "2026-09-02T05:10:17.443Z",
+	"generated_at": "2026-09-02T05:18:19.516Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-09-02",
+			"type": "update",
+			"title": "Every showcased agent now has its own page",
+			"summary": "Agent Spotlight entries got somewhere to live. Each one now has its own page with the agent standing in 3D, the full write-up instead of three clamped lines, a facts panel read live off the agent (skills, conversations, on-chain actions, upvotes), share buttons, and a rail of related entries in the same category. Sharing one finally works too: paste a link anywhere and it unfurls with that entry's headline and the agent's own card rather than the generic showcase image. If you submitted an entry, you can now edit or remove it, which you could not do before: an Edit link on your card opens the write-up ready to change, and removing takes two clicks so it cannot happen by accident. Ranking got fairer as well, with a stable order for entries published at the same moment instead of a shuffle between page loads.",
+			"link": "/spotlight",
+			"tags": [
+				"improvement",
+				"feature"
+			]
+		},
 		{
 			"date": "2026-09-02",
 			"type": "update",

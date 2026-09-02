@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Every showcased agent now has its own page</title>
+			<link>https://three.ws/spotlight</link>
+			<guid isPermaLink="false">2026-09-02:Every showcased agent now has its own page</guid>
+			<pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Agent Spotlight entries got somewhere to live. Each one now has its own page with the agent standing in 3D, the full write-up instead of three clamped lines, a facts panel read live off the agent (skills, conversations, on-chain actions, upvotes), share buttons, and a rail of related entries in the same category. Sharing one finally works too: paste a link anywhere and it unfurls with that entry's headline and the agent's own card rather than the generic showcase image. If you submitted an entry, you can now edit or remove it, which you could not do before: an Edit link on your card opens the write-up ready to change, and removing takes two clicks so it cannot happen by accident. Ranking got fairer as well, with a stable order for entries published at the same moment instead of a shuffle between page loads.</description>
+		</item>
+		<item>
 			<title>Examples gains a voice, an AI's eye on 3D, and a filter</title>
 			<link>https://three.ws/examples</link>
 			<guid isPermaLink="false">2026-09-02:Examples gains a voice, an AI's eye on 3D, and a filter</guid>

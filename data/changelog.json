@@ -2,6 +2,16 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-09-02",
+			"title": "Every showcased agent now has its own page",
+			"summary": "Agent Spotlight entries got somewhere to live. Each one now has its own page with the agent standing in 3D, the full write-up instead of three clamped lines, a facts panel read live off the agent (skills, conversations, on-chain actions, upvotes), share buttons, and a rail of related entries in the same category. Sharing one finally works too: paste a link anywhere and it unfurls with that entry's headline and the agent's own card rather than the generic showcase image. If you submitted an entry, you can now edit or remove it, which you could not do before: an Edit link on your card opens the write-up ready to change, and removing takes two clicks so it cannot happen by accident. Ranking got fairer as well, with a stable order for entries published at the same moment instead of a shuffle between page loads.",
+			"tags": [
+				"improvement",
+				"feature"
+			],
+			"link": "/spotlight"
+		},
+		{
 			"date": "2026-09-01",
 			"title": "The community showcase is open",
 			"summary": "Agent Spotlight is live at /spotlight. The agents index lists everything anyone ever registered, which is thousands of agents and no way to tell which ones are actually good. The spotlight is the other half of that: you write up what your agent does, everyone else upvotes what they like, and the best work rises. Filter by category, search across write-ups and builders, and open any entry straight into the agent's 3D page to talk to it. Entries stay honest by construction: your card stores your pitch and reads the agent's live name, avatar, skills and on-chain identity on every visit, so it can never go stale. One entry per agent, one vote per person, and submitting again edits your entry instead of making a second card. It opens with fourteen agents the team picked out of what the community has already built, from an adversarial code reviewer to an autonomous Solana trader that runs with no language model in the loop.",
