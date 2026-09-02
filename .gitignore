@@ -140,6 +140,10 @@ scripts/scratch-*
 
 # Scratch server bootstraps written during an audit session (absolute local paths)
 .scratch-audit/
+# Shared throwaway probe scripts. Several sessions write one-off inspection
+# scripts here; none of them is a deliverable, and an `add -A` sweep would
+# otherwise commit another session's half-written probe under your message.
+.probe/
 # Dot-prefixed harnesses under scripts/ are the same thing wearing a hidden
 # name, and the hidden name is why they slipped the net: nine of them
 # (.dw-*, .a11y-*, .verify-chat-tmp) had accumulated in the tree by
