@@ -163,6 +163,21 @@ export default wrap(async function handler(req, res) {
 		// invalid_image_url / no_image are caller errors (400); everything else is
 		// an upstream failure surfaced as 502.
 		const status = e?.code === 'invalid_image_url' || e?.code === 'no_image' ? 400 : (e?.status || 502);
-		return error(res, status, e?.code || 'upstream_error', `Image understanding failed: ${e?.message || 'unknown error'}`);
+		// When the whole chain failed, the last rung's message alone is actively
+		// misleading (it names the backstop's billing state, not the reason the
+		// free lanes ahead of it did not answer). Every rung that was tried is
+		// listed so an operator sees which one to fix. Provider error bodies only;
+		// no request content and no credentials pass through here.
+		const lanes = Array.isArray(e?.lanes) ? e.lanes : [];
+		const summary = lanes.length
+			? ` Chain: ${lanes.map((l) => `${l.provider}=${l.status ?? 'unreachable'}`).join(', ')}.`
+			: '';
+		return error(
+			res,
+			status,
+			e?.code || 'upstream_error',
+			`Image understanding failed: ${e?.message || 'unknown error'}.${summary}`,
+			lanes.length ? { lanes } : undefined,
+		);
 	}
 });

@@ -407,6 +407,14 @@ export async function describeImage({
 	}
 
 	let lastErr;
+	// Every rung's verdict, in the order they were tried. Only the LAST failure
+	// used to survive, which made a dead chain unreadable: the caller was told
+	// "openai vision 429: billing_not_active" while the actual problem was that
+	// the free NIM lanes and the Vertex anchor ahead of it had already failed for
+	// two entirely different reasons. Whoever has to fix it needs all three, so
+	// the whole walk is carried on the thrown error and rendered by the handler.
+	/** @type {{ provider: string, model: string|null, status: number|null, detail: string }[]} */
+	const attempts = [];
 	// Hosts this request has already proven sick (a throttle, a dead key, an
 	// unreachable socket). Skipping their remaining rungs inside THIS request is
 	// the difference between paying one doomed attempt and paying one per model
@@ -445,6 +453,7 @@ export async function describeImage({
 			// and benching the sibling rung on that guess would discard the very
 			// redundancy the second rung exists to provide.
 			coolLane(order, p, { seconds: VISION_LANE_COOLDOWN_SECONDS, reason: 'health', hostWide: false });
+			attempts.push({ provider: p.name, model: p.model || null, status: null, detail: `unreachable: ${String(e.message).slice(0, 160)}` });
 			lastErr = Object.assign(new Error(`${p.name} vision unreachable: ${e.message}`), { status: 502, code: 'provider_unreachable' });
 			continue;
 		}
@@ -470,6 +479,7 @@ export async function describeImage({
 				hostWide: st === 429,
 			});
 			if (st === 429) sickHosts.add(laneHost(p));
+			attempts.push({ provider: p.name, model: p.model || null, status: st, detail: body.slice(0, 160) });
 			lastErr = Object.assign(
 				new Error(`${p.name} vision ${upstream.status}: ${body.slice(0, 200)}`),
 				{ status: 502, code: normalizeStatus(upstream.status) },
@@ -491,7 +501,7 @@ export async function describeImage({
 			raw: data,
 		};
 	}
-	throw lastErr || new VisionUnavailableError();
+	throw Object.assign(lastErr || new VisionUnavailableError(), { lanes: attempts });
 }
 
 // Convenience: describeImage + tolerant JSON parse of the reply. VLMs reliably
