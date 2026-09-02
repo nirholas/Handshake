@@ -272,7 +272,20 @@ const TAG_LB_INTERVAL_MS = 8000;
 // ends with no winner). Dead/downed players (W07) can't hold the zone.
 // How long a freshly joined client is given to attach its message handlers and
 // say 'ready' before the room broadcasts to it regardless. See _stillDeaf.
-const JOIN_SETTLE_MS = 3000;
+//
+// Generous on purpose. A client only reaches this point after downloading and
+// running the world bundle, and on a budget phone or a bad connection the gap
+// between the room accepting the join and the client wiring its handlers is
+// seconds, not milliseconds: at 320px on a loaded machine it ran past 30 ticks.
+// Waiting costs a client on an older bundle (which never says 'ready') nothing
+// it cannot recover, since each of these broadcasts is periodic state that comes
+// round again and the king sync is sent directly in onJoin either way.
+const JOIN_SETTLE_MS = 8000;
+// How long a client that never says 'ready' waits for its join snapshot. Matches
+// the broadcast window: sending sooner than that is sending into the same gap
+// this whole handshake exists to avoid, which is exactly what a 1.2s fallback did
+// when it was tried. A client that does say 'ready' never waits for this.
+const JOIN_SNAPSHOT_MS = JOIN_SETTLE_MS;
 const KING_ZONE = { x: 0, z: -12, r: 3.5 };
 const KING_ROUND_MS = 90_000;
 const KING_INTERMISSION_MS = 12_000;
@@ -536,6 +549,9 @@ export class WalkRoom extends Room {
 		// handlers, and when each session joined (see _stillDeaf).
 		this._readyClients = new Set();
 		this._joinedAt = new Map();
+		// Sessions whose join snapshot has gone out, so the 'ready' handshake and
+		// the fallback timer cannot both send it.
+		this._joinSnapshotSent = new Set();
 		// King of the Totem (R07): off-schema round + score state. `phase` is the
 		// round machine ('idle' waiting for players | 'active' round running |
 		// 'intermission' showing the winner). `scores` is sessionId → accumulated
@@ -622,7 +638,7 @@ export class WalkRoom extends Room {
 		// repaint with identical values, never a double-grant.
 		this.onMessage('ready', (client) => {
 			this._readyClients.add(client.sessionId);
-			this._resendJoinSnapshot(client);
+			this._flushJoinSnapshot(client, { force: true });
 		});
 		this.onMessage('move', (client, payload) => this._handleMove(client, payload));
 		this.onMessage('rename', (client, payload) => this._handleRename(client, payload));
@@ -889,9 +905,8 @@ export class WalkRoom extends Room {
 			// Hand the (re-)signed token back so the client persists it and replays
 			// it on the next join. Re-issued every join so an active guest's 90-day
 			// expiry never creeps up on them.
-			client.send('guestToken', { token: identity.guestToken });
-			// Kept for the 'ready' handshake below, which re-sends the join snapshot
-			// to a client that was not listening yet when the above went out.
+			// Held, not sent: it goes out with the rest of the join snapshot once the
+			// client can hear it. See _scheduleJoinSnapshot.
 			this._guestTokens.set(client.sessionId, identity.guestToken);
 		}
 		try { await hydratePlayer(playerId); } catch { /* memory-only fallback */ }
@@ -940,12 +955,6 @@ export class WalkRoom extends Room {
 		// W07: publish the wanted-star count peers can see (dead defaults false).
 		// A restored profile can carry saved heat from a prior session's crimes.
 		player.heat = heatStars(profile.heat);
-		this._sendProfile(client);
-		this._sendQuests(client);
-		// Build permissions: the per-player cap, current usage, and whether this player
-		// is the coin creator (so the HUD can reveal the clear-area moderation tool).
-		// Re-sent later if the creator lookup resolves after this join.
-		this._sendBuildPerms(client);
 
 		const tierTag = this.state.tier === 'holders' ? ' tier=holders' : '';
 		console.log(
@@ -984,7 +993,13 @@ export class WalkRoom extends Room {
 		// beat. Sending zone + phase here is what lets a late joiner render the ring
 		// and timer without waiting up to a full second.
 		if (this._king.phase === 'active') this._king.scores.set(client.sessionId, 0);
-		this._sendKingSync(client);
+
+		// Everything this room owes the new arrival (guest token, profile, quests,
+		// build permissions, the king sync) goes out together, once they can hear
+		// it. Sending from here put all of it on the wire while the client was
+		// still inside its own join await with no handlers attached, so Colyseus
+		// dropped the lot and warned on their console.
+		this._scheduleJoinSnapshot(client);
 	}
 
 	// Retire the reconnecting client's OWN previous session.
@@ -1057,6 +1072,7 @@ export class WalkRoom extends Room {
 		this._guestTokens.delete(client.sessionId);
 		this._readyClients.delete(client.sessionId);
 		this._joinedAt.delete(client.sessionId);
+		this._joinSnapshotSent.delete(client.sessionId);
 		// King of the Totem (R07): drop their current-round score and demote them if
 		// they were holding the zone. Their accumulated points are forfeited (a player
 		// who leaves can't win), and the next tick re-evaluates occupancy from scratch,
@@ -1263,7 +1279,10 @@ export class WalkRoom extends Room {
 			}
 		}
 		rows.sort((a, b) => b.timeMs - a.timeMs);
-		this.broadcast('tag', { event: 'state', itId, leaderboard: rows.slice(0, 8) });
+		// Same settling window as the beat and king ticks: this is a periodic state
+		// broadcast, so a client that misses one gets the next.
+		this.broadcast('tag', { event: 'state', itId, leaderboard: rows.slice(0, 8) },
+			{ except: this._stillDeaf() });
 	}
 
 	// ─── King of the Totem helpers (R07) ────────────────────────────────────────
@@ -1419,13 +1438,30 @@ export class WalkRoom extends Room {
 		return out;
 	}
 
-	/** Re-send everything onJoin sent this client, now that it has confirmed its
-	 *  message handlers are attached. See the 'ready' registration above for why.
-	 *  Safe to call for a client that already received all of it: each payload is
-	 *  a snapshot of current state, not a delta or a grant. */
-	_resendJoinSnapshot(client) {
-		if (!this.state.players.has(client.sessionId)) return; // left mid-handshake
-		const token = this._guestTokens.get(client.sessionId);
+	/** Queue the join snapshot for a client that has just arrived.
+	 *
+	 *  It is sent the moment they say 'ready', and at JOIN_SNAPSHOT_MS regardless
+	 *  for a client on an older bundle that never will. The fallback is short
+	 *  because this is the data the HUD is blank without (purse, jobs, build
+	 *  allowance), so nobody should be made to wait the full broadcast window
+	 *  for it. */
+	_scheduleJoinSnapshot(client) {
+		this.clock.setTimeout(() => this._flushJoinSnapshot(client), JOIN_SNAPSHOT_MS);
+	}
+
+	/** Send everything this room owes a new arrival.
+	 *
+	 *  The fallback sends at most once. The 'ready' handshake always sends, even
+	 *  if the fallback already fired: on a slow client the timer can expire while
+	 *  the handlers are still being attached, and a one-shot flush would then have
+	 *  spent itself on a client that could not yet hear it. Every payload is a
+	 *  snapshot of current state, so a second copy is a repaint, never a grant. */
+	_flushJoinSnapshot(client, { force = false } = {}) {
+		const id = client.sessionId;
+		if (!force && this._joinSnapshotSent.has(id)) return;
+		if (!this.state.players.has(id)) return; // left before we could tell them anything
+		this._joinSnapshotSent.add(id);
+		const token = this._guestTokens.get(id);
 		if (token) { try { client.send('guestToken', { token }); } catch { /* gone */ } }
 		try {
 			this._sendProfile(client);
