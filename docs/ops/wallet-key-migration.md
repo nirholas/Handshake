@@ -170,6 +170,43 @@ Manager. It is now a `secretKeyRef`.
 
 Read the current state at any time with `node scripts/migrate-plaintext-secrets.mjs --verify`.
 
+### The rest of the service went with it
+
+The master key was not the only credential sitting in the config. The same sweep moved
+**57 more**, in two updates (`three-ws-api-00406-nlg`, then `00407-m7c` for one that a
+killed earlier run had left as a version-less secret shell). The service now carries **81
+Secret Manager references and zero plaintext credentials**; `node
+scripts/migrate-plaintext-secrets.mjs --verify` reports `Verify: clean` and exits 0.
+
+Four vars were pointed at a secret that already existed rather than a fresh copy, because
+duplicating a live credential means a later rotation can update one copy and silently leave
+the other serving: `ECONOMY_MASTER_SECRET_BASE58` and `LAUNCHER_MASTER_SECRET_KEY_B64` and
+`X402_TREASURY_SECRET_BASE58` to their `wallet-*` secrets, and `DATABASE_URL` to the
+existing `DATABASE_URL` secret. The tool reports every other value collision it finds but
+never adopts one on its own: several of the matches are secrets belonging to OTHER services
+in this project (`agent-orders-*`, `sniper-*`), and pointing this service at one of those
+would couple two rotations that have no business being coupled.
+
+126 vars stayed as plaintext config, correctly: public identifiers (`ECONOMY_MASTER_ADDRESS`,
+`X402_FEE_PAYER_SOLANA`, every `SIGNER_*` threshold and `X402_*` cap), handles rather than
+values (every `*_KEY_ID`, which names a credential without being one), and 19 provider URLs. The URLs were the one
+judgment call worth making by measurement rather than by name: each value was checked for an
+embedded credential (a `?api-key=`-style parameter, or userinfo before the host) and only
+`DATABASE_URL` carried one, so only it moved. That check is what the tool applies now, so a
+future URL that does embed a key is classified as the credential it is.
+
+Two things the sweep surfaced that are NOT fixed here, because both need an owner decision:
+
+- `WALLET_ENCRYPTION_KEY` and `JWT_SECRET` hold the **same value** on production. The
+  custodial-wallet guard in `secret-box.js` requires a dedicated key and refuses the
+  `JWT_SECRET` fallback, and a var set to the same string passes that guard while defeating
+  its point. Changing it is a re-key, not a config edit: see the top of this file for what
+  happens when a wallet-encryption key changes without carrying the old one forward.
+- `X402_SEED_SOLANA_SECRET_BASE58` holds the same value as `LAUNCHER_MASTER_SECRET_KEY_B64`,
+  though `scripts/wire-master-wallet.mjs` assigns those two slots to different wallets. They
+  were given separate secrets rather than one shared secret so the drift can be corrected
+  later without a rotation touching both.
+
 ### The tool, and the Cloud Run gotcha it encodes
 
 `scripts/migrate-plaintext-secrets.mjs` does the whole move: it classifies every env var on

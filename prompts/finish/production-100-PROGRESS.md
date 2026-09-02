@@ -272,3 +272,71 @@ Worth knowing for the next agent: this ran alongside another agent on the same o
 Everything here reached `main` swept into that agent's commits (the shared worktree does
 `git add -A`), so the content landed even though almost none of it carries a commit of
 mine. Four commit attempts lost the `HEAD` ref race outright.
+
+
+## 2026-09-02: 03 master-key-hygiene (shipped; only the rotate-or-accept decision is left)
+
+Measured: `gcloud` was dead on the first three calls of this session
+("Reauthentication failed. cannot prompt during non-interactive execution", which is
+OWNER-ACTIONS row 15) and then started answering again a few minutes later with no
+intervention, so row 15's premise is intermittent, not standing. With it working:
+`ECONOMY_MASTER_SECRET_BASE58` was a plaintext `value:` on `three-ws-api` exactly as the
+order described, and it was not alone: **57 more credential-bearing vars** were literals
+too, including `DATABASE_URL`, `WALLET_ENCRYPTION_KEY`, `JWT_SECRET`, `CRON_SECRET`,
+`OPENAI_API_KEY`, four wallet secret keys and the `OFFER_RECEIPT_JWK` signing key. Any
+principal with `run.services.get` on the project could read all of them out of the service
+config. Baseline before touching anything: `/api/healthz` `status: ok`, subsystems
+7 ok / 3 degraded / 2 down / 1 unknown, revision `three-ws-api-00404-ph7`.
+
+Did: built `scripts/migrate-plaintext-secrets.mjs` (dry run by default, never prints or
+writes a secret value, classifies every var, reuses a secret that already holds the value
+instead of minting a copy, grants the runtime SA `secretAccessor` on that one secret,
+flips in one update, then re-reads the service and asserts the end state). Migrated the
+master first and verified it alone, then swept the rest.
+
+**End state: 81 Secret Manager references, ZERO plaintext credentials, 100% of traffic on
+`three-ws-api-00407-m7c`.** `--verify` reports `Verify: clean` and exits 0.
+
+Two verifications, both read live rather than assumed:
+1. Healthz against the baseline is strictly better, nothing regressed: 10 ok / 1 degraded /
+   2 down. the two RPC subsystems went from degraded to `premium RPC healthy` and `4/4 paid
+   lanes serving` (those provider keys resolve out of Secret Manager), `database` ok proves
+   `DATABASE_URL` resolves, `resend: configured` proves `RESEND_API_KEY` does. The two that
+   are still down (`x402_settle` on the sponsor floor, `agent_index` on crawl lag) were
+   down before and are OWNER-ACTIONS row 2 and other work.
+2. Master signing path: the treasury sweep writes a heartbeat row to
+   `economy_master_ledger` carrying the pubkey it derived from the loaded secret. Revision
+   `00406-nlg` was created at 19:58:46Z and the ledger kept writing through 20:02:23Z under
+   `WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW`, so the container reads the secret, decodes
+   64 bytes and derives the right wallet. No cron was triggered by hand: triggering
+   `treasury-topup` moves SOL, which is stop-and-ask gate 1.
+
+Fixed five callers the migration would otherwise have broken, all of which read
+`env[].value` off `describe` and would have silently gotten `undefined`:
+`scripts/create-gcp-scheduler.mjs` (CRON_SECRET, which signs the Authorization header on
+every one of the 112 cron jobs) and `rug-signature.mjs` / `seed-sniper-experiments.mjs` /
+`sniper-evolve.mjs` (DATABASE_URL). They now share `scripts/lib/service-env.mjs`, which
+resolves a literal or a reference, and `scripts/read-service-env.mjs` gives an operator the
+same thing on the command line. Ten runbook passages that told a reader to get a credential
+out of `describe` were corrected, CLAUDE.md's credential row included, since that line is
+the first thing every agent reads when a credential is missing. 25 new tests across
+`tests/migrate-plaintext-secrets.test.js` and `tests/service-env-resolver.test.js`, plus 3
+in `tests/cron-scheduler-sync.test.js`; `check:rules` clean on every touched path.
+
+Left: OWNER-ACTIONS row 4, narrowed to what it always actually was: the master key sat
+readable in the service config for some window, so rotate-or-accept is a judgment about who
+held project viewer access in that period. The runbook section in
+`docs/ops/wallet-key-migration.md` now carries the exact rotation commands, owner-gated at
+the fund move. Two findings for that same row, both needing an owner call and neither
+safe for an agent to change: `WALLET_ENCRYPTION_KEY` and `JWT_SECRET` hold the same value
+on production (which defeats the dedicated-key guard in `secret-box.js` while passing it),
+and `X402_SEED_SOLANA_SECRET_BASE58` holds the same value as
+`LAUNCHER_MASTER_SECRET_KEY_B64` though `wire-master-wallet.mjs` assigns them to different
+wallets. Order file deleted.
+
+Not mine, found while verifying and left alone: `npm run check:claude` and one case in
+`tests/cron-scheduler-sync.test.js` fail on a cron count that another agent is mid-edit on
+in `vercel.json` (README and `docs/build.md` say 111, `vercel.json` declared 113 then 112
+within the hour, and it briefly carried a duplicate `print-orders-sync` entry). One
+`npm run audit:docs` finding, `docs/materialize.md` missing from `data/pages.json`, belongs
+to the Materialize work committed today; `data/pages.json` is dirty in that agent's tree.
