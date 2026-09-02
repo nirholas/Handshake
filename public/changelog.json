@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-02T21:35:59.568Z",
+	"generated_at": "2026-09-02T21:37:37.970Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -205,6 +205,16 @@
 				"sdk",
 				"docs",
 				"security"
+			]
+		},
+		{
+			"date": "2026-09-02",
+			"type": "update",
+			"title": "Keyboard users can move past the Create page hero card",
+			"summary": "The recommended card on /create wrapped its rotating 3D preview inside the button itself, so the preview took a tab stop of its own and screen readers announced a control inside a control. The preview is now decorative, as it was always meant to be: the whole card is one target, and the model still wakes up and rotates when you hover or tab to it.",
+			"link": "/create",
+			"tags": [
+				"fix"
 			]
 		},
 		{
