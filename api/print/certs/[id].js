@@ -29,9 +29,10 @@ export default wrap(async (req, res) => {
 	const rl = await limits.mcp3dStatus(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	const url = new URL(req.url, 'http://localhost');
-	const raw = url.searchParams.get('id') || '';
-	const id = String(raw).trim().toLowerCase();
+	// The router injects the `[id]` path segment into req.query; the path itself
+	// is the fallback for a direct dispatch that skipped the router.
+	const fromPath = String(req.url || '').split('?')[0].split('/').filter(Boolean).pop() || '';
+	const id = String(req.query?.id ?? fromPath).trim().toLowerCase();
 	if (!CERT_ID_RE.test(id)) {
 		return json(res, 400, { error: 'invalid certificate id' });
 	}

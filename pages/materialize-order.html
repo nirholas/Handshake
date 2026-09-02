@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Your print · Materialize · three.ws</title>
+	<meta name="description" content="Track a three.ws Materialize print order from quote to doorstep: every status change with its real timestamp, the prepared model, tracking once it ships, and the on-chain certificate." />
+	<meta name="robots" content="noindex, follow" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/fonts/fonts.css" />
+	<script src="/model-viewer-meshopt.js"></script>
+	<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js" integrity="sha384-sr9b4Ux0WhAUGclJ0ym0FSY2zSOMmNSn0bP/SA0e6bNCrpn/5W3QL8mm+LdlQMKw" crossorigin="anonymous"></script>
+	<style>
+		:root {
+			--mo-line: rgba(255, 255, 255, 0.09);
+			--mo-panel: rgba(255, 255, 255, 0.032);
+			--mo-ink-2: rgba(255, 255, 255, 0.6);
+			--mo-ink-3: rgba(255, 255, 255, 0.4);
+			--mo-done: #2fbf71;
+			--mo-warn: #e0a33a;
+			--mo-stop: #e05a4a;
+			--mo-accent: var(--accent, #7c5cff);
+		}
+		[data-theme='light'] {
+			--mo-line: rgba(0, 0, 0, 0.11);
+			--mo-panel: rgba(0, 0, 0, 0.024);
+			--mo-ink-2: rgba(0, 0, 0, 0.64);
+			--mo-ink-3: rgba(0, 0, 0, 0.46);
+		}
+
+		.mo-wrap { max-width: 980px; margin: 0 auto; padding: clamp(1.25rem, 3.5vw, 2.75rem) 1.1rem 5rem; }
+		.mo-back { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 12.5px; color: var(--mo-ink-3); text-decoration: none; margin-bottom: 1.1rem; }
+		.mo-back:hover { color: inherit; }
+		.mo-back:focus-visible { outline: 2px solid var(--mo-accent); outline-offset: 3px; border-radius: 6px; }
+
+		.mo-head { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 1.4rem; align-items: start; margin-bottom: 1.6rem; }
+		@media (max-width: 760px) { .mo-head { grid-template-columns: 1fr; } }
+		.mo-stage {
+			border: 1px solid var(--mo-line); border-radius: 16px; overflow: hidden; aspect-ratio: 1;
+			background: radial-gradient(120% 90% at 50% 8%, rgba(255, 255, 255, 0.07), transparent 62%), var(--mo-panel);
+		}
+		.mo-stage model-viewer { width: 100%; height: 100%; background: transparent; }
+		.mo-stage-empty { width: 100%; height: 100%; display: grid; place-content: center; gap: 0.5rem; justify-items: center; color: var(--mo-ink-3); font-size: 12.5px; }
+
+		.mo-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--mo-ink-3); margin: 0 0 0.6rem; }
+		.mo-title { font-size: clamp(1.4rem, 3.6vw, 2rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; margin: 0 0 0.7rem; }
+		.mo-sub { font-size: 13.5px; line-height: 1.6; color: var(--mo-ink-2); margin: 0 0 1rem; }
+		.mo-specs { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.55rem; }
+		.mo-spec { border: 1px solid var(--mo-line); border-radius: 10px; padding: 0.5rem 0.65rem; }
+		.mo-spec dt { font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--mo-ink-3); margin: 0 0 0.15rem; }
+		.mo-spec dd { font-size: 13px; margin: 0; font-weight: 600; }
+
+		.mo-panel { border: 1px solid var(--mo-line); border-radius: 16px; background: var(--mo-panel); padding: 1.2rem 1.2rem 1.35rem; }
+		.mo-panel + .mo-panel { margin-top: 0.9rem; }
+		.mo-h2 { font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--mo-ink-3); margin: 0 0 1rem; }
+
+		/* The rail */
+		.mo-rail { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+		.mo-step { position: relative; display: grid; grid-template-columns: 26px 1fr; gap: 0.85rem; padding-bottom: 1.15rem; }
+		.mo-step:last-child { padding-bottom: 0; }
+		.mo-step::before {
+			content: ''; position: absolute; left: 12px; top: 22px; bottom: 0; width: 2px; background: var(--mo-line);
+		}
+		.mo-step:last-child::before { display: none; }
+		.mo-step.is-done::before { background: var(--mo-done); }
+		.mo-dot {
+			width: 26px; height: 26px; border-radius: 50%; display: grid; place-content: center; z-index: 1;
+			border: 2px solid var(--mo-line); background: var(--bg, #0b0b0f); color: var(--mo-ink-3); font-size: 11px; font-weight: 700;
+		}
+		.mo-step.is-done .mo-dot { border-color: var(--mo-done); color: var(--mo-done); }
+		.mo-step.is-current .mo-dot { border-color: var(--mo-accent); color: var(--mo-accent); box-shadow: 0 0 0 4px rgba(124, 92, 255, 0.16); }
+		.mo-step.is-current .mo-dot::after {
+			content: ''; width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: mo-pulse 1.8s ease-in-out infinite;
+		}
+		@keyframes mo-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.45; transform: scale(0.75); } }
+		@media (prefers-reduced-motion: reduce) { .mo-step.is-current .mo-dot::after { animation: none; } }
+		.mo-step.is-stopped { opacity: 0.4; }
+		.mo-step-label { font-size: 14px; font-weight: 640; margin: 3px 0 0.15rem; }
+		.mo-step-blurb { font-size: 12.5px; line-height: 1.5; color: var(--mo-ink-2); margin: 0; }
+		.mo-step-at { font-size: 11.5px; color: var(--mo-ink-3); margin: 0.25rem 0 0; }
+		.mo-step-note { font-size: 12.5px; line-height: 1.5; margin: 0.35rem 0 0; padding: 0.45rem 0.6rem; border-left: 2px solid var(--mo-line); color: var(--mo-ink-2); }
+
+		.mo-waiting { display: flex; gap: 0.55rem; align-items: flex-start; font-size: 12.5px; line-height: 1.55; color: var(--mo-ink-2); margin-top: 1.1rem; padding-top: 1rem; border-top: 1px solid var(--mo-line); }
+		.mo-waiting svg { flex: none; margin-top: 2px; color: var(--mo-ink-3); }
+
+		.mo-branch { border-left: 3px solid var(--mo-stop); border-radius: 10px; background: rgba(224, 90, 74, 0.08); padding: 0.85rem 0.95rem; margin-bottom: 1.1rem; }
+		.mo-branch h3 { font-size: 13.5px; font-weight: 660; margin: 0 0 0.3rem; }
+		.mo-branch p { font-size: 12.5px; line-height: 1.55; color: var(--mo-ink-2); margin: 0; }
+
+		.mo-row { display: flex; flex-wrap: wrap; gap: 0.55rem; align-items: center; }
+		.mo-btn {
+			font: inherit; font-size: 13px; font-weight: 620; padding: 9px 16px; border-radius: 10px; cursor: pointer; text-decoration: none;
+			border: 1px solid var(--mo-line); background: transparent; color: inherit; display: inline-flex; align-items: center; gap: 0.4rem;
+			transition: border-color 0.16s ease, transform 0.12s ease;
+		}
+		.mo-btn:hover { border-color: currentColor; transform: translateY(-1px); }
+		.mo-btn:focus-visible { outline: 2px solid var(--mo-accent); outline-offset: 2px; }
+		.mo-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; word-break: break-all; }
+
+		.mo-skel { height: 15px; border-radius: 6px; background: rgba(128, 128, 128, 0.16); animation: mo-fade 1.4s ease-in-out infinite; }
+		@keyframes mo-fade { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
+		@media (prefers-reduced-motion: reduce) { .mo-skel { animation: none; } }
+		.mo-notice { border: 1px solid var(--mo-line); border-left-width: 3px; border-left-color: var(--mo-stop); border-radius: 12px; padding: 0.95rem 1rem; font-size: 13.5px; line-height: 1.6; }
+		.mo-notice h2 { font-size: 15px; font-weight: 680; margin: 0 0 0.4rem; }
+		.mo-notice p { color: var(--mo-ink-2); margin: 0 0 0.7rem; }
+	</style>
+</head>
+<body>
+	<div class="mo-wrap">
+		<a class="mo-back" href="/materialize">
+			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
+			Materialize
+		</a>
+
+		<div id="mo-loading">
+			<div class="mo-panel">
+				<div class="mo-skel" style="width: 44%; margin-bottom: 0.9rem;"></div>
+				<div class="mo-skel" style="width: 76%; margin-bottom: 0.6rem;"></div>
+				<div class="mo-skel" style="width: 62%;"></div>
+			</div>
+		</div>
+
+		<div id="mo-error" hidden></div>
+
+		<main id="mo-main" hidden>
+			<div class="mo-head">
+				<div class="mo-stage" id="mo-stage">
+					<div class="mo-stage-empty" id="mo-stage-empty">
+						<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M12 2 3 7v10l9 5 9-5V7z" /><path d="M3 7l9 5 9-5M12 12v10" /></svg>
+						<span>Preparing the print file</span>
+					</div>
+				</div>
+				<div>
+					<p class="mo-eyebrow" id="mo-eyebrow">Materialize order</p>
+					<h1 class="mo-title" id="mo-title">Your print</h1>
+					<p class="mo-sub" id="mo-sub"></p>
+					<dl class="mo-specs" id="mo-specs"></dl>
+				</div>
+			</div>
+
+			<div class="mo-panel">
+				<h2 class="mo-h2">Progress</h2>
+				<div id="mo-branch"></div>
+				<ol class="mo-rail" id="mo-rail"></ol>
+				<div class="mo-waiting" id="mo-waiting" hidden>
+					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+					<span id="mo-waiting-text"></span>
+				</div>
+			</div>
+
+			<div class="mo-panel" id="mo-ship-panel" hidden>
+				<h2 class="mo-h2">Shipment</h2>
+				<div class="mo-row" id="mo-ship-row"></div>
+			</div>
+
+			<div class="mo-panel" id="mo-cert-panel" hidden>
+				<h2 class="mo-h2">Certificate</h2>
+				<p class="mo-sub" id="mo-cert-text"></p>
+				<div class="mo-row" id="mo-cert-row"></div>
+			</div>
+		</main>
+	</div>
+
+	<script src="/nav.js"></script>
+	<script type="module" src="/src/materialize-order.js"></script>
+</body>
+</html>

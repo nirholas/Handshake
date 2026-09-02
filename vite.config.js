@@ -540,6 +540,8 @@ const appConfig = {
 				'nav-tier-badge': resolve(__dirname, 'src/nav-tier-badge.js'),
 				i18n: resolve(__dirname, 'src/i18n.js'),
 				drops: resolve(__dirname, 'pages/drops.html'),
+				materialize: resolve(__dirname, 'pages/materialize.html'),
+				'materialize-order': resolve(__dirname, 'pages/materialize-order.html'),
 				'materialize-ops': resolve(__dirname, 'pages/materialize-ops.html'),
 				'drop-collection': resolve(__dirname, 'pages/drop-collection.html'),
 				spotlight: resolve(__dirname, 'pages/spotlight.html'),
@@ -1785,6 +1787,8 @@ const appConfig = {
 					'/likeness-bench/': resolve(root, 'pages/likeness-bench.html'),
 					'/payment-outcomes': resolve(root, 'pages/payment-outcomes.html'),
 					'/payment-outcomes/': resolve(root, 'pages/payment-outcomes.html'),
+					'/materialize': resolve(root, 'pages/materialize.html'),
+					'/materialize/': resolve(root, 'pages/materialize.html'),
 					'/inspect': resolve(root, 'pages/inspect.html'),
 					'/inspect/': resolve(root, 'pages/inspect.html'),
 					'/render-lab': resolve(root, 'pages/render-lab.html'),
@@ -2167,6 +2171,9 @@ const appConfig = {
 					// /materialize/insert/:certId  → the printable package insert card (ops).
 					else if (!filePath && /^\/materialize\/insert\/[0-9a-f]{24}\/?$/.test(path))
 						filePath = resolve(root, 'pages/print-insert.html');
+					// /materialize/orders/:id  → one print order's timeline (uuid).
+					else if (!filePath && /^\/materialize\/orders\/[0-9a-fA-F-]{36}\/?$/.test(path))
+						filePath = resolve(root, 'pages/materialize-order.html');
 					// /drops/:slug  → one generative 3D collection. Declared ahead of the
 					// /drop/:id rule below so the singular sealed-gift route and this
 					// plural collection route can never shadow each other.

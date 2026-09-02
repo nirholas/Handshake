@@ -2041,6 +2041,14 @@
 			"dest": "/print-insert.html"
 		},
 		{
+			"src": "/materialize/orders/([0-9a-fA-F-]{36})/?",
+			"dest": "/materialize-order.html"
+		},
+		{
+			"src": "/materialize/?",
+			"dest": "/materialize.html"
+		},
+		{
 			"src": "/p/([a-z0-9-]+)/?",
 			"dest": "/p/index.html"
 		},
@@ -6328,10 +6336,6 @@
 		{
 			"path": "/api/cron/companion-poll",
 			"schedule": "*/2 * * * *"
-		},
-		{
-			"path": "/api/cron/print-orders-sync",
-			"schedule": "17 * * * *"
 		},
 		{
 			"path": "/api/cron/feedback-triage",
