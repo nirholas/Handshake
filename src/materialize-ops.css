@@ -434,6 +434,9 @@
 .mo-textarea,
 .mo-select {
 	width: 100%;
+	/* The page has no global border-box reset, so width:100% plus padding and a
+	   border pushed the textarea 22px past the drawer's right edge. */
+	box-sizing: border-box;
 	padding: 8px 10px;
 	border: 1px solid var(--color-border);
 	border-radius: var(--radius-md, 10px);
