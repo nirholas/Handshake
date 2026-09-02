@@ -4997,7 +4997,10 @@ hand-enumerated, so it can't drift from what's actually deployed), plus the quic
 below and links to this page, the OpenAPI spec, and the x402 docs. **Machine-readable spec:**
 [three.ws/openapi.json](https://three.ws/openapi.json) — every `/api/v1/x/*` path generated
 from the same registry (`api/v1/_providers.js` `providerCatalog()`), tagged `Crypto API
-(aggregator)`. Adding a provider directory in the repo: [`api/v1/README.md`](../api/v1/README.md).
+(aggregator)`. Every paid `/api/x402/*` operation is generated the same way, from the
+service catalog (`api/_lib/service-catalog/services/`), so the document lists all of them
+with their real price, inputs and 402 response rather than the subset someone remembered to
+hand-write. Adding a provider directory in the repo: [`api/v1/README.md`](../api/v1/README.md).
 
 ```
 GET  /api/v1/x                              # discovery: every provider + endpoint

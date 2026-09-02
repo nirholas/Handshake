@@ -24,10 +24,10 @@ a `retry-after` header.
 ## The response envelope
 
 ```json
-{ "ok": true, "degraded": [], "generated_at": "…", "inbound": {…}, "ring_settle": {…}, "sponsor": {…} }
+{ "ok": true, "degraded": [], "generated_at": "…", "inbound": {…}, "ring_settle": {…}, "sponsor": {…}, "stranded_custody": {…} }
 ```
 
-The three panels are read independently, so one failing never blanks the others
+The panels are read independently, so one failing never blanks the others
 (an RPC outage is exactly when the settle panels matter most). `ok` reports
 whether the BOARD rendered, never whether payments are healthy: that verdict is
 per panel. A panel that threw is replaced by `{ "error": "…" }`, named in
@@ -35,7 +35,7 @@ per panel. A panel that threw is replaced by `{ "error": "…" }`, named in
 convention `/api/ops/health` uses. Alert on `degraded` being non-empty: a board
 that cannot see is not a board that is fine.
 
-## The three panels
+## The panels
 
 ### `inbound` (from `x402_audit_log`)
 
@@ -110,6 +110,39 @@ The fee wallet that pays every settle's SOL fee:
   which is the operational figure: settling stops at the floor, not at zero.
 - `runway_status` is the verdict the alert fires on (see below), and the
   dashboard card colours from it so the board and the page cannot disagree.
+
+### `stranded_custody` (custodial key health, snapshot-cached)
+
+Custody the platform has LOST: wallets whose `encrypted_solana_secret` no longer
+decrypts, so their SOL is visible on chain and can never be signed for. It sits
+on this board because it is a payment-outcome fact: the treasury self-heal cannot
+reclaim that SOL and the customers holding it cannot withdraw it. Before this
+panel the only way to see the number was running
+`scripts/audit-custodial-key-health.mjs` by hand, so weeks passed between
+readings. The measurement itself is shared with that script
+(`api/_lib/custodial-key-health.js`), so the CLI and the board cannot disagree.
+
+- `status` is the verdict and `reason` says why:
+  - `stranded` / `sealed`: funded wallets are sealed. `sol_stranded` and its
+    `_platform` / `_customer` split are a real measurement.
+  - `unknown` / `partial_read`: some sealed wallet never got a balance read (an
+    RPC chunk failed), so the totals are a FLOOR, not a measurement. Re-read
+    after the lane recovers rather than quoting the number.
+  - `unknown` / `key_mismatch`: every wallet failed to decrypt. That is one wrong
+    key for this deployment, essentially never a fleet of separately sealed
+    wallets.
+  - `unknown` / `no_decryption_key`: this process holds no custodial key at all
+    (only possible outside production, where secret-box fails closed).
+  - `clear`: nothing funded is sealed.
+- Under either `unknown` key verdict the SOL fields are `null` rather than a
+  number with a caveat attached. An unattributable total is exactly the phantom
+  figure this surface exists to stop publishing.
+- `brief` points at [stranded-wallets.md](stranded-wallets.md), the standing owner
+  decision on the customer balances, whenever customer SOL is confirmed stranded.
+- The panel is snapshot-cached for six hours per instance and concurrent reads
+  share one scan (`cache_age_seconds` reports the snapshot's age). Custody loss is
+  a rotation event, not a live metric, so polling the board never turns into a
+  fleet-wide RPC sweep.
 
 ### The runway alert
 
@@ -193,11 +226,19 @@ curl -s https://three.ws/api/x402/three-intel | jq '.accepts[].network'
    `nothing_reclaimable`: the owner has to send SOL.
 4. `replay_stages_24h` nonzero: captured X-PAYMENT headers are being re-sent;
    the guard is working if the settles panel is unaffected.
+5. `stranded_custody.status` is `stranded`: capital is gone, not late. No cron
+   run, RPC tier, or deposit reaches it. If `sol_stranded_customer` is above
+   zero, that half is a support obligation and outranks every ops number on this
+   board: read [stranded-wallets.md](stranded-wallets.md). A `key_mismatch`
+   verdict is a deployment config problem instead, and the fix is the key, not
+   the wallets.
 
 ## Related
 
 - `api/ops/payment-outcomes.js` (the endpoint),
   `api/_lib/ops/x402-settle-health.js` (the sensor),
+  `api/_lib/custodial-key-health.js` (the custody-loss measurement shared with
+  `scripts/audit-custodial-key-health.mjs`),
   `api/_lib/x402/wallet-balance-monitor.js` (balances, floors, and the runway
   alert), `api/_lib/x402/sponsor-runway.js` (the burn measurement, the verdict,
   and the alert copy), `api/_lib/x402/audit-log.js` (the durable ledger the

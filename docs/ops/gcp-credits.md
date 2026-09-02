@@ -1631,3 +1631,45 @@ found while smoke-testing `/dashboard/spend` for prompt 07, not caused by testin
 artifact) or has been silently broken since 2026-07-07, with a stable environment (no
 concurrent deploys), before attempting a fix — the evidence above rules out several
 easy explanations already.
+
+---
+
+## Animation seeding: accept rate and cost (measured 2026-09-02)
+
+The text-to-motion lane (`model-text2motion`, us-east4) is live and generating.
+Subsystem doc, including every gate threshold and how it was derived:
+[docs/animation-seeding.md](../animation-seeding.md).
+
+**Quality gate calibration.** Against a 60-clip sample of the authored Mixamo library
+the gate accepts **87%**. The rejects are all clips legitimately out of spec for
+generated content rather than gate errors: sliced sub-clips a few frames long, static
+pose assets with zero motion, and one hit reaction that genuinely slides.
+
+**Accept rate on generated clips: 5 of 5** on the corrected gate. That sample is small
+and is stated as such. The number that matters more is how the first gate got there:
+an earlier version tested adjacent **local** quaternions and rejected **100%** of
+generated clips (24 of 24) on a `frame_pop` rule. Inspection showed the sampler emits
+a 180 degree twist about a bone's own axis that the child bone cancels, which is
+invisible on the mesh (a shoulder and forearm flipping together on 39 of 119 frames
+while the hand never moved more than 1.1 cm per frame). The gate now runs forward
+kinematics and judges world-space joint positions. Generated clips score 1.3x to 2.5x
+on world-space continuity against the authored library's median of 1.69 and worst case
+of 5.79, so the generated motion is as smooth as the curated library.
+
+**Why the sample is only 5.** `/api/forge-motion` is a public endpoint rate limited per
+IP. A 40-clip batch generated 2 clips and then took `429 rate_limited` with a
+`retry_after` of 2947 seconds on the remaining 38. Bulk seeding must use the
+in-process transport (`scripts/gcp/seed-motion.mjs` with `GCP_TEXT2MOTION_URL` set),
+which calls the provider directly and is not rate limited.
+
+**Cost.** Wall time is **35 to 45 seconds per clip** end to end (submit to clip JSON
+fetched), measured over 29 real generations. Cost per accepted asset in dollars is not
+recorded here yet: it needs `scripts/gcp/burn-report.mjs`, which needs a working
+`gcloud` credential, and this session's had expired (`Reauthentication failed`). Run
+the burn report after the next seeding batch and record the figure here.
+
+**Catalog position.** 58,544 avatars, 13,929 added in the previous 7 days (roughly
+1,600 a day). The avatar seed cron and its quality gate are live and no longer the
+bottleneck; the earlier figure of 18,622 at ~15 a day in the work order is stale.
+The generated-clip half of the library is still at zero published: the clip library
+serves 2,874 clips and every one is the `mx-` Mixamo import.
