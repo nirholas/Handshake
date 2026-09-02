@@ -1,5 +1,5 @@
 /**
- * /spotlight/:id — one Agent Spotlight entry.
+ * /spotlight/:id renders one Agent Spotlight entry.
  *
  * The reason this page exists: an entry's write-up runs to 4,000 characters and
  * the index could only ever show three clamped lines of it. A showcase whose
@@ -96,12 +96,14 @@ function breadcrumb(e) {
 }
 
 function badges(e) {
-	return el('div', { class: 'sp-detail-badges' }, [
-		el('span', { class: 'sp-badge', text: categoryLabel(e.category) }),
+	// No category chip here: the breadcrumb directly above already names it, and
+	// printing it twice in two styles reads as a rendering bug.
+	const chips = [
 		e.agent.is_registered ? el('span', { class: 'sp-badge sp-badge-onchain', text: 'On-chain' }) : null,
 		e.featured ? el('span', { class: 'sp-badge', text: "Editor's pick" }) : null,
 		e.source === 'curated' ? el('span', { class: 'sp-badge sp-badge-curated', text: 'Curated' }) : null,
-	]);
+	].filter(Boolean);
+	return chips.length ? el('div', { class: 'sp-detail-badges' }, chips) : null;
 }
 
 // A curated entry says so in words, not just a badge. The badge tells you the
@@ -184,7 +186,7 @@ function factsPanel(e) {
 
 function shareRow(e) {
 	const url = `https://three.ws/spotlight/${e.id}`;
-	const shareText = `${e.title} — ${e.agent.name} on three.ws`;
+	const shareText = `${e.title} (${e.agent.name} on three.ws)`;
 
 	const copy = el('button', { type: 'button', class: 'sp-btn sp-btn-sm', text: 'Copy link' });
 	copy.addEventListener('click', async () => {
@@ -425,10 +427,13 @@ function render() {
 			el('p', { class: 'sp-detail-nostory', text: 'No write-up yet, just the one-liner above.' }),
 	]);
 
-	root.replaceChildren(
+	// Filtered, because replaceChildren() coerces a null argument to the literal
+	// string "null" and prints it on the page. Only el() filters its children;
+	// this call is the one place a section can legitimately be absent.
+	const sections = [
 		el('div', { class: 'sp-detail-hero' }, [stageFor(entry, { eager: true }), header]),
 		ownerControls(entry),
-		editorPanel(),
+		entry.editable_by_me ? editorPanel() : null,
 		el('p', { class: 'sp-form-note', id: 'sp-detail-note', role: 'status', 'aria-live': 'polite' }),
 		el('div', { class: 'sp-detail-body' }, [main, factsPanel(entry)]),
 		el('section', { class: 'sp-related', id: 'sp-related', hidden: true }),
@@ -436,7 +441,8 @@ function render() {
 			el('a', { class: 'sp-btn', href: '/spotlight', text: 'Back to the showcase' }),
 			el('a', { class: 'sp-btn', href: '/spotlight?submit=1', text: 'Showcase your own agent' }),
 		]),
-	);
+	].filter(Boolean);
+	root.replaceChildren(...sections);
 	root.setAttribute('aria-busy', 'false');
 	editRefs = null;
 }
