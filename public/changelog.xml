@@ -191,6 +191,14 @@
 			<description>When the payment rail runs short of the SOL it needs to settle, the platform first tries to heal itself: it looks across its own agent wallets for idle funds and pulls them back to the wallet that pays fees. The preview of that plan was counting wallets it could never open. Eight custodial wallets were encrypted under a key retired during the 2026-07 move to Google Cloud, so the preview kept advertising their balance as available while every real run failed on them, and the plan looked the same the next time anyone checked. The preview now opens each wallet's key before listing it, exactly as a real run does, and reports the ones it cannot open separately with the reason. A plan that reads as capital on hand when the capital is unreachable is worse than no plan at all, and it cost two separate investigations. The health check's settlement hint was corrected to match: it no longer says owner funds are needed only once every wallet reports being at its floor, because a sealed wallet never reports that.</description>
 		</item>
 		<item>
+			<title>Your Materialize order now tells you where it is, every step</title>
+			<link>https://three.ws/materialize</link>
+			<guid isPermaLink="false">2026-09-02:Your Materialize order now tells you where it is, every step</guid>
+			<pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Ordering a physical print is only half the promise; the other half is knowing it is actually happening. Every Materialize order now moves through a real fulfillment queue that a person works, and every step it takes is recorded and sent to you: it went to the production lane, it is on the printer, it is in quality check, it shipped, here is the tracking number and the carrier. Nothing skips a step and nothing goes backwards, because the order's status follows one fixed set of rules rather than whatever the last message said. If a print fails quality check it goes back to the printer rather than out the door. If a job goes quiet for longer than the lead time you were quoted, we get told before you have to ask. And when a print bureau's own system reports in, we check it really came from them and ignore repeats, so a retried message can never leave your order in a state it was never in.</description>
+		</item>
+		<item>
 			<title>3D Drops</title>
 			<link>https://three.ws/drops</link>
 			<guid isPermaLink="false">2026-09-01:3D Drops</guid>

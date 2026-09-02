@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-02T19:43:20.615Z",
+	"generated_at": "2026-09-02T19:50:36.665Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -247,6 +247,16 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-09-02",
+			"type": "update",
+			"title": "Your Materialize order now tells you where it is, every step",
+			"summary": "Ordering a physical print is only half the promise; the other half is knowing it is actually happening. Every Materialize order now moves through a real fulfillment queue that a person works, and every step it takes is recorded and sent to you: it went to the production lane, it is on the printer, it is in quality check, it shipped, here is the tracking number and the carrier. Nothing skips a step and nothing goes backwards, because the order's status follows one fixed set of rules rather than whatever the last message said. If a print fails quality check it goes back to the printer rather than out the door. If a job goes quiet for longer than the lead time you were quoted, we get told before you have to ask. And when a print bureau's own system reports in, we check it really came from them and ignore repeats, so a retried message can never leave your order in a state it was never in.",
+			"link": "/materialize",
+			"tags": [
+				"feature"
 			]
 		},
 		{
