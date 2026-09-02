@@ -121,6 +121,7 @@ const KNOWN_UNUSED_PEERS = new Set([
 	'react-native-webrtc|react-native', // web build never hits RN paths
 	'three-gpu-pathtracer|xatlas-web', // UVUnwrapper-only; we import WebGLPathTracer from the index, which never re-exports UVUnwrapper
 	'@web3auth/auth|color', // referenced only in whitelabel .d.ts type declarations, never imported in dist runtime code
+	'manifold-3d|esbuild-wasm', // only lib/bundler.js (the manifold-cad editor) imports esbuild; we load manifold.js, the core WASM kernel, which never touches it
 ]);
 
 function packageNameFromLockPath(lockPath) {
