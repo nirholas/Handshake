@@ -25760,6 +25760,41 @@
 				"feature"
 			],
 			"link": "/materialize"
+		},
+		{
+			"date": "2026-09-02",
+			"title": "The gallery and your avatar list stay fast as the catalog grows",
+			"summary": "There are now more than 58,000 avatars on three.ws, and about 1,600 more arrive every day. Two of the pages that read that catalog were quietly getting slower every single day, because they asked the database to look at every avatar in existence just to show you fifty of them. Both now read only the page you asked for, and the gallery's headline counts are worked out once a minute instead of once per visitor. Your dashboard list is roughly a hundred times quicker to answer, and, more to the point, it will still be that quick when the catalog is ten times bigger.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/gallery"
+		},
+		{
+			"date": "2026-09-02",
+			"title": "The animation gallery shows you clips instead of a spinner",
+			"summary": "The motion library is nearly 3,000 clips and growing, and /animations used to download the entire catalog before it would draw a single card. Now the first batch of clips appears as soon as it arrives and the rest fill in behind it while you are already browsing, searching and filtering. However large the library gets, you start looking at animations after the same short wait.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/animations"
+		},
+		{
+			"date": "2026-09-02",
+			"title": "Text-to-animation is no longer rationed like a paid service",
+			"summary": "Turning a sentence into an animation runs entirely on our own GPUs, but it was being counted against the allowance meant for services we pay a third party for: thirty a day, per person. It now uses the free allowance that lane deserves, which is eight times higher, so you can iterate on a motion prompt properly instead of running out halfway through.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/animations"
+		},
+		{
+			"date": "2026-09-02",
+			"title": "When image understanding fails, it now says which part failed",
+			"summary": "Our image understanding runs through a chain of providers so one outage cannot take the feature down. When every link in that chain failed, the error you got only described the very last one, which was routinely the least relevant and sent everybody looking in the wrong place. The error now lists every provider that was tried and what each one said, so a problem gets fixed instead of investigated twice.",
+			"tags": [
+				"fix"
+			]
 		}
 	]
 }

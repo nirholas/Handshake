@@ -1673,3 +1673,55 @@ the burn report after the next seeding batch and record the figure here.
 bottleneck; the earlier figure of 18,622 at ~15 a day in the work order is stale.
 The generated-clip half of the library is still at zero published: the clip library
 serves 2,874 clips and every one is the `mx-` Mixamo import.
+
+**Rate limit, fixed.** `/api/forge-motion` was metered against `mcp3dGenerate`, the
+paid-generation bucket: 30 per hour per IP, fail-closed. That bucket exists to protect
+third-party spend, and this endpoint has no third-party lane at all. Its only backend
+is our own `model-text2motion` Cloud Run service, and with `GCP_TEXT2MOTION_URL` unset
+it 503s rather than falling through to anyone. It now uses the free-lane bucket
+(`mcp3dGenerateFree`), which is sized to what the deployed fleet sustains. Bulk
+seeding over HTTP goes from 30 clips an hour to 240.
+
+---
+
+## Catalog scale: the four browse surfaces at 58k avatars (measured 2026-09-02)
+
+The seeding campaign is the reason to check this: a catalog growing 1,600 rows a day
+turns "fast enough" into "was fast enough" without anyone changing a line. Every
+figure below is `EXPLAIN (ANALYZE, BUFFERS)` against the live table, not an estimate.
+
+**Two queries did not scale, and both are fixed.**
+
+`listAvatars({ includePublic: true })` backs the signed-in dashboard listing. It asked
+for `(owner_id = $1 or visibility = 'public')`, which no index can serve, so Postgres
+parallel-seq-scanned the table and sorted every surviving row to return 50: **48.7 ms
+and 7,605 heap pages read**, growing with the catalog rather than with the page. It is
+now a `UNION ALL` of two already-ordered, already-limited branches (`avatars_owner_idx`
+and the partial `avatars_public_idx`) merged with a Merge Append: **0.44 ms and 302
+buffer hits**, and flat as the catalog grows. The public branch excludes the caller
+with `is distinct from`, so a self-owned public avatar appears once and a NULL
+`owner_id` is not silently dropped.
+
+`searchPublicAvatars({ withTotals })` backs the gallery's headline counts. The
+`count(*)` plus `sum(view_count)` over every public row is a **42 ms sequential scan**
+that no index avoids, and it ran on every request. `/api/avatars/public` already tells
+browsers and the CDN to cache the whole response for 60 s, so the aggregate is now
+cached for the same 60 s, keyed by the filter set. One scan per minute per instance
+instead of one per request; a filtered view never reads the unfiltered numbers.
+
+**Two surfaces were already sound.** Deep pagination on the public gallery is flat:
+page 0, page 40 (row 2,000), page 100 (row 5,000) and page 199 (row 9,950) all cost
+the same index scan, 74 to 89 ms round trip from outside GCP and 0.3 ms server-side.
+The marketplace list endpoints are cursor-paginated with a hard `limit` ceiling and
+return bounded payloads.
+
+**`/animations` was fetch-all on the client.** The endpoint pages correctly, but the
+gallery awaited every page before painting a card, so time-to-first-card was the size
+of the whole library: 1.12 MB at 2,874 clips, and it would have been ~11 MB at ten
+times that. The catalog now streams: the first 1,000-clip page (397 KB) paints, later
+pages merge into the grid as they land. First paint is one page wide whatever the
+catalog does.
+
+Regression cover: `tests/avatars-list-scale.test.js` pins both query shapes, so a
+future edit cannot quietly reintroduce the OR predicate or the per-request aggregate.
+

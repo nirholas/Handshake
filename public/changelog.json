@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-02T19:50:36.665Z",
+	"generated_at": "2026-09-02T19:52:32.602Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -230,6 +230,16 @@
 		{
 			"date": "2026-09-02",
 			"type": "update",
+			"title": "Text-to-animation is no longer rationed like a paid service",
+			"summary": "Turning a sentence into an animation runs entirely on our own GPUs, but it was being counted against the allowance meant for services we pay a third party for: thirty a day, per person. It now uses the free allowance that lane deserves, which is eight times higher, so you can iterate on a motion prompt properly instead of running out halfway through.",
+			"link": "/animations",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-02",
+			"type": "update",
 			"title": "The 3D Studio connector for ChatGPT is documented as the eleven tools it actually serves",
 			"summary": "The free 3D Studio connector grew to eleven tools when look_at_model landed alongside check_job, but a lot of the writing about it had not caught up: the connector page, the press kit, the partner page, the blog summary, the announcement copy, the press release and the store-submission package still said nine or ten, and the social card enumerated only nine tool names. Every one of those now matches a fresh pull from the live server, the social card lists all eleven, and the module headers inside the connector describe the real catalog including which tools spend generation quota. A test now pins the total, so the next tool to land fails the suite instead of quietly re-opening the same drift. The standalone viewer also stopped crediting the AR launch endpoint with a renderer it no longer loads. Two smaller corrections rode along: the pending-generation example now shows the field that tells a client whether the model coming back is a bare mesh or a finished rig, and the three places the platform pins the 3D viewer library are now explained in one comment, so nobody has to guess why an embed and a standalone page load different builds.",
 			"link": "/docs/mcp-studio",
@@ -241,12 +251,42 @@
 		{
 			"date": "2026-09-02",
 			"type": "update",
+			"title": "The animation gallery shows you clips instead of a spinner",
+			"summary": "The motion library is nearly 3,000 clips and growing, and /animations used to download the entire catalog before it would draw a single card. Now the first batch of clips appears as soon as it arrives and the rest fill in behind it while you are already browsing, searching and filtering. However large the library gets, you start looking at animations after the same short wait.",
+			"link": "/animations",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-02",
+			"type": "update",
+			"title": "The gallery and your avatar list stay fast as the catalog grows",
+			"summary": "There are now more than 58,000 avatars on three.ws, and about 1,600 more arrive every day. Two of the pages that read that catalog were quietly getting slower every single day, because they asked the database to look at every avatar in existence just to show you fifty of them. Both now read only the page you asked for, and the gallery's headline counts are worked out once a minute instead of once per visitor. Your dashboard list is roughly a hundred times quicker to answer, and, more to the point, it will still be that quick when the catalog is ten times bigger.",
+			"link": "/gallery",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-02",
+			"type": "update",
 			"title": "The treasury's self-heal plan now only promises SOL it can actually move",
 			"summary": "When the payment rail runs short of the SOL it needs to settle, the platform first tries to heal itself: it looks across its own agent wallets for idle funds and pulls them back to the wallet that pays fees. The preview of that plan was counting wallets it could never open. Eight custodial wallets were encrypted under a key retired during the 2026-07 move to Google Cloud, so the preview kept advertising their balance as available while every real run failed on them, and the plan looked the same the next time anyone checked. The preview now opens each wallet's key before listing it, exactly as a real run does, and reports the ones it cannot open separately with the reason. A plan that reads as capital on hand when the capital is unreachable is worse than no plan at all, and it cost two separate investigations. The health check's settlement hint was corrected to match: it no longer says owner funds are needed only once every wallet reports being at its floor, because a sealed wallet never reports that.",
 			"link": null,
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-09-02",
+			"type": "update",
+			"title": "When image understanding fails, it now says which part failed",
+			"summary": "Our image understanding runs through a chain of providers so one outage cannot take the feature down. When every link in that chain failed, the error you got only described the very last one, which was routinely the least relevant and sent everybody looking in the wrong place. The error now lists every provider that was tried and what each one said, so a problem gets fixed instead of investigated twice.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{

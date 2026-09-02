@@ -175,6 +175,14 @@
 			<description>Press P in a coin world, or the camera button on the heads-up display, and you get a picture of the world on a share card: the scene itself, the three.ws mark, the coin you are standing in, and, during a live event, that event's name stamped on it. The card was there but the shutter went nowhere. Every single press answered &quot;Couldn't photograph the world just now&quot; and showed nothing, because of a fault in the code that builds the preview, so nobody has ever actually been handed one of these. Pressing it now opens the card, with Download and Copy image next to it. The picture is taken as a separate render rather than grabbed off the screen, so no panel, name tag or chat line is ever in the frame, and it works the same in zen mode, which is when most people will want it. It costs nothing when you are not using it: none of photo mode is loaded until the first press. Two smaller things fixed alongside: taking a second photo while the first card is open now replaces it cleanly instead of briefly stacking two sheets, where a click landing in the wrong moment could dismiss the shot you just took; and the line promising that P takes another one is true now, and visible, having previously rendered as nothing at all. Verified end to end in both Chrome and Safari, on a laptop frame and a phone frame, down to the pixels in the saved file, so the black rectangle that a mishandled 3D screenshot usually produces cannot come back unnoticed.</description>
 		</item>
 		<item>
+			<title>Text-to-animation is no longer rationed like a paid service</title>
+			<link>https://three.ws/animations</link>
+			<guid isPermaLink="false">2026-09-02:Text-to-animation is no longer rationed like a paid service</guid>
+			<pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Turning a sentence into an animation runs entirely on our own GPUs, but it was being counted against the allowance meant for services we pay a third party for: thirty a day, per person. It now uses the free allowance that lane deserves, which is eight times higher, so you can iterate on a motion prompt properly instead of running out halfway through.</description>
+		</item>
+		<item>
 			<title>The 3D Studio connector for ChatGPT is documented as the eleven tools it actually serves</title>
 			<link>https://three.ws/docs/mcp-studio</link>
 			<guid isPermaLink="false">2026-09-02:The 3D Studio connector for ChatGPT is documented as the eleven tools it actually serves</guid>
@@ -183,12 +191,36 @@
 			<description>The free 3D Studio connector grew to eleven tools when look_at_model landed alongside check_job, but a lot of the writing about it had not caught up: the connector page, the press kit, the partner page, the blog summary, the announcement copy, the press release and the store-submission package still said nine or ten, and the social card enumerated only nine tool names. Every one of those now matches a fresh pull from the live server, the social card lists all eleven, and the module headers inside the connector describe the real catalog including which tools spend generation quota. A test now pins the total, so the next tool to land fails the suite instead of quietly re-opening the same drift. The standalone viewer also stopped crediting the AR launch endpoint with a renderer it no longer loads. Two smaller corrections rode along: the pending-generation example now shows the field that tells a client whether the model coming back is a bare mesh or a finished rig, and the three places the platform pins the 3D viewer library are now explained in one comment, so nobody has to guess why an embed and a standalone page load different builds.</description>
 		</item>
 		<item>
+			<title>The animation gallery shows you clips instead of a spinner</title>
+			<link>https://three.ws/animations</link>
+			<guid isPermaLink="false">2026-09-02:The animation gallery shows you clips instead of a spinner</guid>
+			<pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The motion library is nearly 3,000 clips and growing, and /animations used to download the entire catalog before it would draw a single card. Now the first batch of clips appears as soon as it arrives and the rest fill in behind it while you are already browsing, searching and filtering. However large the library gets, you start looking at animations after the same short wait.</description>
+		</item>
+		<item>
+			<title>The gallery and your avatar list stay fast as the catalog grows</title>
+			<link>https://three.ws/gallery</link>
+			<guid isPermaLink="false">2026-09-02:The gallery and your avatar list stay fast as the catalog grows</guid>
+			<pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>There are now more than 58,000 avatars on three.ws, and about 1,600 more arrive every day. Two of the pages that read that catalog were quietly getting slower every single day, because they asked the database to look at every avatar in existence just to show you fifty of them. Both now read only the page you asked for, and the gallery's headline counts are worked out once a minute instead of once per visitor. Your dashboard list is roughly a hundred times quicker to answer, and, more to the point, it will still be that quick when the catalog is ten times bigger.</description>
+		</item>
+		<item>
 			<title>The treasury's self-heal plan now only promises SOL it can actually move</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-09-02:The treasury's self-heal plan now only promises SOL it can actually move</guid>
 			<pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>When the payment rail runs short of the SOL it needs to settle, the platform first tries to heal itself: it looks across its own agent wallets for idle funds and pulls them back to the wallet that pays fees. The preview of that plan was counting wallets it could never open. Eight custodial wallets were encrypted under a key retired during the 2026-07 move to Google Cloud, so the preview kept advertising their balance as available while every real run failed on them, and the plan looked the same the next time anyone checked. The preview now opens each wallet's key before listing it, exactly as a real run does, and reports the ones it cannot open separately with the reason. A plan that reads as capital on hand when the capital is unreachable is worse than no plan at all, and it cost two separate investigations. The health check's settlement hint was corrected to match: it no longer says owner funds are needed only once every wallet reports being at its floor, because a sealed wallet never reports that.</description>
+		</item>
+		<item>
+			<title>When image understanding fails, it now says which part failed</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-02:When image understanding fails, it now says which part failed</guid>
+			<pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Our image understanding runs through a chain of providers so one outage cannot take the feature down. When every link in that chain failed, the error you got only described the very last one, which was routinely the least relevant and sent everybody looking in the wrong place. The error now lists every provider that was tried and what each one said, so a problem gets fixed instead of investigated twice.</description>
 		</item>
 		<item>
 			<title>Your Materialize order now tells you where it is, every step</title>
