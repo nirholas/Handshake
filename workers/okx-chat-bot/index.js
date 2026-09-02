@@ -50,6 +50,8 @@ async function heartbeat(cfg, supervisor) {
 	const meta = {
 		bootAt: BOOT_AT,
 		agentId: cfg.agentId,
+		host: cfg.host,
+		hostDurable: cfg.hostDurable,
 		health: live.verdict.status,
 		ready: live.verdict.ready,
 		reason: live.verdict.reason,
@@ -162,6 +164,8 @@ async function main() {
 	log.info('boot', {
 		home: cfg.home,
 		agentId: cfg.agentId,
+		host: cfg.host,
+		hostDurable: cfg.hostDurable,
 		provider: cfg.provider,
 		providerReason: cfg.providerReason,
 		stateBucket: cfg.stateBucket || null,

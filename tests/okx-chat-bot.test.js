@@ -16,7 +16,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, describe, it, expect, vi } from 'vitest';
 import { classify, loginInstructions } from '../workers/okx-chat-bot/session.js';
-import { resolveProvider, loadConfig, paths } from '../workers/okx-chat-bot/config.js';
+import { resolveProvider, resolveHost, loadConfig, paths } from '../workers/okx-chat-bot/config.js';
 import { createHealthHandler } from '../workers/okx-chat-bot/health-server.js';
 import { createSupervisor } from '../workers/okx-chat-bot/supervisor.js';
 import { STATE_ROOTS, STATE_EXCLUDES } from '../workers/okx-chat-bot/state.js';
@@ -126,6 +126,31 @@ describe('okx-chat-bot provider selection', () => {
 			provider: 'claude',
 			credentialed: false,
 		});
+	});
+});
+
+describe('okx-chat-bot host reporting', () => {
+	it('calls Cloud Run the durable host and names the revision', () => {
+		const h = resolveHost({ K_SERVICE: 'okx-chat-bot', K_REVISION: 'okx-chat-bot-00001-abc' });
+		expect(h.durable).toBe(true);
+		expect(h.label).toContain('okx-chat-bot-00001-abc');
+	});
+
+	// The stopgap this worker replaces runs on a codespace. It must never be able
+	// to report itself the way the always-on host does.
+	it('never lets a codespace claim durability', () => {
+		expect(resolveHost({ CODESPACE_NAME: 'fluffy-space-fiesta' })).toMatchObject({
+			label: 'codespace:fluffy-space-fiesta',
+			durable: false,
+		});
+		expect(resolveHost({ OKX_BOT_HOST_LABEL: 'vm:box-under-a-desk' }).durable).toBe(false);
+		expect(resolveHost({ OKX_BOT_HOST_LABEL: 'vm:box-under-a-desk', OKX_BOT_HOST_DURABLE: '1' }).durable).toBe(true);
+	});
+
+	it('puts the host on the status body a human reads', () => {
+		const cfg = loadConfig({ CODESPACE_NAME: 'fluffy-space-fiesta', PORT: '0' });
+		expect(cfg.host).toBe('codespace:fluffy-space-fiesta');
+		expect(cfg.hostDurable).toBe(false);
 	});
 });
 
@@ -392,6 +417,28 @@ describe('okx_chat_bot subsystem health', () => {
 		expect(s.detail).toContain('logged out');
 		expect(s.hint).toMatch(/email OTP/i);
 		expect(s.hint).toContain('/readyz');
+	});
+
+	it('names the host on a healthy beat', () => {
+		const s = classifyOkxChatBotBeat(beat(20_000, { host: 'cloudrun:okx-chat-bot', hostDurable: true }), now);
+		expect(s.status).toBe('ok');
+		expect(s.detail).toContain('cloudrun:okx-chat-bot');
+	});
+
+	// An online stopgap and an online always-on host are not the same news.
+	// Painting both green is the false-green this worker exists to kill.
+	it('refuses to call a stopgap host green, and points at the deploy', () => {
+		const s = classifyOkxChatBotBeat(beat(20_000, { host: 'codespace:fluffy', hostDurable: false }), now);
+		expect(s.status).toBe('degraded');
+		expect(s.detail).toContain('codespace:fluffy');
+		expect(s.detail).toMatch(/stopgap/);
+		expect(s.hint).toContain('workers/okx-chat-bot/cloudbuild.yaml');
+	});
+
+	// Beats predating the host field must keep reading as ok, not degrade on a
+	// missing key.
+	it('stays ok for a beat that never reported a host', () => {
+		expect(classifyOkxChatBotBeat(beat(20_000), now).status).toBe('ok');
 	});
 
 	it('passes a degraded self-report through without escalating it', () => {

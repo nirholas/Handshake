@@ -4,7 +4,7 @@
 // VM, and locally with no code change. The defaults are the production posture:
 // state persisted to GCS, heartbeat on, session probed every minute.
 
-import { homedir } from 'node:os';
+import { homedir, hostname } from 'node:os';
 import { join } from 'node:path';
 
 const num = (v, fallback) => {
@@ -49,8 +49,36 @@ export function resolveProvider(env = process.env) {
 	};
 }
 
+/**
+ * Name the host this process is beating from, and say whether that host survives
+ * without a human.
+ *
+ * The heartbeat is the fleet's only view of this bot, and "online" from a
+ * developer codespace means something completely different from "online" on
+ * Cloud Run: the first dies with the workspace and takes marketplace chat with
+ * it. Reporting both the same way would rebuild, one level up, exactly the
+ * false-green this worker exists to kill.
+ *
+ *   K_SERVICE               set by Cloud Run, the durable posture
+ *   OKX_BOT_HOST_LABEL      name another host (a VM, a box under a desk)
+ *   OKX_BOT_HOST_DURABLE=1  claim that host survives on its own
+ *
+ * @param {NodeJS.ProcessEnv} env
+ * @returns {{ label: string, durable: boolean }}
+ */
+export function resolveHost(env = process.env) {
+	if (env.K_SERVICE) {
+		return { label: `cloudrun:${env.K_SERVICE}${env.K_REVISION ? ` (${env.K_REVISION})` : ''}`, durable: true };
+	}
+	const explicit = (env.OKX_BOT_HOST_LABEL || '').trim();
+	if (explicit) return { label: explicit, durable: env.OKX_BOT_HOST_DURABLE === '1' };
+	if (env.CODESPACE_NAME) return { label: `codespace:${env.CODESPACE_NAME}`, durable: false };
+	return { label: `local:${hostname()}`, durable: false };
+}
+
 export function loadConfig(env = process.env) {
 	const provider = resolveProvider(env);
+	const host = resolveHost(env);
 	return {
 		// HOME for both CLIs. Everything durable lands under it:
 		//   $home/.okx-agent-task/  daemon state, sqlite, XMTP db, AI workspace
@@ -74,6 +102,12 @@ export function loadConfig(env = process.env) {
 		provider: provider.provider,
 		providerReason: provider.reason,
 		providerCredentialed: provider.credentialed,
+
+		// Where this process runs, and whether that place stays up on its own.
+		// Reported on every beat so /api/healthz can tell a durable host from a
+		// stopgap instead of calling both "online".
+		host: host.label,
+		hostDurable: host.durable,
 
 		// Where the AI subsession's briefing and skills come from. Baked into the
 		// image at /app; regenerated at boot so a redeploy always ships the live

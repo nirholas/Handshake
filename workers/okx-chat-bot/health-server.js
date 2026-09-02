@@ -33,6 +33,7 @@ export function statusBody(cfg, live, daemonStats, bootAt) {
 		worker: 'okx-chat-bot',
 		agentId: cfg.agentId,
 		bootAt,
+		host: { label: cfg.host, durable: cfg.hostDurable },
 		provider: { name: cfg.provider, credentialed: cfg.providerCredentialed, reason: cfg.providerReason },
 		daemon: { status: live.daemon, ...daemonStats },
 		session: live.wallet ? { loggedIn: live.wallet.loggedIn, email: live.wallet.email } : null,
