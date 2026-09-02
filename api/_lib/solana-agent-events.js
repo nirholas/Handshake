@@ -313,10 +313,29 @@ const CHAIN = 'solana';
  * than as an unexplained median.
  *
  * Raising this costs one getSignaturesForAddress per agent per tick; the cron's
- * wall-clock budget, not this constant, is the real ceiling.
+ * wall-clock budget, not this constant, is the real ceiling. Measured against
+ * the live lane router on 2026-09-02, one agent costs ~370ms end to end, so the
+ * sweep's 120-second budget drains roughly 320 agents serially and far more than
+ * that at the concurrency below. 120 per tick was therefore never the budget
+ * talking: it was leaving three quarters of the tick idle while the directory
+ * grew to 1,604 agents and the cycle stretched to 140 minutes, well past the
+ * sensor's 90-minute fresh threshold. 240 puts a 1,600-agent directory on a
+ * 70-minute cycle for a 35-minute median, with room to keep growing.
  */
-export const SOLANA_SWEEP_BATCH = 120;
+export const SOLANA_SWEEP_BATCH = 240;
 export const SOLANA_SWEEP_PERIOD_MIN = 10;
+
+/**
+ * Agents crawled in parallel within one tick.
+ *
+ * Each agent is one independent getSignaturesForAddress plus its transaction
+ * reads, so the sweep spends almost all of its wall clock waiting on the RPC.
+ * A small pool turns that dead time into throughput and gives the batch above
+ * its headroom. Kept deliberately low: the lane router already rotates
+ * providers and parks a cooling one, and a wide fan-out would earn 429s faster
+ * than it earns signatures.
+ */
+export const SOLANA_SWEEP_CONCURRENCY = 4;
 
 /**
  * Crawl one Solana agent account's recent signatures into the event index.
@@ -500,4 +519,96 @@ export async function nextAgentBatch({ limit = 40 } = {}) {
 		ORDER BY cur.last_indexed_at NULLS FIRST
 		LIMIT ${limit}
 	`;
+}
+
+/**
+ * Wall-clock the sweep gives itself inside one cron tick.
+ *
+ * The attestation half of solana-attestations-crawl shares the same function
+ * invocation, so this leaves it the rest of the 300-second ceiling. It is a
+ * ceiling, not a target: at the shipped batch and concurrency a full tick costs
+ * a fraction of it, and the budget only matters on a tick where a provider is
+ * slow enough that finishing late would be worse than finishing short.
+ */
+export const SOLANA_SWEEP_BUDGET_MS = 120_000;
+
+/**
+ * Crawl one tick's worth of the Solana agent directory.
+ *
+ * Drains the oldest-cursor-first batch through a small worker pool, stops on
+ * the budget rather than on the batch, and stamps a failure onto every agent it
+ * could not read so one unreadable account cannot hold the queue head forever.
+ *
+ * `truncated` means the budget ran out with agents still queued: the cycle time
+ * the freshness sensor derives from SOLANA_SWEEP_BATCH assumes a batch that
+ * drains, so a truncated tick is the signal that the batch has outgrown the
+ * budget and the sensor's cycle number is now optimistic.
+ *
+ * @param {{ budgetMs?: number, limit?: number, concurrency?: number, now?: () => number }} [opts]
+ * @returns {Promise<{ agents: number, scanned: number, inserted: number, rejected: number,
+ *   failed: number, truncated: boolean, batch: number, concurrency: number,
+ *   elapsedMs: number, error?: string }>}
+ */
+export async function sweepAgentEvents({
+	budgetMs = SOLANA_SWEEP_BUDGET_MS,
+	limit = SOLANA_SWEEP_BATCH,
+	concurrency = SOLANA_SWEEP_CONCURRENCY,
+	now = Date.now,
+} = {}) {
+	const startedAt = now();
+	const summary = {
+		agents: 0,
+		scanned: 0,
+		inserted: 0,
+		rejected: 0,
+		failed: 0,
+		truncated: false,
+		batch: 0,
+		concurrency: 0,
+		elapsedMs: 0,
+	};
+
+	let batch;
+	try {
+		batch = await nextAgentBatch({ limit });
+	} catch (err) {
+		return { ...summary, elapsedMs: now() - startedAt, error: err?.message || String(err) };
+	}
+
+	summary.batch = batch.length;
+	const workers = Math.max(1, Math.min(concurrency, batch.length));
+	summary.concurrency = workers;
+
+	let next = 0;
+	const drain = async () => {
+		for (;;) {
+			// Read the queue position BEFORE the clock, so a tick that finished its
+			// batch on the last millisecond of the budget is reported as complete
+			// rather than as truncated work that never existed.
+			if (next >= batch.length) return;
+			if (now() - startedAt > budgetMs) {
+				summary.truncated = true;
+				return;
+			}
+			const row = batch[next++];
+			try {
+				const r = await crawlAgentEvents({ agentRef: row.agent_ref, network: row.network });
+				summary.agents += 1;
+				summary.scanned += r.scanned;
+				summary.inserted += r.inserted;
+				summary.rejected += r.rejected;
+			} catch (err) {
+				summary.failed += 1;
+				await markAgentEventError({
+					agentRef: row.agent_ref,
+					network: row.network,
+					error: err?.message || String(err),
+				}).catch(() => {});
+			}
+		}
+	};
+
+	await Promise.all(Array.from({ length: workers }, drain));
+	summary.elapsedMs = now() - startedAt;
+	return summary;
 }
