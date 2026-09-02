@@ -23,9 +23,9 @@
 // (JWT_SECRET fallback) — run this with the SAME key material the agent-sniper
 // service decrypts with, or the worker will load a wallet it cannot open.
 
-import { execSync } from 'node:child_process';
 import './lib/gcloud-path.mjs';
 import { createRequire } from 'node:module';
+import { requireServiceEnvValue } from './lib/service-env.mjs';
 
 const require = createRequire(import.meta.url);
 const { Pool } = require('@neondatabase/serverless');
@@ -276,14 +276,9 @@ async function provisionArm(pool, arm) {
 
 function resolveDatabaseUrl() {
 	if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
-	const svc = JSON.parse(execSync(
-		'gcloud run services describe three-ws-api --region us-central1 --project aerial-vehicle-466722-p5 --format=json',
-		{ encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 },
-	));
-	const env = svc.spec.template.spec.containers[0].env || [];
-	const url = env.find((e) => e.name === 'DATABASE_URL')?.value;
-	if (!url) throw new Error('DATABASE_URL not found in env or on the Cloud Run service');
-	return url;
+	// Production's copy is a Secret Manager reference, not a literal on the
+	// service, so this has to resolve the reference rather than read `.value`.
+	return requireServiceEnvValue('DATABASE_URL');
 }
 
 const pool = new Pool({ connectionString: resolveDatabaseUrl() });

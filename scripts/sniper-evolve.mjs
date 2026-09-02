@@ -39,11 +39,11 @@
 // journaled to sniper_evolution_log (before/after + the evidence) so the whole
 // autonomous history is auditable and one UPDATE can roll any change back.
 
-import { execSync } from 'node:child_process';
 import './lib/gcloud-path.mjs';
 import { createRequire } from 'node:module';
 import { budgetWeightFor, classifyAutonomy } from '../api/_lib/sniper-autonomy.js';
 import { resolveDatabaseUrl as resolveConfiguredDatabaseUrl } from '../api/_lib/env.js';
+import { requireServiceEnvValue } from './lib/service-env.mjs';
 const require = createRequire(import.meta.url);
 const { Pool } = require('@neondatabase/serverless');
 
@@ -74,14 +74,9 @@ const WRITABLE = new Set(['enabled', 'daily_budget_lamports']);
 function resolveDatabaseUrl() {
 	const configured = resolveConfiguredDatabaseUrl();
 	if (configured) return configured;
-	const svc = JSON.parse(execSync(
-		'gcloud run services describe three-ws-api --region us-central1 --project aerial-vehicle-466722-p5 --format=json',
-		{ encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 },
-	));
-	const env = svc.spec.template.spec.containers[0].env || [];
-	const url = env.find((e) => e.name === 'DATABASE_URL')?.value;
-	if (!url) throw new Error('DATABASE_URL not found in env or on the Cloud Run service');
-	return url;
+	// Production's copy is a Secret Manager reference, not a literal on the
+	// service, so this has to resolve the reference rather than read `.value`.
+	return requireServiceEnvValue('DATABASE_URL');
 }
 
 // Wilson score interval for a binomial proportion. Gives a conservative lower

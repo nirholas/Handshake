@@ -20,9 +20,9 @@
 // must compare rugs against WINNERS on the features visible at entry, and against
 // flats to make sure we're not just describing "low activity".
 
-import { execSync } from 'node:child_process';
 import './lib/gcloud-path.mjs';
 import { createRequire } from 'node:module';
+import { requireServiceEnvValue } from './lib/service-env.mjs';
 const require = createRequire(import.meta.url);
 const { Pool } = require('@neondatabase/serverless');
 
@@ -41,14 +41,9 @@ const ACTIVE = activeBuyers ? `and i.unique_buyers >= ${activeBuyers}` : '';
 
 function resolveDatabaseUrl() {
 	if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
-	const svc = JSON.parse(execSync(
-		'gcloud run services describe three-ws-api --region us-central1 --project aerial-vehicle-466722-p5 --format=json',
-		{ encoding: 'utf8' },
-	));
-	const env = svc.spec.template.spec.containers[0].env || [];
-	const row = env.find((e) => e.name === 'DATABASE_URL');
-	if (row?.value) return row.value;
-	throw new Error('DATABASE_URL not found in env or Cloud Run service');
+	// Production's copy is a Secret Manager reference, not a literal on the
+	// service, so this has to resolve the reference rather than read `.value`.
+	return requireServiceEnvValue('DATABASE_URL');
 }
 
 // The entry-time features. Each is a SQL expression over pump_coin_intel (i) so
