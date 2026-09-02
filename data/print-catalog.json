@@ -1,0 +1,226 @@
+{
+	"version": 1,
+	"currency": "USDC",
+	"chain": "solana",
+	"_note": "Single source of truth for every Materialize price. The quote engine (api/_lib/print/quote.js) is pure and reads only this file; no price is ever computed in a frontend module or a handler. Owner-tunable: change a number here and every surface follows.",
+	"_sources": [
+		{
+			"retrieved": "2026-09-02",
+			"url": "https://support.shapeways.com/hc/en-us/articles/360008363353-Designing-for-Full-Color-Sandstone",
+			"note": "Full-colour sandstone published at $0.99 per cm3 plus a $1.50 per-model startup fee, 2 mm minimum wall."
+		},
+		{
+			"retrieved": "2026-09-02",
+			"url": "https://3dprinting.com/how-much-does-3d-printing-cost/",
+			"note": "Bureau bands used as the sanity check on every rate below: FDM $0.05-$0.15 per gram plus $3-$10 setup, SLA resin $0.20-$0.50 per gram plus $3-$10 setup, SLS and metal $1-$10 per cm3 through a bureau."
+		},
+		{
+			"retrieved": "2026-09-02",
+			"url": "https://specialty-polymer.com/sls-3d-printing-cost-a-complete-quoting-guide/",
+			"note": "SLS PA12 quoted from about $0.60 per cm3, rising for filled nylons."
+		},
+		{
+			"retrieved": "2026-09-02",
+			"url": "https://blog.met3dp.com/blog/metal-3d-printing-cost-vs-cnc-in-2026-pricing-benchmarks-for-buyers/",
+			"note": "Metal powder-bed benchmarks span $10-$100 per cm3 depending on alloy and run size, which is why the metal entry is quote-on-request rather than instantly priced."
+		}
+	],
+	"pricing": {
+		"marginFraction": 0.35,
+		"_marginNote": "Declared platform margin already inside every rate below, so a rate can be compared against a bureau's published price directly. Buyer-facing output never includes this field.",
+		"holderDiscount": {
+			"maxBps": 1500,
+			"appliesTo": ["setup", "material", "finish"],
+			"_note": "$THREE holder tiers (api/_lib/three-tier.js) discount platform compute up to 30 percent. A physical print carries real fulfillment cost, so the same tier bps is capped at 15 percent here and never touches shipping, which is passed through."
+		},
+		"quantityBreaks": [
+			{ "minQuantity": 5, "discountBps": 800 },
+			{ "minQuantity": 20, "discountBps": 1500 }
+		],
+		"_quantityNote": "A repeat of the same object reuses the same build setup and the same prepared file, so the break applies to setup, material and finish, not to shipping.",
+		"quoteTtlSeconds": 86400,
+		"minOrderUsdc": 12
+	},
+	"materials": [
+		{
+			"id": "resin-standard",
+			"name": "Standard resin",
+			"class": "resin",
+			"blurb": "Crisp SLA detail with a smooth, slightly glossy surface. The default for figures, busts and anything where the sculpt is the point.",
+			"densityGramsPerCm3": 1.1,
+			"ratePerCm3": 0.55,
+			"setupFee": 6,
+			"minWallMm": 0.6,
+			"minHeightMm": 15,
+			"maxHeightMm": 180,
+			"maxBoundingBoxMm": { "x": 190, "y": 180, "z": 190 },
+			"leadTimeDays": 5,
+			"hollow": { "supported": true, "wallMm": 1.6, "drainHoles": 2 },
+			"colorCapable": false,
+			"swatch": { "base": "#d9d5cf", "sheen": "gloss" },
+			"finishes": [
+				{ "id": "as-printed", "name": "As printed", "fee": 0, "default": true },
+				{ "id": "primed", "name": "Primed and smoothed", "fee": 12, "leadTimeDays": 2 }
+			]
+		},
+		{
+			"id": "resin-tough",
+			"name": "Tough resin",
+			"class": "resin",
+			"blurb": "Impact-resistant SLA for parts that get handled, snapped together or dropped. Holds an edge without shattering.",
+			"densityGramsPerCm3": 1.15,
+			"ratePerCm3": 0.85,
+			"setupFee": 8,
+			"minWallMm": 1,
+			"minHeightMm": 15,
+			"maxHeightMm": 180,
+			"maxBoundingBoxMm": { "x": 190, "y": 180, "z": 190 },
+			"leadTimeDays": 6,
+			"hollow": { "supported": true, "wallMm": 2, "drainHoles": 2 },
+			"colorCapable": false,
+			"swatch": { "base": "#5b6068", "sheen": "satin" },
+			"finishes": [
+				{ "id": "as-printed", "name": "As printed", "fee": 0, "default": true },
+				{ "id": "primed", "name": "Primed and smoothed", "fee": 14, "leadTimeDays": 2 }
+			]
+		},
+		{
+			"id": "nylon-sls",
+			"name": "SLS nylon (PA12)",
+			"class": "sls_nylon",
+			"blurb": "Powder-bed nylon: no support scars, prints interlocking and unsupported geometry other processes refuse. Matte, slightly grainy, very tough.",
+			"densityGramsPerCm3": 1.01,
+			"ratePerCm3": 0.95,
+			"setupFee": 9,
+			"minWallMm": 0.8,
+			"minHeightMm": 12,
+			"maxHeightMm": 280,
+			"maxBoundingBoxMm": { "x": 300, "y": 280, "z": 300 },
+			"leadTimeDays": 7,
+			"hollow": { "supported": false },
+			"colorCapable": false,
+			"swatch": { "base": "#e8e6e1", "sheen": "matte" },
+			"finishes": [
+				{ "id": "natural", "name": "Natural white", "fee": 0, "default": true },
+				{ "id": "dyed-black", "name": "Dyed black", "fee": 9, "leadTimeDays": 1 }
+			]
+		},
+		{
+			"id": "sandstone-full-color",
+			"name": "Full-colour sandstone",
+			"class": "full_color",
+			"blurb": "Binder-jetted gypsum printed in full colour, straight from the model's own texture. The only material here that reproduces what you see in the viewer.",
+			"densityGramsPerCm3": 1.7,
+			"ratePerCm3": 1.15,
+			"setupFee": 4,
+			"minWallMm": 2,
+			"minHeightMm": 20,
+			"maxHeightMm": 200,
+			"maxBoundingBoxMm": { "x": 250, "y": 200, "z": 250 },
+			"leadTimeDays": 8,
+			"hollow": { "supported": false },
+			"colorCapable": true,
+			"requiresTexture": true,
+			"swatch": { "base": "#cfc3ae", "sheen": "matte" },
+			"finishes": [
+				{ "id": "sealed", "name": "Sealed", "fee": 0, "default": true },
+				{ "id": "coated-gloss", "name": "Gloss coated", "fee": 6, "leadTimeDays": 1 }
+			]
+		},
+		{
+			"id": "pla-draft",
+			"name": "PLA draft",
+			"class": "fdm_draft",
+			"blurb": "The cheapest way to hold the thing. Visible layer lines, generous tolerances, fastest turnaround: print it, look at it, then order the real one.",
+			"densityGramsPerCm3": 1.24,
+			"ratePerCm3": 0.3,
+			"setupFee": 4,
+			"minWallMm": 1.2,
+			"minHeightMm": 20,
+			"maxHeightMm": 250,
+			"maxBoundingBoxMm": { "x": 250, "y": 250, "z": 210 },
+			"leadTimeDays": 3,
+			"hollow": { "supported": true, "wallMm": 2.4, "drainHoles": 0 },
+			"colorCapable": false,
+			"swatch": { "base": "#8ba2b8", "sheen": "matte" },
+			"finishes": [{ "id": "as-printed", "name": "As printed", "fee": 0, "default": true }]
+		},
+		{
+			"id": "steel-316l",
+			"name": "316L stainless steel",
+			"class": "metal",
+			"blurb": "Powder-bed stainless, machined off the plate and bead blasted. Priced by an engineer against the actual geometry, not by the calculator.",
+			"densityGramsPerCm3": 7.9,
+			"ratePerCm3": 18,
+			"rateEstimate": true,
+			"setupFee": 45,
+			"minWallMm": 1,
+			"minHeightMm": 10,
+			"maxHeightMm": 120,
+			"maxBoundingBoxMm": { "x": 120, "y": 120, "z": 120 },
+			"leadTimeDays": 15,
+			"quoteOnRequest": true,
+			"hollow": { "supported": false },
+			"colorCapable": false,
+			"swatch": { "base": "#9aa0a6", "sheen": "metal" },
+			"finishes": [{ "id": "bead-blast", "name": "Bead blasted", "fee": 0, "default": true }]
+		}
+	],
+	"sizePresets": [
+		{ "id": "desk", "name": "Desk", "heightMm": 80, "blurb": "Sits beside a keyboard." },
+		{ "id": "shelf", "name": "Shelf", "heightMm": 140, "blurb": "Reads across a room." },
+		{ "id": "keychain", "name": "Keychain", "heightMm": 35, "blurb": "Pocket size." },
+		{ "id": "statement", "name": "Statement", "heightMm": 200, "blurb": "The centrepiece." }
+	],
+	"scaleReferences": [
+		{ "id": "coin", "name": "A coin", "heightMm": 24 },
+		{ "id": "mug", "name": "Coffee mug", "heightMm": 95 },
+		{ "id": "hand", "name": "A hand", "heightMm": 180 },
+		{ "id": "person", "name": "A person", "heightMm": 1750 }
+	],
+	"shipping": {
+		"volumetricDivisor": 5000,
+		"_volumetricNote": "Air-freight convention: chargeable kg is the greater of real mass and (length x width x height in cm) / 5000. A hollow resin figure ships on its box, not its grams.",
+		"packagingMm": 25,
+		"minChargeableKg": 0.25,
+		"zones": [
+			{
+				"id": "cn",
+				"name": "Mainland China",
+				"countries": ["CN"],
+				"baseFee": 4,
+				"perKg": 3,
+				"transitDays": 3
+			},
+			{
+				"id": "us",
+				"name": "United States and Canada",
+				"countries": ["US", "CA"],
+				"baseFee": 9,
+				"perKg": 11,
+				"transitDays": 7
+			},
+			{
+				"id": "eu",
+				"name": "Europe and the UK",
+				"countries": [
+					"GB", "IE", "DE", "FR", "ES", "IT", "NL", "BE", "LU", "AT", "CH", "PT", "DK",
+					"SE", "NO", "FI", "IS", "PL", "CZ", "SK", "HU", "SI", "HR", "RO", "BG", "GR",
+					"EE", "LV", "LT", "MT", "CY"
+				],
+				"baseFee": 11,
+				"perKg": 13,
+				"transitDays": 9
+			},
+			{
+				"id": "row",
+				"name": "Rest of world",
+				"countries": [],
+				"default": true,
+				"baseFee": 14,
+				"perKg": 17,
+				"transitDays": 14
+			}
+		]
+	}
+}
