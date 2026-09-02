@@ -1,27 +1,14 @@
 {
   "base": "https://three.ws",
   "dryRun": true,
+  "ranAt": "2026-09-02T19:06:48.912Z",
   "results": [
-    {
-      "id": "1",
-      "title": "free lane serves live data, no payment demanded",
-      "ok": true,
-      "detail": "health 200 (5 subsystems, real latencies), catalog 200 (11 rows)",
-      "evidence": "prompts/okx-ai/e2e-evidence/30-case1-free-lane.json"
-    },
     {
       "id": "5d",
       "title": "garbage payment header gets a clean 4xx, runs no tool",
       "ok": true,
       "detail": "notBase64=400, wrongShape=402, emptyString=402, truncatedJson=400",
       "evidence": "prompts/okx-ai/e2e-evidence/53-case5d-garbage.json"
-    },
-    {
-      "id": "7",
-      "title": "legacy rails still offered alongside X Layer, same price",
-      "ok": true,
-      "detail": "accepts: eip155:196, solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp, eip155:8453, eip155:8453; solana 10000, base 10000, want 10000",
-      "evidence": "prompts/okx-ai/e2e-evidence/70-case7-legacy-rails.json"
     }
   ],
   "settlements": []

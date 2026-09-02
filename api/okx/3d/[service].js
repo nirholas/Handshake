@@ -57,7 +57,6 @@ import {
 	authenticateRequest,
 	handleSse,
 	handleTerminate,
-	isMcpProtocolClient,
 } from '../../_mcp/auth.js';
 import { sendX402Error, reservePaymentProof } from '../../_mcp/payments.js';
 import {
@@ -403,7 +402,11 @@ async function handleA2mcp(req, res, cfg) {
 	// These services sell on OKX.AI, so the 402 must LEAD with the X Layer
 	// (eip155:196) accept or an OKX buyer cannot pay it. Gated on the X Layer
 	// envs being present. Prepended into the MCP challenge + verify path.
-	const xlayerAcceptsFor = (amount) => (xlayerSettleable() ? [okxXLayerAccept(resourceUrl, amount)] : []);
+	// An amount of null stringifies to the literal "null" inside the accept, an
+	// unpayable challenge that reads to a reviewer as a broken payment rail. No
+	// amount means nothing to charge for, so there is no accept to advertise.
+	const xlayerAcceptsFor = (amount) =>
+		amount && xlayerSettleable() ? [okxXLayerAccept(resourceUrl, amount)] : [];
 
 	if (req.method === 'GET' || req.method === 'HEAD') {
 		// A free service has nothing to challenge for. Answering its GET with a
@@ -435,6 +438,15 @@ async function handleA2mcp(req, res, cfg) {
 		isFreeName,
 	});
 
+	// A row with no list price sells nothing: every tool it serves is free. A
+	// tools/call naming a tool it does NOT serve (forge_3d against the free
+	// forge-status row, which is exactly the sweep a reviewer runs across every
+	// listed endpoint) priced as null and matched no explicit free name, so it
+	// fell through to a 402 quoting an amount of null. A free service must never
+	// demand payment; the honest answer is the dispatcher's own unknown-tool
+	// error. Same reasoning as the GET 405 above.
+	const sellsNothing = !listPrice;
+
 	// The X Layer accept must quote the SAME batch total the platform rails
 	// quote. Pinned to the single-identity list price, a 16-call batch verified
 	// (and settled) against ONE identity's price on the OKX rail: the exact
@@ -447,7 +459,21 @@ async function handleA2mcp(req, res, cfg) {
 		x402Amount,
 		resourcePath,
 		challenge,
-		allowFree: allFree || (isDiscoveryOnlyBatch(body) && !isMcpProtocolClient(req)),
+		// Discovery (initialize / tools/list / ping) is free for EVERY caller
+		// here, protocol clients included. The platform's other MCP surfaces
+		// scope free discovery to non-protocol clients on purpose, because an
+		// OAuth-capable client has to meet the 401 on initialize or it never
+		// starts the OAuth flow. This surface has no OAuth (paymentStatus below
+		// forces 402), so that exclusion protected nothing and instead
+		// paywalled discovery: a spec-compliant MCP client sends
+		// `Accept: text/event-stream` + `MCP-Protocol-Version`, so its
+		// `initialize` and `tools/list` were answered 402 and it could never
+		// connect, read a tool description, or read a parameter schema. That is
+		// what the 2026-09-02 OKX review saw when it rejected the listing for
+		// "missing a complete description, parameter details, and usage
+		// examples"; curl, which sends neither header, was served 200 and hid
+		// it. Paid work is unaffected: tools/call is never a discovery method.
+		allowFree: allFree || sellsNothing || isDiscoveryOnlyBatch(body),
 		extraAccepts,
 		// OKX buyers pay a 402 and nothing else; there is no OAuth story on this
 		// surface, so an MCP client must never be diverted to a 401.

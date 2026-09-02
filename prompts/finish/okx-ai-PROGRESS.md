@@ -6,6 +6,73 @@ Work Order 04 session, no earlier entries existed because no earlier work order 
 
 ---
 
+## 2026-09-02, RUNBOOK repaired: the daily status check had been broken since the CLI moved its approval fields
+
+Companion to the "Work Order 05 dispatched" entry below, same day, different session. That
+one read the state and swept production; this one fixed the operator document both of them
+read, which had drifted far enough that following it produced wrong answers.
+
+**The document was lying in four places. Each was re-derived from a live source, not edited
+from memory.**
+
+1. **Section 1's daily status check did not work.** `onchainos agent get-agents --agent-ids
+   2632` on v4.5.2 still returns the agent, but its payload no longer carries
+   `approvalDisplayStatus`, `approvalLabel`, `status` or `statusLabel`. The scripted
+   one-liner the runbook told an operator to run dies with `KeyError: 'approvalLabel'`,
+   which reads like a broken CLI or an expired session and is neither. `get-my-agents`
+   carries all four. Section 1 is rewritten around it and now records the trap, plus two
+   look-alike fields that must NOT be read as approval state: `service-list`'s
+   `agentInfo.approvalStatus` is a different enum (it read `3` today while the display
+   status read `2`), and its `approvalRemark` still quotes the 2026-07-26 rejection verbatim
+   in the middle of an open review. `agentInfo.updatedAt` is an online heartbeat, not a
+   listing event: it moved 1 ms after `lastOnlineTime` today, so "updated today" means the
+   daemon checked in, nothing more. Verified working replacement:
+   `Listing under review | status not listed | sold 2`.
+2. **Section 2 documented drift that no longer exists.** It described the live listing as
+   the 7 old REST rows against an 11-row module, "expected, because WO-05 has never run".
+   The 2026-08-27 update closed that. Re-pulled `service-list` and compared it row by row to
+   `api/_lib/okx-catalog.js`: 7 rows, ids 39975 to 39981, every name and endpoint matching,
+   all `A2MCP` on chain 196 quoting USD₮0. Section retitled "Drift resolved" and now carries
+   the real table plus the note that 9 further rows are deployed, payable and deliberately
+   `listed: false`.
+3. **Section 3 claimed funding gates the resubmission.** "Only then does WO-05 unlock" is
+   false and was a live tripwire: WO-08 says plainly that a listing needs no settled payment
+   to be submitted, and the 2026-08-27 resubmission went out with all three wallets empty.
+   What funding gates is WO-04's first real settlement. Corrected in place rather than
+   deleted, so the next reader sees the claim was wrong and why. Balances re-read live at
+   block 69606689 (`rpc.xlayer.tech`, direct `balanceOf` + `eth_getBalance`): buyer
+   `0x75d0…cf69` 0 USD₮0 / 0 OKB, seller `0x4022de2D…f402` 2.427731 / 0.839596, relayer
+   `0xe81DE501…415B` 0 / 0.02. Identical to 2026-08-01 and 2026-07-23. Live `payTo` re-probed
+   across all four paid rows: no drift.
+4. **Section 7's "probe this before any submission" command probed the wrong endpoint, with
+   the wrong headers.** It curled `identity-studio`, which has been `listed: false` since the
+   2026-08-22 rebuild, so the check a submission depended on was aimed at a row no reviewer
+   sees. Replaced with a loop over the four listed paid rows carrying the two MCP client
+   headers, and an explanation of why a bare curl is a false green here. Verified today: all
+   four answer 402 with `eip155:196` leading, `GET /forge-status` answers 405.
+
+Also refreshed: the CLI version line (v4.4.0 to the actual v4.5.2), section 4's confirm step
+and section 5's remark-capture command (both pointed at the moved fields), and section 5's
+pointer to the retired WO-05, now WO-08.
+
+`npm run check:rules -- --paths prompts/finish/okx-ai-RUNBOOK.md` passes; no banned dashes.
+
+### One thing measured but not resolved, for whoever picks this up
+
+`soldCount` reads **2** on an agent that has never had a settled payment on our rail. It was
+already 2 on 2026-08-27, before the current listing existed, so it is not a forge sale, and
+the seller wallet's 2.427731 USD₮0 predates it too. Nobody has established what OKX counts
+there. Do not cite it as revenue until someone reconciles it against a tx hash.
+
+### State
+
+Under review, day 6. Nothing to submit, nothing on-chain attempted, no funding needed to
+keep waiting. The pending discovery fix in `api/okx/3d/[service].js` (another session's, see
+the entry below) is the only code between here and the next deploy.
+
+---
+
+
 ## 2026-09-02, Work Order 05 dispatched: RETIRED at the gate, listing verified under review, nothing submitted
 
 Asked to execute `okx-ai-05-relisting-resubmission.md`. **It was not executed, deliberately, and

@@ -513,12 +513,17 @@ describe('402 challenge and pricing', () => {
 
 	// A batch with nothing priced has no total to quote, so the challenge falls
 	// back to the list price it advertises in the catalog and on the SSE lane.
+	// Probed with a tools/call rather than a tools/list: discovery (initialize,
+	// tools/list, ping) is now free for every caller on this surface, protocol
+	// clients included, so a tools/list no longer challenges at all. An unknown
+	// tool name is the honest unpriced-but-billable case this fallback exists
+	// for, and it must never be served free on a row that sells.
 	it('an unpriced batch still challenges at the single-identity list price', async () => {
 		const res = makeRes();
 		await handler(
 			makeReq({
 				headers: { 'mcp-protocol-version': '2025-06-18' },
-				body: { jsonrpc: '2.0', id: 1, method: 'tools/list' },
+				body: { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'no_such_tool', arguments: {} } },
 			}),
 			res,
 		);

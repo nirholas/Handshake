@@ -261,9 +261,12 @@ function buildStatusTool() {
 // inherits the default that describes a different server's tools, and an agent
 // that followed it would pay and then send a call this dispatcher rejects.
 function forgeBazaarExtension(entry, paidTool) {
+	// The image example must point at an image that actually loads: this one is
+	// the single runnable example on the image row, and a buyer that follows it
+	// pays before finding out. It read /og/three-ws.png, which 404s.
 	const exampleArguments = paidTool
 		? entry.lane?.mode === 'image_to_3d'
-			? { image_urls: [`${BASE}/og/three-ws.png`] }
+			? { image_urls: [`${BASE}/logo.png`] }
 			: { prompt: 'a low-poly orange fox sitting down' }
 		: { job_id: 'f1.abc123' };
 	const exampleBody = {

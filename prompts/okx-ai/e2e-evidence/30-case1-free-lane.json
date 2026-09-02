@@ -7,37 +7,48 @@
         {
           "name": "generation",
           "ok": true,
-          "latency_ms": 52,
-          "status": 400
+          "latency_ms": 37,
+          "tiers": 3,
+          "backends": 11
+        },
+        {
+          "name": "submit-latency",
+          "ok": true,
+          "latency_ms": 195,
+          "window_minutes": 60,
+          "samples": 0,
+          "errors": 0,
+          "p50_ms": null,
+          "p90_ms": null
         },
         {
           "name": "render",
           "ok": true,
-          "latency_ms": 34,
+          "latency_ms": 23,
           "poses": 28
         },
         {
           "name": "storage",
           "ok": true,
-          "latency_ms": 174
+          "latency_ms": 117
         },
         {
           "name": "retarget",
           "ok": true,
-          "latency_ms": 32,
+          "latency_ms": 24,
           "clips": 112
         },
         {
           "name": "payment-rail",
           "ok": true,
-          "latency_ms": 489,
+          "latency_ms": 909,
           "settleable": true,
-          "block": "66852007",
+          "block": "69606946",
           "token": "USD₮0",
           "facilitator_configured": false
         }
       ],
-      "checkedAt": "2026-08-01T21:50:43.562Z"
+      "checkedAt": "2026-09-02T19:06:23.596Z"
     }
   },
   "catalog": {
@@ -47,6 +58,204 @@
       "okxAgentId": 2632,
       "chain": "eip155:196",
       "services": [
+        {
+          "id": "forge-draft",
+          "name": "Forge 3D Draft",
+          "kind": "a2mcp",
+          "description": {
+            "capability": "Turns a text description of one object or character into a downloadable textured 3D model in GLB format, with a browser preview link and an augmented-reality link that places it in a real room.",
+            "input": "Provide a text description of a single subject, 3 to 1000 characters, naming its style and main colours. An aspect ratio is optional. Returns a job id to poll on the free status service."
+          },
+          "price_usd": "0.01",
+          "endpoint": "https://three.ws/api/okx/3d/forge-draft",
+          "tool": "forge_3d",
+          "input_schema": {
+            "type": "object",
+            "required": [
+              "prompt"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "prompt": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 1000
+              },
+              "aspect_ratio": {
+                "type": "string",
+                "enum": [
+                  "1:1",
+                  "4:3",
+                  "3:4",
+                  "16:9",
+                  "9:16"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "forge-standard",
+          "name": "Forge 3D Standard",
+          "kind": "a2mcp",
+          "description": {
+            "capability": "Turns a text description of one object or character into a downloadable textured 3D model in GLB format on the standard quality pass, with a browser preview link and an augmented-reality link.",
+            "input": "Provide a text description of a single subject, 3 to 1000 characters, naming its style and main colours. An aspect ratio is optional. Returns a job id to poll on the free status service."
+          },
+          "price_usd": "0.05",
+          "endpoint": "https://three.ws/api/okx/3d/forge-standard",
+          "tool": "forge_3d",
+          "input_schema": {
+            "type": "object",
+            "required": [
+              "prompt"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "prompt": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 1000
+              },
+              "aspect_ratio": {
+                "type": "string",
+                "enum": [
+                  "1:1",
+                  "4:3",
+                  "3:4",
+                  "16:9",
+                  "9:16"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "forge-hd",
+          "name": "Forge 3D HD",
+          "kind": "a2mcp",
+          "description": {
+            "capability": "Turns a text description of one object or character into a downloadable textured 3D model in GLB format on the highest detail pass, with a browser preview link and an augmented-reality link.",
+            "input": "Provide a text description of a single subject, 3 to 1000 characters, naming its style and main colours. An aspect ratio is optional. This pass runs longer, so keep polling the free status service."
+          },
+          "price_usd": "0.25",
+          "endpoint": "https://three.ws/api/okx/3d/forge-hd",
+          "tool": "forge_3d",
+          "input_schema": {
+            "type": "object",
+            "required": [
+              "prompt"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "prompt": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 1000
+              },
+              "aspect_ratio": {
+                "type": "string",
+                "enum": [
+                  "1:1",
+                  "4:3",
+                  "3:4",
+                  "16:9",
+                  "9:16"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "forge-image",
+          "name": "Forge 3D from Image",
+          "kind": "a2mcp",
+          "description": {
+            "capability": "Rebuilds a downloadable textured 3D model in GLB format from photographs or rendered views of one object, with a browser preview link and an augmented-reality link that places it in a real room.",
+            "input": "Provide one to four publicly reachable image links showing the same subject. A short text description is optional and sharpens the result. Returns a job id to poll on the free status service."
+          },
+          "price_usd": "0.25",
+          "endpoint": "https://three.ws/api/okx/3d/forge-image",
+          "tool": "forge_3d",
+          "input_schema": {
+            "type": "object",
+            "required": [
+              "image_urls"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "image_urls": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 4,
+                "items": {
+                  "type": "string",
+                  "format": "uri",
+                  "pattern": "^https://"
+                }
+              },
+              "prompt": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 1000
+              }
+            }
+          }
+        },
+        {
+          "id": "forge-status",
+          "name": "Forge Job Status",
+          "kind": "a2mcp",
+          "description": {
+            "capability": "Reports the live state of any three.ws forge generation job and returns the finished model file, concept image, browser preview link and augmented-reality link once the job completes. Always free.",
+            "input": "Provide the job id returned when a generation was accepted. Optionally provide the original description so the preview pages carry a title. No payment, account, or key is required to call it."
+          },
+          "price_usd": "0",
+          "endpoint": "https://three.ws/api/okx/3d/forge-status",
+          "tool": "forge_status",
+          "input_schema": {
+            "type": "object",
+            "required": [
+              "job_id"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "job_id": {
+                "type": "string",
+                "minLength": 8,
+                "maxLength": 1024
+              },
+              "title": {
+                "type": "string",
+                "maxLength": 200
+              }
+            }
+          }
+        },
+        {
+          "id": "catalog",
+          "name": "3D Studio Service Catalog",
+          "kind": "rest",
+          "description": {
+            "capability": "Free machine-readable index of every three.ws 3D Studio service sold here: names, descriptions, prices, endpoints, and input formats, always in sync with the live services.",
+            "input": "Provide nothing. No parameters, no payment, and no account are required. Returns the full service list with names, prices, endpoints, and the exact input each one expects."
+          },
+          "price_usd": "0",
+          "endpoint": "https://three.ws/api/okx/3d/catalog"
+        },
+        {
+          "id": "health",
+          "name": "3D Studio Health Status",
+          "kind": "rest",
+          "description": {
+            "capability": "Free live health status for the systems behind every paid service: generation, rigging, rendering, storage, and the payment rail, from real checks rather than a fixed reply.",
+            "input": "Provide nothing. No parameters, no payment, and no account are required. Returns a per-system reading so a buyer can confirm everything is up before paying for a job."
+          },
+          "price_usd": "0",
+          "endpoint": "https://three.ws/api/okx/3d/health"
+        }
+      ],
+      "unlisted": [
         {
           "id": "identity-studio",
           "name": "Agent Identity Studio",
@@ -352,31 +561,25 @@
               }
             }
           }
-        },
-        {
-          "id": "catalog",
-          "name": "3D Studio Service Catalog",
-          "kind": "rest",
-          "description": {
-            "capability": "Free machine-readable index of every three.ws 3D Studio service on OKX.AI: names, descriptions, prices, endpoints, and input formats, always in sync with the live services.",
-            "input": "Provide nothing. No parameters, no payment, no account required. Example: fetch the link to list every service with names, prices, and input details."
-          },
-          "price_usd": "0",
-          "endpoint": "https://three.ws/api/okx/3d/catalog"
-        },
-        {
-          "id": "health",
-          "name": "3D Studio Health Status",
-          "kind": "rest",
-          "description": {
-            "capability": "Free live health status for the systems behind every paid service: generation, rigging, rendering, storage, and the payment rail, from real checks rather than a fixed reply.",
-            "input": "Provide nothing. No parameters, no payment, no account required. Example: fetch the link to confirm all systems are up before buying a paid service."
-          },
-          "price_usd": "0",
-          "endpoint": "https://three.ws/api/okx/3d/health"
         }
       ],
       "docs": "https://three.ws/docs/okx-marketplace"
+    }
+  },
+  "freeToolsOnPaidRow": {
+    "forge_status": {
+      "status": 200,
+      "isToolError": true,
+      "structured": {
+        "ok": false,
+        "error": "unknown_job",
+        "message": "Malformed job id."
+      },
+      "text": "unknown_job: Malformed job id."
+    },
+    "getting_started": {
+      "status": 200,
+      "text": "# three.ws Forge, Forge 3D Draft: Getting Started\n\nText or images to a real, downloadable 3D model (GLB), with a browser preview and an augmented-reality link that places it in a real room.\n\n## Tools (this getting_started tool is free)\n- forge_3d ($0.01/call): $0.01 per call, charged only when the job is accepted.\n- forge_status: FREE.\n- look_at_model: FREE.\n\n## Access\n- Pay per call with x402 on "
     }
   }
 }

@@ -4,11 +4,12 @@
 // update submitted to OKX all read from this module, so the live endpoints can
 // never drift from the marketplace listing.
 //
-// OKX listing format: every service carries a 2-part description, part 1 says
-// what the service does, part 2 says what the caller must provide, and each
-// part must fit in 200 display-width characters, where East-Asian wide glyphs
-// count 2 and everything else counts 1 (OKX rejects over-length listings).
-// `validateCatalog()` enforces this; tests/okx-catalog.test.js runs it in CI.
+// OKX listing format: an A2MCP service carries a FOUR-part description (what it
+// does / parameter spec / request method / a working curl). Parts 2 and 4 are
+// derived from each row's inputSchema and example arguments, so the listing
+// cannot drift from the endpoint. See listingDescription() below for the full
+// rule and the review that forced it. `validateCatalog()` enforces every part;
+// tests/api/okx-3d-services.test.js runs it in CI.
 //
 // The okx-ai campaign's work order 03 (retired; readable in git history)
 // decomposes the
@@ -57,6 +58,15 @@ function usdToAtomics(usd) {
 export const FORGE_TOOL = 'forge_3d';
 export const FORGE_STATUS_TOOL = 'forge_status';
 
+// The paid text lanes take the same arguments, so they document them the same
+// way. One definition keeps the four listing rows from drifting apart.
+const TEXT_FORGE_PARAMS = Object.freeze({
+	prompt:
+		'what to build, 3 to 1000 characters, naming one subject plus its style and main colours',
+	aspect_ratio:
+		'framing of the concept image, one of 1:1, 4:3, 3:4, 16:9, 9:16 (defaults to 1:1)',
+});
+
 // The paid text lanes take the same arguments; only the endpoint's lane and
 // fee differ. Built fresh per row so no two rows share a mutable schema object.
 function textForgeSchema() {
@@ -87,7 +97,11 @@ function forgeStatusSchema() {
 //   id                  URL slug, the service's route is /api/okx/3d/<id>
 //   name                Listing display name
 //   kind                'a2mcp' (MCP Streamable HTTP JSON-RPC) | 'rest' (plain JSON GET)
-//   describes           2-part OKX listing description { capability, input }
+//   describes           OKX listing copy { capability, input, params, example }:
+//                       `params` gives every inputSchema property a one-line
+//                       meaning, `example` is a valid argument object for the
+//                       row's own schema. Listing parts 2 and 4 are built from
+//                       them; see listingDescription().
 //   priceUsd            Retail price in USD as a string ('0' = free)
 //   amountAtomics       x402 amount (USDC 6-decimals atomic string), null = free
 //   endpoint            Absolute endpoint URL buyers call
@@ -122,13 +136,18 @@ export const OKX_CATALOG = Object.freeze([
 		lane: { tier: 'draft', path: 'image', mode: 'text_to_3d' },
 		describes: {
 			capability:
-				'Turns a text description of one object or character into a downloadable textured 3D ' +
-				'model in GLB format, with a browser preview link and an augmented-reality link that ' +
-				'places it in a real room.',
+				'Turns a text description of one object or character into a downloadable textured 3D model in ' +
+				'GLB format, with a browser preview link and an augmented-reality link that places it in a ' +
+				'real room.',
 			input:
-				'Provide a text description of a single subject, 3 to 1000 characters, naming its style ' +
-				'and main colours. An aspect ratio is optional. Returns a job id to poll on the free ' +
-				'status service.',
+				'Provide a text description of a single subject, 3 to 1000 characters, naming its style and ' +
+				'main colours. An aspect ratio is optional. Returns a job id to poll on the free status ' +
+				'service.',
+			params: {
+				prompt: 'What to build: one subject, plus its style and main colours.',
+				aspect_ratio: 'Framing of the concept image the model is built from.',
+			},
+			example: {'prompt': 'a low-poly orange fox sitting down'},
 		},
 		priceUsd: '0.01',
 		amountAtomics: usdToAtomics(0.01),
@@ -144,13 +163,18 @@ export const OKX_CATALOG = Object.freeze([
 		lane: { tier: 'standard', mode: 'text_to_3d' },
 		describes: {
 			capability:
-				'Turns a text description of one object or character into a downloadable textured 3D ' +
-				'model in GLB format on the standard quality pass, with a browser preview link and an ' +
+				'Turns a text description of one object or character into a downloadable textured 3D model in ' +
+				'GLB format on the standard quality pass, with a browser preview link and an ' +
 				'augmented-reality link.',
 			input:
-				'Provide a text description of a single subject, 3 to 1000 characters, naming its style ' +
-				'and main colours. An aspect ratio is optional. Returns a job id to poll on the free ' +
-				'status service.',
+				'Provide a text description of a single subject, 3 to 1000 characters, naming its style and ' +
+				'main colours. An aspect ratio is optional. Returns a job id to poll on the free status ' +
+				'service.',
+			params: {
+				prompt: 'What to build: one subject, plus its style and main colours.',
+				aspect_ratio: 'Framing of the concept image the model is built from.',
+			},
+			example: {'prompt': 'a brass steampunk pocket watch, open lid'},
 		},
 		priceUsd: '0.05',
 		amountAtomics: usdToAtomics(0.05),
@@ -166,13 +190,18 @@ export const OKX_CATALOG = Object.freeze([
 		lane: { tier: 'high', mode: 'text_to_3d' },
 		describes: {
 			capability:
-				'Turns a text description of one object or character into a downloadable textured 3D ' +
-				'model in GLB format on the highest detail pass, with a browser preview link and an ' +
-				'augmented-reality link.',
+				'Turns a text description of one object or character into a downloadable textured 3D model in ' +
+				'GLB format on the highest detail pass, with a browser preview link and an augmented-reality ' +
+				'link.',
 			input:
-				'Provide a text description of a single subject, 3 to 1000 characters, naming its style ' +
-				'and main colours. An aspect ratio is optional. This pass runs longer, so keep polling ' +
-				'the free status service.',
+				'Provide a text description of a single subject, 3 to 1000 characters, naming its style and ' +
+				'main colours. An aspect ratio is optional. This pass runs longer, so keep polling the free ' +
+				'status service.',
+			params: {
+				prompt: 'What to build: one subject, plus its style and main colours.',
+				aspect_ratio: 'Framing of the concept image the model is built from.',
+			},
+			example: {'prompt': 'an ornate marble griffin statue on a plinth', 'aspect_ratio': '3:4'},
 		},
 		priceUsd: '0.25',
 		amountAtomics: usdToAtomics(0.25),
@@ -188,13 +217,18 @@ export const OKX_CATALOG = Object.freeze([
 		lane: { mode: 'image_to_3d' },
 		describes: {
 			capability:
-				'Rebuilds a downloadable textured 3D model in GLB format from photographs or rendered ' +
-				'views of one object, with a browser preview link and an augmented-reality link that ' +
-				'places it in a real room.',
+				'Rebuilds a downloadable textured 3D model in GLB format from photographs or rendered views ' +
+				'of one object, with a browser preview link and an augmented-reality link that places it in a ' +
+				'real room.',
 			input:
-				'Provide one to four publicly reachable image links showing the same subject. A short ' +
-				'text description is optional and sharpens the result. Returns a job id to poll on the ' +
-				'free status service.',
+				'Provide one to four publicly reachable image links showing the same subject. A short text ' +
+				'description is optional and sharpens the result. Returns a job id to poll on the free status ' +
+				'service.',
+			params: {
+				image_urls: 'Public https links to photographs or rendered views of one object.',
+				prompt: 'Optional text describing the object, which sharpens the rebuild.',
+			},
+			example: {'image_urls': ['https://three.ws/og-image.png']},
 		},
 		priceUsd: '0.25',
 		amountAtomics: usdToAtomics(0.25),
@@ -223,13 +257,18 @@ export const OKX_CATALOG = Object.freeze([
 		lane: { mode: 'status' },
 		describes: {
 			capability:
-				'Reports the live state of any three.ws forge generation job and returns the finished ' +
-				'model file, concept image, browser preview link and augmented-reality link once the ' +
-				'job completes. Always free.',
+				'Reports the live state of any three.ws forge generation job and returns the finished model ' +
+				'file, concept image, browser preview link and augmented-reality link once the job completes. ' +
+				'Always free.',
 			input:
-				'Provide the job id returned when a generation was accepted. Optionally provide the ' +
-				'original description so the preview pages carry a title. No payment, account, or key ' +
-				'is required to call it.',
+				'Provide the job id returned when a generation was accepted. Optionally provide the original ' +
+				'description so the preview pages carry a title. No payment, account, or key is required to ' +
+				'call it.',
+			params: {
+				job_id: 'The job id returned when a generation was accepted.',
+				title: 'Optional title carried onto the viewer and AR pages.',
+			},
+			example: {'job_id': 'f1.abc123'},
 		},
 		priceUsd: '0',
 		amountAtomics: null,
@@ -540,11 +579,10 @@ export const OKX_CATALOG = Object.freeze([
 		describes: {
 			capability:
 				'Free machine-readable index of every three.ws 3D Studio service sold here: names, ' +
-				'descriptions, prices, endpoints, and input formats, always in sync with the live ' +
-				'services.',
+				'descriptions, prices, endpoints, and input formats, always in sync with the live services.',
 			input:
-				'Provide nothing. No parameters, no payment, and no account are required. Returns the ' +
-				'full service list with names, prices, endpoints, and the exact input each one expects.',
+				'Provide nothing. No parameters, no payment, and no account are required. Returns the full ' +
+				'service list with names, prices, endpoints, and the exact input each one expects.',
 		},
 		priceUsd: '0',
 		amountAtomics: null,
@@ -577,10 +615,90 @@ export function catalogEntry(id) {
 	return OKX_CATALOG.find((e) => e.id === id) || null;
 }
 
-// The OKX listing description string: part ① and part ② joined on a newline,
-// the layout the approved sellers use. Work order 05 submits this verbatim.
+// ── The OKX A2MCP listing description ───────────────────────────────────────
+// OKX listing QA requires FOUR newline-separated parts on an A2MCP service and
+// rejects a listing missing any of them (`onchainos agent update --help`). The
+// 2026-09-02 review rejected #2632 with exactly that remark: "The service you
+// submitted is missing a complete description, parameter details, and usage
+// examples." We were submitting two parts.
+//
+//   1. what the service does          <- describes.capability
+//   2. parameter spec, ALL params on ONE line, `;`-separated, each
+//      `<name>(<type>, required/optional): <meaning>`
+//   3. request method (POST / GET, plus the MCP tool name where there is one)
+//   4. a working curl against the real endpoint
+//
+// Parts 2 and 4 are DERIVED from `inputSchema` + `describes.params` /
+// `describes.example`, never
+// hand-written: a parameter renamed in the schema renames itself in the
+// listing, and validateCatalog() fails a row whose schema and documented
+// parameters disagree. The example arguments are validated against the row's
+// own schema in tests/api/okx-3d-services.test.js, so a published usage
+// example cannot be one the endpoint would reject.
+// JSON Schema type as a buyer-readable label: `string`, `number`, `boolean`,
+// `string[]`. Anything exotic falls back to the raw schema type rather than
+// guessing, so an undocumented shape reads as itself instead of as a lie.
+function schemaTypeLabel(prop) {
+	const type = prop?.type;
+	if (type === 'array') {
+		const item = prop.items?.type;
+		return item ? `${item}[]` : 'array';
+	}
+	return typeof type === 'string' ? type : 'string';
+}
+
+// Part 2. Order follows the schema's own property order, which puts the
+// required arguments first in every row.
+export function parameterSpec(entry) {
+	const schema = entry.inputSchema;
+	const props = schema?.properties ? Object.entries(schema.properties) : [];
+	if (!props.length) return 'No parameters. Send an empty request.';
+	const required = new Set(schema.required || []);
+	const params = entry.describes?.params || {};
+	return props
+		.map(([name, prop]) => {
+			const need = required.has(name) ? 'required' : 'optional';
+			// The meanings are written as sentences; `;` is the separator OKX asks
+			// for, so a trailing full stop would render as "colours.; aspect_ratio".
+			const meaning = String(params[name]).trim().replace(/\.$/, '');
+			return `${name} (${schemaTypeLabel(prop)}, ${need}): ${meaning}`;
+		})
+		.join('; ');
+}
+
+// Part 3. A2MCP rows are called as MCP JSON-RPC `tools/call`, so the tool name
+// is the part a buyer cannot guess; REST rows answer a plain POST, and the two
+// free discovery rows a plain GET.
+export function requestMethod(entry) {
+	if (entry.kind === 'a2mcp') return `POST (MCP JSON-RPC tools/call, tool name: ${entry.tool})`;
+	return entry.inputSchema ? 'POST' : 'GET';
+}
+
+// Part 4. A real, runnable call. The A2MCP rows carry the full JSON-RPC
+// envelope because that, not a bare argument object, is what their endpoint
+// accepts.
+export function requestExample(entry) {
+	const url = entry.endpoint;
+	if (!entry.inputSchema) return `curl ${url}`;
+	const args = entry.describes?.example;
+	const body =
+		entry.kind === 'a2mcp'
+			? { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: entry.tool, arguments: args } }
+			: args;
+	return `curl -X POST ${url} -H "Content-Type: application/json" -d '${JSON.stringify(body)}'`;
+}
+
+// OKX caps the whole description at 1000 CJK characters, i.e. 2000 half-width
+// display columns.
+export const LISTING_MAX_WIDTH = 2000;
+
 export function listingDescription(entry) {
-	return `${entry.describes.capability}\n${entry.describes.input}`;
+	return [
+		entry.describes.capability,
+		parameterSpec(entry),
+		requestMethod(entry),
+		requestExample(entry),
+	].join('\n');
 }
 
 // The machine-readable index the free catalog service returns, the exact
@@ -644,6 +762,42 @@ export function validateCatalog(catalog = OKX_CATALOG) {
 			const w = displayWidth(text);
 			if (w > DESCRIPTION_MAX_WIDTH) {
 				throw new Error(`${ctx}: describes.${part} display width ${w} > ${DESCRIPTION_MAX_WIDTH}`);
+			}
+		}
+		// The four-part rules below bind the rows we actually submit. A back-burner
+		// row is not on the listing, so it is held to the catalog rules only; it
+		// picks these up when it returns to the listing, exactly like the
+		// `listed` name-width check above.
+		if (e.listed) {
+			// Every schema property must carry a documented meaning, and every
+			// documented meaning must name a real schema property. This is the
+			// guard that keeps listing part 2 honest: rename an argument and the
+			// listing fails here rather than shipping a parameter buyers cannot
+			// send.
+			const schemaProps = Object.keys(e.inputSchema?.properties || {});
+			const documented = Object.keys(e.describes?.params || {});
+			for (const name of schemaProps) {
+				if (!e.describes?.params?.[name]) throw new Error(`${ctx}: describes.params is missing "${name}"`);
+			}
+			for (const name of documented) {
+				if (!schemaProps.includes(name)) throw new Error(`${ctx}: describes.params documents unknown param "${name}"`);
+			}
+			// Listing part 4 has to be a real call, so a row with arguments needs
+			// example arguments to build one from.
+			if (schemaProps.length && !e.describes?.example) {
+				throw new Error(`${ctx}: missing describes.example, listing part 4 would have no usage example`);
+			}
+			// All four parts present and inside OKX's whole-description cap. A
+			// listed row missing any part is rejected at listing QA, which is what
+			// happened on 2026-09-02.
+			const listing = listingDescription(e);
+			const parts = listing.split('\n');
+			if (parts.length !== 4 || parts.some((p) => !p.trim())) {
+				throw new Error(`${ctx}: listing description must be 4 non-empty parts, got ${parts.length}`);
+			}
+			const lw = displayWidth(listing);
+			if (lw > LISTING_MAX_WIDTH) {
+				throw new Error(`${ctx}: listing description display width ${lw} > ${LISTING_MAX_WIDTH}`);
 			}
 		}
 		if (!/^\d+(\.\d{1,2})?$/.test(e.priceUsd)) throw new Error(`${ctx}: bad priceUsd`);

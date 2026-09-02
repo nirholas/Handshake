@@ -126,6 +126,13 @@ beforeEach(() => {
 	submitted.length = 0;
 });
 
+// Every listed A2MCP row, the exact set a reviewer's MCP client connects to.
+// The two free REST rows (catalog, health) are plain GET and are covered
+// separately.
+const LISTED_IDS = listedCatalog()
+	.filter((e) => e.kind === 'a2mcp')
+	.map((e) => e.id);
+
 const PAID_FORGE = [
 	['forge-draft', '10000', '0.01'],
 	['forge-standard', '50000', '0.05'],
@@ -258,6 +265,79 @@ describe('402 challenge: the OKX Agent Payments Protocol integration', () => {
 		expect(sse.statusCode).toBe(402);
 	});
 
+	// The 2026-09-02 review rejected the listing as "missing a complete
+	// description, parameter details, and usage examples". It was not the copy:
+	// discovery itself was paywalled. Free discovery was scoped to non-protocol
+	// clients (an OAuth-capable client must meet the 401 on initialize on the
+	// platform's other MCP surfaces), but this surface forces 402 and has no
+	// OAuth, so a spec-compliant MCP client, the only kind a reviewer probes an
+	// A2MCP listing with, was answered 402 on initialize and tools/list and
+	// could never read a single tool description or parameter schema. curl
+	// sends neither header and was served 200, which is why every earlier
+	// verification pass missed it.
+	it('a real MCP client can discover every endpoint without paying', async () => {
+		const mcpHeaders = [
+			{ accept: 'application/json, text/event-stream' },
+			{ 'mcp-protocol-version': '2025-06-18' },
+			{ 'mcp-session-id': 'sess-1' },
+		];
+		for (const id of LISTED_IDS) {
+			for (const headers of mcpHeaders) {
+				for (const method of ['initialize', 'tools/list', 'ping']) {
+					const res = makeRes();
+					await handler(makeReq({ service: id, headers, body: { jsonrpc: '2.0', id: 1, method } }), res);
+					expect(res.statusCode, `${id} ${method} ${JSON.stringify(headers)}`).toBe(200);
+					expect(res.headers['payment-required']).toBeUndefined();
+				}
+			}
+		}
+	});
+
+	// Discovery being free is only useful if what it returns is what the review
+	// asked for: every tool named, described, and carrying a typed schema for
+	// each argument.
+	it('tools/list hands a reviewer the parameter details for every tool', async () => {
+		for (const id of LISTED_IDS) {
+			const res = makeRes();
+			await handler(
+				makeReq({
+					service: id,
+					headers: { 'mcp-protocol-version': '2025-06-18' },
+					body: { jsonrpc: '2.0', id: 1, method: 'tools/list' },
+				}),
+				res,
+			);
+			const tools = JSON.parse(res.body).result.tools;
+			expect(tools.length, id).toBeGreaterThan(0);
+			for (const tool of tools) {
+				expect(tool.name, id).toBeTruthy();
+				expect(String(tool.description || '').length, `${id}/${tool.name}`).toBeGreaterThan(20);
+				const props = tool.inputSchema?.properties || {};
+				for (const [arg, schema] of Object.entries(props)) {
+					expect(schema.type, `${id}/${tool.name}/${arg}`).toBeTruthy();
+				}
+			}
+		}
+	});
+
+	// Paid work is not discovery, and must stay behind the 402 for the same
+	// clients that now discover freely.
+	it('still charges a protocol client for the paid tool', async () => {
+		for (const [id] of PAID_FORGE) {
+			const res = makeRes();
+			await handler(
+				makeReq({
+					service: id,
+					headers: { accept: 'application/json, text/event-stream', 'mcp-protocol-version': '2025-06-18' },
+					body: rpc(FORGE_TOOL, { prompt: 'a low-poly orange fox' }),
+				}),
+				res,
+			);
+			expect(res.statusCode, id).toBe(402);
+			expect(JSON.parse(res.body).accepts[0].network).toBe('eip155:196');
+		}
+	});
+
 	it('free tools need no payment on a paid endpoint', async () => {
 		const res = await post('forge-draft', rpc('getting_started', {}));
 		expect(res.statusCode).toBe(200);
@@ -274,6 +354,29 @@ describe('402 challenge: the OKX Agent Payments Protocol integration', () => {
 		await handler(makeReq({ method: 'GET', service: 'forge-status' }), get);
 		expect(get.statusCode).toBe(405);
 		expect(get.headers.allow).toBe('POST, DELETE');
+	});
+
+	// The reviewer sweep runs ONE body across every listed endpoint, so the free
+	// row is asked for the paid tool it does not serve. That priced as null and
+	// matched no explicit free name, so it fell through to a 402 whose X Layer
+	// accept quoted an amount of the literal string "null": a free service
+	// demanding an unpayable payment, on the row a reviewer reaches last.
+	it('the free status endpoint answers the paid tool it does not serve with an error, not a 402', async () => {
+		const res = await post('forge-status', rpc(FORGE_TOOL, { prompt: 'a low-poly orange fox' }));
+		expect(res.statusCode).not.toBe(402);
+		expect(res.headers['payment-required']).toBeUndefined();
+		const out = JSON.parse(res.body);
+		expect(out.error?.message || out.result?.content?.[0]?.text || '').toMatch(/unknown|not found|unsupported/i);
+	});
+
+	it('no accept ever advertises an amount of "null"', async () => {
+		for (const id of [...PAID_FORGE.map(([rowId]) => rowId), 'forge-status']) {
+			const res = await post(id, rpc(FORGE_TOOL, { prompt: 'a low-poly orange fox' }));
+			if (res.statusCode !== 402) continue;
+			for (const accept of JSON.parse(res.body).accepts) {
+				expect(accept.amount).toMatch(/^[0-9]+$/);
+			}
+		}
 	});
 });
 
