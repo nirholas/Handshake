@@ -2800,13 +2800,20 @@ export class CoinCommunities {
 	// The drawer's view module (roster, DM threads, presence rendering) is only
 	// needed once someone opens it, so it is imported on demand; the unread badge
 	// is fed by `friendsClient` and never waits on this.
-	async _openFriends() {
+	//
+	// The frame is built and slid in SYNCHRONOUSLY, before the chunk is asked for.
+	// It used to be built after the await, which meant a slow chunk left the
+	// button looking dead, and `_friendsOpen` (the flag `_closeFriends` and the
+	// J hotkey both test) only flipped once the module landed, so an Escape while
+	// it was in flight was swallowed and the drawer slid open seconds later
+	// against the player's intent. Now the drawer answers the tap on the same
+	// frame, shows a skeleton roster while the chunk travels, and a cancel during
+	// the load is honoured.
+	_openFriends() {
 		if (this._friendsOpen) return;
 		// Shares the right edge with the avatar switcher; never stack the drawers.
 		this._closeAvatarPanel();
 		if (!this._friendsEl) {
-			if (!this._friendsModule) this._friendsModule = import('./friends-panel.js');
-			const { FriendsPanel } = await this._friendsModule;
 			// Right-docked drawer. The panel renders its own tabs/list/threads into
 			// `body`; we own only the frame, the close affordance and the hotkey hint.
 			const close = document.createElement('button');
@@ -2854,9 +2861,7 @@ export class CoinCommunities {
 			this._friendsEl = root;
 			this._friendsBodyEl = body;
 			this._friendsCloseEl = close;
-			this._friends = new FriendsPanel(body);
 		}
-		this._friends.mount();
 		this._friendsOpen = true;
 		// Next frame, so the transform transition runs from its closed state rather
 		// than being collapsed into the same style recalculation as the insert.
@@ -2866,6 +2871,89 @@ export class CoinCommunities {
 		// keys stops the avatar sliding when focus moves into a DM input.
 		this.keys.clear();
 		this._friendsCloseEl?.focus();
+		if (this._friends) this._friends.mount();
+		else this._loadFriendsPanel();
+	}
+
+	// Fetch the drawer's view module and hand it the open drawer's body. Runs with
+	// the frame already on screen, so everything here only ever swaps the body's
+	// contents: a skeleton roster, then the real panel, or a designed failure with
+	// a retry. A player who closed the drawer while the chunk was travelling gets
+	// the panel built for their next open but never sees it mount behind them.
+	_loadFriendsPanel() {
+		if (this._friendsLoading) return;
+		this._friendsLoading = true;
+		this._renderFriendsSkeleton();
+		if (!this._friendsModule) this._friendsModule = import('./friends-panel.js');
+		this._friendsModule.then(({ FriendsPanel }) => {
+			this._friendsLoading = false;
+			if (!this._friendsBodyEl) return; // world torn down mid-load
+			this._friendsBodyEl.textContent = '';
+			this._friends = new FriendsPanel(this._friendsBodyEl);
+			if (this._friendsOpen) this._friends.mount();
+		}).catch((err) => {
+			this._friendsLoading = false;
+			// A dead chunk (stale deploy, offline, blocked CDN) must not leave the
+			// drawer spinning forever. Say what happened and offer the retry, the
+			// same contract every other panel on this surface keeps.
+			this._friendsModule = null;
+			log.warn('[coincommunities] friends panel failed to load:', err?.message);
+			this._renderFriendsLoadError();
+		});
+	}
+
+	// Skeleton roster: five rows shaped like the friend rows that replace them, so
+	// the drawer reads as "your friends are arriving" rather than as a blank panel.
+	_renderFriendsSkeleton() {
+		const body = this._friendsBodyEl;
+		if (!body) return;
+		body.textContent = '';
+		const wrap = document.createElement('div');
+		wrap.className = 'cc-friends-skel';
+		wrap.setAttribute('role', 'status');
+		wrap.setAttribute('aria-label', 'Loading your friends');
+		for (let i = 0; i < 5; i++) {
+			const row = document.createElement('div');
+			row.className = 'cc-friends-skel-row';
+			const dot = document.createElement('span');
+			dot.className = 'cc-friends-skel-dot';
+			const main = document.createElement('div');
+			main.className = 'cc-friends-skel-main';
+			const a = document.createElement('span');
+			a.className = 'cc-friends-skel-line';
+			const b = document.createElement('span');
+			b.className = 'cc-friends-skel-line cc-friends-skel-line-sm';
+			main.append(a, b);
+			row.append(dot, main);
+			wrap.appendChild(row);
+		}
+		body.appendChild(wrap);
+	}
+
+	_renderFriendsLoadError() {
+		const body = this._friendsBodyEl;
+		if (!body) return;
+		body.textContent = '';
+		const wrap = document.createElement('div');
+		wrap.className = 'cc-friends-loaderr';
+		const glyph = document.createElement('div');
+		glyph.className = 'cc-friends-loaderr-glyph';
+		glyph.setAttribute('aria-hidden', 'true');
+		glyph.textContent = '📡';
+		const title = document.createElement('p');
+		title.className = 'cc-friends-loaderr-title';
+		title.textContent = 'Could not load your friends';
+		const sub = document.createElement('p');
+		sub.className = 'cc-friends-loaderr-sub';
+		sub.textContent = 'The connection dropped on the way. Your friends list is safe, it just needs another go.';
+		const retry = document.createElement('button');
+		retry.className = 'cc-friends-loaderr-retry';
+		retry.type = 'button';
+		retry.textContent = 'Try again';
+		retry.addEventListener('click', () => this._loadFriendsPanel());
+		wrap.append(glyph, title, sub, retry);
+		body.appendChild(wrap);
+		retry.focus();
 	}
 
 	_closeFriends() {
@@ -2889,6 +2977,9 @@ export class CoinCommunities {
 		this._friendsBodyEl = null;
 		this._friendsCloseEl = null;
 		this._friendsOpen = false;
+		// An in-flight chunk resolves into a body that no longer exists; clearing
+		// the flag lets the next world's drawer start its own load.
+		this._friendsLoading = false;
 	}
 
 	// ── In-world avatar switcher ──────────────────────────────────────────────
