@@ -37,22 +37,85 @@ function edgeKey(a, b) {
  */
 export function dropDegenerate(positions, indices, areaEpsilon = 0) {
 	const kept = [];
-	let removed = 0;
+	// The two causes are counted apart because they mean different things about
+	// the source: a repeated corner is a sliver the weld collapsed, a zero-area
+	// face is geometry the generator emitted flat. A repair report that merges
+	// them cannot tell a buyer which one happened to their model.
+	let duplicate = 0;
+	let degenerate = 0;
 	for (let i = 0; i + 2 < indices.length; i += 3) {
 		const a = indices[i];
 		const b = indices[i + 1];
 		const c = indices[i + 2];
 		if (a === b || b === c || a === c) {
-			removed += 1;
+			duplicate += 1;
 			continue;
 		}
 		if (areaEpsilon > 0 && triangleArea(positions, a, b, c) <= areaEpsilon) {
-			removed += 1;
+			degenerate += 1;
 			continue;
 		}
 		kept.push(a, b, c);
 	}
-	return { indices: Uint32Array.from(kept), removed };
+	return {
+		indices: Uint32Array.from(kept),
+		removed: duplicate + degenerate,
+		duplicate,
+		degenerate,
+	};
+}
+
+/**
+ * Whole-mesh winding agreement. Same propagation as orientShell, but it works
+ * on the full index buffer and takes no positions, so it is the pass to run
+ * before anything has been split into shells or measured for volume: it makes
+ * neighbours agree, and leaves the question of which way is "out" to the caller
+ * that has the geometry to answer it.
+ *
+ * Every connected patch is seeded independently, so a mesh whose parts do not
+ * touch still comes back internally consistent within each part.
+ */
+export function orientConsistently(indices) {
+	const out = Uint32Array.from(indices);
+	const { edges } = edgeTopology(out);
+	const triCount = out.length / 3;
+	const visited = new Uint8Array(triCount);
+	let flipped = 0;
+	for (let seed = 0; seed < triCount; seed += 1) {
+		if (visited[seed]) continue;
+		visited[seed] = 1;
+		const stack = [seed];
+		while (stack.length) {
+			const t = stack.pop();
+			const a = out[t * 3];
+			const b = out[t * 3 + 1];
+			const c = out[t * 3 + 2];
+			const corners = [
+				[a, b],
+				[b, c],
+				[c, a],
+			];
+			for (const [u, v] of corners) {
+				const list = edges.get(edgeKey(u, v));
+				if (!list || list.length !== 2) continue;
+				const other = list[0] === t ? list[1] : list[0];
+				if (visited[other]) continue;
+				visited[other] = 1;
+				const oa = out[other * 3];
+				const ob = out[other * 3 + 1];
+				const oc = out[other * 3 + 2];
+				const sameDirection =
+					(oa === u && ob === v) || (ob === u && oc === v) || (oc === u && oa === v);
+				if (sameDirection) {
+					out[other * 3 + 1] = oc;
+					out[other * 3 + 2] = ob;
+					flipped += 1;
+				}
+				stack.push(other);
+			}
+		}
+	}
+	return { indices: out, flipped };
 }
 
 export function triangleArea(positions, a, b, c) {

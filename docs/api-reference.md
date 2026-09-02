@@ -5439,7 +5439,7 @@ The `service` block is read from the OKX catalog (`api/_lib/okx-catalog.js`), th
 
 `status` is `ready` or `pending`. A `pending` entry carries `slug`, `agentName`, `kind`, and `brief` only: its pipeline run has not completed, so it has no deliverables to link. `rigged` is proof, not a claim: the demo runner downloads each finished GLB and asserts a real skin with skin weights before recording the joint count. `count` is every entry, `ready` is the subset with deliverables.
 
-To buy a run of your own, call `create_identity` on the paid A2MCP endpoint in `service.endpoint`; the flow is documented in [OKX.AI Marketplace Services](./okx-marketplace.md#agent-identity-studio-150-per-identity).
+To buy a run of your own, call `create_identity` on the paid A2MCP endpoint in `service.endpoint`; the flow is documented in [OKX.AI Marketplace Services](./okx-marketplace.md#back-burner).
 
 ```bash
 curl -s https://three.ws/api/agent-identities | jq '.service.priceUsd, .ready'
