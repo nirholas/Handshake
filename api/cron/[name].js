@@ -469,7 +469,15 @@ export function isRangeRejection(message) {
 // in the one way that matters: no smaller window fixes it, because the data is
 // gone rather than the request being too wide. Narrow on purpose, so a node
 // that is merely busy is never mistaken for one that has pruned.
-const PRUNED_HISTORY = /has been pruned|pruned history|missing trie node|state is not available|do not have the state/i;
+// `archive request` and its siblings belong here rather than under a range
+// rejection: a keyless public node that will serve the last few thousand blocks
+// and answers anything older with "archive requests require a personal token"
+// has drawn the same retention wall a pruning node draws, just with a paywall
+// behind it. Measured on 2026-09-02, that wording is what two of the three
+// stalled chains were sitting on, and shrinking the window walked straight into
+// it at every size down to the 100-block floor.
+const PRUNED_HISTORY =
+	/has been pruned|pruned history|missing trie node|state is not available|do not have the state|archive request|requires? an archive|archive node (?:is )?required/i;
 
 /**
  * Is this RPC failure the provider saying it no longer retains the blocks the
@@ -964,6 +972,14 @@ async function erc8004EnrichMetadata(limit, deadline) {
 async function erc8004RpcCall(urls, method, params) {
 	const urlList = Array.isArray(urls) ? urls : [urls];
 	let lastErr;
+	// The one lane failure the caller can act on, kept across the whole chain of
+	// lanes. Reporting only the LAST lane's error buries it: on 2026-09-02 one
+	// chain's first lane said plainly that it no longer holds the blocks the
+	// cursor points at, its final lane answered a generic `limit exceeded`, and
+	// the crawl saw only the second. So the cursor never learned to skip the
+	// unreachable span and the chain sat stale for eight days. A retention wall
+	// outranks a busy provider because it is the diagnosis that ends the stall.
+	let retentionErr = null;
 	for (const url of urlList) {
 		const ac = new AbortController();
 		const t = setTimeout(() => ac.abort(), ERC8004_FETCH_TIMEOUT_MS);
@@ -974,17 +990,23 @@ async function erc8004RpcCall(urls, method, params) {
 				body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
 				signal: ac.signal,
 			});
+			// Read the body BEFORE the status. Providers that gate archive ranges
+			// answer with a real JSON-RPC error under a 403, and throwing on the
+			// status alone reduced that to "HTTP 403 from <host>", which no
+			// rejection predicate can classify and no recovery can act on.
+			const data = await res.json().catch(() => null);
+			if (data?.error) throw new Error(`RPC ${data.error.code}: ${data.error.message}`);
 			if (!res.ok) throw new Error(`HTTP ${res.status} from ${url}`);
-			const data = await res.json();
-			if (data.error) throw new Error(`RPC ${data.error.code}: ${data.error.message}`);
+			if (!data) throw new Error(`unreadable JSON-RPC body from ${url}`);
 			return data.result;
 		} catch (err) {
 			lastErr = err;
+			if (retentionErr === null && isPrunedHistoryRejection(err?.message || err)) retentionErr = err;
 		} finally {
 			clearTimeout(t);
 		}
 	}
-	throw lastErr;
+	throw retentionErr ?? lastErr;
 }
 
 async function erc8004FetchAgentMetadata(uri) {
@@ -3829,11 +3851,6 @@ async function handleSolanaAttestEventCleanup(req, res) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 const SOL_ATTEST_PER_RUN_MAX = 50; // bound RPC fan-out per cron tick
-// Hard wall-clock budget for the event half, leaving the attestation half its
-// own share of the function's 300s ceiling. This, not the batch size, is what
-// actually bounds the sweep: the batch is drained until the budget runs out and
-// the remainder is reported as `truncated`.
-const SOL_EVENT_BUDGET_MS = 120_000;
 
 async function handleSolanaAttestationsCrawl(req, res) {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
@@ -3880,44 +3897,13 @@ async function handleSolanaAttestationsCrawl(req, res) {
 }
 
 async function solanaEventSweep() {
-	const { crawlAgentEvents, markAgentEventError, nextAgentBatch, SOLANA_SWEEP_BATCH } = await import(
-		'../_lib/solana-agent-events.js'
-	);
-
-	const startedAt = Date.now();
-	const summary = { agents: 0, scanned: 0, inserted: 0, rejected: 0, failed: 0, truncated: false };
-
-	let batch;
-	try {
-		batch = await nextAgentBatch({ limit: SOLANA_SWEEP_BATCH });
-	} catch (err) {
-		return { ...summary, error: err.message || String(err) };
-	}
-
-	for (const row of batch) {
-		if (Date.now() - startedAt > SOL_EVENT_BUDGET_MS) {
-			summary.truncated = true;
-			break;
-		}
-		try {
-			const r = await crawlAgentEvents({ agentRef: row.agent_ref, network: row.network });
-			summary.agents += 1;
-			summary.scanned += r.scanned;
-			summary.inserted += r.inserted;
-			summary.rejected += r.rejected;
-		} catch (err) {
-			summary.failed += 1;
-			// Stamp the cursor even on failure so one permanently unreadable
-			// account cannot hold the oldest-first queue head forever.
-			await markAgentEventError({
-				agentRef: row.agent_ref,
-				network: row.network,
-				error: err.message || String(err),
-			}).catch(() => {});
-		}
-	}
-
-	return summary;
+	// The pool, the batch and the budget live with the crawl they bound, in
+	// api/_lib/solana-agent-events.js, because the freshness sensor derives the
+	// index's cycle time from those same constants. Splitting them across the
+	// cron and the module is how the sweep spent a year at a batch nobody could
+	// tie back to the median lag it produced.
+	const { sweepAgentEvents } = await import('../_lib/solana-agent-events.js');
+	return sweepAgentEvents();
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
