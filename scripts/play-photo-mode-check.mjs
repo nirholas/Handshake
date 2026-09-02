@@ -227,8 +227,12 @@ try {
 		const pressStart = Date.now();
 		for (let i = 0; i < 40 && !chunkFired; i++) {
 			await page.keyboard.press('p');
+			// Wait on the response OR on the request log. waitForResponse only sees
+			// what arrives after it is attached, so a module that came back in the gap
+			// between the press and the await is invisible to it, and the loop then
+			// calls a working key binding dead while the card is already opening.
 			chunkFired = await page.waitForResponse((r) => /photo-mode/.test(r.url()), { timeout: 3000 })
-				.then(() => true).catch(() => false);
+				.then(() => true).catch(() => photoChunkRequests().length > 0);
 			if (!chunkFired) deadMs = Date.now() - pressStart;
 		}
 		check('the P key reaches the host and fires the lazy import', chunkFired,
@@ -259,10 +263,16 @@ try {
 				toasts: (window.__toasts || []).slice(-6),
 				sheet: !!document.querySelector('#cc-photo'),
 			}));
+			// A sheet that is present after the budget expired is a slow capture, not
+			// a broken one, and saying so is the difference between "photo mode is
+			// broken" and "this box needs a bigger CAPTURE_MS". Still a failure, since
+			// the rest of the sweep cannot run, but named for what it is.
+			const late = why.sheet ? 'the card opened just past the budget' : 'no card ever appeared';
 			check('pressing P opens the preview card', false,
-				`outcome=${outcome ?? 'timeout'} chunk=${chunkFired} sheet=${why.sheet} `
-				+ `overlays=[${why.overlays.join(', ')}] focus=${why.active} toasts=[${why.toasts.join(' | ')}]`);
-			throw new Error('preview never opened');
+				`${late}; outcome=${outcome ?? 'timeout'} chunk=${chunkFired} sheet=${why.sheet} `
+				+ `overlays=[${why.overlays.join(', ')}] focus=${why.active} toasts=[${why.toasts.join(' | ')}]`
+				+ (why.sheet ? ` (raise CAPTURE_MS above ${CAPTURE_MS}ms and rerun)` : ''));
+			throw new Error(why.sheet ? `capture exceeded CAPTURE_MS (${CAPTURE_MS}ms)` : 'preview never opened');
 		}
 		check('pressing P opens the preview card', true);
 		check('photo-mode chunk loaded on the first press, not before', photoChunkRequests().length > 0,
