@@ -3,15 +3,6 @@
 	"entries": [
 		{
 			"date": "2026-09-02",
-			"title": "Take a photo of your world and post it",
-			"summary": "Press P in a /play world, or the camera button on the HUD, and the world is captured onto a share card: your view of the town with the three.ws mark, the coin you are standing in and the date along the bottom, ready to download or paste straight into a post. The interface is never in the shot. The photo is a second frame rendered off screen just for you, so the chat, the job board and the name tags stay out of the picture no matter what is on screen when you press. It works in zen mode too, which is usually exactly when the world looks worth photographing, and while an event is running the card carries that event's name. Nothing is uploaded anywhere: the card is built in your browser and it is yours. The whole feature only downloads on your first press, so a session that never takes a photo never pays for it.",
-			"tags": [
-				"feature"
-			],
-			"link": "/play"
-		},
-		{
-			"date": "2026-09-02",
 			"title": "Groundwork for agents that can run your house",
 			"summary": "A three.ws agent already has a body, a voice and a memory, all of it stuck inside a browser tab. This is the first piece of letting it reach past the screen: a new developer package, @three-ws/home-bridge, that connects an agent to a real Home Assistant, the open-source home platform that already runs in millions of houses and already speaks to Zigbee, Z-Wave, Matter, Thread and about fifteen hundred other things. We wrote no device code at all, on purpose. What the package adds is the part nobody had built: live state from the house shaped into rooms, so a 3D scene can dim when your real lights dim; \"good night\" and \"I'm leaving\" resolved to the scenes you already made yourself, in Home Assistant, rather than to something we invented for you; and a safety gate that reads the way our on-chain one does. Turning a light off is free. Unlocking a door stops and asks you, every time, until you say otherwise for that one door. Locking up never asks, because moving your house toward safety should not need permission. That last part turned out to matter more than expected: Home Assistant's own \"turn it off\" command performs an unlock when you point it at a lock, so an assistant told to turn something off can open your front door with nothing in the command's name to warn anyone. Our gate catches it. All of it was built and checked against a real Home Assistant running here, not against stand-ins, and the write-up of what else is out there and where this goes next (voice in every room, the agent standing in a live model of your home) is published alongside it.",
 			"tags": [
