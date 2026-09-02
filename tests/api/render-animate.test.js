@@ -124,10 +124,10 @@ describe('rendering', () => {
 	});
 
 	it('renders a public avatar by id', async () => {
-		getAvatar.mockResolvedValue({ id: 'abc', name: 'Vern', model_url: 'https://cdn.three.ws/a.glb' });
+		getAvatar.mockResolvedValue({ id: 'abc', name: 'Vern', model_url: 'https://three.ws/cdn/a.glb' });
 		const res = await call('/api/render/animate?avatar=abc&clip=idle');
 		expect(res.statusCode).toBe(200);
-		expect(renderGlbToApngCpu.mock.calls[0][0].glbUrl).toBe('https://cdn.three.ws/a.glb');
+		expect(renderGlbToApngCpu.mock.calls[0][0].glbUrl).toBe('https://three.ws/cdn/a.glb');
 	});
 
 	it('will not render a private avatar', async () => {

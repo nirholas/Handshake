@@ -10,6 +10,10 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+// signQuote signs with the platform secret; a suite must not depend on the
+// developer's .env carrying one.
+process.env.JWT_SECRET ||= 'vitest-ephemeral-jwt-secret-00000000000000';
+
 const REPORT = {
 	version: 1,
 	manifold: true,
@@ -39,7 +43,7 @@ vi.mock('../../api/_lib/print/mesh-io.js', () => ({
 }));
 vi.mock('../../api/_lib/print/analyze.js', () => ({ analyzeMesh: async () => REPORT }));
 vi.mock('../../api/_lib/forge-store.js', () => ({
-	getPublicCreation: async () => ({ id: 'c-9', glb_url: 'https://cdn.three.ws/m.glb', prompt: creationPrompt }),
+	getPublicCreation: async () => ({ id: 'c-9', glb_url: 'https://three.ws/cdn/m.glb', prompt: creationPrompt }),
 }));
 // Only the gate's lineage read touches the database; the rules and layers under
 // test are the shipped ones.

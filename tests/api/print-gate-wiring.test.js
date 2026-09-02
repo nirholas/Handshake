@@ -36,7 +36,7 @@ vi.mock('../../api/_lib/print/mesh-io.js', () => ({
 }));
 vi.mock('../../api/_lib/print/analyze.js', () => ({ analyzeMesh: async () => REPORT }));
 vi.mock('../../api/_lib/forge-store.js', () => ({
-	getPublicCreation: async () => ({ id: 'c-1', glb_url: 'https://cdn.three.ws/m.glb', prompt: lineageText }),
+	getPublicCreation: async () => ({ id: 'c-1', glb_url: 'https://three.ws/cdn/m.glb', prompt: lineageText }),
 }));
 vi.mock('../../api/_lib/auth.js', () => ({ getSessionUser: async () => null }));
 vi.mock('../../api/_lib/three-tier.js', () => ({ holderDiscountBps: async () => 0 }));
@@ -119,7 +119,7 @@ describe('run point 2: no order reaches a printer unscreened', () => {
 		id: 'o-1',
 		status: 'screening',
 		quantity: 1,
-		prepared_asset_urls: { stl: 'https://cdn.three.ws/o-1.stl' },
+		prepared_asset_urls: { stl: 'https://three.ws/cdn/o-1.stl' },
 		analysis: screening ? { screening } : {},
 	});
 

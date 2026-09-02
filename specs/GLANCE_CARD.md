@@ -23,7 +23,7 @@ v1 pins one model, computed once on the server, that every surface renders. Addi
 	"description": "Watches the launch feed and reports what matters.",
 	"url": "https://three.ws/agents/0f3a1c22-9b7e-4d51-8a10-2c6f5d90ab34",
 	"createUrl": "https://three.ws/create",
-	"image": "https://cdn.three.ws/u/…/thumb.png",
+	"image": "https://three.ws/cdn/u/…/thumb.png",
 	"monogram": "AS",
 	"accent": { "from": "hsl(235 82% 58%)", "to": "hsl(283 84% 46%)", "hue": 235 },
 	"status": "active",
