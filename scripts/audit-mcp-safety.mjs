@@ -49,12 +49,21 @@ import { checkTool, extractTools } from './lib/mcp-safety-check.mjs';
 // Reviewed exemptions
 // ---------------------------------------------------------------------------
 // A tool listed here keeps `readOnlyHint: true` despite carrying write evidence,
-// because the write is a cache fill rather than the effect the caller asked for.
-// Keyed `tool:evidence`; every entry states why.
+// because the evidence is not the effect the caller receives. Keyed
+// `tool:evidence`; every entry states why. Two reviewed categories:
 //
-// All four below are read-through cache fills: the caller asked for a read and
-// got a read, and the server warmed its own cache on the way. Each write is
-// wrapped non-fatally at the source, so a failed write still returns the read.
+// 1. Read-through cache fills: the caller asked for a read and got a read, and
+//    the server warmed its own cache on the way. Each write is wrapped
+//    non-fatally at the source, so a failed write still returns the read.
+// 2. Transaction BUILDERS that broadcast nothing: the handler assembles an
+//    unsigned transaction and returns its bytes for a wallet to sign elsewhere.
+//    Instruction constructors (umi's `transferSol`, Metaplex's `mintAsset`) read
+//    as transfers and mints to the call-closure scan, but calling one appends an
+//    instruction to a builder; it moves no funds and touches no chain. Auto-
+//    approving such a call is genuinely safe: nothing changes until the owner
+//    signs and some OTHER tool broadcasts. Only add an entry here after checking
+//    the handler never reaches a send (`sendAndConfirm`, `hedgedSend`) and never
+//    signs with a real keypair.
 const EXEMPTIONS = new Map([
 	[
 		'oracle_coin:db-write',
@@ -71,6 +80,10 @@ const EXEMPTIONS = new Map([
 	[
 		'solana_agent_passport:db-write',
 		'ensureWarm() crawls attestations into the cache on a cold read; the caller receives the passport view.',
+	],
+	[
+		'prepare_agent_mint:funds-transfer',
+		'Builder, not sender (category 2). buildAgentMint() calls umi transferSol() to APPEND the mainnet deploy-fee instruction to the mint builder; the handler signs only with the new asset keypair, serializes to txs_base64 with the caller wallet as a noop fee payer, and returns. It never broadcasts. The sibling that does broadcast, mint_onchain_agent, is annotated readOnlyHint:false + destructiveHint:true.',
 	],
 ]);
 

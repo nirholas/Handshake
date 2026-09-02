@@ -101,6 +101,20 @@ const SKIP = [
 	// record the archive exists to preserve. The rule applies to prose we
 	// write, not to prose we transcribe.
 	/^data\/x-archive\//,
+	// The store-submission evidence captures, for the same reason. Each of these
+	// is a verbatim JSON-RPC wire payload pulled from the LIVE production server
+	// and kept so an OpenAI or MCP-directory reviewer can diff what we claim
+	// against what the endpoint actually answers. Normalizing their typography to
+	// satisfy a house rule falsifies the capture (it was done once, and the
+	// committed evidence silently stopped matching production). Prose rules
+	// belong on the tool descriptions in api/, which is where the wording that
+	// ends up in these files is authored.
+	/^prompts\/store-submissions\/_generated\/[a-z-]*tools-list\.json$/,
+	// Captured live API responses, stored verbatim as the evidence a gauntlet run
+	// produced. Same reasoning as the archive above: the third party's own
+	// wording is the record, and retyping its punctuation to satisfy a house
+	// rule would make the evidence a paraphrase of what the endpoint said.
+	/^prompts\/okx-ai\/e2e-evidence\//,
 	// The baked animation library. Every clip, the manifest, and the signature
 	// index are written by scripts/build-animations.mjs and
 	// scripts/compact-clips.mjs from FBX sources deliberately kept out of the

@@ -28,6 +28,10 @@
 //
 // Env (read from .env / .env.local, or the process env):
 //   DATABASE_URL, WALLET_ENCRYPTION_KEY, JWT_SECRET, SOLANA_RPC_URL
+//
+// Exits 3 without touching the database when no decryption key is configured:
+// a keyless run can only report 100% undecryptable, which says nothing about
+// production. Exit 0 otherwise, stranded fleet or not.
 
 import { readFileSync } from 'node:fs';
 
@@ -51,6 +55,16 @@ const PLATFORM_OWNER_EMAIL = 'agents@three.ws';
 const PLATFORM_EMAIL_SUFFIX = '@agents.three.ws';
 const LAMPORTS_PER_SOL = 1_000_000_000;
 
+// Where an operator actually gets the key. The playbook order in CLAUDE.md:
+// local dotfiles first, then the running service, then Secret Manager.
+const KEY_FIX_HINT = [
+	'  Set WALLET_ENCRYPTION_KEY (>=32 chars) and re-run. Where to find it:',
+	'    .env / .env.local in this repo, or',
+	'    gcloud run services describe three-ws-api --region us-central1 \\',
+	'      --project aerial-vehicle-466722-p5 --format=yaml, or',
+	'    gcloud secrets versions access latest --secret=WALLET_ENCRYPTION_KEY',
+].join('\n');
+
 for (const file of ['.env', '.env.local']) {
 	let text;
 	try {
@@ -65,9 +79,42 @@ for (const file of ['.env', '.env.local']) {
 }
 
 const { sql } = await import('../api/_lib/db.js');
-const { decryptSecret } = await import('../api/_lib/secret-box.js');
+const { decryptSecret, secretBoxKeyCandidates } = await import('../api/_lib/secret-box.js');
 const { PublicKey } = await import('@solana/web3.js');
 const { solanaConnection } = await import('../api/_lib/solana/connection.js');
+
+// A shell with NO decryption key configured cannot tell "sealed under a retired
+// key" from "this machine was never given the key". Without this check the
+// script decrypts nothing, reports 100% undecryptable, and prints the customer
+// escalation banner on any developer machine missing WALLET_ENCRYPTION_KEY: a
+// confident number that sends operators after the wrong problem, which is the
+// same class of failure the unread-balance handling below exists to prevent.
+// secret-box exports its candidate list precisely so this cannot drift from the
+// precedence decryptSecret() actually uses.
+const keyCandidates = secretBoxKeyCandidates();
+if (keyCandidates.length === 0) {
+	const blocked = {
+		checked_at: new Date().toISOString(),
+		error: 'no_decryption_key',
+		detail:
+			'No custodial decryption key is configured, so every wallet would read as ' +
+			'undecryptable here regardless of production state. This run proves nothing ' +
+			'about stranded funds.',
+		fix: KEY_FIX_HINT,
+	};
+	if (AS_JSON) {
+		emitJson(JSON.stringify(blocked, null, 2));
+		process.exit(3);
+	}
+	console.error('custodial key health  ABORTED: no decryption key configured');
+	console.error('');
+	console.error('  Every wallet would report as undecryptable here regardless of production');
+	console.error('  state, so this run cannot tell you anything about stranded funds.');
+	console.error('');
+	console.error(KEY_FIX_HINT);
+	process.exit(3);
+}
+
 
 const rows = await sql`
 	SELECT a.id                               AS agent_id,
@@ -155,6 +202,9 @@ const report = {
 	checked_at: new Date().toISOString(),
 	rpc: process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
 	wallets: wallets.length,
+	// How many keys decryptSecret() had to try. 1 is the healthy steady state; a
+	// higher count means retired keys are still configured for the migration.
+	key_candidates: keyCandidates.length,
 	read_errors: readErrors.length,
 	decryptable: wallets.length - stranded.length,
 	undecryptable: stranded.length,
@@ -227,7 +277,18 @@ if (report.top_stranded.length) {
 		console.log(`    ${String(w.sol).padStart(14)} SOL  ${w.address}  ${w.platform ? 'platform' : 'customer'}  ${w.name || ''} (${w.reason})`);
 	}
 }
-if (report.sol.stranded_customer > 0) {
+// A fleet-wide 100% failure is almost never 725 separately sealed wallets: it is
+// one wrong key. Saying so here keeps the escalation banner below from reading as
+// a mass customer incident when the real fix is a one-line env correction.
+if (report.wallets > 0 && report.undecryptable === report.wallets) {
+	console.log('');
+	console.log(`  EVERY wallet failed to decrypt under the ${report.key_candidates} configured key(s).`);
+	console.log('  A fleet-wide 100% failure almost always means the key is wrong for this');
+	console.log('  deployment, not that every wallet is sealed. Confirm the key matches');
+	console.log('  production before treating this as a customer incident.');
+	console.log('');
+	console.log(KEY_FIX_HINT);
+} else if (report.sol.stranded_customer > 0) {
 	console.log('');
 	console.log('  Customer funds are stranded. This is a support obligation, not just an');
 	console.log('  ops number: those users cannot withdraw. Escalate before anything else.');
