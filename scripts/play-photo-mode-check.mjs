@@ -116,8 +116,11 @@ await ctx.addInitScript(() => {
 // then hides whether the success path works at all. Grant it where the engine
 // supports granting, so the copy that a signed-in player gets is the one under
 // test; engines that do not implement the permission API keep their own default.
-await ctx.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: BASE })
-	.catch(() => { /* webkit and firefox manage the clipboard themselves */ });
+// Only chromium implements these permission names; asking webkit for them
+// poisons the context and every later call on it fails with "Unknown permission".
+if (ENGINE === 'chromium') {
+	await ctx.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: BASE }).catch(() => {});
+}
 
 const page = await ctx.newPage();
 
@@ -450,7 +453,12 @@ try {
 
 	// ── 7. the copy button answers honestly either way ────────────────────────
 	await page.click('#cc-photo .cc-photo-actions button');
-	await sleep(1500);
+	// "Copying…" is a real intermediate state, so poll for the terminal one rather
+	// than sampling once and reporting the spinner as the outcome.
+	await page.waitForFunction(() => {
+		const t = document.querySelector('#cc-photo .cc-photo-status')?.textContent || '';
+		return /copied|download saves the same file|blocked the copy/i.test(t);
+	}, null, { timeout: 30000 }).catch(() => {});
 	const copyStatus = await page.evaluate(() => document.querySelector('#cc-photo .cc-photo-status')?.textContent || '');
 	check('Copy reports a real outcome, never silence', copyStatus.trim().length > 0, copyStatus);
 	check('Copy never leaves the player at a dead end',
