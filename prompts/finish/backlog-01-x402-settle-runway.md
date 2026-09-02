@@ -1,9 +1,46 @@
 # 01. x402 settle: clear `fee_runway_exhausted` and hold the rate above 90%
 
-Read [00-INDEX.md](backlog-00-INDEX.md) first. This is the highest-priority open item:
-the only subsystem reporting **down** on the live healthz.
+Read [00-INDEX.md](backlog-00-INDEX.md) first.
 
-## What is wrong
+> ## Status, re-measured 2026-09-02 (read this before the body below)
+>
+> Every agent-doable line of this order is now shipped. What remains is capital,
+> and it is owner-owned. The body below is kept for its diagnosis method, but
+> four of its factual claims have been overtaken; do not act on them:
+>
+> 1. **The two config levers are already applied in production.**
+>    `GET /api/x402/runway-lab` reports `runway_days: 1` and the 2026-08-01
+>    entry in [PROGRESS.md](backlog-PROGRESS.md) records
+>    `ECONOMY_MASTER_OPERATING_SOL=0.3` landing with it. Do not re-apply them.
+> 2. **Lever 2 is inert at this balance and was struck on 2026-08-02.** The
+>    governor's budget is `max(minBudgetLamports, spendable / runwayDays)`. With
+>    the sponsor at 0.0037 SOL the 10,000,000 lamport heartbeat floor already
+>    exceeds spendable, so runway days change nothing.
+> 3. **The upstream cause is NOT a mis-tuned self-heal trigger.** The deficit has
+>    been positive and the reclaim leg has been running for weeks. It cannot
+>    complete: the wallets it targets are encrypted under the
+>    WALLET_ENCRYPTION_KEY retired in the 2026-07 host migration and fail
+>    AES-GCM decryption. 0.49 SOL is stranded that way, 0.35 of it customer
+>    money. See `docs/ops/wallet-key-migration.md`.
+> 4. **The numbers below are a 2026-08-01 snapshot.** As of 2026-09-02 settle is
+>    55.0% and `degraded`, not 25.9% and `down`; demand has fallen to 177
+>    attempts/hour from 3,726; measured burn is 0.0133 SOL/day spent against
+>    ~0.043 SOL/day to serve every attempt.
+>
+> **The one thing that lifts the settle rate is SOL in two wallets.** The ring
+> payer sits 1,592 lamports under its 2,000,000 floor and the sponsor has
+> 1,727,883 spendable lamports. Send SOL to the economy master
+> `WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW`, never to per-agent wallets.
+> That is stop-and-ask gate 1 and it is the owner's call.
+>
+> Shipped against this order: the caller-side fee admission gate
+> (`assessFeeAdmission`), the governor config recurrence guard
+> (`tests/x402-wallet-fee-governor.test.js`), `WALLET_ENCRYPTION_KEY_PREVIOUS`
+> key rotation, and the dry-run reclaim key gate plus the corrected
+> `sponsor_floor` hint (`afd349790`, 2026-09-02). Full evidence per line is in
+> [PROGRESS.md](backlog-PROGRESS.md).
+
+## What is wrong (as measured 2026-08-01)
 
 `x402_settle` is at 25.9% (504 of 1948 paid attempts over 3 hours). The rail
 faults look external (`http_502` x1180) but they are **our own facilitator

@@ -150,11 +150,36 @@ export function projectDiscoveryResources(doc, { type, limit, offset, lastUpdate
 // pagination sweep costs one build. A failed rebuild serves the last good doc
 // rather than 500ing the crawler mid-sweep.
 const DOC_TTL_MS = 300_000;
+
+// A sweep that straddles a rebuild loses rows. The crawler pages by offset with
+// no cursor and no snapshot token, so every row is served exactly once only if
+// one sweep reads one build: a rebuild landing between two pages shifts every
+// row after the churn point, which re-serves some and skips as many. Measured
+// on the live catalog 2026-09-02, a 46-page sweep that began ~50 s before the
+// TTL expired returned 4,519 rows holding 4,499 distinct resources.
+// So pages after the first keep the build the sweep started on past the TTL,
+// until this grace window closes; offset 0 always takes the fresh build. The
+// window bounds the staleness a slow crawler can pin (a 4,500-row catalog is
+// ~46 requests, far inside it), and a concurrent sweep starting at offset 0
+// still forces the rebuild both then see, because offset is the only sweep
+// identity the wire format carries.
+const DOC_SWEEP_GRACE_MS = 600_000;
+
+// True when the cached build of age `ageMs` may answer this request.
+// `continuation` marks a page past the first, i.e. a sweep already in flight.
+export function canServeCachedDoc({ ageMs, continuation }) {
+	if (!Number.isFinite(ageMs) || ageMs < 0) return false;
+	if (ageMs < DOC_TTL_MS) return true;
+	return Boolean(continuation) && ageMs < DOC_TTL_MS + DOC_SWEEP_GRACE_MS;
+}
+
 let docCache = { at: 0, doc: null, inflight: null };
 
-async function getDiscoveryDoc() {
+async function getDiscoveryDoc({ continuation = false } = {}) {
 	const now = Date.now();
-	if (docCache.doc && now - docCache.at < DOC_TTL_MS) return docCache.doc;
+	if (docCache.doc && canServeCachedDoc({ ageMs: now - docCache.at, continuation })) {
+		return docCache.doc;
+	}
 	if (!docCache.inflight) {
 		docCache.inflight = buildX402DiscoveryDoc()
 			.then((doc) => {
@@ -177,7 +202,9 @@ async function getDiscoveryDoc() {
 }
 
 export async function listDiscoveryResources(query = {}) {
-	const doc = await getDiscoveryDoc();
+	const doc = await getDiscoveryDoc({
+		continuation: (Number.parseInt(query.offset, 10) || 0) > 0,
+	});
 	return projectDiscoveryResources(doc, {
 		...query,
 		lastUpdated: docCache.at ? new Date(docCache.at).toISOString() : undefined,

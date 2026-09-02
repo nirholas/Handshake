@@ -3,6 +3,7 @@ import {
 	toV1Accept,
 	toV1Item,
 	projectDiscoveryResources,
+	canServeCachedDoc,
 	DISCOVERY_DEFAULT_LIMIT,
 	DISCOVERY_MAX_LIMIT,
 } from '../api/_lib/x402/discovery-resources.js';
@@ -210,5 +211,42 @@ describe('projectDiscoveryResources', () => {
 			item({ url: 'https://three.ws/api/mcp', path: '/api/mcp', toolName });
 		const page = projectDiscoveryResources(doc([tool('render'), tool('inspect'), tool('validate')]), {});
 		expect(page.items.map((i) => i.metadata.toolName)).toEqual(['inspect', 'render', 'validate']);
+	});
+});
+
+// ── Sweep coherence across a catalog rebuild ─────────────────────────────────
+//
+// The crawler pages by offset with no cursor, so a rebuild landing between two
+// pages shifts every row after the churn point: some rows come back twice and
+// as many are never served. Pages after the first therefore hold the build the
+// sweep started on past the freshness TTL, up to a bounded grace window.
+
+describe('canServeCachedDoc', () => {
+	const TTL = 300_000;
+	const GRACE = 600_000;
+
+	it('serves a fresh build to any page', () => {
+		expect(canServeCachedDoc({ ageMs: 0, continuation: false })).toBe(true);
+		expect(canServeCachedDoc({ ageMs: TTL - 1, continuation: true })).toBe(true);
+	});
+
+	it('rebuilds for the first page of a sweep once the build is stale', () => {
+		expect(canServeCachedDoc({ ageMs: TTL, continuation: false })).toBe(false);
+		expect(canServeCachedDoc({ ageMs: TTL + 1, continuation: false })).toBe(false);
+	});
+
+	it('keeps a sweep on the build it started on past the TTL', () => {
+		expect(canServeCachedDoc({ ageMs: TTL, continuation: true })).toBe(true);
+		expect(canServeCachedDoc({ ageMs: TTL + GRACE - 1, continuation: true })).toBe(true);
+	});
+
+	it('bounds how long a slow crawler can pin a stale build', () => {
+		expect(canServeCachedDoc({ ageMs: TTL + GRACE, continuation: true })).toBe(false);
+	});
+
+	it('refuses an unusable age rather than serving an unknown build', () => {
+		expect(canServeCachedDoc({ ageMs: Number.NaN, continuation: true })).toBe(false);
+		expect(canServeCachedDoc({ ageMs: -1, continuation: true })).toBe(false);
+		expect(canServeCachedDoc({ ageMs: Number.POSITIVE_INFINITY, continuation: true })).toBe(false);
 	});
 });

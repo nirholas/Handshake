@@ -144,6 +144,26 @@ async function sponsorBoard() {
 	return {
 		configured: Boolean(sponsor?.address),
 		address: sponsor?.address || null,
+		// Every configured ring wallet against its OWN floor, not the sponsor alone.
+		// "the wallets are dry" and "the sponsor is under the settle floor" are
+		// different outages with opposite fixes and identical symptoms from outside
+		// (the premise of the x402-economy-triage runbook), and a board that shows
+		// only the sponsor cannot tell them apart: a starved payer reads as healthy.
+		wallets: (ring.wallets || [])
+			.filter((w) => w.configured)
+			.map((w) => ({
+				role: w.role,
+				address: w.address,
+				sol: w.sol ?? null,
+				sol_floor: w.sol_floor ?? null,
+				sol_low: Boolean(w.sol_low),
+				usdc: w.usdc ?? null,
+				usdc_floor: w.usdc_floor ?? null,
+				usdc_low: Boolean(w.usdc_low),
+			})),
+		// Pre-rendered breach lines from the monitor, so the board's wording and the
+		// alert's wording are the same string rather than two drifting phrasings.
+		breaches: ring.breaches || [],
 		sol: sponsor?.sol ?? null,
 		// The ring's 1.5x watch floor (what `below_floor` compares against) and the
 		// facilitator's hard floor (where settling actually stops) are different
