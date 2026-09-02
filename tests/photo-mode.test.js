@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 //
-// Photo mode (/play) — the share card people post. Exercises the whole press:
+// Photo mode (/play): the share card people post. Exercises the whole press:
 // the offscreen shot is stubbed (jsdom has no WebGL), everything downstream of
 // it is the real module, so the compositor's geometry and the preview sheet are
 // covered without standing up a browser.
