@@ -347,6 +347,14 @@ export function buildStrandedPanel(report) {
 		detail = `${funded} custodial wallet(s) hold ${sol.stranded ?? 0} SOL behind a retired encryption key (platform ${sol.stranded_platform ?? 0}, customer ${sol.stranded_customer ?? 0}).`;
 	}
 
+	// A key problem produces a decrypt-failure total that is NOT lost custody, and
+	// publishing it as one would repeat the defect this whole surface exists to
+	// end (a plan that advertises SOL nothing can move). The counts stay, because
+	// "this process failed on N wallets" is a true statement about this process;
+	// the SOL attribution is withheld until a reading can actually support it.
+	const unattributable = reason === 'no_decryption_key' || reason === 'key_mismatch';
+	const attributed = (n) => (unattributable ? null : n ?? 0);
+
 	return {
 		status,
 		reason,
@@ -356,16 +364,16 @@ export function buildStrandedPanel(report) {
 		undecryptable,
 		stranded_funded: funded,
 		stranded_unread: unread,
-		sol_stranded: sol.stranded ?? 0,
-		sol_stranded_platform: sol.stranded_platform ?? 0,
-		sol_stranded_customer: sol.stranded_customer ?? 0,
-		customer_wallets_stranded: (report?.top_stranded || []).filter((w) => !w.platform).length,
+		sol_stranded: attributed(sol.stranded),
+		sol_stranded_platform: attributed(sol.stranded_platform),
+		sol_stranded_customer: attributed(sol.stranded_customer),
+		customer_wallets_stranded: unattributable ? null : (report?.top_stranded || []).filter((w) => !w.platform).length,
 		detail,
 		// Customer money that cannot be withdrawn is a support obligation, not an
 		// ops number: the board names the decision doc rather than leaving the
 		// reader to rediscover that recovery is impossible.
 		brief: status === 'stranded' && (sol.stranded_customer || 0) > 0 ? 'docs/ops/stranded-wallets.md' : null,
-		top_stranded: (report?.top_stranded || []).slice(0, 10).map((w) => ({
+		top_stranded: (unattributable ? [] : report?.top_stranded || []).slice(0, 10).map((w) => ({
 			address: w.address,
 			sol: w.sol,
 			platform: w.platform,

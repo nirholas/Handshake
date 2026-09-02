@@ -422,6 +422,12 @@ async function main() {
 	if (!updates.length) fail('no var could be prepared; nothing was flipped on the service');
 
 	const pairs = updates.map((u) => `${u.name}=${u.secretName}:latest`).join(',');
+	// Cloud Run refuses to retype an env var in place: an update that only sets
+	// --update-secrets on a name that is currently a literal fails with "already
+	// been set with a different type". The literal has to be dropped in the SAME
+	// update, which lands as one revision, so the var is never absent from a
+	// serving container.
+	const removals = updates.map((u) => u.name).join(',');
 	if (!APPLY) {
 		const echoFlags = [
 			ONLY.length ? ` --only ${ONLY.join(',')}` : '',
@@ -431,7 +437,9 @@ async function main() {
 			FORCE_NEW_VERSION ? ' --force-new-version' : '',
 		].join('');
 		console.log(`\nDry run. To apply:\n  node scripts/migrate-plaintext-secrets.mjs${echoFlags} --apply`);
-		console.log(`\nThe single service update it would run:\n  gcloud run services update ${SERVICE} --region ${REGION} --project ${PROJECT} \\\n    --update-secrets ${pairs}`);
+		console.log(
+			`\nThe single service update it would run:\n  gcloud run services update ${SERVICE} --region ${REGION} --project ${PROJECT} \\\n    --remove-env-vars ${removals} \\\n    --update-secrets ${pairs}`,
+		);
 		return;
 	}
 
@@ -442,6 +450,7 @@ async function main() {
 		'update',
 		SERVICE,
 		`--region=${REGION}`,
+		`--remove-env-vars=${removals}`,
 		`--update-secrets=${pairs}`,
 		'--quiet',
 	]);
