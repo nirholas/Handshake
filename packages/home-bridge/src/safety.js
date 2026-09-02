@@ -84,3 +84,101 @@ export function createAllowList(entityIds = []) {
 		list: () => [...allowed],
 	};
 }
+
+/**
+ * The same gate, in front of the Model Context Protocol channel.
+ *
+ * This is not belt and braces, it is load bearing. Home Assistant's own Assist
+ * tools are deliberately polymorphic, and its published description of
+ * `intent__HassTurnOff` reads: "Turns off/closes a device or entity. For locks,
+ * this performs an 'unlock' action." So a model that has been told to turn
+ * something off can unlock a front door, and nothing in the tool name says so.
+ *
+ * We resolve the tool call's targets against the live entity list, translate
+ * each one into the service it would really perform, and run the same
+ * classification the WebSocket path uses.
+ *
+ * @param {string} toolName the MCP tool name, e.g. "intent__HassTurnOff"
+ * @param {object} args the arguments the model produced
+ * @param {Array<{entityId: string, name: string, domain: string, deviceClass: string|null, areaId: string|null, attributes: object}>} entities
+ * @returns {{ guarded: boolean, risk: string|null, reason: string, targets: string[] }}
+ */
+export function classifyMcpCall(toolName, args = {}, entities = []) {
+	const intent = String(toolName || '').split('__').pop();
+	const direction = MCP_INTENT_DIRECTION[intent];
+	if (!direction) return { guarded: false, risk: null, reason: '', targets: [] };
+
+	const targets = resolveMcpTargets(args, entities);
+	const hits = [];
+	for (const entity of targets) {
+		const service = serviceForDirection(entity.domain, direction);
+		if (!service) continue;
+		const verdict = classifyCall({ domain: entity.domain, service, entityId: entity.entityId, attributes: entity.attributes });
+		if (verdict.guarded) hits.push({ entity, verdict });
+	}
+	if (!hits.length) return { guarded: false, risk: null, reason: '', targets: targets.map((e) => e.entityId) };
+
+	const names = hits.map((h) => h.entity.name).join(', ');
+	return {
+		guarded: true,
+		risk: hits[0].verdict.risk,
+		reason: `"${toolName}" would ${direction === 'off' ? 'unlock or open' : 'open'} ${names}.`,
+		targets: hits.map((h) => h.entity.entityId),
+	};
+}
+
+/** Which way each Assist intent pushes an entity. */
+const MCP_INTENT_DIRECTION = {
+	HassTurnOn: 'on',
+	HassTurnOff: 'off',
+	HassSetPosition: 'position',
+};
+
+function serviceForDirection(domain, direction) {
+	if (domain === 'lock') return direction === 'off' ? 'unlock' : 'lock';
+	if (domain === 'cover') {
+		if (direction === 'position') return 'set_cover_position';
+		return direction === 'on' ? 'open_cover' : 'close_cover';
+	}
+	if (domain === 'valve') {
+		if (direction === 'position') return 'set_valve_position';
+		return direction === 'on' ? 'open_valve' : 'close_valve';
+	}
+	if (domain === 'alarm_control_panel') return direction === 'off' ? 'alarm_disarm' : 'alarm_arm_away';
+	return null;
+}
+
+/**
+ * Assist targets are a name, or a domain, or an area, or a device class, or any
+ * combination. Reproduce that resolution so the gate sees the same entities the
+ * intent will.
+ */
+export function resolveMcpTargets(args = {}, entities = []) {
+	const name = normalizeTarget(args.name);
+	const domains = toArray(args.domain).map(normalizeTarget).filter(Boolean);
+	const deviceClasses = toArray(args.device_class).map(normalizeTarget).filter(Boolean);
+	const area = normalizeTarget(args.area);
+
+	// No target at all means "everything the intent applies to", which is the
+	// broadest and therefore the most dangerous case, not the safest.
+	const filtered = entities.filter((e) => {
+		if (name && normalizeTarget(e.name) !== name && normalizeTarget(e.entityId) !== name) return false;
+		if (domains.length && !domains.includes(e.domain)) return false;
+		if (deviceClasses.length && !deviceClasses.includes(normalizeTarget(e.deviceClass))) return false;
+		if (area && normalizeTarget(e.areaId) !== area && normalizeTarget(e.areaName) !== area) return false;
+		return true;
+	});
+	return filtered;
+}
+
+function normalizeTarget(value) {
+	return String(value ?? '')
+		.toLowerCase()
+		.replace(/[\s_-]+/g, ' ')
+		.trim();
+}
+
+function toArray(value) {
+	if (value == null) return [];
+	return Array.isArray(value) ? value : [value];
+}

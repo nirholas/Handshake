@@ -2614,6 +2614,14 @@
 					"added": "2026-08-16"
 				},
 				{
+					"path": "/docs/smart-home",
+					"title": "Docs \u00b7 three.ws Home",
+					"description": "How a three.ws agent connects to a real house: the open-source smart-home landscape measured and shortlisted, why Home Assistant owns the device layer, the two channels the @three-ws/home-bridge package speaks, the physical-action gate that never lets an unlock through unasked, and the road from here to voice in every room.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-09-02"
+				},
+				{
 					"path": "/docs/tty-avatar",
 					"title": "Docs · Terminal avatar",
 					"description": "The @three-ws/tty-avatar package: any three.ws avatar or agent body rendered live in a terminal by a software rasterizer (truecolor half-blocks, braille, or plain ASCII), procedural moods, and Claude Code hooks that turn it into your coding agent's face.",

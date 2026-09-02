@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-02T21:11:24.271Z",
+	"generated_at": "2026-09-02T21:28:54.811Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,16 @@
 			"title": "Docs · Materialize: turn a generation into a real object",
 			"summary": "How to print any three.ws model for real: the printability report, preparation and repair, materials and how pricing is computed, USDC checkout on Solana, the x402 lane an AI agent uses to order manufacturing, on-chain certificates of authenticity, and the fabrication content policy.",
 			"link": "/docs/materialize",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-02",
+			"type": "launch",
+			"title": "Docs · three.ws Home",
+			"summary": "How a three.ws agent connects to a real house: the open-source smart-home landscape measured and shortlisted, why Home Assistant owns the device layer, the two channels the @three-ws/home-bridge package speaks, the physical-action gate that never lets an unlock through unasked, and the road from here to voice in every room.",
+			"link": "/docs/smart-home",
 			"tags": [
 				"launch"
 			]
@@ -188,6 +198,18 @@
 		{
 			"date": "2026-09-02",
 			"type": "update",
+			"title": "Groundwork for agents that can run your house",
+			"summary": "A three.ws agent already has a body, a voice and a memory, all of it stuck inside a browser tab. This is the first piece of letting it reach past the screen: a new developer package, @three-ws/home-bridge, that connects an agent to a real Home Assistant, the open-source home platform that already runs in millions of houses and already speaks to Zigbee, Z-Wave, Matter, Thread and about fifteen hundred other things. We wrote no device code at all, on purpose. What the package adds is the part nobody had built: live state from the house shaped into rooms, so a 3D scene can dim when your real lights dim; \"good night\" and \"I'm leaving\" resolved to the scenes you already made yourself, in Home Assistant, rather than to something we invented for you; and a safety gate that reads the way our on-chain one does. Turning a light off is free. Unlocking a door stops and asks you, every time, until you say otherwise for that one door. Locking up never asks, because moving your house toward safety should not need permission. That last part turned out to matter more than expected: Home Assistant's own \"turn it off\" command performs an unlock when you point it at a lock, so an assistant told to turn something off can open your front door with nothing in the command's name to warn anyone. Our gate catches it. All of it was built and checked against a real Home Assistant running here, not against stand-ins, and the write-up of what else is out there and where this goes next (voice in every room, the agent standing in a live model of your home) is published alongside it.",
+			"link": "/docs/smart-home",
+			"tags": [
+				"sdk",
+				"docs",
+				"security"
+			]
+		},
+		{
+			"date": "2026-09-02",
+			"type": "update",
 			"title": "License terms for three.ws containers on NVIDIA NGC",
 			"summary": "three.ws is preparing to publish its image-to-3D inference server in NVIDIA's NGC catalog, so the licence that will cover those container images is now public. It states plainly what you get: Apache-2.0 source, no model weights inside the image (you bring your own, under the upstream licence), and a container that carries no analytics or telemetry and sends nothing back to us. It sits alongside the other policies on the legal page.",
 			"link": "/legal/nvidia-ngc-eula",
@@ -246,6 +268,16 @@
 			"link": "/play",
 			"tags": [
 				"fix",
+				"feature"
+			]
+		},
+		{
+			"date": "2026-09-02",
+			"type": "update",
+			"title": "Take a photo of your world and post it",
+			"summary": "Press P in a /play world, or the camera button on the HUD, and the world is captured onto a share card: your view of the town with the three.ws mark, the coin you are standing in and the date along the bottom, ready to download or paste straight into a post. The interface is never in the shot. The photo is a second frame rendered off screen just for you, so the chat, the job board and the name tags stay out of the picture no matter what is on screen when you press. It works in zen mode too, which is usually exactly when the world looks worth photographing, and while an event is running the card carries that event's name. Nothing is uploaded anywhere: the card is built in your browser and it is yours. The whole feature only downloads on your first press, so a session that never takes a photo never pays for it.",
+			"link": "/play",
+			"tags": [
 				"feature"
 			]
 		},

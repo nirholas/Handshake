@@ -1947,6 +1947,12 @@ URL: https://three.ws/docs/avatar-artifact
 
 The standalone avatar viewer you paste into any site as a one-line iframe: its ?agent= and ?model= parameters, the hosts a model may come from, how a clip-less rig still comes to life, and the sentence the page shows for every way it can fail.
 
+### Docs · three.ws Home
+
+URL: https://three.ws/docs/smart-home
+
+How a three.ws agent connects to a real house: the open-source smart-home landscape measured and shortlisted, why Home Assistant owns the device layer, the two channels the @three-ws/home-bridge package speaks, the physical-action gate that never lets an unlock through unasked, and the road from here to voice in every room.
+
 ### Docs · Terminal avatar
 
 URL: https://three.ws/docs/tty-avatar

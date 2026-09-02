@@ -61,11 +61,15 @@ export function buildHomeGraph({ floors = [], areas = [], devices = [], entities
 		const entityId = entry.entity_id;
 		seen.add(entityId);
 		const areaId = entry.area_id || deviceArea.get(entry.device_id) || null;
-		const item = describeEntity(entityId, entry, states[entityId]);
+		const item = describeEntity(entityId, entry, states[entityId], areaId);
 		if (!item) continue;
 		const room = areaId && rooms.get(areaId);
-		if (room) room.entities.push(item);
-		else unassigned.push(item);
+		if (room) {
+			item.areaName = room.name;
+			room.entities.push(item);
+		} else {
+			unassigned.push(item);
+		}
 	}
 
 	// Entities created in YAML never reach the entity registry, and the demo and
@@ -73,7 +77,7 @@ export function buildHomeGraph({ floors = [], areas = [], devices = [], entities
 	// half of some houses, so pick them up from the state map directly.
 	for (const [entityId, state] of Object.entries(states)) {
 		if (seen.has(entityId)) continue;
-		const item = describeEntity(entityId, null, state);
+		const item = describeEntity(entityId, null, state, null);
 		if (item) unassigned.push(item);
 	}
 
@@ -92,13 +96,14 @@ export function buildHomeGraph({ floors = [], areas = [], devices = [], entities
 	};
 }
 
-function describeEntity(entityId, registryEntry, state) {
+function describeEntity(entityId, registryEntry, state, areaId) {
 	const domain = domainOf(entityId);
 	if (!RENDERABLE_DOMAINS.has(domain)) return null;
 	const attributes = state?.attributes || {};
 	return {
 		entityId,
 		domain,
+		areaId: areaId || null,
 		name: registryEntry?.name || attributes.friendly_name || registryEntry?.original_name || entityId,
 		deviceClass: attributes.device_class || registryEntry?.device_class || registryEntry?.original_device_class || null,
 		state: state?.state ?? 'unavailable',
@@ -162,4 +167,12 @@ export function summarizeSecurity(entities) {
 	const open = openings.filter((e) => e.state === 'open' || e.state === 'on').map((e) => e.entityId);
 	if (!locks.length && !openings.length) return null;
 	return { locks: locks.length, unlocked, openings: openings.length, open, secure: unlocked.length === 0 && open.length === 0 };
+}
+
+/** Every renderable entity in the house as one flat list, area id included. */
+export function flattenEntities(graph) {
+	const out = [];
+	for (const room of graph?.rooms || []) out.push(...room.entities);
+	out.push(...(graph?.unassigned || []));
+	return out;
 }

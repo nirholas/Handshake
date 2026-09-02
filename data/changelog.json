@@ -3,6 +3,26 @@
 	"entries": [
 		{
 			"date": "2026-09-02",
+			"title": "Take a photo of your world and post it",
+			"summary": "Press P in a /play world, or the camera button on the HUD, and the world is captured onto a share card: your view of the town with the three.ws mark, the coin you are standing in and the date along the bottom, ready to download or paste straight into a post. The interface is never in the shot. The photo is a second frame rendered off screen just for you, so the chat, the job board and the name tags stay out of the picture no matter what is on screen when you press. It works in zen mode too, which is usually exactly when the world looks worth photographing, and while an event is running the card carries that event's name. Nothing is uploaded anywhere: the card is built in your browser and it is yours. The whole feature only downloads on your first press, so a session that never takes a photo never pays for it.",
+			"tags": [
+				"feature"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-09-02",
+			"title": "Groundwork for agents that can run your house",
+			"summary": "A three.ws agent already has a body, a voice and a memory, all of it stuck inside a browser tab. This is the first piece of letting it reach past the screen: a new developer package, @three-ws/home-bridge, that connects an agent to a real Home Assistant, the open-source home platform that already runs in millions of houses and already speaks to Zigbee, Z-Wave, Matter, Thread and about fifteen hundred other things. We wrote no device code at all, on purpose. What the package adds is the part nobody had built: live state from the house shaped into rooms, so a 3D scene can dim when your real lights dim; \"good night\" and \"I'm leaving\" resolved to the scenes you already made yourself, in Home Assistant, rather than to something we invented for you; and a safety gate that reads the way our on-chain one does. Turning a light off is free. Unlocking a door stops and asks you, every time, until you say otherwise for that one door. Locking up never asks, because moving your house toward safety should not need permission. That last part turned out to matter more than expected: Home Assistant's own \"turn it off\" command performs an unlock when you point it at a lock, so an assistant told to turn something off can open your front door with nothing in the command's name to warn anyone. Our gate catches it. All of it was built and checked against a real Home Assistant running here, not against stand-ins, and the write-up of what else is out there and where this goes next (voice in every room, the agent standing in a live model of your home) is published alongside it.",
+			"tags": [
+				"sdk",
+				"docs",
+				"security"
+			],
+			"link": "/docs/smart-home"
+		},
+		{
+			"date": "2026-09-02",
 			"title": "A polish pass over the coin worlds, from the friends drawer to every button on a phone",
 			"summary": "A sweep through the whole /play journey, from the lobby to the world and back out, fixing what a measured run found rather than what looked wrong. The friends drawer is the big one: it used to do nothing at all for the first moment after you tapped it, because the panel's code was still being fetched, and if you gave up and pressed Escape in that gap the drawer ignored you and slid open anyway a few seconds later. It now answers the tap on the spot with a roster loading in place, closes when you tell it to, and if the panel genuinely cannot be fetched it says so and gives you a Try again button instead of sitting there empty. On a phone, every control in the world has grown to a proper thumb-sized target: the heads-up bar, the leave and voice and zen buttons, the reaction pills, the shop chips and every close cross, plus the sort buttons and footer links back in the lobby. Several of these were half the size a thumb needs, which is why they were easy to miss mid-session. Two things that used to jump are now still: the lobby no longer shoves the community grid down when your saved avatars arrive, and the emote tray no longer flashes as an empty pill before it fills. And pressing Escape on the welcome card no longer throws an error behind the scenes. Nothing about the desktop layout changed; the roomier targets apply only where you are actually using a finger.",
 			"tags": [

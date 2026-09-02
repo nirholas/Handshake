@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-02T21:11:24.224Z",
+	"generated_at": "2026-09-02T21:28:54.711Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -3192,6 +3192,16 @@
 					"title": "Docs · Avatar Artifact viewer",
 					"description": "The standalone avatar viewer you paste into any site as a one-line iframe: its ?agent= and ?model= parameters, the hosts a model may come from, how a clip-less rig still comes to life, and the sentence the page shows for every way it can fail.",
 					"added": "2026-08-16",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/smart-home",
+					"title": "Docs · three.ws Home",
+					"description": "How a three.ws agent connects to a real house: the open-source smart-home landscape measured and shortlisted, why Home Assistant owns the device layer, the two channels the @three-ws/home-bridge package speaks, the physical-action gate that never lets an unlock through unasked, and the road from here to voice in every room.",
+					"added": "2026-09-02",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

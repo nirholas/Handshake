@@ -29,12 +29,14 @@
 	},
 	"files": [
 		"src",
-		"README.md"
+		"README.md",
+		"LICENSE"
 	],
 	"scripts": {
 		"test": "vitest run --root ../.. packages/home-bridge/tests"
 	},
 	"dependencies": {
+		"@leeoniya/ufuzzy": "^1.0.19",
 		"home-assistant-js-websocket": "^9.6.0"
 	},
 	"peerDependencies": {

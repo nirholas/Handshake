@@ -13,6 +13,7 @@
  */
 
 import { ERR, HomeBridgeError } from './errors.js';
+import { classifyMcpCall } from './safety.js';
 import { normalizeBaseUrl } from './url.js';
 
 /**
@@ -23,9 +24,14 @@ import { normalizeBaseUrl } from './url.js';
  *   built-in Assist API lives at /api/mcp/assist; the bare /api/mcp uses the
  *   instance default.
  * @param {string} [options.clientName] reported to Home Assistant in the handshake
- * @returns {Promise<{ client: object, tools: Array, close: () => Promise<void> }>}
+ * @param {() => Array} [options.entities] live entity list, normally
+ *   `() => flattenEntities(bridge.graph)`. Supplying it turns on the physical
+ *   action gate for tool calls, which is the only way an agent driving these
+ *   tools is safe: see classifyMcpCall for why the tool names do not tell you.
+ * @param {(entityId: string) => boolean} [options.isAllowed] standing per-entity approvals
+ * @returns {Promise<{ client: object, tools: Array, callTool: Function, close: () => Promise<void> }>}
  */
-export async function connectHomeMcp({ baseUrl, token, api, clientName = 'three.ws' } = {}) {
+export async function connectHomeMcp({ baseUrl, token, api, clientName = 'three.ws', entities, isAllowed } = {}) {
 	const { http } = normalizeBaseUrl(baseUrl);
 	if (!token) throw new HomeBridgeError(ERR.AUTH, 'A Home Assistant long-lived access token is required.');
 
@@ -60,9 +66,31 @@ export async function connectHomeMcp({ baseUrl, token, api, clientName = 'three.
 	}
 
 	const { tools } = await client.listTools();
+
+	/**
+	 * Call a home tool through the gate.
+	 *
+	 * @param {{ name: string, arguments?: object }} call
+	 * @param {{ confirmed?: boolean }} [options] confirmed:true is the user's
+	 *   explicit yes. Never set it from model output.
+	 */
+	const callTool = async (call, options = {}) => {
+		if (typeof entities === 'function' && !options.confirmed) {
+			const verdict = classifyMcpCall(call.name, call.arguments || {}, entities());
+			const cleared = verdict.guarded && verdict.targets.every((id) => isAllowed?.(id));
+			if (verdict.guarded && !cleared) {
+				const err = new HomeBridgeError(ERR.NEEDS_CONFIRMATION, verdict.reason);
+				err.pending = { tool: call.name, arguments: call.arguments, risk: verdict.risk, targets: verdict.targets };
+				throw err;
+			}
+		}
+		return client.callTool(call);
+	};
+
 	return {
 		client,
 		tools,
+		callTool,
 		close: () => client.close(),
 	};
 }

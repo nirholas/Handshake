@@ -1,6 +1,7 @@
 # three.ws Home: the agent as the interface to your physical space
 
-**Status:** research complete, architecture decided, implementation staged.
+**Status:** research complete, architecture decided, phase 1 built and verified against a
+real Home Assistant instance.
 **Date:** 2026-09-02.
 **Question asked:** can the three.ws 3D agent control a real home, and how much of it already exists in open source?
 
@@ -94,12 +95,17 @@ the idea already has an audience, and [hacs/integration](https://github.com/hacs
 1. **Home Assistant as the device layer.** We write zero device drivers. Not one. Zigbee,
    Z-Wave, Matter, Thread, BLE, cloud APIs, IR blasters, the long tail of 1,500 integrations:
    that is a decade of work by 10,000 contributors and it is already in the user's house.
-2. **`mcp_server` for actions.** The user's home becomes just another MCP server in an
-   ecosystem where we already run 40+ of them. No new wire format, no new auth story, no
-   custom command schema, and every capability the user exposes to their own LLM is exposed
-   to their three.ws agent with identical permissions.
-3. **`home-assistant-js-websocket` for state.** MCP is request/response. A living 3D scene
-   needs a push stream. This library is first-party, dependency-free, and reconnects itself.
+2. **`home-assistant-js-websocket` as the always-available channel.** State *and* actions.
+   It is first-party, dependency-free, reconnects and resubscribes itself, and works on any
+   instance with nothing but a token. MCP is request/response; a living 3D scene needs a push
+   stream, and this is it.
+3. **`mcp_server` as the capability upgrade.** When a home has it enabled, that home becomes
+   just another MCP server in an ecosystem where we already run 40+ of them: no new wire
+   format, no new auth story, no custom command schema, and every capability the user exposed
+   to their own LLM is exposed to their three.ws agent with identical permissions. Verified
+   against a live instance: 29 real tools, no code of ours behind any of them. It is an
+   upgrade rather than a requirement because it has to be set up first, and a bridge that
+   only worked on configured instances would leave most homes out.
 4. **HA scenes and scripts for macros.** "Good night" and "I'm leaving" are not new concepts
    we invent. They are `scene.turn_on` and `script.turn_on`, already modelled, already
    editable by the user in an interface they know. Our agent resolves intent to an existing
@@ -180,7 +186,20 @@ this control, so we inherit it rather than inventing a parallel one). Locks, gar
 alarm panels, and anything HA marks as a security entity require an explicit confirmation
 every time until the user grants a standing allowance per entity. A voice channel that can
 unlock a front door on a misheard phoneme is not a feature, and the first-party HA exposure
-setting is the correct place for that boundary to live.
+setting is the correct place for the outer boundary to live.
+
+One finding from building this makes the gate non-optional, and it is not obvious from the
+outside. Home Assistant's own Assist tools are polymorphic, and its published description of
+`intent__HassTurnOff` reads:
+
+> Turns off/closes a device or entity. **For locks, this performs an 'unlock' action.**
+
+So a model that has been told to turn something off can unlock a front door, and nothing in
+the tool name says so. Confirmed against a live instance: with a lock exposed to Assist (which
+is exactly what a user who wants voice lock control does), `HassTurnOff` on it really does
+unlock the door. Our gate therefore has to sit in front of the MCP channel too, resolving each
+call's targets to real entities and working out the service each one would actually perform.
+That is `classifyMcpCall` in the bridge.
 
 ---
 
@@ -188,12 +207,13 @@ setting is the correct place for that boundary to live.
 
 Each phase is shippable on its own and none of them block on the next.
 
-**Phase 1: connect and act.**
-`packages/home-bridge/` holds one client with the two channels (MCP over
-`@modelcontextprotocol/sdk`, which is already a dependency at `^1.29.0`, and state over
-`home-assistant-js-websocket`). A home connection record, a `/home` connect flow that takes
-a base URL and a long-lived token, and the home tools registered into the existing agent
-tool catalog. Verified against a real Home Assistant instance in Docker, not a fixture.
+**Phase 1: connect and act. Built.**
+[`packages/home-bridge/`](../packages/home-bridge) is the client: the WebSocket channel for
+state and actions, the MCP channel for the user's curated tools, the room graph, intent
+resolution against the house's own scenes, and the physical-action gate in front of both. See
+[its README](../packages/home-bridge/README.md). What remains in this phase is product
+surface, not protocol: the connection record, a `/home` connect flow, and registration of the
+home tools into the existing agent tool catalog.
 
 **Phase 2: the 3D home.** `/home` renders a live scene from the entity registry: areas
 become rooms, lights become lights, and the agent stands in it. Scene lighting is driven by
@@ -209,7 +229,37 @@ and robots, and it is the same protocol either way.
 
 ---
 
-## 6. Licensing
+## 6. What was actually verified
+
+Nothing in this document is inferred from documentation alone. A real Home Assistant
+(`ghcr.io/home-assistant/home-assistant:stable`, the `demo` integration, 122 entities across
+three areas and one floor, plus two user scenes named "Bedtime" and "Away Mode") was run in
+Docker and driven through the bridge:
+
+| Claim | How it was checked | Result |
+|---|---|---|
+| The WebSocket channel needs nothing but a token | `HomeBridge.connect()` against the live instance | Connected, 3 rooms, 1 floor, 122 entities |
+| Live state drives the 3D scene | Ran the house's "Bedtime" scene, read the room graph back | Bedroom brightness fell to 0.157 with colour `[255, 164, 82]`, other rooms went dark |
+| A macro resolves to the user's own scene | `activate('good night')` in a house with no scene called "Good night" | Resolved to `scene.bedtime` at 0.95 confidence and ran it |
+| A macro with no match stays silent | `activate('movie time')` in a house with no movie scene | No match, nothing fired |
+| The gate blocks an unlock | `call('lock', 'unlock', ...)` with no confirmation | Refused; door stayed locked |
+| Confirmation lets it through | The same call with `{ confirmed: true }` | Door unlocked |
+| Locking up never prompts | `call('lock', 'lock', ...)` | Ran, no prompt |
+| `mcp_server` gives us the user's tools | Enabled the integration, opened the MCP channel | 29 real tools; a tool call turned on a real light |
+| HA's own `HassTurnOff` unlocks locks | Exposed a lock to Assist, called it through the gate | Gate refused; with `{ confirmed: true }` the door really did unlock |
+| A bad token reads as auth, not as an outage | Connected with a junk token | `code: 'auth'` |
+| A home without `mcp_server` is not an error | Opened the MCP channel against a nonexistent API | `code: 'no_mcp'` with a recovery message |
+
+The registry snapshot from that instance is checked in as the package's test fixture
+(`packages/home-bridge/tests/fixtures/home.json`, regenerated by
+`scripts/capture-home-fixture.mjs`), so a Home Assistant registry change shows up as a failing
+test rather than as a surprise in someone's house. The live checks above are also a test file
+(`packages/home-bridge/tests/live-home.test.js`), which skips itself unless
+`HOME_ASSISTANT_URL` and `HOME_ASSISTANT_TOKEN` are set.
+
+---
+
+## 7. Licensing
 
 Everything we take into our own process is permissive: Apache-2.0 (Home Assistant, the JS
 WebSocket client, matter.js, openWakeWord), MIT (Wyoming's reference implementation,
