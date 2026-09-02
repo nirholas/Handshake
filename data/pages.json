@@ -2898,6 +2898,14 @@
 					"added": "2026-07-18"
 				},
 				{
+					"path": "/docs/materialize",
+					"title": "Docs · Materialize: turn a generation into a real object",
+					"description": "How to print any three.ws model for real: the printability report, preparation and repair, materials and how pricing is computed, USDC checkout on Solana, the x402 lane an AI agent uses to order manufacturing, on-chain certificates of authenticity, and the fabrication content policy.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-09-02"
+				},
+				{
 					"path": "/docs/how-forge-works",
 					"title": "Docs · How the Forge works, in plain language",
 					"description": "The five steps between typing a prompt and downloading a 3D model: reference image, reconstruction, engine selection, self-healing failover, and permanent storage. Plus what the quality tiers mean and what a finished model can do next.",
