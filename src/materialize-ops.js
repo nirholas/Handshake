@@ -52,6 +52,12 @@ let counts = {};
 let adapters = [];
 let openOrderId = null;
 let lastFocused = null;
+// The outcome of the last action, kept OUTSIDE the drawer's markup. Every
+// action reloads the order, which re-renders the drawer, and an operator who
+// loses the result line has no idea whether their click landed. The refund
+// payout instruction matters even more: it carries the recipient and amount for
+// an owner-executed transfer, and it must survive the reload that follows it.
+let lastResult = null;
 
 const esc = (v) =>
 	String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -194,6 +200,7 @@ function openDrawer(orderId) {
 
 function closeDrawer() {
 	openOrderId = null;
+	lastResult = null;
 	drawer.dataset.open = 'false';
 	scrim.dataset.open = 'false';
 	drawer.setAttribute('aria-hidden', 'true');
@@ -330,8 +337,8 @@ function detailHtml({ order, events, webhook_deliveries: deliveries }) {
 					? `<p class="mo-note">This order is closed. Nothing further can move it.</p>`
 					: ''}
 			</div>
-			<p class="mo-note" id="mo-result" role="status" aria-live="polite"></p>
-			<div id="mo-payout"></div>
+			<p class="mo-note" id="mo-result" role="status" aria-live="polite"${resultFor(order.id) ? ` data-tone="${esc(resultFor(order.id).tone || '')}"` : ''}>${esc(resultFor(order.id)?.message || '')}</p>
+			<div id="mo-payout">${payoutHtml(resultFor(order.id)?.payout)}</div>
 		</section>
 
 		<section>
@@ -350,37 +357,47 @@ function detailHtml({ order, events, webhook_deliveries: deliveries }) {
 		</section>`;
 }
 
+/** The stored outcome, but only for the order it belongs to. */
+function resultFor(orderId) {
+	return lastResult && lastResult.orderId === orderId ? lastResult : null;
+}
+
+// The owner action a refund produces. Rendered from the API's own payout block,
+// never recomputed here: no money number on this page is invented by the page.
+function payoutHtml(payout) {
+	if (!payout) return '';
+	return `<p class="mo-payout"><strong>Owner action required.</strong>
+		Send <strong>${Number(payout.amount_usdc || 0).toFixed(2)} USDC</strong> on Solana to
+		<span class="mo-mono">${esc(payout.recipient || 'the buyer account')}</span>.
+		${esc(payout.instruction || '')}</p>`;
+}
+
 function wireDetail(data) {
 	const order = data.order;
-	const result = drawerBody.querySelector('#mo-result');
-	const payoutEl = drawerBody.querySelector('#mo-payout');
 
-	const say = (message, tone = '') => {
-		result.textContent = message;
-		if (tone) result.dataset.tone = tone;
-		else delete result.dataset.tone;
+	const say = (message, tone = '', payout = null) => {
+		lastResult = { orderId: order.id, message, tone, payout };
+		const el = drawerBody.querySelector('#mo-result');
+		if (!el) return;
+		el.textContent = message;
+		if (tone) el.dataset.tone = tone;
+		else delete el.dataset.tone;
 	};
 
 	const run = async (button, work) => {
 		const buttons = [...drawerBody.querySelectorAll('button[data-act]')];
 		for (const b of buttons) b.disabled = true;
-		button.dataset.busy = 'true';
 		say('Working…');
 		try {
 			const body = await work();
-			say(body.message || 'Done.', 'ok');
-			if (body.payout) {
-				payoutEl.innerHTML = `<p class="mo-payout"><strong>Owner action required.</strong>
-					Send <strong>${Number(body.payout.amount_usdc || 0).toFixed(2)} USDC</strong> on Solana to
-					<span class="mo-mono">${esc(body.payout.recipient || 'the buyer account')}</span>.
-					${esc(body.payout.instruction)}</p>`;
-			}
+			// Stored before the reload, rendered again by detailHtml afterwards, so
+			// the operator reads the outcome rather than watching it flash past.
+			say(body.message || 'Done.', 'ok', body.payout || null);
 			await loadQueue();
 			await loadDetail(order.id);
 		} catch (err) {
 			say(err.message, 'error');
 			for (const b of buttons) b.disabled = false;
-			delete button.dataset.busy;
 		}
 	};
 

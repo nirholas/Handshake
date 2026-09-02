@@ -230,6 +230,7 @@ function renderInfo() {
 			<span class="mp-stat" title="Page views">👁 <b id="mp-views">${formatCount(c.view_count)}</b></span>
 			${c.remix_count ? `<span class="mp-stat" title="Remixes">⑂ <b>${formatCount(c.remix_count)}</b></span>` : ''}
 			<a class="mp-action" href="${esc(c.glb_url)}" download>Download GLB</a>
+			<a class="mp-action" href="/materialize?creation=${encodeURIComponent(c.id)}" title="Order this model as a real physical print, shipped to you">⬢ Materialize</a>
 			<button class="mp-action" id="mp-embed" type="button">&lt;/&gt; Embed</button>
 			<button class="mp-action" id="mp-share" type="button">↗ Share</button>
 			${c.remixable ? `<button class="mp-action" id="mp-remix" type="button">Remix · $0.25</button>` : ''}

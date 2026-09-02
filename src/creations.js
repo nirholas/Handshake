@@ -117,6 +117,7 @@ function cardHTML(item) {
 					${item.viewerUrl ? `<a class="cr-card-btn" href="${esc(item.viewerUrl)}" target="_blank" rel="noopener noreferrer">View</a>` : ''}
 					<button class="cr-card-btn" type="button" data-lineage="${esc(item.id)}" aria-controls="cr-lineage-panel">Lineage</button>
 					${item.prompt ? `<button class="cr-card-btn" type="button" data-copy-prompt="${esc(item.id)}" title="Copy the prompt that generated this model">Copy prompt</button>` : ''}
+					<a class="cr-card-btn" href="/materialize?creation=${esc(item.id)}" title="Order this creation as a real physical print, shipped to you">Materialize</a>
 					<button class="cr-card-btn cr-card-btn--remix" type="button" data-remix-open="${esc(item.id)}">Remix — $0.25</button>
 					<span class="cr-time">${esc(timeAgo(item.createdAt))}</span>
 				</div>

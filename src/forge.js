@@ -108,6 +108,7 @@ const els = {
 	resultQuality: document.getElementById('result-quality'),
 	verdict: document.getElementById('verdict'),
 	download: document.getElementById('download'),
+	materialize: document.getElementById('materialize-it'),
 	again: document.getElementById('again'),
 	refine: document.getElementById('refine'),
 	refineLabel: document.getElementById('refine-label'),
@@ -1992,6 +1993,19 @@ function showResult(glbUrl, label, meta, { autoSaved = false } = {}) {
 		els.savedChip.style.animation = '';
 		// Hide after animation completes (3s).
 		setTimeout(() => els.savedChip?.classList.add('is-hidden'), 3100);
+	}
+	// Deep-link the physical lane at THIS generation. A creation id is the
+	// better handle (it carries the prompt and the creator through to the
+	// print), but a model that has not been persisted yet still materializes
+	// from its own URL, so the action is never dead.
+	if (els.materialize) {
+		const handle = currentCreationId
+			? `?creation=${encodeURIComponent(currentCreationId)}`
+			: glbUrl && !glbUrl.startsWith('blob:')
+				? `?glb=${encodeURIComponent(glbUrl)}`
+				: '';
+		els.materialize.href = `/materialize${handle}`;
+		els.materialize.hidden = false;
 	}
 	els.download.href = glbUrl;
 	els.download.setAttribute(

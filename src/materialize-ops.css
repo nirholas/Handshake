@@ -289,7 +289,10 @@
 	opacity: 0;
 	pointer-events: none;
 	transition: opacity var(--dur-med, 220ms) var(--ease-out, ease);
-	z-index: 60;
+	/* Above the sticky site header (nav.css uses z-index 100). The drawer is a
+	   modal surface: an operator reaching for Close must not hit a nav link that
+	   navigates away mid-job, which is exactly what happened at z-index 60. */
+	z-index: 300;
 }
 
 .mo-drawer-scrim[data-open='true'] { opacity: 1; pointer-events: auto; }
@@ -306,7 +309,7 @@
 	border-left: 1px solid var(--color-border);
 	transform: translateX(100%);
 	transition: transform var(--dur-med, 220ms) var(--ease-out, ease);
-	z-index: 61;
+	z-index: 301;
 	overflow: hidden;
 }
 
