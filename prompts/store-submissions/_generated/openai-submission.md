@@ -36,8 +36,8 @@ production defects found on 2026-07-07 are both **fixed and re-verified live on 
 Additionally, three.ws was **accepted into the OpenAI Partner Network on 2026-07-14** (welcome email
 to nich@three.ws), which unlocks the partner portal for the submission itself.
 
-**Remaining steps are owner-only:** re-run the §5 reviewer smoke test if desired, then submit this
-package through the partner portal. Schema note for the smoke test: `forge_free` accepts
+**Remaining steps as of that date were owner-only:** re-run the §5 reviewer smoke test if desired, then
+submit this package through the partner portal. That is superseded by §0: B3 must clear first. Schema note for the smoke test: `forge_free` accepts
 `{"prompt": "...", "tier"?: "draft"|"standard"|"high"}`; other extra properties are rejected with
 `-32602`.
 
