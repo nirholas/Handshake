@@ -1,5 +1,5 @@
 /**
- * GET /api/print/certs/:id — one Materialize certificate, publicly readable.
+ * GET /api/print/certs/:id: one Materialize certificate, publicly readable.
  *
  * A certificate is a public proof by design: the QR printed on the box has to
  * resolve for whoever is holding the box, which is frequently not the buyer and

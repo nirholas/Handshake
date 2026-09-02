@@ -1,4 +1,4 @@
-// GET /api/print/catalog — the Materialize price list, as data.
+// GET /api/print/catalog: the Materialize price list, as data.
 //
 // Everything a buyer or an agent needs to build a valid quote request: the
 // materials with their real constraints (minimum wall, build volume, lead time),

@@ -101,6 +101,60 @@ function unitPhysicals({ report, material, scale, volumeCm3, catalog }) {
 }
 
 /**
+ * The heights at which THIS mesh can actually be printed in THIS material.
+ *
+ * The catalog's own min/max are a property of the machine; this narrows them by
+ * the two properties of the mesh: its widest axis has to fit the bed, and its
+ * thinnest wall has to survive at the chosen scale. The /materialize size slider
+ * is bounded by this, which is why a buyer moving it never lands on a rejection
+ * they could not have predicted.
+ *
+ * `limitedBy` names which constraint bit, so the UI can label the end of the
+ * track ("as tall as the bed allows") instead of just stopping.
+ *
+ * @returns {{ minHeightMm: number, maxHeightMm: number, feasible: boolean,
+ *   limitedBy: { min: string, max: string } }}
+ */
+export function fitHeightRange({ report, material }) {
+	const heightMm = report?.bbox_mm?.y;
+	if (!(heightMm > 0)) {
+		return { minHeightMm: material.minHeightMm, maxHeightMm: material.maxHeightMm, feasible: false, limitedBy: { min: 'material', max: 'material' } };
+	}
+
+	let minHeightMm = material.minHeightMm;
+	let minLimit = 'material';
+	// Wall thickness scales linearly with height, so the smallest printable height
+	// is the one where the thinnest measured wall reaches the material's minimum.
+	if (report.min_wall_mm > 0) {
+		const wallFloor = (material.minWallMm / report.min_wall_mm) * heightMm;
+		if (wallFloor > minHeightMm) {
+			minHeightMm = wallFloor;
+			minLimit = 'wall';
+		}
+	}
+
+	let maxHeightMm = material.maxHeightMm;
+	let maxLimit = 'material';
+	for (const axis of ['x', 'z']) {
+		const span = report.bbox_mm?.[axis];
+		if (!(span > 0)) continue;
+		// Uniform scale: the height at which this axis exactly fills the bed.
+		const cap = (material.maxBoundingBoxMm[axis] / span) * heightMm;
+		if (cap < maxHeightMm) {
+			maxHeightMm = cap;
+			maxLimit = 'build_volume';
+		}
+	}
+
+	return {
+		minHeightMm: round(minHeightMm, 1),
+		maxHeightMm: round(maxHeightMm, 1),
+		feasible: maxHeightMm >= minHeightMm,
+		limitedBy: { min: minLimit, max: maxLimit },
+	};
+}
+
+/**
  * Every reason a mesh cannot be printed in a material, with the fix attached.
  * A rejection that only says "no" makes the buyer guess; each one here names the
  * measured number, the required number, and the action that resolves it.
@@ -133,10 +187,17 @@ function constraintFailures({ report, material, targetHeightMm, scale }) {
 	for (const axis of ['x', 'z']) {
 		const value = report.bbox_mm[axis] * scale;
 		if (value > box[axis]) {
+			// The fix is a number, not an instruction to fiddle: the tallest this
+			// model can be printed in this material before its widest axis runs out
+			// of bed. A slider that already clamps to fitHeightRange() rarely lands
+			// here, but a deep link or an agent request can.
+			const fits = Math.floor(fitHeightRange({ report, material }).maxHeightMm);
 			failures.push({
 				code: 'exceeds_build_volume',
 				message: `At this size the model is ${round(value, 1)} mm across, over the ${box[axis]} mm build volume for ${material.name}.`,
-				fix: 'Reduce the size, or choose a material with a larger build volume.',
+				fix: fits >= material.minHeightMm
+					? `Print it at ${fits} mm tall or under, or choose a material with a larger build volume.`
+					: 'This model is too wide for this material at any printable height; choose a material with a larger build volume.',
 				measured: round(value, 1),
 				required: box[axis],
 			});
@@ -162,6 +223,38 @@ function constraintFailures({ report, material, targetHeightMm, scale }) {
 		});
 	}
 	return failures;
+}
+
+/**
+ * Every material measured against THIS mesh: the height range it can actually be
+ * printed at, and, when none exists, the reason in the buyer's words.
+ *
+ * The /materialize material cards render straight off this, so a card that cannot
+ * take the model says why on its face rather than failing after it is clicked.
+ */
+export function materialFits({ report, catalog = loadCatalog() }) {
+	return catalog.materials.map((material) => {
+		const fit = fitHeightRange({ report, material });
+		let blocked = null;
+		if (material.requiresTexture && !report.has_textures) {
+			blocked = `${material.name} prints the model's own colours, and this model has no texture.`;
+		} else if (!fit.feasible) {
+			blocked = fit.limitedBy.max === 'build_volume'
+				? `This model is too wide for the ${material.name} build volume at any height that keeps its walls printable.`
+				: `This model cannot hold a ${material.minWallMm} mm wall anywhere in the ${material.minHeightMm} to ${material.maxHeightMm} mm range ${material.name} prints.`;
+		}
+		return {
+			id: material.id,
+			name: material.name,
+			class: material.class,
+			minHeightMm: fit.minHeightMm,
+			maxHeightMm: fit.maxHeightMm,
+			limitedBy: fit.limitedBy,
+			quoteOnRequest: Boolean(material.quoteOnRequest),
+			hollowSupported: Boolean(material.hollow?.supported),
+			blocked,
+		};
+	});
 }
 
 /**

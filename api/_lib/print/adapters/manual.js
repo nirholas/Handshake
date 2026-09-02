@@ -5,7 +5,7 @@
 // is always a human: an operator takes the prepared STL/3MF off the queue,
 // runs it on a real bureau's machines (or their own), and reports what
 // happened. This adapter is the machine-readable face of that person. Its
-// submit() puts the job on the operator's queue and pages the operator channel;
+// submit() puts the job on the operator's queue and pages the operator channel.
 // its status() reads back what the operator recorded through the console.
 //
 // Consequences worth stating, because they are what makes this honest rather

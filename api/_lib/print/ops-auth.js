@@ -81,7 +81,7 @@ export async function authorizeOperator(req) {
 			}
 		}
 	} catch {
-		/* no or invalid session — fall through to the secret door */
+		/* no or invalid session: fall through to the secret door */
 	}
 
 	const secret = process.env.OPS_SECRET;

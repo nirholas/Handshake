@@ -417,14 +417,14 @@ curl -s -X POST https://three.ws/api/mcp-studio -H 'content-type: application/js
 - [x] App discovery schema served + guarded — `/.well-known/3d-studio-openapi.yaml`, free-only,
       `security: []`, byte-identical to the custom-GPT Action file, crypto/payment-free
       (`tests/api/3d-studio-openapi.test.js`).
-- [x] Served discovery schema is live — `https://three.ws/.well-known/3d-studio-openapi.yaml` returns
+- [x] Served discovery schema is live: `https://three.ws/.well-known/3d-studio-openapi.yaml` returns
       200 in production, as do `/.well-known/ai-plugin.json`, `/legal/privacy`, `/legal/tos` and
       `/support` (re-verified 2026-09-02).
 - [ ] Screenshots — **re-capture the landscape widget shots against the shipped inline widget**
       (`api/_mcp-studio/component.js`); the earlier standalone-viewer captures were removed as part of
       collapsing the duplicate viewers. Confirm the form's required dimensions. `[HUMAN]`
 - [x] Compliance audit: 7/7 policy items PASS (§2), with the review-surface separation documented (§2.1a).
-- [x] Listing metadata drafted (§1) — tool list is the live 11-tool surface (re-pulled 2026-09-02);
+- [x] Listing metadata drafted (§1): tool list is the live 11-tool surface (re-pulled 2026-09-02);
       `forge_free` tier note corrected to the honest standard default (2026-07-18).
 - [x] MCP connectivity documented (§3).
 - [x] Reviewer guide written (§5).

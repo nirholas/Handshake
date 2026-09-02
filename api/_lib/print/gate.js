@@ -41,6 +41,33 @@ export { POLICY_URL };
 // well under the ~150 mm of the shortest real handgun.
 export const MINIATURE_MAX_MM = 120;
 
+// The generation classifier's categories this gate honours, with the message
+// rewritten in the fabrication voice (its own copy says "This 3D Studio",
+// which is the wrong product to name when someone is buying an object). Its
+// `weapon_drug` category is deliberately absent: see screenDeterministic().
+const UPSTREAM_CATEGORIES = Object.freeze({
+	csam: {
+		label: 'prohibited content',
+		message: 'This request is not allowed.',
+		allowed: null,
+	},
+	sexual: {
+		label: 'adult content',
+		message: 'three.ws does not manufacture sexual or adult content.',
+		allowed: 'Characters, creatures and figures without explicit themes are fine.',
+	},
+	gore: {
+		label: 'graphic violence',
+		message: 'three.ws does not manufacture graphically violent or gore content.',
+		allowed: 'Describe the same subject without the graphic detail and it can be printed.',
+	},
+	hate: {
+		label: 'hateful or extremist iconography',
+		message: 'three.ws does not manufacture hateful or extremist content or iconography.',
+		allowed: 'Original designs, historical subjects without the iconography, and ordinary symbols are fine.',
+	},
+});
+
 const SCREENING_SYSTEM = `You review 3D models that a manufacturing service is about to physically print.
 Refuse only these categories:
 - firearm components or anything that becomes part of a working firearm
@@ -148,19 +175,30 @@ function refusal({ category, label, message, allowed, layer, matched = null }) {
 export function screenDeterministic({ subject, analysis = null }) {
 	const geometry = geometrySignal(analysis);
 
-	// Layer 1: whatever the generation gate would have refused, fabrication
-	// refuses too. A mesh that should never have been generated must never be
-	// manufactured, including one generated before that gate covered its terms.
+	// Layer 1: the generation content classifier, for the categories whose
+	// answer does not depend on what is being made out of the mesh.
+	//
+	// Generation verdicts are not persisted anywhere (checkPromptSafety refuses
+	// inline in api/3d/studio.js and api/_mcp-studio/tools.js and stores
+	// nothing), and the main /forge lane never called it at all, so this is a
+	// re-evaluation of the lineage rather than a lookup. Only the four
+	// scale-independent categories are honoured: the classifier's fifth,
+	// `weapon_drug`, refuses the bare word "pistol", which would refuse every
+	// tabletop miniature carrying one. Weapons and drug paraphernalia are owned
+	// by the fabrication rules below, which distinguish a display piece from a
+	// working part; deferring to a 13+ chat-app word list here would make that
+	// distinction unreachable.
 	const upstream = checkPromptSafety(subject);
-	if (!upstream.allowed) {
+	if (!upstream.allowed && UPSTREAM_CATEGORIES[upstream.category]) {
+		const mapped = UPSTREAM_CATEGORIES[upstream.category];
 		return {
 			decision: refusal({
 				category: `generation_${upstream.category}`,
-				label: 'generation content policy',
+				label: mapped.label,
 				layer: 'upstream',
 				matched: upstream.matched || null,
-				message: upstream.message,
-				allowed: 'Describe a character, creature, prop or object without that theme and generate it again.',
+				message: mapped.message,
+				allowed: mapped.allowed,
 			}),
 			layers: {
 				upstream: { verdict: 'refuse', category: upstream.category, matched: upstream.matched || null },
@@ -348,21 +386,27 @@ export async function runFabricationGate({
 		};
 	}
 
+	const softFlags = deterministic.layers.denylist.soft || [];
 	const llm = await screenWithLlm({
 		subject,
 		geometry: deterministic.layers.geometry,
-		softRules: deterministic.layers.denylist.soft || [],
+		softRules: softFlags,
 	});
 
 	if (llm.verdict === 'refuse') {
 		// The model may name a category the denylist knows; when it does, the
 		// buyer gets that rule's written message and its "what is allowed"
 		// sentence rather than raw model prose.
+		// The model is asked for a rule id but free models routinely answer with a
+		// sentence. Only a category the denylist actually knows is kept as the
+		// category; anything else is recorded as the model's `reason` and the
+		// order is refused under the general policy, so a stored verdict always
+		// carries a slug a UI and a report can group on.
 		const known = ruleById(llm.category);
 		return {
 			...base,
 			verdict: 'refuse',
-			category: llm.category || 'fabrication_policy',
+			category: known ? known.id : 'fabrication_policy',
 			label: known?.label || 'fabrication content policy',
 			layer: 'llm',
 			matched: null,
@@ -374,6 +418,20 @@ export async function runFabricationGate({
 	}
 
 	if (llm.verdict === 'review') {
+		// An unreachable model must not hold an order the deterministic layers
+		// had no question about: that order already cleared the same bar its
+		// quote cleared, and paging an operator for every teapot during a
+		// provider outage trains them to ignore the channel. Only a request the
+		// denylist deliberately left undecided (a soft rule) is held.
+		if (softFlags.length === 0) {
+			return {
+				...base,
+				verdict: 'allow',
+				category: null,
+				message: null,
+				layers: { ...deterministic.layers, llm },
+			};
+		}
 		return {
 			...base,
 			verdict: 'review',
