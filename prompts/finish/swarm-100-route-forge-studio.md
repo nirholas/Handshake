@@ -2,8 +2,8 @@
 
 How to run: paste this file's repo path into a fresh Claude Code chat in this
 repository and say "run this work order". This file is fully self-contained:
-it depends on no other prompt file anywhere. If neighboring files in
-prompts/swarm-100/ are gone, that work is done; if present, ignore them.
+it depends on no other prompt file anywhere. If sibling swarm-100 files in
+prompts/finish/ are gone, that work is done; if present, ignore them.
 Every claim below rots; step 0 re-measures, and what you measure wins.
 
 ## Operating clause (binding)

@@ -35,8 +35,8 @@ half-finished order is always safe.
 
 ## Relation to other packs
 
-prompts/swarm-100/ audits what exists; this pack builds a new surface, like
-prompts/roadmap/. Where a swarm-100 sweep later touches `api/print/*` or
+The swarm-100 orders in prompts/finish/ audit what exists; this pack builds a
+new surface, like the roadmap orders. Where a swarm-100 sweep later touches `api/print/*` or
 `/materialize`, both re-derive state first, so order does not matter.
 
 ## Retirement
