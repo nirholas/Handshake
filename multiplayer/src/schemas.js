@@ -329,5 +329,10 @@ defineTypes(WalkState, {
 	// Append-only (R24): a new scalar at the end so a still-running older client
 	// isn't shifted off the wire format mid-deploy.
 	holderMinTokens: 'float32',
+	// Append-only: this room build understands the 'ready' join-snapshot handshake.
+	// The client MUST check this before sending 'ready', because an older room
+	// build answers an unknown message type by closing the socket with 4002, which
+	// would kick every player on a client-before-server deploy.
+	acceptsReady: 'boolean',
 });
 

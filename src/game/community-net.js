@@ -80,6 +80,8 @@ export class CommunityNet {
 
 		this.client = null;
 		this.room = null;
+		// Whether this room connection has announced its handlers (see _announceReady).
+		this._readySent = false;
 		this.status = 'idle';
 		this.error = null;
 		this.sessionId = null;
@@ -199,6 +201,28 @@ export class CommunityNet {
 		this._emit('status', { status, error });
 	}
 
+	// Tell the room our message handlers are attached, so it can re-send the
+	// snapshot it pushed during onJoin (guest token, profile, quests, build perms,
+	// the King of the Totem sync). All of that goes out while we are still inside
+	// `await joinRoomWithTimeout`, before a single onMessage handler exists, and
+	// Colyseus drops a message nothing is listening for: measured on 2026-09-02,
+	// a guest lost the token their device needs to reclaim its progression and the
+	// HUD came up with no purse. The room re-sends full snapshots, so arriving
+	// twice is a repaint, never a double grant.
+	//
+	// Two things make this safe. It is gated on the room advertising support,
+	// because an older room build answers an unknown message type by closing the
+	// socket with 4002, which would kick every player during a client-before-server
+	// deploy. And it runs from the FIRST state sync, not from the end of connect():
+	// the flag lives on the schema, so reading it any earlier finds `undefined` and
+	// silently disables the handshake it is supposed to enable.
+	_announceReady() {
+		if (this._destroyed || this._readySent) return;
+		if (!this.room?.state?.acceptsReady) return;
+		this._readySent = true;
+		try { this.room.send('ready'); } catch { /* socket already gone */ }
+	}
+
 	// Detach and close the current room without triggering a reconnect. Every
 	// (re)connect replaces this.room; if the previous room were left live its
 	// socket would keep firing onMessage('chat') alongside the new one, so a
@@ -301,6 +325,9 @@ export class CommunityNet {
 			}
 			this.room = room;
 			this.sessionId = this.room.sessionId;
+			// Per-room: a reconnect gets a fresh join snapshot, so it must announce
+			// itself again rather than inherit the previous session's flag.
+			this._readySent = false;
 
 			// Guest identity (see guest-token.js server-side): the room seals our guest
 			// id into a signed token and hands it back on every join. Persist it, the
@@ -479,6 +506,7 @@ export class CommunityNet {
 			// and a missing sync notification must never take the whole join down.
 			this.room.onStateChange?.once?.(() => {
 				if (!this._destroyed && gen === this._connectGen) this._emit('synced');
+				this._announceReady();
 			});
 
 			this.room.onLeave((code, reason) => {

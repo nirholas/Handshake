@@ -526,6 +526,9 @@ export class WalkRoom extends Room {
 		// per session ({ timeMs: number, becameIt: epoch|null }).
 		this._tagImmunity = new Map();
 		this._tagTime = new Map();
+		// sessionId → the guest token minted for this join, so the 'ready' handshake
+		// can hand it over again if the client was not listening the first time.
+		this._guestTokens = new Map();
 		// King of the Totem (R07): off-schema round + score state. `phase` is the
 		// round machine ('idle' waiting for players | 'active' round running |
 		// 'intermission' showing the winner). `scores` is sessionId → accumulated
@@ -592,6 +595,25 @@ export class WalkRoom extends Room {
 		// rooms would load and flush over each other's creation.
 		this.worldKey = this.state.tier === 'holders' ? `${this.state.coin}#holders` : this.state.coin;
 
+		// Join-snapshot handshake.
+		//
+		// Everything this room sends a client during onJoin (guest token, profile,
+		// quests, build permissions, the King of the Totem sync) goes out while the
+		// client is still inside `await client.joinOrCreate(...)`, before it has
+		// attached a single onMessage handler. Colyseus drops a message no handler
+		// claims and warns; on a machine slow enough to matter the whole snapshot
+		// lands in that gap. Measured on 2026-09-02 against this room: guestToken,
+		// profile, quests and build-perms each reported "onMessage() not registered"
+		// twice in one session, so a guest lost the very token that lets their
+		// device reclaim its progression, and the HUD came up without a purse.
+		//
+		// The client says 'ready' once its handlers are attached, and we send the
+		// snapshot again. Deliberately additive: the original onJoin sends are
+		// untouched, so a client on an older bundle that never says 'ready' behaves
+		// exactly as before, and a client that does gets the data whatever the
+		// timing. Every payload is a full snapshot, so receiving it twice is a
+		// repaint with identical values, never a double-grant.
+		this.onMessage('ready', (client) => this._resendJoinSnapshot(client));
 		this.onMessage('move', (client, payload) => this._handleMove(client, payload));
 		this.onMessage('rename', (client, payload) => this._handleRename(client, payload));
 		this.onMessage('emote', (client, payload) => this._handleEmote(client, payload));
@@ -711,6 +733,10 @@ export class WalkRoom extends Room {
 		// is settled by now.
 		await blockStore.ready();
 		this.state.persistent = blockStore.durable;
+		// Tell clients this build answers 'ready' (see the handshake registration
+		// above). Gating on a schema flag rather than a version guess is what makes
+		// the client safe to deploy before or after this server.
+		this.state.acceptsReady = true;
 
 		// Seed this world's drivable fleet. Vehicles are world entities (everyone sees
 		// them) so they ride on the synced state, parked until someone takes the wheel.
@@ -853,6 +879,9 @@ export class WalkRoom extends Room {
 			// it on the next join. Re-issued every join so an active guest's 90-day
 			// expiry never creeps up on them.
 			client.send('guestToken', { token: identity.guestToken });
+			// Kept for the 'ready' handshake below, which re-sends the join snapshot
+			// to a client that was not listening yet when the above went out.
+			this._guestTokens.set(client.sessionId, identity.guestToken);
 		}
 		try { await hydratePlayer(playerId); } catch { /* memory-only fallback */ }
 		// A slower-arriving leave could fire while we awaited; bail if so.
@@ -1013,6 +1042,7 @@ export class WalkRoom extends Room {
 			}
 		}
 		this._tagTime.delete(client.sessionId);
+		this._guestTokens.delete(client.sessionId);
 		// King of the Totem (R07): drop their current-round score and demote them if
 		// they were holding the zone. Their accumulated points are forfeited (a player
 		// who leaves can't win), and the next tick re-evaluates occupancy from scratch,
@@ -1345,6 +1375,22 @@ export class WalkRoom extends Room {
 	/** Broadcast the current game state to everyone in the room. */
 	_broadcastKing(event) {
 		this.broadcast('game:king', this._kingSnapshot(event));
+	}
+
+	/** Re-send everything onJoin sent this client, now that it has confirmed its
+	 *  message handlers are attached. See the 'ready' registration above for why.
+	 *  Safe to call for a client that already received all of it: each payload is
+	 *  a snapshot of current state, not a delta or a grant. */
+	_resendJoinSnapshot(client) {
+		if (!this.state.players.has(client.sessionId)) return; // left mid-handshake
+		const token = this._guestTokens.get(client.sessionId);
+		if (token) { try { client.send('guestToken', { token }); } catch { /* gone */ } }
+		try {
+			this._sendProfile(client);
+			this._sendQuests(client);
+			this._sendBuildPerms(client);
+			this._sendKingSync(client);
+		} catch { /* a client that vanished between the checks above and here */ }
 	}
 
 	/** Send the current game state to one client (on join), so a mid-round arrival
