@@ -39,6 +39,7 @@ import { isSsrRoute, renderSsrPage } from './ssr-pages.mjs';
 import { hasSeoRoute, renderSeoHead } from './seo-head.mjs';
 import { isMissingShellPage } from './shell-pages.mjs';
 import { hardenHeaderBag } from './csp-hashes.mjs';
+import { cronEdgeAuth } from './cron-edge-auth.mjs';
 // Route resolution lives in its own module so the audit scripts
 // (scripts/audit-cron-liveness.mjs) exercise the SAME resolver production runs,
 // instead of a copy that can silently drift from it.
@@ -359,6 +360,15 @@ app.use(express.json({ limit: BODY_LIMIT, verify: captureRawBody }));
 app.use(express.urlencoded({ extended: true, limit: BODY_LIMIT, verify: captureRawBody }));
 app.use(express.text({ type: 'text/*', limit: BODY_LIMIT }));
 app.use(express.raw({ type: 'application/octet-stream', limit: BODY_LIMIT }));
+
+// Second lock on /api/cron/*, ahead of the route table so no rewritten dest can
+// carry an unauthenticated caller past it. Every handler there still runs its
+// own requireCron; this exists so that ONE handler forgetting the line is not
+// the same thing as publishing a money-moving sweep to the internet. It accepts
+// the CRON_SECRET the handlers already validate and, when
+// CRON_OIDC_AUDIENCE + CRON_OIDC_SERVICE_ACCOUNT are set, a Cloud Scheduler
+// OIDC token. See server/cron-edge-auth.mjs.
+app.use(cronEdgeAuth());
 
 app.use(async (req, res) => {
 	const url = new URL(req.url, 'http://internal');
