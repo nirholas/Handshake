@@ -131,6 +131,11 @@ export class AvatarGalleryPicker {
 		document.addEventListener('keydown', this._onKey);
 
 		requestAnimationFrame(() => {
+			// close() nulls _overlay, and a picker dismissed inside the one frame
+			// between mounting and this callback (Escape on a slow first paint, or a
+			// backdrop click landing early) left this dereferencing null and throwing
+			// on the player's console. Nothing to animate in if it is already gone.
+			if (!this._overlay) return;
 			this._overlay.classList.add('agp-open');
 			this._els.searchInput?.focus();
 		});
