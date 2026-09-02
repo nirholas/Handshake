@@ -151,6 +151,14 @@
 			<description>three.ws is preparing to publish its image-to-3D inference server in NVIDIA's NGC catalog, so the licence that will cover those container images is now public. It states plainly what you get: Apache-2.0 source, no model weights inside the image (you bring your own, under the upstream licence), and a container that carries no analytics or telemetry and sends nothing back to us. It sits alongside the other policies on the legal page.</description>
 		</item>
 		<item>
+			<title>Limited editions: cap how many copies of your model can ever exist</title>
+			<link>https://three.ws/materialize</link>
+			<guid isPermaLink="false">2026-09-02:Limited editions: cap how many copies of your model can ever exist</guid>
+			<pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Any model you forged now has a Physical editions panel on its page where you set one number: how many physical copies of it may ever be printed. Leave it empty and it stays an open edition, which is what every model is by default. Set it and the number starts meaning something everywhere: the price panel tells a buyer which number they would be and how many are left, a sold-out edition is refused where the price is quoted rather than after someone has paid, and every certificate that ships reads &quot;3 of 25&quot; for good. It counts copies that actually shipped rather than orders people started, so an abandoned checkout never strands the last one, and it cannot be lowered below what has already left the building, because a certificate reading &quot;edition 7 of 5&quot; would be a lie already in somebody's hands. There is also now a page at /cert for looking a certificate up by the number printed on its card, and a certificate whose on-chain proof was delayed retries on its own until it lands.</description>
+		</item>
+		<item>
 			<title>Materialize checkout: buy a real print, or let an agent buy one</title>
 			<link>https://three.ws/materialize</link>
 			<guid isPermaLink="false">2026-09-02:Materialize checkout: buy a real print, or let an agent buy one</guid>

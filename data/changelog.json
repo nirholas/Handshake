@@ -25805,6 +25805,16 @@
 				"sdk"
 			],
 			"link": "/materialize"
+		},
+		{
+			"date": "2026-09-02",
+			"title": "Limited editions: cap how many copies of your model can ever exist",
+			"summary": "Any model you forged now has a Physical editions panel on its page where you set one number: how many physical copies of it may ever be printed. Leave it empty and it stays an open edition, which is what every model is by default. Set it and the number starts meaning something everywhere: the price panel tells a buyer which number they would be and how many are left, a sold-out edition is refused where the price is quoted rather than after someone has paid, and every certificate that ships reads \"3 of 25\" for good. It counts copies that actually shipped rather than orders people started, so an abandoned checkout never strands the last one, and it cannot be lowered below what has already left the building, because a certificate reading \"edition 7 of 5\" would be a lie already in somebody's hands. There is also now a page at /cert for looking a certificate up by the number printed on its card, and a certificate whose on-chain proof was delayed retries on its own until it lands.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/materialize"
 		}
 	]
 }
