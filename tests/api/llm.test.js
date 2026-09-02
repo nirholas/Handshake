@@ -13,6 +13,7 @@ function clearKeys() {
 	delete process.env.OPENROUTER_API_KEY;
 	delete process.env.OPENROUTER_FALLBACK_KEYS;
 	delete process.env.NVIDIA_API_KEY;
+	delete process.env.LLM7_API_KEY;
 	delete process.env.ANTHROPIC_API_KEY;
 	delete process.env.OPENAI_API_KEY;
 }
@@ -213,9 +214,11 @@ describe('llmComplete — multiple OpenRouter keys', () => {
 		await expect(llm.llmComplete({ system: 's', user: 'u' })).rejects.toMatchObject({ status: 502 });
 		// or-same is deduped to a single key (one :free rung), then or-extra's :free
 		// rung, two OpenRouter fetches (without dedup or-same would be tried again as
-		// a fallback too). The chain then falls through the three unconditional
-		// keyless lanes (OVH, Pollinations, LLM7) before giving up: five fetches total.
-		expect(n).toBe(5);
+		// a fallback too). The chain then falls through the two unconditional keyless
+		// lanes (OVH, Pollinations) before giving up: four fetches total. LLM7 is not
+		// among them any more; llm7.io retired its anonymous tier, so that rung is
+		// gated on LLM7_API_KEY (see api/_lib/llm.js).
+		expect(n).toBe(4);
 	});
 
 	it('llmConfigured is true with only fallback keys set', () => {

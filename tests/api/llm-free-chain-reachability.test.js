@@ -70,6 +70,7 @@ const ENV_KEYS = [
 	'CLOUDFLARE_ACCOUNT_ID',
 	'CLOUDFLARE_AI_API_TOKEN',
 	'SILICONFLOW_API_KEY',
+	'LLM7_API_KEY',
 	'GEMINI_API_KEY',
 	'GOOGLE_CLOUD_PROJECT',
 	'GOOGLE_CLOUD_LOCATION_GEMINI',
@@ -97,6 +98,7 @@ function configureFreeLanes() {
 	process.env.CLOUDFLARE_ACCOUNT_ID = 'cf-acct';
 	process.env.CLOUDFLARE_AI_API_TOKEN = 'cf-token';
 	process.env.SILICONFLOW_API_KEY = 'sf';
+	process.env.LLM7_API_KEY = 'l7';
 	process.env.GEMINI_API_KEY = 'gem';
 	process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
 	// The NIM lane's own cap is floored at 2s; keep it there so a transport
@@ -207,18 +209,36 @@ describe('free chain: every rung is reachable through a transport-level failure'
 		expect(out.text).toBe('keyless floor');
 	}, 20_000);
 
-	// Third keyless rung: with nothing configured and BOTH OVH and Pollinations
-	// dead at the transport level, LLM7 must still answer.
-	it('serves from LLM7 when OVH and Pollinations both die and nothing is configured', async () => {
+	// LLM7 was the third keyless rung until llm7.io retired its anonymous tier
+	// (401 invalid_api_key on every unauthenticated call, measured 2026-09-02),
+	// so it is key-gated now: with nothing configured it must NOT be dialled,
+	// because the answer cannot arrive and the round trip is pure latency on a
+	// chain that has already exhausted itself.
+	it('does not dial LLM7 with nothing configured, and reports the two keyless rungs it did try', async () => {
+		globalThis.fetch = vi.fn(async (url) => {
+			const u = String(url);
+			if (u.includes(HOSTS.llm7)) throw new Error('llm7 must not be dialled without a key');
+			throw transportFailure('reset');
+		});
+		await expect(llm.llmComplete({ user: 'u', timeoutMs: 20_000 })).rejects.toThrow(/ovh|pollinations/);
+		const dialled = globalThis.fetch.mock.calls.map(([u]) => String(u));
+		expect(dialled.some((u) => u.includes(HOSTS.ovh))).toBe(true);
+		expect(dialled.some((u) => u.includes(HOSTS.pollinations))).toBe(true);
+		expect(dialled.some((u) => u.includes(HOSTS.llm7))).toBe(false);
+	}, 20_000);
+
+	// With the key present it is a normal rung again, behind the other two.
+	it('serves from LLM7 when OVH and Pollinations both die and the key is set', async () => {
+		process.env.LLM7_API_KEY = 'l7';
 		globalThis.fetch = vi.fn(async (url) => {
 			const u = String(url);
 			if (u.includes(HOSTS.ovh)) throw transportFailure('reset');
 			if (u.includes(HOSTS.pollinations)) throw transportFailure('abort');
-			if (u.includes(HOSTS.llm7)) return okOpenAiShape('third keyless floor', 'gemini-3.1-flash-lite');
+			if (u.includes(HOSTS.llm7)) return okOpenAiShape('keyed step-down', 'gemini-3.1-flash-lite');
 			throw new Error(`unexpected fetch: ${u}`);
 		});
 		const out = await llm.llmComplete({ user: 'u', timeoutMs: 20_000 });
 		expect(out.provider).toBe('llm7');
-		expect(out.text).toBe('third keyless floor');
+		expect(out.text).toBe('keyed step-down');
 	}, 20_000);
 });
