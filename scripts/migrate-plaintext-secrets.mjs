@@ -113,6 +113,7 @@ const SECRET_SEGMENTS = new Set([
 	'CREDENTIALS',
 	'APIKEY',
 	'DSN',
+	'JWT',
 ]);
 
 // A name segment from this set means the value is a public identifier, even when
@@ -165,8 +166,13 @@ export function classify(name) {
 	// A provider URL routinely carries its key in the query string (Helius, Alchemy,
 	// QuickNode all do). The name cannot say whether this one does, so it is
 	// surfaced for a human call instead of being silently filed as public config.
-	if (/_(URL|URI|ENDPOINT|DSN)$/.test(name)) {
+	if (/_(URL|URI|ENDPOINT)$/.test(name)) {
 		return { secret: false, review: true, reason: 'URL: may embed a key in its query string' };
+	}
+	// A JWK is a public key half the time and a signing key the other half. The
+	// name cannot tell them apart, so an operator decides.
+	if (/_JWKS?$/.test(name)) {
+		return { secret: false, review: true, reason: 'JWK: private signing keys and public verification keys share this name' };
 	}
 	return { secret: false, reason: 'no credential marker in the name' };
 }
@@ -417,7 +423,14 @@ async function main() {
 
 	const pairs = updates.map((u) => `${u.name}=${u.secretName}:latest`).join(',');
 	if (!APPLY) {
-		console.log(`\nDry run. To apply:\n  node scripts/migrate-plaintext-secrets.mjs${ONLY.length ? ` --only ${ONLY.join(',')}` : ''} --apply`);
+		const echoFlags = [
+			ONLY.length ? ` --only ${ONLY.join(',')}` : '',
+			INCLUDE.length ? ` --include ${INCLUDE.join(',')}` : '',
+			EXCLUDE.length ? ` --exclude ${EXCLUDE.join(',')}` : '',
+			...[...NAME_MAP].map(([env, secret]) => ` --map ${env}=${secret}`),
+			FORCE_NEW_VERSION ? ' --force-new-version' : '',
+		].join('');
+		console.log(`\nDry run. To apply:\n  node scripts/migrate-plaintext-secrets.mjs${echoFlags} --apply`);
 		console.log(`\nThe single service update it would run:\n  gcloud run services update ${SERVICE} --region ${REGION} --project ${PROJECT} \\\n    --update-secrets ${pairs}`);
 		return;
 	}
