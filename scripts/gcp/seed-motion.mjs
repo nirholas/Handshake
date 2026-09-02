@@ -1,482 +1,474 @@
 #!/usr/bin/env node
-// Bulk text-to-motion seeding for the animation library (work order GCP-05, B).
-//
-// Generates clips from data/motion-prompts.json on our own Cloud Run GPU lane,
-// gates every one of them (api/_lib/motion-seed.js), publishes the keepers to
-// the R2 clip library, and lists them in the marketplace under the platform
-// creator with a rotating free subset.
-//
-// The run is resumable: every prompt's outcome is written to a checkpoint file
-// as it lands, and a re-run skips anything already terminal. Killing the process
-// costs at most the clips currently in flight.
-//
-//   # measure quality without publishing anything (no credentials needed)
-//   node scripts/gcp/seed-motion.mjs --count 20 --dry-run
-//
-//   # real run: needs R2 + DATABASE_URL, so it runs where those live
-//   node scripts/gcp/seed-motion.mjs --count 200 --concurrency 6
-//
-// Transport: with GCP_TEXT2MOTION_URL set the runner calls the provider in
-// process, which is the only way a bulk run works. /api/forge-motion is rate
-// limited per IP (it is a public endpoint), so driving a few hundred clips
-// through it earns a 429 with a 49 minute retry-after after roughly the first
-// two. Pass --origin to force the HTTP path anyway, which is useful for proving
-// the deployed route end to end on a handful of clips.
-//
-// Safety: the lane is asserted per job. /api/forge-motion returns a base64url
-// envelope naming the worker it dispatched to, and a job that did not land on
-// our own self-hosted Cloud Run text2motion service aborts the whole run rather
-// than quietly billing a paid third party for a few hundred clips.
+/**
+ * Bulk text-to-motion seeding for the animation library.
+ *
+ * Generates one clip per entry in data/motion-prompts.json through the
+ * self-hosted GPU lane (workers/model-text2motion behind POST /api/forge-motion),
+ * puts every result through the deterministic quality gate
+ * (api/_lib/motion-quality.js), stages the keepers, and publishes them to the
+ * generated half of the library manifest.
+ *
+ * The run is resumable and idempotent. A checkpoint records the verdict for
+ * every prompt id, so re-running picks up where the last run stopped and never
+ * re-spends GPU time on a prompt that already produced a keeper. Rejects are
+ * kept too, with the full metric set, because tuning the gate off real failures
+ * is the only way the thresholds stay honest.
+ *
+ *   node scripts/gcp/seed-motion.mjs                       # whole library, resume
+ *   node scripts/gcp/seed-motion.mjs --limit=12            # smoke batch
+ *   node scripts/gcp/seed-motion.mjs --categories=idle,emote
+ *   node scripts/gcp/seed-motion.mjs --concurrency=4
+ *   node scripts/gcp/seed-motion.mjs --retry-rejects       # re-roll past rejects
+ *   node scripts/gcp/seed-motion.mjs --publish             # upload + manifest
+ *   node scripts/gcp/seed-motion.mjs --report              # checkpoint stats only
+ *
+ * SPEND SAFETY. Every job is submitted with no backend named, so the platform's
+ * own free-first resolver picks the lane. Before a clip is accepted the run
+ * decodes the provider's job envelope and asserts the work actually ran on a
+ * self-hosted Cloud Run GPU service. If a job ever comes back from a paid
+ * third-party lane the batch aborts immediately rather than quietly billing a
+ * few hundred generations to someone else's API.
+ *
+ * PUBLISHING. --publish needs the R2 credentials the production API uses
+ * (S3_ENDPOINT, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, S3_BUCKET,
+ * S3_PUBLIC_DOMAIN). Clips go to animations/library/generated/clips/ and the
+ * generated manifest is rebuilt from the staged keepers. That manifest is a
+ * different object from the Mixamo one on purpose: each publisher rebuilds its
+ * own and would otherwise delete the other's catalog (see api/animations/library.js).
+ */
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import process from 'node:process';
-import {
-	motionPrompts,
-	motionPromptLibrary,
-	gateMotionClip,
-	toLibraryClip,
-	manifestEntryFor,
-	mergeManifest,
-	libraryClipName,
-	freeClipNames,
-	rotationEpoch,
-	FREE_ROTATION,
-	LIBRARY_MANIFEST_KEY,
-	GENERATED_CLIP_DIR,
-} from '../../api/_lib/motion-seed.js';
+import { createHash } from 'node:crypto';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const REPO = resolve(dirname(new URL(import.meta.url).pathname), '../..');
+import { gateMotionClip, explainMotionGate, MOTION_GATE_VERSION } from '../../api/_lib/motion-quality.js';
 
-// ── CLI ─────────────────────────────────────────────────────────────────────
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT = resolve(__dirname, '../..');
 
-function parseArgs(argv) {
-	const out = {
-		count: 25,
-		concurrency: 4,
-		categories: null,
-		dryRun: false,
-		origin: process.env.SEED_MOTION_ORIGIN || 'https://three.ws',
-		checkpoint: resolve(REPO, '.seed-motion-checkpoint.json'),
-		// Default to the provider directly when this process can reach it.
-		transport: process.env.GCP_TEXT2MOTION_URL ? 'in-process' : 'http',
-		price: 0.75,
-		currency: 'USDC',
-		freeSize: FREE_ROTATION.SIZE,
-		pollTimeoutMs: 300_000,
-		retry: 1,
-	};
-	for (let i = 2; i < argv.length; i += 1) {
-		const arg = argv[i];
-		const next = () => argv[++i];
-		switch (arg) {
-			case '--count': out.count = Math.max(1, Number(next()) || out.count); break;
-			case '--concurrency': out.concurrency = Math.min(12, Math.max(1, Number(next()) || out.concurrency)); break;
-			case '--categories': out.categories = String(next() || '').split(',').map((s) => s.trim()).filter(Boolean); break;
-			case '--dry-run': out.dryRun = true; break;
-			case '--origin':
-				out.origin = String(next() || out.origin).replace(/\/$/, '');
-				out.transport = 'http';
-				break;
-			case '--in-process': out.transport = 'in-process'; break;
-			case '--checkpoint': out.checkpoint = resolve(String(next())); break;
-			case '--price': out.price = Math.max(0, Number(next()) || 0); break;
-			case '--free-size': out.freeSize = Math.max(0, Number(next()) || 0); break;
-			case '--retry': out.retry = Math.max(0, Math.min(3, Number(next()) || 0)); break;
-			case '--help':
-				console.log('Usage: seed-motion.mjs [--count N] [--concurrency N] [--categories a,b] [--dry-run] [--in-process] [--origin URL] [--price N] [--free-size N] [--checkpoint PATH]');
-				process.exit(0);
-				break;
-			default:
-				if (arg.startsWith('--')) {
-					console.error(`unknown flag: ${arg}`);
-					process.exit(2);
-				}
-		}
-	}
-	return out;
+const args = Object.fromEntries(
+	process.argv.slice(2).map((a) => {
+		const m = a.match(/^--([^=]+)(?:=(.*))?$/);
+		return m ? [m[1], m[2] ?? true] : [a, true];
+	}),
+);
+
+const ORIGIN = String(args.origin || process.env.SEED_ORIGIN || 'https://three.ws').replace(/\/+$/, '');
+const OUT_DIR = resolve(ROOT, String(args.out || 'animation-sources/.motion-clips'));
+const CLIPS_DIR = join(OUT_DIR, 'clips');
+const REJECTS_DIR = join(OUT_DIR, 'rejected');
+const CHECKPOINT = join(OUT_DIR, 'checkpoint.json');
+const PROMPTS_PATH = join(ROOT, 'data/motion-prompts.json');
+
+const LIMIT = args.limit ? Number(args.limit) : Infinity;
+const CONCURRENCY = Math.max(1, Math.min(Number(args.concurrency) || 3, 8));
+const CATEGORIES = typeof args.categories === 'string' ? args.categories.split(',').map((s) => s.trim()) : null;
+const RETRY_REJECTS = !!args['retry-rejects'];
+const PUBLISH = !!args.publish;
+const REPORT_ONLY = !!args.report;
+
+const R2_PREFIX = 'animations/library/generated';
+const CLIP_NAME_PREFIX = 'gen-';
+
+// Poll budget per job. The lane answers a 4 s clip in 15-40 s warm and pays a
+// cold start on the first job of an idle hour (the keepwarm cron only holds it
+// open during peak), so the ceiling is generous and the interval is short
+// enough that a warm lane is not left waiting on a sleep.
+const POLL_INTERVAL_MS = 4_000;
+const POLL_BUDGET_MS = 5 * 60_000;
+const SUBMIT_TIMEOUT_MS = 30_000;
+// How long a bulk run will sit out the endpoint's per-IP hourly ceiling before
+// giving up and leaving the rest for the next resume. Default is one full window.
+const MAX_WAIT_SECONDS = Number(args['max-wait']) || 3900;
+
+// A job envelope must name one of these hosts. Anything else is a paid
+// third-party lane and aborts the batch (see SPEND SAFETY above).
+const SELF_HOSTED_HOST_RE = /(^|\.)run\.app$/i;
+
+function log(...parts) {
+	console.log(...parts);
 }
 
-// ── Checkpoint ──────────────────────────────────────────────────────────────
+function sleep(ms) {
+	return new Promise((r) => setTimeout(r, ms));
+}
 
-function loadCheckpoint(path) {
-	if (!existsSync(path)) return { version: 1, started_at: new Date().toISOString(), results: {} };
+function ensureDirs() {
+	for (const d of [OUT_DIR, CLIPS_DIR, REJECTS_DIR]) mkdirSync(d, { recursive: true });
+}
+
+function loadCheckpoint() {
+	if (!existsSync(CHECKPOINT)) return { version: MOTION_GATE_VERSION, prompts: {} };
 	try {
-		const parsed = JSON.parse(readFileSync(path, 'utf8'));
-		if (parsed && typeof parsed.results === 'object') return parsed;
-	} catch (err) {
-		console.error(`[checkpoint] unreadable (${err.message}), starting a fresh one`);
-	}
-	return { version: 1, started_at: new Date().toISOString(), results: {} };
-}
-
-function saveCheckpoint(path, state) {
-	mkdirSync(dirname(path), { recursive: true });
-	writeFileSync(path, `${JSON.stringify(state, null, '\t')}\n`);
-}
-
-const TERMINAL = new Set(['published', 'accepted', 'rejected', 'failed']);
-
-// ── Lane assertion ──────────────────────────────────────────────────────────
-
-// The provider packs its job id as base64url JSON: { mode, taskId, baseUrl, ... }
-// (packJobId in api/_providers/gcp.js). Reading the baseUrl back out is how a
-// bulk run proves it is spending credits on our own fleet and not on a hosted
-// lane that happens to be configured as a fallback.
-export function decodeJobEnvelope(jobId) {
-	try {
-		const json = Buffer.from(String(jobId), 'base64url').toString('utf8');
-		const parsed = JSON.parse(json);
-		return parsed && typeof parsed === 'object' ? parsed : null;
+		const parsed = JSON.parse(readFileSync(CHECKPOINT, 'utf8'));
+		return { version: parsed.version || MOTION_GATE_VERSION, prompts: parsed.prompts || {} };
 	} catch {
-		return null;
+		// A truncated checkpoint (killed mid-write) must not strand the catalog.
+		// Losing it costs re-generation, not correctness, since every accepted
+		// clip is also on disk and re-derived below.
+		log('  checkpoint unreadable, starting a fresh one');
+		return { version: MOTION_GATE_VERSION, prompts: {} };
 	}
 }
 
-export function assertSelfHostedLane(jobId) {
-	const env = decodeJobEnvelope(jobId);
-	if (!env) throw new Error('lane assertion failed: job id is not a provider envelope');
-	if (env.mode !== 'text2motion') throw new Error(`lane assertion failed: mode ${env.mode}`);
-	let host;
+function saveCheckpoint(state) {
+	writeFileSync(CHECKPOINT, JSON.stringify(state, null, 2));
+}
+
+function loadPrompts() {
+	const data = JSON.parse(readFileSync(PROMPTS_PATH, 'utf8'));
+	const defaults = data.defaults || {};
+	const all = Array.isArray(data.prompts) ? data.prompts : [];
+	return all.map((p) => ({
+		...p,
+		duration_seconds: Number(p.duration_seconds) || Number(defaults.duration_seconds) || 4,
+		fps: Number(p.fps) || Number(defaults.fps) || 30,
+	}));
+}
+
+/**
+ * Decode the provider's job envelope (base64url JSON, packJobId in
+ * api/_providers/gcp.js) far enough to name the host that ran the work.
+ * An envelope we cannot read is treated as unknown, which aborts the batch:
+ * "I could not tell which lane billed this" is not a reason to keep spending.
+ */
+function laneFromJobId(jobId) {
 	try {
-		host = new URL(env.baseUrl).host;
+		const json = JSON.parse(Buffer.from(String(jobId), 'base64url').toString('utf8'));
+		const host = new URL(json.baseUrl).hostname;
+		return { host, mode: json.mode || null };
 	} catch {
-		throw new Error(`lane assertion failed: unusable baseUrl ${env.baseUrl}`);
+		return { host: null, mode: null };
 	}
-	// Our own Cloud Run services only. Anything else is a paid third party and a
-	// bulk run must never reach one.
-	if (!/\.run\.app$/.test(host)) {
-		throw new Error(`lane assertion failed: ${host} is not a self-hosted Cloud Run lane`);
-	}
-	if (!/^model-text2motion/.test(host)) {
-		throw new Error(`lane assertion failed: unexpected worker ${host}`);
-	}
-	return { host, taskId: env.taskId };
 }
 
-// ── Generation ──────────────────────────────────────────────────────────────
+class PaidLaneError extends Error {}
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-let providerPromise = null;
-function motionProvider() {
-	if (!providerPromise) {
-		providerPromise = import('../../api/_providers/gcp.js').then(({ createRegenProvider }) => {
-			const provider = createRegenProvider();
-			if (!provider.supportsMode('text2motion')) {
-				throw new Error('the text2motion lane is not configured: set GCP_TEXT2MOTION_URL and GCP_RECONSTRUCTION_KEY');
-			}
-			return provider;
+/**
+ * Submit one generation, waiting out the endpoint's per-IP hourly ceiling when
+ * it is hit. A bulk run is exactly the caller that ceiling exists to pace, so
+ * the honest response to a 429 is to wait the window out, not to hammer it or
+ * to record hundreds of fake failures. `--max-wait` caps how long the run is
+ * willing to sit still; past that the prompt is left undecided for the next
+ * resume.
+ */
+async function submitJob(prompt) {
+	for (let attempt = 0; ; attempt++) {
+		const res = await fetch(`${ORIGIN}/api/forge-motion`, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({
+				prompt: prompt.prompt,
+				duration_seconds: prompt.duration_seconds,
+				fps: prompt.fps,
+			}),
+			signal: AbortSignal.timeout(SUBMIT_TIMEOUT_MS),
 		});
+		const data = await res.json().catch(() => ({}));
+		if (res.status === 429) {
+			const retryAfter = Number(data.retry_after) || Number(res.headers.get('retry-after')) || 60;
+			if (attempt > 0 || retryAfter > MAX_WAIT_SECONDS) {
+				throw new Error(
+					`rate limited for another ${retryAfter}s (--max-wait is ${MAX_WAIT_SECONDS}s); resume this run later`,
+				);
+			}
+			log(`  wait   ${prompt.id.padEnd(28)} rate limited, sleeping ${retryAfter}s`);
+			await sleep((retryAfter + 5) * 1000);
+			continue;
+		}
+		if (res.status === 503) throw new Error(`text-to-motion is unconfigured on ${ORIGIN}: ${data.message || ''}`);
+		if (!res.ok || !data.job_id) throw new Error(`submit ${res.status}: ${JSON.stringify(data).slice(0, 200)}`);
+		return finishSubmit(data);
 	}
-	return providerPromise;
 }
 
-/** Submit + poll straight against the provider, with no public endpoint in between. */
-async function generateInProcess(prompt, opts, duration, fps) {
-	const provider = await motionProvider();
-	const job = await provider.submit({
-		mode: 'text2motion',
-		sourceUrl: null,
-		params: { prompt: prompt.prompt, duration_seconds: duration, fps },
-	});
-	const lane = assertSelfHostedLane(job.extJobId);
-
-	const deadline = Date.now() + opts.pollTimeoutMs;
-	let delay = 4_000;
-	while (Date.now() < deadline) {
-		await sleep(delay);
-		delay = Math.min(delay * 1.3, 12_000);
-		const state = await provider.poll(job.extJobId);
-		if (state.status === 'done' || state.status === 'succeeded') {
-			// The provider surfaces a finished motion job as resultClipUrl (a
-			// three.js AnimationClip JSON), alongside the frame count and fps the
-			// worker actually produced.
-			const clipUrl = state.resultClipUrl;
-			if (!clipUrl) throw new Error('worker reported done with no clip');
-			const res = await fetch(clipUrl, { signal: AbortSignal.timeout(60_000) });
-			if (!res.ok) throw new Error(`clip fetch failed: HTTP ${res.status}`);
-			return {
-				clip: await res.json(),
-				lane,
-				duration,
-				fps: typeof state.fps === 'number' ? state.fps : fps,
-				clipUrl,
-			};
-		}
-		if (state.status === 'failed' || state.status === 'error') {
-			throw new Error(`worker failed: ${state.error || 'unknown'}`);
-		}
-	}
-	throw new Error('timed out waiting for the worker');
-}
-
-async function generateOne(prompt, opts) {
-	const defaults = motionPromptLibrary().defaults ?? {};
-	const duration = Number(prompt.duration_seconds) || Number(defaults.duration_seconds) || 4;
-	const fps = Number(defaults.fps) || 30;
-
-	if (opts.transport === 'in-process') return generateInProcess(prompt, opts, duration, fps);
-
-	const started = await fetch(`${opts.origin}/api/forge-motion`, {
-		method: 'POST',
-		headers: { 'content-type': 'application/json' },
-		body: JSON.stringify({ prompt: prompt.prompt, duration_seconds: duration, fps }),
-		signal: AbortSignal.timeout(60_000),
-	});
-	if (started.status === 429) {
-		throw new Error(
-			'rate limited by /api/forge-motion: run with --in-process (GCP_TEXT2MOTION_URL) for a bulk batch',
+function finishSubmit(data) {
+	const lane = laneFromJobId(data.job_id);
+	if (!lane.host || !SELF_HOSTED_HOST_RE.test(lane.host)) {
+		throw new PaidLaneError(
+			`job ran on ${lane.host || 'an unidentifiable lane'}, which is not a self-hosted Cloud Run GPU service`,
 		);
 	}
-	if (started.status === 503) throw new Error('text2motion lane is unconfigured (GCP_TEXT2MOTION_URL)');
-	if (!started.ok) throw new Error(`submit failed: HTTP ${started.status} ${(await started.text()).slice(0, 160)}`);
-	const job = await started.json();
-	const lane = assertSelfHostedLane(job.job_id);
-
-	const deadline = Date.now() + opts.pollTimeoutMs;
-	let delay = 4_000;
-	while (Date.now() < deadline) {
-		await sleep(delay);
-		delay = Math.min(delay * 1.3, 12_000);
-		const res = await fetch(`${opts.origin}/api/forge-motion?job=${encodeURIComponent(job.job_id)}`, {
-			signal: AbortSignal.timeout(30_000),
-		});
-		if (!res.ok) continue;
-		const state = await res.json();
-		if (state.status === 'done' || state.status === 'succeeded') {
-			if (!state.clip_url) throw new Error('worker reported done with no clip');
-			const clipRes = await fetch(state.clip_url, { signal: AbortSignal.timeout(60_000) });
-			if (!clipRes.ok) throw new Error(`clip fetch failed: HTTP ${clipRes.status}`);
-			return { clip: await clipRes.json(), lane, duration, fps, clipUrl: state.clip_url };
-		}
-		if (state.status === 'failed' || state.status === 'error') {
-			throw new Error(`worker failed: ${state.error || 'unknown'}`);
-		}
-	}
-	throw new Error('timed out waiting for the worker');
+	return { jobId: data.job_id, lane: lane.host };
 }
 
-// ── Publishing ──────────────────────────────────────────────────────────────
+async function awaitClip(jobId) {
+	const deadline = Date.now() + POLL_BUDGET_MS;
+	while (Date.now() < deadline) {
+		await sleep(POLL_INTERVAL_MS);
+		const res = await fetch(`${ORIGIN}/api/forge-motion?job=${encodeURIComponent(jobId)}`, {
+			signal: AbortSignal.timeout(SUBMIT_TIMEOUT_MS),
+		});
+		const data = await res.json().catch(() => ({}));
+		if (!res.ok) throw new Error(`poll ${res.status}: ${JSON.stringify(data).slice(0, 200)}`);
+		if (data.error) throw new Error(`worker: ${data.error}`);
+		if (data.clip_url) return data.clip_url;
+		if (data.status === 'failed') throw new Error('worker reported failed with no error text');
+	}
+	throw new Error(`no clip after ${Math.round(POLL_BUDGET_MS / 1000)}s`);
+}
 
-async function publishAccepted(accepted, opts) {
-	const { putObject, getObjectBuffer, publicUrl, objectStorageConfigured } = await import('../../api/_lib/r2.js');
-	if (!objectStorageConfigured()) {
-		throw new Error('object storage is not configured: set the R2 credentials or pass --dry-run');
+async function fetchClip(url) {
+	const res = await fetch(url, { signal: AbortSignal.timeout(SUBMIT_TIMEOUT_MS) });
+	if (!res.ok) throw new Error(`clip fetch ${res.status}`);
+	return res.json();
+}
+
+function clipName(prompt, body) {
+	const hash = createHash('sha1').update(body).digest('hex').slice(0, 12);
+	return `${CLIP_NAME_PREFIX}${prompt.id}-${hash}`;
+}
+
+/**
+ * Run one prompt end to end. Returns the checkpoint record; never throws for a
+ * quality reject (that is a result), only for infrastructure faults and for the
+ * paid-lane abort, which the caller re-raises.
+ */
+async function runPrompt(prompt) {
+	const started = Date.now();
+	const { jobId, lane } = await submitJob(prompt);
+	const clipUrl = await awaitClip(jobId);
+	const raw = await fetchClip(clipUrl);
+	const elapsedSeconds = Math.round((Date.now() - started) / 1000);
+
+	const verdict = gateMotionClip(raw, {
+		loop: prompt.loop === true,
+		requestedDuration: prompt.duration_seconds,
+	});
+
+	// The clip is renamed to its library identity before it is written, so the
+	// staged file, the manifest entry and the published object always agree.
+	const body = JSON.stringify({ ...raw, name: 'pending' });
+	const name = clipName(prompt, body);
+	const clip = { ...raw, name };
+	const serialized = JSON.stringify(clip);
+
+	const record = {
+		prompt_id: prompt.id,
+		label: prompt.label,
+		category: prompt.category,
+		icon: prompt.icon || '🎬',
+		loop: prompt.loop === true,
+		name,
+		lane,
+		clip_source_url: clipUrl,
+		elapsed_seconds: elapsedSeconds,
+		gate_version: verdict.gateVersion,
+		status: verdict.pass ? 'accepted' : 'rejected',
+		reasons: verdict.reasons,
+		detail: verdict.detail || '',
+		metrics: verdict.metrics,
+		decided_at: new Date().toISOString(),
+	};
+
+	if (verdict.pass) {
+		writeFileSync(join(CLIPS_DIR, `${name}.json`), serialized);
+		record.bytes = Buffer.byteLength(serialized);
+	} else {
+		writeFileSync(
+			join(REJECTS_DIR, `${name}.json`),
+			JSON.stringify({ record, explanations: explainMotionGate(verdict.reasons), clip }, null, 1),
+		);
+	}
+	return record;
+}
+
+function shouldRun(record) {
+	if (!record) return true;
+	if (record.status === 'accepted') return false;
+	if (record.status === 'rejected') return RETRY_REJECTS;
+	return true; // a prior infrastructure error is always worth retrying
+}
+
+// ── Reporting ────────────────────────────────────────────────────────────────
+
+function report(state) {
+	const records = Object.values(state.prompts);
+	const accepted = records.filter((r) => r.status === 'accepted');
+	const rejected = records.filter((r) => r.status === 'rejected');
+	const errored = records.filter((r) => r.status === 'error');
+	const decided = accepted.length + rejected.length;
+
+	log('');
+	log('── Batch result ───────────────────────────────────────────');
+	log(`  prompts attempted : ${records.length}`);
+	log(`  accepted          : ${accepted.length}`);
+	log(`  rejected          : ${rejected.length}`);
+	log(`  infra errors      : ${errored.length}`);
+	log(`  accept rate       : ${decided ? ((accepted.length / decided) * 100).toFixed(1) : '0.0'}%  (of gated clips)`);
+
+	const gpuSeconds = records.reduce((s, r) => s + (Number(r.elapsed_seconds) || 0), 0);
+	log(`  lane seconds      : ${gpuSeconds} (${(gpuSeconds / 60).toFixed(1)} min of GPU wall time)`);
+	if (accepted.length) {
+		log(`  seconds/accepted  : ${(gpuSeconds / accepted.length).toFixed(1)}`);
 	}
 
+	if (rejected.length) {
+		/** @type {Record<string, number>} */
+		const tally = {};
+		for (const r of rejected) for (const reason of r.reasons || []) tally[reason] = (tally[reason] || 0) + 1;
+		log('  reject reasons    :');
+		for (const [reason, n] of Object.entries(tally).sort((a, b) => b[1] - a[1])) {
+			log(`      ${String(n).padStart(4)}  ${reason}  (${explainMotionGate([reason])[0]})`);
+		}
+	}
+	if (errored.length) {
+		log('  infra errors      :');
+		for (const r of errored.slice(0, 8)) log(`      ${r.prompt_id}: ${r.detail}`);
+	}
+	log('');
+	return { accepted: accepted.length, rejected: rejected.length, errored: errored.length, gpuSeconds };
+}
+
+// ── Publish ──────────────────────────────────────────────────────────────────
+
+function stagedManifestEntries(state, publicDomain) {
 	const entries = [];
-	for (const item of accepted) {
-		const body = Buffer.from(JSON.stringify(item.libraryClip));
-		const key = `${GENERATED_CLIP_DIR}${item.name}.json`;
-		await putObject({ key, body, contentType: 'application/json', metadata: { prompt_id: item.prompt.id } });
-		entries.push(
-			manifestEntryFor(item.libraryClip, {
-				label: item.prompt.label,
-				icon: item.prompt.icon,
-				loop: item.prompt.loop,
-				bytes: body.byteLength,
-				url: publicUrl(key),
-				thumb: null,
+	for (const record of Object.values(state.prompts)) {
+		if (record.status !== 'accepted') continue;
+		const file = join(CLIPS_DIR, `${record.name}.json`);
+		if (!existsSync(file)) continue;
+		entries.push({
+			name: record.name,
+			label: record.label,
+			icon: record.icon || '🎬',
+			loop: record.loop === true,
+			duration: record.metrics?.duration ?? 0,
+			bytes: record.bytes ?? Buffer.byteLength(readFileSync(file)),
+			url: `${publicDomain}/${R2_PREFIX}/clips/${record.name}.json`,
+			category: record.category,
+			source: 'generated',
+		});
+	}
+	return entries.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+async function publish(state) {
+	const endpoint =
+		process.env.S3_ENDPOINT ||
+		(process.env.R2_ACCOUNT_ID ? `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com` : null);
+	const accessKeyId = process.env.S3_ACCESS_KEY_ID || process.env.R2_ACCESS_KEY_ID;
+	const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY || process.env.R2_SECRET_ACCESS_KEY;
+	const bucket = process.env.S3_BUCKET || process.env.R2_BUCKET;
+	const publicDomain = (process.env.S3_PUBLIC_DOMAIN || '').replace(/\/+$/, '');
+
+	if (!endpoint || !accessKeyId || !secretAccessKey || !bucket || !publicDomain) {
+		log('  publish skipped: storage credentials are not set in this environment.');
+		log('  Needs S3_ENDPOINT, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, S3_BUCKET, S3_PUBLIC_DOMAIN');
+		log('  (they live on the three-ws-api Cloud Run service, not in the repo).');
+		return { published: 0 };
+	}
+
+	const { S3Client, PutObjectCommand } = await import('@aws-sdk/client-s3');
+	const client = new S3Client({ region: 'auto', endpoint, credentials: { accessKeyId, secretAccessKey } });
+	const entries = stagedManifestEntries(state, publicDomain);
+
+	let uploaded = 0;
+	for (const entry of entries) {
+		const body = readFileSync(join(CLIPS_DIR, `${entry.name}.json`));
+		await client.send(
+			new PutObjectCommand({
+				Bucket: bucket,
+				Key: `${R2_PREFIX}/clips/${entry.name}.json`,
+				Body: body,
+				ContentType: 'application/json',
+				CacheControl: 'public, max-age=31536000, immutable',
 			}),
 		);
-		item.storageKey = key;
-		item.bytes = body.byteLength;
+		uploaded++;
+		if (uploaded % 20 === 0) log(`  uploaded ${uploaded}/${entries.length}`);
 	}
 
-	let existing = [];
-	try {
-		const buf = await getObjectBuffer(LIBRARY_MANIFEST_KEY);
-		const parsed = JSON.parse(buf.toString('utf8'));
-		existing = Array.isArray(parsed) ? parsed : parsed.clips ?? [];
-	} catch (err) {
-		if (err?.name !== 'NoSuchKey' && err?.$metadata?.httpStatusCode !== 404) throw err;
-	}
-	const merged = mergeManifest(existing, entries);
-	await putObject({
-		key: LIBRARY_MANIFEST_KEY,
-		body: Buffer.from(JSON.stringify({ generated_at: new Date().toISOString(), clips: merged })),
-		contentType: 'application/json',
-	});
-	return { manifestTotal: merged.length, published: entries.length };
+	await client.send(
+		new PutObjectCommand({
+			Bucket: bucket,
+			Key: `${R2_PREFIX}/manifest.json`,
+			Body: JSON.stringify({ generated_at: new Date().toISOString(), clips: entries }),
+			ContentType: 'application/json',
+			CacheControl: 'public, max-age=60',
+		}),
+	);
+	log(`  ${R2_PREFIX}/manifest.json → ${entries.length} generated clips live via /api/animations/library`);
+	return { published: entries.length };
 }
 
-async function listInMarketplace(accepted, opts) {
-	const { sql } = await import('../../api/_lib/db.js');
-	const owner = (await sql`select id from users where username = 'three' limit 1`)[0];
-	if (!owner) throw new Error('platform creator "three" not found; create it before listing');
-
-	// The free subset is decided over the whole generated collection, not just
-	// this batch, so a later batch cannot hand out a second set of free clips.
-	const allNames = (
-		await sql`select slug from animation_clips where format = 'three.ws.animation.v1' and slug like 'gen-%' and deleted_at is null`
-	).map((r) => r.slug);
-	const names = [...new Set([...allNames, ...accepted.map((a) => a.name)])];
-	const free = new Set(freeClipNames(names, { size: opts.freeSize }));
-
-	let listed = 0;
-	for (const item of accepted) {
-		const isFree = free.has(item.name);
-		const clip = item.libraryClip;
-		await sql`
-			insert into animation_clips (
-				owner_id, slug, name, description, kind, format, duration_ms, frame_count, fps,
-				loop, storage_key, artifact_key, artifact_bytes, artifact_mime, tags, visibility,
-				price_amount, price_currency, listed
-			) values (
-				${owner.id}, ${item.name}, ${item.prompt.label},
-				${item.prompt.prompt}, 'animation', 'three.ws.animation.v1',
-				${Math.round(clip.duration * 1000)}, ${item.gate.metrics.frames || 0}, ${item.fps},
-				${Boolean(item.prompt.loop)}, ${item.storageKey}, ${item.storageKey}, ${item.bytes},
-				'application/json', ${item.prompt.tags ?? []}, 'public',
-				${isFree ? 0 : opts.price}, ${opts.currency}, true
-			)
-			on conflict (slug) do update set
-				name = excluded.name,
-				description = excluded.description,
-				duration_ms = excluded.duration_ms,
-				frame_count = excluded.frame_count,
-				storage_key = excluded.storage_key,
-				artifact_key = excluded.artifact_key,
-				artifact_bytes = excluded.artifact_bytes,
-				price_amount = excluded.price_amount,
-				listed = true,
-				updated_at = now()
-		`;
-		listed += 1;
-	}
-	return { listed, freeCount: [...free].length, epoch: rotationEpoch() };
-}
-
-// ── Main ────────────────────────────────────────────────────────────────────
+// ── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
-	const opts = parseArgs(process.argv);
-	const state = loadCheckpoint(opts.checkpoint);
+	ensureDirs();
+	const state = loadCheckpoint();
 
-	let pool = motionPrompts();
-	if (opts.categories) pool = pool.filter((p) => opts.categories.includes(p.category));
-	const todo = pool.filter((p) => !TERMINAL.has(state.results[p.id]?.status)).slice(0, opts.count);
-
-	if (todo.length === 0) {
-		console.log('nothing to do: every selected prompt is already terminal in the checkpoint');
+	if (REPORT_ONLY) {
+		report(state);
 		return;
 	}
 
-	const via = opts.transport === 'in-process' ? 'the provider in process' : opts.origin;
-	console.log(
-		`seeding ${todo.length} clips via ${via} (concurrency ${opts.concurrency}, ${opts.dryRun ? 'DRY RUN, nothing published' : 'publishing'})`,
-	);
+	if (PUBLISH && Object.values(state.prompts).every((r) => r.status !== 'accepted')) {
+		log('Nothing staged to publish. Run a generation batch first.');
+		return;
+	}
 
-	const accepted = [];
-	const rejected = [];
-	const failed = [];
-	let aborted = null;
-	let cursor = 0;
+	if (!PUBLISH || args.limit || args.categories) {
+		let prompts = loadPrompts();
+		if (CATEGORIES) prompts = prompts.filter((p) => CATEGORIES.includes(p.category));
+		const queue = prompts.filter((p) => shouldRun(state.prompts[p.id])).slice(0, LIMIT);
 
-	const worker = async () => {
-		while (cursor < todo.length && !aborted) {
-			const prompt = todo[cursor++];
-			let lastErr = null;
-			for (let attempt = 0; attempt <= opts.retry && !aborted; attempt += 1) {
+		log(`Seeding motion from ${PROMPTS_PATH.replace(`${ROOT}/`, '')}`);
+		log(`  origin      ${ORIGIN}`);
+		log(`  queue       ${queue.length} prompt(s) of ${prompts.length} (${Object.keys(state.prompts).length} already decided)`);
+		log(`  concurrency ${CONCURRENCY}`);
+		log(`  staging     ${OUT_DIR.replace(`${ROOT}/`, '')}`);
+		log('');
+
+		let index = 0;
+		let aborted = null;
+		const worker = async () => {
+			while (index < queue.length && !aborted) {
+				const prompt = queue[index++];
 				try {
-					const out = await generateOne(prompt, opts);
-					const gate = gateMotionClip(out.clip, { expectedDuration: out.duration, loop: prompt.loop });
-					const name = libraryClipName(prompt.id, out.lane.taskId);
-					const record = {
-						status: gate.ok ? 'accepted' : 'rejected',
-						name,
-						task_id: out.lane.taskId,
-						lane: out.lane.host,
-						reasons: gate.reasons,
-						metrics: gate.metrics,
-						at: new Date().toISOString(),
-					};
-					state.results[prompt.id] = record;
-					saveCheckpoint(opts.checkpoint, state);
-					if (gate.ok) {
-						accepted.push({
-							prompt,
-							name,
-							fps: out.fps,
-							gate,
-							libraryClip: toLibraryClip(out.clip, {
-								name,
-								promptId: prompt.id,
-								prompt: prompt.prompt,
-								category: prompt.category,
-								loop: prompt.loop,
-								taskId: out.lane.taskId,
-							}),
-						});
-						console.log(`  accept  ${prompt.id}`);
-					} else {
-						rejected.push({ prompt, reasons: gate.reasons, metrics: gate.metrics });
-						console.log(`  reject  ${prompt.id}  ${gate.reasons.join(',')}`);
-					}
-					lastErr = null;
-					break;
+					const record = await runPrompt(prompt);
+					state.prompts[prompt.id] = record;
+					const mark = record.status === 'accepted' ? 'keep  ' : 'reject';
+					const why = record.status === 'accepted' ? '' : `  ${record.reasons.join(',')}`;
+					log(`  ${mark} ${prompt.id.padEnd(28)} ${String(record.elapsed_seconds).padStart(3)}s${why}`);
 				} catch (err) {
-					lastErr = err;
-					if (/lane assertion failed/.test(err.message)) {
+					if (err instanceof PaidLaneError) {
 						aborted = err;
 						break;
 					}
+					state.prompts[prompt.id] = {
+						prompt_id: prompt.id,
+						status: 'error',
+						detail: err?.message || String(err),
+						decided_at: new Date().toISOString(),
+					};
+					log(`  error  ${prompt.id.padEnd(28)} ${err?.message || err}`);
 				}
+				saveCheckpoint(state);
 			}
-			if (lastErr && !aborted) {
-				failed.push({ prompt, error: lastErr.message });
-				state.results[prompt.id] = { status: 'failed', error: lastErr.message, at: new Date().toISOString() };
-				saveCheckpoint(opts.checkpoint, state);
-				console.log(`  fail    ${prompt.id}  ${lastErr.message}`);
-			}
+		};
+		await Promise.all(Array.from({ length: Math.min(CONCURRENCY, queue.length) }, worker));
+		saveCheckpoint(state);
+
+		if (aborted) {
+			report(state);
+			console.error(`\nABORTED: ${aborted.message}`);
+			console.error('No bulk generation may run on a paid third-party lane. Fix the lane resolution and re-run.');
+			process.exitCode = 3;
+			return;
 		}
-	};
-
-	await Promise.all(Array.from({ length: Math.min(opts.concurrency, todo.length) }, worker));
-
-	if (aborted) {
-		console.error(`\nABORTED: ${aborted.message}`);
-		console.error('No bulk generation may run on a lane that is not our own. Nothing was published.');
-		process.exitCode = 3;
-		return;
 	}
 
-	const attempted = accepted.length + rejected.length;
-	const rate = attempted ? (100 * accepted.length) / attempted : 0;
-	console.log(
-		`\ngenerated ${attempted} (${failed.length} infrastructure failures), accepted ${accepted.length}, accept rate ${rate.toFixed(1)}%`,
-	);
-	const reasonCounts = {};
-	for (const r of rejected) for (const reason of r.reasons) {
-		const key = reason.split(':')[0];
-		reasonCounts[key] = (reasonCounts[key] ?? 0) + 1;
-	}
-	if (Object.keys(reasonCounts).length) console.log('reject reasons:', reasonCounts);
+	const stats = report(state);
+	if (PUBLISH) await publish(state);
 
-	if (opts.dryRun) {
-		console.log('\ndry run: no clips uploaded, no marketplace rows written');
-		return;
-	}
-	if (accepted.length === 0) {
-		console.log('\nnothing accepted, so nothing to publish');
-		return;
-	}
-
-	const pub = await publishAccepted(accepted, opts);
-	console.log(`published ${pub.published} clips, manifest now holds ${pub.manifestTotal}`);
-	const listing = await listInMarketplace(accepted, opts);
-	console.log(`listed ${listing.listed} in the marketplace, ${listing.freeCount} free this epoch (#${listing.epoch})`);
-	for (const item of accepted) {
-		state.results[item.prompt.id] = { ...state.results[item.prompt.id], status: 'published' };
-	}
-	saveCheckpoint(opts.checkpoint, state);
+	// A batch that gated nothing at all is an infrastructure failure dressed up
+	// as a clean run, so it exits non-zero rather than reporting "0 accepted".
+	if (stats.accepted === 0 && stats.rejected === 0) process.exitCode = 4;
 }
 
-// Only run when invoked directly, so the lane assertion stays unit-testable.
-if (process.argv[1] && import.meta.url === `file://${process.argv[1]}`) {
-	main().catch((err) => {
-		console.error(err);
-		process.exit(1);
-	});
-}
+main().catch((err) => {
+	console.error(err);
+	process.exitCode = 1;
+});

@@ -42,7 +42,14 @@ function unconfigured(res) {
 
 async function startJob(req, res) {
 	const ip = clientIp(req);
-	const rl = await limits.mcp3dGenerate(ip);
+	// The free-lane bucket, not the paid one. This endpoint has exactly one
+	// backend: the self-hosted text2motion worker behind GCP_TEXT2MOTION_URL,
+	// which is our own Cloud Run GPU service. There is no vendor fallback — with
+	// the URL unset the mode is honestly unsupported and the request 503s — so a
+	// call here can never bill a third party, and metering it against the paid
+	// ceiling (30/h, fail-closed) throttled our own GPU fleet to a fifth of what
+	// it sustains and blocked bulk library seeding outright.
+	const rl = await limits.mcp3dGenerateFree(ip);
 	if (!rl.success) {
 		return rateLimited(res, rl);
 	}
