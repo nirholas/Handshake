@@ -173,10 +173,24 @@ curl -s https://three.ws/api/x402/three-intel | jq '.accepts[].network'
    sub-day runway is the answer. Read `runway_status` first, then run the free
    self-heal (`POST /api/cron/treasury-topup?dry=1`, then without `?dry=1`)
    before asking for funds: reclaimable SOL sitting in platform agent wallets is
-   the usual answer, and every reclaim run now leaves `agent_reclaim` rows in
+   often the answer, and every reclaim run now leaves `agent_reclaim` rows in
    `economy_master_ledger` saying whether it was `blocked` (an RPC or key
    problem, free to fix) or found `nothing_reclaimable` (the only case that
    genuinely needs the owner to send SOL).
+
+   **Read `agent_reclaim.failed` in the dry plan before you trust its total.**
+   The plan-only run opens each wallet's key exactly as the real run does, so a
+   wallet whose secret does not decrypt is listed there at stage `recover` with
+   reason `secret_undecryptable` instead of being counted as reclaimable. That
+   SOL is real, visible on chain, and unreachable: it is encrypted under a key
+   this deploy does not hold, and no cron run, RPC tier, or deposit moves it
+   (see [wallet-key-migration.md](wallet-key-migration.md) for the recovery
+   path, and put the retired key in `WALLET_ENCRYPTION_KEY_PREVIOUS` if you have
+   it). Until 2026-09-02 the dry run skipped that check and reported those
+   wallets as available on every tick, which sent two separate investigations
+   away with "the cron will self-heal from here" when it could not. A dry total
+   of 0 with a populated `failed` list means the same thing as
+   `nothing_reclaimable`: the owner has to send SOL.
 4. `replay_stages_24h` nonzero: captured X-PAYMENT headers are being re-sent;
    the guard is working if the settles panel is unaffected.
 

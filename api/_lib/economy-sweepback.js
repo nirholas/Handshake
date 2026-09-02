@@ -655,38 +655,58 @@ export async function reclaimIdleAgentSol({ connection, network = 'mainnet', dry
 	// Biggest balances first: the run cap should spend its budget where the SOL is.
 	candidates.sort((a, b) => b.sol - a.sol);
 
-	const { plan, skipped, totalSol } = planAgentReclaim(candidates, { maxWallets });
-	if (dryRun) {
-		return { master, reclaimedSol: totalSol, moves: plan.map((p) => ({ ...p, dryRun: true })), skipped, failed, readErrors };
-	}
+	const { plan, skipped } = planAgentReclaim(candidates, { maxWallets });
 
 	const secrets = new Map(candidates.map((c) => [c.agentId, c.secret]));
 	const { recoverSolanaAgentKeypair } = await import('./agent-wallet.js');
-	for (const p of plan) {
-		// Recovery and broadcast are reported SEPARATELY on purpose. Sharing one
-		// catch made an undecryptable wallet secret surface as a failed send, and
-		// the alert then read "N failed send(s): The operation failed for an
-		// operation-specific reason": a WebCrypto AES-GCM OperationError wearing
-		// a Solana costume. That sent operators after RPC health and funding for a
-		// key problem no amount of either could fix.
+
+	// Recovery and broadcast are reported SEPARATELY on purpose. Sharing one
+	// catch made an undecryptable wallet secret surface as a failed send, and
+	// the alert then read "N failed send(s): The operation failed for an
+	// operation-specific reason": a WebCrypto AES-GCM OperationError wearing
+	// a Solana costume. That sent operators after RPC health and funding for a
+	// key problem no amount of either could fix.
+	//
+	// The DRY run runs this same gate, which is the whole point of it being a
+	// function. It used to return the raw plan without ever touching a key, so a
+	// wallet whose secret is sealed under a retired WALLET_ENCRYPTION_KEY was
+	// advertised as reclaimable forever: `?dry=1` promised 0.12 SOL the real leg
+	// could never move, and two separate sessions read that plan and concluded
+	// the treasury cron would self-heal. A plan nothing can execute is worse than
+	// no plan, because it reads as capital on hand.
+	const openReclaimWallet = async (p, { audit }) => {
 		let keypair;
 		try {
-			keypair = await recoverSolanaAgentKeypair(secrets.get(p.agentId), {
-				agentId: p.agentId,
-				reason: 'economy_reclaim',
-				meta: { to: master, sol: p.sol },
-			});
+			// A plan-only read passes NO audit context: the real leg's decrypt is a
+			// custody event worth a row, a dry run every scheduler minute is not.
+			keypair = await recoverSolanaAgentKeypair(
+				secrets.get(p.agentId),
+				audit ? { agentId: p.agentId, reason: 'economy_reclaim', meta: { to: master, sol: p.sol } } : null,
+			);
 		} catch (e) {
 			failed.push({
 				name: p.name, address: p.address, sol: p.sol, stage: 'recover',
 				reason: `secret_undecryptable: ${e?.message || 'unknown'}`,
 			});
-			continue;
+			return null;
 		}
 		if (keypair.publicKey.toBase58() !== p.address) {
 			failed.push({ name: p.name, address: p.address, sol: p.sol, stage: 'recover', reason: 'keypair_address_mismatch' });
-			continue;
+			return null;
 		}
+		return keypair;
+	};
+
+	if (dryRun) {
+		for (const p of plan) {
+			if (await openReclaimWallet(p, { audit: false })) moves.push({ ...p, dryRun: true });
+		}
+		return { master, reclaimedSol: round(moves.reduce((s, m) => s + m.sol, 0)), moves, skipped, failed, readErrors };
+	}
+
+	for (const p of plan) {
+		const keypair = await openReclaimWallet(p, { audit: true });
+		if (!keypair) continue;
 		try {
 			const signature = await sendSol({
 				connection,

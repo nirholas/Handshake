@@ -157,8 +157,11 @@ export function diagnoseSettleDrop({ noSolanaAccept, floorSignals, governorSkips
 				'X402_SPONSOR_SOL_FLOOR_LAMPORTS, so the ring has nothing payable and settlements stop. ' +
 				'Do NOT start at the facilitator. Check the sponsor balance, then let the free self-heal run: ' +
 				'POST /api/cron/treasury-topup?dry=1 (Bearer CRON_SECRET) to see the plan, then without ?dry=1 ' +
-				'to apply. Owner SOL is needed only when every reclaim source reports at_or_below_floor. ' +
-				'See docs/ops/production-log-triage.md.',
+				'to apply. READ agent_reclaim.failed in that plan before you trust its total: a wallet whose ' +
+				'secret does not decrypt is reported at stage `recover` and its SOL is unreachable until ' +
+				'WALLET_ENCRYPTION_KEY (or WALLET_ENCRYPTION_KEY_PREVIOUS) can open it, so no cron run and no ' +
+				'RPC tier will ever move it. Owner SOL is needed when every reclaim source reports ' +
+				'at_or_below_floor or secret_undecryptable. See docs/ops/production-log-triage.md.',
 		};
 	}
 	// Nothing failed and nothing was withdrawn: we are refusing our own settles to

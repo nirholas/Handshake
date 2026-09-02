@@ -702,3 +702,113 @@ Kept, with the measured reason:
   `/discovery/resources` paging and `/supported` match what it registered. Verified shipped.
   The file's content and this pack's index row sit behind the CLAUDE.md commit gate, so the
   deletion waits for the owner's yes; nothing else remains.
+
+## 2026-09-02: 01 x402 settle runway (the phantom reclaim plan is fixed; capital is still the whole remaining story)
+
+Measured live at 05:19 UTC, prod `ad7b54c16` / revision `three-ws-api-00404-ph7`
+(107 commits behind `main`, so nothing below ships until the next deploy):
+
+| Fact | Value | Source |
+|---|---|---|
+| `x402_settle` | **degraded, 55.0%** (55/100 paid attempts, 3h), `cause: sponsor_floor` | `GET /api/healthz` |
+| Since-boot settle book | ok 1,709 / failed 50,575: `fee_runway_exhausted` 48,788, `fee_wallet_below_floor` 1,259, `not_confirmed` 371, `broadcast_failed` 20 | same, `x402.self_facilitator` |
+| Governed skips in window | 1,220 against 45 rail faults and 175 `no_solana_accept` | same, `x402_settle.metrics` |
+| Sponsor fee wallet `Wwwu…T3WwW` | 0.003727883 SOL, spendable 1,727,883 lamports over a 2,000,000 floor | `GET /api/x402/runway-lab` |
+| Ring payer `X4o2…stML` | 1,998,408 lamports, i.e. **1,592 lamports under the floor** | same, and the live refusal string `fee_wallet_below_floor:1998408<2000000` |
+| Live governor config | `runway_days: 1`, `min_budget_lamports: 10,000,000`, `governor_enabled: true`, intraday pacing ON | same, `config` |
+| Measured burn | `fee_total_lamports` 13,327,231 over 24h = **0.0133 SOL/day spent**; median fee 10,001 lamports | same, `observed` |
+| Demand | 177 attempts/hour = ~4,248/day, against `projected_settles_per_day` 172 | same |
+
+Three corrections to the work order, all measured:
+
+1. **Levers 1 and 2 are already applied in production.** `runway-lab` reports
+   `runway_days: 1` today, and the 2026-08-01 entry above records
+   `ECONOMY_MASTER_OPERATING_SOL=0.3` landing with it. Do not re-apply them, and
+   do not size anything from lever 2: at a 0.0037 SOL balance the 10,000,000
+   lamport heartbeat floor already exceeds spendable, so runway days are inert
+   (the 2026-08-02 entry struck this lever for the same reason).
+2. **The headline is no longer 25.9% or 5.9%.** Settle is 55.0% and the
+   subsystem is `degraded`, not `down`. `fee_runway_exhausted` still dominates
+   the since-boot book, but that book has never been reset; in the live 3h
+   window the split is 1,220 governor skips, 175 withdrawn Solana accepts, 45
+   rail faults. The fee-admission gate shipped 2026-08-01 is doing its job:
+   unfundable calls are refused in one step instead of after five RPC round
+   trips.
+3. **Demand has collapsed to 177/hour** from the 3,726/hour of 2026-08-02, so
+   the honest funding ask is now ~0.043 SOL/day to serve every attempt
+   (4,248 x 10,001 lamports), not the 0.45 SOL/day that entry quoted. 1 SOL is
+   roughly three weeks at current demand. The "1 to 2 SOL/day" figure the work
+   order warns about is still wrong, by more than the order of magnitude it says.
+
+Did (the one agent-doable item the 2026-09-01 sweep left open in code):
+
+- **`reclaimIdleAgentSol` no longer advertises SOL it cannot move.**
+  `api/_lib/economy-sweepback.js` returned the raw `planAgentReclaim` output in
+  dry-run mode without ever touching a wallet key, so the 8 custodial wallets
+  sealed under the WALLET_ENCRYPTION_KEY retired in the 2026-07 migration were
+  reported as reclaimable on every tick while the real leg failed all of them at
+  the recover stage. The recover-and-verify step is now a function both modes
+  call: the dry run opens each planned wallet's key (passing NO audit context, so
+  a plan-only read on the every-minute economy tick does not write a custody row
+  per wallet), drops the ones that do not decrypt into `failed` at stage
+  `recover`, and sums `reclaimedSol` from the survivors. `agent_reclaim.failed`
+  in the `?dry=1` response now carries them, so the existing blocked-vs-nothing
+  classification in `api/cron/treasury-topup.js` sees the same truth a real run
+  would.
+- **Recurrence guard, with a test.** `tests/economy-reclaim-dryrun-key-gate.test.js`
+  (7 cases) pins dry/real parity on which wallets are unreachable, that
+  `reclaimedSol` counts only openable wallets, that a fully sealed fleet plans
+  nothing at all, the address-mismatch case, and that the dry run signs nothing
+  and writes no custody row.
+- **The healthz hint that produced the loop is corrected.** The `sponsor_floor`
+  hint ended at "Owner SOL is needed only when every reclaim source reports
+  `at_or_below_floor`". A sealed wallet reports `secret_undecryptable` and never
+  `at_or_below_floor`, so that sentence read as "the cron will fix it" for a
+  condition no cron can fix, which is exactly what two earlier sessions
+  concluded. It now names `agent_reclaim.failed`, `secret_undecryptable` and
+  `WALLET_ENCRYPTION_KEY`, with a test in
+  `tests/api/x402-settle-health.test.js` that fails if the old promise returns.
+- Runbook step 3 in `docs/ops/payment-outcomes.md` updated to match, plus a
+  `data/changelog.json` entry (`fix`, `infra`) and `npm run build:pages`.
+
+Verification: `check:rules` clean on the 6 touched paths, `audit:docs` clean,
+`test:gate` and `test:gate-3d` green (559 + gate suites), targeted suites 96/96.
+`npm run gate` does NOT pass end to end in this worktree, and none of it is this
+change: `audit:mcp`, `audit:mcp-golden` and `audit:mcp-safety` fail on
+`packages/{herald,knock,metaplex-agent}-mcp`, `audit:routes` on
+`/events/build-3d-agents-live`, `audit:links` on `pages/tty.html`,
+`pages/knock-door.html`, `src/api.js`, `src/avatar-artifact.js`,
+`audit:inline-handlers` on `src/deploy-onchain.js`, `audit:x402-catalog` on
+`/api/x402/{knock,preflight}`, and `audit:tokens` on five pages. Every one of
+those is a concurrent agent's in-flight work; this diff touches none of those
+files.
+
+Left, and it is all capital, all owner-owned:
+
+1. **The settle rate cannot reach 90% from here.** Two wallets are starved and
+   both are tiny: the ring payer is **1,592 lamports** (0.0000016 SOL) under its
+   2,000,000 floor, and the sponsor has 1,727,883 spendable lamports against a
+   10,000,000/day heartbeat budget. Sustaining current demand needs ~0.043
+   SOL/day. Send SOL to the economy master
+   `WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW` (never to per-agent wallets)
+   and treasury-topup distributes within minutes.
+2. **0.49 SOL stays stranded behind the retired key**, 0.35 of it customer money
+   in two user-owned agents that display a balance their owners cannot move. The
+   dry plan now says so out loud instead of counting it. If the retired key can
+   be produced, `WALLET_ENCRYPTION_KEY_PREVIOUS` recovers it with no migration
+   (`docs/ops/wallet-key-migration.md`); if it cannot, the two customers need a
+   decision, which is not an agent's to make.
+3. **`gcloud` auth is dead in this workspace** (`Reauthentication failed. cannot
+   prompt during non-interactive execution`), and `.env` carries no
+   `CRON_SECRET`, so neither the config levers nor `POST /api/cron/treasury-topup?dry=1`
+   could be exercised from here. One `gcloud auth login` restores both. Nothing
+   in this entry needed them: every number above came from public endpoints.
+4. **This work is behind the deploy gap.** The dry-run fix and the corrected hint
+   are on `main`, not in production; prod still runs `ad7b54c16` from 2026-08-28.
+   The next deploy carries them.
+
+Definition-of-done status: the recurrence guard, its test, the changelog entry and
+this log are done. The three outcome lines (settle above 90%, `fee_runway_exhausted`
+no longer top, a non-zero reclaim plan) cannot be closed by an agent: at a 0.0037
+SOL sponsor balance there is no non-zero *executable* reclaim plan to produce, and
+that is now the honest answer the endpoint gives rather than the phantom one.

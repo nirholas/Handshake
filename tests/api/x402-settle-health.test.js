@@ -160,6 +160,27 @@ describe('classifySettleBuckets — verdict from real bucket shapes', () => {
 		expect(v.hint).not.toMatch(/Payments are being rejected at settle/);
 	});
 
+	it('the sponsor-floor hint refuses to promise a self-heal that sealed wallets cannot deliver', () => {
+		// The hint used to end at "Owner SOL is needed only when every reclaim
+		// source reports at_or_below_floor". On this platform most of the
+		// reclaimable SOL sits in wallets encrypted under a key retired in the
+		// 2026-07 host migration: they report `secret_undecryptable`, never
+		// `at_or_below_floor`, so that sentence read as "the cron will fix it" for
+		// a condition no cron can fix. Two sessions lost time to it.
+		const v = classifySettleBuckets([
+			{ success: true, paid: true, reason: 'none', n: 40 },
+			{ success: false, paid: false, reason: 'http_502', n: 60 },
+			{ success: false, paid: false, reason: 'fee_wallet_below_floor', n: 1 },
+		]);
+		expect(v.cause).toBe('sponsor_floor');
+		expect(v.hint).toMatch(/secret_undecryptable/);
+		expect(v.hint).toMatch(/agent_reclaim\.failed/);
+		expect(v.hint).toMatch(/WALLET_ENCRYPTION_KEY/);
+		// "only when ... at_or_below_floor" was the exact false promise. It must
+		// not come back.
+		expect(v.hint).not.toMatch(/only when every reclaim source reports at_or_below_floor\./);
+	});
+
 	it('still blames the rail when faults rose and Solana is payable', () => {
 		const v = classifySettleBuckets(liveOutageBuckets);
 		expect(v.cause).toBe('rail');

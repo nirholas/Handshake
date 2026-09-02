@@ -1,11 +1,45 @@
 {
-	"generated_at": "2026-09-01T18:36:39.158Z",
+	"generated_at": "2026-09-02T05:22:10.363Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-09-02",
+			"type": "update",
+			"title": "Every showcased agent now has its own page",
+			"summary": "Agent Spotlight entries got somewhere to live. Each one now has its own page with the agent standing in 3D, the full write-up instead of three clamped lines, a facts panel read live off the agent (skills, conversations, on-chain actions, upvotes), share buttons, and a rail of related entries in the same category. Sharing one finally works too: paste a link anywhere and it unfurls with that entry's headline and the agent's own card rather than the generic showcase image. If you submitted an entry, you can now edit or remove it, which you could not do before: an Edit link on your card opens the write-up ready to change, and removing takes two clicks so it cannot happen by accident. Ranking got fairer as well, with a stable order for entries published at the same moment instead of a shuffle between page loads.",
+			"link": "/spotlight",
+			"tags": [
+				"improvement",
+				"feature"
+			]
+		},
+		{
+			"date": "2026-09-02",
+			"type": "update",
+			"title": "Examples gains a voice, an AI's eye on 3D, and a filter",
+			"summary": "Three more runnable examples and a way to find them. The avatar can now speak a line you type: the free text-to-speech lane synthesizes it and a new speakAudio() method routes the audio through the same analyser the built-in voice uses, so the mouth follows the real waveform instead of miming. A second example calls the look_at_model tool on the public MCP server and shows exactly what an AI assistant sees when it inspects a mesh: four rendered angles plus a plain-language read on the geometry, which is how an agent judges its own output and decides to try again. A third reads the live tool list off that same server, so the page can never advertise a tool that was renamed or dropped. With seventeen examples the page also gets a filter: type to search names, descriptions and tags, or narrow by tag, and the lanes fold away as they empty. A deep link always wins over an active filter.",
+			"link": "/examples",
+			"tags": [
+				"feature",
+				"improvement",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-09-02",
+			"type": "update",
+			"title": "The treasury's self-heal plan now only promises SOL it can actually move",
+			"summary": "When the payment rail runs short of the SOL it needs to settle, the platform first tries to heal itself: it looks across its own agent wallets for idle funds and pulls them back to the wallet that pays fees. The preview of that plan was counting wallets it could never open. Eight custodial wallets were encrypted under a key retired during the 2026-07 move to Google Cloud, so the preview kept advertising their balance as available while every real run failed on them, and the plan looked the same the next time anyone checked. The preview now opens each wallet's key before listing it, exactly as a real run does, and reports the ones it cannot open separately with the reason. A plan that reads as capital on hand when the capital is unreachable is worse than no plan at all, and it cost two separate investigations. The health check's settlement hint was corrected to match: it no longer says owner funds are needed only once every wallet reports being at its floor, because a sealed wallet never reports that.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
 		{
 			"date": "2026-09-01",
 			"type": "launch",
