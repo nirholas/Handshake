@@ -76,10 +76,16 @@ curl https://three.ws/api/okx/3d/health
 ## three.ws Forge
 
 Four paid services and one free one. Every row is a real **A2MCP** endpoint: MCP Streamable
-HTTP, JSON-RPC 2.0 `tools/call` over `POST`, SSE discovery on `GET`, session terminate on
-`DELETE`. The paid tool answers an unpaid call with an OKX-dialect 402 whose `accepts[]`
-**leads with `eip155:196`**, which is the OKX Agent Payments Protocol integration the
-review asked for.
+HTTP, JSON-RPC 2.0 over `POST`, session terminate on `DELETE` (204). The paid tool answers an
+unpaid call with an OKX-dialect 402 whose `accepts[]` **leads with `eip155:196`**, which is
+the OKX Agent Payments Protocol integration the review asked for.
+
+`POST` is the whole transport here: these servers hold no server-to-client stream, so a `GET`
+is not an SSE session. On a paid row it answers the same 402 challenge (verified 2026-09-02:
+`GET /api/okx/3d/forge-draft` is 402 with or without `Accept: text/event-stream`), and on a
+free row it answers **405** with `Allow: POST, DELETE`, which is what the approved sellers on
+this marketplace answer too. Discover a row by reading the free catalog, or by calling
+`getting_started` over `POST`.
 
 | Service | Price (USDT) | Endpoint | You send |
 |---|---|---|---|
