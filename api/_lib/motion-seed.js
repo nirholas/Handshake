@@ -677,3 +677,40 @@ export function freeClipNames(names, { now = Date.now(), size = FREE_ROTATION.SI
 export function isFreeThisEpoch(name, allNames, opts = {}) {
 	return freeClipNames(allNames, opts).includes(name);
 }
+
+// ── Lane assertion ──────────────────────────────────────────────────────────
+//
+// The GCP provider packs its job id as base64url JSON naming the worker it
+// dispatched to (packJobId in api/_providers/gcp.js). Reading that back out is
+// how a bulk run proves it is spending credits on our own fleet rather than
+// quietly billing a paid third party for a few hundred clips. Being unable to
+// tell which lane billed a job is itself a reason to stop, so an unreadable
+// envelope throws rather than passing.
+
+export function decodeJobEnvelope(jobId) {
+	try {
+		const parsed = JSON.parse(Buffer.from(String(jobId), 'base64url').toString('utf8'));
+		return parsed && typeof parsed === 'object' ? parsed : null;
+	} catch {
+		return null;
+	}
+}
+
+export function assertSelfHostedLane(jobId) {
+	const envelope = decodeJobEnvelope(jobId);
+	if (!envelope) throw new Error('lane assertion failed: job id is not a provider envelope');
+	if (envelope.mode !== 'text2motion') throw new Error(`lane assertion failed: mode ${envelope.mode}`);
+	let host;
+	try {
+		host = new URL(envelope.baseUrl).host;
+	} catch {
+		throw new Error(`lane assertion failed: unusable baseUrl ${envelope.baseUrl}`);
+	}
+	if (!/\.run\.app$/.test(host)) {
+		throw new Error(`lane assertion failed: ${host} is not a self-hosted Cloud Run lane`);
+	}
+	if (!/^model-text2motion/.test(host)) {
+		throw new Error(`lane assertion failed: unexpected worker ${host}`);
+	}
+	return { host, taskId: envelope.taskId };
+}

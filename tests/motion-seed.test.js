@@ -26,8 +26,9 @@ import {
 	rotationEpoch,
 	motionPrompts,
 	motionPromptById,
+	assertSelfHostedLane,
+	decodeJobEnvelope,
 } from '../api/_lib/motion-seed.js';
-import { assertSelfHostedLane, decodeJobEnvelope } from '../scripts/gcp/seed-motion.mjs';
 
 const BODY_BONES = [
 	'Hips', 'Spine', 'Spine1', 'Spine2', 'Neck', 'Head',

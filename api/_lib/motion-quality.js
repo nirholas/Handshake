@@ -35,8 +35,9 @@ import {
 	CANONICAL_REST_POSITION,
 	CANONICAL_REST_WORLD,
 } from '../../src/animation-canonical-rest.js';
+import { worldMotionMetrics, footContactMetrics } from './motion-seed.js';
 
-export const MOTION_GATE_VERSION = 1;
+export const MOTION_GATE_VERSION = 2;
 
 /**
  * Every bound the gate enforces, in one frozen object so a caller (or a report)
@@ -61,17 +62,28 @@ export const MOTION_BOUNDS = Object.freeze({
 	// Averaged angular speed across every rotation track. A clip below this is
 	// standing in bind pose: technically valid, worthless in a library.
 	minMeanAngularSpeedDeg: 5,
-	// A single inter-frame step this large is a tear, not motion. 45 degrees at
-	// 30 fps is 1350 deg/s on one joint, well past anything a body does.
-	maxFrameAngularStepDeg: 45,
+	// Largest single-frame WORLD step of a witness joint, over that joint's own
+	// p95 step. Measured on local rotations instead, this test cannot work: the
+	// sampler emits a 180 degree twist about a bone's own axis that the child
+	// bone cancels, which is invisible on the mesh but maxes out any local
+	// angular bound, and the authored library itself reaches 121 degrees in a
+	// single frame. A local threshold therefore rejects real motion and genuine
+	// tears alike (measured: 100% of generated clips and 66% of the authored
+	// library). Judging joint POSITIONS separates them. Authored clips score a
+	// median of 1.69 and a worst case of 5.79, so 6.5 leaves headroom.
+	// See docs/animation-seeding.md.
+	maxWorldStepRatio: 6.5,
 	// Loop clips only: the pose distance between the first and last frame. A
 	// seam wider than this visibly pops every cycle.
 	maxLoopSeamDeg: 30,
 
 	// Space.
-	// Planted-foot horizontal drift over one contact span, as a fraction of the
-	// rig's hip height. Above this the character skates.
-	maxFootSlideRatio: 0.45,
+	// Planted-foot drift as a multiple of the stride the clip actually covers,
+	// counting only frames where a foot is on this clip's own floor AND the hips
+	// are upright over it. Without the upright test, floor work (a fall, a crawl,
+	// a breakdance flair) reads as skating because the "lower" foot is merely the
+	// one that happens to be less high.
+	maxSlidePerStride: 0.85,
 	// A foot below the ground plane by more than this (metres) is clipping
 	// through the floor.
 	maxGroundPenetration: 0.15,
@@ -506,9 +518,9 @@ export function decideMotionVerdict(m, opts = {}) {
 	if (m.worstQuatNormError > b.quatNormTolerance) reasons.push('quaternions_not_normalized');
 	if (m.missingBones.length) reasons.push('missing_required_bones');
 	if (m.meanAngularSpeedDeg < b.minMeanAngularSpeedDeg) reasons.push('motion_too_still');
-	if (m.maxFrameStepDeg > b.maxFrameAngularStepDeg) reasons.push('frame_discontinuity');
+	if (m.worldStepRatio > b.maxWorldStepRatio) reasons.push('frame_discontinuity');
 	if (m.maxRootSpeedMetresPerSecond > b.maxRootSpeedMetresPerSecond) reasons.push('root_velocity_implausible');
-	if (m.footSlideRatio > b.maxFootSlideRatio) reasons.push('foot_slide');
+	if (m.slidePerStride > b.maxSlidePerStride) reasons.push('foot_slide');
 	if (m.groundPenetrationMetres > b.maxGroundPenetration) reasons.push('ground_penetration');
 	if (opts.loop && m.loopSeamDeg > b.maxLoopSeamDeg) reasons.push('loop_seam_open');
 
@@ -543,6 +555,17 @@ export function gateMotionClip(raw, opts = {}) {
 		};
 	}
 	const metrics = measureClip(clip);
+	// World-space smoothness, liveliness and foot contact, measured on the raw
+	// clip by the shared forward-kinematics implementation in motion-seed.js.
+	// These are what a viewer actually sees, so they carry the two rules that a
+	// local-rotation measure gets wrong.
+	const world = worldMotionMetrics(raw);
+	const foot = footContactMetrics(raw);
+	metrics.worldStepRatio = world.continuity;
+	metrics.worldTravelMetres = world.travel;
+	metrics.worstWitnessJoint = world.continuityJoint;
+	metrics.slidePerStride = foot.slidePerStride;
+	metrics.plantedFrames = foot.plantedFrames;
 	const { pass, reasons } = decideMotionVerdict(metrics, opts);
 	return { pass, reasons, detail: '', metrics, gateVersion: MOTION_GATE_VERSION };
 }
