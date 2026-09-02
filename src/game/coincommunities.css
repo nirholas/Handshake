@@ -1184,6 +1184,22 @@ html[data-bg="transparent"] #cc-lobby {
 .cc-photo-hud-btn:active { background: rgba(255, 255, 255, 0.12); }
 .cc-photo-hud-btn:focus-visible { outline: none; border-color: var(--cc-edge-hi); box-shadow: 0 0 0 1px var(--cc-edge-hi); }
 .cc-photo-hud-btn[aria-pressed="true"] { color: var(--cc-text); border-color: var(--cc-edge-hi); }
+/* Working: the extra render, the pixel readback and the PNG encode are quick on
+   a GPU and can run for seconds on a software rasterizer or a tired phone. The
+   button breathes for exactly as long as the capture takes, so a slow press is
+   visibly acknowledged instead of reading as a dead control. */
+.cc-photo-hud-btn[aria-busy="true"] {
+	color: var(--cc-text); border-color: var(--cc-edge-hi); cursor: progress;
+	animation: cc-photo-working 1.1s ease-in-out infinite;
+}
+.cc-photo-hud-btn[aria-busy="true"] .cc-photo-hud-ico svg { opacity: 0.55; }
+@keyframes cc-photo-working {
+	0%, 100% { background: var(--cc-panel); }
+	50% { background: rgba(255, 255, 255, 0.12); }
+}
+@media (prefers-reduced-motion: reduce) {
+	.cc-photo-hud-btn[aria-busy="true"] { animation: none; background: rgba(255, 255, 255, 0.12); }
+}
 .cc-photo-hud-ico { display: inline-flex; }
 .cc-photo-hud-ico svg { width: 16px; height: 16px; display: block; }
 .cc-photo-hud-label { line-height: 1; }

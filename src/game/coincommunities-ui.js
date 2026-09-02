@@ -2850,6 +2850,18 @@ export class CommunityUI {
 		this.photoBtn?.setAttribute('aria-pressed', on ? 'true' : 'false');
 	}
 
+	// The capture itself is work: one extra render, a full pixel readback and a
+	// PNG encode. On a GPU that is a blink, but on a software rasterizer or a
+	// tired phone it can run for seconds, and a shutter flash followed by a long
+	// nothing reads as a dead button (measured at 59s on a loaded software-GL
+	// box). Mark the control busy for the duration so the press is visibly
+	// acknowledged and assistive tech hears it too.
+	setPhotoBusy(on) {
+		if (!this.photoBtn) return;
+		if (on) this.photoBtn.setAttribute('aria-busy', 'true');
+		else this.photoBtn.removeAttribute('aria-busy');
+	}
+
 	// Toggle the button's armed state (lit = will dance on next beat).
 	setDancing(on) {
 		if (!this.danceBtn) return;

@@ -4664,6 +4664,10 @@ export class CoinCommunities {
 	async _openPhotoMode() {
 		if (this.phase !== 'world' || this._photoLoading) return;
 		this._photoLoading = true;
+		// The chunk fetch and the capture both take real time on a slow device, and
+		// the shutter flash is over in a quarter second. Hold the button in a busy
+		// state across the whole press so it never looks like nothing happened.
+		this.ui.setPhotoBusy(true);
 		try {
 			const { takePhoto } = await import('./photo-mode.js');
 			const shown = await takePhoto({
@@ -4681,6 +4685,7 @@ export class CoinCommunities {
 			this.ui.toast('Photo mode couldn’t load, check your connection and try again.', 'warn');
 		} finally {
 			this._photoLoading = false;
+			this.ui.setPhotoBusy(false);
 		}
 	}
 
