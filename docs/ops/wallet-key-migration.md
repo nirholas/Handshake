@@ -146,6 +146,139 @@ almost exactly. Nothing changed in the underlying incident: the customer-fund de
 documented above (re-keying abandons the balance; that call is the owner's) is still
 open, and no funds were moved.
 
+## Where the wallet secrets live now, and how to rotate one (2026-09-02)
+
+The incident above is about a key we could not read any more. This section is about the
+opposite failure: a key that was readable by too many people.
+
+`ECONOMY_MASTER_SECRET_BASE58` is the base58 secret key of the economy master wallet
+(`WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW`), the funding root every other Solana
+engine is topped up from (`api/_lib/economy-master.js`, cron `api/cron/treasury-topup.js`).
+It sat on the `three-ws-api` Cloud Run service as a **plaintext literal**, so any principal
+holding `run.services.get` on `aerial-vehicle-466722-p5` could read the private key of a
+funded mainnet wallet straight out of the service config, without ever touching Secret
+Manager. It is now a `secretKeyRef`.
+
+### The end state
+
+| | |
+|---|---|
+| Secret | `wallet-economy-master-b58` (it already held this exact value, so no new version was minted) |
+| Reference | `ECONOMY_MASTER_SECRET_BASE58 = wallet-economy-master-b58:latest` |
+| Who can read it | `three-ws@aerial-vehicle-466722-p5.iam.gserviceaccount.com`, granted `roles/secretmanager.secretAccessor` **on that one secret**, never project-wide |
+| Landed on | revision `three-ws-api-00405-z6c`, 100% of traffic |
+
+Read the current state at any time with `node scripts/migrate-plaintext-secrets.mjs --verify`.
+
+### The tool, and the Cloud Run gotcha it encodes
+
+`scripts/migrate-plaintext-secrets.mjs` does the whole move: it classifies every env var on
+the service, reuses the Secret Manager secret that already holds a value rather than minting
+a second copy of it, grants the runtime service account access to that one secret, flips the
+service in a single update, and then re-reads the service to prove no plaintext literal
+survived and that the new revision serves 100% of traffic. It is a dry run unless you pass
+`--apply`, and it never prints, logs, or writes a secret value.
+
+The gotcha it exists to encode: **Cloud Run refuses to retype an env var in place.** An
+update that only sets `--update-secrets` on a name that is currently a literal fails with
+
+```
+Cannot update environment variable [X] to the given type because it has already been set with a different type.
+```
+
+The literal has to be dropped in the SAME update (`--remove-env-vars X --update-secrets
+X=<secret>:latest`), which lands as one revision, so the variable is never missing from a
+serving container. Two separate updates would ship a revision with the var absent.
+
+### Adding a new version of an existing secret
+
+```sh
+# Never pass a secret as a CLI argument; feed it on stdin.
+printf %s "<the new value>" | gcloud secrets versions add wallet-economy-master-b58 \
+  --data-file=- --project aerial-vehicle-466722-p5
+```
+
+The service points at `:latest`, so a new version takes effect on the **next revision**, not
+immediately. Force one with a config-only update:
+
+```sh
+gcloud run services update three-ws-api --region us-central1 \
+  --project aerial-vehicle-466722-p5 \
+  --update-secrets ECONOMY_MASTER_SECRET_BASE58=wallet-economy-master-b58:latest
+```
+
+### Rotating the master wallet (owner-gated, do not run unattended)
+
+Migrating storage is config work. **Rotating is not**: it generates a new keypair and moves
+real mainnet SOL, which is CLAUDE.md stop-and-ask gate 1. An agent prepares this and stops;
+the owner runs it, or explicitly approves each transfer.
+
+The old value was a plaintext literal for some window, so it should be treated as exposed to
+everyone who has held project viewer access in that period. Whether that warrants a rotation
+is a judgment call about who those principals are: it is logged as an owner decision in
+`prompts/finish/production-100-OWNER-ACTIONS.md`.
+
+If the owner decides to rotate:
+
+```sh
+# 1. Generate the new keypair OFFLINE and keep a durable copy. Nothing here reads
+#    it back later: a secret version's value is unreadable to anyone without the
+#    accessor role, and a lost key is a stranded wallet (see the top of this file).
+solana-keygen new --no-bip39-passphrase --outfile new-master.json
+solana-keygen pubkey new-master.json          # the address funds will move TO
+
+# 2. Fund the new wallet and drain the old one. OWNER-GATED, every transfer
+#    confirmed individually: this is real mainnet SOL leaving a funded wallet.
+#    Leave the old wallet enough SOL to pay its own transaction fees.
+
+# 3. Publish the new secret as a version of the SAME secret, so nothing else has
+#    to be re-pointed.
+printf %s "<new base58 secret>" | gcloud secrets versions add wallet-economy-master-b58 \
+  --data-file=- --project aerial-vehicle-466722-p5
+
+# 4. Update the advertised address in the same update as the new revision, so the
+#    key and the address it derives to never disagree on a serving container.
+gcloud run services update three-ws-api --region us-central1 \
+  --project aerial-vehicle-466722-p5 \
+  --update-env-vars ECONOMY_MASTER_ADDRESS=<new pubkey> \
+  --update-secrets ECONOMY_MASTER_SECRET_BASE58=wallet-economy-master-b58:latest
+
+# 5. Prove the new key is the one production signs with: the treasury sweep writes
+#    a heartbeat row to economy_master_ledger on every run, carrying the pubkey it
+#    derived from the loaded secret.
+node --env-file=.env.local -e "import('./api/_lib/db.js').then(async(m)=>{const sql=m.sql||m.default;\
+  console.log(await sql\`select ts,event,master_pubkey from economy_master_ledger order by ts desc limit 3\`);process.exit(0)})"
+
+# 6. Only once step 5 shows the NEW pubkey and the old wallet is empty, disable the
+#    old version so a rollback cannot silently resurrect a drained wallet.
+gcloud secrets versions disable <old version number> --secret=wallet-economy-master-b58 \
+  --project aerial-vehicle-466722-p5
+```
+
+Never `--set-env-vars` in any of these: it replaces the whole environment set.
+
+### Verifying a migration did not break anything
+
+Storage moves are invisible until they are not, so both readings below are taken against the
+live site, not assumed:
+
+1. **`/api/healthz` before and after.** Compare the `subsystems` block entry by entry. A
+   fresh revision resets in-process counters (RPC quota cooldowns, uptime), so expect those
+   to move; what must not move is a subsystem going from `ok` to `degraded` or `down`.
+2. **A real signing path.** For the master wallet that is the treasury sweep: a row in
+   `economy_master_ledger` timestamped after the new revision's `creationTimestamp`, carrying
+   the master's pubkey, proves the container read the secret, decoded 64 bytes, and derived
+   the right wallet. On 2026-09-02 revision `three-ws-api-00405-z6c` was created at
+   `19:15:17Z` and the ledger kept writing through `19:25:23Z` under
+   `WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW`.
+
+If a migration does regress the service, roll traffic back first and diagnose after:
+
+```sh
+gcloud run services update-traffic three-ws-api --region us-central1 \
+  --project aerial-vehicle-466722-p5 --to-revisions <prior revision>=100
+```
+
 ## Takeaways
 
 - **A key rotation must carry the old key forward, or accompany a sweep.** This is now
