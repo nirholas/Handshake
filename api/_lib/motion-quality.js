@@ -35,7 +35,7 @@ import {
 	CANONICAL_REST_POSITION,
 	CANONICAL_REST_WORLD,
 } from '../../src/animation-canonical-rest.js';
-import { worldMotionMetrics, footContactMetrics } from './motion-seed.js';
+import { worldMotionMetrics, footContactMetrics, loopSeamDistance } from './motion-seed.js';
 
 export const MOTION_GATE_VERSION = 2;
 
@@ -73,9 +73,14 @@ export const MOTION_BOUNDS = Object.freeze({
 	// median of 1.69 and a worst case of 5.79, so 6.5 leaves headroom.
 	// See docs/animation-seeding.md.
 	maxWorldStepRatio: 6.5,
-	// Loop clips only: the pose distance between the first and last frame. A
-	// seam wider than this visibly pops every cycle.
-	maxLoopSeamDeg: 30,
+	// Loop clips only: how far, in metres, a joint sits from where it started,
+	// measured hips-relative in world space so a travelling loop still counts as
+	// a loop. Measured on local rotations instead this reports a 178 degree seam
+	// on a clip whose joints are 2.9 cm apart, because the twist flips the child
+	// bone cancels land in that comparison too. Authored loops sit at 0.000 and a
+	// generated clip run through closeLoopSeam() also lands at 0.000, while a raw
+	// generated walk ends 0.25 m out.
+	maxLoopSeamMetres: 0.08,
 
 	// Space.
 	// Planted-foot drift as a multiple of the stride the clip actually covers,
@@ -522,7 +527,7 @@ export function decideMotionVerdict(m, opts = {}) {
 	if (m.maxRootSpeedMetresPerSecond > b.maxRootSpeedMetresPerSecond) reasons.push('root_velocity_implausible');
 	if (m.slidePerStride > b.maxSlidePerStride) reasons.push('foot_slide');
 	if (m.groundPenetrationMetres > b.maxGroundPenetration) reasons.push('ground_penetration');
-	if (opts.loop && m.loopSeamDeg > b.maxLoopSeamDeg) reasons.push('loop_seam_open');
+	if (opts.loop && m.loopSeamMetres > b.maxLoopSeamMetres) reasons.push('loop_seam_open');
 
 	const requested = Number(opts.requestedDuration);
 	if (Number.isFinite(requested) && requested > 0) {
@@ -566,6 +571,7 @@ export function gateMotionClip(raw, opts = {}) {
 	metrics.worstWitnessJoint = world.continuityJoint;
 	metrics.slidePerStride = foot.slidePerStride;
 	metrics.plantedFrames = foot.plantedFrames;
+	metrics.loopSeamMetres = loopSeamDistance(raw);
 	const { pass, reasons } = decideMotionVerdict(metrics, opts);
 	return { pass, reasons, detail: '', metrics, gateVersion: MOTION_GATE_VERSION };
 }

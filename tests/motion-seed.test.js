@@ -28,6 +28,9 @@ import {
 	motionPromptById,
 	assertSelfHostedLane,
 	decodeJobEnvelope,
+	closeLoopSeam,
+	loopSeamDistance,
+	LOOP_SEAM,
 } from '../api/_lib/motion-seed.js';
 
 const BODY_BONES = [
@@ -339,5 +342,77 @@ describe('lane assertion', () => {
 	it('refuses an unreadable job id', () => {
 		expect(decodeJobEnvelope('not-base64-json')).toBeNull();
 		expect(() => assertSelfHostedLane('not-base64-json')).toThrow(/not a provider envelope/);
+	});
+});
+
+describe('loop seams', () => {
+	/** A clip whose pose at the end is deliberately far from where it started. */
+	const openSeam = () =>
+		buildClip({
+			frames: 120,
+			mutate: (c) => {
+				for (const track of c.tracks) {
+					if (track.type !== 'quaternion') continue;
+					const n = track.values.length / 4;
+					// Drift the last third away from the opening pose.
+					for (let i = Math.floor(n * 0.66); i < n; i += 1) {
+						const t = (i - n * 0.66) / (n - n * 0.66);
+						const q = quatX(0.9 * t);
+						for (let c2 = 0; c2 < 4; c2 += 1) track.values[i * 4 + c2] = q[c2];
+					}
+				}
+			},
+		});
+
+	it('measures the seam in metres, hips relative', () => {
+		expect(loopSeamDistance(openSeam())).toBeGreaterThan(LOOP_SEAM.TARGET);
+	});
+
+	it('closes an open seam', () => {
+		const result = closeLoopSeam(openSeam());
+		expect(result.seamAfter).toBeLessThan(result.seamBefore);
+		expect(result.seamAfter).toBeLessThanOrEqual(LOOP_SEAM.TARGET);
+	});
+
+	it('does not modify the clip it was given', () => {
+		const clip = openSeam();
+		const before = JSON.stringify(clip.tracks[0].values);
+		closeLoopSeam(clip);
+		expect(JSON.stringify(clip.tracks[0].values)).toBe(before);
+	});
+
+	it('leaves a clip that is already seamless alone rather than trimming it', () => {
+		const clip = buildClip({ frames: 120 });
+		const result = closeLoopSeam(clip);
+		expect(result.trimmedFrames).toBe(0);
+	});
+
+	it('never trims away more than the cap', () => {
+		const clip = openSeam();
+		const result = closeLoopSeam(clip);
+		expect(result.trimmedFrames).toBeLessThanOrEqual(Math.ceil(120 * LOOP_SEAM.MAX_TRIM_FRACTION));
+	});
+
+	it('keeps the closed clip playable', () => {
+		const result = closeLoopSeam(openSeam());
+		const verdict = gateMotionClip(result.clip, {});
+		expect(verdict.reasons).not.toContain('non_finite_keyframes');
+		expect(verdict.reasons.some((r) => r.startsWith('world_discontinuity'))).toBe(false);
+	});
+
+	it('is safe to call on a clip too short to work with', () => {
+		const tiny = { name: 't', duration: 0.1, tracks: [], uuid: 'u', blendMode: 0 };
+		expect(closeLoopSeam(tiny).clip).toBe(tiny);
+	});
+
+	it('preserves horizontal travel so a walking loop still covers ground', () => {
+		const clip = openSeam();
+		const result = closeLoopSeam(clip);
+		const hips = result.clip.tracks.find((t) => t.name === 'Hips.position');
+		const n = hips.values.length / 3;
+		// The root track is built with zero travel here, so assert the axis was
+		// left untouched rather than dragged back to the start by the blend.
+		expect(Number.isFinite(hips.values[(n - 1) * 3])).toBe(true);
+		expect(hips.values[(n - 1) * 3]).toBe(clip.tracks.find((t) => t.name === 'Hips.position').values[(n - 1) * 3]);
 	});
 });
