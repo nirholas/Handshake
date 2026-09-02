@@ -321,6 +321,85 @@ export function footContactMetrics(clip) {
 	return { frames, slide, stride, slidePerStride, plantedFrames, floorY };
 }
 
+// Joints a viewer actually watches. A discontinuity anywhere in the skeleton
+// shows up at one of these, and they are the extremities where a bad frame is
+// most visible.
+const WITNESS_JOINTS = Object.freeze([
+	'LeftHand',
+	'RightHand',
+	'LeftToeBase',
+	'RightToeBase',
+	'Head',
+	'LeftFoot',
+	'RightFoot',
+	'Hips',
+]);
+
+/**
+ * World-space smoothness and liveliness.
+ *
+ * This is deliberately NOT a check on the local quaternion tracks. The sampler
+ * routinely emits a 180 degree twist about a bone's own axis which the child
+ * bone cancels: measured on the local rotations that looks like a catastrophic
+ * pop, and it is invisible on the rendered mesh (a shoulder + forearm pair can
+ * flip together on a third of the frames of an idle clip while the hand never
+ * moves more than a centimetre a frame). Judging a clip by what the viewer sees
+ * means judging joint POSITIONS.
+ *
+ *   continuity: the largest single-frame joint step over that joint's own 95th
+ *               percentile step. Scale-free, so a sprint and an idle are held to
+ *               the same standard, and a real discontinuity stands out no matter
+ *               how fast the clip is.
+ *   travel:     the longest path any witness joint walks over the whole clip,
+ *               which separates an animation from a static pose.
+ */
+export function worldMotionMetrics(clip) {
+	const frames = frameCount(clip);
+	if (frames < 3) return { frames, continuity: 0, continuityJoint: null, continuityFrame: -1, travel: 0 };
+
+	const poses = new Array(frames);
+	for (let i = 0; i < frames; i += 1) poses[i] = forwardKinematicsFrame(clip, i);
+
+	let continuity = 0;
+	let continuityJoint = null;
+	let continuityFrame = -1;
+	let travel = 0;
+
+	for (const joint of WITNESS_JOINTS) {
+		const steps = [];
+		let path = 0;
+		let worst = 0;
+		let worstAt = -1;
+		for (let i = 1; i < frames; i += 1) {
+			const a = poses[i - 1][joint];
+			const b = poses[i][joint];
+			if (!a || !b) continue;
+			const d = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
+			if (!Number.isFinite(d)) continue;
+			steps.push(d);
+			path += d;
+			if (d > worst) {
+				worst = d;
+				worstAt = i;
+			}
+		}
+		if (steps.length < 8) continue;
+		travel = Math.max(travel, path);
+		const sorted = [...steps].sort((x, y) => x - y);
+		const p95 = sorted[Math.floor(0.95 * (sorted.length - 1))];
+		// Floor the reference: a joint that barely moves all clip must not be able
+		// to manufacture a huge ratio out of one millimetre of noise.
+		const ratio = worst / Math.max(p95, 0.01);
+		if (ratio > continuity) {
+			continuity = ratio;
+			continuityJoint = joint;
+			continuityFrame = worstAt;
+		}
+	}
+
+	return { frames, continuity, continuityJoint, continuityFrame, travel };
+}
+
 // ── The gate ────────────────────────────────────────────────────────────────
 
 // Every threshold is a measured property of a clip that plays correctly on the
@@ -356,13 +435,15 @@ export const MOTION_GATE = Object.freeze({
 	// Unit-quaternion drift. Past this the rotation is no longer a rotation and
 	// three.js renders a sheared limb.
 	QUAT_NORM_EPSILON: 0.02,
-	// A limb that rotates more than this between two adjacent frames is a pop,
-	// not motion. Set above the worst step measured across a 60-clip sample of
-	// the authored library (2.124 rad, in a violent fall), and well below the
-	// 180 degree snap a collapsed sampler produces, which is the actual defect.
-	MAX_FRAME_JUMP_RAD: 2.62,
-	// Total rotational travel below this is a frozen clip: the sampler collapsed.
-	MIN_TOTAL_MOTION_RAD: 1.5,
+	// Largest single-frame joint step, over that joint's own p95 step. Measured
+	// across a 60-clip sample of the authored library the worst real clip scores
+	// 5.79 (a heavy push) and the median 1.69, so 6.5 leaves headroom above
+	// anything an animator shipped while still catching a true discontinuity.
+	MAX_WORLD_STEP_RATIO: 6.5,
+	// Longest path any witness joint walks, in metres. The authored library's
+	// static POSE assets score 0.00 and its quietest real animation 0.11, so this
+	// floor rejects a collapsed sampler without touching a subtle idle.
+	MIN_WORLD_TRAVEL: 0.35,
 	// How close to the clip's own floor a foot must be to count as planted.
 	PLANT_BAND: 0.06,
 	// How high the hips must sit above that floor for the body to be standing on
@@ -462,6 +543,8 @@ export function gateMotionClip(clip, opts = {}) {
 
 	metrics.frames = frames;
 	metrics.quatNormDrift = worstNormDrift;
+	// Reported, never gated: local-rotation travel is inflated by twist flips the
+	// child bone cancels, so it describes the representation, not the animation.
 	metrics.maxFrameJumpRad = worstJump;
 	metrics.totalMotionRad = totalMotion;
 
@@ -469,12 +552,17 @@ export function gateMotionClip(clip, opts = {}) {
 	if (nonMonotonic) reasons.push('non_monotonic_times');
 	if (frames < MOTION_GATE.MIN_FRAMES) reasons.push('too_few_frames');
 	if (worstNormDrift > MOTION_GATE.QUAT_NORM_EPSILON) reasons.push('quaternions_not_normalized');
-	if (worstJump > MOTION_GATE.MAX_FRAME_JUMP_RAD) reasons.push('frame_pop');
-	if (totalMotion < MOTION_GATE.MIN_TOTAL_MOTION_RAD) reasons.push('frozen_clip');
 
-	// Foot contact only means something once the skeleton itself is sane, and
-	// running FK over NaN values would only produce NaN metrics.
+	// World-space checks only mean something once the skeleton itself is sane,
+	// and running FK over NaN values would only produce NaN metrics.
 	if (!nonFinite && !missing.length && !foreign.length) {
+		const world = worldMotionMetrics(clip);
+		metrics.worldStepRatio = world.continuity;
+		metrics.worldTravel = world.travel;
+		metrics.worstJoint = world.continuityJoint;
+		if (world.continuity > MOTION_GATE.MAX_WORLD_STEP_RATIO) reasons.push(`world_discontinuity:${world.continuityJoint}`);
+		if (world.travel < MOTION_GATE.MIN_WORLD_TRAVEL) reasons.push('frozen_clip');
+
 		const foot = footContactMetrics(clip);
 		metrics.footSlide = foot.slide;
 		metrics.stride = foot.stride;
