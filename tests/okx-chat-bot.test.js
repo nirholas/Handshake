@@ -9,7 +9,7 @@
 // Pure logic only: no daemon, no wallet, no network, no DB.
 
 import http from 'node:http';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -97,14 +97,18 @@ describe('okx-chat-bot session classifier', () => {
 });
 
 describe('okx-chat-bot provider selection', () => {
+	// A host with no interactive CLI login, so these assertions read the env and
+	// nothing else. mkdtemp gives a home that provably holds no credential file.
+	const bare = mkdtempSync(join(tmpdir(), 'okx-bot-nohome-'));
+
 	it('prefers Claude when an Anthropic credential is present', () => {
-		const r = resolveProvider({ ANTHROPIC_API_KEY: 'sk-ant-x', OPENAI_API_KEY: 'sk-y' });
+		const r = resolveProvider({ ANTHROPIC_API_KEY: 'sk-ant-x', OPENAI_API_KEY: 'sk-y' }, bare);
 		expect(r.provider).toBe('claude');
 		expect(r.credentialed).toBe(true);
 	});
 
 	it('falls back to the codex CLI when only an OpenAI key exists', () => {
-		const r = resolveProvider({ OPENAI_API_KEY: 'sk-y' });
+		const r = resolveProvider({ OPENAI_API_KEY: 'sk-y' }, bare);
 		expect(r.provider).toBe('codex');
 		expect(r.credentialed).toBe(true);
 	});
@@ -112,17 +116,30 @@ describe('okx-chat-bot provider selection', () => {
 	// A provider CLI with no key spawns, fails to authenticate, and the buyer
 	// just sees silence. That must surface as uncredentialed, never as ready.
 	it('reports uncredentialed rather than pretending a keyless CLI will answer', () => {
-		const r = resolveProvider({});
+		const r = resolveProvider({}, bare);
 		expect(r.credentialed).toBe(false);
 		expect(classify({ ...ONLINE, providerCredentialed: r.credentialed }).ready).toBe(false);
 	});
 
+	// The stopgap host has no key at all: its claude CLI was logged in by a human
+	// and the adapter authors replies from that grant. Calling it uncredentialed
+	// is a false red on a host that demonstrably answers buyers.
+	it('counts an interactive claude CLI login as a credential', () => {
+		const home = mkdtempSync(join(tmpdir(), 'okx-bot-home-'));
+		mkdirSync(join(home, '.claude'), { recursive: true });
+		writeFileSync(join(home, '.claude', '.credentials.json'), '{}');
+		const r = resolveProvider({}, home);
+		expect(r).toMatchObject({ provider: 'claude', credentialed: true });
+		expect(r.reason).toMatch(/interactive login/);
+		rmSync(home, { recursive: true, force: true });
+	});
+
 	it('honours an explicit pin and still tells the truth about its credential', () => {
-		expect(resolveProvider({ OKX_BOT_AI_PROVIDER: 'codex', OPENAI_API_KEY: 'k' })).toMatchObject({
+		expect(resolveProvider({ OKX_BOT_AI_PROVIDER: 'codex', OPENAI_API_KEY: 'k' }, bare)).toMatchObject({
 			provider: 'codex',
 			credentialed: true,
 		});
-		expect(resolveProvider({ OKX_BOT_AI_PROVIDER: 'claude', OPENAI_API_KEY: 'k' })).toMatchObject({
+		expect(resolveProvider({ OKX_BOT_AI_PROVIDER: 'claude', OPENAI_API_KEY: 'k' }, bare)).toMatchObject({
 			provider: 'claude',
 			credentialed: false,
 		});

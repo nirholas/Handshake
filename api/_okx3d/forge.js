@@ -106,7 +106,10 @@ function laneError(err) {
 // A pending job is polled at the free forge-status endpoint, so `poll` is a
 // real URL an agent can hit, and `poll_tool` names the JSON-RPC tool to call
 // there. Both, because buyers in this marketplace read either.
-const POLL_OPTS = { pollPath: STATUS_ENDPOINT };
+// `paid: true` is what makes a failed-job message honest on this surface: these
+// rows settle when the lane accepts the job, so the free lanes' "it costs
+// nothing to try again" would be a lie told to a buyer who was already charged.
+const POLL_OPTS = { pollPath: STATUS_ENDPOINT, paid: true };
 
 // Every finished creation has a public page at /m/<creation id>: the model
 // spinning in a viewer, AR and fullscreen, download, embed and share, comments

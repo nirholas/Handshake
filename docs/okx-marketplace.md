@@ -26,11 +26,35 @@ documented at the bottom of this page.
 > [x402 payments](./x402.md) · seller-side protocol spec:
 > [`specs/okx-agent-payments.md`](../specs/okx-agent-payments.md)
 
-The **single source of truth** for every service (names, 2-part OKX descriptions, prices,
+The **single source of truth** for every service (names, OKX listing copy, prices,
 endpoints, input schemas, and which rows are listed) is
 [`api/_lib/okx-catalog.js`](../api/_lib/okx-catalog.js). The free catalog endpoint below
 serves it verbatim and the listing submission is generated from it, so the docs, the
 endpoints, and the OKX listing cannot drift apart.
+
+### The A2MCP listing description format
+
+OKX listing QA requires **four** newline-separated parts on an A2MCP service and rejects a
+listing missing any of them (the contract is stated in `onchainos agent update --help`).
+Submitting two parts is what earned the standing review remark on agent #2632: "The service
+you submitted is missing a complete description, parameter details, and usage examples."
+
+| Part | Content | Where it comes from |
+| --- | --- | --- |
+| 1 | What the service does | `describes.capability` |
+| 2 | Every parameter on ONE line, `;`-separated, each `<name> (<type>, required/optional): <meaning>` | generated from `inputSchema` + `describes.params` |
+| 3 | Request method (`POST`/`GET`, plus the MCP tool name where there is one) | generated from `kind` + `tool` |
+| 4 | A working `curl` against the real endpoint | generated from `endpoint` + `describes.example` |
+
+Parts 2 and 4 are **derived, never hand-written**: `parameterSpec()` reads the row's own
+JSON Schema, so a renamed argument renames itself in the listing, and `requestExample()`
+builds the call from example arguments that the test suite validates against that same
+schema. A published example the endpoint would reject cannot ship. `validateCatalog()`
+fails any listed row whose schema and documented parameters disagree, whose description is
+not four non-empty parts, or which exceeds OKX's 2000 half-width cap.
+
+Back-burner rows (`listed: false`) are held to the catalog rules only; they pick up the
+four-part rules when they return to the listing.
 
 ---
 
@@ -166,8 +190,13 @@ the viewer, the AR launch and the page.
 - `previewImageUrl` is the painted concept view the forge produces before the mesh, so you
   can show something the moment it exists.
 
-A failed job answers `status: "error"` with an actionable message. Generation failures are
-free to retry.
+A failed job answers `status: "error"` with an actionable message and, when the generator can
+name them, `retryBackends`: the alternate engines that can still serve this request. The lane
+exhausts its own backend failover chain before it ever reports a failure, so an `error` frame
+is terminal for that job. **A retry is a new paid call**: these rows settle when the lane
+accepts a job (see Payment semantics below), so a job that fails during generation has been
+charged. Over the 30 days to 2026-09-02, 255 of 10,278 forge jobs (2.5%) ended `failed` after
+acceptance.
 
 ### Payment semantics
 
@@ -177,7 +206,9 @@ unit tests in [`tests/api/okx-forge.test.js`](../tests/api/okx-forge.test.js).
 
 - **You pay only when the job is accepted.** Input validation and the age-13+ content gate
   run before settlement; a rejected prompt or a malformed argument fails the call and
-  **no payment settles**.
+  **no payment settles**. Acceptance is the line: once the lane takes the job the payment
+  settles, so a failure that happens later, during generation, has been charged and a retry
+  is a new paid call. Nothing here refunds after settlement.
 - **HD means HD.** If the high-detail lane will not take a job, `forge-hd` answers
   `tier_unavailable` (with `charged: false` and a `retry_after`) instead of quietly serving
   a standard mesh at the HD price. That refusal is also before settlement.

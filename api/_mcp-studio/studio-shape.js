@@ -71,7 +71,12 @@ export function shapeSubmit(job, base, prompt, { pollPath = STUDIO_POLL_PATH } =
 }
 
 // Shape a forge poll response into { status:'pending'|'done'|'error', ... }.
-export function shapePoll(data, base, jobId, title, { pollPath = STUDIO_POLL_PATH } = {}) {
+// `paid` says whether the surface asking is a metered one. It only changes what
+// a FAILED job is told, and it has to: the free lanes really are free to retry,
+// while a metered row settles the moment the lane accepts a job, so the free
+// wording would tell a charged buyer something false about their money. See the
+// failed branch below.
+export function shapePoll(data, base, jobId, title, { pollPath = STUDIO_POLL_PATH, paid = false } = {}) {
 	const glbUrl = typeof data?.glb_url === 'string' ? data.glb_url : '';
 	const preview = previewOf(data);
 	const tier = tierOf(data);
@@ -88,12 +93,26 @@ export function shapePoll(data, base, jobId, title, { pollPath = STUDIO_POLL_PAT
 		};
 	}
 	if (data?.status === 'failed') {
+		// The message is already sanitized by /api/gpt-forge, and the lane only
+		// reports a failure once its own backend failover chain is exhausted, so
+		// this is terminal for THIS job. What a retry costs depends on the
+		// surface, and the difference is not cosmetic: on a metered row payment
+		// settles when the lane accepts the job, so the free lanes' "it costs
+		// nothing to try again" would tell a buyer who was already charged
+		// something false. Neither note claims anything about one particular job
+		// (a status row polls any job id it is handed); each states its own
+		// surface's payment model, which is what the caller has to act on. The
+		// exact per-call answer is the PAYMENT-RESPONSE receipt from the submit.
+		const upstream = String(data?.error || '3D generation hit a snag upstream').trim().replace(/[.!]+$/, '');
+		const lanes = Array.isArray(data?.retry_backends) ? data.retry_backends.filter((b) => typeof b === 'string') : [];
+		const note = paid
+			? 'Jobs here settle when the lane accepts them, so a retry is a new paid call.'
+			: 'It costs nothing to try again.';
 		return {
 			status: 'error',
 			job: jobId,
-			// The message is already sanitized by /api/gpt-forge; generation is free
-			// to retry, so a failed job costs the caller nothing.
-			error: data?.error || '3D generation hit a snag upstream, it costs nothing to try again.',
+			error: `${upstream}. ${note}`,
+			...(lanes.length ? { retryBackends: lanes } : {}),
 		};
 	}
 	// queued / running / anything transient stays pending; keep the title on the
