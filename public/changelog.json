@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-02T19:23:04.763Z",
+	"generated_at": "2026-09-02T19:23:44.983Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -72,17 +72,6 @@
 		{
 			"date": "2026-09-02",
 			"type": "update",
-			"title": "Every 3D service we sell to other agents now publishes its parameters and a working example",
-			"summary": "Agents that buy three.ws 3D generation on the OKX.AI marketplace could read what each service does but not how to call it: the listings named no parameters and carried no example request, so a buyer had to guess the argument names. Each listed service now publishes the full set: what it does, every parameter with its type and whether it is required, the request method and tool name, and a copy-pasteable curl command that hits the real endpoint. The parameter list and the example are generated from the same input schema the endpoint enforces, and a test checks each published example against that schema, so an example that the endpoint would reject cannot ship, and renaming an argument updates the listing with it.",
-			"link": null,
-			"tags": [
-				"improvement",
-				"docs"
-			]
-		},
-		{
-			"date": "2026-09-02",
-			"type": "update",
 			"title": "Every paid endpoint now appears in the public API document",
 			"summary": "Agents find three.ws services by reading the machine-readable API document the platform publishes at /openapi.json. That document listed 24 paid endpoints while the platform actually sells 75, because the entries were written by hand and most were never added. The rest answered a perfectly valid payment challenge in production and could still not be found, which is the whole point of publishing the document. Every paid endpoint is now generated from the same single catalog that already writes the platform's other service listings, so all of them appear with their real price, inputs and payment details, and one written once. The 24 richer hand-written entries are untouched. A test now fails the build if a service is ever added to the catalog without reaching the document, so the gap cannot reopen.",
 			"link": null,
@@ -149,8 +138,19 @@
 			"date": "2026-09-02",
 			"type": "update",
 			"title": "The 3D Studio connector for ChatGPT is documented as the eleven tools it actually serves",
-			"summary": "The free 3D Studio connector grew to eleven tools when look_at_model landed alongside check_job, but a lot of the writing about it had not caught up: the connector page, the press kit, the partner page, the blog summary, the announcement copy, the press release and the store-submission package still said nine or ten, and the social card enumerated only nine tool names. Every one of those now matches a fresh pull from the live server, the social card lists all eleven, and the module headers inside the connector describe the real catalog including which tools spend generation quota. A test now pins the total, so the next tool to land fails the suite instead of quietly re-opening the same drift. The standalone viewer also stopped crediting the AR launch endpoint with a renderer it no longer loads. Two smaller corrections rode along: the pending-generation example now shows the field that tells a client whether the model coming back is a bare mesh or a finished rig, and the three places the platform pins the 3D viewer library are now explained in one comment, so nobody has to guess why an embed and a standalone page load different builds.",
+			"summary": "The free 3D Studio connector grew to eleven tools when look_at_model landed alongside check_job, but a lot of the writing about it had not caught up: the connector page, the press kit, the partner page, the blog summary, the announcement copy, the press release and the store-submission package still said nine or ten, and the social card enumerated only nine tool names. Every one of those now matches a fresh pull from the live server, the social card lists all eleven, and the module headers inside the connector describe the real catalog including which tools spend generation quota. A test now pins the total, so the next tool to land fails the suite instead of quietly re-opening the same drift. The standalone viewer also stopped crediting the AR launch endpoint with a renderer it no longer loads.",
 			"link": "/docs/mcp-studio",
+			"tags": [
+				"docs",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-02",
+			"type": "update",
+			"title": "The docs now agree on how many tools the free ChatGPT connector has",
+			"summary": "The free 3D Studio connector for ChatGPT gained an inspector tool that renders a finished model from several angles, and a collector that picks up a generation which outran its tool call. The pages describing it had not all caught up: the partner page, the press boilerplate, the announcement post and the OpenAI submission pack still counted nine or ten tools between them, and the partner page's tool list was missing the inspector entirely. Every one of those now says eleven and lists the same eleven tools, checked against a live call to the connector, and a test pins the number so the next tool cannot quietly re-open the gap. Alongside it: the pending-generation example now shows the field that tells a client whether the model coming back is a bare mesh or a finished rig, and the three places the 3D viewer library is pinned are documented in one comment so nobody has to guess why a page loads a different build.",
+			"link": "/openai",
 			"tags": [
 				"docs",
 				"fix"

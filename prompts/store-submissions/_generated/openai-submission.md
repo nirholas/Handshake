@@ -1,16 +1,29 @@
 # three.ws 3D Studio — OpenAI ChatGPT App Directory submission package
 
-**Prepared:** 2026-07-07 · **Owning prompt:** 06 · **Endpoint:** `https://three.ws/api/mcp-studio`
+**Prepared:** 2026-07-07 · **Last re-verified live:** 2026-09-02 · **Owning prompt:** 06
+**Endpoint:** `https://three.ws/api/mcp-studio`
 **Prereqs verified live:** prompt 04 (`/api/mcp-studio` deployed), prompt 05 (widget renders real GLBs).
 
 This is the copy-paste-ready answer sheet for submitting the free three.ws 3D Studio to the
-OpenAI ChatGPT App Directory, plus an evidence-backed compliance audit. **Every field is now
+OpenAI ChatGPT App Directory, plus an evidence-backed compliance audit. **Every field is
 filled** (2026-07-14: organization verified on platform.openai.com, support contact and privacy
-policy confirmed live). The only remaining step is the owner's final submit in the portal.
+policy confirmed live). Submission is currently held on the §0 output-quality blocker; once that
+fix is deployed and re-verified, the remaining step is the owner's final submit in the portal.
 
 ---
 
-## 0. Submission verdict — READY (blockers cleared 2026-07-14)
+## 0. Submission verdict: NOT READY (output-quality blocker found 2026-09-02)
+
+**Every connector, manifest, widget and Actions surface re-verified live on 2026-09-02 and all
+pass** (see the §7 checklist). Submission is held on one product defect, not a protocol one:
+
+| # | Blocker | State |
+|---|---------|-------|
+| **B3** | The free lane intermittently ships a **degenerate slab**: a reconstruction that lost its image conditioning returns a full-footprint relief (a 2.0 x 0.31 x 2.0 pancake) instead of the object. It carries 30k triangles and PBR textures, so `scoreGlbQuality` rated it **0.976 / flag `ok`** and skipped vision QA entirely, shipping it as a top-confidence result. Measured on 40 consecutive live free-lane generations: **6 affected**. Both first-try verification generations run for this checklist hit it, so a reviewer's first prompt has a material chance of returning a flat slab. | Cheap-scorer fix landed in `api/_lib/glb-quality.js` (flatness metric + `planar` signal that forces vision-QA escalation; validated to flag 6/6 known-bad and 0/34 healthy). **Needs a production deploy, then a fresh re-verification generation, before submitting.** |
+
+The historical 2026-07-14 blockers below stay cleared.
+
+## 0a. Prior verdict: READY (blockers cleared 2026-07-14)
 
 The app **passes every OpenAI content/privacy/annotation policy** (§2 audit: all PASS). The two
 production defects found on 2026-07-07 are both **fixed and re-verified live on 2026-07-14**:
@@ -406,8 +419,14 @@ curl -s -X POST https://three.ws/api/mcp-studio -H 'content-type: application/js
 
 ## 7. Pre-submit checklist
 
-- [x] **B1** cleared — `tools/call forge_free` returns 200 with a GLB (re-verified 2026-07-14, 1.45 MB GLB).
-- [x] **B2** cleared — `/viewer?src=<glb>` returns 200 and renders the model (re-verified 2026-07-14).
+- [ ] **B3** open: the free lane can ship a degenerate slab as a top-confidence result (§0). Cheap-scorer
+      fix is in the tree (`api/_lib/glb-quality.js`); **deploy it, then re-run a `forge_free` generation and
+      confirm the returned GLB is a solid object** before submitting.
+- [x] **B1** cleared: `tools/call forge_free` returns 200 with a GLB (re-verified live 2026-09-02: HTTP 200
+      in 88s, real 2,256,144-byte GLB with `glTF` magic, `model/gltf-binary`; verbatim response saved to
+      `_generated/live-call-forge_free.json`, which previously held only a stale rate-limit error).
+- [x] **B2** cleared: `/viewer?src=<glb>` returns 200 and renders the model (re-verified live 2026-09-02:
+      `<model-viewer>` reports `loaded === true` for the generated GLB, with no page errors).
 - [x] Developer identity verified on platform.openai.com (verified organization, 2026-07-14).
 - [x] Support contact + privacy policy confirmed live (2026-07-14); both legal URLs return 200 in the
       canonical no-`.html` form (`/legal/privacy`, `/legal/tos`), matching the served OpenAPI (2026-07-18).
@@ -423,6 +442,19 @@ curl -s -X POST https://three.ws/api/mcp-studio -H 'content-type: application/js
 - [ ] Screenshots — **re-capture the landscape widget shots against the shipped inline widget**
       (`api/_mcp-studio/component.js`); the earlier standalone-viewer captures were removed as part of
       collapsing the duplicate viewers. Confirm the form's required dimensions. `[HUMAN]`
+- [x] Inline widget re-verified live 2026-09-02 in a `window.openai`-less Chromium: the skybridge
+      resource paints its empty state ("No model yet"), accepts a real tool payload over `postMessage`,
+      shows the generating state, and reaches ready with `<model-viewer>.loaded === true` on the real
+      generated GLB. Error state reached with an unresolvable GLB ("Couldn't load the model"). No console
+      or page errors in any state.
+- [x] `/api/ar` re-verified live 2026-09-02 per device class: Android UA gets a 302 to a Google Scene
+      Viewer `intent://` URL with a `browser_fallback_url`; iOS and desktop UAs get the 200 launch page
+      that carries the real `og:image`/`og:title` and hands off to `/ar/view`; `kind=avatar` adds the
+      `irl=` hand-off and `/ar/view` renders its "Bring it to life" control; a bad `src` returns a
+      designed 400 page ("Provide a valid https URL to a .glb model.").
+- [x] Custom-GPT Actions lane re-verified live 2026-09-02: `POST /api/3d/studio` returned the documented
+      pending shape in 15s, `GET ?job=&title=` polled to `done` with a real 2,922,332-byte GLB, and both
+      responses validate against the served OpenAPI's own response schemas.
 - [x] Compliance audit: 7/7 policy items PASS (§2), with the review-surface separation documented (§2.1a).
 - [x] Listing metadata drafted (§1): tool list is the live 11-tool surface (re-pulled 2026-09-02);
       `forge_free` tier note corrected to the honest standard default (2026-07-18).

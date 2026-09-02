@@ -66,9 +66,8 @@ run in parallel, H waits on owner gates, I is anytime, J is the parallel swarm.
 
 | Order | State |
 |---|---|
-| [../backlog/01-x402-settle-runway.md](backlog-01-x402-settle-runway.md) | Code complete; outcome false: settle 5.9%, `cause: sponsor_floor`. One code line left (the dry-run reclaim plan still counts sealed wallets). Capital is OWNER-ACTIONS row 2. |
+| [../backlog/01-x402-settle-runway.md](backlog-01-x402-settle-runway.md) | Code complete; outcome false: settle 5.9%, `cause: sponsor_floor`. The dry-run reclaim line it was waiting on is fixed (`afd349790`, pinned by tests). Capital is OWNER-ACTIONS row 2. |
 | [../backlog/11-agent-index-lag.md](backlog-11-agent-index-lag.md) | New 2026-09-01: healthz reports `agent_index` down (1,092 of 1,602 Solana agents erroring, EVM cursors 3,039 hours stale) and nothing owned it. |
-| [02-stranded-wallet-reclaim.md](production-100-02-stranded-wallet-reclaim.md) | Open; nothing shipped. Its ops-card target was removed with the admin panel on 2026-08-05, so the visible surface is the JSON endpoint plus the brief. |
 | [03-master-key-hygiene.md](production-100-03-master-key-hygiene.md) | Open; the runbook section was never written and the cloud half needs a live `gcloud`. |
 
 ### C. Repo and product defects

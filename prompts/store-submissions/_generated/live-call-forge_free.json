@@ -1,1 +1,76 @@
-{"error":"rate_limited","error_description":"generation rate limit — slow down and try again shortly","retry_after":60,"reason":"rate_limiter_unavailable"}
+{
+  "captured": "2026-09-02",
+  "note": "Live, unauthenticated tools/call against https://three.ws/api/mcp-studio. No Authorization header, no API key, no account. Verbatim response body.",
+  "request": {
+    "method": "POST",
+    "url": "https://three.ws/api/mcp-studio",
+    "headers": {
+      "content-type": "application/json"
+    },
+    "body": {
+      "jsonrpc": "2.0",
+      "id": 10,
+      "method": "tools/call",
+      "params": {
+        "name": "forge_free",
+        "arguments": {
+          "prompt": "a low-poly wooden treasure chest with iron bands"
+        }
+      }
+    }
+  },
+  "http_status": 200,
+  "elapsed_seconds": 88.3,
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 10,
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Generated a 3D model (GLB). View it: https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fd36824c3-5749-40d5-a7f5-fa7e0ff159f2.glb\nPlace it in your room (AR, open on a phone): https://three.ws/api/ar?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fd36824c3-5749-40d5-a7f5-fa7e0ff159f2.glb&title=a%20low-poly%20wooden%20treasure%20chest%20with%20iron%20bands\nDownload: https://three.ws/cdn/forge/anon/d36824c3-5749-40d5-a7f5-fa7e0ff159f2.glb\nConcept image it was sculpted from: https://three.ws/cdn/forge/refs/ceaf5386-7302-4f17-994d-f8677282602e.jpg"
+        }
+      ],
+      "structuredContent": {
+        "kind": "model",
+        "glbUrl": "https://three.ws/cdn/forge/anon/d36824c3-5749-40d5-a7f5-fa7e0ff159f2.glb",
+        "viewerUrl": "https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fd36824c3-5749-40d5-a7f5-fa7e0ff159f2.glb",
+        "arUrl": "https://three.ws/api/ar?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fd36824c3-5749-40d5-a7f5-fa7e0ff159f2.glb&title=a%20low-poly%20wooden%20treasure%20chest%20with%20iron%20bands",
+        "format": "glb",
+        "prompt": "a low-poly wooden treasure chest with iron bands",
+        "referenceImageUrl": "https://three.ws/cdn/forge/refs/ceaf5386-7302-4f17-994d-f8677282602e.jpg",
+        "spatial": {
+          "spatialMcpVersion": "0.1",
+          "kind": "model",
+          "scene": {
+            "glbUrl": "https://three.ws/cdn/forge/anon/d36824c3-5749-40d5-a7f5-fa7e0ff159f2.glb",
+            "format": "glb"
+          },
+          "camera": {
+            "autoRotate": true
+          },
+          "environment": {
+            "image": "neutral",
+            "exposure": 1,
+            "shadowIntensity": 1
+          },
+          "affordances": {
+            "orbit": true,
+            "zoom": true,
+            "fullscreen": true,
+            "download": true
+          },
+          "ar": {
+            "glbUrl": "https://three.ws/cdn/forge/anon/d36824c3-5749-40d5-a7f5-fa7e0ff159f2.glb",
+            "launchUrl": "https://three.ws/api/ar?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fd36824c3-5749-40d5-a7f5-fa7e0ff159f2.glb&title=a%20low-poly%20wooden%20treasure%20chest%20with%20iron%20bands",
+            "supported": true
+          },
+          "meta": {
+            "prompt": "a low-poly wooden treasure chest with iron bands",
+            "viewerUrl": "https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fd36824c3-5749-40d5-a7f5-fa7e0ff159f2.glb"
+          }
+        }
+      }
+    }
+  }
+}

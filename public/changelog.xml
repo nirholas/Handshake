@@ -55,14 +55,6 @@
 			<description>Two thirds of the agents in the directory had quietly stopped picking up new on-chain activity. The indexer resumes each agent from the last transaction it saw, and once the RPC provider answering the call no longer held that transaction, the whole read failed and the agent was stuck there permanently: its profile kept loading, it just never learned anything new again. The crawl now notices that its bookmark has gone stale, re-reads from the top and carries on, and the same recovery landed for the secondary chains, where one had been parked on pruned blocks since April. The 1,083 stuck agents have been unstuck. The status page also learned to score this: an index that is erroring rather than lagging used to look perfectly fresh, and a lagging secondary chain no longer reports a platform outage nobody is having.</description>
 		</item>
 		<item>
-			<title>Every 3D service we sell to other agents now publishes its parameters and a working example</title>
-			<link>https://three.ws/changelog</link>
-			<guid isPermaLink="false">2026-09-02:Every 3D service we sell to other agents now publishes its parameters and a working example</guid>
-			<pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
-			<category>improvement</category>
-			<description>Agents that buy three.ws 3D generation on the OKX.AI marketplace could read what each service does but not how to call it: the listings named no parameters and carried no example request, so a buyer had to guess the argument names. Each listed service now publishes the full set: what it does, every parameter with its type and whether it is required, the request method and tool name, and a copy-pasteable curl command that hits the real endpoint. The parameter list and the example are generated from the same input schema the endpoint enforces, and a test checks each published example against that schema, so an example that the endpoint would reject cannot ship, and renaming an argument updates the listing with it.</description>
-		</item>
-		<item>
 			<title>Every paid endpoint now appears in the public API document</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-09-02:Every paid endpoint now appears in the public API document</guid>
@@ -116,7 +108,15 @@
 			<guid isPermaLink="false">2026-09-02:The 3D Studio connector for ChatGPT is documented as the eleven tools it actually serves</guid>
 			<pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
-			<description>The free 3D Studio connector grew to eleven tools when look_at_model landed alongside check_job, but a lot of the writing about it had not caught up: the connector page, the press kit, the partner page, the blog summary, the announcement copy, the press release and the store-submission package still said nine or ten, and the social card enumerated only nine tool names. Every one of those now matches a fresh pull from the live server, the social card lists all eleven, and the module headers inside the connector describe the real catalog including which tools spend generation quota. A test now pins the total, so the next tool to land fails the suite instead of quietly re-opening the same drift. The standalone viewer also stopped crediting the AR launch endpoint with a renderer it no longer loads. Two smaller corrections rode along: the pending-generation example now shows the field that tells a client whether the model coming back is a bare mesh or a finished rig, and the three places the platform pins the 3D viewer library are now explained in one comment, so nobody has to guess why an embed and a standalone page load different builds.</description>
+			<description>The free 3D Studio connector grew to eleven tools when look_at_model landed alongside check_job, but a lot of the writing about it had not caught up: the connector page, the press kit, the partner page, the blog summary, the announcement copy, the press release and the store-submission package still said nine or ten, and the social card enumerated only nine tool names. Every one of those now matches a fresh pull from the live server, the social card lists all eleven, and the module headers inside the connector describe the real catalog including which tools spend generation quota. A test now pins the total, so the next tool to land fails the suite instead of quietly re-opening the same drift. The standalone viewer also stopped crediting the AR launch endpoint with a renderer it no longer loads.</description>
+		</item>
+		<item>
+			<title>The docs now agree on how many tools the free ChatGPT connector has</title>
+			<link>https://three.ws/openai</link>
+			<guid isPermaLink="false">2026-09-02:The docs now agree on how many tools the free ChatGPT connector has</guid>
+			<pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>The free 3D Studio connector for ChatGPT gained an inspector tool that renders a finished model from several angles, and a collector that picks up a generation which outran its tool call. The pages describing it had not all caught up: the partner page, the press boilerplate, the announcement post and the OpenAI submission pack still counted nine or ten tools between them, and the partner page's tool list was missing the inspector entirely. Every one of those now says eleven and lists the same eleven tools, checked against a live call to the connector, and a test pins the number so the next tool cannot quietly re-open the gap. Alongside it: the pending-generation example now shows the field that tells a client whether the model coming back is a bare mesh or a finished rig, and the three places the 3D viewer library is pinned are documented in one comment so nobody has to guess why a page loads a different build.</description>
 		</item>
 		<item>
 			<title>The treasury's self-heal plan now only promises SOL it can actually move</title>
