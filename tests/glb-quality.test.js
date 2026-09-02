@@ -170,6 +170,47 @@ describe('shouldEscalateToVisionQA', () => {
 		expect(shouldEscalateToVisionQA(q)).toBe(true);
 	});
 
+	it('escalates a slab: dense and textured, but with no depth in Y', () => {
+		// The failure this exists for. An image-to-3D reconstruction that loses its
+		// conditioning returns a full-footprint relief: 30k triangles, PBR textures,
+		// a healthy bounding-box diagonal, and a 0.976 score. Every signal the cheap
+		// scorer has says "trust me", so only flatness can withhold that trust.
+		const gltf = healthyGltf();
+		gltf.accessors[0].min = [-1, -0.155, -1];
+		gltf.accessors[0].max = [1, 0.155, 1];
+		const q = scoreGlbQuality(buildGlb(gltf));
+		expect(q.flag).toBe('ok');
+		expect(q.score).toBeGreaterThan(0.6);
+		expect(q.metrics.thinAxis).toBe('y');
+		expect(q.metrics.planar).toBe(true);
+		expect(q.reasons).toContain('planar');
+		expect(shouldEscalateToVisionQA(q)).toBe(true);
+	});
+
+	it('escalates a paper-thin sliver whatever axis it is thin on', () => {
+		const gltf = healthyGltf();
+		gltf.accessors[0].min = [-1, -1, -0.01];
+		gltf.accessors[0].max = [1, 1, 0.01];
+		const q = scoreGlbQuality(buildGlb(gltf));
+		expect(q.metrics.thinAxis).toBe('z');
+		expect(q.metrics.planar).toBe(true);
+		expect(shouldEscalateToVisionQA(q)).toBe(true);
+	});
+
+	it('does NOT flag a slim upright subject as planar', () => {
+		// A standing figure is genuinely narrow front-to-back (measured 0.19 on a
+		// live result). Escalating every humanoid would spend vision budget on the
+		// lane's most common output, so only a Y-thin pancake trips the wider bar.
+		const gltf = healthyGltf();
+		gltf.accessors[0].min = [-0.31, -1, -0.19];
+		gltf.accessors[0].max = [0.31, 1, 0.19];
+		const q = scoreGlbQuality(buildGlb(gltf));
+		expect(q.metrics.thinAxis).toBe('z');
+		expect(q.metrics.planar).toBe(false);
+		expect(q.reasons).not.toContain('planar');
+		expect(shouldEscalateToVisionQA(q)).toBe(false);
+	});
+
 	it('escalates a degenerate / blob mesh', () => {
 		const gltf = healthyGltf();
 		gltf.meshes = [];
