@@ -80,8 +80,24 @@ What it wires, and why each matters:
 Measured reply latency through the real adapter path: ~12 s bare, ~46 s with the full skill
 set loaded. Both are far inside OKX's 30-minute test window.
 
-**The durable fix is built:** [`workers/okx-chat-bot/`](../../workers/okx-chat-bot) is an
-always-on Cloud Run host for the same stack. It restores the wallet/XMTP identity from GCS
+**The durable fix is built and, since 2026-09-02, is what runs the bot on this machine.**
+Prefer it over `npm run okx:bot`, which stages the daemon and exits:
+
+```bash
+PORT=8080 OKX_BOT_REPO_ROOT=/workspaces/three.ws \
+  node --env-file=.env.local workers/okx-chat-bot/index.js
+curl -s localhost:8080/readyz     # 200 with health.ready true when chat is deliverable
+```
+
+Run that way it supervises the daemon itself, beats to `bot_heartbeat` every 30s (so
+`/api/healthz` finally shows the `okx_chat_bot` subsystem instead of `no heartbeat reported
+yet`), and labels every beat `host=codespace:<name>`, `hostDurable=false`, which reads as
+degraded and stopgap on the ops surface rather than green. `--env-file` is not optional:
+sourcing `.env.local` in bash splits the Neon URL on its `&`, and the heartbeat then fails
+with `DATABASE_URL` unset.
+
+[`workers/okx-chat-bot/`](../../workers/okx-chat-bot) is the same code as an
+always-on Cloud Run host. It restores the wallet/XMTP identity from GCS
 on boot, supervises `okx-a2a run` directly (`daemon start` is a no-op in a container),
 rebuilds the AI briefing from the live catalog every boot, and reports health as the
 `okx_chat_bot` subsystem on `/api/healthz`. Ship it with one command (owner-gated):
@@ -344,7 +360,7 @@ This is the holder-visible moment. Work the list top to bottom.
 
 | What | How |
 | --- | --- |
-| Did we sell? | `onchainos agent get-agents --agent-ids 2632` → `soldCount` |
+| Did we sell? | `onchainos agent get-my-agents` → `soldCount`. `get-agents --agent-ids 2632` also carries `soldCount`, but it is the one command that does NOT carry `approvalLabel` (verified 2026-09-02, it reads `None` there), so use `get-my-agents` for the daily watch below and read both fields from one call. |
 | What did buyers say? | `onchainos agent feedback-list --agent-id 2632` ("Query Agent reviews"). `--agent-id` is runtime-enforced: omit it and the CLI answers `missing required parameter: --agent-id`. Optional `--page` / `--page-size`. |
 | Where does revenue land? | The seller/payTo wallet on X Layer (196), **verify live**, it has moved before (see §3); as of 2026-07-23 it is `0x4022de2D36C334E73C7a108805Cea11C0564f402`, the platform's standard EVM merchant wallet, not the buyer wallet. Confirm the first payout against the settlement tx hash from WO-04. |
 | Where do errors surface? | The existing error-reporting path in [`api/_mcp/payments.js`](../../api/_mcp/payments.js); paid-endpoint failures answer **before** settlement, so a failed job never charges a buyer. |
