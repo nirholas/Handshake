@@ -183,6 +183,31 @@ is a stopgap and says so on the wire: every beat carries `host` and
 codespace green would rebuild, one level up, the false-green this worker exists
 to kill.
 
+### The first boot pages for an OTP, unless the state object is seeded
+
+`gs://three-ws-okx-bot-state` holds no snapshot yet, so the first revision boots
+logged out and alerts for a human email OTP as `claude@three.ws`. That round trip
+is avoidable: a machine already holding a live session (the codespace stopgap
+does) can write the same archive this worker writes, and the new host then
+restores an authenticated session and comes up online.
+
+```bash
+# On the machine holding the live session, with its daemon STOPPED so the sqlite
+# files are quiesced. The worker's SIGTERM path stops it for you.
+OKX_BOT_STATE_BUCKET=three-ws-okx-bot-state node -e "
+  import('./workers/okx-chat-bot/state.js').then(async ({ snapshotState }) => {
+    const { loadConfig } = await import('./workers/okx-chat-bot/config.js');
+    console.log(await snapshotState(loadConfig(), { reason: 'seed' }));
+  })"
+```
+
+Two caveats. The archive carries the wallet keyring and session, so it belongs in
+this private bucket and nowhere else, and `snapshotState` needs
+`GCP_SERVICE_ACCOUNT_JSON` on a machine that is not already on GCP. And the
+bucket has exactly one writer: stop the seeding host before the Cloud Run service
+starts, or the two interleave snapshots. Skipping the seed is not a failure, it
+just leaves the OTP that the first boot would have asked for anyway.
+
 The service must run `--min-instances=1 --max-instances=1`. This is not a
 capacity choice: the GCS snapshot has exactly one writer, and concurrent
 revisions would interleave snapshots and corrupt the identity.

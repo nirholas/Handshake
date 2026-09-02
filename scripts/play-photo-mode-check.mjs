@@ -86,7 +86,7 @@ let failedEarly = false;
 try {
 	// ── boot the world ────────────────────────────────────────────────────────
 	console.log(at(), `photo-mode check · ${ENGINE} · ${width}x${height} · ${WORLD}`);
-	await page.goto(WORLD, { waitUntil: 'domcontentloaded', timeout: 120000 });
+	await page.goto(WORLD, { waitUntil: 'domcontentloaded', timeout: BOOT_MS });
 
 	// The HUD is the honest "the world is up" signal: it unhides only once the
 	// scene has a renderer and the room has answered. Asserted as a predicate
