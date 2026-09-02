@@ -48,6 +48,8 @@
 //   --include A,B         also migrate these, overriding the "public config" call
 //   --exclude A,B         never migrate these
 //   --map ENV=secret-name pin a var to a specific Secret Manager secret
+//   --no-reuse            always mint a fresh secret per var, even when an
+//                         existing secret already holds that exact value
 //   --force-new-version   add a version to an existing secret whose value differs
 //   --service/--region/--project  target something other than three-ws-api
 //
@@ -68,6 +70,7 @@ const argv = process.argv.slice(2);
 const APPLY = argv.includes('--apply');
 const VERIFY_ONLY = argv.includes('--verify');
 const FORCE_NEW_VERSION = argv.includes('--force-new-version');
+const REUSE = !argv.includes('--no-reuse');
 
 function optValue(flag, fallback) {
 	const i = argv.indexOf(flag);
@@ -254,9 +257,49 @@ function partition(env) {
 			config.push({ name, reason: 'credential-bearing name but the value is empty' });
 			continue;
 		}
-		credentials.push({ name, value, reason: verdict.reason, secretName: NAME_MAP.get(name) || defaultSecretName(name) });
+		credentials.push({ name, value, reason: verdict.reason, defaultName: defaultSecretName(name) });
 	}
 	return { alreadySecret, credentials, config, review };
+}
+
+// Several env vars legitimately hold the SAME value: one wallet key is read as
+// base58 by one consumer and base64 by another, and the platform treasury key
+// backs more than one signer slot. Minting a fresh secret per var would fan a
+// single credential across several secrets, and a later rotation would update
+// one and silently leave the others live. So the live value is matched against
+// what Secret Manager already holds and an exact match is reused.
+async function buildValueIndex() {
+	const index = new Map();
+	if (!REUSE) return index;
+	let names = [];
+	try {
+		const { stdout } = await gcloud(['secrets', 'list', '--format=value(name)']);
+		names = stdout.split('\n').map((n) => n.trim()).filter(Boolean);
+	} catch {
+		return index;
+	}
+	const digests = await Promise.all(names.map((n) => latestVersionDigest(n)));
+	names.forEach((name, i) => {
+		const d = digests[i];
+		if (!d) return;
+		if (!index.has(d)) index.set(d, []);
+		index.get(d).push(name);
+	});
+	return index;
+}
+
+function resolveSecretName(item, index) {
+	if (NAME_MAP.has(item.name)) return { secretName: NAME_MAP.get(item.name), note: 'pinned by --map' };
+	const matches = index.get(digest(item.value));
+	if (matches?.length) {
+		const preferred = matches.includes(item.defaultName) ? item.defaultName : [...matches].sort()[0];
+		const others = matches.filter((m) => m !== preferred);
+		return {
+			secretName: preferred,
+			note: `already in Secret Manager${others.length ? ` (also held by ${others.join(', ')})` : ''}`,
+		};
+	}
+	return { secretName: item.defaultName, note: 'new secret' };
 }
 
 async function secretExists(name) {
@@ -388,8 +431,15 @@ async function main() {
 		for (const e of review) console.log(`  ${e.name}  (${e.reason}; --include ${e.name} to migrate it)`);
 	}
 
+	const valueIndex = credentials.length ? await buildValueIndex() : new Map();
+	for (const item of credentials) {
+		const resolved = resolveSecretName(item, valueIndex);
+		item.secretName = resolved.secretName;
+		item.nameNote = resolved.note;
+	}
+
 	console.log(`\nPlaintext credentials to migrate (${credentials.length}):`);
-	for (const e of credentials) console.log(`  ${e.name}  ->  ${e.secretName}  (${e.reason})`);
+	for (const e of credentials) console.log(`  ${e.name}  ->  ${e.secretName}  (${e.reason}; ${e.nameNote})`);
 
 	if (VERIFY_ONLY) {
 		const migrated = alreadySecret.map((e) => e.name);

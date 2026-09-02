@@ -172,3 +172,75 @@ describe('computeVerdict: confidence semantics', () => {
 		}
 	});
 });
+
+describe('computeVerdict: the partial stance cannot regress the other classes', () => {
+	// The pre-2026-09-02 rule, transcribed. Its only inputs are `supports`,
+	// `contradicts` and `neutral`, because those were the only stances the
+	// extractor could emit.
+	function legacyComputeVerdict(sources) {
+		if (sources.length < 2) return 'insufficient';
+		let weightedSupport = 0;
+		let weightedContra = 0;
+		let totalWeight = 0;
+		let stanceBearing = 0;
+		for (const s of sources) {
+			totalWeight += s.weight;
+			if (s.stance === 'supports') {
+				weightedSupport += s.weight;
+				stanceBearing++;
+			} else if (s.stance === 'contradicts') {
+				weightedContra += s.weight;
+				stanceBearing++;
+			}
+		}
+		const stanceWeight = weightedSupport + weightedContra;
+		if (totalWeight === 0 || stanceWeight === 0) return 'insufficient';
+		const coverage = stanceWeight / totalWeight;
+		if (stanceBearing === 1 && coverage < 0.3) return 'insufficient';
+		if (weightedSupport / stanceWeight >= 0.7) return 'supported';
+		if (weightedContra / stanceWeight >= 0.7) return 'contradicted';
+		return 'mixed';
+	}
+
+	// A deterministic pseudo-random generator, so a failure is reproducible.
+	function rng(seed) {
+		let state = seed >>> 0;
+		return () => {
+			state = (state * 1664525 + 1013904223) >>> 0;
+			return state / 0x100000000;
+		};
+	}
+
+	it('agrees with the legacy rule on every distribution the legacy rule could see', () => {
+		// This is the no-regression proof for `supported`, `contradicted` and
+		// `insufficient`: on any evidence set with no `partial` in it, the new
+		// calculus returns exactly the old verdict. So the only claims whose
+		// verdict can move are the ones a source actually reports as half-true,
+		// and no clear-cut claim can be pulled into the mixed band by the change.
+		const next = rng(20260902);
+		const legacyStances = ['supports', 'contradicts', 'neutral'];
+		for (let trial = 0; trial < 5000; trial++) {
+			const n = Math.floor(next() * 7);
+			const sources = Array.from({ length: n }, (_v, i) => ({
+				url: `https://example.com/${i}`,
+				stance: legacyStances[Math.floor(next() * legacyStances.length)],
+				// Real weights are authority scores in [0, 1]; 0 is reachable via
+				// the `high` strictness penalty on a low-authority source.
+				weight: Math.round(next() * 100) / 100,
+			}));
+			expect(computeVerdict(sources).verdict, JSON.stringify(sources)).toBe(
+				legacyComputeVerdict(sources),
+			);
+		}
+	});
+
+	it('replacing a partial stance with a directional one restores the legacy verdict', () => {
+		// The change is confined to what `partial` means: it is not a global
+		// re-tuning of the thresholds.
+		const base = [...of('supports', 3), ...of('contradicts', 1)];
+		const withPartial = [...base, ...of('partial', 2)];
+		expect(computeVerdict(base).verdict).toBe('supported');
+		expect(computeVerdict(withPartial).verdict).toBe('mixed');
+		expect(computeVerdict([...base, ...of('supports', 2)]).verdict).toBe('supported');
+	});
+});
