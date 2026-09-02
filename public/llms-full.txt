@@ -726,6 +726,12 @@ URL: https://three.ws/avatar-sdk
 
 The @three-ws/avatar package: embed the platform 3D avatars in any site with a few lines of JavaScript.
 
+### Materialize
+
+URL: https://three.ws/materialize
+
+Turn any 3D model into a real printed object. Live printability analysis and automatic repair, a true-scale AR preview on your own desk, an itemized price from the mesh's own measured volume, and USDC checkout on Solana.
+
 ### Model Inspector
 
 URL: https://three.ws/inspect
