@@ -201,6 +201,7 @@ function openDrawer(orderId) {
 function closeDrawer() {
 	openOrderId = null;
 	lastResult = null;
+	currentDetail = null;
 	drawer.dataset.open = 'false';
 	scrim.dataset.open = 'false';
 	drawer.setAttribute('aria-hidden', 'true');
@@ -372,79 +373,96 @@ function payoutHtml(payout) {
 		${esc(payout.instruction || '')}</p>`;
 }
 
+// The order currently in the drawer. The click handler below is registered ONCE
+// at module scope and reads this, rather than being re-registered per render:
+// every action reloads the detail, and a listener attached inside that render
+// accumulated one extra copy per reload, so the third click fired the same
+// mutation three times and collected two 409s behind the one that landed.
+let currentDetail = null;
+
 function wireDetail(data) {
-	const order = data.order;
-
-	const say = (message, tone = '', payout = null) => {
-		lastResult = { orderId: order.id, message, tone, payout };
-		const el = drawerBody.querySelector('#mo-result');
-		if (!el) return;
-		el.textContent = message;
-		if (tone) el.dataset.tone = tone;
-		else delete el.dataset.tone;
-	};
-
-	const run = async (button, work) => {
-		const buttons = [...drawerBody.querySelectorAll('button[data-act]')];
-		for (const b of buttons) b.disabled = true;
-		say('Working…');
-		try {
-			const body = await work();
-			// Stored before the reload, rendered again by detailHtml afterwards, so
-			// the operator reads the outcome rather than watching it flash past.
-			say(body.message || 'Done.', 'ok', body.payout || null);
-			await loadQueue();
-			await loadDetail(order.id);
-		} catch (err) {
-			say(err.message, 'error');
-			for (const b of buttons) b.disabled = false;
-		}
-	};
-
-	drawerBody.addEventListener('click', (event) => {
-		const button = event.target.closest('button[data-act]');
-		if (!button) return;
-		const note = drawerBody.querySelector('#mo-note')?.value || '';
-
-		if (button.dataset.act === 'submit') {
-			const adapter = drawerBody.querySelector('#mo-adapter')?.value || '';
-			return run(button, async () => {
-				const body = await api('submit', { method: 'POST', body: JSON.stringify({ order_id: order.id, adapter }) });
-				return { message: `Submitted to ${body.adapter}.` };
-			});
-		}
-
-		if (button.dataset.act === 'tracking') {
-			const trackingNumber = drawerBody.querySelector('#mo-tracking')?.value.trim() || '';
-			const carrier = drawerBody.querySelector('#mo-carrier')?.value.trim() || '';
-			if (!trackingNumber) return say('Enter a tracking number first.', 'error');
-			return run(button, async () => {
-				const body = await api('tracking', {
-					method: 'POST',
-					body: JSON.stringify({ order_id: order.id, tracking_number: trackingNumber, carrier, note, ship: order.status !== 'shipped' }),
-				});
-				return { message: `Order is ${body.order.status}.` };
-			});
-		}
-
-		if (button.dataset.act === 'to') {
-			const to = button.dataset.to;
-			// The two moves that end an order get a confirmation. Everything else
-			// is reversible by another transition; these are not.
-			if ((to === 'refunded' || to === 'canceled') && !window.confirm(`Mark order ${shortId(order.id)} as ${to}? This cannot be undone.`)) return;
-			const path = to === 'canceled' ? 'cancel' : to === 'refunded' ? 'refund' : 'transition';
-			const payload = to === 'canceled'
-				? { order_id: order.id, reason: note }
-				: to === 'refunded'
-					? { order_id: order.id, note }
-					: { order_id: order.id, to, note };
-			return run(button, async () => {
-				const body = await api(path, { method: 'POST', body: JSON.stringify(payload) });
-				return { message: `Order is ${body.order.status}.`, payout: body.payout };
-			});
-		}
-	});
+	currentDetail = data;
 }
+
+/** Record an outcome, and show it if the drawer is currently rendered. */
+function say(orderId, message, tone = '', payout = null) {
+	lastResult = { orderId, message, tone, payout };
+	const el = drawerBody.querySelector('#mo-result');
+	if (!el) return;
+	el.textContent = message;
+	if (tone) el.dataset.tone = tone;
+	else delete el.dataset.tone;
+}
+
+// One action at a time. The guard is what makes a double click (or an operator
+// hitting Enter twice) a single mutation rather than a race the state machine
+// has to referee.
+let actionInFlight = false;
+
+async function runAction(orderId, work) {
+	if (actionInFlight) return;
+	actionInFlight = true;
+	for (const b of drawerBody.querySelectorAll('button[data-act]')) b.disabled = true;
+	say(orderId, 'Working…');
+	try {
+		const body = await work();
+		// Stored before the reload, rendered again by detailHtml afterwards, so the
+		// operator reads the outcome rather than watching it flash past.
+		say(orderId, body.message || 'Done.', 'ok', body.payout || null);
+		await loadQueue();
+		await loadDetail(orderId);
+	} catch (err) {
+		say(orderId, err.message, 'error');
+		for (const b of drawerBody.querySelectorAll('button[data-act]')) b.disabled = false;
+	} finally {
+		actionInFlight = false;
+	}
+}
+
+drawerBody.addEventListener('click', (event) => {
+	const button = event.target.closest('button[data-act]');
+	if (!button || !currentDetail) return;
+	const order = currentDetail.order;
+	const note = drawerBody.querySelector('#mo-note')?.value || '';
+
+	if (button.dataset.act === 'submit') {
+		const adapter = drawerBody.querySelector('#mo-adapter')?.value || '';
+		return runAction(order.id, async () => {
+			const body = await api('submit', { method: 'POST', body: JSON.stringify({ order_id: order.id, adapter }) });
+			return { message: `Submitted to ${body.adapter}.` };
+		});
+	}
+
+	if (button.dataset.act === 'tracking') {
+		const trackingNumber = drawerBody.querySelector('#mo-tracking')?.value.trim() || '';
+		const carrier = drawerBody.querySelector('#mo-carrier')?.value.trim() || '';
+		if (!trackingNumber) return say(order.id, 'Enter a tracking number first.', 'error');
+		return runAction(order.id, async () => {
+			const body = await api('tracking', {
+				method: 'POST',
+				body: JSON.stringify({ order_id: order.id, tracking_number: trackingNumber, carrier, note, ship: order.status !== 'shipped' }),
+			});
+			return { message: `Order is ${body.order.status}.` };
+		});
+	}
+
+	if (button.dataset.act === 'to') {
+		const to = button.dataset.to;
+		// The two moves that end an order get a confirmation. Everything else is
+		// reversible by another transition; these are not.
+		if ((to === 'refunded' || to === 'canceled') && !window.confirm(`Mark order ${shortId(order.id)} as ${to}? This cannot be undone.`)) return;
+		const path = to === 'canceled' ? 'cancel' : to === 'refunded' ? 'refund' : 'transition';
+		const payload = to === 'canceled'
+			? { order_id: order.id, reason: note }
+			: to === 'refunded'
+				? { order_id: order.id, note }
+				: { order_id: order.id, to, note };
+		return runAction(order.id, async () => {
+			const body = await api(path, { method: 'POST', body: JSON.stringify(payload) });
+			return { message: `Order is ${body.order.status}.`, payout: body.payout };
+		});
+	}
+});
 
 // ── events ───────────────────────────────────────────────────────────────────
 
