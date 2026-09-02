@@ -153,7 +153,7 @@ function rowHtml(order) {
 		<td class="mo-num">${esc(order.quantity ?? 1)}</td>
 		<td class="mo-num">${Number(order.price_usdc || 0).toFixed(2)}</td>
 		<td>${esc(order.provider || 'unassigned')}</td>
-		<td>${esc(order.ship_to_country || '—')}</td>
+		<td>${esc(order.ship_to_country || '-')}</td>
 		<td class="mo-mono">${esc(fmtDate(order.created_at))}</td>
 	</tr>`;
 }

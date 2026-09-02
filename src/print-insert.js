@@ -1,4 +1,4 @@
-// /materialize/insert/:certId — the card that goes in the box.
+// /materialize/insert/:certId: the card that goes in the box.
 //
 // An operator opens this at the shipping step, prints it on card stock, and
 // drops it in with the object. Everything on the card is what a buyer needs

@@ -1,4 +1,4 @@
-// /cert/:certId — the certificate of authenticity for one Materialize print.
+// /cert/:certId: the certificate of authenticity for one Materialize print.
 //
 // This is the page a QR code on a physical box resolves to, so it is built for
 // a stranger on a phone: no session, no chrome to click through, and the proof
