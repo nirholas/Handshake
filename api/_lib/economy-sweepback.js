@@ -31,6 +31,11 @@ import { sendSol, LAMPORTS_PER_SOL } from './avatar-wallet.js';
 import { submitProtected } from './execution-engine.js';
 import { MIN_OPERATIONAL_WALLET_SOL } from './agent-trade-guards.js';
 import { antiOscillationFloorSol } from './agent-funding-policy.js';
+import {
+	PLATFORM_AGENT_OWNER_EMAIL,
+	PLATFORM_AGENT_EMAIL_SUFFIX,
+	isPlatformOwnedAgent,
+} from './custodial-key-health.js';
 
 // Same float the treasury-topup cron refills to — sweep only above it.
 const DEFAULT_REFILL_MULTIPLE = 3;
@@ -450,10 +455,10 @@ export async function reclaimIdleSol({ connection, network = 'mainnet', dryRun =
 // customer's agent is never touched, and the SQL gate plus a redundant in-JS
 // re-check make that true even if the query is later edited.
 
-/** House account that owns the platform's own (non-bot) agents. */
-export const PLATFORM_AGENT_OWNER_EMAIL = 'three-ws@users.three.ws.local';
-/** Email suffix of the platform-created circulation bot accounts. */
-export const PLATFORM_AGENT_EMAIL_SUFFIX = '@agents.three.ws';
+// One definition, shared with the custodial key-health audit: two copies of this
+// boundary drifted apart once already (the audit carried a different house-account
+// address and filed 12 platform wallets as customer ones).
+export { PLATFORM_AGENT_OWNER_EMAIL, PLATFORM_AGENT_EMAIL_SUFFIX, isPlatformOwnedAgent };
 
 /** Floor left on an idle platform agent — enough to sign its own transactions. */
 const AGENT_IDLE_FLOOR_SOL = num('AGENT_RECLAIM_IDLE_FLOOR_SOL', 0.005);
@@ -581,17 +586,6 @@ export function agentCandidateFromRow(row, sol) {
 				row.per_trade_lamports != null ? Number(row.per_trade_lamports) / LAMPORTS_PER_SOL : 0,
 		},
 	};
-}
-
-/**
- * True only for the platform's own agent-owner accounts. Anything else (a real
- * signup, a wallet-auth account, an unknown value) is a customer and is out.
- * @param {string|null|undefined} ownerEmail
- */
-export function isPlatformOwnedAgent(ownerEmail) {
-	if (!ownerEmail || typeof ownerEmail !== 'string') return false;
-	const email = ownerEmail.trim().toLowerCase();
-	return email === PLATFORM_AGENT_OWNER_EMAIL || email.endsWith(PLATFORM_AGENT_EMAIL_SUFFIX);
 }
 
 /**

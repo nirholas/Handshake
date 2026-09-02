@@ -466,12 +466,21 @@ export function classifyOkxChatBotBeat(beat, now = Date.now()) {
 	}
 
 	const reported = typeof meta.health === 'string' ? meta.health : 'unknown';
+	const host = typeof meta.host === 'string' && meta.host ? meta.host : null;
 	if (reported === 'ok') {
-		return {
-			...base,
-			status: 'ok',
-			detail: `online (${meta.activeClients ?? '?'} XMTP client(s), provider=${beat.mode || meta.provider || 'unknown'})`,
-		};
+		const online = `online (${meta.activeClients ?? '?'} XMTP client(s), provider=${beat.mode || meta.provider || 'unknown'}${host ? `, host=${host}` : ''})`;
+		// A host that beats but cannot survive on its own is a stopgap, not the
+		// fix. Reporting it green is how "the bot is up" and "the bot is up until
+		// this workspace sleeps" became the same sentence.
+		if (meta.hostDurable === false) {
+			return {
+				...base,
+				status: 'degraded',
+				detail: `${online}; that host is a stopgap and dies with its workspace, so chat delivery is not durable yet`,
+				hint: 'Deploy the always-on host: gcloud builds submit --config workers/okx-chat-bot/cloudbuild.yaml . (see workers/okx-chat-bot/README.md).',
+			};
+		}
+		return { ...base, status: 'ok', detail: online };
 	}
 	if (reported === 'unknown') {
 		return { ...base, status: 'unknown', detail: String(meta.detail || 'bot could not determine its own state') };

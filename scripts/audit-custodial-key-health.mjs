@@ -15,7 +15,9 @@
 // A key rotation is the usual cause. `scripts/rekey-stale-launch-wallets.mjs`
 // documents one: the WALLET_ENCRYPTION_KEY changed during the Vercel to Cloud
 // Run migration in 2026-07, and every wallet written under the retired key
-// became unreadable. This script measures the blast radius of that class.
+// became unreadable. This script measures the blast radius of that class;
+// `docs/ops/stranded-wallets.md` carries the standing owner decision on the
+// customer balances it finds.
 //
 // READ-ONLY. It decrypts in memory to test the key, never writes, never signs,
 // never broadcasts. Balances are read with getMultipleAccounts (100 per call) so
@@ -49,11 +51,6 @@ const PLATFORM_ONLY = process.argv.includes('--platform-only');
 const emitJson = console.log.bind(console);
 if (AS_JSON) console.log = (...args) => console.error(...args);
 
-// Same ownership markers the reclaim leg uses (api/_lib/economy-sweepback.js):
-// platform agents live under one owner email or the agent-email suffix.
-const PLATFORM_OWNER_EMAIL = 'agents@three.ws';
-const PLATFORM_EMAIL_SUFFIX = '@agents.three.ws';
-const LAMPORTS_PER_SOL = 1_000_000_000;
 
 // Where an operator actually gets the key. The playbook order in CLAUDE.md:
 // local dotfiles first, then the running service, then Secret Manager.
@@ -78,10 +75,12 @@ for (const file of ['.env', '.env.local']) {
 	}
 }
 
-const { sql } = await import('../api/_lib/db.js');
-const { decryptSecret, secretBoxKeyCandidates } = await import('../api/_lib/secret-box.js');
-const { PublicKey } = await import('@solana/web3.js');
-const { solanaConnection } = await import('../api/_lib/solana/connection.js');
+// The measurement itself lives in api/_lib/custodial-key-health.js, shared with
+// the ops board (`stranded_custody` in /api/ops/payment-outcomes), so the number
+// an operator reads here and the number the board renders cannot drift apart.
+// This file is the CLI around it: env loading, the key guard, and rendering.
+const { secretBoxKeyCandidates } = await import('../api/_lib/secret-box.js');
+const { gatherCustodialKeyHealth } = await import('../api/_lib/custodial-key-health.js');
 
 // A shell with NO decryption key configured cannot tell "sealed under a retired
 // key" from "this machine was never given the key". Without this check the
@@ -115,138 +114,14 @@ if (keyCandidates.length === 0) {
 	process.exit(3);
 }
 
-
-const rows = await sql`
-	SELECT a.id                               AS agent_id,
-	       a.name                             AS name,
-	       a.created_at                       AS created_at,
-	       a.meta->>'solana_address'          AS address,
-	       a.meta->>'encrypted_solana_secret' AS secret,
-	       LOWER(u.email)                     AS owner
-	FROM agent_identities a
-	JOIN users u ON u.id = a.user_id
-	WHERE a.deleted_at IS NULL
-	  AND a.meta->>'solana_address' IS NOT NULL
-	  AND a.meta->>'encrypted_solana_secret' IS NOT NULL
-	ORDER BY a.created_at ASC
-`;
-
-const isPlatform = (owner) =>
-	owner === PLATFORM_OWNER_EMAIL || (owner || '').endsWith(PLATFORM_EMAIL_SUFFIX);
-
-const wallets = rows.filter((r) => (PLATFORM_ONLY ? isPlatform(r.owner) : true));
-
-// Decrypt is the whole test: AES-GCM authenticates, so a wrong key throws rather
-// than returning wrong plaintext. We never touch the recovered material beyond
-// checking that it exists.
-for (const w of wallets) {
-	try {
-		const plain = await decryptSecret(w.secret);
-		w.decryptable = Boolean(plain && plain.length > 0);
-		w.reason = w.decryptable ? null : 'empty_plaintext';
-	} catch (e) {
-		w.decryptable = false;
-		w.reason = e?.name === 'OperationError' ? 'wrong_key' : e?.message || 'decrypt_failed';
-	}
-}
-
-// Same rotating multi-lane connection production reads balances through
-// (api/_lib/solana/connection.js), not a single bare endpoint. A script that
-// hits exactly one RPC URL dies the moment that one lane rate-limits or
-// blocks the caller's IP (observed 2026-08-09: SOLANA_RPC_URL pinned to a
-// single free lane returned 403 for every wallet), and the failure was
-// invisible because unread balances silently summed as zero (see below).
-const connection = solanaConnection({ url: process.env.SOLANA_RPC_URL || null });
-
-const balances = new Map();
-const readErrors = [];
-for (let i = 0; i < wallets.length; i += 100) {
-	const chunk = wallets.slice(i, i + 100);
-	let keys;
-	try {
-		keys = chunk.map((w) => new PublicKey(w.address));
-	} catch (e) {
-		for (const w of chunk) readErrors.push({ address: w.address, reason: `bad_address: ${e?.message}` });
-		continue;
-	}
-	try {
-		const infos = await connection.getMultipleAccountsInfo(keys);
-		infos.forEach((info, idx) => balances.set(chunk[idx].address, (info?.lamports ?? 0) / LAMPORTS_PER_SOL));
-	} catch (e) {
-		for (const w of chunk) readErrors.push({ address: w.address, reason: `rpc_error: ${e?.message}` });
-	}
-}
-
-// balances.has() is load-bearing: a wallet whose chunk hit an RPC error has no
-// entry at all, and must never be treated as a confirmed zero balance. Coalescing
-// "unread" into "0" is exactly the bug that let this audit report "0 SOL
-// stranded" while two undecryptable wallets actually held 0.12 SOL (2026-08-09;
-// caught only because the treasury-topup cron's *live* reclaim attempt, which
-// reads balances through Cloud Run's own multi-lane connection, tried to sweep
-// them and hit secret_undecryptable on wallets this audit had certified as
-// zero). `sum()` therefore only totals wallets with a confirmed read, and the
-// caller must check `unreadCount` before trusting a "0 stranded" verdict.
-const sum = (list) => list.reduce((t, w) => (balances.has(w.address) ? t + balances.get(w.address) : t), 0);
-const unread = (list) => list.filter((w) => !balances.has(w.address));
-const round = (n) => Number(n.toFixed(9));
-
-const platform = wallets.filter((w) => isPlatform(w.owner));
-const customer = wallets.filter((w) => !isPlatform(w.owner));
-const stranded = wallets.filter((w) => !w.decryptable);
-// "Funded" requires a CONFIRMED positive balance; a stranded wallet whose
-// balance we never read is neither funded nor cleared, it is unknown.
-const strandedFunded = stranded.filter((w) => balances.has(w.address) && balances.get(w.address) > 0);
-const strandedUnread = unread(stranded);
-
-const report = {
-	checked_at: new Date().toISOString(),
-	rpc: process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
-	wallets: wallets.length,
-	// How many keys decryptSecret() had to try. 1 is the healthy steady state; a
-	// higher count means retired keys are still configured for the migration.
-	key_candidates: keyCandidates.length,
-	read_errors: readErrors.length,
-	decryptable: wallets.length - stranded.length,
-	undecryptable: stranded.length,
-	sol: {
-		// Every figure below is a sum over CONFIRMED reads only (sum() skips
-		// addresses with no balances.has() entry) - never trust these as
-		// complete while unread_stranded_count > 0 below.
-		total: round(sum(wallets)),
-		decryptable: round(sum(wallets.filter((w) => w.decryptable))),
-		stranded: round(sum(stranded)),
-		stranded_platform: round(sum(stranded.filter((w) => isPlatform(w.owner)))),
-		stranded_customer: round(sum(stranded.filter((w) => !isPlatform(w.owner)))),
-	},
-	counts: {
-		platform: platform.length,
-		customer: customer.length,
-		stranded_platform: stranded.filter((w) => isPlatform(w.owner)).length,
-		stranded_customer: stranded.filter((w) => !isPlatform(w.owner)).length,
-		stranded_funded: strandedFunded.length,
-		stranded_unread: strandedUnread.length,
-	},
-	top_stranded: strandedFunded
-		.sort((a, b) => (balances.get(b.address) || 0) - (balances.get(a.address) || 0))
-		.slice(0, 20)
-		.map((w) => ({
-			name: w.name,
-			address: w.address,
-			owner: w.owner,
-			sol: round(balances.get(w.address) || 0),
-			reason: w.reason,
-			created_at: w.created_at,
-			platform: isPlatform(w.owner),
-		})),
-	unread_stranded: strandedUnread.map((w) => ({
-		name: w.name,
-		address: w.address,
-		owner: w.owner,
-		reason: w.reason,
-		created_at: w.created_at,
-		platform: isPlatform(w.owner),
-	})),
-};
+// One fleet scan: read every stored wallet, test every key, read every balance
+// through the rotating multi-lane connection production uses. Totals sum only
+// CONFIRMED balance reads, so an RPC failure reports `stranded_unread` instead of
+// a confident zero (the 2026-08-09 blind spot).
+const report = await gatherCustodialKeyHealth({
+	platformOnly: PLATFORM_ONLY,
+	keyCandidates: keyCandidates.length,
+});
 
 if (AS_JSON) {
 	emitJson(JSON.stringify(report, null, 2));
@@ -292,5 +167,6 @@ if (report.wallets > 0 && report.undecryptable === report.wallets) {
 	console.log('');
 	console.log('  Customer funds are stranded. This is a support obligation, not just an');
 	console.log('  ops number: those users cannot withdraw. Escalate before anything else.');
+	console.log('  Decision brief: docs/ops/stranded-wallets.md');
 }
 process.exit(0);
