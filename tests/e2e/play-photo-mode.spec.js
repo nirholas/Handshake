@@ -42,7 +42,12 @@ const RETRYING_IMPORT = `window.__imp = async (path) => {
 		// replays the original failure forever no matter how long you wait. Vite
 		// serves the query-suffixed path as the same module, freshly transformed.
 		const spec = i === 0 ? path : path + (path.includes('?') ? '&' : '?') + 'e2eRetry=' + i;
-		try { return await import(spec); } catch (e) { last = e; await new Promise((r) => setTimeout(r, 1200)); }
+		// Absolute, always. This helper is installed by addInitScript, and in
+		// WebKit that script's base URL is web-inspector://bootstrap.js, so a
+		// root-relative specifier resolves against the inspector rather than the
+		// page and every import dies as "Importing a module script failed".
+		try { return await import(new URL(spec, document.baseURI).href); }
+		catch (e) { last = e; await new Promise((r) => setTimeout(r, 1200)); }
 	}
 	throw last;
 };`;

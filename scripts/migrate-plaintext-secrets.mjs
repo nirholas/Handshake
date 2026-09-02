@@ -48,8 +48,8 @@
 //   --include A,B         also migrate these, overriding the "public config" call
 //   --exclude A,B         never migrate these
 //   --map ENV=secret-name pin a var to a specific Secret Manager secret
-//   --no-reuse            always mint a fresh secret per var, even when an
-//                         existing secret already holds that exact value
+//   --no-reuse            skip the scan that reports which existing secrets
+//                         already hold the same value
 //   --force-new-version   add a version to an existing secret whose value differs
 //   --service/--region/--project  target something other than three-ws-api
 //
@@ -290,16 +290,20 @@ async function buildValueIndex() {
 
 function resolveSecretName(item, index) {
 	if (NAME_MAP.has(item.name)) return { secretName: NAME_MAP.get(item.name), note: 'pinned by --map' };
-	const matches = index.get(digest(item.value));
-	if (matches?.length) {
-		const preferred = matches.includes(item.defaultName) ? item.defaultName : [...matches].sort()[0];
-		const others = matches.filter((m) => m !== preferred);
-		return {
-			secretName: preferred,
-			note: `already in Secret Manager${others.length ? ` (also held by ${others.join(', ')})` : ''}`,
-		};
-	}
-	return { secretName: item.defaultName, note: 'new secret' };
+	// A match is reported, never adopted on its own. Several secrets here belong to
+	// OTHER services (agent-orders, sniper) that happen to run the same value today.
+	// Pointing this service's var at one of those would couple two rotations: the
+	// day someone rotates the other service's secret, this service silently takes
+	// the new value, which for a wallet-encryption key means every custodial wallet
+	// stops opening. Adoption is therefore an explicit --map, made by a human who
+	// knows which secret is the credential's real home.
+	const matches = (index.get(digest(item.value)) || []).filter((m) => m !== item.defaultName);
+	return {
+		secretName: item.defaultName,
+		note: matches.length
+			? `this exact value is already in ${matches.join(', ')}; --map ${item.name}=<name> to point at one instead of minting a copy`
+			: 'new secret',
+	};
 }
 
 async function secretExists(name) {
