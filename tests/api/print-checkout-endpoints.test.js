@@ -29,7 +29,7 @@ const OTHER_USER = { id: '00000000-0000-4000-8000-0000000000bb' };
 
 let sessionUser = USER;
 let csrfOk = true;
-const store = { orders: new Map(), created: [], transitions: [] };
+const store = { orders: new Map(), created: [], transitions: [], failTransitionTo: null };
 
 vi.mock('../../api/_lib/auth.js', () => ({
 	getSessionUser: vi.fn(async () => sessionUser),
@@ -83,6 +83,10 @@ vi.mock('../../api/_lib/print-store.js', async (importOriginal) => {
 			return row;
 		}),
 		transition: vi.fn(async ({ orderId, to }) => {
+			if (store.failTransitionTo === to) {
+				const err = new actual.PrintStoreError('edition_sold_out', 'This edition is sold out.');
+				throw err;
+			}
 			store.transitions.push({ orderId, to });
 			const row = store.orders.get(orderId);
 			if (row) row.status = to;
@@ -149,6 +153,7 @@ beforeEach(() => {
 	store.orders.clear();
 	store.created.length = 0;
 	store.transitions.length = 0;
+	store.failTransitionTo = null;
 	vi.clearAllMocks();
 });
 
@@ -230,6 +235,18 @@ describe('POST /api/print/orders', () => {
 		expect(body.quoted_country).toBe('GB');
 		expect(body.shipping_country).toBe('AU');
 		expect(store.created).toHaveLength(0);
+	});
+
+	it('closes out an order the quoted move refused, rather than stranding it', async () => {
+		// The row is inserted before the move, so a refusal after the insert would
+		// otherwise leave a `created` order nobody will pay for and nobody will close.
+		store.failTransitionTo = 'quoted';
+		const res = await postOrder({ token: tokenFor(), shipping: SHIPPING });
+		expect(res.statusCode).toBe(409);
+		expect(parse(res).error).toBe('edition_sold_out');
+		expect(store.transitions).toEqual([
+			{ orderId: '11111111-2222-4333-8444-555555555555', to: 'canceled' },
+		]);
 	});
 
 	it('names the missing shipping field rather than failing generically', async () => {

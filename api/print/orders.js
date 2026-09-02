@@ -30,6 +30,7 @@ import { env } from '../_lib/env.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
 import { buildGaslessPurchaseTx } from '../_lib/solana/gasless-tx.js';
 import { verifyQuote } from '../_lib/print/quote.js';
+import { PrintEditionError } from '../_lib/print/editions.js';
 import {
 	PrintStoreError,
 	createOrder,
@@ -73,6 +74,29 @@ function solanaPayUrl({ payTo, mint, amount, reference, label, message }) {
 		message,
 	});
 	return `solana:${payTo}?${params.toString()}`;
+}
+
+/**
+ * Close out an order that was inserted but never reached `quoted`. Best effort
+ * on purpose: the caller is already returning an error, and a cancel that fails
+ * must not replace the real reason with a second, less useful one. Anything left
+ * behind is still a legal `created` row the operator console can close by hand.
+ *
+ * @param {{ id: string, status: string }|null} order
+ * @param {unknown} cause
+ */
+async function cancelStrandedOrder(order, cause) {
+	if (!order?.id || order.status !== 'created') return;
+	try {
+		await transition({
+			orderId: order.id,
+			to: 'canceled',
+			note: `Checkout could not be completed: ${String(cause?.message || cause).slice(0, 200)}`,
+			actor: 'system',
+		});
+	} catch (err) {
+		console.warn('[print] could not close stranded order', order.id, err?.message);
+	}
 }
 
 export default wrap(async (req, res) => {
@@ -181,6 +205,18 @@ export default wrap(async (req, res) => {
 		});
 		order = moved.order;
 	} catch (err) {
+		// The row is inserted before the move to `quoted`, so a failure here (a
+		// sold-out edition, a lost race) would otherwise strand an order in
+		// `created` that nobody will ever pay for and nobody will ever close.
+		// Cancel it on the way out: the buyer sees the real reason, and the
+		// operator queue does not collect one orphan per failed checkout.
+		await cancelStrandedOrder(order, err);
+		// The scarcity check on the `quoted` move throws its own typed error, so
+		// a sold-out edition has to be caught here too or it would surface as a
+		// 500 on the one path where a buyer most needs to be told why.
+		if (err instanceof PrintEditionError) {
+			return error(res, 409, err.code, err.message);
+		}
 		if (err instanceof PrintStoreError) {
 			const status = err.code === 'edition_sold_out' ? 409 : 422;
 			return error(res, status, err.code, err.message);

@@ -278,12 +278,29 @@ export default async function handler(req, res) {
 				shipping,
 				paymentChain: 'solana',
 			});
-			await transition({
-				orderId: order.id,
-				to: 'quoted',
-				note: note ? `Agent order over x402. ${note}` : 'Agent order over x402, awaiting settlement.',
-				actor: 'system',
-			});
+			try {
+				await transition({
+					orderId: order.id,
+					to: 'quoted',
+					note: note ? `Agent order over x402. ${note}` : 'Agent order over x402, awaiting settlement.',
+					actor: 'system',
+				});
+			} catch (err) {
+				// The row exists before the move, so a refusal here (a sold-out
+				// edition, a lost race) would otherwise strand an order in `created`
+				// that no settlement will ever reach. Close it out, then rethrow so
+				// the wrapper refuses the call BEFORE settling: the caller keeps
+				// their money and the queue keeps no orphan.
+				await transition({
+					orderId: order.id,
+					to: 'canceled',
+					note: `Checkout could not be completed: ${String(err?.message || err).slice(0, 200)}`,
+					actor: 'system',
+				}).catch((cleanupErr) => {
+					console.warn('[print] could not close stranded agent order', order.id, cleanupErr?.message);
+				});
+				throw err;
+			}
 			return {
 				ok: true,
 				order_id: order.id,
