@@ -1522,7 +1522,7 @@ the prompt). `FORGE_QUALITY_GATE` chooses which lanes pay for the vision pass:
 
 | Value | Behavior |
 | --- | --- |
-| `adaptive` **(default)** | The paid **High** tier is always vision-scored. The **free Draft/Standard** lanes escalate to vision QA **only when the fast scorer can't vouch for the mesh** (a `low`/`degenerate`/untextured result, or an `ok` mesh below the `FORGE_QUALITY_ADAPTIVE_MIN` confidence score, default `0.6`). A clean, textured draft ships instantly with no vision latency, so the free lane gains a semantic quality floor without slowing the common case. |
+| `adaptive` **(default)** | The paid **High** tier is always vision-scored. The **free Draft/Standard** lanes escalate to vision QA **only when the fast scorer can't vouch for the mesh** (a `low`/`degenerate`/untextured result, an `ok` mesh below the `FORGE_QUALITY_ADAPTIVE_MIN` confidence score, default `0.6`, or a **`planar`** mesh: one with no depth, which a reconstruction that lost its reference image returns as a full-footprint slab that otherwise scores near the top. Planar means flatter than `FORGE_QUALITY_PLANAR_FLATNESS` (default `0.2`) when the thin axis is Y, or flatter than `FORGE_QUALITY_SLIVER_FLATNESS` (default `0.05`) on X or Z, so genuinely flat subjects and slim upright characters are not swept in). A clean, textured draft ships instantly with no vision latency, so the free lane gains a semantic quality floor without slowing the common case. |
 | `high` | Only the High tier is vision-scored; free lanes keep only the deterministic floor. |
 | `all` | Every tier is vision-scored unconditionally (no fast-scorer shortcut). |
 | `off` | No vision QA anywhere (the deterministic floor still runs). |
