@@ -137,6 +137,9 @@ threews-launch-week-case-study.html
 .tmp-*
 scripts/tmp-*
 scripts/scratch-*
+
+# Scratch server bootstraps written during an audit session (absolute local paths)
+.scratch-audit/
 # Dot-prefixed harnesses under scripts/ are the same thing wearing a hidden
 # name, and the hidden name is why they slipped the net: nine of them
 # (.dw-*, .a11y-*, .verify-chat-tmp) had accumulated in the tree by
