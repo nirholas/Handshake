@@ -154,7 +154,7 @@ const EXTRA_SECRETS = new Set([
 // gcloud is a Python process per invocation, so a fan-out has to be bounded or a
 // sweep of a few dozen secrets spawns a few dozen interpreters at once and the
 // machine starts swapping. Everything here runs through this pool.
-async function mapLimit(items, limit, fn) {
+export async function mapLimit(items, limit, fn) {
 	const results = new Array(items.length);
 	let next = 0;
 	const worker = async () => {

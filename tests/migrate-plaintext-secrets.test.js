@@ -9,7 +9,7 @@
 // docs/ops/gcp-production.md).
 
 import { describe, it, expect } from 'vitest';
-import { classify, defaultSecretName } from '../scripts/migrate-plaintext-secrets.mjs';
+import { classify, defaultSecretName, mapLimit } from '../scripts/migrate-plaintext-secrets.mjs';
 
 describe('credential classifier', () => {
 	it('treats the wallet secret keys as credentials', () => {
@@ -77,5 +77,34 @@ describe('secret naming', () => {
 		expect(defaultSecretName('X402_FEE_PAYER_SECRET_BASE58')).toBe('x402-fee-payer-secret-base58');
 		expect(defaultSecretName('UPSTASH_REDIS_REST_TOKEN')).toBe('upstash-redis-rest-token');
 		expect(defaultSecretName('ECONOMY_MASTER_SECRET_BASE58')).toBe('economy-master-secret-base58');
+	});
+});
+
+// Every gcloud call is a Python process. An unbounded fan-out over the ~50 secrets
+// on this project spawned 57 interpreters at once and the machine OOM-killed the
+// run, so the bound is not a nicety.
+describe('mapLimit', () => {
+	it('never runs more than the limit at once', async () => {
+		let running = 0;
+		let peak = 0;
+		await mapLimit([...Array(20).keys()], 4, async () => {
+			running++;
+			peak = Math.max(peak, running);
+			await new Promise((r) => setTimeout(r, 1));
+			running--;
+		});
+		expect(peak).toBeLessThanOrEqual(4);
+	});
+
+	it('returns results in input order, not completion order', async () => {
+		const out = await mapLimit([30, 1, 20, 2], 4, async (ms) => {
+			await new Promise((r) => setTimeout(r, ms));
+			return ms;
+		});
+		expect(out).toEqual([30, 1, 20, 2]);
+	});
+
+	it('handles an empty list without spawning a worker', async () => {
+		expect(await mapLimit([], 4, async () => 'never')).toEqual([]);
 	});
 });
