@@ -30,3 +30,16 @@ Read this file before running any work order in this directory. Every order assu
 ## Run order
 
 01 and 07 are the spine: 01 makes the countdown real for the actual event time, 07 is the final go/no-go sweep and must run LAST, after every other order that is going to land has landed. 02 through 06 are independent of each other; run as many as time allows, highest value first: 02 (polish), 03 (landing page), 04 (event quests), 05 (cosmetic drop), 06 (photo mode).
+
+## Retire this file when the campaign is done (required)
+
+This file is shared context rather than a single order, so it outlives the
+prompts that cite it. Delete it in the commit that closes the LAST prompt of
+this campaign, once nothing else in `prompts/finish/` references it:
+
+       grep -rl 'event-00-CONTEXT' prompts/finish/
+       git rm prompts/finish/event-00-CONTEXT.md
+
+While any sibling prompt of this campaign is still on disk, leave this file in
+place and keep it accurate instead. The shrinking directory is the only signal
+to the next agent that a campaign is closed.

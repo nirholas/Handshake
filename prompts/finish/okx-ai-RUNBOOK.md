@@ -410,3 +410,16 @@ all four rows answer 402 with `accepts[0].network` = `eip155:196` either way.
 Do not leave a daemon running. When the human wants to watch the review in real time, they
 invoke the `okx-task-watch` skill, which polls the task/chat surface and surfaces reviewer
 messages. Agents should check status once per session with §1 and stop there.
+
+## Retire this file when the campaign is done (required)
+
+This file is shared context rather than a single order, so it outlives the
+prompts that cite it. Delete it in the commit that closes the LAST prompt of
+this campaign, once nothing else in `prompts/finish/` references it:
+
+       grep -rl 'okx-ai-RUNBOOK' prompts/finish/
+       git rm prompts/finish/okx-ai-RUNBOOK.md
+
+While any sibling prompt of this campaign is still on disk, leave this file in
+place and keep it accurate instead. The shrinking directory is the only signal
+to the next agent that a campaign is closed.

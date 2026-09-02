@@ -296,3 +296,16 @@ what was verified (commands/evidence), owner items surfaced. Never record
   report: the devnet SOL for the certificate attester, the mainnet
   certificate approval pair, the partner and ops env vars from order 04, and
   the catalog rates to tune against a real bureau quote.
+
+## Retire this file when the campaign is done (required)
+
+This file is shared context rather than a single order, so it outlives the
+prompts that cite it. Delete it in the commit that closes the LAST prompt of
+this campaign, once nothing else in `prompts/finish/` references it:
+
+       grep -rl 'materialize-PROGRESS' prompts/finish/
+       git rm prompts/finish/materialize-PROGRESS.md
+
+While any sibling prompt of this campaign is still on disk, leave this file in
+place and keep it accurate instead. The shrinking directory is the only signal
+to the next agent that a campaign is closed.

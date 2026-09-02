@@ -133,3 +133,16 @@ interactive login | `curl -o /dev/null -w '%{http_code}'` on the cron path = 401
 `npm run check:cron-syntax` exit 0 with 111 declared crons all valid;
 `npx vitest run tests/cron-scheduler-sync.test.js tests/cron-drift-classify.test.js`
 25 passed
+
+## Retire this file when the campaign is done (required)
+
+This file is shared context rather than a single order, so it outlives the
+prompts that cite it. Delete it in the commit that closes the LAST prompt of
+this campaign, once nothing else in `prompts/finish/` references it:
+
+       grep -rl 'fix-queue-PROGRESS' prompts/finish/
+       git rm prompts/finish/fix-queue-PROGRESS.md
+
+While any sibling prompt of this campaign is still on disk, leave this file in
+place and keep it accurate instead. The shrinking directory is the only signal
+to the next agent that a campaign is closed.

@@ -39,3 +39,16 @@ Both remaining human touchpoints are batched into one message per work order: th
 - Real money on request: work orders compute exact funding needs and pause for the owner.
 - Never deactivate/delete agent #2632, all changes via update + re-activate.
 - `okx-ai-PROGRESS.md` is the only memory between chats. Write it like the next agent knows nothing.
+
+## Retire this file when the campaign is done (required)
+
+This file is shared context rather than a single order, so it outlives the
+prompts that cite it. Delete it in the commit that closes the LAST prompt of
+this campaign, once nothing else in `prompts/finish/` references it:
+
+       grep -rl 'okx-ai-README' prompts/finish/
+       git rm prompts/finish/okx-ai-README.md
+
+While any sibling prompt of this campaign is still on disk, leave this file in
+place and keep it accurate instead. The shrinking directory is the only signal
+to the next agent that a campaign is closed.

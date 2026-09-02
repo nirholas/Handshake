@@ -94,3 +94,16 @@ Tracks A–F get us *listed, packaged, and distributed*. Track G is where we **b
 - Manifests: `server.json`, `server-3d.json`, `server-agent.json`, `server-bazaar.json`, `server-ibm.json`, `server-pumpfun.json`, `mcp-server/server.json`.
 - Legal: `public/legal/privacy.html`, `tos.html`, `content-policy.html`.
 - Deploy: `vercel.json`. OAuth: `api/_mcp/auth.js` + `/.well-known/oauth-protected-resource`.
+
+## Retire this file when the campaign is done (required)
+
+This file is shared context rather than a single order, so it outlives the
+prompts that cite it. Delete it in the commit that closes the LAST prompt of
+this campaign, once nothing else in `prompts/finish/` references it:
+
+       grep -rl 'store-submissions-00-README' prompts/finish/
+       git rm prompts/finish/store-submissions-00-README.md
+
+While any sibling prompt of this campaign is still on disk, leave this file in
+place and keep it accurate instead. The shrinking directory is the only signal
+to the next agent that a campaign is closed.

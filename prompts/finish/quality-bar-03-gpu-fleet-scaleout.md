@@ -98,3 +98,22 @@ Attempt the scale change, read the error if there is one, and report the real ce
 What shipped, what was already shipped before you started plus the evidence that proved it,
 the load-test table, every command that changed cloud state, and the single owner action if one
 remains. No recap of this file.
+
+## Retire this prompt when it is done (required)
+
+1. Verify every Definition of done line against actual command output in front
+   of you. Never claim a line you did not verify.
+2. Record the outcome in this campaign's PROGRESS or INDEX file if it has one.
+3. Commit with explicit paths and a subject that describes the diff (house
+   style: type(scope): what changed and why a reader cares), and delete this
+   prompt file in that same commit:
+
+       git rm prompts/finish/quality-bar-03-gpu-fleet-scaleout.md
+
+   A finished order left on disk reads as open work to the next agent, so the
+   shrinking directory is the campaign's progress ledger.
+
+If a line genuinely cannot pass inside this session (an external party must
+respond, or an owner-gated action is the final step), finish everything else,
+leave this file in place, and state exactly which line remains and who owns it.
+Never delete this file on a partial.

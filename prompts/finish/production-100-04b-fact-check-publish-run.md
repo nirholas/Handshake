@@ -123,3 +123,22 @@ If `/api/fact-check-benchmark` already reports a run generated after the fix lan
 | The deploy is owner-gated | Prepare it so the ship is one command (`npm run deploy:gcp:full` after `npm run prep:worktree -- --apply`) and say so. Publishing the run does NOT need the deploy, but running it against the OLD chain measures the old code, so do not publish that as the fix's number. |
 | Accuracy improves on `mixed` but a neighbour regresses | That is the seesaw the calculus was designed against. Read `/tmp/fc-detail.json` for the regressed claims' stances: a `partial` where the source plainly affirms or plainly refutes is a rubric problem, not a calculus one. |
 | The run is refused as degraded | Working as designed. Fix the lane, then re-run. Never lower `MAX_ERROR_RATE`. |
+
+## Retire this prompt when it is done (required)
+
+1. Verify every Definition of done line against actual command output in front
+   of you. Never claim a line you did not verify.
+2. Record the outcome in this campaign's PROGRESS or INDEX file if it has one.
+3. Commit with explicit paths and a subject that describes the diff (house
+   style: type(scope): what changed and why a reader cares), and delete this
+   prompt file in that same commit:
+
+       git rm prompts/finish/production-100-04b-fact-check-publish-run.md
+
+   A finished order left on disk reads as open work to the next agent, so the
+   shrinking directory is the campaign's progress ledger.
+
+If a line genuinely cannot pass inside this session (an external party must
+respond, or an owner-gated action is the final step), finish everything else,
+leave this file in place, and state exactly which line remains and who owns it.
+Never delete this file on a partial.

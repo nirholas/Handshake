@@ -93,3 +93,16 @@ retired; they remain readable in git history
 - Viewer/SDK: `avatar-sdk/` → `@three-ws/avatar` (`<agent-3d>`), `walk-sdk/`, `page-agent-sdk/`.
 - Creator gallery: `packages/loom-mcp/` (Loom 3D-creation gallery browse/fetch/submit).
 - Crypto: `contracts/` (ERC-8004, skill-license SPL NFTs, agent-invocation), `packages/provenance-mcp/` (signed on-chain-verifiable action log), launches feed (`/api/pump/launches`, `pump_agent_mints`), x402 rails.
+
+## Retire this file when the campaign is done (required)
+
+This file is shared context rather than a single order, so it outlives the
+prompts that cite it. Delete it in the commit that closes the LAST prompt of
+this campaign, once nothing else in `prompts/finish/` references it:
+
+       grep -rl 'roadmap-00-README' prompts/finish/
+       git rm prompts/finish/roadmap-00-README.md
+
+While any sibling prompt of this campaign is still on disk, leave this file in
+place and keep it accurate instead. The shrinking directory is the only signal
+to the next agent that a campaign is closed.

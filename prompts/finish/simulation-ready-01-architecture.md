@@ -201,3 +201,22 @@ design comes first.
 | Grading slows a generation noticeably | It is ~5% of the lane's wall clock. If a specific lane proves otherwise, move grading behind the existing completion path rather than dropping it. |
 | An asset grades differently on a re-run | It must not: sampling is fixed-stride and the math is deterministic. A genuine non-determinism is a bug in the grader and blocks the lane; root-cause it. |
 | Someone proposes storing the grade on `forge_creations` | Rejected in the schema header, with the reason. A grade is a property of bytes; the same bytes appear on four surfaces. |
+
+## Retire this prompt when it is done (required)
+
+1. Verify every Definition of done line against actual command output in front
+   of you. Never claim a line you did not verify.
+2. Record the outcome in this campaign's PROGRESS or INDEX file if it has one.
+3. Commit with explicit paths and a subject that describes the diff (house
+   style: type(scope): what changed and why a reader cares), and delete this
+   prompt file in that same commit:
+
+       git rm prompts/finish/simulation-ready-01-architecture.md
+
+   A finished order left on disk reads as open work to the next agent, so the
+   shrinking directory is the campaign's progress ledger.
+
+If a line genuinely cannot pass inside this session (an external party must
+respond, or an owner-gated action is the final step), finish everything else,
+leave this file in place, and state exactly which line remains and who owns it.
+Never delete this file on a partial.

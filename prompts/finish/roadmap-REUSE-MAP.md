@@ -107,3 +107,16 @@ Verified June 2026. Use this before building anything in `prompts/roadmap/*` —
 - **Embed/OG:** `<model-viewer>` + hand-rolled oEmbed + poppygl (screenshot-glb as fidelity fallback).
 
 **Hard AVOID:** Inria 3D Gaussian Splatting, TEXTure/Text2Tex/Paint3D, LayoutVLM, SpatialLM weights, Meshroom (serverless), Blender headless. **Read fine print (⚠️):** Hunyuan3D (1M MAU + EU/UK/KR exclusion), SF3D/SPAR3D ($1M revenue cap).
+
+## Retire this file when the campaign is done (required)
+
+This file is shared context rather than a single order, so it outlives the
+prompts that cite it. Delete it in the commit that closes the LAST prompt of
+this campaign, once nothing else in `prompts/finish/` references it:
+
+       grep -rl 'roadmap-REUSE-MAP' prompts/finish/
+       git rm prompts/finish/roadmap-REUSE-MAP.md
+
+While any sibling prompt of this campaign is still on disk, leave this file in
+place and keep it accurate instead. The shrinking directory is the only signal
+to the next agent that a campaign is closed.

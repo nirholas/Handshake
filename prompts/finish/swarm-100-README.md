@@ -64,3 +64,16 @@ worktree: orders touching the same shared module can collide. The orders
 already mandate explicit-path staging and prompt commits, which keeps
 collisions cheap. Re-running a half-finished order is always safe; step 0
 re-measures everything.
+
+## Retire this file when the campaign is done (required)
+
+This file is shared context rather than a single order, so it outlives the
+prompts that cite it. Delete it in the commit that closes the LAST prompt of
+this campaign, once nothing else in `prompts/finish/` references it:
+
+       grep -rl 'swarm-100-README' prompts/finish/
+       git rm prompts/finish/swarm-100-README.md
+
+While any sibling prompt of this campaign is still on disk, leave this file in
+place and keep it accurate instead. The shrinking directory is the only signal
+to the next agent that a campaign is closed.

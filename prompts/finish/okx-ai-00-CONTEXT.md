@@ -122,3 +122,16 @@ for the 6-digit OTP from that inbox and run `onchainos wallet verify <otp>`. Nev
 | 05 | `okx-ai-05-relisting-resubmission.md`, update #2632 and resubmit for review | 04 |
 | 06 | Agent Identity Studio (retired 2026-08-01, verified shipped) | 02 |
 | 07 | `okx-ai-07-final-audit-and-watch.md`, full audit, docs closure, approval watch | all |
+
+## Retire this file when the campaign is done (required)
+
+This file is shared context rather than a single order, so it outlives the
+prompts that cite it. Delete it in the commit that closes the LAST prompt of
+this campaign, once nothing else in `prompts/finish/` references it:
+
+       grep -rl 'okx-ai-00-CONTEXT' prompts/finish/
+       git rm prompts/finish/okx-ai-00-CONTEXT.md
+
+While any sibling prompt of this campaign is still on disk, leave this file in
+place and keep it accurate instead. The shrinking directory is the only signal
+to the next agent that a campaign is closed.

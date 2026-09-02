@@ -30,3 +30,16 @@ the fleet and quota position live in `docs/ops/gcp-credits-plan.md`.
 - **Prefer GCP over any paid third party**, and never downgrade quality to save credits.
 - Push target, when the owner asks for a push, is `git push threews main`. Never push, pull,
   fetch or merge `threeD`.
+
+## Retire this file when the campaign is done (required)
+
+This file is shared context rather than a single order, so it outlives the
+prompts that cite it. Delete it in the commit that closes the LAST prompt of
+this campaign, once nothing else in `prompts/finish/` references it:
+
+       grep -rl 'gcp-credits-README' prompts/finish/
+       git rm prompts/finish/gcp-credits-README.md
+
+While any sibling prompt of this campaign is still on disk, leave this file in
+place and keep it accurate instead. The shrinking directory is the only signal
+to the next agent that a campaign is closed.

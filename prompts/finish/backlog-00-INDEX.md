@@ -126,3 +126,16 @@ npm run db:status                       # are migrations pending behind you
 
 More than one session in this repo has been spent debugging a fix that had already
 shipped, or one that never had.
+
+## Retire this file when the campaign is done (required)
+
+This file is shared context rather than a single order, so it outlives the
+prompts that cite it. Delete it in the commit that closes the LAST prompt of
+this campaign, once nothing else in `prompts/finish/` references it:
+
+       grep -rl 'backlog-00-INDEX' prompts/finish/
+       git rm prompts/finish/backlog-00-INDEX.md
+
+While any sibling prompt of this campaign is still on disk, leave this file in
+place and keep it accurate instead. The shrinking directory is the only signal
+to the next agent that a campaign is closed.

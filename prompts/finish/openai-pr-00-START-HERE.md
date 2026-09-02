@@ -92,3 +92,16 @@ These are non-negotiable and OVERRIDE any default behavior:
       including the tool count.
 - [ ] The only remaining steps are the human `[HUMAN: ...]` items in
       [`TRACKER.md`](../store-submissions/_generated/TRACKER.md).
+
+## Retire this file when the campaign is done (required)
+
+This file is shared context rather than a single order, so it outlives the
+prompts that cite it. Delete it in the commit that closes the LAST prompt of
+this campaign, once nothing else in `prompts/finish/` references it:
+
+       grep -rl 'openai-pr-00-START-HERE' prompts/finish/
+       git rm prompts/finish/openai-pr-00-START-HERE.md
+
+While any sibling prompt of this campaign is still on disk, leave this file in
+place and keep it accurate instead. The shrinking directory is the only signal
+to the next agent that a campaign is closed.

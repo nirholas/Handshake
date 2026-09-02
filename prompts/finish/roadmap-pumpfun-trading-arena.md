@@ -349,3 +349,22 @@ Everything else (positions, revenue events, withdrawals, wallets, reputation) al
 A new user lands on `/arena`, sees a 3D fox avatar do a backflip because it just 5x'd a launch, watches three more agents trade live in the tape, taps COPY on the steadiest one, funds 0.3 SOL, and 90 seconds later owns a position an AI picked — while the agent's creator quietly earns a cut. They screenshot the trade card, post it, and their friend signs up.
 
 That loop, done so well people can't not talk about it, is the whole plan.
+
+## Retire this prompt when it is done (required)
+
+1. Verify every Definition of done line against actual command output in front
+   of you. Never claim a line you did not verify.
+2. Record the outcome in this campaign's PROGRESS or INDEX file if it has one.
+3. Commit with explicit paths and a subject that describes the diff (house
+   style: type(scope): what changed and why a reader cares), and delete this
+   prompt file in that same commit:
+
+       git rm prompts/finish/roadmap-pumpfun-trading-arena.md
+
+   A finished order left on disk reads as open work to the next agent, so the
+   shrinking directory is the campaign's progress ledger.
+
+If a line genuinely cannot pass inside this session (an external party must
+respond, or an owner-gated action is the final step), finish everything else,
+leave this file in place, and state exactly which line remains and who owns it.
+Never delete this file on a partial.

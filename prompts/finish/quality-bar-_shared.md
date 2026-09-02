@@ -129,3 +129,16 @@ HF Spaces) stay as fallbacks. Never downgrade model quality or reasoning effort 
 - "May I raise Cloud Run CPU/memory/min-instances?" Yes, within granted quota. Note it in report.
 - "Design tokens?" Use the existing CSS variables in `src/styles/`; if a token is missing,
   add it to the root token sheet and use it everywhere; do not hardcode one-off values.
+
+## Retire this file when the campaign is done (required)
+
+This file is shared context rather than a single order, so it outlives the
+prompts that cite it. Delete it in the commit that closes the LAST prompt of
+this campaign, once nothing else in `prompts/finish/` references it:
+
+       grep -rl 'quality-bar-_shared' prompts/finish/
+       git rm prompts/finish/quality-bar-_shared.md
+
+While any sibling prompt of this campaign is still on disk, leave this file in
+place and keep it accurate instead. The shrinking directory is the only signal
+to the next agent that a campaign is closed.

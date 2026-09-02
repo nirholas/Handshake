@@ -18,3 +18,16 @@ The event is over and `public/event.json` is back to its explicit no-event state
 | 08 event closeout | What ran, what was granted, recap, retire the pack | Retired 2026-09-02. The closeout is the 2026-09-02 entry in [PROGRESS.md](event-PROGRESS.md); no community recap was written and that is deliberate, since nothing was granted and attendance is unknowable. Its two blocked cloud reads are OWNER-ACTIONS rows 13 and 15, and the live defect it found (`MULTIPLAYER_INTERNAL_URL` unset, so the live headcount shows no number) is row 18. |
 
 Run order now: 02 and 06 in either order, though 06 has an agent on it. **When both retire, the pack retires with them:** delete this directory and record it in [../README.md](../README.md) the way retired campaigns are recorded there. Nothing else in the pack is waiting on anyone.
+
+## Retire this file when the campaign is done (required)
+
+This file is shared context rather than a single order, so it outlives the
+prompts that cite it. Delete it in the commit that closes the LAST prompt of
+this campaign, once nothing else in `prompts/finish/` references it:
+
+       grep -rl 'event-README' prompts/finish/
+       git rm prompts/finish/event-README.md
+
+While any sibling prompt of this campaign is still on disk, leave this file in
+place and keep it accurate instead. The shrinking directory is the only signal
+to the next agent that a campaign is closed.

@@ -199,3 +199,16 @@ carries its own table. Two environment facts worth repeating because they burn s
 `gcloud` auth can be revived in-session with `gcloud auth login --no-launch-browser` fed
 through a fifo; an ACTIVE account listing does not prove auth works, so test with a real read
 before trusting it.
+
+## Retire this file when the campaign is done (required)
+
+This file is shared context rather than a single order, so it outlives the
+prompts that cite it. Delete it in the commit that closes the LAST prompt of
+this campaign, once nothing else in `prompts/finish/` references it:
+
+       grep -rl 'production-100-00-INDEX' prompts/finish/
+       git rm prompts/finish/production-100-00-INDEX.md
+
+While any sibling prompt of this campaign is still on disk, leave this file in
+place and keep it accurate instead. The shrinking directory is the only signal
+to the next agent that a campaign is closed.

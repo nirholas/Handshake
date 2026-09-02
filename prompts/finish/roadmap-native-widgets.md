@@ -139,3 +139,22 @@ waits on review.
 - `STRUCTURE.md` has a row for the widget surface, `data/pages.json` has any new public route,
   and `data/changelog.json` has an entry per release.
 - `npm run gate` and `npm run check:rules -- --paths <your files>` are green.
+
+## Retire this prompt when it is done (required)
+
+1. Verify every Definition of done line against actual command output in front
+   of you. Never claim a line you did not verify.
+2. Record the outcome in this campaign's PROGRESS or INDEX file if it has one.
+3. Commit with explicit paths and a subject that describes the diff (house
+   style: type(scope): what changed and why a reader cares), and delete this
+   prompt file in that same commit:
+
+       git rm prompts/finish/roadmap-native-widgets.md
+
+   A finished order left on disk reads as open work to the next agent, so the
+   shrinking directory is the campaign's progress ledger.
+
+If a line genuinely cannot pass inside this session (an external party must
+respond, or an owner-gated action is the final step), finish everything else,
+leave this file in place, and state exactly which line remains and who owns it.
+Never delete this file on a partial.

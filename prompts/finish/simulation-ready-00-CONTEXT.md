@@ -178,3 +178,16 @@ pump.fun trading track). Candidate 12 was demoted for kernel provability, not am
 | A skinned or animated mesh comes through | It is graded at bind pose and the report says so (`skinned_geometry_graded_at_bind_pose`). Do not silently grade a posed mesh as a rigid body. |
 | The forge gallery is empty or the probe cannot reach production | Point the probe at a local server with `--base http://localhost:3000`, or grade a single asset with `--url`. |
 | Someone proposes shipping a fabricated mass or a guessed density | Refuse. The report carries unit-density inertia so a caller multiplies by a density they choose; that is the whole point. |
+
+## Retire this file when the campaign is done (required)
+
+This file is shared context rather than a single order, so it outlives the
+prompts that cite it. Delete it in the commit that closes the LAST prompt of
+this campaign, once nothing else in `prompts/finish/` references it:
+
+       grep -rl 'simulation-ready-00-CONTEXT' prompts/finish/
+       git rm prompts/finish/simulation-ready-00-CONTEXT.md
+
+While any sibling prompt of this campaign is still on disk, leave this file in
+place and keep it accurate instead. The shrinking directory is the only signal
+to the next agent that a campaign is closed.

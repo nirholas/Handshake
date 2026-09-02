@@ -380,3 +380,16 @@ changelog entry was still absent at 19:26Z and belongs to that agent's run, not 
 blocked cloud reads are OWNER-ACTIONS rows 13 and 15, and the production defect it turned up is row 18.
 Its last task, retiring the pack, is now a line in [README.md](event-README.md), since it can only happen
 after 02 and 06 land.
+
+## Retire this file when the campaign is done (required)
+
+This file is shared context rather than a single order, so it outlives the
+prompts that cite it. Delete it in the commit that closes the LAST prompt of
+this campaign, once nothing else in `prompts/finish/` references it:
+
+       grep -rl 'event-PROGRESS' prompts/finish/
+       git rm prompts/finish/event-PROGRESS.md
+
+While any sibling prompt of this campaign is still on disk, leave this file in
+place and keep it accurate instead. The shrinking directory is the only signal
+to the next agent that a campaign is closed.

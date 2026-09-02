@@ -50,3 +50,16 @@ Evidence is in [PROGRESS.md](production-100-PROGRESS.md) under 2026-09-02.
   and finishes everything else; the row waits here.
 - Keep rows honest: if you discover a row's premise no longer holds, fix or delete it and
   note why in [PROGRESS.md](production-100-PROGRESS.md).
+
+## Retire this file when the campaign is done (required)
+
+This file is shared context rather than a single order, so it outlives the
+prompts that cite it. Delete it in the commit that closes the LAST prompt of
+this campaign, once nothing else in `prompts/finish/` references it:
+
+       grep -rl 'production-100-OWNER-ACTIONS' prompts/finish/
+       git rm prompts/finish/production-100-OWNER-ACTIONS.md
+
+While any sibling prompt of this campaign is still on disk, leave this file in
+place and keep it accurate instead. The shrinking directory is the only signal
+to the next agent that a campaign is closed.

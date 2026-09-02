@@ -39,3 +39,16 @@ throughput. 06 and 10 land best after 04.
   without the owner saying so. GCP deploys of the surface a work order owns are in scope.
 - Every user-visible change gets a `data/changelog.json` entry. Every claim is verified with the
   receipts in the final report. Blockers are routed around and documented, never asked about.
+
+## Retire this file when the campaign is done (required)
+
+This file is shared context rather than a single order, so it outlives the
+prompts that cite it. Delete it in the commit that closes the LAST prompt of
+this campaign, once nothing else in `prompts/finish/` references it:
+
+       grep -rl 'quality-bar-README' prompts/finish/
+       git rm prompts/finish/quality-bar-README.md
+
+While any sibling prompt of this campaign is still on disk, leave this file in
+place and keep it accurate instead. The shrinking directory is the only signal
+to the next agent that a campaign is closed.

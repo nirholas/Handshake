@@ -342,3 +342,16 @@ in `vercel.json` (README and `docs/build.md` say 111, `vercel.json` declared 113
 within the hour, and it briefly carried a duplicate `print-orders-sync` entry). One
 `npm run audit:docs` finding, `docs/materialize.md` missing from `data/pages.json`, belongs
 to the Materialize work committed today; `data/pages.json` is dirty in that agent's tree.
+
+## Retire this file when the campaign is done (required)
+
+This file is shared context rather than a single order, so it outlives the
+prompts that cite it. Delete it in the commit that closes the LAST prompt of
+this campaign, once nothing else in `prompts/finish/` references it:
+
+       grep -rl 'production-100-PROGRESS' prompts/finish/
+       git rm prompts/finish/production-100-PROGRESS.md
+
+While any sibling prompt of this campaign is still on disk, leave this file in
+place and keep it accurate instead. The shrinking directory is the only signal
+to the next agent that a campaign is closed.
