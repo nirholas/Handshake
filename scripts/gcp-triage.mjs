@@ -733,6 +733,13 @@ async function probeCustodialKeys() {
 	if (!existsSync('.env')) return { status: 'skipped', note: 'no .env with DB/encryption secrets here' };
 	const r = await runCommand(['node', 'scripts/audit-custodial-key-health.mjs', '--json'], { timeoutMs: 300000 });
 	if (r.code !== 0 || r.timedOut) {
+		// Exit 3 with a structured error is the audit refusing to guess: no
+		// decryption key is configured here, so every wallet would read as
+		// undecryptable and a 100%-stranded verdict would be an artifact of this
+		// machine. Match on the code, not on prose that can be reworded.
+		let blocked;
+		try { blocked = JSON.parse(r.stdout); } catch { blocked = null; }
+		if (blocked?.error === 'no_decryption_key') return { status: 'skipped', note: 'custodial audit has no decryption key here' };
 		if (/DATABASE_URL|WALLET_ENCRYPTION_KEY/i.test(r.stderr + r.stdout)) return { status: 'skipped', note: 'custodial audit secrets not present' };
 		return { status: 'error', note: tail(r.stderr || r.stdout, 3) };
 	}

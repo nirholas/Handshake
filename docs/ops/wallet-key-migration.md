@@ -129,6 +129,17 @@ live reclaim failure. The audit was wrong for two independent reasons, both now 
    `custodial-keys` probe carries the same guard, so the deep sweep no longer reports
    `ok` off an unread balance either.
 
+A third blind spot of the same family closed on 2026-09-02: the audit needs a
+decryption key of its own, and it had no idea whether it had one. Run in a shell with
+no `WALLET_ENCRYPTION_KEY` (a fresh clone, or this codespace, whose `.env.local`
+carries only `DATABASE_URL`), it decrypted nothing, reported **725 of 725 wallets
+undecryptable and 8.57 SOL stranded**, and printed the customer-escalation banner. Every
+number was an artifact of the missing key, not a measurement of production. The script now
+calls `secretBoxKeyCandidates()` before it touches the database and aborts with exit 3 and
+the places to find the key when the candidate list is empty, and when a key IS configured
+but opens nothing at all it says a fleet-wide 100% failure is one wrong key rather than a
+mass incident. Reading a stranded verdict off a keyless run is no longer possible.
+
 With the fix, the audit reads correctly again: **8 undecryptable wallets, 0.49 SOL
 stranded (0.35 SOL customer, 0.14 SOL platform)**, matching the 2026-08-01 measurement
 almost exactly. Nothing changed in the underlying incident: the customer-fund decision
@@ -155,4 +166,5 @@ open, and no funds were moved.
 - `scripts/rekey-stale-launch-wallets.mjs` — the batch re-key tool.
 - `scripts/audit-custodial-key-health.mjs`: read-only sweep of every custodial wallet,
   how many still decrypt, how much SOL sits behind the ones that do not, and which
-  addresses they are.
+  addresses they are. Needs `DATABASE_URL` and `WALLET_ENCRYPTION_KEY`; it exits 3 rather
+  than reporting a stranded total when no decryption key is configured.
