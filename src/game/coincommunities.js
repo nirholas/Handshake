@@ -1139,7 +1139,18 @@ export class CoinCommunities {
 			// A driver that never reports completion must not freeze the canvas: cap
 			// the suspension and let the remaining programs compile on demand, which
 			// is exactly the old behaviour and never worse than it.
-			const compile = typeof r.compileAsync === 'function'
+			// Only take the async path where the driver actually has the extension it
+			// exists for. Without it, compileAsync gives no parallelism and still
+			// leaves three polling checkMaterialsReady over a captured material set
+			// on its own rAF loop, long after the race below has stopped awaiting it.
+			// A material disposed by world entry in that window makes that poll read
+			// a property of undefined and throw from inside three's own callback,
+			// where no try/catch of ours can reach it: an uncaught
+			// "Cannot read properties of undefined (reading 'isReady')" on the
+			// player's console, seen at 320px on 2026-09-02.
+			const parallel = typeof r.compileAsync === 'function'
+				&& r.extensions?.has?.('KHR_parallel_shader_compile');
+			const compile = parallel
 				? r.compileAsync(this.scene, this.camera)
 				: Promise.resolve(r.compile(this.scene, this.camera));
 			await Promise.race([compile, new Promise((res) => setTimeout(res, WARM_TIMEOUT_MS))]);
