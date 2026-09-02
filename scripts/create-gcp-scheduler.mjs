@@ -31,12 +31,21 @@
 //   node scripts/create-gcp-scheduler.mjs --env-file <prod.env> --resume  # sync + resume EVERY job (recover from --pause)
 //   gcloud scheduler jobs resume cron--api-cron-uptime-check --location us-central1  # one job
 //
+// `--only <substring>[,<substring>]` narrows any of the above to the crons whose
+// declared path contains one of those substrings, so repairing the single job
+// `npm run check:cron-drift` reports MISSING does not re-touch the rest of the
+// fleet:
+//
+//   node scripts/create-gcp-scheduler.mjs --env-file <prod.env> --only garment-job-sweep
+//
 // Auth: each job sends `Authorization: Bearer $CRON_SECRET`, exactly what the
-// api/cron/* handlers already validate. The secret is read from --env-file or
-// process.env, never hardcoded.
+// api/cron/* handlers already validate. The secret is read from --env-file, then
+// process.env, then the live three-ws-api Cloud Run service (production's
+// authoritative copy, and the only source on a machine whose .env lacks it).
+// It is never hardcoded.
 
 import { readFileSync } from 'node:fs';
-import { execFile } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
 import './lib/gcloud-path.mjs';
 import { promisify } from 'node:util';
 import path from 'node:path';
@@ -81,6 +90,37 @@ export function runStateAction(argv) {
 	return null;
 }
 
+/**
+ * Narrow a sync to the crons named by `--only <substring>[,<substring>...]`,
+ * matched against the declared cron path. Without the flag every declared cron
+ * is synced, which is the right default for a fleet-wide re-sync and the wrong
+ * one for repairing a single drifted job: `npm run check:cron-drift` names one
+ * path, and touching the other 110 healthy jobs to fix it is blast radius
+ * nobody asked for. With `--pause`/`--resume` the flag bounds those levers to
+ * the same subset instead of the whole fleet.
+ *
+ * A filter that matches nothing throws rather than syncing zero jobs, because a
+ * mistyped path would otherwise report a clean run having done nothing at all.
+ */
+export function selectCrons(crons, argv) {
+	const idx = argv.indexOf('--only');
+	if (idx === -1) return crons;
+	const raw = argv[idx + 1];
+	if (!raw || raw.startsWith('--')) {
+		throw new Error('--only needs a value, e.g. --only garment-job-sweep');
+	}
+	const needles = raw
+		.split(',')
+		.map((s) => s.trim())
+		.filter(Boolean);
+	if (!needles.length) throw new Error('--only needs a value, e.g. --only garment-job-sweep');
+	const picked = crons.filter((c) => needles.some((n) => c.path.includes(n)));
+	if (!picked.length) {
+		throw new Error(`--only ${raw} matched none of the ${crons.length} crons declared in vercel.json.`);
+	}
+	return picked;
+}
+
 /** Read CRON_SECRET out of a `--env-file <path>` argument, if one was given. */
 export function cronSecretFromArgs(argv, readFile = (p) => readFileSync(p, 'utf8')) {
 	const idx = argv.indexOf('--env-file');
@@ -90,6 +130,43 @@ export function cronSecretFromArgs(argv, readFile = (p) => readFileSync(p, 'utf8
 		if (m) return m[1];
 	}
 	return null;
+}
+
+/**
+ * Read CRON_SECRET off the live Cloud Run service, which is where production's
+ * authoritative copy lives. `.env` does not carry it and `vercel env pull`
+ * returns empty for secret-type vars, so on a fresh machine this is the only
+ * place it can come from. Every other thing this script does already requires
+ * an authenticated gcloud session, so needing one here costs nothing extra.
+ *
+ * Returns null rather than throwing: a caller that also has `--env-file` or a
+ * process env should not be denied by an unrelated gcloud failure.
+ */
+export function cronSecretFromService(describe = defaultDescribeService) {
+	let svc;
+	try {
+		svc = JSON.parse(describe());
+	} catch {
+		return null;
+	}
+	const env = svc?.spec?.template?.spec?.containers?.[0]?.env || [];
+	return env.find((e) => e.name === 'CRON_SECRET')?.value || null;
+}
+
+function defaultDescribeService() {
+	return execFileSync(
+		'gcloud',
+		[
+			'run',
+			'services',
+			'describe',
+			'three-ws-api',
+			`--region=${LOCATION}`,
+			`--project=${PROJECT}`,
+			'--format=json',
+		],
+		{ encoding: 'utf8', maxBuffer: 8 * 1024 * 1024, stdio: ['ignore', 'pipe', 'ignore'] },
+	);
 }
 
 async function gcloud(cmdArgs) {
@@ -141,9 +218,11 @@ async function main() {
 		process.exit(1);
 	}
 
-	const secret = cronSecretFromArgs(argv) || process.env.CRON_SECRET;
+	const secret = cronSecretFromArgs(argv) || process.env.CRON_SECRET || cronSecretFromService();
 	if (!secret) {
-		console.error('CRON_SECRET not set: pass --env-file <pulled prod.env> or export it.');
+		console.error(
+			'CRON_SECRET not set: pass --env-file <pulled prod.env>, export it, or authenticate gcloud so it can be read off the three-ws-api service.',
+		);
 		process.exit(1);
 	}
 
@@ -153,7 +232,18 @@ async function main() {
 		process.exit(1);
 	}
 
-	const queue = [...crons];
+	let selected;
+	try {
+		selected = selectCrons(crons, argv);
+	} catch (err) {
+		console.error(err.message);
+		process.exit(1);
+	}
+	if (selected.length !== crons.length) {
+		console.log(`--only: syncing ${selected.length} of ${crons.length} declared crons.`);
+	}
+
+	const queue = [...selected];
 	const results = [];
 	const failures = [];
 	await Promise.all(
@@ -174,7 +264,7 @@ async function main() {
 
 	const created = results.filter((r) => r.action === 'created');
 	console.log(
-		`\n${results.length}/${crons.length} jobs synced; ${created.length} created ENABLED; ${failures.length} failed.`,
+		`\n${results.length}/${selected.length} jobs synced; ${created.length} created ENABLED; ${failures.length} failed.`,
 	);
 	console.log(
 		stateAction

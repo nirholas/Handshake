@@ -15,7 +15,13 @@
 
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { jobId, runStateAction, cronSecretFromArgs } from '../scripts/create-gcp-scheduler.mjs';
+import {
+	jobId,
+	runStateAction,
+	cronSecretFromArgs,
+	cronSecretFromService,
+	selectCrons,
+} from '../scripts/create-gcp-scheduler.mjs';
 
 describe('runStateAction', () => {
 	it('leaves run state alone for a bare config sync', () => {
@@ -33,6 +39,84 @@ describe('runStateAction', () => {
 
 	it('refuses both levers at once rather than guessing an order', () => {
 		expect(() => runStateAction(['--pause', '--resume'])).toThrow(/mutually exclusive/);
+	});
+});
+
+// Production's authoritative CRON_SECRET lives on the Cloud Run service, not in
+// any checked-out file: .env does not carry it and `vercel env pull` returns
+// empty for secret-type vars. Without this fallback, repairing a drifted cron on
+// a fresh machine dead-ends on "CRON_SECRET not set" even with gcloud working.
+describe('cronSecretFromService', () => {
+	const service = (env) => () => JSON.stringify({ spec: { template: { spec: { containers: [{ env }] } } } });
+
+	it('reads the secret out of the service env', () => {
+		expect(
+			cronSecretFromService(service([{ name: 'DATABASE_URL', value: 'postgres://x' }, { name: 'CRON_SECRET', value: 's3cr3t' }])),
+		).toBe('s3cr3t');
+	});
+
+	it('returns null when the service does not carry one', () => {
+		expect(cronSecretFromService(service([{ name: 'DATABASE_URL', value: 'postgres://x' }]))).toBe(null);
+	});
+
+	// A secret-manager-backed var has valueFrom instead of value; treating that
+	// empty string as a secret would write an unauthenticated header to 111 jobs.
+	it('rejects a secret-manager reference that carries no inline value', () => {
+		expect(cronSecretFromService(service([{ name: 'CRON_SECRET', valueFrom: { secretKeyRef: { key: 'latest' } } }]))).toBe(
+			null,
+		);
+	});
+
+	// An unauthenticated gcloud must not deny a caller who passed --env-file.
+	it('returns null instead of throwing when gcloud fails', () => {
+		expect(
+			cronSecretFromService(() => {
+				throw new Error('Reauthentication failed.');
+			}),
+		).toBe(null);
+	});
+});
+
+describe('selectCrons', () => {
+	const crons = [
+		{ path: '/api/cron/garment-job-sweep', schedule: '*/10 * * * *' },
+		{ path: '/api/cron/garment-catalog-audit', schedule: '20 6 * * *' },
+		{ path: '/api/cron/economy-tick', schedule: '* * * * *' },
+	];
+
+	it('syncs every declared cron when no filter is passed', () => {
+		expect(selectCrons(crons, ['--env-file', '/tmp/prod.env'])).toEqual(crons);
+	});
+
+	it('narrows a repair to the one drifted job instead of the whole fleet', () => {
+		expect(selectCrons(crons, ['--only', 'garment-job-sweep']).map((c) => c.path)).toEqual([
+			'/api/cron/garment-job-sweep',
+		]);
+	});
+
+	it('accepts a comma-separated list', () => {
+		expect(selectCrons(crons, ['--only', 'garment-job-sweep,economy-tick']).map((c) => c.path)).toEqual([
+			'/api/cron/garment-job-sweep',
+			'/api/cron/economy-tick',
+		]);
+	});
+
+	// A filter that quietly matched nothing would print a clean "0/0 jobs synced"
+	// and leave the drifted cron exactly as missing as it was.
+	it('refuses a filter that matches nothing rather than syncing zero jobs', () => {
+		expect(() => selectCrons(crons, ['--only', 'no-such-cron'])).toThrow(/matched none/);
+	});
+
+	it('refuses a bare --only with no value', () => {
+		expect(() => selectCrons(crons, ['--only'])).toThrow(/needs a value/);
+		expect(() => selectCrons(crons, ['--only', '--resume'])).toThrow(/needs a value/);
+	});
+
+	it('matches a real declared cron path from vercel.json', () => {
+		const { crons: declared } = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'));
+		const picked = selectCrons(declared, ['--only', 'garment-job-sweep']);
+		expect(picked).toHaveLength(1);
+		expect(jobId(picked[0].path)).toBe('cron--api-cron-garment-job-sweep');
 	});
 });
 
