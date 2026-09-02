@@ -8,7 +8,7 @@
 // worst one a physical product has: an order that is genuinely finished sits in
 // `printing` forever and nobody finds out until the buyer asks.
 //
-// Two passes, deliberately separate:
+// Three passes, deliberately separate:
 //
 //   1. RECONCILE. For every order a configured adapter still owns, ask the
 //      adapter what it thinks the status is and apply the answer through the
@@ -21,9 +21,16 @@
 //      next sweep stays quiet. This is the pass that catches a job nobody is
 //      working on, which no amount of polling a healthy provider will find.
 //
+//   3. SCREEN. For every paid order sitting in `screening`, run the thorough
+//      fabrication gate (api/_lib/print/gate.js) and act on it: clear the order
+//      for submission, or move it to `rejected` (the refund path) and tell the
+//      operators. It runs here rather than inside the payment request because
+//      it makes a model call: a buyer's checkout must not wait on an LLM, and
+//      an LLM outage must not fail a payment that already settled.
+//
 // A provider being down must not fail the sweep: each order is reconciled
 // independently and its failure is counted, not thrown, so one broken lane
-// never hides a stall in another.
+// never hides a stall in another. The same holds for screening.
 
 import { error, json, method, wrapCron } from '../_lib/http.js';
 import { requireCron } from '../_lib/cron-auth.js';
@@ -35,6 +42,7 @@ import {
 } from '../_lib/print/fulfillment-queries.js';
 import { reconcileOrder } from '../_lib/print/fulfillment.js';
 import { jobSummaryLines, notifyOperators } from '../_lib/print/ops-notify.js';
+import { listOrdersAwaitingScreening, screenPaidOrder } from '../_lib/print/gate.js';
 
 // A job is a stall once it is this many days past its recorded lead time. Two
 // days absorbs a weekend and a slow carrier scan without crying wolf.
@@ -44,6 +52,10 @@ const STALL_GRACE_DAYS = 2;
 const STALL_REALERT_HOURS = 24;
 const RECONCILE_BATCH = 100;
 const STALL_BATCH = 25;
+// Screening makes one model call per order, so the batch is small enough that a
+// slow provider cannot push the sweep past its schedule. Anything left over is
+// picked up by the next tick, which is minutes away.
+const SCREEN_BATCH = 10;
 
 export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;
@@ -90,6 +102,19 @@ export default wrapCron(async (req, res) => {
 	}
 	const alerted = await markStallAlerted(stalled.map((o) => o.id));
 
+	const awaiting = await listOrdersAwaitingScreening({ limit: SCREEN_BATCH });
+	const screened = { allow: 0, refuse: 0, review: 0 };
+	for (const order of awaiting) {
+		try {
+			const verdict = await screenPaidOrder(order);
+			if (verdict.verdict in screened) screened[verdict.verdict] += 1;
+		} catch (err) {
+			// A screening failure leaves the order exactly where it was, which the
+			// next sweep retries. It never advances an unscreened order.
+			failures.push({ order_id: order.id, error: `screening: ${String(err?.message || err).slice(0, 280)}` });
+		}
+	}
+
 	return json(res, 200, {
 		ok: true,
 		open: open.length,
@@ -97,6 +122,8 @@ export default wrapCron(async (req, res) => {
 		applied,
 		stalled: stalled.length,
 		alerted,
+		screening_pending: awaiting.length,
+		screened,
 		failures,
 	});
 });

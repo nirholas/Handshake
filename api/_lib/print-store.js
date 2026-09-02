@@ -18,8 +18,10 @@
 // retried by api/cron/print-orders-sync.js, and a shipment is never blocked by
 // an RPC having a bad minute.
 //
-// Scope note for whoever extends this: order creation, quoting and the payment
-// path are not here yet. Add them beside `transition()`, not around it.
+// createOrder() opens an order from a verified quote token and nothing else:
+// the price, the geometry and the material all come out of the token's signed
+// payload, never out of the request, so neither checkout lane can be talked
+// into a price this server did not sign.
 
 import { sql } from './db.js';
 import { publishUserEvent } from './feed.js';
@@ -143,7 +145,8 @@ function notificationLine(status) {
  * @param {string} [input.actor]           system | operator | provider | buyer
  * @param {string|null} [input.actorId]    the operator's user id, when actor is 'operator'
  * @param {Record<string, unknown>} [input.patch] columns to write with the move
- *   (tracking_number, carrier, provider, provider_order_id, submitted_at)
+ *   (tracking_number, carrier, provider, provider_order_id, submitted_at,
+ *   payment_signature, payment_chain, payment_amount_atomics)
  * @returns {Promise<{ order: any, event: any, certificate: any|null }>}
  */
 export async function transition({ orderId, to, note = null, actor = 'system', actorId = null, patch = {} }) {
@@ -177,7 +180,13 @@ export async function transition({ orderId, to, note = null, actor = 'system', a
 			tracking_number   = coalesce(${patch.tracking_number ?? null}, tracking_number),
 			carrier           = coalesce(${patch.carrier ?? null}, carrier),
 			lead_time_days    = coalesce(${patch.lead_time_days ?? null}, lead_time_days),
+			payment_signature = coalesce(${patch.payment_signature ?? null}, payment_signature),
+			payment_chain     = coalesce(${patch.payment_chain ?? null}, payment_chain),
+			payment_amount_atomics = coalesce(${patch.payment_amount_atomics ?? null}, payment_amount_atomics),
 			submitted_at      = case when ${to} = 'submitted' then coalesce(submitted_at, now()) else submitted_at end,
+			-- Stamped by the move itself rather than by the caller, so the paid
+			-- time is always the time the order actually became paid.
+			paid_at           = case when ${to} = 'paid' then coalesce(paid_at, now()) else paid_at end,
 			stall_alerted_at  = null,
 			updated_at        = now()
 		where id = ${orderId} and status = ${order.status}
@@ -230,4 +239,149 @@ export async function transition({ orderId, to, note = null, actor = 'system', a
 	}
 
 	return { order: updated, event, certificate };
+}
+
+// ── Order creation ───────────────────────────────────────────────────────────
+// Both checkout lanes land here. Everything money hangs off (material, height,
+// quantity, volume, total) is read from the VERIFIED quote token, never from
+// the request body, so a caller who edits a price in flight gets the price this
+// server signed or nothing at all. The handlers verify the token; this function
+// refuses to open an order without the decoded payload it produces.
+
+/** Shipping fields we store, and the only ones. Anything else is dropped. */
+const SHIPPING_FIELDS = Object.freeze([
+	'name', 'line1', 'line2', 'city', 'region', 'postal_code', 'country', 'phone',
+]);
+const SHIPPING_REQUIRED = Object.freeze(['name', 'line1', 'city', 'postal_code', 'country']);
+const SHIPPING_MAX_LEN = 120;
+
+/**
+ * Normalize a shipping address down to the minimum this platform is willing to
+ * hold. PII discipline is a schema decision, not a policy document: a field
+ * that is never accepted is a field that can never leak.
+ *
+ * @param {Record<string, unknown>} input
+ * @returns {{ name: string, line1: string, line2: string|null, city: string,
+ *   region: string|null, postal_code: string, country: string, phone: string|null }}
+ */
+export function normalizeShipping(input) {
+	if (!input || typeof input !== 'object') {
+		throw new PrintStoreError('shipping_required', 'a shipping address is required');
+	}
+	/** @type {Record<string, string|null>} */
+	const out = {};
+	for (const field of SHIPPING_FIELDS) {
+		const raw = input[field];
+		const value = raw == null ? '' : String(raw).trim().slice(0, SHIPPING_MAX_LEN);
+		out[field] = value || null;
+	}
+	for (const field of SHIPPING_REQUIRED) {
+		if (!out[field]) {
+			throw new PrintStoreError('shipping_incomplete', `shipping.${field} is required`, { field });
+		}
+	}
+	out.country = String(out.country).toUpperCase();
+	if (!/^[A-Z]{2}$/.test(out.country)) {
+		throw new PrintStoreError('shipping_incomplete', 'shipping.country must be an ISO 3166-1 alpha-2 code', {
+			field: 'country',
+		});
+	}
+	return /** @type {any} */ (out);
+}
+
+/**
+ * Open a print order in `created`. The caller transitions it to `quoted` once
+ * the row exists, so the edition check that guards scarcity runs against a real
+ * order rather than against a request.
+ *
+ * Exactly one of userId (a signed-in human) or payerWallet (an agent that paid
+ * over x402) must be present; the DB carries that as a check constraint and
+ * this refuses it earlier, with a message a handler can return.
+ *
+ * @param {object} input
+ * @param {string|null} [input.userId]
+ * @param {string|null} [input.payerWallet]
+ * @param {object} input.quote        the decoded, verified quote-token payload
+ * @param {object} input.itemization  the full itemization the buyer was shown
+ * @param {object} input.report       the printability report at order time
+ * @param {string} input.sourceGlbUrl
+ * @param {string|null} [input.creationId]
+ * @param {object} input.shipping     already through normalizeShipping()
+ * @param {string|null} [input.paymentReference]  Solana Pay reference pubkey
+ * @param {string|null} [input.paymentChain]
+ */
+export async function createOrder({
+	userId = null,
+	payerWallet = null,
+	quote,
+	itemization,
+	report,
+	sourceGlbUrl,
+	creationId = null,
+	shipping,
+	paymentReference = null,
+	paymentChain = null,
+}) {
+	if (!userId && !payerWallet) {
+		throw new PrintStoreError('owner_required', 'an order needs either a session user or a payer wallet');
+	}
+	if (!quote || !quote.materialId || !(Number(quote.total) > 0)) {
+		throw new PrintStoreError('quote_required', 'a verified quote token is required to open an order');
+	}
+	if (!sourceGlbUrl) {
+		throw new PrintStoreError('source_required', 'an order needs the model it is printing');
+	}
+
+	const [row] = await sql`
+		insert into print_orders (
+			user_id, payer_wallet, creation_id, source_glb_url, analysis,
+			material_id, target_height_mm, quantity, quote, price_usdc,
+			shipping, status, payment_reference, payment_chain, quote_expires_at
+		) values (
+			${userId}, ${payerWallet}, ${creationId}, ${sourceGlbUrl},
+			${JSON.stringify(report ?? {})}::jsonb,
+			${quote.materialId}, ${quote.targetHeightMm}, ${quote.quantity},
+			${JSON.stringify(itemization ?? {})}::jsonb, ${quote.total},
+			${JSON.stringify(shipping)}::jsonb, 'created',
+			${paymentReference}, ${paymentChain},
+			${quote.expiresAt ? new Date(quote.expiresAt).toISOString() : null}
+		)
+		returning *
+	`;
+	await appendEvent({
+		orderId: row.id,
+		status: 'created',
+		note: `${quote.quantity} x ${quote.materialId} at ${quote.targetHeightMm} mm, ${quote.total} USDC`,
+		actor: userId ? 'buyer' : 'system',
+		actorId: userId,
+	});
+	return row;
+}
+
+/**
+ * A buyer's own orders, newest first. Never returns another account's rows: the
+ * only selector is the caller's own user id.
+ * @param {string} userId
+ * @param {{ limit?: number }} [opts]
+ */
+export async function listOrdersForUser(userId, { limit = 50 } = {}) {
+	const capped = Math.min(Math.max(Number(limit) || 50, 1), 100);
+	return sql`
+		select id, status, material_id, target_height_mm, quantity, price_usdc,
+		       tracking_number, carrier, lead_time_days, created_at, updated_at
+		from print_orders
+		where user_id = ${userId}
+		order by created_at desc
+		limit ${capped}
+	`;
+}
+
+/**
+ * The order behind a Solana Pay reference, for the confirm path. The reference
+ * is unique, so this is a lookup rather than a search.
+ * @param {string} reference
+ */
+export async function getOrderByPaymentReference(reference) {
+	const [row] = await sql`select * from print_orders where payment_reference = ${reference} limit 1`;
+	return row || null;
 }

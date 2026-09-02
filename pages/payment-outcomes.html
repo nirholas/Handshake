@@ -31,7 +31,7 @@
 		.po-note h2 { font-size: 15px; margin: 0 0 0.6rem; color: #e2e8f0; font-weight: 700; }
 		.po-note a { color: #a78bfa; }
 
-		.po-banner { display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.85rem 1.1rem; border-radius: 11px; margin-bottom: 1.5rem; font-size: 12.5px; line-height: 1.6; background: rgba(240,169,59,0.07); border: 1px solid rgba(240,169,59,0.24); color: #f0a93b; }
+		.po-banner { padding: 0.85rem 1.1rem; border-radius: 11px; margin-bottom: 1.5rem; font-size: 12.5px; line-height: 1.6; background: rgba(240,169,59,0.07); border: 1px solid rgba(240,169,59,0.24); color: #f0a93b; }
 
 		.po-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: rgba(255,255,255,0.35); margin: 0 0 0.85rem; display: flex; gap: 0.6rem; align-items: baseline; }
 		.po-section-title span { text-transform: none; letter-spacing: 0; font-weight: 500; color: rgba(255,255,255,0.25); }
@@ -44,7 +44,7 @@
 		.po-cell-note { font-size: 11.5px; color: rgba(255,255,255,0.35); margin-top: 0.4rem; line-height: 1.5; }
 		.good { color: #2fbf71; }
 		.warn { color: #f0a93b; }
-		.bad { color: var(--color-danger); }
+		.bad { color: var(--color-danger, #f87171); }
 		.muted { color: rgba(255,255,255,0.35); }
 
 		.po-pill { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 3px 9px; border-radius: 999px; border: 1px solid currentColor; }
@@ -351,6 +351,11 @@
 		function strandedSection(stranded) {
 			if (!stranded) return '';
 			if (stranded.error) return panelError('Stranded custody', stranded);
+			// null is not zero. The panel returns nulls when the process could not
+			// open the wallets at all (no decryption key, a partial balance read),
+			// and rendering that as a green 0 would report "no customer money is
+			// sealed" on the strength of a reading that never happened.
+			const measured = typeof stranded.sol_stranded === 'number' && stranded.status !== 'unknown';
 			const rows = (stranded.top_stranded || []).map((w) => `
 				<tr>
 					<td class="po-addr">${esc(w.address)}</td>
@@ -368,13 +373,17 @@
 					</div>
 					<div class="po-cell">
 						<div class="po-cell-label">SOL behind a retired key</div>
-						<div class="po-cell-value ${stranded.sol_stranded ? 'bad' : 'good'}">${sol(stranded.sol_stranded)}</div>
-						<div class="po-cell-note">platform ${sol(stranded.sol_stranded_platform)}, customer ${sol(stranded.sol_stranded_customer)}</div>
+						<div class="po-cell-value ${measured ? (stranded.sol_stranded ? 'bad' : 'good') : 'muted'}">${measured ? sol(stranded.sol_stranded) : 'not measured'}</div>
+						<div class="po-cell-note">${measured
+							? `platform ${sol(stranded.sol_stranded_platform)}, customer ${sol(stranded.sol_stranded_customer)}`
+							: `${num(stranded.undecryptable)} of ${num(stranded.wallets)} wallets could not be opened by this process${stranded.reason ? ` (${esc(stranded.reason)})` : ''}`}</div>
 					</div>
 					<div class="po-cell">
 						<div class="po-cell-label">Customer wallets affected</div>
-						<div class="po-cell-value ${stranded.customer_wallets_stranded ? 'bad' : ''}">${num(stranded.customer_wallets_stranded)}</div>
-						<div class="po-cell-note">${stranded.brief ? `support obligation: ${esc(stranded.brief)}` : 'no customer money is sealed'}</div>
+						<div class="po-cell-value ${measured ? (stranded.customer_wallets_stranded ? 'bad' : 'good') : 'muted'}">${measured ? num(stranded.customer_wallets_stranded) : 'not measured'}</div>
+						<div class="po-cell-note">${measured
+							? (stranded.brief ? `support obligation: ${esc(stranded.brief)}` : 'no customer money is sealed')
+							: 'an unmeasured panel is not an all-clear'}</div>
 					</div>
 				</div>
 				${rows ? `<div class="po-table-wrap" style="margin-top:1.25rem">

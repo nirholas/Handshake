@@ -35,6 +35,22 @@ import { patchProviderDetails } from './fulfillment-queries.js';
  * @returns {Promise<{ order: object, adapter: string, providerOrderId: string }>}
  */
 export async function submitOrder({ order, adapterKey = '', actor = 'operator', actorId = null }) {
+	// The fabrication gate is not advisory. An order reaches a printer only with
+	// a recorded `allow` verdict on it: the quote-time pass cleared the
+	// deterministic layers, and the screening sweep (api/cron/print-orders-sync)
+	// cleared the model layer. An order still awaiting that pass, or one held for
+	// operator review, is refused here rather than in a code path an operator
+	// could click past. See api/_lib/print/gate.js.
+	const screening = order?.analysis?.screening || null;
+	if (screening?.verdict !== 'allow') {
+		throw new FulfillmentError(
+			'not_screened',
+			screening?.verdict === 'review'
+				? 'this order is held for fabrication review and cannot be submitted until that is resolved'
+				: 'this order has not cleared the fabrication gate yet; the screening sweep runs every few minutes',
+		);
+	}
+
 	const assets = order?.prepared_asset_urls || {};
 	let adapter;
 	if (adapterKey) {
