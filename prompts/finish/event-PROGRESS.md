@@ -262,3 +262,63 @@ World server `/health` → `{"ok":true,"name":"three.ws-multiplayer"}`;
 **Remains.** Two reads that need a live `gcloud` token, both now OWNER-ACTIONS rows: the log
 confirmation (deadline about 2026-09-08) and the Upstash `player:*` scan (floor about 2026-11-07),
 either of which would confirm or overturn the zero above. Orders 02 and 06 are handled separately.
+
+## 2026-09-02 · Order 08 · Independent corroboration of the closeout, from a source outside this repo
+
+Ran the order in a second session while the entry above was being written. Reached the same two
+findings by different evidence, which is worth recording because OWNER-ACTIONS row 13 asks the owner
+to decide from them.
+
+**The API/frontend half is confirmed by a third-party timestamp, not only by our own progress log.**
+The entry above dates the deploy from `production-100-PROGRESS.md` (Cloud Build `015cc079`, revision
+`00365` at `4a748fbde`), which is an agent's own record of its own work. The community Telegram
+channel is an independent, externally timestamped copy of the same fact. `/api/cron/changelog-push`
+posts from `public/changelog.json` **baked into the running image**, on a 20-minute Cloud Scheduler
+cadence, so its post times date the image rather than the repo. Read from the public channel preview
+(`https://t.me/s/three_ws?q=<term>`, no credentials):
+
+```
+2026-08-09 11:20:22Z  Update - The world knows when the meetup is, and throws fireworks when it starts
+2026-08-09 11:20:47Z  Update - The wardrobe panel no longer glitches shut when you reopen it quickly
+2026-08-09 11:40:06Z  Update - Show up to a live event and you keep something from it
+2026-08-09 11:40:20Z  Update - The meetup has its own jobs, and a live leaderboard to race on
+2026-08-09 12:20:07Z  Update - Play now counts down to the next community event
+```
+
+Two properties make this decisive. The times land exactly on 20-minute boundaries (:20, :40, :00),
+which is the Cloud Scheduler cron and not a hand-run `changelog:push`. And the second line is the
+entry dated 2026-08-09 that reached `public/changelog.json` only in `4a748fbde` (feeds regenerated
+2026-08-09 09:54:19Z). An image serving that entry at 11:20 UTC must have been built at or after
+09:54 UTC that morning, which is after every event commit and 5h40m before the 17:00 window opened.
+So the countdown, `/event`, and the in-world meetup layer were live ahead of the window on evidence
+that does not depend on any agent's self-report.
+
+**The service-name defect in the order was found independently here too.** The order's log query
+names `hyperfy-world`. That service is the Hyperfy world behind `world.three.ws`
+(`deploy/world/cloudrun.yaml`, `STRUCTURE.md` row "Multiplayer 3D world"), a different deployment
+from the Colyseus server that runs `/play` and carries `_grantEventSouvenir`. Anyone running the
+order's query verbatim would have read zero rows from a service that never had the code and
+reported a false zero for the right answer's wrong reason. Use `three-ws-multiplayer`.
+
+**Re-verified from scratch, all agreeing with the entry above:** `/health` on the world server is
+`{"ok":true,"name":"three.ws-multiplayer"}`; `/population?by=coin` answers with a `byCoin` map and
+`byCoin` entered `multiplayer/src/index.js` in `ad4d3b713` (2026-08-17), so the image serving today
+postdates the event by eight days; `/api/play/population` answers `{"ok":false,"reason":"unavailable"}`
+against a world server that answers `ok:true` (OWNER-ACTIONS row 18); `/api/play/event-leaderboard`
+answers `no_event`.
+
+**On the two blocked reads.** Confirmed dead here as well, and by one more route than the entry above
+records: the stored-credential paths are refused by this session's tool policy on top of the
+Workspace reauth policy, so `gcloud`, application-default credentials, and a direct token exchange
+are all unavailable without the owner. Nothing in this session narrowed row 15.
+
+**One hazard cleared, not a finding.** The shared index held a stale entry for this file that would
+have deleted the closeout entry (123 lines) on the next `git commit` run without explicit paths,
+even though `9cff4cb2a` had already committed it. Reset with
+`git restore --staged prompts/finish/event-PROGRESS.md`; no working-tree content was touched.
+
+**Not run here.** Orders 02 and 06 stay open. 06 is under active work by a concurrent agent
+(`1c7410eef`, 2026-09-02 19:01Z, the photo-mode retake fix), so it was left alone. 02 needs the
+in-world browser walkthrough it has always needed, and the box is at load average 62 on 16 cores,
+the same contention that defeated the order-04 and order-07 agents; a walkthrough run under that
+would not be trustworthy evidence even if it completed. The pack therefore cannot retire yet.
