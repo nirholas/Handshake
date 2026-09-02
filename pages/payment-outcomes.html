@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Payment Outcomes · three.ws</title>
+	<meta name="robots" content="noindex, nofollow" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/fonts/fonts.css" />
+	<style>
+		body { background: #0a0a0f; color: #e2e8f0; min-height: 100vh; }
+		.po-wrap { max-width: 1200px; margin: 0 auto; padding: clamp(1.5rem, 4vw, 3rem) 1.25rem 5rem; }
+		.po-title { font-size: clamp(1.4rem, 3vw, 1.85rem); font-weight: 800; letter-spacing: -0.025em; margin: 0 0 0.5rem; }
+		.po-sub { color: rgba(255,255,255,0.45); font-size: 13.5px; margin: 0 0 1.75rem; max-width: 74ch; line-height: 1.65; }
+
+		.po-controls { display: flex; gap: 0.75rem; margin-bottom: 1.75rem; flex-wrap: wrap; align-items: center; }
+		.po-controls label { font-size: 12px; color: rgba(255,255,255,0.45); }
+		.po-controls select, .po-controls button { font: inherit; font-size: 13px; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: #e2e8f0; cursor: pointer; transition: border-color .15s ease, background .15s ease, transform .12s ease; }
+		.po-controls select:hover, .po-controls button:hover { border-color: rgba(255,255,255,0.24); background: rgba(255,255,255,0.09); }
+		.po-controls button:active { transform: translateY(1px); }
+		.po-controls select:focus-visible, .po-controls button:focus-visible { outline: 2px solid rgba(124,92,255,0.75); outline-offset: 2px; }
+		.po-controls button[disabled] { opacity: 0.5; cursor: progress; }
+		.po-stamp { font-size: 11.5px; color: rgba(255,255,255,0.3); margin-left: auto; font-variant-numeric: tabular-nums; }
+
+		.po-note { padding: 2.5rem 1.5rem; text-align: center; border-radius: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.55); line-height: 1.75; }
+		.po-note code { background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px; font-size: 12.5px; }
+		.po-note.bad { background: rgba(248,113,113,0.05); border-color: rgba(248,113,113,0.18); }
+		.po-note h2 { font-size: 15px; margin: 0 0 0.6rem; color: #e2e8f0; font-weight: 700; }
+		.po-note a { color: #a78bfa; }
+
+		.po-banner { display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.85rem 1.1rem; border-radius: 11px; margin-bottom: 1.5rem; font-size: 12.5px; line-height: 1.6; background: rgba(240,169,59,0.07); border: 1px solid rgba(240,169,59,0.24); color: #f0a93b; }
+
+		.po-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: rgba(255,255,255,0.35); margin: 0 0 0.85rem; display: flex; gap: 0.6rem; align-items: baseline; }
+		.po-section-title span { text-transform: none; letter-spacing: 0; font-weight: 500; color: rgba(255,255,255,0.25); }
+		.po-section { margin-bottom: 2.5rem; }
+
+		.po-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0.75rem; }
+		.po-cell { padding: 1rem 1.15rem; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); }
+		.po-cell-label { font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 0.4rem; }
+		.po-cell-value { font-size: 1.55rem; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1.15; }
+		.po-cell-note { font-size: 11.5px; color: rgba(255,255,255,0.35); margin-top: 0.4rem; line-height: 1.5; }
+		.good { color: #2fbf71; }
+		.warn { color: #f0a93b; }
+		.bad { color: var(--color-danger); }
+		.muted { color: rgba(255,255,255,0.35); }
+
+		.po-pill { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 3px 9px; border-radius: 999px; border: 1px solid currentColor; }
+
+		.po-bars { display: flex; flex-direction: column; gap: 0.5rem; }
+		.po-bar-row { display: grid; grid-template-columns: minmax(120px, 220px) 1fr 56px; gap: 0.85rem; align-items: center; font-size: 12.5px; }
+		.po-bar-label { color: rgba(255,255,255,0.6); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+		.po-bar-label b { color: rgba(255,255,255,0.35); font-weight: 500; font-size: 11px; }
+		.po-bar-track { height: 20px; border-radius: 6px; background: rgba(255,255,255,0.04); overflow: hidden; }
+		.po-bar-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, rgba(124,92,255,0.85), rgba(124,92,255,0.4)); transition: width .35s cubic-bezier(.4,0,.2,1); }
+		.po-bar-row.settle .po-bar-fill { background: linear-gradient(90deg, rgba(248,113,113,0.85), rgba(248,113,113,0.4)); }
+		.po-bar-row.floor .po-bar-fill { background: linear-gradient(90deg, rgba(47,191,113,0.9), rgba(47,191,113,0.4)); }
+		.po-bar-row.floor.low .po-bar-fill { background: linear-gradient(90deg, rgba(248,113,113,0.9), rgba(248,113,113,0.4)); }
+		.po-bar-count { text-align: right; font-variant-numeric: tabular-nums; color: rgba(255,255,255,0.7); }
+
+		.po-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+		.po-table th, .po-table td { text-align: left; padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.06); white-space: nowrap; }
+		.po-table th { color: rgba(255,255,255,0.4); font-weight: 600; text-transform: uppercase; font-size: 10.5px; letter-spacing: 0.06em; }
+		.po-table tbody tr { transition: background .12s ease; }
+		.po-table tbody tr:hover { background: rgba(255,255,255,0.035); }
+		.po-table td.num { font-variant-numeric: tabular-nums; text-align: right; }
+		.po-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid rgba(255,255,255,0.07); }
+		.po-addr { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; color: rgba(255,255,255,0.45); }
+
+		.po-detail { font-size: 12.5px; color: rgba(255,255,255,0.55); line-height: 1.7; margin: 0.75rem 0 0; }
+		.po-detail b { color: rgba(255,255,255,0.8); font-weight: 600; }
+
+		.po-skeleton { border-radius: 12px; background: linear-gradient(90deg, rgba(255,255,255,0.035) 25%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.035) 75%); background-size: 200% 100%; animation: po-shimmer 1.4s ease-in-out infinite; }
+		.po-skeleton.cell { height: 92px; }
+		.po-skeleton.bar { height: 20px; margin-bottom: 0.5rem; }
+		@keyframes po-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+		@media (prefers-reduced-motion: reduce) {
+			.po-skeleton { animation: none; }
+			.po-bar-fill { transition: none; }
+		}
+	</style>
+</head>
+<body>
+	<div class="po-wrap">
+		<h1 class="po-title">Payment Outcomes</h1>
+		<p class="po-sub">
+			Every way an x402 payment can fail, before it halts the economy. Verify rejections, settle
+			failures and replayed proofs are read from the durable payment ledger; the ring settle sensor
+			and live wallet balances say whether a collapse is a rail fault or a starved sponsor, which
+			look identical from outside and have opposite fixes. Internal tooling, not a public surface.
+		</p>
+
+		<div class="po-controls">
+			<label for="po-window">Window</label>
+			<select id="po-window">
+				<option value="1h">Last hour</option>
+				<option value="3h">Last 3 hours</option>
+				<option value="24h" selected>Last 24 hours</option>
+			</select>
+			<button id="po-refresh" type="button">Refresh</button>
+			<span class="po-stamp" id="po-stamp"></span>
+		</div>
+
+		<div id="po-content" aria-live="polite" aria-busy="true"></div>
+	</div>
+
+	<script src="/nav.js"></script>
+	<script type="module">
+		const el = document.getElementById('po-content');
+		const windowSelect = document.getElementById('po-window');
+		const refreshBtn = document.getElementById('po-refresh');
+		const stamp = document.getElementById('po-stamp');
+
+		const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+		const num = (n, d = 0) => (typeof n === 'number' && Number.isFinite(n) ? n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }) : '-');
+		const sol = (n) => (typeof n === 'number' && Number.isFinite(n) ? `${n.toFixed(4)} SOL` : '-');
+		const days = (n) => (typeof n === 'number' && Number.isFinite(n) ? `${n.toFixed(1)}d` : '-');
+
+		// A rate of null means "no attempts in this window", which is not zero and
+		// must never render as one: a quiet rail and a totally failing rail would
+		// otherwise look the same.
+		const pct = (n) => (typeof n === 'number' && Number.isFinite(n) ? `${(n * 100).toFixed(1)}%` : 'n/a');
+
+		function rateClass(value, { goodAbove, badBelow } = {}) {
+			if (typeof value !== 'number') return 'muted';
+			if (typeof goodAbove === 'number') return value >= goodAbove ? 'good' : value >= badBelow ? 'warn' : 'bad';
+			return '';
+		}
+
+		function rejectClass(value, warnAt, badAt) {
+			if (typeof value !== 'number') return 'muted';
+			if (value >= badAt) return 'bad';
+			if (value >= warnAt) return 'warn';
+			return value > 0 ? 'warn' : 'good';
+		}
+
+		function statusClass(status) {
+			if (status === 'ok' || status === 'clear') return 'good';
+			if (status === 'warn' || status === 'stranded') return 'warn';
+			if (status === 'down' || status === 'critical') return 'bad';
+			return 'muted';
+		}
+
+		function bars(rows, { className = '', empty = 'Nothing recorded in this window.' } = {}) {
+			if (!rows.length) return `<p class="po-detail muted">${esc(empty)}</p>`;
+			const max = Math.max(1, ...rows.map((r) => r.value));
+			return `<div class="po-bars">${rows.map((r) => `
+				<div class="po-bar-row ${className} ${r.rowClass || ''}">
+					<div class="po-bar-label" title="${esc(r.title || r.label)}">${esc(r.label)}${r.sub ? ` <b>${esc(r.sub)}</b>` : ''}</div>
+					<div class="po-bar-track"><div class="po-bar-fill" style="width:${Math.max(2, (r.value / max) * 100)}%"></div></div>
+					<div class="po-bar-count">${esc(r.display ?? num(r.value))}</div>
+				</div>`).join('')}</div>`;
+		}
+
+		function panelError(title, panel) {
+			return `<section class="po-section">
+				<div class="po-section-title">${esc(title)}</div>
+				<div class="po-note bad">This panel could not be read: <code>${esc(panel.error)}</code><br />
+				The other panels are unaffected. A board that cannot see is not a board that is fine.</div>
+			</section>`;
+		}
+
+		function inboundSection(inbound, win) {
+			if (inbound?.error) return panelError(`Inbound payments (${win})`, inbound);
+			const w = inbound?.windows?.[win];
+			if (!w) return panelError(`Inbound payments (${win})`, { error: 'window missing from the response' });
+
+			const quiet = !w.inbound_attempts;
+			const cells = `
+				<div class="po-cell">
+					<div class="po-cell-label">Settle success rate</div>
+					<div class="po-cell-value ${rateClass(w.settle_success_rate, { goodAbove: 0.95, badBelow: 0.8 })}">${pct(w.settle_success_rate)}</div>
+					<div class="po-cell-note">${num(w.settled)} settled, ${num(w.settle_failed)} failed</div>
+				</div>
+				<div class="po-cell">
+					<div class="po-cell-label">Verify reject rate</div>
+					<div class="po-cell-value ${rejectClass(w.verify_reject_rate, 0.1, 0.35)}">${pct(w.verify_reject_rate)}</div>
+					<div class="po-cell-note">${num(w.verify_rejected)} refused before settling. A spike with flat settles is the junk-proof flood.</div>
+				</div>
+				<div class="po-cell">
+					<div class="po-cell-label">Replay reject rate</div>
+					<div class="po-cell-value ${rejectClass(w.replay_reject_rate, 0.01, 0.1)}">${pct(w.replay_reject_rate)}</div>
+					<div class="po-cell-note">${num(w.replay_rejected)} of ${num(w.inbound_attempts)} arrivals. Any sustained value is captured headers being re-sent.</div>
+				</div>
+				<div class="po-cell">
+					<div class="po-cell-label">Unsettled flush</div>
+					<div class="po-cell-value ${w.unsettled_flush ? 'warn' : ''}">${num(w.unsettled_flush)}</div>
+					<div class="po-cell-note">Verified but never claimed</div>
+				</div>
+				<div class="po-cell">
+					<div class="po-cell-label">Settled volume</div>
+					<div class="po-cell-value">$${num(inbound.settled_volume_usd_24h, 2)}</div>
+					<div class="po-cell-note">USDC, last 24h regardless of the window above</div>
+				</div>`;
+
+			const quietNote = quiet
+				? `<p class="po-detail muted">No payment reached the paid routes in this window, so every rate above reads <b>n/a</b> rather than 0%. That is a quiet rail, not a healthy one: widen the window before concluding anything.</p>`
+				: '';
+
+			const reasons = (inbound.top_failure_reasons_24h || []).map((r) => ({
+				label: r.reason,
+				sub: r.stage,
+				value: r.count,
+				rowClass: r.stage === 'settle' ? 'settle' : '',
+				title: `${r.reason} (${r.stage} stage)`,
+			}));
+
+			const stages = Object.entries(inbound.replay_stages_24h || {}).map(([stage, n]) => ({
+				label: stage,
+				sub: stage === 'pre_handler' ? 'guard refused the proof' : stage === 'post_settle' ? 'lost insert race, refused at claim' : '',
+				value: n,
+			})).sort((a, b) => b.value - a.value);
+
+			return `<section class="po-section">
+					<div class="po-section-title">Inbound payments <span>${esc(win)} window</span></div>
+					<div class="po-grid">${cells}</div>
+					${quietNote}
+				</section>
+				<section class="po-section">
+					<div class="po-section-title">Top reject reasons <span>last 24h, verify and settle stages</span></div>
+					${bars(reasons, { empty: 'No verify or settle rejection recorded in the last 24 hours.' })}
+				</section>
+				<section class="po-section">
+					<div class="po-section-title">Replay rejections by stage <span>last 24h</span></div>
+					${bars(stages, { empty: 'No replayed payment proof was refused in the last 24 hours.' })}
+				</section>`;
+		}
+
+		function ringSection(ring) {
+			if (ring?.error) return panelError('Outbound ring settlement', ring);
+			const m = ring.metrics || {};
+			const faults = (m.topFaults || []).map((f) => ({ label: f.reason, value: f.n, rowClass: 'settle' }));
+			const cause = m.cause
+				? `<p class="po-detail">Dominant cause: <b>${esc(m.cause)}</b>. ${
+						m.cause === 'sponsor_floor'
+							? 'The Solana accept was withdrawn under the SOL floor, so nothing was even attempted. Fund the sponsor; the rail is fine.'
+							: m.cause === 'fee_governor'
+								? 'Deliberate spend pacing, not a rail fault. This is a budget decision showing up as failed settles.'
+								: 'Genuine settle faults on the rail.'
+					}</p>`
+				: '';
+			return `<section class="po-section">
+				<div class="po-section-title">Outbound ring settlement <span>${m.windowHours ? `${m.windowHours}h window` : 'sensor'}</span></div>
+				<div class="po-grid">
+					<div class="po-cell">
+						<div class="po-cell-label">Sensor status</div>
+						<div class="po-cell-value"><span class="po-pill ${statusClass(ring.status)}">${esc(ring.status || 'unknown')}</span></div>
+						<div class="po-cell-note">${esc(ring.detail || '')}</div>
+					</div>
+					<div class="po-cell">
+						<div class="po-cell-label">Settle rate</div>
+						<div class="po-cell-value ${rateClass(m.rate, { goodAbove: 0.9, badBelow: 0.6 })}">${pct(m.rate)}</div>
+						<div class="po-cell-note">${num(m.settled)} settled of ${num(m.attempts)} attempts</div>
+					</div>
+					<div class="po-cell">
+						<div class="po-cell-label">Accepts withdrawn</div>
+						<div class="po-cell-value ${m.noSolanaAccept ? 'warn' : ''}">${num(m.noSolanaAccept)}</div>
+						<div class="po-cell-note">Volume the rate cannot show: no Solana accept was offered</div>
+					</div>
+					<div class="po-cell">
+						<div class="po-cell-label">Governor skips</div>
+						<div class="po-cell-value ${m.governorSkips ? 'warn' : ''}">${num(m.governorSkips)}</div>
+						<div class="po-cell-note">Spend pacing, not failure. Read next to the rate.</div>
+					</div>
+				</div>
+				${cause}
+				${ring.hint ? `<p class="po-detail"><b>Triage:</b> ${esc(ring.hint)}</p>` : ''}
+				<div style="margin-top:1.25rem">${bars(faults, { empty: 'No settle fault in the sensor window.' })}</div>
+			</section>`;
+		}
+
+		function sponsorSection(sponsor) {
+			if (sponsor?.error) return panelError('Sponsor and ring wallets', sponsor);
+			if (!sponsor.configured && !(sponsor.wallets || []).length) {
+				return `<section class="po-section">
+					<div class="po-section-title">Sponsor and ring wallets</div>
+					<div class="po-note">
+						<h2>No ring wallet is configured on this deployment</h2>
+						The fee wallet that pays every settle is read from the ring monitor. Configure the
+						x402 ring wallets on the service, then reload; until then the balance half of an
+						outage cannot be distinguished from the rail half.
+					</div>
+				</section>`;
+			}
+
+			// Balance against its OWN floor, per wallet. A starved payer reads as
+			// healthy on a board that shows only the sponsor.
+			const walletBars = (sponsor.wallets || []).flatMap((w) => {
+				const rows = [];
+				if (typeof w.sol === 'number') {
+					rows.push({
+						label: `${w.role} SOL`,
+						sub: typeof w.sol_floor === 'number' ? `floor ${w.sol_floor}` : '',
+						value: w.sol,
+						display: sol(w.sol),
+						rowClass: w.sol_low ? 'low' : '',
+						title: w.address || w.role,
+					});
+				}
+				if (typeof w.usdc === 'number') {
+					rows.push({
+						label: `${w.role} USDC`,
+						sub: typeof w.usdc_floor === 'number' ? `floor ${w.usdc_floor}` : '',
+						value: w.usdc,
+						display: `$${num(w.usdc, 2)}`,
+						rowClass: w.usdc_low ? 'low' : '',
+						title: w.address || w.role,
+					});
+				}
+				return rows;
+			});
+
+			const breaches = (sponsor.breaches || []).length
+				? `<div class="po-banner">${sponsor.breaches.map((b) => esc(typeof b === 'string' ? b : b.message || JSON.stringify(b))).join('<br />')}</div>`
+				: '';
+
+			return `<section class="po-section">
+				<div class="po-section-title">Sponsor runway <span>burn measured over ${sponsor.burn_window_days ?? '?'} days, ${num(sponsor.settles_in_window)} settles</span></div>
+				${breaches}
+				<div class="po-grid">
+					<div class="po-cell">
+						<div class="po-cell-label">Fee wallet balance</div>
+						<div class="po-cell-value ${sponsor.below_floor ? 'bad' : 'good'}">${sol(sponsor.sol)}</div>
+						<div class="po-cell-note">watch floor ${sol(sponsor.sol_floor)}, settling stops at ${sol(sponsor.settle_floor_sol)}</div>
+					</div>
+					<div class="po-cell">
+						<div class="po-cell-label">Runway verdict</div>
+						<div class="po-cell-value"><span class="po-pill ${statusClass(sponsor.runway_status)}">${esc(sponsor.runway_status || 'unknown')}</span></div>
+						<div class="po-cell-note">${esc(sponsor.runway_reason || `alerts under ${sponsor.runway_alert_days ?? '?'} days`)}</div>
+					</div>
+					<div class="po-cell">
+						<div class="po-cell-label">Days to the floor</div>
+						<div class="po-cell-value ${sponsor.runway_status === 'critical' ? 'bad' : sponsor.runway_status === 'warn' ? 'warn' : ''}">${days(sponsor.runway_days_to_floor)}</div>
+						<div class="po-cell-note">the operational figure: settling stops at the floor, not at zero (${days(sponsor.runway_days)} to empty)</div>
+					</div>
+					<div class="po-cell">
+						<div class="po-cell-label">Measured burn</div>
+						<div class="po-cell-value">${typeof sponsor.burn_sol_per_day === 'number' ? `${sponsor.burn_sol_per_day.toFixed(4)}` : '-'}</div>
+						<div class="po-cell-note">SOL/day from real settle fees, never a remembered constant</div>
+					</div>
+				</div>
+				<div style="margin-top:1.5rem">
+					<div class="po-section-title">Every configured ring wallet against its own floor</div>
+					${bars(walletBars, { className: 'floor', empty: 'No ring wallet reported a readable balance.' })}
+				</div>
+			</section>`;
+		}
+
+		function strandedSection(stranded) {
+			if (!stranded) return '';
+			if (stranded.error) return panelError('Stranded custody', stranded);
+			const rows = (stranded.top_stranded || []).map((w) => `
+				<tr>
+					<td class="po-addr">${esc(w.address)}</td>
+					<td>${w.platform ? 'platform' : 'customer'}</td>
+					<td class="num">${sol(w.sol)}</td>
+					<td>${esc(w.reason || '')}</td>
+				</tr>`).join('');
+			return `<section class="po-section">
+				<div class="po-section-title">Stranded custody <span>${stranded.checked_at ? `snapshot ${esc(String(stranded.checked_at).slice(0, 16).replace('T', ' '))}` : 'snapshot'}</span></div>
+				<div class="po-grid">
+					<div class="po-cell">
+						<div class="po-cell-label">Status</div>
+						<div class="po-cell-value"><span class="po-pill ${statusClass(stranded.status)}">${esc(stranded.status)}</span></div>
+						<div class="po-cell-note">${esc(stranded.detail || '')}</div>
+					</div>
+					<div class="po-cell">
+						<div class="po-cell-label">SOL behind a retired key</div>
+						<div class="po-cell-value ${stranded.sol_stranded ? 'bad' : 'good'}">${sol(stranded.sol_stranded)}</div>
+						<div class="po-cell-note">platform ${sol(stranded.sol_stranded_platform)}, customer ${sol(stranded.sol_stranded_customer)}</div>
+					</div>
+					<div class="po-cell">
+						<div class="po-cell-label">Customer wallets affected</div>
+						<div class="po-cell-value ${stranded.customer_wallets_stranded ? 'bad' : ''}">${num(stranded.customer_wallets_stranded)}</div>
+						<div class="po-cell-note">${stranded.brief ? `support obligation: ${esc(stranded.brief)}` : 'no customer money is sealed'}</div>
+					</div>
+				</div>
+				${rows ? `<div class="po-table-wrap" style="margin-top:1.25rem">
+					<table class="po-table">
+						<thead><tr><th>Wallet</th><th>Owner</th><th>SOL</th><th>Reason</th></tr></thead>
+						<tbody>${rows}</tbody>
+					</table>
+				</div>` : ''}
+			</section>`;
+		}
+
+		function render(data, win) {
+			const degraded = data.degraded || [];
+			const banner = degraded.length
+				? `<div class="po-banner">Blind panels this read: <b>${degraded.map(esc).join(', ')}</b>. Everything else below is current.</div>`
+				: '';
+			el.innerHTML = banner
+				+ inboundSection(data.inbound, win)
+				+ ringSection(data.ring_settle)
+				+ sponsorSection(data.sponsor)
+				+ strandedSection(data.stranded_custody);
+			stamp.textContent = data.generated_at ? `read ${new Date(data.generated_at).toLocaleTimeString()}` : '';
+		}
+
+		function skeleton() {
+			const cells = Array.from({ length: 5 }, () => '<div class="po-skeleton cell"></div>').join('');
+			const rows = Array.from({ length: 4 }, () => '<div class="po-skeleton bar"></div>').join('');
+			el.innerHTML = `
+				<section class="po-section">
+					<div class="po-section-title">Inbound payments <span>reading the payment ledger</span></div>
+					<div class="po-grid">${cells}</div>
+				</section>
+				<section class="po-section">
+					<div class="po-section-title">Wallets <span>reading live balances over RPC</span></div>
+					${rows}
+				</section>`;
+		}
+
+		function denied() {
+			el.innerHTML = `<div class="po-note">
+				<h2>This board is internal</h2>
+				It exposes wallet addresses, floors and failure reasons, so it takes the same gate as
+				<code>/api/ops/health</code>. Sign in as a platform admin, or call the API directly with
+				<code>x-ops-secret: $OPS_SECRET</code>:<br /><br />
+				<code>curl -s -H "x-ops-secret: $OPS_SECRET" https://three.ws/api/ops/payment-outcomes | jq</code>
+			</div>`;
+		}
+
+		function failed(message) {
+			el.innerHTML = `<div class="po-note bad">
+				<h2>Could not read the payment board</h2>
+				<code>${esc(message)}</code><br /><br />
+				The endpoint answers 207 with the panels it managed to read, so a total failure here is the
+				request itself: check the service is up (<code>/api/healthz</code>) and retry.
+			</div>`;
+		}
+
+		let inFlight = null;
+		let lastData = null;
+
+		async function load() {
+			const win = windowSelect.value;
+			// A second click while a read is open would race two renders; the button
+			// reports the state instead of pretending the click did nothing.
+			if (inFlight) return;
+			refreshBtn.disabled = true;
+			refreshBtn.textContent = 'Reading…';
+			el.setAttribute('aria-busy', 'true');
+			skeleton();
+			inFlight = (async () => {
+				try {
+					const res = await fetch('/api/ops/payment-outcomes', {
+						credentials: 'include',
+						headers: { accept: 'application/json' },
+					});
+					if (res.status === 401) { lastData = null; return denied(); }
+					if (res.status === 429) {
+						return failed(`rate limited, retry in ${res.headers.get('retry-after') || 'a moment'}s`);
+					}
+					// 207 is the designed partial: the body is valid and names its blind panels.
+					if (!res.ok && res.status !== 207) throw new Error(`status ${res.status}`);
+					lastData = await res.json();
+					render(lastData, win);
+				} catch (err) {
+					failed(err?.message || String(err));
+				} finally {
+					refreshBtn.disabled = false;
+					refreshBtn.textContent = 'Refresh';
+					el.setAttribute('aria-busy', 'false');
+					inFlight = null;
+				}
+			})();
+			await inFlight;
+		}
+
+		// All three windows arrive in ONE response, so switching between them is a
+		// re-render, not a request: an operator sweeping 1h/3h/24h during an
+		// incident should not spend three database reads and three RPC balance
+		// reads to do it. Refresh is the explicit way to fetch again.
+		windowSelect.addEventListener('change', () => {
+			if (lastData) render(lastData, windowSelect.value);
+			else load();
+		});
+		refreshBtn.addEventListener('click', load);
+		load();
+	</script>
+</body>
+</html>
