@@ -1645,8 +1645,13 @@ the gate accepts **87%**. The rejects are all clips legitimately out of spec for
 generated content rather than gate errors: sliced sub-clips a few frames long, static
 pose assets with zero motion, and one hit reaction that genuinely slides.
 
-**Accept rate on generated clips: 5 of 5** on the corrected gate. That sample is small
-and is stated as such. The number that matters more is how the first gate got there:
+**Accept rate on generated clips: 10 of 10** on the corrected gate (6 from a live
+12-prompt batch, all locomotion and all loop-tagged, plus 4 earlier study clips). The
+batch itself decided only 6 before the rate limiter throttled the rest; through the
+code as it stands every one of those 6 passes, including the 3 the batch rejected on a
+loop seam that the adaptive blend now closes (0.236, 0.294 and 0.378 m, all to 0.000).
+The sample is small and is stated as such: 10 clips, weighted toward locomotion, not a
+broad sweep of all 10 categories. The number that matters more is how the first gate got there:
 an earlier version tested adjacent **local** quaternions and rejected **100%** of
 generated clips (24 of 24) on a `frame_pop` rule. Inspection showed the sampler emits
 a 180 degree twist about a bone's own axis that the child bone cancels, which is
