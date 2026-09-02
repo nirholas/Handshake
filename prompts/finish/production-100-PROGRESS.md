@@ -163,3 +163,112 @@ credit the customers (recommended), contact them first, or write the balance off
 the second customer wallet needs one keyed `node scripts/audit-custodial-key-health.mjs
 --json` run on a machine with `WALLET_ENCRYPTION_KEY` (row 15); the decision itself does
 not wait on it. Order file deleted.
+
+## 2026-09-02: the `mixed` class was unreachable by construction, not by threshold
+
+P100-04 assumed the `mixed` verdict needed a threshold nudge. It did not. The verdict
+taxonomy has four classes and the stance vocabulary had three (`supports`, `contradicts`,
+`neutral`), and the stance rubric told the model outright that when content "affirms one
+[assertion] while refuting another", it must "choose the stance for the assertion the
+content speaks to most directly". Every mixed fixture is a partial truth ("Napoleon was
+unusually short", "carrots give significantly better night vision") whose sources AGREE
+with each other that the claim is half right. Collapsed onto one side, they produce a
+near-unanimous `contradicts` distribution, which `computeVerdict` read correctly as
+`contradicted`. Both published runs show it: mixed to contradicted, 7 of 10, twice. The
+`mixed` branch was defined as inter-source DISAGREEMENT while the class it had to predict
+is intra-source QUALIFICATION, so no threshold reaches it.
+
+Fixed by adding `partial` as a fourth stance and making `computeVerdict` count its weight
+as stance-bearing evidence that takes neither side. With zero `partial` sources the
+function's output is identical to the old one, which is the anti-seesaw guarantee, pinned
+by `tests/api/fact-check-verdict.test.js`.
+
+Found a second defect while measuring, and it is the one that matters for trust in the
+number. Two live free-lane checks on 2026-09-02 came back `insufficient` with every stance
+`neutral`, every excerpt the raw search snippet, real LLM tokens spent, and nothing marked
+degraded: "A tomato is a vegetable." resolved as unengaged evidence while holding
+*Nix v. Hedden*, the Supreme Court case that settles it. Both LLM stages extracted their
+JSON with a NON-GREEDY `/\[[\s\S]*?\]/`, so they stopped at the first `]` in the response.
+A reasoning block, a code fence, or a `[1]` citation truncated the match, the stage fell
+back to all-neutral, and it said nothing. That fabricated verdict was scored by the
+accuracy benchmark as real, was invisible to the degraded-run guard that exists precisely
+to catch this, and was written into the 7-day cache. The same fault collapsed the three
+search angles to one on every check. `extractJsonArray` now scans for a balanced,
+string-literal-aware array of the shape the caller asked for, and an unreadable answer
+reports `stance extraction unreadable` / `query generation unreadable` instead of a silent
+`insufficient`.
+
+Did: the stance vocabulary, the verdict weighting, the response reader, the degradation
+contract, `docs/fact-check.md`, `agents/fact-checker/README.md`, and two changelog
+entries. 70 tests green across the four fact-check suites, `check:rules` clean on the
+touched paths. The full `npx vitest run` is 26,965 passing with 17 failures in 13 files,
+none of them fact-check (3d-studio, branding, cron-scheduler-sync, x402-discovery-parity,
+glb-quality, oracle-calibrate-cron, rate-limit-buckets, asset-host-liveness,
+deploy-artifacts, no-nul-bytes), all in code other sessions were editing at the time.
+
+Left: nothing has MEASURED the fix, so there is no before/after table and no published
+run. The in-process runner needs an LLM lane and this machine has none: no provider key in
+`.env` or `.env.local`, and `gcloud` refuses every call with "Reauthentication failed.
+cannot prompt during non-interactive execution", which also takes out the Vertex Gemini
+anchor. Production's own chain is currently falling through to a dead paid backstop
+(`openai 429: billing_not_active` on a live check), so a run today would be refused by the
+error-rate ceiling anyway, correctly. `prompts/finish/production-100-04b-fact-check-publish-run.md`
+carries the remainder with the exact commands. Order file 04 deleted.
+
+## 2026-09-02: 04 mixed verdicts (calculus fix, lane fix, and what could not be measured)
+
+Measured first: the live endpoint still served the 2026-08-10 run, `source: database`,
+40% overall with `mixed` 0/10 and its confusion row reading `contradicted` 7,
+`insufficient` 2, `supported` 1.
+
+Root cause, and it is not a threshold. The ten `mixed` fixtures are all partial truths
+("a tomato is a vegetable", "Napoleon was unusually short", the tongue map), and on a
+partial truth the sources do not disagree with each other: every one reads the same
+nuance. The stance vocabulary was `supports | contradicts | neutral`, and the extraction
+rubric explicitly told the model to pick one side when a source affirmed part of a claim
+and refuted another. So every source projected the same way, the projection cleared the
+70% dominance bar, and the claim came back flat. `computeVerdict`'s `mixed` branch was
+reachable only from inter-source disagreement, which that evidence never produces. The
+class was unreachable by construction.
+
+Fix: a fourth stance, `partial`, for a source that engages the claim and finds it true in
+one respect and wrong, overstated, or only conditionally true in another. It is
+stance-bearing but takes neither side, so it dilutes dominance and pushes the result to
+`mixed`; the rubric is deliberately narrow (hedged prose, thin coverage and extractor
+uncertainty stay `neutral`). Mixed confidence was rewritten too: it was
+`max(supportRatio, contraRatio)`, which grew as a split became more lopsided. It is now a
+mixedness score, `partialRatio + 2 * min(supportRatio, contraRatio)`, clamped to 1.
+Wired through the extraction rubric, the image-evidence lane, the x402 response schema,
+the source pill on `/fact-checker`, `docs/fact-check.md` and the agent README.
+
+Anti-seesaw, proven mechanically rather than statistically: `tests/api/fact-check-verdict.test.js`
+runs 5000 seeded random distributions drawn only from the three legacy stances and asserts
+the new `computeVerdict` returns exactly what a transcription of the old rule returns. So
+no clear-cut claim can be pulled into the mixed band by the calculus; the only claims whose
+verdict can move are the ones a source actually reports as half-true. 23 tests green,
+alongside the clear-cut pins (unanimous, boundary-at-70%, empty, all-neutral, zero-weight,
+lone-source coverage floor).
+
+Could not be measured here, which is why 04b exists. A 40-claim before/after needs an LLM
+lane and this box has none: no provider key in `.env` or `.env.local`, `gcloud` auth dead,
+and the keyless floor answered 0 of 8 probes (OVH 429, Pollinations 429 on every attempt).
+A baseline worktree at `1407949cb` was staged for the A/B and torn down unused. Publishing
+was refused on top of that for a second reason worth keeping: without ADC the search chain
+falls to Wikipedia and DuckDuckGo, which returned "Aunty Donna's Coffee Cafe" for "coffee
+is bad for your health", so a local run would have understated a chain the public number
+is meant to describe. Both facts are now written into 04b with the trap named.
+
+Side fix, from diagnosing that floor: LLM7.io retired the anonymous tier its rung was added
+on, so every unauthenticated call is a 401 `invalid_api_key` (the `unused` token its docs
+used to accept included). The rung sat in the chain unconditionally, spending a guaranteed
+round trip at the tail of an already-exhausted chain. It is gated on `LLM7_API_KEY` now,
+and `docs/ops/llm-lanes.md`, `docs/free-llm-providers.md` and `.env.example` no longer
+claim three keyless rungs when there are two.
+
+Left: 04b, unchanged in scope. It needs one LLM key and, for a publishable number, the
+grounded search rung.
+
+Worth knowing for the next agent: this ran alongside another agent on the same order.
+Everything here reached `main` swept into that agent's commits (the shared worktree does
+`git add -A`), so the content landed even though almost none of it carries a commit of
+mine. Four commit attempts lost the `HEAD` ref race outright.

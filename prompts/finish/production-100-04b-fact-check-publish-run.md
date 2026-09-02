@@ -61,6 +61,15 @@ If `/api/fact-check-benchmark` already reports a run generated after the fix lan
    aerial-vehicle-466722-p5 --format=yaml`). Search needs no key: Wikipedia and DuckDuckGo
    are keyless rungs, though a `BRAVE_API_KEY` / `TAVILY_API_KEY` materially improves the
    evidence the verdict sees.
+
+   **Do not plan on the keyless LLM floor.** It exists and it is real, but it is two rungs,
+   not three, and from this workspace's shared egress IP it answered 0 of 8 probes on
+   2026-09-02: OVH 429 and Pollinations 429 on every attempt across 64 seconds, with one
+   isolated success after a long idle. LLM7 was the third keyless rung and is not one any
+   more (llm7.io retired its anonymous tier; every unauthenticated call is 401
+   `invalid_api_key`, the `unused` token its docs used to accept included), so it is gated
+   on `LLM7_API_KEY` now. A 40-claim run is 80 LLM turns; the keyless floor will not carry
+   it. Get a real key.
 2. **Check the production chain is not itself degraded before spending a run.** On
    2026-09-02 a live free-lane check returned
    `query generation unavailable: openai 429 billing_not_active`, meaning every free rung
@@ -76,6 +85,17 @@ If `/api/fact-check-benchmark` already reports a run generated after the fix lan
    `by_class` against the last published run (`mixed` must leave zero, no class may
    regress) and read `/tmp/fc-detail.json` for the per-source stances behind any class that
    moved the wrong way.
+
+   **Fidelity trap, and it decides whether step 4 is honest.** The published 2026-08-10 run
+   was produced by production, whose search chain leads with Vertex-grounded Google Search.
+   A local run without `GOOGLE_CLOUD_PROJECT` and ADC (or a Brave/Tavily/Exa/Serper key)
+   silently falls to the keyless rungs, and the evidence is visibly worse: probing the
+   `mixed` claims here on 2026-09-02 returned five Wikipedia pages per claim, among them
+   "Aunty Donna's Coffee Cafe" for "Coffee is bad for your health" and "Zootopia" for the
+   tongue map. That tier is fine for an A/B of the CALCULUS against itself, where both arms
+   see the same evidence. It is not the product's accuracy, and publishing it as the
+   headline number would understate a chain the public number is supposed to describe.
+   Before `--publish`, confirm the run actually used the grounded search rung.
 4. **Publish only an improved, non-degraded run:** re-run with `--publish`. The live
    `/api/fact-check-benchmark` reads the DB row first, so this reaches the public page
    without a deploy, but the CHAIN itself only improves once the code is deployed, so
@@ -98,7 +118,8 @@ If `/api/fact-check-benchmark` already reports a run generated after the fix lan
 
 | Blocker | Resolution |
 |---|---|
-| No LLM key anywhere on the machine | Restore `gcloud` auth for the Vertex anchor, then read the service env. If a key genuinely exists nowhere, that is one line for OWNER-ACTIONS naming the single missing variable, not a reason to leave the rest undone. |
+| No LLM key anywhere on the machine | Restore `gcloud` auth for the Vertex anchor, then read the service env. If a key genuinely exists nowhere, that is one line for OWNER-ACTIONS naming the single missing variable, not a reason to leave the rest undone. Do not spend the session retrying the keyless rungs: they were 0/8 from this egress IP on 2026-09-02 (task 1). |
+| Tempted to publish a run measured on the keyless search tier | Do not. It measures a chain the public number does not describe (task 3). Report the A/B, leave the published run alone, and say what is missing. |
 | The deploy is owner-gated | Prepare it so the ship is one command (`npm run deploy:gcp:full` after `npm run prep:worktree -- --apply`) and say so. Publishing the run does NOT need the deploy, but running it against the OLD chain measures the old code, so do not publish that as the fix's number. |
 | Accuracy improves on `mixed` but a neighbour regresses | That is the seesaw the calculus was designed against. Read `/tmp/fc-detail.json` for the regressed claims' stances: a `partial` where the source plainly affirms or plainly refutes is a rubric problem, not a calculus one. |
 | The run is refused as degraded | Working as designed. Fix the lane, then re-run. Never lower `MAX_ERROR_RATE`. |
