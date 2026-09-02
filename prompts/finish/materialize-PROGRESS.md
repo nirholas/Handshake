@@ -103,3 +103,113 @@ what was verified (commands/evidence), owner items surfaced. Never record
   and `PRINT_PARTNER_CN_URL` + `PRINT_PARTNER_CN_KEY`, which stay absent until
   a partner is contracted. Signing that partner is an owner action.
   Next: the adapter registry is the only file a contracted partner touches.
+
+- 2026-09-02, order 03 (the /materialize surface): the page is live locally and
+  exercised end to end in a real browser. NOTE: this pack ran with ~49 sessions
+  sharing one worktree, so several of these files were swept into other
+  sessions' commits before this one landed; the content is this session's.
+  Shipped: `pages/materialize.html` + `src/materialize.js` + the pure
+  `src/materialize-lib.js` (scale drawing, slider maths, itemization rows,
+  timeline, shipping validation), the tracking page
+  `pages/materialize-order.html` + `src/materialize-order.js`, and the two
+  handlers the page needed that nobody had built: `api/print/prepare.js`
+  (repair, scale, optional hollow, then STL/3MF/repaired-GLB to R2 with the
+  before and after reports) and `api/print/upload.js` (presigned slot so a
+  local .glb can be measured). Entry points: `/m/:id` action bar, the forge
+  result bar (deep-links by creation id, falls back to the GLB url), creation
+  cards, and the advanced-tier nav item. Routes in `data/pages.json`,
+  `vite.config.js` (input + dev static + the `/materialize/orders/:id` dynamic
+  rule) and `vercel.json`. Docs: a "Using the page" section in
+  `docs/materialize.md`; STRUCTURE.md row extended.
+  Also added to order 02's engine (which a concurrent session had landed):
+  `fitHeightRange()` and `materialFits()`, so the slider ends and the material
+  cards are the server's own measurement of THIS mesh rather than the catalog's
+  machine limits, plus `tests/print-quote-engine.test.js` (27) and
+  `tests/materialize-lib.test.js` (41), both green.
+  Verified in Chromium against `server/index.mjs` on the production database
+  with a real QA session and real forge creations: empty state, loading,
+  populated, analyze failure (two distinct messages for an unreadable file and
+  an unfetchable URL), rejection with its fix and alternatives, repair (38s,
+  6404 vertices merged, score 88 to 93, viewer swapped to the prepared file),
+  material switch, quantity break, destination re-pricing, the AR desktop QR
+  handoff, the anonymous sign-in gate, shipping validation, a real order (201)
+  with a live Solana Pay intent and QR, and the tracking page in both its live
+  and canceled states. Console clean, no horizontal overflow at 320 or 768.
+  Five defects found and fixed while proving it: `/api/auth/me` answers
+  `{user:null}` for a visitor and the envelope was being read as the user, so
+  the sign-in gate never fired; the printability card rendered before the size
+  existed and reported the mesh's native wall thickness; the preset row rendered
+  four dead chips when none fitted the material's band; the creations rail only
+  worked for an account with a claimed username; and the tracking page showed a
+  raw material id and no lead time until a job was submitted.
+  NOT verified, deliberately: no USDC was sent (CLAUDE.md gate 1), so `paid` and
+  everything after it on the tracking page is covered by unit tests, not a live
+  payment. AR placement itself needs a phone; the `scale` + `ar-scale="fixed"`
+  wiring was verified in the DOM and the factor is the quote's own scale.
+  model-viewer cannot fetch an R2 model from a localhost origin because the
+  bucket's CORS allowlist names `https://three.ws` only (confirmed by preflight;
+  it is the `backlog-05-r2-bucket-cors` item), so the browser runs stood that one
+  policy down; every model, API call and price in them was real.
+  Two QA orders (`0ce46a9b-5ac5-43ed-b2bb-151c213ef016`,
+  `0a83c40c-6030-4c33-9920-21a48ab04e64`) were opened against the production
+  database and closed out as `canceled` with a note; neither is in the operator
+  queue.
+  Owner items: none new. Next: orders 04, 05 and 06 are already in flight from
+  other sessions; the surface consumes their endpoints as they land.
+
+- 2026-09-02, order 05 (certificates, editions, the phygital link): shipped and
+  closed. Ran alongside orders 01-04 in other sessions, so parts of this landed
+  inside their commits; what this session authored:
+  `api/_lib/print/certificate.js` (SHA-256 of the exact prepared bytes read
+  back off object storage, atomic edition claim, QR to R2, SPL Memo
+  attestation, `retryPendingAttestations`, the public read with its visibility
+  rule), `api/_lib/print/editions.js` (series keys, cap normalisation,
+  `assertEditionAvailable`, creator-only `setEditionLimit`), the state machine
+  in `api/_lib/print-store.js` (statuses, transition whitelist, guarded update,
+  timeline row, `print_update` notification, the shipped -> certificate hook)
+  which orders 02 and 04 then extended, migration
+  `20260902193000_print_certificates.sql` (+ `forge_creations.print_edition_limit`),
+  `api/print/certs/[id].js`, `api/print/editions.js`,
+  `api/print/ops/insert-card.js`, `pages/certificate.html` +
+  `src/certificate-page.js` + `src/certificate.css` (`/cert/:id` and the
+  `/cert` lookup), `pages/print-insert.html` + `src/print-insert.js` +
+  `src/print-insert.css` (the A5 package insert), the Physical editions panel
+  on `/m/:id`, `editionNote` on `/materialize`, the edition gate on
+  `/api/print/quote` and both checkout lanes, and the attestation retry pass in
+  `api/cron/print-orders-sync.js`. Tests:
+  `tests/print-certificate.test.js` (44), `tests/print-store.test.js` (20),
+  the attestation cases in `tests/print-orders-sync.test.js`, `editionNote` in
+  `tests/materialize-lib.test.js`.
+  ROUTE DEVIATION from 00-CONTEXT: the certificate page is `/cert/:certId`,
+  not `/p/:certId`. `/p/([a-z0-9-]+)` was already the launchpad route and a
+  24-hex certificate id matches it, so `/p/` would have shadowed a live
+  surface. 00-CONTEXT and the architecture diagram were updated to match.
+  Certificate ids are 24 lowercase hex characters (the `/drop/:id` convention)
+  rather than uuids, because the id is printed on a card and encoded in a QR
+  that has to scan off paper.
+  Verified end to end against the production database and real object storage:
+  order `aa005325-6d60-490a-9c18-331fe55d1eb9` walked `created -> shipped`
+  through the store, which hashed the real 2,554,288-byte GLB of creation
+  `19d94f26-8207-4cd8-89ab-62193dc2c211` to
+  `c3a3eaf09f88ef4776a089817de1dd09e82c334c5b9dafa2534bdf00d44da578`
+  (independently confirmed with `curl … | sha256sum`), claimed edition 1,
+  wrote a real 4,934-byte QR PNG to R2, and built certificate
+  `aef337708dbb8191c25c2a64`. `/cert/aef337708dbb8191c25c2a64`,
+  `/materialize/insert/aef337708dbb8191c25c2a64` (screen and print media, the
+  print sheet showing only the card), `/cert` and the not-found state were all
+  rendered in a real browser at 1440 and 390 with no errors from this code.
+  The sold-out refusal was proven live: the series was capped at 1, the quote
+  came back `edition_sold_out` with the remaining count and a fix line, and the
+  cap was restored to null.
+  NOT verified, and the one open item: the devnet memo transaction never sent.
+  The attester `Fcwqit9x1KmfUboPtoVWBUdEuonNyTA8T6xtfAEPpPeH` has no devnet
+  SOL, the public devnet faucet is rate-limited for this machine's IP, and the
+  only wallet here holding devnet SOL is a platform treasury the permission
+  layer declined to sign or transfer from. The certificate is issued, hashed,
+  QR'd and carries its exact memo string; `solana_signature` is null and the
+  page says so. OWNER ACTION, one step: send about 0.02 devnet SOL to that
+  address and the sweep attests it within 15 minutes with no code change.
+  Owner items: mainnet certificates need `PRINT_CERT_CLUSTER=mainnet` plus
+  `PRINT_CERT_MAINNET_APPROVAL` on the Cloud Run service; without the second
+  the certificate is issued and left unattested rather than downgraded to a
+  devnet signature. Deliberately untriggered here (CLAUDE.md gate 1).

@@ -29,7 +29,12 @@ action.
 - API prefix: `/api/print/*` (handlers in `api/print/`). "print" is the
   honest verb for the API; "Materialize" is the product name for humans.
 - Agent lane: `POST /api/x402/print-order` (file `api/x402/print-order.js`).
-- Certificate page: `/p/:certId` (physical provenance permalink).
+- Certificate page: `/cert/:certId` (physical provenance permalink), with
+  `/cert` as the lookup for a number read off a printed card. NOT `/p/:certId`:
+  `/p/([a-z0-9-]+)` is already the launchpad route and a certificate id matches
+  it, so that path would have shadowed a live surface (measured 2026-09-02).
+  Certificate ids are 24 lowercase hex characters, not uuids, because the id is
+  printed on a card and encoded into a QR that has to scan off paper.
 - Order tracking: `/materialize/orders/:id` for humans;
   `GET /api/print/orders/:id` for machines.
 
@@ -54,7 +59,7 @@ action.
    fulfillment adapter (manual | partner API) ── status webhooks back in
                          │
                          ▼
-   on-chain certificate (Solana memo attest) + QR ──► /p/:certId
+   on-chain certificate (Solana memo attest) + QR ──► /cert/:certId
 ```
 
 Same design properties as the forge: one orchestrator per concern, adapters
@@ -162,7 +167,7 @@ gate is code plus tests, not a prompt suggestion.
 Every shipped print gets a certificate: SHA-256 of the exact prepared
 asset, edition number (DB-enforced), and a Solana attestation (memo
 transaction from the platform wallet; devnet in tests, mainnet send is
-owner-gated per CLAUDE.md gate 1). The package carries a QR to `/p/:certId`
+owner-gated per CLAUDE.md gate 1). The package carries a QR to `/cert/:certId`
 showing the spinning original, the prompt lineage, the edition, and the
 on-chain proof. Re-derive what `scripts/tokenize-3d-devnet-e2e.mjs` already
 proves before writing any new chain code.
