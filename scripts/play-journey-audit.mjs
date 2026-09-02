@@ -105,11 +105,20 @@ async function overflowScan(label) {
 		const out = [];
 		const doc = document.scrollingElement;
 		if (doc.scrollWidth > doc.clientWidth + 1) out.push({ sel: 'document', right: doc.scrollWidth, w: doc.clientWidth });
+		// The defect this scan exists to catch is content the player can SEE being
+		// cut off by the screen edge, so an element only counts when it actually
+		// straddles that edge. /play pins <body> to `overflow: hidden`, and three
+		// harmless classes of element live entirely outside the viewport behind
+		// that clip: name labels the 3D projection puts at x=10000 when their
+		// subject is off camera, buttons parked past the end of the horizontally
+		// scrollable emote tray, and a closed right-docked drawer. All three used
+		// to be reported every run, which buried the hits that mattered.
+		const straddles = (r) => (r.right > vw + 1 && r.left < vw) || (r.left < -1 && r.right > 0);
 		for (const n of document.querySelectorAll('body *')) {
 			if (!n.offsetParent && getComputedStyle(n).position !== 'fixed') continue;
 			const r = n.getBoundingClientRect();
 			if (r.width === 0 || r.height === 0) continue;
-			if (r.right > vw + 1 || r.left < -1) {
+			if (straddles(r)) {
 				const sel = n.id ? `#${n.id}` : `${n.tagName.toLowerCase()}.${String(n.className).split(' ').slice(0, 2).join('.')}`;
 				out.push({ sel, left: Math.round(r.left), right: Math.round(r.right) });
 			}
@@ -257,8 +266,8 @@ function summarize() {
 	console.log('CLS:', findings.cls?.cls);
 }
 
-async function noteState(label, fn) {
-	const v = await page.evaluate(fn).catch((e) => ({ error: String(e) }));
+async function noteState(label, fn, arg) {
+	const v = await page.evaluate(fn, arg).catch((e) => ({ error: String(e) }));
 	findings.states.push({ label, v });
 	console.log(at(), `[state:${label}]`, JSON.stringify(v));
 	return v;
@@ -443,7 +452,11 @@ await focusSweep('world');
 const PANELS = [
 	['store', /store|shop|boutique/i],
 	['bank', /bank|wallet|balance/i],
-	['wheel', /wheel|spin/i],
+	// "emote wheel" also matches /wheel/, and its button sits in the HUD while
+	// the Wheel of Fortune is proximity-gated behind its station. Without the
+	// exclusion this step opened the emote wheel and reported it as the spin
+	// wheel, so a real gap would have read as a pass.
+	['wheel', /(?<!emote )wheel|spin/i],
 	['quests', /quest|job|board/i],
 	['friends', /friend|crew/i],
 	['emotes', /emote/i],
@@ -490,8 +503,14 @@ const left = await page.evaluate(() => {
 	return true;
 });
 await page.waitForTimeout(2500);
-await noteState('after-leave', () => ({ leaveButton: left, lobbyVisible: !!document.querySelector('#cc-lobby:not([hidden])') }))
-	.catch(() => {});
+// `left` lives in this Node scope, so it has to be passed in; referencing it
+// inside the page threw "left is not defined" and the whole leave step was
+// silently swallowed by the .catch(), never verifying the lobby came back.
+await noteState('after-leave', (clicked) => ({
+	leaveButton: clicked,
+	lobbyVisible: !!document.querySelector('#cc-lobby:not([hidden])'),
+	worldGone: !document.querySelector('#cc-hud:not([hidden])'),
+}), left);
 
 findings.cls = await page.evaluate(() => ({ cls: Number((window.__cls || 0).toFixed(4)), shifts: (window.__shifts || []).slice(0, 8) }));
 console.log(at(), '[cls]', JSON.stringify(findings.cls));

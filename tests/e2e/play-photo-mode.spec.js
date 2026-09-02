@@ -20,14 +20,29 @@ import { serveHarness, collectPageErrors } from './_support.js';
 const HARNESS = '**/e2e/photo-mode';
 const URL = 'http://localhost:3000/e2e/photo-mode';
 
-// The synthetic world's clear colour. Distinctive enough that finding it in the
-// PNG proves the shot is the scene and not an empty buffer.
+// The synthetic world's clear colour, distinctive enough that finding it in the
+// PNG proves the shot is the scene and not an empty buffer. Set from a hex
+// literal on purpose: three.js reads a hex as sRGB, so the value below is
+// exactly what a correct capture must write back, which also pins the render
+// target's colour-space handling (a target left in linear space comes back
+// visibly washed out).
 const CLEAR = { r: 18, g: 92, b: 176 };
+const CLEAR_HEX = 0x125cb0;
 
+// Vite re-bundles the moment it first sees a new dependency and drops the
+// module requests that were in flight while it does, which surfaces as "Failed
+// to fetch dynamically imported module" on a cold dev server. Retry rather than
+// report a build-server restart as a product failure. Three.js is a large cold
+// transform and WebKit is the slowest to get through it, hence the patience.
 const RETRYING_IMPORT = `window.__imp = async (path) => {
 	let last;
-	for (let i = 0; i < 4; i++) {
-		try { return await import(path); } catch (e) { last = e; await new Promise((r) => setTimeout(r, 700)); }
+	for (let i = 0; i < 8; i++) {
+		// A retry must ask for a NEW specifier, not the same one: JSC caches the
+		// failed module record, so re-importing the identical path in WebKit
+		// replays the original failure forever no matter how long you wait. Vite
+		// serves the query-suffixed path as the same module, freshly transformed.
+		const spec = i === 0 ? path : path + (path.includes('?') ? '&' : '?') + 'e2eRetry=' + i;
+		try { return await import(spec); } catch (e) { last = e; await new Promise((r) => setTimeout(r, 1200)); }
 	}
 	throw last;
 };`;
@@ -36,7 +51,7 @@ const RETRYING_IMPORT = `window.__imp = async (path) => {
 // report what landed: the preview chrome, and the decoded pixels of the PNG the
 // player would download.
 async function shoot(page, { width, height }) {
-	return page.evaluate(async ({ w, h, clear }) => {
+	return page.evaluate(async ({ w, h, clearHex }) => {
 		const THREE = await window.__imp('/node_modules/three/build/three.module.js');
 		const { takePhoto, photoPreviewOpen, closePhotoPreview } = await window.__imp('/src/game/photo-mode.js');
 
@@ -48,7 +63,7 @@ async function shoot(page, { width, height }) {
 		const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 		renderer.setPixelRatio(1);
 		renderer.setSize(w, h, false);
-		renderer.setClearColor(new THREE.Color(clear.r / 255, clear.g / 255, clear.b / 255), 1);
+		renderer.setClearColor(clearHex, 1);
 
 		const scene = new THREE.Scene();
 		scene.add(new THREE.AmbientLight(0xffffff, 2));
@@ -124,7 +139,7 @@ async function shoot(page, { width, height }) {
 		renderer.dispose();
 		canvas.remove();
 		return result;
-	}, { w: width, h: height, clear: CLEAR });
+	}, { w: width, h: height, clearHex: CLEAR_HEX });
 }
 
 function near(actual, expected, tolerance = 26) {
@@ -146,6 +161,17 @@ for (const engine of ENGINES) {
 
 		test.beforeAll(async () => {
 			browser = await engine.type.launch();
+			// Pay the cold Vite transform of the three.js graph once, outside the
+			// tests, so the first assertion is not racing the build server.
+			const warm = await browser.newPage({ baseURL: 'http://localhost:3000' });
+			await serveHarness(warm, HARNESS, { title: 'warm-up' });
+			await warm.addInitScript(RETRYING_IMPORT);
+			await warm.goto(URL);
+			await warm.evaluate(async () => {
+				await window.__imp('/node_modules/three/build/three.module.js');
+				await window.__imp('/src/game/photo-mode.js');
+			});
+			await warm.close();
 		});
 		test.afterAll(async () => { await browser?.close(); });
 

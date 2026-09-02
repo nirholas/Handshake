@@ -150,7 +150,7 @@ export class PlayOnboard {
 				tag:   'Welcome',
 				title: name + (sym ? ' · ' + sym : ''),
 				body:
-					'A shared 3D world — everyone in ' +
+					'A shared 3D world. Everyone in ' +
 					(sym || `the ${name} community`) +
 					' meets here. Walk around, chat, build, and trade together. ' +
 					'Others are in this world with you right now.',
@@ -165,8 +165,8 @@ export class PlayOnboard {
 				title: 'The economy',
 				body:
 					'Real ' + (sym || name) + ' trades drive this world: buys light the boundary ring green, sells ripple red, volume spins the totem, and price momentum shifts the weather. ' +
-					'Two AI agents — ORACLE and NOVA — trade on-chain here too: NOVA pays ORACLE in USDC via x402, and every settlement is a real Solana transaction with a Solscan link. Walk up to them by the plaza and press E (or tap them) to watch a live payment round. ' +
-					'Across the plaza, the ' + (sym || name) + ' Intel Kiosk sells live market intel — pay $0.01 USDC from your own wallet to light up its screen.',
+					'Two AI agents, ORACLE and NOVA, trade on-chain here too: NOVA pays ORACLE in USDC via x402, and every settlement is a real Solana transaction with a Solscan link. Walk up to them by the plaza and press E (or tap them) to watch a live payment round. ' +
+					'Across the plaza, the ' + (sym || name) + ' Intel Kiosk sells live market intel: pay $0.01 USDC from your own wallet to light up its screen.',
 			},
 		];
 	}
@@ -602,6 +602,15 @@ body.po-onboarding #cc-joystick { z-index: 60; }
 .po-help-close:focus-visible { outline: none; border-color: #fff; box-shadow: 0 0 0 1px #fff; }
 
 #po-help .po-ctrl-grid { margin-bottom: 0; max-height: 280px; }
+
+/* Thumb-sized targets on a coarse pointer. The card is the first thing a phone
+   player touches, and its skip cross was a 28px square. Desktop keeps the tight
+   density it was drawn for. */
+@media (pointer: coarse) {
+  .po-close { min-width: 40px; min-height: 40px; }
+  .po-help-close { min-width: 40px; min-height: 40px; }
+  .po-btn, .po-ctrl-btn { min-height: 40px; }
+}
 
 /* Reduced-motion overrides */
 @media (prefers-reduced-motion: reduce) {

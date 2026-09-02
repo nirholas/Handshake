@@ -597,3 +597,10 @@
 	box-shadow: 0 0 0 2px var(--bg-0);
 	pointer-events: none;
 }
+
+
+/* Thumb-sized actions on a phone. The panel is a drawer on /play, where every
+   tap happens one-handed mid-session; 35px was under the bar. */
+@media (pointer: coarse) {
+	.kg-fr-btn { min-height: 40px; }
+}

@@ -383,6 +383,9 @@ html[data-bg="transparent"] #cc-lobby {
    does not apply to them. */
 .cc-foot-links a {
 	display: inline-flex; align-items: center; min-height: 44px;
+	/* The row already cleared 44px of height; a four-letter label ("Docs", "API")
+	   was still only 31px wide, so the padding buys the other axis too. */
+	padding: 0 6px; margin: 0 -6px; min-width: 40px; justify-content: center;
 	color: var(--cc-dim); font-size: 13px; transition: color 0.15s ease;
 }
 .cc-foot-links a:hover { color: var(--cc-text); }
@@ -546,7 +549,10 @@ html[data-bg="transparent"] #cc-lobby {
 	.cc-id-toggle { flex: 1 1 100%; justify-content: center; }
 }
 .cc-avatar-label small { display: block; color: var(--cc-dim); font-weight: 400; font-size: 12px; margin-top: 3px; text-transform: none; letter-spacing: 0; }
-.cc-avatar-presets { display: flex; gap: 8px; flex-wrap: wrap; }
+/* The presets arrive from the avatar API a beat after first paint. Reserving one
+   chip-row of height keeps the fields and the community grid below from being
+   shoved down when they land (it was the lobby's largest layout shift). */
+.cc-avatar-presets { display: flex; gap: 8px; flex-wrap: wrap; min-height: 50px; }
 .cc-avatar-chip {
 	width: 50px; height: 50px; border-radius: var(--cc-radius); overflow: hidden;
 	border: 1px solid var(--cc-edge); background: var(--cc-bg2);
@@ -1268,6 +1274,10 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	display: flex; gap: 6px; background: var(--cc-panel); border: 1px solid var(--cc-edge);
 	border-radius: var(--cc-radius); padding: 7px; box-shadow: var(--cc-shadow); backdrop-filter: blur(10px);
 }
+/* The tray is built empty and filled once the emote manifest lands. An empty
+   bordered pill sitting there and then jumping to full width was the biggest
+   layout shift in the world HUD; hide it until it has something to show. */
+#cc-emotes:empty { display: none; }
 .cc-emote {
 	width: 44px; height: 44px; border-radius: var(--cc-radius-sm); border: 1px solid transparent;
 	background: rgba(255, 255, 255, 0.04); cursor: pointer; font-size: 21px; filter: grayscale(1);
@@ -2564,6 +2574,49 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 .cc-friends-panel-close:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 /* The FriendsPanel renders its own scrolling list into this body. */
 .cc-friends-panel-body { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+
+/* Drawer states owned by the frame, not by FriendsPanel: the window between the
+   tap and the view chunk landing, and the chunk never landing at all. Shaped and
+   shimmered like the economy panels so the whole surface loads the same way. */
+.cc-friends-skel { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; }
+.cc-friends-skel-row {
+	display: flex; align-items: center; gap: 10px; padding: 9px 10px;
+	background: rgba(255, 255, 255, 0.03); border: 1px solid var(--cc-edge-soft); border-radius: var(--cc-radius-sm);
+}
+.cc-friends-skel-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.cc-friends-skel-dot, .cc-friends-skel-line {
+	background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.12) 37%, rgba(255, 255, 255, 0.05) 63%);
+	background-size: 400% 100%;
+	animation: cc-friends-skel-shimmer 1.4s ease infinite;
+	border-radius: 3px;
+}
+.cc-friends-skel-dot { width: 26px; height: 26px; flex: none; border-radius: 50%; }
+.cc-friends-skel-line { height: 9px; width: 58%; }
+.cc-friends-skel-line-sm { height: 8px; width: 32%; }
+@keyframes cc-friends-skel-shimmer {
+	0% { background-position: 100% 50%; }
+	100% { background-position: 0 50%; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.cc-friends-skel-dot, .cc-friends-skel-line { animation: none; }
+}
+
+.cc-friends-loaderr {
+	display: flex; flex-direction: column; align-items: center; gap: 8px;
+	padding: 30px 22px; text-align: center;
+}
+.cc-friends-loaderr-glyph { font-size: 26px; line-height: 1; opacity: 0.75; }
+.cc-friends-loaderr-title { margin: 0; font-size: 13px; font-weight: 700; color: var(--cc-text); }
+.cc-friends-loaderr-sub { margin: 0; font-size: 12px; line-height: 1.5; color: var(--cc-dim); max-width: 34ch; }
+.cc-friends-loaderr-retry {
+	margin-top: 4px; min-height: 40px; padding: 0 16px;
+	background: transparent; color: var(--cc-text); font: inherit; font-size: 12px; font-weight: 700;
+	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius-sm); cursor: pointer;
+	transition: border-color 0.14s ease, background 0.14s ease;
+}
+.cc-friends-loaderr-retry:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.08); }
+.cc-friends-loaderr-retry:active { background: rgba(255, 255, 255, 0.14); }
+.cc-friends-loaderr-retry:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .cc-friends-panel-hint {
 	flex: none; padding: 8px 14px 12px;
 	color: var(--cc-dim, #8b93a3); font-size: 11px; letter-spacing: 0.02em;
@@ -3706,4 +3759,33 @@ summary:focus-visible,
 	.cc-avsw-skel {
 		animation: none !important;
 	}
+}
+
+
+/* ── Touch targets on a coarse pointer ─────────────────────────────────────────
+   Measured with scripts/play-journey-audit.mjs at 375px: the whole world HUD and
+   the lobby's sort chips painted at 26-36px tall, under the 40px a thumb needs,
+   so every one of them was a near-miss waiting to happen on the device most of
+   this surface's players arrive on. The desktop density is deliberate and stays
+   exactly as it is; these bumps apply only where the pointer is coarse.
+   `min-*` clamps a fixed `width`/`height`, so the square closers grow too. */
+@media (pointer: coarse) {
+	/* Lobby */
+	.cc-sort { min-height: 40px; }
+
+	/* World HUD bar and the fixed right-edge stack */
+	.cc-shop-btn, .cc-wardrobe-btn, .cc-avatarbtn, .cc-jobs-btn, .cc-friends-btn,
+	.cc-buy-btn, .cc-leave, .cc-voice, .cc-power-btn, .cc-zen-btn,
+	.cc-build-toggle, .cc-chat-head, #cc-status, .cc-photo-hud-btn {
+		min-height: 40px;
+	}
+
+	/* Emote and reaction trays: the reaction pills were the smallest of all. */
+	.cc-reaction { min-width: 40px; min-height: 40px; }
+
+	/* Panel chrome: closers, tabs, filter chips, primary actions. */
+	.cc-shop-close, .cc-ew-close, .cc-shop-flex, .cc-friends-panel-close {
+		min-width: 40px; min-height: 40px;
+	}
+	.cc-shop-chip, .cc-shop-buy, .cc-friends-panel-crew { min-height: 40px; }
 }
