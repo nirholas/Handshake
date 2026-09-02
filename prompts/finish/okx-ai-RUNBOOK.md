@@ -7,7 +7,7 @@ human or agent: every command below was run from this repo and its real output r
 - **Full history:** [`okx-ai-PROGRESS.md`](okx-ai-PROGRESS.md).
 - **Public docs:** [`docs/okx-marketplace.md`](../../docs/okx-marketplace.md), [`specs/okx-agent-payments.md`](../../specs/okx-agent-payments.md).
 
-**CLI:** `onchainos` at `~/.local/bin/onchainos` (v4.4.0 as of 2026-08-01; check drift with
+**CLI:** `onchainos` at `~/.local/bin/onchainos` (v4.5.2 as of 2026-09-02; check drift with
 `onchainos --version`). Almost everything here needs an authenticated session as
 `claude@three.ws`: every **write** (update, activate, resubmit) and, as of v4.3.0, the
 **reads** too (see the note after the login block). **Login mechanics
@@ -115,72 +115,90 @@ curl -s -H "Authorization: Bearer $(gcloud auth print-identity-token)" "$URL/rea
 One command. Run it, read three fields.
 
 ```bash
-onchainos agent get-agents --agent-ids 2632
+onchainos agent get-my-agents
 ```
 
-**Last successfully read: 2026-07-10.** Every attempt since (2026-07-23, 2026-07-26,
-2026-08-01) hit the logged-out wall above, so the state below is the newest real reading,
-not a current one. Re-read it the moment a login lands.
+> **Trap, found 2026-09-02 on `onchainos` v4.5.2: `get-agents` no longer carries the approval
+> fields.** The obvious command for this (`onchainos agent get-agents --agent-ids 2632`) still
+> works and still returns the agent, but its payload has NO `approvalDisplayStatus`,
+> `approvalLabel`, `status` or `statusLabel`. The one-liner this runbook used to recommend
+> against it dies with `KeyError: 'approvalLabel'`, which reads like a broken CLI and is just a
+> moved field. `get-my-agents` (own agents only, no `--agent-ids`) carries all four. Use it for
+> every status read; keep `get-agents` for the card copy, description and profile photo.
 
-Verified output (2026-07-10):
+Verified output (2026-09-02, the fields that matter):
 
 ```json
-{ "agentId": "2632", "approvalDisplayStatus": 5, "approvalLabel": "Listing rejected",
-  "approvalRemark": "", "status": 2, "soldCount": 0, "role": 2 }
+{ "agentId": "2632", "approvalDisplayStatus": 2, "approvalLabel": "Listing under review",
+  "status": 2, "statusLabel": "not listed", "soldCount": 2, "role": 2, "roleLabel": "ASP" }
 ```
 
 ### Reading the fields
 
 | Field | Meaning |
 | --- | --- |
-| `approvalDisplayStatus` | Review state. `5` = **Listing rejected** (our current state). The CLI also returns `approvalLabel`, the human string, **trust `approvalLabel` over memorising numbers**; the numeric map is OKX's and is not documented publicly. |
-| `approvalLabel` | Same state as text: `"Listing rejected"`, `"Listing approved"`, `"Under review"`. |
-| `approvalRemark` | The reviewer's stated reason. **Currently empty**, the 2026-07-04 rejection reason arrived only by email, not through this field. Do not assume a rejection reason will appear here. |
-| `status` | Listing state. `2` = **not listed**. |
-| `soldCount` | Lifetime sales. `0` today. First non-zero value is our first revenue. |
+| `approvalDisplayStatus` | Review state. `2` = **Listing under review** (our state since the 2026-08-27 resubmission), `5` = **Listing rejected**. The CLI also returns `approvalLabel`, the human string, **trust `approvalLabel` over memorising numbers**; the numeric map is OKX's and is not documented publicly. |
+| `approvalLabel` | Same state as text: `"Listing under review"`, `"Listing rejected"`, `"Listing approved"`. |
+| `status` | Listing state. `2` = **not listed**; `statusLabel` says it in words. |
+| `soldCount` | Lifetime sales. `2` today. |
 | `role` | `2` = ASP (Agent Service Provider). |
+
+Two fields on the OTHER commands look like this one and are not. **Do not read approval state
+out of either:**
+
+- `agent service-list --agent-id 2632` returns `data[0].agentInfo.approvalStatus`, a
+  DIFFERENT enum from `approvalDisplayStatus` (it read `3` on 2026-09-02 while the display
+  status read `2`). Its `approvalRemark` is the last rejection reason ever stored, not the
+  current one: on 2026-09-02, mid-review, it still quoted the 2026-07-26 rejection verbatim.
+  A reader who takes that pair at face value concludes we were rejected again when we were
+  not.
+- `agentInfo.updatedAt` tracks the agent's online heartbeat, not the listing. It moves every
+  time the `okx-a2a` daemon checks in (observed 1 ms after `lastOnlineTime`), so "updated
+  today" says nothing about review progress.
 
 Quick one-liner for a scripted check:
 
 ```bash
-onchainos agent get-agents --agent-ids 2632 \
-  | python3 -c "import json,sys; d=json.load(sys.stdin)['data'][0]; print(d['approvalLabel'], '| status', d['status'], '| sold', d['soldCount'])"
+onchainos agent get-my-agents \
+  | python3 -c "import json,sys; a=[x for g in json.load(sys.stdin)['data']['list'] for x in g['agentList'] if x['agentId']=='2632'][0]; print(a['approvalLabel'], '| status', a['statusLabel'], '| sold', a['soldCount'])"
 ```
+
+Verified 2026-09-02: `Listing under review | status not listed | sold 2`.
 
 ---
 
-## 2. Known drift: the live listing is NOT our current catalog
+## 2. Drift resolved: the live listing IS our current catalog
 
-Last confirmed 2026-07-10 (service-list read needs the login session in §0 above; re-run once
-logged in to refresh this). The listing carried the **old, rejected** service set: **7**
-services vs. our catalog module [`api/_lib/okx-catalog.js`](../../api/_lib/okx-catalog.js)'s
-**11**, not one name matching.
+Historic note: from 2026-07-04 to 2026-08-27 the listing carried the old, rejected service
+set (7 REST rows, not one name matching the catalog module). That drift was closed by the
+2026-08-27 on-chain update (8 deletes, 7 creates, tx
+`0xb4b2f51dc34d4c8ed6adc2cfb55b0e21e2a6a29d787c02a8a9ca110e178415ba`).
+
+Re-verified 2026-09-02, live listing against
+[`api/_lib/okx-catalog.js`](../../api/_lib/okx-catalog.js): **7 rows, every name and every
+endpoint matching, no drift.**
 
 ```bash
-onchainos agent service-list --agent-id 2632   # → data[0].total = 7 (as of 2026-07-10)
+onchainos agent service-list --agent-id 2632   # -> data[0].total = 7
 ```
 
-| Live on the listing (7, as of 2026-07-10) | Our catalog module (11) |
-| --- | --- |
-| Text & Image to 3D Model | Agent Identity Studio |
-| Video to 3D Scene Capture | Text to 3D Model (GLB) |
-| Auto-Rig Skeleton Builder | Text to 3D Model (Pro) |
-| Universal Animation Retarget | Image to 3D Model |
-| Masked Texture Repaint | Auto-Rig a GLB |
-| Mesh Repair & Format Export | Text to Rigged Avatar |
-| Mesh Part Segmentation | Animation Retarget |
-| | Pose Seed |
-| | FBX Export (rig-preserving) |
-| | 3D Studio Catalog (free) |
-| | 3D Studio Health (free) |
+| Service id | Name | Fee | Endpoint |
+| --- | --- | --- | --- |
+| 39975 | Forge 3D Draft | 0.01 | `https://three.ws/api/okx/3d/forge-draft` |
+| 39976 | Forge 3D Standard | 0.05 | `https://three.ws/api/okx/3d/forge-standard` |
+| 39977 | Forge 3D HD | 0.25 | `https://three.ws/api/okx/3d/forge-hd` |
+| 39978 | Forge 3D from Image | 0.25 | `https://three.ws/api/okx/3d/forge-image` |
+| 39979 | Forge Job Status | 0 | `https://three.ws/api/okx/3d/forge-status` |
+| 39980 | 3D Studio Service Catalog | 0 | `https://three.ws/api/okx/3d/catalog` |
+| 39981 | 3D Studio Health Status | 0 | `https://three.ws/api/okx/3d/health` |
 
-This is expected: **WO-05 (relisting) has never run**, because it is hard-gated on WO-04.
-Nothing is broken, but do not read the live listing as a description of what we sell today.
-The catalog module is the source of truth; the listing is stale until WO-05 executes. Note
-also that the catalog's listing strings were rewritten 2026-07-17 (`f68ce55bb`) to match OKX's
-documented description format (numbered "Provide: 1. ... 2. ..." lists, no tech jargon, no
-price-in-name), verify against the CURRENT `api/_lib/okx-catalog.js`, not the table above,
-which mirrors the module as of 2026-07-10.
+All seven are `serviceType: A2MCP`, all on `chainIndex: 196`, all quoting
+`contractAddress: 0x779ded0c9e1022225f8e0630b35a9b54be713736` (USD₮0).
+
+The catalog module stays the source of truth. Nine further rows (Identity Studio and the
+single-capability REST services) are deployed and payable but carry `listed: false`; they
+show up under `unlisted` in `GET /api/okx/3d/catalog` and are deliberately not submitted.
+Re-run the comparison above after any change to the module, and after any listing update.
 
 ---
 
@@ -203,9 +221,10 @@ this session's `payment pay` command signs from, so a "self-payment" test is no 
 self-payment (buyer `0x75d0…cf69` → seller `0x4022de2D…f402`), which is arguably a more
 realistic E2E test, not a problem, but the funding target below is what actually needs money.
 
-**Wallet balances re-checked live 2026-08-01, block 66852405 (X Layer RPC `rpc.xlayer.tech`,
-direct `eth_call` on `balanceOf` + `eth_getBalance`). Unchanged since 2026-07-23, and the
-live 402's `payTo` was re-probed the same day and had NOT drifted again:**
+**Wallet balances re-checked live 2026-09-02, block 69606689 (X Layer RPC `rpc.xlayer.tech`,
+direct `eth_call` on `balanceOf` + `eth_getBalance`). Every figure below is unchanged from
+2026-08-01 and from 2026-07-23, and the live 402's `payTo` was re-probed the same day across
+all four paid rows and had NOT drifted again:**
 
 | Wallet | Role | USD₮0 | OKB (gas) |
 | --- | --- | --- | --- |
@@ -230,7 +249,15 @@ Re-verify the relayer's OKB balance is still enough for ≥3 settlement tx befor
 0.02 OKB, top up a few cents' worth if a dry run shows `broadcast_failed`/out-of-gas.
 
 Once funded, run [`okx-ai-04-e2e-real-payment-test.md`](okx-ai-04-e2e-real-payment-test.md). It needs ≥3
-real settlements with transaction hashes. **Only then** does WO-05 (resubmission) unlock.
+real settlements with transaction hashes.
+
+**Correction (2026-09-02): funding no longer gates the resubmission, and never did.** Earlier
+revisions of this file said "only then does WO-05 unlock". WO-05 is retired; its successor
+[`okx-ai-08-forge-relisting.md`](okx-ai-08-forge-relisting.md) states plainly that a listing
+does not require a settled payment to be submitted, and the 2026-08-27 resubmission went out
+with all three wallets exactly as they are in the table above. What funding gates is the
+first real end-to-end settlement (WO-04), which is evidence we owe ourselves and the
+marketplace, not a precondition for review.
 
 Until a real settlement exists, `docs/okx-marketplace.md` must not claim observed on-chain
 settlement, its "Payment semantics" section states the contract as implemented and
@@ -247,7 +274,7 @@ This is the holder-visible moment. Work the list top to bottom.
 
 1. **Confirm the listing is live and activated.**
    ```bash
-   onchainos agent get-agents --agent-ids 2632     # status should leave 2 ("not listed")
+   onchainos agent get-my-agents                   # status should leave 2 ("not listed")
    onchainos agent service-list --agent-id 2632    # services present, prices correct
    ```
    Reconcile the service names against `api/_lib/okx-catalog.js`, see §2. If they still
@@ -283,17 +310,20 @@ This is the holder-visible moment. Work the list top to bottom.
 
 ## 5. Branch: **REJECTED AGAIN** (`approvalDisplayStatus: 5`)
 
-1. **Capture the exact reason.** Check `approvalRemark` first, then the `claude@three.ws`
-   inbox, the 2026-07-04 rejection came by email with `approvalRemark` empty, so assume the
-   email is authoritative.
+1. **Capture the exact reason.** The `claude@three.ws` inbox is authoritative: the
+   2026-07-04 rejection came by email with `approvalRemark` empty. The only CLI field that
+   ever carries a remark is on `service-list`, and it is the LAST reason ever stored, not
+   necessarily the current one (see the warning in §1), so read it as a candidate and
+   confirm it against the email before acting.
    ```bash
-   onchainos agent get-agents --agent-ids 2632 \
-     | python3 -c "import json,sys; print(repr(json.load(sys.stdin)['data'][0]['approvalRemark']))"
+   onchainos agent service-list --agent-id 2632 \
+     | python3 -c "import json,sys; print(repr(json.load(sys.stdin)['data'][0]['agentInfo']['approvalRemark']))"
    ```
 2. **Append the verbatim remark to `okx-ai-PROGRESS.md`** with the date. Never paraphrase a
    reviewer.
 3. **Map the reason to the work order that owns it**, fix there, and re-run
-   [`okx-ai-05-relisting-resubmission.md`](okx-ai-05-relisting-resubmission.md). Precedent:
+   [`okx-ai-08-forge-relisting.md`](okx-ai-08-forge-relisting.md), which supersedes the
+   retired `okx-ai-05-relisting-resubmission.md`. Precedent:
    - 2026-07-04 rejection ("your A2MCP service has not been integrated with the OKX Agent
      Payments Protocol standard") was owned by the payment rail, implemented in
      [`api/_lib/x402-xlayer-okx.js`](../../api/_lib/x402-xlayer-okx.js).
@@ -334,13 +364,28 @@ curl -s https://three.ws/api/okx/3d/health  | head -c 400   # honest lane health
 
 An unpaid `POST` to any paid service must return a spec-valid **402** carrying the X Layer
 accept. Challenges drift whenever an unrelated deploy touches shared payment code, so re-run
-this before any submission:
+this before any submission, over the four LISTED paid rows (`identity-studio`, which earlier
+revisions of this file probed, is `listed: false` since the 2026-08-22 rebuild and is not
+what a reviewer sees):
 
 ```bash
-curl -s -o /dev/null -w '%{http_code}\n' -X POST \
-  -H 'content-type: application/json' -d '{}' \
-  https://three.ws/api/okx/3d/identity-studio     # expect 402
+for s in forge-draft forge-standard forge-hd forge-image; do
+  printf '%s ' "$s"
+  curl -s -o /dev/null -w '%{http_code}\n' -X POST \
+    -H 'content-type: application/json' \
+    -H 'accept: application/json, text/event-stream' \
+    -H 'mcp-protocol-version: 2025-06-18' \
+    -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"forge_3d","arguments":{"prompt":"a low-poly orange fox"}}}' \
+    "https://three.ws/api/okx/3d/$s"      # expect 402 on all four
+done
+curl -s -o /dev/null -w '%{http_code}\n' https://three.ws/api/okx/3d/forge-status   # expect 405
 ```
+
+**Send the two MCP headers.** A bare curl is a false green: an OAuth-capable client
+(`accept: text/event-stream` or `mcp-protocol-version`) used to be answered 401 rather than
+402 on this surface, which is a status an OKX buyer cannot pay, and every verification pass
+before 2026-08-22 missed it because none of them sent those headers. Verified 2026-09-02:
+all four rows answer 402 with `accepts[0].network` = `eip155:196` either way.
 
 ---
 
