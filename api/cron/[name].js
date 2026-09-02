@@ -465,6 +465,29 @@ export function isRangeRejection(message) {
 	return RANGE_REJECTED.test(String(message ?? ''));
 }
 
+// Blocks the provider no longer holds at all. Distinct from a range rejection
+// in the one way that matters: no smaller window fixes it, because the data is
+// gone rather than the request being too wide. Narrow on purpose, so a node
+// that is merely busy is never mistaken for one that has pruned.
+const PRUNED_HISTORY = /has been pruned|pruned history|missing trie node|state is not available|do not have the state/i;
+
+/**
+ * Is this RPC failure the provider saying it no longer retains the blocks the
+ * cursor points at?
+ *
+ * This is the EVM twin of the Solana unresolvable-cursor stall, and it fails the
+ * same way: the crawl resumes at `last_block + 1`, the provider has pruned that
+ * height, the whole call errors, and the cursor is only written on the success
+ * path, so every later tick asks for the same dead blocks forever. Measured on
+ * 2026-09-02, one chain's cursor had not moved since 2026-04-28 for exactly this
+ * reason while the range backoff, which cannot help here, retried around it.
+ * @param {unknown} message
+ * @returns {boolean}
+ */
+export function isPrunedHistoryRejection(message) {
+	return PRUNED_HISTORY.test(String(message ?? ''));
+}
+
 /**
  * The block window to request for a chain this tick.
  *
@@ -505,7 +528,7 @@ async function erc8004CrawlChain(chain) {
 	const latestHex = await erc8004RpcCall(chain.rpcUrls ?? chain.rpcUrl, 'eth_blockNumber', []);
 	const latestBlock = Number.parseInt(latestHex, 16);
 
-	const fromBlock = cursor
+	let fromBlock = cursor
 		? Number(cursor.last_block) + 1
 		: Math.max(0, latestBlock - ERC8004_DEFAULT_LOOKBACK);
 
@@ -533,6 +556,7 @@ async function erc8004CrawlChain(chain) {
 	// cursor never moves. Measured on 2026-08-14: BSC Testnet and Moonbeam sat at
 	// scanned=0 across four consecutive ticks while their backlogs grew.
 	let narrowedFrom = null;
+	let prunedSkip = null;
 	for (;;) {
 		toBlock = Math.min(fromBlock + chunkSize - 1, latestBlock);
 		const range = {
@@ -558,6 +582,24 @@ async function erc8004CrawlChain(chain) {
 			]);
 			break;
 		} catch (err) {
+			// Pruned blocks are unreachable at every window size, so shrinking is
+			// the wrong move and waiting is worse: the cursor stays parked on data
+			// the provider will never serve, and the chain indexes nothing again,
+			// forever. Resume at the head instead, once per tick so a provider that
+			// keeps saying no cannot spin here.
+			//
+			// The skipped span is a real, permanent gap in this chain's history: it
+			// can only be recovered from an archive node, which the keyless failover
+			// tail is not. Report it rather than closing over it, so the gap is a
+			// number someone can act on instead of a silence.
+			if (isPrunedHistoryRejection(err?.message || err) && prunedSkip === null) {
+				const resumeAt = Math.max(0, latestBlock - ERC8004_DEFAULT_LOOKBACK);
+				if (resumeAt > fromBlock) {
+					prunedSkip = { from: fromBlock, to: resumeAt, blocks: resumeAt - fromBlock };
+					fromBlock = resumeAt;
+					continue;
+				}
+			}
 			// Any RPC failure that is not the provider refusing the range is a genuine
 			// error and propagates to the per-chain handler above.
 			if (!isRangeRejection(err?.message || err)) throw err;
@@ -770,6 +812,10 @@ async function erc8004CrawlChain(chain) {
 		// by shrinking in place, so the report distinguishes "settled at its real
 		// window" from "asked for too much and still delivered".
 		...(narrowedFrom ? { narrowedFrom } : {}),
+		// Present only when the provider had pruned the blocks the cursor pointed
+		// at and the crawl resumed at the head. Names the span that is now a
+		// permanent gap for this chain.
+		...(prunedSkip ? { prunedSkip } : {}),
 		chunkSize,
 	};
 }

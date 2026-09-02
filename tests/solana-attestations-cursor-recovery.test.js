@@ -7,7 +7,7 @@
 // These cover the recovery: detect that class of error, re-scan from the head.
 
 import { describe, it, expect } from 'vitest';
-import { isPrunedCursorError, signaturesSinceCursor } from '../api/_lib/solana-attestations.js';
+import { isPrunedCursorError, signaturesSinceCursor } from '../api/_lib/solana/cursor-recovery.js';
 
 // The message shape a Solana RPC actually returns for a pruned `until`.
 const PRUNED = new Error(

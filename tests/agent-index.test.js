@@ -25,11 +25,17 @@ import {
 	sanitizeText,
 	sanitizePayload,
 } from '../api/_lib/onchain-events.js';
-import { sweepCycleMin } from '../api/_lib/ops/index-lag.js';
+import {
+	sweepCycleMin,
+	indexLagVerdict,
+	SOLANA_ERROR_RATE_DEGRADED,
+	SOLANA_ERROR_RATE_DOWN,
+} from '../api/_lib/ops/index-lag.js';
 import {
 	nextChunkSize,
 	backoffChunkSize,
 	isRangeRejection,
+	isPrunedHistoryRejection,
 	catchUpCandidates,
 	rank,
 } from '../api/cron/[name].js';
@@ -416,6 +422,38 @@ describe('backoffChunkSize', () => {
 	});
 });
 
+describe('isPrunedHistoryRejection', () => {
+	it('recognises a provider that no longer holds the blocks the cursor points at', () => {
+		// Verbatim from erc8004_crawl_cursor.last_error on 2026-09-02, on a chain
+		// whose cursor had not moved since 2026-04-28.
+		expect(
+			isPrunedHistoryRejection('RPC -32701: History has been pruned for this block. To remove restriction'),
+		).toBe(true);
+		expect(isPrunedHistoryRejection('missing trie node 0xabc (path )')).toBe(true);
+	});
+
+	it('does NOT claim a range rejection or a plan limit is pruned history', () => {
+		// These have their own recovery (shrink the window). Reading them as
+		// pruned would skip the cursor to the head and silently drop real blocks.
+		expect(isPrunedHistoryRejection('block range is too wide (maximum 1024)')).toBe(false);
+		expect(isPrunedHistoryRejection('limit exceeded')).toBe(false);
+		expect(isPrunedHistoryRejection('HTTP 403')).toBe(false);
+		expect(isPrunedHistoryRejection(null)).toBe(false);
+		expect(isPrunedHistoryRejection('')).toBe(false);
+	});
+
+	it('is disjoint from isRangeRejection, so exactly one recovery can claim a fault', () => {
+		for (const msg of [
+			'RPC -32701: History has been pruned for this block',
+			'block range is too wide (maximum 1024)',
+			'query returned more than 10000 results',
+			'missing trie node',
+		]) {
+			expect(isPrunedHistoryRejection(msg) && isRangeRejection(msg)).toBe(false);
+		}
+	});
+});
+
 describe('isRangeRejection', () => {
 	it('recognises how each provider words a range it will not serve', () => {
 		// Verbatim messages observed from the configured lanes on 2026-08-14.
@@ -619,5 +657,98 @@ describe('rank', () => {
 	it('treats a missing or future timestamp as no age, never a negative rank', () => {
 		expect(rank({ blocks_behind: 0, updated_at: null }, NOW)).toBe(0);
 		expect(rank({ blocks_behind: 0, updated_at: new Date(NOW + 60_000).toISOString() }, NOW)).toBe(0);
+	});
+});
+
+// ─── Index verdict ───────────────────────────────────────────────────────────
+//
+// Measured on production 2026-09-02: the sensor reported `down` on a secondary
+// chain whose cursor had not moved since April, while the Solana leg it was
+// burying had 1,101 of 1,604 cursors wedged on an unresolvable-cursor error and
+// scored `ok` on a 63-minute median. Both halves of that are covered here: an
+// EVM-only fault must not claim an outage users are not having, and a Solana
+// leg that is erroring rather than lagging must stop reading as fresh.
+
+/** A synthetic readIndexLag() shape, healthy unless overridden. */
+function lagFixture({ solana = {}, evm = {} } = {}) {
+	return {
+		solana: {
+			medianLagMin: 60,
+			worstLagMin: 130,
+			agents: 1604,
+			uncrawled: 0,
+			errored: 0,
+			events: 1510,
+			batch: SOLANA_SWEEP_BATCH,
+			sweepCycleMin: 140,
+			...solana,
+		},
+		evm: {
+			lagMin: 15,
+			chains: 22,
+			configuredChains: 22,
+			uncrawledChains: 0,
+			staleChains: 0,
+			behindChains: 0,
+			worstBlocksBehind: 0,
+			worstChainId: null,
+			worstChainName: null,
+			events: 107296,
+			...evm,
+		},
+		lastEventAt: null,
+		lastIndexedAt: null,
+	};
+}
+
+describe('indexLagVerdict', () => {
+	it('is ok when both legs are fresh', () => {
+		expect(indexLagVerdict(lagFixture()).status).toBe('ok');
+	});
+
+	it('caps an EVM-only fault at degraded and says why', () => {
+		// The exact production shape: a cursor stalled for months and a backlog
+		// far past the down threshold, with Solana fresh.
+		const verdict = indexLagVerdict(
+			lagFixture({ evm: { lagMin: 183_014, worstBlocksBehind: 17_396_220, behindChains: 1, staleChains: 3 } }),
+		);
+		expect(verdict.status).toBe('degraded');
+		expect(verdict.detail).toContain('the Solana index users read is fresh');
+	});
+
+	it('still reports down when Solana itself is the leg that is behind', () => {
+		const verdict = indexLagVerdict(lagFixture({ solana: { medianLagMin: 400 } }));
+		expect(verdict.status).toBe('down');
+		// The cap is for EVM-only faults; it must never soften a Solana outage.
+		expect(verdict.detail).not.toContain('the Solana index users read is fresh');
+	});
+
+	it('scores a wedged Solana leg on its error rate, not just its cursor age', () => {
+		// 1,101 of 1,604 erroring on a fresh 63-minute median: `ok` before this.
+		const verdict = indexLagVerdict(lagFixture({ solana: { medianLagMin: 63, errored: 1101 } }));
+		expect(verdict.status).toBe('down');
+		expect(verdict.detail).toContain('1101 erroring');
+		expect(verdict.hint).toContain('agent_event_cursor');
+	});
+
+	it('degrades between the error-rate thresholds and clears below them', () => {
+		const agents = 1000;
+		const degraded = indexLagVerdict(
+			lagFixture({ solana: { agents, errored: Math.ceil(agents * SOLANA_ERROR_RATE_DEGRADED) } }),
+		);
+		expect(degraded.status).toBe('degraded');
+
+		const down = indexLagVerdict(
+			lagFixture({ solana: { agents, errored: Math.ceil(agents * SOLANA_ERROR_RATE_DOWN) } }),
+		);
+		expect(down.status).toBe('down');
+
+		const clear = indexLagVerdict(lagFixture({ solana: { agents, errored: 10 } }));
+		expect(clear.status).toBe('ok');
+	});
+
+	it('reports a never-crawled index as warming up rather than broken', () => {
+		const verdict = indexLagVerdict(lagFixture({ solana: { agents: 0 }, evm: { chains: 0 } }));
+		expect(verdict.status).toBe('unknown');
 	});
 });

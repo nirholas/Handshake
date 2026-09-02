@@ -27,6 +27,7 @@
 import { PublicKey } from '@solana/web3.js';
 import { sql } from './db.js';
 import { solanaConnection } from './solana/connection.js';
+import { signaturesSinceCursor } from './solana/cursor-recovery.js';
 import { RPC } from './solana-attestations.js';
 import { recordEvents } from './onchain-events.js';
 
@@ -351,13 +352,33 @@ export async function crawlAgentEvents({ agentRef, network = 'mainnet', limit = 
 		LIMIT 1
 	`;
 
-	const sigs = await conn.getSignaturesForAddress(address, {
+	// Never call getSignaturesForAddress({ until }) directly here. The lane
+	// router answers from whichever RPC provider is not cooling, and providers
+	// disagree about which signatures they still hold, so a cursor written by
+	// one lane is regularly unresolvable by the next. That fails the WHOLE call
+	// and, because the cursor is only ever written on the success path, wedges
+	// the agent forever. Measured on 2026-09-02: 1,101 of 1,604 Solana cursors
+	// were stuck on exactly that error, every one of them re-reporting it every
+	// tick, which is what held the agent_index sensor at `down`.
+	const { sigs, cursorReset } = await signaturesSinceCursor(
+		conn,
+		address,
 		limit,
-		until: cursor?.last_tx || undefined,
-	});
+		cursor?.last_tx || undefined,
+	);
 
 	if (sigs.length === 0) {
-		await touchCursor({ agentRef, network: net, lastTx: cursor?.last_tx || null });
+		// An abandoned cursor must NOT be written back: re-storing the dead
+		// signature would re-arm the exact stall this recovery just cleared.
+		// This is the common case for a wedged agent, since the account whose
+		// cursor the lane cannot resolve usually has no reachable history on
+		// that lane either.
+		await touchCursor({
+			agentRef,
+			network: net,
+			lastTx: cursorReset ? null : cursor?.last_tx || null,
+			resetCursor: cursorReset,
+		});
 		return { scanned: 0, inserted: 0, rejected: 0 };
 	}
 
@@ -401,7 +422,16 @@ export async function crawlAgentEvents({ agentRef, network = 'mainnet', limit = 
 	return { scanned: sigs.length, inserted, rejected };
 }
 
-async function touchCursor({ agentRef, network, lastTx, lastSlot = null, lastEventAt = null, scanned = 0 }) {
+/**
+ * Stamp a successful pass over one agent's cursor.
+ *
+ * `resetCursor` exists because the COALESCE below is a trap on the recovery
+ * path: it is there so a quiet tick keeps the last good signature, but it also
+ * means passing null to CLEAR an unresolvable cursor silently preserves it, and
+ * the agent stays wedged on the next tick. When the recovery abandoned the
+ * cursor, write the null through instead of folding it away.
+ */
+async function touchCursor({ agentRef, network, lastTx, lastSlot = null, lastEventAt = null, scanned = 0, resetCursor = false }) {
 	await sql`
 		INSERT INTO agent_event_cursor
 			(chain, chain_id, agent_ref, network, last_tx, last_slot, last_event_at, last_indexed_at, scanned)
@@ -409,9 +439,12 @@ async function touchCursor({ agentRef, network, lastTx, lastSlot = null, lastEve
 			(${CHAIN}, 0, ${agentRef}, ${network}, ${lastTx}, ${lastSlot}, ${lastEventAt}, now(), ${scanned})
 		ON CONFLICT (chain, chain_id, agent_ref) DO UPDATE SET
 			network         = excluded.network,
-			last_tx         = COALESCE(excluded.last_tx, agent_event_cursor.last_tx),
-			last_slot       = COALESCE(excluded.last_slot, agent_event_cursor.last_slot),
-			last_event_at   = COALESCE(excluded.last_event_at, agent_event_cursor.last_event_at),
+			last_tx         = CASE WHEN ${resetCursor}::boolean THEN excluded.last_tx
+			                       ELSE COALESCE(excluded.last_tx, agent_event_cursor.last_tx) END,
+			last_slot       = CASE WHEN ${resetCursor}::boolean THEN excluded.last_slot
+			                       ELSE COALESCE(excluded.last_slot, agent_event_cursor.last_slot) END,
+			last_event_at   = CASE WHEN ${resetCursor}::boolean THEN excluded.last_event_at
+			                       ELSE COALESCE(excluded.last_event_at, agent_event_cursor.last_event_at) END,
 			last_indexed_at = now(),
 			scanned         = agent_event_cursor.scanned + excluded.scanned,
 			error           = null

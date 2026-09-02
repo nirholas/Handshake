@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-09-02",
+			"title": "Agent profiles stopped losing their on-chain history",
+			"summary": "Two thirds of the agents in the directory had quietly stopped picking up new on-chain activity. The indexer resumes each agent from the last transaction it saw, and once the RPC provider answering the call no longer held that transaction, the whole read failed and the agent was stuck there permanently: its profile kept loading, it just never learned anything new again. The crawl now notices that its bookmark has gone stale, re-reads from the top and carries on, and the same recovery landed for the secondary chains, where one had been parked on pruned blocks since April. The 1,083 stuck agents have been unstuck. The status page also learned to score this: an index that is erroring rather than lagging used to look perfectly fresh, and a lagging secondary chain no longer reports a platform outage nobody is having.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-02",
 			"title": "Every showcased agent now has its own page",
 			"summary": "Agent Spotlight entries got somewhere to live. Each one now has its own page with the agent standing in 3D, the full write-up instead of three clamped lines, a facts panel read live off the agent (skills, conversations, on-chain actions, upvotes), share buttons, and a rail of related entries in the same category. Sharing one finally works too: paste a link anywhere and it unfurls with that entry's headline and the agent's own card rather than the generic showcase image. If you submitted an entry, you can now edit or remove it, which you could not do before: an Edit link on your card opens the write-up ready to change, and removing takes two clicks so it cannot happen by accident. Ranking got fairer as well, with a stable order for entries published at the same moment instead of a shuffle between page loads.",
 			"tags": [

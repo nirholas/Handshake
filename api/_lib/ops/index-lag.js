@@ -43,6 +43,21 @@ export const EVM_LAG_DOWN_MIN = 480;
 export const EVM_BLOCKS_BEHIND_DEGRADED = 20_000;
 export const EVM_BLOCKS_BEHIND_DOWN = 250_000;
 
+/**
+ * Share of Solana cursors carrying a crawl error before the leg is unhealthy.
+ *
+ * Cursor AGE alone could not see this class at all, because the sweep stamps
+ * last_indexed_at on the FAILURE path too (deliberately, so one unreadable
+ * account cannot hold the oldest-first queue head forever). The consequence is
+ * that a wedged agent looks exactly as fresh as a healthy one. On 2026-09-02,
+ * 1,101 of 1,604 Solana cursors were stuck on a single unresolvable-cursor
+ * error, every one re-reporting it every tick, and this sensor still scored the
+ * Solana leg `ok` on a 63-minute median. An error rate is the signal that makes
+ * a silently non-indexing directory visible.
+ */
+export const SOLANA_ERROR_RATE_DEGRADED = 0.05;
+export const SOLANA_ERROR_RATE_DOWN = 0.25;
+
 const QUERY_TIMEOUT_MS = 4_000;
 
 const minutesSince = (ts) => (ts ? Math.round((Date.now() - new Date(ts).getTime()) / 60_000) : null);
@@ -182,31 +197,53 @@ export async function gatherIndexLagHealth() {
 	} catch (err) {
 		return { ...base, status: 'unknown', detail: err?.message || 'index lag unreadable' };
 	}
+	return { ...base, ...indexLagVerdict(lag), metrics: lag };
+}
 
+/**
+ * Roll index freshness into a verdict. Pure: takes the shape readIndexLag()
+ * returns and does no IO, so the thresholds can be exercised directly.
+ *
+ * @param {Awaited<ReturnType<typeof readIndexLag>>} lag
+ * @returns {{ status: string, detail: string, hint?: string }}
+ */
+export function indexLagVerdict(lag) {
 	// Nothing crawled yet is a warming-up state, not a fault: a fresh database
 	// or a just-applied migration lands here before the first cron tick.
 	if (lag.solana.agents === 0 && lag.evm.chains === 0) {
 		return {
-			...base,
 			status: 'unknown',
 			detail: 'no crawl cursors yet — indexers have not run since the index was created',
 			hint: 'Wait one cron tick (solana-attestations-crawl every 10 min, erc8004-crawl every 15 min).',
-			metrics: lag,
 		};
 	}
 
+	const errorRate = lag.solana.agents > 0 ? lag.solana.errored / lag.solana.agents : 0;
 	const solStatus = worst(
 		legStatus(lag.solana.medianLagMin, SOLANA_LAG_DEGRADED_MIN, SOLANA_LAG_DOWN_MIN),
-		// A leg crawling every agent and indexing nothing is broken, not fresh.
-		// That exact shape (1,576 cursors, 0 events) hid a crash in the Solana
-		// crawler for two days behind a healthy-looking cursor age.
-		lag.solana.agents > 0 && lag.solana.events === 0 ? 'down' : 'ok',
+		worst(
+			// A leg crawling every agent and indexing nothing is broken, not fresh.
+			// That exact shape (1,576 cursors, 0 events) hid a crash in the Solana
+			// crawler for two days behind a healthy-looking cursor age.
+			lag.solana.agents > 0 && lag.solana.events === 0 ? 'down' : 'ok',
+			legStatus(errorRate, SOLANA_ERROR_RATE_DEGRADED, SOLANA_ERROR_RATE_DOWN),
+		),
 	);
 	const evmStatus = worst(
 		legStatus(lag.evm.lagMin, EVM_LAG_DEGRADED_MIN, EVM_LAG_DOWN_MIN),
 		legStatus(lag.evm.worstBlocksBehind, EVM_BLOCKS_BEHIND_DEGRADED, EVM_BLOCKS_BEHIND_DOWN),
 	);
-	const status = worst(solStatus, evmStatus);
+
+	// Solana leads, and here that is a correctness rule rather than a preference.
+	// A user opening an agent profile reads the Solana index; a secondary-chain
+	// cursor that is months behind changes nothing they can see. Letting the EVM
+	// leg alone drive the whole subsystem to `down` reports an outage that no
+	// user is experiencing, and it buries the Solana leg's real state: for weeks
+	// the surface said `down` for a stale secondary cursor while the actual
+	// Solana fault (two thirds of cursors wedged) was never scored at all. So an
+	// EVM-only fault caps at `degraded`, with the reason stated in the detail.
+	const evmOnlyFault = solStatus === 'ok' && evmStatus === 'down';
+	const status = worst(solStatus, evmOnlyFault ? 'degraded' : evmStatus);
 
 	const solPart =
 		lag.solana.agents === 0
@@ -214,7 +251,7 @@ export async function gatherIndexLagHealth() {
 			: `Solana: ${fmt(lag.solana.medianLagMin)} median lag across ${lag.solana.agents} agents` +
 				(lag.solana.sweepCycleMin ? ` (${fmt(lag.solana.sweepCycleMin)} full sweep at ${lag.solana.batch}/tick)` : '') +
 				(lag.solana.uncrawled ? `, ${lag.solana.uncrawled} never crawled` : '') +
-				(lag.solana.errored ? `, ${lag.solana.errored} erroring` : '') +
+				(lag.solana.errored ? `, ${lag.solana.errored} erroring (${pct(errorRate)})` : '') +
 				`, ${lag.solana.events} events`;
 	const evmPart =
 		lag.evm.chains === 0
@@ -227,17 +264,22 @@ export async function gatherIndexLagHealth() {
 				(lag.evm.uncrawledChains ? `, ${lag.evm.uncrawledChains} never crawled` : '') +
 				`, ${lag.evm.events} events`;
 
-	const detail = `${solPart}. ${evmPart}.`;
+	const detail =
+		`${solPart}. ${evmPart}.` +
+		(evmOnlyFault ? ' Secondary-chain cursors only: the Solana index users read is fresh, so this is degraded, not down.' : '');
+
 	const hint =
 		status === 'ok'
 			? undefined
 			: lag.solana.agents > 0 && lag.solana.events === 0
 				? 'The Solana crawl is reaching every agent and recording nothing: read the `error` column on agent_event_cursor, which the sweep stamps on failure.'
-				: lag.evm.worstBlocksBehind >= EVM_BLOCKS_BEHIND_DEGRADED
-					? 'An EVM chain is behind head, not just stale: the crawl grows its block window while behind, so a backlog that keeps rising means the RPC is rejecting ranges (erc8004_crawl_cursor.last_error) or the cron is being cut short by its budget.'
-					: 'Check the crawl crons: /api/cron/solana-attestations-crawl and /api/cron/erc8004-crawl. A stale cursor means the job is failing or no longer scheduled.';
+				: errorRate >= SOLANA_ERROR_RATE_DEGRADED
+					? 'Solana cursors are erroring, not just lagging, and the sweep stamps last_indexed_at on the failure path so they still look fresh. Group them: select error, count(*) from agent_event_cursor where error is not null group by 1 order by 2 desc. See docs/ops/agent-index.md.'
+					: lag.evm.worstBlocksBehind >= EVM_BLOCKS_BEHIND_DEGRADED
+						? 'An EVM chain is behind head, not just stale: the crawl grows its block window while behind, so a backlog that keeps rising means the RPC is rejecting ranges (erc8004_crawl_cursor.last_error) or the cron is being cut short by its budget.'
+						: 'Check the crawl crons: /api/cron/solana-attestations-crawl and /api/cron/erc8004-crawl. A stale cursor means the job is failing or no longer scheduled.';
 
-	return { ...base, status, detail, ...(hint ? { hint } : {}), metrics: lag };
+	return { status, detail, ...(hint ? { hint } : {}) };
 }
 
 function legStatus(lagMin, degradedAt, downAt) {
@@ -258,4 +300,8 @@ function fmt(min) {
 	const h = Math.floor(min / 60);
 	const m = min % 60;
 	return m ? `${h}h${m}m` : `${h}h`;
+}
+
+function pct(rate) {
+	return `${(rate * 100).toFixed(1)}%`;
 }

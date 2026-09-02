@@ -182,17 +182,14 @@ every surface it documented. Only the production-affecting findings are listed
 here; the code-quality items from that pass are not production issues.
 
 9. **Live R2 CORS does not match `scripts/set-r2-cors.mjs`** (owner action:
-    one credential). CONFIRMED by measurement, not inference, and RE-CONFIRMED
-    unchanged on 2026-09-02: `node scripts/set-r2-cors.mjs --probe` reads the
-    enforced policy from outside and exits 1 on this bucket. The probe needs no
-    credentials of any kind (it discovers the public host from a live listing
-    endpoint and the upload host from the auth-free `/api/forge-upload`), so
-    anyone can re-check this in one command.
+    one credential). CONFIRMED by measurement 2026-08-01, not inference:
+    `node scripts/set-r2-cors.mjs --probe` reads the enforced policy from
+    outside using only object-scoped keys, and it exits 1 on this bucket.
 
     | Surface | Result |
     |---|---|
     | Site edge, `three.ws/avatars/*.glb`, foreign origin | PASS, `access-control-allow-origin: *`. Not affected. |
-    | Public bucket host `pub-*.r2.dev`, foreign origin GET/HEAD | FAIL. Body returns `200`, but with no `access-control-allow-origin`, so the browser discards it. Allowlisted origins DO get their origin echoed, which is how the live read rule is known to still be the old allowlist rather than the world-open `*`. |
+    | Public bucket host `pub-*.r2.dev`, foreign origin GET/HEAD | FAIL, no header at all. Preflight `OPTIONS` returns `403`. |
     | Presigned `PUT` preflight on the S3 endpoint | Mixed. `204` for `three.ws`, `*.vercel.app`, `localhost:3000`; `403` for `www.three.ws`, `*.app.github.dev`, `localhost:5173`. |
 
     The live policy is one allowlist rule serving both reads and writes
@@ -208,10 +205,7 @@ here; the code-quality items from that pass are not production issues.
     this machine (`S3_*` in `.env`, identical to the Cloud Run service env,
     bucket `chatty-storage`) is object-scoped and gets `403 AccessDenied` on
     Get/PutBucketCors. Secret Manager holds no R2 or Cloudflare admin token
-    (checked 2026-08-01 with working gcloud auth). As of 2026-09-02 this
-    machine holds no R2 token at all and its gcloud session has expired, which
-    changes nothing: the probe above still measures the live policy without
-    credentials, and applying the fix still needs the admin token below.
+    (checked 2026-08-01 with working gcloud auth).
     Owner: mint an "Admin Read & Write" R2 token scoped to the bucket (the
     script prints the exact steps; its `--get` path explains this instead
     of crashing), drop it in `.env.local` as `R2_ACCESS_KEY_ID`/`R2_SECRET_ACCESS_KEY`,

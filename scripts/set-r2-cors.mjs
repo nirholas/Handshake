@@ -13,9 +13,7 @@
  *   2. Write — PUT of presigned uploads from the same web origins.
  *
  * Usage:
- *   node scripts/set-r2-cors.mjs --probe       # measure the LIVE policy from outside (no credentials at all)
- *   node scripts/set-r2-cors.mjs --probe --site=https://staging.example  # probe another deployment
- *   node scripts/set-r2-cors.mjs --probe --key=thumb/x.png               # read a specific object
+ *   node scripts/set-r2-cors.mjs --probe       # measure the LIVE policy from outside (no bucket creds)
  *   node scripts/set-r2-cors.mjs --get         # read the live policy (needs an admin token)
  *   node scripts/set-r2-cors.mjs --dry-run     # print the policy, don't push
  *   node scripts/set-r2-cors.mjs               # apply (idempotent, needs an admin token)
@@ -23,12 +21,9 @@
  * Where the credentials come from:
  *   - `.env` / `.env.local` hold S3_ENDPOINT, S3_ACCESS_KEY_ID,
  *     S3_SECRET_ACCESS_KEY, S3_BUCKET. The token normally checked in here is
- *     "Object Read & Write" scoped, which is NOT enough for Get/PutBucketCors.
- *     Put an "Admin Read & Write" R2 token in `.env.local` as
- *     R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY to use --get or to apply.
- *   - --probe needs NONE of them. With no credentials it discovers the public
- *     host from a live listing endpoint and the presigned-upload host from the
- *     auth-free /api/forge-upload, which is exactly what a browser sees.
+ *     "Object Read & Write" scoped, which is enough for --probe but NOT for
+ *     Get/PutBucketCors. Put an "Admin Read & Write" R2 token in `.env.local`
+ *     as R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY to use --get or apply.
  *   - Production runtime values live on the Cloud Run service, readable with
  *     `gcloud run services describe three-ws-api --region us-central1
  *      --project aerial-vehicle-466722-p5 --format=yaml`. Those are the same
@@ -60,41 +55,18 @@ function fallbackEndpointFromAccount(accountId) {
 	if (!accountId) return null;
 	return `https://${accountId.trim()}.r2.cloudflarestorage.com`;
 }
-// Assign through this, never `process.env.X ||= y` directly: assigning an
-// absent value to process.env stores the STRING "undefined", which is truthy.
-// That silently defeated every "is storage configured?" check below. On a
-// machine with no R2 vars the script skipped its own skip-gate and went on to
-// call the bucket API with the literal credentials "undefined".
-function aliasEnv(name, value) {
-	if (!process.env[name] && value) process.env[name] = value;
-}
-aliasEnv('S3_ENDPOINT', process.env.R2_ENDPOINT || fallbackEndpointFromAccount(process.env.R2_ACCOUNT_ID));
-aliasEnv('S3_ACCESS_KEY_ID', process.env.R2_ACCESS_KEY_ID);
-aliasEnv('S3_SECRET_ACCESS_KEY', process.env.R2_SECRET_ACCESS_KEY);
-aliasEnv('S3_BUCKET', process.env.R2_BUCKET);
-
-const flag = (name) => process.argv.includes(name);
-const argValue = (name) => {
-	const hit = process.argv.find((a) => a.startsWith(`${name}=`));
-	return hit ? hit.slice(name.length + 1) : null;
-};
+process.env.S3_ENDPOINT          ||= process.env.R2_ENDPOINT || fallbackEndpointFromAccount(process.env.R2_ACCOUNT_ID);
+process.env.S3_ACCESS_KEY_ID     ||= process.env.R2_ACCESS_KEY_ID;
+process.env.S3_SECRET_ACCESS_KEY ||= process.env.R2_SECRET_ACCESS_KEY;
+process.env.S3_BUCKET            ||= process.env.R2_BUCKET;
 
 const required = ['S3_ENDPOINT', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY', 'S3_BUCKET'];
 const missing = required.filter((k) => !process.env[k]);
-const hasBucketCreds = missing.length === 0;
-
-// --probe and --dry-run are exempt from this gate on purpose: neither calls the
-// bucket API. --probe measures the policy the way a browser experiences it, over
-// public HTTP, sourcing both of its URLs from the live site (see probe() below),
-// and --dry-run only prints POLICY. Requiring credentials here would make the
-// one command that verifies this policy unrunnable exactly where it is needed
-// most: a fresh clone, or a machine whose keys have rotated out.
-if (missing.length && !flag('--probe') && !flag('--dry-run')) {
+if (missing.length) {
 	// Deploy-time invocation: missing env is not a deploy failure. Local-dev
 	// invocation: surface the hint. Either way, exit 0 so a CI step can chain.
 	console.log(`[set-r2-cors] skipped, missing env: ${missing.join(', ')}`);
 	console.log('[set-r2-cors] (local: drop R2_ACCOUNT_ID/R2_ACCESS_KEY_ID/R2_SECRET_ACCESS_KEY/R2_BUCKET in .env.local. Production values: gcloud run services describe three-ws-api --region us-central1 --project aerial-vehicle-466722-p5 --format=yaml)');
-	console.log('[set-r2-cors] (to measure the LIVE policy without any bucket credentials: node scripts/set-r2-cors.mjs --probe)');
 	process.exit(0);
 }
 
@@ -156,22 +128,16 @@ const PROBE_ORIGINS = [
 // this key is never created or read.
 const PROBE_WRITE_KEY = 'cors-preflight-probe.bin';
 
-// Built on first use, never at import: --probe runs with no credentials at all
-// and must not construct a client around an undefined endpoint.
-let _s3;
-function s3client() {
-	if (!_s3) {
-		_s3 = new S3Client({
-			region: 'auto',
-			endpoint: process.env.S3_ENDPOINT,
-			credentials: {
-				accessKeyId: process.env.S3_ACCESS_KEY_ID,
-				secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
-			},
-		});
-	}
-	return _s3;
-}
+const flag = (name) => process.argv.includes(name);
+
+const s3 = new S3Client({
+	region: 'auto',
+	endpoint: process.env.S3_ENDPOINT,
+	credentials: {
+		accessKeyId: process.env.S3_ACCESS_KEY_ID,
+		secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
+	},
+});
 
 const Bucket = process.env.S3_BUCKET;
 
@@ -192,7 +158,7 @@ if (flag('--get')) {
 }
 
 if (flag('--dry-run')) {
-	console.log('Would apply to bucket:', Bucket || '(S3_BUCKET unset in this environment)');
+	console.log('Would apply to bucket:', Bucket);
 	console.log(JSON.stringify(POLICY, null, 2));
 	process.exit(0);
 }
@@ -205,7 +171,7 @@ try {
 	process.exit(1);
 }
 try {
-	await s3client().send(new PutBucketCorsCommand({ Bucket, CORSConfiguration: POLICY }));
+	await s3.send(new PutBucketCorsCommand({ Bucket, CORSConfiguration: POLICY }));
 } catch (err) {
 	if (!explainAccessDenied(err, 'writing')) throw err;
 	process.exit(1);
@@ -230,27 +196,21 @@ if (JSON.stringify(before) === JSON.stringify(after)) {
 // Exits nonzero when the measurement disagrees with POLICY.
 async function probe() {
 	const publicHost = process.env.S3_PUBLIC_DOMAIN || process.env.R2_PUBLIC_DOMAIN;
-	const site = (argValue('--site') || 'https://three.ws').replace(/\/$/, '');
-
-	// Both probe URLs, with the live site as the fallback source for each. The
-	// site is the browser's own view of the bucket, so a machine with no bucket
-	// credentials at all still measures the real policy.
-	const readUrl = (await probeReadUrl(publicHost, site)) || null;
-	if (!readUrl) {
-		console.error('--probe could not find a public object to read.');
-		console.error('Pass one with --key=<object key> (needs S3_PUBLIC_DOMAIN), or check that');
-		console.error(`${site} is reachable and still serves r2.dev asset URLs.`);
+	if (!publicHost) {
+		console.error('--probe needs S3_PUBLIC_DOMAIN (the public r2.dev or custom-domain host).');
 		return false;
 	}
 
-	const writeUrl = await probeWriteUrl(site);
-	if (!writeUrl) {
-		console.error('--probe could not determine the presigned-upload host.');
-		console.error(`Set S3_ENDPOINT + S3_BUCKET, or check that ${site}/api/forge-upload is reachable.`);
+	const key = await probeKey();
+	if (!key) {
+		console.error('--probe could not find a public object to read. Pass one with --key=<object key>.');
 		return false;
 	}
 
-	console.log(`Probing ${Bucket || hostLabel(writeUrl)} (read: ${readUrl})\n`);
+	const readUrl = `${publicHost.replace(/\/$/, '')}/${encodeR2Key(key)}`;
+	const writeUrl = `${process.env.S3_ENDPOINT.replace(/\/$/, '')}/${Bucket}/${PROBE_WRITE_KEY}`;
+
+	console.log(`Probing ${Bucket} (read: ${readUrl})\n`);
 	console.log(`${'ORIGIN'.padEnd(38)} ${'READ'.padEnd(6)} ${'WRITE'.padEnd(6)} EXPECTED`);
 
 	let ok = true;
@@ -277,89 +237,17 @@ async function probe() {
 	return ok;
 }
 
-// A world-readable object URL on the public host, so the read probe measures
-// CORS rather than auth. Three sources, best first: an explicit --key, the
-// bucket listing (needs credentials), and finally the live site, which hands
-// out public asset URLs on the very host we want to measure.
-async function probeReadUrl(publicHost, site) {
-	const explicit = argValue('--key');
-	if (explicit) {
-		if (!publicHost) {
-			console.error('--key needs S3_PUBLIC_DOMAIN to build a URL from.');
-			return null;
-		}
-		return `${publicHost.replace(/\/$/, '')}/${encodeR2Key(explicit)}`;
-	}
-
-	if (hasBucketCreds && publicHost) {
-		try {
-			const r = await s3client().send(new ListObjectsV2Command({ Bucket, Prefix: 'thumb/', MaxKeys: 1 }));
-			const key = r.Contents?.[0]?.Key;
-			if (key) return `${publicHost.replace(/\/$/, '')}/${encodeR2Key(key)}`;
-		} catch {
-			// Fall through to the site: an object-scoped token that cannot list
-			// is exactly the case this fallback exists for.
-		}
-	}
-
-	return discoverPublicAssetUrl(site, publicHost);
-}
-
-// Scrape one public bucket URL out of a live listing endpoint. These return
-// user-generated avatars, whose media resolves to the public bucket host via
-// publicUrl() in api/_lib/r2.js, the same URL a third-party embed would load.
-async function discoverPublicAssetUrl(site, publicHost) {
-	const hostPattern = publicHost
-		? escapeRegExp(publicHost.replace(/\/$/, ''))
-		: 'https:\\/\\/[a-z0-9-]+\\.r2\\.dev';
-	const re = new RegExp(`${hostPattern}\\/[^"'\\s\\\\]+\\.(?:glb|png|jpg|webp)`, 'i');
-	for (const path of ['/api/marketplace/agents?limit=12', '/api/avatars?limit=12']) {
-		try {
-			const res = await fetch(`${site}${path}`, { headers: { accept: 'application/json' } });
-			if (!res.ok) continue;
-			const hit = (await res.text()).match(re);
-			if (hit) return hit[0];
-		} catch {
-			continue;
-		}
-	}
-	return null;
-}
-
-// The presigned-upload host. From env when credentials are present, else from
-// the site's own auth-free presign endpoint, which returns a real upload URL on
-// the exact host the browser PUTs to. Only its OPTIONS preflight is ever sent,
-// so no object is created.
-async function probeWriteUrl(site) {
-	if (process.env.S3_ENDPOINT && Bucket) {
-		return `${process.env.S3_ENDPOINT.replace(/\/$/, '')}/${Bucket}/${PROBE_WRITE_KEY}`;
-	}
+// A key whose object is world-readable, so the read probe measures CORS rather
+// than auth. Prefers a caller-supplied --key, else the first thumbnail.
+async function probeKey() {
+	const explicit = process.argv.find((a) => a.startsWith('--key='));
+	if (explicit) return explicit.slice('--key='.length);
 	try {
-		const res = await fetch(`${site}/api/forge-upload`, {
-			method: 'POST',
-			headers: { 'content-type': 'application/json', 'x-forge-client': 'set-r2-cors-probe' },
-			body: JSON.stringify({ content_type: 'image/png', size_bytes: 1024 }),
-		});
-		if (!res.ok) return null;
-		const { upload_url: uploadUrl } = await res.json();
-		if (!uploadUrl) return null;
-		const u = new URL(uploadUrl);
-		return `${u.origin}${u.pathname}`;
+		const r = await s3.send(new ListObjectsV2Command({ Bucket, Prefix: 'thumb/', MaxKeys: 1 }));
+		return r.Contents?.[0]?.Key || null;
 	} catch {
 		return null;
 	}
-}
-
-function hostLabel(url) {
-	try {
-		return new URL(url).hostname.split('.')[0];
-	} catch {
-		return 'bucket';
-	}
-}
-
-function escapeRegExp(text) {
-	return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 // True when the browser would be allowed through: a matching
@@ -405,7 +293,7 @@ function encodeR2Key(key) {
 
 async function getCors() {
 	try {
-		const r = await s3client().send(new GetBucketCorsCommand({ Bucket }));
+		const r = await s3.send(new GetBucketCorsCommand({ Bucket }));
 		return { CORSRules: r.CORSRules || [] };
 	} catch (err) {
 		if (err?.name === 'NoSuchCORSConfiguration' || err?.$metadata?.httpStatusCode === 404) {
