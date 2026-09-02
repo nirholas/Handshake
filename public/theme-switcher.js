@@ -232,16 +232,15 @@
 		// change the verdict, so only a stylesheet node (a <link rel=stylesheet>
 		// finishing its load, or a <style> element landing or leaving) re-probes,
 		// and a burst of them costs one probe per frame.
-		var probeQueued = false;
+		// Synchronous on purpose. A stylesheet landing has to flip the page in the
+		// same turn: nav.js injects its <link> long after boot, and a visitor who
+		// chose light must not sit on dark until the next frame. Batching this
+		// onto an animation frame also made the probe outlive boot, which is
+		// exactly what the "own probe stylesheet re-triggers the watch" guard
+		// exists to catch. The saving comes from the filter below, not from
+		// deferring: only a stylesheet can change the verdict.
 		var onSheet = function () {
-			if (probeQueued || (!sheetWatch && islandSettled)) return;
-			probeQueued = true;
-			var run = function () {
-				probeQueued = false;
-				if (reprobeCapability()) stopWatching();
-			};
-			if (typeof requestAnimationFrame === 'function') requestAnimationFrame(run);
-			else setTimeout(run, 16);
+			if (reprobeCapability()) stopWatching();
 		};
 		var isSheetNode = function (node) {
 			if (!node || node.nodeType !== 1 || isProbeNode(node)) return false;

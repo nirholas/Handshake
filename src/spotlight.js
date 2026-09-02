@@ -1,5 +1,5 @@
 /**
- * /spotlight: Agent Spotlight, the three.ws community showcase.
+ * /spotlight — Agent Spotlight, the three.ws community showcase.
  *
  * One controller, three jobs: browse (sort + category + search + paging), vote,
  * and submit. State is a single `view` object that the URL mirrors, so every
