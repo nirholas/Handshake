@@ -2012,6 +2012,14 @@ export const limits = {
 	// stopping a script from using the analyzer as a free mesh-processing service.
 	printQuoteIp: (ip) =>
 		getLimiter('print:quote:ip', { limit: 90, window: '5 m', local: true }).limit(ip),
+	// Materialize checkout (api/print/orders.js and its confirm step). Both are
+	// session-gated and CSRF-gated already, so this is not the security boundary;
+	// it caps how often one IP can open orders or poll the chain for a payment.
+	// NOT local: the confirm path spends the shared Solana RPC allowance, and a
+	// per-instance counter would multiply by however many Cloud Run instances are
+	// up, which is exactly the bypass that makes an RPC cap meaningless.
+	printOrderIp: (ip) =>
+		getLimiter('print:order:ip', { limit: 60, window: '5 m' }).limit(ip),
 };
 
 // ── Fail-closed limiter call for privacy-boundary reads (H7) ─────────────────

@@ -4,8 +4,13 @@
 healthy right now, and if not, which stage is failing?". It exists because the
 x402 griefing classes (verify-reject floods, settle failures, sponsor-fee
 starvation) historically became visible only after they halted the economy;
-the 2026-07-11 fable audit filed the gap and this board closes it. It is a
-JSON read; consume it with `curl` + `jq` or wire it into ops tooling.
+the 2026-07-11 fable audit filed the gap and this board closes it.
+
+Two ways to read it: the JSON endpoint below (`curl` + `jq`, or wired into ops
+tooling), and **[/payment-outcomes](../../pages/payment-outcomes.html)**, the
+internal page that renders the same response. Neither is a summary of the
+other: the page renders every panel this endpoint returns and adds no number of
+its own.
 
 ## Auth
 
@@ -57,6 +62,12 @@ routes:
   (verify vs settle) so a 502 cluster is distinguishable from a rejected-proof
   wave without a log dive.
 - `settled_volume_usd_24h` from settled `amount_atomics` (USDC, 6 decimals).
+- `replay_reject_rate` has its own denominator, `inbound_attempts` (everything
+  that arrived, replays included). Measuring replays against the verify
+  denominator would report a rate above 1 during exactly the flood the number
+  exists to detect, since replays are refused above verify. It is computed in
+  the endpoint rather than in a renderer so the JSON, the page, and any ops
+  script quote one number computed one way.
 
 Replays are excluded from both rate denominators: they are refused before
 verify and would otherwise dilute the signal.
@@ -193,6 +204,32 @@ curl -s https://three.ws/api/x402/three-intel | jq '.accepts[].network'
 # only eip155:8453 means the Solana accept has been withdrawn
 ```
 
+## The page
+
+`/payment-outcomes` ([pages/payment-outcomes.html](../../pages/payment-outcomes.html))
+renders the whole response. It takes the same gate as the endpoint, is
+`noindex, nofollow`, and is deliberately absent from `data/pages.json`: it is
+internal tooling, like `/quality-bench` and `/likeness-bench`, not a public
+surface.
+
+- **The window selector (1h / 3h / 24h) is a re-render, not a request.** All
+  three windows arrive in one response, so sweeping between them during an
+  incident costs no extra database or RPC read. `Refresh` is the explicit
+  refetch.
+- **A rate with no attempts renders `n/a`, never `0%`.** A quiet rail and a
+  totally failing rail must not look the same, so an empty window says so in
+  words underneath.
+- **A panel that failed renders its own error in place** and names the other
+  panels as unaffected, matching the endpoint's 207 semantics. The banner at the
+  top lists whatever is in `degraded`.
+- **An unmeasured number is never a green zero.** The stranded-custody panel
+  returns nulls when the process could not open the wallets at all, and the page
+  renders `not measured` in muted type rather than a reassuring `0 SOL`.
+- Panels: inbound rates for the selected window, top reject reasons and replay
+  stages (both 24h), the outbound ring settle sensor with its triage hint, every
+  configured ring wallet against its own floor plus the sponsor runway, and
+  stranded custody.
+
 ## Reading it in an incident
 
 1. `inbound.settle_success_rate` low but `verify_reject_rate` flat: the rail
@@ -236,6 +273,7 @@ curl -s https://three.ws/api/x402/three-intel | jq '.accepts[].network'
 ## Related
 
 - `api/ops/payment-outcomes.js` (the endpoint),
+  `pages/payment-outcomes.html` (the page at `/payment-outcomes`),
   `api/_lib/ops/x402-settle-health.js` (the sensor),
   `api/_lib/custodial-key-health.js` (the custody-loss measurement shared with
   `scripts/audit-custodial-key-health.mjs`),
