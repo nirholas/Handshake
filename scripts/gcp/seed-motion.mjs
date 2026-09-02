@@ -43,6 +43,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { gateMotionClip, explainMotionGate, MOTION_GATE_VERSION } from '../../api/_lib/motion-quality.js';
+import { closeLoopSeam } from '../../api/_lib/motion-seed.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '../..');
@@ -229,8 +230,17 @@ async function runPrompt(prompt) {
 	const started = Date.now();
 	const { jobId, lane } = await submitJob(prompt);
 	const clipUrl = await awaitClip(jobId);
-	const raw = await fetchClip(clipUrl);
+	const fetched = await fetchClip(clipUrl);
 	const elapsedSeconds = Math.round((Date.now() - started) / 1000);
+
+	// A loop prompt needs a clip that actually loops, and the sampler never
+	// returns one: it samples a window, so the last frame has no reason to meet
+	// the first. Close the seam before the gate sees it, or 41% of the prompt
+	// library is rejected for a defect we know how to repair. The repair
+	// self-verifies and returns the original clip untouched if closing the seam
+	// would cost more than it buys.
+	const seam = prompt.loop === true ? closeLoopSeam(fetched) : null;
+	const raw = seam ? seam.clip : fetched;
 
 	const verdict = gateMotionClip(raw, {
 		loop: prompt.loop === true,
@@ -255,6 +265,9 @@ async function runPrompt(prompt) {
 		clip_source_url: clipUrl,
 		elapsed_seconds: elapsedSeconds,
 		gate_version: verdict.gateVersion,
+		loop_seam: seam
+			? { before: seam.seamBefore, after: seam.seamAfter, trimmed_frames: seam.trimmedFrames, kept_original: seam.rejected || null }
+			: null,
 		status: verdict.pass ? 'accepted' : 'rejected',
 		reasons: verdict.reasons,
 		detail: verdict.detail || '',
