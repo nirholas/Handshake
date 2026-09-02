@@ -447,9 +447,12 @@ is `✕`, the file is `threews-three-2026-09-02_205528.png` at `1440 × 970` (a 
    it better, by retrying the press and reporting the dead window as the measurement, so their
    script was left alone.
 
-**Evidence on disk (not committed, per the no-screenshots hygiene rule):** the real downloaded share
-card plus the preview sheet at 1440 and 390 in
-`/tmp/claude-1000/-workspaces-three-ws/e041b23d-2096-4e66-a073-67542a5717a3/scratchpad/photo-evidence/`.
+**Evidence on disk (not committed, per the no-screenshots hygiene rule):** the preview sheet with a
+real card in it, captured from the live world at 1440x900, in
+`/tmp/claude-1000/-workspaces-three-ws/e041b23d-2096-4e66-a073-67542a5717a3/scratchpad/photo-evidence/preview-sheet-1440x900.png`.
+A second run to dump the decoded PNG on its own timed out at 240s rather than 59s: the box was at a
+load average of 58 by then, with several agents' suites running. Nothing was inferred from that
+timeout, and the card's actual bytes are asserted per-pixel in the e2e spec instead.
 
 **Suite.** `npx vitest run`: 27,304 passed, 12 failed across 10 files, none of them photo-mode
 (`x402-discovery-parity`, `x402-discovery-green`, `cron-scheduler-sync`, `branding`,
