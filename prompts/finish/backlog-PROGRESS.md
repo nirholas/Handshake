@@ -947,3 +947,97 @@ is appended to the hash-chained ledger once a minute (1,440 identical rows/day,
 112 RPC balance reads each) for as long as the fleet stays empty. Writing it only
 when the verdict changes would keep the "it ran and found nothing" signal without
 the noise.
+
+## 2026-09-02 (evening): 11 agent index, EVM lane census, plus a shared-index hazard cleared
+
+Session note first, because it changes how this entry should be read: 49 peer sessions were
+live on this worktree, and one of them was editing `api/cron/[name].js` while I was reading
+it (the file changed under me at 19:01 UTC, mid-edit). Order 11 is actively owned by that
+session, so I stopped touching its files and wrote the measurement down instead of racing it.
+Nothing below is committed into order 11's code.
+
+### The hazard, fixed: the shared git index was staged to revert two landed commits
+
+Measured with `git diff --staged --stat` and a per-path `git diff HEAD -- <file>`:
+
+| Path | Index held | Worktree held |
+|---|---|---|
+| `api/_lib/economy-sweepback.js` | pre-`afd349790` blob | identical to HEAD |
+| `api/_lib/ops/x402-settle-health.js` | pre-`afd349790` blob | identical to HEAD |
+| `tests/economy-reclaim-dryrun-key-gate.test.js` | staged DELETE | file present, identical to HEAD |
+| `docs/ops/payment-outcomes.md`, `data/changelog.json`, `CHANGELOG.md`, `public/changelog.{json,xml}` | pre-`afd349790` blobs | identical to HEAD |
+| `src/spotlight.js`, `src/spotlight-entry.js`, `api/spotlight-og.js` | pre-`fe30b61bc` blobs | identical to HEAD |
+
+Nine of ten paths matched HEAD in the worktree and differed only in the index, so this was
+stale index state, not anyone's intended staging. Left alone, the next peer to run a bare
+`git commit` would have reverted `afd349790` (the reclaim dry-run key gate) and `fe30b61bc`
+(the spotlight fixes) and DELETED `tests/economy-reclaim-dryrun-key-gate.test.js`, under
+whatever message that peer wrote. Cleared with a path-scoped `git reset --` over exactly
+those paths, which restores the index to HEAD and touches no worktree file; `git diff
+--staged` is empty after it. Worth adding to the reflex list in this pack: read
+`git diff --staged --stat` when you arrive, not only before you commit.
+
+### The three stalled EVM cursors, diagnosed per lane
+
+Order 11 task 3 asks whether the stale chains' RPC URLs still answer. They do, and that is
+why the stall was misread. The refusal is not reachability, it is retention. Measured by
+replaying the crawl's OWN filter (`eth_getLogs` on `chain.registry` with `REGISTRY_TOPICS`)
+at each cursor's real resume height, per lane, at 8000/4000/2000/1000/500/200/100 blocks:
+
+| chain_id | resume block | behind | lane verdicts at the resume height |
+|---|---|---|---|
+| 56 | 101,261,625 | 17.4M | 2 lanes `-32005: limit exceeded` at every width down to the 100 floor; 1 lane HTTP 429 on `eth_blockNumber`; 1 lane HTTP 403 whose BODY says archive access needs a paid token |
+| 97 | 127,171,609 | 1.56M | 1 lane `-32701: History has been pruned`; 2 lanes `-32005: limit exceeded` down to the floor |
+| 137 | 86,112,155 | 7.0M | 1 lane HTTP 401 `API key disabled, tenant disabled` (permanently dead); 1 lane serves ONLY at exactly 100 blocks and refuses 200 and above; 1 lane caps `eth_getLogs` at 50 blocks; 1 lane `History has been pruned` |
+
+Four findings the fix should not lose:
+
+1. **Every lane answers `eth_blockNumber` except two**, so a reachability check would have
+   called all three chains healthy. The wall is at `eth_getLogs` on old blocks only.
+2. **Shrinking the window cannot help chain 56 or 97.** Both were refused at the 100-block
+   floor, so the backoff loop was always going to walk the whole ladder and end at the
+   floor-exhausted branch, which by design leaves the cursor untouched. That branch's comment
+   says the next tick retries against the failover RPC; it has now said that for 89 and 127
+   days respectively.
+3. **Chain 137 is the one case where a lane does hold the history, and it is still not
+   recoverable by backfill.** That lane serves exactly the 100-block floor. At 100 blocks a
+   tick against a head advancing roughly 36,000 blocks per 15-minute tick, the backlog grows
+   every tick forever. Resume-at-head with the gap reported is the only outcome that indexes
+   anything, which is what the in-flight `prunedSkip` path already does. Whoever finishes 11
+   should expect chain 137 to skip rather than backfill, and should say so in the docs.
+4. **Chain 137's FIRST lane is dead, not slow**: it answers HTTP 401 `API key disabled,
+   tenant disabled` to every method, so every call on that chain pays a dead lane before it
+   reaches a live one. Dropping it is a one-line failover-list edit in
+   `api/_lib/erc8004-chains.js`, and it sits behind the CLAUDE.md commit gate because that
+   file names chains other than `$THREE`. Owner: approve or decline that one edit. The lane
+   is identified by its position in that chain's `rpcUrls` array, not named here, so this log
+   stays inside the gate.
+
+The peer session had, independently and in the same window, landed the two fixes this
+diagnosis points at (archive wording folded into the pruned-history predicate, and the
+JSON-RPC error body read before the HTTP status so a 403's reason survives). Their code was
+in the worktree uncommitted at 19:01 UTC. This entry exists so the per-lane evidence outlives
+whichever session commits it.
+
+### Re-verified, so nobody re-derives it
+
+- **`gcloud` auth is ALIVE again** (`gcloud auth list` returns `nich@sperax.io`). The
+  2026-09-02 05:19 entry above records it dead; that is now stale. Cloud Run and Secret
+  Manager reads work from this workspace.
+- **Order 05 is still blocked on exactly one credential.** `gcloud secrets list` over the
+  whole project matches nothing on r2, cloudflare, bucket or cors, and neither `.env` nor
+  `.env.local` carries an R2 or Cloudflare admin variable. `node scripts/set-r2-cors.mjs
+  --probe` still reports 5 drifted origins (`www.three.ws`, `*.app.github.dev` and
+  `localhost:5173` refused a read they should get; `example.org` and `localhost:8080` are
+  refused writes correctly but reads too). Unchanged owner action: mint the token.
+- **Solana leg of the agent index: 190 of 1,604 cursors erroring (11.8%)**, and 185 of those
+  185 carry one class, `failed to get signatures for address: Transaction <sig> not found`.
+  That is the same unresolvable-cursor stall order 11 fixes, re-accumulating at roughly 14 an
+  hour because production still runs `ad7b54c16` and re-wedges an agent on every sweep. The
+  remaining 5 are one-off provider 429s and a TLS fault. Do NOT read a low number here as the
+  fix working: it will climb back toward 1,100 until the deploy lands. I did not run
+  `scripts/heal-agent-event-cursors.mjs --apply`, deliberately, so the owning session's
+  before/after numbers stay meaningful.
+
+Left: order 11 belongs to the session that was editing it. Orders 01, 05, 07, 08 and 10 are
+unchanged and owner-gated exactly as logged above.
