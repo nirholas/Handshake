@@ -9,10 +9,16 @@
 //   VIEWPORT=375 LOBBY_ONLY=1 node scripts/play-journey-audit.mjs   # skip the world
 //   TAB_CHECK=1 node scripts/play-journey-audit.mjs                 # add a real Tab pass
 //   VIEWPORT=320 node scripts/play-journey-audit.mjs https://three.ws/play
+//   WAIT_SCALE=4 node scripts/play-journey-audit.mjs               # force the patience
+//   ALLOW_HMR=1  node scripts/play-journey-audit.mjs               # let Vite reload the page
+//
+// Waits scale automatically with the box's load at start-up (see SCALE below),
+// because a contended run reporting a timeout as a defect is worse than no run.
 //
 // Nothing here is inferred from source. Every finding is a resolved computed
 // style or a measured box, so a clean run is real evidence the journey is clean.
 import { chromium, devices } from 'playwright';
+import { loadavg, cpus } from 'node:os';
 
 const BASE = process.argv[2] || 'http://localhost:3000/play';
 const VIEWPORT = String(process.env.VIEWPORT || 'desktop');
@@ -23,12 +29,76 @@ const MOBILE = VIEWPORT !== 'desktop';
 const width = MOBILE ? Number(VIEWPORT) : 1440;
 const height = MOBILE ? 812 : 900;
 
-// NO_WEBGL=1 drops the software renderer entirely. The lobby's layout is pure
-// DOM and CSS, so a chrome without 3D measures it exactly the same while using
-// a fraction of the memory, and it doubles as a check that the WebGL-unavailable
-// fallbacks (avatar-thumb.js, the world boot) degrade instead of stranding the
-// page. Use it for layout and touch-target sweeps; use the default for anything
-// that has to actually render the world.
+// Every wait below is wall-clock, which is fine on an idle box and a liar on a
+// busy one: concurrent agents share this worktree, and at load 220 on 16 cores
+// this harness reported "LOBBY NEVER BECAME VISIBLE" about a lobby that was
+// simply 200s from painting, then called a grid holding 21 cards unresolved.
+// Those are false negatives, and a false negative in a polish sweep is worse
+// than no run at all. So scale the patience by how contended the box actually
+// is. The assertions do not move; only how long they are given to come true.
+// WAIT_SCALE=n overrides the measurement.
+const SCALE = (() => {
+	const forced = Number(process.env.WAIT_SCALE || 0);
+	if (forced > 0) return Math.min(forced, 10);
+	const per = loadavg()[0] / Math.max(1, cpus().length);
+	return Math.min(8, Math.max(1, Math.round(per * 2) / 2));
+})();
+/** Scale a wall-clock budget by the contention measured at start-up. */
+const ms = (base) => Math.round(base * SCALE);
+
+// A bare `.catch(() => log('X NEVER HAPPENED'))` reports a crashed renderer, a
+// destroyed execution context and a genuine timeout with the same sentence, so
+// a reader files a layout bug against a browser that fell over. Say which.
+const why = (e) => String(e?.message || e).split('\n')[0];
+
+// Wait for `pred` to come true, surviving a page reload underneath us.
+//
+// This worktree is shared, and the dev server on port 3000 is shared with it:
+// the moment any other agent saves a file under src/, Vite hot-reloads every
+// open page, which destroys this run's execution context and rejects whatever
+// `waitForFunction` was in flight with "Execution context was destroyed". That
+// is not a defect in the page, but the old code caught it the same way it
+// caught a timeout, so it reported "LOBBY NEVER BECAME VISIBLE" about a lobby
+// that painted 21 cards a minute later, and "GRID NEVER RESOLVED" about a grid
+// that had already resolved. Both were logged in the 2026-09-02 runs. Retrying
+// across the reload is what makes a run on this box mean anything.
+async function waitFor(pred, budgetMs, label) {
+	const deadline = Date.now() + budgetMs;
+	let reloads = 0;
+	for (;;) {
+		const left = deadline - Date.now();
+		if (left <= 0) { console.log(at(), `${label}: timed out after ${Math.round(budgetMs / 1000)}s`); return false; }
+		const started = Date.now();
+		try {
+			await page.waitForFunction(pred, { timeout: left });
+			if (reloads) console.log(at(), `[note] ${label} survived ${reloads} hot-reload(s) from another agent's save`);
+			return true;
+		} catch (e) {
+			const m = String(e?.message || e).split('\n')[0];
+			if (/execution context was destroyed|Target closed|frame was detached|navigat/i.test(m)) {
+				reloads++;
+				await page.waitForLoadState('domcontentloaded').catch(() => {});
+				continue;
+			}
+			// Report what actually elapsed on this attempt, not the budget it was
+			// given: a rejection at 5s under a 480s budget is not a timeout, and
+			// printing the budget hid that distinction behind a plausible number.
+			console.log(at(), `${label}: ${why(e)} (after ${((Date.now() - started) / 1000).toFixed(1)}s of a ${Math.round(left / 1000)}s budget)`);
+			return false;
+		}
+	}
+}
+
+// NO_WEBGL=1 drops the software renderer entirely. It is NOT a cheap way to
+// measure the lobby: CoinCommunities builds its renderer in the constructor,
+// before the lobby UI exists, so on /play a chrome without 3D never paints a
+// single coin card and every layout reading comes back empty. (Measured
+// 2026-09-02: `[coincommunities] boot failed: WebGL unavailable` at
+// _initRenderer, then `LOBBY NEVER BECAME VISIBLE` and 0 cards.) What it IS
+// good for is proving the no-WebGL path degrades to its designed recovery card
+// rather than a dead loader, which it does: "WebGL unavailable", how to turn
+// hardware acceleration back on, Try again, and a way home. Use the default
+// swiftshader chrome for anything that has to measure the page.
 const NO_WEBGL = process.env.NO_WEBGL === '1';
 const browser = await chromium.launch({
 	args: NO_WEBGL
@@ -40,6 +110,43 @@ const ctx = await browser.newContext(
 		? { ...devices['iPhone 14'], viewport: { width, height }, screen: { width, height } }
 		: { viewport: { width, height } },
 );
+
+// Cut this page off from Vite's hot-reload socket (ALLOW_HMR=1 keeps it).
+//
+// The dev server on port 3000 is shared with every other agent working in this
+// worktree, and Vite reloads every open page the instant any of them saves a
+// file under src/. Mid-journey that is not a hiccup, it silently resets the run:
+// the search box empties, open panels close, the world tears down, and the next
+// step measures a page in a state the harness never put it in. The 2026-09-02
+// desktop run read 0 results for a term with hits and 8 results for a nonsense
+// term for exactly this reason, and nothing in the output said so. A run that
+// quietly measures the wrong thing is worse than no run.
+//
+// Only the HMR socket is refused: it is the one that opens against this page's
+// own origin carrying Vite's `?token=`. The world's Colyseus connection and
+// every other socket the page opens are untouched, which is what keeps this
+// honest rather than convenient.
+if (process.env.ALLOW_HMR !== '1') {
+	await ctx.addInitScript(() => {
+		const Native = window.WebSocket;
+		const isViteHmr = (url) => {
+			try {
+				const u = new URL(String(url), location.href);
+				return u.host === location.host && u.searchParams.has('token') && u.pathname === '/';
+			} catch { return false; }
+		};
+		class Blocked extends EventTarget {
+			constructor() { super(); this.readyState = 3; this.url = ''; }
+			send() {} close() {}
+		}
+		window.WebSocket = new Proxy(Native, {
+			construct(target, args) {
+				if (isViteHmr(args[0])) return new Blocked();
+				return new target(...args);
+			},
+		});
+	});
+}
 
 // CLS has to be observed from the first frame, so the observer is installed
 // before any page script runs.
@@ -114,10 +221,34 @@ async function overflowScan(label) {
 		// scrollable emote tray, and a closed right-docked drawer. All three used
 		// to be reported every run, which buried the hits that mattered.
 		const straddles = (r) => (r.right > vw + 1 && r.left < vw) || (r.left < -1 && r.right > 0);
+		// What the player can see is the element's box after every scrolling
+		// ancestor has clipped it. The mobile emote and reaction trays are
+		// `overflow-x: auto` and dock to the right edge, so their scrolled-out
+		// buttons sit past the viewport edge while being clipped well inside it:
+		// numerically a straddle, visually nothing at all, and reachable by
+		// scrolling the tray. Intersect first, then judge.
+		const visibleRect = (n) => {
+			let r = n.getBoundingClientRect();
+			for (let p = n.parentElement; p && p !== document.body; p = p.parentElement) {
+				const cs = getComputedStyle(p);
+				if (!/(auto|scroll|hidden|clip)/.test(cs.overflowX + cs.overflowY)) continue;
+				const c = p.getBoundingClientRect();
+				r = {
+					left: Math.max(r.left, c.left), right: Math.min(r.right, c.right),
+					top: Math.max(r.top, c.top), bottom: Math.min(r.bottom, c.bottom),
+				};
+				if (r.right <= r.left || r.bottom <= r.top) return null; // clipped away
+			}
+			return r;
+		};
 		for (const n of document.querySelectorAll('body *')) {
-			if (!n.offsetParent && getComputedStyle(n).position !== 'fixed') continue;
-			const r = n.getBoundingClientRect();
-			if (r.width === 0 || r.height === 0) continue;
+			const cs0 = getComputedStyle(n);
+			if (!n.offsetParent && cs0.position !== 'fixed') continue;
+			// An element the player cannot see is not a layout defect either.
+			if (cs0.visibility === 'hidden' || Number(cs0.opacity) === 0) continue;
+			const r = visibleRect(n);
+			if (!r) continue;
+			if (r.right - r.left <= 0 || r.bottom - r.top <= 0) continue;
 			if (straddles(r)) {
 				const sel = n.id ? `#${n.id}` : `${n.tagName.toLowerCase()}.${String(n.className).split(' ').slice(0, 2).join('.')}`;
 				out.push({ sel, left: Math.round(r.left), right: Math.round(r.right) });
@@ -274,14 +405,15 @@ async function noteState(label, fn, arg) {
 }
 
 // ── 1. cold load into the lobby ────────────────────────────────────────────
-console.log(at(), `journey start ${BASE} @ ${width}x${height}${MOBILE ? ' (touch)' : ''}`);
-await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 150000 });
+console.log(at(), `journey start ${BASE} @ ${width}x${height}${MOBILE ? ' (touch)' : ''}`
+	+ ` load ${loadavg()[0].toFixed(1)}/${cpus().length} cores, waits x${SCALE}`);
+await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: ms(150000) });
 // The lobby element exists from boot but stays hidden behind the loader, so
 // "rendered" means a coin card (or a designed empty/error state) is on screen.
-await page.waitForFunction(() => {
+await waitFor(() => {
 	const lobby = document.getElementById('cc-lobby');
 	return !!lobby && lobby.getBoundingClientRect().height > 0;
-}, { timeout: 60000 }).catch(() => console.log(at(), 'LOBBY NEVER BECAME VISIBLE'));
+}, ms(60000), 'LOBBY NEVER BECAME VISIBLE');
 
 // The skeleton has to exist before data lands, otherwise the grid pops in.
 await noteState('lobby-first-paint', () => ({
@@ -290,9 +422,9 @@ await noteState('lobby-first-paint', () => ({
 	empty: !!document.querySelector('.cc-state'),
 }));
 
-await page.waitForFunction(() => document.querySelectorAll('.cc-card:not(.cc-skeleton)').length > 0
-	|| document.querySelector('.cc-state'), { timeout: 30000 })
-	.catch(() => console.log(at(), 'GRID NEVER RESOLVED (no cards, no empty state, no error state)'));
+await waitFor(() => document.querySelectorAll('.cc-card:not(.cc-skeleton)').length > 0
+	|| document.querySelector('.cc-state'), ms(30000),
+	'GRID NEVER RESOLVED (no cards, no empty state, no error state)');
 
 await noteState('lobby-loaded', () => ({
 	cards: document.querySelectorAll('.cc-card:not(.cc-skeleton)').length,
@@ -316,7 +448,7 @@ const introDismissed = await page.evaluate(() => {
 	return true;
 });
 if (introDismissed) console.log(at(), '[dismissed] cold-open intro');
-await page.waitForTimeout(600);
+await page.waitForTimeout(ms(600));
 // Opt-in: a real Tab press costs a page round trip, and on a machine rendering
 // this world in software that is seconds each. focusSweep above already proves
 // reachability, so the trap check is only worth its minutes when something
@@ -357,21 +489,27 @@ const typeSearch = (value) => page.evaluate((v) => {
 }, value);
 
 if (await typeSearch('dog')) {
-	await page.waitForTimeout(4000);
+	await page.waitForTimeout(ms(4000));
 	await noteState('search-hits', () => ({
 		cards: document.querySelectorAll('.cc-card:not(.cc-skeleton)').length,
 		more: !!document.querySelector('.cc-search-more'),
 		empty: !!document.querySelector('.cc-state'),
+		// pump.fun search is live data, so a term with hits one hour has none the
+		// next, and a feed blip renders a retryable error. Both put a .cc-state on
+		// screen, and reporting only `empty: true` for either one sent a reader
+		// hunting a broken search that was showing exactly the right state. Print
+		// what it actually says.
+		stateText: document.querySelector('.cc-state')?.textContent?.trim().replace(/\s+/g, ' ').slice(0, 120) || null,
 	}));
 	await typeSearch('zzzqqqxnotacoin9999');
-	await page.waitForTimeout(5000);
+	await page.waitForTimeout(ms(5000));
 	await noteState('search-no-hits', () => ({
 		cards: document.querySelectorAll('.cc-card:not(.cc-skeleton)').length,
 		empty: !!document.querySelector('.cc-state'),
 		emptyText: document.querySelector('.cc-state')?.textContent?.trim().replace(/\s+/g, ' ').slice(0, 140) || null,
 	}));
 	await typeSearch('');
-	await page.waitForTimeout(1500);
+	await page.waitForTimeout(ms(1500));
 } else {
 	console.log(at(), '[missing] lobby search input');
 }
@@ -394,14 +532,14 @@ for (const [name, sel] of [['create', '.cc-create-btn'], ['gallery', '.cc-galler
 	// out on a button that is perfectly clickable for a real user.
 	const found = await page.evaluate((s) => { const b = document.querySelector(s); if (!b) return false; b.click(); return true; }, sel);
 	if (!found) { console.log(at(), `[missing] ${name} button`); continue; }
-	await page.waitForTimeout(2500);
+	await page.waitForTimeout(ms(2500));
 	await noteState(`${name}-open`, () => ({
 		overlays: [...document.querySelectorAll('[class*="overlay"], [class*="modal"], dialog')]
 			.filter((n) => n.offsetParent).map((n) => String(n.className).slice(0, 40)),
 	}));
 	await overflowScan(`${name}-modal`);
 	await page.keyboard.press('Escape');
-	await page.waitForTimeout(800);
+	await page.waitForTimeout(ms(800));
 	await noteState(`${name}-closed-by-escape`, () => ({
 		stillOpen: [...document.querySelectorAll('[class*="overlay"], [class*="modal"], dialog')].filter((n) => n.offsetParent).length,
 	}));
@@ -410,22 +548,22 @@ for (const [name, sel] of [['create', '.cc-create-btn'], ['gallery', '.cc-galler
 		const x = [...document.querySelectorAll('button')].find((b) => b.offsetParent && /close|✕|×/i.test(b.getAttribute('aria-label') || b.textContent || ''));
 		x?.click();
 	});
-	await page.waitForTimeout(500);
+	await page.waitForTimeout(ms(500));
 }
 
 // ── 4. into the $THREE world ───────────────────────────────────────────────
 const worldUrl = `${BASE}${BASE.includes('?') ? '&' : '?'}coin=${HOME_COIN}`;
 console.log(at(), 'entering world', worldUrl);
-await page.goto(worldUrl, { waitUntil: 'domcontentloaded', timeout: 150000 });
-await page.waitForFunction(() => {
+await page.goto(worldUrl, { waitUntil: 'domcontentloaded', timeout: ms(150000) });
+await waitFor(() => {
 	const l = document.getElementById('kx-loading');
 	return !l || l.classList.contains('kx-hidden') || l.hidden || getComputedStyle(l).display === 'none';
-}, { timeout: 60000 }).catch(() => console.log(at(), 'LOADER NEVER CLEARED'));
+}, ms(60000), 'LOADER NEVER CLEARED');
 console.log(at(), 'world interactive');
 
 // Dismiss whatever onboarding is showing so the HUD is reachable.
 for (let i = 0; i < 4; i++) {
-	await page.waitForTimeout(1500);
+	await page.waitForTimeout(ms(1500));
 	const hit = await page.evaluate(() => {
 		const b = [...document.querySelectorAll('button')]
 			.find((x) => x.offsetParent && /^(continue|enter the world|got it|start|skip|drop in|let's go)$/i.test((x.textContent || '').trim()));
@@ -472,7 +610,7 @@ for (const [name, re] of PANELS) {
 		return (b.getAttribute('aria-label') || b.textContent || '').trim().slice(0, 30);
 	}, String(re));
 	if (!opened) { console.log(at(), `[panel:${name}] no trigger visible`); continue; }
-	await page.waitForTimeout(2200);
+	await page.waitForTimeout(ms(2200));
 	const shape = await page.evaluate(() => {
 		const panels = [...document.querySelectorAll('[class*="panel"], [class*="modal"], [class*="overlay"], dialog')]
 			.filter((n) => n.offsetParent)
@@ -492,7 +630,7 @@ for (const [name, re] of PANELS) {
 	if (MOBILE) await touchScan(`panel:${name}`);
 	await overflowScan(`panel:${name}`);
 	await page.keyboard.press('Escape');
-	await page.waitForTimeout(700);
+	await page.waitForTimeout(ms(700));
 }
 
 // ── 6. leave back to the lobby ─────────────────────────────────────────────
@@ -502,7 +640,7 @@ const left = await page.evaluate(() => {
 	b.click();
 	return true;
 });
-await page.waitForTimeout(2500);
+await page.waitForTimeout(ms(2500));
 // `left` lives in this Node scope, so it has to be passed in; referencing it
 // inside the page threw "left is not defined" and the whole leave step was
 // silently swallowed by the .catch(), never verifying the lobby came back.

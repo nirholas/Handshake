@@ -160,6 +160,8 @@
 	   the controls a player taps mid-session with one hand. */
 	.ec-x { width: 40px; height: 40px; }
 	.ec-tab { padding: 12px 0; }
-	.ec-row-btn { padding: 11px 14px; }
+	/* Padding alone left this at 36px, under the 40px bar: the jobs board's
+	   Accept button is the one control a player taps most in a run. */
+	.ec-row-btn { padding: 11px 14px; min-height: 40px; }
 	.ec-bank-preset { padding: 11px 0; }
 }
