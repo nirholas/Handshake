@@ -245,12 +245,12 @@ function renderCertificate(cert) {
 			<div>
 				${stage(cert)}
 				${lineage(cert)}
+				${verifySection(cert)}
 			</div>
 			<div>
 				${facts(cert)}
 				${proof(cert)}
 				${qrCard(cert)}
-				${verifySection(cert)}
 			</div>
 		</div>`;
 	host.setAttribute('aria-busy', 'false');

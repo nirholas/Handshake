@@ -114,6 +114,7 @@
 
 .ct-stage {
 	position: relative;
+	margin-bottom: var(--space-lg, 24px);
 	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.08));
 	border-radius: var(--radius-lg, 16px);
 	overflow: hidden;
