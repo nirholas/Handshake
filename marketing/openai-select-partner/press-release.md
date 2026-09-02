@@ -27,7 +27,7 @@ models and products and turn them into measurable impact.
 As an OpenAI Select Partner, three.ws will continue working with OpenAI to help
 organizations build, deploy, and scale AI solutions responsibly and effectively.
 three.ws contributes the dimension assistants have been missing: its free 3D
-Studio connector gives ChatGPT nine keyless tools that turn a sentence into an
+Studio connector gives ChatGPT eleven keyless tools that turn a sentence into an
 interactive, textured 3D model rendered inline in the conversation, then rig it,
 animate it, and place it in the user's room in augmented reality.
 

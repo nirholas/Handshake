@@ -115,8 +115,10 @@ const BUILD_COPIED_ROOTS = ['blog', 'docs', 'pump-fun-skills', 'avatar-sdk'];
 
 // Emitted at build time, so there is no source file to point at. vite-plugin-pwa
 // writes the web manifest from the `manifest` block in vite.config.js, which is
-// what the 250 pages linking `/manifest.webmanifest` actually get.
-const GENERATED_TARGETS = new Set(['/manifest.webmanifest']);
+// what the 250 pages linking `/manifest.webmanifest` actually get, and
+// scripts/write-build-info.mjs writes dist/build-info.json, the static file the
+// build stamps the running commit into and /api/version reads back.
+const GENERATED_TARGETS = new Set(['/manifest.webmanifest', '/build-info.json']);
 
 // Does a clean path resolve to a real source file (what the catch-all serves)?
 function fileForCleanPath(path) {
@@ -445,11 +447,23 @@ function scanFile(file) {
 		// `window.open('')` opens a blank tab the caller then writes into, a real
 		// pattern, not a link to nowhere.
 		if (target === '' && /^window\.open/i.test(m[1])) continue;
+		// `{ href: '' }` in an object literal is the ABSENCE of a link, and every
+		// consumer of a link-descriptor object in this repo guards on it before
+		// rendering an anchor. That is the opposite of markup: `<a href="">` is a
+		// live element that navigates to the current URL, which is why the empty
+		// string stays a stub everywhere else. Only the object-literal form is
+		// exempt, so a real `el.href = ''` assignment is still reported.
+		if (target === '' && /href\s*:$/i.test(m[1])) continue;
 		if (inComment(m.index)) continue;
 		record(target, file, lineOf(content, m.index), concatenatedAfter(content, m.index + m[0].length));
 	}
 	fetchRe.lastIndex = 0;
 	while ((m = fetchRe.exec(content))) {
+		// Masked exactly like the two scanners above. This one skipped the check,
+		// so a module's own header comment explaining what NOT to call was read as
+		// a call: the line warning against raw `fetch('/api…')` was reported as a
+		// broken link to `/api…`, a path no code ever requests.
+		if (inComment(m.index)) continue;
 		const t = m[2] ?? m[3] ?? m[4] ?? '';
 		if (t.startsWith('/')) record(t, file, lineOf(content, m.index)); // only internal fetches
 	}

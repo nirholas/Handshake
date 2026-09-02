@@ -25,7 +25,7 @@ logo swap. three.ws ships **four live surfaces on OpenAI platforms**, all free,
 all keyless, all open source:
 
 1. **The three.ws 3D Studio connector** (Apps SDK / MCP) at
-   `https://three.ws/api/mcp-studio`, ten tools, no authentication.
+   `https://three.ws/api/mcp-studio`, eleven tools, no authentication.
 2. **The "three.ws 3D Studio" custom GPT**, published publicly in the GPT Store
    since 2026-07-14, calling a REST Actions contract at `/api/3d/studio`.
 3. **AR from the conversation**: every generation carries a one-tap
@@ -60,6 +60,8 @@ above Select.
 | 2026-07-28 | Announcement graphics and the X wording decision ("OpenAI Partner" on X only) | `badge-usage.md`, `social-copy.md` |
 | 2026-07-29 | Custom GPT QA pass; three builder-config defects found and fixed | `docs/chatgpt-3d-studio-gpt.md` |
 | 2026-08-06 | Tier story re-verified live; docs reconciled to the ten-tool surface | `forge-free-tier-evidence.json`, `data/changelog.json` |
+| 2026-08-28 | `look_at_model` lands, taking the connector to eleven tools | `api/_mcp-studio/tools.js` |
+| 2026-09-02 | Every count, listing and announcement document reconciled to the live eleven-tool surface | `openai-submission.md`, `live-tools-list.json`, `docs/press-kit.md` |
 
 **What the Select tier grants.** Use of the OpenAI Partner Network badge under
 the rules in `badge-usage.md`, OpenAI's approved starter messaging and approved
@@ -214,12 +216,14 @@ app is anonymous and free, OpenAI's "provide a demo account with test
 credentials" requirement does not apply, and the submission form says so
 explicitly.
 
-**Ten tools**, verified live today: six generation tools (`forge_free`,
-`text_to_avatar`, `mesh_forge`, `rig_mesh`, `forge_avatar`, `refine_model`), the
-read-only `check_job` collector that picks up a generation which outran its tool
-call, and three persona tools (`create_agent_persona`, `get_agent_persona`,
-`persona_say`) that give an assistant a persistent, lip-syncing body in the
-panel.
+**Eleven tools**, verified live on 2026-09-02: six generation tools
+(`forge_free`, `text_to_avatar`, `mesh_forge`, `rig_mesh`, `forge_avatar`,
+`refine_model`), the read-only `check_job` collector that picks up a generation
+which outran its tool call, the read-only `look_at_model` inspector that renders
+a finished GLB from several angles so the assistant can check its own work before
+handing it over, and three persona tools (`create_agent_persona`,
+`get_agent_persona`, `persona_say`) that give an assistant a persistent,
+lip-syncing body in the panel.
 
 **The inline widget** is the `<model-viewer>` skybridge component built in
 `api/_mcp-studio/component.js`, resource `ui://widget/three-studio-model.html`,
@@ -255,7 +259,7 @@ PASS):
   `estimated_credits`, `preview_image_url`, `reference_image_urls`. No session id,
   trace id, user id, or PII. Inputs are minimal too, with
   `additionalProperties: false` on every schema.
-- **Correct tool annotations** on all ten tools (read-only, destructive,
+- **Correct tool annotations** on all eleven tools (read-only, destructive,
   idempotent, open-world hints), with the rationale for each documented.
 - **Clear utility not native to ChatGPT.** ChatGPT cannot turn language into a
   manipulable, downloadable 3D asset. That is the whole value proposition.
@@ -360,7 +364,7 @@ Probed against production today:
 | `/openai` partner page | HTTP 200 |
 | `/.well-known/3d-studio-openapi.yaml` | HTTP 200 |
 | Badge SVG | HTTP 200 |
-| MCP `tools/list` | 200, ten tools, exactly the documented set |
+| MCP `tools/list` | 200, eleven tools, exactly the documented set |
 | `GET /api/3d/studio?job=bogus123` | 400 `invalid_job` in 0.43s, correct designed error |
 | `POST /api/3d/studio` (new prompt) | **No response within 100s** |
 | `POST /api/3d/generate` (new prompt) | **No response within 100s** |
@@ -392,15 +396,28 @@ or configuration issue.
 | Delete the draft duplicate GPT `g-6a5672fbf3f48191b559e482c7fcbf51` | Owner | Avoids confusion with the published GPT |
 | Press release: fill two fields, email for OpenAI approval | Owner | rachel.kim@c-openai.com, do not publish before written approval |
 | Free generation submit path degraded (see §10) | Engineering | Actions deadline vs 90s-plus-retry accept window |
-| "Nine tools" drift in older copy | Engineering | See below |
+| ~~"Nine tools" drift in older copy~~ | Engineering | Closed 2026-09-02, see below |
 
-**The nine-versus-ten drift.** The connector shipped with five tools, grew to
-nine, and reached ten when `check_job` landed. `/openai` and `docs/mcp-studio.md`
-were reconciled to ten on 2026-08-06, but three announcement-era documents still
-say nine: `press-release.md`, `social-copy.md` (both the X and LinkedIn copy), and
-the OpenAI section of `docs/partners.md`. The press release is the one that
-matters most, because it has not been sent yet and would go out with a number
-that is now wrong. Fix all three before the release is emailed for approval.
+**The tool-count drift, closed 2026-09-02.** The connector shipped with five
+tools, grew to nine, reached ten when `check_job` landed, and reached eleven when
+`look_at_model` landed on 2026-08-28. Each growth step left a trail of stale
+numbers behind it: the 2026-08-06 pass reconciled `/openai` and
+`docs/mcp-studio.md` to ten but left the announcement-era copy at nine, and
+`look_at_model` then made both numbers wrong.
+
+Every surface that quotes a number is now reconciled against the live
+`tools/list` and says eleven: this brief, `press-release.md`, `social-copy.md`
+(X and LinkedIn), `cards/social-card.html`, `docs/partners.md`,
+`docs/press-kit.md`, `pages/press/index.html`, `blog/index.html`,
+`docs/openai-community-3d-studio-post.md`, `openai-submission.md`, `TRACKER.md`,
+the `/openai` page, and the module headers in `api/_mcp-studio/`. The press
+release is still unsent, so it now carries the correct number.
+
+The drift is also pinned mechanically now, so the next tool to land fails a test
+instead of quietly re-opening this row: `tests/mcp-studio.test.js` asserts that
+the two catalogs sum to exactly eleven. Bump that assertion and this section
+together, and re-render `public/partners/openai/social-card-studio.png` from
+`cards/social-card.html` with `npm run build:openai-cards`.
 
 ---
 

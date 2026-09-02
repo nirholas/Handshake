@@ -31,7 +31,7 @@ Attach: `social-card-openai-partner.png`
 >
 > What that sits on top of: assistants have been excellent at text and images for
 > years and have had nothing to say in three dimensions. We're the 3D layer. Our
-> free 3D Studio connector gives ChatGPT nine keyless tools that turn a sentence
+> free 3D Studio connector gives ChatGPT eleven keyless tools that turn a sentence
 > into an interactive, textured model rendered inline, rig it, animate it, and
 > place it in your room in AR. No key, no account, no cost.
 >
@@ -72,7 +72,7 @@ above Select.
 >
 > What that sits on top of: assistants have been excellent at text and images for
 > years and have had almost nothing to say in three dimensions. three.ws is the 3D
-> layer. Our free 3D Studio connector gives ChatGPT nine keyless tools that turn a
+> layer. Our free 3D Studio connector gives ChatGPT eleven keyless tools that turn a
 > sentence into an interactive, textured 3D model rendered inline in the
 > conversation, rig it, animate it, and place it in your room in AR. No key, no
 > account, no cost.

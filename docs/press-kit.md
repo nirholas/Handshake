@@ -93,7 +93,7 @@ Approved descriptions at four lengths. Copy them verbatim; they are written to b
 
 **Long, about 100 words**
 
-> three.ws is an open-source platform for 3D AI agents. It turns a text prompt into a rigged, animation-ready 3D character, gives that character an on-chain identity and a payment rail, and embeds it into any website or assistant with a single tag. The free 3D generation lane requires no account, no API key, and no payment. Assistants reach the same tools over MCP: three.ws is an OpenAI Select Partner, and its 3D Studio connector gives ChatGPT nine keyless tools that generate, rig, animate, and place models in AR, rendered inline in the conversation. The viewer, the runtime, and the embeddable web component are open source.
+> three.ws is an open-source platform for 3D AI agents. It turns a text prompt into a rigged, animation-ready 3D character, gives that character an on-chain identity and a payment rail, and embeds it into any website or assistant with a single tag. The free 3D generation lane requires no account, no API key, and no payment. Assistants reach the same tools over MCP: three.ws is an OpenAI Select Partner, and its 3D Studio connector gives ChatGPT eleven keyless tools that generate, rig, animate, inspect, and place models in AR, rendered inline in the conversation. The viewer, the runtime, and the embeddable web component are open source.
 
 **Full bio, about 330 words**
 
@@ -105,7 +105,7 @@ Approved descriptions at four lengths. Copy them verbatim; they are written to b
 >
 > Agents on three.ws are economic actors. Each one can hold an on-chain identity on Solana, the platform's home chain, carry a wallet and a human-readable name, and pay or get paid by other agents per API call over x402, the HTTP 402 payment standard. The platform coin, $THREE, lives on Solana.
 >
-> Distribution is the point. A finished agent ships as the `<agent-3d>` web component that drops into any page, and every generation and animation tool is reachable by AI assistants over MCP. three.ws is an OpenAI Select Partner, and its 3D Studio connector gives ChatGPT nine keyless tools that generate, rig, animate, and place 3D models in AR, rendered inline in the conversation. It is also a member of NVIDIA Inception.
+> Distribution is the point. A finished agent ships as the `<agent-3d>` web component that drops into any page, and every generation and animation tool is reachable by AI assistants over MCP. three.ws is an OpenAI Select Partner, and its 3D Studio connector gives ChatGPT eleven keyless tools that generate, rig, animate, inspect, and place 3D models in AR, rendered inline in the conversation. It is also a member of NVIDIA Inception.
 >
 > The viewer, the agent runtime, and the web component are open source at github.com/nirholas/three.ws, and every release ships to the public changelog at three.ws/changelog. The goal is simple: as the internet gains an agent-native, three-dimensional layer, three.ws is the infrastructure it runs on.
 
@@ -138,7 +138,7 @@ three.ws is an OpenAI Select Partner. The two graphics on `/press` are both 3200
 | File | What it is |
 |---|---|
 | [`social-card-announcement.png`](../public/partners/openai/social-card-announcement.png) | The announcement card. Carries the partner badge exactly as OpenAI supplied it, plus the independence line. |
-| [`social-card-studio.png`](../public/partners/openai/social-card-studio.png) | The product card: the nine tools the 3D Studio connector adds to ChatGPT. No badge, so nothing here reads as an endorsement. |
+| [`social-card-studio.png`](../public/partners/openai/social-card-studio.png) | The product card: the keyless tools the 3D Studio connector adds to ChatGPT. No badge, so nothing here reads as an endorsement. |
 
 **The independence line, as the page states it.** The OpenAI Partner Network badge inside the announcement card is OpenAI's asset, reproduced unaltered. three.ws is an independent member of the network at the Select tier: not an OpenAI product, and not endorsed by OpenAI beyond the partner designation shown. OpenAI, ChatGPT, and the OpenAI Partner Network badge are trademarks of OpenAI.
 

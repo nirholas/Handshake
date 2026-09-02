@@ -27,7 +27,7 @@ The page's stat bar reads 8 partners, 22 chains, and an infinity glyph for scale
 
 ## OpenAI
 
-**What the page claims.** three.ws is an OpenAI Select Partner in the OpenAI Partner Network. The free three.ws 3D Studio connector gives ChatGPT nine keyless 3D tools: text to model, rigged avatars, conversational refinement, and a living agent body, all rendered interactively inline in the conversation. Card tags: Apps SDK, MCP, Custom GPT, Spatial MCP.
+**What the page claims.** three.ws is an OpenAI Select Partner in the OpenAI Partner Network. The free three.ws 3D Studio connector gives ChatGPT eleven keyless 3D tools: text to model, rigged avatars, conversational refinement, model inspection, and a living agent body, all rendered interactively inline in the conversation. Card tags: Apps SDK, MCP, Custom GPT, Spatial MCP.
 
 **What the integration is.**
 

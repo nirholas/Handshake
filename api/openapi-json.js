@@ -14,6 +14,7 @@
 import { env } from './_lib/env.js';
 import { cors, json, method, wrap } from './_lib/http.js';
 import { providerCatalog } from './v1/_providers.js';
+import { PAID_SERVICES } from './_lib/service-catalog/services/index.js';
 
 // Single source of truth for the protocol list on every paid operation. Each
 // entry is one supported payment protocol; per-network payment lanes (Base /
@@ -129,6 +130,88 @@ function aggregatorPaths() {
 	return paths;
 }
 
+// Every paid /api/x402/* operation, projected from the service catalog
+// (api/_lib/service-catalog/services/), which is already the written-once
+// source of truth the x402 discovery doc and the OKX storefront render from.
+//
+// Why this exists: the operations below used to be hand-authored one by one,
+// and 24 of the catalog's 75 live paid services ever got an entry. That is not
+// cosmetic. x402scan registers an origin by reading THIS document, and
+// AgentCash's validator reads payable operations from it too, so a service
+// missing here is a service neither directory can list no matter how valid its
+// live 402 challenge is (measured 2026-09-02: 52 live paid endpoints answered a
+// spec-valid 402 in production while being absent from both this document and
+// the x402scan origin listing).
+//
+// The projection is spread BEFORE the hand-authored paths, so any route with a
+// richer hand-written operation keeps it verbatim and this only fills the gaps.
+function catalogPaidPaths() {
+	const paths = {};
+	for (const service of PAID_SERVICES) {
+		if (service.free || service.status !== 'live') continue;
+		// Same gate the hand-authored permit2 entry below applies: the Permit2-only
+		// lane is unpayable without CDP credentials, so never advertise it then.
+		if (
+			service.acceptsBuilder === 'permit2-only' &&
+			!(env.CDP_API_KEY_ID && env.CDP_API_KEY_SECRET)
+		)
+			continue;
+
+		const operation = {
+			operationId: `x402_${service.slug.replace(/-/g, '_')}`,
+			security: PAYMENT_ONLY_SECURITY,
+			summary: `Paid: ${service.title}`,
+			description: service.description,
+			responses: {
+				200: { description: `${service.serviceName} result JSON` },
+				400: { description: 'Validation error' },
+				402: { description: 'Payment Required (x402)' },
+			},
+			'x-payment-info': {
+				price: { mode: 'fixed', currency: 'USD', amount: formatUsd(service.priceAtomics) },
+				protocols: X402_PROTOCOLS,
+			},
+		};
+
+		if (service.method === 'POST') {
+			operation.requestBody = {
+				required: true,
+				content: {
+					'application/json': {
+						schema: service.inputSchema,
+						...(service.input !== undefined ? { example: service.input } : {}),
+					},
+				},
+			};
+		} else {
+			operation.parameters = queryParameters(service.inputSchema);
+		}
+
+		paths[service.path] = { [service.method.toLowerCase()]: operation };
+	}
+	return paths;
+}
+
+// A catalog descriptor's JSON Schema, flattened into OpenAPI query parameters.
+// The per-property `description` moves up to the parameter (where tooling shows
+// it) and the rest of the property schema rides along as the parameter schema,
+// so enums, formats and defaults survive into the document.
+function queryParameters(inputSchema) {
+	const properties = inputSchema?.properties || {};
+	const required = new Set(inputSchema?.required || []);
+	return Object.entries(properties).map(([name, propertySchema]) => {
+		const { description, ...schema } = propertySchema || {};
+		return {
+			name,
+			in: 'query',
+			required: required.has(name),
+			schema: Object.keys(schema).length ? schema : { type: 'string' },
+			...(description ? { description } : {}),
+		};
+	});
+}
+
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
@@ -214,6 +297,9 @@ export default wrap(async (req, res) => {
 				// today: aggregator paths live under /api/v1/x/*, hand-authored
 				// paths don't).
 				...aggregatorPaths(),
+				// Projected from the service catalog, spread before the hand-authored
+				// operations below so a richer hand-written entry always wins.
+				...catalogPaidPaths(),
 				'/api/mcp': {
 					post: {
 						operationId: 'mcp_call',

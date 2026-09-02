@@ -55,9 +55,10 @@ Everything here can be done today. Nothing waits on NVIDIA, a build, or a date.
 | 3 | **Portal product record correction** | `programs.nvidia.com/phoenix/application` | Gates the Showcase AND the Apps Catalog. Already specified in [nvidia-apps-catalog-listing.md](./nvidia-apps-catalog-listing.md) step 1. Nothing else in this doc lands well while the record says "CUDA consumer". |
 | 4 | **Inception Startup Showcase** | `inceptionprogram@nvidia.com` | NVIDIA's own wording is "member spotlights and story opportunities". Curated from the portal record, so do #3 first. |
 | 5 | **AI Podcast guest nomination** | Embedded form at [ai-podcast.nvidia.com](https://ai-podcast.nvidia.com) | Free, one form, and a founder-shaped story. Fields: name, business email, organization, industry, job title, location, preferred language, and a description of the proposal. |
-| 6 | **NVIDIA Developer Forums, post 3** | [forums.developer.nvidia.com](https://forums.developer.nvidia.com) | We are 2 for 2 on posts that landed. This is the one channel with a proven track record, and it is self-serve. See [Technical publishing](#technical-publishing-the-proven-channel). |
+| 6 | **NVIDIA Developer Forums, post 3** | [forums.developer.nvidia.com](https://forums.developer.nvidia.com) | We are 2 for 2 on posts that landed. This is the one channel with a proven track record, and it is self-serve. **Drafted 2026-09-02: [nvidia-forum-browser-digital-human.md](./nvidia-forum-browser-digital-human.md).** Owner-gated on the external-channel rule, then paste and post. See [Technical publishing](#technical-publishing-the-proven-channel). |
 | 7 | **NVIDIA Developer Discord** | [discord.com/invite/nvidiadeveloper](https://discord.com/invite/nvidiadeveloper) | NVIDIA engineers and product staff are in there. The browser Audio2Face demo is a conversation starter with the actual ACE team, not a marketing ask. |
 | 8 | **Fix `docs/listings.md`** | Ours | The "Startup & Credit Programs" table lists Quicknode and Google Cloud and has **no NVIDIA row at all**, which is the one canonical place a reader looks for our program memberships. Fixed in this change. |
+| 9 | **"Maximize Your Membership" benefits webinar** | Region registration from the Inception member mailer (Americas / EMEA / APAC) | Announced to members 2026-09-02. NVIDIA's own walkthrough of requesting and managing benefits through the portal, which is the exact mechanism gating items 2, 3 and 4 on this list. Attend it before sending the batched email, and use the Q&A to ask the co-marketing and Showcase questions live rather than waiting on an inbox. |
 
 ## Tier 2: needs a build first
 
@@ -87,6 +88,14 @@ closed" for GTC 2026. NVIDIA's own FAQ page is already titled for **GTC San Jose
 dates as unconfirmed until NVIDIA states them, but treat the **submission window
 as imminent**: for a March event, recent cycles opened submissions in the summer
 and closed in early fall, which is the month we are in.
+
+**Re-checked 2026-09-02.** Still closed: the call-for-submissions page carries the
+same GTC 2026 "now closed" copy, and no 2027 CFP or registration has opened.
+Third-party trackers have converged on **2027-03-15 to 2027-03-18, San Jose**,
+one day later than the dates recorded above, which is a reminder that none of
+these dates are NVIDIA-stated yet. Nothing to submit to this week. Keep the
+weekly watch running; the abstracts in step 2 below are what should be written
+while the window is shut.
 
 Actions, in order:
 
@@ -219,6 +228,8 @@ Recorded so the next person does not repeat the search.
 | All Inception matters, Showcase, co-marketing, GTC pavilion | `inceptionprogram@nvidia.com` |
 | China-based startups (not us, recorded for completeness) | `inception_cn@nvidia.com` |
 | Member portal | `programs.nvidia.com/phoenix/application` |
+| Live phone support (Mon to Fri, 8:00 to 17:00 PT) | +1 (408) 486-2056 |
+| Program FAQ and benefits webinar registration | Linked from the Inception member mailer; region-specific (Americas, EMEA, APAC) |
 
 One thread, one address. Every ask in Tier 1 goes to the same inbox, so batch
 them into a single email rather than sending four.
@@ -236,6 +247,8 @@ record, save it, then send and stamp the date in the request doc.
 | Claim | Checked how | Result |
 |---|---|---|
 | GTC 2026 CFP closed; 2027 is next | Fetched [call-for-submissions](https://www.nvidia.com/gtc/call-for-submissions/) | "now closed" for GTC 2026; NVIDIA's FAQ page already titled GTC San Jose 2027 |
+| GTC 2027 CFP still shut (2026-09-02) | Re-fetched the same page, plus a search across event trackers | Same "now closed" GTC 2026 copy; no 2027 CFP or registration open; trackers report 2027-03-15 to 2027-03-18 San Jose |
+| A2F lane live and its latency (2026-09-02) | Three POSTs each to `https://three.ws/api/a2f`, audio-in and text-in | 200 on all six; 4.64 s of speech animates in 1.29 to 2.26 s, text-to-speech-to-animation in 1.88 to 3.41 s; 140 frames at 30 fps, 55 blendshapes |
 | Inception benefit wording | Fetched [nvidia.com/en-us/startups](https://www.nvidia.com/en-us/startups/) | Quoted verbatim above |
 | Social handles | Fetched [NVIDIA social directory](https://www.nvidia.com/en-us/contact/social/) | Full list; the table above is the topic-relevant subset |
 | AI Podcast guest form | Fetched [ai-podcast.nvidia.com](https://ai-podcast.nvidia.com) | Embedded "Submit Guest Ideas" form, fields recorded above |

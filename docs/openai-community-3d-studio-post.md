@@ -14,7 +14,7 @@ ChatGPT has two integration models with different strengths, so the 3D lane ship
 
 ### 1a. The ChatGPT app (Apps SDK / MCP connector)
 
-The connector is a Streamable HTTP MCP server at `https://three.ws/api/mcp-studio` (MCP protocol `2025-06-18`, JSON-RPC 2.0 over POST, no auth). It exposes exactly ten tools, deliberately scoped to 3D generation only: no wallet, no payments, no token, nothing a store reviewer would need to think twice about.
+The connector is a Streamable HTTP MCP server at `https://three.ws/api/mcp-studio` (MCP protocol `2025-06-18`, JSON-RPC 2.0 over POST, no auth). It exposes exactly eleven tools, deliberately scoped to 3D generation only: no wallet, no payments, no token, nothing a store reviewer would need to think twice about.
 
 - Six generation tools: `forge_free` (text to 3D), `text_to_avatar` (text to a rigged humanoid), `mesh_forge`, `rig_mesh` (add a skeleton to a static GLB you already have), `forge_avatar`, and `refine_model` (iterate on a previous result; every refinement is its own version with its own AR link).
 - One collector, `check_job`, which picks up a generation that outran the tool call.
@@ -153,7 +153,7 @@ One practical detail that bit me more than once: most three.ws avatars ship with
 
 ### 2c. The 3D Studio MCP server (the paid, full-pipeline twin)
 
-Beyond the ten free tools, the full pipeline is exposed as a second MCP server at `https://three.ws/api/mcp-3d` (OAuth 2.1 against the same authorization server as the main MCP endpoint, or x402 pay-per-call). The tools compose into one flow, each step's output feeding the next:
+Beyond the eleven free tools, the full pipeline is exposed as a second MCP server at `https://three.ws/api/mcp-3d` (OAuth 2.1 against the same authorization server as the main MCP endpoint, or x402 pay-per-call). The tools compose into one flow, each step's output feeding the next:
 
 ```
 direct_prompt ─▶ text_to_3d ─┐
