@@ -88,7 +88,7 @@ function renderHtml({ entryId, title, desc, agentName, pageUrl, ogImage, origin 
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>${t} — Agent Spotlight — three.ws</title>
+	<title>${t} | Agent Spotlight | three.ws</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 	<meta name="description" content="${d}">
 	<meta name="theme-color" content="#06070a">
