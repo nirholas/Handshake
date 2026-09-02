@@ -157,7 +157,7 @@ Example output: ["query one", "query two", "query three"]`;
 	if (queries.length === 0) {
 		// Fallback: read the response as a plain list, one query per line. Lines
 		// are length-bounded and required to hold at least two words, because a
-		// reasoning model's prose is not a search query — accepting it is how a
+		// reasoning model's prose is not a search query. Accepting it is how a
 		// three-angle sweep silently collapsed into one bad one.
 		queries = text
 			.split('\n')
@@ -168,7 +168,7 @@ Example output: ["query one", "query two", "query three"]`;
 
 	if (queries.length === 0) {
 		// Last resort: the claim itself is a legitimate search query, so the check
-		// still runs on real evidence — but on one angle instead of three, which
+		// still runs on real evidence, but on one angle instead of three, which
 		// the caller has to be told about.
 		return {
 			queries: [claim],
@@ -234,25 +234,30 @@ Example (for 2 results): [{"excerpt":"The tower stands at 330m","stance":"suppor
 		};
 	}
 
-	let analyses;
-	try {
-		const match = text.match(/\[[\s\S]*?\]/);
-		if (!match) throw new Error('no array found');
-		analyses = JSON.parse(match[0]);
-		if (!Array.isArray(analyses)) throw new Error('not an array');
-		// Normalize and pad/trim to match results length.
-		analyses = analyses.slice(0, results.length).map((a) => ({
-			excerpt: String(a?.excerpt || '').slice(0, 200),
-			stance: ['supports', 'contradicts', 'partial', 'neutral'].includes(a?.stance)
-				? a.stance
-				: 'neutral',
-		}));
-		while (analyses.length < results.length) {
-			analyses.push({ excerpt: '', stance: 'neutral' });
-		}
-	} catch {
-		// Fallback: mark all neutral.
-		analyses = results.map(() => ({ excerpt: '', stance: 'neutral' }));
+	const parsed = extractJsonArray(text);
+	if (!parsed || parsed.length === 0) {
+		// The provider ANSWERED and its answer could not be read. That is not the
+		// same thing as "the sources were silent", but the all-neutral fallback
+		// makes the two indistinguishable: computeVerdict reads either as
+		// "insufficient". Left unflagged, one unreadable turn was scored as a real
+		// verdict by the accuracy benchmark and written into the 7-day cache,
+		// pinning that wrong answer on a perfectly checkable claim for a week.
+		// A live check on 2026-09-02 did exactly this: five real sources, 1476
+		// spent tokens, every stance neutral, and nothing marked degraded.
+		return {
+			analyses: results.map(() => ({ excerpt: '', stance: 'neutral' })),
+			tokens: inputTokens + outputTokens,
+			degraded: 'stance extraction unreadable: provider returned no parseable JSON array',
+		};
+	}
+
+	// Normalize and pad/trim to match results length.
+	const analyses = parsed.slice(0, results.length).map((a) => ({
+		excerpt: String(a?.excerpt || '').slice(0, 200),
+		stance: STANCES.includes(a?.stance) ? a.stance : 'neutral',
+	}));
+	while (analyses.length < results.length) {
+		analyses.push({ excerpt: '', stance: 'neutral' });
 	}
 
 	return { analyses, tokens: inputTokens + outputTokens };
