@@ -1802,6 +1802,195 @@ buys from is documented under `POST /api/x402/forge` in the x402 section.
 
 ---
 
+## Materialize print API
+
+Turn any 3D model into a real, physical object: analysis, preparation, an
+itemized price, checkout in USDC on Solana, tracked fulfillment, and a
+certificate of authenticity attested on-chain. Product guide:
+[Materialize](./materialize.md). Wire contracts:
+[specs/PRINT_PIPELINE.md](../specs/PRINT_PIPELINE.md).
+
+Analysis and quoting are **free and keyless**. Only checkout costs money.
+
+### Catalog
+
+```http
+GET /api/print/catalog
+```
+
+Materials, size presets, finishes, shipping zones and the pricing parameters
+every quote is computed from. The public output omits the platform margin
+fields. This is the source of truth for `materialId`; do not hardcode ids.
+
+```json
+{
+  "version": 1,
+  "currency": "USDC",
+  "chain": "solana",
+  "materials": [
+    {
+      "id": "resin-standard",
+      "name": "Standard resin",
+      "class": "resin",
+      "minWallMm": 0.6,
+      "minHeightMm": 15,
+      "maxHeightMm": 180,
+      "leadTimeDays": 5,
+      "colorCapable": false,
+      "finishes": [{ "id": "as-printed", "name": "As printed", "fee": 0 }]
+    }
+  ],
+  "sizePresets": [{ "id": "desk", "heightMm": 120 }],
+  "shipping": { "zones": [{ "id": "us" }, { "id": "eu" }, { "id": "cn" }, { "id": "row" }] }
+}
+```
+
+### Analyze and quote
+
+```http
+POST /api/print/quote
+```
+
+One endpoint, two modes. Omit `materialId` and it is a pure analysis: the
+printability report, free, no price. Include one and it also returns the
+itemization and a signed quote token.
+
+| Field | Type | Notes |
+|---|---|---|
+| `creationId` | string | A three.ws creation id. One of this or `glbUrl` is required. |
+| `glbUrl` | string | A public `.glb` URL instead. |
+| `materialId` | string | From the catalog. Omit for analysis only. |
+| `finishId` | string | Optional, from the material's finishes. |
+| `targetHeightMm` | number | Printed height. Bounded by the material and the mesh. |
+| `quantity` | integer | Default `1`. Breaks at 5 and 20. |
+| `country` | string | ISO 3166-1 alpha-2, for shipping. |
+| `hollow` | boolean | Hollow the solid where it is geometrically safe. Changes the price. |
+| `note` | string | Optional note for the operator. Read by the fabrication gate. |
+
+```bash
+curl -s https://three.ws/api/print/quote \
+  -H 'content-type: application/json' \
+  -d '{"creationId":"6f1b...","materialId":"resin-standard","targetHeightMm":120,"quantity":1,"country":"US"}'
+```
+
+```json
+{
+  "report": {
+    "version": 1,
+    "manifold": true,
+    "shells": 1,
+    "volume_cm3": 71.4,
+    "bbox_mm": { "x": 62.1, "y": 120, "z": 48.3, "diagonal": 143.2 },
+    "min_wall_mm": 1.42,
+    "recommended_min_height_mm": { "resin": 120, "sls_nylon": 120, "full_color": 169 },
+    "score": 96,
+    "deductions": []
+  },
+  "fits": [{ "materialId": "resin-standard", "ok": true, "minHeightMm": 51, "maxHeightMm": 180 }],
+  "screening": { "verdict": "allow", "stage": "quote", "policy_url": "/docs/materialize#content-policy" },
+  "quote": {
+    "version": 1,
+    "currency": "USDC",
+    "lines": [
+      { "id": "setup", "label": "Build setup, Standard resin", "amount": 6 },
+      { "id": "material", "label": "Standard resin", "detail": "71.4 cm3 at 0.55 USDC per cm3.", "amount": 39.27 },
+      { "id": "shipping", "label": "Shipping to United States and Canada", "amount": 12.4 }
+    ],
+    "total": 57.67,
+    "leadTimeDays": 12
+  },
+  "token": "pq1.eyJ2IjoxLC...",
+  "expiresInSeconds": 86400
+}
+```
+
+| Status | Code | Meaning |
+|---|---|---|
+| `200` | | Report, and a quote when a material was given. A mesh that violates the material's constraints returns `quote: null` with a `rejection` naming the measured number, the required number and the fix. |
+| `413` | `too_large` / `too_complex` | Over 100 MB or 2M triangles. |
+| `422` | `invalid_model` / `no_geometry` | Not a parseable mesh, or no triangles to print. |
+| `451` | `fabrication_refused` | The fabrication gate refused it. The body carries `category`, `label`, `allowed` and `policy_url`. See the [content policy](./materialize.md#content-policy). |
+| `502` | `fetch_failed` | The model URL did not serve the file. |
+
+### Prepare
+
+```http
+POST /api/print/prepare
+```
+
+Reconstructs the mesh as a closed solid, fills holes, scales it to
+`targetHeightMm`, optionally hollows it with drain holes, and writes the
+manufacturing files (binary STL, 3MF with vertex colour when the source had a
+texture, and the repaired GLB) to durable storage. Returns permanent URLs plus
+the post-repair report, so you can see exactly what changed.
+
+### Order (human checkout)
+
+```http
+POST /api/print/orders          # session + CSRF
+GET  /api/print/orders/:id      # the order and its full timeline
+```
+
+Body: the quote `token` plus a `shipping` object (`name`, `line1`, `line2`,
+`city`, `region`, `postal_code`, `country`, `phone`). Minimum fields only: this
+is the sole personal data the platform stores for a print, it is never logged,
+and it never enters an analytics event.
+
+### Order (agent checkout, x402)
+
+```http
+POST /api/x402/print-order
+```
+
+The agent lane. The quote token and the address are validated **before** any 402
+is issued, so a malformed order is refused for free with a `422` and never
+charges. The 402 then quotes that token's exact total rather than a list price,
+because every print is its own object.
+
+```bash
+curl -s -X POST https://three.ws/api/x402/print-order \
+  -H 'content-type: application/json' \
+  -d '{
+    "token": "pq1....",
+    "shipping": { "name": "Ada Lovelace", "line1": "12 Analytical Way", "city": "London", "postal_code": "EC1A 1AA", "country": "GB" }
+  }'
+```
+
+```json
+{
+  "ok": true,
+  "order_id": "c1b0a2d4-7e33-4f01-9a55-2b7c1d0e9f4a",
+  "status": "screening",
+  "paid_usdc": "48.20",
+  "track_url": "/materialize/orders/c1b0a2d4-7e33-4f01-9a55-2b7c1d0e9f4a"
+}
+```
+
+Track it with `GET /api/print/orders/:id`, which needs no account.
+
+### Certificates
+
+```http
+GET /api/print/certs/:id
+```
+
+The certificate for a shipped print: the SHA-256 of the exact manufactured file
+and of the viewable GLB, the edition number, and the Solana memo signature that
+carries both. The human page is `/cert/:id`. A `signature` of `null` means the
+attestation is still in flight, not that the certificate is fake.
+
+### Operator and provider surfaces
+
+`POST /api/print/ops/{queue|order|adapters|transition|submit|tracking|cancel|refund}`
+is the operator console API and is allowlist-gated.
+`POST /api/print/webhook/:provider` is where a fulfillment partner reports in;
+every delivery is HMAC-verified against the raw bytes before it is parsed and
+claimed for idempotency before it is applied. Neither is a public integration
+surface; both are specified in
+[specs/PRINT_PIPELINE.md](../specs/PRINT_PIPELINE.md).
+
+---
+
 ## Material Studio API
 
 Re-skin *any* GLB — not just avatars — without regenerating its mesh. Generalizes

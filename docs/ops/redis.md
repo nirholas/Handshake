@@ -284,8 +284,8 @@ The dead store's REST URL and token are needed for migration. Try in order:
    cred was overwritten, the old value is still readable from the revision that
    used it:
    ```bash
-   gcloud run services describe three-ws-api --region us-central1 \
-     --project aerial-vehicle-466722-p5 --format=yaml | grep -A1 UPSTASH
+   node scripts/read-service-env.mjs '^UPSTASH' --names   # which secret backs each
+   node scripts/read-service-env.mjs '^UPSTASH_REDIS_REST_TOKEN$' --raw
    gcloud run revisions list --service three-ws-api --region us-central1 \
      --project aerial-vehicle-466722-p5   # then `describe <old-revision>` for its env
    ```

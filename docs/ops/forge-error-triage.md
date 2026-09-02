@@ -158,6 +158,6 @@ Without it, it exits 2 and prints the command that reads production's value off
 the Cloud Run service:
 
 ```bash
-gcloud run services describe three-ws-api --region us-central1 \
-  --project aerial-vehicle-466722-p5 --format=yaml | grep -A1 DATABASE_URL
+# DATABASE_URL is a Secret Manager reference, so describe alone shows no value.
+node scripts/read-service-env.mjs '^DATABASE_URL$' --raw
 ```

@@ -241,9 +241,7 @@ service, so `--env-file=.env.local` alone exits with `S3_BUCKET is unset` for an
 mode that renders or adopts. Export them into the shell first:
 
 ```bash
-eval "$(gcloud run services describe three-ws-api --region us-central1 \
-  --project aerial-vehicle-466722-p5 --format=json \
-  | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{for(const e of JSON.parse(s).spec.template.spec.containers[0].env||[])if(e.name.startsWith("S3_")&&e.value)console.log(`export ${e.name}=${JSON.stringify(e.value)}`)})')"
+eval "$(node scripts/read-service-env.mjs '^S3_')"
 ```
 
 Then any of the commands above runs as written.

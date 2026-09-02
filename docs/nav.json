@@ -130,6 +130,10 @@
 					"path": "forge-pipeline"
 				},
 				{
+					"label": "Materialize: print it for real",
+					"path": "materialize"
+				},
+				{
 					"label": "Image to 3D",
 					"path": "image-to-3d"
 				},

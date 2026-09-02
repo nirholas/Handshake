@@ -169,6 +169,12 @@ export const NAV_GROUPS = [
 						desc: 'Every engine for high-quality & photoreal 3D avatars — technique, license & how three.ws uses each',
 					},
 					{
+						title: 'Materialize',
+						href: '/materialize',
+						badge: 'New',
+						desc: 'Any 3D model becomes a real printed object: printability analysis, true-scale AR, and USDC checkout on Solana',
+					},
+					{
 						title: 'CA → x402',
 						href: '/ca2x402',
 						desc: 'Paste any token contract address → a live, agent-payable x402 endpoint for its market intel',

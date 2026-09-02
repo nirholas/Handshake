@@ -327,7 +327,7 @@ Organized by symptom. Find your problem, check the likely causes, follow the fix
 
 **Fix steps:**
 
-1. Set `JWT_SECRET` once and don't rotate it unless needed. In production it lives on the Cloud Run service env (`gcloud run services describe three-ws-api --region us-central1` to inspect), it must be the same value across all revisions.
+1. Set `JWT_SECRET` once and don't rotate it unless needed. In production it lives in Secret Manager, referenced by the Cloud Run service (`node scripts/read-service-env.mjs '^JWT_SECRET$' --raw` to read it), and it must be the same value across all revisions.
 2. Session duration is 30 days. A session used when fewer than 7 days remain is rotated to a fresh 30-day token (a rolling refresh window), so actively returning users stay signed in indefinitely.
 
 ---
@@ -510,7 +510,7 @@ Run `npm run db:status` first to preview which migrations are pending.
      --freshness=1h --limit 20 --format="value(textPayload)"
    ```
    Deploys ship via `npm run deploy:gcp` (run `npm run build` first for frontend changes), the full runbook lives in the repo at `docs/ops/gcp-production.md`. On a self-hosted fork, check whatever your host surfaces as function/process logs.
-2. The most common cause is a missing environment variable. All required vars must be set: `DATABASE_URL`, `JWT_SECRET`, `PUBLIC_APP_ORIGIN`. The `env.js` module throws on startup if required vars are absent. In production, inspect and set them on the Cloud Run service: `gcloud run services describe three-ws-api --region us-central1` / `gcloud run services update three-ws-api --region us-central1 --update-env-vars KEY=value`.
+2. The most common cause is a missing environment variable. All required vars must be set: `DATABASE_URL`, `JWT_SECRET`, `PUBLIC_APP_ORIGIN`. The `env.js` module throws on startup if required vars are absent. In production, read them with `node scripts/read-service-env.mjs '^DATABASE_URL$|^JWT_SECRET$|^PUBLIC_APP_ORIGIN$' --names` (credentials are Secret Manager references, so `describe` alone shows no value) and set a non-secret one with `gcloud run services update three-ws-api --region us-central1 --update-env-vars KEY=value`. A credential goes in Secret Manager instead: see `docs/ops/wallet-key-migration.md`.
 
 ---
 

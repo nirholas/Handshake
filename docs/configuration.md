@@ -355,7 +355,7 @@ node scripts/gen-solana-signer-key.mjs --var COIN_TREASURY_SECRET_KEY_B64
 node scripts/gen-solana-signer-key.mjs --vanity www
 ```
 
-**Fund the printed public key with SOL** before the relayer can pay fees. `--write` refuses to clobber an existing value, so rotating means removing the old line first. In production, add the value to the Cloud Run service (`gcloud run services update three-ws-api --region us-central1 --update-env-vars <NAME>=<base64>`) — never commit the secret. Note that `gcloud run services describe three-ws-api` is the authoritative view of production env; a `vercel env pull` export returns empty for secret-type vars and must not be trusted.
+**Fund the printed public key with SOL** before the relayer can pay fees. `--write` refuses to clobber an existing value, so rotating means removing the old line first. In production a relayer key is a credential, so it goes in Secret Manager rather than on the service as a literal: `node scripts/migrate-plaintext-secrets.mjs --only <NAME> --apply` moves an existing one, and `docs/ops/wallet-key-migration.md` has the commands for publishing a new version. Never commit the secret. Read production's current value with `node scripts/read-service-env.mjs '^<NAME>$' --raw`; a `vercel env pull` export returns empty for secret-type vars and must not be trusted.
 
 ---
 

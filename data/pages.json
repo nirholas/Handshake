@@ -977,6 +977,14 @@
 					"changefreq": "weekly"
 				},
 				{
+					"path": "/materialize",
+					"title": "Materialize",
+					"description": "Turn any 3D model into a real printed object. Live printability analysis and automatic repair, a true-scale AR preview on your own desk, an itemized price from the mesh's own measured volume, and USDC checkout on Solana.",
+					"priority": 0.8,
+					"changefreq": "weekly",
+					"added": "2026-09-02"
+				},
+				{
 					"path": "/inspect",
 					"title": "Model Inspector",
 					"description": "Run the exact quality gate three.ws applies to its own catalog against any .glb, in your browser. Nothing is uploaded. Per-rule verdict, what was measured against each bound, and the fix for every failure.",

@@ -66,6 +66,8 @@ Generations don't need a babysitter, either: start a forge job, close the tab, a
 
 Curious what happens between the prompt and the model? [How the Forge works](./how-forge-works.md) tells the story in plain language; [the Forge pipeline](./forge-pipeline.md) is the full engineering deep dive.
 
+Want the model in your hands rather than on a screen? [Materialize](./materialize.md) prints any generation in resin, nylon, colour sandstone or steel and ships it to your door, paid in USDC on Solana, with a certificate of authenticity attested on-chain. An AI agent can order one too, over x402, without a human in the loop.
+
 ---
 
 ## Ready to build?

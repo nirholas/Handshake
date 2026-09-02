@@ -28,7 +28,7 @@ Start with [gcp-production.md](gcp-production.md); it is the complete operationa
 | [runtime-flags.md](runtime-flags.md) | DB-backed feature flags that flip platform behavior without a redeploy. |
 | [x402-discovery-listings.md](x402-discovery-listings.md) | Getting paid endpoints listed and ranked on x402scan, the Bazaar, and other directories. |
 | [seo-keyword-plan.md](seo-keyword-plan.md) | Verified keyword landscape and content calendar (snapshot dated 2026-07-17). |
-| [wallet-key-migration.md](wallet-key-migration.md) | Incident record: stranded pool-agent wallets after the WALLET_ENCRYPTION_KEY migration. |
+| [wallet-key-migration.md](wallet-key-migration.md) | Incident record: stranded pool-agent wallets after the WALLET_ENCRYPTION_KEY migration. Also the standing runbook for where production's credentials live in Secret Manager, how to publish a new version, and the owner-gated master-wallet rotation. |
 | [stranded-wallets.md](stranded-wallets.md) | The standing owner decision on custodial wallets sealed by that rotation: measured list, why recovery is impossible, what crediting or writing off the customer balances costs, and the commands for each. |
 | [forge-multiview-migration-handoff.md](forge-multiview-migration-handoff.md) | Historical hand-off for the forge multi-view migrations (June 2026); superseded by gcp-production.md. |
 | [examples-repo-export.md](examples-repo-export.md) | How the public `three-ws/examples` satellite repo is assembled and published from this monorepo. |

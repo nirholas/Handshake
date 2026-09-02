@@ -225,9 +225,10 @@ curl -s -o /dev/null -w '%{http_code}\n' -X POST \
   -d '{"anthropic_version":"vertex-2023-10-16","max_tokens":16,"messages":[{"role":"user","content":"hi"}]}' \
   "https://aiplatform.googleapis.com/v1/projects/aerial-vehicle-466722-p5/locations/global/publishers/anthropic/models/claude-sonnet-5:rawPredict"
 
-# What production actually has set:
-gcloud run services describe three-ws-api --region us-central1 \
-  --project aerial-vehicle-466722-p5 --format=yaml | grep -A1 API_KEY
+# What production actually has set (every API key is a Secret Manager
+# reference since 2026-09-02, so read them through the resolver):
+node scripts/read-service-env.mjs '_API_KEY$' --names   # which secret backs each
+node scripts/read-service-env.mjs '^OPENAI_API_KEY$' --raw   # one value
 ```
 
 ---
