@@ -65,6 +65,7 @@
 import { readFileSync } from 'node:fs';
 import { execFile, execFileSync } from 'node:child_process';
 import './lib/gcloud-path.mjs';
+import { accessSecretVersion } from './lib/service-env.mjs';
 import { promisify } from 'node:util';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -193,18 +194,7 @@ export function cronSecretFromService(describe = defaultDescribeService, accessV
 }
 
 function defaultAccessSecretVersion(secretName, version) {
-	return execFileSync(
-		'gcloud',
-		[
-			'secrets',
-			'versions',
-			'access',
-			version,
-			`--secret=${secretName}`,
-			`--project=${PROJECT}`,
-		],
-		{ encoding: 'utf8', maxBuffer: 1024 * 1024, stdio: ['ignore', 'pipe', 'ignore'] },
-	);
+	return accessSecretVersion(secretName, version, { project: PROJECT });
 }
 
 function defaultDescribeService() {

@@ -25,15 +25,7 @@
 // operator gets a production value onto a machine that needs it. Do not pipe it
 // into a file that lives in the repo, and do not paste its output into a commit.
 
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
-import './lib/gcloud-path.mjs';
-
-const execFileP = promisify(execFile);
-
-const PROJECT = 'aerial-vehicle-466722-p5';
-const REGION = 'us-central1';
-const SERVICE = 'three-ws-api';
+import { accessSecretVersion, serviceEnvEntries, DEFAULT_SERVICE } from './lib/service-env.mjs';
 
 const argv = process.argv.slice(2);
 const RAW = argv.includes('--raw');
@@ -45,14 +37,7 @@ function fail(msg) {
 	process.exit(1);
 }
 
-async function gcloud(args) {
-	const { stdout } = await execFileP('gcloud', [...args, `--project=${PROJECT}`], {
-		maxBuffer: 16 * 1024 * 1024,
-	});
-	return stdout;
-}
-
-async function main() {
+function main() {
 	let regex;
 	try {
 		regex = pattern ? new RegExp(pattern) : /.*/;
@@ -60,15 +45,13 @@ async function main() {
 		fail(`"${pattern}" is not a valid regular expression: ${e.message}`);
 	}
 
-	let svc;
+	let env;
 	try {
-		svc = JSON.parse(await gcloud(['run', 'services', 'describe', SERVICE, `--region=${REGION}`, '--format=json']));
+		env = serviceEnvEntries().filter((e) => regex.test(e.name));
 	} catch (e) {
-		fail(`could not read ${SERVICE}: ${(e?.stderr || e?.message || '').trim().split('\n')[0]}`);
+		fail(`could not read ${DEFAULT_SERVICE}: ${(e?.stderr || e?.message || '').trim().split('\n')[0]}`);
 	}
-
-	const env = (svc?.spec?.template?.spec?.containers?.[0]?.env || []).filter((e) => regex.test(e.name));
-	if (!env.length) fail(`no variable on ${SERVICE} matches ${regex}`);
+	if (!env.length) fail(`no variable on ${DEFAULT_SERVICE} matches ${regex}`);
 
 	if (NAMES_ONLY) {
 		for (const e of env) {
@@ -91,7 +74,7 @@ async function main() {
 				continue;
 			}
 			try {
-				value = await gcloud(['secrets', 'versions', 'access', ref.key || 'latest', `--secret=${ref.name}`]);
+				value = accessSecretVersion(ref.name, ref.key || 'latest');
 			} catch (err) {
 				console.error(
 					`  ${e.name}: cannot read ${ref.name}:${ref.key}. Needs roles/secretmanager.secretAccessor on that secret.`,
@@ -107,4 +90,8 @@ async function main() {
 	}
 }
 
-main().catch((e) => fail(e?.message || String(e)));
+try {
+	main();
+} catch (e) {
+	fail(e?.message || String(e));
+}

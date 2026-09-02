@@ -331,6 +331,20 @@ async function secretExists(name) {
 	}
 }
 
+// A secret can exist with zero versions: `secrets create` succeeded and the
+// `versions add` that follows it did not (an interrupted sweep leaves exactly
+// this). That shell holds no value to protect, so it takes the first version like
+// a brand-new secret would. It must not be confused with a secret whose versions
+// exist but cannot be read, which is a permission problem and a refusal.
+async function secretVersionCount(name) {
+	try {
+		const { stdout } = await gcloud(['secrets', 'versions', 'list', name, '--format=value(name)']);
+		return stdout.split('\n').filter((l) => l.trim()).length;
+	} catch {
+		return null;
+	}
+}
+
 async function latestVersionDigest(name) {
 	try {
 		const { stdout } = await gcloud(['secrets', 'versions', 'access', 'latest', `--secret=${name}`]);
@@ -353,12 +367,17 @@ async function prepareSecret(item) {
 	if (existingDigest === liveDigest) {
 		return { action: 'reused existing secret (latest version already holds this value)' };
 	}
+	if (existingDigest === null && (await secretVersionCount(item.secretName)) === 0) {
+		if (!APPLY) return { action: 'add version 1 to an existing empty secret' };
+		gcloudWithStdin(['secrets', 'versions', 'add', item.secretName, '--data-file=-'], item.value);
+		return { action: 'added version 1 to an existing empty secret' };
+	}
 	if (!FORCE_NEW_VERSION) {
 		return {
 			action: null,
 			error:
 				existingDigest === null
-					? `secret ${item.secretName} exists but its latest version is unreadable; resolve by hand or pass --force-new-version`
+					? `secret ${item.secretName} has versions this account cannot read; grant roles/secretmanager.secretAccessor on it or pass --force-new-version`
 					: `secret ${item.secretName} exists with a DIFFERENT value; another var may depend on it. Pass --force-new-version to add the live value as a new version, or --map ${item.name}=<other-name>`,
 		};
 	}
