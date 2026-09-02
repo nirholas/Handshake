@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-09-02",
+			"title": "The 3D Studio connector for ChatGPT is documented as the eleven tools it actually serves",
+			"summary": "The free 3D Studio connector grew to eleven tools when look_at_model landed alongside check_job, but a lot of the writing about it had not caught up: the connector page, the press kit, the partner page, the blog summary, the announcement copy, the press release and the store-submission package still said nine or ten, and the social card enumerated only nine tool names. Every one of those now matches a fresh pull from the live server, the social card lists all eleven, and the module headers inside the connector describe the real catalog including which tools spend generation quota. A test now pins the total, so the next tool to land fails the suite instead of quietly re-opening the same drift. The standalone viewer also stopped crediting the AR launch endpoint with a renderer it no longer loads.",
+			"tags": [
+				"docs",
+				"fix"
+			],
+			"link": "/docs/mcp-studio"
+		},
+		{
+			"date": "2026-09-02",
 			"title": "License terms for three.ws containers on NVIDIA NGC",
 			"summary": "three.ws is preparing to publish its image-to-3D inference server in NVIDIA's NGC catalog, so the licence that will cover those container images is now public. It states plainly what you get: Apache-2.0 source, no model weights inside the image (you bring your own, under the upstream licence), and a container that carries no analytics or telemetry and sends nothing back to us. It sits alongside the other policies on the legal page.",
 			"tags": [
@@ -25666,6 +25676,16 @@
 				"improvement"
 			],
 			"link": "/fact-checker"
+		},
+		{
+			"date": "2026-09-02",
+			"title": "The docs now agree on how many tools the free ChatGPT connector has",
+			"summary": "The free 3D Studio connector for ChatGPT gained an inspector tool that renders a finished model from several angles, and a collector that picks up a generation which outran its tool call. The pages describing it had not all caught up: the partner page, the press boilerplate, the announcement post and the OpenAI submission pack still counted nine or ten tools between them, and the partner page's tool list was missing the inspector entirely. Every one of those now says eleven and lists the same eleven tools, checked against a live call to the connector, and a test pins the number so the next tool cannot quietly re-open the gap. Alongside it: the pending-generation example now shows the field that tells a client whether the model coming back is a bare mesh or a finished rig, and the three places the 3D viewer library is pinned are documented in one comment so nobody has to guess why a page loads a different build.",
+			"tags": [
+				"docs",
+				"fix"
+			],
+			"link": "/openai"
 		}
 	]
 }
