@@ -225,12 +225,42 @@ and was re-checked from scratch, not carried over: shell env, `.env`,
 `.env.local`, the `three-ws-api` Cloud Run service env, and Secret Manager all
 hold no funded chain-97 key, and three programmatic faucet endpoints
 (bnbchain's API, Stakely, Triangle) refuse or are retired. A throwaway deployer
-now exists at `0xC4e63FdF188D94059C877b957866726A888e1240`, written to the
-gitignored `contracts/.env`; it holds 0 tBNB and needs one human faucet run.
+was written to the gitignored `contracts/.env` at
+`0xC4e63FdF188D94059C877b957866726A888e1240`; that key no longer exists on this
+machine (see the 2026-09-02 note below for the address that replaced it, and do
+not fund the retired one).
 [`scripts/bnb-testnet-deploy-prove.mjs`](../scripts/bnb-testnet-deploy-prove.mjs)
 is the single command for the rest: a signature-free preflight by default, and
 with `--broadcast` it deploys both contracts and then proves the live sender,
 reader, and ghost paths against what it just deployed.
+
+**Re-verified 2026-09-02, and the deployer address changed.** Everything above
+was re-measured against the current tree rather than carried forward:
+
+- Both dry runs simulate green against the live BSC testnet RPC at exactly the
+  same gas as before: `DeployWorldMoves` 566,068 gas and `DeployGreenfieldVault`
+  1,711,362 gas, both at 0.1 gwei (0.0000566068 and 0.0001711362 BNB).
+- `forge test` is 19/19 on WorldMoves and 41/41 on GreenfieldVault (the vault
+  suite has grown by 7 cases since the 2026-08-02 note's 34).
+- All four BSC testnet RPC lanes in `api/_lib/bnb/chains.js` answer chainId
+  `0x61` today, so the lane list is no longer one rung thin.
+- **The deployer is now `0x1C4918894dfA5eE11cfF9629B458b5169Cfa3871`.** The
+  2026-08-02 throwaway key was not preserved across sessions, and its address
+  holds 0 tBNB, so nothing was stranded by replacing it. The new key is
+  testnet-only, lives in the gitignored `contracts/.env` at mode 600, and has
+  never held and must never hold mainnet value.
+- The faucet still has no agent path: `testnet.bnbchain.org/faucet-smart` serves
+  its reCAPTCHA page rather than a claim API, and the Stakely endpoint is gone.
+  Funding remains one human action.
+- The full `--broadcast` path was re-validated end to end against a local
+  `anvil --chain-id 97` before asking for funds, so a funded run will not be the
+  first time this code executes: both contracts deployed, then 1 `join`,
+  3 `move`, and 1 `leave` mined through the real `api/_lib/bnb/world-moves.js`
+  sender, decoded live by `src/bnb/world-presence-reader.js` (1 Joined, 3 Moved,
+  1 Left, zero reader errors), with `createGhostTracker` holding 1 ghost
+  interpolating `{x:1110, z:-445}` toward its `{x:1500, z:-250}` target and
+  dropping to 0 on `Left`. Local addresses are deliberately not recorded here;
+  they are anvil-local and mean nothing on the public chain.
 
 **Real broadcast proof — anvil fork of LIVE BSC testnet state** (per
 00-CONTEXT's decision-default table: "if every faucet fails, finish ALL code +
@@ -414,8 +444,9 @@ testnet RPC at 1,695,618 total gas (1,226,903 of it the constructor) at 0.1
 gwei = 0.0001695618 BNB, and `forge test` is still 34/34. The ~1.16M/~0.000170
 BNB figures above were the constructor-only measurement; the number that
 matters for funding is the total. The funding blocker is unchanged; see the
-re-verification note in the WorldMoves section for the full re-check and for
-the throwaway deployer address now waiting on the faucet.
+re-verification notes in the WorldMoves section for the full re-check and for
+the throwaway deployer address now waiting on the faucet. Re-measured again
+2026-09-02: same 1,711,362 total gas, and `forge test` is now 41/41.
 
 Deploy (once funded), preferred, because it also proves the live paths in the
 same run:

@@ -40,9 +40,9 @@ observable health, so 01 to 03 come first.
 
 | # | Work order | Blocked on | Owner action needed |
 |---|---|---|---|
-| 01 | [x402 settle: clear `fee_runway_exhausted`](backlog-01-x402-settle-runway.md) | nothing (config-only updates are pre-approved) | one `gcloud auth login` if auth is dead |
+| 01 | [x402 settle: clear `fee_runway_exhausted`](backlog-01-x402-settle-runway.md) | capital, and nothing else (every code and config line shipped 2026-09-02) | SOL to the economy master; the config levers are already applied |
 | 05 | [R2 bucket CORS: verify, then fix at the origin](backlog-05-r2-bucket-cors.md) | one credential | mint an R2 admin token |
-| 07 | [BNB testnet: deploy the two finished contracts](backlog-07-bnb-testnet-deploys.md) | one funded EOA | fund a throwaway testnet key |
+| 07 | [BNB testnet: deploy the two finished contracts](backlog-07-bnb-testnet-deploys.md) | one funded EOA | send tBNB to `0x1C4918894dfA5eE11cfF9629B458b5169Cfa3871` (faucet is reCAPTCHA-gated) |
 | 08 | [OKX chat bot: move off the codespace](backlog-08-okx-chat-bot-always-on.md) | nothing | one email OTP login |
 | 09 | [Telegram bots: durable hosting for both feeds](backlog-09-telegram-bots-durability.md) | nothing | none |
 | 10 | [x402scan listing: finish the last three steps](backlog-10-x402scan-listing.md) | one PAT or one comment | classic PAT, or the owner comments |
@@ -62,11 +62,16 @@ metering audit, the opt-in paid mirror, corrected docs). Their files are readabl
 history; the evidence per line is in [PROGRESS.md](backlog-PROGRESS.md) under 2026-09-01.
 
 State of what remains, measured the same day: 01 is code-complete but its outcome line is
-false (settle 5.9%, sponsor wallet under its SOL floor; capital is the owner's), and the
-dry-run reclaim plan still reports sealed wallets as reclaimable. 05 waits on one R2 admin
-token. 07 needs a new funded deployer key: the throwaway key generated on 2026-08-02 no
-longer exists on this machine, so funding the old address would strand the tokens. 08's
-worker is built and committed but has never reported a heartbeat, so it is not running
+false (settle 5.9%, sponsor wallet under its SOL floor; capital is the owner's). The dry-run
+reclaim plan that reported sealed wallets as reclaimable was fixed on 2026-09-02 (`afd349790`):
+it now opens each planned wallet's key and lists the ones that will not decrypt under
+`agent_reclaim.failed`, so a dry total of 0 means the owner has to send SOL. 05 waits on one R2 admin
+token. 07 needs one faucet claim and nothing else: a deployer key now exists in the gitignored
+`contracts/.env` at `0x1C4918894dfA5eE11cfF9629B458b5169Cfa3871` (re-verified 2026-09-02,
+balance 0 tBNB), both dry runs simulate green against the live chain-97 RPC, and the
+`--broadcast` path is proven end to end on a local chain-97 node. Fund that address, not
+the retired 2026-08-02 one.
+08's worker is built and committed but has never reported a heartbeat, so it is not running
 anywhere. 09's deliverables live in a sibling repository that is not checked out in this
 workspace, so nothing here can verify them. 10's remaining external step resolved on its own
 (the upstream pull request merged 2026-08-11 and the live discovery endpoint matches it);
