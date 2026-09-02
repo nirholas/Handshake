@@ -564,13 +564,22 @@ async function loadLatest() {
 				(d) =>
 					`<a class="do-agent-tile" href="https://www.metaplex.com/agents/${escapeHtml(d.agent_id)}" target="_blank" rel="noopener">` +
 					(d.image
-						? `<img class="do-agent-thumb" src="${escapeHtml(d.image)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'" />`
+						? `<img class="do-agent-thumb" src="${escapeHtml(d.image)}" alt="" loading="lazy" />`
 						: '<span class="do-agent-thumb" aria-hidden="true"></span>') +
 					`<span class="do-agent-name">${escapeHtml(d.name || short(d.agent_id))}</span>` +
 					`<span class="do-agent-sub">${d.has_3d ? '3D · ' : ''}${d.x402_support ? 'x402 · ' : ''}${new Date(d.registered_at).toLocaleDateString()}</span>` +
 					'</a>',
 			)
 			.join('');
+		// A dead remote thumbnail leaves the tile's layout intact instead of a
+		// broken-image glyph. Bound here rather than as an inline onerror: the
+		// site CSP has no 'unsafe-inline' in script-src, so an inline handler in
+		// this generated markup would never fire in production.
+		for (const img of strip.querySelectorAll('img.do-agent-thumb')) {
+			img.addEventListener('error', () => {
+				img.style.visibility = 'hidden';
+			});
+		}
 	} catch {
 		strip.innerHTML = '<p class="do-latest-empty">The live feed is unreachable right now. <a href="/deployments">Open the full feed</a>.</p>';
 	}
