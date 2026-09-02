@@ -83,7 +83,7 @@
 	<main class="sm-wrap">
 		<div class="sm-hero">
 			<h1>Sitemap</h1>
-			<p>All 880 pages on three.ws, grouped by purpose. Looking for the machine-readable versions?</p>
+			<p>All 883 pages on three.ws, grouped by purpose. Looking for the machine-readable versions?</p>
 			<div class="sm-formats">
 				<a href="/sitemap.xml"><code>sitemap.xml</code> · for search engines</a>
 				<a href="/llms.txt"><code>llms.txt</code> · for AI agents</a>
@@ -95,7 +95,7 @@
 		</div>
 		<div class="sm-filter">
 			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-			<input id="sm-filter-input" type="search" placeholder="Filter 880 pages by name, path, or description…" aria-label="Filter pages" autocomplete="off" spellcheck="false" />
+			<input id="sm-filter-input" type="search" placeholder="Filter 883 pages by name, path, or description…" aria-label="Filter pages" autocomplete="off" spellcheck="false" />
 			<kbd aria-hidden="true">/</kbd>
 		</div>
 		<p class="sm-filter-count" id="sm-filter-count" role="status" aria-live="polite"></p>
@@ -103,6 +103,30 @@
 			<h2 id="sm-new-title">Newest<a class="sm-new-more" href="/changelog">full changelog &rarr;</a></h2>
 			<p class="sm-section-desc">The 9 most recently launched pages, straight to the live surface.</p>
 			<ul class="sm-list">
+				<li>
+					<a href="/docs/animation-seeding">
+						<span class="sm-new-date">Sep 2, 2026</span>
+						<span class="sm-title">Generated animation seeding</span>
+						<span class="sm-path">/docs/animation-seeding</span>
+						<span class="sm-desc">How three.ws generates its own animation clips: the text-to-motion GPU lane, the world-space quality gate that judges joint positions instead of raw rotations, the resumable bulk runner, and the rotating free subset.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/cert">
+						<span class="sm-new-date">Sep 2, 2026</span>
+						<span class="sm-title">Print Certificates</span>
+						<span class="sm-path">/cert</span>
+						<span class="sm-desc">Check the certificate of authenticity that ships with every three.ws physical print. Scan the code on the box or type the certificate number to see the original 3D model spinning, its edition number, the SHA-256 of the exact bytes that went to the printer, and the Solana transaction attesting both. Each certificate lives at /cert/&lt;id&gt;.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/legal/nvidia-ngc-eula">
+						<span class="sm-new-date">Sep 2, 2026</span>
+						<span class="sm-title">NVIDIA NGC Container EULA</span>
+						<span class="sm-path">/legal/nvidia-ngc-eula</span>
+						<span class="sm-desc">License terms for three.ws container images distributed through the NVIDIA NGC catalog: what the license covers, the model weights the image does not ship, and the data the container does not collect.</span>
+					</a>
+				</li>
 				<li>
 					<a href="/drops">
 						<span class="sm-new-date">Sep 1, 2026</span>
@@ -149,30 +173,6 @@
 						<span class="sm-title">Filming three.ws on a Seeker without a Seeker</span>
 						<span class="sm-path">/docs/seeker-video</span>
 						<span class="sm-desc">How to record a Seeker screen recording of the app with no device: why the Trusted Web Activity makes a browser capture at the real panel geometry a genuine capture, and which moments still have to come from an Android emulator.</span>
-					</a>
-				</li>
-				<li>
-					<a href="/docs/native-widgets">
-						<span class="sm-new-date">Aug 29, 2026</span>
-						<span class="sm-title">Native widgets: your agent on the home screen</span>
-						<span class="sm-path">/docs/native-widgets</span>
-						<span class="sm-desc">Put your three.ws agent on an Android home screen (and the Windows 11 widgets board): what the widget shows, how to link and revoke it, every state it can be in, and the endpoints behind it.</span>
-					</a>
-				</li>
-				<li>
-					<a href="/portal">
-						<span class="sm-new-date">Aug 28, 2026</span>
-						<span class="sm-title">Portal</span>
-						<span class="sm-path">/portal</span>
-						<span class="sm-desc">Paste any web address and walk through it in 3D. Portal reads the page's real structure and builds a place from it: sections become buildings sized by what they say, links become doors you step into, images become billboards. Download the world as a GLB or embed it in your own site.</span>
-					</a>
-				</li>
-				<li>
-					<a href="/companion">
-						<span class="sm-new-date">Aug 28, 2026</span>
-						<span class="sm-title">Companion</span>
-						<span class="sm-path">/companion</span>
-						<span class="sm-desc">A 3D companion that delivers your important messages in person. Connect your own Telegram bot, calendar, inbox, or phone, give each contact their own avatar and voice, and hear only what clears your bar.</span>
 					</a>
 				</li>
 			</ul>
@@ -593,7 +593,7 @@
 
 		<section class="sm-section" id="build">
 			<header>
-				<h2>Build<span class="sm-count" data-count>69</span></h2>
+				<h2>Build<span class="sm-count" data-count>70</span></h2>
 				<p class="sm-section-desc">Create and customize an agent.</p>
 			</header>
 			<ul class="sm-list">
@@ -1080,6 +1080,13 @@
 						<span class="sm-desc">A3S packs a GLB into nested layers whose first 50 KB is already a complete, skinned, spec-valid avatar, then refines it in place over plain HTTP range requests. Live side-by-side against a classic GLB load.</span>
 					</a>
 				</li>
+				<li>
+					<a href="/docs/animation-seeding">
+						<span class="sm-title">Generated animation seeding</span>
+						<span class="sm-path">/docs/animation-seeding</span>
+						<span class="sm-desc">How three.ws generates its own animation clips: the text-to-motion GPU lane, the world-space quality gate that judges joint positions instead of raw rotations, the resumable bulk runner, and the rotating free subset.</span>
+					</a>
+				</li>
 			</ul>
 		</section>
 
@@ -1248,7 +1255,7 @@
 
 		<section class="sm-section" id="crypto">
 			<header>
-				<h2>Crypto<span class="sm-count" data-count>138</span></h2>
+				<h2>Crypto<span class="sm-count" data-count>139</span></h2>
 				<p class="sm-section-desc">On-chain features: pay-per-call, token launches, vanity wallets.</p>
 			</header>
 			<ul class="sm-list">
@@ -1355,6 +1362,13 @@
 						<span class="sm-title">Minted 3D Assets</span>
 						<span class="sm-path">/minted</span>
 						<span class="sm-desc">Live public gallery of every generated 3D avatar minted as a Metaplex Core NFT through three.ws: interactive viewer, baked provenance, and enforced creator royalties on every card.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/cert">
+						<span class="sm-title">Print Certificates</span>
+						<span class="sm-path">/cert</span>
+						<span class="sm-desc">Check the certificate of authenticity that ships with every three.ws physical print. Scan the code on the box or type the certificate number to see the original 3D model spinning, its edition number, the SHA-256 of the exact bytes that went to the printer, and the Solana transaction attesting both. Each certificate lives at /cert/&lt;id&gt;.</span>
 					</a>
 				</li>
 				<li>
@@ -5493,7 +5507,7 @@
 
 		<section class="sm-section" id="legal">
 			<header>
-				<h2>Legal<span class="sm-count" data-count>6</span></h2>
+				<h2>Legal<span class="sm-count" data-count>7</span></h2>
 				
 			</header>
 			<ul class="sm-list">
@@ -5516,6 +5530,13 @@
 						<span class="sm-title">End-User License Agreement</span>
 						<span class="sm-path">/legal/eula</span>
 						<span class="sm-desc">License terms for the three.ws Seeker/Saga mobile app: what the license covers, camera and selfie data, updates, and termination.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/legal/nvidia-ngc-eula">
+						<span class="sm-title">NVIDIA NGC Container EULA</span>
+						<span class="sm-path">/legal/nvidia-ngc-eula</span>
+						<span class="sm-desc">License terms for three.ws container images distributed through the NVIDIA NGC catalog: what the license covers, the model weights the image does not ship, and the data the container does not collect.</span>
 					</a>
 				</li>
 				<li>

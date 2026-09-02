@@ -774,6 +774,12 @@ URL: https://three.ws/stream
 
 A3S packs a GLB into nested layers whose first 50 KB is already a complete, skinned, spec-valid avatar, then refines it in place over plain HTTP range requests. Live side-by-side against a classic GLB load.
 
+### Generated animation seeding
+
+URL: https://three.ws/docs/animation-seeding
+
+How three.ws generates its own animation clips: the text-to-motion GPU lane, the world-space quality gate that judges joint positions instead of raw rotations, the resumable bulk runner, and the rotating free subset.
+
 ## Labs
 
 Experimental features actively shipping. Expect fast iteration.
@@ -1003,6 +1009,12 @@ Launch a supply-capped collection of AI-forged 3D characters. Pick a style, defi
 URL: https://three.ws/minted
 
 Live public gallery of every generated 3D avatar minted as a Metaplex Core NFT through three.ws: interactive viewer, baked provenance, and enforced creator royalties on every card.
+
+### Print Certificates
+
+URL: https://three.ws/cert
+
+Check the certificate of authenticity that ships with every three.ws physical print. Scan the code on the box or type the certificate number to see the original 3D model spinning, its edition number, the SHA-256 of the exact bytes that went to the printer, and the Solana transaction attesting both. Each certificate lives at /cert/<id>.
 
 ### Creator Gallery
 
@@ -4568,6 +4580,12 @@ What data three.ws collects, why we hold it, who we share it with, how long we k
 URL: https://three.ws/legal/eula
 
 License terms for the three.ws Seeker/Saga mobile app: what the license covers, camera and selfie data, updates, and termination.
+
+### NVIDIA NGC Container EULA
+
+URL: https://three.ws/legal/nvidia-ngc-eula
+
+License terms for three.ws container images distributed through the NVIDIA NGC catalog: what the license covers, the model weights the image does not ship, and the data the container does not collect.
 
 ### Terms of Service
 

@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-09-02",
+			"title": "License terms for three.ws containers on NVIDIA NGC",
+			"summary": "three.ws is preparing to publish its image-to-3D inference server in NVIDIA's NGC catalog, so the licence that will cover those container images is now public. It states plainly what you get: Apache-2.0 source, no model weights inside the image (you bring your own, under the upstream licence), and a container that carries no analytics or telemetry and sends nothing back to us. It sits alongside the other policies on the legal page.",
+			"tags": [
+				"docs"
+			],
+			"link": "/legal/nvidia-ngc-eula"
+		},
+		{
+			"date": "2026-09-02",
 			"title": "Fixed a footer link that led to a dead page",
 			"summary": "The terminal page's footer offered an Avatars link that pointed at an address the site does not serve, so clicking it returned a 404 instead of the avatar gallery. It now opens the gallery, the same place every other page sends you. On the knock page, a placeholder link that sat empty until the profile finished loading was removed, so people navigating by keyboard or screen reader no longer land on a link with no name and nowhere to go.",
 			"tags": [
@@ -25638,6 +25647,25 @@
 				"infra"
 			],
 			"link": "/agents"
+		},
+		{
+			"date": "2026-09-02",
+			"title": "Every paid endpoint now appears in the public API document",
+			"summary": "Agents find three.ws services by reading the machine-readable API document the platform publishes at /openapi.json. That document listed 24 paid endpoints while the platform actually sells 75, because the entries were written by hand and most were never added. The rest answered a perfectly valid payment challenge in production and could still not be found, which is the whole point of publishing the document. Every paid endpoint is now generated from the same single catalog that already writes the platform's other service listings, so all of them appear with their real price, inputs and payment details, and one written once. The 24 richer hand-written entries are untouched. A test now fails the build if a service is ever added to the catalog without reaching the document, so the gap cannot reopen.",
+			"tags": [
+				"improvement",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-09-02",
+			"title": "Fact checks stop saying \"not enough evidence\" when the evidence was there",
+			"summary": "A fact check reads five sources and asks a language model where each one stands on the claim. When that model answered in a shape the reader could not parse, every source was quietly recorded as saying nothing, the check reported \"not enough evidence\", and nothing anywhere said the reading had failed. A live check on whether a tomato is a vegetable came back that way while holding the Supreme Court case that settles the question. The reader now copes with the formats models actually use, including the thinking-out-loud preamble and code fences it used to choke on, and it no longer stops at the first square bracket it sees. When a reply genuinely cannot be read, the check now says it was degraded instead of presenting a verdict it did not earn, which also keeps that answer out of the week-long cache and out of the published accuracy score. The same fault had been collapsing the three search angles behind each check down to one.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/fact-checker"
 		}
 	]
 }

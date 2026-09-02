@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-02T19:09:32.966Z",
+	"generated_at": "2026-09-02T19:16:34.113Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1271,6 +1271,16 @@
 					"indexable": true,
 					"tags": [],
 					"showcase": false
+				},
+				{
+					"path": "/docs/animation-seeding",
+					"title": "Generated animation seeding",
+					"description": "How three.ws generates its own animation clips: the text-to-motion GPU lane, the world-space quality gate that judges joint positions instead of raw rotations, the resumable bulk runner, and the rotating free subset.",
+					"added": "2026-09-02",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
 				}
 			]
 		},
@@ -1651,6 +1661,16 @@
 					"title": "Minted 3D Assets",
 					"description": "Live public gallery of every generated 3D avatar minted as a Metaplex Core NFT through three.ws: interactive viewer, baked provenance, and enforced creator royalties on every card.",
 					"added": "2026-07-08",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/cert",
+					"title": "Print Certificates",
+					"description": "Check the certificate of authenticity that ships with every three.ws physical print. Scan the code on the box or type the certificate number to see the original 3D model spinning, its edition number, the SHA-256 of the exact bytes that went to the printer, and the Solana transaction attesting both. Each certificate lives at /cert/<id>.",
+					"added": "2026-09-02",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -7566,6 +7586,16 @@
 					"title": "End-User License Agreement",
 					"description": "License terms for the three.ws Seeker/Saga mobile app: what the license covers, camera and selfie data, updates, and termination.",
 					"added": "2026-07-14",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/legal/nvidia-ngc-eula",
+					"title": "NVIDIA NGC Container EULA",
+					"description": "License terms for three.ws container images distributed through the NVIDIA NGC catalog: what the license covers, the model weights the image does not ship, and the data the container does not collect.",
+					"added": "2026-09-02",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
