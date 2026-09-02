@@ -812,3 +812,138 @@ this log are done. The three outcome lines (settle above 90%, `fee_runway_exhaus
 no longer top, a non-zero reclaim plan) cannot be closed by an agent: at a 0.0037
 SOL sponsor balance there is no non-zero *executable* reclaim plan to produce, and
 that is now the honest answer the endpoint gives rather than the phantom one.
+
+## 2026-09-02: 07 bnb-testnet-deploys (re-verified end to end; the public broadcast is still one human faucet claim away)
+
+Everything in this entry was re-measured against the current tree at 18:57 UTC, not
+carried over from the 2026-08-02 or earlier-today notes.
+
+| Fact | Value | Source |
+|---|---|---|
+| Deployer | `0x1C4918894dfA5eE11cfF9629B458b5169Cfa3871`, key present in gitignored `contracts/.env` (mode 600) | `node scripts/bnb-testnet-deploy-prove.mjs` |
+| Deployer balance | **0 tBNB** | same, live `data-seed-prebsc-1-s1` RPC |
+| Live testnet gas price | 0.1 gwei (`100000000` wei), head block `128730981` | `cast gas-price` / `cast block-number` |
+| `DeployGreenfieldVault` dry run | green, **1,711,362 gas** = 0.0001711362 BNB | preflight simulation against the live RPC |
+| `DeployWorldMoves` dry run | green, **566,068 gas** = 0.0000566068 BNB | same |
+| `forge test` WorldMoves | **19/19** | `forge test --match-path test/WorldMoves.t.sol` |
+| `forge test` GreenfieldVault | **41/41** | `forge test --match-path test/GreenfieldVault.t.sol` |
+| `/api/bnb/world-config?network=testnet` | `address: null, deployed: false` | live production endpoint |
+
+Two corrections to earlier text in this pack:
+
+1. **The index's "the throwaway key generated on 2026-08-02 no longer exists" line and the
+   2026-09-01 status line "`contracts/.env` does not exist" are both out of date.** The file
+   exists today and carries `BNB_TESTNET_DEPLOYER_KEY` for `0x1C49...3871`. The retired
+   2026-08-02 address `0xC4e63FdF188D94059C877b957866726A888e1240` still holds 0 tBNB, so
+   nothing was ever stranded on it. **Fund `0x1C49...3871`, not the retired address.**
+2. **The work order's bare dry-run commands cannot pass as written.** `forge script
+   script/DeployGreenfieldVault.s.sol` with no `--rpc-url` runs against chain id 31337 and
+   reverts with `no known Greenfield hub addresses for this chain id`, by design: the script
+   only knows hubs for 56 and 97. The dry run that means anything is the one the preflight
+   runs, against the live chain-97 RPC.
+
+**The `--broadcast` path was re-validated end to end today** against a fresh local
+`anvil --chain-id 97`, with the deployer funded by `anvil_setBalance`, so a funded public
+run will not be the first time this code executes. One command did all of it
+(`BSC_TESTNET_RPC_URL=http://127.0.0.1:8555 node scripts/bnb-testnet-deploy-prove.mjs --broadcast`):
+both contracts deployed, then 1 `join`, 3 `move` and 1 `leave` mined through the real
+`api/_lib/bnb/world-moves.js` sender, decoded live by `src/bnb/world-presence-reader.js`
+(1 Joined, 3 Moved, 1 Left, zero reader errors), with `createGhostTracker` holding 1 ghost
+before the leave and 0 after. Local addresses are deliberately not recorded here: they are
+anvil-local and mean nothing on the public chain.
+
+**The faucet still has no agent path, re-probed today, not remembered.**
+`POST https://testnet.bnbchain.org/api/claim` answers `403` from the CDN edge (no claim API
+behind it), `https://www.bnbchain.org/en/testnet-faucet` serves its reCAPTCHA page, and the
+Stakely endpoint answers `500`. Four EOAs known to this workspace
+(the current deployer, the retired 2026-08-02 one, the CREATE2 factory deployer
+`0x4022de2D...C0564f402`, and the platform validator `0x93Bc7EfB...01b1CD04`) all hold
+0 tBNB on chain 97, so there is nothing here to route funds from either.
+
+Definition-of-done status: dry runs re-verified (done), unit suites green (done), the
+broadcast path proven on a local chain-97 node (done). The three remaining lines are the
+same single dependency they have always been, and it is not an agent's to close: one human
+faucet claim to `0x1C4918894dfA5eE11cfF9629B458b5169Cfa3871`, then the owner's explicit yes
+on the spend, then `node scripts/bnb-testnet-deploy-prove.mjs --broadcast` deploys both,
+proves all three paths against the public deployment, and prints the exact
+`gcloud run services update ... --update-env-vars WORLD_MOVES_ADDRESS_TESTNET=0x...` to flip
+the endpoint to `deployed: true`.
+
+## 2026-09-02 (19:00 UTC): 01 x402 settle runway (re-measured; the rail is now suppressed, not burning, and the fleet is empty)
+
+Every number here was read at 18:52 to 19:05 UTC from public endpoints, mainnet
+RPC and the production ledger. Nothing is carried over from the 05:19 entry
+above, and three of that entry's headline numbers have moved.
+
+| Fact | Value | Source |
+|---|---|---|
+| `x402_settle` | **down, 6.1%** (3 of 49 paid attempts, 3h), `cause: sponsor_floor` | `GET /api/healthz` |
+| Solana accept in that window | **withdrawn from 324 challenges**, 153 floor refusals, 46 rail faults, 0 governor skips | same, `metrics` |
+| Since-boot facilitator book | ok 851 / failed 33,176: `fee_runway_exhausted` 31,489, `fee_wallet_below_floor` 1,493, `not_confirmed` 133 | same, `x402.self_facilitator` |
+| Sponsor / economy master `Wwwu...T3WwW` | **1,567,667 lamports (0.001568 SOL)**, spendable **0** under the 2,000,000 floor | `GET /api/x402/runway-lab` + `getBalance` |
+| Ring payer `X4o2...stML` | 1,893,408 lamports, **106,592 under the floor**, holding 3.969 USDC it cannot spend | `getBalance`, `getTokenAccountsByOwner` |
+| x402 receiver `wwwww...ccrU` | 0.054995 SOL against its 0.1 SOL `minSol`, 0.056 USDC | same |
+| All 8 registry engine wallets | **0.204507 SOL total** | `getBalance` over the map in `scripts/audit-wallet-flows.mjs` |
+| Self-heal, running every 60s | `agent_reclaim` books **`blocked`**: deficit **1.4696 SOL**, 110 of 112 agent wallets `at_or_below_floor`, **2** unreadable at stage `recover`, **0 SOL reclaimed** | `economy_master_ledger`, latest row 19:00:45 UTC |
+| Prod commit | `ad7b54c16` (2026-08-28), revision `three-ws-api-00404-ph7` | `GET /api/version` |
+
+Three corrections to the 05:19 entry, all measured:
+
+1. **The rail moved from `degraded` to `down`.** 55.0% then, 6.1% now. The
+   sponsor crossed its floor during the day (1,727,883 spendable lamports then,
+   0 now), and `sponsorKnownBelowFloor()` now withdraws the Solana accept from
+   every 402 challenge, which is why paid attempts collapsed to 49 in 3 hours
+   while 324 challenges went out with nothing payable on them. The low rate is a
+   suppressed rail, not a burning one. That is the design working: the platform
+   stops charging for what it cannot settle.
+2. **The reclaim leg is not merely unproductive, it is provably empty.** The
+   production ledger records a real (not dry) run every minute with the same
+   verdict: 110 of 112 agent wallets are at or below their floor and only 2 fail
+   at `recover`. The whole platform holds 0.2045 SOL across every registry
+   wallet against a 1.4696 SOL deficit. There is no reachable SOL left to move,
+   so no cron cadence, RPC tier, or config change can lift the settle rate.
+3. **The funding ask is smaller than the fleet deficit suggests.** Serving every
+   payable intent at the observed 10,001 lamport 2-signature fee costs roughly
+   0.03 SOL/day at the current 124 payable intents/hour. 0.1 SOL restarts
+   settlement within one topup tick; 2 SOL clears the entire 1.4696 SOL fleet
+   deficit and leaves weeks of runway.
+
+Did (no code change was warranted; the code side of this order shipped in
+`afd349790` this morning and its guards are green):
+
+- Re-verified the order's guards: `tests/economy-reclaim-dryrun-key-gate.test.js`,
+  `tests/x402-wallet-fee-governor.test.js` and `tests/api/x402-settle-health.test.js`
+  pass **60/60**.
+- **Repaired the shared git index**, which held the pre-`afd349790` content for
+  every file that commit touched (`api/_lib/economy-sweepback.js`,
+  `api/_lib/ops/x402-settle-health.js`, its test, `data/changelog.json`, both
+  public feeds, `CHANGELOG.md`) plus a staged DELETION of the new test file. Any
+  peer running `git commit -a` would have reverted this order's fix and removed
+  its recurrence guard from the tree. Proven stale before touching it (index
+  blob == `afd349790^` blob, disk blob == `HEAD` blob for each path), then
+  unstaged path by path; no worktree content was altered.
+- Updated the status block at the top of
+  [01-x402-settle-runway.md](backlog-01-x402-settle-runway.md) so the next
+  session opens on the 19:00 UTC numbers rather than the 05:19 ones.
+
+Left, all owner-owned, unchanged in kind and sharper in number:
+
+1. **SOL to `WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW`** (the economy master,
+   which is also the x402 sponsor fee wallet). Never to per-agent wallets.
+   0.1 SOL restarts the rail, 2 SOL clears the fleet deficit. Moving platform
+   funds is stop-and-ask gate 1, and there is nothing to move anyway.
+2. **A deploy.** `afd349790` (the honest dry-run reclaim plan and the corrected
+   `sponsor_floor` hint) is on `main`; production still runs `ad7b54c16` from
+   2026-08-28, so the hint live on healthz right now is still the old one that
+   promises the cron will fix it.
+3. **`gcloud` auth is still dead here** (`Reauthentication failed. cannot prompt
+   during non-interactive execution`) and `.env` carries no `CRON_SECRET`, so
+   the treasury dry run and any env change remain out of reach from this
+   session. Every number above was read without them.
+
+Follow-up worth someone's time, deliberately not done here because it changes a
+choice the 05:19 session made on purpose: the blocked `agent_reclaim` summary row
+is appended to the hash-chained ledger once a minute (1,440 identical rows/day,
+112 RPC balance reads each) for as long as the fleet stays empty. Writing it only
+when the verdict changes would keep the "it ran and found nothing" signal without
+the noise.

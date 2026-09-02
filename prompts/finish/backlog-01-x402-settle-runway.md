@@ -22,16 +22,26 @@ Read [00-INDEX.md](backlog-00-INDEX.md) first.
 >    WALLET_ENCRYPTION_KEY retired in the 2026-07 host migration and fail
 >    AES-GCM decryption. 0.49 SOL is stranded that way, 0.35 of it customer
 >    money. See `docs/ops/wallet-key-migration.md`.
-> 4. **The numbers below are a 2026-08-01 snapshot.** As of 2026-09-02 settle is
->    55.0% and `degraded`, not 25.9% and `down`; demand has fallen to 177
->    attempts/hour from 3,726; measured burn is 0.0133 SOL/day spent against
->    ~0.043 SOL/day to serve every attempt.
+> 4. **The numbers below are a 2026-08-01 snapshot.** Re-measured 2026-09-02 at
+>    19:00 UTC: settle is **6.1%** (3 of 49 paid attempts in 3h) and `down`
+>    again, cause `sponsor_floor`, with the Solana accept WITHDRAWN from 324
+>    challenges in the same window (`sponsorKnownBelowFloor()`), so the low rate
+>    now measures a suppressed rail rather than a burning one.
 >
-> **The one thing that lifts the settle rate is SOL in two wallets.** The ring
-> payer sits 1,592 lamports under its 2,000,000 floor and the sponsor has
-> 1,727,883 spendable lamports. Send SOL to the economy master
-> `WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW`, never to per-agent wallets.
-> That is stop-and-ask gate 1 and it is the owner's call.
+> **Every wallet in the fleet is under its own floor, so no cron can heal this.**
+> Measured on chain and in the production ledger at 19:00 UTC on 2026-09-02: the
+> sponsor / economy master `Wwwu...T3WwW` holds 0.001568 SOL with spendable 0
+> against its 2,000,000 lamport floor; the ring payer `X4o2...stML` holds
+> 0.001893 SOL plus 3.969 USDC it cannot spend for want of fee SOL; the x402
+> receiver `wwwww...ccrU` holds 0.054995 SOL under a 0.1 SOL floor; all eight
+> registry wallets together hold **0.2045 SOL**. The reclaim leg runs every 60
+> seconds and books `blocked` every time: deficit **1.4696 SOL**, 110 of 112
+> agent wallets `at_or_below_floor`, 2 unreadable at stage `recover`, 0 SOL
+> reclaimed. Send SOL to the economy master
+> `WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW`, never to per-agent wallets:
+> 0.1 SOL lifts the sponsor back over its floors and restarts settlement,
+> 2 SOL clears the fleet's whole 1.47 SOL deficit with weeks of runway. That is
+> stop-and-ask gate 1 and it is the owner's call.
 >
 > Shipped against this order: the caller-side fee admission gate
 > (`assessFeeAdmission`), the governor config recurrence guard
