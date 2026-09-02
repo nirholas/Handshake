@@ -74,17 +74,8 @@ function faviconUrl(sourceUrl) {
 }
 
 function stancePill(stance) {
-	// `partial` is a source that bears the claim out in one respect and corrects
-	// it in another. It is what drives the `mixed` verdict, so it carries the same
-	// amber the mixed badge does (see .stance-pill.partial in pages/fact-checker.html).
-	const labels = {
-		supports: 'Supports',
-		contradicts: 'Contradicts',
-		partial: 'Partly true',
-		neutral: 'Neutral',
-	};
-	const known = Object.prototype.hasOwnProperty.call(labels, stance) ? stance : 'neutral';
-	return `<span class="stance-pill ${known}">${labels[stance] || stance}</span>`;
+	const labels = { supports: 'Supports', contradicts: 'Contradicts', neutral: 'Neutral' };
+	return `<span class="stance-pill ${stance}">${labels[stance] || stance}</span>`;
 }
 
 function renderSources(sources) {

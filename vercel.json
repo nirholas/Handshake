@@ -2021,18 +2021,6 @@
 			"dest": "/constellation.html"
 		},
 		{
-			"src": "/cert/?",
-			"dest": "/certificate.html"
-		},
-		{
-			"src": "/cert/([0-9a-f]{24})/?",
-			"dest": "/certificate.html"
-		},
-		{
-			"src": "/materialize/insert/([0-9a-f]{24})/?",
-			"dest": "/print-insert.html"
-		},
-		{
 			"src": "/p/([a-z0-9-]+)/?",
 			"dest": "/p/index.html"
 		},
@@ -6312,10 +6300,6 @@
 		{
 			"path": "/api/cron/feedback-triage",
 			"schedule": "*/5 * * * *"
-		},
-		{
-			"path": "/api/cron/print-orders-sync",
-			"schedule": "*/15 * * * *"
 		}
 	]
 }

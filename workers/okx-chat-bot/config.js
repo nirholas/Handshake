@@ -4,7 +4,6 @@
 // VM, and locally with no code change. The defaults are the production posture:
 // state persisted to GCS, heartbeat on, session probed every minute.
 
-import { existsSync } from 'node:fs';
 import { homedir, hostname } from 'node:os';
 import { join } from 'node:path';
 
@@ -30,31 +29,18 @@ const num = (v, fallback) => {
  *   CLAUDE_CODE_OAUTH_TOKEN → claude
  *   OPENAI_API_KEY        → codex
  *
- * A headless host is credentialed by env alone, but a developer host running the
- * stopgap has no key at all: its claude CLI was logged in interactively and keeps
- * the grant in ~/.claude/.credentials.json. Ignoring that file reports
- * `ai_provider_uncredentialed` on a host whose adapter demonstrably authors
- * replies, which is a false red, and a false red trains people to ignore the
- * signal that this worker exists to raise.
- *
  * @param {NodeJS.ProcessEnv} env
- * @param {string} [home] where the CLI keeps an interactive login
  * @returns {{ provider: string, reason: string, credentialed: boolean }}
  */
-export function resolveProvider(env = process.env, home = env.OKX_BOT_HOME || homedir()) {
+export function resolveProvider(env = process.env) {
 	const pinned = (env.OKX_BOT_AI_PROVIDER || '').trim().toLowerCase();
-	const hasClaudeKey = !!(env.ANTHROPIC_API_KEY || env.CLAUDE_CODE_OAUTH_TOKEN);
-	const hasClaudeLogin = existsSync(join(home, '.claude', '.credentials.json'));
-	const hasClaude = hasClaudeKey || hasClaudeLogin;
+	const hasClaude = !!(env.ANTHROPIC_API_KEY || env.CLAUDE_CODE_OAUTH_TOKEN);
 	const hasCodex = !!env.OPENAI_API_KEY;
 	if (pinned) {
 		const credentialed = pinned === 'claude' ? hasClaude : pinned === 'codex' ? hasCodex : true;
 		return { provider: pinned, reason: 'pinned by OKX_BOT_AI_PROVIDER', credentialed };
 	}
-	if (hasClaudeKey) return { provider: 'claude', reason: 'ANTHROPIC_API_KEY present', credentialed: true };
-	if (hasClaudeLogin) {
-		return { provider: 'claude', reason: 'claude CLI holds an interactive login', credentialed: true };
-	}
+	if (hasClaude) return { provider: 'claude', reason: 'ANTHROPIC_API_KEY present', credentialed: true };
 	if (hasCodex) return { provider: 'codex', reason: 'OPENAI_API_KEY present (no Anthropic key)', credentialed: true };
 	return {
 		provider: 'claude',
@@ -91,14 +77,13 @@ export function resolveHost(env = process.env) {
 }
 
 export function loadConfig(env = process.env) {
-	const home = env.OKX_BOT_HOME || homedir();
-	const provider = resolveProvider(env, home);
+	const provider = resolveProvider(env);
 	const host = resolveHost(env);
 	return {
 		// HOME for both CLIs. Everything durable lands under it:
 		//   $home/.okx-agent-task/  daemon state, sqlite, XMTP db, AI workspace
 		//   $home/.onchainos/       wallet keyring, session, machine identity
-		home,
+		home: env.OKX_BOT_HOME || homedir(),
 		port: num(env.PORT, 0),
 
 		agentId: env.OKX_BOT_AGENT_ID || '2632',
