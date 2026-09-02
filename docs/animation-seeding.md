@@ -125,3 +125,28 @@ names. The epoch is one week and the subset is 12 clips (`FREE_ROTATION`).
 
 The subset is computed over the **whole** generated collection rather than the current
 batch, so a later batch cannot hand out a second set of free clips.
+
+## Scale: what happens as the library grows
+
+Measured 2026-09-02 against the live site, with 2,874 clips in the library and
+58,544 avatars in the catalog.
+
+`GET /api/animations/library` already supports paging (`?limit=`, `?offset=`), and a
+paged response is small: 24.6 KB for `?limit=60`. **With no `?limit` it returns the
+entire manifest**, which is 1.12 MB uncompressed today (about 100 KB on the wire,
+since the CDN serves it brotli-compressed). That un-paged form is the documented
+backward-compatible contract, and three consumers still use it:
+
+- `src/animations-gallery.js` (the `/animations` gallery)
+- `src/animation-library.js` (pose deep-link lookup by clip name)
+- `src/avatar-embed.js` (the embed viewer)
+
+At 5 to 10 times the current library those three each parse 6 to 11 MB of JSON on
+load. The gallery is the one to fix first, because it only ever renders a page at a
+time and has no reason to hold the whole manifest; the other two look a clip up by
+name, so they need either a name-indexed endpoint or a cached shard rather than
+simple paging. None of this is urgent at 2,874 clips and all of it bites well before
+30,000.
+
+The marketplace endpoint (`/api/marketplace/animations`) is cursor-paged with a hard
+`limit` ceiling of 60 and needs no change.
