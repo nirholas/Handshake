@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · Materialize: turn a generation into a real object</title>
+			<link>https://three.ws/docs/materialize</link>
+			<guid isPermaLink="false">2026-09-02:Docs · Materialize: turn a generation into a real object</guid>
+			<pubDate>Wed, 02 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How to print any three.ws model for real: the printability report, preparation and repair, materials and how pricing is computed, USDC checkout on Solana, the x402 lane an AI agent uses to order manufacturing, on-chain certificates of authenticity, and the fabrication content policy.</description>
+		</item>
+		<item>
 			<title>Generated animation seeding</title>
 			<link>https://three.ws/docs/animation-seeding</link>
 			<guid isPermaLink="false">2026-09-02:Generated animation seeding</guid>

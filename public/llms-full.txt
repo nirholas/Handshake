@@ -2157,6 +2157,12 @@ URL: https://three.ws/docs/forge-pipeline
 
 The engineering guide to the Forge: every entry point, the declared engine grid, free-first health-aware routing, the job lifecycle with two-layer failover, persistence and storage, GPU workers, post-processing, payments, and how to extend the pipeline.
 
+### Docs · Materialize: turn a generation into a real object
+
+URL: https://three.ws/docs/materialize
+
+How to print any three.ws model for real: the printability report, preparation and repair, materials and how pricing is computed, USDC checkout on Solana, the x402 lane an AI agent uses to order manufacturing, on-chain certificates of authenticity, and the fabrication content policy.
+
 ### Docs · How the Forge works, in plain language
 
 URL: https://three.ws/docs/how-forge-works

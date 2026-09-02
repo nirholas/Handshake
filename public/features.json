@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-02T19:40:47.857Z",
+	"generated_at": "2026-09-02T19:43:20.555Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -3542,6 +3542,16 @@
 					"title": "Docs · The Forge pipeline (architecture deep dive)",
 					"description": "The engineering guide to the Forge: every entry point, the declared engine grid, free-first health-aware routing, the job lifecycle with two-layer failover, persistence and storage, GPU workers, post-processing, payments, and how to extend the pipeline.",
 					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/materialize",
+					"title": "Docs · Materialize: turn a generation into a real object",
+					"description": "How to print any three.ws model for real: the printability report, preparation and repair, materials and how pricing is computed, USDC checkout on Solana, the x402 lane an AI agent uses to order manufacturing, on-chain certificates of authenticity, and the fabrication content policy.",
+					"added": "2026-09-02",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

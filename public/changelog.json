@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-09-02T19:40:47.887Z",
+	"generated_at": "2026-09-02T19:43:20.615Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-09-02",
+			"type": "launch",
+			"title": "Docs · Materialize: turn a generation into a real object",
+			"summary": "How to print any three.ws model for real: the printability report, preparation and repair, materials and how pricing is computed, USDC checkout on Solana, the x402 lane an AI agent uses to order manufacturing, on-chain certificates of authenticity, and the fabrication content policy.",
+			"link": "/docs/materialize",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-09-02",
 			"type": "launch",

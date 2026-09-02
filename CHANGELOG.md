@@ -6,6 +6,7 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 
 ## 2026-09-02
 
+- **Docs · Materialize: turn a generation into a real object** (`/docs/materialize`): How to print any three.ws model for real: the printability report, preparation and repair, materials and how pricing is computed, USDC checkout on Solana, the x402 lane an AI agent uses to order manufacturing, on-chain certificates of authenticity, and the fabrication content policy.
 - **Generated animation seeding** (`/docs/animation-seeding`): How three.ws generates its own animation clips: the text-to-motion GPU lane, the world-space quality gate that judges joint positions instead of raw rotations, the resumable bulk runner, and the rotating free subset.
 - **Materialize** (`/materialize`): Turn any 3D model into a real printed object. Live printability analysis and automatic repair, a true-scale AR preview on your own desk, an itemized price from the mesh's own measured volume, and USDC checkout on Solana.
 - **NVIDIA NGC Container EULA** (`/legal/nvidia-ngc-eula`): License terms for three.ws container images distributed through the NVIDIA NGC catalog: what the license covers, the model weights the image does not ship, and the data the container does not collect.
