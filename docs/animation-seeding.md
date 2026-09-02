@@ -148,5 +148,15 @@ name, so they need either a name-indexed endpoint or a cached shard rather than
 simple paging. None of this is urgent at 2,874 clips and all of it bites well before
 30,000.
 
-The marketplace endpoint (`/api/marketplace/animations`) is cursor-paged with a hard
-`limit` ceiling of 60 and needs no change.
+The other list surfaces are already scale-safe and need no change. Measured at
+58,544 avatars, each returns a bounded first page even with **no** `?limit` given:
+
+| Endpoint | No limit | `?limit=24` |
+|---|---|---|
+| `/api/marketplace` | 22.8 KB | 22.8 KB |
+| `/api/avatars/public` | 38.3 KB | 38.3 KB |
+| `/api/marketplace/animations` | cursor-paged, `limit` ceiling 60 | 
+| `/api/animations/library` | **1.12 MB, the whole manifest** | 24.6 KB |
+
+So the clip library is the single unbounded response on the platform, and the fix is
+the three consumers above rather than the endpoint, which already pages.
