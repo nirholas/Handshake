@@ -101,6 +101,21 @@ for (const f of walk(resolve(ROOT, 'blog'))) served.add('blog/' + f);
 	}
 }
 
+// public/news/ is the same shape: scripts/build-news.mjs renders /news/index.html
+// and one page per curated item into it during `prebuild`, and .gitignore excludes
+// the directory, so walking public/ misses it in any workspace that has not built.
+// Modeled from the generator's own source of truth (data/rss/items.json), which is
+// also what decides whether the index gets written at all: writeAllPages() returns
+// early on an empty feed, so an empty feed here correctly models /news as absent.
+{
+	const curated = JSON.parse(readFileSync(resolve(ROOT, 'data/rss/items.json'), 'utf8'));
+	const entries = Array.isArray(curated?.items) ? curated.items : [];
+	const publishable = entries.filter(
+		(e) => e && typeof e === 'object' && e.id && e.title && e.date && e.body_html && e.published !== false,
+	);
+	if (publishable.length) served.add('news/index.html');
+}
+
 // ───────────────────────── shared legacy-routes resolver ─────────────────────────
 // The matcher itself lives in scripts/lib/vercel-routes.mjs so this script and
 // scripts/audit-route-shadowing.mjs predict production from one implementation.
