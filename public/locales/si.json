@@ -15413,7 +15413,6 @@
 		"three_ws_3d_agent_identity_and_x402": "three.ws 3D නියෝජිත අනන්‍යතාවය සහ x402 ගෙවීම් පද්ධති IBM watsonx සහ IBM Granite සමඟ ඒකාබද්ධ වේ. නියෝජිතයන් on-chain අනන්‍යතාවය පවත්වා ගනිමින් සහ සැබෑ ක්ෂුද්‍ර ගෙවීම් සිදු කරමින් ව්‍යවසාය AI මාදිලි ක්‍රියාත්මක කරයි — මේ සියල්ල තනි නියෝජිත පැතිකඩකින්.",
 		"three_ws_is_a_member_of_nvidia": "three.ws යනු NVIDIA Inception හි සාමාජිකයෙකි, එය වේගවත් පරිගණනය මත ගොඩනඟන ආරම්භක ව්‍යාපාර සඳහා NVIDIA හි වැඩසටහනයි. සෑම 3D උත්පාදන මාර්ගයක්ම දැනටමත් NVIDIA සිලිකන් මත ක්‍රියාත්මක වේ: text to 3D, photo to avatar, auto-rigging, සහ motion capture, තවද forge පිටුපස ඇති නොමිලේ සත්කාරකත්වය සපයන NIM lane.",
 		"three_ws_is_a_member_of_the": "three.ws Quicknode Startup Program හි සාමාජිකයෙකි, අනුමත යටිතල පහසුකම් ණය සමඟින්. Quicknode හි ගෝලීය වශයෙන් බෙදා හරින ලද RPC endpoints, agent wallets, x402 settlement verification, සහ සජීවී Solana market data පිටුපස ඇති chain access සඳහා ධාරිතාව සහ අතිරික්තය එක් කරයි.",
-		"three_ws_is_an_openai_select_partner": "three.ws යනු OpenAI Partner Network හි OpenAI Select Partner කෙනෙකි. නොමිලේ three.ws 3D Studio connector මඟින් ChatGPT වෙත ප්‍රධාන රහිත 3D මෙවලම් නවයක් ලබා දෙයි: text to model, rigged avatars, conversational refinement, සහ ජීවමාන agent body එකක්, මේ සියල්ල සංවාදය තුළ අන්තර්ක්‍රියාකාරීව render කර ඇත.",
 		"three_ws_runs_on_and_integrates_with": "three.ws ප්‍රමුඛ පෙළේ cloud, AI, සහ hardware platforms මත ක්‍රියාත්මක වන අතර ඒවා සමඟ ඒකාබද්ධ වේ — සෑම agent කෙනෙකුටම enterprise-grade compute, identity, සහ reach ලබා දෙයි.",
 		"vertex_ai": "Vertex AI",
 		"watsonx_ai": "watsonx.ai",

@@ -15413,7 +15413,6 @@
 		"three_ws_3d_agent_identity_and_x402": "three.ws 3D-agentti-identiteetti ja x402 maksuraidat integroituvat IBM watsonx:ään ja IBM Granite:een. Agentit käyttävät yritys-AI-malleja säilyttäen samalla on-chain-identiteetin ja toteuttaen pieniä maksuja — kaikki yhdestä agenttiprofiilista.",
 		"three_ws_is_a_member_of_nvidia": "three.ws on NVIDIA Inceptionin jäsen, joka on NVIDIAn ohjelma kiihdytettyyn laskentaan perustuville startup-yrityksille. Jokainen 3D-generointikaista pyörii jo NVIDIAn piillä: tekstistä 3D:ksi, valokuvasta avatariin, automaattinen riggaus ja liikkeenkaappaus, sekä ilmainen isännöity NIM-kaista forgen takana.",
 		"three_ws_is_a_member_of_the": "three.ws on Quicknode Startup Programin jäsen, jolla on hyväksytyt infrastruktuuriluotot. Quicknode:n globaalisti jakautuneet RPC-pisteet lisäävät kapasiteettia ja redundanssia agenttilompakoiden taustalla, x402-maksujen vahvistamisessa ja reaaliaikaisissa Solana-markkinatiedoissa.",
-		"three_ws_is_an_openai_select_partner": "three.ws on OpenAI Select -kumppani OpenAI Partner Networkissa. Ilmainen three.ws 3D Studio -liitin antaa ChatGPT:lle yhdeksän avaimetonta 3D-työkalua: tekstistä malliksi, rigatut avatarit, keskustelun tarkennus ja elävä agenttikeho, kaikki renderöitynä interaktiivisesti suoraan keskusteluun.",
 		"three_ws_runs_on_and_integrates_with": "three.ws toimii ja integroituu johtaviin pilvi-, AI- ja laitteistolaitteisiin — antaen jokaiselle agentille yritystason laskentatehon, identiteetin ja ulottuvuuden.",
 		"vertex_ai": "Vertex AI",
 		"watsonx_ai": "watsonx.ai",

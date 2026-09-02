@@ -15413,7 +15413,6 @@
 		"three_ws_3d_agent_identity_and_x402": "three.ws 3D ügynök identitás és x402 fizetési sínek integrálódnak az IBM watsonx és az IBM Granite-el. Az ügynökök vállalati AI modelleket futtatnak, miközben fenntartják az on-chain identitást és valós mikrofizetéseket hajtanak végre — mindezt egyetlen ügynök profilból.",
 		"three_ws_is_a_member_of_nvidia": "A three.ws az NVIDIA Inception tagja, amely az NVIDIA programja a gyorsított számítástechnikára épülő startupok számára. Minden 3D generációs sáv már NVIDIA szilíciumon fut: szövegből 3D, fotóból avatár, automatikus rigelés és mozgásrögzítés, plusz az ingyenesen hosztolt NIM sáv a forge mögött.",
 		"three_ws_is_a_member_of_the": "three.ws a Quicknode Startup Program tagja, jóváhagyott infrastruktúra hitelekkel. A Quicknode globálisan elosztott RPC végpontjai kapacitást és redundanciát adnak a lánc eléréséhez az ügynök pénztárcák, x402 elszámolás ellenőrzés és élő Solana piaci adatok mögött.",
-		"three_ws_is_an_openai_select_partner": "A three.ws az OpenAI Select Partnere az OpenAI Partnerhálózatban. Az ingyenes three.ws 3D Studio csatlakozó kilenc kulcs nélküli 3D eszközt biztosít a ChatGPT-nek: szövegből modell, rigelt avatárok, beszélgetés finomítása és élő ügynöktest, mind interaktívan, beágyazva jelenik meg a beszélgetésben.",
 		"three_ws_runs_on_and_integrates_with": "three.ws a vezető felhő-, AI- és hardverplatformokon fut és integrálódik — minden ügynöknek vállalati szintű számítást, identitást és elérhetőséget biztosít.",
 		"vertex_ai": "Vertex AI",
 		"watsonx_ai": "watsonx.ai",

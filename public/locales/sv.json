@@ -15413,7 +15413,6 @@
 		"three_ws_3d_agent_identity_and_x402": "three.ws 3D agentidentitet och x402 betalningssystem integreras med IBM watsonx och IBM Granite. Agenter kör företags-AI-modeller samtidigt som de upprätthåller identitet på kedjan och genomför verkliga mikrobetalningar — allt från en enda agentprofil.",
 		"three_ws_is_a_member_of_nvidia": "three.ws är medlem i NVIDIA Inception, NVIDIAs program för startups som bygger på accelererad databehandling. Varje 3D-genereringsbana körs redan på NVIDIA-kisel: text till 3D, foto till avatar, automatisk riggning och motion capture, plus den kostnadsfria hostade NIM-banan bakom smedjan.",
 		"three_ws_is_a_member_of_the": "three.ws är medlem i Quicknode Startup Program med godkända infrastrukturkrediter. Quicknodes globalt distribuerade RPC-slutpunkter lägger till kapacitet och redundans till kedjeåtkomsten bakom agentplånböcker, x402 avvecklingsverifiering och live Solana marknadsdata.",
-		"three_ws_is_an_openai_select_partner": "three.ws är en OpenAI Select Partner i OpenAI Partner Network. Den kostnadsfria three.ws 3D Studio-anslutningen ger ChatGPT nio nyckellösa 3D-verktyg: text till modell, riggade avatarer, konversationsförfining och en levande agentkropp, allt renderat interaktivt direkt i konversationen.",
 		"three_ws_runs_on_and_integrates_with": "three.ws körs på och integreras med de ledande moln-, AI- och hårdvaruplattformarna — vilket ger varje agent företagsklassad beräkning, identitet och räckvidd.",
 		"vertex_ai": "Vertex AI",
 		"watsonx_ai": "watsonx.ai",

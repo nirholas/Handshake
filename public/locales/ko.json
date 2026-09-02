@@ -15409,7 +15409,6 @@
 		"three_ws_3d_agent_identity_and_x402": "three.ws 3D 에이전트 ID와 x402 결제 레일은 IBM watsonx 및 IBM Granite과 통합됩니다. 에이전트는 온체인 ID를 유지하고 실제 소액 결제를 실행하면서 엔터프라이즈 AI 모델을 구동합니다. 이 모든 것이 단일 에이전트 프로필에서 이루어집니다.",
 		"three_ws_is_a_member_of_nvidia": "three.ws는 가속 컴퓨팅 기반 스타트업을 위한 NVIDIA 프로그램인 NVIDIA 인셉션의 회원사입니다. 모든 3D 생성 레인은 이미 NVIDIA 실리콘에서 실행됩니다: 텍스트를 3D로, 사진을 아바타로, 자동 리깅, 모션 캡처, 그리고 포지 뒤의 무료 호스팅 NIM 레인까지.",
 		"three_ws_is_a_member_of_the": "three.ws는 승인된 인프라 크레딧을 보유한 Quicknode 스타트업 프로그램의 회원입니다. Quicknode의 전 세계적으로 분산된 RPC 엔드포인트는 에이전트 지갑 뒤의 체인 액세스, x402 정산 확인 및 실시간 Solana 시장 데이터의 용량과 이중성을 강화합니다.",
-		"three_ws_is_an_openai_select_partner": "three.ws는 OpenAI 파트너 네트워크의 OpenAI 셀렉트 파트너입니다. 무료 three.ws 3D 스튜디오 커넥터는 ChatGPT에 9가지 키리스 3D 도구를 제공합니다. 텍스트를 모델로, 리깅된 아바타, 대화형 정교화, 살아있는 에이전트 바디 등 이 모든 것이 대화 내에서 상호작용적으로 렌더링됩니다.",
 		"three_ws_runs_on_and_integrates_with": "three.ws는 선도적인 클라우드, AI 및 하드웨어 플랫폼과 연동 및 통합되어 모든 에이전트에게 엔터프라이즈급 컴퓨팅, ID 및 도달 범위를 제공합니다.",
 		"vertex_ai": "Vertex AI",
 		"watsonx_ai": "watsonx.ai",

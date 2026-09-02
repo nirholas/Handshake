@@ -15409,7 +15409,6 @@
 		"three_ws_3d_agent_identity_and_x402": "three.ws 3D 代理身份和 x402 付款通道與 IBM watsonx 和 IBM Granite 整合。代理運行企業 AI 模型，同時保持鏈上身份並執行實時微支付 — 所有操作均來自單一代理檔案。",
 		"three_ws_is_a_member_of_nvidia": "three.ws 是 NVIDIA Inception 的成員，這是 NVIDIA 針對基於加速運算建立的新創公司所設計的計畫。每個 3D 生成通道都已在 NVIDIA 晶片上運行：包括文字轉 3D、照片轉虛擬替身、自動綁定和動作捕捉，以及 Forge 背後免費託管的 NIM 通道。",
 		"three_ws_is_a_member_of_the": "three.ws 是 Quicknode 初創計劃的成員，擁有批准的基礎設施信用。Quicknode 的全球分佈 RPC 端點為代理錢包後的鏈接訪問、x402 結算驗證和實時 Solana 市場數據增加了容量和冗餘。",
-		"three_ws_is_an_openai_select_partner": "three.ws 是 OpenAI 合作夥伴網路中的 OpenAI Select Partner。免費的 three.ws 3D Studio 連接器為 ChatGPT 提供了九種無需金鑰的 3D 工具：包括文字轉模型、綁定虛擬替身、對話精煉和活體代理實體，所有這些都能在對話中即時互動式渲染。",
 		"three_ws_runs_on_and_integrates_with": "three.ws 在並整合了領先的雲端、AI 和硬體平台 — 為每個代理提供企業級計算、身份和觸及。",
 		"vertex_ai": "Vertex AI",
 		"watsonx_ai": "watsonx.ai",

@@ -15409,7 +15409,6 @@
 		"three_ws_3d_agent_identity_and_x402": "three.wsの3DエージェントIDとx402決済レールは、IBM watsonxおよびIBM Graniteと連携。エージェントはオンチェーンIDを維持し、実際のマイクロペイメントを実行しながらエンタープライズAIモデルを稼働させます — これら全てを単一のエージェントプロファイルから。",
 		"three_ws_is_a_member_of_nvidia": "three.wsは、NVIDIAのアクセラレーテッドコンピューティングを基盤とするスタートアップ向けプログラム「NVIDIA Inception」のメンバーです。テキストから3D、写真からアバター、自動リギング、モーションキャプチャ、そしてForgeを支える無料のホスト型NIMレーンまで、すべての3D生成レーンはNVIDIAシリコン上で稼働しています。",
 		"three_ws_is_a_member_of_the": "three.wsは、承認されたインフラクレジットを持つQuicknodeスタートアッププログラムのメンバーです。Quicknodeのグローバル分散型RPCエンドポイントは、エージェントウォレット、x402決済検証、およびライブSolana市場データの背後にあるチェーンアクセスに容量と冗長性をもたらします。",
-		"three_ws_is_an_openai_select_partner": "three.wsはOpenAIパートナーネットワークのOpenAI Select Partnerです。無料のthree.ws 3D Studioコネクタは、ChatGPTに9つのキーレス3Dツールを提供します。テキストからモデル生成、リギング済みアバター、会話の洗練、そして生きているエージェントボディなど、すべて会話中にインタラクティブにインラインでレンダリングされます。",
 		"three_ws_runs_on_and_integrates_with": "three.wsは、主要なクラウド、AI、ハードウェアプラットフォーム上で稼働し、連携します — 全てのエージェントにエンタープライズグレードのコンピューティング、ID、リーチを提供します。",
 		"vertex_ai": "Vertex AI",
 		"watsonx_ai": "watsonx.ai",
