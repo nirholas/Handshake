@@ -1656,6 +1656,15 @@ kinematics and judges world-space joint positions. Generated clips score 1.3x to
 on world-space continuity against the authored library's median of 1.69 and worst case
 of 5.79, so the generated motion is as smooth as the curated library.
 
+**Loop seams: a second 100% rejection, same root cause.** 41% of the prompt library is
+tagged `loop`, and the sampler produces no seamless loops: a generated walk ends 0.25 m
+per joint from where it started, against 0.000 for the authored library. The gate's
+seam rule also compared LOCAL rotations, so it reported a 178 degree seam on a clip
+whose joints were 2.9 cm apart. Both are fixed: the seam is measured in world space,
+and `closeLoopSeam()` trims to the cycle and blends the tail back onto the opening
+pose, taking four real clips from seams of 0.029 to 0.267 m down to 0.000, all passing
+as loops.
+
 **Why the sample is only 5.** `/api/forge-motion` is a public endpoint rate limited per
 IP. A 40-clip batch generated 2 clips and then took `429 rate_limited` with a
 `retry_after` of 2947 seconds on the remaining 38. Bulk seeding must use the

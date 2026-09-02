@@ -83,6 +83,39 @@ motion we asked for, so those rules are correct where they are applied.
 Re-run the calibration whenever a threshold changes, and inspect rejected clips before
 touching a number. A broken pipeline looks exactly like a strict gate.
 
+## Loop seams
+
+A motion-diffusion sampler does not produce seamless loops. It samples a window, and
+the last frame has no reason to meet the first. This matters because **41% of the
+prompt library (56 of 137) is tagged `loop`**, concentrated exactly where looping
+matters: locomotion (16 of 20), dance (10 of 12), idle (10 of 14).
+
+Measured on real output, a generated walk ends **0.25 m** per joint from where it
+started (hips-relative), against **0.000** for the authored library's loops. Published
+as-is, every one of those clips would visibly pop once a cycle.
+
+`closeLoopSeam(clip)` fixes it in two steps:
+
+1. **Trim to the cycle.** Search the tail for the frame whose pose is closest to frame
+   0 and cut there. For a periodic motion the cycle really is in the clip already. A
+   trim is only taken if it beats the untrimmed seam by a clear margin, and never cuts
+   more than 35% of the clip.
+2. **Blend what is left.** Over the final frames, slerp each rotation onto the value it
+   holds at frame 0, so the seam closes exactly. The root's height is matched the same
+   way while its horizontal travel is preserved, so a travelling walk still travels.
+
+It **self-verifies**: closing a seam moves joints, and on a clip that barely needed it
+the correction can cost more than the seam did. If the result is less continuous than
+the gate allows while the original was fine, the original is returned untouched.
+
+Measured on four real clips: seams of 0.029, 0.171, 0.251 and 0.267 m all close to
+**0.000**, and all four pass the gate as loops.
+
+Seam distance is measured in world space, hips-relative, for the same reason the
+continuity test is. Compared on local rotations, a clip whose joints are 2.9 cm apart
+reports a **178 degree** seam, because the twist flips described above land in that
+comparison too. That reading would have condemned a clip that was already fine.
+
 ## Running a batch
 
 ```bash
