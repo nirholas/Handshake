@@ -9,7 +9,7 @@
 // docs/ops/gcp-production.md).
 
 import { describe, it, expect } from 'vitest';
-import { classify, defaultSecretName, mapLimit } from '../scripts/migrate-plaintext-secrets.mjs';
+import { classify, defaultSecretName, mapLimit, urlCarriesCredential } from '../scripts/migrate-plaintext-secrets.mjs';
 
 describe('credential classifier', () => {
 	it('treats the wallet secret keys as credentials', () => {
@@ -57,11 +57,26 @@ describe('credential classifier', () => {
 		}
 	});
 
-	it('flags a provider URL for a human call instead of filing it as public config', () => {
-		for (const name of ['SOLANA_RPC_URL', 'UPSTASH_REDIS_REST_URL', 'HELIUS_RPC_ENDPOINT']) {
-			const verdict = classify(name);
-			expect(verdict.secret, name).toBe(false);
-			expect(verdict.review, name).toBe(true);
+	// A URL's name says nothing about whether it carries a key, so the value
+	// decides. Every one of the 19 URL vars on production was checked this way on
+	// 2026-09-02 and only DATABASE_URL carried a credential.
+	it('leaves a provider URL alone when its value carries no credential', () => {
+		for (const [name, value] of [
+			['SOLANA_RPC_URL', 'https://rpc.example.com/v2/abc'],
+			['UPSTASH_REDIS_REST_URL', 'http://10.128.15.228'],
+			['GCP_STYLIZE_URL', 'https://stylize-abc-uc.a.run.app'],
+		]) {
+			expect(classify(name, value).secret, name).toBe(false);
+		}
+	});
+
+	it('migrates a provider URL that does carry one', () => {
+		for (const [name, value] of [
+			['SOLANA_RPC_URL', 'https://rpc.example.com/?api-key=abc123'],
+			['AGENT_WALLET_RPC_URL', 'https://eth.example.com/v2?apiKey=zzz'],
+			['LIQUIDATION_COLLECTOR_URL', 'https://user:pw@collector.example.com/hook'],
+		]) {
+			expect(classify(name, value).secret, name).toBe(true);
 		}
 	});
 
@@ -106,5 +121,32 @@ describe('mapLimit', () => {
 
 	it('handles an empty list without spawning a worker', async () => {
 		expect(await mapLimit([], 4, async () => 'never')).toEqual([]);
+	});
+});
+
+describe('urlCarriesCredential', () => {
+	it('finds a key in the query string under any spelling', () => {
+		for (const v of [
+			'https://x.example/?api-key=a',
+			'https://x.example/?api_key=a',
+			'https://x.example/?apikey=a',
+			'https://x.example/?token=a',
+			'https://x.example/path?foo=1&secret=a',
+			'https://x.example/?ACCESS-KEY=a',
+		]) {
+			expect(urlCarriesCredential(v), v).toBe(true);
+		}
+	});
+
+	it('finds a credential in the userinfo, which is how a database URL carries one', () => {
+		expect(urlCarriesCredential('postgres://user:pw@host/db')).toBe(true);
+	});
+
+	// A path segment that merely looks key-shaped is not a query parameter, and an
+	// empty parameter carries nothing.
+	it('does not fire on a plain URL', () => {
+		for (const v of ['https://x.example/v2/abcdef', 'http://10.128.15.228', 'https://x.example/?key=', '']) {
+			expect(urlCarriesCredential(v), JSON.stringify(v)).toBe(false);
+		}
 	});
 });

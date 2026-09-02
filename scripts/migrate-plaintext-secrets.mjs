@@ -121,8 +121,8 @@ const SECRET_SEGMENTS = new Set([
 ]);
 
 // A name segment from this set means the value is a public identifier, even when
-// another segment matched above. In a crypto codebase TOKEN and KEY are heavily
-// overloaded: THREE_TOKEN_MINT is an address, not a credential.
+// another segment matched above. TOKEN and KEY are heavily overloaded here:
+// THREE_TOKEN_MINT is an address, not a credential.
 const PUBLIC_SEGMENTS = new Set(['PUBLIC', 'PUBKEY', 'ADDRESS', 'MINT', 'ISSUER', 'AUDIENCE']);
 
 // Suffixes that name a credential's handle rather than the credential itself.
@@ -171,7 +171,18 @@ function fail(msg) {
 	process.exit(1);
 }
 
-export function classify(name) {
+// A provider URL routinely carries its key in the query string, and a database
+// URL carries its password as userinfo before the host. The NAME cannot say
+// whether a given one does, so the value is what decides: this returns true only
+// for a URL that actually carries a credential.
+export function urlCarriesCredential(value) {
+	if (!value) return false;
+	if (/[?&](api[-_]?key|apikey|key|token|secret|password|passwd|access[-_]?key|auth)=[^&\s]+/i.test(value)) return true;
+	const authority = String(value).split('//')[1]?.split(/[/?#]/)[0] || '';
+	return authority.includes('@');
+}
+
+export function classify(name, value) {
 	if (EXCLUDE.includes(name)) return { secret: false, reason: 'excluded by --exclude' };
 	if (INCLUDE.includes(name)) return { secret: true, reason: 'forced by --include' };
 	if (EXTRA_SECRETS.has(name)) return { secret: true, reason: 'known credential' };
@@ -186,7 +197,9 @@ export function classify(name) {
 	// QuickNode all do). The name cannot say whether this one does, so it is
 	// surfaced for a human call instead of being silently filed as public config.
 	if (/_(URL|URI|ENDPOINT)$/.test(name)) {
-		return { secret: false, review: true, reason: 'URL: may embed a key in its query string' };
+		return urlCarriesCredential(value)
+			? { secret: true, reason: 'URL carrying a credential in its query string or userinfo' }
+			: { secret: false, reason: 'URL with no credential in it' };
 	}
 	// A JWK is a public key half the time and a signing key the other half. The
 	// name cannot tell them apart, so an operator decides.
@@ -264,7 +277,7 @@ function partition(env) {
 			continue;
 		}
 		const value = entry.value ?? '';
-		const verdict = classify(name);
+		const verdict = classify(name, value);
 		if (!verdict.secret) {
 			(verdict.review ? review : config).push({ name, reason: verdict.reason });
 			continue;
@@ -412,7 +425,7 @@ function reportEndState(after, migratedNames) {
 		else if (!entry.valueFrom?.secretKeyRef) problems.push(`${name}: neither a literal nor a secretKeyRef`);
 	}
 	const leftoverLiterals = after.env
-		.filter((e) => e.value && classify(e.name).secret)
+		.filter((e) => e.value && classify(e.name, e.value).secret)
 		.map((e) => e.name);
 	const servingRevision = after.traffic.find((t) => Number(t.percent) === 100);
 	const trafficOk = Boolean(servingRevision) && (servingRevision.latestRevision || servingRevision.revisionName === after.latestReady);
