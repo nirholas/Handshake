@@ -85,3 +85,43 @@ now carries its numbers (56 of 151 routes mechanically clean, 95 with a measured
 none retirable on mechanical evidence) and the state of the four sweeps and the roadmap
 slice. Probe artifacts stayed in the session scratchpad; the reproducible method is in
 `docs/ops/swarm-100-audit.md`.
+
+## 2026-09-02: OWNER-ACTIONS re-measured, and the audit that would have lied about row 3
+
+Measured, not carried over: production still `ad7b54c16` (2026-08-28, revision 00404-ph7)
+against a `main` that has moved to **143 commits ahead** (`git rev-list --count
+ad7b54c16..HEAD`); healthz `x402_settle` down at 5.9% (3 of 51 paid attempts, 3 hours,
+`cause: sponsor_floor`, 329 `no_solana_accept`) with the sponsor wallet holding
+**0.001568 SOL** read straight off mainnet `getBalance`; `gcloud run services list` still
+refusing with "Reauthentication failed. cannot prompt during non-interactive execution";
+the `three-ws` GitHub organization and its `examples` repository both 404; the x402
+discovery endpoint live with 100 resources; the testnet deployer
+`0x1C4918894dfA5eE11cfF9629B458b5169Cfa3871` present in `contracts/.env` at balance 0,
+nonce 0.
+
+Found and fixed a defect that would have made row 3 worse than unanswered. Running
+`scripts/audit-custodial-key-health.mjs` here, where `.env.local` carries only
+`DATABASE_URL`, produced a fully confident report: **725 of 725 wallets undecryptable,
+8.57 SOL stranded, 7.29 SOL of it customer money**, followed by the escalation banner. Every
+number was an artifact of the script having no decryption key at all, and it is off by more
+than an order of magnitude from the real incident (8 wallets, 0.49 SOL). It is the same
+class of false certainty the script already guards against for unread balances. The audit
+now calls `secretBoxKeyCandidates()` before it touches the database and exits 3 with the
+places to find the key when the list is empty, and when a key is configured but opens
+nothing it says a fleet-wide 100% failure is one wrong key rather than a mass customer
+incident (`3a8000267`). `scripts/gcp-triage.mjs` skips on the structured error code instead
+of matching prose, and `docs/ops/wallet-key-migration.md` records the blind spot beside the
+two it already documents (`7335810ec`).
+
+Did: rewrote rows 1, 2, 3, 8, 9, 15 and 16 of OWNER-ACTIONS from those measurements, and
+put row 18 back in numeric order. Three premises had rotted. Row 8 asked for a GitHub PAT
+that nothing needs any more (the upstream pull request merged 2026-08-11) and was filed
+against backlog 09, which needs nothing; it now asks for the origin registration that is
+actually left, against backlog 10. Row 9 asked the owner to generate a deployer key that
+already exists and named no address to fund; it now names the address, the measured gas
+cost, and the retired address not to fund. Row 3 gained the finding above: the brief it
+waits on cannot be written from this workspace at all, because the wallet list needs
+`WALLET_ENCRYPTION_KEY` off the service env, which makes row 15 the gate on four rows.
+
+Left: no row was cleared, because none of them is an agent's to clear. Row 15 is now the
+highest-leverage one on the board.
