@@ -343,6 +343,57 @@ within the hour, and it briefly carried a duplicate `print-orders-sync` entry). 
 `npm run audit:docs` finding, `docs/materialize.md` missing from `data/pages.json`, belongs
 to the Materialize work committed today; `data/pages.json` is dirty in that agent's tree.
 
+## 2026-09-02: 01 ship-readiness (built and verified; the submit is the owner's)
+
+Prod before: `089500f4e`, revision `three-ws-api-00408-9mn`, built 20:07 UTC. Read it from
+the Cloud Run URL, not `https://three.ws/api/version`: the CDN served three different
+stale copies of that endpoint during this run (`ad7b54c16`/00404, `7f0ef6251`/00405), and
+believing them would have made this a 343-commit deploy instead of the real 188. Anyone
+verifying a deploy from the public URL without purging first is reading history.
+
+Pinned and staged, not submitted: `2f26d19f3`, built clean in `/workspaces/.deploy-wt-p100`.
+`npm run gate` exit 0 at that SHA, `npm run build:gcp` exit 0 (773 declared pages resolve,
+check:dist OK), `npm run db:check` exit 0 with every migration applied. The ship is one
+command; owner approval for the submit had not been given, so it was not run.
+
+Full `npm test` on a quiet box, which this order has been owed since 2026-08-08: vitest
+`Test Files 1911 passed | 3 skipped (1914)`, zero failures. Playwright `192 passed, 1
+flaky, 2 failed`; both failures were then fixed and re-verified individually. Load average
+peaked at 216 mid-run and the test was held until it fell under 16 rather than reading a
+SIGTERM as a result.
+
+Fifteen reds cleared to get there. Four were checkers that only passed on a machine that
+had already built, which is why the gate looked green in the shared tree and failed in a
+fresh deploy worktree: `check:claude` required `dist-lib/agent-3d.js`, `avatar-sdk/dist`
+and `.git/hooks` (a linked worktree's `.git` is a file, so that one can never resolve
+there); `verify-routes` missed a vite entry a formatter had wrapped across lines, and
+modelled no `public/news/`; `audit-links` looked on disk for a dest `build-news.mjs`
+writes; `audit-docs` wanted launch-kit art that `build:x-grid` regenerates. Two were real
+config defects: `vercel.json` declared `/api/cron/print-orders-sync` twice, which collides
+on one Cloud Scheduler job id, and `api/_lib/drops.js` carried four raw NUL bytes. Ten
+hardcoded hexes across five pages were byte-identical to `--success`/`--danger`/`--warn`.
+Four test suites were stale against shipped behaviour, including an oracle-calibrate case
+asserting a factor both close to 1.318 and below the 1.3 ceiling. `prep:worktree` never
+staged `agent-payments-sdk/dist`, so a fresh worktree failed with "Failed to resolve entry
+for package @three-ws/agent-payments" instead of naming the missing artifact.
+
+Two user-visible fixes, one with a changelog entry: the `/create` hero card nested its
+rotating `model-viewer` inside its own `role="button"`, a serious axe `nested-interactive`
+violation, now `inert`; and the `/portal` spec was judging the product on Vite's HMR
+socket rather than on product errors.
+
+Left for the owner: the submit itself, `npm run deploy:gcp:submit` from
+`/workspaces/.deploy-wt-p100`, then `npm run deploy:gcp:purge-cdn` and `npm run smoke:prod`.
+The worktree is left in place, built and ready, rather than removed. Pre-ship healthz had
+`x402_settle` and `agent_index` down and `rpc_lanes`, `helius`, `sniper` degraded; that is
+the baseline to compare against, and none of it is deploy-armed by this change.
+
+Eight vitest files fail ONLY in a detached worktree and pass in the main checkout
+(`packages/home-bridge` x2, `tour-sdk` x2, `check-tdz-bootstrap`, `multiplayer-server-boot`,
+`server-404-routes`, `setup-git-hooks`). Verified both ways before dismissing them. They
+need nested workspace `node_modules` and a real `.git/hooks` that `prep:worktree` does not
+stage; worth staging next time rather than re-diagnosing.
+
 ## Retire this file when the campaign is done (required)
 
 This file is shared context rather than a single order, so it outlives the
