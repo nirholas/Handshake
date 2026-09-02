@@ -270,6 +270,9 @@ const TAG_LB_INTERVAL_MS = 8000;
 // dropped tick never over- or under-pays. A round needs ≥ KING_MIN_PLAYERS present
 // to start, but once running it tolerates players leaving down to zero (it simply
 // ends with no winner). Dead/downed players (W07) can't hold the zone.
+// How long a freshly joined client is given to attach its message handlers and
+// say 'ready' before the room broadcasts to it regardless. See _stillDeaf.
+const JOIN_SETTLE_MS = 3000;
 const KING_ZONE = { x: 0, z: -12, r: 3.5 };
 const KING_ROUND_MS = 90_000;
 const KING_INTERMISSION_MS = 12_000;
@@ -529,6 +532,10 @@ export class WalkRoom extends Room {
 		// sessionId → the guest token minted for this join, so the 'ready' handshake
 		// can hand it over again if the client was not listening the first time.
 		this._guestTokens = new Map();
+		// Join-settling bookkeeping for the same handshake: who has announced their
+		// handlers, and when each session joined (see _stillDeaf).
+		this._readyClients = new Set();
+		this._joinedAt = new Map();
 		// King of the Totem (R07): off-schema round + score state. `phase` is the
 		// round machine ('idle' waiting for players | 'active' round running |
 		// 'intermission' showing the winner). `scores` is sessionId → accumulated
@@ -613,7 +620,10 @@ export class WalkRoom extends Room {
 		// exactly as before, and a client that does gets the data whatever the
 		// timing. Every payload is a full snapshot, so receiving it twice is a
 		// repaint with identical values, never a double-grant.
-		this.onMessage('ready', (client) => this._resendJoinSnapshot(client));
+		this.onMessage('ready', (client) => {
+			this._readyClients.add(client.sessionId);
+			this._resendJoinSnapshot(client);
+		});
 		this.onMessage('move', (client, payload) => this._handleMove(client, payload));
 		this.onMessage('rename', (client, payload) => this._handleRename(client, payload));
 		this.onMessage('emote', (client, payload) => this._handleEmote(client, payload));
@@ -798,7 +808,8 @@ export class WalkRoom extends Room {
 		const DANCE_FLOOR_CLIPS = ['av-dance-shuffle', 'av-rap-dance', 'av-headbang', 'dance'];
 		let _beatIdx = 0;
 		this.clock.setInterval(() => {
-			this.broadcast('floor:beat', { clip: DANCE_FLOOR_CLIPS[_beatIdx++ % DANCE_FLOOR_CLIPS.length] });
+			this.broadcast('floor:beat', { clip: DANCE_FLOOR_CLIPS[_beatIdx++ % DANCE_FLOOR_CLIPS.length] },
+				{ except: this._stillDeaf() });
 		}, 4000);
 
 		// King of the Totem (R07): the single authoritative clock that runs the round
@@ -959,6 +970,7 @@ export class WalkRoom extends Room {
 		// have enough players. This runs AFTER the hydratePlayer await so the player
 		// is confirmed still present. Uses a random initial assignment so the first
 		// player to join isn't always "it" on arrival.
+		this._joinedAt.set(client.sessionId, Date.now());
 		this._tagTime.set(client.sessionId, { timeMs: 0, becameIt: null });
 		if (this.state.players.size >= TAG_MIN_PLAYERS && !this._itPlayer()) {
 			this._assignIt(this._randomTagPlayer(null));
@@ -1043,6 +1055,8 @@ export class WalkRoom extends Room {
 		}
 		this._tagTime.delete(client.sessionId);
 		this._guestTokens.delete(client.sessionId);
+		this._readyClients.delete(client.sessionId);
+		this._joinedAt.delete(client.sessionId);
 		// King of the Totem (R07): drop their current-round score and demote them if
 		// they were holding the zone. Their accumulated points are forfeited (a player
 		// who leaves can't win), and the next tick re-evaluates occupancy from scratch,
@@ -1374,7 +1388,35 @@ export class WalkRoom extends Room {
 
 	/** Broadcast the current game state to everyone in the room. */
 	_broadcastKing(event) {
-		this.broadcast('game:king', this._kingSnapshot(event));
+		this.broadcast('game:king', this._kingSnapshot(event), { except: this._stillDeaf() });
+	}
+
+	/** Clients that have joined but cannot hear us yet.
+	 *
+	 *  A room broadcast lands on a client that is still inside its own join await,
+	 *  before any onMessage handler exists; Colyseus drops it and logs a warning on
+	 *  their console. The join snapshot is handled by the 'ready' handshake, but the
+	 *  timed broadcasts (the dance beat, the King of the Totem tick) fire on their
+	 *  own schedule and would keep hitting that gap.
+	 *
+	 *  So skip a session until it announces itself, and give up waiting after
+	 *  JOIN_SETTLE_MS regardless. The deadline is what keeps a client on an older
+	 *  bundle, which never sends 'ready', from being excluded forever; it misses at
+	 *  most a couple of seconds of a state that re-broadcasts every tick anyway, and
+	 *  its king sync is sent directly in onJoin. */
+	_stillDeaf() {
+		// Called from the broadcast hot path, including by the unit harnesses that
+		// drive the round machine on a bare room without the constructor's fields.
+		// Nobody to hold back is the right answer for all of those.
+		if (!this._joinedAt?.size || !this.clients) return [];
+		const now = Date.now();
+		const out = [];
+		for (const c of this.clients) {
+			if (this._readyClients.has(c.sessionId)) continue;
+			const at = this._joinedAt.get(c.sessionId);
+			if (at != null && now - at < JOIN_SETTLE_MS) out.push(c);
+		}
+		return out;
 	}
 
 	/** Re-send everything onJoin sent this client, now that it has confirmed its
