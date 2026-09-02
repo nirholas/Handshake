@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Materialize · Turn any 3D model into a real printed object · three.ws</title>
+	<meta name="description" content="Take any three.ws creation from a spinning model to a high-precision physical print. Live printability analysis, true-scale AR preview on your own desk, an itemized price, and USDC checkout on Solana." />
+	<link rel="canonical" href="https://three.ws/materialize" />
+	<meta property="og:title" content="Materialize · three.ws" />
+	<meta property="og:description" content="Turn any 3D model into a real printed object. Printability analysis, true-scale AR, an itemized quote, and USDC checkout on Solana." />
+	<meta property="og:url" content="https://three.ws/materialize" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Materialize&amp;d=Turn+any+3D+model+into+a+real+printed+object.+Printability+analysis%2C+true-scale+AR%2C+an+itemized+quote%2C+and+USDC+checkout+on+Solana.&amp;p=%2Fmaterialize" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:site" content="@trythreews" />
+	<meta name="twitter:title" content="Materialize · three.ws" />
+	<meta name="twitter:description" content="Turn any 3D model into a real printed object. Printability analysis, true-scale AR, an itemized quote, and USDC checkout on Solana." />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/fonts/fonts.css" />
+	<script src="/model-viewer-meshopt.js"></script>
+	<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js" integrity="sha384-sr9b4Ux0WhAUGclJ0ym0FSY2zSOMmNSn0bP/SA0e6bNCrpn/5W3QL8mm+LdlQMKw" crossorigin="anonymous"></script>
+	<style>
+		:root {
+			--mz-line: rgba(255, 255, 255, 0.09);
+			--mz-line-strong: rgba(255, 255, 255, 0.16);
+			--mz-panel: rgba(255, 255, 255, 0.032);
+			--mz-panel-2: rgba(255, 255, 255, 0.055);
+			--mz-ink-2: rgba(255, 255, 255, 0.6);
+			--mz-ink-3: rgba(255, 255, 255, 0.4);
+			--mz-great: #2fbf71;
+			--mz-good: #6fcf5f;
+			--mz-fair: #e0a33a;
+			--mz-poor: #e05a4a;
+			--mz-accent: var(--accent, #7c5cff);
+			--mz-stage: radial-gradient(120% 90% at 50% 6%, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 62%);
+		}
+		[data-theme='light'] {
+			--mz-line: rgba(0, 0, 0, 0.11);
+			--mz-line-strong: rgba(0, 0, 0, 0.2);
+			--mz-panel: rgba(0, 0, 0, 0.024);
+			--mz-panel-2: rgba(0, 0, 0, 0.05);
+			--mz-ink-2: rgba(0, 0, 0, 0.64);
+			--mz-ink-3: rgba(0, 0, 0, 0.46);
+			--mz-stage: radial-gradient(120% 90% at 50% 6%, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0) 62%);
+		}
+
+		.mz-wrap { max-width: 1320px; margin: 0 auto; padding: clamp(1.25rem, 3.5vw, 2.75rem) 1.1rem 5rem; }
+
+		/* Hero */
+		.mz-hero { max-width: 64ch; margin-bottom: clamp(1.25rem, 3vw, 2.25rem); }
+		.mz-eyebrow {
+			display: inline-flex; align-items: center; gap: 0.5rem; margin: 0 0 0.8rem;
+			font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--mz-ink-3);
+		}
+		.mz-eyebrow::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--mz-great); box-shadow: 0 0 10px var(--mz-great); }
+		.mz-title { font-size: clamp(1.7rem, 4.4vw, 2.7rem); font-weight: 800; letter-spacing: -0.032em; line-height: 1.06; margin: 0 0 0.8rem; }
+		.mz-lede { font-size: clamp(14px, 1.5vw, 16px); line-height: 1.6; color: var(--mz-ink-2); margin: 0; }
+		.mz-lede strong { color: inherit; font-weight: 650; }
+
+		/* Shared bits */
+		.mz-panel { border: 1px solid var(--mz-line); border-radius: 16px; background: var(--mz-panel); padding: 1.15rem 1.15rem 1.25rem; }
+		.mz-panel + .mz-panel { margin-top: 0.85rem; }
+		.mz-panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; margin: 0 0 0.85rem; }
+		.mz-h2 { font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--mz-ink-3); margin: 0; }
+		.mz-meta { font-size: 12px; color: var(--mz-ink-3); margin: 0; }
+
+		.mz-btn {
+			font: inherit; font-size: 13px; font-weight: 620; padding: 9px 16px; border-radius: 10px; cursor: pointer;
+			border: 1px solid var(--mz-line-strong); background: var(--mz-panel-2); color: inherit;
+			transition: background 0.16s ease, border-color 0.16s ease, transform 0.12s ease, box-shadow 0.16s ease;
+		}
+		.mz-btn:hover:not(:disabled) { background: var(--mz-panel-2); border-color: currentColor; transform: translateY(-1px); }
+		.mz-btn:active:not(:disabled) { transform: translateY(0); }
+		.mz-btn:focus-visible { outline: 2px solid var(--mz-accent); outline-offset: 2px; }
+		.mz-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+		.mz-btn-primary { background: var(--mz-accent); border-color: transparent; color: #fff; }
+		.mz-btn-primary:hover:not(:disabled) { box-shadow: 0 6px 22px rgba(124, 92, 255, 0.32); }
+		.mz-btn-block { width: 100%; padding: 13px 18px; font-size: 14.5px; }
+
+		/* Picker (empty state) */
+		.mz-pick { display: grid; grid-template-columns: 1.05fr 1fr; gap: 1rem; }
+		@media (max-width: 860px) { .mz-pick { grid-template-columns: 1fr; } }
+		.mz-drop {
+			border: 1.5px dashed var(--mz-line-strong); border-radius: 16px; background: var(--mz-panel);
+			padding: 1.9rem 1.4rem; text-align: center;
+			transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+		}
+		.mz-drop.is-over { border-color: var(--mz-great); background: rgba(47, 191, 113, 0.09); transform: scale(1.006); }
+		.mz-drop h2 { font-size: 15px; font-weight: 650; margin: 0 0 0.3rem; }
+		.mz-drop p { font-size: 12.5px; color: var(--mz-ink-3); margin: 0 0 1rem; }
+		.mz-url-row { display: flex; gap: 0.5rem; margin-top: 0.9rem; }
+		.mz-url-row input {
+			flex: 1; min-width: 0; font: inherit; font-size: 13px; padding: 9px 12px; border-radius: 10px;
+			border: 1px solid var(--mz-line); background: var(--mz-panel); color: inherit;
+		}
+		.mz-url-row input:focus-visible { outline: 2px solid var(--mz-accent); outline-offset: 1px; }
+
+		.mz-rail { display: grid; grid-template-columns: repeat(auto-fill, minmax(108px, 1fr)); gap: 0.6rem; }
+		.mz-rail-card {
+			position: relative; border: 1px solid var(--mz-line); border-radius: 12px; overflow: hidden;
+			background: var(--mz-panel); cursor: pointer; padding: 0; aspect-ratio: 1; color: inherit; font: inherit;
+			transition: border-color 0.16s ease, transform 0.16s ease;
+		}
+		.mz-rail-card:hover, .mz-rail-card:focus-visible { border-color: var(--mz-accent); transform: translateY(-2px); }
+		.mz-rail-card:focus-visible { outline: 2px solid var(--mz-accent); outline-offset: 2px; }
+		.mz-rail-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+		.mz-rail-card figcaption {
+			position: absolute; inset: auto 0 0 0; padding: 1.4rem 0.5rem 0.4rem; font-size: 11px; line-height: 1.25;
+			text-align: left; color: #fff; background: linear-gradient(transparent, rgba(0, 0, 0, 0.78));
+			display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+		}
+		.mz-rail-empty { grid-column: 1 / -1; font-size: 12.5px; color: var(--mz-ink-3); margin: 0; }
+		.mz-skel { border-radius: 12px; aspect-ratio: 1; background: var(--mz-panel-2); animation: mz-pulse 1.4s ease-in-out infinite; }
+		@keyframes mz-pulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 0.85; } }
+		@media (prefers-reduced-motion: reduce) { .mz-skel { animation: none; } }
+
+		/* Studio */
+		.mz-studio { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 1.1rem; align-items: start; }
+		@media (max-width: 1000px) { .mz-studio { grid-template-columns: 1fr; } }
+		.mz-left { position: sticky; top: 1rem; }
+		@media (max-width: 1000px) { .mz-left { position: static; } }
+
+		.mz-stage {
+			position: relative; border: 1px solid var(--mz-line); border-radius: 18px; overflow: hidden;
+			background: var(--mz-stage), var(--mz-panel); aspect-ratio: 4 / 5; min-height: 340px;
+		}
+		@media (max-width: 1000px) { .mz-stage { aspect-ratio: 4 / 3; } }
+		.mz-stage model-viewer { width: 100%; height: 100%; --poster-color: transparent; background: transparent; }
+		.mz-stage model-viewer::part(default-ar-button) { display: none; }
+
+		/* Scale drawing: the print beside an everyday object, in true proportion. */
+		.mz-scale { position: absolute; left: 14px; bottom: 14px; display: flex; align-items: flex-end; gap: 10px; pointer-events: none; }
+		.mz-scale-col { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+		.mz-scale-bar {
+			width: 26px; border-radius: 4px 4px 2px 2px; background: var(--mz-accent); opacity: 0.85;
+			transition: height 0.28s cubic-bezier(0.22, 0.61, 0.36, 1);
+		}
+		.mz-scale-ref { width: 26px; color: var(--mz-ink-3); transition: height 0.28s cubic-bezier(0.22, 0.61, 0.36, 1); }
+		.mz-scale-ref svg { width: 100%; height: 100%; display: block; }
+		.mz-scale-tag { font-size: 10px; font-weight: 650; letter-spacing: 0.03em; color: var(--mz-ink-2); white-space: nowrap; }
+		.mz-scale-caption {
+			position: absolute; right: 14px; bottom: 14px; max-width: 46%; text-align: right;
+			font-size: 11.5px; line-height: 1.35; color: var(--mz-ink-2); pointer-events: none;
+		}
+		@media (prefers-reduced-motion: reduce) { .mz-scale-bar, .mz-scale-ref { transition: none; } }
+
+		.mz-stage-busy {
+			position: absolute; inset: 0; display: grid; place-content: center; gap: 0.7rem; justify-items: center;
+			background: rgba(0, 0, 0, 0.35); backdrop-filter: blur(3px); font-size: 12.5px; color: #fff;
+		}
+		[data-theme='light'] .mz-stage-busy { background: rgba(255, 255, 255, 0.55); color: #000; }
+		.mz-spinner {
+			width: 26px; height: 26px; border-radius: 50%; border: 2.5px solid currentColor; border-top-color: transparent;
+			animation: mz-spin 0.75s linear infinite;
+		}
+		@keyframes mz-spin { to { transform: rotate(360deg); } }
+		@media (prefers-reduced-motion: reduce) { .mz-spinner { animation-duration: 2.4s; } }
+
+		.mz-stage-bar { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-top: 0.7rem; }
+		.mz-stage-bar .mz-meta { margin-right: auto; }
+		.mz-ar { display: inline-flex; align-items: center; gap: 0.45rem; }
+		.mz-ar svg { width: 15px; height: 15px; }
+
+		/* Printability */
+		.mz-score { display: flex; align-items: center; gap: 0.9rem; margin-bottom: 0.9rem; }
+		.mz-score-dial { position: relative; width: 58px; height: 58px; flex: none; }
+		.mz-score-dial svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+		.mz-score-dial circle { fill: none; stroke-width: 5; stroke-linecap: round; }
+		.mz-score-track { stroke: var(--mz-line); }
+		.mz-score-fill { transition: stroke-dashoffset 0.5s cubic-bezier(0.22, 0.61, 0.36, 1); }
+		.mz-score-num {
+			position: absolute; inset: 0; display: grid; place-content: center; font-size: 16px; font-weight: 750; letter-spacing: -0.02em;
+		}
+		.mz-score-label { font-size: 15px; font-weight: 650; margin: 0 0 0.15rem; }
+		.tone-great { color: var(--mz-great); }
+		.tone-good { color: var(--mz-good); }
+		.tone-fair { color: var(--mz-fair); }
+		.tone-poor { color: var(--mz-poor); }
+		.mz-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 0.5rem; margin: 0 0 0.85rem; padding: 0; list-style: none; }
+		.mz-fact { border: 1px solid var(--mz-line); border-radius: 10px; padding: 0.5rem 0.6rem; }
+		.mz-fact dt { font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--mz-ink-3); margin: 0 0 0.15rem; }
+		.mz-fact dd { font-size: 12.5px; margin: 0; }
+		.mz-issues { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.45rem; }
+		.mz-issue { display: flex; gap: 0.6rem; align-items: flex-start; font-size: 12.5px; line-height: 1.45; }
+		.mz-issue-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 0.42rem; flex: none; background: var(--mz-fair); }
+		.mz-issue-dot.is-repairable { background: var(--mz-accent); }
+		.mz-issue b { font-weight: 640; }
+		.mz-issue span { color: var(--mz-ink-2); }
+		.mz-repair-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin-top: 0.9rem; }
+		.mz-repair-metrics { list-style: none; margin: 0.85rem 0 0; padding: 0; display: grid; gap: 0.35rem; font-size: 12.5px; }
+		.mz-repair-metrics li { display: flex; justify-content: space-between; gap: 0.75rem; color: var(--mz-ink-2); }
+		.mz-repair-metrics b { color: inherit; font-weight: 640; }
+
+		/* Materials */
+		.mz-mats { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.6rem; }
+		.mz-mat {
+			position: relative; text-align: left; font: inherit; color: inherit; cursor: pointer; padding: 0.7rem 0.75rem 0.8rem;
+			border: 1px solid var(--mz-line); border-radius: 13px; background: var(--mz-panel);
+			transition: border-color 0.16s ease, transform 0.14s ease, background 0.16s ease;
+		}
+		.mz-mat:hover:not(:disabled) { transform: translateY(-2px); border-color: var(--mz-line-strong); }
+		.mz-mat:focus-visible { outline: 2px solid var(--mz-accent); outline-offset: 2px; }
+		.mz-mat[aria-pressed='true'] { border-color: var(--mz-accent); background: var(--mz-panel-2); box-shadow: inset 0 0 0 1px var(--mz-accent); }
+		.mz-mat:disabled { opacity: 0.5; cursor: not-allowed; }
+		.mz-mat-swatch { width: 100%; height: 34px; border-radius: 8px; margin-bottom: 0.5rem; border: 1px solid var(--mz-line); }
+		.mz-mat-name { display: block; font-size: 13px; font-weight: 650; margin-bottom: 0.15rem; }
+		.mz-mat-note { display: block; font-size: 11.5px; line-height: 1.35; color: var(--mz-ink-3); }
+		.mz-mat-blocked { display: block; font-size: 11.5px; line-height: 1.35; color: var(--mz-fair); margin-top: 0.3rem; }
+
+		/* Size */
+		.mz-size-row { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.5rem; }
+		.mz-size-value { font-size: 22px; font-weight: 750; letter-spacing: -0.02em; }
+		.mz-slider { width: 100%; margin: 0.2rem 0 0.35rem; accent-color: var(--mz-accent); }
+		.mz-slider:focus-visible { outline: 2px solid var(--mz-accent); outline-offset: 4px; }
+		.mz-track-ends { display: flex; justify-content: space-between; font-size: 11px; color: var(--mz-ink-3); margin-bottom: 0.85rem; gap: 1rem; }
+		.mz-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+		.mz-chip {
+			font: inherit; font-size: 12px; font-weight: 600; padding: 6px 11px; border-radius: 999px; cursor: pointer;
+			border: 1px solid var(--mz-line); background: transparent; color: var(--mz-ink-2);
+			transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+		}
+		.mz-chip:hover:not(:disabled) { color: inherit; border-color: var(--mz-line-strong); }
+		.mz-chip[aria-pressed='true'] { border-color: var(--mz-accent); color: inherit; background: var(--mz-panel-2); }
+		.mz-chip:focus-visible { outline: 2px solid var(--mz-accent); outline-offset: 2px; }
+		.mz-chip:disabled { opacity: 0.4; cursor: not-allowed; }
+		.mz-opts { display: flex; flex-wrap: wrap; gap: 0.9rem; align-items: center; margin-top: 0.95rem; }
+		.mz-field { display: flex; align-items: center; gap: 0.45rem; font-size: 12.5px; color: var(--mz-ink-2); }
+		.mz-field select, .mz-field input[type='number'] {
+			font: inherit; font-size: 12.5px; padding: 6px 9px; border-radius: 9px; color: inherit;
+			border: 1px solid var(--mz-line); background: var(--mz-panel);
+		}
+		.mz-field input[type='number'] { width: 68px; }
+		.mz-switch { display: inline-flex; align-items: center; gap: 0.45rem; cursor: pointer; }
+		.mz-switch input { accent-color: var(--mz-accent); }
+
+		/* Quote */
+		.mz-quote-lines { list-style: none; margin: 0 0 0.9rem; padding: 0; display: grid; gap: 0.55rem; }
+		.mz-line { display: grid; grid-template-columns: 1fr auto; gap: 0.35rem 0.9rem; align-items: baseline; }
+		.mz-line-label { font-size: 13px; font-weight: 600; }
+		.mz-line-amount { font-size: 13px; font-variant-numeric: tabular-nums; font-weight: 640; }
+		.mz-line.is-credit .mz-line-label, .mz-line.is-credit .mz-line-amount { color: var(--mz-great); }
+		.mz-line-detail { grid-column: 1 / -1; font-size: 11.5px; line-height: 1.4; color: var(--mz-ink-3); margin: 0; }
+		.mz-total { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; border-top: 1px solid var(--mz-line); padding-top: 0.8rem; }
+		.mz-total-label { font-size: 13px; font-weight: 650; }
+		.mz-total-amount { font-size: 26px; font-weight: 780; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+		.mz-total-note { font-size: 11.5px; color: var(--mz-ink-3); margin: 0.35rem 0 0; }
+		.mz-quote-busy { display: flex; align-items: center; gap: 0.5rem; font-size: 12.5px; color: var(--mz-ink-3); }
+		.mz-quote-busy .mz-spinner { width: 14px; height: 14px; border-width: 2px; }
+		.mz-quote-skel { display: grid; gap: 0.5rem; }
+		.mz-quote-skel span { height: 13px; border-radius: 6px; background: var(--mz-panel-2); animation: mz-pulse 1.4s ease-in-out infinite; }
+
+		/* Rejection and errors, designed as guidance */
+		.mz-notice { border: 1px solid var(--mz-line); border-left-width: 3px; border-radius: 12px; padding: 0.85rem 0.95rem; font-size: 13px; line-height: 1.5; }
+		.mz-notice h3 { font-size: 13.5px; font-weight: 660; margin: 0 0 0.35rem; }
+		.mz-notice p { margin: 0 0 0.5rem; color: var(--mz-ink-2); }
+		.mz-notice p:last-child { margin-bottom: 0; }
+		.mz-notice-warn { border-left-color: var(--mz-fair); background: rgba(224, 163, 58, 0.07); }
+		.mz-notice-error { border-left-color: var(--mz-poor); background: rgba(224, 90, 74, 0.07); }
+		.mz-notice-info { border-left-color: var(--mz-accent); background: rgba(124, 92, 255, 0.07); }
+		.mz-notice-actions { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.6rem; }
+
+		/* Checkout */
+		.mz-sheet {
+			position: fixed; inset: 0; z-index: 60; display: grid; place-items: end center;
+			background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(4px); padding: 0;
+		}
+		@media (min-width: 720px) { .mz-sheet { place-items: center; padding: 1.5rem; } }
+		.mz-sheet[hidden] { display: none; }
+		.mz-sheet-card {
+			width: min(560px, 100%); max-height: min(92vh, 900px); overflow-y: auto;
+			border: 1px solid var(--mz-line); border-radius: 18px 18px 0 0; background: var(--bg, #0b0b0f);
+			padding: 1.3rem 1.25rem 1.6rem; animation: mz-rise 0.24s cubic-bezier(0.22, 0.61, 0.36, 1);
+		}
+		@media (min-width: 720px) { .mz-sheet-card { border-radius: 18px; } }
+		@keyframes mz-rise { from { transform: translateY(18px); opacity: 0; } to { transform: none; opacity: 1; } }
+		@media (prefers-reduced-motion: reduce) { .mz-sheet-card { animation: none; } }
+		.mz-sheet-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+		.mz-sheet-head h2 { font-size: 17px; font-weight: 720; letter-spacing: -0.02em; margin: 0 0 0.2rem; }
+		.mz-close {
+			font: inherit; line-height: 1; font-size: 20px; padding: 4px 9px; border-radius: 9px; cursor: pointer;
+			border: 1px solid var(--mz-line); background: transparent; color: var(--mz-ink-2);
+		}
+		.mz-close:hover { color: inherit; border-color: var(--mz-line-strong); }
+		.mz-close:focus-visible { outline: 2px solid var(--mz-accent); outline-offset: 2px; }
+		.mz-form { display: grid; gap: 0.75rem; }
+		.mz-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+		@media (max-width: 480px) { .mz-grid-2 { grid-template-columns: 1fr; } }
+		.mz-input-label { display: grid; gap: 0.3rem; font-size: 12px; font-weight: 620; color: var(--mz-ink-2); }
+		.mz-input-label input, .mz-input-label select {
+			font: inherit; font-size: 13.5px; padding: 10px 12px; border-radius: 10px; color: inherit;
+			border: 1px solid var(--mz-line); background: var(--mz-panel);
+		}
+		.mz-input-label input:focus-visible, .mz-input-label select:focus-visible { outline: 2px solid var(--mz-accent); outline-offset: 1px; }
+		.mz-input-label[data-invalid] input, .mz-input-label[data-invalid] select { border-color: var(--mz-poor); }
+		.mz-error-text { font-size: 11.5px; font-weight: 550; color: var(--mz-poor); }
+		.mz-pay-summary { display: grid; gap: 0.4rem; border: 1px solid var(--mz-line); border-radius: 12px; padding: 0.85rem 0.95rem; font-size: 13px; margin-bottom: 1rem; }
+		.mz-pay-summary div { display: flex; justify-content: space-between; gap: 1rem; }
+		.mz-pay-summary .mz-pay-total { font-weight: 720; font-size: 15px; }
+		.mz-qr { display: block; width: min(200px, 60%); margin: 0.9rem auto; border-radius: 12px; background: #fff; padding: 8px; }
+		.mz-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; word-break: break-all; color: var(--mz-ink-2); }
+
+		.mz-success-mark {
+			width: 46px; height: 46px; border-radius: 50%; display: grid; place-content: center; margin: 0 auto 0.9rem;
+			background: rgba(47, 191, 113, 0.16); color: var(--mz-great);
+		}
+
+		/* Footer notes */
+		.mz-notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem; margin-top: 2.5rem; padding-top: 1.75rem; border-top: 1px solid var(--mz-line); }
+		.mz-note h3 { font-size: 13px; font-weight: 660; margin: 0 0 0.4rem; }
+		.mz-note p { font-size: 12.5px; line-height: 1.55; color: var(--mz-ink-2); margin: 0; }
+		.mz-note a { color: inherit; }
+	</style>
+</head>
+<body>
+	<div class="mz-wrap">
+		<header class="mz-hero">
+			<p class="mz-eyebrow">Materialize · physical prints</p>
+			<h1 class="mz-title">Hold the thing you generated.</h1>
+			<p class="mz-lede">
+				Pick any model, and this measures whether it can actually be printed, repairs it if it cannot,
+				shows it at <strong>true scale on your own desk in AR</strong>, and prices the real object.
+				Paid in <strong>USDC on Solana</strong>, printed on real machines, shipped to your door.
+			</p>
+		</header>
+
+		<!-- Empty state: no model chosen yet. -->
+		<section id="mz-picker" aria-labelledby="mz-picker-title">
+			<h2 id="mz-picker-title" class="mz-h2" style="margin-bottom: 0.7rem;">Choose something to print</h2>
+			<div class="mz-pick">
+				<div class="mz-drop" id="mz-drop">
+					<h2>Drop a .glb, or paste a link</h2>
+					<p>Any glTF binary. Your own file is analyzed and never published.</p>
+					<button type="button" class="mz-btn" id="mz-browse">Choose a file</button>
+					<input type="file" id="mz-file" accept=".glb,model/gltf-binary" hidden />
+					<form class="mz-url-row" id="mz-url-form">
+						<input type="url" id="mz-url" placeholder="https://…/model.glb" aria-label="Model URL" />
+						<button type="submit" class="mz-btn">Load</button>
+					</form>
+				</div>
+
+				<div class="mz-panel">
+					<div class="mz-panel-head">
+						<h2 class="mz-h2" id="mz-rail-title">Your creations</h2>
+						<a class="mz-meta" href="/create" style="color: inherit;">Make a new one</a>
+					</div>
+					<div class="mz-rail" id="mz-rail" aria-labelledby="mz-rail-title">
+						<div class="mz-skel"></div><div class="mz-skel"></div><div class="mz-skel"></div>
+						<div class="mz-skel"></div><div class="mz-skel"></div><div class="mz-skel"></div>
+					</div>
+				</div>
+			</div>
+			<div class="mz-notice mz-notice-error" id="mz-load-error" role="alert" hidden style="margin-top: 1rem;"></div>
+		</section>
+
+		<!-- The studio: a model is chosen. -->
+		<section class="mz-studio" id="mz-studio" hidden>
+			<div class="mz-left">
+				<div class="mz-stage" id="mz-stage">
+					<model-viewer
+						id="mz-viewer"
+						alt="The model you are about to print"
+						camera-controls
+						auto-rotate
+						rotation-per-second="14deg"
+						interaction-prompt="none"
+						exposure="1.05"
+						shadow-intensity="0.85"
+						shadow-softness="0.9"
+						environment-image="neutral"
+						tone-mapping="aces"
+						ar
+						ar-modes="webxr scene-viewer quick-look"
+						ar-scale="fixed"
+						ar-placement="floor"
+						reveal="auto"
+					></model-viewer>
+					<div class="mz-scale" id="mz-scale" hidden>
+						<div class="mz-scale-col">
+							<div class="mz-scale-bar" id="mz-scale-bar" style="height: 60px;"></div>
+							<span class="mz-scale-tag" id="mz-scale-tag">Print</span>
+						</div>
+						<div class="mz-scale-col">
+							<div class="mz-scale-ref" id="mz-scale-ref" style="height: 90px;"></div>
+							<span class="mz-scale-tag" id="mz-scale-ref-tag"></span>
+						</div>
+					</div>
+					<p class="mz-scale-caption" id="mz-scale-caption"></p>
+					<div class="mz-stage-busy" id="mz-stage-busy" hidden>
+						<div class="mz-spinner"></div>
+						<span id="mz-stage-busy-label">Measuring the mesh…</span>
+					</div>
+				</div>
+				<div class="mz-stage-bar">
+					<p class="mz-meta" id="mz-source-note"></p>
+					<button type="button" class="mz-btn mz-ar" id="mz-ar-btn" hidden>
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+							<path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2" />
+							<path d="M12 8.5 8 10.7v4.6l4 2.2 4-2.2v-4.6z" />
+						</svg>
+						See it at true size
+					</button>
+					<button type="button" class="mz-btn" id="mz-change">Change model</button>
+				</div>
+			</div>
+
+			<div>
+				<!-- Printability -->
+				<div class="mz-panel" id="mz-printability">
+					<div class="mz-panel-head">
+						<h2 class="mz-h2">Printability</h2>
+						<p class="mz-meta" id="mz-printability-meta"></p>
+					</div>
+					<div class="mz-score">
+						<div class="mz-score-dial">
+							<svg viewBox="0 0 44 44" aria-hidden="true">
+								<circle class="mz-score-track" cx="22" cy="22" r="19"></circle>
+								<circle class="mz-score-fill" id="mz-score-fill" cx="22" cy="22" r="19" stroke-dasharray="119.4" stroke-dashoffset="119.4"></circle>
+							</svg>
+							<span class="mz-score-num" id="mz-score-num">0</span>
+						</div>
+						<div>
+							<p class="mz-score-label" id="mz-score-label">Measuring…</p>
+							<p class="mz-meta" id="mz-score-sub"></p>
+						</div>
+					</div>
+					<dl class="mz-facts" id="mz-facts"></dl>
+					<ul class="mz-issues" id="mz-issues"></ul>
+					<div class="mz-repair-row" id="mz-repair-row" hidden>
+						<button type="button" class="mz-btn" id="mz-repair">Repair this model</button>
+						<span class="mz-meta" id="mz-repair-note"></span>
+					</div>
+					<ul class="mz-repair-metrics" id="mz-repair-metrics" hidden></ul>
+				</div>
+
+				<!-- Material -->
+				<div class="mz-panel">
+					<div class="mz-panel-head">
+						<h2 class="mz-h2">Material</h2>
+						<p class="mz-meta" id="mz-finish-note"></p>
+					</div>
+					<div class="mz-mats" id="mz-mats" role="group" aria-label="Print material"></div>
+					<div class="mz-opts" id="mz-finish-row" hidden>
+						<label class="mz-field">
+							Finish
+							<select id="mz-finish"></select>
+						</label>
+					</div>
+				</div>
+
+				<!-- Size -->
+				<div class="mz-panel" id="mz-size-panel">
+					<div class="mz-size-row">
+						<h2 class="mz-h2">Size</h2>
+						<span class="mz-size-value" id="mz-size-value">—</span>
+					</div>
+					<input type="range" class="mz-slider" id="mz-size" min="10" max="200" step="1" value="100" aria-label="Printed height in millimetres" />
+					<div class="mz-track-ends">
+						<span id="mz-size-min"></span>
+						<span id="mz-size-max"></span>
+					</div>
+					<div class="mz-chips" id="mz-presets" role="group" aria-label="Size presets"></div>
+					<div class="mz-opts">
+						<label class="mz-field">
+							Quantity
+							<input type="number" id="mz-qty" min="1" max="500" step="1" value="1" />
+						</label>
+						<label class="mz-field">
+							Ship to
+							<select id="mz-country"></select>
+						</label>
+						<label class="mz-switch mz-field" id="mz-hollow-label" hidden>
+							<input type="checkbox" id="mz-hollow" />
+							Hollow it
+						</label>
+					</div>
+				</div>
+
+				<!-- Quote -->
+				<div class="mz-panel" id="mz-quote-panel">
+					<div class="mz-panel-head">
+						<h2 class="mz-h2">Price</h2>
+						<p class="mz-meta" id="mz-quote-meta"></p>
+					</div>
+					<div id="mz-quote-body" aria-live="polite">
+						<div class="mz-quote-skel">
+							<span style="width: 82%;"></span><span style="width: 64%;"></span><span style="width: 71%;"></span>
+						</div>
+					</div>
+				</div>
+
+				<div class="mz-notice mz-notice-error" id="mz-studio-error" role="alert" hidden style="margin-top: 0.85rem;"></div>
+			</div>
+		</section>
+
+		<section class="mz-notes">
+			<div class="mz-note">
+				<h3>The price is measured, not guessed</h3>
+				<p>Every quote comes from the mesh itself: the analyzer computes the true solid volume of the repaired model, and the price is that volume in the material you picked. Nothing is estimated from a bounding box.</p>
+			</div>
+			<div class="mz-note">
+				<h3>USDC on Solana, by decision</h3>
+				<p>There is no card processor. You pay the exact quoted amount in USDC on Solana, the order is opened against a signed quote, and the price can never move between the quote and the charge.</p>
+			</div>
+			<div class="mz-note">
+				<h3>Agents can order too</h3>
+				<p>The same pipeline is exposed to autonomous agents over x402, so a model an agent just generated can be manufactured without a human in the loop. See <a href="/docs/api-reference">the API reference</a>.</p>
+			</div>
+		</section>
+	</div>
+
+	<!-- Checkout -->
+	<div class="mz-sheet" id="mz-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="mz-sheet-title">
+		<div class="mz-sheet-card" id="mz-sheet-card">
+			<div class="mz-sheet-head">
+				<div>
+					<h2 id="mz-sheet-title">Where should it go?</h2>
+					<p class="mz-meta" id="mz-sheet-sub">We keep the minimum a courier needs, and nothing else.</p>
+				</div>
+				<button type="button" class="mz-close" id="mz-sheet-close" aria-label="Close checkout">×</button>
+			</div>
+			<div id="mz-sheet-body"></div>
+		</div>
+	</div>
+
+	<script src="/nav.js"></script>
+	<script type="module" src="/src/materialize.js"></script>
+</body>
+</html>
