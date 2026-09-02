@@ -122,7 +122,7 @@ a separate surface, `api/_mcp-studio/component.js`; `/viewer` is the "open in a 
 | **App name** | **three.ws 3D Studio** |
 | **Tagline** | Turn a text prompt into a downloadable, animation-ready 3D model — free, inside ChatGPT. |
 | **Short description** | three.ws 3D Studio generates textured 3D models, avatars, and rigged characters from a text prompt (or a reference image) and renders each result inline in an interactive 3D viewer you can rotate, inspect, and download as a GLB. It can also auto-rig a static model into an animation-ready one. Free to use — no account, no key, no payment. |
-| **Long description** | Describe anything ("a friendly round robot mascot," "a low-poly treasure chest," "a knight character I can animate") and three.ws 3D Studio builds a real, textured 3D model and shows it in an interactive viewer right in the conversation. Ten tools cover the full path from idea to asset: generate a model from text, generate an avatar, generate an art-directed mesh, auto-rig a static model into an animation-ready one, generate-then-rig a character in a single step, refine an existing model by describing a change, collect a detailed model that took longer than one turn, and save a rigged model as a persistent persona that can speak with lip-sync and emotion. Every result is a standard **GLB** you can download and drop into Blender, Unity, Unreal, three.js, or any glTF pipeline. Generation runs on three.ws's own free 3D lane, so there is nothing to sign up for and nothing to pay. Not natively possible in ChatGPT: turning language into a manipulable, downloadable 3D asset with an inline viewer. |
+| **Long description** | Describe anything ("a friendly round robot mascot," "a low-poly treasure chest," "a knight character I can animate") and three.ws 3D Studio builds a real, textured 3D model and shows it in an interactive viewer right in the conversation. Eleven tools cover the full path from idea to asset: generate a model from text, generate an avatar, generate an art-directed mesh, auto-rig a static model into an animation-ready one, generate-then-rig a character in a single step, refine an existing model by describing a change, collect a detailed model that took longer than one turn, look at a finished model from several angles to check the result, and save a rigged model as a persistent persona that can speak with lip-sync and emotion. Every result is a standard **GLB** you can download and drop into Blender, Unity, Unreal, three.js, or any glTF pipeline. Generation runs on three.ws's own free 3D lane, so there is nothing to sign up for and nothing to pay. Not natively possible in ChatGPT: turning language into a manipulable, downloadable 3D asset with an inline viewer. |
 | **Category** | Creativity & Design (secondary: Productivity) |
 | **Country availability** | All countries / Global (no geo-restriction; anonymous + free). |
 | **Age suitability** | Suitable for ages 13–17 (content-safety gate on every generation lane — §2.6). |
@@ -138,7 +138,7 @@ a separate surface, `api/_mcp-studio/component.js`; `/viewer` is the "open in a 
 4. `Make a rigged, animation-ready knight character I can pose.`
 5. `Model a small ceramic teapot with a bamboo handle and a celadon glaze.`
 
-### Tool list (titles as shown to users; matches live `tools/list`, re-pulled 2026-08-06)
+### Tool list (titles as shown to users; matches live `tools/list`, re-pulled 2026-09-02)
 | Tool | Title | What it does |
 |------|-------|--------------|
 | `forge_free` | Generate a 3D model from text | Text → textured GLB, platform-funded. Defaults to the standard tier (fast, reliable, textured); the caller may request `draft` (fastest) or `high` (best, slower; falls back to standard under load). |
@@ -148,6 +148,7 @@ a separate surface, `api/_mcp-studio/component.js`; `/viewer` is the "open in a 
 | `forge_avatar` | Generate a rigged, animation-ready avatar | Text/image → generate + auto-rig in one step. |
 | `refine_model` | Refine a 3D model by describing a change | Existing GLB + instruction → regenerated model with version lineage. |
 | `check_job` | Check a pending 3D generation | Job id → the finished model, or a fresh pending state with a live ETA. Read-only; collects a generation that outran its original tool call. |
+| `look_at_model` | Look at a 3D model | GLB URL → rendered frames from several angles as images, plus geometry stats (triangles, materials, textures) and a plain reading of them. Read-only; works on any public https GLB. |
 | `create_agent_persona` | Save a rigged model as a living, persistent agent body | Rigged GLB + name → persona id (continuity across sessions). |
 | `get_agent_persona` | Reload a persona by id (continuity across sessions) | Persona id → saved persona (read-only). |
 | `persona_say` | Speak a reply through a persona: lip-sync + emotion + gesture | Persona id + text → lip-sync, emotion, and gesture playback in the viewer. |
@@ -222,8 +223,8 @@ anywhere in this server — generation runs operator-funded."* No tool returns a
 checkout; the app charges the user nothing. (If monetization is ever added, OpenAI allows only physical
 goods via external checkout — out of scope here.)
 
-### 2.3 Tool annotations correct on all ten tools: **PASS**
-Pulled from the live `tools/list` (re-pulled 2026-08-06):
+### 2.3 Tool annotations correct on all eleven tools: **PASS**
+Pulled from the live `tools/list` (re-pulled 2026-09-02):
 
 | Tool | readOnlyHint | destructiveHint | idempotentHint | openWorldHint |
 |------|:---:|:---:|:---:|:---:|
@@ -234,6 +235,7 @@ Pulled from the live `tools/list` (re-pulled 2026-08-06):
 | forge_avatar | false | false | false | **true** |
 | refine_model | false | false | false | **true** |
 | check_job | **true** | false | **true** | **true** |
+| look_at_model | **true** | false | **true** | **true** |
 | create_agent_persona | false | false | false | **true** |
 | get_agent_persona | **true** | false | **true** | false |
 | persona_say | false | false | false | false |
@@ -244,6 +246,9 @@ non-destructive; `refine_model` creates a new version, the parent is preserved i
 prompt yields a fresh mesh → not idempotent; generation runs against **external model APIs** →
 `openWorldHint: true`. `check_job` only reads the state of a job already submitted → `readOnlyHint:
 true`, `idempotentHint: true`, and it still polls the external provider → `openWorldHint: true`.
+`look_at_model` draws pictures of a model that already exists and creates nothing → `readOnlyHint:
+true`, `idempotentHint: true`, and it fetches a caller-supplied GLB from wherever it is hosted →
+`openWorldHint: true`.
 `get_agent_persona` and `persona_say` operate only on three.ws's own store → `openWorldHint: false`;
 `create_agent_persona` fetches the caller-supplied GLB from wherever it is hosted before taking a
 durable copy, so it keeps `openWorldHint: true`. `get_agent_persona` is a pure read →
@@ -287,6 +292,8 @@ No chat-history or "just in case" fields; `additionalProperties: false` on every
 | rig_mesh | `glb_url` | `glb_url` |
 | forge_avatar | `prompt`, `image_url`, `allow_non_humanoid` | — |
 | refine_model | `glb_url`, `instruction`, `parent_prompt`, `reference_image_url`, `parent_lineage`, `parent_index` | `glb_url`, `instruction` |
+| check_job | `job_id` | `job_id` |
+| look_at_model | `glb_url`, `views`, `size` | `glb_url` |
 | create_agent_persona | `glb_url`, `name`, `voice`, `source_prompt` | `glb_url`, `name` |
 | get_agent_persona | `persona_id` | `persona_id` |
 | persona_say | `persona_id`, `text`, `emotion` | `persona_id`, `text` |
@@ -361,7 +368,7 @@ viewport.]`
 **No credentials needed** (anonymous, free). Full flow re-verified green against production 2026-07-14.
 
 1. **Discover**: `initialize` → `tools/list` → `resources/list` against
-   `https://three.ws/api/mcp-studio`. Expect 10 tools + two resources,
+   `https://three.ws/api/mcp-studio`. Expect 11 tools + two resources,
    `ui://widget/three-studio-model.html` (the inline 3D viewer) and
    `ui://widget/three-studio-persona.html` (the living agent body).
 2. **Generate** a model that reliably succeeds — say to ChatGPT: *"Make a 3D model of a friendly round
@@ -406,19 +413,19 @@ curl -s -X POST https://three.ws/api/mcp-studio -H 'content-type: application/js
       canonical no-`.html` form (`/legal/privacy`, `/legal/tos`), matching the served OpenAPI (2026-07-18).
 - [x] Review surface is the MCP connector metadata, not `/.well-known/ai-plugin.json` (§2.1a, cited);
       live `initialize` + `tools/list` return `three-ws-3d-studio-free` on protocol `2025-06-18` with the
-      exact 9-tool surface (re-verified live 2026-07-18).
+      exact 11-tool surface (re-verified live 2026-09-02).
 - [x] App discovery schema served + guarded — `/.well-known/3d-studio-openapi.yaml`, free-only,
       `security: []`, byte-identical to the custom-GPT Action file, crypto/payment-free
       (`tests/api/3d-studio-openapi.test.js`).
-- [ ] **Deploy pending** — the served discovery schema and the 2026-07-18 doc/tier/README fixes are
-      committed locally and ship on the next production deploy; `/.well-known/3d-studio-openapi.yaml`
-      returns 404 in prod until then. `[HUMAN: deploy]`
+- [x] Served discovery schema is live — `https://three.ws/.well-known/3d-studio-openapi.yaml` returns
+      200 in production, as do `/.well-known/ai-plugin.json`, `/legal/privacy`, `/legal/tos` and
+      `/support` (re-verified 2026-09-02).
 - [ ] Screenshots — **re-capture the landscape widget shots against the shipped inline widget**
       (`api/_mcp-studio/component.js`); the earlier standalone-viewer captures were removed as part of
       collapsing the duplicate viewers. Confirm the form's required dimensions. `[HUMAN]`
 - [x] Compliance audit: 7/7 policy items PASS (§2), with the review-surface separation documented (§2.1a).
-- [x] Listing metadata drafted (§1) — tool list is the live 9-tool surface; `forge_free` tier note
-      corrected to the honest standard default (2026-07-18).
+- [x] Listing metadata drafted (§1) — tool list is the live 11-tool surface (re-pulled 2026-09-02);
+      `forge_free` tier note corrected to the honest standard default (2026-07-18).
 - [x] MCP connectivity documented (§3).
 - [x] Reviewer guide written (§5).
 - [ ] **Final submit in the portal.** `[HUMAN]`
