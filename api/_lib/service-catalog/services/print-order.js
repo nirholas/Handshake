@@ -62,5 +62,21 @@ export default {
 			note: { type: 'string', maxLength: 500, description: 'Optional note for the operator, kept on the order timeline.' },
 		},
 	},
+	// What a settled call returns. Directories render this as the result card, so
+	// it is the shape a buyer sees before they decide to pay, not decoration.
+	outputExample: {
+		ok: true,
+		order_id: 'c1b0a2d4-7e33-4f01-9a55-2b7c1d0e9f4a',
+		status: 'screening',
+		paid_usdc: '48.20',
+		material: 'resin-standard',
+		finish: 'as-printed',
+		quantity: 1,
+		target_height_mm: 140,
+		lead_time_days: 14,
+		ship_to: { city: 'London', country: 'GB' },
+		settlement_signature: '5vJqYyDpNfNMrGVFrTHbXwLXqmoLTeMoiUAvHi1cwYRTPjPUwmT8bQfMDHLtwBoNw6vzYBBhw8vY9WEbEBcRZJ4W',
+		track_url: 'https://three.ws/api/print/orders/c1b0a2d4-7e33-4f01-9a55-2b7c1d0e9f4a',
+	},
 	storefronts: ['x402scan'],
 };

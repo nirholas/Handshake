@@ -46,5 +46,17 @@ export default {
 			request_id: { type: 'string', maxLength: 80, description: 'Idempotency key. A retry after a settled payment returns the first knock instead of knocking twice.' },
 		},
 	},
+	// What a settled knock returns. The receipt URL is the whole point for a
+	// caller with no account: it is how they read the reply.
+	outputExample: {
+		ok: true,
+		knock_id: 'c1b0a2d4-7e33-4f01-9a55-2b7c1d0e9f4a',
+		delivered_to: 'nirholas',
+		announced: true,
+		importance: 78,
+		paid: '0.05',
+		receipt_url: 'https://three.ws/knock/receipt/c1b0a2d4-7e33-4f01-9a55-2b7c1d0e9f4a',
+		duplicate: false,
+	},
 	storefronts: ['x402scan'],
 };
