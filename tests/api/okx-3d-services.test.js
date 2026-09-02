@@ -118,8 +118,11 @@ const {
 	OKX_CATALOG,
 	catalogEntry,
 	catalogIndex,
+	displayWidth,
 	listedCatalog,
 	listingDescription,
+	parameterSpec,
+	requestMethod,
 	validateCatalog,
 } = await import('../../api/_lib/okx-catalog.js');
 const studioCatalog = await import('../../api/_mcp3d/catalog.js');
@@ -196,12 +199,64 @@ describe('okx catalog — work order 03 rows', () => {
 		expect(prices['fbx-export']).toEqual(['0.10', '100000']);
 	});
 
-	it('every paid row routes /api/okx/3d/<id>, is POST-documented, and its listing description joins the two parts', () => {
+	it('every paid row routes /api/okx/3d/<id> and is POST-documented', () => {
 		for (const id of PAID_REST_IDS) {
 			const e = catalogEntry(id);
 			expect(e.endpoint).toBe(`https://three.ws/api/okx/3d/${id}`);
 			expect(e.inputSchema).toBeTruthy();
-			expect(listingDescription(e)).toBe(`${e.describes.capability}\n${e.describes.input}`);
+		}
+	});
+
+	// OKX listing QA requires FOUR parts on an A2MCP service and rejects a
+	// listing missing any of them (`onchainos agent update --help`). Submitting
+	// two parts is what earned the 2026-09-02 rejection: "The service you
+	// submitted is missing a complete description, parameter details, and usage
+	// examples."
+	it('every listed row submits four parts: capability, parameters, method, example', () => {
+		for (const e of listedCatalog()) {
+			const parts = listingDescription(e).split('\n');
+			expect(parts, `${e.id} part count`).toHaveLength(4);
+			expect(parts[0], `${e.id} capability`).toBe(e.describes.capability);
+			expect(parts[1], `${e.id} parameters`).toBe(parameterSpec(e));
+			expect(parts[2], `${e.id} method`).toBe(requestMethod(e));
+			expect(parts[3], `${e.id} example`).toMatch(/^curl /);
+			expect(parts[3], `${e.id} example hits the real endpoint`).toContain(e.endpoint);
+			expect(displayWidth(listingDescription(e)), `${e.id} width`).toBeLessThanOrEqual(2000);
+		}
+	});
+
+	// Part 2 is generated from the schema, so it names every argument the
+	// endpoint accepts, with the type and required flag the endpoint enforces.
+	it('the parameter spec names every schema property with its real type and requiredness', () => {
+		for (const e of listedCatalog()) {
+			const props = Object.entries(e.inputSchema?.properties || {});
+			const spec = parameterSpec(e);
+			if (!props.length) {
+				expect(spec).toBe('No parameters. Send an empty request.');
+				continue;
+			}
+			const required = new Set(e.inputSchema.required || []);
+			for (const [name, prop] of props) {
+				const type = prop.type === 'array' ? `${prop.items?.type}[]` : prop.type;
+				expect(spec, `${e.id}.${name}`).toContain(
+					`${name} (${type}, ${required.has(name) ? 'required' : 'optional'}):`,
+				);
+			}
+		}
+	});
+
+	// A published usage example the endpoint would reject is worse than none:
+	// the buyer copies it, gets a 400, and leaves. Validate each example against
+	// the row's own schema with the same Ajv the endpoints use.
+	it('every listed usage example validates against its own endpoint schema', async () => {
+		const { default: Ajv } = await import('ajv');
+		const { default: addFormats } = await import('ajv-formats');
+		const ajv = addFormats(new Ajv({ strict: false }));
+		for (const e of listedCatalog()) {
+			if (!Object.keys(e.inputSchema?.properties || {}).length) continue;
+			const validate = ajv.compile(e.inputSchema);
+			const ok = validate(e.describes.example);
+			expect(ok, `${e.id} example: ${ajv.errorsText(validate.errors)}`).toBe(true);
 		}
 	});
 
