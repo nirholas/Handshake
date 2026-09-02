@@ -165,7 +165,13 @@ export async function transition({ orderId, to, note = null, actor = 'system', a
 
 	// Scarcity is enforced where the price is set, so a sold-out edition is
 	// refused before a buyer is ever asked for money.
-	if (to === 'quoted') {
+	//
+	// An order printing a bare GLB is skipped, not failed: editions are numbered
+	// against a creation, and an upload that belongs to no creation belongs to no
+	// series, so there is nothing for it to be sold out of. Without this guard the
+	// series key is underivable and a perfectly valid direct-upload order 500s at
+	// the moment it is quoted.
+	if (to === 'quoted' && order.creation_id) {
 		await assertEditionAvailable({
 			creationId: order.creation_id,
 			quantity: order.quantity || 1,

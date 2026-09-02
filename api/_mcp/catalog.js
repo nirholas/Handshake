@@ -5,6 +5,7 @@ import { buildGettingStartedTool } from '../_lib/mcp-getting-started.js';
 import { priceFor } from '../_lib/pump-pricing.js';
 import { toolDefs as avatarDefs } from './tools/avatars.js';
 import { toolDefs as modelDefs } from './tools/models.js';
+import { toolDefs as printDefs } from './tools/print.js';
 import { toolDefs as solanaDefs } from './tools/solana.js';
 import { toolDefs as pumpfunDefs } from './tools/pumpfun.js';
 import { toolDefs as agentDefs } from './tools/agents.js';
@@ -23,6 +24,7 @@ const baseDefs = [
 	...avatarDefs,
 	...embedDefs,
 	...modelDefs,
+	...printDefs,
 	...animationDefs,
 	...signDefs,
 	...solanaDefs,

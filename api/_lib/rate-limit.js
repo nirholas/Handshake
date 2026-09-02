@@ -873,6 +873,14 @@ export const limits = {
 		getLimiter('mcp:inspect', { limit: 30, window: '1 m', critical: true }).limit(key),
 	mcpOptimize: (key) =>
 		getLimiter('mcp:optimize', { limit: 10, window: '1 m', critical: true }).limit(key),
+	// Materialize. Analysis fetches, parses, welds and probes a mesh, then builds
+	// a BVH over it, so it costs about as much as an optimize; quoting adds only
+	// arithmetic on top of the same analysis (which is memoized per source URL),
+	// so it gets a wider budget for an agent dragging a size or material choice.
+	mcpPrintAnalyze: (key) =>
+		getLimiter('mcp:print-analyze', { limit: 10, window: '1 m', critical: true }).limit(key),
+	mcpPrintQuote: (key) =>
+		getLimiter('mcp:print-quote', { limit: 30, window: '1 m', critical: true }).limit(key),
 	// Diffing fetches and fully parses TWO models per call, so it costs roughly
 	// double an inspect and gets half the budget.
 	mcpDiff: (key) =>
