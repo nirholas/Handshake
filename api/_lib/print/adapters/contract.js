@@ -13,7 +13,7 @@
 // origin country, lead time) rather than a try-and-see.
 //
 // THE RULE THAT MATTERS: an adapter never writes the database. It returns
-// vocabulary the store understands, and the caller drives transitionOrder().
+// vocabulary the store understands, and the caller drives transition().
 // That is what keeps a partner changing their payload shape from being able to
 // corrupt an order's state machine.
 //
@@ -35,21 +35,9 @@
 
 import { createHash } from 'node:crypto';
 import { PRINT_STATUSES } from '../../print-store.js';
+import { ADAPTER_DRIVABLE_STATUSES } from '../fulfillment-queries.js';
 
-/**
- * The statuses a fulfillment provider is allowed to drive. Everything before
- * `submitted` is ours (quoting, payment, safety screening) and no adapter may
- * reach back into it; `refunded` is a money action and stays operator-only.
- */
-export const ADAPTER_DRIVABLE_STATUSES = Object.freeze([
-	'submitted',
-	'printing',
-	'quality_check',
-	'shipped',
-	'delivered',
-	'canceled',
-	'rejected',
-]);
+export { ADAPTER_DRIVABLE_STATUSES };
 
 /** Thrown when an adapter returns something the store cannot use. */
 export class AdapterContractError extends Error {

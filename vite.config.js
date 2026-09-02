@@ -543,6 +543,8 @@ const appConfig = {
 				'drop-collection': resolve(__dirname, 'pages/drop-collection.html'),
 				spotlight: resolve(__dirname, 'pages/spotlight.html'),
 				'spotlight-entry': resolve(__dirname, 'pages/spotlight-entry.html'),
+				certificate: resolve(__dirname, 'pages/certificate.html'),
+				'print-insert': resolve(__dirname, 'pages/print-insert.html'),
 				app: resolve(__dirname, 'pages/app.html'),
 				proof: resolve(__dirname, 'pages/proof.html'),
 				stream: resolve(__dirname, 'pages/stream.html'),
@@ -1442,6 +1444,8 @@ const appConfig = {
 					'/drops/': resolve(root, 'pages/drops.html'),
 					'/spotlight': resolve(root, 'pages/spotlight.html'),
 					'/spotlight/': resolve(root, 'pages/spotlight.html'),
+					'/cert': resolve(root, 'pages/certificate.html'),
+					'/cert/': resolve(root, 'pages/certificate.html'),
 					'/airdrops': resolve(root, 'pages/airdrops.html'),
 					'/airdrops/': resolve(root, 'pages/airdrops.html'),
 					'/launcher': resolve(root, 'pages/launcher.html'),
@@ -2153,6 +2157,12 @@ const appConfig = {
 					// /spotlight/:id  → one Agent Spotlight entry (uuid).
 					else if (!filePath && /^\/spotlight\/[0-9a-fA-F-]{36}\/?$/.test(path))
 						filePath = resolve(root, 'pages/spotlight-entry.html');
+					// /cert/:certId  → one Materialize certificate of authenticity (24 hex).
+					else if (!filePath && /^\/cert\/[0-9a-f]{24}\/?$/.test(path))
+						filePath = resolve(root, 'pages/certificate.html');
+					// /materialize/insert/:certId  → the printable package insert card (ops).
+					else if (!filePath && /^\/materialize\/insert\/[0-9a-f]{24}\/?$/.test(path))
+						filePath = resolve(root, 'pages/print-insert.html');
 					// /drops/:slug  → one generative 3D collection. Declared ahead of the
 					// /drop/:id rule below so the singular sealed-gift route and this
 					// plural collection route can never shadow each other.

@@ -3,7 +3,7 @@
 // machine.
 //
 // Adapters speak; the store decides. Every path in here takes a normalized
-// adapter result and turns it into at most one transitionOrder() call, so the
+// adapter result and turns it into at most one transition() call, so the
 // rules about what may follow what live in print-store.js and nowhere else.
 //
 // The interesting case is a provider reporting something the machine refuses:
@@ -14,13 +14,7 @@
 // the timeline as a provider event with the refusal in its note, and the HTTP
 // caller gets a 200 that says `applied: false`.
 
-import { sql } from '../db.js';
-import {
-	PrintTransitionError,
-	appendOrderEvent,
-	getOrder,
-	transitionOrder,
-} from '../print-store.js';
+import { PrintStoreError, appendEvent, getOrder, transition } from '../print-store.js';
 import {
 	normalizeCancelResult,
 	normalizeStatusResult,
@@ -28,6 +22,7 @@ import {
 	adapterSupportsOrder,
 } from './adapters/contract.js';
 import { getAdapter, routeOrder } from './adapters/index.js';
+import { patchProviderDetails } from './fulfillment-queries.js';
 
 /**
  * Hand a screened order to a fulfillment lane.
@@ -59,7 +54,7 @@ export async function submitOrder({ order, adapterKey = '', actor = 'operator', 
 	const raw = await adapter.submit(order, assets);
 	const result = normalizeSubmitResult(adapter.key, raw);
 
-	const { order: updated } = await transitionOrder({
+	const { order: updated } = await transition({
 		orderId: order.id,
 		to: result.status,
 		note: result.note || `Submitted to ${adapter.label}.`,
@@ -68,14 +63,16 @@ export async function submitOrder({ order, adapterKey = '', actor = 'operator', 
 		patch: {
 			provider: adapter.key,
 			provider_order_id: result.providerOrderId,
-			provider_state: result.state,
 			lead_time_days: result.leadTimeDays || adapter.capabilities.leadTimeDays,
-			submitted_at: new Date().toISOString(),
-			stall_alerted_at: null,
 		},
 	});
 
-	return { order: updated, adapter: adapter.key, providerOrderId: result.providerOrderId };
+	// provider_state is not a lifecycle column, so it is written beside the move
+	// rather than through it. A failure here loses a diagnostic blob, never the
+	// fact that the job was submitted.
+	const withState = (await patchProviderDetails(order.id, { provider_state: result.state })) || updated;
+
+	return { order: withState, adapter: adapter.key, providerOrderId: result.providerOrderId };
 }
 
 /** A fulfillment routing/lane failure with a code a handler can map to HTTP. */
@@ -108,32 +105,30 @@ export async function applyProviderEvent({ order, event, actor = 'provider' }) {
 	// No status, or the status we already hold: this is news about the job, not
 	// a move. Record what changed and stop.
 	if (!event.status || event.status === order.status) {
-		const changed = await patchOnly(order, patch);
+		const changed = (await patchProviderDetails(order.id, patch)) || order;
 		if (event.note) {
-			await appendOrderEvent({
-				orderId: order.id,
-				status: order.status,
-				note: event.note,
-				actor,
-			});
+			await appendEvent({ orderId: order.id, status: order.status, note: event.note, actor });
 		}
 		return { applied: false, order: changed, reason: event.status ? 'already in that status' : 'no status change reported' };
 	}
 
 	try {
-		const { order: updated } = await transitionOrder({
+		const { order: updated } = await transition({
 			orderId: order.id,
 			to: event.status,
 			note: event.note || `Provider reported ${event.status}.`,
 			actor,
-			patch,
+			patch: { tracking_number: patch.tracking_number, carrier: patch.carrier },
 		});
-		return { applied: true, order: updated, reason: '' };
+		const withState = patch.provider_state
+			? (await patchProviderDetails(order.id, { provider_state: patch.provider_state })) || updated
+			: updated;
+		return { applied: true, order: withState, reason: '' };
 	} catch (err) {
-		if (err instanceof PrintTransitionError) {
-			// Out-of-order or impossible: keep it on the timeline where an operator
-			// will see it, and tell the caller it was not applied.
-			await appendOrderEvent({
+		if (err instanceof PrintStoreError) {
+			// Out of order, impossible, or lost a race: keep it on the timeline
+			// where an operator will see it, and tell the caller it was not applied.
+			await appendEvent({
 				orderId: order.id,
 				status: order.status,
 				note: `Refused provider report '${event.status}': ${err.message}`,
@@ -144,27 +139,6 @@ export async function applyProviderEvent({ order, event, actor = 'provider' }) {
 		}
 		throw err;
 	}
-}
-
-/**
- * Write patched columns without a status change. Used when a provider reports
- * a tracking number before (or after) the transition that carries it.
- * @param {object} order
- * @param {Record<string, unknown>} patch
- */
-async function patchOnly(order, patch) {
-	if (!patch || Object.keys(patch).length === 0) return order;
-	// transitionOrder is the only writer of `status`; a no-op self transition is
-	// not legal, so patch-only writes go through a dedicated statement here. It
-	// touches no lifecycle column, which is why it does not need the machine.
-	const rows = await sql`
-		update print_orders set
-			tracking_number = coalesce(${patch.tracking_number ?? null}, tracking_number),
-			carrier = coalesce(${patch.carrier ?? null}, carrier),
-			provider_state = coalesce(${patch.provider_state ? JSON.stringify(patch.provider_state) : null}::jsonb, provider_state)
-		where id = ${order.id}
-		returning *`;
-	return rows[0] || order;
 }
 
 /**
