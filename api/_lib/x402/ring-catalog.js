@@ -822,6 +822,43 @@ export const RING_CATALOG = [
 		note: 'autobuy:false — freemium rail: 60 searches/day per IP are free, so a ring call usually gets a free 200, not a 402; the paid twin only engages over quota.',
 	},
 	{
+		slug: 'print-order',
+		sourceFile: 'api/x402/print-order.js',
+		path: '/api/x402/print-order',
+		method: 'POST',
+		// The catalog floor price, which is also what the probe challenge quotes.
+		// A real call is priced by its own signed quote token, so no single number
+		// here can be the price of an order.
+		body: () => ({ token: null, shipping: null }),
+		priceAtomicDefault: 12_000_000,
+		priceSlug: 'print-order',
+		tier: 'commerce',
+		kind: 'commerce',
+		network: null,
+		autobuy: false,
+		weight: 0,
+		businessEffect: 'Each settled call opens a REAL manufacturing job: a physical 3D print is produced and shipped to the street address in the request, and an on-chain certificate is issued when it ships.',
+		note: 'autobuy:false - a settled call manufactures and ships a physical object to a real address, which cannot be canaried. It is also unbuyable by a loop by construction: the price comes from an HMAC-signed quote token the ring has no way to mint, so a rotation call would be refused pre-settle with a 422.',
+	},
+	{
+		slug: 'knock',
+		sourceFile: 'api/x402/knock.js',
+		path: '/api/x402/knock',
+		method: 'POST',
+		body: () => ({ from: 'ring canary', message: 'ring coverage probe' }),
+		// The representative probe price the handler quotes when no door is named.
+		// A real knock is priced by the recipient's own door row.
+		priceAtomicDefault: 50_000,
+		priceSlug: 'knock',
+		tier: 'commerce',
+		kind: 'commerce',
+		network: null,
+		autobuy: false,
+		weight: 0,
+		businessEffect: 'Each settled call delivers one paid message to a real person, settling USDC directly to that recipient\'s own wallet rather than to the platform.',
+		note: 'autobuy:false - a settled call interrupts a real human being and pays them, and the payout wallet is theirs, not ours. There is also nothing to buy without a ?to= handle: a rotation call with no door gets the probe challenge and can never settle.',
+	},
+	{
 		slug: 'three-buy',
 		sourceFile: 'api/x402/three-buy.js',
 		path: '/api/x402/three-buy',

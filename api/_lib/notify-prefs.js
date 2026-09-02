@@ -102,6 +102,9 @@ const TYPE_CATEGORY = {
 	asset_purchase_confirmed: 'purchases',
 	skill_gift_received: 'purchases',
 	skill_gift_sent: 'purchases',
+	// Materialize: one type carries the whole print lifecycle, quoted through
+	// delivered. It is the buyer's own order, so it belongs with purchases.
+	print_update: 'purchases',
 
 	remix: 'social',
 	reply: 'social',

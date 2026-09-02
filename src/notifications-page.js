@@ -18,6 +18,7 @@ const TYPE_CATEGORY = {
 	pump_launch_filled: 'sales', royalty_paid: 'sales',
 	skill_purchase_confirmed: 'purchases', asset_purchase_confirmed: 'purchases',
 	skill_gift_received: 'purchases', skill_gift_sent: 'purchases',
+	print_update: 'purchases',
 	remix: 'social', reply: 'social', comment: 'social', embed: 'social', mention: 'social',
 	fork: 'social', follow: 'social', dm_received: 'social', agent_review: 'social',
 	quest_complete: 'social',

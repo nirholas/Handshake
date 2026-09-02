@@ -91,6 +91,7 @@ export const TYPE_ICON = {
 	quest_complete:           '🏆',
 	royalty_paid:             '💰',
 	companion_delivery:       '👋',
+	print_update:             '📦',
 };
 
 export function notifLabel(n) {
@@ -168,6 +169,10 @@ export function notifLabel(n) {
 			// point of the delivery, so the inbox reads exactly like the avatar
 			// sounds. Falls back to the subject when a line never got written.
 			return p.line || (p.sender ? `${p.sender}: ${p.title || 'has something for you'}` : p.title || 'Something needs you');
+		case 'print_update':
+			// The store already wrote the line for this status, so the bell reads
+			// exactly what the order timeline says rather than a second wording of it.
+			return p.message || `Your print order was updated${p.status ? `: ${String(p.status).replace(/_/g, ' ')}` : ''}`;
 		case 'royalty_paid':
 			return p.usd
 				? `${p.actor || 'A fork of your avatar'} paid you $${Number(p.usd).toFixed(3)} in royalties`

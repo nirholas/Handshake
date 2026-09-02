@@ -32,7 +32,7 @@ import { analyzeMesh } from '../_lib/print/analyze.js';
 import { loadCatalog, materialFits, quotePrint, signQuote } from '../_lib/print/quote.js';
 import { getPublicCreation } from '../_lib/forge-store.js';
 import { loadLineage, runFabricationGate } from '../_lib/print/gate.js';
-import { holderDiscountBps } from '../_lib/three-tier.js';
+import { holderDiscountBps, holderUsd, tierForUsd } from '../_lib/three-tier.js';
 
 // One analysis per source model, held for an hour. The report is deterministic
 // for given bytes, so a cache hit is the same answer the analysis would produce,
@@ -41,6 +41,8 @@ const reports = createCache({ max: 256, ttlMs: 60 * 60 * 1000 });
 
 // MeshIoError codes carry their own correct HTTP status: a mesh that is too big
 // is the caller's input, not our failure, and a fetch that died upstream is a 502.
+const SOLANA_ADDRESS_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
 const MESH_ERROR_STATUS = {
 	invalid_model: 422,
 	no_geometry: 422,
@@ -161,7 +163,24 @@ export default wrap(async (req, res) => {
 	// buyers quote at list price and the panel says so, rather than showing a
 	// discount they cannot claim at checkout.
 	const user = await getSessionUser(req).catch(() => null);
-	const discountBps = user ? await holderDiscountBps(user) : 0;
+	// An agent has no session, so it names the wallet it will pay from and the
+	// tier is read from that wallet's own $THREE holdings. Without this the
+	// x402 lane could only ever quote list price, which would make the holder
+	// discount a humans-only perk on a platform whose buyers are half machines.
+	// Self-declared and harmless: the discount is derived from an on-chain
+	// balance we read ourselves, so naming someone else's wallet buys nothing
+	// except that wallet's own tier.
+	const payerWallet =
+		!user && typeof body.payerWallet === 'string' && SOLANA_ADDRESS_RE.test(body.payerWallet.trim())
+			? body.payerWallet.trim()
+			: null;
+	let discountBps = 0;
+	if (user) {
+		discountBps = await holderDiscountBps(user);
+	} else if (payerWallet) {
+		const held = await holderUsd(payerWallet);
+		discountBps = tierForUsd(held.usd).discountBps;
+	}
 
 	const priced = quotePrint({
 		report,
@@ -200,6 +219,7 @@ export default wrap(async (req, res) => {
 			rejection: null,
 			token,
 			holderTierApplied: discountBps > 0,
+			holderTierSource: user ? 'session' : payerWallet ? 'payer_wallet' : null,
 			expiresInSeconds: token ? catalog.pricing.quoteTtlSeconds : null,
 		},
 		{ 'cache-control': 'no-store' },
