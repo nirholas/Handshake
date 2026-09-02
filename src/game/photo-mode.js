@@ -359,10 +359,8 @@ function showPreview({ blob, width, height, stamp, filename, onClose }) {
 			closePhotoPreview();
 			return;
 		}
-		if (e.key === 'p' || e.key === 'P') {
-			if (e.ctrlKey || e.metaKey) return;
-			return;
-		}
+		// Ctrl/Cmd+P included: the host leaves that to the browser's print dialog.
+		if (e.key === 'p' || e.key === 'P') return;
 		if (card.contains(e.target)) e.stopPropagation();
 	};
 	document.addEventListener('keydown', onKeydown, true);
