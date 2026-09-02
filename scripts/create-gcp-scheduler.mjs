@@ -42,7 +42,8 @@
 // api/cron/* handlers already validate. The secret is read from --env-file, then
 // process.env, then the live three-ws-api Cloud Run service (production's
 // authoritative copy, and the only source on a machine whose .env lacks it).
-// It is never hardcoded.
+// When the service stores it as a Secret Manager reference rather than a literal,
+// the reference is followed. It is never hardcoded.
 
 // `--oidc` additionally attaches a Cloud Scheduler OIDC identity token, the
 // second lock the edge gate (server/cron-edge-auth.mjs) can verify. It exists
@@ -166,7 +167,7 @@ export function cronSecretFromArgs(argv, readFile = (p) => readFileSync(p, 'utf8
  * Returns null rather than throwing: a caller that also has `--env-file` or a
  * process env should not be denied by an unrelated gcloud failure.
  */
-export function cronSecretFromService(describe = defaultDescribeService) {
+export function cronSecretFromService(describe = defaultDescribeService, accessVersion = defaultAccessSecretVersion) {
 	let svc;
 	try {
 		svc = JSON.parse(describe());
@@ -174,7 +175,36 @@ export function cronSecretFromService(describe = defaultDescribeService) {
 		return null;
 	}
 	const env = svc?.spec?.template?.spec?.containers?.[0]?.env || [];
-	return env.find((e) => e.name === 'CRON_SECRET')?.value || null;
+	const entry = env.find((e) => e.name === 'CRON_SECRET');
+	if (!entry) return null;
+	if (entry.value) return entry.value;
+	// CRON_SECRET is a credential, so it belongs in Secret Manager rather than as
+	// a literal on the service (scripts/migrate-plaintext-secrets.mjs moves it
+	// there). Once it is a secretKeyRef the service config no longer carries the
+	// value, so follow the reference. The payload is returned byte for byte,
+	// exactly what the container receives, with no trimming.
+	const ref = entry.valueFrom?.secretKeyRef;
+	if (!ref?.name) return null;
+	try {
+		return accessVersion(ref.name, ref.key || 'latest') || null;
+	} catch {
+		return null;
+	}
+}
+
+function defaultAccessSecretVersion(secretName, version) {
+	return execFileSync(
+		'gcloud',
+		[
+			'secrets',
+			'versions',
+			'access',
+			version,
+			`--secret=${secretName}`,
+			`--project=${PROJECT}`,
+		],
+		{ encoding: 'utf8', maxBuffer: 1024 * 1024, stdio: ['ignore', 'pipe', 'ignore'] },
+	);
 }
 
 function defaultDescribeService() {

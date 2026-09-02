@@ -68,6 +68,44 @@ describe('cronSecretFromService', () => {
 		);
 	});
 
+	// Once the secret is migrated off the service config (production did this on
+	// 2026-09-02), the only copy lives in Secret Manager, so the reference has to
+	// be followed or every cron repair on a fresh machine dead-ends again.
+	it('follows a secret-manager reference to the version the container reads', () => {
+		const accessed = [];
+		const value = cronSecretFromService(
+			service([{ name: 'CRON_SECRET', valueFrom: { secretKeyRef: { name: 'cron-secret', key: 'latest' } } }]),
+			(secret, version) => {
+				accessed.push([secret, version]);
+				return 's3cr3t';
+			},
+		);
+		expect(value).toBe('s3cr3t');
+		expect(accessed).toEqual([['cron-secret', 'latest']]);
+	});
+
+	// The container receives the payload byte for byte. Trimming here would sign
+	// every cron header with a value production never uses.
+	it('returns the payload without trimming it', () => {
+		expect(
+			cronSecretFromService(
+				service([{ name: 'CRON_SECRET', valueFrom: { secretKeyRef: { name: 'cron-secret', key: '4' } } }]),
+				() => ' padded \n',
+			),
+		).toBe(' padded \n');
+	});
+
+	it('returns null when the secret version cannot be read', () => {
+		expect(
+			cronSecretFromService(
+				service([{ name: 'CRON_SECRET', valueFrom: { secretKeyRef: { name: 'cron-secret', key: 'latest' } } }]),
+				() => {
+					throw new Error('PERMISSION_DENIED');
+				},
+			),
+		).toBe(null);
+	});
+
 	// An unauthenticated gcloud must not deny a caller who passed --env-file.
 	it('returns null instead of throwing when gcloud fails', () => {
 		expect(
