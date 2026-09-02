@@ -463,3 +463,83 @@ worktree. `npm run check:rules` clean on every file touched.
 **Remains.** Nothing in this order. It is behind the deploy gap like everything else on `main`:
 production still serves the broken shutter until the next deploy carries these commits, and deploys
 are owner-gated.
+
+## 2026-09-02 · Order 06, second pass: cross-engine capture proof, and a duplicate announcement caught before it shipped
+
+Ran as an independent verification of 06 while another session was fixing it. Both sessions
+converged on the same two facts from opposite directions, which is worth more than either run
+alone; this entry records only what is not already above.
+
+**The harness, and why it has two modes.** `scripts/play-photo-mode-check.mjs` (`MODE=world`,
+`MODE=scene`). World mode boots the real `/play` world and drives the key and the HUD button the
+way a player does. Scene mode stands a real `WebGLRenderer` up on the `/play` page and drives the
+SHIPPED `takePhoto` over it, which is the only way to answer the black-frame question on an engine
+that has no swiftshader switch: webkit will not boot the world here at all, so "verified on a
+second engine" is unreachable without it. Same capture path, same compositor, same preview sheet,
+seconds instead of minutes.
+
+**Measured, both engines, scene mode: 20/20 each.**
+
+| Fact | chromium | webkit |
+|---|---|---|
+| capture is not a black frame | 100% non-black, mean luma 53.5 | 100% non-black, mean luma 53.6 |
+| capture holds a rendered scene, not a flat fill | 24 distinct colours | 22 distinct colours |
+| Download writes real PNG bytes | magic `89504e470d0a1a0a` | same |
+| Copy reaches the clipboard | "Copied. Paste it straight into a post." | same |
+| retake leaves exactly one sheet | 1 | 1 |
+
+The downloaded file and the composited card are byte-identical in size on each engine (40,494 on
+chromium, 21,870 on webkit), so what the player saves is the card that was measured.
+
+**Three harness bugs found by disbelieving its own failures, each a lesson.**
+
+1. It reported the HUD photo button as failing a 40px touch bar at 92x34. It is not a defect:
+   `coincommunities.css` raises that whole right-edge stack under `@media (pointer: coarse)` and
+   leaves the fine-pointer rail at its designed 34px. A touch bar asserted against a mouse reports
+   the design as a bug. The check now asserts the bar that matches the pointer under test.
+2. It filtered visible overlays with `offsetParent`, which is null for every `position: fixed`
+   element, so the one overlay it existed to name was the one it could never see.
+3. It read the copy status 1.5s after the click and reported "Copying..." as the outcome. It now
+   polls for a terminal status. Separately, chromium's headless clipboard denies image writes
+   unless the origin is granted, so the run only ever exercised the honest fallback; granting it
+   proves the success path, and those permission names are chromium's alone (asking webkit for them
+   poisons the context so every later call fails).
+
+**The inert-HUD window, measured rather than inferred.** Independently found and quantified: the
+HUD is painted by `ui.enterWorld()` at `coincommunities.js:1455` and `phase = 'world'` is not set
+until line 1898, after the whole async world build. Every world hotkey and every HUD button routes
+through a `phase !== 'world'` guard that returns silently, so the window is not "slow", it is
+unresponsive with no feedback. Four runs here measured 240.6s, 292.6s, 392.8s and (in the other
+session) 142s. Those magnitudes are swiftshader on a shared box, not production, but the mechanism
+is real and shows on any slow device. Not fixed here on purpose: two commits landed on that exact
+code path from another session while this was being measured (`9647898af` the button busy state,
+`36ed209bf` the parallel-compile guard), and a third hand in one method is how work gets lost.
+World mode names the window as its own measurement rather than reporting it as a dead key binding.
+
+**A duplicate community announcement, caught and removed (`c71cfae49`).** Both sessions wrote a
+changelog entry for photo mode within the same hour, and both were committed by other agents'
+`git add -A` sweeps before either could be reconciled. The feed baked into the next image would
+have carried two entries for one feature, and `/api/cron/changelog-push` diffs that feed against DB
+state, so the community Telegram channel would have received two posts about the same thing. The
+surviving entry is the other session's, which is the more accurate of the two: it announces the fix
+that made the feature work at all, rather than announcing a feature that had never once produced a
+photo. The duplicate `STRUCTURE.md` row went with it; the surviving row is more complete and
+already cites this harness. Feeds regenerated so the data and the generated output agree.
+
+**Also repaired on the way through, both self-inflicted or inherited, both worth naming.**
+`f1f28f19c` restores an `inert` attribute on the `/create` hero card that an earlier commit of mine
+dropped: a private index read from `HEAD` a moment before another commit landed carries that
+commit's file back to its earlier state, so a private-index commit needs its parent pinned and
+`git update-ref HEAD <new> <old>` as a compare-and-swap, not a bare `update-ref`. Twice during this
+session the SHARED index also held stale entries that a plain `git commit` from any agent would
+have turned into a revert of committed work, once including 67 lines of the closeout entry above.
+Both were cleared with a path-scoped `git reset` after confirming the worktree already matched
+`HEAD`, which touches no file on disk.
+
+**Remains.** World mode cannot complete on this box: the capture never returns inside a 240s budget
+under software GL at these load averages, so its last five checks (zen mode, the button path,
+overflow) are unverified by this harness and are covered instead by the other session's
+`tests/e2e/play-photo-mode.spec.js`. It needs a real GPU or a quiet machine. `ENGINE=firefox` needs
+`npx playwright install firefox` (the installed build is not the one this Playwright expects).
+Sample cards for eyeballing: `photo-scene-chromium/card.png` and `photo-scene-webkit/card.png` under
+`/tmp/claude-1000/-workspaces-three-ws/ca2699d0-9f18-493e-ad30-4677e38f0a7f/scratchpad/`.
