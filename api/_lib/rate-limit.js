@@ -1228,7 +1228,7 @@ export const limits = {
 		getLimiter('bounty:create', { limit: 15, window: '1 h' }).limit(userId),
 	bountySubmit: (userId) =>
 		getLimiter('bounty:submit', { limit: 40, window: '1 h' }).limit(userId),
-	// Agent Spotlight (api/showcase/[action].js). Writing a showcase entry is a
+	// Agent Spotlight (api/spotlight/[action].js). Writing a showcase entry is a
 	// considered act (a builder does it once per agent and edits it a few times),
 	// so the create bucket is deliberately tight. Voting is a browse-time
 	// gesture down a long page, so it gets a much wider one; both are keyed on

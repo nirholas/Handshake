@@ -70,7 +70,7 @@
 				<dl class="sp-stats" id="sp-stats" aria-live="polite"></dl>
 			</section>
 
-			<!-- Submission. Server-validated on POST /api/showcase/submit; the client
+			<!-- Submission. Server-validated on POST /api/spotlight/submit; the client
 			     mirrors the same bounds so a builder learns about a too-long tagline
 			     while typing it rather than after a round trip. -->
 			<form class="sp-panel" id="sp-submit-panel" hidden>
@@ -85,86 +85,9 @@
 
 				<div id="sp-submit-auth" class="sp-inline-state" hidden></div>
 
-				<div class="sp-field">
-					<label for="sp-agent">Agent</label>
-					<select class="sp-input" id="sp-agent" name="agentId" required></select>
-					<span class="sp-hint" id="sp-agent-hint"></span>
-				</div>
-
-				<div class="sp-row">
-					<div class="sp-field">
-						<label for="sp-title">Headline</label>
-						<input
-							class="sp-input"
-							id="sp-title"
-							name="title"
-							required
-							minlength="3"
-							maxlength="90"
-							placeholder="The rug detector that reads the chain before you ape"
-							autocomplete="off"
-						/>
-						<span class="sp-hint"><span data-count-for="sp-title">0</span>/90</span>
-					</div>
-					<div class="sp-field">
-						<label for="sp-category">Category</label>
-						<select class="sp-input" id="sp-category" name="category" required></select>
-					</div>
-				</div>
-
-				<div class="sp-field">
-					<label for="sp-tagline">One-liner</label>
-					<input
-						class="sp-input"
-						id="sp-tagline"
-						name="tagline"
-						required
-						minlength="10"
-						maxlength="160"
-						placeholder="What it does, in the words you would use out loud."
-						autocomplete="off"
-					/>
-					<span class="sp-hint"><span data-count-for="sp-tagline">0</span>/160</span>
-				</div>
-
-				<div class="sp-field">
-					<label for="sp-story">The write-up <span class="sp-hint">(optional)</span></label>
-					<textarea
-						class="sp-textarea"
-						id="sp-story"
-						name="story"
-						maxlength="4000"
-						placeholder="How you built it, what it is for, what surprised you. This is the part people read."
-					></textarea>
-					<span class="sp-hint"><span data-count-for="sp-story">0</span>/4000</span>
-				</div>
-
-				<div class="sp-row">
-					<div class="sp-field">
-						<label for="sp-demo">Demo link <span class="sp-hint">(optional)</span></label>
-						<input
-							class="sp-input"
-							id="sp-demo"
-							name="demoUrl"
-							type="url"
-							maxlength="500"
-							placeholder="https://your-site.com/where-it-lives"
-							autocomplete="off"
-						/>
-					</div>
-					<div class="sp-field">
-						<label for="sp-tags">Tags <span class="sp-hint">(optional, up to 6)</span></label>
-						<input
-							class="sp-input"
-							id="sp-tags"
-							name="tags"
-							maxlength="160"
-							placeholder="solana, on-chain, research"
-							autocomplete="off"
-						/>
-						<span class="sp-hint">Comma separated. Lowercase letters, digits and hyphens.</span>
-					</div>
-				</div>
+				<!-- Fields are built by src/spotlight-form.js, the same module the edit
+				     form on /spotlight/:id uses, so the two can never drift apart. -->
+				<div id="sp-fields"></div>
 
 				<div class="sp-ctas">
 					<button type="submit" class="sp-btn sp-btn-primary" id="sp-submit">Publish to the showcase</button>

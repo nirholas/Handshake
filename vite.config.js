@@ -542,6 +542,7 @@ const appConfig = {
 				drops: resolve(__dirname, 'pages/drops.html'),
 				'drop-collection': resolve(__dirname, 'pages/drop-collection.html'),
 				spotlight: resolve(__dirname, 'pages/spotlight.html'),
+				'spotlight-entry': resolve(__dirname, 'pages/spotlight-entry.html'),
 				app: resolve(__dirname, 'pages/app.html'),
 				proof: resolve(__dirname, 'pages/proof.html'),
 				stream: resolve(__dirname, 'pages/stream.html'),
@@ -2149,6 +2150,9 @@ const appConfig = {
 						/^\/markets\/robinhood\/coin\/0x[0-9a-fA-F]{40}\/?$/.test(path)
 					)
 						filePath = resolve(root, 'pages/robinhood-coin.html');
+					// /spotlight/:id  → one Agent Spotlight entry (uuid).
+					else if (!filePath && /^\/spotlight\/[0-9a-fA-F-]{36}\/?$/.test(path))
+						filePath = resolve(root, 'pages/spotlight-entry.html');
 					// /drops/:slug  → one generative 3D collection. Declared ahead of the
 					// /drop/:id rule below so the singular sealed-gift route and this
 					// plural collection route can never shadow each other.

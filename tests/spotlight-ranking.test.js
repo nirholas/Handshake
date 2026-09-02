@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { CATEGORIES, GRAVITY, SORTS, isCategory, mapEntry, trendingScore } from '../api/_lib/showcase-store.js';
+import { CATEGORIES, GRAVITY, SORTS, isCategory, mapEntry, trendingScore } from '../api/_lib/spotlight-store.js';
 
 const DAY = 86_400_000;
 const NOW = Date.UTC(2026, 8, 1, 12, 0, 0);
@@ -54,12 +54,20 @@ describe('spotlight trending score', () => {
 
 describe('spotlight SQL and JS agree', () => {
 	it('computes the same expression in the ORDER BY as trendingScore does', () => {
-		const source = readFileSync(new URL('../api/_lib/showcase-store.js', import.meta.url), 'utf8');
+		const source = readFileSync(new URL('../api/_lib/spotlight-store.js', import.meta.url), 'utf8');
 		// The ranking exists twice by necessity (Postgres orders the page, JS
 		// reports the score on each row). Pin the SQL shape so a change to one
 		// without the other fails here instead of silently reordering the page.
 		expect(source).toMatch(/\(coalesce\(v\.n, 0\) \+ 1\)::numeric/);
 		expect(source).toMatch(/power\(extract\(epoch from \(now\(\) - s\.created_at\)\)::numeric \/ 86400\.0 \+ 1, \$\{GRAVITY\}::numeric\)/);
+	});
+
+	it('orders totally, so the same query cannot return a different page', () => {
+		const source = readFileSync(new URL('../api/_lib/spotlight-store.js', import.meta.url), 'utf8');
+		// Entries seeded in one batch tie on score AND created_at. Without a
+		// terminal tie-break the planner picks, and the page reshuffles between
+		// identical requests.
+		expect(source).toMatch(/\(coalesce\(ch\.n, 0\) \+ coalesce\(ac\.n, 0\)\) desc,\n\t\t\ts\.id/);
 	});
 });
 

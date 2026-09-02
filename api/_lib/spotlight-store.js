@@ -6,6 +6,12 @@
 // agent_identities/avatars/users on each query, so an entry can never show a
 // stale name or a deleted avatar. See the migration
 // 20260901160000_agent_showcase.sql for the same reasoning at the schema level.
+//
+// Naming: the HTTP surface and this module are "spotlight" because /api/showcase
+// was already taken by an unrelated public endpoint (the ERC-8004 directory in
+// api/showcase.js, documented in docs/showcase.md). The TABLES stay
+// `agent_showcase` / `agent_showcase_votes`: they are applied in production, and
+// renaming a live table to match a module name is not a trade worth making.
 
 import { sql } from './db.js';
 import { env } from './env.js';
@@ -209,7 +215,15 @@ export async function listEntries({
 			     then (coalesce(v.n, 0) + 1)::numeric
 			          / power(extract(epoch from (now() - s.created_at))::numeric / 86400.0 + 1, ${GRAVITY}::numeric)
 			end desc nulls last,
-			s.created_at desc
+			s.created_at desc,
+			-- A board seeded in one batch, or two entries published the same
+			-- minute, ties on every clause above and would then order by whatever
+			-- the planner happened to return: the same query gives a different
+			-- page each time, which reads as a bug. Break the tie on the agent's
+			-- own activity (it is the most useful thing to lead with among equals)
+			-- and finally on id, so the order is total and stable.
+			(coalesce(ch.n, 0) + coalesce(ac.n, 0)) desc,
+			s.id
 		limit ${limit} offset ${offset}
 	`;
 	const now = Date.now();

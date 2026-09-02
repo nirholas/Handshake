@@ -1,15 +1,15 @@
-// api/showcase/[action]: Agent Spotlight, the community showcase.
+// api/spotlight/[action]: Agent Spotlight, the community showcase.
 //
-//   GET  /api/showcase/list?sort=trending|new|top&category=&tag=&q=&limit=&offset=&featured=1
-//   GET  /api/showcase/get?id=<uuid>
-//   GET  /api/showcase/categories     (per-category counts + headline totals)
-//   GET  /api/showcase/eligible            (auth: the caller's showcasable agents)
-//   POST /api/showcase/submit  { agentId, title, tagline, story?, demoUrl?, category, tags[] }
-//   POST /api/showcase/vote    { id }      (toggle)
-//   POST /api/showcase/remove  { id }      (submitter or agent owner)
+//   GET  /api/spotlight/list?sort=trending|new|top&category=&tag=&q=&limit=&offset=&featured=1
+//   GET  /api/spotlight/get?id=<uuid>
+//   GET  /api/spotlight/categories     (per-category counts + headline totals)
+//   GET  /api/spotlight/eligible            (auth: the caller's showcasable agents)
+//   POST /api/spotlight/submit  { agentId, title, tagline, story?, demoUrl?, category, tags[] }
+//   POST /api/spotlight/vote    { id }      (toggle)
+//   POST /api/spotlight/remove  { id }      (submitter or agent owner)
 //
 // Reads are public and CDN-cached; writes need a session plus CSRF. The ranking
-// and every query live in api/_lib/showcase-store.js; this file is the HTTP
+// and every query live in api/_lib/spotlight-store.js; this file is the HTTP
 // boundary and nothing else.
 
 import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/http.js';
@@ -35,7 +35,7 @@ import {
 	softDeleteEntry,
 	toggleVote,
 	upsertEntry,
-} from '../_lib/showcase-store.js';
+} from '../_lib/spotlight-store.js';
 
 const MAX_LIMIT = 48;
 
@@ -63,7 +63,7 @@ export default wrap(async (req, res) => {
 		case 'remove':
 			return await handleRemove(req, res);
 		default:
-			return error(res, 404, 'not_found', `unknown showcase action "${actionOf(req)}"`);
+			return error(res, 404, 'not_found', `unknown spotlight action "${actionOf(req)}"`);
 	}
 });
 

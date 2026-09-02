@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot - no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Agent Spotlight · three.ws</title>
+		<meta
+			name="description"
+			content="A community write-up of an agent built on three.ws: what it does, how it was built, and the live agent behind it."
+		/>
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/spotlight.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="sp-shell sp-detail" id="sp-entry" aria-busy="true">
+			<!-- Rendered by /src/spotlight-entry.js from /api/spotlight/get. The
+			     skeleton below is real markup rather than a spinner so the page has
+			     its final shape before the data lands. -->
+			<div class="sp-detail-skeleton" id="sp-entry-skeleton">
+				<div class="sp-skeleton sp-skeleton-stage"></div>
+				<div class="sp-skeleton sp-skeleton-copy"></div>
+			</div>
+			<noscript>
+				<section class="sp-empty">
+					<h3>Agent Spotlight</h3>
+					<p>
+						This page renders a community write-up of an agent built on three.ws. Enable
+						JavaScript to read it, or browse the whole showcase.
+					</p>
+					<a class="sp-btn sp-btn-primary" href="/spotlight">Open the showcase</a>
+				</section>
+			</noscript>
+		</main>
+
+		<div id="sp-live" class="sr-only" role="status" aria-live="polite"></div>
+
+		<script type="module" src="/src/spotlight-entry.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

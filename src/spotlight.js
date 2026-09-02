@@ -1,5 +1,5 @@
 /**
- * /spotlight: Agent Spotlight, the three.ws community showcase.
+ * /spotlight — Agent Spotlight, the three.ws community showcase.
  *
  * One controller, three jobs: browse (sort + category + search + paging), vote,
  * and submit. State is a single `view` object that the URL mirrors, so every
@@ -7,15 +7,28 @@
  * re-fetched from that object rather than mutated in place, which keeps the
  * "what am I looking at" question answerable from one value.
  *
+ * A card's headline links to the ENTRY (/spotlight/:id), not the agent. The
+ * write-up is the thing a showcase exists to publish, and burying it behind a
+ * clamped three-line preview with no way to open it was the difference between a
+ * showcase and a directory. Every card still carries direct links to the agent
+ * itself in its footer.
+ *
  * The 3D stage on the featured entry is deliberately lazy: <agent-3d> is a
- * WebGL component and the showcase is a browse surface, so the loader script is
- * only injected once a featured entry with a public GLB actually scrolls into
- * view. Everything below the fold renders from thumbnails.
+ * WebGL component and this is a browse surface, so the loader script is only
+ * injected once a featured entry with a public GLB actually scrolls into view.
+ * Everything below the fold renders from thumbnails.
  */
 
 import { apiFetch } from './api.js';
+import {
+	buildFields,
+	fillCategories,
+	readValues,
+	saveEntry,
+	validate,
+} from './spotlight-form.js';
+import { entryPath, errorMessage, monogram, relativeTime, stageFor, voteButton } from './spotlight-shared.js';
 
-const AGENT_3D_LOADER = 'https://three.ws/agent-3d/latest/agent-3d.js';
 const PAGE_SIZE = 24;
 
 const els = {
@@ -31,27 +44,20 @@ const els = {
 	panel: document.getElementById('sp-submit-panel'),
 	panelToggle: document.getElementById('sp-submit-toggle'),
 	panelAuth: document.getElementById('sp-submit-auth'),
-	agentSelect: document.getElementById('sp-agent'),
-	agentHint: document.getElementById('sp-agent-hint'),
-	categorySelect: document.getElementById('sp-category'),
+	fields: document.getElementById('sp-fields'),
 	cancel: document.getElementById('sp-cancel'),
 	submit: document.getElementById('sp-submit'),
 	formNote: document.getElementById('sp-form-note'),
 	live: document.getElementById('sp-live'),
 };
 
-const view = {
-	sort: 'trending',
-	category: null,
-	tag: null,
-	q: '',
-	offset: 0,
-};
+const view = { sort: 'trending', category: null, tag: null, q: '', offset: 0 };
 
 let total = 0;
 let categories = [];
 let totals = { entries: 0, builders: 0, votes: 0 };
 let loadToken = 0;
+let formRefs = null;
 
 /* ── url state ────────────────────────────────────────────────────────── */
 
@@ -87,8 +93,7 @@ function el(tag, props = {}, children = []) {
 		else node.setAttribute(k, v === true ? '' : String(v));
 	}
 	for (const child of [].concat(children)) {
-		if (child == null) continue;
-		node.append(child);
+		if (child != null) node.append(child);
 	}
 	return node;
 }
@@ -101,135 +106,16 @@ function plural(n, one, many) {
 	return `${n.toLocaleString()} ${n === 1 ? one : many}`;
 }
 
-function relativeTime(iso) {
-	const then = new Date(iso).getTime();
-	if (!Number.isFinite(then)) return '';
-	const mins = Math.round((Date.now() - then) / 60000);
-	if (mins < 1) return 'just now';
-	if (mins < 60) return `${mins}m ago`;
-	const hours = Math.round(mins / 60);
-	if (hours < 24) return `${hours}h ago`;
-	const days = Math.round(hours / 24);
-	if (days < 30) return `${days}d ago`;
-	return new Date(then).toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
-}
-
-// Deterministic hue from the agent id: the same agent keeps the same monogram
-// colour on every card, in every session, without storing anything.
-function hueOf(id) {
-	let h = 0;
-	for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 360;
-	return h;
-}
-
-function monogram(agent) {
-	const hue = hueOf(agent.id || agent.name || 'agent');
-	const initials = (agent.name || '?')
-		.split(/\s+/)
-		.slice(0, 2)
-		.map((w) => w[0])
-		.join('')
-		.toUpperCase();
-	const node = el('div', { class: 'sp-mono', 'aria-hidden': 'true', text: initials });
-	node.style.background = `linear-gradient(140deg, hsl(${hue} 62% 26%), hsl(${(hue + 48) % 360} 55% 14%))`;
-	return node;
-}
-
 function categoryLabel(slug) {
 	return categories.find((c) => c.slug === slug)?.label || slug;
 }
 
-/* ── the featured stage ───────────────────────────────────────────────── */
-
-let agent3dRequested = false;
-function loadAgent3d() {
-	if (agent3dRequested) return;
-	agent3dRequested = true;
-	const s = document.createElement('script');
-	s.type = 'module';
-	s.src = AGENT_3D_LOADER;
-	document.head.appendChild(s);
+function onVoted(entry) {
+	totals.votes += entry.voted_by_me ? 1 : -1;
+	renderStats();
 }
 
-// Hide the still only once <agent-3d> has painted a canvas of its own. There is
-// no documented ready event on the component, and a canvas in the DOM is the
-// one signal that means the model is genuinely on screen. Give up after a
-// bounded wait and leave the still in place, which is the correct outcome when
-// the GLB never arrives.
-function revealWhenPainted(viewer, still) {
-	let settled = false;
-	const done = () => {
-		if (settled) return;
-		settled = true;
-		observer.disconnect();
-		clearTimeout(timer);
-		still.classList.add('is-hidden');
-	};
-	const painted = () =>
-		Boolean(viewer.querySelector('canvas') || viewer.shadowRoot?.querySelector('canvas'));
-
-	const observer = new MutationObserver(() => {
-		if (painted()) done();
-	});
-	observer.observe(viewer, { childList: true, subtree: true });
-	const timer = setTimeout(() => {
-		observer.disconnect();
-	}, 15000);
-	if (painted()) done();
-}
-
-function stageFor(entry) {
-	const stage = el('div', { class: 'sp-stage' });
-	stage.append(el('span', { class: 'sp-stage-badge', text: "Editor's pick" }));
-
-	// The still image goes in first and stays until the 3D viewer has actually
-	// painted a canvas. A GLB can fail to load for reasons this page does not
-	// control (a cold CDN, a blocked origin, no WebGL on the device), and a
-	// silently empty hero is the worst version of that failure.
-	const still = entry.agent.thumbnail
-		? el('img', {
-				class: 'sp-stage-still',
-				src: entry.agent.thumbnail,
-				alt: `${entry.agent.name} avatar`,
-				loading: 'lazy',
-				decoding: 'async',
-			})
-		: monogram(entry.agent);
-	stage.append(still);
-
-	if (!entry.agent.glb_url) return stage;
-
-	// Mounted only when the stage is actually on screen. Below-the-fold WebGL on
-	// a browse page costs a visitor real frames for something they may never
-	// scroll to.
-	const mount = () => {
-		loadAgent3d();
-		const viewer = el('agent-3d', {
-			body: entry.agent.glb_url,
-			autorotate: 'true',
-			'camera-controls': 'true',
-			'aria-label': `${entry.agent.name} in 3D`,
-		});
-		stage.append(viewer);
-		revealWhenPainted(viewer, still);
-	};
-
-	if ('IntersectionObserver' in window) {
-		const io = new IntersectionObserver(
-			(entries, obs) => {
-				if (entries.some((e) => e.isIntersecting)) {
-					obs.disconnect();
-					mount();
-				}
-			},
-			{ rootMargin: '200px' },
-		);
-		io.observe(stage);
-	} else {
-		mount();
-	}
-	return stage;
-}
+/* ── featured ─────────────────────────────────────────────────────────── */
 
 function renderFeatured(entries) {
 	if (!entries.length) {
@@ -239,27 +125,18 @@ function renderFeatured(entries) {
 	}
 	const entry = entries[0];
 	const copy = el('div', { class: 'sp-featured-copy' }, [
-		el('h3', {}, [el('a', { href: `/agents/${entry.agent.id}`, text: entry.title })]),
+		el('h3', {}, [el('a', { href: entryPath(entry), text: entry.title })]),
 		el('p', { text: entry.tagline }),
 		entry.story ? el('p', { class: 'sp-featured-story', text: entry.story }) : null,
 		el('div', { class: 'sp-card-meta' }, metaBits(entry)),
 		el('div', { class: 'sp-ctas' }, [
-			el('a', { class: 'sp-btn sp-btn-primary', href: `/agents/${entry.agent.id}`, text: `Open ${entry.agent.name}` }),
-			el('a', { class: 'sp-btn', href: `/agents/${entry.agent.id}/profile`, text: 'Read the profile' }),
-			entry.demo_url
-				? el('a', {
-						class: 'sp-btn',
-						href: entry.demo_url,
-						target: '_blank',
-						rel: 'noopener nofollow ugc',
-						text: 'See it live',
-					})
-				: null,
-			voteButton(entry),
+			el('a', { class: 'sp-btn sp-btn-primary', href: entryPath(entry), text: 'Read the write-up' }),
+			el('a', { class: 'sp-btn', href: `/agents/${entry.agent.id}`, text: `Open ${entry.agent.name}` }),
+			voteButton(entry, { announce, onVoted }),
 		]),
 	]);
 
-	els.featuredBody.replaceChildren(stageFor(entry), copy);
+	els.featuredBody.replaceChildren(stageFor(entry, { badge: "Editor's pick" }), copy);
 	els.featured.hidden = false;
 }
 
@@ -269,10 +146,11 @@ function metaBits(entry) {
 	const bits = [el('span', {}, [el('strong', { text: entry.agent.name })])];
 	if (entry.builder?.name) {
 		bits.push(el('span', { 'aria-hidden': 'true', text: '·' }));
-		const by = entry.builder.profile_url
-			? el('a', { href: entry.builder.profile_url, text: `by ${entry.builder.name}` })
-			: el('span', { text: `by ${entry.builder.name}` });
-		bits.push(by);
+		bits.push(
+			entry.builder.profile_url
+				? el('a', { href: entry.builder.profile_url, text: `by ${entry.builder.name}` })
+				: el('span', { text: `by ${entry.builder.name}` }),
+		);
 	}
 	if (entry.agent.chat_count > 0) {
 		bits.push(el('span', { 'aria-hidden': 'true', text: '·' }));
@@ -286,76 +164,25 @@ function metaBits(entry) {
 	return bits;
 }
 
-function voteButton(entry) {
-	const count = el('span', { class: 'sp-vote-count', text: String(entry.vote_count) });
-	const btn = el(
-		'button',
-		{
-			type: 'button',
-			class: 'sp-vote',
-			'aria-pressed': String(Boolean(entry.voted_by_me)),
-			'aria-label': `Upvote ${entry.title}`,
-			title: 'Upvote',
-		},
-		[el('span', { class: 'sp-vote-caret', 'aria-hidden': 'true', text: '▲' }), count],
-	);
-
-	btn.addEventListener('click', async (event) => {
-		event.preventDefault();
-		event.stopPropagation();
-		btn.classList.add('is-busy');
-		try {
-			const res = await apiFetch('/api/showcase/vote', {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ id: entry.id }),
-				allowAnonymous: true,
-			});
-			if (res.status === 401) {
-				location.href = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
-				return;
-			}
-			const data = await res.json().catch(() => null);
-			if (!res.ok) {
-				announce(data?.error?.message || 'the vote did not go through');
-				return;
-			}
-			entry.vote_count = data.vote_count;
-			entry.voted_by_me = data.voted;
-			count.textContent = String(data.vote_count);
-			btn.setAttribute('aria-pressed', String(data.voted));
-			announce(`${data.voted ? 'Upvoted' : 'Removed your upvote from'} ${entry.title}. ${data.vote_count} total.`);
-		} catch {
-			announce('the vote did not go through; check your connection');
-		} finally {
-			btn.classList.remove('is-busy');
-		}
-	});
-
-	return btn;
-}
-
 function cardFor(entry) {
 	const art = el('div', { class: 'sp-card-art' });
-	if (entry.agent.thumbnail) {
-		art.append(
-			el('img', {
-				src: entry.agent.thumbnail,
-				alt: `${entry.agent.name} avatar`,
-				loading: 'lazy',
-				decoding: 'async',
-			}),
-		);
-	} else {
-		art.append(monogram(entry.agent));
-	}
-
-	const badges = el('div', { class: 'sp-card-badges' }, [
-		el('span', { class: 'sp-badge', text: categoryLabel(entry.category) }),
-		entry.agent.is_registered ? el('span', { class: 'sp-badge sp-badge-onchain', text: 'On-chain' }) : null,
-		entry.source === 'curated' ? el('span', { class: 'sp-badge sp-badge-curated', text: 'Curated' }) : null,
-	]);
-	art.append(badges);
+	art.append(
+		entry.agent.thumbnail
+			? el('img', {
+					src: entry.agent.thumbnail,
+					alt: `${entry.agent.name} avatar`,
+					loading: 'lazy',
+					decoding: 'async',
+				})
+			: monogram(entry.agent),
+	);
+	art.append(
+		el('div', { class: 'sp-card-badges' }, [
+			el('span', { class: 'sp-badge', text: categoryLabel(entry.category) }),
+			entry.agent.is_registered ? el('span', { class: 'sp-badge sp-badge-onchain', text: 'On-chain' }) : null,
+			entry.source === 'curated' ? el('span', { class: 'sp-badge sp-badge-curated', text: 'Curated' }) : null,
+		]),
+	);
 
 	const tags = entry.tags.length
 		? el(
@@ -380,23 +207,27 @@ function cardFor(entry) {
 		: null;
 
 	const body = el('div', { class: 'sp-card-body' }, [
-		el('h3', { class: 'sp-card-title' }, [el('a', { href: `/agents/${entry.agent.id}`, text: entry.title })]),
+		el('h3', { class: 'sp-card-title' }, [el('a', { href: entryPath(entry), text: entry.title })]),
 		el('p', { class: 'sp-card-tagline', text: entry.tagline }),
 		el('div', { class: 'sp-card-meta' }, metaBits(entry)),
 		tags,
 	]);
 
 	const links = el('div', { class: 'sp-card-links' }, [
-		el('a', { href: `/agents/${entry.agent.id}`, text: 'Open' }),
-		el('a', { href: `/agents/${entry.agent.id}/profile`, text: 'Profile' }),
+		el('a', { href: `/agents/${entry.agent.id}`, text: 'Open agent' }),
 		entry.demo_url
 			? el('a', { href: entry.demo_url, target: '_blank', rel: 'noopener nofollow ugc', text: 'Demo' })
 			: null,
+		// Only an owner sees this, and it goes to the entry page where the edit
+		// form lives, so there is exactly one place an entry is written.
+		entry.editable_by_me ? el('a', { href: `${entryPath(entry)}?edit=1`, text: 'Edit' }) : null,
 	]);
 
-	const foot = el('div', { class: 'sp-card-foot' }, [links, voteButton(entry)]);
-
-	return el('article', { class: 'sp-card' }, [art, body, foot]);
+	return el('article', { class: 'sp-card' }, [
+		art,
+		body,
+		el('div', { class: 'sp-card-foot' }, [links, voteButton(entry, { announce, onVoted })]),
+	]);
 }
 
 /* ── loading ──────────────────────────────────────────────────────────── */
@@ -412,7 +243,7 @@ function renderEmpty() {
 		el('p', {
 			text: filtered
 				? 'No showcased agent matches this filter. Clear it to see everything the community has published.'
-				: 'No one has claimed the first slot. Build an agent, make it public, and write up what it does; the first entry gets the featured stage.',
+				: 'No one has claimed the first slot. Build an agent, make it public, and write up what it does: the first entry gets the featured stage.',
 		}),
 	]);
 	box.append(
@@ -428,6 +259,7 @@ function renderEmpty() {
 						view.offset = 0;
 						if (els.search) els.search.value = '';
 						writeUrl();
+						renderCategories();
 						load();
 					},
 				})
@@ -447,12 +279,7 @@ function renderError(message) {
 		el('div', { class: 'sp-error' }, [
 			el('h3', { text: 'The showcase did not load' }),
 			el('p', { text: message }),
-			el('button', {
-				type: 'button',
-				class: 'sp-btn sp-btn-primary',
-				text: 'Try again',
-				onclick: () => load(),
-			}),
+			el('button', { type: 'button', class: 'sp-btn sp-btn-primary', text: 'Try again', onclick: () => load() }),
 		]),
 	);
 }
@@ -475,15 +302,15 @@ async function load({ append = false } = {}) {
 	if (view.q) p.set('q', view.q);
 
 	try {
-		const res = await apiFetch(`/api/showcase/list?${p}`, { allowAnonymous: true });
+		const res = await apiFetch(`/api/spotlight/list?${p}`, { allowAnonymous: true });
 		if (token !== loadToken) return;
 		if (res.status === 503) {
-			renderEmpty();
 			els.grid.replaceChildren();
+			renderEmpty();
 			return;
 		}
 		const data = await res.json().catch(() => null);
-		if (!res.ok) throw new Error(data?.error?.message || `the showcase returned ${res.status}`);
+		if (!res.ok) throw new Error(errorMessage(data, `the showcase returned ${res.status}`));
 
 		const entries = Array.isArray(data.entries) ? data.entries : [];
 		total = Number(data.total) || 0;
@@ -515,19 +342,11 @@ function renderStats() {
 		els.stats.replaceChildren();
 		return;
 	}
+	const stat = (value, label) => el('div', {}, [el('dd', { text: value.toLocaleString() }), el('dt', { text: label })]);
 	els.stats.replaceChildren(
-		el('div', {}, [
-			el('dd', { text: totals.entries.toLocaleString() }),
-			el('dt', { text: totals.entries === 1 ? 'agent showcased' : 'agents showcased' }),
-		]),
-		el('div', {}, [
-			el('dd', { text: totals.builders.toLocaleString() }),
-			el('dt', { text: totals.builders === 1 ? 'builder' : 'builders' }),
-		]),
-		el('div', {}, [
-			el('dd', { text: totals.votes.toLocaleString() }),
-			el('dt', { text: totals.votes === 1 ? 'upvote' : 'upvotes' }),
-		]),
+		stat(totals.entries, totals.entries === 1 ? 'agent showcased' : 'agents showcased'),
+		stat(totals.builders, totals.builders === 1 ? 'builder' : 'builders'),
+		stat(totals.votes, totals.votes === 1 ? 'upvote' : 'upvotes'),
 	);
 }
 
@@ -535,7 +354,7 @@ function renderStats() {
 
 async function loadFeatured() {
 	try {
-		const res = await apiFetch('/api/showcase/list?featured=1&limit=1&sort=trending', { allowAnonymous: true });
+		const res = await apiFetch('/api/spotlight/list?featured=1&limit=1&sort=trending', { allowAnonymous: true });
 		if (!res.ok) return;
 		const data = await res.json().catch(() => null);
 		renderFeatured(Array.isArray(data?.entries) ? data.entries : []);
@@ -557,10 +376,16 @@ function renderCategories() {
 		...categories
 			.filter((c) => c.count > 0 || c.slug === view.category)
 			.map((c) =>
-				el('button', { type: 'button', class: 'sp-cat', 'aria-pressed': String(view.category === c.slug), onclick: () => selectCategory(c.slug) }, [
-					el('span', { text: c.label }),
-					el('span', { class: 'sp-cat-count', text: String(c.count) }),
-				]),
+				el(
+					'button',
+					{
+						type: 'button',
+						class: 'sp-cat',
+						'aria-pressed': String(view.category === c.slug),
+						onclick: () => selectCategory(c.slug),
+					},
+					[el('span', { text: c.label }), el('span', { class: 'sp-cat-count', text: String(c.count) })],
+				),
 			),
 	);
 }
@@ -575,24 +400,17 @@ function selectCategory(slug) {
 
 async function loadCategories() {
 	try {
-		const res = await apiFetch('/api/showcase/categories', { allowAnonymous: true });
+		const res = await apiFetch('/api/spotlight/categories', { allowAnonymous: true });
 		if (!res.ok) return;
 		const data = await res.json().catch(() => null);
 		categories = Array.isArray(data?.categories) ? data.categories : [];
 		if (data?.totals) totals = data.totals;
 		renderCategories();
 		renderStats();
-		fillCategorySelect();
+		if (formRefs) fillCategories(formRefs, categories);
 	} catch {
 		categories = [];
 	}
-}
-
-function fillCategorySelect() {
-	if (!els.categorySelect || !categories.length) return;
-	els.categorySelect.replaceChildren(
-		...categories.map((c) => el('option', { value: c.slug, text: c.label })),
-	);
 }
 
 /* ── submission ───────────────────────────────────────────────────────── */
@@ -609,56 +427,58 @@ function openPanel(open) {
 
 async function loadEligible() {
 	eligibleLoaded = true;
-	els.agentSelect.replaceChildren(el('option', { value: '', text: 'Loading your agents…' }));
+	formRefs.agentSelect.replaceChildren(new Option('Loading your agents…', ''));
 	try {
-		const res = await apiFetch('/api/showcase/eligible', { allowAnonymous: true });
+		const res = await apiFetch('/api/spotlight/eligible', { allowAnonymous: true });
 		if (res.status === 401) {
 			eligibleLoaded = false;
 			showPanelAuth();
 			return;
 		}
 		const data = await res.json().catch(() => null);
-		if (!res.ok) throw new Error(data?.error?.message || 'could not load your agents');
+		if (!res.ok) throw new Error(errorMessage(data, 'could not load your agents'));
 
 		if (Array.isArray(data.categories) && data.categories.length && !categories.length) {
 			categories = data.categories.map((c) => ({ ...c, count: 0 }));
-			fillCategorySelect();
+			renderCategories();
 		}
+		fillCategories(formRefs, categories);
 
 		const agents = Array.isArray(data.agents) ? data.agents : [];
 		if (!agents.length) {
-			els.agentSelect.replaceChildren(el('option', { value: '', text: 'No eligible agents' }));
-			els.agentSelect.disabled = true;
+			formRefs.agentSelect.replaceChildren(new Option('No eligible agents', ''));
+			formRefs.agentSelect.disabled = true;
 			els.submit.disabled = true;
-			els.agentHint.replaceChildren(
-				document.createTextNode('Every public agent you own is already showcased, or you have not made one yet. '),
+			formRefs.agentHint.replaceChildren(
+				document.createTextNode(
+					'Every public agent you own is already showcased, or you have not made one yet. ',
+				),
 				el('a', { href: '/create-agent', text: 'Create an agent' }),
 				document.createTextNode('.'),
 			);
 			return;
 		}
-		els.agentSelect.disabled = false;
+		formRefs.agentSelect.disabled = false;
 		els.submit.disabled = false;
-		els.agentSelect.replaceChildren(
-			el('option', { value: '', text: 'Choose an agent…' }),
-			...agents.map((a) => el('option', { value: a.id, text: a.name })),
+		formRefs.agentSelect.replaceChildren(
+			new Option('Choose an agent…', ''),
+			...agents.map((a) => new Option(a.name, a.id)),
 		);
-		els.agentHint.textContent = `${plural(agents.length, 'agent', 'agents')} you can showcase. Only public agents are listed.`;
+		formRefs.agentHint.textContent = `${plural(agents.length, 'agent', 'agents')} you can showcase. Only public agents are listed.`;
 
 		// Pre-fill the one-liner from the agent's own description: the builder
 		// already wrote it once, and an empty field is the main reason a
 		// submission gets abandoned halfway.
-		els.agentSelect.addEventListener('change', () => {
-			const chosen = agents.find((a) => a.id === els.agentSelect.value);
-			const tagline = document.getElementById('sp-tagline');
-			if (chosen?.description && tagline && !tagline.value.trim()) {
-				tagline.value = chosen.description.replace(/\s+/g, ' ').trim().slice(0, 160);
-				tagline.dispatchEvent(new Event('input'));
+		formRefs.agentSelect.addEventListener('change', () => {
+			const chosen = agents.find((a) => a.id === formRefs.agentSelect.value);
+			if (chosen?.description && !formRefs.tagline.value.trim()) {
+				formRefs.tagline.value = chosen.description.replace(/\s+/g, ' ').trim().slice(0, 160);
+				formRefs.tagline.dispatchEvent(new Event('input'));
 			}
 		});
 	} catch (err) {
 		eligibleLoaded = false;
-		els.agentSelect.replaceChildren(el('option', { value: '', text: 'Could not load your agents' }));
+		formRefs.agentSelect.replaceChildren(new Option('Could not load your agents', ''));
 		setNote(err?.message || 'could not load your agents', 'error');
 	}
 }
@@ -674,8 +494,8 @@ function showPanelAuth() {
 		}),
 		el('a', { class: 'sp-btn sp-btn-sm', href: '/register', text: 'Create an account' }),
 	);
-	els.agentSelect.replaceChildren(el('option', { value: '', text: 'Sign in first' }));
-	els.agentSelect.disabled = true;
+	formRefs.agentSelect.replaceChildren(new Option('Sign in first', ''));
+	formRefs.agentSelect.disabled = true;
 	els.submit.disabled = true;
 }
 
@@ -685,60 +505,25 @@ function setNote(message, tone) {
 	else delete els.formNote.dataset.tone;
 }
 
-function parseTags(raw) {
-	return raw
-		.split(',')
-		.map((t) => t.trim().toLowerCase().replace(/\s+/g, '-'))
-		.filter(Boolean)
-		.slice(0, 6);
-}
-
 async function onSubmit(event) {
 	event.preventDefault();
-	const agentId = els.agentSelect.value;
-	if (!agentId) return setNote('pick which agent you are showcasing', 'error');
-
-	const payload = {
-		agentId,
-		title: document.getElementById('sp-title').value.trim(),
-		tagline: document.getElementById('sp-tagline').value.trim(),
-		story: document.getElementById('sp-story').value.trim() || null,
-		demoUrl: document.getElementById('sp-demo').value.trim() || null,
-		category: els.categorySelect.value,
-		tags: parseTags(document.getElementById('sp-tags').value),
-	};
-
-	if (payload.title.length < 3) return setNote('the headline needs at least 3 characters', 'error');
-	if (payload.tagline.length < 10) return setNote('the one-liner needs at least 10 characters', 'error');
+	const payload = readValues(formRefs);
+	const problem = validate(payload);
+	if (problem) return setNote(problem, 'error');
 
 	els.submit.disabled = true;
 	setNote('Publishing…');
 	try {
-		const res = await apiFetch('/api/showcase/submit', {
-			method: 'POST',
-			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify(payload),
-			allowAnonymous: true,
-		});
-		if (res.status === 401) {
+		const entry = await saveEntry(payload);
+		setNote('Published. Taking you to your entry…', 'success');
+		announce(`${payload.title} is now in the showcase.`);
+		location.href = entryPath(entry);
+	} catch (err) {
+		if (err.unauthorized) {
 			showPanelAuth();
 			setNote('sign in to publish', 'error');
 			return;
 		}
-		const data = await res.json().catch(() => null);
-		if (!res.ok) throw new Error(data?.error?.message || `the submission returned ${res.status}`);
-
-		setNote('Published. Your agent is in the showcase.', 'success');
-		els.panel.reset();
-		eligibleLoaded = false;
-		view.offset = 0;
-		view.sort = 'new';
-		syncSortButtons();
-		writeUrl();
-		await Promise.all([load(), loadCategories()]);
-		announce(`${payload.title} is now in the showcase.`);
-		setTimeout(() => openPanel(false), 1200);
-	} catch (err) {
 		setNote(err?.message || 'the submission did not go through', 'error');
 	} finally {
 		els.submit.disabled = false;
@@ -755,19 +540,9 @@ function syncSortButtons() {
 	}
 }
 
-function wireCharCounters() {
-	for (const counter of document.querySelectorAll('[data-count-for]')) {
-		const field = document.getElementById(counter.dataset.countFor);
-		if (!field) continue;
-		const update = () => {
-			counter.textContent = String(field.value.length);
-		};
-		field.addEventListener('input', update);
-		update();
-	}
-}
-
 function wire() {
+	formRefs = buildFields(els.fields, { prefix: 'sp', withAgentPicker: true });
+
 	for (const btn of els.sorts) {
 		btn.addEventListener('click', () => {
 			if (view.sort === btn.dataset.sort) return;
@@ -818,7 +593,8 @@ function wire() {
 		load();
 	});
 
-	wireCharCounters();
+	// Deep link from a card's "Edit" affordance or an empty state.
+	if (new URLSearchParams(location.search).get('submit') === '1') openPanel(true);
 }
 
 readUrl();

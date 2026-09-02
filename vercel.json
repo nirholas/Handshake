@@ -942,6 +942,21 @@
 			"dest": "/spotlight.html"
 		},
 		{
+			"src": "/spotlight/([0-9a-fA-F-]{36})/?$",
+			"has": [
+				{
+					"type": "header",
+					"key": "user-agent",
+					"value": "(?i).*(Twitterbot|facebookexternalhit|Slackbot|LinkedInBot|Discordbot|TelegramBot|WhatsApp|Googlebot|bingbot|Applebot|Pinterestbot|redditbot|Embedly|Quora|outbrain|vkShare|Iframely).*"
+				}
+			],
+			"dest": "/api/spotlight-og?id=$1"
+		},
+		{
+			"src": "/spotlight/([0-9a-fA-F-]{36})/?$",
+			"dest": "/spotlight-entry.html"
+		},
+		{
 			"src": "/drops/([a-z0-9][a-z0-9-]*)/?$",
 			"dest": "/drop-collection.html"
 		},

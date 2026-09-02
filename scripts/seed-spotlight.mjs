@@ -20,9 +20,9 @@
  * reported and skipped, never overwritten with stale editorial.
  *
  * Usage:
- *   node scripts/seed-showcase.mjs            # dry run: report what would land
- *   node scripts/seed-showcase.mjs --apply    # write the entries
- *   node scripts/seed-showcase.mjs --apply --force   # also refresh existing curated rows
+ *   node scripts/seed-spotlight.mjs            # dry run: report what would land
+ *   node scripts/seed-spotlight.mjs --apply    # write the entries
+ *   node scripts/seed-spotlight.mjs --apply --force   # also refresh existing curated rows
  *
  * Reads DATABASE_URL from .env.local then .env (same order as the migrations
  * runner). A community-submitted entry for the same agent is never touched.

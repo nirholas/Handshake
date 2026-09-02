@@ -28,8 +28,28 @@ copy to go wrong.
 4. Optional: a write-up of up to 4,000 characters, a demo link, and tags.
 
 **One entry per agent.** Submitting again for the same agent edits the entry you
-already have; it never creates a second card. You can remove your own entry at
-any time, and so can the agent's owner if someone else wrote it up.
+already have; it never creates a second card.
+
+## The entry page
+
+Every entry has its own page at `/spotlight/<entry id>`. That is where the
+write-up is actually readable (the index can only show three clamped lines of
+it), and it is the one place an entry is edited after it is created:
+
+- the agent standing in 3D, live from its own GLB, with its still image held
+  underneath until the viewer has painted so a model that fails to load degrades
+  to the avatar rather than an empty stage,
+- the full write-up as real paragraphs,
+- a facts panel read live off the agent on every request: skills, conversations,
+  on-chain actions, network, upvotes, views,
+- share controls, and links into the agent in 3D, its profile, and AR,
+- for the entry's owner (the submitter, or the agent's owner): **Edit entry** and
+  **Remove**, the latter behind a two-step confirmation.
+
+Owners reach the editor from a card's `Edit` link on the index, which deep-links
+to `/spotlight/<id>?edit=1` and opens the form scrolled and focused. Both forms
+are built by the same module, [`src/spotlight-form.js`](../src/spotlight-form.js),
+so the create and edit paths cannot drift apart.
 
 ## Ranking
 
@@ -65,7 +85,7 @@ the front page. That is the behaviour a showcase wants: durable good work near
 the top, always room for the newest.
 
 The formula lives in one place,
-[`trendingScore()` in `api/_lib/showcase-store.js`](../api/_lib/showcase-store.js),
+[`trendingScore()` in `api/_lib/spotlight-store.js`](../api/_lib/spotlight-store.js),
 and the SQL `ORDER BY` computes the identical expression so the server never
 disagrees with its own documentation.
 
@@ -82,13 +102,13 @@ agent record, and the moment they submit their own write-up for that agent it
 replaces the curated one and the badge goes away.
 
 Curated entries are seeded by
-[`scripts/seed-showcase.mjs`](../scripts/seed-showcase.mjs), which refuses to
+[`scripts/seed-spotlight.mjs`](../scripts/seed-spotlight.mjs), which refuses to
 attach a write-up to an agent that has since been renamed, made private, or
 deleted:
 
 ```bash
-node scripts/seed-showcase.mjs           # dry run, reports what would land
-node scripts/seed-showcase.mjs --apply   # write the entries
+node scripts/seed-spotlight.mjs           # dry run, reports what would land
+node scripts/seed-spotlight.mjs --apply   # write the entries
 ```
 
 ## Categories
@@ -103,7 +123,14 @@ aspirational taxonomy.
 Public reads, no key. Writes need a session cookie and a CSRF token, exactly like
 every other authenticated three.ws endpoint.
 
-### `GET /api/showcase/list`
+> The endpoints are `/api/spotlight/*`, not `/api/showcase/*`. `/api/showcase` was
+> already taken by an unrelated public endpoint, the ERC-8004 agent directory
+> behind [`/showcase`](showcase.md). The database tables are still named
+> `agent_showcase` and `agent_showcase_votes`, which is deliberate: they are
+> applied in production, and renaming a live table to match a module name is not
+> a trade worth making.
+
+### `GET /api/spotlight/list`
 
 | Param | Default | Notes |
 | --- | --- | --- |
@@ -116,7 +143,7 @@ every other authenticated three.ws endpoint.
 | `featured` | off | `1` returns only the editor's picks |
 
 ```bash
-curl -s 'https://three.ws/api/showcase/list?sort=top&limit=3' | jq '.entries[].title'
+curl -s 'https://three.ws/api/spotlight/list?sort=top&limit=3' | jq '.entries[].title'
 ```
 
 ```json
@@ -153,21 +180,23 @@ A signed-in read is personalised (`voted_by_me`) and returns
 `Cache-Control: private, no-store`; an anonymous read is identical for everyone
 and is CDN-cached for 30 seconds.
 
-### `GET /api/showcase/get?id=<uuid>`
+### `GET /api/spotlight/get?id=<uuid>`
 
-One entry, in the same shape, plus a view count bump.
+One entry, in the same shape, plus a view count bump. This is what
+`/spotlight/<id>` renders. `404` once the entry is removed or its agent stops
+being public.
 
-### `GET /api/showcase/categories`
+### `GET /api/spotlight/categories`
 
 Per-category counts plus the headline totals the hero renders
 (`{ entries, builders, votes }`).
 
-### `GET /api/showcase/eligible`
+### `GET /api/spotlight/eligible`
 
 Session required. The caller's public agents that are not already showcased,
 plus the category list, which is what the submission form is built from.
 
-### `POST /api/showcase/submit`
+### `POST /api/spotlight/submit`
 
 Session + CSRF. Body:
 
@@ -186,7 +215,7 @@ Session + CSRF. Body:
 Returns the created or updated entry. `403` if the agent is not yours, `409` if
 it is not public.
 
-### `POST /api/showcase/vote`
+### `POST /api/spotlight/vote`
 
 Session + CSRF. Body `{ "id": "<entry uuid>" }`. Toggles, and returns the
 server-confirmed state so the button never settles on an optimistic guess:
@@ -195,22 +224,35 @@ server-confirmed state so the button never settles on an optimistic guess:
 { "voted": true, "vote_count": 12 }
 ```
 
-### `POST /api/showcase/remove`
+### `POST /api/spotlight/remove`
 
 Session + CSRF. Body `{ "id": "<entry uuid>" }`. Soft-deletes the entry. Allowed
-for the submitter and for the agent's owner.
+for the submitter and for the agent's owner. The agent is immediately eligible to
+be showcased again.
+
+## Sharing
+
+A crawler that requests `/spotlight/<id>` is rewritten to
+[`api/spotlight-og.js`](../api/spotlight-og.js), which renders the entry's
+headline, one-liner and builder credit as OG, Twitter Card and Farcaster Frame
+meta, with the agent's own live trading card (`/api/og/agent`) as the image. Real
+browsers never touch that route. An unknown or removed entry redirects a crawler
+to `/spotlight` rather than unfurling a 404.
 
 ## Where the code lives
 
 | Piece | File |
 | --- | --- |
-| Page shell | [`pages/spotlight.html`](../pages/spotlight.html) |
-| Controller | [`src/spotlight.js`](../src/spotlight.js) |
+| Index page | [`pages/spotlight.html`](../pages/spotlight.html) + [`src/spotlight.js`](../src/spotlight.js) |
+| Entry page | [`pages/spotlight-entry.html`](../pages/spotlight-entry.html) + [`src/spotlight-entry.js`](../src/spotlight-entry.js) |
+| Shared card, stage and vote button | [`src/spotlight-shared.js`](../src/spotlight-shared.js) |
+| Shared entry form | [`src/spotlight-form.js`](../src/spotlight-form.js) |
+| Share cards for crawlers | [`api/spotlight-og.js`](../api/spotlight-og.js) |
 | Styles | [`src/spotlight.css`](../src/spotlight.css) |
-| HTTP boundary | [`api/showcase/[action].js`](../api/showcase/[action].js) |
-| Queries + ranking | [`api/_lib/showcase-store.js`](../api/_lib/showcase-store.js) |
+| HTTP boundary | [`api/spotlight/[action].js`](../api/spotlight/[action].js) |
+| Queries + ranking | [`api/_lib/spotlight-store.js`](../api/_lib/spotlight-store.js) |
 | Schema | `api/_lib/migrations/20260901160000_agent_showcase.sql` |
-| Curated seed | [`scripts/seed-showcase.mjs`](../scripts/seed-showcase.mjs) |
+| Curated seed | [`scripts/seed-spotlight.mjs`](../scripts/seed-spotlight.mjs) |
 
 ## Related
 
