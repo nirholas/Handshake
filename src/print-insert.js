@@ -133,7 +133,7 @@ function renderCard(payload) {
 async function load() {
 	const id = certIdFromPath();
 	if (!id || !CERT_ID_RE.test(id)) {
-		renderStatus('That is not a certificate number. Open this page from an order in the operator console.');
+		renderStatus('That is not a certificate number. Open this page from a shipped order in the operator queue.');
 		return;
 	}
 	try {
