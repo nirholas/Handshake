@@ -34,7 +34,7 @@ const WORLD = `${BASE}/play?coin=${COIN}&name=three.ws&symbol=three`;
 // The world boots a software renderer here, and this repo's dev box is usually
 // carrying several agents at once. Budget for the slow case rather than
 // reporting a busy machine as a broken feature.
-const BOOT_MS = Number(process.env.BOOT_MS || 240000);
+const BOOT_MS = Number(process.env.BOOT_MS || 600000);
 
 const MOBILE = VIEWPORT !== 'desktop';
 const width = MOBILE ? Number(VIEWPORT) : 1440;
@@ -89,12 +89,15 @@ try {
 	await page.goto(WORLD, { waitUntil: 'domcontentloaded', timeout: 120000 });
 
 	// The HUD is the honest "the world is up" signal: it unhides only once the
-	// scene has a renderer and the room has answered.
-	await page.waitForSelector('#cc-hud:not([hidden])', { timeout: BOOT_MS });
+	// scene has a renderer and the room has answered. Asserted as a predicate
+	// rather than a visibility locator: under a loaded box the HUD's layout
+	// settles a frame or two after it unhides, and a visibility wait can miss
+	// that window and report a slow machine as a broken feature.
 	await page.waitForFunction(() => {
+		const hud = document.querySelector('#cc-hud');
 		const c = document.querySelector('canvas');
-		return !!c && c.width > 100 && c.height > 100;
-	}, null, { timeout: BOOT_MS });
+		return !!hud && !hud.hasAttribute('hidden') && !!c && c.width > 100 && c.height > 100;
+	}, null, { timeout: BOOT_MS, polling: 1000 });
 	// Let the scene actually paint something before photographing it.
 	await sleep(8000);
 	console.log(at(), 'world up');
