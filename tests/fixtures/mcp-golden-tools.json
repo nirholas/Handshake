@@ -516,6 +516,24 @@
 			"schemaHash": "7187ef4e7b09"
 		}
 	],
+	"api/_mcp/tools/print.js": [
+		{
+			"name": "print_analyze",
+			"title": "Check whether a 3D model can be printed",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": "ref:PRINT_ANNOTATIONS",
+			"schemaHash": "84a63f274adc"
+		},
+		{
+			"name": "print_quote",
+			"title": "Price a real 3D print and get a signed quote",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": "ref:PRINT_ANNOTATIONS",
+			"schemaHash": "8638cfe3d36d"
+		}
+	],
 	"api/_mcp/tools/pumpfun.js": [
 		{
 			"name": "pumpfun_creator_intel",

@@ -5,7 +5,7 @@
 // API becomes a config change rather than a rebuild. That only holds if every
 // lane is held to one shape.
 //
-// `partner-cn` is deliberately uncontracted (materialize-00-CONTEXT): the paths
+// `partner-cn` is deliberately uncontracted (Materialize campaign, order 04): the paths
 // exercised below are the ones that run WITHOUT partner credentials plus the
 // two that need only the HMAC secret, which the test supplies itself.
 

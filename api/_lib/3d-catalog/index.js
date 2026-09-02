@@ -30,6 +30,8 @@ import { fileURLToPath } from 'node:url';
 import diffEntry from './diff.js';
 import generateEntry from './generate.js';
 import inspectEntry from './inspect.js';
+import printQuoteEntry from './print-quote.js';
+import printPrepareEntry from './print-prepare.js';
 
 // Static barrel — the PRODUCTION source of truth for the catalog. Vercel's
 // bundler only reliably ships what static imports reach: the first deployed
@@ -44,6 +46,8 @@ const STATIC_ENTRIES = [
 	{ mod: diffEntry, source: 'diff.js' },
 	{ mod: generateEntry, source: 'generate.js' },
 	{ mod: inspectEntry, source: 'inspect.js' },
+	{ mod: printQuoteEntry, source: 'print-quote.js' },
+	{ mod: printPrepareEntry, source: 'print-prepare.js' },
 ];
 
 // In dev/tests `import.meta.url` is this source file, so its own directory is

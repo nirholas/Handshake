@@ -213,3 +213,86 @@ what was verified (commands/evidence), owner items surfaced. Never record
   `PRINT_CERT_MAINNET_APPROVAL` on the Cloud Run service; without the second
   the certificate is issued and left unattested rather than downgraded to a
   devnet signature. Deliberately untriggered here (CLAUDE.md gate 1).
+
+- 2026-09-02: Order 06 (fabrication gate, spec, docs, launch) shipped. The
+  campaign is closed; 00-CONTEXT, 01, 06 and the README are retired in this
+  commit and this log is the surviving record.
+  THE GATE. `api/_lib/print/rules.js` carries the denylist as structured rules,
+  one per category with its own buyer-facing message and its own "what is
+  allowed instead" line: firearm components, suppressors and solvent traps,
+  ammunition and feeding devices, keys and lock-bypass tools, counterfeit and
+  trademark goods, working weapon mechanisms, drug paraphernalia, plus one SOFT
+  rule for realistic weapon likeness. `api/_lib/print/gate.js` layers them:
+  the generation content classifier (narrowed to its four scale-independent
+  categories, see the deviation below), the denylist, a scale signal, then the
+  platform LLM chain. The denylist always wins; the model can only ADD a
+  refusal, and it is not called at all once a hard rule fires.
+  TWO RUN POINTS, both wired, neither advisory. At quote time
+  `api/print/quote.js` runs the deterministic layers before any price exists
+  and answers 451 with the category, the policy link and the allowed
+  alternative, so a refusal costs the buyer nothing and a price is never gated
+  on a third-party model being up. After payment the screening pass runs as a
+  third pass inside `api/cron/print-orders-sync.js` (it makes a model call, so
+  it must not sit in a checkout request), records the verdict on
+  `analysis.screening`, and moves a failure to `rejected`. `submitOrder()` now
+  refuses any order without a recorded `allow` verdict, so the gate cannot be
+  clicked past from the operator console.
+  Also shipped by this order: `specs/PRINT_PIPELINE.md` (six versioned wire
+  contracts: printability report, quote token, order states, gate verdict,
+  adapter interface, webhook envelope, certificate memo, plus a stated
+  limitations section), `docs/materialize.md` wired into `docs/nav.json`,
+  `docs/start-here.md` and `data/pages.json`, the `/api/print/*` section of
+  `docs/api-reference.md`, the STRUCTURE.md row, three changelog entries, and
+  two MCP tools (`print_analyze`, `print_quote` in `api/_mcp/tools/print.js`)
+  so an agent discovers the print lane in the same list it discovered
+  generation. Tests: `print-fabrication-gate` (36), `print-gate-wiring` (7),
+  `print-mcp-tools` (9).
+  GAPS FROM EARLIER ORDERS, closed here rather than reported: order 01 never
+  registered its endpoints in the free 3D API catalog, so `/api/3d` and its
+  OpenAPI did not advertise the print lane at all; `api/_lib/3d-catalog/
+  print-quote.js` and `print-prepare.js` plus the static barrel fix that, and
+  both now appear in the live index and in `/api/3d/openapi.json` (verified).
+  `src/materialize-order.js` shipped an inline `onclick="location.reload()"`
+  on its error-state Try again button, which the site CSP blocks, so the only
+  way out of that state did nothing; it is delegated now.
+  `pages/print-insert.html` resolved no `[hidden]` guard.
+  VERIFIED. Gate unit + wiring + MCP suites green (52 tests). Against a local
+  `server/index.mjs` on the production database with the page served by vite:
+  a clean quote returns 33.87 USDC with `screening.verdict: allow`, and three
+  crafted violating orders (an AR-15 lower receiver, a suppressor baffle asked
+  for in the buyer note, a bump key) each answer 451 with the right category
+  and no price and no token in the body. Run point 2 was proven end to end on
+  real rows: two orders walked created -> quoted -> paid -> screening, the
+  violating one auto-rejected with the category and the policy link on its
+  timeline and `allow`/`refuse` stored under `analysis.screening`, the
+  ordinary one stayed in screening, and both rows were deleted afterwards (0
+  remaining). No USDC moved: the `paid` transition was driven through the
+  store with a note saying so, per CLAUDE.md gate 1. The LLM layer was proven
+  separately against the live chain (OVH Llama-3.3-70B refused "a compact
+  carry pistol, life accurate, for range use"). Browser walk: `/materialize`
+  at 320, 768 and 1440 with zero horizontal overflow and no page-code console
+  errors, and `/docs/materialize#content-policy` resolves to a real anchor
+  (`id="content-policy"`), which is what keeps a refusal from linking a 404.
+  `npm run audit:docs` clean (1480 files). `npm run gate`: every step passes
+  except `audit:tokens`, which reports 8 hardcoded token hexes across four
+  pages unrelated to this campaign (motion, oracle-lab, stream,
+  threews-claim); the one drifted hex that WAS this campaign's
+  (`pages/payment-outcomes.html`) is fixed. A peer session is visibly working
+  that list down.
+  DEVIATIONS FROM 00-CONTEXT, one line each. (1) There is no
+  `POST /api/print/analyze`: order 02 merged analysis into
+  `POST /api/print/quote`, which returns the report alone when no material is
+  given. That is one round trip instead of two and is what the docs, the spec
+  and the MCP tools describe; no stale reference to the old path survives.
+  (2) The upstream generation classifier is honoured for csam, sexual, gore
+  and hate only. Its fifth category refuses the bare word "pistol", which
+  would refuse every tabletop miniature carrying one; weapons and drug
+  paraphernalia are owned by the fabrication rules instead, which distinguish
+  a display piece from a working part. (3) Generation safety verdicts are not
+  persisted anywhere (`checkPromptSafety` refuses inline and stores nothing,
+  and the main `/forge` lane never called it), so the gate re-evaluates the
+  lineage rather than reading a stored verdict. Owner FYI, not a blocker.
+  OWNER ITEMS carried out of this campaign are collected in the closing
+  report: the devnet SOL for the certificate attester, the mainnet
+  certificate approval pair, the partner and ops env vars from order 04, and
+  the catalog rates to tune against a real bureau quote.

@@ -96,7 +96,7 @@ run in parallel, H waits on owner gates, I is anytime, J is the parallel swarm.
 | [../roadmap/developer-resources-repos.md](roadmap-developer-resources-repos.md) | Agent side shipped (`export:satellites` stages 70 files offline); blocked on OWNER-ACTIONS row 16, then the cross-links. |
 | [../roadmap/native-widgets.md](roadmap-native-widgets.md) | Tasks 1 to 3 built (card endpoint, Android widget, Windows manifest); two commits await the deploy; task 4 needs row 17. |
 | [../gcp-credits/05-catalog-animation-seeding.md](gcp-credits-05-catalog-animation-seeding.md) | Partial: the catalog seed runs at scale (56,898 avatars); the generated motion library has 0 clips. |
-| [../materialize/README.md](materialize-README.md) | Six orders, zero code; design-only pack. |
+| Materialize (retired 2026-09-02) | Shipped: the print engine, quote and catalog, checkout on both lanes, fulfillment adapters and the operator console, on-chain certificates, the fabrication gate, docs and `specs/PRINT_PIPELINE.md`. Evidence in [materialize-PROGRESS.md](materialize-PROGRESS.md). |
 | [../simulation-ready/01-architecture.md](simulation-ready-01-architecture.md) | Kernel, spec and schema exist; 0.5 of 8 build tasks done. |
 | Trading trio (see [../roadmap/00-README.md](roadmap-00-README.md)) | Three plans, largely absorbed by shipped surfaces; every commit touching them is gated. |
 

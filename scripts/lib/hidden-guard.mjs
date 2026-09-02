@@ -28,7 +28,7 @@ export const GUARD_RE = /\[hidden\][^{]*\{[^}]*display\s*:\s*none/i;
 // MARKER makes injection idempotent and lets the audit recognise stamped pages.
 export const MARKER = 'three.ws hidden-guard';
 export const INLINE_GUARD =
-	`<style>/* ${MARKER} — make the \`hidden\` attribute authoritative; see scripts/lib/hidden-guard.mjs */` +
+	`<style>/* ${MARKER}: make the \`hidden\` attribute authoritative. See scripts/lib/hidden-guard.mjs */` +
 	`[hidden]{display:none!important}</style>`;
 
 /** Resolve a CSS href/import to an absolute path on disk, or null (external CDN). */
