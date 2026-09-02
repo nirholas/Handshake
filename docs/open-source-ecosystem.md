@@ -131,7 +131,7 @@ Beyond the official registry: 18 of these are indexed on PulseMCP and 10 on Glam
 x402 is the HTTP 402 pay-per-call protocol. three.ws runs on it, and every piece of the implementation is in the repo.
 
 - The facilitator is self-hosted, in api/_lib/x402/. It has processed 110,416 on-chain USDC settlements and 803,483 verifications. Nothing routes through a third party to settle on Solana.
-- The discovery catalog at three.ws/.well-known/x402.json lists 4,519 priced endpoints, every one on Solana mainnet. It is also indexed by the Coinbase CDP Bazaar, by x402scan (where we have an upstream pull request), and by 402index.
+- The discovery catalog at three.ws/.well-known/x402.json lists 4,519 priced endpoints, every one on Solana mainnet. x402scan indexes it and, since our facilitator registration merged upstream on 2026-08-11, counts our Solana settlements against it: 18,636 transactions and $1,055 of USDC volume as of 2026-09-02. 402index carries the endpoints too. The Coinbase CDP Bazaar does not: it indexes a service only after that service settles a payment through the CDP facilitator on Base, and every settlement here runs on our own Solana rail.
 - The Receipt Vault at three.ws/receipts holds 58,907 signed Offer and Receipt artifacts, retrievable forever.
 - The client side is published: x402-fetch for code, the two modals for any web page, x402-mcp and mcp-bridge for agents, and the VS Code extension (on the VS Code Marketplace and Open VSX) for people.
 - The merchant side is published too: x402-server turns any endpoint into a paid one, and agentcore-payments-mcp gives an agent a budgeted session.

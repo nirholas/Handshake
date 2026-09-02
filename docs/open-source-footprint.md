@@ -57,7 +57,7 @@ Not published anywhere yet (do not claim): PyPI, crates.io, Docker Hub, Smithery
 |---|---|---|
 | Discovery catalog | https://three.ws/.well-known/x402.json | 4,519 priced endpoints, all on Solana mainnet |
 | Self-hosted facilitator | in the repo, `api/_lib/x402/` | 110,416 on-chain USDC settlements, 803,483 verifications |
-| x402scan | https://www.x402scan.com/server/17cbd874-52ac-4920-a020-b22ff2489a07 | server page, plus an upstream [PR](https://github.com/Merit-Systems/x402scan/pull/1032) |
+| x402scan | https://www.x402scan.com/server/17cbd874-52ac-4920-a020-b22ff2489a07 | server page (60 registered resources), plus [our facilitator](https://www.x402scan.com/facilitator/three-ws) since the upstream [PR](https://github.com/Merit-Systems/x402scan/pull/1032) merged 2026-08-11 |
 | Coinbase CDP Bazaar | https://api.cdp.coinbase.com/platform/v2/x402/discovery/resources | settlement-indexed |
 | 402index.io | registered via `scripts/x402-register-directories.mjs` | 19 endpoints, domain claimed |
 | Receipts | https://three.ws/receipts | 58,907 signed Offer and Receipt artifacts |

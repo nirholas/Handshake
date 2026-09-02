@@ -44,9 +44,9 @@ observable health, so 01 to 03 come first.
 | 05 | [R2 bucket CORS: verify, then fix at the origin](backlog-05-r2-bucket-cors.md) | one credential | mint an R2 admin token |
 | 07 | [BNB testnet: deploy the two finished contracts](backlog-07-bnb-testnet-deploys.md) | one funded EOA | send tBNB to `0x1C4918894dfA5eE11cfF9629B458b5169Cfa3871` (faucet is reCAPTCHA-gated) |
 | 08 | [OKX chat bot: move off the codespace](backlog-08-okx-chat-bot-always-on.md) | nothing | one email OTP login |
-| 09 | [Telegram bots: durable hosting for both feeds](backlog-09-telegram-bots-durability.md) | nothing | none |
-| 10 | [x402scan listing: finish the last three steps](backlog-10-x402scan-listing.md) | one PAT or one comment | classic PAT, or the owner comments |
-| 11 | [Agent index: bring the on-chain crawl back from `down`](backlog-11-agent-index-lag.md) | nothing | none |
+| 09 | [Telegram bots: durable hosting for both feeds](backlog-09-telegram-bots-durability.md) | **done**, verified live 2026-09-02 | clear the commit gate on its file update |
+| 10 | [x402scan listing: finish the last three steps](backlog-10-x402scan-listing.md) | the deploy (the facilitator listing itself is live) | approve the deploy, then one wallet signature to re-register the origin |
+| 11 | [Agent index: bring the on-chain crawl back from `down`](backlog-11-agent-index-lag.md) | one production deploy (all code, tests, docs and the migration landed 2026-09-02) | approve the deploy; the commands are in [PROGRESS.md](backlog-PROGRESS.md) |
 
 ---
 
@@ -71,11 +71,19 @@ token. 07 needs one faucet claim and nothing else: a deployer key now exists in 
 balance 0 tBNB), both dry runs simulate green against the live chain-97 RPC, and the
 `--broadcast` path is proven end to end on a local chain-97 node. Fund that address, not
 the retired 2026-08-02 one.
-08's worker is built and committed but has never reported a heartbeat, so it is not running
-anywhere. 09's deliverables live in a sibling repository that is not checked out in this
-workspace, so nothing here can verify them. 10's remaining external step resolved on its own
-(the upstream pull request merged 2026-08-11 and the live discovery endpoint matches it);
-its file is retired as soon as the owner clears the commit gate that its content sits behind.
+08's worker is built and committed; on 2026-09-02 it beat for the first time, from this
+codespace, so `/api/healthz` now carries the `okx_chat_bot` subsystem and reports it as the
+stopgap it is (`hostDurable=false`). The Cloud Run host is still undeployed.
+09 is done: the sibling repository is checked out at `/workspaces/pump-fun-sdk` after all, and
+both feeds were verified running on Cloud Run on 2026-09-02 (`Ready=True`, websocket transport,
+25 h uptime each) while this codespace's own rebuild killed their local processes.
+10's remaining external step resolved on its own
+(the upstream pull request merged 2026-08-11, the registry attributes 18,636 settlements and
+$1,055 of volume to our facilitator, and their own crawler replayed against production returns
+4,519 stable items with no duplicates). What was left was on our side: their registration flow
+reads `/openapi.json`, which hand-enumerated 24 of the 75 live paid services, so 52 endpoints
+answered a valid 402 and could not be listed. That is fixed in the tree and ships with the next
+deploy, after which one wallet signature re-registers the origin.
 
 ## Shared rules (every work order obeys these)
 

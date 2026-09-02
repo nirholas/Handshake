@@ -1,5 +1,13 @@
 # 11. Agent index: bring the on-chain crawl back from `down`
 
+> **Status 2026-09-02 19:20 UTC: done in code, waiting on one deploy.** Do not re-run this
+> order from the top. Every task below is implemented, tested, documented and committed, and
+> the migration is applied; the Solana leg went from 1,092 erroring cursors to 0 and its sweep
+> cycle from 140 minutes to 70. What remains is a single production deploy, which is
+> owner-gated, plus the two post-deploy health reads it unblocks. The measurements, the
+> error-class table, the commit SHAs and the exact deploy commands are in
+> [PROGRESS.md](backlog-PROGRESS.md) under the 2026-09-02 19:20 UTC entry.
+
 **How to run this:** paste this whole file into a fresh Claude Code chat opened in
 `/workspaces/three.ws`, or say "execute `prompts/finish/backlog-11-agent-index-lag.md`". Read
 [00-INDEX.md](backlog-00-INDEX.md) and `CLAUDE.md` first.

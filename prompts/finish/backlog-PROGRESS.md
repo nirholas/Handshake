@@ -1041,3 +1041,207 @@ whichever session commits it.
 
 Left: order 11 belongs to the session that was editing it. Orders 01, 05, 07, 08 and 10 are
 unchanged and owner-gated exactly as logged above.
+
+## 2026-09-02 19:20 UTC: order 11 (agent index) closed in code; one deploy remains
+
+`agent_index` was `down` with no owner. Root cause on both legs was the same and it was never
+capacity: **the stored cursor pointed at history the answering provider no longer serves, and
+the cursor is only written on the success path**, so every later tick re-presented the same
+dead value and got the same error forever while the crons kept returning 200.
+
+### Solana leg, before and after (live prod DB)
+
+| Read | `errored` / `agents` | rate | median lag | dominant error class |
+|---|---|---|---|---|
+| 2026-09-01 (order written) | 1,092 / 1,602 | 68.2% | 87 min | unresolvable cursor |
+| 2026-09-02 18:50 (session start) | 190 / 1,604 | 11.8% | 63 min | unresolvable cursor (185 of 190) |
+| 2026-09-02 19:17 (after recovery) | **0 / 1,604** | **0.0%** | 24 min | none |
+
+Error-class table as measured, and what each turned out to be:
+
+| Class | Count at 18:50 | Verdict |
+|---|---|---|
+| `failed to get signatures for address: Transaction <sig> not found` | 185 | The whole stall. Lane router rotates providers with different retention, so a cursor one lane wrote is unreadable by the next. Now self-heals: drop `until`, re-scan from head, and write the null THROUGH the upsert's `COALESCE` so the dead value is actually cleared. |
+| `solana rpc 429 @ <host>` | 3 | Transient. Note for the next session: running the sweep or the heal script back to back from this workspace exhausts the shared free lanes and manufactures 168 of these. They clear on the next tick. |
+| `solana rpc provider error -16401 @ <host>` | 1 | Lane gates the method behind a paid tier. Capability routing already covers it. |
+| `fetch failed (ERR_SSL_...) @ <host>` | 1 | One-off transport fault. |
+
+`scripts/heal-agent-event-cursors.mjs --apply` drained the backlog in one pass: 170 healed, 0
+still failing, 0.0% erroring. Zero unresolvable-cursor rows remain, which is the recovery
+proving itself against live data rather than against a fixture.
+
+### Sweep capacity: the batch was the cap, not the budget
+
+Timed against the live lane router: one agent costs ~370 ms. The sweep was taking 120 per
+10-minute tick and spending 45 s of a 120 s budget, so it left three quarters of every tick
+idle while the 1,604-agent directory cycled in 140 minutes against a 90-minute threshold.
+Batch raised to 240 behind a 4-worker pool. One real tick, measured:
+
+```
+{"agents":240,"scanned":0,"inserted":0,"rejected":0,"failed":0,
+ "truncated":false,"batch":240,"concurrency":4,"elapsedMs":25862}
+```
+
+25.9 s against the 120 s budget (4.6x headroom), `truncated: false`, zero failures. Cycle is
+now **70 min** (7 ticks) for a 35-minute median floor, proved by two consecutive reads of the
+cursor table across that tick: median lag 42 min -> 22 min.
+
+### EVM leg: all three stalled chains had ONE cause, and it was not the scheduler
+
+Both crawl crons are alive (`gcloud scheduler jobs list`: `cron--api-cron-erc8004-crawl` and
+`cron--api-cron-solana-attestations-crawl`, both ENABLED, last attempt minutes old). The three
+stale chains were sitting behind a provider retention wall that the code could not classify:
+
+- The keyless lanes answer an old range with `Archive requests require a personal token` under
+  an **HTTP 403**, and `erc8004RpcCall` threw on the status before reading the body, so the
+  reason was reduced to `HTTP 403 from <host>` and no predicate could act on it.
+- On another chain the FIRST lane said plainly that the blocks were pruned while the LAST lane
+  answered a generic `limit exceeded`; the call surfaced only the last lane's error, so the
+  retention diagnosis never reached the recovery. That chain sat stale for eight days, another
+  for four months.
+
+Fixes: read the JSON-RPC body before the status; keep a retention diagnosis from any lane
+ahead of a later lane's generic failure; fold the archive-paywall wording into
+`isPrunedHistoryRejection`. Proved live against all three chains before committing: each one
+now classifies as retention, skips to head, and scans real logs (the busiest returned 47 logs
+on its first post-skip window).
+
+Skipping closes the backlog, which would have made the loss invisible: a chain at head reports
+zero blocks behind and reads as healthy. Migration
+**`20260902190000_erc8004_history_gap.sql`** (applied) adds `history_gap_blocks`,
+`history_gap_to`, `history_gap_at` to `erc8004_crawl_cursor`; the crawl accumulates the skipped
+span there and the sensor reports it (`evm.historyGapChains`, `evm.historyGapBlocks`) without
+ever scoring it, because it is history no tick can recover.
+
+I did NOT touch the failing chains' `rpcUrls`. The retention skip resolves all three without
+it, and the earlier entry above is right that editing that file sits behind the commit gate.
+
+### Sensor
+
+`indexLagVerdict()` was already split out and pure. It now also carries the history-gap line.
+An EVM-only fault still caps at `degraded` with the reason in `detail`, and the Solana error
+rate is scored in its own right. `tests/agent-index.test.js`: 78 passing, including the pool's
+budget and truncation edges driven by a hand-cranked clock (no doubles), the archive wording,
+and the assertion that a full cycle, not just the median, fits inside the fresh threshold.
+
+### Commits
+
+| SHA | What |
+|---|---|
+| `6cd247926` | Solana cursor recovery + `scripts/heal-agent-event-cursors.mjs` |
+| `a27a668ed` | Sweep batch 240 + concurrency ceiling |
+| `5283235a8` | Keep the retention-wall error instead of the last lane's generic one |
+| `c6b6c2c02` | The history-gap migration and the archive wording |
+| `88270c25a`, `771761928` | Concurrent sweepers carried the rest of the same work (pool, sensor, tests, runbook) into their commits |
+| `33160c660` | Changelog entry |
+
+`docs/ops/agent-index.md` is the runbook, linked from `docs/ops/README.md`.
+
+### OWNER-ACTIONS: one deploy closes the last three boxes
+
+Production still runs `ad7b54c16` (2026-08-28), so none of the above is live yet. The Solana
+error rate will climb back from 0% at roughly 14 cursors an hour until it lands, and
+`agent_index` will keep reporting `down` rather than `degraded` because the old sensor has
+neither the EVM-only cap nor the error-rate score. The migration is already applied, so
+`db:check` will pass.
+
+```sh
+npm run clean:worktrees -- --apply
+npm run prep:worktree -- --apply
+npm run build:gcp
+npm run deploy:gcp:submit
+npm run deploy:gcp:purge-cdn
+curl -s https://three.ws/api/version
+```
+
+After it lands, the two remaining checks are reads, not work: `agent_index.metrics.solana.errored`
+under 5% on two healthz reads an hour apart, and `evm.behindChains` not growing across two
+reads (the busiest secondary chain should skip to head on its first tick and bank ~18.4M blocks
+into `history_gap_blocks`).
+
+
+## 2026-09-02: 10 x402scan listing (facilitator listing done; one deploy + one signature left)
+
+Measured, no credentials used anywhere:
+
+| Fact | Value | Command |
+|---|---|---|
+| PR #1032 | **`MERGED` 2026-08-11T20:01:45Z**, 4 commits, 0 reviews | `gh pr view 1032 --repo Merit-Systems/x402scan` |
+| Facilitator page | live, both fee payers rendered | `https://www.x402scan.com/facilitator/three-ws` |
+| Attribution | 18,636 transactions, $1,055.01 USDC, latest settle 2026-09-02T08:59:12Z | that page's payload |
+| Our origin page | 60 resources, 0 deprecated, re-crawled by them 2026-08-27 | `.../server/17cbd874-52ac-4920-a020-b22ff2489a07` |
+| Discovery crawl | 46 pages, 4,519 fetched, `total` stable at 4,519, 0 duplicate identities | their `listAllFacilitatorResources` replayed against production |
+| Merged config | url, `discoveryConfig`, both addresses, logo 200, `docsUrl` 200 | `gh api .../facilitators/threews.ts`, `curl` |
+| CDP Bazaar | three.ws in **0 of 15,127** catalog resources | full paged sweep |
+
+**The blocked step is moot.** The PR merged without the reviewer-verification comment, so
+the classic PAT this work order has been waiting on since 2026-07-17 is no longer needed for
+anything. Their transfer sync is doing exactly what the PR set it up to do.
+
+Two upstream facts worth carrying forward. Their facilitator crawl is still paused
+(`FACILITATOR_SYNC_PAUSED = true` in `apps/scan/src/app/api/resources/sync/route.ts`,
+re-checked today), so being a registered facilitator buys settlement attribution, not catalog
+ingestion. And their registration flow reads **`/openapi.json`**, not our facilitator catalog.
+
+Did: that second fact exposed the real reason the origin has sat at 60 resources since
+2026-07-11. `/openapi.json` hand-enumerated **24 of the 75** live paid services, so 52
+endpoints answered a spec-valid 402 in production and could not be registered by anyone.
+`catalogPaidPaths()` in `api/openapi-json.js` now projects every live paid service from
+`api/_lib/service-catalog/` (already the written-once source of truth for the x402 discovery
+doc and the OKX storefront) into the document, spread BEFORE the hand-authored paths so the
+24 richer entries keep their exact wording. `/api/x402/*` operations went 24 to 79; diffed
+against the live production document, **zero existing paths changed**. Five guards added to
+`tests/openapi-aggregator.test.js` (16 pass): catalog coverage, price parity with the
+dynamic-price exemption, hand-authored entries preserved verbatim, GET/POST input projection,
+and the JSON Schema required list surviving onto query parameters. This also fixes the
+AgentCash discovery lane, which reads the same document.
+
+Also corrected two docs that were wrong against measurement: `docs/open-source-ecosystem.md`
+claimed the CDP Bazaar indexes our catalog (it does not, and cannot until a Base settle runs
+through the CDP facilitator), and both it and `docs/open-source-footprint.md` still described
+the merged PR as pending. Added a measured 2026-09-02 block to the registration log in
+`docs/ops/x402-discovery-listings.md`. Changelog entry added, feeds rebuilt.
+
+Not a bug, worth knowing: five endpoints answer 503 `settlement_unavailable` instead of a 402
+while the sponsor wallet is under its SOL settle floor (`dance-tip`, `feed-health`,
+`ring-settle`, `spend-session`, `three-buy`). They are Solana-only, so the floor removes their
+only rail; every Base-carrying endpoint keeps its 402 through the same outage. They cannot be
+probe-registered until work order 01 lands capital. Eight ring endpoints are absent from our
+own discovery catalog on purpose (`discoverable: false`, plus `service` as a dynamic per-agent
+dispatcher and `ring-settle` as the internal volume primitive); that was checked before
+assuming drift, and no descriptors were added for them.
+
+Left:
+- **The deploy.** Production runs `ad7b54c16` (2026-08-28), so registration still sees 24
+  endpoints until the `/openapi.json` fix ships. Owner-gated.
+- **One SIWX wallet signature** (no funds move) to re-register origin `https://three.ws` at
+  `https://www.x402scan.com/resources/register` after that deploy. The 53 endpoints that
+  answer a valid 402 today and are missing from the listing: `/api/agents/endpoint-shopper-run`,
+  `/api/agents/unstoppable-status`, and under `/api/x402/`: `analytics`, `api-key-health`,
+  `auth-health`, `avatar-optimize-batch`, `bazaar-feed`, `billboard`, `club-cover`,
+  `cross-chain`, `defi-radar`, `embody`, `gas-oracle`, `hack-check`, `llm-proxy`,
+  `market-categories`, `market-chains`, `market-chart`, `market-coin`, `market-coins`,
+  `market-defi`, `market-derivatives`, `market-dex-volumes`, `market-exchanges`, `market-fees`,
+  `market-gas`, `market-global`, `market-hacks`, `market-heatmap`, `market-mood`,
+  `market-pulse`, `market-stablecoins`, `market-trending`, `market-yields`, `mcp-tool-catalog`,
+  `model-validation-sweep`, `news-pulse`, `notify`, `pipeline-gameready`, `pipeline-rembg`,
+  `pipeline-remesh`, `pipeline-rig`, `pipeline-stylize`, `rate-limit-probe`, `remix-asset`,
+  `robinhood-portfolio`, `schema-check`, `solana-register-health`, `stablecoin-health`,
+  `telegram-health`, `token-intel`, `wallet-connect`, `yield-scan`.
+- **CDP keys / a funded Base buyer** for the optional Base leg. Additive only.
+
+Solana settlement is unchanged and still self-hosted. Nothing in this session re-pointed,
+demoted, or touched the Solana rail.
+
+Gate: fails on 6 `/materialize` link findings from a concurrent agent's uncommitted print
+work (`pages/certificate.html`, `src/certificate-page.js`), none of it in a file this session
+touched. `npm run check:claude` was failing on a stale cron count (111 vs the 112 in
+vercel.json) and is fixed. `npm run check:rules` clean on every file touched here.
+`npm run audit:docs` reports only two pre-existing unpublished-doc findings, neither mine.
+
+Commit gate: this entry and the doc updates name a third-party registry and are NOT staged.
+One note the owner needs: the `api/openapi-json.js` change was swept into commit `cb9af5cd2`
+("docs(openai): publish the partner announcement copy and the visibility map") by a
+concurrent agent's `git add -A` at 19:07:29 UTC, before the gate could be cleared and under a
+message that describes it as "schema entries for the newly listed tools", which it is not.
+Nothing was amended or reset in response.

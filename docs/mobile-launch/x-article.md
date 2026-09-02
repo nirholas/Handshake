@@ -128,7 +128,7 @@ Generation is free on three.ws because serious people backed us early, and every
 
 **NVIDIA.** three.ws is a member of NVIDIA Inception, and every 3D generation lane runs on NVIDIA silicon: text-to-3D and image-to-3D on Cloud Run L4s and Blackwell, the free hosted NIM lane behind the Forge running TRELLIS, and Nemotron models doing the LLM, vision, embedding, reranking, and safety work around it. Membership is a startup programme, not an endorsement, and we say so every time.
 
-**OpenAI.** three.ws is an OpenAI Select Partner. The free 3D Studio connector gives ChatGPT nine keyless 3D tools, and every generation carries a place-in-your-room AR link. We are an independent member of the partner network; nothing here is an OpenAI product.
+**OpenAI.** three.ws is an OpenAI Select Partner. The free 3D Studio connector gives ChatGPT eleven keyless 3D tools, and every generation carries a place-in-your-room AR link. We are an independent member of the partner network; nothing here is an OpenAI product.
 
 **Google Cloud.** Production runs on Cloud Run, the GPU fleet runs on Cloud Run, Vertex AI provides the Gemini and image lanes, and a Google for Startups Web3 cloud grant pays for the compute behind every model you make.
 

@@ -87,13 +87,23 @@ The cheapest is the Solana USDC rail, whose accept carries a `feePayer`, so it n
 | --- | --- |
 | To | `9PirGw9wVLLNFgVyjgAt5jvuFQwJ3pYUBWt9n3vZfnyc` (same TEE wallet, Solana account) |
 | Chain | Solana mainnet |
-| Token | USDC `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` |
+| Token | the USDC mint named in the live challenge's Solana accept (`asset`, read it fresh, do not trust a copy) |
 | Amount | **0.10 USDC** (ten draft calls' worth of headroom) |
 
-The same challenge also advertises a **$THREE** rail (`FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump`,
-10 THREE for a draft call). Funding that instead, or as well, would let the gauntlet prove
-an agent can buy three.ws compute with $THREE. Say which you prefer; the run defaults to the
-USDC rail and skips the paid leg cleanly if the wallet is empty.
+The same challenge also advertises a **$THREE** rail
+(`FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump`, 10 THREE for a draft call). Funding that
+instead, or as well, would let the gauntlet prove an agent can buy three.ws compute with
+$THREE. Say which you prefer; the run defaults to the USDC rail and skips the paid leg
+cleanly if the wallet is empty.
+
+Read both `asset` fields live before sending anything:
+
+```bash
+curl -s -X POST https://three.ws/api/okx/3d/forge-draft \
+  -H 'content-type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"forge_3d","arguments":{"prompt":"a teapot"}}}' \
+  -D - -o /dev/null | grep -i '^payment-required:' | cut -d' ' -f2 | base64 -d | python3 -m json.tool
+```
 
 ## What runs the moment the funding lands
 

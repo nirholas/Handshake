@@ -172,7 +172,7 @@ Solana Mobile built the phone this app was designed for, the dApp Store it ships
 
 NVIDIA: three.ws is a member of NVIDIA Inception. Every 3D generation lane runs on NVIDIA silicon, the free hosted NIM lane behind the Forge runs TRELLIS, and Nemotron models handle the LLM, vision, embedding, reranking, and safety work around it. Membership is a startup programme, not an endorsement.
 
-OpenAI: three.ws is an OpenAI Select Partner. The free 3D Studio connector gives ChatGPT nine keyless 3D tools with an AR handoff on every generation. We are an independent member of the partner network.
+OpenAI: three.ws is an OpenAI Select Partner. The free 3D Studio connector gives ChatGPT eleven keyless 3D tools with an AR handoff on every generation. We are an independent member of the partner network.
 
 Google Cloud: production runs on Cloud Run, the GPU fleet runs on Cloud Run, Vertex AI provides the Gemini and image lanes, and three.ws is a member of Google Cloud for Web3 Startups, whose grant funds the compute behind every model you make.
 
