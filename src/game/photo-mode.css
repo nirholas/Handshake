@@ -30,6 +30,10 @@
 	opacity: 0; transition: opacity 0.2s ease;
 }
 #cc-photo.cc-on { opacity: 1; }
+/* A sheet on its way out (or not yet in) must never catch a click: during the
+   fade it is still full-viewport, and a click landing on it would dismiss the
+   card that replaced it. */
+#cc-photo:not(.cc-on) { pointer-events: none; }
 
 .cc-photo-card {
 	position: relative; width: min(460px, 94vw); max-height: 88vh; overflow: auto;

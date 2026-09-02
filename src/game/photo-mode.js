@@ -52,16 +52,26 @@ function reducedMotion() {
 	return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
+// Same contract as the `el` in coincommunities-ui.js, deliberately: this module
+// is lazy-loaded on its own and must not drag the HUD in, so the helper is
+// duplicated rather than imported. Keep the two in step. It handles `html` and
+// plain-string children because the card below uses both, and a helper that
+// silently turns `html` into an attribute and throws on a string child produces
+// a preview that never mounts.
 function el(tag, props = {}, kids = []) {
 	const n = document.createElement(tag);
 	for (const [k, v] of Object.entries(props)) {
-		if (v == null) continue;
+		if (v == null || v === false) continue;
 		if (k === 'class') n.className = v;
 		else if (k === 'text') n.textContent = v;
+		else if (k === 'html') n.innerHTML = v;
 		else if (k.startsWith('on') && typeof v === 'function') n.addEventListener(k.slice(2), v);
-		else n.setAttribute(k, v);
+		else n.setAttribute(k, v === true ? '' : v);
 	}
-	for (const c of [].concat(kids)) if (c) n.appendChild(c);
+	for (const c of [].concat(kids)) {
+		if (c == null || c === false) continue;
+		n.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+	}
 	return n;
 }
 
@@ -246,8 +256,15 @@ export function photoPreviewOpen() {
 	return !!preview;
 }
 
-/** Dismiss the preview and release the object URL behind it. */
-export function closePhotoPreview() {
+/**
+ * Dismiss the preview and release the object URL behind it.
+ *
+ * @param {{ immediate?: boolean }} [opts] skip the exit transition and tear the
+ *   sheet down in this frame. A retake passes it: a card that is still fading
+ *   out while its replacement mounts would leave two sheets stacked, and the
+ *   outgoing one's backdrop would close the fresh card if it caught a click.
+ */
+export function closePhotoPreview({ immediate = false } = {}) {
 	if (!preview) return;
 	const { root, url, onClose, restoreFocus, onKeydown } = preview;
 	preview = null;
@@ -257,7 +274,7 @@ export function closePhotoPreview() {
 		root.remove();
 		URL.revokeObjectURL(url);
 	};
-	if (reducedMotion()) drop();
+	if (immediate || reducedMotion()) drop();
 	else setTimeout(drop, 220);
 	if (restoreFocus?.isConnected) restoreFocus.focus();
 	onClose?.();
@@ -327,15 +344,23 @@ function showPreview({ blob, width, height, stamp, filename, onClose }) {
 	const root = el('div', { id: 'cc-photo', onclick: () => closePhotoPreview() }, [card]);
 
 	// Keys pressed inside the card must not also drive the avatar: /play listens
-	// on window, so Space would jump the player instead of pressing the focused
-	// button. Escape closes from anywhere except a text field.
+	// on window in the bubble phase, so this capture-phase listener sees them
+	// first and Space presses the focused button instead of jumping the player.
+	// Escape closes from anywhere except a text field. P is the one key
+	// deliberately let through: the hint below promises it takes another, and the
+	// host's handler routes it back into takePhoto, which retakes over this card.
 	const onKeydown = (e) => {
 		const typing = e.target instanceof HTMLElement
 			&& (/^(input|textarea|select)$/i.test(e.target.tagName) || e.target.isContentEditable);
-		if (e.key === 'Escape' && !typing) {
+		if (typing) return;
+		if (e.key === 'Escape') {
 			e.preventDefault();
 			e.stopPropagation();
 			closePhotoPreview();
+			return;
+		}
+		if (e.key === 'p' || e.key === 'P') {
+			if (e.ctrlKey || e.metaKey) return;
 			return;
 		}
 		if (card.contains(e.target)) e.stopPropagation();
@@ -377,8 +402,9 @@ function stampedName(symbol) {
 export async function takePhoto({ renderer, scene, camera, coinLabel, worldLabel, toast, onClose }) {
 	if (capturing) return false;
 	capturing = true;
-	// A second press while a card is up is a retake, not a second card.
-	if (preview) closePhotoPreview();
+	// A second press while a card is up is a retake, not a second card: tear the
+	// old sheet down in this frame so the two never overlap.
+	if (preview) closePhotoPreview({ immediate: true });
 
 	try {
 		shutter();
