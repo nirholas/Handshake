@@ -48,8 +48,14 @@ const createAvatar = vi.fn(async ({ input }) => ({
 	size_bytes: input.size_bytes,
 	source: input.source,
 }));
+// The handler asks the account's "Default avatar visibility" preference for a
+// request that did not name one, and this mock replaces the whole module, so it
+// has to answer too. With no stored preference the real function returns the
+// caller's fallback, which is what these tests assert on.
+const defaultAvatarVisibilityFor = vi.fn(async (_userId, fallback = 'private') => fallback);
 vi.mock('../../api/_lib/avatars.js', () => ({
 	createAvatar,
+	defaultAvatarVisibilityFor,
 	storageKeyFor: ({ userId, slug }) => `u/${userId}/${slug}/x.glb`,
 }));
 

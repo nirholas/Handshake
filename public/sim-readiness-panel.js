@@ -76,7 +76,7 @@ const WARNING_TEXT = {
 };
 
 const CSS = `
-:host { display: inline-block; font: inherit; --sr-good: #34c76d; --sr-near: #6ea8fe; --sr-warn: #f0b429; --sr-bad: #ff5656; --sr-dim: #9aa3b2; }
+:host { position: relative; display: inline-block; font: inherit; --sr-good: #34c76d; --sr-near: #6ea8fe; --sr-warn: #f0b429; --sr-bad: #ff5656; --sr-dim: #9aa3b2; }
 :host([hidden]) { display: none; }
 * { box-sizing: border-box; }
 
@@ -116,16 +116,23 @@ const CSS = `
 }
 @keyframes sweep { from { background-position: 120% 0; } to { background-position: -120% 0; } }
 
+/* The panel overlays rather than reflowing: opening it must not move the model,
+   the title, or anything else on the page. It anchors under the badge, to the
+   badge's left edge by default and to its right edge when the host sits at the
+   end of a bar (align="end"), so it never runs off either side. */
 .panel {
-	margin-top: 8px; max-width: 480px;
+	position: absolute; top: calc(100% + 8px); left: 0; z-index: 30;
+	width: max-content; min-width: 260px; max-width: min(480px, calc(100vw - 32px));
 	max-height: 60vh; overflow-y: auto; overscroll-behavior: contain;
 	border: 1px solid rgba(127, 140, 160, .28); border-radius: 12px;
-	background: rgba(18, 20, 26, .96); color: #e8eaf0;
-	padding: 12px 13px; font-size: 12.5px; line-height: 1.5;
+	background: #12141a; color: #e8eaf0;
+	padding: 12px 13px; font-size: 12.5px; line-height: 1.5; text-align: left;
 	opacity: 0; transform: translateY(-4px); transition: opacity .18s ease, transform .18s ease;
 }
 .panel[hidden] { display: none; }
 .panel.open { opacity: 1; transform: translateY(0); }
+:host([align="end"]) .panel { left: auto; right: 0; }
+.panel { box-shadow: 0 12px 34px rgba(0, 0, 0, .38); }
 @media (prefers-reduced-motion: reduce) {
 	.panel { transition: none; }
 	.skeleton { animation: none; }
@@ -134,7 +141,7 @@ const CSS = `
 	.panel { background: #fff; color: #14161c; border-color: rgba(20, 22, 28, .16); box-shadow: 0 8px 28px rgba(20, 22, 28, .12); }
 }
 :host-context([data-theme="light"]) .panel { background: #fff; color: #14161c; border-color: rgba(20, 22, 28, .16); box-shadow: 0 8px 28px rgba(20, 22, 28, .12); }
-:host-context([data-theme="dark"]) .panel { background: rgba(18, 20, 26, .96); color: #e8eaf0; border-color: rgba(127, 140, 160, .28); }
+:host-context([data-theme="dark"]) .panel { background: #12141a; color: #e8eaf0; border-color: rgba(127, 140, 160, .28); }
 
 .lead { margin: 0 0 10px; }
 h3 { margin: 12px 0 5px; font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--sr-dim); }
