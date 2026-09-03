@@ -192,7 +192,7 @@ const VALUE_INPUT_PROPS = {
 export const toolDefs = [
 	{
 		name: 'persona_identity',
-		title: "Read a persona's on-chain identity — wallet, reputation, holdings",
+		title: "Read a persona's on-chain identity: wallet, reputation, holdings",
 		annotations: READ_ANNOTATIONS,
 		description:
 			"Read a persona's real on-chain identity: its deterministic Solana wallet address, live SOL/USDC balance, " +

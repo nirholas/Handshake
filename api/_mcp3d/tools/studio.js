@@ -2246,7 +2246,7 @@ export const toolDefs = [
 	},
 	{
 		name: 'persona_say',
-		title: 'Speak a reply through a persona — lip-sync + emotion + gesture',
+		title: 'Speak a reply through a persona: lip-sync + emotion + gesture',
 		annotations: PERSONA_SAY_ANNOTATIONS,
 		description:
 			"Make a persona PERFORM a reply: the body lip-syncs the text and shows the matching expression and body gesture. Pass the persona_id and the exact text the agent is saying this turn; the emotion is detected from the text automatically (or override it). The returned text/html resource animates the body for this turn — display it alongside the spoken reply. This is the turn-by-turn embodiment hook.",

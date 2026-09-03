@@ -289,7 +289,7 @@ const DEFS = [
 	},
 	{
 		name: 'persona_say',
-		title: 'Speak a reply through a persona — lip-sync + emotion + gesture',
+		title: 'Speak a reply through a persona: lip-sync + emotion + gesture',
 		description:
 			'Make a persona PERFORM a reply: the body lip-syncs the text and shows the matching facial expression ' +
 			'and body gesture. Pass the persona_id and the exact text the agent is saying this turn; the emotion is ' +

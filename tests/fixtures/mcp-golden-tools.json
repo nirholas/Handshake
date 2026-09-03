@@ -18,7 +18,7 @@
 		},
 		{
 			"name": "persona_say",
-			"title": "Speak a reply through a persona — lip-sync + emotion + gesture",
+			"title": "Speak a reply through a persona: lip-sync + emotion + gesture",
 			"descHead": "dynamic",
 			"descHash": "dynamic",
 			"annotations": "ref:SAY_ANNOTATIONS",
@@ -707,7 +707,7 @@
 	"api/_mcp3d/tools/persona-identity.js": [
 		{
 			"name": "persona_identity",
-			"title": "Read a persona's on-chain identity — wallet, reputation, holdings",
+			"title": "Read a persona's on-chain identity: wallet, reputation, holdings",
 			"descHead": "dynamic",
 			"descHash": "dynamic",
 			"annotations": "ref:READ_ANNOTATIONS",
@@ -771,6 +771,21 @@
 				"openWorldHint": true
 			},
 			"schemaHash": "892619deae7b"
+		}
+	],
+	"api/_mcp3d/tools/sim-readiness.js": [
+		{
+			"name": "grade_sim_readiness",
+			"title": "Grade a 3D model for physics simulation",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": true,
+				"openWorldHint": true
+			},
+			"schemaHash": "451ee5707431"
 		}
 	],
 	"api/_mcp3d/tools/spatial.js": [
@@ -860,7 +875,7 @@
 		},
 		{
 			"name": "persona_say",
-			"title": "Speak a reply through a persona — lip-sync + emotion + gesture",
+			"title": "Speak a reply through a persona: lip-sync + emotion + gesture",
 			"descHead": "Make a persona PERFORM a reply: the body lip-syncs the text and shows th",
 			"descHash": "7ce7c147f8f6",
 			"annotations": "ref:PERSONA_SAY_ANNOTATIONS",
