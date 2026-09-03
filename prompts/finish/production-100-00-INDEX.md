@@ -92,7 +92,7 @@ run in parallel, H waits on owner gates, I is anytime, J is the parallel swarm.
 |---|---|
 | [../roadmap/generation-suite.md](roadmap-generation-suite.md) | Partial: tools, smoke cron and gallery shipped; PBR map outputs, job webhooks and the API contract doc open. |
 | [../roadmap/creation-consolidation.md](roadmap-creation-consolidation.md) | Partial: redirects and the save fix shipped; Studio wardrobe, the `/embed` retirement and the `/start` decision open. |
-| [../roadmap/avatar-parametric-editor.md](roadmap-avatar-parametric-editor.md) | Partial: 122 sliders and client-side proportions; server bake, free sculpt and the spec open. |
+| Parametric avatar editor | Done 2026-09-03: 306 sliders, server-side proportion bake, free-sculpt brush, `specs/PARAMETRIC_AVATAR.md`. |
 | [../roadmap/developer-resources-repos.md](roadmap-developer-resources-repos.md) | Agent side shipped (`export:satellites` stages 70 files offline); blocked on OWNER-ACTIONS row 16, then the cross-links. |
 | [../roadmap/native-widgets.md](roadmap-native-widgets.md) | Tasks 1 to 3 built (card endpoint, Android widget, Windows manifest); two commits await the deploy; task 4 needs row 17. |
 | [../gcp-credits/05-catalog-animation-seeding.md](gcp-credits-05-catalog-animation-seeding.md) | Partial: the catalog seed runs at scale (56,898 avatars); the generated motion library has 0 clips. |

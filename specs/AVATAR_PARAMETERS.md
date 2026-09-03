@@ -1,6 +1,6 @@
 # Avatar Parameter Model v0.1
 
-**Status:** partial (morphs, colors, layers, garments, accessories and proportions are live; sculpt deltas, texture layers and animation identity are reserved).
+**Status:** partial (morphs, colors, layers, garments, accessories, proportions and free-sculpt deltas are live; texture layers and animation identity are reserved).
 
 The parameter model is the serialized description of a three.ws avatar's body: one JSON document that says what the character *is*, independent of any particular GLB. It is what saves, what re-opens in the editor, what the server bakes, and what a fork or a share link carries.
 
@@ -20,6 +20,7 @@ Every three.ws avatar keeps its parameters. The GLB is a *render* of the documen
   "accessories": ["preset-id", "..."],
   "morphs": { "noseWider": 0.3, "earPointedLeft": 0.8 },
   "proportions": { "legLength": 1.06, "shoulderWidth": 0.94 },
+  "sculpt": { "version": 1, "meshes": { "Body": { "count": 812, "vertexCount": 14517, "scale": 3.1e-6, "indices": "…", "deltas": "…" } } },
   "colors": { "skin": "#c99a70", "hair": "#241a12" },
   "hidden": ["hair"],
   "garments": [{ "slot": "top", "id": "garment-id" }],
@@ -35,6 +36,7 @@ Every field is optional. An absent field means "default", and a document with no
 | `accessories` | preset id[] | Bone-mounted props (hat, glasses, earrings) | `src/agent-accessories.js` |
 | `morphs` | name → weight | Shape. Any morph target the loaded GLB exposes, by name | `src/avatar-sculpt.js` |
 | `proportions` | id → ratio | Build. Skeleton-space length, width and stature | `src/avatar-proportions.js` |
+| `sculpt` | delta document | Free-brush vertex deltas, sparse and quantised | `specs/PARAMETRIC_AVATAR.md` |
 | `colors` | slot → hex | Per-slot material tint | `src/avatar-studio.js` |
 | `hidden` | slot[] | Garment layers to drop | `src/avatar-wardrobe.js` |
 | `garments` | {slot, id}[] | Additive catalog wearables | `specs/GARMENT_MANIFEST.md` |
@@ -44,7 +46,7 @@ Every field is optional. An absent field means "default", and a document with no
 
 `{ morphTargetName: weight }`, weights clamped to `[-1, 1]` (`[0, 1]` in the UI). Names are matched against whatever the loaded GLB actually carries: an unknown name is skipped, never an error, because the same document may be applied to a rig that exposes fewer shapes.
 
-There is no fixed slider list. The parametric base (`public/avatars/parametric-base.glb`) ships 122 identity morphs and the panel renders one slider per morph it finds, so growing the base grows the editor with no UI change.
+There is no fixed slider list. The parametric base (`public/avatars/parametric-base.glb`) ships 306 identity morphs and the panel renders one slider per morph it finds, so growing the base grows the editor with no UI change. The morph name `customSculpt` is reserved: it carries the `sculpt` field's deltas and is deliberately not offered as a slider, because its weight is pinned at 1.
 
 ## `proportions`: build
 
@@ -73,6 +75,14 @@ Three invariants any implementation MUST hold:
 
 Values outside a parameter's range are clamped, unknown ids are dropped, and a value within `1e-4` of `1.0` is removed entirely (`normalizeProportions`). A rig missing a parameter's bones simply does not offer that slider (`availableProportionParams`), so the panel never shows a dead control.
 
+## `sculpt`: free-brush deltas
+
+Everything the morph library and the proportion table cannot reach: a dent in one temple, a crooked bridge, a brow ridge in no catalogue. A radius-and-falloff brush pushes vertices along their own surface normal and records the result as one extra morph target per mesh, named `customSculpt` and pinned at weight 1, so the edit stays additive with every library slider and reversible by clearing that one target.
+
+The document is sparse (only vertices that moved) and quantised to int16 over the recorded peak, which resolves the 0.12 m displacement cap to under 4 micrometres. Its field-by-field contract, the bind-space maths and the symmetry rule are specified in [`PARAMETRIC_AVATAR.md`](./PARAMETRIC_AVATAR.md#3-free-sculpt-everything-else); validation is `sanitizeSculptDoc` in `src/avatar-sculpt-doc.js`, applied on both read and write like every other field.
+
+A sculpt is tied to a topology. `vertexCount` records the mesh it was authored against, and a consumer whose mesh disagrees MUST skip that entry rather than force-fit it: a delta applied to the wrong vertices is a disfigured avatar, which is worse than an un-sculpted one.
+
 ## `attachments`: custom bone-mounted props
 
 `accessories` names entries in the curated preset catalog, which is what makes a hat portable: the id resolves to a GLB the platform ships. A prop generated on demand (Scene Composer forges one from a text prompt and parents it to a bone) is in no catalog, so it carries its own reference instead:
@@ -92,7 +102,6 @@ Named here so implementations do not claim the keys for anything else:
 
 | Field | For |
 |---|---|
-| `sculpt` | Free-brush vertex deltas, stored out of band and referenced by URL |
 | `layers` | Texture layers over the canonical UVs (tattoos, makeup, complexion) |
 | `animation` | Per-avatar animation identity (default idle/walk, gesture intensity, mood) |
 | `base` | Explicit base-body id, once more than one parametric base ships |
@@ -106,6 +115,7 @@ Named here so implementations do not claim the keys for anything else:
 
 ## Related
 
+- [`PARAMETRIC_AVATAR.md`](./PARAMETRIC_AVATAR.md): the base body these parameters describe, its morph inventory, and the free-sculpt wire format.
 - [`GARMENT_MANIFEST.md`](./GARMENT_MANIFEST.md): the wearables `garments` references.
 - [`EDITOR_SPEC.md`](./EDITOR_SPEC.md): the authoring surface these parameters are edited in.
 - [`docs/avatar-studio.md`](../docs/avatar-studio.md): the user-facing guide to the editor.

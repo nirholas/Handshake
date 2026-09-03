@@ -3,13 +3,17 @@
 // scripts/build-parametric-base.mjs.
 //
 // This is the backbone of the "change everything" avatar editor: one canonical
-// body whose identity is ~120 morph-target sliders. These tests pin the three
+// body whose identity is 300+ morph-target sliders. These tests pin the four
 // contracts the rest of the platform depends on:
 //   1. the GLB is valid and carries the curated morph set with targetNames,
 //   2. the mixamorig skeleton canonicalizes, so the whole pre-baked clip
 //      library retargets onto it (walk-ready by construction),
 //   3. the morphs load as real geometry deltas in three.js, localized to the
-//      region their name claims (a nose slider must not move the feet).
+//      region their name claims (a nose slider must not move the feet),
+//   4. every slider lands in a named group in the sculpt panel rather than in
+//      the "Other" drawer, and the whole set stays inside the VRAM budget the
+//      baker enforces (three.js allocates one dense texture layer per morph
+//      target, so slider count is a shipped-product cost, not a free one).
 
 import { describe, it, expect, beforeAll } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -54,7 +58,8 @@ describe('parametric-base.glb: validity and inventory', () => {
 		expect(root.listSkins()[0].listJoints()).toHaveLength(52);
 
 		const bodyNames = meshes.Body.getExtras()?.targetNames;
-		expect(bodyNames.length).toBeGreaterThanOrEqual(120);
+		expect(bodyNames.length).toBeGreaterThanOrEqual(300);
+		expect(new Set(bodyNames).size).toBe(bodyNames.length); // no shadowed slider
 		// One representative slider per region.
 		for (const name of [
 			'noseWider', 'mouthUpperLipFuller', 'earPointedLeft', 'earPointedRight',
@@ -62,6 +67,14 @@ describe('parametric-base.glb: validity and inventory', () => {
 			'neckThicker', 'bodyFeminine', 'bodyMasculine', 'bodyMuscular', 'bodyHeavier',
 			'heightTaller', 'chestVShape', 'waistNarrower', 'hipsWider', 'gluteusBigger',
 			'bellyBigger', 'shouldersWider', 'armsMuscular', 'thighsThicker', 'legsLonger',
+			// Curation pass 2: the regions that were thin or missing entirely.
+			'noseBridgeWider', 'noseNostrilsAngleUp', 'mouthPhiltrumDeeper',
+			'mouthCupidsBowWider', 'earTriangleLeft', 'earTiltForwardRight',
+			'eyeEpicanthusInLeft', 'eyeUpperLidUpRight', 'browsForward',
+			'cheekInnerFullerLeft', 'jawBonesStronger', 'foreheadTemplesWider',
+			'headDiamond', 'neckDoubleChin', 'torsoLatsWider', 'hipsWaistUp',
+			'bellyNavelUp', 'armsUpperWider', 'legsKneesIn', 'legsUpperLonger',
+			'bodyAfrican', 'bodyAsian', 'bodyCaucasian',
 		]) {
 			expect(bodyNames, name).toContain(name);
 		}
@@ -136,7 +149,7 @@ describe('parametric-base.glb: three.js runtime behaviour', () => {
 			if (n.isSkinnedMesh && n.name === 'Body') body = n;
 		});
 		expect(body).not.toBeNull();
-		expect(Object.keys(body.morphTargetDictionary).length).toBeGreaterThanOrEqual(120);
+		expect(Object.keys(body.morphTargetDictionary).length).toBeGreaterThanOrEqual(300);
 
 		const positions = body.geometry.attributes.position;
 		const inspect = (morphName) => {
@@ -179,5 +192,32 @@ describe('parametric-base.glb: three.js runtime behaviour', () => {
 		// Height: moves nearly everything.
 		const tall = inspect('heightTaller');
 		expect(tall.touched).toBeGreaterThan(5000);
+	});
+});
+
+describe('parametric-base.glb: panel grouping and runtime budget', () => {
+	it('files every slider into a named sculpt group, none into "Other"', async () => {
+		const doc = await new NodeIO().read(GLB_PATH);
+		const names = doc
+			.getRoot()
+			.listMeshes()
+			.flatMap((m) => m.getExtras()?.targetNames || []);
+		const unique = [...new Set(names)].filter((n) => n !== 'tongueOut');
+
+		const { CATEGORIES_FOR_TEST } = await import('../src/avatar-sculpt.js');
+		const orphans = unique.filter((n) => !CATEGORIES_FOR_TEST.some((c) => c.match.test(n)));
+		expect(orphans, `ungrouped sliders: ${orphans.join(', ')}`).toEqual([]);
+	});
+
+	it('stays inside the morph-texture VRAM budget the baker enforces', async () => {
+		const doc = await new NodeIO().read(GLB_PATH);
+		// three.js WebGLMorphtargets allocates an RGBA32F layer per target over
+		// the full vertex count, whether the slider is at zero or not.
+		let bytes = 0;
+		for (const mesh of doc.getRoot().listMeshes()) {
+			const prim = mesh.listPrimitives()[0];
+			bytes += prim.getAttribute('POSITION').getCount() * prim.listTargets().length * 16;
+		}
+		expect(bytes / 1024 / 1024).toBeLessThan(96);
 	});
 });
