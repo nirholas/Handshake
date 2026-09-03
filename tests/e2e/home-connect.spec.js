@@ -113,9 +113,10 @@ test.describe('/smart-home connect flow', () => {
 		await expect(state(page)).toHaveAttribute('data-state', 'private_host');
 		expect(sent, 'a LAN address must be refused before the network, not after a timeout').toEqual([]);
 
-		// And it must name the two real ways round it, not just say no.
-		await expect(page.getByText(/remote https address/i)).toBeVisible();
-		await expect(page.getByText(/add-on/i)).toBeVisible();
+		// And it must name the two real ways round it, not just say no: the remote
+		// https URL that works today, and letting the house dial out to us.
+		await expect(page.getByRole('listitem').filter({ hasText: /remote https address/i })).toBeVisible();
+		await expect(page.getByRole('listitem').filter({ hasText: /dial out to three\.ws/i })).toBeVisible();
 	});
 
 	test('a rejected token says so and puts focus back in the token field', async ({ page }) => {
