@@ -26,8 +26,22 @@ const CATALOGS = [
 //   forget        — deletes a stored agent memory
 //   pay_and_call  — spends the user's USDC (irreversible transfer)
 //   persona_tip   — spends a persona's own USDC (irreversible transfer)
-//   persona_send  — spends a persona's own USDC (irreversible transfer)
-const DESTRUCTIVE_TOOLS = new Set(['delete_avatar', 'forget', 'pay_and_call', 'persona_tip', 'persona_send']);
+//   persona_send  - spends a persona's own USDC (irreversible transfer)
+//   home_activate - runs a scene or script in a real house, which moves locks,
+//                   covers and alarms in the physical world
+//   home_call     - calls an arbitrary Home Assistant service, so it can unlock a
+//                   door or open a garage
+//
+// The two home tools are the reason this list is not just about money. Marking
+// them non-destructive would tell every MCP client that opening someone's front
+// door is a safe, reversible call, which is exactly the claim Home Assistant's
+// own intent__HassTurnOff makes and exactly why this platform gates it. If a
+// future home tool is genuinely read-only it belongs outside this set; anything
+// that reaches an actuator belongs inside it.
+const DESTRUCTIVE_TOOLS = new Set([
+	'delete_avatar', 'forget', 'pay_and_call', 'persona_tip', 'persona_send',
+	'home_activate', 'home_call',
+]);
 
 // Internal/spec-only fields that must never leak into the tools/list wire
 // payload.
