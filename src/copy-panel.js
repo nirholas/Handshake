@@ -48,10 +48,55 @@ export async function mountCopyPanel(el, { leaderAgentId, leaderName, network = 
 	const { subscriptions = [] } = await res.json().catch(() => ({ subscriptions: [] }));
 	const existing = subscriptions.find((s) => s.leader_agent_id === leaderAgentId && s.network === network);
 
+	// A leader on an alpha-drip releases to higher $THREE tiers first. Show the
+	// copier the seat THEY get before they commit, never after: an unexpected
+	// delay discovered from an empty inbox is the version of this that erodes
+	// trust. Best-effort — a drip read must never block copy setup.
+	const drip = await fetchDrip(leaderAgentId);
+
 	if (existing && existing.status !== 'stopped') {
-		return renderActive(el, { existing, leaderName, leaderAgentId, network });
+		return renderActive(el, { existing, leaderName, leaderAgentId, network, drip });
 	}
-	return renderForm(el, { leaderAgentId, leaderName, network, prefill: existing || null });
+	return renderForm(el, { leaderAgentId, leaderName, network, prefill: existing || null, drip });
+}
+
+async function fetchDrip(leaderAgentId) {
+	try {
+		const res = await api(`/api/copy/alpha-drip?leader_agent_id=${encodeURIComponent(leaderAgentId)}`);
+		if (!res.ok) return null;
+		const body = await res.json().catch(() => null);
+		return body?.drip?.enabled ? body : null;
+	} catch {
+		return null;
+	}
+}
+
+/** The copier-facing seat note: their wait, the ladder, and the disclosure. */
+function dripNote(drip) {
+	if (!drip) return '';
+	const you = drip.you;
+	const seat = you
+		? (you.delay_sec === 0
+			? `Your ${escapeHtml(you.tier_label)} seat gets this trader's calls the moment they fire.`
+			: `Your ${escapeHtml(you.tier_label)} seat waits ${escapeHtml(fmtDelay(you.delay_sec))} after this trader fires.`)
+		: 'Sign in to see the seat your $THREE balance gets.';
+	const upgrade = you && you.delay_sec > 0
+		? ` <a href="/three-token">Hold more $THREE to move up →</a>`
+		: '';
+	return `
+		<p class="cp-drip">
+			<strong>Tiered release.</strong> ${seat}${upgrade}<br />
+			<span class="cp-drip-sub">${escapeHtml(drip.drip.summary)} ${escapeHtml(drip.drip.disclosure || '')}</span>
+		</p>`;
+}
+
+/** Matches formatDelay() in api/_lib/alpha-drip.js. */
+function fmtDelay(sec) {
+	const s = Math.max(0, Math.round(Number(sec) || 0));
+	if (s < 60) return `${s}s`;
+	const m = Math.floor(s / 60);
+	const r = s % 60;
+	return r ? `${m}m ${r}s` : `${m}m`;
 }
 
 // --- States ------------------------------------------------------------------
@@ -74,7 +119,7 @@ function renderError(el, retry) {
 	$('#cp-retry', el)?.addEventListener('click', retry);
 }
 
-function renderActive(el, { existing, leaderName, leaderAgentId, network }) {
+function renderActive(el, { existing, leaderName, leaderAgentId, network, drip = null }) {
 	const s = existing;
 	const sizeLabel = s.sizing_rule === 'fixed' ? `${Number(s.fixed_sol)} SOL fixed`
 		: s.sizing_rule === 'multiplier' ? `${Number(s.multiplier)}× their size`
@@ -91,6 +136,7 @@ function renderActive(el, { existing, leaderName, leaderAgentId, network }) {
 		   Exits you were already in still come through. Resume when they recover, or edit your limit.</p>` : ''}
 		<p>${escapeHtml(sizeLabel)} · cap ${Number(s.per_trade_cap_sol)} SOL/trade · ${Number(s.daily_budget_sol)} SOL/day${limit ? ` · pause at ${limit}% drawdown` : ''}.
 		   New trades arrive as intents in your dashboard.${s.telegram_chat_id ? ` Telegram alerts on.` : ''}</p>
+		${dripNote(drip)}
 		<p class="cp-err" id="cp-toggle-err" hidden></p>
 		<div class="cp-actions">
 			<a class="lb-btn lb-btn-primary" href="/dashboard/copy">Manage copies →</a>
@@ -117,15 +163,16 @@ function renderActive(el, { existing, leaderName, leaderAgentId, network }) {
 		btn.disabled = false;
 		btn.textContent = label;
 	});
-	$('#cp-edit', el)?.addEventListener('click', () => renderForm(el, { leaderAgentId, leaderName, network, prefill: s }));
+	$('#cp-edit', el)?.addEventListener('click', () => renderForm(el, { leaderAgentId, leaderName, network, prefill: s, drip }));
 }
 
-function renderForm(el, { leaderAgentId, leaderName, network, prefill }) {
+function renderForm(el, { leaderAgentId, leaderName, network, prefill, drip = null }) {
 	const p = prefill || {};
 	const rule = p.sizing_rule || 'fixed';
 	el.innerHTML = `
 		<h2>Copy ${escapeHtml(leaderName || 'this trader')}</h2>
 		<p>You sign every trade from your own wallet. We never take custody — these are sized intents, capped by your rules.</p>
+		${dripNote(drip)}
 		<form class="cp-form" id="cp-form" novalidate>
 			<label class="cp-field">
 				<span class="cp-label">Your Solana wallet</span>

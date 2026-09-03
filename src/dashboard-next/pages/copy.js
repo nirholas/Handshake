@@ -11,6 +11,7 @@ import { mountShell } from '../shell.js';
 import { requireUser, get, post, del, esc, relTime } from '../api.js';
 import { errorStateHTML, ensureStateKitStyles, attachRetry } from '../../shared/state-kit.js';
 import { gmgnAddressUrl } from '../../shared/trading-terminals.js';
+import { mountAlphaDripPanel, formatDelay } from '../../alpha-drip-panel.js';
 
 const SKIP_LABEL = {
 	below_mcap_floor: 'Below your market-cap floor',
@@ -24,6 +25,7 @@ const SKIP_LABEL = {
 	daily_budget_spent: 'Daily budget used up',
 	max_open_copies: 'Open-copies cap reached',
 	sizing_unavailable: 'Could not size (no balance)',
+	drip_capacity_cap: 'Your tier\'s size cap left the order below your minimum',
 };
 
 const fmtSol = (n) => {
@@ -60,6 +62,8 @@ const STYLE = `
 .cp-tag.sell { color: var(--nxt-warn); border-color: color-mix(in srgb, var(--nxt-warn) 40%, transparent); }
 .cp-tag.on { color: var(--nxt-success); }
 .cp-tag.paused { color: var(--nxt-warn); }
+.cp-tripped { color: var(--nxt-warn); margin-top: 4px; line-height: 1.45; }
+.cp-sub-err { color: var(--nxt-danger); margin-top: 4px; line-height: 1.45; }
 .cp-tag.skipped, .cp-tag.expired, .cp-tag.dismissed { color: var(--nxt-ink-dim); }
 .cp-tag.acted { color: var(--nxt-success); }
 .cp-btn { font-size: 12px; padding: 5px 12px; border-radius: var(--nxt-radius-sm); border: 1px solid var(--nxt-stroke); background: var(--nxt-bg-2); color: var(--nxt-ink); cursor: pointer; text-decoration: none; transition: border-color .14s, transform .14s; white-space: nowrap; }
@@ -69,6 +73,10 @@ const STYLE = `
 .cp-skeleton { height: 56px; border-radius: 10px; background: var(--nxt-bg-2); animation: cp-pulse 1.4s ease infinite; }
 @keyframes cp-pulse { 0%,100% { opacity: .55 } 50% { opacity: 1 } }
 .cp-note { font-size: 12px; color: var(--nxt-ink-dim); margin: 0 0 14px; }
+.cp-locked { opacity: .92; }
+.cp-lock-coin { letter-spacing: .18em; color: var(--nxt-ink-dim); font-weight: 700; }
+.cp-countdown { font-variant-numeric: tabular-nums; color: var(--nxt-ink-dim); transition: color .2s ease; }
+.cp-locked:hover .cp-countdown { color: var(--nxt-ink); }
 .cp-oracle { display: inline-flex; }
 .cp-ob { display: inline-flex; align-items: center; gap: 3px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 2px 7px; text-decoration: none; font-size: 11px; transition: border-color .12s; }
 .cp-ob:hover { border-color: rgba(255,255,255,0.22); }
@@ -145,10 +153,15 @@ const STYLE = `
 }
 </style>`;
 
+// One countdown interval for the whole page; a re-render replaces it rather
+// than stacking a second ticker on the same rows.
+let _countdownTimer = null;
+
 function img(e) { return e.leader_image || e.leader_avatar || '/favicon.ico'; }
 function traderHref(agentId) { return `/trader/${encodeURIComponent(agentId)}`; }
 
 function intentRow(e) {
+	if (e.locked) return lockedIntentRow(e);
 	const isBuy = e.direction === 'buy';
 	const amount = isBuy ? `<span class="cp-amt">${fmtSol(e.planned_sol)}</span>` : `<span class="cp-tag sell">Exit your copy</span>`;
 	const proof = e.leader_buy_sig ? `<a href="https://solscan.io/tx/${esc(e.leader_buy_sig)}" target="_blank" rel="noopener">leader tx ↗</a>` : '';
@@ -174,17 +187,71 @@ function intentRow(e) {
 	</div>`;
 }
 
+/**
+ * An intent this copier's $THREE tier has not reached yet. The leader and the
+ * fact that they fired are shown — the coin and the size are not, because that
+ * is precisely what the leader's release ladder sells. It unlocks in place: the
+ * countdown reaches zero and the next poll renders the real row.
+ */
+function lockedIntentRow(e) {
+	const tier = e.drip_tier ? e.drip_tier.charAt(0).toUpperCase() + e.drip_tier.slice(1) : null;
+	const held = e.drip_delay_sec ? `held ${formatDelay(e.drip_delay_sec)} on this trader's ladder` : 'held on this trader\'s ladder';
+	return `
+	<div class="cp-item cp-locked" data-id="${esc(e.id)}" data-unlocks-at="${esc(e.unlocks_at || '')}">
+		<img loading="lazy" decoding="async" class="cp-av" src="${esc(img(e))}" alt="" data-fallback="invisible" />
+		<div class="cp-mid">
+			<div class="cp-title">
+				<span class="cp-tag">LOCKED</span>
+				<span class="cp-lock-coin" aria-label="Coin hidden until release">•••••</span>
+				<span class="cp-sub" style="margin:0">via <a href="${traderHref(e.leader_agent_id)}">${esc(e.leader_name || 'trader')}</a></span>
+			</div>
+			<div class="cp-sub">${tier ? `${esc(tier)} seat · ` : ''}${held} · <a href="/docs/alpha-drip">why?</a></div>
+		</div>
+		<div class="cp-side">
+			<span class="cp-amt cp-countdown" data-countdown role="timer" aria-live="off">${esc(formatDelay(e.unlocks_in_sec || 0))}</span>
+			<a class="cp-btn ghost" href="/three-token" aria-label="Hold more $THREE to unlock this trader's signal sooner">Unlock sooner</a>
+		</div>
+	</div>`;
+}
+
+/**
+ * Tick every locked row's countdown, and reload the inbox the moment one hits
+ * zero so the real intent replaces it without the copier touching anything.
+ */
+function startCountdowns(host, reload) {
+	const timer = setInterval(() => {
+		const rows = Array.from(host.querySelectorAll('.cp-locked[data-unlocks-at]'));
+		if (!rows.length) { clearInterval(timer); return; }
+		let due = false;
+		for (const row of rows) {
+			const at = Date.parse(row.dataset.unlocksAt || '');
+			const left = Number.isFinite(at) ? Math.max(0, Math.ceil((at - Date.now()) / 1000)) : 0;
+			const cell = row.querySelector('[data-countdown]');
+			if (cell) cell.textContent = formatDelay(left);
+			if (left <= 0) due = true;
+		}
+		if (due) { clearInterval(timer); reload(); }
+	}, 1000);
+	return timer;
+}
+
 function subRow(s) {
 	const paused = s.status === 'paused';
+	// A subscription the drawdown breaker paused was not paused by this user, so
+	// the row has to say what happened — "Paused" alone reads as their own doing.
+	const tripped = paused && s.paused_reason === 'leader_drawdown_breach';
+	const ddLimit = s.max_drawdown_pct == null ? null : Number(s.max_drawdown_pct);
 	return `
 	<div class="cp-item" data-sub="${esc(s.id)}">
 		<img loading="lazy" decoding="async" class="cp-av" src="${esc(img(s))}" alt="" data-fallback="invisible" />
 		<div class="cp-mid">
 			<div class="cp-title">
 				<a href="${traderHref(s.leader_agent_id)}" style="color:inherit;text-decoration:none">${esc(s.leader_name || 'trader')}</a>
-				<span class="cp-tag ${paused ? 'paused' : 'on'}">${paused ? 'Paused' : '● Active'}</span>
+				<span class="cp-tag ${paused ? 'paused' : 'on'}">${tripped ? 'Auto-paused' : paused ? 'Paused' : '● Active'}</span>
 			</div>
-			<div class="cp-sub">${esc(sizingLabel(s))} · cap ${Number(s.per_trade_cap_sol)} ◎ · ${Number(s.daily_budget_sol)} ◎/day · ${Number(s.pending_count) || 0} pending${s.min_oracle_score != null ? ` · Oracle ≥${s.min_oracle_score}` : ''}${s.telegram_chat_id ? ' · TG alerts on' : ''}</div>
+			<div class="cp-sub">${esc(sizingLabel(s))} · cap ${Number(s.per_trade_cap_sol)} ◎ · ${Number(s.daily_budget_sol)} ◎/day · ${Number(s.pending_count) || 0} pending${ddLimit ? ` · stop at ${ddLimit}% DD` : ''}${s.min_oracle_score != null ? ` · Oracle ≥${s.min_oracle_score}` : ''}${s.telegram_chat_id ? ' · TG alerts on' : ''}</div>
+			${tripped ? `<div class="cp-sub cp-tripped">This trader fell past your ${ddLimit}% drawdown limit, so new copies stopped. Exits you're already in still arrive. Resume once they recover, or widen the limit on their profile.</div>` : ''}
+			<div class="cp-sub cp-sub-err" data-sub-err hidden></div>
 		</div>
 		<div class="cp-side">
 			<button type="button" class="cp-btn" data-sub-act="${paused ? 'active' : 'paused'}" aria-label="${paused ? 'Resume' : 'Pause'} copying ${esc(s.leader_name || 'trader')}">${paused ? 'Resume' : 'Pause'}</button>
@@ -376,6 +443,12 @@ async function loadAndRender(host) {
 
 			${earningsSection(earnings)}
 
+			<section class="cp-sec" id="cp-drip" hidden>
+				<div class="cp-sec-h"><h2>Your signal release</h2></div>
+				<p class="cp-note">Price the latency of your own calls: $THREE holders in higher tiers see your intent first, everyone else after the delay you set. The trade still lands in your public track record either way.</p>
+				<div id="cp-drip-panel"></div>
+			</section>
+
 			<section class="cp-sec">
 				<div class="cp-sec-h"><h2>History</h2><span class="cp-count">${hist.length}</span></div>
 				${historyStats(hist)}
@@ -391,6 +464,20 @@ async function loadAndRender(host) {
 
 	// Enrich pending intent rows with Oracle conviction badges
 	enrichIntentOracle(host.querySelector('#cp-pending'));
+
+	// Locked intents count down in place and reload themselves on release.
+	if (_countdownTimer) clearInterval(_countdownTimer);
+	_countdownTimer = startCountdowns(host, () => loadAndRender(host));
+
+	// Leader side: price your own signal. The panel renders nothing (and the
+	// section stays hidden) unless somebody is actually copying one of your agents.
+	const dripHost = host.querySelector('#cp-drip-panel');
+	if (dripHost) {
+		mountAlphaDripPanel(dripHost).then(() => {
+			const section = host.querySelector('#cp-drip');
+			if (section) section.hidden = !dripHost.innerHTML.trim();
+		});
+	}
 
 	// Discover section: load top leaderboard traders the user isn't copying yet
 	const copiedIds = new Set(subs.filter((s) => s.status !== 'stopped').map((s) => s.leader_agent_id));
@@ -419,12 +506,22 @@ async function loadAndRender(host) {
 		const row = btn.closest('[data-sub]');
 		const id = row?.dataset.sub;
 		const next = btn.dataset.subAct;
+		const errEl = row?.querySelector('[data-sub-err]');
+		if (errEl) { errEl.hidden = true; errEl.textContent = ''; }
 		btn.disabled = true;
 		try {
 			if (next === 'stopped') await del(`/api/copy/subscriptions?id=${encodeURIComponent(id)}`);
 			else await post('/api/copy/subscriptions', { id, status: next });
 			loadAndRender(host);
-		} catch { btn.disabled = false; }
+		} catch (err) {
+			// A resume the breaker refuses is the common case here, and swallowing it
+			// left the button looking broken. Say why it did not take.
+			btn.disabled = false;
+			if (errEl) {
+				errEl.textContent = err?.message || 'Could not change this subscription.';
+				errEl.hidden = false;
+			}
+		}
 	});
 
 	// Performance fee settlement

@@ -11,6 +11,8 @@ Both are Solana-native. Both run on `mainnet` and `devnet`. Neither is a paper-t
 
 If you want to feel a leader's edge before committing money, that is a *separate* surface: [Ghost-copy](./ghost-copy.md) replays a leader's real closed trades against a wallet that does not exist. It never touches either engine below and never produces an intent.
 
+A leader can also price *when* each copier is shown their signal: [alpha-drip](./alpha-drip.md) releases the copy intent to higher $THREE tiers first and everyone else after a delay the leader sets. It is off unless a leader turns it on, it delays the reveal and never the record, and the copier is shown the seat they get before they subscribe.
+
 Related reading: [Smart Money Radar](./smart-money.md) for the first-party wallet reputation graph, [the trading surfaces](./trading-surfaces.md) for the screeners and the trading cockpit these leaders trade from, [agent wallets](./agent-wallets.md) for the custody and spend-policy model, and [signal marketplace](./signals.md) for the paid-feed variant that reuses the same guarded executor.
 
 ---

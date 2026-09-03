@@ -255,6 +255,25 @@
 	background: var(--surface-2);
 }
 .cp-tripped strong { display: block; color: var(--ink-bright); margin-bottom: 2px; }
+
+/* Alpha-drip: the seat this copier's $THREE tier gets on the leader's signal.
+   Same left-rule treatment as the breaker notice, in the accent rather than the
+   warn colour, because it is an offer and not a problem. */
+.cp-drip {
+	font-size: var(--text-xs);
+	color: var(--ink-dim);
+	line-height: 1.5;
+	margin: 0 0 var(--space-sm);
+	padding: var(--space-sm) var(--space-md);
+	border-left: 2px solid var(--accent);
+	border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+	background: var(--surface-2);
+}
+.cp-drip strong { color: var(--ink-bright); }
+.cp-drip a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .14s ease; }
+.cp-drip a:hover { border-bottom-color: currentColor; }
+.cp-drip a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+.cp-drip-sub { display: inline-block; margin-top: 2px; color: var(--ink-faint); }
 .cp-err .cp-unmet {
 	list-style: none;
 	margin: var(--space-2xs) 0;

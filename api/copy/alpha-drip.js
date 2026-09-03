@@ -91,7 +91,39 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, ['GET', 'POST'])) return;
 	if (await rateLimited(req, res, limits.api, clientIp(req))) return;
 
-	const leaderFromQuery = String(req.query?.leader_agent_id || '').trim();
+	const params = new URL(req.url, 'http://x').searchParams;
+	const leaderFromQuery = String(params.get('leader_agent_id') || '').trim();
+
+	// ?mine=1 — every agent the caller owns that someone is actually copying,
+	// with its current ladder. This is what the leader's editor lists, and it is
+	// one query rather than one request per agent.
+	if (req.method === 'GET' && params.get('mine') === '1') {
+		const auth = await requireUser(req, res);
+		if (!auth) return;
+		const rows = await sql`
+			select a.id, a.name,
+			       count(s.id) filter (where s.status = 'active') as copiers,
+			       d.enabled, d.schedule, d.public_delay_sec, d.disclosure, d.capacity_note, d.updated_at
+			from agent_identities a
+			join copy_subscriptions s on s.leader_agent_id = a.id and s.status = 'active'
+			left join copy_alpha_drip d on d.leader_agent_id = a.id
+			where a.user_id = ${auth.userId} and a.deleted_at is null
+			group by a.id, a.name, d.enabled, d.schedule, d.public_delay_sec, d.disclosure, d.capacity_note, d.updated_at
+			order by copiers desc, a.name asc
+		`;
+		const leaders = rows.map((row) => {
+			const norm = row.enabled == null ? { ok: false } : normalizeDripConfig(row);
+			const config = norm.ok ? norm.value : emptyDripConfig();
+			return {
+				leader_agent_id: row.id,
+				leader_name: row.name,
+				copiers: Number(row.copiers) || 0,
+				updated_at: row.updated_at || null,
+				drip: present(config),
+			};
+		});
+		return json(res, 200, { leaders });
+	}
 
 	if (req.method === 'GET') {
 		if (!isUuid(leaderFromQuery)) return error(res, 400, 'invalid_leader', 'leader_agent_id must be an agent UUID');
