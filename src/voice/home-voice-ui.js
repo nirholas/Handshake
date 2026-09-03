@@ -340,11 +340,14 @@ export class HomeVoicePanel {
 	_renderConfirmation(confirmation) {
 		this.el.confirmSentence.textContent = confirmation.sentence;
 		this.el.confirmEntities.replaceChildren();
+		// The friendly name is what a person recognises and the entity id is what
+		// actually moves, so both are shown. textContent, always: both strings come
+		// from a device or another household member and are rendered as data.
+		const named = new Map((confirmation.entities || []).map((e) => [e.entityId, e.name]));
 		for (const id of confirmation.entityIds) {
 			const li = document.createElement('li');
-			// textContent, always: an entity name is a string a device or another
-			// household member controls, and it is rendered as data, never markup.
-			li.textContent = id;
+			const name = named.get(id);
+			li.textContent = name ? `${name} (${id})` : id;
 			this.el.confirmEntities.appendChild(li);
 		}
 		const started = Date.now();
@@ -390,6 +393,7 @@ export class HomeVoicePanel {
 			endpoint: 400,
 			asr: 900,
 			turn: 1200,
+			toolCall: 1200,
 			action: 700,
 			firstAudio: 1800,
 		};
@@ -398,6 +402,7 @@ export class HomeVoicePanel {
 			endpoint: 'End of speech',
 			asr: 'Transcription',
 			turn: 'Agent turn',
+			toolCall: 'First tool call',
 			action: 'Action to device',
 			firstAudio: 'First audible reply',
 			tts: 'Speech synthesis',

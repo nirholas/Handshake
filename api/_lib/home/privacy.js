@@ -82,11 +82,26 @@ export const INVENTORY = Object.freeze([
 	},
 	{
 		key: 'entity_names',
-		data: 'The names of your rooms, devices and scenes',
+		data: 'The display names of your rooms, devices and scenes ("Sarah\'s Bedroom Lamp")',
 		table: null,
 		why: 'To draw your home and to understand what you ask for.',
 		retention: 'Never stored. They are read live from your Home Assistant and held in memory only for as long as the connection is open.',
 		deletedBy: 'Nothing to delete.',
+	},
+	{
+		// The honest companion to the row above, and the reason that row says
+		// "display names" rather than "names". Several tables hold ids, and a Home
+		// Assistant id is normally a slug of the name the thing was created with,
+		// so "light.sarah_bedroom" carries the name for every practical purpose.
+		// Claiming we store no names at all would be a privacy promise that is
+		// 95% true, which is to say false. This row is what makes the other one
+		// safe to make.
+		key: 'entity_ids',
+		data: 'Which devices an action touched, as your Home Assistant\'s own ids (light.kitchen). An id is usually a slug of the name the device was created with, so it can carry that name',
+		table: 'home_action_log',
+		why: 'A log that cannot say which door was opened cannot answer the only question anyone asks it.',
+		retention: 'The action log\'s window: 90 days by default, and yours to change.',
+		deletedBy: 'The retention sweep, deleting this home, or deleting your account.',
 	},
 	{
 		key: 'entity_states',
@@ -95,6 +110,14 @@ export const INVENTORY = Object.freeze([
 		why: 'To render your home live and to answer questions about it.',
 		retention: 'Never stored. A record of when your lights go on and off is a record of when you are home, and we do not keep one.',
 		deletedBy: 'Nothing to delete.',
+	},
+	{
+		key: 'layout',
+		data: 'The floorplan you drew: where each room sits and how big it is',
+		table: 'home_layouts',
+		why: 'Home Assistant knows which room a device is in and has no idea where that room is, so the arrangement has to come from you.',
+		retention: 'Until you delete the home. Coordinates only, keyed by your Home Assistant\'s own area ids; the validator strips every other field before it is written, so nothing else can end up in it.',
+		deletedBy: 'Delete this home, or delete your account.',
 	},
 	{
 		key: 'members',
@@ -109,7 +132,7 @@ export const INVENTORY = Object.freeze([
 		data: 'The email address of someone you invited, until they accept or it expires',
 		table: 'home_invites',
 		why: 'To send and to honour an invitation to your home.',
-		retention: 'Until accepted, revoked, or expired; deleted with the home. Deleting your account also removes invitations addressed to your email.',
+		retention: 'An unaccepted invitation is deleted a week after it expires or is revoked, so a dead invite stops holding an address. An accepted one is kept on the home\'s own action-log window, so "who let this person in" survives a dispute. Deleting your account also removes invitations addressed to your email.',
 		deletedBy: 'Revoke the invite, delete this home, or delete your account.',
 		sensitive: true,
 	},
@@ -161,7 +184,7 @@ export const INVENTORY = Object.freeze([
 		data: 'A short-lived pairing code, stored as a one-way digest, when you connect a home that only exists on your own network',
 		table: 'home_relay_pairings',
 		why: 'To introduce the add-on running inside your house to your account, once.',
-		retention: 'Ten minutes, and single use. It is a digest, never the code, so a database read cannot pair anything. The row is deleted with the home.',
+		retention: 'Ten minutes, and single use. It is a digest, never the code, so a database read cannot pair anything. The row itself is swept a day after it is used or expires, and deleted with the home.',
 		deletedBy: 'Redeeming or expiring it, deleting this home, or deleting your account.',
 		sensitive: true,
 	},
@@ -303,12 +326,20 @@ export async function purgeActionLogForHome(homeId, days) {
 		  and created_at < now() - ${n} * interval '1 day'
 		returning id
 	`;
-	// The confirmation records ride the same window; see purgeExpiredActionLog.
+	// Everything else that rides this home's window, applied in the same breath so
+	// shortening retention means what it says. See purgeExpiredActionLog for why
+	// each of these is on this window rather than a constant.
 	await sql`
 		delete from home_confirmations
 		where home_id = ${homeId}
 		  and (redeemed_at is not null or expired_at is not null)
 		  and created_at < now() - ${n} * interval '1 day'
+	`;
+	await sql`
+		delete from home_invites
+		where home_id = ${homeId}
+		  and accepted_at is not null
+		  and accepted_at < now() - ${n} * interval '1 day'
 	`;
 	return del.length;
 }
@@ -352,6 +383,43 @@ export async function purgeExpiredActionLog({ batch = 5000, maxRows = 100_000 } 
 		for (const row of del) homes.add(row.home_id);
 		if (del.length < batch) break;
 	}
+	// Invitations are the quietest leak in the lane: every one carries somebody's
+	// EMAIL ADDRESS, they are written by anyone who administers a household, and
+	// nothing ever removed a dead one. An invite that has expired, been revoked,
+	// or been accepted has done its whole job; keeping the address afterwards
+	// serves nobody. An accepted one is kept a little longer than the others so
+	// "who let this person in, and when" survives a dispute about it, on the same
+	// window the home's own log uses.
+	const invites = await sql`
+		delete from home_invites
+		where ctid in (
+			select i.ctid
+			from home_invites i
+			join home_connections h on h.id = i.home_id
+			where (
+				(i.accepted_at is null and i.revoked_at is null and i.expires_at < now() - interval '7 days')
+				or (i.revoked_at is not null and i.revoked_at < now() - interval '7 days')
+				or (i.accepted_at is not null
+				    and i.accepted_at < now() - h.action_log_retention_days * interval '1 day')
+			)
+			limit ${batch}
+		)
+		returning id
+	`;
+
+	// Relay pairing codes, same shape as the satellite codes below: a digest of a
+	// weak secret that is dead in ten minutes and has no reason to outlive it.
+	const relayPairings = await sql`
+		delete from home_relay_pairings
+		where ctid in (
+			select ctid from home_relay_pairings
+			where (redeemed_at is not null and redeemed_at < now() - interval '1 day')
+			   or (redeemed_at is null and expires_at < now() - interval '1 day')
+			limit ${batch}
+		)
+		returning id
+	`;
+
 	// The satellite pairing codes are the one thing here with no per-home window,
 	// because they hang off an account rather than a house and they are dead in
 	// minutes by design. Their creating migration states they are swept by this
@@ -388,6 +456,8 @@ export async function purgeExpiredActionLog({ batch = 5000, maxRows = 100_000 } 
 		homes: homes.size,
 		confirmations: confirmations.length,
 		satelliteCodes: satelliteCodes.length,
+		invites: invites.length,
+		relayPairings: relayPairings.length,
 	};
 }
 
@@ -421,7 +491,7 @@ export async function exportHomeData(userId) {
 
 	const [
 		members, invites, grants, actions, confirmations, pairings, invitesToMe,
-		satellites, satelliteCodes, planOverrides,
+		satellites, satelliteCodes, planOverrides, layouts,
 	] = await Promise.all([
 		homeIds.length
 			? sql`select home_id, user_id, role, entity_scope, invited_by, created_at, updated_at
@@ -466,6 +536,10 @@ export async function exportHomeData(userId) {
 		    from home_satellite_codes where user_id = ${userId} order by created_at`,
 		sql`select limits, note, created_at, updated_at
 		    from home_plan_overrides where user_id = ${userId}`,
+		homeIds.length
+			? sql`select home_id, version, layout, updated_by, updated_at, created_at
+			      from home_layouts where home_id = any(${homeIds}) order by home_id`
+			: [],
 	]);
 
 	return {
@@ -488,6 +562,7 @@ export async function exportHomeData(userId) {
 		satellites,
 		satellite_codes: satelliteCodes,
 		plan_override: planOverrides[0] ?? null,
+		layouts,
 	};
 }
 
@@ -601,7 +676,7 @@ export async function deleteAllHomeDataForUser(userId, { email = null } = {}) {
  * @returns {Promise<Record<string, number>>}
  */
 export async function countHomeRows(homeId) {
-	const [conn, members, invites, grants, actions, confirmations, pairings, audit] = await Promise.all([
+	const [conn, members, invites, grants, actions, confirmations, pairings, layouts, audit] = await Promise.all([
 		sql`select count(*)::int as n from home_connections   where id = ${homeId}`,
 		sql`select count(*)::int as n from home_members       where home_id = ${homeId}`,
 		sql`select count(*)::int as n from home_invites       where home_id = ${homeId}`,
@@ -609,6 +684,7 @@ export async function countHomeRows(homeId) {
 		sql`select count(*)::int as n from home_action_log    where home_id = ${homeId}`,
 		sql`select count(*)::int as n from home_confirmations where home_id = ${homeId}`,
 		sql`select count(*)::int as n from home_relay_pairings where home_id = ${homeId}`,
+		sql`select count(*)::int as n from home_layouts where home_id = ${homeId}`,
 		sql`select count(*)::int as n from audit_log where resource_id = ${homeId} and action like '%home%'`,
 	]);
 	return {
@@ -619,6 +695,7 @@ export async function countHomeRows(homeId) {
 		home_action_log: actions[0].n,
 		home_confirmations: confirmations[0].n,
 		home_relay_pairings: pairings[0].n,
+		home_layouts: layouts[0].n,
 		audit_log: audit[0].n,
 	};
 }
@@ -633,7 +710,7 @@ export async function countHomeRows(homeId) {
 export async function countUserRows(userId, email = null) {
 	const [
 		conn, members, invites, invitesToEmail, grants, actorRows, confirmRows,
-		confirmations, pairings, satellites, satelliteCodes, planOverride, audit,
+		confirmations, pairings, satellites, satelliteCodes, planOverride, layouts, audit,
 	] =
 		await Promise.all([
 			sql`select count(*)::int as n from home_connections where user_id = ${userId}`,
@@ -650,6 +727,7 @@ export async function countUserRows(userId, email = null) {
 			sql`select count(*)::int as n from home_satellites where user_id = ${userId}`,
 			sql`select count(*)::int as n from home_satellite_codes where user_id = ${userId}`,
 			sql`select count(*)::int as n from home_plan_overrides where user_id = ${userId}`,
+			sql`select count(*)::int as n from home_layouts where updated_by = ${userId}`,
 			sql`select count(*)::int as n from audit_log where action like '%home%' and user_id = ${userId}`,
 		]);
 	return {
@@ -665,6 +743,7 @@ export async function countUserRows(userId, email = null) {
 		home_satellites: satellites[0].n,
 		home_satellite_codes: satelliteCodes[0].n,
 		home_plan_overrides: planOverride[0].n,
+		home_layouts_edited: layouts[0].n,
 		audit_log: audit[0].n,
 	};
 }

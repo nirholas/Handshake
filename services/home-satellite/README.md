@@ -67,6 +67,33 @@ The hub role needs `HOME_SATELLITE_HUB_SECRET` and listens on `PORT` (default 80
 An unpaired satellite **stays up**. It answers `/healthz`, and it tells a connecting Home
 Assistant exactly why it is refusing, which is more useful than a container that exits on boot.
 
+## Run it in Docker (the way a household actually runs it)
+
+```bash
+docker build -t three-ws-home-satellite services/home-satellite
+
+docker run -d --name three-ws-satellite \
+  --network host \
+  -v three-ws-satellite:/data \
+  -e THREE_WS_PAIRING_CODE=RH23-KSW5 \
+  -e SATELLITE_NAME="Kitchen display" \
+  -e SATELLITE_AREA=Kitchen \
+  three-ws-home-satellite
+
+docker logs three-ws-satellite | head
+curl -s localhost:10701/healthz
+```
+
+`--network host` is the simple case: Home Assistant, this container and the display are all on the
+same machine or the same LAN, and nothing needs a port map. On a bridge network, publish `10700`
+(Home Assistant connects in) and `10701` (browsers on the LAN connect in) instead.
+
+The `/data` volume matters. It holds the identity claimed with the pairing code, and a satellite
+that loses it has to be paired again from scratch.
+
+To point it at a three.ws you are running yourself, add `-e THREE_WS_API_BASE=http://host:port`.
+To keep it entirely off the internet after pairing, add `-e SATELLITE_HUB=off`.
+
 ## Point Home Assistant at it
 
 Home Assistant is the client here, not the server: its `wyoming` integration dials out to this
@@ -115,6 +142,89 @@ same way.
 | `WS /viewer` | viewer port | A browser attaching a face, microphone and speaker |
 | `WS /room` | hub | The hub side of the same join |
 | Wyoming | `10700` (TCP) | What Home Assistant's `wyoming` integration connects to |
+
+## Reproduce the end-to-end run
+
+Three scripts in `scripts/` stand up the whole thing against real software. None of them uses a
+fixture: Home Assistant runs its own speech recognition, its own intent handling and its own text
+to speech, and the house really changes.
+
+```bash
+docker network create wyoming
+docker run -d --name whisper --network wyoming rhasspy/wyoming-whisper:latest \
+  --model tiny-int8 --language en --uri tcp://0.0.0.0:10300 --data-dir /data --download-dir /data
+docker run -d --name piper --network wyoming -p 10200:10200 rhasspy/wyoming-piper:latest \
+  --voice en_US-lessac-low --uri tcp://0.0.0.0:10200 --data-dir /data --download-dir /data
+docker run -d --name openwakeword --network wyoming rhasspy/wyoming-openwakeword:latest \
+  --preload-model ok_nabu --uri tcp://0.0.0.0:10400
+docker run -d --name ha --network wyoming -p 8123:8123 \
+  --add-host=host.docker.internal:host-gateway ghcr.io/home-assistant/home-assistant:stable
+
+# Onboard Home Assistant and get a token (repo root).
+node scripts/provision-home-assistant.mjs --url http://localhost:8123 --rooms
+
+# Add the four Wyoming services, build an Assist pipeline, make it preferred.
+node scripts/provision-ha-pipeline.mjs --url http://localhost:8123 --token "$HOME_ASSISTANT_TOKEN" \
+  --stt whisper:10300 --tts piper:10200 --wake openwakeword:10400 \
+  --satellite host.docker.internal:10700
+
+# Speak a sentence into the pipeline through this satellite and print what came back.
+node scripts/pipeline-run.mjs \
+  --viewer ws://127.0.0.1:10701/viewer --token "$(node src/index.js token)" \
+  --piper 127.0.0.1:10200 --say "turn off the kitchen lights" \
+  --ha http://localhost:8123 --ha-token "$HOME_ASSISTANT_TOKEN" --watch light.kitchen_lights
+```
+
+`pipeline-run.mjs` plays the part of the browser: it connects to the viewer WebSocket exactly as
+`src/home/satellite.js` does, streams microphone audio the same way, and receives the same events
+and the same speech the avatar lip-syncs to. The "microphone audio" is real speech, synthesized by
+the same piper container Home Assistant uses for its answers.
+
+Add `--drop-viewer` and it closes the browser's socket the instant the utterance ends. The run
+still has to finish and the house still has to change, which is how the claim at the top of this
+file is checked rather than asserted.
+
+`capture-states.mjs` drives the three.ws page itself in Chromium, with a WAV played into
+`getUserMedia`, and screenshots every state the view can be in.
+
+## Versions, and what happens when they move
+
+| Piece | Verified against |
+|---|---|
+| Home Assistant | 2026.9.0 (`ghcr.io/home-assistant/home-assistant:stable`) |
+| `wyoming` protocol package | read from `rhasspy/wyoming` at 1.10.2; the tested Home Assistant ships 1.10.0 |
+| Speech to text | `rhasspy/wyoming-whisper`, `tiny-int8` |
+| Text to speech | `rhasspy/wyoming-piper`, `en_US-lessac-low` |
+| Wake word | `rhasspy/wyoming-openwakeword`, `ok_nabu` |
+
+`WYOMING_VERSION` in `src/protocol.js` travels in every header this service writes and is reported
+in the `info` handshake, exactly as the reference does, so a version mismatch is visible from the
+Home Assistant side instead of turning into a mystery.
+
+Two findings from that verification are worth knowing before you change anything here:
+
+- **Home Assistant opens more than one connection.** The config entry's info coordinator opens its
+  own short-lived socket every 30 seconds to re-read `describe`, alongside the satellite's
+  long-lived one. A satellite that assumes a single connection kills the live socket every time
+  that probe lands and reconnects forever without ever completing a pipeline.
+- **Home Assistant does not stream partial transcripts to a satellite.** It sends `transcribe`
+  when listening starts, `voice-started` and `voice-stopped` as it hears speech begin and end, and
+  one final `transcript`. `transcript-chunk` exists in the protocol but the integration never
+  writes it downstream, so the view streams the stages it does get rather than pretending to
+  stream words.
+
+## Licence and attribution
+
+The Wyoming protocol and its reference implementation are MIT licensed, by Michael Hansen and the
+Rhasspy project. This service **implements the protocol**; it does not vendor the reference
+satellite, which is a device runtime for a Raspberry Pi with a microphone attached and is the
+wrong shape for a client that lives in our own stack. The framing and the event set in
+`src/protocol.js` were written from that source, and where our reading differed from the wire, the
+wire won.
+
+- Protocol and reference client: <https://github.com/rhasspy/wyoming> (MIT)
+- Reference satellite runtime: <https://github.com/rhasspy/wyoming-satellite> (MIT)
+- Home Assistant's side of it: `homeassistant/components/wyoming` (Apache-2.0)
 
 ## Read next
 

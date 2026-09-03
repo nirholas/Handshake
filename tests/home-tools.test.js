@@ -334,11 +334,21 @@ live('against a real Home Assistant', () => {
 		expect(macros.ok).toBe(true);
 		if (!macros.structured.macros.length) return;
 
-		const activated = await asOwner('home_activate', { home_id: home.id, phrase: 'good night', dry_run: true });
-		expect(activated.ok).toBe(true);
-		expect(activated.structured.matched).toBe(true);
-		expect(activated.structured.ran).toBe(false);
-		expect(activated.structured.match.entity_id).toMatch(/^(scene|script)\./);
+		const dry = await asOwner('home_activate', { home_id: home.id, phrase: 'good night', dry_run: true });
+		expect(dry.ok).toBe(true);
+		expect(dry.structured.matched).toBe(true);
+		expect(dry.structured.ran).toBe(false);
+		expect(dry.structured.match.entity_id).toMatch(/^(scene|script)\./);
+
+		// And it really runs it. The scene the lane seeds locks the door, which is
+		// the safe direction, so this is one call with no prompt: "good night" must
+		// not stop to ask permission to lock up.
+		await setState(instance, 'lock', 'unlock', lockId);
+		await waitForState(instance, lockId, 'unlocked');
+		const ran = await asOwner('home_activate', { home_id: home.id, phrase: 'good night' });
+		expect(ran.ok).toBe(true);
+		expect(ran.structured.status).toBe('done');
+		expect(ran.structured.entity_ids).toEqual([dry.structured.match.entity_id]);
 	}, 60_000);
 
 	it('answers a phrase that matches nothing with a designed miss, not an error', async () => {

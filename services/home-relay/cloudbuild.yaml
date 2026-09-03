@@ -1,0 +1,102 @@
+# Cloud Build to Cloud Run for the home relay (services/home-relay).
+#
+# The relay terminates the outbound WebSocket that a three.ws integration inside
+# a LAN-only Home Assistant dials, and holds it open between platform requests.
+# That shapes three of the settings below, and none of them is incidental:
+#
+#   --no-cpu-throttling + --min-instances    a throttled or cold instance drops
+#                                            every connected house at once
+#   --allow-unauthenticated                  houses dial in from the public
+#                                            internet with their own bearer
+#                                            token; the service authenticates
+#                                            every connection itself
+#   --timeout=3600                           Cloud Run caps a request, and a
+#                                            WebSocket IS a request, so this is
+#                                            how long a house's socket may live
+#                                            before it must reconnect
+#
+# Build context is this directory only: the relay depends on nothing else in the
+# repo, which is the point of keeping the protocol pure.
+#
+# ── ONE-TIME SECRET SETUP (never commit these) ────────────────────────────────
+#   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))" \
+#     | tr -d '\n' | gcloud secrets create home-relay-signing-key --data-file=-
+#   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))" \
+#     | tr -d '\n' | gcloud secrets create home-relay-service-token --data-file=-
+#   for s in home-relay-signing-key home-relay-service-token; do \
+#     gcloud secrets add-iam-policy-binding "$s" \
+#       --member=serviceAccount:three-ws@$PROJECT_ID.iam.gserviceaccount.com \
+#       --role=roles/secretmanager.secretAccessor; done
+#   # The API needs the SAME two values, plus HOME_RELAY_URL:
+#   gcloud run services update three-ws-api --region us-central1 \
+#     --update-secrets=HOME_RELAY_SIGNING_KEY=home-relay-signing-key:latest,HOME_RELAY_SERVICE_TOKEN=home-relay-service-token:latest \
+#     --update-env-vars=HOME_RELAY_URL=wss://home-relay.three.ws
+#
+#   gcloud builds submit --config services/home-relay/cloudbuild.yaml \
+#     --region us-central1 --project aerial-vehicle-466722-p5 \
+#     --substitutions=SHORT_SHA=manual$(date +%s) services/home-relay
+
+# Builds run as the pinned three-ws-build service account: the project's default
+# compute service account was deleted, so an unpinned submit fails with
+# "Unknown service account".
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+
+substitutions:
+  _REGION: us-central1
+  _SERVICE: home-relay
+  _REPO: services
+  _MIN_INSTANCES: "1"
+  _MAX_INSTANCES: "4"
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --file
+      - Dockerfile
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest
+      - --cache-from
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest
+      - .
+    timeout: 600s
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - --all-tags
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
+      - --region=${_REGION}
+      - --platform=managed
+      - --no-cpu-throttling
+      - --cpu=1
+      - --memory=512Mi
+      - --concurrency=250
+      - --timeout=3600
+      - --min-instances=${_MIN_INSTANCES}
+      - --max-instances=${_MAX_INSTANCES}
+      - --allow-unauthenticated
+      - --service-account=three-ws@$PROJECT_ID.iam.gserviceaccount.com
+      - --set-env-vars=NODE_ENV=production
+      - --set-secrets=HOME_RELAY_SIGNING_KEY=home-relay-signing-key:latest,HOME_RELAY_SERVICE_TOKEN=home-relay-service-token:latest
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest
+
+options:
+  machineType: E2_HIGHCPU_8
+  logging: CLOUD_LOGGING_ONLY

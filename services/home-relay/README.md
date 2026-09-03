@@ -89,20 +89,105 @@ Rate limits live in the same manifest, per install, on both frame rate and actua
 in an integration must not be able to flood a house, and a compromised platform caller must not be
 able to hammer a lock.
 
+## The protocol, in one exchange
+
+```
+  house                        relay                        platform
+    |-- hello ------------------>|
+    |<----------------- hello.ok |
+    |                            |<---- (opens wss /v1/bridge?relay_id=)
+    |<------------ session.open  |
+    |-- session.ready ---------->|---- session.ready ----------->|
+    |<-------- ha {get_states} --|<---- ha {get_states} ---------|
+    |-- ha {result} ------------>|----- ha {result} ------------>|
+```
+
+Frames are JSON text objects carrying `{ v, t, ... }`. `v` is the protocol version and a mismatch
+is refused rather than coerced, which is what makes an old integration a named upgrade prompt
+instead of a confusing failure. `src/protocol.js` is pure: no sockets, no timers, no I/O, so the
+part that must never be wrong is testable exhaustively without a network.
+
+Note what never appears in that exchange: an `auth` frame. Authentication happens inside the
+house, before `session.ready`, so no Home Assistant credential ever crosses this process.
+
+## Public API
+
+```js
+import { createRelay } from './src/server.js';
+
+const relay = createRelay({ signingKey, serviceToken, log: (event, fields) => {} });
+await relay.listen(8080);
+relay.stats();          // { installs, sessions, revoked }
+await relay.close();    // closes every house's socket first, for a clean SIGTERM
+```
+
+```js
+import { mintInstallToken, newRelayId, verifyInstallToken } from './src/token.js';
+
+const relayId = newRelayId();                                     // hr_<24 url-safe chars>
+const token = mintInstallToken({ relayId, userId, homeId }, key); // hr1.<payload>.<hmac>
+verifyInstallToken(token, key);                                   // { ok, claims } | { ok:false, reason }
+```
+
+```js
+import { checkOutbound, checkInbound, allowlistManifest } from './src/protocol.js';
+
+checkOutbound({ type: 'call_service', domain: 'light', service: 'turn_on' });
+// { allowed: true }
+checkOutbound({ type: 'call_service', domain: 'shell_command', service: 'x' });
+// { allowed: false, code: 'not_allowed', reason: 'The "shell_command" domain administers...' }
+```
+
 ## Deploy
 
-It deploys to Cloud Run with `--no-cpu-throttling` and a minimum instance count, and that is not a
-performance preference. A house's dial-out socket has to survive between platform requests; a
-throttled container lets every one of them die and reconnect in a loop.
+```bash
+gcloud builds submit --config services/home-relay/cloudbuild.yaml \
+  --region us-central1 --project aerial-vehicle-466722-p5 \
+  --substitutions=SHORT_SHA=manual$(date +%s) services/home-relay
+```
+
+Three settings in [`cloudbuild.yaml`](cloudbuild.yaml) are load-bearing, and none of them is a
+performance preference:
+
+- `--no-cpu-throttling` with `--min-instances=1`. A house's dial-out socket has to survive between
+  platform requests; a throttled or scaled-to-zero container lets every one of them die and
+  reconnect in a loop.
+- `--allow-unauthenticated`. Houses dial in from the public internet carrying their own bearer
+  token, and this service authenticates every connection itself. IAM auth would make the feature
+  impossible, not safer.
+- `--timeout=3600`. Cloud Run caps a request and a WebSocket **is** a request, so this is how long
+  a house's socket may live before it must reconnect. The integration reconnects with backoff, so
+  the ceiling costs a few hundred milliseconds an hour per house and nothing else.
+
+`--session-affinity` is deliberately absent. A house holds one socket to one instance, and the
+platform is routed to whichever instance holds it by relay id, so affinity would buy nothing and
+pin load unevenly.
+
+To build the image locally:
 
 ```bash
 docker build -t home-relay services/home-relay
 ```
+
+## Tests
+
+```bash
+npx vitest run tests/home-relay-protocol.test.js   # the allowlist, exhaustively, no network
+npx vitest run tests/home-relay-transport.test.js  # this server, in process, over a real socket
+```
+
+The live proof against an actual Home Assistant on a network the caller cannot route to is
+[`scripts/home-relay-e2e.mjs`](../../scripts/home-relay-e2e.mjs); the two-network recipe is in
+[docs/home-relay.md](../../docs/home-relay.md).
 
 ## Read next
 
 - [`home-assistant-integration/`](../../home-assistant-integration): the other end of the socket,
   the part that installs in the house through HACS.
 - [`@three-ws/home-bridge`](../../packages/home-bridge): the client that speaks to this.
+- [docs/home-relay.md](../../docs/home-relay.md): installing the integration, configuring this
+  service, and the two-network setup that proves the path against an unroutable house.
+- [docs/home-relay-threat-model.md](../../docs/home-relay-threat-model.md): what an attacker gets
+  at every position around this socket, including a compromised relay.
 - [docs/smart-home.md](../../docs/smart-home.md): why the reachability problem exists and the
   three honest answers to it.

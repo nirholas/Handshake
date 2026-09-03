@@ -100,7 +100,12 @@ export class SatelliteLink extends EventTarget {
 		}
 		if (this._stopped) return;
 
+		// The API hands back an origin, which is http(s) because that is what the
+		// hub is deployed behind. A WebSocket needs the ws(s) scheme for the same
+		// origin, and `new WebSocket('http://…')` throws a SyntaxError rather than
+		// connecting, so normalize rather than trusting the caller.
 		const url = new URL(target.url);
+		url.protocol = url.protocol === 'https:' ? 'wss:' : url.protocol === 'http:' ? 'ws:' : url.protocol;
 		url.searchParams.set('token', target.token);
 		const socket = new WebSocket(url.toString());
 		socket.binaryType = 'arraybuffer';

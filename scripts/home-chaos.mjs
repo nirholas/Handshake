@@ -92,7 +92,7 @@ const resolveLoopbackDial = async (baseUrl) => {
 	return { host: url.hostname, addresses: [{ address: '127.0.0.1', family: 4 }], secure: false };
 };
 
-function fleetStore(houses, { overrideUrl } = {}) {
+function fleetStore(houses, { overrideUrl, overrideToken } = {}) {
 	const byId = new Map(houses.map((h) => [homeIdFor(h.index), h]));
 	const handshakes = [];
 	const store = {
@@ -105,7 +105,7 @@ function fleetStore(houses, { overrideUrl } = {}) {
 		getDecryptedToken: async (id) => {
 			const house = byId.get(id);
 			if (!house) return null;
-			return { token: house.token, baseUrl: overrideUrl?.(house) || house.baseUrl, transport: 'direct', relayId: null, fingerprint: `fp-${id}` };
+			return { token: overrideToken?.(house) || house.token, baseUrl: overrideUrl?.(house) || house.baseUrl, transport: 'direct', relayId: null, fingerprint: `fp-${id}` };
 		},
 		listAllowedEntities: async () => [],
 		recordHandshake: async (id, update) => {
@@ -364,14 +364,29 @@ async function scenarioFlap(fleet, { seconds = 120, periodMs = 5000 } = {}) {
 async function scenarioTokenRevoked(fleet) {
 	const house = fleet.houses.find((h) => !h.big && h.index === 3);
 	const homeId = homeIdFor(house.index);
-	const store = fleetStore(fleet.houses);
-	const runtime = createHomeRuntime({ ...store, maxConnections: 10, connectTimeoutMs: 8000 });
 	const transcript = [];
 
-	const held = await runtime.acquire(homeId, USER_ID);
-	transcript.push(`connected with a real long-lived access token; ${Object.keys(held.bridge.states).length} entities`);
+	// Mint a token FOR this scenario and revoke that one.
+	//
+	// The obvious version of this scenario revokes the house's own long-lived
+	// token, which works exactly once: every later run then finds a fleet whose
+	// credential it destroyed, and the scenario reports an auth failure it caused
+	// itself rather than the one it is testing. A disposable token is the same
+	// test from Home Assistant's point of view (same table, same deletion, same
+	// socket teardown) and leaves the fleet usable.
+	const clientName = `three.ws chaos scenario 3 ${Date.now()}`;
+	const disposable = await wsCommand(house, house.token, (send) =>
+		send({ type: 'auth/long_lived_access_token', client_name: clientName, lifespan: 1 }),
+	);
+	transcript.push(`minted a disposable long-lived token for this run (${clientName})`);
 
-	const removed = await revokeToken(house);
+	const store = fleetStore(fleet.houses, { overrideToken: (h) => (h.index === house.index ? disposable : h.token) });
+	const runtime = createHomeRuntime({ ...store, maxConnections: 10, connectTimeoutMs: 8000 });
+
+	const held = await runtime.acquire(homeId, USER_ID);
+	transcript.push(`connected with it; ${Object.keys(held.bridge.states).length} entities, ${held.bridge.graph.rooms.length} rooms`);
+
+	const removed = await revokeToken(house, clientName);
 	transcript.push(`revoked in Home Assistant: ${removed}`);
 	held.release();
 	runtime.closeAll();
@@ -387,6 +402,12 @@ async function scenarioTokenRevoked(fleet) {
 	const handshake = store.handshakes.filter((h) => h.status === HOME_STATUS.AUTH_FAILED).at(-1);
 	transcript.push(`store row: status=${handshake?.status} detail="${handshake?.statusDetail}"`);
 
+	// And the fleet's own credential is untouched, which is what makes this
+	// scenario runnable twice.
+	const fleetTokenStillWorks = await fetch(`${house.baseUrl}/api/config`, { headers: { authorization: `Bearer ${house.token}` } })
+		.then((r) => r.ok, () => false);
+	transcript.push(`the fleet credential for ${house.name} still works: ${fleetTokenStillWorks}`);
+
 	return {
 		scenario: 3,
 		title: 'the token is revoked while we are connected',
@@ -396,25 +417,28 @@ async function scenarioTokenRevoked(fleet) {
 		reacquireMessage: failure?.message ?? null,
 		recordedStatus: handshake?.status ?? null,
 		recordedDetail: handshake?.statusDetail ?? null,
-		passed: failure?.code === ERR.AUTH && handshake?.status === HOME_STATUS.AUTH_FAILED && /token/i.test(failure?.message || ''),
+		fleetTokenStillWorks,
+		passed: failure?.code === ERR.AUTH && handshake?.status === HOME_STATUS.AUTH_FAILED && /token/i.test(failure?.message || '') && fleetTokenStillWorks,
 		note: 'The failure is reported as an auth problem the user can fix by reconnecting, never as an unreachable house, and the connection row records the same thing so the connect screen can explain it without dialling the house again.',
 	};
 }
 
 /**
- * Delete every long-lived token this house has issued, through Home Assistant's
- * own WebSocket API. Its command names have moved between releases, so both
- * spellings are tried and the one that answers is reported.
+ * One authenticated WebSocket errand against a house.
+ *
+ * `home-assistant-js-websocket` is built to hold a connection open and reconnect
+ * forever, which is the wrong shape for sending two commands and leaving.
  */
-async function revokeToken(house) {
+async function wsCommand(house, token, work) {
 	const socket = new WebSocket(`${house.baseUrl.replace(/^http/, 'ws')}/api/websocket`);
 	const pending = new Map();
 	let id = 1;
 	await new Promise((resolve, reject) => {
 		socket.on('error', reject);
+		socket.on('close', () => reject(new Error('socket closed before auth completed')));
 		socket.on('message', (raw) => {
 			const msg = JSON.parse(raw.toString());
-			if (msg.type === 'auth_required') return socket.send(JSON.stringify({ type: 'auth', access_token: house.token }));
+			if (msg.type === 'auth_required') return socket.send(JSON.stringify({ type: 'auth', access_token: token }));
 			if (msg.type === 'auth_ok') return resolve();
 			if (msg.type === 'auth_invalid') return reject(new Error(msg.message));
 			const waiter = pending.get(msg.id);
@@ -430,33 +454,46 @@ async function revokeToken(house) {
 			pending.set(messageId, { resolve, reject });
 			socket.send(JSON.stringify({ ...payload, id: messageId }));
 		});
-
-	let tokens = [];
-	let listedWith = null;
-	for (const type of ['auth/refresh_tokens', 'auth/refresh_token/list']) {
-		try {
-			tokens = await send({ type });
-			listedWith = type;
-			break;
-		} catch {
-			// Try the other spelling before giving up.
-		}
+	try {
+		return await work(send);
+	} finally {
+		socket.close();
 	}
-	const longLived = (tokens || []).filter((t) => t.type === 'long_lived_access_token');
-	let deleted = 0;
-	for (const token of longLived) {
-		for (const type of ['auth/delete_refresh_token', 'auth/refresh_token/delete']) {
+}
+
+/**
+ * Delete the long-lived tokens this house issued under one client name, through
+ * Home Assistant's own WebSocket API. Its command names have moved between
+ * releases, so both spellings are tried and the one that answered is reported.
+ */
+async function revokeToken(house, clientName) {
+	return wsCommand(house, house.token, async (send) => {
+		let tokens = [];
+		let listedWith = null;
+		for (const type of ['auth/refresh_tokens', 'auth/refresh_token/list']) {
 			try {
-				await send({ type, refresh_token_id: token.id });
-				deleted++;
+				tokens = await send({ type });
+				listedWith = type;
 				break;
 			} catch {
-				// Same: the command name moved, the intent did not.
+				// Try the other spelling before giving up.
 			}
 		}
-	}
-	socket.close();
-	return `${deleted} of ${longLived.length} long-lived token(s) deleted (listed with ${listedWith})`;
+		const targets = (tokens || []).filter((t) => t.type === 'long_lived_access_token' && (!clientName || t.client_name === clientName));
+		let deleted = 0;
+		for (const token of targets) {
+			for (const type of ['auth/delete_refresh_token', 'auth/refresh_token/delete']) {
+				try {
+					await send({ type, refresh_token_id: token.id });
+					deleted++;
+					break;
+				} catch {
+					// Same: the command name moved, the intent did not.
+				}
+			}
+		}
+		return `${deleted} of ${targets.length} token(s) named "${clientName}" deleted (listed with ${listedWith})`;
+	});
 }
 
 // ---------------------------------------------------------------- scenario 4
@@ -612,11 +649,17 @@ async function scenarioDatabaseDown(fleet) {
 /** Ask the real store module for a row from a database that is not there. */
 async function realDeadDatabaseError() {
 	const previous = process.env.DATABASE_URL;
-	// Port 1 on the loopback: nothing listens, and nothing can be made to. Built
-	// from parts rather than written out, because a literal user:pass@host is
-	// indistinguishable from a real leaked DSN to scripts/check-secrets.mjs, and
-	// a scanner that cries wolf here is a scanner nobody reads.
-	process.env.DATABASE_URL = ['postgres://nobody', ':', 'nothing', '@127.0.0.1:1/threews_chaos'].join('');
+	// A hostname in the reserved `.invalid` TLD, which by RFC 6761 can never
+	// resolve. The Neon driver is HTTP based and rewrites the connection string
+	// into `https://<host>/sql`, so a loopback address here produces a URL PARSE
+	// error rather than a connection one, which is a different failure from the
+	// one this scenario is about. An unresolvable name gives the real shape: the
+	// driver builds a valid request and the fetch fails.
+	//
+	// Built from parts rather than written out, because a literal user:pass@host
+	// is indistinguishable from a real leaked DSN to scripts/check-secrets.mjs,
+	// and a scanner that cries wolf here is a scanner nobody reads.
+	process.env.DATABASE_URL = ['postgres://nobody', ':', 'nothing', '@db-that-cannot-exist.invalid:5432/threews_chaos'].join('');
 	try {
 		const { neon } = await import('@neondatabase/serverless');
 		const sql = neon(process.env.DATABASE_URL);

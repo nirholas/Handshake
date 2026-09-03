@@ -294,7 +294,7 @@ describe('guarded actions', () => {
 			fetchImpl: async () => jsonResponse({ configured: true }),
 		});
 		await loop._openConfirmation(
-			normalizePendingConfirmation({ confirmation_id: 'abc', sentence: 'This will unlock the Front Door.' }),
+			normalizePendingConfirmation({ confirmation: { id: 'abc', summary: 'This will unlock the Front Door.' } }),
 		);
 		expect(loop.pendingConfirmation).toBeNull();
 		const refusal = events.find((e) => e.type === 'guarded-refused');
@@ -305,8 +305,7 @@ describe('guarded actions', () => {
 		const events = [];
 		const loop = new HomeVoiceLoop({ onEvent: (e) => events.push(e), fetchImpl: async () => jsonResponse({}) });
 		loop.pendingConfirmation = normalizePendingConfirmation({
-			confirmation_id: 'abc',
-			sentence: 'This will unlock the Front Door.',
+			confirmation: { id: 'abc', summary: 'This will unlock the Front Door.' },
 		});
 		loop.say = vi.fn(async () => {});
 		await loop._handleSpokenConfirmation('yeah');
@@ -327,10 +326,8 @@ describe('guarded actions', () => {
 		});
 		loop._speak = vi.fn(async () => {});
 		loop.pendingConfirmation = normalizePendingConfirmation({
-			confirmation_id: 'conf-9',
-			home_id: 'home-1',
-			sentence: 'This will unlock the Front Door.',
-			entity_ids: ['lock.front_door'],
+			home: { id: 'home-1' },
+			confirmation: { id: 'conf-9', summary: 'This will unlock the Front Door.', entity_ids: ['lock.front_door'] },
 		});
 		await loop.confirmPending();
 
@@ -367,20 +364,28 @@ describe('untrusted entity names', () => {
 
 	it('normalizes a pending confirmation into a fixed, bounded shape', () => {
 		const pending = normalizePendingConfirmation({
-			confirmation_id: 'x',
-			sentence: 'y'.repeat(1000),
-			entity_ids: Array.from({ length: 100 }, (_, i) => `lock.door_${i}`),
-			expires_in_ms: '90000',
+			home: { id: 'home-1' },
+			confirmation: {
+				id: 'x',
+				summary: 'y'.repeat(1000),
+				entity_ids: Array.from({ length: 100 }, (_, i) => `lock.door_${i}`),
+				entities: Array.from({ length: 100 }, (_, i) => ({ entity_id: `lock.door_${i}`, name: 'n'.repeat(400) })),
+				expires_in_seconds: 90,
+			},
 		});
 		expect(pending.sentence.length).toBe(240);
 		expect(pending.entityIds.length).toBe(24);
+		expect(pending.entities.length).toBe(24);
+		expect(pending.entities[0].name.length).toBe(80);
 		expect(pending.expiresInMs).toBe(90000);
+		expect(pending.homeId).toBe('home-1');
 		expect(pending.risk).toBe('unknown');
 	});
 
 	it('defaults the sentence rather than rendering an empty confirmation', () => {
-		const pending = normalizePendingConfirmation({ confirmation_id: 'x' });
+		const pending = normalizePendingConfirmation({ confirmation: { id: 'x' } });
 		expect(pending.sentence).toMatch(/change something/i);
+		expect(pending.expiresInMs).toBe(90000);
 	});
 });
 
@@ -400,5 +405,134 @@ describe('permission recovery', () => {
 		expect(permissionRecovery('Mozilla/5.0 Chrome/120 Safari/537')).toMatch(/Chrome/);
 		expect(permissionRecovery('Mozilla/5.0 Version/17 Safari/605')).toMatch(/Safari/);
 		expect(permissionRecovery('some-unknown-agent')).toMatch(/browser settings/i);
+	});
+});
+
+describe('the agent turn over Server-Sent Events', () => {
+	beforeEach(() => installStorage());
+
+	// Frames in exactly the shape api/chat.js sends them.
+	function sseResponse(frames) {
+		const body = frames.map((f) => `data: ${JSON.stringify(f)}\n\n`).join('');
+		const bytes = new TextEncoder().encode(body);
+		return {
+			ok: true,
+			status: 200,
+			body: {
+				getReader() {
+					let sent = false;
+					return {
+						read: async () => (sent ? { done: true } : ((sent = true), { done: false, value: bytes })),
+					};
+				},
+			},
+		};
+	}
+
+	it('reads the reply out of the done frame', async () => {
+		const loop = new HomeVoiceLoop({
+			fetchImpl: async () =>
+				sseResponse([
+					{ type: 'chunk', text: 'The kitchen ' },
+					{ type: 'chunk', text: 'light is off.' },
+					{ type: 'done', reply: 'The kitchen light is off.', home: [] },
+				]),
+		});
+		const result = await loop._turn('turn the kitchen light off', new AbortController().signal);
+		expect(result.reply).toBe('The kitchen light is off.');
+		expect(result.pendingConfirmation).toBeNull();
+	});
+
+	it('picks the confirmation out of the home_tool frame, ahead of the closing sentence', async () => {
+		const loop = new HomeVoiceLoop({
+			fetchImpl: async () =>
+				sseResponse([
+					{
+						type: 'home_tool',
+						tool: 'home_call',
+						status: 'pending_confirmation',
+						home_id: 'home-1',
+						data: {
+							status: 'pending_confirmation',
+							home: { id: 'home-1', label: 'Home' },
+							confirmation: {
+								id: 'conf-1',
+								summary: 'This will unlock the Front Door.',
+								risk: 'opens the house',
+								entity_ids: ['lock.front_door'],
+								entities: [{ entity_id: 'lock.front_door', name: 'Front Door', state: 'locked' }],
+								expires_in_seconds: 90,
+							},
+						},
+					},
+					{ type: 'done', reply: 'I need you to approve that one.', home: [] },
+				]),
+		});
+		const result = await loop._turn('unlock the front door', new AbortController().signal);
+		expect(result.pendingConfirmation.confirmationId).toBe('conf-1');
+		expect(result.pendingConfirmation.homeId).toBe('home-1');
+		expect(result.pendingConfirmation.sentence).toBe('This will unlock the Front Door.');
+		expect(result.pendingConfirmation.entityIds).toEqual(['lock.front_door']);
+		expect(result.pendingConfirmation.entities[0].name).toBe('Front Door');
+	});
+
+	it('still finds the confirmation when only the done frame carries it', async () => {
+		const loop = new HomeVoiceLoop({
+			fetchImpl: async () =>
+				sseResponse([
+					{
+						type: 'done',
+						reply: 'That one needs your approval.',
+						home: [
+							{
+								tool: 'home_call',
+								status: 'pending_confirmation',
+								home_id: 'home-2',
+								data: { home: { id: 'home-2' }, confirmation: { id: 'conf-2', summary: 'This will open the Garage Door.' } },
+							},
+						],
+					},
+				]),
+		});
+		const result = await loop._turn('open the garage', new AbortController().signal);
+		expect(result.pendingConfirmation.confirmationId).toBe('conf-2');
+	});
+
+	it('sends the platform chat body, and no field a model could steer', async () => {
+		let sent = null;
+		const loop = new HomeVoiceLoop({
+			fetchImpl: async (url, init) => {
+				sent = { url, body: JSON.parse(init.body) };
+				return sseResponse([{ type: 'done', reply: 'ok', home: [] }]);
+			},
+		});
+		await loop._turn('hello', new AbortController().signal);
+		expect(sent.url).toBe('/api/chat');
+		expect(Object.keys(sent.body).sort()).toEqual(['history', 'message']);
+		expect(sent.body.message).toBe('hello');
+	});
+
+	it('carries the conversation forward so a follow-up means something', async () => {
+		const bodies = [];
+		const loop = new HomeVoiceLoop({
+			fetchImpl: async (url, init) => {
+				bodies.push(JSON.parse(init.body));
+				return sseResponse([{ type: 'done', reply: 'The kitchen light is off.', home: [] }]);
+			},
+		});
+		await loop._turn('turn the kitchen light off', new AbortController().signal);
+		await loop._turn('and the hallway', new AbortController().signal);
+		expect(bodies[0].history).toEqual([]);
+		expect(bodies[1].history).toEqual([
+			{ role: 'user', content: 'turn the kitchen light off' },
+			{ role: 'assistant', content: 'The kitchen light is off.' },
+		]);
+	});
+
+	it('raises a streamed error rather than answering with silence', async () => {
+		const loop = new HomeVoiceLoop({
+			fetchImpl: async () => sseResponse([{ type: 'error', code: 'stream_error', message: 'stream interrupted' }]),
+		});
+		await expect(loop._turn('hello', new AbortController().signal)).rejects.toThrow(/stream interrupted/);
 	});
 });

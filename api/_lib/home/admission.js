@@ -59,14 +59,42 @@ export const READ_SOURCE = Object.freeze({
  * and here together, or the document stops being true.
  */
 export const ADMISSION_DEFAULTS = Object.freeze({
-	/** Pooled live house connections per instance. */
+	/**
+	 * Pooled live house connections per instance.
+	 *
+	 * Memory bound, and the memory was measured: 665 KB of RSS per connection to
+	 * a 123 entity house, about 1.1 MB for a 624 entity one, so 600 connections
+	 * cost roughly 500 MB. That is 6% of the 8 GiB instance the service now runs
+	 * on. The runtime overrides this from HOME_MAX_CONNECTIONS, which is set to
+	 * the same 600 on three-ws-api.
+	 */
 	maxPooled: 600,
 	/** Short-lived connections opened past the pool cap, at any one moment. */
 	maxUnpooled: 60,
-	/** Concurrent SSE subscribers per instance. */
-	maxStreams: 900,
-	/** Actions in flight at any one moment. */
-	maxInflightActions: 120,
+	/**
+	 * Concurrent SSE subscribers per instance.
+	 *
+	 * NOT memory bound, and this is the trap. A held SSE stream is an in-flight
+	 * Cloud Run request for its entire life, so it occupies one of the
+	 * `containerConcurrency` slots (160 on three-ws-api) the whole time somebody
+	 * is watching their home. Measured against production: holding 200 streams
+	 * took observed per-instance concurrency from about 10 to about 100, in
+	 * proportion to the instances serving them. A cap sized from memory would be
+	 * in the hundreds and the platform would start refusing requests long before
+	 * the ladder ever shed one, which would make this whole module decoration.
+	 *
+	 * 96 is 60% of the container's request budget, leaving room for actions below
+	 * and for the rest of the platform, whose own baseline is 10 to 14.
+	 */
+	maxStreams: 96,
+	/**
+	 * Actions in flight at any one moment.
+	 *
+	 * Shares the same 160 request budget as the streams above. 24 is 15% of it,
+	 * so a fully saturated home lane occupies 120 of 160 slots and leaves 40 for
+	 * everything else the container serves.
+	 */
+	maxInflightActions: 24,
 	/**
 	 * The fraction of action capacity at which streams stop being admitted.
 	 *

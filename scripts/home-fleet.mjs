@@ -427,6 +427,28 @@ async function down() {
 	console.log(containers.length ? `\n${containers.length} container(s) removed` : 'nothing running');
 }
 
+/**
+ * Rebuild one house in place and re-record it in the manifest.
+ *
+ * A fleet is not immutable: a chaos run that revokes a credential, or a
+ * container that dies badly, leaves one house unusable while the other eleven
+ * are fine. Rebuilding the whole fleet to fix one of them costs minutes, so this
+ * replaces exactly the house named and leaves the rest alone.
+ */
+async function repair({ index, big }) {
+	const manifest = await readFleet();
+	const existing = manifest.houses.find((h) => h.index === index);
+	if (!existing) throw new Error(`no house ${index} in the manifest`);
+	console.log(`rebuilding house ${index} (${existing.name})`);
+
+	const rebuilt = await startHouse({ index, big: big ?? existing.big });
+	manifest.houses = manifest.houses.map((h) => (h.index === index ? rebuilt : h));
+	manifest.repairedAt = new Date().toISOString();
+	await writeFile(MANIFEST, `${JSON.stringify(manifest, null, 2)}\n`);
+	console.log(`  up  ${rebuilt.name}  ${rebuilt.baseUrl}  ${rebuilt.entityCount} entities  boot ${rebuilt.bootMs}ms`);
+	return rebuilt;
+}
+
 async function status() {
 	const containers = await listContainers();
 	if (!containers.length) {
@@ -466,11 +488,12 @@ if (isMain) {
 	const command = args._[0] || 'status';
 	const run = {
 		up: () => up({ homes: Number(args.homes || 10), big: Number(args.big || 0), slow: Boolean(args.slow) }),
+		repair: () => repair({ index: Number(args.index), big: args.big === undefined ? undefined : Boolean(args.big) }),
 		down,
 		status,
 	}[command];
 	if (!run) {
-		console.error(`unknown command "${command}". Use: up | down | status`);
+		console.error(`unknown command "${command}". Use: up | repair --index N | down | status`);
 		process.exit(2);
 	}
 	run().then(

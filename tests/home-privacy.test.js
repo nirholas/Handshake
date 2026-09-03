@@ -234,6 +234,31 @@ describe('home privacy: the disclosure copy', () => {
 		expect(disclosureById('home.voice')).toBe(VOICE_DISCLOSURE);
 	});
 
+	it('does not claim we store no names, because entity ids carry them', () => {
+		// The trap this closes: "we do not store the names of your rooms or
+		// devices" reads well and was false. An action log row holds entity ids,
+		// and a Home Assistant id is normally a slug of the name the thing was
+		// created with, so light.sarah_bedroom IS the name. The copy has to say
+		// which of the two it means, every time.
+		const text = CONNECT_DISCLOSURE.lines.join(' ');
+		expect(
+			/(?<!display )names of your rooms or devices/.test(text),
+			'The unqualified claim is back. Say "display names", and say that ids are stored.',
+		).toBe(false);
+		expect(text).toMatch(/display names/);
+		expect(text, 'must say ids are recorded, and show one').toMatch(/id[s]? for them|own ids?\b/);
+	});
+
+	it('every inventory promise about names distinguishes a name from an id', () => {
+		const names = INVENTORY.find((r) => r.key === 'entity_names');
+		const ids = INVENTORY.find((r) => r.key === 'entity_ids');
+		expect(names, 'the display-name promise must exist').toBeTruthy();
+		expect(ids, 'and the id row that makes it honest must exist beside it').toBeTruthy();
+		expect(names.data).toMatch(/display names/i);
+		expect(ids.table).toBe('home_action_log');
+		expect(ids.data, 'must admit an id can carry the name').toMatch(/slug|carry that name/i);
+	});
+
 	it('the connect copy says what the token can actually do', () => {
 		const text = CONNECT_DISCLOSURE.lines.join(' ').toLowerCase();
 		// "full control" is the sentence that does not change anybody's mind.
@@ -284,6 +309,28 @@ describe('home privacy: retention bounds', () => {
 			`check (action_log_retention_days between ${MIN_ACTION_LOG_RETENTION_DAYS} and ${MAX_ACTION_LOG_RETENTION_DAYS})`,
 		);
 		expect(migration).toContain(`default ${DEFAULT_ACTION_LOG_RETENTION_DAYS}`);
+	});
+
+	it('no home table can pin a departed user in place', () => {
+		// Deletion completeness has a structural precondition nobody thinks to
+		// check: a foreign key to users(id) with NO on-delete action makes the
+		// account row undeletable, and the error names a table the person has
+		// never heard of. Two of these shipped in this campaign
+		// (home_entity_grants.granted_by, home_layouts.updated_by), both invisible
+		// to a test that only deletes an owner's own data, because an owner's
+		// homes cascade in the same statement. Every future one fails here.
+		const offenders = [];
+		for (const { file, sql } of homeMigrations()) {
+			for (const m of sql.matchAll(/references\s+users\s*\(\s*id\s*\)([^,\n)]*)/gi)) {
+				if (!/on delete/i.test(m[1])) {
+					offenders.push(`${file}: "references users(id)${m[1].trim()}"`);
+				}
+			}
+		}
+		expect(
+			offenders,
+			`A home_* column references users(id) with no ON DELETE action, so an account that touched it can never be deleted. Choose CASCADE (the person's own row) or SET NULL (a record of an action that outlives the actor):\n  ${offenders.join('\n  ')}`,
+		).toEqual([]);
 	});
 
 	it('a grant cannot pin a departed user in place', () => {
@@ -547,5 +594,132 @@ describe.skipIf(!LIVE)('home privacy: deletion and purge against the real databa
 		const serialized = JSON.stringify(data);
 		expect(serialized, 'the export must never carry a credential column').not.toContain('access_token_enc');
 		expect(data.homes_you_own[0].token_fingerprint, 'the fingerprint proves which token without being usable').toBeTruthy();
+	});
+});
+
+// ── The privacy screen ───────────────────────────────────────────────────────
+// The pure parts of /smart-home/privacy: what a person is shown first, the
+// sentence a day count becomes, the gate on the destructive button, and the
+// receipt after a deletion. All four are wording or safety, which is exactly the
+// kind of thing that rots silently without a test.
+
+describe('home privacy: the screen', () => {
+	it('leads with the numbers somebody came to check, and hides the zero rows', async () => {
+		const { statRows } = await import('../src/home/privacy-copy.js');
+		const rows = statRows({
+			homes: [{ revoked_at: null }, { revoked_at: null }, { revoked_at: '2026-09-01' }],
+			counts: { home_action_log_actor: 38, home_entity_grants: 2, home_members: 3, home_satellites: 0, home_invites_sent: 0 },
+		});
+		const labels = rows.map(([label]) => label);
+		expect(labels).toEqual(['Homes connected', 'Actions logged', 'Standing permissions', 'People with access']);
+		// A revoked home is not a connected one.
+		expect(rows[0][1]).toBe(2);
+		expect(rows[1][1]).toBe(38);
+		// A row of zeroes teaches somebody to stop reading, so the optional ones
+		// only appear when they say something.
+		expect(labels).not.toContain('Voice satellites');
+		expect(labels).not.toContain('Invitations open');
+	});
+
+	it('shows the optional rows once they are real', async () => {
+		const { statRows } = await import('../src/home/privacy-copy.js');
+		const labels = statRows({ homes: [], counts: { home_satellites: 1, home_invites_sent: 2 } }).map(([l]) => l);
+		expect(labels).toContain('Voice satellites');
+		expect(labels).toContain('Invitations open');
+	});
+
+	it('says a window the way a person would say it', async () => {
+		const { describeWindow } = await import('../src/home/privacy-copy.js');
+		expect(describeWindow(1)).toBe('Kept for a day');
+		expect(describeWindow(3)).toBe('Kept for 3 days');
+		expect(describeWindow(7)).toBe('Kept for a week');
+		expect(describeWindow(30)).toBe('Kept for a month');
+		expect(describeWindow(90)).toBe('Kept for 90 days');
+		expect(describeWindow(365)).toBe('Kept for a year');
+		expect(describeWindow(3650)).toBe('Kept for ten years');
+		expect(describeWindow(undefined)).toBe('Unknown');
+	});
+
+	it('will not unlock "delete everything" on a yes', async () => {
+		const { phraseMatches } = await import('../src/home/privacy-copy.js');
+		// The whole point of a typed phrase is that the gesture is not the same as
+		// the gesture that opened the dialog. Anything short of the words fails.
+		for (const near of ['', ' ', 'delete', 'yes', 'y', 'everything', 'delete all', 'delete  everything', 'confirm']) {
+			expect(phraseMatches(near), `"${near}" must not unlock it`).toBe(false);
+		}
+		// A trailing space or a capital is a typo, not a change of mind.
+		for (const good of ['delete everything', 'Delete Everything', '  delete everything  ', 'DELETE EVERYTHING']) {
+			expect(phraseMatches(good), `"${good}" should unlock it`).toBe(true);
+		}
+	});
+
+	it('gives a receipt that says what actually went', async () => {
+		const { deletedSentence } = await import('../src/home/privacy-copy.js');
+		expect(deletedSentence({ home_connections: 1, home_action_log: 38, home_entity_grants: 2 })).toBe(
+			'1 home, 38 logged actions and 2 standing permissions deleted.',
+		);
+		expect(deletedSentence({ home_connections: 1 })).toBe('1 home deleted.');
+		expect(deletedSentence({ home_connections: 2, home_members: 1 })).toBe('2 homes and 1 household membership deleted.');
+		// Never a bare "done", and never a lie about rows that were not there.
+		expect(deletedSentence({})).toBe('There was nothing left to delete.');
+		expect(deletedSentence({ home_connections: 0, home_action_log: 0 })).toBe('There was nothing left to delete.');
+	});
+
+	it('renders both disclosures from the shared copy, unfolded', async () => {
+		// A jsdom-free check: the panel builds DOM, so it is exercised through a
+		// minimal document stub rather than pulling a whole environment in for one
+		// module. What matters is that it reads the shared strings and does not
+		// hide them behind a <details>.
+		const made = [];
+		const fakeEl = (tag, className, text) => {
+			const node = {
+				tag,
+				className,
+				text,
+				children: [],
+				attrs: {},
+				id: '',
+				href: '',
+				setAttribute(k, v) { this.attrs[k] = v; },
+				append(...kids) { this.children.push(...kids); },
+			};
+			made.push(node);
+			return node;
+		};
+		const { disclosurePanel } = await import('../src/home/disclosure-panel.js');
+		const { CONNECT_DISCLOSURE, VOICE_DISCLOSURE } = await import('../src/shared/home-disclosure.js');
+
+		for (const [id, copy] of [['home.connect', CONNECT_DISCLOSURE], ['home.voice', VOICE_DISCLOSURE]]) {
+			made.length = 0;
+			const panel = disclosurePanel(id, { el: fakeEl });
+			expect(panel.tag).toBe('section');
+			expect(made.some((n) => n.tag === 'details'), 'a disclosure must never be folded away').toBe(false);
+			const rendered = made.filter((n) => n.tag === 'li').map((n) => n.text);
+			expect(rendered).toEqual([...copy.lines]);
+			expect(made.find((n) => n.tag === 'h3').text).toBe(copy.heading);
+			expect(made.find((n) => n.tag === 'a').href).toBe(copy.learnMoreHref);
+		}
+	});
+
+	it('refuses to render a disclosure that does not exist', async () => {
+		const { disclosurePanel } = await import('../src/home/disclosure-panel.js');
+		expect(() => disclosurePanel('home.nope')).toThrow(/unknown disclosure/);
+	});
+});
+
+describe('home privacy: both surfaces render the shared copy', () => {
+	it('the connect screen and the voice page use the module, not their own words', () => {
+		const connect = readFileSync(join(process.cwd(), 'src/home/connect.js'), 'utf8');
+		expect(connect).toMatch(/disclosurePanel\('home\.connect'/);
+		const voice = readFileSync(join(process.cwd(), 'src/voice-home.js'), 'utf8');
+		expect(voice).toMatch(/disclosurePanel\('home\.voice'/);
+	});
+
+	it('neither surface retypes a promise the module already makes', () => {
+		// The exact failure this guards: somebody writes "we never store your
+		// audio" into a page's HTML, the module's wording later changes, and the
+		// page keeps making the old promise.
+		const voicePage = readFileSync(join(process.cwd(), 'pages/voice-home.html'), 'utf8');
+		expect(voicePage).toContain('id="voice-disclosure"');
 	});
 });

@@ -336,9 +336,15 @@ export class PcmDownsampler {
 			pos += this.ratio;
 		}
 
-		const consumed = Math.floor(pos);
-		this._phase = pos - consumed;
-		this._tail = src.slice(Math.min(consumed, src.length));
+		// Carry the read position exactly. `pos` can run past the end of what we
+		// have (the step is fractional and the last step overshoots), so the kept
+		// tail is clamped but the phase is measured against where the tail
+		// actually starts. Measuring it against the unclamped index instead
+		// silently discards a fraction of a sample per frame, which at 375 frames
+		// a second is a quarter of a second of audio lost per minute.
+		const keepFrom = Math.min(Math.floor(pos), src.length);
+		this._phase = pos - keepFrom;
+		this._tail = src.slice(keepFrom);
 		return Int16Array.from(out);
 	}
 

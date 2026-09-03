@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Your home data · See it, export it, delete it · three.ws</title>
+	<meta name="description" content="Everything three.ws stores about the homes you connected, with why it exists and how long it stays. Set how long your action log lives, download all of it as JSON, or delete one home or every trace of all of them. Room names, device states and voice audio are never stored." />
+	<link rel="canonical" href="https://three.ws/smart-home/privacy" />
+	<meta property="og:title" content="Your home data · three.ws" />
+	<meta property="og:description" content="Everything we store about your connected homes, and the controls to export or delete all of it. Room names, device states and voice audio are never stored." />
+	<meta property="og:url" content="https://three.ws/smart-home/privacy" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Your+home+data&amp;d=Everything+we+store+about+your+connected+homes%2C+and+the+controls+to+export+or+delete+all+of+it.&amp;p=%2Fsmart-home%2Fprivacy" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:site" content="@trythreews" />
+	<meta name="twitter:title" content="Your home data · three.ws" />
+	<meta name="twitter:description" content="Everything we store about your connected homes, and the controls to export or delete all of it." />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/fonts/fonts.css" />
+	<link rel="stylesheet" href="/src/home/home.css" />
+</head>
+<body>
+	<header><div id="nav-container"></div></header>
+	<main class="hm-wrap" id="main" tabindex="-1">
+		<nav class="hm-breadcrumb" aria-label="Breadcrumb">
+			<a href="/smart-home">Your homes</a>
+			<span aria-hidden="true">/</span>
+			<span aria-current="page">Your data</span>
+		</nav>
+
+		<!-- Filled by /src/home/privacy.js from GET /api/home/privacy. The
+		     inventory is rendered from the server's own list, never a copy here,
+		     so this page cannot claim we store something we do not or miss
+		     something we do. -->
+		<div id="hm-root"></div>
+
+		<noscript>
+			<section class="hm-panel">
+				<h2 class="hm-panel-title">JavaScript is required here</h2>
+				<p class="hm-panel-sub">
+					This page reads your own data from your account, so it needs JavaScript. Nothing about
+					what we store depends on it: the written version, with the full inventory and the API
+					you can call yourself, is always available.
+				</p>
+				<div class="hm-actions">
+					<a class="hm-btn hm-btn-primary" href="/docs/home-privacy">What we store, in full</a>
+					<a class="hm-btn hm-btn-ghost" href="/smart-home">Back to your homes</a>
+					<a class="hm-btn hm-btn-ghost" href="mailto:privacy@three.ws">Email us instead</a>
+				</div>
+			</section>
+		</noscript>
+	</main>
+
+	<script src="/nav.js"></script>
+	<script type="module" src="/src/home/privacy.js"></script>
+	<script type="module" src="/i18n.js"></script>
+</body>
+</html>

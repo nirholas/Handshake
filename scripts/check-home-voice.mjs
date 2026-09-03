@@ -39,6 +39,7 @@
 
 import { chromium } from 'playwright';
 import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { resolve, join } from 'node:path';
 
 const args = process.argv.slice(2);
@@ -87,6 +88,47 @@ async function signIn() {
 	}
 	SESSION_COOKIE = sid;
 	console.log('[auth] signed in as the QA account.');
+}
+
+/**
+ * A disk cache for the agent's own speech, used only where synthesis is
+ * scaffolding rather than the thing under test.
+ *
+ * The guarded-action scenarios make the agent read a confirmation sentence
+ * aloud, and re-synthesising the same fixed sentence on every run spends the
+ * account's hourly TTS budget on bytes that are identical each time. A cold
+ * cache calls the real lane; a warm one replays it. The barge-in and happy-path
+ * scenarios never use this, so the tts and firstAudio legs in the report are
+ * always measured against a live call.
+ */
+const TTS_CACHE = join(OUT, 'tts-cache');
+
+async function cachedSpeech(text) {
+	mkdirSync(TTS_CACHE, { recursive: true });
+	const key = createHash('sha256').update(text).digest('hex').slice(0, 32);
+	const file = join(TTS_CACHE, `${key}.wav`);
+	if (existsSync(file)) return readFileSync(file);
+	const res = await fetch(`${BASE}/api/tts/speak`, {
+		method: 'POST',
+		headers: { 'content-type': 'application/json', ...(SESSION_COOKIE ? { cookie: SESSION_COOKIE } : {}) },
+		body: JSON.stringify({ text, format: 'wav' }),
+	});
+	if (!res.ok) throw new Error(`tts ${res.status}: ${(await res.text()).slice(0, 160)}`);
+	const buf = Buffer.from(await res.arrayBuffer());
+	writeFileSync(file, buf);
+	return buf;
+}
+
+async function routeCachedSpeech(page) {
+	await page.route('**/api/tts/speak', async (route) => {
+		const { text } = JSON.parse(route.request().postData() || '{}');
+		try {
+			const body = await cachedSpeech(text || ' ');
+			await route.fulfill({ status: 200, contentType: 'audio/wav', body });
+		} catch (err) {
+			await route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: String(err) }) });
+		}
+	});
 }
 
 const results = [];
@@ -209,16 +251,42 @@ function wav16(samples, rate) {
 // ── browser plumbing ────────────────────────────────────────────────────────
 
 async function launch(audioPath, { loopAudio = true } = {}) {
+	// A machine under memory pressure from a neighbour's build kills a browser
+	// during startup, and it can die at any point between launch and the first
+	// page. That is never a finding about the page under test, so the whole
+	// startup is retried rather than only the first call in it.
+	let lastError = null;
+	for (let attempt = 0; attempt < 4; attempt++) {
+		let browser = null;
+		try {
+			return await startBrowser(audioPath, loopAudio);
+		} catch (err) {
+			lastError = err;
+			await browser?.close().catch(() => {});
+			await new Promise((r) => setTimeout(r, 4000 * (attempt + 1)));
+		}
+	}
+	throw lastError;
+}
+
+async function startBrowser(audioPath, loopAudio) {
 	const chromiumArgs = [
 		'--use-fake-device-for-media-stream',
 		'--use-fake-ui-for-media-stream',
 		'--autoplay-policy=no-user-gesture-required',
+		// Playwright already passes --disable-dev-shm-usage, which matters here: a
+		// container's 64 MB /dev/shm is smaller than the wasm speech runtime plus a
+		// decoded audio buffer. Nothing further is capped on purpose: a heap or
+		// renderer-process limit small enough to be a good neighbour is also small
+		// enough to kill the tab while onnxruntime is compiling, and a dead tab
+		// reads as a bug in the page.
 	];
 	// The fake capture file starts the moment getUserMedia opens, and the models
 	// take a few seconds to arrive on a cold cache. Looping means the utterance
 	// comes round again rather than the whole scenario hinging on a guess about
 	// how long the download took.
 	if (audioPath) chromiumArgs.push(`--use-file-for-fake-audio-capture=${audioPath}${loopAudio ? '' : '%noloop'}`);
+
 	const browser = await chromium.launch({ headless: !HEADED, args: chromiumArgs });
 	const context = await browser.newContext({
 		permissions: ['microphone'],
@@ -234,18 +302,17 @@ async function launch(audioPath, { loopAudio = true } = {}) {
 	const failedResponses = [];
 	// Noise from the harness and from the platform chrome, neither of which is the
 	// page under test: the dev server's HMR socket cannot reach a
-	// Codespace-forwarded origin, and the site nav requests /api/notifications
-	// optimistically on every page, which answers 401 for a signed-out visitor.
-	const isDevNoise = (text) => /\[vite\]|WebSocket|hmr|\/api\/notifications/i.test(text);
+	// Codespace-forwarded origin, its dependency cache is re-optimized whenever a
+	// concurrent agent edits this worktree, and the site nav requests
+	// /api/notifications optimistically on every page.
+	const isDevNoise = (text) => /\[vite\]|WebSocket|hmr|\/api\/notifications|Outdated Optimize Dep|\/node_modules\/\.vite\//i.test(text);
 	page.on('console', (m) => {
 		if (m.type() === 'error' && !isDevNoise(m.text())) {
 			consoleErrors.push(`${m.text()} @ ${m.location()?.url || 'unknown'}`);
 		}
 	});
 	page.on('response', (r) => {
-		if (r.status() >= 400 && !r.url().includes('/@vite/') && !r.url().includes('/api/notifications')) {
-			failedResponses.push(`${r.status()} ${r.url().replace(BASE, '')}`);
-		}
+		if (r.status() >= 400 && !isDevNoise(r.url())) failedResponses.push(`${r.status()} ${r.url().replace(BASE, '')}`);
 	});
 	page.on('pageerror', (e) => {
 		if (!isDevNoise(String(e))) consoleErrors.push(String(e));
@@ -316,6 +383,25 @@ const events = (page) => page.evaluate(() => window.__hv.events);
 const legs = (page) => page.evaluate(() => window.homeVoice.loop.latencySummary());
 
 // ── scenarios ───────────────────────────────────────────────────────────────
+
+/**
+ * Load the page once and throw the browser away.
+ *
+ * Other agents edit this worktree while a run is in flight, which makes Vite
+ * re-optimize its dependency cache and answer 504 to whatever was mid-flight.
+ * Absorbing that here means a real assertion never fails for it.
+ */
+async function warmUp() {
+	const { browser, page } = await launch(null);
+	try {
+		await page.goto(`${BASE}/voice/home`, { waitUntil: 'networkidle', timeout: 60000 }).catch(() => {});
+		await page.waitForTimeout(1500);
+		await page.reload({ waitUntil: 'networkidle', timeout: 60000 }).catch(() => {});
+		console.log('[warm] dev server primed.');
+	} finally {
+		await browser.close();
+	}
+}
 
 async function scenarioColdLoad() {
 	const { browser, page, requests, consoleErrors, failedResponses } = await launch(null);
@@ -458,26 +544,53 @@ async function scenarioSelfTrigger() {
 }
 
 /**
- * The pending_confirmation payload order 04 will mint server-side. Supplied here
- * so the client half can be proven now; see the note at the top of this file.
+ * The /api/chat stream a guarded request produces, frame for frame as
+ * api/chat.js sends it: a `home_tool` frame carrying the gate's
+ * pending_confirmation, then the model's closing sentence.
+ *
+ * Substituted here only because reaching the real one needs a connected Home
+ * Assistant and a home connection record, which belong to earlier orders in the
+ * campaign. The payload is the real contract (api/_lib/home/tools.js composes
+ * `structured.confirmation`), and the redemption these scenarios then perform is
+ * the real endpoint's real request.
  */
-const PENDING_CONFIRMATION = {
-	pending_confirmation: {
-		confirmation_id: 'check-home-voice-confirmation',
+const CONFIRMATION_ID = '3d5a0c58-7a8e-4d31-9a53-1f0e2c9b4a77';
+const GUARDED_STREAM = [
+	{
+		type: 'home_tool',
+		tool: 'home_call',
+		status: 'pending_confirmation',
 		home_id: 'check-home',
-		sentence: 'This will unlock the Front Door.',
-		entity_ids: ['lock.front_door'],
-		risk: 'opens the house',
-		expires_in_ms: 90000,
+		data: {
+			status: 'pending_confirmation',
+			home: { id: 'check-home', label: 'Check Home' },
+			confirmation: {
+				id: CONFIRMATION_ID,
+				summary: 'This will unlock the Front Door.',
+				risk: 'opens the house',
+				domain: 'lock',
+				service: 'unlock',
+				entity_ids: ['lock.front_door'],
+				entities: [{ entity_id: 'lock.front_door', domain: 'lock', name: 'Front Door', state: 'locked' }],
+				expires_in_seconds: 90,
+				confirm_url: '/api/home/check-home/confirm',
+			},
+		},
 	},
-};
+	{ type: 'done', reply: 'That one needs your approval.', home: [], actions: [] },
+]
+	.map((frame) => `data: ${JSON.stringify(frame)}\n\n`)
+	.join('');
 
 async function scenarioGuarded({ clip, expectRedeemed, label }) {
-	const { browser, page } = await launch(clip.path);
+	// One pass of the audio, not a loop: a repeated "yeah" would re-run the whole
+	// turn every few seconds and the point of the scenario is one utterance
+	// against one open confirmation.
+	const { browser, page } = await launch(clip.path, { loopAudio: false });
 	const redemptions = [];
 	try {
 		await page.route('**/api/chat', (route) =>
-			route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(PENDING_CONFIRMATION) }),
+			route.fulfill({ status: 200, contentType: 'text/event-stream', body: GUARDED_STREAM }),
 		);
 		await page.route('**/api/csrf-token', (route) =>
 			route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: { token: 'check' } }) }),
@@ -491,6 +604,7 @@ async function scenarioGuarded({ clip, expectRedeemed, label }) {
 			});
 		});
 
+		await routeCachedSpeech(page);
 		await bootPage(page, { query: '?home=check-home' });
 		await optIn(page);
 		await page.evaluate(() => window.homeVoice.loop.say('unlock the front door'));
@@ -500,9 +614,11 @@ async function scenarioGuarded({ clip, expectRedeemed, label }) {
 			spoken,
 		});
 		const shownEntities = await page.locator('.hv-confirm-entities li').allTextContents();
-		check(`${label}: the entity is on screen while the confirmation is open`, shownEntities.includes('lock.front_door'), {
-			shownEntities,
-		});
+		check(
+			`${label}: the entity is on screen, by name and by id, while the confirmation is open`,
+			shownEntities.some((t) => t.includes('Front Door') && t.includes('lock.front_door')),
+			{ shownEntities },
+		);
 		await page.locator('#voice-panel').screenshot({ path: join(OUT, `guarded-${expectRedeemed ? 'confirm' : 'yeah'}.png`) });
 
 		await waitForEvent(page, 'transcript', 90000);
@@ -519,6 +635,7 @@ async function scenarioGuarded({ clip, expectRedeemed, label }) {
 				redemptions[0] && Object.keys(redemptions[0]).join(',') === 'confirmation_id',
 				redemptions[0],
 			);
+			check(`${label}: and it is the id the server minted`, redemptions[0]?.confirmation_id === CONFIRMATION_ID);
 		} else {
 			check(`${label}: the ambient word is transcribed`, transcript.text.trim().length > 0, { text: transcript.text });
 			check(`${label}: nothing is unlocked`, redemptions.length === 0, { redemptions });
@@ -655,6 +772,7 @@ async function main() {
 	}
 	await signIn();
 	await ensureClips();
+	await warmUp();
 
 	const measured = {};
 	await scenarioColdLoad();

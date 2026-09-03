@@ -51,6 +51,20 @@
 		.vh-card p, .vh-card li { color: var(--ink-dim); line-height: 1.6; font-size: var(--text-ui); }
 		.vh-card p { margin: 0 0 var(--space-sm); max-width: 62ch; }
 		.vh-card ul { margin: 0; padding-left: 1.15em; display: flex; flex-direction: column; gap: var(--space-xs); }
+		/* The disclosure panel (src/home/disclosure-panel.js) is shared with the
+		   connect screen, so it arrives with that screen's hm- classes. Inside a
+		   vh-card it needs no border of its own: the card already is the frame.
+		   Everything else maps onto this page's tokens so the shared component
+		   reads as native here rather than as a graft. */
+		.vh-card .hm-disclosure { margin: 0; padding: 0; border-left: 0; }
+		.vh-card .hm-disclosure-title { margin: 0 0 var(--space-sm); font: 600 var(--text-lg)/1.25 var(--font-display); color: var(--ink-bright); }
+		.vh-card .hm-disclosure-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-sm); }
+		.vh-card .hm-disclosure-list li { color: var(--ink-dim); line-height: 1.6; font-size: var(--text-ui); max-width: 62ch; }
+		/* "The wake word is detected on this device" is the sentence somebody is
+		   actually deciding on. It does not get the dim ink. */
+		.vh-card .hm-disclosure-list li:first-child { color: var(--ink-bright); }
+		.vh-card .hm-disclosure-more { display: inline-block; margin-top: var(--space-sm); font-size: var(--text-sm); color: var(--ink-dim); text-underline-offset: 2px; }
+		.vh-card .hm-disclosure-more:hover { color: var(--ink-bright); }
 		.vh-pipe { font: var(--text-sm)/1.7 var(--font-mono); color: var(--ink-faint); white-space: pre; overflow-x: auto; margin: 0; }
 		.vh-budget { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
 		.vh-budget th, .vh-budget td { text-align: left; padding: var(--space-xs) var(--space-sm); border-bottom: 1px solid var(--stroke); }
@@ -87,8 +101,13 @@
 			<div id="voice-panel"></div>
 
 			<aside class="vh-aside">
+				<!-- The promise, in the words a person reads, rendered from the same
+				     module the connect screen and GET /api/home/privacy use. Filled by
+				     src/voice-home.js; the pipeline below it is the same fact stated
+				     for an engineer, and the two must never drift apart. -->
+				<section class="vh-card" id="voice-disclosure"></section>
 				<section class="vh-card">
-					<h2>What leaves this device</h2>
+					<h2>The same thing, as a pipeline</h2>
 					<p>
 						The wake word runs on openWakeWord and the endpointing on silero, both downloaded from three.ws
 						and executed in this tab. That audio is never uploaded. Only the sentence after the wake word is

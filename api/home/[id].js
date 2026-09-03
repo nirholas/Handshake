@@ -18,7 +18,7 @@
 import { requireCsrf } from '../_lib/csrf.js';
 import { filterGraphForScope, publicHome, resolveHomeAccess } from '../_lib/home/access.js';
 import { homeError, toHomeFailure } from '../_lib/home/errors.js';
-import { revokeConnection } from '../_lib/home/store.js';
+import { getConnection, revokeConnection } from '../_lib/home/store.js';
 import { revokeAtRelay } from '../_lib/home/relay.js';
 import { closeHome, snapshot } from '../_lib/home/runtime.js';
 import { cors, error, json, method, rateLimited, wrap } from '../_lib/http.js';
@@ -32,7 +32,21 @@ export default wrap(async (req, res) => {
 	// GET is a read; DELETE takes the house off the platform, which is the one
 	// thing an admin may not do.
 	const access = await resolveHomeAccess(req, res, homeId, req.method === 'DELETE' ? 'disconnect' : 'read');
-	if (!access.ok) return error(res, access.status, access.code, access.message);
+	if (!access.ok) {
+		// Disconnecting is idempotent, and a home that is ALREADY disconnected is
+		// the state the caller asked for. Reads keep answering 404 for a revoked
+		// home (it is off the platform), but answering the second click of a
+		// Disconnect button with a 404 teaches a person that the first one broke
+		// something. Ownership is still a WHERE clause: the lookup below is the
+		// same household-joined query, it simply does not filter out revoked rows.
+		if (req.method === 'DELETE' && access.status === 404) {
+			const alreadyGone = homeId ? await getConnection(homeId, access.caller?.userId, { includeRevoked: true }) : null;
+			if (alreadyGone?.revoked_at) {
+				return json(res, 200, { revoked: true, changed: false, home: publicHome(alreadyGone) });
+			}
+		}
+		return error(res, access.status, access.code, access.message);
+	}
 
 	if (req.method === 'GET') return handleRead(req, res, access);
 	return handleRevoke(req, res, access);

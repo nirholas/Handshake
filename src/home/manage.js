@@ -30,7 +30,7 @@ const STALE_AFTER_MS = 90_000;
  */
 const PLATFORM_STATUS_URL = '/api/status';
 
-export function renderManage({ homes, notice, onDisconnect, onReconnect , focused = false }) {
+export function renderManage({ homes, notice, onDisconnect, onReconnect, focused = false }) {
 	const frag = document.createDocumentFragment();
 	if (notice) frag.append(noticeEl(notice));
 
@@ -56,6 +56,14 @@ export function renderManage({ homes, notice, onDisconnect, onReconnect , focuse
 	const plan = el('a', 'hm-btn hm-btn-ghost', 'Plan and usage');
 	plan.href = '/smart-home/plan';
 	headActions.append(plan);
+
+	// The privacy centre, from the place a person is when they wonder what we are
+	// actually keeping. A data-deletion control nobody can find is a promise
+	// nobody can exercise, so it sits next to the homes it is about rather than
+	// three levels down a settings tree.
+	const privacy = el('a', 'hm-btn hm-btn-ghost', 'Your data');
+	privacy.href = '/smart-home/privacy';
+	headActions.append(privacy);
 
 	if (focused) {
 		// A deep link is often the first page someone lands on, so it has to offer
@@ -144,18 +152,20 @@ function homeCard(home, { onDisconnect, onReconnect, focused = false }) {
 	main.append(statusLine(home));
 
 	const actions = el('div', 'hm-card-actions');
-	// The live 3D house is the product, so it leads. "Open" beside it is the
-	// settings view for the same home: grants, the action log, disconnect.
-	const scene = el('a', 'hm-btn', 'Live 3D home');
-	scene.href = `/home/${encodeURIComponent(home.id)}`;
-	actions.append(scene);
+	// "Open" opens the house: the live 3D scene at /smart-home/<id>, which is the
+	// product. This card, with its grants and its action log, is that home's
+	// settings and sits one segment deeper.
+	const open = el('a', 'hm-btn', 'Open');
+	open.href = `/smart-home/${encodeURIComponent(home.id)}`;
+	open.setAttribute('aria-label', `Open ${home.label || hostOf(home.base_url)}`);
+	actions.append(open);
 
 	// Not rendered on the focused view, where it would link to the current page.
 	if (!focused) {
-		const open = el('a', 'hm-btn hm-btn-ghost', 'Open');
-		open.href = `/smart-home/${encodeURIComponent(home.id)}`;
-		open.setAttribute('aria-label', `Open ${home.label || hostOf(home.base_url)}`);
-		actions.append(open);
+		const settings = el('a', 'hm-btn hm-btn-ghost', 'Settings');
+		settings.href = `/smart-home/${encodeURIComponent(home.id)}/settings`;
+		settings.setAttribute('aria-label', `Settings for ${home.label || hostOf(home.base_url)}`);
+		actions.append(settings);
 	}
 
 	// A house whose stored token was rejected, or that has stopped answering, is
@@ -364,11 +374,19 @@ function grantRow(home, grant, rerender) {
 }
 
 /** Every write the platform made in this house, refusals included. */
+const LOG_PAGE = 25;
+
 function logPanel(home) {
+	const url = (before) => {
+		const q = new URLSearchParams({ limit: String(LOG_PAGE) });
+		if (before) q.set('before', before);
+		return `/api/home/${encodeURIComponent(home.id)}/log?${q}`;
+	};
+
 	return lazyPanel({
 		title: 'What happened in this house',
 		summary: 'Every action your agent took, and every one it refused.',
-		load: () => getJson(`/api/home/${encodeURIComponent(home.id)}/log?limit=25`),
+		load: () => getJson(url()),
 		render: (body) => {
 			const rows = Array.isArray(body?.actions) ? body.actions : [];
 			if (!rows.length) {
@@ -377,9 +395,46 @@ function logPanel(home) {
 					'Once your agent turns a light on or refuses to open a door, it lands here with who asked and what happened.',
 				);
 			}
+
+			const wrap = el('div');
 			const list = el('ul', 'hm-rows');
 			for (const row of rows) list.append(logRow(row));
-			return list;
+			wrap.append(list);
+
+			// The endpoint pages on a timestamp rather than an offset, because rows
+			// land while somebody is reading and an offset would silently skip one.
+			// Appending rather than replacing keeps the reader's scroll position and
+			// the history they have already read.
+			let cursor = body.next_before || null;
+			if (!cursor) return wrap;
+
+			const more = el('button', 'hm-btn hm-btn-ghost', 'Show older activity');
+			more.type = 'button';
+			more.addEventListener('click', async () => {
+				more.disabled = true;
+				more.textContent = 'Loading';
+				try {
+					const next = await getJson(url(cursor));
+					for (const row of next.actions || []) list.append(logRow(row));
+					cursor = next.next_before || null;
+					if (!cursor) {
+						more.replaceWith(el('p', 'hm-hint', 'That is the whole history we hold for this home.'));
+						return;
+					}
+					more.disabled = false;
+					more.textContent = 'Show older activity';
+				} catch (err) {
+					more.disabled = false;
+					more.textContent = 'Try again';
+					wrap.append(el('p', 'hm-row-meta', err?.message || 'That did not load.'));
+				}
+			});
+
+			const actions = el('div', 'hm-actions');
+			actions.style.marginTop = 'var(--space-sm)';
+			actions.append(more);
+			wrap.append(actions);
+			return wrap;
 		},
 	});
 }
@@ -412,12 +467,11 @@ function logRow(row) {
  * than throwing the whole page away.
  */
 function lazyPanel({ title, summary: summaryText, load, render }) {
-	const wrap = el('details', 'hm-panel');
+	const wrap = el('details', 'hm-panel hm-details');
 	wrap.style.marginTop = 'var(--space-sm)';
 	wrap.style.background = 'transparent';
 
 	const head = el('summary');
-	head.style.cursor = 'pointer';
 	head.append(el('span', '', title));
 	wrap.append(head);
 
@@ -616,16 +670,29 @@ function confirmDisconnect(card, home, onDisconnect) {
 	const no = el('button', 'hm-btn hm-btn-ghost', 'Keep it connected');
 	no.type = 'button';
 
-	no.addEventListener('click', () => {
+	const dismiss = () => {
 		box.remove();
+		document.removeEventListener('keydown', onKey);
 		card.querySelector('.hm-btn-danger')?.focus();
-	});
+	};
+	// Escape closes it, because this is a dialog and a destructive one: a keyboard
+	// user must be able to back out of it the way they back out of every other
+	// dialog, without hunting for the cancel button.
+	const onKey = (event) => {
+		if (event.key === 'Escape') {
+			event.stopPropagation();
+			dismiss();
+		}
+	};
+	document.addEventListener('keydown', onKey);
+	no.addEventListener('click', dismiss);
 	yes.addEventListener('click', async () => {
 		yes.disabled = true;
 		no.disabled = true;
 		yes.textContent = 'Disconnecting';
 		try {
 			await onDisconnect(home);
+			document.removeEventListener('keydown', onKey);
 		} catch (err) {
 			clear(content);
 			content.append(

@@ -1,0 +1,102 @@
+# Cloud Build → Cloud Run for the voice-satellite HUB (services/home-satellite,
+# role `hub`). The satellite itself is NOT deployed here: it runs on the user's
+# own network, beside their Home Assistant, from the same image.
+#
+# The hub is a long-lived WebSocket terminator. A house's dial-out socket has to
+# survive between platform requests, so it deploys with --no-cpu-throttling and
+# a minimum instance: a throttled container lets every satellite's socket die
+# and reconnect in a loop, and the reconnect storm is worse than the idle cost.
+#
+# It holds no database and no Home Assistant credential. The only thing that can
+# tell it "this socket may join room X" is the signature on the token the socket
+# presents, so it needs exactly one secret.
+#
+# ── SECRET SETUP (once) ──────────────────────────────────────────────────────
+#   openssl rand -base64 32 | tr -d '\n' \
+#     | gcloud secrets create home-satellite-hub-secret --data-file=-
+#   gcloud secrets add-iam-policy-binding home-satellite-hub-secret \
+#     --member=serviceAccount:three-ws@$PROJECT_ID.iam.gserviceaccount.com \
+#     --role=roles/secretmanager.secretAccessor
+#
+# The SAME value must reach the API service, which is what mints the tokens:
+#   gcloud run services update three-ws-api --region us-central1 \
+#     --update-secrets=HOME_SATELLITE_HUB_SECRET=home-satellite-hub-secret:latest
+#   gcloud run services update three-ws-api --region us-central1 \
+#     --update-env-vars=HOME_SATELLITE_HUB_URL=https://<this service's URL>
+#
+# Until HOME_SATELLITE_HUB_URL is set, /api/home/satellite returns hub_url: null
+# and satellites run local-network only. Nothing breaks; the face just cannot be
+# watched from three.ws.
+#
+#   gcloud builds submit --config services/home-satellite/cloudbuild.yaml . \
+#     --region us-central1 --project aerial-vehicle-466722-p5 \
+#     --substitutions=SHORT_SHA=manual$(date +%s)
+#
+# SHORT_SHA is only populated for trigger-driven builds; a manual submit must
+# pass it or the image tag comes out empty and the build fails at push.
+
+# Builds run as the pinned three-ws-build service account: the project's default
+# compute service account was deleted, so an unpinned submit fails with
+# "Unknown service account".
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+
+substitutions:
+  _REGION: us-central1
+  _SERVICE: home-satellite-hub
+  _REPO: services
+  _MIN_INSTANCES: "1"
+  _MAX_INSTANCES: "4"
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --file
+      - services/home-satellite/Dockerfile
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest
+      - --cache-from
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest
+      - services/home-satellite
+    timeout: 1200s
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - --all-tags
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
+      - --region=${_REGION}
+      - --platform=managed
+      - --command=node
+      - --args=src/index.js,hub
+      - --no-cpu-throttling
+      - --cpu=1
+      - --memory=512Mi
+      - --timeout=3600
+      - --min-instances=${_MIN_INSTANCES}
+      - --max-instances=${_MAX_INSTANCES}
+      - --allow-unauthenticated
+      - --service-account=three-ws@$PROJECT_ID.iam.gserviceaccount.com
+      - --set-env-vars=NODE_ENV=production
+      - --set-secrets=HOME_SATELLITE_HUB_SECRET=home-satellite-hub-secret:latest
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest
+
+options:
+  machineType: E2_HIGHCPU_8
+  logging: CLOUD_LOGGING_ONLY

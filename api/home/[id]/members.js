@@ -18,6 +18,7 @@ import { getConnection } from '../../_lib/home/store.js';
 import { getSessionUser } from '../../_lib/auth.js';
 import { requireCsrf } from '../../_lib/csrf.js';
 import { assertMemberCapacity, HomeQuotaError } from '../../_lib/home/entitlements.js';
+import { safeError } from '../../_lib/home/log-safe.js';
 import {
 	ASSIGNABLE_ROLES,
 	canAssignRole,
@@ -190,7 +191,7 @@ export default wrap(async (req, res) => {
 		} catch (err) {
 			// A dead mail provider must not cost somebody their invitation: the row
 			// is already written and the link in this response still works.
-			console.warn('[home-members] invite email failed', { home: homeId, error: err?.message });
+			console.warn('[home-members] invite email failed', { home: homeId, error: safeError(err) });
 		}
 
 		logAudit({ userId: user.id, action: 'household.invite', resourceId: homeId, meta: { email, role, scope: invite.scope, emailed }, req });

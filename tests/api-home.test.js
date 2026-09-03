@@ -115,6 +115,9 @@ const MUTATING = [
 	{ name: 'POST /api/home/:id/call', key: 'call', method: 'POST', body: { domain: 'light', service: 'turn_on', data: { entity_id: 'light.x' } } },
 	{ name: 'POST /api/home/:id/activate', key: 'activate', method: 'POST', body: { phrase: 'good night' } },
 	{ name: 'POST /api/home/:id/grants', key: 'grants', method: 'POST', body: { entityId: 'lock.office_door' } },
+	{ name: 'PUT /api/home/:id/layout', key: 'layout', method: 'PUT', body: { version: 0, layout: { rooms: { kitchen: { x: 0, z: 0 } } } } },
+	{ name: 'DELETE /api/home/:id/layout', key: 'layout', method: 'DELETE' },
+	{ name: 'POST /api/home/:id/assign', key: 'assign', method: 'POST', body: { entityId: 'light.kitchen_lights', areaId: 'kitchen' } },
 ];
 
 /** Every read route. */
@@ -123,6 +126,7 @@ const READS = [
 	{ name: 'GET /api/home/:id/macros', key: 'macros', method: 'GET' },
 	{ name: 'GET /api/home/:id/grants', key: 'grants', method: 'GET' },
 	{ name: 'GET /api/home/:id/log', key: 'log', method: 'GET' },
+	{ name: 'GET /api/home/:id/layout', key: 'layout', method: 'GET' },
 ];
 
 async function sweep() {
@@ -147,6 +151,8 @@ beforeAll(async () => {
 	handlers.grants = (await import('../api/home/[id]/grants.js')).default;
 	handlers.log = (await import('../api/home/[id]/log.js')).default;
 	handlers.stream = (await import('../api/home/[id]/stream.js')).default;
+	handlers.layout = (await import('../api/home/[id]/layout.js')).default;
+	handlers.assign = (await import('../api/home/[id]/assign.js')).default;
 
 	await sweep();
 

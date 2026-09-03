@@ -13,8 +13,14 @@
 //      the last block also wants a real Home Assistant:
 //
 //        DATABASE_URL=...            npx vitest run tests/home-store.test.js
-//        HOME_ASSISTANT_URL=http://localhost:8123 HOME_ASSISTANT_TOKEN=... \
+//
+//      The house comes from the lane's one harness, never from an instance you
+//      built by hand, so every live test in the lane is pointed at the same
+//      thing (scripts/home-test-instance.mjs):
+//
+//        eval "$(node scripts/home-test-instance.mjs --up --onboard --seed --env)"
 //        DATABASE_URL=... WALLET_ENCRYPTION_KEY=... npx vitest run tests/home-store.test.js
+//        node scripts/home-test-instance.mjs --down
 //
 //      The live tier writes throwaway users into whatever database it is given
 //      and deletes them again, the same posture as the package's live-home suite

@@ -43,6 +43,8 @@ const HA_TOKEN = arg('ha-token', process.env.HOME_ASSISTANT_TOKEN || '');
 const WATCH = arg('watch', '');
 const OUT = arg('out', '');
 const MODE = arg('mode', 'command');
+const DROP_VIEWER = args.includes('--drop-viewer');
+const HEALTH = arg('health', '');
 
 const log = (...a) => console.error('[run]', ...a);
 
@@ -166,6 +168,10 @@ const main = async () => {
 			}
 			socket.send(JSON.stringify({ t: 'mic-stop' }));
 			log('finished streaming');
+			if (DROP_VIEWER) {
+				socket.close(1000, 'closing the page mid-run on purpose');
+				log('viewer socket closed: nothing is watching from here on');
+			}
 		});
 		socket.on('message', (raw, isBinary) => {
 			if (isBinary) {
@@ -200,6 +206,27 @@ const main = async () => {
 		});
 		setTimeout(() => reject(new Error('no answer within 90s')), 90_000);
 	});
+
+	if (DROP_VIEWER) {
+		// Nothing is listening on the socket any more, so wait on the two things
+		// that prove the run completed without it: the satellite's own counter of
+		// text-to-speech chunks it consumed, and the house.
+		const deadline = Date.now() + 60_000;
+		let health = null;
+		while (Date.now() < deadline) {
+			await new Promise((r) => setTimeout(r, 1500));
+			health = HEALTH ? await fetch(HEALTH).then((r) => r.json()).catch(() => null) : null;
+			if (health?.counters?.ttsChunks > 0 && health?.state === 'idle') break;
+		}
+		const after = await haState(WATCH);
+		console.log(JSON.stringify({
+			said: PHRASE,
+			viewer: 'closed immediately after the utterance',
+			satellite: health ? { state: health.state, tts_chunks: health.counters.ttsChunks, viewers: health.viewers } : null,
+			watched: WATCH ? { entity: WATCH, before, after } : null,
+		}, null, '\t'));
+		process.exit(0);
+	}
 
 	await finished;
 	socket.close();

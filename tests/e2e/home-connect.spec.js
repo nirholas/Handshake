@@ -281,6 +281,51 @@ test.describe('/smart-home connect flow', () => {
 		await expect(page.locator('.hm-dot-auth_failed')).toBeVisible();
 	});
 
+	test('a deep link opens that one home, not the whole list again', async ({ page }) => {
+		// The route existed before the state did, which made "Open" on a card a
+		// link back to the page it was already on. A button that goes nowhere is
+		// the defect this asserts against.
+		const other = { ...HOME, id: '9c8b7a65-4321-4dcb-a987-0123456789ab', label: 'The office' };
+		await stub(page, { homes: [HOME, other] });
+		await page.goto(`/smart-home/${HOME.id}`);
+		await expect(state(page)).toHaveAttribute('data-state', 'one_home', { timeout: SLOW });
+
+		await expect(page.locator('.hm-card')).toHaveCount(1);
+		await expect(page.locator('.hm-panel-title').first()).toHaveText(HOME.label);
+		await expect(page.getByText('The office')).toHaveCount(0);
+		// And it offers the way back up, because a deep link is often the first
+		// page somebody lands on.
+		await expect(page.getByRole('link', { name: /all your homes/i })).toHaveAttribute('href', '/smart-home');
+		// No link to the page we are already on.
+		await expect(page.getByRole('link', { name: /^open/i })).toHaveCount(0);
+	});
+
+	test('a deep link to a home that is not yours reveals nothing', async ({ page }) => {
+		await stub(page, { homes: [HOME] });
+		await page.goto('/smart-home/11111111-2222-4333-8444-555555555555');
+		await expect(state(page)).toHaveAttribute('data-state', 'not_found', { timeout: SLOW });
+
+		await expect(page.getByText(/not on this account/i)).toBeVisible();
+		// Nothing that would confirm the id exists somewhere else.
+		await expect(page.getByText(/forbidden|belongs to user|exists/i)).toHaveCount(0);
+	});
+
+	test('a house whose token was rejected offers a prefilled reconnect', async ({ page }) => {
+		await stub(page, { homes: [{ ...HOME, status: 'auth_failed', status_detail: 'Home Assistant rejected the stored token.' }] });
+		await page.goto(PAGE);
+		await expect(state(page)).toHaveAttribute('data-state', 'connected', { timeout: SLOW });
+
+		// Stating a problem and offering only "disconnect" is a dead end.
+		await page.getByRole('button', { name: /reconnect with a new token/i }).click();
+		await expect(state(page)).toHaveAttribute('data-state', 'empty');
+
+		// The address it already knows is carried across; the token never is.
+		await expect(page.locator('#hm-url')).toHaveValue(HOME.base_url);
+		await expect(page.locator('#hm-label')).toHaveValue(HOME.label);
+		await expect(page.locator('#hm-token')).toHaveValue('');
+		await expect(page.locator('#hm-token')).toBeFocused();
+	});
+
 	test('the token field is a password field with a working reveal toggle', async ({ page }) => {
 		await stub(page);
 		await page.goto(PAGE);

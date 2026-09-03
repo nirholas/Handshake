@@ -26,6 +26,11 @@
  *     --url http://localhost:8123 --token <long-lived token> \
  *     --satellite host.docker.internal:10700 \
  *     --stt whisper:10300 --tts piper:10200 --wake openwakeword:10400
+ *
+ * Re-running it is safe: it removes the Wyoming entries it manages before it
+ * adds them, because Home Assistant's own config flow will happily create a
+ * second entry for a host and port it already has. --keep-existing turns that
+ * off if you are adding to an instance you did not set up.
  */
 
 import { WebSocket } from 'ws';
@@ -132,6 +137,18 @@ async function connectWs() {
 }
 
 const main = async () => {
+	// Home Assistant's Wyoming config flow does NOT dedupe by host and port: run
+	// this twice and you get two entries per service, two satellite devices, and
+	// two sockets fighting over one pipeline. Clear the domain first so the run
+	// is idempotent. Pass --keep-existing to add alongside whatever is there.
+	if (!args.includes('--keep-existing')) {
+		const entries = await rest('/api/config/config_entries/entry');
+		for (const entry of entries.filter((e) => e.domain === 'wyoming')) {
+			await rest(`/api/config/config_entries/entry/${entry.entry_id}`, { method: 'DELETE' });
+			log(`removed existing entry "${entry.title}"`);
+		}
+	}
+
 	for (const [role, hostPort] of Object.entries(SERVICES)) {
 		const result = await addWyoming(hostPort);
 		log(`${role} ${hostPort}: ${result.added ? `added as "${result.title}"` : `already configured (${result.reason})`}`);
@@ -152,6 +169,23 @@ const main = async () => {
 		log(`stt=${sttEntity} tts=${ttsEntity} wake=${wakeEntity} satellite=${satelliteEntity}`);
 		if (!sttEntity || !ttsEntity) throw new Error('speech to text or text to speech did not appear; check those two containers');
 
+		// Ask each engine what it actually supports rather than assuming a tag.
+		// Piper advertises `en_US` and Home Assistant refuses `en-us` outright, so
+		// a hardcoded language turns into a `tts-not-supported` error at the last
+		// stage of an otherwise working run.
+		const languageFor = async (type, engineId, want) => {
+			const result = await ws.call({ type, engine_id: engineId }).catch(() => null);
+			const supported = result?.provider?.supported_languages || [];
+			if (!supported.length) return want;
+			const exact = supported.find((l) => l.toLowerCase() === want.toLowerCase());
+			if (exact) return exact;
+			const prefix = supported.find((l) => l.toLowerCase().startsWith(want.split(/[-_]/)[0].toLowerCase()));
+			return prefix || supported[0];
+		};
+		const sttLanguage = await languageFor('stt/engine/get', sttEntity, 'en');
+		const ttsLanguage = await languageFor('tts/engine/get', ttsEntity, 'en_US');
+		log(`languages: stt=${sttLanguage} tts=${ttsLanguage}`);
+
 		const pipelines = await ws.call({ type: 'assist_pipeline/pipeline/list' });
 		const existing = (pipelines.pipelines || []).find((p) => p.name === PIPELINE_NAME);
 		const spec = {
@@ -160,9 +194,9 @@ const main = async () => {
 			conversation_engine: 'conversation.home_assistant',
 			conversation_language: 'en',
 			stt_engine: sttEntity,
-			stt_language: 'en',
+			stt_language: sttLanguage,
 			tts_engine: ttsEntity,
-			tts_language: 'en-us',
+			tts_language: ttsLanguage,
 			tts_voice: null,
 			wake_word_entity: wakeEntity,
 			wake_word_id: wakeEntity ? 'ok_nabu_v0.1' : null,

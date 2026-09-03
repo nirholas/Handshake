@@ -97,6 +97,23 @@ const BARGE_IN_FRAMES = 4;
 const MAX_UTTERANCE_SEC = 20;
 
 /**
+ * How long a finished utterance stays open for the rest of the sentence.
+ *
+ * People pause after a wake word ("Hey Jarvis... turn the kitchen light off")
+ * and in the middle of a thought, and those pauses are routinely longer than the
+ * end-of-speech window. Ending the capture on the first one truncates the
+ * command to the wake word, which is the single most common way a voice
+ * assistant feels broken.
+ *
+ * The window costs nothing on the fast path: transcription of what was heard so
+ * far starts the moment the VAD closes a segment, and only the result is held
+ * back until the window passes. If more speech does arrive, that transcription is
+ * discarded and the combined audio is transcribed instead, so a pause costs one
+ * spare call to a free lane and never costs the user their sentence.
+ */
+const CONTINUATION_MS = 450;
+
+/**
  * The spoken confirmation token, and the words that are NOT it.
  *
  * The rule, and the reason it is a narrow token: a background "yeah" in somebody
@@ -273,6 +290,12 @@ export class HomeVoiceLoop {
 		this.stateDetail = {};
 		/** Every leg measured this session, newest last. */
 		this.latency = [];
+		/**
+		 * The conversation, so a follow-up ("and the hallway too") means something.
+		 * Capped at HISTORY_TURNS: /api/chat accepts at most 20 messages, and a
+		 * voice turn is short enough that more context buys nothing.
+		 */
+		this.history = [];
 		/** ASR capability, read from /api/asr before anything claims to listen. */
 		this.asr = { probed: false, configured: false, languages: [] };
 		this.settings = this._readSettings();
@@ -287,6 +310,12 @@ export class HomeVoiceLoop {
 		this._turnAbort = null;
 		this._bargeFrames = 0;
 		this._captureUntil = 0;
+		/** Audio segments of the utterance in progress, joined when it closes. */
+		this._segments = [];
+		/** Bumped on every segment, so a superseded transcription can be dropped. */
+		this._utteranceSeq = 0;
+		this._continuationTimer = 0;
+		this._continuationResolve = null;
 		this._enabled = false;
 		this._muted = false;
 		this._destroyed = false;
@@ -472,6 +501,8 @@ export class HomeVoiceLoop {
 	async mute() {
 		if (!this._enabled || this._muted) return;
 		this._muted = true;
+		this._utteranceSeq++;
+		this._resetUtterance();
 		this._cancelPlayback('muted');
 		await this._vad?.pause();
 		for (const track of this._stream?.getAudioTracks() || []) {
@@ -504,6 +535,8 @@ export class HomeVoiceLoop {
 	async disable() {
 		this._enabled = false;
 		this._muted = false;
+		this._utteranceSeq++;
+		this._resetUtterance();
 		this._cancelPlayback('disabled');
 		this._clearConfirmation('disabled', { silent: true });
 		await this._teardownAudio();
@@ -561,6 +594,13 @@ export class HomeVoiceLoop {
 
 	_onSpeechStart() {
 		this._marks.speechStart = now();
+		// Speech inside the continuation window means the last segment was a pause.
+		// Cancelling the timer here is what keeps "Hey Jarvis... turn the kitchen
+		// light off" one command instead of two.
+		if (this._continuationTimer) {
+			this._cancelContinuation(false);
+			this.onEvent({ type: 'utterance-continued', segments: this._segments.length });
+		}
 		this.onEvent({ type: 'speech-start' });
 	}
 
@@ -581,6 +621,7 @@ export class HomeVoiceLoop {
 
 		if (this.state !== STATES.CAPTURING && this.state !== STATES.CONFIRM_PENDING) return;
 		if (this.state === STATES.CAPTURING && endedAt > this._captureUntil) {
+			this._resetUtterance();
 			this._setState(STATES.IDLE, {
 				wakeWord: this.settings.wakeWord,
 				note: 'That went on too long, so it was dropped.',
@@ -588,21 +629,36 @@ export class HomeVoiceLoop {
 			return;
 		}
 
+		this._segments.push(audio);
+		const seq = ++this._utteranceSeq;
 		const wasConfirming = this.state === STATES.CONFIRM_PENDING;
-		if (!wasConfirming) this._setState(STATES.THINKING, {});
 
-		let transcript = '';
-		try {
-			transcript = await this._transcribe(audio);
-		} catch (err) {
+		// Start transcribing now and decide later whether the sentence was over.
+		const pending = this._transcribe(joinSegments(this._segments)).then(
+			(text) => ({ ok: true, text }),
+			(err) => ({ ok: false, err }),
+		);
+
+		const closed = await this._waitForContinuationWindow();
+		// More speech arrived inside the window: this segment was a pause, not an
+		// ending, and a later speech-end owns the utterance now.
+		if (!closed || seq !== this._utteranceSeq) return;
+
+		if (!wasConfirming && this.state === STATES.CAPTURING) this._setState(STATES.THINKING, {});
+		const result = await pending;
+		if (seq !== this._utteranceSeq) return;
+		this._resetUtterance();
+
+		if (!result.ok) {
 			this._setState(STATES.ERROR, {
-				message: `Speech recognition failed: ${err?.message || 'unknown error'}. Say it again, or type it.`,
+				message: `Speech recognition failed: ${result.err?.message || 'unknown error'}. Say it again, or type it.`,
 				retryable: true,
 			});
 			this._recover();
 			return;
 		}
 
+		const transcript = result.text;
 		if (!transcript.trim()) {
 			this.onEvent({ type: 'empty-transcript' });
 			if (!wasConfirming) this._setState(STATES.IDLE, { wakeWord: this.settings.wakeWord });
@@ -614,7 +670,39 @@ export class HomeVoiceLoop {
 			await this._handleSpokenConfirmation(transcript);
 			return;
 		}
+		if (this.state === STATES.CAPTURING) this._setState(STATES.THINKING, {});
 		await this.say(transcript);
+	}
+
+	/**
+	 * Resolve true when the continuation window closes with no further speech, and
+	 * false the moment speech resumes inside it.
+	 */
+	_waitForContinuationWindow() {
+		this._cancelContinuation(false);
+		return new Promise((resolve) => {
+			this._continuationResolve = resolve;
+			this._continuationTimer = setTimeout(() => {
+				this._continuationTimer = 0;
+				this._continuationResolve = null;
+				resolve(true);
+			}, CONTINUATION_MS);
+		});
+	}
+
+	/** End any open continuation window, telling its waiter what happened. */
+	_cancelContinuation(closed) {
+		if (this._continuationTimer) clearTimeout(this._continuationTimer);
+		this._continuationTimer = 0;
+		const resolve = this._continuationResolve;
+		this._continuationResolve = null;
+		resolve?.(closed);
+	}
+
+	/** Drop whatever is half-captured. Called when an utterance closes or is abandoned. */
+	_resetUtterance() {
+		this._cancelContinuation(false);
+		this._segments = [];
 	}
 
 	/** Upload one utterance to the real ASR lane and time the round trip. */
@@ -672,10 +760,18 @@ export class HomeVoiceLoop {
 	/**
 	 * One turn against the platform's chat lane, scoped to this home.
 	 *
-	 * The home tools, the gate and the confirmation record all live server-side.
-	 * This client sends the transcript and the home id and reads back either an
-	 * answer or a pending_confirmation payload; it never decides whether an action
-	 * is guarded, and it has no way to set `confirmed`.
+	 * The home tools, the gate and the confirmation record all live server-side
+	 * (api/chat.js runs the home round between model passes, and the gate in
+	 * api/_lib/home/tools.js mints the confirmation). This client sends the
+	 * transcript and reads back either an answer or a `home_tool` frame carrying
+	 * `pending_confirmation`. It never decides whether an action is guarded, it
+	 * never sees the confirm endpoint's authority, and there is no field it could
+	 * send that would set `confirmed`.
+	 *
+	 * /api/chat streams Server-Sent Events. The `home_tool` frame arrives ahead of
+	 * the model's closing sentence on purpose, so a confirmation is on screen
+	 * while the agent is still composing the words that explain it; the turn is
+	 * timed to that frame rather than to the end of the stream.
 	 */
 	async _turn(text, signal) {
 		const res = await this.fetch('/api/chat', {
@@ -683,20 +779,68 @@ export class HomeVoiceLoop {
 			headers: { 'content-type': 'application/json' },
 			credentials: 'same-origin',
 			signal,
-			body: JSON.stringify({
-				messages: [{ role: 'user', content: text }],
-				home_id: this.homeId,
-				surface: 'home-voice',
-			}),
+			body: JSON.stringify({ message: text, history: this.history.slice(-HISTORY_TURNS) }),
 		});
-		if (!res.ok) {
+		if (!res.ok || !res.body) {
 			const detail = await res.text().catch(() => '');
 			throw new Error(`${res.status} ${detail.slice(0, 200)}`);
 		}
-		const body = await res.json().catch(() => ({}));
-		const reply = String(body.reply ?? body.content ?? body.text ?? '').trim();
-		const pending = body.pending_confirmation || body.pendingConfirmation || null;
-		return { reply, pendingConfirmation: pending ? normalizePendingConfirmation(pending) : null };
+
+		const startedAt = now();
+		const reader = res.body.getReader();
+		const decoder = new TextDecoder();
+		let buffer = '';
+		let streamed = '';
+		let reply = '';
+		let streamError = '';
+		let pending = null;
+		let firstToolCall = false;
+
+		for (;;) {
+			const { done, value } = await reader.read();
+			if (done) break;
+			buffer += decoder.decode(value, { stream: true });
+			let sep;
+			while ((sep = buffer.indexOf('\n\n')) !== -1) {
+				const frame = buffer.slice(0, sep);
+				buffer = buffer.slice(sep + 2);
+				const line = frame.split('\n').find((l) => l.startsWith('data:'));
+				if (!line) continue;
+				let event;
+				try {
+					event = JSON.parse(line.slice(5).trim());
+				} catch {
+					continue;
+				}
+				if (event.type === 'chunk' && typeof event.text === 'string') {
+					streamed += event.text;
+				} else if (event.type === 'home_tool') {
+					if (!firstToolCall) {
+						firstToolCall = true;
+						this._record('toolCall', now() - startedAt);
+					}
+					this.onEvent({ type: 'home-tool', tool: event.tool, status: event.status, homeId: event.home_id });
+					if (event.status === 'pending_confirmation' && event.data?.confirmation) {
+						pending = normalizePendingConfirmation(event.data);
+					}
+				} else if (event.type === 'done') {
+					reply = String(event.reply || streamed || '').trim();
+					if (!pending) {
+						const guarded = (event.home || []).find((h) => h.status === 'pending_confirmation');
+						if (guarded?.data?.confirmation) pending = normalizePendingConfirmation(guarded.data);
+					}
+				} else if (event.type === 'error') {
+					streamError = event.message || 'stream error';
+				}
+			}
+		}
+
+		const answer = (reply || streamed).trim();
+		if (!answer && !pending && streamError) throw new Error(streamError);
+		this.history.push({ role: 'user', content: text });
+		if (answer) this.history.push({ role: 'assistant', content: answer });
+		while (this.history.length > HISTORY_TURNS) this.history.shift();
+		return { reply: answer, pendingConfirmation: pending };
 	}
 
 	// -- guarded actions -----------------------------------------------------
@@ -1014,6 +1158,9 @@ const MIC_CONSTRAINTS = {
 	autoGainControl: true,
 };
 
+/** /api/chat accepts at most 20 history messages; stay well inside that. */
+const HISTORY_TURNS = 12;
+
 const UNAVAILABLE_REASON =
 	'Speech recognition is not available in this deployment, so the microphone stays off. ' +
 	'Type to the agent instead: everything voice can do, text can do.';
@@ -1023,14 +1170,21 @@ const UNAVAILABLE_REASON =
  * act on. Nothing here is trusted as instruction: `sentence` is spoken and shown,
  * never fed back into a model, and the entity ids are rendered as data.
  */
-export function normalizePendingConfirmation(raw) {
+export function normalizePendingConfirmation(structured) {
+	const c = structured?.confirmation ?? structured ?? {};
+	const seconds = Number(c.expires_in_seconds);
 	return {
-		confirmationId: String(raw.confirmation_id ?? raw.confirmationId ?? ''),
-		homeId: raw.home_id ?? raw.homeId ?? null,
-		sentence: capText(raw.sentence ?? raw.message ?? 'This will change something in your home.', 240),
-		entityIds: (raw.entity_ids ?? raw.entityIds ?? []).slice(0, 24).map((id) => capText(id, 128)),
-		risk: capText(raw.risk ?? 'unknown', 32),
-		expiresInMs: Number(raw.expires_in_ms ?? raw.expiresInMs ?? 90000),
+		confirmationId: String(c.id ?? c.confirmation_id ?? ''),
+		homeId: structured?.home?.id ?? c.home_id ?? null,
+		sentence: capText(c.summary ?? c.sentence ?? 'This will change something in your home.', 240),
+		entityIds: (c.entity_ids ?? []).slice(0, 24).map((id) => capText(id, 128)),
+		entities: (c.entities ?? []).slice(0, 24).map((e) => ({
+			entityId: capText(e.entity_id, 128),
+			name: capText(e.name, 80),
+			state: capText(e.state, 32),
+		})),
+		risk: capText(c.risk ?? 'unknown', 32),
+		expiresInMs: Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : 90000,
 	};
 }
 
@@ -1048,6 +1202,19 @@ export function capText(value, max) {
 // Built from codepoints rather than written as a literal so the source file
 // never itself contains the control characters it is stripping.
 const CONTROL_CHARS = new RegExp('[\\u0000-\\u001f\\u007f-\\u009f]', 'g');
+
+/** One Float32Array from several, in order. Cheap: an utterance is seconds long. */
+function joinSegments(segments) {
+	if (segments.length === 1) return segments[0];
+	const total = segments.reduce((n, s) => n + s.length, 0);
+	const out = new Float32Array(total);
+	let offset = 0;
+	for (const segment of segments) {
+		out.set(segment, offset);
+		offset += segment.length;
+	}
+	return out;
+}
 
 /**
  * A fresh CSRF token for the confirm endpoint, minted the way every other write

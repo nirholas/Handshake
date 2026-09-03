@@ -1,56 +1,256 @@
 {
-  "ranAt": "2026-09-03T03:51:37.310Z",
+  "ranAt": "2026-09-03T04:38:39.549Z",
   "fleetImage": "ghcr.io/home-assistant/home-assistant:stable",
   "houses": 12,
   "results": [
     {
       "scenario": 1,
-      "passed": false,
-      "error": "127.0.0.1 is a private address. A three.ws server on the public internet cannot route to it. Use your remote https URL, or connect the add-on so your house dials out to us instead.",
-      "stack": "HomeBridgeError: 127.0.0.1 is a private address. A three.ws server on the public internet cannot route to it. Use your remote https URL, or connect the add-on so your house dials out to us instead.\n    at resolveDialPin (file:///workspaces/three.ws/api/_lib/home/runtime.js:514:10)\n    at async file:///workspaces/three.ws/api/_lib/home/runtime.js:548:54\n    at async acquire (file:///workspaces/three.ws/api/_lib/home/runtime.js:192:4)\n    at async Object.subscribe (file:///workspaces/three.ws/api/_lib/home/runtime.js:275:15)\n    at async scenarioOfflineMidSession (file:///workspaces/three.ws/scripts/home-chaos.mjs:228:15)\n    at async main (file:///workspaces/three.ws/scripts/home-chaos.mjs:851:20)",
-      "durationMs": 3
+      "title": "a house goes offline mid-session",
+      "transcript": [
+        "connected: 7 rooms, stale=false",
+        "docker stop threews-ha-1",
+        "while down: stale=true status=unreachable rooms=7",
+        "docker start threews-ha-1",
+        "recovered: 7 rooms, stale=false, no re-subscribe"
+      ],
+      "roomsWhileUp": 7,
+      "roomsWhileDown": 7,
+      "statusWhileDown": "unreachable",
+      "roomsAfterRecovery": 7,
+      "subscriptionSurvived": true,
+      "passed": true,
+      "note": "The same subscription callback saw the whole sequence. The browser never reloaded and the graph never went empty: it went stale.",
+      "durationMs": 344879
     },
     {
       "scenario": 2,
-      "passed": false,
-      "error": "127.0.0.1 is a private address. A three.ws server on the public internet cannot route to it. Use your remote https URL, or connect the add-on so your house dials out to us instead.",
-      "stack": "HomeBridgeError: 127.0.0.1 is a private address. A three.ws server on the public internet cannot route to it. Use your remote https URL, or connect the add-on so your house dials out to us instead.\n    at resolveDialPin (file:///workspaces/three.ws/api/_lib/home/runtime.js:514:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///workspaces/three.ws/api/_lib/home/runtime.js:548:54\n    at async Object.acquire (file:///workspaces/three.ws/api/_lib/home/runtime.js:192:4)\n    at async scenarioFlap (file:///workspaces/three.ws/scripts/home-chaos.mjs:281:10)\n    at async main (file:///workspaces/three.ws/scripts/home-chaos.mjs:851:20)",
-      "durationMs": 10
+      "title": "a house flaps up, down, up",
+      "transcript": [
+        "connected through the flap gate; 26 file descriptors held",
+        "24 up-down-up cycles at 5000ms; 26 file descriptors held",
+        "pool still holds 1 connection(s) for 1 home",
+        "breaker opened on attempt 6; subsequent attempts fail in 1ms or less"
+      ],
+      "cycles": 24,
+      "fdBefore": 26,
+      "fdAfter": 26,
+      "fdLeaked": 0,
+      "poolEntriesAfterFlap": 1,
+      "breakerOpenedOnAttempt": 6,
+      "breakerFastFailMaxMs": 1,
+      "attempts": [
+        {
+          "attempt": 1,
+          "ms": 11,
+          "code": "unreachable"
+        },
+        {
+          "attempt": 2,
+          "ms": 2,
+          "code": "unreachable"
+        },
+        {
+          "attempt": 3,
+          "ms": 2,
+          "code": "unreachable"
+        },
+        {
+          "attempt": 4,
+          "ms": 3,
+          "code": "unreachable"
+        },
+        {
+          "attempt": 5,
+          "ms": 2,
+          "code": "unreachable"
+        },
+        {
+          "attempt": 6,
+          "ms": 0,
+          "code": "home_breaker_open"
+        },
+        {
+          "attempt": 7,
+          "ms": 1,
+          "code": "home_breaker_open"
+        },
+        {
+          "attempt": 8,
+          "ms": 0,
+          "code": "home_breaker_open"
+        }
+      ],
+      "warningsEmitted": 0,
+      "warningsPerCycle": 0,
+      "passed": true,
+      "note": "No socket leak across the flap, and the breaker turns a connect storm into one fast refusal per call. Warnings are counted, not sampled.",
+      "durationMs": 123244
     },
     {
       "scenario": 3,
-      "passed": false,
-      "error": "127.0.0.1 is a private address. A three.ws server on the public internet cannot route to it. Use your remote https URL, or connect the add-on so your house dials out to us instead.",
-      "stack": "HomeBridgeError: 127.0.0.1 is a private address. A three.ws server on the public internet cannot route to it. Use your remote https URL, or connect the add-on so your house dials out to us instead.\n    at resolveDialPin (file:///workspaces/three.ws/api/_lib/home/runtime.js:514:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///workspaces/three.ws/api/_lib/home/runtime.js:548:54\n    at async Object.acquire (file:///workspaces/three.ws/api/_lib/home/runtime.js:192:4)\n    at async scenarioTokenRevoked (file:///workspaces/three.ws/scripts/home-chaos.mjs:351:15)\n    at async main (file:///workspaces/three.ws/scripts/home-chaos.mjs:851:20)",
-      "durationMs": 1
+      "title": "the token is revoked while we are connected",
+      "transcript": [
+        "minted a disposable long-lived token for this run (three.ws chaos scenario 3 1788410157622)",
+        "connected with it; 123 entities, 7 rooms",
+        "revoked in Home Assistant: 1 of 1 token(s) named \"three.ws chaos scenario 3 1788410157622\" deleted (listed with auth/refresh_tokens)",
+        "re-acquire: auth \"Home Assistant rejected that access token. Create a new long-lived token in your profile and try again.\"",
+        "store row: status=auth_failed detail=\"Home Assistant rejected that access token. Create a new long-lived token in your profile and try again.\"",
+        "the fleet credential for threews-ha-3 still works: true"
+      ],
+      "revoked": "1 of 1 token(s) named \"three.ws chaos scenario 3 1788410157622\" deleted (listed with auth/refresh_tokens)",
+      "reacquireCode": "auth",
+      "reacquireMessage": "Home Assistant rejected that access token. Create a new long-lived token in your profile and try again.",
+      "recordedStatus": "auth_failed",
+      "recordedDetail": "Home Assistant rejected that access token. Create a new long-lived token in your profile and try again.",
+      "fleetTokenStillWorks": true,
+      "passed": true,
+      "note": "The failure is reported as an auth problem the user can fix by reconnecting, never as an unreachable house, and the connection row records the same thing so the connect screen can explain it without dialling the house again.",
+      "durationMs": 648
     },
     {
       "scenario": 4,
-      "passed": false,
-      "error": "timed out after 60000ms waiting for the child to report a live stream",
-      "stack": "Error: timed out after 60000ms waiting for the child to report a live stream\n    at until (file:///workspaces/three.ws/scripts/home-chaos.mjs:186:8)\n    at async scenarioInstanceRecycled (file:///workspaces/three.ws/scripts/home-chaos.mjs:459:2)\n    at async main (file:///workspaces/three.ws/scripts/home-chaos.mjs:851:20)",
-      "durationMs": 60450
+      "title": "our instance is recycled mid-stream",
+      "transcript": [
+        "established sockets to threews-ha-4 before: 0",
+        "while the child streamed: 2",
+        "child exited 0 and reported: CLOSED 1",
+        "established sockets after: 0",
+        "a fresh instance re-subscribed in 30.5ms"
+      ],
+      "socketsBefore": 0,
+      "socketsDuring": 2,
+      "socketsAfter": 0,
+      "childClosedConnections": true,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "resubscribeMs": 30.5,
+      "passed": true,
+      "note": "SIGTERM runs the runtime shutdown hook, which closes every held socket. The house sees a clean disconnect rather than a dead connection it has to time out, and the next instance is streaming again in well under a second.",
+      "durationMs": 38419
     },
     {
       "scenario": 5,
-      "passed": false,
-      "error": "127.0.0.1 is a private address. A three.ws server on the public internet cannot route to it. Use your remote https URL, or connect the add-on so your house dials out to us instead.",
-      "stack": "HomeBridgeError: 127.0.0.1 is a private address. A three.ws server on the public internet cannot route to it. Use your remote https URL, or connect the add-on so your house dials out to us instead.\n    at resolveDialPin (file:///workspaces/three.ws/api/_lib/home/runtime.js:514:10)\n    at async file:///workspaces/three.ws/api/_lib/home/runtime.js:548:54\n    at async Object.acquire (file:///workspaces/three.ws/api/_lib/home/runtime.js:192:4)\n    at async scenarioDatabaseDown (file:///workspaces/three.ws/scripts/home-chaos.mjs:542:15)\n    at async main (file:///workspaces/three.ws/scripts/home-chaos.mjs:851:20)",
-      "durationMs": 27
+      "title": "the database is unavailable",
+      "transcript": [
+        "real store against a dead host: NeonDbError: Error connecting to database: fetch failed",
+        "connected with the database up: 7 rooms, readPlan=database",
+        "a cold acquire with the database down: Error connecting to database: fetch failed",
+        "readPlan is now source=graph rung=degraded_read",
+        "with the database down: 7 rooms still readable, write to light.bed_light went through",
+        "writePolicy: {\"attempt\":true,\"persistAudit\":false}",
+        "after the database answers again: readPlan=database"
+      ],
+      "realDriverError": "NeonDbError: Error connecting to database: fetch failed",
+      "roomsWhileHealthy": 7,
+      "roomsWhileDown": 7,
+      "readSourceWhileDown": "graph",
+      "writeAttemptedWhileDown": true,
+      "writeSucceededWhileDown": true,
+      "auditPersistedWhileDown": true,
+      "coldAcquireMessage": "Error connecting to database: fetch failed",
+      "stillServing": true,
+      "readSourceAfterRecovery": "database",
+      "passed": true,
+      "note": "Reads degrade to the graph this process already holds, a write is still attempted because a write is somebody pressing a button, and only the audit row waits. A cold acquire fails with a designed error rather than hanging, and the flag clears itself on the first query that answers.",
+      "durationMs": 122
     },
     {
       "scenario": 6,
-      "passed": false,
-      "error": "127.0.0.1 is a private address. A three.ws server on the public internet cannot route to it. Use your remote https URL, or connect the add-on so your house dials out to us instead.",
-      "stack": "HomeBridgeError: 127.0.0.1 is a private address. A three.ws server on the public internet cannot route to it. Use your remote https URL, or connect the add-on so your house dials out to us instead.\n    at resolveDialPin (file:///workspaces/three.ws/api/_lib/home/runtime.js:514:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///workspaces/three.ws/api/_lib/home/runtime.js:548:54\n    at async Object.acquire (file:///workspaces/three.ws/api/_lib/home/runtime.js:192:4)\n    at async scenarioSlowHouse (file:///workspaces/three.ws/scripts/home-chaos.mjs:629:20)\n    at async main (file:///workspaces/three.ws/scripts/home-chaos.mjs:851:20)",
-      "durationMs": 20
+      "title": "a slow house, beside a fast one",
+      "transcript": [
+        "a 2000ms delay on every response from threews-ha-7, injected at the socket",
+        "fast house alone: p50 1.97ms, p95 6.8ms over 30 calls",
+        "slow house at the default 15s connect timeout: connected after 14058ms",
+        "slow house connected in 14092ms with a 120s timeout",
+        "slow house under load: p50 2005.16ms, p95 2021.04ms",
+        "fast house beside it: p50 2.39ms, p95 6.99ms"
+      ],
+      "delayMs": 2000,
+      "defaultTimeoutOutcome": "connected",
+      "defaultTimeoutMs": 14058,
+      "slowConnectMsWithLongTimeout": 14092,
+      "fastHouseAlone": {
+        "n": 30,
+        "p50": 1.97,
+        "p95": 6.8,
+        "max": 9.06
+      },
+      "fastHouseBesideSlow": {
+        "n": 30,
+        "p50": 2.39,
+        "p95": 6.99,
+        "max": 7.57
+      },
+      "slowHouseUnderLoad": {
+        "n": 15,
+        "p50": 2005.16,
+        "p95": 2021.04,
+        "max": 2021.04
+      },
+      "fastP95Alone": 6.8,
+      "fastP95Beside": 6.99,
+      "fastP95DriftMs": 0.1900000000000004,
+      "passed": true,
+      "note": "Each home has its own socket and its own event loop work; nothing is shared between them but the process. The default 15s connect timeout is what bounds a house this slow in production, and the long timeout here exists only so isolation could be measured with the slow house actually connected.",
+      "durationMs": 58383
     },
     {
       "scenario": 7,
-      "passed": false,
-      "error": "127.0.0.1 is a private address. A three.ws server on the public internet cannot route to it. Use your remote https URL, or connect the add-on so your house dials out to us instead.",
-      "stack": "HomeBridgeError: 127.0.0.1 is a private address. A three.ws server on the public internet cannot route to it. Use your remote https URL, or connect the add-on so your house dials out to us instead.\n    at resolveDialPin (file:///workspaces/three.ws/api/_lib/home/runtime.js:514:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///workspaces/three.ws/api/_lib/home/runtime.js:548:54\n    at async Object.acquire (file:///workspaces/three.ws/api/_lib/home/runtime.js:192:4)\n    at async scenarioLargeHouseUpdateRate (file:///workspaces/three.ws/scripts/home-chaos.mjs:713:15)\n    at async main (file:///workspaces/three.ws/scripts/home-chaos.mjs:851:20)",
-      "durationMs": 1
+      "title": "a 500 entity house at ten updates a second",
+      "transcript": [
+        "624 entities, 7 rooms",
+        "600 real state changes in 62.1s (9.7/s), 0 failed",
+        "61 graph rebuilds: 9.8 updates coalesced into each",
+        "graph rebuild p95 0.5ms against a 16.7ms frame budget",
+        "heap 17.8MB -> 17.6MB"
+      ],
+      "entityCount": 624,
+      "roomCount": 7,
+      "targetRatePerSecond": 10,
+      "achievedRatePerSecond": 9.66,
+      "updates": 600,
+      "failures": 0,
+      "seconds": 62.1,
+      "graphRebuilds": 61,
+      "coalescingRatio": 9.84,
+      "rebuildIntervalMs": {
+        "n": 61,
+        "p50": 1001.04,
+        "p95": 1013.8,
+        "max": 1035.37
+      },
+      "graphBuildMs": {
+        "n": 40,
+        "p50": 0.294,
+        "p95": 0.5,
+        "max": 0.69
+      },
+      "frameBudgetMs": 16.7,
+      "frameBudgetHeld": true,
+      "heapStart": 17798864,
+      "heapEnd": 17584936,
+      "heapGrowthBytes": -213928,
+      "heapSamples": [
+        18249976,
+        18802216,
+        18458256,
+        18144824,
+        19585296,
+        18310048,
+        19607616,
+        19040784,
+        18662032,
+        18387056,
+        19770880,
+        19649944
+      ],
+      "cpuMs": 393.5,
+      "cpuPercentOfOneCore": 0.6,
+      "passed": true,
+      "note": "The frame budget measured here is the data half: how long it takes to rebuild the room graph the 3D scene renders. Coalescing is what keeps that off the critical path, and the ratio above is it working.",
+      "durationMs": 64352
     }
   ]
 }

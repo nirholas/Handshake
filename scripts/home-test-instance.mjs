@@ -10,6 +10,7 @@
  * hide as "works on my machine".
  *
  *   node scripts/home-test-instance.mjs --up --onboard --seed --json
+ *   eval "$(node scripts/home-test-instance.mjs --up --onboard --seed --env)"
  *   node scripts/home-test-instance.mjs --down
  *
  * Flags combine in that order, so one command takes you from nothing to a
@@ -54,10 +55,19 @@ async function main() {
 	}
 
 	const instance = describeInstance(opts.name, opts.version);
-	log = opts.json ? () => {} : (...args) => console.error(...args);
+	log = opts.json || opts.env ? () => {} : (...args) => console.error(...args);
 	emit = (payload) => {
 		if (opts.json) console.log(JSON.stringify({ ok: true, ...payload }, null, '\t'));
-		else if (payload.baseUrl) {
+		// --env exists so the documented one-liner is literally true:
+		//   eval "$(node scripts/home-test-instance.mjs --up --onboard --seed --env)"
+		// The bare form already printed the two variables, but without `export`
+		// they land in the eval's own shell and vanish, which is the kind of
+		// almost-working instruction that sends someone back to building a house
+		// by hand. Progress goes to stderr either way, so stdout stays evaluable.
+		else if (opts.env) {
+			if (payload.baseUrl) console.log(`export HOME_ASSISTANT_URL=${shellQuote(payload.baseUrl)}`);
+			if (payload.token) console.log(`export HOME_ASSISTANT_TOKEN=${shellQuote(payload.token)}`);
+		} else if (payload.baseUrl) {
 			console.log(`HOME_ASSISTANT_URL=${payload.baseUrl}`);
 			if (payload.token) console.log(`HOME_ASSISTANT_TOKEN=${payload.token}`);
 		}
@@ -102,6 +112,9 @@ async function main() {
 		});
 	} catch (err) {
 		if (opts.json) console.log(JSON.stringify({ ok: false, error: err.message }, null, '\t'));
+		// Under --env, stdout is being eval'd. A failure must leave it empty
+		// rather than feeding a shell half a sentence.
+
 		console.error(`home-test-instance: ${err.message}`);
 		process.exitCode = 1;
 	}
@@ -825,7 +838,7 @@ function writeState(inst, state) {
 }
 
 function parseArgs(args) {
-	const out = { name: 'default', version: 'stable', json: false };
+	const out = { name: 'default', version: 'stable', json: false, env: false };
 	for (let i = 0; i < args.length; i += 1) {
 		const arg = args[i];
 		if (arg === '--up') out.up = true;
@@ -833,12 +846,18 @@ function parseArgs(args) {
 		else if (arg === '--seed') out.seed = true;
 		else if (arg === '--down') out.down = true;
 		else if (arg === '--json') out.json = true;
+		else if (arg === '--env') out.env = true;
 		else if (arg === '--help' || arg === '-h') out.help = true;
 		else if (arg === '--name') out.name = args[++i];
 		else if (arg === '--version') out.version = args[++i];
 		else throw new Error(`unknown argument "${arg}"`);
 	}
 	return out;
+}
+
+/** Single-quote for a POSIX shell, so an eval'd value cannot become a command. */
+function shellQuote(value) {
+	return `'${String(value).replace(/'/g, `'\\''`)}'`;
 }
 
 function usage() {
@@ -851,6 +870,7 @@ function usage() {
   --name <slug>       run more than one instance side by side (default: default)
   --version <tag>     Home Assistant image tag (default: stable)
   --json              machine-readable output for a test to consume
+  --env               'export VAR=...' lines, for eval in a shell
 
 Everything is idempotent. The usual call is:
   node scripts/home-test-instance.mjs --up --onboard --seed --json`);

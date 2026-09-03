@@ -331,7 +331,10 @@ async function homeStatus(args, run) {
 	// The narrative line carries counts and entity IDS only. Friendly names stay
 	// in `structured`, where a model reads them as data, because a name is
 	// attacker-controlled text and this sentence is the one place it would be
-	// read as prose.
+	// read as prose. An entity id is safe to say out loud here: Home Assistant
+	// slugifies it to `domain.object_id` over lowercase letters, digits and
+	// underscores, so it cannot carry punctuation, and the ids are what makes the
+	// answer actionable rather than a number the model cannot do anything with.
 	const secure = structured.summary.secure;
 	const text = [
 		args.room && !rooms.length
@@ -339,7 +342,7 @@ async function homeStatus(args, run) {
 			: `${rooms.length} room(s), ${all.length} entities, ${lightsOn.length} light(s) on.`,
 		secure
 			? 'Everything is locked and closed.'
-			: `Not secure: ${unlocked.length} lock(s) unlocked, ${openings.length} cover(s) open. See structured content for which.`,
+			: `Not secure: ${unlocked.length} lock(s) unlocked (${unlocked.map((e) => e.entityId).join(', ')}), ${openings.length} cover(s) open (${openings.map((e) => e.entityId).join(', ')}).`,
 		view.connected ? '' : 'The live connection to this home has dropped, so this state may be stale.',
 	]
 		.filter(Boolean)
@@ -364,7 +367,7 @@ async function homeListMacros(args, run) {
 	};
 
 	const text = visible.length
-		? `This home has ${visible.length} scene(s) and script(s). Their names and entity ids are in structured content; pass a phrase to home_activate to run one.`
+		? `This home has ${visible.length} scene(s) and script(s): ${visible.map((m) => m.entityId).join(', ')}. Pass a phrase to home_activate to run one.`
 		: 'This home has no scenes or scripts yet. Compose the action with home_call, or suggest creating a scene in Home Assistant.';
 
 	return ok(text, structured);

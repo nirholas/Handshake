@@ -342,7 +342,12 @@ async function renderLive(id) {
 	const said = el('p', { class: 'hs-said', 'aria-live': 'polite' });
 	const answered = el('p', { class: 'hs-answered', 'aria-live': 'polite' });
 	const meterFill = el('div', { class: 'hs-meter-fill' });
-	const micButton = el('button', { class: 'hs-btn hs-btn-primary', type: 'button', text: 'Start listening' });
+	// Two ways in, because a satellite has two honest modes. "Listen" is what it
+	// does on a wall all day: stream continuously and let Home Assistant's own
+	// wake word decide. "Talk now" skips the wake stage for somebody standing in
+	// front of the screen who would rather press a button than say a phrase.
+	const micButton = el('button', { class: 'hs-btn', type: 'button', text: 'Listen for the wake word' });
+	const talkButton = el('button', { class: 'hs-btn hs-btn-primary', type: 'button', text: 'Talk now' });
 	const status = el('span', { class: 'hs-live-status', text: 'Connecting to the satellite' });
 
 	root.append(el('div', { class: 'hs-live' }, [
@@ -358,6 +363,7 @@ async function renderLive(id) {
 			said,
 			answered,
 			el('div', { class: 'hs-live-actions' }, [
+				talkButton,
 				micButton,
 				el('div', { class: 'hs-meter', role: 'presentation' }, [meterFill]),
 				el('span', { class: 'hs-item-meta', text: 'Home Assistant owns the wake word, the transcription and the answer. This screen is the face.' }),
@@ -440,7 +446,11 @@ async function renderLive(id) {
 		status.textContent = 'This session expired. Reload the page to watch again.';
 	});
 	link.addEventListener('mic', (event) => {
-		micButton.textContent = event.detail.open ? 'Stop listening' : 'Start listening';
+		const { open, mode } = event.detail;
+		micButton.textContent = open && mode === 'wake' ? 'Stop listening' : 'Listen for the wake word';
+		talkButton.textContent = open && mode === 'command' ? 'Done' : 'Talk now';
+		micButton.disabled = open && mode === 'command';
+		talkButton.disabled = open && mode === 'wake';
 	});
 	link.addEventListener('state', (event) => {
 		const { state, detail } = event.detail;
@@ -456,17 +466,19 @@ async function renderLive(id) {
 		if (emotes && copy.emote && copy.emote !== 'idle') scene.playEmoteOnce?.(copy.emote);
 	});
 
-	micButton.addEventListener('click', async () => {
-		micButton.disabled = true;
+	const toggleMic = async (button, mode) => {
+		button.disabled = true;
 		try {
 			if (link.micOpen) link.stopMic();
-			else await link.startMic('wake');
+			else await link.startMic(mode);
 		} catch (err) {
 			answered.textContent = err.message;
 		} finally {
-			micButton.disabled = false;
+			button.disabled = false;
 		}
-	});
+	};
+	micButton.addEventListener('click', () => toggleMic(micButton, 'wake'));
+	talkButton.addEventListener('click', () => toggleMic(talkButton, 'command'));
 
 	// The microphone meter. rAF rather than an interval so it stops dead when
 	// the tab is hidden instead of spinning on a sleeping display.

@@ -28,6 +28,7 @@
 // functions the server validates with, so the two cannot disagree.
 import { isPrivateHost, normalizeBaseUrl } from '@three-ws/home-bridge/url';
 
+import { disclosurePanel } from './disclosure-panel.js';
 import { renderManage } from './manage.js';
 
 /** The eleven states. Each one has a designed treatment; none falls through. */
@@ -58,7 +59,22 @@ export const STATE = Object.freeze({
 	 * seven states inside this one.
 	 */
 	PAIRING: 'pairing',
+	/**
+	 * One home, deep-linked at /smart-home/:id. The route existed before this
+	 * state did, which made "Open" on a card a link back to the page it was
+	 * already on: a dead path dressed as a button.
+	 */
+	ONE_HOME: 'one_home',
+	/** That id is not a home this account has. Says nothing about whether it exists. */
+	NOT_FOUND: 'not_found',
 });
+
+/**
+ * `/smart-home/<uuid>/settings` addresses one home's settings card; anything
+ * else here is the whole list. The bare `/smart-home/<uuid>` is the live 3D
+ * house, which is what "Open" on a card means to a person.
+ */
+const HOME_ID_IN_PATH = /^\/smart-home\/([0-9a-fA-F-]{36})\/settings\/?$/;
 
 /** Where Home Assistant hides the token minting screen. Never make anyone hunt. */
 const TOKEN_PATH = 'Profile, Security, Long-lived access tokens, Create token';
@@ -75,6 +91,15 @@ async function boot() {
 	try {
 		const homes = await listHomes();
 		if (homes === null) return render(STATE.SIGNED_OUT);
+
+		const deepLink = HOME_ID_IN_PATH.exec(location.pathname);
+		if (deepLink) {
+			const one = homes.find((h) => h.id === deepLink[1]);
+			// A miss is answered exactly like a home that belongs to somebody else,
+			// because from here they are the same thing and neither should confirm
+			// that an id is real.
+			return one ? render(STATE.ONE_HOME, { homes: [one] }) : render(STATE.NOT_FOUND, { homes });
+		}
 		renderHomes(homes);
 	} catch (err) {
 		// The list failing is not the connect flow failing: offer the connect card
@@ -83,9 +108,22 @@ async function boot() {
 	}
 }
 
-function renderHomes(homes) {
-	if (!homes.length) return render(STATE.EMPTY);
-	render(homes.length > 1 ? STATE.MANY : STATE.CONNECTED, { homes });
+function renderHomes(homes, notice) {
+	if (!homes.length) return render(STATE.EMPTY, notice ? { notice } : {});
+	render(homes.length > 1 ? STATE.MANY : STATE.CONNECTED, { homes, ...(notice ? { notice } : {}) });
+}
+
+/**
+ * Is this stored home the one the user just typed? Compared on the normalized
+ * form, because "home.example.com" and "https://home.example.com/" are the same
+ * house and the server stores only the normalized one.
+ */
+function sameHouse(storedBaseUrl, typedBaseUrl) {
+	try {
+		return storedBaseUrl === normalizeBaseUrl(typedBaseUrl).http;
+	} catch {
+		return false;
+	}
 }
 
 // ── The renderer ────────────────────────────────────────────────────────────
@@ -108,6 +146,15 @@ function render(state, data = {}) {
 		case STATE.UNREACHABLE: return root.append(connectCard(data));
 		case STATE.REVOKED: return root.append(connectCard(data));
 		case STATE.QUOTA_REACHED: return root.append(quotaCard(data));
+		case STATE.NOT_FOUND: return root.append(notFoundCard(data));
+		case STATE.ONE_HOME:
+			return root.append(renderManage({
+				homes: data.homes || [],
+				notice: data.notice,
+				onDisconnect: disconnect,
+				onReconnect: showConnectCard,
+				focused: true,
+			}));
 		case STATE.PAIRING: return root.append(pairingHost(data));
 		case STATE.CONNECTED:
 		case STATE.DEGRADED:
@@ -164,7 +211,7 @@ function connectCard({ notice, values = {}, focus } = {}) {
 	const heading = el('div');
 	heading.append(
 		el('h2', 'hm-panel-title', 'Connect a Home Assistant'),
-		el('p', 'hm-panel-sub', 'Everything runs against your own instance. three.ws stores the address and an access token, encrypted, and nothing else about your house.'),
+		el('p', 'hm-panel-sub', 'Everything runs against your own instance. What we store, and what we never store, is spelled out below before you connect.'),
 	);
 	head.append(heading);
 	panel.append(head);
@@ -216,6 +263,10 @@ function connectCard({ notice, values = {}, focus } = {}) {
 		submitConnect({ form, label: label.input, url: url.input, token: token.input, submit });
 	});
 
+	// The disclosure sits between the form and the help, which is the last thing
+	// on screen before somebody reaches for the button. It is never folded: a
+	// promise you have to open is not one you were told.
+	panel.append(disclosurePanel('home.connect', { el }));
 	panel.append(form);
 	panel.append(tokenHelp());
 
@@ -229,6 +280,31 @@ function connectCard({ notice, values = {}, focus } = {}) {
 		}
 	});
 
+	return panel;
+}
+
+/**
+ * A deep link to a home this account does not have. Worded so it reveals
+ * nothing: a home that was disconnected, a link from someone else's household
+ * and an id that never existed all read the same here.
+ */
+function notFoundCard({ homes = [] } = {}) {
+	const panel = el('section', 'hm-panel');
+	const wrap = el('div', 'hm-empty');
+	wrap.append(
+		el('p', 'hm-empty-title', 'That home is not on this account'),
+		el('p', 'hm-empty-body', homes.length
+			? 'It may have been disconnected, or the link may belong to a different account. Your own homes are below.'
+			: 'It may have been disconnected, or the link may belong to a different account. You have no homes connected yet.'),
+	);
+	const actions = el('div', 'hm-actions');
+	actions.style.justifyContent = 'center';
+	const all = el('a', 'hm-btn hm-btn-primary', homes.length ? 'See your homes' : 'Connect a home');
+	all.href = '/smart-home';
+	actions.append(all);
+	wrap.append(actions);
+	panel.append(wrap);
+	queueMicrotask(() => all.focus());
 	return panel;
 }
 
@@ -255,7 +331,7 @@ function quotaCard({ notice, upgrade } = {}) {
 
 /** Where to get a token, inline, so nobody has to go and search for it. */
 function tokenHelp() {
-	const wrap = el('details', 'hm-panel');
+	const wrap = el('details', 'hm-panel hm-details');
 	wrap.style.marginTop = 'var(--space-md)';
 	wrap.style.background = 'transparent';
 	const summary = el('summary', '', 'Where do I get an access token?');
@@ -393,10 +469,24 @@ async function submitConnect({ form, label, url, token, submit }) {
 		renderHomes(homes && homes.length ? homes : [home]);
 	} catch (err) {
 		if (err?.name === 'AbortError') {
+			// Aborting the fetch stops the browser waiting; it does NOT stop the
+			// server, which may already have verified the house and written the row.
+			// Claiming "nothing was stored" without looking would be a comfortable
+			// lie about a credential, so ask before saying anything.
+			values.token = '';
+			const after = await listHomes().catch(() => null);
+			const landed = after?.find((h) => sameHouse(h.base_url, values.baseUrl));
+			if (landed) {
+				return renderHomes(after, {
+					tone: 'info',
+					title: `${landed.label} connected anyway.`,
+					body: 'You cancelled while it was still verifying, but your home had already answered by then, so it is connected. Disconnect it below if that is not what you wanted.',
+				});
+			}
 			return render(STATE.EMPTY, {
 				values: { label: values.label, baseUrl: values.baseUrl },
 				focus: 'url',
-				notice: { tone: 'info', title: 'Cancelled.', body: 'Nothing was stored. Try again whenever you are ready.' },
+				notice: { tone: 'info', title: 'Cancelled.', body: 'No home was connected and no token was stored. Try again whenever you are ready.' },
 			});
 		}
 		renderFailure(err, values);
@@ -478,8 +568,27 @@ function quotaTitle(quota) {
 	return `Your plan covers ${limit} ${limit === 1 ? 'home' : 'homes'}.`;
 }
 
-function showConnectCard(notice) {
-	render(STATE.EMPTY, notice ? { notice } : {});
+/**
+ * Back to the connect card, optionally prefilled.
+ *
+ * Reconnecting a house that is already on the account carries its label and URL
+ * across, because the only thing that changed is the token: making someone
+ * retype an address the platform already stored is asking them to re-solve a
+ * problem it knows the answer to. The token is never prefilled, because it is
+ * never held anywhere this code can reach.
+ */
+function showConnectCard(notice, values) {
+	const prefilled = values && (values.label || values.baseUrl);
+	render(STATE.EMPTY, {
+		...(notice ? { notice } : prefilled ? {
+			notice: {
+				tone: 'info',
+				title: `Reconnecting ${values.label || values.baseUrl}.`,
+				body: `Paste a fresh long-lived access token below. Everything else is already filled in. Create one under ${TOKEN_PATH}.`,
+			},
+		} : {}),
+		...(prefilled ? { values: { label: values.label || '', baseUrl: values.baseUrl || '' }, focus: 'token' } : {}),
+	});
 }
 
 // ── Reachability, decided here, before the network ──────────────────────────

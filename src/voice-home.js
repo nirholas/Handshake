@@ -14,6 +14,7 @@
 
 import { HomeVoiceLoop, STATES, STATE_ORDER, normalizePendingConfirmation } from './voice/home-voice.js';
 import { HomeVoicePanel } from './voice/home-voice-ui.js';
+import { disclosurePanel } from './home/disclosure-panel.js';
 import { log } from './shared/log.js';
 
 const params = new URLSearchParams(location.search);
@@ -29,6 +30,13 @@ const loop = new HomeVoiceLoop({
 	},
 });
 
+// The disclosure goes in before anything else runs, so it is on screen whether
+// or not speech recognition turns out to be available in this browser: the
+// promise about a microphone is exactly as relevant to somebody who is deciding
+// whether to try as to somebody who already has.
+const disclosureMount = document.getElementById('voice-disclosure');
+if (disclosureMount) disclosureMount.append(disclosurePanel('home.voice'));
+
 const mount = document.getElementById('voice-panel');
 const panel = new HomeVoicePanel({ mount, loop });
 
@@ -43,11 +51,17 @@ window.homeVoice = { loop, panel };
 // ── the state gallery ───────────────────────────────────────────────────────
 
 const SAMPLE_CONFIRMATION = normalizePendingConfirmation({
-	confirmation_id: 'preview',
-	sentence: 'This will unlock the Front Door.',
-	entity_ids: ['lock.front_door'],
-	risk: 'opens the house',
-	expires_in_ms: 90000,
+	home: { id: 'preview', label: 'Preview' },
+	confirmation: {
+		id: 'preview',
+		summary: 'This will unlock the Front Door.',
+		risk: 'opens the house',
+		domain: 'lock',
+		service: 'unlock',
+		entity_ids: ['lock.front_door'],
+		entities: [{ entity_id: 'lock.front_door', name: 'Front Door', state: 'locked' }],
+		expires_in_seconds: 90,
+	},
 });
 
 const DETAILS = {

@@ -38,6 +38,23 @@ that is only on its own network needs a remote https URL (Home Assistant Cloud, 
 user's own reverse proxy). `normalizeBaseUrl` and `isPrivateHost` let you say that up front
 instead of after a timeout.
 
+## Which Home Assistant versions this works against
+
+**2025.10 and newer.** Measured, not assumed: `npm run home:matrix` in the three.ws repo
+(`scripts/home-version-matrix.mjs`) boots a real container per release and runs this library
+against it, filling in a table of connect, registries, state stream, service call, scenes and
+`mcp_server`. The full table and the date it was measured are in
+[docs/smart-home.md](https://github.com/nirholas/three.ws/blob/main/docs/smart-home.md).
+
+The release set is derived from Home Assistant's own install-share analytics rather than
+hardcoded: the current stable, the two before it, and the oldest release still above one percent
+of installs. The floor is where the world has moved on, not where this library breaks, and it
+moves on its own as people upgrade. Nothing was found that a 2025.10 house cannot do.
+
+Where releases differ, this library **asks the instance** rather than parsing its version string.
+The `mcp_server` probe is the pattern: an instance either answers `/api/mcp` with tools or it does
+not, and either answer is a fact rather than an inference from a number.
+
 ## Use it
 
 ```js

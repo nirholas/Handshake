@@ -26,8 +26,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { chromium } from '@playwright/test';
-
 import { acquireHomeInstance } from '../_helpers/home-instance.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -63,23 +61,17 @@ export default async function globalSetup(config) {
  */
 async function ensureAccounts(origin) {
 	const stored = readJson(ACCOUNTS_FILE) || {};
-	const accounts = {};
-	let browser = null;
+	const accounts = { ...stored };
 
-	try {
-		for (const role of ['owner', 'guest']) {
-			if (stored[role] && (await loginWorks(origin, stored[role]))) {
-				accounts[role] = stored[role];
-				continue;
-			}
-			browser = browser || (await chromium.launch());
-			accounts[role] = await register(browser, origin, role);
-		}
-	} finally {
-		await browser?.close();
+	for (const role of ['owner', 'guest']) {
+		if (accounts[role] && (await loginWorks(origin, accounts[role]))) continue;
+		accounts[role] = await register(origin, role);
+		// Write after EVERY account, not once at the end. Registration is limited
+		// to five per hour per IP, and a run that created the owner and then died
+		// on the guest used to throw the owner away and burn one of the five for
+		// nothing.
+		fs.writeFileSync(ACCOUNTS_FILE, `${JSON.stringify(accounts, null, '\t')}\n`, { mode: 0o600 });
 	}
-
-	fs.writeFileSync(ACCOUNTS_FILE, `${JSON.stringify(accounts, null, '\t')}\n`, { mode: 0o600 });
 	return accounts;
 }
 
@@ -93,46 +85,43 @@ async function loginWorks(origin, account) {
 	return Boolean(res?.ok);
 }
 
-async function register(browser, origin, role) {
-	// The register form takes a username; the server derives the account email
-	// as <username>@users.three.ws.local, the same as scripts/provision-audit-account.mjs.
-	const username = `home-e2e-${role}-${Date.now().toString(36)}`;
-	const password = `Home-e2e-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`;
+/**
+ * Create one account against the real registration endpoint.
+ *
+ * This is the same request the register page makes, with the same terms
+ * acceptance, and it is made directly rather than by driving the page: a
+ * headless Chromium loading the full signup bundle is the heaviest thing in
+ * this setup, and on a busy machine it crashes the page before the form is
+ * filled. What is under test in this lane is the home surface; the signup page
+ * has its own specs.
+ */
+async function register(origin, role) {
+	const suffix = `${role}-${Date.now().toString(36)}`;
+	const account = {
+		username: `home-e2e-${suffix}`,
+		email: `home-e2e-${suffix}@qa.three.ws`,
+		password: `Home-e2e-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`,
+	};
 
-	const context = await browser.newContext({ baseURL: origin });
-	const page = await context.newPage();
-	try {
-		await page.goto('/register', { waitUntil: 'domcontentloaded', timeout: 120_000 });
-		await page.fill('#username', username);
-		await page.fill('#password', password);
-		await page.check('#tos-accept');
-		await Promise.all([
-			page.waitForURL((u) => !/\/register/.test(u.pathname), { timeout: 120_000 }),
-			page.click('#submit'),
-		]);
-	} catch (cause) {
-		const message = await page
-			.getByRole('alert')
-			.first()
-			.textContent()
-			.catch(() => null);
-		// Say which of the two it was. Blaming the rate limit for what is really a
-		// dead API process sends the next person looking in the wrong place: this
-		// worktree is shared, and the API server has been killed out from under a
-		// run by another agent's `pkill`.
-		const reachable = await fetch(`${origin}/api/home`, { signal: AbortSignal.timeout(10_000) })
-			.then(() => true)
-			.catch(() => false);
-		throw new Error(
-			reachable
-				? `could not register the ${role} account${message ? `: ${message.trim()}` : ''}. Account creation is limited to five per hour per IP; the accounts in ${path.basename(ACCOUNTS_FILE)} are reused whenever they still log in.`
-				: `could not register the ${role} account because ${origin}/api is not answering. The API server died during this run; check the [WebServer] output for a SIGTERM.`,
-			{ cause },
-		);
-	} finally {
-		await context.close();
+	const res = await fetch(`${origin}/api/auth/register`, {
+		method: 'POST',
+		headers: { 'content-type': 'application/json', origin },
+		body: JSON.stringify({ email: account.email, password: account.password, tosAccepted: true }),
+		signal: AbortSignal.timeout(90_000),
+	}).catch((cause) => {
+		throw new Error(`could not reach ${origin}/api/auth/register. The API server died during this run; check the [WebServer] output for a SIGTERM.`, { cause });
+	});
+
+	if (!res.ok) {
+		const body = await res.text().catch(() => '');
+		if (res.status === 429) {
+			throw new Error(
+				`registration is rate limited (five per hour per IP). The accounts in ${path.basename(ACCOUNTS_FILE)} are reused whenever they still log in; delete that file only when you have budget to spare.`,
+			);
+		}
+		throw new Error(`registering the ${role} account returned ${res.status}: ${body.slice(0, 200)}`);
 	}
-	return { username, password, email: `${username}@users.three.ws.local` };
+	return account;
 }
 
 function readJson(file) {

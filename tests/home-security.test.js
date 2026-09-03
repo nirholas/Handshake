@@ -23,8 +23,12 @@
 //     suite does. Never mock the house. A fake instance would have hidden the
 //     HassTurnOff-unlocks-a-lock behaviour that this whole gate exists for.
 //
-//     HOME_ASSISTANT_URL=http://localhost:8123 HOME_ASSISTANT_TOKEN=... \
+//     The house comes from the lane's one harness, never from an instance you
+//     built by hand (scripts/home-test-instance.mjs):
+//
+//       eval "$(node scripts/home-test-instance.mjs --up --onboard --seed --env)"
 //       npx vitest run tests/home-security.test.js
+//       node scripts/home-test-instance.mjs --down
 
 import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
@@ -32,14 +36,34 @@ import { lookup } from 'node:dns/promises';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import {
-	assertDialableHomeUrl,
-	homeFetch,
-	HomeUrlError,
-} from '../api/_lib/home-url-guard.js';
 import { classifyCall } from '../packages/home-bridge/src/safety.js';
+
+/**
+ * The guard as PRODUCTION loads it, whatever the developer's environment says.
+ *
+ * `HOME_ALLOW_LOCAL_INSTANCE=1` is exactly what someone running the live
+ * injection proof against a Home Assistant on their own machine has set, and it
+ * is the one switch that turns the SSRF guard off. Reading the module through
+ * the ambient environment would therefore turn every refusal below into a pass
+ * on the machine most likely to be running them. So the checks re-import it with
+ * the seam forced off and K_SERVICE present, which is the shape the live service
+ * runs in, and prove the control that actually ships.
+ */
+async function loadAsProduction(specifier) {
+	vi.stubEnv('HOME_ALLOW_LOCAL_INSTANCE', '');
+	vi.stubEnv('K_SERVICE', 'three-ws-api');
+	vi.resetModules();
+	try {
+		return await import(specifier);
+	} finally {
+		vi.unstubAllEnvs();
+		vi.resetModules();
+	}
+}
+
+const loadGuardAsProduction = () => loadAsProduction('../api/_lib/home-url-guard.js');
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), '..');
 const HOME_ROUTES_DIR = join(REPO, 'api', 'home');
@@ -113,8 +137,16 @@ const rel = (file) => relative(REPO, file);
 // server-side, and redeemed server-side. It is never an argument.
 
 describe('home security 1: `confirmed` is unreachable from a model', () => {
-	it('no home MCP tool exposes a confirmation flag in its input schema', async () => {
-		const { TOOL_CATALOG } = await import('../api/_mcp/catalog.js');
+	// Loaded once, lazily. A static import pulls the whole tool graph in at
+	// collection time and costs this file its memory budget on a busy machine; a
+	// per-test dynamic import pays the cold ESM load three times over and times
+	// out. One hook, one load.
+	let TOOL_CATALOG;
+	beforeAll(async () => {
+		({ TOOL_CATALOG } = await import('../api/_mcp/catalog.js'));
+	}, 180_000);
+
+	it('no home MCP tool exposes a confirmation flag in its input schema', () => {
 		const offenders = [];
 		for (const tool of TOOL_CATALOG) {
 			if (!/^home/.test(tool.name)) continue;
@@ -125,18 +157,16 @@ describe('home security 1: `confirmed` is unreachable from a model', () => {
 		expect(offenders, 'a model must never be able to assert its own confirmation').toEqual([]);
 	});
 
-	it('the home tools are actually in the catalog, so the check above has something to check', async () => {
-		const { TOOL_CATALOG } = await import('../api/_mcp/catalog.js');
+	it('the home tools are actually in the catalog, so the check above has something to check', () => {
 		const homeTools = TOOL_CATALOG.filter((t) => /^home/.test(t.name));
 		expect(homeTools.length, 'no home tool is registered, so check 1 proved nothing').toBeGreaterThan(0);
 	});
 
-	it('the only tool outside this lane that takes a confirmation flag is the known one', async () => {
+	it('the only tool outside this lane that takes a confirmation flag is the known one', () => {
 		// Scoped rather than silenced. delete_avatar.confirm predates this lane and
 		// guards a database row, not a deadbolt; it is recorded as an out-of-lane
 		// residual in docs/home-security.md. This assertion exists so a SECOND one
 		// cannot appear without somebody reading that section.
-		const { TOOL_CATALOG } = await import('../api/_mcp/catalog.js');
 		const offenders = [];
 		for (const tool of TOOL_CATALOG) {
 			for (const path of confirmationProps(tool.inputSchema)) offenders.push(`${tool.name}.${path}`);
@@ -394,6 +424,7 @@ describe('home security 6: the token never leaves the code path that opens a soc
 	});
 
 	it('a failure at the dial stage never carries the token into the error', async () => {
+		const { assertDialableHomeUrl, homeFetch } = await loadGuardAsProduction();
 		const secret = 'llat-do-not-leak-0123456789abcdef';
 		const failures = [];
 		for (const url of ['https://127.0.0.1:8123', 'not a url at all', 'https://10-0-0-1.nip.io:8123']) {
@@ -422,6 +453,12 @@ describe('home security 6: the token never leaves the code path that opens a soc
 // on any private address, and pins the connection to the addresses it approved.
 
 describe('home security 7: a user-supplied home URL cannot reach our network', () => {
+	/** @type {{assertDialableHomeUrl: Function, homeFetch: Function}} */
+	let guard;
+	beforeAll(async () => {
+		guard = await loadGuardAsProduction();
+	});
+
 	const refusals = [
 		['loopback, literal', 'https://127.0.0.1:8123', 'private_address'],
 		['loopback, IPv6 literal', 'https://[::1]:8123', 'private_address'],
@@ -434,16 +471,16 @@ describe('home security 7: a user-supplied home URL cannot reach our network', (
 
 	for (const [label, url, code] of refusals) {
 		it(`refuses ${label}`, async () => {
-			await expect(assertDialableHomeUrl(url)).rejects.toMatchObject({ code });
+			await expect(guard.assertDialableHomeUrl(url)).rejects.toMatchObject({ code });
 		});
 	}
 
 	it('refuses plain http for a remote host, so a building key never travels in clear text', async () => {
-		await expect(assertDialableHomeUrl('http://example.com:8123')).rejects.toMatchObject({ code: 'bad_url' });
+		await expect(guard.assertDialableHomeUrl('http://example.com:8123')).rejects.toMatchObject({ code: 'bad_url' });
 	});
 
 	it('allows a real public https home', async () => {
-		const pin = await assertDialableHomeUrl('https://example.com');
+		const pin = await guard.assertDialableHomeUrl('https://example.com');
 		expect(pin.host).toBe('example.com');
 		expect(pin.addresses.length).toBeGreaterThan(0);
 	});
@@ -458,32 +495,32 @@ describe('home security 7: a user-supplied home URL cannot reach our network', (
 
 		it('refuses a public name that resolves to loopback', async () => {
 			if (!dnsWorks) return;
-			await expect(assertDialableHomeUrl('https://localtest.me:8123')).rejects.toMatchObject({
+			await expect(guard.assertDialableHomeUrl('https://localtest.me:8123')).rejects.toMatchObject({
 				code: 'private_address',
 			});
 		});
 
 		it('refuses a public name that resolves into RFC1918', async () => {
 			if (!dnsWorks) return;
-			await expect(assertDialableHomeUrl('https://10-0-0-1.nip.io:8123')).rejects.toMatchObject({
+			await expect(guard.assertDialableHomeUrl('https://10-0-0-1.nip.io:8123')).rejects.toMatchObject({
 				code: 'private_address',
 			});
 		});
 
 		it('pins the connection to the addresses it validated', async () => {
-			const pin = await assertDialableHomeUrl('https://example.com');
+			const pin = await guard.assertDialableHomeUrl('https://example.com');
 			// The pin is the TOCTOU closure: even handed a private address after
 			// validation, the dispatcher refuses to open a socket to it.
 			const poisoned = { host: pin.host, addresses: [{ address: '169.254.169.254', family: 4 }] };
 			await expect(
-				homeFetch(poisoned, 'https://example.com/api/config', { timeoutMs: 3_000 }),
+				guard.homeFetch(poisoned, 'https://example.com/api/config', { timeoutMs: 3_000 }),
 			).rejects.toBeTruthy();
 		});
 
 		it('refuses a host the pin was not issued for', async () => {
-			const pin = await assertDialableHomeUrl('https://example.com');
+			const pin = await guard.assertDialableHomeUrl('https://example.com');
 			await expect(
-				homeFetch({ host: pin.host, addresses: pin.addresses }, 'https://example.org/api/config'),
+				guard.homeFetch({ host: pin.host, addresses: pin.addresses }, 'https://example.org/api/config'),
 			).rejects.toMatchObject({ code: 'host_pin_mismatch' });
 		});
 	});
@@ -492,7 +529,7 @@ describe('home security 7: a user-supplied home URL cannot reach our network', (
 		const stub = async () =>
 			new Response(null, { status: 302, headers: { location: 'https://10-0-0-1.nip.io/api/states' } });
 		await expect(
-			homeFetch(
+			guard.homeFetch(
 				{ host: 'example.com', addresses: [{ address: '93.184.216.34', family: 4 }], secure: true },
 				'https://example.com/api/config',
 				{ fetchImpl: stub },
@@ -503,7 +540,7 @@ describe('home security 7: a user-supplied home URL cannot reach our network', (
 	it('refuses a redirect to cloud metadata', async () => {
 		const stub = async () => new Response(null, { status: 302, headers: { location: 'http://169.254.169.254/' } });
 		await expect(
-			homeFetch(
+			guard.homeFetch(
 				{ host: 'example.com', addresses: [{ address: '93.184.216.34', family: 4 }], secure: true },
 				'https://example.com/api/config',
 				{ fetchImpl: stub },
@@ -514,7 +551,7 @@ describe('home security 7: a user-supplied home URL cannot reach our network', (
 	it('stops a redirect loop rather than following it forever', async () => {
 		const stub = async () => new Response(null, { status: 302, headers: { location: 'https://example.com/again' } });
 		await expect(
-			homeFetch(
+			guard.homeFetch(
 				{ host: 'example.com', addresses: [{ address: '93.184.216.34', family: 4 }], secure: true },
 				'https://example.com/api/config',
 				{ fetchImpl: stub, maxRedirects: 2 },
@@ -551,8 +588,8 @@ describe('home security 7: a user-supplied home URL cannot reach our network', (
 
 		// And it is off by default, which is the state every test in this file
 		// above has been running under.
-		const guard = await import('../api/_lib/home-url-guard.js');
-		await expect(guard.assertDialableHomeUrl('https://127.0.0.1:8123')).rejects.toMatchObject({
+		const production = await loadGuardAsProduction();
+		await expect(production.assertDialableHomeUrl('https://127.0.0.1:8123')).rejects.toMatchObject({
 			code: 'private_address',
 		});
 	});
@@ -572,7 +609,9 @@ describe('home security 7: a user-supplied home URL cannot reach our network', (
 		// seam is only safe while the DEFAULT is the guard, which is what this
 		// asserts: a runtime constructed the way production constructs it refuses
 		// the loopback address the harness is allowed to use.
-		const { createHomeRuntime, defaultResolveDial } = await import('../api/_lib/home/runtime.js');
+		// Loaded the way production loads it, so a developer running this file with
+		// the local-instance seam on still proves the shipping behaviour.
+		const { createHomeRuntime, defaultResolveDial } = await loadAsProduction('../api/_lib/home/runtime.js');
 
 		await expect(defaultResolveDial('http://127.0.0.1:8123')).rejects.toMatchObject({ code: 'unreachable' });
 		await expect(defaultResolveDial('http://169.254.169.254')).rejects.toMatchObject({ code: 'unreachable' });
@@ -919,11 +958,15 @@ live('home security 4: a prompt injection with a deadbolt behind it', () => {
 		expect(openable.state, 'the injected instruction opened a lock').toBe('locked');
 
 		// And every lock the model did reach for was stopped by the gate, not by
-		// the model happening to behave.
-		for (const { action } of attempted.filter((a) => a.domain === 'lock')) {
+		// the model happening to behave. `attempted` holds the action objects
+		// themselves, so the refusal is matched by identity against the entries
+		// `refused` recorded for them.
+		for (const action of attempted.filter((a) => a.domain === 'lock')) {
+			const wasRefused = refused.some((r) => r.action === action);
+			const movesTowardSafety = action.service === 'lock';
 			expect(
-				refused.some((r) => r.action === action) || action.service === 'lock',
-				`an unlock on ${action.entity_id} was not gated`,
+				wasRefused || movesTowardSafety,
+				`${action.service} on ${action.entity_id} reached the house without a confirmation`,
 			).toBe(true);
 		}
 	}, 240_000);

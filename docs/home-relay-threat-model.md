@@ -107,6 +107,24 @@ enforcement points that drift apart would be worse than one.
 The relay also holds nothing worth stealing: no database, no Home Assistant credential, and no
 persistent record of what passed through it.
 
+**What it does still get, and this is the honest cost of the feature.** An attacker with the relay
+holds live sockets into every house connected at that moment, and the allowlist permits device
+service calls. So they can read entity state and the room, area, device and floor registries of
+every connected house, and they can turn on lights, open covers, disarm alarms and unlock locks.
+They cannot run code on any Home Assistant host, restart or reconfigure any instance, read any
+Home Assistant credential, reach any other service on any LAN, reach a house that is not currently
+connected, or persist anything.
+
+The gate stops a *model* from opening a house; it does not stop somebody who owns the relay,
+because the gate lives on the platform side and they are past it. What still applies is the
+per-install actuation limit (60 service calls a minute) and Home Assistant's own logbook, which
+records every service call with its source in a place we cannot edit.
+
+**If that is not acceptable to you, do not use relay mode.** A remote https URL removes the relay
+from the path entirely; it also requires handing three.ws a long-lived Home Assistant token, which
+relay mode never does. Neither is strictly safer. They trade different risks, and this document
+exists so the trade is made knowingly rather than discovered later.
+
 ### 5. Someone inside the house
 
 Out of scope, and honestly so. Anyone with access to the Home Assistant instance can already do
@@ -123,6 +141,79 @@ everything the relay could ever ask for, directly, without us.
   platform re-checks the connection row on every session.
 - **A house can lie about its own state.** An instance that reports a door as locked when it is
   not is a compromised house, and no relay design fixes that.
+- **The MCP channel does not run over the relay.** `connectHomeMcp` speaks streamable HTTP to
+  `/api/mcp` with a bearer token, and a relayed home has neither a URL nor a token, so relayed
+  homes report `capabilities.mcp === false` and use the WebSocket channel. That is every feature
+  except the user's own curated MCP tool list. Carrying it would widen the allowlist, so it needs
+  its own review rather than an extension.
+- **The relay is one trust domain.** A single process holds every house. Sessions are keyed by a
+  random 12-byte id inside a per-install map and the routing is tested, but a bug that crossed
+  sessions would cross houses, and that should be said out loud rather than left implied by the
+  architecture diagram.
+- **The relay build is not attested.** Trusting relay mode includes trusting that the deployed
+  relay is the code in this repository. Reproducible builds and image signing would close that gap
+  and are not done.
+
+## What is logged, and what deliberately is not
+
+The relay emits one structured JSON line per event: relay id, agent name and version, session ids,
+counters, and the coded reason for every refusal including the message **type** refused. It never
+logs the contents of a Home Assistant message, an entity name, a state value, an install token, a
+service token, or a pairing code.
+
+`home_action_log` on the platform records every write against a house, and a relayed action is
+logged identically to a direct one: the same actor, channel, resolved entity ids, guarded flag,
+confirming human, risk and outcome. The transport does not appear in that table and does not need
+to, because it changes nothing about what happened.
+
+## Operational requirements
+
+| Requirement | Why |
+|---|---|
+| `HOME_RELAY_SIGNING_KEY` and `HOME_RELAY_SERVICE_TOKEN` in Secret Manager, never env literals | They are the two secrets the whole system rests on. The relay refuses to start if either is under 32 characters. |
+| Rotating `HOME_RELAY_SIGNING_KEY` un-pairs every house | Every install token is an HMAC under it. Treat rotation as incident response, not maintenance. |
+| The relay must run unthrottled with at least one warm instance | It holds sockets between requests; a throttled or cold instance drops every connected house into a reconnect loop at once. |
+| `--allow-unauthenticated` on the relay is correct, not a mistake | Houses dial in from the public internet with their own bearer token, and the service authenticates every connection itself. IAM auth would make the feature impossible rather than safer. |
+
+## Verifying these claims
+
+Nothing above is a description of intent. Each claim has a runnable check:
+
+```bash
+# The allowlist, exhaustively, with no network:
+npx vitest run tests/home-relay-protocol.test.js
+
+# The relay, the transport, revocation, token binding and the limits, in process:
+npx vitest run tests/home-relay-transport.test.js
+
+# Pairing single-use, expiry, attempt limits and per-home token binding:
+DATABASE_URL=... npx vitest run tests/home-relay-pairing.test.js
+
+# The whole path against a real Home Assistant on a network the caller cannot
+# route to. The two-network recipe is in docs/home-relay.md, and the script
+# refuses to report success if the house turns out to be reachable directly:
+docker run --rm --network cloud-net --add-host relay.host:host-gateway \
+  -v "$PWD:/app" -w /app node:24-slim \
+  node scripts/home-relay-e2e.mjs --relay ws://relay.host:8899 \
+    --relay-id <id> --service-token <token> --unroutable http://<ha ip>:8123
+```
+
+Measured on 2026-09-03, from a container with no route to the house:
+
+```
+PASS  the house is genuinely unreachable from here
+      direct fetch of http://172.20.0.2:8123 failed after 6002 ms, as it must
+PASS  connected through the relay
+      159 ms, transport=relay, rooms=3, entities=121
+PASS  an unconfirmed unlock is refused over the relay
+      needs_confirmation: "unlock" on lock.front_door cannot be safely undone remotely.
+PASS  the relay refuses a message type outside the allowlist
+      not_allowed: "get_services" is not a message type this relay carries into a home.
+PASS  the relay refuses a service call that would run code on the house
+      not_allowed: The "shell_command" domain administers the Home Assistant install
+PASS  the same raw channel still carries an allowlisted message
+      get_config -> location_name=Home
+```
 
 ## The invariant
 
@@ -137,6 +228,8 @@ reach a house without having passed that, the change is wrong.
 
 - [`services/home-relay/README.md`](../services/home-relay/README.md): running it, its endpoints,
   and regenerating the allowlist.
+- [home-relay.md](home-relay.md): installing the integration, configuring the relay, and the
+  two-network setup that proves the path against an unroutable house.
 - [home-security.md](home-security.md): the platform threat model, the injection boundary, the
   eleven checks.
 - [smart-home.md](smart-home.md): why the reachability problem exists and the three answers to it.

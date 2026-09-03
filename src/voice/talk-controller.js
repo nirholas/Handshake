@@ -56,7 +56,7 @@ export class TalkController {
 	 * @param {(err: Error) => void} [opts.onError]
 	 * @param {{ attach: Function, setMouthShape: Function }} opts.mouthTarget
 	 */
-	constructor({ avatar, systemPromptFn, onMessage, onStateChange, onInterim, onError, mouthTarget, commandInterceptor, language }) {
+	constructor({ avatar, systemPromptFn, onMessage, onStateChange, onInterim, onError, mouthTarget, commandInterceptor, language, onHomeEvent }) {
 		if (!avatar?.id) throw new Error('TalkController: avatar.id required');
 		if (!mouthTarget) throw new Error('TalkController: mouthTarget required');
 		this.avatar = avatar;
@@ -65,6 +65,12 @@ export class TalkController {
 		this.onStateChange = onStateChange || (() => {});
 		this.onInterim = onInterim || (() => {});
 		this.onError = onError || ((e) => log.warn('[talk]', e?.message));
+		// Home tool traffic from the chat stream. A guarded action (a lock, a
+		// garage door, an alarm) never executes: the server freezes it and sends
+		// a `pending_confirmation` that a PERSON has to redeem, so a surface that
+		// drops these events leaves the user asking twice and nothing happening.
+		// Surfaces that cannot render a confirmation simply do not pass this in.
+		this.onHomeEvent = onHomeEvent || null;
 		this.mouthTarget = mouthTarget;
 		// Optional async hook: gets first crack at a final transcript. If it returns
 		// true, the utterance was handled out-of-band (e.g. a wallet command) and the
@@ -630,7 +636,12 @@ export class TalkController {
 					continue;
 				}
 				if (evt.type === 'chunk' && evt.text) acc += evt.text;
-				else if (evt.type === 'error') throw new Error(evt.message || evt.error || 'Stream error');
+				else if (evt.type === 'home_tool') this.onHomeEvent?.(evt);
+				else if (evt.type === 'done' && Array.isArray(evt.home) && evt.home.length) {
+					// The terminal frame repeats the turn's home results, which is the
+					// recovery path for a card whose `home_tool` frame was missed.
+					for (const entry of evt.home) this.onHomeEvent?.({ type: 'home_tool', ...entry });
+				} else if (evt.type === 'error') throw new Error(evt.message || evt.error || 'Stream error');
 			}
 		}
 		return acc.trim();

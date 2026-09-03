@@ -78,7 +78,7 @@
 
 import { isSafetyAction, isSafetyMcpCall } from '@three-ws/home-bridge';
 
-import { ACCOUNT_TIERS, detectHolder, resolveAccountTier } from '../account-tier.js';
+import { detectHolder, resolveAccountTier } from '../account-tier.js';
 import { sql } from '../db.js';
 import { withDbRetry } from '../db-retry.js';
 import { tierForUsd } from '../three-tier.js';
@@ -250,8 +250,6 @@ const DEFAULT_LIMITS = Object.freeze({
 		relayConnections: UNLIMITED,
 	}),
 });
-
-const TIER_IDS = Object.freeze(ACCOUNT_TIERS.map((t) => t.id));
 
 /**
  * `HOME_LIMIT_<TIER>_<DIMENSION>`, upper snake case, e.g.
