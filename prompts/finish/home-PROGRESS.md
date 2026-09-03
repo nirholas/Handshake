@@ -41,7 +41,7 @@ One section per finished order, newest at the bottom:
 | 09 Wyoming satellite | open | |
 | 10 add-on relay | open | |
 | 11 security | open | |
-| 12 households and RBAC | open | |
+| 12 households and RBAC | done | 2026-09-03 |
 | 13 observability | partial, see entry below | |
 | 14 reliability and scale | open | |
 | 15 privacy and retention | done | 2026-09-03 |
@@ -50,7 +50,7 @@ One section per finished order, newest at the bottom:
 | 18 docs and SDK | docs done, npm publish owner-gated | 2026-09-03 |
 | 19 plans and entitlements | open | |
 | 20 launch readiness | standing | |
-| 21 Matter direct | horizon | |
+| 21 Matter direct | done, documented negative | 2026-09-03 |
 
 Update the row in the same commit that retires the order. The directory shrinking is the real
 ledger; this table is the readable one.
@@ -670,3 +670,128 @@ on first paint. Everything a house supplies is rendered as `textContent`.
 **Commits:** `e552787d7`, `7efe069d5`, plus the page, controller, manage view, stylesheet,
 `STRUCTURE.md` row, changelog entry, `data/pages.json` entry and i18n keys, which concurrent
 `git add -A` sweeps carried into other agents' commits before I could stage them.
+
+---
+
+## 21. Matter direct control: past the house (2026-09-03)
+
+**Shipped:** A documented negative, which this order explicitly allows. The kernel was built and
+run against real software rather than reasoned about: a `@matter/main` `ServerNode` in a
+container presenting an On/Off Plug-in Unit (Home Assistant asking the agent for something) and
+an Occupancy Sensor (the agent telling the house something), commissioned over plain IP into a
+real Home Assistant 2026.9.0 through a real `python-matter-server`, with Bluetooth off for the
+whole run. Both directions of the round trip were proven, the fabric was proven to survive a
+restart of each side, and the physical-action gate was proven to hold against a real Home
+Assistant automation. Then it was deleted. What now exists that did not before is
+[section 8 of `docs/smart-home.md`](../../docs/smart-home.md), which records every measurement,
+the one failure worth writing down, the two reasons it is not built, and the three conditions
+that would turn the answer over. The "Not shipped" bullet and the two landscape verdicts that
+predicted this phase were rewritten to point at it, and a `docs` changelog entry went out.
+
+**Measured:** Landscape re-read on 2026-09-03 and unmoved from the campaign's 2026-09-02
+snapshot: `matter.js` 894 stars, Apache-2.0, last push `2026-09-02T21:52:32Z`, not archived;
+`matterbridge` 963 stars, Apache-2.0, last push `2026-09-02T20:19:51Z`; `@matter/main` at npm
+`0.17.9`; controller SDK `2025.7.0`, schema 11. Commissioning over IP with `network_only: true`
+and `bluetooth_enabled: false`: **744 ms**. Home Assistant to agent: **328 ms** on
+`switch.turn_on`, 195 ms on `turn_off`. Agent to Home Assistant: **531 ms** for the occupancy
+sensor to read `on`, 894 ms back to `off`. Steady state: **73 MB RSS, 0.03% of one CPU**, 430 MB
+image. Node restart: back `commissioned=true` with no pairing code, control recovered unattended
+in **39 s** at 247 ms latency. Controller and Home Assistant restart: rediscovered on mDNS and
+resubscribed in ~1.5 s, no re-commissioning. Safety: an HA automation whose action turned on the
+Matter switch reached the agent, the agent's `lock.unlock` on a real lock was refused
+`needs_confirmation`, `lock.front_door` stayed `locked`, and only an explicit out-of-band human
+confirmation opened it. Identity: the node commissioned as vendor ID `0xFFF1`, which the CSA
+Distributed Compliance Ledger the controller downloaded lists under the vendor name **"Test"**,
+accepted only because the controller ships the `Chip-Test-PAA-FFF1` root certificate.
+
+**Deviations:** The order file's weighting of capability B was written before this campaign
+shipped `home-assistant-integration/` and `services/home-relay/`. Its premise, that presenting as
+a Matter device makes the agent addressable by infrastructure the user already owns and that
+"nobody offers" it, is now weaker than it was: the HACS integration already puts three.ws inside
+Home Assistant with the full agent connection, where Matter would offer a switch and a sensor.
+That is the first of the two reasons recorded for not building it, and it is a reason the order
+file could not have known. The second, that reaching any controller outside Home Assistant needs
+a real CSA vendor ID and certified attestation, is a cost the order file did not price at all.
+The order also expected the kernel might fail at step 2 or 4; it failed at neither. It failed
+once at the restart step, from the controller picking an unroutable IPv6 link-local address
+across a Docker bridge, which `--primary-interface eth0` fixed; that is an artefact of a bridged
+lab, not of Matter, and it is written into the doc because it presents as "Matter is flaky".
+
+**Left open:** Nothing from this order. The recommendation is B over A if it is ever revisited,
+and neither now. The three conditions that would change the answer are in the doc, and the first
+of them (a real CSA vendor ID and certified device attestation) is on the critical path from day
+one, so it is where a second attempt starts rather than with code. Order 20 has not returned a
+go, which is the reason this stayed a horizon order.
+
+**Commits:** see the commit that deletes `prompts/finish/home-21-matter-direct.md`.
+
+## 12. Households: members, roles, per-member scopes, SSO (2026-09-03)
+
+**Shipped:** A home is a household. `home_members` and `home_invites` landed beside
+`home_connections` without rewriting its `user_id`, and a trigger on that table gives every
+connection exactly one owner row on insert, so "a home always has somebody who can administer it"
+is a schema fact rather than a step in one code path. `api/_lib/home/members.js` is the single
+authority on the five roles, the eight capabilities, per-member entity scope, invitations and
+deprovisioning. The change that made the rest fall out is in the store: `getConnection`,
+`listConnections` and `getDecryptedToken` now join `home_members` instead of comparing `user_id`,
+which turned the runtime's `acquire`, every `/api/home/*` route and the chat and MCP tools
+household-aware at once. `resolveHomeAccess` takes the capability its route needs and returns the
+caller's role and scope; `filterGraphForScope` runs before serialization on the single home read
+and on every streamed frame; `call.js` refuses a `confirmed: true` from a role that cannot confirm
+before it even acquires the socket, and refuses an out-of-scope target against the live graph.
+The roster is a panel on every home card (`src/home/members.js`), the invite link opens a real
+page that says what it is for before asking anyone to sign in (`/smart-home/join`), and account
+deletion now revokes household membership and every allowance the account left behind, because a
+session is not the only thing a departing person holds.
+
+**Measured:** `tests/home-roles.test.js`, 125 tests, all passing: the 5x8 matrix asserted twice,
+once against `requireMembership` and once through `resolveHomeAccess` with a real session cookie,
+plus a source-level guard that reads every `resolveHomeAccess` call site under `api/home/` and
+fails if one omits its capability. Proven against a real Home Assistant 2026.9.0 (the
+`scripts/home-test-instance.mjs` lane, 4 areas, 67 entities): an owner reads 4 rooms and 67
+entities with `lock.front_door` present; a guest scoped to the kitchen reads 1 room and 3
+entities from the same endpoint, with `lock.front_door`, `Bedroom` and `Front Door` absent from
+the serialized response entirely. The same account, the same request, the same real door: as a
+`guest`, `lock.unlock` with `confirmed: true` answered 403 `role_forbidden` and the lock stayed
+`locked`; promoted to `member`, the identical call answered 200 and the lock read `unlocked`. All
+three attempts are in `home_action_log` attributed to the acting member, with `guarded`, the
+outcome, and `confirmed_by` null on both refusals. Member removal: three grants before, the two
+authorised by the removed member gone after, the owner's untouched, in one transaction. Invites:
+410 `invite_spent`, 410 `invite_expired`, 410 `invite_revoked`, 404 `invite_not_found`. Seven
+home suites green together (321 tests).
+
+**Deviations:** The order assumed orders 01 to 04 had landed. When this started only order 01's
+migration existed and two agents were writing the connection store concurrently, so the schema,
+the membership module, the endpoints and the tests were built first against the store's published
+contract and the enforcement points were wired once orders 01 to 04 landed mid-session. A
+capability the order's table did not have was added: `manage`, for connection administration
+(re-pairing a relay), held by owner and admin. It is a distinct name from `grant` and `invite`
+even though the same two roles hold all three, because they are powers over different things and
+collapsing them would stop a future role holding one without the others. The order's task 5 named
+`src/home/members.js` for both the endpoint and the UI; the endpoint is
+`api/home/[id]/members.js` with redemption at `api/home/invites/[token].js`, and the UI is
+`src/home/members.js` plus `src/home/join.js`.
+
+**SAML, measured rather than assumed:** group claims are NOT available. `extractSamlIdentity` in
+`api/_lib/saml.js` returns `{issuer, nameID, nameIDFormat, email, name, sessionIndex}` and drops
+every other attribute; there is no group list anywhere below it, and no SLO or SCIM endpoint. So
+no claim mapping was half-wired. A SAML user joins through the same invite path as everybody
+else, and what the work would actually take is written down in `docs/home-households.md`.
+
+**Left open:** Three route files (`api/home/[id]/grants.js`, `log.js`, `macros.js`),
+`api/home/index.js`, `stream.js`, `call.js`, `pair.js` and `docs/start-here.md` carried a
+concurrent agent's in-flight rewrite while this work was in them, so the one-line capability
+declaration in each landed inside their commits rather than a separate one. The drift guard in
+`tests/home-roles.test.js` is what keeps that honest: if any of those declarations is ever
+dropped, the test fails rather than the route quietly admitting a viewer. Four suites were red on
+the full run and none of them are this order's: `tutorials-manifest` (a peer's
+`docs/tutorials/connect-your-home.md` not yet in the manifest), `cron-scheduler-sync` (stale cron
+counts), `deploy-artifacts` (`api/_lib/home-url-guard.js` imports `home-assistant-js-websocket`
+without declaring it in `package.json`), and `audit-guards` (`data/guards.json` drift). Each is
+named here because the next person to run the suite will see them and should not spend the time
+this took to attribute them.
+
+**Commits:** `51b103b1a`, plus the concurrent agents' sweeps that carried the rest of this work
+(`842ec690e`, `f9d09844c`, and the commits that first tracked `api/_lib/home/members.js`,
+`api/home/[id]/members.js`, `api/home/invites/[token].js`, `tests/home-roles.test.js` and
+`api/_lib/migrations/20260903130000_home_members.sql`).
