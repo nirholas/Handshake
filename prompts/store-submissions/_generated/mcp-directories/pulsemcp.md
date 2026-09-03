@@ -7,7 +7,7 @@
 **Contact:** support@three.ws
 **Icon:** https://three.ws/three-ws-mcp-icon.svg
 **Official MCP registry:** https://registry.modelcontextprotocol.io/?q=io.github.nirholas
-**Coverage:** 50 servers — 7 hosted remote (Streamable HTTP) + 43 install-and-run (npm/stdio).
+**Coverage:** 50 servers: 7 hosted remote (Streamable HTTP) + 43 install-and-run (npm/stdio).
 
 > Every field below is derived from `mcp-listing-source.json`. If a value looks stale, fix the manifest or the overlay and re-run the generators — never hand-edit this file.
 
@@ -38,7 +38,7 @@ Because PulseMCP is registry-driven, the highest-leverage action is keeping the 
 
 ## Full catalog (auto-ingested — verify these appear after each registry publish)
 
-### All 7 hosted remote servers (Streamable HTTP — connect by URL)
+### All 7 hosted remote servers (Streamable HTTP, connect by URL)
 
 | Name (registry) | Title | URL | Category |
 |---|---|---|---|
@@ -50,7 +50,7 @@ Because PulseMCP is registry-driven, the highest-leverage action is keeping the 
 | `io.github.nirholas/threews-pumpfun` | three.ws pump.fun MCP | https://three.ws/api/pump-fun-mcp | market-data |
 | `io.github.nirholas/threews-x402-bazaar` | three.ws x402 Bazaar | https://three.ws/api/mcp-bazaar | agent-economy |
 
-### All 43 install-and-run servers (stdio — `npx`)
+### All 43 install-and-run servers (stdio, `npx`)
 
 | Name (registry) | Title | Connect | Category |
 |---|---|---|---|

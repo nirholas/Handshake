@@ -7,7 +7,7 @@
 **Contact:** support@three.ws
 **Icon:** https://three.ws/three-ws-mcp-icon.svg
 **Official MCP registry:** https://registry.modelcontextprotocol.io/?q=io.github.nirholas
-**Coverage:** 50 servers — 7 hosted remote (Streamable HTTP) + 43 install-and-run (npm/stdio).
+**Coverage:** 50 servers: 7 hosted remote (Streamable HTTP) + 43 install-and-run (npm/stdio).
 
 > Every field below is derived from `mcp-listing-source.json`. If a value looks stale, fix the manifest or the overlay and re-run the generators — never hand-edit this file.
 
@@ -15,7 +15,7 @@
 
 LobeHub runs **two** systems — MCP servers go through the **MCP Marketplace**, not the legacy plugin index:
 
-**A. MCP Marketplace — https://lobehub.com/mcp** (the correct path for all 50 servers):
+**A. MCP Marketplace, https://lobehub.com/mcp** (the correct path for all 50 servers):
 - **Primary:** the **Submit** modal on https://lobehub.com/mcp (login + Cloudflare Turnstile).
 - **Fallback (modal is flaky):** open a `[Request] Add <server> to the MCP marketplace` issue on https://github.com/lobehub/lobehub with: GitHub repo URL, publisher, license, **official MCP Registry entry ID** (e.g. `io.github.nirholas/three.ws` + version), transport, endpoint URL, auth scheme, and tool count.
 
@@ -40,15 +40,15 @@ LobeHub runs **two** systems — MCP servers go through the **MCP Marketplace**,
 
 ## Registry entry IDs to cite in the LobeHub submission
 
-- **three.ws Avatars & Agents** — `io.github.nirholas/three.ws@1.0.1` · transport: streamable-http · endpoint https://three.ws/api/mcp · tags: 3d, avatars, gltf, solana, agents
-- **three.ws 3D Studio** — `io.github.nirholas/threews-3d-studio@1.0.1` · transport: streamable-http · endpoint https://three.ws/api/mcp-3d · tags: text-to-3d, image-to-3d, rigging, glb, x402
-- **three.ws 3D Studio (free)** — `io.github.nirholas/threews-3d-studio-free@1.0.1` · transport: streamable-http · endpoint https://three.ws/api/mcp-studio · tags: text-to-3d, free, avatars, rigging, nvidia-nim
-- **three.ws Agent Wallet** — `io.github.nirholas/threews-agent@1.0.0` · transport: streamable-http · endpoint https://three.ws/api/mcp-agent · tags: x402, wallet, usdc, agent-payments, spend-caps
-- **three.ws x402 Bazaar** — `io.github.nirholas/threews-x402-bazaar@1.0.2` · transport: streamable-http · endpoint https://three.ws/api/mcp-bazaar · tags: x402, discovery, marketplace, agents, usdc
-- **x402 Wallet** — `io.github.nirholas/x402-mcp@0.2.2` · transport: stdio · stdio npx -y @three-ws/x402-mcp · tags: x402, wallet, usdc, self-custodial, payments
-- **$THREE Token** — `io.github.nirholas/three-token-mcp@1.1.2` · transport: stdio · stdio npx -y @three-ws/three-token-mcp · tags: three, solana, burn, token, defi
-- **pump.fun Solana Data** — `io.github.nirholas/pumpfun-solana-mcp@0.2.5` · transport: stdio · stdio npx -y @three-ws/pumpfun-mcp · tags: pumpfun, solana, sns, analysis, free
-- **IBM Granite x402 Remote** — `io.github.nirholas/ibm-x402-mcp-remote@1.0.0` · transport: streamable-http · endpoint https://three.ws/api/ibm-mcp · tags: ibm, granite, x402, usdc, llm
+- **three.ws Avatars & Agents**: `io.github.nirholas/three.ws@1.0.1` · transport: streamable-http · endpoint https://three.ws/api/mcp · tags: 3d, avatars, gltf, solana, agents
+- **three.ws 3D Studio**: `io.github.nirholas/threews-3d-studio@1.0.1` · transport: streamable-http · endpoint https://three.ws/api/mcp-3d · tags: text-to-3d, image-to-3d, rigging, glb, x402
+- **three.ws 3D Studio (free)**: `io.github.nirholas/threews-3d-studio-free@1.0.1` · transport: streamable-http · endpoint https://three.ws/api/mcp-studio · tags: text-to-3d, free, avatars, rigging, nvidia-nim
+- **three.ws Agent Wallet**: `io.github.nirholas/threews-agent@1.0.0` · transport: streamable-http · endpoint https://three.ws/api/mcp-agent · tags: x402, wallet, usdc, agent-payments, spend-caps
+- **three.ws x402 Bazaar**: `io.github.nirholas/threews-x402-bazaar@1.0.2` · transport: streamable-http · endpoint https://three.ws/api/mcp-bazaar · tags: x402, discovery, marketplace, agents, usdc
+- **x402 Wallet**: `io.github.nirholas/x402-mcp@0.2.2` · transport: stdio · stdio npx -y @three-ws/x402-mcp · tags: x402, wallet, usdc, self-custodial, payments
+- **$THREE Token**: `io.github.nirholas/three-token-mcp@1.1.2` · transport: stdio · stdio npx -y @three-ws/three-token-mcp · tags: three, solana, burn, token, defi
+- **pump.fun Solana Data**: `io.github.nirholas/pumpfun-solana-mcp@0.2.5` · transport: stdio · stdio npx -y @three-ws/pumpfun-mcp · tags: pumpfun, solana, sns, analysis, free
+- **IBM Granite x402 Remote**: `io.github.nirholas/ibm-x402-mcp-remote@1.0.0` · transport: streamable-http · endpoint https://three.ws/api/ibm-mcp · tags: ibm, granite, x402, usdc, llm
 
 ## Legacy LobeChat plugin manifest (surface B)
 - Hosted at: https://three.ws/lobehub/plugin.json (source: `public/lobehub/plugin.json`)
@@ -56,7 +56,7 @@ LobeHub runs **two** systems — MCP servers go through the **MCP Marketplace**,
 
 ## Full MCP catalog to submit
 
-### All 7 hosted remote servers (Streamable HTTP — connect by URL)
+### All 7 hosted remote servers (Streamable HTTP, connect by URL)
 
 | Name (registry) | Title | URL | Category |
 |---|---|---|---|
@@ -68,7 +68,7 @@ LobeHub runs **two** systems — MCP servers go through the **MCP Marketplace**,
 | `io.github.nirholas/threews-pumpfun` | three.ws pump.fun MCP | https://three.ws/api/pump-fun-mcp | market-data |
 | `io.github.nirholas/threews-x402-bazaar` | three.ws x402 Bazaar | https://three.ws/api/mcp-bazaar | agent-economy |
 
-### All 43 install-and-run servers (stdio — `npx`)
+### All 43 install-and-run servers (stdio, `npx`)
 
 | Name (registry) | Title | Connect | Category |
 |---|---|---|---|

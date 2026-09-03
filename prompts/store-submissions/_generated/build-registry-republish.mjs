@@ -64,7 +64,7 @@ const rows = files.map((f) => {
 	const rel = f.replace(ROOT + '/', '');
 	const rv = latest[j.name];
 	const status = !rv ? 'NEW' : cmp(j.version, rv) > 0 ? 'STALE' : 'OK';
-	return { rel, name: j.name, ver: j.version, rv: rv || '—', status };
+	return { rel, name: j.name, ver: j.version, rv: rv || '(none)', status };
 });
 const todo = rows.filter((r) => r.status !== 'OK');
 const ok = rows.filter((r) => r.status === 'OK').length;
@@ -74,7 +74,7 @@ const verify = "node scripts/publish-mcp-servers.mjs --dry-run";
 
 let sh = '#!/usr/bin/env bash\n';
 sh += `# Republish stale/new three.ws MCP servers to the official MCP registry.\n`;
-sh += `# GENERATED ${DATE} by build-registry-republish.mjs — regenerate after any manifest bump.\n`;
+sh += `# GENERATED ${DATE} by build-registry-republish.mjs. Regenerate after any manifest bump.\n`;
 sh += `# DO NOT run unattended. A human must be logged in and review each publish.\n`;
 sh += `# ${todo.length} servers need a republish; ${ok} are already current.\n`;
 sh += 'set -euo pipefail\n';
