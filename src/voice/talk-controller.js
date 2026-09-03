@@ -78,6 +78,12 @@ export class TalkController {
 		this._currentAudioEl = null;
 		this._currentTap = null;
 		this._driver = null;
+		// Playback gain for the spoken reply (0..1). Persists across turns so a
+		// "quieter" instruction survives the next thing the avatar says.
+		this._volume = 1;
+		// Latched once /api/tts/edge answers 401/403: it needs a session, and an
+		// anonymous listener should not pay a wasted round trip on every turn.
+		this._edgeUnavailable = false;
 		this._voicePromise = null; // resolves to { provider, voiceId } | null
 
 		// Speech-to-text routing. 'riva' = server-side NVIDIA Riva (cross-browser),
@@ -466,6 +472,36 @@ export class TalkController {
 	}
 
 	/**
+	 * Cut the reply off mid-sentence and return to rest, WITHOUT tearing the
+	 * session down the way stop() does. This is barge-in: the driver says
+	 * "stop talking", the voice ends, and the very next turn still works.
+	 */
+	hush() {
+		this._stopPlayback();
+		this._driver?.dispose();
+		this._driver = null;
+		this._setState('idle');
+	}
+
+	/**
+	 * Playback volume for spoken replies, 0..1. Applies to the line currently
+	 * playing and to every line after it.
+	 * @returns {number} the clamped value actually in force.
+	 */
+	setVolume(value) {
+		const next = Math.min(1, Math.max(0, Number(value)));
+		if (!Number.isFinite(next)) return this._volume;
+		this._volume = next;
+		if (this._currentAudioEl) this._currentAudioEl.volume = next;
+		return next;
+	}
+
+	/** Current playback volume, 0..1. */
+	get volume() {
+		return this._volume;
+	}
+
+	/**
 	 * Invalidate the cached voice lookup so the next turn re-checks the agent
 	 * for a (possibly newly cloned) voice_id. Call after the user finishes a
 	 * voice-clone flow inside the overlay.
@@ -632,11 +668,12 @@ export class TalkController {
 		const voice = await this._resolveVoice();
 		const blob = voice
 			? await this._fetchTtsEleven(text, voice.voiceId)
-			: await this._fetchTtsEdge(text);
+			: await this._fetchTtsFallback(text);
 
 		const url = URL.createObjectURL(blob);
 		const audio = new Audio();
 		audio.crossOrigin = 'anonymous';
+		audio.volume = this._volume;
 		audio.src = url;
 		this._currentAudioEl = audio;
 
@@ -712,11 +749,49 @@ export class TalkController {
 			}),
 		});
 		if (!r.ok) {
-			// Fall back to Edge so the talk loop still completes if ElevenLabs
-			// is rate-limited or down.
-			log.warn('[talk] eleven TTS failed, falling back to edge');
-			return this._fetchTtsEdge(text);
+			// Fall through to the free lanes so the talk loop still completes
+			// if ElevenLabs is rate-limited or down.
+			log.warn('[talk] eleven TTS failed, falling back to the free lanes');
+			return this._fetchTtsFallback(text);
 		}
+		return r.blob();
+	}
+
+	/**
+	 * Voice for an avatar with no cloned voice of its own.
+	 *
+	 * Edge Neural leads when the session can reach it: it selects a voice per
+	 * language and body type, which the generic lane cannot. But /api/tts/edge
+	 * requires a signed-in session, so an anonymous listener (a public avatar
+	 * page, an embed, the car surface) used to get a working reply with no
+	 * voice at all. The free NVIDIA Magpie lane on /api/tts/speak has no such
+	 * gate, so it backs the chain up rather than leaving silence.
+	 */
+	async _fetchTtsFallback(text) {
+		if (!this._edgeUnavailable) {
+			try {
+				return await this._fetchTtsEdge(text);
+			} catch (err) {
+				const message = err?.message || '';
+				if (/\((401|403)\)/.test(message)) this._edgeUnavailable = true;
+				log.warn('[talk] edge TTS unavailable, using the free speak lane:', message);
+			}
+		}
+		return this._fetchTtsSpeak(text);
+	}
+
+	async _fetchTtsSpeak(text) {
+		const r = await fetch('/api/tts/speak', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			credentials: 'include',
+			body: JSON.stringify({
+				text: text.slice(0, 1500),
+				language: this.language,
+				format: 'wav',
+			}),
+		});
+		if (!r.ok) throw new Error(`TTS failed (${r.status})`);
 		return r.blob();
 	}
 

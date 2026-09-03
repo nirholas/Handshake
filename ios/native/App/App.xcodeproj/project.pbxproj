@@ -17,6 +17,8 @@
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9582B6822FE993A50072D4E8 /* SceneDelegate.swift */; };
+		C4A11E0130A1000200000000 /* CarPlaySceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A11E0130A1000100000000 /* CarPlaySceneDelegate.swift */; };
+		C4A11E0130A1000400000000 /* DriveLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A11E0130A1000300000000 /* DriveLink.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -31,6 +33,8 @@
 		504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
 		9582B6822FE993A50072D4E8 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		C4A11E0130A1000100000000 /* CarPlaySceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarPlaySceneDelegate.swift; sourceTree = "<group>"; };
+		C4A11E0130A1000300000000 /* DriveLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriveLink.swift; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
@@ -67,6 +71,8 @@
 			isa = PBXGroup;
 			children = (
 				9582B6822FE993A50072D4E8 /* SceneDelegate.swift */,
+				C4A11E0130A1000100000000 /* CarPlaySceneDelegate.swift */,
+				C4A11E0130A1000300000000 /* DriveLink.swift */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
 				7A31B0C14E5F41A290C30011 /* MainViewController.swift */,
@@ -164,6 +170,8 @@
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 				7A31B0C14E5F41A290C30012 /* MainViewController.swift in Sources */,
 				9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */,
+				C4A11E0130A1000200000000 /* CarPlaySceneDelegate.swift in Sources */,
+				C4A11E0130A1000400000000 /* DriveLink.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

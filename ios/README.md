@@ -23,11 +23,26 @@ ios/
 ├── native/App/             # the generated Xcode project (committed)
 │   ├── App.xcodeproj
 │   ├── App/MainViewController.swift  # swipe-back, dark chrome, edge-to-edge insets
-│   ├── App/Info.plist                # usage strings, URL scheme, orientations
-│   ├── App/App.entitlements          # associated domains + APNs
+│   ├── App/CarPlaySceneDelegate.swift # the car screen: templates + voice control
+│   ├── App/DriveLink.swift           # CarPlay <-> /drive channel + audio session
+│   ├── App/Info.plist                # usage strings, URL scheme, orientations, scenes
+│   ├── App/App.entitlements          # associated domains + APNs + CarPlay
 │   └── CapApp-SPM/                   # Swift Package Manager plugin graph
-└── docs/                   # SUBMISSION.md, REVIEW-RISK.md, ASSETS.md
+└── docs/                   # SUBMISSION.md, REVIEW-RISK.md, ASSETS.md, CARPLAY.md
 ```
+
+## CarPlay
+
+The app carries a second scene for **three.ws Drive**, the agent in the car. Apple's
+voice-based conversational category grants templates and an audio session and no drawing
+surface, so the car screen shows four controls and the Voice Control template while the
+phone's WebView runs `/drive` with the actual agent in it. The two are joined by the
+`threeWsDrive` WebKit message channel.
+
+It is inert without the `com.apple.developer.carplay-voice-based-conversation` entitlement,
+which Apple grants per app on request, so nothing about the phone app changes before then.
+Read [`docs/CARPLAY.md`](docs/CARPLAY.md) before touching any of it, and
+[`../docs/carplay.md`](../docs/carplay.md) for why the architecture is shaped this way.
 
 ## Why the WebView loads the live site
 

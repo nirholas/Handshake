@@ -36,6 +36,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication,
                      configurationForConnecting connectingSceneSession: UISceneSession,
                      options: UIScene.ConnectionOptions) -> UISceneConfiguration {
+        // CarPlay connects as its own scene with its own delegate. Without this
+        // branch the car screen would try to build the phone's WebView scene,
+        // which CarPlay refuses, and three.ws Drive would simply never appear.
+        // See ios/docs/CARPLAY.md and CarPlaySceneDelegate.swift.
+        if connectingSceneSession.role == UISceneSession.Role.carTemplateApplication {
+            let config = UISceneConfiguration(name: "CarPlay Configuration",
+                                              sessionRole: connectingSceneSession.role)
+            config.delegateClass = CarPlaySceneDelegate.self
+            return config
+        }
+
         let config = UISceneConfiguration(name: "Default Configuration",
                                           sessionRole: connectingSceneSession.role)
         config.delegateClass = SceneDelegate.self

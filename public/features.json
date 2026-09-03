@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-02T21:37:37.885Z",
+	"generated_at": "2026-09-03T01:46:12.050Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -170,6 +170,16 @@
 					"title": "Coin Autopilot",
 					"description": "A hands-off token cockpit. Set the rules (buys, sells, and guardrails) and let your agent run the coin autonomously.",
 					"added": "2026-07-01",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": true
+				},
+				{
+					"path": "/drive",
+					"title": "three.ws Drive",
+					"description": "Your 3D agent in the car: voice-first, glanceable, and built to the rules CarPlay and Android Auto enforce. Runs on a head unit, a phone in the cradle, or inside the native car shell.",
+					"added": "2026-09-03",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -3202,6 +3212,16 @@
 					"title": "Docs · three.ws Home",
 					"description": "How a three.ws agent connects to a real house: the open-source smart-home landscape measured and shortlisted, why Home Assistant owns the device layer, the two channels the @three-ws/home-bridge package speaks, the physical-action gate that never lets an unlock through unasked, and the road from here to voice in every room.",
 					"added": "2026-09-02",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/carplay",
+					"title": "Docs · three.ws Drive",
+					"description": "How a three.ws agent rides in the car: the CarPlay entitlement categories measured, why Apple's voice-based conversational category is the one that fits and why it grants no drawing surface, the open-source in-car projects worth adopting and the copyleft ones that are not, and how the /drive surface, the native CarPlay scene, and an open head unit share one implementation.",
+					"added": "2026-09-03",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

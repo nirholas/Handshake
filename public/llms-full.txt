@@ -109,6 +109,12 @@ URL: https://three.ws/autopilot
 
 A hands-off token cockpit. Set the rules (buys, sells, and guardrails) and let your agent run the coin autonomously.
 
+### three.ws Drive
+
+URL: https://three.ws/drive
+
+Your 3D agent in the car: voice-first, glanceable, and built to the rules CarPlay and Android Auto enforce. Runs on a head unit, a phone in the cradle, or inside the native car shell.
+
 ### AgenC · Embodied
 
 URL: https://three.ws/agenc/embodied
@@ -1952,6 +1958,12 @@ The standalone avatar viewer you paste into any site as a one-line iframe: its ?
 URL: https://three.ws/docs/smart-home
 
 How a three.ws agent connects to a real house: the open-source smart-home landscape measured and shortlisted, why Home Assistant owns the device layer, the two channels the @three-ws/home-bridge package speaks, the physical-action gate that never lets an unlock through unasked, and the road from here to voice in every room.
+
+### Docs · three.ws Drive
+
+URL: https://three.ws/docs/carplay
+
+How a three.ws agent rides in the car: the CarPlay entitlement categories measured, why Apple's voice-based conversational category is the one that fits and why it grants no drawing surface, the open-source in-car projects worth adopting and the copyleft ones that are not, and how the /drive surface, the native CarPlay scene, and an open head unit share one implementation.
 
 ### Docs · Terminal avatar
 

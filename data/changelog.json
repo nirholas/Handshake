@@ -25835,6 +25835,16 @@
 				"improvement"
 			],
 			"link": "/materialize"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "three.ws Drive: your agent, in the car",
+			"summary": "There is a new page at /drive built for a car screen instead of a desk. Your agent is on it full size, you hold one big button and talk, and it answers out loud in its own voice with its face moving. It shows you one line of what it said rather than a wall of chat, because you are driving. It starts dark, because a bright panel at night is glare, and it will switch to a day palette on one press or one sentence. The keyboard stays out of the way while you are moving: if your browser can tell how fast you are going, text entry locks itself the moment you pull away and comes back when you have properly stopped. A few things you say never leave the car at all, so \"repeat that\", \"stop talking\", \"louder\" and \"night mode\" happen instantly, while \"stop at the next charger\" still goes to your agent like any other question. It works today on a head unit browser, on a phone in a cradle, and on Android Automotive. The Apple CarPlay version is built and waiting on Apple's approval for voice assistants in the car. One thing this fixed for everyone: an avatar used to answer in silence if you were not signed in, and now it always has a voice.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/drive"
 		}
 	]
 }

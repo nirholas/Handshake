@@ -24,5 +24,16 @@
 	-->
 	<key>aps-environment</key>
 	<string>development</string>
+
+	<!--
+		CarPlay, voice-based conversational category (iOS 26.4 and later). This
+		is what puts three.ws Drive on the car screen. Apple grants it per app
+		on request (https://developer.apple.com/carplay/), and a build signed
+		without the grant simply never sees a CarPlay scene: the phone app is
+		unaffected either way, so this key is safe to carry before approval
+		lands. See ios/docs/CARPLAY.md for the request and the review notes.
+	-->
+	<key>com.apple.developer.carplay-voice-based-conversation</key>
+	<true/>
 </dict>
 </plist>

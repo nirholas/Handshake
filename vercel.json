@@ -203,6 +203,13 @@
 			"continue": true
 		},
 		{
+			"src": "/drive/?$",
+			"headers": {
+				"permissions-policy": "accelerometer=(self), autoplay=(self), camera=(), display-capture=(), encrypted-media=(self), geolocation=(self), gyroscope=(self), magnetometer=(self), microphone=(self), midi=(), payment=(), serial=(), usb=(), xr-spatial-tracking=()"
+			},
+			"continue": true
+		},
+		{
 			"src": "/world-lines/?$",
 			"headers": {
 				"permissions-policy": "accelerometer=(self), autoplay=(self), camera=(self), display-capture=(), encrypted-media=(self), geolocation=(self), gyroscope=(self), magnetometer=(self), microphone=(), midi=(), payment=(self), serial=(), usb=(), xr-spatial-tracking=(self)"
@@ -5462,6 +5469,14 @@
 		{
 			"src": "/concierge/",
 			"dest": "/concierge.html"
+		},
+		{
+			"src": "/drive",
+			"dest": "/drive.html"
+		},
+		{
+			"src": "/drive/",
+			"dest": "/drive.html"
 		},
 		{
 			"src": "/tour-builder",

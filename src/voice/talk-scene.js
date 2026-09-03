@@ -203,6 +203,25 @@ export class TalkScene {
 		return this._emotes;
 	}
 
+	/**
+	 * Clip names baked into the loaded GLB. Empty means the model shipped with
+	 * no animation of its own and needs a retargeted clip from the shared
+	 * library, or it stands in bind pose.
+	 * @returns {string[]}
+	 */
+	get clipNames() {
+		return this._clips.map((c) => c.name);
+	}
+
+	/**
+	 * Name of the GLB clip currently playing on the model's own mixer, or null.
+	 * A caller can read this to decide whether the rig still needs driving.
+	 * @returns {string|null}
+	 */
+	get playingClip() {
+		return this._currentAction?.getClip?.()?.name || null;
+	}
+
 	/** Convenience: play an external emote by name. */
 	playEmote(name) {
 		return this._emotes?.play(name) ?? Promise.resolve(false);

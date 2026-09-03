@@ -97,8 +97,14 @@
 
 	<key>UIApplicationSceneManifest</key>
 	<dict>
+		<!--
+			CarPlay is a SECOND scene running beside the phone's, so multiple
+			scenes have to be allowed. With this false the car screen and the
+			phone cannot be live at the same time and three.ws Drive never
+			connects. See CarPlaySceneDelegate.swift and ios/docs/CARPLAY.md.
+		-->
 		<key>UIApplicationSupportsMultipleScenes</key>
-		<false/>
+		<true/>
 		<key>UISceneConfigurations</key>
 		<dict>
 			<key>UIWindowSceneSessionRoleApplication</key>
@@ -110,6 +116,15 @@
 					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
 					<key>UISceneStoryboardFile</key>
 					<string>Main</string>
+				</dict>
+			</array>
+			<key>CPTemplateApplicationSceneSessionRoleApplication</key>
+			<array>
+				<dict>
+					<key>UISceneConfigurationName</key>
+					<string>CarPlay Configuration</string>
+					<key>UISceneDelegateClassName</key>
+					<string>$(PRODUCT_MODULE_NAME).CarPlaySceneDelegate</string>
 				</dict>
 			</array>
 		</dict>

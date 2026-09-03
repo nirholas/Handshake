@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="en" data-no-atlas>
+	<head>
+		<style>/* three.ws hidden-guard: make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="theme-color" content="#000000" />
+		<title>three.ws Drive · your 3D agent in the car</title>
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/tokens.css" />
+		<meta
+			name="description"
+			content="three.ws Drive: a voice-first 3D agent built for the car. Runs on CarPlay, Android Auto, a head unit, or a phone in the cradle."
+		/>
+		<link rel="canonical" href="https://three.ws/drive" />
+
+		<script type="module" src="/src/drive/index.js"></script>
+
+		<style>
+			:root {
+				/* Cockpit scale. The surface preset overrides it on <html>: a 800x480
+				   head unit needs bigger glyphs per pixel than a 1920x720 dash. */
+				--dr-scale: 1;
+				--dr-gutter: calc(var(--space-lg) * var(--dr-scale));
+				--dr-talk-size: calc(132px * var(--dr-scale));
+				/* Night is the default: car displays run dark and a bright panel at
+				   speed is a glare hazard. Day mode swaps these three. */
+				--dr-ground: #05070b;
+				--dr-veil: rgba(5, 7, 11, 0.72);
+				--dr-ink: #ffffff;
+				--dr-ink-dim: rgba(255, 255, 255, 0.62);
+				--dr-line: rgba(255, 255, 255, 0.12);
+				--dr-fill: rgba(255, 255, 255, 0.07);
+				--dr-fill-hi: rgba(255, 255, 255, 0.14);
+				--dr-live: var(--success);
+				--dr-busy: var(--warn);
+				--dr-fault: var(--danger);
+			}
+			:root[data-drive-light='1'] {
+				--dr-ground: #eef1f5;
+				--dr-veil: rgba(238, 241, 245, 0.74);
+				--dr-ink: #0b0e13;
+				--dr-ink-dim: rgba(11, 14, 19, 0.62);
+				--dr-line: rgba(11, 14, 19, 0.16);
+				--dr-fill: rgba(11, 14, 19, 0.06);
+				--dr-fill-hi: rgba(11, 14, 19, 0.13);
+				--dr-live: #15803d;
+				--dr-busy: #a16207;
+				--dr-fault: #b91c1c;
+			}
+			*, *::before, *::after { box-sizing: border-box; }
+			html, body {
+				margin: 0;
+				padding: 0;
+				height: 100%;
+				overflow: hidden;
+				background: var(--dr-ground);
+				color: var(--dr-ink);
+				font-family: var(--font-body, 'Inter', system-ui, sans-serif);
+				-webkit-font-smoothing: antialiased;
+				overscroll-behavior: none;
+				touch-action: manipulation;
+				-webkit-tap-highlight-color: transparent;
+			}
+			body { user-select: none; }
+
+			.dr {
+				position: fixed;
+				inset: 0;
+				display: grid;
+				grid-template-rows: auto 1fr auto;
+				padding:
+					max(var(--dr-gutter), env(safe-area-inset-top))
+					max(var(--dr-gutter), env(safe-area-inset-right))
+					max(var(--dr-gutter), env(safe-area-inset-bottom))
+					max(var(--dr-gutter), env(safe-area-inset-left));
+				gap: calc(var(--space-md) * var(--dr-scale));
+			}
+
+			/* The agent fills the panel behind everything; the chrome floats over it.
+			   In landscape the render area is pushed right of centre so the spoken
+			   line gets a clean column of its own instead of sitting on a chest. */
+			.dr-stage { position: fixed; inset: 0; z-index: 0; }
+			.dr-stage canvas { display: block; }
+			@media (orientation: landscape) {
+				.dr-stage { left: 16%; right: -4%; }
+				/* Keep the spoken line inside its own column instead of running it
+				   across the agent standing to the right of it. */
+				.dr-mid { max-width: min(62ch, 62%); }
+			}
+			/* The scrim is composed around the agent, not over it: a light wash
+			   under the top rail, a heavy one under the deck, and in landscape a
+			   left-hand gradient that carries the text column. */
+			.dr::after {
+				content: '';
+				position: fixed;
+				inset: 0;
+				z-index: 0;
+				pointer-events: none;
+				background:
+					linear-gradient(to bottom, var(--dr-veil) 0%, transparent 14%, transparent 46%, var(--dr-veil) 96%);
+			}
+			@media (orientation: landscape) {
+				.dr::after {
+					background:
+						linear-gradient(to right, var(--dr-veil) 0%, color-mix(in srgb, var(--dr-veil) 62%, transparent) 30%, transparent 54%),
+						linear-gradient(to bottom, var(--dr-veil) 0%, transparent 14%, transparent 44%, var(--dr-veil) 92%);
+				}
+			}
+			.dr > *:not(.dr-stage) { position: relative; z-index: 1; }
+
+			/* ── Top rail ─────────────────────────────────────────────────── */
+			.dr-top {
+				display: flex;
+				align-items: center;
+				gap: calc(var(--space-sm) * var(--dr-scale));
+				min-height: 0;
+			}
+			.dr-id { display: flex; align-items: center; gap: calc(var(--space-sm) * var(--dr-scale)); min-width: 0; }
+			.dr-dot {
+				width: calc(10px * var(--dr-scale));
+				height: calc(10px * var(--dr-scale));
+				border-radius: var(--radius-pill);
+				background: var(--dr-ink-dim);
+				flex: none;
+				transition: background 180ms ease, box-shadow 180ms ease;
+			}
+			.dr[data-state='listening'] .dr-dot { background: var(--dr-live); box-shadow: 0 0 calc(14px * var(--dr-scale)) var(--dr-live); }
+			.dr[data-state='transcribing'] .dr-dot,
+			.dr[data-state='thinking'] .dr-dot { background: var(--dr-busy); box-shadow: 0 0 calc(14px * var(--dr-scale)) var(--dr-busy); }
+			.dr[data-state='speaking'] .dr-dot { background: var(--dr-ink); box-shadow: 0 0 calc(14px * var(--dr-scale)) var(--dr-line); }
+			.dr-name {
+				font-family: var(--font-display, 'Space Grotesk', system-ui, sans-serif);
+				font-size: calc(1.05rem * var(--dr-scale));
+				font-weight: 600;
+				letter-spacing: -0.01em;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			.dr-state {
+				font-size: calc(0.82rem * var(--dr-scale));
+				color: var(--dr-ink-dim);
+				white-space: nowrap;
+				font-variant-numeric: tabular-nums;
+			}
+			.dr-top-spacer { flex: 1 1 auto; }
+
+			.dr-pill {
+				appearance: none;
+				display: inline-flex;
+				align-items: center;
+				gap: calc(var(--space-xs) * var(--dr-scale));
+				height: calc(44px * var(--dr-scale));
+				padding: 0 calc(var(--space-md) * var(--dr-scale));
+				border-radius: var(--radius-pill);
+				border: 1px solid var(--dr-line);
+				background: color-mix(in srgb, var(--dr-ground) 74%, var(--dr-fill));
+				backdrop-filter: blur(14px);
+				color: var(--dr-ink);
+				font: inherit;
+				font-size: calc(0.85rem * var(--dr-scale));
+				font-weight: 600;
+				cursor: pointer;
+				white-space: nowrap;
+				transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+			}
+			.dr-pill:hover { background: var(--dr-fill-hi); }
+			.dr-pill:active { transform: scale(0.97); }
+			.dr-pill:focus-visible { outline: 2px solid var(--dr-ink); outline-offset: 3px; }
+			.dr-pill[aria-pressed='true'] { background: var(--dr-fill-hi); border-color: var(--dr-line); }
+
+			/* ── The spoken line ──────────────────────────────────────────── */
+			.dr-mid {
+				display: flex;
+				flex-direction: column;
+				justify-content: flex-end;
+				min-height: 0;
+				gap: calc(var(--space-sm) * var(--dr-scale));
+			}
+			.dr-heard {
+				font-size: calc(0.95rem * var(--dr-scale));
+				color: var(--dr-ink-dim);
+				min-height: calc(1.3em);
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+				opacity: 0;
+				transition: opacity 200ms ease;
+			}
+			.dr-heard.is-on { opacity: 1; }
+			.dr-said {
+				font-family: var(--font-display, 'Space Grotesk', system-ui, sans-serif);
+				font-size: clamp(1.35rem, calc(3.1vw * var(--dr-scale)), calc(2.6rem * var(--dr-scale)));
+				line-height: 1.25;
+				font-weight: 600;
+				letter-spacing: -0.015em;
+				margin: 0;
+				/* Two lines is the glanceable ceiling; the rest is spoken, not read. */
+				display: -webkit-box;
+				-webkit-line-clamp: 2;
+				line-clamp: 2;
+				-webkit-box-orient: vertical;
+				overflow: hidden;
+				text-wrap: balance;
+				min-height: 2.5em;
+			}
+			.dr-said:empty::after {
+				content: attr(data-placeholder);
+				color: var(--dr-ink-dim);
+				font-weight: 500;
+			}
+			.dr-fault {
+				display: flex;
+				align-items: center;
+				gap: calc(var(--space-sm) * var(--dr-scale));
+				font-size: calc(0.9rem * var(--dr-scale));
+				color: var(--dr-fault);
+			}
+			.dr-fault-fix {
+				appearance: none;
+				border: 0;
+				background: none;
+				color: inherit;
+				font: inherit;
+				font-weight: 700;
+				text-decoration: underline;
+				text-underline-offset: 3px;
+				cursor: pointer;
+				padding: calc(var(--space-xs) * var(--dr-scale));
+			}
+			.dr-fault-fix:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+
+			/* ── Bottom deck ──────────────────────────────────────────────── */
+			.dr-deck {
+				display: flex;
+				align-items: center;
+				gap: calc(var(--space-md) * var(--dr-scale));
+			}
+			.dr-acts {
+				display: flex;
+				gap: calc(var(--space-sm) * var(--dr-scale));
+				flex: 1 1 auto;
+				min-width: 0;
+			}
+			.dr-act {
+				appearance: none;
+				flex: 1 1 0;
+				min-width: 0;
+				height: calc(72px * var(--dr-scale));
+				border-radius: calc(var(--radius-lg) * var(--dr-scale));
+				border: 1px solid var(--dr-line);
+				background: color-mix(in srgb, var(--dr-ground) 74%, var(--dr-fill));
+				backdrop-filter: blur(14px);
+				color: var(--dr-ink);
+				font: inherit;
+				font-size: calc(0.95rem * var(--dr-scale));
+				font-weight: 600;
+				cursor: pointer;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: calc(var(--space-xs) * var(--dr-scale));
+				overflow: hidden;
+				white-space: nowrap;
+				text-overflow: ellipsis;
+				transition: background 140ms ease, opacity 140ms ease, transform 140ms ease;
+			}
+			.dr-act:hover:not(:disabled) { background: var(--dr-fill-hi); }
+			.dr-act:active:not(:disabled) { transform: scale(0.97); }
+			.dr-act:focus-visible { outline: 2px solid var(--dr-ink); outline-offset: 3px; }
+			.dr-act:disabled { opacity: 0.32; cursor: default; }
+
+			.dr-talk {
+				appearance: none;
+				flex: none;
+				width: var(--dr-talk-size);
+				height: var(--dr-talk-size);
+				border-radius: var(--radius-pill);
+				border: 2px solid var(--dr-line);
+				background: color-mix(in srgb, var(--dr-ground) 66%, var(--dr-fill-hi));
+				backdrop-filter: blur(16px);
+				color: var(--dr-ink);
+				font: inherit;
+				font-size: calc(1rem * var(--dr-scale));
+				font-weight: 700;
+				letter-spacing: 0.02em;
+				cursor: pointer;
+				position: relative;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				transition: transform 140ms ease, border-color 180ms ease, background 180ms ease;
+			}
+			.dr-talk:focus-visible { outline: 3px solid var(--dr-ink); outline-offset: 4px; }
+			.dr-talk:active { transform: scale(0.96); }
+			.dr-talk::before {
+				/* Live mic energy, driven from the real captured level. */
+				content: '';
+				position: absolute;
+				inset: calc(-6px * var(--dr-scale));
+				border-radius: var(--radius-pill);
+				border: 2px solid var(--dr-live);
+				opacity: calc(0.25 + var(--dr-mic, 0) * 0.75);
+				transform: scale(calc(1 + var(--dr-mic, 0) * 0.09));
+				transition: transform 90ms linear, opacity 90ms linear;
+				pointer-events: none;
+			}
+			.dr[data-state='idle'] .dr-talk::before,
+			.dr[data-state='thinking'] .dr-talk::before,
+			.dr[data-state='speaking'] .dr-talk::before { opacity: 0; }
+			.dr[data-state='listening'] .dr-talk { border-color: var(--dr-live); background: var(--dr-fill-hi); }
+			.dr[data-state='speaking'] .dr-talk { border-color: var(--dr-ink); }
+
+			/* ── Overlays: picker, keyboard, permission ───────────────────── */
+			.dr-sheet {
+				position: fixed;
+				inset: 0;
+				z-index: 5;
+				display: flex;
+				flex-direction: column;
+				background: color-mix(in srgb, var(--dr-ground) 92%, transparent);
+				backdrop-filter: blur(18px);
+				padding:
+					max(var(--dr-gutter), env(safe-area-inset-top))
+					max(var(--dr-gutter), env(safe-area-inset-right))
+					max(var(--dr-gutter), env(safe-area-inset-bottom))
+					max(var(--dr-gutter), env(safe-area-inset-left));
+				gap: calc(var(--space-md) * var(--dr-scale));
+				animation: dr-rise 200ms ease both;
+			}
+			@keyframes dr-rise { from { opacity: 0; transform: translateY(2%); } to { opacity: 1; transform: none; } }
+			@media (prefers-reduced-motion: reduce) {
+				.dr-sheet { animation: none; }
+				.dr-talk::before { transition: none; }
+			}
+			.dr-sheet-head { display: flex; align-items: center; gap: calc(var(--space-md) * var(--dr-scale)); }
+			.dr-sheet-title {
+				margin: 0;
+				font-family: var(--font-display, 'Space Grotesk', system-ui, sans-serif);
+				font-size: calc(1.35rem * var(--dr-scale));
+				font-weight: 700;
+				letter-spacing: -0.015em;
+				flex: 1 1 auto;
+			}
+			.dr-sheet-sub {
+				margin: 0;
+				color: var(--dr-ink-dim);
+				font-size: calc(0.95rem * var(--dr-scale));
+				max-width: 62ch;
+			}
+			.dr-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(calc(190px * var(--dr-scale)), 1fr));
+				gap: calc(var(--space-sm) * var(--dr-scale));
+				overflow-y: auto;
+				align-content: start;
+				flex: 1 1 auto;
+				padding-bottom: calc(var(--space-md) * var(--dr-scale));
+			}
+			.dr-card {
+				appearance: none;
+				border: 1px solid var(--dr-line);
+				background: var(--dr-fill);
+				color: var(--dr-ink);
+				border-radius: calc(var(--radius-lg) * var(--dr-scale));
+				padding: calc(var(--space-sm) * var(--dr-scale));
+				cursor: pointer;
+				display: flex;
+				flex-direction: column;
+				gap: calc(var(--space-sm) * var(--dr-scale));
+				text-align: left;
+				font: inherit;
+				transition: background 140ms ease, transform 140ms ease;
+			}
+			.dr-card:hover { background: var(--dr-fill-hi); }
+			.dr-card:active { transform: scale(0.985); }
+			.dr-card:focus-visible { outline: 2px solid var(--dr-ink); outline-offset: 3px; }
+			.dr-card img {
+				width: 100%;
+				aspect-ratio: 1 / 1;
+				object-fit: cover;
+				border-radius: calc(var(--radius-md) * var(--dr-scale));
+				background: var(--dr-fill);
+				display: block;
+			}
+			.dr-card-name {
+				font-weight: 600;
+				font-size: calc(0.95rem * var(--dr-scale));
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			.dr-skel {
+				border-radius: calc(var(--radius-lg) * var(--dr-scale));
+				background: linear-gradient(90deg, var(--dr-fill) 25%, var(--dr-fill-hi) 37%, var(--dr-fill) 63%);
+				background-size: 400% 100%;
+				animation: dr-shimmer 1.4s ease infinite;
+				aspect-ratio: 4 / 5;
+			}
+			@keyframes dr-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+			@media (prefers-reduced-motion: reduce) { .dr-skel { animation: none; } }
+			.dr-empty {
+				border: 1px dashed var(--dr-line);
+				border-radius: calc(var(--radius-lg) * var(--dr-scale));
+				padding: calc(var(--space-lg) * var(--dr-scale));
+				color: var(--dr-ink-dim);
+				font-size: calc(0.95rem * var(--dr-scale));
+				display: flex;
+				flex-direction: column;
+				gap: calc(var(--space-md) * var(--dr-scale));
+				align-items: flex-start;
+			}
+			.dr-link {
+				color: var(--dr-ink);
+				font-weight: 700;
+				text-decoration: underline;
+				text-underline-offset: 3px;
+			}
+
+			.dr-typebar { display: flex; gap: calc(var(--space-sm) * var(--dr-scale)); }
+			.dr-input {
+				flex: 1 1 auto;
+				min-width: 0;
+				height: calc(64px * var(--dr-scale));
+				border-radius: calc(var(--radius-lg) * var(--dr-scale));
+				border: 1px solid var(--dr-line);
+				background: var(--dr-fill);
+				color: var(--dr-ink);
+				font: inherit;
+				font-size: calc(1.05rem * var(--dr-scale));
+				padding: 0 calc(var(--space-md) * var(--dr-scale));
+				user-select: text;
+			}
+			.dr-input:focus-visible { outline: 2px solid var(--dr-ink); outline-offset: 2px; }
+			.dr-input::placeholder { color: var(--dr-ink-dim); }
+
+			/* Portrait (a phone in the cradle) stacks the deck and pairs the
+			   actions two by two, which is a far better thumb target than four
+			   slivers across a 390px panel. */
+			@media (orientation: portrait) {
+				.dr-deck { flex-direction: column-reverse; align-items: stretch; }
+				.dr-talk { width: 100%; height: calc(104px * var(--dr-scale)); border-radius: calc(var(--radius-lg) * var(--dr-scale)); }
+				.dr-talk::before { border-radius: calc(var(--radius-lg) * var(--dr-scale)); }
+				.dr-acts { display: grid; grid-template-columns: 1fr 1fr; }
+				.dr::after {
+					background:
+						linear-gradient(to bottom, var(--dr-veil) 0%, transparent 12%, transparent 30%, var(--dr-veil) 62%);
+				}
+			}
+			/* A narrow panel loses the redundant status word before it loses a
+			   control: the state dot and the spoken line already carry it. */
+			@media (max-width: 560px) {
+				.dr-state { display: none; }
+				.dr-pill {
+					height: calc(40px * var(--dr-scale));
+					padding: 0 calc(var(--space-sm) * var(--dr-scale));
+					font-size: calc(0.78rem * var(--dr-scale));
+				}
+				.dr-top { gap: calc(var(--space-xs) * var(--dr-scale)); }
+				.dr-name { font-size: calc(0.95rem * var(--dr-scale)); }
+			}
+			/* A short landscape dash (800x480 and friends) has no room for a top rail
+			   and a two-line reply, so the reply gets one line and the rail shrinks. */
+			@media (orientation: landscape) and (max-height: 520px) {
+				.dr-said { -webkit-line-clamp: 1; line-clamp: 1; min-height: 1.25em; }
+				.dr-act { height: calc(60px * var(--dr-scale)); }
+			}
+		</style>
+	</head>
+	<body>
+		<div class="dr" id="dr" data-state="idle">
+			<div class="dr-stage" id="dr-stage" aria-hidden="true"></div>
+
+			<header class="dr-top">
+				<div class="dr-id">
+					<span class="dr-dot" aria-hidden="true"></span>
+					<span class="dr-name" id="dr-name">three.ws Drive</span>
+				</div>
+				<span class="dr-state" id="dr-status" role="status" aria-live="polite">Starting</span>
+				<span class="dr-top-spacer"></span>
+				<button type="button" class="dr-pill" id="dr-motion" aria-pressed="true" title="Driving locks the keyboard. Switch to Parked to type.">
+					Driving
+				</button>
+				<button type="button" class="dr-pill" id="dr-light" aria-pressed="false" title="Day or night palette">Night</button>
+				<button type="button" class="dr-pill" id="dr-swap">Agent</button>
+			</header>
+
+			<main class="dr-mid">
+				<p class="dr-heard" id="dr-heard"></p>
+				<p
+					class="dr-said"
+					id="dr-said"
+					role="status"
+					aria-live="polite"
+					data-placeholder="Hold Talk and speak."
+				></p>
+				<p class="dr-fault" id="dr-fault" hidden>
+					<span id="dr-fault-text"></span>
+					<button type="button" class="dr-fault-fix" id="dr-fault-fix" hidden></button>
+				</p>
+			</main>
+
+			<div class="dr-deck">
+				<div class="dr-acts" id="dr-acts">
+					<button type="button" class="dr-act" id="dr-act-hands" aria-pressed="false">Hands free</button>
+					<button type="button" class="dr-act" id="dr-act-repeat" disabled>Repeat</button>
+					<button type="button" class="dr-act" id="dr-act-stop" disabled>Stop</button>
+					<button type="button" class="dr-act" id="dr-act-type">Type</button>
+				</div>
+				<button type="button" class="dr-talk" id="dr-talk">Talk</button>
+			</div>
+		</div>
+
+		<section class="dr-sheet" id="dr-picker" hidden aria-label="Choose your copilot">
+			<div class="dr-sheet-head">
+				<h1 class="dr-sheet-title">Choose your copilot</h1>
+				<button type="button" class="dr-pill" id="dr-picker-close" hidden>Back</button>
+			</div>
+			<p class="dr-sheet-sub" id="dr-picker-sub">
+				Pick the agent that rides with you. It keeps its voice, its face, and its memory in
+				the car.
+			</p>
+			<div class="dr-grid" id="dr-picker-grid"></div>
+		</section>
+
+		<section class="dr-sheet" id="dr-type" hidden aria-label="Type to your agent">
+			<div class="dr-sheet-head">
+				<h1 class="dr-sheet-title">Type</h1>
+				<button type="button" class="dr-pill" id="dr-type-close">Back</button>
+			</div>
+			<p class="dr-sheet-sub">
+				The keyboard is here for a stopped car or a passenger. Switch back to Driving when you
+				pull away.
+			</p>
+			<form class="dr-typebar" id="dr-type-form">
+				<input
+					class="dr-input"
+					id="dr-type-input"
+					type="text"
+					autocomplete="off"
+					placeholder="Ask your agent something"
+					aria-label="Message"
+				/>
+				<button type="submit" class="dr-pill" id="dr-type-send">Send</button>
+			</form>
+		</section>
+	</body>
+</html>

@@ -45,5 +45,10 @@ class MainViewController: CAPBridgeViewController {
         // ios/src/native-bridge.js; without this the insets are always zero and
         // that padding has nothing to react to.
         webView?.scrollView.contentInsetAdjustmentBehavior = .never
+
+        // Wire the CarPlay channel. The car screen talks to /drive through this
+        // WebView and nothing else, so the handler has to be registered before
+        // a CarPlay scene can ever connect. It is inert until one does.
+        if let webView { DriveLink.shared.attach(to: webView) }
     }
 }
