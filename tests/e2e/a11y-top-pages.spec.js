@@ -33,11 +33,17 @@ const EXTRA_HIGH_TRAFFIC = [
 	'/nvidia',
 	'/pricing',
 	'/irl',
-	// The Home Assistant lane. A voice-controlled house is assistive technology
-	// for the people most likely to need it, so /smart-home carries the same
-	// hard WCAG floor as the marketing surfaces above it and never rides on its
-	// own priority score staying high enough to land in the top 30.
+	// The Home Assistant lane, every public route of it. A voice-controlled
+	// house is assistive technology for the people most likely to need it, so
+	// these carry the same hard WCAG floor as the marketing surfaces above and
+	// never ride on their own priority scores staying high enough to land in
+	// the top 30. The two authed views, /smart-home/:id and /home/:id, are not
+	// here because they need a session and a connected house; they are covered
+	// by the lane's own live suite instead.
 	'/smart-home',
+	'/smart-home/join',
+	'/smart-home/plan',
+	'/smart-home/satellite',
 ];
 const coveredPaths = new Set(top30.map((p) => p.path));
 const extraPages = allPages.filter(

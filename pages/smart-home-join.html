@@ -4,18 +4,18 @@
 	<script>/* three.ws theme boot */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Join a home · Accept an invitation to a household · three.ws</title>
-	<meta name="description" content="Accept an invitation to somebody's connected home. The link tells you which home it is and exactly what you would be able to do there before you sign in, and it works once." />
+	<title data-i18n="home_join.meta_title">Join a home · Accept an invitation to a household · three.ws</title>
+	<meta name="description" content="Accept an invitation to somebody's connected home. The link tells you which home it is and exactly what you would be able to do there before you sign in, and it works once." data-i18n-attr="content:home_join.meta_description" />
 	<link rel="canonical" href="https://three.ws/smart-home/join" />
 	<meta name="robots" content="noindex, follow" />
-	<meta property="og:title" content="Join a home · three.ws" />
-	<meta property="og:description" content="An invitation to a household: which home, what you would be able to do there, and what you would never be able to do." />
+	<meta property="og:title" content="Join a home · three.ws" data-i18n-attr="content:home_join.meta_og_title" />
+	<meta property="og:description" content="An invitation to a household: which home, what you would be able to do there, and what you would never be able to do." data-i18n-attr="content:home_join.meta_og_description" />
 	<meta property="og:url" content="https://three.ws/smart-home/join" />
 	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Join+a+home&amp;d=An+invitation+to+a+household%3A+which+home%2C+and+what+you+could+do+there.&amp;p=%2Fsmart-home%2Fjoin" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="Join a home · three.ws" />
-	<meta name="twitter:description" content="An invitation to a household: which home, what you would be able to do there, and what you would never be able to do." />
+	<meta name="twitter:title" content="Join a home · three.ws" data-i18n-attr="content:home_join.meta_twitter_title" />
+	<meta name="twitter:description" content="An invitation to a household: which home, what you would be able to do there, and what you would never be able to do." data-i18n-attr="content:home_join.meta_twitter_description" />
 	<link rel="icon" href="/favicon.ico" sizes="any" />
 	<link rel="stylesheet" href="/style.css" />
 	<link rel="stylesheet" href="/nav.css" />
@@ -25,9 +25,9 @@
 <body>
 	<main class="hm-wrap" id="main">
 		<header class="hm-hero">
-			<p class="hm-eyebrow">Smart home</p>
-			<h1 class="hm-title">You were invited to a home</h1>
-			<p class="hm-lede">
+			<p class="hm-eyebrow" data-i18n="home_join.eyebrow">Smart home</p>
+			<h1 class="hm-title" data-i18n="home_join.title">You were invited to a home</h1>
+			<p class="hm-lede" data-i18n="home_join.lede">
 				Somebody has given you access to a house they connected to three.ws. Before you accept,
 				this page tells you which home it is, what you would be able to do there, and what you
 				would never be able to do. The link works once.
@@ -49,14 +49,14 @@
 
 		<noscript>
 			<section class="hm-panel">
-				<h2 class="hm-panel-title">JavaScript is required here</h2>
-				<p class="hm-panel-sub">
+				<h2 class="hm-panel-title" data-i18n="home_join.noscript_title">JavaScript is required here</h2>
+				<p class="hm-panel-sub" data-i18n="home_join.noscript_body">
 					Accepting an invitation reads it from your account, so this page needs JavaScript. The
 					invitation itself is unaffected and still works: turn JavaScript on and open the link
 					again.
 				</p>
 				<div class="hm-actions">
-					<a class="hm-btn hm-btn-ghost" href="/smart-home">Your homes</a>
+					<a class="hm-btn hm-btn-ghost" href="/smart-home" data-i18n="home_join.noscript_back">Your homes</a>
 				</div>
 			</section>
 		</noscript>
@@ -64,5 +64,7 @@
 
 	<script src="/nav.js"></script>
 	<script type="module" src="/src/home/join.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

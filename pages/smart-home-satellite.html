@@ -4,17 +4,17 @@
 	<script>/* three.ws theme boot */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Voice satellite · Give your Home Assistant assistant a face · three.ws</title>
-	<meta name="description" content="Point an existing Home Assistant voice pipeline at a three.ws agent and it gains a face, an expression, lip sync and a body. Home Assistant keeps the wake word, the transcription and the answer; three.ws is the face." />
+	<title data-i18n="home_satellite.meta_title">Voice satellite · Give your Home Assistant assistant a face · three.ws</title>
+	<meta name="description" content="Point an existing Home Assistant voice pipeline at a three.ws agent and it gains a face, an expression, lip sync and a body. Home Assistant keeps the wake word, the transcription and the answer; three.ws is the face." data-i18n-attr="content:home_satellite.meta_description" />
 	<link rel="canonical" href="https://three.ws/smart-home/satellite" />
-	<meta property="og:title" content="Voice satellite · three.ws" />
-	<meta property="og:description" content="Your Home Assistant voice assistant is a speaker with an LED ring. Give it a face, lip sync and a body that turns toward you." />
+	<meta property="og:title" content="Voice satellite · three.ws" data-i18n-attr="content:home_satellite.meta_og_title" />
+	<meta property="og:description" content="Your Home Assistant voice assistant is a speaker with an LED ring. Give it a face, lip sync and a body that turns toward you." data-i18n-attr="content:home_satellite.meta_og_description" />
 	<meta property="og:url" content="https://three.ws/smart-home/satellite" />
 	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Voice+satellite&amp;d=Give+your+Home+Assistant+voice+assistant+a+face%2C+lip+sync+and+a+body.&amp;p=%2Fsmart-home%2Fsatellite" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="Voice satellite · three.ws" />
-	<meta name="twitter:description" content="Your Home Assistant voice assistant is a speaker with an LED ring. Give it a face, lip sync and a body that turns toward you." />
+	<meta name="twitter:title" content="Voice satellite · three.ws" data-i18n-attr="content:home_satellite.meta_twitter_title" />
+	<meta name="twitter:description" content="Your Home Assistant voice assistant is a speaker with an LED ring. Give it a face, lip sync and a body that turns toward you." data-i18n-attr="content:home_satellite.meta_twitter_description" />
 	<link rel="icon" href="/favicon.ico" sizes="any" />
 	<link rel="stylesheet" href="/style.css" />
 	<link rel="stylesheet" href="/nav.css" />
@@ -24,9 +24,9 @@
 <body>
 	<main class="hs-wrap" id="main">
 		<header>
-			<p class="hs-eyebrow">Voice satellite</p>
-			<h1 class="hs-title">Your voice assistant already works. Give it a face.</h1>
-			<p class="hs-lede">
+			<p class="hs-eyebrow" data-i18n="home_satellite.eyebrow">Voice satellite</p>
+			<h1 class="hs-title" data-i18n="home_satellite.title">Your voice assistant already works. Give it a face.</h1>
+			<p class="hs-lede" data-i18n="home_satellite.lede">
 				Home Assistant owns the hard part: the wake word, the speech recognition, the intent, the
 				answer, and every device in your house. What it does not have is a body. Pair a three.ws
 				satellite and the same pipeline you already use gets one, lip-synced to its own speech, on
@@ -51,13 +51,13 @@
 
 		<noscript>
 			<section class="hs-panel">
-				<h2 class="hs-panel-title">JavaScript is required here</h2>
-				<p class="hs-panel-sub">
+				<h2 class="hs-panel-title" data-i18n="home_satellite.noscript_title">JavaScript is required here</h2>
+				<p class="hs-panel-sub" data-i18n="home_satellite.noscript_body">
 					This page opens a live audio session and renders a 3D avatar, so it needs JavaScript.
 					The satellite itself does not: it runs beside Home Assistant on your own network and
 					keeps your voice pipeline working whether or not any browser is open.
 				</p>
-				<p class="hs-panel-sub">
+				<p class="hs-panel-sub" data-i18n-html="home_satellite.noscript_guide">
 					<a href="/docs/home-satellite">Read the setup guide</a> for the install steps in plain text.
 				</p>
 			</section>
@@ -66,5 +66,7 @@
 
 	<script src="/nav.js"></script>
 	<script type="module" src="/src/home/satellite.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

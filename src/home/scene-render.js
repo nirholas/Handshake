@@ -174,6 +174,8 @@ export function createHomeScene(container, options = {}) {
 	const scene = new Scene();
 	const camera = new PerspectiveCamera(46, 1, 0.1, 400);
 	const controls = new OrbitControls(camera, renderer.domElement);
+	// Reassigned by the reduced-motion watcher below, which cannot run before
+	// the controls exist.
 	controls.enableDamping = true;
 	controls.dampingFactor = 0.08;
 	controls.maxPolarAngle = Math.PI * 0.49;
@@ -221,6 +223,18 @@ export function createHomeScene(container, options = {}) {
 	const pointer = new Vector2();
 	const governor = createFrameGovernor();
 	const focus = trackWindowFocus();
+	// A house is a live readout, so reduced motion cannot mean a frozen scene:
+	// the values still update, they just stop travelling to their new state.
+	// Every damped quantity snaps, and OrbitControls stops coasting after a
+	// drag, which is the motion a vestibular trigger actually notices.
+	const motionQuery =
+		typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
+	let reduceMotion = Boolean(motionQuery?.matches);
+	controls.enableDamping = !reduceMotion;
+	motionQuery?.addEventListener?.('change', (event) => {
+		reduceMotion = event.matches;
+		controls.enableDamping = !reduceMotion;
+	});
 	let powerSaver = getPowerSaver();
 	const stopPowerSaver = onPowerSaverChange((on) => {
 		powerSaver = on;
@@ -666,6 +680,11 @@ export function createHomeScene(container, options = {}) {
 	}
 
 	function damp(current, target, dt) {
+		// Reduced motion arrives, it does not travel. Returning the target is
+		// what turns every transition in the scene off at once, because every
+		// animated quantity in the loop (intensity, highlight, security, the
+		// stale desaturation) goes through this one function.
+		if (reduceMotion) return target;
 		// Framerate-independent exponential approach: the same visual speed at
 		// 30 fps and at 144.
 		return current + (target - current) * (1 - Math.exp(-dt / EASE));
@@ -706,7 +725,7 @@ export function createHomeScene(container, options = {}) {
 				Math.abs(wasHighlight - record.highlight) > 0.001 ||
 				cameraMoved;
 			if (moved || !record.color.equals(record.targetColor) || staleMoving) {
-				record.color.lerp(record.targetColor, 1 - Math.exp(-dt / EASE));
+				record.color.lerp(record.targetColor, reduceMotion ? 1 : 1 - Math.exp(-dt / EASE));
 				commitRoom(record);
 			}
 		}

@@ -4,17 +4,17 @@
 	<script>/* three.ws theme boot */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Home plan · What your homes use and when it resets · three.ws</title>
-	<meta name="description" content="What your three.ws plan covers for connected homes: homes, household seats, live screens, voice minutes and agent turns, with what you have used and when it resets. Locking up, closing a garage and arming an alarm are never limited." />
+	<title data-i18n="home_plan.meta_title">Home plan · What your homes use and when it resets · three.ws</title>
+	<meta name="description" content="What your three.ws plan covers for connected homes: homes, household seats, live screens, voice minutes and agent turns, with what you have used and when it resets. Locking up, closing a garage and arming an alarm are never limited." data-i18n-attr="content:home_plan.meta_description" />
 	<link rel="canonical" href="https://three.ws/smart-home/plan" />
-	<meta property="og:title" content="Home plan · three.ws" />
-	<meta property="og:description" content="What your plan covers for connected homes, what you have used, and when it resets. Safety actions are never limited." />
+	<meta property="og:title" content="Home plan · three.ws" data-i18n-attr="content:home_plan.meta_og_title" />
+	<meta property="og:description" content="What your plan covers for connected homes, what you have used, and when it resets. Safety actions are never limited." data-i18n-attr="content:home_plan.meta_og_description" />
 	<meta property="og:url" content="https://three.ws/smart-home/plan" />
 	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Home+plan&amp;d=What+your+plan+covers+for+connected+homes%2C+what+you+have+used%2C+and+when+it+resets.&amp;p=%2Fsmart-home%2Fplan" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="Home plan · three.ws" />
-	<meta name="twitter:description" content="What your plan covers for connected homes, what you have used, and when it resets. Safety actions are never limited." />
+	<meta name="twitter:title" content="Home plan · three.ws" data-i18n-attr="content:home_plan.meta_twitter_title" />
+	<meta name="twitter:description" content="What your plan covers for connected homes, what you have used, and when it resets. Safety actions are never limited." data-i18n-attr="content:home_plan.meta_twitter_description" />
 	<link rel="icon" href="/favicon.ico" sizes="any" />
 	<link rel="stylesheet" href="/style.css" />
 	<link rel="stylesheet" href="/nav.css" />
@@ -57,15 +57,15 @@
 
 		<noscript>
 			<section class="hm-panel">
-				<h2 class="hm-panel-title">JavaScript is required here</h2>
-				<p class="hm-panel-sub">
+				<h2 class="hm-panel-title" data-i18n="home_plan.noscript_title">JavaScript is required here</h2>
+				<p class="hm-panel-sub" data-i18n="home_plan.noscript_body">
 					This page reads your live usage from your account, so it needs JavaScript. Your limits
 					and your homes are unaffected either way, and every safety action keeps working: a plan
 					never stops you locking up.
 				</p>
 				<div class="hm-actions">
-					<a class="hm-btn hm-btn-ghost" href="/smart-home">Back to your homes</a>
-					<a class="hm-btn hm-btn-ghost" href="/pricing">See plans</a>
+					<a class="hm-btn hm-btn-ghost" href="/smart-home" data-i18n="home_plan.noscript_back">Back to your homes</a>
+					<a class="hm-btn hm-btn-ghost" href="/pricing" data-i18n="home_plan.noscript_plans">See plans</a>
 				</div>
 			</section>
 		</noscript>
@@ -73,5 +73,7 @@
 
 	<script src="/nav.js"></script>
 	<script type="module" src="/src/home/plan.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>
