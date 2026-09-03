@@ -25,9 +25,7 @@
 // the model fetcher use). This module is the home lane's spelling of them, so
 // there is one function to call and no room to compose them wrongly.
 
-import { ERR_CANNOT_CONNECT, ERR_INVALID_AUTH } from 'home-assistant-js-websocket';
-
-import { normalizeBaseUrl } from '../../packages/home-bridge/src/url.js';
+import { ERR_CANNOT_CONNECT, ERR_INVALID_AUTH, normalizeBaseUrl } from '@three-ws/home-bridge';
 import { Agent } from 'undici';
 
 import { isPrivateAddress, pinnedAgent, resolvePublicHost, SsrfError } from './ssrf.js';

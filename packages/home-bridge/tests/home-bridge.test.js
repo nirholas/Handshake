@@ -69,8 +69,8 @@ describe('normalizeBaseUrl', () => {
 
 describe('room graph', () => {
 	it('groups the real instance into its real rooms', () => {
-		expect(graph.rooms.map((r) => r.name)).toEqual(['Bedroom', 'Kitchen', 'Living Room']);
-		expect(graph.floors).toEqual([{ id: 'ground_floor', name: 'Ground floor', level: 0, icon: null }]);
+		expect(graph.rooms.map((r) => r.name)).toEqual(['Bedroom', 'Front Door', 'Kitchen', 'Living Room']);
+		expect(graph.floors).toEqual([{ id: 'ground_floor', name: 'Ground Floor', level: 0, icon: null }]);
 		for (const room of graph.rooms) expect(room.floorId).toBe('ground_floor');
 	});
 
