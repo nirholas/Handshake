@@ -6,7 +6,7 @@ Each file here is a **self-contained prompt** you paste into a fresh Claude Code
 
 Read this file once; every prompt assumes it.
 
-**Strategy layer:** [fable-playbook.md](roadmap-fable-playbook.md) is the operating strategy
+**Strategy layer:** [the Fable playbook](../../docs/internal/fable-playbook.md) is the operating strategy
 above these prompts — how to deploy Claude Fable 5 across them, the revenue ladder,
 OSS in/out motions, and standing routines. Read it to decide *what to run next*;
 read this file to run it safely.
@@ -81,7 +81,7 @@ retired; they remain readable in git history
 
 | File | What it is |
 |---|---|
-| [fable-playbook.md](roadmap-fable-playbook.md) | The operating strategy above these work orders: what to run next, the revenue ladder, standing routines. |
+| [the Fable playbook](../../docs/internal/fable-playbook.md) | The operating strategy above these work orders: what to run next, the revenue ladder, standing routines. Promoted out of this directory into `docs/internal/` on 2026-09-03, since it is durable strategy rather than a one-shot order. |
 | [REUSE-MAP.md](roadmap-REUSE-MAP.md) | License-vetted OSS to integrate instead of reinventing. Check it before building anything here. |
 | [pumpfun-trading.md](roadmap-pumpfun-trading.md), [pumpfun-trading-arena.md](roadmap-pumpfun-trading-arena.md), [pumpfun-trading-wedge.md](roadmap-pumpfun-trading-wedge.md) | Three overlapping strategy documents for the trading product. They are plans, not work orders, and every commit touching them hits the CLAUDE.md commit gate. The wedge document's own recommendation stands: fold the arena draft into the master plan, keep the wedge as the delta. |
 

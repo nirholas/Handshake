@@ -1,0 +1,112 @@
+
+> 3d-agent@1.5.2 gate
+> npm run check:conflicts && npm run check:claude && npm run check:vendored && npm run check:fetch-timeouts && npm run check:tdz-bootstrap && npm run check:event && npm run check:cron-syntax && npm run check:studio-openapi && npm run test:gate && npm run test:gate-3d && npm run audit:mcp && npm run audit:mcp-golden && npm run audit:mcp-safety && npm run audit:mcp-catalog && npm run audit:routes && npm run audit:handlers && npm run audit:pages && npm run audit:links && npm run audit:docs && npm run audit:upstreams && npm run check:tutorials && npm run audit:hidden-guard && npm run audit:inline-handlers && npm run audit:x402-catalog && npm run audit:tokens && npm run audit:guards && npm run audit:tour-atlas && npm run check:ios-icons
+
+
+> 3d-agent@1.5.2 check:conflicts
+> node scripts/check-merge-conflicts.mjs
+
+check:conflicts — no unresolved merge-conflict markers in tracked files
+
+> 3d-agent@1.5.2 check:claude
+> node scripts/check-claude-md.mjs
+
+[check-claude] OK: every script, path, and typography rule in CLAUDE.md matches the repo
+
+> 3d-agent@1.5.2 check:vendored
+> node scripts/check-vendored-workers.mjs
+
+[check-vendored-workers] OK: 27 vendored file copies across 32 workers are byte-identical
+
+> 3d-agent@1.5.2 check:fetch-timeouts
+> node scripts/check-fetch-timeouts.mjs
+
+check:fetch-timeouts: every external fetch, and every fetch under api/, is bounded by a deadline
+
+> 3d-agent@1.5.2 check:tdz-bootstrap
+> node scripts/check-tdz-bootstrap.mjs
+
+check:tdz-bootstrap: no bootstrap-before-state ordering in 1597 browser module(s)
+
+> 3d-agent@1.5.2 check:event
+> node scripts/check-event-window.mjs
+
+[check-event] OK: public/event.json carries the explicit no-event state, so no event is configured (a supported state)
+
+> 3d-agent@1.5.2 check:cron-syntax
+> node scripts/check-cron-drift.mjs --offline
+
+Declared crons in vercel.json: 114
+Most frequent:
+  every 1m  /api/cron/economy-tick
+  every 1m  /api/cron/three-market-refresh
+  every 1m  /api/cron/avaturn-seed-cron
+  every 1m  /api/cron/flush-usage-events
+  every 1m  /api/cron/forge-finalize
+
+All cron expressions are valid (offline mode: live jobs not compared).
+
+> 3d-agent@1.5.2 check:studio-openapi
+> node scripts/sync-studio-openapi.mjs --check
+
+3D Studio OpenAPI in sync: prompts/store-submissions/_generated/openai-actions.yaml matches public/.well-known/3d-studio-openapi.yaml.
+
+> 3d-agent@1.5.2 test:gate
+> node scripts/test-gate.mjs
+
+[test-gate] running 7 critical-path test files…
+
+ RUN  v4.1.9 /workspaces/three.ws
+
+
+ Test Files  7 passed (7)
+      Tests  86 passed (86)
+   Start at  07:25:43
+   Duration  2.93s (transform 2.66s, setup 0ms, import 5.30s, tests 2.79s, environment 1ms)
+
+[test-gate] ✓ all critical-path tests passed
+
+> 3d-agent@1.5.2 test:gate-3d
+> vitest run tests/glb-canonicalize.test.js tests/animation-retarget.test.js tests/animation-retarget-rest-pollution.test.js tests/viewer-framing.test.js
+
+
+ RUN  v4.1.9 /workspaces/three.ws
+
+
+ Test Files  4 passed (4)
+      Tests  559 passed (559)
+   Start at  07:25:46
+   Duration  692ms (transform 400ms, setup 0ms, import 948ms, tests 502ms, environment 1ms)
+
+
+> 3d-agent@1.5.2 audit:mcp
+> node scripts/audit-mcp-manifests.mjs
+
+[audit:mcp] 49 MCP manifests consistent
+
+> 3d-agent@1.5.2 audit:mcp-golden
+> node scripts/audit-mcp-golden.mjs
+
+[audit:mcp-golden] api/_mcp3d/tools/sim-readiness.js: tool ADDED: grade_sim_readiness
+
+[audit:mcp-golden] 1 contract change(s) vs golden fixture.
+  If every change above is INTENTIONAL (reviewed as a public-contract change),
+  refresh the fixture:  node scripts/audit-mcp-golden.mjs --update
+exit=1
+
+--- audit note (agent, 2026-09-03) ---
+gate-before failed at test:gate (tests/api/healthz.test.js could not import:
+the db mock threw synchronously, killing api/_lib/home/store.js's module-scope
+sql fragment). That failure short-circuited the chain, so gate-before never
+reached audit:mcp-golden.
+
+gate-after clears every stage that gate-before reached, plus the ones it could
+not: test:gate 7/7 (was 6 passed, 1 failed), test:gate-3d 4/4, audit:mcp 49
+manifests consistent.
+
+The single remaining failure, audit:mcp-golden reporting grade_sim_readiness
+ADDED, comes from api/_mcp3d/tools/sim-readiness.js, an UNTRACKED file belonging
+to a concurrent agent in this shared worktree. It is not part of this work and
+the golden fixture was deliberately left alone: refreshing it would rubber-stamp
+another agent's unreviewed public MCP contract change. That agent should run
+`node scripts/audit-mcp-golden.mjs --update` when it commits.

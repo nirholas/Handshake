@@ -100,7 +100,7 @@ run in parallel, H waits on owner gates, I is anytime, J is the parallel swarm.
 | [../simulation-ready/01-architecture.md](simulation-ready-01-architecture.md) | Kernel, spec and schema exist; 0.5 of 8 build tasks done. |
 | Trading trio (see [../roadmap/00-README.md](roadmap-00-README.md)) | Three plans, largely absorbed by shipped surfaces; every commit touching them is gated. |
 
-Strategy for what to run next inside E: [../roadmap/fable-playbook.md](roadmap-fable-playbook.md).
+Strategy for what to run next inside E: [the Fable playbook](../../docs/internal/fable-playbook.md).
 
 ### F. Trust and benchmarks
 
