@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Smart home · Connect your house to your agent · three.ws</title>
+	<meta name="description" content="Connect a Home Assistant house to your three.ws agent. Your agent reads the rooms, runs your own scenes, and stops to ask before it unlocks, opens, or disarms anything." />
+	<link rel="canonical" href="https://three.ws/smart-home" />
+	<meta property="og:title" content="Smart home · three.ws" />
+	<meta property="og:description" content="Connect a Home Assistant house to your three.ws agent. Reads are free; anything that opens the house stops and asks." />
+	<meta property="og:url" content="https://three.ws/smart-home" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Smart+home&amp;d=Connect+a+Home+Assistant+house+to+your+three.ws+agent.+Reads+are+free%3B+anything+that+opens+the+house+stops+and+asks.&amp;p=%2Fsmart-home" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:site" content="@trythreews" />
+	<meta name="twitter:title" content="Smart home · three.ws" />
+	<meta name="twitter:description" content="Connect a Home Assistant house to your three.ws agent. Reads are free; anything that opens the house stops and asks." />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/fonts/fonts.css" />
+	<link rel="stylesheet" href="/src/home/home.css" />
+</head>
+<body>
+	<main class="hm-wrap" id="main">
+		<header class="hm-hero">
+			<p class="hm-eyebrow" data-i18n="smart_home.eyebrow">Smart home</p>
+			<h1 class="hm-title" data-i18n="smart_home.title">Put your agent inside your house</h1>
+			<p class="hm-lede" data-i18n="smart_home.lede">
+				Connect a Home Assistant instance and your agent can see every room, read every device, and
+				run the scenes you already built. Reads are free. Anything that unlocks, opens or disarms
+				stops and asks you first, every time.
+			</p>
+		</header>
+
+		<!--
+			One live region for the whole flow. The controller (src/home/connect.js)
+			owns everything inside it and renders exactly one of the eleven states.
+			It is `aria-live="polite"` so a state change (a refusal, a connected
+			house) is announced without stealing focus mid-typing.
+		-->
+		<div id="hm-root" aria-live="polite" aria-busy="true">
+			<section class="hm-panel">
+				<div class="hm-panel-head">
+					<div style="flex:1">
+						<div class="hm-skeleton" style="height:1.1rem;width:11rem"></div>
+						<div class="hm-skeleton" style="height:0.85rem;width:19rem;margin-top:0.55rem"></div>
+					</div>
+				</div>
+				<div class="hm-skeleton" style="height:2.6rem"></div>
+			</section>
+		</div>
+
+		<noscript>
+			<section class="hm-panel">
+				<h2 class="hm-panel-title">JavaScript is required here</h2>
+				<p class="hm-panel-sub">
+					Connecting a house opens a live connection to it and never stores your access token in
+					this browser, so this page needs JavaScript to work. Everything else on three.ws reads
+					fine without it.
+				</p>
+			</section>
+		</noscript>
+	</main>
+
+	<script src="/nav.js"></script>
+	<script type="module" src="/src/home/connect.js"></script>
+</body>
+</html>

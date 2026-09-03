@@ -1,0 +1,155 @@
+/**
+ * The browser half of the `/api/home/*` contract.
+ *
+ * One place that knows the error shape, the CSRF dance and the SSE framing, so
+ * the 3D scene, the 2D fallback and every later home surface read the same
+ * table instead of three slightly different ones.
+ *
+ * Every failure surfaces as a `HomeApiError` carrying the server's `code`, so
+ * a caller branches on `needs_confirmation` or `unreachable` rather than on a
+ * message string that will be reworded next week.
+ */
+
+export class HomeApiError extends Error {
+	constructor(code, message, { status = 0, pending = null } = {}) {
+		super(message);
+		this.name = 'HomeApiError';
+		this.code = code;
+		this.status = status;
+		this.pending = pending;
+	}
+}
+
+let csrf = null;
+
+async function csrfToken() {
+	if (csrf && csrf.expiresAt > Date.now() + 5000) return csrf.token;
+	const res = await fetch('/api/csrf-token', { credentials: 'include' });
+	if (!res.ok) throw new HomeApiError('unauthorized', 'Sign in to control this home.', { status: res.status });
+	const body = await res.json();
+	const data = body.data || body;
+	csrf = { token: data.token, expiresAt: Date.now() + ((data.expires_in || 3600) - 30) * 1000 };
+	return csrf.token;
+}
+
+async function request(path, { method = 'GET', body = null, signal } = {}) {
+	const headers = { accept: 'application/json' };
+	if (body) headers['content-type'] = 'application/json';
+	if (method !== 'GET') {
+		headers['x-csrf-token'] = await csrfToken();
+		// Tokens are single use on this platform; drop the cache after spending one.
+		csrf = null;
+	}
+	let res;
+	try {
+		res = await fetch(path, { method, headers, credentials: 'include', body: body ? JSON.stringify(body) : undefined, signal });
+	} catch (cause) {
+		if (cause?.name === 'AbortError') throw cause;
+		throw new HomeApiError('unreachable', 'three.ws could not be reached. Check your connection and try again.', { status: 0 });
+	}
+	const text = await res.text();
+	let payload = null;
+	try {
+		payload = text ? JSON.parse(text) : null;
+	} catch {
+		// A proxy error page, not our contract.
+	}
+	if (!res.ok) {
+		const code = payload?.code || payload?.error || 'call_failed';
+		const message = payload?.error_description || payload?.message || (typeof payload?.error === 'string' && payload.code ? payload.error : null) || `Request failed (${res.status}).`;
+		throw new HomeApiError(code, message, { status: res.status, pending: payload?.pending || null });
+	}
+	return payload;
+}
+
+/** The caller's homes, credential free. */
+export function listHomes(signal) {
+	return request('/api/home', { signal });
+}
+
+/** One home plus the current room graph. */
+export function getHome(id, signal) {
+	return request(`/api/home/${encodeURIComponent(id)}`, { signal });
+}
+
+/**
+ * A gated service call. A guarded action answers 409 with `pending`, which the
+ * caller renders as a question next to the thing it would move. `confirmed` is
+ * only ever set from a person clicking yes.
+ */
+export function callService(id, { domain, service, data, confirmed = false }) {
+	return request(`/api/home/${encodeURIComponent(id)}/call`, { method: 'POST', body: { domain, service, data, confirmed } });
+}
+
+/** A phrase to one of the house's own scenes or scripts. */
+export function activatePhrase(id, { phrase, dryRun = false, confirmed = false }) {
+	return request(`/api/home/${encodeURIComponent(id)}/activate`, { method: 'POST', body: { phrase, dryRun, confirmed } });
+}
+
+/** A standing per-entity allowance, so a repeated yes is not asked forever. */
+export function grantEntity(id, { entityId, expiresAt = null }) {
+	return request(`/api/home/${encodeURIComponent(id)}/grants`, { method: 'POST', body: { entityId, expiresAt } });
+}
+
+/**
+ * The live stream.
+ *
+ * `EventSource` reconnects on its own with the server's `retry` interval, which
+ * is exactly the behaviour a wall display needs: nothing here re-implements a
+ * backoff on top of it. What this does add is a watchdog, because a stream that
+ * silently stops delivering (a proxy holding a dead socket open) looks
+ * identical to a quiet house, and the two must not.
+ *
+ * @param {string} id
+ * @param {{ onGraph: Function, onStatus: Function, onOpen?: Function, onSilence?: Function }} handlers
+ * @returns {{ close(): void }}
+ */
+export function openStream(id, handlers) {
+	const url = `/api/home/${encodeURIComponent(id)}/stream`;
+	const source = new EventSource(url, { withCredentials: true });
+	let watchdog = 0;
+	// The server heartbeats every 25 s. Two missed beats plus slack is a stream
+	// that is no longer delivering, whatever the socket believes.
+	const SILENCE_MS = 70_000;
+
+	const beat = () => {
+		clearTimeout(watchdog);
+		watchdog = setTimeout(() => handlers.onSilence?.(), SILENCE_MS);
+	};
+
+	source.addEventListener('open', () => {
+		beat();
+		handlers.onOpen?.();
+	});
+	source.addEventListener('graph', (event) => {
+		beat();
+		const payload = parse(event.data);
+		if (payload) handlers.onGraph(payload);
+	});
+	source.addEventListener('status', (event) => {
+		beat();
+		const payload = parse(event.data);
+		if (payload) handlers.onStatus(payload);
+	});
+	source.addEventListener('heartbeat', beat);
+	source.addEventListener('error', () => {
+		// EventSource fires `error` both for a transient drop it will retry and
+		// for a terminal close. `readyState` is the only honest signal of which.
+		handlers.onStatus({ status: source.readyState === EventSource.CLOSED ? 'disconnected' : 'reconnecting', stale: true });
+	});
+
+	return {
+		close() {
+			clearTimeout(watchdog);
+			source.close();
+		},
+	};
+}
+
+function parse(data) {
+	try {
+		return JSON.parse(data);
+	} catch {
+		return null;
+	}
+}
