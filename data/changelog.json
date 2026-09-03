@@ -26256,6 +26256,16 @@
 			"tags": [
 				"feature"
 			]
+		},
+		{
+			"date": "2026-09-03",
+			"title": "Every 3D model now says whether a physics engine could actually use it",
+			"summary": "A 3D model can look flawless on screen and still be unusable the moment you drop it into a physics engine: an open shell sinks through the floor, an inside-out surface spins like it is hollow, and a model fitted to a unit box is a metre tall when you asked for a teapot. Nothing in a GLB file has ever said so, so everyone building robotics, game or simulation pipelines has been finding out one broken asset at a time. Now every model page carries a verdict beside its geometry stats, and the GLB viewer will grade any public model you point it at. Four answers: ready to simulate as-is, sound but needs its real size set, needs its surface closed first, or nothing there to simulate. Open the badge and you get every number behind the verdict, including the exact volume, centre of mass and inertia tensor, copyable as JSON straight into your own pipeline. It is free, needs no account, and works on any public model, not just ours. Agents can ask the same question through the free grade_sim_readiness tool, so a shopping agent can check ten candidates for nothing and only pay for the one that works. Models forged here are graded the moment they are generated, so the answer is already waiting when the page opens, and when a model is credentialed the grade is signed along with it, which makes the physics claim as hard to forge as the authorship claim.",
+			"link": "/docs/sim-readiness",
+			"tags": [
+				"feature",
+				"sdk"
+			]
 		}
 	]
 }

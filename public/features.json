@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-03T07:43:01.036Z",
+	"generated_at": "2026-09-03T08:05:25.631Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -559,7 +559,7 @@
 				{
 					"path": "/showcase",
 					"title": "Showcase",
-					"description": "AI-powered 3D model viewer showcase: drop in a model and explore it live.",
+					"description": "Browse every ERC-8004 agent that carries a 3D glTF body, indexed from canonical registries across 22 chains, and open any of them in the live viewer.",
 					"added": null,
 					"auth": null,
 					"indexable": true,
@@ -6213,6 +6213,16 @@
 					"title": "Docs · Verifiable 3D provenance",
 					"description": "Every generated model can carry a signed content credential (creator, prompt, model and provider, lineage, timestamp, and the file's content hash) with that hash anchored on-chain so anyone can verify it later.",
 					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/sim-readiness",
+					"title": "Docs · Simulation readiness",
+					"description": "A free physics grade for any 3D model: whether a rigid-body solver can use it as-is, whether its size is real meters or a generator's unit box, and its exact volume, centre of mass and inertia tensor.",
+					"added": "2026-09-03",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

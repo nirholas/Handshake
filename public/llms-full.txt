@@ -343,7 +343,7 @@ Plans and pricing for three.ws: free forge quota, premium passes, and pay-per-us
 
 URL: https://three.ws/showcase
 
-AI-powered 3D model viewer showcase: drop in a model and explore it live.
+Browse every ERC-8004 agent that carries a 3D glTF body, indexed from canonical registries across 22 chains, and open any of them in the live viewer.
 
 ### Lab Demos
 
@@ -3759,6 +3759,12 @@ Pre-baked clips replay motion recorded somewhere else; they cannot know where yo
 URL: https://three.ws/docs/provenance
 
 Every generated model can carry a signed content credential (creator, prompt, model and provider, lineage, timestamp, and the file's content hash) with that hash anchored on-chain so anyone can verify it later.
+
+### Docs · Simulation readiness
+
+URL: https://three.ws/docs/sim-readiness
+
+A free physics grade for any 3D model: whether a rigid-body solver can use it as-is, whether its size is real meters or a generator's unit box, and its exact volume, centre of mass and inertia tensor.
 
 ### Docs · The remix economy
 

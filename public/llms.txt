@@ -84,7 +84,7 @@ Entry points into the product.
 - [three.ws on NVIDIA](https://three.ws/nvidia): three.ws is a member of the NVIDIA Inception program. Every 3D model, avatar, and voice on the platform runs on NVIDIA: a free hosted lane behind one API key covering text-to-3D, chat, vision, embeddings, safety and speech, plus a self-hosted fleet of Cloud Run GPU workers on L4 and RTX PRO 6000.
 - [Press kit](https://three.ws/press): Logos, announcement graphics, boilerplate, and usage rules for three.ws. Every asset is downloadable and current, and editorial use needs no permission.
 - [Pricing](https://three.ws/pricing): Plans and pricing for three.ws: free forge quota, premium passes, and pay-per-use API surfaces.
-- [Showcase](https://three.ws/showcase): AI-powered 3D model viewer showcase: drop in a model and explore it live.
+- [Showcase](https://three.ws/showcase): Browse every ERC-8004 agent that carries a 3D glTF body, indexed from canonical registries across 22 chains, and open any of them in the live viewer.
 - [Lab Demos](https://three.ws/demos): Index of live demos across the platform: viewers, agents, payments, and experiments.
 
 ## Build
@@ -663,6 +663,7 @@ Docs, tutorials, and reference.
 - [Docs · Persona Hub](https://three.ws/docs/persona-hub): Cross-app sign-in for avatars: a user creates and stores their three.ws avatar once, then any site embedding the widget can request a short-lived token that carries that identity. The flow, the token shape, and the trust boundaries.
 - [Docs · Procedural animation](https://three.ws/docs/procedural-animation): Pre-baked clips replay motion recorded somewhere else; they cannot know where your cursor is or that the ground under one foot is lower than the other. The runtime IK layers that fix both, on top of the clip library.
 - [Docs · Verifiable 3D provenance](https://three.ws/docs/provenance): Every generated model can carry a signed content credential (creator, prompt, model and provider, lineage, timestamp, and the file's content hash) with that hash anchored on-chain so anyone can verify it later.
+- [Docs · Simulation readiness](https://three.ws/docs/sim-readiness): A free physics grade for any 3D model: whether a rigid-body solver can use it as-is, whether its size is real meters or a generator's unit box, and its exact volume, centre of mass and inertia tensor.
 - [Docs · The remix economy](https://three.ws/docs/remix): Every model carries its provenance, and creators can opt a finished model into the remix bazaar: when someone builds on it, a creator-set royalty routes back automatically. How lineage and royalties are enforced.
 - [Docs · The real-funds risk acknowledgment](https://three.ws/docs/risk-acknowledgment): Every feature that can move real money sits behind a one-time, versioned acknowledgment shown before a user's first real-funds action. What it says, how versioning works, and why it is not a dialog you can skip.
 - [Docs · Security](https://three.ws/docs/security): How three.ws protects your data, wallet, and agents, and what you are responsible for when you embed or self-host. The threat model, the boundaries enforced in code, and how to report an issue.
