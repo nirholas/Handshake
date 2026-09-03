@@ -59,6 +59,6 @@
 		"sharp": "^0.35.3"
 	},
 	"scripts": {
-		"test": "vitest run tests"
+		"test": "vitest run --root ../.. packages/render/tests"
 	}
 }

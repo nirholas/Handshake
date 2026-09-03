@@ -7,9 +7,11 @@
 
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { parseGlb, packGlb, extractImages, stripImages } from '../src/glb.js';
 
-const AVATAR = 'public/avatars/default.glb';
+const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
+const AVATAR = `${ROOT}public/avatars/default.glb`;
 
 function readAvatar() {
 	const buf = readFileSync(AVATAR);

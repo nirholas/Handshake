@@ -7,6 +7,7 @@
 
 import { describe, it, expect, beforeAll } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { AvatarModel } from '../src/model.js';
 import { renderFrame, renderFrames, frameCamera, PRESETS } from '../src/render.js';
@@ -14,8 +15,9 @@ import { parseClipJson } from '../src/clips.js';
 import { encodePng, encodeApng } from '../src/encode.js';
 import { decodePng } from '../src/image.js';
 
-const AVATAR = 'public/avatars/default.glb';
-const CLIP = 'public/animations/clips/idle.json';
+const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
+const AVATAR = `${ROOT}public/avatars/default.glb`;
+const CLIP = `${ROOT}public/animations/clips/idle.json`;
 
 let model;
 
