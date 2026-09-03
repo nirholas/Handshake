@@ -2,7 +2,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { mintPlaintext, looksLikeGlanceToken, prefixOf, GLANCE_TOKEN_PREFIX } from '../api/_lib/glance-tokens.js';
-import { androidLinkUrl, ANDROID_PACKAGE } from '../api/glance/token.js';
+import { androidLinkUrl, appleLinkUrl, ANDROID_PACKAGE } from '../api/glance/token.js';
 
 describe('glance widget tokens', () => {
 	it('mint a prefixed, url-safe plaintext that the shape check accepts', () => {
@@ -28,5 +28,25 @@ describe('glance widget tokens', () => {
 		expect(url).toContain('scheme=threews');
 		expect(url).toContain('S.browser_fallback_url=');
 		expect(url).toContain(encodeURIComponent(token));
+	});
+
+	it('hand the token to an Apple app through the scheme both of them register', () => {
+		const token = mintPlaintext();
+		const url = appleLinkUrl(token);
+		// The Mac app and the iPhone app claim this natively (see
+		// apple/GlanceKit/GlanceLink.swift and ios/native/App/App/SceneDelegate.swift),
+		// so the credential never reaches a web view.
+		expect(url.startsWith('threews://glance/link?token=')).toBe(true);
+		expect(url).toContain(encodeURIComponent(token));
+		expect(new URL(url).searchParams.get('token')).toBe(token);
+	});
+
+	it('escape a token into both link URLs rather than pasting it raw', () => {
+		// The plaintext is url-safe base64 by construction, so this is a
+		// regression guard on the builders and not on the alphabet.
+		const hostile = 'glw_' + 'a'.repeat(28) + '&x=1';
+		expect(appleLinkUrl(hostile)).toContain(encodeURIComponent(hostile));
+		expect(appleLinkUrl(hostile)).not.toContain('&x=1');
+		expect(androidLinkUrl(hostile)).toContain(encodeURIComponent(hostile));
 	});
 });

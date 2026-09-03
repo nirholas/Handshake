@@ -294,6 +294,11 @@ function routeDeepLinks() {
 				// first path segment in `hostname`, which is a URL parsing quirk and
 				// not a host in any meaningful sense.
 				const path = `${url.hostname ? `/${url.hostname}` : ''}${url.pathname}`;
+				// threews://glance/link?token=glw_... is the home screen widget's
+				// credential, and SceneDelegate.swift has already taken it into the
+				// keychain. It is not a page, and navigating here would put a live
+				// token in the address bar of a WebView, so it stops at this line.
+				if (path === '/glance/link') return;
 				target = `https://three.ws${path || '/'}${url.search}${url.hash}`;
 			} else if (INTERNAL_HOSTS.has(url.hostname)) {
 				target = url.href;

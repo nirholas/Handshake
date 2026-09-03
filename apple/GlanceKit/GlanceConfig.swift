@@ -25,8 +25,13 @@ enum GlanceConfig {
 
 	/// The App Group container holding the last card. `nil` on a single-target
 	/// development run, where the extension falls back to its own container and
-	/// simply cannot see what the app cached.
-	static var appGroup: String? { infoString("GlanceAppGroup") }
+	/// simply cannot see what the app cached. A value starting with a dot means
+	/// `DEVELOPMENT_TEAM` was not set when the Mac project was built, so the
+	/// team prefix expanded to nothing and the identifier is not a real group.
+	static var appGroup: String? {
+		guard let raw = infoString("GlanceAppGroup"), !raw.hasPrefix(".") else { return nil }
+		return raw
+	}
 
 	/// The shared keychain group. `nil` when `DEVELOPMENT_TEAM` was not set at
 	/// build time, in which case the value expands to a bare `.ws.three.shared`

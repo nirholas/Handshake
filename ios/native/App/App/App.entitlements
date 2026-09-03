@@ -35,5 +35,20 @@
 	-->
 	<key>com.apple.developer.carplay-voice-based-conversation</key>
 	<true/>
+	<!--
+		The Agent glance home screen widget. The App Group holds the last card
+		the widget downloaded, so it keeps painting when the phone is offline,
+		and the keychain group holds the widget token this app claims from
+		threews://glance/link. Both are read-only reads of one endpoint; see
+		docs/native-widgets.md.
+	-->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>$(GLANCE_APP_GROUP)</string>
+	</array>
+	<key>keychain-access-groups</key>
+	<array>
+		<string>$(GLANCE_KEYCHAIN_GROUP)</string>
+	</array>
 </dict>
 </plist>

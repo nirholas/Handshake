@@ -165,5 +165,18 @@
 	-->
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<!--
+		Read back by apple/GlanceKit/GlanceConfig.swift in both this app and the
+		Agent glance widget extension. The values come from the target's build
+		settings because the two Apple platforms need different strings: an App
+		Group on iPhone must not carry the team prefix that the same group on a
+		Developer ID Mac must. See apple/README.md.
+	-->
+	<key>GlanceOrigin</key>
+	<string>$(GLANCE_ORIGIN)</string>
+	<key>GlanceAppGroup</key>
+	<string>$(GLANCE_APP_GROUP)</string>
+	<key>GlanceKeychainGroup</key>
+	<string>$(GLANCE_KEYCHAIN_GROUP)</string>
 </dict>
 </plist>

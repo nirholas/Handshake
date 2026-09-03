@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+	<key>com.apple.security.network.client</key>
+	<true/>
+	<!--
+		Shared with the widget extension: the App Group holds the last card, the
+		keychain group holds the token. Both strings come from the project's
+		build settings; on a Mac signed with a Developer ID they carry the team
+		prefix, which is why they are not literals here.
+	-->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>$(GLANCE_APP_GROUP)</string>
+	</array>
+	<key>keychain-access-groups</key>
+	<array>
+		<string>$(GLANCE_KEYCHAIN_GROUP)</string>
+	</array>
+</dict>
+</plist>

@@ -19,7 +19,48 @@
 		9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9582B6822FE993A50072D4E8 /* SceneDelegate.swift */; };
 		C4A11E0130A1000200000000 /* CarPlaySceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A11E0130A1000100000000 /* CarPlaySceneDelegate.swift */; };
 		C4A11E0130A1000400000000 /* DriveLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A11E0130A1000300000000 /* DriveLink.swift */; };
+		C4A11E0230B1003100000000 /* GlanceConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A11E0230B1000100000000 /* GlanceConfig.swift */; };
+		C4A11E0230B1004100000000 /* GlanceConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A11E0230B1000100000000 /* GlanceConfig.swift */; };
+		C4A11E0230B1003200000000 /* GlanceCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A11E0230B1000200000000 /* GlanceCard.swift */; };
+		C4A11E0230B1004200000000 /* GlanceCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A11E0230B1000200000000 /* GlanceCard.swift */; };
+		C4A11E0230B1003300000000 /* GlanceTokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A11E0230B1000300000000 /* GlanceTokenStore.swift */; };
+		C4A11E0230B1004300000000 /* GlanceTokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A11E0230B1000300000000 /* GlanceTokenStore.swift */; };
+		C4A11E0230B1003400000000 /* GlanceCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A11E0230B1000400000000 /* GlanceCache.swift */; };
+		C4A11E0230B1004400000000 /* GlanceCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A11E0230B1000400000000 /* GlanceCache.swift */; };
+		C4A11E0230B1004500000000 /* GlanceClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A11E0230B1000500000000 /* GlanceClient.swift */; };
+		C4A11E0230B1003500000000 /* GlanceLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A11E0230B1000600000000 /* GlanceLink.swift */; };
+		C4A11E0230B1004600000000 /* GlanceLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A11E0230B1000600000000 /* GlanceLink.swift */; };
+		C4A11E0230B1004700000000 /* GlanceImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A11E0230B1000700000000 /* GlanceImage.swift */; };
+		C4A11E0230B1004800000000 /* GlanceEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A11E0230B1000800000000 /* GlanceEntry.swift */; };
+		C4A11E0230B1004900000000 /* GlanceCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A11E0230B1000900000000 /* GlanceCardView.swift */; };
+		C4A11E0230B1004A00000000 /* GlanceProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A11E0230B1000A00000000 /* GlanceProvider.swift */; };
+		C4A11E0230B1004B00000000 /* AgentGlanceWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A11E0230B1000B00000000 /* AgentGlanceWidget.swift */; };
+		C4A11E0230B1005000000000 /* GlanceWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C4A11E0230B1000E00000000 /* GlanceWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		C4A11E0230B1006600000000 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C4A11E0230B1006000000000;
+			remoteInfo = GlanceWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		C4A11E0230B1006400000000 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				C4A11E0230B1005000000000 /* GlanceWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
@@ -36,6 +77,20 @@
 		C4A11E0130A1000100000000 /* CarPlaySceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarPlaySceneDelegate.swift; sourceTree = "<group>"; };
 		C4A11E0130A1000300000000 /* DriveLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriveLink.swift; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
+		C4A11E0230B1000100000000 /* GlanceConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlanceConfig.swift; sourceTree = "<group>"; };
+		C4A11E0230B1000200000000 /* GlanceCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlanceCard.swift; sourceTree = "<group>"; };
+		C4A11E0230B1000300000000 /* GlanceTokenStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlanceTokenStore.swift; sourceTree = "<group>"; };
+		C4A11E0230B1000400000000 /* GlanceCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlanceCache.swift; sourceTree = "<group>"; };
+		C4A11E0230B1000500000000 /* GlanceClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlanceClient.swift; sourceTree = "<group>"; };
+		C4A11E0230B1000600000000 /* GlanceLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlanceLink.swift; sourceTree = "<group>"; };
+		C4A11E0230B1000700000000 /* GlanceImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlanceImage.swift; sourceTree = "<group>"; };
+		C4A11E0230B1000800000000 /* GlanceEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlanceEntry.swift; sourceTree = "<group>"; };
+		C4A11E0230B1000900000000 /* GlanceCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlanceCardView.swift; sourceTree = "<group>"; };
+		C4A11E0230B1000A00000000 /* GlanceProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlanceProvider.swift; sourceTree = "<group>"; };
+		C4A11E0230B1000B00000000 /* AgentGlanceWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentGlanceWidget.swift; sourceTree = "<group>"; };
+		C4A11E0230B1000C00000000 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C4A11E0230B1000D00000000 /* GlanceWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = GlanceWidget.entitlements; sourceTree = "<group>"; };
+		C4A11E0230B1000E00000000 /* GlanceWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = GlanceWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -47,6 +102,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C4A11E0230B1006200000000 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -55,6 +117,7 @@
 			children = (
 				958DCC722DB07C7200EA8C5F /* debug.xcconfig */,
 				504EC3061FED79650016851F /* App */,
+				C4A11E0230B1002000000000 /* Glance */,
 				504EC3051FED79650016851F /* Products */,
 			);
 			sourceTree = "<group>";
@@ -63,6 +126,7 @@
 			isa = PBXGroup;
 			children = (
 				504EC3041FED79650016851F /* App.app */,
+				C4A11E0230B1000E00000000 /* GlanceWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -86,6 +150,44 @@
 			path = App;
 			sourceTree = "<group>";
 		};
+		C4A11E0230B1002000000000 /* Glance */ = {
+			isa = PBXGroup;
+			children = (
+				C4A11E0230B1002100000000 /* GlanceKit */,
+				C4A11E0230B1002200000000 /* GlanceWidget */,
+			);
+			name = Glance;
+			sourceTree = "<group>";
+		};
+		C4A11E0230B1002100000000 /* GlanceKit */ = {
+			isa = PBXGroup;
+			children = (
+				C4A11E0230B1000100000000 /* GlanceConfig.swift */,
+				C4A11E0230B1000200000000 /* GlanceCard.swift */,
+				C4A11E0230B1000300000000 /* GlanceTokenStore.swift */,
+				C4A11E0230B1000400000000 /* GlanceCache.swift */,
+				C4A11E0230B1000500000000 /* GlanceClient.swift */,
+				C4A11E0230B1000600000000 /* GlanceLink.swift */,
+				C4A11E0230B1000700000000 /* GlanceImage.swift */,
+				C4A11E0230B1000800000000 /* GlanceEntry.swift */,
+				C4A11E0230B1000900000000 /* GlanceCardView.swift */,
+			);
+			name = GlanceKit;
+			path = ../../../apple/GlanceKit;
+			sourceTree = SOURCE_ROOT;
+		};
+		C4A11E0230B1002200000000 /* GlanceWidget */ = {
+			isa = PBXGroup;
+			children = (
+				C4A11E0230B1000A00000000 /* GlanceProvider.swift */,
+				C4A11E0230B1000B00000000 /* AgentGlanceWidget.swift */,
+				C4A11E0230B1000C00000000 /* Info.plist */,
+				C4A11E0230B1000D00000000 /* GlanceWidget.entitlements */,
+			);
+			name = GlanceWidget;
+			path = ../../../apple/GlanceWidget;
+			sourceTree = SOURCE_ROOT;
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -96,10 +198,12 @@
 				504EC3001FED79650016851F /* Sources */,
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
+				C4A11E0230B1006400000000 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				C4A11E0230B1006500000000 /* PBXTargetDependency */,
 			);
 			name = App;
 			packageProductDependencies = (
@@ -108,6 +212,22 @@
 			productName = App;
 			productReference = 504EC3041FED79650016851F /* App.app */;
 			productType = "com.apple.product-type.application";
+		};
+		C4A11E0230B1006000000000 /* GlanceWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C4A11E0230B1006700000000 /* Build configuration list for PBXNativeTarget "GlanceWidgetExtension" */;
+			buildPhases = (
+				C4A11E0230B1006100000000 /* Sources */,
+				C4A11E0230B1006200000000 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = GlanceWidgetExtension;
+			productName = GlanceWidget;
+			productReference = C4A11E0230B1000E00000000 /* GlanceWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -121,6 +241,10 @@
 					504EC3031FED79650016851F = {
 						CreatedOnToolsVersion = 9.2;
 						LastSwiftMigration = 1100;
+						ProvisioningStyle = Automatic;
+					};
+					C4A11E0230B1006000000000 = {
+						CreatedOnToolsVersion = 15.0;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -142,6 +266,7 @@
 			projectRoot = "";
 			targets = (
 				504EC3031FED79650016851F /* App */,
+				C4A11E0230B1006000000000 /* GlanceWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -172,10 +297,41 @@
 				9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */,
 				C4A11E0130A1000200000000 /* CarPlaySceneDelegate.swift in Sources */,
 				C4A11E0130A1000400000000 /* DriveLink.swift in Sources */,
+				C4A11E0230B1003100000000 /* GlanceConfig.swift in Sources */,
+				C4A11E0230B1003200000000 /* GlanceCard.swift in Sources */,
+				C4A11E0230B1003300000000 /* GlanceTokenStore.swift in Sources */,
+				C4A11E0230B1003400000000 /* GlanceCache.swift in Sources */,
+				C4A11E0230B1003500000000 /* GlanceLink.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C4A11E0230B1006100000000 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C4A11E0230B1004100000000 /* GlanceConfig.swift in Sources */,
+				C4A11E0230B1004200000000 /* GlanceCard.swift in Sources */,
+				C4A11E0230B1004300000000 /* GlanceTokenStore.swift in Sources */,
+				C4A11E0230B1004400000000 /* GlanceCache.swift in Sources */,
+				C4A11E0230B1004500000000 /* GlanceClient.swift in Sources */,
+				C4A11E0230B1004600000000 /* GlanceLink.swift in Sources */,
+				C4A11E0230B1004700000000 /* GlanceImage.swift in Sources */,
+				C4A11E0230B1004800000000 /* GlanceEntry.swift in Sources */,
+				C4A11E0230B1004900000000 /* GlanceCardView.swift in Sources */,
+				C4A11E0230B1004A00000000 /* GlanceProvider.swift in Sources */,
+				C4A11E0230B1004B00000000 /* AgentGlanceWidget.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		C4A11E0230B1006500000000 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C4A11E0230B1006000000000 /* GlanceWidgetExtension */;
+			targetProxy = C4A11E0230B1006600000000 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		504EC30B1FED79650016851F /* Main.storyboard */ = {
@@ -314,6 +470,9 @@
 				CODE_SIGN_STYLE = Automatic;
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
+				GLANCE_APP_GROUP = group.ws.three.app;
+				GLANCE_KEYCHAIN_GROUP = "$(DEVELOPMENT_TEAM).ws.three.shared";
+				GLANCE_ORIGIN = "https://three.ws";
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -337,6 +496,9 @@
 				CODE_SIGN_STYLE = Automatic;
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
+				GLANCE_APP_GROUP = group.ws.three.app;
+				GLANCE_KEYCHAIN_GROUP = "$(DEVELOPMENT_TEAM).ws.three.shared";
+				GLANCE_ORIGIN = "https://three.ws";
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -347,6 +509,88 @@
 				PRODUCT_BUNDLE_IDENTIFIER = ws.three.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		C4A11E0230B1006800000000 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_ENTITLEMENTS = "../../../apple/GlanceWidget/GlanceWidget.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				/* The three values GlanceKit reads back out of the Info.plist at
+				   runtime. An App Group on iPhone must NOT carry the team prefix;
+				   the same group on the Mac app must. See apple/README.md. */
+				GLANCE_APP_GROUP = group.ws.three.app;
+				GLANCE_KEYCHAIN_GROUP = "$(DEVELOPMENT_TEAM).ws.three.shared";
+				GLANCE_ORIGIN = "https://three.ws";
+				INFOPLIST_FILE = "../../../apple/GlanceWidget/Info.plist";
+				/* WidgetKit's containerBackground and contentMarginsDisabled are
+				   iOS 17. The host app stays on 16.0; an extension the system
+				   cannot run is simply not offered in the widget gallery. */
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = ws.three.app.glance;
+				PRODUCT_NAME = GlanceWidget;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C4A11E0230B1006900000000 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_ENTITLEMENTS = "../../../apple/GlanceWidget/GlanceWidget.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				/* The three values GlanceKit reads back out of the Info.plist at
+				   runtime. An App Group on iPhone must NOT carry the team prefix;
+				   the same group on the Mac app must. See apple/README.md. */
+				GLANCE_APP_GROUP = group.ws.three.app;
+				GLANCE_KEYCHAIN_GROUP = "$(DEVELOPMENT_TEAM).ws.three.shared";
+				GLANCE_ORIGIN = "https://three.ws";
+				INFOPLIST_FILE = "../../../apple/GlanceWidget/Info.plist";
+				/* WidgetKit's containerBackground and contentMarginsDisabled are
+				   iOS 17. The host app stays on 16.0; an extension the system
+				   cannot run is simply not offered in the widget gallery. */
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = ws.three.app.glance;
+				PRODUCT_NAME = GlanceWidget;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -369,6 +613,15 @@
 			buildConfigurations = (
 				504EC3171FED79650016851F /* Debug */,
 				504EC3181FED79650016851F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C4A11E0230B1006700000000 /* Build configuration list for PBXNativeTarget "GlanceWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C4A11E0230B1006800000000 /* Debug */,
+				C4A11E0230B1006900000000 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
