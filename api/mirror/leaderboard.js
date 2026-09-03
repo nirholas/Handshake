@@ -68,13 +68,19 @@ export default wrap(async function handler(req, res) {
 			WHERE network = ${network} AND category = 'trade' AND status IN ('confirmed','ok')
 			GROUP BY agent_id
 		),
+		-- Followers exclude self-follows: an owner mirroring between two agents they
+		-- both own is a legitimate strategy, but counting it here let anyone buy up
+		-- to 20 points of composite score (the follower nudge in rankLeaders) by
+		-- creating agents and pointing them at themselves. The edge still works and
+		-- still shows on the owner's own dashboard; it just no longer buys rank.
 		followers AS (
-			SELECT leader_agent_id AS agent_id,
+			SELECT f.leader_agent_id AS agent_id,
 			       count(*)::int AS followers,
-			       count(*) FILTER (WHERE enabled)::int AS active_followers
-			FROM agent_mirror_follows
-			WHERE network = ${network}
-			GROUP BY leader_agent_id
+			       count(*) FILTER (WHERE f.enabled)::int AS active_followers
+			FROM agent_mirror_follows f
+			JOIN agent_identities la ON la.id = f.leader_agent_id AND la.user_id <> f.owner_user_id
+			WHERE f.network = ${network}
+			GROUP BY f.leader_agent_id
 		)
 		SELECT a.id, a.name, a.avatar_url, a.profile_image_url,
 		       COALESCE(c.settled, 0) AS settled, COALESCE(c.wins, 0) AS wins,

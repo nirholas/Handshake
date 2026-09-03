@@ -77,11 +77,15 @@ export async function gatherLeaders(network = 'mainnet', { limit = 200 } = {}) {
 			       max(closed_at) as last_closed_at
 			from closed group by agent_id
 		),
+		-- Self-follows excluded, same as the mirror leaderboard: an owner's own
+		-- mirror edges must not weight this allocator's view of a leader.
 		followers as (
-			select leader_agent_id as agent_id,
+			select f.leader_agent_id as agent_id,
 			       count(*)::int as followers,
-			       count(*) filter (where enabled)::int as active_followers
-			from agent_mirror_follows where network = ${network} group by leader_agent_id
+			       count(*) filter (where f.enabled)::int as active_followers
+			from agent_mirror_follows f
+			join agent_identities la on la.id = f.leader_agent_id and la.user_id <> f.owner_user_id
+			where f.network = ${network} group by f.leader_agent_id
 		)
 		select a.id, a.name, a.avatar_url, a.profile_image_url,
 		       g.settled, g.wins, g.pnl_lamports, g.entry_lamports, g.avg_entry_lamports,

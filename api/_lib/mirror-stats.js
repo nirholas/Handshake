@@ -44,11 +44,15 @@ export async function leaderTrackRecord(agentId, network = 'mainnet') {
 			where agent_id = ${agentId} and network = ${network}
 			  and category = 'trade' and status in ('confirmed', 'ok')
 		`.catch(() => [{}]),
+		// Self-follows are excluded: an owner pointing their own agents at this one
+		// is legitimate, but it must not inflate the public follower count that the
+		// leaderboard score and the Trader Card both read as social proof.
 		sql`
 			select count(*)::int as total,
-			       count(*) filter (where enabled = true)::int as active
-			from agent_mirror_follows
-			where leader_agent_id = ${agentId} and network = ${network}
+			       count(*) filter (where f.enabled = true)::int as active
+			from agent_mirror_follows f
+			join agent_identities la on la.id = f.leader_agent_id and la.user_id <> f.owner_user_id
+			where f.leader_agent_id = ${agentId} and f.network = ${network}
 		`.catch(() => [{ total: 0, active: 0 }]),
 	]);
 
@@ -116,11 +120,12 @@ export async function leaderTrackRecord(agentId, network = 'mainnet') {
 export async function followCounts(agentIds, network = 'mainnet') {
 	if (!Array.isArray(agentIds) || agentIds.length === 0) return new Map();
 	const rows = await sql`
-		select leader_agent_id as id, count(*)::int as followers,
-		       count(*) filter (where enabled = true)::int as active_followers
-		from agent_mirror_follows
-		where leader_agent_id = any(${agentIds}) and network = ${network}
-		group by leader_agent_id
+		select f.leader_agent_id as id, count(*)::int as followers,
+		       count(*) filter (where f.enabled = true)::int as active_followers
+		from agent_mirror_follows f
+		join agent_identities la on la.id = f.leader_agent_id and la.user_id <> f.owner_user_id
+		where f.leader_agent_id = any(${agentIds}) and f.network = ${network}
+		group by f.leader_agent_id
 	`.catch(() => []);
 	const m = new Map();
 	for (const r of rows) m.set(r.id, { followers: Number(r.followers), active: Number(r.active_followers) });
