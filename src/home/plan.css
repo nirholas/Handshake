@@ -1,0 +1,154 @@
+/*
+ * The plan page.
+ *
+ * Built on the tokens src/home/home.css already establishes, so the plan
+ * surface and the connect surface are visibly one product rather than two pages
+ * that happen to share a nav. Nothing here redefines a colour: --hm-live,
+ * --hm-stale and --hm-down carry the same meanings they do everywhere else in
+ * the lane (fine, nearly out, over), which is why a bar going amber reads the
+ * same way a house going amber does.
+ */
+
+/* ── The plan header ─────────────────────────────────────────────────────── */
+
+.hm-plan-badges {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	align-items: center;
+}
+
+.hm-plan-badge {
+	--badge: var(--hm-ink-3);
+	display: inline-flex;
+	align-items: center;
+	padding: 0.2rem 0.6rem;
+	border-radius: var(--radius-pill);
+	border: 1px solid color-mix(in srgb, var(--badge) 45%, transparent);
+	background: color-mix(in srgb, var(--badge) 14%, transparent);
+	color: var(--ink);
+	font-size: 0.76rem;
+	font-weight: 600;
+	letter-spacing: 0.01em;
+	white-space: nowrap;
+}
+
+.hm-panel-quiet { background: var(--hm-panel-2); }
+
+/* ── The quota bars ──────────────────────────────────────────────────────── */
+
+.hm-quotas {
+	display: grid;
+	gap: 1.1rem;
+	margin-top: var(--space-md);
+}
+
+.hm-quota {
+	display: grid;
+	gap: 0.42rem;
+	/* The state colour every bar inherits. Overridden by .is-warn / .is-over. */
+	--quota: var(--hm-live);
+}
+
+.hm-quota.is-warn { --quota: var(--hm-stale); }
+.hm-quota.is-over { --quota: var(--hm-down); }
+
+.hm-quota-head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--space-md);
+}
+
+.hm-quota-label {
+	font-weight: 600;
+	color: var(--ink);
+	font-size: 0.95rem;
+}
+
+.hm-quota-count {
+	font-family: var(--font-mono);
+	font-size: 0.82rem;
+	color: var(--hm-ink-2);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.hm-quota-track {
+	height: 0.42rem;
+	border-radius: var(--radius-pill);
+	background: var(--hm-line);
+	overflow: hidden;
+}
+
+.hm-quota-fill {
+	height: 100%;
+	border-radius: var(--radius-pill);
+	background: var(--quota);
+	/* Animated so a bar that moved after an action is visibly the thing that
+	   moved, rather than a number that was different the next time you looked. */
+	transition: width 320ms cubic-bezier(0.22, 1, 0.36, 1), background-color 200ms ease;
+}
+
+.hm-quota-why {
+	margin: 0;
+	font-size: 0.82rem;
+	line-height: var(--leading-normal);
+	color: var(--hm-ink-3);
+}
+
+.hm-quota-note {
+	margin: 0;
+	font-size: 0.78rem;
+	font-weight: 600;
+	color: var(--hm-live);
+}
+
+/* ── A paused home ───────────────────────────────────────────────────────── */
+
+.hm-card.is-paused {
+	/* Dimmed, never hidden. A paused home is still your house and it still
+	   answers safety actions, so it stays legible rather than being greyed into
+	   the background as though it were gone. */
+	border-style: dashed;
+	background: var(--hm-panel-2);
+}
+
+.hm-card.is-paused .hm-card-label { color: var(--hm-ink-2); }
+
+.hm-pill {
+	display: inline-block;
+	margin-left: 0.5rem;
+	padding: 0.1rem 0.5rem;
+	border-radius: var(--radius-pill);
+	border: 1px solid color-mix(in srgb, var(--hm-stale) 45%, transparent);
+	background: color-mix(in srgb, var(--hm-stale) 16%, transparent);
+	color: var(--hm-stale);
+	font-size: 0.7rem;
+	font-weight: 700;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+	vertical-align: middle;
+}
+
+.hm-card-reason {
+	margin: 0.4rem 0 0;
+	font-size: 0.82rem;
+	line-height: var(--leading-normal);
+	color: var(--hm-ink-3);
+}
+
+.hm-btn.is-disabled {
+	opacity: 0.45;
+	pointer-events: none;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 520px) {
+	.hm-quota-head { flex-direction: column; align-items: flex-start; gap: 0.15rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.hm-quota-fill { transition: none; }
+}
