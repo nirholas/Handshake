@@ -237,3 +237,33 @@ describe('maskUnreleasedIntent', () => {
 		}
 	});
 });
+
+describe('the suggested-ladder lane', () => {
+	it('reads a fenced JSON reply, a bare one, and prose around one', async () => {
+		const { parseJsonBlock } = await import('../api/copy/alpha-drip.js');
+		const payload = '{"schedule":[{"tier":"gold","delay_sec":0}],"public_delay_sec":45}';
+		for (const reply of [payload, '```json\n' + payload + '\n```', 'Here you go:\n' + payload + '\nHope that helps.']) {
+			expect(parseJsonBlock(reply)).toEqual({ schedule: [{ tier: 'gold', delay_sec: 0 }], public_delay_sec: 45 });
+		}
+	});
+
+	it('returns null rather than throwing on a reply with no JSON in it', async () => {
+		const { parseJsonBlock } = await import('../api/copy/alpha-drip.js');
+		for (const reply of ['', 'I cannot help with that.', '{ not json', null, undefined, 42]) {
+			expect(parseJsonBlock(reply)).toBeNull();
+		}
+	});
+
+	it('holds a suggestion to the same rules as a hand-written ladder', async () => {
+		const { parseJsonBlock } = await import('../api/copy/alpha-drip.js');
+		// A model that inverts the ladder (a higher tier waiting longer) must be
+		// refused, not saved: the normalizer is the only authority on the rules.
+		const bad = parseJsonBlock('{"schedule":[{"tier":"gold","delay_sec":60},{"tier":"bronze","delay_sec":5}],"public_delay_sec":90}');
+		expect(normalizeDripConfig({ ...bad, enabled: true }).ok).toBe(false);
+		// And one that respects them normalizes exactly like a hand-written one.
+		const good = parseJsonBlock('```json\n{"schedule":[{"tier":"gold","delay_sec":0},{"tier":"bronze","delay_sec":30}],"public_delay_sec":90}\n```');
+		const norm = normalizeDripConfig({ ...good, enabled: true });
+		expect(norm.ok).toBe(true);
+		expect(describeSchedule(norm.value)).toBe('Gold+ instant, Bronze+ after 30s, everyone else after 1m 30s.');
+	});
+});

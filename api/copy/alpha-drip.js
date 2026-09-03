@@ -89,7 +89,8 @@ function present(config) {
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET', 'POST'])) return;
-	if (await rateLimited(req, res, limits.api, clientIp(req))) return;
+	const rl = await limits.publicIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
 
 	const params = new URL(req.url, 'http://x').searchParams;
 	const leaderFromQuery = String(params.get('leader_agent_id') || '').trim();
@@ -158,7 +159,9 @@ export default wrap(async (req, res) => {
 
 	const auth = await requireUser(req, res);
 	if (!auth) return;
-	if (auth.viaSession && !requireCsrf(req, res)) return;
+	// requireCsrf is async and binds the token to the caller: awaiting it and
+	// passing the user id are both load-bearing, not style.
+	if (auth.viaSession && !(await requireCsrf(req, res, auth.userId))) return;
 
 	const input = await readJson(req);
 	if (!input) return error(res, 400, 'invalid_body', 'expected a JSON body');
@@ -196,10 +199,19 @@ export default wrap(async (req, res) => {
 		try {
 			raw = await llmComplete({ system: RECOMMEND_SYSTEM, user: userPrompt, maxTokens: 700, timeoutMs: 25_000, track: { userId: auth.userId } });
 		} catch (err) {
-			if (err instanceof LlmUnavailableError) {
-				return error(res, 503, 'llm_unavailable', 'No language model is reachable right now. Set the ladder by hand and try the suggestion later.');
+			// The daily spend cap is the one failure the leader can act on, so it
+			// keeps its own status and wording. Everything else means the provider
+			// chain was exhausted (every rung unconfigured, throttled, or down),
+			// which is the same outcome from the leader's side: the ladder is still
+			// theirs to set by hand, and a provider's raw 429 body is not their
+			// problem to read.
+			if (err?.code === 'daily_spend_cap_exceeded') {
+				return error(res, 429, err.code, err.message);
 			}
-			return error(res, err.status || 502, err.code || 'recommend_failed', err.message || 'Could not draft a ladder.');
+			if (!(err instanceof LlmUnavailableError)) {
+				console.warn(`[alpha-drip] recommend chain exhausted: ${err?.message || err}`);
+			}
+			return error(res, 503, 'llm_unavailable', 'No language model answered just now. Set the ladder by hand, or try the suggestion again in a moment.');
 		}
 
 		const parsed = parseJsonBlock(raw?.text ?? raw);
@@ -249,7 +261,7 @@ export default wrap(async (req, res) => {
 });
 
 /** Pull the first JSON object out of a model reply, fenced or bare. Never throws. */
-function parseJsonBlock(text) {
+export function parseJsonBlock(text) {
 	if (typeof text !== 'string') return null;
 	const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
 	const candidate = fenced ? fenced[1] : text;
