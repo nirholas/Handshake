@@ -24,7 +24,9 @@
  * through the inverse of that map. That map is sampled once per drag, at
  * pointer-down: sculpting is correct for the pose you sculpted on, so the host
  * settles the rig before enabling the brush rather than painting onto a moving
- * target.
+ * target. That same cache is what the hit test picks against, because three's
+ * skinned raycast is far too slow on a 300-slider base to run per pointer move
+ * (see `_hit`).
  *
  * Symmetry is a mirror of the BRUSH, not of the vertices: the stroke is applied
  * a second time at the point reflected across the avatar's own X = 0 plane. On
@@ -129,6 +131,42 @@ export function sculptableMeshes(root) {
 		if (node.isMesh && node.geometry?.attributes?.position) out.push(node);
 	});
 	return out;
+}
+
+/**
+ * Drop a custom target that is still all zeros.
+ *
+ * Adding a morph target makes three reallocate the whole morph texture (one
+ * dense RGBA32F layer per target: ~70 MB on this base), so the brush creates
+ * its target when it is switched ON rather than paying that stall inside the
+ * user's first drag. The cost of that trade is an empty target on a mesh nobody
+ * ended up painting, which would then ride into the exported GLB, so switching
+ * the brush off takes it back out again.
+ *
+ * Only ever removes the LAST target, which `ensureSculptTarget` guarantees the
+ * custom one is: removing from the middle would renumber every morph above it
+ * and silently rebind every slider the user had set.
+ *
+ * @returns {number} meshes pruned
+ */
+export function pruneEmptySculptTargets(root) {
+	let pruned = 0;
+	for (const mesh of sculptableMeshes(root)) {
+		const index = mesh.morphTargetDictionary?.[SCULPT_TARGET_NAME];
+		if (index === undefined) continue;
+		const list = mesh.geometry?.morphAttributes?.position;
+		if (!list || index !== list.length - 1) continue;
+		const attr = list[index];
+		if (!attr || attr.array.some((v) => v !== 0)) continue;
+		list.pop();
+		mesh.morphTargetInfluences.pop();
+		delete mesh.morphTargetDictionary[SCULPT_TARGET_NAME];
+		for (const m of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) {
+			if (m) m.needsUpdate = true;
+		}
+		pruned++;
+	}
+	return pruned;
 }
 
 /** Zero every custom target under `root`. Returns the number of meshes reset. */
@@ -267,6 +305,7 @@ const _skin = new Matrix4();
 const _bone = new Matrix4();
 const _inv = new Matrix4();
 const _rootInv = new Matrix4();
+const _pickMatrix = new Matrix4();
 
 /** Blender-style smooth falloff: 1 at the centre, 0 at the rim, flat at both. */
 function falloff(t) {
@@ -342,6 +381,12 @@ export class SculptBrush {
 		this._cursor = null;
 		this._worldCache = new WeakMap(); // mesh -> Float32Array of world positions
 		this._touched = 0;
+		// Pointer moves are coalesced onto animation frames. A stroke step costs
+		// a raycast against a 27k-triangle skinned mesh, and a fast drag can
+		// deliver several moves per frame; without this the queue backs up and
+		// the brush lags a visibly growing distance behind the cursor.
+		this._raf = null;
+		this._pending = null;
 
 		this._onDown = this._onDown.bind(this);
 		this._onMove = this._onMove.bind(this);
@@ -364,6 +409,10 @@ export class SculptBrush {
 		window.addEventListener('pointerup', this._onUp);
 		this.domElement.style.cursor = 'crosshair';
 		this._ensureCursor();
+		// Allocate the custom target up front: see pruneEmptySculptTargets for
+		// why the morph-texture reallocation belongs on the toggle and not
+		// inside the first stroke.
+		for (const mesh of this._meshes) ensureSculptTarget(mesh);
 	}
 
 	disable() {
@@ -377,6 +426,7 @@ export class SculptBrush {
 		this.domElement.style.cursor = '';
 		this._cursor?.remove();
 		this._cursor = null;
+		pruneEmptySculptTargets(this.root);
 	}
 
 	dispose() {
@@ -396,11 +446,69 @@ export class SculptBrush {
 		return _ndc;
 	}
 
-	_hit(event) {
+	/**
+	 * Which vertex is under the pointer.
+	 *
+	 * NOT three's `Raycaster.intersectObjects`. `SkinnedMesh.raycast` calls
+	 * `getVertexPosition` for all three corners of every triangle, and that
+	 * method walks the whole morph-target list per corner. On this base that is
+	 * 27k triangles x 3 x 306 targets, measured at ~200 ms per hit test, so a
+	 * drag ran at four frames a second and the brush trailed the cursor by half
+	 * a screen.
+	 *
+	 * The stroke already needs every vertex's world position, and the rig is
+	 * frozen for the duration of the drag, so that array is built once and this
+	 * picks against it: for each vertex, its distance along the ray and its
+	 * perpendicular distance from it, keeping the nearest vertex in front of the
+	 * camera that lies within a few pixels of the ray. One linear pass over
+	 * 14.5k points, under a millisecond, and it is the front-most surface by
+	 * construction because ties break on ray distance.
+	 *
+	 * @param {{clientX:number, clientY:number}} coords
+	 * @returns {{object: object, index: number, point: Vector3, distance: number}|null}
+	 */
+	_hit(coords) {
 		if (!this._meshes.length) this._meshes = sculptableMeshes(this.root);
-		this._raycaster.setFromCamera(this._ndcFrom(event), this.camera);
-		const hits = this._raycaster.intersectObjects(this._meshes, false);
-		return hits.length ? hits[0] : null;
+		this._raycaster.setFromCamera(this._ndcFrom(coords), this.camera);
+		const { origin, direction } = this._raycaster.ray;
+
+		// A ray this many pixels from a vertex still counts as pointing at it.
+		// It has to exceed half the on-screen spacing between neighbouring
+		// vertices or a ray landing mid-quad finds nothing and the press falls
+		// through to the orbit controls, which reads as a brush that ignores
+		// half its clicks. The world-space floor covers the same gap at close
+		// zoom, where that spacing grows without bound.
+		const PICK_PX = 14;
+		const MIN_WORLD = 0.02;
+		const height = this.domElement?.clientHeight || 1;
+		const fov = ((this.camera.fov || 35) * Math.PI) / 180;
+		const worldPerPixelAt = (2 * Math.tan(fov / 2)) / height;
+
+		let best = null;
+		for (const mesh of this._meshes) {
+			const world = this._worldPositions(mesh);
+			for (let i = 0, n = world.length / 3; i < n; i++) {
+				const ox = world[i * 3] - origin.x;
+				const oy = world[i * 3 + 1] - origin.y;
+				const oz = world[i * 3 + 2] - origin.z;
+				const t = ox * direction.x + oy * direction.y + oz * direction.z;
+				if (t <= 0 || (best && t >= best.distance)) continue;
+				const px = ox - t * direction.x;
+				const py = oy - t * direction.y;
+				const pz = oz - t * direction.z;
+				const thr = Math.max(PICK_PX * worldPerPixelAt * t, MIN_WORLD);
+				if (px * px + py * py + pz * pz > thr * thr) continue;
+				best = { object: mesh, index: i, distance: t };
+			}
+		}
+		if (!best) return null;
+		const world = this._worldPositions(best.object);
+		best.point = new Vector3(
+			world[best.index * 3],
+			world[best.index * 3 + 1],
+			world[best.index * 3 + 2],
+		);
+		return best;
 	}
 
 	_onDown(event) {
@@ -423,8 +531,17 @@ export class SculptBrush {
 		if (!this.enabled) return;
 		this._moveCursor(event);
 		if (this._pointerId === null || event.pointerId !== this._pointerId) return;
-		const hit = this._hit(event);
-		if (hit) this._stroke(hit);
+		event.preventDefault();
+		this._pending = { clientX: event.clientX, clientY: event.clientY };
+		if (this._raf !== null) return;
+		this._raf = requestAnimationFrame(() => {
+			this._raf = null;
+			const pending = this._pending;
+			this._pending = null;
+			if (!pending || this._pointerId === null) return;
+			const hit = this._hit(pending);
+			if (hit) this._stroke(hit);
+		});
 	}
 
 	_onUp(event) {
@@ -437,6 +554,17 @@ export class SculptBrush {
 	}
 
 	_endStroke() {
+		if (this._raf !== null) {
+			cancelAnimationFrame(this._raf);
+			this._raf = null;
+		}
+		// One last step at the position the pointer stopped on, so a flick that
+		// ended between frames is not silently dropped.
+		if (this._pending && this._pointerId !== null) {
+			const hit = this._hit(this._pending);
+			if (hit) this._stroke(hit);
+		}
+		this._pending = null;
 		if (this._pointerId !== null) {
 			this.domElement?.releasePointerCapture?.(this._pointerId);
 			this._pointerId = null;
@@ -459,10 +587,33 @@ export class SculptBrush {
 	_worldPositions(mesh) {
 		let cached = this._worldCache.get(mesh);
 		if (cached) return cached;
-		const count = mesh.geometry.attributes.position.count;
+
+		const geometry = mesh.geometry;
+		const position = geometry.attributes.position;
+		const count = position.count;
 		cached = new Float32Array(count * 3);
+
+		// three's Mesh.getVertexPosition walks EVERY morph target per vertex,
+		// which on a 306-slider base is 4.4 million comparisons for a body that
+		// typically has a handful of non-zero sliders. Resolve the active set
+		// once instead.
+		const morphAttributes = geometry.morphAttributes?.position || [];
+		const influences = mesh.morphTargetInfluences || [];
+		const relative = geometry.morphTargetsRelative !== false;
+		const active = [];
+		for (let m = 0; m < morphAttributes.length; m++) {
+			const w = influences[m];
+			if (w) active.push([morphAttributes[m], w]);
+		}
+
 		for (let i = 0; i < count; i++) {
-			mesh.getVertexPosition(i, _v);
+			_v.fromBufferAttribute(position, i);
+			for (const [attribute, weight] of active) {
+				_a.fromBufferAttribute(attribute, i);
+				if (relative) _v.addScaledVector(_a, weight);
+				else _v.addScaledVector(_a.sub(_v), weight);
+			}
+			if (mesh.isSkinnedMesh) mesh.applyBoneTransform(i, _v);
 			_v.applyMatrix4(mesh.matrixWorld);
 			cached[i * 3] = _v.x;
 			cached[i * 3 + 1] = _v.y;
@@ -475,7 +626,7 @@ export class SculptBrush {
 	_stroke(hit) {
 		const mesh = hit.object;
 		if (!mesh?.geometry?.attributes?.position) return;
-		const normal = this._faceNormal(mesh, hit.face);
+		const normal = this._vertexNormal(mesh, hit.index);
 		const touched = this.applyStroke({ mesh, point: hit.point, normal });
 		if (touched) {
 			this._touched += touched;
@@ -483,12 +634,18 @@ export class SculptBrush {
 		}
 	}
 
-	/** World-space normal at a raycast hit, falling back to facing the camera. */
-	_faceNormal(mesh, face) {
+	/**
+	 * World-space surface normal at a picked vertex. The vertex normal is
+	 * authored in bind space like the positions, so it goes out through the same
+	 * bind-to-world map rather than through the mesh's world matrix alone: on a
+	 * posed or proportion-edited rig those differ, and a stroke along the wrong
+	 * normal digs sideways into the mesh.
+	 */
+	_vertexNormal(mesh, index) {
 		const normals = mesh.geometry.attributes.normal;
-		if (face && normals) {
-			_n.fromBufferAttribute(normals, face.a);
-			return _n.clone().transformDirection(mesh.matrixWorld);
+		if (normals) {
+			vertexBindToWorld(mesh, index, _pickMatrix);
+			return _n.fromBufferAttribute(normals, index).transformDirection(_pickMatrix).clone();
 		}
 		return new Vector3().subVectors(this.camera.position, mesh.getWorldPosition(_a)).normalize();
 	}

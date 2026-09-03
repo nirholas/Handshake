@@ -16,7 +16,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { NodeIO } from '@gltf-transform/core';
-import { Vector3 } from 'three';
+import { PerspectiveCamera, Ray, Vector3 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 import {
@@ -28,6 +28,7 @@ import {
 	applySculptToRoot,
 	clearSculpt,
 	sculptIsEmpty,
+	pruneEmptySculptTargets,
 } from '../src/avatar-sculpt-brush.js';
 import {
 	sanitizeSculptDoc,
@@ -330,5 +331,105 @@ describe('free sculpt: composes with the library morphs through a real bake', ()
 		// check on magnitude, not an exact-vertex comparison.
 		expect(bakedPeak).toBeGreaterThan(sourcePeak * 0.5);
 		expect(bakedPeak).toBeLessThan(sourcePeak * 2);
+	});
+});
+
+describe('free sculpt: the hit test', () => {
+	it('picks the front-most vertex under the ray and skips the background', async () => {
+		const { scene } = await loadThree();
+		scene.updateMatrixWorld(true);
+		const body = bodyOf(scene);
+
+		// A camera looking at the avatar from the front, matching the studio.
+		const camera = new PerspectiveCamera(35, 1440 / 900, 0.05, 100);
+		camera.position.set(0, 1.5, 2);
+		camera.lookAt(0, 1.4, 0);
+		camera.updateMatrixWorld(true);
+
+		const brush = new SculptBrush({
+			root: scene,
+			camera,
+			domElement: { clientHeight: 900, clientWidth: 1440, getBoundingClientRect: () => ({ left: 0, top: 0, width: 1440, height: 900 }) },
+		});
+		brush._meshes = [body];
+
+		// Aim at the head, which sits above the orbit target and dead centre.
+		const head = new Vector3();
+		body.getVertexPosition(highVertex(body), head).applyMatrix4(body.matrixWorld);
+		const ndc = head.clone().project(camera);
+		const hit = brush._hit({
+			clientX: ((ndc.x + 1) / 2) * 1440,
+			clientY: ((1 - ndc.y) / 2) * 900,
+		});
+		expect(hit).not.toBeNull();
+		expect(hit.object).toBe(body);
+
+		// The contract is "a surface point under the cursor", not "that exact
+		// vertex": aiming at the crown, the nearest-to-camera candidate inside
+		// the pick radius is a little forward of the topmost vertex, which is
+		// the correct answer. So measure the perpendicular distance to the ray.
+		const ray = new Ray(
+			camera.position.clone(),
+			hit.point.clone().sub(camera.position).normalize(),
+		);
+		const aim = new Ray(camera.position.clone(), head.clone().sub(camera.position).normalize());
+		expect(aim.distanceToPoint(hit.point)).toBeLessThan(0.03);
+		expect(ray.distanceToPoint(hit.point)).toBeLessThan(1e-6);
+
+		// The front of the head, not the back of it: the pick must be nearer the
+		// camera than the far side of the skull.
+		const far = brush._worldPositions(body);
+		let deepest = 0;
+		for (let i = 0; i < far.length / 3; i++) {
+			deepest = Math.max(deepest, camera.position.distanceTo(new Vector3(far[i * 3], far[i * 3 + 1], far[i * 3 + 2])));
+		}
+		expect(hit.distance).toBeLessThan(deepest);
+
+		// Well off to the side is background, and background orbits.
+		expect(brush._hit({ clientX: 20, clientY: 860 })).toBeNull();
+	});
+
+	it('returns a world-space normal that follows the posed rig', async () => {
+		const { scene } = await loadThree();
+		scene.updateMatrixWorld(true);
+		const body = bodyOf(scene);
+		const brush = new SculptBrush({ root: scene, camera: { position: new Vector3(0, 1.5, 2), fov: 35 }, domElement: null });
+		const n = brush._vertexNormal(body, highVertex(body));
+		expect(Number.isFinite(n.x) && Number.isFinite(n.y) && Number.isFinite(n.z)).toBe(true);
+		expect(n.length()).toBeCloseTo(1, 5);
+		// Top of the head: the normal points up, not sideways or inward.
+		expect(n.y).toBeGreaterThan(0.5);
+	});
+});
+
+describe('free sculpt: the empty target is not left behind', () => {
+	it('drops an untouched custom target and keeps a painted one', async () => {
+		const { scene } = await loadThree();
+		const body = bodyOf(scene);
+		const before = body.geometry.morphAttributes.position.length;
+
+		// Allocated but never painted: prune takes it back out, so an export
+		// after toggling the brush on and off is byte-identical to no sculpt.
+		ensureSculptTarget(body);
+		expect(body.geometry.morphAttributes.position).toHaveLength(before + 1);
+		expect(pruneEmptySculptTargets(scene)).toBeGreaterThan(0);
+		expect(body.geometry.morphAttributes.position).toHaveLength(before);
+		expect(body.morphTargetDictionary[SCULPT_TARGET_NAME]).toBeUndefined();
+
+		// Painted: prune must leave it alone.
+		const attr = ensureSculptTarget(body);
+		attr.array[3] = 0.01;
+		pruneEmptySculptTargets(scene);
+		expect(body.morphTargetDictionary[SCULPT_TARGET_NAME]).toBe(before);
+		expect(body.geometry.morphAttributes.position).toHaveLength(before + 1);
+	});
+
+	it('never renumbers the library sliders', async () => {
+		const { scene } = await loadThree();
+		const body = bodyOf(scene);
+		const noseBefore = body.morphTargetDictionary.noseWider;
+		ensureSculptTarget(body);
+		pruneEmptySculptTargets(scene);
+		expect(body.morphTargetDictionary.noseWider).toBe(noseBefore);
 	});
 });
