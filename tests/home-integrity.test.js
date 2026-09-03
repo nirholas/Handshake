@@ -18,6 +18,8 @@ import {
 	HANDSHAKE_DOWN,
 	homeHealthVerdict,
 	LATENCY_DOWN_MS,
+	MIN_ACTIONS_FOR_A_VERDICT,
+	MIN_CONFIRMATIONS_FOR_A_VERDICT,
 	MIN_HOMES_FOR_A_VERDICT,
 	noteSubscriberSample,
 	resetSubscriberSamples,
@@ -29,9 +31,9 @@ function healthy(overrides = {}) {
 		windowMinutes: 15,
 		homes: { live: 40, connected: 40, unreachable: 0, authFailed: 0 },
 		handshakes: { attempts: 40, ok: 40, failed: 0, rate: 1 },
-		actions: { total: 200, ok: 198, refused: 2, failed: 0, homes: 30, rate: 1, timed: 200, p95LatencyMs: 300 },
+		actions: { total: 200, ok: 198, refused: 2, failed: 0, homes: 30, failedHomes: 0, rate: 1, timed: 200, p95LatencyMs: 300 },
 		confirmations: { total: 20, redeemed: 19, expired: 1, expiryRate: 1 / 20 },
-		integrity: { violations: 0, lastAt: null },
+		integrity: { violations: 0, lastAt: null, grantBacked: 0, grantBackedWithoutGrant: 0 },
 		pool: { open: 12, subscribers: 12, capacity: 200, breakersOpen: 0, byStatus: { connected: 12 }, streams: 12, rung: 'normal' },
 		leak: { leaking: false, samples: [12, 12, 12], margins: [0, 0, 0], growth: 0 },
 		...overrides,
@@ -40,17 +42,37 @@ function healthy(overrides = {}) {
 
 describe('confirmation integrity is a zero-budget invariant', () => {
 	it('takes the subsystem down on a single row, however healthy everything else is', () => {
-		const verdict = homeHealthVerdict(healthy({ integrity: { violations: 1, lastAt: '2026-09-03T03:37:14.568Z' } }));
+		const verdict = homeHealthVerdict(healthy({ integrity: { violations: 1, lastAt: '2026-09-03T03:37:14.568Z', grantBacked: 0, grantBackedWithoutGrant: 0 } }));
 		expect(verdict.status).toBe('down');
 		expect(verdict.detail).toContain('no confirmation on record');
 		expect(verdict.hint).toContain('Sev 1');
 	});
 
+	it('does not fire on an unlock a standing grant already authorised', () => {
+		// The shape real traffic produces: the user granted the agent lock.kitchen_door
+		// once, so the gate cleared it through the allow list and nobody was asked
+		// again. Paging on this would page on every legitimate unlock forever.
+		const verdict = homeHealthVerdict(
+			healthy({ integrity: { violations: 0, lastAt: null, grantBacked: 2, grantBackedWithoutGrant: 0 } }),
+		);
+		expect(verdict.status).toBe('ok');
+		expect(verdict.detail).toContain('2 guarded action(s) cleared by a standing grant');
+	});
+
+	it('reports a grant-backed action whose grant no longer exists without alerting on it', () => {
+		// A grant revoked after the action is the ordinary explanation, which is
+		// why this is a number to read rather than a page to answer.
+		const verdict = homeHealthVerdict(
+			healthy({ integrity: { violations: 0, lastAt: null, grantBacked: 3, grantBackedWithoutGrant: 1 } }),
+		);
+		expect(verdict.status).toBe('ok');
+	});
+
 	it('outranks every other signal, so it is never masked by a busy platform', () => {
 		const verdict = homeHealthVerdict(
 			healthy({
-				integrity: { violations: 3, lastAt: '2026-09-03T03:37:14.568Z' },
-				actions: { total: 1000, ok: 1000, refused: 0, failed: 0, homes: 90, rate: 1, timed: 1000, p95LatencyMs: 120 },
+				integrity: { violations: 3, lastAt: '2026-09-03T03:37:14.568Z', grantBacked: 0, grantBackedWithoutGrant: 0 },
+				actions: { total: 1000, ok: 1000, refused: 0, failed: 0, homes: 90, failedHomes: 0, rate: 1, timed: 1000, p95LatencyMs: 120 },
 			}),
 		);
 		expect(verdict.status).toBe('down');
@@ -120,7 +142,7 @@ describe('actions', () => {
 	it('counts a refused action as a success, because the gate working is not a fault', () => {
 		// Every action refused, none failed: the safety gate did its job all day.
 		const verdict = homeHealthVerdict(
-			healthy({ actions: { total: 100, ok: 0, refused: 100, failed: 0, homes: 20, rate: 1, timed: 100, p95LatencyMs: 200 } }),
+			healthy({ actions: { total: 100, ok: 0, refused: 100, failed: 0, homes: 20, failedHomes: 0, rate: 1, timed: 100, p95LatencyMs: 200 } }),
 		);
 		expect(verdict.status).toBe('ok');
 	});
@@ -129,10 +151,30 @@ describe('actions', () => {
 		const rate = 0.9;
 		expect(rate).toBeLessThan(ACTION_DOWN);
 		const verdict = homeHealthVerdict(
-			healthy({ actions: { total: 100, ok: 90, refused: 0, failed: 10, homes: 25, rate, timed: 100, p95LatencyMs: 300 } }),
+			healthy({ actions: { total: 100, ok: 90, refused: 0, failed: 10, homes: 25, failedHomes: 6, rate, timed: 100, p95LatencyMs: 300 } }),
 		);
 		expect(verdict.status).toBe('down');
 		expect(verdict.detail).toContain('10 failed');
+	});
+
+	it('does not down the platform for failures confined to one house', () => {
+		// One home whose Z-Wave stick fell out fails everything sent to it. That is
+		// that house, and paging for it is paging for a loose USB port.
+		const verdict = homeHealthVerdict(
+			healthy({ actions: { total: 100, ok: 88, refused: 0, failed: 12, homes: 25, failedHomes: 1, rate: 0.88, timed: 100, p95LatencyMs: 300 } }),
+		);
+		expect(verdict.status).toBe('degraded');
+		expect(verdict.detail).toContain('12 failed in 1 home (that house, not us)');
+		expect(verdict.hint).toContain('confined to one home');
+	});
+
+	it('does not score a thin window at all', () => {
+		const total = MIN_ACTIONS_FOR_A_VERDICT - 1;
+		const verdict = homeHealthVerdict(
+			healthy({ actions: { total, ok: total - 4, refused: 0, failed: 4, homes: 5, failedHomes: 4, rate: (total - 4) / total, timed: total, p95LatencyMs: 300 } }),
+		);
+		expect(verdict.status).toBe('ok');
+		expect(verdict.detail).toContain(`under the ${MIN_ACTIONS_FOR_A_VERDICT}-action floor`);
 	});
 
 	it('says so plainly when nothing on the act path is timed yet', () => {
@@ -158,6 +200,14 @@ describe('confirmations that expire are a UI failure', () => {
 		);
 		expect(verdict.status).toBe('down');
 		expect(verdict.hint).toContain('That is a UI failure, not user hesitation');
+	});
+
+	it('does not score three prompts as a broken UI', () => {
+		const verdict = homeHealthVerdict(
+			healthy({ confirmations: { total: 4, redeemed: 1, expired: 3, expiryRate: 0.75 } }),
+		);
+		expect(verdict.status).toBe('ok');
+		expect(verdict.detail).toContain(`under the ${MIN_CONFIRMATIONS_FOR_A_VERDICT}-confirmation floor`);
 	});
 
 	it('ignores an empty window rather than scoring it as perfect or broken', () => {

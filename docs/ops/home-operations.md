@@ -30,15 +30,21 @@ So the rule, stated once and enforced in code:
 | The pool gauges | `stats()` in [`api/_lib/home/runtime.js`](../../api/_lib/home/runtime.js) |
 | The tables | `home_connections`, `home_action_log`, `home_confirmations` |
 
-Every rate is computed **across tenants** over a 15 minute window, and nothing is
-scored at all until at least 10 homes are connected (`MIN_HOMES_FOR_A_VERDICT`).
-With three homes, one holiday cottage losing power is a 33% failure rate, and
-scoring that as an outage is the exact false page this design exists to prevent.
-Below the floor the subsystem reports the numbers and stays green, saying so:
+Every rate is computed **across tenants** over a 15 minute window, and each one
+has a floor below which it is reported but not scored:
+
+| Rate | Floor | Why |
+|---|---|---|
+| Handshake success | 10 connected homes (`MIN_HOMES_FOR_A_VERDICT`) | With three homes, one holiday cottage losing power is a 33% failure rate. |
+| Action success | 20 actions (`MIN_ACTIONS_FOR_A_VERDICT`), and failures in more than one home | A house whose Z-Wave stick fell out fails everything sent to it. Paging for that is paging for a loose USB port. Failures confined to one home cap at `degraded` and the hint names the house. |
+| Confirmation expiry | 10 decided confirmations (`MIN_CONFIRMATIONS_FOR_A_VERDICT`) | Three prompts in a quiet hour, two of them from someone who walked away from their laptop, is not a UI failure. |
+
+Below a floor the subsystem reports the numbers and stays green, saying so:
 
 ```
-1/1 homes connected; handshakes 100.0% over 1 homes in 15m (under the 10-home
-floor, reported not scored); no actions in window; ...
+14/14 homes connected; handshakes 100.0% over 3 homes in 15m; actions 93.3% of 30
+across 5 homes, 2 failed in 1 home (that house, not us); confirmations 75.0%
+expired of 4 (under the 10-confirmation floor, reported not scored); ...
 ```
 
 ### The thresholds
@@ -51,11 +57,21 @@ floor, reported not scored); no actions in window; ...
 | Breaker-open homes | `runtime.stats()` | under 2% | 2 to 10% | over 10% |
 | p95 action latency (our leg) | `home_action_log.detail->>'latencyMs'` | under 1.5 s | 1.5 to 4 s | over 4 s |
 | Subscriber leak | `stats().subscribers` versus open streams | flat | growing | growing |
-| Confirmation integrity | `home_action_log` | zero rows | n/a | any row |
+| Confirmation integrity | `home_action_log`, excluding standing grants | zero rows | n/a | any row |
 
 A **refused** action counts as a success. The safety gate refusing to open a
 front door is the product working, not a failure to deliver, and scoring it as an
 error would make the safest houses look like the sickest ones.
+
+A guarded action with no `confirmed_by` is **not** on its own a violation, and
+finding that out against real rows is what stopped this alert from firing on
+every legitimate unlock. A standing per-entity allowance in `home_entity_grants`
+is a yes the user already gave, recorded once rather than re-asked every time, so
+the act path clears the gate through the allow list and stamps
+`detail.allowed_by_grant`. Those rows are counted and reported
+(`integrity.grantBacked`), never paged. What remains a Sev 1 is the shape with no
+yes behind it at all: guarded, executed, nobody confirmed it, and no grant
+claimed.
 
 ## The SLOs
 
@@ -71,10 +87,14 @@ guarded action executing without a valid confirmation is a Sev 1 regardless of
 volume, regardless of how many succeeded, and regardless of whether any user
 noticed. There is no budget to spend and no rate at which it becomes acceptable.
 
-**Pre-launch baseline (measured 2026-09-03, local, not production):** 3 connected
-homes, 8 actions logged across the window (3 refused by the gate, 5 executed),
-p95 our-leg latency 412 ms on the single timed action, zero integrity violations,
-zero confirmations expired. Re-measure against production traffic in order 20.
+**Pre-launch baseline (measured 2026-09-03, development database, not
+production):** 14 connected homes, 30 actions in the window across 5 homes (93.3%
+succeeding or refused, the 2 failures confined to one house), p95 our-leg latency
+412 ms on the one action carrying a timing, 2 guarded actions cleared by a
+standing grant, zero integrity violations. The act path does not yet stamp
+`detail.latencyMs` on every action, so the p95 above rests on a single sample and
+the sensor says `no action timings recorded` rather than inventing one.
+Re-measure against production traffic in order 20.
 
 ---
 
@@ -144,12 +164,18 @@ always pages even if an earlier one paged an hour ago.
 **First command:**
 
 ```sql
-select id, home_id, user_id, actor, channel, action, entity_ids, risk, created_at
+select id, home_id, user_id, actor, channel, action, entity_ids, risk, detail, created_at
 from home_action_log
 where guarded = true and confirmed_by is null and outcome = 'ok'
+  and coalesce(detail->>'allowed_by_grant', 'false') <> 'true'
   and created_at > now() - interval '24 hours'
 order by created_at desc;
 ```
+
+Drop the `allowed_by_grant` line to see the grant-backed actions alongside them.
+Those are legitimate and are the reason that line is there: without it, this
+query returns every standing-grant unlock in the fleet and the alert becomes
+noise within a day.
 
 **Then, in this order:**
 
@@ -163,11 +189,15 @@ order by created_at desc;
    are the only things standing between a model and a front door. A refactor that
    changed a domain list, or a caller that passed `confirmed: true` from
    somewhere other than a human, is the likely cause.
-4. **Check for a standing grant.** A per-entity allowance in
-   `home_entity_grants` is a legitimate reason for a guarded action to run
-   without a fresh confirmation, and the act path must record the grant in
-   `detail` when it uses one. A violation row with a matching live grant is a
-   logging bug; a violation row with no grant is the real thing.
+4. **Check the grant claim.** The alert already excludes actions that recorded
+   `detail.allowed_by_grant`, so a row that reached you claimed no grant at all.
+   Confirm that against `home_entity_grants` for the home and entity: a live
+   grant with no claim on the row is a logging bug in the act path
+   (`api/home/[id]/call.js`), which is a much smaller problem than the alternative
+   and still worth fixing the same day. No grant and no claim is the real thing.
+   `integrity.grantBackedWithoutGrant` on the health block counts rows that
+   claimed a grant that no longer exists; that is usually a grant the user
+   revoked afterwards, which is why it reports rather than pages.
 
 **Rollback:** yes. Roll back to the last revision known to gate correctly before
 diagnosing further.

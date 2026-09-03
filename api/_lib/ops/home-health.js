@@ -61,6 +61,20 @@ export const LATENCY_DOWN_MS = 4_000;
  */
 export const MIN_HOMES_FOR_A_VERDICT = 10;
 
+/**
+ * The minimum number of actions in the window before their success rate is
+ * scored. Below it, two failures in a quiet hour read as a 90% success rate and
+ * would take the subsystem down over nothing.
+ */
+export const MIN_ACTIONS_FOR_A_VERDICT = 20;
+
+/**
+ * The minimum number of decided confirmations before their expiry rate is
+ * scored. Three prompts in a quiet hour, two of them from someone who walked
+ * away from their laptop, is not a UI failure.
+ */
+export const MIN_CONFIRMATIONS_FOR_A_VERDICT = 10;
+
 const QUERY_TIMEOUT_MS = 4_000;
 
 /**
@@ -175,6 +189,7 @@ export async function readHomeSignals({ windowMinutes = WINDOW_MINUTES } = {}) {
 					count(*) filter (where outcome = 'refused')::int as refused,
 					count(*) filter (where outcome = 'failed')::int as failed,
 					count(distinct home_id)::int as homes,
+					count(distinct home_id) filter (where outcome = 'failed')::int as failed_homes,
 					percentile_disc(0.95) within group (
 						order by (detail->>'latencyMs')::numeric
 					) as p95_latency_ms,
@@ -198,9 +213,31 @@ export async function readHomeSignals({ windowMinutes = WINDOW_MINUTES } = {}) {
 		// The zero-budget invariant, over a deliberately wider window than the
 		// rates: a single row is an incident and must not be able to age out of
 		// the check between two cron ticks.
+		//
+		// A null `confirmed_by` is NOT on its own a violation, and finding that out
+		// against real rows is what stopped this alert from firing on every
+		// legitimate unlock. A standing per-entity allowance in
+		// `home_entity_grants` is a yes the user already gave, recorded once rather
+		// than re-asked every time, so the act path clears the gate through the
+		// allow list and stamps `detail.allowed_by_grant`. Those rows are counted
+		// and reported, never paged.
+		//
+		// What remains a violation is the shape with no yes behind it at all:
+		// guarded, executed, nobody confirmed it, and no grant claimed.
 		withTimeout(
 			sql`
-				select count(*)::int as violations, max(created_at) as last_at
+				select
+					count(*) filter (where coalesce(detail->>'allowed_by_grant', 'false') <> 'true')::int as violations,
+					max(created_at) filter (where coalesce(detail->>'allowed_by_grant', 'false') <> 'true') as last_at,
+					count(*) filter (where detail->>'allowed_by_grant' = 'true')::int as grant_backed,
+					count(*) filter (
+						where detail->>'allowed_by_grant' = 'true'
+						  and not exists (
+							select 1 from home_entity_grants g
+							where g.home_id = home_action_log.home_id
+							  and g.entity_id = any(home_action_log.entity_ids)
+						)
+					)::int as grant_backed_without_grant
 				from home_action_log
 				where guarded = true and confirmed_by is null and outcome = 'ok'
 				  and created_at > now() - interval '24 hours'
@@ -240,6 +277,10 @@ export async function readHomeSignals({ windowMinutes = WINDOW_MINUTES } = {}) {
 			refused: a.refused ?? 0,
 			failed: a.failed ?? 0,
 			homes: a.homes ?? 0,
+			// Failures confined to ONE home are that home's problem, exactly like a
+			// handshake failure is. Without this, a single house with a broken
+			// integration downs the subsystem for everybody.
+			failedHomes: a.failed_homes ?? 0,
 			// A refused action is the safety gate doing its job, so it counts as a
 			// success. Only `failed` is us not delivering.
 			rate: (a.total ?? 0) > 0 ? ((a.ok ?? 0) + (a.refused ?? 0)) / a.total : null,
@@ -255,6 +296,14 @@ export async function readHomeSignals({ windowMinutes = WINDOW_MINUTES } = {}) {
 		integrity: {
 			violations: v.violations ?? 0,
 			lastAt: v.last_at ? new Date(v.last_at).toISOString() : null,
+			// Guarded actions a standing grant let through. Reported so the number
+			// is visible, never scored: the user said yes once, on purpose.
+			grantBacked: v.grant_backed ?? 0,
+			// Of those, the ones whose entity has no grant row now. Usually a grant
+			// the user revoked after the fact, which is why this reports rather than
+			// alerts. A number that climbs while nobody is revoking anything is
+			// worth reading.
+			grantBackedWithoutGrant: v.grant_backed_without_grant ?? 0,
 		},
 		pool,
 		leak,
@@ -317,10 +366,19 @@ export function homeHealthVerdict(s) {
 	const handshakeStatus = !enoughHomes || s.handshakes.rate === null
 		? 'ok'
 		: rateStatus(s.handshakes.rate, HANDSHAKE_DEGRADED, HANDSHAKE_DOWN);
-	const actionStatus = s.actions.rate === null
+	// Actions get the same cross-tenant guard as handshakes, for the same reason.
+	// A house whose Z-Wave stick fell out fails every action sent to it; scoring
+	// that as a platform outage pages an operator for somebody's loose USB port.
+	// It has to be thin traffic or one house before it stops counting, never both
+	// ignored: real correlated breakage shows up across homes and at volume.
+	const actionsScoreable = s.actions.rate !== null && s.actions.total >= MIN_ACTIONS_FOR_A_VERDICT;
+	const actionStatus = !actionsScoreable
 		? 'ok'
-		: rateStatus(s.actions.rate, ACTION_DEGRADED, ACTION_DOWN);
-	const expiryStatus = s.confirmations.expiryRate === null
+		: s.actions.failedHomes <= 1
+			? worst('ok', rateStatus(s.actions.rate, ACTION_DEGRADED, 0))
+			: rateStatus(s.actions.rate, ACTION_DEGRADED, ACTION_DOWN);
+	const decidedConfirmations = s.confirmations.redeemed + s.confirmations.expired;
+	const expiryStatus = s.confirmations.expiryRate === null || decidedConfirmations < MIN_CONFIRMATIONS_FOR_A_VERDICT
 		? 'ok'
 		: ceilingStatus(s.confirmations.expiryRate, EXPIRY_DEGRADED, EXPIRY_DOWN);
 	const breakerRate = s.pool.open > 0 ? s.pool.breakersOpen / s.pool.open : 0;
@@ -340,14 +398,18 @@ export function homeHealthVerdict(s) {
 			? `handshakes ${pct(s.handshakes.rate)} over ${s.handshakes.attempts} homes in ${s.windowMinutes}m` + (enoughHomes ? '' : ` (under the ${MIN_HOMES_FOR_A_VERDICT}-home floor, reported not scored)`)
 			: `no handshakes in ${s.windowMinutes}m`,
 		s.actions.total > 0
-			? `actions ${pct(s.actions.rate)} of ${s.actions.total} across ${s.actions.homes} homes` + (s.actions.failed ? `, ${s.actions.failed} failed` : '')
+			? `actions ${pct(s.actions.rate)} of ${s.actions.total} across ${s.actions.homes} homes`
+				+ (s.actions.failed ? `, ${s.actions.failed} failed in ${s.actions.failedHomes} home${s.actions.failedHomes === 1 ? ' (that house, not us)' : 's'}` : '')
+				+ (s.actions.total >= MIN_ACTIONS_FOR_A_VERDICT ? '' : ` (under the ${MIN_ACTIONS_FOR_A_VERDICT}-action floor, reported not scored)`)
 			: 'no actions in window',
 		s.actions.p95LatencyMs === null
 			? 'no action timings recorded'
 			: `p95 our-leg latency ${s.actions.p95LatencyMs}ms over ${s.actions.timed} timed actions`,
 		s.confirmations.total > 0
 			? `confirmations ${pct(s.confirmations.expiryRate ?? 0)} expired of ${s.confirmations.total}`
+				+ (decidedConfirmations >= MIN_CONFIRMATIONS_FOR_A_VERDICT ? '' : ` (under the ${MIN_CONFIRMATIONS_FOR_A_VERDICT}-confirmation floor, reported not scored)`)
 			: 'no confirmations in window',
+		s.integrity.grantBacked ? `${s.integrity.grantBacked} guarded action(s) cleared by a standing grant` : null,
 		`pool ${s.pool.open} open, ${s.pool.subscribers} subscribers` + (s.pool.streams === null ? '' : ` across ${s.pool.streams} streams`) + `, ${s.pool.breakersOpen} breakers open` + (s.pool.rung && s.pool.rung !== 'normal' ? `, admission ${s.pool.rung}` : ''),
 	];
 
@@ -358,14 +420,16 @@ export function homeHealthVerdict(s) {
 			: handshakeStatus !== 'ok'
 				? 'Handshakes are failing across tenants, which is almost always us: a deploy, an egress change or a DNS fault. Run the correlation query in docs/ops/home-operations.md before touching anything.'
 				: actionStatus !== 'ok'
-					? 'Actions are failing across homes. Group home_action_log by outcome and detail->>\'code\' to see whether this is one error or many.'
+					? (s.actions.failedHomes <= 1
+						? 'Action failures are confined to one home, so this is that house rather than the platform. Read its status_detail and its own action log before looking anywhere else.'
+						: 'Actions are failing across homes. Group home_action_log by outcome and detail->>\'code\' to see whether this is one error or many.')
 					: expiryStatus !== 'ok'
 						? 'Confirmations are timing out rather than being answered. That is a UI failure, not user hesitation: check that the confirm prompt is reaching the surface the user is actually on.'
 						: latencyStatus !== 'ok'
 							? 'Our own leg of the act path is slow. The house is excluded from this measurement, so look at the pool: cold opens, breaker retries, or a store read on the hot path.'
 							: 'Breakers are open on a large share of this instance\'s pooled homes. Correlated, that means we cannot reach houses we could reach an hour ago.';
 
-	return { status, detail: parts.join('; ') + '.', ...(hint ? { hint } : {}) };
+	return { status, detail: parts.filter(Boolean).join('; ') + '.', ...(hint ? { hint } : {}) };
 }
 
 /**
