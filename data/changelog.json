@@ -25875,6 +25875,25 @@
 				"improvement"
 			],
 			"link": "/status"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "Connect your house to your agent, and see every way it can go wrong",
+			"summary": "The /smart-home page now takes you from \"I have a Home Assistant somewhere\" to a connected house, and it is honest at every step. An address that only exists on your home network is refused the moment you type it, with the two real ways round it, instead of spinning for fifteen seconds. A rejected token says so and puts the cursor back in the token box. A house that stops answering keeps its rooms on screen, marked stale with how long ago it last replied, rather than blanking out. Your access token is sent once, encrypted at rest, and never comes back to the page: it is not in your browser storage, not in a URL, and not in any response. Disconnecting says plainly that the stored token is erased and reminds you to delete it in Home Assistant too.",
+			"tags": [
+				"feature"
+			],
+			"link": "/smart-home"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "A stranger cannot make your agent open your front door",
+			"summary": "The home lane now has a written threat model and eleven security checks that run with every build, and the standard they hold is a lock, not a database row. The big fix: the address you give for your house is now resolved and pinned on our side before anything dials it, so a web address that secretly points back into our own network is refused instead of connected to, and it is re-checked every time your house reconnects rather than trusted from the day you added it. A device or integration in your house cannot talk your agent into anything either: we wrote an unlock instruction into a real room name, a real device name and a real scene name, ran a real agent against that house, and the front door stayed locked. Your privacy page is now rate limited like everything else, so nobody can hammer the export or the delete.",
+			"tags": [
+				"security",
+				"improvement"
+			],
+			"link": "/smart-home"
 		}
 	]
 }

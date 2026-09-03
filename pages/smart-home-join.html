@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Join a home · Accept an invitation to a household · three.ws</title>
+	<meta name="description" content="Accept an invitation to somebody's connected home. The link tells you which home it is and exactly what you would be able to do there before you sign in, and it works once." />
+	<link rel="canonical" href="https://three.ws/smart-home/join" />
+	<meta name="robots" content="noindex, follow" />
+	<meta property="og:title" content="Join a home · three.ws" />
+	<meta property="og:description" content="An invitation to a household: which home, what you would be able to do there, and what you would never be able to do." />
+	<meta property="og:url" content="https://three.ws/smart-home/join" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Join+a+home&amp;d=An+invitation+to+a+household%3A+which+home%2C+and+what+you+could+do+there.&amp;p=%2Fsmart-home%2Fjoin" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:site" content="@trythreews" />
+	<meta name="twitter:title" content="Join a home · three.ws" />
+	<meta name="twitter:description" content="An invitation to a household: which home, what you would be able to do there, and what you would never be able to do." />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/fonts/fonts.css" />
+	<link rel="stylesheet" href="/src/home/home.css" />
+</head>
+<body>
+	<main class="hm-wrap" id="main">
+		<header class="hm-hero">
+			<p class="hm-eyebrow">Smart home</p>
+			<h1 class="hm-title">You were invited to a home</h1>
+			<p class="hm-lede">
+				Somebody has given you access to a house they connected to three.ws. Before you accept,
+				this page tells you which home it is, what you would be able to do there, and what you
+				would never be able to do. The link works once.
+			</p>
+		</header>
+
+		<!--
+			One live region the controller owns (src/home/join.js). `aria-busy` starts
+			true and the skeleton below is the exact shape of the invitation card, so
+			the page does not jump when the answer arrives.
+		-->
+		<div id="hm-join-root" aria-live="polite" aria-busy="true">
+			<section class="hm-panel">
+				<div class="hm-skeleton" style="height:1.1rem;width:15rem"></div>
+				<div class="hm-skeleton" style="height:0.85rem;width:22rem;margin-top:0.6rem"></div>
+				<div class="hm-skeleton" style="height:2.4rem;margin-top:1.4rem"></div>
+			</section>
+		</div>
+
+		<noscript>
+			<section class="hm-panel">
+				<h2 class="hm-panel-title">JavaScript is required here</h2>
+				<p class="hm-panel-sub">
+					Accepting an invitation reads it from your account, so this page needs JavaScript. The
+					invitation itself is unaffected and still works: turn JavaScript on and open the link
+					again.
+				</p>
+				<div class="hm-actions">
+					<a class="hm-btn hm-btn-ghost" href="/smart-home">Your homes</a>
+				</div>
+			</section>
+		</noscript>
+	</main>
+
+	<script src="/nav.js"></script>
+	<script type="module" src="/src/home/join.js"></script>
+</body>
+</html>

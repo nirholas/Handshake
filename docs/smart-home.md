@@ -321,6 +321,15 @@ the HA add-on in phase 2 ships publicly through HACS rather than only to our own
 
 ---
 
+## Security
+
+The threat model for this lane, the injection boundary, the SSRF guard every server-side dial
+goes through, and the residuals we accepted on purpose: [Home security](./home-security.md). It
+is written about a building rather than about a database, and every claim in it is enforced by
+[`tests/home-security.test.js`](../tests/home-security.test.js).
+
+---
+
 ## Sources
 
 - [home-assistant/core](https://github.com/home-assistant/core)

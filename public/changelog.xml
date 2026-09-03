@@ -71,6 +71,14 @@
 			<description>Give your existing Home Assistant voice assistant a face. Pair a three.ws satellite and the same pipeline you already use gains a 3D agent that lip-syncs its answers and reacts, on any screen in the house. Home Assistant keeps the wake word, the speech recognition and the answer; closing the page never stops the voice working.</description>
 		</item>
 		<item>
+			<title>Connect your house to your agent, and see every way it can go wrong</title>
+			<link>https://three.ws/smart-home</link>
+			<guid isPermaLink="false">2026-09-03:Connect your house to your agent, and see every way it can go wrong</guid>
+			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The /smart-home page now takes you from &quot;I have a Home Assistant somewhere&quot; to a connected house, and it is honest at every step. An address that only exists on your home network is refused the moment you type it, with the two real ways round it, instead of spinning for fifteen seconds. A rejected token says so and puts the cursor back in the token box. A house that stops answering keeps its rooms on screen, marked stale with how long ago it last replied, rather than blanking out. Your access token is sent once, encrypted at rest, and never comes back to the page: it is not in your browser storage, not in a URL, and not in any response. Disconnecting says plainly that the stored token is erased and reminds you to delete it in Home Assistant too.</description>
+		</item>
+		<item>
 			<title>See, export and delete everything a connected home stores</title>
 			<link>https://three.ws/docs/home-privacy</link>
 			<guid isPermaLink="false">2026-09-03:See, export and delete everything a connected home stores</guid>
