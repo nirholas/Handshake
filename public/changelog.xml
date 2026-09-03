@@ -23,6 +23,14 @@
 			<description>Your 3D agent in the car: voice-first, glanceable, and built to the rules CarPlay and Android Auto enforce. Runs on a head unit, a phone in the cradle, or inside the native car shell.</description>
 		</item>
 		<item>
+			<title>The tour atlas counts its stops correctly again</title>
+			<link>https://three.ws/tour/atlas</link>
+			<guid isPermaLink="false">2026-09-03:The tour atlas counts its stops correctly again</guid>
+			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The atlas at /tour/atlas is the map of the guided tour: one card per stop, numbered in the order you would walk them. Two hundred and three of those cards were still carrying numbers from an older version of the tour, so the grid showed duplicate stop numbers, skipped others, and put cards out of order, under a heading that claimed one more stop than the grid actually held. Every card is now numbered by its real position in the tour and the count above the grid matches what is under it. Nothing about the stops themselves changed: same pages, same screenshots, same highlights.</description>
+		</item>
+		<item>
 			<title>three.ws Drive: your agent, in the car</title>
 			<link>https://three.ws/drive</link>
 			<guid isPermaLink="false">2026-09-03:three.ws Drive: your agent, in the car</guid>
