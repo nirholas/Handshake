@@ -1,0 +1,239 @@
+// The Home lane's scoring rules, exercised directly.
+//
+// The one thing this file is really for: proving that a single dark house does
+// NOT read as an outage, and that ten of them at once does. Everything else in
+// the observability lane is downstream of getting that distinction right, and it
+// is the distinction that is easy to break in a refactor and impossible to
+// notice until somebody is paged at 3am for a stranger's router.
+//
+// `homeHealthVerdict` and `noteSubscriberSample` are pure, so every threshold is
+// asserted here without a database. The end-to-end proof against a real Postgres
+// and a real Home Assistant is in the order 13 report.
+
+import { beforeEach, describe, expect, it } from 'vitest';
+
+import {
+	ACTION_DOWN,
+	EXPIRY_DOWN,
+	HANDSHAKE_DOWN,
+	homeHealthVerdict,
+	LATENCY_DOWN_MS,
+	MIN_HOMES_FOR_A_VERDICT,
+	noteSubscriberSample,
+	resetSubscriberSamples,
+} from '../api/_lib/ops/home-health.js';
+
+/** A platform where nothing is wrong, as `readHomeSignals` shapes it. */
+function healthy(overrides = {}) {
+	return {
+		windowMinutes: 15,
+		homes: { live: 40, connected: 40, unreachable: 0, authFailed: 0 },
+		handshakes: { attempts: 40, ok: 40, failed: 0, rate: 1 },
+		actions: { total: 200, ok: 198, refused: 2, failed: 0, homes: 30, rate: 1, timed: 200, p95LatencyMs: 300 },
+		confirmations: { total: 20, redeemed: 19, expired: 1, expiryRate: 1 / 20 },
+		integrity: { violations: 0, lastAt: null },
+		pool: { open: 12, subscribers: 12, capacity: 200, breakersOpen: 0, byStatus: { connected: 12 }, streams: 12, rung: 'normal' },
+		leak: { leaking: false, samples: [12, 12, 12], margins: [0, 0, 0], growth: 0 },
+		...overrides,
+	};
+}
+
+describe('confirmation integrity is a zero-budget invariant', () => {
+	it('takes the subsystem down on a single row, however healthy everything else is', () => {
+		const verdict = homeHealthVerdict(healthy({ integrity: { violations: 1, lastAt: '2026-09-03T03:37:14.568Z' } }));
+		expect(verdict.status).toBe('down');
+		expect(verdict.detail).toContain('no confirmation on record');
+		expect(verdict.hint).toContain('Sev 1');
+	});
+
+	it('outranks every other signal, so it is never masked by a busy platform', () => {
+		const verdict = homeHealthVerdict(
+			healthy({
+				integrity: { violations: 3, lastAt: '2026-09-03T03:37:14.568Z' },
+				actions: { total: 1000, ok: 1000, refused: 0, failed: 0, homes: 90, rate: 1, timed: 1000, p95LatencyMs: 120 },
+			}),
+		);
+		expect(verdict.status).toBe('down');
+		expect(verdict.detail).toContain('3 guarded physical actions');
+	});
+});
+
+describe('one dark house is a UI state, not an outage', () => {
+	it('does not score a handshake rate at all below the home floor', () => {
+		// Three homes, one offline: a 33% failure rate that must not page anyone.
+		const verdict = homeHealthVerdict(
+			healthy({
+				homes: { live: 3, connected: 2, unreachable: 1, authFailed: 0 },
+				handshakes: { attempts: 3, ok: 2, failed: 1, rate: 2 / 3 },
+			}),
+		);
+		expect(verdict.status).toBe('ok');
+		expect(verdict.detail).toContain(`under the ${MIN_HOMES_FOR_A_VERDICT}-home floor, reported not scored`);
+	});
+
+	it('still reports the failure, so the operator can see it without being paged for it', () => {
+		const verdict = homeHealthVerdict(
+			healthy({
+				homes: { live: 3, connected: 2, unreachable: 1, authFailed: 0 },
+				handshakes: { attempts: 3, ok: 2, failed: 1, rate: 2 / 3 },
+			}),
+		);
+		expect(verdict.detail).toContain('66.7%');
+		expect(verdict.detail).toContain('2/3 homes connected');
+	});
+
+	it('an expired token on one house of forty does not move the aggregate', () => {
+		const verdict = homeHealthVerdict(
+			healthy({
+				homes: { live: 40, connected: 39, unreachable: 0, authFailed: 1 },
+				handshakes: { attempts: 40, ok: 39, failed: 1, rate: 39 / 40 },
+			}),
+		);
+		expect(verdict.status).toBe('ok');
+	});
+});
+
+describe('a correlated failure is an outage', () => {
+	it('goes down when handshakes fail across enough homes at once', () => {
+		const attempts = MIN_HOMES_FOR_A_VERDICT + 2;
+		const ok = 2;
+		const verdict = homeHealthVerdict(
+			healthy({
+				homes: { live: 40, connected: ok, unreachable: attempts - ok, authFailed: 0 },
+				handshakes: { attempts, ok, failed: attempts - ok, rate: ok / attempts },
+			}),
+		);
+		expect(ok / attempts).toBeLessThan(HANDSHAKE_DOWN);
+		expect(verdict.status).toBe('down');
+		expect(verdict.hint).toContain('almost always us');
+	});
+
+	it('degrades between the two thresholds rather than jumping straight to down', () => {
+		const verdict = homeHealthVerdict(
+			healthy({ handshakes: { attempts: 40, ok: 35, failed: 5, rate: 0.875 } }),
+		);
+		expect(verdict.status).toBe('degraded');
+	});
+});
+
+describe('actions', () => {
+	it('counts a refused action as a success, because the gate working is not a fault', () => {
+		// Every action refused, none failed: the safety gate did its job all day.
+		const verdict = homeHealthVerdict(
+			healthy({ actions: { total: 100, ok: 0, refused: 100, failed: 0, homes: 20, rate: 1, timed: 100, p95LatencyMs: 200 } }),
+		);
+		expect(verdict.status).toBe('ok');
+	});
+
+	it('goes down when actions genuinely fail across homes', () => {
+		const rate = 0.9;
+		expect(rate).toBeLessThan(ACTION_DOWN);
+		const verdict = homeHealthVerdict(
+			healthy({ actions: { total: 100, ok: 90, refused: 0, failed: 10, homes: 25, rate, timed: 100, p95LatencyMs: 300 } }),
+		);
+		expect(verdict.status).toBe('down');
+		expect(verdict.detail).toContain('10 failed');
+	});
+
+	it('says so plainly when nothing on the act path is timed yet', () => {
+		const verdict = homeHealthVerdict(healthy({ actions: { ...healthy().actions, timed: 0, p95LatencyMs: null } }));
+		expect(verdict.status).toBe('ok');
+		expect(verdict.detail).toContain('no action timings recorded');
+	});
+
+	it('goes down on our own leg being slow', () => {
+		const verdict = homeHealthVerdict(
+			healthy({ actions: { ...healthy().actions, p95LatencyMs: LATENCY_DOWN_MS + 1 } }),
+		);
+		expect(verdict.status).toBe('down');
+		expect(verdict.hint).toContain('The house is excluded from this measurement');
+	});
+});
+
+describe('confirmations that expire are a UI failure', () => {
+	it('goes down when most confirmations time out instead of being answered', () => {
+		const expiryRate = EXPIRY_DOWN + 0.1;
+		const verdict = homeHealthVerdict(
+			healthy({ confirmations: { total: 50, redeemed: 25, expired: 25, expiryRate } }),
+		);
+		expect(verdict.status).toBe('down');
+		expect(verdict.hint).toContain('That is a UI failure, not user hesitation');
+	});
+
+	it('ignores an empty window rather than scoring it as perfect or broken', () => {
+		const verdict = homeHealthVerdict(
+			healthy({ confirmations: { total: 0, redeemed: 0, expired: 0, expiryRate: null } }),
+		);
+		expect(verdict.status).toBe('ok');
+		expect(verdict.detail).toContain('no confirmations in window');
+	});
+});
+
+describe('the subscriber leak detector', () => {
+	beforeEach(() => resetSubscriberSamples());
+
+	it('does not accuse anything before it has three samples', () => {
+		expect(noteSubscriberSample({ subscribers: 10, open: 5, streams: 2 }).leaking).toBe(false);
+		expect(noteSubscriberSample({ subscribers: 20, open: 5, streams: 2 }).leaking).toBe(false);
+	});
+
+	it('fires when the surplus over open streams grows across three checks', () => {
+		noteSubscriberSample({ subscribers: 12, open: 10, streams: 10 });
+		noteSubscriberSample({ subscribers: 18, open: 10, streams: 10 });
+		const third = noteSubscriberSample({ subscribers: 26, open: 10, streams: 10 });
+
+		expect(third.leaking).toBe(true);
+		expect(third.margins).toEqual([2, 8, 16]);
+		expect(third.growth).toBe(14);
+	});
+
+	it('clears as soon as the leaked subscriptions are released', () => {
+		noteSubscriberSample({ subscribers: 12, open: 10, streams: 10 });
+		noteSubscriberSample({ subscribers: 18, open: 10, streams: 10 });
+		expect(noteSubscriberSample({ subscribers: 26, open: 10, streams: 10 }).leaking).toBe(true);
+
+		expect(noteSubscriberSample({ subscribers: 10, open: 10, streams: 10 }).leaking).toBe(false);
+	});
+
+	it('does not call honest traffic a leak: streams and subscribers rising together', () => {
+		noteSubscriberSample({ subscribers: 10, open: 10, streams: 10 });
+		noteSubscriberSample({ subscribers: 40, open: 10, streams: 40 });
+		const third = noteSubscriberSample({ subscribers: 90, open: 10, streams: 90 });
+
+		expect(third.leaking).toBe(false);
+		expect(third.margins).toEqual([0, 0, 0]);
+	});
+
+	it('does not call a shrinking surplus a leak', () => {
+		noteSubscriberSample({ subscribers: 30, open: 10, streams: 10 });
+		noteSubscriberSample({ subscribers: 20, open: 10, streams: 10 });
+		expect(noteSubscriberSample({ subscribers: 12, open: 10, streams: 10 }).leaking).toBe(false);
+	});
+
+	it('falls back to the pooled connection count when the runtime reports no stream gauge', () => {
+		noteSubscriberSample({ subscribers: 12, open: 10, streams: null });
+		noteSubscriberSample({ subscribers: 18, open: 10, streams: null });
+		expect(noteSubscriberSample({ subscribers: 26, open: 10, streams: null }).leaking).toBe(true);
+	});
+
+	it('surfaces the leak as degraded, not down: every request is still being served', () => {
+		const verdict = homeHealthVerdict(
+			healthy({ leak: { leaking: true, samples: [12, 18, 26], margins: [2, 8, 16], growth: 14 } }),
+		);
+		expect(verdict.status).toBe('degraded');
+		expect(verdict.hint).toContain('never releasing it');
+	});
+});
+
+describe('an empty platform', () => {
+	it('reports unknown rather than a confident green when no home is connected', () => {
+		const verdict = homeHealthVerdict(
+			healthy({
+				homes: { live: 0, connected: 0, unreachable: 0, authFailed: 0 },
+				handshakes: { attempts: 0, ok: 0, failed: 0, rate: null },
+			}),
+		);
+		expect(verdict.status).toBe('unknown');
+		expect(verdict.detail).toContain('no homes connected yet');
+	});
+});

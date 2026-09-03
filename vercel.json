@@ -1748,6 +1748,10 @@
 			"dest": "/api/agora/act.js"
 		},
 		{
+			"src": "/voice/home/?",
+			"dest": "/voice-home.html"
+		},
+		{
 			"src": "/voice/?",
 			"dest": "/voice.html"
 		},
@@ -5642,6 +5646,10 @@
 			}
 		},
 		{
+			"src": "/home/([0-9a-fA-F-]{36})/?",
+			"dest": "/home-scene.html"
+		},
+		{
 			"src": "/home",
 			"status": 301,
 			"headers": {
@@ -6367,6 +6375,10 @@
 		{
 			"path": "/api/cron/print-orders-sync",
 			"schedule": "*/15 * * * *"
+		},
+		{
+			"path": "/api/cron/home-health-alert",
+			"schedule": "*/5 * * * *"
 		}
 	]
 }

@@ -25,6 +25,9 @@
 // Shaped after api/_lib/ops/index-lag.js: a `read*` that does the IO, a pure
 // `*Verdict` that scores it, and a `gather*` that never throws.
 
+import { randomUUID } from 'node:crypto';
+
+import { cacheGet, cacheSet } from '../cache.js';
 import { sql } from '../db.js';
 import { stats as runtimeStats } from '../home/runtime.js';
 
@@ -67,6 +70,22 @@ const QUERY_TIMEOUT_MS = 4_000;
 const LEAK_SAMPLES = 3;
 /** The rolling subscriber samples, newest last. Per process, like the pool it measures. */
 const leakSamples = [];
+
+/**
+ * This process's identity for leak reporting.
+ *
+ * Cloud Run gives a service no per-instance environment variable, and it runs
+ * this one at minScale=6 with sessionAffinity off, so a cron tick lands on an
+ * arbitrary instance and can only ever see its own pool. A random id minted at
+ * module load IS the instance identity for this purpose: it lives exactly as
+ * long as the process whose sockets it is counting.
+ */
+const INSTANCE_ID = `${process.env.K_REVISION || 'local'}-${randomUUID().slice(0, 8)}`;
+/** Where every instance parks its rolling leak samples for the alert cron to read. */
+const LEAK_KEY = 'home:leak:instances';
+const LEAK_TTL_S = 60 * 60;
+/** An instance that has not reported inside this window is gone, not leaking. */
+const LEAK_STALE_MS = 15 * 60_000;
 
 /**
  * Record one subscriber sample and say whether the pool is leaking.
@@ -350,6 +369,53 @@ export function homeHealthVerdict(s) {
 }
 
 /**
+ * Park this instance's leak state where the alert cron can read it.
+ *
+ * Fire and forget, and deliberately tolerant of a lost update: several instances
+ * read-modify-write the same map, so a concurrent write occasionally drops one
+ * sample. That delays a slow leak's detection by one tick and never invents one,
+ * which is the correct trade for a gauge nobody is billed on.
+ *
+ * @param {{ leaking: boolean, samples: number[], margins: number[] }} leak
+ */
+export async function publishLeakSample(leak) {
+	try {
+		const map = (await cacheGet(LEAK_KEY)) || {};
+		const now = Date.now();
+		const next = {};
+		for (const [id, entry] of Object.entries(map)) {
+			if (entry && now - Number(entry.at || 0) < LEAK_STALE_MS) next[id] = entry;
+		}
+		next[INSTANCE_ID] = { at: now, leaking: leak.leaking, samples: leak.samples, margins: leak.margins };
+		await cacheSet(LEAK_KEY, next, LEAK_TTL_S);
+	} catch {
+		// A gauge that cannot be parked must not take the health block down.
+	}
+}
+
+/**
+ * Every instance's current leak state, stale entries dropped.
+ * @returns {Promise<Array<{ instanceId: string, leaking: boolean, samples: number[], margins: number[], at: number }>>}
+ */
+export async function readLeakInstances() {
+	try {
+		const map = (await cacheGet(LEAK_KEY)) || {};
+		const now = Date.now();
+		return Object.entries(map)
+			.filter(([, entry]) => entry && now - Number(entry.at || 0) < LEAK_STALE_MS)
+			.map(([instanceId, entry]) => ({
+				instanceId,
+				leaking: Boolean(entry.leaking),
+				samples: Array.isArray(entry.samples) ? entry.samples : [],
+				margins: Array.isArray(entry.margins) ? entry.margins : [],
+				at: Number(entry.at || 0),
+			}));
+	} catch {
+		return [];
+	}
+}
+
+/**
  * The `home` subsystem block for /api/healthz and /api/status. Never throws.
  * @returns {Promise<{ name: string, label: string, status: string, detail: string, hint?: string, metrics?: object }>}
  */
@@ -361,6 +427,10 @@ export async function gatherHomeHealth() {
 	} catch (err) {
 		return { ...base, status: 'unknown', detail: err?.message || 'home signals unreadable' };
 	}
+	// Every instance answers its own /api/healthz, so gathering here is the one
+	// place that reliably samples all of them. Not awaited: the health block must
+	// not wait on a cache write.
+	publishLeakSample(signals.leak);
 	return { ...base, ...homeHealthVerdict(signals), metrics: signals };
 }
 
