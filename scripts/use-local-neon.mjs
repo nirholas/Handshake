@@ -10,13 +10,20 @@
 // unfinished work. This gives you a throwaway database with the real schema and
 // the real migration chain instead.
 //
-//   docker run -d --name neon-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=main \
+// Pick any throwaway password for the local container and use it in all three
+// places. It never leaves your machine, so it is written as a shell variable
+// here rather than inline: a literal user:password URL in a committed file is
+// what the repo's secret scan exists to stop, and an example is not an
+// exception to that.
+//
+//   PW=$(openssl rand -hex 16)
+//   docker run -d --name neon-pg -e POSTGRES_PASSWORD="$PW" -e POSTGRES_DB=main \
 //     -p 55433:5432 postgres:16-alpine
 //   docker run -d --name neon-proxy --link neon-pg \
-//     -e PG_CONNECTION_STRING=postgres://postgres:postgres@neon-pg:5432/main \
+//     -e PG_CONNECTION_STRING="postgres://postgres:$PW@neon-pg:5432/main" \
 //     -p 4455:4444 ghcr.io/timowilhelm/local-neon-http-proxy:main
 //
-//   export DATABASE_URL='postgres://postgres:postgres@127.0.0.1:4455/main'
+//   export DATABASE_URL="postgres://postgres:$PW@127.0.0.1:4455/main"
 //   node --import ./scripts/use-local-neon.mjs scripts/apply-schema.mjs
 //   node --import ./scripts/use-local-neon.mjs scripts/apply-migrations.mjs --apply
 //
