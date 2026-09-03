@@ -422,7 +422,9 @@
 		"companion:e2e": "node --env-file=.env.local --env-file=.env scripts/companion-e2e.mjs",
 		"home:instance": "node scripts/home-test-instance.mjs --up --onboard --seed --name lane",
 		"home:instance:down": "node scripts/home-test-instance.mjs --down --name lane",
-		"test:home:live": "HOME_LIVE=1 vitest run packages/home-bridge tests/home-store.test.js"
+		"test:home:live": "HOME_LIVE=1 vitest run packages/home-bridge tests/home-store.test.js",
+		"home:matrix": "node scripts/home-version-matrix.mjs",
+		"test:home:e2e": "node --env-file=.env.local ./node_modules/@playwright/test/cli.js test --config=playwright.home.config.js"
 	},
 	"dependencies": {
 		"@0xsplits/splits-sdk": "^6.5.0",

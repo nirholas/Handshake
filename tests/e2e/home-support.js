@@ -11,7 +11,6 @@
  * catch, and only Home Assistant can tell us which happened.
  */
 
-import { randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 
 import { expect } from '@playwright/test';
@@ -21,36 +20,62 @@ import { STACK_FILE } from './home-global-setup.js';
 
 export { readState, readStates, waitForState };
 
-/** The house this run is driving, as global setup left it. */
-export function homeInstance() {
+/** The stack this run is driving, as global setup left it. */
+function stack() {
 	if (!fs.existsSync(STACK_FILE)) {
 		throw new Error('No home e2e stack: run through playwright.home.config.js, which sets it up.');
 	}
-	return JSON.parse(fs.readFileSync(STACK_FILE, 'utf8')).home;
+	return JSON.parse(fs.readFileSync(STACK_FILE, 'utf8'));
+}
+
+/** The house this run is driving. */
+export function homeInstance() {
+	return stack().home;
 }
 
 /**
- * A brand new three.ws account, registered through the real signup page, signed
- * in on this browser context.
+ * Sign in as one of the two accounts global setup provisioned.
  *
- * A fresh account per journey is deliberate: these tests connect houses and
- * grant standing permissions on locks, and one journey's grant leaking into the
- * next would quietly disarm the gate the next one is trying to prove.
+ * Signing in rather than signing up on every journey is not a shortcut: account
+ * creation is rate limited to five per hour per IP, so a suite that registered
+ * per journey would pass once and then spend an hour reporting the rate limiter
+ * as a product failure. The accounts are real, made through the real signup
+ * page, and this is the real login endpoint.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {'owner'|'guest'} role
  */
-export async function signUp(page, { prefix = 'home-e2e' } = {}) {
-	const username = `${prefix}-${randomBytes(4).toString('hex')}`;
-	const password = `Pw-${randomBytes(12).toString('base64url')}`;
+export async function signIn(page, role = 'owner') {
+	const account = stack().accounts[role];
+	if (!account) throw new Error(`no ${role} account in the e2e stack`);
 
-	await page.goto('/register', { waitUntil: 'domcontentloaded' });
-	await page.fill('#username', username);
-	await page.fill('#password', password);
-	await page.check('#tos-accept');
-	await Promise.all([
-		page.waitForURL((u) => !/\/register/.test(u.pathname), { timeout: 90_000 }),
-		page.click('#submit'),
-	]);
+	const res = await page.request.post('/api/auth/login', {
+		data: { email: account.email, password: account.password },
+		headers: { 'content-type': 'application/json' },
+		timeout: 60_000,
+	});
+	if (!res.ok()) {
+		throw new Error(`login as ${role} returned ${res.status()}: ${(await res.text()).slice(0, 200)}`);
+	}
+	return account;
+}
 
-	return { username, password, email: `${username}@users.three.ws.local` };
+/**
+ * Take every home this account has off the platform.
+ *
+ * Journeys grant standing permissions on locks, and a grant surviving into the
+ * next journey would quietly disarm the gate that journey is trying to prove.
+ * Each one therefore starts from an account with no houses on it.
+ */
+export async function resetHomes(page) {
+	const list = await page.request.get('/api/home', { timeout: 60_000 });
+	if (!list.ok()) return 0;
+	const body = await list.json().catch(() => null);
+	const homes = Array.isArray(body?.homes) ? body.homes : Array.isArray(body) ? body : [];
+	for (const home of homes) {
+		await page.request.delete(`/api/home/${home.id}`, { timeout: 60_000 }).catch(() => {});
+	}
+	return homes.length;
 }
 
 /**
@@ -75,6 +100,32 @@ export async function connectHome(page, { label = 'The lane house' } = {}) {
 	// having been read, not about an animation having finished.
 	await expect(page.getByText(label, { exact: false }).first()).toBeVisible({ timeout: 120_000 });
 	return label;
+}
+
+/**
+ * Open the connected house's 3D page, in the 2D view.
+ *
+ * The 2D view is the one with named buttons. It renders the same model, calls
+ * the same action endpoint and hits the same gate as the 3D view, so nothing
+ * about what is under test changes; what changes is that a click lands on
+ * "Unlock Front Door" instead of on a guessed pixel of a WebGL canvas.
+ */
+export async function openScene(page) {
+	const list = await page.request.get('/api/home', { timeout: 60_000 });
+	const body = await list.json();
+	const homes = Array.isArray(body?.homes) ? body.homes : Array.isArray(body) ? body : [];
+	if (!homes.length) throw new Error('no connected home to open');
+
+	await page.goto(`/smart-home/${homes[0].id}`, { waitUntil: 'domcontentloaded' });
+	const flat = page.locator('#hs-view-2d');
+	await expect(flat).toBeVisible({ timeout: 90_000 });
+	await flat.click();
+	await expect(flat).toHaveAttribute('aria-pressed', 'true', { timeout: 30_000 });
+
+	// Wait for the house to have been read, not for a spinner to stop: the room
+	// rail is only populated once the real registries have arrived.
+	await expect(page.locator('#hs-rooms')).not.toHaveAttribute('aria-busy', 'true', { timeout: 120_000 });
+	return homes[0].id;
 }
 
 /**
