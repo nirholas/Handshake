@@ -108,7 +108,10 @@ test('calling a paid tool without payment returns the x402 PaymentRequired envel
 	assert.ok(bazaar, 'bazaar discovery extension present');
 	assert.equal(bazaar.type, 'mcp');
 	assert.equal(bazaar.toolName, 'ibm_granite_chat');
-	assert.equal(bazaar.transport, 'stdio');
+	// No transport is declared: the bazaar spec's only legal values are
+	// "streamable-http" and "sse", so a stdio server omits the optional field
+	// rather than emitting a value an indexer rejects.
+	assert.equal(bazaar.transport, undefined);
 	assert.equal(bazaar.inputSchema.type, 'object');
 	assert.ok(bazaar.inputSchema.properties.messages, 'input schema rides in discovery');
 

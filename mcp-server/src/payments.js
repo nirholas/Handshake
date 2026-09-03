@@ -289,7 +289,11 @@ export function paid(cfg, handler) {
 			const bazaar = declareDiscoveryExtension({
 				toolName,
 				description,
-				transport: 'stdio',
+				// No `transport`: the bazaar discovery spec only accepts
+				// "streamable-http" and "sse" there, so declaring "stdio" made every
+				// row fail validateDiscoveryExtensionSpec and get dropped by an
+				// indexer. The field is optional, and a stdio server has no valid
+				// value for it, so it is left off.
 				inputSchema,
 				example,
 				output: outputExample ? { example: outputExample } : undefined,
