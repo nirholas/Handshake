@@ -1,4 +1,4 @@
-// `list_macros` — the scenes and scripts the household already built. Read-only.
+// `list_macros`: the scenes and scripts the household already built. Read-only.
 //
 // A house's own "Bedtime" scene knows about the plant light and the fish tank in
 // a way no amount of reasoning over an entity list will. Running the user's

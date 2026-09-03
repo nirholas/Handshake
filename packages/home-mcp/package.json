@@ -1,0 +1,56 @@
+{
+	"name": "@three-ws/home-mcp",
+	"version": "0.1.0",
+	"mcpName": "io.github.nirholas/home-mcp",
+	"description": "Give any MCP assistant safe control of a real Home Assistant house: floors, rooms and live state, the household's own scenes, and service calls behind a physical-action gate that refuses anything which opens the house.",
+	"type": "module",
+	"author": "three.ws <support@three.ws> (https://three.ws)",
+	"license": "Apache-2.0",
+	"homepage": "https://three.ws",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "packages/home-mcp"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/three.ws/issues"
+	},
+	"keywords": [
+		"mcp",
+		"model-context-protocol",
+		"home-assistant",
+		"smart-home",
+		"iot",
+		"agent",
+		"three.ws"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"src",
+		"server.json",
+		"README.md",
+		"LICENSE"
+	],
+	"bin": {
+		"home-mcp": "src/index.js"
+	},
+	"main": "./src/index.js",
+	"exports": {
+		".": "./src/index.js"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"scripts": {
+		"start": "node src/index.js",
+		"test": "node --test \"test/**/*.test.mjs\"",
+		"inspect": "npx -y @modelcontextprotocol/inspector node src/index.js"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.29.0",
+		"@three-ws/home-bridge": "^0.1.0",
+		"zod": "^3.23.8"
+	}
+}

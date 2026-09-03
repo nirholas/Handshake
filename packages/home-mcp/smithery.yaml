@@ -1,0 +1,38 @@
+# Smithery deployment config for @three-ws/home-mcp
+# https://smithery.ai/docs/config#smitheryyaml
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      homeAssistantUrl:
+        type: string
+        description: >-
+          Base URL of the Home Assistant instance, e.g.
+          https://abc123.ui.nabu.casa. Must be reachable from wherever this
+          server runs; a LAN-only home needs Home Assistant Cloud or the
+          household's own reverse proxy.
+      homeAssistantToken:
+        type: string
+        description: >-
+          A Home Assistant long-lived access token (profile, Security,
+          Long-lived access tokens).
+      homeAllowedEntities:
+        type: string
+        description: >-
+          Comma-separated entity ids pre-approved for guarded actions, e.g.
+          lock.office_door. The only way an action that opens the house runs
+          over stdio. Leave unset to refuse every one of them.
+    required:
+      - homeAssistantUrl
+      - homeAssistantToken
+  commandFunction: |
+    (config) => ({
+      command: "npx",
+      args: ["-y", "@three-ws/home-mcp"],
+      env: {
+        HOME_ASSISTANT_URL: config.homeAssistantUrl,
+        HOME_ASSISTANT_TOKEN: config.homeAssistantToken,
+        ...(config.homeAllowedEntities ? { HOME_ALLOWED_ENTITIES: config.homeAllowedEntities } : {}),
+      },
+    })

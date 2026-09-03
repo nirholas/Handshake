@@ -1,9 +1,11 @@
-// `run_macro` — "good night" to the scene this house actually has, then run it.
+// `run_macro`: "good night" to the scene this house actually has, then run it.
 //
 // Resolution goes through a synonym table and then fuzzy matching over the
 // house's own scene and script names, so "goodnight", "bedtime" and "time for
 // bed" all reach the same place, and a house with no match runs nothing rather
 // than firing the closest thing it can find.
+
+import { z } from 'zod';
 
 import { home } from '../lib/home.js';
 import { refusal } from '../lib/gate.js';
@@ -21,14 +23,14 @@ export const def = {
 		'the phrase maps to anything. A macro that would open the house goes through the same gate as ' +
 		'`call_service` and is refused here too.',
 	inputSchema: {
-		phrase: {
-			type: 'string',
-			description: 'What the person said, e.g. "good night", "movie time", "I am leaving".',
-		},
-		dry_run: {
-			type: 'boolean',
-			description: 'Resolve the phrase and report the match without running it. Default false.',
-		},
+		phrase: z
+			.string()
+			.min(1)
+			.describe('What the person said, e.g. "good night", "movie time", "I am leaving".'),
+		dry_run: z
+			.boolean()
+			.optional()
+			.describe('Resolve the phrase and report the match without running it. Default false.'),
 	},
 	async handler(args = {}) {
 		const phrase = String(args.phrase || '').trim();

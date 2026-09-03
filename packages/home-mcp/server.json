@@ -1,0 +1,54 @@
+{
+	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+	"name": "io.github.nirholas/home-mcp",
+	"title": "three.ws Home",
+	"description": "Read and safely act on a real Home Assistant house: floors, rooms, live state, the household's own scenes, and gated service calls.",
+	"websiteUrl": "https://three.ws",
+	"icons": [
+		{
+			"src": "https://three.ws/three-ws-mcp-icon.svg",
+			"mimeType": "image/svg+xml",
+			"sizes": [
+				"any"
+			]
+		}
+	],
+	"repository": {
+		"url": "https://github.com/nirholas/three.ws",
+		"source": "github",
+		"subfolder": "packages/home-mcp"
+	},
+	"version": "0.1.0",
+	"packages": [
+		{
+			"registryType": "npm",
+			"identifier": "@three-ws/home-mcp",
+			"version": "0.1.0",
+			"runtimeHint": "npx",
+			"transport": {
+				"type": "stdio"
+			},
+			"environmentVariables": [
+				{
+					"name": "HOME_ASSISTANT_URL",
+					"description": "Base URL of the Home Assistant instance, e.g. https://abc123.ui.nabu.casa. It has to be a URL this process can actually reach: a server outside the house cannot route to 192.168.x.x, so a LAN-only home needs Home Assistant Cloud or the household's own reverse proxy.",
+					"format": "string",
+					"isRequired": true
+				},
+				{
+					"name": "HOME_ASSISTANT_TOKEN",
+					"description": "A Home Assistant long-lived access token (Home Assistant, your profile, Security, Long-lived access tokens, Create token). It carries the full rights of the account that minted it, so mint it from an account with only the access this agent should have.",
+					"format": "string",
+					"isRequired": true,
+					"isSecret": true
+				},
+				{
+					"name": "HOME_ALLOWED_ENTITIES",
+					"description": "Comma-separated entity ids the person running this server has pre-approved for guarded actions, e.g. lock.office_door. This is the ONLY way an action that opens the house runs over stdio, and it is deliberately a human, out-of-band decision: no tool can add to it. Per entity, never per domain. Leave unset to refuse every such action.",
+					"format": "string",
+					"isRequired": false
+				}
+			]
+		}
+	]
+}

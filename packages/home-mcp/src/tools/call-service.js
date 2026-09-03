@@ -3,6 +3,8 @@
 // Safe moves run. Guarded moves are refused, never queued and never guessed at:
 // see src/lib/gate.js for the decision and why an MCP client cannot confirm one.
 
+import { z } from 'zod';
+
 import { home } from '../lib/home.js';
 import { refusal } from '../lib/gate.js';
 
@@ -23,23 +25,20 @@ export const def = {
 		'else (lights, climate, switches, fans, media, covers that are not an opening in the building) just ' +
 		'runs.',
 	inputSchema: {
-		domain: {
-			type: 'string',
-			description: 'The service domain, e.g. "light", "climate", "lock", "cover".',
-		},
-		service: {
-			type: 'string',
-			description: 'The service, e.g. "turn_on", "set_temperature", "lock", "close_cover".',
-		},
-		entity_id: {
-			type: 'string',
-			description: 'The entity to act on, e.g. "light.kitchen_lights". Omit only for a service that takes no target.',
-		},
-		data: {
-			type: 'object',
-			description: 'Extra service data, e.g. { "brightness_pct": 40 } or { "temperature": 21 }.',
-			additionalProperties: true,
-		},
+		domain: z.string().min(1).describe('The service domain, e.g. "light", "climate", "lock", "cover".'),
+		service: z
+			.string()
+			.min(1)
+			.describe('The service, e.g. "turn_on", "set_temperature", "lock", "close_cover".'),
+		entity_id: z
+			.string()
+			.min(1)
+			.optional()
+			.describe('The entity to act on, e.g. "light.kitchen_lights". Omit only for a service that takes no target.'),
+		data: z
+			.record(z.any())
+			.optional()
+			.describe('Extra service data, e.g. { "brightness_pct": 40 } or { "temperature": 21 }.'),
 	},
 	async handler(args = {}) {
 		const domain = String(args.domain || '').trim();
