@@ -13,6 +13,8 @@
 // only one of them is safe to disclose.
 
 import { logAudit } from '../../_lib/audit.js';
+import { sendHouseholdInviteEmail } from '../../_lib/email.js';
+import { getConnection } from '../../_lib/home/store.js';
 import { getSessionUser } from '../../_lib/auth.js';
 import { requireCsrf } from '../../_lib/csrf.js';
 import { assertMemberCapacity, HomeQuotaError } from '../../_lib/home/entitlements.js';
@@ -75,6 +77,12 @@ export default wrap(async (req, res) => {
 	if (req.method === 'GET') {
 		const gate = await requireMembership(homeId, user.id, 'read');
 		if (!gate.ok) return error(res, gate.status, gate.code, gate.reason);
+
+		// Metered on the same bucket as every other read on this surface, so a
+		// panel that polls the roster competes with the rest of a person's reads
+		// rather than sitting outside the ceiling everything else is held to.
+		const rl = await limits.homeRead(user.id).catch(() => ({ success: true }));
+		if (rl && rl.success === false) return rateLimited(res, rl, 'too many home reads, slow down');
 		const [members, invites] = await Promise.all([listMembers(homeId), listInvites(homeId)]);
 		return json(res, 200, {
 			role: gate.role,
@@ -139,6 +147,11 @@ export default wrap(async (req, res) => {
 			});
 		}
 
+		// The home's own label, for the email. Read through the membership-resolved
+		// store rather than trusted from the request, so an invitation can never
+		// name a house the sender is not actually in.
+		const home = await getConnection(homeId, user.id);
+
 		const invite = await createInvite({
 			homeId,
 			email,
@@ -147,12 +160,46 @@ export default wrap(async (req, res) => {
 			invitedBy: user.id,
 		});
 
-		logAudit({ userId: user.id, action: 'household.invite', resourceId: homeId, meta: { email, role, scope: invite.scope }, req });
+		const url = inviteUrl(req, invite.token);
+
+		// Mail it, and say honestly whether that worked.
+		//
+		// The link is still returned either way, because the send is the
+		// convenience and the link is the invitation. A platform that mails the
+		// only copy of a one-use credential and then fails to deliver it has
+		// destroyed something the inviter cannot recreate without starting over,
+		// so `emailed` reports what actually happened and the UI shows the link
+		// beside it rather than promising a message that may never land.
+		//
+		// Awaited, unlike most sends here, for exactly that reason: `emailed:
+		// true` is a claim about the world and a fire-and-forget send cannot make
+		// it. `sendEmail` answers `{skipped:true}` with no RESEND_API_KEY, which is
+		// the ordinary state on a preview deploy and is reported as not emailed
+		// rather than as a failure.
+		let emailed = false;
+		try {
+			const sent = await sendHouseholdInviteEmail({
+				to: email,
+				homeLabel: home?.label || null,
+				role,
+				inviterName: user.display_name || user.username || null,
+				inviteUrl: url,
+				expiresAt: invite.expiresAt,
+			});
+			emailed = !sent?.skipped;
+		} catch (err) {
+			// A dead mail provider must not cost somebody their invitation: the row
+			// is already written and the link in this response still works.
+			console.warn('[home-members] invite email failed', { home: homeId, error: err?.message });
+		}
+
+		logAudit({ userId: user.id, action: 'household.invite', resourceId: homeId, meta: { email, role, scope: invite.scope, emailed }, req });
 
 		// The plaintext token exists in this response and nowhere else, ever.
 		return json(res, 201, {
 			invite: { id: invite.id, email: invite.email, role: invite.role, scope: invite.scope, expires_at: invite.expiresAt },
-			invite_url: inviteUrl(req, invite.token),
+			invite_url: url,
+			emailed,
 		});
 	}
 

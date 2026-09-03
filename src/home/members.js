@@ -15,7 +15,7 @@
  * chooses one, rather than in documentation nobody opens.
  */
 
-import { listHousehold, inviteToHousehold, removeFromHousehold, revokeHouseholdInvite, setHouseholdRole } from './api.js';
+import { getHome, listHousehold, inviteToHousehold, removeFromHousehold, revokeHouseholdInvite, setHouseholdRole } from './api.js';
 import { clear, el, noticeEl } from './connect.js';
 
 /**
@@ -199,6 +199,17 @@ function memberRow(home, member, { assignable, rerender }) {
 		}
 	});
 
+	// The scope editor, offered only where scope means anything. A member's row
+	// has no button for it because a member is whole-house by definition, and a
+	// control that silently does nothing is worse than no control.
+	if (member.scoped) {
+		const narrow = el('button', 'hm-btn hm-btn-ghost', 'What they can see');
+		narrow.type = 'button';
+		narrow.setAttribute('aria-expanded', 'false');
+		narrow.addEventListener('click', () => editScope(li, main, home, member, rerender, narrow));
+		actions.append(narrow);
+	}
+
 	const remove = el('button', 'hm-btn hm-btn-danger', 'Remove');
 	remove.type = 'button';
 	remove.addEventListener('click', () => confirmRemove(li, main, home, member, rerender));
@@ -206,6 +217,60 @@ function memberRow(home, member, { assignable, rerender }) {
 	actions.append(picker, remove);
 	li.append(main, actions);
 	return li;
+}
+
+/**
+ * Narrow or widen what one scoped member can reach, in place on their row.
+ *
+ * Sends only `scope`, leaving `role` untouched, so changing what somebody can
+ * see is not silently a change to what they can do.
+ */
+function editScope(li, main, home, member, rerender, trigger) {
+	const existing = li.querySelector('.hm-scope-edit');
+	if (existing) {
+		existing.remove();
+		trigger.setAttribute('aria-expanded', 'false');
+		return;
+	}
+	trigger.setAttribute('aria-expanded', 'true');
+
+	const box = el('div', 'hm-scope-edit');
+	box.style.marginTop = 'var(--space-sm)';
+	box.style.width = '100%';
+	const picker = scopePicker(home, member.scope);
+	picker.setRole(member.role);
+	box.append(picker.node);
+
+	const actions = el('div', 'hm-card-actions');
+	const save = el('button', 'hm-btn hm-btn-primary', 'Save');
+	save.type = 'button';
+	const cancel = el('button', 'hm-btn hm-btn-ghost', 'Cancel');
+	cancel.type = 'button';
+	cancel.addEventListener('click', () => {
+		box.remove();
+		trigger.setAttribute('aria-expanded', 'false');
+		trigger.focus();
+	});
+	save.addEventListener('click', async () => {
+		save.disabled = true;
+		cancel.disabled = true;
+		save.textContent = 'Saving';
+		try {
+			// `scope: null` from the picker means the whole house; send an explicit
+			// {mode:'all'} rather than omitting the field, because omitting it means
+			// "leave it as it was" to the endpoint and this press meant a change.
+			await setHouseholdRole(home.id, { userId: member.user_id, role: member.role, scope: picker.read() ?? { mode: 'all' } });
+			rerender();
+		} catch (err) {
+			save.disabled = false;
+			cancel.disabled = false;
+			save.textContent = 'Try again';
+			main.append(el('p', 'hm-row-meta', err?.message || 'That change did not go through.'));
+		}
+	});
+	actions.append(save, cancel);
+	box.append(actions);
+	li.append(box);
 }
 
 /**
@@ -283,6 +348,149 @@ function inviteRow(home, invite, { canAdminister, rerender }) {
 	return li;
 }
 
+/**
+ * The rooms and devices a scoped role may reach.
+ *
+ * Built from the house's OWN room graph, fetched once and cached for the panel:
+ * a scope written by typing area ids into a box would be a scope nobody can
+ * verify, and an area id that does not exist silently grants nothing while
+ * looking like it granted something.
+ *
+ * Two states, and the default is the safe one only where it is honest. Inviting
+ * somebody is a deliberate act of sharing, so "the whole house" stays the
+ * default for a role that lives there and "only what I choose" is offered
+ * plainly for a role that is visiting. Nothing is inferred: whichever is
+ * selected is what gets sent, and the server normalizes a non-scoped role back
+ * to the whole house regardless of what this control says.
+ *
+ * @param {object} home
+ * @param {object} [initial] an existing scope to start from
+ * @returns {{ node: HTMLElement, read: () => object|null, setRole: (role: string) => void }}
+ */
+function scopePicker(home, initial) {
+	const wrap = el('fieldset', 'hm-field');
+	wrap.style.border = '0';
+	wrap.style.padding = '0';
+	wrap.style.margin = 'var(--space-sm) 0 0';
+	const legend = el('legend', 'hm-label', 'How much of the house they get');
+	wrap.append(legend);
+
+	const name = `scope-mode-${Math.random().toString(36).slice(2, 9)}`;
+	const modes = el('div', 'hm-actions');
+	const all = radio(name, 'all', 'The whole house');
+	const some = radio(name, 'allow', 'Only what I choose');
+	modes.append(all.label, some.label);
+	wrap.append(modes);
+
+	const detail = el('div');
+	detail.style.marginTop = 'var(--space-sm)';
+	detail.hidden = true;
+	wrap.append(detail);
+
+	const checks = new Map();
+	let loaded = false;
+	let unavailable = false;
+
+	async function loadRooms() {
+		if (loaded) return;
+		loaded = true;
+		const skeleton = el('div', 'hm-skeleton');
+		skeleton.style.height = '2.6rem';
+		detail.append(skeleton);
+		try {
+			const body = await getHome(home.id);
+			clear(detail);
+			const rooms = body?.graph?.rooms || [];
+			if (!rooms.length) {
+				unavailable = true;
+				// A house that is not answering cannot be divided up honestly, so the
+				// control says so instead of offering an empty list that would send an
+				// empty allowlist and share nothing.
+				detail.append(el('p', 'hm-row-meta', body?.connected === false
+					? 'This home is not answering right now, so its rooms cannot be listed. You can invite them to the whole house now and narrow it once the home reconnects.'
+					: 'This home has no rooms assigned yet. Assign areas in Home Assistant and they will appear here.'));
+				return;
+			}
+			detail.append(el('p', 'hm-row-meta', 'Everything you do not tick stays hidden from them completely, not just hidden on screen.'));
+			const list = el('div');
+			list.style.display = 'grid';
+			list.style.gap = '0.35rem';
+			list.style.marginTop = '0.5rem';
+			for (const room of rooms) {
+				const box = el('input');
+				box.type = 'checkbox';
+				box.value = room.id;
+				box.id = `${name}-${room.id}`;
+				if (initial?.areas?.includes(room.id)) box.checked = true;
+				const label = el('label', 'hm-row-meta');
+				label.style.display = 'flex';
+				label.style.gap = '0.5rem';
+				label.style.alignItems = 'center';
+				label.htmlFor = box.id;
+				label.append(box);
+				// A room name is whatever its owner called it in Home Assistant.
+				label.append(document.createTextNode(`${room.name} (${room.entities.length} ${room.entities.length === 1 ? 'device' : 'devices'})`));
+				checks.set(room.id, box);
+				list.append(label);
+			}
+			detail.append(list);
+		} catch (err) {
+			clear(detail);
+			unavailable = true;
+			detail.append(el('p', 'hm-row-meta', err?.message || 'We could not list this home\'s rooms. You can still invite them to the whole house.'));
+		}
+	}
+
+	const sync = () => {
+		detail.hidden = !some.input.checked;
+		if (some.input.checked) loadRooms();
+	};
+	all.input.addEventListener('change', sync);
+	some.input.addEventListener('change', sync);
+
+	if (initial?.mode === 'allow') {
+		some.input.checked = true;
+		sync();
+	} else {
+		all.input.checked = true;
+	}
+
+	return {
+		node: wrap,
+		/** null means "do not send a scope at all", which the server reads as the whole house. */
+		read() {
+			if (!some.input.checked || unavailable) return null;
+			const areas = [...checks.entries()].filter(([, box]) => box.checked).map(([id]) => id);
+			// Individual entities are carried through from an existing scope rather
+			// than picked here: a house with 67 devices makes a flat checkbox list
+			// unusable, and a room is the unit people actually think in. An entity
+			// grant set through the API survives an edit made here.
+			const entities = Array.isArray(initial?.entities) ? initial.entities : [];
+			return { mode: 'allow', areas, entities };
+		},
+		/** Scope only means anything for a scoped role; hide it entirely for the rest. */
+		setRole(role) {
+			const scoped = role === 'guest' || role === 'viewer';
+			wrap.hidden = !scoped;
+			if (!scoped) all.input.checked = true;
+			sync();
+		},
+	};
+}
+
+function radio(name, value, text) {
+	const input = el('input');
+	input.type = 'radio';
+	input.name = name;
+	input.value = value;
+	const label = el('label', 'hm-row-meta');
+	label.style.display = 'flex';
+	label.style.gap = '0.45rem';
+	label.style.alignItems = 'center';
+	label.append(input, document.createTextNode(text));
+	return { input, label };
+}
+
 function inviteForm(home, { assignable, rerender }) {
 	const form = el('form', 'hm-panel');
 	form.style.marginTop = 'var(--space-sm)';
@@ -315,8 +523,14 @@ function inviteForm(home, { assignable, rerender }) {
 
 	const explain = el('p', 'hm-row-meta', ROLE_COPY[role.value] || '');
 	form.append(explain);
+
+	const scope = scopePicker(home);
+	form.append(scope.node);
+	scope.setRole(role.value);
+
 	role.addEventListener('change', () => {
 		explain.textContent = ROLE_COPY[role.value] || '';
+		scope.setRole(role.value);
 	});
 
 	const submit = el('button', 'hm-btn hm-btn-primary', 'Send invitation');
@@ -334,12 +548,14 @@ function inviteForm(home, { assignable, rerender }) {
 		submit.disabled = true;
 		submit.textContent = 'Sending';
 		try {
-			const result = await inviteToHousehold(home.id, { email: email.value.trim(), role: role.value });
+			const result = await inviteToHousehold(home.id, { email: email.value.trim(), role: role.value, scope: scope.read() });
+			const sentTo = email.value.trim();
 			email.value = '';
 			// The link is shown once, here, because the server keeps only a hash of
 			// it. Telling somebody to "check the invitations list for the link"
-			// would be a promise this system cannot keep.
-			outcome.append(inviteLinkBlock(result?.invite_url));
+			// would be a promise this system cannot keep, and it is shown whether or
+			// not the email went out for exactly that reason.
+			outcome.append(inviteLinkBlock(result?.invite_url, { emailed: result?.emailed === true, to: sentTo }));
 			rerender();
 		} catch (err) {
 			outcome.append(noticeEl({
@@ -356,12 +572,17 @@ function inviteForm(home, { assignable, rerender }) {
 	return form;
 }
 
-function inviteLinkBlock(url) {
+function inviteLinkBlock(url, { emailed = false, to = '' } = {}) {
 	const wrap = el('div', 'hm-notice hm-notice-ok');
 	wrap.setAttribute('role', 'status');
 	const inner = el('div');
-	inner.append(el('p', 'hm-row-title', 'Send them this link'));
-	inner.append(el('p', 'hm-row-meta', 'It works once and then stops. We only keep a fingerprint of it, so this is the only time it can be shown.'));
+	inner.append(el('p', 'hm-row-title', emailed ? `Invitation sent to ${to}` : 'Send them this link'));
+	// The link is shown either way. When the email went out it is the copy the
+	// inviter can paste into a message themselves, which is what people actually
+	// do; when it did not, it is the invitation.
+	inner.append(el('p', 'hm-row-meta', emailed
+		? 'Here is the same link, in case you would rather send it yourself. It works once and then stops, and this is the only time we can show it.'
+		: 'We could not email it, so this link is the invitation. It works once and then stops. We only keep a fingerprint of it, so this is the only time it can be shown.'));
 
 	const field = el('div', 'hm-card-actions');
 	const box = el('input', 'hm-input');

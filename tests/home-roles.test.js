@@ -573,6 +573,79 @@ d('invitations are single use and they expire', () => {
 	});
 });
 
+d('the invitation email says what the seat is, and never renders a name as markup', () => {
+	it('names the role and the thing that role can never do', async () => {
+		const { renderHouseholdInvite } = await import('../api/_lib/email.js');
+		const mail = renderHouseholdInvite({
+			homeLabel: 'The office',
+			role: 'guest',
+			inviterName: 'Sam',
+			inviteUrl: 'https://three.ws/smart-home/join?invite=token',
+			expiresAt: '2026-09-10T03:31:52.462Z',
+		});
+		expect(mail.subject).toContain('The office');
+		// The guest line is the one that matters: somebody forwarding this should
+		// be able to see they are handing over a guest seat and not the house.
+		expect(mail.text).toContain('never be able to approve unlocking a door');
+		expect(mail.html).toContain('never be able to approve unlocking a door');
+		expect(mail.text).toContain('works once');
+	});
+
+	it('escapes a home label and an inviter name, both of which a person typed', async () => {
+		const { renderHouseholdInvite } = await import('../api/_lib/email.js');
+		const mail = renderHouseholdInvite({
+			homeLabel: '<img src=x onerror=alert(1)>',
+			role: 'viewer',
+			inviterName: '<b>nobody</b>',
+			inviteUrl: 'https://three.ws/smart-home/join?invite=token',
+		});
+		expect(mail.html).not.toContain('<img src=x');
+		expect(mail.html).not.toContain('<b>nobody</b>');
+		expect(mail.html).toContain('&lt;img');
+	});
+
+	it('carries a different sentence for every assignable role', async () => {
+		const { renderHouseholdInvite } = await import('../api/_lib/email.js');
+		const lines = new Set();
+		for (const role of members.ASSIGNABLE_ROLES) {
+			const mail = renderHouseholdInvite({ homeLabel: 'Home', role, inviteUrl: 'https://three.ws/x' });
+			lines.add(mail.text);
+		}
+		expect(lines.size).toBe(members.ASSIGNABLE_ROLES.length);
+	});
+});
+
+d('a scope survives a round trip through the store', () => {
+	it('keeps the rooms an editor sent, and drops nothing on the way back', async () => {
+		const sent = { mode: 'allow', areas: ['kitchen', 'hall'], entities: ['light.hall_lamp'] };
+		const saved = await members.setMemberRole({ homeId, userId: users.viewer, role: 'viewer', scope: sent });
+		expect(saved.scope).toEqual(sent);
+
+		const read = await members.resolveMembership(homeId, users.viewer);
+		expect(read.scope).toEqual(sent);
+
+		// Widening back to the whole house is an explicit {mode:'all'}, not an
+		// omission: the editor's Save means "this is the scope now".
+		const widened = await members.setMemberRole({ homeId, userId: users.viewer, role: 'viewer', scope: { mode: 'all' } });
+		expect(widened.scope).toEqual({ mode: 'all' });
+
+		await members.setMemberRole({ homeId, userId: users.viewer, role: 'viewer', scope: { mode: 'allow', areas: ['kitchen'], entities: ['light.hall_lamp'] } });
+	});
+
+	it('refuses a scope the schema cannot describe', async () => {
+		await expect(
+			sql`UPDATE home_members SET entity_scope = ${'{"mode":"everything"}'}::jsonb WHERE home_id = ${homeId} AND user_id = ${users.viewer}`,
+		).rejects.toMatchObject({ code: '23514' });
+	});
+
+	it('de-duplicates and trims what an editor sends, and caps how much it can send', () => {
+		const messy = { mode: 'allow', areas: [' kitchen ', 'kitchen', '', null, 'hall'], entities: Array.from({ length: 900 }, (_, i) => `light.l${i}`) };
+		const clean = members.normalizeScope(messy, 'guest');
+		expect(clean.areas).toEqual(['kitchen', 'hall']);
+		expect(clean.entities).toHaveLength(500);
+	});
+});
+
 d('the action log attributes every action to the member who acted', () => {
 	it('records two members acting on one home under their own ids', async () => {
 		for (const who of ['admin', 'member']) {

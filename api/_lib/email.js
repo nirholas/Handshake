@@ -142,6 +142,48 @@ export function sendReferralCommissionEmail({ to, amount, currency, fromHandle, 
 	return sendEmail({ to, ...renderReferralCommission({ amount, currency, fromHandle, skillName, date }) });
 }
 
+// An invitation to somebody's household: a role in a real building, sent to an
+// email address that may not have a three.ws account behind it yet.
+//
+// Three things this template does deliberately, all of them because of what the
+// link opens:
+//
+//   1. It names the ROLE and what that role can never do, in the email, not only
+//      behind the link. Somebody forwarding an invitation should be able to see
+//      that they are handing over a guest seat and not the house.
+//   2. It never renders the home's label or the inviter's name as HTML. Both are
+//      strings a person typed, and one of them is chosen by whoever set up the
+//      home; `esc` is not optional here.
+//   3. It says the link works once and when it stops working, because an invite
+//      that quietly expires reads as a broken product rather than a policy.
+//
+// `roleNote` is the sentence that makes a guest seat legible to a person who has
+// never used the product. The guest line is the one that matters: it is the
+// difference between letting somebody water the plants and letting them open the
+// front door.
+const HOUSEHOLD_ROLE_NOTE = {
+	admin: 'You will be able to control everything in the home, approve unlocking a door, and invite other people. You will not be able to disconnect the home.',
+	member: 'You will be able to control everything in the home and approve unlocking a door, the same as anybody who lives there.',
+	guest: 'You will be able to control the things you have been given. You will never be able to approve unlocking a door, opening a garage or disarming an alarm.',
+	viewer: 'You will be able to watch the things you have been given, and change nothing.',
+};
+
+export function renderHouseholdInvite({ homeLabel, role, inviterName, inviteUrl, expiresAt }) {
+	const label = homeLabel || 'a home';
+	const who = inviterName ? `${inviterName} has` : 'Somebody has';
+	const note = HOUSEHOLD_ROLE_NOTE[role] || 'You will be able to reach this home from your three.ws account.';
+	const expiry = expiresAt ? new Date(expiresAt).toUTCString() : null;
+	return {
+		subject: `${who.replace(' has', '')} invited you to ${label} on three.ws`,
+		html: householdInviteHtml({ label, role, who, note, inviteUrl, expiry }),
+		text: householdInviteText({ label, role, who, note, inviteUrl, expiry }),
+	};
+}
+
+export function sendHouseholdInviteEmail({ to, homeLabel, role, inviterName, inviteUrl, expiresAt }) {
+	return sendEmail({ to, ...renderHouseholdInvite({ homeLabel, role, inviterName, inviteUrl, expiresAt }) });
+}
+
 // Unattended forge completion: sent only by the server-side finalizer when a
 // generation finished after the creator left the page. `creationPath` is the
 // site-relative share path (/forge?share=<id>).
@@ -281,6 +323,31 @@ function subscriptionHtml(plan, chain, txId) {
     ${txId ? `<p class="muted">Transaction: <code>${esc(txId)}</code></p>` : ''}
     <a class="btn" href="${APP_URL}/dashboard/">Go to Dashboard</a>
   `);
+}
+
+function householdInviteHtml({ label, role, who, note, inviteUrl, expiry }) {
+	return layout(`You have been invited to ${label}`, `
+    <p class="brand">three.ws</p>
+    <h1>You have been invited to ${esc(label)}</h1>
+    <p>${esc(who)} given you access to a home they connected to three.ws, as a <strong>${esc(role)}</strong>.</p>
+    <p>${esc(note)}</p>
+    <a class="btn" href="${esc(inviteUrl)}">See the invitation</a>
+    <p class="muted">The link opens a page that shows exactly what you would be able to do before you accept anything. It works once${expiry ? `, and stops working after ${esc(expiry)}` : ''}.</p>
+    <p class="muted">If you were not expecting this, you can ignore it. Nothing happens to your account unless you open the link and accept.</p>
+  `);
+}
+
+function householdInviteText({ label, role, who, note, inviteUrl, expiry }) {
+	return [
+		`${who} given you access to ${label} on three.ws, as a ${role}.`,
+		'',
+		note,
+		'',
+		`See the invitation: ${inviteUrl}`,
+		'',
+		`The link works once${expiry ? `, and stops working after ${expiry}` : ''}.`,
+		'If you were not expecting this, you can ignore it.',
+	].join('\n');
 }
 
 function subscriptionText(plan, chain, txId) {

@@ -169,8 +169,15 @@ An invite is an email address plus a link: single use, expiring (7 days by defau
 one home and one role.
 
 - **The plaintext token leaves the server exactly once**, in the `invite_url` of the creating
-  response. What is stored is `sha256` of it. An invite is a bearer credential for a role in a
-  building, so a leaked database must not be a set of working keys.
+  response, and in the email that response also sends. What is stored is `sha256` of it. An invite
+  is a bearer credential for a role in a building, so a leaked database must not be a set of
+  working keys.
+- **The email is awaited, not fired and forgotten**, which is the exception on this platform. The
+  response's `emailed` flag is a claim about the world and a fire-and-forget send cannot make one.
+  With no `RESEND_API_KEY` (the ordinary state on a preview deploy) `sendEmail` answers
+  `{skipped: true}` and this reports `emailed: false`, which is a fact rather than a failure. A
+  dead mail provider never costs anybody their invitation: the row is already written and the link
+  in the response still works.
 - **Single use is enforced in the redeeming UPDATE's own WHERE clause**, not by a read followed by
   a write, so two people opening the same link at the same moment cannot both become members.
 - **Accepting requires an account, and this endpoint does not create one.** Registration and
@@ -201,9 +208,22 @@ whether you may administer that person, so a button that would be refused is nev
 A member with no roster authority still sees the household. Hiding the fact that other people hold
 keys to the house you are in would be the wrong secret to keep.
 
-Sending an invitation shows the link once, at that moment, with a copy button. There is no way to
-see it again: the server keeps only a hash, so "check the invitations list for the link" would be a
-promise this system cannot keep, and the UI says so rather than letting somebody discover it.
+When the role being invited is `guest` or `viewer`, the form offers **How much of the house they
+get**: the whole house, or only rooms you tick. The room list comes from the house's own graph, so
+you are choosing between rooms you can see rather than typing area ids nobody can verify. A room
+is the unit the picker works in on purpose: a house with 67 devices makes a flat checkbox list
+unusable, and a room is the unit people actually think in. Individual entity grants set through
+the API survive an edit made in the UI. The same picker sits on a scoped member's row behind
+**What they can see**, and it sends only `scope`, so changing what somebody can see is never
+silently a change to what they can do.
+
+Sending an invitation mails it. The email names the role and, for a guest, states in the body that
+they will never be able to approve unlocking a door, so somebody forwarding an invitation can see
+they are handing over a guest seat and not the house. The link is shown in the UI either way, and
+the response says whether the mail actually went out (`emailed`) rather than assuming: a platform
+that mails the only copy of a one-use credential and then fails to deliver it has destroyed
+something the inviter cannot recreate. There is no way to see the link again afterwards, because
+the server keeps only a hash.
 
 The link opens [/smart-home/join](https://three.ws/smart-home/join). That page inspects the
 invitation without spending it, so it can say which home, which role, what that role will let the
@@ -341,6 +361,7 @@ automatic today: an IdP deactivating a user stops them signing in and does not b
 | The household panel | `src/home/members.js`, mounted by `src/home/manage.js` |
 | The join page | `pages/smart-home-join.html`, `src/home/join.js` |
 | The browser half of the API | `src/home/api.js` |
+| The invitation email | `renderHouseholdInvite` / `sendHouseholdInviteEmail` in `api/_lib/email.js` |
 | The matrix as an executable test | `tests/home-roles.test.js` |
 
 The owner row is created by a database trigger on `home_connections`, not by the application. "A
