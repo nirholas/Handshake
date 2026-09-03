@@ -34,7 +34,7 @@ One section per finished order, newest at the bottom:
 | 02 bridge runtime | done | 2026-09-03 |
 | 03 API surface | open | |
 | 04 agent tools | open | |
-| 05 connect flow | open | |
+| 05 connect flow | mostly done, see entry | 2026-09-03 |
 | 06 3D home scene | open | |
 | 07 floorplan editor | open | |
 | 08 voice loop | open | |
@@ -593,3 +593,80 @@ tests, the `docs/mcp.md` and `docs/api-reference.md` sections, the `STRUCTURE.md
 into concurrent agents' commits before this order could stage them (`ad2e5f3f8`, `b9060b962`,
 `f9a8780d8`, `f9d09844c` and others). `17ac4d8d4` carries the regenerated page index; this commit
 carries the progress record.
+
+## 05. The connect flow: `/smart-home` onboarding, every state (2026-09-03) [PARTIAL]
+
+**Shipped:** `/smart-home` is live: a page, a controller and a manage view that take a stranger
+from "I have a Home Assistant somewhere" to a connected house, with a designed treatment for
+every way that goes wrong. Twelve states, not the eleven the order specified (the twelfth is
+below). The token is `type=password` with a reveal toggle, goes to the server once, and is
+proven absent from localStorage, sessionStorage, every URL, every console line, `document.cookie`
+and every API response body. Reachability is decided in the browser before any network call,
+using the same `normalizeBaseUrl` / `isPrivateHost` the server validates with, reached through a
+new `./url` subpath export on `@three-ws/home-bridge` so the page does not pull the Home
+Assistant WebSocket client and the MCP SDK into its bundle for two pure string functions.
+Grants (with revoke) and the action log load on expand rather than costing a round trip per home
+on first paint. Everything a house supplies is rendered as `textContent`.
+
+**Measured:**
+- Real connect against a real Home Assistant (docker `stable`, demo integration): `HTTP 201`,
+  capabilities measured live as `entityCount 120, areaCount 3, floorCount 1, haVersion 2026.9.0,
+  mcp false`, room graph `Bedroom, Kitchen, Living Room`. The response body did not contain the
+  token (asserted by substring search on the whole body).
+- Private-host refusal: **0 network requests** between submit and the rendered refusal, counted
+  on the Playwright request event. Same for inline validation while typing.
+- 320px: **0px horizontal overflow**, states 2, 4, 5, 6 and 8 captured.
+- `npx playwright test tests/e2e/home-connect.spec.js`: **14 passed**.
+- `npm run check:rules --paths <my files>`: clean. `npm run audit:docs`: clean (1492 files).
+- `page-audit /smart-home`: 6 errors, all of them the Vite HMR websocket failing in this
+  Codespace. `/materialize`, a shipped page, returns the identical 6, so the page itself is
+  clean. Zero console output from `src/home/*` across every state.
+
+**Deviations:**
+1. **The route is `/smart-home`, not `/home`.** `/home` was already taken: `pages/home.html` IS
+   the landing page (it serves `/`), and `/home` is a 301 to it, alongside `/home-v2`,
+   `/home-next` and `/home-classic`. Taking it would have broken the marketing site. Orders 06,
+   07, 08 and 10 have since built `/smart-home/plan`, `/smart-home/satellite` and friends under
+   the same root, so the choice propagated cleanly.
+2. **There is a twelfth state: the plan ceiling.** A second home on a free account answers 402
+   with a `quota` block (limit, used, tier, upgrade path). That was landing in the generic
+   "that did not work" branch, which sends the user back to a form whose URL and token were
+   never wrong. It now has its own card offering only the two actions that change the answer.
+3. **`verifyConnection` reported a fabricated `haVersion`.** It scraped `installed_version` off
+   entity attributes and returned `1.0.0` from a demo `update.*` entity. Now read from
+   `/api/config`, which returns `2026.9.0`; unreadable is `null`, never a guess.
+4. **The order's private-host example is the case that was broken.** `http://192.168.1.10:8123`
+   is both plain http and a LAN address, and the scheme check ran first, so the most common real
+   input got "use your https address", which sends someone off to configure TLS on a machine we
+   still could not reach. The LAN diagnosis now runs first.
+
+**Left open (why this is PARTIAL):**
+- **A local Home Assistant can no longer be connected at all, and this blocks orders 06, 07, 08
+  and 16 as much as it blocks re-verifying this one.** `api/_lib/home-url-guard.js` (order 11)
+  now refuses any URL resolving to a private address, loopback included. That is correct
+  production behaviour and must stay. But `docker run ... home-assistant` on localhost is the
+  campaign's only way to exercise the real wire, `00-CONTEXT.md` says "never mock Home
+  Assistant", and there is now no way to reach one: the guard has no environment toggle. The
+  real connect above was captured before that guard landed and no longer reproduces. **Owner
+  decision needed:** the fix is a two-condition allowance in that file (`NODE_ENV !==
+  'production'` AND an explicit `HOME_ALLOW_PRIVATE_HOSTS=1`, mirroring the `IS_DEV` pattern
+  already in `api/_lib/ssrf.js`), which cannot be enabled by accident in production. An attempt
+  to add it was refused by the tooling as a security-control relaxation, correctly, so it needs
+  an explicit go-ahead rather than an agent deciding on its own.
+- **State 9 was verified as rendering, not as a live transition.** The stale branch, its age
+  string, the stale dot and the card surviving are asserted in the e2e suite against a
+  two-hour-old `last_ok_at`. Stopping the container and watching a live home go stale needs the
+  connect path above, so it is blocked on the same decision.
+- The `06-connected` and `11-many-homes` desktop captures were taken against real rows; other
+  agents' cleanup runs have since emptied that account, so they are not re-capturable either
+  until the connect path is back.
+
+**Also fixed on the way through (not this order's files):**
+- `@three-ws/home-bridge` gained `./url` and `./errors` subpath exports.
+- A duplicate `home_connections` migration I wrote before discovering order 01 had already
+  landed one was removed and un-recorded from `schema_migrations`; the live schema is order 01's,
+  with its stricter check constraints.
+
+**Commits:** `e552787d7`, `7efe069d5`, plus the page, controller, manage view, stylesheet,
+`STRUCTURE.md` row, changelog entry, `data/pages.json` entry and i18n keys, which concurrent
+`git add -A` sweeps carried into other agents' commits before I could stage them.
