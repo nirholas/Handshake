@@ -1,5 +1,5 @@
 {
-	"updated": "2026-08-06",
+	"updated": "2026-09-03",
 	"summary": "Every mechanical guard that protects this repository, and the stage each one runs in. This file is the single source of truth: scripts/audit-guards.mjs proves every entry is real and every stage claim is true, docs/guards.md explains them, and /guards renders them.",
 	"stages": [
 		{
@@ -410,6 +410,43 @@
 					}
 				},
 				"expect": "public/mcp-catalog.json is stale"
+			}
+		},
+		{
+			"id": "audit-mcp-listing",
+			"script": "scripts/build-mcp-listing-source.mjs",
+			"npm": "audit:mcp-listing",
+			"title": "MCP directory listing source",
+			"protects": "prompts/store-submissions/_generated/mcp-listing-source.json describes every MCP server we publish, at the version we publish.",
+			"why": "Every third-party directory listing (the official registry, Smithery, Glama, mcp.so, PulseMCP, LobeHub) is written from that one file. While it was kept by hand it drifted six servers short and thirty-five versions behind, and nothing noticed, because a listing nobody reads back looks identical whether it is right or wrong. The generator reads the facts from the manifests and this check fails when the committed file no longer matches them, or when a new server lands with no listing copy at all.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A new MCP server landing with no listing copy, so its directory card would be blank.",
+				"violation": {
+					"write": {
+						"packages/guard-proof-mcp/server.json": "{\n\t\"$schema\": \"https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json\",\n\t\"name\": \"io.github.nirholas/guard-proof-mcp\",\n\t\"title\": \"Guard proof server\",\n\t\"description\": \"Proof fixture server used only inside the guard sandbox.\",\n\t\"websiteUrl\": \"https://three.ws\",\n\t\"repository\": {\n\t\t\"url\": \"https://github.com/nirholas/three.ws\",\n\t\t\"source\": \"github\"\n\t},\n\t\"version\": \"0.0.1\",\n\t\"packages\": [\n\t\t{\n\t\t\t\"registryType\": \"npm\",\n\t\t\t\"identifier\": \"@three-ws/guard-proof-mcp\",\n\t\t\t\"version\": \"0.0.1\",\n\t\t\t\"runtimeHint\": \"npx\",\n\t\t\t\"transport\": {\n\t\t\t\t\"type\": \"stdio\"\n\t\t\t}\n\t\t}\n\t]\n}\n"
+					}
+				},
+				"expect": "no curated listing copy"
+			}
+		},
+		{
+			"id": "audit-mcp-reviewer",
+			"script": "scripts/audit-mcp-reviewer-path.mjs",
+			"npm": "audit:mcp-reviewer",
+			"title": "Connector reviewer path",
+			"protects": "Every paid tool on the published stdio server answers an unpaid call with a clean, priced x402 challenge, and the reviewer entitlement lifts it only for the right secret.",
+			"why": "A Claude Connectors reviewer drives the server with no wallet, so what they see for a paid tool IS the product. A crash, a stack trace or an unexplained JSON blob reads as a broken connector and costs a submission cycle. This drove the whole surface as a reviewer's host does and immediately found the standing evidence was four tools out of date.",
+			"stages": [
+				"manual"
+			],
+			"needs": "network",
+			"proof": {
+				"kind": "live",
+				"reason": "It spawns the real published server over stdio and calls every tool, and several tools reach live upstreams. A static fixture cannot produce a payment challenge from the x402 wrapper, which is the thing under test."
 			}
 		},
 		{
