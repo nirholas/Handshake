@@ -13,6 +13,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { createLogger } from './shared/log.js';
+import { initFork, openFork } from './fork-trade.js';
 
 const log = createLogger('radar');
 
@@ -923,7 +924,25 @@ function renderCard(coin) {
 		watchBtn.title = nowWatched ? 'Remove from watchlist' : 'Add to watchlist';
 	});
 
-	foot.append(scan, detail, watchBtn);
+	// Fork: the one action on an otherwise read-only card. Opens the real trade
+	// panel for this coin; the visitor's own wallet signs. Mainnet only, since a
+	// devnet coin has no market to buy into.
+	const forkBtn = coin.network === 'devnet' ? null : el('button', 'rc-fork', 'Fork');
+	if (forkBtn) {
+		forkBtn.type = 'button';
+		const sym = coin.symbol ? `$${String(coin.symbol).toUpperCase()}` : 'this coin';
+		forkBtn.setAttribute('aria-label', `Fork this trade: buy ${sym} from your own wallet`);
+		forkBtn.title = `Buy ${sym} from your own wallet`;
+		// Bound directly rather than via fork-trade's delegation: the card itself
+		// listens for clicks to open the quick-view drawer, so this has to stop
+		// the event at the button, which a document-level delegate never sees.
+		forkBtn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			openFork({ mint: coin.mint, symbol: coin.symbol, name: coin.name, image: coin.image_uri });
+		});
+	}
+
+	foot.append(scan, detail, ...(forkBtn ? [forkBtn] : []), watchBtn);
 	card.append(foot);
 
 	if (isNew) requestAnimationFrame(() => card.classList.remove('is-enter'));
@@ -1679,6 +1698,9 @@ function renderWalletLedger(coin) {
 export function mountRadar(mountEl) {
 	root = mountEl;
 	readUrl();
+	// An inbound ?fork=<mint> link opens the real trade panel on arrival. Runs
+	// before the first writeUrl() rewrites the query string.
+	initFork();
 	render();
 	fetchFeed();
 	fetchPulse();

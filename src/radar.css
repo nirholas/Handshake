@@ -379,6 +379,20 @@
 .rc-detail:active { transform: translateY(1px); }
 .rc-detail:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: 2px; }
 
+/* Fork: the radar's one live action. Opens the real pump.fun trade panel for
+   this coin (src/fork-trade.js); the visitor's own wallet signs it. Accented so
+   it reads as the action among the read-only links beside it. */
+.rc-fork {
+	font-size: var(--text-sm); font-weight: var(--weight-semibold); color: var(--ink);
+	background: color-mix(in srgb, var(--accent) 16%, transparent);
+	border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--stroke));
+	border-radius: var(--radius-md); padding: var(--space-2xs) var(--space-sm); cursor: pointer;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
+}
+.rc-fork:hover { background: color-mix(in srgb, var(--accent) 28%, transparent); border-color: var(--accent); }
+.rc-fork:active { transform: translateY(1px); }
+.rc-fork:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: 2px; }
+
 .rc-watch {
 	font-size: var(--text-md); line-height: 1; padding: var(--space-2xs) var(--space-xs);
 	background: var(--surface-2); border: 1px solid var(--stroke); border-radius: var(--radius-md);

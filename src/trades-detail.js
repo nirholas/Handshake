@@ -28,6 +28,7 @@ import { mountBondingCurve } from './widgets/bonding-curve.js';
 import { mountBubblemap } from './trades-bubblemap.js';
 import { mountTradeTape } from './trades-tape.js';
 import { escapeHtml, compact, shortAddr, relTime, identicon } from './trader-format.js';
+import { forkButton } from './fork-trade.js';
 
 const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 
@@ -675,6 +676,8 @@ function shell({ mint, network, sym, name, img, isThree, exit }) {
 				<p class="dd-desc" data-host="desc" hidden></p>
 			</div>
 			<div class="dd-hero-actions">
+				${forkButton({ mint, symbol: sym, name }, { label: 'Fork trade', className: 'dd-btn dd-btn--primary', title: 'Buy this coin from your own wallet' })}
+				${forkButton({ mint, symbol: sym, name }, { label: 'Share ↗', className: 'dd-btn', share: true, title: 'Share a one-tap fork link for this coin' })}
 				<a href="https://pump.fun/${escapeHtml(mint)}" target="_blank" rel="noopener" class="dd-btn">pump.fun ↗</a>
 				<a href="/oracle/coin/${encodeURIComponent(mint)}" class="dd-btn dd-btn--oracle">Oracle ↗</a>
 			</div>

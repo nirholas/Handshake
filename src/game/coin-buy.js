@@ -112,22 +112,27 @@ function friendlyTradeError(err, mode = 'buy') {
 }
 
 /**
- * Open the trade modal for a coin. Idempotent — a second call refocuses the
- * existing modal instead of stacking. Opens in Buy mode; the user can switch to
- * Sell inside the modal.
+ * Open the trade modal for a coin. A second call for the SAME coin refocuses
+ * the open modal instead of stacking; a call for a DIFFERENT coin replaces it,
+ * so a forked trade never leaves the user staring at the previous coin's panel.
+ * Opens in Buy mode; the user can switch to Sell inside the modal.
  * @param {{mint:string, name?:string, symbol?:string, image?:string}} coin
- * @param {{mode?: 'buy'|'sell'}} [opts]
+ * @param {{mode?: 'buy'|'sell', amount?: number}} [opts] `amount` pre-fills the
+ *   buy input (SOL), which is how a forked trade carries its size across.
  */
 export function openBuyModal(coin, opts = {}) {
 	if (!coin?.mint) return;
-	if (_open) { _open.focus(); return; }
-	_open = new TradeModal(coin, opts.mode === 'sell' ? 'sell' : 'buy');
+	if (_open) {
+		if (_open.coin?.mint === coin.mint) { _open.focus(); return; }
+		_open.close();
+	}
+	_open = new TradeModal(coin, opts.mode === 'sell' ? 'sell' : 'buy', opts);
 }
 
 export { openBuyModal as openTradeModal };
 
 class TradeModal {
-	constructor(coin, mode = 'buy') {
+	constructor(coin, mode = 'buy', opts = {}) {
 		this.coin = coin;
 		this.symPlain = coin.symbol ? '$' + coin.symbol.toUpperCase() : '';
 		this.sym = coin.symbol ? '$' + coin.symbol.toUpperCase() : 'this coin';
@@ -137,6 +142,12 @@ class TradeModal {
 		// coin renders identically to the original widget with no flicker.
 		this.denom = SOL_DENOM;
 		this.amount = mode === 'buy' ? SOL_DENOM.presets[0] : 0;
+		// A forked trade opens pre-filled with the size it is forking. It is only
+		// honoured for SOL-denominated buys: if the coin turns out to price in
+		// USDC, _detectDenom falls back to the USDC preset, because a SOL number
+		// means nothing against a USDC curve.
+		const preset = Number(opts.amount);
+		if (mode === 'buy' && Number.isFinite(preset) && preset > 0) this.amount = preset;
 		this._sellMax = false;
 		this.slippageBps = DEFAULT_SLIPPAGE_BPS;
 		this.busy = false;

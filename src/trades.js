@@ -20,6 +20,7 @@
 
 import { mountDetail } from './trades-detail.js';
 import { escapeHtml, compact, shortAddr, relTime } from './trader-format.js';
+import { initFork, FORK_PARAM } from './fork-trade.js';
 
 const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
@@ -55,6 +56,7 @@ function init() {
 	// Open the deep-dive immediately so the terminal is never an empty void —
 	// the URL mint if present, otherwise the platform coin.
 	select(state.selected || THREE_MINT, state.selected ? null : threeSeed(), { push: false });
+	initFork();
 	feedTimer = setInterval(() => loadFeed(false), FEED_REFRESH_MS);
 	pulseTimer = setInterval(loadPulse, PULSE_REFRESH_MS);
 	window.addEventListener('beforeunload', teardown);
@@ -73,7 +75,10 @@ function threeSeed() {
 // ── URL ───────────────────────────────────────────────────────────────────────
 function readUrl() {
 	const p = new URL(location.href).searchParams;
-	const m = p.get('mint') || p.get('coin');
+	// `?fork=<mint>` is an inbound fork link (see src/fork-trade.js). It selects
+	// the coin here as well as opening the trade panel, so the visitor lands on
+	// the full deep-dive behind the panel rather than a terminal showing $THREE.
+	const m = p.get('mint') || p.get('coin') || p.get(FORK_PARAM);
 	if (m && MINT_RE.test(m)) state.selected = m;
 	if (p.get('network') === 'devnet') state.network = 'devnet';
 	if (p.get('tab') === 'exits') state.tab = 'exits';
