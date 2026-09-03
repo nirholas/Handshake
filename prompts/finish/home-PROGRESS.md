@@ -31,7 +31,7 @@ One section per finished order, newest at the bottom:
 |---|---|---|
 | 00 CONTEXT | shared facts | n/a |
 | 01 connection store | done | 2026-09-03 |
-| 02 bridge runtime | open | |
+| 02 bridge runtime | done | 2026-09-03 |
 | 03 API surface | open | |
 | 04 agent tools | open | |
 | 05 connect flow | open | |
@@ -244,3 +244,62 @@ test runs, sealed under their local keys, which the audit reports honestly.
 **Commits:** the schema, store, verify, tests and audit script were swept into concurrent agents'
 `git add -A` commits as they landed (`c3132956a`, `858a2f86b` among them); this entry and the
 retirement of the order file are the final commit.
+
+---
+
+## 02. Bridge runtime: the multi-tenant connection manager (2026-09-03)
+
+**Shipped:** `api/_lib/home/runtime.js` holds one per-instance, lazily-opened, reference-counted,
+idle-evicted pool of live Home Assistant sockets, and every consumer above it (SSE, a chat tool
+call, an MCP call) checks a bridge out and back in through `withHome` rather than constructing
+one. `acquire`, `withHome`, `snapshot`, `subscribe`, `evictIdle`, `stats` and `closeAll` are the
+contract; `createHomeRuntime` builds one over injectable dependencies so the refcount, the cap,
+the breaker and the eviction boundary are testable without a network. The socket is a cache and
+never the source of truth: a request landing on an instance holding no connection opens one, and
+that cold path is normal rather than an error. The behaviour worth naming on its own is that the
+graph is never emptied on disconnect, only marked stale, so a person watching their 3D home sees
+it go grey instead of watching their house vanish. `tests/home-runtime.test.js` (27 pure) and
+`tests/home-runtime-live.test.js` (5 live, self-skipping on `HOME_ASSISTANT_URL`) cover it.
+
+**Measured:**
+
+- Socket reuse, host side: two sequential `withHome` calls against a real Home Assistant 2026.9.0
+  (125 entities, 4 rooms) left `ss -tn state established` at **1** socket after each call, with
+  **1** bridge constructed. `closeAll()` took it back to 0.
+- Breaker, at the production 15 s connect timeout: failures 1 to 5 cost 15009, 15005, 15005,
+  15004 and 15002 ms; attempt 6 failed in **0 ms** with `home_breaker_open` and a message naming
+  the 300 second cooldown. The store is written with `status: unreachable` and a `status_detail`
+  ending "paused retries for five minutes", so the connect screen explains it without a socket.
+- Kill and restart, mid-subscription: `docker stop` left the subscriber's last event at
+  `stale=true connected=false status=unreachable` with all four rooms (Bedroom, Front Door,
+  Kitchen, Living Room) still readable. `docker start` restored `stale=false connected=true`
+  about 6 s later with no client action and 2 events delivered.
+- Eviction at its boundary: 89,999 ms after the last release evicts 0; 90,000 ms evicts 1 and
+  `stats().open` drops to 0.
+- `npx vitest run tests/home-runtime.test.js packages/home-bridge`: 57 passed, 7 skipped.
+- `npm run check:rules --paths <the files>`: clean.
+
+**Deviations:**
+
+- The order says order 01 must have landed first. It had not when this session started
+  (`api/_lib/home/` did not exist), and several sessions were running the campaign in parallel,
+  so the schema and `store.js` were written here and then converged with the peer session that
+  owned order 01. Two `create table if not exists` migrations for the same tables raced, which
+  makes the loser a silent no-op that skips the CHECK constraints declared inside its CREATE
+  TABLE: the duplicate was withdrawn and `20260903130000_home_schema_reconcile.sql` adds
+  `home_connections_relay_chk` and `home_action_log_risk_chk` by name, so a raced database ends
+  up matching what `20260903030000_home_connections.sql` says it guarantees. It is a no-op on a
+  cleanly provisioned one.
+- A real concurrency defect in the pool, found by the test that two simultaneous `acquire` calls
+  share one open: the pool slot was claimed AFTER the credential read, so two callers that both
+  cleared the map check during that database round trip each opened a socket and the second
+  `entries.set` orphaned the first, which was then never pooled, never evicted and never closed.
+  A page load and an SSE stream starting together is exactly that race. The slot is now reserved
+  synchronously before the first await and the credential is read inside `entry.ready`.
+- `HomeBridge` gained `haVersion` and `registries` getters. The capability record has to state
+  the version the instance actually reported rather than one inferred from a state attribute.
+
+**Left open:** nothing in this order. The `admission` ladder that now rides along in `stats()`
+belongs to order 14 and landed alongside this work in the same worktree.
+
+**Commits:** this entry, the tests, the reconcile migration and the pool fix.
