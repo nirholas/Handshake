@@ -475,16 +475,50 @@ export class SculptBrush {
 	_stroke(hit) {
 		const mesh = hit.object;
 		if (!mesh?.geometry?.attributes?.position) return;
-
-		let touched = this._applyAt(mesh, hit.point, hit.face);
-		if (this.params.symmetry) {
-			const mirrored = this._mirrorPoint(hit.point);
-			if (mirrored) touched += this._applyAt(mesh, mirrored, hit.face, true);
-		}
+		const normal = this._faceNormal(mesh, hit.face);
+		const touched = this.applyStroke({ mesh, point: hit.point, normal });
 		if (touched) {
 			this._touched += touched;
 			this.onStroke?.({ vertices: touched });
 		}
+	}
+
+	/** World-space normal at a raycast hit, falling back to facing the camera. */
+	_faceNormal(mesh, face) {
+		const normals = mesh.geometry.attributes.normal;
+		if (face && normals) {
+			_n.fromBufferAttribute(normals, face.a);
+			return _n.clone().transformDirection(mesh.matrixWorld);
+		}
+		return new Vector3().subVectors(this.camera.position, mesh.getWorldPosition(_a)).normalize();
+	}
+
+	/**
+	 * Apply one stroke, symmetry included, at an explicit world point and
+	 * direction. Public because the pointer handler is not the only caller that
+	 * wants it: a programmatic fit (an identity solver's residual, a test) needs
+	 * the same maths without a canvas.
+	 *
+	 * @param {{mesh: object, point: import('three').Vector3, normal: import('three').Vector3}} args
+	 * @returns {number} vertices moved
+	 */
+	applyStroke({ mesh, point, normal }) {
+		if (!mesh?.geometry?.attributes?.position) return 0;
+		let touched = this._applyAt(mesh, point, normal, false);
+		if (this.params.symmetry) {
+			const mirrored = this._mirrorPoint(point);
+			if (mirrored) touched += this._applyAt(mesh, mirrored, normal, true);
+		}
+		return touched;
+	}
+
+	/**
+	 * Forget the cached skinned world positions. The pointer path does this at
+	 * every pointer-down; a programmatic caller that re-poses the rig between
+	 * strokes has to say so.
+	 */
+	invalidate() {
+		this._worldCache = new WeakMap();
 	}
 
 	/** Reflect a world point across the model's own X = 0 plane. */
@@ -497,28 +531,22 @@ export class SculptBrush {
 	}
 
 	/**
-	 * Apply one stroke step centred on `center` (world space). Returns the
-	 * number of vertices moved.
+	 * Apply one stroke step centred on `center` with world direction `normal`.
+	 * Returns the number of vertices moved.
 	 */
-	_applyAt(mesh, center, face, mirrored = false) {
+	_applyAt(mesh, center, normal, mirrored = false) {
 		const attr = ensureSculptTarget(mesh);
 		if (!attr) return 0;
 
 		const world = this._worldPositions(mesh);
 		const positions = mesh.geometry.attributes.position;
-		const normals = mesh.geometry.attributes.normal;
 		const { radius, strength, direction } = this.params;
 		const r2 = radius * radius;
 
 		// Stroke direction: the surface normal at the hit, in world space. The
 		// mirrored pass reflects it so both sides bulge outward rather than one
 		// pushing in while the other pulls out.
-		if (face && normals) {
-			_n.fromBufferAttribute(normals, face.a);
-			_n.transformDirection(mesh.matrixWorld);
-		} else {
-			_n.set(0, 0, 1);
-		}
+		_n.copy(normal);
 		if (mirrored && this.root) {
 			// Reflect the direction in the model's own frame: into root space,
 			// negate X, back out. transformDirection ignores translation and
