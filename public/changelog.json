@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-03T08:11:22.831Z",
+	"generated_at": "2026-09-03T08:23:37.813Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -240,6 +240,16 @@
 		{
 			"date": "2026-09-03",
 			"type": "update",
+			"title": "AI material restyling works again without an IBM key",
+			"summary": "Restyling a model's materials in plain language (make it chrome, weathered copper, frosted glass) asked IBM Granite for the answer and gave up with a not-configured message if no IBM credentials were present, even though the same free model chain that powers the rest of the site was one call away. It now leads with Granite where it is available and falls back to that shared chain everywhere else, so the button works on every deployment. The two matching tools on the 3D Studio agent server, material generation and prompt direction, had the same dead end and were fixed with it.",
+			"link": "/forge",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
 			"title": "Any assistant can now run your house, and it still will not open your door",
 			"summary": "There is a new way to connect your home that needs no three.ws account and no remote web address at all: install @three-ws/home-mcp in Claude, Cursor, or anything else that speaks Model Context Protocol, give it your Home Assistant address and a token, and it reads your rooms, runs the scenes you already built, and calls services. Because it runs on your own machine, your ordinary home network address works and nothing about your house leaves the building. The safety rule is the same one the rest of the platform uses, applied honestly to this setup: locking up, closing the garage and arming the alarm run straight away and never ask. Unlocking, opening a door and disarming are refused outright, every time, because saying yes to opening a building takes a person and this kind of connection has no person in it to ask. If you genuinely want one specific door handled without asking, you name that exact door yourself when you start it, by hand, and nothing your assistant can do will widen that to any other door. We proved it against a real Home Assistant rather than a stand-in: the front door was told to unlock seven different ways, including with a fake confirmation smuggled into the request, and it stayed locked every time. Alongside it there is now a full walkthrough from nothing to a working agent in a real house, covering what to do when it says your home is unreachable, and what a guest in your household can and cannot do.",
 			"link": "/smart-home",
@@ -258,6 +268,27 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Avatar Studio can now dress, rig and walk your avatar, not just paint it",
+			"summary": "Avatar Studio picked up everything the older avatar editor could do and it could not. A Wardrobe tab puts real catalog garments on your avatar, bound to its own skeleton so they move with every animation, on top of the show/hide and recolour controls for the clothes the body already came with. A Walk tab lets you drive the avatar around the stage with WASD, which is where a garment that does not follow the hips actually becomes visible, and hands the unsaved look straight to the full Walk page. Editing a saved avatar also gets a Rig tab that turns a static mesh into an animation-ready one, and a Play as this button that saves and drops you into a world wearing it. Saving a dressed avatar keeps the clothes: the outfit is stored as data and rebuilt on the pristine base, so nothing gets baked on twice and the base model you started from is always recoverable.",
+			"link": "/avatar-studio",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Chain logos on the fees tables render instead of breaking",
+			"summary": "Every chain row on the fees and revenue tables showed a broken image. The upstream data source hands out chain logo links that are missing a piece of their address, so each one failed to load. We repair the address before the data reaches the page, and any icon that still fails for its own reasons now quietly becomes the same neutral disc a protocol without a logo already gets, rather than a broken-image mark. The same repair covers the DEX volume, protocol and chain pages that draw from the same feed.",
+			"link": "/fees",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -295,6 +326,17 @@
 		{
 			"date": "2026-09-03",
 			"type": "update",
+			"title": "Copy a working embed snippet with no account, and embed an agent's chat page",
+			"summary": "The embed editor moved into the Widget Studio, and it got the two things it was missing. You no longer need an account: the walking-avatar and the new Agent Chat widget carry their whole setup in the embed URL, so you can configure one, copy the snippet and put it on your site without signing in (signing in still gets you a shareable link and the ability to change a live embed later). Agent Chat embeds an agent you already published, so visitors talk to it on your page. You can also point an embed at a .glb or .vrm you host yourself, and the modal now tells you exactly where the snippet goes in HTML, React, WordPress, Webflow and Shopify. Every control writes itself back into the address bar, so a configured studio link is something you can send to someone. Old /embed links keep working and land on the same configuration.",
+			"link": "/studio",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
 			"title": "Copy trading now stops itself when a leader slides, and a trader has to earn the right to be copied",
 			"summary": "Three guards landed on the copy loop. You can set a drawdown limit when you start copying a trader: if their real closed trades fall that far below their best point, new copies stop automatically, you get told why, and exits on positions you already hold keep coming through so you are never frozen inside the leader that just tripped. Resuming while they are still down is refused with the actual numbers rather than a button that silently re-pauses. Second, a trader now has to have earned a record before anyone can put money behind them: five closed round-trips, a day of trading history, and real capital deployed, all measured on-chain. Fall short and the panel shows exactly what is still missing instead of a flat refusal, and a losing trader with a real record still qualifies, because this asks whether the record is real, not whether it is good. Third, you can no longer copy an agent you own, and follows between your own agents no longer count toward the follower score on the leaderboard. Along the way, starting or editing a copy from a trader profile was failing silently on every attempt; that is fixed.",
 			"link": "/dashboard/copy",
@@ -312,6 +354,17 @@
 			"link": "/daily",
 			"tags": [
 				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Download your model as FBX or 3MF",
+			"summary": "The download menu on a finished model offered five formats it could convert inside your browser: GLB, OBJ, STL, PLY and USDZ. FBX and 3MF have no browser converter, so they were missing from the menu even though the platform has always been able to author them. Both are there now, converted on our side and handed straight back: FBX keeps the skeleton for Unity, Unreal and Maya, and 3MF is the modern package that slicers and print services expect. A server conversion shows real progress while it runs, says what went wrong if it fails, and leaves the finished file one click away in case the download was missed. The format menu also no longer runs off the left edge of a narrow phone screen.",
+			"link": "/forge",
+			"tags": [
+				"feature",
 				"improvement"
 			]
 		},
@@ -404,6 +457,17 @@
 		{
 			"date": "2026-09-03",
 			"type": "update",
+			"title": "Refine now returns the same model at higher quality, not a different one",
+			"summary": "Refine bumps a finished model up a quality tier. It replayed your prompt but never pinned the randomness, so on the text path it painted a brand new reference image and reconstructed a different object: you asked for this model, better, and got another model, better. Every generation is now stamped with a seed that rides along on Refine, Retry and an automatic engine switch, so the tier is the only thing that changes. Starting a fresh generation still explores, so Make another on the same prompt keeps giving you something new. Two related fixes came with it: requests that differed only by their seed were being collapsed into a single job and handed back the identical file, and the force-a-fresh-run flag skipped the result cache but not that collapsing.",
+			"link": "/forge",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
 			"title": "Restyle Studio: upload works from the keyboard, and reverting a version really rewinds the source",
 			"summary": "Two things on the Restyle Studio page were quietly broken. \"Upload GLB\" was a styled label wrapped around a hidden file input, so it could not be reached by keyboard or by a screen reader at all: the only way to bring your own model in was a mouse click. It is now a real button, in the tab order, with the same look. Separately, clicking an older entry in the Versions strip reloaded that model on the stage but left every following action pointed at the newest checkpoint, so an AI restyle or a Save right after a revert quietly re-skinned the wrong model and filed the result under the version you had gone back to. Reverting now re-anchors the source, so restyle, Save version, and \"Save all as versions\" all branch from the version you are actually looking at. The rest of the sweep is smaller but adds up: the metalness, roughness and emissive sliders and the model-URL and instruction fields now have real labels; every async result note is announced instead of silently changing; a successful save reads as success rather than as another grey hint; clicking \"Load URL\" with an empty box tells you what it wants instead of doing nothing; dropping a file on the stage highlights the target and says so when the file is not a model; picking the same file twice in a row works; and \"Load the sample model\" clears the failing ?url= so a reload does not land straight back in the error state.",
 			"link": "/restyle",
@@ -471,6 +535,17 @@
 		{
 			"date": "2026-09-03",
 			"type": "update",
+			"title": "Soft shadows are soft again in Pose Studio, Mirror and Diorama",
+			"summary": "These three 3D surfaces were asking for a soft-shadow mode that the renderer stopped supporting and silently swapped for hard-edged shadows, complaining in the console every time a scene started. They now use the supported soft-shadow type, so contact shadows under a figure read as shadows rather than hard cutouts.",
+			"link": "/pose",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
 			"title": "Talk to your house without finding a phone, and a background \"yeah\" can never open your front door",
 			"summary": "Hands-free is here for connected homes. Turn it on at /voice/home, say the wake word, and ask for what you want: \"turn the kitchen light off\" works while you are carrying groceries. The wake word is matched by a model that runs inside your own browser tab, so that audio never leaves your device; only the sentence you say afterwards is sent, and only to be turned into text. While the microphone is live there is an indicator on the page that cannot be switched off, and Mute genuinely stops the microphone at the device rather than hiding a dot. Talk over the agent and it stops mid-sentence and listens, in about a tenth of a second, and it will not wake itself up when it happens to say its own wake word out loud. The part we spent the most care on is the door. Anything that opens your house is spoken back in full first, the exact device appears on screen while you decide, and only the word \"confirm\" goes through. A \"yeah\" or a \"sure\" overheard from a conversation on the other side of the room does not, and on a device with no screen the agent refuses to take an unlock by voice at all and offers your phone instead. Four wake phrases to choose from, twelve designed states including an honest one for deployments where speech recognition is not available, and every stage of the round trip timed live on screen so you can see where the seconds go.",
 			"link": "/voice/home",
@@ -520,6 +595,16 @@
 			"link": "/smart-home",
 			"tags": [
 				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "The Showcase directory is back after a stray change emptied it",
+			"summary": "Showcase lists every ERC-8004 agent that carries a 3D body, discovered across 22 chains and indexed from the canonical registries, and any card opens that agent in the live viewer. An unrelated change had emptied the file behind it, so for a while the page loaded and then showed nothing at all. It is restored and browsing again. While it was open we also gave the page a single real heading instead of two competing ones, which matters to anyone reading the site with a screen reader, and rewrote its description, which had been advertising a drag-and-drop model viewer rather than the agent directory it actually is.",
+			"link": "/showcase",
+			"tags": [
 				"fix"
 			]
 		},
@@ -34708,7 +34793,7 @@
 			"date": "2026-05-24",
 			"type": "launch",
 			"title": "Widget Studio",
-			"summary": "Pick an avatar, configure embed options, copy a one-line snippet for your site.",
+			"summary": "Build an embeddable 3D widget: pick an avatar (or your own model URL), pick a widget type, tune it live, and copy the snippet. No account needed for the URL-based embeds.",
 			"link": "/studio",
 			"tags": [
 				"launch"

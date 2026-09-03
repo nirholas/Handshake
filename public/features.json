@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-03T08:05:25.631Z",
+	"generated_at": "2026-09-03T08:23:37.800Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -896,7 +896,7 @@
 				{
 					"path": "/studio",
 					"title": "Widget Studio",
-					"description": "Pick an avatar, configure embed options, copy a one-line snippet for your site.",
+					"description": "Build an embeddable 3D widget: pick an avatar (or your own model URL), pick a widget type, tune it live, and copy the snippet. No account needed for the URL-based embeds.",
 					"added": "2026-05-24",
 					"auth": null,
 					"indexable": true,
@@ -1186,7 +1186,7 @@
 				{
 					"path": "/avatar-studio",
 					"title": "Avatar Studio",
-					"description": "Build a custom 3D avatar from scratch. Choose body type, sculpt face and body, add outfits and accessories. No selfie required.",
+					"description": "Build a custom 3D avatar from scratch. Sculpt the face and body, dress it from the closet, add accessories, and walk it around the stage. No selfie required.",
 					"added": null,
 					"auth": null,
 					"indexable": true,

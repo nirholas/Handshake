@@ -191,6 +191,14 @@
 			<description>Every agent card on the x402 Pay page asked for its owner's avatar picture at a URL that has never existed on this site, so the picture always 404'd and the card fell back to a plain letter tile. The page now uses the real thumbnail the rest of three.ws uses, so an agent with a public avatar shows its face on the card, and an agent whose avatar is private still gets the letter tile without a wasted failed request.</description>
 		</item>
 		<item>
+			<title>AI material restyling works again without an IBM key</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-09-03:AI material restyling works again without an IBM key</guid>
+			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Restyling a model's materials in plain language (make it chrome, weathered copper, frosted glass) asked IBM Granite for the answer and gave up with a not-configured message if no IBM credentials were present, even though the same free model chain that powers the rest of the site was one call away. It now leads with Granite where it is available and falls back to that shared chain everywhere else, so the button works on every deployment. The two matching tools on the 3D Studio agent server, material generation and prompt direction, had the same dead end and were fixed with it.</description>
+		</item>
+		<item>
 			<title>Any assistant can now run your house, and it still will not open your door</title>
 			<link>https://three.ws/smart-home</link>
 			<guid isPermaLink="false">2026-09-03:Any assistant can now run your house, and it still will not open your door</guid>
@@ -205,6 +213,22 @@
 			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Some of the images we render of an avatar on the server are drawn by a headless browser that loads three.js from a public CDN: the images the render endpoint and the MCP render tools return, rendered clips, and the preview cards for models our fast in-process renderer cannot decode on its own. When that one CDN was slow or unreachable, the page's module load simply hung, the render timed out, and the image came back empty with nothing to explain why. A failover had been written for exactly this and was never connected to the renderers. It is connected now: before each render we check that the CDN is answering and switch to a second one if it is not, remembering the answer for ten minutes so a burst of renders pays for a single check. The three renderers also share one pinned version of three.js instead of keeping three copies that could drift apart, and a test now fails the build if a renderer ever goes back to hardcoding a single CDN.</description>
+		</item>
+		<item>
+			<title>Avatar Studio can now dress, rig and walk your avatar, not just paint it</title>
+			<link>https://three.ws/avatar-studio</link>
+			<guid isPermaLink="false">2026-09-03:Avatar Studio can now dress, rig and walk your avatar, not just paint it</guid>
+			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Avatar Studio picked up everything the older avatar editor could do and it could not. A Wardrobe tab puts real catalog garments on your avatar, bound to its own skeleton so they move with every animation, on top of the show/hide and recolour controls for the clothes the body already came with. A Walk tab lets you drive the avatar around the stage with WASD, which is where a garment that does not follow the hips actually becomes visible, and hands the unsaved look straight to the full Walk page. Editing a saved avatar also gets a Rig tab that turns a static mesh into an animation-ready one, and a Play as this button that saves and drops you into a world wearing it. Saving a dressed avatar keeps the clothes: the outfit is stored as data and rebuilt on the pristine base, so nothing gets baked on twice and the base model you started from is always recoverable.</description>
+		</item>
+		<item>
+			<title>Chain logos on the fees tables render instead of breaking</title>
+			<link>https://three.ws/fees</link>
+			<guid isPermaLink="false">2026-09-03:Chain logos on the fees tables render instead of breaking</guid>
+			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every chain row on the fees and revenue tables showed a broken image. The upstream data source hands out chain logo links that are missing a piece of their address, so each one failed to load. We repair the address before the data reaches the page, and any icon that still fails for its own reasons now quietly becomes the same neutral disc a protocol without a logo already gets, rather than a broken-image mark. The same repair covers the DEX volume, protocol and chain pages that draw from the same feed.</description>
 		</item>
 		<item>
 			<title>Coin Radar tells you when it is your filter, not the market, that is empty</title>
@@ -231,6 +255,14 @@
 			<description>The /smart-home page now takes you from &quot;I have a Home Assistant somewhere&quot; to a connected house, and it is honest at every step. An address that only exists on your home network is refused the moment you type it, with the two real ways round it, instead of spinning for fifteen seconds. A rejected token says so and puts the cursor back in the token box. A house that stops answering keeps its rooms on screen, marked stale with how long ago it last replied, rather than blanking out. Your access token is sent once, encrypted at rest, and never comes back to the page: it is not in your browser storage, not in a URL, and not in any response. Disconnecting says plainly that the stored token is erased and reminds you to delete it in Home Assistant too.</description>
 		</item>
 		<item>
+			<title>Copy a working embed snippet with no account, and embed an agent's chat page</title>
+			<link>https://three.ws/studio</link>
+			<guid isPermaLink="false">2026-09-03:Copy a working embed snippet with no account, and embed an agent's chat page</guid>
+			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The embed editor moved into the Widget Studio, and it got the two things it was missing. You no longer need an account: the walking-avatar and the new Agent Chat widget carry their whole setup in the embed URL, so you can configure one, copy the snippet and put it on your site without signing in (signing in still gets you a shareable link and the ability to change a live embed later). Agent Chat embeds an agent you already published, so visitors talk to it on your page. You can also point an embed at a .glb or .vrm you host yourself, and the modal now tells you exactly where the snippet goes in HTML, React, WordPress, Webflow and Shopify. Every control writes itself back into the address bar, so a configured studio link is something you can send to someone. Old /embed links keep working and land on the same configuration.</description>
+		</item>
+		<item>
 			<title>Copy trading now stops itself when a leader slides, and a trader has to earn the right to be copied</title>
 			<link>https://three.ws/dashboard/copy</link>
 			<guid isPermaLink="false">2026-09-03:Copy trading now stops itself when a leader slides, and a trader has to earn the right to be copied</guid>
@@ -245,6 +277,14 @@
 			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Daily Forge is built around one thing: the challenge of the day. That headline was being wiped out a moment after the page loaded. The translation layer runs after the page fetches its language file, and it was overwriting the day's theme with the placeholder text baked into the HTML, so every visitor read &quot;Today's theme&quot; and &quot;Loading today's challenge&quot; forever while the starter prompt and the idea chips below quietly described a completely different subject. The theme, its emoji, its hint and the browser tab title now hold. Four more fixes landed with it: a failed generation says &quot;Could not reach the forge, check your connection&quot; instead of the browser's raw &quot;Failed to fetch&quot;; when a model finishes but the preview cannot show it, the Download button the message points at is now actually clickable instead of sitting underneath the message; every button and link has a visible focus outline for keyboard and screen-reader users, and the streak milestone popup takes focus, closes on Escape and hands focus back; and a browser without 3D support now still sees today's theme and a clear explanation instead of a permanent loading line. The community strip at the bottom also fills in properly rather than staying empty.</description>
+		</item>
+		<item>
+			<title>Download your model as FBX or 3MF</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-09-03:Download your model as FBX or 3MF</guid>
+			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The download menu on a finished model offered five formats it could convert inside your browser: GLB, OBJ, STL, PLY and USDZ. FBX and 3MF have no browser converter, so they were missing from the menu even though the platform has always been able to author them. Both are there now, converted on our side and handed straight back: FBX keeps the skeleton for Unity, Unreal and Maya, and 3MF is the modern package that slicers and print services expect. A server conversion shows real progress while it runs, says what went wrong if it fails, and leaves the finished file one click away in case the download was missed. The format menu also no longer runs off the left edge of a narrow phone screen.</description>
 		</item>
 		<item>
 			<title>Endpoint Shopper takes payment on the page, so a paid run actually runs</title>
@@ -311,6 +351,14 @@
 			<description>Homes connect over a live socket, and a house whose broadband keeps dropping in and out was able to crash the server process that held it, which meant every other connected home on that server went quiet at the same time. The cause was in the open-source Home Assistant client we build on: it reconnects a subscription after a drop without handling the case where the connection dies again mid-reconnect. That is now handled on our side, the failure is reported instead of being lost, and the connection recovers on its own. We have written the problem up for the upstream project too. Found by deliberately flapping a real house on and off every five seconds for two minutes.</description>
 		</item>
 		<item>
+			<title>Refine now returns the same model at higher quality, not a different one</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-09-03:Refine now returns the same model at higher quality, not a different one</guid>
+			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Refine bumps a finished model up a quality tier. It replayed your prompt but never pinned the randomness, so on the text path it painted a brand new reference image and reconstructed a different object: you asked for this model, better, and got another model, better. Every generation is now stamped with a seed that rides along on Refine, Retry and an automatic engine switch, so the tier is the only thing that changes. Starting a fresh generation still explores, so Make another on the same prompt keeps giving you something new. Two related fixes came with it: requests that differed only by their seed were being collapsed into a single job and handed back the identical file, and the force-a-fresh-run flag skipped the result cache but not that collapsing.</description>
+		</item>
+		<item>
 			<title>Restyle Studio: upload works from the keyboard, and reverting a version really rewinds the source</title>
 			<link>https://three.ws/restyle</link>
 			<guid isPermaLink="false">2026-09-03:Restyle Studio: upload works from the keyboard, and reverting a version really rewinds the source</guid>
@@ -359,6 +407,14 @@
 			<description>The ASL practice mirror got a pass over every state it can be in. When the camera cannot start it now says which thing failed and what to do about it: permission refused, no camera on the device, the camera busy in another app, or the hand tracker itself failing to download. It used to print the raw internal error, which nobody could act on. While the tracker downloads you see that it is downloading, instead of a panel that still says the camera is off. Turning the camera off puts the panel back to telling you what to do next rather than leaving an empty box. Every letter square now carries the best score you have reached on it, so twenty six identical squares become a map of where your practice actually is, and that score is kept between sessions. Screen readers now hear the finger being named, and the live skeleton and the per finger bars are redrawn in place instead of being rebuilt on every camera frame, which takes real work off the machine doing the grading.</description>
 		</item>
 		<item>
+			<title>Soft shadows are soft again in Pose Studio, Mirror and Diorama</title>
+			<link>https://three.ws/pose</link>
+			<guid isPermaLink="false">2026-09-03:Soft shadows are soft again in Pose Studio, Mirror and Diorama</guid>
+			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>These three 3D surfaces were asking for a soft-shadow mode that the renderer stopped supporting and silently swapped for hard-edged shadows, complaining in the console every time a scene started. They now use the supported soft-shadow type, so contact shadows under a figure read as shadows rather than hard cutouts.</description>
+		</item>
+		<item>
 			<title>Talk to your house without finding a phone, and a background &quot;yeah&quot; can never open your front door</title>
 			<link>https://three.ws/voice/home</link>
 			<guid isPermaLink="false">2026-09-03:Talk to your house without finding a phone, and a background &quot;yeah&quot; can never open your front door</guid>
@@ -397,6 +453,14 @@
 			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>The connect page learned all 87 languages last week; the invitation, plan and voice satellite pages had the same gap and now speak them too, along with the live 3D house. Setting a page to Arabic or Hebrew also actually mirrors it now: the reveal button, the coloured bars beside notices, and the room and device columns in the live house used to stay stuck on the left. If you have asked your device to reduce motion, the house stops animating between states while staying completely live, so lights and locks still update the instant they change, they just arrive rather than glide. The live house also keeps the screen awake now, which is what you want on a kitchen tablet on a shelf, and gives that up the moment you switch away, which is what you want on a phone in your pocket. On a phone with a notch the house fills the screen without hiding its own controls behind the cutout.</description>
+		</item>
+		<item>
+			<title>The Showcase directory is back after a stray change emptied it</title>
+			<link>https://three.ws/showcase</link>
+			<guid isPermaLink="false">2026-09-03:The Showcase directory is back after a stray change emptied it</guid>
+			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Showcase lists every ERC-8004 agent that carries a 3D body, discovered across 22 chains and indexed from the canonical registries, and any card opens that agent in the live viewer. An unrelated change had emptied the file behind it, so for a while the page loaded and then showed nothing at all. It is restored and browsing again. While it was open we also gave the page a single real heading instead of two competing ones, which matters to anyone reading the site with a screen reader, and rewrote its description, which had been advertising a drag-and-drop model viewer rather than the agent directory it actually is.</description>
 		</item>
 		<item>
 			<title>The signal marketplace tells you how to get on it, and reads correctly to a screen reader</title>
@@ -26476,7 +26540,7 @@ And all of it is public. Oracle Lab publishes the actual model: every weight, th
 			<guid isPermaLink="false">2026-05-24:Widget Studio</guid>
 			<pubDate>Sun, 24 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Pick an avatar, configure embed options, copy a one-line snippet for your site.</description>
+			<description>Build an embeddable 3D widget: pick an avatar (or your own model URL), pick a widget type, tune it live, and copy the snippet. No account needed for the URL-based embeds.</description>
 		</item>
 		<item>
 			<title>Avatar review with live 3D preview</title>
