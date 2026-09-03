@@ -3829,6 +3829,18 @@ The cross-surface leaderboard behind `/rankings`. Public; sending a session cook
 
 `remixes_received` counts finished derivatives made by *other* creators: a creator's own refines of their own model write the same `parent_creation_id` and are deliberately excluded, as are generations that never finished.
 
+**Response:** `{ metric, metricLabel, total, limit, offset, hasMore, rows, me, streak, badges }`.
+
+`rows` is the requested page of `{ rank, userId, username, handle, profileUrl, avatar, value }`. `me`, `streak`, and `badges` are per-viewer and are `null` / `[]` for an anonymous caller:
+
+| Field    | Description                                                                                                                             |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `me`     | The caller's own row, pinned even when it falls outside the page window. `rank: null` plus `unranked: true` when the caller has no score. |
+| `streak` | `{ currentStreak, longestStreak, lastActiveDay }` from `user_streaks`, or `null`. A streak two UTC days stale reads back as `0`.          |
+| `badges` | Earned badges, newest first, each `{ code, context, unlockedAt, label, description, icon }`.                                              |
+
+Because those three blocks are viewer specific, an authenticated response is sent `cache-control: private`; an anonymous one keeps the shared `public, s-maxage=30` edge cache.
+
 ---
 
 ### Daily Match standings
@@ -7684,6 +7696,311 @@ DELETE /api/home/:id/grants/:entityId
 
 What the agent may do in this house without asking again. A grant is **per entity**, optionally
 until a date. Allowing `lock.office_door` does not allow `lock.front_door`.
+
+`POST` takes `{ entity_id, expires_at }`. `expires_at` is optional (omit it for "until
+withdrawn"), must be in the future, and may not be more than a year out. A domain on its own is
+refused with `validation_error`: there is no such thing as a grant over `lock`.
+
+Withdrawal has two spellings on purpose, because the half of a permission system that takes a
+key back has to be trivially reachable: the path form, and `DELETE .../grants?entity_id=`. The
+query form also covers ids a path segment cannot carry, such as a script literally named `js`.
+
+Both `DELETE` forms are idempotent and answer `200` either way. `changed` says whether this call
+was the one that did it:
+
+```json
+{ "revoked": true, "changed": false, "entity_id": "lock.office_door" }
+```
+
+A withdrawal takes effect on the **next call**, not on the next socket. The allowances are read
+from the store on every action, so a grant taken back thirty seconds ago cannot be honoured by a
+connection that was pooled while it was still live.
+
+---
+
+### The house's own scenes and scripts
+
+```
+GET /api/home/:id/macros
+```
+
+Every `scene.*` and `script.*` the household already built, plus the six canonical macros (good
+night, leaving, arriving, morning, movie, focus) annotated with what this particular house has
+for each. A macro with no match comes back as `"match": null`, which is a measured statement
+about the house rather than a guess:
+
+```json
+{
+	"macros": [{ "entity_id": "scene.good_night", "name": "Good Night", "kind": "scene" }],
+	"canonical": [
+		{ "id": "good_night", "label": "Good night", "example_phrase": "good night",
+		  "match": { "entity_id": "scene.good_night", "name": "Good Night", "kind": "scene" } },
+		{ "id": "movie", "label": "Movie time", "example_phrase": "movie time", "match": null }
+	]
+}
+```
+
+This is what lets a connect screen say "you have no Leaving scene, here is what one usually
+does" instead of showing an empty list and no next step.
+
+---
+
+### The floorplan
+
+```
+GET    /api/home/:id/layout
+PUT    /api/home/:id/layout
+DELETE /api/home/:id/layout
+```
+
+Home Assistant knows which room a device is in and has no idea where that room is: there is no
+geometry anywhere in its registries. The 3D house packs rooms into a default grid so it is
+useful the moment a home connects, and this is the plan a person drew on top of that.
+
+**A layout is never required.** No row is the ordinary state, and every response shape below
+handles a house with no plan, a plan covering only some rooms, and a plan naming a room the
+house no longer has.
+
+```json
+{
+  "version": 3,
+  "layout": {
+    "format": 1,
+    "units": "m",
+    "rooms": { "kitchen": { "x": 0, "z": 0, "w": 5.7, "d": 4.2 } }
+  },
+  "orphaned": ["spare_room"],
+  "unplaced": ["garage"],
+  "driftKnown": true
+}
+```
+
+`x` and `z` are the room's centre on its floor, in metres; `w` and `d` are its footprint, and
+either may be absent to keep the default. `orphaned` names rooms in the plan that the house no
+longer has (an area deleted in Home Assistant) and `unplaced` names rooms nobody has drawn yet.
+`driftKnown` is false when the house could not be reached to compare, which is why a floorplan
+stays editable while a home is offline.
+
+**Reading needs `read`; writing needs the `layout` capability**, so a guest sees the plan and
+cannot redraw somebody's home.
+
+A `PUT` carries the `version` it loaded, or `0` to create the first plan:
+
+```json
+{ "version": 3, "layout": { "rooms": { "kitchen": { "x": 0, "z": 0 } } } }
+```
+
+A stale version returns **409** with the document that won attached, so a client can offer a
+real choice rather than a bare failure:
+
+```json
+{
+  "error": "Someone else changed this floorplan while you were drawing.",
+  "code": "layout_conflict",
+  "current": { "version": 4, "layout": { } }
+}
+```
+
+Two people can edit one house, and a version check beats a last-write-wins timestamp here
+because clock skew between two browsers is real and the loser of a millisecond should not lose
+their afternoon. Nothing is merged automatically and nothing is silently overwritten.
+
+The document is validated on write **and** on read, against hard caps (200 rooms, 500 m from
+the origin per axis, rooms between 1.5 m and 60 m, 64 KB). Every cap is a refusal rather than a
+clamp: silently moving a room somebody placed is worse than telling them the number was
+rejected. A stored plan that a later cap would now refuse comes back with `unreadable` set and
+an empty room map, so one bad document degrades to the default grid instead of taking a page
+down.
+
+---
+
+### Filing a device into a room
+
+```
+POST /api/home/:id/assign
+```
+
+```json
+{ "entityId": "light.kitchen_lights", "areaId": "kitchen" }
+```
+
+Writes the area into **the user's own Home Assistant registry**
+(`config/entity_registry/update`), not into a picture of it here. The room then shows up in
+their dashboards, their voice assistant and their automations, and the work survives them never
+opening three.ws again. Pass `areaId: null` to take a device out of every room.
+
+Not a guarded action: nothing moves, nothing opens, and it is two clicks to reverse in their own
+Home Assistant. It still needs the `layout` capability and a CSRF token, and it still writes a
+`home_action_log` row.
+
+An entity defined in YAML never reaches the entity registry, which is the common case rather
+than an edge one for template and demo entities. Those return `call_failed` with a sentence
+naming the reason, not a raw protocol error.
+
+A scoped member is checked twice: against the entity's current area and against the destination,
+so they can neither map the house one refusal at a time nor move a device somewhere they could
+no longer reach it.
+
+---
+
+### The action log
+
+```
+GET /api/home/:id/log?limit=50&before=<iso timestamp>
+```
+
+Every write the platform has performed against this house, newest first, **including the ones it
+refused**. A refused unlock is the most important row in this table: it is the evidence the gate
+held.
+
+**Session only.** A bearer principal that can act cannot read this, because the log is a record
+of when somebody was home and which doors opened when, and being allowed to turn on a light is
+not the same permission as reading the history of everything that ever happened in a building.
+
+```json
+{
+	"actions": [
+		{
+			"id": "1042",
+			"actor": "user",
+			"channel": "websocket",
+			"action": "lock.unlock",
+			"entity_ids": ["lock.front_door"],
+			"guarded": true,
+			"confirmed_by": null,
+			"risk": "security",
+			"outcome": "refused",
+			"detail": { "code": "needs_confirmation" },
+			"created_at": "2026-09-03T03:42:40.118Z"
+		}
+	],
+	"next_before": "2026-09-03T03:39:36.004Z"
+}
+```
+
+`actor` is `user`, `agent`, `voice`, `mcp` or `automation`; `outcome` is `ok`, `refused` or
+`failed`. `confirmed_by` is the account that said yes, and it is null on an action a **standing
+grant** cleared, so an auditor can tell "a person approved this" from "a rule allowed it".
+
+Paging is on `created_at`, not an offset: an offset page shifts under you when new rows land at
+the head, which for a log that is being written is every page. Pass the last row's `created_at`
+back as `before`. `next_before` is null on the last page.
+
+---
+
+### Is my house all right, and whose fault is it
+
+```
+GET /api/home/:id/health
+```
+
+The per-tenant counterpart to the `home` block in `GET /api/healthz`. That block is scored
+across tenants so an operator is paged for a correlated outage and **never** for one person's
+unplugged router. This endpoint is where that one person is told what happened to their router,
+because a failure nobody alerts on still has to reach the human it belongs to.
+
+`fault` is the field this endpoint exists for:
+
+| `fault`     | Means                                                             |
+| ----------- | ----------------------------------------------------------------- |
+| `none`      | Nothing is wrong, or the user disconnected this home themselves    |
+| `your_home` | Their instance or their token, with `advice` naming the fix        |
+| `us`        | Enough other homes are failing right now that this is our problem  |
+| `unknown`   | We genuinely cannot tell yet                                       |
+
+`unknown` is a real answer we are willing to give. Telling somebody to check their router during
+our own outage costs them an evening on hardware that was never broken, so `your_home` is
+returned only when the fleet is provably fine.
+
+```json
+{
+	"home_id": "9a0eae2b-55f4-4580-902f-2a345f2e5ef2",
+	"health": {
+		"state": "unreachable",
+		"fault": "your_home",
+		"headline": "We cannot reach your house right now.",
+		"reason": "Connection refused on port 8123.",
+		"advice": ["Check that Home Assistant is running and reachable at the address you gave us."],
+		"measured": true,
+		"windowMinutes": 1440,
+		"lastOkAt": "2026-09-03T03:54:13.910Z",
+		"lastErrorAt": "2026-09-03T04:11:02.771Z",
+		"actions": { "total": 4, "ok": 3, "refused": 1, "failed": 0, "timed": 4, "p95LatencyMs": 412 },
+		"confirmations": { "total": 2, "redeemed": 1, "expired": 1 },
+		"fleet": { "othersFailing": 0, "correlated": false }
+	}
+}
+```
+
+`fleet.othersFailing` is the correlation answer, and it is a bare count on purpose. A user is
+entitled to know whether they are alone in this; they are not entitled to anything about a
+stranger's house.
+
+Two things this endpoint deliberately does not do. It never answers anything but **200**: a
+house being unreachable is the successful answer to this question, not a failure to answer it,
+and a 503 would make the panel render its own error state instead of the explanation. And it
+does not read the in-process connection pool, because Cloud Run answers a user's request from an
+arbitrary instance that usually does not hold their connection; every number above comes from
+the database, which is the same on every instance.
+
+Open to a bearer as well as a session, unlike `/log`: this is coarse counters and a reachability
+verdict rather than a record of when somebody was home, and an agent that can act on a house has
+a real need to ask whether it is failing because the house is down.
+
+---
+
+### Home API status codes
+
+One table, so a client needs one branch. Every body carries the code twice: as `error` (the
+platform-wide envelope) and as `code` (the Home surface's own), with the human sentence in both
+`error_description` and `message`.
+
+| `code`               | Status | When                                                    | What to show |
+| -------------------- | ------ | ------------------------------------------------------- | ------------ |
+| `bad_url`            | 400    | Not a URL, or plain http from an https origin           | Use your remote https URL |
+| `auth`               | 400    | Home Assistant rejected the token                       | Create a new long-lived token |
+| `validation_error`   | 400    | The body or query is malformed                          | The message names the field |
+| `unauthorized`       | 401    | No session and no valid bearer                          | Sign in |
+| `role_forbidden`     | 403    | A member whose role cannot do this                      | Name the role; it is not a broken door |
+| `not_found`          | 404    | Not this caller's home                                  | Nothing about whether the id exists |
+| `needs_confirmation` | 409    | A guarded action with no explicit yes                   | Render `pending` and ask a person |
+| `quota_exceeded`     | 402    | The plan's ceiling for homes or streams                 | Offer the upgrade in `quota` |
+| `unreachable`        | 502    | The house did not answer                                | It may be LAN-only: offer pairing |
+| `call_failed`        | 502    | Connected, but the request failed                       | The message, verbatim |
+| `not_connected`      | 503    | Retries are paused, or the connection is opening        | Retry, with the reason |
+| `rate_limited`       | 429    | Over a bucket (see `retry_after`)                       | Back off by `retry_after` |
+
+Two of those are deliberate and worth stating:
+
+- **`needs_confirmation` is 409, never 403 and never 200.** It is a conflict with the current
+  authorization state and it is retryable with the same request plus a person's yes. A `403`
+  reads as terminal to every HTTP client ever written, so "ask the user" becomes "give up"; a
+  `200` with an error field reads as SUCCESS to a language model, which is exactly how an agent
+  talks itself into believing it locked a door it actually opened.
+- **`auth` is 400, not 401.** A `401` from us means "your three.ws session is bad". This code
+  means "Home Assistant rejected the token you gave us", which is a problem with the submitted
+  data. Conflating them logs a person out of three.ws because their house's token expired.
+
+A home whose `mcp_server` integration is not enabled is **not** an error anywhere. It connects,
+it stores, and it comes back with `capabilities.mcp: false` plus the setting path.
+
+### Home API rate limits
+
+Three buckets, because the three shapes of request have three different costs and one of them is
+not measured in money.
+
+| Bucket    | Routes                                    | Ceiling         |
+| --------- | ----------------------------------------- | --------------- |
+| read      | list, snapshot, `macros`, `log`, dry runs | 240 per minute  |
+| act       | `call`, `activate`                        | 40 per 5 minutes |
+| connect   | connecting a home, disconnecting one      | 10 per 10 minutes |
+| stream    | `stream`                                  | 60 per 5 minutes |
+
+`act` is the tight one on purpose. A runaway client there does not run up a bill, it cycles a
+real garage door in a real building, so the ceiling is set by what a person could plausibly mean
+to do. A scene that touches twelve lights is **one** action, so an honest household never
+approaches it and a loop hits the wall in seconds. A 429 carries `retry-after` as a header and
+`retry_after` in the body.
 
 ---
 
