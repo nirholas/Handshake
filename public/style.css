@@ -8698,6 +8698,28 @@ textarea.erc8004-code {
    (older) explore layout and does not reach this page's selectors.
    ─────────────────────────────────────────────────────────────────────── */
 @media screen and (max-width: 768px) {
+	/* The header nav is a plain flex row of about ten links, which measures
+	   roughly a thousand pixels. On a 320px phone that had two different bad
+	   endings: pages that clip their header hid most of the links, so they were
+	   unreachable, and pages that do not (/showcase) let the nav push the whole
+	   document into a horizontal scroll. Scrolling the nav itself keeps every
+	   link reachable and the page width honest. min-width:0 is what lets a flex
+	   item shrink below its content so the overflow can apply at all. */
+	.features-nav {
+		min-width: 0;
+		overflow-x: auto;
+		scrollbar-width: none;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	.features-nav::-webkit-scrollbar {
+		display: none;
+	}
+
+	.features-nav a {
+		white-space: nowrap;
+	}
+
 	/* Double padding (body.explore-page + .explore-main) ate too much width
 	   on phones, pushing the 260px grid track past the viewport. Tighten the
 	   inner gutter so content fits without horizontal scroll. */

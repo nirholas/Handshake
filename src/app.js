@@ -2546,6 +2546,11 @@ class App {
 			page.className = 'showcase-page';
 			main.appendChild(page);
 
+			// Same upgrade /deploy performs. The legacy footer is a flex row that
+			// measures ~413px, so on a 320px phone it was the one thing dragging the
+			// document into a horizontal scroll while the directory itself fitted.
+			this._upgradeToHorizonFooter();
+
 			const { renderShowcasePage } = await import('./erc8004/showcase.js');
 			renderShowcasePage(page);
 		} catch (err) {
