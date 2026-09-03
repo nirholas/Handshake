@@ -15,6 +15,7 @@
 import { logAudit } from '../../_lib/audit.js';
 import { getSessionUser } from '../../_lib/auth.js';
 import { requireCsrf } from '../../_lib/csrf.js';
+import { assertMemberCapacity, HomeQuotaError } from '../../_lib/home/entitlements.js';
 import {
 	ASSIGNABLE_ROLES,
 	canAssignRole,
@@ -39,6 +40,11 @@ function inviteUrl(req, token) {
 	const host = req.headers['x-forwarded-host'] || req.headers.host || 'three.ws';
 	const proto = /^localhost|^127\./.test(String(host)) ? 'http' : 'https';
 	return `${proto}://${host}/home/join?invite=${encodeURIComponent(token)}`;
+}
+
+/** "an admin" / "a member": role names are user-facing copy, not identifiers. */
+function a(role) {
+	return /^[aeiou]/i.test(String(role)) ? `an ${role}` : `a ${role}`;
 }
 
 function emailish(value) {
@@ -109,7 +115,21 @@ export default wrap(async (req, res) => {
 
 		const role = String(body?.role || '').trim();
 		if (!canAssignRole(gate.role, role)) {
-			return error(res, 403, 'role_forbidden', `a ${gate.role} cannot invite somebody as ${role || 'that role'}`);
+			return error(res, 403, 'role_forbidden', `${a(gate.role)} cannot invite somebody as ${role ? a(role) : 'that role'}`);
+		}
+
+		// Seats are billed to the home's owner, not to whoever sent the invite, and
+		// the ceiling counts outstanding invitations as well as members: an unspent
+		// invite is a seat about to be taken, and discovering the refusal at the
+		// moment somebody accepts is the worst time to discover it.
+		try {
+			await assertMemberCapacity(homeId);
+		} catch (err) {
+			if (!(err instanceof HomeQuotaError)) throw err;
+			return error(res, err.status, err.code, err.message, {
+				code: err.code,
+				quota: { dimension: err.dimension, label: err.dimensionLabel, limit: err.limit, used: err.used, upgrade: err.upgradePath },
+			});
 		}
 
 		const invite = await createInvite({
@@ -137,12 +157,12 @@ export default wrap(async (req, res) => {
 		const target = await resolveMembership(homeId, targetId);
 		if (!target) return error(res, 404, 'not_found', 'that person is not in this household');
 		if (!canManageMember(gate.role, target.role)) {
-			return error(res, 403, 'role_forbidden', `a ${gate.role} cannot change a ${target.role}`);
+			return error(res, 403, 'role_forbidden', `${a(gate.role)} cannot change ${a(target.role)}`);
 		}
 
 		const role = body?.role === undefined ? target.role : String(body.role).trim();
 		if (!canAssignRole(gate.role, role)) {
-			return error(res, 403, 'role_forbidden', `a ${gate.role} cannot assign the ${role || 'requested'} role`);
+			return error(res, 403, 'role_forbidden', `${a(gate.role)} cannot assign the ${role || 'requested'} role`);
 		}
 
 		const scope = body?.scope === undefined ? target.scope : body.scope;
@@ -171,7 +191,7 @@ export default wrap(async (req, res) => {
 	const target = await resolveMembership(homeId, targetId);
 	if (!target) return error(res, 404, 'not_found', 'that person is not in this household');
 	if (!canManageMember(gate.role, target.role)) {
-		return error(res, 403, 'role_forbidden', `a ${gate.role} cannot remove a ${target.role}`);
+		return error(res, 403, 'role_forbidden', `${a(gate.role)} cannot remove ${a(target.role)}`);
 	}
 
 	const { removed, grantsRevoked } = await removeMember({ homeId, userId: targetId });

@@ -36,7 +36,7 @@ export function domainOf(entityId) {
  * @param {Array} input.entities  config/entity_registry/list
  * @param {Record<string, object>} input.states  entity_id to state object
  */
-export function buildHomeGraph({ floors = [], areas = [], devices = [], entities = [], states = {} } = {}) {
+export function buildHomeGraph({ floors = [], areas = [], devices = [], entities = [], states = {}, temperatureUnit = null } = {}) {
 	const deviceArea = new Map(devices.map((d) => [d.id, d.area_id || null]));
 
 	const rooms = new Map(
@@ -85,7 +85,7 @@ export function buildHomeGraph({ floors = [], areas = [], devices = [], entities
 		...room,
 		entities: room.entities.sort(byName),
 		lighting: summarizeLighting(room.entities),
-		climate: summarizeClimate(room.entities),
+		climate: summarizeClimate(room.entities, temperatureUnit),
 		secured: summarizeSecurity(room.entities),
 	}));
 
@@ -93,6 +93,10 @@ export function buildHomeGraph({ floors = [], areas = [], devices = [], entities
 		floors: floors.map((f) => ({ id: f.floor_id, name: f.name, level: f.level ?? 0, icon: f.icon || null })).sort((a, b) => a.level - b.level),
 		rooms: list.sort(byName),
 		unassigned: unassigned.sort(byName),
+		// Carried on the graph rather than read at render time: the scene, the 2D
+		// fallback and the agent's answers all have to say the same unit, and this
+		// is the one object all three of them already read.
+		temperatureUnit,
 	};
 }
 
@@ -144,14 +148,46 @@ export function summarizeLighting(entities) {
 	};
 }
 
-export function summarizeClimate(entities) {
-	const readings = entities
-		.filter((e) => e.domain === 'climate' || (e.domain === 'sensor' && e.deviceClass === 'temperature'))
-		.map((e) => (e.domain === 'climate' ? Number(e.attributes.current_temperature) : Number(e.state)))
-		.filter((n) => Number.isFinite(n));
+const CELSIUS = '\u00b0C';
+const FAHRENHEIT = '\u00b0F';
+
+/**
+ * Convert one reading between the two units Home Assistant measures temperature
+ * in. An unknown pair is returned untouched rather than mangled: a wrong number
+ * is worse than an unconverted one, because it looks right.
+ */
+function convertTemperature(value, from, to) {
+	if (!Number.isFinite(value) || !from || !to || from === to) return value;
+	if (from === CELSIUS && to === FAHRENHEIT) return (value * 9) / 5 + 32;
+	if (from === FAHRENHEIT && to === CELSIUS) return ((value - 32) * 5) / 9;
+	return value;
+}
+
+/**
+ * The room's temperature, in the unit the house displays.
+ *
+ * A house is not all one unit. Switching an instance to US customary does not
+ * rewrite a sensor that declares its own `unit_of_measurement`, so a real house
+ * can hold a Celsius sensor and a Fahrenheit thermostat at once, and averaging
+ * their raw numbers produces a reading that belongs to neither. Every reading
+ * is converted to `unit` first, using the unit that reading itself declares: a
+ * sensor states it outright, and a climate entity is already normalised to the
+ * instance's own unit, which is what `unit` is.
+ */
+export function summarizeClimate(entities, unit = null) {
+	const readings = [];
+	for (const entity of entities) {
+		const isClimate = entity.domain === 'climate';
+		if (!isClimate && !(entity.domain === 'sensor' && entity.deviceClass === 'temperature')) continue;
+		const attributes = entity.attributes || {};
+		const raw = isClimate ? Number(attributes.current_temperature) : Number(entity.state);
+		if (!Number.isFinite(raw)) continue;
+		const own = (isClimate ? attributes.temperature_unit : attributes.unit_of_measurement) || unit;
+		readings.push(convertTemperature(raw, own, unit || own));
+	}
 	if (!readings.length) return null;
 	const mean = readings.reduce((a, b) => a + b, 0) / readings.length;
-	return { temperature: Number(mean.toFixed(1)), sources: readings.length };
+	return { temperature: Number(mean.toFixed(1)), sources: readings.length, unit: unit || null };
 }
 
 /**

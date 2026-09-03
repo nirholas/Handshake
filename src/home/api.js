@@ -153,3 +153,28 @@ function parse(data) {
 		return null;
 	}
 }
+
+/**
+ * What this account's plan covers, what it is using, and when it resets.
+ *
+ * Every dimension comes back whether or not it is near its ceiling: a quota you
+ * only learn about at the moment it refuses you is a quota that was never shown.
+ */
+export function getPlan(signal) {
+	return request('/api/home/plan', { signal });
+}
+
+/**
+ * Pause a home to make room for another one, or bring a paused one back.
+ *
+ * Pausing is never a disconnect. The row, the stored credential and the action
+ * log are all untouched, and a paused home still answers safety actions:
+ * locking up, closing a garage or valve and arming an alarm are never refused by
+ * a plan.
+ *
+ * @param {'pause'|'resume'|'preview'} action
+ * @param {string} [homeId]
+ */
+export function changePlanState(action, homeId) {
+	return request('/api/home/plan', { method: 'POST', body: { action, home_id: homeId } });
+}

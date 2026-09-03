@@ -46,15 +46,29 @@ const FRAME = {
 };
 
 /**
- * Resolve the WebSocket constructor. Node 22 has a global `WebSocket`, and a
- * caller can inject one (a test double, or `ws`) instead.
+ * Resolve the WebSocket constructor.
+ *
+ * The relay authenticates the platform with an `Authorization` header on the
+ * upgrade, and the WHATWG `WebSocket` a browser and Node both expose has no way
+ * to send one: its second argument is the subprotocol list, so passing headers
+ * there fails silently and the relay answers 401. This transport therefore uses
+ * `ws`, which does support upgrade headers, and is imported lazily so that
+ * merely importing this module costs nothing where the relay is not used.
+ *
+ * @param {Function} [injected] a constructor to use instead, for tests
  */
-function resolveWebSocket(injected) {
-	const impl = injected || globalThis.WebSocket;
-	if (typeof impl !== 'function') {
-		throw new HomeBridgeError(ERR.UNREACHABLE, 'No WebSocket implementation is available for the relay transport. Pass WebSocketImpl.');
+async function resolveWebSocket(injected) {
+	if (typeof injected === 'function') return injected;
+	try {
+		const mod = await import('ws');
+		return mod.WebSocket || mod.default;
+	} catch (cause) {
+		throw new HomeBridgeError(
+			ERR.UNREACHABLE,
+			'The relay transport needs the `ws` package, because the relay is authenticated with an upgrade header that the built-in WebSocket cannot send. Install ws, or pass WebSocketImpl.',
+			cause,
+		);
 	}
-	return impl;
 }
 
 /**
@@ -72,7 +86,6 @@ export function createRelayTransport({ relayUrl, relayId, serviceToken, openTime
 	if (!relayUrl) throw new HomeBridgeError(ERR.BAD_URL, 'The relay transport needs a relayUrl.');
 	if (!relayId) throw new HomeBridgeError(ERR.BAD_URL, 'The relay transport needs a relayId.');
 	if (!serviceToken) throw new HomeBridgeError(ERR.AUTH, 'The relay transport needs the relay service token.');
-	const WS = resolveWebSocket(WebSocketImpl);
 	const endpoint = buildEndpoint(relayUrl, relayId);
 
 	/**
@@ -80,8 +93,9 @@ export function createRelayTransport({ relayUrl, relayId, serviceToken, openTime
 	 * every reconnect, so a house that goes offline and comes back recovers with
 	 * no action from the user and no code above this line.
 	 */
-	const createSocket = () =>
-		new Promise((resolve, reject) => {
+	const createSocket = async () => {
+		const WS = await resolveWebSocket(WebSocketImpl);
+		return new Promise((resolve, reject) => {
 			let socket;
 			try {
 				socket = new WS(endpoint, { headers: { authorization: `Bearer ${serviceToken}` } });
@@ -113,6 +127,7 @@ export function createRelayTransport({ relayUrl, relayId, serviceToken, openTime
 				reject(err);
 			};
 		});
+	};
 
 	return { createSocket, endpoint, relayId };
 }

@@ -2043,6 +2043,31 @@ export const limits = {
 	// what stops an enumeration sweep from costing us a database round trip each.
 	homeInviteRedeem: (ip) =>
 		getLimiter('home:invite:redeem:ip', { limit: 30, window: '10 m' }).limit(ip),
+	// Redeeming a relay pairing code (api/home/pair/redeem.js). Unlike the invite
+	// token above, this secret is deliberately weak: 8 characters a person reads
+	// off one screen and types into another, so roughly 40 bits. The per-pairing
+	// attempt counter is what actually makes guessing hopeless (five wrong tries
+	// kills the code); this bounds a distributed sweep across every live pairing
+	// at once, which the per-pairing counter alone cannot see. Ten in ten minutes
+	// is far above what a person retyping a code they mistyped ever needs.
+	homePairRedeem: (ip) =>
+		getLimiter('home:pair:redeem:ip', { limit: 10, window: '10 m' }).limit(ip),
+	// Minting a voice-satellite pairing code (api/home/satellite.js). A code buys
+	// a microphone in a house an attachment to an agent, so the ceiling is the
+	// same shape as homeInvite: keyed on the account, low enough that a
+	// compromised session cannot mint a pile of them, high enough that somebody
+	// setting up four displays in one afternoon never notices it.
+	homeSatellitePair: (userId) =>
+		getLimiter('home:satellite:pair:user', { limit: 20, window: '1 h' }).limit(userId),
+	// Redeeming one (action 'claim') and refreshing a satellite's hub token
+	// (action 'session'). Both are called by a program with no session cookie, so
+	// the IP is the only key available. The code itself is 8 characters from a
+	// 31-character alphabet, roughly 40 bits, single use, and dead in 15 minutes;
+	// this is what makes a distributed sweep across every live code at once cost
+	// more than it can possibly return. A satellite refreshing its own token does
+	// so once a day, so 30 in ten minutes never binds on the honest path.
+	homeSatelliteClaimIp: (ip) =>
+		getLimiter('home:satellite:claim:ip', { limit: 30, window: '10 m' }).limit(ip),
 	// Redeeming a pending physical-action confirmation (api/home/[id]/confirm.js).
 	// Every redemption is a human pressing a button in front of a door, so the
 	// honest ceiling is "faster than a person could ever mean to": 30 in five
@@ -2092,6 +2117,17 @@ export const limits = {
 	// one cheap read.
 	homeStream: (userId) =>
 		getLimiter('home:stream', { limit: 60, window: '5 m', local: true }).limit(userId),
+	// The privacy surface (api/home/privacy.js): the full data export, the
+	// retention change, and the deletion. Its own bucket, and a tight one, for
+	// two different reasons that happen to want the same ceiling. The export
+	// assembles every home, every grant and the whole action log for an account
+	// in one response, so it is the most expensive read on the surface and an
+	// obvious amplification lever. The DELETE destroys data that cannot be
+	// regenerated, so a loop that hits it is not abuse we merely want to slow
+	// down. 20 an hour is far more than anyone exercising their own privacy
+	// rights will ever need. NOT local: this must hold across instances.
+	homePrivacy: (userId) =>
+		getLimiter('home:privacy', { limit: 20, window: '1 h' }).limit(userId),
 };
 
 // ── Fail-closed limiter call for privacy-boundary reads (H7) ─────────────────

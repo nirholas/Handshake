@@ -140,6 +140,38 @@ An instance without the integration set up throws `ERR.NO_MCP`, which is an ordi
 be in and not an outage. The WebSocket channel works on every instance with nothing but a
 token, so the MCP channel is always an upgrade and never a requirement.
 
+## A house you cannot dial into
+
+Most Home Assistant installs answer only on their own network, and no remote https URL exists for
+them. For those, the house dials out: the three.ws integration inside it opens one outbound
+WebSocket to a relay, and this package reaches the instance back down that socket.
+
+Above this line nothing changes. The room graph, the gate, intent resolution and every error code
+are identical, because `HomeBridge` takes a transport where it would otherwise take a token:
+
+```js
+import { HomeBridge, createRelayTransport } from '@three-ws/home-bridge';
+
+const home = new HomeBridge({
+	transport: createRelayTransport({
+		relayUrl: 'wss://home-relay.three.ws',
+		relayId,
+		serviceToken,
+	}),
+});
+console.log(home.transport); // "relay"
+console.log(home.baseUrl);   // "wss://home-relay.three.ws/v1/bridge?relay_id=abc123"
+await home.connect();
+```
+
+No `baseUrl` and no `token`: a transport replaces both. It carries **no Home Assistant
+credential** at all, because the integration authenticates locally, inside the house, and hands
+the session over already authenticated, so no long-lived token ever leaves the building.
+
+The two halves of that socket are [`services/home-relay`](../../services/home-relay) (the
+terminator) and [`home-assistant-integration/`](../../home-assistant-integration) (the piece that
+installs in the house and dials out).
+
 ## Errors
 
 Every failure carries a `code`, because a connect screen has to tell "your token is wrong"
@@ -166,6 +198,7 @@ apart from "your house is offline".
 | `summarizeLighting` / `summarizeClimate` / `summarizeSecurity` | Per-room rollups the 3D scene reads |
 | `resolveIntent` / `matchMacro` / `MACROS` | Phrase to an existing scene or script |
 | `classifyCall` / `classifyMcpCall` / `createAllowList` | The physical-action gate |
+| `createRelayTransport` / `relayCloseError` / `RELAY_PROTOCOL_VERSION` | Reach a house that dialled out to a relay instead of one you dial into. See below |
 | `normalizeBaseUrl` / `isPrivateHost` | URL handling and the LAN reachability check |
 
 ## Tests
@@ -177,13 +210,25 @@ npx vitest run packages/home-bridge
 The default suite runs against `tests/fixtures/home.json`, a recording of a real Home
 Assistant instance rather than hand-written shapes (regenerate it with
 `scripts/capture-home-fixture.mjs`). Set `HOME_ASSISTANT_URL` and `HOME_ASSISTANT_TOKEN` to
-also run the live suite, which changes real state on a real instance:
+also run the live suite, which changes real state on a real instance. A throwaway house,
+onboarded and seeded, is one command:
 
 ```bash
-docker run -d --name ha -p 8123:8123 ghcr.io/home-assistant/home-assistant:stable
-# add `demo:` to its configuration.yaml for a house full of entities, then restart
-HOME_ASSISTANT_URL=http://localhost:8123 HOME_ASSISTANT_TOKEN=... npx vitest run packages/home-bridge
+node scripts/home-test-instance.mjs --up --onboard --seed --json
+# {"ok":true,"baseUrl":"http://127.0.0.1:42125","token":"eyJhbGciOi...","seeded":true, ...}
+
+HOME_ASSISTANT_URL=http://127.0.0.1:42125 HOME_ASSISTANT_TOKEN=... npx vitest run packages/home-bridge
+node scripts/home-test-instance.mjs --down
 ```
+
+## Read next
+
+- [docs/tutorials/connect-your-home.md](../../docs/tutorials/connect-your-home.md): zero to a
+  working agent in a real house, by text and by voice.
+- [`@three-ws/home-mcp`](../home-mcp): this library packaged as an MCP server, so any assistant
+  can run a house without you writing a client.
+- [docs/smart-home.md](../../docs/smart-home.md): why Home Assistant owns the device layer, what
+  else was evaluated, and where this goes next.
 
 ## License
 

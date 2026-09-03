@@ -26,7 +26,8 @@
 
 import { getSessionUser } from '../_lib/auth.js';
 import { requireCsrf } from '../_lib/csrf.js';
-import { cors, error, json, method, readJson, wrap } from '../_lib/http.js';
+import { cors, error, json, method, rateLimited, readJson, wrap } from '../_lib/http.js';
+import { limits } from '../_lib/rate-limit.js';
 import {
 	DEFAULT_ACTION_LOG_RETENTION_DAYS,
 	MAX_ACTION_LOG_RETENTION_DAYS,
@@ -54,6 +55,12 @@ export default wrap(async (req, res) => {
 
 	if (req.method === 'GET') {
 		const wantsExport = req.query?.export === '1' || req.query?.export === 'true';
+		// The summary is a page load; the export assembles every home, grant and
+		// action-log row this account has. They do not belong in the same bucket.
+		const rl = await (wantsExport ? limits.homePrivacy(session.id) : limits.homeRead(session.id));
+		if (!rl.success) {
+			return rateLimited(res, rl, wantsExport ? 'too many exports, try again shortly' : 'too many reads, slow down');
+		}
 		if (wantsExport) {
 			const data = await exportHomeData(session.id);
 			// A download, not a page: the browser saves it under a name the user
@@ -70,6 +77,11 @@ export default wrap(async (req, res) => {
 	// both carry the same CSRF requirement as the other session-auth writers.
 	if (!(await requireCsrf(req, res, session.id))) return;
 
+	// Both write verbs change or destroy data that cannot be regenerated, so both
+	// are held to the tight bucket rather than the read one.
+	const writeLimit = await limits.homePrivacy(session.id);
+	if (!writeLimit.success) return rateLimited(res, writeLimit, 'too many privacy changes, try again shortly');
+
 	const body = (await readJson(req)) ?? {};
 
 	if (req.method === 'PATCH') {
@@ -85,6 +97,16 @@ export default wrap(async (req, res) => {
 
 		if (result.ok) return json(res, 200, result);
 		if (result.code === 'not_found') return error(res, 404, 'not_found', 'no such home');
+		if (result.code === 'retention_over_plan') {
+			return error(
+				res,
+				402,
+				'retention_over_plan',
+				`Your plan keeps the action log for up to ${result.limit} days and you asked for ${result.requested}. ` +
+					'Upgrade at three.ws/pricing to keep it longer. Nothing already recorded is affected: a plan never shortens a log you have already kept.',
+				{ code: 'retention_over_plan', quota: { dimension: 'logRetentionDays', limit: result.limit, requested: result.requested, upgrade: '/pricing' } },
+			);
+		}
 		if (result.code === 'reason_required') {
 			return error(
 				res,

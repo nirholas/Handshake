@@ -428,7 +428,7 @@ async function homeActivate(args, run) {
 	}
 
 	return await performCall(
-		{ domain: match.kind, service: 'turn_on', data: { entity_id: match.entityId } },
+		{ domain: match.kind, service: 'turn_on', data: { entity_id: match.entity_id } },
 		run,
 		{ toolName: 'home_activate', extra: { matched: true, match, phrase: safeText(phrase, 200) } },
 	);
@@ -437,7 +437,15 @@ async function homeActivate(args, run) {
 async function homeCall(args, run) {
 	const domain = String(args.domain || '').trim().toLowerCase();
 	const service = String(args.service || '').trim().toLowerCase();
-	const data = args.data && typeof args.data === 'object' && !Array.isArray(args.data) ? args.data : {};
+	const raw = args.data && typeof args.data === 'object' && !Array.isArray(args.data) ? args.data : {};
+
+	// `data` is free-form service data by necessity (brightness, temperature,
+	// colour), which is the one place a model could smuggle in a field named
+	// `confirmed`. It would authorise nothing, because the gate below never reads
+	// service data for its verdict, but it would send a confusing key to Home
+	// Assistant and it would make the invariant "no confirmed anywhere" untrue on
+	// inspection. Drop it, and say why here rather than in a commit message.
+	const data = Object.fromEntries(Object.entries(raw).filter(([key]) => key !== 'confirmed'));
 
 	if (!/^[a-z0-9_]+$/.test(domain) || !/^[a-z0-9_]+$/.test(service)) {
 		return err(
@@ -576,6 +584,11 @@ async function performCall({ domain, service, data }, run, { toolName, extra = {
 	try {
 		await withHome(run.homeId, run.ownerId, (bridge) => bridge.call(domain, service, data, { confirmed: false }));
 	} catch (error) {
+		// Logged and answered HERE rather than rethrown. A rethrow would reach
+		// `bridgeFailure` in the dispatcher, which logs a second row under the tool
+		// name, and one refused service call must not read as two events in a
+		// household's history.
+		const message = safeText(error?.message, 400) || 'The home did not answer.';
 		logHomeAction({
 			homeId: run.homeId,
 			userId: run.userId,
@@ -585,9 +598,13 @@ async function performCall({ domain, service, data }, run, { toolName, extra = {
 			entityIds: targetIds,
 			guarded: false,
 			outcome: 'failed',
-			detail: { reason: safeText(error?.message, 200), code: error?.code || null, tool: toolName },
+			detail: { reason: message, code: error?.code || null, tool: toolName },
 		});
-		throw error;
+		return err(error?.code || 'call_failed', 502, message, {
+			home: { id: run.homeId },
+			action: `${domain}.${service}`,
+			entity_ids: targetIds,
+		});
 	}
 
 	logHomeAction({
@@ -766,6 +783,11 @@ function scopedGraph(graph, scope) {
 		floors: graph.floors || [],
 		rooms,
 		unassigned: (graph.unassigned || []).filter((e) => entityInScope(scope, e)),
+		// Narrowing WHICH rooms a guest sees must not change WHAT the numbers in
+		// them mean. Rebuilding this object field by field silently dropped the
+		// house's temperature unit, so a scoped caller read bare degrees off a
+		// Fahrenheit house while the owner read the same rooms in F.
+		temperatureUnit: graph.temperatureUnit ?? null,
 	};
 }
 

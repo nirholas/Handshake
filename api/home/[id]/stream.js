@@ -26,9 +26,10 @@
 // frames until the response ends, which for a stream is never, and the page
 // looks hung while the server believes it is delivering.
 
-import { resolveHomeAccess } from '../../_lib/home/access.js';
+import { filterGraphForScope, resolveHomeAccess } from '../../_lib/home/access.js';
 import { toHomeFailure } from '../../_lib/home/errors.js';
-import { subscribe } from '../../_lib/home/runtime.js';
+import { assertWithinLimit, HomeQuotaError, resolveHomeEntitlementsForUser } from '../../_lib/home/entitlements.js';
+import { streamCount, subscribe } from '../../_lib/home/runtime.js';
 import { cors, error, method, rateLimited, wrap } from '../../_lib/http.js';
 import { limits } from '../../_lib/rate-limit.js';
 
@@ -41,15 +42,46 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET'])) return;
 
-	const access = await resolveHomeAccess(req, res, req.query?.id);
+	const access = await resolveHomeAccess(req, res, req.query?.id, 'read');
 	if (!access.ok) return error(res, access.status, access.code, access.message);
 	const { caller, home } = access;
 
 	const rl = await limits.homeStream(caller.userId);
 	if (!rl.success) return rateLimited(res, rl, 'too many stream connections, slow down');
 
+	// The plan's per-home stream ceiling. This is the wall-display dimension: a
+	// screen left open in a kitchen is a subscriber we serialize the whole house
+	// to on every state change, for the entire month, and it is the second
+	// measured cost in this lane after the held socket itself.
+	//
+	// The count is this instance's, which under-states a fleet-wide total and so
+	// errs toward admitting the stream. That is the only direction a quota may
+	// err, and it is the same bias the platform's other counters take.
+	//
+	// A refusal here is a normal HTTP response with a designed body, deliberately
+	// BEFORE any SSE head is written: a stream that opens and then says nothing is
+	// the failure mode this whole route was shaped to avoid.
+	try {
+		const entitlements = await resolveHomeEntitlementsForUser(caller.userId);
+		assertWithinLimit({ entitlements, dimension: 'streams', used: streamCount(home.id) });
+	} catch (err) {
+		if (!(err instanceof HomeQuotaError)) throw err;
+		return error(res, err.status, err.code, err.message, {
+			code: err.code,
+			message: err.message,
+			quota: { dimension: err.dimension, label: err.dimensionLabel, limit: err.limit, used: err.used, upgrade: err.upgradePath },
+		});
+	}
+
 	let closed = false;
 	let flowing = false;
+	// Declared here, not beside `deliver` below, because the first frame is
+	// flushed the moment the head is written and that call runs ABOVE the point
+	// a `let` further down would be initialized. Temporal dead zone: the very
+	// first subscriber threw "Cannot access 'lastStatusKey' before
+	// initialization" and got a 500 instead of a stream.
+	let lastStatusKey = null;
+	let lastGraph = null;
 	/** The event `subscribe` delivers synchronously, before the head exists. */
 	let pending = null;
 
@@ -128,8 +160,6 @@ export default wrap(async (req, res) => {
 	 * heartbeat arrived, so the split happens here and each half is sent only when
 	 * that half changed.
 	 */
-	let lastStatusKey = null;
-	let lastGraph = null;
 	function deliver(event) {
 		const statusKey = `${event.status}|${event.stale}|${event.connected}`;
 		if (statusKey !== lastStatusKey) {
@@ -150,7 +180,13 @@ export default wrap(async (req, res) => {
 		// already said.
 		if (event.graph && event.graph !== lastGraph) {
 			lastGraph = event.graph;
-			send('graph', { graph: event.graph, stale: Boolean(event.stale), at: Date.now() });
+			// Filtered per member, on every frame, before it is serialized. The
+			// identity comparison above is against the RAW graph on purpose: it
+			// answers "did the house change", and the filtering is what this one
+			// subscriber is allowed to see of that change. A guest given the kitchen
+			// never receives a frame carrying another room, so no client-side rule
+			// stands between them and a room they were not given.
+			send('graph', { graph: filterGraphForScope(event.graph, access.scope), stale: Boolean(event.stale), at: Date.now() });
 		}
 	}
 

@@ -25,6 +25,8 @@
 // the model fetcher use). This module is the home lane's spelling of them, so
 // there is one function to call and no room to compose them wrongly.
 
+import { ERR_CANNOT_CONNECT, ERR_INVALID_AUTH } from 'home-assistant-js-websocket';
+
 import { normalizeBaseUrl } from '../../packages/home-bridge/src/url.js';
 import { isPrivateAddress, pinnedAgent, resolvePublicHost, SsrfError } from './ssrf.js';
 
@@ -240,4 +242,114 @@ function toHomeUrlError(err, hostname) {
 		);
 	}
 	return new HomeUrlError('bad_url', err.message);
+}
+
+/**
+ * A `createSocket` for `home-assistant-js-websocket` whose socket is pinned to
+ * the validated addresses.
+ *
+ * The library's own createSocket is one line away from being usable here: it
+ * builds `new WebSocket(url)` against the global, with no way to pass undici a
+ * dispatcher, so the state channel (the connection that stays open for hours)
+ * would be the one dial in the lane that a rebinding host could still redirect.
+ * The auth handshake below therefore mirrors the library's, and only the socket
+ * construction differs. It is verified against a real Home Assistant rather than
+ * assumed: see tests/home-security.test.js.
+ *
+ * Upstream would rather have the option than our copy, and asking for it is the
+ * right end state; until it exists this is the pin.
+ *
+ * @param {{host: string, addresses: Array<{address: string, family: number}>}} pin
+ * @returns {(options: {auth: object, setupRetry?: number}) => Promise<WebSocket>}
+ */
+export function pinnedHomeSocketFactory(pin) {
+	return homeSocketFactory(pin.host, () => homeDispatcher(pin));
+}
+
+/**
+ * The Home Assistant auth handshake over a socket built by `dispatcherFor`.
+ *
+ * Split out from `pinnedHomeSocketFactory` for one reason: the address decision
+ * and the handshake are different jobs, and only the handshake can be verified
+ * against a Home Assistant running on a developer machine (a pin will never
+ * carry a loopback address, correctly). Production never calls this directly;
+ * everything that dials a user's house goes through `pinnedHomeSocketFactory`,
+ * so `homeDispatcher` is always the thing choosing the addresses.
+ *
+ * @param {string} expectedHost the only host this factory will open a socket to
+ * @param {() => import('undici').Agent} dispatcherFor
+ */
+export function homeSocketFactory(expectedHost, dispatcherFor) {
+	return function createHomeSocket(options) {
+		const auth = options?.auth;
+		if (!auth) throw new HomeUrlError('bad_url', 'A Home Assistant auth object is required.');
+		const url = auth.wsUrl;
+		if (new URL(url).hostname !== expectedHost) {
+			throw new HomeUrlError('host_pin_mismatch', 'Refusing to open a socket to a host we did not validate.');
+		}
+
+		const connect = (triesLeft, resolve, reject) => {
+			const socket = new WebSocket(url, { dispatcher: dispatcherFor() });
+			let invalidAuth = false;
+
+			const onClose = () => {
+				socket.removeEventListener('close', onClose);
+				if (invalidAuth) return reject(ERR_INVALID_AUTH);
+				if (triesLeft === 0) return reject(ERR_CANNOT_CONNECT);
+				const next = triesLeft === -1 ? -1 : triesLeft - 1;
+				setTimeout(() => connect(next, resolve, reject), 1_000);
+			};
+
+			const onOpen = () => {
+				socket.send(JSON.stringify({ type: 'auth', access_token: auth.accessToken }));
+			};
+
+			const onMessage = (event) => {
+				const message = JSON.parse(event.data);
+				if (message.type === 'auth_invalid') {
+					invalidAuth = true;
+					socket.close();
+					return;
+				}
+				if (message.type !== 'auth_ok') return;
+				socket.removeEventListener('open', onOpen);
+				socket.removeEventListener('message', onMessage);
+				socket.removeEventListener('close', onClose);
+				socket.removeEventListener('error', onClose);
+				socket.haVersion = message.ha_version;
+				// 2022.9 and newer negotiate compressed state subscriptions; the
+				// library sends this immediately after auth and the graph builder
+				// depends on the reply shape it selects.
+				if (atLeastVersion(socket.haVersion, 2022, 9)) {
+					socket.send(JSON.stringify({ type: 'supported_features', id: 1, features: { coalesce_messages: 1 } }));
+				}
+				resolve(socket);
+			};
+
+			socket.addEventListener('open', onOpen);
+			socket.addEventListener('message', onMessage);
+			socket.addEventListener('close', onClose);
+			socket.addEventListener('error', onClose);
+		};
+
+		return new Promise((resolve, reject) => connect(options.setupRetry ?? 0, resolve, reject));
+	};
+}
+
+/** Home Assistant versions read "2024.6.1", sometimes with a suffix. */
+function atLeastVersion(version, major, minor) {
+	const parts = String(version || '').split('.');
+	const [gotMajor, gotMinor] = [Number(parts[0]), Number(parts[1])];
+	if (!Number.isFinite(gotMajor) || !Number.isFinite(gotMinor)) return false;
+	return gotMajor > major || (gotMajor === major && gotMinor >= minor);
+}
+
+/**
+ * A pinned `fetch` for anything that takes one: the MCP SDK's streamable HTTP
+ * transport, and any other client that dials the home over plain HTTP.
+ *
+ * @param {{host: string, addresses: Array<{address: string, family: number}>, secure?: boolean}} pin
+ */
+export function pinnedHomeFetch(pin) {
+	return (url, init = {}) => homeFetch(pin, typeof url === 'string' ? url : url.toString(), init);
 }

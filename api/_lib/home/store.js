@@ -27,7 +27,8 @@ import { logAudit } from '../audit.js';
 import { sql } from '../db.js';
 import { withDbRetry } from '../db-retry.js';
 import { decryptSecret, encryptSecret } from '../secret-box.js';
-import { redactUrlSecrets, scrubSecrets } from '../scrub-secrets.js';
+import { scrubSecrets } from '../scrub-secrets.js';
+import { safeError } from './log-safe.js';
 
 /** Statuses the schema's check constraint accepts. */
 export const HOME_STATUS = Object.freeze({
@@ -49,6 +50,20 @@ const SAFE_COLUMNS = sql`
 	id, user_id, label, base_url, token_fingerprint, transport, relay_id,
 	capabilities, status, status_detail, last_ok_at, last_error_at,
 	created_at, updated_at, revoked_at
+`;
+
+// The same projection, qualified, for the reads that join home_members.
+//
+// Those reads answer "may this caller see this home" through membership rather
+// than through `user_id` equality, and a join makes the bare list ambiguous:
+// home_members carries a user_id of its own. `c.user_id` stays on the row and
+// keeps meaning what it always meant, the account that connected the house,
+// which is why order 12 could add membership beside this column instead of
+// rewriting it.
+const SAFE_COLUMNS_C = sql`
+	c.id, c.user_id, c.label, c.base_url, c.token_fingerprint, c.transport, c.relay_id,
+	c.capabilities, c.status, c.status_detail, c.last_ok_at, c.last_error_at,
+	c.created_at, c.updated_at, c.revoked_at
 `;
 
 /** sha256 of the token, hex. Never reversible, only comparable. */
@@ -131,30 +146,54 @@ export async function createConnection({
 export async function listConnections(userId) {
 	if (!userId) return [];
 	return sql`
-		select ${SAFE_COLUMNS}
-		from home_connections
-		where user_id = ${userId} and revoked_at is null
-		order by created_at desc
+		select ${SAFE_COLUMNS_C}, m.role, m.entity_scope
+		from home_connections c
+		join home_members m on m.home_id = c.id and m.user_id = ${userId}
+		where c.revoked_at is null
+		order by c.created_at desc
 	`;
 }
 
 /**
  * One home, ownership-checked in SQL.
  *
- * Returns null both when the id does not exist and when it belongs to somebody
- * else, so a caller cannot distinguish the two and turn this into an oracle for
- * "does this home id exist". The endpoint layer maps null to 404, never 403.
+ * Returns null both when the id does not exist and when the caller is not in
+ * its household, so a caller cannot distinguish the two and turn this into an
+ * oracle for "does this home id exist". The endpoint layer maps null to 404,
+ * never 403.
+ *
+ * Entitlement is MEMBERSHIP, not ownership: the join against home_members is
+ * what lets a partner, a house sitter or a colleague reach a home somebody else
+ * connected. There is deliberately no `or c.user_id = ${userId}` beside it. Such
+ * a branch would look like belt and braces and would in fact be the bypass, and
+ * it is unnecessary: the migration's trigger gives every connection an owner row
+ * the moment it is inserted, so the account that connected a house is always in
+ * its household.
+ *
+ * The returned row carries `role` and `entity_scope`, because every caller that
+ * needs the home also needs to know what this member may do with it, and a
+ * second round trip to find out is a second place to forget.
  *
  * @param {string} id
  * @param {string} userId
  * @param {{ includeRevoked?: boolean }} [options]
- * @returns {Promise<object|null>}
+ * @returns {Promise<object|null>} the credential-free row plus `role` and `entity_scope`
  */
 export async function getConnection(id, userId, { includeRevoked = false } = {}) {
 	if (!id || !userId || !isUuid(id)) return null;
 	const rows = includeRevoked
-		? await sql`select ${SAFE_COLUMNS} from home_connections where id = ${id} and user_id = ${userId}`
-		: await sql`select ${SAFE_COLUMNS} from home_connections where id = ${id} and user_id = ${userId} and revoked_at is null`;
+		? await sql`
+			select ${SAFE_COLUMNS_C}, m.role, m.entity_scope
+			from home_connections c
+			join home_members m on m.home_id = c.id and m.user_id = ${userId}
+			where c.id = ${id}
+		`
+		: await sql`
+			select ${SAFE_COLUMNS_C}, m.role, m.entity_scope
+			from home_connections c
+			join home_members m on m.home_id = c.id and m.user_id = ${userId}
+			where c.id = ${id} and c.revoked_at is null
+		`;
 	return rows[0] || null;
 }
 
@@ -175,9 +214,10 @@ export async function getConnection(id, userId, { includeRevoked = false } = {})
 export async function getDecryptedToken(id, userId) {
 	if (!id || !userId || !isUuid(id)) return null;
 	const rows = await sql`
-		select access_token_enc, base_url, transport, relay_id, token_fingerprint
-		from home_connections
-		where id = ${id} and user_id = ${userId} and revoked_at is null
+		select c.access_token_enc, c.base_url, c.transport, c.relay_id, c.token_fingerprint
+		from home_connections c
+		join home_members m on m.home_id = c.id and m.user_id = ${userId}
+		where c.id = ${id} and c.revoked_at is null
 	`;
 	const row = rows[0];
 	if (!row || !row.access_token_enc) return null;
@@ -419,14 +459,10 @@ export async function logHomeActionNow({
 		// MCP tool name ('light.turn_on'), never a friendly name, and the entity
 		// ids are deliberately absent: correlating a dropped write needs the home
 		// and the verb, not the list of things in somebody's bedroom. A driver
-		// error can echo a bound parameter, so the message is redacted and
-		// truncated rather than passed through.
-		console.warn('[home-store] action log insert dropped', {
-			homeId,
-			action,
-			outcome,
-			error: redactUrlSecrets(String(err?.message ?? '')).slice(0, 200),
-		});
+		// error can echo a bound parameter, so it goes through safeError() like
+		// every other error in the lane: a code, and a message with every host
+		// stripped out of it.
+		console.warn('[home-store] action log insert dropped', { homeId, action, outcome, ...safeError(err) });
 		return false;
 	}
 }

@@ -46,6 +46,7 @@ import {
 	WebGLRenderer,
 } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { createFrameGovernor, FPS_ACTIVE, FPS_IDLE, FPS_SAVER, getPowerSaver, onPowerSaverChange, trackWindowFocus } from '../shared/frame-governor.js';
 import { diffScene } from './scene-model.js';
 
@@ -82,6 +83,34 @@ function sharedGeometry() {
 		ring: new CylinderGeometry(0.17, 0.17, 0.05, 20),
 		plane: new PlaneGeometry(1, 1),
 	};
+}
+
+/** The four waist-high walls of a room, as one geometry. */
+function roomShell(w, d) {
+	const h = 0.92;
+	const parts = [];
+	for (const [sx, sz, px, pz] of [
+		[w, 0.06, 0, -d / 2],
+		[w, 0.06, 0, d / 2],
+		[0.06, d, -w / 2, 0],
+		[0.06, d, w / 2, 0],
+	]) {
+		const box = new BoxGeometry(sx, h, sz);
+		box.translate(px, h / 2, pz);
+		parts.push(box);
+	}
+	const merged = mergeGeometries(parts, false);
+	for (const part of parts) part.dispose();
+	return merged;
+}
+
+/** The "this device is not answering" marker, built only when one is. */
+function addMissingMarker(node) {
+	const marker = new Sprite(new SpriteMaterial({ color: 0xe05a4a, transparent: true, opacity: 0, depthWrite: false, depthTest: false }));
+	marker.scale.set(0.34, 0.34, 1);
+	marker.position.y = 0.42;
+	node.add(marker);
+	return marker;
 }
 
 /**
@@ -126,7 +155,7 @@ export function createHomeScene(container, options = {}) {
 	const objects = new Map();
 	/** @type {Map<string, object>} roomId to its live room record */
 	const rooms = new Map();
-	const spare = { color: new Color(), target: new Color(), v: new Vector3() };
+	const spare = { color: new Color(), target: new Color(), v: new Vector3(), toward: new Vector3(), forward: new Vector3() };
 
 	let model = null;
 	let stale = false;
@@ -140,6 +169,11 @@ export function createHomeScene(container, options = {}) {
 	let frames = 0;
 	let fpsWindowStart = 0;
 	let fps = 0;
+	// Split on purpose. Under a software rasterizer (headless CI, a locked-down
+	// browser) `render` dominates and says nothing about the scene's own cost, so
+	// the update work is timed separately and both numbers are reported.
+	let updateMs = 0;
+	let renderMs = 0;
 
 	const raycaster = new Raycaster();
 	const pointer = new Vector2();
@@ -233,19 +267,14 @@ export function createHomeScene(container, options = {}) {
 		// Waist-high walls, translucent. Full-height walls would hide the room's
 		// contents from every angle an orbiting camera can reach, and a dollhouse
 		// you cannot see into is a box.
+		//
+		// All four are ONE geometry. As separate meshes they were four draw calls
+		// per room, which is four hundred in a hundred-room house for a shape that
+		// never moves relative to its room.
 		const wallMat = new MeshStandardMaterial({ color: WALL, roughness: 0.75, metalness: 0.05, transparent: true, opacity: 0.34 });
-		const h = 0.92;
-		for (const [sx, sz, px, pz] of [
-			[room.w, 0.06, 0, -room.d / 2],
-			[room.w, 0.06, 0, room.d / 2],
-			[0.06, room.d, -room.w / 2, 0],
-			[0.06, room.d, room.w / 2, 0],
-		]) {
-			const wall = new Mesh(geo.panel, wallMat);
-			wall.scale.set(sx, h, sz);
-			wall.position.set(px, h / 2, pz);
-			group.add(wall);
-		}
+		const wallGeo = roomShell(room.w, room.d);
+		const walls = new Mesh(wallGeo, wallMat);
+		group.add(walls);
 
 		// The security tell: a line around the room's foot that goes amber the
 		// moment something in it is unlocked or open. Readable from across the
@@ -274,6 +303,7 @@ export function createHomeScene(container, options = {}) {
 			edgeMat,
 			light: usesLight ? light : null,
 			label,
+			wallGeo,
 			labelText: '',
 			color: new Color(room.light.hex),
 			targetColor: new Color(room.light.hex),
@@ -432,15 +462,6 @@ export function createHomeScene(container, options = {}) {
 			}
 		}
 
-		// A device Home Assistant cannot reach is drawn, never omitted: a thing
-		// that vanished from a house is information, and hiding it is how a scene
-		// tells a comfortable lie.
-		const missing = new Sprite(new SpriteMaterial({ color: 0xe05a4a, transparent: true, opacity: 0, depthWrite: false, depthTest: false }));
-		missing.scale.set(0.34, 0.34, 1);
-		missing.position.y = 0.42;
-		node.add(missing);
-		record.missing = missing;
-
 		commitObject(record);
 		return record;
 	}
@@ -538,6 +559,11 @@ export function createHomeScene(container, options = {}) {
 		// is off" and "the lamp is gone" can never look the same.
 		record.material.opacity = 0.24 + available * 0.76;
 		for (const part of record.parts) part.opacity = 0.3 + available * 0.7;
+		// A device Home Assistant cannot reach is drawn, never omitted: a thing
+		// that vanished from a house is information, and hiding it is how a scene
+		// tells a comfortable lie. The marker is built the first time a device
+		// actually goes missing, so a healthy house pays nothing for it.
+		if (available < 0.999 && !record.missing) record.missing = addMissingMarker(record.node);
 		if (record.missing) record.missing.material.opacity = (1 - available) * 0.9;
 		record.node.scale.setScalar(1 + record.select * 0.18);
 	}
@@ -564,6 +590,7 @@ export function createHomeScene(container, options = {}) {
 		const dt = last ? Math.min(0.1, (now - last) / 1000) : 0.016;
 		last = now;
 
+		const updateStart = performance.now();
 		const staleTarget = stale ? 1 : 0;
 		staleMoving = Math.abs(staleAmount - staleTarget) > 0.002;
 		staleAmount = damp(staleAmount, staleTarget, dt);
@@ -602,7 +629,10 @@ export function createHomeScene(container, options = {}) {
 
 		if (agent) agent.update(dt, now);
 		controls.update();
+		const renderStart = performance.now();
+		updateMs = renderStart - updateStart;
 		renderer.render(scene, camera);
+		renderMs = performance.now() - renderStart;
 
 		frames += 1;
 		if (!fpsWindowStart) fpsWindowStart = now;
@@ -744,6 +774,7 @@ export function createHomeScene(container, options = {}) {
 		for (const record of rooms.values()) {
 			record.floorMat.dispose();
 			record.wallMat.dispose();
+			record.wallGeo.dispose();
 			record.edgeMat.dispose();
 			record.label.material.map?.dispose();
 			record.label.material.dispose();
@@ -768,9 +799,32 @@ export function createHomeScene(container, options = {}) {
 			if (next?.roomId) agent?.moveToRoom(rooms.get(next.roomId)?.source);
 			agent?.act();
 		},
+		/**
+		 * Where an entity currently sits on screen, so the confirmation can be
+		 * pinned to the door it would open rather than to a corner of the page.
+		 * @returns {{ x: number, y: number, visible: boolean }|null}
+		 */
+		project(entityId) {
+			const record = objects.get(entityId);
+			if (!record) return null;
+			record.node.getWorldPosition(spare.v);
+			spare.v.y += 0.5;
+			spare.toward.copy(spare.v).sub(camera.position);
+			camera.getWorldDirection(spare.forward);
+			const behind = spare.toward.dot(spare.forward) <= 0;
+			spare.v.project(camera);
+			const rect = renderer.domElement.getBoundingClientRect();
+			return {
+				x: ((spare.v.x + 1) / 2) * rect.width,
+				y: ((1 - spare.v.y) / 2) * rect.height,
+				visible: !behind && Math.abs(spare.v.x) <= 1.05 && Math.abs(spare.v.y) <= 1.05,
+			};
+		},
 		stats() {
 			return {
 				fps,
+				updateMs: Math.round(updateMs * 100) / 100,
+				renderMs: Math.round(renderMs * 100) / 100,
 				objects: objects.size,
 				rooms: rooms.size,
 				drawCalls: renderer.info.render.calls,

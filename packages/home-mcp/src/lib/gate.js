@@ -24,7 +24,7 @@
 import { ERR } from '@three-ws/home-bridge';
 
 /** Where a person actually confirms a guarded action. */
-export const CONFIRM_AT = 'https://three.ws/home';
+export const CONFIRM_AT = 'https://three.ws/smart-home';
 
 /**
  * Turn a bridge refusal into the answer the model should read.
@@ -53,8 +53,8 @@ export function refusal(err) {
 		message: err.message,
 		why: 'This action opens the house, and this server has no way for a person to say yes: an MCP client carries no session and no browser. It is refused rather than guessed at.',
 		how_a_person_confirms: [
-			`Do it in the three.ws home surface at ${CONFIRM_AT}, where the action is shown to the account holder before it runs.`,
-			'Or, if you want this agent to hold a standing allowance for this exact entity, the person running this server adds it to HOME_ALLOWED_ENTITIES and restarts:' +
+			`Connect the house at ${CONFIRM_AT} and act through the hosted three.ws MCP server instead. That surface mints a pending confirmation and the account holder redeems it in their own browser, which is a person saying yes.`,
+			'Or, for a standing allowance on this exact entity, the person running THIS server adds it to HOME_ALLOWED_ENTITIES and restarts:' +
 				(targets.length ? ` HOME_ALLOWED_ENTITIES=${targets.join(',')}` : ' HOME_ALLOWED_ENTITIES=lock.office_door'),
 		],
 		retry: 'Do not retry this call. No argument you can pass will change the answer.',

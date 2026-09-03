@@ -181,17 +181,24 @@ export function lightOf(room) {
  * Warm or cool, from the room's own measured temperature. Neutral below the
  * comfort band's width so an ordinary room is not permanently tinted.
  */
-export function climateOf(room) {
+export function climateOf(room, unit = null) {
 	const climate = room.climate;
 	if (!climate || !Number.isFinite(climate.temperature)) return null;
 	const t = climate.temperature;
-	const offset = clamp(-1, 1, (t - 21) / 6);
+	// The comfort band is centred where the house measures it. Home Assistant
+	// reports whatever unit the instance is configured in, so a Fahrenheit house
+	// must not read as permanently freezing because 70 is nowhere near 21.
+	const fahrenheit = String(unit || '').includes('F');
+	const centre = fahrenheit ? 70 : 21;
+	const span = fahrenheit ? 11 : 6;
+	const offset = clamp(-1, 1, (t - centre) / span);
 	return {
 		temperature: t,
 		sources: climate.sources,
+		unit: unit || null,
 		// -1 fully cool, +1 fully warm. The renderer and the 2D card both read it.
 		tint: Number(offset.toFixed(3)),
-		label: `${t.toFixed(1)}°`,
+		label: `${t.toFixed(1)}${unit || '°'}`,
 	};
 }
 
@@ -244,7 +251,7 @@ export function buildSceneModel(graph, options = {}) {
 			// The rollups a real area gets, applied to the bucket nobody filed.
 			// Same functions the graph builder uses, so one shape flows through.
 			lighting: summarizeLighting(unassigned),
-			climate: summarizeClimate(unassigned),
+			climate: summarizeClimate(unassigned, source.temperatureUnit || null),
 			secured: summarizeSecurity(unassigned),
 		});
 	}
@@ -258,7 +265,7 @@ export function buildSceneModel(graph, options = {}) {
 			const cell = cells[index];
 			const x = Number.isFinite(authored?.x) ? authored.x : cell.x * CELL;
 			const z = Number.isFinite(authored?.z) ? authored.z : cell.z * CELL;
-			placed.push(buildRoom(room, floor, { x, z, w: authored?.w, d: authored?.d }));
+			placed.push(buildRoom(room, { ...floor, temperatureUnit: source.temperatureUnit || null }, { x, z, w: authored?.w, d: authored?.d }));
 		});
 	}
 
@@ -329,7 +336,10 @@ function lowestFloor(floors) {
  * screen is, and a house read from a 3/4 camera reads better in rows.
  */
 export function packCells(n) {
-	const cols = Math.max(1, Math.ceil(Math.sqrt(n * 1.35)));
+	// Never wider than there are rooms: the 1.35 bias makes a grid landscape,
+	// but applied to a single-room house it produced a two-column grid with one
+	// room sitting half a cell off centre.
+	const cols = Math.max(1, Math.min(n, Math.ceil(Math.sqrt(n * 1.35))));
 	const rows = Math.max(1, Math.ceil(n / cols));
 	const out = [];
 	for (let i = 0; i < n; i += 1) {
@@ -381,7 +391,7 @@ function buildRoom(room, floor, cell) {
 		d,
 		h: WALL_HEIGHT,
 		light: lightOf(room),
-		climate: climateOf(room),
+		climate: climateOf(room, floor.temperatureUnit),
 		security: secured
 			? { ...secured, unlocked: secured.unlocked || [], open: secured.open || [] }
 			: null,

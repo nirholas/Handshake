@@ -25,7 +25,9 @@
 	"main": "./src/index.js",
 	"module": "./src/index.js",
 	"exports": {
-		".": "./src/index.js"
+		".": "./src/index.js",
+		"./url": "./src/url.js",
+		"./errors": "./src/errors.js"
 	},
 	"files": [
 		"src",
@@ -40,10 +42,14 @@
 		"home-assistant-js-websocket": "^9.6.0"
 	},
 	"peerDependencies": {
-		"@modelcontextprotocol/sdk": "^1.29.0"
+		"@modelcontextprotocol/sdk": "^1.29.0",
+		"ws": "^8.21.0"
 	},
 	"peerDependenciesMeta": {
 		"@modelcontextprotocol/sdk": {
+			"optional": true
+		},
+		"ws": {
 			"optional": true
 		}
 	},

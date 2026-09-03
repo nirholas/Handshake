@@ -47,6 +47,23 @@ live('against a real Home Assistant', () => {
 		expect(home.graph.rooms.length + home.graph.unassigned.length).toBeGreaterThan(0);
 	});
 
+	it('reports the unit the house measures temperature in, read from the house', async () => {
+		// The point of this one is that it is not a guess. Home Assistant states
+		// its unit system in get_config, and the assertion compares what the
+		// bridge exposes against what the instance's own REST config says, so a
+		// locale-derived or hardcoded default cannot pass it.
+		const res = await fetch(`${instance.baseUrl}/api/config`, {
+			headers: { Authorization: `Bearer ${instance.token}` },
+		});
+		expect(res.ok).toBe(true);
+		const config = await res.json();
+		expect(config.unit_system.temperature).toMatch(/^\u00b0[CF]$/);
+		expect(home.temperatureUnit).toBe(config.unit_system.temperature);
+		// And it reaches the graph the scene renders, which is the only copy the
+		// browser ever sees.
+		expect(home.graph.temperatureUnit).toBe(config.unit_system.temperature);
+	}, 30_000);
+
 	it('reports the version the house is actually running', () => {
 		// The connect screen and the capability record both have to state this,
 		// and a support conversation starts with it.

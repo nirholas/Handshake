@@ -22,7 +22,11 @@
  *      a physical actuator on the other end.
  */
 
-import { isPrivateHost, normalizeBaseUrl } from '@three-ws/home-bridge';
+// The `/url` subpath, not the package root: url.js is pure string handling, and
+// importing it directly keeps the Home Assistant WebSocket client and the MCP
+// SDK (both behind the root export) out of this page's bundle. The same
+// functions the server validates with, so the two cannot disagree.
+import { isPrivateHost, normalizeBaseUrl } from '@three-ws/home-bridge/url';
 
 import { renderManage } from './manage.js';
 
@@ -39,6 +43,14 @@ export const STATE = Object.freeze({
 	DEGRADED: 'degraded',
 	REVOKED: 'revoked',
 	MANY: 'many',
+	/**
+	 * Not in the original eleven: the plan ceiling. It surfaced the first time a
+	 * second house was connected on a free account, and it needs its own
+	 * treatment because the recovery is commercial, not technical: sending
+	 * someone back to re-check a URL that was never wrong is the worst possible
+	 * answer to "you have run out of homes".
+	 */
+	QUOTA_REACHED: 'quota_reached',
 });
 
 /** Where Home Assistant hides the token minting screen. Never make anyone hunt. */
@@ -88,6 +100,7 @@ function render(state, data = {}) {
 		case STATE.AUTH_FAILED: return root.append(connectCard(data));
 		case STATE.UNREACHABLE: return root.append(connectCard(data));
 		case STATE.REVOKED: return root.append(connectCard(data));
+		case STATE.QUOTA_REACHED: return root.append(quotaCard(data));
 		case STATE.CONNECTED:
 		case STATE.DEGRADED:
 		case STATE.MANY:
@@ -208,6 +221,27 @@ function connectCard({ notice, values = {}, focus } = {}) {
 		}
 	});
 
+	return panel;
+}
+
+/**
+ * The plan ceiling. No form: re-submitting the same house would hit the same
+ * wall, so the card offers only the two actions that actually change the answer.
+ */
+function quotaCard({ notice, upgrade } = {}) {
+	const panel = el('section', 'hm-panel');
+	panel.append(el('h2', 'hm-panel-title', 'This account is at its home limit'));
+	if (notice) panel.append(noticeEl(notice));
+
+	const actions = el('div', 'hm-actions');
+	const up = el('a', 'hm-btn hm-btn-primary', 'See the plans');
+	up.href = typeof upgrade === 'string' && upgrade.startsWith('/') ? upgrade : '/pricing';
+	const back = el('button', 'hm-btn hm-btn-ghost', 'Back to my homes');
+	back.type = 'button';
+	back.addEventListener('click', () => boot());
+	actions.append(up, back);
+	panel.append(actions);
+	queueMicrotask(() => up.focus());
 	return panel;
 }
 
@@ -374,11 +408,36 @@ function renderFailure(err, values) {
 		});
 	}
 
+	// A plan ceiling is not a failure of the address or the token, so it must not
+	// send the user back to re-check either. It is a decision with a price on it,
+	// and the only useful next action is the upgrade or disconnecting a house.
+	if (err?.quota) {
+		return render(STATE.QUOTA_REACHED, {
+			values: carried,
+			notice: {
+				tone: 'warn',
+				title: quotaTitle(err.quota),
+				body: messageOf(err),
+				bullets: [
+					'Disconnect a home you no longer use and this one will connect.',
+					'Or move to a plan that carries more homes.',
+				],
+			},
+			upgrade: err.quota.upgrade || '/pricing',
+		});
+	}
+
 	return render(STATE.EMPTY, {
 		values: carried,
 		focus: 'url',
 		notice: { tone: 'error', title: 'That did not work.', body: messageOf(err) },
 	});
+}
+
+function quotaTitle(quota) {
+	const limit = Number(quota?.limit);
+	if (!Number.isFinite(limit)) return 'Your plan is at its limit for homes.';
+	return `Your plan covers ${limit} ${limit === 1 ? 'home' : 'homes'}.`;
 }
 
 function showConnectCard(notice) {
@@ -516,6 +575,10 @@ function apiError(body, res) {
 	const err = new Error(body?.message || body?.error_description || body?.error || `Request failed (${res.status}).`);
 	err.code = body?.code || (res.status === 404 ? 'not_found' : 'call_failed');
 	err.status = res.status;
+	// A plan limit answers with a `quota` block naming the dimension, the ceiling
+	// and where to lift it. Carrying it here is what lets the card offer the
+	// upgrade instead of a dead end.
+	if (body?.quota) err.quota = body.quota;
 	return err;
 }
 

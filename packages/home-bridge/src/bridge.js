@@ -30,7 +30,8 @@ export class HomeBridge {
 	#unsubscribers = [];
 	#states = {};
 	#registries = { floors: [], areas: [], devices: [], entities: [] };
-	#graph = { floors: [], rooms: [], unassigned: [] };
+	#config = null;
+	#graph = { floors: [], rooms: [], unassigned: [], temperatureUnit: null };
 	#listeners = new Map();
 	#rebuildTimer = null;
 	#closed = false;
@@ -47,6 +48,9 @@ export class HomeBridge {
 	 *   add-on uses, for the majority of installs that only exist on a LAN. It is
 	 *   an EITHER/OR with baseUrl + token: a relayed home authenticates inside the
 	 *   house and three.ws never holds a Home Assistant credential for it.
+	 * @param {Function} [options.createSocket] a `home-assistant-js-websocket`
+	 *   socket factory, for a server that must pin the connection to addresses it
+	 *   already validated (see api/_lib/home-url-guard.js). Browser callers omit it.
 	 * @param {boolean} [options.requireSecure] reject plain http for remote hosts
 	 * @param {string[]} [options.allowedEntities] entities pre-approved for guarded actions
 	 * @param {number} [options.rebuildDelayMs] coalescing window for graph rebuilds
@@ -99,6 +103,17 @@ export class HomeBridge {
 		return this.#graph;
 	}
 
+	/**
+	 * The temperature unit this house measures in, as the instance itself
+	 * reports it ('\u00b0C' or '\u00b0F'), or null before connect(). Read, never
+	 * guessed: a browser locale says where the reader is, not what the
+	 * thermostat is set to, and an American house browsed from Berlin is still
+	 * in Fahrenheit.
+	 */
+	get temperatureUnit() {
+		return this.#config?.unit_system?.temperature || null;
+	}
+
 	/** Raw entity states, keyed by entity id. */
 	get states() {
 		return this.#states;
@@ -135,7 +150,14 @@ export class HomeBridge {
 		// after this line is identical for both, which is the whole point.
 		const connectionOptions = this.#options.transport
 			? { createSocket: this.#options.transport.createSocket }
-			: { auth: createLongLivedTokenAuth(this.#options.baseUrl, this.#options.token) };
+			: {
+					auth: createLongLivedTokenAuth(this.#options.baseUrl, this.#options.token),
+					// A server dialling a user-supplied URL supplies its own socket
+					// factory so the connection is pinned to the addresses its SSRF
+					// guard validated. In the browser there is nothing to pin and the
+					// option is simply absent.
+					...(this.#options.createSocket ? { createSocket: this.#options.createSocket } : {}),
+				};
 		try {
 			this.#connection = await createConnection(connectionOptions);
 		} catch (err) {
@@ -145,7 +167,7 @@ export class HomeBridge {
 		this.#connection.addEventListener('ready', () => this.#emit('reconnected', undefined));
 		this.#connection.addEventListener('disconnected', () => this.#emit('disconnected', undefined));
 
-		this.#registries = await this.#loadRegistries();
+		[this.#registries, this.#config] = await Promise.all([this.#loadRegistries(), this.#loadConfig()]);
 		this.#unsubscribers.push(
 			subscribeEntities(this.#connection, (entities) => {
 				this.#states = entities;
@@ -183,6 +205,19 @@ export class HomeBridge {
 		return { floors, areas, devices, entities };
 	}
 
+	// get_config carries the unit system, and it is the only place the house
+	// states its own units. An instance that refuses it (an old core, a relay
+	// that filters the message) leaves the unit null, and the scene falls back
+	// to a bare degree sign rather than inventing a unit it cannot verify.
+	async #loadConfig() {
+		try {
+			const result = await this.#connection.sendMessagePromise({ type: 'get_config' });
+			return result && typeof result === 'object' ? result : null;
+		} catch {
+			return null;
+		}
+	}
+
 	async #list(type) {
 		try {
 			const result = await this.#connection.sendMessagePromise({ type });
@@ -201,7 +236,11 @@ export class HomeBridge {
 	}
 
 	#rebuild() {
-		this.#graph = buildHomeGraph({ ...this.#registries, states: this.#states });
+		this.#graph = buildHomeGraph({
+			...this.#registries,
+			states: this.#states,
+			temperatureUnit: this.temperatureUnit,
+		});
 		this.#emit('graph', this.#graph);
 	}
 

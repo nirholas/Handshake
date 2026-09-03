@@ -25,6 +25,8 @@
 
 import { ERR, HomeBridge, HomeBridgeError } from '@three-ws/home-bridge';
 
+import { assertDialableHomeUrl, HomeUrlError, pinnedHomeSocketFactory } from '../home-url-guard.js';
+
 import { createAdmissionController } from './admission.js';
 import {
 	getConnection,
@@ -33,6 +35,8 @@ import {
 	listAllowedEntities,
 	recordHandshake,
 } from './store.js';
+import { relayTransportFor } from './relay.js';
+import { safeError } from './log-safe.js';
 
 /**
  * Codes `acquire` adds to the bridge package's `ERR` vocabulary, so the route
@@ -92,6 +96,12 @@ export function createHomeRuntime(deps = {}) {
 	const maxConnections = deps.maxConnections ?? readMaxConnections();
 	const idleMs = deps.idleMs ?? IDLE_MS;
 	const connectTimeoutMs = deps.connectTimeoutMs ?? CONNECT_TIMEOUT_MS;
+	/**
+	 * How a relayed home is reached, injectable so a test can drive the relay
+	 * path without a relay. Most houses only exist on a LAN, so this is not the
+	 * exotic case: it is the one the majority of installs will take.
+	 */
+	const buildRelayTransport = deps.relayTransportFor || relayTransportFor;
 
 	/**
 	 * The backpressure ladder (api/_lib/home/admission.js). The pool decides which
@@ -274,7 +284,7 @@ export function createHomeRuntime(deps = {}) {
 		try {
 			onGraph(eventFor(entry, bridge));
 		} catch (err) {
-			console.warn('[home-runtime] a subscriber threw on its first event', { homeId, error: err?.message });
+			console.warn('[home-runtime] a subscriber threw on its first event', { homeId, ...safeError(err) });
 		}
 
 		return () => {
@@ -321,6 +331,24 @@ export function createHomeRuntime(deps = {}) {
 		let breakersOpen = 0;
 		for (const breaker of breakers.values()) if (breaker.openedUntil > now()) breakersOpen += 1;
 		return { open: entries.size, subscribers, pooledCap: maxConnections, breakersOpen, byStatus, admission: admission.snapshot() };
+	}
+
+	/**
+	 * How many live stream subscribers this instance is holding for one home.
+	 *
+	 * Per-instance, and deliberately not reconciled across the fleet. A
+	 * cross-instance stream tally would need a shared counter with a lease, and a
+	 * process that dies holding sockets leaks that counter until it expires,
+	 * which shows up as a user being refused a dashboard they are not watching.
+	 * Counting locally under-states a fleet-wide total, so the per-home stream
+	 * limit built on it errs toward serving the user, which is the only direction
+	 * a quota is allowed to err.
+	 *
+	 * @param {string} homeId
+	 * @returns {number}
+	 */
+	function streamCount(homeId) {
+		return entries.get(homeId)?.subscribers.size ?? 0;
 	}
 
 	/**
@@ -437,6 +465,15 @@ export function createHomeRuntime(deps = {}) {
 			);
 		}
 
+		// A relayed home has no credential to load, and that absence is the design
+		// rather than a gap: the three.ws integration inside the house
+		// authenticates to Home Assistant locally, so there has never been a token
+		// here for us to decrypt. Everything downstream treats the transport it
+		// gets back exactly like a base URL and a token.
+		if (row.transport === 'relay') {
+			return { transport: 'relay', relayId: row.relay_id, baseUrl: row.base_url, transportFactory: buildRelayTransport(row) };
+		}
+
 		let credential;
 		try {
 			credential = await readCredential(homeId, userId);
@@ -458,6 +495,24 @@ export function createHomeRuntime(deps = {}) {
 			);
 		}
 		return credential;
+	}
+
+	/**
+	 * The addresses this home is allowed to be dialled at, resolved fresh.
+	 *
+	 * A refusal is reported as UNREACHABLE rather than as a fault: from the
+	 * owner's side, a house that has moved onto a LAN-only name looks exactly
+	 * like a house that is offline, and the connect screen already knows how to
+	 * explain that one.
+	 */
+	async function resolveDialPin(baseUrl) {
+		try {
+			const dial = await assertDialableHomeUrl(baseUrl);
+			return { host: dial.host, addresses: dial.addresses, secure: dial.secure };
+		} catch (cause) {
+			if (!(cause instanceof HomeUrlError)) throw cause;
+			throw new HomeBridgeError(ERR.UNREACHABLE, cause.message, cause);
+		}
 	}
 
 	function openEntry({ homeId, userId, pooled }) {
@@ -484,7 +539,23 @@ export function createHomeRuntime(deps = {}) {
 			// three.ws retrying a house that is merely offline.
 			const credential = await loadCredential(homeId, userId);
 			const allowedEntities = await readAllowed(homeId).catch(() => []);
-			const bridge = createBridge({ baseUrl: credential.baseUrl, token: credential.token, allowedEntities });
+			// A direct home is re-resolved on EVERY dial, not trusted from the
+			// connect that stored it. That is the whole answer to DNS rebinding on
+			// a long-lived connection: a name that was public when the user added
+			// their house and points into our network today is refused here, and
+			// the socket that does open is pinned to what this resolved. A relayed
+			// home has no URL of ours to dial, so there is nothing to pin.
+			const dial = credential.transportFactory ? null : await resolveDialPin(credential.baseUrl);
+			const bridge = createBridge(
+				credential.transportFactory
+					? { transport: credential.transportFactory, allowedEntities }
+					: {
+							baseUrl: credential.baseUrl,
+							token: credential.token,
+							allowedEntities,
+							createSocket: pinnedHomeSocketFactory(dial),
+						},
+			);
 			entry.bridge = bridge;
 			wireEvents(entry, bridge);
 
@@ -494,7 +565,9 @@ export function createHomeRuntime(deps = {}) {
 					connectTimeoutMs,
 					() => new HomeBridgeError(
 						ERR.UNREACHABLE,
-						`${credential.baseUrl} did not answer within ${Math.round(connectTimeoutMs / 1000)} seconds. If it is only on your home network, three.ws cannot route to it: use your remote https URL, or connect the three.ws add-on.`,
+						credential.transport === 'relay'
+							? `This home did not answer through the three.ws relay within ${Math.round(connectTimeoutMs / 1000)} seconds. Its three.ws integration is offline, which usually means Home Assistant is restarting. It reconnects on its own.`
+							: `${credential.baseUrl} did not answer within ${Math.round(connectTimeoutMs / 1000)} seconds. If it is only on your home network, three.ws cannot route to it: use your remote https URL, or connect the three.ws integration.`,
 					),
 				);
 				entry.lastGraph = graph || entry.lastGraph;
@@ -541,7 +614,12 @@ export function createHomeRuntime(deps = {}) {
 			// able to fill the log.
 			if (entry.loggedError) return;
 			entry.loggedError = true;
-			console.warn('[home-runtime] bridge reported an error', { homeId: entry.homeId, error: err?.message || String(err) });
+			// A bridge error message names the house: toBridgeError builds
+			// "Could not reach https://home.example.com...", which is the most
+			// common error there is. The code is what an operator can act on; the
+			// URL is somebody's address in a log with its own retention. Fall back
+			// to the error's name, never its message.
+			console.warn('[home-runtime] bridge reported an error', { homeId: entry.homeId, ...safeError(err) });
 		});
 	}
 
@@ -552,7 +630,7 @@ export function createHomeRuntime(deps = {}) {
 			try {
 				listener(event);
 			} catch (err) {
-				console.warn('[home-runtime] a subscriber threw', { homeId: entry.homeId, error: err?.message });
+				console.warn('[home-runtime] a subscriber threw', { homeId: entry.homeId, ...safeError(err) });
 			}
 		}
 	}
@@ -584,7 +662,7 @@ export function createHomeRuntime(deps = {}) {
 				measuredAt: new Date().toISOString(),
 			},
 		}).catch((err) => {
-			console.warn('[home-runtime] handshake record dropped', { homeId, error: err?.message });
+			console.warn('[home-runtime] handshake record dropped', { homeId, ...safeError(err) });
 		});
 	}
 
@@ -635,7 +713,7 @@ export function createHomeRuntime(deps = {}) {
 		try {
 			entry.bridge?.close();
 		} catch (err) {
-			console.warn('[home-runtime] close threw on an already dead socket', { homeId: entry.homeId, error: err?.message });
+			console.warn('[home-runtime] close threw on an already dead socket', { homeId: entry.homeId, ...safeError(err) });
 		}
 	}
 
@@ -652,7 +730,7 @@ export function createHomeRuntime(deps = {}) {
 		sweepTimer = null;
 	}
 
-	return { acquire, withHome, snapshot, subscribe, evictIdle, stats, closeHome, closeAll, admitAction, withAction, readPlan, admission };
+	return { acquire, withHome, snapshot, subscribe, streamCount, evictIdle, stats, closeHome, closeAll, admitAction, withAction, readPlan, admission };
 }
 
 function readMaxConnections() {
@@ -675,6 +753,7 @@ export const acquire = runtime.acquire;
 export const withHome = runtime.withHome;
 export const snapshot = runtime.snapshot;
 export const subscribe = runtime.subscribe;
+export const streamCount = runtime.streamCount;
 export const evictIdle = runtime.evictIdle;
 export const stats = runtime.stats;
 export const closeHome = runtime.closeHome;

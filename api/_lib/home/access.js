@@ -19,6 +19,7 @@
 
 import { authenticateBearer, extractBearer, getSessionUser } from '../auth.js';
 
+import { can, filterGraphForScope, normalizeScope, outOfScopeEntities } from './members.js';
 import { getConnection } from './store.js';
 
 /**
@@ -41,24 +42,42 @@ export async function resolveCaller(req, res) {
 }
 
 /**
- * Authenticate, then resolve one home the caller is entitled to.
+ * Authenticate, then resolve one home this caller is entitled to, for a named
+ * capability.
+ *
+ * Two different refusals, and the difference is deliberate:
+ *
+ *   404  the caller is not in this household (or there is no such home, or it
+ *        was disconnected). Indistinguishable on purpose: a 403 here would
+ *        confirm the id is real and turn a list of uuids into an oracle for
+ *        "is this a house".
+ *   403  the caller IS in the household and their role does not hold this
+ *        capability. Naming the role is safe, and it is the only answer that
+ *        lets a guest refused an unlock understand it is their role rather than
+ *        a broken door.
+ *
+ * `capability` defaults to `read` because every route on this surface needs at
+ * least that, and a route that forgets to name one therefore fails closed at the
+ * weakest useful level rather than open.
  *
  * @param {import('node:http').IncomingMessage} req
  * @param {import('node:http').ServerResponse} res
  * @param {string} homeId from `req.query.id`
+ * @param {string} [capability] one of HOME_CAPABILITIES in ./members.js
  * @returns {Promise<
- *   | { ok: true, caller: { userId: string, via: string, scope: string|null }, home: object }
+ *   | { ok: true, caller: object, home: object, role: string, scope: object, scoped: boolean }
  *   | { ok: false, status: 401, code: 'unauthorized', message: string }
  *   | { ok: false, status: 404, code: 'not_found', message: string }
+ *   | { ok: false, status: 403, code: 'role_forbidden', message: string, role: string }
  * >}
  */
-export async function resolveHomeAccess(req, res, homeId) {
+export async function resolveHomeAccess(req, res, homeId, capability = 'read') {
 	const caller = await resolveCaller(req, res);
 	if (!caller) {
 		return { ok: false, status: 401, code: 'unauthorized', message: 'Sign in to reach your home.' };
 	}
 
-	// A malformed id is answered exactly like a real id that is not yours. A 400
+	// A malformed id is answered exactly like a real id you are not in. A 400
 	// here would tell an unauthenticated prober which of their guesses were even
 	// shaped like a home id.
 	const home = homeId ? await getConnection(homeId, caller.userId) : null;
@@ -66,8 +85,39 @@ export async function resolveHomeAccess(req, res, homeId) {
 		return { ok: false, status: 404, code: 'not_found', message: 'No such home.', caller };
 	}
 
-	return { ok: true, caller, home };
+	const role = home.role;
+	const scope = normalizeScope(home.entity_scope, role);
+
+	if (capability && !can(role, capability)) {
+		return {
+			ok: false,
+			status: 403,
+			code: 'role_forbidden',
+			message: `${article(role)} cannot ${capability} in this home.`,
+			role,
+			capability,
+			caller,
+			home,
+		};
+	}
+
+	return { ok: true, caller, home, role, scope, scoped: scope.mode !== 'all' };
 }
+
+/** "an admin" / "a member": role names reach users as copy, not as identifiers. */
+function article(role) {
+	return /^[aeiou]/i.test(String(role)) ? `an ${role}` : `a ${role}`;
+}
+
+/**
+ * The room graph as this member is allowed to see it.
+ *
+ * Re-exported from ./members.js through this module so every route reaches
+ * scope filtering from the same import it already uses for access, and a route
+ * that renders a graph without filtering it reads as an obvious omission rather
+ * than as one missing import among many.
+ */
+export { filterGraphForScope, outOfScopeEntities };
 
 /**
  * The credential-free projection every route returns for a home.

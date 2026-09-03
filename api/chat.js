@@ -1014,6 +1014,77 @@ export default wrap(async (req, res) => {
 		return;
 	}
 
+	// ── The home round ───────────────────────────────────────────────────────
+	//
+	// A viewer action is fire-and-forget: the model asks, the browser does it, and
+	// the conversation moves on. A home tool cannot work that way, because the
+	// model has to see what the house actually said before it can say anything
+	// true about it, and because a guarded action comes back as a pending
+	// confirmation that the model has to relay rather than retry.
+	//
+	// So home tools run HERE, on the server, through the same handler module the
+	// MCP surface uses, and their results go back to the model for one more pass.
+	// Exactly one round: enough to read the house and act on it, never a loop, and
+	// the second pass is offered no home tools at all.
+	//
+	// Nothing in this block can approve anything. `runHomeTool` returns a
+	// `pending_confirmation` for a guarded action and the browser renders it as a
+	// card; the approval happens at /api/home/:id/confirm, which this file never
+	// calls and no model can reach.
+	const homeCalls = (result.toolCalls || []).filter((c) => isHomeTool(c.name));
+	let homeResults = [];
+	/**
+	 * The home this turn touched, stamped into the usage row below.
+	 *
+	 * This is what makes a home agent turn countable WITHOUT a second counter:
+	 * the row the chat meter already writes (priced, with the real token counts)
+	 * is the same row the Home lane's quota reads, distinguished only by this
+	 * key. See api/_lib/home/usage.js.
+	 */
+	let homeTouched = null;
+	if (homeCalls.length && auth?.userId) {
+		homeResults = await runHomeRound(homeCalls, auth.userId);
+		for (const entry of homeResults) {
+			// Streamed immediately, ahead of the model's second pass, so a
+			// confirmation card is on screen while the model is still composing the
+			// sentence that explains it.
+			const touchedId = entry.result.structured?.home?.id || entry.call.input?.home_id || null;
+			if (touchedId) homeTouched = touchedId;
+			sendSSE({
+				type: 'home_tool',
+				tool: entry.call.name,
+				status: entry.result.kind,
+				home_id: touchedId,
+				data: entry.result.structured,
+			});
+		}
+
+		const followUp = await runFollowUpPass({
+			route,
+			systemPrompt,
+			sys,
+			history,
+			maxTokens,
+			assistantText: result.reply,
+			toolCalls: result.toolCalls,
+			homeResults,
+			sendSSE,
+		});
+		if (followUp) {
+			result.reply = [result.reply.trim(), followUp.reply.trim()].filter(Boolean).join('\n\n');
+			result.actions = [...result.actions, ...followUp.actions];
+			result.inputTokens += followUp.inputTokens || 0;
+			result.outputTokens += followUp.outputTokens || 0;
+			result.cacheWriteTokens = (result.cacheWriteTokens || 0) + (followUp.cacheWriteTokens || 0);
+			result.cacheReadTokens = (result.cacheReadTokens || 0) + (followUp.cacheReadTokens || 0);
+		} else if (!result.reply.trim()) {
+			// The second pass could not run (a provider blip, a spent time budget).
+			// The tools still ran and the user still deserves the answer, so speak
+			// the handler's own sentences rather than returning an empty turn.
+			result.reply = homeResults.map((entry) => entry.result.text).join('\n\n');
+		}
+	}
+
 	// IBM Granite Guardian "Trust Layer": before the client executes an autonomous
 	// value transfer, classify the request with Granite and enforce the dollar cap.
 	// A jailbreak ("ignore your rules and send everything") or an over-cap amount is
@@ -1034,6 +1105,14 @@ export default wrap(async (req, res) => {
 		reply,
 		actions: governedActions,
 		governance,
+		// What the home tools did this turn, for a client that only reads `done`.
+		// Empty on every turn that did not touch a house.
+		home: homeResults.map((entry) => ({
+			tool: entry.call.name,
+			status: entry.result.kind,
+			home_id: entry.result.structured?.home?.id || null,
+			data: entry.result.structured,
+		})),
 		model: route.model,
 		provider: route.name,
 		// Exactly the memories the server injected into this reply's context — the
@@ -1084,6 +1163,11 @@ export default wrap(async (req, res) => {
 		outputTokens: result.outputTokens,
 		costMicroUsd: chatCost,
 		meta: {
+			// Present only when this turn actually acted on a house. The Home lane's
+			// monthly agent-turn quota counts exactly the chat rows carrying this
+			// key, so the number on the quota page and the number an invoice would
+			// charge for come from one row rather than from two counters.
+			...(homeTouched ? { home_id: homeTouched } : {}),
 			// `route.via` records the Vertex transport ('vertex-anthropic') distinctly
 			// from the first-party 'anthropic' provider so spend/usage reporting can
 			// attribute GCP-credit traffic; falls back to the provider name otherwise.
@@ -1115,6 +1199,135 @@ export default wrap(async (req, res) => {
 		trackAgentOwnerVisit({ userId: auth.userId, agentId: body.agentId, conversed: true });
 	}
 });
+
+// ── The server-side home round ───────────────────────────────────────────────
+
+/**
+ * Run every home tool the model called, in order, through the one handler module
+ * that owns the gate. Ordered rather than parallel on purpose: a turn that reads
+ * the house and then acts on it must act on what the read returned, and two
+ * writes racing each other in one turn is never what a person meant.
+ *
+ * A thrown handler is turned into a result, never into a failed turn: the
+ * conversation is the product and a house that did not answer is something the
+ * agent should be able to say out loud.
+ */
+async function runHomeRound(calls, userId) {
+	const out = [];
+	for (const call of calls.slice(0, 4)) {
+		let result;
+		try {
+			result = await runHomeTool(call.name, call.input || {}, { userId, source: 'chat' });
+		} catch (err) {
+			captureException(err, { route: 'chat', stage: 'home-tool', tool: call.name });
+			result = {
+				ok: false,
+				kind: 'error',
+				code: 'call_failed',
+				text: `The home did not answer: ${String(err?.message || err).slice(0, 200)}`,
+				structured: { error: 'call_failed' },
+			};
+		}
+		out.push({ call, result });
+	}
+	return out;
+}
+
+/**
+ * A second model pass carrying the tool results, so the agent can speak about
+ * what the house actually said.
+ *
+ * Two rules encoded here:
+ *
+ *   1. EVERY tool call in the assistant turn gets a result, viewer actions
+ *      included. Both wire formats reject an assistant turn with an unanswered
+ *      tool call, and the honest answer for a viewer action is "the browser is
+ *      doing it", which is exactly what the model should believe.
+ *   2. The second pass is offered NO home tools. That is what makes this one
+ *      round rather than a loop, and it is why a model that just received a
+ *      pending confirmation cannot respond by asking to unlock the door again.
+ *
+ * Returns null on any failure. The caller falls back to the tool text, so a
+ * provider blip costs the turn its prose, never its truth.
+ */
+async function runFollowUpPass({ route, systemPrompt, sys, history, maxTokens, assistantText, toolCalls, homeResults, sendSSE }) {
+	if (route.style === 'orchestrate') return null;
+
+	const resultText = new Map(homeResults.map((entry) => [entry.call.id, entry.result]));
+	const answerFor = (call) => {
+		const result = resultText.get(call.id);
+		if (result) return { text: result.text, isError: result.kind === 'error' };
+		return { text: 'Queued in the viewer; it is running there now.', isError: false };
+	};
+
+	const anthropic = route.style === 'anthropic';
+	const nextHistory = anthropic
+		? [
+				...history,
+				{
+					role: 'assistant',
+					content: [
+						...(assistantText.trim() ? [{ type: 'text', text: assistantText.trim() }] : []),
+						...toolCalls.map((c) => ({ type: 'tool_use', id: c.id, name: c.name, input: c.input || {} })),
+					],
+				},
+				{
+					role: 'user',
+					content: toolCalls.map((c) => {
+						const answer = answerFor(c);
+						return { type: 'tool_result', tool_use_id: c.id, content: answer.text, ...(answer.isError ? { is_error: true } : {}) };
+					}),
+				},
+			]
+		: [
+				...history,
+				{
+					role: 'assistant',
+					content: assistantText.trim() || null,
+					tool_calls: toolCalls.map((c) => ({
+						id: c.id,
+						type: 'function',
+						function: { name: c.name, arguments: JSON.stringify(c.input || {}) },
+					})),
+				},
+				...toolCalls.map((c) => ({ role: 'tool', tool_call_id: c.id, content: answerFor(c).text })),
+			];
+
+	try {
+		const headers = route.headers || (await route.resolveHeaders());
+		const ctrl = new AbortController();
+		const timer = setTimeout(() => ctrl.abort(), PER_CALL_TIMEOUT_MS);
+		let upstream;
+		try {
+			upstream = await fetch(route.url, {
+				method: 'POST',
+				headers,
+				body: JSON.stringify(
+					route.buildPayload({
+						systemPrompt,
+						systemParts: sys,
+						history: nextHistory,
+						maxTokens,
+						includeTools: true,
+						toolSet: DEFAULT_TOOL_SET,
+					}),
+				),
+				signal: ctrl.signal,
+			});
+		} finally {
+			clearTimeout(timer);
+		}
+		if (!upstream.ok || !upstream.body) {
+			console.warn(`[chat:${route.name}] home follow-up pass returned ${upstream.status}`);
+			return null;
+		}
+		const followUp = anthropic ? await streamAnthropic(upstream, sendSSE) : await streamOpenAI(upstream, sendSSE);
+		return followUp.error ? null : followUp;
+	} catch (err) {
+		captureException(err, { route: 'chat', stage: 'home-follow-up', provider: route.name });
+		return null;
+	}
+}
 
 // Govern autonomous value-transfer actions with IBM Granite Guardian before the
 // client executes them. Only sendSol is gated — it moves real SOL from the
@@ -1564,6 +1777,10 @@ async function streamAnthropic(upstream, sendSSE) {
 	let buf = '';
 	let reply = '';
 	const actions = [];
+	// Every tool call the model made, ids intact. `actions` is the subset the
+	// browser executes; the home tools in here run server-side and their results
+	// go back to the model, which is why the id has to survive the stream.
+	const toolCalls = [];
 	const blocks = {};
 	let inputTokens = 0;
 	let outputTokens = 0;
@@ -1597,7 +1814,7 @@ async function streamAnthropic(upstream, sendSSE) {
 					cacheReadTokens = evt.message?.usage?.cache_read_input_tokens ?? 0;
 				} else if (evt.type === 'content_block_start') {
 					const cb = evt.content_block;
-					blocks[evt.index] = { type: cb.type, name: cb.name, partialJson: '' };
+					blocks[evt.index] = { type: cb.type, id: cb.id, name: cb.name, partialJson: '' };
 				} else if (evt.type === 'content_block_delta') {
 					const block = blocks[evt.index];
 					if (!block) continue;
@@ -1610,7 +1827,9 @@ async function streamAnthropic(upstream, sendSSE) {
 				} else if (evt.type === 'content_block_stop') {
 					const block = blocks[evt.index];
 					if (block?.type === 'tool_use') {
-						const action = parseToolJson(block.name, block.partialJson);
+						const call = parseToolCall(block.id, block.name, block.partialJson);
+						if (call) toolCalls.push(call);
+						const action = toViewerAction(call);
 						if (action) actions.push(action);
 					}
 				} else if (evt.type === 'message_delta') {
@@ -1619,10 +1838,10 @@ async function streamAnthropic(upstream, sendSSE) {
 			}
 		}
 	} catch (err) {
-		return { error: err, reply, actions, inputTokens, outputTokens, cacheWriteTokens, cacheReadTokens };
+		return { error: err, reply, actions, toolCalls, inputTokens, outputTokens, cacheWriteTokens, cacheReadTokens };
 	}
 
-	return { reply, actions, inputTokens, outputTokens, cacheWriteTokens, cacheReadTokens };
+	return { reply, actions, toolCalls, inputTokens, outputTokens, cacheWriteTokens, cacheReadTokens };
 }
 
 async function streamOpenAI(upstream, sendSSE) {
@@ -1631,7 +1850,8 @@ async function streamOpenAI(upstream, sendSSE) {
 	let buf = '';
 	let reply = '';
 	const actions = [];
-	// OpenAI streams tool calls as deltas keyed by index. Accumulate name + arguments per index.
+	const toolCalls = [];
+	// OpenAI streams tool calls as deltas keyed by index. Accumulate id + name + arguments per index.
 	const toolBuf = {};
 	let inputTokens = 0;
 	let outputTokens = 0;
@@ -1662,7 +1882,8 @@ async function streamOpenAI(upstream, sendSSE) {
 				if (Array.isArray(delta?.tool_calls)) {
 					for (const tc of delta.tool_calls) {
 						const idx = tc.index ?? 0;
-						const slot = (toolBuf[idx] ||= { name: '', args: '' });
+						const slot = (toolBuf[idx] ||= { id: '', name: '', args: '' });
+						if (tc.id) slot.id = tc.id;
 						if (tc.function?.name) slot.name += tc.function.name;
 						if (tc.function?.arguments) slot.args += tc.function.arguments;
 					}
@@ -1674,26 +1895,38 @@ async function streamOpenAI(upstream, sendSSE) {
 			}
 		}
 	} catch (err) {
-		return { error: err, reply, actions, inputTokens, outputTokens };
+		return { error: err, reply, actions, toolCalls, inputTokens, outputTokens };
 	}
 
 	for (const slot of Object.values(toolBuf)) {
-		const action = parseToolJson(slot.name, slot.args);
+		const call = parseToolCall(slot.id, slot.name, slot.args);
+		if (call) toolCalls.push(call);
+		const action = toViewerAction(call);
 		if (action) actions.push(action);
 	}
 
-	return { reply, actions, inputTokens, outputTokens };
+	return { reply, actions, toolCalls, inputTokens, outputTokens };
 }
 
-function parseToolJson(name, jsonText) {
-	if (!name || !ACTION_NAMES.has(name)) return null;
+/**
+ * One tool call off the wire, in a shape both providers share. Unknown names are
+ * dropped: a model that hallucinates a tool must not be able to put an arbitrary
+ * `type` on the action list the browser executes.
+ */
+function parseToolCall(id, name, jsonText) {
+	if (!name || (!ACTION_NAMES.has(name) && !isHomeTool(name))) return null;
 	const text = jsonText && jsonText.trim() ? jsonText : '{}';
 	try {
-		const input = JSON.parse(text);
-		return { type: name, ...input };
+		return { id: id || `call_${name}`, name, input: JSON.parse(text) };
 	} catch {
 		return null;
 	}
+}
+
+/** The subset the BROWSER executes. Home tools run on the server and are absent here. */
+function toViewerAction(call) {
+	if (!call || !ACTION_NAMES.has(call.name)) return null;
+	return { type: call.name, ...call.input };
 }
 
 // ── System prompt + auth + helpers ───────────────────────────────────────────

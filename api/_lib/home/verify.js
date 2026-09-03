@@ -15,6 +15,14 @@
 
 import { connectHomeMcp, ERR, HomeBridge, HomeBridgeError, normalizeBaseUrl } from '@three-ws/home-bridge';
 
+import {
+	assertDialableHomeUrl,
+	homeFetch,
+	HomeUrlError,
+	pinnedHomeFetch,
+	pinnedHomeSocketFactory,
+} from '../home-url-guard.js';
+
 /** A house behind a slow tunnel is common; a hang is not. */
 const CONNECT_TIMEOUT_MS = 15_000;
 /** The optional channel gets a shorter leash: it must never dominate connect latency. */
@@ -33,12 +41,19 @@ const CONFIG_TIMEOUT_MS = 5_000;
  * @throws {HomeBridgeError} with the `ERR` vocabulary, so the route layer can
  *   map one table of codes instead of two.
  */
-export async function verifyConnection({ baseUrl, token, timeoutMs = CONNECT_TIMEOUT_MS }) {
+export async function verifyConnection({ baseUrl, token, timeoutMs = CONNECT_TIMEOUT_MS, pin = null }) {
 	// Throws BAD_URL before anything opens a socket, which is what lets the UI
 	// refuse a LAN address without a network call.
 	const { http } = normalizeBaseUrl(baseUrl);
 
-	const bridge = new HomeBridge({ baseUrl: http, token });
+	// The SSRF guard, resolved HERE rather than trusted from the caller, so no
+	// route can dial a house by forgetting to pass one. The hostname check the
+	// connect route runs first is a courtesy to the user; this is the control.
+	// A caller that already resolved the same URL passes its pin through so the
+	// name is looked up once per connect rather than once per channel.
+	const dial = pin || (await resolveDialPin(http));
+
+	const bridge = new HomeBridge({ baseUrl: http, token, createSocket: pinnedHomeSocketFactory(dial) });
 	let graph;
 	try {
 		graph = await withTimeout(
@@ -54,7 +69,10 @@ export async function verifyConnection({ baseUrl, token, timeoutMs = CONNECT_TIM
 	try {
 		const states = bridge.states || {};
 		const entityCount = Object.keys(states).length;
-		const [mcp, config] = await Promise.all([probeMcp({ baseUrl: http, token }), readConfig({ baseUrl: http, token })]);
+		const [mcp, config] = await Promise.all([
+			probeMcp({ baseUrl: http, token, pin: dial }),
+			readConfig({ baseUrl: http, token, pin: dial }),
+		]);
 
 		return {
 			graph,
@@ -93,11 +111,11 @@ export async function verifyConnection({ baseUrl, token, timeoutMs = CONNECT_TIM
  * confident, wrong number to the user. An unreadable version is null, never a
  * guess, because the connect screen prints this verbatim.
  */
-async function readConfig({ baseUrl, token }) {
+async function readConfig({ baseUrl, token, pin }) {
 	try {
-		const res = await fetch(`${baseUrl}/api/config`, {
+		const res = await homeFetch(pin, `${baseUrl}/api/config`, {
 			headers: { authorization: `Bearer ${token}` },
-			signal: AbortSignal.timeout(CONFIG_TIMEOUT_MS),
+			timeoutMs: CONFIG_TIMEOUT_MS,
 		});
 		if (!res.ok) return { version: null, locationName: null };
 		const body = await res.json();
@@ -112,10 +130,10 @@ async function readConfig({ baseUrl, token }) {
 	}
 }
 
-async function probeMcp({ baseUrl, token }) {
+async function probeMcp({ baseUrl, token, pin }) {
 	try {
 		const session = await withTimeout(
-			connectHomeMcp({ baseUrl, token }),
+			connectHomeMcp({ baseUrl, token, fetchImpl: pinnedHomeFetch(pin) }),
 			MCP_TIMEOUT_MS,
 			() => new HomeBridgeError(ERR.NO_MCP, 'The MCP endpoint did not answer in time.'),
 		);
@@ -139,4 +157,26 @@ function withTimeout(promise, ms, makeError) {
 		timer = setTimeout(() => reject(makeError()), ms);
 	});
 	return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
+/**
+ * Resolve a base URL to the addresses we are willing to dial, in this lane's
+ * error vocabulary.
+ *
+ * A refusal here is nearly always a person typing their LAN address, not an
+ * attack, so it comes back as UNREACHABLE with the sentence that tells them what
+ * to do instead. The security property is the same either way: the name is
+ * resolved on our side and the connection is pinned to what it resolved to, so a
+ * public hostname pointing into RFC1918 (or flipping there after the check) is
+ * refused rather than dialled from inside our network.
+ */
+async function resolveDialPin(http) {
+	try {
+		const dial = await assertDialableHomeUrl(http);
+		return { host: dial.host, addresses: dial.addresses, secure: dial.secure };
+	} catch (err) {
+		if (!(err instanceof HomeUrlError)) throw err;
+		const code = err.code === 'bad_url' ? ERR.BAD_URL : ERR.UNREACHABLE;
+		throw new HomeBridgeError(code, err.message, err);
+	}
 }

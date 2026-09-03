@@ -221,17 +221,25 @@ function toArray(value) {
  * @param {object} call
  * @param {string} call.domain
  * @param {string} call.service
- * @param {object} [call.attributes] the entity's current attributes, for device_class
  * @returns {boolean}
  */
-export function isSafetyAction({ domain, service, attributes = {} } = {}) {
+export function isSafetyAction({ domain, service } = {}) {
 	const d = String(domain || '').toLowerCase();
 	const s = String(service || '').toLowerCase();
 
-	if (d === 'cover') {
-		const deviceClass = String(attributes.device_class || '').toLowerCase();
-		return GUARDED_COVER_CLASSES.has(deviceClass) && SAFE_SERVICES.has(s);
-	}
+	// Deliberately NOT filtered by device_class, unlike classifyCall. The gate has
+	// to know whether a cover is a garage door before it will refuse opening it,
+	// because opening a blind is nothing and opening a garage is an opening in the
+	// building. Closing has no such asymmetry: there is no cover whose CLOSING is
+	// dangerous, and no valve whose closing is dangerous.
+	//
+	// That is not a shortcut, it is the property that makes the exemption usable.
+	// Reading device_class requires a live socket to the house, and the moment a
+	// safety exemption depends on the connection being healthy it stops being an
+	// exemption: the states where a user most needs to lock up (a paused home, a
+	// degraded instance, an account over quota) are exactly the states where the
+	// attributes are not in hand.
+	if (d === 'cover' || d === 'valve') return SAFE_SERVICES.has(s);
 	if (d === 'alarm_control_panel') return s.startsWith('alarm_arm') && SAFE_SERVICES.has(s);
 	if (GUARDED_DOMAINS.has(d)) return SAFE_SERVICES.has(s);
 	return false;

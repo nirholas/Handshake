@@ -44,9 +44,15 @@ export const HOME_ROLES = Object.freeze(['owner', 'admin', 'member', 'guest', 'v
  *   grant       create a standing allowance that clears the gate in future
  *   layout      edit the floorplan and the 3D layout
  *   invite      administer the roster: invite, change a role, remove a member
+ *   manage      administer the CONNECTION: rename it, re-pair its relay, retry it
  *   disconnect  revoke the connection and take the house off the platform
+ *
+ * `grant`, `invite` and `manage` are held by the same two roles today, and they
+ * are still three names. They are different powers over different things (a
+ * lock, the roster, the connection), and collapsing them would mean a future
+ * role could not hold one without the others.
  */
-export const HOME_CAPABILITIES = Object.freeze(['read', 'act', 'confirm', 'grant', 'layout', 'invite', 'disconnect']);
+export const HOME_CAPABILITIES = Object.freeze(['read', 'act', 'confirm', 'grant', 'layout', 'invite', 'manage', 'disconnect']);
 
 /**
  * The role matrix. `rank` orders the roles for roster administration; `scoped`
@@ -62,8 +68,8 @@ export const HOME_CAPABILITIES = Object.freeze(['read', 'act', 'confirm', 'grant
  *   viewer  a wall display or a monitoring seat. Scoped, and reads only.
  */
 const ROLE_MATRIX = Object.freeze({
-	owner: Object.freeze({ rank: 5, scoped: false, can: Object.freeze(new Set(['read', 'act', 'confirm', 'grant', 'layout', 'invite', 'disconnect'])) }),
-	admin: Object.freeze({ rank: 4, scoped: false, can: Object.freeze(new Set(['read', 'act', 'confirm', 'grant', 'layout', 'invite'])) }),
+	owner: Object.freeze({ rank: 5, scoped: false, can: Object.freeze(new Set(['read', 'act', 'confirm', 'grant', 'layout', 'invite', 'manage', 'disconnect'])) }),
+	admin: Object.freeze({ rank: 4, scoped: false, can: Object.freeze(new Set(['read', 'act', 'confirm', 'grant', 'layout', 'invite', 'manage'])) }),
 	member: Object.freeze({ rank: 3, scoped: false, can: Object.freeze(new Set(['read', 'act', 'confirm', 'layout'])) }),
 	guest: Object.freeze({ rank: 2, scoped: true, can: Object.freeze(new Set(['read', 'act'])) }),
 	viewer: Object.freeze({ rank: 1, scoped: true, can: Object.freeze(new Set(['read'])) }),
@@ -188,7 +194,7 @@ export function filterGraphForScope(graph, scope) {
 						...room,
 						entities: kept,
 						lighting: summarizeLighting(kept),
-						climate: summarizeClimate(kept),
+						climate: summarizeClimate(kept, graph.temperatureUnit || null),
 						secured: summarizeSecurity(kept),
 					},
 		);

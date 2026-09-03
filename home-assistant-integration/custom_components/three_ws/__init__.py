@@ -15,9 +15,7 @@ the ones that administer this machine refused outright.
 
 from __future__ import annotations
 
-import json
 import logging
-from pathlib import Path
 from typing import Any
 
 from homeassistant.auth.const import GROUP_ID_ADMIN
@@ -25,7 +23,9 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_send
+from homeassistant.loader import async_get_integration
 
+from . import allowlist
 from .const import (
     CONF_INSTALL_TOKEN,
     CONF_REFRESH_TOKEN_ID,
@@ -42,15 +42,18 @@ _LOGGER = logging.getLogger(__name__)
 PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR]
 
 
-def _version() -> str:
-    manifest = json.loads((Path(__file__).parent / "manifest.json").read_text(encoding="utf-8"))
-    return str(manifest.get("version", "0.0.0"))
-
-
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Mint this install's local credential and start dialling out."""
     hass.data.setdefault(DOMAIN, {})
-    hass.data[f"{DOMAIN}_version"] = _version()
+    # The loader already parsed the manifest during startup, so asking it for the
+    # version costs nothing and, unlike reading the file here, does not do disk
+    # IO on the event loop.
+    version = str((await async_get_integration(hass, DOMAIN)).version or "0.0.0")
+    hass.data[f"{DOMAIN}_version"] = version
+
+    # Every relayed frame is checked against the allowlist inside the loop, so
+    # the file it is loaded from is read once, here, in an executor.
+    await allowlist.async_preload(hass)
 
     refresh_token = await _async_get_or_create_token(hass, entry)
 
@@ -66,7 +69,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         install_token=entry.data[CONF_INSTALL_TOKEN],
         local_ws_url=_local_ws_url(hass),
         mint_access_token=mint_access_token,
-        integration_version=_version(),
+        integration_version=version,
         on_status=lambda status: async_dispatcher_send(hass, f"{SIGNAL_STATUS}_{entry.entry_id}", status),
     )
     hass.data[DOMAIN][entry.entry_id] = client
@@ -96,9 +99,9 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     token_id = entry.data.get(CONF_REFRESH_TOKEN_ID)
     user_id = entry.data.get(CONF_USER_ID)
     if token_id:
-        token = await hass.auth.async_get_refresh_token(token_id)
+        token = hass.auth.async_get_refresh_token(token_id)
         if token is not None:
-            await hass.auth.async_remove_refresh_token(token)
+            hass.auth.async_remove_refresh_token(token)
     if user_id:
         user = await hass.auth.async_get_user(user_id)
         if user is not None and user.system_generated:
@@ -116,7 +119,7 @@ async def _async_get_or_create_token(hass: HomeAssistant, entry: ConfigEntry) ->
     """
     token_id = entry.data.get(CONF_REFRESH_TOKEN_ID)
     if token_id:
-        existing = await hass.auth.async_get_refresh_token(token_id)
+        existing = hass.auth.async_get_refresh_token(token_id)
         if existing is not None:
             return existing
 

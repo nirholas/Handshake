@@ -37,6 +37,7 @@ import { emitRecallFromChat } from './agents/memory-client.js';
 import { moodEngine } from './agents/mood-engine.js';
 import { skillLabel } from './shared/skill-label.js';
 import { mountCoinStatus } from './pump/coin-status-card.js';
+import { renderHomeConfirmation } from './home-confirm-card.js';
 
 const ATTACHED_KEY_PREFIX = 'avatar_attached_v1:';
 
@@ -2429,6 +2430,14 @@ async function sendChatMessage(text) {
 					assistantNode.textContent = acc;
 					logEl.scrollTop = logEl.scrollHeight;
 					streamThoughtText(acc);
+				} else if (evt.type === 'home_tool') {
+					// The agent touched the connected house. A guarded action arrives
+					// here as a pending confirmation and is rendered as a card the
+					// person approves; the browser NEVER performs it itself, and there
+					// is no path from this branch to the door.
+					if (evt.status === 'pending_confirmation') {
+						renderHomeConfirmation(logEl, evt.data);
+					}
 				} else if (evt.type === 'done') {
 					// The server reports exactly which memories it recalled into this
 					// reply's context — turn that into a `memory:recalled` bus event so

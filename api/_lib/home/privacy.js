@@ -32,6 +32,8 @@
 import { sql } from '../db.js';
 import { withDbRetry } from '../db-retry.js';
 
+import { resolveHomeEntitlementsForUser } from './entitlements.js';
+
 /** The 90-day default, stated once so the doc, the UI and the DB agree. */
 export const DEFAULT_ACTION_LOG_RETENTION_DAYS = 90;
 /** The bounds the schema check constraint enforces. Mirrored, never guessed. */
@@ -129,6 +131,41 @@ export const INVENTORY = Object.freeze([
 		sensitive: true,
 	},
 	{
+		key: 'satellite',
+		data: 'A voice satellite you set up: what you called it, which room you said it is in, which agent appears on it, and the key that lets a browser in that room attach to it',
+		table: 'home_satellites',
+		why: 'So a speaker in a room can carry your agent, and so a screen on the same network can show it even when three.ws is unreachable.',
+		retention: 'Until you remove the satellite. The key is encrypted at rest with the same primitive as a home credential.',
+		deletedBy: 'Remove the satellite, or delete your account.',
+		sensitive: true,
+	},
+	{
+		key: 'satellite_pairing',
+		data: 'A short-lived setup code for a satellite, stored as a one-way digest',
+		table: 'home_satellite_codes',
+		why: 'To claim a satellite you are setting up, once.',
+		retention: 'Until it is claimed or expires; expired unclaimed codes are swept by the daily retention pass.',
+		deletedBy: 'Claiming it, the retention sweep, or deleting your account.',
+		sensitive: true,
+	},
+	{
+		key: 'plan_override',
+		data: 'A per-account limit an administrator agreed with you (how many homes, how many members, how long the log is kept), and the sentence explaining why',
+		table: 'home_plan_overrides',
+		why: 'So an operator whose numbers do not fit a published plan gets the numbers they were promised, on the record.',
+		retention: 'Until the override is removed or your account is deleted.',
+		deletedBy: 'Delete your account, or ask for the override to be removed.',
+	},
+	{
+		key: 'relay_pairing',
+		data: 'A short-lived pairing code, stored as a one-way digest, when you connect a home that only exists on your own network',
+		table: 'home_relay_pairings',
+		why: 'To introduce the add-on running inside your house to your account, once.',
+		retention: 'Ten minutes, and single use. It is a digest, never the code, so a database read cannot pair anything. The row is deleted with the home.',
+		deletedBy: 'Redeeming or expiring it, deleting this home, or deleting your account.',
+		sensitive: true,
+	},
+	{
 		key: 'confirmations',
 		data: 'A pending request to open something, and the sentence you were shown before you said yes: "Unlock the Front Door"',
 		table: 'home_confirmations',
@@ -211,6 +248,20 @@ export async function setActionLogRetention({ homeId, userId, days, reason = nul
 		return { ok: false, code: 'reason_required' };
 	}
 	const storedReason = n > DEFAULT_ACTION_LOG_RETENTION_DAYS ? trimmed.slice(0, 500) : null;
+
+	// The plan's ceiling on how LONG a log may be kept. Deliberately one-way: it
+	// can refuse a request to keep more, and it never shortens what is already
+	// kept. Retroactively truncating somebody's audit trail because their plan
+	// changed would destroy their evidence, and the log's integrity is not a paid
+	// feature on any tier. Shortening is always allowed and never checked, because
+	// keeping less of somebody's own data never needs a plan's permission.
+	if (n > DEFAULT_ACTION_LOG_RETENTION_DAYS) {
+		const entitlements = await resolveHomeEntitlementsForUser(userId);
+		const ceiling = entitlements.limits.logRetentionDays;
+		if (Number.isFinite(ceiling) && n > ceiling) {
+			return { ok: false, code: 'retention_over_plan', limit: ceiling, requested: n };
+		}
+	}
 
 	const rows = await sql`
 		update home_connections
@@ -301,6 +352,17 @@ export async function purgeExpiredActionLog({ batch = 5000, maxRows = 100_000 } 
 		for (const row of del) homes.add(row.home_id);
 		if (del.length < batch) break;
 	}
+	// The satellite pairing codes are the one thing here with no per-home window,
+	// because they hang off an account rather than a house and they are dead in
+	// minutes by design. Their creating migration states they are swept by this
+	// pass, so this is where that promise is kept: an expired, unclaimed code has
+	// no purpose and is a digest of a secret somebody typed into a terminal.
+	const satelliteCodes = await sql`
+		delete from home_satellite_codes
+		where claimed_at is null and expires_at < now()
+		returning id
+	`;
+
 	// Retired confirmations ride the same window. They are the other half of the
 	// same audit trail (the action log says a door was opened; the confirmation
 	// says who was shown what before it was), and the summary sentence frozen on
@@ -320,7 +382,13 @@ export async function purgeExpiredActionLog({ batch = 5000, maxRows = 100_000 } 
 		returning id
 	`;
 
-	return { deleted, batches, homes: homes.size, confirmations: confirmations.length };
+	return {
+		deleted,
+		batches,
+		homes: homes.size,
+		confirmations: confirmations.length,
+		satelliteCodes: satelliteCodes.length,
+	};
 }
 
 // ── Export ───────────────────────────────────────────────────────────────────
@@ -351,7 +419,10 @@ export async function exportHomeData(userId) {
 	`;
 	const homeIds = homes.map((h) => h.id);
 
-	const [members, invites, grants, actions, confirmations, invitesToMe] = await Promise.all([
+	const [
+		members, invites, grants, actions, confirmations, pairings, invitesToMe,
+		satellites, satelliteCodes, planOverrides,
+	] = await Promise.all([
 		homeIds.length
 			? sql`select home_id, user_id, role, entity_scope, invited_by, created_at, updated_at
 			      from home_members where home_id = any(${homeIds}) order by home_id, created_at`
@@ -376,11 +447,25 @@ export async function exportHomeData(userId) {
 			             outcome, created_at
 			      from home_confirmations where home_id = any(${homeIds}) order by home_id, created_at`
 			: [],
+		homeIds.length
+			? sql`select id, home_id, user_id, relay_id, expires_at, redeemed_at, redeemed_by,
+			             attempts, created_at
+			      from home_relay_pairings where home_id = any(${homeIds}) order by home_id, created_at`
+			: [],
 		// Homes somebody else owns that you are a member of, and invitations
 		// addressed to you: both are data about you that a query scoped to homes
 		// you own would miss entirely.
 		sql`select m.home_id, m.role, m.entity_scope, m.created_at
 		    from home_members m where m.user_id = ${userId} order by m.created_at`,
+		// Account-scoped, not home-scoped: a satellite belongs to a person and an
+		// agent, not to one house, so a query over homes you own would miss it.
+		// The viewer secret is excluded for the same reason the home credential is.
+		sql`select id, agent_id, name, area, version, wyoming_version, created_at, last_seen_at
+		    from home_satellites where user_id = ${userId} order by created_at`,
+		sql`select id, agent_id, name, created_at, expires_at, claimed_at, satellite_id
+		    from home_satellite_codes where user_id = ${userId} order by created_at`,
+		sql`select limits, note, created_at, updated_at
+		    from home_plan_overrides where user_id = ${userId}`,
 	]);
 
 	return {
@@ -395,6 +480,14 @@ export async function exportHomeData(userId) {
 		grants,
 		action_log: actions,
 		confirmations,
+		// The pairing digest itself is deliberately absent: it is a one-way hash of
+		// a code that is dead in ten minutes, and exporting it tells the reader
+		// nothing they can use. What a person needs to know is that a pairing
+		// happened and when.
+		relay_pairings: pairings,
+		satellites,
+		satellite_codes: satelliteCodes,
+		plan_override: planOverrides[0] ?? null,
 	};
 }
 
@@ -469,6 +562,10 @@ export async function deleteAllHomeDataForUser(userId, { email = null } = {}) {
 	await sql`delete from home_members where user_id = ${userId}`;
 	await sql`delete from home_entity_grants where granted_by = ${userId}`;
 	await sql`delete from home_invites where invited_by = ${userId}`;
+	await sql`delete from home_relay_pairings where user_id = ${userId}`;
+	await sql`delete from home_satellite_codes where user_id = ${userId}`;
+	await sql`delete from home_satellites where user_id = ${userId}`;
+	await sql`delete from home_plan_overrides where user_id = ${userId}`;
 	if (email) {
 		await sql`delete from home_invites where lower(email) = lower(${email})`;
 	}
@@ -504,13 +601,14 @@ export async function deleteAllHomeDataForUser(userId, { email = null } = {}) {
  * @returns {Promise<Record<string, number>>}
  */
 export async function countHomeRows(homeId) {
-	const [conn, members, invites, grants, actions, confirmations, audit] = await Promise.all([
+	const [conn, members, invites, grants, actions, confirmations, pairings, audit] = await Promise.all([
 		sql`select count(*)::int as n from home_connections   where id = ${homeId}`,
 		sql`select count(*)::int as n from home_members       where home_id = ${homeId}`,
 		sql`select count(*)::int as n from home_invites       where home_id = ${homeId}`,
 		sql`select count(*)::int as n from home_entity_grants where home_id = ${homeId}`,
 		sql`select count(*)::int as n from home_action_log    where home_id = ${homeId}`,
 		sql`select count(*)::int as n from home_confirmations where home_id = ${homeId}`,
+		sql`select count(*)::int as n from home_relay_pairings where home_id = ${homeId}`,
 		sql`select count(*)::int as n from audit_log where resource_id = ${homeId} and action like '%home%'`,
 	]);
 	return {
@@ -520,6 +618,7 @@ export async function countHomeRows(homeId) {
 		home_entity_grants: grants[0].n,
 		home_action_log: actions[0].n,
 		home_confirmations: confirmations[0].n,
+		home_relay_pairings: pairings[0].n,
 		audit_log: audit[0].n,
 	};
 }
@@ -532,7 +631,10 @@ export async function countHomeRows(homeId) {
  * @returns {Promise<Record<string, number>>}
  */
 export async function countUserRows(userId, email = null) {
-	const [conn, members, invites, invitesToEmail, grants, actorRows, confirmRows, confirmations, audit] =
+	const [
+		conn, members, invites, invitesToEmail, grants, actorRows, confirmRows,
+		confirmations, pairings, satellites, satelliteCodes, planOverride, audit,
+	] =
 		await Promise.all([
 			sql`select count(*)::int as n from home_connections where user_id = ${userId}`,
 			sql`select count(*)::int as n from home_members where user_id = ${userId}`,
@@ -544,6 +646,10 @@ export async function countUserRows(userId, email = null) {
 			sql`select count(*)::int as n from home_action_log where user_id = ${userId}`,
 			sql`select count(*)::int as n from home_action_log where confirmed_by = ${userId}`,
 			sql`select count(*)::int as n from home_confirmations where user_id = ${userId} or redeemed_by = ${userId}`,
+			sql`select count(*)::int as n from home_relay_pairings where user_id = ${userId}`,
+			sql`select count(*)::int as n from home_satellites where user_id = ${userId}`,
+			sql`select count(*)::int as n from home_satellite_codes where user_id = ${userId}`,
+			sql`select count(*)::int as n from home_plan_overrides where user_id = ${userId}`,
 			sql`select count(*)::int as n from audit_log where action like '%home%' and user_id = ${userId}`,
 		]);
 	return {
@@ -555,6 +661,10 @@ export async function countUserRows(userId, email = null) {
 		home_action_log_actor: actorRows[0].n,
 		home_action_log_confirmed_by: confirmRows[0].n,
 		home_confirmations: confirmations[0].n,
+		home_relay_pairings: pairings[0].n,
+		home_satellites: satellites[0].n,
+		home_satellite_codes: satelliteCodes[0].n,
+		home_plan_overrides: planOverride[0].n,
 		audit_log: audit[0].n,
 	};
 }

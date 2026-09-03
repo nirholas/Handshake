@@ -43,6 +43,14 @@ export const HOME_ERR = Object.freeze({
 	NOT_FOUND: 'not_found',
 	/** No three.ws session and no valid bearer token. */
 	UNAUTHORIZED: 'unauthorized',
+	/**
+	 * The caller IS in this household and their role does not hold the capability
+	 * this route needs. Distinct from NOT_FOUND on purpose: 404 says nothing and
+	 * is the answer across a tenancy boundary, while 403 is safe to say inside one
+	 * and is the only answer that lets a guest refused an unlock understand it is
+	 * their role rather than a broken door. See api/_lib/home/members.js.
+	 */
+	FORBIDDEN: 'role_forbidden',
 	/** The request body or query is malformed. */
 	VALIDATION: 'validation_error',
 });
@@ -56,6 +64,7 @@ const STATUS_BY_CODE = Object.freeze({
 	[HOME_ERR.AUTH]: 400,
 	[HOME_ERR.VALIDATION]: 400,
 	[HOME_ERR.UNAUTHORIZED]: 401,
+	[HOME_ERR.FORBIDDEN]: 403,
 	[HOME_ERR.NOT_FOUND]: 404,
 	[HOME_ERR.NEEDS_CONFIRMATION]: 409,
 	[HOME_ERR.UNREACHABLE]: 502,

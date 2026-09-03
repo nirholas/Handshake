@@ -22,6 +22,7 @@ import {
 	normalizeBaseUrl,
 	resolveIntent,
 	resolveMcpTargets,
+	summarizeClimate,
 	summarizeLighting,
 } from '../src/index.js';
 
@@ -103,7 +104,35 @@ describe('room graph', () => {
 	});
 
 	it('survives an empty house without throwing', () => {
-		expect(buildHomeGraph()).toEqual({ floors: [], rooms: [], unassigned: [] });
+		expect(buildHomeGraph()).toEqual({ floors: [], rooms: [], unassigned: [], temperatureUnit: null });
+	});
+
+	it('converts a reading that declares its own unit into the unit the house shows', () => {
+		// The case this exists for: an instance switched to US customary does not
+		// rewrite a sensor pinned to Celsius, so the raw numbers are mixed. 20C is
+		// 68F, and averaged with a 70F thermostat the room is 69F, not 45 of
+		// nothing.
+		const room = [
+			{ domain: 'sensor', deviceClass: 'temperature', state: '20', attributes: { unit_of_measurement: '\u00b0C' } },
+			{ domain: 'climate', deviceClass: null, state: 'heat', attributes: { current_temperature: 70 } },
+		];
+		expect(summarizeClimate(room, '\u00b0F')).toEqual({ temperature: 69, sources: 2, unit: '\u00b0F' });
+		// The same two readings displayed in Celsius: 70F is 21.1C, averaged with 20C.
+		expect(summarizeClimate(room, '\u00b0C').temperature).toBeCloseTo(20.6, 1);
+	});
+
+	it('leaves readings alone when the house never said what unit it uses', () => {
+		// No unit means no safe conversion. The raw number is passed through and
+		// labelled with a bare degree sign rather than converted on a guess.
+		const out = summarizeClimate([{ domain: 'sensor', deviceClass: 'temperature', state: '25', attributes: {} }]);
+		expect(out).toEqual({ temperature: 25, sources: 1, unit: null });
+	});
+
+	it('carries the unit the house reported, and null when it reported none', () => {
+		// Null is the honest answer, not a Celsius default: the scene shows a bare
+		// degree sign rather than labelling a reading with a unit nobody confirmed.
+		expect(buildHomeGraph().temperatureUnit).toBeNull();
+		expect(buildHomeGraph({ temperatureUnit: '\u00b0F' }).temperatureUnit).toBe('\u00b0F');
 	});
 });
 

@@ -26,6 +26,16 @@ def manifest() -> dict[str, Any]:
     return json.loads(_ALLOWLIST_PATH.read_text(encoding="utf-8"))
 
 
+async def async_preload(hass: Any) -> None:
+    """Warm the cache off the event loop.
+
+    Every allowlist check happens on a hot path inside the loop, and Home
+    Assistant rightly refuses to let an integration read a file there. Reading
+    it once in an executor at setup makes every later check pure CPU.
+    """
+    await hass.async_add_executor_job(manifest)
+
+
 class Denied(Exception):
     """A message was refused by the allowlist.
 

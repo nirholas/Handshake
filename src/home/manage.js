@@ -29,10 +29,19 @@ export function renderManage({ homes, notice, onDisconnect, onReconnect }) {
 	);
 	head.append(heading);
 
+	const headActions = el('div', 'hm-card-actions');
+	// The plan surface, reachable from the place a person is when they wonder how
+	// many of these they are allowed. A limit that can only be found after it
+	// refuses you was never shown to you.
+	const plan = el('a', 'hm-btn hm-btn-ghost', 'Plan and usage');
+	plan.href = '/smart-home/plan';
+	headActions.append(plan);
+
 	const add = el('button', 'hm-btn hm-btn-ghost', 'Connect another');
 	add.type = 'button';
 	add.addEventListener('click', () => onReconnect && onReconnect());
-	head.append(add);
+	headActions.append(add);
+	head.append(headActions);
 	panel.append(head);
 
 	const list = el('ul', 'hm-list');
@@ -116,7 +125,7 @@ function grantRow(home, grant, rerender) {
 		revoke.disabled = true;
 		revoke.textContent = 'Revoking';
 		try {
-			await sendJson(`/api/home/${encodeURIComponent(home.id)}/grants/${encodeURIComponent(grant.entity_id)}`, 'DELETE');
+			await sendJson(`/api/home/${encodeURIComponent(home.id)}/grants?entity_id=${encodeURIComponent(grant.entity_id)}`, 'DELETE');
 			rerender();
 		} catch (err) {
 			revoke.disabled = false;

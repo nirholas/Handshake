@@ -29,9 +29,11 @@ import { normalizeBaseUrl } from './url.js';
  *   action gate for tool calls, which is the only way an agent driving these
  *   tools is safe: see classifyMcpCall for why the tool names do not tell you.
  * @param {(entityId: string) => boolean} [options.isAllowed] standing per-entity approvals
+ * @param {Function} [options.fetchImpl] a pinned fetch, for a server dialling a
+ *   user-supplied URL. See api/_lib/home-url-guard.js.
  * @returns {Promise<{ client: object, tools: Array, callTool: Function, close: () => Promise<void> }>}
  */
-export async function connectHomeMcp({ baseUrl, token, api, clientName = 'three.ws', entities, isAllowed } = {}) {
+export async function connectHomeMcp({ baseUrl, token, api, clientName = 'three.ws', entities, isAllowed, fetchImpl } = {}) {
 	const { http } = normalizeBaseUrl(baseUrl);
 	if (!token) throw new HomeBridgeError(ERR.AUTH, 'A Home Assistant long-lived access token is required.');
 
@@ -47,6 +49,9 @@ export async function connectHomeMcp({ baseUrl, token, api, clientName = 'three.
 	const url = new URL(`${http}/api/mcp${api ? `/${api}` : ''}`);
 	const transport = new StreamableHTTPClientTransport(url, {
 		requestInit: { headers: { authorization: `Bearer ${token}` } },
+		// A server dialling a user-supplied URL passes a fetch pinned to the
+		// addresses its SSRF guard validated; the browser has nothing to pin.
+		...(fetchImpl ? { fetch: fetchImpl } : {}),
 	});
 	const client = new Client({ name: clientName, version: '0.1.0' }, { capabilities: {} });
 

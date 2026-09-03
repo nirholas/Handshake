@@ -24,10 +24,12 @@
 // refused unlock is the single most important row in that table: it is the
 // evidence that the gate held.
 
-import { classifyCall } from '@three-ws/home-bridge';
+import { classifyCall, flattenEntities } from '@three-ws/home-bridge';
 
 import { requireCsrf } from '../../_lib/csrf.js';
-import { resolveHomeAccess } from '../../_lib/home/access.js';
+import { outOfScopeEntities, resolveHomeAccess } from '../../_lib/home/access.js';
+import { can } from '../../_lib/home/members.js';
+import { assertHomeActionAllowed, HomePausedError } from '../../_lib/home/entitlements.js';
 import { homeError, homeFailure, HOME_ERR, toHomeFailure } from '../../_lib/home/errors.js';
 import { acquire } from '../../_lib/home/runtime.js';
 import { listAllowedEntities, logHomeAction } from '../../_lib/home/store.js';
@@ -41,7 +43,10 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const access = await resolveHomeAccess(req, res, req.query?.id);
+	// `act` admits the caller to the endpoint. Whether they may say yes to a
+	// GUARDED action is a second question, asked below, and the two are different
+	// on purpose: a guest may turn a light on and may never authorise an unlock.
+	const access = await resolveHomeAccess(req, res, req.query?.id, 'act');
 	if (!access.ok) return error(res, access.status, access.code, access.message);
 	const { caller, home } = access;
 
@@ -74,6 +79,54 @@ export default wrap(async (req, res) => {
 	const action = `${domain}.${service}`;
 	const targets = entityIdsOf(data);
 
+	// The role check on the confirmation, and the reason order 12 exists.
+	//
+	// `confirmed: true` is a human saying yes to something that opens a building.
+	// A guest is admitted to this endpoint because a house sitter should be able
+	// to turn the lights on, and a guest saying yes to an unlock is exactly what
+	// a house sitter must not be able to do. So the refusal happens HERE, before
+	// the socket is even acquired, and it is a refusal naming their role rather
+	// than a confirmation prompt they could answer: a role that cannot confirm
+	// must never be shown a door it could open.
+	if (confirmed && !can(access.role, 'confirm')) {
+		logHomeAction({
+			homeId: home.id, userId: caller.userId, actor: actorFor(caller), channel: 'websocket',
+			action, entityIds: targets, guarded: true, outcome: 'refused',
+			detail: { reason: 'role_forbidden', role: access.role },
+		});
+		return error(res, 403, 'role_forbidden', `A ${access.role} cannot confirm a guarded action in this home.`);
+	}
+
+	// The plan check, and the ONE line in this file that is about money.
+	//
+	// It sits here, before the socket is acquired, and it checks the safety
+	// exemption FIRST: locking a door, closing a garage or a valve and arming an
+	// alarm are never refused by a commercial limit, on any plan, in any state,
+	// including on a home this account's plan has paused. The classification
+	// needs only the domain and the service, so the exemption does not depend on
+	// the connection being healthy, which matters because the degraded states are
+	// exactly the ones where somebody needs to lock up.
+	//
+	// A refusal is logged like every other refusal. A home_action_log row that
+	// says "we would not do this because of a plan" is evidence the gate held for
+	// a different reason, and the owner is entitled to see it.
+	try {
+		assertHomeActionAllowed({ home, call: { domain, service } });
+	} catch (err) {
+		if (!(err instanceof HomePausedError)) throw err;
+		logHomeAction({
+			homeId: home.id, userId: caller.userId, actor: actorFor(caller), channel: 'websocket',
+			action, entityIds: targets, outcome: 'refused', detail: { reason: err.code },
+		});
+		return json(res, err.status, {
+			error: err.code,
+			error_description: err.message,
+			code: err.code,
+			message: err.message,
+			upgrade: err.upgradePath,
+		});
+	}
+
 	let checkout;
 	try {
 		checkout = await acquire(home.id, caller.userId);
@@ -95,6 +148,31 @@ export default wrap(async (req, res) => {
 		// a pooled socket outliving a revoked allowance is a door that opens after
 		// the user took the key back.
 		await syncAllowList(bridge, home.id);
+
+		// Scope, enforced on the way out as well as on the way in.
+		//
+		// A scoped member's room graph is filtered before it reaches them, so they
+		// cannot SEE an out-of-scope entity. That is not a reason to skip checking
+		// what they ASK for: the filtered graph is what an honest client renders,
+		// and this endpoint takes an entity id straight from a request body. The
+		// area is resolved from the live graph rather than trusted from the body,
+		// because an area a caller names is an argument and an area an entity is
+		// actually in is a fact.
+		if (access.scoped) {
+			const areaOf = new Map(flattenEntities(bridge.graph).map((e) => [e.entityId, e.areaId]));
+			const refused = outOfScopeEntities(
+				access.scope,
+				targets.map((id) => ({ entityId: id, areaId: areaOf.get(id) ?? null })),
+			);
+			if (refused.length) {
+				logHomeAction({
+					homeId: home.id, userId: caller.userId, actor: actorFor(caller), channel: 'websocket',
+					action, entityIds: refused, outcome: 'refused',
+					detail: { reason: 'out_of_scope', role: access.role },
+				});
+				return error(res, 403, 'out_of_scope', 'That is not one of the things you were given access to in this home.');
+			}
+		}
 
 		// Classified for the LOG, not for the decision. The decision is made once,
 		// inside bridge.call, so there is exactly one gate and this cannot drift

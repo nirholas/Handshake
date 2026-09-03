@@ -1,16 +1,20 @@
-// /api/home/:id/log: what the platform actually did inside this house.
+// GET /api/home/:id/log: what the platform did inside this house.
 //
-// This is the owner's record, not ours. It answers one question, "what did my
-// agent do in my house, and what did it refuse to do", and it is the only place
-// a refused unlock is visible. A refusal row matters more than a success row:
-// it is the evidence that the gate fired when something asked to open a door.
+// This is not the general audit_log. It is higher volume, it carries the
+// physical-action verdict, and an operator has to be able to answer "what did my
+// agent do in my house last Tuesday" without a join across a shared table.
 //
-// Read-only, session or bearer, newest first, cursor-paginated on the timestamp
-// rather than an offset, because rows arrive while a person is reading and an
-// offset would silently skip one.
+// Newest first, keyset-paginated on `created_at` rather than an offset: an offset
+// page shifts under you when new rows land at the head, which for a log that is
+// actively being written is every page. `?before=` takes the `created_at` of the
+// last row you saw.
+//
+// Session only, no bearer. Reading the log is reading a record of when a person
+// was home and which doors opened when, which is the most privacy-sensitive data
+// this whole surface holds; an agent token that can act does not thereby get to
+// read the history of everything that ever acted.
 
-import { publicHome, resolveHomeAccess } from '../../_lib/home/access.js';
-import { HOME_ERR, homeError, homeFailure } from '../../_lib/home/errors.js';
+import { resolveHomeAccess } from '../../_lib/home/access.js';
 import { listHomeActions } from '../../_lib/home/store.js';
 import { cors, error, json, method, rateLimited, wrap } from '../../_lib/http.js';
 import { limits } from '../../_lib/rate-limit.js';
@@ -22,61 +26,58 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET'])) return;
 
-	const access = await resolveHomeAccess(req, res, req.query?.id);
+	const access = await resolveHomeAccess(req, res, req.query?.id, 'read');
 	if (!access.ok) return error(res, access.status, access.code, access.message);
+	const { caller, home } = access;
 
-	const rl = await limits.homeRead(access.caller.userId);
+	if (caller.via !== 'session') {
+		return error(res, 403, 'forbidden', 'The action log is readable from a signed-in session only.');
+	}
+
+	const rl = await limits.homeRead(caller.userId);
 	if (!rl.success) return rateLimited(res, rl, 'too many home reads, slow down');
 
 	const url = new URL(req.url, 'http://x');
+	const limit = clamp(Number(url.searchParams.get('limit')) || DEFAULT_LIMIT, 1, MAX_LIMIT);
 
-	const rawLimit = url.searchParams.get('limit');
-	if (rawLimit != null && !/^\d{1,3}$/.test(rawLimit)) {
-		return homeError(res, homeFailure(HOME_ERR.VALIDATION, 'limit must be a number.'));
+	const beforeRaw = url.searchParams.get('before');
+	let before = null;
+	if (beforeRaw) {
+		const at = new Date(beforeRaw);
+		if (Number.isNaN(at.getTime())) {
+			return error(res, 400, 'validation_error', 'before must be an ISO timestamp from a previous page.');
+		}
+		before = at;
 	}
-	const limit = Math.min(Number(rawLimit) || DEFAULT_LIMIT, MAX_LIMIT);
 
-	const before = url.searchParams.get('before');
-	if (before && !Number.isFinite(Date.parse(before))) {
-		return homeError(res, homeFailure(HOME_ERR.VALIDATION, 'before must be an ISO 8601 timestamp.'));
-	}
-
-	const rows = await listHomeActions(access.home.id, { limit: limit + 1, before });
+	// One extra row answers "is there another page" without a second count query
+	// over a table that only grows.
+	const rows = await listHomeActions(home.id, { limit: limit + 1, before });
 	const hasMore = rows.length > limit;
-	const actions = hasMore ? rows.slice(0, limit) : rows;
+	const page = hasMore ? rows.slice(0, limit) : rows;
 
 	return json(res, 200, {
-		home: publicHome(access.home),
-		actions: actions.map(publicAction),
-		// The cursor is the oldest row's timestamp, so the next page continues from
-		// exactly where this one stopped even as new rows land at the top.
-		next_before: hasMore ? isoOf(actions[actions.length - 1]?.created_at) : null,
+		actions: page.map(shape),
+		next_before: hasMore ? new Date(page[page.length - 1].created_at).toISOString() : null,
 	});
 });
 
-/**
- * `detail` is deliberately dropped from the list view. It is a small free-form
- * object written by the action path, and this endpoint renders straight into a
- * page: keeping it out means one less place for a house-controlled string to
- * reach a client that has no schema for it.
- */
-function publicAction(row) {
+function shape(row) {
 	return {
 		id: String(row.id),
 		actor: row.actor,
 		channel: row.channel,
 		action: row.action,
-		entity_ids: Array.isArray(row.entity_ids) ? row.entity_ids : [],
-		guarded: Boolean(row.guarded),
-		confirmed: Boolean(row.confirmed_by),
-		risk: row.risk ?? null,
+		entity_ids: row.entity_ids || [],
+		guarded: row.guarded,
+		confirmed_by: row.confirmed_by,
+		risk: row.risk,
 		outcome: row.outcome,
-		created_at: isoOf(row.created_at),
+		detail: row.detail ?? null,
+		created_at: row.created_at,
 	};
 }
 
-function isoOf(value) {
-	if (!value) return null;
-	const at = value instanceof Date ? value : new Date(value);
-	return Number.isFinite(at.getTime()) ? at.toISOString() : null;
+function clamp(value, min, max) {
+	return Math.min(Math.max(Math.trunc(value) || min, min), max);
 }

@@ -16,7 +16,7 @@
 // the first one broke something.
 
 import { requireCsrf } from '../_lib/csrf.js';
-import { publicHome, resolveHomeAccess } from '../_lib/home/access.js';
+import { filterGraphForScope, publicHome, resolveHomeAccess } from '../_lib/home/access.js';
 import { homeError, toHomeFailure } from '../_lib/home/errors.js';
 import { revokeConnection } from '../_lib/home/store.js';
 import { closeHome, snapshot } from '../_lib/home/runtime.js';
@@ -28,14 +28,16 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, ['GET', 'DELETE'])) return;
 
 	const homeId = req.query?.id;
-	const access = await resolveHomeAccess(req, res, homeId);
+	// GET is a read; DELETE takes the house off the platform, which is the one
+	// thing an admin may not do.
+	const access = await resolveHomeAccess(req, res, homeId, req.method === 'DELETE' ? 'disconnect' : 'read');
 	if (!access.ok) return error(res, access.status, access.code, access.message);
 
 	if (req.method === 'GET') return handleRead(req, res, access);
 	return handleRevoke(req, res, access);
 });
 
-async function handleRead(req, res, { caller, home }) {
+async function handleRead(req, res, { caller, home, scope }) {
 	const rl = await limits.homeRead(caller.userId);
 	if (!rl.success) return rateLimited(res, rl, 'too many home reads, slow down');
 
@@ -53,7 +55,13 @@ async function handleRead(req, res, { caller, home }) {
 
 	return json(res, 200, {
 		home: publicHome(home),
-		graph: live?.graph ?? null,
+		role: home.role,
+		// Filtered before serialization, never in the client. A guest given the
+		// kitchen receives a house with one room in it; the rooms they were not
+		// given do not reach the wire at all, names included, because a room whose
+		// name arrived in a browser has been disclosed no matter what the browser
+		// then chooses to draw.
+		graph: live?.graph ? filterGraphForScope(live.graph, scope) : null,
 		connected: live?.connected ?? false,
 		stale: live?.stale ?? true,
 		live_status: live?.status ?? home.status,

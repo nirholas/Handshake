@@ -19,6 +19,7 @@
 
 import { requireCsrf } from '../../_lib/csrf.js';
 import { resolveHomeAccess } from '../../_lib/home/access.js';
+import { can } from '../../_lib/home/members.js';
 import { homeError, homeFailure, HOME_ERR, toHomeFailure } from '../../_lib/home/errors.js';
 import { acquire } from '../../_lib/home/runtime.js';
 import { listAllowedEntities, logHomeAction } from '../../_lib/home/store.js';
@@ -32,7 +33,9 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	const access = await resolveHomeAccess(req, res, req.query?.id);
+	// Running a scene moves things in the world, so it needs `act`. A viewer is
+	// refused here; a guest is admitted and then held to their scope below.
+	const access = await resolveHomeAccess(req, res, req.query?.id, 'act');
 	if (!access.ok) return error(res, access.status, access.code, access.message);
 	const { caller, home } = access;
 
@@ -47,6 +50,23 @@ export default wrap(async (req, res) => {
 	// Strict `=== true`: see the note in call.js. A truthy string must never be
 	// able to stand in for a person saying yes.
 	const confirmed = body.confirmed === true;
+
+	// The same role check call.js makes, for the same reason. A scene is a bundle
+	// of service calls the user assembled themselves, and "good night" in a house
+	// with a smart lock locks the door. Whether that bundle may be waved through a
+	// guarded step is a question about the person, not about the phrase.
+	if (confirmed && !can(access.role, 'confirm')) {
+		return error(res, 403, 'role_forbidden', `A ${access.role} cannot confirm a guarded action in this home.`);
+	}
+
+	// A scoped member gets scenes, not the house. A scene reaches whatever its
+	// author put in it, which for "good night" is usually every room, so running
+	// one from a role that was given the kitchen is not something to narrow down
+	// to the kitchen: it is something to refuse. Refusing is also the honest
+	// answer, because a half-run scene is worse than no scene.
+	if (access.scoped) {
+		return error(res, 403, 'out_of_scope', 'Scenes run across the whole house, so they are not available on a scoped role.');
+	}
 
 	// A dry run moves nothing, so it is metered as a read. Charging it to the act
 	// bucket would make the voice loop's read-back step compete with the actions
