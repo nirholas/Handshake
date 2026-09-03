@@ -11,8 +11,14 @@ vi.mock('../../api/_lib/sentry.js', () => ({ captureException: () => {} }));
 // gracefully. Without this mock the build would query the production DB, where
 // a stale bot_heartbeat row flips monitor.running to false and fails the smoke
 // test non-deterministically.
+// `sql` is a tagged template that modules also use at import time to build
+// reusable column fragments (api/_lib/home/store.js), so a mock that throws
+// synchronously kills the import of anything on that chain before a single
+// test runs. Hand back a thenable that rejects instead: fragment construction
+// succeeds, every awaited query fails, and that is what a DB outage actually
+// looks like to the handler's `try { await sql`…` } catch` blocks.
 vi.mock('../../api/_lib/db.js', () => ({
-	sql: () => { throw new Error('no database in test'); },
+	sql: () => ({ then: (_resolve, reject) => reject(new Error('no database in test')) }),
 	isDbUnavailableError: () => false,
 	isDbCapacityError: () => false,
 }));
