@@ -21,12 +21,15 @@
 
 import { createToolResourceUrl } from '@x402/mcp';
 import { declareDiscoveryExtension, extractDiscoveryInfo } from '@x402/extensions/bazaar';
-import { createRequire } from 'node:module';
+import { readFileSync } from 'node:fs';
 
-const require = createRequire(import.meta.url);
+// Both packages restrict their `exports` map, so read the versions off disk
+// rather than importing package.json through the resolver.
+const pkgVersion = (name) =>
+	JSON.parse(readFileSync(new URL(`../node_modules/${name}/package.json`, import.meta.url), 'utf8')).version;
 const versions = {
-	'@x402/mcp': require('@x402/mcp/package.json').version,
-	'@x402/extensions': require('@x402/extensions/package.json').version,
+	'@x402/mcp': pkgVersion('@x402/mcp'),
+	'@x402/extensions': pkgVersion('@x402/extensions'),
 	node: process.version,
 };
 console.log('versions:', JSON.stringify(versions));
