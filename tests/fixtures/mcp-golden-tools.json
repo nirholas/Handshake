@@ -2398,6 +2398,78 @@
 			"schemaHash": "08dee57d80d1"
 		}
 	],
+	"packages/home-mcp/src/tools/call-service.js": [
+		{
+			"name": "call_service",
+			"title": "Call a Home Assistant service, subject to the physical-action gate",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": false,
+				"destructiveHint": true,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "fafa0271623c"
+		}
+	],
+	"packages/home-mcp/src/tools/home-overview.js": [
+		{
+			"name": "home_overview",
+			"title": "Read the house: floors, rooms, lights, climate, security",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "44136fa355b3"
+		}
+	],
+	"packages/home-mcp/src/tools/list-entities.js": [
+		{
+			"name": "list_entities",
+			"title": "List addressable entities, filtered by domain, area or name",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "5ab233ecb026"
+		}
+	],
+	"packages/home-mcp/src/tools/list-macros.js": [
+		{
+			"name": "list_macros",
+			"title": "List the scenes and scripts this household already built",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"idempotentHint": true,
+				"openWorldHint": true
+			},
+			"schemaHash": "44136fa355b3"
+		}
+	],
+	"packages/home-mcp/src/tools/run-macro.js": [
+		{
+			"name": "run_macro",
+			"title": "Resolve a phrase to one of the household's own scenes and run it",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": false,
+				"destructiveHint": true,
+				"idempotentHint": false,
+				"openWorldHint": true
+			},
+			"schemaHash": "671496d6eea7"
+		}
+	],
 	"packages/intel-mcp/src/tools/copy-smart-wallets.js": [
 		{
 			"name": "copy_smart_wallets",

@@ -4,6 +4,7 @@ import bs58 from 'bs58';
 
 import {
 	PROVENANCE_3D_VERSION,
+	PROVENANCE_3D_VERSIONS,
 	sha256Hex,
 	buildCredential,
 	signCredential,
@@ -12,7 +13,9 @@ import {
 	decideVerdict,
 	provenanceKey,
 	explorerTxUrl,
+	credentialCanonicalBytes,
 } from '../api/_lib/provenance-3d.js';
+import { gradeSimReadiness, signedGradeSubset, SIM_READINESS_VERSION } from '../api/_lib/sim-readiness.js';
 
 // A deterministic test issuer (32-byte seed) so signatures are reproducible.
 const SEED = new Uint8Array(32).fill(7);
@@ -97,6 +100,125 @@ describe('decideVerdict', () => {
 		const env = makeEnvelope();
 		env.credential.prompt = 'silently changed after signing';
 		expect(decideVerdict(GLB_HASH, env).status).toBe('tampered');
+	});
+});
+
+// v2 adds one optional field and nothing else. The permanent obligation the
+// version bump creates is that a credential signed under v1, before the field
+// existed, keeps verifying byte for byte forever: a credential is evidence, and
+// re-issuing evidence is not an option.
+describe('credential versioning (v1 keeps verifying under v2)', () => {
+	// A v1 credential exactly as the pre-v2 code emitted it, signed over its own
+	// canonical bytes. Hand-built rather than produced by buildCredential, which
+	// now stamps v2 and could never regress into emitting this again.
+	function v1Envelope() {
+		const credential = {
+			version: 'threews.provenance.3d.v1',
+			glbSha256: GLB_HASH,
+			createdAt: '2026-07-08T00:00:00.000Z',
+			creator: 'creator-1',
+			prompt: 'a friendly robot',
+			model: 'TRELLIS',
+			provider: 'nvidia',
+		};
+		const { signature, issuer } = signCredential(credential, SEED);
+		return { credential, signature, issuer };
+	}
+
+	it('the current version is v2 and both versions are implemented', () => {
+		expect(PROVENANCE_3D_VERSION).toBe('threews.provenance.3d.v2');
+		expect(PROVENANCE_3D_VERSIONS).toContain('threews.provenance.3d.v1');
+		expect(PROVENANCE_3D_VERSIONS).toContain('threews.provenance.3d.v2');
+	});
+
+	it('a v1 credential signed before v2 existed still verifies', () => {
+		const verdict = decideVerdict(GLB_HASH, v1Envelope());
+		expect(verdict.status).toBe('verified');
+		expect(verdict.version).toBe('threews.provenance.3d.v1');
+		// v1 predates the field, so nothing may be read back as a signed grade.
+		expect(verdict.simReadiness).toBeNull();
+	});
+
+	it('a v1 credential is still tamper-evident', () => {
+		const env = v1Envelope();
+		env.credential.prompt = 'silently changed after signing';
+		expect(decideVerdict(GLB_HASH, env).status).toBe('tampered');
+	});
+
+	it('reports unknown for a version this verifier does not implement', () => {
+		const credential = { version: 'threews.provenance.3d.v9', glbSha256: GLB_HASH, createdAt: 'x' };
+		const { signature, issuer } = signCredential(credential, SEED);
+		const verdict = decideVerdict(GLB_HASH, { credential, signature, issuer });
+		expect(verdict.status).toBe('unknown');
+		expect(verdict.reason).toContain('v9');
+	});
+});
+
+describe('the signed simulation-readiness grade', () => {
+	// The grade signed into a credential is the real grader's output over a real
+	// mesh, not a hand-written object: the subset has to survive the actual
+	// report shape, which is the only thing that can drift.
+	async function realGrade() {
+		const { Document, NodeIO } = await import('@gltf-transform/core');
+		const h = 0.2;
+		const positions = [-h, -h, -h, h, -h, -h, h, h, -h, -h, h, -h, -h, -h, h, h, -h, h, h, h, h, -h, h, h];
+		const faces = [0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 3, 7, 6, 3, 6, 2, 0, 4, 7, 0, 7, 3, 1, 2, 6, 1, 6, 5];
+		const doc = new Document();
+		const buffer = doc.createBuffer();
+		const pos = doc.createAccessor().setType('VEC3').setArray(new Float32Array(positions)).setBuffer(buffer);
+		const idx = doc.createAccessor().setType('SCALAR').setArray(new Uint16Array(faces)).setBuffer(buffer);
+		const prim = doc.createPrimitive().setAttribute('POSITION', pos).setIndices(idx);
+		doc.createScene('s').addChild(doc.createNode('n').setMesh(doc.createMesh('m').addPrimitive(prim)));
+		return gradeSimReadiness(Buffer.from(await new NodeIO().writeBinary(doc)));
+	}
+
+	it('signs only the documented subset, and it survives sign/verify', async () => {
+		const report = await realGrade();
+		const subset = signedGradeSubset(report);
+		expect(subset.grader).toBe(SIM_READINESS_VERSION);
+		expect(subset.verdict).toBe('simulation_ready');
+		expect(subset.inertiaUnitDensity).toHaveLength(9);
+		// The full report never enters the credential: the canonical bytes have to
+		// stay small and stable, and every signed field is one a future grader
+		// could contradict.
+		expect(Object.keys(subset).sort()).toEqual([
+			'blockers', 'convexityRatio', 'grader', 'inertiaUnitDensity', 'longestAxisMeters', 'verdict', 'volumeM3',
+		]);
+		expect(subset.topology).toBeUndefined();
+		expect(subset.bounds).toBeUndefined();
+
+		const credential = buildCredential({ glbSha256: GLB_HASH, createdAt: 'x', simReadiness: subset });
+		expect(credential.version).toBe('threews.provenance.3d.v2');
+		expect(credential.simReadiness).toEqual(subset);
+		const { signature, issuer } = signCredential(credential, SEED);
+		const verdict = decideVerdict(GLB_HASH, { credential, signature, issuer });
+		expect(verdict.status).toBe('verified');
+		expect(verdict.simReadiness.verdict).toBe('simulation_ready');
+	});
+
+	it('a grade altered after signing breaks the signature', async () => {
+		const subset = signedGradeSubset(await realGrade());
+		const credential = buildCredential({ glbSha256: GLB_HASH, createdAt: 'x', simReadiness: subset });
+		const { signature, issuer } = signCredential(credential, SEED);
+		credential.simReadiness.verdict = 'simulation_ready';
+		credential.simReadiness.volumeM3 = 999;
+		expect(decideVerdict(GLB_HASH, { credential, signature, issuer }).status).toBe('tampered');
+	});
+
+	it('omits the field rather than signing an unusable or absent grade', async () => {
+		expect(signedGradeSubset(null)).toBeNull();
+		expect(signedGradeSubset({ readable: false, verdict: 'unreadable', blockers: ['unreadable_glb'] })).toBeNull();
+		const c = buildCredential({ glbSha256: GLB_HASH, createdAt: 'x', simReadiness: null });
+		expect(c.simReadiness).toBeUndefined();
+		// An undocumented key can never reach the signed bytes, because another
+		// implementation reproducing the canonical form would not know to add it.
+		const smuggled = buildCredential({
+			glbSha256: GLB_HASH,
+			createdAt: 'x',
+			simReadiness: { grader: SIM_READINESS_VERSION, verdict: 'simulation_ready', note: 'trust me' },
+		});
+		expect(smuggled.simReadiness.note).toBeUndefined();
+		expect(credentialCanonicalBytes(smuggled).toString('utf8')).not.toContain('trust me');
 	});
 });
 

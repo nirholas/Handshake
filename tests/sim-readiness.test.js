@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Document, NodeIO } from '@gltf-transform/core';
-import { gradeSimReadiness } from '../api/_lib/sim-readiness.js';
+import { gradeSimReadiness, SIM_READINESS_VERSION } from '../api/_lib/sim-readiness.js';
 
 // Solids with analytically known mass properties, authored in-process so the
 // expected values are derived from the shape's closed form rather than from a
@@ -52,6 +52,7 @@ describe('gradeSimReadiness', () => {
 	it('grades a closed cube as simulation ready with exact mass properties', async () => {
 		const report = await gradeSimReadiness(await glbFrom(cubeMesh(0.4)));
 
+		expect(report.grader).toBe(SIM_READINESS_VERSION);
 		expect(report.readable).toBe(true);
 		expect(report.verdict).toBe('simulation_ready');
 		expect(report.blockers).toEqual([]);
@@ -108,8 +109,30 @@ describe('gradeSimReadiness', () => {
 
 	it('returns an honest verdict for a buffer that is not a GLB', async () => {
 		const report = await gradeSimReadiness(Buffer.from('not a glb at all'));
+		expect(report.grader).toBe(SIM_READINESS_VERSION);
 		expect(report.readable).toBe(false);
 		expect(report.verdict).toBe('unreadable');
 		expect(report.blockers).toContain('unreadable_glb');
+	});
+
+	// Every report, including the two early returns, is a claim by a named
+	// grader: a stored or signed grade whose version is missing cannot be
+	// re-checked later against the grader that produced it.
+	it('stamps the grader version on every report shape, and it is the spec string', async () => {
+		expect(SIM_READINESS_VERSION).toBe('threews.sim.readiness.v1');
+		const empty = new Document();
+		empty.createScene('scene');
+		const noTriangles = await gradeSimReadiness(Buffer.from(await new NodeIO().writeBinary(empty)));
+		expect(noTriangles.verdict).toBe('unusable');
+		expect(noTriangles.blockers).toContain('no_triangles');
+		expect(noTriangles.grader).toBe(SIM_READINESS_VERSION);
+	});
+
+	// The grade is cached, published and signed by content hash, so two runs over
+	// the same bytes that disagreed would silently invalidate every stored grade.
+	it('is deterministic: the same bytes grade identically twice', async () => {
+		const glb = await glbFrom(cubeMesh(0.4));
+		const [a, b] = await Promise.all([gradeSimReadiness(glb), gradeSimReadiness(glb)]);
+		expect(JSON.stringify(a)).toBe(JSON.stringify(b));
 	});
 });

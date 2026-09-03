@@ -111,6 +111,11 @@ export const FREE_TOOLS = Object.freeze(
 		'validate_spatial_response',
 		'export_ar',
 		'verify_provenance',
+		// The physics grade is free for the same reason the authenticity check is:
+		// a gate nobody can afford to call gates nothing. An agent that can grade
+		// an asset before paying to generate, buy, or rig it spends less overall,
+		// which is the point.
+		'grade_sim_readiness',
 		// Free on purpose and permanently. An assurance check that costs money is one
 		// nobody calls, and one nobody calls prevents nothing.
 		'x402_preflight',

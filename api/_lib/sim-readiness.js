@@ -49,6 +49,15 @@ const MODE_TRIANGLES = 4;
 // the same hull, which matters because the hull volume feeds a published grade.
 const HULL_POINT_CAP = 20000;
 
+// The contract string every report carries and every stored grade is keyed by.
+// A grade is a claim about what a SPECIFIC grader measured, so the version rides
+// with the numbers: a consumer selects behaviour by it, a signed credential
+// preserves it permanently, and `where grader_version <> $current` is the
+// backfill sweep after a bump. Additive fields, new blocker values, and any
+// threshold change other than the two documented in SCALE_BOUNDS all require a
+// new string here. Spec: specs/SIM_READINESS.md.
+export const SIM_READINESS_VERSION = 'threews.sim.readiness.v1';
+
 // Physical-plausibility window for a rigid-body prop, in meters along the
 // longest axis. Below the floor the solver hits its contact epsilon; above the
 // ceiling the asset is a set piece, not a prop, and wants a different lane.
@@ -390,12 +399,13 @@ export async function gradeSimReadiness(buffer, options = {}) {
 		const io = await getIO();
 		document = await io.readBinary(buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer));
 	} catch (err) {
-		return { readable: false, error: String(err?.message || err), verdict: 'unreadable', blockers: ['unreadable_glb'] };
+		return { grader: SIM_READINESS_VERSION, readable: false, error: String(err?.message || err), verdict: 'unreadable', blockers: ['unreadable_glb'] };
 	}
 
 	const soup = collectTriangles(document);
 	if (!soup.indices.length) {
 		return {
+			grader: SIM_READINESS_VERSION,
 			readable: true, verdict: 'unusable', blockers: ['no_triangles'],
 			geometry: { triangles: 0, vertices: soup.positions.length / 3, skippedPrimitives: soup.skippedPrimitives },
 		};
@@ -435,6 +445,7 @@ export async function gradeSimReadiness(buffer, options = {}) {
 	else verdict = 'simulation_ready';
 
 	return {
+		grader: SIM_READINESS_VERSION,
 		readable: true,
 		verdict,
 		blockers,
@@ -463,4 +474,41 @@ export async function gradeSimReadiness(buffer, options = {}) {
 	};
 }
 
-export default { gradeSimReadiness, SCALE_BOUNDS };
+/**
+ * The subset of a grade that rides inside a signed content credential.
+ *
+ * The full report deliberately stays out: a credential's canonical bytes must
+ * be small and stable, and every signed field is a field a future grader could
+ * contradict. These seven are the ones a consumer acts on: the version that
+ * made the claim, the verdict, why it is not better, and the four numbers a
+ * simulator needs to place the object and integrate it. Spec:
+ * specs/SIM_READINESS.md ("In the content credential").
+ *
+ * Returns null for a report with nothing worth signing (an unreadable buffer),
+ * because omitting the field is honest and signing a null is not.
+ *
+ * @param {object} report a report from gradeSimReadiness
+ * @returns {object|null}
+ */
+export function signedGradeSubset(report) {
+	if (!report || typeof report !== 'object' || !report.verdict) return null;
+	if (report.readable === false) return null;
+	const subset = {
+		grader: String(report.grader || SIM_READINESS_VERSION),
+		verdict: String(report.verdict),
+		blockers: Array.isArray(report.blockers) ? report.blockers.map(String) : [],
+	};
+	const volume = Number(report.mass?.volumeM3);
+	if (Number.isFinite(volume)) subset.volumeM3 = volume;
+	const axis = Number(report.scale?.longestAxisMeters);
+	if (Number.isFinite(axis)) subset.longestAxisMeters = axis;
+	const inertia = report.mass?.inertiaUnitDensity;
+	if (Array.isArray(inertia) && inertia.length === 9 && inertia.every((n) => Number.isFinite(Number(n)))) {
+		subset.inertiaUnitDensity = inertia.map(Number);
+	}
+	const convexity = Number(report.collision?.convexityRatio);
+	if (Number.isFinite(convexity)) subset.convexityRatio = convexity;
+	return subset;
+}
+
+export default { gradeSimReadiness, SCALE_BOUNDS, SIM_READINESS_VERSION, signedGradeSubset };

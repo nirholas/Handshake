@@ -26,6 +26,8 @@ import {
 	explorerTxUrl,
 } from '../../_lib/provenance-3d.js';
 import { anchorCredentialHash, confirmAnchor } from '../../_lib/provenance-anchor.js';
+import { gradeSimReadiness, signedGradeSubset } from '../../_lib/sim-readiness.js';
+import { getGrade, putGrade } from '../../_lib/sim-readiness-store.js';
 
 const MAX_GLB_BYTES = 64 * 1024 * 1024; // 64 MB — a generous ceiling for a single asset.
 
@@ -37,13 +39,45 @@ function toolError(message, code) {
 	};
 }
 
-// Fetch GLB bytes over an SSRF-guarded request and return their sha256 (hex).
-async function hashGlbBytes(glbUrl) {
+// Fetch GLB bytes over an SSRF-guarded request and return them with their
+// sha256 (hex). Anchoring signs a physics grade over the same bytes, so the
+// buffer is handed back rather than dropped: one fetch, two claims about
+// provably identical content.
+async function fetchGlbBytes(glbUrl) {
 	const res = await fetchSafePublicUrl(glbUrl, { redirect: 'follow' }, { maxBytes: MAX_GLB_BYTES });
 	if (!res.ok) throw new Error(`could not fetch the model (${res.status})`);
 	const buf = Buffer.from(await res.arrayBuffer());
 	if (!buf.length) throw new Error('the model URL returned no data');
-	return sha256Hex(buf);
+	return { buf, glbSha256: sha256Hex(buf) };
+}
+
+async function hashGlbBytes(glbUrl) {
+	return (await fetchGlbBytes(glbUrl)).glbSha256;
+}
+
+// The signed grade for these exact bytes: the cached one when it exists at the
+// current grader version, otherwise a fresh grade that is also cached for the
+// free endpoint. Best-effort by design. A credential without a grade is a
+// complete, valid credential; a credential carrying a grade nobody could
+// compute would not be.
+async function signableGrade(buf, glbSha256, glbUrl) {
+	try {
+		const hit = await getGrade(glbSha256);
+		if (hit) return signedGradeSubset(hit.report);
+		const started = Date.now();
+		const report = await gradeSimReadiness(buf);
+		await putGrade({
+			glbSha256,
+			report,
+			sourceUrl: glbUrl,
+			sizeBytes: buf.length,
+			gradeMs: Date.now() - started,
+		});
+		return signedGradeSubset(report);
+	} catch (err) {
+		console.warn('[provenance] simulation-readiness grade unavailable for this anchor:', err?.message);
+		return null;
+	}
 }
 
 async function readEnvelope(glbSha256) {
@@ -69,6 +103,7 @@ function publicCredential(c) {
 		...(c.model ? { model: c.model } : {}),
 		...(c.provider ? { provider: c.provider } : {}),
 		...(Array.isArray(c.lineage) ? { lineage: c.lineage } : {}),
+		...(c.simReadiness ? { simReadiness: c.simReadiness } : {}),
 	};
 }
 
@@ -113,6 +148,7 @@ async function handleVerify(args) {
 			reason: verdict.reason,
 			badge,
 			glbSha256,
+			credentialVersion: verdict.version || null,
 			credential: publicCredential(envelope?.credential),
 			issuer: envelope?.issuer || null,
 			anchor,
@@ -125,8 +161,9 @@ async function handleAnchor(args) {
 	if (!/^https:\/\//i.test(glbUrl)) return toolError('Provide an https URL to the .glb to credential.', 'invalid_input');
 
 	let glbSha256;
+	let glbBytes;
 	try {
-		glbSha256 = await hashGlbBytes(glbUrl);
+		({ buf: glbBytes, glbSha256 } = await fetchGlbBytes(glbUrl));
 	} catch (err) {
 		return toolError(err.message || 'could not read the model to credential it', 'fetch_failed');
 	}
@@ -134,6 +171,7 @@ async function handleAnchor(args) {
 	const cluster = args.network === 'mainnet' ? 'mainnet' : 'devnet';
 	const credential = buildCredential({
 		glbSha256,
+		simReadiness: await signableGrade(glbBytes, glbSha256, glbUrl),
 		createdAt: new Date().toISOString(),
 		assetId: args.asset_id,
 		creator: args.creator,
@@ -232,7 +270,9 @@ export const toolDefs = [
 		description:
 			'Issue a signed content credential for a generated 3D model (GLB) and anchor its hash on Solana, so anyone ' +
 			'can later verify authenticity and tampering for free with verify_provenance. Records creator, prompt, ' +
-			'model/provider, lineage, timestamp, and the GLB content hash. Real signature, real on-chain anchor.',
+			'model/provider, lineage, timestamp, and the GLB content hash. Also signs the asset\u2019s simulation-readiness ' +
+			'grade (verdict, volume, real-world size, inertia tensor) when it can be computed, so the physics claim is ' +
+			'as forge-proof as the authorship claim. Real signature, real on-chain anchor.',
 		inputSchema: {
 			type: 'object',
 			additionalProperties: false,

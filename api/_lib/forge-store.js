@@ -26,6 +26,8 @@ import { classifyModelCategory } from './forge-classify.js';
 import { cleanupGlb } from './glb-cleanup.js';
 import { derivePbrChannels } from './glb-pbr-derive.js';
 import { fetchUpstream } from './upstream-fetch.js';
+import { gradeSimReadiness } from './sim-readiness.js';
+import { putGrade } from './sim-readiness-store.js';
 
 // Stable, non-secret salt so a leaked DB row can't be trivially reversed to the
 // raw browser-local id. The id is anonymous to begin with; this is hygiene, not
@@ -371,7 +373,10 @@ async function copyToBucket({ sourceUrl, key, fallbackContentType, maxBytes, com
 		cleaned = scored.cleaned;
 	}
 	await putObject({ key, body: buf, contentType, metadata: { source: 'forge' } });
-	return { bytes: buf.length, publicUrl: publicUrl(key), quality, compression, cleaned };
+	// `buffer` is the bytes actually stored, post-cleanup and post-compression, so
+	// a caller that hashes or grades them is describing the asset users receive
+	// rather than the provider's original, and does it without a second fetch.
+	return { bytes: buf.length, publicUrl: publicUrl(key), quality, compression, cleaned, buffer: buf };
 }
 
 function imageExtFor(url) {
@@ -382,6 +387,34 @@ function imageExtFor(url) {
 const IMAGE_CONTENT_TYPE_BY_EXT = { png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp' };
 function imageContentTypeFor(ext) {
 	return IMAGE_CONTENT_TYPE_BY_EXT[ext] || 'image/webp';
+}
+
+// Grade the delivered mesh for simulation readiness and cache the report by its
+// content hash (api/_lib/sim-readiness-store.js). Every finished generation
+// becomes a graded asset, which is what turns the free grade endpoint from an
+// on-demand tool into a growing corpus: by the time anyone asks about one of our
+// meshes, the answer is already a hash lookup.
+//
+// Deliberately fire-and-forget and fully wrapped. Grading is ~1.5 s of pure CPU
+// against a generation that already took tens of seconds, but a user waiting on
+// their model must never lose it to a grader bug or a database blip: any failure
+// here leaves the creation ungraded and delivered, never failed.
+function gradeDeliveredMesh({ buffer, creationId, sourceUrl }) {
+	if (!buffer?.length) return;
+	const started = Date.now();
+	Promise.resolve()
+		.then(() => gradeSimReadiness(buffer))
+		.then((report) =>
+			putGrade({
+				glbSha256: createHash('sha256').update(buffer).digest('hex'),
+				report,
+				sourceUrl,
+				creationId,
+				sizeBytes: buffer.length,
+				gradeMs: Date.now() - started,
+			}),
+		)
+		.catch((err) => console.warn('[forge-store] simulation-readiness grading failed:', err?.message));
 }
 
 // Copy a finished generation into durable storage and flip the row to 'done'.
@@ -473,6 +506,8 @@ export async function materializeCreation({ replicateJobId, clientKey, glbUrl, q
 			latencyMs,
 			source: 'materialize',
 		});
+		// Every delivered mesh gets a physics grade, cached by content hash.
+		gradeDeliveredMesh({ buffer: glb.buffer, creationId: existing.id, sourceUrl: glb.publicUrl });
 		// A finished, signed-in creation is a qualifying streak action + the
 		// trigger for the "first creation" badge. Fire-and-forget — never blocks
 		// delivery of the model itself.

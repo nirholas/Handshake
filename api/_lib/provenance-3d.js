@@ -16,7 +16,24 @@ import { createHash } from 'node:crypto';
 import { ed25519 } from '@noble/curves/ed25519.js';
 import bs58 from 'bs58';
 
-export const PROVENANCE_3D_VERSION = 'threews.provenance.3d.v1';
+// The version new credentials are stamped with. v2 adds one optional field,
+// `simReadiness` (specs/SIM_READINESS.md), to the v1 body and changes nothing
+// else. The additive-field rule in specs/PROVENANCE_3D.md requires the new
+// string anyway, because a verifier must select behaviour by version rather
+// than by sniffing which fields happen to be present.
+export const PROVENANCE_3D_VERSION = 'threews.provenance.3d.v2';
+
+// Every version this verifier implements. v1 credentials were signed over their
+// own canonical bytes and keep verifying unchanged, permanently: a credential is
+// evidence, and evidence does not expire when the schema moves. A version NOT in
+// this set is not a failure of the credential, it is a limit of this verifier:
+// decideVerdict says so rather than guessing at a schema it does not implement.
+export const PROVENANCE_3D_VERSIONS = Object.freeze([
+	'threews.provenance.3d.v1',
+	'threews.provenance.3d.v2',
+]);
+
+const KNOWN_VERSIONS = new Set(PROVENANCE_3D_VERSIONS);
 
 /** sha256 of raw bytes → lowercase hex. The GLB content hash. */
 export function sha256Hex(bytes) {
@@ -34,6 +51,27 @@ function canonicalize(value) {
 	return JSON.stringify(value === undefined ? null : value);
 }
 
+// The exact keys a signed grade may carry, per specs/SIM_READINESS.md. Anything
+// else handed to buildCredential is dropped rather than signed: the canonical
+// bytes are a contract, and an unexpected key in them is a credential no other
+// implementation can reproduce.
+const SIM_READINESS_KEYS = Object.freeze([
+	'grader', 'verdict', 'blockers', 'volumeM3', 'longestAxisMeters', 'inertiaUnitDensity', 'convexityRatio',
+]);
+
+// Keep only the documented keys, and only when the grade actually says
+// something. A grade without a grader version or a verdict is not a claim
+// anyone can check later, so it is omitted instead of signed.
+function normalizeSimReadiness(value) {
+	if (!value || typeof value !== 'object') return null;
+	if (typeof value.grader !== 'string' || typeof value.verdict !== 'string') return null;
+	const out = {};
+	for (const key of SIM_READINESS_KEYS) {
+		if (value[key] !== undefined && value[key] !== null) out[key] = value[key];
+	}
+	return out;
+}
+
 /**
  * Build the unsigned credential body. Only the fields provided are included
  * (lineage/assetId are optional), and the shape is fixed so the canonical form is
@@ -41,7 +79,8 @@ function canonicalize(value) {
  * content hash or a timestamp is meaningless.
  *
  * @param {{ glbSha256:string, createdAt:string, creator?:string, prompt?:string,
- *           model?:string, provider?:string, lineage?:Array, assetId?:string }} f
+ *           model?:string, provider?:string, lineage?:Array, assetId?:string,
+ *           simReadiness?:object }} f
  * @returns {object} the unsigned credential
  */
 export function buildCredential(f) {
@@ -60,6 +99,11 @@ export function buildCredential(f) {
 	if (f.model) cred.model = String(f.model);
 	if (f.provider) cred.provider = String(f.provider);
 	if (Array.isArray(f.lineage) && f.lineage.length) cred.lineage = f.lineage.map(String);
+	// v2's one additive field: the physics grade for these exact bytes, signed so
+	// it cannot be forged the way an unsigned report can. Absent when the asset
+	// could not be graded. An omitted claim beats a fabricated one.
+	const simReadiness = normalizeSimReadiness(f.simReadiness);
+	if (simReadiness) cred.simReadiness = simReadiness;
 	return cred;
 }
 
@@ -106,22 +150,47 @@ export function verifyCredentialSignature(credential, signatureBs58, issuerBs58)
  * credential envelope. Pure — the caller fetches bytes and the credential; this
  * decides the verdict.
  *
+ * Behaviour is selected by `credential.version`, which is what the version
+ * string is for. Both implemented versions verify identically: the signature is
+ * over the credential's own canonical bytes, so a v1 record signed before v2
+ * existed still verifies byte for byte, permanently. What the version decides is
+ * which fields this verifier is licensed to read back: only v2 may carry a
+ * signed `simReadiness` grade. A version this build does not implement is
+ * reported as unknown rather than guessed at, because stating a verdict over a
+ * schema you do not implement is how a verifier starts lying.
+ *
  * @param {string} glbSha256                 sha256 of the bytes actually served
  * @param {{ credential:object, signature:string, issuer:string }|null} envelope
- * @returns {{ status:'verified'|'tampered'|'unknown', reason:string }}
+ * @returns {{ status:'verified'|'tampered'|'unknown', reason:string,
+ *             version?:string, simReadiness?:object|null }}
  */
 export function decideVerdict(glbSha256, envelope) {
 	if (!envelope || !envelope.credential) {
 		return { status: 'unknown', reason: 'no provenance credential is on record for this asset' };
 	}
 	const { credential, signature, issuer } = envelope;
+	const version = typeof credential.version === 'string' ? credential.version : '';
+	if (!KNOWN_VERSIONS.has(version)) {
+		return {
+			status: 'unknown',
+			reason: `this credential was issued under provenance version ${version || '(none)'}, which this verifier does not implement`,
+			version,
+		};
+	}
 	if (!verifyCredentialSignature(credential, signature, issuer)) {
-		return { status: 'tampered', reason: 'the credential signature does not verify — the record was altered' };
+		return { status: 'tampered', reason: 'the credential signature does not verify, so the record was altered', version };
 	}
 	if (credential.glbSha256 !== glbSha256) {
-		return { status: 'tampered', reason: 'the model bytes do not match the signed content hash — the asset was modified' };
+		return { status: 'tampered', reason: 'the model bytes do not match the signed content hash, so the asset was modified', version };
 	}
-	return { status: 'verified', reason: 'the model matches its signed credential' };
+	return {
+		status: 'verified',
+		reason: 'the model matches its signed credential',
+		version,
+		// v1 predates the field entirely, so a v1 record never carries a grade no
+		// matter what a caller reads into it.
+		simReadiness: version === 'threews.provenance.3d.v1' ? null : (credential.simReadiness ?? null),
+	};
 }
 
 /** R2 object key a credential envelope is stored at, addressed by the GLB hash. */
