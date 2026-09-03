@@ -288,7 +288,7 @@ A 3D guide walks across the live site, points at every feature, and narrates wha
 
 URL: https://three.ws/tour/atlas
 
-Every stop on the guided tour as a real screenshot of the live site, with the feature circled by the tour's own spotlight. Search 185 stops, filter by chapter, read what the guide says about each one, and drop the tour onto any feature in a single click.
+Every stop on the guided tour as a real screenshot of the live site, with the feature circled by the tour's own spotlight. Search 263 stops, filter by chapter, read what the guide says about each one, and drop the tour onto any feature in a single click.
 
 ### Walk Anywhere on the Web
 
@@ -749,6 +749,12 @@ Turn any 3D model into a real printed object. Live printability analysis and aut
 URL: https://three.ws/smart-home/join
 
 Accept an invitation to somebody's connected home. The link says which home it is, exactly what your role would let you do there and what it would never let you do, before you sign in. It works once and it expires.
+
+### Your home data
+
+URL: https://three.ws/smart-home/privacy
+
+Everything three.ws stores about the homes you connected, with why it exists and how long it stays. Set how long your action log lives and watch the old entries go, download all of it as JSON, or delete one home or every trace of all of them. Room names, device states and voice audio are never stored at all.
 
 ### Home plan
 
@@ -1983,11 +1989,23 @@ URL: https://three.ws/docs/avatar-artifact
 
 The standalone avatar viewer you paste into any site as a one-line iframe: its ?agent= and ?model= parameters, the hosts a model may come from, how a clip-less rig still comes to life, and the sentence the page shows for every way it can fail.
 
+### Docs · The browser voice loop
+
+URL: https://three.ws/docs/home-voice
+
+How hands-free works for a connected home: a wake word matched by a model running in your own tab, an interruption that stops the agent mid-sentence, a pause that does not truncate your command, and a spoken confirmation narrow enough that a background yes can never unlock a front door. Includes the measured latency of every leg and how to mount the loop on your own surface.
+
 ### Docs · three.ws Home
 
 URL: https://three.ws/docs/smart-home
 
 How a three.ws agent connects to a real house: the open-source smart-home landscape measured and shortlisted, why Home Assistant owns the device layer, the two channels the @three-ws/home-bridge package speaks, the physical-action gate that never lets an unlock through unasked, and the road from here to voice in every room.
+
+### Docs · Give your voice assistant a face
+
+URL: https://three.ws/docs/home-satellite
+
+Point an existing Home Assistant voice pipeline at a three.ws agent and it gains a face: the setup in four steps, exactly what crosses your network and what never does, the eleven states the display can be in, and the rule the whole thing is built around, that closing the page never stops your voice assistant working.
 
 ### Docs · Home households and roles
 
@@ -2001,11 +2019,23 @@ URL: https://three.ws/docs/home-security
 
 The threat model for a connected house, written about a building rather than a database: what each actor can do and what stops them, why the confirmation gate is the load-bearing control and prompt filtering is depth, the eleven checks that run with every build, the SSRF guard every server-side dial goes through and why a hostname check is not one, the prompt-injection proof that ends by asking a real lock whether it opened, and the residuals accepted on purpose.
 
+### Docs · Connect a home that is only on your network
+
+URL: https://three.ws/docs/home-relay
+
+Most Home Assistant installs cannot be reached from the internet, so the house dials three.ws instead: install one HACS integration, paste a ten-minute pairing code, and nothing listens on your network, no port is forwarded, and three.ws never receives a Home Assistant token. Includes the operator half: the relay service, its configuration and deploy, how the allowlist is changed, and how to prove the whole path against a real house on a network the server cannot route to.
+
 ### Docs · Home relay threat model
 
 URL: https://three.ws/docs/home-relay-threat-model
 
 What an attacker gets at every position around the socket a LAN-only house dials out through, and what stops them: why the relay carries a fixed list of message types instead of proxying HTTP into a home network, what a stolen install token is and is not worth, why the allowlist is enforced again inside the house so a compromised relay widens nothing, and the residuals accepted on purpose.
+
+### Docs · The live 3D home
+
+URL: https://three.ws/docs/home-scene
+
+How the connected house becomes a room you can stand in: the room graph the bridge builds from Home Assistant's registries, how a real light dimming dims the model, what the scene does while the house is unreachable, and the fallback that keeps every control usable without WebGL.
 
 ### Docs · Home privacy and retention
 
@@ -4797,12 +4827,6 @@ Indexable: no (excluded from sitemap)
 x402 service catalog: every paid pay-per-call endpoint with price, network, and input schema.
 
 ## News
-
-Product launches, integrations, and announcements from three.ws.
-
-### News & Announcements
-
-URL: https://three.ws/news/
 
 Product launches, integrations, and announcements from three.ws.
 

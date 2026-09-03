@@ -82,7 +82,7 @@ Pass the returned `lineage` array back as `parent_lineage` on the next call to e
 - **AI restyle and Save need a public model URL.** A locally dropped file is checkpointed to a URL in the background first; until that resolves, AI restyle and Save show an honest note rather than failing silently. Loading a public `.glb` via "Load URL" skips the wait.
 - **Texture generation is best-effort.** Past the free daily quota the image lane returns a payment-required signal; the studio surfaces that as a note and keeps the flat PBR restyle it already applied. It never fakes a texture.
 - **Bounded, not gated.** The web endpoint is free but rate-limited per IP (separate limits for uploads and restyle/variants). Instructions are capped at 300 characters and uploads at 64 MB.
-- **Reset vs. revert.** Reset restores the original material values in the current tab. Reverting to an earlier durable GLB is a separate action: click its entry in the Versions strip.
+- **Reset vs. revert.** Reset restores the original material values in the current tab. Reverting to an earlier durable GLB is a separate action: click its entry in the Versions strip. Reverting also re-anchors the source: the next AI restyle, Save version, or "Save all as versions" reads that version's bytes and branches from it, rather than from the newest checkpoint.
 - **No mesh changes.** Geometry, UVs, and rigging are never modified, so a restyle can never break animation or distort a shape.
 
 ## Related

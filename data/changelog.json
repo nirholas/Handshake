@@ -3,6 +3,53 @@
 	"entries": [
 		{
 			"date": "2026-09-03",
+			"title": "Agent avatars on the Pay page load instead of 404ing",
+			"summary": "Every agent card on the x402 Pay page asked for its owner's avatar picture at a URL that has never existed on this site, so the picture always 404'd and the card fell back to a plain letter tile. The page now uses the real thumbnail the rest of three.ws uses, so an agent with a public avatar shows its face on the card, and an agent whose avatar is private still gets the letter tile without a wasted failed request.",
+			"tags": [
+				"fix"
+			],
+			"link": "/pay"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "Live Trading Theater: the tape opens full and the connection light tells the truth",
+			"summary": "The theater got a pass over every state it can be in. The connection light in the top bar used to say Connecting for the whole visit even after the live feed had connected seconds earlier, because the page's translation pass ran last and put the placeholder wording back; it now reports the connection it actually has, and the same fix stops the sound button telling a screen reader the sound is off while it is on. The Live tape used to be a blank column until something happened on-chain: it now opens seeded with real recent activity, shows placeholder rows while that is loading, and says what it is waiting for when the feed is genuinely quiet. A slow roster response no longer dumps you straight onto the error card; the page tries again with more room and says it is still assembling. Recent-activity entries that had nowhere to link are plain text now instead of links that went nowhere, and the ones that do link to a three.ws page stay in your tab instead of opening a new one. The nameplates over each 3D trader were invisible to screen readers even though they are the only keyboard route into a trader's wallet and reputation panel; they are now reachable, and every remaining control on the page has a visible focus ring.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/theater"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "Older Home Assistant houses get their agent tools back",
+			"summary": "If your house runs a Home Assistant release from 2025, three.ws was telling you the Model Context Protocol Server integration was not enabled even when it was, and your agent lost the curated tool list you had set up for it. Home Assistant moved that endpoint between releases: the older ones serve it over one connection style and the newer ones over another, and we were only asking for the newer one. three.ws now asks your house which one it speaks and uses that, instead of guessing from a version number. Nothing to change on your side. We also now test every release we support on a real Home Assistant before we say we support it, so the supported range is a measurement rather than a promise: 2025.10 and newer, with everything working across all of it.",
+			"tags": [
+				"fix"
+			],
+			"link": "/smart-home"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "Sign Mirror tells you what went wrong, and remembers how close you got",
+			"summary": "The ASL practice mirror got a pass over every state it can be in. When the camera cannot start it now says which thing failed and what to do about it: permission refused, no camera on the device, the camera busy in another app, or the hand tracker itself failing to download. It used to print the raw internal error, which nobody could act on. While the tracker downloads you see that it is downloading, instead of a panel that still says the camera is off. Turning the camera off puts the panel back to telling you what to do next rather than leaving an empty box. Every letter square now carries the best score you have reached on it, so twenty six identical squares become a map of where your practice actually is, and that score is kept between sessions. Screen readers now hear the finger being named, and the live skeleton and the per finger bars are redrawn in place instead of being rebuilt on every camera frame, which takes real work off the machine doing the grading.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/sign-mirror"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "Your house, in 3D, live",
+			"summary": "Open a connected home and you get a real 3D model of it, driven by your own Home Assistant. Every room is lit the way the room is actually lit, in the colour its bulbs are actually set to, and dark when they are all off. The outline around a room turns amber the moment anything in it is unlocked or open, so you can see across the whole house at a glance. Your agent stands in it. Click anything to see what it is and act on it, and anything that would open your home asks first, right on the thing it would move. If the connection to your house drops the house stays on screen, greyed, with how long ago it was last seen: it never vanishes. There is a full 2D view of the same house that reads and controls everything without a graphics card, and a browser that cannot run 3D is sent there automatically and told why.",
+			"tags": [
+				"feature"
+			],
+			"link": "/smart-home"
+		},
+		{
+			"date": "2026-09-03",
 			"title": "See what your connected homes use, before a limit ever stops you",
 			"summary": "Your smart home plan now has a page. It shows every allowance whether or not you are near it: how many homes you have connected, how many people are in each household, how many live screens, how many voice minutes and agent turns you have used this month, and the exact date each one resets. Two things a plan can never do are written on the page itself, because they matter more than any number on it. Locking a door, closing a garage or a water valve and arming an alarm are never refused by a limit, on any plan, in any state, including on a home your plan has paused. And confirmation prompts, your action log and every safety property of household roles are on every plan, free included: safety is not an upgrade. If a plan change ever leaves you with more homes than it covers, nothing is disconnected and nothing is deleted. The extra homes are paused, with their access tokens and their whole history untouched, and you pick which ones are live from the same page.",
 			"tags": [
@@ -25947,6 +25994,26 @@
 		},
 		{
 			"date": "2026-09-03",
+			"title": "Talk to your house without finding a phone, and a background \"yeah\" can never open your front door",
+			"summary": "Hands-free is here for connected homes. Turn it on at /voice/home, say the wake word, and ask for what you want: \"turn the kitchen light off\" works while you are carrying groceries. The wake word is matched by a model that runs inside your own browser tab, so that audio never leaves your device; only the sentence you say afterwards is sent, and only to be turned into text. While the microphone is live there is an indicator on the page that cannot be switched off, and Mute genuinely stops the microphone at the device rather than hiding a dot. Talk over the agent and it stops mid-sentence and listens, in about a tenth of a second, and it will not wake itself up when it happens to say its own wake word out loud. The part we spent the most care on is the door. Anything that opens your house is spoken back in full first, the exact device appears on screen while you decide, and only the word \"confirm\" goes through. A \"yeah\" or a \"sure\" overheard from a conversation on the other side of the room does not, and on a device with no screen the agent refuses to take an unlock by voice at all and offers your phone instead. Four wake phrases to choose from, twelve designed states including an honest one for deployments where speech recognition is not available, and every stage of the round trip timed live on screen so you can see where the seconds go.",
+			"tags": [
+				"feature",
+				"security"
+			],
+			"link": "/voice/home"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "Connect a home that only exists on your own network",
+			"summary": "Most Home Assistant installs sit on a home network with nothing exposed to the internet, so until now three.ws had no way to reach them. Now the house connects to us instead. Install one integration through HACS, paste a ten-minute pairing code, and your agent can see your rooms and run your scenes with nothing listening on your network, no port forwarded, and no firewall rule changed. The part worth saying plainly: three.ws never receives a Home Assistant token for a home connected this way. The integration signs in to Home Assistant on your own machine with a credential it makes for itself and never sends anywhere, so there is nothing stored here that would open your house. What we can do through that connection is a fixed list, enforced twice, once by us and once by the integration on your machine: reads, your room layout, and device controls. It can never run code on the machine Home Assistant lives on, restart or reconfigure your instance, or reach anything else on your network. Unlocking, opening and disarming still stop and ask a person first, every time, exactly as they do for a home connected by address. Disconnecting works from either end and takes effect immediately. There is an honest threat model in the docs, including what a compromise of three.ws would mean for a connected house; read it before you decide.",
+			"tags": [
+				"feature",
+				"security"
+			],
+			"link": "/docs/home-relay"
+		},
+		{
+			"date": "2026-09-03",
 			"title": "Your home tells you when it stops answering, and whether the problem is ours",
 			"summary": "When a connected house goes quiet, the manage page now says what happened and what to do about it, without you having to ask anyone. It names the real reason the handshake failed, separates a Home Assistant that rejected our token (make a new one) from a Home Assistant we cannot reach at all (check the instance), and keeps the last room state on screen instead of emptying the page. The part that matters most: it tells you whose problem it is. If enough other homes are failing at the same moment, it says so plainly and tells you there is nothing for you to do, so nobody spends an evening rebooting a router that was never broken. A house that already looks unhealthy loads the explanation on its own; a house that looks fine keeps its panel closed until you open it, so nothing extra is fetched for homes that are working.",
 			"tags": [
@@ -25954,6 +26021,134 @@
 				"improvement"
 			],
 			"link": "/smart-home"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "One unreachable home can no longer take the others down with it",
+			"summary": "Homes connect over a live socket, and a house whose broadband keeps dropping in and out was able to crash the server process that held it, which meant every other connected home on that server went quiet at the same time. The cause was in the open-source Home Assistant client we build on: it reconnects a subscription after a drop without handling the case where the connection dies again mid-reconnect. That is now handled on our side, the failure is reported instead of being lost, and the connection recovers on its own. We have written the problem up for the upstream project too. Found by deliberately flapping a real house on and off every five seconds for two minutes.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"title": "Coin Radar tells you when it is your filter, not the market, that is empty",
+			"summary": "Search the radar for a ticker it has not seen and the board used to say \"Radar is clear, waiting for the next launch\", which blamed a quiet market for a filter you set and gave you no way back. Most of Radar's filters run on the server, so an over-tight one came back looking exactly like a quiet window. Now the board reads your filters instead of the response: it says no coins match, lists every filter you have on as a chip you can click to drop just that one, and keeps a reset-everything button next to it. The 24-hour pulse strip across the top also got an honest state of its own. It is a separate request from the live feed, and when it failed it used to shimmer as if still loading forever; now it says the aggregate did not load, offers a retry, and leaves the feed below running. On a 320px phone every card was losing about 19 pixels off its right edge to a layout overflow that the mobile scroll guard was quietly clipping; cards now fit the screen they are on.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/radar"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "The splat viewer lets go of the graphics card between scenes",
+			"summary": "Every scene the viewer opened built a fresh WebGL renderer, and tearing the old one down freed its memory but never released the graphics context itself. The library we use for splat rendering ends its own cleanup by removing an element from the page that was never there, which throws and skips the last of its teardown, so the contexts stacked up across a session of opening one capture after another. The viewer now releases each context by hand on every swap and when you leave the page. Recentering the camera no longer rebuilds the whole scene either: it moves the camera on the running viewer, so the stage snaps back instantly instead of flashing through the loading screen. If the browser does take the graphics context back, after a GPU reset or under memory pressure, the stage now says so and offers a way to reload rather than sitting on a frozen frame. Two smaller things while we were in there: a scene you opened by URL can be downloaded from the viewer, the same as an upload or a sample, and the drop zone now has a real button for keyboard users with a labelled URL field for screen readers.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/splat"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "The rest of the smart home now speaks your language, and the wall display stays awake",
+			"summary": "The connect page learned all 87 languages last week; the invitation, plan and voice satellite pages had the same gap and now speak them too, along with the live 3D house. Setting a page to Arabic or Hebrew also actually mirrors it now: the reveal button, the coloured bars beside notices, and the room and device columns in the live house used to stay stuck on the left. If you have asked your device to reduce motion, the house stops animating between states while staying completely live, so lights and locks still update the instant they change, they just arrive rather than glide. The live house also keeps the screen awake now, which is what you want on a kitchen tablet on a shelf, and gives that up the moment you switch away, which is what you want on a phone in your pocket. On a phone with a notch the house fills the screen without hiding its own controls behind the cutout.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/smart-home"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "The signal marketplace tells you how to get on it, and reads correctly to a screen reader",
+			"summary": "No verified trader has published a paid feed yet, so the marketplace's empty state is what everyone actually sees, and it only pointed at the leaderboard. It now also points at the place you publish from: the Signals tab of your agent wallet. The rank and network filters used to announce themselves as tabs, which promises a screen-reader user a panel to arrow between that this page does not have; they are now announced as the pressed toggles they really are, wired to the board they re-rank. The Retry button on a failed load and both empty-state buttons had no hover or keyboard-focus styling at all, so a keyboard user could not see where they were; all three now light up on hover and show a focus ring. Landing on the page with a stale or misspelled sort in the address bar rewrites it to the board you are actually looking at, so a shared link always opens the view it names. And a feed link that no longer resolves now gets a real page heading instead of a floating error message.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/signals"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "three.ws Drive on Android Auto, and your agent can reach your house from the car",
+			"summary": "The car surface now has an Android Auto app to go with the CarPlay one. Open three.ws on your car screen and you get four big controls, and your agent listens straight away. The car screen is Android's own layout, which is the rule for every app that runs while you drive, so the conversation runs on your phone and comes out of the car speakers. There is a notification while it is running, on purpose: your agent should never be listening invisibly, and one tap stops it. The bigger part is what it can now do. If you have connected your home to three.ws, your agent already reaches it, so \"turn the porch light on\" works while you are driving home. Anything that opens or unlocks something is different and stays different: your agent will not touch a lock, a garage door or an alarm on its own, and it will not even ask you to approve one while the car is moving. It tells you it is waiting and offers it for the moment you park. On the car screen, where you cannot see what you would be approving, it asks you to do it on your phone instead.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/drive"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "Restyle Studio: upload works from the keyboard, and reverting a version really rewinds the source",
+			"summary": "Two things on the Restyle Studio page were quietly broken. \"Upload GLB\" was a styled label wrapped around a hidden file input, so it could not be reached by keyboard or by a screen reader at all: the only way to bring your own model in was a mouse click. It is now a real button, in the tab order, with the same look. Separately, clicking an older entry in the Versions strip reloaded that model on the stage but left every following action pointed at the newest checkpoint, so an AI restyle or a Save right after a revert quietly re-skinned the wrong model and filed the result under the version you had gone back to. Reverting now re-anchors the source, so restyle, Save version, and \"Save all as versions\" all branch from the version you are actually looking at. The rest of the sweep is smaller but adds up: the metalness, roughness and emissive sliders and the model-URL and instruction fields now have real labels; every async result note is announced instead of silently changing; a successful save reads as success rather than as another grey hint; clicking \"Load URL\" with an empty box tells you what it wants instead of doing nothing; dropping a file on the stage highlights the target and says so when the file is not a model; picking the same file twice in a row works; and \"Load the sample model\" clears the failing ?url= so a reload does not land straight back in the error state.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/restyle"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "The sniper scoreboard reads correctly in the light theme, and tells you what it is doing while it loads",
+			"summary": "The strategy board was building a second copy of its own stylesheet in JavaScript and appending it to the page, so those rules won every tie and quietly reverted the real one. In the light theme that meant profit figures and the LLM badges rendered in a near-white green and lavender on white paper, close to invisible; they now use the same colours as every other crypto page and read properly in both themes. Loading is no longer a blank space under the headline: the board paints a skeleton in the exact shape of the table while it reads each agent's live wallet balance off the chain. If the feed cannot be reached you now get a plain sentence about what went wrong plus a button to try again, instead of a raw browser error and a silent 30-second wait, and a refresh that fails on top of a board that already has numbers keeps the numbers, says they are the last good read, and offers the same retry. Switching the time window while a slower request is still in flight can no longer paint the wrong window's figures. The judgment ledger says so when there are no LLM verdicts in the window rather than disappearing. And the table stopped showing a hand cursor over rows and headers that were never clickable or sortable.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/sniper/experiments"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "Tour Atlas counts its own stops honestly, and says why a stop has no picture",
+			"summary": "The atlas advertised 185 stops in its page title, its search prompt, its social cards and its listing everywhere on the site. It has had 263 for a while, and nothing was checking, so the number quietly went stale. It now says 263, and the atlas guard fails the build if that number ever stops matching the manifest again. Eighteen stops carry no screenshot because they are live 3D or live-market pages that never stop painting long enough to be photographed; their cards used to claim the page 'did not respond', which was untrue of all of them, and now they say what actually happened and invite you to open the page live. Opening one of those stops used to show an empty black frame above the write-up, and now shows the same explanation. If the atlas itself cannot load you get a plain sentence about what went wrong and a Try again button, instead of a raw browser error or an instruction to run a developer command. And a /tour/atlas#stop-name link now opens that stop even when you are already on the page or have a filter narrowing the grid.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/tour/atlas"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "Endpoint Shopper takes payment on the page, so a paid run actually runs",
+			"summary": "Paying for an Endpoint Shopper run used to send you to the generic payment page, which arrived with no price and no wallet options because it could not read the challenge this route sends. Even if it had, it would have replayed the run as an empty request: your task and budget were left behind on the previous page, so a completed payment unlocked nothing. Payment now happens on /shopper itself. The card quotes the real price, lists the Base and Solana wallets the endpoint accepts, reports connecting, signing and settling as they happen, and replays the exact task and budget you typed, so the answer and its cost breakdown appear right where you were, with a link to the settlement transaction. The example task chips are now real buttons you can reach with the keyboard, the task box and budget slider carry proper labels, and the Marketplace and Fact Checker links no longer vanish from the header on a phone.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/shopper"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "Scene Studio stops hiding its own menu bar, and tells a new scene what to do next",
+			"summary": "The 3D scene editor was pinning itself 13 pixels too high, so the site header covered the top of the File, Edit, Add, View, Render and Help row and sliced the tops off the letters at every window size; the autosave checkbox was hidden entirely. It now sits below the header. The Import, Export and Share buttons were parked on top of the Scene, Project and Settings tabs, which made those tabs unreadable and unclickable on any desktop window; they now dock beside the sidebar and follow it when you drag it wider or narrower. At phone width the menu bar used to spill Help onto a second row that the layout could not show, and it now keeps all six on one line. A brand-new scene is no longer a silent black grid: a card explains the three ways to start and disappears the moment you add anything. Importing a model by URL now happens in a proper dialog that checks the link and explains what is wrong inline, instead of a bare browser prompt, and a failed import, export or share now says what went wrong and what to try next in the same notification style as the rest of the site rather than a browser alert box. Sharing a scene labels it with the scene's own name instead of the page's title. The translate, rotate and scale buttons are icon-only and had no names at all for screen readers; they now announce both their name and which one is active. The page also gained the heading every other page on the site has.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/scene"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "Your Home Assistant voice assistant can have a face now",
+			"summary": "If you already run Home Assistant with a voice pipeline, it hears you, understands you, turns on the lights and answers, and the whole visual side of that is an LED ring. You can now point that same pipeline at a three.ws agent and get a face on any screen in the house: it reacts while you speak, the transcript fills in as your own speech recognition produces it, and it lip-syncs the answer to the audio your own text-to-speech generated. Home Assistant keeps every part of the pipeline, running on your own hardware exactly as it does today. Setup is a pairing code, one Docker command, and adding it in Home Assistant as a Wyoming Protocol integration. Nothing needs to be exposed to the internet: Home Assistant connects out to the satellite on your own network, the satellite connects out to us, and there is no port to forward. The rule the whole thing is built around is that closing the page never stops your voice assistant working, so the run finishes, the lights still change, and the only thing you lose is the face.",
+			"tags": [
+				"feature"
+			],
+			"link": "/smart-home/satellite"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "Search keeps its filters honest, and says so when it cannot answer",
+			"summary": "Sharing a filtered search link now works the way it looks: open /search?type=agent and the Agents filter is the one highlighted, instead of the row claiming All while the results were already narrowed. After a search runs, the types that turned up nothing for that query fade back, so you can see at a glance where the matches actually are. When the search index itself is unreachable the page now says it is warming up and offers a retry plus the browse galleries, rather than telling you nothing matched, which was never true. A failed search says what went wrong and gives you the same retry and browse links. Pressing Enter runs the query immediately without waiting for the pause-and-search delay, and Escape clears it. Result cards lost their duplicate untitled thumbnail link, creators without a public profile read as plain names instead of links that went nowhere, the search box and the remix instruction field are properly labelled for screen readers, and every focusable control on the page now shows a visible focus ring.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/search"
 		}
 	]
 }

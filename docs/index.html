@@ -24,6 +24,13 @@
 		<link rel="icon" href="/favicon.ico" />
 		<link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin />
 		<link rel="preload" href="/fonts/space-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin />
+		<!-- Both CDNs are on the critical path: cdnjs serves a render-blocking
+		     stylesheet a few lines below, and jsdelivr serves marked. Without the
+		     handshake started up here the browser only learns it needs a cdnjs
+		     connection when the parser reaches that <link>, and pays DNS + TCP +
+		     TLS before a single byte of the theme arrives. -->
+		<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+		<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<link rel="stylesheet" href="/style.css" />
 		<link
@@ -37,7 +44,6 @@
 		     an ERR_UNKNOWN_URL_SCHEME per figure. Same files the tutorial viewer
 		     loads, so a figure looks identical on every surface. -->
 		<link rel="stylesheet" href="/tutorial-figures.css" />
-		<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
 		<!-- All four are deferred so they stop blocking the parser; nothing here is
 		     needed before the shell's boot, which waits for DOMContentLoaded (fired
 		     only after every deferred script has executed). -->

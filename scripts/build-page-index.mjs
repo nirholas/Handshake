@@ -98,12 +98,17 @@ if (!existsSync(newsRoutesFile) && existsSync(newsSourceFile)) {
 }
 if (existsSync(newsRoutesFile)) {
 	const newsRoutes = plainDeep(JSON.parse(readFileSync(newsRoutesFile, 'utf8')), 'data/rss/items.json');
-	if (Array.isArray(newsRoutes) && newsRoutes.length) {
+	// The news index (/news) is already declared by hand in data/pages.json, so
+	// splicing the generated route for it verbatim would list the same page
+	// twice on /sitemap and emit a duplicate <loc> in every derived export.
+	const declared = new Set(sections.flatMap((s) => s.pages.map((p) => p.path)));
+	const spliced = newsRoutes.filter((r) => !declared.has(r.path));
+	if (Array.isArray(newsRoutes) && spliced.length) {
 		sections.push({
 			id: 'news',
 			title: 'News',
 			description: 'Product launches, integrations, and announcements from three.ws.',
-			pages: newsRoutes.map((r) => ({
+			pages: spliced.map((r) => ({
 				path: r.path,
 				title: r.title,
 				description: r.description,
@@ -356,6 +361,11 @@ ${items}
 \t.sm-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 64px 24px; border: 1px dashed rgba(255,255,255,.12); border-radius: 16px; text-align: center; }
 \t.sm-empty p { margin: 0; color: #b6b6cf; font-size: 15px; }
 \t.sm-empty .sm-empty-hint { color: #7a85a8; font-size: 13px; }
+\t.sm-empty-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 6px; }
+\t.sm-empty-actions button, .sm-empty-actions a { font: inherit; font-size: 13px; padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.03); color: #d8d8ee; text-decoration: none; cursor: pointer; transition: background .15s, border-color .15s, color .15s; }
+\t.sm-empty-actions button:hover, .sm-empty-actions a:hover { background: rgba(120,140,255,.10); border-color: rgba(150,170,255,.38); color: #fff; }
+\t.sm-empty-actions button:active, .sm-empty-actions a:active { transform: translateY(1px); }
+\t.sm-empty-actions :focus-visible { outline: 2px solid #9ad4ff; outline-offset: 2px; }
 \t.sm-empty kbd { display: inline-flex; align-items: center; height: 18px; padding: 0 5px; border: 1px solid rgba(255,255,255,.14); border-radius: 4px; font: 600 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: #9ad4ff; }
 \t.sm-count { display: inline-flex; align-items: center; margin-left: 10px; padding: 2px 9px; border-radius: 999px; background: rgba(255,255,255,.06); color: #9b9bb7; font-size: 12px; font-weight: 600; vertical-align: 3px; }
 \t@media (max-width: 640px) { .sm-filter kbd { display: none; } }
@@ -418,7 +428,11 @@ ${tocHtml}
 ${sectionHtml}
 \t\t<div class="sm-empty" id="sm-empty" hidden>
 \t\t\t<p>No pages match &ldquo;<span id="sm-empty-q"></span>&rdquo;.</p>
-\t\t\t<p class="sm-empty-hint">Clear the filter, or press <kbd>&#8984;K</kbd> for global search &mdash; it covers agents, coins, and skills too.</p>
+\t\t\t<p class="sm-empty-hint">Try a shorter word, or search everything: global search covers agents, coins, and skills too.</p>
+\t\t\t<div class="sm-empty-actions">
+\t\t\t\t<button type="button" id="sm-empty-clear">Clear filter</button>
+\t\t\t\t<a id="sm-empty-search" href="/search">Search all of ${escapeHtml(site.name)}</a>
+\t\t\t</div>
 \t\t</div>
 \t</main>
 \t<div id="footer-container"></div>
@@ -430,6 +444,8 @@ ${sectionHtml}
 \t\tvar countEl = document.getElementById('sm-filter-count');
 \t\tvar empty = document.getElementById('sm-empty');
 \t\tvar emptyQ = document.getElementById('sm-empty-q');
+\t\tvar emptyClear = document.getElementById('sm-empty-clear');
+\t\tvar emptySearch = document.getElementById('sm-empty-search');
 \t\tvar groups = Array.prototype.map.call(document.querySelectorAll('.sm-section'), function (sec) {
 \t\t\treturn {
 \t\t\t\tsec: sec,
@@ -466,12 +482,18 @@ ${sectionHtml}
 \t\t\t\t: total + ' pages \\u00b7 ' + groups.length + ' sections';
 \t\t\temptyQ.textContent = q;
 \t\t\tempty.hidden = !q || shown > 0;
+\t\t\temptySearch.href = q ? '/search?q=' + encodeURIComponent(q) : '/search';
 \t\t\tvar url = new URL(location.href);
 \t\t\tif (q) url.searchParams.set('q', q); else url.searchParams.delete('q');
 \t\t\thistory.replaceState(null, '', url);
 \t\t}
 
 \t\tinput.addEventListener('input', function () { apply(input.value); });
+\t\temptyClear.addEventListener('click', function () {
+\t\t\tinput.value = '';
+\t\t\tapply('');
+\t\t\tinput.focus();
+\t\t});
 \t\tinput.addEventListener('keydown', function (e) {
 \t\t\tif (e.key === 'Escape' && input.value) {
 \t\t\t\te.stopPropagation();

@@ -30,6 +30,7 @@
 // Usage:
 //   node scripts/i18n-translate.mjs                 # translate missing keys, all locales
 //   node scripts/i18n-translate.mjs --locale=es     # one locale
+//   node scripts/i18n-translate.mjs --locales=es,de  # a shard of locales, one process
 //   node scripts/i18n-translate.mjs --force         # retranslate everything
 //   node scripts/i18n-translate.mjs --lint          # validate only (build gate, no API key needed)
 //   node scripts/i18n-translate.mjs --prune         # drop keys the source dropped (no API key needed)
@@ -94,7 +95,18 @@ if (!source) {
 }
 
 const onlyLocale = opt('locale');
-const targets = (onlyLocale ? [onlyLocale] : cfg.outputLocales).filter(Boolean);
+// A bulk run rebuilds the manifest first, which reads all 84 catalogs, so
+// sharding a backlog across providers one `--locale=` process per locale pays
+// that scan 84 times. `--locales=` takes a comma-separated shard instead: each
+// process scans once and then works through its own slice.
+const localeShard = opt('locales');
+const targets = (
+	onlyLocale
+		? [onlyLocale]
+		: localeShard
+			? localeShard.split(',').map((c) => c.trim())
+			: cfg.outputLocales
+).filter(Boolean);
 const localePath = (code) => resolve(ROOT, cfg.output, `${code}.json`);
 
 // --- lint mode: pure validation, no network, safe to run in CI -------------

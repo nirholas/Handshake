@@ -14,11 +14,11 @@ The viewer (`src/splat-viewer.js`) is entirely client-side. It uses `@mkkellogg/
 
 There are three ways to load a scene:
 
-- **By URL.** Paste a link and the viewer fetches the bytes and decodes them. To survive cross-origin blocks, it rewrites the human-facing URLs of common asset hosts to their CORS-enabled raw form: GitHub `raw`/`blob` links become `raw.githubusercontent.com`, Hugging Face `/blob/` becomes `/resolve/`, and Dropbox links are forced to a direct download. When a host still blocks the browser fetch, the error state tells you to download the file and upload it instead.
+- **By URL.** Paste a link and the viewer fetches the bytes and decodes them. To survive cross-origin blocks, it rewrites the human-facing URLs of common asset hosts to their CORS-enabled raw form: GitHub `raw`/`blob` links become `raw.githubusercontent.com`, Hugging Face `/blob/` becomes `/resolve/`, and Dropbox links are forced to a direct download. When a host still blocks the browser fetch, the error state tells you to download the file and upload it instead. Because the bytes are already in memory once a remote scene renders, the download control offers them back, so a scene you reached by URL is as saveable as one you uploaded.
 - **By file.** Pick a file or drag and drop a `.ply`/`.splat`/`.ksplat` onto the stage. The file is read locally and never leaves your machine; a download button is offered for the loaded buffer.
 - **Samples.** Two procedurally generated scenes ship in the page: a radiance shell (6,000 splats) and a synthetic head-and-shoulders bust (14,000 splats) that evokes what a real GaussianAvatars capture looks like in the viewer. These are synthetic, generated in-browser, and downloadable.
 
-A deep link, `?src=<url>&name=<label>`, loads a scene straight from the URL on page load, so a photoreal avatar is shareable with a single link. A recenter control rebuilds the viewer from the cached buffer (the most reliable camera reset across splat-lib versions), and the viewer tears down cleanly on navigation.
+A deep link, `?src=<url>&name=<label>`, loads a scene straight from the URL on page load, so a photoreal avatar is shareable with a single link. A recenter control resets the camera on the live viewer, so it snaps back without dropping and rebuilding the WebGL context. Teardown is explicit: the renderer's graphics context is released by hand on every scene swap and when the page is hidden, because the splat library's own dispose stops short of that. If the browser drops the context anyway, after a GPU reset or under memory pressure, the stage reports it and offers a reload rather than freezing on the last frame.
 
 ## Walkthrough
 
@@ -26,7 +26,7 @@ A deep link, `?src=<url>&name=<label>`, loads a scene straight from the URL on p
 2. Try a sample first: click the radiance shell or the head bust to see the viewer in action.
 3. Load your own scene: paste a `.ply`/`.splat`/`.ksplat` URL and click Render, or drop a file onto the stage, or pick one from disk.
 4. Orbit, zoom, and pan with the built-in controls. The HUD shows the scene label and splat count.
-5. Recenter if the camera drifts. Download the loaded buffer if you loaded a file or a sample.
+5. Recenter if the camera drifts. Download the loaded buffer, whether the scene came from a file, a sample, or a URL.
 6. Share a scene by appending `?src=<url>` to the page URL.
 
 ## Examples

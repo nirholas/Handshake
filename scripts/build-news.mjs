@@ -316,13 +316,13 @@ ${item.tags?.length ? `\t\t\t\t\t<div class="tag-list">${item.tags.map((t) => `<
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>News &amp; Announcements — ${escapeHtml(SITE_NAME)}</title>
 <meta name="description" content="Product launches, integrations, and announcements from three.ws — 3D AI agent avatars on-chain."/>
-<link rel="canonical" href="${SITE_ORIGIN}${NEWS_PATH_PREFIX}/"/>
+<link rel="canonical" href="${SITE_ORIGIN}${NEWS_PATH_PREFIX}"/>
 <link rel="alternate" type="application/rss+xml" title="three.ws news" href="${SITE_ORIGIN}/rss/announcements.xml"/>
 <meta property="og:type" content="website"/>
 <meta property="og:site_name" content="${escapeAttr(SITE_NAME)}"/>
 <meta property="og:title" content="News &amp; Announcements — ${escapeAttr(SITE_NAME)}"/>
 <meta property="og:description" content="Product launches, integrations, and announcements from three.ws."/>
-<meta property="og:url" content="${SITE_ORIGIN}${NEWS_PATH_PREFIX}/"/>
+<meta property="og:url" content="${SITE_ORIGIN}${NEWS_PATH_PREFIX}"/>
 <meta property="og:image" content="${SITE_ORIGIN}/3d.png"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:site" content="${TWITTER_HANDLE}"/>
@@ -368,9 +368,12 @@ export async function writeAllPages(items, { outDir = OUT_DIR, routesFile = ROUT
 	const indexHtml = renderIndexPage(items);
 	await writeFile(path.join(outDir, 'index.html'), indexHtml, 'utf8');
 
+	// The index route is the bare prefix, never `${NEWS_PATH_PREFIX}/`: the
+	// trailing-slash form 301s to it, and a sitemap or llms.txt entry that
+	// redirects is dropped from the index rather than followed.
 	const routes = [
 		{
-			path: `${NEWS_PATH_PREFIX}/`,
+			path: NEWS_PATH_PREFIX,
 			title: 'News & Announcements',
 			description: 'Product launches, integrations, and announcements from three.ws.',
 			lastmod: items[0].timestamp.toISOString().slice(0, 10),

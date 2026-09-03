@@ -277,6 +277,47 @@
 			]
 		},
 		{
+			"title": "Your home",
+			"links": [
+				{
+					"label": "three.ws Home (start here)",
+					"path": "smart-home"
+				},
+				{
+					"label": "Connect your house",
+					"path": "tutorials/connect-your-home"
+				},
+				{
+					"label": "The live 3D home",
+					"path": "home-scene"
+				},
+				{
+					"label": "The browser voice loop",
+					"path": "home-voice"
+				},
+				{
+					"label": "Households and roles",
+					"path": "home-households"
+				},
+				{
+					"label": "A house that is only on your network",
+					"path": "home-relay"
+				},
+				{
+					"label": "Home security",
+					"path": "home-security"
+				},
+				{
+					"label": "Home privacy and retention",
+					"path": "home-privacy"
+				},
+				{
+					"label": "Home plans and quotas",
+					"path": "home-plans"
+				}
+			]
+		},
+		{
 			"title": "Build an agent",
 			"links": [
 				{

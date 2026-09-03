@@ -35,6 +35,8 @@ const SRC = path.join(root, 'data/tour-atlas.json');
 const OUT = path.join(root, 'public/tour/atlas.json');
 const CURRICULUM = path.join(root, 'public/tour/curriculum.json');
 const PUBLIC_DIR = path.join(root, 'public');
+const PAGES_INDEX = path.join(root, 'data/pages.json');
+const PAGE_HTML = path.join(root, 'pages/tour-atlas.html');
 
 /** The exact bytes public/tour/atlas.json must contain for a given manifest. */
 export function renderPublicAtlas(manifest) {
@@ -66,6 +68,39 @@ export function summarizeStops(stops) {
 		withConsoleErrors: stops.filter((s) => s.consoleErrors > 0).length,
 		captured: stops.filter((s) => Boolean(s.media)).length,
 	};
+}
+
+/**
+ * Every "<n> stops" claim in a blob of copy, as numbers.
+ *
+ * The page and its page-index entry both advertise the size of the atlas, and
+ * that number is copied verbatim into the meta description, the OG and Twitter
+ * cards, the JSON-LD block, the OG image URL (where the space is "+"), the
+ * curriculum narration, llms.txt, the sitemap and the changelog. It was written
+ * once, by hand, and was wrong by 78 stops for a month because nothing checked
+ * it. Reading the claims back out is what lets the gate below check them.
+ */
+export function stopCountClaims(text) {
+	return [...String(text ?? '').matchAll(/\b(\d+)[\s+]stops\b/g)].map((m) => Number(m[1]));
+}
+
+/**
+ * The copy that advertises the atlas, checked against the atlas itself.
+ * `sources` is a list of { label, text } so the caller owns the file reads.
+ */
+export function stopCountProblems(total, sources) {
+	const problems = [];
+	for (const { label, text } of sources) {
+		for (const claimed of new Set(stopCountClaims(text))) {
+			if (claimed !== total) {
+				problems.push(
+					`${label} advertises "${claimed} stops" but the atlas has ${total}. ` +
+						`Update the copy to ${total}.`,
+				);
+			}
+		}
+	}
+	return problems;
 }
 
 /**
@@ -180,6 +215,19 @@ function main() {
 	}
 	problems.push(
 		...atlasProblems(manifest, curriculum, (url) => existsSync(path.join(PUBLIC_DIR, url.replace(/^\//, '')))),
+	);
+
+	// The headline number in the page's own marketing copy is the one claim on
+	// this surface that no other check could see, because it lives in meta tags
+	// and a JSON string rather than in the manifest.
+	const pageEntry = JSON.parse(readFileSync(PAGES_INDEX, 'utf8'))
+		.sections.flatMap((s) => s.pages)
+		.find((p) => p.path === '/tour/atlas');
+	problems.push(
+		...stopCountProblems(manifest.stops.length, [
+			{ label: 'data/pages.json /tour/atlas', text: pageEntry?.description ?? '' },
+			{ label: 'pages/tour-atlas.html', text: readFileSync(PAGE_HTML, 'utf8') },
+		]),
 	);
 
 	if (problems.length) {

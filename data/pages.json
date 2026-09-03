@@ -2686,6 +2686,14 @@
 					"changefreq": "monthly",
 					"added": "2026-09-02"
 				},
+			{
+				"path": "/docs/home-satellite",
+				"title": "Docs \u00b7 Give your voice assistant a face",
+				"description": "Point an existing Home Assistant voice pipeline at a three.ws agent and it gains a face: the setup in four steps, exactly what crosses your network and what never does, the eleven states the display can be in, and the rule the whole thing is built around, that closing the page never stops your voice assistant working.",
+				"priority": 0.6,
+				"changefreq": "monthly",
+				"added": "2026-09-03"
+			},
 				{
 					"path": "/docs/home-households",
 					"title": "Docs · Home households and roles",

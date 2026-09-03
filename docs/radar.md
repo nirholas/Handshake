@@ -75,7 +75,8 @@ console.log(clean.map((c) => `${c.symbol} q${c.quality_score}`));
 - **No streaming.** Radar polls every 12 seconds and shows a "Live, updated Ns ago" indicator; polling pauses when the tab is hidden and refetches on return.
 - **Warm-up.** A coin has no score until its 90-second observation window closes and finalize runs. Coins older than the engine's deploy, or mid-observation, return 404 on the detail read and render a "Not observed" state.
 - **Honest nulls.** A signal that was not measured is null and renders "not measured," never a fabricated 0. The market-pulse path degrades to zeros and empties gracefully if the engine tables are cold.
-- **Empty and error states.** The board has designed loading (skeleton grid), empty ("Radar is clear, waiting for the next launch"), no-match (with a reset), and error (with a retry) states. On a silent poll failure it keeps the prior coins and only blanks to an error when nothing is cached.
+- **Empty and error states.** The board has designed loading (skeleton grid), empty ("Radar is clear, waiting for the next launch"), no-match, and error (with a retry) states. Which of empty and no-match you get is decided by your filters, not by the response shape: most filters (search, category, minimum quality, smart money, news) run server-side, so an over-tight filter comes back as an empty feed, and the board still names it as a filter result. The no-match state lists every active filter as a removable chip, so you can drop the one that is too tight instead of resetting the board. On a silent poll failure it keeps the prior coins and only blanks to an error when nothing is cached.
+- **The pulse strip has its own state.** It is a separate request from the feed. If it fails with no earlier value to keep showing, the strip says the 24h aggregate did not load and offers a retry, and the live feed below keeps working; it never sits on a loading shimmer indefinitely.
 
 ## Related
 

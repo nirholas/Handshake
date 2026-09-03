@@ -118,7 +118,9 @@ Speed, signing hand, and avatar are the same settings as /sign-language, stored 
 - **Wrong is named, not just scored.** Each finger gets its own bar, and the hint says what to change ("straighten your ring finger"). When your hand is a long way off but cleanly forms a different letter, the page says which letter it sees.
 - **Letters that share a handshape are flagged, not failed.** G and Q, K and P differ only by which way the hand points, which a handshape score cannot see; the page explains the difference instead of marking you wrong.
 - **A course, not a list.** The alphabet is ordered easiest-first: closed fists, open hands, pointing fingers, then the confusable pairs. Passed letters turn green and progress is kept on the device.
+- **Your best on every letter is visible.** Each letter square carries a thin bar showing the best score that letter has reached, so the grid reads as a map of where your practice actually is rather than 26 identical buttons. Screen readers get the same number in the button's label. **Reset progress** clears both the passes and the best scores.
 - **Entirely on-device.** MediaPipe's hand landmarker runs in the tab, the grading is arithmetic, and there is no network call in the practice loop: no frame, landmark, or score is ever uploaded. No camera? The target diagram and the avatar still work.
+- **A camera that will not start says why.** Permission refused, no camera on the device, the camera held by another app, an insecure origin, and a hand tracker that failed to download are each named separately with the step that fixes them. The one-off tracker download (about 8 MB, cached afterwards) shows its own state in the camera panel rather than leaving it reading "the camera is off".
 
 Deep link: `?letter=W` opens a letter. The signing hand and avatar are the same stored preferences as /sign-language and /asl-alphabet.
 

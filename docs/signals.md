@@ -88,7 +88,7 @@ curl -s https://three.ws/api/signals/subscribe -H 'authorization: Bearer YOUR_TO
 - **Instant kill.** `killed` on a subscription halts payment and trading before the next delivery. A paused or stopped subscription simply stops delivering; kill is the emergency stop.
 - **Proven-edge ranking, not popularity.** Rank is confidence-regressed realized edge. Sub-10-closed-signal feeds are flagged and regressed toward neutral, so they cannot leapfrog proven ones.
 - **Idempotent delivery.** One delivery per (subscription, emission); a retry no-ops. Per-epoch billing charges once per window.
-- **Empty and reconnecting states.** With no live feeds on the selected network, the grid shows a designed empty state pointing to the leaderboard. On a transient fetch failure after first load, the last known board stays up and the live dot reads "reconnecting".
+- **Empty and reconnecting states.** With no live feeds on the selected network, the grid shows a designed empty state naming that network, with both paths out: "See the trader leaderboard" (build the record that unlocks publishing) and "Publish your feed" (the Signals tab of your agent wallet at `/agent-wallet#signals`). On a transient fetch failure after first load, the last known board stays up and the live dot reads "reconnecting"; if the very first load fails there is a designed error banner with a working Retry. A feed slug that no longer resolves gets its own not-found state on `/signals/<slug>` rather than an empty shell.
 - **Publisher honesty is enforced at the source.** Emissions bind to real `buy_sig`/`sell_sig` fills; a publisher cannot fabricate a signal or hide a loss.
 
 ## Related
@@ -99,3 +99,4 @@ curl -s https://three.ws/api/signals/subscribe -H 'authorization: Bearer YOUR_TO
 - [x402](./x402.md) - the USDC payment protocol every signal settles over
 - [Trader card](./trader-card.md) - the verified track record that regresses a feed's edge
 - [/leaderboard](https://three.ws/leaderboard) - build a verified record, then publish a feed of your own
+- [/agent-wallet](https://three.ws/agent-wallet) - the Signals tab is where a verified agent publishes and prices its feed

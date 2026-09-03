@@ -159,6 +159,29 @@ were contention artifacts. If a run still reports pairs beyond the cap, raise
 `--reverify-cap` or re-run just those routes with `--concurrency 1` before
 acting on them.
 
+## A crashed browser no longer costs you the run
+
+A full sweep drives 700+ routes, most of them WebGL, through one browser
+process for well over an hour, on a box that is usually running other agents'
+builds beside it. That browser gets killed sometimes. Until 2026-09-03 the
+sweep had no answer for it: the next `newContext` threw
+`Target page, context or browser has been closed`, and the run died with every
+already-collected finding still in memory and nothing written to `reports/`.
+The run of 2026-09-03 lost 782 desktop routes plus 49 crawl-discovered ones
+that way, at the very last step before the report.
+
+The browser is now a session that relaunches when its process is gone, the
+per-viewport context is rebuilt on demand, and a route that failed only because
+its session was torn down is retried against the fresh one rather than reported
+as an `audit-crash` against a page nobody ever loaded. If the solo re-check
+cannot get a browser at all, it stops early and the report is still written,
+carrying a line that says which errors went unverified. The one thing that
+never happens now is finishing the sweep and having nothing to show for it.
+
+You will see `⚠ browser process gone; relaunching (#n)` when it fires. A run
+with many of those was fighting for memory: lower `--concurrency` before
+trusting its error counts.
+
 ## Reports
 
 Findings are deduped, grouped per route, scored by severity (error / warn /

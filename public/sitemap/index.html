@@ -50,6 +50,11 @@
 	.sm-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 64px 24px; border: 1px dashed rgba(255,255,255,.12); border-radius: 16px; text-align: center; }
 	.sm-empty p { margin: 0; color: #b6b6cf; font-size: 15px; }
 	.sm-empty .sm-empty-hint { color: #7a85a8; font-size: 13px; }
+	.sm-empty-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 6px; }
+	.sm-empty-actions button, .sm-empty-actions a { font: inherit; font-size: 13px; padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.03); color: #d8d8ee; text-decoration: none; cursor: pointer; transition: background .15s, border-color .15s, color .15s; }
+	.sm-empty-actions button:hover, .sm-empty-actions a:hover { background: rgba(120,140,255,.10); border-color: rgba(150,170,255,.38); color: #fff; }
+	.sm-empty-actions button:active, .sm-empty-actions a:active { transform: translateY(1px); }
+	.sm-empty-actions :focus-visible { outline: 2px solid #9ad4ff; outline-offset: 2px; }
 	.sm-empty kbd { display: inline-flex; align-items: center; height: 18px; padding: 0 5px; border: 1px solid rgba(255,255,255,.14); border-radius: 4px; font: 600 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: #9ad4ff; }
 	.sm-count { display: inline-flex; align-items: center; margin-left: 10px; padding: 2px 9px; border-radius: 999px; background: rgba(255,255,255,.06); color: #9b9bb7; font-size: 12px; font-weight: 600; vertical-align: 3px; }
 	@media (max-width: 640px) { .sm-filter kbd { display: none; } }
@@ -83,7 +88,7 @@
 	<main class="sm-wrap">
 		<div class="sm-hero">
 			<h1>Sitemap</h1>
-			<p>All 898 pages on three.ws, grouped by purpose. Looking for the machine-readable versions?</p>
+			<p>All 902 pages on three.ws, grouped by purpose. Looking for the machine-readable versions?</p>
 			<div class="sm-formats">
 				<a href="/sitemap.xml"><code>sitemap.xml</code> · for search engines</a>
 				<a href="/llms.txt"><code>llms.txt</code> · for AI agents</a>
@@ -95,7 +100,7 @@
 		</div>
 		<div class="sm-filter">
 			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-			<input id="sm-filter-input" type="search" placeholder="Filter 898 pages by name, path, or description…" aria-label="Filter pages" autocomplete="off" spellcheck="false" />
+			<input id="sm-filter-input" type="search" placeholder="Filter 902 pages by name, path, or description…" aria-label="Filter pages" autocomplete="off" spellcheck="false" />
 			<kbd aria-hidden="true">/</kbd>
 		</div>
 		<p class="sm-filter-count" id="sm-filter-count" role="status" aria-live="polite"></p>
@@ -128,6 +133,14 @@
 					</a>
 				</li>
 				<li>
+					<a href="/smart-home/privacy">
+						<span class="sm-new-date">Sep 3, 2026</span>
+						<span class="sm-title">Your home data</span>
+						<span class="sm-path">/smart-home/privacy</span>
+						<span class="sm-desc">Everything three.ws stores about the homes you connected, with why it exists and how long it stays. Set how long your action log lives and watch the old entries go, download all of it as JSON, or delete one home or every trace of all of them. Room names, device states and voice audio are never stored at all.</span>
+					</a>
+				</li>
+				<li>
 					<a href="/smart-home/plan">
 						<span class="sm-new-date">Sep 3, 2026</span>
 						<span class="sm-title">Home plan</span>
@@ -152,27 +165,19 @@
 					</a>
 				</li>
 				<li>
-					<a href="/docs/home-households">
+					<a href="/docs/home-voice">
 						<span class="sm-new-date">Sep 3, 2026</span>
-						<span class="sm-title">Docs · Home households and roles</span>
-						<span class="sm-path">/docs/home-households</span>
-						<span class="sm-desc">Sharing a connected house without sharing a login: the five roles and what each one may do, per-member entity scopes that narrow the house a member can even see, how invitations are issued and accepted, what happens to somebody's access when they leave, and the rule everything hangs off, that a guest can never confirm an action that opens a building.</span>
+						<span class="sm-title">Docs · The browser voice loop</span>
+						<span class="sm-path">/docs/home-voice</span>
+						<span class="sm-desc">How hands-free works for a connected home: a wake word matched by a model running in your own tab, an interruption that stops the agent mid-sentence, a pause that does not truncate your command, and a spoken confirmation narrow enough that a background yes can never unlock a front door. Includes the measured latency of every leg and how to mount the loop on your own surface.</span>
 					</a>
 				</li>
 				<li>
-					<a href="/docs/home-security">
+					<a href="/docs/home-satellite">
 						<span class="sm-new-date">Sep 3, 2026</span>
-						<span class="sm-title">Docs · Home security</span>
-						<span class="sm-path">/docs/home-security</span>
-						<span class="sm-desc">The threat model for a connected house, written about a building rather than a database: what each actor can do and what stops them, why the confirmation gate is the load-bearing control and prompt filtering is depth, the eleven checks that run with every build, the SSRF guard every server-side dial goes through and why a hostname check is not one, the prompt-injection proof that ends by asking a real lock whether it opened, and the residuals accepted on purpose.</span>
-					</a>
-				</li>
-				<li>
-					<a href="/docs/home-relay-threat-model">
-						<span class="sm-new-date">Sep 3, 2026</span>
-						<span class="sm-title">Docs · Home relay threat model</span>
-						<span class="sm-path">/docs/home-relay-threat-model</span>
-						<span class="sm-desc">What an attacker gets at every position around the socket a LAN-only house dials out through, and what stops them: why the relay carries a fixed list of message types instead of proxying HTTP into a home network, what a stolen install token is and is not worth, why the allowlist is enforced again inside the house so a compromised relay widens nothing, and the residuals accepted on purpose.</span>
+						<span class="sm-title">Docs · Give your voice assistant a face</span>
+						<span class="sm-path">/docs/home-satellite</span>
+						<span class="sm-desc">Point an existing Home Assistant voice pipeline at a three.ws agent and it gains a face: the setup in four steps, exactly what crosses your network and what never does, the eleven states the display can be in, and the rule the whole thing is built around, that closing the page never stops your voice assistant working.</span>
 					</a>
 				</li>
 			</ul>
@@ -515,7 +520,7 @@
 					<a href="/tour/atlas">
 						<span class="sm-title">Tour Atlas</span>
 						<span class="sm-path">/tour/atlas</span>
-						<span class="sm-desc">Every stop on the guided tour as a real screenshot of the live site, with the feature circled by the tour's own spotlight. Search 185 stops, filter by chapter, read what the guide says about each one, and drop the tour onto any feature in a single click.</span>
+						<span class="sm-desc">Every stop on the guided tour as a real screenshot of the live site, with the feature circled by the tour's own spotlight. Search 263 stops, filter by chapter, read what the guide says about each one, and drop the tour onto any feature in a single click.</span>
 					</a>
 				</li>
 				<li>
@@ -600,7 +605,7 @@
 
 		<section class="sm-section" id="build">
 			<header>
-				<h2>Build<span class="sm-count" data-count>76</span></h2>
+				<h2>Build<span class="sm-count" data-count>77</span></h2>
 				<p class="sm-section-desc">Create and customize an agent.</p>
 			</header>
 			<ul class="sm-list">
@@ -1050,6 +1055,13 @@
 						<span class="sm-title">Join a home</span>
 						<span class="sm-path">/smart-home/join</span>
 						<span class="sm-desc">Accept an invitation to somebody's connected home. The link says which home it is, exactly what your role would let you do there and what it would never let you do, before you sign in. It works once and it expires.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/smart-home/privacy">
+						<span class="sm-title">Your home data</span>
+						<span class="sm-path">/smart-home/privacy</span>
+						<span class="sm-desc">Everything three.ws stores about the homes you connected, with why it exists and how long it stays. Set how long your action log lives and watch the old entries go, download all of it as JSON, or delete one home or every trace of all of them. Room names, device states and voice audio are never stored at all.</span>
 					</a>
 				</li>
 				<li>
@@ -2458,7 +2470,7 @@
 
 		<section class="sm-section" id="learn">
 			<header>
-				<h2>Learn<span class="sm-count" data-count>409</span></h2>
+				<h2>Learn<span class="sm-count" data-count>413</span></h2>
 				<p class="sm-section-desc">Docs, tutorials, and reference.</p>
 			</header>
 			<ul class="sm-list">
@@ -2491,10 +2503,24 @@
 					</a>
 				</li>
 				<li>
+					<a href="/docs/home-voice">
+						<span class="sm-title">Docs · The browser voice loop</span>
+						<span class="sm-path">/docs/home-voice</span>
+						<span class="sm-desc">How hands-free works for a connected home: a wake word matched by a model running in your own tab, an interruption that stops the agent mid-sentence, a pause that does not truncate your command, and a spoken confirmation narrow enough that a background yes can never unlock a front door. Includes the measured latency of every leg and how to mount the loop on your own surface.</span>
+					</a>
+				</li>
+				<li>
 					<a href="/docs/smart-home">
 						<span class="sm-title">Docs · three.ws Home</span>
 						<span class="sm-path">/docs/smart-home</span>
 						<span class="sm-desc">How a three.ws agent connects to a real house: the open-source smart-home landscape measured and shortlisted, why Home Assistant owns the device layer, the two channels the @three-ws/home-bridge package speaks, the physical-action gate that never lets an unlock through unasked, and the road from here to voice in every room.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/home-satellite">
+						<span class="sm-title">Docs · Give your voice assistant a face</span>
+						<span class="sm-path">/docs/home-satellite</span>
+						<span class="sm-desc">Point an existing Home Assistant voice pipeline at a three.ws agent and it gains a face: the setup in four steps, exactly what crosses your network and what never does, the eleven states the display can be in, and the rule the whole thing is built around, that closing the page never stops your voice assistant working.</span>
 					</a>
 				</li>
 				<li>
@@ -2512,10 +2538,24 @@
 					</a>
 				</li>
 				<li>
+					<a href="/docs/home-relay">
+						<span class="sm-title">Docs · Connect a home that is only on your network</span>
+						<span class="sm-path">/docs/home-relay</span>
+						<span class="sm-desc">Most Home Assistant installs cannot be reached from the internet, so the house dials three.ws instead: install one HACS integration, paste a ten-minute pairing code, and nothing listens on your network, no port is forwarded, and three.ws never receives a Home Assistant token. Includes the operator half: the relay service, its configuration and deploy, how the allowlist is changed, and how to prove the whole path against a real house on a network the server cannot route to.</span>
+					</a>
+				</li>
+				<li>
 					<a href="/docs/home-relay-threat-model">
 						<span class="sm-title">Docs · Home relay threat model</span>
 						<span class="sm-path">/docs/home-relay-threat-model</span>
 						<span class="sm-desc">What an attacker gets at every position around the socket a LAN-only house dials out through, and what stops them: why the relay carries a fixed list of message types instead of proxying HTTP into a home network, what a stolen install token is and is not worth, why the allowlist is enforced again inside the house so a compromised relay widens nothing, and the residuals accepted on purpose.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/home-scene">
+						<span class="sm-title">Docs · The live 3D home</span>
+						<span class="sm-path">/docs/home-scene</span>
+						<span class="sm-desc">How the connected house becomes a room you can stand in: the room graph the bridge builds from Home Assistant's registries, how a real light dimming dims the model, what the scene does while the house is unreachable, and the fallback that keeps every control usable without WebGL.</span>
 					</a>
 				</li>
 				<li>
@@ -5777,17 +5817,10 @@
 
 		<section class="sm-section" id="news">
 			<header>
-				<h2>News<span class="sm-count" data-count>113</span></h2>
+				<h2>News<span class="sm-count" data-count>112</span></h2>
 				<p class="sm-section-desc">Product launches, integrations, and announcements from three.ws.</p>
 			</header>
 			<ul class="sm-list">
-				<li>
-					<a href="/news/">
-						<span class="sm-title">News &amp; Announcements</span>
-						<span class="sm-path">/news/</span>
-						<span class="sm-desc">Product launches, integrations, and announcements from three.ws.</span>
-					</a>
-				</li>
 				<li>
 					<a href="/news/huggingface-building-3d-ai-agents">
 						<span class="sm-title">Inside three.ws: our second Hugging Face article, and the whole stack in one piece</span>
@@ -6576,7 +6609,11 @@
 		</section>
 		<div class="sm-empty" id="sm-empty" hidden>
 			<p>No pages match &ldquo;<span id="sm-empty-q"></span>&rdquo;.</p>
-			<p class="sm-empty-hint">Clear the filter, or press <kbd>&#8984;K</kbd> for global search &mdash; it covers agents, coins, and skills too.</p>
+			<p class="sm-empty-hint">Try a shorter word, or search everything: global search covers agents, coins, and skills too.</p>
+			<div class="sm-empty-actions">
+				<button type="button" id="sm-empty-clear">Clear filter</button>
+				<a id="sm-empty-search" href="/search">Search all of three.ws</a>
+			</div>
 		</div>
 	</main>
 	<div id="footer-container"></div>
@@ -6588,6 +6625,8 @@
 		var countEl = document.getElementById('sm-filter-count');
 		var empty = document.getElementById('sm-empty');
 		var emptyQ = document.getElementById('sm-empty-q');
+		var emptyClear = document.getElementById('sm-empty-clear');
+		var emptySearch = document.getElementById('sm-empty-search');
 		var groups = Array.prototype.map.call(document.querySelectorAll('.sm-section'), function (sec) {
 			return {
 				sec: sec,
@@ -6624,12 +6663,18 @@
 				: total + ' pages \u00b7 ' + groups.length + ' sections';
 			emptyQ.textContent = q;
 			empty.hidden = !q || shown > 0;
+			emptySearch.href = q ? '/search?q=' + encodeURIComponent(q) : '/search';
 			var url = new URL(location.href);
 			if (q) url.searchParams.set('q', q); else url.searchParams.delete('q');
 			history.replaceState(null, '', url);
 		}
 
 		input.addEventListener('input', function () { apply(input.value); });
+		emptyClear.addEventListener('click', function () {
+			input.value = '';
+			apply('');
+			input.focus();
+		});
 		input.addEventListener('keydown', function (e) {
 			if (e.key === 'Escape' && input.value) {
 				e.stopPropagation();

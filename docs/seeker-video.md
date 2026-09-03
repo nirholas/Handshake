@@ -65,7 +65,72 @@ That needs `ffmpeg` on `PATH` (`sudo apt-get install -y ffmpeg`) to assemble the
 ships its own ffmpeg, but that build is VP8-only with no filters, so it can do neither the H.264
 encode nor the device compositing.
 
-## Path 2: the Android surfaces around the app
+## Path 2: someone actually using it
+
+Path 1 is a scripted scroll: good for a store listing, silent about what the app does. When you need
+a video of a person using the product feature by feature, run the feature tour instead.
+
+```bash
+npm run audit:web:login          # mint the QA session the generation act needs
+npm run seeker:feature-tour      # node solana-mobile/scripts/make-feature-tour.mjs --authed
+```
+
+It writes `seeker-feature-tour-screen.mp4` (1200x2670) and `seeker-feature-tour-device.mp4`
+(1080x1920) next to the Path 1 files, in the same panel and body geometry, so the two cut together.
+
+Every step is a real interaction with the live site. The tour types a prompt and generates an actual
+avatar through `/api/avatars/reconstruct`, searches the real marketplace, opens a real agent, turns
+that agent's 3D model with a real drag, and sends a real message to the model behind it. Nothing is
+staged: if the site is broken, the run fails instead of recording a pretty lie.
+
+### The acts
+
+| Act | What it records | Ends on |
+|---|---|---|
+| `home` | The app's home screen, a thumb flick down to the Create lane, a tap on "Describe it" | `/create/prompt` |
+| `create` | Typing a prompt, tapping Generate, the real build (time-lapsed), then dragging the finished avatar | the done screen |
+| `market` | The nav drawer, the marketplace, typing a search, flicking the results, opening a card | an agent's page |
+| `agent` | Turning the agent's 3D model, switching to its Chat tab, asking it something, its real answer | the reply |
+| `verify` | The Seeker Genesis Token check on `/seeker`. Opt in with `--acts=...,verify`: it only tells a story on a session whose wallet holds one | the verdict |
+
+`--acts=market,agent` records a subset, and each act navigates itself if it is not already on its
+page, so a single act is a fast loop while you tune a step. The default is
+`home,create,market,agent`, which plays as one continuous session.
+
+Other flags: `--origin=http://localhost:3000` records a dev server, `--fps=20` halves the render time
+for a draft, `--seed=` changes where the thumb lands (it is seeded, so a rerun repeats the same
+takes), `--out=` writes elsewhere, and `--name=` renames both files.
+
+### The thumb
+
+A touch indicator follows the input: a translucent contact dot with a ring that blooms on each tap,
+the same thing Android's "Show taps" developer option draws over a real screen recording. It is the
+only pixel the tour adds to the page. Every tap, keystroke, and drag underneath it is dispatched as
+real input to the real page, and the motion is deliberately human: paths bow and settle instead of
+snapping, typing carries per-character jitter and slows at punctuation, a flick drags the page under
+the finger and then coasts after it lifts, and the hand leaves the glass while text is being typed
+because the keyboard is a system surface this recording does not draw.
+
+Scrolling is the one motion driven from script rather than through the input pipeline. Chromium's
+fling physics run on the wall clock, so a stepped frame would land on a different offset every run;
+`window.scrollTo` per frame with a drag-then-coast profile puts the same pixels on screen every time.
+
+### What it costs to render
+
+Capture is frame-stepped, so wall-clock time is dominated by how expensive each page is to
+screenshot: about 1.3s per frame on `/seeker`, 2.2s on `/create/prompt`, and 3s on `/marketplace`,
+whose document is 90k px tall with a live WebGL hero. A full default tour is roughly an hour of
+capture for around a minute of video. Two things make that number what it is rather than five times
+worse: the tour dismisses the walk companion with its own close button on the first page that offers
+it (which the SDK persists for the session, and halves the per-frame cost), and the browser is
+launched with `--disable-dev-shm-usage`, because Docker's 64 MB `/dev/shm` makes a heavy page either
+crash the renderer outright or drag a single marketplace screenshot out to 22 seconds.
+
+The real build inside the `create` act is not compressed away, it is time-lapsed: the recording keeps
+rolling at one frame per 0.9s of real time while the page's own progress bar, status line, and
+elapsed clock advance at their own pace.
+
+## Path 3: the Android surfaces around the app
 
 For the launcher tap, the status bar, the share sheet, and an end-to-end Seed Vault sign-in, run the
 signed APK in a stock Android emulator and record that. This is the same setup the app's QA uses.
@@ -88,14 +153,14 @@ signed APK in a stock Android emulator and record that. This is the same setup t
    `adb pull /sdcard/take.mp4`.
 
 The emulator's own frame rate is not good enough to carry a whole marketing video. Use it for the
-few seconds of system chrome and let Path 1 carry the app.
+few seconds of system chrome and let Path 1 or Path 2 carry the app.
 
 ## Why not just buy an Android phone
 
 A phone that is not a Seeker gives you a recording of a phone that is not a Seeker. It has no Seed
 Vault, no dApp Store, no Seeker Genesis Token, and a different panel shape, so every Seeker-specific
 moment in the video would still have to come from somewhere else. It costs money and removes none of
-the work. Buy a Seeker if you want a Seeker; otherwise use the two paths above.
+the work. Buy a Seeker if you want a Seeker; otherwise use the paths above.
 
 ## Related
 

@@ -175,6 +175,12 @@ and walk metrics, and writes `user_streaks` / `user_badges`. A daily rollup
 cron ([api/cron/leaderboard-rollup.js](../api/cron/leaderboard-rollup.js))
 sweeps badge awards. Badges and streaks also render on profile pages.
 
+An authenticated request gets `streak` and `badges` back in the same response
+as the board, keyed on the session's user id, so the `/rankings` streak card
+works for accounts that have never picked a username. Those three per-viewer
+blocks (`me`, `streak`, `badges`) make an authenticated response
+`cache-control: private`; anonymous responses stay edge-cacheable.
+
 > Page: [pages/rankings.html](../pages/rankings.html).
 > Source: [api/leaderboard/unified.js](../api/leaderboard/unified.js).
 
