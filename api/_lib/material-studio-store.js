@@ -38,6 +38,7 @@ import { putObject, publicUrl } from './r2.js';
 import { assertPublicHttpsUrl } from './ssrf.js';
 import { fetchSafePublicUrlPinned, MaxBytesExceededError } from './ssrf-guard.js';
 import { watsonxConfig, watsonxChatComplete } from './watsonx.js';
+import { llmComplete } from './llm.js';
 import { materialVariants, materialPreset, MATERIAL_PRESET_NAMES } from '@three-ws/viewer-presets';
 import { seedLineage, appendVersion, branchFrom, buildLineageChain } from '../../mcp-server/src/tools/_lineage.js';
 
@@ -344,6 +345,15 @@ export async function validateAndPersistGlb(bytes, { keyPrefix = 'material-studi
 
 // ── 1. AI restyle: instruction → PBR factors → applied + persisted GLB ──────
 
+// A full PBR answer (name, three factor triples, the optional clearcoat /
+// transmission / sheen blocks, and a notes sentence) measures ~300 tokens of
+// JSON; 400 leaves headroom so a slightly more verbose model returns closing
+// braces instead of a fragment that fails the JSON.parse below.
+const MATERIAL_AUTHOR_MAX_TOKENS = 400;
+// Overall budget across the whole fallback chain, matching the prompt
+// director's. A restyle is interactive: the caller is watching a button.
+const MATERIAL_AUTHOR_TIMEOUT_MS = 20_000;
+
 // Ask IBM Granite (watsonx.ai) for a glTF PBR material from a plain-language
 // description. Same system-prompt shape as the generate_material MCP tool
 // (api/_mcp3d/tools/studio.js), factored out here so Material Studio doesn't
@@ -357,13 +367,6 @@ export async function generateMaterialFactorsFromInstruction(instruction) {
 			code: 'invalid_instruction',
 		});
 	}
-	const cfg = watsonxConfig();
-	if (!cfg.configured) {
-		throw new MaterialStudioError(
-			'AI restyle is not configured on this deployment (set WATSONX_API_KEY and WATSONX_PROJECT_ID).',
-			{ status: 503, code: 'not_configured' },
-		);
-	}
 	const system =
 		'You are a 3D material author. Given a short restyle instruction (e.g. "make it chrome", "wooden", ' +
 		'"cyberpunk neon", "car paint", "frosted glass"), return ONLY a valid JSON object describing a glTF 2.0 ' +
@@ -376,21 +379,51 @@ export async function generateMaterialFactorsFromInstruction(instruction) {
 		'"sheenRoughnessFactor" (0-1) for fabric/velvet/skin-like soft grazing highlights. Omit any key that does ' +
 		'not apply — do not invent clearcoat/transmission/sheen for a plain metal or plastic instruction. ' +
 		'No markdown, no prose outside the JSON.';
-	let result;
-	try {
-		result = await watsonxChatComplete(cfg, {
-			messages: [
-				{ role: 'system', content: system },
-				{ role: 'user', content: trimmed },
-			],
-			maxTokens: 400,
-			temperature: 0.4,
-		});
-	} catch (err) {
-		throw new MaterialStudioError(`AI restyle model call failed: ${err.message}`, {
-			status: 502,
-			code: 'provider_error',
-		});
+	// Two-rung author chain. IBM Granite (watsonx) leads where it is configured
+	// because its factors are what the shipped presets were tuned against, and the
+	// shared free-first chain (llmComplete: the same ladder forge-enhance and the
+	// prompt director ride) backs it up. Before this, an unset WATSONX_API_KEY made
+	// restyle a hard 503 on any deployment without an IBM key, which is exactly how
+	// production served a dead "AI restyle is not configured" button while a healthy
+	// LLM chain sat one call away. Neither rung is required; only an exhausted chain
+	// is an error.
+	let result = null;
+	let lastError = null;
+	const cfg = watsonxConfig();
+	if (cfg.configured) {
+		try {
+			result = await watsonxChatComplete(cfg, {
+				messages: [
+					{ role: 'system', content: system },
+					{ role: 'user', content: trimmed },
+				],
+				maxTokens: MATERIAL_AUTHOR_MAX_TOKENS,
+				temperature: 0.4,
+			});
+		} catch (err) {
+			lastError = err;
+			result = null;
+		}
+	}
+	if (!result?.text) {
+		try {
+			result = await llmComplete({
+				system,
+				user: trimmed,
+				maxTokens: MATERIAL_AUTHOR_MAX_TOKENS,
+				timeoutMs: MATERIAL_AUTHOR_TIMEOUT_MS,
+				track: { tool: 'material-studio-restyle' },
+			});
+		} catch (err) {
+			lastError = err;
+			result = null;
+		}
+	}
+	if (!result?.text) {
+		throw new MaterialStudioError(
+			`AI restyle could not reach a language model: ${lastError?.message || 'no provider is configured on this deployment'}`,
+			{ status: 503, code: 'no_provider' },
+		);
 	}
 	let parsed;
 	try {
