@@ -178,6 +178,9 @@
     <!-- No aria-label: when the badge links out, its accessible name has to be the
          status a sighted visitor reads ("Verified · three.ws"), not a generic one. -->
     <a id="badge" class="badge hidden" target="_blank" rel="noopener noreferrer"></a>
+    <!-- The physics grade, beside the authenticity badge: one says the asset is
+         genuine, the other says a solver can actually use it. -->
+    <sim-readiness id="sim-badge" hidden></sim-readiness>
   </header>
 
   <div class="stage">
@@ -560,6 +563,34 @@
         if (d.reason) badge.title = d.reason;
       })
       .catch(function () {});
+  })();
+
+  // Simulation readiness. Deliberately NOT automatic: grading an arbitrary URL
+  // makes the server fetch the whole GLB, and doing that on every viewer load
+  // would spend real bandwidth answering a question most visitors did not ask.
+  // So the badge starts as an offer and the expensive path stays behind a click.
+  (function checkSimReadiness() {
+    var el = document.getElementById('sim-badge');
+    if (!el || !src) return;
+    function run() {
+      fetch('/api/sim-readiness?src=' + encodeURIComponent(src), { headers: { accept: 'application/json' } })
+        .then(function (r) {
+          return r.json().then(function (body) { return { ok: r.ok, status: r.status, body: body }; });
+        })
+        .then(function (res) {
+          if (!res.ok) throw new Error((res.body && res.body.error) || ('HTTP ' + res.status));
+          el.showReport(res.body, { gradedAt: res.body.gradedAt, cached: res.body.cached });
+        })
+        .catch(function (err) {
+          el.failed(err && err.message ? err.message : 'The physics grade could not be fetched.', { onRetry: run });
+        });
+    }
+    function offer() { el.ungraded({ onGrade: run }); }
+    // The element only exists once its module lands; until then it is inert and
+    // hidden, which is why nothing here runs before the import resolves.
+    import('/sim-readiness-panel.js').then(offer).catch(function () {
+      // No component, no badge. The model itself is unaffected.
+    });
   })();
 
   // If model-viewer itself never upgrades (script blocked), don't spin forever.

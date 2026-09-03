@@ -753,9 +753,18 @@ export async function getPublicCreation({ id, voterKey = null }) {
 					where v.creation_id = fc.id and v.voter_key = ${voterKey ?? ''}) as voted,
 				u.username as creator_username,
 				u.display_name as creator_display_name,
-				u.avatar_url as creator_avatar_url
+				u.avatar_url as creator_avatar_url,
+				g.report as sim_readiness,
+				g.graded_at as sim_readiness_graded_at
 			from forge_creations fc
 			left join users u on u.id = fc.user_id and u.deleted_at is null
+			-- The physics grade for this creation's own bytes, written when the
+			-- generation was materialized. Joined here so the model page renders
+			-- the verdict without a second round trip and, more importantly,
+			-- without re-fetching the GLB just to recompute a hash it already has
+			-- a row for. Null is the honest answer for an older creation nobody
+			-- has graded yet, and the page has a state for that.
+			left join sim_readiness_grades g on g.creation_id = fc.id
 			where fc.id = ${id} and fc.status = 'done' and fc.glb_url is not null
 				and (fc.visibility is null or fc.visibility in ('public', 'unlisted'))
 			limit 1
@@ -790,6 +799,8 @@ export async function getPublicCreation({ id, voterKey = null }) {
 			creatorUsername: r.creator_username || null,
 			creatorDisplayName: r.creator_display_name || r.creator_username || null,
 			creatorAvatarUrl: r.creator_avatar_url || null,
+			simReadiness: r.sim_readiness ?? null,
+			simReadinessGradedAt: r.sim_readiness_graded_at ? new Date(r.sim_readiness_graded_at).toISOString() : null,
 			...x402Provenance(r),
 		};
 	} catch (err) {

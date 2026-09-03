@@ -113,6 +113,7 @@ async function boot() {
 	renderInfo();
 	renderSuggested();
 	loadGeometry();
+	loadSimReadiness();
 	loadComments();
 	loadEdition();
 	if (shell) shell.setAttribute('aria-busy', 'false');
@@ -236,6 +237,7 @@ function renderInfo() {
 			${c.remixable ? `<button class="mp-action" id="mp-remix" type="button">Remix · $0.25</button>` : ''}
 		</div>
 		<div class="mp-geo" id="mp-geo"><span>Reading geometry…</span></div>
+		<div class="mp-sim" id="mp-sim"></div>
 		<p class="mp-desc">${esc(c.prompt)}</p>
 		<div class="mp-published" title="${esc(publishedAbs)}">🕒 Published ${esc(timeAgo(c.created_at))}</div>
 		${chips ? `<div class="mp-chips">${chips}</div>` : ''}
@@ -518,6 +520,51 @@ async function loadGeometry() {
 		log.warn('inspect unavailable', err);
 		const size = formatBytes(c.size_bytes);
 		host.innerHTML = size ? `<span>File size: <b>${esc(size)}</b></span>` : '';
+	}
+}
+
+// ── simulation readiness (the physics grade) ────────────────────────────────
+
+// The grade rides in on the creation payload, joined from sim_readiness_grades
+// by creation_id, so the common case renders instantly with no extra request
+// and, crucially, without re-fetching the GLB server-side just to recompute a
+// hash we already have a row for. A creation from before this lane existed has
+// no row: that is the ungraded state, and it offers the grade rather than
+// reading as a failure.
+async function loadSimReadiness() {
+	const host = $('mp-sim');
+	const c = state.creation;
+	if (!host || !c?.glb_url) return;
+
+	try {
+		await import('/sim-readiness-panel.js');
+	} catch (err) {
+		// No component, no badge. Everything else on the page is unaffected.
+		log.warn('simulation-readiness panel unavailable', err);
+		return;
+	}
+
+	const el = document.createElement('sim-readiness');
+	host.replaceChildren(el);
+
+	const grade = async () => {
+		try {
+			const r = await fetch(`/api/sim-readiness?src=${encodeURIComponent(c.glb_url)}`, {
+				headers: { accept: 'application/json' },
+			});
+			const body = await r.json();
+			if (!r.ok) throw new Error(body?.error || `HTTP ${r.status}`);
+			el.showReport(body, { gradedAt: body.gradedAt, cached: body.cached });
+		} catch (err) {
+			log.warn('simulation-readiness grade failed', err);
+			el.failed(err?.message || 'The physics grade could not be fetched.', { onRetry: grade });
+		}
+	};
+
+	if (c.simReadiness?.verdict) {
+		el.showReport(c.simReadiness, { gradedAt: c.simReadinessGradedAt, cached: true });
+	} else {
+		el.ungraded({ onGrade: grade });
 	}
 }
 

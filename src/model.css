@@ -249,6 +249,16 @@ a.mp-creator-name:hover, a.mp-creator-name:focus-visible { text-decoration: unde
 .mp-geo-detail div { display: flex; justify-content: space-between; gap: 8px; }
 .mp-geo-detail span { color: var(--ink-faint); }
 
+/* The physics grade sits on its own line under the geometry row: it answers a
+   different question from the triangle count and must not read as one more
+   stat. Reserves its own height so the badge landing does not shift the page. */
+.mp-sim {
+	display: flex;
+	align-items: center;
+	min-height: 25px;
+	margin: 0 0 var(--space-md);
+}
+
 /* ── Description + meta + chips ──────────────────────────────────────────── */
 
 .mp-desc {
