@@ -317,6 +317,41 @@ gcloud run services update-traffic three-ws-api --region us-central1 \
   --project aerial-vehicle-466722-p5 --to-revisions <prior revision>=100
 ```
 
+## The other ciphertext under this key: connected homes (2026-09-03)
+
+Everything above is about custodial wallet secrets. Since 2026-09-03 the same
+`WALLET_ENCRYPTION_KEY` also seals a second, unrelated class of secret:
+`home_connections.access_token_enc`, the Home Assistant long-lived access token a user
+hands over when they connect their house (`api/_lib/home/store.js`). A rotation covers
+both or it covers neither.
+
+The two failures look nothing alike, so do not reason about one from the other:
+
+| | Custodial wallet secret | Home access token |
+|---|---|---|
+| What a lost key costs | custody, permanently. The SOL is visible on chain and can never be signed for again | reach, temporarily. Nothing is destroyed |
+| How the user recovers | they cannot | they paste a fresh long-lived token and reconnect |
+| How you notice | a funded wallet fails to sign, and `stranded_custody` counts it | every connected home goes dark at once, with nothing on chain to notice it by |
+| What it is a key to | money | a physical building |
+
+The last row is the reason it gets this primitive at all: a home token unlocks a front
+door, so it is stored like a wallet key from its first write, never as a hash (we have to
+replay it on every socket open) and never in plaintext.
+
+Because a sealed home has no balance to show up in a treasury sweep, it needs its own
+reading. Run it alongside the wallet audit at step 3 of the rotation above:
+
+```sh
+node scripts/audit-home-credential-health.mjs
+```
+
+It is read-only, decrypts in memory only, never prints a token, and carries the same
+no-key guard the wallet audit learned: with no decryption key configured it exits 3 rather
+than reporting every home as sealed. Exit 1 means something really is sealed. If EVERY
+home fails to decrypt, that is one wrong key for the deployment, not a fleet of separately
+broken houses: put the outgoing key in `WALLET_ENCRYPTION_KEY_PREVIOUS` before telling
+anybody to reconnect.
+
 ## Takeaways
 
 - **A key rotation must carry the old key forward, or accompany a sweep.** This is now
@@ -335,6 +370,9 @@ gcloud run services update-traffic three-ws-api --region us-central1 \
   pool feeds.
 - `api/_lib/agent-pumpfun.js` — the self-heal + fund-safety guard.
 - `scripts/rekey-stale-launch-wallets.mjs` — the batch re-key tool.
+- `scripts/audit-home-credential-health.mjs`: the same reading for connected homes, whose
+  tokens sit under the same key (see the section above). Exits 3 with no key, 1 when a
+  home is sealed.
 - `scripts/audit-custodial-key-health.mjs`: read-only sweep of every custodial wallet,
   how many still decrypt, how much SOL sits behind the ones that do not, and which
   addresses they are. Needs `DATABASE_URL` and `WALLET_ENCRYPTION_KEY`; it exits 3 rather

@@ -211,9 +211,28 @@ Each phase is shippable on its own and none of them block on the next.
 [`packages/home-bridge/`](../packages/home-bridge) is the client: the WebSocket channel for
 state and actions, the MCP channel for the user's curated tools, the room graph, intent
 resolution against the house's own scenes, and the physical-action gate in front of both. See
-[its README](../packages/home-bridge/README.md). What remains in this phase is product
-surface, not protocol: the connection record, a `/home` connect flow, and registration of the
-home tools into the existing agent tool catalog.
+[its README](../packages/home-bridge/README.md).
+
+The connection record landed on 2026-09-03 and is the first piece of this phase that is
+product rather than protocol. `home_connections` holds one row per connected house: the
+normalized base URL, the Home Assistant long-lived token encrypted with the same
+AES-256-GCM primitive as a custodial wallet key (`api/_lib/secret-box.js`), a sha256
+fingerprint so a re-connect is idempotent and a token rotation is detectable without
+decrypting anything, and the capabilities that were MEASURED at connect rather than
+assumed. `home_entity_grants` holds the standing allowances behind the physical-action
+gate, per entity and never per domain, because letting the agent open the office door is
+not letting it open the front door. `home_action_log` records every write the platform
+performs against a house, with the gate's verdict and the resolved targets, so an owner
+can answer "what did my agent do in my house last Tuesday".
+
+`api/_lib/home/store.js` is the only module that touches those tables, and
+`getDecryptedToken` is the only function in the codebase that returns a plaintext home
+credential. `api/_lib/home/verify.js` opens a real bridge at connect time and measures what
+the instance can actually do. Covered by `tests/home-store.test.js`, whose live tier runs
+against a real database and a real Home Assistant.
+
+What remains in this phase is the rest of the surface: a `/home` connect flow and
+registration of the home tools into the existing agent tool catalog.
 
 **Phase 2: the 3D home.** `/home` renders a live scene from the entity registry: areas
 become rooms, lights become lights, and the agent stands in it. Scene lighting is driven by
