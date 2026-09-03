@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-03T07:32:51.766Z",
+	"generated_at": "2026-09-03T07:36:51.546Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -265,6 +265,17 @@
 		{
 			"date": "2026-09-03",
 			"type": "update",
+			"title": "Daily Forge shows the day's theme again",
+			"summary": "Daily Forge is built around one thing: the challenge of the day. That headline was being wiped out a moment after the page loaded. The translation layer runs after the page fetches its language file, and it was overwriting the day's theme with the placeholder text baked into the HTML, so every visitor read \"Today's theme\" and \"Loading today's challenge\" forever while the starter prompt and the idea chips below quietly described a completely different subject. The theme, its emoji, its hint and the browser tab title now hold. Four more fixes landed with it: a failed generation says \"Could not reach the forge, check your connection\" instead of the browser's raw \"Failed to fetch\"; when a model finishes but the preview cannot show it, the Download button the message points at is now actually clickable instead of sitting underneath the message; every button and link has a visible focus outline for keyboard and screen-reader users, and the streak milestone popup takes focus, closes on Escape and hands focus back; and a browser without 3D support now still sees today's theme and a clear explanation instead of a permanent loading line. The community strip at the bottom also fills in properly rather than staying empty.",
+			"link": "/daily",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
 			"title": "Endpoint Shopper takes payment on the page, so a paid run actually runs",
 			"summary": "Paying for an Endpoint Shopper run used to send you to the generic payment page, which arrived with no price and no wallet options because it could not read the challenge this route sends. Even if it had, it would have replayed the run as an empty request: your task and budget were left behind on the previous page, so a completed payment unlocked nothing. Payment now happens on /shopper itself. The card quotes the real price, lists the Base and Solana wallets the endpoint accepts, reports connecting, signing and settling as they happen, and replays the exact task and budget you typed, so the answer and its cost breakdown appear right where you were, with a link to the settlement transaction. The example task chips are now real buttons you can reach with the keyboard, the task box and budget slider carry proper labels, and the Marketplace and Fact Checker links no longer vanish from the header on a phone.",
 			"link": "/shopper",
@@ -521,6 +532,16 @@
 			"link": "/docs/smart-home",
 			"tags": [
 				"docs"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Your agent on a Mac and an iPhone: the Agent glance widget comes to Apple",
+			"summary": "The widget that has been on Android home screens and the Windows 11 widgets board now runs on Apple platforms too, from one WidgetKit extension shared by both. On a Mac it lives in Notification Centre in small, medium or large, fed by a small menu bar app that shows the same card and carries Open my agent, Refresh now and Unlink this Mac. On iPhone and iPad it is a home screen widget inside the three.ws app. Linking is one press on three.ws/glance: the page hands the device its own token, and if nothing opens (a Mac whose browser is signed in elsewhere) it shows a code to paste instead. The widget refreshes about every half hour without you opening anything, follows light and dark mode because it fetches the card in both, keeps the last card it downloaded when you are offline and says when that was rather than showing a spinner, and opens your agent on a tap. Every linked device is listed on three.ws/glance with a revoke button, and each token can only ever read your glance card.",
+			"link": "/glance",
+			"tags": [
+				"feature"
 			]
 		},
 		{

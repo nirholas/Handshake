@@ -1,6 +1,6 @@
 
 > 3d-agent@1.5.2 gate
-> npm run check:conflicts && npm run check:claude && npm run check:vendored && npm run check:fetch-timeouts && npm run check:tdz-bootstrap && npm run check:event && npm run check:cron-syntax && npm run check:studio-openapi && npm run test:gate && npm run test:gate-3d && npm run audit:mcp && npm run audit:mcp-golden && npm run audit:mcp-safety && npm run audit:mcp-catalog && npm run audit:routes && npm run audit:handlers && npm run audit:pages && npm run audit:links && npm run audit:docs && npm run audit:upstreams && npm run check:tutorials && npm run audit:hidden-guard && npm run audit:inline-handlers && npm run audit:x402-catalog && npm run audit:tokens && npm run audit:guards && npm run audit:tour-atlas && npm run check:ios-icons
+> npm run check:conflicts && npm run check:claude && npm run check:vendored && npm run check:fetch-timeouts && npm run check:tdz-bootstrap && npm run check:event && npm run check:cron-syntax && npm run check:studio-openapi && npm run test:gate && npm run test:gate-3d && npm run audit:mcp && npm run audit:mcp-golden && npm run audit:mcp-safety && npm run audit:mcp-catalog && npm run audit:routes && npm run audit:handlers && npm run audit:pages && npm run audit:links && npm run audit:docs && npm run audit:upstreams && npm run check:tutorials && npm run audit:hidden-guard && npm run audit:inline-handlers && npm run audit:x402-catalog && npm run audit:tokens && npm run audit:guards && npm run audit:tour-atlas && npm run check:ios-icons && npm run check:macos-icon && npm run check:apple-widget
 
 
 > 3d-agent@1.5.2 check:conflicts
@@ -26,7 +26,7 @@ check:fetch-timeouts: every external fetch, and every fetch under api/, is bound
 > 3d-agent@1.5.2 check:tdz-bootstrap
 > node scripts/check-tdz-bootstrap.mjs
 
-check:tdz-bootstrap: no bootstrap-before-state ordering in 1597 browser module(s)
+check:tdz-bootstrap: no bootstrap-before-state ordering in 1601 browser module(s)
 
 > 3d-agent@1.5.2 check:event
 > node scripts/check-event-window.mjs
@@ -61,8 +61,8 @@ All cron expressions are valid (offline mode: live jobs not compared).
 
  Test Files  7 passed (7)
       Tests  86 passed (86)
-   Start at  07:25:43
-   Duration  2.93s (transform 2.66s, setup 0ms, import 5.30s, tests 2.79s, environment 1ms)
+   Start at  07:35:07
+   Duration  6.15s (transform 6.62s, setup 0ms, import 15.33s, tests 4.00s, environment 1ms)
 
 [test-gate] ✓ all critical-path tests passed
 
@@ -75,8 +75,8 @@ All cron expressions are valid (offline mode: live jobs not compared).
 
  Test Files  4 passed (4)
       Tests  559 passed (559)
-   Start at  07:25:46
-   Duration  692ms (transform 400ms, setup 0ms, import 948ms, tests 502ms, environment 1ms)
+   Start at  07:35:15
+   Duration  1.95s (transform 1.01s, setup 0ms, import 2.60s, tests 1.37s, environment 1ms)
 
 
 > 3d-agent@1.5.2 audit:mcp
@@ -87,26 +87,70 @@ All cron expressions are valid (offline mode: live jobs not compared).
 > 3d-agent@1.5.2 audit:mcp-golden
 > node scripts/audit-mcp-golden.mjs
 
-[audit:mcp-golden] api/_mcp3d/tools/sim-readiness.js: tool ADDED: grade_sim_readiness
+[audit:mcp-golden] 307 hosted MCP tool contracts match the golden fixture
 
-[audit:mcp-golden] 1 contract change(s) vs golden fixture.
-  If every change above is INTENTIONAL (reviewed as a public-contract change),
-  refresh the fixture:  node scripts/audit-mcp-golden.mjs --update
+> 3d-agent@1.5.2 audit:mcp-safety
+> node scripts/audit-mcp-safety.mjs
+
+[audit:mcp-safety] 307 MCP tool annotations verified against handler behavior across 248 files, 6 reviewed exemption(s)
+
+> 3d-agent@1.5.2 audit:mcp-catalog
+> node scripts/build-mcp-catalog.mjs --check
+
+[audit:mcp-catalog] catalog matches source: 307 tools across 40 servers
+
+> 3d-agent@1.5.2 audit:routes
+> node scripts/verify-routes.mjs --strict
+
+Route verify — 791 catalog pages, 1311 main routes, 1 post-filesystem routes.
+  modeled dist files: 2934 · canonical-covered: 791 · literal page routes checked for shadows: 582
+  filesystem boundary (handle:filesystem) present: yes
+
+✓ static checks pass: every catalog page reachable, unknown paths → designed 404, no shadowed page routes.
+
+> 3d-agent@1.5.2 audit:handlers
+> node scripts/audit-empty-handlers.mjs
+
+✓ audit-empty-handlers: all API handlers export a body (2195 checked)
+
+> 3d-agent@1.5.2 audit:pages
+> node scripts/audit-page-index.mjs --strict
+
+Route audit: 166 auditable page routes, 791 documented in pages.json.
+✓ Every auditable page route is documented.
+
+> 3d-agent@1.5.2 audit:links
+> node scripts/audit-links.mjs
+
+Link audit — scanned 2253 files
+
+Broken internal links : 0
+
+Stub hrefs (#, void(0)) : 0
+
+Dangling routes (→ missing file) : 0
+
+External links collected : 556
+  (run with --external to probe liveness)
+
+Dynamic targets skipped : 1371
+
+> 3d-agent@1.5.2 audit:docs
+> node scripts/audit-docs.mjs
+
+docs audit: clean (1511 markdown files checked).
+
+> 3d-agent@1.5.2 audit:upstreams
+> node scripts/audit-upstreams.mjs
+
+audit:upstreams: 225 outbound call sites across 79 upstreams (A:0 B:54 C:92 D:79 F:0)
+audit:upstreams: no regressions
+
+> 3d-agent@1.5.2 check:tutorials
+> node scripts/sync-tutorial-pages.mjs
+
+manifest entries: 70  markdown files: 70
+pages.json: missing 1 tutorial entry
+
+Tutorial drift found. Fix the manifest, or run: node scripts/sync-tutorial-pages.mjs --write
 exit=1
-
---- audit note (agent, 2026-09-03) ---
-gate-before failed at test:gate (tests/api/healthz.test.js could not import:
-the db mock threw synchronously, killing api/_lib/home/store.js's module-scope
-sql fragment). That failure short-circuited the chain, so gate-before never
-reached audit:mcp-golden.
-
-gate-after clears every stage that gate-before reached, plus the ones it could
-not: test:gate 7/7 (was 6 passed, 1 failed), test:gate-3d 4/4, audit:mcp 49
-manifests consistent.
-
-The single remaining failure, audit:mcp-golden reporting grade_sim_readiness
-ADDED, comes from api/_mcp3d/tools/sim-readiness.js, an UNTRACKED file belonging
-to a concurrent agent in this shared worktree. It is not part of this work and
-the golden fixture was deliberately left alone: refreshing it would rubber-stamp
-another agent's unreviewed public MCP contract change. That agent should run
-`node scripts/audit-mcp-golden.mjs --update` when it commits.

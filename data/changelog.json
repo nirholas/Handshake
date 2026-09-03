@@ -3,6 +3,25 @@
 	"entries": [
 		{
 			"date": "2026-09-03",
+			"title": "Your agent on a Mac and an iPhone: the Agent glance widget comes to Apple",
+			"summary": "The widget that has been on Android home screens and the Windows 11 widgets board now runs on Apple platforms too, from one WidgetKit extension shared by both. On a Mac it lives in Notification Centre in small, medium or large, fed by a small menu bar app that shows the same card and carries Open my agent, Refresh now and Unlink this Mac. On iPhone and iPad it is a home screen widget inside the three.ws app. Linking is one press on three.ws/glance: the page hands the device its own token, and if nothing opens (a Mac whose browser is signed in elsewhere) it shows a code to paste instead. The widget refreshes about every half hour without you opening anything, follows light and dark mode because it fetches the card in both, keeps the last card it downloaded when you are offline and says when that was rather than showing a spinner, and opens your agent on a tap. Every linked device is listed on three.ws/glance with a revoke button, and each token can only ever read your glance card.",
+			"tags": [
+				"feature"
+			],
+			"link": "/glance"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "Daily Forge shows the day's theme again",
+			"summary": "Daily Forge is built around one thing: the challenge of the day. That headline was being wiped out a moment after the page loaded. The translation layer runs after the page fetches its language file, and it was overwriting the day's theme with the placeholder text baked into the HTML, so every visitor read \"Today's theme\" and \"Loading today's challenge\" forever while the starter prompt and the idea chips below quietly described a completely different subject. The theme, its emoji, its hint and the browser tab title now hold. Four more fixes landed with it: a failed generation says \"Could not reach the forge, check your connection\" instead of the browser's raw \"Failed to fetch\"; when a model finishes but the preview cannot show it, the Download button the message points at is now actually clickable instead of sitting underneath the message; every button and link has a visible focus outline for keyboard and screen-reader users, and the streak milestone popup takes focus, closes on Escape and hands focus back; and a browser without 3D support now still sees today's theme and a clear explanation instead of a permanent loading line. The community strip at the bottom also fills in properly rather than staying empty.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/daily"
+		},
+		{
+			"date": "2026-09-03",
 			"title": "Every SDK doc now points at code you can actually run",
 			"summary": "Eight developer docs pages described a capability without ever showing you a working project that uses it, so finding the runnable version meant guessing at folder names on GitHub. The SDK, MCP, embedding, authentication, create-an-agent, Solana, agent-payments and agent-wallets pages now each end with a Runnable example section linking straight to the project that backs them: a browser demo, a Node script that drives the free MCP server end to end, nine single-file HTML embeds you can open with no build step, the full wallet sign-in round trip, and a complete agent defined entirely as files. The machine-readable index that AI agents read to navigate the site now carries the examples location too, so an agent asked to build against three.ws can fetch working code instead of inferring it from prose. Every one of those examples is installed, run and link-checked before release, so a link on a docs page never points at something broken.",
 			"tags": [
