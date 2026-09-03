@@ -41,6 +41,7 @@ The UI colors quality as Healthy at 70 and up, Mixed from 40 to 69, and High ris
 4. Click any coin for the drawer: the full signal grid, the top-50 wallet ledger, the smart-money notable roster, the outcome (if labeled), and an asynchronously injected Oracle conviction section.
 5. Every mainnet coin links to its full page at `/oracle/coin/<mint>`: the card's "Full intel →" button goes there directly, and the drawer carries an "Open full page →" link in its header. The full page renders in the markets-hub design (the same system as `/coin/:id`) with the live price chart, the complete Launch Intelligence read (this engine's signal grid, risk flags, and trader ledger), Oracle conviction, live market intel, agent transactions, and a live trade tape.
 6. On a coin worth tracking, use Watch to add it to your [Watchlist](https://three.ws/watchlist), then open it in [Mission Control](./terminal.md) to trade.
+7. On a coin worth acting on now, use **[Fork](./fork-trade.md)**. It opens the real pump.fun trade panel for that mint without leaving the page: live quote, the safety firewall's verdict, and your own browser wallet as the signer. Devnet coins have no market to buy into, so they carry no Fork button.
 
 ## Examples
 
@@ -83,6 +84,7 @@ console.log(clean.map((c) => `${c.symbol} q${c.quality_score}`));
 - [The trading surfaces: Radar, Mission Control, Live Trade Feed, Watchlist, Coin Intelligence](./trading-surfaces.md)
 - [Oracle: the conviction engine](./oracle.md) fuses this intel into a single conviction score
 - [Smart Money Radar](./smart-money.md) is the pedigree layer Radar surfaces inline
+- [Fork a trade](./fork-trade.md) is the one-tap buy on every Radar card, and the deep link that brings a shared coin back here
 - [Mission Control](./terminal.md) is where a Radar find gets traded
 - [Coin pages](./coin-pages.md) cross-link the per-mint intel and conviction views
 - Pages: [/radar](https://three.ws/radar) · [/coin-intel](https://three.ws/coin-intel) · [/watchlist](https://three.ws/watchlist)

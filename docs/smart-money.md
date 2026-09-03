@@ -47,8 +47,9 @@ A wallet is "proven smart money" at reputation 70 or more. The card's smart-mone
 1. Open [/smart-money](https://three.ws/smart-money). The hero shows live totals: proven wallets, proven win rate, tracked capital, coins on radar, and last-updated.
 2. Stay on **Smart money is buying**. Filter by `On radar (fresh)`, `Graduated`, or `All`, and sort by pedigree, smart-money share, smart buy volume, proven wallets in, or freshest. Each card shows the pedigree badge, the share bar, and up to four notable wallet labels.
 3. Click a coin to open its drawer: the full notable roster, and an Oracle conviction slot fetched separately from `/api/oracle/coin`.
-4. Switch to **Top wallets**. Filter by label (`smart_money`, `sniper`, `dumper`, or all), or paste a wallet address to jump straight to it. The sortable table shows win rate, early-win rate, dump rate, record, volume, and score.
-5. Click any wallet to see its recent coins and cross-navigate back to a coin it bought. Star coins to your Watchlist to track them locally.
+4. **[Fork this trade](fork-trade.md)** on the card or in the drawer. It opens the real pump.fun trade panel for that coin, quoted live and screened by the safety firewall, and your own browser wallet signs it. Nothing is delegated and no balance is held. The drawer's **Share** button hands you a one-tap fork link (carrying your referral code when you are signed in) so the wallets you found can travel.
+5. Switch to **Top wallets**. Filter by label (`smart_money`, `sniper`, `dumper`, or all), or paste a wallet address to jump straight to it. The sortable table shows win rate, early-win rate, dump rate, record, volume, and score.
+6. Click any wallet to see its recent coins and cross-navigate back to a coin it bought. Star coins to your Watchlist to track them locally.
 
 ## Examples
 

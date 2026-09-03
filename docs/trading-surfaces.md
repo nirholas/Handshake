@@ -1,18 +1,18 @@
 # The trading surfaces: Radar, Mission Control, Live Trade Feed, Watchlist, Coin Intelligence
 
-The platform's trading stack is spread across five public pages. Four of them are read-only intelligence — they exist to answer "what's launching, what's real, who's winning" — and one, Mission Control, is the actual cockpit where a signed-in user trades from their agent's wallet. This doc explains what each surface is, where its numbers come from, and how they fit together.
+The platform's trading stack is spread across five public pages. Four of them are intelligence surfaces — they exist to answer "what's launching, what's real, who's winning" — and one, Mission Control, is the full cockpit where a signed-in user trades from their agent's wallet. The intelligence pages are no longer dead ends: the Coin Radar and the Live Trade Feed (along with the [Smart Money Radar](smart-money.md) and [Ghost-copy](ghost-copy.md)) each carry a [Fork](fork-trade.md) button that opens the real pump.fun trade panel for the coin you are looking at, signed by your own wallet. This doc explains what each surface is, where its numbers come from, and how they fit together.
 
 The one-line map:
 
 | Surface | Route | What it answers | Trades? |
 | --- | --- | --- | --- |
-| Coin Radar | [/radar](https://three.ws/radar) | What launched in the last 90 seconds, and is it real? | No |
+| Coin Radar | [/radar](https://three.ws/radar) | What launched in the last 90 seconds, and is it real? | Fork, from your own wallet |
 | Coin Intelligence | [/coin-intel](https://three.ws/coin-intel) | What did the intel engine learn about every launch? | No |
-| Live Trade Feed | [/trades](https://three.ws/trades) | Which trades actually won, and what did the winner see? | No |
+| Live Trade Feed | [/trades](https://three.ws/trades) | Which trades actually won, and what did the winner see? | Fork, from your own wallet |
 | Watchlist | [/watchlist](https://three.ws/watchlist) | What are *my* coins doing right now? | Buy via coin card |
 | Mission Control | [/terminal](https://three.ws/terminal) | Everything, live — and execute. | Yes, from your agent wallet |
 
-Everything below is public and works signed-out except executing trades in Mission Control, which requires a signed-in account with a trading agent.
+Everything below is public and works signed-out except executing trades in Mission Control, which requires a signed-in account with a trading agent. Forking needs no account either: a browser wallet signs the trade directly, and the same safety firewall that guards every other trade surface blocks a coin it judges unsafe.
 
 ## Where the numbers come from
 
@@ -36,6 +36,7 @@ What you can do:
 - Filter by narrative category (meme / ai / tech / culture / …) and a minimum-quality slider; sort by buyers, buy volume, and more.
 - Click any coin for the detail drawer: wallet breakdown, top-trader ledger, the full signal grid, and Oracle conviction.
 - **Watch** any coin — one tap adds it to your [Watchlist](#watchlist--watchlist).
+- **[Fork](fork-trade.md)** any mainnet coin — one tap opens the real pump.fun trade panel for it, priced live, screened by the safety firewall, and signed by your own wallet. Devnet coins have no market to buy into, so they show no Fork button.
 
 The list refreshes every 12 seconds. Fully public, no account.
 
@@ -64,7 +65,7 @@ Click any trade (or paste any mint) and the center pane becomes a full analytics
 - Smart-money pedigree and a wallet-footprint table with Solscan links and DEV tags
 - The live trade tape, the outcome badge (with ATH multiple), and the agent's economics on the trade (buyback runs and burns)
 
-Every wallet links to Solscan; every coin links onward to its Oracle page. Public, no account.
+Every wallet links to Solscan; every coin links onward to its Oracle page. The deep-dive header also carries **[Fork](fork-trade.md)**, which opens the real trade panel for the coin you are reading about, and **Share**, which hands you a one-tap fork link (carrying your referral code when you are signed in) for X, Farcaster, or the clipboard. Public, no account.
 
 ## Watchlist — /watchlist
 

@@ -7,7 +7,7 @@
 		"description": "three.ws is the AI-agent layer for the open web: build, embed, monetize, and trade autonomous agents with real 3D avatars, on-chain identity (ERC-8004), pay-per-call (x402), and pump.fun token launches.",
 		"contact": "https://x.com/trythreews",
 		"github": "https://github.com/nirholas/three.ws",
-    "examples": "https://github.com/nirholas/three.ws/tree/main/examples"
+		"examples": "https://github.com/nirholas/three.ws/tree/main/examples"
 	},
 	"sections": [
 		{
@@ -2687,14 +2687,14 @@
 					"changefreq": "monthly",
 					"added": "2026-09-02"
 				},
-			{
-				"path": "/docs/home-satellite",
-				"title": "Docs \u00b7 Give your voice assistant a face",
-				"description": "Point an existing Home Assistant voice pipeline at a three.ws agent and it gains a face: the setup in four steps, exactly what crosses your network and what never does, the eleven states the display can be in, and the rule the whole thing is built around, that closing the page never stops your voice assistant working.",
-				"priority": 0.6,
-				"changefreq": "monthly",
-				"added": "2026-09-03"
-			},
+				{
+					"path": "/docs/home-satellite",
+					"title": "Docs · Give your voice assistant a face",
+					"description": "Point an existing Home Assistant voice pipeline at a three.ws agent and it gains a face: the setup in four steps, exactly what crosses your network and what never does, the eleven states the display can be in, and the rule the whole thing is built around, that closing the page never stops your voice assistant working.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-09-03"
+				},
 				{
 					"path": "/docs/home-households",
 					"title": "Docs · Home households and roles",
@@ -2713,7 +2713,7 @@
 				},
 				{
 					"path": "/docs/home-relay",
-					"title": "Docs \u00b7 Connect a home that is only on your network",
+					"title": "Docs · Connect a home that is only on your network",
 					"description": "Most Home Assistant installs cannot be reached from the internet, so the house dials three.ws instead: install one HACS integration, paste a ten-minute pairing code, and nothing listens on your network, no port is forwarded, and three.ws never receives a Home Assistant token. Includes the operator half: the relay service, its configuration and deploy, how the allowlist is changed, and how to prove the whole path against a real house on a network the server cannot route to.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -2729,7 +2729,7 @@
 				},
 				{
 					"path": "/docs/home-scene",
-					"title": "Docs \u00b7 The live 3D home",
+					"title": "Docs · The live 3D home",
 					"description": "How the connected house becomes a room you can stand in: the room graph the bridge builds from Home Assistant's registries, how a real light dimming dims the model, what the scene does while the house is unreachable, and the fallback that keeps every control usable without WebGL.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -5628,6 +5628,14 @@
 					"added": "2026-08-02"
 				},
 				{
+					"path": "/docs/fork-trade",
+					"title": "Docs · Fork a trade",
+					"description": "One tap on any coin across the Radar, the Live Trade Feed, the Smart Money Radar, or a ghost-copy replay opens the real pump.fun trade panel for it, pre-filled and signed by your own wallet. No custody, no delegated key, and a ?fork= link so a coin travels.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-09-03"
+				},
+				{
 					"path": "/docs/trader-passport",
 					"title": "Docs · Trader Passport",
 					"description": "A trader track record other apps can verify: once a day each ranked trader's rolled-up score is committed to Solana as a signed SPL-Memo attestation, and this API serves that credential for anyone to re-check against the chain.",
@@ -5698,6 +5706,14 @@
 					"priority": 0.5,
 					"changefreq": "monthly",
 					"added": "2026-08-28"
+				},
+				{
+					"path": "/tutorials/connect-your-home",
+					"title": "Tutorial · Connect your home",
+					"description": "Point your agent at a real Home Assistant and it runs your actual house: lights, thermostat, and the scenes you already built. Covers the three honest ways to reach a house that lives on a home network, and the rule that unlocking, opening and disarming always stop and ask, while locking up never...",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-09-03"
 				}
 			]
 		},

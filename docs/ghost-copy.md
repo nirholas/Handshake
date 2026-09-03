@@ -7,8 +7,12 @@ copied this agent, at my size, with my limits, where would I be now?*
 
 Page: [/ghost-copy](https://three.ws/ghost-copy) · API: `/api/pump/ghost-copy`
 
-Nothing is signed, nothing is spent, no wallet is connected, and no account is
-required. It is arithmetic over trades that already happened.
+The replay itself signs nothing, spends nothing, connects no wallet, and needs
+no account. It is arithmetic over trades that already happened. The one live
+action on the page is [Fork](fork-trade.md) on a position the leader is still
+holding: that opens the real pump.fun trade panel at your ghost size, and your
+own wallet signs it. Forking is opt-in, one coin at a time, and never happens
+as part of a replay.
 
 ## Why it exists
 
