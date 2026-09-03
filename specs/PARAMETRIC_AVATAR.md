@@ -130,7 +130,7 @@ Quantisation is int16 over the recorded peak, which resolves a 0.12 m range to u
 
 ## Versioning
 
-`base` in the appearance record names the body a document was authored against. Absent means `parametric-v1` for a document that carries `sculpt` or parametric morph names, and "whatever GLB this avatar points at" otherwise, which is the pre-parametric behaviour and stays supported.
+`base` in the appearance record names the body a document was authored against. **Nothing writes it yet** and it is listed as reserved in [`AVATAR_PARAMETERS.md`](./AVATAR_PARAMETERS.md#reserved), because one parametric base ships and a field with one possible value is noise. Until a second base exists, absence means `parametric-v1` for a document that carries `sculpt` or parametric morph names, and "whatever GLB this avatar points at" otherwise, which is the pre-parametric behaviour and stays supported. The rule below is what the field will mean when it lands.
 
 - **Morph names are permanent.** Once a slider ships, its name is a public identifier: it is a key in stored records. Renaming one silently drops a user's edit. Add a new slider instead, and leave the old one baked.
 - **Adding sliders is a minor change.** Consumers ignore names they do not have, so an older viewer loading a newer base is a body with fewer controls, never an error.
