@@ -361,6 +361,17 @@ export class Hand {
 
 	/** Put an element in the comfortable middle band of the screen. */
 	async bringIntoView(selector, { top = 150, bottom = 190 } = {}) {
+		/* A fixed or sticky element travels with the viewport, so scrolling
+		   towards it moves the page and never moves the target: the corner
+		   companion widget would drag the whole tour down the document. */
+		const pinned = await this.page.locator(selector).first().evaluate((el) => {
+			for (let n = el; n && n !== document.documentElement; n = n.parentElement) {
+				const pos = getComputedStyle(n).position;
+				if (pos === 'fixed' || pos === 'sticky') return true;
+			}
+			return false;
+		}).catch(() => false);
+		if (pinned) return;
 		const box = await this.page.locator(selector).first().boundingBox();
 		if (!box) return;
 		const lo = top;

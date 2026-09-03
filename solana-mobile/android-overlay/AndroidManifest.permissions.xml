@@ -2,3 +2,13 @@
          from an OS process, so the app itself declares the network. -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
+    <!-- three.ws Drive (solana-mobile/android-overlay): the agent in the car.
+         The loop runs in a service-hosted web view while Android Auto owns the
+         phone screen, so it is a background process by definition and needs a
+         typed foreground service to hold the microphone at all. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>

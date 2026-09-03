@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- three.ws Drive (solana-mobile/android-overlay): car screen + session copy. -->
+<resources>
+    <string name="drive_car_title">three.ws Drive</string>
+
+    <string name="drive_action_talk">Talk</string>
+    <string name="drive_action_hands">Hands free</string>
+    <string name="drive_action_repeat">Repeat</string>
+    <string name="drive_action_hush">Quiet</string>
+
+    <string name="drive_detail_ask">Ask your agent something</string>
+    <string name="drive_detail_listening">Listening</string>
+    <string name="drive_detail_hands">Keep the mic open between turns</string>
+    <string name="drive_detail_nothing_said">Nothing said yet</string>
+    <string name="drive_detail_stop_talking">Stop talking</string>
+
+    <string name="drive_mic_needed">three.ws Drive is a voice assistant, so it needs the microphone. Grant it on your phone and it will start listening.</string>
+    <string name="drive_mic_grant">Grant microphone</string>
+    <string name="drive_mic_denied">Without the microphone there is nothing to listen with.</string>
+
+    <string name="drive_channel_name">Drive session</string>
+    <string name="drive_channel_description">Shown while your agent is riding with you, so it is never listening invisibly.</string>
+    <string name="drive_notification_title">Your agent is riding with you</string>
+    <string name="drive_notification_text">Talk to it from the car screen. Tap to open three.ws Drive.</string>
+    <string name="drive_notification_stop">Stop</string>
+</resources>

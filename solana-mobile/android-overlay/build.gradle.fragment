@@ -2,3 +2,12 @@
 dependencies {
     implementation 'androidx.work:work-runtime:2.9.1'
 }
+
+// three.ws Drive (solana-mobile/android-overlay): the Android Auto car app.
+// app-projected is what makes the templates render on a phone-projected head
+// unit; app-automotive (a separate AAOS build with its own CarAppActivity) is
+// deliberately not here yet, see docs/carplay.md.
+dependencies {
+    implementation 'androidx.car.app:app:1.4.0'
+    implementation 'androidx.car.app:app-projected:1.4.0'
+}

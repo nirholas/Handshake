@@ -48,14 +48,33 @@ export const BG = '#080814';
 
 export const AUTH_STATE = path.join(ROOT, '.auth/audit-state.json');
 
+/**
+ * Chromium launch flags for a recording.
+ *
+ * `--disable-dev-shm-usage` is not optional in a container: Docker gives /dev/shm
+ * 64 MB, and a heavy page (the marketplace document is 90k px tall with a live
+ * WebGL hero) blows through that. The renderer then either crashes outright with
+ * "Page crashed" or limps, which reads as the site being slow rather than as the
+ * sandbox being small: a single 1200x2670 screenshot of /marketplace measured
+ * 22s with the default shm and 4s with this flag.
+ */
+export function launchOptions() {
+	return { args: ['--disable-dev-shm-usage'] };
+}
+
+/** The panel in device pixels at a given capture density. */
+export function panelFor(dpr = DPR) {
+	return { width: CSS.width * dpr, height: CSS.height * dpr };
+}
+
 /** The Android/Seeker browser context every recording runs in. */
-export function contextOptions({ authed = false } = {}) {
+export function contextOptions({ authed = false, dpr = DPR } = {}) {
 	if (authed && !existsSync(AUTH_STATE)) {
 		throw new Error(`--authed needs ${path.relative(ROOT, AUTH_STATE)}; mint it with: npm run audit:web:login`);
 	}
 	return {
 		viewport: CSS,
-		deviceScaleFactor: DPR,
+		deviceScaleFactor: dpr,
 		isMobile: true,
 		hasTouch: true,
 		colorScheme: 'dark',

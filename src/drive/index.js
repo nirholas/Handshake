@@ -18,7 +18,7 @@
 import { TalkScene } from '../voice/talk-scene.js';
 import { AvatarMouthTarget } from '../voice/avatar-morph-target.js';
 import { TalkController } from '../voice/talk-controller.js';
-import { detectSurface, surfaceProfile, applySurface } from './surface.js';
+import { detectSurface, surfaceProfile, applySurface, approvalDisposition } from './surface.js';
 import { createBridge } from './bridge.js';
 import { createDriveInterceptor } from './commands.js';
 import { watchMotion } from './motion.js';
@@ -68,6 +68,9 @@ const ui = {
 	pickerClose: el('dr-picker-close'),
 	pickerGrid: el('dr-picker-grid'),
 	pickerSub: el('dr-picker-sub'),
+	confirm: el('dr-confirm'),
+	confirmClose: el('dr-confirm-close'),
+	confirmSlot: el('dr-confirm-slot'),
 	type: el('dr-type'),
 	typeClose: el('dr-type-close'),
 	typeForm: el('dr-type-form'),
@@ -204,6 +207,7 @@ function systemPrompt() {
 		'Never ask them to read anything, tap through a list, or look at the screen.',
 		'Never produce markdown, bullet points, code, links, or emoji.',
 		'If something genuinely needs a screen, say you will have it waiting when they park.',
+		'A lock, a garage door or an alarm always needs their hands on the screen, so offer it for when they stop rather than promising it now.',
 		'If you are not sure what they said over road noise, ask one short clarifying question.',
 	].join(' ');
 }
@@ -273,7 +277,7 @@ function clearRearm() {
 function maybeRearm() {
 	clearRearm();
 	if (!handsFree || !controller) return;
-	if (document.hidden || !ui.type.hidden || !ui.picker.hidden) return;
+	if (document.hidden || !ui.type.hidden || !ui.picker.hidden || !ui.confirm.hidden) return;
 	rearmTimer = setTimeout(() => {
 		rearmTimer = 0;
 		if (!handsFree || !controller || controller.state !== 'idle') return;
@@ -381,6 +385,73 @@ function greet() {
 	scene?.playEmoteOnce('wave', { settleTo: 'idle' }).catch(() => {});
 }
 
+// The one thing the agent is not allowed to do on its own.
+//
+// A lock, a garage door, an alarm: the server never executes these. It freezes
+// the action and hands back a confirmation only a person can redeem, over a
+// session-and-CSRF endpoint no model can reach. The car is the hardest place to
+// honour that, because the person is driving. So the rule here is simple and it
+// does not bend: while the wheels are turning, the answer is no, said out loud,
+// with an offer for when they stop. Parked, it is one tap on the sentence the
+// SERVER composed, never the model's.
+async function onHomeEvent(evt) {
+	if (evt?.status !== 'pending_confirmation') return;
+	const payload = evt.data;
+	if (!payload?.confirmation?.id || !payload?.home?.id) return;
+	const sentence = String(payload.confirmation.summary || 'That changes something in your home.').slice(0, 240);
+
+	const disposition = approvalDisposition(profile, moving);
+	if (disposition !== 'approve') {
+		setSaid(sentence);
+		controller?.speakText(
+			disposition === 'moving'
+				? `${sentence} Not while we are moving. Pull over and it is one tap.`
+				: `${sentence} I cannot take that one here, because you cannot see what you would be approving. Confirm it on your phone and it will go through.`,
+		);
+		return;
+	}
+
+	clearRearm();
+	stopVad();
+	let renderHomeConfirmation;
+	try {
+		({ renderHomeConfirmation } = await import('../home-confirm-card.js'));
+	} catch (err) {
+		log.warn('[drive] confirmation card unavailable:', err?.message);
+		controller?.speakText(`${sentence} Approve it on your phone and it will go through.`);
+		return;
+	}
+
+	ui.confirmSlot.replaceChildren();
+	const card = renderHomeConfirmation(ui.confirmSlot, payload, {
+		onResolved: (result) => {
+			const spoken = result?.ok
+				? 'Done.'
+				: result?.declined
+					? 'Left alone.'
+					: String(result?.message || 'That did not go through.');
+			setSaid(spoken);
+			controller?.speakText(spoken);
+			// Let the card's own end state stay on screen for a beat before the
+			// sheet closes, so the outcome is read as well as heard.
+			setTimeout(closeConfirm, 2200);
+		},
+	});
+	if (!card) return;
+
+	ui.confirm.hidden = false;
+	ui.confirmClose.focus();
+	setSaid(sentence);
+	controller?.speakText(`${sentence} Approve it on the screen and it will go through.`);
+}
+
+function closeConfirm() {
+	if (ui.confirm.hidden) return;
+	ui.confirm.hidden = true;
+	ui.confirmSlot.replaceChildren();
+	if (handsFree) maybeRearm();
+}
+
 // ── session ──────────────────────────────────────────────────────────────────
 
 async function startSession(avatar) {
@@ -399,21 +470,27 @@ async function startSession(avatar) {
 	}
 	mouth?.dispose();
 
-	scene = new TalkScene();
+	// The mouth target is safe unattached (it no-ops until a model binds), which
+	// is what lets the audio-only surface run the identical controller.
 	mouth = new AvatarMouthTarget();
 
-	try {
-		await scene.mount({ container: ui.stage, glbUrl: avatar.model_url, cameraPreset: 'half' });
-		scene.attachMouthTarget(mouth);
-		await ensureMotion();
-	} catch (err) {
-		setStatus('Ready');
-		setFault(`Could not load ${avatar.name || 'that agent'}: ${err.message}`, {
-			label: 'Choose another',
-			run: () => openPicker(true),
-			code: 'model',
-		});
-		return;
+	if (profile.renders3d) {
+		scene = new TalkScene();
+		try {
+			await scene.mount({ container: ui.stage, glbUrl: avatar.model_url, cameraPreset: 'half' });
+			scene.attachMouthTarget(mouth);
+			await ensureMotion();
+		} catch (err) {
+			setStatus('Ready');
+			setFault(`Could not load ${avatar.name || 'that agent'}: ${err.message}`, {
+				label: 'Choose another',
+				run: () => openPicker(true),
+				code: 'model',
+			});
+			return;
+		}
+	} else {
+		ui.stage.hidden = true;
 	}
 
 	controller = new TalkController({
@@ -421,6 +498,7 @@ async function startSession(avatar) {
 		systemPromptFn: systemPrompt,
 		mouthTarget: mouth,
 		commandInterceptor: interceptor,
+		onHomeEvent,
 		onMessage: (m) => {
 			if (m.role === 'user') setHeard(m.content);
 			else setSaid(m.content);
@@ -619,7 +697,8 @@ function wire() {
 				beginListening();
 			}
 		} else if (e.key === 'Escape') {
-			if (!ui.type.hidden) closeType();
+			if (!ui.confirm.hidden) closeConfirm();
+			else if (!ui.type.hidden) closeType();
 			else if (!ui.picker.hidden && copilot) closePicker();
 			else hush();
 		}
@@ -649,6 +728,7 @@ function wire() {
 	});
 	ui.pickerClose.addEventListener('click', closePicker);
 	ui.typeClose.addEventListener('click', closeType);
+	ui.confirmClose.addEventListener('click', closeConfirm);
 	ui.typeForm.addEventListener('submit', (e) => {
 		e.preventDefault();
 		const text = ui.typeInput.value.trim();

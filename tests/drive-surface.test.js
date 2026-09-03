@@ -5,7 +5,7 @@
 // or a command that silently eats a real question.
 
 import { describe, it, expect, vi } from 'vitest';
-import { detectSurface, scaleFor, surfaceProfile } from '../src/drive/surface.js';
+import { detectSurface, scaleFor, surfaceProfile, approvalDisposition } from '../src/drive/surface.js';
 import { matchDriveCommand, normalize, createDriveInterceptor, commandVocabulary } from '../src/drive/commands.js';
 import { watchMotion } from '../src/drive/motion.js';
 
@@ -35,6 +35,50 @@ describe('drive surface detection', () => {
 	it('knows which panels have a native shell listening', () => {
 		expect(surfaceProfile('carplay').native).toBe(true);
 		expect(surfaceProfile('browser').native).toBe(false);
+	});
+
+	// Android Auto runs the page in a service-hosted web view with no window, so
+	// there are no animation frames and nothing to look at. Both flags follow
+	// from that one fact, and both change behaviour, so both are pinned.
+	it('turns the 3D stage off only where there is no window to draw in', () => {
+		expect(surfaceProfile('androidauto').renders3d).toBe(false);
+		for (const name of ['carplay', 'headunit', 'cradle', 'browser']) {
+			expect(surfaceProfile(name).renders3d).toBe(true);
+		}
+	});
+
+	it('refuses tap-to-approve where the person cannot see what they are approving', () => {
+		expect(surfaceProfile('androidauto').canConfirm).toBe(false);
+		for (const name of ['carplay', 'headunit', 'cradle', 'browser']) {
+			expect(surfaceProfile(name).canConfirm).toBe(true);
+		}
+	});
+});
+
+// Approving a lock is the one thing in the car that must never quietly happen.
+// Both refusals are load-bearing, so both are pinned here rather than left to a
+// reading of the UI code.
+describe('approving a physical home action', () => {
+	it('allows a tap only on a parked car with a screen', () => {
+		expect(approvalDisposition(surfaceProfile('headunit'), false)).toBe('approve');
+		expect(approvalDisposition(surfaceProfile('cradle'), false)).toBe('approve');
+		expect(approvalDisposition(surfaceProfile('carplay'), false)).toBe('approve');
+	});
+
+	it('refuses while the car is moving, on every surface', () => {
+		for (const name of ['carplay', 'headunit', 'cradle', 'browser']) {
+			expect(approvalDisposition(surfaceProfile(name), true)).toBe('moving');
+		}
+	});
+
+	it('refuses on a surface with nothing to look at, parked or not', () => {
+		expect(approvalDisposition(surfaceProfile('androidauto'), false)).toBe('no-screen');
+		expect(approvalDisposition(surfaceProfile('androidauto'), true)).toBe('no-screen');
+	});
+
+	it('refuses when handed no profile at all rather than defaulting open', () => {
+		expect(approvalDisposition(null, false)).toBe('no-screen');
+		expect(approvalDisposition(undefined, false)).toBe('no-screen');
 	});
 });
 

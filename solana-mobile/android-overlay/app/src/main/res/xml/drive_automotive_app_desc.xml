@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Declares which car experiences this app provides. Android Auto reads it from
+  the com.google.android.gms.car.application meta-data; without it the car app
+  service is never discovered and three.ws Drive simply does not appear.
+-->
+<automotiveApp>
+    <uses name="template" />
+</automotiveApp>

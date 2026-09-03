@@ -63,6 +63,16 @@ export function surfaceProfile(surface = detectSurface()) {
 		// Hands free is opt-in everywhere, but a car panel is the only place it
 		// is the better default once the driver has enabled it once.
 		remembersHandsFree: surface !== 'browser',
+		// Is there anywhere to draw the agent? On Android Auto the page runs in a
+		// service-hosted web view with no window at all, because the phone screen
+		// is Android Auto's during a drive and the car screen is templates. No
+		// window means no animation frames, so the 3D stage is skipped and the
+		// loop runs as audio: the same conversation, no renderer.
+		renders3d: surface !== 'androidauto',
+		// Can a person tap to approve a physical action here? A confirmation the
+		// user cannot SEE is a recognizer being trusted with a lock, which the
+		// home safety doctrine refuses (src/voice/home-voice.js).
+		canConfirm: surface !== 'androidauto',
 	};
 }
 
@@ -81,4 +91,29 @@ export function applySurface(profile, doc = document, win = window) {
 	sync();
 	win.addEventListener('resize', sync, { passive: true });
 	return () => win.removeEventListener('resize', sync);
+}
+
+/**
+ * May a physical home action be approved right now?
+ *
+ * Two independent refusals, and either one is enough:
+ *
+ *   - **No screen to look at.** Approving a lock you cannot see is trusting a
+ *     recognizer with a door, which the home safety doctrine refuses outright
+ *     (src/voice/home-voice.js). That is the Android Auto case, where the page
+ *     runs in a web view with no window.
+ *   - **The car is moving.** A confirmation is a sentence to read and a target
+ *     to hit, which is exactly what no in-car guideline permits at speed.
+ *
+ * The answer to a refusal is never silence: the caller says so out loud and
+ * offers it for when the car stops.
+ *
+ * @param {{ canConfirm: boolean }} profile
+ * @param {boolean} moving
+ * @returns {'approve'|'no-screen'|'moving'}
+ */
+export function approvalDisposition(profile, moving) {
+	if (!profile?.canConfirm) return 'no-screen';
+	if (moving) return 'moving';
+	return 'approve';
 }

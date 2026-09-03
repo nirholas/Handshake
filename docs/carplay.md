@@ -1,8 +1,9 @@
 # three.ws Drive: the agent in the car
 
 **Status:** research complete, architecture decided, the shared car surface (`/drive`) is
-built and verified in a browser, and the native CarPlay scene is written and wired into the
-iOS app. The one step that cannot be finished from here is Apple's entitlement grant.
+built and verified in a browser, the native CarPlay scene is written and wired into the iOS
+app, and the Android Auto car app is written, wired into the Android overlay, and compiled.
+The steps that cannot be finished from here are Apple's entitlement grant and a car.
 **Date:** 2026-09-03.
 **Question asked:** can a three.ws 3D agent be the assistant on an Apple CarPlay screen, and
 how much of it already exists in open source?
@@ -70,7 +71,7 @@ another template instead of taking the whole screen, and the template was opened
 category. An app holding `carplay-maps` can now keep a map rendering underneath a live
 assistant. That is a door worth walking through later; it is not the first shipment.
 
-### Android's side, for symmetry
+### Android's side
 
 Android draws the same line in a different place. The Car App Library
 (`androidx.car.app`, Apache-2.0) is template-based too, and the host renders the UI. But its
@@ -80,6 +81,20 @@ working sample of exactly that. So the "3D agent rendered on the car screen" ide
 technically reachable on Android Auto through the navigation category, and blocked on
 CarPlay by the exclusive-map rule. Android Automotive OS, which runs the app on the head
 unit itself, is looser still.
+
+What Android does **not** have is a conversational category. The manifest categories are
+`NAVIGATION`, `POI`, `IOT`, `WEATHER`, `MEDIA`, `MESSAGING` and `CALLING`, and an app
+declares exactly one. The accurate one here is **`androidx.car.app.category.IOT`**, for apps
+that let people "take relevant actions on connected devices from within the car". That is
+not a workaround: a three.ws agent already reaches a real house through the home tools wired
+into `/api/chat` ([smart-home.md](smart-home.md)), with a safety gate that freezes anything
+physical until a person approves it. "Turn the porch light on" from the car is the product,
+and the category names it correctly.
+
+The consequence is that Android and iOS end up in the same place from opposite directions.
+Apple grants a conversational category with no canvas; Google grants a canvas only to
+navigation and has no conversational category at all. Either way the car screen is
+templates, the conversation is the page, and the agent's face is somewhere else.
 
 ### The open-source inventory
 
@@ -117,7 +132,20 @@ channel joins them. Written, wired, and documented in
 [`ios/docs/CARPLAY.md`](../ios/docs/CARPLAY.md). It cannot ship until Apple grants
 `com.apple.developer.carplay-voice-based-conversation`, which is a per-app request.
 
-### Lane C: the open head unit (designed, not built)
+### Lane C: native Android Auto (built)
+
+A `CarAppService` in the Android app's overlay, declaring the IOT category. The car screen
+shows the same four controls; the conversation runs in a web view inside a typed foreground
+service, because during a drive the phone screen belongs to Android Auto and a background
+process may not hold a microphone. Written, wired, compiled, and documented in
+[`solana-mobile/docs/ANDROID-AUTO.md`](../solana-mobile/docs/ANDROID-AUTO.md).
+
+That web view is never attached to a window, which means no animation frames, so
+`?surface=androidauto` turns the 3D stage off and the loop runs as audio. The same preset
+turns the confirmation card off: a person who cannot see what they are approving is a
+recognizer being trusted with a lock, and the home safety doctrine refuses that outright.
+
+### Lane D: the open head unit (designed, not built)
 
 `node-carplay` plus a Carlinkit CPC200 dongle renders a real CarPlay or Android Auto session
 inside a browser surface we own, on a Raspberry Pi or any Linux box. In that lane there is no
@@ -188,9 +216,10 @@ same class, which is what makes barge-in and "louder" real rather than decorativ
 | 1 | `/drive`: the surface, the voice loop, the safety rules, the presets | **Done.** Verified in Chromium at 800x480, 1280x720, 1920x720 and 390x844, day and night, with a real `/api/chat` and `/api/tts` turn. |
 | 2 | Native CarPlay scene, audio session, message channel, entitlement, Info.plist | **Done in the tree.** Cannot be compiled or run without Xcode and a car or the CarPlay simulator. |
 | 3 | Apple's entitlement request | **Owner action.** See `ios/docs/CARPLAY.md`. Nothing else blocks. |
-| 4 | Android Auto: a `CarAppService` in `solana-mobile/`, same four controls, same channel | Scoped, not started. |
-| 5 | Lane C head unit: `node-carplay` beside the agent on a Pi | Scoped, needs a CPC200 dongle. |
-| 6 | The car as a home trigger: "we are ten minutes out" through `@three-ws/home-bridge` | Scoped. Both halves exist. |
+| 4 | Android Auto: `CarAppService`, foreground-service web view, the same channel, the same four controls | **Done and compiled.** Needs the Desktop Head Unit and a phone to exercise on a car screen. |
+| 5 | The home lane reaching the car: guarded actions surfaced and gated on being parked | **Done.** `/api/chat`'s home tools already work from `/drive`; the confirmation card is wired and refused while moving. |
+| 6 | Android Automotive OS: `app-automotive` plus a `CarAppActivity` in its own build flavor | Scoped, not started. |
+| 7 | Lane D head unit: `node-carplay` beside the agent on a Pi | Scoped, needs a CPC200 dongle. |
 
 ---
 

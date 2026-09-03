@@ -37,12 +37,17 @@
  *   --out=       write somewhere other than marketing/seeker-video
  *   --fps=       output frame rate (default 30)
  *   --seed=      seed for the hand's jitter, so a rerun lands the same pixels
+ *   --dpr=       capture density (default 3, the Seeker's own); 2 halves render time
+ *                and still exceeds the 782px the device frame draws
+ *   --live-css   keep CSS transitions running instead of snapping them settled
+ *   --agent=     open a specific agent page in the agent act instead of picking
+ *                one out of the marketplace (a path, e.g. /marketplace/agents/<id>)
  */
 import { chromium } from 'playwright';
 import { mkdirSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import {
-	ROOT, CSS, PANEL, contextOptions, encodeScreen, encodeDevice,
+	ROOT, CSS, DPR, panelFor, contextOptions, launchOptions, encodeScreen, encodeDevice,
 } from './lib/seeker-panel.mjs';
 import { Hand, installHand } from './lib/hand.mjs';
 
@@ -54,6 +59,14 @@ const ORIGIN = String(args.origin || 'https://three.ws').replace(/\/$/, '');
 const OUT = path.resolve(ROOT, String(args.out || 'marketing/seeker-video'));
 const FPS = Number(args.fps || 30);
 const SEED = Number(args.seed || 7);
+const CAPTURE_DPR = Number(args.dpr || DPR);
+const PANEL = panelFor(CAPTURE_DPR);
+/* Our frames are not real time, so a CSS transition captured mid-flight is
+   rendering at the wall clock's idea of progress, not the video's. Snapping
+   every transition to its settled state is both the honest frame for a stepped
+   capture and, on a page with a live WebGL hero, twice as fast to screenshot
+   (3.3s to 1.5s on /marketplace). Pass --live-css to keep them running. */
+const ANIMATIONS = args['live-css'] ? 'allow' : 'disabled';
 const NAME = String(args.name || 'seeker-feature-tour');
 
 const log = (...m) => console.log('[feature-tour]', ...m);
@@ -111,13 +124,16 @@ const ACTS = {
 	},
 
 	/* Search the live marketplace and open something out of the results. */
-	market: async ({ page, hand, visit }) => {
-		if (!page.url().includes('/marketplace')) {
+	market: async ({ page, hand, visit, origin }) => {
+		/* Walked into from another act: take the app's own route there, through
+		   the nav drawer. Started here with --acts=market: just open the page. */
+		if (page.url().startsWith(origin) && !page.url().includes('/marketplace')) {
 			await hand.tapOn('#nav-toggle', { expect: 'a[href="/marketplace"]' });
 			await hand.hold(500);
 			await hand.tapOn('a[href="/marketplace"]', { expect: '#market-search' });
 		}
 		await visit('/marketplace', { ready: '#market-search', settle: 4200 });
+		await hand.tapIfPresent('.walk-companion-close', { after: 400 });
 		await hand.typeInto('#market-search', SEARCH, { settle: 900 });
 		await hand.waitFor(
 			(p) => p.locator('#market-grid a.title.card-profile-link').first().isVisible().catch(() => false),
@@ -132,11 +148,17 @@ const ACTS = {
 	/* An agent's own page: turn the model, then talk to it. */
 	agent: async ({ page, hand, visit }) => {
 		if (!(await page.locator('#av-stage').count())) {
-			await visit('/marketplace', { ready: '#market-search', settle: 3500 });
-			await hand.tapOn('#market-grid a.title.card-profile-link', { expect: '#av-stage' });
+			/* Walked in from the market act, this never runs. Started here, either
+			   pick up the agent named on the command line or go and find one. */
+			if (args.agent) await visit(String(args.agent), { ready: '#av-stage', settle: 3000 });
+			else {
+				await visit('/marketplace', { ready: '#market-search', settle: 3500 });
+				await hand.tapOn('#market-grid a.title.card-profile-link', { expect: '#av-stage' });
+			}
 		}
 		await page.waitForSelector('#av-viewer', { timeout: 30_000 });
 		await page.waitForTimeout(6000);
+		await hand.tapIfPresent('.walk-companion-close', { after: 400 });
 		await hand.hold(900);
 		await hand.dragAcross('#av-viewer', { dx: 190, ms: 1100 });
 		await hand.hold(800);
@@ -181,10 +203,10 @@ rmSync(work, { recursive: true, force: true });
 const frames = path.join(work, 'frames');
 mkdirSync(frames, { recursive: true });
 
-const browser = await chromium.launch();
+const browser = await chromium.launch(launchOptions());
 let count = 0;
 try {
-	const ctx = await browser.newContext(contextOptions({ authed: Boolean(args.authed) }));
+	const ctx = await browser.newContext(contextOptions({ authed: Boolean(args.authed), dpr: CAPTURE_DPR }));
 	await ctx.addInitScript(installHand);
 	const page = await ctx.newPage();
 
@@ -196,7 +218,8 @@ try {
 				path: path.join(frames, `${String(count).padStart(6, '0')}.jpg`),
 				type: 'jpeg',
 				quality: 92,
-				timeout: 20_000,
+				animations: ANIMATIONS,
+				timeout: 30_000,
 			});
 			count += 1;
 		} catch (err) {
@@ -223,7 +246,7 @@ try {
 	for (const act of wanted) {
 		log(`act: ${act}`);
 		const at = count;
-		await ACTS[act]({ page, hand, visit, log });
+		await ACTS[act]({ page, hand, visit, log, origin: ORIGIN });
 		log(`act ${act} added ${((count - at) / FPS).toFixed(1)}s`);
 	}
 	/* Leave the hand off the glass on the last frame. */

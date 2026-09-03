@@ -24,3 +24,31 @@
                 <data android:scheme="threews" android:host="glance" />
             </intent-filter>
         </activity>
+
+        <!-- three.ws Drive (solana-mobile/android-overlay): Android Auto.
+             The IOT category is the accurate one: a three.ws agent takes real
+             actions on the user's connected devices through the home tools wired
+             into /api/chat, with a safety gate that freezes anything physical
+             until a person approves it. Docs: docs/carplay.md. -->
+        <meta-data
+            android:name="androidx.car.app.minCarApiLevel"
+            android:value="1" />
+
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/drive_automotive_app_desc" />
+
+        <service
+            android:name=".drive.DriveCarAppService"
+            android:exported="true"
+            android:label="@string/drive_car_title">
+            <intent-filter>
+                <action android:name="androidx.car.app.CarAppService" />
+                <category android:name="androidx.car.app.category.IOT" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".drive.DriveWebService"
+            android:exported="false"
+            android:foregroundServiceType="microphone|mediaPlayback" />
