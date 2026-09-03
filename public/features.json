@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-03T03:56:06.690Z",
+	"generated_at": "2026-09-03T03:57:33.231Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1217,6 +1217,16 @@
 					"title": "Materialize",
 					"description": "Turn any 3D model into a real printed object. Live printability analysis and automatic repair, a true-scale AR preview on your own desk, an itemized price from the mesh's own measured volume, and USDC checkout on Solana.",
 					"added": "2026-09-02",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/smart-home/join",
+					"title": "Join a home",
+					"description": "Accept an invitation to somebody's connected home. The link says which home it is, exactly what your role would let you do there and what it would never let you do, before you sign in. It works once and it expires.",
+					"added": "2026-09-03",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -3261,6 +3271,16 @@
 					"path": "/docs/home-households",
 					"title": "Docs · Home households and roles",
 					"description": "Sharing a connected house without sharing a login: the five roles and what each one may do, per-member entity scopes that narrow the house a member can even see, how invitations are issued and accepted, what happens to somebody's access when they leave, and the rule everything hangs off, that a guest can never confirm an action that opens a building.",
+					"added": "2026-09-03",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/home-security",
+					"title": "Docs · Home security",
+					"description": "The threat model for a connected house, written about a building rather than a database: what each actor can do and what stops them, why the confirmation gate is the load-bearing control and prompt filtering is depth, the eleven checks that run with every build, the SSRF guard every server-side dial goes through and why a hostname check is not one, the prompt-injection proof that ends by asking a real lock whether it opened, and the residuals accepted on purpose.",
 					"added": "2026-09-03",
 					"auth": null,
 					"indexable": true,

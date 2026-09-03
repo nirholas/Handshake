@@ -23,6 +23,14 @@
 			<description>Everything three.ws stores about a home you connect, why, for how long, and what removes it: the full inventory, the promise that room names and device states are never persisted, the 90-day action-log window and the control that changes it, the export and deletion paths, the logging rules, and the disclosure text shown at connect and at the voice opt-in.</description>
 		</item>
 		<item>
+			<title>Docs · Home security</title>
+			<link>https://three.ws/docs/home-security</link>
+			<guid isPermaLink="false">2026-09-03:Docs · Home security</guid>
+			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The threat model for a connected house, written about a building rather than a database: what each actor can do and what stops them, why the confirmation gate is the load-bearing control and prompt filtering is depth, the eleven checks that run with every build, the SSRF guard every server-side dial goes through and why a hostname check is not one, the prompt-injection proof that ends by asking a real lock whether it opened, and the residuals accepted on purpose.</description>
+		</item>
+		<item>
 			<title>Docs · three.ws Drive</title>
 			<link>https://three.ws/docs/carplay</link>
 			<guid isPermaLink="false">2026-09-03:Docs · three.ws Drive</guid>
@@ -47,6 +55,14 @@
 			<description>What your plan covers for connected homes: homes, household seats, live screens, voice minutes and agent turns, each with what you have used and when it resets. Pause and resume which homes are live without disconnecting any of them. Locking up, closing a garage and arming an alarm are never limited.</description>
 		</item>
 		<item>
+			<title>Join a home</title>
+			<link>https://three.ws/smart-home/join</link>
+			<guid isPermaLink="false">2026-09-03:Join a home</guid>
+			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Accept an invitation to somebody's connected home. The link says which home it is, exactly what your role would let you do there and what it would never let you do, before you sign in. It works once and it expires.</description>
+		</item>
+		<item>
 			<title>Smart home</title>
 			<link>https://three.ws/smart-home</link>
 			<guid isPermaLink="false">2026-09-03:Smart home</guid>
@@ -69,6 +85,14 @@
 			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Give your existing Home Assistant voice assistant a face. Pair a three.ws satellite and the same pipeline you already use gains a 3D agent that lip-syncs its answers and reacts, on any screen in the house. Home Assistant keeps the wake word, the speech recognition and the answer; closing the page never stops the voice working.</description>
+		</item>
+		<item>
+			<title>A stranger cannot make your agent open your front door</title>
+			<link>https://three.ws/smart-home</link>
+			<guid isPermaLink="false">2026-09-03:A stranger cannot make your agent open your front door</guid>
+			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>The home lane now has a written threat model and eleven security checks that run with every build, and the standard they hold is a lock, not a database row. The big fix: the address you give for your house is now resolved and pinned on our side before anything dials it, so a web address that secretly points back into our own network is refused instead of connected to, and it is re-checked every time your house reconnects rather than trusted from the day you added it. A device or integration in your house cannot talk your agent into anything either: we wrote an unlock instruction into a real room name, a real device name and a real scene name, ran a real agent against that house, and the front door stayed locked. Your privacy page is now rate limited like everything else, so nobody can hammer the export or the delete.</description>
 		</item>
 		<item>
 			<title>Connect your house to your agent, and see every way it can go wrong</title>
@@ -109,6 +133,14 @@
 			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>There is a new page at /drive built for a car screen instead of a desk. Your agent is on it full size, you hold one big button and talk, and it answers out loud in its own voice with its face moving. It shows you one line of what it said rather than a wall of chat, because you are driving. It starts dark, because a bright panel at night is glare, and it will switch to a day palette on one press or one sentence. The keyboard stays out of the way while you are moving: if your browser can tell how fast you are going, text entry locks itself the moment you pull away and comes back when you have properly stopped. A few things you say never leave the car at all, so &quot;repeat that&quot;, &quot;stop talking&quot;, &quot;louder&quot; and &quot;night mode&quot; happen instantly, while &quot;stop at the next charger&quot; still goes to your agent like any other question. It works today on a head unit browser, on a phone in a cradle, and on Android Automotive. The Apple CarPlay version is built and waiting on Apple's approval for voice assistants in the car. One thing this fixed for everyone: an avatar used to answer in silence if you were not signed in, and now it always has a voice.</description>
+		</item>
+		<item>
+			<title>Your house reads in your language, in your units, at a size a finger can hit</title>
+			<link>https://three.ws/smart-home</link>
+			<guid isPermaLink="false">2026-09-03:Your house reads in your language, in your units, at a size a finger can hit</guid>
+			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Three fixes to the smart home page, all of them things you would have noticed. It now speaks all 87 languages: the page was written to be translated but never loaded the piece that does the translating, so everyone got English, and Arabic and Hebrew never flipped to right to left. Temperatures now come from your house rather than from an assumption. If your Home Assistant is set to Fahrenheit, every room reads in Fahrenheit, and a room at 70 no longer shows as blazing hot because the comfort range was written in Celsius. A house that mixes a Celsius sensor with a Fahrenheit thermostat is converted before it is averaged, so the number you see belongs to a real scale. The small print at the top of the page also got lighter so it clears the contrast standard, in both the light and dark themes, and the Show button next to the token field is now big enough to tap without missing.</description>
 		</item>
 		<item>
 			<title>Docs · Materialize: turn a generation into a real object</title>

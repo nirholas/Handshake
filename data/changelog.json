@@ -25894,6 +25894,16 @@
 				"improvement"
 			],
 			"link": "/smart-home"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "Your house reads in your language, in your units, at a size a finger can hit",
+			"summary": "Three fixes to the smart home page, all of them things you would have noticed. It now speaks all 87 languages: the page was written to be translated but never loaded the piece that does the translating, so everyone got English, and Arabic and Hebrew never flipped to right to left. Temperatures now come from your house rather than from an assumption. If your Home Assistant is set to Fahrenheit, every room reads in Fahrenheit, and a room at 70 no longer shows as blazing hot because the comfort range was written in Celsius. A house that mixes a Celsius sensor with a Fahrenheit thermostat is converted before it is averaged, so the number you see belongs to a real scale. The small print at the top of the page also got lighter so it clears the contrast standard, in both the light and dark themes, and the Show button next to the token field is now big enough to tap without missing.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/smart-home"
 		}
 	]
 }
