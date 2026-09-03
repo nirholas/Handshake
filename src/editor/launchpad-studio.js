@@ -861,7 +861,7 @@ export function mountLaunchpadStudio(root, options = {}) {
 				<div class="actions">
 					<span class="save-state" data-save-state role="status" aria-live="polite"></span>
 					<a class="btn ghost" href="/launches" title="Public feed of every coin launched by a three.ws agent">See all launched coins →</a>
-					<a class="btn ghost" href="/embed" title="The original place-and-scale embed editor">Open classic editor</a>
+					<a class="btn ghost" href="/studio" title="The Widget Studio, which absorbed the classic embed editor">Open Widget Studio</a>
 					<button class="btn" data-action="open-recent" aria-haspopup="true" aria-expanded="false">My launchpads ▾</button>
 					<button class="btn" data-action="new-draft" title="Start a new draft (current draft cleared)">New</button>
 					<button class="btn primary" data-action="publish">Publish</button>

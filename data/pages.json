@@ -743,7 +743,7 @@
 				{
 					"path": "/studio",
 					"title": "Widget Studio",
-					"description": "Pick an avatar, configure embed options, copy a one-line snippet for your site.",
+					"description": "Build an embeddable 3D widget: pick an avatar (or your own model URL), pick a widget type, tune it live, and copy the snippet. No account needed for the URL-based embeds.",
 					"priority": 0.8,
 					"changefreq": "weekly",
 					"added": "2026-05-24"
@@ -976,7 +976,7 @@
 				{
 					"path": "/avatar-studio",
 					"title": "Avatar Studio",
-					"description": "Build a custom 3D avatar from scratch. Choose body type, sculpt face and body, add outfits and accessories. No selfie required.",
+					"description": "Build a custom 3D avatar from scratch. Sculpt the face and body, dress it from the closet, add accessories, and walk it around the stage. No selfie required.",
 					"priority": 0.7,
 					"changefreq": "weekly"
 				},

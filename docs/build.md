@@ -139,8 +139,8 @@ head -1 api/<route>.js   # bundle if it starts with __defProp / createRequire / 
 
 ## Embed integrity
 
-Embed surfaces (`/widget`, `/embed`, `/agent-embed`, `/a-embed`,
-`/avatar-embed`, `/agent-token-page`, `/assistant-frame`) load inside third-party iframes. They must
+Embed surfaces (`widget.html`, `embed.html`, `agent-embed.html`, `a-embed.html`,
+`avatar-embed.html`, `agent-token-page.html`, `assistant-frame.html`) load inside third-party iframes. They must
 **not** register the service worker — an SW registered from an iframe is scoped
 to `https://three.ws/` and would intercept every other tab on the origin.
 

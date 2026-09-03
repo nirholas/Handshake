@@ -2,6 +2,21 @@
 
 > Retirement note (2026-07-28): work orders verified fully shipped were deleted from this pack per owner directive; their files remain in git history. Links below to missing files refer to retired, completed work orders. Remaining files are open or partial.
 
+> **creation-consolidation closed 2026-09-03.** Both blocked redirects shipped once the capability
+> gaps behind them were closed. Avatar Studio reached edit-mode parity with the avatar editor
+> (wardrobe + closet, auto-rig, walk preview, "Play as this", `?equip-*`), and the Widget Studio
+> absorbed the `/embed` editor (no-account snippets, an Agent Chat widget type, deep-linkable
+> config on the same parameter names, raw GLB/VRM URLs, platform paste instructions), so `/embed`
+> now 301s to `/studio` with `has`-gated rewrites for every parameter-carrying form. Two placement
+> decisions were resolved in place: `/start` **stays** as guided onboarding (it is the onboarding
+> tour's target and composes the canonical `/api/agents`; the alternative, retiring it, would have
+> broken the tour, the `/features` CTAs, the sitemap and the localized page set), and `/pose`
+> **stays in Build** under `tier: 'advanced'` (it already appeared exactly once in `public/nav-data.js`,
+> and it is the most-linked authoring tool on the site; the alternative, Labs-only, would bury it).
+> The bare `/avatar-edit` landing keeps its existing 301 to `/dashboard/avatars` rather than moving
+> to `/avatar-studio`: a bare `/avatar-edit` means "edit one of my avatars", and Studio's create
+> mode answers a different question. Route contract: `tests/creation-surface-redirects.test.js`.
+
 Each file here is a **self-contained prompt** you paste into a fresh Claude Code chat in this repo. Each one improves an existing surface or adds a new 3D / crypto / AI capability — **additively, without breaking the current architecture.**
 
 Read this file once; every prompt assumes it.
@@ -72,7 +87,6 @@ retired; they remain readable in git history
 | File | Owns | State |
 |---|---|---|
 | [generation-suite.md](roadmap-generation-suite.md) | Meshy and Tripo class parity, and production truth for every generation endpoint | Open. Step 0 and tasks 1 and 2 are done (2026-09-03): the truth table was rebuilt from live probes, and every row is green except the undeployed talking-avatar lane. That sweep found the default free image lane failing 44 of 49 generations for 12 hours while every status surface read green; it is restored and hardened, and `trellis_selfhost` now has a live health probe. Tasks 3 to 8 (pipeline tools in `/forge`, preview then refine, export formats, PBR controls, job webhooks, community gallery) are untouched. |
-| [creation-consolidation.md](roadmap-creation-consolidation.md) | The last three creation-surface merges | Open. Two redirects are blocked behind real capability gaps, and closing those gaps is the work. |
 | [developer-resources-repos.md](roadmap-developer-resources-repos.md) | The public examples satellite repo and its one-way export | Done, retired 2026-09-03. `npm run export:satellites` stages 72 files and passes all four smoke stages; the docs, `llms.txt` and `llms-full.txt` cross-links are live. Only the owner-gated publish remains (create the `three-ws` org, run the printed push), tracked as row 16 of [production-100-OWNER-ACTIONS.md](production-100-OWNER-ACTIONS.md). |
 | [native-widgets.md](roadmap-native-widgets.md) | Native widgets on the Android, Windows, macOS and iOS home screens | Built, all four surfaces. Android and Windows are live in production; the Apple sources are in `apple/`. Open only on what code cannot do: an Apple Developer account to sign the two binaries (owner action 17) and a Windows 11 machine for the in-board check. |
 

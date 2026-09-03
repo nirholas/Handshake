@@ -548,7 +548,7 @@ function agentCard(a, avatars) {
 				<div class="dn-agent-actions-primary">
 					${a.avatar_id ? `<a class="dn-btn" href="/avatars/${encodeURIComponent(a.avatar_id)}" target="_blank" rel="noopener" style="padding:5px 10px;font-size:12px">Live page ↗</a>` : ''}
 					<a class="dn-btn" href="/app?agent=${encodeURIComponent(a.id)}" target="_blank" rel="noopener" style="padding:5px 10px;font-size:12px">3D Studio ↗</a>
-					<a class="dn-btn" href="/embed?avatar=${encodeURIComponent(a.id)}&mode=chat" target="_blank" rel="noopener" style="padding:5px 10px;font-size:12px">Embed wizard ↗</a>
+					<a class="dn-btn" href="/studio?avatar=${encodeURIComponent(a.id)}&mode=chat" target="_blank" rel="noopener" style="padding:5px 10px;font-size:12px">Embed wizard ↗</a>
 				</div>
 				<div class="dn-agent-actions-secondary">
 					<button class="dn-btn ghost" data-action="edit-agent" data-id="${esc(a.id)}" style="padding:5px 10px;font-size:12px">Edit</button>

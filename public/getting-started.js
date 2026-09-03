@@ -66,7 +66,7 @@
 			desc: 'Drop one line of HTML onto any site. It loads and animates itself.',
 			href: '/studio',
 			done: function (p) {
-				return p.indexOf('/studio') === 0 || p === '/embed' ||
+				return p.indexOf('/studio') === 0 ||
 					p.indexOf('/dashboard/widgets') === 0 || p.indexOf('/dashboard/api') === 0;
 			},
 		},

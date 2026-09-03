@@ -1,6 +1,6 @@
 # Avatar Studio: build a custom avatar from scratch, no selfie
 
-Avatar Studio builds a fully rigged 3D avatar without a photo. You start from a base body and shape it into your own character: tint skin, hair, and outfit; sculpt the face and body with morph sliders; add hats, glasses, and earrings; hide or show garment layers to strip back to the base and build a look up; and drive the rig live with a library of emotes. When you save, the live scene is exported to a GLB exactly as you see it and stored to your account, ready to animate, dress, and use anywhere on the platform.
+Avatar Studio builds a fully rigged 3D avatar without a photo. You start from a base body and shape it into your own character: tint skin, hair, and outfit; sculpt the face and body with morph sliders; put on catalog garments from a closet; add hats, glasses, and earrings; hide or show the body's own garment layers to strip back to the base and build a look up; drive the rig live with a library of emotes; and walk the finished avatar around the stage. When you save, the live scene is exported to a GLB exactly as you see it and stored to your account, ready to animate, dress, and use anywhere on the platform.
 
 Page: [/avatar-studio](https://three.ws/avatar-studio) (also reachable at [/create/studio](https://three.ws/create/studio))
 
@@ -23,15 +23,21 @@ Every edit updates the live scene graph, and a working "appearance" object track
 - **Free sculpt.** Above everything else sits a brush for the shapes no catalogue has: a dent in one temple, a crooked bridge, a brow ridge that is simply yours. Turn **Brush on**, then drag on the avatar to pull the surface out or push it in; dragging the background still orbits the camera, so you never lose the view. Size and Strength are real world measurements (centimetres and millimetres per stroke), the on-screen ring shows the brush's actual footprint at the current zoom, and Symmetry mirrors each stroke across the body's own centre line until you turn it off. Playback pauses while the brush is on so the mesh holds still under your cursor. The edit is recorded as its own morph target, which means it adds to the library sliders instead of fighting them, exports with the mesh, and comes back untouched when you re-open the avatar. **Clear sculpt** returns the body to exactly the catalogue shape.
 - **Proportions.** Above the morph sliders sits a bone-level build panel: Height, Leg Length, Torso Length, Neck Length, Arm Length, Shoulder Width, Hip Width, Head Size, Hand Size, Foot Size. Morphs reshape a limb; these re-proportion the skeleton, which is the only way to actually lengthen one (a morph is a fixed set of vertex deltas, so pulling the hand further from the elbow would drag the skin off the bone driving it). Each slider is a ratio around the base body, shown as a signed percentage, and double-clicking resets it. Lengthen the legs and the hips ride up so the feet stay on the floor, and the animation library re-measures itself against the new hip height so the walk does not foot-slide. Only parameters the loaded rig has bones for are offered.
 - **Accessories.** Hats, glasses, and earrings load from a preset catalog (`/accessories/presets.json`). Hovering a tile previews it live on the avatar; clicking commits it. Hats and glasses are single-slot; earrings stack. A chip row shows everything applied, each removable.
-- **Garment layers.** Outfit, glasses, and hair can be toggled visible/hidden, with bulk "Start minimal" and "Dress fully" actions, so you can strip to the base body and rebuild the look deliberately.
+- **Wardrobe.** Two things stacked in one tab. The top half is the body's own garment layers (outfit, glasses, hair): recolour them, toggle each visible or hidden, or use the bulk "Start minimal" and "Dress fully" actions to strip to the base body and rebuild a look deliberately. The layers are resolved from whatever the loaded GLB actually contains rather than a hardcoded material list, so a third-party body still gets real controls. Beneath them is the **Closet**: catalog garments (tops, bottoms, footwear, outerwear, hair, headwear, glasses, accessories) that are downloaded and re-bound to *this* avatar's skeleton at runtime, so they move with every animation. Worn pieces occlude the skin underneath (pixel-exact on the Parametric base, which ships a baked UV region mask; bone-cull elsewhere), appear as removable chips beside the accessory chips, and are stored as `appearance.garments`. The garment contract is [specs/GARMENT_MANIFEST.md](../specs/GARMENT_MANIFEST.md).
 - **Animate.** Load the shared canonical clip library and drive the rig live with 17 emotes (idle, waiting, chill, wave, cheer, celebrate, flex, jump, pray, blow kiss, taunt, dance, shuffle, rumba, thriller, capoeira). A looping emote becomes the avatar's resting idle and is baked in on save; one-shots play once and settle back to the current idle. This doubles as proof the avatar is fully rigged.
+- **Walk.** Take the avatar for a walk without leaving the editor. It auto-walks a circle around the stage and you can drive it with WASD or the arrow keys, in any of the runtime's environments. Every sculpt, colour, garment and accessory edit shows up in motion immediately, which is where foot-slide, clipping and a garment that does not follow the hips actually become visible. In edit mode, **Open in Walk page** stashes the *unsaved* look as a short-lived draft and opens the full [/walk](https://three.ws/walk) page on it, so you review exactly what is on the stage rather than the last save. In create mode there is no saved record to build that draft from, so the panel says so instead of offering a button that would fail.
+- **Rig** (edit mode only). Rig status for the loaded avatar plus one-click auto-rigging for a static mesh that has no skeleton and therefore cannot walk, wave, or emote. Rigging is non-destructive: it mints a new sibling avatar and opens the studio on it, leaving the original mesh untouched.
 - **Randomize.** One button rolls a random swatch per color slot, a gentle draw on every proportion parameter, and a random hat and glasses, as a starting point. The proportion draw stays near neutral on purpose: two random avatars should read as different people, not different species.
 
 The studio has 50-deep undo/redo, a dirty-state indicator in the title bar, and a draft autosave to local storage that is offered back if you leave and return (in create mode).
 
 ### Save
 
-Saving does not ask a server to re-bake anything. The live Three.js scene, with colors, morphs, and accessories already applied to the scene graph, is exported via `GLTFExporter`, so the resulting GLB is exactly what you saw. It runs through the shared optimize-and-validate path (geometry compression, `gltf-validator`), uploads to your account, and creates or (in edit mode) updates the avatar record. The appearance JSON is stored alongside as metadata so the avatar stays re-editable.
+Saving takes one of two paths, and which one it takes matters.
+
+**Creating a new avatar** exports the live Three.js scene via `GLTFExporter`, with colors, morphs and accessories already applied to the scene graph, so the resulting GLB is exactly what you saw. It runs through the shared optimize-and-validate path (geometry compression, `gltf-validator`), uploads to your account, and creates the avatar record. The appearance JSON is stored alongside as metadata so the avatar stays re-editable. Closet garments are the one exception: they are taken off the rig for the duration of the export and put straight back afterwards, because the appearance record carries them and the server bake replays them onto the base. Exporting a dressed body would apply every garment twice, onto a base you could never get back.
+
+**Editing a saved avatar** does not export geometry at all. The record keeps its original, pristine base model and the server bakes the appearance onto it, so this is a metadata-only `PATCH` of `{ name, appearance }`. That is also why the base body cannot be switched while editing: a saved avatar owns its base.
 
 ## Walkthrough
 
@@ -39,16 +45,18 @@ Saving does not ask a server to re-bake anything. The live Three.js scene, with 
 2. On the Color tab, tap a Look (say, Cyber) for an instant coherent palette, then fine-tune skin, hair, and outfit with the swatches or the rainbow chip's full picker.
 3. Open the Face tab and sculpt: widen the jaw, adjust the nose, nudge body shape. Use the face-type wheel to blend archetypes.
 4. Add a hat and glasses from their tabs; hover to preview, click to keep. Add earrings if you want.
-5. Use the Layers block to hide the outfit and rebuild it, or leave it dressed.
+5. On the Wardrobe tab, hide the base outfit and put on a shirt and boots from the closet, or leave the avatar in what it came with.
 6. On the Animate tab, pick a looping emote (for example, Dance) to set the avatar's resting idle.
-7. Name it and click Save. The studio exports, optimizes, uploads, and lands you with a saved avatar you can animate and dress elsewhere.
+7. Open the Walk tab and drive the avatar around with WASD to check the outfit moves with it.
+8. Name it and click Save. The studio exports, optimizes, uploads, and lands you with a saved avatar you can animate and dress elsewhere.
 
 ## Examples
 
 Avatar Studio is an interactive builder; its examples are its entry points and the account API it saves through.
 
 - **Create a new avatar:** [https://three.ws/avatar-studio](https://three.ws/avatar-studio) or [https://three.ws/create/studio](https://three.ws/create/studio)
-- **Edit a saved avatar:** `https://three.ws/avatar-studio?edit=<avatarId>`: reloads that avatar's appearance and updates the existing record on save.
+- **Edit a saved avatar:** `https://three.ws/avatar-studio?edit=<avatarId>`: reloads that avatar's appearance and updates the existing record on save. Edit mode also adds the Rig tab and a **Play as this** button that saves and drops you into [/play](https://three.ws/play) wearing the avatar.
+- **Arrive wearing something:** `https://three.ws/avatar-studio?edit=<avatarId>&equip-glb=<url>&equip-kind=hat&equip-name=Top%20hat` pre-applies an accessory GLB that is not in the preset catalog and marks the avatar unsaved, so a gallery "Equip" tile can hand off straight into the studio. `equip-kind` is `hat`, `glasses` or `earrings` (default `hat`); `equip-bone` overrides the attach bone (default `Head`). The avatar editor at `/avatars/<avatarId>/edit` accepts the identical parameters.
 
 Fetching an avatar record (the same call the studio makes to load edit mode):
 
@@ -66,6 +74,8 @@ curl 'https://three.ws/api/avatars/<avatarId>' -H 'cookie: <session>'
 - **Sculpt depends on the base's morphs.** The face/body sliders render against whatever morph targets the base GLB exposes; a slot with no matching morph simply does not appear. Proportions are independent of morphs: they need only a canonical humanoid skeleton, so they work on a rig with no blendshapes at all. Height is the one parameter that needs an armature node above the hips, and is hidden on rigs whose hips sit directly in the scene.
 - **Save requires an account.** Export happens client-side, but persisting the avatar to your library needs sign-in. Optimization is best-effort: if compression fails, the original export is saved untouched so the save always completes.
 - **What you see is what you save.** Because the save exports the live scene graph, the stored GLB matches the viewport exactly, colors, morphs, accessories, and the chosen idle included.
+- **The Rig and Play tabs need a saved avatar.** Auto-rigging posts the avatar's id to the regenerate backend and the /walk handoff presigns that avatar's private base GLB, so neither exists for an unsaved draft. The Rig tab is hidden in create mode and the Walk tab swaps its handoff button for the reason.
+- **A garment needs a humanoid skeleton to bind to.** The closet refuses a piece it cannot rebind rather than attaching it mangled, and a retired catalog id degrades to "not worn" on load instead of failing the whole avatar. Re-dressing a saved outfit runs alongside the boot rather than blocking it, so the avatar is live and animating while the pieces land.
 - **Drafts are local.** Unsaved work autosaves to local storage in create mode and is offered back on return; edit mode does not autosave a draft over the saved avatar.
 
 ## Related

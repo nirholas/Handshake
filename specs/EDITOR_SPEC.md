@@ -333,6 +333,8 @@ UI wrapper over `publishEditedGLB`. Manages three states: **working** (step prog
 
 A separate "place, scale, preview, copy" UX. Mounted by calling `mountEmbedEditor(rootEl, { src, defaults })`. Renders a split view: a live iframe preview on the left, a control panel on the right.
 
+> Route note: the standalone `/embed` page this module used to back is retired. That editor's job now belongs to the Widget Studio at `/studio` ([`public/studio/studio.js`](../public/studio/studio.js)), which reads the same query-parameter names, so `/embed?…` links rewrite there. This module stays as the embeddable, host-mountable form of the same UX (the `<agent-3d editor>` path described above); it is no longer served at a route of its own.
+
 Controls exposed:
 
 - Mode selector (floating, inline, section, fullscreen)

@@ -551,7 +551,7 @@ Khronos-spec validator for glTF/GLB files. Paste a URL or upload a model.
 
 URL: https://three.ws/studio
 
-Pick an avatar, configure embed options, copy a one-line snippet for your site.
+Build an embeddable 3D widget: pick an avatar (or your own model URL), pick a widget type, tune it live, and copy the snippet. No account needed for the URL-based embeds.
 
 ### Artifact Viewer
 
@@ -725,7 +725,7 @@ Paste any token contract address and get a live, agent-payable x402 endpoint for
 
 URL: https://three.ws/avatar-studio
 
-Build a custom 3D avatar from scratch. Choose body type, sculpt face and body, add outfits and accessories. No selfie required.
+Build a custom 3D avatar from scratch. Sculpt the face and body, dress it from the closet, add accessories, and walk it around the stage. No selfie required.
 
 ### TRELLIS NIM Forge
 

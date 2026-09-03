@@ -248,7 +248,7 @@
 			blurb: 'The loader mounts a rotatable 3D viewer into every [data-agent-id] element on the page. Great for WordPress, Ghost, or any static site.',
 			tags: ['widget', 'no-build'],
 			docs: [
-				{ label: 'Embed editor', href: '/embed' },
+				{ label: 'Embed editor', href: '/studio' },
 				{ label: 'Share your agent', href: '/tutorials/share-your-agent' },
 			],
 			github: 'https://github.com/nirholas/three.ws/blob/main/public/artifact.js',

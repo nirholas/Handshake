@@ -54,8 +54,9 @@
 	var FEATURES = {
 		'/forge':          { label: 'Forge',          desc: 'Turn a text prompt into a textured 3D model.' },
 		'/create/prompt':  { label: 'Describe it to 3D', desc: 'Type a description → a rigged 3D avatar.' },
-		'/scan':           { label: 'Scan',           desc: 'Turn a selfie into a rigged 3D avatar.' },
-		'/studio':         { label: 'Studio',         desc: 'Customize your avatar and grab an embed for any site.' },
+		'/create/selfie':  { label: 'Selfie to avatar', desc: 'Turn a selfie into a rigged 3D avatar.' },
+		'/studio':         { label: 'Widget Studio',  desc: 'Build an embeddable 3D widget and copy the snippet for any site.' },
+		'/avatar-studio':  { label: 'Avatar Studio',  desc: 'Sculpt, dress and animate an avatar from scratch, no selfie.' },
 		'/scene':          { label: 'Scene Studio',   desc: 'Import GLBs, compose full 3D scenes, and export.' },
 		'/play':           { label: 'Worlds',         desc: 'Drop into a live 3D world and hang out.' },
 		'/walk':           { label: 'Walk',           desc: 'Walk your avatar across any page on the site.' },
@@ -68,8 +69,6 @@
 		'/gmgn':           { label: 'GMGN Smart Money', desc: 'Track what smart-money wallets are buying.' },
 		'/skills':         { label: 'Skills',         desc: 'Browse tool packs your agents can equip.' },
 		'/brain':          { label: 'Brain',          desc: 'Compare one prompt across Claude, GPT and more.' },
-		'/embed':          { label: 'Embed',          desc: 'Put your live agent on any website.' },
-		'/embed.html':     { label: 'Embed Editor',   desc: 'Tune mode, size, and position, then copy the snippet.' },
 		'/docs':           { label: 'Docs',            desc: 'SDKs, API reference, and integration guides.' },
 		'/launchpad':      { label: 'Launchpad Studio', desc: 'Build a white-label 3D token launchpad and go live onchain.' },
 		'/deploy':         { label: 'Deploy Onchain',  desc: 'Register your model as a permanent on-chain agent identity.' },
@@ -78,7 +77,7 @@
 	};
 
 	// Under-used "hidden gems" — the pool the passive prompt draws from first.
-	var HIDDEN_GEMS = ['/forge', '/create/prompt', '/studio', '/embed.html', '/docs', '/launchpad', '/marketplace', '/lipsync', '/voice', '/brain', '/skills'];
+	var HIDDEN_GEMS = ['/forge', '/create/prompt', '/create/selfie', '/studio', '/avatar-studio', '/docs', '/launchpad', '/marketplace', '/lipsync', '/voice', '/brain', '/skills'];
 
 	// Cross-links shown when a feature finishes (`tws:feature-done`). Every target
 	// is a confirmed live route; the adjacent action is the natural next step.
@@ -94,7 +93,7 @@
 	var CROSSLINKS = {
 		forge: { kicker: 'Nice model. What now?', links: [
 			{ route: '/scene',    label: 'Open in Scene Studio', primary: true, modelParam: 'model', nameParam: 'name' },
-			{ route: '/embed.html', label: 'Embed editor', modelParam: 'avatar' },
+			{ route: '/studio',   label: 'Embed it on a site', modelParam: 'model' },
 			{ route: '/deploy',   label: 'Deploy onchain', idParam: 'avatar', modelParam: 'model', nameParam: 'name' },
 			{ route: '/play',     label: 'Drop it in a world', modelParam: 'avatar' },
 		] },
@@ -108,16 +107,16 @@
 			{ route: '/studio',   label: 'Open Studio', primary: true, idParam: 'avatar', modelParam: 'model' },
 			{ route: '/create-agent', label: 'Make it an agent' },
 			{ route: '/walk',     label: 'Walk your avatar', idParam: 'avatar', modelParam: 'avatarUrl' },
-			{ route: '/embed.html', label: 'Embed editor', idParam: 'avatar', modelParam: 'avatar' },
+			{ route: '/studio',   label: 'Embed it on a site', idParam: 'avatar', modelParam: 'model' },
 		] },
 		scan: { kicker: 'Avatar ready. What now?', links: [
 			{ route: '/studio',   label: 'Open Studio', primary: true, idParam: 'avatar', modelParam: 'model' },
 			{ route: '/walk',     label: 'Walk your avatar', idParam: 'avatar', modelParam: 'avatarUrl' },
-			{ route: '/embed.html', label: 'Embed editor', idParam: 'avatar', modelParam: 'avatar' },
+			{ route: '/studio',   label: 'Embed it on a site', idParam: 'avatar', modelParam: 'model' },
 			{ route: '/docs',     label: 'Read the docs' },
 		] },
 		studio: { kicker: 'Widget ready. Share it?', links: [
-			{ route: '/embed.html', label: 'Embed editor', primary: true },
+			{ route: '/widgets',    label: 'See it in the gallery', primary: true },
 			{ route: '/deploy',     label: 'Deploy onchain', idParam: 'avatar', modelParam: 'model', nameParam: 'name' },
 			{ route: '/docs',       label: 'Integration guide' },
 		] },

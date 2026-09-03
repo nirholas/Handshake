@@ -1897,12 +1897,24 @@
 			"dest": "/api/embed/resolve"
 		},
 		{
-			"src": "/embed",
-			"dest": "/embed.html"
+			"src": "/embed/?",
+			"has": [{ "type": "query", "key": "mode" }],
+			"dest": "/studio/index.html"
 		},
 		{
-			"src": "/embed/",
-			"dest": "/embed.html"
+			"src": "/embed/?",
+			"has": [{ "type": "query", "key": "avatar" }],
+			"dest": "/studio/index.html"
+		},
+		{
+			"src": "/embed/?",
+			"has": [{ "type": "query", "key": "id" }],
+			"dest": "/studio/index.html"
+		},
+		{
+			"src": "/embed/?",
+			"status": 301,
+			"headers": { "Location": "/studio" }
 		},
 		{
 			"src": "/embodiment/embed/?",

@@ -118,7 +118,7 @@ Create and customize an agent.
 - [Scene Composer](https://three.ws/compose): Real-time 3D scene composer: forge items from text, attach them to your avatar's skeleton bones, arrange and scale freely, then export your creation or save it as an outfit.
 - [Animation Studio](https://three.ws/pose): Pose any three.ws avatar or the built-in mannequin with FK/IK, keyframe a timeline, and preview the motion live. Export an animated GLB or clip JSON, save animations to your account, play them back across the platform, and sell them for USDC.
 - [glTF Validator](https://three.ws/validation): Khronos-spec validator for glTF/GLB files. Paste a URL or upload a model.
-- [Widget Studio](https://three.ws/studio): Pick an avatar, configure embed options, copy a one-line snippet for your site.
+- [Widget Studio](https://three.ws/studio): Build an embeddable 3D widget: pick an avatar (or your own model URL), pick a widget type, tune it live, and copy the snippet. No account needed for the URL-based embeds.
 - [Artifact Viewer](https://three.ws/artifact): Renders Claude artifact bundles as standalone embeddable apps.
 - [create-agent: one command, one 3D character](https://three.ws/docs/create-agent): npm create @three-ws/agent turns a sentence into a rigged, downloadable 3D character with a working demo page. No account, no API key.
 - [Brownout: proven fallbacks, not promised ones](https://three.ws/docs/brownout): Every response says where its data came from and how fresh it is, and every fallback the API claims has been executed for real against a genuinely refusing provider, inside the request path a user hits.
@@ -147,7 +147,7 @@ Create and customize an agent.
 - [Voice Lab](https://three.ws/voice): Browse hundreds of voices across Microsoft Edge, Gemini, NVIDIA, OpenAI and ElevenLabs, preview any of them, or clone your own from a short recording, then give it to your agent.
 - [Make Dad a 3D Avatar](https://three.ws/dad): Turn one photo of your dad into a recognizable, rigged, animated 3D avatar. It idles, walks, and waves, and you can share a permalink.
 - [CA → x402](https://three.ws/ca2x402): Paste any token contract address and get a live, agent-payable x402 endpoint for its market intel (price, momentum, and a bullish/bearish signal) for $0.01 USDC, discoverable in the x402 bazaar.
-- [Avatar Studio](https://three.ws/avatar-studio): Build a custom 3D avatar from scratch. Choose body type, sculpt face and body, add outfits and accessories. No selfie required.
+- [Avatar Studio](https://three.ws/avatar-studio): Build a custom 3D avatar from scratch. Sculpt the face and body, dress it from the closet, add accessories, and walk it around the stage. No selfie required.
 - [TRELLIS NIM Forge](https://three.ws/nim-forge): Drop in a photo, get a textured 3D model, reconstructed on a self-hosted Microsoft TRELLIS NIM. Single-hop image to GLB.
 - [Avatar SDK](https://three.ws/avatar-sdk): The @three-ws/avatar package: embed the platform 3D avatars in any site with a few lines of JavaScript.
 - [Materialize](https://three.ws/materialize): Turn any 3D model into a real printed object. Live printability analysis and automatic repair, a true-scale AR preview on your own desk, an itemized price from the mesh's own measured volume, and USDC checkout on Solana.

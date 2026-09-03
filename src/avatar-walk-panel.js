@@ -102,7 +102,7 @@ export function createWalkPanel({
 		const kbd = KEYS.map((k) => `<kbd>${k}</kbd>`).join('');
 		const cta = openWalkUrl
 			? `<button class="${esc(buttonClass)} primary ae-walk-open" type="button">Open in Walk page &rarr;</button>`
-			: `<p class="ae-walk-note ae-walk-hint">${esc(saveHint)}</p>`;
+			: `<p class="ae-walk-note ae-walk-savehint">${esc(saveHint)}</p>`;
 
 		panel.innerHTML = `
 			<div class="ae-walk">
@@ -207,7 +207,9 @@ function injectCss() {
 		.ae-walk-select:focus-visible { border-color: var(--accent, #fafafa); }
 		.ae-walk-open { align-self: flex-start; }
 		.ae-walk-note { margin: 0; font-size: 12px; line-height: 1.5; color: var(--text-3, #71717a); min-height: 16px; }
-		.ae-walk-hint { color: var(--text-2, #a1a1aa); }
+		/* Deliberately not .ae-walk-hint: AvatarWalkPreview already owns that
+		   class for the on-stage driving hint it overlays on the viewport. */
+		.ae-walk-savehint { color: var(--text-2, #a1a1aa); }
 	`;
 	document.head.appendChild(style);
 }

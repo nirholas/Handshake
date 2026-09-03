@@ -8609,7 +8609,7 @@ three.ws is production-ready and serves [three.ws](https://three.ws) live on Goo
 
 - `<agent-3d>` custom element — drop it anywhere with no framework dependency
 - Five widget variants: turntable, animation gallery, talking agent, ERC-8004 passport card, hotspot tour
-- Widget Studio + WYSIWYG **Embed editor** at `/embed` — pick an avatar, embed mode, environment, and size, copy the snippet
+- **Widget Studio** at `/studio`: pick an avatar (or paste your own model URL), pick a widget type, tune it live, copy the snippet; no account needed for the URL-baked types
 - **Launchpad** at `/launchpad` — hosted public launch pages at `/p/[slug]` for tokens, agents, and drops
 - Open Graph metadata and oEmbed support for rich social previews when links are shared
 - Versioned CDN bundles at `/agent-3d/x.y.z/agent-3d.js`
@@ -8735,7 +8735,7 @@ A map of every user-facing route. [`STRUCTURE.md`](STRUCTURE.md) maps each produ
 | **Profile**          | `/profile`, `/u/[username]`, `/avatars/[id]`                                                    | User and avatar public pages — SNS badge + pay-by-name modal when `[username].threews.sol` is claimed           |
 | **SNS Subdomain**    | `/threews/claim`                                                                                | Mint `[label].threews.sol`, set the URL record to your showcase, transfer ownership — single tx, platform pays  |
 | **Dashboard**        | `/dashboard`, `/dashboard/actions`, `/dashboard/wallets`, `/dashboard/usage`, `/dashboard/x402` | Account management, settings, and x402 receipts/payouts                                                         |
-| **Studio / Tools**   | `/studio`, `/embed`, `/pose`, `/gestures`, `/choreograph`, `/voice`, `/mocap-studio`, `/hydrate`, `/validation`, `/strategy-lab` | Widget Studio, WYSIWYG embed editor, pose authoring, gesture vocabulary + override builder, routine choreographer, Voice Lab, Mocap Studio, on-chain import, glTF validator, DCA |
+| **Studio / Tools**   | `/studio`, `/avatar-studio`, `/pose`, `/gestures`, `/choreograph`, `/voice`, `/mocap-studio`, `/hydrate`, `/validation`, `/strategy-lab` | Widget Studio (the WYSIWYG embed builder), Avatar Studio, pose authoring, gesture vocabulary + override builder, routine choreographer, Voice Lab, Mocap Studio, on-chain import, glTF validator, DCA |
 | **Widgets**          | `/widgets`, `/w/[id]`                                                                           | Widget gallery and public widget pages (OG + oEmbed)                                                            |
 | **Launchpad**        | `/launchpad`, `/p/[slug]`                                                                       | Launchpad Studio + hosted launch pages (token, agent, drop campaigns)                                           |
 | **Club**             | `/club`                                                                                         | Multiplayer 3D venue — tips, leaderboard, audio tracks, perf-aware renderer                                     |
@@ -9025,7 +9025,7 @@ For the absolute simplest way to embed an agent, use this snippet. It requires n
 <script type="module" src="https://three.ws/artifact.js"></script>
 ```
 
-The loader ([public/artifact.js](public/artifact.js)) mounts a rotatable 3D viewer into every `[data-agent-id]` element on the page. You can find your agent ID in the agent's settings page. This method is great for quick integrations on platforms like WordPress, Ghost, or any static HTML site — size it with the `style` attribute. For a configurable snippet (chat mode, environments, size presets), use the [Embed editor](#embed-editor) at `/embed`.
+The loader ([public/artifact.js](public/artifact.js)) mounts a rotatable 3D viewer into every `[data-agent-id]` element on the page. You can find your agent ID in the agent's settings page. This method is great for quick integrations on platforms like WordPress, Ghost, or any static HTML site; size it with the `style` attribute. For a configurable snippet (chat mode, environments, size presets), use the [Widget Studio](#embed-editor) at `/studio`.
 
 ---
 
@@ -9563,19 +9563,20 @@ Widgets are stored as JSON config in Postgres, pointing at an avatar in R2.
 
 ## Embed Editor
 
-The **Embed editor** at [three.ws/embed](https://three.ws/embed) ([src/editor/embed-editor.js](src/editor/embed-editor.js)) is a WYSIWYG configurator for embedding a three.ws avatar or agent on any website. Pick an avatar from the gallery picker, choose an embed mode, tune the environment and size, and copy a ready-to-paste snippet.
+The WYSIWYG embed editor lives in the **Widget Studio** at [three.ws/studio](https://three.ws/studio) ([public/studio/studio.js](public/studio/studio.js)). The standalone `/embed` page merged into it: the bare path 301s to `/studio`, and a parameter-carrying `/embed?…` link rewrites there, because the Studio reads the same parameter names.
 
-[![Embed editor, live](public/screenshots/embed-editor.png)](https://three.ws/embed)
+[![Embed editor, live](public/screenshots/embed-editor.png)](https://three.ws/studio)
 
-| Feature              | Description                                                                              |
-| -------------------- | ---------------------------------------------------------------------------------------- |
-| **Four embed modes** | Static (idle pose), Idle (drifts on its own), Walking (joystick/keyboard), Chat (agent page iframe) |
-| **Avatar picker**    | Gallery modal (`src/avatar-gallery-picker.js`) — pick any avatar without leaving the page |
-| **Live preview**     | Renders the exact runtime the snippet ships — `/walk-embed` or `/a/<id>?embed=1`         |
-| **Environments**     | Studio (transparent), Void, Beach, Sunset, Night, Grid                                   |
-| **Size presets**     | S / M / L plus custom width × height                                                     |
-| **Snippet UX**       | Real clipboard copy of the iframe or script-tag form, with per-platform paste instructions (HTML, React, WordPress, Webflow, Shopify) |
-| **Deep-linkable**    | Every control reflects into the URL query, so a configured embed can be shared and re-opened |
+| Feature               | Description                                                                              |
+| --------------------- | ---------------------------------------------------------------------------------------- |
+| **Embed modes**       | Static (idle pose), Idle (drifts on its own), Walking (joystick/keyboard), Chat (an existing agent's page in an iframe), plus every other widget type |
+| **Avatar picker**     | Your library, a public-avatar search, or a model URL you host yourself (`.glb`, `.gltf`, `.vrm`) |
+| **Live preview**      | Renders the exact runtime the snippet ships: `/walk-embed`, `/a/<id>?embed=1`, or `/widget` |
+| **Environments**      | Studio (transparent), Void, Beach, Sunset, Night, Grid                                   |
+| **Size presets**      | S / M / L plus custom width × height, and a responsive (fluid) snippet                   |
+| **No account needed** | Walking-avatar and agent-chat bake their config into the embed URL, so the snippet works with no sign-in and no saved widget |
+| **Snippet UX**        | Real clipboard copy of the iframe or script-tag form, with per-platform paste instructions (HTML, React, WordPress, Webflow, Shopify) |
+| **Deep-linkable**     | Every control reflects into the URL query, so a configured embed can be shared and re-opened |
 
 ---
 

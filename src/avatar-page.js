@@ -1215,8 +1215,13 @@ function renderEmbedPanel(glbUrl) {
 	// The terminal viewer resolves an agent to its bound body through
 	// /api/agents/:id, so the agent id is the right handle in agent mode.
 	const ttySnippet = `npx @three-ws/tty-avatar ${mode === 'agent' ? `agent:${entityId}` : avatarId}`;
-	const wizardUrl = `/embed?${new URLSearchParams(
-		mode === 'agent' ? { agent: entityId, ...(avatarId ? { avatar: avatarId } : {}) } : { avatar: avatarId },
+	// The Widget Studio absorbed the standalone /embed editor and reads the same
+	// parameter names. An agent lands on the Agent Chat widget type (mode=chat
+	// takes the agent id); an avatar lands on the walking-avatar embed. The old
+	// editor silently ignored the `agent` key it used to be handed here, so the
+	// agent case landed on an avatar embed instead of a chat one.
+	const wizardUrl = `/studio?${new URLSearchParams(
+		mode === 'agent' ? { mode: 'chat', avatar: entityId } : { avatar: avatarId },
 	)}`;
 	return `
 		<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px">

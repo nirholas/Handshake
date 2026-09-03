@@ -761,11 +761,20 @@ async function bootScene(glbUrl, editAvatar) {
 			},
 			onChanged: () => renderChips(),
 		});
-		// Racks render as soon as the closet exists: browsing the catalog must
-		// not wait behind re-downloading a saved outfit (hydrate below marks
-		// tiles worn as each piece lands, via the onChanged re-render).
+		// Racks render as soon as the closet exists: browsing the catalog must not
+		// wait behind re-downloading a saved outfit.
 		if (activeTab === 'wardrobe') renderActivePanel();
-		await closet.hydrate(workingAppearance.garments);
+		// Re-dressing a saved outfit is a catalog fetch plus a GLB download per
+		// piece, which measured ~18s on a cold cache. Awaiting it here held the
+		// whole boot tail behind it: the avatar stayed in its bind pose (the idle
+		// clip loads below) and the status line still read like create mode. So
+		// it runs alongside instead, and each piece repaints the racks and chips
+		// as it lands through the closet's own onChanged. Every mutation the user
+		// can make in the meantime is serialized behind the same queue.
+		closet.hydrate(workingAppearance.garments).catch((err) => {
+			log.warn('[avatar-studio] closet hydrate failed', err?.message);
+			setStatus('err', 'Could not re-dress this avatar. Open Wardrobe to retry the closet.');
+		});
 
 		// Bring the rig to life: load the clip library and settle the avatar into
 		// a looping idle so it leaves its bind T-pose. The clip drives the whole

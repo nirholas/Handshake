@@ -5442,11 +5442,14 @@ function renderEmbedTab(a) {
 	if (iframe) iframe.textContent = iframeSnippet;
 	if (link) link.textContent = embedPageUrl;
 
-	// "Configure in wizard" — pre-loads this agent into the full embed editor
+	// "Configure in wizard": pre-loads this agent into the Widget Studio, which
+	// absorbed the standalone /embed editor. `mode=chat` is the same parameter
+	// name the old editor used, and the studio reads it to seed its Agent Chat
+	// widget type, so old links keep working through the redirect too.
 	const wizardLink = $('d-embed-wizard-link');
 	if (wizardLink) {
 		const p = new URLSearchParams({ avatar: agentId, mode: 'chat' });
-		wizardLink.href = `/embed?${p}`;
+		wizardLink.href = `/studio?${p}`;
 	}
 }
 
