@@ -1,6 +1,7 @@
 {
   "name": "hood-mcp",
   "version": "0.1.0",
+  "mcpName": "io.github.nirholas/hood-mcp",
   "description": "Model Context Protocol servers for Robinhood Chain (chain ID 4663): a zero-config read-only data server (Stock Token quotes, multiplier-correct portfolios, memecoin launches, chain stats) and an explicitly opt-in trading server (guarded swaps + USDG transfers with hard spend caps and a confirm gate).",
   "keywords": [
     "mcp",

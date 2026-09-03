@@ -1,6 +1,6 @@
 {
-  "$comment": "CANONICAL SOURCE OF TRUTH for every three.ws MCP directory listing. Regenerate with build-mcp-listing-source.mjs — do NOT hand-edit this JSON; edit the OVERLAY in that script. Factual fields (name/title/description/version/connect/tags-from-manifest) are read live from server*.json so listings can never drift from the manifests.",
-  "generatedBy": "prompts/store-submissions/_generated/build-mcp-listing-source.mjs",
+  "$comment": "CANONICAL SOURCE OF TRUTH for every three.ws MCP directory listing. Regenerate with scripts/build-mcp-listing-source.mjs; do NOT hand-edit this JSON. Factual fields (name/title/description/version/connect/requiredEnv) are read live from the server*.json manifests, so a listing can never drift from what we publish. Curated copy lives in the script's OVERLAY.",
+  "generatedBy": "scripts/build-mcp-listing-source.mjs",
   "publisher": {
     "name": "three.ws",
     "namespace": "io.github.nirholas",
@@ -23,11 +23,660 @@
     "icon": "Card/avatar image on all directories."
   },
   "counts": {
-    "total": 44,
+    "total": 50,
     "remote": 7,
-    "stdio": 37
+    "stdio": 43
   },
   "servers": [
+    {
+      "name": "io.github.nirholas/3d-agent-mcp",
+      "title": "three.ws 3D Agent Tools",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/mcp-server",
+      "npmPackage": "@three-ws/mcp-server",
+      "version": "1.2.2",
+      "description": "MCP tools from three.ws: free + paid text-to-3D, rigging, agent reputation, market intel.",
+      "tagline": "Full three.ws 3D + agent toolkit: free and paid text-to-3D, rigging, agent reputation, market intel.",
+      "category": "3d",
+      "tags": [
+        "text-to-3d",
+        "rigging",
+        "reputation",
+        "market-intel",
+        "free-and-paid"
+      ],
+      "examplePrompts": [
+        "Forge a free 3D model of a katana from text.",
+        "Generate a rigged avatar of a fox samurai.",
+        "Look up this agent's ERC-8004 reputation."
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2F3d-agent-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/3D-AI-Agent-Avatar",
+      "title": "3D AI Agent Avatar",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/avatar-agent",
+      "npmPackage": "@three-ws/avatar-agent",
+      "version": "1.2.2",
+      "description": "3D AI Agent Avatar — render any GLB, give it a Solana wallet, a voice, and pump.fun powers.",
+      "tagline": "Turn any GLB into a riggable 3D AI agent with a Solana wallet, a voice, and pump.fun powers.",
+      "category": "avatars",
+      "tags": [
+        "avatars",
+        "glb",
+        "solana",
+        "voice",
+        "pumpfun"
+      ],
+      "examplePrompts": [
+        "Inspect and validate this GLB, then thumbnail it.",
+        "Optimize this avatar GLB for the web.",
+        "Give this avatar a Solana wallet and a voice."
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2F3D-AI-Agent-Avatar",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/activity-mcp",
+      "title": "three.ws Activity",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/activity-mcp",
+      "npmPackage": "@three-ws/activity-mcp",
+      "version": "0.1.2",
+      "description": "Trending agents and coins, the $THREE holder leaderboard, and the site-wide activity ticker.",
+      "tagline": "Trending agents and coins, the $THREE holder leaderboard, and the site-wide activity ticker.",
+      "category": "market-data",
+      "tags": [
+        "trending",
+        "leaderboard",
+        "three",
+        "activity",
+        "discovery"
+      ],
+      "examplePrompts": [
+        "What agents are trending on three.ws right now?",
+        "Show the $THREE holder leaderboard.",
+        "Give me the latest platform activity."
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Factivity-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/agenc-mcp",
+      "title": "three.ws AgenC",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/agenc-mcp",
+      "npmPackage": "@three-ws/agenc-mcp",
+      "version": "0.1.2",
+      "description": "Browse the AgenC on-chain task marketplace, query the agent registry, and link identities.",
+      "tagline": "Browse the AgenC on-chain task marketplace, query the agent registry, and link identities.",
+      "category": "agent-economy",
+      "tags": [
+        "agenc",
+        "tasks",
+        "registry",
+        "coordination",
+        "on-chain"
+      ],
+      "examplePrompts": [
+        "List open tasks on the AgenC marketplace.",
+        "Get the status of this AgenC task.",
+        "Look up this agent in the AgenC registry."
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fagenc-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/agent-sniper",
+      "title": "Agent Sniper",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/agent-sniper mcp",
+      "npmPackage": "@three-ws/agent-sniper",
+      "version": "0.1.6",
+      "description": "Self-custodial pump.fun sniper: arm strategies, snipe, manage positions. Simulate by default.",
+      "tagline": "Self-custodial pump.fun sniper: arm strategies, snipe, and manage positions. Simulates by default.",
+      "category": "trading",
+      "tags": [
+        "pumpfun",
+        "sniper",
+        "solana",
+        "self-custodial",
+        "strategies"
+      ],
+      "examplePrompts": [
+        "Arm a snipe strategy for new launches by this dev (simulate).",
+        "Fire a manual buy on this mint for 0.05 SOL.",
+        "Show my open sniper positions."
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fagent-sniper",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/agentcore-payments-mcp",
+      "title": "three.ws Agent Payments",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/agentcore-payments-mcp",
+      "npmPackage": "@three-ws/agentcore-payments-mcp",
+      "version": "0.1.4",
+      "description": "Governed x402 payment sessions: pay any endpoint with budget, allowlist & per-tx caps, no key.",
+      "tagline": "Governed x402 payment sessions: pay any endpoint with a budget, allowlist, and per-tx caps — no key handling.",
+      "category": "payments",
+      "tags": [
+        "x402",
+        "sessions",
+        "budget",
+        "allowlist",
+        "payments"
+      ],
+      "examplePrompts": [
+        "Open a $2 payment session allowlisted to this host.",
+        "Pay this endpoint using my open session.",
+        "Show my active payment sessions and remaining budget."
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fagentcore-payments-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/agora-mcp",
+      "title": "three.ws Agora",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/agora-mcp",
+      "npmPackage": "@three-ws/agora-mcp",
+      "version": "0.1.2",
+      "description": "Agora agent economy over MCP: browse the board, register, claim on-chain work, and post bounties.",
+      "tagline": "Join the Agora agent economy over MCP: browse the board, register, claim on-chain work, and post bounties.",
+      "category": "agent-economy",
+      "tags": [
+        "agora",
+        "economy",
+        "bounties",
+        "work",
+        "three"
+      ],
+      "examplePrompts": [
+        "Show the Agora job board.",
+        "Register my agent as an Agora citizen.",
+        "Claim this bounty and mark it complete."
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fagora-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/alerts-mcp",
+      "title": "three.ws Alerts",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/alerts-mcp",
+      "npmPackage": "@three-ws/alerts-mcp",
+      "version": "0.1.2",
+      "description": "Create, update, and delete pump.fun alert rules and read fired-alert history across channels.",
+      "tagline": "Create, update, and delete pump.fun alert rules and read fired-alert history across channels.",
+      "category": "market-data",
+      "tags": [
+        "alerts",
+        "pumpfun",
+        "rules",
+        "webhook",
+        "telegram"
+      ],
+      "examplePrompts": [
+        "Alert me when any token crosses $1M market cap.",
+        "List my active alert rules.",
+        "Show alerts that fired in the last day."
+      ],
+      "requiredEnv": [
+        "THREE_WS_SESSION"
+      ],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Falerts-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/alibaba-cloud",
+      "title": "Alibaba Cloud DashScope — Qwen",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/alibaba-cloud-mcp",
+      "npmPackage": "@three-ws/alibaba-cloud-mcp",
+      "version": "0.1.3",
+      "description": "Alibaba Cloud DashScope MCP: Qwen chat, embeddings, and model discovery on your own account.",
+      "tagline": "Alibaba Cloud DashScope: Qwen chat, embeddings, and model discovery on your own account.",
+      "category": "ai-models",
+      "tags": [
+        "alibaba",
+        "qwen",
+        "dashscope",
+        "embeddings",
+        "llm"
+      ],
+      "examplePrompts": [
+        "Chat with Qwen on my DashScope account.",
+        "Get Qwen embeddings for these sentences.",
+        "List available DashScope models."
+      ],
+      "requiredEnv": [
+        "DASHSCOPE_API_KEY"
+      ],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Falibaba-cloud",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/assistant-widget",
+      "title": "three.ws Assistant Widget",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/assistant-mcp",
+      "npmPackage": "@three-ws/assistant-mcp",
+      "version": "0.1.1",
+      "description": "Generate a paste-ready embed for a floating 3D avatar chatbot on any website.",
+      "tagline": "Generate a paste-ready 3D avatar assistant widget for any website, a floating chatbot plus speak mode.",
+      "category": "3d",
+      "tags": [
+        "3d",
+        "avatar",
+        "assistant",
+        "chatbot",
+        "widget",
+        "embed"
+      ],
+      "examplePrompts": [
+        "Build a 3D assistant widget named Aria with an ocean background for my site.",
+        "What avatars and backgrounds can the assistant widget use?",
+        "Give me the embed snippet for a left-positioned chat-only assistant."
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws/assistant",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fassistant-widget",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/audio-mcp",
+      "title": "three.ws Audio",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/audio-mcp",
+      "npmPackage": "@three-ws/audio-mcp",
+      "version": "0.1.2",
+      "description": "Text-to-speech, speech-to-text, audio-to-face lipsync, and motion-capture clips for 3D agents.",
+      "tagline": "Text-to-speech, speech-to-text, audio-to-face lipsync, and motion-capture clips for 3D agents.",
+      "category": "ai-models",
+      "tags": [
+        "tts",
+        "stt",
+        "lipsync",
+        "mocap",
+        "audio"
+      ],
+      "examplePrompts": [
+        "Convert this text to speech for my avatar.",
+        "Transcribe this audio clip.",
+        "Generate audio-to-face lipsync from this voice line."
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Faudio-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/autopilot-mcp",
+      "title": "three.ws Autopilot",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/autopilot-mcp",
+      "npmPackage": "@three-ws/autopilot-mcp",
+      "version": "0.2.1",
+      "description": "Set autopilot scopes and a daily SOL spend cap, then propose, execute, and undo agent actions.",
+      "tagline": "Set autopilot scopes and a daily SOL spend cap, then propose, execute, and undo agent actions.",
+      "category": "agent-economy",
+      "tags": [
+        "autopilot",
+        "agents",
+        "spend-caps",
+        "proposals",
+        "automation"
+      ],
+      "examplePrompts": [
+        "Set my autopilot daily cap to 0.5 SOL and enable trade scope.",
+        "Generate action proposals for my agent.",
+        "Execute proposal #3, then undo it."
+      ],
+      "requiredEnv": [
+        "THREE_WS_API_KEY"
+      ],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fautopilot-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/billing-mcp",
+      "title": "three.ws Billing",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/billing-mcp",
+      "npmPackage": "@three-ws/billing-mcp",
+      "version": "0.1.2",
+      "description": "An agent's account economics — plan quotas, metered usage, invoices, receipts, and earnings.",
+      "tagline": "An agent's account economics — plan quotas, metered usage, invoices, receipts, and earnings.",
+      "category": "account",
+      "tags": [
+        "billing",
+        "usage",
+        "invoices",
+        "receipts",
+        "quotas"
+      ],
+      "examplePrompts": [
+        "Show my billing summary for this month.",
+        "Export my usage history as CSV.",
+        "Fetch the receipt for my last invoice."
+      ],
+      "requiredEnv": [
+        "THREE_WS_SESSION"
+      ],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fbilling-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/brain-mcp",
+      "title": "three.ws Brain",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/brain-mcp",
+      "npmPackage": "@three-ws/brain-mcp",
+      "version": "0.1.3",
+      "description": "List LLM providers and run chat completions through the three.ws multi-provider router.",
+      "tagline": "List LLM providers and run chat completions through the three.ws multi-provider router.",
+      "category": "ai-models",
+      "tags": [
+        "llm",
+        "router",
+        "multi-provider",
+        "chat",
+        "ai"
+      ],
+      "examplePrompts": [
+        "List the available LLM providers.",
+        "Run this prompt through the cheapest available model.",
+        "Compare two providers on the same prompt."
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fbrain-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/clash-mcp",
+      "title": "three.ws Coin Clash",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/clash-mcp",
+      "npmPackage": "@three-ws/clash-mcp",
+      "version": "0.1.2",
+      "description": "Play three.ws Coin Clash — read the faction battle board and leaderboard, enlist, and rally.",
+      "tagline": "Play three.ws Coin Clash — read the faction battle board and leaderboard, enlist, and rally.",
+      "category": "gaming",
+      "tags": [
+        "game",
+        "clash",
+        "factions",
+        "leaderboard",
+        "three"
+      ],
+      "examplePrompts": [
+        "Show the current Coin Clash battle state.",
+        "Enlist me in the strongest faction.",
+        "Rally my faction with a boost."
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fclash-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/concierge-mcp",
+      "title": "three.ws Concierge",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/concierge-mcp",
+      "npmPackage": "@three-ws/concierge-mcp",
+      "version": "0.1.0",
+      "description": "Ask any website's AI concierge a grounded question, and generate the embed to add one to a site.",
+      "tagline": "Ask any website's AI concierge a grounded question, and generate the embed to add one to a site.",
+      "category": "agents",
+      "tags": [],
+      "examplePrompts": [],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws/concierge",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fconcierge-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/copy-mcp",
+      "title": "three.ws Copy Trading",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/copy-mcp",
+      "npmPackage": "@three-ws/copy-mcp",
+      "version": "0.1.2",
+      "description": "Manage copy-trade follows — follow leaders, tune sizing and guard rules, and track fees owed.",
+      "tagline": "Manage copy-trade follows — follow leaders, tune sizing and guard rules, and track fees owed.",
+      "category": "trading",
+      "tags": [
+        "copy-trading",
+        "follow",
+        "sizing",
+        "guards",
+        "solana"
+      ],
+      "examplePrompts": [
+        "Follow this leader wallet with 2% sizing.",
+        "List my copy-trade subscriptions.",
+        "Update the stop-loss guard on this follow."
+      ],
+      "requiredEnv": [
+        "THREE_WS_API_KEY"
+      ],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fcopy-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/herald-mcp",
+      "title": "three.ws Herald",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/herald-mcp",
+      "npmPackage": "@three-ws/herald-mcp",
+      "version": "0.1.0",
+      "description": "Tell your human in person: a 3D character walks onto their open browser tab and says it out loud.",
+      "tagline": "Speak to your human out loud: a 3D character walks onto their open tab and delivers the message.",
+      "category": "avatars",
+      "tags": [
+        "voice",
+        "notifications",
+        "3d",
+        "presence",
+        "browser"
+      ],
+      "examplePrompts": [
+        "Tell me out loud when the deploy finishes.",
+        "Check whether my browser rail is connected before you announce anything.",
+        "Announce the build result on my open three.ws tab."
+      ],
+      "requiredEnv": [
+        "THREE_WS_API_KEY"
+      ],
+      "websiteUrl": "https://three.ws/herald",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fherald-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/home-mcp",
+      "title": "three.ws Home",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/home-mcp",
+      "npmPackage": "@three-ws/home-mcp",
+      "version": "0.1.0",
+      "description": "Read and safely act on a real Home Assistant house: rooms, live state, scenes, gated actions.",
+      "tagline": "Read and safely act on a real Home Assistant house: rooms, live state, scenes, gated actions.",
+      "category": "home",
+      "tags": [
+        "home-assistant",
+        "smart-home",
+        "automation",
+        "scenes",
+        "iot"
+      ],
+      "examplePrompts": [
+        "What is the temperature in every room right now?",
+        "List the macros I can run in the living room.",
+        "Run the good night macro."
+      ],
+      "requiredEnv": [
+        "HOME_ASSISTANT_URL",
+        "HOME_ASSISTANT_TOKEN"
+      ],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fhome-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/hood-mcp",
+      "title": "Robinhood Chain",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y hood-mcp",
+      "npmPackage": "hood-mcp",
+      "version": "0.1.0",
+      "description": "Robinhood Chain data + guarded trading for AI agents: Stock Token quotes, portfolios, launches",
+      "tagline": "Robinhood Chain data for agents: coin prices, portfolios, launches, and swap quotes.",
+      "category": "market-data",
+      "tags": [
+        "robinhood-chain",
+        "on-chain-data",
+        "portfolio",
+        "launches",
+        "swaps"
+      ],
+      "examplePrompts": [
+        "What is trending on Robinhood Chain right now?",
+        "Show me the recent launches on chain 4663.",
+        "Quote a swap for this token and explain the price impact."
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://nirholas.github.io/robinhood-chain-mcp/",
+      "repository": "https://github.com/nirholas/robinhood-chain-mcp",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fhood-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/ibm-watsonx",
+      "title": "IBM watsonx.ai Granite",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/ibm-watsonx-mcp",
+      "npmPackage": "@three-ws/ibm-watsonx-mcp",
+      "version": "0.2.1",
+      "description": "IBM watsonx.ai MCP by three.ws: chat, text generation, embeddings, and tokenization.",
+      "tagline": "IBM watsonx.ai on your own account: chat, text generation, embeddings, and tokenization.",
+      "category": "ai-models",
+      "tags": [
+        "ibm",
+        "watsonx",
+        "granite",
+        "embeddings",
+        "llm"
+      ],
+      "examplePrompts": [
+        "Chat with Granite on my watsonx.ai account.",
+        "Get watsonx embeddings for these documents.",
+        "Tokenize this text with watsonx."
+      ],
+      "requiredEnv": [
+        "WATSONX_API_KEY"
+      ],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fibm-watsonx",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/ibm-x402-mcp",
+      "title": "IBM Granite via x402",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/ibm-x402-mcp",
+      "npmPackage": "@three-ws/ibm-x402-mcp",
+      "version": "1.1.3",
+      "description": "x402 pay-per-use IBM Granite AI: chat, code, embeddings, analysis, forecasting. Pay USDC per call.",
+      "tagline": "x402 pay-per-use IBM Granite AI over stdio: chat, code, embeddings, analysis, forecasting — pay USDC per call.",
+      "category": "ai-models",
+      "tags": [
+        "ibm",
+        "granite",
+        "x402",
+        "usdc",
+        "llm"
+      ],
+      "examplePrompts": [
+        "Ask Granite to refactor this function (pay per call).",
+        "Get Granite embeddings for these documents.",
+        "Analyze the sentiment of these reviews with Granite."
+      ],
+      "requiredEnv": [
+        "MCP_SVM_PAYMENT_ADDRESS",
+        "WATSONX_API_KEY"
+      ],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fibm-x402-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
     {
       "name": "io.github.nirholas/ibm-x402-mcp-remote",
       "title": "IBM Granite x402 Remote",
@@ -55,6 +704,447 @@
       "websiteUrl": "https://three.ws",
       "repository": "https://github.com/nirholas/three.ws",
       "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fibm-x402-mcp-remote",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/intel-mcp",
+      "title": "three.ws Intel",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/intel-mcp",
+      "npmPackage": "@three-ws/intel-mcp",
+      "version": "0.1.2",
+      "description": "Coin smart-money scores, wallet reputation, signal feeds, and KOL leaderboards.",
+      "tagline": "Coin smart-money scores, wallet reputation, signal feeds, and KOL leaderboards.",
+      "category": "market-data",
+      "tags": [
+        "smart-money",
+        "wallet-intel",
+        "signals",
+        "kol",
+        "solana"
+      ],
+      "examplePrompts": [
+        "Score the smart money behind this coin.",
+        "Give me the reputation profile of this wallet.",
+        "Show the KOL leaderboard."
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fintel-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/knock-mcp",
+      "title": "three.ws Knock",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/knock-mcp",
+      "npmPackage": "@three-ws/knock-mcp",
+      "version": "0.1.0",
+      "description": "Reach a real person: quote their door, browse who is reachable, knock, and read the reply.",
+      "tagline": "Reach a real person: quote their door, knock, and read the reply.",
+      "category": "agent-economy",
+      "tags": [
+        "human-in-the-loop",
+        "messaging",
+        "x402",
+        "inbox",
+        "directory"
+      ],
+      "examplePrompts": [
+        "Who is reachable right now, and what does each door cost?",
+        "Quote what it costs to knock on this person's door.",
+        "Knock with my question and show me the reply when it lands."
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws/knock",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fknock-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/kol-mcp",
+      "title": "three.ws KOL",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/kol-mcp",
+      "npmPackage": "@three-ws/kol-mcp",
+      "version": "0.1.1",
+      "description": "Per-wallet KOL deep dive — a tracked trader's portfolio P&L and its trades on a given mint.",
+      "tagline": "Per-wallet KOL deep dive — a tracked trader's portfolio P&L and their trades on a given mint.",
+      "category": "market-data",
+      "tags": [
+        "kol",
+        "wallet",
+        "pnl",
+        "trades",
+        "solana"
+      ],
+      "examplePrompts": [
+        "Show this KOL wallet's portfolio and P&L.",
+        "List this wallet's trades on this mint.",
+        "How did this trader perform this month?"
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fkol-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/loom-mcp",
+      "title": "three.ws Loom",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/loom-mcp",
+      "npmPackage": "@three-ws/loom-mcp",
+      "version": "0.1.2",
+      "description": "Browse the community 3D-creation gallery, fetch a creation with its viewer URL, and submit it.",
+      "tagline": "Browse the community 3D-creation gallery, fetch a creation with its viewer URL, and contribute your own.",
+      "category": "3d",
+      "tags": [
+        "3d",
+        "gallery",
+        "community",
+        "creations",
+        "viewer"
+      ],
+      "examplePrompts": [
+        "Show the newest creations in the Loom gallery.",
+        "Fetch this creation and give me its viewer link.",
+        "Submit my GLB to the Loom gallery."
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Floom-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/marketplace-mcp",
+      "title": "three.ws Marketplace",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/marketplace-mcp",
+      "npmPackage": "@three-ws/marketplace-mcp",
+      "version": "0.1.2",
+      "description": "Browse and discover the public three.ws agent marketplace and skills catalog. Read-only.",
+      "tagline": "Browse and discover the public three.ws agent marketplace and skills catalog. Read-only.",
+      "category": "agent-economy",
+      "tags": [
+        "marketplace",
+        "agents",
+        "skills",
+        "discovery",
+        "read-only"
+      ],
+      "examplePrompts": [
+        "Browse trading agents on the three.ws marketplace.",
+        "Show details for this agent.",
+        "List the available agent skill categories."
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fmarketplace-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/metaplex-agent",
+      "title": "Metaplex Agent Registry",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/metaplex-agent-mcp",
+      "npmPackage": "@three-ws/metaplex-agent-mcp",
+      "version": "0.2.0",
+      "description": "Deploy AI agents on-chain on Solana with an EIP-8004 identity. Deploy fee funds $THREE buybacks.",
+      "tagline": "Give an AI agent an on-chain Solana identity, minted and queryable.",
+      "category": "identity",
+      "tags": [
+        "solana",
+        "agent-identity",
+        "erc-8004",
+        "on-chain",
+        "registry"
+      ],
+      "examplePrompts": [
+        "Mint an on-chain identity for my agent on Solana.",
+        "Look up this agent's on-chain registration.",
+        "List the agents registered on-chain so far."
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fmetaplex-agent",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/naming-mcp",
+      "title": "three.ws Naming",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/naming-mcp",
+      "npmPackage": "@three-ws/naming-mcp",
+      "version": "0.1.2",
+      "description": "On-chain identity for AI agents: resolve .sol names, reverse-lookup wallets, check handles.",
+      "tagline": "On-chain identity for AI agents: resolve .sol names, reverse-lookup wallets, check handle availability.",
+      "category": "identity",
+      "tags": [
+        "sns",
+        "naming",
+        "sol",
+        "identity",
+        "resolve"
+      ],
+      "examplePrompts": [
+        "Resolve alice.sol to a wallet address.",
+        "Reverse-lookup the .sol name for this wallet.",
+        "Is nova.threews.sol available?"
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fnaming-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/notifications-mcp",
+      "title": "three.ws Notifications",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/notifications-mcp",
+      "npmPackage": "@three-ws/notifications-mcp",
+      "version": "0.1.3",
+      "description": "Read the inbox, mark items read, manage delivery preferences, and register Web Push devices.",
+      "tagline": "An agent's inbox — read notifications, mark them read, manage delivery preferences, and register Web Push devices.",
+      "category": "account",
+      "tags": [
+        "notifications",
+        "inbox",
+        "web-push",
+        "preferences",
+        "agents"
+      ],
+      "examplePrompts": [
+        "Show my unread notifications.",
+        "Mark all notifications as read.",
+        "Turn off Telegram delivery and keep Web Push."
+      ],
+      "requiredEnv": [
+        "THREE_WS_API_KEY"
+      ],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fnotifications-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/onchain-agent-wallets",
+      "title": "Onchain Agent Wallets",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/onchain-agent-wallets",
+      "npmPackage": "@three-ws/onchain-agent-wallets",
+      "version": "0.1.0",
+      "description": "Give an AI agent a Solana spending allowance instead of your key. Chain-enforced cap, x402.",
+      "tagline": "Give an agent a spending allowance instead of your key: a chain-enforced cap it cannot exceed.",
+      "category": "payments",
+      "tags": [
+        "solana",
+        "allowance",
+        "guardrails",
+        "x402",
+        "agent-wallet"
+      ],
+      "examplePrompts": [
+        "Create a wallet for my agent with a five dollar weekly cap.",
+        "Show me what my agent has spent and what is left.",
+        "Revoke my agent's allowance now."
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/onchain-agent-wallets",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fonchain-agent-wallets",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/portfolio-mcp",
+      "title": "three.ws Portfolio",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/portfolio-mcp",
+      "npmPackage": "@three-ws/portfolio-mcp",
+      "version": "0.1.1",
+      "description": "An agent's trading state — portfolio value, PnL, live balances, trade feed, and signed transfers.",
+      "tagline": "An agent's trading state — portfolio value, PnL, live balances, trade feed, and signed transfers.",
+      "category": "trading",
+      "tags": [
+        "portfolio",
+        "pnl",
+        "balances",
+        "transfers",
+        "solana"
+      ],
+      "examplePrompts": [
+        "What is my portfolio value and PnL?",
+        "Show my live token balances.",
+        "Send 0.1 SOL to this address."
+      ],
+      "requiredEnv": [
+        "SOLANA_SECRET_KEY"
+      ],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fportfolio-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/provenance-mcp",
+      "title": "three.ws Provenance",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/provenance-mcp",
+      "npmPackage": "@three-ws/provenance-mcp",
+      "version": "0.1.2",
+      "description": "Append-only, signed, on-chain-verifiable agent action log — record and audit what agents did.",
+      "tagline": "Append-only, signed, on-chain-verifiable agent action log — record and audit what agents did.",
+      "category": "identity",
+      "tags": [
+        "provenance",
+        "audit",
+        "signed",
+        "on-chain",
+        "agents"
+      ],
+      "examplePrompts": [
+        "Record this action to my provenance log.",
+        "List my agent's recent actions.",
+        "Verify this logged action is untampered."
+      ],
+      "requiredEnv": [
+        "THREE_WS_TOKEN"
+      ],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fprovenance-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/pumpfun-solana-mcp",
+      "title": "pump.fun Solana Data",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/pumpfun-mcp",
+      "npmPackage": "@three-ws/pumpfun-mcp",
+      "version": "0.2.5",
+      "description": "Free, read-only pump.fun + Solana MCP: token discovery, on-chain analysis, SNS, 3D snapshots.",
+      "tagline": "Free, read-only pump.fun + Solana MCP: token discovery, on-chain analysis, SNS, 3D snapshots.",
+      "category": "market-data",
+      "tags": [
+        "pumpfun",
+        "solana",
+        "sns",
+        "analysis",
+        "free"
+      ],
+      "examplePrompts": [
+        "Analyze this pump.fun token and its holders.",
+        "Resolve this .sol name to a wallet.",
+        "Snapshot this token as a 3D object."
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fpumpfun-solana-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/scene-mcp",
+      "title": "three.ws Scenes",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/scene-mcp",
+      "npmPackage": "@three-ws/scene-mcp",
+      "version": "0.2.1",
+      "description": "Compose a placed 3D diorama from one sentence, export a forged world, browse saved scenes.",
+      "tagline": "Speak a placed 3D diorama into being from one sentence, then browse the saved scene gallery.",
+      "category": "3d",
+      "tags": [
+        "3d",
+        "scene",
+        "diorama",
+        "text-to-scene",
+        "gallery"
+      ],
+      "examplePrompts": [
+        "Compose a 3D scene: a campfire ringed by three tents at dusk.",
+        "Show me the scene I just made.",
+        "List the latest community scenes."
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fscene-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/signals-mcp",
+      "title": "three.ws Signals",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/signals-mcp",
+      "npmPackage": "@three-ws/signals-mcp",
+      "version": "0.1.2",
+      "description": "Discover signal feeds ranked by proven edge, rank publishers, and subscribe + track results.",
+      "tagline": "Discover signal feeds ranked by proven edge, rank publishers, and subscribe + track results.",
+      "category": "market-data",
+      "tags": [
+        "signals",
+        "feeds",
+        "edge",
+        "publishers",
+        "subscriptions"
+      ],
+      "examplePrompts": [
+        "List signal feeds ranked by proven edge.",
+        "Subscribe to this signal feed.",
+        "Show the mirror leaderboard of top publishers."
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fsignals-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/three-token-mcp",
+      "title": "$THREE Token",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/three-token-mcp",
+      "npmPackage": "@three-ws/three-token-mcp",
+      "version": "1.1.2",
+      "description": "Price, hold, and burn $THREE on Solana — the first MCP server whose actions burn a token.",
+      "tagline": "Price, hold, and burn $THREE on Solana — the first MCP server whose actions burn a token.",
+      "category": "payments",
+      "tags": [
+        "three",
+        "solana",
+        "burn",
+        "token",
+        "defi"
+      ],
+      "examplePrompts": [
+        "What is the current $THREE price?",
+        "Check my $THREE balance.",
+        "Burn 1000 $THREE from my wallet."
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fthree-token-mcp",
       "icon": "https://three.ws/three-ws-mcp-icon.svg"
     },
     {
@@ -174,14 +1264,43 @@
       "icon": "https://three.ws/three-ws-mcp-icon.svg"
     },
     {
+      "name": "io.github.nirholas/threews-avatar",
+      "title": "three.ws Avatars",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/avatar-mcp",
+      "npmPackage": "@three-ws/avatar-mcp",
+      "version": "0.3.1",
+      "description": "three.ws 3D avatars in your agent: render a live, interactive 3D avatar inline, or get an embed.",
+      "tagline": "Drop a live, interactive 3D avatar into any agent chat, or get an embed snippet.",
+      "category": "avatars",
+      "tags": [
+        "avatars",
+        "embed",
+        "3d",
+        "chat-ui",
+        "gltf"
+      ],
+      "examplePrompts": [
+        "Render a live 3D avatar for agent nova in this chat.",
+        "Give me an embed code for this avatar.",
+        "Fetch the GLB and metadata for this avatar id."
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fthreews-avatar",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
       "name": "io.github.nirholas/threews-pumpfun",
       "title": "three.ws pump.fun MCP",
       "type": "remote",
       "transport": "streamable-http",
       "connect": "https://three.ws/api/pump-fun-mcp",
       "npmPackage": null,
-      "version": "1.0.0",
-      "description": "Free, read-only pump.fun and Solana token discovery and on-chain analysis tools, by three.ws.",
+      "version": "1.0.1",
+      "description": "Free pump.fun and Solana token discovery and on-chain analysis tools, by three.ws.",
       "tagline": "Free, read-only pump.fun + Solana token discovery and on-chain analysis.",
       "category": "market-data",
       "tags": [
@@ -232,953 +1351,13 @@
       "icon": "https://three.ws/three-ws-mcp-icon.svg"
     },
     {
-      "name": "io.github.nirholas/3d-agent-mcp",
-      "title": "three.ws 3D Agent Tools",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/mcp-server",
-      "npmPackage": "@three-ws/mcp-server",
-      "version": "1.2.1",
-      "description": "MCP tools from three.ws: free + paid text-to-3D, rigging, agent reputation, market intel.",
-      "tagline": "Full three.ws 3D + agent toolkit: free and paid text-to-3D, rigging, agent reputation, market intel.",
-      "category": "3d",
-      "tags": [
-        "text-to-3d",
-        "rigging",
-        "reputation",
-        "market-intel",
-        "free-and-paid"
-      ],
-      "examplePrompts": [
-        "Forge a free 3D model of a katana from text.",
-        "Generate a rigged avatar of a fox samurai.",
-        "Look up this agent's ERC-8004 reputation."
-      ],
-      "requiredEnv": [],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2F3d-agent-mcp",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/3D-AI-Agent-Avatar",
-      "title": "3D AI Agent Avatar",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/avatar-agent",
-      "npmPackage": "@three-ws/avatar-agent",
-      "version": "1.2.2",
-      "description": "3D AI Agent Avatar — render any GLB, give it a Solana wallet, a voice, and pump.fun powers.",
-      "tagline": "Turn any GLB into a riggable 3D AI agent with a Solana wallet, a voice, and pump.fun powers.",
-      "category": "avatars",
-      "tags": [
-        "avatars",
-        "glb",
-        "solana",
-        "voice",
-        "pumpfun"
-      ],
-      "examplePrompts": [
-        "Inspect and validate this GLB, then thumbnail it.",
-        "Optimize this avatar GLB for the web.",
-        "Give this avatar a Solana wallet and a voice."
-      ],
-      "requiredEnv": [],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2F3D-AI-Agent-Avatar",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/activity-mcp",
-      "title": "three.ws Activity",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/activity-mcp",
-      "npmPackage": "@three-ws/activity-mcp",
-      "version": "0.1.1",
-      "description": "Trending agents and coins, the $THREE holder leaderboard, and the site-wide activity ticker.",
-      "tagline": "Trending agents and coins, the $THREE holder leaderboard, and the site-wide activity ticker.",
-      "category": "market-data",
-      "tags": [
-        "trending",
-        "leaderboard",
-        "three",
-        "activity",
-        "discovery"
-      ],
-      "examplePrompts": [
-        "What agents are trending on three.ws right now?",
-        "Show the $THREE holder leaderboard.",
-        "Give me the latest platform activity."
-      ],
-      "requiredEnv": [],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Factivity-mcp",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/agenc-mcp",
-      "title": "three.ws AgenC",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/agenc-mcp",
-      "npmPackage": "@three-ws/agenc-mcp",
-      "version": "0.1.1",
-      "description": "Browse the AgenC on-chain task marketplace, query the agent registry, and link identities.",
-      "tagline": "Browse the AgenC on-chain task marketplace, query the agent registry, and link identities.",
-      "category": "agent-economy",
-      "tags": [
-        "agenc",
-        "tasks",
-        "registry",
-        "coordination",
-        "on-chain"
-      ],
-      "examplePrompts": [
-        "List open tasks on the AgenC marketplace.",
-        "Get the status of this AgenC task.",
-        "Look up this agent in the AgenC registry."
-      ],
-      "requiredEnv": [],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fagenc-mcp",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/agent-sniper",
-      "title": "Agent Sniper",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/agent-sniper mcp",
-      "npmPackage": "@three-ws/agent-sniper",
-      "version": "0.1.2",
-      "description": "Self-custodial pump.fun sniper: arm strategies, snipe, manage positions. Simulate by default.",
-      "tagline": "Self-custodial pump.fun sniper: arm strategies, snipe, and manage positions. Simulates by default.",
-      "category": "trading",
-      "tags": [
-        "pumpfun",
-        "sniper",
-        "solana",
-        "self-custodial",
-        "strategies"
-      ],
-      "examplePrompts": [
-        "Arm a snipe strategy for new launches by this dev (simulate).",
-        "Fire a manual buy on this mint for 0.05 SOL.",
-        "Show my open sniper positions."
-      ],
-      "requiredEnv": [],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fagent-sniper",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/agentcore-payments-mcp",
-      "title": "three.ws Agent Payments",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/agentcore-payments-mcp",
-      "npmPackage": "@three-ws/agentcore-payments-mcp",
-      "version": "0.1.2",
-      "description": "Governed x402 payment sessions: pay any endpoint with budget, allowlist & per-tx caps, no key.",
-      "tagline": "Governed x402 payment sessions: pay any endpoint with a budget, allowlist, and per-tx caps — no key handling.",
-      "category": "payments",
-      "tags": [
-        "x402",
-        "sessions",
-        "budget",
-        "allowlist",
-        "payments"
-      ],
-      "examplePrompts": [
-        "Open a $2 payment session allowlisted to this host.",
-        "Pay this endpoint using my open session.",
-        "Show my active payment sessions and remaining budget."
-      ],
-      "requiredEnv": [],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fagentcore-payments-mcp",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/agora-mcp",
-      "title": "three.ws Agora",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/agora-mcp",
-      "npmPackage": "@three-ws/agora-mcp",
-      "version": "0.1.1",
-      "description": "Agora agent economy over MCP: browse the board, register, claim on-chain work, and post bounties.",
-      "tagline": "Join the Agora agent economy over MCP: browse the board, register, claim on-chain work, and post bounties.",
-      "category": "agent-economy",
-      "tags": [
-        "agora",
-        "economy",
-        "bounties",
-        "work",
-        "three"
-      ],
-      "examplePrompts": [
-        "Show the Agora job board.",
-        "Register my agent as an Agora citizen.",
-        "Claim this bounty and mark it complete."
-      ],
-      "requiredEnv": [],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fagora-mcp",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/alerts-mcp",
-      "title": "three.ws Alerts",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/alerts-mcp",
-      "npmPackage": "@three-ws/alerts-mcp",
-      "version": "0.1.1",
-      "description": "Create, update, and delete pump.fun alert rules and read fired-alert history across channels.",
-      "tagline": "Create, update, and delete pump.fun alert rules and read fired-alert history across channels.",
-      "category": "market-data",
-      "tags": [
-        "alerts",
-        "pumpfun",
-        "rules",
-        "webhook",
-        "telegram"
-      ],
-      "examplePrompts": [
-        "Alert me when any token crosses $1M market cap.",
-        "List my active alert rules.",
-        "Show alerts that fired in the last day."
-      ],
-      "requiredEnv": [
-        "THREE_WS_SESSION"
-      ],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Falerts-mcp",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/alibaba-cloud",
-      "title": "Alibaba Cloud DashScope — Qwen",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/alibaba-cloud-mcp",
-      "npmPackage": "@three-ws/alibaba-cloud-mcp",
-      "version": "0.1.1",
-      "description": "Alibaba Cloud DashScope MCP: Qwen chat, embeddings, and model discovery on your own account.",
-      "tagline": "Alibaba Cloud DashScope: Qwen chat, embeddings, and model discovery on your own account.",
-      "category": "ai-models",
-      "tags": [
-        "alibaba",
-        "qwen",
-        "dashscope",
-        "embeddings",
-        "llm"
-      ],
-      "examplePrompts": [
-        "Chat with Qwen on my DashScope account.",
-        "Get Qwen embeddings for these sentences.",
-        "List available DashScope models."
-      ],
-      "requiredEnv": [
-        "DASHSCOPE_API_KEY"
-      ],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Falibaba-cloud",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/assistant-widget",
-      "title": "three.ws Assistant Widget",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/assistant-mcp",
-      "npmPackage": "@three-ws/assistant-mcp",
-      "version": "0.1.0",
-      "description": "Turn a config into a paste-ready three.ws assistant widget: an embeddable script tag, a frame URL, and a ThreeAssistant.init() snippet for a floating 3D avatar chatbot on any website.",
-      "tagline": "Generate a paste-ready 3D avatar assistant widget for any website, a floating chatbot plus speak mode.",
-      "category": "3d",
-      "tags": [
-        "3d",
-        "avatar",
-        "assistant",
-        "chatbot",
-        "widget",
-        "embed"
-      ],
-      "examplePrompts": [
-        "Build a 3D assistant widget named Aria with an ocean background for my site.",
-        "What avatars and backgrounds can the assistant widget use?",
-        "Give me the embed snippet for a left-positioned chat-only assistant."
-      ],
-      "requiredEnv": [],
-      "websiteUrl": "https://three.ws/assistant",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fassistant-widget",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/audio-mcp",
-      "title": "three.ws Audio",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/audio-mcp",
-      "npmPackage": "@three-ws/audio-mcp",
-      "version": "0.1.1",
-      "description": "Text-to-speech, speech-to-text, audio-to-face lipsync, and motion-capture clips for 3D agents.",
-      "tagline": "Text-to-speech, speech-to-text, audio-to-face lipsync, and motion-capture clips for 3D agents.",
-      "category": "ai-models",
-      "tags": [
-        "tts",
-        "stt",
-        "lipsync",
-        "mocap",
-        "audio"
-      ],
-      "examplePrompts": [
-        "Convert this text to speech for my avatar.",
-        "Transcribe this audio clip.",
-        "Generate audio-to-face lipsync from this voice line."
-      ],
-      "requiredEnv": [],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Faudio-mcp",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/autopilot-mcp",
-      "title": "three.ws Autopilot",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/autopilot-mcp",
-      "npmPackage": "@three-ws/autopilot-mcp",
-      "version": "0.2.0",
-      "description": "Set autopilot scopes and a daily SOL spend cap, then propose, execute, and undo agent actions.",
-      "tagline": "Set autopilot scopes and a daily SOL spend cap, then propose, execute, and undo agent actions.",
-      "category": "agent-economy",
-      "tags": [
-        "autopilot",
-        "agents",
-        "spend-caps",
-        "proposals",
-        "automation"
-      ],
-      "examplePrompts": [
-        "Set my autopilot daily cap to 0.5 SOL and enable trade scope.",
-        "Generate action proposals for my agent.",
-        "Execute proposal #3, then undo it."
-      ],
-      "requiredEnv": [
-        "THREE_WS_API_KEY"
-      ],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fautopilot-mcp",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/billing-mcp",
-      "title": "three.ws Billing",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/billing-mcp",
-      "npmPackage": "@three-ws/billing-mcp",
-      "version": "0.1.1",
-      "description": "An agent's account economics — plan quotas, metered usage, invoices, receipts, and earnings.",
-      "tagline": "An agent's account economics — plan quotas, metered usage, invoices, receipts, and earnings.",
-      "category": "account",
-      "tags": [
-        "billing",
-        "usage",
-        "invoices",
-        "receipts",
-        "quotas"
-      ],
-      "examplePrompts": [
-        "Show my billing summary for this month.",
-        "Export my usage history as CSV.",
-        "Fetch the receipt for my last invoice."
-      ],
-      "requiredEnv": [
-        "THREE_WS_SESSION"
-      ],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fbilling-mcp",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/brain-mcp",
-      "title": "three.ws Brain",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/brain-mcp",
-      "npmPackage": "@three-ws/brain-mcp",
-      "version": "0.1.2",
-      "description": "List LLM providers and run chat completions through the three.ws multi-provider router.",
-      "tagline": "List LLM providers and run chat completions through the three.ws multi-provider router.",
-      "category": "ai-models",
-      "tags": [
-        "llm",
-        "router",
-        "multi-provider",
-        "chat",
-        "ai"
-      ],
-      "examplePrompts": [
-        "List the available LLM providers.",
-        "Run this prompt through the cheapest available model.",
-        "Compare two providers on the same prompt."
-      ],
-      "requiredEnv": [],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fbrain-mcp",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/clash-mcp",
-      "title": "three.ws Coin Clash",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/clash-mcp",
-      "npmPackage": "@three-ws/clash-mcp",
-      "version": "0.1.1",
-      "description": "Play three.ws Coin Clash — read the faction battle board and leaderboard, enlist, and rally.",
-      "tagline": "Play three.ws Coin Clash — read the faction battle board and leaderboard, enlist, and rally.",
-      "category": "gaming",
-      "tags": [
-        "game",
-        "clash",
-        "factions",
-        "leaderboard",
-        "three"
-      ],
-      "examplePrompts": [
-        "Show the current Coin Clash battle state.",
-        "Enlist me in the strongest faction.",
-        "Rally my faction with a boost."
-      ],
-      "requiredEnv": [],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fclash-mcp",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/concierge-mcp",
-      "title": "three.ws Concierge",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/concierge-mcp",
-      "npmPackage": "@three-ws/concierge-mcp",
-      "version": "0.1.0",
-      "description": "Ask any website's AI concierge a grounded question, and generate the embed to add one to a site.",
-      "tagline": "Ask any website's AI concierge a grounded question, and generate the embed to add one to a site.",
-      "category": "agents",
-      "tags": [],
-      "examplePrompts": [],
-      "requiredEnv": [],
-      "websiteUrl": "https://three.ws/concierge",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fconcierge-mcp",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/copy-mcp",
-      "title": "three.ws Copy Trading",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/copy-mcp",
-      "npmPackage": "@three-ws/copy-mcp",
-      "version": "0.1.1",
-      "description": "Manage copy-trade follows — follow leaders, tune sizing and guard rules, and track fees owed.",
-      "tagline": "Manage copy-trade follows — follow leaders, tune sizing and guard rules, and track fees owed.",
-      "category": "trading",
-      "tags": [
-        "copy-trading",
-        "follow",
-        "sizing",
-        "guards",
-        "solana"
-      ],
-      "examplePrompts": [
-        "Follow this leader wallet with 2% sizing.",
-        "List my copy-trade subscriptions.",
-        "Update the stop-loss guard on this follow."
-      ],
-      "requiredEnv": [
-        "THREE_WS_API_KEY"
-      ],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fcopy-mcp",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/ibm-watsonx",
-      "title": "IBM watsonx.ai Granite",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/ibm-watsonx-mcp",
-      "npmPackage": "@three-ws/ibm-watsonx-mcp",
-      "version": "0.2.0",
-      "description": "IBM watsonx.ai MCP by three.ws: chat, text generation, embeddings, and tokenization.",
-      "tagline": "IBM watsonx.ai on your own account: chat, text generation, embeddings, and tokenization.",
-      "category": "ai-models",
-      "tags": [
-        "ibm",
-        "watsonx",
-        "granite",
-        "embeddings",
-        "llm"
-      ],
-      "examplePrompts": [
-        "Chat with Granite on my watsonx.ai account.",
-        "Get watsonx embeddings for these documents.",
-        "Tokenize this text with watsonx."
-      ],
-      "requiredEnv": [
-        "WATSONX_API_KEY"
-      ],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fibm-watsonx",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/ibm-x402-mcp",
-      "title": "IBM Granite via x402",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/ibm-x402-mcp",
-      "npmPackage": "@three-ws/ibm-x402-mcp",
-      "version": "1.1.2",
-      "description": "x402 pay-per-use IBM Granite AI: chat, code, embeddings, analysis, forecasting. Pay USDC per call.",
-      "tagline": "x402 pay-per-use IBM Granite AI over stdio: chat, code, embeddings, analysis, forecasting — pay USDC per call.",
-      "category": "ai-models",
-      "tags": [
-        "ibm",
-        "granite",
-        "x402",
-        "usdc",
-        "llm"
-      ],
-      "examplePrompts": [
-        "Ask Granite to refactor this function (pay per call).",
-        "Get Granite embeddings for these documents.",
-        "Analyze the sentiment of these reviews with Granite."
-      ],
-      "requiredEnv": [
-        "MCP_SVM_PAYMENT_ADDRESS",
-        "WATSONX_API_KEY"
-      ],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fibm-x402-mcp",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/intel-mcp",
-      "title": "three.ws Intel",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/intel-mcp",
-      "npmPackage": "@three-ws/intel-mcp",
-      "version": "0.1.1",
-      "description": "Coin smart-money scores, wallet reputation, signal feeds, and KOL leaderboards.",
-      "tagline": "Coin smart-money scores, wallet reputation, signal feeds, and KOL leaderboards.",
-      "category": "market-data",
-      "tags": [
-        "smart-money",
-        "wallet-intel",
-        "signals",
-        "kol",
-        "solana"
-      ],
-      "examplePrompts": [
-        "Score the smart money behind this coin.",
-        "Give me the reputation profile of this wallet.",
-        "Show the KOL leaderboard."
-      ],
-      "requiredEnv": [],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fintel-mcp",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/kol-mcp",
-      "title": "three.ws KOL",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/kol-mcp",
-      "npmPackage": "@three-ws/kol-mcp",
-      "version": "0.1.0",
-      "description": "Per-wallet KOL deep dive — a tracked trader's portfolio P&L and its trades on a given mint.",
-      "tagline": "Per-wallet KOL deep dive — a tracked trader's portfolio P&L and their trades on a given mint.",
-      "category": "market-data",
-      "tags": [
-        "kol",
-        "wallet",
-        "pnl",
-        "trades",
-        "solana"
-      ],
-      "examplePrompts": [
-        "Show this KOL wallet's portfolio and P&L.",
-        "List this wallet's trades on this mint.",
-        "How did this trader perform this month?"
-      ],
-      "requiredEnv": [],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fkol-mcp",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/loom-mcp",
-      "title": "three.ws Loom",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/loom-mcp",
-      "npmPackage": "@three-ws/loom-mcp",
-      "version": "0.1.1",
-      "description": "Browse the community 3D-creation gallery, fetch a creation with its viewer URL, and submit it.",
-      "tagline": "Browse the community 3D-creation gallery, fetch a creation with its viewer URL, and contribute your own.",
-      "category": "3d",
-      "tags": [
-        "3d",
-        "gallery",
-        "community",
-        "creations",
-        "viewer"
-      ],
-      "examplePrompts": [
-        "Show the newest creations in the Loom gallery.",
-        "Fetch this creation and give me its viewer link.",
-        "Submit my GLB to the Loom gallery."
-      ],
-      "requiredEnv": [],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Floom-mcp",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/marketplace-mcp",
-      "title": "three.ws Marketplace",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/marketplace-mcp",
-      "npmPackage": "@three-ws/marketplace-mcp",
-      "version": "0.1.1",
-      "description": "Browse and discover the public three.ws agent marketplace and skills catalog. Read-only.",
-      "tagline": "Browse and discover the public three.ws agent marketplace and skills catalog. Read-only.",
-      "category": "agent-economy",
-      "tags": [
-        "marketplace",
-        "agents",
-        "skills",
-        "discovery",
-        "read-only"
-      ],
-      "examplePrompts": [
-        "Browse trading agents on the three.ws marketplace.",
-        "Show details for this agent.",
-        "List the available agent skill categories."
-      ],
-      "requiredEnv": [],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fmarketplace-mcp",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/naming-mcp",
-      "title": "three.ws Naming",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/naming-mcp",
-      "npmPackage": "@three-ws/naming-mcp",
-      "version": "0.1.1",
-      "description": "On-chain identity for AI agents: resolve .sol names, reverse-lookup wallets, check handles.",
-      "tagline": "On-chain identity for AI agents: resolve .sol names, reverse-lookup wallets, check handle availability.",
-      "category": "identity",
-      "tags": [
-        "sns",
-        "naming",
-        "sol",
-        "identity",
-        "resolve"
-      ],
-      "examplePrompts": [
-        "Resolve alice.sol to a wallet address.",
-        "Reverse-lookup the .sol name for this wallet.",
-        "Is nova.threews.sol available?"
-      ],
-      "requiredEnv": [],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fnaming-mcp",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/notifications-mcp",
-      "title": "three.ws Notifications",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/notifications-mcp",
-      "npmPackage": "@three-ws/notifications-mcp",
-      "version": "0.1.2",
-      "description": "Read the inbox, mark items read, manage delivery preferences, and register Web Push devices.",
-      "tagline": "An agent's inbox — read notifications, mark them read, manage delivery preferences, and register Web Push devices.",
-      "category": "account",
-      "tags": [
-        "notifications",
-        "inbox",
-        "web-push",
-        "preferences",
-        "agents"
-      ],
-      "examplePrompts": [
-        "Show my unread notifications.",
-        "Mark all notifications as read.",
-        "Turn off Telegram delivery and keep Web Push."
-      ],
-      "requiredEnv": [
-        "THREE_WS_API_KEY"
-      ],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fnotifications-mcp",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/portfolio-mcp",
-      "title": "three.ws Portfolio",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/portfolio-mcp",
-      "npmPackage": "@three-ws/portfolio-mcp",
-      "version": "0.1.0",
-      "description": "An agent's trading state — portfolio value, PnL, live balances, trade feed, and signed transfers.",
-      "tagline": "An agent's trading state — portfolio value, PnL, live balances, trade feed, and signed transfers.",
-      "category": "trading",
-      "tags": [
-        "portfolio",
-        "pnl",
-        "balances",
-        "transfers",
-        "solana"
-      ],
-      "examplePrompts": [
-        "What is my portfolio value and PnL?",
-        "Show my live token balances.",
-        "Send 0.1 SOL to this address."
-      ],
-      "requiredEnv": [
-        "SOLANA_SECRET_KEY"
-      ],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fportfolio-mcp",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/provenance-mcp",
-      "title": "three.ws Provenance",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/provenance-mcp",
-      "npmPackage": "@three-ws/provenance-mcp",
-      "version": "0.1.1",
-      "description": "Append-only, signed, on-chain-verifiable agent action log — record and audit what agents did.",
-      "tagline": "Append-only, signed, on-chain-verifiable agent action log — record and audit what agents did.",
-      "category": "identity",
-      "tags": [
-        "provenance",
-        "audit",
-        "signed",
-        "on-chain",
-        "agents"
-      ],
-      "examplePrompts": [
-        "Record this action to my provenance log.",
-        "List my agent's recent actions.",
-        "Verify this logged action is untampered."
-      ],
-      "requiredEnv": [
-        "THREE_WS_TOKEN"
-      ],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fprovenance-mcp",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/pumpfun-solana-mcp",
-      "title": "pump.fun Solana Data",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/pumpfun-mcp",
-      "npmPackage": "@three-ws/pumpfun-mcp",
-      "version": "0.2.3",
-      "description": "Free, read-only pump.fun + Solana MCP: token discovery, on-chain analysis, SNS, 3D snapshots.",
-      "tagline": "Free, read-only pump.fun + Solana MCP: token discovery, on-chain analysis, SNS, 3D snapshots.",
-      "category": "market-data",
-      "tags": [
-        "pumpfun",
-        "solana",
-        "sns",
-        "analysis",
-        "free"
-      ],
-      "examplePrompts": [
-        "Analyze this pump.fun token and its holders.",
-        "Resolve this .sol name to a wallet.",
-        "Snapshot this token as a 3D object."
-      ],
-      "requiredEnv": [],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fpumpfun-solana-mcp",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/scene-mcp",
-      "title": "three.ws Scenes",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/scene-mcp",
-      "npmPackage": "@three-ws/scene-mcp",
-      "version": "0.2.0",
-      "description": "Compose a placed 3D diorama from one sentence, build and export a complete forged world in one call, then browse the saved scene gallery.",
-      "tagline": "Speak a placed 3D diorama into being from one sentence, then browse the saved scene gallery.",
-      "category": "3d",
-      "tags": [
-        "3d",
-        "scene",
-        "diorama",
-        "text-to-scene",
-        "gallery"
-      ],
-      "examplePrompts": [
-        "Compose a 3D scene: a campfire ringed by three tents at dusk.",
-        "Show me the scene I just made.",
-        "List the latest community scenes."
-      ],
-      "requiredEnv": [],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fscene-mcp",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/signals-mcp",
-      "title": "three.ws Signals",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/signals-mcp",
-      "npmPackage": "@three-ws/signals-mcp",
-      "version": "0.1.1",
-      "description": "Discover signal feeds ranked by proven edge, rank publishers, and subscribe + track results.",
-      "tagline": "Discover signal feeds ranked by proven edge, rank publishers, and subscribe + track results.",
-      "category": "market-data",
-      "tags": [
-        "signals",
-        "feeds",
-        "edge",
-        "publishers",
-        "subscriptions"
-      ],
-      "examplePrompts": [
-        "List signal feeds ranked by proven edge.",
-        "Subscribe to this signal feed.",
-        "Show the mirror leaderboard of top publishers."
-      ],
-      "requiredEnv": [],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fsignals-mcp",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/three-token-mcp",
-      "title": "$THREE Token",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/three-token-mcp",
-      "npmPackage": "@three-ws/three-token-mcp",
-      "version": "1.1.1",
-      "description": "Price, hold, and burn $THREE on Solana — the first MCP server whose actions burn a token.",
-      "tagline": "Price, hold, and burn $THREE on Solana — the first MCP server whose actions burn a token.",
-      "category": "payments",
-      "tags": [
-        "three",
-        "solana",
-        "burn",
-        "token",
-        "defi"
-      ],
-      "examplePrompts": [
-        "What is the current $THREE price?",
-        "Check my $THREE balance.",
-        "Burn 1000 $THREE from my wallet."
-      ],
-      "requiredEnv": [],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fthree-token-mcp",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
-      "name": "io.github.nirholas/threews-avatar",
-      "title": "three.ws Avatars",
-      "type": "stdio",
-      "transport": "stdio",
-      "connect": "npx -y @three-ws/avatar-mcp",
-      "npmPackage": "@three-ws/avatar-mcp",
-      "version": "0.3.0",
-      "description": "three.ws 3D avatars in your agent: render a live, interactive 3D avatar inline, or get an embed.",
-      "tagline": "Drop a live, interactive 3D avatar into any agent chat, or get an embed snippet.",
-      "category": "avatars",
-      "tags": [
-        "avatars",
-        "embed",
-        "3d",
-        "chat-ui",
-        "gltf"
-      ],
-      "examplePrompts": [
-        "Render a live 3D avatar for agent nova in this chat.",
-        "Give me an embed code for this avatar.",
-        "Fetch the GLB and metadata for this avatar id."
-      ],
-      "requiredEnv": [],
-      "websiteUrl": "https://three.ws",
-      "repository": "https://github.com/nirholas/three.ws",
-      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fthreews-avatar",
-      "icon": "https://three.ws/three-ws-mcp-icon.svg"
-    },
-    {
       "name": "io.github.nirholas/tutor-mcp",
       "title": "three.ws Tutor",
       "type": "stdio",
       "transport": "stdio",
       "connect": "npx -y @three-ws/tutor-mcp",
       "npmPackage": "@three-ws/tutor-mcp",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "Read a Pay-As-You-Learn tutoring session's itemized tab and close it for an attested invoice.",
       "tagline": "Read a Pay-As-You-Learn tutoring session's itemized tab and close it for an attested invoice.",
       "category": "learning",
@@ -1207,7 +1386,7 @@
       "transport": "stdio",
       "connect": "npx -y @three-ws/vanity-mcp",
       "npmPackage": "@three-ws/vanity-mcp",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "description": "Read the three.ws vanity-address market: quote difficulty + USDC price, browse the board.",
       "tagline": "Read the three.ws vanity-address market: quote difficulty and USDC price, browse the board.",
       "category": "market-data",
@@ -1265,7 +1444,7 @@
       "transport": "stdio",
       "connect": "npx -y @three-ws/mcp-bridge",
       "npmPackage": "@three-ws/mcp-bridge",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Pay any x402 endpoint on the open web: auto-paying bridge with Bazaar discovery and spend caps.",
       "tagline": "An auto-paying bridge that pays any x402 endpoint on the open web, with Bazaar discovery and spend caps.",
       "category": "payments",
@@ -1294,7 +1473,7 @@
       "transport": "stdio",
       "connect": "npx -y @three-ws/x402-mcp",
       "npmPackage": "@three-ws/x402-mcp",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "description": "Self-custodial x402 wallet for AI agents: pay any service in USDC or $THREE from your own key.",
       "tagline": "Self-custodial x402 wallet for AI agents: find, inspect, and pay any service in USDC or $THREE from your own key.",
       "category": "payments",

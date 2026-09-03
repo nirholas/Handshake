@@ -82,6 +82,10 @@ const EXEMPTIONS = new Map([
 		'ensureWarm() crawls attestations into the cache on a cold read; the caller receives the passport view.',
 	],
 	[
+		'grade_sim_readiness:db-write',
+		'Read-through cache fill (category 1). gradeForCaller() answers from getGrade() when the content hash is already known; on a miss it grades the mesh it just fetched and calls putGrade() to warm sim_readiness_grades. putGrade() wraps its insert in try/catch and returns null on failure, so the caller receives the same grade whether or not the write lands.',
+	],
+	[
 		'prepare_agent_mint:funds-transfer',
 		'Builder, not sender (category 2). buildAgentMint() calls umi transferSol() to APPEND the mainnet deploy-fee instruction to the mint builder; the handler signs only with the new asset keypair, serializes to txs_base64 with the caller wallet as a noop fee payer, and returns. It never broadcasts. The sibling that does broadcast, mint_onchain_agent, is annotated readOnlyHint:false + destructiveHint:true.',
 	],

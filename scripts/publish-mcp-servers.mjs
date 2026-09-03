@@ -125,6 +125,7 @@ const SERVERS = [
 	{ key: 'herald-mcp', dir: 'packages/herald-mcp', manifest: 'packages/herald-mcp/server.json' },
 	{ key: 'knock-mcp', dir: 'packages/knock-mcp', manifest: 'packages/knock-mcp/server.json' },
 	{ key: 'home-mcp', dir: 'packages/home-mcp', manifest: 'packages/home-mcp/server.json' },
+	{ key: 'hood-mcp', dir: 'robinhood/hood-mcp', manifest: 'robinhood/hood-mcp/server.json' },
 	{ key: 'remote-main', manifest: 'server.json' },
 	{ key: 'remote-pumpfun', manifest: 'server-pumpfun.json' },
 	{ key: 'remote-3d', manifest: 'server-3d.json' },

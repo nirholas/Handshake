@@ -31,8 +31,9 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 // stdio package manifests live next to their package.json. Discovered from
 // disk, never hand-listed: a hardcoded list silently drifts as packages are
 // added, and an unlisted manifest is an unvalidated one that only fails on
-// publish day. mcp-server/mcp-bridge sit outside packages/ so they are named.
-const FIXED_PACKAGE_DIRS = ['mcp-server', 'mcp-bridge'];
+// publish day. mcp-server, mcp-bridge and robinhood/hood-mcp sit outside packages/
+// so they are named.
+const FIXED_PACKAGE_DIRS = ['mcp-server', 'mcp-bridge', 'robinhood/hood-mcp'];
 const PACKAGE_MANIFESTS = [
 	...FIXED_PACKAGE_DIRS,
 	...readdirSync(resolve(root, 'packages'), { withFileTypes: true })
