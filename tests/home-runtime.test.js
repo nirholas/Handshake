@@ -529,13 +529,25 @@ describe('home runtime: what the health probe reads', () => {
 		const held = await runtime.acquire(OTHER_HOME_ID, USER_ID);
 
 		const snapshot = runtime.stats();
-		expect(snapshot).toEqual({
+		expect(snapshot).toMatchObject({
 			open: 2,
 			subscribers: 2,
 			pooledCap: 42,
 			breakersOpen: 0,
 			byStatus: { [HOME_STATUS.CONNECTED]: 2 },
 		});
+
+		// The backpressure ladder rides along, because an operator asking "is this
+		// instance full" and an operator asking "how many homes are open" are the
+		// same person one second apart.
+		expect(snapshot.admission).toMatchObject({
+			rung: 'normal',
+			pooled: 2,
+			unpooled: 0,
+			streams: 2,
+			databaseHealthy: true,
+		});
+		expect(snapshot.admission.limits.maxPooled).toBe(42);
 
 		held.release();
 		runtime.closeAll();

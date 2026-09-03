@@ -652,7 +652,7 @@ export function createHomeRuntime(deps = {}) {
 		sweepTimer = null;
 	}
 
-	return { acquire, withHome, snapshot, subscribe, evictIdle, stats, closeHome, closeAll };
+	return { acquire, withHome, snapshot, subscribe, evictIdle, stats, closeHome, closeAll, admitAction, withAction, readPlan, admission };
 }
 
 function readMaxConnections() {
@@ -679,6 +679,10 @@ export const evictIdle = runtime.evictIdle;
 export const stats = runtime.stats;
 export const closeHome = runtime.closeHome;
 export const closeAll = runtime.closeAll;
+export const admitAction = runtime.admitAction;
+export const withAction = runtime.withAction;
+export const readPlan = runtime.readPlan;
+export const admission = runtime.admission;
 
 // Cloud Run sends SIGTERM before it recycles a container. Closing here is the
 // difference between a clean disconnect and the user's Home Assistant holding
