@@ -13,6 +13,7 @@
 // so Vercel's NFT doesn't statically trace the chromium tree for every route
 // that transitively imports this module — that trace caused 45-min build hangs.
 import { env } from './env.js';
+import { DEFAULT_THREE_BASE, resolveThreeCdn, THREE_VERSION, threeImportMap } from './three-cdn.js';
 import { fetchModel } from './fetch-model.js';
 import { scriptJson, safeCssColor } from './render-safe.js';
 
@@ -31,10 +32,6 @@ const DEFAULT_CHROMIUM_PACK =
 	'https://github.com/Sparticuz/chromium/releases/download/v148.0.0/chromium-v148.0.0-pack.x64.tar';
 const CHROMIUM_PACK = env.CHROMIUM_PACK_URL || DEFAULT_CHROMIUM_PACK;
 
-// three.js version pinned in package-lock — must match what the in-app viewer
-// renders so the server-side preview is faithful (camera, lighting, material
-// behavior are all version-sensitive).
-const THREE_VERSION = '0.176.0';
 
 // Poster composition. A 26° yaw reads as a natural 3/4 portrait without hiding
 // the front of the model; 1.22 leaves enough margin that a T-pose's fingertips
@@ -145,7 +142,7 @@ function releaseRenderSlot() {
 // Inline viewer HTML — bundled into the function so the renderer needs no
 // extra static assets. three.js + GLTFLoader load from unpkg pinned to the
 // installed version. window.__renderDone signals readiness to puppeteer.
-function viewerHtml({ glbBase64, width, height, background, backdrop }) {
+function viewerHtml({ glbBase64, width, height, background, backdrop, threeBase = DEFAULT_THREE_BASE }) {
 	// A gradient backdrop renders as page CSS behind a transparent canvas: the
 	// screenshot composites the two, so the scene itself stays background-free.
 	// `background` reaches here straight from a public handler, and both slots
@@ -166,10 +163,7 @@ function viewerHtml({ glbBase64, width, height, background, backdrop }) {
 </head><body>
 <canvas id="c" width="${width}" height="${height}" style="display:block;width:${width}px;height:${height}px"></canvas>
 <script>window.__GLB_B64=${scriptJson(glbBase64)};</script>
-<script type="importmap">{ "imports": {
-	"three": "https://unpkg.com/three@${THREE_VERSION}/build/three.module.js",
-	"three/addons/": "https://unpkg.com/three@${THREE_VERSION}/examples/jsm/"
-}}</script>
+<script type="importmap">{ "imports": ${scriptJson(threeImportMap(threeBase))} }</script>
 <script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -217,7 +211,7 @@ const rim = new THREE.DirectionalLight(0xffffff, 1.1); rim.position.set(-1.5, 3,
 // model — register every standard compression decoder so the renderer
 // handles optimized GLBs instead of falling back to the SVG card. Decoder
 // assets load from the same pinned three.js release as the loaders.
-const ADDONS = 'https://unpkg.com/three@${THREE_VERSION}/examples/jsm/';
+const ADDONS = ${scriptJson(`${threeBase}examples/jsm/`)};
 const dracoLoader = new DRACOLoader().setDecoderPath(ADDONS + 'libs/draco/');
 const ktx2Loader = new KTX2Loader().setTranscoderPath(ADDONS + 'libs/basis/').detectSupport(renderer);
 
@@ -372,9 +366,13 @@ async function renderOnce({ glbBase64, width, height, background, backdrop }) {
 	const page = await browser.newPage();
 	try {
 		await page.setViewport({ width, height, deviceScaleFactor: 1 });
-		const html = viewerHtml({ glbBase64, width, height, background, backdrop });
+		// Resolve which CDN still serves three.js before building the page. An
+		// unpkg outage would otherwise hang the module import until the
+		// watchdog below fires and every poster comes back blank.
+		const { base: threeBase } = await resolveThreeCdn(THREE_VERSION);
+		const html = viewerHtml({ glbBase64, width, height, background, backdrop, threeBase });
 		// data: URL avoids needing a network fetch for the bootstrap page itself.
-		// importmap dependencies (three, GLTFLoader) still come from unpkg.
+		// importmap dependencies (three, GLTFLoader) still come from the CDN.
 		await page.setContent(html, { waitUntil: 'domcontentloaded' });
 		await page.waitForFunction(
 			'window.__renderDone === true || window.__renderError !== null',

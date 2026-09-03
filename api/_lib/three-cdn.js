@@ -8,10 +8,20 @@
 // is to check unpkg once (bounded HEAD), remember the answer for ten minutes,
 // and hand the renderers whichever host is up.
 
+// The three.js release the headless renderers load. All three renderers share
+// this pin so a bump lands everywhere at once instead of leaving one poster
+// lane on an older release than the others.
+export const THREE_VERSION = '0.176.0';
+
 export const THREE_CDN_HOSTS = {
 	unpkg: (version) => `https://unpkg.com/three@${version}/`,
 	jsdelivr: (version) => `https://cdn.jsdelivr.net/npm/three@${version}/`,
 };
+
+// The base a renderer uses when it has not resolved a host yet. Keeping the
+// default on unpkg means a caller that skips the probe behaves exactly as the
+// renderers did before the failover was wired in.
+export const DEFAULT_THREE_BASE = THREE_CDN_HOSTS.unpkg(THREE_VERSION);
 
 const PROBE_TIMEOUT_MS = 3_000;
 const PROBE_TTL_MS = 10 * 60_000;

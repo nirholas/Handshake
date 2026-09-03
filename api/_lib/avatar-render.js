@@ -12,6 +12,7 @@ import { env } from './env.js';
 import { publicUrl, putObject, headObject } from './r2.js';
 import { poseRuntimeModules } from './pose-runtime.js';
 import { scriptJson, safeCssColor } from './render-safe.js';
+import { DEFAULT_THREE_BASE, resolveThreeCdn, THREE_VERSION, threeImportMap } from './three-cdn.js';
 import { PRESETS } from '../../src/pose-presets.js';
 
 export const MIN_DIM = 64;
@@ -297,7 +298,6 @@ export async function renderAvatarImage({ avatar, glbUrl, params, awaitUpload = 
 const DEFAULT_CHROMIUM_PACK =
 	'https://github.com/Sparticuz/chromium/releases/download/v148.0.0/chromium-v148.0.0-pack.x64.tar';
 const CHROMIUM_PACK = env.CHROMIUM_PACK_URL || DEFAULT_CHROMIUM_PACK;
-const THREE_VERSION = '0.176.0';
 
 let _browserPromise = null;
 async function getBrowser() {
@@ -327,7 +327,7 @@ async function getBrowser() {
 // from here.
 export { poseRuntimeModules };
 
-export function sceneViewerHtml({ glbUrl, width, height, background, pose, cameraOrbit, expression, scenePreset }) {
+export function sceneViewerHtml({ glbUrl, width, height, background, pose, cameraOrbit, expression, scenePreset, threeBase = DEFAULT_THREE_BASE }) {
 	// Every value below is interpolated into a <script> block. scriptJson (not
 	// JSON.stringify) is what keeps a caller-supplied string from closing the tag
 	// and running its own code in a page with container network egress.
@@ -344,8 +344,7 @@ export function sceneViewerHtml({ glbUrl, width, height, background, pose, camer
 </head><body>
 <canvas id="c" width="${width}" height="${height}" style="display:block;width:${width}px;height:${height}px"></canvas>
 <script type="importmap">{ "imports": {
-	"three": "https://unpkg.com/three@${THREE_VERSION}/build/three.module.js",
-	"three/addons/": "https://unpkg.com/three@${THREE_VERSION}/examples/jsm/",
+	${scriptJson(threeImportMap(threeBase)).slice(1, -1)},
 	"glb-canonicalize": "${poseModules['glb-canonicalize']}",
 	"pose-mannequin": "${poseModules['pose-mannequin']}",
 	"pose-rig": "${poseModules['pose-rig']}"
@@ -446,7 +445,7 @@ const preset = ${presetJson};
 // Pipeline GLBs ship Draco geometry, Meshopt buffers, and KTX2 textures;
 // a bare GLTFLoader throws "No DRACOLoader instance provided". Register
 // every standard compression decoder from the pinned three.js release.
-const ADDONS = 'https://unpkg.com/three@${THREE_VERSION}/examples/jsm/';
+const ADDONS = ${scriptJson(`${threeBase}examples/jsm/`)};
 const dracoLoader = new DRACOLoader().setDecoderPath(ADDONS + 'libs/draco/');
 const ktx2Loader = new KTX2Loader().setTranscoderPath(ADDONS + 'libs/basis/').detectSupport(renderer);
 
@@ -499,10 +498,14 @@ export async function renderAvatarScene({
 	const page = await browser.newPage();
 	try {
 		await page.setViewport({ width: W, height: H, deviceScaleFactor: 1 });
+		// Pick a live three.js CDN first: an unpkg outage would otherwise hang
+		// the page's module import until the watchdog fires and the render
+		// comes back blank.
+		const { base: threeBase } = await resolveThreeCdn(THREE_VERSION);
 		const html = sceneViewerHtml({
 			glbUrl, width: W, height: H, background,
 			pose, cameraOrbit: cameraOrbit || { theta: 0, phi: 80, radius: null },
-			expression, scenePreset,
+			expression, scenePreset, threeBase,
 		});
 		await page.setContent(html, { waitUntil: 'domcontentloaded' });
 		await page.waitForFunction(
