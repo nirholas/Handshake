@@ -126,6 +126,9 @@ const EMPTY = {
 	hidden: [],
 	garments: [],
 	proportions: {},
+	// Free-sculpt deltas (src/avatar-sculpt-doc.js). null, not {}, because the
+	// field is one document or nothing: an empty one would collapse away anyway.
+	sculpt: null,
 };
 
 describe('hydrateAppearance', () => {
@@ -158,6 +161,7 @@ describe('hydrateAppearance', () => {
 			hidden: ['outfit'],
 			garments: [{ slot: 'outerwear', id: 'parka' }],
 			proportions: { height: 1.08 },
+			sculpt: null,
 		};
 		expect(hydrateAppearance(raw)).toEqual(raw);
 	});
