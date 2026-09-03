@@ -26,9 +26,11 @@
 	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
-	<!-- Meshopt decoder before <model-viewer> (Forge GLBs are meshopt-compressed). -->
+	<!-- Meshopt decoder before <model-viewer> (Forge GLBs are meshopt-compressed).
+	     <model-viewer> itself is loaded by the bootstrap at the end of <body>, only
+	     once WebGL is confirmed: it builds a THREE.WebGLRenderer the moment it
+	     upgrades, which throws on a browser that has no WebGL context to give it. -->
 	<script src="/model-viewer-meshopt.js"></script>
-	<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
 	<style>
 		:root {
 			--bg: #0b0c10; --ink: #ecedf2; --ink-dim: #9aa0af; --ink-faint: #6b7080;
@@ -128,7 +130,7 @@
 		.h { font-size: 15px; font-weight: 650; }
 		.muted { color: var(--ink-dim); font-size: 13px; line-height: 1.5; max-width: 40ch; }
 		.elapsed { font-variant-numeric: tabular-nums; color: var(--ink-faint); font-size: 12px; }
-		.actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 12px 14px; border-top: 1px solid var(--line); background: rgba(10,11,14,0.45); }
+		.actions { position: relative; z-index: 2; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 12px 14px; border-top: 1px solid var(--line); background: rgba(10,11,14,0.6); }
 		.actions .meta { flex: 1 1 100%; color: var(--ink-dim); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 		a.btn, button.btn {
 			appearance: none; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 7px;
@@ -157,6 +159,12 @@
 		.milestone-card .big { font-size: 52px; line-height: 1; }
 		.milestone-card h3 { margin: 12px 0 6px; font-size: 22px; }
 		.milestone-card p { margin: 0 0 16px; color: var(--ink-dim); font-size: 14px; line-height: 1.5; }
+
+		:where(a, button, input, [tabindex]):focus-visible {
+			outline: 2px solid color-mix(in srgb, var(--theme, var(--accent)) 85%, #fff);
+			outline-offset: 2px; border-radius: 8px;
+		}
+		.ask input:focus-visible { outline: 2px solid color-mix(in srgb, var(--theme, var(--accent)) 85%, #fff); outline-offset: 0; }
 
 		footer.foot { border-top: 1px solid var(--line); padding: 14px 16px; text-align: center; color: var(--ink-faint); font-size: 12px; }
 		footer.foot a { color: var(--ink-dim); }
@@ -258,10 +266,51 @@
 		function webglSupported() {
 			try { const c = document.createElement('canvas'); return !!(window.WebGLRenderingContext && (c.getContext('webgl') || c.getContext('experimental-webgl'))); } catch { return false; }
 		}
-		if (webglSupported()) import('/src/daily.js');
-		else {
+		// Loaded as a tag rather than a dynamic import so the bundler leaves the CDN
+		// URL alone, and so a CDN outage is a rejected promise we can design for
+		// instead of an unhandled module failure.
+		function loadModelViewer() {
+			return new Promise((resolve, reject) => {
+				const el = document.createElement('script');
+				el.type = 'module';
+				el.src = 'https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js';
+				el.onload = () => resolve();
+				el.onerror = () => reject(new Error('model-viewer failed to load'));
+				document.head.appendChild(el);
+			});
+		}
+
+		if (webglSupported()) {
+			// Whatever happens to the CDN, the page script boots: daily.js checks
+			// whether <model-viewer> actually registered and hands over download and
+			// AR links instead of a preview when it did not.
+			const viewerReady = loadModelViewer().then(() => customElements.whenDefined('model-viewer')).catch(() => {});
+			const cap = new Promise((resolve) => { setTimeout(resolve, 8000); });
+			Promise.race([viewerReady, cap]).then(() => import('/src/daily.js'));
+		} else {
+			// No WebGL means no preview, but the day's theme is pure data and still
+			// worth showing: without this the visitor sat on "Loading today's
+			// challenge..." forever and never learned what the challenge was.
+			import('/src/daily/daily-theme.js').then(({ themeForDate }) => {
+				const theme = themeForDate(new Date());
+				document.documentElement.style.setProperty('--theme', theme.accent);
+				const own = (el) => { if (el) el.setAttribute('data-i18n-owned', '1'); return el; };
+				own(document.querySelector('.theme h1'));
+				own(document.getElementById('theme-day')).textContent = `Day ${theme.day} · Daily challenge`;
+				document.getElementById('theme-emoji').textContent = theme.emoji;
+				document.getElementById('theme-title').textContent = theme.title;
+				own(document.getElementById('theme-hint')).textContent = theme.hint;
+				own(document.querySelector('title'));
+				document.title = `${theme.emoji} ${theme.title} · Daily Forge · three.ws`;
+				const input = document.getElementById('prompt');
+				if (input) input.placeholder = `Your take on "${theme.title}"…`;
+			}).catch(() => {});
+			const form = document.getElementById('ask');
+			if (form) form.addEventListener('submit', (e) => e.preventDefault());
+			const go = document.getElementById('go');
+			if (go) { go.disabled = true; go.title = 'Forging needs a browser that can render 3D.'; }
 			const s = document.getElementById('idle');
-			if (s) s.innerHTML = '<div class="idleart">🛰️</div><div class="h">This browser can’t render 3D</div><div class="muted">Reopen Daily Forge in an up-to-date Chrome or Safari to join today’s challenge.</div>';
+			if (s) s.innerHTML = '<div class="idleart">🛰️</div><div class="h">This browser can’t render 3D</div><div class="muted">Daily Forge needs WebGL to show your model. Reopen this page in an up-to-date Chrome, Edge, Firefox, or Safari to join today’s challenge.</div>';
 		}
 	</script>
 	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
