@@ -97,6 +97,8 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | Design-token ratchet | `npm run audit:tokens` | Hardcoded colour hexes cannot creep back past a committed baseline. |
 | Credential material | `npm run check:secrets` | No dotenv file, private key, keystore, or downloaded cloud credential becomes a tracked file, and no added line carries a provider-issued key. |
 | iOS app icon | `npm run check:ios-icons` | The committed iOS icon and launch images are exactly what the current brand mark produces, and the icon carries no alpha channel. |
+| macOS app icon | `npm run check:macos-icon` | The ten committed Mac icon sizes and their Contents.json are exactly what the current brand mark produces. |
+| Apple glance widget | `npm run check:apple-widget` | Both Xcode projects that build the Agent glance widget are consistent, every shared Swift source belongs to the targets that need it, and the Swift client still agrees with `api/glance/mine.js` on the endpoint, the headers, the states, the sizes and the token shape. |
 
 ### Routing and pages
 

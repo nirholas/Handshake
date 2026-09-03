@@ -1119,6 +1119,48 @@
 			}
 		},
 		{
+			"id": "check-macos-icon",
+			"script": "apple/scripts/make-macos-icon.mjs",
+			"npm": "check:macos-icon",
+			"title": "The Mac app icon still is the brand mark",
+			"protects": "The ten committed macOS icon sizes and their Contents.json are exactly what the current brand mark produces.",
+			"why": "macOS compiles its icon into the .app from Assets.xcassets, so whatever is committed is what people see in the Dock and in Notification Centre beside the widget. It fails silently in both directions a hand-edit can go: a replacement drifts away from public/pwa-512x512.png and nothing notices, and a missing size in the ladder makes the icon fall back to a blurry upscale that only shows up on a Retina display somebody else owns. Re-deriving all ten and comparing bytes catches both here rather than after a Developer ID build.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A committed Mac icon size replaced with bytes the brand mark does not produce.",
+				"violation": {
+					"write": {
+						"apple/macos/ThreeWSGlance/Assets.xcassets/AppIcon.appiconset/icon_256x256.png": "not the brand mark\n"
+					}
+				},
+				"expect": "DRIFT"
+			}
+		},
+		{
+			"id": "check-apple-widget",
+			"script": "scripts/check-apple-widget.mjs",
+			"npm": "check:apple-widget",
+			"title": "The Apple glance widget still builds and still speaks the server’s wire",
+			"protects": "Both Xcode projects that build the Agent glance widget are internally consistent, every shared Swift source is a member of the targets that need it, the plists expand only build settings the projects define, and the Swift client still agrees with api/glance/mine.js on the endpoint, the query, the six headers, the four states, the sizes, the scales and the token shape.",
+			"why": "Nothing on a Linux build machine can compile Swift or open an .xcodeproj, so every failure here would otherwise be found on somebody else’s Mac days later. Two classes of them are silent. A Swift file added to apple/GlanceKit and never added to a target simply does not exist at runtime, and an object id in the committed project.pbxproj that no longer resolves breaks the iOS app build outright, on the shipping App Store artifact. The quieter one is drift across the wire: rename a header or a state string in api/glance/mine.js and the widget keeps parsing the old name, draws the wrong card, and nothing anywhere errors. This proves the structure and the contract without a Mac in the room; it does not prove the Swift compiles, and does not claim to.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "The Swift client stops reading a header api/glance/mine.js still sets.",
+				"violation": {
+					"write": {
+						"apple/GlanceKit/GlanceClient.swift": "// A client that reads none of the headers the server sets.\nimport Foundation\nstruct GlanceClient {}\n"
+					}
+				},
+				"expect": "no longer reads"
+			}
+		},
+		{
 			"id": "audit-upstreams",
 			"script": "scripts/audit-upstreams.mjs",
 			"npm": "audit:upstreams",
