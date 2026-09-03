@@ -8,10 +8,10 @@
 // origin, which is the claim the consent copy makes.
 //
 // What is staged (all from node_modules, so the lockfile pins the versions):
-//   silero_vad_v5.onnx           @ricky0123/vad-web  — the MIT silero VAD
-//   vad.worklet.bundle.min.js    @ricky0123/vad-web  — its AudioWorklet
-//   ort-wasm-simd-threaded.mjs   onnxruntime-web     — the wasm loader
-//   ort-wasm-simd-threaded.wasm  onnxruntime-web     — the runtime itself
+//   silero_vad_v5.onnx           @ricky0123/vad-web  (the MIT silero VAD)
+//   vad.worklet.bundle.min.js    @ricky0123/vad-web  (its AudioWorklet)
+//   ort-wasm-simd-threaded.mjs   onnxruntime-web     (the wasm loader)
+//   ort-wasm-simd-threaded.wasm  onnxruntime-web     (the runtime itself)
 //
 // NOT staged here: the openWakeWord models under /public/models/voice/wake-word.
 // Those are Apache-2.0 release artifacts from dscripka/openWakeWord v0.5.1 that
@@ -39,7 +39,7 @@ const files = [
 
 const missing = files.filter(([from]) => !existsSync(join(repo, from)));
 if (missing.length === files.length) {
-	console.warn('[copy-voice-models] no source files found — skipping. Run npm install first.');
+	console.warn('[copy-voice-models] no source files found, skipping. Run npm install first.');
 	process.exit(0);
 }
 
