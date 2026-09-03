@@ -10,6 +10,11 @@
  * It is optional on purpose: `mcp_server` needs setting up, while the WebSocket
  * API in bridge.js works on every instance with nothing but a token. This is an
  * upgrade, never a requirement.
+ *
+ * Two transports, tried in that order, because Home Assistant moved this
+ * endpoint: `/api/mcp` (Streamable HTTP) on current releases, `/mcp_server/sse`
+ * (SSE) on the older ones still in wide use. Which one a house speaks is
+ * discovered by asking it, never by reading its version number.
  */
 
 import { ERR, HomeBridgeError } from './errors.js';
@@ -39,35 +44,70 @@ export async function connectHomeMcp({ baseUrl, token, api, clientName = 'three.
 
 	let Client;
 	let StreamableHTTPClientTransport;
+	let SSEClientTransport;
 	try {
 		({ Client } = await import('@modelcontextprotocol/sdk/client/index.js'));
 		({ StreamableHTTPClientTransport } = await import('@modelcontextprotocol/sdk/client/streamableHttp.js'));
+		({ SSEClientTransport } = await import('@modelcontextprotocol/sdk/client/sse.js'));
 	} catch (cause) {
 		throw new HomeBridgeError(ERR.NO_MCP, 'The MCP channel needs @modelcontextprotocol/sdk installed alongside this package.', cause);
 	}
 
-	const url = new URL(`${http}/api/mcp${api ? `/${api}` : ''}`);
-	const transport = new StreamableHTTPClientTransport(url, {
-		requestInit: { headers: { authorization: `Bearer ${token}` } },
-		// A server dialling a user-supplied URL passes a fetch pinned to the
-		// addresses its SSRF guard validated; the browser has nothing to pin.
-		...(fetchImpl ? { fetch: fetchImpl } : {}),
-	});
 	const client = new Client({ name: clientName, version: '0.1.0' }, { capabilities: {} });
+	const attempts = [
+		{ transport: 'streamable-http', url: new URL(`${http}/api/mcp${api ? `/${api}` : ''}`) },
+		{ transport: 'sse', url: new URL(`${http}/mcp_server/sse`) },
+	];
 
-	try {
-		await client.connect(transport);
-	} catch (cause) {
-		// A 404 here is the ordinary case, not a fault: the integration is simply
-		// not set up. Say which one it is so the UI can offer the right next step.
-		const status = cause?.code ?? cause?.status;
-		if (status === 404 || /404/.test(String(cause?.message || ''))) {
-			throw new HomeBridgeError(ERR.NO_MCP, 'This home does not have the Model Context Protocol Server integration enabled. Add it in Settings, Devices and services, to give your agent your own curated tools.', cause);
+	let connected = null;
+	let lastCause = null;
+	for (const attempt of attempts) {
+		const transport =
+			attempt.transport === 'streamable-http'
+				? new StreamableHTTPClientTransport(attempt.url, {
+					requestInit: { headers: authHeaders(token) },
+					// A server dialling a user-supplied URL passes a fetch pinned to
+					// the addresses its SSRF guard validated; the browser has nothing
+					// to pin.
+					...(fetchImpl ? { fetch: fetchImpl } : {}),
+				})
+				: new SSEClientTransport(attempt.url, {
+					requestInit: { headers: authHeaders(token) },
+					// The SSE transport opens its stream with a plain GET that carries
+					// no requestInit, so the token has to be attached to that fetch
+					// too or Home Assistant answers 401 on the stream alone.
+					eventSourceInit: {
+						fetch: (input, init) =>
+							(fetchImpl || fetch)(input, { ...init, headers: { ...(init?.headers || {}), ...authHeaders(token) } }),
+					},
+				});
+
+		try {
+			await client.connect(transport);
+			connected = attempt;
+			break;
+		} catch (cause) {
+			lastCause = cause;
+			const status = cause?.code ?? cause?.status;
+			if (status === 401 || status === 403) {
+				throw new HomeBridgeError(ERR.AUTH, 'Home Assistant rejected that token on the MCP endpoint.', cause);
+			}
+			// Only a 404 means "not here, try the other transport". Anything else is
+			// a real outage and must not be retried into a misleading NO_MCP.
+			if (!isNotFound(cause)) {
+				throw new HomeBridgeError(ERR.UNREACHABLE, `Could not open the MCP channel at ${attempt.url.href}.`, cause);
+			}
 		}
-		if (status === 401 || status === 403) {
-			throw new HomeBridgeError(ERR.AUTH, 'Home Assistant rejected that token on the MCP endpoint.', cause);
-		}
-		throw new HomeBridgeError(ERR.UNREACHABLE, `Could not open the MCP channel at ${url.href}.`, cause);
+	}
+
+	if (!connected) {
+		// Both transports 404: the integration really is not set up. That is the
+		// ordinary case, not a fault, so say which one it is and offer the step.
+		throw new HomeBridgeError(
+			ERR.NO_MCP,
+			'This home does not have the Model Context Protocol Server integration enabled. Add it in Settings, Devices and services, to give your agent your own curated tools.',
+			lastCause,
+		);
 	}
 
 	const { tools } = await client.listTools();
@@ -95,7 +135,31 @@ export async function connectHomeMcp({ baseUrl, token, api, clientName = 'three.
 	return {
 		client,
 		tools,
+		/** Which transport this house answered on: 'streamable-http' or 'sse'. */
+		transport: connected.transport,
+		endpoint: connected.url.href,
 		callTool,
 		close: () => client.close(),
 	};
+}
+
+function authHeaders(token) {
+	return { authorization: `Bearer ${token}` };
+}
+
+/**
+ * A 404 from either transport, however the SDK chose to report it.
+ *
+ * Home Assistant moved the MCP endpoint between releases: through 2025.10 the
+ * integration served only the SSE transport at `/mcp_server/sse`, and the
+ * Streamable HTTP endpoint at `/api/mcp` arrived later. Asking for `/api/mcp`
+ * on an older house therefore 404s even though its MCP server is running and
+ * exposing real tools, which is how a working house came to be reported as
+ * having no MCP at all. We try both and let the house answer, rather than
+ * parsing its version string and deciding for it.
+ */
+function isNotFound(cause) {
+	const status = cause?.code ?? cause?.status;
+	if (status === 404) return true;
+	return /\b404\b|not found/i.test(String(cause?.message || ''));
 }
