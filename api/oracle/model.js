@@ -148,7 +148,8 @@ async function loadVersion(id, network) {
 export default wrap(async (req, res) => {
 	if (cors(req, res)) return;
 	if (!method(req, res, ['GET'])) return;
-	if (await rateLimited(req, res, limits.publicRead, clientIp(req))) return;
+	const rl = await limits.publicIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
 
 	const url = new URL(req.url, 'http://localhost');
 	const network = NETWORKS.has(url.searchParams.get('network')) ? url.searchParams.get('network') : 'mainnet';
