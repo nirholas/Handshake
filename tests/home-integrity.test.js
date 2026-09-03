@@ -223,55 +223,76 @@ describe('the subscriber leak detector', () => {
 	beforeEach(() => resetSubscriberSamples());
 
 	it('does not accuse anything before it has three samples', () => {
-		expect(noteSubscriberSample({ subscribers: 10, open: 5, streams: 2 }).leaking).toBe(false);
-		expect(noteSubscriberSample({ subscribers: 20, open: 5, streams: 2 }).leaking).toBe(false);
+		expect(noteSubscriberSample({ subscribers: 10, open: 1, streams: 10 }).leaking).toBe(false);
+		expect(noteSubscriberSample({ subscribers: 20, open: 1, streams: 20 }).leaking).toBe(false);
 	});
 
-	it('fires when the surplus over open streams grows across three checks', () => {
-		noteSubscriberSample({ subscribers: 12, open: 10, streams: 10 });
-		noteSubscriberSample({ subscribers: 18, open: 10, streams: 10 });
-		const third = noteSubscriberSample({ subscribers: 26, open: 10, streams: 10 });
+	it('fires on subscribers climbing while connections do not', () => {
+		// The shape a real leaked subscription produces, measured against the
+		// runtime's own stats(): six leaked subscriptions over one pooled
+		// connection, with the stream gauge moving in lockstep the whole time.
+		noteSubscriberSample({ subscribers: 1, open: 1, streams: 1 });
+		noteSubscriberSample({ subscribers: 3, open: 1, streams: 3 });
+		const third = noteSubscriberSample({ subscribers: 6, open: 1, streams: 6 });
 
 		expect(third.leaking).toBe(true);
-		expect(third.margins).toEqual([2, 8, 16]);
-		expect(third.growth).toBe(14);
+		expect(third.samples).toEqual([1, 3, 6]);
+		expect(third.growth).toBe(5);
+	});
+
+	it('is not fooled by the margin being zero, which it always is', () => {
+		// subscribe() registers the subscriber and admits the stream in one call,
+		// so a detector built on their difference could never fire. This pins that
+		// the margin is recorded but is not what decides the verdict.
+		noteSubscriberSample({ subscribers: 1, open: 1, streams: 1 });
+		noteSubscriberSample({ subscribers: 3, open: 1, streams: 3 });
+		const third = noteSubscriberSample({ subscribers: 6, open: 1, streams: 6 });
+
+		expect(third.margins).toEqual([0, 0, 0]);
+		expect(third.leaking).toBe(true);
 	});
 
 	it('clears as soon as the leaked subscriptions are released', () => {
-		noteSubscriberSample({ subscribers: 12, open: 10, streams: 10 });
-		noteSubscriberSample({ subscribers: 18, open: 10, streams: 10 });
-		expect(noteSubscriberSample({ subscribers: 26, open: 10, streams: 10 }).leaking).toBe(true);
+		noteSubscriberSample({ subscribers: 1, open: 1, streams: 1 });
+		noteSubscriberSample({ subscribers: 3, open: 1, streams: 3 });
+		expect(noteSubscriberSample({ subscribers: 6, open: 1, streams: 6 }).leaking).toBe(true);
 
-		expect(noteSubscriberSample({ subscribers: 10, open: 10, streams: 10 }).leaking).toBe(false);
+		expect(noteSubscriberSample({ subscribers: 0, open: 1, streams: 0 }).leaking).toBe(false);
 	});
 
-	it('does not call honest traffic a leak: streams and subscribers rising together', () => {
+	it('does not call a fleet taking on more houses a leak', () => {
+		// Subscribers and connections rising together is growth, not a leak.
 		noteSubscriberSample({ subscribers: 10, open: 10, streams: 10 });
-		noteSubscriberSample({ subscribers: 40, open: 10, streams: 40 });
-		const third = noteSubscriberSample({ subscribers: 90, open: 10, streams: 90 });
-
-		expect(third.leaking).toBe(false);
-		expect(third.margins).toEqual([0, 0, 0]);
+		noteSubscriberSample({ subscribers: 40, open: 40, streams: 40 });
+		expect(noteSubscriberSample({ subscribers: 90, open: 90, streams: 90 }).leaking).toBe(false);
 	});
 
-	it('does not call a shrinking surplus a leak', () => {
-		noteSubscriberSample({ subscribers: 30, open: 10, streams: 10 });
-		noteSubscriberSample({ subscribers: 20, open: 10, streams: 10 });
-		expect(noteSubscriberSample({ subscribers: 12, open: 10, streams: 10 }).leaking).toBe(false);
+	it('does not call a big family watching one house a leak', () => {
+		// Rising, connections flat, but still a plausible number of people on one
+		// home. Below the per-connection ceiling this stays quiet.
+		noteSubscriberSample({ subscribers: 1, open: 1, streams: 1 });
+		noteSubscriberSample({ subscribers: 2, open: 1, streams: 2 });
+		expect(noteSubscriberSample({ subscribers: 4, open: 1, streams: 4 }).leaking).toBe(false);
 	});
 
-	it('falls back to the pooled connection count when the runtime reports no stream gauge', () => {
-		noteSubscriberSample({ subscribers: 12, open: 10, streams: null });
-		noteSubscriberSample({ subscribers: 18, open: 10, streams: null });
-		expect(noteSubscriberSample({ subscribers: 26, open: 10, streams: null }).leaking).toBe(true);
+	it('does not call a falling count a leak', () => {
+		noteSubscriberSample({ subscribers: 30, open: 1, streams: 30 });
+		noteSubscriberSample({ subscribers: 20, open: 1, streams: 20 });
+		expect(noteSubscriberSample({ subscribers: 12, open: 1, streams: 12 }).leaking).toBe(false);
+	});
+
+	it('works with no stream gauge at all', () => {
+		noteSubscriberSample({ subscribers: 1, open: 1, streams: null });
+		noteSubscriberSample({ subscribers: 3, open: 1, streams: null });
+		expect(noteSubscriberSample({ subscribers: 6, open: 1, streams: null }).leaking).toBe(true);
 	});
 
 	it('surfaces the leak as degraded, not down: every request is still being served', () => {
 		const verdict = homeHealthVerdict(
-			healthy({ leak: { leaking: true, samples: [12, 18, 26], margins: [2, 8, 16], growth: 14 } }),
+			healthy({ leak: { leaking: true, samples: [1, 3, 6], margins: [0, 0, 0], growth: 5 } }),
 		);
 		expect(verdict.status).toBe('degraded');
-		expect(verdict.hint).toContain('never releasing it');
+		expect(verdict.hint).toContain('never released');
 	});
 });
 

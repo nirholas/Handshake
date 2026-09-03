@@ -22,6 +22,7 @@
  *   gate         under saturation, a guarded action still demands a human
  */
 
+import { spawn } from 'node:child_process';
 import { readdirSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
@@ -218,35 +219,51 @@ async function measureConnections(fleet, { count, big = false, actionSamples = 4
 
 	const actions = await measureActionLatency(bridges, actionSamples);
 
+	// Drop every reference before the residual reading, or this array keeps all
+	// N bridges (and their entity states and room graphs) alive and the harness
+	// reports its own scope as a leak. That is exactly what the first run did:
+	// 188KB per connection "retained" was this variable.
 	closeAll(bridges);
-	await sleep(1500);
+	const connected = bridges.length;
+	bridges.length = 0;
+	// Two collections and a real pause, because a socket's buffers are released
+	// on a later tick than its object graph. Reading straight after close reports
+	// a leak that is not there.
+	await sleep(4000);
+	heapNow();
+	await sleep(1000);
 	const afterClose = heapNow();
 
 	return {
 		requested: count,
-		connected: bridges.length,
+		connected,
+		// Per measurement, not per run: this box is shared, and a p95 taken at load
+		// 30 is a different number from the same p95 taken at load 8. A reader who
+		// cannot see that cannot tell contention from a regression.
+		loadAverage: os.loadavg().map((n) => Number(n.toFixed(2))),
 		failures: failures.slice(0, 5),
 		house: big ? 'large' : 'small',
 		entitiesHeld: entities,
-		entitiesPerConnection: bridges.length ? Math.round(entities / bridges.length) : null,
+		entitiesPerConnection: connected ? Math.round(entities / connected) : null,
 		roomsHeld: rooms,
 		openMs: Number(openMs.toFixed(1)),
-		openMsPerConnection: bridges.length ? Number((openMs / bridges.length).toFixed(2)) : null,
+		openMsPerConnection: connected ? Number((openMs / connected).toFixed(2)) : null,
 		heapUsedDelta: after.heapUsed - before.heapUsed,
-		heapPerConnection: bytesPer(after.heapUsed - before.heapUsed, bridges.length),
+		heapPerConnection: bytesPer(after.heapUsed - before.heapUsed, connected),
 		rssDelta: after.rss - before.rss,
-		rssPerConnection: bytesPer(after.rss - before.rss, bridges.length),
+		rssPerConnection: bytesPer(after.rss - before.rss, connected),
 		externalDelta: after.external - before.external,
 		fdBefore,
 		fdAfter,
-		fdPerConnection: bridges.length && fdAfter != null && fdBefore != null ? Number(((fdAfter - fdBefore) / bridges.length).toFixed(2)) : null,
+		fdPerConnection: connected && fdAfter != null && fdBefore != null ? Number(((fdAfter - fdBefore) / connected).toFixed(2)) : null,
 		openCpuMs: Number(((idleCpu.user + idleCpu.system) / 1000).toFixed(1)),
 		idleCpuMsPer10s: Number(((idleWindow.user + idleWindow.system) / 1000).toFixed(1)),
-		idleCpuMsPerConnectionPerMinute: bridges.length
-			? Number((((idleWindow.user + idleWindow.system) / 1000 / bridges.length) * 6).toFixed(3))
+		idleCpuMsPerConnectionPerMinute: connected
+			? Number((((idleWindow.user + idleWindow.system) / 1000 / connected) * 6).toFixed(3))
 			: null,
 		actionLatencyMs: actions,
 		heapAfterCloseDelta: afterClose.heapUsed - before.heapUsed,
+		heapRetainedPerConnection: bytesPer(afterClose.heapUsed - before.heapUsed, connected),
 		fdAfterClose: fdCount(),
 	};
 }
@@ -311,8 +328,16 @@ async function measureBurst(fleet, { updates = 100, connections = 1 } = {}) {
 	const heapBefore = process.memoryUsage().heapUsed;
 	const t0 = performance.now();
 
+	// The value must DIFFER from the entity's current one or Home Assistant
+	// records no state change, pushes nothing, and the burst measures an empty
+	// socket. A first run happens to differ; a second run against the same house
+	// writes the same numbers back and silently measures nothing, which is how
+	// this harness first reported zero graph rebuilds for a hundred updates.
 	await Promise.all(
-		targets.map((entityId, i) => driver.call('input_number', 'set_value', { entity_id: entityId, value: (i % 100) + 1 })),
+		targets.map((entityId) => {
+			const current = Number(driver.states[entityId]?.state ?? 0);
+			return driver.call('input_number', 'set_value', { entity_id: entityId, value: (current % 100) + 1 });
+		}),
 	);
 	const dispatchMs = performance.now() - t0;
 
@@ -420,8 +445,21 @@ async function measureSse(fleet, { subscribers = 200, seconds = 10 } = {}) {
 	const after = heapNow();
 	const fdAfter = fdCount();
 
+	// Drive real state changes for the whole window. Without this the fixture
+	// house simply does not change during a ten second sample, no graph event
+	// fires, and the measurement reports the cost of holding a socket while
+	// silently omitting the cost of writing to it: the first run of this measured
+	// exactly zero frames and looked like a bargain.
+	const driveTargets = Object.keys(source.states).filter((id) => id.startsWith('light.'));
 	const cpuBefore = process.cpuUsage();
-	await sleep(seconds * 1000);
+	const driveUntil = Date.now() + seconds * 1000;
+	let drives = 0;
+	while (Date.now() < driveUntil) {
+		const entityId = driveTargets[drives % driveTargets.length];
+		await source.call('light', 'turn_on', { entity_id: entityId, brightness: 20 + (drives * 17) % 220 }).catch(() => {});
+		drives++;
+		await sleep(500);
+	}
 	const cpu = process.cpuUsage(cpuBefore);
 
 	stopFanout();
@@ -437,13 +475,20 @@ async function measureSse(fleet, { subscribers = 200, seconds = 10 } = {}) {
 		heapPerSubscriber: bytesPer(after.heapUsed - before.heapUsed, attached),
 		rssDelta: after.rss - before.rss,
 		rssPerSubscriber: bytesPer(after.rss - before.rss, attached),
-		fdPerSubscriber: attached && fdAfter != null ? Number(((fdAfter - fdBefore) / attached).toFixed(2)) : null,
+		// Two descriptors per subscriber here because both ends of every socket are
+		// in this one process. In production the far end is a browser, so the
+		// server side of a subscriber costs one.
+		fdPerSubscriberBothEnds: attached && fdAfter != null ? Number(((fdAfter - fdBefore) / attached).toFixed(2)) : null,
+		fdPerSubscriberServerSide: attached && fdAfter != null ? Number((((fdAfter - fdBefore) / attached) / 2).toFixed(2)) : null,
+		stateChangesDriven: drives,
 		framesWritten,
+		framesPerSubscriber: attached ? Number((framesWritten / attached).toFixed(2)) : null,
 		bytesWritten,
+		bytesPerFrame: framesWritten ? Math.round(bytesWritten / framesWritten) : null,
 		windowSeconds: seconds,
 		cpuMsInWindow: Number(((cpu.user + cpu.system) / 1000).toFixed(1)),
 		cpuMsPerSubscriberPerMinute: attached ? Number((((cpu.user + cpu.system) / 1000 / attached) * (60 / seconds)).toFixed(3)) : null,
-		note: 'One live house fanning its real room graph to N real HTTP subscribers over a real socket each. Both halves of the cost, the held response and the per-frame serialization, are in these numbers.',
+		note: 'One live house fanning its real room graph to N real HTTP subscribers over a real socket each, with the house being changed throughout so frames actually flow. Both halves of the cost, the held response and the per-frame serialization, are in these numbers. Both ends of every socket are in this process, so the descriptor and RSS figures are an upper bound on what a server pays.',
 	};
 }
 
@@ -524,6 +569,216 @@ async function measureGateUnderSaturation(fleet, { steps = 400 } = {}) {
 	};
 }
 
+/**
+ * What Cloud Run's CPU throttling actually does to a held SSE stream.
+ *
+ * This is the setting most likely to be wrong for this workload and the order it
+ * comes from is explicit that it must be tested rather than reasoned about. It
+ * cannot be tested on this machine: throttling is a Cloud Run behaviour, not a
+ * container one. So it is tested against the running production service, using a
+ * streaming endpoint that is already deployed there and already emits a ping on
+ * a fixed interval (api/pump/trades-stream.js, PING_INTERVAL_MS = 15000).
+ *
+ * That ping is a background timer inside a held request, which is exactly the
+ * shape order 03's home stream has. If `cpu-throttling=true` starved timers
+ * while a stream is open, the interval between pings would drift; if the request
+ * timeout cut the stream, it would end at a measurable second. Both are read off
+ * the wire here rather than off the documentation.
+ *
+ * @param {{ url?: string, seconds?: number, expectedIntervalMs?: number }} options
+ */
+async function measureCloudRunStream({ url = 'https://three.ws/api/pump/trades-stream', seconds = 960, expectedIntervalMs = 15_000 } = {}) {
+	const controller = new AbortController();
+	const startedAt = Date.now();
+	const events = [];
+	let bytes = 0;
+	let endedReason = 'still open at the deadline';
+
+	const timer = setTimeout(() => {
+		endedReason = 'closed by this probe at the deadline';
+		controller.abort();
+	}, seconds * 1000);
+
+	const response = await fetch(url, { headers: { accept: 'text/event-stream' }, signal: controller.signal });
+	const status = response.status;
+	const served = {
+		status,
+		server: response.headers.get('server'),
+		contentType: response.headers.get('content-type'),
+		cacheControl: response.headers.get('cache-control'),
+	};
+
+	try {
+		const reader = response.body.getReader();
+		const decoder = new TextDecoder();
+		let buffer = '';
+		for (;;) {
+			const { value, done } = await reader.read();
+			if (done) {
+				endedReason = 'the server ended the stream';
+				break;
+			}
+			bytes += value.byteLength;
+			buffer += decoder.decode(value, { stream: true });
+			let index;
+			while ((index = buffer.indexOf('\n\n')) !== -1) {
+				const frame = buffer.slice(0, index);
+				buffer = buffer.slice(index + 2);
+				const name = (frame.match(/^event:\s*(.+)$/m) || [null, 'message'])[1].trim();
+				events.push({ atMs: Date.now() - startedAt, event: name });
+			}
+		}
+	} catch (err) {
+		if (err.name !== 'AbortError') endedReason = `the stream failed: ${err.message}`;
+	} finally {
+		clearTimeout(timer);
+	}
+
+	const heldMs = Date.now() - startedAt;
+	// Whichever event this endpoint uses for its heartbeat is the one to time.
+	// The name differs between streams ("ping" here, "heartbeat" there) and the
+	// probe should not need editing to point at a different one.
+	const histogram = {};
+	for (const e of events) histogram[e.event] = (histogram[e.event] || 0) + 1;
+	const heartbeatName = Object.entries(histogram).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+	const pings = events.filter((e) => e.event === heartbeatName);
+	const gaps = pings.slice(1).map((p, i) => p.atMs - pings[i].atMs);
+	const drift = gaps.map((g) => g - expectedIntervalMs);
+
+	return {
+		url,
+		requestedSeconds: seconds,
+		heldSeconds: Number((heldMs / 1000).toFixed(1)),
+		served,
+		endedReason,
+		bytes,
+		framesReceived: events.length,
+		frameHistogram: histogram,
+		heartbeatEvent: heartbeatName,
+		pingsReceived: pings.length,
+		expectedIntervalMs,
+		pingGapMs: summarize(gaps),
+		pingDriftMs: summarize(drift),
+		worstLatePingMs: drift.length ? Math.max(...drift) : null,
+		note: 'A ping arriving on schedule for the whole hold means the interval timer inside a held streaming request kept its CPU. The end reason and heldSeconds say whether the platform request timeout cut the stream before this probe did.',
+	};
+}
+
+/**
+ * Does a held SSE stream occupy a Cloud Run concurrency slot?
+ *
+ * This decides the stream cap, and it is not a detail: `containerConcurrency` is
+ * 160 on three-ws-api, so if a stream holds a slot for its whole life then the
+ * platform starts refusing requests long before an admission cap of several
+ * hundred would ever fire, and the ladder would be decoration.
+ *
+ * It is measured rather than reasoned about, against the running service, using
+ * a streaming endpoint already deployed there. Cloud Run autoscales on
+ * concurrency, so if streams consume slots the instance count rises with them
+ * and falls again afterwards. The instance count comes from Cloud Monitoring,
+ * which is the platform's own accounting rather than ours.
+ *
+ * @param {{ url?: string, streams?: number, seconds?: number, project?: string, service?: string }} options
+ */
+async function measureStreamConcurrency({
+	url = 'https://three.ws/api/feed-stream',
+	streams = 200,
+	seconds = 240,
+	project = 'aerial-vehicle-466722-p5',
+	service = 'three-ws-api',
+} = {}) {
+	const before = await readInstanceCount({ project, service, minutesBack: 20 });
+
+	const controllers = [];
+	let opened = 0;
+	let failed = 0;
+	const openStream = async () => {
+		const controller = new AbortController();
+		controllers.push(controller);
+		try {
+			const response = await fetch(url, { headers: { accept: 'text/event-stream' }, signal: controller.signal });
+			if (!response.ok) {
+				failed++;
+				return;
+			}
+			opened++;
+			// Drain and discard. A stream nobody reads is a stream the kernel
+			// eventually stalls, which would measure our own back pressure instead
+			// of the platform's.
+			response.body.pipeTo(new WritableStream({ write() {} }), { signal: controller.signal }).catch(() => {});
+		} catch {
+			failed++;
+		}
+	};
+
+	// Open in waves, and keep reopening: the endpoint caps its own streams at 275
+	// seconds, so a fixed set would drain away mid measurement.
+	const started = Date.now();
+	const keepAlive = setInterval(() => {
+		const shortfall = streams - opened + failed;
+		for (let i = 0; i < Math.min(20, Math.max(0, shortfall)); i++) openStream();
+	}, 10_000);
+	for (let i = 0; i < streams; i += 25) {
+		await Promise.all(Array.from({ length: Math.min(25, streams - i) }, openStream));
+		await sleep(500);
+	}
+
+	await sleep(Math.max(0, seconds * 1000 - (Date.now() - started)));
+	const during = await readInstanceCount({ project, service, minutesBack: 8 });
+
+	clearInterval(keepAlive);
+	for (const controller of controllers) controller.abort();
+
+	const delta = during.peakActive != null && before.peakActive != null ? during.peakActive - before.peakActive : null;
+	return {
+		url,
+		streamsRequested: streams,
+		streamsOpened: opened,
+		streamsRefused: failed,
+		heldSeconds: seconds,
+		instancesBefore: before,
+		instancesDuring: during,
+		peakActiveDelta: delta,
+		streamsPerAddedInstance: delta && delta > 0 ? Number((opened / delta).toFixed(1)) : null,
+		occupiesConcurrencySlot: delta != null ? delta > 0 : null,
+		note: 'Cloud Run autoscales on concurrent requests. An instance count that rises while N streams are held, and only while they are held, is the platform saying each stream is an in-flight request holding a concurrency slot.',
+	};
+}
+
+/** Cloud Run instance counts, straight from Cloud Monitoring. */
+async function readInstanceCount({ project, service, minutesBack }) {
+	const token = await new Promise((resolve, reject) => {
+		const child = spawn('gcloud', ['auth', 'print-access-token'], { stdio: ['ignore', 'pipe', 'ignore'] });
+		let out = '';
+		child.stdout.on('data', (d) => (out += d));
+		child.on('error', reject);
+		child.on('close', (code) => (code === 0 ? resolve(out.trim()) : reject(new Error('gcloud auth print-access-token failed'))));
+	});
+
+	const end = new Date();
+	const start = new Date(end.getTime() - minutesBack * 60_000);
+	const params = new URLSearchParams({
+		filter: `metric.type="run.googleapis.com/container/instance_count" AND resource.labels.service_name="${service}"`,
+		'interval.startTime': start.toISOString(),
+		'interval.endTime': end.toISOString(),
+		'aggregation.alignmentPeriod': '60s',
+		'aggregation.perSeriesAligner': 'ALIGN_MEAN',
+	});
+	const response = await fetch(`https://monitoring.googleapis.com/v3/projects/${project}/timeSeries?${params}`, {
+		headers: { authorization: `Bearer ${token}` },
+	});
+	const body = await response.json();
+	if (body.error) return { error: body.error.message, peakActive: null };
+
+	const byState = {};
+	for (const series of body.timeSeries || []) {
+		const state = series.metric.labels.state;
+		const values = series.points.map((p) => Number(p.value.doubleValue ?? p.value.int64Value ?? 0));
+		byState[state] = { peak: Math.max(...values, 0), mean: Number((values.reduce((a, b) => a + b, 0) / Math.max(1, values.length)).toFixed(2)), points: values.length };
+	}
+	return { windowMinutes: minutesBack, byState, peakActive: byState.active?.peak ?? null };
+}
+
 /** Each rung of the ladder, demonstrated rather than described. */
 function demonstrateLadder() {
 	const admission = createAdmissionController({ maxPooled: 4, maxUnpooled: 2, maxStreams: 6, maxInflightActions: 8, streamYieldRatio: 0.5 });
@@ -559,6 +814,36 @@ function demonstrateLadder() {
 
 // ---------------------------------------------------------------- runner
 
+/**
+ * Run one measurement in a brand new process and return its JSON.
+ *
+ * Heap deltas do not survive being taken back to back in one process: the
+ * garbage from a 400 connection tier is still resident when the next tier reads
+ * its baseline, and the arithmetic comes out negative. Measuring the large house
+ * that way produced -6.8MB per connection, which is not a number, it is an
+ * artefact. Every heap figure in the envelope is therefore taken against a
+ * baseline read moments earlier in a process that has done nothing else.
+ */
+function measureInChildProcess(args) {
+	return new Promise((resolve, reject) => {
+		const child = spawn(process.execPath, ['--expose-gc', fileURLToPath(import.meta.url), ...args], {
+			stdio: ['ignore', 'pipe', 'inherit'],
+			env: process.env,
+		});
+		let out = '';
+		child.stdout.on('data', (d) => (out += d));
+		child.on('error', reject);
+		child.on('close', (code) => {
+			if (code !== 0) return reject(new Error(`${args.join(' ')} exited ${code}`));
+			try {
+				resolve(JSON.parse(out));
+			} catch (err) {
+				reject(new Error(`${args.join(' ')} did not print JSON: ${err.message}`));
+			}
+		});
+	});
+}
+
 async function all({ out, counts, sseSubscribers }) {
 	const fleet = await readFleet();
 	const machine = {
@@ -567,7 +852,12 @@ async function all({ out, counts, sseSubscribers }) {
 		cpus: os.cpus().length,
 		cpuModel: os.cpus()[0]?.model ?? null,
 		totalMemBytes: os.totalmem(),
+		freeMemBytes: os.freemem(),
 		ulimitNofile: Number(process.report?.getReport()?.userLimits?.open_files?.soft ?? 0) || null,
+		// This box is shared with other work. Load average is recorded so a reader
+		// can tell a real latency number from one taken while sixteen cores were
+		// already busy, instead of having to trust that the run was quiet.
+		loadAverage: os.loadavg().map((n) => Number(n.toFixed(2))),
 	};
 
 	const result = {
@@ -589,22 +879,23 @@ async function all({ out, counts, sseSubscribers }) {
 	};
 
 	for (const count of counts) {
-		process.stderr.write(`  measuring ${count} connections...\n`);
-		result.connections.push(await measureConnections(fleet, { count }));
-		await sleep(2000);
+		process.stderr.write(`  measuring ${count} connections (fresh process)...\n`);
+		result.connections.push(await measureInChildProcess(['connections', '--n', String(count)]));
 	}
 
-	process.stderr.write('  measuring the large house...\n');
-	result.largeHouse = await measureConnections(fleet, { count: 10, big: true });
+	process.stderr.write('  measuring the large house (fresh process)...\n');
+	result.largeHouse = await measureInChildProcess(['connections', '--n', '10', '--big']);
 
 	process.stderr.write('  measuring a 100 entity update burst...\n');
-	result.burst = await measureBurst(fleet, { updates: 100 });
+	result.burst = await measureInChildProcess(['burst', '--updates', '100']);
 
 	process.stderr.write('  measuring SSE subscribers...\n');
-	result.sse = await measureSse(fleet, { subscribers: sseSubscribers });
+	result.sse = await measureInChildProcess(['sse', '--subscribers', String(sseSubscribers)]);
 
 	process.stderr.write('  asserting the gate under saturation...\n');
-	result.gate = await measureGateUnderSaturation(fleet);
+	result.gate = await measureInChildProcess(['gate']);
+
+	result.machineAtEnd = { loadAverage: os.loadavg().map((n) => Number(n.toFixed(2))), freeMemBytes: os.freemem() };
 
 	if (out) {
 		const file = path.resolve(ROOT, out);
@@ -627,7 +918,7 @@ function parseArgs(argv) {
 	return out;
 }
 
-export { demonstrateLadder, measureBurst, measureColdStart, measureConnections, measureGateUnderSaturation, measureSse, openBridges, closeAll, pickHouses, summarize, requiresConfirmation };
+export { demonstrateLadder, measureBurst, measureCloudRunStream, measureColdStart, measureStreamConcurrency, measureConnections, measureGateUnderSaturation, measureSse, openBridges, closeAll, pickHouses, summarize, requiresConfirmation };
 
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
@@ -646,6 +937,8 @@ if (isMain) {
 		sse: async () => measureSse(await readFleet(), { subscribers: Number(args.subscribers || 200) }),
 		gate: async () => measureGateUnderSaturation(await readFleet()),
 		ladder: async () => demonstrateLadder(),
+		cloudrun: async () => measureCloudRunStream({ seconds: Number(args.seconds || 960), url: typeof args.url === 'string' ? args.url : undefined }),
+		concurrency: async () => measureStreamConcurrency({ streams: Number(args.streams || 200), seconds: Number(args.seconds || 240) }),
 	};
 
 	const run = commands[command];

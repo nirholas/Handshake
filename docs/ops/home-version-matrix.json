@@ -1,0 +1,152 @@
+{
+	"measuredAt": "2026-09-03T03:48:46.943Z",
+	"source": "https://analytics.home-assistant.io/data.json",
+	"results": [
+		{
+			"tag": "2026.9",
+			"share": 4.171891450676068,
+			"role": "current stable",
+			"installs": 28213,
+			"haVersion": "2026.9.0",
+			"cells": {
+				"connect": {
+					"ok": true,
+					"note": "2026.9.0"
+				},
+				"registries": {
+					"ok": true,
+					"note": "1f/4a/62d/92e"
+				},
+				"stream": {
+					"ok": true,
+					"note": "push"
+				},
+				"call": {
+					"ok": true,
+					"note": "gated"
+				},
+				"scenes": {
+					"ok": true,
+					"note": "scene"
+				},
+				"mcp": {
+					"ok": true,
+					"note": "29 tools"
+				}
+			},
+			"notes": [
+				"exposes via `homeassistant/expose_entity`"
+			]
+		},
+		{
+			"tag": "2026.8",
+			"share": 50.414778843765156,
+			"role": "previous release",
+			"installs": 340937,
+			"haVersion": "2026.8.3",
+			"cells": {
+				"connect": {
+					"ok": true,
+					"note": "2026.8.3"
+				},
+				"registries": {
+					"ok": true,
+					"note": "1f/4a/62d/92e"
+				},
+				"stream": {
+					"ok": true,
+					"note": "push"
+				},
+				"call": {
+					"ok": true,
+					"note": "gated"
+				},
+				"scenes": {
+					"ok": true,
+					"note": "scene"
+				},
+				"mcp": {
+					"ok": true,
+					"note": "29 tools"
+				}
+			},
+			"notes": [
+				"exposes via `homeassistant/expose_entity`"
+			]
+		},
+		{
+			"tag": "2026.7",
+			"share": 13.214661729738681,
+			"role": "previous release",
+			"installs": 89366,
+			"haVersion": "2026.7.4",
+			"cells": {
+				"connect": {
+					"ok": true,
+					"note": "2026.7.4"
+				},
+				"registries": {
+					"ok": true,
+					"note": "1f/4a/62d/92e"
+				},
+				"stream": {
+					"ok": true,
+					"note": "push"
+				},
+				"call": {
+					"ok": true,
+					"note": "gated"
+				},
+				"scenes": {
+					"ok": true,
+					"note": "scene"
+				},
+				"mcp": {
+					"ok": true,
+					"note": "29 tools"
+				}
+			},
+			"notes": [
+				"exposes via `homeassistant/expose_entity`"
+			]
+		},
+		{
+			"tag": "2025.10",
+			"share": 1.0467805472419056,
+			"role": "oldest in wide use",
+			"installs": 7079,
+			"haVersion": "2025.10.4",
+			"cells": {
+				"connect": {
+					"ok": true,
+					"note": "2025.10.4"
+				},
+				"registries": {
+					"ok": true,
+					"note": "1f/4a/52d/79e"
+				},
+				"stream": {
+					"ok": true,
+					"note": "push"
+				},
+				"call": {
+					"ok": true,
+					"note": "gated"
+				},
+				"scenes": {
+					"ok": true,
+					"note": "scene"
+				},
+				"mcp": {
+					"ok": true,
+					"note": "absent",
+					"degraded": true
+				}
+			},
+			"notes": [
+				"exposes via `homeassistant/expose_entity`",
+				"no mcp_server: the WebSocket channel carries the house alone"
+			]
+		}
+	]
+}

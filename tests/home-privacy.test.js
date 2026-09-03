@@ -125,12 +125,31 @@ describe('home privacy: no persisted entity-state history', () => {
 });
 
 describe('home privacy: log hygiene', () => {
-	const SOURCES = [
-		'api/_lib/home/store.js',
-		'api/_lib/home/privacy.js',
-		'api/_lib/home/disclosure.js',
-		'api/home/privacy.js',
-	];
+	// The WHOLE lane, discovered rather than listed: a file added by a future
+	// order is covered the moment it lands, which is the only version of this
+	// test that keeps working. Two leaks were found this way while writing it
+	// (the connect audit entry recording a base URL, and the runtime logging a
+	// bridge error whose message names the house).
+	function laneSources() {
+		const out = [];
+		const walk = (dir) => {
+			let entries;
+			try {
+				entries = readdirSync(join(process.cwd(), dir), { withFileTypes: true });
+			} catch {
+				return;
+			}
+			for (const e of entries) {
+				if (e.isDirectory()) walk(`${dir}/${e.name}`);
+				else if (e.name.endsWith('.js')) out.push(`${dir}/${e.name}`);
+			}
+		};
+		walk('api/home');
+		walk('api/_lib/home');
+		return out.sort();
+	}
+
+	const SOURCES = laneSources();
 
 	function readIfPresent(path) {
 		try {
@@ -139,6 +158,12 @@ describe('home privacy: log hygiene', () => {
 			return null;
 		}
 	}
+
+	it('discovers the whole lane, not a stale list', () => {
+		expect(SOURCES.length).toBeGreaterThan(4);
+		expect(SOURCES).toContain('api/_lib/home/store.js');
+		expect(SOURCES).toContain('api/home/privacy.js');
+	});
 
 	it('no log call in the lane passes a base URL, a home label, or a friendly name', () => {
 		// Match the ARGUMENTS of a log call, not the whole file: the modules talk
@@ -157,6 +182,39 @@ describe('home privacy: log hygiene', () => {
 				).toBe(false);
 			}
 		}
+	});
+
+	it('no log call in the lane passes a raw error message', () => {
+		// A bridge error message names the house ("Could not reach
+		// https://home.example.com..."), and a driver error can echo a bound
+		// parameter. safeError() in api/_lib/home/log-safe.js is the only way an
+		// error becomes a log field here.
+		const LOG_CALL = /(?:console\.(?:log|warn|error|info|debug)|logAudit|logAuditNow|sendOpsAlert)\s*\(([\s\S]{0,600}?)\)\s*;/g;
+		const RAW = /\berr(?:or)?\??\.message\b|String\(\s*err\b/;
+		for (const path of SOURCES) {
+			const src = readIfPresent(path);
+			if (src === null) continue;
+			for (const match of src.matchAll(LOG_CALL)) {
+				expect(
+					RAW.test(match[1]),
+					`${path}: a log call passes a raw error message:\n${match[0].slice(0, 300)}\nUse safeError(err) from api/_lib/home/log-safe.js instead.`,
+				).toBe(false);
+			}
+		}
+	});
+
+	it('safeError strips hosts from the message it keeps', async () => {
+		const { safeError } = await import('../api/_lib/home/log-safe.js');
+		const unreachable = Object.assign(
+			new Error('Could not reach https://home.example.com:8123/api. three.ws cannot route to it.'),
+			{ code: 'unreachable' },
+		);
+		const out = safeError(unreachable);
+		expect(out.code).toBe('unreachable');
+		expect(out.detail).not.toContain('home.example.com');
+		expect(out.detail).not.toContain('https://');
+		expect(safeError({ message: 'connect ECONNREFUSED homeassistant.local:8123' }).detail).not.toContain('homeassistant.local');
+		expect(safeError(new Error('boom')).code).toBe('Error');
 	});
 
 	it('the action log scrubs its detail blob before writing it', () => {
@@ -423,6 +481,24 @@ describe.skipIf(!LIVE)('home privacy: deletion and purge against the real databa
 		expect(tooLong.ok).toBe(false);
 		expect(tooLong.code).toBe('reason_required');
 
+		// A reason alone is not enough: the plan caps how long a log may be kept
+		// (order 19's entitlements), and the default tier stops at the 90-day
+		// default. That refusal is a different code from a missing reason, so a
+		// caller can tell "say why" from "your plan does not allow this".
+		const overPlan = await privacy.setActionLogRetention({
+			homeId,
+			userId: owner.id,
+			days: 365,
+			reason: 'Building operator: incident records are kept for one year.',
+		});
+		expect(overPlan.ok).toBe(false);
+		expect(overPlan.code).toBe('retention_over_plan');
+
+		await sql`
+			insert into home_plan_overrides (user_id, limits, note)
+			values (${owner.id}, ${JSON.stringify({ logRetentionDays: 365 })}::jsonb, 'Test: building operator')
+			on conflict (user_id) do update set limits = excluded.limits
+		`;
 		const withReason = await privacy.setActionLogRetention({
 			homeId,
 			userId: owner.id,
@@ -438,7 +514,7 @@ describe.skipIf(!LIVE)('home privacy: deletion and purge against the real databa
 		expect(counts.home_action_log).toBe(0);
 
 		// Out of bounds is refused by the module before it reaches the constraint.
-		const absurd = await privacy.setActionLogRetention({ homeId, userId: owner.id, days: 99_999, reason: 'forever please' });
+		const absurd = await privacy.setActionLogRetention({ homeId, userId: owner.id, days: 99_999, reason: 'forever please, this is long enough' });
 		expect(absurd.ok).toBe(false);
 		expect(absurd.code).toBe('bad_retention_days');
 
@@ -460,7 +536,8 @@ describe.skipIf(!LIVE)('home privacy: deletion and purge against the real databa
 		const data = await privacy.exportHomeData(owner.id);
 		expect(Object.keys(data).sort()).toEqual([
 			'action_log', 'confirmations', 'generated_at', 'grants', 'homes_you_own',
-			'inventory', 'invites', 'members', 'memberships', 'notice',
+			'inventory', 'invites', 'members', 'memberships', 'notice', 'plan_override',
+			'relay_pairings', 'satellite_codes', 'satellites',
 		]);
 		expect(data.homes_you_own).toHaveLength(1);
 		expect(data.grants).toHaveLength(1);
