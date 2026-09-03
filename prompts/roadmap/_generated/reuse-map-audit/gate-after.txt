@@ -1,6 +1,6 @@
 
 > 3d-agent@1.5.2 gate
-> npm run check:conflicts && npm run check:claude && npm run check:vendored && npm run check:fetch-timeouts && npm run check:tdz-bootstrap && npm run check:event && npm run check:cron-syntax && npm run check:studio-openapi && npm run test:gate && npm run test:gate-3d && npm run audit:mcp && npm run audit:mcp-golden && npm run audit:mcp-safety && npm run audit:mcp-catalog && npm run audit:routes && npm run audit:handlers && npm run audit:pages && npm run audit:links && npm run audit:docs && npm run audit:upstreams && npm run check:tutorials && npm run audit:hidden-guard && npm run audit:inline-handlers && npm run audit:x402-catalog && npm run audit:tokens && npm run audit:guards && npm run audit:tour-atlas && npm run check:ios-icons && npm run check:macos-icon && npm run check:apple-widget
+> npm run check:conflicts && npm run check:claude && npm run check:vendored && npm run check:fetch-timeouts && npm run check:tdz-bootstrap && npm run check:event && npm run check:cron-syntax && npm run check:studio-openapi && npm run test:gate && npm run test:gate-3d && npm run audit:mcp && npm run audit:mcp-golden && npm run audit:mcp-safety && npm run audit:mcp-catalog && npm run audit:mcp-listing && npm run audit:routes && npm run audit:handlers && npm run audit:pages && npm run audit:links && npm run audit:docs && npm run audit:upstreams && npm run check:tutorials && npm run audit:hidden-guard && npm run audit:inline-handlers && npm run audit:x402-catalog && npm run audit:tokens && npm run audit:guards && npm run audit:tour-atlas && npm run check:ios-icons && npm run check:macos-icon && npm run check:apple-widget
 
 
 > 3d-agent@1.5.2 check:conflicts
@@ -61,8 +61,8 @@ All cron expressions are valid (offline mode: live jobs not compared).
 
  Test Files  7 passed (7)
       Tests  86 passed (86)
-   Start at  07:35:07
-   Duration  6.15s (transform 6.62s, setup 0ms, import 15.33s, tests 4.00s, environment 1ms)
+   Start at  07:38:24
+   Duration  2.92s (transform 3.32s, setup 0ms, import 7.68s, tests 2.90s, environment 1ms)
 
 [test-gate] ✓ all critical-path tests passed
 
@@ -75,14 +75,14 @@ All cron expressions are valid (offline mode: live jobs not compared).
 
  Test Files  4 passed (4)
       Tests  559 passed (559)
-   Start at  07:35:15
-   Duration  1.95s (transform 1.01s, setup 0ms, import 2.60s, tests 1.37s, environment 1ms)
+   Start at  07:38:28
+   Duration  1.34s (transform 499ms, setup 0ms, import 1.54s, tests 983ms, environment 5ms)
 
 
 > 3d-agent@1.5.2 audit:mcp
 > node scripts/audit-mcp-manifests.mjs
 
-[audit:mcp] 49 MCP manifests consistent
+[audit:mcp] 50 MCP manifests consistent
 
 > 3d-agent@1.5.2 audit:mcp-golden
 > node scripts/audit-mcp-golden.mjs
@@ -99,11 +99,16 @@ All cron expressions are valid (offline mode: live jobs not compared).
 
 [audit:mcp-catalog] catalog matches source: 307 tools across 40 servers
 
+> 3d-agent@1.5.2 audit:mcp-listing
+> node scripts/build-mcp-listing-source.mjs --check
+
+[mcp-listing-source] up to date: 50 servers (7 remote, 43 stdio)
+
 > 3d-agent@1.5.2 audit:routes
 > node scripts/verify-routes.mjs --strict
 
-Route verify — 791 catalog pages, 1311 main routes, 1 post-filesystem routes.
-  modeled dist files: 2934 · canonical-covered: 791 · literal page routes checked for shadows: 582
+Route verify — 792 catalog pages, 1311 main routes, 1 post-filesystem routes.
+  modeled dist files: 2935 · canonical-covered: 792 · literal page routes checked for shadows: 582
   filesystem boundary (handle:filesystem) present: yes
 
 ✓ static checks pass: every catalog page reachable, unknown paths → designed 404, no shadowed page routes.
@@ -116,7 +121,7 @@ Route verify — 791 catalog pages, 1311 main routes, 1 post-filesystem routes.
 > 3d-agent@1.5.2 audit:pages
 > node scripts/audit-page-index.mjs --strict
 
-Route audit: 166 auditable page routes, 791 documented in pages.json.
+Route audit: 166 auditable page routes, 792 documented in pages.json.
 ✓ Every auditable page route is documented.
 
 > 3d-agent@1.5.2 audit:links
@@ -138,19 +143,8 @@ Dynamic targets skipped : 1371
 > 3d-agent@1.5.2 audit:docs
 > node scripts/audit-docs.mjs
 
-docs audit: clean (1511 markdown files checked).
+docs audit: clean (1512 markdown files checked).
 
 > 3d-agent@1.5.2 audit:upstreams
 > node scripts/audit-upstreams.mjs
 
-audit:upstreams: 225 outbound call sites across 79 upstreams (A:0 B:54 C:92 D:79 F:0)
-audit:upstreams: no regressions
-
-> 3d-agent@1.5.2 check:tutorials
-> node scripts/sync-tutorial-pages.mjs
-
-manifest entries: 70  markdown files: 70
-pages.json: missing 1 tutorial entry
-
-Tutorial drift found. Fix the manifest, or run: node scripts/sync-tutorial-pages.mjs --write
-exit=1
