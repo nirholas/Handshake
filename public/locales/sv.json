@@ -1842,7 +1842,7 @@
 		"meta_title": "Avatar Studio · three.ws",
 		"meta_twitter_description": "Bygg en anpassad 3D-avatar från grunden. Välj kroppstyp, forma ansikte och kropp, lägg till kläder och tillbehör. Ingen selfie krävs.",
 		"meta_twitter_title": "Avatar Studio · three.ws",
-		"parametric_120_sliders": "Parametriska <span class=\"as-base-new\">120+ reglage</span>",
+		"parametric_sliders_count": "Parametriska <span class=\"as-base-new\">300+ reglage</span>",
 		"randomise_look_title": "Slumpla utseende",
 		"redo_arialabel": "Gör om",
 		"redo_ctrl_shift_z_title": "Gör om (Ctrl+Shift+Z)",
