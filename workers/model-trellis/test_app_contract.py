@@ -110,6 +110,80 @@ def main() -> int:
     check("root names the service", body.get("service") == "model-trellis", str(body)[:120])
     check("root lists the working endpoints", "POST /infer" in body.get("endpoints", []), str(body)[:160])
 
+    # 4b. A dead instance must SAY it is dead, on both surfaces.
+    #
+    #     This is the regression that took the default free image lane down for
+    #     12 hours on 2026-09-02. A transient rate limit failed the model load;
+    #     the error latched in memory; /health went on answering ok:true, so the
+    #     platform health report and Cloud Run both still called the instance
+    #     healthy; and /infer went on accepting jobs it could never run, which
+    #     bypassed the caller's lane failover entirely and made every one of
+    #     those 70 generations terminal. Both surfaces are asserted here, in the
+    #     build, because neither failure is visible from outside until real user
+    #     traffic is already being dropped.
+    app_module._load_error = "internal error (ref deadbeefcafe)"
+    try:
+        res = client.get("/health")
+        body = res.json()
+        check("a dead pipeline makes /health answer 503", res.status_code == 503, f"got {res.status_code}")
+        check("a dead pipeline makes /health report ok:false", body.get("ok") is False, str(body)[:160])
+        check("health surfaces the load error", "deadbeefcafe" in str(body.get("load_error")), str(body)[:160])
+        res = client.post("/infer", headers={"Authorization": f"Bearer {KEY}"}, json={"images": [png_data_uri()]})
+        check(
+            "a dead pipeline makes /infer refuse with 503 so the caller fails over",
+            res.status_code == 503,
+            f"got {res.status_code}",
+        )
+    finally:
+        app_module._load_error = None
+    res = client.get("/health")
+    check("a live pipeline still answers /health 200", res.status_code == 200, f"got {res.status_code}")
+    check("a live pipeline reports ok:true", res.json().get("ok") is True, str(res.json())[:160])
+
+    # 4c. The image conditioner resolves locally, so the model load never depends
+    #     on GitHub's rate limit for an anonymous shared Cloud Run egress IP.
+    #     torch.hub.load() is given no branch by TRELLIS, so it calls github.com
+    #     on every load and re-raises any non-404 before consulting its cache;
+    #     that is the exact call that 403'd and started the outage above.
+    check(
+        "the dinov2 checkout is baked into the image",
+        os.path.isfile(os.path.join(app_module.DINOV2_LOCAL_DIR, "hubconf.py")),
+        f"missing hubconf.py under {app_module.DINOV2_LOCAL_DIR}",
+    )
+    import torch
+
+    original_hub_load = torch.hub.load
+    try:
+        # Install the pin over a recorder, so the assertion is about what the
+        # wrapper forwards rather than about building a ViT on a GPU-less builder.
+        forwarded = {}
+
+        def _record(repo_or_dir, model, *args, **kwargs):
+            forwarded["repo"] = repo_or_dir
+            forwarded["source"] = kwargs.get("source")
+            return "recorded"
+
+        app_module._dinov2_pinned = False
+        torch.hub.load = _record
+        check("the dinov2 pin installs", app_module._pin_dinov2_to_local_checkout() is True)
+        torch.hub.load("facebookresearch/dinov2", "dinov2_vitl14_reg", pretrained=True)
+        check(
+            "torch.hub resolves dinov2 from the local checkout, never over the network",
+            forwarded.get("repo") == app_module.DINOV2_LOCAL_DIR and forwarded.get("source") == "local",
+            str(forwarded),
+        )
+        # Everything else must still reach the real loader untouched.
+        forwarded.clear()
+        torch.hub.load("pytorch/vision", "resnet18")
+        check(
+            "an unrelated torch.hub repo is left alone",
+            forwarded.get("repo") == "pytorch/vision" and forwarded.get("source") is None,
+            str(forwarded),
+        )
+    finally:
+        torch.hub.load = original_hub_load
+        app_module._dinov2_pinned = False
+
     # 5. Request validation, before anything reaches the GPU.
     good = {"Authorization": f"Bearer {KEY}"}
     res = client.post("/infer", headers=good, json={"images": []})

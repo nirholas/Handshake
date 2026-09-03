@@ -21,7 +21,12 @@ API contract (consumed by the Pipeline Controller):
   GET  /tasks/:id → { task_id, status, result_gcs_url?, tier?, matted_views?,
                       quality?, error? }
 
-  GET  /health    → { ok, model, gpu_available, tiers, rembg_matte }
+  GET  /health    → { ok, model, gpu_available, tiers, rembg_matte, load_error,
+                      load_attempts }. Answers 503 with ok:false once the model
+                      load has spent its retry budget, so a permanently dead
+                      instance is drained by the platform health report and
+                      recycled by the Cloud Run liveness probe instead of
+                      staying resident and failing every job it accepts.
 
   GET  /          → { service, model, ready, endpoints }. Unauthenticated
                     service descriptor for the platform's warmth probe.
@@ -42,6 +47,11 @@ Environment variables (README.md carries the full table):
   REMBG_MODEL           default rembg model (default: isnet-general-use)
   REMBG_TIMEOUT_S       matte round-trip budget (default: 90)
   IMAGE_FETCH_TIMEOUT_S per-attempt image fetch timeout (default: 30)
+  MODEL_LOAD_ATTEMPTS   model-load attempts before the error latches (default: 4)
+  MODEL_LOAD_RETRY_BASE_S  first load-retry backoff, doubling (default: 15)
+  MODEL_LOAD_RETRY_CAP_S   ceiling on that backoff (default: 120)
+  DINOV2_LOCAL_DIR      baked dinov2 checkout for the image conditioner
+                        (default: /opt/dinov2), so the load never calls GitHub
 """
 
 from __future__ import annotations

@@ -140,6 +140,7 @@ forever behind a dead runner. Unknown ids return `404`.
 	"pipeline_loaded": true,
 	"ready": true,
 	"load_error": null,
+	"load_attempts": 1,
 	"tiers": ["draft", "standard", "high", "max"],
 	"default_quality": { "ss_steps": 40, "slat_steps": 40, "ss_cfg": 7.5, "slat_cfg": 3.0, "simplify": 0.75, "texture_size": 4096 },
 	"rembg_matte": true
@@ -149,6 +150,23 @@ forever behind a dead runner. Unknown ids return `404`.
 The ~3 GB pipeline loads in the background after the port opens, so a cold
 instance reports `ready: false` briefly; `/infer` tasks submitted during that
 window wait for `ready` (up to 600 s) rather than failing.
+
+**A dead instance says so.** The load is retried (`MODEL_LOAD_ATTEMPTS`) before
+its error is treated as terminal, because the failures that reach it are
+transient upstream ones rather than code faults. While retries remain,
+`load_error` stays `null` and jobs keep waiting on `ready`. Once the budget is
+spent, `load_error` latches and this endpoint answers **`503` with
+`"ok": false`**, `/infer` refuses new work with `503`, and the Cloud Run
+liveness probe recycles the container.
+
+That behaviour is the fix for the 2026-09-02 outage: a single transient
+`HTTP Error 403: rate limit exceeded` during the load latched forever, `/health`
+went on answering `ok: true`, `/infer` went on accepting jobs it could never
+run, and `min-instances=1` kept the dead instance resident. The default free
+image lane failed 70 of 219 generations over 12 hours while every status surface
+read green. Callers rely on the `503` from `/infer`: it is what trips the lane
+failover in `api/forge.js`, which reroutes the request to another backend
+instead of letting it die at poll time.
 
 ### `GET /`
 
@@ -181,6 +199,11 @@ against two real error events, which is how a genuine failure goes unnoticed.
 | `WEIGHTS_GCS_URI` | no | - | `gs://` weight tree staged to local disk at startup with the storage client. Set in production; see the note below |
 | `WEIGHTS_LOCAL_DIR` | no | `/tmp/trellis-weights` | Where that staging lands, and what the pipeline then loads from |
 | `IMAGE_FETCH_TIMEOUT_S` | no | `30` | Per-attempt timeout for fetching a caller-supplied `https://` image (3 attempts) |
+| `MODEL_LOAD_ATTEMPTS` | no | `4` | Model-load attempts before `load_error` latches and the instance reports itself dead |
+| `MODEL_LOAD_RETRY_BASE_S` | no | `15` | First load-retry backoff, doubling per attempt |
+| `MODEL_LOAD_RETRY_CAP_S` | no | `120` | Ceiling on that backoff |
+| `DINOV2_LOCAL_DIR` | no | `/opt/dinov2` | Image-baked dinov2 checkout used for TRELLIS's image conditioner, so the load never calls GitHub |
+| `TORCH_HOME` | no | `/opt/torch` | Set in the image; holds the pre-baked `dinov2_vitl14_reg` checkpoint so `torch.hub` finds it cached |
 
 Weights are **not** baked into the image — the `three-ws-model-weights` bucket
 is mounted at `/weights`, so refreshing weights needs no rebuild.

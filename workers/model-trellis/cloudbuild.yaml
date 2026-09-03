@@ -68,6 +68,17 @@ steps:
       - --add-volume-mount=volume=weights,mount-path=/weights
       - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},WEIGHTS_DIR=/weights/trellis-large,MAX_CONCURRENT=1,WEIGHTS_GCS_URI=gs://${_WEIGHTS_BUCKET}/${_WEIGHTS_BUCKET_PREFIX},WEIGHTS_LOCAL_DIR=/tmp/trellis-weights,REMBG_SERVICE_URL=${_REMBG_SERVICE_URL}
       - --set-secrets=API_KEY=avatar-reconstruction-key:latest
+      # Recycle an instance whose model load is permanently dead. The startup
+      # probe is a TCP check, and the port opens immediately because the ~3 GB
+      # load is backgrounded, so nothing here ever noticed a load that failed:
+      # with min-instances=1 the failed instance stayed resident and answered
+      # every job with "pipeline unavailable" until somebody redeployed. That is
+      # the 2026-09-02 outage. main.py answers /health with 503 only once the
+      # whole retry budget is spent, so an ordinary cold load (200 while
+      # loading) is never killed mid-load, and a genuinely dead container is
+      # replaced within ~3 minutes. Inference runs in a thread executor, so
+      # /health stays responsive while the GPU is busy.
+      - --liveness-probe=httpGet.path=/health,initialDelaySeconds=60,periodSeconds=60,timeoutSeconds=10,failureThreshold=3
 
 images:
   - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
