@@ -54,9 +54,9 @@ All figures pulled from the GitHub API on 2026-09-02. Nothing here is quoted fro
 | [esphome/esphome](https://github.com/esphome/esphome) | 11,628 | Apache-2.0 + GPL | 2026-09-02 | C++ | Indirect, and the DIY-hardware on-ramp later. |
 | [project-chip/connectedhomeip](https://github.com/project-chip/connectedhomeip) | 8,916 | Apache-2.0 | 2026-09-02 | C++ | Reference only. The Matter spec implementation, C++, not our runtime. |
 | [openhab/openhab-core](https://github.com/openhab/openhab-core) | 1,137 | EPL-2.0 | 2026-09-01 | Java | Skip. Real, mature, and an order of magnitude smaller in reach than HA. |
-| [matter-js/matter.js](https://github.com/matter-js/matter.js) | 894 | Apache-2.0 | 2026-09-02 | TypeScript | **Phase 3.** A full Matter controller *and device* implementation in TypeScript. HA is migrating its own Matter integration onto it. This is how three.ws eventually talks to devices with no hub at all, and how a three.ws agent can *present itself* as a Matter device. |
+| [matter-js/matter.js](https://github.com/matter-js/matter.js) | 894 | Apache-2.0 | 2026-09-02 | TypeScript | **Measured, not adopted.** A full Matter controller *and device* implementation in TypeScript, and it does what it says: a three.ws agent built on it commissioned into a real Home Assistant in 744 ms. The reason it is not in the tree is a product reason, not a technical one. [Section 8](#8-matter-direct-control-measured-and-not-yet-built). |
 | [zwave-js/zwave-js](https://github.com/zwave-js/zwave-js) | 887 | MIT | 2026-09-02 | TypeScript | Indirect. HA's Z-Wave layer is already this. |
-| [Luligu/matterbridge](https://github.com/Luligu/matterbridge) | 963 | Apache-2.0 | 2026-09-02 | TypeScript | Reference. Best worked example of matter.js in the "expose things as Matter devices" direction. |
+| [Luligu/matterbridge](https://github.com/Luligu/matterbridge) | 963 | Apache-2.0 | 2026-09-02 | TypeScript | Reference. Best worked example of matter.js in the "expose things as Matter devices" direction. Read it before any second attempt at [section 8](#8-matter-direct-control-measured-and-not-yet-built). |
 
 ### Agent-to-home bridge
 
@@ -249,9 +249,10 @@ below exists, and anything that does not exist says so.
 
 ### Not shipped
 
-- **Matter direct control.** matter.js would let an agent be a Matter controller with no hub, and
-  let a three.ws agent present itself as a Matter device. That is the door to cars, offices and
-  robots, and it is the same protocol either way. Nothing of it is in the tree.
+- **Matter direct control.** Built as a throwaway kernel, measured, and deliberately not kept.
+  It works; it is not yet worth shipping. The evidence and the conditions that would change that
+  answer are in [section 8](#8-matter-direct-control-measured-and-not-yet-built). Nothing of it
+  is in the tree.
 - **A floorplan editor.** The 3D scene derives its layout from the area graph. Authoring and
   persisting a hand-drawn floorplan is not built.
 
@@ -320,6 +321,123 @@ the HA add-on in phase 2 ships publicly through HACS rather than only to our own
 
 ---
 
+## 8. Matter direct control: measured, and not yet built
+
+Phase 4 of the original plan was "past the house": use
+[matter.js](https://github.com/matter-js/matter.js) to let a three.ws agent talk to devices with
+no hub, and to let a three.ws agent **present itself** as a Matter device that any Matter
+controller can see. On 2026-09-03 that was built as a throwaway kernel, driven against real
+software, measured, and then deleted. This section is the record, so the next attempt starts
+from data rather than from the idea.
+
+**The answer is: it works, and it is not yet worth shipping.** Both halves of that matter, so
+both are evidenced below.
+
+### The landscape, re-measured on 2026-09-03
+
+The campaign's numbers were read on 2026-09-02. One day later nothing had moved:
+
+| Fact | Value |
+|---|---|
+| `matter-js/matter.js` | 894 stars, Apache-2.0, last push `2026-09-02T21:52:32Z`, not archived |
+| `Luligu/matterbridge` | 963 stars, Apache-2.0, last push `2026-09-02T20:19:51Z` |
+| `@matter/main` on npm | `0.17.9` |
+| Controller used | `ghcr.io/home-assistant-libs/python-matter-server:stable`, SDK `2025.7.0`, schema 11 |
+
+### What was built and what it proved
+
+A `ServerNode` on `@matter/main` in a `node:24-alpine` container, presenting two endpoints
+chosen because they are the two directions an agent needs and nothing more:
+
+- an **On/Off Plug-in Unit**, which is Home Assistant asking the agent for something, and
+- an **Occupancy Sensor**, which is the agent telling the house something.
+
+It was commissioned over IP into a real Home Assistant (2026.9.0, the `demo` integration) through
+a real python-matter-server, on an IPv6-enabled Docker network. No Bluetooth, no Thread, no
+radio of any kind: `bluetooth_enabled: false` on the controller for the whole run.
+
+| Claim | How it was checked | Result |
+|---|---|---|
+| A matter.js node stands up and is commissionable | Booted the container, read its own advertisement | Online, advertising `_matterc._udp`, manual pairing code `34970112332` |
+| It commissions over plain IP, with no BLE and no Thread | `commission_with_code` with `network_only: true` | Commissioned as node 1 in **744 ms** |
+| Home Assistant sees the agent as a first-class device | Read the device registry | One device: manufacturer `three.ws`, model `three.ws Agent`, serial `SN-THREEWS-0001`, five entities |
+| It can be put in a room | Assigned the device to an area over the WebSocket API | All five entities moved to `Living Room` |
+| Home Assistant reaches the agent | `switch.turn_on` on `switch.three_ws_agent` | The node's handler fired **328 ms** later; `turn_off` in 195 ms |
+| The agent reaches Home Assistant | Flipped the node's occupancy attribute | `binary_sensor.three_ws_agent_occupancy` went `on` in **531 ms**, and back to `off` in 894 ms |
+| A guarded action cannot ride in on a Matter automation | A real HA automation whose action turns on the Matter switch; the agent then tried `lock.unlock` on a real lock | Refused, `needs_confirmation`; `lock.front_door` still `locked` |
+| The confirmation is real, not decorative | Replayed the pending action with an explicit human confirmation | Executed; the door unlocked |
+| The node survives its own restart | Replaced the container on the same volume | Came back `commissioned=true`, no pairing code, no re-commissioning |
+| It survives a restart of the controller and Home Assistant | Restarted both | Rediscovered on mDNS and resubscribed in ~1.5 s, no re-commissioning |
+| Control comes back on its own after the node restarts | Restarted the node, then polled until a command landed | Recovered unattended in **39 s**; command latency back to 247 ms |
+
+Steady-state cost of the agent's Matter node: **73 MB RSS and 0.03% of one CPU**, from a 430 MB
+image. That is small enough that cost is not the objection.
+
+### The one failure worth writing down
+
+On the first pass the node never came back after a restart: Home Assistant held it
+`unavailable` for twenty minutes while the node was up, reachable, and re-advertising. The
+controller's own log gave it away: `The SDK is communicating with the device using
+fe80::...`, and a `ping_node` answered `true` on the node's IPv4 and its ULA but `false` on
+that link-local address. The CHIP SDK had picked an IPv6 link-local address it could not route
+across a Docker bridge. Starting python-matter-server with `--primary-interface eth0` fixed it,
+and the same restart then recovered unattended in 39 seconds.
+
+It is an artefact of running the controller in a bridged container rather than on the host, so
+it will not bite a normal household install, where Home Assistant is on host networking. It is
+written down because it presents as "Matter is flaky" and is nothing of the kind.
+
+### Why it is not built
+
+Two reasons, in order of weight.
+
+**1. A narrower pipe than the one already shipped.** The argument for an agent presenting itself
+as a Matter device was that it becomes addressable by infrastructure the user already owns. That
+argument was written before this campaign shipped the
+[Home Assistant integration](../home-assistant-integration) and the
+[dial-out relay](../services/home-relay/README.md). Those already put three.ws inside the user's
+Home Assistant, with the full agent connection: tools, voice, the room graph, and the
+confirmation protocol. Matter's device model would give that same Home Assistant a switch and a
+sensor. Building it would spend real effort to offer a worse version of a channel that exists.
+
+**2. The identity is a test identity.** The kernel commissioned as vendor ID `0xFFF1`, which the
+CSA's own Distributed Compliance Ledger lists by the name **"Test"**, and it was accepted only
+because the controller ships the `Chip-Test-PAA-FFF1` root certificate. python-matter-server
+takes that; the major consumer ecosystems do not. Reaching a controller outside Home Assistant,
+which is the entire point of "past the house", needs a real CSA vendor ID and certified device
+attestation certificates. That is a membership and certification programme, not an afternoon.
+
+A third, smaller reason: a Matter node has to sit on the user's own network, so it needs the
+in-house deployment channel the HACS integration already occupies. Shipping it would mean asking
+a household to install a second local component.
+
+**Capability A, three.ws as a hub-less controller, is weaker still.** It is a substitute for
+something the user already has. Anyone willing to run local software can run Home Assistant, and
+get 1,500 integrations instead of the Matter subset. Worse, this lab proved IP commissioning for
+an IP-based device we wrote ourselves; the consumer Matter devices a user would actually want to
+adopt commission over BLE or Thread, which needs radio hardware on the user's network. Capability
+A buys a smaller device set for a larger hardware requirement. Do not build it.
+
+### What would have to change
+
+Any one of these turns the answer over, and none of them is true today:
+
+- **A controller outside Home Assistant becomes the goal.** A real CSA vendor ID and certified
+  attestation are on the critical path from that day, so start there and not with the code.
+- **The lane reaches steady operation.** Order 20 has not returned a go, and Matter is a horizon
+  order for exactly this reason: it is a research project competing with a product that has not
+  launched.
+- **The endpoint model gets richer than a switch.** If a three.ws agent has something to say that
+  Matter models well and the WebSocket channel models badly, that is a reason. Nothing found so
+  far qualifies.
+
+The safety rule is unchanged and is not negotiable if this is ever revisited: **a Matter fabric
+is not a human saying yes.** A command arriving over Matter is a request, and anything guarded
+still mints a confirmation. The kernel proved the existing gate already holds that line without
+modification, including when the command arrives from an automation the user set up themselves.
+
+---
+
 ## Security
 
 The threat model for this lane, the injection boundary, the SSRF guard every server-side dial
@@ -337,6 +455,8 @@ is written about a building rather than about a database, and every claim in it 
 - [home-assistant/home-assistant-js-websocket](https://github.com/home-assistant/home-assistant-js-websocket)
 - [Home Assistant WebSocket API reference](https://developers.home-assistant.io/docs/api/websocket/)
 - [matter-js/matter.js](https://github.com/matter-js/matter.js) and [`@matter/main` on npm](https://www.npmjs.com/package/@matter/main)
+- [home-assistant-libs/python-matter-server](https://github.com/home-assistant-libs/python-matter-server), the controller Home Assistant's Matter integration talks to
+- [CSA Distributed Compliance Ledger](https://webui.dcl.csa-iot.org/), which is where vendor ID `0xFFF1` is listed as "Test"
 - [rhasspy/wyoming-satellite](https://github.com/rhasspy/wyoming-satellite)
 - [Home Assistant: about wake words](https://www.home-assistant.io/voice_control/about_wake_word/)
 - [dscripka/openWakeWord](https://github.com/dscripka/openWakeWord), [snakers4/silero-vad](https://github.com/snakers4/silero-vad)

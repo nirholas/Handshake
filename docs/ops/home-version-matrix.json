@@ -1,5 +1,5 @@
 {
-	"measuredAt": "2026-09-03T03:48:46.943Z",
+	"measuredAt": "2026-09-03T04:05:13.047Z",
 	"source": "https://analytics.home-assistant.io/data.json",
 	"results": [
 		{
@@ -87,7 +87,7 @@
 				},
 				"registries": {
 					"ok": true,
-					"note": "1f/4a/62d/92e"
+					"note": "1f/4a/61d/87e"
 				},
 				"stream": {
 					"ok": true,
@@ -139,13 +139,11 @@
 				},
 				"mcp": {
 					"ok": true,
-					"note": "absent",
-					"degraded": true
+					"note": "22 tools"
 				}
 			},
 			"notes": [
-				"exposes via `homeassistant/expose_entity`",
-				"no mcp_server: the WebSocket channel carries the house alone"
+				"exposes via `homeassistant/expose_entity`"
 			]
 		}
 	]
