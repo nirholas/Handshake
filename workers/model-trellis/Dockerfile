@@ -91,6 +91,28 @@ RUN git clone --recurse-submodules https://github.com/microsoft/TRELLIS.git /app
     && git -C /app/TRELLIS checkout 442aa1e1afb9014e80681d3bf604e8d728a86ee7 \
     && git -C /app/TRELLIS submodule update --init --recursive
 
+# ── 7. dinov2 image conditioner, baked so the model load never calls out ──────
+# pipeline.json sets image_cond_model=dinov2_vitl14_reg, and TRELLIS resolves it
+# with torch.hub.load("facebookresearch/dinov2", ...) with no branch pinned. That
+# call hits github.com on every load just to discover the default branch, and
+# torch re-raises any non-404 there before it ever looks at its own cache. Cloud
+# Run egresses from shared Google IPs that GitHub rate-limits, so the load had a
+# standing dependency on somebody else's quota: on 2026-09-02 a single "HTTP
+# Error 403: rate limit exceeded" failed it, and the latched error held the
+# default free image lane down for 12 hours. Baking the repo and its checkpoint
+# removes that dependency; main.py routes torch.hub at this checkout.
+# The checkpoint filename is the one torch.hub.load_state_dict_from_url derives
+# from the upstream URL, so the pre-baked copy is a cache hit rather than a
+# second download.
+ENV TORCH_HOME=/opt/torch \
+    DINOV2_LOCAL_DIR=/opt/dinov2
+RUN git clone https://github.com/facebookresearch/dinov2.git /opt/dinov2 \
+    && git -C /opt/dinov2 checkout 7764ea0f912e53c92e82eb78a2a1631e92725fc8 \
+    && mkdir -p /opt/torch/hub/checkpoints \
+    && curl -fsSL -o /opt/torch/hub/checkpoints/dinov2_vitl14_reg4_pretrain.pth \
+         https://dl.fbaipublicfiles.com/dinov2/dinov2_vitl14/dinov2_vitl14_reg4_pretrain.pth \
+    && python3 -c "import os; p='/opt/torch/hub/checkpoints/dinov2_vitl14_reg4_pretrain.pth'; s=os.path.getsize(p); assert s > 1_000_000_000, f'dinov2 checkpoint truncated: {s} bytes'"
+
 WORKDIR /app
 COPY worker_security.py /app/worker_security.py
 COPY request_policy.py /app/request_policy.py

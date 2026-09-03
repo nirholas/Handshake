@@ -68,7 +68,7 @@ from typing import Optional
 from urllib.parse import urlsplit
 
 import torch
-from fastapi import FastAPI, HTTPException, Header, BackgroundTasks
+from fastapi import FastAPI, HTTPException, Header, BackgroundTasks, Response
 from google.api_core.exceptions import NotFound
 from google.cloud import storage
 from PIL import Image
@@ -122,12 +122,26 @@ WEIGHTS_LOCAL_DIR = os.environ.get("WEIGHTS_LOCAL_DIR", "/tmp/trellis-weights")
 REMBG_SERVICE_URL = os.environ.get("REMBG_SERVICE_URL", "").rstrip("/")
 REMBG_DEFAULT_MODEL = os.environ.get("REMBG_MODEL", "isnet-general-use")
 REMBG_TIMEOUT_S = float(os.environ.get("REMBG_TIMEOUT_S", "90"))
+# The model load is retried before it is treated as terminal. Every failure that
+# has actually hit this path was transient upstream state (a rate-limited weight
+# fetch, a stalled GCS read), not a code fault, so a single exception must not
+# decide the fate of the instance. See _load_pipeline_bg for the incident this
+# encodes.
+MODEL_LOAD_ATTEMPTS = int(os.environ.get("MODEL_LOAD_ATTEMPTS", "4"))
+MODEL_LOAD_RETRY_BASE_S = float(os.environ.get("MODEL_LOAD_RETRY_BASE_S", "15"))
+MODEL_LOAD_RETRY_CAP_S = float(os.environ.get("MODEL_LOAD_RETRY_CAP_S", "120"))
+# TRELLIS's image conditioner (pipeline.json: image_cond_model=dinov2_vitl14_reg)
+# is baked into the image here so loading it never reaches the public internet.
+DINOV2_LOCAL_DIR = os.environ.get("DINOV2_LOCAL_DIR", "/opt/dinov2")
+DINOV2_HUB_REPO = "facebookresearch/dinov2"
 
 _pipeline = None
 _bucket: Optional[storage.Bucket] = None
 _sem: Optional[asyncio.Semaphore] = None
 _ready: Optional[asyncio.Event] = None
 _load_error: Optional[str] = None
+_load_attempts = 0
+_dinov2_pinned = False
 # In-memory cache only — Cloud Run runs this service across up to _MAX_INSTANCES
 # containers with no session affinity, so a POST /infer and a later GET
 # /tasks/:id can land on different instances. The durable source of truth is
@@ -179,6 +193,46 @@ def _stage_weights_local() -> Optional[str]:
         return None
 
 
+def _pin_dinov2_to_local_checkout() -> bool:
+    """Resolve TRELLIS's image conditioner from the image-baked dinov2 checkout.
+
+    TRELLIS builds that conditioner with torch.hub.load("facebookresearch/dinov2",
+    ...), passing no branch. torch.hub therefore calls github.com on EVERY load
+    just to discover the repo's default branch, and it re-raises any non-404 HTTP
+    error out of that probe before it ever consults its own cache. Cloud Run
+    egresses from shared Google IPs that GitHub rate-limits hard, so that probe
+    is a standing outage risk: one "HTTP Error 403: rate limit exceeded" on
+    2026-09-02 failed the load, and the latched error then took the default free
+    image lane down for 12 hours. The repo and its checkpoint are baked into the
+    image (see the Dockerfile), so point torch.hub at the local checkout and drop
+    the network dependency entirely.
+
+    Returns False when the checkout is absent, which leaves the historical GitHub
+    path exactly as it was: this can only remove a failure mode, never add one.
+    """
+    global _dinov2_pinned
+    if _dinov2_pinned:
+        return True
+    if not os.path.isfile(os.path.join(DINOV2_LOCAL_DIR, "hubconf.py")):
+        log.warning(
+            "dinov2 checkout missing at %s; torch.hub will resolve it over the network",
+            DINOV2_LOCAL_DIR,
+        )
+        return False
+    original_load = torch.hub.load
+
+    def _load_local_first(repo_or_dir, model, *args, **kwargs):
+        if isinstance(repo_or_dir, str) and repo_or_dir.startswith(DINOV2_HUB_REPO):
+            kwargs["source"] = "local"
+            return original_load(DINOV2_LOCAL_DIR, model, *args, **kwargs)
+        return original_load(repo_or_dir, model, *args, **kwargs)
+
+    torch.hub.load = _load_local_first
+    _dinov2_pinned = True
+    log.info("dinov2 pinned to the local checkout at %s", DINOV2_LOCAL_DIR)
+    return True
+
+
 def _load_pipeline():
     global _pipeline
     from trellis.pipelines import TrellisImageTo3DPipeline
@@ -195,18 +249,40 @@ async def _load_pipeline_bg():
     """Load the pipeline off the request path and signal readiness when done.
 
     Runs the blocking, GPU-bound load in a worker thread so the event loop (and
-    the HTTP port) stay live. On failure the error is recorded and surfaced via
-    /health and per-task, rather than crash-looping the container.
+    the HTTP port) stay live.
+
+    The load is RETRIED with exponential backoff, and _load_error stays unset
+    while attempts remain, so a job that arrives mid-retry waits on _ready
+    instead of failing against a half-written verdict. Latching the very first
+    exception is what turned a single transient 403 into a 12-hour outage on
+    2026-09-02: the error was cached in memory, every later task failed against
+    it instantly, and minScale=1 kept that dead instance resident and in
+    rotation. Only once the whole budget is spent does the error latch, and from
+    there /health answers 503 and /infer refuses new work, so the instance is
+    reported down and the caller fails over instead of queueing behind a corpse.
     """
-    global _load_error
+    global _load_error, _load_attempts
     loop = asyncio.get_event_loop()
-    try:
-        await loop.run_in_executor(None, _load_pipeline)
-        _ready.set()
-        log.info("TRELLIS pipeline ready")
-    except Exception as exc:  # noqa: BLE001 — surfaced via /health + task status
-        _load_error = safe_error(exc, context="model load")
-        log.error("TRELLIS pipeline load FAILED: %s", exc)
+    attempts = max(1, MODEL_LOAD_ATTEMPTS)
+    for attempt in range(1, attempts + 1):
+        _load_attempts = attempt
+        try:
+            await loop.run_in_executor(None, _load_pipeline)
+            _load_error = None
+            _ready.set()
+            log.info("TRELLIS pipeline ready (attempt %d)", attempt)
+            return
+        except Exception as exc:  # noqa: BLE001 - surfaced via /health + task status
+            if attempt >= attempts:
+                _load_error = safe_error(exc, context="model load")
+                log.error("TRELLIS pipeline load FAILED after %d attempt(s): %s", attempt, exc)
+                return
+            delay = min(MODEL_LOAD_RETRY_BASE_S * (2 ** (attempt - 1)), MODEL_LOAD_RETRY_CAP_S)
+            log.warning(
+                "TRELLIS pipeline load attempt %d/%d failed (%s); retrying in %.0fs",
+                attempt, attempts, exc, delay,
+            )
+            await asyncio.sleep(delay)
 
 
 @asynccontextmanager
@@ -221,6 +297,7 @@ async def lifespan(app: FastAPI):
     # load + GPU transfer runs minutes on a cold instance) and the revision would
     # be marked failed. Backgrounding lets the port open at once; requests that
     # arrive before the load completes wait on _ready (see _run_inference).
+    _pin_dinov2_to_local_checkout()
     asyncio.create_task(_load_pipeline_bg())
     log.info("Service starting — pipeline loading in background (max_concurrent=%d)", MAX_CONCURRENT)
     yield
@@ -609,6 +686,18 @@ async def infer(
     authorization: str = Header(...),
 ) -> dict:
     _require_api_key(authorization)
+    # A latched load failure means this instance can never serve this job, so
+    # refuse it at submit time. 503 is what the caller's lane failover reads
+    # (api/forge.js isUpstreamUnavailable -> markLaneUnhealthy), which routes the
+    # request to another backend. Accepting the job and only failing it minutes
+    # later during polling bypasses that failover entirely: it is how 70
+    # generations went terminal in the 24 h to 2026-09-03 while the catalog and
+    # the health report both still called this lane healthy.
+    if _load_error:
+        raise HTTPException(
+            status_code=503,
+            detail=f"pipeline unavailable: {_load_error}",
+        )
     task_id = str(uuid.uuid4())
     # Persist the "queued" record before responding — a poll can reach a
     # different instance than this one the moment the 202 lands, and that
@@ -656,15 +745,29 @@ async def root() -> dict:
 
 
 @app.get("/health")
-async def health() -> dict:
+async def health(response: Response) -> dict:
+    """Readiness, answered honestly.
+
+    This used to return ok:true unconditionally, including while the pipeline
+    was permanently dead, so nothing upstream could tell a working instance from
+    a poisoned one. A spent load budget now answers 503: the platform health
+    probe reads that as down (api/_lib/forge-health.js), and a Cloud Run liveness
+    probe pointed here recycles the container instead of leaving it resident.
+    A load still in progress stays 200 so an ordinary cold start is never killed
+    mid-load.
+    """
+    dead = _load_error is not None
+    if dead:
+        response.status_code = 503
     return {
-        "ok": True,
+        "ok": not dead,
         "model": "trellis-image-large",
         "gpu_available": torch.cuda.is_available(),
         "gpu_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
         "pipeline_loaded": _pipeline is not None,
         "ready": bool(_ready and _ready.is_set()),
         "load_error": _load_error,
+        "load_attempts": _load_attempts,
         "tiers": list(TIER_PRESETS),
         "default_quality": QUALITY_DEFAULTS,
         "rembg_matte": bool(REMBG_SERVICE_URL),

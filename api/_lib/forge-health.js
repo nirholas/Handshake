@@ -214,7 +214,7 @@ function gcpWorkerProbe(id, urlEnv) {
 		const url = readEnv(urlEnv);
 		const key = readEnv('GCP_RECONSTRUCTION_KEY');
 		if (!url || !key) {
-			return result(id, 'unconfigured', `The ${label} self-host worker is not deployed on this deployment.`);
+			return result(id, 'unconfigured', `The ${label} worker is not configured on this deployment.`);
 		}
 		const started = Date.now();
 		const res = await probeFetch(`${url.replace(/\/+$/, '')}/health`, {
@@ -258,6 +258,16 @@ const PROBES = {
 	trellis: probeReplicate,
 	hunyuan3d: gcpWorkerProbe('hunyuan3d', 'GCP_HUNYUAN3D_URL'),
 	triposg: gcpWorkerProbe('triposg', 'GCP_TRIPOSG_URL'),
+	// The self-hosted TRELLIS worker is the DEFAULT image backend for the draft and
+	// standard tiers, and it was the one platform lane with no live probe: it fell
+	// through to the env-presence branch below and reported a flat "ok" whenever
+	// MODEL_TRELLIS_URL happened to be set. That is exactly the blind spot this
+	// report exists to close. On 2026-09-02 the worker latched a failed model load
+	// and answered every job with "pipeline unavailable" for 12 hours while this
+	// endpoint still called it healthy, so 70 of 219 generations went terminal with
+	// nothing flagging it. It publishes the same /health contract the other GCP
+	// workers do, load_error included, so the shared probe reads it as down.
+	trellis_selfhost: gcpWorkerProbe('trellis_selfhost', 'MODEL_TRELLIS_URL'),
 };
 
 // The distributed rate-limiter store gates every paid lane: when Redis is
