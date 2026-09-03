@@ -19,6 +19,8 @@ import { connectHomeMcp, ERR, HomeBridge, HomeBridgeError, normalizeBaseUrl } fr
 const CONNECT_TIMEOUT_MS = 15_000;
 /** The optional channel gets a shorter leash: it must never dominate connect latency. */
 const MCP_TIMEOUT_MS = 8_000;
+/** The version lookup is a nicety: never let it hold up a connect. */
+const CONFIG_TIMEOUT_MS = 5_000;
 
 /**
  * Open a real connection, measure it, close it.
@@ -52,7 +54,7 @@ export async function verifyConnection({ baseUrl, token, timeoutMs = CONNECT_TIM
 	try {
 		const states = bridge.states || {};
 		const entityCount = Object.keys(states).length;
-		const mcp = await probeMcp({ baseUrl: http, token });
+		const [mcp, config] = await Promise.all([probeMcp({ baseUrl: http, token }), readConfig({ baseUrl: http, token })]);
 
 		return {
 			graph,
@@ -62,7 +64,8 @@ export async function verifyConnection({ baseUrl, token, timeoutMs = CONNECT_TIM
 				areaCount: graph?.rooms?.length ?? 0,
 				floorCount: graph?.floors?.length ?? 0,
 				macroCount: bridge.macros().length,
-				haVersion: readVersion(states),
+				haVersion: config.version,
+				locationName: config.locationName,
 				mcp: mcp.available,
 				mcpToolCount: mcp.toolCount,
 				mcpDetail: mcp.detail,
@@ -81,12 +84,32 @@ export async function verifyConnection({ baseUrl, token, timeoutMs = CONNECT_TIM
  * on the state channel is any entity carrying the supervisor/core version
  * attribute; when nothing does, we return null rather than inventing a number.
  */
-function readVersion(states) {
-	for (const state of Object.values(states)) {
-		const v = state?.attributes?.installed_version || state?.attributes?.version;
-		if (typeof v === 'string' && /^\d+\.\d+/.test(v)) return v;
+/**
+ * Home Assistant's version, from the instance itself.
+ *
+ * Read from /api/config rather than scraped off entity attributes: a house full
+ * of `update.*` entities publishes half a dozen `installed_version` attributes
+ * belonging to add-ons and firmware, and picking one of those reports a
+ * confident, wrong number to the user. An unreadable version is null, never a
+ * guess, because the connect screen prints this verbatim.
+ */
+async function readConfig({ baseUrl, token }) {
+	try {
+		const res = await fetch(`${baseUrl}/api/config`, {
+			headers: { authorization: `Bearer ${token}` },
+			signal: AbortSignal.timeout(CONFIG_TIMEOUT_MS),
+		});
+		if (!res.ok) return { version: null, locationName: null };
+		const body = await res.json();
+		return {
+			version: typeof body?.version === 'string' ? body.version : null,
+			locationName: typeof body?.location_name === 'string' ? body.location_name : null,
+		};
+	} catch {
+		// The state channel already proved the instance is reachable and the token
+		// works, so a failure here costs a version string, not the connection.
+		return { version: null, locationName: null };
 	}
-	return null;
 }
 
 async function probeMcp({ baseUrl, token }) {

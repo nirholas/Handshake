@@ -31,6 +31,26 @@ const UNSAFE_SERVICES = new Set([
 	'toggle',
 ]);
 
+/**
+ * Services that move a guarded entity toward locked, closed, or armed.
+ *
+ * This is the exact mirror of UNSAFE_SERVICES, and it is a separate set rather
+ * than "everything not unsafe" on purpose: `light.turn_on` is not unsafe and it
+ * is not a safety action either. Only the moves in here are the ones a quota,
+ * a plan limit, or any other commercial gate is forbidden to block.
+ */
+const SAFE_SERVICES = new Set([
+	'lock',
+	'close',
+	'close_cover',
+	'close_valve',
+	'alarm_arm_away',
+	'alarm_arm_home',
+	'alarm_arm_night',
+	'alarm_arm_vacation',
+	'alarm_arm_custom_bypass',
+]);
+
 /** Everything a read-only agent may do without ever prompting. */
 export const READ_ONLY_SERVICES = new Set(['get_states', 'get_config', 'get_services']);
 
@@ -181,4 +201,75 @@ function normalizeTarget(value) {
 function toArray(value) {
 	if (value == null) return [];
 	return Array.isArray(value) ? value : [value];
+}
+
+/**
+ * Does this call move the house toward safety?
+ *
+ * `classifyCall` answers the question the gate asks ("does this open the
+ * house"). This answers the opposite one, and the two are deliberately not
+ * complements: `light.turn_on` is neither. Locking a door, closing a garage,
+ * closing a water valve and arming an alarm are the four moves in the set, and
+ * they are the moves that must work when everything else about an account has
+ * been cut off.
+ *
+ * Why it lives here, beside the gate, rather than in the billing code: the list
+ * of things a lock can do is a fact about Home Assistant, not a fact about a
+ * price list. Anything that needs to know "may I refuse this" imports this
+ * function; nothing gets to keep its own copy of the list and drift from it.
+ *
+ * @param {object} call
+ * @param {string} call.domain
+ * @param {string} call.service
+ * @param {object} [call.attributes] the entity's current attributes, for device_class
+ * @returns {boolean}
+ */
+export function isSafetyAction({ domain, service, attributes = {} } = {}) {
+	const d = String(domain || '').toLowerCase();
+	const s = String(service || '').toLowerCase();
+
+	if (d === 'cover') {
+		const deviceClass = String(attributes.device_class || '').toLowerCase();
+		return GUARDED_COVER_CLASSES.has(deviceClass) && SAFE_SERVICES.has(s);
+	}
+	if (d === 'alarm_control_panel') return s.startsWith('alarm_arm') && SAFE_SERVICES.has(s);
+	if (GUARDED_DOMAINS.has(d)) return SAFE_SERVICES.has(s);
+	return false;
+}
+
+/**
+ * The same question, in front of the MCP channel.
+ *
+ * `HassTurnOn` on a lock is a lock, and `HassTurnOff` on a garage door is a
+ * close: the polymorphism that makes the gate necessary also means the safe
+ * direction arrives under a tool name that says nothing about doors. Resolve the
+ * targets the same way the gate does and ask `isSafetyAction` about each one.
+ *
+ * True only when the call touches at least one guarded entity and EVERY guarded
+ * entity it touches moves toward safety. A mixed call is not a safety action,
+ * because refusing it would still have refused a safety move, and allowing it
+ * would have allowed something else through on a safety exemption.
+ *
+ * @param {string} toolName
+ * @param {object} args
+ * @param {Array<object>} entities
+ * @returns {boolean}
+ */
+export function isSafetyMcpCall(toolName, args = {}, entities = []) {
+	const intent = String(toolName || '').split('__').pop();
+	const direction = MCP_INTENT_DIRECTION[intent];
+	if (!direction || direction === 'position') return false;
+
+	let sawSafety = false;
+	for (const entity of resolveMcpTargets(args, entities)) {
+		const service = serviceForDirection(entity.domain, direction);
+		if (!service) continue;
+		const call = { domain: entity.domain, service, entityId: entity.entityId, attributes: entity.attributes };
+		if (isSafetyAction(call)) {
+			sawSafety = true;
+			continue;
+		}
+		if (classifyCall(call).guarded) return false;
+	}
+	return sawSafety;
 }

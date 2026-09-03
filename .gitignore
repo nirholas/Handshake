@@ -535,6 +535,9 @@ download.zip
 # .storage/auth, so the pattern is deliberately broad: any .ha-* directory at the
 # repo root is a throwaway HA instance and never belongs in a commit.
 .ha-*/
+# Same thing at fleet scale: scripts/home-fleet.mjs boots numbered Home Assistant
+# instances under .home-fleet/<n>/, each with its own token store.
+.home-fleet/
 
 # Browser voice-loop runtime staged from node_modules by scripts/copy-voice-models.mjs
 # (silero VAD + the onnxruntime-web wasm). Regenerated on every install and
