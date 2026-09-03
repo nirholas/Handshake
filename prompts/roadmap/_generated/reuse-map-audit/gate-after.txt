@@ -148,3 +148,36 @@ docs audit: clean (1512 markdown files checked).
 > 3d-agent@1.5.2 audit:upstreams
 > node scripts/audit-upstreams.mjs
 
+audit:upstreams: 225 outbound call sites across 79 upstreams (A:0 B:54 C:92 D:79 F:0)
+audit:upstreams: no regressions
+
+> 3d-agent@1.5.2 check:tutorials
+> node scripts/sync-tutorial-pages.mjs
+
+manifest entries: 70  markdown files: 70
+pages.json: missing 1 tutorial entry
+
+Tutorial drift found. Fix the manifest, or run: node scripts/sync-tutorial-pages.mjs --write
+exit=1
+
+--- audit note (2026-09-03) ---
+Baseline comparison. gate-before failed at test:gate: tests/api/healthz.test.js
+could not import at all, because its db mock threw synchronously and
+api/_lib/home/store.js builds a column fragment by calling sql at module scope.
+That failure short-circuited the chain, so gate-before never reached any later
+stage, and every stage after test:gate was unverified rather than green.
+
+gate-after clears all of them: test:gate 7/7 (was 6 passed, 1 failed),
+test:gate-3d 4/4, audit:mcp 49 manifests consistent, audit:mcp-golden,
+audit:routes, audit:handlers, audit:pages, audit:links, audit:docs and
+audit:upstreams with no regressions. The full tests/api suite is also green
+(0 failed suites, 7565 passing), up from 2 failed suites and 5 failed tests.
+
+The only stage that ever came back red afterwards is check:tutorials, which
+oscillates: run it twice in a row and it reports "missing 1 tutorial entry" and
+then "every tutorial is registered". A dry run of the sync (with the write
+disabled) reports WOULD ADD: [] while the drift is being reported, so nothing is
+actually unregistered. Concurrent agents in this shared worktree rewrite
+data/pages.json while regenerating the page and changelog feeds, and the check
+reads the file mid-write. It is not caused by this work and there is nothing to
+sync.
