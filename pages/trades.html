@@ -86,7 +86,7 @@
 			border-radius: 8px; padding: 9px 34px 9px 11px; font: 500 12px/1.2 var(--mono); color: var(--fg);
 			transition: border-color .14s;
 		}
-		.tt-search input:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+		.tt-search input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 		.tt-search input:focus { border-color: color-mix(in srgb, var(--cyan) 55%, var(--line)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyan) 18%, transparent); }
 		.tt-search input.shake { animation: ttshake .35s; border-color: var(--tt-down); }
 		@keyframes ttshake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
@@ -100,7 +100,7 @@
 		.tt-rail-net select { background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 7px; font: 600 11px/1 var(--mono); color: var(--fg); cursor: pointer; }
 
 		.tt-feed { overflow-y: auto; flex: 1; padding: 6px; display: flex; flex-direction: column; gap: 3px; scrollbar-width: thin; }
-		.tt-feed:focus-visible { outline: 2px solid var(--cyan); outline-offset: -2px; }
+		.tt-feed:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
 		/* feed row */
 		.tt-row { display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 10px; width: 100%; text-align: left; background: none; border: 1px solid transparent; border-radius: 9px; padding: 8px 9px; cursor: pointer; transition: background .13s, border-color .13s; }
@@ -164,6 +164,7 @@
 		.dd-btn { font: 600 12px/1 var(--mono); padding: 8px 13px; border-radius: 8px; border: 1px solid var(--line); background: none; color: var(--muted); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 5px; transition: border-color .14s, color .14s, background .14s; white-space: nowrap; }
 		.dd-btn:hover { border-color: var(--cyan); color: var(--cyan); }
 		.dd-btn:disabled { opacity: .55; cursor: progress; }
+		.dd-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 		.dd-btn--oracle { background: rgba(192,132,252,.1); border-color: rgba(192,132,252,.3); color: var(--tt-prime); }
 		.dd-btn--oracle:hover { background: rgba(192,132,252,.18); color: var(--tt-prime); }
 		.dd-btn--primary { background: color-mix(in srgb, var(--cyan) 14%, transparent); border-color: color-mix(in srgb, var(--cyan) 45%, var(--line)); color: var(--cyan); }
