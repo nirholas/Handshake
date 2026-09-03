@@ -7,6 +7,10 @@ documents, not a product surface. Nothing here ships to users.
 **Everything still to finish lives in one folder: [finish/](finish/).** Open a work order there,
 paste it, run it. That folder is the whole queue; nothing outstanding is filed anywhere else.
 
+**Which one to run first: [RUN-ORDER.md](RUN-ORDER.md).** It ranks the whole queue into tiers
+against live production measurements, so the folder tells you what is open and that file tells
+you what matters.
+
 ## Layout
 
 | Path | What it holds |
