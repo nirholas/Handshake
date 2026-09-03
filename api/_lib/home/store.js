@@ -46,11 +46,24 @@ const DETAIL_MAX = 500;
 
 // Every column a caller may see. `access_token_enc` is absent on purpose and
 // must stay absent: this list is the mechanical guarantee behind invariant (1).
-const SAFE_COLUMNS = sql`
-	id, user_id, label, base_url, token_fingerprint, transport, relay_id,
-	capabilities, status, status_detail, last_ok_at, last_error_at,
-	created_at, updated_at, revoked_at
-`;
+// Built on first use rather than at module load. `sql` is the database driver:
+// calling it while this module is being imported does driver work before any
+// caller has asked for a query, which made merely IMPORTING this file fail
+// wherever the driver is absent or stubbed. That took the whole critical-path
+// test gate down (tests/api/healthz.test.js reaches store.js through
+// home/runtime.js and never gets to run a single test). Memoized, so the
+// fragment is still built exactly once per process.
+let safeColumnsFragment = null;
+function SAFE_COLUMNS() {
+	if (!safeColumnsFragment) {
+		safeColumnsFragment = sql`
+			id, user_id, label, base_url, token_fingerprint, transport, relay_id,
+			capabilities, status, status_detail, last_ok_at, last_error_at,
+			created_at, updated_at, revoked_at
+		`;
+	}
+	return safeColumnsFragment;
+}
 
 // The same projection, qualified, for the reads that join home_members.
 //
@@ -60,11 +73,17 @@ const SAFE_COLUMNS = sql`
 // keeps meaning what it always meant, the account that connected the house,
 // which is why order 12 could add membership beside this column instead of
 // rewriting it.
-const SAFE_COLUMNS_C = sql`
-	c.id, c.user_id, c.label, c.base_url, c.token_fingerprint, c.transport, c.relay_id,
-	c.capabilities, c.status, c.status_detail, c.last_ok_at, c.last_error_at,
-	c.created_at, c.updated_at, c.revoked_at
-`;
+let safeColumnsCFragment = null;
+function SAFE_COLUMNS_C() {
+	if (!safeColumnsCFragment) {
+		safeColumnsCFragment = sql`
+			c.id, c.user_id, c.label, c.base_url, c.token_fingerprint, c.transport, c.relay_id,
+			c.capabilities, c.status, c.status_detail, c.last_ok_at, c.last_error_at,
+			c.created_at, c.updated_at, c.revoked_at
+		`;
+	}
+	return safeColumnsCFragment;
+}
 
 /** sha256 of the token, hex. Never reversible, only comparable. */
 export function fingerprintToken(token) {
@@ -133,7 +152,7 @@ export async function createConnection({
 			status            = excluded.status,
 			status_detail     = excluded.status_detail,
 			updated_at        = now()
-		returning ${SAFE_COLUMNS}
+		returning ${SAFE_COLUMNS()}
 	`;
 	return rows[0];
 }
@@ -146,7 +165,7 @@ export async function createConnection({
 export async function listConnections(userId) {
 	if (!userId) return [];
 	return sql`
-		select ${SAFE_COLUMNS_C}, m.role, m.entity_scope
+		select ${SAFE_COLUMNS_C()}, m.role, m.entity_scope
 		from home_connections c
 		join home_members m on m.home_id = c.id and m.user_id = ${userId}
 		where c.revoked_at is null
@@ -183,13 +202,13 @@ export async function getConnection(id, userId, { includeRevoked = false } = {})
 	if (!id || !userId || !isUuid(id)) return null;
 	const rows = includeRevoked
 		? await sql`
-			select ${SAFE_COLUMNS_C}, m.role, m.entity_scope
+			select ${SAFE_COLUMNS_C()}, m.role, m.entity_scope
 			from home_connections c
 			join home_members m on m.home_id = c.id and m.user_id = ${userId}
 			where c.id = ${id}
 		`
 		: await sql`
-			select ${SAFE_COLUMNS_C}, m.role, m.entity_scope
+			select ${SAFE_COLUMNS_C()}, m.role, m.entity_scope
 			from home_connections c
 			join home_members m on m.home_id = c.id and m.user_id = ${userId}
 			where c.id = ${id} and c.revoked_at is null
@@ -261,7 +280,7 @@ export async function recordHandshake(id, { status, statusDetail = null, capabil
 			last_error_at = case when ${ok}::boolean then last_error_at else now() end,
 			updated_at    = now()
 		where id = ${id} and revoked_at is null
-		returning ${SAFE_COLUMNS}
+		returning ${SAFE_COLUMNS()}
 	`;
 	return rows[0] || null;
 }
@@ -293,7 +312,7 @@ export async function revokeConnection(id, userId) {
 			status_detail    = 'Disconnected by the owner.',
 			updated_at       = now()
 		where id = ${id} and user_id = ${userId} and revoked_at is null
-		returning ${SAFE_COLUMNS}
+		returning ${SAFE_COLUMNS()}
 	`;
 
 	if (rows[0]) {
