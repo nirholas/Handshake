@@ -16,6 +16,22 @@
 	padding: clamp(1.25rem, 4vw, 3rem) clamp(1rem, 4vw, 2rem) 5rem;
 }
 
+/*
+ * The hero has to carry a class, and that is the whole point of it.
+ * public/style.css styles a CLASSLESS <header> as legacy 3D-viewer chrome: a
+ * fixed 55px strip with white-space:nowrap and overflow-x:auto. This page's
+ * hero was bare, so it inherited that, squashing the title and lede onto one
+ * unwrapped 4063px line inside a 1024px viewport and creating exactly the
+ * keyboard-unreachable scroll region axe reports as
+ * scrollable-region-focusable. The class is the fix; these declarations are
+ * the hero it should have been all along.
+ */
+.hs-hero {
+	display: block;
+	max-width: 46rem;
+	margin-bottom: clamp(1.25rem, 3vw, 2.25rem);
+}
+
 .hs-eyebrow {
 	margin: 0 0 0.5rem;
 	font-size: 0.78rem;
