@@ -86,7 +86,13 @@ In Xcode:
 
 1. Select the **App** target, Signing & Capabilities, choose the team. Confirm
    Associated Domains lists `applinks:three.ws` and Push Notifications is
-   present; both come from `App/App.entitlements`.
+   present; both come from `App/App.entitlements`. App Groups should list
+   `group.ws.three.app` and Keychain Sharing `ws.three.shared`, which are what
+   the Agent glance widget reads.
+1b. Select the **GlanceWidgetExtension** target and choose the same team. It
+   needs the same App Group and Keychain Sharing entries; both expand from
+   `DEVELOPMENT_TEAM`, so nothing else has to be typed. A build with no team on
+   this target fails to sign the .appex and the archive is rejected.
 2. Set the marketing version and build number. `MARKETING_VERSION` is `1.0`
    and `CURRENT_PROJECT_VERSION` is `1` in the project file; the build number
    must increase on every upload.
