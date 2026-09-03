@@ -1,5 +1,5 @@
 /**
- * Alpha-drip — pure release-planning tests.
+ * Alpha-drip: pure release-planning tests.
  *
  * Money-adjacent and trust-adjacent: a bug here either leaks a leader's signal
  * early or sells a holder a slower seat than the one below them, so every rule
@@ -214,7 +214,7 @@ describe('maskUnreleasedIntent', () => {
 		}
 	});
 
-	it('still names the leader and the direction — only the trade is held', () => {
+	it('still names the leader and the direction, only the trade is held', () => {
 		const masked = maskUnreleasedIntent(row(), now);
 		expect(masked.leader_name).toBe('Nine');
 		expect(masked.direction).toBe('buy');

@@ -98,7 +98,7 @@ describe('self-copy guard', () => {
 		await subscriptions(post(validBody()), r);
 		expect(r._json.status).toBe(403);
 		expect(r._json.body.error).toBe('self_copy');
-		// Refused BEFORE any row is written — a wash-trade edge must never exist.
+		// Refused BEFORE any row is written: a wash-trade edge must never exist.
 		expect(sqlCalls.some((c) => c.text.includes('insert into copy_subscriptions'))).toBe(false);
 	});
 

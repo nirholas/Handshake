@@ -1,5 +1,5 @@
 /**
- * Alpha-drip — tiered release of a leader's OWN copy signal. PURE: no DB, no network.
+ * Alpha-drip: tiered release of a leader's OWN copy signal. PURE: no DB, no network.
  *
  * A leader's edge decays in seconds, so the thing worth selling is not only a
  * share of the profit but the LATENCY: $THREE holders in higher tiers see the
@@ -11,7 +11,7 @@
  *
  *   1. A drip delays the REVEAL, never the RECORD. The intent row is written in
  *      full at fanout time and the leader's public track record is untouched, so
- *      there are no hidden trades — only delayed ones. Nothing here can express
+ *      there are no hidden trades, only delayed ones. Nothing here can express
  *      "do not disclose".
  *   2. Delay never increases with tier. A higher-tier holder can never wait longer
  *      than a lower-tier one, so paying more can only ever help.
@@ -38,7 +38,7 @@ const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : NaN);
 /**
  * Validate + normalize a leader's release schedule.
  *
- * Accepts a sparse array — a leader prices the tiers they care about and the rest
+ * Accepts a sparse array: a leader prices the tiers they care about and the rest
  * inherit. The result is sorted high→low tier level so `planRelease` can walk it
  * once, and is guaranteed monotonic (rule 2 above).
  *
@@ -74,7 +74,7 @@ export function normalizeDripConfig(raw = {}) {
 		entries.push({ tier, delay_sec: delay, max_copy_size_sol: cap });
 	}
 
-	// High tier first — the order planRelease walks and the order a UI reads best.
+	// High tier first: the order planRelease walks and the order a UI reads best.
 	entries.sort((a, b) => LEVEL_BY_ID.get(b.tier) - LEVEL_BY_ID.get(a.tier));
 
 	// Rule 2: paying more can never buy a longer wait. Checked against the public
@@ -82,7 +82,7 @@ export function normalizeDripConfig(raw = {}) {
 	let prev = 0;
 	for (const e of entries) {
 		if (e.delay_sec < prev) {
-			return { ok: false, error: `delay for "${e.tier}" is shorter than a higher tier's — a higher tier can never wait longer` };
+			return { ok: false, error: `delay for "${e.tier}" is shorter than a higher tier's. A higher tier can never wait longer` };
 		}
 		prev = e.delay_sec;
 	}
@@ -153,7 +153,7 @@ export function planReleaseForUsd(config, usdHeld) {
 /**
  * The disclosure shown to every copier before they subscribe. A leader may
  * override the wording, but never the standing sentence that says what a drip is
- * and what it is not — that is appended regardless.
+ * and what it is not. That sentence is appended regardless.
  */
 export function dripDisclosure(config) {
 	const standing =
@@ -179,7 +179,7 @@ export function describeSchedule(config) {
 	return `${parts.join(', ')}.`;
 }
 
-/** "45s" / "2m 30s" — the one format every drip surface prints. */
+/** "45s" / "2m 30s": the one format every drip surface prints. */
 export function formatDelay(sec) {
 	const s = Math.max(0, int(sec) || 0);
 	if (s < 60) return `${s}s`;
@@ -191,7 +191,7 @@ export function formatDelay(sec) {
 /**
  * Fairness check against how fast the leader's edge actually decays. When the
  * longest wait outruns the edge's half-life, the slowest tier is being sold a
- * signal that is already spent — say so instead of shipping it quietly.
+ * signal that is already spent. Say so instead of shipping it quietly.
  *
  * @returns {{ fair: boolean, longest_delay_sec: number, warning: string|null }}
  */
@@ -222,7 +222,7 @@ export function maxDelaySec(config) {
  * A leader with real size has finite capacity: if the earliest tier copies the
  * full order, the fills the later tiers get are the ones the early tier already
  * moved through. `max_copy_size_sol` is how a leader splits that, so it is
- * applied AFTER the copy engine has sized and gated the order, never before —
+ * applied AFTER the copy engine has sized and gated the order, never before:
  * the copier's own caps still bind first.
  *
  * A cap that pushes an order under the copier's minimum is a skip, not a dust
@@ -252,7 +252,7 @@ export function applyCapacityCap(orderSol, capSol, minOrderSol = 0) {
 /**
  * Hide the tradeable content of an intent the copier's seat has not reached yet.
  *
- * The row exists, the copier knows WHO traded and that something fired — what
+ * The row exists, the copier knows WHO traded and that something fired. What
  * they do not get early is the coin and the size, which is the whole thing the
  * ladder sells. Masking happens on the way OUT rather than in the query so the
  * record stays complete in the database and the same row unmasks itself the

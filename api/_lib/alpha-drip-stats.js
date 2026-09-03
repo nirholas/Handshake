@@ -1,5 +1,5 @@
 /**
- * How fast a leader's edge actually decays — measured, not assumed.
+ * How fast a leader's edge actually decays: measured, not assumed.
  *
  * Alpha-drip prices latency, so the only honest way to judge a ladder is against
  * how long this leader's entry advantage survives in their own history. The
@@ -10,7 +10,7 @@
  *
  * Median, not mean, because one position held overnight would otherwise justify
  * a delay nobody should be sold. Returns null rather than a guess when the
- * leader has too few profitable closes to measure — every caller treats a null
+ * leader has too few profitable closes to measure. Every caller treats a null
  * half-life as "cannot judge" and says nothing instead of inventing a number.
  */
 

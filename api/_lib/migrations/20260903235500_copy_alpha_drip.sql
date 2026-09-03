@@ -1,4 +1,4 @@
--- Migration: alpha-drip — tiered release of a leader's own copy signal.
+-- Migration: alpha-drip, the tiered release of a leader's own copy signal.
 -- Apply: psql "$DATABASE_URL" -f api/_lib/migrations/20260903235500_copy_alpha_drip.sql
 -- Idempotent.
 --

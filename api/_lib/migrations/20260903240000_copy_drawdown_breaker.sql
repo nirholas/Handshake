@@ -20,7 +20,7 @@
 -- existing row had, so no backfill is needed and no live subscription changes.
 --
 -- paused_reason / paused_at also cover the future auto-pause cases (a leader who
--- goes quiet, a copier whose safety gate keeps rejecting) — any code path that
+-- goes quiet, a copier whose safety gate keeps rejecting): any code path that
 -- pauses a subscription on the copier's behalf owes them the reason.
 
 begin;

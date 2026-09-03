@@ -154,8 +154,12 @@ function breakerMessage({ leaderName, drawdownPct, limitPct }) {
  * and any subscription whose copier-set drawdown limit the leader has breached is
  * flipped to 'paused' here, with the reason and timestamp recorded, before it can
  * size a single order.
+ *
+ * Exported so the guards can be exercised directly: they are the money-adjacent
+ * half of this cron, and the fanout itself only runs when a leader traded inside
+ * the last 8 minutes.
  */
-async function activeSubscriptionsByLeader(leaderIds, network, stats) {
+export async function activeSubscriptionsByLeader(leaderIds, network, stats) {
 	const byLeader = new Map();
 	if (!leaderIds.length) return byLeader;
 

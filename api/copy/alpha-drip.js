@@ -1,9 +1,9 @@
 /**
- * Alpha-drip configuration — a leader prices the latency of their own signal.
+ * Alpha-drip configuration: a leader prices the latency of their own signal.
  *
  *   GET  /api/copy/alpha-drip?leader_agent_id=<uuid>
  *        Public read. Returns the leader's release ladder, the standing
- *        disclosure, and — for a signed-in caller — the seat THEY would get, so
+ *        disclosure, and (for a signed-in caller) the seat THEY would get, so
  *        a copier sees their real wait before they subscribe rather than after.
  *
  *   POST /api/copy/alpha-drip { leader_agent_id, enabled, schedule,
@@ -13,8 +13,8 @@
  *   POST /api/copy/alpha-drip { action: 'recommend', leader_agent_id,
  *                               edge_halflife_sec }
  *        Asks the LLM chain for a ladder tuned to how fast this leader's edge
- *        actually decays. It only ever RETURNS a draft — the leader still has to
- *        save it — and the draft is validated through the same normalizer as a
+ *        actually decays. It only ever RETURNS a draft (the leader still has to
+ *        save it), and the draft is validated through the same normalizer as a
  *        hand-written one, so the model can never talk the ladder past a rule.
  *
  * The drip delays the reveal, never the record: the intent row is written in
@@ -35,7 +35,7 @@ import {
 import { llmComplete, LlmUnavailableError } from '../_lib/llm.js';
 import { leaderEdgeHalflifeSec } from '../_lib/alpha-drip-stats.js';
 
-const RECOMMEND_SYSTEM = `You decide how a LEADER's OWN trade signal is released across the leader's OWN subscriber tiers. You are gating the leader's self-produced signal as a subscription product. You are NOT accessing, delaying, or front-running anyone else's orders — only the leader's own.
+const RECOMMEND_SYSTEM = `You decide how a LEADER's OWN trade signal is released across the leader's OWN subscriber tiers. You are gating the leader's self-produced signal as a subscription product. You are NOT accessing, delaying, or front-running anyone else's orders, only the leader's own.
 
 Reply with STRICT JSON and nothing else:
 {
@@ -94,7 +94,7 @@ export default wrap(async (req, res) => {
 	const params = new URL(req.url, 'http://x').searchParams;
 	const leaderFromQuery = String(params.get('leader_agent_id') || '').trim();
 
-	// ?mine=1 — every agent the caller owns that someone is actually copying,
+	// ?mine=1: every agent the caller owns that someone is actually copying,
 	// with its current ladder. This is what the leader's editor lists, and it is
 	// one query rather than one request per agent.
 	if (req.method === 'GET' && params.get('mine') === '1') {
@@ -137,7 +137,7 @@ export default wrap(async (req, res) => {
 		const body = { leader_agent_id: leader.id, leader_name: leader.name, updated_at: updatedAt, drip: present(config) };
 
 		// A signed-in caller sees the seat they personally get. Signed-out callers
-		// get the ladder only — we have no wallet to price them against.
+		// get the ladder only, because we have no wallet to price them against.
 		const session = await getSessionUser(req);
 		if (session) {
 			const { tier, usd } = await resolveUserTier(session);

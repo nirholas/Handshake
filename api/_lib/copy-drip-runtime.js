@@ -1,12 +1,12 @@
 /**
- * Alpha-drip at fanout time — the DB-facing half of the tiered signal release.
+ * Alpha-drip at fanout time: the DB-facing half of the tiered signal release.
  *
  * `api/_lib/alpha-drip.js` decides WHAT seat a copier gets (pure, exhaustively
  * tested). This module is what the copy-fanout cron actually calls: it loads the
  * leaders' ladders, prices each copier against their live $THREE balance, and
  * later releases the alerts it held back.
  *
- * Cost discipline: a leader with the drip off costs nothing here — no config
+ * Cost discipline: a leader with the drip off costs nothing here: no config
  * row, no balance read, no branch taken. Balance reads are memoized per wallet
  * for the length of one tick, because a copier following three leaders should
  * not be priced three times.

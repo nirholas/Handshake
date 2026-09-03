@@ -1,5 +1,5 @@
 /**
- * Alpha-drip editor — a leader prices the latency of their own signal.
+ * Alpha-drip editor: a leader prices the latency of their own signal.
  *
  * Mounted on the copy dashboard for every agent the signed-in user owns that
  * someone is actually copying. The leader sets how long each $THREE tier waits
@@ -73,8 +73,8 @@ function ensureStyles() {
 	document.head.appendChild(tag);
 }
 
-// A CSRF token is single-use — the server burns it on first use and returns it
-// as { data: { token } } — so it is fetched per mutation and never cached.
+// A CSRF token is single-use (the server burns it on first use and returns it
+// as { data: { token } }), so it is fetched per mutation and never cached.
 async function csrfToken() {
 	try {
 		const r = await fetch('/api/csrf-token', { credentials: 'include' });
@@ -98,7 +98,7 @@ async function api(path, opts = {}) {
 	return { ok: res.ok, status: res.status, body };
 }
 
-/** "45s" / "2m 30s" — matches formatDelay() in api/_lib/alpha-drip.js. */
+/** "45s" / "2m 30s": matches formatDelay() in api/_lib/alpha-drip.js. */
 export function formatDelay(sec) {
 	const s = Math.max(0, Math.round(Number(sec) || 0));
 	if (s < 60) return `${s}s`;
@@ -116,7 +116,7 @@ export function validateLadder(rows, publicDelay) {
 	// rows arrive high tier first
 	let prev = 0;
 	for (const r of priced) {
-		if (r.delay_sec < prev) return `${r.label} waits less than a higher tier — a higher tier can never wait longer.`;
+		if (r.delay_sec < prev) return `${r.label} waits less than a higher tier. A higher tier can never wait longer.`;
 		prev = r.delay_sec;
 	}
 	if (priced.length && publicDelay < prev) return 'Everyone else must wait at least as long as the slowest paid tier.';

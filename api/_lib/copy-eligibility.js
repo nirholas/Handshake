@@ -1,10 +1,10 @@
 /**
- * Copy-trading anti-gaming layer — who may be copied, and when copying stops.
+ * Copy-trading anti-gaming layer: who may be copied, and when copying stops.
  *
  * Copy-trading dies the moment a track record can be faked or a follower can be
  * strapped to a runaway leader. Three defenses live here, all of them enforced
  * before money is committed and all of them derived from real, closed, on-chain
- * round-trips (agent_sniper_positions) — never from a self-reported number:
+ * round-trips (agent_sniper_positions), never from a self-reported number:
  *
  *   1. SELF-COPY (wash trading). A user subscribing to an agent they own pays a
  *      performance fee to themselves, inflates that leader's public copier count,
@@ -12,8 +12,8 @@
  *      at subscribe time and skipped again in the fanout, so a row that predates
  *      this rule cannot keep firing.
  *   2. SYBIL BAR on copyable status. A brand-new agent with no history could be
- *      followed the minute it was created. A leader now needs a real record —
- *      closed round-trips, elapsed time, and capital actually deployed — before
+ *      followed the minute it was created. A leader now needs a real record:
+ *      closed round-trips, elapsed time, and capital actually deployed, before
  *      anyone can attach money to it, so dust-trading a curve into existence
  *      buys nothing.
  *   3. DRAWDOWN CIRCUIT BREAKER. A copier sets the peak-to-trough loss they are
@@ -70,7 +70,7 @@ const CRITERION_LABELS = {
 /**
  * Decide whether a leader's record clears the copyable bar. PURE.
  *
- * @param {object} record  { settled, span_hours, deployed_sol } — real closed-trade stats.
+ * @param {object} record  { settled, span_hours, deployed_sol }, real closed-trade stats.
  * @param {object} [bar]   override thresholds (tests, future per-tier bars).
  * @returns {{ eligible:boolean, unmet:Array<{criterion:string,need:number,have:number,label:string}>, met:object }}
  */
@@ -105,7 +105,7 @@ export function evaluateLeaderEligibility(record = {}, bar = LEADER_ELIGIBILITY)
  *
  * A null tolerance means the copier opted out of the breaker; a null drawdown
  * means the leader has no measurable curve yet (no deployed capital), and an
- * unmeasurable leader is never auto-paused — the eligibility bar is what keeps
+ * unmeasurable leader is never auto-paused; the eligibility bar is what keeps
  * a history-less leader from being copied in the first place.
  *
  * @returns {{ breached:boolean, drawdown_pct:number|null, limit_pct:number|null, detail?:string }}
@@ -121,7 +121,7 @@ export function evaluateDrawdownBreaker(sub = {}, leaderDrawdownPct = null) {
 		breached: true,
 		drawdown_pct: round2(dd),
 		limit_pct: limit,
-		detail: `Leader drawdown ${round2(dd)}% reached your ${limit}% limit — copying paused.`,
+		detail: `Leader drawdown ${round2(dd)}% reached your ${limit}% limit. Copying paused.`,
 	};
 }
 
@@ -146,7 +146,7 @@ export async function leaderCopyProfile(agentId, network = 'mainnet') {
 }
 
 /**
- * Fold closed round-trips into the copy profile. PURE — exported so the equity
+ * Fold closed round-trips into the copy profile. PURE, and exported so the equity
  * curve walk is testable without a database.
  *
  * @param {Array<{realized_pnl_lamports:*, entry_quote_lamports:*, closed_at:*}>} rows
@@ -190,7 +190,7 @@ export function summarizeCopyProfile(rows = []) {
 }
 
 /**
- * Batch the drawdown percentage for a set of leaders in one query — the fanout
+ * Batch the drawdown percentage for a set of leaders in one query. The fanout
  * cron checks every leader it is about to mirror, and a leader with a thousand
  * copiers must not cost a thousand round-trips.
  *

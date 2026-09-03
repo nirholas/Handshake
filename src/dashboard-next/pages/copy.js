@@ -189,7 +189,7 @@ function intentRow(e) {
 
 /**
  * An intent this copier's $THREE tier has not reached yet. The leader and the
- * fact that they fired are shown — the coin and the size are not, because that
+ * fact that they fired are shown. The coin and the size are not, because that
  * is precisely what the leader's release ladder sells. It unlocks in place: the
  * countdown reaches zero and the next poll renders the real row.
  */
@@ -238,7 +238,7 @@ function startCountdowns(host, reload) {
 function subRow(s) {
 	const paused = s.status === 'paused';
 	// A subscription the drawdown breaker paused was not paused by this user, so
-	// the row has to say what happened — "Paused" alone reads as their own doing.
+	// the row has to say what happened: "Paused" alone reads as their own doing.
 	const tripped = paused && s.paused_reason === 'leader_drawdown_breach';
 	const ddLimit = s.max_drawdown_pct == null ? null : Number(s.max_drawdown_pct);
 	return `

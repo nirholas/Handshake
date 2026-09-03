@@ -2,7 +2,7 @@
  * The copy-trading anti-gaming layer (api/_lib/copy-eligibility.js).
  *
  * Three defenses stand between a copier and the two ways copy-trading gets
- * gamed — a manufactured track record, and a leader who keeps trading on the way
+ * gamed: a manufactured track record, and a leader who keeps trading on the way
  * down. These are the pure halves; tests/copy-subscribe-guards.test.js covers the
  * endpoint that enforces them.
  */
@@ -27,7 +27,7 @@ const close = (pnlSol, entrySol, closedAt) => ({
 
 const hoursAgo = (h) => new Date(Date.UTC(2026, 0, 10) - h * 3_600_000).toISOString();
 
-describe('evaluateLeaderEligibility — the sybil bar on copyable status', () => {
+describe('evaluateLeaderEligibility: the sybil bar on copyable status', () => {
 	it('clears a leader with a real record', () => {
 		const r = evaluateLeaderEligibility({ settled: 30, span_hours: 200, deployed_sol: 2.5 });
 		expect(r.eligible).toBe(true);
@@ -72,7 +72,7 @@ describe('evaluateLeaderEligibility — the sybil bar on copyable status', () =>
 	});
 });
 
-describe('evaluateDrawdownBreaker — the copier\'s circuit breaker', () => {
+describe('evaluateDrawdownBreaker: the copier\'s circuit breaker', () => {
 	it('does nothing when the copier set no limit', () => {
 		expect(evaluateDrawdownBreaker({ max_drawdown_pct: null }, 90).breached).toBe(false);
 		expect(evaluateDrawdownBreaker({}, 90).breached).toBe(false);
@@ -100,7 +100,7 @@ describe('evaluateDrawdownBreaker — the copier\'s circuit breaker', () => {
 
 	it('never auto-pauses on an unmeasurable leader', () => {
 		// A null drawdown means no capital was ever deployed. Pausing on "unknown"
-		// would freeze every subscription the moment a leader's history is thin —
+		// would freeze every subscription the moment a leader's history is thin;
 		// the eligibility bar is what keeps a history-less leader uncopyable.
 		expect(evaluateDrawdownBreaker({ max_drawdown_pct: 10 }, null).breached).toBe(false);
 	});
@@ -110,7 +110,7 @@ describe('evaluateDrawdownBreaker — the copier\'s circuit breaker', () => {
 	});
 });
 
-describe('summarizeCopyProfile — the equity curve both defenses read', () => {
+describe('summarizeCopyProfile: the equity curve both defenses read', () => {
 	it('returns an honest empty record for a leader who has closed nothing', () => {
 		expect(summarizeCopyProfile([])).toMatchObject({
 			settled: 0, deployed_sol: 0, span_hours: 0, max_drawdown_pct: null,

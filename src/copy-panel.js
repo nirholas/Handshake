@@ -51,7 +51,7 @@ export async function mountCopyPanel(el, { leaderAgentId, leaderName, network = 
 	// A leader on an alpha-drip releases to higher $THREE tiers first. Show the
 	// copier the seat THEY get before they commit, never after: an unexpected
 	// delay discovered from an empty inbox is the version of this that erodes
-	// trust. Best-effort — a drip read must never block copy setup.
+	// trust. Best-effort: a drip read must never block copy setup.
 	const drip = await fetchDrip(leaderAgentId);
 
 	if (existing && existing.status !== 'stopped') {
