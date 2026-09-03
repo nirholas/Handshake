@@ -19,7 +19,7 @@
 // Run: node scripts/build-parametric-base.mjs
 // Data provenance and license: avatar-sources/anny/README.md (all CC0).
 
-import { readFileSync, writeFileSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, statSync, existsSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -49,6 +49,12 @@ const PAIR = (root, filePattern, ...extra) => [
 	M(`${root}Left`, filePattern.replace('{s}', 'l'), ...extra.map((f) => f.replace('{s}', 'l'))),
 	M(`${root}Right`, filePattern.replace('{s}', 'r'), ...extra.map((f) => f.replace('{s}', 'r'))),
 ];
+
+// L+R merged helper: ONE slider that drives both sides. Limb width, depth and
+// length reads as a defect when it lands on one arm only, so those collapse
+// here instead of expanding through PAIR.
+const BOTH = (name, ...patterns) =>
+	M(name, ...patterns.flatMap((p) => [p.replace('{s}', 'l'), p.replace('{s}', 'r')]));
 
 const MACRO = 'macrodetails';
 // Gender-averaged recipe entries: one target per gender at weight s each.
@@ -198,7 +204,212 @@ const MORPHS = [
 	M('calvesMuscular', ['legs/l-lowerleg-muscle-incr', 1], ['legs/r-lowerleg-muscle-incr', 1]),
 	M('legsLonger', 'legs/upperlegs-height-incr', 'legs/lowerlegs-height-incr'),
 	M('legsShorter', 'legs/upperlegs-height-decr', 'legs/lowerlegs-height-decr'),
-];
+
+	/* ── Curation pass 2 (2026-09-03) ────────────────────────────────────────
+	 * The vendored MakeHuman set carries far more shape data than pass 1 used.
+	 * Everything below comes from targets that were already on disk: face
+	 * regions stay per-side (PAIR) because asymmetry is an identity feature,
+	 * limbs collapse to one symmetric slider (BOTH) because a one-armed edit is
+	 * a bug report, not a look. Targets that only translate a centred feature
+	 * sideways (nose-trans-in/out, head-trans-in/out) are deliberately skipped:
+	 * they read as "broken face", not as a control.
+	 * ──────────────────────────────────────────────────────────────────────── */
+
+	// Nose, continued
+	M('noseBridgeWider', 'nose/nose-width1-incr'),
+	M('noseBridgeNarrower', 'nose/nose-width1-decr'),
+	M('noseMidWider', 'nose/nose-width2-incr'),
+	M('noseMidNarrower', 'nose/nose-width2-decr'),
+	M('noseBaseWider', 'nose/nose-width3-incr'),
+	M('noseBaseNarrower', 'nose/nose-width3-decr'),
+	M('noseDeeper', 'nose/nose-scale-depth-incr'),
+	M('noseShallower', 'nose/nose-scale-depth-decr'),
+	M('noseTipWider', 'nose/nose-point-width-incr'),
+	M('noseTipNarrower', 'nose/nose-point-width-decr'),
+	M('noseFlaring', 'nose/nose-flaring-incr'),
+	M('noseFlaringLess', 'nose/nose-flaring-decr'),
+	M('noseNostrilsAngleUp', 'nose/nose-nostrils-angle-up'),
+	M('noseNostrilsAngleDown', 'nose/nose-nostrils-angle-down'),
+	M('noseBaseUp', 'nose/nose-base-up'),
+	M('noseBaseDown', 'nose/nose-base-down'),
+	M('noseGreek', 'nose/nose-greek-incr'),
+	M('noseConvex', 'nose/nose-curve-convex'),
+	M('noseHumpLess', 'nose/nose-hump-decr'),
+	M('noseCompressed', 'nose/nose-compression-compress'),
+	M('noseForward', 'nose/nose-trans-forward'),
+	M('noseBackward', 'nose/nose-trans-backward'),
+	M('noseHigher', 'nose/nose-trans-up'),
+	M('noseLower', 'nose/nose-trans-down'),
+	// Mouth, continued
+	M('mouthTaller', 'mouth/mouth-scale-vert-incr'),
+	M('mouthShorter', 'mouth/mouth-scale-vert-decr'),
+	M('mouthDeeper', 'mouth/mouth-scale-depth-incr'),
+	M('mouthShallower', 'mouth/mouth-scale-depth-decr'),
+	M('mouthUpperLipWider', 'mouth/mouth-upperlip-width-incr'),
+	M('mouthUpperLipNarrower', 'mouth/mouth-upperlip-width-decr'),
+	M('mouthLowerLipWider', 'mouth/mouth-lowerlip-width-incr'),
+	M('mouthLowerLipNarrower', 'mouth/mouth-lowerlip-width-decr'),
+	M('mouthUpperLipTaller', 'mouth/mouth-upperlip-height-incr'),
+	M('mouthUpperLipShorter', 'mouth/mouth-upperlip-height-decr'),
+	M('mouthLowerLipTaller', 'mouth/mouth-lowerlip-height-incr'),
+	M('mouthLowerLipShorter', 'mouth/mouth-lowerlip-height-decr'),
+	M('mouthUpperLipMiddleUp', 'mouth/mouth-upperlip-middle-up'),
+	M('mouthUpperLipMiddleDown', 'mouth/mouth-upperlip-middle-down'),
+	M('mouthLowerLipMiddleUp', 'mouth/mouth-lowerlip-middle-up'),
+	M('mouthLowerLipMiddleDown', 'mouth/mouth-lowerlip-middle-down'),
+	M('mouthCupidsBowWider', 'mouth/mouth-cupidsbow-width-incr'),
+	M('mouthCupidsBowNarrower', 'mouth/mouth-cupidsbow-width-decr'),
+	M('mouthPhiltrumDeeper', 'mouth/mouth-philtrum-volume-incr'),
+	M('mouthPhiltrumShallower', 'mouth/mouth-philtrum-volume-decr'),
+	M('mouthLaughLines', 'mouth/mouth-laugh-lines-out'),
+	M('mouthHigher', 'mouth/mouth-trans-up'),
+	M('mouthLower', 'mouth/mouth-trans-down'),
+	// Ears, continued
+	...PAIR('earTaller', 'ears/{s}-ear-scale-vert-incr'),
+	...PAIR('earShorter', 'ears/{s}-ear-scale-vert-decr'),
+	...PAIR('earRound', 'ears/{s}-ear-shape-round'),
+	...PAIR('earSquare', 'ears/{s}-ear-shape-square'),
+	...PAIR('earTriangle', 'ears/{s}-ear-shape-triangle'),
+	...PAIR('earLobeSmaller', 'ears/{s}-ear-lobe-decr'),
+	...PAIR('earFlapMore', 'ears/{s}-ear-flap-incr'),
+	...PAIR('earTiltForward', 'ears/{s}-ear-rot-forward'),
+	...PAIR('earTiltBack', 'ears/{s}-ear-rot-backward'),
+	// Eye sockets, continued
+	...PAIR('eyeHigher', 'eyes/{s}-eye-trans-up'),
+	...PAIR('eyeLower', 'eyes/{s}-eye-trans-down'),
+	...PAIR('eyeInnerUp', 'eyes/{s}-eye-corner1-up'),
+	...PAIR('eyeInnerDown', 'eyes/{s}-eye-corner1-down'),
+	...PAIR('eyeUpperLidUp', 'eyes/{s}-eye-height1-incr'),
+	...PAIR('eyeUpperLidDown', 'eyes/{s}-eye-height1-decr'),
+	...PAIR('eyeLowerLidUp', 'eyes/{s}-eye-height3-incr'),
+	...PAIR('eyeLowerLidDown', 'eyes/{s}-eye-height3-decr'),
+	...PAIR('eyeFoldUp', 'eyes/{s}-eye-eyefold-up'),
+	...PAIR('eyeFoldDown', 'eyes/{s}-eye-eyefold-down'),
+	...PAIR('eyeEpicanthusIn', 'eyes/{s}-eye-epicanthus-in'),
+	...PAIR('eyeEpicanthusOut', 'eyes/{s}-eye-epicanthus-out'),
+	...PAIR('eyeDeepSet', 'eyes/{s}-eye-push1-in'),
+	...PAIR('eyeProtruding', 'eyes/{s}-eye-push1-out'),
+	// Brows, continued
+	M('browsForward', 'eyebrows/eyebrows-trans-forward'),
+	M('browsBackward', 'eyebrows/eyebrows-trans-backward'),
+	// Cheeks, continued
+	...PAIR('cheekFlatter', 'cheek/{s}-cheek-bones-decr'),
+	...PAIR('cheekInnerFuller', 'cheek/{s}-cheek-inner-incr'),
+	...PAIR('cheekInnerHollow', 'cheek/{s}-cheek-inner-decr'),
+	...PAIR('cheekHigher', 'cheek/{s}-cheek-trans-up'),
+	...PAIR('cheekLower', 'cheek/{s}-cheek-trans-down'),
+	// Jaw and chin, continued
+	M('jawBonesStronger', 'chin/chin-bones-incr'),
+	M('jawBonesSofter', 'chin/chin-bones-decr'),
+	M('jawChinProminent', 'chin/chin-prominent-incr'),
+	M('jawChinRecessed', 'chin/chin-prominent-decr'),
+	M('jawDrop', 'chin/chin-jaw-drop-incr'),
+	M('jawChinCleftLess', 'chin/chin-cleft-decr'),
+	// Head and forehead, continued
+	M('headTriangular', 'head/head-triangular'),
+	M('headInvertedTriangular', 'head/head-invertedtriangular'),
+	M('headRectangular', 'head/head-rectangular'),
+	M('headDiamond', 'head/head-diamond'),
+	M('headFuller', 'head/head-fat-incr'),
+	M('headLeaner', 'head/head-fat-decr'),
+	M('headAged', 'head/head-age-incr'),
+	M('headYouthful', 'head/head-age-decr'),
+	M('headBackDeeper', 'head/head-back-scale-depth-incr'),
+	M('headBackFlatter', 'head/head-back-scale-depth-decr'),
+	M('foreheadTaller', 'forehead/forehead-scale-vert-incr'),
+	M('foreheadShorter', 'forehead/forehead-scale-vert-decr'),
+	M('foreheadForward', 'forehead/forehead-trans-forward'),
+	M('foreheadBackward', 'forehead/forehead-trans-backward'),
+	M('foreheadTemplesWider', 'forehead/forehead-temple-incr'),
+	M('foreheadTemplesNarrower', 'forehead/forehead-temple-decr'),
+	// Neck, continued
+	M('neckBackDeeper', 'neck/neck-back-scale-depth-incr'),
+	M('neckBackFlatter', 'neck/neck-back-scale-depth-decr'),
+	M('neckDoubleChin', 'neck/neck-double-incr'),
+	M('neckDoubleChinLess', 'neck/neck-double-decr'),
+	M('neckForward', 'neck/neck-trans-forward'),
+	M('neckBackward', 'neck/neck-trans-backward'),
+	// Torso, continued
+	M('chestShallower', 'torso/torso-scale-depth-decr'),
+	M('chestTaller', 'torso/torso-scale-vert-incr'),
+	M('chestShorter', 'torso/torso-scale-vert-decr'),
+	M('chestVShapeLess', 'torso/torso-vshape-decr'),
+	M('chestPectoralsLess', 'torso/torso-muscle-pectoral-decr'),
+	M('torsoLatsWider', 'torso/torso-muscle-dorsi-incr'),
+	M('torsoLatsNarrower', 'torso/torso-muscle-dorsi-decr'),
+	M('torsoFrontChestWider', 'torso/measure-frontchest-dist-incr'),
+	M('torsoFrontChestNarrower', 'torso/measure-frontchest-dist-decr'),
+	M('torsoUnderbustWider', 'torso/measure-underbust-circ-incr'),
+	M('torsoUnderbustNarrower', 'torso/measure-underbust-circ-decr'),
+	// Hips and stomach, continued
+	M('hipsCircWider', 'torso/measure-hips-circ-incr'),
+	M('hipsCircNarrower', 'torso/measure-hips-circ-decr'),
+	M('hipsDeeper', 'hip/hip-scale-depth-incr'),
+	M('hipsTaller', 'hip/hip-scale-vert-incr'),
+	M('hipsShorter', 'hip/hip-scale-vert-decr'),
+	M('hipsWaistUp', 'hip/hip-waist-up'),
+	M('hipsWaistDown', 'hip/hip-waist-down'),
+	M('bellySmaller', 'stomach/stomach-pregnant-decr'),
+	M('bellySoft', 'stomach/stomach-tone-decr'),
+	M('bellyNavelUp', 'stomach/stomach-navel-up'),
+	M('bellyNavelDown', 'stomach/stomach-navel-down'),
+	// Arms, continued (symmetric: one slider drives both sides)
+	BOTH('armsUpperWider', 'arms/{s}-upperarm-scale-horiz-incr'),
+	BOTH('armsUpperNarrower', 'arms/{s}-upperarm-scale-horiz-decr'),
+	BOTH('armsLowerWider', 'arms/{s}-lowerarm-scale-horiz-incr'),
+	BOTH('armsLowerNarrower', 'arms/{s}-lowerarm-scale-horiz-decr'),
+	BOTH('armsUpperDeeper', 'arms/{s}-upperarm-scale-depth-incr'),
+	BOTH('armsLowerDeeper', 'arms/{s}-lowerarm-scale-depth-incr'),
+	BOTH('armsUpperTaller', 'arms/{s}-upperarm-scale-vert-incr'),
+	BOTH('armsLowerTaller', 'arms/{s}-lowerarm-scale-vert-incr'),
+	BOTH('armsLessMuscular', 'arms/{s}-upperarm-muscle-decr', 'arms/{s}-lowerarm-muscle-decr'),
+	BOTH('armsShouldersLessMuscular', 'arms/{s}-upperarm-shoulder-muscle-decr'),
+	// Legs, continued (symmetric)
+	BOTH('legsThighsWider', 'legs/{s}-upperleg-scale-horiz-incr'),
+	BOTH('legsThighsNarrower', 'legs/{s}-upperleg-scale-horiz-decr'),
+	BOTH('legsCalvesWider', 'legs/{s}-lowerleg-scale-horiz-incr'),
+	BOTH('legsCalvesNarrower', 'legs/{s}-lowerleg-scale-horiz-decr'),
+	BOTH('legsThighsDeeper', 'legs/{s}-upperleg-scale-depth-incr'),
+	BOTH('legsCalvesDeeper', 'legs/{s}-lowerleg-scale-depth-incr'),
+	BOTH('legsKneesIn', 'legs/{s}-leg-valgus-incr'),
+	BOTH('legsKneesOut', 'legs/{s}-leg-valgus-decr'),
+	BOTH('calvesThicker', 'legs/{s}-lowerleg-fat-incr'),
+	BOTH('calvesThinner', 'legs/{s}-lowerleg-fat-decr'),
+	BOTH('thighsLessMuscular', 'legs/{s}-upperleg-muscle-decr'),
+	BOTH('calvesLessMuscular', 'legs/{s}-lowerleg-muscle-decr'),
+	M('legsUpperLonger', 'legs/measure-upperleg-height-incr'),
+	M('legsUpperShorter', 'legs/measure-upperleg-height-decr'),
+	M('legsLowerLonger', 'legs/measure-lowerleg-height-incr'),
+	M('legsLowerShorter', 'legs/measure-lowerleg-height-decr'),
+	// Phenotype macros, continued: one slider per ethnicity anchor, gender
+	// averaged, so a user can dial an ancestry cue without also flipping sex.
+	M('bodyAfrican', ...g2((g) => `${MACRO}/african-${g}-young`)),
+	M('bodyAsian', ...g2((g) => `${MACRO}/asian-${g}-young`)),
+	M('bodyCaucasian', ...g2((g) => `${MACRO}/caucasian-${g}-young`)),];
+
+/* ────────────────────────────────────────────────────────────────────────── *
+ * Preflight: a mistyped target path or a duplicated slider name is a typo, and
+ * a typo that survives to the bake either throws 900 lines later or silently
+ * ships a slider that shadows another. Catch both here, listing everything
+ * wrong in one pass instead of failing on the first.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+function preflight() {
+	const problems = [];
+	const seen = new Set();
+	for (const { name, files } of MORPHS) {
+		if (seen.has(name)) problems.push(`duplicate morph name: ${name}`);
+		seen.add(name);
+		for (const { file } of files) {
+			const abs = resolve(SRC, 'targets', `${file}.target.gz`);
+			if (!existsSync(abs)) problems.push(`${name}: missing target file ${file}.target.gz`);
+		}
+	}
+	if (problems.length) {
+		throw new Error(`morph table preflight failed:\n  ${problems.join('\n  ')}`);
+	}
+	return seen.size;
+}
 
 /* ────────────────────────────────────────────────────────────────────────── *
  * OBJ parsing (positions in source space, faces per group, v/vt indexing)
@@ -246,10 +457,30 @@ function loadTarget(relPath) {
 }
 
 /* ────────────────────────────────────────────────────────────────────────── *
+ * Budgets. The file size one is obvious. The VRAM one is not, and it is the
+ * real ceiling on how many sliders this base can carry: three.js uploads morph
+ * targets as an RGBA32F DataArrayTexture with ONE DENSE LAYER PER TARGET
+ * (node_modules/three/src/renderers/webgl/WebGLMorphtargets.js), so cost is
+ * targets x vertices x 16 bytes whether a slider is at zero or not. Sparse glTF
+ * accessors keep the download small; they do nothing for VRAM. Every embed of
+ * every avatar built on this base pays it, so it is a shipped-product budget,
+ * not a dev-machine one.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+const FILE_SIZE_BUDGET_MB = 12;
+const MORPH_VRAM_BUDGET_MB = 96;
+
+/** Bytes three.js will allocate for this GLB's morph textures. */
+function morphTextureBytes(stats) {
+	return stats.reduce((sum, s) => sum + s.verts * s.morphs * 16, 0);
+}
+
+/* ────────────────────────────────────────────────────────────────────────── *
  * Build
  * ────────────────────────────────────────────────────────────────────────── */
 
 function main() {
+	preflight();
 	const obj = parseObj(readFileSync(resolve(SRC, '3dobjs/base.obj'), 'utf8'));
 	const vertexGroups = JSON.parse(
 		readFileSync(resolve(SRC, 'mesh_metadata/basemesh_vertex_groups.json'), 'utf8'),
@@ -538,7 +769,18 @@ function main() {
 		for (const s of stats) console.log(` ${s.name}: ${s.verts} verts, ${s.tris} tris, ${s.morphs} morphs`);
 		const hips = jointWorld.get('mixamorig:Hips');
 		console.log(` hips rest height: ${hips[1].toFixed(3)} m`);
-		if (size > 8 * 1024 * 1024) throw new Error('output unexpectedly large; check sparse encoding');
+		console.log(` morph texture: ${(morphTextureBytes(stats) / 1024 / 1024).toFixed(1)} MB VRAM (budget ${MORPH_VRAM_BUDGET_MB} MB)`);
+		if (size > FILE_SIZE_BUDGET_MB * 1024 * 1024) {
+			throw new Error(`output ${(size / 1024 / 1024).toFixed(2)} MB exceeds the ${FILE_SIZE_BUDGET_MB} MB budget; check sparse encoding`);
+		}
+		const vram = morphTextureBytes(stats) / 1024 / 1024;
+		if (vram > MORPH_VRAM_BUDGET_MB) {
+			throw new Error(
+				`morph targets would need ${vram.toFixed(1)} MB of VRAM, over the ${MORPH_VRAM_BUDGET_MB} MB budget. ` +
+					'Every viewer of every avatar on this base pays that, not just the editor. ' +
+					'Cut sliders, or land the bake-side identity-morph fold first (specs/PARAMETRIC_AVATAR.md).',
+			);
+		}
 	});
 }
 

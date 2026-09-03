@@ -28,7 +28,7 @@ import { canonicalBoneNodesFromObject } from './animation-retarget.js';
 import { renderWardrobePanel } from './avatar-wardrobe.js';
 import { GarmentCloset, renderClosetSection } from './garment-closet.js';
 import { renderRigPanel } from './avatar-rig.js';
-import { AvatarWalkPreview } from './avatar-edit-walk.js';
+import { createWalkPanel } from './avatar-walk-panel.js';
 import { apiFetch } from './api.js';
 import { playAs } from './game/play-handoff.js';
 import { log } from './shared/log.js';
@@ -527,12 +527,15 @@ function renderActivePanel() {
 
 // ── Walk preview ─────────────────────────────────────────────────────────
 
+// The panel itself lives in src/avatar-walk-panel.js so Avatar Studio mounts
+// the identical control. This editor supplies the scene, the ambient-idle
+// pause/resume hooks, and the draft handoff into /walk.
 function getWalkPreview() {
 	if (walkPreview) return walkPreview;
 	if (!scene?.root) return null;
-	walkPreview = new AvatarWalkPreview({
-		scene,
-		stageEl: $('ae-stage'),
+	walkPreview = createWalkPanel({
+		getScene: () => scene,
+		getStageEl: () => $('ae-stage'),
 		// The editor's ambient idle layer writes bone rotations every frame; pause
 		// it while a retargeted walk clip owns the skeleton, resume on exit.
 		pauseAmbient: () => {
@@ -546,116 +549,43 @@ function getWalkPreview() {
 				idleDispose = scene.addOnTick((dt) => idle.update(dt));
 			}
 		},
-	});
-	walkPreview.onStatus((msg) => {
-		const el = $('ae-walk-status');
-		if (el) el.textContent = msg || '';
+		openWalkUrl: buildWalkDraftUrl,
 	});
 	return walkPreview;
 }
 
 function renderWalkPanel(panel) {
-	if (!scene?.root) {
-		panel.innerHTML = `<div class="ae-empty">Waiting for avatar to load…</div>`;
+	const preview = getWalkPreview();
+	if (!preview) {
+		panel.innerHTML = `<div class="ae-empty">Waiting for avatar to load...</div>`;
 		return;
 	}
-	// Don't rebuild the panel (and lose the env selection) if it's already up —
-	// renderActivePanel can re-fire while the Walk tab stays active (e.g. on save).
-	if (panel.querySelector('#ae-walk-panel')) {
-		enterWalkMode();
-		return;
-	}
-
-	panel.innerHTML = `
-		<div class="ae-walk" id="ae-walk-panel">
-			<p class="ae-walk-lede">
-				See your avatar in motion. It auto-walks a circle around the stage —
-				take over any time with <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>
-				or the arrow keys. Every sculpt, outfit, and accessory edit shows up here live.
-			</p>
-
-			<label class="ae-walk-field">
-				<span class="ae-walk-field-label">Environment</span>
-				<select class="ae-walk-select" id="ae-walk-env">
-					<option value="void">Void</option>
-				</select>
-			</label>
-
-			<button class="ae-btn primary ae-walk-open" id="ae-walk-open" type="button">
-				Open in Walk page →
-			</button>
-			<p class="ae-walk-note" id="ae-walk-status"></p>
-		</div>
-	`;
-
-	const envSel = panel.querySelector('#ae-walk-env');
-	envSel.addEventListener('change', () => {
-		getWalkPreview()?.setEnvironment(envSel.value);
-	});
-	panel.querySelector('#ae-walk-open').addEventListener('click', openInWalkPage);
-
-	enterWalkMode();
-
-	// Backfill the real environment list once the manifest resolves.
-	const preview = getWalkPreview();
-	preview?.listEnvironments().then((envs) => {
-		if (!envs || envs.length <= 1) return;
-		const current = preview.envName || 'void';
-		envSel.innerHTML = envs
-			.map(
-				(e) =>
-					`<option value="${esc(e.name)}"${e.name === current ? ' selected' : ''}>${esc(e.label)}</option>`,
-			)
-			.join('');
-	});
-}
-
-function enterWalkMode() {
-	const preview = getWalkPreview();
-	if (!preview || preview.active) return;
-	preview.enter().catch((err) => {
-		log.warn('[avatar-edit] walk preview enter failed:', err?.message);
-		const el = $('ae-walk-status');
-		if (el) el.textContent = `Could not start walk: ${err.message}`;
-	});
+	preview.render(panel);
 }
 
 function exitWalkMode() {
-	if (walkPreview?.active) walkPreview.exit();
+	walkPreview?.exit();
 }
 
-async function openInWalkPage() {
-	const btn = $('ae-walk-open');
-	const status = $('ae-walk-status');
-	if (btn) btn.disabled = true;
-	if (status) status.textContent = 'Preparing preview…';
-	try {
-		// Mint an unguessable draft id and stash the *current* (unsaved) look so the
-		// walk page renders exactly what's on the editor stage — not the last save.
-		const draftId = (crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`)
-			.replace(/[^a-z0-9]/gi, '')
-			.slice(0, 40);
-		const r = await apiFetch(`/api/avatars/draft/${encodeURIComponent(draftId)}`, {
-			method: 'PUT',
-			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({
-				avatar_id: avatar.id,
-				appearance: collapseAppearance(workingAppearance),
-			}),
-		});
-		if (!r.ok) {
-			const j = await r.json().catch(() => ({}));
-			throw new Error(j.error_description || `Could not save draft (${r.status})`);
-		}
-		const env = $('ae-walk-env')?.value || 'void';
-		const url = `/walk?avatar=${encodeURIComponent(draftId)}&preview=true&env=${encodeURIComponent(env)}`;
-		window.open(url, '_blank', 'noopener');
-		if (status) status.textContent = 'Opened in a new tab.';
-	} catch (err) {
-		if (status) status.textContent = err.message;
-	} finally {
-		if (btn) btn.disabled = false;
+// Mint an unguessable draft id and stash the *current* (unsaved) look so the
+// walk page renders exactly what's on the editor stage, not the last save.
+async function buildWalkDraftUrl(env) {
+	const draftId = (crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`)
+		.replace(/[^a-z0-9]/gi, '')
+		.slice(0, 40);
+	const r = await apiFetch(`/api/avatars/draft/${encodeURIComponent(draftId)}`, {
+		method: 'PUT',
+		headers: { 'content-type': 'application/json' },
+		body: JSON.stringify({
+			avatar_id: avatar.id,
+			appearance: collapseAppearance(workingAppearance),
+		}),
+	});
+	if (!r.ok) {
+		const j = await r.json().catch(() => ({}));
+		throw new Error(j.error_description || `Could not save draft (${r.status})`);
 	}
+	return `/walk?avatar=${encodeURIComponent(draftId)}&preview=true&env=${encodeURIComponent(env)}`;
 }
 
 function tilePreviewMarkup(preset) {

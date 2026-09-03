@@ -29,6 +29,11 @@ import {
 	PROPORTION_PARAMS,
 } from './avatar-proportions.js';
 import { canonicalBoneNodesFromObject } from './animation-retarget.js';
+import { renderWardrobePanel } from './avatar-wardrobe.js';
+import { GarmentCloset, renderClosetSection, SLOT_LABEL_ONE } from './garment-closet.js';
+import { renderRigPanel } from './avatar-rig.js';
+import { createWalkPanel } from './avatar-walk-panel.js';
+import { playAs } from './game/play-handoff.js';
 import { saveRemoteGlbToAccount, apiFetch } from './account.js';
 import { captureWizardReturn, returnToWizard } from './shared/wizard-return.js';
 
@@ -96,6 +101,19 @@ let editAvatarId = null;   // non-null when in edit mode (?edit=ID)
 
 let history = [];
 let historyIndex = -1;
+
+// Additive-wardrobe controller: catalog garments skinned onto this avatar's
+// skeleton at runtime (specs/GARMENT_MANIFEST.md). Created once the scene root
+// exists, in both create and edit mode -- adding a garment needs a rig, not a
+// saved record.
+let closet = null;
+// Walk-tab controller (src/avatar-walk-panel.js). Owns a second AnimationManager
+// on the same rig, so proportion edits have to re-measure it too.
+let walkPanel = null;
+// The avatar loaded in edit mode, kept for the panels that need the record
+// itself (rig status, the /walk draft handoff, "Play as this").
+let editAvatar = null;
+let idleDispose = null;
 
 let previewedId = null;
 let previewToken = 0;
@@ -184,14 +202,25 @@ function beginBusy(label) {
 	};
 }
 
+// `editOnly` tabs need a saved avatar record behind them: rigging POSTs the
+// avatar's id to the regenerate backend, so there is nothing to rig from a
+// draft. The Walk tab renders in both modes (locomotion needs only the live
+// rig); its handoff into /walk is what degrades, inside the panel.
 const TABS = [
 	{ id: 'color', label: 'Color', kinds: [], emoji: '🎨', color: true },
+	{ id: 'wardrobe', label: 'Wardrobe', kinds: [], emoji: '👕', wardrobe: true },
 	{ id: 'hat', label: 'Hats', kinds: ['hat'], emoji: '🎩', single: true },
 	{ id: 'glasses', label: 'Glasses', kinds: ['glasses'], emoji: '🕶️', single: true },
 	{ id: 'earrings', label: 'Earrings', kinds: ['earrings'], emoji: '💎', single: false },
 	{ id: 'sculpt', label: 'Sculpt', kinds: [], emoji: '✨', single: true, sculpt: true },
 	{ id: 'animate', label: 'Animate', kinds: [], emoji: '🎬', animate: true },
+	{ id: 'walk', label: 'Walk', kinds: [], emoji: '🚶', walk: true },
+	{ id: 'rig', label: 'Rig', kinds: [], emoji: '🦴', rig: true, editOnly: true },
 ];
+
+function visibleTabs() {
+	return TABS.filter((t) => !t.editOnly || editAvatar);
+}
 
 const KIND_EMOJI = { hat: '🎩', glasses: '🕶️', earrings: '💎' };
 const KIND_LABEL = { hat: 'Hat', glasses: 'Glasses', earrings: 'Earrings' };
@@ -281,7 +310,6 @@ async function init() {
 	const params = new URLSearchParams(location.search);
 	editAvatarId = parseEditId(params);
 
-	let editAvatar = null;
 	if (editAvatarId) {
 		try {
 			editAvatar = await fetchEditAvatar(editAvatarId);
@@ -329,9 +357,9 @@ async function init() {
 	bindHeader();
 	bindKeyboard();
 
-	// The accessory catalog powers three of six tabs. A catalog outage degrades
-	// those tabs to a retryable error; it must not take down colors, sculpt,
-	// animate, or save, all of which need nothing from it.
+	// The accessory catalog powers three of the accessory tabs. A catalog outage
+	// degrades those tabs to a retryable error; it must not take down colors,
+	// wardrobe, sculpt, animate, walk or save, none of which need it.
 	const presetsPromise = loadPresets();
 
 	await scenePromise;
@@ -340,8 +368,46 @@ async function init() {
 		applyAllColors();
 		applyAllLayers();
 	}
+	await applyEquipHandoff(params);
 	renderActivePanel();
 	updateDirtyState();
+}
+
+// Gallery "Equip" handoff: /avatar-studio?equip-glb=<url>&equip-kind=hat pre-
+// applies an accessory GLB that is not in the presets catalog and dirties the
+// state so Save lights up. Same contract the avatar editor honours, so a
+// gallery tile can hand off to either editor.
+const EQUIP_KINDS = ['hat', 'glasses', 'earrings'];
+
+async function applyEquipHandoff(params) {
+	const glbUrl = params.get('equip-glb') || '';
+	if (!glbUrl || !accessoryManager) return;
+	const kind = EQUIP_KINDS.includes(params.get('equip-kind') || '')
+		? params.get('equip-kind')
+		: 'hat';
+	const name = params.get('equip-name') || 'Gallery accessory';
+	const preset = {
+		id: `gallery:${btoa(glbUrl).replace(/[^a-z0-9]/gi, '').slice(0, 32)}`,
+		kind,
+		name,
+		glbUrl,
+		attachBone: params.get('equip-bone') || 'Head',
+	};
+	const { ok } = await runQueued(() => accessoryManager.applyPreset(preset));
+	if (!ok) {
+		setStatus('err', `Could not load "${name}". Everything else is ready.`);
+		return;
+	}
+	if (!workingAppearance.accessories.includes(preset.id)) {
+		workingAppearance.accessories = [...workingAppearance.accessories, preset.id];
+	}
+	// The synthetic preset is not in the catalog, so register it for the chip
+	// bar and the tile-selected checks that read presetsById.
+	presetsById.set(preset.id, preset);
+	pushHistory();
+	renderChips();
+	updateDirtyState();
+	setStatus('ok', `"${name}" added. Save to keep it on your avatar.`);
 }
 
 async function fetchEditAvatar(id) {
@@ -492,6 +558,13 @@ async function applyHistoryState(state) {
 	if (accessoryManager) {
 		await runQueued(() => accessoryManager.hydrateFromAppearance(target));
 	}
+	// Catalog garments live on the rig, not in the appearance-driven accessory
+	// manager, so undo/redo has to re-dress the closet explicitly or a stepped-
+	// over garment stays on the body while the record says it is off.
+	if (closet && token === historyToken) {
+		closet.clear();
+		await closet.hydrate(target.garments);
+	}
 	done();
 	if (token !== historyToken) return;
 
@@ -608,6 +681,9 @@ function applyProportions() {
 	if (!scene?.root) return;
 	applyProportionsToRoot(scene.root, workingAppearance.proportions, { boneMap: boneNodes });
 	scene.getEmoteController()?.remeasureRig?.();
+	// The walk preview owns a second AnimationManager on the same rig, so it has
+	// its own stale hip scale to fix.
+	walkPanel?.remeasureProportions();
 }
 
 // ── Boot scene ────────────────────────────────────────────────────────
@@ -645,9 +721,34 @@ async function bootScene(glbUrl, editAvatar) {
 
 		idle = new IdleAnimation({
 			getRoot: () => scene.root,
-			seed: 'avatar-studio',
+			seed: editAvatar?.id || 'avatar-studio',
 		});
-		scene.addOnTick((dt) => idle.update(dt));
+		// Held rather than discarded: the Walk tab has to silence this layer
+		// while a retargeted clip owns the skeleton, or the two fight per frame.
+		idleDispose = scene.addOnTick((dt) => idle.update(dt));
+
+		// Additive wardrobe. Unknown or retired garments degrade to "not worn"
+		// inside hydrate rather than failing the whole boot.
+		closet = new GarmentCloset({
+			getRoot: () => scene?.root || null,
+			getWorking: () => workingAppearance,
+			// The parametric base ships a baked UV region mask, giving worn
+			// garments pixel-exact skin occlusion. Other bodies use bone-cull.
+			regionMaskUrl: glbUrl.includes('parametric-base')
+				? '/avatars/parametric-base.regions.png'
+				: null,
+			onDirty: () => {
+				pushHistory();
+				updateDirtyState();
+				scheduleDraftSave();
+			},
+			onChanged: () => renderChips(),
+		});
+		// Racks render as soon as the closet exists: browsing the catalog must
+		// not wait behind re-downloading a saved outfit (hydrate below marks
+		// tiles worn as each piece lands, via the onChanged re-render).
+		if (activeTab === 'wardrobe') renderActivePanel();
+		await closet.hydrate(workingAppearance.garments);
 
 		// Bring the rig to life: load the clip library and settle the avatar into
 		// a looping idle so it leaves its bind T-pose. The clip drives the whole
@@ -670,6 +771,66 @@ async function bootScene(glbUrl, editAvatar) {
 			'We couldn’t load the avatar. Check your connection and try again.',
 		);
 	}
+}
+
+// ── Walk preview ─────────────────────────────────────────────────────
+
+// Same control the avatar editor mounts (src/avatar-walk-panel.js). In edit
+// mode the "Open in Walk page" handoff stashes the *unsaved* look as a draft so
+// the walk page renders the stage, not the last save. In create mode there is
+// no avatar record to presign a base GLB from, so the panel says so instead of
+// offering a button that would 400.
+function getWalkPanel() {
+	if (walkPanel) return walkPanel;
+	if (!scene?.root) return null;
+	walkPanel = createWalkPanel({
+		getScene: () => scene,
+		getStageEl: () => $('as-stage'),
+		buttonClass: 'as-btn',
+		emptyClass: 'as-empty',
+		pauseAmbient: () => {
+			if (idleDispose) {
+				idleDispose();
+				idleDispose = null;
+			}
+		},
+		resumeAmbient: () => {
+			if (idle && scene && !idleDispose) {
+				idleDispose = scene.addOnTick((dt) => idle.update(dt));
+			}
+		},
+		openWalkUrl: editAvatar ? buildWalkDraftUrl : null,
+		saveHint: 'Save this avatar to open it in the full Walk page.',
+	});
+	return walkPanel;
+}
+
+function renderWalkPanel(panel) {
+	const p = getWalkPanel();
+	if (!p) {
+		panel.innerHTML = `<div class="as-empty">Waiting for avatar to load...</div>`;
+		return;
+	}
+	p.render(panel);
+}
+
+async function buildWalkDraftUrl(env) {
+	const draftId = (crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`)
+		.replace(/[^a-z0-9]/gi, '')
+		.slice(0, 40);
+	const r = await apiFetch(`/api/avatars/draft/${encodeURIComponent(draftId)}`, {
+		method: 'PUT',
+		headers: { 'content-type': 'application/json' },
+		body: JSON.stringify({
+			avatar_id: editAvatar.id,
+			appearance: collapseAppearance(workingAppearance),
+		}),
+	});
+	if (!r.ok) {
+		const j = await r.json().catch(() => ({}));
+		throw new Error(j.error_description || `Could not save draft (${r.status})`);
+	}
+	return `/walk?avatar=${encodeURIComponent(draftId)}&preview=true&env=${encodeURIComponent(env)}`;
 }
 
 // ── Animate — live rig playback ──────────────────────────────────────
@@ -776,7 +937,7 @@ async function retryPresets() {
 
 function renderTabs() {
 	const el = $('as-tabs');
-	el.innerHTML = TABS.map((t) => {
+	el.innerHTML = visibleTabs().map((t) => {
 		const active = t.id === activeTab;
 		// The icon carries the tab on narrow viewports, where the word label is
 		// hidden. `aria-label` is unconditional so the button keeps its name in
@@ -828,12 +989,77 @@ function renderActivePanel() {
 	// A re-render replaces the swatch DOM the popover is anchored to; close it
 	// first so it never points at a detached node.
 	closeActivePopover();
-	const tab = TABS.find((t) => t.id === activeTab);
+	const tabs = visibleTabs();
+	let tab = tabs.find((t) => t.id === activeTab);
+	if (!tab) {
+		tab = tabs[0];
+		activeTab = tab.id;
+	}
 	const panel = $('as-panel');
 	panel.setAttribute('aria-labelledby', `as-tab-${activeTab}`);
 
+	// Leaving the Walk tab tears locomotion down and restores the static stage.
+	// Idempotent, so it is safe on every render regardless of the source tab.
+	if (activeTab !== 'walk') walkPanel?.exit();
+
 	if (tab.color) {
 		renderColorPanel(panel);
+		return;
+	}
+
+	if (tab.walk) {
+		renderWalkPanel(panel);
+		return;
+	}
+
+	// Wardrobe: recolour and show/hide the avatar's own baked garment layers
+	// (src/avatar-wardrobe.js resolves them on arbitrary GLBs by mesh/material
+	// shape, not a hardcoded name list), plus the closet of additive catalog
+	// garments skinned onto the live skeleton with occlusion masking.
+	if (tab.wardrobe) {
+		if (!scene?.root) {
+			panel.innerHTML = `<div class="as-empty">Waiting for avatar to load...</div>`;
+			return;
+		}
+		renderWardrobePanel({
+			container: panel,
+			root: scene.root,
+			working: workingAppearance,
+			applyLayers: (layers) => accessoryManager?.applyLayers(layers),
+			onDirty: () => {
+				pushHistory();
+				renderChips();
+				updateDirtyState();
+				scheduleDraftSave();
+			},
+		});
+		// The closet renders beneath the layer cards. It exists even for models
+		// with no built-in layers: being able to ADD a garment is exactly what a
+		// layerless avatar needs.
+		const closetMount = document.createElement('div');
+		closetMount.className = 'as-closet-mount';
+		panel.appendChild(closetMount);
+		if (closet) {
+			renderClosetSection({ container: closetMount, closet });
+		} else {
+			closetMount.innerHTML = '<div class="gc-loading">Closet opens when the avatar finishes loading...</div>';
+		}
+		return;
+	}
+
+	// Rig: rig status plus one-click auto-rig. Non-destructive (it mints a new
+	// sibling avatar), so on success we hand the owner into that new avatar's
+	// Studio session rather than silently swapping the model under them.
+	if (tab.rig) {
+		renderRigPanel({
+			container: panel,
+			avatar: editAvatar,
+			buttonClass: 'as-btn',
+			onRigged: (newAvatar) => {
+				if (!newAvatar?.id) return;
+				location.href = `/avatar-studio?edit=${encodeURIComponent(newAvatar.id)}`;
+			},
+		});
 		return;
 	}
 
@@ -854,7 +1080,10 @@ function renderActivePanel() {
 			},
 			// Debounced by the panel: rebuilding every bound action on each
 			// slider frame would stutter the drag.
-			onRigChanged: () => scene?.getEmoteController()?.remeasureRig?.(),
+			onRigChanged: () => {
+				scene?.getEmoteController()?.remeasureRig?.();
+				walkPanel?.remeasureProportions();
+			},
 		});
 		return;
 	}
@@ -1464,7 +1693,27 @@ function renderChips() {
 			</span>`);
 	}
 
+	// Worn catalog garments. Read from the closet rather than
+	// `workingAppearance.garments` so a chip only ever names a piece that is
+	// actually on the rig (hydrate drops retired ids).
+	for (const [slot, entry] of closet?.attached() || []) {
+		const name = entry?.manifest?.name;
+		if (!name) continue;
+		parts.push(`
+			<span class="as-chip" data-garment="${esc(slot)}">
+				<span class="as-chip-kind">${esc(SLOT_LABEL_ONE[slot] || slot)}</span>
+				<span>${esc(name)}</span>
+				<button type="button" aria-label="Take off ${esc(name)}" data-takeoff="${esc(slot)}">×</button>
+			</span>`);
+	}
+
 	el.innerHTML = parts.join('');
+
+	// detach() emits onDirty + onChanged, which re-runs this render and refreshes
+	// the closet racks through their own subscription, so nothing else to do here.
+	el.querySelectorAll('button[data-takeoff]').forEach((btn) => {
+		btn.addEventListener('click', () => closet?.detach(btn.dataset.takeoff));
+	});
 
 	el.querySelectorAll('button[data-remove]').forEach((btn) => {
 		btn.addEventListener('click', () => removeCommitted(btn.dataset.remove));
@@ -1667,11 +1916,42 @@ async function applyAccessory(tab, presetId) {
 function bindHeader() {
 	$('as-save').addEventListener('click', () => saveAvatar());
 	$('as-reset').addEventListener('click', () => resetAll());
+	bindPlayAs();
 	// A renamed avatar is an unsaved change too, so keep the dirty marker honest.
 	$('as-name')?.addEventListener('input', () => updateDirtyState());
 	$('as-randomize')?.addEventListener('click', () => randomizeAppearance());
 	$('as-undo')?.addEventListener('click', () => undoAppearance());
 	$('as-redo')?.addEventListener('click', () => redoAppearance());
+}
+
+// "Play as this": drop straight into /play wearing the avatar on the stage.
+// Only offered in edit mode, where there is a saved record for /play to load;
+// a create-mode draft has nothing to hand over until Save mints one. Unsaved
+// edits are committed first, so /play never renders a stale look.
+function bindPlayAs() {
+	const btn = $('as-play');
+	if (!btn) return;
+	if (!editAvatar) return;
+	btn.hidden = false;
+	btn.addEventListener('click', async () => {
+		btn.disabled = true;
+		try {
+			if (isDirtyNow()) {
+				// The PATCH directly, not saveAvatar(): the full save path ends in a
+				// success toast and a redirect to the avatar page, which would race
+				// the handoff into /play.
+				setStatus('spin', 'Saving your look before you play...');
+				await patchEditedAvatar(editAvatarId, currentName(), collapseAppearance(workingAppearance));
+				savedAppearance = cloneAppearance(workingAppearance);
+				updateDirtyState();
+			}
+			setStatus('spin', 'Entering /play...');
+			await playAs({ id: editAvatar.id, name: currentName(), dest: '/play' });
+		} catch (err) {
+			setStatus('err', err.message);
+			btn.disabled = false;
+		}
+	});
 }
 
 function bindKeyboard() {
@@ -1692,13 +1972,14 @@ async function resetAll() {
 		if (accessoryManager) {
 			for (const id of wasIds) accessoryManager.removePreset(id);
 		}
-		// Reset clears what Studio controls. The wardrobe it cannot show (baked
-		// outfit preset, catalog garments) is not Studio's to throw away.
+		// Reset clears what Studio controls, which now includes the closet. The
+		// baked `outfit` preset id has no Studio UI, so it is not Studio's to
+		// throw away and rides through untouched.
 		workingAppearance = {
 			...hydrateAppearance(null),
 			outfit: workingAppearance.outfit ?? null,
-			garments: (workingAppearance.garments || []).map((g) => ({ ...g })),
 		};
+		closet?.clear();
 		if (scene?.root) {
 			applyMorphsToRoot(scene.root, {});
 			applyProportions();
@@ -1859,7 +2140,12 @@ async function saveAvatar() {
 		// This captures all colours, morphs, and accessories already applied
 		// to the Three.js scene — no server-side bake needed.
 		updateSaveOverlay('Exporting model...', 'Capturing colours and accessories');
-		const rawGlbBlob = await exportSceneGlb();
+		// Catalog garments are re-baked from the appearance record PATCHed below,
+		// so the uploaded base must not already be wearing them (see
+		// GarmentCloset#withGarmentsOff). The closet puts them straight back.
+		const rawGlbBlob = closet
+			? await closet.withGarmentsOff(() => exportSceneGlb())
+			: await exportSceneGlb();
 		updateProgress(15);
 
 		// ── Step 1b: Compress + validate before upload ──────────────
@@ -1965,11 +2251,11 @@ async function patchEditedAvatar(avatarId, name, appearance) {
 // toast, redirect.
 async function finishSave(avatar) {
 	// A Studio snapshot only represents the avatar faithfully when Studio drew
-	// everything it is wearing. Wardrobe garments and baked outfit presets are
-	// carried through the appearance record but have no Studio UI and are not in
-	// the live scene, so overwriting the thumbnail here would show the avatar
-	// undressed. Leave the existing thumbnail alone in that case.
-	const wearsUnrenderedLayers = !!(workingAppearance.outfit || workingAppearance.garments?.length);
+	// everything it is wearing. Closet garments now ARE on the live rig, so they
+	// photograph correctly; a baked `outfit` preset id still has no Studio UI and
+	// is not in the scene, so overwriting the thumbnail while one is set would
+	// show the avatar undressed. Leave the existing thumbnail alone in that case.
+	const wearsUnrenderedLayers = !!workingAppearance.outfit;
 	if (!wearsUnrenderedLayers) {
 		updateSaveOverlay('Capturing thumbnail...');
 		try {

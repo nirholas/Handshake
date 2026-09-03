@@ -27,10 +27,17 @@ import { clampOccludes } from './garment-taxonomy.js';
 import { loadCatalog, bySlot, verifyModelBytes } from './garment-catalog.js';
 import { log } from './shared/log.js';
 
+// Plural rack headings. `SLOT_LABEL_ONE` is the singular form a chip or a
+// one-item summary needs, so callers do not have to de-pluralize by hand.
 const SLOT_LABELS = {
 	top: 'Tops', bottom: 'Bottoms', footwear: 'Footwear', outerwear: 'Outerwear',
 	hair: 'Hair', headwear: 'Headwear', glasses: 'Glasses', accessory: 'Accessories',
 };
+
+export const SLOT_LABEL_ONE = Object.freeze({
+	top: 'Top', bottom: 'Bottom', footwear: 'Shoes', outerwear: 'Outerwear',
+	hair: 'Hair', headwear: 'Headwear', glasses: 'Glasses', accessory: 'Accessory',
+});
 
 /**
  * Controller for one avatar's attached garments. Owns the scene-side state;
@@ -216,6 +223,34 @@ export class GarmentCloset {
 			this._syncWorking();
 		}
 		return { missing };
+	}
+
+	/**
+	 * Run `fn` with every worn garment temporarily off the rig and the skin
+	 * occlusion they impose lifted, then put them back exactly as they were.
+	 *
+	 * Avatar Studio's create-mode save exports the live scene as the new
+	 * avatar's BASE model and PATCHes the appearance record alongside it. The
+	 * server bake replays `appearance.garments` onto that base
+	 * (api/_lib/bake-garments.js), so exporting an already-dressed body would
+	 * apply every garment twice. Detaching is scene-side only: `working.garments`
+	 * is untouched, because it is exactly what the bake needs to replay.
+	 *
+	 * Re-attach reads the GLB bytes back from this closet's cache, so putting
+	 * the outfit back costs a parse, not a download.
+	 */
+	async withGarmentsOff(fn) {
+		const worn = [...this._attached.values()].map(({ manifest }) => manifest);
+		if (!worn.length) return fn();
+		await this._enqueue(async () => {
+			for (const slot of [...this._attached.keys()]) this._detachNow(slot);
+			this._reoccludeAll();
+		});
+		try {
+			return await fn();
+		} finally {
+			for (const manifest of worn) await this.attach(manifest);
+		}
 	}
 
 	/** Detach everything (model swap teardown). Scene-side only. */

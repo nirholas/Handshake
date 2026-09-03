@@ -1,5 +1,6 @@
 /**
- * Avatar rigging panel — /avatars/:id/edit → "Animate" tab.
+ * Avatar rigging panel, shared by /avatars/:id/edit ("Animate" tab) and the
+ * Avatar Studio edit mode ("Rig" tab).
  *
  * A static (un-rigged) mesh can't play the pre-baked animation library: it has
  * no skeleton to drive. This panel turns such a mesh into an animation-ready
@@ -64,8 +65,12 @@ async function isRiggingAvailable() {
  * @param {HTMLElement} options.container
  * @param {Object} options.avatar - the avatar being edited
  * @param {(newAvatar: Object) => void} options.onRigged - called with the new rigged avatar
+ * @param {string} [options.buttonClass] - host page's button class, so the
+ *   action button inherits the surrounding editor's chrome. Defaults to the
+ *   avatar editor's `ae-btn`; Avatar Studio passes `as-btn`.
  */
-export function renderRigPanel({ container, avatar, onRigged }) {
+export function renderRigPanel({ container, avatar, onRigged, buttonClass = 'ae-btn' }) {
+	injectRigCss();
 	const status = getRigStatus(avatar);
 	const state = { phase: 'idle', message: null, progress: 0, jobId: null };
 	let cancelled = false;
@@ -237,7 +242,7 @@ export function renderRigPanel({ container, avatar, onRigged }) {
 		}
 
 		const btn = document.createElement('button');
-		btn.className = `ae-btn ${status.rigged ? '' : 'primary'}`.trim();
+		btn.className = `${buttonClass} ${status.rigged ? '' : 'primary'}`.trim();
 		btn.textContent = status.rigged ? 'Re-rig anyway' : 'Rig this model';
 		el.appendChild(btn);
 
@@ -293,4 +298,55 @@ export function renderRigPanel({ container, avatar, onRigged }) {
 
 	paint();
 	return { unmount: cleanup };
+}
+
+/* ── styles ──────────────────────────────────────────────────────────────── */
+
+// The panel is mounted by two different editors, so it owns its own chrome
+// rather than assuming the host page declared `.ae-rig-*`. Every token carries
+// a literal fallback: Avatar Studio does not define `--warn`, and a spinner
+// that silently loses its keyframes reads as a hung job.
+let rigCssInjected = false;
+function injectRigCss() {
+	if (rigCssInjected || typeof document === 'undefined') return;
+	rigCssInjected = true;
+	const style = document.createElement('style');
+	style.id = 'ae-rig-css';
+	style.textContent = `
+		.ae-rig { display: flex; flex-direction: column; gap: 16px; padding: 4px 2px; }
+		.ae-rig-pill {
+			display: inline-flex; align-items: center; gap: 8px; align-self: flex-start;
+			padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 600;
+			letter-spacing: 0.01em; border: 1px solid var(--border-2, #2a2a2a); color: var(--text-2, #a1a1aa);
+		}
+		.ae-rig-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-3, #71717a); }
+		.ae-rig-pill.ok { color: #34d399; border-color: rgba(52, 211, 153, 0.35); }
+		.ae-rig-pill.ok .ae-rig-dot { background: #34d399; box-shadow: 0 0 8px rgba(52, 211, 153, 0.6); }
+		.ae-rig-pill.warn { color: var(--warn, #f59e0b); border-color: color-mix(in srgb, var(--warn, #f59e0b) 35%, transparent); }
+		.ae-rig-pill.warn .ae-rig-dot { background: var(--warn, #f59e0b); }
+		.ae-rig-pill.unknown { color: var(--text-3, #71717a); }
+		.ae-rig-detail { margin: 0; font-size: 13px; line-height: 1.5; color: var(--text-2, #a1a1aa); }
+		.ae-rig-action { display: flex; flex-direction: column; gap: 10px; }
+		.ae-rig-action button { align-self: flex-start; }
+		.ae-rig-note { margin: 0; font-size: 12px; line-height: 1.5; color: var(--text-3, #71717a); }
+		.ae-rig-error {
+			font-size: 13px; line-height: 1.5; color: var(--danger, #f43f5e);
+			padding: 10px 12px; border: 1px solid rgba(244, 63, 94, 0.3);
+			border-radius: 10px; background: rgba(244, 63, 94, 0.06);
+		}
+		.ae-rig-busy { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 28px 8px; text-align: center; }
+		.ae-rig-spinner {
+			width: 28px; height: 28px; border-radius: 50%;
+			border: 3px solid var(--border-2, #2a2a2a); border-top-color: var(--text, #fafafa);
+			animation: ae-rig-spin 0.9s linear infinite;
+		}
+		@keyframes ae-rig-spin { to { transform: rotate(360deg); } }
+		@media (prefers-reduced-motion: reduce) { .ae-rig-spinner { animation-duration: 2.4s; } }
+		.ae-rig-busy-msg { margin: 0; font-size: 14px; font-weight: 600; color: var(--text, #fafafa); }
+		.ae-rig-busy-hint { margin: 0; font-size: 12px; color: var(--text-3, #71717a); }
+		.ae-rig-bar { width: 100%; height: 6px; border-radius: 999px; background: var(--panel-2, #161616); overflow: hidden; }
+		.ae-rig-bar-fill { height: 100%; background: var(--text, #fafafa); border-radius: 999px; transition: width 0.4s ease; }
+		.ae-rig-done { display: flex; flex-direction: column; gap: 14px; padding: 8px 2px; }
+	`;
+	document.head.appendChild(style);
 }

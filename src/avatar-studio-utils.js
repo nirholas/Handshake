@@ -8,12 +8,11 @@ import { normalizeProportions } from './avatar-proportions.js';
 export const DRAFT_KEY = 'avatar-studio-draft';
 export const DRAFT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-// `outfit` (a baked preset id) and `garments` (additive catalog wearables, see
-// specs/GARMENT_MANIFEST.md) are part of the stored appearance record but the
-// Studio has no UI for either (the wardrobe lives in the avatar editor). They
-// are still carried through hydrate/collapse/clone verbatim: a PATCH replaces
-// `appearance` wholesale, so dropping them here would silently undress any
-// avatar opened in Studio's edit mode and saved.
+// `garments` (additive catalog wearables, see specs/GARMENT_MANIFEST.md) are
+// driven by the Studio's Wardrobe tab; `outfit` (a baked preset id) still has
+// no UI anywhere. Both are carried through hydrate/collapse/clone verbatim: a
+// PATCH replaces `appearance` wholesale, so dropping either here would silently
+// undress an avatar opened in Studio's edit mode and saved.
 
 /** Copy the garment list, isolating each {slot, id} entry from the source. */
 function copyGarments(list) {

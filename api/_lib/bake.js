@@ -61,6 +61,11 @@ export function isBakeable(appearance) {
 	// Additive catalog garments (specs/GARMENT_MANIFEST.md) bake via
 	// bake-garments.js — a garments-only outfit is absolutely bakeable.
 	if (Array.isArray(appearance.garments) && appearance.garments.length > 0) return true;
+	// Skeleton-space build (src/avatar-proportions.js, baked by
+	// bake-proportions.js). A body edited only in the Proportions group carries
+	// nothing else, and treating that as "no customisation" is what left the
+	// baked GLB at default height while the editor showed the edit.
+	if (appearance.proportions && Object.keys(appearance.proportions).length > 0) return true;
 	return false;
 }
 
@@ -68,7 +73,7 @@ export function isBakeable(appearance) {
  * Bake `appearance` into a copy of the base GLB. Returns Uint8Array of the GLB.
  *
  * @param {Uint8Array|Buffer} baseGlbBytes
- * @param {object} appearance — { outfit?, accessories?, morphs? }
+ * @param {object} appearance — { outfit?, accessories?, morphs?, proportions?, garments? }
  * @returns {Promise<Uint8Array>}
  */
 export async function bakeAppearance(baseGlbBytes, appearance) {
@@ -115,6 +120,28 @@ export async function bakeAppearance(baseGlbBytes, appearance) {
 	//     pass reclaims the now-unreferenced meshes/materials/textures.
 	if (Array.isArray(appearance?.hidden) && appearance.hidden.length > 0) {
 		applyHidden(doc, appearance.hidden);
+	}
+
+	// 1d) Skeleton-space proportions: height, limb lengths, shoulder/hip width,
+	//     head/hand/foot size. Applied before anything reads the skeleton, so
+	//     accessories mount to the moved bones and garments bind to the final
+	//     rig. Lazy-imported to keep the module graph light for the common
+	//     default-body bake, matching the bake-garments.js pattern.
+	if (appearance?.proportions && Object.keys(appearance.proportions).length > 0) {
+		try {
+			const { applyProportions } = await import('./bake-proportions.js');
+			const { applied, missing, stature } = applyProportions(doc, appearance.proportions);
+			if (applied.length) {
+				console.log(
+					`[bake] proportions baked: ${applied.join(', ')}${stature !== 1 ? ` (stature ${stature})` : ''}`,
+				);
+			}
+			if (missing.length) {
+				console.warn(`[bake] proportions skipped (rig lacks the bones): ${missing.join(', ')}`);
+			}
+		} catch (err) {
+			console.warn(`[bake] proportion pass failed, baking without it: ${err.message}`);
+		}
 	}
 
 	// 2) Bone-mounted accessory GLBs.

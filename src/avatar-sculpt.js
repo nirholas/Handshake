@@ -110,10 +110,44 @@ const CATEGORIES = [
 	// tongueOut intentionally omitted — RPM/Avaturn bake the morph but nobody
 	// wants a "Tongue Out" slider on their face customizer. Drivers that need
 	// it (lipsync, mocap) still hit it via runtime APIs.
+	// Body regions of the parametric base. These sit BEFORE the catch-all Body
+	// group on purpose: its regex would otherwise swallow every one of them.
+	// They default to collapsed because the parametric base carries hundreds of
+	// body sliders and an all-open panel is a wall, not a control surface.
+	{
+		id: 'neck',
+		label: 'Neck',
+		match: /^neck/,
+		collapsed: true,
+	},
+	{
+		id: 'torso',
+		label: 'Torso',
+		match: /^(torso|chest|bust|breast|waist|shoulders)/,
+		collapsed: true,
+	},
+	{
+		id: 'midsection',
+		label: 'Hips & Midsection',
+		match: /^(hips|hip|gluteus|buttocks|belly|stomach)/,
+		collapsed: true,
+	},
+	{
+		id: 'arms',
+		label: 'Arms',
+		match: /^(arms|forearm|upperarm|hands)/,
+		collapsed: true,
+	},
+	{
+		id: 'legs',
+		label: 'Legs',
+		match: /^(legs|thighs|calves|knees|feet)/,
+		collapsed: true,
+	},
 	{
 		id: 'body',
 		label: 'Body',
-		match: /^(body|shape|height|breast|chest|waist|hip|muscle|weight|bust|gluteus|figure|thighs|arms|neck|belly|shoulders|calves|legs)/i,
+		match: /^(body|shape|height|muscle|weight|figure)/i,
 	},
 	{
 		id: 'visemes',
@@ -131,6 +165,11 @@ const CATEGORIES = [
 const ARKIT52 = new Set([
 	'eyeBlinkLeft','eyeBlinkRight','eyeLookDownLeft','eyeLookDownRight','eyeLookInLeft','eyeLookInRight','eyeLookOutLeft','eyeLookOutRight','eyeLookUpLeft','eyeLookUpRight','eyeSquintLeft','eyeSquintRight','eyeWideLeft','eyeWideRight','jawForward','jawLeft','jawRight','jawOpen','mouthClose','mouthFunnel','mouthPucker','mouthLeft','mouthRight','mouthSmileLeft','mouthSmileRight','mouthFrownLeft','mouthFrownRight','mouthDimpleLeft','mouthDimpleRight','mouthStretchLeft','mouthStretchRight','mouthRollLower','mouthRollUpper','mouthShrugLower','mouthShrugUpper','mouthPressLeft','mouthPressRight','mouthLowerDownLeft','mouthLowerDownRight','mouthUpperUpLeft','mouthUpperUpRight','browDownLeft','browDownRight','browInnerUp','browOuterUpLeft','browOuterUpRight','cheekPuff','cheekSquintLeft','cheekSquintRight','noseSneerLeft','noseSneerRight','tongueOut',
 ]);
+
+// Above this many morphs the panel stops being scannable and earns a filter.
+// Parametric bases blow past it; a 52-blendshape RPM avatar never does, so its
+// panel stays exactly as it was.
+const FILTER_THRESHOLD = 80;
 
 /* ────────────────────────────────────────────────────────────────────────── *
  * Blend wheel presets — 6 face archetypes placed on a 2-D [-1..1] plane.
@@ -309,6 +348,13 @@ export function renderSculptPanel({ container, root, working, onDirty, onRigChan
 			</label>` : ''}
 			<button class="ae-btn ae-sculpt-reset" type="button" id="ae-sculpt-reset">Reset all</button>
 		</div>
+		${all.length > FILTER_THRESHOLD ? `
+		<div class="ae-sculpt-filter">
+			<input type="search" id="ae-sculpt-filter-input" autocomplete="off"
+			       placeholder="Filter ${all.length} sliders (nose, jaw, calf...)"
+			       aria-label="Filter sculpt sliders">
+			<span class="ae-sculpt-filter-count" id="ae-sculpt-filter-count" role="status" aria-live="polite"></span>
+		</div>` : ''}
 		<p class="ae-sculpt-note">
 			${all.length
 				? `Drag the wheel puck to blend face types. Use sliders for fine control.
@@ -327,6 +373,7 @@ export function renderSculptPanel({ container, root, working, onDirty, onRigChan
 
 	ensureProportionCss();
 	wireSliders(container, root, working, onDirty);
+	wireFilter(container);
 	if (all.length) wireBlendWheel(container, root, working, available, onDirty);
 	wireProportionsGroup({ container, root, working, boneMap, onDirty, onRigChanged, rerender });
 
@@ -380,6 +427,55 @@ function ensureProportionCss() {
 		.ae-prop-row { grid-template-columns: minmax(0, 1.3fr) minmax(0, 2fr) 52px; }
 		.ae-prop-row .ae-sculpt-value { color: var(--text-2, var(--text-3)); }
 		.ae-prop-rows #ae-prop-reset { align-self: flex-start; margin-top: 10px; }
+
+		/* Filter + edited badges. These ship with the module rather than with
+		   either page's inline <style> because both surfaces render the same
+		   panel and a copy-pasted rule is a rule that drifts. */
+		.ae-sculpt-filter {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			margin: 0 0 10px;
+		}
+		.ae-sculpt-filter input[type='search'] {
+			flex: 1 1 auto;
+			min-width: 0;
+			padding: 8px 10px;
+			font: inherit;
+			font-size: 12px;
+			color: var(--text);
+			background: var(--panel);
+			border: 1px solid var(--border-2);
+			border-radius: 8px;
+			transition: border-color 0.12s, box-shadow 0.12s;
+		}
+		.ae-sculpt-filter input[type='search']:hover { border-color: var(--text-3); }
+		.ae-sculpt-filter input[type='search']:focus-visible {
+			outline: none;
+			border-color: var(--accent);
+			box-shadow: 0 0 0 2px var(--accent-dim, rgba(255, 255, 255, 0.14));
+		}
+		.ae-sculpt-filter-count {
+			font-size: 10px;
+			color: var(--text-3);
+			white-space: nowrap;
+		}
+		/* .ae-sculpt-row sets display:grid, which outranks the UA [hidden] rule,
+		   so filtering needs its own hide. Same for the group wrapper. */
+		.ae-sculpt-row[hidden],
+		.ae-sculpt-group[hidden] { display: none; }
+		/* Let the group title claim the free space so the badges sit together on
+		   the right whether or not the edited pill is showing. */
+		.ae-sculpt-group summary > span:first-child { margin-right: auto; }
+		.ae-sculpt-group summary .ae-sculpt-count { margin-left: 6px; }
+		.ae-sculpt-edited {
+			font-size: 10px;
+			font-weight: 600;
+			color: var(--accent-ink, #000);
+			background: var(--accent);
+			padding: 2px 7px;
+			border-radius: 999px;
+		}
 	`;
 	document.head.appendChild(style);
 }
@@ -566,6 +662,7 @@ function wireSliders(container, root, working, onDirty) {
 				writeMorph(working, pairName, w);
 				applyMorphsToRoot(root, { [pairName]: w });
 			}
+			refreshEditedBadge(input);
 			onDirty?.();
 		};
 		input.addEventListener('input', onChange);
@@ -581,6 +678,88 @@ function writeMorph(working, name, w) {
 /* ────────────────────────────────────────────────────────────────────────── *
  * Group rendering — mirror-lock collapses L/R pairs to a single slider
  * ────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Live filter over every slider row. Groups whose rows all fall away are hidden
+ * entirely and matching groups spring open, so a query lands the user on the
+ * control instead of on a list of closed folders. Clearing the box restores the
+ * group open/closed state exactly as it was before the first keystroke.
+ */
+function wireFilter(container) {
+	const input = container.querySelector('#ae-sculpt-filter-input');
+	if (!input) return;
+	const countEl = container.querySelector('#ae-sculpt-filter-count');
+	const groups = [...container.querySelectorAll('details.ae-sculpt-group')];
+	const rows = [...container.querySelectorAll('.ae-sculpt-row[data-search]')];
+	const total = rows.length;
+	let restoreOpen = null;
+
+	const apply = () => {
+		const q = input.value.trim().toLowerCase();
+		if (!q) {
+			for (const row of rows) row.hidden = false;
+			groups.forEach((g, i) => {
+				g.hidden = false;
+				if (restoreOpen) g.open = restoreOpen[i];
+			});
+			restoreOpen = null;
+			if (countEl) countEl.textContent = '';
+			return;
+		}
+		if (!restoreOpen) restoreOpen = groups.map((g) => g.open);
+
+		const terms = q.split(/\s+/);
+		let shown = 0;
+		for (const row of rows) {
+			const hay = row.dataset.search;
+			const hit = terms.every((t) => hay.includes(t));
+			row.hidden = !hit;
+			if (hit) shown++;
+		}
+		for (const g of groups) {
+			const hit = !!g.querySelector('.ae-sculpt-row[data-search]:not([hidden])');
+			g.hidden = !hit;
+			if (hit) g.open = true;
+		}
+		if (countEl) {
+			countEl.textContent = shown
+				? `${shown} of ${total}`
+				: 'No slider matches that';
+		}
+	};
+
+	input.addEventListener('input', apply);
+	input.addEventListener('keydown', (e) => {
+		if (e.key !== 'Escape' || !input.value) return;
+		e.stopPropagation();
+		input.value = '';
+		apply();
+	});
+}
+
+/**
+ * "3 edited" pill on a collapsed group's summary. With hundreds of sliders the
+ * panel is mostly closed, and without this the user has no way to tell which
+ * closed groups they have already touched.
+ */
+function editedBadge(names, morphs) {
+	const n = names.reduce((c, name) => c + (morphs[name] ? 1 : 0), 0);
+	return `<span class="ae-sculpt-edited" data-edited="${n}"${n ? '' : ' hidden'}>${n} edited</span>`;
+}
+
+/** Recount the badge on the group owning `input` after a slider moves. */
+function refreshEditedBadge(input) {
+	const group = input.closest('details.ae-sculpt-group');
+	const badge = group?.querySelector('.ae-sculpt-edited');
+	if (!badge) return;
+	let n = 0;
+	group.querySelectorAll('input[type="range"][data-morph]').forEach((el) => {
+		if (Number(el.value) !== 0) n++;
+	});
+	badge.dataset.edited = String(n);
+	badge.textContent = `${n} edited`;
+	badge.hidden = n === 0;
+}
 
 function renderGroup(g, morphs) {
 	if (_mirrorLocked) {
@@ -606,6 +785,7 @@ function renderGroup(g, morphs) {
 			<details class="ae-sculpt-group" ${g.collapsed ? '' : 'open'}>
 				<summary>
 					<span>${escHtml(g.label)}</span>
+					${editedBadge(visible.map((v) => v.name), morphs)}
 					<span class="ae-sculpt-count">${visible.length}</span>
 				</summary>
 				<div class="ae-sculpt-rows">
@@ -618,6 +798,7 @@ function renderGroup(g, morphs) {
 		<details class="ae-sculpt-group" ${g.collapsed ? '' : 'open'}>
 			<summary>
 				<span>${escHtml(g.label)}</span>
+				${editedBadge(g.morphs, morphs)}
 				<span class="ae-sculpt-count">${g.morphs.length}</span>
 			</summary>
 			<div class="ae-sculpt-rows">
@@ -805,8 +986,11 @@ function sliderRow(name, value, displayLabel, pairName) {
 	const label = humanize(labelSource);
 	const meta = ARKIT52.has(name) ? 'ARKit' : isVisemeName(name) ? 'Viseme' : '';
 	const pairAttr = pairName ? ` data-pair="${escAttr(pairName)}"` : '';
+	// data-search carries both the human label and the raw morph name so the
+	// filter finds "cupids bow" and "mouthCupidsBowWider" with one query.
+	const search = `${label} ${name}`.toLowerCase();
 	return `
-		<div class="ae-sculpt-row">
+		<div class="ae-sculpt-row" data-search="${escAttr(search)}">
 			<div class="ae-sculpt-label">
 				<span class="ae-sculpt-name" title="${escAttr(name)}">${escHtml(label)}</span>
 				${meta ? `<span class="ae-sculpt-meta">${meta}</span>` : ''}

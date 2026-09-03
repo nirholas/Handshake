@@ -1053,6 +1053,10 @@
 				transition: width 0.3s ease;
 				width: 0%;
 			}
+			/* The Wardrobe tab stacks the closet racks under the layer cards;
+			   both panels ship their own CSS from src/avatar-wardrobe.js and
+			   src/garment-closet.js, this only sets the gap between them. */
+			.as-closet-mount { margin-top: 18px; }
 		</style>
 	
 	<link rel="canonical" href="https://three.ws/avatar-studio">
@@ -1084,6 +1088,7 @@
 					<span class="as-btn-label">Randomise</span>
 				</button>
 				<button class="as-btn" id="as-reset" type="button" data-i18n="avatar_studio.reset">Reset</button>
+				<button class="as-btn" id="as-play" type="button" hidden title="Drop into /play as this avatar" data-i18n="avatar_studio.play_as_this" data-i18n-attr="title:avatar_studio.drop_into_play_as_this_avatar_title">&#9654; Play as this</button>
 				<button class="as-btn primary" id="as-save" type="button" data-i18n="avatar_studio.save_avatar">Save avatar</button>
 			</div>
 		</header>
