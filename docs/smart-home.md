@@ -1,8 +1,9 @@
 # three.ws Home: the agent as the interface to your physical space
 
-**Status:** research complete, architecture decided, phase 1 built and verified against a
-real Home Assistant instance.
-**Date:** 2026-09-02.
+**Status:** shipped. The connection store, the API surface, the agent tools, the `/smart-home`
+page, the 3D scene, the household roster, the relay for LAN-only houses and the voice satellite
+are all in the tree. What is not shipped is named as such in section 5.
+**Researched:** 2026-09-02. **Last measured against the tree:** 2026-09-03.
 **Question asked:** can the three.ws 3D agent control a real home, and how much of it already exists in open source?
 
 **Short answer:** almost all of it exists, and it is better than anything we would write.
@@ -115,7 +116,9 @@ the idea already has an audience, and [hacs/integration](https://github.com/hacs
 
 - A device driver, of any kind, for anything.
 - A hub, a broker, or an automation rules engine.
-- Another HA MCP server. The first-party one exists.
+- Another HA MCP server. The first-party one exists, and `packages/home-mcp` is not one: it does
+  not reimplement Home Assistant's `mcp_server`, it packages our own bridge and our own gate so an
+  assistant can reach a house without writing a client.
 - A local speech stack. The user's HA already runs Whisper and Piper locally, or their
   browser already runs ours.
 
@@ -201,52 +204,57 @@ unlock the door. Our gate therefore has to sit in front of the MCP channel too, 
 call's targets to real entities and working out the service each one would actually perform.
 That is `classifyMcpCall` in the bridge.
 
----
+### What is stored, and what deliberately is not
 
-## 5. Build plan
+The device layer is Home Assistant's, and so is the data in it. What three.ws persists is
+small and sharp: the connection record and its encrypted credential, who you shared the home
+with, the standing allowances you granted, and a log of every action the agent took. What it
+never persists is the part that would matter most if it did: **the names of your rooms and
+devices, and their states.** Those are read live and held in memory only while the connection
+is open, because a stored history of when a household's lights go on and off is a record of
+when they are home.
 
-Each phase is shippable on its own and none of them block on the next.
-
-**Phase 1: connect and act. Built.**
-[`packages/home-bridge/`](../packages/home-bridge) is the client: the WebSocket channel for
-state and actions, the MCP channel for the user's curated tools, the room graph, intent
-resolution against the house's own scenes, and the physical-action gate in front of both. See
-[its README](../packages/home-bridge/README.md).
-
-The connection record landed on 2026-09-03 and is the first piece of this phase that is
-product rather than protocol. `home_connections` holds one row per connected house: the
-normalized base URL, the Home Assistant long-lived token encrypted with the same
-AES-256-GCM primitive as a custodial wallet key (`api/_lib/secret-box.js`), a sha256
-fingerprint so a re-connect is idempotent and a token rotation is detectable without
-decrypting anything, and the capabilities that were MEASURED at connect rather than
-assumed. `home_entity_grants` holds the standing allowances behind the physical-action
-gate, per entity and never per domain, because letting the agent open the office door is
-not letting it open the front door. `home_action_log` records every write the platform
-performs against a house, with the gate's verdict and the resolved targets, so an owner
-can answer "what did my agent do in my house last Tuesday".
-
-`api/_lib/home/store.js` is the only module that touches those tables, and
-`getDecryptedToken` is the only function in the codebase that returns a plaintext home
-credential. `api/_lib/home/verify.js` opens a real bridge at connect time and measures what
-the instance can actually do. Covered by `tests/home-store.test.js`, whose live tier runs
-against a real database and a real Home Assistant.
-
-What remains in this phase is the rest of the surface: a `/home` connect flow and
-registration of the home tools into the existing agent tool catalog.
-
-**Phase 2: the 3D home.** `/home` renders a live scene from the entity registry: areas
-become rooms, lights become lights, and the agent stands in it. Scene lighting is driven by
-real light state. This is the phase that produces the screenshot.
-
-**Phase 3: voice, both directions.** The browser voice loop gains wake word and barge-in
-(openWakeWord, silero-vad). Separately, we speak Wyoming so a Home Assistant pipeline can
-select a three.ws agent as its satellite and get a face.
-
-**Phase 4: past the house.** matter.js lets an agent be a Matter controller with no hub, and
-lets a three.ws agent present itself as a Matter device. That is the door to cars, offices,
-and robots, and it is the same protocol either way.
+The action log is the one genuinely difficult call, and it is settled at 90 days by default,
+owner-adjustable down to a day and up to ten years with a written reason. The full inventory,
+the retention decision and its justification, the export and deletion paths, and the
+disclosure copy shown at connect and at the voice opt-in are in
+[Home privacy and retention](./home-privacy.md).
 
 ---
+
+## 5. What shipped, and what has not
+
+Each phase was shippable on its own. This section is a map of the tree, not a plan: every path
+below exists, and anything that does not exist says so.
+
+### Shipped
+
+| Piece | Where |
+|---|---|
+| The client library: state and action channel, MCP channel, room graph, intent resolution, the gate | [`packages/home-bridge/`](../packages/home-bridge/README.md) |
+| The connection store: schema, encrypted credentials, lifecycle | [`api/_lib/home/store.js`](../api/_lib/home/store.js), 8 migrations under `api/_lib/migrations/*_home_*.sql` |
+| The bridge runtime: pooled per-home connections, refcounting, breaker, backpressure ladder | [`api/_lib/home/runtime.js`](../api/_lib/home/runtime.js), [`admission.js`](../api/_lib/home/admission.js) |
+| The `/api/home/*` surface: REST, SSE stream, the error contract | [`api/home/`](../api/home) |
+| Agent tools and the confirmation protocol | [`api/_lib/home/tools.js`](../api/_lib/home/tools.js), [`confirm.js`](../api/_lib/home/confirm.js), wired into `api/chat.js` and `api/_mcp/tools/home.js` |
+| The connect flow and the household page | `/smart-home` ([`pages/smart-home.html`](../pages/smart-home.html), [`src/home/`](../src/home)) |
+| The live 3D home | [`src/home/scene-render.js`](../src/home/scene-render.js), [`scene-model.js`](../src/home/scene-model.js) |
+| Households: roles, per-member scopes, invites | [`api/_lib/home/members.js`](../api/_lib/home/members.js), [docs/home-households.md](home-households.md) |
+| Privacy, retention, export and deletion | [`api/_lib/home/privacy.js`](../api/_lib/home/privacy.js), [docs/home-privacy.md](home-privacy.md) |
+| The dial-out relay for LAN-only houses | [`services/home-relay/`](../services/home-relay/README.md) plus [`home-assistant-integration/`](../home-assistant-integration) |
+| The Wyoming voice satellite | [`services/home-satellite/`](../services/home-satellite/README.md) |
+| A standalone MCP server, so any assistant can run a house | [`packages/home-mcp/`](../packages/home-mcp/README.md) |
+| A real Home Assistant on demand, for every live test | [`scripts/home-test-instance.mjs`](../scripts/home-test-instance.mjs) |
+| The tutorial | [docs/tutorials/connect-your-home.md](tutorials/connect-your-home.md) |
+
+### Not shipped
+
+- **Matter direct control.** matter.js would let an agent be a Matter controller with no hub, and
+  let a three.ws agent present itself as a Matter device. That is the door to cars, offices and
+  robots, and it is the same protocol either way. Nothing of it is in the tree.
+- **A floorplan editor.** The 3D scene derives its layout from the area graph. Authoring and
+  persisting a hand-drawn floorplan is not built.
+- **Voice on the `/smart-home` page itself.** Voice today is the household's own Home Assistant
+  Assist pipeline, which the satellite gives a face to. The page is text.
 
 ## 6. What was actually verified
 
@@ -268,6 +276,26 @@ Docker and driven through the bridge:
 | HA's own `HassTurnOff` unlocks locks | Exposed a lock to Assist, called it through the gate | Gate refused; with `{ confirmed: true }` the door really did unlock |
 | A bad token reads as auth, not as an outage | Connected with a junk token | `code: 'auth'` |
 | A home without `mcp_server` is not an error | Opened the MCP channel against a nonexistent API | `code: 'no_mcp'` with a recovery message |
+
+### Re-measured against the shipped tree (2026-09-03)
+
+The house was `scripts/home-test-instance.mjs --up --onboard --seed`: Home Assistant 2026.9.0, one
+floor, four areas, 122 entities, two user scenes (Bedtime, Away Mode), four locks.
+
+| Claim | How it was checked | Result |
+|---|---|---|
+| The client library still works end to end | `npx vitest run packages/home-bridge` with the house configured | 37 passed (30 pure, 7 live) |
+| Every code example in the `home-bridge` README runs | Each one executed against that instance in order | All ran, including the MCP channel: 29 real tools, and a tool call that turned on a real light |
+| The MCP channel is present on a seeded instance | `connectHomeMcp` against it | 29 tools |
+| `activate('good night')` still resolves to the house's own scene | Ran it against a house with no scene called "Good night" | `scene.bedtime`, confidence 0.95, and the bedroom went dark |
+| A phrase with no match still runs nothing | `activate('launch the shuttle')` | `{ ran: false, match: null }` |
+| The standalone MCP server refuses a guarded action over real stdio | Spawned `packages/home-mcp` as a child process, spoke MCP to it, then asked Home Assistant | Refused; `lock.front_door` still `locked` |
+| A confirmation cannot be smuggled into service data | Same, with `{confirmed:true}`, `{confirm:'yes'}`, `{confirmed:true,user_said_yes:true}` | All three refused; door still `locked` |
+| A standing allowance stays per entity | Same call with `HOME_ALLOWED_ENTITIES=lock.kitchen_door` | Refused; door still `locked` |
+| The operator's own allowance does work | Same call with `HOME_ALLOWED_ENTITIES=lock.front_door` | Ran; door `unlocked`, then re-locked |
+| Locking up never prompts | `lock.lock` through the server with no allowance at all | Ran |
+| The relay allowlist has not drifted from the protocol | `npx vitest run tests/home-relay-protocol.test.js` | 11 passed |
+| The platform really will not dial a private address | Posted a loopback URL to `POST /api/home` on a local server against the live database | `unreachable`, with the LAN explanation, and nothing stored |
 
 The registry snapshot from that instance is checked in as the package's test fixture
 (`packages/home-bridge/tests/fixtures/home.json`, regenerated by

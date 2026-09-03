@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-03T03:42:01.129Z",
+	"generated_at": "2026-09-03T03:50:33.875Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1223,9 +1223,29 @@
 					"showcase": false
 				},
 				{
+					"path": "/smart-home/plan",
+					"title": "Home plan",
+					"description": "What your plan covers for connected homes: homes, household seats, live screens, voice minutes and agent turns, each with what you have used and when it resets. Pause and resume which homes are live without disconnecting any of them. Locking up, closing a garage and arming an alarm are never limited.",
+					"added": "2026-09-03",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/smart-home",
 					"title": "Smart home",
 					"description": "Connect a Home Assistant house to your three.ws agent. Your agent reads every room and device, runs the scenes you already built, and stops to ask before it unlocks, opens or disarms anything.",
+					"added": "2026-09-03",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/smart-home/satellite",
+					"title": "Voice satellite",
+					"description": "Give your existing Home Assistant voice assistant a face. Pair a three.ws satellite and the same pipeline you already use gains a 3D agent that lip-syncs its answers and reacts, on any screen in the house. Home Assistant keeps the wake word, the speech recognition and the answer; closing the page never stops the voice working.",
 					"added": "2026-09-03",
 					"auth": null,
 					"indexable": true,

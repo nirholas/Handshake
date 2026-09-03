@@ -39,6 +39,14 @@
 			<description>Talk to your house without finding a phone: a wake word matched on your own device, real barge-in mid-sentence, and a spoken confirmation that a background yes can never satisfy.</description>
 		</item>
 		<item>
+			<title>Home plan</title>
+			<link>https://three.ws/smart-home/plan</link>
+			<guid isPermaLink="false">2026-09-03:Home plan</guid>
+			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>What your plan covers for connected homes: homes, household seats, live screens, voice minutes and agent turns, each with what you have used and when it resets. Pause and resume which homes are live without disconnecting any of them. Locking up, closing a garage and arming an alarm are never limited.</description>
+		</item>
+		<item>
 			<title>Smart home</title>
 			<link>https://three.ws/smart-home</link>
 			<guid isPermaLink="false">2026-09-03:Smart home</guid>
@@ -53,6 +61,14 @@
 			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Your 3D agent in the car: voice-first, glanceable, and built to the rules CarPlay and Android Auto enforce. Runs on a head unit, a phone in the cradle, or inside the native car shell.</description>
+		</item>
+		<item>
+			<title>Voice satellite</title>
+			<link>https://three.ws/smart-home/satellite</link>
+			<guid isPermaLink="false">2026-09-03:Voice satellite</guid>
+			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Give your existing Home Assistant voice assistant a face. Pair a three.ws satellite and the same pipeline you already use gains a 3D agent that lip-syncs its answers and reacts, on any screen in the house. Home Assistant keeps the wake word, the speech recognition and the answer; closing the page never stops the voice working.</description>
 		</item>
 		<item>
 			<title>See, export and delete everything a connected home stores</title>
