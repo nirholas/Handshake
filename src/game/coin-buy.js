@@ -117,8 +117,9 @@ function friendlyTradeError(err, mode = 'buy') {
  * so a forked trade never leaves the user staring at the previous coin's panel.
  * Opens in Buy mode; the user can switch to Sell inside the modal.
  * @param {{mint:string, name?:string, symbol?:string, image?:string}} coin
- * @param {{mode?: 'buy'|'sell', amount?: number}} [opts] `amount` pre-fills the
- *   buy input (SOL), which is how a forked trade carries its size across.
+ * @param {{mode?: 'buy'|'sell', amount?: number, elevate?: boolean}} [opts]
+ *   `amount` pre-fills the buy input (SOL), which is how a forked trade carries
+ *   its size across; `elevate` lifts the modal above a page's sticky site nav.
  */
 export function openBuyModal(coin, opts = {}) {
 	if (!coin?.mint) return;
@@ -148,6 +149,9 @@ class TradeModal {
 		// means nothing against a USDC curve.
 		const preset = Number(opts.amount);
 		if (mode === 'buy' && Number.isFinite(preset) && preset > 0) this.amount = preset;
+		// Pages with the site nav stack their chrome above this modal's default
+		// layer; they opt into a higher one. See .cc-buy-elevated.
+		this.elevate = !!opts.elevate;
 		this._sellMax = false;
 		this.slippageBps = DEFAULT_SLIPPAGE_BPS;
 		this.busy = false;
@@ -274,7 +278,7 @@ class TradeModal {
 			pumpLink,
 		]);
 
-		this.overlay = el('div', { class: 'cc-buy-overlay', onpointerdown: (e) => { if (e.target === this.overlay) this.close(); } }, [this.card]);
+		this.overlay = el('div', { class: `cc-buy-overlay${this.elevate ? ' cc-buy-elevated' : ''}`, onpointerdown: (e) => { if (e.target === this.overlay) this.close(); } }, [this.card]);
 		// Keep the game from swallowing typing/keys while the modal is up.
 		this.card.addEventListener('keydown', (e) => {
 			if (e.key === 'Escape') this.close();

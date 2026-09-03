@@ -112,7 +112,9 @@ export async function openFork(trade) {
 		const { openBuyModal } = await import('./game/coin-buy.js');
 		openBuyModal(
 			{ mint: trade.mint, symbol: trade.symbol, name: trade.name, image: trade.image },
-			{ mode: 'buy', amount: clampForkSize(trade.size) ?? undefined },
+			// elevate: a fork always opens on a page carrying the site nav, which
+			// stacks above the modal's default /play layer.
+			{ mode: 'buy', amount: clampForkSize(trade.size) ?? undefined, elevate: true },
 		);
 		return true;
 	} catch {

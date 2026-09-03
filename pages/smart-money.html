@@ -3,6 +3,7 @@
 <head>
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
+	<script src="/referral-capture.js"></script>
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 	<title data-i18n="smart_money.meta_title">Smart Money Radar — follow the wallets that actually win on pump.fun · three.ws</title>
 	<meta name="description" content="A live, first-party reputation graph of every pump.fun wallet. We cross each coin's buyers with which coins actually graduated, so you can see exactly which wallets keep picking winners — and what they're buying right now."  data-i18n-attr="content:smart_money.meta_description"/>
@@ -108,6 +109,21 @@
 		.sm-watch:hover { color: var(--ink); }
 		.sm-watch:focus-visible { outline: 2px solid #7c83ff; outline-offset: 1px; }
 		@media (hover: none) { .sm-watch { opacity: 1; } }
+		/* Fork: the card's one live action. Opens the real pump.fun trade panel for
+		   this coin (src/fork-trade.js); the visitor's own wallet signs it. The
+		   card reserves a strip for it rather than floating it over the score
+		   badge, and it stays visible: this is the page's call to action, not a
+		   hover easter egg. */
+		.sm-coin-wrap .coin { padding-bottom: 55px; }
+		.sm-fork { position: absolute; left: 15px; right: 15px; bottom: 13px; z-index: 2; height: 32px;
+			display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+			border-radius: 9px; border: 1px solid rgba(124,131,255,.45); background: rgba(124,131,255,.14);
+			color: var(--ink); font: 700 12px/1 var(--mono, ui-monospace, monospace); letter-spacing: .06em;
+			cursor: pointer; transition: background .15s, border-color .15s, transform .15s; }
+		.sm-fork:hover { background: rgba(124,131,255,.3); border-color: #7c83ff; }
+		.sm-fork:active { transform: translateY(1px); }
+		.sm-fork:focus-visible { outline: 2px solid #7c83ff; outline-offset: 2px; }
+		@media (prefers-reduced-motion: reduce) { .sm-fork { transition: none; } .sm-fork:active { transform: none; } }
 		.coin { text-align: left; width: 100%; background: var(--panel); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
 			border: 1px solid var(--line); border-radius: var(--r); padding: 15px; box-shadow: var(--shadow);
 			display: flex; flex-direction: column; gap: 13px; transition: transform .14s, border-color .18s; }
@@ -240,6 +256,7 @@
 		.state { padding: 56px 22px; text-align: center; color: var(--muted); }
 		.state b { display: block; color: var(--ink); font-size: 16px; margin-bottom: 8px; }
 		.state .btn { margin-top: 16px; }
+		.dr-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
 		.btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px; border: 1px solid var(--line);
 			background: var(--panel); font-weight: 600; font-size: 13px; transition: transform .12s, border-color .2s; }
 		.btn:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--cyan) 50%, var(--line)); }
@@ -404,6 +421,8 @@
 	</div>
 
 	<script type="module">
+		import { initFork, forkButton } from '/src/fork-trade.js';
+
 		const API = '/api/pump/smart-money';
 		const $ = (id) => document.getElementById(id);
 		const fmtSol = (n) => (n == null ? '0' : (n >= 100 ? Math.round(n) : n.toFixed(n >= 10 ? 1 : 2)));
@@ -549,6 +568,13 @@
 			const wrap = document.createElement('div');
 			wrap.className = 'sm-coin-wrap';
 			wrap.appendChild(btn);
+
+			// The page's whole claim is "proven wallets are in this coin". Fork is the
+			// one place that claim becomes an action: it opens the real trade panel
+			// for this mint, and the visitor's own wallet signs it.
+			const fk = document.createElement('div');
+			fk.innerHTML = forkButton({ mint: c.mint, symbol: c.symbol, name: c.name }, { label: 'Fork this trade', className: 'sm-fork' });
+			if (fk.firstElementChild) wrap.appendChild(fk.firstElementChild);
 
 			if (watchOffer) {
 				const watched = isWatched(c.mint);
@@ -895,7 +921,11 @@
 					<div class="dr-sec">Notable wallets buying</div>
 					${rows}
 					<div id="sm-oracle-slot" class="sm-oracle-slot"><div class="skel" style="height:80px;margin-top:16px"></div></div>
-					<a class="btn primary" style="margin-top:18px" href="https://pump.fun/${esc(coin.mint)}" target="_blank" rel="noopener">Open on pump.fun →</a>`;
+					<div class="dr-actions">
+						${forkButton({ mint: coin.mint, symbol: coin.symbol, name: coin.name }, { label: 'Fork this trade', className: 'btn primary' })}
+						${forkButton({ mint: coin.mint, symbol: coin.symbol, name: coin.name }, { label: 'Share ↗', className: 'btn', share: true })}
+						<a class="btn" href="https://pump.fun/${esc(coin.mint)}" target="_blank" rel="noopener">pump.fun →</a>
+					</div>`;
 
 				$('drBody').querySelectorAll('.nwallet[data-wallet]').forEach((el) => {
 					const go = () => openWallet(el.dataset.wallet);
@@ -1106,6 +1136,7 @@
 		$('staleRetry').addEventListener('click', manualRetry);
 
 		// boot
+		initFork();
 		renderWalletHead();
 		updateWatchCount();
 		$('feedGrid').innerHTML = Array.from({ length: 6 }, () => '<div class="skel"></div>').join('');

@@ -33,6 +33,12 @@
 	opacity: 0; transition: opacity 0.18s ease;
 }
 .cc-buy-overlay.cc-on { opacity: 1; }
+/* Opened from a page that carries the site nav (a forked trade: /trades,
+   /radar, /smart-money) rather than from inside a /play world. The nav is
+   sticky at z-index 100 and its menus at 200, so the default 80 would slide
+   the modal's own header, and its close button, under the header bar. Kept as
+   an opt-in modifier so the /play HUD's stacking is untouched. */
+.cc-buy-overlay.cc-buy-elevated { z-index: 9000; }
 .cc-buy-card {
 	width: 100%; max-width: 380px;
 	background: var(--cc-panel-solid); border: 1px solid var(--cc-edge);
