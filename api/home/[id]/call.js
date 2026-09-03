@@ -184,7 +184,16 @@ export default wrap(async (req, res) => {
 			attributes: targets[0] ? bridge.states?.[targets[0]]?.attributes : undefined,
 		});
 
+		// Our own leg of the call, which is what the latency SLO is written against
+		// (docs/ops/home-operations.md). It deliberately includes the house's
+		// service call, because there is no point at which we can separate the two
+		// from here; what it excludes is everything before the gate: auth, the
+		// store read and the pool open. A p95 measured on a number nobody records
+		// is a number nobody has, so this is stamped on every action rather than
+		// sampled.
+		const startedAt = Date.now();
 		const result = await bridge.call(domain, service, data, { confirmed });
+		const latencyMs = Date.now() - startedAt;
 
 		logHomeAction({
 			homeId: home.id,
@@ -197,7 +206,7 @@ export default wrap(async (req, res) => {
 			confirmedBy: verdict.guarded && confirmed ? caller.userId : null,
 			risk: verdict.risk,
 			outcome: 'ok',
-			detail: { via: caller.via, allowed_by_grant: verdict.guarded && !confirmed },
+			detail: { via: caller.via, allowed_by_grant: verdict.guarded && !confirmed, latencyMs },
 		});
 
 		return json(res, 200, {
