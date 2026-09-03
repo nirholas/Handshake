@@ -131,6 +131,21 @@ All three channels take the pin. Node's global `WebSocket` is undici's and honou
 `dispatcher`, which is what makes pinning the state channel possible at all; the pinned socket
 factory is verified against a real Home Assistant rather than assumed to work.
 
+**There is exactly one way a private address is ever dialable**, and it is the local-instance
+seam: `HOME_ALLOW_LOCAL_INSTANCE=1` on a process that is not a Cloud Run revision. It exists
+because this campaign's own rule is "never mock Home Assistant, run one", and the way you run one
+lands on loopback; without it, no part of this surface could be exercised against a real instance
+on a developer machine, and the workaround people reach for (publishing their test Home
+Assistant, token and all, so it passes the guard) is far worse than what the guard prevents.
+
+Its production check is **positive**, and that matters more than it sounds. It was originally
+`NODE_ENV !== 'production'`, and `NODE_ENV` is not set on the `three-ws-api` service at all, so
+that test read true in production and the entire guard rested on one unset flag. It now keys off
+`K_SERVICE`, which the Cloud Run runtime stamps on every revision and which cannot be removed
+from the service config. Proven both ways: with the flag set and no `K_SERVICE`, loopback
+resolves; with the flag set and `K_SERVICE` present, loopback and `169.254.169.254` are both
+refused.
+
 **The pin is re-derived on every dial, not stored.** `api/_lib/home/runtime.js` re-resolves a
 direct home each time the pool opens a connection to it, so a house whose name was public when
 the user added it and points into our network today is refused at reconnect rather than trusted

@@ -52,7 +52,8 @@ export const REACHABILITY_CODES = new Set(['private_address', 'unroutable_host']
  * The one way a private address is ever dialable, and it is off unless BOTH of
  * these are true at once:
  *
- *   * this process is not production (`NODE_ENV !== 'production'`), and
+ *   * this process is not a Cloud Run revision (no `K_SERVICE`) and is not
+ *     otherwise marked production (`NODE_ENV !== 'production'`), and
  *   * `HOME_ALLOW_LOCAL_INSTANCE=1` is set in the environment.
  *
  * It exists because the Home campaign's own instruction is "never mock Home
@@ -64,12 +65,23 @@ export const REACHABILITY_CODES = new Set(['private_address', 'unroutable_host']
  * internet so it passes the guard) is far worse than the thing the guard
  * prevents.
  *
- * Two properties keep it from being a hole: it is read once at module load, so
- * a request cannot turn it on; and the production check is on NODE_ENV rather
- * than on the flag alone, so setting the flag on the live service does nothing.
+ * Three properties keep it from being a hole. It is read once at module load, so
+ * no request can turn it on. It needs the flag, which is set nowhere. And the
+ * production check is POSITIVE: `K_SERVICE` is stamped on every Cloud Run
+ * revision by the runtime and cannot be unset from the service config, so the
+ * seam is off on the live service whatever else is configured.
+ *
+ * That last one is not a stylistic preference. The check was originally
+ * `NODE_ENV !== 'production'`, and `NODE_ENV` is not set on the three-ws-api
+ * service at all, so it read TRUE in production and the whole guard rested on
+ * one unset flag. A negative test for production is only as good as somebody
+ * remembering to set the variable it tests; `K_SERVICE` is set by the platform.
+ * api/cron/economy-tick.js uses the same signal for the same reason.
  */
 const ALLOW_LOCAL_INSTANCE =
-	process.env.NODE_ENV !== 'production' && process.env.HOME_ALLOW_LOCAL_INSTANCE === '1';
+	!process.env.K_SERVICE &&
+	process.env.NODE_ENV !== 'production' &&
+	process.env.HOME_ALLOW_LOCAL_INSTANCE === '1';
 
 // The connect probe talks to a home that may be a residential uplink on the far
 // side of a reverse proxy. Ten seconds is long enough for that and short enough

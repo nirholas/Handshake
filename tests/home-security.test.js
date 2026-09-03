@@ -538,6 +538,25 @@ describe('home security 7: a user-supplied home URL cannot reach our network', (
 		expect(offenders, 'these dial a home without the SSRF guard').toEqual([]);
 	});
 
+	it('the local-instance seam cannot be on in production', async () => {
+		// The seam exists so the lane can be exercised against a real Home
+		// Assistant on a developer machine, which lands on loopback. It is also
+		// the one switch that turns this whole guard off, so its production check
+		// has to be one the platform sets rather than one a person remembers to.
+		const src = read(join(REPO, 'api', '_lib', 'home-url-guard.js'));
+		expect(src, 'the seam must key off K_SERVICE, which Cloud Run stamps on every revision').toMatch(
+			/!process\.env\.K_SERVICE/,
+		);
+		expect(src, 'the seam must still require its own flag').toMatch(/HOME_ALLOW_LOCAL_INSTANCE === '1'/);
+
+		// And it is off by default, which is the state every test in this file
+		// above has been running under.
+		const guard = await import('../api/_lib/home-url-guard.js');
+		await expect(guard.assertDialableHomeUrl('https://127.0.0.1:8123')).rejects.toMatchObject({
+			code: 'private_address',
+		});
+	});
+
 	it('the guard is actually reached by the connect path, so the check above means something', () => {
 		for (const file of ['api/home/index.js', 'api/_lib/home/verify.js', 'api/_lib/home/runtime.js']) {
 			expect(read(join(REPO, file)), `${file} must dial through the guard`).toMatch(/home-url-guard/);
