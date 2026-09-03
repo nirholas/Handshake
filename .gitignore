@@ -526,3 +526,18 @@ marketing/*/.raw/
 
 # Avatar seeding checkpoints and rejected-candidate dumps (scripts/gcp/seed-avatars.mjs).
 .seed-batches/
+
+# local analysis bundle (never commit)
+download.zip
+
+# Local Home Assistant instances used to verify the home bridge against a real
+# house. Every one of them holds refresh tokens and a long-lived access token in
+# .storage/auth, so the pattern is deliberately broad: any .ha-* directory at the
+# repo root is a throwaway HA instance and never belongs in a commit.
+.ha-*/
+
+# Browser voice-loop runtime staged from node_modules by scripts/copy-voice-models.mjs
+# (silero VAD + the onnxruntime-web wasm). Regenerated on every install and
+# prebuild; the committed openWakeWord models under public/models/voice/wake-word
+# are release artifacts and DO belong in git.
+public/models/voice/runtime/
