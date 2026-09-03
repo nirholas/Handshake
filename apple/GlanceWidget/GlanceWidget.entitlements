@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+		The extension reads the token the host app wrote and the card cache the
+		two of them share. Both values come from the project's build settings so
+		this file is identical on iOS and macOS; see apple/README.md for why the
+		two platforms need different strings.
+	-->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>$(GLANCE_APP_GROUP)</string>
+	</array>
+	<key>keychain-access-groups</key>
+	<array>
+		<string>$(GLANCE_KEYCHAIN_GROUP)</string>
+	</array>
+	<!--
+		macOS only: an app extension is sandboxed, and a widget that cannot open
+		an outgoing connection cannot fetch its card. Ignored on iOS.
+	-->
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+	<key>com.apple.security.network.client</key>
+	<true/>
+</dict>
+</plist>

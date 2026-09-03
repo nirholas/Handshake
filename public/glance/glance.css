@@ -315,6 +315,17 @@ button.copy[data-state='done'] {
 	font-weight: 500;
 	padding: 0.35rem 0.75rem;
 }
+.glance-token {
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-size: 12.5px;
+	letter-spacing: 0.02em;
+	padding: 0.35rem 0.6rem;
+	border-radius: 8px;
+	border: 1px solid var(--line, #262842);
+	background: var(--panel, #15162a);
+	user-select: all;
+	word-break: break-all;
+}
 .glance-devices {
 	margin-top: 2rem;
 	padding-top: 1.5rem;

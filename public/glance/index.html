@@ -196,20 +196,34 @@
 							its own token, which you can revoke below at any time.
 						</p>
 					</article>
-					<article class="glance-surface">
+					<article class="glance-surface is-live" id="apple">
 						<h3>macOS and iOS</h3>
-						<p class="glance-status">Planned</p>
-						<p>
-							A shared WidgetKit extension, gated on an Apple Developer account. Same card, same
-							endpoint. See the
-							<a href="https://github.com/nirholas/three.ws/blob/main/prompts/finish/roadmap-native-widgets.md">work order</a>.
+						<p class="glance-status">Live now</p>
+						<ol>
+							<li>Install the three.ws Glance app on the Mac, or the <a href="/docs/ios-app">three.ws iPhone app</a>.</li>
+							<li>Open this page on that device, signed in, and press <b>Link this device</b>.</li>
+							<li>Add <b>Agent glance</b> from the widget gallery (Mac: click the date, then <b>Edit widgets</b>).</li>
+						</ol>
+						<p class="glance-link" id="apple-link">
+							<button type="button" class="glance-btn" id="apple-link-button">Link this device</button>
+							<span class="glance-help" id="apple-link-status"></span>
+						</p>
+						<p class="glance-link" id="apple-link-code" hidden>
+							<code id="apple-link-token" class="glance-token">glw_</code>
+							<button class="copy glance-btn secondary" type="button" data-copy="apple-link-token">Copy</button>
+							<span class="glance-help">Paste this into the app if the link did not open it. It is shown once.</span>
+						</p>
+						<p class="glance-note">
+							One WidgetKit extension serves both platforms, in small, medium and large. It refreshes
+							on the system's timeline, keeps the last card offline, and opens your agent on click.
+							Same token, revocable below.
 						</p>
 					</article>
 				</div>
 				<div class="glance-devices" id="devices" hidden>
 					<h3>Linked widgets</h3>
 					<p class="glance-help">
-						Every phone widget holds its own token that can only read your glance card. Revoke one
+						Every linked widget holds its own token that can only read your glance card. Revoke one
 						and that widget shows a "link again" card on its next refresh.
 					</p>
 					<ul id="device-list" class="glance-device-list" aria-live="polite"></ul>

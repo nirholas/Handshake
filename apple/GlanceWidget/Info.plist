@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>Agent glance</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>NSExtension</key>
+	<dict>
+		<key>NSExtensionPointIdentifier</key>
+		<string>com.apple.widgetkit-extension</string>
+	</dict>
+	<!--
+		GlanceKit reads these three at runtime instead of hard coding them,
+		because iOS and macOS cannot agree on the strings: an App Group on a Mac
+		signed with a Developer ID has to carry the team prefix that the same
+		group on iPhone must not have. Each project defines the build settings
+		and Xcode expands them here and in the entitlements.
+	-->
+	<key>GlanceOrigin</key>
+	<string>$(GLANCE_ORIGIN)</string>
+	<key>GlanceAppGroup</key>
+	<string>$(GLANCE_APP_GROUP)</string>
+	<key>GlanceKeychainGroup</key>
+	<string>$(GLANCE_KEYCHAIN_GROUP)</string>
+</dict>
+</plist>

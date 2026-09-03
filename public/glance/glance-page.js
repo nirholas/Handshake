@@ -194,11 +194,37 @@ const android = {
 	list: document.getElementById('device-list'),
 };
 
+/**
+ * Apple hand-off. Same mint, a different delivery: an Apple app claims the
+ * `threews://glance/link` URL natively, and a Mac whose browser is signed in
+ * on a different machine has no URL to follow at all, so the code is revealed
+ * once beside the button for a person to paste into the app.
+ */
+const apple = {
+	button: document.getElementById('apple-link-button'),
+	status: document.getElementById('apple-link-status'),
+	code: document.getElementById('apple-link-code'),
+	value: document.getElementById('apple-link-token'),
+};
+
 function deviceLabel() {
 	const ua = navigator.userAgent;
 	const model = ua.match(/;\s*([^;)]+?)\s+Build\//);
 	if (model) return model[1].trim().slice(0, 40);
 	return /Android/i.test(ua) ? 'Android phone' : 'Home screen widget';
+}
+
+/**
+ * Which Apple platform is asking. iPadOS reports itself as a Mac, so a Mac
+ * with a touch screen is an iPad; everything else Apple is a Mac.
+ */
+function applePlatform() {
+	const ua = navigator.userAgent;
+	if (/iPhone|iPod/.test(ua)) return { platform: 'ios', label: 'iPhone' };
+	if (/iPad/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) {
+		return { platform: 'ios', label: 'iPad' };
+	}
+	return { platform: 'macos', label: 'Mac' };
 }
 
 async function linkAndroid({ auto = false } = {}) {
@@ -236,6 +262,45 @@ async function linkAndroid({ auto = false } = {}) {
 	}
 }
 
+async function linkApple({ auto = false } = {}) {
+	const { platform, label } = applePlatform();
+	apple.button.disabled = true;
+	apple.status.textContent = 'Linking\u2026';
+	try {
+		const res = await fetch('/api/glance/token', {
+			method: 'POST',
+			credentials: 'same-origin',
+			headers: { 'content-type': 'application/json', accept: 'application/json' },
+			body: JSON.stringify({ platform, label, agent: state.agentId || null }),
+			signal: AbortSignal.timeout(TIMEOUT_MS),
+		});
+		if (res.status === 401) {
+			const next = encodeURIComponent('/glance?link=apple');
+			apple.status.innerHTML = `<a href="/login?next=${next}">Sign in</a> first, then come back here.`;
+			if (auto) location.assign(`/login?next=${next}`);
+			return;
+		}
+		const body = await res.json().catch(() => ({}));
+		if (!res.ok) {
+			apple.status.textContent = body.message || body.error || `Could not link (${res.status}).`;
+			return;
+		}
+		// The code is the fallback, and it is shown every time rather than only
+		// on failure: nothing on the page can observe whether the app claimed
+		// the URL, and a person staring at a Mac that did nothing needs the code
+		// already in front of them.
+		apple.value.textContent = body.token;
+		apple.code.hidden = false;
+		apple.status.textContent = `Opening the three.ws app on this ${label}. If nothing happens, paste the code below into it.`;
+		await loadDevices();
+		location.assign(body.links.apple);
+	} catch (err) {
+		apple.status.textContent = `Could not link: ${err.message}`;
+	} finally {
+		apple.button.disabled = false;
+	}
+}
+
 function relative(iso) {
 	if (!iso) return 'never used';
 	const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
@@ -269,7 +334,7 @@ async function loadDevices() {
 	if (!tokens.length) {
 		const li = document.createElement('li');
 		li.className = 'glance-device-empty';
-		li.textContent = 'No widget is linked yet. Link a phone above and it appears here.';
+		li.textContent = 'No widget is linked yet. Link a device above and it appears here.';
 		android.list.append(li);
 		return;
 	}
@@ -310,20 +375,24 @@ async function loadDevices() {
 	}
 }
 
-function wireAndroid() {
+function wireLinking() {
 	android.button.addEventListener('click', () => linkAndroid());
+	apple.button.addEventListener('click', () => linkApple());
 	loadDevices();
-	const params = new URL(location.href).searchParams;
-	if (params.get('link') === 'android') {
+	const link = new URL(location.href).searchParams.get('link');
+	if (link === 'android') {
 		document.getElementById('android')?.scrollIntoView({ block: 'center' });
 		linkAndroid({ auto: true });
+	} else if (link === 'apple') {
+		document.getElementById('apple')?.scrollIntoView({ block: 'center' });
+		linkApple({ auto: true });
 	}
 }
 
 async function main() {
 	wireControls();
 	wireCopyButtons();
-	wireAndroid();
+	wireLinking();
 
 	const fromUrl = new URL(location.href).searchParams.get('agent');
 	const { options, note } = await discoverAgents();

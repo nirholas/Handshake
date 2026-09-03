@@ -6,7 +6,9 @@
  *
  *   GET     list the caller's live tokens (prefix, label, platform, last seen)
  *   POST    mint one: { label?, platform?, agent? }. Answers the plaintext
- *           exactly once, plus the Android deep link that hands it to the app.
+ *           exactly once, plus the deep links that hand it to a native app
+ *           (Android's intent: URL, and the threews:// URL both Apple apps
+ *           claim).
  *   PATCH   { id, agent } repoint a token at another owned agent (null = first)
  *   DELETE  ?id=<uuid> revoke one. Idempotent; 404 for an id that is not
  *           the caller's live token.
@@ -40,6 +42,20 @@ export const ANDROID_PACKAGE = 'ws.three.app';
 export function androidLinkUrl(token) {
 	const fallback = encodeURIComponent('https://three.ws/seeker?utm_source=glance_link');
 	return `intent://glance/link?token=${encodeURIComponent(token)}#Intent;scheme=threews;package=${ANDROID_PACKAGE};S.browser_fallback_url=${fallback};end`;
+}
+
+/**
+ * The URL that hands the token to an Apple app: the three.ws iPhone app or the
+ * three.ws Glance app on a Mac, both of which register the `threews` scheme.
+ *
+ * There is no intent-style fallback here because neither platform has one: a
+ * Mac or an iPhone without the app installed simply does nothing with the URL,
+ * which is why /glance also reveals the code for a person to paste. The link
+ * activity is native on both platforms (SceneDelegate on iOS, the app delegate
+ * on macOS), so the token never reaches the WebView.
+ */
+export function appleLinkUrl(token) {
+	return `threews://glance/link?token=${encodeURIComponent(token)}`;
 }
 
 async function ownsAgent(userId, agentId) {
@@ -111,7 +127,7 @@ export default wrap(async (req, res) => {
 		});
 		return json(res, 201, {
 			...minted,
-			links: { android: androidLinkUrl(minted.token) },
+			links: { android: androidLinkUrl(minted.token), apple: appleLinkUrl(minted.token) },
 		});
 	} catch (e) {
 		if (e.code === 'too_many_tokens') return error(res, 409, e.code, e.message);
