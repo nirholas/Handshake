@@ -1040,6 +1040,15 @@ export default wrap(async (req, res) => {
 	// card; the approval happens at /api/home/:id/confirm, which this file never
 	// calls and no model can reach.
 	let homeResults = [];
+	/**
+	 * The home this turn touched, stamped into the usage row below.
+	 *
+	 * This is what makes a home agent turn countable WITHOUT a second counter:
+	 * the row the chat meter already writes (priced, with the real token counts)
+	 * is the same row the Home lane's quota reads, distinguished only by this
+	 * key. See api/_lib/home/usage.js.
+	 */
+	let homeTouched = null;
 	if (auth?.userId && (result.toolCalls || []).some((c) => isHomeTool(c.name))) {
 		let pass = result;
 		let workingHistory = history;
@@ -1053,11 +1062,13 @@ export default wrap(async (req, res) => {
 				// Streamed immediately, ahead of the model's next pass, so a
 				// confirmation card is on screen while the model is still composing
 				// the sentence that explains it.
+				const touchedId = entry.result.structured?.home?.id || entry.call.input?.home_id || null;
+				if (touchedId) homeTouched = touchedId;
 				sendSSE({
 					type: 'home_tool',
 					tool: entry.call.name,
 					status: entry.result.kind,
-					home_id: entry.result.structured?.home?.id || entry.call.input?.home_id || null,
+					home_id: touchedId,
 					data: entry.result.structured,
 				});
 			}

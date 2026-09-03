@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-03T04:01:57.493Z",
+	"generated_at": "2026-09-03T04:06:00.542Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -3301,6 +3301,16 @@
 					"path": "/docs/home-privacy",
 					"title": "Docs · Home privacy and retention",
 					"description": "Everything three.ws stores about a home you connect, why, for how long, and what removes it: the full inventory, the promise that room names and device states are never persisted, the 90-day action-log window and the control that changes it, the export and deletion paths, the logging rules, and the disclosure text shown at connect and at the voice opt-in.",
+					"added": "2026-09-03",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/home-plans",
+					"title": "Docs · Home plans and quotas",
+					"description": "What a connected house costs and what each plan covers, with the two commitments enforced in code rather than promised in prose: a limit never blocks a safety action, so locking up, closing a garage or valve and arming an alarm work over quota and past due; and nothing about the confirmation gate, the action log's integrity or the role system is ever a paid feature.",
 					"added": "2026-09-03",
 					"auth": null,
 					"indexable": true,

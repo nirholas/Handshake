@@ -2,6 +2,16 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-09-03",
+			"title": "See what your connected homes use, before a limit ever stops you",
+			"summary": "Your smart home plan now has a page. It shows every allowance whether or not you are near it: how many homes you have connected, how many people are in each household, how many live screens, how many voice minutes and agent turns you have used this month, and the exact date each one resets. Two things a plan can never do are written on the page itself, because they matter more than any number on it. Locking a door, closing a garage or a water valve and arming an alarm are never refused by a limit, on any plan, in any state, including on a home your plan has paused. And confirmation prompts, your action log and every safety property of household roles are on every plan, free included: safety is not an upgrade. If a plan change ever leaves you with more homes than it covers, nothing is disconnected and nothing is deleted. The extra homes are paused, with their access tokens and their whole history untouched, and you pick which ones are live from the same page.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/smart-home/plan"
+		},
+		{
 			"date": "2026-09-02",
 			"title": "Keyboard users can move past the Create page hero card",
 			"summary": "The recommended card on /create wrapped its rotating 3D preview inside the button itself, so the preview took a tab stop of its own and screen readers announced a control inside a control. The preview is now decorative, as it was always meant to be: the whole card is one target, and the model still wakes up and rotates when you hover or tab to it.",
@@ -25919,12 +25929,21 @@
 		{
 			"date": "2026-09-03",
 			"title": "Your home is a household now, and a house sitter still cannot open your front door",
-			"summary": "A house has more than one person in it, and until now the only way to let a partner, a house sitter or a colleague use a connected home was to hand over your password. Every home has a household. On its card under \u201cWho can reach this home\u201d you can invite somebody by email and choose exactly what they get. There are five roles and each one says plainly what it can and cannot do at the moment you pick it. Someone who lives there can control everything and approve unlocking a door. A guest can turn the lights on and can never approve unlocking anything, ever, no matter what your agent asks them: that refusal is enforced on our servers and there is no version of the app that could offer them the button. A guest or a viewer can also be given just the kitchen, or just three specific devices, and the rooms you did not give them are removed from what they receive rather than hidden on screen, so their app never learns those rooms exist. Invitations work once, expire after a week, and can be withdrawn before anyone uses them. Removing somebody takes back every standing allowance they ever approved in the same instant, so a door can never keep opening on the say-so of a person who has left. And every action in your home log is attributed to the person who took it, so \u201cwho did what\u201d has a real answer.",
+			"summary": "A house has more than one person in it, and until now the only way to let a partner, a house sitter or a colleague use a connected home was to hand over your password. Every home has a household. On its card under “Who can reach this home” you can invite somebody by email and choose exactly what they get. There are five roles and each one says plainly what it can and cannot do at the moment you pick it. Someone who lives there can control everything and approve unlocking a door. A guest can turn the lights on and can never approve unlocking anything, ever, no matter what your agent asks them: that refusal is enforced on our servers and there is no version of the app that could offer them the button. A guest or a viewer can also be given just the kitchen, or just three specific devices, and the rooms you did not give them are removed from what they receive rather than hidden on screen, so their app never learns those rooms exist. Invitations work once, expire after a week, and can be withdrawn before anyone uses them. Removing somebody takes back every standing allowance they ever approved in the same instant, so a door can never keep opening on the say-so of a person who has left. And every action in your home log is attributed to the person who took it, so “who did what” has a real answer.",
 			"tags": [
 				"feature",
 				"security"
 			],
 			"link": "/smart-home"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "We tried making your agent a Matter device, measured it, and decided against it for now",
+			"summary": "Matter is the standard that lets smart-home gear from different brands work together, and the plan had always been to make a three.ws agent show up as a Matter device so that any smart-home controller could see it, drop it in a room, and use it in an automation. We built it and pointed it at a real Home Assistant to find out whether the idea holds up. It does, technically: the agent paired in under a second over an ordinary network with no Bluetooth and no special radio, Home Assistant listed it as a proper device with a name, a model and a serial number, put it in the living room, and messages went both ways in well under a second. It also held the line that matters most: an automation that asked the agent to unlock a front door was refused and the door stayed locked, because an automation is not a person saying yes, and only a real confirmation from a person opened it. We are still not shipping it, and the honest reason is that it would be a narrower version of something you can already have. The three.ws Home Assistant integration already puts your agent inside your house with the whole conversation available to it, where Matter would offer a switch and a sensor. On top of that, appearing in the big-name smart-home apps needs a certified manufacturer identity we do not hold. The full write-up, every measurement, and the exact conditions that would change our answer are now in the smart-home documentation, so nobody has to guess or start over.",
+			"tags": [
+				"docs"
+			],
+			"link": "/docs/smart-home"
 		}
 	]
 }

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-03T04:01:57.539Z",
+	"generated_at": "2026-09-03T04:06:00.555Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,16 @@
 			"title": "Docs · Home households and roles",
 			"summary": "Sharing a connected house without sharing a login: the five roles and what each one may do, per-member entity scopes that narrow the house a member can even see, how invitations are issued and accepted, what happens to somebody's access when they leave, and the rule everything hangs off, that a guest can never confirm an action that opens a building.",
 			"link": "/docs/home-households",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "launch",
+			"title": "Docs · Home plans and quotas",
+			"summary": "What a connected house costs and what each plan covers, with the two commitments enforced in code rather than promised in prose: a limit never blocks a safety action, so locking up, closing a garage or valve and arming an alarm work over quota and past due; and nothing about the confirmation gate, the action log's integrity or the role system is ever a paid feature.",
+			"link": "/docs/home-plans",
 			"tags": [
 				"launch"
 			]
@@ -152,6 +162,17 @@
 		{
 			"date": "2026-09-03",
 			"type": "update",
+			"title": "See what your connected homes use, before a limit ever stops you",
+			"summary": "Your smart home plan now has a page. It shows every allowance whether or not you are near it: how many homes you have connected, how many people are in each household, how many live screens, how many voice minutes and agent turns you have used this month, and the exact date each one resets. Two things a plan can never do are written on the page itself, because they matter more than any number on it. Locking a door, closing a garage or a water valve and arming an alarm are never refused by a limit, on any plan, in any state, including on a home your plan has paused. And confirmation prompts, your action log and every safety property of household roles are on every plan, free included: safety is not an upgrade. If a plan change ever leaves you with more homes than it covers, nothing is disconnected and nothing is deleted. The extra homes are paused, with their access tokens and their whole history untouched, and you pick which ones are live from the same page.",
+			"link": "/smart-home/plan",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
 			"title": "See, export and delete everything a connected home stores",
 			"summary": "Connecting a house to three.ws hands over a key to a physical building, so the answer to \"what do you keep, and for how long\" is now a page you can read and an endpoint you can call. Every piece of data a connected home creates is listed with why it exists and what removes it, including the parts we deliberately never store: the names of your rooms and devices, their states, and any audio from voice control. There is no record of which lights were on, or when. The log of what the agent did in your home is yours: it keeps 90 days by default, you can shorten it to a single day and the old entries go immediately, and an operator who has to keep records for longer can, with a written reason. One endpoint shows you what is stored, downloads all of it as JSON, and deletes one home or every trace of all of them.",
 			"link": "/docs/home-privacy",
@@ -191,6 +212,16 @@
 			"tags": [
 				"feature",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "We tried making your agent a Matter device, measured it, and decided against it for now",
+			"summary": "Matter is the standard that lets smart-home gear from different brands work together, and the plan had always been to make a three.ws agent show up as a Matter device so that any smart-home controller could see it, drop it in a room, and use it in an automation. We built it and pointed it at a real Home Assistant to find out whether the idea holds up. It does, technically: the agent paired in under a second over an ordinary network with no Bluetooth and no special radio, Home Assistant listed it as a proper device with a name, a model and a serial number, put it in the living room, and messages went both ways in well under a second. It also held the line that matters most: an automation that asked the agent to unlock a front door was refused and the door stayed locked, because an automation is not a person saying yes, and only a real confirmation from a person opened it. We are still not shipping it, and the honest reason is that it would be a narrower version of something you can already have. The three.ws Home Assistant integration already puts your agent inside your house with the whole conversation available to it, where Matter would offer a switch and a sensor. On top of that, appearing in the big-name smart-home apps needs a certified manufacturer identity we do not hold. The full write-up, every measurement, and the exact conditions that would change our answer are now in the smart-home documentation, so nobody has to guess or start over.",
+			"link": "/docs/smart-home",
+			"tags": [
+				"docs"
 			]
 		},
 		{

@@ -2013,6 +2013,12 @@ URL: https://three.ws/docs/home-privacy
 
 Everything three.ws stores about a home you connect, why, for how long, and what removes it: the full inventory, the promise that room names and device states are never persisted, the 90-day action-log window and the control that changes it, the export and deletion paths, the logging rules, and the disclosure text shown at connect and at the voice opt-in.
 
+### Docs · Home plans and quotas
+
+URL: https://three.ws/docs/home-plans
+
+What a connected house costs and what each plan covers, with the two commitments enforced in code rather than promised in prose: a limit never blocks a safety action, so locking up, closing a garage or valve and arming an alarm work over quota and past due; and nothing about the confirmation gate, the action log's integrity or the role system is ever a paid feature.
+
 ### Docs · three.ws Drive
 
 URL: https://three.ws/docs/carplay
