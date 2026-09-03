@@ -155,6 +155,19 @@ describe('isFatalAuthFailure', () => {
 		expect(isFatalAuthFailure(Object.assign(new Error('429'), { status: 429 }))).toBe(false);
 	});
 
+	// Regression: a free tier that hits its daily cap answers 429 forever. Once
+	// the backoff budget is spent that is an exhausted quota, not one bad string,
+	// so callBackendWithRetry stamps isQuotaExhausted. Left retryable, the
+	// halve-and-retry path walked every key the run had left down to a single
+	// key and baked English over each one, then exited as if it had worked.
+	it('is fatal once a rate limit has outlived its whole backoff budget', () => {
+		expect(
+			isFatalAuthFailure(
+				Object.assign(new Error('groq 429: rate limit'), { status: 429, isQuotaExhausted: true }),
+			),
+		).toBe(true);
+	});
+
 	it('is NOT fatal on a server error or a bad model reply', () => {
 		expect(isFatalAuthFailure(Object.assign(new Error('500'), { status: 500 }))).toBe(false);
 		expect(isFatalAuthFailure(new Error('no JSON object in response'))).toBe(false);
