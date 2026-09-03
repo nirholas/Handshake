@@ -4324,6 +4324,14 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/alpha-drip",
+					"title": "Docs: Alpha-drip",
+					"description": "Alpha-drip lets a copy-trading leader price the latency of their own signal: $THREE holders in higher tiers see the copy intent first, everyone else after a delay the leader sets. It delays the reveal, never the record.",
+					"added": "2026-09-03",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
 					"path": "/docs/copy-trading",
 					"title": "Docs: Copy Trading",
 					"description": "Copy trading lets one wallet follow another's real trades. Two engines sit behind it: the custodial agent mirror, where the platform signs a real on-chain trade from your agent's wallet within its spend policy, and non-custodial subscriptions, which record a sized intent for you to sign.",

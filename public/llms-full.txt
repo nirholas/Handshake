@@ -3340,6 +3340,12 @@ URL: https://three.ws/docs/user-wallet
 
 Every user account can own one custodial wallet: the master wallet, the financial hub for the person rather than the bot. Provision it, read balances, send SOL or any SPL token, fund an agent, and read its on-chain history, with the spend safeguards on each route.
 
+### Docs: Alpha-drip
+
+URL: https://three.ws/docs/alpha-drip
+
+Alpha-drip lets a copy-trading leader price the latency of their own signal: $THREE holders in higher tiers see the copy intent first, everyone else after a delay the leader sets. It delays the reveal, never the record.
+
 ### Docs: Copy Trading
 
 URL: https://three.ws/docs/copy-trading

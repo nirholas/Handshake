@@ -87,6 +87,14 @@
 			<description>How a three.ws agent rides in the car: the CarPlay entitlement categories measured, why Apple's voice-based conversational category is the one that fits and why it grants no drawing surface, the open-source in-car projects worth adopting and the copyleft ones that are not, and how the /drive surface, the native CarPlay scene, and an open head unit share one implementation.</description>
 		</item>
 		<item>
+			<title>Docs: Alpha-drip</title>
+			<link>https://three.ws/docs/alpha-drip</link>
+			<guid isPermaLink="false">2026-09-03:Docs: Alpha-drip</guid>
+			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Alpha-drip lets a copy-trading leader price the latency of their own signal: $THREE holders in higher tiers see the copy intent first, everyone else after a delay the leader sets. It delays the reveal, never the record.</description>
+		</item>
+		<item>
 			<title>Hands-free voice for your home</title>
 			<link>https://three.ws/voice/home</link>
 			<guid isPermaLink="false">2026-09-03:Hands-free voice for your home</guid>
@@ -165,6 +173,14 @@
 			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>There is a new way to connect your home that needs no three.ws account and no remote web address at all: install @three-ws/home-mcp in Claude, Cursor, or anything else that speaks Model Context Protocol, give it your Home Assistant address and a token, and it reads your rooms, runs the scenes you already built, and calls services. Because it runs on your own machine, your ordinary home network address works and nothing about your house leaves the building. The safety rule is the same one the rest of the platform uses, applied honestly to this setup: locking up, closing the garage and arming the alarm run straight away and never ask. Unlocking, opening a door and disarming are refused outright, every time, because saying yes to opening a building takes a person and this kind of connection has no person in it to ask. If you genuinely want one specific door handled without asking, you name that exact door yourself when you start it, by hand, and nothing your assistant can do will widen that to any other door. We proved it against a real Home Assistant rather than a stand-in: the front door was told to unlock seven different ways, including with a fake confirmation smuggled into the request, and it stayed locked every time. Alongside it there is now a full walkthrough from nothing to a working agent in a real house, covering what to do when it says your home is unreachable, and what a guest in your household can and cannot do.</description>
+		</item>
+		<item>
+			<title>Avatar posters and clips survive a CDN outage instead of coming back blank</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-03:Avatar posters and clips survive a CDN outage instead of coming back blank</guid>
+			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Some of the images we render of an avatar on the server are drawn by a headless browser that loads three.js from a public CDN: the images the render endpoint and the MCP render tools return, rendered clips, and the preview cards for models our fast in-process renderer cannot decode on its own. When that one CDN was slow or unreachable, the page's module load simply hung, the render timed out, and the image came back empty with nothing to explain why. A failover had been written for exactly this and was never connected to the renderers. It is connected now: before each render we check that the CDN is answering and switch to a second one if it is not, remembering the answer for ten minutes so a burst of renders pays for a single check. The three renderers also share one pinned version of three.js instead of keeping three copies that could drift apart, and a test now fails the build if a renderer ever goes back to hardcoding a single CDN.</description>
 		</item>
 		<item>
 			<title>Coin Radar tells you when it is your filter, not the market, that is empty</title>
@@ -365,6 +381,14 @@
 			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The atlas advertised 185 stops in its page title, its search prompt, its social cards and its listing everywhere on the site. It has had 263 for a while, and nothing was checking, so the number quietly went stale. It now says 263, and the atlas guard fails the build if that number ever stops matching the manifest again. Eighteen stops carry no screenshot because they are live 3D or live-market pages that never stop painting long enough to be photographed; their cards used to claim the page 'did not respond', which was untrue of all of them, and now they say what actually happened and invite you to open the page live. Opening one of those stops used to show an empty black frame above the write-up, and now shows the same explanation. If the atlas itself cannot load you get a plain sentence about what went wrong and a Try again button, instead of a raw browser error or an instruction to run a developer command. And a /tour/atlas#stop-name link now opens that stop even when you are already on the page or have a filter narrowing the grid.</description>
+		</item>
+		<item>
+			<title>Traders can now price the latency of their own calls</title>
+			<link>https://three.ws/docs/alpha-drip</link>
+			<guid isPermaLink="false">2026-09-03:Traders can now price the latency of their own calls</guid>
+			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Copy trading has a new option for the trader being copied: alpha-drip. A trader can set how long each $THREE holder tier waits before their copy intent is revealed, so holding more $THREE means seeing their calls sooner. It is off unless a trader turns it on, and the rules are strict on purpose: a higher tier can never wait longer than a lower one, no delay can exceed fifteen minutes, and the delay only affects when a copier is SHOWN the trade. The trade itself is still recorded the instant it happens and still appears in the trader's public track record, so nothing is ever hidden. Copiers see exactly which seat their balance buys before they subscribe, and a held intent shows a live countdown that unlocks in place. Traders can also ask for a suggested ladder tuned to how fast their own edge actually decays, measured from their real closed trades, and get warned when the slowest tier would be waiting longer than that edge lasts.</description>
 		</item>
 		<item>
 			<title>We tried making your agent a Matter device, measured it, and decided against it for now</title>

@@ -26169,6 +26169,24 @@
 				"infra"
 			],
 			"link": "/docs/autonomous-x402"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "Avatar posters and clips survive a CDN outage instead of coming back blank",
+			"summary": "Some of the images we render of an avatar on the server are drawn by a headless browser that loads three.js from a public CDN: the images the render endpoint and the MCP render tools return, rendered clips, and the preview cards for models our fast in-process renderer cannot decode on its own. When that one CDN was slow or unreachable, the page's module load simply hung, the render timed out, and the image came back empty with nothing to explain why. A failover had been written for exactly this and was never connected to the renderers. It is connected now: before each render we check that the CDN is answering and switch to a second one if it is not, remembering the answer for ten minutes so a burst of renders pays for a single check. The three renderers also share one pinned version of three.js instead of keeping three copies that could drift apart, and a test now fails the build if a renderer ever goes back to hardcoding a single CDN.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"title": "Traders can now price the latency of their own calls",
+			"summary": "Copy trading has a new option for the trader being copied: alpha-drip. A trader can set how long each $THREE holder tier waits before their copy intent is revealed, so holding more $THREE means seeing their calls sooner. It is off unless a trader turns it on, and the rules are strict on purpose: a higher tier can never wait longer than a lower one, no delay can exceed fifteen minutes, and the delay only affects when a copier is SHOWN the trade. The trade itself is still recorded the instant it happens and still appears in the trader's public track record, so nothing is ever hidden. Copiers see exactly which seat their balance buys before they subscribe, and a held intent shows a live countdown that unlocks in place. Traders can also ask for a suggested ladder tuned to how fast their own edge actually decays, measured from their real closed trades, and get warned when the slowest tier would be waiting longer than that edge lasts.",
+			"link": "/docs/alpha-drip",
+			"tags": [
+				"feature"
+			]
 		}
 	]
 }

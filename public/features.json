@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-03T07:27:18.729Z",
+	"generated_at": "2026-09-03T07:32:51.716Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -5513,6 +5513,16 @@
 					"title": "Docs: Your master wallet",
 					"description": "Every user account can own one custodial wallet: the master wallet, the financial hub for the person rather than the bot. Provision it, read balances, send SOL or any SPL token, fund an agent, and read its on-chain history, with the spend safeguards on each route.",
 					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/alpha-drip",
+					"title": "Docs: Alpha-drip",
+					"description": "Alpha-drip lets a copy-trading leader price the latency of their own signal: $THREE holders in higher tiers see the copy intent first, everyone else after a delay the leader sets. It delays the reveal, never the record.",
+					"added": "2026-09-03",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
