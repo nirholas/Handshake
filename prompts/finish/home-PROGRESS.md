@@ -144,3 +144,24 @@ alerts, axe, `audit:web`, 320/768/1440, account-deletion sweep, log scrub).
 
 **Left open:** the campaign. Re-run this order when orders 01 to 19 are retired.
 **Commits:** `f7a97880f`, `6107a08bc`, `c1eb31023`, `4b6a7b5c6`.
+
+**Addendum, same session, after the verdict above was written.** The lane kept moving during and
+after this run, so two lines above are already stale and one is not:
+
+- Resolved by their owning agents: the duplicate `20260903120000_home_connections.sql` file is
+  gone, `packages/home-mcp/README.md` landed, and `api/_lib/ops/home-health.js` now reports a
+  `home` subsystem through `/api/healthz`.
+- **Not resolved, still live on production:** all six duplicate indexes. The
+  `20260903130000_home_schema_reconcile.sql` that landed adds the two CHECK constraints the losing
+  `create table if not exists` never created, which is a different (real) bug. It drops no index.
+  Verified against Neon after it applied: all six names still present. Order 01 still owns it.
+- New since the verdict: `services/home-satellite` has no README either, so `npm run check:claude`
+  still fails on two directories rather than the two named above.
+- Fixed here after the verdict: `scripts/audit-home-credential-health.mjs` landed with no npm
+  script and no registry entry, failing `npm run audit:guards`, `npm run gate` and
+  `tests/audit-guards.test.js`. Registered beside its custodial-wallet twin (manual stage, needs
+  credentials, live proof) in `d00748f1d`.
+- The full suite cannot be certified green while the campaign is in flight. Three failures in one
+  run (`tests/home-privacy.test.js`, `tests/home-runtime.test.js`, `tests/audit-guards.test.js`)
+  and one in another; the first two pass in isolation. They read `api/_lib/migrations/` and the
+  guard registry from disk, and peers mutate both mid-run. Re-run the suite when the lane is quiet.
