@@ -535,9 +535,21 @@ download.zip
 # .storage/auth, so the pattern is deliberately broad: any .ha-* directory at the
 # repo root is a throwaway HA instance and never belongs in a commit.
 .ha-*/
+# The home lane's e2e stack details (tests/e2e/home-global-setup.js) are a FILE,
+# not a directory, so the pattern above does not reach them. Same contents: the
+# base URL and a working long-lived access token for the seeded house.
+.ha-config-e2e-stack.json
 # Same thing at fleet scale: scripts/home-fleet.mjs boots numbered Home Assistant
 # instances under .home-fleet/<n>/, each with its own token store.
 .home-fleet/
+# A directory literally named "true": what a script writes when a boolean flag is
+# parsed as its output path. Junk every time, and a git add -A sweep will take it.
+/true/
+# Root-level .scratch/: throwaway probe scripts and screenshots. Repo hygiene
+# keeps debug one-offs in scripts/ or deletes them; they never get committed.
+# (scratch/ and scripts/.scratch/ are already covered above; this is the root
+# dotted sibling that slipped through both.)
+/.scratch/
 # The fleet registry that pairs those instances with their long-lived access
 # tokens. Local state about local containers; the tokens make it uncommittable.
 tasks/home/*.local.json
@@ -547,3 +559,5 @@ tasks/home/*.local.json
 # prebuild; the committed openWakeWord models under public/models/voice/wake-word
 # are release artifacts and DO belong in git.
 public/models/voice/runtime/
+# The reusable QA accounts for the home lane's e2e run. Real credentials.
+.ha-config-e2e-accounts.json

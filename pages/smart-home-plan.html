@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Home plan · What your homes use and when it resets · three.ws</title>
+	<meta name="description" content="What your three.ws plan covers for connected homes: homes, household seats, live screens, voice minutes and agent turns, with what you have used and when it resets. Locking up, closing a garage and arming an alarm are never limited." />
+	<link rel="canonical" href="https://three.ws/smart-home/plan" />
+	<meta property="og:title" content="Home plan · three.ws" />
+	<meta property="og:description" content="What your plan covers for connected homes, what you have used, and when it resets. Safety actions are never limited." />
+	<meta property="og:url" content="https://three.ws/smart-home/plan" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Home+plan&amp;d=What+your+plan+covers+for+connected+homes%2C+what+you+have+used%2C+and+when+it+resets.&amp;p=%2Fsmart-home%2Fplan" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:site" content="@trythreews" />
+	<meta name="twitter:title" content="Home plan · three.ws" />
+	<meta name="twitter:description" content="What your plan covers for connected homes, what you have used, and when it resets. Safety actions are never limited." />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/fonts/fonts.css" />
+	<link rel="stylesheet" href="/src/home/home.css" />
+	<link rel="stylesheet" href="/src/home/plan.css" />
+</head>
+<body>
+	<main class="hm-wrap" id="main">
+		<header class="hm-hero">
+			<p class="hm-eyebrow" data-i18n="home_plan.eyebrow">Smart home</p>
+			<h1 class="hm-title" data-i18n="home_plan.title">Your home plan</h1>
+			<p class="hm-lede" data-i18n="home_plan.lede">
+				What your plan covers, what you are using, and when it resets. Every limit is here whether
+				or not you are near it, because a quota you only meet at the moment it stops you is a
+				quota nobody showed you. Locking a door, closing a garage or a valve and arming an alarm
+				are never refused by a limit, on any plan.
+			</p>
+		</header>
+
+		<!--
+			One live region for the whole page. The controller (src/home/plan.js)
+			owns everything inside it. `aria-live="polite"` so pausing or resuming a
+			home announces the new state without stealing focus from the button that
+			was just pressed.
+		-->
+		<div id="hm-plan-root" aria-live="polite" aria-busy="true">
+			<section class="hm-panel">
+				<div class="hm-panel-head">
+					<div style="flex:1">
+						<div class="hm-skeleton" style="height:1.1rem;width:13rem"></div>
+						<div class="hm-skeleton" style="height:0.85rem;width:21rem;margin-top:0.55rem"></div>
+					</div>
+				</div>
+				<div class="hm-skeleton" style="height:0.42rem;margin-top:1rem"></div>
+				<div class="hm-skeleton" style="height:0.42rem;margin-top:1.4rem"></div>
+				<div class="hm-skeleton" style="height:0.42rem;margin-top:1.4rem"></div>
+			</section>
+		</div>
+
+		<noscript>
+			<section class="hm-panel">
+				<h2 class="hm-panel-title">JavaScript is required here</h2>
+				<p class="hm-panel-sub">
+					This page reads your live usage from your account, so it needs JavaScript. Your limits
+					and your homes are unaffected either way, and every safety action keeps working: a plan
+					never stops you locking up.
+				</p>
+				<div class="hm-actions">
+					<a class="hm-btn hm-btn-ghost" href="/smart-home">Back to your homes</a>
+					<a class="hm-btn hm-btn-ghost" href="/pricing">See plans</a>
+				</div>
+			</section>
+		</noscript>
+	</main>
+
+	<script src="/nav.js"></script>
+	<script type="module" src="/src/home/plan.js"></script>
+</body>
+</html>

@@ -7503,6 +7503,260 @@ Session cookie required; writes must be same-site. `POST` answers `201` with `{ 
 | `too_many_tokens` | 409 | 12 live tokens already |
 | `rate_limited` | 429 | over the per-account write limit |
 
+## Home API
+
+Read and act on a Home Assistant house the account has connected. Session-authenticated from a
+browser; bearer principals (OAuth, API key) may read with `home:read` and act with `home:act`, but
+**no bearer may ever confirm a guarded action**.
+
+Every failure carries a stable `code` alongside the message: `bad_url`, `auth`, `unreachable`,
+`needs_confirmation`, `no_mcp`, `call_failed`, `not_connected`. Branch on the code, show the
+message. Full walkthrough: [Connect your home](./tutorials/connect-your-home.md).
+
+**The physical-action gate applies to every route here.** Locking, closing and arming run
+immediately and never prompt. Unlocking, opening a door, gate or garage, and disarming do not run
+from an agent call at all: they mint a pending confirmation that a person redeems in a session.
+
+### List connected homes
+
+```
+GET /api/home
+```
+
+Returns every home this account has connected, **credential-free**: the stored access token is
+never in a response, on any route.
+
+```json
+{
+	"homes": [
+		{
+			"id": "e33233a2-94ca-4f5e-8f62-223a30ea971b",
+			"label": "Tutorial house",
+			"base_url": "https://abc123.ui.nabu.casa",
+			"status": "connected",
+			"transport": "direct",
+			"capabilities": { "mcp": true }
+		}
+	]
+}
+```
+
+---
+
+### Connect a home
+
+```
+POST /api/home
+```
+
+**Body**
+
+| Field     | Type   | Description                                                        |
+| --------- | ------ | ------------------------------------------------------------------ |
+| `baseUrl` | string | Required. The instance's base URL, reachable over https             |
+| `token`   | string | Required. A Home Assistant long-lived access token                  |
+| `label`   | string | Optional. Defaults to the host                                      |
+
+Three things happen in a fixed order, and the order does not change: the URL shape is validated
+before any socket opens, the instance is **measured** for real (version, entity count, areas,
+floors, whether `mcp_server` answers), and only then is the token encrypted and the row written. A
+house that could not be reached never becomes a stored credential.
+
+A private address is refused up front rather than after a timeout:
+
+```json
+{
+	"error": "unreachable",
+	"code": "unreachable",
+	"message": "192.168.1.40 is a private address. A three.ws server on the public internet cannot route to it. Use your remote https URL, or connect the add-on so your house dials out to us instead."
+}
+```
+
+A home whose `mcp_server` integration is off is **not** an error. It connects, stores, and comes
+back with `capabilities.mcp === false`.
+
+---
+
+### Get one home
+
+```
+GET /api/home/:id
+```
+
+The connection record plus a live room-graph snapshot. It answers even when the house is
+unreachable, because a person needs to see the record in order to fix it.
+
+---
+
+### Disconnect a home
+
+```
+DELETE /api/home/:id
+```
+
+Soft-deletes the row and destroys the stored credential.
+
+---
+
+### Live state
+
+```
+GET /api/home/:id/stream
+```
+
+Server-Sent Events.
+
+| Event       | When                                                            |
+| ----------- | --------------------------------------------------------------- |
+| `graph`     | On open, and on every coalesced room-graph rebuild               |
+| `status`    | On open, on disconnect, on reconnect                             |
+| `heartbeat` | Every 25 s, because idle proxies close silent streams            |
+
+Under severe load, stream admission is limited **before** action admission: someone asking to
+unlock a door is served before someone watching a dashboard.
+
+---
+
+### Call a service
+
+```
+POST /api/home/:id/call
+```
+
+**Body:** `{ domain, service, data, confirmed }`
+
+`confirmed` is the browser's redemption of a confirmation a person already approved. It is never
+set from model output, and a bearer principal cannot use it.
+
+A guarded call returns a pending confirmation rather than acting:
+
+```json
+{
+	"code": "needs_confirmation",
+	"pending": { "id": "...", "domain": "lock", "service": "unlock", "risk": "security", "entityId": "lock.front_door" }
+}
+```
+
+---
+
+### Activate a scene
+
+```
+POST /api/home/:id/activate
+```
+
+**Body:** `{ phrase, dryRun, confirmed }`
+
+Resolves a phrase like "good night" to a scene or script the household already built, then runs
+it. A phrase that matches nothing runs nothing. `dryRun` resolves without running.
+
+---
+
+### Confirm a physical action
+
+```
+POST /api/home/:id/confirm
+GET  /api/home/:id/confirm
+```
+
+The narrowest endpoint on the platform, and the only one that can let an unlock through.
+
+1. **No bearer, ever.** An OAuth or API-key principal is refused first, even one carrying
+   `home:act`. `home:act` authorises asking; it never authorises answering.
+2. **Session plus CSRF.** A cookie alone is not intent, and a cookie a third-party page can make
+   the browser send is the shape of "a website unlocked my front door".
+3. **The id is the whole request.** No domain, no service, no entity, no `confirmed`: the action
+   was frozen server-side when the confirmation was minted and is read back from that row.
+
+`GET` lists what is currently waiting, so a chat card or a voice prompt that lost its state can
+recover without minting anything new. Confirmations expire in 90 seconds.
+
+---
+
+### Standing allowances
+
+```
+GET    /api/home/:id/grants
+POST   /api/home/:id/grants
+DELETE /api/home/:id/grants
+DELETE /api/home/:id/grants/:entityId
+```
+
+What the agent may do in this house without asking again. A grant is **per entity**, optionally
+until a date. Allowing `lock.office_door` does not allow `lock.front_door`.
+
+---
+
+### Household roster
+
+```
+GET    /api/home/:id/members
+POST   /api/home/:id/members
+PATCH  /api/home/:id/members
+DELETE /api/home/:id/members
+```
+
+List members and outstanding invitations, invite by email to a named role and scope, change a
+role, remove a member or withdraw an invitation.
+
+| Role     | Read   | Act    | Confirm | Grant | Layout | Invite | Manage | Disconnect |
+| -------- | ------ | ------ | ------- | ----- | ------ | ------ | ------ | ---------- |
+| `owner`  | yes    | yes    | yes     | yes   | yes    | yes    | yes    | yes        |
+| `admin`  | yes    | yes    | yes     | yes   | yes    | yes    | yes    | no         |
+| `member` | yes    | yes    | yes     | no    | yes    | no     | no     | no         |
+| `guest`  | scoped | scoped | no      | no    | no     | no     | no     | no         |
+| `viewer` | scoped | no     | no      | no    | no     | no     | no     | no         |
+
+There is exactly one owner, enforced by the schema. Ownership is never assigned by an invite.
+
+---
+
+### Accept an invitation
+
+```
+GET  /api/home/invites/:token
+POST /api/home/invites/:token
+```
+
+`GET` says what the link is for without spending it, so the join screen can name the household and
+the role. `POST` spends it.
+
+---
+
+### Pair a LAN-only house
+
+```
+POST /api/home/pair
+GET  /api/home/pair?homeId=
+POST /api/home/pair/redeem
+```
+
+For a house with no reachable URL. `POST /api/home/pair` mints a short pairing code (send
+`{ homeId, action: 'refresh' }` to reissue one); `GET` returns its countdown and the link state.
+
+`POST /api/home/pair/redeem` is the only endpoint in this surface with no three.ws session behind
+it, and that is deliberate: the caller is a Home Assistant install with no account, no cookie and
+no bearer token, holding only the short code its owner typed in. After redemption the house dials
+out to [`services/home-relay`](../services/home-relay/README.md), and **no Home Assistant
+credential ever reaches three.ws**.
+
+---
+
+### Privacy and retention
+
+```
+GET    /api/home/privacy
+GET    /api/home/privacy?export=1
+PATCH  /api/home/privacy
+DELETE /api/home/privacy
+```
+
+What is held about your homes in plain language, the whole of it as JSON, the action-log retention
+window (`{ homeId, retentionDays, reason }`), and deletion (`{ scope: 'home' | 'all', homeId }`).
+Details: [docs/home-privacy.md](./home-privacy.md).
+
+---
+
 ## Pagination
 
 Paginated list endpoints use `limit`/`offset` query parameters unless noted otherwise (each endpoint's own parameter table is authoritative; some small per-user lists, like `/api/agents` and `/api/widgets`, return everything with no pagination).

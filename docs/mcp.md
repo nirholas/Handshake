@@ -53,7 +53,7 @@ There are two kinds. **Hosted remote servers** run over Streamable HTTP with not
 
 | Server | Endpoint | What it does |
 |--------|----------|--------------|
-| three.ws | `/api/mcp` | Avatars, glTF/GLB validation, agent data, memory, copy-trading (this page) |
+| three.ws | `/api/mcp` | Avatars, glTF/GLB validation, agent data, memory, copy-trading, a connected home (this page) |
 | 3D Studio | `/api/mcp-3d` | Paid text/image→3D, rigging, retexture, optimization |
 | 3D Studio (free) | `/api/mcp-studio` | Free text/image→3D and rigged avatars — no auth, no payment |
 | Agent wallet | `/api/mcp-agent` | The agent's custodial wallet: balance, find + pay services, and `monetize_endpoint` |
@@ -61,7 +61,7 @@ There are two kinds. **Hosted remote servers** run over Streamable HTTP with not
 | pump.fun | `/api/pump-fun-mcp` | Free pump.fun + Solana token tools; `get_new_tokens` and `get_trending_tokens` read the live pump.fun feed with no indexer needed; `pumpfun_upload_metadata` needs a key |
 | IBM x402 | `/api/ibm-mcp` | Pay-per-use IBM Granite AI |
 
-**Thirty-eight install-and-run servers** on npm under the `@three-ws` scope, each running over stdio with one command:
+**Forty install-and-run servers** on npm under the `@three-ws` scope, each running over stdio with one command:
 
 ```bash
 # 3D & avatars
@@ -118,6 +118,9 @@ npx -y @three-ws/vision-mcp        # analyze & describe images via the three.ws 
 npx -y @three-ws/brain-mcp         # run any LLM through the multi-provider router
 npx -y @three-ws/audio-mcp         # TTS, STT, audio-to-face lipsync & motion-capture clips
 npx -y @three-ws/alibaba-cloud-mcp  # Qwen chat + embeddings on your own DashScope key
+
+# The physical world
+npx -y @three-ws/home-mcp          # run a real Home Assistant house: rooms, scenes, gated service calls
 
 # Coordination, gaming & learning
 npx -y @three-ws/agenc-mcp         # AgenC on-chain task marketplace + agent registry
@@ -659,6 +662,121 @@ Fetch the public wardrobe catalog: every published garment manifest (id, slot, n
   "additionalProperties": false
 }
 ```
+
+### Your connected home
+
+Five tools reach a Home Assistant house the account has connected at
+[three.ws/smart-home](https://three.ws/smart-home). They are the same handlers the 3D agent and
+the voice loop call, so the gate below cannot be different on this channel. `home_id` is optional
+for an account with exactly one home.
+
+Scopes: `home:read` for the three read tools, `home:act` for the two write tools. `home:act`
+authorises **asking**; it never authorises answering, which is what keeps every bearer principal
+out of the confirmation path.
+
+**The gate.** Reads are free. Writes that make the house safer (`lock`, `close_cover`,
+`close_valve`, `alarm_arm_*`) run immediately and never prompt. Writes that OPEN the house
+(`unlock`, opening a door, gate or garage, `alarm_disarm`) never run from a tool call: they return
+a **pending confirmation**, which is neither a success nor an error, and a signed-in person
+redeems it in their own browser at `POST /api/home/:id/confirm` (session and CSRF only, no bearer,
+ever). There is no `confirmed` property in any schema below and there never will be: a model
+cannot set a field it was not handed.
+
+Home Assistant's own `intent__HassTurnOff` is documented as performing an **unlock** on a lock, so
+the gate resolves what a call would actually touch rather than trusting a service name. Entity,
+area and scene names come from the user's devices and household and are returned in
+`structuredContent` rather than interpolated into prose: treat them as untrusted data.
+
+#### `home_status`
+
+Read the current state of a connected home: its rooms, what is lit, the temperature, and whether
+it is locked up. Returns a per-room rollup and a `stale` flag when the live connection has
+dropped. Read-only.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "home_id": { "type": "string", "format": "uuid" },
+    "room":    { "type": "string", "maxLength": 80 }
+  },
+  "additionalProperties": false
+}
+```
+
+#### `home_list_macros`
+
+List the scenes and scripts this house already has. Prefer running one over composing your own
+sequence of calls: the household's own "Bedtime" scene knows about the plant light and the fish
+tank. Read-only.
+
+```json
+{
+  "type": "object",
+  "properties": { "home_id": { "type": "string", "format": "uuid" } },
+  "additionalProperties": false
+}
+```
+
+#### `home_grants`
+
+List the entities this home has pre-approved, so a guarded action on one of them runs without
+asking. Read this before proposing something that would otherwise prompt. Read-only.
+
+```json
+{
+  "type": "object",
+  "properties": { "home_id": { "type": "string", "format": "uuid" } },
+  "additionalProperties": false
+}
+```
+
+Returns the grants, and `confirmation_ttl_seconds` (90) so a caller knows how long a pending
+confirmation stays redeemable.
+
+#### `home_activate`
+
+Match a phrase like "good night" or "I am home" to one of this house's own scenes or scripts, and
+run it. Returns the match and its confidence. A house with no match runs nothing rather than
+firing the closest scene. If the scene would unlock, open or disarm something, this returns a
+pending confirmation instead of running.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "home_id": { "type": "string", "format": "uuid" },
+    "phrase":  { "type": "string", "minLength": 1, "maxLength": 200 },
+    "dry_run": { "type": "boolean", "default": false }
+  },
+  "required": ["phrase"],
+  "additionalProperties": false
+}
+```
+
+#### `home_call`
+
+Call a Home Assistant service when no scene fits. Target with `entity_id`, `device_id`, `area_id`
+or `floor_id`; every target is resolved to concrete entities before the gate sees it.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "home_id": { "type": "string", "format": "uuid" },
+    "domain":  { "type": "string", "minLength": 1, "maxLength": 64 },
+    "service": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "data":    { "type": "object", "default": {} }
+  },
+  "required": ["domain", "service"],
+  "additionalProperties": false
+}
+```
+
+Full walkthrough: [Connect your home](./tutorials/connect-your-home.md). To run a house from your
+own machine with no three.ws account at all, use
+[`@three-ws/home-mcp`](../packages/home-mcp/README.md) instead, where a guarded action is refused
+outright because an MCP client has no person in it to confirm one.
 
 ---
 

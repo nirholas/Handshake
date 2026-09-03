@@ -56,7 +56,7 @@ expired of 4 (under the 10-confirmation floor, reported not scored); ...
 | Confirmation expiry | `home_confirmations` | under 20% | 20 to 40% | over 40% |
 | Breaker-open homes | `runtime.stats()` | under 2% | 2 to 10% | over 10% |
 | p95 action latency (our leg) | `home_action_log.detail->>'latencyMs'` | under 1.5 s | 1.5 to 4 s | over 4 s |
-| Subscriber leak | `stats().subscribers` versus open streams | flat | growing | growing |
+| Subscriber leak | `stats().subscribers` over three checks | flat or falling | climbing with flat connections | climbing with flat connections |
 | Confirmation integrity | `home_action_log`, excluding standing grants | zero rows | n/a | any row |
 
 A **refused** action counts as a success. The safety gate refusing to open a
@@ -211,8 +211,22 @@ full root cause to tell somebody their door was opened.
 
 ## Alert 3: subscriber leak
 
-**Fires when:** on any instance, the surplus of registered subscribers over open
-streams grows across three consecutive checks.
+**Fires when:** on any instance, registered subscribers climb across three
+consecutive checks while the number of open connections does not, at more than
+four watchers per open connection.
+
+**The obvious signal does not work, and this was measured rather than reasoned.**
+The plan was to watch the margin between registered subscribers and open
+streams. Against the real runtime that margin is always zero, because
+`subscribe()` registers the subscriber and admits the stream in the same call, so
+the two counters move in lockstep by construction. Six deliberately leaked
+subscriptions produced `margins=[0,0,0]` and a detector built on the difference
+would never have fired once. What actually leaks is the absolute count:
+subscribers that climb and never come back down while the pool does not grow.
+Honest traffic fluctuates, because people close tabs. A leak only ever rises. The
+per-connection ceiling is what keeps a family all watching one house at once from
+reading as a leak; the margin is still recorded, because a non-zero one is a
+different bug (a stream admitted with no subscriber, or the reverse).
 
 **Symptom as reported:** nothing, until instances start restarting. This failure
 has no error signature: every request keeps succeeding while the process fills
