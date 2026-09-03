@@ -68,6 +68,8 @@ curl "https://three.ws/api/sim-readiness?hash=b7001eaeea8254bd…"
 
 A hash nobody has graded returns `404 {"error": "not graded"}`. That is the cheap call: use it in a loop, and fall back to `?src=` only when you need bytes fetched and measured.
 
+The two lanes cost very different things, so only one is metered. `?hash=` is a single indexed row read and is uncapped. `?src=` makes this server fetch up to 64 MB from a host you named and build a convex hull over it, so it is capped at 30 per five minutes per address; over that you get a `429` with `Retry-After`. If you are screening a large catalogue, grade once and use the hashes afterwards.
+
 ### Every response
 
 | Case | Status | Body |
@@ -78,6 +80,7 @@ A hash nobody has graded returns `404 {"error": "not graded"}`. That is the chea
 | `src` is not a public https URL | 400 | `{ "error": "src must be a public https URL" }` |
 | Asset over 64 MB | 413 | `{ "error": "asset exceeds 64 MB" }` |
 | The upstream fetch failed | 502 | `{ "error": "could not fetch the asset", "status": 404 }` |
+| More than 30 `?src=` grades in 5 minutes from one address | 429 | `{ "error": "rate_limited", "retry_after": 294 }` with `Retry-After` |
 | Not binary glTF 2.0 | 200 | `{ "readable": false, "verdict": "unreadable", "blockers": ["unreadable_glb"] }` |
 
 That last row is not a mistake. "This is not a GLB" is a valid grade, not a server error, and a client that gates on `verdict` handles it without a second code path.

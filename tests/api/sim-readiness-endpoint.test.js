@@ -53,6 +53,17 @@ vi.mock('../../api/_lib/ssrf-guard.js', () => ({
 	}),
 }));
 
+// Switchable per-IP quota, so the metered lane is asserted rather than assumed.
+let rlOk = true;
+vi.mock('../../api/_lib/rate-limit.js', () => ({
+	limits: {
+		apiIp: async () => (rlOk
+			? { success: true, limit: 30, remaining: 29, reset: Date.now() + 300_000 }
+			: { success: false, limit: 30, remaining: 0, reset: Date.now() + 300_000 }),
+	},
+	clientIp: () => '203.0.113.9',
+}));
+
 vi.mock('../../api/_lib/sim-readiness-store.js', () => ({
 	simReadinessStoreEnabled: () => true,
 	getGrade: vi.fn(async (hash) => stored.get(hash) ?? null),
@@ -65,6 +76,7 @@ vi.mock('../../api/_lib/sim-readiness-store.js', () => ({
 }));
 
 beforeEach(() => {
+	rlOk = true;
 	upstream = { status: 200, body: REAL_GLB, throws: null };
 	stored = new Map();
 	puts = [];
@@ -128,6 +140,24 @@ describe('GET /api/sim-readiness: the request contract', () => {
 		expect(r.body).toEqual({ error: 'not graded' });
 		// The whole point of the hash lane: it is a lookup, never a download.
 		expect(fetchSafePublicUrlPinned).not.toHaveBeenCalled();
+	});
+
+	it('meters the expensive lane and tells the caller to use a hash instead', async () => {
+		rlOk = false;
+		const { fetchSafePublicUrlPinned } = await import('../../api/_lib/ssrf-guard.js');
+		const r = await get('/api/sim-readiness?src=https%3A%2F%2Fthree.ws%2Fa.glb');
+		expect(r.status).toBe(429);
+		expect(r.body.error).toBe('rate_limited');
+		expect(r.headers['retry-after']).toBeTruthy();
+		// The whole point of the cap: the fetch never happened.
+		expect(fetchSafePublicUrlPinned).not.toHaveBeenCalled();
+	});
+
+	it('never meters the cheap hash lookup, which is one indexed read', async () => {
+		rlOk = false;
+		const r = await get(`/api/sim-readiness?hash=${'b'.repeat(64)}`);
+		// 404 rather than 429: the lookup ran.
+		expect(r.status).toBe(404);
 	});
 
 	it('refuses a POST: grading is a read', async () => {

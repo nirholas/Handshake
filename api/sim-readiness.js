@@ -20,7 +20,8 @@
  * Spec: specs/SIM_READINESS.md.
  */
 
-import { cors, method, wrap } from './_lib/http.js';
+import { cors, method, rateLimited, wrap } from './_lib/http.js';
+import { clientIp, limits } from './_lib/rate-limit.js';
 import { gradeForCaller } from './_mcp3d/tools/sim-readiness.js';
 
 // A grade is immutable for fixed bytes under a fixed grader, so the only thing
@@ -31,6 +32,18 @@ const CACHE_HEADER = 'public, max-age=60, s-maxage=300';
 // The coded errors gradeForCaller throws, mapped to the status each one means.
 // Anything unmapped is a 500 and reaches the wrap() error path.
 const STATUS_BY_CODE = { invalid_input: 400, not_graded: 404, too_large: 413, fetch_failed: 502 };
+
+// Only `?src=` is metered, and it is metered on the generic per-IP bucket sized
+// for this traffic shape rather than a bucket of its own. The two lanes cost
+// wildly different things: `?hash=` is one indexed row read, while `?src=`
+// makes this server fetch up to 64 MB from an arbitrary host and build a convex
+// hull over it. Capping the expensive lane at 30 per 5 minutes per IP leaves a
+// person grading a folder of assets, or an agent screening a shortlist, far
+// more headroom than either needs, while stopping the endpoint from being used
+// as a free fetch-and-compute treadmill. The cheap lane stays uncapped on
+// purpose: a client that pages through known hashes is exactly the usage this
+// design is trying to encourage.
+const GRADE_LIMIT = { limit: 30, window: '5 m' };
 
 function fail(res, status, body) {
 	res.statusCode = status;
@@ -48,6 +61,13 @@ export default wrap(async (req, res) => {
 	const url = new URL(req.url, 'http://x');
 	const src = url.searchParams.get('src') || url.searchParams.get('glb_url') || '';
 	const hash = url.searchParams.get('hash') || '';
+
+	if (src) {
+		const rl = await limits.apiIp(clientIp(req), GRADE_LIMIT);
+		if (!rl.success) {
+			return rateLimited(res, rl, 'too many grades from this address; grade by content hash, or retry shortly');
+		}
+	}
 
 	let envelope;
 	try {
