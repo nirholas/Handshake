@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-03T08:55:49.851Z",
+	"generated_at": "2026-09-03T16:28:57.686Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -703,6 +703,18 @@
 			"link": "/docs/alpha-drip",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Twenty-one finished packages were built and never shipped; the publisher now finds them by itself",
+			"summary": "Twenty-one packages in this repo were written, tested and documented and then sat unpublished, because the publish script read a hand-maintained array that nobody remembered to edit. That array is gone: the publisher now discovers every package on disk, so a package ships by existing rather than by being added to a list. It also runs a preflight first and refuses to publish anything that would land broken (a scoped package that would go out private, a missing README or LICENSE, an entry point that is not actually in the tarball). The standalone-repo mirror had the same blind spot and only ever saw MCP servers; it now covers library packages too. Along the way the licensing was made consistent: 86 packages shipped a LICENSE file saying all rights reserved while their manifest and the repo both said Apache-2.0, and every one of them now says Apache-2.0 in all three places.",
+			"link": "/docs",
+			"tags": [
+				"improvement",
+				"sdk",
+				"docs"
 			]
 		},
 		{
