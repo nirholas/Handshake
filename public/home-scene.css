@@ -21,7 +21,13 @@
 	align-items: center;
 	gap: var(--space-sm);
 	flex-wrap: wrap;
-	padding: var(--space-sm) var(--space-md);
+	/* The page opts into viewport-fit=cover so the house can fill a notched
+	   phone edge to edge, which also means the bar and the rail are laid out
+	   underneath the notch and the home indicator unless they say otherwise.
+	   max() keeps the ordinary padding everywhere the inset is zero, so a
+	   device without a cutout is unchanged. */
+	padding: var(--space-sm) max(var(--space-md), env(safe-area-inset-right, 0)) var(--space-sm)
+		max(var(--space-md), env(safe-area-inset-left, 0));
 	border-bottom: 1px solid var(--stroke);
 	background: var(--surface-1);
 }
@@ -120,9 +126,11 @@
 .hs-panel {
 	overflow-y: auto;
 	overscroll-behavior: contain;
-	padding: var(--space-md);
+	padding: var(--space-md) var(--space-md) max(var(--space-md), env(safe-area-inset-bottom, 0));
 	background: var(--surface-1);
 }
+.hs-rail { padding-inline-start: max(var(--space-md), env(safe-area-inset-left, 0)); }
+.hs-panel { padding-inline-end: max(var(--space-md), env(safe-area-inset-right, 0)); }
 .hs-rail { border-inline-end: 1px solid var(--stroke); }
 .hs-panel { border-inline-start: 1px solid var(--stroke); }
 
@@ -143,7 +151,8 @@
 .hs-age {
 	position: absolute;
 	left: 50%;
-	bottom: var(--space-md);
+	/* Sits above the home indicator rather than behind it. */
+	bottom: max(var(--space-md), env(safe-area-inset-bottom, 0));
 	transform: translateX(-50%);
 	padding: 0.4rem 0.8rem;
 	border-radius: var(--radius-pill);
