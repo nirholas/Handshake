@@ -100,4 +100,4 @@ Runnable scripts live in [`examples/`](./examples): a zero-spend 402 discovery p
 
 ## License
 
-All rights reserved. See [LICENSE](./LICENSE).
+Apache-2.0. See [LICENSE](./LICENSE).

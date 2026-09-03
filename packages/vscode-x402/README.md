@@ -84,5 +84,5 @@ npm test             # requirement selection, token rules, scaffold template
 
 Press <kbd>F5</kbd> in VS Code to launch an Extension Development Host.
 
-All rights reserved (see [LICENSE](./LICENSE)) · part of the
+Apache-2.0 (see [LICENSE](./LICENSE)) · part of the
 [three.ws](https://three.ws) monorepo.

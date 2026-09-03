@@ -138,7 +138,7 @@ Audio crosses the wire as base64 (TTS returns it, ASR/A2F accept it). Both the s
 - Homepage: https://three.ws
 - Changelog: https://three.ws/changelog
 - Issues: https://github.com/nirholas/three.ws/issues
-- License: proprietary, see [LICENSE](./LICENSE)
+- License: Apache-2.0, see [LICENSE](./LICENSE)
 
 ---
 

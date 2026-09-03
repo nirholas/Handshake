@@ -174,7 +174,7 @@ three-ws-avatar validate manifest.json
 - Homepage: https://three.ws
 - Changelog: https://three.ws/changelog
 - Issues: https://github.com/nirholas/three.ws/issues
-- License: proprietary, see [LICENSE](./LICENSE)
+- License: Apache-2.0, see [LICENSE](./LICENSE)
 
 ---
 

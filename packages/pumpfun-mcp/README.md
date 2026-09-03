@@ -169,7 +169,7 @@ Failures surface as MCP tool errors (`isError: true`) with the real cause — ne
 - Homepage: https://three.ws
 - Changelog: https://three.ws/changelog
 - Issues: https://github.com/nirholas/three.ws/issues
-- License: proprietary, all rights reserved. See [LICENSE](./LICENSE).
+- License: Apache-2.0. See [LICENSE](./LICENSE).
 
 ---
 

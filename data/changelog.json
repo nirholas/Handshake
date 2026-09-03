@@ -3,6 +3,17 @@
 	"entries": [
 		{
 			"date": "2026-09-03",
+			"title": "Twenty-one finished packages were built and never shipped; the publisher now finds them by itself",
+			"summary": "Twenty-one packages in this repo were written, tested and documented and then sat unpublished, because the publish script read a hand-maintained array that nobody remembered to edit. That array is gone: the publisher now discovers every package on disk, so a package ships by existing rather than by being added to a list. It also runs a preflight first and refuses to publish anything that would land broken (a scoped package that would go out private, a missing README or LICENSE, an entry point that is not actually in the tarball). The standalone-repo mirror had the same blind spot and only ever saw MCP servers; it now covers library packages too. Along the way the licensing was made consistent: 86 packages shipped a LICENSE file saying all rights reserved while their manifest and the repo both said Apache-2.0, and every one of them now says Apache-2.0 in all three places.",
+			"link": "/docs",
+			"tags": [
+				"improvement",
+				"sdk",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-09-03",
 			"title": "Refine now returns the same model at higher quality, not a different one",
 			"summary": "Refine bumps a finished model up a quality tier. It replayed your prompt but never pinned the randomness, so on the text path it painted a brand new reference image and reconstructed a different object: you asked for this model, better, and got another model, better. Every generation is now stamped with a seed that rides along on Refine, Retry and an automatic engine switch, so the tier is the only thing that changes. Starting a fresh generation still explores, so Make another on the same prompt keeps giving you something new. Two related fixes came with it: requests that differed only by their seed were being collapsed into a single job and handed back the identical file, and the force-a-fresh-run flag skipped the result cache but not that collapsing.",
 			"link": "/forge",

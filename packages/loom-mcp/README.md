@@ -157,7 +157,7 @@ No API key, signer, or account is needed for any tool.
 - Forge gallery: https://three.ws/forge
 - Changelog: https://three.ws/changelog
 - Issues: https://github.com/nirholas/three.ws/issues
-- License: proprietary, see [LICENSE](./LICENSE)
+- License: Apache-2.0, see [LICENSE](./LICENSE)
 
 ---
 

@@ -297,7 +297,7 @@ Reads are always safe to retry. The writes are idempotent by design (`mark_read`
 - Homepage: https://three.ws
 - Changelog: https://three.ws/changelog
 - Issues: https://github.com/nirholas/three.ws/issues
-- License: proprietary, all rights reserved. See [LICENSE](./LICENSE).
+- License: Apache-2.0. See [LICENSE](./LICENSE).
 
 ---
 

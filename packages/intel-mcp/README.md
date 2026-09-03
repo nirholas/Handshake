@@ -141,7 +141,7 @@ All six tools read live data: scores, feeds, and rankings move between calls, so
 - Homepage: https://three.ws
 - Changelog: https://three.ws/changelog
 - Issues: https://github.com/nirholas/three.ws/issues
-- License: proprietary, all rights reserved; see [LICENSE](./LICENSE)
+- License: Apache-2.0, see [LICENSE](./LICENSE)
 
 ---
 

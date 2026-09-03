@@ -143,7 +143,7 @@ calls `pay_and_call`, so nothing is signed and nothing is spent. See
 - MCP catalog: https://three.ws/docs/mcp
 - Changelog: https://three.ws/changelog
 - Issues: https://github.com/nirholas/three.ws/issues
-- License: all rights reserved, see [LICENSE](./LICENSE)
+- License: Apache-2.0, see [LICENSE](./LICENSE)
 
 ---
 

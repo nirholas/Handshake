@@ -50,5 +50,8 @@
     "@gltf-transform/core": "^4.4.0",
     "@gltf-transform/extensions": "^4.4.0",
     "meshoptimizer": "^1.1.1"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

@@ -121,7 +121,7 @@ All three are live public reads against Solana mainnet. A `.sol` name with no ow
 - Homepage: https://three.ws
 - Changelog: https://three.ws/changelog
 - Issues: https://github.com/nirholas/three.ws/issues
-- License: proprietary, all rights reserved. See [LICENSE](./LICENSE).
+- License: Apache-2.0. See [LICENSE](./LICENSE).
 
 ---
 

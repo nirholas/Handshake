@@ -135,7 +135,7 @@ For an SPL transfer it reads the mint's decimals on-chain, verifies your balance
 - Homepage: https://three.ws
 - Changelog: https://three.ws/changelog
 - Issues: https://github.com/nirholas/three.ws/issues
-- License: proprietary, all rights reserved. See [LICENSE](./LICENSE).
+- License: Apache-2.0. See [LICENSE](./LICENSE).
 
 ---
 

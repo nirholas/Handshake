@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-// Sync every three.ws MCP server package to its own standalone GitHub repo,
-// idempotently. The monorepo (nirholas/three.ws) stays the canonical source of
-// truth; each standalone repo is a generated, read-only MIRROR of one package.
+// Sync every publishable three.ws package (MCP servers AND library SDKs) to its
+// own standalone GitHub repo, idempotently. The monorepo (nirholas/three.ws)
+// stays the canonical source of truth; each standalone repo is a generated,
+// read-only MIRROR of one package.
 //
 // Why mirrors and not a live split: this repo's operating rules make threews the
 // single source of truth, and `git subtree`/`git filter-repo` aren't available
@@ -9,7 +10,12 @@
 // mirrors — every sync force-pushes one commit whose message records the exact
 // monorepo SHA it came from, so provenance is never lost.
 //
-// For each package (any dir with BOTH package.json and server.json) it:
+// A package is in scope when its dir holds a non-private package.json. Scoping
+// on server.json (the old rule) silently excluded every library package, so the
+// 18 SDKs under packages/ had no mirror at all; --kind narrows it back down when
+// you only want one lane.
+//
+// For each package it:
 //   1. resolves the standalone repo name (unscoped npm name, overridable below);
 //   2. creates github.com/<owner>/<repo> via `gh` if it doesn't exist (public);
 //   3. snapshots the package dir into a temp working tree, rewrites the mirror's
@@ -24,6 +30,9 @@
 //   node scripts/sync-standalone-repos.mjs --execute            # create + push all
 //   node scripts/sync-standalone-repos.mjs --execute --only agent-sniper,copy-mcp
 //   node scripts/sync-standalone-repos.mjs --execute --owner my-org
+//   node scripts/sync-standalone-repos.mjs --kind mcp     # MCP servers only
+//   node scripts/sync-standalone-repos.mjs --kind lib     # library packages only
+//   node scripts/sync-standalone-repos.mjs --new          # only repos that don't exist yet
 
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync, existsSync, mkdtempSync, rmSync, cpSync, readdirSync } from 'node:fs';
@@ -39,6 +48,8 @@ const execute = argv.includes('--execute');
 const dryRun = !execute; // dry-run is the default; --execute opts in to writes
 const owner = flagValue('--owner') || 'nirholas';
 const onlyArg = flagValue('--only');
+const kind = flagValue('--kind') || 'all'; // all | mcp | lib
+const newOnly = argv.includes('--new');
 const only = onlyArg ? onlyArg.split(',').map((s) => s.trim()).filter(Boolean) : null;
 
 function flagValue(name) {
@@ -57,6 +68,23 @@ const REPO_NAME_OVERRIDES = {
 	'avatar-agent-mcp': 'avatar-agent-mcp',
 };
 
+/**
+ * The standalone repo name for a package.
+ *
+ * On npm the `@three-ws` scope carries the identity, so a package can be called
+ * `see` or `render`. A repo cannot: github.com/nirholas/render says nothing
+ * about what it is or who ships it, and single-token names are the ones most
+ * likely to collide with something else later. Single-token `@three-ws/*` names
+ * therefore mirror as `three-ws-<name>`; anything already hyphenated (glb-diff,
+ * x402-preflight, agent-vitals) is distinctive enough to stand alone.
+ */
+function repoNameFor(base, pkg) {
+	if (REPO_NAME_OVERRIDES[base]) return REPO_NAME_OVERRIDES[base];
+	const unscoped = pkg.name.replace(/^@[^/]+\//, '');
+	const scoped = pkg.name.startsWith('@three-ws/');
+	return scoped && !unscoped.includes('-') ? `three-ws-${unscoped}` : unscoped;
+}
+
 // ── helpers ─────────────────────────────────────────────────────────────────────
 const log = (...a) => console.log(...a);
 function git(args, opts = {}) {
@@ -69,18 +97,27 @@ function readJson(path) {
 	return JSON.parse(readFileSync(path, 'utf8'));
 }
 
-// Discover every MCP-server package: a dir holding both package.json and server.json.
+// Discover every mirrorable package: a dir holding a non-private package.json.
+// A server.json in the dir marks it as an MCP server (kind 'mcp'); everything
+// else is a library package (kind 'lib').
 function discoverPackages() {
-	const dirs = ['mcp-server', 'mcp-bridge', ...readdirSync(join(root, 'packages')).map((d) => `packages/${d}`)];
+	const dirs = [
+		'mcp-server',
+		'mcp-bridge',
+		'assistant-sdk',
+		...readdirSync(join(root, 'packages')).map((d) => `packages/${d}`),
+	];
 	const out = [];
 	for (const dir of dirs) {
 		const abs = resolve(root, dir);
-		if (!existsSync(join(abs, 'package.json')) || !existsSync(join(abs, 'server.json'))) continue;
+		if (!existsSync(join(abs, 'package.json'))) continue;
 		const pkg = readJson(join(abs, 'package.json'));
 		if (pkg.private) continue; // never mirror a private package
 		const base = basename(dir);
-		const repo = REPO_NAME_OVERRIDES[base] || pkg.name.replace(/^@[^/]+\//, '');
-		out.push({ key: base, dir, abs, pkg, repo });
+		const packageKind = existsSync(join(abs, 'server.json')) ? 'mcp' : 'lib';
+		if (kind !== 'all' && kind !== packageKind) continue;
+		const repo = repoNameFor(base, pkg);
+		out.push({ key: base, dir, abs, pkg, repo, kind: packageKind });
 	}
 	return out.sort((a, b) => a.repo.localeCompare(b.repo));
 }
@@ -155,7 +192,8 @@ function pushSnapshot(p, slug, sourceSha) {
 const pkgs = discoverPackages().filter((p) => !only || only.includes(p.key) || only.includes(p.repo));
 const sourceSha = git(['rev-parse', 'HEAD']);
 
-log(`${dryRun ? 'DRY RUN' : 'EXECUTE'} — mirroring ${pkgs.length} MCP package(s) to github.com/${owner}/*`);
+const lanes = `${pkgs.filter((p) => p.kind === 'mcp').length} MCP, ${pkgs.filter((p) => p.kind === 'lib').length} library`;
+log(`${dryRun ? 'DRY RUN' : 'EXECUTE'}: mirroring ${pkgs.length} package(s) (${lanes}) to github.com/${owner}/*`);
 log(`source: three.ws@${sourceSha.slice(0, 12)}\n`);
 
 if (execute) {
@@ -172,11 +210,14 @@ if (execute) {
 	}
 }
 
-let created = 0, pushed = 0, failed = 0;
+let created = 0, pushed = 0, failed = 0, skipped = 0;
+const plannedNew = [];
 for (const p of pkgs) {
 	const slug = `${owner}/${p.repo}`;
 	const exists = (() => { try { return repoExists(slug); } catch { return false; } })();
-	log(`── ${p.pkg.name}  →  github.com/${slug}  ${exists ? '(exists)' : '(new)'}`);
+	if (newOnly && exists) { skipped++; continue; }
+	if (!exists) plannedNew.push(slug);
+	log(`── ${p.pkg.name}  [${p.kind}]  →  github.com/${slug}  ${exists ? '(exists)' : '(NEW)'}`);
 
 	if (dryRun) {
 		if (!exists) log(`   would: gh repo create ${slug} --public`);
@@ -200,9 +241,11 @@ for (const p of pkgs) {
 	}
 }
 
-log(
-	dryRun
-		? `\nDry run complete — ${pkgs.length} package(s) planned. Re-run with --execute (and gh auth as ${owner}) to apply.`
-		: `\nDone — ${created} created, ${pushed} pushed, ${failed} failed.`,
-);
+if (dryRun) {
+	log(`\nDry run complete. ${pkgs.length - skipped} package(s) planned, ${plannedNew.length} of them NEW repos.`);
+	if (plannedNew.length) log(`  new: ${plannedNew.join(', ')}`);
+	log(`Re-run with --execute (and gh auth as ${owner}) to apply.`);
+} else {
+	log(`\nDone. ${created} created, ${pushed} pushed, ${skipped} skipped, ${failed} failed.`);
+}
 if (failed) process.exitCode = 1;

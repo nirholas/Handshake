@@ -34,7 +34,8 @@
 	"files": [
 		"src",
 		"bin",
-		"README.md"
+		"README.md",
+		"LICENSE"
 	],
 	"engines": {
 		"node": ">=18"

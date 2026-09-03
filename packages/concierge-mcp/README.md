@@ -157,4 +157,4 @@ A live end-to-end check against a running three.ws (`test/_manual-e2e.mjs`) driv
 
 ## License
 
-Proprietary. See [LICENSE](./LICENSE). Free to run against the public three.ws API.
+Apache-2.0. See [LICENSE](./LICENSE). Free to run against the public three.ws API.

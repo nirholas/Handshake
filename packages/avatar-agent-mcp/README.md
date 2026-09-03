@@ -214,7 +214,7 @@ Execution errors that occur after broadcast include the transaction `signature` 
 - Sibling package: [`@three-ws/avatar-mcp`](https://www.npmjs.com/package/@three-ws/avatar-mcp) — live, read-only avatar viewer for MCP
 - Changelog: https://three.ws/changelog
 - Issues: https://github.com/nirholas/three.ws/issues
-- License: proprietary, see [LICENSE](./LICENSE)
+- License: Apache-2.0, see [LICENSE](./LICENSE)
 
 ---
 

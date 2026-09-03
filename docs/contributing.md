@@ -164,30 +164,70 @@ npm run verify
 
 ---
 
-## Publishing MCP servers & standalone mirrors
+## Publishing packages & standalone mirrors
 
-Every MCP server package ships to three destinations. The authoritative list is the `SERVERS` array at the top of `scripts/publish-mcp-servers.mjs`: the `packages/*-mcp` directories that carry both a `package.json` and a `server.json`, plus `packages/agent-sniper`, `mcp-server`, and `mcp-bridge`. Read that array rather than a count quoted here. All steps are idempotent and default to a safe dry run.
+Every package in `packages/` ships to up to three destinations: npm, the official
+MCP registry (MCP servers only), and its own standalone GitHub repo. All steps are
+idempotent and default to a safe dry run, so re-running after a network drop or a
+rate limit picks up where it stopped.
 
-**1. npm + the official MCP registry** (`registry.modelcontextprotocol.io`):
+Which lane a package is in is decided by the filesystem, not by a list someone has
+to remember to edit. A directory holding a `server.json` is an **MCP server**;
+everything else with a non-private `package.json` is a **library package**.
+
+**1. Library packages → npm** (`scripts/publish-packages.mjs`):
 
 ```bash
-npm run audit:mcp          # validate every server.json (names, versions, ≤100-char descriptions)
-npm run publish:mcp:dry    # report what would publish — no writes
+npm run publish:packages:dry   # report what would publish, run the preflight
+npm run publish:packages       # publish every version missing from npm
+node scripts/publish-packages.mjs --new          # only never-published packages
+node scripts/publish-packages.mjs --only forge   # one package, by directory name
+```
+
+Before publishing anything the script runs a preflight per package and refuses to
+ship one that would land broken: a scoped package without
+`publishConfig.access: "public"` (npm publishes it restricted and then 402s on a
+free plan), a missing README or LICENSE, an `exports`/`main`/`bin` target that is
+not on disk, or a `workspace:`/`file:` dependency that no installer could resolve.
+A blocked package exits non-zero; fix the manifest rather than skipping it.
+
+**2. MCP servers → npm + the official MCP registry** (`registry.modelcontextprotocol.io`):
+
+```bash
+npm run audit:mcp          # validate every server.json (names, versions, descriptions)
+npm run publish:mcp:dry    # report what would publish - no writes
 npm run publish:mcp        # publish any package/version missing from npm or the registry
 ```
 
-Auth: npm needs `npm whoami` to succeed or `NPM_TOKEN` set. The registry publishes under the `io.github.nirholas` namespace and needs `MCP_REGISTRY_TOKEN`, or a GitHub token for that account (`GITHUB_TOKEN`, or the PAT on the `origin` remote) — a token for a different account will be rejected for that namespace.
+Auth: npm needs `npm whoami` to succeed or `NPM_TOKEN` set. The registry publishes
+under the `io.github.nirholas` namespace and needs `MCP_REGISTRY_TOKEN`, or a
+GitHub token for that account (`GITHUB_TOKEN`, or the PAT on the `origin` remote).
+A token for a different account authenticates fine and is then rejected for that
+namespace.
 
-**2. Standalone GitHub mirrors** — each package also lives in its own repo at `github.com/<owner>/<name>` (a read-only mirror; the monorepo stays canonical). Each sync force-pushes one snapshot commit whose message records the source monorepo SHA, and rewrites the mirror's `package.json` / `server.json` `repository` fields to point at the standalone repo:
+**3. Standalone GitHub mirrors** - each package also lives in its own repo at
+`github.com/<owner>/<name>` (a read-only mirror; the monorepo stays canonical).
+Each sync force-pushes one snapshot commit whose message records the source
+monorepo SHA, and rewrites the mirror's `package.json` / `server.json`
+`repository` fields to point at the standalone repo:
 
 ```bash
-npm run sync:repos:dry     # plan only
+npm run sync:repos:dry     # plan only, both lanes
 npm run sync:repos         # create missing repos + push snapshots (needs gh auth as the owner)
-# scope to a subset:
+# scope it:
+node scripts/sync-standalone-repos.mjs --dry-run --kind lib --new
 node scripts/sync-standalone-repos.mjs --execute --only agent-sniper,copy-mcp
 ```
 
-Auth: `gh` must be authenticated as the target owner (default `nirholas`; override with `--owner`) so it can create and push under that account.
+`--kind mcp` / `--kind lib` narrows to one lane, `--new` limits the run to repos
+that do not exist yet, and the dry run prints how many repos it would CREATE
+before you commit to it. Repo names come from the unscoped npm name, except that
+a single-token `@three-ws/*` name mirrors as `three-ws-<name>`: the scope carries
+the identity on npm, but `github.com/nirholas/render` says nothing about what it
+is or who ships it.
+
+Auth: `gh` must be authenticated as the target owner (default `nirholas`; override
+with `--owner`) so it can create and push under that account.
 
 ---
 

@@ -117,4 +117,4 @@ Hit a skeleton convention it doesn't know? Add the bone-name mapping to the cano
 
 ## License
 
-All rights reserved. See [LICENSE](./LICENSE).
+Apache-2.0. See [LICENSE](./LICENSE).

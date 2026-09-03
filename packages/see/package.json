@@ -41,5 +41,8 @@
 	},
 	"scripts": {
 		"test": "node --test test/"
+	},
+	"publishConfig": {
+		"access": "public"
 	}
 }

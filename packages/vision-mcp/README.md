@@ -155,7 +155,7 @@ The endpoint is rate-limited per IP. To raise your limit to the per-user tier, s
 - Homepage: https://three.ws
 - Changelog: https://three.ws/changelog
 - Issues: https://github.com/nirholas/three.ws/issues
-- License: all rights reserved, see [LICENSE](./LICENSE)
+- License: Apache-2.0, see [LICENSE](./LICENSE)
 
 ---
 
