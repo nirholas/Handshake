@@ -426,7 +426,7 @@ export async function deleteHome(homeId, userId) {
 	// by resource_id and survive both the home and the account. Remove ours by
 	// hand, or "delete my home" leaves the home's address in a table with a
 	// 365-day window.
-	await sql`delete from audit_log where resource_id = ${homeId} and action like 'home\\_%'`;
+	await sql`delete from audit_log where resource_id = ${homeId} and action like '%home%'`;
 
 	await sql`delete from home_connections where id = ${homeId} and user_id = ${userId}`;
 
@@ -458,7 +458,7 @@ export async function deleteAllHomeDataForUser(userId, { email = null } = {}) {
 	const homeIds = homes.map((h) => h.id);
 
 	if (homeIds.length) {
-		await sql`delete from audit_log where resource_id = any(${homeIds}) and action like 'home\\_%'`;
+		await sql`delete from audit_log where resource_id = any(${homeIds}) and action like '%home%'`;
 		// One statement, one cascade: home_members, home_invites,
 		// home_entity_grants and home_action_log all hang off this row.
 		await sql`delete from home_connections where user_id = ${userId}`;
@@ -472,6 +472,11 @@ export async function deleteAllHomeDataForUser(userId, { email = null } = {}) {
 	if (email) {
 		await sql`delete from home_invites where lower(email) = lower(${email})`;
 	}
+
+	// audit_log.user_id is SET NULL on account deletion rather than removed, so a
+	// row naming a home this user disconnected would outlive them by the audit
+	// table's own 365 day window. Remove the lane's rows for this user outright.
+	await sql`delete from audit_log where user_id = ${userId} and action like '%home%'`;
 
 	// A confirmation this user MINTED on another household's home cascades with
 	// their account (user_id references users on delete cascade). One they
@@ -506,7 +511,7 @@ export async function countHomeRows(homeId) {
 		sql`select count(*)::int as n from home_entity_grants where home_id = ${homeId}`,
 		sql`select count(*)::int as n from home_action_log    where home_id = ${homeId}`,
 		sql`select count(*)::int as n from home_confirmations where home_id = ${homeId}`,
-		sql`select count(*)::int as n from audit_log where resource_id = ${homeId} and action like 'home\\_%'`,
+		sql`select count(*)::int as n from audit_log where resource_id = ${homeId} and action like '%home%'`,
 	]);
 	return {
 		home_connections: conn[0].n,
@@ -539,7 +544,7 @@ export async function countUserRows(userId, email = null) {
 			sql`select count(*)::int as n from home_action_log where user_id = ${userId}`,
 			sql`select count(*)::int as n from home_action_log where confirmed_by = ${userId}`,
 			sql`select count(*)::int as n from home_confirmations where user_id = ${userId} or redeemed_by = ${userId}`,
-			sql`select count(*)::int as n from audit_log where action like 'home\\_%' and user_id = ${userId}`,
+			sql`select count(*)::int as n from audit_log where action like '%home%' and user_id = ${userId}`,
 		]);
 	return {
 		home_connections: conn[0].n,

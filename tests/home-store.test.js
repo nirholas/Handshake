@@ -10,11 +10,12 @@
 //      and the proof that it stays per entity belongs next to the real entity
 //      ids it has to discriminate between.
 //   3. The live round trip. Skips itself unless pointed at a real database, and
-//      the last block also wants a real Home Assistant:
+//      the last block also wants a real Home Assistant, which it gets from the
+//      lane's one harness rather than from a hand-built container:
 //
-//        DATABASE_URL=...            npx vitest run tests/home-store.test.js
-//        HOME_ASSISTANT_URL=http://localhost:8123 HOME_ASSISTANT_TOKEN=... \
 //        DATABASE_URL=... WALLET_ENCRYPTION_KEY=... npx vitest run tests/home-store.test.js
+//        HOME_LIVE=1 DATABASE_URL=... WALLET_ENCRYPTION_KEY=... \
+//          npx vitest run tests/home-store.test.js
 //
 //      The live tier writes throwaway users into whatever database it is given
 //      and deletes them again, the same posture as the package's live-home suite
@@ -27,6 +28,8 @@ import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { classifyCall, createAllowList, HomeBridge } from '@three-ws/home-bridge';
+
+import { acquireHomeInstance, liveHomeAvailable } from './_helpers/home-instance.js';
 
 import {
 	createConnection,
@@ -114,16 +117,14 @@ describe('grant scoping, over the recorded instance', () => {
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 const hasKey = Boolean(process.env.WALLET_ENCRYPTION_KEY || process.env.JWT_SECRET);
-const haUrl = process.env.HOME_ASSISTANT_URL;
-const haToken = process.env.HOME_ASSISTANT_TOKEN;
 
 const liveDb = describe.skipIf(!hasDb || !hasKey);
-const liveHome = describe.skipIf(!hasDb || !hasKey || !haUrl || !haToken);
+const liveHome = describe.skipIf(!hasDb || !hasKey || !liveHomeAvailable());
 
 // A token shaped like the real thing but belonging to nothing: the DB-only tier
 // proves the credential path without needing a house to point it at.
 const SYNTHETIC_TOKEN = `synthetic.home.assistant.token.${'a'.repeat(64)}`;
-const BASE_URL = haUrl || 'https://home.invalid.three.ws';
+const BASE_URL = 'https://home.invalid.three.ws';
 
 liveDb('against a real database', () => {
 	/** @type {import('@neondatabase/serverless').NeonQueryFunction} */
@@ -141,7 +142,7 @@ liveDb('against a real database', () => {
 			userId: owner.id,
 			label: '  The office  ',
 			baseUrl: `${BASE_URL}/`,
-			token: haToken || SYNTHETIC_TOKEN,
+			token: SYNTHETIC_TOKEN,
 		});
 	}, 60_000);
 
@@ -158,18 +159,18 @@ liveDb('against a real database', () => {
 
 	it('returns a row with no credential on it', () => {
 		expect(home).not.toHaveProperty('access_token_enc');
-		expect(JSON.stringify(home)).not.toContain(haToken || SYNTHETIC_TOKEN);
+		expect(JSON.stringify(home)).not.toContain(SYNTHETIC_TOKEN);
 	});
 
 	it('encrypts the credential at rest', async () => {
 		const [row] = await sql`select access_token_enc from home_connections where id = ${home.id}`;
 		expect(row.access_token_enc.startsWith('v2:')).toBe(true);
-		expect(row.access_token_enc).not.toContain(haToken || SYNTHETIC_TOKEN);
+		expect(row.access_token_enc).not.toContain(SYNTHETIC_TOKEN);
 	});
 
 	it('re-connecting the same house updates the row instead of stacking a second one', async () => {
 		const again = await createConnection({
-			userId: owner.id, label: 'The office', baseUrl: BASE_URL, token: haToken || SYNTHETIC_TOKEN,
+			userId: owner.id, label: 'The office', baseUrl: BASE_URL, token: SYNTHETIC_TOKEN,
 		});
 		expect(again.id).toBe(home.id);
 		expect(again.token_fingerprint).toBe(home.token_fingerprint);
@@ -183,7 +184,7 @@ liveDb('against a real database', () => {
 		expect(rotated.id).toBe(home.id);
 		expect(rotated.token_fingerprint).not.toBe(home.token_fingerprint);
 		// Put the working credential back for the tests that follow.
-		await createConnection({ userId: owner.id, label: 'The office', baseUrl: BASE_URL, token: haToken || SYNTHETIC_TOKEN });
+		await createConnection({ userId: owner.id, label: 'The office', baseUrl: BASE_URL, token: SYNTHETIC_TOKEN });
 	});
 
 	it('never shows one user another user\'s home', async () => {
@@ -195,7 +196,7 @@ liveDb('against a real database', () => {
 
 	it('gives the owner back exactly the token they connected with', async () => {
 		const cred = await getDecryptedToken(home.id, owner.id);
-		expect(cred.token).toBe(haToken || SYNTHETIC_TOKEN);
+		expect(cred.token).toBe(SYNTHETIC_TOKEN);
 		expect(cred.baseUrl).toBe(BASE_URL);
 	});
 
@@ -290,7 +291,7 @@ liveDb('against a real database', () => {
 
 	it('lets the same house be connected again after a revoke', async () => {
 		const fresh = await createConnection({
-			userId: owner.id, label: 'Home again', baseUrl: BASE_URL, token: haToken || SYNTHETIC_TOKEN,
+			userId: owner.id, label: 'Home again', baseUrl: BASE_URL, token: SYNTHETIC_TOKEN,
 		});
 		expect(fresh.id).not.toBe(home.id);
 		expect(await listConnections(owner.id)).toHaveLength(1);
@@ -301,14 +302,19 @@ liveHome('the stored credential against a real Home Assistant', () => {
 	let sql;
 	let owner;
 	let home;
+	let haUrl;
+	let haToken;
 	/** @type {HomeBridge} */
 	let bridge;
 
 	beforeAll(async () => {
+		const instance = await acquireHomeInstance();
+		haUrl = instance.baseUrl;
+		haToken = instance.token;
 		({ sql } = await import('../api/_lib/db.js'));
 		[owner] = await sql`insert into users (email) values (${`home-store-live-${Date.now()}@qa.three.ws`}) returning id`;
 		home = await createConnection({ userId: owner.id, label: 'Live', baseUrl: haUrl, token: haToken });
-	}, 60_000);
+	}, 600_000);
 
 	afterAll(async () => {
 		bridge?.close();

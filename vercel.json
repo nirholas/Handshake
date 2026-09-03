@@ -2056,6 +2056,14 @@
 			"dest": "/materialize.html"
 		},
 		{
+			"src": "/smart-home/([0-9a-fA-F-]{36})/?",
+			"dest": "/smart-home.html"
+		},
+		{
+			"src": "/smart-home/?",
+			"dest": "/smart-home.html"
+		},
+		{
 			"src": "/p/([a-z0-9-]+)/?",
 			"dest": "/p/index.html"
 		},

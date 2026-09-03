@@ -19,6 +19,7 @@ import { toolDefs as cryptoDataDefs } from './tools/crypto-data.js';
 import { toolDefs as garmentDefs } from './tools/garments.js';
 import { toolDefs as signDefs } from './tools/sign.js';
 import { toolDefs as feedbackDefs } from './tools/feedback.js';
+import { toolDefs as homeDefs } from './tools/home.js';
 
 const baseDefs = [
 	...avatarDefs,
@@ -37,6 +38,7 @@ const baseDefs = [
 	...cryptoDataDefs,
 	...garmentDefs,
 	...feedbackDefs,
+	...homeDefs,
 ];
 
 // Free, public entry point — listed first so discovery clients see it up top.
@@ -48,7 +50,7 @@ const gettingStarted = {
 	...buildGettingStartedTool({
 		server: 'three.ws',
 		tagline:
-			'The main three.ws MCP server: render and manage 3D avatars and models, animations, American Sign Language, an agent registry, agent memory, live pump.fun market data, Oracle conviction signals, and the trader leaderboard + copy-trading system.',
+			'The main three.ws MCP server: render and manage 3D avatars and models, animations, American Sign Language, an agent registry, agent memory, live pump.fun market data, Oracle conviction signals, the trader leaderboard + copy-trading system, and safe control of a connected Home Assistant house.',
 		tools: baseDefs,
 		priceFor,
 		access: [

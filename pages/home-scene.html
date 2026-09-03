@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+	<title>Your home, live · three.ws</title>
+	<meta name="description" content="A live 3D model of your house driven by Home Assistant: every room lit the way the real room is lit, every door and lock shown as it really is, and your agent standing in it." />
+	<meta name="robots" content="noindex, follow" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/fonts/fonts.css" />
+	<link rel="stylesheet" href="/home-scene.css" />
+</head>
+<body>
+	<a class="skip-link" href="#hs-stage">Skip to the house</a>
+	<div id="nav-root"></div>
+
+	<div class="hs-shell" id="hs-shell">
+		<div class="hs-bar">
+			<a class="hs-back" href="/home/connect">
+				<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+				<span>Homes</span>
+			</a>
+			<h1 class="hs-title" id="hs-title">Loading your home</h1>
+			<span class="hs-pill" id="hs-status" data-status="connecting" role="status">Connecting</span>
+			<span class="hs-spacer"></span>
+			<button type="button" class="hs-btn" id="hs-view-3d" aria-pressed="true">3D</button>
+			<button type="button" class="hs-btn" id="hs-view-2d" aria-pressed="false">2D</button>
+			<button type="button" class="hs-btn" id="hs-reconnect" hidden>Reconnect</button>
+		</div>
+
+		<div class="hs-body">
+			<nav class="hs-rail" id="hs-rail" aria-label="Rooms">
+				<p class="hs-rail-head">Rooms</p>
+				<div id="hs-rooms" class="hs-skeleton" aria-busy="true">
+					<span></span><span></span><span></span><span></span>
+				</div>
+			</nav>
+
+			<main class="hs-stage" id="hs-stage" tabindex="-1"></main>
+
+			<aside class="hs-panel" id="hs-panel" aria-label="Selected device">
+				<p class="hs-panel-empty" id="hs-panel-empty">Pick a room on the left, or click anything in the house to see what it is and act on it.</p>
+				<div id="hs-inspector" hidden></div>
+			</aside>
+		</div>
+	</div>
+
+	<p class="sr-only" id="hs-live" role="status" aria-live="polite"></p>
+
+	<script src="/nav.js"></script>
+	<script type="module" src="/src/home/scene.js"></script>
+</body>
+</html>

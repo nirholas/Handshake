@@ -541,6 +541,7 @@ const appConfig = {
 				i18n: resolve(__dirname, 'src/i18n.js'),
 				drops: resolve(__dirname, 'pages/drops.html'),
 				materialize: resolve(__dirname, 'pages/materialize.html'),
+				'smart-home': resolve(__dirname, 'pages/smart-home.html'),
 				'materialize-order': resolve(__dirname, 'pages/materialize-order.html'),
 				'materialize-ops': resolve(__dirname, 'pages/materialize-ops.html'),
 				'drop-collection': resolve(__dirname, 'pages/drop-collection.html'),

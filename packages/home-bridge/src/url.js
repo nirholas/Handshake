@@ -2,8 +2,12 @@ import { ERR, HomeBridgeError } from './errors.js';
 
 /**
  * Home Assistant is reached at a base URL the user types by hand, so it arrives
- * with trailing slashes, a stray `/lovelace`, or no scheme at all. Normalize it
- * once, here, and let every other module assume it is clean.
+ * with trailing slashes, or no scheme at all. Normalize it once, here, and let
+ * every other module assume it is clean. A path is KEPT, not stripped: an
+ * instance behind a reverse proxy legitimately lives under one, and there is no
+ * way to tell that prefix apart from a pasted `/lovelace` without asking the
+ * house. Callers that persist this value (the connection store) store what comes
+ * back, so the same house always spells itself the same way.
  *
  * @param {string} input
  * @param {{ requireSecure?: boolean }} [options] requireSecure rejects http://

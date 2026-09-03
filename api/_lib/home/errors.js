@@ -79,11 +79,20 @@ const STATUS_BY_CODE = Object.freeze({
  *   home_not_found   -> not_found      "no such home", said without confirming one
  *   home_revoked     -> auth           the credential is gone; reconnect the home
  *   home_breaker_open-> not_connected  retries are paused; try again shortly
+ *   home_at_capacity -> not_connected  this instance is full; retry-after is set
+ *   home_stream_shed -> not_connected  live updates yielded to actions; same
+ *
+ * The last two are the backpressure ladder's refusals (api/_lib/home/admission.js)
+ * and they are the reason `retry_after` exists on this envelope at all. A 503
+ * without one is indistinguishable from an outage, and a client that cannot tell
+ * "full for a moment" from "broken" backs off for far too long or not at all.
  */
 const RUNTIME_CODE_ALIASES = Object.freeze({
 	[HOME_RUNTIME_ERR.NOT_FOUND]: HOME_ERR.NOT_FOUND,
 	[HOME_RUNTIME_ERR.REVOKED]: HOME_ERR.AUTH,
 	[HOME_RUNTIME_ERR.BREAKER_OPEN]: HOME_ERR.NOT_CONNECTED,
+	[HOME_RUNTIME_ERR.AT_CAPACITY]: HOME_ERR.NOT_CONNECTED,
+	[HOME_RUNTIME_ERR.STREAM_SHED]: HOME_ERR.NOT_CONNECTED,
 });
 
 /**
@@ -129,6 +138,7 @@ export function toHomeFailure(err) {
 			message: 'Something went wrong reaching your home.',
 			pending: null,
 			detailCode: null,
+			retryAfterSeconds: null,
 			unexpected: true,
 		};
 	}
@@ -138,6 +148,7 @@ export function toHomeFailure(err) {
 		message: err.message || 'Your home could not be reached.',
 		pending: err.pending ? sanitizePending(err.pending) : null,
 		detailCode: raw !== code ? raw : null,
+		retryAfterSeconds: Number.isFinite(err?.retryAfterSeconds) ? err.retryAfterSeconds : null,
 		unexpected: false,
 	};
 }
@@ -156,10 +167,14 @@ export function toHomeFailure(err) {
 export function homeError(res, err) {
 	const failure = toHomeFailure(err);
 	if (failure.unexpected) throw err;
+	// A shed request is retryable and says so in the one place every HTTP client
+	// already looks, as well as in the body for the ones that do not.
+	if (failure.retryAfterSeconds != null) res.setHeader('Retry-After', String(failure.retryAfterSeconds));
 	return httpError(res, failure.status, failure.code, failure.message, {
 		code: failure.code,
 		message: failure.message,
 		...(failure.detailCode ? { detail_code: failure.detailCode } : {}),
+		...(failure.retryAfterSeconds != null ? { retry_after: failure.retryAfterSeconds } : {}),
 		...(failure.pending ? { pending: failure.pending } : {}),
 	});
 }

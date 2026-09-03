@@ -58,6 +58,8 @@ import {
 	PER_CALL_TIMEOUT_MS,
 } from './_lib/chat-models.js';
 import { computeContext, searchMemories } from './_lib/memory-store.js';
+import { HOME_TOOL_DEFS, isHomeTool, runHomeTool } from './_lib/home/tools.js';
+import { listMembershipHomes } from './_lib/home/members.js';
 import { loadInstalledSkills, skillsPromptBlock } from './_lib/installed-skills.js';
 import {
 	vertexClaudeEnabled,
@@ -408,14 +410,43 @@ const ACTION_TOOLS = [
 
 const ACTION_NAMES = new Set(ACTION_TOOLS.map((t) => t.name));
 
-const OPENAI_TOOLS = ACTION_TOOLS.map((t) => ({
+const toOpenAiTool = (t) => ({
 	type: 'function',
 	function: {
 		name: t.name,
 		description: t.description,
 		parameters: t.input_schema,
 	},
+});
+
+const OPENAI_TOOLS = ACTION_TOOLS.map(toOpenAiTool);
+
+// The home tools are a different KIND of tool from everything above.
+//
+// Every ACTION_TOOL is a viewer action: the model asks, the browser does it, and
+// the model never learns the outcome. A home tool acts on a real building, and
+// the model has to see the result to say anything true about it, so these run
+// SERVER-SIDE (api/_lib/home/tools.js) between the two model passes below.
+//
+// They are only offered to a caller who actually has a connected home; a model
+// handed a tool that can never work will keep reaching for it.
+//
+// Note what is NOT here: any way to confirm. The schemas come straight from
+// HOME_TOOL_DEFS, which carries no `confirmed` property, so a guarded action can
+// only ever come back as a pending confirmation that the browser renders and a
+// person approves through /api/home/:id/confirm.
+const HOME_ANTHROPIC_TOOLS = HOME_TOOL_DEFS.map((def) => ({
+	name: def.name,
+	description: def.description,
+	input_schema: def.inputSchema,
 }));
+const HOME_OPENAI_TOOLS = HOME_ANTHROPIC_TOOLS.map(toOpenAiTool);
+
+/** The tool set a route sends when the caller has no home connected. */
+const DEFAULT_TOOL_SET = Object.freeze({ anthropic: ACTION_TOOLS, openai: OPENAI_TOOLS });
+
+/** One round of server-side home tools per turn: enough to read and act, never a loop. */
+const HOME_TOOL_ROUNDS = 1;
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
@@ -582,6 +613,25 @@ export default wrap(async (req, res) => {
 		}
 	}
 
+	// Home tools are offered only to an account that has a house connected, so a
+	// model is never handed a tool it cannot use. One indexed read of a tiny
+	// membership table; a failure degrades to a home-less turn, never a failed
+	// chat, because the house is a feature and the conversation is the product.
+	let homeCount = 0;
+	if (auth?.userId) {
+		try {
+			homeCount = (await listMembershipHomes(auth.userId)).length;
+		} catch (err) {
+			captureException(err, { route: 'chat', stage: 'home-membership' });
+		}
+	}
+	const toolSet = homeCount
+		? {
+				anthropic: [...ACTION_TOOLS, ...HOME_ANTHROPIC_TOOLS],
+				openai: [...OPENAI_TOOLS, ...HOME_OPENAI_TOOLS],
+			}
+		: DEFAULT_TOOL_SET;
+
 	const sys = buildSystemPrompt(
 		body.context,
 		personaPrompt,
@@ -647,7 +697,7 @@ export default wrap(async (req, res) => {
 					method: 'POST',
 					headers: reqHeaders,
 					body: JSON.stringify(
-						route.buildPayload({ systemPrompt, systemParts: sys, history, maxTokens, includeTools }),
+						route.buildPayload({ systemPrompt, systemParts: sys, history, maxTokens, includeTools, toolSet }),
 					),
 					signal: ctrl.signal,
 				});
@@ -1353,7 +1403,7 @@ function makeRoute(name, cfg, apiKey, model) {
 			url: vertexMessagesUrl(model, { stream: true }),
 			style: 'anthropic',
 			resolveHeaders: () => vertexRequestHeaders(),
-			buildPayload: ({ systemPrompt, systemParts, history, maxTokens, includeTools = true }) =>
+			buildPayload: ({ systemPrompt, systemParts, history, maxTokens, includeTools = true, toolSet = DEFAULT_TOOL_SET }) =>
 				toVertexBody({
 					model,
 					// Same thinking-budget floor and cached-stable-prefix split as the
@@ -1368,7 +1418,7 @@ function makeRoute(name, cfg, apiKey, model) {
 								]
 							: systemPrompt,
 					messages: history,
-					...(includeTools ? { tools: ACTION_TOOLS } : {}),
+					...(includeTools ? { tools: toolSet.anthropic } : {}),
 					stream: true,
 				}),
 		};
@@ -1385,7 +1435,7 @@ function makeRoute(name, cfg, apiKey, model) {
 			url: vertexGeminiChatUrl(),
 			style: 'openai',
 			resolveHeaders: () => vertexRequestHeaders(),
-			buildPayload: ({ systemPrompt, history, maxTokens, includeTools = true }) => ({
+			buildPayload: ({ systemPrompt, history, maxTokens, includeTools = true, toolSet = DEFAULT_TOOL_SET }) => ({
 				model,
 				// Gemini reasons by default and its reasoning tokens are billed against
 				// max_tokens without being returned, so a plain budget streams a reply
@@ -1393,7 +1443,7 @@ function makeRoute(name, cfg, apiKey, model) {
 				// funds it on top of the caller's budget (max_tokens + extra_body).
 				...vertexGeminiBudget(maxTokens),
 				messages: [{ role: 'system', content: systemPrompt }, ...history],
-				...(includeTools ? { tools: OPENAI_TOOLS, tool_choice: 'auto' } : {}),
+				...(includeTools ? { tools: toolSet.openai, tool_choice: 'auto' } : {}),
 				stream: true,
 			}),
 		};
@@ -1409,7 +1459,7 @@ function makeRoute(name, cfg, apiKey, model) {
 				'anthropic-version': '2023-06-01',
 				'content-type': 'application/json',
 			},
-			buildPayload: ({ systemPrompt, systemParts, history, maxTokens, includeTools = true }) => ({
+			buildPayload: ({ systemPrompt, systemParts, history, maxTokens, includeTools = true, toolSet = DEFAULT_TOOL_SET }) => ({
 				model,
 				// Claude 5 models think by default and max_tokens caps thinking plus
 				// visible text together; floor the budget so a small chat cap
@@ -1431,7 +1481,7 @@ function makeRoute(name, cfg, apiKey, model) {
 							]
 						: systemPrompt,
 				messages: history,
-				...(includeTools ? { tools: ACTION_TOOLS } : {}),
+				...(includeTools ? { tools: toolSet.anthropic } : {}),
 				stream: true,
 			}),
 		};
@@ -1477,12 +1527,12 @@ function makeRoute(name, cfg, apiKey, model) {
 			// streamed tool-call deltas are OpenAI-shaped, so streamOpenAI parses
 			// them verbatim. If a model/region rejects tools the request loop retries
 			// this route once without them (see the 4xx tool-rejection guard above).
-			buildPayload: ({ systemPrompt, history, maxTokens, includeTools = true }) => ({
+			buildPayload: ({ systemPrompt, history, maxTokens, includeTools = true, toolSet = DEFAULT_TOOL_SET }) => ({
 				model_id: model,
 				...scope,
 				messages: [{ role: 'system', content: systemPrompt }, ...history],
 				max_tokens: maxTokens,
-				...(includeTools ? { tools: OPENAI_TOOLS, tool_choice_option: 'auto' } : {}),
+				...(includeTools ? { tools: toolSet.openai, tool_choice_option: 'auto' } : {}),
 			}),
 		};
 	}
@@ -1496,11 +1546,11 @@ function makeRoute(name, cfg, apiKey, model) {
 			'Content-Type': 'application/json',
 			...(cfg.extraHeaders || {}),
 		},
-		buildPayload: ({ systemPrompt, history, maxTokens, includeTools = true }) => ({
+		buildPayload: ({ systemPrompt, history, maxTokens, includeTools = true, toolSet = DEFAULT_TOOL_SET }) => ({
 			model,
 			max_tokens: maxTokens,
 			messages: [{ role: 'system', content: systemPrompt }, ...history],
-			...(includeTools ? { tools: OPENAI_TOOLS, tool_choice: 'auto' } : {}),
+			...(includeTools ? { tools: toolSet.openai, tool_choice: 'auto' } : {}),
 			stream: true,
 		}),
 	};

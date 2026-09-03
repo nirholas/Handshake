@@ -25,6 +25,7 @@
 
 import { ERR, HomeBridge, HomeBridgeError } from '@three-ws/home-bridge';
 
+import { createAdmissionController } from './admission.js';
 import {
 	getConnection,
 	getDecryptedToken,
@@ -44,6 +45,10 @@ export const HOME_RUNTIME_ERR = Object.freeze({
 	REVOKED: 'home_revoked',
 	/** Too many consecutive connect failures. Fails fast instead of timing out. */
 	BREAKER_OPEN: 'home_breaker_open',
+	/** Rung 5. Every pooled AND unpooled slot on this instance is taken. */
+	AT_CAPACITY: 'home_at_capacity',
+	/** Rung 4. Live updates are shed so that actions keep being served. */
+	STREAM_SHED: 'home_stream_shed',
 });
 
 /** Long enough that a page navigation or a chat turn reuses the socket, short enough that an abandoned tab does not hold a stranger's house open. */
@@ -88,6 +93,23 @@ export function createHomeRuntime(deps = {}) {
 	const idleMs = deps.idleMs ?? IDLE_MS;
 	const connectTimeoutMs = deps.connectTimeoutMs ?? CONNECT_TIMEOUT_MS;
 
+	/**
+	 * The backpressure ladder (api/_lib/home/admission.js). The pool decides which
+	 * socket you get; this decides whether you get one at all, whether a browser
+	 * may open a live stream, and what a saturated instance says instead of
+	 * hanging. It is sized from the same pool cap so the two can never disagree
+	 * about what "full" means.
+	 */
+	const admission = deps.admission || createAdmissionController({
+		maxPooled: maxConnections,
+		// Overflow is deliberately a tenth of the pool. An unpooled connection is
+		// a full Home Assistant handshake that is thrown away on release, so it is
+		// a pressure valve, not a second pool: sizing it any larger would let an
+		// instance spend all its CPU on handshakes it is about to discard.
+		maxUnpooled: Math.max(1, Math.ceil(maxConnections / 10)),
+		...(deps.admissionLimits || {}),
+	});
+
 	/** homeId -> pool entry. Keyed by home, not by user: a home has exactly one owner. */
 	const entries = new Map();
 	/** homeId -> { failures, openedUntil } */
@@ -129,15 +151,42 @@ export function createHomeRuntime(deps = {}) {
 			return handle(existing);
 		}
 
-		const credential = await loadCredential(homeId, userId);
-		const pooled = entries.size < maxConnections;
-		const entry = openEntry({ homeId, userId, credential, pooled });
+		// Reserve the pool slot SYNCHRONOUSLY, before the first await. Reading the
+		// credential is a database round trip, and two callers that both cleared the
+		// `entries.get` check while it was in flight (a page load and an SSE stream
+		// starting together is exactly that) would each open a socket to the same
+		// house. The second `entries.set` would then orphan the first: never
+		// pooled, never evicted, never closed, and the user's Home Assistant holds
+		// a connection nothing on this side can still reach. Registering first
+		// makes the second caller take the `existing` path and share this open.
+		// Rungs 1, 2 and 5 of the ladder, taken synchronously for the same reason
+		// the pool registration above is: an admission decision that straddles an
+		// await can be made twice against the same free slot.
+		//
+		// Rung 1 hands back a pooled slot. Rung 2, past the cap, hands back a
+		// short-lived UNPOOLED connection: it works identically and it closes the
+		// moment its last reference is released, so the instance pays for the
+		// handshake but never for the hold. Rung 5, past that too, refuses with a
+		// retry-after rather than opening a socket this instance cannot afford.
+		const slot = admission.acquire();
+		if (!slot.admitted) {
+			const err = new HomeBridgeError(HOME_RUNTIME_ERR.AT_CAPACITY, slot.reason);
+			err.retryAfterSeconds = slot.retryAfterSeconds;
+			throw err;
+		}
+		const pooled = slot.connection === 'pooled';
+		const entry = openEntry({ homeId, userId, pooled });
 		if (pooled) entries.set(homeId, entry);
 
 		try {
 			await entry.ready;
 		} catch (err) {
 			entries.delete(homeId);
+			// openEntry's failure path closed the bridge but the ladder slot was
+			// claimed before the handshake, so give it back here. Without this, a
+			// house that is down eats one slot per failed connect until the instance
+			// reports itself full while holding nothing.
+			releaseSlot(entry);
 			throw err;
 		}
 		startSweep();
@@ -199,7 +248,26 @@ export function createHomeRuntime(deps = {}) {
 	 * @returns {Promise<() => void>} unsubscribe
 	 */
 	async function subscribe(homeId, userId, onGraph) {
-		const { bridge, release, entry } = await acquire(homeId, userId);
+		// Rung 4, and the reason it is rung 4 rather than rung 5: a live stream is
+		// the FIRST thing this instance stops handing out under pressure, because a
+		// dashboard that stops updating is an inconvenience and a door that will
+		// not lock is not. Admission is checked before the connection is acquired,
+		// so a shed stream does not even pay for a handshake.
+		const seat = admission.admitStream();
+		if (!seat.admitted) {
+			const err = new HomeBridgeError(HOME_RUNTIME_ERR.STREAM_SHED, seat.reason);
+			err.retryAfterSeconds = seat.retryAfterSeconds;
+			throw err;
+		}
+
+		let acquired;
+		try {
+			acquired = await acquire(homeId, userId);
+		} catch (err) {
+			admission.closeStream();
+			throw err;
+		}
+		const { bridge, release, entry } = acquired;
 		entry.subscribers.add(onGraph);
 		let live = true;
 
@@ -213,6 +281,7 @@ export function createHomeRuntime(deps = {}) {
 			if (!live) return;
 			live = false;
 			entry.subscribers.delete(onGraph);
+			admission.closeStream();
 			release();
 		};
 	}
@@ -251,7 +320,55 @@ export function createHomeRuntime(deps = {}) {
 		}
 		let breakersOpen = 0;
 		for (const breaker of breakers.values()) if (breaker.openedUntil > now()) breakersOpen += 1;
-		return { open: entries.size, subscribers, pooledCap: maxConnections, breakersOpen, byStatus };
+		return { open: entries.size, subscribers, pooledCap: maxConnections, breakersOpen, byStatus, admission: admission.snapshot() };
+	}
+
+	/**
+	 * Rung 4 and rung 5, for the action path.
+	 *
+	 * The route layer wraps every write in this. The two halves of the answer are
+	 * computed independently on purpose: `admitted` is a function of load, and
+	 * `requiresConfirmation` is a function of the request alone. That separation
+	 * is the safety property this whole lane is built around, so a saturated
+	 * instance can refuse an action outright and can never confirm one.
+	 *
+	 * @param {{ guarded?: boolean, confirmed?: boolean, allowed?: boolean }} [request]
+	 */
+	function admitAction(request) {
+		const verdict = admission.admitAction(request);
+		if (!verdict.admitted) {
+			const err = new HomeBridgeError(HOME_RUNTIME_ERR.AT_CAPACITY, verdict.reason);
+			err.retryAfterSeconds = verdict.retryAfterSeconds;
+			throw err;
+		}
+		return verdict;
+	}
+
+	/**
+	 * Run an action under the ladder. The slot is always given back, including on
+	 * a throw, or one failing house drains the instance's action capacity.
+	 *
+	 * @template T
+	 * @param {{ guarded?: boolean, confirmed?: boolean, allowed?: boolean }} request
+	 * @param {() => Promise<T>} fn
+	 * @returns {Promise<T>}
+	 */
+	async function withAction(request, fn) {
+		admitAction(request);
+		try {
+			return await fn();
+		} finally {
+			admission.finishAction();
+		}
+	}
+
+	/**
+	 * Rung 3. Reads fall back to the live graph this process already holds when
+	 * the database is unreachable; writes are attempted regardless, because a
+	 * write is somebody pressing a button.
+	 */
+	function readPlan() {
+		return admission.admitRead();
 	}
 
 	/**
@@ -290,8 +407,29 @@ export function createHomeRuntime(deps = {}) {
 		return count;
 	}
 
+	/**
+	 * Watch a store call for the one thing rung 3 needs to know.
+	 *
+	 * A store call that RESOLVES (even to null, which is an ordinary miss) proves
+	 * the database answered. A store call that REJECTS is the signal that reads
+	 * have to come from memory until it recovers. Deriving the flag from real
+	 * traffic rather than from a health-check timer means the ladder reacts on the
+	 * first failed query instead of up to one poll interval later, which under
+	 * Cloud Run CPU throttling can be a long time.
+	 */
+	async function observeStore(promise) {
+		try {
+			const value = await promise;
+			admission.setDatabaseHealthy(true);
+			return value;
+		} catch (err) {
+			admission.setDatabaseHealthy(false);
+			throw err;
+		}
+	}
+
 	async function loadCredential(homeId, userId) {
-		const row = await readConnection(homeId, userId);
+		const row = await observeStore(readConnection(homeId, userId));
 		if (!row) {
 			throw new HomeBridgeError(
 				HOME_RUNTIME_ERR.NOT_FOUND,
@@ -322,7 +460,7 @@ export function createHomeRuntime(deps = {}) {
 		return credential;
 	}
 
-	function openEntry({ homeId, userId, credential, pooled }) {
+	function openEntry({ homeId, userId, pooled }) {
 		const entry = {
 			homeId,
 			userId,
@@ -339,6 +477,12 @@ export function createHomeRuntime(deps = {}) {
 		};
 
 		entry.ready = (async () => {
+			// Inside `ready`, not before it, so the slot above was claimed before any
+			// await. A home that is unknown, revoked, or whose ciphertext will not
+			// decrypt rejects here WITHOUT reaching the bridge or the breaker: none
+			// of those is the house failing to answer, and none of them should stop
+			// three.ws retrying a house that is merely offline.
+			const credential = await loadCredential(homeId, userId);
 			const allowedEntities = await readAllowed(homeId).catch(() => []);
 			const bridge = createBridge({ baseUrl: credential.baseUrl, token: credential.token, allowedEntities });
 			entry.bridge = bridge;
@@ -477,7 +621,14 @@ export function createHomeRuntime(deps = {}) {
 		};
 	}
 
+	function releaseSlot(entry) {
+		if (entry.slotReleased) return;
+		entry.slotReleased = true;
+		admission.release(entry.pooled ? 'pooled' : 'unpooled');
+	}
+
 	function closeEntry(entry) {
+		releaseSlot(entry);
 		if (entry.closed) return;
 		entry.closed = true;
 		entry.subscribers.clear();

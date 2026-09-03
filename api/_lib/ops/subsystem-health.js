@@ -38,6 +38,7 @@ import { checkRingInvariants } from '../x402/ring-allowlist.js';
 import { gatherX402SettleHealth } from './x402-settle-health.js';
 import { gatherForgeHealth } from './forge-health-sensor.js';
 import { gatherIndexLagHealth } from './index-lag.js';
+import { gatherHomeHealth } from './home-health.js';
 import { describeSolvency } from '../sniper-solvency.js';
 
 const DB_PING_TIMEOUT_MS = 2_500;
@@ -562,6 +563,11 @@ export async function gatherSubsystemHealth({ probeDb = true } = {}) {
 		// learning about the chains. Reads cursor tables only, so it shares the
 		// probeDb gate with the other DB-backed sensors.
 		probeDb ? gatherIndexLagHealth() : Promise.resolve({ name: 'agent_index', label: 'Agent index freshness', status: 'unknown', detail: 'index read skipped' }),
+		// Home Assistant bridge. Every rate it reports is computed ACROSS tenants,
+		// because one person's house being offline is a UI state for that person
+		// and never an outage: see api/_lib/ops/home-health.js. DB-gated like the
+		// other rate sensors.
+		probeDb ? gatherHomeHealth() : Promise.resolve({ name: 'home', label: 'Home Assistant bridge', status: 'unknown', detail: 'home read skipped' }),
 		checkWorld(),
 		Promise.resolve(checkX402Config()),
 		probeDb ? checkSniper() : Promise.resolve({ name: 'sniper', label: 'Sniper worker (Cloud Run)', status: 'unknown', detail: 'probe skipped' }),

@@ -67,8 +67,197 @@ function homeCard(home, { onDisconnect }) {
 	const detail = el('div');
 	detail.style.marginTop = 'var(--space-sm)';
 	detail.append(summary(home));
+	detail.append(grantsPanel(home));
+	detail.append(logPanel(home));
 	li.append(detail);
 	return li;
+}
+
+/**
+ * The standing allowances, with a revoke on each.
+ *
+ * Loaded on expand rather than on page load: a user with six houses should not
+ * pay six extra round trips to see a list most of them will be empty.
+ */
+function grantsPanel(home) {
+	return lazyPanel({
+		title: 'Standing allowances',
+		summary: 'What your agent may open without asking you first.',
+		load: () => getJson(`/api/home/${encodeURIComponent(home.id)}/grants`),
+		render: (body, rerender) => {
+			const grants = Array.isArray(body?.grants) ? body.grants : [];
+			if (!grants.length) {
+				return emptyBlock(
+					'Nothing is pre-approved.',
+					'Every unlock, every opening and every disarm stops and asks you. When you grant one, it appears here with a revoke.',
+				);
+			}
+			const list = el('ul', 'hm-rows');
+			for (const grant of grants) list.append(grantRow(home, grant, rerender));
+			return list;
+		},
+	});
+}
+
+function grantRow(home, grant, rerender) {
+	const li = el('li', 'hm-row');
+	const main = el('div', 'hm-row-main');
+	// An entity id is a string the house controls. Text only.
+	const title = el('p', 'hm-row-title');
+	title.append(el('span', 'hm-mono', grant.entity_id));
+	main.append(title);
+	main.append(el('p', 'hm-row-meta', grant.expires_at
+		? `Allowed until ${formatWhen(grant.expires_at)}.`
+		: 'Allowed until you revoke it.'));
+
+	const revoke = el('button', 'hm-btn hm-btn-danger', 'Revoke');
+	revoke.type = 'button';
+	revoke.addEventListener('click', async () => {
+		revoke.disabled = true;
+		revoke.textContent = 'Revoking';
+		try {
+			await sendJson(`/api/home/${encodeURIComponent(home.id)}/grants/${encodeURIComponent(grant.entity_id)}`, 'DELETE');
+			rerender();
+		} catch (err) {
+			revoke.disabled = false;
+			revoke.textContent = 'Try again';
+			main.append(el('p', 'hm-row-meta', err?.message || 'That did not go through.'));
+		}
+	});
+
+	li.append(main, revoke);
+	return li;
+}
+
+/** Every write the platform made in this house, refusals included. */
+function logPanel(home) {
+	return lazyPanel({
+		title: 'What happened in this house',
+		summary: 'Every action your agent took, and every one it refused.',
+		load: () => getJson(`/api/home/${encodeURIComponent(home.id)}/log?limit=25`),
+		render: (body) => {
+			const rows = Array.isArray(body?.actions) ? body.actions : [];
+			if (!rows.length) {
+				return emptyBlock(
+					'Nothing yet.',
+					'Once your agent turns a light on or refuses to open a door, it lands here with who asked and what happened.',
+				);
+			}
+			const list = el('ul', 'hm-rows');
+			for (const row of rows) list.append(logRow(row));
+			return list;
+		},
+	});
+}
+
+function logRow(row) {
+	const li = el('li', 'hm-row');
+	const main = el('div', 'hm-row-main');
+	const title = el('p', 'hm-row-title');
+	title.append(el('span', 'hm-mono', row.action || 'unknown action'));
+	main.append(title);
+
+	const targets = Array.isArray(row.entity_ids) ? row.entity_ids : [];
+	const parts = [
+		`${formatWhen(row.created_at)}`,
+		`by ${row.actor || 'unknown'}`,
+		targets.length ? targets.join(', ') : null,
+		row.guarded ? (row.confirmed_by ? 'confirmed by a person' : 'stopped by the gate') : null,
+	].filter(Boolean);
+	main.append(el('p', 'hm-row-meta', parts.join(' · ')));
+
+	const outcome = String(row.outcome || 'ok');
+	const tag = el('span', `hm-tag hm-tag-${outcome}`, outcome === 'refused' ? 'refused' : outcome === 'failed' ? 'failed' : 'done');
+	li.append(main, tag);
+	return li;
+}
+
+/**
+ * A collapsed section that fetches on first open, keeps a skeleton the exact
+ * height of its content while it loads, and renders its own error state rather
+ * than throwing the whole page away.
+ */
+function lazyPanel({ title, summary: summaryText, load, render }) {
+	const wrap = el('details', 'hm-panel');
+	wrap.style.marginTop = 'var(--space-sm)';
+	wrap.style.background = 'transparent';
+
+	const head = el('summary');
+	head.style.cursor = 'pointer';
+	head.append(el('span', '', title));
+	wrap.append(head);
+
+	const caption = el('p', 'hm-hint', summaryText);
+	wrap.append(caption);
+
+	const body = el('div');
+	body.style.marginTop = 'var(--space-sm)';
+	wrap.append(body);
+
+	let loaded = false;
+	const run = async () => {
+		clear(body);
+		const skeleton = el('div', 'hm-skeleton');
+		skeleton.style.height = '3.4rem';
+		body.append(skeleton);
+		try {
+			const data = await load();
+			clear(body);
+			body.append(render(data, run));
+		} catch (err) {
+			clear(body);
+			body.append(noticeEl({
+				tone: 'error',
+				title: 'We could not load this.',
+				body: err?.message || 'Try opening it again in a moment.',
+			}));
+		}
+	};
+
+	wrap.addEventListener('toggle', () => {
+		if (!wrap.open || loaded) return;
+		loaded = true;
+		run();
+	});
+	return wrap;
+}
+
+function emptyBlock(title, body) {
+	const wrap = el('div', 'hm-empty');
+	wrap.style.padding = 'var(--space-md) 0';
+	wrap.append(el('p', 'hm-empty-title', title), el('p', 'hm-empty-body', body));
+	return wrap;
+}
+
+async function getJson(url) {
+	const res = await fetch(url, { credentials: 'include', headers: { accept: 'application/json' } });
+	const body = await res.json().catch(() => null);
+	if (!res.ok) throw new Error(body?.message || body?.error_description || `Request failed (${res.status}).`);
+	return body;
+}
+
+async function sendJson(url, method) {
+	const headers = { accept: 'application/json' };
+	try {
+		const csrfRes = await fetch('/api/csrf-token', { credentials: 'include' });
+		if (csrfRes.ok) {
+			const csrf = await csrfRes.json();
+			const token = csrf?.token || csrf?.data?.token;
+			if (token) headers['x-csrf-token'] = token;
+		}
+	} catch {
+		// No CSRF token available: let the server refuse rather than guessing.
+	}
+	const res = await fetch(url, { method, credentials: 'include', headers });
+	const body = await res.json().catch(() => null);
+	if (!res.ok) throw new Error(body?.message || body?.error_description || `Request failed (${res.status}).`);
+	return body;
+}
+
+function formatWhen(iso) {
+	const at = Date.parse(iso || '');
+	if (!Number.isFinite(at)) return 'an unknown time';
+	return new Date(at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 }
 
 /**
