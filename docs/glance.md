@@ -171,6 +171,6 @@ The three.ws Android app (1.1 and later) ships an **Agent glance** home screen w
 
 ## Where this is going
 
-Glance is phase 5 of the [roadmap](https://github.com/nirholas/three.ws/blob/main/README.md#roadmap). Windows 11, Android and the web are live. macOS and iOS follow through a shared WidgetKit extension against the same PNG endpoint and the same widget token; the scoped work order is [prompts/finish/roadmap-native-widgets.md](https://github.com/nirholas/three.ws/blob/main/prompts/finish/roadmap-native-widgets.md).
+Glance is phase 5 of the [roadmap](https://github.com/nirholas/three.ws/blob/main/README.md#roadmap). Windows 11, Android and the web are live. macOS and iOS are built: one WidgetKit extension over the same PNG endpoint and the same widget token, sources in [apple/](https://github.com/nirholas/three.ws/tree/main/apple), waiting only on an Apple Developer account to sign and distribute the two binaries. See [native-widgets.md](native-widgets.md).
 
 Every one of those surfaces consumes the endpoint documented above. The card is the contract; the hosts are just slots.

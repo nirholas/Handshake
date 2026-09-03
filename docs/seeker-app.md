@@ -54,9 +54,9 @@ including every state it can be in and how it authenticates, is in
 [native-widgets.md](native-widgets.md#android); the native sources are in
 [solana-mobile/android-overlay/](../solana-mobile/android-overlay/README.md).
 
-## What is next
+## The same card everywhere else
 
-Windows 11 already gets the same card through the installed PWA's manifest. macOS and iOS follow
-through a shared WidgetKit extension against the same endpoint and widget token; that is Phase 5
-of the [roadmap](../README.md#roadmap) and the scoped work order is
-[prompts/finish/roadmap-native-widgets.md](../prompts/finish/roadmap-native-widgets.md).
+Windows 11 gets it through the installed PWA's manifest, and macOS and iOS through one WidgetKit
+extension over the same endpoint and the same kind of widget token. Those sources live in
+[apple/](../apple/README.md) and the product documentation for all four surfaces is
+[native-widgets.md](native-widgets.md).
