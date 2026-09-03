@@ -117,12 +117,20 @@ const CSS = `
 @keyframes sweep { from { background-position: 120% 0; } to { background-position: -120% 0; } }
 
 /* The panel overlays rather than reflowing: opening it must not move the model,
-   the title, or anything else on the page. It anchors under the badge, to the
-   badge's left edge by default and to its right edge when the host sits at the
-   end of a bar (align="end"), so it never runs off either side. */
+   the title, or anything else on the page. It opens in the TOP LAYER as a
+   popover, which is the only way to escape an ancestor's stacking context and
+   containing block. Both matter here: the viewer's header carries a
+   backdrop-filter, which makes it the containing block for fixed descendants
+   AND a stacking context the 3D stage paints over, so a plain z-index panel
+   rendered underneath the model. Position comes from JS so it stays clamped
+   inside the viewport at any width; at 320px the badge sits within a panel's
+   width of the right edge and pure-CSS anchoring pushed half the numbers off
+   screen. Browsers without popover fall back to absolute positioning inside
+   the host, which is why the host declares position: relative. */
 .panel {
-	position: absolute; top: calc(100% + 8px); left: 0; z-index: 30;
-	width: max-content; min-width: 260px; max-width: min(480px, calc(100vw - 32px));
+	position: fixed; top: 0; left: 0; z-index: 2147483000;
+	margin: 0; inset: auto; overflow: auto;
+	width: max-content; min-width: 240px; max-width: min(480px, calc(100vw - 24px));
 	max-height: 60vh; overflow-y: auto; overscroll-behavior: contain;
 	border: 1px solid rgba(127, 140, 160, .28); border-radius: 12px;
 	background: #12141a; color: #e8eaf0;
@@ -131,8 +139,14 @@ const CSS = `
 }
 .panel[hidden] { display: none; }
 .panel.open { opacity: 1; transform: translateY(0); }
-:host([align="end"]) .panel { left: auto; right: 0; }
 .panel { box-shadow: 0 12px 34px rgba(0, 0, 0, .38); }
+/* A [popover] is display:none until open; these restore the panel's own box and
+   strip the UA's default popover chrome. */
+.panel[popover] { display: none; border-width: 1px; padding: 12px 13px; }
+.panel[popover]:popover-open { display: block; }
+.panel[popover]::backdrop { background: transparent; }
+.panel.fallback { position: absolute; top: calc(100% + 8px); left: 0; }
+:host([align="end"]) .panel.fallback { left: auto; right: 0; }
 @media (prefers-reduced-motion: reduce) {
 	.panel { transition: none; }
 	.skeleton { animation: none; }
@@ -210,6 +224,11 @@ class SimReadinessCard extends HTMLElement {
 		this._panel = document.createElement('div');
 		this._panel.className = 'panel';
 		this._panel.hidden = true;
+		// 'manual' rather than 'auto': the badge is the toggle, and auto's light
+		// dismiss would close the panel on the same click that reopens it.
+		this._popover = typeof this._panel.showPopover === 'function';
+		if (this._popover) this._panel.setAttribute('popover', 'manual');
+		else this._panel.classList.add('fallback');
 		this.shadowRoot.append(style, this._head, this._panel);
 	}
 
@@ -307,24 +326,112 @@ class SimReadinessCard extends HTMLElement {
 		this.hidden = false;
 	}
 
+	disconnectedCallback() {
+		this._unbind();
+	}
+
+	_bind() {
+		if (this._bound) return;
+		this._bound = () => this._place();
+		// Capture, so a scroll inside any ancestor repositions the panel too.
+		window.addEventListener('scroll', this._bound, { passive: true, capture: true });
+		window.addEventListener('resize', this._bound, { passive: true });
+		this._onKey = (e) => { if (e.key === 'Escape' && this._open) { this._collapse(); this._badge?.focus(); } };
+		document.addEventListener('keydown', this._onKey);
+		// composedPath so a click inside the panel's own shadow tree (Copy JSON)
+		// is not read as a click outside it.
+		this._onAway = (e) => {
+			if (!this._open) return;
+			const path = e.composedPath();
+			if (path.includes(this._panel) || path.includes(this._badge)) return;
+			this._collapse();
+		};
+		document.addEventListener('pointerdown', this._onAway, true);
+	}
+
+	_unbind() {
+		if (this._bound) {
+			window.removeEventListener('scroll', this._bound, { capture: true });
+			window.removeEventListener('resize', this._bound);
+			this._bound = null;
+		}
+		if (this._onKey) {
+			document.removeEventListener('keydown', this._onKey);
+			this._onKey = null;
+		}
+		if (this._onAway) {
+			document.removeEventListener('pointerdown', this._onAway, true);
+			this._onAway = null;
+		}
+	}
+
+	// Anchor under the badge, then clamp into the viewport on both axes and flip
+	// above when there is more room there. Reading the panel's own box after it
+	// is displayed is what makes this correct at any width, including the 320px
+	// case where the badge itself sits within a panel's width of the right edge.
+	_place() {
+		if (!this._open || !this._badge || !this._popover) return;
+		const anchor = this._badge.getBoundingClientRect();
+		const gap = 8;
+		const margin = 12;
+		const box = this._panel.getBoundingClientRect();
+		const preferEnd = this.getAttribute('align') === 'end';
+		let left = preferEnd ? anchor.right - box.width : anchor.left;
+		left = Math.min(left, window.innerWidth - box.width - margin);
+		left = Math.max(margin, left);
+		const below = window.innerHeight - anchor.bottom - gap - margin;
+		const above = anchor.top - gap - margin;
+		const flip = below < box.height && above > below;
+		const top = flip
+			? Math.max(margin, anchor.top - gap - box.height)
+			: Math.min(anchor.bottom + gap, window.innerHeight - box.height - margin);
+		this._panel.style.left = `${Math.round(left)}px`;
+		this._panel.style.top = `${Math.round(Math.max(margin, top))}px`;
+		this._panel.style.maxHeight = `${Math.round(Math.max(160, (flip ? above : below)))}px`;
+	}
+
+	_show() {
+		if (this._popover) {
+			this._panel.hidden = false;
+			try { this._panel.showPopover(); return; } catch { /* already open */ }
+		}
+		this._panel.hidden = false;
+	}
+
+	_hide() {
+		if (this._popover) {
+			try { this._panel.hidePopover(); } catch { /* already closed */ }
+		}
+		this._panel.hidden = true;
+	}
+
 	_collapse() {
 		this._open = false;
 		this._panel.classList.remove('open');
-		this._panel.hidden = true;
+		this._hide();
 		this._badge?.setAttribute('aria-expanded', 'false');
+		this._unbind();
 	}
 
 	_toggle() {
 		this._open = !this._open;
 		this._badge.setAttribute('aria-expanded', this._open ? 'true' : 'false');
 		if (this._open) {
-			this._panel.hidden = false;
+			this._show();
+			this._place();
+			this._bind();
 			// One frame before the class so the transition actually runs rather
 			// than being collapsed into the same style recalculation.
-			requestAnimationFrame(() => this._panel.classList.add('open'));
+			requestAnimationFrame(() => {
+				this._panel.classList.add('open');
+				// Re-place once the panel has its final laid-out box: the first
+				// pass measured it before the browser had resolved max-height.
+				this._place();
+			});
 		} else {
 			this._panel.classList.remove('open');
-			this._panel.hidden = true;
+			this._hide();
+			this._unbind();
 		}
 	}
 
