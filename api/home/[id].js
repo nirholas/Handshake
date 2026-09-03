@@ -1,4 +1,4 @@
-// /api/home/:id — one home, and the door that removes it.
+// /api/home/:id: one home, and the door that removes it.
 //
 //   GET     the connection record plus a live room graph snapshot
 //   DELETE  disconnect: soft-delete the row and destroy the credential
