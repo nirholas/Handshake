@@ -22,6 +22,8 @@
 // and the same prefix is swept before the run so a crashed previous run cannot
 // leave anything behind.
 
+import { randomUUID } from 'node:crypto';
+
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import '../tests/setup.env.js';
@@ -29,8 +31,18 @@ import '../tests/setup.env.js';
 const HAS_DB = Boolean(process.env.DATABASE_URL);
 const d = HAS_DB ? describe : describe.skip;
 
-const PREFIX = 'home-roles-test';
+// Every row this suite writes is namespaced to THIS run, not to the file.
+//
+// A constant prefix looked tidy and was a landmine: this workspace runs many
+// agents, several of them with a vitest of their own in flight, and two
+// overlapping runs of this file deleted each other's users and homes mid-test.
+// The symptom is a wall of foreign-key violations on `sessions` and
+// `home_invites` that reads like broken RBAC and is nothing of the kind.
+const FAMILY = 'home-roles-test';
+const PREFIX = `${FAMILY}-${randomUUID().slice(0, 8)}`;
 const email = (who) => `${PREFIX}+${who}@example.invalid`;
+/** Rows from a run that crashed before its own cleanup. Old enough that no live run owns them. */
+const STALE_AFTER = '1 hour';
 
 /** The order 12 table, transcribed. Rows are roles, columns are capabilities. */
 const EXPECTED = {
@@ -70,12 +82,43 @@ async function sweep() {
 	await sql`DELETE FROM users WHERE email LIKE ${`${PREFIX}+%`}`;
 }
 
+/**
+ * Rows left by a run that died before its own cleanup, from any prefix in this
+ * family. Bounded by age so it can never touch a run happening right now, which
+ * is the whole reason the per-run prefix exists.
+ */
+async function sweepStale() {
+	await sql`
+		DELETE FROM home_connections
+		WHERE label LIKE ${`${FAMILY}-%`} AND created_at < now() - ${STALE_AFTER}::interval
+	`;
+	await sql`
+		DELETE FROM sessions
+		WHERE user_id IN (
+			SELECT id FROM users
+			WHERE email LIKE ${`${FAMILY}-%`} AND created_at < now() - ${STALE_AFTER}::interval
+		)
+	`;
+	await sql`
+		DELETE FROM audit_log
+		WHERE user_id IN (
+			SELECT id FROM users
+			WHERE email LIKE ${`${FAMILY}-%`} AND created_at < now() - ${STALE_AFTER}::interval
+		)
+	`;
+	await sql`
+		DELETE FROM users
+		WHERE email LIKE ${`${FAMILY}-%`} AND created_at < now() - ${STALE_AFTER}::interval
+	`;
+}
+
 beforeAll(async () => {
 	if (!HAS_DB) return;
 	({ sql } = await import('../api/_lib/db.js'));
 	members = await import('../api/_lib/home/members.js');
 	store = await import('../api/_lib/home/store.js');
 
+	await sweepStale();
 	await sweep();
 
 	for (const who of ['owner', 'admin', 'member', 'guest', 'viewer', 'stranger', 'second']) {
