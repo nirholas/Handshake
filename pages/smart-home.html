@@ -4,17 +4,17 @@
 	<script>/* three.ws theme boot */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Smart home · Connect your house to your agent · three.ws</title>
-	<meta name="description" content="Connect a Home Assistant house to your three.ws agent. Your agent reads the rooms, runs your own scenes, and stops to ask before it unlocks, opens, or disarms anything." />
+	<title data-i18n="smart_home.meta_title">Smart home · Connect your house to your agent · three.ws</title>
+	<meta name="description" content="Connect a Home Assistant house to your three.ws agent. Your agent reads the rooms, runs your own scenes, and stops to ask before it unlocks, opens, or disarms anything." data-i18n-attr="content:smart_home.meta_description" />
 	<link rel="canonical" href="https://three.ws/smart-home" />
-	<meta property="og:title" content="Smart home · three.ws" />
-	<meta property="og:description" content="Connect a Home Assistant house to your three.ws agent. Reads are free; anything that opens the house stops and asks." />
+	<meta property="og:title" content="Smart home · three.ws" data-i18n-attr="content:smart_home.meta_og_title" />
+	<meta property="og:description" content="Connect a Home Assistant house to your three.ws agent. Reads are free; anything that opens the house stops and asks." data-i18n-attr="content:smart_home.meta_og_description" />
 	<meta property="og:url" content="https://three.ws/smart-home" />
 	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Smart+home&amp;d=Connect+a+Home+Assistant+house+to+your+three.ws+agent.+Reads+are+free%3B+anything+that+opens+the+house+stops+and+asks.&amp;p=%2Fsmart-home" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="Smart home · three.ws" />
-	<meta name="twitter:description" content="Connect a Home Assistant house to your three.ws agent. Reads are free; anything that opens the house stops and asks." />
+	<meta name="twitter:title" content="Smart home · three.ws" data-i18n-attr="content:smart_home.meta_twitter_title" />
+	<meta name="twitter:description" content="Connect a Home Assistant house to your three.ws agent. Reads are free; anything that opens the house stops and asks." data-i18n-attr="content:smart_home.meta_twitter_description" />
 	<link rel="icon" href="/favicon.ico" sizes="any" />
 	<link rel="stylesheet" href="/style.css" />
 	<link rel="stylesheet" href="/nav.css" />
@@ -53,8 +53,8 @@
 
 		<noscript>
 			<section class="hm-panel">
-				<h2 class="hm-panel-title">JavaScript is required here</h2>
-				<p class="hm-panel-sub">
+				<h2 class="hm-panel-title" data-i18n="smart_home.noscript_title">JavaScript is required here</h2>
+				<p class="hm-panel-sub" data-i18n="smart_home.noscript_body">
 					Connecting a house opens a live connection to it and never stores your access token in
 					this browser, so this page needs JavaScript to work. Everything else on three.ws reads
 					fine without it.

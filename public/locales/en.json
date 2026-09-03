@@ -9184,7 +9184,8 @@
 		"reconnect": "Reconnect",
 		"status_connecting": "Connecting",
 		"view_2d_aria": "Show the house as a room and device list",
-		"view_3d_aria": "Show the 3D house"
+		"view_3d_aria": "Show the 3D house",
+		"view_plan_aria": "Draw where the rooms are"
 	},
 	"hydrate_index": {
 		"connect_wallet": "Connect Wallet",
@@ -17321,7 +17322,8 @@
 		"show_more": "Show more",
 		"trader_leaderboard": "Trader Leaderboard →",
 		"walk_distance": "Walk Distance",
-		"walk_leaderboard": "Walk Leaderboard →"
+		"walk_leaderboard": "Walk Leaderboard →",
+		"your_rank": "Your rank"
 	},
 	"reasoning_ledger": {
 		"meta_description": "Every consequential decision an agent makes — what it decided, why, what it predicted, and what actually happened — recorded in a tamper-evident, independently verifiable ledger. Track record you can interrogate, not trust.",
@@ -17333,13 +17335,18 @@
 	},
 	"register": {
 		"3_30_characters_letters_numbers_or": "3–30 characters, letters, numbers, _ or -",
+		"6_digit_code_arialabel": "6-digit code",
+		"6_digit_code_placeholder": "6-digit code",
 		"already_have_an_account_sign_in": "Already have an account? <a href=\"/login\">Sign in</a>",
 		"back": "← Back",
 		"by_creating_an_account_including_with_privy": "By creating an account (including with Privy or a connected wallet) you agree to the <a href=\"/legal/tos\" target=\"_blank\" rel=\"noopener\">Terms of Service</a> and <a href=\"/legal/privacy\" target=\"_blank\" rel=\"noopener\">Privacy Policy</a>.",
 		"caps_lock_is_on": "Caps Lock is on",
 		"connect_wallet": "Connect wallet",
+		"continue_with_privy": "Continue with Privy",
 		"create_account": "Create account",
 		"create_account_2": "Create account",
+		"email_address_arialabel": "Email address",
+		"email_address_placeholder": "Email address",
 		"evm": "EVM",
 		"get_started_free_no_wallet_needed": "Get started free. <span class=\"badge\">✓ No wallet needed</span>",
 		"i_have_read_and_agree_to_the": "I have read and agree to the <a href=\"/legal/tos\" target=\"_blank\" rel=\"noopener\">Terms of Service</a> and <a href=\"/legal/privacy\" target=\"_blank\" rel=\"noopener\">Privacy Policy</a>.",
@@ -17379,7 +17386,7 @@
 		"meta_description": "View and submit on-chain reviews for any AI agent or Ethereum address.",
 		"meta_og_description": "Inspect on-chain reputation scores and attestations for any agent.",
 		"meta_og_title": "Reputation Explorer · three.ws",
-		"meta_title": "Agent Reputation — three.ws",
+		"meta_title": "Reputation Explorer · three.ws",
 		"meta_twitter_description": "Inspect on-chain reputation scores and attestations for any agent.",
 		"meta_twitter_title": "Reputation Explorer · three.ws",
 		"privacy_policy": "Privacy Policy",
@@ -17411,6 +17418,7 @@
 	},
 	"restyle": {
 		"ai_restyle": "AI restyle",
+		"describe_the_look": "Describe the look",
 		"emissive": "Emissive",
 		"every_ai_restyle_mints_a_real_durable": "Every AI restyle mints a real, durable GLB — never overwriting the one before it. \"Save version\" checkpoints your current fine-tune/preset edits the same way. Click a version to revert to it; the original is always version 1.",
 		"export_glb": "Export GLB",
@@ -17429,6 +17437,7 @@
 		"meta_twitter_description": "Re-skin any 3D model in the browser: apply PBR material presets (chrome, gold, glass, wood…), restyle from a plain-language AI instruction, fan out seeded colorway variants as durable versions, fine-tune metalness and roughness live, and export a validated GLB — non-destructively, with a real revertable version lineage.",
 		"meta_twitter_title": "Restyle Studio — material presets, AI restyle & variants · three.ws",
 		"metalness": "Metalness",
+		"model_url": "Model URL",
 		"re_skin_any_3d_model_in_your": "Re-skin any 3D model in your browser — apply a PBR material preset, describe a look in plain language for an AI restyle, fan out seeded colorway variants, fine-tune metalness and roughness live, then export a validated GLB. Your original is never touched; Reset restores it instantly.",
 		"reset_to_original": "Reset to original",
 		"restyle": "Restyle",
@@ -17438,6 +17447,7 @@
 		"save_all_as_versions": "Save all as versions",
 		"save_version": "Save version",
 		"seeded_variants": "Seeded variants",
+		"upload_glb": "Upload GLB",
 		"versions": "Versions"
 	},
 	"robinhood_coin": {
@@ -17514,6 +17524,7 @@
 		"your_browser_can_t_open_the_camera": "Your browser can't open the camera here — use Upload instead, or open this page in Safari / Chrome on a device with a camera."
 	},
 	"scene": {
+		"h1": "Scene Studio",
 		"meta_description": "A full 3D scene editor in the browser. Import GLB models, arrange them with transform gizmos, edit materials and lights, and export complete scenes.",
 		"meta_og_description": "A full 3D scene editor in the browser. Import models, compose scenes, edit materials and lights, export GLB.",
 		"meta_og_title": "Scene Studio — Assemble 3D worlds · three.ws",
@@ -17536,21 +17547,26 @@
 		"any": "Any",
 		"any_2": "Any",
 		"categories": "Categories",
-		"filter_the_top_250_coins_by_market": "Filter the top 250 coins by market cap in real time — search by name, isolate gainers or losers, set floors on market cap and volume, then sort any column. Every row opens the full coin profile.",
+		"direction_arialabel": "Direction filter",
+		"filter_the_top_250_coins_by_market": "Filter the top 250 coins by market cap in real time. Search by name, isolate gainers or losers, set floors on market cap and volume, then sort any column. Every row opens the full coin profile.",
 		"gainers": "Gainers",
 		"heatmap": "Heatmap",
 		"losers": "Losers",
 		"markets": "Markets",
-		"meta_description": "Filter the top 250 cryptocurrencies live — search by name, isolate gainers or losers, set minimum market cap and volume, and sort every column. Find your next coin fast.",
-		"meta_og_description": "Filter the top 250 cryptocurrencies live — search, isolate gainers or losers, set minimum market cap and volume, and sort every column.",
+		"meta_description": "Filter the top 250 cryptocurrencies live: search by name, isolate gainers or losers, set minimum market cap and volume, and sort every column. Find your next coin fast.",
+		"meta_og_description": "Filter the top 250 cryptocurrencies live: search, isolate gainers or losers, set minimum market cap and volume, and sort every column.",
 		"meta_og_title": "Token Screener · three.ws",
 		"meta_title": "Token Screener · three.ws",
-		"meta_twitter_description": "Filter the top 250 cryptocurrencies live — search, isolate gainers or losers, set minimum market cap and volume, and sort every column.",
+		"meta_twitter_description": "Filter the top 250 cryptocurrencies live: search, isolate gainers or losers, set minimum market cap and volume, and sort every column.",
 		"meta_twitter_title": "Token Screener · three.ws",
 		"min_24h_volume": "Min 24h volume",
 		"min_market_cap": "Min market cap",
+		"min_market_cap_arialabel": "Minimum market cap",
+		"min_volume_arialabel": "Minimum 24h volume",
 		"reset": "Reset",
 		"screener": "Screener",
+		"search_arialabel": "Filter coins by name or symbol",
+		"search_placeholder": "Filter by name or symbol…",
 		"token_screener": "Token Screener"
 	},
 	"search": {
@@ -18370,6 +18386,14 @@
 	"smart_home": {
 		"eyebrow": "Smart home",
 		"lede": "Connect a Home Assistant instance and your agent can see every room, read every device, and run the scenes you already built. Reads are free. Anything that unlocks, opens or disarms stops and asks you first, every time.",
+		"meta_description": "Connect a Home Assistant house to your three.ws agent. Your agent reads the rooms, runs your own scenes, and stops to ask before it unlocks, opens, or disarms anything.",
+		"meta_og_description": "Connect a Home Assistant house to your three.ws agent. Reads are free; anything that opens the house stops and asks.",
+		"meta_og_title": "Smart home · three.ws",
+		"meta_title": "Smart home · Connect your house to your agent · three.ws",
+		"meta_twitter_description": "Connect a Home Assistant house to your three.ws agent. Reads are free; anything that opens the house stops and asks.",
+		"meta_twitter_title": "Smart home · three.ws",
+		"noscript_body": "Connecting a house opens a live connection to it and never stores your access token in this browser, so this page needs JavaScript to work. Everything else on three.ws reads fine without it.",
+		"noscript_title": "JavaScript is required here",
 		"title": "Put your agent inside your house"
 	},
 	"smart_money": {
@@ -18527,6 +18551,7 @@
 		"render_gaussian_splat_and_radiance_field_ava": "Render Gaussian-splat and radiance-field avatars right in the browser — the photoreal output of engines like <a href=\"/avatar-engines?family=photoreal-head\">GaussianAvatars and HumanGaussian</a>. Load a <code>.ply</code>, <code>.splat</code>, or <code>.ksplat</code> by URL or drop a file in.",
 		"samples": "Samples",
 		"samples_are_procedurally_generated_to_exerci": "Samples are procedurally generated to exercise the renderer — not real captures.",
+		"splat_scene_url": "Splat scene URL",
 		"synthetic_head_bust_14k_splats": "<span class=\"sp-sample-dot\"></span> Synthetic head bust · 14k splats",
 		"try_a_sample": "Try a sample",
 		"where_splats_come_from": "Where splats come from"
