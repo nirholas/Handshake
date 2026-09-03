@@ -40,6 +40,15 @@ export const REGISTERABLE_SCOPES = Object.freeze([
 	// require an admin account, so granting this scope to a non-admin authorizes
 	// nothing extra.
 	'feedback:read',
+	// Home Assistant MCP tools (home_status / home_list_macros / home_grants read;
+	// home_activate / home_call act). `home:act` authorises ASKING to act, and
+	// nothing more: an action that unlocks, opens, or disarms returns a pending
+	// confirmation which only a browser session can satisfy
+	// (api/home/[id]/confirm.js refuses every bearer principal, this scope
+	// included). There is deliberately no `home:confirm` scope, because a
+	// confirmation is a human saying yes and there is no token that can be one.
+	'home:read',
+	'home:act',
 	// The wallet/services scopes gate the agent-wallet MCP server
 	// (api/mcp-agent). They are registerable because the user approves each one
 	// by name on the consent screen and every spend they authorize is still

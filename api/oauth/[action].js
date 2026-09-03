@@ -58,7 +58,7 @@ function canonicalResource(requested) {
 // read from one array and cannot drift apart.
 
 function scopeLabel(s) {
-	const labels = { 'avatars:read': 'Read your avatars', 'avatars:write': 'Create and update avatars', 'avatars:delete': 'Delete your avatars', profile: 'See your name and email', offline_access: 'Stay signed in across sessions', 'memory:read': 'Recall your agents’ memories', 'memory:write': 'Store and forget your agents’ memories', 'agents:read': 'Screen your agents’ identities', 'agents:write': 'Register your agents on-chain', 'wallet:read': 'See your agent wallet balance and spending caps', 'wallet:write': 'Spend USDC from your agent wallet, within your caps', 'services:write': 'Publish paid services that earn USDC to your agent wallet' };
+	const labels = { 'avatars:read': 'Read your avatars', 'avatars:write': 'Create and update avatars', 'avatars:delete': 'Delete your avatars', profile: 'See your name and email', offline_access: 'Stay signed in across sessions', 'memory:read': 'Recall your agents’ memories', 'memory:write': 'Store and forget your agents’ memories', 'agents:read': 'Screen your agents’ identities', 'agents:write': 'Register your agents on-chain', 'wallet:read': 'See your agent wallet balance and spending caps', 'wallet:write': 'Spend USDC from your agent wallet, within your caps', 'services:write': 'Publish paid services that earn USDC to your agent wallet', 'home:read': 'See the state of your connected home', 'home:act': 'Control your connected home (unlocking, opening and disarming still need your explicit yes each time)' };
 	return labels[s] || esc(s);
 }
 

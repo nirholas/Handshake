@@ -27,7 +27,7 @@ import { logAudit } from '../audit.js';
 import { sql } from '../db.js';
 import { withDbRetry } from '../db-retry.js';
 import { decryptSecret, encryptSecret } from '../secret-box.js';
-import { redactUrlSecrets } from '../scrub-secrets.js';
+import { redactUrlSecrets, scrubSecrets } from '../scrub-secrets.js';
 
 /** Statuses the schema's check constraint accepts. */
 export const HOME_STATUS = Object.freeze({
@@ -383,7 +383,9 @@ export function logHomeAction(entry) {
  * @param {string|null} [entry.confirmedBy] who said yes, when it did
  * @param {'security'|'physical'|null} [entry.risk]
  * @param {'ok'|'refused'|'failed'} entry.outcome
- * @param {object|null} [entry.detail] small; no secrets, no state dumps
+ * @param {object|null} [entry.detail] small; no state dumps. Passed through
+ *   scrubSecrets() before it lands, so a caller that spreads an options object
+ *   carrying a token into it writes '[redacted]' rather than a key to a house.
  * @returns {Promise<boolean>}
  */
 export async function logHomeActionNow({
@@ -407,7 +409,7 @@ export async function logHomeActionNow({
 				values
 					(${homeId}, ${userId}, ${actor}, ${channel}, ${action},
 					 ${entityIds.map(String)}, ${Boolean(guarded)}, ${confirmedBy}, ${risk}, ${outcome},
-					 ${detail === null ? null : JSON.stringify(detail)}::jsonb)
+					 ${detail === null ? null : JSON.stringify(scrubSecrets(detail))}::jsonb)
 			`,
 			{ timeoutMs: 5_000 },
 		);

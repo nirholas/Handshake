@@ -2043,6 +2043,55 @@ export const limits = {
 	// what stops an enumeration sweep from costing us a database round trip each.
 	homeInviteRedeem: (ip) =>
 		getLimiter('home:invite:redeem:ip', { limit: 30, window: '10 m' }).limit(ip),
+	// Redeeming a pending physical-action confirmation (api/home/[id]/confirm.js).
+	// Every redemption is a human pressing a button in front of a door, so the
+	// honest ceiling is "faster than a person could ever mean to": 30 in five
+	// minutes. It exists to bound a stolen-session replay sweep and an id guess,
+	// not to shape normal use, which never approaches it.
+	// NOT local: a per-instance counter would multiply by however many Cloud Run
+	// instances are up, and the thing on the other side of this limit is a lock.
+	homeConfirm: (userId) =>
+		getLimiter('home:confirm:user', { limit: 30, window: '5 m' }).limit(userId),
+
+	// The Home surface proper (api/home/*). Three buckets, because the three
+	// shapes of request have three completely different costs and one of them is
+	// not measured in money at all.
+	//
+	// read: list, snapshot, macros, action log. Cache-backed, or a single read off
+	// an already-pooled socket, so the ceiling only has to stop a poll storm. 240
+	// a minute is a page open in four tabs with a chatty client, comfortably.
+	// Local, because a per-instance counter is plenty for something this cheap and
+	// it keeps a Redis command off every page load.
+	homeRead: (userId) =>
+		getLimiter('home:read', { limit: 240, window: '1 m', local: true }).limit(userId),
+	// act: every service call and every scene activation. This bucket touches
+	// PHYSICAL HARDWARE. A runaway client here does not run up a bill, it cycles a
+	// real garage door in a real building, so the ceiling is set by what a person
+	// could plausibly mean to do rather than by what the server can afford: 40
+	// actions in 5 minutes is a very busy household (a scene fires many entities
+	// in ONE call, so a "good night" that touches twelve lights costs one), and a
+	// broken loop hits the wall in seconds. NOT local, deliberately: a
+	// per-instance counter multiplied by the instance count is exactly the bypass
+	// that would make this ceiling a decoration, and this is the one bucket in
+	// this file whose failure mode is mechanical wear on somebody's house.
+	homeAct: (userId) =>
+		getLimiter('home:act', { limit: 40, window: '5 m' }).limit(userId),
+	// connect: connecting a home, and re-verifying one. Each call opens a real
+	// WebSocket to a third party and may hold it for up to 15 seconds, and it is
+	// the credential-stuffing surface on this whole surface: the request body
+	// carries a Home Assistant token, so a caller who can retry freely can test
+	// tokens against a house through us. 10 in 10 minutes is several honest
+	// attempts at a fiddly URL and nothing like enough to sweep. NOT local, for
+	// the same reason as homeAct.
+	homeConnect: (userId) =>
+		getLimiter('home:connect', { limit: 10, window: '10 m' }).limit(userId),
+	// The live stream (api/home/[id]/stream.js). Its own bucket rather than a
+	// share of homeRead: an EventSource that reconnects in a tight loop (a dead
+	// network, a client bug) would otherwise eat a page-load budget it should not
+	// share, and a stream costs a held reference on a pooled socket rather than
+	// one cheap read.
+	homeStream: (userId) =>
+		getLimiter('home:stream', { limit: 60, window: '5 m', local: true }).limit(userId),
 };
 
 // ── Fail-closed limiter call for privacy-boundary reads (H7) ─────────────────

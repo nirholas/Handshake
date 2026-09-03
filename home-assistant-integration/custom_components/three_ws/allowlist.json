@@ -1,0 +1,65 @@
+{
+	"protocolVersion": 1,
+	"minAgentProtocol": 1,
+	"frameTypes": [
+		"hello",
+		"hello.ok",
+		"hello.err",
+		"ping",
+		"pong",
+		"session.open",
+		"session.ready",
+		"session.close",
+		"ha"
+	],
+	"outboundTypes": [
+		"supported_features",
+		"get_states",
+		"get_config",
+		"subscribe_entities",
+		"subscribe_events",
+		"unsubscribe_events",
+		"ping",
+		"config/floor_registry/list",
+		"config/area_registry/list",
+		"config/device_registry/list",
+		"config/entity_registry/list",
+		"call_service"
+	],
+	"inboundTypes": [
+		"result",
+		"event",
+		"pong"
+	],
+	"allowedEventTypes": [
+		"state_changed"
+	],
+	"deniedServiceDomains": [
+		"shell_command",
+		"python_script",
+		"hassio",
+		"supervisor",
+		"backup",
+		"update",
+		"cloud",
+		"config",
+		"auth",
+		"command_line"
+	],
+	"deniedServices": [
+		"homeassistant.restart",
+		"homeassistant.stop",
+		"homeassistant.check_config",
+		"homeassistant.reload_all",
+		"homeassistant.reload_core_config",
+		"persistent_notification.create"
+	],
+	"limits": {
+		"maxFrameBytes": 4194304,
+		"maxSessionsPerInstall": 8,
+		"outboundFramesPerSecond": 40,
+		"serviceCallsPerMinute": 60,
+		"heartbeatMs": 25000,
+		"heartbeatTimeoutMs": 60000
+	}
+}

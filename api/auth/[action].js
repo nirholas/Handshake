@@ -21,6 +21,7 @@ import { seedDefaultAgent } from '../_lib/seed-default-agent.js';
 import { recordEvent } from '../_lib/usage.js';
 import { logAudit } from '../_lib/audit.js';
 import { tosAcceptanceFromBody, recordTosAcceptance } from '../_lib/legal.js';
+import { revokeAllMemberships } from '../_lib/home/members.js';
 import { z } from 'zod';
 
 const APP_ORIGIN = process.env.APP_ORIGIN || 'https://three.ws';
@@ -280,6 +281,18 @@ async function handleDeleteAccount(req, res) {
 	await sql`update sessions set revoked_at = now() where user_id = ${user.id} and revoked_at is null`;
 	await sql`update oauth_refresh_tokens set revoked_at = now() where user_id = ${user.id} and revoked_at is null`;
 
+	// Household membership outlives a session, so revoking sessions is not enough
+	// to deprovision somebody: an account with a `guest` row in a house still has
+	// standing access to a physical building, and any standing allowance it left
+	// behind still opens a lock on its authority. Both go here, in the same place
+	// the sessions do. The account's OWN homes are left alone, matching the
+	// content-first rule above: deleting an account is not a decision that gets to
+	// take somebody's house off the platform.
+	const households = await revokeAllMemberships(user.id).catch((err) => {
+		console.warn('[auth] household deprovision failed', { user: user.id, error: err?.message });
+		return { removedFrom: [], ownedHomes: [] };
+	});
+
 	res.setHeader('set-cookie', sessionCookie('', { clear: true }));
 	// Counted from `returning id`, not a driver `.count` field: Neon's HTTP
 	// driver hands back a plain rows array, so `.count` was always undefined and
@@ -293,7 +306,12 @@ async function handleDeleteAccount(req, res) {
 	logAudit({
 		userId: user.id,
 		action: 'delete_account',
-		meta: { released_username: current.username || null, ...deleted },
+		meta: {
+			released_username: current.username || null,
+			...deleted,
+			households_left: households.removedFrom.length,
+			households_owned: households.ownedHomes.length,
+		},
 		req,
 	});
 	return json(res, 200, { ok: true, deleted });

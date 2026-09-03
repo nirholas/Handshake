@@ -34,6 +34,7 @@
 import { ERR, HomeBridgeError } from '@three-ws/home-bridge';
 
 import { error as httpError } from '../http.js';
+import { HOME_RUNTIME_ERR } from './runtime.js';
 
 /** The bridge vocabulary plus the codes only a transport can produce. */
 export const HOME_ERR = Object.freeze({
@@ -69,6 +70,23 @@ const STATUS_BY_CODE = Object.freeze({
 });
 
 /**
+ * The runtime raises three codes of its own (api/_lib/home/runtime.js) so its
+ * internal states stay distinguishable in a log. A client must not have to learn
+ * a second vocabulary for them, so each one collapses onto the published code
+ * that means the same thing to a person, and the precise one rides along as
+ * `detail_code` for whoever is reading the server log at 3am.
+ *
+ *   home_not_found   -> not_found      "no such home", said without confirming one
+ *   home_revoked     -> auth           the credential is gone; reconnect the home
+ *   home_breaker_open-> not_connected  retries are paused; try again shortly
+ */
+const RUNTIME_CODE_ALIASES = Object.freeze({
+	[HOME_RUNTIME_ERR.NOT_FOUND]: HOME_ERR.NOT_FOUND,
+	[HOME_RUNTIME_ERR.REVOKED]: HOME_ERR.AUTH,
+	[HOME_RUNTIME_ERR.BREAKER_OPEN]: HOME_ERR.NOT_CONNECTED,
+});
+
+/**
  * Build a coded failure. Returns (never throws) a `HomeBridgeError` so the
  * runtime, the store and the routes all raise one class.
  *
@@ -98,7 +116,8 @@ export function notFound(what = 'home') {
  * @returns {{ status: number, code: string, message: string, pending: object|null, unexpected: boolean }}
  */
 export function toHomeFailure(err) {
-	const code = err instanceof HomeBridgeError ? err.code : null;
+	const raw = err instanceof HomeBridgeError ? err.code : null;
+	const code = raw ? RUNTIME_CODE_ALIASES[raw] ?? raw : null;
 	const status = code ? STATUS_BY_CODE[code] : undefined;
 	if (!code || !status) {
 		return {
@@ -109,6 +128,7 @@ export function toHomeFailure(err) {
 			// server log is how this one gets diagnosed.
 			message: 'Something went wrong reaching your home.',
 			pending: null,
+			detailCode: null,
 			unexpected: true,
 		};
 	}
@@ -117,6 +137,7 @@ export function toHomeFailure(err) {
 		code,
 		message: err.message || 'Your home could not be reached.',
 		pending: err.pending ? sanitizePending(err.pending) : null,
+		detailCode: raw !== code ? raw : null,
 		unexpected: false,
 	};
 }
@@ -138,6 +159,7 @@ export function homeError(res, err) {
 	return httpError(res, failure.status, failure.code, failure.message, {
 		code: failure.code,
 		message: failure.message,
+		...(failure.detailCode ? { detail_code: failure.detailCode } : {}),
 		...(failure.pending ? { pending: failure.pending } : {}),
 	});
 }

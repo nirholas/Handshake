@@ -1,0 +1,36 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect this home to three.ws",
+        "description": "Open {connect_url}, add a home, and choose \"my home is only on my network\". three.ws shows a pairing code. Type it below within ten minutes.\n\nThis home will open one outgoing connection to three.ws. Nothing listens on your network, no port is forwarded, and three.ws never receives a Home Assistant token.",
+        "data": {
+          "pairing_code": "Pairing code",
+          "platform_url": "three.ws address"
+        },
+        "data_description": {
+          "pairing_code": "The code shown on three.ws. It works once and expires after ten minutes.",
+          "platform_url": "Leave this alone unless you run your own three.ws."
+        }
+      }
+    },
+    "error": {
+      "invalid_code": "That pairing code is not recognised. Check it on three.ws and try again.",
+      "code_used": "That pairing code has already been used. Generate a new one on three.ws.",
+      "code_expired": "That pairing code expired. Generate a new one on three.ws.",
+      "upgrade_required": "This three.ws integration is too old for the relay. Update it in HACS and try again.",
+      "cannot_connect": "Home Assistant could not reach three.ws. Check this machine's internet connection.",
+      "unknown": "Pairing failed. Check the Home Assistant log for the reason."
+    },
+    "abort": {
+      "already_configured": "This home is already connected to three.ws."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "relay": {
+        "name": "three.ws connection"
+      }
+    }
+  }
+}

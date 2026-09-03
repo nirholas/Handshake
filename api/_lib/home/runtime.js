@@ -255,6 +255,28 @@ export function createHomeRuntime(deps = {}) {
 	}
 
 	/**
+	 * Drop one home's connection right now, whatever is still holding it.
+	 *
+	 * Revoking a home destroys its credential, but a socket opened a minute
+	 * earlier is already authenticated and would keep delivering that house's
+	 * state to any open SSE stream until the idle window expired. That is the
+	 * difference between "disconnected" and "disconnected in ninety seconds", and
+	 * only one of those is what the button said. `acquire` cannot re-open it
+	 * afterwards: the store filters revoked rows, so the next checkout is a 404.
+	 *
+	 * @param {string} homeId
+	 * @returns {boolean} true when this instance was holding one
+	 */
+	function closeHome(homeId) {
+		const entry = entries.get(homeId);
+		if (!entry) return false;
+		entries.delete(homeId);
+		closeEntry(entry);
+		if (!entries.size) stopSweep();
+		return true;
+	}
+
+	/**
 	 * Close every connection this process holds. Wired to SIGTERM: a container
 	 * that dies without closing leaves the user's Home Assistant holding dead
 	 * connections until its own timeout expires.
@@ -479,7 +501,7 @@ export function createHomeRuntime(deps = {}) {
 		sweepTimer = null;
 	}
 
-	return { acquire, withHome, snapshot, subscribe, evictIdle, stats, closeAll };
+	return { acquire, withHome, snapshot, subscribe, evictIdle, stats, closeHome, closeAll };
 }
 
 function readMaxConnections() {
@@ -504,6 +526,7 @@ export const snapshot = runtime.snapshot;
 export const subscribe = runtime.subscribe;
 export const evictIdle = runtime.evictIdle;
 export const stats = runtime.stats;
+export const closeHome = runtime.closeHome;
 export const closeAll = runtime.closeAll;
 
 // Cloud Run sends SIGTERM before it recycles a container. Closing here is the

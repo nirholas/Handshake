@@ -129,6 +129,15 @@ export const INVENTORY = Object.freeze([
 		sensitive: true,
 	},
 	{
+		key: 'confirmations',
+		data: 'A pending request to open something, and the sentence you were shown before you said yes: "Unlock the Front Door"',
+		table: 'home_confirmations',
+		why: 'So that what a human approves and what actually runs cannot drift apart, and so an operator can prove who approved opening a door.',
+		retention: 'The request itself is only valid for seconds. The record of it is kept on the same window as your action log, 90 days by default, and deleted with it. This is the one place a room or device name is written down, and it is the reason that window applies to it.',
+		deletedBy: 'The daily retention sweep, deleting this home, or deleting your account.',
+		sensitive: true,
+	},
+	{
 		key: 'voice_audio',
 		data: 'The sound of your voice',
 		table: null,
@@ -243,6 +252,13 @@ export async function purgeActionLogForHome(homeId, days) {
 		  and created_at < now() - ${n} * interval '1 day'
 		returning id
 	`;
+	// The confirmation records ride the same window; see purgeExpiredActionLog.
+	await sql`
+		delete from home_confirmations
+		where home_id = ${homeId}
+		  and (redeemed_at is not null or expired_at is not null)
+		  and created_at < now() - ${n} * interval '1 day'
+	`;
 	return del.length;
 }
 
@@ -285,7 +301,26 @@ export async function purgeExpiredActionLog({ batch = 5000, maxRows = 100_000 } 
 		for (const row of del) homes.add(row.home_id);
 		if (del.length < batch) break;
 	}
-	return { deleted, batches, homes: homes.size };
+	// Retired confirmations ride the same window. They are the other half of the
+	// same audit trail (the action log says a door was opened; the confirmation
+	// says who was shown what before it was), and the summary sentence frozen on
+	// them is the ONE place this lane writes a room or device name down. A
+	// pending row is never touched: its own seconds-long TTL retires it, and
+	// deleting one out from under a person mid-decision would break the gate.
+	const confirmations = await sql`
+		delete from home_confirmations
+		where ctid in (
+			select c.ctid
+			from home_confirmations c
+			join home_connections h on h.id = c.home_id
+			where (c.redeemed_at is not null or c.expired_at is not null)
+			  and c.created_at < now() - h.action_log_retention_days * interval '1 day'
+			limit ${batch}
+		)
+		returning id
+	`;
+
+	return { deleted, batches, homes: homes.size, confirmations: confirmations.length };
 }
 
 // ── Export ───────────────────────────────────────────────────────────────────
@@ -316,7 +351,7 @@ export async function exportHomeData(userId) {
 	`;
 	const homeIds = homes.map((h) => h.id);
 
-	const [members, invites, grants, actions, invitesToMe] = await Promise.all([
+	const [members, invites, grants, actions, confirmations, invitesToMe] = await Promise.all([
 		homeIds.length
 			? sql`select home_id, user_id, role, entity_scope, invited_by, created_at, updated_at
 			      from home_members where home_id = any(${homeIds}) order by home_id, created_at`
@@ -334,6 +369,12 @@ export async function exportHomeData(userId) {
 			? sql`select id, home_id, user_id, actor, channel, action, entity_ids, guarded,
 			             confirmed_by, risk, outcome, detail, created_at
 			      from home_action_log where home_id = any(${homeIds}) order by home_id, created_at`
+			: [],
+		homeIds.length
+			? sql`select id, home_id, user_id, domain, service, service_data, entity_ids, risk,
+			             summary, source, expires_at, redeemed_at, redeemed_by, expired_at,
+			             outcome, created_at
+			      from home_confirmations where home_id = any(${homeIds}) order by home_id, created_at`
 			: [],
 		// Homes somebody else owns that you are a member of, and invitations
 		// addressed to you: both are data about you that a query scoped to homes
@@ -353,6 +394,7 @@ export async function exportHomeData(userId) {
 		invites,
 		grants,
 		action_log: actions,
+		confirmations,
 	};
 }
 
@@ -431,6 +473,12 @@ export async function deleteAllHomeDataForUser(userId, { email = null } = {}) {
 		await sql`delete from home_invites where lower(email) = lower(${email})`;
 	}
 
+	// A confirmation this user MINTED on another household's home cascades with
+	// their account (user_id references users on delete cascade). One they
+	// REDEEMED does not: redeemed_by is set null, which keeps the household's
+	// record of "somebody approved this" while removing the pointer to who.
+	// That is the same trade the action log makes below, and it is deliberate.
+
 	// The action log's actor columns carry no foreign key (an actor can be an
 	// agent with no account), so nothing removes a departed user's id from
 	// another household's log. Scrub rather than delete: the household that owns
@@ -451,12 +499,13 @@ export async function deleteAllHomeDataForUser(userId, { email = null } = {}) {
  * @returns {Promise<Record<string, number>>}
  */
 export async function countHomeRows(homeId) {
-	const [conn, members, invites, grants, actions, audit] = await Promise.all([
-		sql`select count(*)::int as n from home_connections  where id = ${homeId}`,
-		sql`select count(*)::int as n from home_members      where home_id = ${homeId}`,
-		sql`select count(*)::int as n from home_invites      where home_id = ${homeId}`,
+	const [conn, members, invites, grants, actions, confirmations, audit] = await Promise.all([
+		sql`select count(*)::int as n from home_connections   where id = ${homeId}`,
+		sql`select count(*)::int as n from home_members       where home_id = ${homeId}`,
+		sql`select count(*)::int as n from home_invites       where home_id = ${homeId}`,
 		sql`select count(*)::int as n from home_entity_grants where home_id = ${homeId}`,
-		sql`select count(*)::int as n from home_action_log   where home_id = ${homeId}`,
+		sql`select count(*)::int as n from home_action_log    where home_id = ${homeId}`,
+		sql`select count(*)::int as n from home_confirmations where home_id = ${homeId}`,
 		sql`select count(*)::int as n from audit_log where resource_id = ${homeId} and action like 'home\\_%'`,
 	]);
 	return {
@@ -465,6 +514,7 @@ export async function countHomeRows(homeId) {
 		home_invites: invites[0].n,
 		home_entity_grants: grants[0].n,
 		home_action_log: actions[0].n,
+		home_confirmations: confirmations[0].n,
 		audit_log: audit[0].n,
 	};
 }
@@ -477,7 +527,7 @@ export async function countHomeRows(homeId) {
  * @returns {Promise<Record<string, number>>}
  */
 export async function countUserRows(userId, email = null) {
-	const [conn, members, invites, invitesToEmail, grants, actorRows, confirmRows, audit] =
+	const [conn, members, invites, invitesToEmail, grants, actorRows, confirmRows, confirmations, audit] =
 		await Promise.all([
 			sql`select count(*)::int as n from home_connections where user_id = ${userId}`,
 			sql`select count(*)::int as n from home_members where user_id = ${userId}`,
@@ -488,6 +538,7 @@ export async function countUserRows(userId, email = null) {
 			sql`select count(*)::int as n from home_entity_grants where granted_by = ${userId}`,
 			sql`select count(*)::int as n from home_action_log where user_id = ${userId}`,
 			sql`select count(*)::int as n from home_action_log where confirmed_by = ${userId}`,
+			sql`select count(*)::int as n from home_confirmations where user_id = ${userId} or redeemed_by = ${userId}`,
 			sql`select count(*)::int as n from audit_log where action like 'home\\_%' and user_id = ${userId}`,
 		]);
 	return {
@@ -498,6 +549,7 @@ export async function countUserRows(userId, email = null) {
 		home_entity_grants: grants[0].n,
 		home_action_log_actor: actorRows[0].n,
 		home_action_log_confirmed_by: confirmRows[0].n,
+		home_confirmations: confirmations[0].n,
 		audit_log: audit[0].n,
 	};
 }
