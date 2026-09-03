@@ -2028,6 +2028,21 @@ export const limits = {
 	// up, which is exactly the bypass that makes an RPC cap meaningless.
 	printOrderIp: (ip) =>
 		getLimiter('print:order:ip', { limit: 60, window: '5 m' }).limit(ip),
+	// Household invitations (api/home/[id]/members.js). An invite link is a bearer
+	// credential for a role in a physical building, so the ceiling is deliberately
+	// low: 20 per hour per account is more households than anyone administers and
+	// far too few for a compromised session to spray keys with. Keyed on the
+	// account, not the IP, because the account is what the capability hangs off.
+	// NOT local: a per-instance counter would multiply the ceiling by however many
+	// Cloud Run instances are up, which is exactly the bypass that matters here.
+	homeInvite: (userId) =>
+		getLimiter('home:invite:user', { limit: 20, window: '1 h' }).limit(userId),
+	// Redeeming a household invitation (api/home/invites/[token].js). The token is
+	// 256 bits of randomness, so this is not what stops a guess; it is what makes
+	// "guessing is not feasible" a bounded statement rather than a hopeful one, and
+	// what stops an enumeration sweep from costing us a database round trip each.
+	homeInviteRedeem: (ip) =>
+		getLimiter('home:invite:redeem:ip', { limit: 30, window: '10 m' }).limit(ip),
 };
 
 // ── Fail-closed limiter call for privacy-boundary reads (H7) ─────────────────

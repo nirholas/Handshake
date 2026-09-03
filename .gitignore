@@ -538,6 +538,9 @@ download.zip
 # Same thing at fleet scale: scripts/home-fleet.mjs boots numbered Home Assistant
 # instances under .home-fleet/<n>/, each with its own token store.
 .home-fleet/
+# The fleet registry that pairs those instances with their long-lived access
+# tokens. Local state about local containers; the tokens make it uncommittable.
+tasks/home/*.local.json
 
 # Browser voice-loop runtime staged from node_modules by scripts/copy-voice-models.mjs
 # (silero VAD + the onnxruntime-web wasm). Regenerated on every install and

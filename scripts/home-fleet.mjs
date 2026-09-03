@@ -57,6 +57,20 @@ function run(cmd, args, { capture = true } = {}) {
 const docker = (...args) => run('docker', args);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * Home Assistant runs as root inside the container and writes root-owned files
+ * into the bind-mounted config directory (blueprints, .storage, the database),
+ * so the host user cannot unlink them. Deleting them therefore has to happen as
+ * root too, and the cheapest root on this machine is the image we already have.
+ */
+async function removeAsRoot(target) {
+	const parent = path.dirname(target);
+	const leaf = path.basename(target);
+	await mkdir(parent, { recursive: true });
+	await docker('run', '--rm', '-v', `${parent}:/scrub`, '--entrypoint', 'rm', IMAGE, '-rf', `/scrub/${leaf}`).catch(() => null);
+	await rm(target, { recursive: true, force: true }).catch(() => null);
+}
+
 // ---------------------------------------------------------------- configuration
 
 /**
@@ -267,7 +281,7 @@ async function seedRegistry(send) {
 }
 
 async function mintLongLivedToken(send, clientName) {
-	return send({ type: 'auth/long_lived_access_token', client_name: clientName, client_icon: null, lifespan: 3650 });
+	return send({ type: 'auth/long_lived_access_token', client_name: clientName, lifespan: 3650 });
 }
 
 // ---------------------------------------------------------------- latency shim
@@ -320,7 +334,7 @@ async function startHouse({ index, big }) {
 	const configDir = path.join(CONFIG_ROOT, String(index));
 
 	await docker('rm', '-f', name).catch(() => null);
-	await rm(configDir, { recursive: true, force: true });
+	await removeAsRoot(configDir);
 	await mkdir(configDir, { recursive: true });
 	await writeFile(path.join(configDir, 'configuration.yaml'), configurationYaml({ big }));
 	await writeFile(path.join(configDir, 'automations.yaml'), '[]\n');
@@ -408,7 +422,7 @@ async function down() {
 		await docker('rm', '-f', name).catch(() => null);
 		console.log(`  removed ${name}`);
 	}
-	await rm(CONFIG_ROOT, { recursive: true, force: true });
+	await removeAsRoot(CONFIG_ROOT);
 	await rm(MANIFEST, { force: true });
 	console.log(containers.length ? `\n${containers.length} container(s) removed` : 'nothing running');
 }
