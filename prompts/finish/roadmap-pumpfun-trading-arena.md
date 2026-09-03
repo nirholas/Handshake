@@ -1,7 +1,34 @@
 # The Pump.fun Trading Arena — Master Plan
 
-**Status:** Strategy / roadmap. Owner-facing. Last updated 2026-06-15.
+**Status:** Strategy / roadmap. Owner-facing. Last updated 2026-09-03.
 **Scope:** ONLY pump.fun trading, deploying, agent monetization, and copy-trading. Nothing else.
+
+> **Build status (verified 2026-09-03).** Phases 0 to 6 are shipped, on surfaces that
+> settled on different names than this plan proposed: the Arena front door is
+> [/play/arena](https://three.ws/play/arena) (the tournament surface took `/arena`), the proof page is
+> `/trader/:id`, strategy authoring is `/strategy-lab` plus `POST /api/sniper/compile`,
+> and the copy loop runs as two engines (custodial `/mirror`, non-custodial
+> `/dashboard/copy`) over `copy_subscriptions` / `copy_executions` rather than the
+> `agent_copy_followers` schema sketched in section 8. Prompts A, B, C, E and F all
+> have shipped equivalents (`workers/agent-sniper/llm-judge.js`,
+> `workers/agent-sniper/journal.js` plus `/clip-director`, `api/_lib/strategy-compiler.js`,
+> the pump launcher, and `api/_lib/meta-allocator.js`).
+>
+> Section 4's anti-gaming layer was the last real gap and closed on 2026-09-03
+> (`api/_lib/copy-eligibility.js`): the copyable-status sybil bar (4.4), the follower
+> drawdown circuit breaker (4.5), and self-copy / self-follow exclusion (4.6).
+> Section 9's named blocker, AMM exits on graduated positions, is done
+> (`workers/agent-sniper/amm-exit.js`).
+>
+> **One item remains: Prompt D, the adversarial Risk Officer** (section 6). The
+> executor enforces several real pre-trade gates today (Mayhem exclusion, the oracle
+> gate, the token-intel gate, market-realness, the trade firewall's buy/sell
+> round-trip, budgets and concurrency), but none of them is the independent
+> second-opinion LLM veto with a `size_adjustment` that this section specifies.
+> It is deliberately unbuilt: it would change what the live fleet buys with real
+> funds, so arming it is an owner call under stop-and-ask gate 1, not a
+> session-end addition. **Owner: owner decision to arm.** Everything else in this
+> plan is live.
 **The only coin this platform promotes is `$THREE` (`FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump`).** Pump.fun coins traded/launched through the platform are user runtime data, never endorsements.
 
 ---

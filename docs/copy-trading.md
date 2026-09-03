@@ -255,7 +255,38 @@ curl -s -X POST 'https://three.ws/api/copy/subscriptions' \
   }'
 ```
 
-Validated by `normalizeSubscriptionInput` in `api/_lib/copy-engine.js`. `per_trade_cap_sol` and `daily_budget_sol` are both mandatory and must be greater than 0, `min_order_sol` cannot exceed the cap, `pct_balance` must be within 0 to 100, `min_oracle_score` within 0 to 100, and `perf_fee_bps` within 0 to 3000 (30 percent). `max_open_copies` defaults to 5 and is clamped to 1 to 100. `copy_sells` defaults to true, `require_safety_pass` defaults to false. `telegram_chat_id`, if set, must be a numeric Telegram chat id and turns on push alerts for new intents. Only public leaders can be copied. We store your wallet address and your rules, never a key.
+Validated by `normalizeSubscriptionInput` in `api/_lib/copy-engine.js`. `per_trade_cap_sol` and `daily_budget_sol` are both mandatory and must be greater than 0, `min_order_sol` cannot exceed the cap, `pct_balance` must be within 0 to 100, `min_oracle_score` within 0 to 100, `max_drawdown_pct` within 0 to 100 (or null), and `perf_fee_bps` within 0 to 3000 (30 percent). `max_open_copies` defaults to 5 and is clamped to 1 to 100. `copy_sells` defaults to true, `require_safety_pass` defaults to false. `telegram_chat_id`, if set, must be a numeric Telegram chat id and turns on push alerts for new intents. We store your wallet address and your rules, never a key.
+
+### Who you are allowed to copy
+
+Two gates run before a subscription is written, both in `api/_lib/copy-eligibility.js`. Neither is a taste filter: they exist because a copy-trading board is worthless the moment a track record can be manufactured or a fee can be paid to yourself.
+
+**You cannot copy an agent you own.** A self-copy routes the performance fee back to its own owner while inflating that leader's public copier count, copied volume, and the "earned X for being copied" figure the leaderboard shows as social proof. The endpoint answers `403 self_copy`, and `api/cron/copy-fanout.js` skips any such row again at fan-out time so a subscription predating this rule cannot keep firing. The custodial mirror has always refused the equivalent (an agent may not mirror itself, and may not close a follow loop).
+
+**A leader needs a real, closed, on-chain record.** Measured only on closed round-trips on the network you are copying, so open positions and simulated fills count for nothing:
+
+| Requirement | Floor | Why |
+| --- | --- | --- |
+| Closed round-trips | 5 | A leader with no settled trades has no record to judge |
+| Hours between first and last close | 24 | Blocks a curve minted in a single burst |
+| Gross SOL deployed across those closes | 0.1 | Blocks a record built out of dust trades |
+
+Falling short returns `409 leader_not_copyable` with an `eligibility.unmet` array naming each criterion, what it needs, and what the leader has, so the copy panel renders a checklist instead of a dead end. A leader clears this by trading; a *losing* leader with a real record is copyable, because this asks whether the record is real, never whether it is good.
+
+Self-follow edges are also excluded from the public follower counts that `api/mirror/leaderboard.js`, `api/_lib/mirror-stats.js`, and the Meta-Allocator read. Mirroring between two agents you own is a legitimate strategy and still works; it just no longer buys up to 20 points of leaderboard score.
+
+### The drawdown circuit breaker
+
+`max_drawdown_pct` is the one guard that acts while you are already copying. The other caps bound a single order or a single day; this one answers "how far down do I ride this leader?".
+
+It is measured as the leader's worst peak-to-trough loss on their realized equity curve, as a share of the capital they actually deployed. That is the same definition the [Meta-Allocator](https://three.ws/meta-allocator) ranks on and the Trader Card shows, so the number you set a limit against is the number you were looking at.
+
+`api/cron/copy-fanout.js` evaluates it once per leader per tick, before any sizing. On a breach the subscription flips to `status = 'paused'` with `paused_reason = 'leader_drawdown_breach'` and `paused_at` recorded, a Telegram alert goes out if you configured one, and nothing further is copied. Two deliberate details:
+
+- **Exits still come through.** Only buys are frozen. You are already in the positions this leader is closing, and withholding the sell intent would strand you in the exact leader the breaker just fired on. A `stopped` subscription (your own hard exit) is the only state that stops mirroring exits.
+- **Resuming while still breached is refused.** `POST { id, status: 'active' }` on an auto-paused subscription re-checks the leader and answers `409 drawdown_still_breached` with the current and limit percentages, rather than un-pausing a row the next tick would immediately re-pause. Raise the limit, or clear it, and the same edit reactivates the subscription.
+
+Leave `max_drawdown_pct` null to opt out; that is the behavior every subscription had before this guard existed. A limit of 0 or less is treated as opted out, never as "pause before the first losing trade".
 
 ### How intents are recorded
 
