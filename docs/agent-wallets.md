@@ -88,3 +88,12 @@ An agent can pay a human-readable name instead of a base58 address. `/api/x402/p
 - [What agents can do](agent-abilities.md) — the complete dossier, including a page per wallet ability
 - [x402 protocol](x402.md) — how agents pay for services
 - [Coin launches](coin-launches.md) — how the wallet signs a pump.fun launch
+
+---
+
+## Runnable example
+
+[`examples/metamask-agent-wallet/`](https://github.com/nirholas/three.ws/tree/main/examples/metamask-agent-wallet) A localhost bridge plus a single page that gives an agent a real server-side wallet through the authenticated MetaMask Agentic CLI.
+
+It is part of the curated set `npm run export:satellites` publishes as the public
+three.ws examples repo, so it is installed, run, and link-checked before every release.

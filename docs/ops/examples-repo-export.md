@@ -141,12 +141,30 @@ plain directory; the owner turns it into a repo.
 5. **Never pull, fetch, or merge from the satellite.** To update it later,
    re-run the export and repeat steps 2 to 4. The satellite is output, never input.
 
-## Cross-linking (rolling, after the repo exists)
+## Cross-linking
 
-- three.ws docs pages link to the matching example folder; the examples README
-  already links back to `https://three.ws/docs` and the live platform.
-- `public/llms.txt` / `llms-full.txt` reference the examples repo.
-- The org profile README pins `examples` and the monorepo.
-- Ship a `data/changelog.json` entry when the repo goes public (this is a
-  user-visible developer resource). The export script itself is internal
-  tooling and gets no changelog entry.
+The cross-links are wired and live today, pointed at the curated source in this
+monorepo (`examples/` and the SDK directories), because the satellite repo does
+not exist yet and shipping a link to a 404 is worse than shipping no link.
+
+Already in place:
+
+- **Eight docs pages carry a `## Runnable example` section** linking to the folder
+  that backs them: `docs/sdk.md`, `docs/mcp.md`, `docs/embedding.md`,
+  `docs/authentication.md`, `docs/create-agent.md`, `docs/solana.md`,
+  `docs/a2a-payments.md`, `docs/agent-wallets.md`.
+- **`public/llms.txt` and `public/llms-full.txt` carry an examples pointer**, emitted
+  by `scripts/build-page-index.mjs` from a single constant, `site.examples` in
+  `data/pages.json`. Nothing else hardcodes that URL.
+- **The exported root README links back** to `https://three.ws/docs`, the changelog,
+  and the live platform, and states that the monorepo is the source of truth.
+
+When the repo goes public, flip it in this order:
+
+1. Set `site.examples` in `data/pages.json` to `https://github.com/three-ws/examples`
+   and run `node scripts/build-page-index.mjs`. That moves both llms feeds at once.
+2. Repoint the eight `## Runnable example` links at the satellite paths
+   (`quickstarts/`, `tutorials/`, `embeds/`, `agents/`).
+3. Pin `examples` and the monorepo on the org profile README.
+4. Add the `data/changelog.json` entry: the repo is a user-visible developer
+   resource. The export script itself is internal tooling and gets no entry.

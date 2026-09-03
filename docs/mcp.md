@@ -938,3 +938,12 @@ Contributors: `npm run audit:mcp-safety` enforces this. It parses each tool's ha
 - [3D Studio MCP (free)](/docs/mcp-studio): the no-auth, no-payment 3D generation server
 - [Spatial MCP](/docs/spatial-mcp): returning live 3D scenes as native MCP responses
 - [x402](/docs/x402): the USDC micropayment rail behind the paid tools
+
+---
+
+## Runnable example
+
+[`examples/agent-native-3d/`](https://github.com/nirholas/three.ws/tree/main/examples/agent-native-3d) A Node script that drives the free MCP server end to end: generate a mesh, rig it, save it as a persona, speak through it, and emit every embed snippet.
+
+It is part of the curated set `npm run export:satellites` publishes as the public
+three.ws examples repo, so it is installed, run, and link-checked before every release.

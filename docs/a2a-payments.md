@@ -198,3 +198,12 @@ every autonomous category while the owner's withdraw stays open, and that the
 receipts come back from the live owner surfaces. No funds move: every spend stops
 at the reservation layer, which is the same layer that runs before any key is
 touched in production. It needs `docker` and ports 5817, 5818 and 3817.
+
+---
+
+## Runnable example
+
+[`agent-payments-sdk/`](https://github.com/nirholas/three.ws/tree/main/agent-payments-sdk) The `@three-ws/agent-payments` package: agent-to-agent payments over x402 and a2a, with its quickstart in the README.
+
+It is part of the curated set `npm run export:satellites` publishes as the public
+three.ws examples repo, so it is installed, run, and link-checked before every release.

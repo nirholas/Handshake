@@ -737,3 +737,12 @@ The platform records anonymous embed impressions (country, referrer hostname) vi
 - [Widgets](widgets.md) — Widget Studio and widget types
 - [specs/EMBED_SPEC.md](../specs/EMBED_SPEC.md) — authoritative web component spec
 - [specs/EMBED_HOST_PROTOCOL.md](../specs/EMBED_HOST_PROTOCOL.md) — versioned postMessage protocol
+
+---
+
+## Runnable example
+
+[`examples/`](https://github.com/nirholas/three.ws/tree/main/examples) Nine single-file HTML embeds, each one openable straight in a browser with no build step: the bare avatar, the one-line demo, two agents in one scene, and the widget RPC bridge.
+
+It is part of the curated set `npm run export:satellites` publishes as the public
+three.ws examples repo, so it is installed, run, and link-checked before every release.

@@ -5,6 +5,7 @@ three.ws is the AI-agent layer for the open web: build, embed, monetize, and tra
 Canonical site: https://three.ws
 Tagline: Give your AI a body.
 Source code: https://github.com/nirholas/three.ws
+Runnable examples: https://github.com/nirholas/three.ws/tree/main/examples
 Contact / social: https://x.com/trythreews
 
 This file is generated from data/pages.json. It lists every public surface on the site, grouped by section, so AI agents and crawlers can navigate without scraping the home page.

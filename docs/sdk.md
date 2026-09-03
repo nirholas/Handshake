@@ -433,3 +433,12 @@ python3 -m http.server 8080
 - [JavaScript API](/docs/js-api): viewer, validator, and component internals
 - [REST API Reference](/docs/api-reference): the HTTP surface the SDK talks to
 - [x402](/docs/x402): the payment packages listed above
+
+---
+
+## Runnable example
+
+[`sdk/example/`](https://github.com/nirholas/three.ws/tree/main/sdk/example) A browser demo that installs `@three-ws/sdk` from npm and mounts an agent with the code on this page.
+
+It is part of the curated set `npm run export:satellites` publishes as the public
+three.ws examples repo, so it is installed, run, and link-checked before every release.

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-03T04:48:32.387Z",
+	"generated_at": "2026-09-03T07:27:18.798Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,16 @@
 			"title": "Docs · Connect a home that is only on your network",
 			"summary": "Most Home Assistant installs cannot be reached from the internet, so the house dials three.ws instead: install one HACS integration, paste a ten-minute pairing code, and nothing listens on your network, no port is forwarded, and three.ws never receives a Home Assistant token. Includes the operator half: the relay service, its configuration and deploy, how the allowlist is changed, and how to prove the whole path against a real house on a network the server cannot route to.",
 			"link": "/docs/home-relay",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "launch",
+			"title": "Docs · Give your voice assistant a face",
+			"summary": "Point an existing Home Assistant voice pipeline at a three.ws agent and it gains a face: the setup in four steps, exactly what crosses your network and what never does, the eleven states the display can be in, and the rule the whole thing is built around, that closing the page never stops your voice assistant working.",
+			"link": "/docs/home-satellite",
 			"tags": [
 				"launch"
 			]
@@ -180,6 +190,16 @@
 		{
 			"date": "2026-09-03",
 			"type": "update",
+			"title": "Agent avatars on the Pay page load instead of 404ing",
+			"summary": "Every agent card on the x402 Pay page asked for its owner's avatar picture at a URL that has never existed on this site, so the picture always 404'd and the card fell back to a plain letter tile. The page now uses the real thumbnail the rest of three.ws uses, so an agent with a public avatar shows its face on the card, and an agent whose avatar is private still gets the letter tile without a wasted failed request.",
+			"link": "/pay",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
 			"title": "Any assistant can now run your house, and it still will not open your door",
 			"summary": "There is a new way to connect your home that needs no three.ws account and no remote web address at all: install @three-ws/home-mcp in Claude, Cursor, or anything else that speaks Model Context Protocol, give it your Home Assistant address and a token, and it reads your rooms, runs the scenes you already built, and calls services. Because it runs on your own machine, your ordinary home network address works and nothing about your house leaves the building. The safety rule is the same one the rest of the platform uses, applied honestly to this setup: locking up, closing the garage and arming the alarm run straight away and never ask. Unlocking, opening a door and disarming are refused outright, every time, because saying yes to opening a building takes a person and this kind of connection has no person in it to ask. If you genuinely want one specific door handled without asking, you name that exact door yourself when you start it, by hand, and nothing your assistant can do will widen that to any other door. We proved it against a real Home Assistant rather than a stand-in: the front door was told to unlock seven different ways, including with a fake confirmation smuggled into the request, and it stayed locked every time. Alongside it there is now a full walkthrough from nothing to a working agent in a real house, covering what to do when it says your home is unreachable, and what a guest in your household can and cannot do.",
 			"link": "/smart-home",
@@ -229,6 +249,17 @@
 			"link": "/shopper",
 			"tags": [
 				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Every SDK doc now points at code you can actually run",
+			"summary": "Eight developer docs pages described a capability without ever showing you a working project that uses it, so finding the runnable version meant guessing at folder names on GitHub. The SDK, MCP, embedding, authentication, create-an-agent, Solana, agent-payments and agent-wallets pages now each end with a Runnable example section linking straight to the project that backs them: a browser demo, a Node script that drives the free MCP server end to end, nine single-file HTML embeds you can open with no build step, the full wallet sign-in round trip, and a complete agent defined entirely as files. The machine-readable index that AI agents read to navigate the site now carries the examples location too, so an agent asked to build against three.ws can fetch working code instead of inferring it from prose. Every one of those examples is installed, run and link-checked before release, so a link on a docs page never points at something broken.",
+			"link": "/docs/sdk",
+			"tags": [
+				"docs",
 				"improvement"
 			]
 		},
@@ -289,6 +320,17 @@
 		{
 			"date": "2026-09-03",
 			"type": "update",
+			"title": "Search keeps its filters honest, and says so when it cannot answer",
+			"summary": "Sharing a filtered search link now works the way it looks: open /search?type=agent and the Agents filter is the one highlighted, instead of the row claiming All while the results were already narrowed. After a search runs, the types that turned up nothing for that query fade back, so you can see at a glance where the matches actually are. When the search index itself is unreachable the page now says it is warming up and offers a retry plus the browse galleries, rather than telling you nothing matched, which was never true. A failed search says what went wrong and gives you the same retry and browse links. Pressing Enter runs the query immediately without waiting for the pause-and-search delay, and Escape clears it. Result cards lost their duplicate untitled thumbnail link, creators without a public profile read as plain names instead of links that went nowhere, the search box and the remix instruction field are properly labelled for screen readers, and every focusable control on the page now shows a visible focus ring.",
+			"link": "/search",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
 			"title": "See what your connected homes use, before a limit ever stops you",
 			"summary": "Your smart home plan now has a page. It shows every allowance whether or not you are near it: how many homes you have connected, how many people are in each household, how many live screens, how many voice minutes and agent turns you have used this month, and the exact date each one resets. Two things a plan can never do are written on the page itself, because they matter more than any number on it. Locking a door, closing a garage or a water valve and arming an alarm are never refused by a limit, on any plan, in any state, including on a home your plan has paused. And confirmation prompts, your action log and every safety property of household roles are on every plan, free included: safety is not an upgrade. If a plan change ever leaves you with more homes than it covers, nothing is disconnected and nothing is deleted. The extra homes are paused, with their access tokens and their whole history untouched, and you pick which ones are live from the same page.",
 			"link": "/smart-home/plan",
@@ -329,6 +371,17 @@
 			"tags": [
 				"feature",
 				"security"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "The payments feed now tells you which volume is ours and which is real demand",
+			"summary": "three.ws runs a closed loop where platform wallets pay platform endpoints on a schedule, to keep the payment rails warm and provably live. That traffic is real money on a real chain, and it is the overwhelming majority of settled volume, so anyone reading the raw total was reading our own money back to us. The x402 volume report on the paid analytics endpoint now carries a revenue split alongside the totals: how many calls and how much USDC came from outside wallets, how much is the internal loop, and how much is test traffic that was never money at all. A new command, npm run readout:revenue, prints the same breakdown for any window and refuses to print an external figure when it cannot tell our wallets apart from anyone else's, rather than quietly reporting a flattering one. One classifier backs both, so the API and the command can never disagree.",
+			"link": "/docs/autonomous-x402",
+			"tags": [
+				"improvement",
+				"infra"
 			]
 		},
 		{
@@ -437,6 +490,16 @@
 			"link": "/docs/smart-home",
 			"tags": [
 				"docs"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Your Home Assistant voice assistant can have a face now",
+			"summary": "If you already run Home Assistant with a voice pipeline, it hears you, understands you, turns on the lights and answers, and the whole visual side of that is an LED ring. You can now point that same pipeline at a three.ws agent and get a face on any screen in the house: it reacts while you speak, the transcript fills in as your own speech recognition produces it, and it lip-syncs the answer to the audio your own text-to-speech generated. Home Assistant keeps every part of the pipeline, running on your own hardware exactly as it does today. Setup is a pairing code, one Docker command, and adding it in Home Assistant as a Wyoming Protocol integration. Nothing needs to be exposed to the internet: Home Assistant connects out to the satellite on your own network, the satellite connects out to us, and there is no port to forward. The rule the whole thing is built around is that closing the page never stops your voice assistant working, so the run finishes, the lights still change, and the only thing you lose is the face.",
+			"link": "/smart-home/satellite",
+			"tags": [
+				"feature"
 			]
 		},
 		{

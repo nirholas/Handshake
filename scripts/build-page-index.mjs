@@ -148,6 +148,7 @@ function buildLlmsTxt() {
 	lines.push(`Tagline: ${site.tagline}`);
 	lines.push(`Site: ${baseUrl}`);
 	if (site.github) lines.push(`Source: ${site.github}`);
+	if (site.examples) lines.push(`Examples: ${site.examples}`);
 	if (site.contact) lines.push(`Contact: ${site.contact}`);
 	lines.push('');
 	// The machine-readable section leads, and skips the `indexable` filter its
@@ -193,6 +194,7 @@ function buildLlmsFull() {
 	lines.push(`Canonical site: ${baseUrl}`);
 	lines.push(`Tagline: ${site.tagline}`);
 	if (site.github) lines.push(`Source code: ${site.github}`);
+	if (site.examples) lines.push(`Runnable examples: ${site.examples}`);
 	if (site.contact) lines.push(`Contact / social: ${site.contact}`);
 	lines.push('');
 	lines.push('This file is generated from data/pages.json. It lists every public surface on the site, grouped by section, so AI agents and crawlers can navigate without scraping the home page.');

@@ -5,6 +5,7 @@
 Tagline: Give your AI a body.
 Site: https://three.ws
 Source: https://github.com/nirholas/three.ws
+Examples: https://github.com/nirholas/three.ws/tree/main/examples
 Contact: https://x.com/trythreews
 
 ## For AI agents

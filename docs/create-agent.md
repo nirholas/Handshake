@@ -124,3 +124,12 @@ Full reference: [packages/create-agent/README.md](https://github.com/nirholas/th
 - **Give it a brain and a voice.** [three.ws/create](https://three.ws/create) takes the same model and adds a personality, memory, and speech.
 - **Show what it is doing.** [Glance](glance.md) puts the agent's live status on a home screen, in a README, or in Slack.
 - **Let other agents hire it.** [three.ws/marketplace](https://three.ws/marketplace).
+
+---
+
+## Runnable example
+
+[`examples/coach-leo/`](https://github.com/nirholas/three.ws/tree/main/examples/coach-leo) The smallest complete agent defined entirely as files: a manifest, a system prompt, and one installed skill. Copy it as the template for your own.
+
+It is part of the curated set `npm run export:satellites` publishes as the public
+three.ws examples repo, so it is installed, run, and link-checked before every release.

@@ -175,7 +175,14 @@ function routeRef(ref, fromRel, toRel) {
 	if (doc) return `${HOST}/${target.startsWith('docs/tutorials/') ? 'tutorials' : 'docs'}/${doc[1]}`;
 
 	// Everything else in the monorepo: a permalink a reader can actually open.
-	const isDir = existsSync(join(REPO, target)) && statSync(join(REPO, target)).isDirectory();
+	// "Can actually open" is the whole point, so the target has to exist. A
+	// reference to a file that is not in the monorepo either is dead: minting a
+	// permalink for it would launder a broken reference into a plausible GitHub
+	// URL that 404s, and the structure stage would then see no relative path left
+	// to complain about. Returning null instead leaves the original reference in
+	// place so that stage flags it and aborts the export.
+	if (!existsSync(join(REPO, target))) return null;
+	const isDir = statSync(join(REPO, target)).isDirectory();
 	return `${MONOREPO_URL}/${isDir ? 'tree' : 'blob'}/main/${target}`;
 }
 
@@ -278,14 +285,14 @@ function listFiles(dir, acc = []) {
 // public agent with a dangling skill uri is broken for the reader who tries it.
 // ---------------------------------------------------------------------------
 const AGENTS = [
-	{ dir: 'coach-leo', title: 'Coach Leo', shows: 'A full character agent: system prompt, manifest, and skill wiring.', run: 'Load into the three.ws agent builder (instructions.md + manifest.json).', docs: `${HOST}/docs/agents` },
-	{ dir: 'metamask-agent-wallet', title: 'MetaMask agent wallet', shows: 'A wallet-connected agent: a localhost bridge exposing the MetaMask Agentic CLI to a demo page.', run: 'node server.mjs, then open index.html at http://localhost:4280', docs: `${HOST}/docs/wallet` },
+	{ dir: 'coach-leo', title: 'Coach Leo', shows: 'A full character agent: system prompt, manifest, and skill wiring.', run: 'Load into the three.ws agent builder (instructions.md + manifest.json).', docs: `${HOST}/docs/create-agent` },
+	{ dir: 'metamask-agent-wallet', title: 'MetaMask agent wallet', shows: 'A wallet-connected agent: a localhost bridge exposing the MetaMask Agentic CLI to a demo page.', run: 'node server.mjs, then open index.html at http://localhost:4280', docs: `${HOST}/docs/agent-wallets` },
 ];
 
 const QUICKSTARTS = [
 	{ slug: 'sdk', pkg: '@three-ws/sdk', readme: 'sdk/README.md', section: /^## Quick start/m, exampleDir: 'sdk/example', blurb: 'The core three.ws SDK: build an agent, embed a 3D avatar, register on-chain.', docs: `${HOST}/docs/sdk` },
-	{ slug: 'solana-agent-sdk', pkg: '@three-ws/solana-agent', readme: 'solana-agent-sdk/README.md', section: /^## Quick start/m, blurb: 'Solana-native agent actions, wallet providers, and x402 exact payments.', docs: `${HOST}/docs/solana-agent-sdk` },
-	{ slug: 'agent-payments-sdk', pkg: '@three-ws/agent-payments', readme: 'agent-payments-sdk/README.md', section: /^## Quick start/m, blurb: 'Agent-to-agent payments over x402 and a2a on Solana and EVM.', docs: `${HOST}/docs/agent-payments` },
+	{ slug: 'solana-agent-sdk', pkg: '@three-ws/solana-agent', readme: 'solana-agent-sdk/README.md', section: /^## Quick start/m, blurb: 'Solana-native agent actions, wallet providers, and x402 exact payments.', docs: `${HOST}/docs/solana` },
+	{ slug: 'agent-payments-sdk', pkg: '@three-ws/agent-payments', readme: 'agent-payments-sdk/README.md', section: /^## Quick start/m, blurb: 'Agent-to-agent payments over x402 and a2a on Solana and EVM.', docs: `${HOST}/docs/a2a-payments` },
 	{ slug: 'mcp-server', pkg: '@three-ws/mcp-server', readme: 'mcp-server/README.md', section: /^## Quickstart \(30 seconds\)/m, blurb: 'The three.ws MCP server: 3D generation, Solana, markets, and agent tools in Claude/Cursor.', docs: `${HOST}/docs/mcp` },
 ];
 

@@ -674,3 +674,12 @@ Password hashing cost is configurable via `PASSWORD_ROUNDS` (default: `11` bcryp
 - [ERC-8004 identity](/docs/erc8004): what a connected wallet unlocks on-chain
 - [Embedding guide](/docs/embedding): embeds work unauthenticated; auth is only for editing and publishing
 - [Architecture overview](/docs/architecture): where sessions and the API server fit
+
+---
+
+## Runnable example
+
+[`examples/wallet-sign-in/`](https://github.com/nirholas/three.ws/tree/main/examples/wallet-sign-in) The complete Sign-In with Solana and Sign-In with Ethereum round trips, run against the live auth API.
+
+It is part of the curated set `npm run export:satellites` publishes as the public
+three.ws examples repo, so it is installed, run, and link-checked before every release.

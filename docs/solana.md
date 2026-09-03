@@ -271,3 +271,12 @@ A full ERC-8004-equivalent on Solana (Identity / Reputation / Validation as Anch
 - [Agent Reputation on Solana](/docs/solana-reputation): how attestations become a trust grade
 - [SAS Credentialed Attestations](/docs/sas-attestations): authority-signed credentials
 - [ERC-8004](/docs/erc8004): the EVM identity path this flow mirrors
+
+---
+
+## Runnable example
+
+[`solana-agent-sdk/`](https://github.com/nirholas/three.ws/tree/main/solana-agent-sdk) The `@three-ws/solana-agent` package: Solana-native agent actions, wallet providers, and x402 exact payments, with its quickstart in the README.
+
+It is part of the curated set `npm run export:satellites` publishes as the public
+three.ws examples repo, so it is installed, run, and link-checked before every release.
