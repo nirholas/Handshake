@@ -1,4 +1,5 @@
 // GET /api/coin/markets?page=1&per_page=100     → ranked market table rows
+// GET /api/coin/markets?…&sparkline=0            → same rows without 7d series
 // GET /api/coin/markets?q=<text>                → coin search (id/name/symbol)
 // GET /api/coin/markets?category=<slug>&…       → table rows for one category
 // ---------------------------------------------------------------------------
@@ -49,7 +50,10 @@ export default wrap(async (req, res) => {
 		}
 
 		const page = Math.min(Math.max(1, parseInt(params.get('page') || '1', 10) || 1), 20);
-		const perPage = Math.min(Math.max(10, parseInt(params.get('per_page') || '100', 10) || 100), 250);
+		const perPage = Math.min(
+			Math.max(10, parseInt(params.get('per_page') || '100', 10) || 100),
+			250,
+		);
 		// Optional CoinGecko category id (e.g. layer-1, artificial-intelligence) —
 		// scopes the table to one sector for the /category/:id coins list.
 		const category = (params.get('category') || '').trim().toLowerCase();
@@ -62,7 +66,16 @@ export default wrap(async (req, res) => {
 		// gracefully). Category scoping has no second live source, so it falls back
 		// to the last-known-good rows for that category and reports `stale` so the
 		// page can say so rather than showing an empty table.
-		const { rows, stale, asOf } = await fetchMarketsTable({ page, perPage, category });
+		// sparkline=0 drops the 7d price series from every row. /coins renders that
+		// series as a chart column and keeps the default; /screener renders no
+		// chart and opts out, cutting a 250-row response from ~215KB to ~70KB.
+		const sparkline = !/^(0|false)$/i.test(params.get('sparkline') || '');
+		const { rows, stale, asOf } = await fetchMarketsTable({
+			page,
+			perPage,
+			category,
+			sparkline,
+		});
 		return json(
 			res,
 			200,
@@ -71,7 +84,9 @@ export default wrap(async (req, res) => {
 				page,
 				per_page: perPage,
 				category: category || null,
-				...(stale ? { stale: true, as_of: asOf ? new Date(asOf).toISOString() : null } : {}),
+				...(stale
+					? { stale: true, as_of: asOf ? new Date(asOf).toISOString() : null }
+					: {}),
 			},
 			{
 				// Stale rows are served briefly and revalidated hard: the moment the
@@ -82,6 +97,11 @@ export default wrap(async (req, res) => {
 			},
 		);
 	} catch {
-		return error(res, 502, 'upstream_error', 'market data is unavailable right now — retry shortly');
+		return error(
+			res,
+			502,
+			'upstream_error',
+			'market data is unavailable right now — retry shortly',
+		);
 	}
 });

@@ -4,7 +4,14 @@
 // load-more pagination. Every row links to the rich /coin/:id detail page.
 
 import { formatUsd, formatPercent, escapeHtml as esc } from './shared/coin-format.js';
-import { coinRow, COIN_COLUMNS, coinSortValue } from './shared/market-table.js';
+import {
+	coinRow,
+	COIN_COLUMNS,
+	coinSortValue,
+	sortableHeaderCells,
+	bindSortableHeaders,
+	bindRowNavigation,
+} from './shared/market-table.js';
 import { onPageReady } from './shell/page-lifecycle.js';
 
 const $ = (id) => document.getElementById(id);
@@ -22,14 +29,11 @@ async function getJson(url) {
 // ── Global stats bar ────────────────────────────────────────────────────────
 
 const ICONS = {
-	trend:
-		'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>',
+	trend: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>',
 	bars: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>',
 	pie: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>',
-	coins:
-		'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/></svg>',
-	gauge:
-		'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>',
+	coins: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/></svg>',
+	gauge: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>',
 	activity:
 		'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
 };
@@ -59,7 +63,9 @@ async function loadStats() {
 	if (!el) return; // shell navigation left /coins before the retry landed
 	el.innerHTML =
 		'<div style="display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">' +
-		Array.from({ length: 6 }, () => '<div class="cv-skel" style="height:6rem"></div>').join('') +
+		Array.from({ length: 6 }, () => '<div class="cv-skel" style="height:6rem"></div>').join(
+			'',
+		) +
 		'</div>';
 	try {
 		const { market, fear_greed } = await getJson('/api/coin/global');
@@ -76,7 +82,11 @@ async function loadStats() {
 					deltaClass: (market.market_cap_change_pct_24h ?? 0) >= 0 ? 'cv-up' : 'cv-down',
 					icon: 'trend',
 				}),
-				statCard({ label: '24h Volume', value: formatUsd(market.volume_24h_usd), icon: 'bars' }),
+				statCard({
+					label: '24h Volume',
+					value: formatUsd(market.volume_24h_usd),
+					icon: 'bars',
+				}),
 			);
 			for (const [i, d] of (market.dominance || []).entries()) {
 				cards.push(
@@ -175,16 +185,11 @@ function renderTable() {
 		return;
 	}
 
-	const head = COIN_COLUMNS.map((col) => {
-		const active = col.key === state.sortKey;
-		const arrow = active ? (state.sortDir === 'asc' ? '↑' : '↓') : '↕';
-		// Every sortable header carries aria-sort (the inactive ones as "none"), so
-		// a screen reader reads the whole row as sortable rather than one column.
-		const sort = active ? (state.sortDir === 'asc' ? 'ascending' : 'descending') : 'none';
-		return `<th scope="col" tabindex="0" data-key="${col.key}" aria-sort="${sort}" class="${col.left ? 'left' : ''} ${col.hide || ''}">${esc(col.label)}<span class="arrow" aria-hidden="true">${arrow}</span></th>`;
-	}).join('');
+	const head = sortableHeaderCells(COIN_COLUMNS, state.sortKey, state.sortDir);
 
-	const rows = sortedCoins().map(coinRow).join('');
+	const rows = sortedCoins()
+		.map((c) => coinRow(c))
+		.join('');
 
 	// Footer: the button while more rows exist, an end-of-list line once the feed
 	// is exhausted (a button that can never add another row is a dead control),
@@ -208,34 +213,8 @@ function renderTable() {
 		</div>
 		${footer}`;
 
-	el.querySelectorAll('th[data-key]').forEach((th) => {
-		const activate = () => {
-			const key = th.dataset.key;
-			if (key === state.sortKey) {
-				state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
-			} else {
-				state.sortKey = key;
-				state.sortDir = key === 'name' || key === 'rank' ? 'asc' : 'desc';
-			}
-			renderTable();
-		};
-		th.addEventListener('click', activate);
-		th.addEventListener('keydown', (e) => {
-			if (e.key === 'Enter' || e.key === ' ') {
-				e.preventDefault();
-				activate();
-			}
-		});
-	});
-
-	// Whole row navigates; the name link inside stays a real anchor for
-	// middle-click / keyboard users.
-	el.querySelectorAll('tr[data-href]').forEach((tr) => {
-		tr.addEventListener('click', (e) => {
-			if (e.target.closest('a')) return;
-			location.href = tr.dataset.href;
-		});
-	});
+	bindSortableHeaders(el, state, renderTable);
+	bindRowNavigation(el);
 
 	$('cv-load-more')?.addEventListener('click', loadMore);
 }
@@ -247,7 +226,10 @@ async function loadCoins() {
 	if (!el) return; // shell navigation left /coins before the retry landed
 	el.innerHTML =
 		'<div class="cv-table-wrap" style="padding:0.75rem">' +
-		Array.from({ length: 12 }, () => '<div class="cv-skel" style="height:2.5rem;margin:0.375rem 0"></div>').join('') +
+		Array.from(
+			{ length: 12 },
+			() => '<div class="cv-skel" style="height:2.5rem;margin:0.375rem 0"></div>',
+		).join('') +
 		'</div>';
 	try {
 		const { coins } = await getJson(`/api/coin/markets?page=1&per_page=${PER_PAGE}`);
@@ -270,7 +252,9 @@ async function loadMore() {
 	state.moreErrorStatus = null;
 	renderTable();
 	try {
-		const { coins } = await getJson(`/api/coin/markets?page=${state.page + 1}&per_page=${PER_PAGE}`);
+		const { coins } = await getJson(
+			`/api/coin/markets?page=${state.page + 1}&per_page=${PER_PAGE}`,
+		);
 		const seen = new Set(state.coins.map((c) => c.id));
 		const fresh = coins.filter((c) => !seen.has(c.id));
 		state.coins.push(...fresh);
@@ -350,7 +334,8 @@ function wireSearch() {
 		input.setAttribute('aria-expanded', 'true');
 		// Screen readers follow the active option through aria-activedescendant;
 		// data-active only moves the highlight visually.
-		if (active >= 0 && items[active]) input.setAttribute('aria-activedescendant', `cv-search-opt-${active}`);
+		if (active >= 0 && items[active])
+			input.setAttribute('aria-activedescendant', `cv-search-opt-${active}`);
 		else input.removeAttribute('aria-activedescendant');
 	}
 

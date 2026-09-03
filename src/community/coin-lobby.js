@@ -61,13 +61,17 @@ export class CoinLobby {
 	_build() {
 		const root = el('div', 'clobby');
 		root.setAttribute('role', 'dialog');
-		root.setAttribute('aria-label', 'Choose a coin world');
+		root.setAttribute('aria-labelledby', 'clobby-title');
 		this.root = root;
 
 		const inner = el('div', 'clobby__inner');
 		const head = el('header', 'clobby__head');
 		const titles = el('div', 'clobby__titles');
-		titles.appendChild(el('h1', 'clobby__h1', 'Enter a coin world'));
+		// h2, not h1: this is a dialog layered over the host page, which owns the
+		// document's single h1. The .clobby__h1 class carries the visual weight.
+		const title = el('h2', 'clobby__h1', 'Enter a coin world');
+		title.id = 'clobby-title';
+		titles.appendChild(title);
 		titles.appendChild(
 			el(
 				'p',

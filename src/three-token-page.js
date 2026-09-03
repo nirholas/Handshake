@@ -10,7 +10,7 @@ import { createThreeTokenData, THREE_MINT } from './pump/three-token-data.js';
 import { mountBondingCurve } from './widgets/bonding-curve.js';
 import { openSwapModal } from './swap-jupiter.js';
 import { trackFunnelStep, ANALYTICS_EVENTS } from './analytics.js';
-import { emptyStateHTML, ensureStateKitStyles } from './shared/state-kit.js';
+import { emptyStateHTML, errorStateHTML, ensureStateKitStyles } from './shared/state-kit.js';
 import { paintVerifiedBadge } from './pump/verified-badge.js';
 
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
@@ -41,6 +41,31 @@ const fmtPct = (n) => {
 };
 const shortAddr = (a) => { const s = String(a || ''); return s.length > 9 ? `${s.slice(0, 4)}…${s.slice(-4)}` : s; };
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+// Clipboard with a real fallback: navigator.clipboard is undefined on http
+// origins and can be permission-denied, so drop to a selection copy before
+// reporting failure. Returns whether the text actually made it to the clipboard.
+async function copyText(text) {
+	try {
+		if (navigator.clipboard?.writeText) {
+			await navigator.clipboard.writeText(text);
+			return true;
+		}
+	} catch { /* fall through to the selection path */ }
+	const ta = document.createElement('textarea');
+	ta.value = text;
+	ta.setAttribute('readonly', '');
+	ta.style.cssText = 'position:fixed;top:0;left:-9999px;opacity:0';
+	document.body.appendChild(ta);
+	try {
+		ta.select();
+		return document.execCommand('copy');
+	} catch {
+		return false;
+	} finally {
+		ta.remove();
+	}
+}
+
 const relTime = (sec) => {
 	const d = Math.max(0, Math.floor(Date.now() / 1000 - Number(sec || 0)));
 	if (d < 60) return `${d}s`;
@@ -112,6 +137,7 @@ function injectStyles() {
 	.tk-dot { width:7px; height:7px; border-radius:50%; background:#4ade80; box-shadow:0 0 8px #4ade80; }
 	.tk-dot.off { background:#f87171; box-shadow:none; }
 	.tk-empty { text-align:center; color:#7d7d86; font-size:13px; padding:40px 0; }
+	.tk-stats-err { grid-column:1/-1; }
 	.tk-skel { background:linear-gradient(90deg,#16161c,#1d1d24,#16161c); background-size:200% 100%; animation:tkSh 1.4s infinite; border-radius:10px; }
 	@keyframes tkSh { from { background-position:200% 0; } to { background-position:-200% 0; } }
 	.tk-foot { display:flex; gap:18px; flex-wrap:wrap; margin-top:26px; font-size:13px; }
@@ -214,7 +240,16 @@ function renderBuybackRuns(runs) {
 }
 
 function renderBuyback(bb) {
-	if (!bb) return `<div class="tk-empty" style="padding:24px 0">Couldn’t load buyback data.</div>`;
+	if (!bb) {
+		return errorStateHTML({
+			title: 'Buyback data is unavailable',
+			body: 'The protocol stats feed didn’t respond. Every buyback is on-chain, so you can verify the treasury directly while this reconnects.',
+			actions: [
+				{ label: 'Retry', id: 'bb-retry', primary: true },
+				{ label: 'Verify on Solscan', id: 'bb-solscan' },
+			],
+		});
+	}
 	const revenue = fmtUsd(bb.revenue_usd);
 	// The published promise — the headline a holder repeats. Defaults guard a
 	// partial payload so the commitment always renders.
@@ -262,10 +297,20 @@ function renderBuyback(bb) {
 // genuine live feed of on-chain trades.
 const TAPE_POLL_MS = 9_000;
 
+const TAPE_EMPTY_HTML = () => emptyStateHTML({
+	compact: true,
+	live: true,
+	icon: '',
+	title: 'Live trades will appear here',
+	body: 'As people buy and sell $THREE, each trade streams in here in real time.',
+	tip: 'Live on-chain swaps from the $THREE DEX pool, refreshed every few seconds.',
+});
+
 function startTradeTape(tapeEl, statusEl) {
 	let stopped = false;
 	let timer = null;
 	let everLoaded = false;
+	let failStreak = 0;
 	const seen = new Set();
 
 	const setStatus = (online) => {
@@ -279,6 +324,8 @@ function startTradeTape(tapeEl, statusEl) {
 		// Drop the empty-state placeholder on the first real trade.
 		const empty = tapeEl.querySelector('[data-empty]');
 		if (empty) empty.remove();
+		const stale = tapeEl.querySelector('[data-tape-error]');
+		if (stale) stale.remove();
 
 		const isBuy = t.is_buy ?? t.txType === 'buy';
 		const usd = t.sol_value_usd != null ? fmtUsd(t.sol_value_usd) : null;
@@ -316,11 +363,42 @@ function startTradeTape(tapeEl, statusEl) {
 			const animate = everLoaded;
 			for (let i = trades.length - 1; i >= 0; i--) addTrade(trades[i], animate);
 			everLoaded = true;
+			failStreak = 0;
+			// A poll that succeeds but returns nothing is a quiet market, not a
+			// fault: put the empty state back if an error frame is showing.
+			const errBox = tapeEl.querySelector('[data-tape-error]');
+			if (errBox && !tapeEl.querySelector('.tk-trade')) {
+				tapeEl.innerHTML = `<div data-empty>${TAPE_EMPTY_HTML()}</div>`;
+			}
 			setStatus(true);
 		} catch {
+			failStreak += 1;
 			setStatus(false);
+			// Only claim an outage once nothing has ever loaded and two polls in a
+			// row have failed. With rows on screen the last good frame stands.
+			if (!everLoaded && failStreak >= 2 && !tapeEl.querySelector('[data-tape-error]')) {
+				tapeEl.innerHTML = `<div data-tape-error>${errorStateHTML({
+					title: 'Trade feed is unreachable',
+					body: 'The $THREE swap feed didn’t respond. Trading itself is unaffected: the pool is live on-chain.',
+					actions: [
+						{ label: 'Retry', id: 'tape-retry', primary: true },
+						{ label: 'View trades on Solscan ↗', id: 'tape-solscan' },
+					],
+				})}</div>`;
+			}
 		}
 	};
+
+	tapeEl.addEventListener('click', (e) => {
+		const act = e.target.closest('[data-sk-action]')?.dataset.skAction;
+		if (act === 'tape-retry') {
+			failStreak = 0;
+			tapeEl.innerHTML = `<div data-empty>${TAPE_EMPTY_HTML()}</div>`;
+			poll();
+		} else if (act === 'tape-solscan') {
+			window.open(`https://solscan.io/token/${THREE_MINT}`, '_blank', 'noopener');
+		}
+	});
 
 	setStatus(false);
 	poll();
@@ -356,7 +434,7 @@ function boot() {
 	// $THREE holder funnel, step 1: the token page is in view.
 	trackFunnelStep('three', ANALYTICS_EVENTS.TOKEN_PAGE_VIEWED, {});
 
-	const wrap = document.createElement('div');
+	const wrap = document.createElement('main');
 	wrap.className = 'tk-wrap';
 	wrap.innerHTML = `
 		<div class="tk-head">
@@ -365,7 +443,7 @@ function boot() {
 				<div class="tk-titlerow"><h1 class="tk-title">$THREE</h1><span data-verified></span></div>
 				<p class="tk-sub">The protocol token powering the three.ws agent economy</p>
 			</div>
-			<button class="tk-ca" data-ca title="Copy contract address">${esc(shortAddr(THREE_MINT))} · copy</button>
+			<button class="tk-ca" data-ca title="Copy contract address: ${esc(THREE_MINT)}">${esc(shortAddr(THREE_MINT))} · copy</button>
 		</div>
 		<div class="tk-stats" data-stats>
 			${Array.from({ length: 4 }, () => `<div class="tk-stat"><div class="tk-skel" style="height:48px"></div></div>`).join('')}
@@ -383,14 +461,7 @@ function boot() {
 			<div class="tk-card">
 				<h2 style="display:flex;align-items:center;justify-content:space-between">Live trades <span class="tk-status" data-tape-status></span></h2>
 				<div class="tk-tape" data-tape>
-					<div data-empty>${emptyStateHTML({
-						compact: true,
-						live: true,
-						icon: '',
-						title: 'Live trades will appear here',
-						body: 'As people buy and sell $THREE, each trade streams in here in real time.',
-						tip: 'Live on-chain swaps from the $THREE DEX pool, refreshed every few seconds.',
-					})}</div>
+					<div data-empty>${TAPE_EMPTY_HTML()}</div>
 				</div>
 			</div>
 		</div>
@@ -407,15 +478,20 @@ function boot() {
 	`;
 	document.body.appendChild(wrap);
 
-	// Copy CA
-	wrap.querySelector('[data-ca]').addEventListener('click', async (e) => {
-		try {
-			await navigator.clipboard.writeText(THREE_MINT);
-			const b = e.currentTarget;
-			const prev = b.textContent;
-			b.textContent = 'Copied ✓';
-			setTimeout(() => { b.textContent = prev; }, 1400);
-		} catch {}
+	// Copy CA. The async clipboard is unavailable outside a secure context and
+	// can be denied by permission policy, so fall back to a selection copy and,
+	// failing that, tell the reader instead of silently doing nothing.
+	const caBtn = wrap.querySelector('[data-ca]');
+	const caLabel = caBtn.textContent;
+	let caTimer = null;
+	const flashCa = (text) => {
+		caBtn.textContent = text;
+		clearTimeout(caTimer);
+		caTimer = setTimeout(() => { caBtn.textContent = caLabel; }, 1600);
+	};
+	caBtn.addEventListener('click', async () => {
+		if (await copyText(THREE_MINT)) flashCa('Copied ✓');
+		else flashCa('Copy failed');
 	});
 
 	// Buy — funnel step 2: buy intent.
@@ -443,7 +519,16 @@ function boot() {
 			statsEl.innerHTML = renderHeaderStats(p.token);
 			paintVerifiedBadge(verifiedEl, p.token);
 		}
-		else if (p.status === 'error') statsEl.innerHTML = `<div class="tk-empty" style="grid-column:1/-1">Couldn’t load $THREE market data. <a href="${PUMP_URL}" target="_blank" rel="noopener" style="color:#7CC4FF">View on pump.fun ↗</a></div>`;
+		else if (p.status === 'error') {
+			statsEl.innerHTML = `<div class="tk-stats-err">${errorStateHTML({
+				title: 'Live market data is unavailable',
+				body: 'The $THREE price feed didn’t respond. The market is unaffected: price, cap and volume are still live on pump.fun.',
+				actions: [
+					{ label: 'Retry', id: 'stats-retry', primary: true },
+					{ label: 'View on pump.fun ↗', id: 'stats-pump' },
+				],
+			})}</div>`;
+		}
 	});
 
 	// Live trade tape.
@@ -453,13 +538,31 @@ function boot() {
 	// both from one protocol stats fetch.
 	const bbEl = wrap.querySelector('[data-buyback]');
 	const whyEl = wrap.querySelector('[data-why]');
-	fetch('/api/three-token/stats', { headers: { accept: 'application/json' } })
-		.then((r) => (r.ok ? r.json() : Promise.reject(new Error(`stats ${r.status}`))))
-		.then((d) => {
-			bbEl.innerHTML = renderBuyback(d.buyback);
-			if (d.buyback?.commit_pct != null) whyEl.innerHTML = renderWhyHold(d.buyback.commit_pct);
-		})
-		.catch(() => { bbEl.innerHTML = renderBuyback(null); });
+	const loadBuyback = () => {
+		bbEl.innerHTML = '<div class="tk-skel" style="height:96px"></div>';
+		return fetch('/api/three-token/stats', { headers: { accept: 'application/json' } })
+			.then((r) => (r.ok ? r.json() : Promise.reject(new Error(`stats ${r.status}`))))
+			.then((d) => {
+				bbEl.innerHTML = renderBuyback(d.buyback);
+				if (d.buyback?.commit_pct != null) whyEl.innerHTML = renderWhyHold(d.buyback.commit_pct);
+			})
+			.catch(() => { bbEl.innerHTML = renderBuyback(null); });
+	};
+	bbEl.addEventListener('click', (e) => {
+		const act = e.target.closest('[data-sk-action]')?.dataset.skAction;
+		if (act === 'bb-retry') loadBuyback();
+		else if (act === 'bb-solscan') window.open(`https://solscan.io/token/${THREE_MINT}`, '_blank', 'noopener');
+	});
+	loadBuyback();
+
+	// Header stats recover through the same store the header reads from.
+	statsEl.addEventListener('click', (e) => {
+		const act = e.target.closest('[data-sk-action]')?.dataset.skAction;
+		if (act === 'stats-retry') {
+			statsEl.innerHTML = Array.from({ length: 4 }, () => '<div class="tk-stat"><div class="tk-skel" style="height:48px"></div></div>').join('');
+			store.refresh();
+		} else if (act === 'stats-pump') window.open(PUMP_URL, '_blank', 'noopener');
+	});
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

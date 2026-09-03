@@ -40,6 +40,7 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { getSessionUser, extractBearer, authenticateBearer } from '../_lib/auth.js';
 import { thumbnailUrl } from '../_lib/r2.js';
+import { getStreak, listBadges } from '../_lib/streaks.js';
 
 export const maxDuration = 10;
 
@@ -217,7 +218,24 @@ export default wrap(async (req, res) => {
 		}
 	}
 
-	res.setHeader('cache-control', 'public, max-age=15, s-maxage=30, stale-while-revalidate=60');
+	// The `me`, `streak`, and `badges` blocks are per-viewer, so a signed-in
+	// response must never reach a shared cache: `public` + `s-maxage` here would
+	// let the CDN hand one creator's rank and badge list to the next visitor.
+	// Anonymous responses are identical for everyone and stay edge-cacheable.
+	res.setHeader(
+		'cache-control',
+		viewerId
+			? 'private, max-age=15, stale-while-revalidate=60'
+			: 'public, max-age=15, s-maxage=30, stale-while-revalidate=60',
+	);
+
+	// Streak and badges ride along with the board so the page resolves the whole
+	// signed-in view in one request. Reading them from a username-keyed profile
+	// endpoint instead used to leave every user who has not picked a username
+	// (the default for a fresh account) with no streak card at all.
+	const [streak, badges] = viewerId
+		? await Promise.all([getStreak(viewerId), listBadges(viewerId)])
+		: [null, []];
 
 	return json(res, 200, {
 		metric,
@@ -228,5 +246,7 @@ export default wrap(async (req, res) => {
 		hasMore: offset + limit < total,
 		rows: pageRows,
 		me,
+		streak,
+		badges,
 	});
 });

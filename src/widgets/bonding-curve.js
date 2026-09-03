@@ -26,6 +26,7 @@
 import { hasThreeWsMark } from '../solana/vanity/brand.js';
 import { solToUsd } from '../shared/usd-price.js';
 
+const UNKNOWN_VALUE = '\u2014'; // the card's placeholder for a value it cannot read
 const LAMPORTS_PER_SOL = 1_000_000_000;
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
 
@@ -300,7 +301,9 @@ export function renderCardShell(view, cfg = {}) {
 			? 'Graduated'
 			: view.status === 'bonding'
 				? 'Bonding'
-				: 'No curve';
+				: view.status === 'loading'
+					? 'Loading'
+					: 'No curve';
 
 	return `<div class="bcw-card ${statusClass}">
 		<header class="bcw-head">
@@ -356,7 +359,11 @@ const STYLES = `
 }
 .bcw-card {
 	pointer-events: auto;
+	/* 92vw keeps the floating/overlay mount off the viewport edges; max-width
+	   keeps an embedded mount inside its container, which at 320px is far
+	   narrower than 92vw once page and card padding are taken out. */
 	width: min(420px, 92vw);
+	max-width: 100%;
 	box-sizing: border-box;
 	padding: 18px 18px 16px;
 	border-radius: 18px;
@@ -452,6 +459,15 @@ const STYLES = `
 .bcw-by:hover { color: rgba(255, 255, 255, 0.6); }
 
 .bcw-empty-msg { margin: 2px 0 14px; font-size: 0.82rem; color: rgba(255, 255, 255, 0.5); }
+.bcw-retry {
+	appearance: none; margin-left: 6px; padding: 3px 10px; border-radius: 7px;
+	border: 1px solid rgba(255, 255, 255, 0.18); background: rgba(255, 255, 255, 0.06);
+	color: #f2f3f7; font: inherit; font-size: 0.78rem; font-weight: 600; cursor: pointer;
+	transition: background 0.15s, border-color 0.15s;
+}
+.bcw-retry:hover { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.3); }
+.bcw-retry:active { transform: translateY(1px); }
+.bcw-retry:focus-visible { outline: 2px solid var(--bcw-accent); outline-offset: 2px; }
 .bcw-card.is-loading .bcw-pct-num,
 .bcw-card.is-loading .bcw-stats dd { color: transparent; background: rgba(255,255,255,0.08); border-radius: 6px; animation: bcw-shimmer 1.2s ease-in-out infinite; }
 @keyframes bcw-shimmer { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
@@ -523,6 +539,8 @@ export function mountBondingCurve(rootEl, opts = {}) {
 	let timer = null;
 	let raf = null;
 	let displayedProgress = 0; // currently-rendered marker/percent position
+	let everLoaded = false;    // a poll has resolved at least once (good frame on screen)
+	let failStreak = 0;        // consecutive failed polls since the last good frame
 	let view = { status: pollable ? 'loading' : 'empty', progress: 0 };
 
 	// Initial paint — shell + empty/loading state.
@@ -587,6 +605,41 @@ export function mountBondingCurve(rootEl, opts = {}) {
 		raf = requestAnimationFrame(step);
 	}
 
+	// A first load that never lands leaves the shell shimmering under a "Loading"
+	// badge forever, which reads as a slow network long after the fetch gave up.
+	// Once two attempts have failed with no good frame yet, say so and offer the
+	// retry. Later failures keep the last good frame instead (a blip, not an outage).
+	function applyLoadError() {
+		card.classList.remove('is-loading', 'is-bonding', 'is-grad');
+		card.classList.add('is-empty');
+		setTextSafe(els.status, 'Offline');
+		if (els.pctNum) els.pctNum.textContent = UNKNOWN_VALUE;
+		if (!els.meter || wrap.querySelector('[data-bcw-retry]')) return;
+		const p = doc.createElement('p');
+		p.className = 'bcw-empty-msg';
+		p.setAttribute('role', 'alert');
+		p.textContent = 'Couldn’t reach the bonding-curve feed. ';
+		const btn = doc.createElement('button');
+		btn.type = 'button';
+		btn.className = 'bcw-retry';
+		btn.dataset.bcwRetry = '';
+		btn.textContent = 'Retry';
+		btn.addEventListener('click', () => {
+			p.remove();
+			failStreak = 0;
+			card.classList.add('is-loading');
+			setTextSafe(els.status, 'Loading');
+			poll();
+		});
+		p.appendChild(btn);
+		els.meter.insertAdjacentElement('afterend', p);
+	}
+
+	function clearLoadError() {
+		const btn = wrap.querySelector('[data-bcw-retry]');
+		if (btn) btn.parentElement.remove();
+	}
+
 	async function poll() {
 		if (destroyed || stopped || !pollable) return;
 		try {
@@ -596,6 +649,9 @@ export function mountBondingCurve(rootEl, opts = {}) {
 			]);
 			if (destroyed) return;
 			if (resp.status === 404) {
+				everLoaded = true;
+				failStreak = 0;
+				clearLoadError();
 				// A 404 is terminal: this mint has no bonding curve (graduated or
 				// not a pump.fun token) and never will. Stop the interval instead
 				// of re-polling forever — an interval against a curve-less mint is
@@ -612,6 +668,9 @@ export function mountBondingCurve(rootEl, opts = {}) {
 			if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 			const data = await resp.json();
 			if (destroyed) return;
+			everLoaded = true;
+			failStreak = 0;
+			clearLoadError();
 			view = computeView(data, solUsd);
 			if (view.status === 'empty') {
 				applyEmptyState(card, els);
@@ -619,7 +678,10 @@ export function mountBondingCurve(rootEl, opts = {}) {
 				renderValues(view);
 			}
 		} catch {
-			// Network blip — keep last good frame, retry on next tick.
+			// Network blip: keep the last good frame and retry on the next tick.
+			// With no good frame yet, surface the failure instead of shimmering on.
+			failStreak += 1;
+			if (!everLoaded && failStreak >= 2) applyLoadError();
 		}
 	}
 

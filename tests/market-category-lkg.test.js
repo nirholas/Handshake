@@ -93,9 +93,9 @@ describe('fetchMarketsTable: upstream failure', () => {
 
 	it('still throws for a category with no cached rows (cold cache stays honest)', async () => {
 		fetchFirstMock.mockRejectedValue(new Error('markets-table: all providers failed'));
-		await expect(fetchMarketsTable({ page: 1, perPage: 100, category: 'brand-new' })).rejects.toThrow(
-			/all providers failed/,
-		);
+		await expect(
+			fetchMarketsTable({ page: 1, perPage: 100, category: 'brand-new' }),
+		).rejects.toThrow(/all providers failed/);
 	});
 
 	it('still throws for the uncategorized table however warm the cache is', async () => {
@@ -106,26 +106,70 @@ describe('fetchMarketsTable: upstream failure', () => {
 		);
 	});
 
-	it('does not serve one category\'s rows for another', async () => {
+	it("does not serve one category's rows for another", async () => {
 		fetchFirstMock.mockResolvedValueOnce({ value: ROWS, source: 'coingecko' });
 		await fetchMarketsTable({ page: 1, perPage: 100, category: 'aave-tokens' });
 
 		fetchFirstMock.mockRejectedValue(new Error('markets-table: all providers failed'));
-		await expect(fetchMarketsTable({ page: 1, perPage: 100, category: 'layer-1' })).rejects.toThrow(
-			/all providers failed/,
-		);
+		await expect(
+			fetchMarketsTable({ page: 1, perPage: 100, category: 'layer-1' }),
+		).rejects.toThrow(/all providers failed/);
 	});
 
 	it('surfaces the upstream error when the cached entry is empty or malformed', async () => {
 		cacheStore.set('coin:markets:lkg:aave-tokens:p1:pp100', { rows: [], at: Date.now() });
 		fetchFirstMock.mockRejectedValue(new Error('markets-table: all providers failed'));
-		await expect(fetchMarketsTable({ page: 1, perPage: 100, category: 'aave-tokens' })).rejects.toThrow(
-			/all providers failed/,
-		);
+		await expect(
+			fetchMarketsTable({ page: 1, perPage: 100, category: 'aave-tokens' }),
+		).rejects.toThrow(/all providers failed/);
 
-		cacheStore.set('coin:markets:lkg:aave-tokens:p1:pp100', { rows: 'not-an-array', at: Date.now() });
-		await expect(fetchMarketsTable({ page: 1, perPage: 100, category: 'aave-tokens' })).rejects.toThrow(
-			/all providers failed/,
-		);
+		cacheStore.set('coin:markets:lkg:aave-tokens:p1:pp100', {
+			rows: 'not-an-array',
+			at: Date.now(),
+		});
+		await expect(
+			fetchMarketsTable({ page: 1, perPage: 100, category: 'aave-tokens' }),
+		).rejects.toThrow(/all providers failed/);
+	});
+});
+
+/**
+ * Sparkline opt-out. /screener renders 250 rows and no 7d chart column, so it
+ * asks the endpoint to leave the price series out: measured against live
+ * CoinGecko that is a 219,911-byte response versus 69,754 for the same rows.
+ * The flag only shapes the CoinGecko rung (the fallbacks never carry a series),
+ * and the two shapes must not share a last-known-good cache entry, or a
+ * sparkline-less replay would blank the /coins chart column.
+ */
+describe('fetchMarketsTable: sparkline opt-out', () => {
+	const geckoUrl = () => fetchFirstMock.mock.calls.at(-1)[0][0].url;
+
+	it('requests the 7d series by default', async () => {
+		fetchFirstMock.mockResolvedValue({ value: ROWS, source: 'coingecko' });
+		await fetchMarketsTable({ page: 1, perPage: 250, category: '' });
+		expect(geckoUrl()).toContain('sparkline=true');
+	});
+
+	it('drops the 7d series when the caller renders no chart column', async () => {
+		fetchFirstMock.mockResolvedValue({ value: ROWS, source: 'coingecko' });
+		await fetchMarketsTable({ page: 1, perPage: 250, category: '', sparkline: false });
+		expect(geckoUrl()).toContain('sparkline=false');
+		expect(geckoUrl()).toContain('price_change_percentage=24h,7d');
+	});
+
+	it('keeps the two row shapes in separate last-known-good entries', async () => {
+		fetchFirstMock.mockResolvedValue({ value: ROWS, source: 'coingecko' });
+		await fetchMarketsTable({ page: 1, perPage: 100, category: 'aave-tokens' });
+		await fetchMarketsTable({
+			page: 1,
+			perPage: 100,
+			category: 'aave-tokens',
+			sparkline: false,
+		});
+
+		expect([...cacheStore.keys()].sort()).toEqual([
+			'coin:markets:lkg:aave-tokens:p1:pp100',
+			'coin:markets:lkg:aave-tokens:p1:pp100:nospark',
+		]);
 	});
 });

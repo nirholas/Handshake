@@ -1,17 +1,32 @@
-// /screener — client-side token screener over the live top-250 markets.
-// Loads /api/coin/markets?page=1&per_page=250 once, then filters and sorts
-// entirely in the browser: text search, gainers/losers, market-cap and volume
-// floors, and click-to-sort columns reusing the shared cv-table pattern from
-// coins-index.js. Every row links to the rich /coin/:id detail page.
+// /screener: a client-side token screener over the live top-250 markets.
+// Loads /api/coin/markets?page=1&per_page=250&sparkline=0 once, then filters
+// and sorts entirely in the browser: text search, gainers/losers, market-cap
+// and volume floors, and click-to-sort columns. Rows, columns, sorting and
+// row navigation come from src/shared/market-table.js, the same primitives
+// /coins renders, so the two tables cannot drift apart. Every row links to the
+// rich /coin/:id detail page.
 
-import { formatUsd, formatPrice, formatPercent, escapeHtml as esc } from './shared/coin-format.js';
+import { escapeHtml as esc } from './shared/coin-format.js';
+import {
+	coinRow,
+	COIN_COLUMNS,
+	coinSortValue,
+	sortableHeaderCells,
+	bindSortableHeaders,
+	bindRowNavigation,
+} from './shared/market-table.js';
 
 const $ = (id) => document.getElementById(id);
+
+// The screener renders no 7d chart column, so it asks the endpoint to leave the
+// sparkline arrays out. Over 250 rows that is the difference between a ~215KB
+// and a ~70KB response for exactly the same table.
+const MARKETS_URL = '/api/coin/markets?page=1&per_page=250&sparkline=0';
 
 async function getJson(url) {
 	const res = await fetch(url, { headers: { accept: 'application/json' } });
 	if (!res.ok) {
-		const err = new Error(`fetch ${url} → ${res.status}`);
+		const err = new Error(`fetch ${url} -> ${res.status}`);
 		err.status = res.status;
 		throw err;
 	}
@@ -20,20 +35,16 @@ async function getJson(url) {
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
-const COLUMNS = [
-	{ key: 'rank', label: '#', left: true, hide: 'hide-sm', num: true },
-	{ key: 'name', label: 'Coin', left: true },
-	{ key: 'price', label: 'Price', num: true },
-	{ key: 'change_24h', label: '24h %', num: true },
-	{ key: 'change_7d', label: '7d %', hide: 'hide-md', num: true },
-	{ key: 'market_cap', label: 'Mkt Cap', hide: 'hide-lg', num: true },
-	{ key: 'volume_24h', label: 'Vol (24h)', hide: 'hide-lg', num: true },
-];
-
 const state = {
 	coins: [],
 	loaded: false,
-	error: false,
+	// A 429 is our own per-IP budget rather than an upstream outage, so the two
+	// failures need different advice; null means the fetch has not failed.
+	errorStatus: null,
+	// Set when the endpoint served last-known-good rows because every live
+	// provider was down. The table is real data, just not current, and saying so
+	// beats a timestamp that claims otherwise.
+	staleAsOf: null,
 	sortKey: 'rank',
 	sortDir: 'asc',
 	q: '',
@@ -56,17 +67,11 @@ function filtered() {
 	});
 }
 
-function sortValue(c, key) {
-	if (key === 'name') return (c.name || '').toLowerCase();
-	if (key === 'rank') return c.rank ?? Infinity;
-	return c[key] ?? -Infinity;
-}
-
 function sorted(rows) {
 	const { sortKey, sortDir } = state;
 	return [...rows].sort((a, b) => {
-		const va = sortValue(a, sortKey);
-		const vb = sortValue(b, sortKey);
+		const va = coinSortValue(a, sortKey);
+		const vb = coinSortValue(b, sortKey);
 		const cmp = typeof va === 'string' ? va.localeCompare(vb) : va - vb;
 		return sortDir === 'asc' ? cmp : -cmp;
 	});
@@ -74,28 +79,39 @@ function sorted(rows) {
 
 // ── Rendering ─────────────────────────────────────────────────────────────────
 
-function pctCell(v, extraClass = '') {
-	if (v == null) return `<td class="pct dim ${extraClass}">—</td>`;
-	const up = v >= 0;
-	return `<td class="pct ${up ? 'cv-up' : 'cv-down'} ${extraClass}"><span aria-hidden="true">${up ? '▲' : '▼'}</span>${esc(formatPercent(v))}</td>`;
-}
-
 function updateCount(shown) {
 	const el = $('scr-count');
 	if (!el) return;
-	if (!state.loaded) {
-		el.textContent = '';
-		return;
-	}
-	el.textContent = `${shown.toLocaleString('en-US')} of ${state.coins.length.toLocaleString('en-US')} coins`;
+	el.textContent = state.loaded
+		? `${shown.toLocaleString('en-US')} of ${state.coins.length.toLocaleString('en-US')} coins`
+		: '';
+}
+
+// The failure the user hit decides the advice: retrying into our own rate limit
+// only spends the next request they have, so that case asks for a pause first.
+function whyFailed(status) {
+	return status === 429
+		? 'You have loaded this feed too many times in a row. Give it a minute, then'
+		: 'The market data provider did not answer.';
+}
+
+function renderSkeleton() {
+	$('scr-table').innerHTML =
+		'<div class="cv-table-wrap" style="padding:0.75rem">' +
+		Array.from(
+			{ length: 14 },
+			() => '<div class="cv-skel" style="height:2.5rem;margin:0.375rem 0"></div>',
+		).join('') +
+		'</div>';
 }
 
 function renderTable() {
 	const el = $('scr-table');
+	if (!el) return;
 
-	if (state.error) {
-		el.innerHTML =
-			'<div class="cv-empty">Market data is temporarily unavailable. Please try again shortly.</div>';
+	if (state.errorStatus) {
+		el.innerHTML = `<div class="cv-empty" role="status">The screener could not load the market table. ${whyFailed(state.errorStatus)} <button type="button" class="cv-linkbtn" data-act="retry">${state.errorStatus === 429 ? 'load it again' : 'Try again'}</button>.</div>`;
+		el.querySelector('[data-act="retry"]')?.addEventListener('click', load);
 		updateCount(0);
 		return;
 	}
@@ -104,73 +120,49 @@ function renderTable() {
 	const rows = sorted(filtered());
 	updateCount(rows.length);
 
-	if (!rows.length) {
+	if (!state.coins.length) {
 		el.innerHTML =
-			'<div class="cv-empty">No coins match these filters. Try widening your market-cap or volume floor, or <button type="button" class="scr-empty-reset" id="scr-empty-reset">reset all filters</button>.</div>';
-		$('scr-empty-reset')?.addEventListener('click', resetFilters);
+			'<div class="cv-empty" role="status">No coins are being reported right now. <button type="button" class="cv-linkbtn" data-act="retry">Refresh</button> to check again.</div>';
+		el.querySelector('[data-act="retry"]')?.addEventListener('click', load);
 		return;
 	}
 
-	const head = COLUMNS.map((col) => {
-		const active = col.key === state.sortKey;
-		const arrow = active ? (state.sortDir === 'asc' ? '↑' : '↓') : '↕';
-		return `<th scope="col" tabindex="0" data-key="${col.key}" class="${col.left ? 'left' : ''} ${col.hide || ''}"${active ? ` aria-sort="${state.sortDir === 'asc' ? 'ascending' : 'descending'}"` : ''}>${esc(col.label)}<span class="arrow" aria-hidden="true">${arrow}</span></th>`;
-	}).join('');
-
-	const body = rows
-		.map((c) => {
-			const href = `/coin/${encodeURIComponent(c.id)}`;
-			return `
-			<tr data-href="${esc(href)}">
-				<td class="rank hide-sm cv-mono">${c.rank ?? '—'}</td>
-				<td class="left name-cell"><a href="${esc(href)}"><span class="inner">
-					${c.image ? `<img src="${esc(c.image)}" alt="" loading="lazy" width="24" height="24" data-no-dark-filter />` : ''}
-					<span class="nm">${esc(c.name)}</span>
-					<span class="sym">${esc(c.symbol)}</span>
-				</span></a></td>
-				<td class="price">${esc(formatPrice(c.price))}</td>
-				${pctCell(c.change_24h)}
-				${pctCell(c.change_7d, 'hide-md')}
-				<td class="dim hide-lg">${esc(formatUsd(c.market_cap))}</td>
-				<td class="dim hide-lg">${esc(formatUsd(c.volume_24h))}</td>
-			</tr>`;
-		})
-		.join('');
+	if (!rows.length) {
+		el.innerHTML =
+			'<div class="cv-empty" role="status">No coins match these filters. Try widening your market-cap or volume floor, or <button type="button" class="cv-linkbtn" data-act="reset">reset all filters</button>.</div>';
+		el.querySelector('[data-act="reset"]')?.addEventListener('click', resetFilters);
+		return;
+	}
 
 	el.innerHTML = `
 		<div class="cv-table-wrap">
 			<table class="cv-table">
-				<thead><tr>${head}</tr></thead>
-				<tbody>${body}</tbody>
+				<thead><tr>${sortableHeaderCells(COIN_COLUMNS, state.sortKey, state.sortDir)}</tr></thead>
+				<tbody>${rows.map((c) => coinRow(c, { sparkline: false })).join('')}</tbody>
 			</table>
 		</div>`;
 
-	el.querySelectorAll('th[data-key]').forEach((th) => {
-		const activate = () => {
-			const key = th.dataset.key;
-			if (key === state.sortKey) {
-				state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
-			} else {
-				state.sortKey = key;
-				state.sortDir = key === 'name' || key === 'rank' ? 'asc' : 'desc';
-			}
-			renderTable();
-		};
-		th.addEventListener('click', activate);
-		th.addEventListener('keydown', (e) => {
-			if (e.key === 'Enter' || e.key === ' ') {
-				e.preventDefault();
-				activate();
-			}
-		});
-	});
+	bindSortableHeaders(el, state, renderTable);
+	bindRowNavigation(el);
+}
 
-	el.querySelectorAll('tr[data-href]').forEach((tr) => {
-		tr.addEventListener('click', (e) => {
-			if (e.target.closest('a')) return;
-			location.href = tr.dataset.href;
-		});
-	});
+// The footer line is the page's only claim about freshness, so it never says
+// "Updated <now>" over rows the endpoint flagged as last-known-good.
+function renderUpdated() {
+	const el = $('scr-updated');
+	if (!el) return;
+	if (state.errorStatus || !state.loaded) {
+		el.textContent = '';
+		return;
+	}
+	if (state.staleAsOf) {
+		const at = new Date(state.staleAsOf);
+		const when = Number.isNaN(at.getTime()) ? null : at.toLocaleString('en-US');
+		el.innerHTML = `<span class="cv-src-note" title="Every live market provider is unreachable, so these are the last rows this feed fetched successfully.">Live market data is unavailable${when ? `; showing the last rows fetched at ${esc(when)}` : '; showing the last rows fetched'}.</span> <button type="button" class="cv-linkbtn" data-act="refresh">Try for live prices</button>.`;
+		el.querySelector('[data-act="refresh"]')?.addEventListener('click', load);
+		return;
+	}
+	el.textContent = `Updated ${new Date().toLocaleTimeString('en-US')}`;
 }
 
 // ── Controls ──────────────────────────────────────────────────────────────────
@@ -228,24 +220,23 @@ function wireControls() {
 // ── Load ──────────────────────────────────────────────────────────────────────
 
 async function load() {
-	const el = $('scr-table');
-	el.innerHTML =
-		'<div class="cv-table-wrap" style="padding:0.75rem">' +
-		Array.from(
-			{ length: 14 },
-			() => '<div class="cv-skel" style="height:2.5rem;margin:0.375rem 0"></div>',
-		).join('') +
-		'</div>';
+	// A retry starts from the same clean slate as the first load, so a recovered
+	// upstream clears the error box instead of rendering behind it.
+	state.errorStatus = null;
+	state.staleAsOf = null;
+	state.loaded = false;
+	renderSkeleton();
+	renderUpdated();
 	try {
-		const { coins } = await getJson('/api/coin/markets?page=1&per_page=250');
-		state.coins = Array.isArray(coins) ? coins : [];
+		const data = await getJson(MARKETS_URL);
+		state.coins = Array.isArray(data.coins) ? data.coins : [];
+		state.staleAsOf = data.stale ? data.as_of || null : null;
 		state.loaded = true;
-		$('scr-updated').textContent = `Updated ${new Date().toLocaleTimeString('en-US')}`;
-	} catch {
-		state.error = true;
-		$('scr-updated').textContent = '';
+	} catch (err) {
+		state.errorStatus = err.status || 502;
 	}
 	renderTable();
+	renderUpdated();
 }
 
 wireControls();

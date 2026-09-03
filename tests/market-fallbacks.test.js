@@ -128,10 +128,35 @@ describe('markets table row normalizer', () => {
 		expect(row.price).toBeNull();
 		expect(row.sparkline).toEqual([]);
 	});
+
+	// Number(null) is 0, so an absent field used to arrive as a confident zero:
+	// CoinGecko reports market_cap_rank: null for coins it has not ranked, and
+	// that became rank 0, which sorted the coin above Bitcoin at the top of the
+	// /coins and /screener tables (observed live 2026-09-03 on
+	// tradable-singapore-fintech-ssl-2). Absent stays absent.
+	it('keeps an unreported number null instead of coercing it to zero', () => {
+		const row = normalizeGeckoRow({
+			id: 'tradable-singapore-fintech-ssl-2',
+			symbol: 'pc0000023',
+			name: 'Tradable Singapore Fintech SSL',
+			market_cap_rank: null,
+			current_price: 1,
+			market_cap: 114_500_000,
+			total_volume: null,
+			price_change_percentage_24h_in_currency: null,
+			price_change_percentage_7d_in_currency: undefined,
+		});
+		expect(row.rank).toBeNull();
+		expect(row.volume_24h).toBeNull();
+		expect(row.change_24h).toBeNull();
+		expect(row.change_7d).toBeNull();
+		// A genuine zero is still a zero.
+		expect(normalizeGeckoRow({ id: 'z', total_volume: 0 }).volume_24h).toBe(0);
+	});
 });
 
 describe('exchange spot ticker parsers', () => {
-	it('Kraken ticker → last trade price under Kraken\'s internal pair alias', () => {
+	it("Kraken ticker → last trade price under Kraken's internal pair alias", () => {
 		// Querying XBTUSD comes back keyed XXBTZUSD; the parser must not depend
 		// on knowing the alias.
 		const raw = { error: [], result: { XXBTZUSD: { a: ['64000.1'], c: ['63980.5', '0.01'] } } };
@@ -139,7 +164,9 @@ describe('exchange spot ticker parsers', () => {
 	});
 
 	it('Coinbase spot → data.amount', () => {
-		expect(parseCoinbaseSpot({ data: { base: 'BTC', currency: 'USD', amount: '64010.55' } })).toBeCloseTo(64010.55);
+		expect(
+			parseCoinbaseSpot({ data: { base: 'BTC', currency: 'USD', amount: '64010.55' } }),
+		).toBeCloseTo(64010.55);
 	});
 
 	it('Bitfinex ticker array → LAST_PRICE at index 6', () => {
@@ -156,7 +183,11 @@ describe('exchange spot ticker parsers', () => {
 
 	it('maps exactly the headline assets, all three exchanges each', () => {
 		for (const id of ['bitcoin', 'ethereum', 'solana']) {
-			expect(Object.keys(EXCHANGE_PAIRS[id]).sort()).toEqual(['bitfinex', 'coinbase', 'kraken']);
+			expect(Object.keys(EXCHANGE_PAIRS[id]).sort()).toEqual([
+				'bitfinex',
+				'coinbase',
+				'kraken',
+			]);
 		}
 	});
 });
@@ -195,6 +226,8 @@ describe('exchange candle chart normalizers', () => {
 		expect(normalizeKrakenChart({ result: {} }, 1, now)).toBeNull();
 		expect(normalizeKrakenChart(null, 1, now)).toBeNull();
 		expect(normalizeCoinbaseChart({ message: 'NotFound' }, 1, now)).toBeNull();
-		expect(normalizeCoinbaseChart([[(now - 100 * hour) / 1000, 1, 2, 1, 2, 3]], 1, now)).toBeNull();
+		expect(
+			normalizeCoinbaseChart([[(now - 100 * hour) / 1000, 1, 2, 1, 2, 3]], 1, now),
+		).toBeNull();
 	});
 });

@@ -26,7 +26,13 @@ import { CEX_BASE_BY_ID, cexPriceProviders, cexCandleProviders } from './cex-pub
 import { downsample } from '../../src/shared/coin-format.js';
 import { cacheGet, cacheSet } from './cache.js';
 
+// null/undefined and the empty string must stay null, not become 0: Number(null)
+// is 0, which is how a coin CoinGecko reports with market_cap_rank: null landed
+// in the table as rank 0 and sorted above Bitcoin (observed live 2026-09-03 on
+// tradable-singapore-fintech-ssl-2). The same coercion turned every absent
+// price, market cap and volume into a confident $0.00.
 const num = (v) => {
+	if (v == null || v === '') return null;
 	const n = Number(v);
 	return Number.isFinite(n) ? n : null;
 };
@@ -118,7 +124,9 @@ function exchangePriceProviders(id) {
  * @throws when every free source is down.
  */
 export async function fetchCoinPriceUsd(coingeckoId) {
-	const id = String(coingeckoId || '').trim().toLowerCase();
+	const id = String(coingeckoId || '')
+		.trim()
+		.toLowerCase();
 	if (!/^[a-z0-9][a-z0-9_-]{0,99}$/.test(id)) throw new Error(`bad coin id: ${coingeckoId}`);
 	const { value } = await fetchFirst(
 		[
@@ -273,7 +281,10 @@ export function normalizeGeckoRow(c) {
 		change_7d: num(c.price_change_percentage_7d_in_currency),
 		market_cap: num(c.market_cap),
 		volume_24h: num(c.total_volume),
-		sparkline: downsample((c.sparkline_in_7d?.price || []).filter((v) => Number.isFinite(v)), 32),
+		sparkline: downsample(
+			(c.sparkline_in_7d?.price || []).filter((v) => Number.isFinite(v)),
+			32,
+		),
 	};
 }
 
@@ -319,13 +330,21 @@ function normalizeLoreRow(c) {
 // on its own if a category is genuinely retired.
 const LKG_TTL_SECONDS = 86_400;
 
-export async function fetchMarketsTable({ page, perPage, category }) {
+/**
+ * A page of ranked market rows. `sparkline` (default true) fetches the trailing
+ * 7d price series CoinGecko bundles into each row; a caller that renders no
+ * chart column passes false and CoinGecko leaves the arrays out, which is most
+ * of the response weight at 250 rows. The fallback providers carry no
+ * sparklines either way, so the flag only shapes the CoinGecko rung.
+ */
+export async function fetchMarketsTable({ page, perPage, category, sparkline = true }) {
 	const providers = [
 		{
 			name: 'coingecko',
 			url:
 				`${COINGECKO_BASE}/coins/markets?vs_currency=usd&order=market_cap_desc` +
-				`&per_page=${perPage}&page=${page}&sparkline=true&price_change_percentage=24h,7d` +
+				`&per_page=${perPage}&page=${page}&sparkline=${sparkline ? 'true' : 'false'}` +
+				'&price_change_percentage=24h,7d' +
 				(category ? `&category=${encodeURIComponent(category)}` : ''),
 			init: { headers: geckoHeaders() },
 			parse: async (r) => {
@@ -358,9 +377,14 @@ export async function fetchMarketsTable({ page, perPage, category }) {
 	// missing rung: real rows this same endpoint fetched earlier, replayed with
 	// an explicit staleness marker so the page can label them, instead of a
 	// blank error state. Nothing is synthesized; a cold cache still fails.
-	const lkgKey = category ? `coin:markets:lkg:${category}:p${page}:pp${perPage}` : null;
+	const lkgKey = category
+		? `coin:markets:lkg:${category}:p${page}:pp${perPage}${sparkline ? '' : ':nospark'}`
+		: null;
 	try {
-		const { value, source } = await fetchFirst(providers, { timeoutMs: 10_000, label: 'markets-table' });
+		const { value, source } = await fetchFirst(providers, {
+			timeoutMs: 10_000,
+			label: 'markets-table',
+		});
 		if (lkgKey && Array.isArray(value) && value.length) {
 			// Best-effort write: a cache outage must never fail a healthy read.
 			cacheSet(lkgKey, { rows: value, at: Date.now() }, LKG_TTL_SECONDS).catch(() => {});
@@ -370,7 +394,12 @@ export async function fetchMarketsTable({ page, perPage, category }) {
 		if (!lkgKey) throw err;
 		const cached = await cacheGet(lkgKey).catch(() => null);
 		if (!Array.isArray(cached?.rows) || !cached.rows.length) throw err;
-		return { rows: cached.rows, source: 'last-known-good', stale: true, asOf: cached.at ?? null };
+		return {
+			rows: cached.rows,
+			source: 'last-known-good',
+			stale: true,
+			asOf: cached.at ?? null,
+		};
 	}
 }
 

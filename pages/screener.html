@@ -21,7 +21,7 @@
 		<title data-i18n="screener.meta_title">Token Screener · three.ws</title>
 		<meta
 			name="description"
-			content="Filter the top 250 cryptocurrencies live — search by name, isolate gainers or losers, set minimum market cap and volume, and sort every column. Find your next coin fast."
+			content="Filter the top 250 cryptocurrencies live: search by name, isolate gainers or losers, set minimum market cap and volume, and sort every column. Find your next coin fast."
 		 data-i18n-attr="content:screener.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
@@ -29,7 +29,7 @@
 		<meta property="og:title" content="Token Screener · three.ws"  data-i18n-attr="content:screener.meta_og_title"/>
 		<meta
 			property="og:description"
-			content="Filter the top 250 cryptocurrencies live — search, isolate gainers or losers, set minimum market cap and volume, and sort every column."
+			content="Filter the top 250 cryptocurrencies live: search, isolate gainers or losers, set minimum market cap and volume, and sort every column."
 		 data-i18n-attr="content:screener.meta_og_description"/>
 		<meta
 			property="og:image"
@@ -42,7 +42,7 @@
 		<meta name="twitter:title" content="Token Screener · three.ws"  data-i18n-attr="content:screener.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
-			content="Filter the top 250 cryptocurrencies live — search, isolate gainers or losers, set minimum market cap and volume, and sort every column."
+			content="Filter the top 250 cryptocurrencies live: search, isolate gainers or losers, set minimum market cap and volume, and sort every column."
 		 data-i18n-attr="content:screener.meta_twitter_description"/>
 		<meta
 			name="twitter:image"
@@ -61,7 +61,7 @@
 		<link rel="canonical" href="https://three.ws/screener" />
 		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
 		<meta property="og:locale" content="en_US" />
-		<meta property="og:image:alt" content="Token Screener — three.ws" />
+		<meta property="og:image:alt" content="Token Screener on three.ws" />
 
 		<script type="application/ld+json">
 			{
@@ -94,7 +94,7 @@
 			</nav>
 			<h1 class="cv-h1" data-i18n="screener.token_screener">Token Screener</h1>
 			<p class="cv-sub" data-i18n="screener.filter_the_top_250_coins_by_market">
-				Filter the top 250 coins by market cap in real time — search by name, isolate
+				Filter the top 250 coins by market cap in real time. Search by name, isolate
 				gainers or losers, set floors on market cap and volume, then sort any column. Every
 				row opens the full coin profile.
 			</p>
@@ -122,10 +122,17 @@
 						autocomplete="off"
 						spellcheck="false"
 						aria-label="Filter coins by name or symbol"
+						data-i18n-attr="placeholder:screener.search_placeholder;aria-label:screener.search_arialabel"
 					/>
 				</div>
 
-				<div class="hm-seg" role="group" aria-label="Direction filter" id="scr-dir">
+				<div
+					class="hm-seg"
+					role="group"
+					aria-label="Direction filter"
+					id="scr-dir"
+					data-i18n-attr="aria-label:screener.direction_arialabel"
+				>
 					<button type="button" data-dir="all" aria-pressed="true" data-i18n="screener.all">All</button>
 					<button type="button" data-dir="gainers" aria-pressed="false" data-i18n="screener.gainers">Gainers</button>
 					<button type="button" data-dir="losers" aria-pressed="false" data-i18n="screener.losers">Losers</button>
@@ -133,7 +140,11 @@
 
 				<label class="scr-field">
 					<span data-i18n="screener.min_market_cap">Min market cap</span>
-					<select id="scr-mcap" aria-label="Minimum market cap">
+					<select
+						id="scr-mcap"
+						aria-label="Minimum market cap"
+						data-i18n-attr="aria-label:screener.min_market_cap_arialabel"
+					>
 						<option value="0" data-i18n="screener.any">Any</option>
 						<option value="10000000" data-i18n="screener.10m">$10M+</option>
 						<option value="100000000" data-i18n="screener.100m">$100M+</option>
@@ -145,7 +156,11 @@
 
 				<label class="scr-field">
 					<span data-i18n="screener.min_24h_volume">Min 24h volume</span>
-					<select id="scr-vol" aria-label="Minimum 24h volume">
+					<select
+						id="scr-vol"
+						aria-label="Minimum 24h volume"
+						data-i18n-attr="aria-label:screener.min_volume_arialabel"
+					>
 						<option value="0" data-i18n="screener.any_2">Any</option>
 						<option value="1000000" data-i18n="screener.1m">$1M+</option>
 						<option value="10000000" data-i18n="screener.10m_2">$10M+</option>
@@ -168,7 +183,7 @@
 
 			<!-- Results table. Hydrated by src/screener.js. -->
 			<section id="scr-table" aria-label="Screened cryptocurrencies"></section>
-			<p class="cv-updated" id="scr-updated"></p>
+			<p class="cv-updated" id="scr-updated" role="status"></p>
 		</main>
 
 		<script type="module" src="/src/screener.js"></script>
