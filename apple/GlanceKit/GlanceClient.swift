@@ -52,6 +52,10 @@ struct GlanceClient {
 			URLQueryItem(name: "size", value: size.rawValue),
 			URLQueryItem(name: "theme", value: theme.rawValue),
 			URLQueryItem(name: "scale", value: String(size.scale)),
+			// Only narrows where an unlinked card's tap goes: it sends this
+			// device to the Apple hand-off on /glance rather than the Android
+			// one. Everything else about the answer is identical.
+			URLQueryItem(name: "platform", value: Self.platform),
 		]
 		guard let url = components?.url else { throw GlanceClientError.badStatus(0) }
 
@@ -80,6 +84,17 @@ struct GlanceClient {
 			fetchedAt: Date()
 		)
 	}
+
+	/// The token platform this shell registers as, and the value
+	/// `/api/glance/mine?platform=` reads. Matches GLANCE_TOKEN_PLATFORMS in
+	/// api/_lib/glance-tokens.js.
+	static let platform: String = {
+		#if os(macOS)
+		return "macos"
+		#else
+		return "ios"
+		#endif
+	}()
 
 	static let userAgent: String = {
 		let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown"

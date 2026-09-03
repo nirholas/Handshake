@@ -134,7 +134,7 @@ verifies both projects and the wire contract without a Mac.
 
 | Endpoint | Purpose |
 | --- | --- |
-| `GET /api/glance/mine?format=png&size=small\|medium\|large&theme=dark\|light&scale=1\|2\|3` | The card bitmap for the caller (widget token as `Authorization: Bearer`, or the session cookie). Always `200`; the state is in `x-glance-state` and the tap target in `x-glance-url`. |
+| `GET /api/glance/mine?format=png&size=small\|medium\|large&theme=dark\|light&scale=1\|2\|3&platform=android\|ios\|macos` | The card bitmap for the caller (widget token as `Authorization: Bearer`, or the session cookie). Always `200`; the state is in `x-glance-state` and the tap target in `x-glance-url`. `platform` only decides which hand-off an unlinked card's tap opens. |
 | `GET /api/glance/mine` | The same as JSON: `{ signedIn, state, card, notice, agents, … }`. |
 | `POST /api/glance/token` | Mint a widget token (session, same-site). Returns the plaintext once plus `links.android` and `links.apple`. |
 | `GET /api/glance/token` | List the caller's live tokens. |

@@ -37,8 +37,17 @@ import { isUuid } from '../_lib/validate.js';
 
 const SITE = 'https://three.ws';
 const SIGN_IN_URL = `${SITE}/login?next=%2Fglance`;
-const LINK_URL = `${SITE}/glance?link=android`;
 const CREATE_URL = `${SITE}/create`;
+
+// Where a widget with no working credential sends the person who taps it. The
+// page can start the hand-off on its own if it knows which shell is asking, so
+// the widget says: `?platform=ios` and `macos` open the Apple flow, anything
+// else opens the Android one, which is what the shipped 1.1 APK gets by sending
+// nothing at all.
+const LINK_FLOWS = { android: 'android', ios: 'apple', macos: 'apple' };
+export function linkUrl(platform) {
+	return `${SITE}/glance?link=${LINK_FLOWS[platform] || 'android'}`;
+}
 
 export const GLANCE_STATES = {
 	signedOut: 'signed-out',
@@ -48,13 +57,13 @@ export const GLANCE_STATES = {
 };
 
 /** The notice card for each non-agent state. Exported for the tests. */
-export function stateCard(state) {
+export function stateCard(state, platform) {
 	if (state === GLANCE_STATES.unlinked) {
 		return noticeCard({
 			name: 'Widget unlinked',
 			headline: 'Tap to link this widget to your account again.',
 			description: 'This widget no longer has access to your agent.',
-			url: LINK_URL,
+			url: linkUrl(platform),
 		});
 	}
 	if (state === GLANCE_STATES.noAgent) {
@@ -110,8 +119,14 @@ export default wrap(async (req, res) => {
 	const url = new URL(req.url, 'http://x');
 	const format = url.searchParams.get('format') === 'png' ? 'png' : 'json';
 
+	// Only ever narrows the tap target of a notice card; a card with an agent on
+	// it already points at that agent on every platform.
+	const platform = url.searchParams.get('platform') || '';
+
 	const caller = await resolveCaller(req, res, url);
-	if (caller.state) return respond(res, format, url, { state: caller.state, card: stateCard(caller.state), agents: [] });
+	if (caller.state) {
+		return respond(res, format, url, { state: caller.state, card: stateCard(caller.state, platform), agents: [], platform });
+	}
 
 	const owned = await sql`
 		SELECT id, name
@@ -130,17 +145,17 @@ export default wrap(async (req, res) => {
 	const target = pinned || owned[0]?.id || null;
 
 	if (!target) {
-		return respond(res, format, url, { state: GLANCE_STATES.noAgent, card: stateCard(GLANCE_STATES.noAgent), agents: [] });
+		return respond(res, format, url, { state: GLANCE_STATES.noAgent, card: stateCard(GLANCE_STATES.noAgent, platform), agents: [], platform });
 	}
 
 	const card = await loadGlanceCard(target);
 	if (!card) {
-		return respond(res, format, url, { state: GLANCE_STATES.noAgent, card: stateCard(GLANCE_STATES.noAgent), agents: owned });
+		return respond(res, format, url, { state: GLANCE_STATES.noAgent, card: stateCard(GLANCE_STATES.noAgent, platform), agents: owned, platform });
 	}
-	return respond(res, format, url, { state: GLANCE_STATES.agent, card, agents: owned, via: caller.via });
+	return respond(res, format, url, { state: GLANCE_STATES.agent, card, agents: owned, via: caller.via, platform });
 });
 
-async function respond(res, format, url, { state, card, agents, via = null }) {
+async function respond(res, format, url, { state, card, agents, via = null, platform = '' }) {
 	if (format === 'png') {
 		const opts = pngOptions(url.searchParams);
 		const { png, width, height, etag, cache } = await glancePng(card, opts);
@@ -170,7 +185,7 @@ async function respond(res, format, url, { state, card, agents, via = null }) {
 		agents: agents.map((a) => ({ id: a.id, name: a.name })),
 		signInUrl: SIGN_IN_URL,
 		createUrl: CREATE_URL,
-		linkUrl: LINK_URL,
+		linkUrl: linkUrl(platform),
 	});
 }
 

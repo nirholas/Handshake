@@ -9,7 +9,7 @@ import sharp from 'sharp';
 import { buildGlanceCard, noticeCard } from '../api/_lib/glance-card.js';
 import { renderGlanceSvg } from '../api/_lib/glance-svg.js';
 import { rasterizeGlanceCard, pngOptions, GLANCE_PNG_SCALES } from '../api/_lib/glance-png.js';
-import { stateCard, GLANCE_STATES } from '../api/glance/mine.js';
+import { stateCard, linkUrl, GLANCE_STATES } from '../api/glance/mine.js';
 
 const NOW = new Date('2026-08-28T12:00:00.000Z');
 
@@ -106,5 +106,19 @@ describe('notice cards', () => {
 			const out = await rasterizeGlanceCard(notice, { size: 'small', scale: 1 });
 			expect((await sharp(out.png).metadata()).width).toBe(240);
 		}
+	});
+
+	it('send an unlinked widget to the hand-off its own platform can finish', () => {
+		// The shipped 1.1 Android APK sends no platform at all, so the default
+		// has to stay exactly where it was pointing before Apple existed here.
+		expect(linkUrl('')).toBe('https://three.ws/glance?link=android');
+		expect(linkUrl(undefined)).toBe('https://three.ws/glance?link=android');
+		expect(linkUrl('android')).toBe('https://three.ws/glance?link=android');
+		expect(linkUrl('ios')).toBe('https://three.ws/glance?link=apple');
+		expect(linkUrl('macos')).toBe('https://three.ws/glance?link=apple');
+		// An unknown value is a caller we do not know, not a reason to 400 a
+		// widget that is already in trouble.
+		expect(linkUrl('windows')).toBe('https://three.ws/glance?link=android');
+		expect(stateCard(GLANCE_STATES.unlinked, 'macos').url).toBe('https://three.ws/glance?link=apple');
 	});
 });

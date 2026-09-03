@@ -167,10 +167,19 @@ const svg = read('api/_lib/glance-svg.js');
 const token = read('api/glance/token.js');
 
 if (!client.includes('api/glance/mine')) fail('the Swift client does not call /api/glance/mine');
-for (const param of ['format', 'size', 'theme', 'scale']) {
+for (const param of ['format', 'size', 'theme', 'scale', 'platform']) {
 	if (!client.includes(`name: "${param}"`)) fail(`the Swift client never sends ?${param}, which the server reads`);
 }
 pass('the Swift client calls the endpoint with the query the server reads');
+
+// The platform hint only exists to point an unlinked card at the right
+// hand-off, so the value the client sends has to be one the server routes.
+const flows = (mine.match(/LINK_FLOWS = \{([^}]+)\}/) || [, ''])[1];
+for (const value of ['macos', 'ios']) {
+	if (!flows.includes(`${value}:`)) fail(`api/glance/mine.js does not route ?platform=${value} to a link flow`);
+	if (!client.includes(`return "${value}"`)) fail(`the Swift client never reports platform=${value}`);
+}
+pass('the unlinked card sends an Apple device to the Apple hand-off');
 
 // Header names, as the server sets them.
 const headers = [...mine.matchAll(/setHeader\('(x-glance-[a-z]+)'/g)].map((m) => m[1]);

@@ -91,6 +91,8 @@ Every state is a `200` with a designed card, never a `401`: a widget that render
 
 `format=png` (with `size`, `theme`, `scale` as above) returns the bitmap for whichever state applies, with `x-glance-state`, `x-glance-url` (the tap target), `x-glance-name`, `x-glance-metric` and `x-glance-agent` in the headers, so a native widget learns everything from the one request that fetched the image.
 
+Add `platform=ios` or `platform=macos` and an unlinked card's tap opens the Apple hand-off on `/glance` instead of the Android one. It changes nothing else, and omitting it keeps the Android behaviour the shipped app relies on.
+
 ### `POST | GET | PATCH | DELETE /api/glance/token`
 
 The widget tokens. Session and same-site only. `POST { label?, platform?, agent? }` mints one and answers the plaintext exactly once, plus `links.android`, the `intent://` URL that hands it to the Android app, and `links.apple`, the `threews://glance/link` URL the Mac and iPhone apps claim. `GET` lists the caller's live tokens (prefix, label, platform, last seen), `PATCH { id, agent }` repoints one, `DELETE ?id=` revokes one. The revoke list on [/glance](https://three.ws/glance#devices) is this endpoint.

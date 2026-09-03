@@ -111,6 +111,8 @@ A response that has no agent to show (signed out, an unlinked widget token, an a
 
 The JSON answer is `{ signedIn, state, via, card, notice, agents, signInUrl, createUrl, linkUrl }` with `state` one of `agent`, `signed-out`, `unlinked`, `no-agent`. When `state` is `agent`, `card` is the document above and `notice` is `null`; otherwise `card` is `null` and `notice` is a notice card.
 
+A caller MAY add `platform=android|ios|macos`. It changes nothing but the `url` of a notice card, sending an unlinked widget to the hand-off its own shell can finish; omitting it is the Android hand-off, which is what a shell that predates the parameter gets.
+
 The PNG answer is always status `200` and carries the same facts in headers, so a host that only downloads a bitmap still learns where a tap goes:
 
 | Header | Value |

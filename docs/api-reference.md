@@ -7490,11 +7490,11 @@ No auth. `json` is the card model, `svg` a self-contained image, `png` a bitmap 
 ### My card
 
 ```
-GET /api/glance/mine?format=json|png&agent=<uuid>&size=…&theme=dark|light&scale=…
+GET /api/glance/mine?format=json|png&agent=<uuid>&size=…&theme=dark|light&scale=…&platform=android|ios|macos
 Authorization: Bearer glw_…        (widget token)   or the session cookie
 ```
 
-Always `200`. JSON: `{ signedIn, state, via, card, notice, agents, signInUrl, createUrl, linkUrl }`, `state` one of `agent`, `signed-out`, `unlinked`, `no-agent`. PNG: the card bitmap for whichever state applies, with `x-glance-state`, `x-glance-url` (tap target), `x-glance-name`, `x-glance-metric`, `x-glance-agent`, `x-glance-updated` headers. `cache-control: private, no-store`.
+Always `200`. JSON: `{ signedIn, state, via, card, notice, agents, signInUrl, createUrl, linkUrl }`, `state` one of `agent`, `signed-out`, `unlinked`, `no-agent`. PNG: the card bitmap for whichever state applies, with `x-glance-state`, `x-glance-url` (tap target), `x-glance-name`, `x-glance-metric`, `x-glance-agent`, `x-glance-updated` headers. `platform` narrows nothing but the tap target of a notice card: `ios` and `macos` point an unlinked widget at the Apple hand-off on `/glance`, anything else (including omitting it, which is what the shipped Android app does) points at the Android one. `cache-control: private, no-store`.
 
 ### Widget tokens
 
