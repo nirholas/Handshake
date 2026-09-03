@@ -57,6 +57,9 @@ import {
 	TOUR_FALLBACK_SELECTORS,
 	TOUR_CONTENT_ROOT_SELECTOR,
 } from '../src/feature-tour/curriculum.js';
+// The summary shape is owned by the gate that verifies it, so the writer and the
+// checker can never disagree about what a number means.
+import { summarizeStops } from './build-tour-atlas.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const CURRICULUM_PATH = resolve(ROOT, 'public/tour/curriculum.json');
@@ -336,7 +339,7 @@ async function settleImages() {
 // a heavy WebGL stop like /walk or /temporary parses its DOM in under two
 // seconds but does not fire DOMContentLoaded for another ten-plus while its
 // module graph boots, and on a loaded runner that pushes past the timeout. The
-// navigation then throws, the status stays 0, and summarize() counts a page
+// navigation then throws, the status stays 0, and summarizeStops() counts a page
 // that answered HTTP 200 in 200ms as unreachable, telling whoever reads the
 // report to "fix the page or drop the stop" about a page with nothing wrong.
 //
@@ -518,24 +521,6 @@ function readExistingManifest() {
 	}
 }
 
-function summarize(stops) {
-	const resolved = stops.filter((s) => s.anchor.state === 'resolved');
-	return {
-		total: stops.length,
-		anchored: resolved.length,
-		missingAnchor: stops.filter((s) => s.anchor.state === 'missing').length,
-		// A curated anchor points at the feature the narration is about. A
-		// fallback anchor points at whatever heading the page happens to have, so
-		// the count is the size of the "this stop deserves a real anchor" backlog.
-		curatedAnchor: resolved.filter((s) => s.anchor.source === 'curriculum').length,
-		fallbackAnchor: resolved.filter((s) => s.anchor.source === 'fallback').length,
-		navScopedAnchor: resolved.filter((s) => s.anchor.scope === 'nav').length,
-		unreachable: stops.filter((s) => s.status >= 400 || s.status === 0).length,
-		withConsoleErrors: stops.filter((s) => s.consoleErrors > 0).length,
-		captured: stops.filter((s) => Boolean(s.media)).length,
-	};
-}
-
 function writeManifest(curriculum, fresh) {
 	const previous = readExistingManifest();
 	const merged = new Map();
@@ -546,9 +531,18 @@ function writeManifest(curriculum, fresh) {
 
 	// A stop that left the curriculum has to leave the atlas, or the guard would
 	// keep checking media for a page nobody can reach any more.
-	const live = new Set(curriculum.stops.map((s) => s.id));
+	//
+	// The curriculum's own order is the only truth about a stop's position, so
+	// every merged stop is re-numbered from it rather than trusting the `index`
+	// it carried in. A partial run (`--only`) keeps the previous manifest's
+	// entries verbatim, and those were numbered against whatever curriculum
+	// existed the day they were captured; sorting a mixed set by that stale
+	// number produced duplicate and skipped stop numbers on /tour/atlas (58
+	// duplicated badges by 2026-09-02) and shuffled the grid out of tour order.
+	const order = new Map(curriculum.stops.map((s, i) => [s.id, i]));
 	const stops = [...merged.values()]
-		.filter((s) => live.has(s.id))
+		.filter((s) => order.has(s.id))
+		.map((s) => ({ ...s, index: order.get(s.id) }))
 		.sort((a, b) => a.index - b.index);
 
 	const manifest = {
@@ -560,7 +554,7 @@ function writeManifest(curriculum, fresh) {
 		curriculumGeneratedAt: curriculum.generatedAt ?? null,
 		sections: (curriculum.sections || []).map((s) => ({ id: s.id, title: s.title })),
 		tracks: (curriculum.tracks || []).map((t) => ({ id: t.id, title: t.title })),
-		summary: summarize(stops),
+		summary: summarizeStops(stops),
 		stops,
 	};
 	writeFileSync(MANIFEST_PATH, `${JSON.stringify(manifest, null, '\t')}\n`);
@@ -631,7 +625,7 @@ async function main() {
 	results.sort((a, b) => a.index - b.index);
 
 	if (HEALTH_ONLY) {
-		const s = summarize(results);
+		const s = summarizeStops(results);
 		console.log(
 			`\nAnchors: ${s.anchored} resolved (${s.curatedAnchor} curated, ${s.fallbackAnchor} fallback), ` +
 				`${s.missingAnchor} missing. ${s.unreachable} unreachable page(s), ` +
