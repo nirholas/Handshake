@@ -76,7 +76,20 @@ vi.mock('../../api/_lib/watsonx.js', () => ({
 	})),
 }));
 
+// The second rung of the restyle author chain. Granite leads, but a deployment
+// with no IBM key must still restyle through the shared free-first chain rather
+// than answering a dead 503. That is the behaviour the two fallback tests pin.
+vi.mock('../../api/_lib/llm.js', () => ({
+	llmComplete: vi.fn(async () => ({
+		text: JSON.stringify(watsonxReply),
+		model: 'free-chain/test-model',
+	})),
+}));
+
 beforeEach(() => {
+	// Call counts leak across tests otherwise, and the author-chain tests below
+	// assert exactly which rung ran. mockClear keeps the factory implementations.
+	vi.clearAllMocks();
 	uploadedObjects = [];
 	fixtureBytes = readFileSync(FIXTURE_GLB_PATH);
 	watsonxReply = {
@@ -148,12 +161,38 @@ describe('restyleMaterialFromInstruction', () => {
 		expect(result.lineage[0].glbUrl).toBe(FIXTURE_URL);
 	});
 
-	it('surfaces a not_configured error when watsonx has no credentials, without persisting anything', async () => {
-		const { watsonxConfig } = await import('../../api/_lib/watsonx.js');
+	it('restyles through the free-first LLM chain when watsonx has no credentials', async () => {
+		const { watsonxConfig, watsonxChatComplete } = await import('../../api/_lib/watsonx.js');
+		const { llmComplete } = await import('../../api/_lib/llm.js');
 		watsonxConfig.mockReturnValueOnce({ configured: false });
-		const { restyleMaterialFromInstruction, MaterialStudioError } = await import('../../api/_lib/material-studio-store.js');
+		const { restyleMaterialFromInstruction } = await import('../../api/_lib/material-studio-store.js');
+		const result = await restyleMaterialFromInstruction({ glbUrl: FIXTURE_URL, instruction: 'chrome' });
+		// Granite is skipped entirely, the fallback rung answers, and a real
+		// restyled GLB is persisted, with no 503 on a deployment lacking an IBM key.
+		expect(watsonxChatComplete).not.toHaveBeenCalled();
+		expect(llmComplete).toHaveBeenCalledTimes(1);
+		expect(result.glbUrl).toMatch(persistedGlbUrl('material-studio/restyle'));
+		expect(uploadedObjects).toHaveLength(1);
+	});
+
+	it('falls back to the LLM chain when watsonx is configured but throws', async () => {
+		const { watsonxChatComplete } = await import('../../api/_lib/watsonx.js');
+		const { llmComplete } = await import('../../api/_lib/llm.js');
+		watsonxChatComplete.mockRejectedValueOnce(new Error('watsonx 502'));
+		const { restyleMaterialFromInstruction } = await import('../../api/_lib/material-studio-store.js');
+		const result = await restyleMaterialFromInstruction({ glbUrl: FIXTURE_URL, instruction: 'chrome' });
+		expect(llmComplete).toHaveBeenCalledTimes(1);
+		expect(result.glbUrl).toMatch(persistedGlbUrl('material-studio/restyle'));
+	});
+
+	it('errors with no_provider only when BOTH author rungs are unavailable, without persisting anything', async () => {
+		const { watsonxConfig } = await import('../../api/_lib/watsonx.js');
+		const { llmComplete } = await import('../../api/_lib/llm.js');
+		watsonxConfig.mockReturnValueOnce({ configured: false });
+		llmComplete.mockRejectedValueOnce(new Error('no provider is configured'));
+		const { restyleMaterialFromInstruction } = await import('../../api/_lib/material-studio-store.js');
 		await expect(restyleMaterialFromInstruction({ glbUrl: FIXTURE_URL, instruction: 'chrome' })).rejects.toMatchObject({
-			code: 'not_configured',
+			code: 'no_provider',
 			status: 503,
 		});
 		expect(uploadedObjects).toHaveLength(0);
