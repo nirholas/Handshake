@@ -18,17 +18,28 @@
  */
 
 import { escapeHtml } from './trader-format.js';
+import { apiFetch } from './api.js';
 
 const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const $ = (sel, root) => root.querySelector(sel);
 
+/**
+ * Every call this panel makes goes through the shared client, which is the only
+ * place a single-use CSRF token is minted. A raw fetch() here sent no
+ * x-csrf-token, so every mutation from a trader profile (start copying, save
+ * settings, pause, resume) came back 403 csrf_missing: exactly the drift
+ * src/api.js exists to prevent.
+ *
+ * allowAnonymous keeps the 401 as a Response instead of a redirect, because a
+ * signed-out visitor gets this panel's own sign-in CTA rather than being thrown
+ * off the trader profile they were reading.
+ */
 async function api(path, opts = {}) {
-	const res = await fetch(path, {
-		credentials: 'include',
+	return apiFetch(path, {
+		allowAnonymous: true,
 		headers: { accept: 'application/json', ...(opts.body ? { 'content-type': 'application/json' } : {}) },
 		...opts,
 	});
-	return res;
 }
 
 export async function mountCopyPanel(el, { leaderAgentId, leaderName, network = 'mainnet' }) {
@@ -158,7 +169,7 @@ function renderActive(el, { existing, leaderName, leaderAgentId, network, drip =
 			const data = await r.json().catch(() => ({}));
 			showErr(errEl, data.error_description || 'Could not change this subscription.');
 		} catch {
-			showErr(errEl, 'Network error — try again.');
+			showErr(errEl, 'Network error. Try again.');
 		}
 		btn.disabled = false;
 		btn.textContent = label;
@@ -307,7 +318,7 @@ function renderForm(el, { leaderAgentId, leaderName, network, prefill, drip = nu
 				btn.disabled = false;
 				btn.textContent = prefill ? 'Save copy settings' : 'Start copying';
 				// A leader who has not earned a copyable record is not an error the
-				// copier can retry — show exactly what is still missing instead.
+				// copier can retry: show exactly what is still missing instead.
 				if (data.error === 'leader_not_copyable' && Array.isArray(data.eligibility?.unmet)) {
 					return showEligibility(errEl, leaderName, data.eligibility);
 				}
@@ -318,7 +329,7 @@ function renderForm(el, { leaderAgentId, leaderName, network, prefill, drip = nu
 			mountCopyPanel(el, { leaderAgentId, leaderName, network });
 		} catch {
 			btn.disabled = false; btn.textContent = prefill ? 'Save copy settings' : 'Start copying';
-			showErr(errEl, 'Network error — try again.');
+			showErr(errEl, 'Network error. Try again.');
 		}
 	});
 }
@@ -327,7 +338,7 @@ function showErr(el, msg) { el.textContent = msg; el.hidden = false; }
 
 /**
  * The copyable-bar refusal, as a checklist. A leader clears this by trading, so
- * the useful answer is which criteria are short and by how much — not "denied".
+ * the useful answer is which criteria are short and by how much, not "denied".
  */
 function showEligibility(el, leaderName, eligibility) {
 	const items = eligibility.unmet

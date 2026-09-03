@@ -268,7 +268,7 @@ async function live() {
 }
 
 // ───────────────────────── report ─────────────────────────
-console.log(`Route verify — ${catalog.length} catalog pages, ${mainRoutes.length} main routes, ${postRoutes.length} post-filesystem routes.`);
+console.log(`Route verify: ${catalog.length} catalog pages, ${mainRoutes.length} main routes, ${postRoutes.length} post-filesystem routes.`);
 console.log(`  modeled dist files: ${served.size} · canonical-covered: ${covered} · literal page routes checked for shadows: ${litChecked}`);
 console.log(`  filesystem boundary (handle:filesystem) present: ${fsIdx !== -1 ? 'yes' : 'NO'}`);
 

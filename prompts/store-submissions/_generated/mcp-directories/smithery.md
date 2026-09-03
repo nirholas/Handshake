@@ -28,13 +28,13 @@ Smithery is publisher-driven — publish by **URL** (hosted remote) or **MCPB bu
 
 | Server | Name (registry) | Connect | What it does |
 |---|---|---|---|
-| **three.ws Avatars & Agents** | `io.github.nirholas/three.ws` | `https://three.ws/api/mcp` | Render 3D avatars, validate glTF/GLB, and read on-chain agent data — the flagship three.ws server. |
+| **three.ws Avatars & Agents** | `io.github.nirholas/three.ws` | `https://three.ws/api/mcp` | Render 3D avatars, validate glTF/GLB, and read on-chain agent data. The flagship three.ws server. |
 | **three.ws 3D Studio** | `io.github.nirholas/threews-3d-studio` | `https://three.ws/api/mcp-3d` | Turn text or an image into an animation-ready GLB: generate, auto-rig, retexture, optimize. |
-| **three.ws 3D Studio (free)** | `io.github.nirholas/threews-3d-studio-free` | `https://three.ws/api/mcp-studio` | Free text/image → 3D. Five tools, no auth, no payment — forge meshes and rigged avatars on the house. |
+| **three.ws 3D Studio (free)** | `io.github.nirholas/threews-3d-studio-free` | `https://three.ws/api/mcp-studio` | Free text/image → 3D. Five tools, no auth, no payment: forge meshes and rigged avatars on the house. |
 | **three.ws Agent Wallet** | `io.github.nirholas/threews-agent` | `https://three.ws/api/mcp-agent` | Give your agent an x402 wallet: discover, pay for, and earn from services in USDC, bounded by spend caps. |
 | **three.ws x402 Bazaar** | `io.github.nirholas/threews-x402-bazaar` | `https://three.ws/api/mcp-bazaar` | Discover and price paid agent services across the live x402 facilitator network. |
 | **x402 Wallet** | `io.github.nirholas/x402-mcp` | `npx -y @three-ws/x402-mcp` | Self-custodial x402 wallet for AI agents: find, inspect, and pay any service in USDC or $THREE from your own key. |
-| **$THREE Token** | `io.github.nirholas/three-token-mcp` | `npx -y @three-ws/three-token-mcp` | Price, hold, and burn $THREE on Solana — the first MCP server whose actions burn a token. |
+| **$THREE Token** | `io.github.nirholas/three-token-mcp` | `npx -y @three-ws/three-token-mcp` | Price, hold, and burn $THREE on Solana. The first MCP server whose actions burn a token. |
 | **pump.fun Solana Data** | `io.github.nirholas/pumpfun-solana-mcp` | `npx -y @three-ws/pumpfun-mcp` | Free, read-only pump.fun + Solana MCP: token discovery, on-chain analysis, SNS, 3D snapshots. |
 | **IBM Granite x402 Remote** | `io.github.nirholas/ibm-x402-mcp-remote` | `https://three.ws/api/ibm-mcp` | Pay-per-use IBM Granite AI via x402: chat, code, embeddings, forecasting. USDC on Base or Solana. |
 
@@ -45,7 +45,7 @@ Smithery is publisher-driven — publish by **URL** (hosted remote) or **MCPB bu
 - **Registry name:** `io.github.nirholas/three.ws`
 - **Type:** Remote (Streamable HTTP) — publish by URL
 - **Connect:** `https://three.ws/api/mcp`
-- **Tagline:** Render 3D avatars, validate glTF/GLB, and read on-chain agent data — the flagship three.ws server.
+- **Tagline:** Render 3D avatars, validate glTF/GLB, and read on-chain agent data. The flagship three.ws server.
 - **Category:** 3d · **Tags:** 3d, avatars, gltf, solana, agents
 - **Description:** 3D avatars, embeds, glTF tools, agent memory, and on-chain agent identity from three.ws.
 - **Example prompts:**
@@ -71,7 +71,7 @@ Smithery is publisher-driven — publish by **URL** (hosted remote) or **MCPB bu
 - **Registry name:** `io.github.nirholas/threews-3d-studio-free`
 - **Type:** Remote (Streamable HTTP) — publish by URL
 - **Connect:** `https://three.ws/api/mcp-studio`
-- **Tagline:** Free text/image → 3D. Five tools, no auth, no payment — forge meshes and rigged avatars on the house.
+- **Tagline:** Free text/image → 3D. Five tools, no auth, no payment: forge meshes and rigged avatars on the house.
 - **Category:** 3d · **Tags:** text-to-3d, free, avatars, rigging, nvidia-nim
 - **Description:** Free text/image → 3D: generate, rig, avatar-ify, and refine GLB models. No auth, no payment.
 - **Example prompts:**
@@ -123,7 +123,7 @@ Smithery is publisher-driven — publish by **URL** (hosted remote) or **MCPB bu
 - **Registry name:** `io.github.nirholas/three-token-mcp`
 - **Type:** Local (stdio) — publish as MCPB bundle or npm
 - **Connect:** `npx -y @three-ws/three-token-mcp`
-- **Tagline:** Price, hold, and burn $THREE on Solana — the first MCP server whose actions burn a token.
+- **Tagline:** Price, hold, and burn $THREE on Solana. The first MCP server whose actions burn a token.
 - **Category:** payments · **Tags:** three, solana, burn, token, defi
 - **Description:** Price, hold, and burn $THREE on Solana — the first MCP server whose actions burn a token.
 - **Example prompts:**

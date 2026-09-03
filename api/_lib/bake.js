@@ -75,7 +75,7 @@ export function isBakeable(appearance) {
  * Bake `appearance` into a copy of the base GLB. Returns Uint8Array of the GLB.
  *
  * @param {Uint8Array|Buffer} baseGlbBytes
- * @param {object} appearance — { outfit?, accessories?, morphs?, proportions?, sculpt?, garments? }
+ * @param {object} appearance: { outfit?, accessories?, morphs?, proportions?, sculpt?, garments? }
  * @returns {Promise<Uint8Array>}
  */
 export async function bakeAppearance(baseGlbBytes, appearance) {

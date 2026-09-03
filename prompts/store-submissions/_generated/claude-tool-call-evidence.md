@@ -2,7 +2,9 @@
 
 **Connector:** `io.github.nirholas/3d-agent-mcp` — npm `@three-ws/mcp-server@1.2.0`, stdio transport.
 **Captured:** 2026-06-25 (UTC), against production `https://three.ws` for the free lane; payment challenges captured from the shipped tool surface with the built-in default payout.
-**Surface:** 17 tools — **1 free** (`forge_free`) + **16 paid** (x402 USDC on Solana mainnet, `exact` scheme).
+**Surface (2026-06-25 capture):** 17 tools, 1 free + 16 paid. **Live surface as of 2026-09-03:**
+25 tools, 5 free + 20 paid; see the re-verification at the end of this file, which supersedes the
+counts in the tables below.
 
 Methodology: every tool was driven once. Free tool → real generation. Paid tools were
 called with **no x402 payment and no review entitlement** — each must return a clean
@@ -219,3 +221,51 @@ a code defect — flagging for owner awareness, not blocking submission. If tigh
 is wanted later, the fix is architectural (move the paid-tool-bypass decision to something the
 caller cannot self-supply, e.g. an OAuth-gated remote transport instead of stdio-local env
 vars) and is out of scope for this prompt.
+
+
+---
+
+## 2026-09-03 re-verification (submission close-out)
+
+Method changed: the transcripts above were hand-driven and went stale the moment a tool
+landed. The sweep is now one command, `npm run audit:mcp-reviewer`
+([scripts/audit-mcp-reviewer-path.mjs](../../../scripts/audit-mcp-reviewer-path.mjs)), which
+spawns the published stdio server, calls every tool unpaid with schema-valid arguments, and
+fails on any challenge that is malformed, unexplained, or missing a payout field.
+
+### A. Every paid tool still answers a clean challenge, and there are four more of them
+
+`npm run audit:mcp-reviewer` on 2026-09-03: **20 of 20 paid tools returned a clean
+`PaymentRequired`**, 4 free tools ran, 1 free tool (`forge_free`) was skipped as a
+long-running generation covered by its own smoke test. Zero crashes, zero stack traces, zero
+unsubstituted payout placeholders.
+
+The four paid tools missing from the 16-row table above are `refine_model` ($0.25),
+`restyle_material` ($0.05), `agent_hire` ($0.05) and `agent_hire_discover` ($0.01); every
+price in that table still matches what the server quotes today.
+
+A note for anyone re-running this by hand: `rig_mesh`, `refine_model`, `restyle_material` and
+`pump_snapshot` constrain their inputs (a `format: uri` GLB URL, a 32-character base58 mint).
+Call them with a placeholder that fails those bounds and the MCP SDK answers `-32602` before
+the payment wrapper ever runs, and the tool reads as free. The audit script carries valid
+sample values so that cannot happen silently.
+
+### B. The reviewer entitlement works, and only with the right secret
+
+The same run mints a fresh random `MCP_REVIEW_SECRET`, starts the server with it, and calls
+`get_pose_seed` with a matching `MCP_REVIEW_MODE`: the real handler ran and returned real data
+with no charge. A third run with a deliberately mismatched `MCP_REVIEW_MODE` still got the
+paywall, so the entitlement is a gate rather than a flag. The architectural caveat in §B of the
+2026-07-08 section (a stdio caller can supply both halves itself) is unchanged and still not a
+blocker.
+
+### C. The free lane completes, but slowly
+
+A live `POST https://three.ws/api/mcp-studio tools/call forge_free` with
+`{"prompt":"a small ceramic teapot"}` returned **HTTP 200 after 147 seconds** with a real
+3,674,712-byte GLB (`glTF` magic, `model/gltf-binary`, served from `/cdn/forge/anon/`), and the
+emitted `/viewer?src=` link returned 200. So the 2026-07-08 hang is gone and the lane is
+genuinely end-to-end, but 147s is far longer than the 16.1s measured on 2026-07-15 and longer
+than most reviewer clients will wait. Re-run it immediately before filing and, if it is still
+this slow, expect the reviewer to need the guide's "this can take a couple of minutes" framing
+rather than a live demo.

@@ -90,6 +90,6 @@ try {
 	});
 	console.log('[test-gate] ✓ all critical-path tests passed');
 } catch {
-	console.error('[test-gate] ✗ critical-path tests failed — blocking deploy');
+	console.error('[test-gate] ✗ critical-path tests failed, blocking deploy');
 	process.exit(1);
 }

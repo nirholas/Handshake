@@ -6,7 +6,7 @@
 > 3d-agent@1.5.2 check:conflicts
 > node scripts/check-merge-conflicts.mjs
 
-check:conflicts — no unresolved merge-conflict markers in tracked files
+check:conflicts: no unresolved merge-conflict markers in tracked files
 
 > 3d-agent@1.5.2 check:claude
 > node scripts/check-claude-md.mjs
@@ -107,7 +107,7 @@ All cron expressions are valid (offline mode: live jobs not compared).
 > 3d-agent@1.5.2 audit:routes
 > node scripts/verify-routes.mjs --strict
 
-Route verify — 792 catalog pages, 1311 main routes, 1 post-filesystem routes.
+Route verify: 792 catalog pages, 1311 main routes, 1 post-filesystem routes.
   modeled dist files: 2935 · canonical-covered: 792 · literal page routes checked for shadows: 582
   filesystem boundary (handle:filesystem) present: yes
 
@@ -127,7 +127,7 @@ Route audit: 166 auditable page routes, 792 documented in pages.json.
 > 3d-agent@1.5.2 audit:links
 > node scripts/audit-links.mjs
 
-Link audit — scanned 2253 files
+Link audit: scanned 2253 files
 
 Broken internal links : 0
 

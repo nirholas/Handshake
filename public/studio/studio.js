@@ -845,7 +845,7 @@ function mountAgentChatExtras(wrap) {
 	wrap.appendChild(
 		boolField(
 			'responsive',
-			'Responsive width — fills its container instead of a fixed size',
+			'Responsive width: fills its container instead of a fixed size',
 			state.config.responsive === true,
 		),
 	);
@@ -1638,8 +1638,8 @@ function selectByModelUrl(url) {
 	// anything left to ask for.
 	toast(
 		URL_BAKED_TYPES.has(state.type)
-			? 'Using your hosted model — the embed snippet points straight at this URL'
-			: 'Previewing this model — pick or save an avatar from your library to publish',
+			? 'Using your hosted model: the embed snippet points straight at this URL'
+			: 'Previewing this model: pick or save an avatar from your library to publish',
 		'info',
 	);
 }

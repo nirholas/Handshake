@@ -1,5 +1,5 @@
 /**
- * Server-side proportions baker — api/_lib/bake-proportions.js.
+ * Server-side proportions baker: api/_lib/bake-proportions.js.
  *
  * The contract this file exists to protect is PARITY. Two code paths write a
  * user's build into a GLB and they must agree exactly:

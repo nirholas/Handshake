@@ -17,11 +17,11 @@
 //
 // Two guards run BEFORE any sizing (api/_lib/copy-eligibility.js), because both
 // protect money rather than shaping an intent:
-//   • DRAWDOWN BREAKER — the leader's realized peak-to-trough loss is measured
+//   • DRAWDOWN BREAKER: the leader's realized peak-to-trough loss is measured
 //     once per leader per tick; every subscription whose max_drawdown_pct it
 //     breaches is flipped to 'paused' with the reason recorded, and fans out
 //     nothing further. A copier is never mirrored into a leader's slide.
-//   • SELF-COPY — a subscription whose copier owns the leader agent is skipped.
+//   • SELF-COPY: a subscription whose copier owns the leader agent is skipped.
 //     Subscribing to your own agent is refused at the endpoint; this catches any
 //     row that predates that rule, so a wash-trade loop cannot keep firing.
 //
@@ -243,7 +243,7 @@ async function fanoutBuys(network, stats) {
 	const open = new Map(openRows.map((r) => [r.subscription_id, Number(r.open) || 0]));
 
 	// Active subscriptions for every leader in this batch, fetched once and grouped
-	// by leader_agent_id — replaces a per-position query. Self-copy rows are dropped
+	// by leader_agent_id: replaces a per-position query. Self-copy rows are dropped
 	// and drawdown-breached ones are auto-paused before anything is sized.
 	const leaderIds = [...new Set(positions.map((p) => p.agent_id))];
 	const subsByLeader = await activeSubscriptionsByLeader(leaderIds, network, stats);
@@ -268,7 +268,7 @@ async function fanoutBuys(network, stats) {
 			});
 			// Alpha-drip: price this copier's seat, apply the tier's capacity cap, and
 			// work out when the intent is revealed to them. The row itself is written
-			// in full either way — only the reveal moves.
+			// in full either way; only the reveal moves.
 			const release = decision.action === 'copy'
 				? await priceRelease({ subscription: sub, config: drips.get(pos.agent_id) || null, plannedSol: decision.order_sol, tierCache })
 				: null;
@@ -301,7 +301,7 @@ async function fanoutBuys(network, stats) {
 					spent.set(sub.id, (spent.get(sub.id) || 0) + (planned || 0));
 					open.set(sub.id, (open.get(sub.id) || 0) + 1);
 					// Telegram notify copier of the new buy intent (best-effort, async).
-					// A dripped seat stays quiet here — releaseDueDrips sends it when
+					// A dripped seat stays quiet here; releaseDueDrips sends it when
 					// the intent is actually revealed, so the alert cannot leak the
 					// coin ahead of the copier's own release time.
 					if (sub.telegram_chat_id && release?.notifyNow !== false) {
@@ -354,7 +354,7 @@ async function fanoutSells(network, stats) {
 		for (const b of buys) {
 			// Exit signals deliberately survive a pause. A subscription paused by the
 			// drawdown breaker has its BUYS frozen, but the copier is already in the
-			// position this close exits — withholding the sell intent would strand
+			// position this close exits; withholding the sell intent would strand
 			// them in the exact leader the breaker just fired on. Only a stopped
 			// subscription (the copier's own hard exit) stops mirroring exits.
 			if (!b.copy_sells || b.sub_status === 'stopped') continue;
@@ -414,7 +414,7 @@ async function fanoutOracleBuys(network, stats) {
 	const open = new Map(openRows.map((r) => [r.subscription_id, Number(r.open) || 0]));
 
 	// Active subscriptions for every acting agent in this batch, fetched once and
-	// grouped by leader_agent_id — replaces a per-action query. Same two guards as
+	// grouped by leader_agent_id: replaces a per-action query. Same two guards as
 	// the sniper path: self-copy dropped, drawdown-breached auto-paused.
 	const leaderIds = [...new Set(actions.map((a) => a.agent_id))];
 	const subsByLeader = await activeSubscriptionsByLeader(leaderIds, network, stats);
@@ -474,7 +474,7 @@ async function fanoutOracleBuys(network, stats) {
 					spent.set(sub.id, (spent.get(sub.id) || 0) + (planned || 0));
 					open.set(sub.id, (open.get(sub.id) || 0) + 1);
 					// Telegram notify copier of the new oracle-sourced buy intent (best-effort).
-					// Held back for a dripped seat — releaseDueDrips sends it on reveal.
+					// Held back for a dripped seat; releaseDueDrips sends it on reveal.
 					if (sub.telegram_chat_id && release?.notifyNow !== false) {
 						const leader = await agentName(action.agent_id);
 						sendTg(sub.telegram_chat_id, buyIntentMessage({

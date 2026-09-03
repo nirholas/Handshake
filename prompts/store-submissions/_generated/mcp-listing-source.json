@@ -18,7 +18,7 @@
     "description": "Long description body on every directory.",
     "category": "Smithery + LobeHub category; mcp.so tag group.",
     "tags": "Smithery/Glama/mcp.so/LobeHub keyword tags.",
-    "connect": "Install/connect snippet — remote URL for Smithery URL-publish; `npx` for stdio config JSON.",
+    "connect": "Install/connect snippet: remote URL for Smithery URL-publish; `npx` for stdio config JSON.",
     "examplePrompts": "LobeHub + mcp.so \"example usage\"; Smithery README examples.",
     "icon": "Card/avatar image on all directories."
   },
@@ -182,7 +182,7 @@
       "npmPackage": "@three-ws/agentcore-payments-mcp",
       "version": "0.1.4",
       "description": "Governed x402 payment sessions: pay any endpoint with budget, allowlist & per-tx caps, no key.",
-      "tagline": "Governed x402 payment sessions: pay any endpoint with a budget, allowlist, and per-tx caps — no key handling.",
+      "tagline": "Governed x402 payment sessions: pay any endpoint with a budget, allowlist, and per-tx caps, with no key handling.",
       "category": "payments",
       "tags": [
         "x402",
@@ -392,7 +392,7 @@
       "npmPackage": "@three-ws/billing-mcp",
       "version": "0.1.2",
       "description": "An agent's account economics — plan quotas, metered usage, invoices, receipts, and earnings.",
-      "tagline": "An agent's account economics — plan quotas, metered usage, invoices, receipts, and earnings.",
+      "tagline": "An agent's account economics: plan quotas, metered usage, invoices, receipts, and earnings.",
       "category": "account",
       "tags": [
         "billing",
@@ -452,7 +452,7 @@
       "npmPackage": "@three-ws/clash-mcp",
       "version": "0.1.2",
       "description": "Play three.ws Coin Clash — read the faction battle board and leaderboard, enlist, and rally.",
-      "tagline": "Play three.ws Coin Clash — read the faction battle board and leaderboard, enlist, and rally.",
+      "tagline": "Play three.ws Coin Clash: read the faction battle board and leaderboard, enlist, and rally.",
       "category": "gaming",
       "tags": [
         "game",
@@ -500,7 +500,7 @@
       "npmPackage": "@three-ws/copy-mcp",
       "version": "0.1.2",
       "description": "Manage copy-trade follows — follow leaders, tune sizing and guard rules, and track fees owed.",
-      "tagline": "Manage copy-trade follows — follow leaders, tune sizing and guard rules, and track fees owed.",
+      "tagline": "Manage copy-trade follows: follow leaders, tune sizing and guard rules, and track fees owed.",
       "category": "trading",
       "tags": [
         "copy-trading",
@@ -654,7 +654,7 @@
       "npmPackage": "@three-ws/ibm-x402-mcp",
       "version": "1.1.3",
       "description": "x402 pay-per-use IBM Granite AI: chat, code, embeddings, analysis, forecasting. Pay USDC per call.",
-      "tagline": "x402 pay-per-use IBM Granite AI over stdio: chat, code, embeddings, analysis, forecasting — pay USDC per call.",
+      "tagline": "x402 pay-per-use IBM Granite AI over stdio: chat, code, embeddings, analysis, forecasting, paying USDC per call.",
       "category": "ai-models",
       "tags": [
         "ibm",
@@ -773,7 +773,7 @@
       "npmPackage": "@three-ws/kol-mcp",
       "version": "0.1.1",
       "description": "Per-wallet KOL deep dive — a tracked trader's portfolio P&L and its trades on a given mint.",
-      "tagline": "Per-wallet KOL deep dive — a tracked trader's portfolio P&L and their trades on a given mint.",
+      "tagline": "Per-wallet KOL deep dive: a tracked trader's portfolio P&L and their trades on a given mint.",
       "category": "market-data",
       "tags": [
         "kol",
@@ -918,7 +918,7 @@
       "npmPackage": "@three-ws/notifications-mcp",
       "version": "0.1.3",
       "description": "Read the inbox, mark items read, manage delivery preferences, and register Web Push devices.",
-      "tagline": "An agent's inbox — read notifications, mark them read, manage delivery preferences, and register Web Push devices.",
+      "tagline": "An agent's inbox: read notifications, mark them read, manage delivery preferences, and register Web Push devices.",
       "category": "account",
       "tags": [
         "notifications",
@@ -978,7 +978,7 @@
       "npmPackage": "@three-ws/portfolio-mcp",
       "version": "0.1.1",
       "description": "An agent's trading state — portfolio value, PnL, live balances, trade feed, and signed transfers.",
-      "tagline": "An agent's trading state — portfolio value, PnL, live balances, trade feed, and signed transfers.",
+      "tagline": "An agent's trading state: portfolio value, PnL, live balances, trade feed, and signed transfers.",
       "category": "trading",
       "tags": [
         "portfolio",
@@ -1009,7 +1009,7 @@
       "npmPackage": "@three-ws/provenance-mcp",
       "version": "0.1.2",
       "description": "Append-only, signed, on-chain-verifiable agent action log — record and audit what agents did.",
-      "tagline": "Append-only, signed, on-chain-verifiable agent action log — record and audit what agents did.",
+      "tagline": "Append-only, signed, on-chain-verifiable agent action log: record and audit what agents did.",
       "category": "identity",
       "tags": [
         "provenance",
@@ -1127,7 +1127,7 @@
       "npmPackage": "@three-ws/three-token-mcp",
       "version": "1.1.2",
       "description": "Price, hold, and burn $THREE on Solana — the first MCP server whose actions burn a token.",
-      "tagline": "Price, hold, and burn $THREE on Solana — the first MCP server whose actions burn a token.",
+      "tagline": "Price, hold, and burn $THREE on Solana. The first MCP server whose actions burn a token.",
       "category": "payments",
       "tags": [
         "three",
@@ -1156,7 +1156,7 @@
       "npmPackage": null,
       "version": "1.0.1",
       "description": "3D avatars, embeds, glTF tools, agent memory, and on-chain agent identity from three.ws.",
-      "tagline": "Render 3D avatars, validate glTF/GLB, and read on-chain agent data — the flagship three.ws server.",
+      "tagline": "Render 3D avatars, validate glTF/GLB, and read on-chain agent data. The flagship three.ws server.",
       "category": "3d",
       "tags": [
         "3d",
@@ -1214,7 +1214,7 @@
       "npmPackage": null,
       "version": "1.0.1",
       "description": "Free text/image → 3D: generate, rig, avatar-ify, and refine GLB models. No auth, no payment.",
-      "tagline": "Free text/image → 3D. Five tools, no auth, no payment — forge meshes and rigged avatars on the house.",
+      "tagline": "Free text/image → 3D. Five tools, no auth, no payment: forge meshes and rigged avatars on the house.",
       "category": "3d",
       "tags": [
         "text-to-3d",
@@ -1417,7 +1417,7 @@
       "npmPackage": "@three-ws/vision-mcp",
       "version": "0.1.1",
       "description": "Image understanding for AI agents — analyze and describe any image via the three.ws pipeline.",
-      "tagline": "Image understanding for AI agents — analyze and describe any image via the three.ws pipeline.",
+      "tagline": "Image understanding for AI agents: analyze and describe any image via the three.ws pipeline.",
       "category": "ai-models",
       "tags": [
         "vision",

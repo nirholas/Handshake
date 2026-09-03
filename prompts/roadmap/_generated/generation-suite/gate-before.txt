@@ -6,7 +6,7 @@
 > 3d-agent@1.5.2 check:conflicts
 > node scripts/check-merge-conflicts.mjs
 
-check:conflicts — no unresolved merge-conflict markers in tracked files
+check:conflicts: no unresolved merge-conflict markers in tracked files
 
 > 3d-agent@1.5.2 check:claude
 > node scripts/check-claude-md.mjs
@@ -82,4 +82,4 @@ Error: no database in test
    Start at  07:14:56
    Duration  15.36s (transform 3.45s, setup 0ms, import 36.85s, tests 2.61s, environment 1ms)
 
-[test-gate] ✗ critical-path tests failed — blocking deploy
+[test-gate] ✗ critical-path tests failed, blocking deploy

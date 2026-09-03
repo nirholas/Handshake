@@ -1,6 +1,6 @@
 # The trading surfaces: Radar, Mission Control, Live Trade Feed, Watchlist, Coin Intelligence
 
-The platform's trading stack is spread across five public pages. Four of them are intelligence surfaces — they exist to answer "what's launching, what's real, who's winning" — and one, Mission Control, is the full cockpit where a signed-in user trades from their agent's wallet. The intelligence pages are no longer dead ends: the Coin Radar and the Live Trade Feed (along with the [Smart Money Radar](smart-money.md) and [Ghost-copy](ghost-copy.md)) each carry a [Fork](fork-trade.md) button that opens the real pump.fun trade panel for the coin you are looking at, signed by your own wallet. This doc explains what each surface is, where its numbers come from, and how they fit together.
+The platform's trading stack is spread across five public pages. Four of them are intelligence surfaces (they exist to answer "what's launching, what's real, who's winning") and one, Mission Control, is the full cockpit where a signed-in user trades from their agent's wallet. The intelligence pages are no longer dead ends: the Coin Radar and the Live Trade Feed (along with the [Smart Money Radar](smart-money.md) and [Ghost-copy](ghost-copy.md)) each carry a [Fork](fork-trade.md) button that opens the real pump.fun trade panel for the coin you are looking at, signed by your own wallet. This doc explains what each surface is, where its numbers come from, and how they fit together.
 
 The one-line map:
 
@@ -36,7 +36,7 @@ What you can do:
 - Filter by narrative category (meme / ai / tech / culture / …) and a minimum-quality slider; sort by buyers, buy volume, and more.
 - Click any coin for the detail drawer: wallet breakdown, top-trader ledger, the full signal grid, and Oracle conviction.
 - **Watch** any coin — one tap adds it to your [Watchlist](#watchlist--watchlist).
-- **[Fork](fork-trade.md)** any mainnet coin — one tap opens the real pump.fun trade panel for it, priced live, screened by the safety firewall, and signed by your own wallet. Devnet coins have no market to buy into, so they show no Fork button.
+- **[Fork](fork-trade.md)** any mainnet coin: one tap opens the real pump.fun trade panel for it, priced live, screened by the safety firewall, and signed by your own wallet. Devnet coins have no market to buy into, so they show no Fork button.
 
 The list refreshes every 12 seconds. Fully public, no account.
 

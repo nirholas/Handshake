@@ -1,8 +1,10 @@
 # Claude Connectors — reviewer setup & verification guide
 
 **Connector:** three.ws 3D Agent — `io.github.nirholas/3d-agent-mcp`
-**Package:** npm `@three-ws/mcp-server` (v1.2.0+) · **Transport:** stdio (MCP 2025-06-18)
-**Surface:** 17 tools — **1 free** (`forge_free`) + **16 paid** (x402 USDC on Solana mainnet, `exact` scheme).
+**Package:** npm `@three-ws/mcp-server` (v1.2.2+) · **Transport:** stdio (MCP 2025-06-18)
+**Surface:** 25 tools, measured live 2026-09-03 by `npm run audit:mcp-reviewer`: **5 free**
+(`forge_free`, `vanity_premium`, `crypto_news`, `crypto_news_digest`, `crypto_news_archive`) +
+**20 paid** (x402 USDC on Solana mainnet, `exact` scheme).
 
 This guide lets someone with **zero prior context** verify the whole server: connect it, run
 the free path, exercise the paid tools for real, and understand why the paid tools answer
@@ -114,7 +116,7 @@ payment you get a structured **`PaymentRequired`** — this is the correct, expe
 Every priced tool also states its price in its own description (e.g. *"Paid: $0.15 USDC"*) and
 in `tools/list` under `pricing`/`extensions.bazaar`. Prices range from **$0.0005**
 (`ens_sns_resolve`) to **$0.45** (`forge_avatar`). See
-`claude-tool-call-evidence.md` for the full per-tool table (16/16 verified clean).
+`claude-tool-call-evidence.md` for the full per-tool table (20/20 verified clean on 2026-09-03).
 
 ---
 
@@ -184,19 +186,22 @@ correct behavior across the whole surface.
 
 | Category | Tools | Unpaid | Paid / review-mode result |
 |---|---|---|---|
-| **Free 3D** | `forge_free` | *n/a — always free* | real GLB URL + viewer link |
-| **3D generation** | `text_to_avatar`, `mesh_forge`, `rig_mesh`, `forge_avatar` | clean `PaymentRequired` | GLB / rigged-GLB URL + `preview`/`poseStudioUrl` |
+| **Free 3D** | `forge_free` | *n/a, always free* | real GLB URL + viewer link |
+| **Free news** | `crypto_news`, `crypto_news_digest`, `crypto_news_archive` | *n/a, always free* | recent headlines / a digest / an archive search |
+| **Free catalog** | `vanity_premium` | *n/a, always free* | the premium vanity listings and their prices |
+| **3D generation** | `text_to_avatar`, `mesh_forge`, `rig_mesh`, `forge_avatar`, `refine_model`, `restyle_material` | clean `PaymentRequired` | GLB / rigged-GLB URL + `preview`/`poseStudioUrl` |
 | **Pose** | `get_pose_seed` | clean `PaymentRequired` | preset id + seed + `previewUrl` on three.ws/pose |
 | **Names** | `ens_sns_resolve` | clean `PaymentRequired` | resolved ENS/SNS address(es) |
 | **Market data** | `pump_snapshot`, `sentiment_pulse`, `aixbt_intel`, `aixbt_projects` | clean `PaymentRequired` | live token/market/sentiment JSON |
 | **Agents / reputation** | `agent_reputation`, `agent_delegate_action`, `agenc_list_tasks`, `agenc_get_task`, `agenc_get_agent` | clean `PaymentRequired` | on-chain reputation / AgenC task + agent reads |
+| **Agent commerce** | `agent_hire_discover`, `agent_hire` | clean `PaymentRequired` | a reputation-ranked shortlist, then a delegated result with its settlement reference |
 | **Solana utility** | `vanity_grinder` | clean `PaymentRequired` | a vanity Solana keypair/seed phrase (treat result as a secret) |
 
 ---
 
 ## 7. Verification checklist
 
-- [ ] `claude mcp add 3d-agent -- npx -y @three-ws/mcp-server` connects; `tools/list` shows 17 tools.
+- [ ] `claude mcp add 3d-agent -- npx -y @three-ws/mcp-server` connects; `tools/list` shows 25 tools.
 - [ ] `forge_free` returns a real GLB URL; `preview` opens in a browser.
 - [ ] Any paid tool, no payment → clean `PaymentRequired` (price + USDC-on-Solana + `payTo`), not a crash.
 - [ ] Re-add with `MCP_REVIEW_SECRET`/`MCP_REVIEW_MODE` (token from private notes); `get_pose_seed` returns real data; `text_to_avatar` returns a real GLB (credentialed reviewer instance).

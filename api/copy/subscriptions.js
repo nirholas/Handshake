@@ -95,7 +95,7 @@ export default wrap(async (req, res) => {
 		}
 		// Resuming an auto-paused subscription must not hand the copier a button that
 		// re-pauses on the next tick. If the breaker is still breached, refuse and say
-		// what would clear it — raise the limit, or drop it.
+		// what would clear it: raise the limit, or drop it.
 		if (body.status === 'active') {
 			const [paused] = await sql`
 				select id, network, leader_agent_id, max_drawdown_pct, paused_reason
@@ -146,10 +146,10 @@ export default wrap(async (req, res) => {
 
 	// Wash-trade guard: copying your own agent routes the performance fee back to
 	// you while inflating that leader's copier count, copied volume, and the public
-	// "earned X for being copied" figure. Refused outright — there is no legitimate
+	// "earned X for being copied" figure. Refused outright: there is no legitimate
 	// version of it, since the owner already controls the agent's own trading.
 	if (leader.user_id === userId) {
-		return error(res, 403, 'self_copy', 'You cannot copy an agent you own — you already control its trading.');
+		return error(res, 403, 'self_copy', 'You cannot copy an agent you own; you already control its trading.');
 	}
 
 	// Sybil bar: a leader needs a real, closed, on-chain track record before a

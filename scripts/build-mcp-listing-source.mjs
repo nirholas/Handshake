@@ -46,7 +46,7 @@ const FIELD_CONSUMERS = {
 	description: 'Long description body on every directory.',
 	category: 'Smithery + LobeHub category; mcp.so tag group.',
 	tags: 'Smithery/Glama/mcp.so/LobeHub keyword tags.',
-	connect: 'Install/connect snippet — remote URL for Smithery URL-publish; `npx` for stdio config JSON.',
+	connect: 'Install/connect snippet: remote URL for Smithery URL-publish; `npx` for stdio config JSON.',
 	examplePrompts: 'LobeHub + mcp.so "example usage"; Smithery README examples.',
 	icon: 'Card/avatar image on all directories.',
 };
@@ -125,7 +125,7 @@ const OVERLAY = {
 		],
 	},
 	"io.github.nirholas/three.ws": {
-		tagline: "Render 3D avatars, validate glTF/GLB, and read on-chain agent data — the flagship three.ws server.",
+		tagline: "Render 3D avatars, validate glTF/GLB, and read on-chain agent data. The flagship three.ws server.",
 		category: "3d",
 		tags: ["3d","avatars","gltf","solana","agents"],
 		examplePrompts: [
@@ -145,7 +145,7 @@ const OVERLAY = {
 		],
 	},
 	"io.github.nirholas/threews-3d-studio-free": {
-		tagline: "Free text/image → 3D. Five tools, no auth, no payment — forge meshes and rigged avatars on the house.",
+		tagline: "Free text/image → 3D. Five tools, no auth, no payment: forge meshes and rigged avatars on the house.",
 		category: "3d",
 		tags: ["text-to-3d","free","avatars","rigging","nvidia-nim"],
 		examplePrompts: [
@@ -235,7 +235,7 @@ const OVERLAY = {
 		],
 	},
 	"io.github.nirholas/agentcore-payments-mcp": {
-		tagline: "Governed x402 payment sessions: pay any endpoint with a budget, allowlist, and per-tx caps — no key handling.",
+		tagline: "Governed x402 payment sessions: pay any endpoint with a budget, allowlist, and per-tx caps, with no key handling.",
 		category: "payments",
 		tags: ["x402","sessions","budget","allowlist","payments"],
 		examplePrompts: [
@@ -305,7 +305,7 @@ const OVERLAY = {
 		],
 	},
 	"io.github.nirholas/billing-mcp": {
-		tagline: "An agent's account economics — plan quotas, metered usage, invoices, receipts, and earnings.",
+		tagline: "An agent's account economics: plan quotas, metered usage, invoices, receipts, and earnings.",
 		category: "account",
 		tags: ["billing","usage","invoices","receipts","quotas"],
 		examplePrompts: [
@@ -325,7 +325,7 @@ const OVERLAY = {
 		],
 	},
 	"io.github.nirholas/clash-mcp": {
-		tagline: "Play three.ws Coin Clash — read the faction battle board and leaderboard, enlist, and rally.",
+		tagline: "Play three.ws Coin Clash: read the faction battle board and leaderboard, enlist, and rally.",
 		category: "gaming",
 		tags: ["game","clash","factions","leaderboard","three"],
 		examplePrompts: [
@@ -342,7 +342,7 @@ const OVERLAY = {
 		],
 	},
 	"io.github.nirholas/copy-mcp": {
-		tagline: "Manage copy-trade follows — follow leaders, tune sizing and guard rules, and track fees owed.",
+		tagline: "Manage copy-trade follows: follow leaders, tune sizing and guard rules, and track fees owed.",
 		category: "trading",
 		tags: ["copy-trading","follow","sizing","guards","solana"],
 		examplePrompts: [
@@ -362,7 +362,7 @@ const OVERLAY = {
 		],
 	},
 	"io.github.nirholas/ibm-x402-mcp": {
-		tagline: "x402 pay-per-use IBM Granite AI over stdio: chat, code, embeddings, analysis, forecasting — pay USDC per call.",
+		tagline: "x402 pay-per-use IBM Granite AI over stdio: chat, code, embeddings, analysis, forecasting, paying USDC per call.",
 		category: "ai-models",
 		tags: ["ibm","granite","x402","usdc","llm"],
 		examplePrompts: [
@@ -382,7 +382,7 @@ const OVERLAY = {
 		],
 	},
 	"io.github.nirholas/kol-mcp": {
-		tagline: "Per-wallet KOL deep dive — a tracked trader's portfolio P&L and their trades on a given mint.",
+		tagline: "Per-wallet KOL deep dive: a tracked trader's portfolio P&L and their trades on a given mint.",
 		category: "market-data",
 		tags: ["kol","wallet","pnl","trades","solana"],
 		examplePrompts: [
@@ -422,7 +422,7 @@ const OVERLAY = {
 		],
 	},
 	"io.github.nirholas/notifications-mcp": {
-		tagline: "An agent's inbox — read notifications, mark them read, manage delivery preferences, and register Web Push devices.",
+		tagline: "An agent's inbox: read notifications, mark them read, manage delivery preferences, and register Web Push devices.",
 		category: "account",
 		tags: ["notifications","inbox","web-push","preferences","agents"],
 		examplePrompts: [
@@ -432,7 +432,7 @@ const OVERLAY = {
 		],
 	},
 	"io.github.nirholas/portfolio-mcp": {
-		tagline: "An agent's trading state — portfolio value, PnL, live balances, trade feed, and signed transfers.",
+		tagline: "An agent's trading state: portfolio value, PnL, live balances, trade feed, and signed transfers.",
 		category: "trading",
 		tags: ["portfolio","pnl","balances","transfers","solana"],
 		examplePrompts: [
@@ -442,7 +442,7 @@ const OVERLAY = {
 		],
 	},
 	"io.github.nirholas/provenance-mcp": {
-		tagline: "Append-only, signed, on-chain-verifiable agent action log — record and audit what agents did.",
+		tagline: "Append-only, signed, on-chain-verifiable agent action log: record and audit what agents did.",
 		category: "identity",
 		tags: ["provenance","audit","signed","on-chain","agents"],
 		examplePrompts: [
@@ -482,7 +482,7 @@ const OVERLAY = {
 		],
 	},
 	"io.github.nirholas/three-token-mcp": {
-		tagline: "Price, hold, and burn $THREE on Solana — the first MCP server whose actions burn a token.",
+		tagline: "Price, hold, and burn $THREE on Solana. The first MCP server whose actions burn a token.",
 		category: "payments",
 		tags: ["three","solana","burn","token","defi"],
 		examplePrompts: [
@@ -522,7 +522,7 @@ const OVERLAY = {
 		],
 	},
 	"io.github.nirholas/vision-mcp": {
-		tagline: "Image understanding for AI agents — analyze and describe any image via the three.ws pipeline.",
+		tagline: "Image understanding for AI agents: analyze and describe any image via the three.ws pipeline.",
 		category: "ai-models",
 		tags: ["vision","image","analysis","captioning","ai"],
 		examplePrompts: [
@@ -642,7 +642,7 @@ const rendered = `${JSON.stringify(doc, null, 2)}\n`;
 
 if (missingCopy.length) {
 	for (const name of missingCopy) {
-		console.error(`[mcp-listing-source] no curated listing copy for ${name} — add it to OVERLAY`);
+		console.error(`[mcp-listing-source] no curated listing copy for ${name}. Add it to OVERLAY`);
 	}
 	process.exit(1);
 }
@@ -650,7 +650,7 @@ if (missingCopy.length) {
 if (CHECK) {
 	const current = existsSync(OUT) ? readFileSync(OUT, 'utf8') : '';
 	if (current !== rendered) {
-		console.error('[mcp-listing-source] out of date — run node scripts/build-mcp-listing-source.mjs');
+		console.error('[mcp-listing-source] out of date. Run node scripts/build-mcp-listing-source.mjs');
 		process.exit(1);
 	}
 	console.log(`[mcp-listing-source] up to date: ${doc.counts.total} servers (${doc.counts.remote} remote, ${doc.counts.stdio} stdio)`);

@@ -77,7 +77,7 @@ const closed = filesWithMarker(CLOSE);
 const conflicted = [...opened].filter((f) => basename(f) !== self).sort();
 
 if (!conflicted.length) {
-	console.log('check:conflicts — no unresolved merge-conflict markers in tracked files');
+	console.log('check:conflicts: no unresolved merge-conflict markers in tracked files');
 	process.exit(0);
 }
 

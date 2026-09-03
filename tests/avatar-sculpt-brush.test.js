@@ -1,5 +1,5 @@
 /**
- * Free sculpt — src/avatar-sculpt-brush.js, src/avatar-sculpt-doc.js and
+ * Free sculpt: src/avatar-sculpt-brush.js, src/avatar-sculpt-doc.js and
  * api/_lib/bake-sculpt.js.
  *
  * The guarantee under test is the round trip. A brush stroke has to survive:

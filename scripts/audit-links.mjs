@@ -616,7 +616,7 @@ if (AS_JSON) {
 	console.log(JSON.stringify(report, null, 2));
 } else {
 	const line = (s = '') => console.log(s);
-	line(`Link audit — scanned ${findings.scanned} files`);
+	line(`Link audit: scanned ${findings.scanned} files`);
 	line('');
 	line(`Broken internal links : ${findings.brokenInternal.length}`);
 	for (const b of findings.brokenInternal.slice(0, 60)) line(`  ✗ ${b.value}  (${b.kind})  — ${b.file}:${b.line}`);
