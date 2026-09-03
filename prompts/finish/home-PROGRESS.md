@@ -42,7 +42,7 @@ One section per finished order, newest at the bottom:
 | 10 add-on relay | open | |
 | 11 security | open | |
 | 12 households and RBAC | open | |
-| 13 observability | open | |
+| 13 observability | partial, see entry below | |
 | 14 reliability and scale | open | |
 | 15 privacy and retention | open | |
 | 16 test program | open | |
@@ -334,3 +334,71 @@ cold-start break. `api/_lib/db.js` exports `sql` as a Proxy whose tagged-templat
 lazy fragment and never touches Neon, so `store.js`'s top-level `SAFE_COLUMNS` fragment is the
 house idiom. Those tests mock `db.js` with a `sql` that throws on any call, and the lane newly
 pulled `api/_lib/home/*` into the healthz import graph. Broken tests, working handler.
+
+## 13. Observability, SLOs, alerting, incident runbook (2026-09-03) [PARTIAL]
+
+**Shipped:** the `home` subsystem now scores the whole lane across tenants and appears in
+`gatherSubsystemHealth`, so it reaches `/api/healthz`, `/api/status`, `/status` and the
+uptime cron's escalation without a second health endpoint
+(`api/_lib/ops/home-health.js`). `api/cron/home-health-alert.js` runs every 5 minutes and
+sends exactly three alerts: correlated unreachability, a confirmation-integrity violation,
+and a subscriber leak. A per-tenant failure sends nothing, ever.
+`docs/ops/home-operations.md` carries the SLOs, the three alert runbooks, the four
+per-tenant reports that must never page, and the correlation query; every command and query
+in it was run before it was written down. `api/home/[id]/call.js` now stamps our own leg of
+every action so the latency SLO has data. 28 tests in `tests/home-integrity.test.js`.
+
+**Measured:** three findings that only came from running it against real rows and the real
+runtime, each of which would have shipped a broken alert:
+
+1. **The integrity invariant fired twice on lawful traffic.** Both rows were `lock.unlock`
+   with `confirmed_by` null and `detail.allowed_by_grant` true: the user had granted a
+   standing per-entity allowance, so the gate cleared it through the allow list and nobody
+   was asked again. As specified, this Sev 1 would have paged on every grant-backed unlock
+   in the fleet. It now excludes grant-backed actions, counts them separately
+   (`integrity.grantBacked`), and reports the ones whose grant no longer exists without
+   alerting.
+2. **The subscriber-leak signal could never fire.** It was specified as the margin between
+   registered subscribers and open streams, but `subscribe()` registers the subscriber and
+   admits the stream in one call, so the counters move in lockstep by construction. Six
+   deliberately leaked subscriptions against the real runtime produced `margins=[0,0,0]`.
+   The detector now watches the absolute count climbing across three checks while open
+   connections do not, above four watchers per connection; the same six leaked
+   subscriptions fire it on the third check and clear it on release.
+3. **Two rates had no cross-tenant guard at all**, which is the whole premise of the lane.
+   Action failures confined to one home now cap at `degraded` with a hint naming that house,
+   and neither the action rate nor the confirmation expiry rate is scored on a thin window
+   (`MIN_ACTIONS_FOR_A_VERDICT` 20, `MIN_CONFIRMATIONS_FOR_A_VERDICT` 10). Before that, 2
+   failures out of 27 and 3 expired prompts out of 4 took the whole subsystem down.
+
+Alert proofs, all against the real database with the synthetic rows removed afterwards and
+verified gone: 12 synthetic homes pointed at a dead address moved handshakes to 33.3% over
+15 homes and the cron fired `correlated_unreachability` through its real gate; a synthetic
+guarded-without-confirmation row took the subsystem from ok to down and back. Pre-launch
+baseline: 14 connected homes, 30 actions across 5 homes, p95 our-leg latency 412 ms on the
+one action that carried a timing at the time.
+
+**Deviations:** the runbook is `docs/ops/home-operations.md`, not `docs/home-operations.md`,
+because every operational runbook here lives in `docs/ops/` and that directory is
+deliberately excluded from the public site build. It is indexed in `docs/ops/README.md`
+rather than `docs/start-here.md` for the same reason. Every pointer at the old path was
+updated, including the one already left in `api/_lib/home/admission.js`.
+
+**Left open:** two of the order's tasks.
+- **Task 6, the per-tenant status surface** (`src/home/manage.js`). The home surface was
+  still being built by concurrent sessions and there is no page to wire it into; adding the
+  module now would be a dead path. Owner: whoever closes order 05.
+- **The Cloud Scheduler job.** The cron is declared in `vercel.json` (crons 112 to 113,
+  CLAUDE.md updated) but `check:cron-drift` lists it as never synced, along with four
+  pre-existing ones. Creating it needs `node scripts/create-gcp-scheduler.mjs` after the
+  next deploy, and deploys are owner-gated.
+- Production `/api/healthz` does not carry the `home` block yet, for the same reason: it
+  needs the owner-gated deploy.
+
+**Not mine, observed:** `tests/home-runtime.test.js` had 24 failures at the time of writing,
+because its cases use `https://home.example.com` and the SSRF guard added alongside it
+resolves DNS for real and refuses an unroutable host. `createHomeRuntime` already accepts a
+`resolveDial` dep; the tests need to inject it. Left alone because that file was being
+edited live.
+
+**Commits:** 13e62503e, 3e5cbda8e, e38f809f9, 5c8bda6b6, 9d32efeb3, 3357c7dae, 013cf631c.
