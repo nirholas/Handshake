@@ -33,6 +33,11 @@ const EXTRA_HIGH_TRAFFIC = [
 	'/nvidia',
 	'/pricing',
 	'/irl',
+	// The Home Assistant lane. A voice-controlled house is assistive technology
+	// for the people most likely to need it, so /smart-home carries the same
+	// hard WCAG floor as the marketing surfaces above it and never rides on its
+	// own priority score staying high enough to land in the top 30.
+	'/smart-home',
 ];
 const coveredPaths = new Set(top30.map((p) => p.path));
 const extraPages = allPages.filter(

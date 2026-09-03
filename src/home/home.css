@@ -14,7 +14,14 @@
 	--hm-panel: rgba(255, 255, 255, 0.032);
 	--hm-panel-2: rgba(255, 255, 255, 0.055);
 	--hm-ink-2: rgba(255, 255, 255, 0.62);
-	--hm-ink-3: rgba(255, 255, 255, 0.42);
+	/* 0.48, not 0.42. --hm-ink-3 is the muted ink behind nine small-text styles
+	   (the eyebrow, hints, placeholders, stat labels, row meta), and every one of
+	   them is under 18.66px, so WCAG AA asks 4.5:1 of all of them. At 0.42 it
+	   measured 4.05:1 on the page and 4.08:1 on --hm-panel-2, which is the
+	   failure axe reports as color-contrast on .hm-eyebrow. 0.48 measures 4.95:1
+	   against the darkest-text case (--hm-panel-2 over the page), leaving room
+	   for the tinted panels to move without dropping back under the line. */
+	--hm-ink-3: rgba(255, 255, 255, 0.48);
 	--hm-live: #2fbf71;
 	--hm-stale: #e0a33a;
 	--hm-down: #e05a4a;
@@ -28,7 +35,11 @@
 	--hm-panel: rgba(0, 0, 0, 0.024);
 	--hm-panel-2: rgba(0, 0, 0, 0.05);
 	--hm-ink-2: rgba(0, 0, 0, 0.66);
-	--hm-ink-3: rgba(0, 0, 0, 0.46);
+	/* Light needed more headroom than dark, and it never showed up in CI: the
+	   axe gate runs the page in its default dark theme, so this one was only
+	   measurable by pinning data-theme. At 0.46 it read 3.40:1 on --hm-panel-2,
+	   further under AA than the dark theme ever was. 0.58 measures 5.16:1. */
+	--hm-ink-3: rgba(0, 0, 0, 0.58);
 	--hm-idle: rgba(0, 0, 0, 0.3);
 }
 
