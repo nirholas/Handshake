@@ -293,7 +293,11 @@ export function configError(message) {
  */
 export function isFatalAuthFailure(err) {
 	return Boolean(
-		err?.isConfigError || err?.status === 401 || err?.status === 402 || err?.status === 403,
+		err?.isConfigError ||
+			err?.isQuotaExhausted ||
+			err?.status === 401 ||
+			err?.status === 402 ||
+			err?.status === 403,
 	);
 }
 
@@ -661,6 +665,10 @@ async function callBackendWithRetry(call, langName, payload, attempt = 0) {
 			await new Promise((r) => setTimeout(r, wait));
 			return callBackendWithRetry(call, langName, payload, attempt + 1);
 		}
+		// A 429 that survives the full backoff budget is a spent quota, not one
+		// bad key. Mark it so the caller aborts instead of splitting down to
+		// single keys and baking English over every key the run had left.
+		if (err.status === 429) err.isQuotaExhausted = true;
 		throw err;
 	}
 }
@@ -771,12 +779,23 @@ async function translateLocale(code) {
 		}
 		for (const k of keys) {
 			const val = out[k];
+			const src = getDeep(source, k);
 			if (typeof val !== 'string') {
 				console.warn(`  ! ${code} ${k}: model omitted key, keeping source`);
-				translatedFlat[k] = getDeep(source, k);
+				translatedFlat[k] = src;
 				continue;
 			}
-			translatedFlat[k] = masker.unmask(val, tokenMap[k]);
+			const unmasked = masker.unmask(val, tokenMap[k]);
+			// An empty reply for a non-empty source is the model dropping the
+			// value, not a translation. Writing it through is what put 501 empty
+			// strings in the catalog: lint then reads them as untranslated
+			// forever and the runtime renders a blank label. Keep the source.
+			if (!unmasked.trim() && String(src ?? '').trim()) {
+				console.warn(`  ! ${code} ${k}: model returned an empty value, keeping source`);
+				translatedFlat[k] = src;
+				continue;
+			}
+			translatedFlat[k] = unmasked;
 		}
 		done += keys.length;
 		if (cfg.saveImmediately) persist(code, existing, translatedFlat);

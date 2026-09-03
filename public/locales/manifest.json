@@ -7,11 +7,6 @@
 			"dir": "ltr"
 		},
 		{
-			"code": "es",
-			"name": "Español",
-			"dir": "ltr"
-		},
-		{
 			"code": "zh-CN",
 			"name": "简体中文",
 			"dir": "ltr"
