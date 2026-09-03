@@ -25944,6 +25944,16 @@
 				"docs"
 			],
 			"link": "/docs/smart-home"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "Your home tells you when it stops answering, and whether the problem is ours",
+			"summary": "When a connected house goes quiet, the manage page now says what happened and what to do about it, without you having to ask anyone. It names the real reason the handshake failed, separates a Home Assistant that rejected our token (make a new one) from a Home Assistant we cannot reach at all (check the instance), and keeps the last room state on screen instead of emptying the page. The part that matters most: it tells you whose problem it is. If enough other homes are failing at the same moment, it says so plainly and tells you there is nothing for you to do, so nobody spends an evening rebooting a router that was never broken. A house that already looks unhealthy loads the explanation on its own; a house that looks fine keeps its panel closed until you open it, so nothing extra is fetched for homes that are working.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/smart-home"
 		}
 	]
 }

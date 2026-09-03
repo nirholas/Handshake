@@ -157,15 +157,30 @@ describe('actions', () => {
 		expect(verdict.detail).toContain('10 failed');
 	});
 
-	it('does not down the platform for failures confined to one house', () => {
+	it('does not move the aggregate at all for failures confined to one house', () => {
 		// One home whose Z-Wave stick fell out fails everything sent to it. That is
 		// that house, and paging for it is paging for a loose USB port.
+		//
+		// `degraded` is not a safe middle ground here: api/cron/uptime-check.js
+		// escalates a degraded subsystem exactly like a down one and re-pages it
+		// roughly hourly for as long as it lasts. So the only status that keeps the
+		// promise this file is named for is `ok`, with the failure still stated in
+		// the detail for anyone reading it.
 		const verdict = homeHealthVerdict(
 			healthy({ actions: { total: 100, ok: 88, refused: 0, failed: 12, homes: 25, failedHomes: 1, rate: 0.88, timed: 100, p95LatencyMs: 300 } }),
 		);
-		expect(verdict.status).toBe('degraded');
+		expect(verdict.status).toBe('ok');
 		expect(verdict.detail).toContain('12 failed in 1 home (that house, not us)');
-		expect(verdict.hint).toContain('confined to one home');
+	});
+
+	it('starts scoring again as soon as a second house is failing', () => {
+		// The line between "that house" and "us" is drawn at two, so the fix above
+		// cannot be mistaken for switching action scoring off.
+		const verdict = homeHealthVerdict(
+			healthy({ actions: { total: 100, ok: 88, refused: 0, failed: 12, homes: 25, failedHomes: 2, rate: 0.88, timed: 100, p95LatencyMs: 300 } }),
+		);
+		expect(verdict.status).toBe('down');
+		expect(verdict.hint).toContain('more than one home');
 	});
 
 	it('does not score a thin window at all', () => {

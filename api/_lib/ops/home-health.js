@@ -397,11 +397,24 @@ export function homeHealthVerdict(s) {
 	// It has to be thin traffic or one house before it stops counting, never both
 	// ignored: real correlated breakage shows up across homes and at volume.
 	const actionsScoreable = s.actions.rate !== null && s.actions.total >= MIN_ACTIONS_FOR_A_VERDICT;
-	const actionStatus = !actionsScoreable
+	// Failures confined to ONE home do not move this verdict at all, and that is
+	// stronger than it first looks. Capping them at `degraded` was not enough:
+	// api/cron/uptime-check.js escalates `degraded` exactly like `down` and
+	// re-pages roughly hourly for as long as it lasts, so a single user whose
+	// Z-Wave stick fell out would page an operator every hour indefinitely. That
+	// is the alert-fatigue failure this whole module exists to prevent, arriving
+	// through the status field instead of through an alert.
+	//
+	// Measured, not reasoned: on 2026-09-03 the live fleet sat at `degraded` from
+	// 1 failed action out of 23, in 1 home out of 25 connected.
+	//
+	// The failure is not swallowed. It stays in `detail` below, it is in that
+	// home's own action log, and GET /api/home/:id/health tells its owner
+	// directly. A per-tenant fault has an audience of exactly one, and it is not
+	// the operator.
+	const actionStatus = !actionsScoreable || s.actions.failedHomes <= 1
 		? 'ok'
-		: s.actions.failedHomes <= 1
-			? worst('ok', rateStatus(s.actions.rate, ACTION_DEGRADED, 0))
-			: rateStatus(s.actions.rate, ACTION_DEGRADED, ACTION_DOWN);
+		: rateStatus(s.actions.rate, ACTION_DEGRADED, ACTION_DOWN);
 	const decidedConfirmations = s.confirmations.redeemed + s.confirmations.expired;
 	const expiryStatus = s.confirmations.expiryRate === null || decidedConfirmations < MIN_CONFIRMATIONS_FOR_A_VERDICT
 		? 'ok'
@@ -445,9 +458,7 @@ export function homeHealthVerdict(s) {
 			: handshakeStatus !== 'ok'
 				? 'Handshakes are failing across tenants, which is almost always us: a deploy, an egress change or a DNS fault. Run the correlation query in docs/ops/home-operations.md before touching anything.'
 				: actionStatus !== 'ok'
-					? (s.actions.failedHomes <= 1
-						? 'Action failures are confined to one home, so this is that house rather than the platform. Read its status_detail and its own action log before looking anywhere else.'
-						: 'Actions are failing across homes. Group home_action_log by outcome and detail->>\'code\' to see whether this is one error or many.')
+					? 'Actions are failing across more than one home, so this is not one house having a bad day. Group home_action_log by outcome and detail->>\'code\' to see whether this is one error or many.'
 					: expiryStatus !== 'ok'
 						? 'Confirmations are timing out rather than being answered. That is a UI failure, not user hesitation: check that the confirm prompt is reaching the surface the user is actually on.'
 						: latencyStatus !== 'ok'
