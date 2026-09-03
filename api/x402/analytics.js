@@ -37,6 +37,7 @@ import { solUsdPrice } from '../_lib/avatar-wallet.js';
 import { buildSniperAnalytics } from '../_lib/x402/sniper-analytics-store.js';
 import { computeUserActivity, normalizePeriod } from '../_lib/x402/user-activity-analytics.js';
 import { getPaymentStats } from '../_lib/x402/audit-log.js';
+import { revenueSplit } from '../_lib/x402/revenue-split.js';
 
 const ROUTE = '/api/x402/analytics';
 
@@ -578,6 +579,15 @@ async function volumeReport(seconds) {
 		.sort((a, b) => a.count - b.count || Number(a.volume) - Number(b.volume))
 		.slice(0, UNDERUSED_LIMIT);
 
+	// The totals above are GROSS: they include the x402 ring, the closed
+	// dogfooding loop in which platform-controlled wallets pay platform
+	// endpoints on a cron. That traffic is the overwhelming majority of settled
+	// volume, so a buyer reading total_usdc_paid as "three.ws revenue" would be
+	// reading our own money back to us. `revenue_split` states which share is
+	// external, and folds a soft failure to null rather than guessing, because a
+	// missing split is honest where a fabricated one is not.
+	const revenueSplitBlock = await buildRevenueSplit(since);
+
 	return {
 		total_calls: stats.total_payments || 0,
 		total_usdc_paid: stats.total_volume_usdc || '0.000000',
@@ -588,7 +598,37 @@ async function volumeReport(seconds) {
 		by_endpoint: byEndpoint,
 		by_network: stats.by_network || [],
 		underused_endpoints: underused,
+		revenue_split: revenueSplitBlock,
 	};
+}
+
+// Compact the full split (api/_lib/x402/revenue-split.js) down to what a paid
+// buyer needs: the three buckets and whether the classification is trustworthy.
+// Route-level external attribution stays internal to the readout script; it
+// names the endpoints our few real buyers touched, which is our commercial
+// detail rather than the buyer's.
+async function buildRevenueSplit(since) {
+	try {
+		const split = await revenueSplit({ since });
+		const bucket = (b) => ({
+			calls: b.calls,
+			volume_usdc: b.volume_usdc,
+			unique_payers: b.unique_payers,
+			share_of_calls: b.share_of_calls,
+		});
+		return {
+			confident: split.confident,
+			confidence_note: split.confidence_note,
+			external: bucket(split.external),
+			internal_ring: bucket(split.internal),
+			synthetic: bucket(split.synthetic),
+		};
+	} catch {
+		// A split we cannot compute is reported as absent. The gross totals above
+		// remain accurate on their own terms; what is unavailable is the
+		// interpretation, and inventing one is the failure mode this guards.
+		return null;
+	}
 }
 
 export default paidEndpoint({

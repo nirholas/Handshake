@@ -3596,6 +3596,13 @@ const SELF_ENDPOINTS = [
 			underused_endpoints: Array.isArray(r?.underused_endpoints)
 				? r.underused_endpoints.map((e) => e?.route).filter(Boolean)
 				: [],
+			// total_usdc_paid above is gross, and this loop is itself the source
+			// of nearly all of it. Lifting the external share into the same
+			// signal keeps the ring's own journal from reading as revenue:
+			// null means the split was unavailable, not that it was zero.
+			external_usdc: r?.revenue_split?.external?.volume_usdc ?? null,
+			external_payers: r?.revenue_split?.external?.unique_payers ?? null,
+			split_confident: r?.revenue_split?.confident ?? null,
 		}),
 	},
 

@@ -201,6 +201,7 @@
 		"smoke:agent-wallet": "node scripts/agent-wallet-smoke.mjs",
 		"audit:mcp": "node scripts/audit-mcp-manifests.mjs",
 		"smoke:mcp": "node scripts/smoke-mcp-remotes.mjs",
+		"readout:revenue": "node scripts/x402-revenue-readout.mjs",
 		"test:mcp": "node scripts/test-mcp-all.mjs",
 		"audit:pages": "node scripts/audit-page-index.mjs --strict",
 		"audit:meetup": "node scripts/meetup-audit.mjs",

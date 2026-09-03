@@ -26,6 +26,15 @@ const SAMPLE = {
 		{ route: '/api/x402/did', count: 1, volume: '0.001000' },
 		{ route: '/api/x402/model-check', count: 30, volume: '0.030000' },
 	],
+	// The gross totals above are almost entirely the ring paying itself, so the
+	// report carries the external/internal split alongside them.
+	revenue_split: {
+		confident: true,
+		confidence_note: null,
+		external: { calls: 4, volume_usdc: '0.004000', unique_payers: 3, share_of_calls: 0.003115 },
+		internal_ring: { calls: 1278, volume_usdc: '12.834000', unique_payers: 33, share_of_calls: 0.995327 },
+		synthetic: { calls: 2, volume_usdc: '0.002000', unique_payers: 1, share_of_calls: 0.001558 },
+	},
 };
 
 describe('autonomous registry — analytics-x402-volume entry', () => {
@@ -72,5 +81,22 @@ describe('autonomous registry — analytics-x402-volume entry', () => {
 		expect(sig.unique_payers).toBe(0);
 		expect(sig.top_endpoint).toBeNull();
 		expect(sig.underused_endpoints).toEqual([]);
+	});
+
+	it('extractSignal carries the external share so the journal is not read as revenue', () => {
+		const sig = entry.extractSignal(SAMPLE);
+		expect(sig.external_usdc).toBe('0.004000');
+		expect(sig.external_payers).toBe(3);
+		expect(sig.split_confident).toBe(true);
+	});
+
+	it('extractSignal reports an unavailable split as null, never as zero revenue', () => {
+		// A missing split means "we could not classify", which is a different
+		// claim from "no external revenue". Collapsing the two would let a
+		// degraded run look like a confident zero.
+		const sig = entry.extractSignal({ total_calls: 12 });
+		expect(sig.external_usdc).toBeNull();
+		expect(sig.external_payers).toBeNull();
+		expect(sig.split_confident).toBeNull();
 	});
 });

@@ -158,6 +158,35 @@ automatically (and `tests/x402-ring-catalog.test.js` fails until it is cataloged
 > [Circulation engine](circulation-engine.md), real `agent_hire` commerce,
 > discovery), not a heavier self-paid sweep.
 
+**Excluding it is mechanical, not a matter of remembering to.**
+`api/_lib/x402/revenue-split.js` classifies every settled payment in
+`x402_audit_log` into three buckets by payer: `internal` (any
+platform-controlled wallet, resolved through `ringAllowedAddresses()`),
+`synthetic` (a payer string that is not a plausible on-chain address at all, such
+as the literal `PAYER` written by replay-test paths), and `external` (a real
+address we do not control). Only the last one is revenue.
+
+```bash
+npm run readout:revenue                 # trailing 30 days
+npm run readout:revenue -- --window all # all time
+npm run readout:revenue -- --json       # machine-readable
+```
+
+The same split ships as `revenue_split` on the `x402_volume` report of the paid
+`/api/x402/analytics` endpoint, so a buyer reading `total_usdc_paid` can see what
+share of it is our own money, and the volume loop's own
+`x402_autonomous_log.signal_data` now carries `external_usdc` beside the gross
+figure.
+
+The classification is deliberately conservative in one direction. If the
+controlled-wallet registry (`x402_ring_wallets`) returns no enabled rows, the
+ring's own wallets would be classified as external customers and the headline
+number would inflate. The split reports `confident: false` with the reason
+instead, and the readout script exits 2 rather than printing a figure it cannot
+stand behind. An unavailable split is reported as `null`, never as a confident
+zero: "we could not classify" and "there was no external revenue" are different
+claims.
+
 ## The Datapoint Fabric Volume Sweep
 
 One registry entry — `datapoint-volume-sweep`, pipeline `datapoint`, cooldown
