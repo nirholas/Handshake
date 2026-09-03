@@ -502,6 +502,51 @@ function ensureProportionCss() {
 			padding: 2px 7px;
 			border-radius: 999px;
 		}
+
+		/* Free sculpt */
+		.ae-brush-toggle {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			font-size: 12px;
+			color: var(--text-2, var(--text));
+			cursor: pointer;
+			padding: 4px 0;
+		}
+		.ae-brush-toggle input { accent-color: var(--accent); cursor: pointer; }
+		.ae-brush-modes { display: flex; gap: 6px; margin: 2px 0 4px; }
+		.ae-brush-mode {
+			flex: 1 1 0;
+			padding: 7px 8px;
+			font: inherit;
+			font-size: 12px;
+			font-weight: 600;
+			color: var(--text-2, var(--text));
+			background: var(--panel);
+			border: 1px solid var(--border-2);
+			border-radius: 8px;
+			cursor: pointer;
+			transition: background 0.12s, border-color 0.12s, color 0.12s;
+		}
+		.ae-brush-mode:hover { border-color: var(--text-3); }
+		.ae-brush-mode:focus-visible {
+			outline: none;
+			box-shadow: 0 0 0 2px var(--accent-dim, rgba(255, 255, 255, 0.14));
+		}
+		.ae-brush-mode[aria-pressed='true'] {
+			background: var(--accent);
+			border-color: var(--accent);
+			color: var(--accent-ink, #000);
+		}
+		.ae-brush-foot {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 10px;
+			margin-top: 6px;
+		}
+		.ae-brush-status { font-size: 11px; color: var(--text-3); min-width: 0; }
+		.ae-brush-clear:disabled { opacity: 0.45; cursor: not-allowed; }
 	`;
 	document.head.appendChild(style);
 }
@@ -760,6 +805,186 @@ function wireFilter(container) {
 		e.stopPropagation();
 		input.value = '';
 		apply();
+	});
+}
+
+
+/* ────────────────────────────────────────────────────────────────────────── *
+ * Free sculpt: the brush group.
+ *
+ * The library sliders and the proportion table are both catalogues. This is the
+ * escape hatch from them, so it sits at the top of the panel rather than buried
+ * under three hundred sliders. It only renders when the host handed us a
+ * viewport, because a brush with no canvas to paint on would be a dead control.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+let _brush = null;
+let _brushParams = { ...BRUSH_DEFAULTS };
+
+/** Drop the live brush: canvas listeners, cursor ring, rig pause. */
+function teardownBrush() {
+	if (!_brush) return;
+	_brush.viewport?.setPaused?.(false);
+	_brush.instance.dispose();
+	_brush = null;
+}
+
+function freeSculptGroupHtml(viewport, working) {
+	if (!viewport?.camera || !viewport?.domElement) return '';
+	const p = _brushParams;
+	const r = BRUSH_LIMITS.radius;
+	const st = BRUSH_LIMITS.strength;
+	const recorded = sculptVertexCount(working.sculpt);
+	return `
+		<details class="ae-sculpt-group ae-brush-group" open>
+			<summary>
+				<span>Free Sculpt</span>
+				<span class="ae-sculpt-edited" data-edited="${recorded}"${recorded ? '' : ' hidden'}>${recorded} points</span>
+				<span class="ae-sculpt-count">brush</span>
+			</summary>
+			<div class="ae-sculpt-rows">
+				<p class="ae-prop-note">
+					Drag on the avatar to push or pull the surface. Dragging the
+					background still orbits the camera. Playback pauses while the
+					brush is on so the mesh holds still under your cursor.
+				</p>
+				<label class="ae-brush-toggle">
+					<input type="checkbox" id="ae-brush-enable">
+					<span>Brush on</span>
+				</label>
+				<div class="ae-brush-modes" role="group" aria-label="Brush direction">
+					<button type="button" class="ae-brush-mode" data-direction="1"
+					        aria-pressed="${p.direction > 0}">Pull out</button>
+					<button type="button" class="ae-brush-mode" data-direction="-1"
+					        aria-pressed="${p.direction < 0}">Push in</button>
+				</div>
+				<div class="ae-sculpt-row ae-prop-row">
+					<div class="ae-sculpt-label"><span class="ae-sculpt-name">Size</span></div>
+					<input type="range" id="ae-brush-radius"
+					       min="${r.min}" max="${r.max}" step="${r.step}" value="${p.radius}"
+					       aria-label="Brush size in centimetres">
+					<output class="ae-sculpt-value" id="ae-brush-radius-out">${(p.radius * 100).toFixed(1)} cm</output>
+				</div>
+				<div class="ae-sculpt-row ae-prop-row">
+					<div class="ae-sculpt-label"><span class="ae-sculpt-name">Strength</span></div>
+					<input type="range" id="ae-brush-strength"
+					       min="${st.min}" max="${st.max}" step="${st.step}" value="${p.strength}"
+					       aria-label="Brush strength in millimetres per stroke">
+					<output class="ae-sculpt-value" id="ae-brush-strength-out">${(p.strength * 1000).toFixed(1)} mm</output>
+				</div>
+				<label class="ae-brush-toggle">
+					<input type="checkbox" id="ae-brush-symmetry" ${p.symmetry ? 'checked' : ''}>
+					<span>Symmetry</span>
+				</label>
+				<div class="ae-brush-foot">
+					<span class="ae-brush-status" id="ae-brush-status" role="status" aria-live="polite">
+						${recorded ? `${recorded} points sculpted` : 'Nothing sculpted yet'}
+					</span>
+					<button type="button" class="ae-btn ae-brush-clear" id="ae-brush-clear"
+					        ${recorded ? '' : 'disabled'}>Clear sculpt</button>
+				</div>
+			</div>
+		</details>
+	`;
+}
+
+function wireFreeSculpt({ container, root, working, viewport, onDirty }) {
+	const enable = container.querySelector('#ae-brush-enable');
+	if (!enable || !viewport) return;
+
+	const status = container.querySelector('#ae-brush-status');
+	const clearBtn = container.querySelector('#ae-brush-clear');
+	const badge = container.querySelector('.ae-brush-group .ae-sculpt-edited');
+	const radius = container.querySelector('#ae-brush-radius');
+	const radiusOut = container.querySelector('#ae-brush-radius-out');
+	const strength = container.querySelector('#ae-brush-strength');
+	const strengthOut = container.querySelector('#ae-brush-strength-out');
+	const symmetry = container.querySelector('#ae-brush-symmetry');
+
+	// Rehydrate whatever the record already carries onto the live mesh. The
+	// panel is the only place that knows both the document and the model, and
+	// doing it here means a saved sculpt reappears on every tab visit rather
+	// than only on the load that happened to run the host's boot path.
+	if (working.sculpt) applySculptToRoot(root, working.sculpt);
+
+	const report = (message) => {
+		const count = sculptVertexCount(working.sculpt);
+		if (status) status.textContent = message ?? (count ? `${count} points sculpted` : 'Nothing sculpted yet');
+		if (clearBtn) clearBtn.disabled = count === 0;
+		if (badge) {
+			badge.dataset.edited = String(count);
+			badge.textContent = `${count} points`;
+			badge.hidden = count === 0;
+		}
+	};
+
+	const commit = () => {
+		working.sculpt = serializeSculpt(root);
+		report();
+		onDirty?.();
+	};
+
+	const ensureBrush = () => {
+		if (_brush) return _brush.instance;
+		const instance = new SculptBrush({
+			root,
+			camera: viewport.camera,
+			domElement: viewport.domElement,
+			controls: viewport.controls || null,
+			onStroke: ({ vertices }) => {
+				if (status) status.textContent = `Sculpting… ${vertices} vertices this step`;
+			},
+			onStrokeEnd: commit,
+		});
+		instance.setParams(_brushParams);
+		_brush = { instance, viewport };
+		return instance;
+	};
+
+	enable.addEventListener('change', () => {
+		if (enable.checked) {
+			const instance = ensureBrush();
+			viewport.setPaused?.(true);
+			instance.enable();
+			report('Brush on. Drag the avatar to sculpt.');
+		} else {
+			teardownBrush();
+			report();
+		}
+	});
+
+	const pushParams = (patch) => {
+		Object.assign(_brushParams, patch);
+		_brush?.instance.setParams(_brushParams);
+	};
+
+	radius?.addEventListener('input', () => {
+		const v = Number(radius.value);
+		pushParams({ radius: v });
+		if (radiusOut) radiusOut.textContent = `${(v * 100).toFixed(1)} cm`;
+	});
+	strength?.addEventListener('input', () => {
+		const v = Number(strength.value);
+		pushParams({ strength: v });
+		if (strengthOut) strengthOut.textContent = `${(v * 1000).toFixed(1)} mm`;
+	});
+	symmetry?.addEventListener('change', () => pushParams({ symmetry: symmetry.checked }));
+
+	for (const btn of container.querySelectorAll('.ae-brush-mode')) {
+		btn.addEventListener('click', () => {
+			const direction = Number(btn.dataset.direction);
+			pushParams({ direction });
+			for (const other of container.querySelectorAll('.ae-brush-mode')) {
+				other.setAttribute('aria-pressed', String(Number(other.dataset.direction) === direction));
+			}
+		});
+	}
+
+	clearBtn?.addEventListener('click', () => {
+		clearSculpt(root);
+		working.sculpt = null;
+		report('Free sculpt cleared.');
+		onDirty?.();
 	});
 }
 

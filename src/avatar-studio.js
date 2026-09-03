@@ -23,6 +23,7 @@ import { TalkScene } from './voice/talk-scene.js';
 import { AccessoryManager } from './agent-accessories.js';
 import { IdleAnimation } from './idle-animation.js';
 import { renderSculptPanel, applyMorphsToRoot } from './avatar-sculpt.js';
+import { applySculptToRoot, clearSculpt } from './avatar-sculpt-brush.js';
 import {
 	applyProportionsToRoot,
 	captureProportionRest,
@@ -504,6 +505,7 @@ function maybeSuggestDraft() {
 			applyAllLayers();
 			applyMorphsToRoot(scene.root, workingAppearance.morphs);
 			applyProportions();
+			applySculpt();
 			if (accessoryManager) accessoryManager.hydrateFromAppearance(workingAppearance);
 		}
 		pushHistory();
@@ -573,6 +575,7 @@ async function applyHistoryState(state) {
 		applyAllLayers();
 		applyMorphsToRoot(scene.root, workingAppearance.morphs);
 		applyProportions();
+		applySculpt();
 	}
 	renderChips();
 	renderActivePanel();
@@ -684,6 +687,20 @@ function applyProportions() {
 	// The walk preview owns a second AnimationManager on the same rig, so it has
 	// its own stale hip scale to fix.
 	walkPanel?.remeasureProportions();
+}
+
+/**
+ * Replay `workingAppearance.sculpt` onto the live mesh.
+ *
+ * Called wherever the whole appearance is restored (boot, draft restore, undo,
+ * revert) rather than folded into applyProportions(), which fires on every
+ * slider frame: rewriting a 15k-vertex delta array 60 times a second would be
+ * wasted work, and it would stamp on a free-sculpt stroke that is mid-drag.
+ */
+function applySculpt() {
+	if (!scene?.root) return;
+	if (workingAppearance.sculpt) applySculptToRoot(scene.root, workingAppearance.sculpt);
+	else clearSculpt(scene.root);
 }
 
 // ── Boot scene ────────────────────────────────────────────────────────
@@ -985,6 +1002,38 @@ function renderTabs() {
 	});
 }
 
+/**
+ * The stage handed to the sculpt panel's free-sculpt brush. Returning null
+ * (no scene yet) simply means the Free Sculpt group is not rendered, which is
+ * the correct outcome: a brush with no canvas is a dead control.
+ *
+ * `setPaused` freezes clip playback AND the procedural idle. The brush caches
+ * the skinned world positions of every vertex at pointer-down, so a breathing
+ * chest under a live drag would make every stroke after the first land a few
+ * millimetres off the pixel the user aimed at.
+ */
+let idleChannelsBeforeSculpt = null;
+
+function sculptViewport() {
+	if (!scene?.camera || !scene?.renderer?.domElement) return null;
+	return {
+		camera: scene.camera,
+		domElement: scene.renderer.domElement,
+		controls: scene.controls || null,
+		setPaused: (paused) => {
+			scene.setRigPaused?.(paused);
+			if (!idle) return;
+			if (paused) {
+				idleChannelsBeforeSculpt = idleChannelsBeforeSculpt || idle.getChannels?.() || null;
+				idle.setChannels({ breathing: false, saccade: false, blink: false, weightShift: false });
+			} else if (idleChannelsBeforeSculpt) {
+				idle.setChannels(idleChannelsBeforeSculpt);
+				idleChannelsBeforeSculpt = null;
+			}
+		},
+	};
+}
+
 function renderActivePanel() {
 	// A re-render replaces the swatch DOM the popover is anchored to; close it
 	// first so it never points at a detached node.
@@ -1063,6 +1112,8 @@ function renderActivePanel() {
 		return;
 	}
 
+
+
 	if (tab.sculpt) {
 		if (!scene?.root) {
 			panel.innerHTML = `<div class="as-empty">Waiting for avatar to load…</div>`;
@@ -1072,6 +1123,7 @@ function renderActivePanel() {
 			container: panel,
 			root: scene.root,
 			working: workingAppearance,
+			viewport: sculptViewport(),
 			onDirty: () => {
 				pushHistory();
 				renderChips();

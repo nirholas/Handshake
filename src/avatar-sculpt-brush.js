@@ -55,7 +55,19 @@ export {
 	sculptEqual,
 } from './avatar-sculpt-doc.js';
 
-/** Brush defaults, in metres / metres-per-stroke-step. */
+/** Brush defaults, in metres and metres-per-stroke-step. */
+export const BRUSH_DEFAULTS = Object.freeze({
+	radius: 0.05,
+	strength: 0.006,
+	direction: 1, // +1 pulls the surface out, -1 pushes it in
+	symmetry: true,
+});
+
+/** Slider ranges for the brush controls, in the same units. */
+export const BRUSH_LIMITS = Object.freeze({
+	radius: { min: 0.01, max: 0.3, step: 0.005 },
+	strength: { min: 0.001, max: 0.03, step: 0.001 },
+});
 
 /* ────────────────────────────────────────────────────────────────────────── *
  * Morph-target plumbing

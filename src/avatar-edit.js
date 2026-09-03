@@ -26,7 +26,7 @@ import { renderSculptPanel } from './avatar-sculpt.js';
 import { applyProportionsToRoot, captureProportionRest, normalizeProportions, proportionsEqual } from './avatar-proportions.js';
 import { canonicalBoneNodesFromObject } from './animation-retarget.js';
 import { sanitizeSculptDoc, sculptEqual } from './avatar-sculpt-doc.js';
-import { applySculptToRoot } from './avatar-sculpt-brush.js';
+import { applySculptToRoot, clearSculpt } from './avatar-sculpt-brush.js';
 import { renderWardrobePanel } from './avatar-wardrobe.js';
 import { GarmentCloset, renderClosetSection } from './garment-closet.js';
 import { renderRigPanel } from './avatar-rig.js';
@@ -250,6 +250,20 @@ function applyProportions() {
 	walkPreview?.remeasureProportions();
 }
 
+/**
+ * Replay `workingAppearance.sculpt` onto the live mesh.
+ *
+ * Called wherever the whole appearance is restored (boot, draft restore, undo,
+ * revert) rather than folded into applyProportions(), which fires on every
+ * slider frame: rewriting a 15k-vertex delta array 60 times a second would be
+ * wasted work, and it would stamp on a free-sculpt stroke that is mid-drag.
+ */
+function applySculpt() {
+	if (!scene?.root) return;
+	if (workingAppearance.sculpt) applySculptToRoot(scene.root, workingAppearance.sculpt);
+	else clearSculpt(scene.root);
+}
+
 async function bootScene() {
 	// IMPORTANT: load the BASE GLB, not the baked one. The customizer applies
 	// appearance on the client; loading the already-baked URL would stack
@@ -268,6 +282,7 @@ async function bootScene() {
 		boneNodes = canonicalBoneNodesFromObject(scene.root);
 		captureProportionRest(scene.root, { boneMap: boneNodes });
 		applyProportions();
+		applySculpt();
 
 		accessoryManager = new AccessoryManager({
 			content: scene.root,
@@ -391,6 +406,38 @@ function renderTabs() {
 	});
 }
 
+/**
+ * The stage handed to the sculpt panel's free-sculpt brush. Returning null
+ * (no scene yet) simply means the Free Sculpt group is not rendered, which is
+ * the correct outcome: a brush with no canvas is a dead control.
+ *
+ * `setPaused` freezes clip playback AND the procedural idle. The brush caches
+ * the skinned world positions of every vertex at pointer-down, so a breathing
+ * chest under a live drag would make every stroke after the first land a few
+ * millimetres off the pixel the user aimed at.
+ */
+let idleChannelsBeforeSculpt = null;
+
+function sculptViewport() {
+	if (!scene?.camera || !scene?.renderer?.domElement) return null;
+	return {
+		camera: scene.camera,
+		domElement: scene.renderer.domElement,
+		controls: scene.controls || null,
+		setPaused: (paused) => {
+			scene.setRigPaused?.(paused);
+			if (!idle) return;
+			if (paused) {
+				idleChannelsBeforeSculpt = idleChannelsBeforeSculpt || idle.getChannels?.() || null;
+				idle.setChannels({ breathing: false, saccade: false, blink: false, weightShift: false });
+			} else if (idleChannelsBeforeSculpt) {
+				idle.setChannels(idleChannelsBeforeSculpt);
+				idleChannelsBeforeSculpt = null;
+			}
+		},
+	};
+}
+
 function renderActivePanel() {
 	const tab = TABS.find((t) => t.id === activeTab);
 	const panel = $('ae-panel');
@@ -435,6 +482,8 @@ function renderActivePanel() {
 	// Sculpt tab gets its own UI — morph sliders, not a tile grid. The face-
 	// capture modal lives inside that module, so the avatar-edit shell doesn't
 	// need to know anything about MediaPipe loading or webcam plumbing.
+
+
 	if (tab.sculpt) {
 		if (!scene?.root) {
 			panel.innerHTML = `<div class="ae-empty">Waiting for avatar to load…</div>`;
@@ -444,6 +493,7 @@ function renderActivePanel() {
 			container: panel,
 			root: scene.root,
 			working: workingAppearance,
+			viewport: sculptViewport(),
 			onDirty: () => {
 				renderChips();
 				updateDirtyState();
@@ -930,6 +980,7 @@ function bindHeader() {
 			}
 			workingAppearance = clone(currentAppearance);
 			applyProportions();
+			applySculpt();
 			if (accessoryManager) await accessoryManager.hydrateFromAppearance(workingAppearance);
 			if (closet) {
 				closet.clear();
