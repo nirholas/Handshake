@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-09-03",
+			"title": "The free 3D generation lane is back up, and it can no longer fail quietly",
+			"summary": "The worker behind the default free text-to-3D and image-to-3D lane stopped being able to load its model on the evening of 2 September, and then kept accepting work it could not do. It had cached that one failure and replayed it to every job that followed, while its status page still reported itself healthy, so nothing raised a flag: roughly a third of generations on that lane failed over about twelve hours. The lane is running again, and four things now stop a repeat. The load is retried instead of one bad moment being treated as final. A worker that genuinely cannot run turns work away, so your generation is handed to another backend rather than dying several minutes later. It reports itself as unhealthy, so it gets replaced automatically and shows up as down on the status page instead of green. And the part of the model that had to be fetched from an outside site every time the worker started, which is what failed, now ships inside the worker, so that fetch cannot fail again.",
+			"link": "/forge",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-03",
 			"title": "Every three.ws MCP server now shows up in the directories, and six more joined the list",
 			"summary": "The one file every MCP directory listing is written from was six servers short and thirty-five versions behind, because it was being kept by hand. It is generated from the server manifests again, so a listing can no longer drift from what we actually publish, and a build check fails when it does. Six servers that existed but were invisible to the directories are now in: Herald, Home, Knock, the Metaplex agent registry, on-chain agent wallets, and the Robinhood Chain server. Paid tools also answer more cleanly to a store reviewer: the discovery data they attached to a payment prompt declared a transport the spec does not allow, so an indexer threw the whole row away. That is fixed, and a new check drives every paid tool the way a reviewer's client does and fails if any of them answers with anything but a clear, priced payment prompt.",
 			"link": "/docs/mcp",
