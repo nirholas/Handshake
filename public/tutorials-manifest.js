@@ -442,6 +442,16 @@
 			previewModel: '/animations/soldier.glb',
 			ctaPrimary: { label: 'Open /play', href: '/play' },
 		},
+		{
+			slug: 'connect-your-home',
+			tier: 'middle',
+			title: 'Connect your home',
+			blurb: 'Point your agent at a real Home Assistant and it runs your actual house: lights, thermostat, and the scenes you already built. Covers the three honest ways to reach a house that lives on a home network, and the rule that unlocking, opening and disarming always stop and ask, while locking up never does. Ends with sharing the house: five roles, per-person scopes, and why a house sitter can turn a light on and can never open the front door.',
+			builds: 'A house your agent can run, shared with the people who live in it',
+			time: '20 min',
+			previewModel: '/animations/robotexpressive.glb',
+			ctaPrimary: { label: 'Connect a home', href: '/smart-home' },
+		},
 
 		/* ───────────────────────── ADVANCED ───────────────────────── */
 		{

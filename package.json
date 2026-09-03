@@ -126,7 +126,8 @@
 		"packages/witness",
 		"packages/portal",
 		"packages/tty-avatar",
-		"packages/home-bridge"
+		"packages/home-bridge",
+		"packages/home-mcp"
 	],
 	"main": "src/app.js",
 	"browserslist": [
@@ -169,6 +170,8 @@
 		"build:x-strip": "node scripts/make-x-strip.mjs",
 		"build:dapp-store-media": "node solana-mobile/scripts/make-media.mjs",
 		"build:dapp-store-previews": "node solana-mobile/scripts/make-screenshots.mjs",
+		"seeker:screencast": "node solana-mobile/scripts/make-screencast.mjs",
+		"seeker:feature-tour": "node solana-mobile/scripts/make-feature-tour.mjs --authed",
 		"render:pumpfun-verified": "node scripts/render-pumpfun-verified.mjs",
 		"build:ibm-shell": "node scripts/build-ibm-shell.mjs",
 		"i18n": "npm run i18n:extract && npm run i18n:translate",
@@ -353,6 +356,7 @@
 		"check:vendored": "node scripts/check-vendored-workers.mjs",
 		"check:secrets": "node scripts/check-secrets.mjs",
 		"check:gcloudignore": "node scripts/check-gcloudignore.mjs",
+		"check:home-voice": "node scripts/check-home-voice.mjs",
 		"check:evm-rpc": "node --env-file=.env scripts/probe-evm-rpc.mjs --chain 1 --ens",
 		"awal:pin": "node scripts/update-awal-version.mjs",
 		"smoke:prod": "node scripts/check-pages.mjs --base https://three.ws",
@@ -421,6 +425,10 @@
 		"token:volume": "node scripts/token-volume.mjs",
 		"companion:e2e": "node --env-file=.env.local --env-file=.env scripts/companion-e2e.mjs",
 		"home:instance": "node scripts/home-test-instance.mjs --up --onboard --seed --name lane",
+		"home:fleet": "node scripts/home-fleet.mjs up --homes 12 --big 1",
+		"home:fleet:down": "node scripts/home-fleet.mjs down",
+		"home:load": "node --expose-gc scripts/home-load.mjs all --out tasks/home/envelope-$(date -u +%Y-%m-%d).json",
+		"home:chaos": "node --expose-gc scripts/home-chaos.mjs all --out tasks/home/chaos-$(date -u +%Y-%m-%d).json",
 		"home:instance:down": "node scripts/home-test-instance.mjs --down --name lane",
 		"test:home:live": "HOME_LIVE=1 vitest run packages/home-bridge tests/home-store.test.js",
 		"home:matrix": "node scripts/home-version-matrix.mjs",

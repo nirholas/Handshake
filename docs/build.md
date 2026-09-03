@@ -45,7 +45,7 @@ front-end, the `vercel.json` route table, and every `api/**` handler from source
 provisioned from the `crons` array in `vercel.json` by
 [scripts/create-gcp-scheduler.mjs](../scripts/create-gcp-scheduler.mjs); that
 array is the count, so read it there rather than trusting a number quoted here
-(112 entries on 2026-09-02). There is **no GitHub Actions CI**. Full runbook: [docs/ops/gcp-production.md](./ops/gcp-production.md).
+(114 entries on 2026-09-03). There is **no GitHub Actions CI**. Full runbook: [docs/ops/gcp-production.md](./ops/gcp-production.md).
 
 `.npmrc` sets `legacy-peer-deps=true` (npm never auto-installs peers — the
 reason `audit:deploy` checks the peer tree), and `engines.node` pins Node

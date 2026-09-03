@@ -1008,6 +1008,22 @@
 			}
 		},
 		{
+			"id": "check-home-voice",
+			"script": "scripts/check-home-voice.mjs",
+			"npm": "check:home-voice",
+			"title": "Hands-free voice loop",
+			"protects": "The browser voice loop keeps the properties the feature is sold on: nothing about listening loads before opt-in, an ambient \"yeah\" never confirms a guarded action, and the agent does not wake itself.",
+			"why": "This loop holds a live microphone and can reach a physical actuator, so its claims are the kind that have to be measured rather than reasoned about. It drives a real Chromium with a fake capture device fed from speech the platform synthesized itself, and walks ten scenarios end to end including barge-in, mute at the track, a refused microphone and a deployment with no speech lane. It cannot sit on an automatic path: it needs a browser, a server and the live speech lanes, and a flaky guard on the gate is a guard people learn to skip.",
+			"stages": [
+				"manual"
+			],
+			"needs": "browser",
+			"proof": {
+				"kind": "live",
+				"reason": "Drives a real Chromium against the running voice loop with a synthesized microphone stream. The behaviours under test (a wake word firing, playback stopping on barge-in, a capture track actually ending) only exist at runtime, so there is no static fixture that could stand in for them."
+			}
+		},
+		{
 			"id": "audit-play-failure-modes",
 			"script": "scripts/audit-play-failure-modes.mjs",
 			"npm": "audit:play-failures",

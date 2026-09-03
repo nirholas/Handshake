@@ -395,7 +395,7 @@
 				{
 					"path": "/tour/atlas",
 					"title": "Tour Atlas",
-					"description": "Every stop on the guided tour as a real screenshot of the live site, with the feature circled by the tour's own spotlight. Search 185 stops, filter by chapter, read what the guide says about each one, and drop the tour onto any feature in a single click.",
+					"description": "Every stop on the guided tour as a real screenshot of the live site, with the feature circled by the tour's own spotlight. Search 263 stops, filter by chapter, read what the guide says about each one, and drop the tour onto any feature in a single click.",
 					"priority": 0.6,
 					"changefreq": "weekly",
 					"added": "2026-07-31"
@@ -1007,6 +1007,14 @@
 					"description": "Accept an invitation to somebody's connected home. The link says which home it is, exactly what your role would let you do there and what it would never let you do, before you sign in. It works once and it expires.",
 					"priority": 0.4,
 					"changefreq": "yearly",
+					"added": "2026-09-03"
+				},
+				{
+					"path": "/smart-home/privacy",
+					"title": "Your home data",
+					"description": "Everything three.ws stores about the homes you connected, with why it exists and how long it stays. Set how long your action log lives and watch the old entries go, download all of it as JSON, or delete one home or every trace of all of them. Room names, device states and voice audio are never stored at all.",
+					"priority": 0.5,
+					"changefreq": "monthly",
 					"added": "2026-09-03"
 				},
 				{
@@ -2663,6 +2671,14 @@
 					"added": "2026-08-16"
 				},
 				{
+					"path": "/docs/home-voice",
+					"title": "Docs · The browser voice loop",
+					"description": "How hands-free works for a connected home: a wake word matched by a model running in your own tab, an interruption that stops the agent mid-sentence, a pause that does not truncate your command, and a spoken confirmation narrow enough that a background yes can never unlock a front door. Includes the measured latency of every leg and how to mount the loop on your own surface.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-09-03"
+				},
+				{
 					"path": "/docs/smart-home",
 					"title": "Docs · three.ws Home",
 					"description": "How a three.ws agent connects to a real house: the open-source smart-home landscape measured and shortlisted, why Home Assistant owns the device layer, the two channels the @three-ws/home-bridge package speaks, the physical-action gate that never lets an unlock through unasked, and the road from here to voice in every room.",
@@ -2687,9 +2703,25 @@
 					"added": "2026-09-03"
 				},
 				{
+					"path": "/docs/home-relay",
+					"title": "Docs \u00b7 Connect a home that is only on your network",
+					"description": "Most Home Assistant installs cannot be reached from the internet, so the house dials three.ws instead: install one HACS integration, paste a ten-minute pairing code, and nothing listens on your network, no port is forwarded, and three.ws never receives a Home Assistant token. Includes the operator half: the relay service, its configuration and deploy, how the allowlist is changed, and how to prove the whole path against a real house on a network the server cannot route to.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-09-03"
+				},
+				{
 					"path": "/docs/home-relay-threat-model",
 					"title": "Docs · Home relay threat model",
 					"description": "What an attacker gets at every position around the socket a LAN-only house dials out through, and what stops them: why the relay carries a fixed list of message types instead of proxying HTTP into a home network, what a stolen install token is and is not worth, why the allowlist is enforced again inside the house so a compromised relay widens nothing, and the residuals accepted on purpose.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-09-03"
+				},
+				{
+					"path": "/docs/home-scene",
+					"title": "Docs \u00b7 The live 3D home",
+					"description": "How the connected house becomes a room you can stand in: the room graph the bridge builds from Home Assistant's registries, how a real light dimming dims the model, what the scene does while the house is unreachable, and the fallback that keeps every control usable without WebGL.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-09-03"

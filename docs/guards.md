@@ -158,6 +158,7 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | Cron liveness | `npm run audit:cron-liveness` | Each cron in `vercel.json` resolves to a handler that exists, imports, answers a live request, and refuses an unauthenticated one. |
 | Custodial key health | `npm run audit:custodial-keys` | Every stored custodial Solana secret still decrypts under the current `WALLET_ENCRYPTION_KEY`. |
 | Home credential health | `npm run audit:home-credentials` | Every stored Home Assistant token still decrypts under the current `WALLET_ENCRYPTION_KEY`, so no connected house is sealed. |
+| Hands-free voice loop | `npm run check:home-voice` | Nothing about listening loads before opt-in, an ambient "yeah" never confirms a guarded action, and the agent does not wake itself. |
 | Delegation contract addresses | `npm run check:erc7710` | Every delegation-manager address is a deployed contract. |
 
 ---
