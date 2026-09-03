@@ -956,8 +956,11 @@ function renderAgentCards(agents) {
     const el = document.createElement('div');
     el.className = 'agent-card' + (selectedAgent?.id === agent.id ? ' selected' : '');
     el.dataset.agentId = agent.id;
-    const avatarHtml = agent.avatar_id
-      ? `<img src="https://three.ws/avatars/${agent.avatar_id}/thumbnail.png" data-fallback="sibling" alt="" /><span style="display:none">${escape(agent.name[0]||'?')}</span>`
+    // The thumbnail URL comes from the API (R2, public/unlisted avatars only).
+    // There is no /avatars/<id>/thumbnail.png route on this origin, so deriving
+    // one from avatar_id only ever 404'd and painted the fallback anyway.
+    const avatarHtml = agent.avatar_thumbnail_url
+      ? `<img src="${attr(agent.avatar_thumbnail_url)}" data-fallback="sibling" alt="" /><span style="display:none">${escape(agent.name[0]||'?')}</span>`
       : `<span>${escape(agent.name[0]||'?')}</span>`;
     const walletHtml = agent.solana_address
       ? `<span class="bal">${agent.usdc != null ? agent.usdc.toFixed(3)+' USDC' : ''}</span>`
@@ -1429,6 +1432,9 @@ const renderTicker = () => { tickerText.textContent = `${sessionTotal.toFixed(3)
 renderTicker();
 
 function escape(s) { return String(s).replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])); }
+// Attribute context needs the quote characters escaped too; `escape` above is
+// text-node safe only.
+function attr(s) { return escape(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
 function formatBytes(n) {
   if (!Number.isFinite(n)) return '—';
   if (n < 1024) return `${n} B`;

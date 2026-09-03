@@ -507,12 +507,21 @@ function mobileRedirectError() {
 
 // Retry the gated resource with the X-PAYMENT proof and return the unlocked
 // content plus the decoded settlement receipt.
-async function executePaid({ xPayment, resourceUrl, onStatus, accept, payerAddress }) {
+//
+// `request` lets a caller replay a resource that is not a plain GET. A paid
+// POST route (the Endpoint Shopper takes its task and budget in a JSON body)
+// answers a bodyless GET with a 405, so the buyer would settle on-chain and
+// then get nothing back. Callers pass { method, body, headers } to replay the
+// exact request that earned the 402. Default stays GET for the paywall page.
+async function executePaid({ xPayment, resourceUrl, onStatus, accept, payerAddress, request }) {
 	onStatus?.('confirming', 'Unlocking content…');
-	const res = await fetch(resourceUrl, {
-		method: 'GET',
-		headers: { 'X-PAYMENT': xPayment, Accept: '*/*' },
-	});
+	const method = String(request?.method || 'GET').toUpperCase();
+	const init = {
+		method,
+		headers: { 'X-PAYMENT': xPayment, Accept: '*/*', ...(request?.headers || {}) },
+	};
+	if (request?.body != null && method !== 'GET' && method !== 'HEAD') init.body = request.body;
+	const res = await fetch(resourceUrl, init);
 	const ct = res.headers.get('content-type') || '';
 	const text = await res.text();
 	let result;
@@ -547,7 +556,7 @@ async function executePaid({ xPayment, resourceUrl, onStatus, accept, payerAddre
 
 // ────────────────────────────────────────────────────────────── Solana pay ───
 
-export async function paySolana({ accept, resourceUrl, walletName, onStatus, origin }) {
+export async function paySolana({ accept, resourceUrl, walletName, onStatus, origin, request }) {
 	accept = normalizeAccept(accept);
 	const apiOrigin = origin || (typeof location !== 'undefined' ? location.origin : '');
 	const label = walletName === 'solflare' ? 'Solflare' : 'Phantom';
@@ -588,7 +597,7 @@ export async function paySolana({ accept, resourceUrl, walletName, onStatus, ori
 		resource_url: resourceUrl,
 	});
 
-	return executePaid({ xPayment: enc.x_payment, resourceUrl, onStatus, accept, payerAddress });
+	return executePaid({ xPayment: enc.x_payment, resourceUrl, onStatus, accept, payerAddress, request });
 }
 
 // ───────────────────────────────────────────────────────────────── EVM pay ───
@@ -637,7 +646,7 @@ function getWcProjectId() {
 	return null;
 }
 
-export async function payEvm({ accept, resourceUrl, walletName, onStatus }) {
+export async function payEvm({ accept, resourceUrl, walletName, onStatus, request }) {
 	accept = normalizeAccept(accept);
 	const meta = EVM_NETWORKS[accept.network];
 	if (!meta) throw new Error(`Unsupported EVM network ${accept.network}`);
@@ -687,19 +696,19 @@ export async function payEvm({ accept, resourceUrl, walletName, onStatus }) {
 		resourceUrl,
 	});
 	const xPayment = b64encode(paymentPayload);
-	return executePaid({ xPayment, resourceUrl, onStatus, accept, payerAddress });
+	return executePaid({ xPayment, resourceUrl, onStatus, accept, payerAddress, request });
 }
 
 // ─────────────────────────────────────────────────────────── dispatcher ──────
 
 // Single entry point for the paywall controller. Routes a wallet button to the
 // correct chain-specific payer based on the network of the matching `accept`.
-export async function pay({ accept, resourceUrl, walletName, onStatus, origin }) {
+export async function pay({ accept, resourceUrl, walletName, onStatus, origin, request }) {
 	if (isSolanaNetwork(accept?.network)) {
-		return paySolana({ accept, resourceUrl, walletName, onStatus, origin });
+		return paySolana({ accept, resourceUrl, walletName, onStatus, origin, request });
 	}
 	if (isEvmNetwork(accept?.network)) {
-		return payEvm({ accept, resourceUrl, walletName, onStatus });
+		return payEvm({ accept, resourceUrl, walletName, onStatus, request });
 	}
 	throw new Error(`Unsupported network ${accept?.network}`);
 }

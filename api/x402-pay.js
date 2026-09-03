@@ -45,6 +45,7 @@ import { dispatch } from './_mcp/dispatch.js';
 import { env } from './_lib/env.js';
 import { getRedis as _getSharedRedis } from './_lib/redis.js';
 import { sql } from './_lib/db.js';
+import { thumbnailUrl } from './_lib/r2.js';
 import { logger } from './_lib/usage.js';
 import { getSessionUser, authenticateBearer, extractBearer } from './_lib/auth.js';
 import { recoverSolanaAgentKeypair } from './_lib/agent-wallet.js';
@@ -217,10 +218,13 @@ async function loadAgentKeypairForUser(agentId, userId) {
 
 async function getAgentsForUser(userId) {
 	const rows = await sql`
-		SELECT id, name, description, avatar_id, meta
-		FROM agent_identities
-		WHERE user_id = ${userId} AND deleted_at IS NULL
-		ORDER BY created_at ASC
+		SELECT i.id, i.name, i.description, i.avatar_id, i.meta,
+		       a.thumbnail_key AS avatar_thumbnail_key,
+		       a.visibility    AS avatar_visibility
+		FROM agent_identities i
+		LEFT JOIN avatars a ON a.id = i.avatar_id AND a.deleted_at IS NULL
+		WHERE i.user_id = ${userId} AND i.deleted_at IS NULL
+		ORDER BY i.created_at ASC
 	`;
 	const conn = solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed' });
 	return Promise.all(rows.map(async (row) => {
@@ -251,11 +255,22 @@ async function getAgentsForUser(userId) {
 				usdc = 0;
 			}
 		}
+		// Thumbnails carry the same public/unlisted gate as everywhere else
+		// (api/agents.js, characters.js): a private avatar's R2 object is not
+		// publicly readable, so emitting its URL only paints a broken image.
+		// Null lets the card fall back to the initial-letter avatar it already
+		// renders as a sibling.
+		const avatarPubliclyReadable =
+			row.avatar_visibility === 'public' || row.avatar_visibility === 'unlisted';
 		return {
 			id: row.id,
 			name: row.name,
 			description: row.description,
 			avatar_id: row.avatar_id,
+			avatar_thumbnail_url:
+				row.avatar_thumbnail_key && avatarPubliclyReadable
+					? thumbnailUrl(row.avatar_thumbnail_key)
+					: null,
 			solana_address: address,
 			solana_wallet_source: source,
 			usdc,

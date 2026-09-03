@@ -113,7 +113,7 @@ The codebase includes the `<agent-3d>` browser component, the Solana minting SDK
 Every listing is announced through:
 
 - **RSS** — [`https://three.ws/rss/announcements.xml`](https://three.ws/rss/announcements.xml)
-- **News index** — [`https://three.ws/news/`](https://three.ws/news/)
+- **News index**: [`https://three.ws/news`](https://three.ws/news)
 - **Blog** — [`https://three.ws/blog/`](https://three.ws/blog/)
 
 Subscribe via RSS to track new listings, integrations, and protocol updates.

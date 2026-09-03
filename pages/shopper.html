@@ -86,9 +86,23 @@
 			transition: border-color 0.15s, background 0.15s;
 		}
 		.nav-end .console:hover { border-color: var(--text); background: rgba(255,255,255,0.04); }
+		/* Below 880px the links used to be display:none, which left the
+		   Marketplace and Fact Checker routes unreachable from this page on a
+		   phone. They stay in the bar and scroll horizontally instead. */
 		@media (max-width: 880px) {
-			.nav-main { display: none; }
-			.nav-inner { padding: 14px 20px; gap: 16px; }
+			.nav-inner { padding: 14px 20px; gap: 12px; }
+			.nav-main {
+				margin-left: 0; min-width: 0;
+				overflow-x: auto; scrollbar-width: none;
+				-webkit-overflow-scrolling: touch;
+			}
+			.nav-main::-webkit-scrollbar { display: none; }
+			.nav-main a { padding: 7px 9px; white-space: nowrap; }
+		}
+		@media (max-width: 560px) {
+			.nav-inner { gap: 8px; }
+			.brand { font-size: 15px; }
+			.nav-end .console { margin-left: 0; padding: 7px 12px; }
 		}
 
 		/* ── BUTTONS ─────────────────────────────────────────────── */
@@ -397,6 +411,89 @@
 		}
 		.empty-tips strong { color: var(--text-2); font-weight: 500; }
 
+		/* Inline payment card (402) */
+		.pay-card {
+			background: var(--surface-1);
+			border: 1px solid rgba(255, 180, 0, 0.28);
+			border-radius: 12px;
+			overflow: hidden;
+		}
+		.pay-head { padding: 22px 24px 18px; border-bottom: 1px solid var(--hairline); }
+		.pay-eyebrow {
+			font-family: var(--font-mono); font-size: 10.5px;
+			letter-spacing: 0.2em; text-transform: uppercase;
+			color: #e6a820; margin-bottom: 10px;
+		}
+		.pay-price {
+			font-family: var(--font-display);
+			font-size: 34px; font-weight: 600; letter-spacing: -0.03em;
+			color: var(--text); line-height: 1.1;
+		}
+		.pay-price span {
+			font-family: var(--font-mono); font-size: 13px;
+			font-weight: 400; color: var(--text-3); letter-spacing: 0;
+			margin-left: 6px;
+		}
+		.pay-desc {
+			margin: 10px 0 0; font-size: 13.5px;
+			color: var(--text-2); line-height: 1.5; max-width: 44ch;
+		}
+		.pay-body { padding: 20px 24px; }
+		.pay-net-label {
+			font-family: var(--font-mono); font-size: 10.5px;
+			letter-spacing: 0.2em; text-transform: uppercase;
+			color: var(--text-3); margin-bottom: 14px;
+		}
+		.pay-wallets {
+			display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+			gap: 20px; align-items: start;
+		}
+		.pay-net { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+		.pay-net-name {
+			font-size: 12px; color: var(--text-3);
+			letter-spacing: 0.04em;
+		}
+		.wallet-btn {
+			justify-content: space-between; width: 100%;
+			padding: 11px 14px; font-size: 13.5px;
+			background: var(--surface-2);
+		}
+		.wallet-btn span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+		.wallet-arrow { color: var(--text-4); transition: transform 0.15s, color 0.15s; }
+		.wallet-btn:hover .wallet-arrow { transform: translateX(3px); color: var(--text-2); }
+		.pay-status {
+			margin: 16px 0 0; min-height: 0;
+			font-size: 13px; line-height: 1.45; color: var(--text-2);
+		}
+		.pay-status:empty { display: none; }
+		.pay-status-error { color: #e07070; }
+		.pay-foot {
+			padding: 14px 24px 18px;
+			border-top: 1px solid var(--hairline);
+		}
+		.pay-cancel { padding: 8px 14px; font-size: 13px; }
+
+		/* Settlement receipt above a paid run */
+		.receipt-row {
+			display: flex; align-items: center; justify-content: space-between;
+			gap: 12px; flex-wrap: wrap;
+			padding: 10px 16px; margin-bottom: 12px;
+			background: var(--surface-2);
+			border: 1px solid var(--hairline);
+			border-radius: 8px;
+		}
+		.receipt-lbl {
+			font-family: var(--font-mono); font-size: 11.5px;
+			letter-spacing: 0.12em; text-transform: uppercase;
+			color: var(--text-3);
+		}
+		.receipt-val {
+			font-family: var(--font-mono); font-size: 12px;
+			color: var(--text-2); word-break: break-all;
+		}
+		.receipt-val a { text-decoration: underline; text-underline-offset: 3px; }
+		.receipt-val a:hover { color: var(--text); }
+
 		/* 402 badge */
 		.badge-402 {
 			display: inline-flex; align-items: center; gap: 6px;
@@ -465,7 +562,7 @@
 
 			<!-- Left: form -->
 			<div class="form-panel">
-				<div class="panel-label">Task</div>
+				<label class="panel-label" for="task-input">Task</label>
 				<textarea
 					id="task-input"
 					class="task-input"
@@ -473,16 +570,16 @@
 					rows="5"
 				></textarea>
 
-				<div class="chip-row" id="chip-row">
-					<span class="chip" data-task="What is Ethereum's current price?" data-i18n="shopper.eth_price">ETH price</span>
-					<span class="chip" data-task="Check reputation of agent with address 0x1234" data-i18n="shopper.agent_reputation">Agent reputation</span>
-					<span class="chip" data-task="Search for available x402 endpoints for weather data" data-i18n="shopper.find_weather_apis">Find weather APIs</span>
-					<span class="chip" data-task="List the top paid AI model endpoints in the Bazaar" data-i18n="shopper.ai_model_endpoints">AI model endpoints</span>
-					<span class="chip" data-task="What pump.fun tokens are trending right now?" data-i18n="shopper.pump_fun_trends">Pump.fun trends</span>
+				<div class="chip-row" id="chip-row" role="group" aria-label="Example tasks">
+					<button type="button" class="chip" data-task="What is Ethereum's current price?" data-i18n="shopper.eth_price">ETH price</button>
+					<button type="button" class="chip" data-task="Check reputation of agent with address 0x1234" data-i18n="shopper.agent_reputation">Agent reputation</button>
+					<button type="button" class="chip" data-task="Search for available x402 endpoints for weather data" data-i18n="shopper.find_weather_apis">Find weather APIs</button>
+					<button type="button" class="chip" data-task="List the top paid AI model endpoints in the Bazaar" data-i18n="shopper.ai_model_endpoints">AI model endpoints</button>
+					<button type="button" class="chip" data-task="What pump.fun tokens are trending right now?" data-i18n="shopper.pump_fun_trends">Pump.fun trends</button>
 				</div>
 
 				<div class="budget-row">
-					<span class="budget-label" data-i18n="shopper.max_budget">Max budget</span>
+					<label class="budget-label" for="budget-slider" data-i18n="shopper.max_budget">Max budget</label>
 					<input
 						id="budget-slider"
 						type="range"

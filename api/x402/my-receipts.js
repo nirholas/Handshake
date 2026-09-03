@@ -1,4 +1,4 @@
-// GET /api/x402/my-receipts?address=<addr>&signature=<sig>&issuedAt=<iso>&network=<evm|solana>&sinceUnix=<n>
+// GET /api/x402/my-receipts?address=<addr>&signature=<sig>&issuedAt=<iso>&network=<evm|solana>&sinceUnix=<n>&cursor=<c>&limit=<n>
 //
 // Buyer-side read endpoint for the x402 Offer & Receipt extension (USE-17).
 // Returns every signed receipt we issued to the requested wallet so a buyer
@@ -22,7 +22,10 @@ import { evmTransport } from '../_lib/evm/rpc.js';
 import { cors, error, json, method, rateLimited } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { listReceiptsForPayer } from '../_lib/x402/receipt-storage.js';
+import {
+	listReceiptPage,
+	summarizeReceiptsForPayer,
+} from '../_lib/x402/receipt-storage.js';
 import { verifySiwsSignature } from '../_lib/siws.js';
 
 const MAX_AGE_SECONDS = 300;
@@ -54,27 +57,48 @@ function withinFreshnessWindow(issuedAt) {
 	return ageSec >= 0 && ageSec <= MAX_AGE_SECONDS;
 }
 
-// Decimals for the settlement assets THIS deployment actually pays in, read
-// from the same env config that builds the 402 accepts — so a client never has
-// to keep its own copy of our asset addresses (which would silently drift the
-// day an asset is repointed). Every asset advertised in an accept is covered:
-// USDC on Solana/Base/BSC, USD₮0 on X Layer, and $THREE on the Solana rail. An
-// asset we don't recognise returns null and the client renders the raw atomic
-// amount rather than guessing a scale.
-export function assetDecimals(asset) {
+// The settlement assets THIS deployment actually pays in, read from the same
+// env config that builds the 402 accepts — so a client never has to keep its
+// own copy of our asset addresses (which would silently drift the day an asset
+// is repointed). Every asset advertised in an accept is covered: USDC on
+// Solana/Base/BSC, USD₮0 on X Layer, and $THREE on the Solana rail.
+//
+// The symbol travels with the scale because scale alone is not enough to
+// render an amount: $THREE and USDC are both divisible assets, and printing a
+// $THREE payment as "$1.23" claims a dollar value nobody quoted. One table so
+// a new asset cannot arrive with a scale but no symbol.
+function settlementAssets() {
+	return [
+		[env.X402_ASSET_MINT_SOLANA, 6, 'USDC'],
+		[env.X402_ASSET_ADDRESS_BASE, 6, 'USDC'],
+		[env.X402_ASSET_ADDRESS_BSC, 6, 'USDC'],
+		[env.X402_ASSET_ADDRESS_XLAYER, 6, 'USD₮0'],
+		[env.THREE_TOKEN_MINT, env.THREE_TOKEN_DECIMALS, 'THREE'],
+	];
+}
+
+function lookupAsset(asset) {
 	if (!asset) return null;
 	const want = String(asset).toLowerCase();
-	const configured = [
-		[env.X402_ASSET_MINT_SOLANA, 6],
-		[env.X402_ASSET_ADDRESS_BASE, 6],
-		[env.X402_ASSET_ADDRESS_BSC, 6],
-		[env.X402_ASSET_ADDRESS_XLAYER, 6],
-		[env.THREE_TOKEN_MINT, env.THREE_TOKEN_DECIMALS],
-	];
-	for (const [known, decimals] of configured) {
-		if (known && String(known).toLowerCase() === want) return decimals;
+	for (const [known, decimals, symbol] of settlementAssets()) {
+		if (known && String(known).toLowerCase() === want) return { decimals, symbol };
 	}
 	return null;
+}
+
+/**
+ * Scale for a settlement asset, or null for one this deployment never pays in
+ * (the client then renders the raw atomic amount rather than guessing).
+ */
+export function assetDecimals(asset) {
+	const found = lookupAsset(asset);
+	return found ? found.decimals : null;
+}
+
+/** Ticker for a settlement asset, or null when we do not recognise it. */
+export function assetSymbol(asset) {
+	const found = lookupAsset(asset);
+	return found ? found.symbol : null;
 }
 
 function detectNetwork(address, declared) {
@@ -98,6 +122,7 @@ export default async function handler(req, res) {
 	const declaredNetwork = String(url.searchParams.get('network') || '').trim().toLowerCase();
 	const sinceUnix = url.searchParams.get('sinceUnix');
 	const limit = url.searchParams.get('limit');
+	const cursor = url.searchParams.get('cursor');
 
 	const network = detectNetwork(address, declaredNetwork);
 	if (!network) {
@@ -159,9 +184,17 @@ export default async function handler(req, res) {
 	// Storage layer stores EVM addresses lowercased and Solana addresses as-is;
 	// match that convention so the join hits.
 	const payerKey = network === 'evm' ? address.toLowerCase() : address;
-	let rows;
+	let page;
+	let summary;
 	try {
-		rows = await listReceiptsForPayer({ payer: payerKey, sinceUnix, limit });
+		// The summary is account-wide on purpose: a payer with tens of thousands
+		// of receipts must be told the real total, not the size of the page they
+		// happen to be holding. It is only computed for the first page, since
+		// paging never changes it.
+		[page, summary] = await Promise.all([
+			listReceiptPage({ payer: payerKey, sinceUnix, cursor, limit }),
+			cursor ? Promise.resolve(null) : summarizeReceiptsForPayer({ payer: payerKey, sinceUnix }),
+		]);
 	} catch (err) {
 		return error(res, 502, 'receipt_query_failed', err.message);
 	}
@@ -169,7 +202,24 @@ export default async function handler(req, res) {
 	json(res, 200, {
 		network,
 		address: payerKey,
-		count: rows.length,
-		receipts: rows.map((r) => ({ ...r, assetDecimals: assetDecimals(r.asset) })),
+		count: page.receipts.length,
+		nextCursor: page.nextCursor,
+		...(summary
+			? {
+					summary: {
+						...summary,
+						spend: summary.spend.map((s) => ({
+							...s,
+							decimals: assetDecimals(s.asset),
+							symbol: assetSymbol(s.asset),
+						})),
+					},
+				}
+			: {}),
+		receipts: page.receipts.map((r) => ({
+			...r,
+			assetDecimals: assetDecimals(r.asset),
+			assetSymbol: assetSymbol(r.asset),
+		})),
 	});
 }
