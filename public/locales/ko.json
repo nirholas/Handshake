@@ -1842,7 +1842,7 @@
 		"meta_title": "아바타 스튜디오 · three.ws",
 		"meta_twitter_description": "처음부터 맞춤형 3D 아바타를 만드세요. 체형을 선택하고, 얼굴과 몸을 조각하고, 의상과 액세서리를 추가하세요. 셀카는 필요 없습니다.",
 		"meta_twitter_title": "아바타 스튜디오 · three.ws",
-		"parametric_120_sliders": "파라메트릭 <span class=\"as-base-new\">120개 이상의 슬라이더</span>",
+		"parametric_sliders_count": "파라메트릭 <span class=\"as-base-new\">300개 이상의 슬라이더</span>",
 		"randomise_look_title": "외형 무작위화",
 		"redo_arialabel": "다시 실행",
 		"redo_ctrl_shift_z_title": "다시 실행 (Ctrl+Shift+Z)",
