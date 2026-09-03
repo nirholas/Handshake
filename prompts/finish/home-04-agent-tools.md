@@ -36,7 +36,7 @@ grep -n "SCOPES\|export const" api/_lib/oauth-scopes.js | head -20
 
 All three must call **one** handler module so they cannot diverge on the gate. Build
 `api/_lib/home/tools.js` with the handlers, and let the three surfaces be thin adapters over it.
-This is the same discipline `api/sim-readiness.js` uses over its MCP tool handler.
+This is the same discipline [`api/provenance.js`](../../api/provenance.js) uses over its MCP tool handler in [`api/_mcp3d/tools/provenance.js`](../../api/_mcp3d/tools/provenance.js); read that pair before you start.
 
 ## The tool set
 
