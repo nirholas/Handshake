@@ -2703,6 +2703,14 @@
 					"added": "2026-09-03"
 				},
 				{
+					"path": "/docs/home-plans",
+					"title": "Docs · Home plans and quotas",
+					"description": "What a connected house costs and what each plan covers, with the two commitments enforced in code rather than promised in prose: a limit never blocks a safety action, so locking up, closing a garage or valve and arming an alarm work over quota and past due; and nothing about the confirmation gate, the action log's integrity or the role system is ever a paid feature.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-09-03"
+				},
+				{
 					"path": "/docs/carplay",
 					"title": "Docs · three.ws Drive",
 					"description": "How a three.ws agent rides in the car: the CarPlay entitlement categories measured, why Apple's voice-based conversational category is the one that fits and why it grants no drawing surface, the open-source in-car projects worth adopting and the copyleft ones that are not, and how the /drive surface, the native CarPlay scene, and an open head unit share one implementation.",
