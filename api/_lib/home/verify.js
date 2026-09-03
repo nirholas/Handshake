@@ -82,7 +82,16 @@ export async function verifyConnection({ baseUrl, token, timeoutMs = CONNECT_TIM
 				areaCount: graph?.rooms?.length ?? 0,
 				floorCount: graph?.floors?.length ?? 0,
 				macroCount: bridge.macros().length,
-				haVersion: config.version,
+				// The socket already carries this: Home Assistant announces its
+				// version in the WebSocket handshake, so a house whose state channel
+				// opened has always told us. The /api/config read stays as a
+				// fallback for the location name, but it must not be the only source
+				// of the version: it is a second HTTP round trip with its own
+				// failure modes, and when it fails the capability record advertises
+				// `haVersion: null` for an instance we are actively talking to,
+				// which is how a connected 2026.9.0 house came to report no version
+				// at all.
+				haVersion: bridge.haVersion ?? config.version,
 				locationName: config.locationName,
 				mcp: mcp.available,
 				mcpToolCount: mcp.toolCount,

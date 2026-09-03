@@ -22,6 +22,7 @@ import {
 	liveHomeAvailable,
 	pickEntity,
 	readState,
+	setState,
 	waitForState,
 } from '../../../tests/_helpers/home-instance.js';
 import { connectHomeMcp, ERR, flattenEntities, HomeBridge } from '../src/index.js';
@@ -136,6 +137,15 @@ live('against a real Home Assistant', () => {
 		expect(mcp.tools.length).toBeGreaterThan(0);
 		const lock = await pickEntity(instance, 'lock');
 		if (lock) {
+			// Shut the door FIRST. The lane's instance is shared by every live test
+			// in the run and by anything else pointed at it, so "the door stayed
+			// shut" is only a statement about the gate if the door was shut when we
+			// started. Without this the assertion inherits whatever the last
+			// confirmed unlock left behind and fails for a reason that has nothing
+			// to do with the gate.
+			await setState(instance, 'lock', 'lock', lock);
+			await waitForState(instance, lock, ['locked', 'locking']);
+
 			const name = home.states[lock].attributes.friendly_name;
 			await expect(mcp.callTool({ name: 'intent__HassTurnOff', arguments: { name } })).rejects.toMatchObject({
 				code: ERR.NEEDS_CONFIRMATION,
