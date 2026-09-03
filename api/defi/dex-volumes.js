@@ -13,6 +13,7 @@ import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { createCache, cached } from '../_lib/mem-cache.js';
 import { fetchUpstream } from '../_lib/upstream-fetch.js';
+import { normalizeLlamaLogo } from '../_lib/llama-icon.js';
 
 const UPSTREAM = 'https://api.llama.fi/overview/dexs?excludeTotalDataChartBreakdown=true';
 const TTL_MS = 600_000;
@@ -74,7 +75,7 @@ async function loadDexVolumes() {
 			// `slug` is DeFiLlama's canonical protocol key. It resolves at
 			// /protocol/{slug} (verified against uniswap-v3 and peers).
 			slug: typeof p.slug === 'string' && p.slug ? p.slug : null,
-			logo: typeof p.logo === 'string' ? p.logo : null,
+			logo: normalizeLlamaLogo(p.logo),
 			chains,
 			total24h,
 			total7d: finite(Number(p.total7d)),

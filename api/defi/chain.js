@@ -24,6 +24,7 @@ import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { createCache, cached } from '../_lib/mem-cache.js';
 import { fetchUpstream, lastGood } from '../_lib/upstream-fetch.js';
+import { normalizeLlamaLogo } from '../_lib/llama-icon.js';
 
 // DeFiLlama is this page's only upstream. A TTL cache alone still 502s the
 // moment it expires during an outage, so every loader also keeps its last good
@@ -154,7 +155,7 @@ function shapeProtocols(raw, chainName) {
 		onChain.push({
 			name: typeof p.name === 'string' ? p.name : 'Unknown',
 			slug: typeof p.slug === 'string' ? p.slug : null,
-			logo: typeof p.logo === 'string' ? p.logo : null,
+			logo: normalizeLlamaLogo(p.logo),
 			category: typeof p.category === 'string' ? p.category : null,
 			tvl_on_chain: tvl,
 			change_7d: finite(Number(p.change_7d)),

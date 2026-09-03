@@ -364,6 +364,24 @@ function renderTable() {
 			</table>
 		</div>`;
 
+	// A protocol icon is fetched from a third-party CDN, so one that has been
+	// renamed or pulled answers 404 and the row renders a broken-image glyph.
+	// Swap any icon that fails to load for the same neutral disc a logo-less
+	// protocol already gets. The error event does not bubble, so this listens in
+	// the capture phase on the container rather than per image.
+	el.addEventListener(
+		'error',
+		(e) => {
+			const img = e.target;
+			if (!(img instanceof HTMLImageElement) || !img.closest('.name-cell')) return;
+			const fallback = document.createElement('span');
+			fallback.className = 'fx-logo-fallback';
+			fallback.setAttribute('aria-hidden', 'true');
+			img.replaceWith(fallback);
+		},
+		true,
+	);
+
 	el.querySelectorAll('th[data-key]').forEach((th) => {
 		const activate = () => {
 			const key = th.dataset.key;

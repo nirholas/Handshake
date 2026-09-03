@@ -10,6 +10,7 @@ import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { createCache, cached } from '../_lib/mem-cache.js';
 import { fetchUpstream } from '../_lib/upstream-fetch.js';
+import { normalizeLlamaLogo } from '../_lib/llama-icon.js';
 
 const UPSTREAM = 'https://api.llama.fi/protocols';
 const TTL_MS = 300_000;
@@ -63,7 +64,7 @@ async function loadProtocols() {
 			// DeFiLlama protocol slug. The /protocol/:slug detail page keys off it.
 			slug: typeof p.slug === 'string' ? p.slug : null,
 			name: typeof p.name === 'string' ? p.name : 'Unknown',
-			logo: typeof p.logo === 'string' ? p.logo : null,
+			logo: normalizeLlamaLogo(p.logo),
 			symbol: typeof p.symbol === 'string' && p.symbol !== '-' ? p.symbol : null,
 			category: typeof p.category === 'string' ? p.category : null,
 			chains,

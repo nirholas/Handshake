@@ -19,6 +19,7 @@ import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { createCache, cached } from '../_lib/mem-cache.js';
 import { fetchUpstream, lastGood } from '../_lib/upstream-fetch.js';
+import { normalizeLlamaLogo } from '../_lib/llama-icon.js';
 
 // DeFiLlama is this page's only upstream. A TTL cache alone still 502s the
 // moment it expires during an outage, so every loader also keeps its last good
@@ -224,7 +225,7 @@ function build(slug, proto, fees, revenue, dexs) {
 		slug,
 		name: str(proto.name) || slug,
 		symbol: str(proto.symbol) && proto.symbol !== '-' ? proto.symbol : null,
-		logo: httpUrl(proto.logo) || httpUrl(meta.logo),
+		logo: normalizeLlamaLogo(httpUrl(proto.logo) || httpUrl(meta.logo)),
 		url: httpUrl(proto.url) || httpUrl(meta.url),
 		twitter: str(proto.twitter) || str(meta.twitter),
 		category: str(proto.category) || str(meta.category),

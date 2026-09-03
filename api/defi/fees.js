@@ -14,6 +14,7 @@ import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { createCache, cached } from '../_lib/mem-cache.js';
 import { fetchUpstream } from '../_lib/upstream-fetch.js';
+import { normalizeLlamaLogo } from '../_lib/llama-icon.js';
 
 const TTL_MS = 600_000;
 const MAX_CHART_POINTS = 200;
@@ -73,7 +74,7 @@ async function loadFees(type) {
 			// `slug` is DeFiLlama's canonical protocol key. It resolves at
 			// /protocol/{slug} (verified against tether / circle-usdc / uniswap-v3).
 			slug: typeof p.slug === 'string' && p.slug ? p.slug : null,
-			logo: typeof p.logo === 'string' ? p.logo : null,
+			logo: normalizeLlamaLogo(p.logo),
 			category: typeof p.category === 'string' ? p.category : null,
 			chains,
 			total24h: finite(Number(p.total24h)),
