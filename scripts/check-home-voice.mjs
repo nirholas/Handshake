@@ -231,16 +231,26 @@ async function launch(audioPath, { loopAudio = true } = {}) {
 	const requests = [];
 	page.on('request', (r) => requests.push({ url: r.url(), at: Date.now() }));
 	const consoleErrors = [];
-	// The dev server's own HMR socket cannot reach a Codespace-forwarded origin,
-	// which is noise from the harness rather than from the page under test.
-	const isDevNoise = (text) => /\[vite\]|WebSocket|hmr/i.test(text);
+	const failedResponses = [];
+	// Noise from the harness and from the platform chrome, neither of which is the
+	// page under test: the dev server's HMR socket cannot reach a
+	// Codespace-forwarded origin, and the site nav requests /api/notifications
+	// optimistically on every page, which answers 401 for a signed-out visitor.
+	const isDevNoise = (text) => /\[vite\]|WebSocket|hmr|\/api\/notifications/i.test(text);
 	page.on('console', (m) => {
-		if (m.type() === 'error' && !isDevNoise(m.text())) consoleErrors.push(m.text());
+		if (m.type() === 'error' && !isDevNoise(m.text())) {
+			consoleErrors.push(`${m.text()} @ ${m.location()?.url || 'unknown'}`);
+		}
+	});
+	page.on('response', (r) => {
+		if (r.status() >= 400 && !r.url().includes('/@vite/') && !r.url().includes('/api/notifications')) {
+			failedResponses.push(`${r.status()} ${r.url().replace(BASE, '')}`);
+		}
 	});
 	page.on('pageerror', (e) => {
 		if (!isDevNoise(String(e))) consoleErrors.push(String(e));
 	});
-	return { browser, context, page, requests, consoleErrors };
+	return { browser, context, page, requests, consoleErrors, failedResponses };
 }
 
 /** Mirror the loop's own event stream into the page so the script can await it. */
@@ -308,7 +318,7 @@ const legs = (page) => page.evaluate(() => window.homeVoice.loop.latencySummary(
 // ── scenarios ───────────────────────────────────────────────────────────────
 
 async function scenarioColdLoad() {
-	const { browser, page, requests, consoleErrors } = await launch(null);
+	const { browser, page, requests, consoleErrors, failedResponses } = await launch(null);
 	try {
 		await bootPage(page);
 		await page.waitForTimeout(3000);
@@ -334,7 +344,10 @@ async function scenarioColdLoad() {
 			count: afterOptIn.length,
 			sample: afterOptIn.slice(0, 3).map((r) => r.url.replace(BASE, '')),
 		});
-		check('no console errors on the voice surface', consoleErrors.length === 0, { errors: consoleErrors.slice(0, 4) });
+		check('no console errors on the voice surface', consoleErrors.length === 0, {
+			errors: consoleErrors.slice(0, 4),
+			failedResponses: failedResponses.slice(0, 6),
+		});
 	} finally {
 		await browser.close();
 	}
@@ -388,12 +401,14 @@ async function scenarioBargeIn() {
 					'the front door is locked, and the garage is closed. Nothing else has changed since this morning.',
 			);
 		});
-		await page
-			.waitForFunction(
-				() => window.homeVoice.loop.state === 'speaking' || window.__hv.events.some((e) => e.type === 'tts-failed'),
-				null,
-				{ timeout: 45000 },
-			);
+		// Wait for sound actually leaving the speaker, not merely for the state
+		// flip: _speak enters `speaking` before the synthesis request returns, so a
+		// failed TTS call would otherwise read as a silent, un-interruptible agent.
+		await page.waitForFunction(
+			() => !!window.homeVoice.loop._playback || window.__hv.events.some((e) => e.type === 'tts-failed'),
+			null,
+			{ timeout: 60000 },
+		);
 		const ttsFailure = (await events(page)).find((e) => e.type === 'tts-failed');
 		if (ttsFailure) throw new Error(`the agent could not speak, so barge-in cannot be measured: ${ttsFailure.message}`);
 		await waitForEvent(page, 'barge-in', 45000);
@@ -621,7 +636,7 @@ async function scenarioStateGallery() {
 		check('the state gallery renders every one of the twelve states', count === 12, { count });
 		for (let i = 0; i < count; i++) {
 			const section = sections.nth(i);
-			const name = (await section.locator('h3').textContent()).trim();
+			const name = (await section.locator('> h3').textContent()).trim();
 			await section.screenshot({ path: join(OUT, `state-${String(i + 1).padStart(2, '0')}-${name}.png`) });
 		}
 		await page.screenshot({ path: join(OUT, 'page-full.png'), fullPage: true });

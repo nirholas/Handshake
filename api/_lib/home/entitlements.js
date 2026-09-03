@@ -857,6 +857,10 @@ export function describeEntitlements(entitlements, usage = {}, { now = new Date(
 			percent: unlimited ? 0 : limit === 0 ? 100 : Math.min(100, Math.round((used / limit) * 100)),
 			exceeded: !unlimited && used > limit,
 			source: entitlements.sources[id],
+			// A ceiling dimension is not consumed: sitting at it is the normal,
+			// healthy state (the retention default IS the free ceiling), so the
+			// surface must not paint it as "you are out of something".
+			ceilingOnly: Boolean(meta.ceilingOnly),
 			resetsAt: meta.period === 'month' ? period.endIso : null,
 			costPerUnitUsd: meta.costPerUnitUsd,
 			costBasis: meta.costBasis,

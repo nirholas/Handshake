@@ -51,6 +51,13 @@ export const STATE = Object.freeze({
 	 * answer to "you have run out of homes".
 	 */
 	QUOTA_REACHED: 'quota_reached',
+	/**
+	 * Not a failure of the flow above: the other half of it. Most Home Assistant
+	 * installs have no address three.ws could ever dial, so for those the house
+	 * dials out to us through a small integration. src/home/pair.js owns the
+	 * seven states inside this one.
+	 */
+	PAIRING: 'pairing',
 });
 
 /** Where Home Assistant hides the token minting screen. Never make anyone hunt. */
@@ -101,6 +108,7 @@ function render(state, data = {}) {
 		case STATE.UNREACHABLE: return root.append(connectCard(data));
 		case STATE.REVOKED: return root.append(connectCard(data));
 		case STATE.QUOTA_REACHED: return root.append(quotaCard(data));
+		case STATE.PAIRING: return root.append(pairingHost(data));
 		case STATE.CONNECTED:
 		case STATE.DEGRADED:
 		case STATE.MANY:
@@ -305,6 +313,36 @@ function verifying({ steps = [], onCancel } = {}) {
 	return panel;
 }
 
+/**
+ * The pairing flow lives in its own module and manages its own states; this is
+ * only the seam that hands it a container and takes the user back when they
+ * decide their house has a web address after all.
+ */
+function pairingHost() {
+	const host = el('div', 'hm-pairhost');
+	// Deferred so the pairing module (and the polling it starts) is not in the
+	// bundle for the many visitors who never open this path.
+	import('./pair.js').then(({ renderPairing }) => {
+		activePairing?.destroy();
+		activePairing = renderPairing({
+			mount: host,
+			onCancel: () => {
+				activePairing?.destroy();
+				activePairing = null;
+				render(STATE.EMPTY);
+			},
+			onLinked: () => {
+				// The home is real from here on, so the list is what should own it.
+				listHomes().then((homes) => homes && renderHomes(homes)).catch(() => null);
+			},
+		});
+	});
+	return host;
+}
+
+/** One pairing flow at a time; leaving the state stops its polling. */
+let activePairing = null;
+
 // ── Submit ──────────────────────────────────────────────────────────────────
 
 async function submitConnect({ form, label, url, token, submit }) {
@@ -483,8 +521,9 @@ export function checkReachable(input) {
 				body: 'three.ws runs on the public internet, so it cannot reach an address that only exists inside your house. There are two real ways round it.',
 				bullets: [
 					'Use your remote https address instead. Home Assistant Cloud gives you one, and so does your own reverse proxy. That works today, with the token you already have.',
-					'Or install the three.ws add-on inside your Home Assistant, which dials out to us so nothing has to be exposed to the internet.',
+					'Or let your house dial out to three.ws instead, with the button below. One small integration inside Home Assistant, no port forwarded, and no Home Assistant token stored here at all.',
 				],
+				action: { label: 'Connect a home that is only on my network', onClick: () => render(STATE.PAIRING) },
 			},
 		};
 	}
@@ -614,7 +653,7 @@ export function clear(node) {
 	while (node.firstChild) node.removeChild(node.firstChild);
 }
 
-export function noticeEl({ tone = 'info', title, body, bullets } = {}) {
+export function noticeEl({ tone = 'info', title, body, bullets, action } = {}) {
 	const wrap = el('div', `hm-notice hm-notice-${tone}`);
 	wrap.setAttribute('role', tone === 'error' ? 'alert' : 'status');
 
@@ -636,6 +675,15 @@ export function noticeEl({ tone = 'info', title, body, bullets } = {}) {
 		const ul = el('ul');
 		for (const line of bullets) ul.append(el('li', '', line));
 		content.append(ul);
+	}
+	// An explanation that names a way out should carry the way out. Telling
+	// somebody their house is unreachable and then leaving them to find the fix
+	// on their own is the difference between a diagnosis and a product.
+	if (action?.label && typeof action.onClick === 'function') {
+		const button = el('button', 'hm-btn hm-btn-primary hm-notice-action', action.label);
+		button.type = 'button';
+		button.addEventListener('click', action.onClick);
+		content.append(button);
 	}
 	wrap.append(icon, content);
 	return wrap;

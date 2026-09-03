@@ -361,6 +361,69 @@
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 
+/* ── Pairing a home that only exists on a LAN (src/home/pair.js) ─────────────
+   The code is the whole screen for a minute or two, so it is set at display
+   scale and spaced like something meant to be read off a monitor and typed on
+   a phone. Everything else on this panel is instructions, and instructions
+   read better small. */
+
+.hm-pairhost { display: block; }
+
+.hm-paircode {
+	display: flex; align-items: center; justify-content: space-between;
+	gap: var(--space-md); flex-wrap: wrap;
+	margin: var(--space-md) 0 0.6rem;
+	padding: 1rem 1.15rem;
+	border: 1px solid var(--hm-line);
+	border-radius: var(--radius-lg);
+	background: var(--hm-panel-2);
+}
+
+.hm-paircode-value {
+	font-family: var(--font-mono);
+	font-size: clamp(1.6rem, 6vw, 2.4rem);
+	font-weight: var(--weight-bold);
+	/* A pairing code is read one character at a time, so it gets the tracking a
+	   licence key gets rather than the tracking prose gets. */
+	letter-spacing: 0.14em;
+	line-height: 1.1;
+	/* Selectable in one gesture for anyone who would rather select than press
+	   the copy button, including a screen reader user on a touch device. */
+	user-select: all;
+	word-break: break-all;
+}
+
+.hm-paircode-copy { flex: 0 0 auto; }
+
+.hm-notice-action { margin-top: 0.7rem; }
+
+.hm-details { margin-top: var(--space-md); }
+.hm-details summary { cursor: pointer; font-size: var(--text-md); }
+.hm-details summary:focus-visible { outline: 2px solid var(--hm-focus); outline-offset: 3px; border-radius: var(--radius-sm); }
+.hm-details[open] summary { margin-bottom: 0.4rem; }
+
+/* "Waiting for your home to connect", with a pulse that means a real poll is
+   running. It stops when the poll stops, so it never animates over a dead
+   screen. */
+.hm-live {
+	display: inline-flex; align-items: center; gap: 0.5rem;
+	margin: 0.2rem 0 0; color: var(--hm-ink-2); font-size: var(--text-md);
+}
+.hm-live::before {
+	content: ''; width: 7px; height: 7px; border-radius: 50%;
+	background: var(--hm-live); box-shadow: 0 0 8px var(--hm-live);
+	animation: hm-pulse 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.hm-live::before { animation: none; }
+}
+
+@media (max-width: 480px) {
+	.hm-paircode { justify-content: center; text-align: center; }
+	.hm-paircode-copy { width: 100%; }
+}
+
 @media (max-width: 640px) {
 	.hm-card { grid-template-columns: minmax(0, 1fr); }
 	.hm-card-actions { justify-content: flex-start; flex-wrap: wrap; }

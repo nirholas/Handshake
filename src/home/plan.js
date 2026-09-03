@@ -121,14 +121,19 @@ function quotaPanel(plan) {
 
 function quotaRow(d) {
 	const row = el('div', 'hm-quota');
-	// At the ceiling and past it read the same, because they mean the same thing
-	// to the person looking: the next one is refused.
-	if (d.exceeded || (!d.unlimited && d.percent >= 100)) row.classList.add('is-over');
-	else if (!d.unlimited && d.percent >= WARN_AT) row.classList.add('is-warn');
+	// A ceiling dimension is never "running out": retention sitting at the plan's
+	// maximum is the healthy default state, not a warning. Only consumable
+	// dimensions change colour.
+	if (!d.ceilingOnly) {
+		// At the ceiling and past it read the same, because they mean the same
+		// thing to the person looking: the next one is refused.
+		if (d.exceeded || (!d.unlimited && d.percent >= 100)) row.classList.add('is-over');
+		else if (!d.unlimited && d.percent >= WARN_AT) row.classList.add('is-warn');
+	}
 
 	const head = el('div', 'hm-quota-head');
 	head.append(el('span', 'hm-quota-label', d.label));
-	head.append(el('span', 'hm-quota-count', d.unlimited ? `${formatNumber(d.used)} used · unlimited` : `${formatNumber(d.used)} of ${formatNumber(d.limit)}`));
+	head.append(el('span', 'hm-quota-count', countLabel(d)));
 	row.append(head);
 
 	const track = el('div', 'hm-quota-track');
@@ -141,6 +146,7 @@ function quotaRow(d) {
 	// A floor of 2% so a single unit out of a thousand is still visible, but only
 	// once there IS one: a stub of colour on an untouched quota reads as usage.
 	fill.style.width = d.unlimited || d.used === 0 ? '0%' : `${Math.max(2, d.percent)}%`;
+	if (d.ceilingOnly) fill.classList.add('is-ceiling');
 	track.append(fill);
 	row.append(track);
 
@@ -307,6 +313,22 @@ function renderFailure(err) {
 }
 
 // ── Formatting ───────────────────────────────────────────────────────────────
+
+/**
+ * "847 of 1,000" for something you consume, "90 days, up to 90" for a ceiling.
+ * A ceiling read as a consumable is how a healthy default comes to look like a
+ * problem.
+ */
+function countLabel(d) {
+	if (d.unlimited) return d.ceilingOnly ? `${formatNumber(d.used)} ${plural(d.unit, d.used)} · no limit` : `${formatNumber(d.used)} used · unlimited`;
+	if (d.ceilingOnly) return `${formatNumber(d.used)} ${plural(d.unit, d.used)} · up to ${formatNumber(d.limit)}`;
+	return `${formatNumber(d.used)} of ${formatNumber(d.limit)}`;
+}
+
+function plural(unit, n) {
+	if (n === 1) return unit;
+	return /s$/.test(unit) ? unit : `${unit}s`;
+}
 
 function labelFor(plan, dimensionId) {
 	return plan.dimensions.find((d) => d.id === dimensionId)?.label || dimensionId;

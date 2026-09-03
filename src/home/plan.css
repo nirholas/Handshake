@@ -90,6 +90,11 @@
 	transition: width 320ms cubic-bezier(0.22, 1, 0.36, 1), background-color 200ms ease;
 }
 
+/* A ceiling that is simply set, rather than a quota being consumed. Neutral on
+   purpose: retention sitting at the plan's maximum is the default, not a
+   warning, and colouring it like one teaches people to ignore the colour. */
+.hm-quota-fill.is-ceiling { background: var(--hm-line-strong); }
+
 .hm-quota-why {
 	margin: 0;
 	font-size: 0.82rem;

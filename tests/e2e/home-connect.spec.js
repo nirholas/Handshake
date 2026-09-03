@@ -242,6 +242,44 @@ test.describe('/smart-home connect flow', () => {
 		expect(await page.evaluate(() => window.__xss)).toBeUndefined();
 	});
 
+	test('a house that stopped answering goes stale, and keeps its card', async ({ page }) => {
+		// The distinction this asserts is the whole difference between a product
+		// and a demo: when a house stops answering, the last known state stays on
+		// screen marked stale with its age. Emptying the list because the socket
+		// dropped would make a user think their home had been deleted.
+		const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+		await stub(page, { homes: [{ ...HOME, last_ok_at: twoHoursAgo }] });
+		await page.goto(PAGE);
+		await expect(state(page)).toHaveAttribute('data-state', 'connected', { timeout: SLOW });
+
+		// The card is still there, and it says how long ago the house last spoke.
+		await expect(page.locator('.hm-card')).toHaveCount(1);
+		await expect(page.locator('.hm-status')).toContainText(/last answered 2 hours ago/i);
+		await expect(page.locator('.hm-status')).toContainText(/showing the last state we saw/i);
+		await expect(page.locator('.hm-dot-stale')).toBeVisible();
+		// The measured summary survives too: a stale house is not an empty one.
+		await expect(page.getByText('120')).toBeVisible();
+	});
+
+	test('a house answering right now reads as live, not stale', async ({ page }) => {
+		await stub(page, { homes: [{ ...HOME, last_ok_at: new Date().toISOString() }] });
+		await page.goto(PAGE);
+		await expect(state(page)).toHaveAttribute('data-state', 'connected', { timeout: SLOW });
+
+		await expect(page.locator('.hm-status')).toContainText(/live/i);
+		await expect(page.locator('.hm-dot-connected')).toBeVisible();
+		await expect(page.locator('.hm-dot-stale')).toHaveCount(0);
+	});
+
+	test('a rejected stored token explains itself in the list', async ({ page }) => {
+		await stub(page, { homes: [{ ...HOME, status: 'auth_failed', status_detail: 'Home Assistant rejected the stored token.', last_ok_at: null }] });
+		await page.goto(PAGE);
+		await expect(state(page)).toHaveAttribute('data-state', 'connected', { timeout: SLOW });
+
+		await expect(page.locator('.hm-status')).toContainText(/rejected the stored token/i);
+		await expect(page.locator('.hm-dot-auth_failed')).toBeVisible();
+	});
+
 	test('the token field is a password field with a working reveal toggle', async ({ page }) => {
 		await stub(page);
 		await page.goto(PAGE);

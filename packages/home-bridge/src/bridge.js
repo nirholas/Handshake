@@ -34,6 +34,7 @@ export class HomeBridge {
 	#graph = { floors: [], rooms: [], unassigned: [], temperatureUnit: null };
 	#listeners = new Map();
 	#rebuildTimer = null;
+	#registryTimer = null;
 	#closed = false;
 
 	/**
@@ -174,6 +175,7 @@ export class HomeBridge {
 				this.#scheduleRebuild();
 			}),
 		);
+		await this.#watchRegistries();
 
 		await this.#waitForFirstStates();
 		this.#rebuild();
@@ -191,6 +193,56 @@ export class HomeBridge {
 				resolve();
 			});
 		});
+	}
+
+	/**
+	 * Keep the registries live.
+	 *
+	 * They were loaded once, at connect, and never again. Everything the room
+	 * graph is made of lives in them: which room an entity is in, what a room is
+	 * called, which floor it is on. So renaming a room, creating one, or filing a
+	 * device into an area changed nothing on screen until the pooled socket
+	 * happened to be recycled, which is minutes later or never. A user who just
+	 * assigned their kitchen light to the kitchen watched nothing happen.
+	 *
+	 * Home Assistant announces every one of those changes on the same socket. We
+	 * listen, reload the four lists once per burst, and rebuild.
+	 *
+	 * The reload is coalesced because assigning ten entities to an area emits ten
+	 * events, and each reload is four round trips.
+	 */
+	async #watchRegistries() {
+		const events = [
+			'area_registry_updated',
+			'device_registry_updated',
+			'entity_registry_updated',
+			'floor_registry_updated',
+		];
+		for (const event_type of events) {
+			try {
+				const stop = await this.#connection.subscribeEvents(() => this.#scheduleRegistryReload(), event_type);
+				this.#unsubscribers.push(stop);
+			} catch {
+				// An instance too old to know one of these events is not broken; it
+				// just keeps the connect-time registries for that dimension.
+			}
+		}
+	}
+
+	#scheduleRegistryReload() {
+		if (this.#registryTimer) return;
+		this.#registryTimer = setTimeout(async () => {
+			this.#registryTimer = null;
+			if (this.#closed || !this.#connection) return;
+			try {
+				this.#registries = await this.#loadRegistries();
+			} catch {
+				// A failed reload keeps the last good registries rather than emptying
+				// the house, which is the rule everywhere else in this file too.
+				return;
+			}
+			this.#rebuild();
+		}, this.#options.registryReloadDelayMs ?? 400);
 	}
 
 	async #loadRegistries() {
@@ -318,6 +370,8 @@ export class HomeBridge {
 		this.#closed = true;
 		if (this.#rebuildTimer) clearTimeout(this.#rebuildTimer);
 		this.#rebuildTimer = null;
+		if (this.#registryTimer) clearTimeout(this.#registryTimer);
+		this.#registryTimer = null;
 		for (const stop of this.#unsubscribers) {
 			try {
 				stop();

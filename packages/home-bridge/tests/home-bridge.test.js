@@ -100,7 +100,7 @@ describe('room graph', () => {
 		expect(living.secured).not.toBeNull();
 		expect(living.secured.secure).toBe(living.secured.unlocked.length === 0 && living.secured.open.length === 0);
 		// A room with nothing to secure reports null rather than a false "secure".
-		expect(graph.rooms.find((r) => r.name === 'Kitchen').secured).toBeNull();
+		expect(graph.rooms.find((r) => r.name === 'Bedroom').secured).toBeNull();
 	});
 
 	it('survives an empty house without throwing', () => {

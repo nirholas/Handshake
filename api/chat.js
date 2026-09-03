@@ -445,8 +445,16 @@ const HOME_OPENAI_TOOLS = HOME_ANTHROPIC_TOOLS.map(toOpenAiTool);
 /** The tool set a route sends when the caller has no home connected. */
 const DEFAULT_TOOL_SET = Object.freeze({ anthropic: ACTION_TOOLS, openai: OPENAI_TOOLS });
 
-/** One round of server-side home tools per turn: enough to read and act, never a loop. */
-const HOME_TOOL_ROUNDS = 1;
+/**
+ * Server-side home rounds per turn.
+ *
+ * Two, because the shape a person actually asks for is "check the house, then do
+ * the thing": read the state, act on what it said. One round produced an agent
+ * that answered "I don't have a tool for that" after reading the house, which is
+ * both useless and untrue. The last round is offered no home tools at all, so
+ * the ceiling is a hard stop rather than a heuristic.
+ */
+const HOME_TOOL_ROUNDS = 2;
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
@@ -1024,63 +1032,66 @@ export default wrap(async (req, res) => {
 	//
 	// So home tools run HERE, on the server, through the same handler module the
 	// MCP surface uses, and their results go back to the model for one more pass.
-	// Exactly one round: enough to read the house and act on it, never a loop, and
-	// the second pass is offered no home tools at all.
+	// Two rounds at most: read the house, act on what it said. The final pass is
+	// offered no home tools at all, which is what bounds the loop mechanically.
 	//
 	// Nothing in this block can approve anything. `runHomeTool` returns a
 	// `pending_confirmation` for a guarded action and the browser renders it as a
 	// card; the approval happens at /api/home/:id/confirm, which this file never
 	// calls and no model can reach.
-	const homeCalls = (result.toolCalls || []).filter((c) => isHomeTool(c.name));
 	let homeResults = [];
-	/**
-	 * The home this turn touched, stamped into the usage row below.
-	 *
-	 * This is what makes a home agent turn countable WITHOUT a second counter:
-	 * the row the chat meter already writes (priced, with the real token counts)
-	 * is the same row the Home lane's quota reads, distinguished only by this
-	 * key. See api/_lib/home/usage.js.
-	 */
-	let homeTouched = null;
-	if (homeCalls.length && auth?.userId) {
-		homeResults = await runHomeRound(homeCalls, auth.userId);
-		for (const entry of homeResults) {
-			// Streamed immediately, ahead of the model's second pass, so a
-			// confirmation card is on screen while the model is still composing the
-			// sentence that explains it.
-			const touchedId = entry.result.structured?.home?.id || entry.call.input?.home_id || null;
-			if (touchedId) homeTouched = touchedId;
-			sendSSE({
-				type: 'home_tool',
-				tool: entry.call.name,
-				status: entry.result.kind,
-				home_id: touchedId,
-				data: entry.result.structured,
-			});
-		}
+	if (auth?.userId && (result.toolCalls || []).some((c) => isHomeTool(c.name))) {
+		let pass = result;
+		let workingHistory = history;
+		for (let round = 0; round < HOME_TOOL_ROUNDS; round++) {
+			const calls = (pass.toolCalls || []).filter((c) => isHomeTool(c.name));
+			if (!calls.length) break;
 
-		const followUp = await runFollowUpPass({
-			route,
-			systemPrompt,
-			sys,
-			history,
-			maxTokens,
-			assistantText: result.reply,
-			toolCalls: result.toolCalls,
-			homeResults,
-			sendSSE,
-		});
-		if (followUp) {
+			const roundResults = await runHomeRound(calls, auth.userId);
+			homeResults = [...homeResults, ...roundResults];
+			for (const entry of roundResults) {
+				// Streamed immediately, ahead of the model's next pass, so a
+				// confirmation card is on screen while the model is still composing
+				// the sentence that explains it.
+				sendSSE({
+					type: 'home_tool',
+					tool: entry.call.name,
+					status: entry.result.kind,
+					home_id: entry.result.structured?.home?.id || entry.call.input?.home_id || null,
+					data: entry.result.structured,
+				});
+			}
+
+			const followUp = await runFollowUpPass({
+				route,
+				systemPrompt,
+				sys,
+				history: workingHistory,
+				maxTokens,
+				assistantText: pass.reply,
+				toolCalls: pass.toolCalls,
+				homeResults: roundResults,
+				// The last round hands over no home tools, which is what bounds this
+				// loop mechanically rather than by hoping the model stops asking.
+				toolSet: round === HOME_TOOL_ROUNDS - 1 ? DEFAULT_TOOL_SET : toolSet,
+				sendSSE,
+			});
+			if (!followUp) break;
+
 			result.reply = [result.reply.trim(), followUp.reply.trim()].filter(Boolean).join('\n\n');
 			result.actions = [...result.actions, ...followUp.actions];
 			result.inputTokens += followUp.inputTokens || 0;
 			result.outputTokens += followUp.outputTokens || 0;
 			result.cacheWriteTokens = (result.cacheWriteTokens || 0) + (followUp.cacheWriteTokens || 0);
 			result.cacheReadTokens = (result.cacheReadTokens || 0) + (followUp.cacheReadTokens || 0);
-		} else if (!result.reply.trim()) {
-			// The second pass could not run (a provider blip, a spent time budget).
-			// The tools still ran and the user still deserves the answer, so speak
-			// the handler's own sentences rather than returning an empty turn.
+			workingHistory = followUp.history;
+			pass = followUp;
+		}
+
+		if (!result.reply.trim()) {
+			// No pass could speak (a provider blip, a spent time budget). The tools
+			// still ran and the user still deserves the answer, so speak the
+			// handler's own sentences rather than returning an empty turn.
 			result.reply = homeResults.map((entry) => entry.result.text).join('\n\n');
 		}
 	}
@@ -1243,14 +1254,15 @@ async function runHomeRound(calls, userId) {
  *      included. Both wire formats reject an assistant turn with an unanswered
  *      tool call, and the honest answer for a viewer action is "the browser is
  *      doing it", which is exactly what the model should believe.
- *   2. The second pass is offered NO home tools. That is what makes this one
- *      round rather than a loop, and it is why a model that just received a
- *      pending confirmation cannot respond by asking to unlock the door again.
+ *   2. The caller decides which tools this pass may use. The final round is
+ *      handed none of the home tools, which is what bounds the loop
+ *      mechanically, and is why a model that just received a pending
+ *      confirmation cannot answer by asking to unlock the door again.
  *
  * Returns null on any failure. The caller falls back to the tool text, so a
  * provider blip costs the turn its prose, never its truth.
  */
-async function runFollowUpPass({ route, systemPrompt, sys, history, maxTokens, assistantText, toolCalls, homeResults, sendSSE }) {
+async function runFollowUpPass({ route, systemPrompt, sys, history, maxTokens, assistantText, toolCalls, homeResults, toolSet, sendSSE }) {
 	if (route.style === 'orchestrate') return null;
 
 	const resultText = new Map(homeResults.map((entry) => [entry.call.id, entry.result]));
@@ -1309,7 +1321,7 @@ async function runFollowUpPass({ route, systemPrompt, sys, history, maxTokens, a
 						history: nextHistory,
 						maxTokens,
 						includeTools: true,
-						toolSet: DEFAULT_TOOL_SET,
+						toolSet: toolSet || DEFAULT_TOOL_SET,
 					}),
 				),
 				signal: ctrl.signal,
@@ -1322,7 +1334,9 @@ async function runFollowUpPass({ route, systemPrompt, sys, history, maxTokens, a
 			return null;
 		}
 		const followUp = anthropic ? await streamAnthropic(upstream, sendSSE) : await streamOpenAI(upstream, sendSSE);
-		return followUp.error ? null : followUp;
+		// The history this pass was built on rides back out, so a second round
+		// continues the same conversation instead of rebuilding it from the top.
+		return followUp.error ? null : { ...followUp, history: nextHistory };
 	} catch (err) {
 		captureException(err, { route: 'chat', stage: 'home-follow-up', provider: route.name });
 		return null;

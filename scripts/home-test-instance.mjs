@@ -335,21 +335,40 @@ async function seed(inst, state, { alreadyInConfig }) {
 		const floor = await ensureFloor(ws, 'Ground Floor');
 		created.floors = floor.created ? 1 : 0;
 
+		// Only entities that reached the ENTITY REGISTRY can hold an area, and the
+		// demo's locks never do: they carry no unique_id, so they exist as states
+		// and nothing more. Plan the rooms from the registry and let the states
+		// answer for everything else, rather than assigning an area to an entity
+		// that cannot have one and counting it as furnished.
+		const registry = await ws.send({ type: 'config/entity_registry/list' }).catch(() => []);
 		const states = await ws.send({ type: 'get_states' });
+		const registered = (domain) => registry.filter((e) => e.entity_id.startsWith(`${domain}.`)).map((e) => e.entity_id);
 		const byDomain = (domain) => states.filter((s) => s.entity_id.startsWith(`${domain}.`)).map((s) => s.entity_id);
-		const lights = byDomain('light');
-		const locks = byDomain('lock');
-		const climate = byDomain('climate');
 
-		// Three real rooms with real entities in them, which is the minimum the
-		// room graph, the 3D scene and the per-room rollups all need to mean
-		// anything. Entities are taken from whatever the demo actually provides
-		// rather than hardcoded, so a demo-integration change does not break this.
+		const lights = registered('light');
+		const climate = registered('climate');
+		const covers = registered('cover');
+		const fans = registered('fan');
+		const switches = registered('switch');
+		const doorSensors = registered('binary_sensor');
+		const locks = byDomain('lock');
+
+		// A furnished house, not a demo of one. Every room gets light, and the
+		// rooms that should have something to secure get a cover or a door
+		// sensor, because a room graph whose security rollup is null everywhere
+		// proves nothing about the rollup. Entities come from whatever this
+		// release's demo actually registers, so a demo change shows up as fewer
+		// assignments rather than as a broken seed.
 		const plan = [
-			{ name: 'Living Room', entities: [lights[0], climate[0]].filter(Boolean) },
-			{ name: 'Bedroom', entities: [lights[1]].filter(Boolean) },
-			{ name: 'Front Door', entities: [locks[0], lights[2]].filter(Boolean) },
-		];
+			{ name: 'Living Room', entities: [lights[0], climate[0], covers[0], switches[0]] },
+			{ name: 'Kitchen', entities: [lights[1], covers[1], fans[0], doorSensors[0]] },
+			// The bedroom is deliberately left with nothing securable in it. A house
+			// where every room has a door is a house that cannot tell a real
+			// "nothing to secure here" apart from a false "all secure", and the
+			// room graph draws that distinction on purpose.
+			{ name: 'Bedroom', entities: [lights[2], climate[1], fans[1]] },
+			{ name: 'Front Door', entities: [lights[3], covers[2], doorSensors[1]] },
+		].map((room) => ({ ...room, entities: room.entities.filter(Boolean) }));
 
 		for (const room of plan) {
 			const area = await ensureArea(ws, room.name, floor.floor_id);
