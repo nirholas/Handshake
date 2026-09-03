@@ -12,7 +12,7 @@ The free forge is the platform's front door, but a one-off "make a 3D model" pro
 
 ## How it works
 
-The page loads model-viewer (with the meshopt decoder, since Forge GLBs are meshopt-compressed) and, after a WebGL support check, the `src/daily.js` module. If WebGL is unavailable the module is never loaded and the stage shows a "This browser can't render 3D" message.
+The page runs a WebGL support check first, then loads model-viewer from the CDN (behind the meshopt decoder, since Forge GLBs are meshopt-compressed) and finally the `src/daily.js` module. model-viewer is loaded only when WebGL is present, because it builds a `THREE.WebGLRenderer` the moment the element upgrades and throws on a browser that has no context to give it. If WebGL is unavailable the stage shows a "This browser can't render 3D" message and the Forge button is disabled, but the day's theme still renders: `src/daily/daily-theme.js` is DOM-free and pure, so the visitor still learns what today's challenge is. If the CDN itself is unreachable, `src/daily.js` loads anyway and a finished generation hands over its Download and AR links in place of the preview.
 
 **Deterministic theme.** `src/daily/daily-theme.js` holds a frozen pool of 24 curated themes, each with an emoji, title, hint, accent, and three seed prompts. The theme for a date is chosen with an FNV-1a hash of the `YYYY-MM-DD` UTC key, plus a weekly rotation offset so a fixed weekday does not lock to one theme:
 
@@ -87,8 +87,10 @@ console.log(themeIndex(new Date().toISOString().slice(0, 10), 24));
 - **No sign-up, no key.** The whole loop is anonymous: an in-browser client id, a free NVIDIA generation lane, and a local streak. Nothing is stored server-side about you.
 - **Per day.** The theme, the starter seed, and the streak all key on the UTC day. The streak counts at most once per day.
 - **Prompt limits.** 3 to 600 characters (enforced in JS and on the input).
-- **Empty and error states.** The stage has idle, working (with an elapsed timer), and failed (with retry) overlays. The forge lane surfaces offline (503), rate-limited (429 with a retry-after), and timeout (over 5 minutes of polling) states, and a "generated but couldn't display" path that still offers a download and still counts the streak. The community strip hides itself when empty. WebGL-unsupported browsers never load the module.
-- **Shared links do not cheat the streak.** Opening `/daily?src=<glb>` to view someone else's creation does not light your streak; only a real forge does.
+- **Empty and error states.** The stage has idle, working (with an elapsed timer), and failed (with retry) overlays. The forge lane surfaces offline (503), rate-limited (429 with a retry-after), unreachable (a connection failure, phrased for a human rather than as "Failed to fetch"), and timeout (over 5 minutes of polling) states, plus a "generated but couldn't display" path that still offers a download and still counts the streak. The action bar sits above the overlays, so the Download button that copy points at is actually clickable. The community strip hides itself when empty or when the gallery is down. WebGL-unsupported browsers never load model-viewer, and still see the day's theme.
+- **Shared links do not cheat the streak.** Opening `/daily?src=<glb>` to view someone else's creation does not light your streak; only a real forge does. A `src` that is neither absolute https nor a same-origin path is refused with a designed message rather than handed to the viewer.
+- **The theme is data, not copy.** Every element `src/daily.js` writes is claimed with `data-i18n-owned="1"` before it is written, so the runtime i18n catalog pass (which lands after an async `/api/locale` fetch) cannot revert the day's theme back to the "Today's theme" / "Loading today's challenge" placeholders baked into the HTML. Copy this module writes itself reads back through `window.threewsI18n.t()` and re-renders on `i18n:change`.
+- **Keyboard and focus.** Every control carries a visible `:focus-visible` ring in the day's accent colour. The milestone dialog takes focus on open, closes on Escape or a backdrop click, keeps Tab inside itself, and restores focus to whatever was focused before it opened.
 
 ## Related
 
