@@ -34,11 +34,11 @@ const email = (who) => `${PREFIX}+${who}@example.invalid`;
 
 /** The order 12 table, transcribed. Rows are roles, columns are capabilities. */
 const EXPECTED = {
-	owner: { read: true, act: true, confirm: true, grant: true, layout: true, invite: true, disconnect: true },
-	admin: { read: true, act: true, confirm: true, grant: true, layout: true, invite: true, disconnect: false },
-	member: { read: true, act: true, confirm: true, grant: false, layout: true, invite: false, disconnect: false },
-	guest: { read: true, act: true, confirm: false, grant: false, layout: false, invite: false, disconnect: false },
-	viewer: { read: true, act: false, confirm: false, grant: false, layout: false, invite: false, disconnect: false },
+	owner: { read: true, act: true, confirm: true, grant: true, layout: true, invite: true, manage: true, disconnect: true },
+	admin: { read: true, act: true, confirm: true, grant: true, layout: true, invite: true, manage: true, disconnect: false },
+	member: { read: true, act: true, confirm: true, grant: false, layout: true, invite: false, manage: false, disconnect: false },
+	guest: { read: true, act: true, confirm: false, grant: false, layout: false, invite: false, manage: false, disconnect: false },
+	viewer: { read: true, act: false, confirm: false, grant: false, layout: false, invite: false, manage: false, disconnect: false },
 };
 
 /** Roles whose reads and actions are narrowed by entity_scope. */
@@ -62,6 +62,11 @@ async function makeUser(who) {
 
 async function sweep() {
 	await sql`DELETE FROM home_connections WHERE label LIKE ${`${PREFIX}%`}`;
+	// Sessions and audit rows are keyed on the user rather than the home, so they
+	// do not follow the connection's cascade and have to be named here. Without
+	// this the suite leaves a session behind on every run.
+	await sql`DELETE FROM sessions WHERE user_id IN (SELECT id FROM users WHERE email LIKE ${`${PREFIX}+%`})`;
+	await sql`DELETE FROM audit_log WHERE user_id IN (SELECT id FROM users WHERE email LIKE ${`${PREFIX}+%`})`;
 	await sql`DELETE FROM users WHERE email LIKE ${`${PREFIX}+%`}`;
 }
 
@@ -581,6 +586,101 @@ d('the action log attributes every action to the member who acted', () => {
 		// a confirmed_by would be the audit trail lying about who opened a door.
 		expect(row.confirmed_by).toBeNull();
 		expect(row.detail.role).toBe('guest');
+	});
+});
+
+d('the access door enforces the matrix for every /api/home route', () => {
+	// resolveHomeAccess is the single door every REST route on this surface goes
+	// through, so the matrix is asserted against it directly, with a real session
+	// cookie, rather than against nine handlers that all delegate to it.
+	let access;
+	let sessions = {};
+
+	beforeAll(async () => {
+		access = await import('../api/_lib/home/access.js');
+		const { createSession } = await import('../api/_lib/auth.js');
+		for (const who of ['owner', 'admin', 'member', 'guest', 'viewer', 'stranger']) {
+			sessions[who] = await createSession({ userId: users[who], userAgent: 'home-roles-test', ip: '127.0.0.1' });
+		}
+	}, 120_000);
+
+	const reqFor = (who) => ({ headers: { cookie: `__Host-sid=${sessions[who]}` }, socket: {} });
+	const res = { setHeader() {}, getHeader() {}, headersSent: false };
+
+	for (const [role, expected] of Object.entries(EXPECTED)) {
+		for (const [capability, allowed] of Object.entries(expected)) {
+			it(`the door ${allowed ? 'admits' : 'refuses'} a ${role} asking to ${capability}`, async () => {
+				const result = await access.resolveHomeAccess(reqFor(role), res, homeId, capability);
+				expect(result.ok).toBe(allowed);
+				if (allowed) {
+					expect(result.role).toBe(role);
+					expect(result.home.id).toBe(homeId);
+					// The credential never reaches a route, whichever role asked.
+					expect(Object.keys(result.home)).not.toContain('access_token_enc');
+				} else {
+					expect(result.status).toBe(403);
+					expect(result.code).toBe('role_forbidden');
+					expect(result.message).toContain(role);
+				}
+			});
+		}
+	}
+
+	it('answers a non-member 404 without confirming the home is real', async () => {
+		const result = await access.resolveHomeAccess(reqFor('stranger'), res, homeId, 'read');
+		expect(result.ok).toBe(false);
+		expect(result.status).toBe(404);
+		expect(result.code).toBe('not_found');
+		expect(result.home).toBeUndefined();
+	});
+
+	it('answers a signed-out caller 401', async () => {
+		const result = await access.resolveHomeAccess({ headers: {}, socket: {} }, res, homeId, 'read');
+		expect(result.status).toBe(401);
+	});
+
+	it('carries the scope a scoped role is held to', async () => {
+		const result = await access.resolveHomeAccess(reqFor('guest'), res, homeId, 'read');
+		expect(result.scoped).toBe(true);
+		expect(result.scope.areas).toContain('kitchen');
+
+		const whole = await access.resolveHomeAccess(reqFor('member'), res, homeId, 'read');
+		expect(whole.scoped).toBe(false);
+		expect(whole.scope).toEqual({ mode: 'all' });
+	});
+
+	it('defaults to `read` so a route that names no capability fails closed, not open', async () => {
+		const viewer = await access.resolveHomeAccess(reqFor('viewer'), res, homeId);
+		expect(viewer.ok).toBe(true);
+		expect(viewer.role).toBe('viewer');
+	});
+});
+
+d('every route on the surface names the capability it needs', () => {
+	// A drift guard, not a behaviour test. `resolveHomeAccess` defaults to `read`,
+	// which is the safe default and also a silent one: a new route that writes to
+	// a house and forgets to say so would be admitted to a viewer. Reading the
+	// call sites is the only way to catch that, because the omission is invisible
+	// at runtime until somebody exploits it.
+	it('passes a capability at every resolveHomeAccess call site under api/home', async () => {
+		const { readdirSync, readFileSync, statSync } = await import('node:fs');
+		const { join } = await import('node:path');
+
+		const walk = (dir) =>
+			readdirSync(dir).flatMap((name) => {
+				const full = join(dir, name);
+				return statSync(full).isDirectory() ? walk(full) : full.endsWith('.js') ? [full] : [];
+			});
+
+		const bare = [];
+		for (const file of walk('api/home')) {
+			const src = readFileSync(file, 'utf8');
+			for (const call of src.match(/resolveHomeAccess\([^)]*\)/g) || []) {
+				// Three arguments is (req, res, homeId) with the capability left off.
+				if (call.split(',').length < 4) bare.push(`${file}: ${call}`);
+			}
+		}
+		expect(bare).toEqual([]);
 	});
 });
 
