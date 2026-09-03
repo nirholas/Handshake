@@ -64,19 +64,28 @@ async function main() {
 	};
 
 	try {
-		let state = readState(instance);
+		// Several vitest forks reach for the same named instance at once, and two
+		// simultaneous `docker run --name` calls means one of them fails. The lock
+		// makes the second caller wait for the first to finish building the house
+		// and then reuse it, which is what "idempotent" has to mean under
+		// concurrency.
+		const state = await withLock(instance, async () => {
+			let current = readState(instance);
 
-		if (opts.down) {
-			const removed = await down(instance, state);
-			emit({ action: 'down', name: instance.name, ...removed });
-			return;
-		}
+			if (opts.down) {
+				const removed = await down(instance, current);
+				emit({ action: 'down', name: instance.name, ...removed });
+				return null;
+			}
 
-		if (opts.up) state = await up(instance, state, { seedNow: opts.seed });
-		if (!state) state = requireState(instance);
+			if (opts.up) current = await up(instance, current, { seedNow: opts.seed });
+			if (!current) current = requireState(instance);
 
-		if (opts.onboard) state = await onboard(instance, state);
-		if (opts.seed) state = await seed(instance, state, { alreadyInConfig: Boolean(opts.up) });
+			if (opts.onboard) current = await onboard(instance, current);
+			if (opts.seed) current = await seed(instance, current, { alreadyInConfig: Boolean(opts.up) });
+			return current;
+		});
+		if (!state) return;
 
 		emit({
 			action: 'ready',
@@ -88,6 +97,7 @@ async function main() {
 			baseUrl: state.baseUrl,
 			token: state.token || null,
 			seeded: Boolean(state.seeded),
+			seed: state.seedResult || null,
 			configDir: path.relative(ROOT, instance.configDir),
 		});
 	} catch (err) {
@@ -167,6 +177,18 @@ async function down(inst, state) {
 		if (!path.basename(dir).startsWith('.ha-config-') || path.dirname(dir) !== ROOT) {
 			throw new Error(`refusing to delete ${dir}: not a harness config directory`);
 		}
+		// Home Assistant runs as root in the container, so /config comes back
+		// owned by root and an ordinary rm cannot clear it. Hand ownership back
+		// through a throwaway container on the image we already have locally,
+		// then delete from here. A config directory left behind is not litter:
+		// it holds a working access token.
+		await docker([
+			'run', '--rm',
+			'-v', `${dir}:/target`,
+			'--entrypoint', 'chown',
+			inst.image,
+			'-R', `${process.getuid()}:${process.getgid()}`, '/target',
+		]).catch((err) => log(`[down] could not reclaim ownership of ${path.relative(ROOT, dir)}: ${err.message}`));
 		fs.rmSync(dir, { recursive: true, force: true });
 		removedConfig = true;
 		log(`[down] removed ${path.relative(ROOT, dir)}`);
@@ -724,6 +746,39 @@ function describeInstance(name, version) {
 		container: `three-ws-home-test-${slug}`,
 		configDir: path.join(ROOT, `.ha-config-test-${slug}`),
 	};
+}
+
+/**
+ * An exclusive lock around one named instance, held for the whole up/onboard/
+ * seed sequence. `mkdir` is the atomic primitive here: it either creates the
+ * directory or fails, with no window between the two.
+ */
+async function withLock(inst, fn) {
+	const lock = `${inst.configDir}.lock`;
+	const deadline = Date.now() + 900_000;
+	for (;;) {
+		try {
+			fs.mkdirSync(lock);
+			break;
+		} catch (err) {
+			if (err.code !== 'EEXIST') throw err;
+			// A killed run leaves its lock behind. Nothing here takes longer than
+			// a cold Home Assistant boot, so a much older lock is abandoned.
+			const age = Date.now() - (fs.statSync(lock).mtimeMs || 0);
+			if (age > 900_000) {
+				fs.rmSync(lock, { recursive: true, force: true });
+				continue;
+			}
+			if (Date.now() > deadline) throw new Error(`another run has held the lock on "${inst.name}" for 15 minutes`);
+			log(`[lock] waiting for another run to finish with "${inst.name}"`);
+			await new Promise((r) => setTimeout(r, 2000));
+		}
+	}
+	try {
+		return await fn();
+	} finally {
+		fs.rmSync(lock, { recursive: true, force: true });
+	}
 }
 
 function statePath(inst) {
