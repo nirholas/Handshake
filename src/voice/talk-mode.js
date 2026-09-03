@@ -19,6 +19,7 @@ import { TalkScene } from './talk-scene.js';
 import { AvatarMouthTarget } from './avatar-morph-target.js';
 import { TalkController } from './talk-controller.js';
 import { openVoiceCloneModal } from './voice-clone-modal.js';
+import { TALK_LANGUAGES, detectTalkLanguage, talkLanguage } from './talk-languages.js';
 import { nextPreset, PRESET_LABELS } from './camera-presets.js';
 import { WalletIntentController } from './wallet-intent.js';
 import { log } from '../shared/log.js';
@@ -67,6 +68,7 @@ export function openTalkMode({ avatar, systemPromptFn }) {
 	const textbar = overlay.querySelector('.tws-talk-textbar');
 	const textInput = overlay.querySelector('.tws-talk-input');
 	const walletHintBtn = overlay.querySelector('.tws-talk-wallet-hint');
+	const langSel = overlay.querySelector('.tws-talk-lang');
 	nameEl.textContent = avatar.name || 'Avatar';
 
 	// Owner-only affordance: `owner_id` is stripped from the API response for
@@ -129,6 +131,7 @@ export function openTalkMode({ avatar, systemPromptFn }) {
 	controller = new TalkController({
 		avatar,
 		systemPromptFn,
+		language: readStoredTalkLanguage(),
 		mouthTarget,
 		onMessage: (m) => appendTranscript(transcriptEl, m),
 		onInterim: (t) => setPartial(partialEl, t),
@@ -156,18 +159,65 @@ export function openTalkMode({ avatar, systemPromptFn }) {
 		}
 	}
 
-	// Resolve the speech-to-text path up front (probes the free Riva lane). When no
-	// recognizer exists at all, retire the mic button and lead with text input.
-	controller.prepare().then((mode) => {
+	// ── Conversation language ──────────────────────────────────────────
+	// The picker drives all three legs of the loop: what the recognizer listens
+	// for, what language the agent answers in, and which voice speaks the reply
+	// (a cloned voice speaks every language here; the fallback voice switches to
+	// a native one). Options are labelled with the recognizer each language will
+	// actually get, so a "type only" language is visible before it is chosen.
+	function renderLanguageOptions() {
+		if (!langSel) return;
+		const current = controller.language;
+		langSel.innerHTML = TALK_LANGUAGES.map((l) => {
+			const mode = controller.sttModeFor(l.tag);
+			const suffix = mode === 'none' ? ' (type only)' : '';
+			const label = l.native === l.english ? l.native : `${l.native} · ${l.english}`;
+			return `<option value="${l.tag}"${l.tag === current ? ' selected' : ''}>${label}${suffix}</option>`;
+		}).join('');
+		langSel.value = current;
+	}
+
+	// Reflect the recognizer available for the chosen language: no recognizer at
+	// all retires the mic button and leads with the text input rather than leaving
+	// a button that can only fail.
+	function applySttMode() {
+		const mode = controller.sttMode;
+		const name = talkLanguage(controller.language)?.english || 'this language';
+		// Before the probe answers, the mapping is a guess, so never retire the mic
+		// button or accuse a language of being unusable on a guess.
+		if (!controller.probeSettled) {
+			holdBtn.title = `Hold to talk in ${name}`;
+			return;
+		}
+		holdBtn.hidden = mode === 'none';
 		if (mode === 'none') {
-			holdBtn.hidden = true;
 			textInput?.focus();
+			showError(errEl, `Speech input isn't available for ${name} in this browser. Type instead and the avatar still answers out loud.`);
 		} else {
 			holdBtn.title =
 				mode === 'riva'
-					? 'Hold to talk — powered by NVIDIA Riva speech-to-text'
-					: 'Hold to talk';
+					? `Hold to talk in ${name}, powered by NVIDIA Riva speech-to-text`
+					: `Hold to talk in ${name}`;
 		}
+	}
+
+	renderLanguageOptions();
+	applySttMode();
+
+	langSel?.addEventListener('change', () => {
+		const tag = controller.setLanguage(langSel.value);
+		storeTalkLanguage(tag);
+		hideError(errEl);
+		renderLanguageOptions();
+		applySttMode();
+	});
+
+	// Resolve the speech-to-text path up front (probes the free Riva lane): the
+	// probe tells us which languages the free server lane can hear, so the labels
+	// and the mic button both settle once it answers.
+	controller.prepare().then(() => {
+		renderLanguageOptions();
+		applySttMode();
 	});
 
 	// ── Conversational Wallet (owner-only) ──────────────────────────────
@@ -340,6 +390,10 @@ const TEMPLATE = `
 			<span class="tws-talk-name"></span>
 		</div>
 		<div class="tws-talk-header-actions">
+			<label class="tws-talk-lang-wrap" title="Language you speak. The avatar answers in it, in its own voice">
+				<span class="tws-talk-lang-icon" aria-hidden="true">🌐</span>
+				<select class="tws-talk-lang" aria-label="Conversation language"></select>
+			</label>
 			<button class="tws-talk-frame" type="button" title="Cycle framing: half → headshot → full" aria-label="Cycle camera framing">
 				<span aria-hidden="true">⛶</span>
 				<span class="tws-talk-frame-label">Half body</span>
@@ -446,6 +500,33 @@ function appendTranscript(el, msg) {
 	el.scrollTop = el.scrollHeight;
 }
 
+function hideError(el) {
+	if (!el) return;
+	el.hidden = true;
+	el.textContent = '';
+}
+
+// Conversation-language preference. Per browser, not per avatar: someone who
+// talks to their agents in Mandarin does so with all of them, and re-picking the
+// language on every avatar page would be the worst part of the feature.
+const LANG_STORAGE_KEY = 'tws_talk_language';
+
+function readStoredTalkLanguage() {
+	try {
+		return localStorage.getItem(LANG_STORAGE_KEY) || '';
+	} catch {
+		return ''; // private mode / storage blocked, so fall back to detection
+	}
+}
+
+function storeTalkLanguage(tag) {
+	try {
+		localStorage.setItem(LANG_STORAGE_KEY, tag);
+	} catch {
+		// Storage blocked: the choice still applies for this session.
+	}
+}
+
 function showError(el, message) {
 	if (!el) return;
 	el.textContent = message;
@@ -522,6 +603,36 @@ const TALK_CSS = `
 	gap: 8px;
 	flex-shrink: 0;
 }
+.tws-talk-lang-wrap {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	background: rgba(255,255,255,0.06);
+	border: 1px solid rgba(255,255,255,0.14);
+	border-radius: 999px;
+	padding: 5px 10px 5px 12px;
+	transition: background 0.15s, border-color 0.15s;
+	flex-shrink: 0;
+}
+.tws-talk-lang-wrap:hover, .tws-talk-lang-wrap:focus-within {
+	background: rgba(255,255,255,0.10);
+	border-color: rgba(255,255,255,0.25);
+}
+.tws-talk-lang-icon { font-size: 12px; line-height: 1; }
+.tws-talk-lang {
+	appearance: none;
+	background: transparent;
+	border: 0;
+	color: #fafafa;
+	font-family: inherit;
+	font-size: 12px;
+	font-weight: 600;
+	padding: 2px 2px;
+	cursor: pointer;
+	max-width: 150px;
+}
+.tws-talk-lang:focus-visible { outline: 2px solid #7c5cff; outline-offset: 3px; border-radius: 4px; }
+.tws-talk-lang option { background: #131316; color: #fafafa; }
 .tws-talk-clone, .tws-talk-frame {
 	background: rgba(255,255,255,0.06);
 	border: 1px solid rgba(255,255,255,0.14);

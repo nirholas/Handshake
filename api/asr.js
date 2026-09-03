@@ -17,7 +17,8 @@
 //   audio/flac                → FLAC
 //   audio/ogg                 → Ogg/Opus
 // or a JSON body { audio: <base64>, format?, language?, sampleRate?, words? }.
-// Query/JSON params: language (BCP-47, default en-US), rate (PCM sample rate),
+// Query/JSON params: language (BCP-47, default en-US; a non-English tag routes
+//   to the multilingual model, see asrFunctionIdFor), rate (PCM sample rate),
 // words ("1" for word-level timestamps), model (override Riva model name).
 //
 // Response: { text, confidence, language, model, durationSec, words? }.
@@ -30,6 +31,7 @@ import {
 	nvidiaAsrConfigured,
 	resolveAsrEncoding,
 	parseWav,
+	asrLanguages,
 } from './_lib/asr-nvidia.js';
 
 export const maxDuration = 30;
@@ -86,6 +88,10 @@ export default wrap(async function handler(req, res) {
 				// 16 kHz mono is the Riva acoustic-model rate and the rate the client
 				// downsamples its capture to — surface it so the two never drift.
 				sampleRate: 16000,
+				// BCP-47 tags this deployment can recognize. A client builds its
+				// language picker from this rather than guessing: offering a language
+				// the lane rejects is worse than not offering it at all.
+				languages: asrLanguages(),
 			},
 			{ 'cache-control': 'public, max-age=60' },
 		);
@@ -201,6 +207,17 @@ export default wrap(async function handler(req, res) {
 			code === 'invalid_argument' ? 400 :
 			code === 'not_configured' ? 503 :
 			502;
+		// An `invalid_argument` on a non-English language is nearly always the
+		// hosted model refusing that language_code, which reads as a generic
+		// provider failure unless we say so. Name the language and the way out.
+		if (code === 'invalid_argument' && !String(language).toLowerCase().startsWith('en')) {
+			return error(
+				res,
+				400,
+				'unsupported_language',
+				`The speech-to-text lane could not recognize "${language}". Supported: ${asrLanguages().join(', ') || 'none'}.`,
+			);
+		}
 		return error(res, status, code, `Speech recognition failed: ${e?.message || 'unknown error'}`);
 	}
 });

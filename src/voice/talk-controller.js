@@ -27,6 +27,12 @@
 
 import { LipsyncDriver, tapAudioElement } from './lipsync-driver.js';
 import { MicCapture } from './mic-capture.js';
+import {
+	detectTalkLanguage,
+	edgeVoiceFor,
+	languageInstruction,
+	resolveTalkLanguage,
+} from './talk-languages.js';
 import { log } from '../shared/log.js';
 
 // Riva interim recognition cadence. While holding to talk we fire a recognition
@@ -35,12 +41,6 @@ import { log } from '../shared/log.js';
 // metered ASR budget. The release always runs one authoritative final pass.
 const INTERIM_INTERVAL_MS = 1400;
 const MAX_INTERIMS = 4;
-
-const EDGE_VOICES_BY_GENDER = {
-	female: 'en-US-AriaNeural',
-	male: 'en-US-GuyNeural',
-	neutral: 'en-US-AriaNeural',
-};
 
 const ELEVEN_DEFAULT_VOICE = 'EXAVITQu4vr4xnSDxMaL'; // Bella — ElevenLabs default voice
 
@@ -56,7 +56,7 @@ export class TalkController {
 	 * @param {(err: Error) => void} [opts.onError]
 	 * @param {{ attach: Function, setMouthShape: Function }} opts.mouthTarget
 	 */
-	constructor({ avatar, systemPromptFn, onMessage, onStateChange, onInterim, onError, mouthTarget, commandInterceptor }) {
+	constructor({ avatar, systemPromptFn, onMessage, onStateChange, onInterim, onError, mouthTarget, commandInterceptor, language }) {
 		if (!avatar?.id) throw new Error('TalkController: avatar.id required');
 		if (!mouthTarget) throw new Error('TalkController: mouthTarget required');
 		this.avatar = avatar;
@@ -82,24 +82,69 @@ export class TalkController {
 
 		// Speech-to-text routing. 'riva' = server-side NVIDIA Riva (cross-browser),
 		// 'browser' = window.SpeechRecognition (Chrome/Edge/Safari), 'none' = text
-		// only. Resolved once by prepare(); language tracks the avatar's locale.
-		this._sttMode = null;
-		this._sttModePromise = null;
+		// only. The right path depends on the CONVERSATION LANGUAGE, not just the
+		// browser: the server lane recognizes the languages it advertises on
+		// /api/asr, and the browser recognizer covers the rest. prepare() probes
+		// once; the mode is then derived per language.
+		this._probePromise = null;
+		this._probeSettledFlag = false;
+		this._serverAsr = null; // { configured, languages } from GET /api/asr
+		this._hasBrowserSR = !!(
+			typeof window !== 'undefined' &&
+			(window.SpeechRecognition || window.webkitSpeechRecognition)
+		);
 		this._listenMode = null; // mode of the in-flight turn
 		this._mic = null;
 		this._interimTimer = null;
 		this._interimBusy = false;
 		this._interimCount = 0;
-		this.language = 'en-US';
+
+		// Conversation language: an explicit choice wins, else the language the
+		// site is already displayed in, else the browser's own preference. Every
+		// leg of the loop reads it: recognition, the reply, and the voice.
+		this.language = resolveTalkLanguage(
+			language ||
+				detectTalkLanguage({
+					uiLocale: siteLocale(),
+					navLangs:
+						typeof navigator !== 'undefined'
+							? navigator.languages || [navigator.language]
+							: [],
+				}),
+		);
+	}
+
+	/**
+	 * Switch the conversation language mid-session. Takes effect on the next turn:
+	 * recognition, the reply, and the voice all follow it.
+	 * @returns {string} the resolved tag (never an unsupported one).
+	 */
+	setLanguage(tag) {
+		this.language = resolveTalkLanguage(tag);
+		return this.language;
 	}
 
 	get state() {
 		return this._state;
 	}
 
-	/** Resolved STT path: 'riva' | 'browser' | 'none' (null until prepare()). */
+	/** STT path for the CURRENT language: 'riva' | 'browser' | 'none'. */
 	get sttMode() {
-		return this._sttMode;
+		return this._modeFor(this.language);
+	}
+
+	/** True when the free server lane can hear the current language. */
+	get serverHearsLanguage() {
+		return this._serverSupports(this.language);
+	}
+
+	/**
+	 * Recognizer a given language would use right now: 'riva' | 'browser' | 'none'.
+	 * A picker calls this to label each option honestly before the user commits to
+	 * one, instead of discovering the dead end by holding the mic.
+	 */
+	sttModeFor(language) {
+		return this._modeFor(resolveTalkLanguage(language));
 	}
 
 	/** Live mic level (0..1) while the Riva lane is capturing; 0 otherwise. */
@@ -108,32 +153,61 @@ export class TalkController {
 	}
 
 	/**
-	 * Decide the STT path once, before the first turn. Probes /api/asr for the
-	 * free NVIDIA Riva lane (works in every browser, including Firefox); falls
-	 * back to the browser's own SpeechRecognition, then to text-only. Safe to
-	 * call repeatedly — the probe runs at most once. Returns the resolved mode.
+	 * Decide the STT path before the first turn. Probes /api/asr once for the free
+	 * NVIDIA Riva lane (works in every browser, including Firefox) and the set of
+	 * languages that lane recognizes; falls back to the browser's own
+	 * SpeechRecognition, then to text-only. Safe to call repeatedly; the probe
+	 * runs at most once. Returns the mode for the current language.
 	 */
 	async prepare() {
-		if (this._sttMode) return this._sttMode;
-		if (!this._sttModePromise) {
-			this._sttModePromise = (async () => {
-				const hasBrowserSR = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
-				const canCapture = MicCapture.isSupported();
-				if (canCapture) {
-					try {
-						const r = await fetch('/api/asr', { headers: { accept: 'application/json' } });
-						if (r.ok) {
-							const j = await r.json();
-							if (j?.configured) return (this._sttMode = 'riva');
-						}
-					} catch {
-						// Probe failure is not fatal — fall back to whatever the browser offers.
-					}
+		if (!this._probePromise) {
+			this._probePromise = (async () => {
+				if (!MicCapture.isSupported()) return;
+				try {
+					const r = await fetch('/api/asr', { headers: { accept: 'application/json' } });
+					if (!r.ok) return;
+					const j = await r.json();
+					if (!j?.configured) return;
+					this._serverAsr = {
+						configured: true,
+						// A deployment that predates language routing advertises no list;
+						// treat that as the English-only lane it is rather than assuming
+						// it can hear Mandarin and failing the first turn.
+						languages: Array.isArray(j.languages) && j.languages.length
+							? j.languages.map((t) => String(t).toLowerCase())
+							: ['en-us'],
+					};
+				} catch {
+					// Probe failure is not fatal: fall back to whatever the browser offers.
+				} finally {
+					this._probeSettledFlag = true;
 				}
-				return (this._sttMode = hasBrowserSR ? 'browser' : 'none');
 			})();
 		}
-		return this._sttModePromise;
+		await this._probePromise;
+		return this.sttMode;
+	}
+
+	/** Does the probed server lane advertise recognition for this language? */
+	_serverSupports(language) {
+		if (!this._serverAsr?.configured) return false;
+		const tag = String(language || '').toLowerCase();
+		const primary = tag.split('-')[0];
+		return this._serverAsr.languages.some(
+			(l) => l === tag || l.split('-')[0] === primary,
+		);
+	}
+
+	/**
+	 * Best recognizer for a language. The server lane leads where it can hear the
+	 * language (cross-browser, and it does not ship the user's audio to Google);
+	 * the browser's recognizer covers everything else, which is what makes a
+	 * language the server lane never learned still usable in Chrome and Safari.
+	 */
+	_modeFor(language) {
+		if (this._serverSupports(language)) return 'riva';
+		if (this._hasBrowserSR) return 'browser';
+		return 'none';
 	}
 
 	/**
@@ -145,7 +219,7 @@ export class TalkController {
 	startListening() {
 		if (this._state !== 'idle') return false;
 
-		const mode = this._sttMode || this._fallbackSttMode();
+		const mode = this.probeSettled ? this.sttMode : this._fallbackSttMode();
 		if (mode === 'riva') {
 			this._listenMode = 'riva';
 			this._startRivaListening();
@@ -180,8 +254,17 @@ export class TalkController {
 	// recognizer (zero setup, instant) when present; otherwise attempt Riva if the
 	// environment can capture audio at all.
 	_fallbackSttMode() {
-		if (window.SpeechRecognition || window.webkitSpeechRecognition) return 'browser';
+		if (this._hasBrowserSR) return 'browser';
 		return MicCapture.isSupported() ? 'riva' : 'none';
+	}
+
+	/**
+	 * True once the /api/asr probe has answered (or failed). Until it has, the
+	 * language→recognizer mapping is a guess, so a UI should not tell the user a
+	 * language is unusable yet.
+	 */
+	get probeSettled() {
+		return this._probeSettledFlag;
 	}
 
 	// ── Browser SpeechRecognition path (Chrome/Edge/Safari) ────────────────
@@ -460,6 +543,14 @@ export class TalkController {
 		}
 	}
 
+	// The agent's own persona plus, for a non-English conversation, the one line
+	// that makes the reply come back in the language the user is speaking.
+	_systemPrompt() {
+		return [this.systemPromptFn(), languageInstruction(this.language)]
+			.filter(Boolean)
+			.join('\n\n');
+	}
+
 	async _streamChat(message) {
 		const isUuid =
 			typeof this.avatar.id === 'string' &&
@@ -471,7 +562,7 @@ export class TalkController {
 			credentials: 'include',
 			body: JSON.stringify({
 				message,
-				system_prompt: this.systemPromptFn(),
+				system_prompt: this._systemPrompt(),
 				history: this._history.slice(-10, -1),
 				...(isUuid ? { agentId: this.avatar.id } : {}),
 				...(this.avatar.agent_id ? { agentId: this.avatar.agent_id } : {}),
@@ -634,7 +725,10 @@ export class TalkController {
 			this.avatar?.source_meta?.gender ||
 			this.avatar?.source_meta?.bodyType ||
 			'neutral';
-		const voice = EDGE_VOICES_BY_GENDER[gender] || EDGE_VOICES_BY_GENDER.neutral;
+		// Language first, body type second: an English voice reading Mandarin is
+		// unintelligible, while a female voice reading a male avatar's line is
+		// merely a mismatch.
+		const voice = edgeVoiceFor(this.language, gender);
 		const r = await fetch('/api/tts/edge', {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
@@ -649,6 +743,19 @@ export class TalkController {
 		if (this._state === state) return;
 		this._state = state;
 		this.onStateChange(state);
+	}
+}
+
+// The language the site UI is already displayed in, when the i18n runtime is on
+// the page. Read through the global instead of importing src/i18n.js: talk mode
+// also runs inside embeds that never boot the translation runtime, and a hard
+// import would pull the whole catalogue loader into those bundles.
+function siteLocale() {
+	if (typeof window === 'undefined') return '';
+	try {
+		return window.threewsI18n?.getLocale?.() || document.documentElement?.lang || '';
+	} catch {
+		return '';
 	}
 }
 

@@ -666,6 +666,18 @@ export const env = {
 		return opt('NVIDIA_ASR_FUNCTION_ID');
 	},
 
+	// NVCF function id for a MULTILINGUAL hosted ASR model, used when a caller asks
+	// for a non-English language (api/_lib/asr-nvidia.js). The English-tuned
+	// Parakeet functions reject a non-`en` language_code outright (gRPC 3
+	// INVALID_ARGUMENT), so without this id the free lane is English-only and a
+	// Mandarin/Japanese/Spanish speaker falls back to the browser recognizer.
+	// Discover the live id with `node scripts/verify-nvidia-asr.mjs --list` and
+	// pick a multilingual model (ai-canary-1b-asr on our account). Optional: when
+	// unset, non-English requests keep using NVIDIA_ASR_FUNCTION_ID.
+	get NVIDIA_ASR_FUNCTION_ID_MULTILINGUAL() {
+		return opt('NVIDIA_ASR_FUNCTION_ID_MULTILINGUAL');
+	},
+
 	// NVCF function id for the hosted Audio2Face-3D model used by the free facial-
 	// animation lane (api/_lib/a2f-nvidia.js, api/a2f.js) that turns Magpie speech
 	// into a per-frame ARKit blendshape track. Unlike the ASR id this is OPTIONAL:

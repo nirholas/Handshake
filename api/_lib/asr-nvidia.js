@@ -53,7 +53,73 @@ export function resolveAsrEncoding(encoding) {
 }
 
 export function nvidiaAsrConfigured() {
-	return Boolean(env.NVIDIA_API_KEY && env.NVIDIA_ASR_FUNCTION_ID);
+	return Boolean(
+		env.NVIDIA_API_KEY &&
+			(env.NVIDIA_ASR_FUNCTION_ID || env.NVIDIA_ASR_FUNCTION_ID_MULTILINGUAL),
+	);
+}
+
+// ── Language routing ────────────────────────────────────────────────────────
+// One hosted function does not cover every language. The English-tuned Parakeet
+// models reject a non-`en` language_code outright (gRPC 3 INVALID_ARGUMENT), so
+// a Mandarin utterance sent to the English pin fails rather than degrading. A
+// multilingual model (ai-canary-1b-asr on our account) transcribes the languages
+// below, and English at the same quality as the English pin. We therefore keep
+// the English pin for `en*` (better casing and punctuation on English) and route
+// every other language to the multilingual id when one is configured.
+//
+// The list is empirical, not aspirational: every tag here was verified by
+// synthesizing a sentence in that language and reading back a correct
+// transcript (`node scripts/verify-nvidia-asr.mjs --languages`). Languages the
+// model rejects (Arabic, Malay, Tamil, Filipino, Norwegian) or garbles
+// (Indonesian, Vietnamese, Finnish, Danish, Greek, Hungarian) are deliberately
+// absent, so the client never offers a language the lane cannot hear.
+export const MULTILINGUAL_ASR_LANGUAGES = [
+	'zh-CN',
+	'zh-TW',
+	'ja-JP',
+	'ko-KR',
+	'es-ES',
+	'fr-FR',
+	'de-DE',
+	'it-IT',
+	'pt-BR',
+	'ru-RU',
+	'hi-IN',
+	'nl-NL',
+	'pl-PL',
+	'cs-CZ',
+];
+
+/** True when `language` is an English tag (the English pin's territory). */
+function isEnglish(language) {
+	return String(language || '').trim().toLowerCase().startsWith('en');
+}
+
+/**
+ * NVCF function id to use for `language`, or null when nothing is configured.
+ * English (and any language with no multilingual id configured) stays on
+ * NVIDIA_ASR_FUNCTION_ID; everything else prefers the multilingual id.
+ */
+export function asrFunctionIdFor(language) {
+	const multilingual = env.NVIDIA_ASR_FUNCTION_ID_MULTILINGUAL || null;
+	const primary = env.NVIDIA_ASR_FUNCTION_ID || null;
+	if (!isEnglish(language) && multilingual) return multilingual;
+	return primary || multilingual;
+}
+
+/**
+ * BCP-47 tags this deployment can actually recognize, for the capability probe.
+ * Always includes en-US (the base lane); the multilingual tags appear only when
+ * a multilingual function id is configured.
+ */
+export function asrLanguages() {
+	const langs = env.NVIDIA_ASR_FUNCTION_ID ? ['en-US', 'en-GB'] : [];
+	if (env.NVIDIA_ASR_FUNCTION_ID_MULTILINGUAL) {
+		if (!langs.length) langs.push('en-US');
+		langs.push(...MULTILINGUAL_ASR_LANGUAGES);
+	}
+	return langs;
 }
 
 // Parse a RIFF/WAVE header → { sampleRateHz, channels, pcm } so a WAV upload can
@@ -167,9 +233,10 @@ export async function transcribeNvidiaAsr({
 	model = '',
 	timeoutMs = DEFAULT_TIMEOUT_MS,
 	apiKey,
+	functionId: functionIdOverride,
 } = {}) {
 	const key = apiKey || env.NVIDIA_API_KEY;
-	const functionId = env.NVIDIA_ASR_FUNCTION_ID;
+	const functionId = functionIdOverride || asrFunctionIdFor(language);
 	if (!key || !functionId) {
 		const err = new Error(
 			!key ? 'NVIDIA_API_KEY not set' : 'NVIDIA_ASR_FUNCTION_ID not set (run scripts/verify-nvidia-asr.mjs --list to discover it)',
