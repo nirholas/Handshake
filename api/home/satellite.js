@@ -122,7 +122,7 @@ export default wrap(async (req, res) => {
 			// Distinguishing them would turn this endpoint into an oracle for
 			// guessing codes, and none of the four is actionable differently: the
 			// fix is always "get a fresh code".
-			return error(res, 400, 'invalid_code', 'that pairing code is not valid. Codes are single use and expire after 15 minutes; generate a new one at /smart-home/satellite.');
+			return error(res, 400, 'invalid_code', 'that pairing code is not valid. Codes are single use and expire after 15 minutes; generate a new one at /home/satellite.');
 		}
 
 		const [agentRow] = await sql`select id, name, avatar_id from agent_identities where id = ${result.satellite.agent_id} limit 1`;
