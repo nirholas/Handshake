@@ -74,7 +74,7 @@ retired; they remain readable in git history
 | [generation-suite.md](roadmap-generation-suite.md) | Meshy and Tripo class parity, and production truth for every generation endpoint | Open. Starts by rebuilding the production truth table from live probes. |
 | [creation-consolidation.md](roadmap-creation-consolidation.md) | The last three creation-surface merges | Open. Two redirects are blocked behind real capability gaps, and closing those gaps is the work. |
 | [avatar-parametric-editor.md](roadmap-avatar-parametric-editor.md) | Parametric avatar editor, phase 2 onward | Open. Phase 1 (122-slider parametric base) shipped 2026-07-22. |
-| [developer-resources-repos.md](roadmap-developer-resources-repos.md) | The public examples satellite repo and its one-way export | Open. npm packages are published, so the blocker that stalled it is gone. |
+| [developer-resources-repos.md](roadmap-developer-resources-repos.md) | The public examples satellite repo and its one-way export | Done, retired 2026-09-03. `npm run export:satellites` stages 72 files and passes all four smoke stages; the docs, `llms.txt` and `llms-full.txt` cross-links are live. Only the owner-gated publish remains (create the `three-ws` org, run the printed push), tracked as row 16 of [production-100-OWNER-ACTIONS.md](production-100-OWNER-ACTIONS.md). |
 | [native-widgets.md](roadmap-native-widgets.md) | Native widgets on the Android, Windows, macOS and iOS home screens | Open. The signed `ws.three.app` TWA and the server-side render endpoints already exist, so the shell and the image source are not the work. |
 
 ### Strategy and reference (read, do not execute)
