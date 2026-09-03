@@ -9,8 +9,10 @@ import Foundation
 /// truncated PNG.
 struct GlanceCache {
 	private let directory: URL
+	private let fileManager: FileManager
 
 	init?(fileManager: FileManager = .default) {
+		self.fileManager = fileManager
 		let base: URL?
 		if let group = GlanceConfig.appGroup {
 			base = fileManager.containerURL(forSecurityApplicationGroupIdentifier: group)
@@ -46,7 +48,7 @@ struct GlanceCache {
 	func clear() {
 		for size in GlanceSize.allCases {
 			for theme in GlanceTheme.allCases {
-				try? FileManager.default.removeItem(at: url(size: size, theme: theme))
+				try? fileManager.removeItem(at: url(size: size, theme: theme))
 			}
 		}
 	}
