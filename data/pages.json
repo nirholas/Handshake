@@ -1025,14 +1025,14 @@
 					"changefreq": "weekly",
 					"added": "2026-09-03"
 				},
-			{
-				"path": "/smart-home/satellite",
-				"title": "Voice satellite",
-				"description": "Give your existing Home Assistant voice assistant a face. Pair a three.ws satellite and the same pipeline you already use gains a 3D agent that lip-syncs its answers and reacts, on any screen in the house. Home Assistant keeps the wake word, the speech recognition and the answer; closing the page never stops the voice working.",
-				"priority": 0.7,
-				"changefreq": "monthly",
-				"added": "2026-09-03"
-			},
+				{
+					"path": "/smart-home/satellite",
+					"title": "Voice satellite",
+					"description": "Give your existing Home Assistant voice assistant a face. Pair a three.ws satellite and the same pipeline you already use gains a 3D agent that lip-syncs its answers and reacts, on any screen in the house. Home Assistant keeps the wake word, the speech recognition and the answer; closing the page never stops the voice working.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-09-03"
+				},
 				{
 					"path": "/inspect",
 					"title": "Model Inspector",
@@ -2680,8 +2680,16 @@
 				},
 				{
 					"path": "/docs/home-security",
-					"title": "Docs \u00b7 Home security",
+					"title": "Docs · Home security",
 					"description": "The threat model for a connected house, written about a building rather than a database: what each actor can do and what stops them, why the confirmation gate is the load-bearing control and prompt filtering is depth, the eleven checks that run with every build, the SSRF guard every server-side dial goes through and why a hostname check is not one, the prompt-injection proof that ends by asking a real lock whether it opened, and the residuals accepted on purpose.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-09-03"
+				},
+				{
+					"path": "/docs/home-relay-threat-model",
+					"title": "Docs · Home relay threat model",
+					"description": "What an attacker gets at every position around the socket a LAN-only house dials out through, and what stops them: why the relay carries a fixed list of message types instead of proxying HTTP into a home network, what a stolen install token is and is not worth, why the allowlist is enforced again inside the house so a compromised relay widens nothing, and the residuals accepted on purpose.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-09-03"

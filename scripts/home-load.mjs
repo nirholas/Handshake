@@ -673,10 +673,16 @@ async function measureCloudRunStream({ url = 'https://three.ws/api/pump/trades-s
  * hundred would ever fire, and the ladder would be decoration.
  *
  * It is measured rather than reasoned about, against the running service, using
- * a streaming endpoint already deployed there. Cloud Run autoscales on
- * concurrency, so if streams consume slots the instance count rises with them
- * and falls again afterwards. The instance count comes from Cloud Monitoring,
- * which is the platform's own accounting rather than ours.
+ * a streaming endpoint already deployed there. Cloud Run publishes the observed
+ * concurrency per instance as `container/max_request_concurrencies`, which is
+ * the platform's own accounting of what it counts as an in-flight request. If
+ * holding N streams moves that number, a stream is a concurrency slot; if it
+ * does not, a stream is free and the cap can be sized on memory alone.
+ *
+ * Reading that metric rather than watching for a scaling event is deliberate:
+ * forcing this service to autoscale would take more than a thousand concurrent
+ * streams, which is a load test on production, and the concurrency gauge answers
+ * the same question with two hundred.
  *
  * @param {{ url?: string, streams?: number, seconds?: number, project?: string, service?: string }} options
  */
@@ -687,7 +693,10 @@ async function measureStreamConcurrency({
 	project = 'aerial-vehicle-466722-p5',
 	service = 'three-ws-api',
 } = {}) {
-	const before = await readInstanceCount({ project, service, minutesBack: 20 });
+	const before = {
+		concurrency: await readConcurrency({ project, service, minutesBack: 20 }),
+		instances: await readInstanceCount({ project, service, minutesBack: 20 }),
+	};
 
 	const controllers = [];
 	let opened = 0;
@@ -724,29 +733,78 @@ async function measureStreamConcurrency({
 	}
 
 	await sleep(Math.max(0, seconds * 1000 - (Date.now() - started)));
-	const during = await readInstanceCount({ project, service, minutesBack: 8 });
+	const during = {
+		concurrency: await readConcurrency({ project, service, minutesBack: 6 }),
+		instances: await readInstanceCount({ project, service, minutesBack: 6 }),
+	};
 
 	clearInterval(keepAlive);
 	for (const controller of controllers) controller.abort();
 
-	const delta = during.peakActive != null && before.peakActive != null ? during.peakActive - before.peakActive : null;
+	const rise = during.concurrency.peak != null && before.concurrency.peak != null
+		? Number((during.concurrency.peak - before.concurrency.peak).toFixed(1))
+		: null;
+	const instancesDuring = during.instances.peakActive ?? null;
 	return {
 		url,
 		streamsRequested: streams,
 		streamsOpened: opened,
 		streamsRefused: failed,
 		heldSeconds: seconds,
-		instancesBefore: before,
-		instancesDuring: during,
-		peakActiveDelta: delta,
-		streamsPerAddedInstance: delta && delta > 0 ? Number((opened / delta).toFixed(1)) : null,
-		occupiesConcurrencySlot: delta != null ? delta > 0 : null,
-		note: 'Cloud Run autoscales on concurrent requests. An instance count that rises while N streams are held, and only while they are held, is the platform saying each stream is an in-flight request holding a concurrency slot.',
+		concurrencyBefore: before.concurrency,
+		concurrencyDuring: during.concurrency,
+		concurrencyRise: rise,
+		instancesBefore: before.instances,
+		instancesDuring: during.instances,
+		expectedRiseIfStreamsHoldSlots: instancesDuring ? Number((opened / instancesDuring).toFixed(1)) : null,
+		occupiesConcurrencySlot: rise != null ? rise > 2 : null,
+		note: 'Cloud Run counts an in-flight request against containerConcurrency. Holding N streams and watching the platform own concurrency gauge rise by roughly N divided by the instance count is the platform saying a held stream is one of those requests.',
+	};
+}
+
+/** Observed concurrent requests per instance, from Cloud Run's own gauge. */
+async function readConcurrency({ project, service, minutesBack }) {
+	const series = await readTimeSeries({
+		project,
+		service,
+		metric: 'run.googleapis.com/container/max_request_concurrencies',
+		minutesBack,
+		aligner: 'ALIGN_PERCENTILE_99',
+	});
+	if (series.error) return { error: series.error, peak: null };
+	const values = (series.timeSeries[0]?.points || []).map((p) => Number(p.value.doubleValue ?? p.value.int64Value ?? 0));
+	if (!values.length) return { peak: null, points: 0 };
+	return {
+		windowMinutes: minutesBack,
+		points: values.length,
+		peak: Number(Math.max(...values).toFixed(1)),
+		median: Number(values.slice().sort((a, b) => a - b)[Math.floor(values.length / 2)].toFixed(1)),
 	};
 }
 
 /** Cloud Run instance counts, straight from Cloud Monitoring. */
 async function readInstanceCount({ project, service, minutesBack }) {
+	const series = await readTimeSeries({
+		project,
+		service,
+		metric: 'run.googleapis.com/container/instance_count',
+		minutesBack,
+		aligner: 'ALIGN_MEAN',
+	});
+	if (series.error) return { error: series.error, peakActive: null };
+	const body = series;
+
+	const byState = {};
+	for (const series of body.timeSeries || []) {
+		const state = series.metric.labels.state;
+		const values = series.points.map((p) => Number(p.value.doubleValue ?? p.value.int64Value ?? 0));
+		byState[state] = { peak: Math.max(...values, 0), mean: Number((values.reduce((a, b) => a + b, 0) / Math.max(1, values.length)).toFixed(2)), points: values.length };
+	}
+	return { windowMinutes: minutesBack, byState, peakActive: byState.active?.peak ?? null };
+}
+
+/** One Cloud Monitoring read, with the access token gcloud already holds. */
+async function readTimeSeries({ project, service, metric, minutesBack, aligner }) {
 	const token = await new Promise((resolve, reject) => {
 		const child = spawn('gcloud', ['auth', 'print-access-token'], { stdio: ['ignore', 'pipe', 'ignore'] });
 		let out = '';
@@ -758,25 +816,18 @@ async function readInstanceCount({ project, service, minutesBack }) {
 	const end = new Date();
 	const start = new Date(end.getTime() - minutesBack * 60_000);
 	const params = new URLSearchParams({
-		filter: `metric.type="run.googleapis.com/container/instance_count" AND resource.labels.service_name="${service}"`,
+		filter: `metric.type="${metric}" AND resource.labels.service_name="${service}"`,
 		'interval.startTime': start.toISOString(),
 		'interval.endTime': end.toISOString(),
 		'aggregation.alignmentPeriod': '60s',
-		'aggregation.perSeriesAligner': 'ALIGN_MEAN',
+		'aggregation.perSeriesAligner': aligner,
 	});
 	const response = await fetch(`https://monitoring.googleapis.com/v3/projects/${project}/timeSeries?${params}`, {
 		headers: { authorization: `Bearer ${token}` },
 	});
 	const body = await response.json();
-	if (body.error) return { error: body.error.message, peakActive: null };
-
-	const byState = {};
-	for (const series of body.timeSeries || []) {
-		const state = series.metric.labels.state;
-		const values = series.points.map((p) => Number(p.value.doubleValue ?? p.value.int64Value ?? 0));
-		byState[state] = { peak: Math.max(...values, 0), mean: Number((values.reduce((a, b) => a + b, 0) / Math.max(1, values.length)).toFixed(2)), points: values.length };
-	}
-	return { windowMinutes: minutesBack, byState, peakActive: byState.active?.peak ?? null };
+	if (body.error) return { error: body.error.message };
+	return { timeSeries: body.timeSeries || [] };
 }
 
 /** Each rung of the ladder, demonstrated rather than described. */
