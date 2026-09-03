@@ -1,0 +1,22 @@
+{
+	"name": "@three-ws/home-satellite",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"description": "Home Assistant Wyoming voice satellite that gives a three.ws agent's 3D body to an existing voice pipeline.",
+	"license": "MIT",
+	"engines": {
+		"node": ">=20"
+	},
+	"bin": {
+		"three-ws-home-satellite": "src/index.js"
+	},
+	"scripts": {
+		"start": "node src/index.js satellite",
+		"hub": "node src/index.js hub",
+		"token": "node src/index.js token"
+	},
+	"dependencies": {
+		"ws": "^8.21.0"
+	}
+}

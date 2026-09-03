@@ -1,0 +1,417 @@
+/*
+ * Voice satellite view.
+ *
+ * Two layouts from one stylesheet. The manage view is a normal page: panels,
+ * forms, a list. The live view is a display: an avatar filling the frame with
+ * one line of text under it, readable from across a kitchen. The live view is
+ * the one that runs on a wall-mounted tablet at 3am, so it is dark, it has no
+ * chrome it does not need, and every piece of text on it is large.
+ *
+ * Prefixed `hs-` so it cannot collide with the rest of the home surface.
+ */
+
+.hs-wrap {
+	max-width: 68rem;
+	margin: 0 auto;
+	padding: clamp(1.25rem, 4vw, 3rem) clamp(1rem, 4vw, 2rem) 5rem;
+}
+
+.hs-eyebrow {
+	margin: 0 0 0.5rem;
+	font-size: 0.78rem;
+	font-weight: 600;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--accent, #7c9cff);
+}
+
+.hs-title {
+	margin: 0 0 0.75rem;
+	font-size: clamp(1.9rem, 5vw, 2.9rem);
+	line-height: 1.1;
+	letter-spacing: -0.02em;
+}
+
+.hs-lede {
+	margin: 0 0 2rem;
+	max-width: 46rem;
+	font-size: 1.02rem;
+	line-height: 1.65;
+	color: var(--text-dim, #9aa4b2);
+}
+
+.hs-panel {
+	border: 1px solid var(--border, #23262d);
+	border-radius: 14px;
+	background: var(--surface, #14161a);
+	padding: clamp(1rem, 3vw, 1.6rem);
+	margin-bottom: 1.1rem;
+}
+
+.hs-panel-title {
+	margin: 0 0 0.35rem;
+	font-size: 1.05rem;
+	font-weight: 650;
+}
+
+.hs-panel-sub {
+	margin: 0 0 1rem;
+	font-size: 0.9rem;
+	line-height: 1.6;
+	color: var(--text-dim, #9aa4b2);
+}
+
+.hs-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.7rem;
+	align-items: center;
+}
+
+.hs-grow {
+	flex: 1 1 14rem;
+	min-width: 0;
+}
+
+.hs-btn {
+	appearance: none;
+	border: 1px solid var(--border, #2a2e37);
+	border-radius: 10px;
+	background: var(--surface-2, #1c1f26);
+	color: inherit;
+	font: inherit;
+	font-weight: 600;
+	padding: 0.62rem 1.05rem;
+	cursor: pointer;
+	transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+}
+
+.hs-btn:hover:not(:disabled) {
+	background: var(--surface-3, #242832);
+	border-color: var(--border-strong, #39404d);
+}
+
+.hs-btn:active:not(:disabled) {
+	transform: translateY(1px);
+}
+
+.hs-btn:focus-visible {
+	outline: 2px solid var(--accent, #7c9cff);
+	outline-offset: 2px;
+}
+
+.hs-btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.hs-btn-primary {
+	background: var(--accent, #7c9cff);
+	border-color: var(--accent, #7c9cff);
+	color: #0b0d10;
+}
+
+.hs-btn-primary:hover:not(:disabled) {
+	background: var(--accent-bright, #96b0ff);
+	border-color: var(--accent-bright, #96b0ff);
+}
+
+.hs-btn-quiet {
+	background: transparent;
+}
+
+.hs-select,
+.hs-input {
+	width: 100%;
+	border: 1px solid var(--border, #2a2e37);
+	border-radius: 10px;
+	background: var(--surface-2, #1c1f26);
+	color: inherit;
+	font: inherit;
+	padding: 0.62rem 0.8rem;
+}
+
+.hs-select:focus-visible,
+.hs-input:focus-visible {
+	outline: 2px solid var(--accent, #7c9cff);
+	outline-offset: 1px;
+}
+
+.hs-label {
+	display: block;
+	margin-bottom: 0.35rem;
+	font-size: 0.82rem;
+	font-weight: 600;
+	color: var(--text-dim, #9aa4b2);
+}
+
+/* The pairing code. Read off a screen and typed into a terminal, so it is big,
+   monospaced, and spaced out enough that nobody has to squint at a 5 next to
+   an S. */
+.hs-code {
+	display: inline-block;
+	font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+	font-size: clamp(1.6rem, 6vw, 2.4rem);
+	font-weight: 700;
+	letter-spacing: 0.16em;
+	padding: 0.5rem 0.9rem;
+	border-radius: 12px;
+	background: var(--surface-2, #1c1f26);
+	border: 1px dashed var(--border-strong, #39404d);
+	user-select: all;
+}
+
+.hs-cmd {
+	display: block;
+	overflow-x: auto;
+	white-space: pre;
+	font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+	font-size: 0.82rem;
+	line-height: 1.7;
+	padding: 0.85rem 1rem;
+	border-radius: 10px;
+	background: #0b0d10;
+	border: 1px solid var(--border, #23262d);
+	color: #c7d0dd;
+}
+
+.hs-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: 0.6rem;
+}
+
+.hs-item {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.6rem 1rem;
+	align-items: center;
+	border: 1px solid var(--border, #23262d);
+	border-radius: 12px;
+	background: var(--surface-2, #1a1d23);
+	padding: 0.8rem 1rem;
+	transition: border-color 140ms ease;
+}
+
+.hs-item:hover {
+	border-color: var(--border-strong, #39404d);
+}
+
+.hs-item-name {
+	font-weight: 650;
+}
+
+.hs-item-meta {
+	font-size: 0.82rem;
+	color: var(--text-dim, #9aa4b2);
+}
+
+.hs-dot {
+	width: 0.55rem;
+	height: 0.55rem;
+	border-radius: 50%;
+	background: var(--text-dim, #6b7280);
+	flex: none;
+}
+
+.hs-dot[data-live="1"] {
+	background: #3ddc84;
+	box-shadow: 0 0 0 3px rgb(61 220 132 / 18%);
+}
+
+.hs-empty {
+	text-align: center;
+	padding: 2.4rem 1rem;
+	color: var(--text-dim, #9aa4b2);
+}
+
+.hs-empty-mark {
+	font-size: 2.2rem;
+	line-height: 1;
+	margin-bottom: 0.7rem;
+	opacity: 0.85;
+}
+
+.hs-note {
+	margin: 0.9rem 0 0;
+	font-size: 0.84rem;
+	line-height: 1.6;
+	color: var(--text-dim, #9aa4b2);
+}
+
+.hs-error {
+	border-color: #7f3030;
+	background: rgb(127 48 48 / 12%);
+}
+
+.hs-skeleton {
+	border-radius: 8px;
+	background: linear-gradient(90deg, #1a1d23 25%, #23272f 37%, #1a1d23 63%);
+	background-size: 400% 100%;
+	animation: hs-shimmer 1.4s ease infinite;
+}
+
+@keyframes hs-shimmer {
+	0% { background-position: 100% 50%; }
+	100% { background-position: 0 50%; }
+}
+
+/* ------------------------------------------------------------------ live */
+
+.hs-live {
+	display: grid;
+	grid-template-rows: auto 1fr auto;
+	min-height: 100dvh;
+	background: radial-gradient(120% 80% at 50% 0%, #171a21 0%, #0b0d10 70%);
+}
+
+.hs-live-top {
+	display: flex;
+	gap: 0.75rem;
+	align-items: center;
+	padding: 0.9rem clamp(0.9rem, 3vw, 1.6rem);
+	border-bottom: 1px solid var(--border, #1c1f26);
+}
+
+.hs-live-name {
+	font-weight: 650;
+	letter-spacing: -0.01em;
+}
+
+.hs-live-status {
+	font-size: 0.82rem;
+	color: var(--text-dim, #9aa4b2);
+}
+
+.hs-stage {
+	position: relative;
+	min-height: 42vh;
+}
+
+.hs-stage-canvas {
+	position: absolute;
+	inset: 0;
+}
+
+/* The whole point of the product: the badge that names the current state, over
+   the avatar, legible from across a room. */
+.hs-badge {
+	position: absolute;
+	top: clamp(0.7rem, 2vw, 1.2rem);
+	left: 50%;
+	transform: translateX(-50%);
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.4rem 0.9rem;
+	border-radius: 999px;
+	font-size: 0.85rem;
+	font-weight: 600;
+	letter-spacing: 0.01em;
+	background: rgb(11 13 16 / 72%);
+	border: 1px solid var(--border, #23262d);
+	backdrop-filter: blur(8px);
+	transition: opacity 200ms ease, transform 200ms ease;
+}
+
+.hs-badge[data-state="listening"] { border-color: #2f6f4f; color: #86e2b0; }
+.hs-badge[data-state="wake"] { border-color: #6f5a2f; color: #f0cf86; }
+.hs-badge[data-state="thinking"] { border-color: #3a4b7a; color: #a9bcf3; }
+.hs-badge[data-state="speaking"] { border-color: #4a3a7a; color: #c8b4f5; }
+.hs-badge[data-state="error"] { border-color: #7f3030; color: #f3a9a9; }
+.hs-badge[data-state="disconnected"],
+.hs-badge[data-state="offline"] { border-color: #3a3f48; color: #9aa4b2; }
+
+/* Breathing ring behind the badge while the microphone is live. Transform and
+   opacity only, so it never triggers layout on a low-power display. */
+.hs-pulse::before {
+	content: "";
+	position: absolute;
+	inset: -6px;
+	border-radius: inherit;
+	border: 1px solid currentColor;
+	opacity: 0.4;
+	animation: hs-pulse 1.8s ease-out infinite;
+}
+
+@keyframes hs-pulse {
+	0% { transform: scale(0.96); opacity: 0.45; }
+	100% { transform: scale(1.12); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.hs-pulse::before { animation: none; opacity: 0.3; }
+	.hs-skeleton { animation: none; }
+}
+
+.hs-caption {
+	padding: clamp(0.9rem, 3vw, 1.6rem);
+	border-top: 1px solid var(--border, #1c1f26);
+	display: grid;
+	gap: 0.55rem;
+}
+
+.hs-said,
+.hs-answered {
+	margin: 0;
+	font-size: clamp(1.02rem, 2.6vw, 1.35rem);
+	line-height: 1.5;
+	min-height: 1.5em;
+}
+
+.hs-said {
+	color: var(--text, #e6eaf0);
+	font-weight: 600;
+}
+
+.hs-answered {
+	color: var(--text-dim, #9aa4b2);
+}
+
+.hs-said:empty::after,
+.hs-answered:empty::after {
+	content: "";
+}
+
+.hs-live-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.6rem;
+	align-items: center;
+	margin-top: 0.5rem;
+}
+
+.hs-meter {
+	width: 6.5rem;
+	height: 0.4rem;
+	border-radius: 999px;
+	background: var(--surface-2, #1c1f26);
+	overflow: hidden;
+}
+
+.hs-meter-fill {
+	height: 100%;
+	width: 0;
+	background: #3ddc84;
+	transform-origin: left center;
+	transition: width 80ms linear;
+}
+
+.hs-asleep {
+	position: absolute;
+	inset: 0;
+	display: grid;
+	place-content: center;
+	text-align: center;
+	gap: 0.6rem;
+	padding: 2rem;
+	background: rgb(6 7 9 / 92%);
+	color: var(--text-dim, #9aa4b2);
+}
+
+@media (max-width: 560px) {
+	.hs-item { align-items: flex-start; }
+	.hs-code { letter-spacing: 0.1em; }
+}
