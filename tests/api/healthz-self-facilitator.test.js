@@ -19,12 +19,17 @@ const FAC_ROWS = [
 	{ action: 'settle', ok: true, reason: '', n: 11 },
 	{ action: 'settle', ok: false, reason: 'broadcast_failed', n: 2 },
 ];
+// Every other query rejects rather than throwing synchronously. Modules on
+// this import chain call `sql` at module scope to build reusable column
+// fragments (api/_lib/home/store.js), so a synchronous throw kills the import
+// before a single test runs. A rejected promise is also what a DB outage
+// actually looks like to the handler's try/catch.
 vi.mock('../../api/_lib/db.js', () => ({
 	sql: (strings) => {
-		if (strings.join('').includes('x402_self_facilitator_log')) {
+		if (Array.isArray(strings) && strings.join('').includes('x402_self_facilitator_log')) {
 			return Promise.resolve(FAC_ROWS);
 		}
-		throw new Error('no database in test');
+		return { then: (_resolve, reject) => reject(new Error('no database in test')) };
 	},
 	isDbUnavailableError: () => false,
 	isDbCapacityError: () => false,
