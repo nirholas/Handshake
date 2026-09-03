@@ -44,7 +44,7 @@ One section per finished order, newest at the bottom:
 | 12 households and RBAC | open | |
 | 13 observability | partial, see entry below | |
 | 14 reliability and scale | open | |
-| 15 privacy and retention | open | |
+| 15 privacy and retention | done | 2026-09-03 |
 | 16 test program | open | |
 | 17 a11y, i18n, mobile | open | |
 | 18 docs and SDK | open | |
@@ -402,3 +402,107 @@ resolves DNS for real and refuses an unroutable host. `createHomeRuntime` alread
 edited live.
 
 **Commits:** 13e62503e, 3e5cbda8e, e38f809f9, 5c8bda6b6, 9d32efeb3, 3357c7dae, 013cf631c.
+
+## 15. Privacy, retention, export and deletion (2026-09-03)
+
+**Shipped:** The Home lane now has one module that knows everything it stores, and every other
+privacy behaviour is derived from it rather than written twice. `api/_lib/home/privacy.js`
+carries `INVENTORY` (thirteen data classes, including four explicit "we never store this" rows
+for entity names, entity states, voice audio and voice transcripts), the per-home retention
+control, the purge, the export and both deletion verbs. `api/home/privacy.js` serves it at
+`/api/home/privacy` on the shape `/api/irl/privacy` already established: see it, export it as
+JSON, set the window, delete one home or every trace of all of them. The user-facing disclosure
+sentences for the connect screen and the voice opt-in live once in
+`api/_lib/home/disclosure.js` and are served live under `disclosures`, so orders 05 and 08
+render the same strings `docs/home-privacy.md` quotes rather than their own copy.
+`20260903180000_home_privacy_retention.sql` adds the owner-controlled window and fixes a
+foreign key that made account deletion impossible. `api/_lib/home/log-safe.js` is now the only
+way an error becomes a log field in this lane. The purge joined the platform's existing
+retention cron as section E of `api/cron/db-retention.js` rather than becoming cron 113.
+
+**Measured:**
+- Inventory reconciled against the live schema, not the order file. Eight `home_*` tables exist
+  (`home_connections`, `home_members`, `home_invites`, `home_entity_grants`, `home_action_log`,
+  `home_confirmations`, `home_relay_pairings`, `home_satellites`, `home_satellite_codes`,
+  `home_plan_overrides`); the order file predicted `home_layouts`, which does not exist, and
+  missed six that do.
+- Deleting one home: `{home_connections:1, home_members:1, home_invites:1, home_entity_grants:1,
+  home_action_log:3, home_confirmations:1, home_relay_pairings:1}` to all zeroes, with a second
+  home of the same owner and a third owned by somebody else unchanged, counted before and after.
+- Account deletion: `{home_connections:2, home_members:3, home_invites_to_email:1,
+  home_entity_grants:1, home_confirmations:1, home_satellites:1, home_satellite_codes:1,
+  home_plan_overrides:1, audit_log:1}` to all zeroes, idempotent on a second run, after which the
+  `users` row itself deletes (it could not before, see Deviations).
+- Purge over seeded rows: a home on a 7 day window kept 2 of 5 log rows and 1 of 2
+  confirmations; a home on the 90 day default kept its 30 day old row untouched. Second sweep
+  deleted 0. Shortening to 1 day purged immediately (1 row) rather than waiting for the cron.
+- Export keys: `action_log, confirmations, generated_at, grants, homes_you_own, inventory,
+  invites, members, memberships, notice, plan_override, relay_pairings, satellite_codes,
+  satellites`. Serialized export contains neither `access_token_enc` nor `viewer_secret_enc`.
+- Log grep over a full connect, act, guarded refusal, confirm and disconnect cycle: 0 hits
+  across 7 probes (base URL, bare host, token, home label, three entity friendly names) against
+  the captured console output and the `audit_log` rows the cycle wrote.
+- `tests/home-privacy.test.js`: 25 passing, 6 of them against the real database.
+- `npm run check:rules` clean on all 13 touched files. `npm run audit:docs` clean of anything
+  this order owns.
+
+**Deviations:** four, all because the order file was written before the schema existed.
+1. It claimed orders 01 to 08 had landed. Only 01 had, and it had landed twice: two agents raced
+   the same `create table if not exists` migration. A peer's `20260903130000_home_schema_reconcile.sql`
+   had already repaired the weaker half by the time this order ran.
+2. Its table listed `home_layouts` (does not exist) and omitted `home_members`, `home_invites`,
+   `home_confirmations`, `home_relay_pairings`, `home_satellites`, `home_satellite_codes` and
+   `home_plan_overrides`. The completeness test caught three of those landing DURING this order,
+   which is the strongest evidence the tripwire works: it re-derives the table set from the
+   migration files and fails the build on an inventory that has fallen behind.
+3. It called for a new cron. The platform already runs `/api/cron/db-retention` every 15 minutes,
+   so the sweep joined it as section E instead. No cron count changed, so `check:cron-drift` and
+   `check:claude` were unaffected by this order.
+4. It said confirmations are "purged" on a 90 second TTL. They are not: `confirm.js` marks them
+   `expired_at` and nothing ever deleted them, so an unbounded table was accumulating the one
+   persisted string in this lane that carries a device friendly name (`summary`, e.g. "Unlock the
+   Front Door"). They now ride the home's own action-log window.
+
+**Found and fixed beyond the brief:**
+- `home_entity_grants.granted_by` referenced `users(id)` with NO ACTION. A household member who
+  had granted a standing allowance on somebody else's home could never delete their account: the
+  DELETE failed on a foreign-key violation. Now `on delete cascade`, which is also the
+  privacy-correct answer (an allowance should not outlive the person who authorised it).
+- Three logging leaks. `revoke_home_connection` was writing the home's base URL and the owner's
+  chosen label into the platform `audit_log`, which has a 365 day window and whose `user_id` is
+  SET NULL on account deletion rather than removed, so a building's address outlived the account
+  that owned it. `connect_home` was doing the same with `base_url`. And `runtime.js` was logging
+  `err.message` from bridge errors, whose most common message is literally "Could not reach
+  https://home.example.com...". All three now log a code and a host-stripped detail.
+- `home_action_log.detail` was written unscrubbed despite its own migration comment claiming
+  otherwise; it now goes through `scrubSecrets`.
+- The audit-row deletion filter had to widen from `action like 'home\_%'` to `like '%home%'`,
+  because the lane's actual action names are `connect_home`, `revoke_home_connection` and
+  `home.pair.*`, none of which start with `home_`.
+
+**Left open:**
+- **No platform-wide account deletion or export path exists.** This lane carries its own,
+  complete, and exports `deleteAllHomeDataForUser` as the function a platform-wide path calls
+  when one is built. That gap is the platform's to close, not this lane's.
+- The legal privacy page (`public/legal/privacy.html`) gained a data-collection row, a retention
+  paragraph and a section 10b for connected homes, annotated for i18n. The keys are not in
+  `public/locales/en.json`: that page had exactly one extracted key before this change and
+  `npm run i18n:lint` reports 43k pre-existing gaps repo-wide, so extraction and translation stay
+  a batch job for whoever owns the i18n sweep. The page renders the English correctly meanwhile.
+- Policy wording is the owner's. The plain-language sentences are written and shipped; nobody has
+  reviewed the legal text.
+- The disclosure copy is shipped, tested and served, but **not screenshotted**, because neither
+  surface exists yet: order 05 (connect screen) and order 08 (voice opt-in) are still open. Both
+  orders consume `CONNECT_DISCLOSURE` / `VOICE_DISCLOSURE` rather than writing their own copy.
+- Not this order's, but blocking a clean `npm run gate` at the time of writing: a peer added
+  cron 113 without updating the counts quoted in `README.md:9997` and `docs/build.md:48`
+  (`tests/cron-scheduler-sync.test.js` fails), a peer added `scripts/check-home-voice.mjs`
+  without registering it in `data/guards.json` (`tests/audit-guards.test.js` fails), a peer's
+  `services/home-satellite/` has no README (`npm run check:claude` fails), and
+  `packages/home-bridge/README.md` and `packages/home-mcp/README.md` both link a
+  `docs/tutorials/connect-your-home.md` that does not exist yet (`npm run audit:docs`).
+
+**Commits:** the code, docs, migration, tests, `STRUCTURE.md` row, `data/pages.json` entries and
+the changelog entry were swept into concurrent agents' commits before this order could stage them
+(`875e1c828`, `9d82e63d9`, `e6a32da61`, and others); this commit carries the progress record and
+retires the order file.

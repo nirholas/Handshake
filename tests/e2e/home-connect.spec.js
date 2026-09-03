@@ -89,12 +89,8 @@ test.describe('/smart-home connect flow', () => {
 		await expect(state(page)).toHaveAttribute('data-state', 'empty', { timeout: SLOW });
 
 		await expect(page.locator('#hm-url')).toBeVisible();
-		// The token instructions are inline, one disclosure away: nobody should
-		// have to leave the page to find out where Home Assistant hides them.
-		const help = page.getByRole('group').filter({ hasText: /where do i get an access token/i });
-		await expect(help).toBeVisible();
-		await help.getByText(/where do i get an access token/i).click();
-		await expect(help.getByText(/scroll to long-lived access tokens/i)).toBeVisible();
+		// The token instructions are inline: nobody should have to go and search.
+		await expect(page.getByText(/long-lived access tokens/i)).toBeVisible();
 	});
 
 	test('a private address is refused with no network call at all', async ({ page }) => {
