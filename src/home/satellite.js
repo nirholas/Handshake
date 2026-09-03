@@ -1,5 +1,5 @@
 /**
- * /smart-home/satellite — the browser half of a Home Assistant voice satellite.
+ * /smart-home/satellite: the browser half of a Home Assistant voice satellite.
  *
  * Two views out of one module, chosen by the `?id=` in the URL:
  *
