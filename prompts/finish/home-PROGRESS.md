@@ -32,11 +32,11 @@ One section per finished order, newest at the bottom:
 | 00 CONTEXT | shared facts | n/a |
 | 01 connection store | done | 2026-09-03 |
 | 02 bridge runtime | done | 2026-09-03 |
-| 03 API surface | open | |
+| 03 API surface | done | 2026-09-03 |
 | 04 agent tools | open | |
 | 05 connect flow | mostly done, see entry | 2026-09-03 |
 | 06 3D home scene | open | |
-| 07 floorplan editor | open | |
+| 07 floorplan editor | built, browser verification blocked, see entry | |
 | 08 voice loop | open | |
 | 09 Wyoming satellite | open | |
 | 10 add-on relay | open | |
@@ -796,3 +796,142 @@ this took to attribute them.
 (`842ec690e`, `f9d09844c`, and the commits that first tracked `api/_lib/home/members.js`,
 `api/home/[id]/members.js`, `api/home/invites/[token].js`, `tests/home-roles.test.js` and
 `api/_lib/migrations/20260903130000_home_members.sql`).
+
+---
+
+## 03. The `/api/home/*` surface: REST, SSE, error contract (2026-09-03)
+
+**Shipped:** the routes themselves landed across several concurrent sessions; what this run added
+is the proof they behave, and two fixes it found. `tests/api-home.test.js` exercises every route
+through the real handlers against a real database and (gated) a real Home Assistant: 36 cases
+covering the anonymous 401 on every route, the stranger's 404 on every route, the CSRF refusal on
+every mutating route, the one error shape, method rejection, revoke idempotency with the
+ciphertext scrubbed, the action log, and a live snapshot, macro list, guarded call and SSE stream.
+`tests/home-roles.test.js` proves the role matrix against `resolveHomeAccess`; this file proves
+each handler actually calls it, which a matrix test cannot.
+
+**Measured:** the full transcript, at the handler boundary against the lane's seeded 2026.9.0
+house (125 entities, 4 areas, 1 floor, 4 locks, 2 scenes):
+
+```
+POST   /api/home                  201  capabilities {mcp:true, mcpToolCount, areaCount:4,
+                                       floorCount:1, websocket:true, haVersion:"2026.9.0"}
+GET    /api/home                  200  {"homes":[...]}
+GET    /api/home/:id              200  home + graph, no credential field
+POST   /api/home/:id/call         200  light.turn_on -> HA context id (a real light moved)
+POST   /api/home/:id/call         409  needs_confirmation, pending {domain, service,
+                                       entityId:"lock.front_door", risk:"security", data}
+POST   /api/home/:id/call         200  same call confirmed -> HA context id (a real door opened)
+POST   /api/home/:id/activate     200  dryRun -> match scene.bedtime, macro "good_night"
+GET    /api/home/:id  (user B)    404  not_found
+POST   /api/home/:id/call (no csrf) 403 csrf_missing
+GET    /api/home/:id  (no session)  401 unauthorized
+DELETE /api/home/:id              200  {"revoked":true,"changed":true}
+DELETE /api/home/:id              200  {"revoked":true,"changed":false}
+```
+
+Every write, including the refusal, left a row:
+
+```
+user  light.turn_on   light.bed_light  guarded=false risk=null     ok
+user  lock.unlock     lock.front_door  guarded=true  risk=security refused
+user  lock.unlock     lock.front_door  guarded=true  risk=security ok
+```
+
+`npx vitest run tests/api-home.test.js` 36 passed with a live house, 30 passed and 6 skipped
+without one. `packages/home-bridge` 47 passed. `npm run check:rules` clean.
+
+**Deviations:**
+
+- The order asks for curl transcripts. A locally booted `server/index.mjs` was not usable for
+  them here (no `dist/` build in this worktree, and concurrent sessions holding ports), so the
+  transcript above is taken at the handler boundary instead: the same exported handlers the
+  filesystem router mounts, with real sessions and real single-use CSRF tokens.
+- **A real defect in the capability record.** `verify.js` read the Home Assistant version only
+  from a second `/api/config` REST call, and when that call did not answer it stored
+  `haVersion: null` for an instance whose WebSocket was open and authenticated. Home Assistant
+  announces its version in the socket handshake, so a connected house has always already told us.
+  It now prefers `bridge.haVersion` and keeps the REST read as a fallback for the location name.
+  Measured: the same house went from `haVersion: null` to `haVersion: "2026.9.0"`.
+- **A real order-dependence in the live suite.** `packages/home-bridge/tests/live-home.test.js`
+  asserted that the MCP gate left a door shut without first ensuring it was shut. The lane's
+  instance is shared by every live test in the run, so any confirmed unlock before it (this run's
+  own transcript, for one) made it fail for a reason that had nothing to do with the gate. It now
+  locks the door as a precondition. Proved by deliberately leaving the door unlocked and running
+  the suite: 47 passed.
+
+**Left open:** nothing in this order.
+
+**Commits:** the test, the version fix and the live-suite precondition.
+
+
+## 07. Floorplan authoring and layout persistence (2026-09-03, partial)
+
+**Shipped:** `home_layouts` holds one versioned plan per home, and the 3D scene renders it. The
+document is the map `buildSceneModel` already read (`layout[roomId] = { x, z, w, d }` in metres),
+so order 06's integration point was honoured rather than replaced; the order file's guessed
+`{x,y,w,h}` shape was wrong and was not used. `api/_lib/home/layout.js` validates by REBUILDING
+the document key by key rather than deleting unknown fields off the caller's object, because a
+delete list can be forgotten when a field is added and a rebuild cannot let anything through it
+does not name. Every cap is a refusal, never a clamp: silently moving a room somebody placed is
+worse than saying the number was rejected. A stored plan that a later cap would now refuse comes
+back with `unreadable` set and an empty room map, so one bad row degrades to the default grid
+instead of taking the page down.
+
+`GET/PUT/DELETE /api/home/:id/layout` carries optimistic concurrency: a stale `version` returns
+409 with the document that won attached, so two members drawing at once are asked instead of one
+losing an afternoon. Last-write-wins on a timestamp was rejected because clock skew between two
+browsers is real.
+
+`POST /api/home/:id/assign` is the part worth having. It calls `config/entity_registry/update`
+through the bridge, so filing a stray device writes the area into the user's OWN Home Assistant
+and reaches their dashboards, their voice assistant and their automations. Deliberately not
+gated (nothing moves, nothing opens, two clicks to reverse in their own UI) and still logged to
+`home_action_log`. `packages/home-bridge` gained `assignEntityArea`, `areas` and
+`refreshRegistries` for it.
+
+`src/home/floorplan.js` is the editor, reachable as a third `Plan` view beside 3D and 2D on
+`/home/:id`. Overlap is prevented while dragging rather than validated on save, because a plan
+that can enter an invalid state and then refuse to save is a plan that loses work; touching walls
+is adjacency, not overlap. Undo and redo cover every mutation by construction, since every edit
+goes through one `apply()`. Dragging is never the only route: a room takes arrow keys and a
+device has a File button.
+
+**Measured:**
+
+- `npx vitest run tests/home-layout.test.js` against the live Neon database and a real Home
+  Assistant 2026.9.0 (`node scripts/home-test-instance.mjs --up --onboard --seed --name layout07`,
+  125 entities): **29 passed, 0 skipped.** Without live env: 15 passed, 14 skipped.
+- The load-bearing assertion moves a real entity into a real area and reads the area back out of
+  Home Assistant's own entity registry, not out of our cache of it, then unfiles it and puts it
+  back.
+- `npx vitest run --maxWorkers=1 packages/home-bridge`: **47 passed**, so the three new bridge
+  methods regressed nothing.
+- `npm run db:status` / `npm run db:check`: both home migrations applied, nothing pending.
+- `npm run check:rules` and `npm run audit:docs`: clean.
+
+**Deviations:** the order file specified a `{ x, y, w, h, rotation }` room shape and a
+`floors[]` array in the document. Order 06 had already shipped a different and better contract
+(`{ x, z, w, d }` keyed by room id, floors derived from the graph), so the shipped one won.
+Rotation and per-entity placement were cut: neither is reachable from the current renderer, and
+adding a field the scene ignores is a lie in a schema.
+
+**Left open, and why:** the four browser journeys in `tests/e2e/home-floorplan.spec.js` are
+written and have never executed. Two attempts: the first aborted in global setup because a
+concurrent agent held port 8099 (the config's `HOME_E2E_API_PORT` override exists for exactly
+this), and the second, on dedicated ports 8131/3061, died with the API server never binding and
+the browser page crashing outright. Cause is the shared box, not the lane: load average 214,
+56 of 62 GB resident, another agent running `vite build` and a full vitest suite concurrently.
+Re-run `HOME_E2E_API_PORT=<free> HOME_E2E_WEB_PORT=<free> npx playwright test --config
+playwright.home.config.js tests/e2e/home-floorplan.spec.js` when the machine is quiet. Until
+those pass, order 07's browser-verification, console-cleanliness, timed-zero-areas-walkthrough
+and two-browser-conflict lines are unmet and **this order is NOT retired**. Everything below the
+browser is verified against real infrastructure.
+
+**Commits:** `15563f03e` (the order), `2d93f58d9` (the API reference), plus `491694b00`, which is
+not order 07 at all: it drops the three duplicate indexes the launch-readiness run found live on
+production Neon. Order 01 was retired without fixing them so nobody owned them. Each was
+byte-identical to one the surviving migration creates and each was verified to back no constraint
+before the drop; after applying, zero orphans remain, all four intended indexes are present, the
+grants index is still UNIQUE and the row counts are unchanged.
+
