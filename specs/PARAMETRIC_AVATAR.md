@@ -81,6 +81,8 @@ The maths lives once, in `src/avatar-proportions.js`, and is dependency-free pre
 
 `tests/bake-proportions.test.js` asserts the browser and server adapters produce bit-comparable bone locals on the real base. Invariants (rotations never written, feet stay grounded, root motion re-measured) are specified in [`AVATAR_PARAMETERS.md`](./AVATAR_PARAMETERS.md#proportions-build).
 
+**The server pass is what lands a build, on every path, including the one that looks like it does not need it.** Avatar Studio saves by exporting the live scene, which reads like proportions come along for free. They do not: `exportSceneGlb` calls `poseSkeletonsToBind` first so a clip caught mid-frame cannot be frozen into the file, and that resets every bone from the skin's inverse bind matrices, which a proportion edit deliberately never touches. The build is therefore absent from the exported GLB and is restored by the bake that follows the appearance PATCH. Same on `/avatars/:id/edit`, which never exports at all. If the export neutraliser changes, `tests/bake-proportions.test.js` is the test that says so.
+
 ### 3. Free sculpt (everything else)
 
 `appearance.sculpt`. A radius-and-falloff brush that pushes vertices along their own surface normal, recorded as **one extra morph target per mesh**, named `customSculpt`, pinned at weight 1.

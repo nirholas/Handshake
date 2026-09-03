@@ -210,3 +210,31 @@ describe('bake-proportions: end-to-end through bakeAppearance', () => {
 		expect(baked.y / plainHead.y).toBeCloseTo(1.1, 2);
 	});
 });
+
+describe('bake-proportions: why the server pass is not optional', () => {
+	it('is the only thing that puts a build into a Studio export', async () => {
+		// Avatar Studio saves by exporting the live scene, which reads like
+		// "proportions come along for free". They do not. exportSceneGlb() calls
+		// poseSkeletonsToBind() first, so a clip mid-frame cannot be frozen into
+		// the file, and that resets every bone from the skin's inverse bind
+		// matrices, which a proportion edit deliberately never touches. The
+		// build is wiped out of the export, and only the server bake below puts
+		// it back. Change the export neutraliser and this is the test that says
+		// what else has to change with it.
+		const { poseSkeletonsToBind } = await import('../src/glb-bind-pose.js');
+		const { scene } = await loadThree();
+		const boneMap = canonicalBoneNodesFromObject(scene);
+		const hips = boneMap.get('Hips');
+		const leg = boneMap.get('LeftLeg');
+		const rest = { hips: hips.position.toArray(), leg: leg.position.toArray() };
+
+		applyProportionsToRoot(scene, { legLength: 1.15 }, { boneMap });
+		expect(leg.position.toArray()).not.toEqual(rest.leg);
+
+		expect(poseSkeletonsToBind(scene)).toBeGreaterThan(0);
+		for (let i = 0; i < 3; i++) {
+			expect(leg.position.toArray()[i]).toBeCloseTo(rest.leg[i], 5);
+			expect(hips.position.toArray()[i]).toBeCloseTo(rest.hips[i], 5);
+		}
+	});
+});
