@@ -82,6 +82,13 @@ const QUERY_TIMEOUT_MS = 4_000;
  * called a leak. Three, because two is a busy minute and four is a wasted hour.
  */
 const LEAK_SAMPLES = 3;
+/**
+ * Watchers per open connection above which a rising subscriber count stops
+ * looking like a busy household and starts looking like nobody releasing. Four
+ * people watching one home live at the same moment is a large family; forty is a
+ * bug.
+ */
+const LEAK_PER_CONNECTION = 4;
 /** The rolling subscriber samples, newest last. Per process, like the pool it measures. */
 const leakSamples = [];
 
@@ -104,25 +111,40 @@ const LEAK_STALE_MS = 15 * 60_000;
 /**
  * Record one subscriber sample and say whether the pool is leaking.
  *
- * A leak here is a subscriber that was registered and never released: an SSE
+ * A leak here is a subscription that was registered and never released: an SSE
  * stream whose client vanished without the server noticing, repeated until the
- * instance dies holding hundreds of sockets into strangers' houses. It has no
- * error signature at all, which is why it is measured as a SHAPE over time
- * rather than a threshold.
+ * instance dies holding sockets into houses nobody is watching. It has no error
+ * signature at all, which is why it is measured as a SHAPE over time rather than
+ * a threshold.
  *
- * The signal is the MARGIN between registered subscribers and open streams. One
- * subscriber per stream is correct at any scale, so a margin that exists and
- * keeps growing across three consecutive checks is the fingerprint, and a
- * hundred honest streams arriving at once is not. When the runtime reports no
- * stream gauge, the pooled connection count stands in: subscribers climbing
- * while connections do not is the same shape, one step less precise.
+ * **The obvious signal does not work, and this was measured rather than
+ * reasoned.** The plan was to watch the margin between registered subscribers
+ * and open streams. Against the real runtime that margin is always zero:
+ * `subscribe()` registers the subscriber and admits the stream in the same call,
+ * so the two counters move in lockstep by construction and a detector built on
+ * their difference can never fire. A run of six deliberately leaked
+ * subscriptions produced `margins=[0,0,0]`.
+ *
+ * What actually leaks is the ABSOLUTE count: subscribers climbing and never
+ * coming back down while the number of pooled connections does not grow. Honest
+ * traffic fluctuates, because people close tabs. A leak only ever rises.
+ *
+ * The count alone is not enough either, because many people can legitimately
+ * watch one house at once and that also raises subscribers against a flat
+ * connection count. So the detector additionally requires more watchers per open
+ * connection than a household plausibly has (`LEAK_PER_CONNECTION`), which is
+ * where "a family is looking at the same home" stops being the likely
+ * explanation and "nobody is releasing" starts.
+ *
+ * The margin is still recorded, because a NON-zero one is a different bug worth
+ * seeing: a stream admitted without a subscriber, or the reverse.
  *
  * @param {{ subscribers: number, open: number, streams?: number|null }} sample
  * @returns {{ leaking: boolean, samples: number[], margins: number[], growth: number }}
  */
 export function noteSubscriberSample({ subscribers, open, streams = null }) {
-	const baseline = typeof streams === 'number' ? streams : open;
-	leakSamples.push({ subscribers, baseline, margin: subscribers - baseline });
+	const baseline = typeof streams === 'number' ? streams : subscribers;
+	leakSamples.push({ subscribers, open, margin: subscribers - baseline });
 	while (leakSamples.length > LEAK_SAMPLES) leakSamples.shift();
 
 	const samples = leakSamples.map((s) => s.subscribers);
@@ -131,12 +153,15 @@ export function noteSubscriberSample({ subscribers, open, streams = null }) {
 
 	let climbing = true;
 	for (let i = 1; i < leakSamples.length; i += 1) {
-		if (leakSamples[i].margin <= leakSamples[i - 1].margin) climbing = false;
+		// Strictly rising subscribers, and connections that are not rising with
+		// them. A fleet genuinely taking on more houses grows both.
+		if (leakSamples[i].subscribers <= leakSamples[i - 1].subscribers) climbing = false;
+		if (leakSamples[i].open > leakSamples[i - 1].open) climbing = false;
 	}
-	const growth = margins[margins.length - 1] - margins[0];
-	// A negative margin is not a leak in the other direction, it is a stream that
-	// has not registered its subscriber yet. Only an unexplained surplus counts.
-	return { leaking: climbing && growth > 0 && margins[margins.length - 1] > 0, samples, margins, growth };
+	const latest = leakSamples[leakSamples.length - 1];
+	const crowded = latest.subscribers > LEAK_PER_CONNECTION * Math.max(1, latest.open);
+	const growth = samples[samples.length - 1] - samples[0];
+	return { leaking: climbing && crowded && growth > 0, samples, margins, growth };
 }
 
 /** Forget the rolling samples. Test seam, and the reset after an alert fires. */
@@ -416,7 +441,7 @@ export function homeHealthVerdict(s) {
 	const hint = status === 'ok'
 		? undefined
 		: s.leak.leaking
-			? `The subscriber surplus over open streams grew across ${s.leak.margins.join(' then ')}. A stream is registering a subscriber and never releasing it. See docs/ops/home-operations.md, "Subscriber leak".`
+			? `Subscribers climbed ${s.leak.samples.join(' then ')} across three checks while open connections did not, at more than ${LEAK_PER_CONNECTION} watchers per connection. A subscription is being registered and never released. See docs/ops/home-operations.md, "Subscriber leak".`
 			: handshakeStatus !== 'ok'
 				? 'Handshakes are failing across tenants, which is almost always us: a deploy, an egress change or a DNS fault. Run the correlation query in docs/ops/home-operations.md before touching anything.'
 				: actionStatus !== 'ok'

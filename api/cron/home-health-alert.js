@@ -17,10 +17,11 @@
 //      door, a disarm) recorded as having executed with no confirmation on
 //      record. This is supposed to be impossible, so a SINGLE row pages: it has
 //      no rate, no threshold and no error budget.
-//   3. Subscriber leak. Registered subscribers exceeding open streams by a
-//      margin that grows across three consecutive checks. Nothing about this
-//      shows up as an error; instances just quietly fill with sockets into
-//      strangers' houses until they die.
+//   3. Subscriber leak. Registered subscribers climbing across three consecutive
+//      checks while open connections do not, at more watchers per connection
+//      than a household plausibly has. Nothing about this shows up as an error;
+//      instances just quietly fill with sockets into strangers' houses until
+//      they die.
 //
 // The alerting channel itself is api/_lib/alerts.js. This adds no second
 // channel, and the generic degradation escalation in api/cron/uptime-check.js
@@ -159,7 +160,7 @@ async function alertSubscriberLeak() {
 		`Home subscriber leak on ${leaking.length} instance(s)`,
 		[
 			...leaking.map(
-				(i) => `  ${i.instanceId}: subscriber surplus over open streams grew ${i.margins.join(' then ')} (subscribers ${i.samples.join(' then ')})`,
+				(i) => `  ${i.instanceId}: subscribers climbed ${i.samples.join(' then ')} across three checks while open connections did not`,
 			),
 			'',
 			'A subscription is being registered and never released, so the instance is holding sockets into houses nobody is watching.',
