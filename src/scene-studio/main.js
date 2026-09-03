@@ -29,6 +29,9 @@ import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
 import { addGltfBufferToScene as sharedAddGltfBufferToScene } from './loader.js';
 import { mountStudioActions } from './actions.js';
+import { mountEmptyState } from './empty-state.js';
+import { enhanceToolbarA11y } from './toolbar-a11y.js';
+import { toastError } from '../shared/toast.js';
 
 window.URL = window.URL || window.webkitURL;
 window.BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder;
@@ -72,6 +75,14 @@ container.appendChild(animationResizer.dom);
 // Layered quality-of-life bar — Import from Forge / Export presets / Share —
 // sibling to the vendored chrome, never touching vendor/**. See actions.js.
 mountStudioActions(editor, container);
+
+// The vendored transform buttons ship as icon-only <button>s with no
+// accessible name; label them and announce their pressed state.
+enhanceToolbarA11y(editor, toolbar.dom);
+
+// First-run guidance over the empty grid. Retires itself as soon as the scene
+// holds anything, including a scene restored from the autosave below.
+mountEmptyState(editor, container);
 
 editor.signals.animationPanelChanged.add(function (height) {
 	const visible = height !== false;
@@ -180,7 +191,11 @@ async function importModelFromQuery() {
 			.replace(/\s+/g, ' ').trim().slice(0, 64) || 'Model';
 		await addGltfBufferToScene(contents, label);
 	} catch (error) {
-		alert('Could not load the handed-off model (' + error.message + '). You can drag the GLB file into the editor instead.');
+		toastError(
+			`Could not load the handed-off model: ${error.message}. ` +
+				'Download the GLB and drag the file into the editor instead.',
+			{ duration: 7000 },
+		);
 	}
 }
 
@@ -225,7 +240,11 @@ async function importHandoffAnimation() {
 			editor.execute(new AddScriptCommand(editor, object, { ...HANDOFF_PLAY_SCRIPT }));
 		}
 	} catch (error) {
-		alert('Could not load the animation from the Animation Studio (' + error.message + '). Try Export GLB on /pose and drag the file in instead.');
+		toastError(
+			`Could not load the animation from the Animation Studio: ${error.message}. ` +
+				'Try Export GLB on /pose and drag the file in instead.',
+			{ duration: 7000 },
+		);
 	}
 }
 

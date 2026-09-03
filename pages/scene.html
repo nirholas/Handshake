@@ -78,6 +78,10 @@
 </head>
 	<body class="scene-studio">
 		<div id="nav-container"></div>
+		<!-- The editor fills the window and has no visible heading of its own, so
+		     the page's document title lives here for screen readers and for the
+		     one-h1-per-page contract every other three.ws route keeps. -->
+		<h1 class="sr-only" data-i18n="scene.h1">Scene Studio</h1>
 		<div id="studio-app" role="application" aria-label="Scene Studio 3D editor"></div>
 
 		<script src="/nav.js" defer></script>

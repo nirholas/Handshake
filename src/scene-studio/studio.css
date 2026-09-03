@@ -12,10 +12,16 @@ body.scene-studio {
 }
 
 /* The editor panels position themselves absolutely against their nearest
- * positioned ancestor; this container pins the whole tool under the site nav. */
+ * positioned ancestor; this container pins the whole tool under the site nav.
+ *
+ * The offset is --nav-h (the rendered height of the nav.js header), NOT
+ * --header-h: those are different numbers (69px vs 56px), and using the
+ * smaller one parked the top 13px of the editor behind the sticky nav, which
+ * sliced the tops off the File/Edit/Add/View/Render/Help glyphs and hid the
+ * autosave checkbox at every width. See the --nav-h note in public/tokens.css. */
 #studio-app {
 	position: fixed;
-	top: calc(var(--header-h) + env(safe-area-inset-top, 0px));
+	top: calc(var(--nav-h, 69px) + env(safe-area-inset-top, 0px));
 	left: 0;
 	right: 0;
 	bottom: 0;
@@ -34,6 +40,22 @@ body.scene-studio {
 
 #studio-app #menubar .menu .title {
 	color: var(--ink);
+}
+
+/* The vendored #menubar is a fixed 36px tall strip of floated menus, and every
+ * panel below it (#viewport, #sidebar, #toolbar, #script, #player) is pinned to
+ * `top: 36px`. At 320px the six titles no longer fit on one line, so `Help`
+ * floated onto a second row that the 36px strip cannot show: it spilled over
+ * the viewport and landed under the quick-action bar. Tightening the padding
+ * below 600px fits all six on the single row the layout assumes. */
+@media (max-width: 600px) {
+	#studio-app #menubar .menu {
+		padding-right: 2px;
+	}
+
+	#studio-app #menubar .menu .title {
+		padding: 10px 6px;
+	}
 }
 
 #studio-app #menubar .menu:hover,
