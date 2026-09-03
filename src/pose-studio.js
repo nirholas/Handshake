@@ -19,7 +19,7 @@ import {
 	Mesh,
 	MeshBasicMaterial,
 	MeshStandardMaterial,
-	PCFSoftShadowMap,
+	VSMShadowMap,
 	PerspectiveCamera,
 	Plane,
 	PMREMGenerator,
@@ -207,7 +207,10 @@ function setupScene(canvas, hudStatus) {
 	});
 	renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 	renderer.shadowMap.enabled = true;
-	renderer.shadowMap.type = PCFSoftShadowMap;
+	// PCFSoftShadowMap is deprecated in three.js and silently downgrades to hard
+	// PCFShadowMap at runtime, warning on every boot; VSMShadowMap is the
+	// supported soft-shadow type.
+	renderer.shadowMap.type = VSMShadowMap;
 	// Filmic response + image-based lighting, matching the IRL/avatar-sdk render
 	// stack — PBR materials read flat and plasticky under bare analytic lights.
 	renderer.toneMapping = ACESFilmicToneMapping;

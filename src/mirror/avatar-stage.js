@@ -127,7 +127,10 @@ export class AvatarStage {
 		renderer.toneMapping = THREE.ACESFilmicToneMapping;
 		renderer.toneMappingExposure = 1.05;
 		renderer.shadowMap.enabled = true;
-		renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+		// PCFSoftShadowMap is deprecated in three.js and silently downgrades to hard
+		// PCFShadowMap at runtime, warning on every boot; VSMShadowMap is the
+		// supported soft-shadow type.
+		renderer.shadowMap.type = THREE.VSMShadowMap;
 		this.renderer = renderer;
 	}
 

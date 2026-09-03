@@ -413,7 +413,10 @@ export function createDioramaRenderer(container, opts = {}) {
 	});
 	renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 	renderer.shadowMap.enabled = true;
-	renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+	// PCFSoftShadowMap is deprecated in three.js and silently downgrades to hard
+	// PCFShadowMap at runtime, warning on every boot; VSMShadowMap is the
+	// supported soft-shadow type.
+	renderer.shadowMap.type = THREE.VSMShadowMap;
 	renderer.toneMapping = THREE.ACESFilmicToneMapping;
 	renderer.toneMappingExposure = opts.exposure ?? 1.0;
 	renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -1316,7 +1319,10 @@ export async function renderThumbnail(canvas, diorama) {
 	renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 	renderer.setSize(width, height, false);
 	renderer.shadowMap.enabled = true;
-	renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+	// PCFSoftShadowMap is deprecated in three.js and silently downgrades to hard
+	// PCFShadowMap at runtime, warning on every boot; VSMShadowMap is the
+	// supported soft-shadow type.
+	renderer.shadowMap.type = THREE.VSMShadowMap;
 	renderer.toneMapping = THREE.ACESFilmicToneMapping;
 	renderer.toneMappingExposure = 1.0;
 	renderer.outputColorSpace = THREE.SRGBColorSpace;
