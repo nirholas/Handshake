@@ -226,6 +226,24 @@ HOME_ASSISTANT_URL=http://127.0.0.1:42125 HOME_ASSISTANT_TOKEN=... npx vitest ru
 node scripts/home-test-instance.mjs --down
 ```
 
+## A flapping house cannot kill your process
+
+`connect()` installs `guardSubscriptions` on the connection it opens, and that is not
+belt and braces. `home-assistant-js-websocket` re-establishes its subscriptions after a
+reconnect with no rejection handler on the promise, so a house whose uplink flaps can
+drop the socket again with a resubscribe command in flight, and the rejection reaches
+Node unobserved. Under Node's default `--unhandled-rejections=throw` that **terminates
+the process**, which on a server holding one connection per house means one bad uplink
+takes every other house down with it.
+
+Reproduced against a real Home Assistant, at the fifth flap, by scenario 2 of
+[`scripts/home-chaos.mjs`](../../scripts/home-chaos.mjs). The bug and the fix we would
+like to see are written up in
+[docs/upstream/home-assistant-js-websocket-resubscribe-rejection.md](../../docs/upstream/home-assistant-js-websocket-resubscribe-rejection.md).
+Until that lands, a failed subscribe here is reported on the bridge's `error` event and
+resolves to a no-op unsubscribe, so the library retries it on the next `ready` and the
+process survives.
+
 ## Read next
 
 - [docs/tutorials/connect-your-home.md](../../docs/tutorials/connect-your-home.md): zero to a

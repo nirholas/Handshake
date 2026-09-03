@@ -1,4 +1,4 @@
-export { HomeBridge, toBridgeError } from './bridge.js';
+export { guardSubscriptions, HomeBridge, toBridgeError } from './bridge.js';
 export { ERR, HomeBridgeError } from './errors.js';
 // The two connection sentinels a custom socket factory has to reject with, so a
 // server that supplies one (api/_lib/home-url-guard.js pins the socket to the

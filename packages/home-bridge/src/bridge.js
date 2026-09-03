@@ -165,6 +165,10 @@ export class HomeBridge {
 			throw toBridgeError(err, this.#options.baseUrl);
 		}
 
+		guardSubscriptions(this.#connection, (err) =>
+			this.#emit('error', toBridgeError(err, this.#options.baseUrl, 'A state subscription could not be established.')),
+		);
+
 		this.#connection.addEventListener('ready', () => this.#emit('reconnected', undefined));
 		this.#connection.addEventListener('disconnected', () => this.#emit('disconnected', undefined));
 
@@ -384,6 +388,73 @@ export class HomeBridge {
 		this.#connection = null;
 		this.#listeners.clear();
 	}
+}
+
+/**
+ * Stop a flapping house from killing the process.
+ *
+ * `home-assistant-js-websocket` re-establishes its subscriptions after a
+ * reconnect in `Connection._setSocket`:
+ *
+ *     info.subscribe().then((unsub) => { info.unsubscribe = unsub; info.resolve(); });
+ *
+ * There is no rejection handler on that promise. A house whose uplink flaps can
+ * drop the socket again while the resubscribe command is still in flight, the
+ * command rejects with a `{ type: "result", success: false }` frame, and the
+ * rejection reaches the process unobserved. Under Node's default
+ * `--unhandled-rejections=throw` that TERMINATES the process, so one flapping
+ * house takes down every other house's connection on the same server. Reproduced
+ * against a real Home Assistant by scenario 2 of scripts/home-chaos.mjs, which
+ * crashed exactly this way at the fifth flap.
+ *
+ * The bug is upstream and is reported there (see the package README). Until a
+ * fix lands, this closes it at the one seam we own: the connection object the
+ * library uses. `info.subscribe` is `() => this.subscribeMessage(...)`, which
+ * resolves the method off the instance at call time, so replacing it here covers
+ * the reconnect path as well as the first subscribe.
+ *
+ * The failure is REPORTED, not swallowed: it reaches the bridge's `error` event
+ * with a real message. The resolved value is a no-op unsubscribe, which keeps
+ * the library's own bookkeeping intact so the same subscription is retried on
+ * the next `ready`.
+ *
+ * @param {object} connection a home-assistant-js-websocket Connection
+ * @param {(err: unknown) => void} onError
+ */
+export function guardSubscriptions(connection, onError) {
+	const report = (err) => {
+		try {
+			onError(err);
+		} catch {
+			// An error reporter that throws must not become the crash it exists to prevent.
+		}
+	};
+
+	const original = connection.subscribeMessage.bind(connection);
+	connection.subscribeMessage = (callback, message, options) =>
+		original(callback, message, options).then(
+			// BOTH ends of the subscription need this, and the second one is easy
+			// to miss. `getCollection` tears a subscription down with
+			// `unsubProm.then((unsub) => unsub())`, also with no catch, and
+			// `info.unsubscribe` sends an `unsubscribe_events` command that rejects
+			// the same way when the socket is already going. Guarding only the
+			// subscribe leaves the process dying on close instead of on connect.
+			(unsubscribe) => () => {
+				try {
+					const result = unsubscribe();
+					if (result && typeof result.then === 'function') result.then(undefined, report);
+					return result;
+				} catch (err) {
+					report(err);
+					return undefined;
+				}
+			},
+			(err) => {
+				report(err);
+				return () => {};
+			},
+		);
+	return connection;
 }
 
 function firstEntityId(data) {

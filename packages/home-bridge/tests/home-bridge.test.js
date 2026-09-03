@@ -16,6 +16,7 @@ import {
 	createAllowList,
 	ERR,
 	flattenEntities,
+	guardSubscriptions,
 	HomeBridge,
 	isPrivateHost,
 	matchMacro,
@@ -266,5 +267,104 @@ describe('HomeBridge construction', () => {
 	it('will not act before connect()', async () => {
 		const bridge = new HomeBridge({ baseUrl: 'https://home.example.com', token: 'x' });
 		await expect(bridge.call('light', 'turn_on', {})).rejects.toMatchObject({ code: ERR.NOT_CONNECTED });
+	});
+});
+
+describe('a flapping house cannot kill the process', () => {
+	// home-assistant-js-websocket resubscribes after a reconnect with
+	// `info.subscribe().then(...)` and no rejection handler. A house that drops
+	// its socket again while that resubscribe is in flight produces an unhandled
+	// rejection, and under Node's default mode an unhandled rejection terminates
+	// the process: one flapping house takes every other house down with it.
+	// Reproduced against a real Home Assistant by scripts/home-chaos.mjs
+	// scenario 2 before this guard existed.
+	function fakeConnection(behaviour) {
+		return {
+			calls: 0,
+			async subscribeMessage(callback, message, options) {
+				this.calls++;
+				return behaviour(this.calls, callback, message, options);
+			},
+		};
+	}
+
+	it('turns a failed subscribe into a reported error and a no-op unsubscribe', async () => {
+		const failure = { type: 'result', success: false, error: {} };
+		const connection = fakeConnection(() => Promise.reject(failure));
+		const seen = [];
+		guardSubscriptions(connection, (err) => seen.push(err));
+
+		const unsubscribe = await connection.subscribeMessage(() => {}, { type: 'subscribe_entities' });
+
+		expect(typeof unsubscribe).toBe('function');
+		expect(() => unsubscribe()).not.toThrow();
+		expect(seen).toHaveLength(1);
+		// Reported, never swallowed, and reported RAW: the guard hands the failure
+		// to its caller untranslated, so the bridge can turn a bare Home Assistant
+		// result frame into a sentence and a test can see the frame itself.
+		expect(seen[0]).toEqual(failure);
+	});
+
+	it('passes a successful subscribe through, and its unsubscribe still works', async () => {
+		let stopped = 0;
+		const unsub = () => {
+			stopped++;
+			return 'stopped';
+		};
+		const connection = fakeConnection(() => Promise.resolve(unsub));
+		guardSubscriptions(connection, () => {});
+
+		const returned = await connection.subscribeMessage(() => {}, { type: 'subscribe_entities' });
+		expect(returned()).toBe('stopped');
+		expect(stopped).toBe(1);
+	});
+
+	it('turns a failing unsubscribe into a report instead of a crash', async () => {
+		// getCollection tears down with `unsubProm.then((unsub) => unsub())` and no
+		// catch, and the unsubscribe itself sends a command that rejects when the
+		// socket is already going. Guarding only the subscribe moves the crash from
+		// connect to close rather than removing it.
+		const failure = { type: 'result', success: false, error: {} };
+		const connection = fakeConnection(() => Promise.resolve(() => Promise.reject(failure)));
+		const seen = [];
+		guardSubscriptions(connection, (err) => seen.push(err));
+
+		const unsubscribe = await connection.subscribeMessage(() => {}, { type: 'subscribe_entities' });
+		const result = unsubscribe();
+		await expect(result).rejects.toEqual(failure);
+		expect(seen).toEqual([failure]);
+	});
+
+	it('turns an unsubscribe that throws synchronously into a report too', async () => {
+		const boom = new Error('socket already gone');
+		const connection = fakeConnection(() => Promise.resolve(() => {
+			throw boom;
+		}));
+		const seen = [];
+		guardSubscriptions(connection, (err) => seen.push(err));
+
+		const unsubscribe = await connection.subscribeMessage(() => {}, { type: 'subscribe_entities' });
+		expect(() => unsubscribe()).not.toThrow();
+		expect(seen).toEqual([boom]);
+	});
+
+	it('survives a reporter that throws, which is the crash it exists to prevent', async () => {
+		const connection = fakeConnection(() => Promise.reject(new Error('socket closed')));
+		guardSubscriptions(connection, () => {
+			throw new Error('the reporter is broken too');
+		});
+
+		await expect(connection.subscribeMessage(() => {}, { type: 'subscribe_entities' })).resolves.toBeTypeOf('function');
+	});
+
+	it('keeps guarding across repeated failures, so a flap never escapes', async () => {
+		const connection = fakeConnection((n) => (n % 2 ? Promise.reject(new Error(`flap ${n}`)) : Promise.resolve(() => {})));
+		const seen = [];
+		guardSubscriptions(connection, (err) => seen.push(err));
+
+		for (let i = 0; i < 10; i++) {
+			await expect(connection.subscribeMessage(() => {}, { type: 'subscribe_entities' })).resolves.toBeTypeOf('function');
+		}
+		expect(seen).toHaveLength(5);
 	});
 });

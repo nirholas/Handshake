@@ -768,6 +768,13 @@ function withTimeout(promise, ms, makeError) {
 	const timeout = new Promise((_resolve, reject) => {
 		timer = setTimeout(() => reject(makeError()), ms);
 	});
+	// The loser of this race still settles. A connect that rejects AFTER its
+	// timeout already fired would otherwise be an unhandled rejection, and under
+	// Node's default --unhandled-rejections=throw an unhandled rejection
+	// terminates the process: one house that fails slowly would take every other
+	// house on the instance down with it. `Promise.race` observes the winner
+	// only, so the loser needs its own handler.
+	promise.then(undefined, () => {});
 	return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
 
