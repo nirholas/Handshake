@@ -42,7 +42,7 @@ One section per finished order, newest at the bottom:
 | 10 add-on relay | open | |
 | 11 security | open | |
 | 12 households and RBAC | done | 2026-09-03 |
-| 13 observability | partial, see entry below | |
+| 13 observability | done, Cloud Scheduler job owner-gated | 2026-09-03 |
 | 14 reliability and scale | open | |
 | 15 privacy and retention | done | 2026-09-03 |
 | 16 test program | open | |
@@ -384,10 +384,9 @@ deliberately excluded from the public site build. It is indexed in `docs/ops/REA
 rather than `docs/start-here.md` for the same reason. Every pointer at the old path was
 updated, including the one already left in `api/_lib/home/admission.js`.
 
-**Left open:** two of the order's tasks.
-- **Task 6, the per-tenant status surface** (`src/home/manage.js`). The home surface was
-  still being built by concurrent sessions and there is no page to wire it into; adding the
-  module now would be a dead path. Owner: whoever closes order 05.
+**Closed after the first pass.** Task 6, the per-tenant status surface, was left open because `src/home/manage.js` did not exist yet. It does now, so the manage view reads the platform's own `home` verdict off the public status feed and answers the one question a person cannot answer alone when their house goes quiet: the lane unhealthy gets a banner saying it is us and nothing in their house needs restarting; the lane healthy with one home down gets a line on that card saying every other house is answering; and a status feed that cannot be reached says NOTHING, because the wrong guess is "your house is broken" during an outage we caused. Four Playwright cases in `tests/e2e/home-whose-fault.spec.js`, passing against a real Chromium.
+
+**Left open:**
 - **The Cloud Scheduler job.** The cron is declared in `vercel.json` (crons 112 to 113,
   CLAUDE.md updated) but `check:cron-drift` lists it as never synced, along with four
   pre-existing ones. Creating it needs `node scripts/create-gcp-scheduler.mjs` after the
@@ -395,11 +394,13 @@ updated, including the one already left in `api/_lib/home/admission.js`.
 - Production `/api/healthz` does not carry the `home` block yet, for the same reason: it
   needs the owner-gated deploy.
 
-**Not mine, observed:** `tests/home-runtime.test.js` had 24 failures at the time of writing,
-because its cases use `https://home.example.com` and the SSRF guard added alongside it
-resolves DNS for real and refuses an unroutable host. `createHomeRuntime` already accepts a
-`resolveDial` dep; the tests need to inject it. Left alone because that file was being
-edited live.
+**Fixed in passing:** `tests/home-roles.test.js` was failing 28 of 125 with foreign-key
+violations that read like broken RBAC. The cause was neither: the suite namespaced its rows
+with a constant prefix, and this workspace runs many agents with a vitest each, so two
+overlapping runs swept each other's users and homes mid-test. Rows are now namespaced per
+run, with a separate age-bounded reaper for runs that crash. 125 of 125 pass, and nothing
+about the role matrix changed. (`tests/home-runtime.test.js`, red for the same class of
+reason earlier in the session, was fixed by its own author in the meantime.)
 
 **Commits:** 13e62503e, 3e5cbda8e, e38f809f9, 5c8bda6b6, 9d32efeb3, 3357c7dae, 013cf631c.
 

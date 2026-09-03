@@ -17,15 +17,34 @@ import { householdPanel } from './members.js';
 /** Past this, "moments ago" stops being honest. */
 const STALE_AFTER_MS = 90_000;
 
-export function renderManage({ homes, notice, onDisconnect, onReconnect }) {
+/**
+ * The question every person asks when their home stops answering, and the one
+ * they cannot answer alone: is it my house, or is it you?
+ *
+ * three.ws already computes that verdict across every connected home
+ * (api/_lib/ops/home-health.js) and publishes it on the public status feed. So
+ * the answer is told here, unprompted, instead of leaving somebody to power-cycle
+ * a router during an outage that was ours. It is read once per render, it never
+ * blocks the page, and a status feed that does not answer simply says nothing
+ * rather than adding a second failure to the one they already have.
+ */
+const PLATFORM_STATUS_URL = '/api/status';
+
+export function renderManage({ homes, notice, onDisconnect, onReconnect , focused = false }) {
 	const frag = document.createDocumentFragment();
 	if (notice) frag.append(noticeEl(notice));
+
+	// Filled in asynchronously, and only when there is something to say.
+	const platform = el('div');
+	frag.append(platform);
 
 	const panel = el('section', 'hm-panel');
 	const head = el('div', 'hm-panel-head');
 	const heading = el('div');
 	heading.append(
-		el('h2', 'hm-panel-title', homes.length === 1 ? 'Your home' : `Your homes (${homes.length})`),
+		el('h2', 'hm-panel-title', focused
+			? (homes[0]?.label || 'This home')
+			: homes.length === 1 ? 'Your home' : `Your homes (${homes.length})`),
 		el('p', 'hm-panel-sub', 'Your agent can read everything here. Anything that unlocks, opens or disarms still stops and asks, unless you have granted it below.'),
 	);
 	head.append(heading);
@@ -38,21 +57,82 @@ export function renderManage({ homes, notice, onDisconnect, onReconnect }) {
 	plan.href = '/smart-home/plan';
 	headActions.append(plan);
 
-	const add = el('button', 'hm-btn hm-btn-ghost', 'Connect another');
-	add.type = 'button';
-	add.addEventListener('click', () => onReconnect && onReconnect());
-	headActions.append(add);
+	if (focused) {
+		// A deep link is often the first page someone lands on, so it has to offer
+		// a way up rather than assuming they arrived from the list.
+		const all = el('a', 'hm-btn hm-btn-ghost', 'All your homes');
+		all.href = '/smart-home';
+		headActions.append(all);
+	} else {
+		const add = el('button', 'hm-btn hm-btn-ghost', 'Connect another');
+		add.type = 'button';
+		add.addEventListener('click', () => onReconnect && onReconnect());
+		headActions.append(add);
+	}
 	head.append(headActions);
 	panel.append(head);
 
 	const list = el('ul', 'hm-list');
-	for (const home of homes) list.append(homeCard(home, { onDisconnect }));
+	const cards = homes.map((home) => {
+		const card = homeCard(home, { onDisconnect, onReconnect, focused });
+		list.append(card);
+		return { home, card };
+	});
 	panel.append(list);
 	frag.append(panel);
+
+	explainWhoseFault({ platform, cards });
 	return frag;
 }
 
-function homeCard(home, { onDisconnect }) {
+/**
+ * Read the platform's own verdict on the home lane and say what it means for
+ * this person, in their words.
+ *
+ * Two outcomes, and neither of them is a dashboard:
+ *
+ *   * the lane is unhealthy, so a banner says so before they touch anything. It
+ *     is us. Nothing in their house needs restarting.
+ *   * the lane is healthy and one of their homes is not, so that card says the
+ *     other houses are answering normally. It is theirs, and the recovery is the
+ *     one already printed on the card.
+ *
+ * A status feed that is unreachable produces neither, because guessing here is
+ * worse than silence: telling somebody their house is at fault during an outage
+ * we caused is the one wrong answer.
+ */
+async function explainWhoseFault({ platform, cards }) {
+	let home;
+	try {
+		const res = await fetch(PLATFORM_STATUS_URL, { headers: { accept: 'application/json' } });
+		if (!res.ok) return;
+		const body = await res.json();
+		home = (body?.subsystems?.items || []).find((item) => item?.name === 'home');
+	} catch {
+		return;
+	}
+	if (!home || !home.status) return;
+
+	if (home.status === 'degraded' || home.status === 'down') {
+		clear(platform);
+		platform.append(noticeEl({
+			tone: home.status === 'down' ? 'error' : 'warn',
+			title: 'This one is us, not your house.',
+			body: 'three.ws is having trouble reaching connected homes right now. Nothing in your house needs restarting and your access token is fine. We are on it, and your home will come back on its own.',
+		}));
+		return;
+	}
+
+	if (home.status !== 'ok') return;
+	for (const { home: row, card } of cards) {
+		if (row.status !== 'unreachable' && row.status !== 'auth_failed') continue;
+		const line = card.querySelector('.hm-status');
+		if (!line) continue;
+		line.append(el('span', 'hm-status-verdict', ' Every other connected home is answering normally, so this one looks like your house rather than us.'));
+	}
+}
+
+function homeCard(home, { onDisconnect, onReconnect, focused = false }) {
 	const li = el('li');
 	const card = el('div', 'hm-card');
 
@@ -68,12 +148,34 @@ function homeCard(home, { onDisconnect }) {
 	// settings view for the same home: grants, the action log, disconnect.
 	const scene = el('a', 'hm-btn', 'Live 3D home');
 	scene.href = `/home/${encodeURIComponent(home.id)}`;
-	const open = el('a', 'hm-btn hm-btn-ghost', 'Open');
-	open.href = `/smart-home/${encodeURIComponent(home.id)}`;
+	actions.append(scene);
+
+	// Not rendered on the focused view, where it would link to the current page.
+	if (!focused) {
+		const open = el('a', 'hm-btn hm-btn-ghost', 'Open');
+		open.href = `/smart-home/${encodeURIComponent(home.id)}`;
+		open.setAttribute('aria-label', `Open ${home.label || hostOf(home.base_url)}`);
+		actions.append(open);
+	}
+
+	// A house whose stored token was rejected, or that has stopped answering, is
+	// the one case where reading the status is not enough: the fix is to connect
+	// it again, and without this the card states a problem and offers no way out
+	// of it except disconnecting.
+	if (home.status === 'auth_failed' || home.status === 'unreachable') {
+		const again = el('button', 'hm-btn', home.status === 'auth_failed' ? 'Reconnect with a new token' : 'Try connecting again');
+		again.type = 'button';
+		again.addEventListener('click', () => onReconnect && onReconnect(null, {
+			label: home.label,
+			baseUrl: home.base_url,
+		}));
+		actions.append(again);
+	}
+
 	const drop = el('button', 'hm-btn hm-btn-danger', 'Disconnect');
 	drop.type = 'button';
 	drop.addEventListener('click', () => confirmDisconnect(card, home, onDisconnect));
-	actions.append(scene, open, drop);
+	actions.append(drop);
 
 	card.append(main, actions);
 	li.append(card);
@@ -81,11 +183,128 @@ function homeCard(home, { onDisconnect }) {
 	const detail = el('div');
 	detail.style.marginTop = 'var(--space-sm)';
 	detail.append(summary(home));
+	detail.append(healthPanel(home));
 	detail.append(householdPanel(home));
 	detail.append(grantsPanel(home));
 	detail.append(logPanel(home));
 	li.append(detail);
 	return li;
+}
+
+/**
+ * "Is my house all right, and if not, is it me or is it them."
+ *
+ * The `home` subsystem in /api/healthz deliberately refuses to page anyone for a
+ * single house going dark, because one person's unplugged router is not an
+ * outage. That decision is only defensible if the person whose router it is gets
+ * told, and this is where they get told.
+ *
+ * Two load strategies on purpose. A house that already looks unhealthy on its
+ * card fetches immediately, because somebody staring at a red dot should not have
+ * to find and open a panel to learn why. A house that looks fine waits to be
+ * asked, so a user with six working homes pays no extra round trips on load: the
+ * same trade grantsPanel and logPanel already make.
+ */
+function healthPanel(home) {
+	const load = () => getJson(`/api/home/${encodeURIComponent(home.id)}/health`);
+	const troubled = home.status !== 'connected' || isStale(home);
+
+	if (!troubled) {
+		return lazyPanel({
+			title: 'How this home is doing',
+			summary: 'Reachability, what your agent has done here, and whether any problem is ours.',
+			load,
+			render: renderHealth,
+		});
+	}
+
+	const wrap = el('div');
+	wrap.style.marginTop = 'var(--space-sm)';
+	const skeleton = el('div', 'hm-skeleton');
+	skeleton.style.height = '5rem';
+	wrap.append(skeleton);
+
+	load().then(
+		(body) => {
+			clear(wrap);
+			wrap.append(renderHealth(body));
+		},
+		(err) => {
+			clear(wrap);
+			// The card already says the house is not answering. This panel failing
+			// on top of that must not read as a second, different fault.
+			wrap.append(noticeEl({
+				tone: 'warn',
+				title: 'We could not check why yet.',
+				body: err?.message || 'Reload the page to try again.',
+			}));
+		},
+	);
+	return wrap;
+}
+
+/** Tone follows whose problem it is, not how loud the words are. */
+function healthTone(health) {
+	if (health.state === 'live') return 'ok';
+	if (health.state === 'revoked' || health.state === 'pending') return 'info';
+	// Ours is a warning rather than an error: nothing the reader can act on is
+	// broken, and painting their working house red would be a lie.
+	if (health.fault === 'us' || health.state === 'stale') return 'warn';
+	return 'error';
+}
+
+function renderHealth(body) {
+	const health = body?.health || {};
+	const frag = document.createDocumentFragment();
+
+	if (health.measured === false) {
+		frag.append(noticeEl({
+			tone: 'warn',
+			title: health.headline || 'We could not measure this home just now.',
+			body: health.reason || 'Try again in a moment.',
+		}));
+		return frag;
+	}
+
+	frag.append(noticeEl({
+		tone: healthTone(health),
+		title: health.headline || 'Home status',
+		body: health.reason || '',
+		bullets: Array.isArray(health.advice) && health.advice.length ? health.advice : undefined,
+	}));
+
+	const stats = el('div', 'hm-stats');
+	const a = health.actions || {};
+	stats.append(
+		stat(count(a.ok), 'Actions done'),
+		stat(count(a.refused), 'Stopped to ask'),
+		stat(count(a.failed), 'Failed'),
+		stat(a.p95LatencyMs == null ? 'Not measured' : `${a.p95LatencyMs} ms`, 'Our response time'),
+	);
+	frag.append(stats);
+
+	const expired = Number(health.confirmations?.expired) || 0;
+	if (expired > 0) {
+		frag.append(el(
+			'p',
+			'hm-hint',
+			`${expired} confirmation${expired === 1 ? '' : 's'} timed out without an answer. Those actions did not happen.`,
+		));
+	}
+
+	// The correlation answer, kept to a count. A user is entitled to know whether
+	// they are alone in this; they are not entitled to anything about a stranger's
+	// house.
+	const others = Number(health.fleet?.othersFailing) || 0;
+	if (others > 0 && health.fault !== 'us') {
+		frag.append(el(
+			'p',
+			'hm-hint',
+			`${others} other home${others === 1 ? ' is' : 's are'} also having trouble right now, which is not yet enough for us to call it a problem on our side.`,
+		));
+	}
+
+	return frag;
 }
 
 /**

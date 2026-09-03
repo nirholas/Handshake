@@ -381,7 +381,11 @@
 
 .hm-paircode-value {
 	font-family: var(--font-mono);
-	font-size: clamp(1.6rem, 6vw, 2.4rem);
+	/* Floors at 1.25rem rather than 1.6rem: eight characters plus a separator at
+	   licence-key tracking still has to fit a 320px phone without wrapping
+	   mid-group, and a code broken across two lines is a code somebody types
+	   wrong. */
+	font-size: clamp(1.25rem, 6.5vw, 2.4rem);
 	font-weight: var(--weight-bold);
 	/* A pairing code is read one character at a time, so it gets the tracking a
 	   licence key gets rather than the tracking prose gets. */
@@ -394,6 +398,10 @@
 }
 
 .hm-paircode-copy { flex: 0 0 auto; }
+
+/* The waiting indicator is a sentence, not a heading, so the buttons under it
+   need the gap a paragraph would have given them. */
+.hm-live + .hm-actions { margin-top: var(--space-md); }
 
 .hm-notice-action { margin-top: 0.7rem; }
 
@@ -436,3 +444,8 @@
 	.hm-stats { grid-template-columns: 1fr 1fr; }
 	.hm-secret .hm-input { padding-right: 4.4rem; }
 }
+
+/* The "is it us or your house" verdict, appended to a failing home's status
+   line once the platform's own health is known. Muted on purpose: it explains,
+   it does not compete with the status it is explaining. */
+.hm-status-verdict { color: var(--hm-ink-2); }
