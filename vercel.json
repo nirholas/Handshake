@@ -2060,14 +2060,6 @@
 			"dest": "/materialize.html"
 		},
 		{
-			"src": "/smart-home/satellite/?",
-			"dest": "/smart-home-satellite.html"
-		},
-		{
-			"src": "/smart-home/plan/?",
-			"dest": "/smart-home-plan.html"
-		},
-		{
 			"src": "/smart-home/([0-9a-fA-F-]{36})/?",
 			"dest": "/smart-home.html"
 		},

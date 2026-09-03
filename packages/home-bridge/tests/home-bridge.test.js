@@ -117,8 +117,16 @@ describe('room graph', () => {
 			{ domain: 'climate', deviceClass: null, state: 'heat', attributes: { current_temperature: 70 } },
 		];
 		expect(summarizeClimate(room, '\u00b0F')).toEqual({ temperature: 69, sources: 2, unit: '\u00b0F' });
-		// The same two readings displayed in Celsius: 70F is 21.1C, averaged with 20C.
-		expect(summarizeClimate(room, '\u00b0C').temperature).toBeCloseTo(20.6, 1);
+
+		// A climate entity carries no unit of its own because Home Assistant has
+		// already normalised it to the instance's, so it is read as-is. When an
+		// integration does declare one, it is honoured: 70F averaged with the
+		// 20C sensor, both shown in Celsius, is 20.6.
+		const declared = [
+			room[0],
+			{ ...room[1], attributes: { current_temperature: 70, temperature_unit: '\u00b0F' } },
+		];
+		expect(summarizeClimate(declared, '\u00b0C').temperature).toBeCloseTo(20.6, 1);
 	});
 
 	it('leaves readings alone when the house never said what unit it uses', () => {

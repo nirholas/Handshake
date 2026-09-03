@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-03T03:50:33.954Z",
+	"generated_at": "2026-09-03T03:42:01.139Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -49,16 +49,6 @@
 		{
 			"date": "2026-09-03",
 			"type": "launch",
-			"title": "Home plan",
-			"summary": "What your plan covers for connected homes: homes, household seats, live screens, voice minutes and agent turns, each with what you have used and when it resets. Pause and resume which homes are live without disconnecting any of them. Locking up, closing a garage and arming an alarm are never limited.",
-			"link": "/smart-home/plan",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-09-03",
-			"type": "launch",
 			"title": "Smart home",
 			"summary": "Connect a Home Assistant house to your three.ws agent. Your agent reads every room and device, runs the scenes you already built, and stops to ask before it unlocks, opens or disarms anything.",
 			"link": "/smart-home",
@@ -72,16 +62,6 @@
 			"title": "three.ws Drive",
 			"summary": "Your 3D agent in the car: voice-first, glanceable, and built to the rules CarPlay and Android Auto enforce. Runs on a head unit, a phone in the cradle, or inside the native car shell.",
 			"link": "/drive",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-09-03",
-			"type": "launch",
-			"title": "Voice satellite",
-			"summary": "Give your existing Home Assistant voice assistant a face. Pair a three.ws satellite and the same pipeline you already use gains a 3D agent that lip-syncs its answers and reacts, on any screen in the house. Home Assistant keeps the wake word, the speech recognition and the answer; closing the page never stops the voice working.",
-			"link": "/smart-home/satellite",
 			"tags": [
 				"launch"
 			]

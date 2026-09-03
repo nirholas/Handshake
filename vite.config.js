@@ -540,11 +540,8 @@ const appConfig = {
 				'nav-tier-badge': resolve(__dirname, 'src/nav-tier-badge.js'),
 				i18n: resolve(__dirname, 'src/i18n.js'),
 				drops: resolve(__dirname, 'pages/drops.html'),
-				'home-scene': resolve(__dirname, 'pages/home-scene.html'),
 				materialize: resolve(__dirname, 'pages/materialize.html'),
 				'smart-home': resolve(__dirname, 'pages/smart-home.html'),
-				'smart-home-plan': resolve(__dirname, 'pages/smart-home-plan.html'),
-				'smart-home-satellite': resolve(__dirname, 'pages/smart-home-satellite.html'),
 				'materialize-order': resolve(__dirname, 'pages/materialize-order.html'),
 				'materialize-ops': resolve(__dirname, 'pages/materialize-ops.html'),
 				'drop-collection': resolve(__dirname, 'pages/drop-collection.html'),
@@ -564,7 +561,6 @@ const appConfig = {
 				'tour-atlas': resolve(__dirname, 'pages/tour-atlas.html'),
 				concierge: resolve(__dirname, 'pages/concierge.html'),
 				drive: resolve(__dirname, 'pages/drive.html'),
-				'voice-home': resolve(__dirname, 'pages/voice-home.html'),
 				'tour-builder': resolve(__dirname, 'pages/tour-builder.html'),
 				'agent-identities': resolve(__dirname, 'pages/agent-identities.html'),
 				'mcp-tools': resolve(__dirname, 'pages/mcp-tools.html'),
@@ -1397,10 +1393,6 @@ const appConfig = {
 					'/atlas': resolve(root, 'pages/atlas.html'),
 					'/atlas/': resolve(root, 'pages/atlas.html'),
 					'/status/': resolve(root, 'pages/status.html'),
-					'/smart-home/satellite': resolve(root, 'pages/smart-home-satellite.html'),
-					'/smart-home/satellite/': resolve(root, 'pages/smart-home-satellite.html'),
-					'/smart-home/plan': resolve(root, 'pages/smart-home-plan.html'),
-					'/smart-home/plan/': resolve(root, 'pages/smart-home-plan.html'),
 					'/marketplace': resolve(root, 'pages/marketplace.html'),
 					'/marketplace/': resolve(root, 'pages/marketplace.html'),
 					'/marketplace-walk': resolve(root, 'pages/marketplace-walk.html'),
@@ -2186,10 +2178,6 @@ const appConfig = {
 					// /materialize/orders/:id  → one print order's timeline (uuid).
 					else if (!filePath && /^\/materialize\/orders\/[0-9a-fA-F-]{36}\/?$/.test(path))
 						filePath = resolve(root, 'pages/materialize-order.html');
-					// /home/:id  → the live 3D home (uuid). Mirrors vercel.json, which
-					// routes this ahead of the bare /home redirect.
-					else if (!filePath && /^\/home\/[0-9a-fA-F-]{36}\/?$/.test(path))
-						filePath = resolve(root, 'pages/home-scene.html');
 					// /drops/:slug  → one generative 3D collection. Declared ahead of the
 					// /drop/:id rule below so the singular sealed-gift route and this
 					// plural collection route can never shadow each other.
@@ -2267,12 +2255,6 @@ const appConfig = {
 						const slug = path.replace(/^\/dashboard\//, '').replace(/\/$/, '');
 						const candidate = resolve(root, `pages/dashboard-next/${slug}.html`);
 						if (existsSync(candidate)) filePath = candidate;
-					}
-					// /voice/home → pages/voice-home.html
-					// Mirrors vercel.json: the hands-free voice loop lives under /voice/
-					// but its page file is flat, so dev has to be told the same mapping.
-					else if (!filePath && /^\/voice\/home\/?$/.test(path)) {
-						filePath = resolve(root, 'pages/voice-home.html');
 					}
 					// /features/<slug> → pages/features/<slug>.html
 					// Mirrors vercel.json so per-feature SEO landing pages work in dev.
@@ -3151,36 +3133,6 @@ const appConfig = {
 							JSON.stringify({ error: 'fixture_load_failed', message: err.message }),
 						);
 					}
-				});
-			},
-		},
-		{
-			// Serve /models/voice/runtime/** as raw static files in dev.
-			//
-			// onnxruntime-web fetches its wasm loader with a runtime dynamic import
-			// of a URL it computes from env.wasm.wasmPaths. Vite's dev pipeline sees
-			// that as a module import of a file under /public and refuses it with a
-			// 500 ("should not be imported from source code"), which kills the whole
-			// voice loop in dev while working perfectly in production, where the same
-			// file is served statically from dist/. This middleware makes dev behave
-			// the way production already does. The wake-word models next door
-			// (/models/voice/wake-word/**) are fetched with fetch(), not import(), so
-			// they never hit this path.
-			name: 'voice-runtime-static',
-			configureServer(server) {
-				const TYPES = { '.mjs': 'text/javascript', '.js': 'text/javascript', '.wasm': 'application/wasm' };
-				server.middlewares.use((req, res, next) => {
-					const path = (req.url || '').split('?')[0];
-					if (!path.startsWith('/models/voice/runtime/')) return next();
-					const file = resolve(__dirname, 'public' + path);
-					if (!file.startsWith(resolve(__dirname, 'public/models/voice/runtime')) || !existsSync(file)) {
-						return next();
-					}
-					const ext = file.slice(file.lastIndexOf('.'));
-					res.statusCode = 200;
-					res.setHeader('content-type', TYPES[ext] || 'application/octet-stream');
-					res.setHeader('cache-control', 'no-cache');
-					res.end(readFileSync(file));
 				});
 			},
 		},

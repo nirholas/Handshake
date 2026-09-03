@@ -940,14 +940,6 @@
 					"added": "2026-05-25"
 				},
 				{
-					"path": "/voice/home",
-					"title": "Hands-free voice for your home",
-					"description": "Talk to your house without finding a phone: a wake word matched on your own device, real barge-in mid-sentence, and a spoken confirmation that a background yes can never satisfy.",
-					"priority": 0.7,
-					"changefreq": "weekly",
-					"added": "2026-09-03"
-				},
-				{
 					"path": "/voice",
 					"title": "Voice Lab",
 					"description": "Browse hundreds of voices across Microsoft Edge, Gemini, NVIDIA, OpenAI and ElevenLabs, preview any of them, or clone your own from a short recording, then give it to your agent.",
@@ -1002,14 +994,6 @@
 					"added": "2026-09-02"
 				},
 				{
-					"path": "/smart-home/plan",
-					"title": "Home plan",
-					"description": "What your plan covers for connected homes: homes, household seats, live screens, voice minutes and agent turns, each with what you have used and when it resets. Pause and resume which homes are live without disconnecting any of them. Locking up, closing a garage and arming an alarm are never limited.",
-					"priority": 0.6,
-					"changefreq": "weekly",
-					"added": "2026-09-03"
-				},
-				{
 					"path": "/smart-home",
 					"title": "Smart home",
 					"description": "Connect a Home Assistant house to your three.ws agent. Your agent reads every room and device, runs the scenes you already built, and stops to ask before it unlocks, opens or disarms anything.",
@@ -1017,14 +1001,6 @@
 					"changefreq": "weekly",
 					"added": "2026-09-03"
 				},
-			{
-				"path": "/smart-home/satellite",
-				"title": "Voice satellite",
-				"description": "Give your existing Home Assistant voice assistant a face. Pair a three.ws satellite and the same pipeline you already use gains a 3D agent that lip-syncs its answers and reacts, on any screen in the house. Home Assistant keeps the wake word, the speech recognition and the answer; closing the page never stops the voice working.",
-				"priority": 0.7,
-				"changefreq": "monthly",
-				"added": "2026-09-03"
-			},
 				{
 					"path": "/inspect",
 					"title": "Model Inspector",
@@ -2661,22 +2637,6 @@
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-09-02"
-				},
-				{
-					"path": "/docs/home-households",
-					"title": "Docs · Home households and roles",
-					"description": "Sharing a connected house without sharing a login: the five roles and what each one may do, per-member entity scopes that narrow the house a member can even see, how invitations are issued and accepted, what happens to somebody's access when they leave, and the rule everything hangs off, that a guest can never confirm an action that opens a building.",
-					"priority": 0.6,
-					"changefreq": "monthly",
-					"added": "2026-09-03"
-				},
-				{
-					"path": "/docs/home-privacy",
-					"title": "Docs · Home privacy and retention",
-					"description": "Everything three.ws stores about a home you connect, why, for how long, and what removes it: the full inventory, the promise that room names and device states are never persisted, the 90-day action-log window and the control that changes it, the export and deletion paths, the logging rules, and the disclosure text shown at connect and at the voice opt-in.",
-					"priority": 0.6,
-					"changefreq": "monthly",
-					"added": "2026-09-03"
 				},
 				{
 					"path": "/docs/carplay",
