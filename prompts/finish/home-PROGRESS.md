@@ -47,7 +47,7 @@ One section per finished order, newest at the bottom:
 | 15 privacy and retention | done | 2026-09-03 |
 | 16 test program | open | |
 | 17 a11y, i18n, mobile | open | |
-| 18 docs and SDK | open | |
+| 18 docs and SDK | docs done, npm publish owner-gated | 2026-09-03 |
 | 19 plans and entitlements | open | |
 | 20 launch readiness | standing | |
 | 21 Matter direct | horizon | |
@@ -506,3 +506,90 @@ retention cron as section E of `api/cron/db-retention.js` rather than becoming c
 the changelog entry were swept into concurrent agents' commits before this order could stage them
 (`875e1c828`, `9d82e63d9`, `e6a32da61`, and others); this commit carries the progress record and
 retires the order file.
+
+## 18. Docs, SDK publish, the home MCP server package (2026-09-03)
+
+**Shipped:** the documentation layer the lane had been skipping, plus one new package. A
+standalone MCP server, `packages/home-mcp` (`@three-ws/home-mcp`), gives any assistant the home
+tools over stdio with no three.ws account and no reachability problem, because it runs on the
+user's own machine; it imports the gate from `@three-ws/home-bridge` rather than keeping a second
+copy. READMEs for `packages/home-mcp`, `services/home-relay` and `services/home-satellite`, which
+were the three directories breaking the 100% coverage standard and failing `npm run gate` at
+`check:claude`. `docs/tutorials/connect-your-home.md`, zero to a working agent in a real house.
+`docs/home-relay-threat-model.md`, which three shipped source files already told readers to read
+and which did not exist. `docs/smart-home.md` rewritten from a plan into a map of the tree.
+`docs/mcp.md` (the five hosted home tools, the gate, and the new package) and
+`docs/api-reference.md` (a full Home API section: every route, the role matrix, the confirmation
+endpoint's three refusals). `STRUCTURE.md` rows for the surface, the package and both services.
+`tests/home-relay-protocol.test.js`, which `scripts/gen-allowlist.mjs` claimed existed as the
+staleness guard and did not. Both packages registered in the publish scripts.
+
+**The gate decision for stdio, which the order required be chosen and written down:** a guarded
+action is REFUSED. `confirmed: true` represents a human saying yes; an MCP stdio server has no
+human in it, carries no session and has no browser to prompt in, so anything it accepted as a
+confirmation would be model output wearing a person's clothes. No tool schema has a confirmation
+field, so a model cannot set one. The only way through is `HOME_ALLOWED_ENTITIES`, set by hand by
+whoever starts the process, per entity, never per domain, and no tool can widen it. The refusal
+names the entity, the risk, and the two places a person can actually confirm. Documented in
+`packages/home-mcp/README.md` and in `src/lib/gate.js`.
+
+**Measured** (house: `scripts/home-test-instance.mjs --up --onboard --seed`, Home Assistant
+2026.9.0, one floor, four areas, 122 entities, two scenes, four locks):
+
+- `packages/home-mcp/test/gate-live.test.mjs`: 13 tests, all passing. It spawns the real entry
+  point as a child process, speaks MCP over stdin/stdout the way a desktop client does, and then
+  asks Home Assistant itself whether the door moved. `lock.front_door` stayed `locked` through a
+  bare unlock, through `{confirmed:true}`, `{confirm:'yes'}` and
+  `{confirmed:true,user_said_yes:true}` smuggled into service data, and through an allowance
+  naming a different lock. It unlocked only under `HOME_ALLOWED_ENTITIES=lock.front_door`, and
+  `lock.lock` ran with no allowance at all.
+- Every code example in both READMEs executed against that instance: `home-bridge`'s connect,
+  graph, service call, `activate`, gate, allow list, no-match and MCP channel (29 real tools, and
+  a tool call that turned on a real light); `home-mcp`'s stdio client example, which printed the
+  real rooms and `refused: true`. The `claude mcp add ... -- npx -y @three-ws/home-mcp` line was
+  run and `claude mcp list` reported the server Connected, then it was removed.
+- `npx vitest run packages/home-bridge`: 41 passed. `tests/home-relay-protocol.test.js`: passing.
+- `npm run audit:docs`: clean, 1493 files. `npm run check:docs-search`: index current (643 docs,
+  8097 sections). `npm run check:claude`: OK (it had been failing on the three missing READMEs).
+  `npm run check:rules`: clean.
+- `npm run publish:packages:dry` and `npm run publish:mcp:dry`: both clean, both new packages
+  reported as "would publish". `npm pack --dry-run`: `@three-ws/home-bridge` 12 files / 28.7 kB,
+  `@three-ws/home-mcp` 12 files / 17.3 kB. No test files, no fixtures, no tokens in either.
+
+**Deviations from the order file, all corrected in place:**
+
+- The public routes are `/smart-home` and `/smart-home/:id`, not `/home` and `/home/:id`. `/home`
+  is a 301 to `/`, so a doc pointing at it would have sent every reader to the homepage. The
+  refusal text in `packages/home-mcp/src/lib/gate.js` points at `/smart-home`.
+- The order said `home-mcp` wraps order 04's handlers. It cannot: those handlers are
+  account-scoped, and this server has no account, no session and no database. It wraps
+  `@three-ws/home-bridge` directly and imports the gate from it, which is the same rule enforced
+  by the same code. `list_entities` asks `classifyMcpCall` whether an entity is guarded rather
+  than keeping a second list of guarded domains.
+- `docs/smart-home.md` did not need its status corrected downward. It said "phase 1 built" and
+  that was true; what it needed was the opposite edit, replacing a build plan with what the tree
+  now holds.
+- The voice loop shipped while this order was being written (`/voice/home`,
+  `src/voice/home-voice.js`). The tutorial's voice section and the doc's shipped table were
+  rewritten against it rather than against the satellite alone.
+
+**Left open, both named and neither owned by this order:**
+
+1. **The npm publish, which is owner-gated.** Everything is staged and both dry runs are clean.
+   The exact commands are in the report and are `npm run publish:packages -- --only home-bridge`
+   and `npm run publish:mcp -- --only home-mcp`. The order file stays on disk until that lands.
+2. **`tests/home-runtime-live.test.js` is red, and this order did not cause it.** `e6a32da61`
+   added `resolveDialPin` to `api/_lib/home/runtime.js`, which routes every acquisition through
+   `assertDialableHomeUrl`. That refuses a loopback address, and this file's own header documents
+   pointing it at `http://127.0.0.1:<port>` from the local harness. Five tests fail with
+   `127.0.0.1 is a private address`. Not fixed here on purpose: whether the home lane's SSRF guard
+   should relax outside production is a security decision belonging to the order that added it,
+   and `api/_lib/ssrf.js` already carries an unused `IS_DEV` for exactly that shape of allowance.
+   **Owner: order 11.**
+
+**Commits:** the tutorial, the three READMEs, the threat model, the `home-mcp` package and its
+tests, the `docs/mcp.md` and `docs/api-reference.md` sections, the `STRUCTURE.md` rows, the
+`data/pages.json` entry, the changelog entry and the publish-script registrations were all swept
+into concurrent agents' commits before this order could stage them (`ad2e5f3f8`, `b9060b962`,
+`f9a8780d8`, `f9d09844c` and others). `17ac4d8d4` carries the regenerated page index; this commit
+carries the progress record.
