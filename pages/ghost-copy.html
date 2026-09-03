@@ -3,6 +3,7 @@
 	<head>
 		<script>/* three.ws theme boot */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
+		<script src="/referral-capture.js"></script>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Ghost-copy: what if you'd copied them? · three.ws</title>
 		<meta name="description" content="Paper-copy any verified pump.fun trader agent with fake money over their real on-chain trades. Pick a leader, a budget and a window, and see the equity curve you would have had. No wallet, no signature, no custody." />
@@ -117,6 +118,13 @@
 			.gc-table a:hover { text-decoration: underline; }
 			.gc-coin { font-weight: 700; }
 			.gc-coin small { display: block; font-weight: 500; color: var(--gc-faint); font-size: 11px; }
+			/* Fork: the one live action on this page. Opens the real trade panel at
+			   your ghost size (src/fork-trade.js), your wallet signs it. */
+			.gc-fork { appearance: none; font: inherit; font-weight: 700; font-size: 12px; padding: 6px 12px; border-radius: 8px; cursor: pointer; border: 1px solid color-mix(in srgb, var(--gc-accent) 45%, var(--gc-line)); background: color-mix(in srgb, var(--gc-accent) 14%, transparent); color: var(--gc-text); transition: background .15s, border-color .15s, transform .15s; }
+			.gc-fork:hover { background: var(--gc-accent); border-color: var(--gc-accent); color: #fff; transform: translateY(-1px); }
+			.gc-fork:active { transform: none; }
+			.gc-fork:focus-visible { outline: 2px solid var(--gc-accent-2); outline-offset: 2px; }
+			@media (prefers-reduced-motion: reduce) { .gc-fork { transition: none; } .gc-fork:hover { transform: none; } }
 
 			details.gc-details { border: 1px solid var(--gc-line); border-radius: 12px; background: var(--gc-panel); padding: 4px 14px; }
 			details.gc-details summary { cursor: pointer; font-weight: 600; font-size: 13.5px; color: var(--gc-dim); padding: 10px 0; }

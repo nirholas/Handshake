@@ -51,6 +51,14 @@ export function normalizeSubscriptionInput(raw = {}) {
 		return { ok: false, error: 'min_oracle_score must be between 0 and 100' };
 	}
 
+	// Drawdown circuit breaker (null = opted out). Enforced per tick by
+	// api/cron/copy-fanout.js against the leader's realized equity curve; see
+	// api/_lib/copy-eligibility.js for the definition the percentage is measured on.
+	const maxDrawdownPct = raw.max_drawdown_pct == null || raw.max_drawdown_pct === '' ? null : n(raw.max_drawdown_pct);
+	if (maxDrawdownPct != null && !(maxDrawdownPct > 0 && maxDrawdownPct <= 100)) {
+		return { ok: false, error: 'max_drawdown_pct must be between 0 and 100' };
+	}
+
 	// Telegram chat ID: numeric string (positive or negative integer).
 	const tgRaw = raw.telegram_chat_id == null ? null : String(raw.telegram_chat_id).trim();
 	const telegramChatId = tgRaw === '' || tgRaw === null ? null : tgRaw;
@@ -74,6 +82,7 @@ export function normalizeSubscriptionInput(raw = {}) {
 			copy_sells: raw.copy_sells !== false,
 			require_safety_pass: raw.require_safety_pass === true,
 			min_oracle_score: minOracleScore,
+			max_drawdown_pct: maxDrawdownPct,
 			perf_fee_bps: perfBps,
 			telegram_chat_id: telegramChatId,
 		},

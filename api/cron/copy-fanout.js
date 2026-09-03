@@ -15,6 +15,16 @@
 //                acted on the matching buy. Oracle sells are not modelled (there
 //                is no explicit exit event — outcomes are graded after the fact).
 //
+// Two guards run BEFORE any sizing (api/_lib/copy-eligibility.js), because both
+// protect money rather than shaping an intent:
+//   • DRAWDOWN BREAKER — the leader's realized peak-to-trough loss is measured
+//     once per leader per tick; every subscription whose max_drawdown_pct it
+//     breaches is flipped to 'paused' with the reason recorded, and fans out
+//     nothing further. A copier is never mirrored into a leader's slide.
+//   • SELF-COPY — a subscription whose copier owns the leader agent is skipped.
+//     Subscribing to your own agent is refused at the endpoint; this catches any
+//     row that predates that rule, so a wash-trade loop cannot keep firing.
+//
 // Idempotent via partial unique indexes:
 //   (subscription_id, leader_position_id,      direction) when leader_position_id      is not null
 //   (subscription_id, leader_oracle_action_id, direction) when leader_oracle_action_id is not null
@@ -22,6 +32,8 @@
 import { json, method, wrapCron } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { planCopyOrder } from '../_lib/copy-engine.js';
+import { BREAKER_REASON, evaluateDrawdownBreaker, leaderDrawdownPcts } from '../_lib/copy-eligibility.js';
+import { loadDripConfigs, newTierCache, priceRelease, releaseDueDrips } from '../_lib/copy-drip-runtime.js';
 import { requireCron } from '../_lib/cron-auth.js';
 import { pumpFetchJson, PUMP_FRONTEND_BASE } from '../_lib/pump-feed-fetch.js';
 import { fetchTokenMarketData } from '../_lib/market/token-market.js';
@@ -120,6 +132,81 @@ async function oracleScore(mint, network) {
 	} catch { return null; }
 }
 
+// ── Pre-sizing guards ─────────────────────────────────────────────────────────
+
+function breakerMessage({ leaderName, drawdownPct, limitPct }) {
+	return [
+		'\u26d4 Copy trading paused',
+		`Leader: ${leaderName || 'unknown'}`,
+		`Drawdown ${drawdownPct}% reached your ${limitPct}% limit.`,
+		'',
+		'Nothing was copied. Review and resume when you are ready:',
+		'https://three.ws/dashboard/copy',
+	].join('\n');
+}
+
+/**
+ * Active subscriptions for a batch of leaders, grouped by leader, with the two
+ * money-protecting guards already applied.
+ *
+ * Self-copy rows are dropped (a copier who owns the leader would pay a
+ * performance fee to themselves and inflate that leader's public copier count),
+ * and any subscription whose copier-set drawdown limit the leader has breached is
+ * flipped to 'paused' here, with the reason and timestamp recorded, before it can
+ * size a single order.
+ */
+async function activeSubscriptionsByLeader(leaderIds, network, stats) {
+	const byLeader = new Map();
+	if (!leaderIds.length) return byLeader;
+
+	// The leader's owner comes back on the row so the self-copy test costs no
+	// extra round trip.
+	const subRows = await sql`
+		select s.*, a.user_id as leader_user_id, a.name as leader_name
+		from copy_subscriptions s
+		join agent_identities a on a.id = s.leader_agent_id
+		where s.leader_agent_id = any(${leaderIds}) and s.network = ${network} and s.status = 'active'
+	`;
+	if (!subRows.length) return byLeader;
+
+	// One drawdown query for every leader in the batch, not one per subscription.
+	const drawdowns = await leaderDrawdownPcts(leaderIds, network);
+
+	for (const sub of subRows) {
+		if (sub.leader_user_id && sub.leader_user_id === sub.copier_user_id) {
+			stats.skipped_self_copy = (stats.skipped_self_copy || 0) + 1;
+			continue;
+		}
+
+		const breaker = evaluateDrawdownBreaker(sub, drawdowns.get(sub.leader_agent_id) ?? null);
+		if (breaker.breached) {
+			const [paused] = await sql`
+				update copy_subscriptions
+				set status = 'paused', paused_reason = ${BREAKER_REASON}, paused_at = now(), updated_at = now()
+				where id = ${sub.id} and status = 'active'
+				returning id
+			`;
+			// Only the tick that actually flipped the row counts it and notifies, so a
+			// retry or an overlapping run cannot double-report or double-message.
+			if (paused) {
+				stats.paused_drawdown = (stats.paused_drawdown || 0) + 1;
+				if (sub.telegram_chat_id) {
+					sendTg(sub.telegram_chat_id, breakerMessage({
+						leaderName: sub.leader_name,
+						drawdownPct: breaker.drawdown_pct,
+						limitPct: breaker.limit_pct,
+					}));
+				}
+			}
+			continue;
+		}
+
+		if (!byLeader.has(sub.leader_agent_id)) byLeader.set(sub.leader_agent_id, []);
+		byLeader.get(sub.leader_agent_id).push(sub);
+	}
+	return byLeader;
+}
+
 async function fanoutBuys(network, stats) {
 	const positions = await sql`
 		select p.id, p.agent_id, p.mint, p.symbol, p.name, p.entry_quote_lamports, p.buy_sig, p.opened_at
@@ -152,17 +239,13 @@ async function fanoutBuys(network, stats) {
 	const open = new Map(openRows.map((r) => [r.subscription_id, Number(r.open) || 0]));
 
 	// Active subscriptions for every leader in this batch, fetched once and grouped
-	// by leader_agent_id — replaces a per-position query.
+	// by leader_agent_id — replaces a per-position query. Self-copy rows are dropped
+	// and drawdown-breached ones are auto-paused before anything is sized.
 	const leaderIds = [...new Set(positions.map((p) => p.agent_id))];
-	const subRows = await sql`
-		select * from copy_subscriptions
-		where leader_agent_id = any(${leaderIds}) and network = ${network} and status = 'active'
-	`;
-	const subsByLeader = new Map();
-	for (const s of subRows) {
-		if (!subsByLeader.has(s.leader_agent_id)) subsByLeader.set(s.leader_agent_id, []);
-		subsByLeader.get(s.leader_agent_id).push(s);
-	}
+	const subsByLeader = await activeSubscriptionsByLeader(leaderIds, network, stats);
+	// Alpha-drip ladders for this batch. Leaders without one cost nothing below.
+	const drips = await loadDripConfigs(leaderIds);
+	const tierCache = newTierCache();
 
 	for (const pos of positions) {
 		const subs = subsByLeader.get(pos.agent_id) || [];
@@ -179,19 +262,31 @@ async function fanoutBuys(network, stats) {
 				spentTodaySol: spent.get(sub.id) || 0,
 				openCopies: open.get(sub.id) || 0,
 			});
-			const status = decision.action === 'copy' ? 'pending' : 'skipped';
-			const planned = decision.action === 'copy' ? decision.order_sol : null;
+			// Alpha-drip: price this copier's seat, apply the tier's capacity cap, and
+			// work out when the intent is revealed to them. The row itself is written
+			// in full either way — only the reveal moves.
+			const release = decision.action === 'copy'
+				? await priceRelease({ subscription: sub, config: drips.get(pos.agent_id) || null, plannedSol: decision.order_sol, tierCache })
+				: null;
+			const capacitySkip = release?.capacitySkip || null;
+			const status = decision.action === 'copy' && !capacitySkip ? 'pending' : 'skipped';
+			const planned = status === 'pending' ? release.plannedSol : null;
+			const skipReason = capacitySkip ? capacitySkip.reason : (status === 'skipped' ? decision.reason : null);
 
 			const [inserted] = await sql`
 				insert into copy_executions (
 					subscription_id, copier_user_id, leader_agent_id, leader_position_id, network,
 					mint, symbol, name, direction, planned_sol, leader_entry_sol, status, skip_reason,
-					safety, leader_buy_sig
+					safety, leader_buy_sig, visible_at, drip_tier, drip_delay_sec, notified_at,
+					expires_at
 				) values (
 					${sub.id}, ${sub.copier_user_id}, ${pos.agent_id}, ${pos.id}, ${network},
 					${pos.mint}, ${pos.symbol}, ${pos.name}, 'buy', ${planned}, ${entrySol}, ${status},
-					${decision.reason && status === 'skipped' ? decision.reason : null},
-					${coin ? JSON.stringify(coin) : null}::jsonb, ${pos.buy_sig}
+					${skipReason},
+					${coin ? JSON.stringify(coin) : null}::jsonb, ${pos.buy_sig},
+					${release?.visibleAt ?? null}, ${release?.tier ?? null}, ${release?.delaySec ?? null},
+					${release && !release.notifyNow ? null : new Date()},
+					${release?.expiresAt ?? new Date(Date.now() + 30 * 60 * 1000)}
 				)
 				on conflict (subscription_id, leader_position_id, direction) do nothing
 				returning id
@@ -202,7 +297,10 @@ async function fanoutBuys(network, stats) {
 					spent.set(sub.id, (spent.get(sub.id) || 0) + (planned || 0));
 					open.set(sub.id, (open.get(sub.id) || 0) + 1);
 					// Telegram notify copier of the new buy intent (best-effort, async).
-					if (sub.telegram_chat_id) {
+					// A dripped seat stays quiet here — releaseDueDrips sends it when
+					// the intent is actually revealed, so the alert cannot leak the
+					// coin ahead of the copier's own release time.
+					if (sub.telegram_chat_id && release?.notifyNow !== false) {
 						const leader = await agentName(pos.agent_id);
 						sendTg(sub.telegram_chat_id, buyIntentMessage({
 							sym: pos.symbol, name: pos.name, plannedSol: planned,
@@ -250,6 +348,11 @@ async function fanoutSells(network, stats) {
 	for (const pos of closes) {
 		const buys = buysByPosition.get(pos.id) || [];
 		for (const b of buys) {
+			// Exit signals deliberately survive a pause. A subscription paused by the
+			// drawdown breaker has its BUYS frozen, but the copier is already in the
+			// position this close exits — withholding the sell intent would strand
+			// them in the exact leader the breaker just fired on. Only a stopped
+			// subscription (the copier's own hard exit) stops mirroring exits.
 			if (!b.copy_sells || b.sub_status === 'stopped') continue;
 			const [inserted] = await sql`
 				insert into copy_executions (
@@ -307,17 +410,13 @@ async function fanoutOracleBuys(network, stats) {
 	const open = new Map(openRows.map((r) => [r.subscription_id, Number(r.open) || 0]));
 
 	// Active subscriptions for every acting agent in this batch, fetched once and
-	// grouped by leader_agent_id — replaces a per-action query.
+	// grouped by leader_agent_id — replaces a per-action query. Same two guards as
+	// the sniper path: self-copy dropped, drawdown-breached auto-paused.
 	const leaderIds = [...new Set(actions.map((a) => a.agent_id))];
-	const subRows = await sql`
-		select * from copy_subscriptions
-		where leader_agent_id = any(${leaderIds}) and network = ${network} and status = 'active'
-	`;
-	const subsByLeader = new Map();
-	for (const s of subRows) {
-		if (!subsByLeader.has(s.leader_agent_id)) subsByLeader.set(s.leader_agent_id, []);
-		subsByLeader.get(s.leader_agent_id).push(s);
-	}
+	const subsByLeader = await activeSubscriptionsByLeader(leaderIds, network, stats);
+	// Alpha-drip ladders for this batch. Leaders without one cost nothing below.
+	const drips = await loadDripConfigs(leaderIds);
+	const tierCache = newTierCache();
 
 	for (const action of actions) {
 		const subs = subsByLeader.get(action.agent_id) || [];
@@ -334,8 +433,14 @@ async function fanoutOracleBuys(network, stats) {
 				spentTodaySol: spent.get(sub.id) || 0,
 				openCopies: open.get(sub.id) || 0,
 			});
-			const status = decision.action === 'copy' ? 'pending' : 'skipped';
-			const planned = decision.action === 'copy' ? decision.order_sol : null;
+			// Alpha-drip: same seat pricing and capacity cap as the sniper path.
+			const release = decision.action === 'copy'
+				? await priceRelease({ subscription: sub, config: drips.get(action.agent_id) || null, plannedSol: decision.order_sol, tierCache })
+				: null;
+			const capacitySkip = release?.capacitySkip || null;
+			const status = decision.action === 'copy' && !capacitySkip ? 'pending' : 'skipped';
+			const planned = status === 'pending' ? release.plannedSol : null;
+			const skipReason = capacitySkip ? capacitySkip.reason : (status === 'skipped' ? decision.reason : null);
 
 			// Note: leader_position_id is null for oracle-sourced intents.
 			// Idempotency is guaranteed by the copy_executions_oracle_idem partial unique index.
@@ -343,12 +448,15 @@ async function fanoutOracleBuys(network, stats) {
 				insert into copy_executions (
 					subscription_id, copier_user_id, leader_agent_id, leader_position_id, leader_oracle_action_id,
 					network, mint, symbol, direction, planned_sol, leader_entry_sol, status, skip_reason,
-					safety
+					safety, visible_at, drip_tier, drip_delay_sec, notified_at, expires_at
 				) values (
 					${sub.id}, ${sub.copier_user_id}, ${action.agent_id}, null, ${action.id},
 					${network}, ${action.mint}, ${action.symbol || null}, 'buy', ${planned}, ${entrySol},
-					${status}, ${decision.reason && status === 'skipped' ? decision.reason : null},
-					${coin ? JSON.stringify(coin) : null}::jsonb
+					${status}, ${skipReason},
+					${coin ? JSON.stringify(coin) : null}::jsonb,
+					${release?.visibleAt ?? null}, ${release?.tier ?? null}, ${release?.delaySec ?? null},
+					${release && !release.notifyNow ? null : new Date()},
+					${release?.expiresAt ?? new Date(Date.now() + 30 * 60 * 1000)}
 				)
 				on conflict (subscription_id, leader_oracle_action_id, direction)
 				where leader_oracle_action_id is not null
@@ -362,7 +470,8 @@ async function fanoutOracleBuys(network, stats) {
 					spent.set(sub.id, (spent.get(sub.id) || 0) + (planned || 0));
 					open.set(sub.id, (open.get(sub.id) || 0) + 1);
 					// Telegram notify copier of the new oracle-sourced buy intent (best-effort).
-					if (sub.telegram_chat_id) {
+					// Held back for a dripped seat — releaseDueDrips sends it on reveal.
+					if (sub.telegram_chat_id && release?.notifyNow !== false) {
 						const leader = await agentName(action.agent_id);
 						sendTg(sub.telegram_chat_id, buyIntentMessage({
 							sym: action.symbol, name: null, plannedSol: planned,
@@ -392,6 +501,16 @@ export default wrapCron(async (req, res) => {
 	_coinCache.clear();
 	_oracleScoreCache.clear();
 	_agentNameCache.clear();
+
+	// Alerts held back by an alpha-drip go out the moment their reveal passes.
+	// Running it at the top of the tick means the release cadence is the fanout
+	// cadence, with no second cron to keep in sync.
+	try {
+		await releaseDueDrips({ sendTg, stats });
+	} catch (err) {
+		stats.error_drip_release = err.message;
+	}
+
 	for (const network of NETWORKS) {
 		try {
 			await fanoutBuys(network, stats);

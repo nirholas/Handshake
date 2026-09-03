@@ -17,6 +17,7 @@ import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.
 import { requireCsrf } from '../_lib/csrf.js';
 import { sql } from '../_lib/db.js';
 import { isUuid } from '../_lib/validate.js';
+import { maskUnreleasedIntent } from '../_lib/alpha-drip.js';
 
 const STATUSES = new Set(['pending', 'acted', 'dismissed', 'skipped', 'expired', 'all']);
 
@@ -65,7 +66,11 @@ export default wrap(async (req, res) => {
 				where e.copier_user_id = ${userId} and e.status = ${status}
 				order by e.created_at desc limit ${limit}
 			`;
-		return json(res, 200, { executions: rows });
+		// A leader on an alpha-drip releases their signal to higher $THREE tiers
+		// first. The row is complete in the database; the coin and size are held
+		// back on the way out until this copier's own reveal passes.
+		const now = Date.now();
+		return json(res, 200, { executions: rows.map((r) => maskUnreleasedIntent(r, now)) });
 	}
 
 	// POST — act / dismiss. Enforce CSRF for cookie-session callers.
@@ -81,12 +86,29 @@ export default wrap(async (req, res) => {
 	const txSig = action === 'acted' && typeof body.tx_signature === 'string'
 		? body.tx_signature.trim().slice(0, 128) || null : null;
 
+	// `visible_at` gates the action too, not just the render: an intent this
+	// copier's tier has not reached yet is not theirs to act on, and the guard
+	// lives in the same statement so it cannot be raced.
 	const [row] = await sql`
 		update copy_executions
 		set status = ${action}, tx_signature = ${txSig}, updated_at = now()
 		where id = ${id} and copier_user_id = ${userId} and status = 'pending'
+		  and (visible_at is null or visible_at <= now())
 		returning *
 	`;
-	if (!row) return error(res, 409, 'not_actionable', 'No such pending intent (it may have expired or already been actioned).');
-	return json(res, 200, { execution: row });
+	if (!row) {
+		const [held] = await sql`
+			select visible_at from copy_executions
+			where id = ${id} and copier_user_id = ${userId} and status = 'pending'
+			  and visible_at is not null and visible_at > now()
+			limit 1
+		`;
+		if (held) {
+			return error(res, 409, 'not_released', 'This signal has not been released to your tier yet.', {
+				unlocks_at: new Date(held.visible_at).toISOString(),
+			});
+		}
+		return error(res, 409, 'not_actionable', 'No such pending intent (it may have expired or already been actioned).');
+	}
+	return json(res, 200, { execution: maskUnreleasedIntent(row) });
 });

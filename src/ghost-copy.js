@@ -5,9 +5,14 @@
 // in the URL (?leader&budget&window) so a result is deep-linkable and shareable,
 // which is the entire point: the artifact travels, the referral comes back.
 //
-// Nothing on this page signs, spends, or connects a wallet. The only outbound
-// actions are links to the leader's verified record and to the real (custodial-
-// guardrailed) copy surface at /vaults.
+// The page itself signs and spends nothing: the replay is arithmetic over trades
+// that already happened. The one live action is Fork (src/fork-trade.js) on a
+// position the leader is STILL holding. That opens the real pump.fun trade
+// panel at your ghost size, and your own wallet signs it. Everything else is a
+// link out to the leader's verified record or the guardrailed copy surface at
+// /vaults.
+
+import { initFork, forkButton } from './fork-trade.js';
 
 const leadersEl = document.getElementById('gcLeaders');
 const resultEl = document.getElementById('gcResult');
@@ -267,10 +272,10 @@ function renderResult(data) {
 
 	const stillOpen = s.still_open_count ? `
 		<section class="gc-section">
-			<h2>Still open <span>· marked at the leader's last on-chain quote, not realized</span></h2>
+			<h2>Still open <span>· marked at the leader's last on-chain quote, not realized. Fork opens the real trade at your ghost size; your wallet signs it.</span></h2>
 			<div class="gc-tablewrap">
 				<table class="gc-table">
-					<thead><tr><th scope="col">Coin</th><th scope="col">Your size</th><th scope="col">Mark</th><th scope="col">Unrealized</th><th scope="col">Opened</th></tr></thead>
+					<thead><tr><th scope="col">Coin</th><th scope="col">Your size</th><th scope="col">Mark</th><th scope="col">Unrealized</th><th scope="col">Opened</th><th scope="col">For real</th></tr></thead>
 					<tbody>
 						${data.still_open.map((o) => `
 							<tr>
@@ -279,6 +284,7 @@ function renderResult(data) {
 								<td class="num ${tone(o.mark_pct)}">${o.mark_pct == null ? 'at cost' : pct(o.mark_pct)}</td>
 								<td class="num ${tone(o.unrealized_sol)}">${signed(o.unrealized_sol, 4)}</td>
 								<td>${esc(shortDate(o.opened_at))}</td>
+								<td>${forkButton({ mint: o.mint, symbol: o.symbol, name: o.name, size: o.order_sol }, { className: 'gc-fork' })}</td>
 							</tr>`).join('')}
 					</tbody>
 				</table>
@@ -385,6 +391,9 @@ windowSeg.addEventListener('click', (e) => {
 });
 
 readUrl();
+// Before writeUrl() rewrites the query string: an inbound ?fork=<mint> link
+// opens the real trade panel on arrival.
+initFork();
 budgetEl.value = String(state.budget);
 for (const b of windowSeg.querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.window === state.window));
 writeUrl();

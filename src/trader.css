@@ -241,6 +241,31 @@
 .cp-fine { color: var(--ink-faint); font-size: var(--text-2xs); margin: 0; }
 .cp-hint { display: block; font-size: var(--text-2xs); color: var(--ink-faint); margin-top: 4px; line-height: 1.4; }
 
+/* Drawdown circuit breaker: the auto-pause notice, and the copyable-bar checklist.
+   Both carry a left rule so they read as a status the system is reporting rather
+   than as another paragraph of body copy. */
+.cp-tripped {
+	font-size: var(--text-xs);
+	color: var(--ink-dim);
+	line-height: 1.5;
+	margin: 0 0 var(--space-sm);
+	padding: var(--space-sm) var(--space-md);
+	border-left: 2px solid var(--warn);
+	border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+	background: var(--surface-2);
+}
+.cp-tripped strong { display: block; color: var(--ink-bright); margin-bottom: 2px; }
+.cp-err .cp-unmet {
+	list-style: none;
+	margin: var(--space-2xs) 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+.cp-err .cp-unmet li { color: var(--ink-dim); }
+.cp-err .cp-unmet li::before { content: "○ "; color: var(--ink-faint); }
+
 /* ---- States / skeleton ---- */
 .tp-skel { border: 1px solid var(--stroke); border-radius: var(--radius-card); background: var(--surface-1); padding: var(--space-lg); }
 .tp-sk { height: 14px; border-radius: var(--radius-sm); background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 37%, var(--surface-2) 63%); background-size: 400% 100%; animation: lb-shimmer 1.4s ease infinite; margin-bottom: var(--space-sm); }

@@ -6,9 +6,15 @@
  * turns the leader's future trades into sized, safety-checked intents the copier
  * acts on from `/dashboard/copy`.
  *
- * Self-contained: handles signed-out (CTA), first-time (form), and already-
- * copying (summary + edit) states, plus loading/error. Import and call
+ * Self-contained: handles signed-out (CTA), first-time (form), already-copying
+ * (summary + edit) and auto-paused states, plus loading/error. Import and call
  * `mountCopyPanel(el, { leaderAgentId, leaderName, network })`.
+ *
+ * Two server-side guards surface here rather than as a generic failure, because
+ * both are answerable by the copier: a leader who has not yet earned a copyable
+ * track record comes back as a checklist of what is still missing, and a
+ * subscription auto-paused by the drawdown breaker explains what tripped it and
+ * refuses a resume that would immediately re-trip.
  */
 
 import { escapeHtml } from './trader-format.js';
@@ -74,19 +80,42 @@ function renderActive(el, { existing, leaderName, leaderAgentId, network }) {
 		: s.sizing_rule === 'multiplier' ? `${Number(s.multiplier)}× their size`
 		: `${Number(s.pct_balance)}% of balance`;
 	const paused = s.status === 'paused';
+	// An auto-pause is a different state from a pause the copier chose: it needs to
+	// say what tripped, because the copier did not do it and cannot otherwise tell.
+	const tripped = paused && s.paused_reason === 'leader_drawdown_breach';
+	const limit = s.max_drawdown_pct == null ? null : Number(s.max_drawdown_pct);
 	el.innerHTML = `
 		<h2>You're copying ${escapeHtml(leaderName || 'this trader')} ${paused ? '<span class="tp-soon" style="color:var(--ink-faint);border-color:var(--stroke)">Paused</span>' : '<span class="cp-on">● Active</span>'}</h2>
-		<p>${escapeHtml(sizeLabel)} · cap ${Number(s.per_trade_cap_sol)} SOL/trade · ${Number(s.daily_budget_sol)} SOL/day.
+		${tripped ? `<p class="cp-tripped"><strong>Your drawdown limit stopped new copies.</strong>
+		   ${escapeHtml(leaderName || 'This trader')} fell past the ${limit}% peak-to-trough loss you set, so nothing new is being copied.
+		   Exits you were already in still come through. Resume when they recover, or edit your limit.</p>` : ''}
+		<p>${escapeHtml(sizeLabel)} · cap ${Number(s.per_trade_cap_sol)} SOL/trade · ${Number(s.daily_budget_sol)} SOL/day${limit ? ` · pause at ${limit}% drawdown` : ''}.
 		   New trades arrive as intents in your dashboard.${s.telegram_chat_id ? ` Telegram alerts on.` : ''}</p>
+		<p class="cp-err" id="cp-toggle-err" hidden></p>
 		<div class="cp-actions">
 			<a class="lb-btn lb-btn-primary" href="/dashboard/copy">Manage copies →</a>
 			<button class="lb-btn" id="cp-toggle">${paused ? 'Resume' : 'Pause'}</button>
-			<button class="lb-btn" id="cp-edit">Edit size</button>
+			<button class="lb-btn" id="cp-edit">${tripped ? 'Edit limit' : 'Edit size'}</button>
 		</div>`;
 	$('#cp-toggle', el)?.addEventListener('click', async () => {
 		const next = paused ? 'active' : 'paused';
-		const r = await api('/api/copy/subscriptions', { method: 'POST', body: JSON.stringify({ id: s.id, status: next }) });
-		if (r.ok) mountCopyPanel(el, { leaderAgentId, leaderName, network });
+		const btn = $('#cp-toggle', el);
+		const errEl = $('#cp-toggle-err', el);
+		errEl.hidden = true;
+		btn.disabled = true;
+		const label = btn.textContent;
+		btn.textContent = paused ? 'Resuming…' : 'Pausing…';
+		try {
+			const r = await api('/api/copy/subscriptions', { method: 'POST', body: JSON.stringify({ id: s.id, status: next }) });
+			if (r.ok) return mountCopyPanel(el, { leaderAgentId, leaderName, network });
+			// A refused resume used to do nothing at all, which read as a dead button.
+			const data = await r.json().catch(() => ({}));
+			showErr(errEl, data.error_description || 'Could not change this subscription.');
+		} catch {
+			showErr(errEl, 'Network error — try again.');
+		}
+		btn.disabled = false;
+		btn.textContent = label;
 	});
 	$('#cp-edit', el)?.addEventListener('click', () => renderForm(el, { leaderAgentId, leaderName, network, prefill: s }));
 }
@@ -136,6 +165,15 @@ function renderForm(el, { leaderAgentId, leaderName, network, prefill }) {
 				<label class="cp-field">
 					<span class="cp-label">Daily budget (SOL)</span>
 					<input class="cp-input" id="cp-daily" type="number" step="0.1" min="0.01" value="${Number(p.daily_budget_sol) || 1}" required />
+				</label>
+			</div>
+
+			<div class="cp-row">
+				<label class="cp-field">
+					<span class="cp-label">Stop copying at drawdown (%)</span>
+					<input class="cp-input" id="cp-dd" type="number" step="1" min="1" max="100" placeholder="never"
+					       value="${p.max_drawdown_pct ?? ''}" />
+					<span class="cp-hint">Pause new copies if this trader falls this far below their best point, measured on their real closed trades. Exits you're already in still come through. Leave blank to ride it out.</span>
 				</label>
 			</div>
 
@@ -207,6 +245,7 @@ function renderForm(el, { leaderAgentId, leaderName, network, prefill }) {
 			mcap_floor_usd: $('#cp-mcf', el).value === '' ? null : num('cp-mcf'),
 			mcap_ceiling_usd: $('#cp-mcc', el).value === '' ? null : num('cp-mcc'),
 			min_oracle_score: $('#cp-oracle', el).value === '' ? null : Math.round(num('cp-oracle')),
+			max_drawdown_pct: $('#cp-dd', el).value === '' ? null : num('cp-dd'),
 			copy_sells: $('#cp-sells', el).checked,
 			require_safety_pass: $('#cp-safe', el).checked,
 			telegram_chat_id: (() => { const v = ($('#cp-tg', el)?.value || '').trim(); return /^-?[0-9]+$/.test(v) ? v : null; })(),
@@ -217,7 +256,18 @@ function renderForm(el, { leaderAgentId, leaderName, network, prefill }) {
 		try {
 			const r = await api('/api/copy/subscriptions', { method: 'POST', body: JSON.stringify(body) });
 			const data = await r.json().catch(() => ({}));
-			if (!r.ok) { btn.disabled = false; btn.textContent = prefill ? 'Save copy settings' : 'Start copying'; return showErr(errEl, data.message || 'Could not save.'); }
+			if (!r.ok) {
+				btn.disabled = false;
+				btn.textContent = prefill ? 'Save copy settings' : 'Start copying';
+				// A leader who has not earned a copyable record is not an error the
+				// copier can retry — show exactly what is still missing instead.
+				if (data.error === 'leader_not_copyable' && Array.isArray(data.eligibility?.unmet)) {
+					return showEligibility(errEl, leaderName, data.eligibility);
+				}
+				// The API names its message error_description; reading `message` meant
+				// every server refusal collapsed into the generic line below.
+				return showErr(errEl, data.error_description || 'Could not save.');
+			}
 			mountCopyPanel(el, { leaderAgentId, leaderName, network });
 		} catch {
 			btn.disabled = false; btn.textContent = prefill ? 'Save copy settings' : 'Start copying';
@@ -227,3 +277,19 @@ function renderForm(el, { leaderAgentId, leaderName, network, prefill }) {
 }
 
 function showErr(el, msg) { el.textContent = msg; el.hidden = false; }
+
+/**
+ * The copyable-bar refusal, as a checklist. A leader clears this by trading, so
+ * the useful answer is which criteria are short and by how much — not "denied".
+ */
+function showEligibility(el, leaderName, eligibility) {
+	const items = eligibility.unmet
+		.map((u) => `<li>${escapeHtml(u.label)}</li>`)
+		.join('');
+	el.innerHTML = `
+		<strong>${escapeHtml(leaderName || 'This trader')} can't be copied yet.</strong>
+		A trader needs a real, closed, on-chain record before anyone can put money behind it. Still short:
+		<ul class="cp-unmet">${items}</ul>
+		Follow their profile and copy them once they clear it.`;
+	el.hidden = false;
+}

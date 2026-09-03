@@ -8,6 +8,12 @@
  *
  * Auth required (session cookie or bearer). Non-custodial: we store the copier's
  * own wallet and their sizing/guard rules — never keys, never custody.
+ *
+ * Two anti-gaming gates run before a follow is accepted (api/_lib/copy-eligibility.js):
+ * a copier may not follow an agent they own (a self-copy pays a performance fee
+ * to itself and inflates the leader's public copier count and earnings), and a
+ * leader must have cleared the copyable bar on real closed round-trips before
+ * anyone can attach money to it.
  */
 
 import { cors, json, error, method, wrap, readJson, rateLimited } from '../_lib/http.js';
@@ -16,6 +22,7 @@ import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.
 import { requireCsrf } from '../_lib/csrf.js';
 import { sql } from '../_lib/db.js';
 import { normalizeSubscriptionInput } from '../_lib/copy-engine.js';
+import { BREAKER_REASON, LEADER_ELIGIBILITY, evaluateDrawdownBreaker, evaluateLeaderEligibility, leaderCopyProfile } from '../_lib/copy-eligibility.js';
 import { isUuid } from '../_lib/validate.js';
 
 const NETWORKS = new Set(['mainnet', 'devnet']);
@@ -86,8 +93,37 @@ export default wrap(async (req, res) => {
 		if (!['active', 'paused', 'stopped'].includes(body.status)) {
 			return error(res, 400, 'invalid_status', 'status must be active, paused, or stopped');
 		}
+		// Resuming an auto-paused subscription must not hand the copier a button that
+		// re-pauses on the next tick. If the breaker is still breached, refuse and say
+		// what would clear it — raise the limit, or drop it.
+		if (body.status === 'active') {
+			const [paused] = await sql`
+				select id, network, leader_agent_id, max_drawdown_pct, paused_reason
+				from copy_subscriptions
+				where id = ${body.id} and copier_user_id = ${userId}
+				limit 1
+			`;
+			if (!paused) return error(res, 404, 'not_found', 'No such subscription.');
+			if (paused.paused_reason === BREAKER_REASON && paused.max_drawdown_pct != null) {
+				const leaderProfile = await leaderCopyProfile(paused.leader_agent_id, paused.network);
+				const breaker = evaluateDrawdownBreaker(paused, leaderProfile.max_drawdown_pct);
+				if (breaker.breached) {
+					return error(
+						res,
+						409,
+						'drawdown_still_breached',
+						`This trader is still ${breaker.drawdown_pct}% below their peak, past your ${breaker.limit_pct}% limit. Raise or clear your drawdown limit to resume.`,
+						{ breaker, leader_profile: leaderProfile },
+					);
+				}
+			}
+		}
+
+		// A status change made BY the copier carries no machine reason, so the
+		// auto-pause bookkeeping is cleared on every branch of this path: paused_reason
+		// is only ever set by a guard acting on the copier's behalf.
 		const [row] = await sql`
-			update copy_subscriptions set status = ${body.status}, updated_at = now()
+			update copy_subscriptions set status = ${body.status}, paused_reason = null, paused_at = null, updated_at = now()
 			where id = ${body.id} and copier_user_id = ${userId}
 			returning *
 		`;
@@ -103,9 +139,33 @@ export default wrap(async (req, res) => {
 	if (!BASE58_RE.test(wallet)) return error(res, 400, 'invalid_wallet', 'copier_wallet must be a valid Solana address');
 
 	const [leader] = await sql`
-		select id, is_public from agent_identities where id = ${leaderId} limit 1
+		select id, user_id, name, is_public from agent_identities
+		where id = ${leaderId} and deleted_at is null limit 1
 	`;
 	if (!leader || leader.is_public === false) return error(res, 404, 'leader_not_found', 'No such public trader.');
+
+	// Wash-trade guard: copying your own agent routes the performance fee back to
+	// you while inflating that leader's copier count, copied volume, and the public
+	// "earned X for being copied" figure. Refused outright — there is no legitimate
+	// version of it, since the owner already controls the agent's own trading.
+	if (leader.user_id === userId) {
+		return error(res, 403, 'self_copy', 'You cannot copy an agent you own — you already control its trading.');
+	}
+
+	// Sybil bar: a leader needs a real, closed, on-chain track record before a
+	// copier can attach money to it. The unmet criteria go back in the body so the
+	// UI can say exactly what is missing instead of "not eligible".
+	const profile = await leaderCopyProfile(leaderId, network);
+	const eligibility = evaluateLeaderEligibility(profile);
+	if (!eligibility.eligible) {
+		return error(
+			res,
+			409,
+			'leader_not_copyable',
+			`${leader.name || 'This trader'} does not have enough verified history to be copied yet: ${eligibility.unmet.map((u) => u.label).join(', ')}.`,
+			{ eligibility: { ...eligibility, requirements: LEADER_ELIGIBILITY, network } },
+		);
+	}
 
 	const norm = normalizeSubscriptionInput(body);
 	if (!norm.ok) return error(res, 400, 'invalid_config', norm.error);
@@ -125,13 +185,13 @@ export default wrap(async (req, res) => {
 			sizing_rule, fixed_sol, multiplier, pct_balance,
 			per_trade_cap_sol, min_order_sol, daily_budget_sol, max_open_copies,
 			mcap_floor_usd, mcap_ceiling_usd, copy_sells, require_safety_pass, min_oracle_score, perf_fee_bps,
-			telegram_chat_id
+			max_drawdown_pct, telegram_chat_id
 		) values (
 			${userId}, ${wallet}, ${leaderId}, ${leaderWallet}, ${network}, 'active',
 			${v.sizing_rule}, ${v.fixed_sol}, ${v.multiplier}, ${v.pct_balance},
 			${v.per_trade_cap_sol}, ${v.min_order_sol}, ${v.daily_budget_sol}, ${v.max_open_copies},
 			${v.mcap_floor_usd}, ${v.mcap_ceiling_usd}, ${v.copy_sells}, ${v.require_safety_pass}, ${v.min_oracle_score}, ${v.perf_fee_bps},
-			${v.telegram_chat_id || null}
+			${v.max_drawdown_pct}, ${v.telegram_chat_id || null}
 		)
 		on conflict (copier_user_id, leader_agent_id, network) do update set
 			copier_wallet = excluded.copier_wallet,
@@ -151,9 +211,15 @@ export default wrap(async (req, res) => {
 			require_safety_pass = excluded.require_safety_pass,
 			min_oracle_score = excluded.min_oracle_score,
 			perf_fee_bps = excluded.perf_fee_bps,
+			max_drawdown_pct = excluded.max_drawdown_pct,
 			telegram_chat_id = excluded.telegram_chat_id,
+			-- Re-subscribing is a deliberate act, so it clears an auto-pause. A
+			-- breaker that stayed latched here would silently re-arm a subscription
+			-- the copier just reconfigured to a wider limit.
+			paused_reason = null,
+			paused_at = null,
 			updated_at = now()
 		returning *
 	`;
-	return json(res, 200, { subscription: row });
+	return json(res, 200, { subscription: row, leader: { id: leaderId, name: leader.name || null }, leader_profile: profile });
 });
