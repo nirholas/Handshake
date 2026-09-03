@@ -20,7 +20,7 @@
  * with a drag-then-momentum profile puts the same pixels on screen every run.
  */
 
-export const TIP_PX = 56;
+export const TIP_PX = 38;
 
 /** Installed into every document (page load and client-side navigation alike). */
 export function installHand() {
@@ -35,15 +35,21 @@ export function installHand() {
 		root.setAttribute('aria-hidden', 'true');
 		root.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;z-index:2147483647;pointer-events:none;';
 		const ripple = document.createElement('div');
-		ripple.style.cssText = 'position:absolute;border-radius:50%;border:2px solid rgba(255,255,255,0.85);'
+		ripple.style.cssText = 'position:absolute;border-radius:50%;border:2px solid rgba(255,255,255,0.8);'
 			+ 'transform:translate(-50%,-50%);opacity:0;will-change:transform,opacity;';
+		/* Translucent on purpose, and small: a touch indicator reports where the
+		   finger is, it does not hide the control the finger is on. The contact
+		   dot inside it is what the eye tracks between taps. */
 		const tip = document.createElement('div');
-		tip.style.cssText = 'position:absolute;width:56px;height:56px;border-radius:50%;opacity:0;'
-			+ 'background:radial-gradient(circle at 36% 32%, rgba(255,255,255,0.95), rgba(255,255,255,0.5) 40%,'
-			+ ' rgba(255,255,255,0.16) 70%, rgba(255,255,255,0) 74%);'
-			+ 'box-shadow:0 0 0 1.5px rgba(255,255,255,0.5), 0 10px 26px rgba(0,0,0,0.5);'
+		tip.style.cssText = 'position:absolute;width:38px;height:38px;border-radius:50%;opacity:0;'
+			+ 'background:radial-gradient(circle at 40% 36%, rgba(255,255,255,0.34), rgba(255,255,255,0.17) 52%,'
+			+ ' rgba(255,255,255,0.05) 74%, rgba(255,255,255,0) 78%);'
+			+ 'box-shadow:0 0 0 1.25px rgba(255,255,255,0.3);will-change:transform,opacity;';
+		const dot = document.createElement('div');
+		dot.style.cssText = 'position:absolute;width:11px;height:11px;border-radius:50%;opacity:0;'
+			+ 'background:rgba(255,255,255,0.92);box-shadow:0 0 10px rgba(255,255,255,0.55);'
 			+ 'will-change:transform,opacity;';
-		root.append(ripple, tip);
+		root.append(ripple, tip, dot);
 		host.appendChild(root);
 		return root;
 	};
@@ -53,11 +59,14 @@ export function installHand() {
 		set(s) {
 			const root = ensure();
 			if (!root) return;
-			const [ripple, tip] = root.children;
-			tip.style.left = `${s.x}px`;
-			tip.style.top = `${s.y}px`;
+			const [ripple, tip, dot] = root.children;
+			for (const el of [tip, dot]) {
+				el.style.left = `${s.x}px`;
+				el.style.top = `${s.y}px`;
+				el.style.transform = `translate(-50%,-50%) scale(${s.scale})`;
+			}
 			tip.style.opacity = String(s.opacity);
-			tip.style.transform = `translate(-50%,-50%) scale(${s.scale})`;
+			dot.style.opacity = String(s.opacity * 0.9);
 			ripple.style.left = `${s.x}px`;
 			ripple.style.top = `${s.y}px`;
 			ripple.style.width = `${s.rippleR * 2}px`;
@@ -208,8 +217,8 @@ export class Hand {
 		for (let i = 1; i <= down; i += 1) {
 			const t = i / down;
 			this.state.scale = 1 - 0.2 * t;
-			this.state.rippleR = 20 + 8 * t;
-			this.state.rippleO = 0.5 * t;
+			this.state.rippleR = 15 + 5 * t;
+			this.state.rippleO = 0.55 * t;
 			await this.frame({ drift: false });
 		}
 		await this.page.touchscreen.tap(x, y);
@@ -217,8 +226,8 @@ export class Hand {
 		for (let i = 1; i <= up; i += 1) {
 			const t = easeOutQuint(i / up);
 			this.state.scale = 0.8 + 0.2 * t;
-			this.state.rippleR = 28 + 44 * t;
-			this.state.rippleO = 0.5 * (1 - t);
+			this.state.rippleR = 20 + 34 * t;
+			this.state.rippleO = 0.55 * (1 - t);
 			await this.frame({ drift: false });
 		}
 		this.state.scale = 1;
