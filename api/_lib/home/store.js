@@ -27,6 +27,7 @@ import { logAudit } from '../audit.js';
 import { sql } from '../db.js';
 import { withDbRetry } from '../db-retry.js';
 import { decryptSecret, encryptSecret } from '../secret-box.js';
+import { redactUrlSecrets } from '../scrub-secrets.js';
 
 /** Statuses the schema's check constraint accepts. */
 export const HOME_STATUS = Object.freeze({
@@ -256,11 +257,18 @@ export async function revokeConnection(id, userId) {
 	`;
 
 	if (rows[0]) {
+		// The platform audit trail lives in a different table, with a different
+		// (365 day) window and a different set of readers, and its rows outlive
+		// the account that made them (audit_log.user_id is set null on deletion,
+		// not removed). So it gets the correlation key and nothing else: never the
+		// base URL, which is the address of somebody's building, and never the
+		// label, which is a name a person chose ("Mum's flat"). The home id is
+		// enough to join back to the row while it exists, and meaningless after.
 		logAudit({
 			userId,
 			action: 'revoke_home_connection',
 			resourceId: id,
-			meta: { baseUrl: rows[0].base_url, label: rows[0].label },
+			meta: { transport: rows[0].transport, status: rows[0].status },
 		});
 		return { revoked: true, alreadyRevoked: false, home: rows[0] };
 	}
@@ -405,7 +413,18 @@ export async function logHomeActionNow({
 		);
 		return true;
 	} catch (err) {
-		console.warn('[home-store] action log insert dropped', { homeId, action, outcome, error: err?.message });
+		// Ids and a service name only. `action` is a Home Assistant service or an
+		// MCP tool name ('light.turn_on'), never a friendly name, and the entity
+		// ids are deliberately absent: correlating a dropped write needs the home
+		// and the verb, not the list of things in somebody's bedroom. A driver
+		// error can echo a bound parameter, so the message is redacted and
+		// truncated rather than passed through.
+		console.warn('[home-store] action log insert dropped', {
+			homeId,
+			action,
+			outcome,
+			error: redactUrlSecrets(String(err?.message ?? '')).slice(0, 200),
+		});
 		return false;
 	}
 }

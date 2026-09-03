@@ -195,23 +195,26 @@ async function onboard(inst, state) {
 	const steps = await json(`${state.baseUrl}/api/onboarding`);
 	const done = new Set(steps.filter((s) => s.done).map((s) => s.step));
 
+	// An instance can be onboarded while the harness holds no token: an
+	// interrupted run, or a config directory that outlived its state file. The
+	// owner account is one this harness created and whose password it knows, so
+	// the recovery is a real login rather than a dead end.
+	let session;
 	if (done.has('user')) {
-		throw new Error(
-			`${inst.container} is already onboarded but the harness has no token for it. Run --down then --up --onboard to start clean.`,
-		);
+		log('[onboard] already onboarded, signing in as the owner');
+		session = await exchangeCode(state.baseUrl, clientId, await login(state.baseUrl, clientId));
+	} else {
+		log('[onboard] creating the owner account');
+		const { auth_code: userCode } = await json(`${state.baseUrl}/api/onboarding/users`, {
+			method: 'POST',
+			body: { client_id: clientId, ...USER, language: 'en' },
+		});
+		session = await exchangeCode(state.baseUrl, clientId, userCode);
 	}
-
-	log('[onboard] creating the owner account');
-	const { auth_code: userCode } = await json(`${state.baseUrl}/api/onboarding/users`, {
-		method: 'POST',
-		body: { client_id: clientId, ...USER, language: 'en' },
-	});
-
-	const session = await exchangeCode(state.baseUrl, clientId, userCode);
 
 	// core_config and analytics are separate steps and each has appeared and
 	// moved between releases, so a missing one is skipped rather than fatal.
-	for (const step of ['core_config', 'analytics']) {
+	for (const step of done.has('user') ? [] : ['core_config', 'analytics']) {
 		if (done.has(step)) continue;
 		await json(`${state.baseUrl}/api/onboarding/${step}`, {
 			method: 'POST',
@@ -243,6 +246,25 @@ async function onboard(inst, state) {
 	}
 
 	return writeState(inst, { ...state, token, haVersion: ws.haVersion || state.haVersion });
+}
+
+/**
+ * Home Assistant's real username/password login flow, which is what the login
+ * page performs. Returns the authorization code to exchange for a session.
+ */
+async function login(baseUrl, clientId) {
+	const flow = await json(`${baseUrl}/auth/login_flow`, {
+		method: 'POST',
+		body: { client_id: clientId, handler: ['homeassistant', null], redirect_uri: clientId, type: 'authorize' },
+	});
+	const result = await json(`${baseUrl}/auth/login_flow/${flow.flow_id}`, {
+		method: 'POST',
+		body: { client_id: clientId, username: USER.username, password: USER.password },
+	});
+	if (result?.type !== 'create_entry' || !result.result) {
+		throw new Error(`login as ${USER.username} did not produce an auth code: ${JSON.stringify(result).slice(0, 200)}`);
+	}
+	return result.result;
 }
 
 async function exchangeCode(baseUrl, clientId, code) {
@@ -311,8 +333,15 @@ async function seed(inst, state, { alreadyInConfig }) {
 			const area = await ensureArea(ws, room.name, floor.floor_id);
 			if (area.created) created.areas += 1;
 			for (const entityId of room.entities) {
-				await ws.send({ type: 'config/entity_registry/update', entity_id: entityId, area_id: area.area_id }).catch(() => {});
-				created.assigned += 1;
+				// A demo entity with no unique_id never reaches the entity registry
+				// and cannot hold an area. Count what actually landed, so the seed
+				// report is a measurement rather than a count of attempts.
+				const assigned = await ws
+					.send({ type: 'config/entity_registry/update', entity_id: entityId, area_id: area.area_id })
+					.then(() => true)
+					.catch(() => false);
+				if (assigned) created.assigned += 1;
+				else created.unregistered = [...(created.unregistered || []), entityId];
 			}
 		}
 
@@ -339,16 +368,8 @@ async function seed(inst, state, { alreadyInConfig }) {
 		// the whole safety gate exists for: the lane must test against a house
 		// where that is actually reachable.
 		if (locks[0]) {
-			const ok = await ws
-				.send({
-					type: 'homeassistant/expose_entity/set',
-					assistants: ['conversation'],
-					entity_ids: [locks[0]],
-					should_expose: true,
-				})
-				.then(() => true)
-				.catch(() => false);
-			if (ok) created.exposed += 1;
+			created.exposed = (await exposeToAssist(ws, [locks[0], ...lights.slice(0, 1)])) ? 1 : 0;
+			created.exposeCommand = ws.exposeCommand || null;
 		}
 
 		created.mcp = await ensureMcpServer(state);
@@ -420,16 +441,54 @@ async function ensureMcpServer(state) {
 	if (flow.type === 'create_entry') return true;
 	if (!flow.flow_id) return false;
 
-	// The single step asks which LLM API to expose. "assist" is the built-in one
-	// and the only value every release since the integration landed accepts.
+	// The single step asks which LLM API to expose. Releases disagree on the
+	// shape: a single-value select in the release the integration landed in, a
+	// multi-select since. Read the flow's own schema rather than sniffing a
+	// version string, and send whichever shape this instance asked for.
 	const finish = await fetch(`${state.baseUrl}/api/config/config_entries/flow/${flow.flow_id}`, {
 		method: 'POST',
 		headers,
-		body: JSON.stringify({ llm_hass_api: 'assist' }),
+		body: JSON.stringify({ llm_hass_api: llmApiValue(flow.data_schema) }),
 	});
 	if (!finish.ok) return false;
 	const result = await finish.json();
 	return result.type === 'create_entry';
+}
+
+/**
+ * "assist" in the shape this instance's config flow asks for.
+ *
+ * @param {Array} schema the flow's own data_schema
+ */
+function llmApiValue(schema) {
+	const field = (Array.isArray(schema) ? schema : []).find((f) => f.name === 'llm_hass_api');
+	const options = field?.selector?.select?.options || [];
+	const assist = options.find((o) => (o?.value ?? o) === 'assist');
+	const value = assist ? (assist.value ?? assist) : 'assist';
+	return field?.selector?.select?.multiple ? [value] : value;
+}
+
+/**
+ * Expose entities to Assist, which is what makes Home Assistant's own
+ * `intent__HassTurnOff` able to unlock a real door. The command was
+ * `homeassistant/expose_entity/set` when exposure settings landed and is
+ * `homeassistant/expose_entity` now, so ask the instance which one it answers
+ * to instead of branching on a version number.
+ */
+async function exposeToAssist(ws, entityIds) {
+	const ids = entityIds.filter(Boolean);
+	if (!ids.length) return false;
+	const candidates = ['homeassistant/expose_entity', 'homeassistant/expose_entity/set'];
+	for (const type of candidates) {
+		try {
+			await ws.send({ type, assistants: ['conversation'], entity_ids: ids, should_expose: true });
+			ws.exposeCommand = type;
+			return true;
+		} catch (err) {
+			if (!/unknown_command/.test(err.message)) throw err;
+		}
+	}
+	return false;
 }
 
 // ---------------------------------------------------------------- websocket
@@ -634,10 +693,26 @@ function freePort() {
 }
 
 function writeConfiguration(inst, { demo }) {
-	const file = path.join(inst.configDir, 'configuration.yaml');
-	const lines = ['# Written by scripts/home-test-instance.mjs. Throwaway instance.', 'default_config:', 'logger:', '  default: warning'];
+	// The three !include lines are not decoration. Home Assistant's scene, script
+	// and automation config APIs write to these files, and without the includes
+	// the write succeeds, the file appears, and no entity is ever created: a seed
+	// that reports two scenes and produces none. That is exactly the silent
+	// half-success this harness exists to stop.
+	const lines = [
+		'# Written by scripts/home-test-instance.mjs. Throwaway instance.',
+		'default_config:',
+		'logger:',
+		'  default: warning',
+		'scene: !include scenes.yaml',
+		'script: !include scripts.yaml',
+		'automation: !include automations.yaml',
+	];
 	if (demo) lines.push('demo:');
-	fs.writeFileSync(file, `${lines.join('\n')}\n`);
+	fs.writeFileSync(path.join(inst.configDir, 'configuration.yaml'), `${lines.join('\n')}\n`);
+	for (const store of ['scenes.yaml', 'scripts.yaml', 'automations.yaml']) {
+		const file = path.join(inst.configDir, store);
+		if (!fs.existsSync(file)) fs.writeFileSync(file, store === 'scripts.yaml' ? '{}\n' : '[]\n');
+	}
 }
 
 function describeInstance(name, version) {

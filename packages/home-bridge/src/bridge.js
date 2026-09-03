@@ -37,17 +37,38 @@ export class HomeBridge {
 
 	/**
 	 * @param {object} options
-	 * @param {string} options.baseUrl the home's base URL, as the user typed it
-	 * @param {string} options.token a Home Assistant long-lived access token
+	 * @param {string} [options.baseUrl] the home's base URL, as the user typed it.
+	 *   Required for a direct connection; unused when a transport is supplied.
+	 * @param {string} [options.token] a Home Assistant long-lived access token.
+	 *   Required for a direct connection; a relayed home has none, by design.
+	 * @param {{ createSocket: Function, endpoint?: string, relayId?: string }} [options.transport]
+	 *   an alternative way to reach this house, in place of dialling its URL.
+	 *   `createRelayTransport` in transport-relay.js builds the one the dial-out
+	 *   add-on uses, for the majority of installs that only exist on a LAN. It is
+	 *   an EITHER/OR with baseUrl + token: a relayed home authenticates inside the
+	 *   house and three.ws never holds a Home Assistant credential for it.
 	 * @param {boolean} [options.requireSecure] reject plain http for remote hosts
 	 * @param {string[]} [options.allowedEntities] entities pre-approved for guarded actions
 	 * @param {number} [options.rebuildDelayMs] coalescing window for graph rebuilds
 	 */
 	constructor(options) {
-		const { http } = normalizeBaseUrl(options?.baseUrl, { requireSecure: options?.requireSecure });
-		if (!options?.token) throw new HomeBridgeError(ERR.AUTH, 'A Home Assistant long-lived access token is required.');
-		this.#options = { ...options, baseUrl: http, rebuildDelayMs: options.rebuildDelayMs ?? 80 };
+		const transport = options?.transport;
+		if (transport && typeof transport.createSocket !== 'function') {
+			throw new HomeBridgeError(ERR.BAD_URL, 'A transport must provide createSocket().');
+		}
+		// A relayed home has no URL of ours to dial and no token for us to hold,
+		// so both checks below belong to the direct path only.
+		const baseUrl = transport
+			? transport.endpoint || `relay:${transport.relayId || 'home'}`
+			: normalizeBaseUrl(options?.baseUrl, { requireSecure: options?.requireSecure }).http;
+		if (!transport && !options?.token) throw new HomeBridgeError(ERR.AUTH, 'A Home Assistant long-lived access token is required.');
+		this.#options = { ...options, baseUrl, rebuildDelayMs: options.rebuildDelayMs ?? 80 };
 		this.allowList = createAllowList(options.allowedEntities || []);
+	}
+
+	/** How this bridge reaches its house: 'direct' or 'relay'. */
+	get transport() {
+		return this.#options.transport ? 'relay' : 'direct';
 	}
 
 	get baseUrl() {
@@ -109,9 +130,14 @@ export class HomeBridge {
 		if (this.#closed) throw new HomeBridgeError(ERR.NOT_CONNECTED, 'This bridge was closed. Create a new one.');
 		if (this.#connection) return this.#graph;
 
-		const auth = createLongLivedTokenAuth(this.#options.baseUrl, this.#options.token);
+		// Either seam of `home-assistant-js-websocket`: `auth` makes it dial the
+		// house itself, `createSocket` hands it a socket we opened. Everything
+		// after this line is identical for both, which is the whole point.
+		const connectionOptions = this.#options.transport
+			? { createSocket: this.#options.transport.createSocket }
+			: { auth: createLongLivedTokenAuth(this.#options.baseUrl, this.#options.token) };
 		try {
-			this.#connection = await createConnection({ auth });
+			this.#connection = await createConnection(connectionOptions);
 		} catch (err) {
 			throw toBridgeError(err, this.#options.baseUrl);
 		}

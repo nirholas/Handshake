@@ -1,0 +1,345 @@
+/*
+ * The smart-home surface.
+ *
+ * Everything here composes public/tokens.css primitives; the only local custom
+ * properties are the ones the design system has no token for (the status hues a
+ * house can be in, and the panel tints this surface shares with /materialize).
+ * A house has more states than most pages ever show, so the state treatment is
+ * the design: eleven of them, each with its own colour, icon and recovery text.
+ */
+
+:root {
+	--hm-line: rgba(255, 255, 255, 0.09);
+	--hm-line-strong: rgba(255, 255, 255, 0.16);
+	--hm-panel: rgba(255, 255, 255, 0.032);
+	--hm-panel-2: rgba(255, 255, 255, 0.055);
+	--hm-ink-2: rgba(255, 255, 255, 0.62);
+	--hm-ink-3: rgba(255, 255, 255, 0.42);
+	--hm-live: #2fbf71;
+	--hm-stale: #e0a33a;
+	--hm-down: #e05a4a;
+	--hm-idle: rgba(255, 255, 255, 0.32);
+	--hm-focus: rgba(124, 92, 255, 0.75);
+}
+
+[data-theme='light'] {
+	--hm-line: rgba(0, 0, 0, 0.11);
+	--hm-line-strong: rgba(0, 0, 0, 0.2);
+	--hm-panel: rgba(0, 0, 0, 0.024);
+	--hm-panel-2: rgba(0, 0, 0, 0.05);
+	--hm-ink-2: rgba(0, 0, 0, 0.66);
+	--hm-ink-3: rgba(0, 0, 0, 0.46);
+	--hm-idle: rgba(0, 0, 0, 0.3);
+}
+
+.hm-wrap {
+	max-width: 1180px;
+	margin: 0 auto;
+	padding: clamp(1.25rem, 3.5vw, 2.75rem) 1.1rem 5rem;
+}
+
+/* ── Hero ────────────────────────────────────────────────────────────────── */
+
+.hm-hero { max-width: 62ch; margin-bottom: clamp(1.25rem, 3vw, 2.25rem); }
+
+.hm-eyebrow {
+	display: inline-flex; align-items: center; gap: 0.5rem; margin: 0 0 0.8rem;
+	font-size: var(--text-2xs); font-weight: var(--weight-bold);
+	letter-spacing: 0.09em; text-transform: uppercase; color: var(--hm-ink-3);
+}
+.hm-eyebrow::before {
+	content: ''; width: 6px; height: 6px; border-radius: 50%;
+	background: var(--hm-live); box-shadow: 0 0 10px var(--hm-live);
+}
+
+.hm-title {
+	font-family: var(--font-display);
+	font-size: clamp(1.7rem, 4.4vw, 2.7rem); font-weight: 800;
+	letter-spacing: -0.032em; line-height: 1.06; margin: 0 0 0.8rem;
+}
+
+.hm-lede { font-size: clamp(14px, 1.5vw, 16px); line-height: var(--leading-normal); color: var(--hm-ink-2); margin: 0; }
+
+/* ── Panels ──────────────────────────────────────────────────────────────── */
+
+.hm-panel {
+	background: var(--hm-panel);
+	border: 1px solid var(--hm-line);
+	border-radius: var(--radius-lg);
+	padding: clamp(1rem, 2.4vw, 1.6rem);
+}
+
+.hm-panel + .hm-panel { margin-top: var(--space-md); }
+
+.hm-panel-head {
+	display: flex; align-items: flex-start; justify-content: space-between;
+	gap: var(--space-md); margin-bottom: var(--space-md);
+}
+
+.hm-panel-title { font-size: var(--text-lg); font-weight: var(--weight-semibold); margin: 0; letter-spacing: -0.015em; }
+.hm-panel-sub { font-size: var(--text-md); color: var(--hm-ink-2); margin: 0.35rem 0 0; line-height: var(--leading-normal); }
+
+/* ── Form ────────────────────────────────────────────────────────────────── */
+
+.hm-field { display: block; margin-bottom: var(--space-md); }
+.hm-label { display: block; font-size: var(--text-md); font-weight: var(--weight-medium); margin-bottom: 0.4rem; }
+.hm-hint { font-size: var(--text-sm); color: var(--hm-ink-3); margin: 0.35rem 0 0; line-height: var(--leading-normal); }
+
+.hm-input {
+	width: 100%; box-sizing: border-box;
+	background: var(--hm-panel-2);
+	border: 1px solid var(--hm-line);
+	border-radius: var(--radius-md);
+	color: var(--ink);
+	font: inherit; font-size: var(--text-ui);
+	padding: 0.7rem 0.85rem;
+	transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+.hm-input::placeholder { color: var(--hm-ink-3); }
+.hm-input:hover:not(:disabled) { border-color: var(--hm-line-strong); }
+.hm-input:focus-visible {
+	outline: none;
+	border-color: var(--hm-focus);
+	box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.22);
+	background: var(--hm-panel);
+}
+.hm-input:disabled { opacity: 0.55; cursor: not-allowed; }
+.hm-input[aria-invalid='true'] { border-color: var(--hm-down); }
+.hm-input[aria-invalid='true']:focus-visible { box-shadow: 0 0 0 3px rgba(224, 90, 74, 0.24); }
+
+/* The token field carries a reveal toggle inside its own bounds, so the layout
+   does not shift when the button appears. */
+.hm-secret { position: relative; }
+.hm-secret .hm-input { padding-right: 5.2rem; }
+.hm-reveal {
+	position: absolute; top: 50%; right: 0.45rem; transform: translateY(-50%);
+	background: var(--hm-panel-2); border: 1px solid var(--hm-line);
+	border-radius: var(--radius-sm); color: var(--hm-ink-2);
+	font: inherit; font-size: var(--text-sm); padding: 0.3rem 0.55rem;
+	cursor: pointer; transition: color 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+.hm-reveal:hover { color: var(--ink); border-color: var(--hm-line-strong); }
+.hm-reveal:focus-visible { outline: none; border-color: var(--hm-focus); box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.22); }
+.hm-reveal:active { background: var(--hm-panel); }
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+
+.hm-btn {
+	display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+	font: inherit; font-size: var(--text-ui); font-weight: var(--weight-medium);
+	padding: 0.68rem 1.1rem;
+	border-radius: var(--radius-md);
+	border: 1px solid var(--hm-line-strong);
+	background: var(--hm-panel-2);
+	color: var(--ink);
+	cursor: pointer;
+	transition: background 140ms ease, border-color 140ms ease, transform 90ms ease, opacity 140ms ease;
+}
+.hm-btn:hover:not(:disabled) { background: var(--hm-panel); border-color: var(--hm-focus); }
+.hm-btn:active:not(:disabled) { transform: translateY(1px); }
+.hm-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.28); border-color: var(--hm-focus); }
+.hm-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.hm-btn-primary { background: var(--ink); color: var(--bg, #0b0b0f); border-color: transparent; font-weight: var(--weight-semibold); }
+.hm-btn-primary:hover:not(:disabled) { background: var(--ink); opacity: 0.9; border-color: transparent; }
+
+.hm-btn-danger { color: var(--hm-down); border-color: rgba(224, 90, 74, 0.35); }
+.hm-btn-danger:hover:not(:disabled) { background: rgba(224, 90, 74, 0.1); border-color: var(--hm-down); }
+
+.hm-btn-ghost { background: transparent; border-color: var(--hm-line); color: var(--hm-ink-2); }
+.hm-btn-ghost:hover:not(:disabled) { color: var(--ink); border-color: var(--hm-line-strong); background: var(--hm-panel); }
+
+.hm-actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); align-items: center; }
+
+/* ── Notices: the shape every failure and every explanation renders into ─── */
+
+.hm-notice {
+	display: flex; gap: 0.7rem; align-items: flex-start;
+	border: 1px solid var(--hm-line);
+	border-left-width: 3px;
+	border-radius: var(--radius-md);
+	background: var(--hm-panel-2);
+	padding: 0.8rem 0.95rem;
+	margin: 0 0 var(--space-md);
+	font-size: var(--text-md);
+	line-height: var(--leading-normal);
+}
+.hm-notice p { margin: 0; }
+.hm-notice p + p { margin-top: 0.45rem; }
+.hm-notice-title { font-weight: var(--weight-semibold); }
+.hm-notice-body { color: var(--hm-ink-2); }
+.hm-notice ul { margin: 0.5rem 0 0; padding-left: 1.1rem; color: var(--hm-ink-2); }
+.hm-notice li + li { margin-top: 0.3rem; }
+
+.hm-notice-info { border-left-color: var(--hm-idle); }
+.hm-notice-warn { border-left-color: var(--hm-stale); }
+.hm-notice-error { border-left-color: var(--hm-down); }
+.hm-notice-ok { border-left-color: var(--hm-live); }
+
+.hm-notice-icon { flex: 0 0 auto; width: 1.05rem; height: 1.05rem; margin-top: 0.12rem; }
+.hm-notice-info .hm-notice-icon { color: var(--hm-idle); }
+.hm-notice-warn .hm-notice-icon { color: var(--hm-stale); }
+.hm-notice-error .hm-notice-icon { color: var(--hm-down); }
+.hm-notice-ok .hm-notice-icon { color: var(--hm-live); }
+
+/* ── Status dot, shared by the list and the detail header ────────────────── */
+
+.hm-status { display: inline-flex; align-items: center; gap: 0.42rem; font-size: var(--text-sm); color: var(--hm-ink-2); }
+.hm-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--hm-idle); flex: 0 0 auto; }
+.hm-dot-connected { background: var(--hm-live); box-shadow: 0 0 8px var(--hm-live); }
+.hm-dot-stale { background: var(--hm-stale); box-shadow: 0 0 8px var(--hm-stale); }
+.hm-dot-unreachable,
+.hm-dot-auth_failed { background: var(--hm-down); box-shadow: 0 0 8px var(--hm-down); }
+.hm-dot-pending { background: var(--hm-idle); animation: hm-pulse 1.6s ease-in-out infinite; }
+
+@keyframes hm-pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+
+/* ── Verifying: named steps, never a bare spinner ────────────────────────── */
+
+.hm-steps { list-style: none; margin: 0; padding: 0; }
+.hm-step {
+	display: flex; align-items: center; gap: 0.6rem;
+	padding: 0.5rem 0; font-size: var(--text-md); color: var(--hm-ink-3);
+	border-bottom: 1px solid var(--hm-line);
+	transition: color 200ms ease;
+}
+.hm-step:last-child { border-bottom: 0; }
+.hm-step[data-state='active'] { color: var(--ink); }
+.hm-step[data-state='done'] { color: var(--hm-ink-2); }
+.hm-step-mark {
+	width: 1.05rem; height: 1.05rem; flex: 0 0 auto;
+	border-radius: 50%; border: 1.5px solid currentColor;
+	display: inline-flex; align-items: center; justify-content: center;
+	font-size: 0.62rem;
+}
+.hm-step[data-state='active'] .hm-step-mark { border-color: var(--hm-live); color: var(--hm-live); animation: hm-pulse 1.4s ease-in-out infinite; }
+.hm-step[data-state='done'] .hm-step-mark { border-color: var(--hm-live); color: var(--hm-live); animation: none; }
+
+/* ── Skeletons: reserve the exact space the real content will take ───────── */
+
+.hm-skeleton {
+	background: linear-gradient(90deg, var(--hm-panel) 25%, var(--hm-panel-2) 50%, var(--hm-panel) 75%);
+	background-size: 200% 100%;
+	animation: hm-shimmer 1.4s ease-in-out infinite;
+	border-radius: var(--radius-sm);
+}
+@keyframes hm-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+	.hm-skeleton, .hm-dot-pending, .hm-step[data-state='active'] .hm-step-mark { animation: none; }
+	.hm-btn, .hm-input, .hm-card { transition: none; }
+}
+
+/* ── Measured summary ────────────────────────────────────────────────────── */
+
+.hm-stats {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+	gap: var(--space-sm);
+	margin: var(--space-md) 0 0;
+}
+.hm-stat {
+	background: var(--hm-panel-2); border: 1px solid var(--hm-line);
+	border-radius: var(--radius-md); padding: 0.75rem 0.85rem;
+	/* The number lands after the network call; reserving the row height stops
+	   the panel from jumping when it does. */
+	min-height: 4.15rem;
+}
+.hm-stat-value { font-family: var(--font-display); font-size: var(--text-lg); font-weight: 700; letter-spacing: -0.02em; display: block; }
+.hm-stat-label { font-size: var(--text-2xs); text-transform: uppercase; letter-spacing: 0.08em; color: var(--hm-ink-3); margin-top: 0.3rem; display: block; }
+
+/* ── Home list ───────────────────────────────────────────────────────────── */
+
+.hm-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-sm); }
+
+.hm-card {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: var(--space-md);
+	align-items: center;
+	background: var(--hm-panel-2);
+	border: 1px solid var(--hm-line);
+	border-radius: var(--radius-md);
+	padding: 0.9rem 1rem;
+	transition: border-color 140ms ease, background 140ms ease;
+}
+.hm-card:hover { border-color: var(--hm-line-strong); }
+.hm-card:focus-within { border-color: var(--hm-focus); }
+
+.hm-card-main { min-width: 0; }
+/* A house called "aaaaaaa…" must not push the buttons off the card. */
+.hm-card-label {
+	font-weight: var(--weight-semibold); font-size: var(--text-ui);
+	margin: 0 0 0.25rem;
+	overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.hm-card-url {
+	font-family: var(--font-mono); font-size: var(--text-sm); color: var(--hm-ink-3);
+	margin: 0 0 0.35rem;
+	overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.hm-card-actions { display: flex; gap: var(--space-xs); flex: 0 0 auto; }
+
+/* ── Grants and log ──────────────────────────────────────────────────────── */
+
+.hm-rows { list-style: none; margin: 0; padding: 0; }
+.hm-row {
+	display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-sm);
+	align-items: center; padding: 0.65rem 0; border-bottom: 1px solid var(--hm-line);
+}
+.hm-row:last-child { border-bottom: 0; }
+.hm-row-main { min-width: 0; }
+.hm-row-title { font-size: var(--text-md); margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hm-row-meta { font-size: var(--text-sm); color: var(--hm-ink-3); margin: 0.2rem 0 0; }
+.hm-mono { font-family: var(--font-mono); }
+
+.hm-tag {
+	display: inline-flex; align-items: center; gap: 0.3rem;
+	font-size: var(--text-2xs); text-transform: uppercase; letter-spacing: 0.07em;
+	border: 1px solid var(--hm-line); border-radius: var(--radius-pill);
+	padding: 0.15rem 0.5rem; color: var(--hm-ink-2);
+}
+.hm-tag-refused { color: var(--hm-down); border-color: rgba(224, 90, 74, 0.4); }
+.hm-tag-failed { color: var(--hm-stale); border-color: rgba(224, 163, 58, 0.4); }
+.hm-tag-ok { color: var(--hm-live); border-color: rgba(47, 191, 113, 0.4); }
+
+/* ── Empty states ────────────────────────────────────────────────────────── */
+
+.hm-empty { text-align: center; padding: clamp(1.5rem, 5vw, 3rem) 1rem; }
+.hm-empty-art { width: 3rem; height: 3rem; margin: 0 auto var(--space-md); color: var(--hm-ink-3); opacity: 0.7; }
+.hm-empty-title { font-size: var(--text-lg); font-weight: var(--weight-semibold); margin: 0 0 0.4rem; }
+.hm-empty-body { font-size: var(--text-md); color: var(--hm-ink-2); margin: 0 auto var(--space-md); max-width: 44ch; line-height: var(--leading-normal); }
+
+/* ── Utility ─────────────────────────────────────────────────────────────── */
+
+.hm-sr {
+	position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+	overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+.hm-ol { list-style: decimal; margin: 0.5rem 0 0; padding-left: 1.2rem; color: var(--hm-ink-2); font-size: var(--text-md); line-height: var(--leading-normal); }
+.hm-ol li + li { margin-top: 0.3rem; }
+.hm-ol code, .hm-code {
+	font-family: var(--font-mono); font-size: 0.9em;
+	background: var(--hm-panel-2); border: 1px solid var(--hm-line);
+	border-radius: var(--radius-sm); padding: 0.08rem 0.3rem;
+}
+
+.hm-link { color: var(--ink); text-decoration: underline; text-underline-offset: 0.18em; text-decoration-color: var(--hm-line-strong); }
+.hm-link:hover { text-decoration-color: currentColor; }
+.hm-link:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.28); border-radius: var(--radius-sm); }
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+	.hm-card { grid-template-columns: minmax(0, 1fr); }
+	.hm-card-actions { justify-content: flex-start; flex-wrap: wrap; }
+	.hm-row { grid-template-columns: minmax(0, 1fr); }
+	.hm-panel-head { flex-direction: column; }
+	.hm-actions .hm-btn { flex: 1 1 auto; }
+}
+
+@media (max-width: 380px) {
+	.hm-stats { grid-template-columns: 1fr 1fr; }
+	.hm-secret .hm-input { padding-right: 4.4rem; }
+}

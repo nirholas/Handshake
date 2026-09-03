@@ -51,6 +51,18 @@
 //      (pgstattuple_approx) and VACUUM FULLs the worst offenders, smallest
 //      first and bounded per tick, so the file space actually returns and the
 //      gate unlatches without a human.
+//   E. HOME ACTION-LOG RETENTION. home_action_log is the "what did my agent do in
+//      my house" trail, and read the other way round it is a behavioural record
+//      of a household: when someone came home, which rooms they lit, what time
+//      the bedroom light went off. Its window is therefore NOT a platform
+//      constant and NOT tunable by an env var here. It is per home and it is
+//      the owner's, stored on home_connections.action_log_retention_days
+//      (90 days by default). This step joins the log against its own home's
+//      setting so the whole policy stays in the database. Deliberately exempt
+//      from the storage-pressure valve in both directions: shortening someone's
+//      audit trail because our disk is full is not our call to make, and the
+//      rows are small enough that they cannot be the reason it is full.
+//      See docs/home-privacy.md and api/_lib/home/privacy.js.
 //
 // DELETE (not UPDATE) is used for the firehose because DELETE settles xmax in place
 // and does NOT extend a relation file — it therefore succeeds even AT the cap,
@@ -65,6 +77,7 @@ import { json, method, wrapCron } from '../_lib/http.js';
 import { sql, isDbCapacityError } from '../_lib/db.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { requireCron } from '../_lib/cron-auth.js';
+import { purgeExpiredActionLog } from '../_lib/home/privacy.js';
 
 // Mint-keyed satellites of pump_coin_intel, deleted before the master so no run
 // orphans a satellite row. Every name here is a fixed constant (never user input),
@@ -546,6 +559,17 @@ export default wrapCron(async (req, res) => {
 	const runLogs = await pruneRunLogs(cutoffDays);
 	const audit = await pruneAuditLog(auditCutoffDays);
 	const regen = await pruneRegenJobs();
+	// E. Per-home action-log retention. Best-effort: the home tables may not exist
+	// on a branch that has not run the Home migrations, and a failure here must
+	// not cost the platform its storage sweep.
+	let homeActionLog = { deleted: 0, batches: 0, homes: 0 };
+	if (await tableExists('home_action_log')) {
+		try {
+			homeActionLog = await purgeExpiredActionLog();
+		} catch (err) {
+			homeActionLog = { deleted: 0, batches: 0, homes: 0, error: err?.message?.slice(0, 160) };
+		}
+	}
 
 	// VACUUM only tables we actually deleted from this tick.
 	const touched = Object.keys(firehose.perTable).filter((t) => firehose.perTable[t] > 0);
@@ -554,6 +578,7 @@ export default wrapCron(async (req, res) => {
 	for (const t of Object.keys(runLogs)) if (!touched.includes(t)) touched.push(t);
 	if (audit.deleted > 0) touched.push('x402_audit_log');
 	if (regen.deleted > 0 || regen.stripped > 0) touched.push('avatar_regen_jobs');
+	if (homeActionLog.deleted > 0) touched.push('home_action_log');
 	await vacuumTables(touched);
 
 	// D. Under pressure, actually shrink the files (plain VACUUM cannot) so the
@@ -609,6 +634,7 @@ export default wrapCron(async (req, res) => {
 		run_logs: runLogs,
 		audit,
 		regen,
+		home_action_log: homeActionLog,
 		vacuumed: touched,
 		compaction,
 		top_tables: topTables,
