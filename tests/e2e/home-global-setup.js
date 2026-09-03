@@ -116,8 +116,17 @@ async function register(browser, origin, role) {
 			.first()
 			.textContent()
 			.catch(() => null);
+		// Say which of the two it was. Blaming the rate limit for what is really a
+		// dead API process sends the next person looking in the wrong place: this
+		// worktree is shared, and the API server has been killed out from under a
+		// run by another agent's `pkill`.
+		const reachable = await fetch(`${origin}/api/home`, { signal: AbortSignal.timeout(10_000) })
+			.then(() => true)
+			.catch(() => false);
 		throw new Error(
-			`could not register the ${role} account${message ? `: ${message.trim()}` : ''}. Account creation is limited to five per hour per IP; the previous accounts in ${path.basename(ACCOUNTS_FILE)} are reused when they still log in.`,
+			reachable
+				? `could not register the ${role} account${message ? `: ${message.trim()}` : ''}. Account creation is limited to five per hour per IP; the accounts in ${path.basename(ACCOUNTS_FILE)} are reused whenever they still log in.`
+				: `could not register the ${role} account because ${origin}/api is not answering. The API server died during this run; check the [WebServer] output for a SIGTERM.`,
 			{ cause },
 		);
 	} finally {

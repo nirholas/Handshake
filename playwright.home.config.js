@@ -33,6 +33,11 @@ const localSecrets = {
 	MCP_RESOURCE: `${APP_ORIGIN}/api/mcp`,
 	JWT_KID: 'home-e2e',
 	NODE_ENV: 'development',
+	// The house this lane drives is a container on loopback, and the URL guard
+	// refuses private addresses unless a non-production process opts in. Without
+	// this every journey fails at connect with "127.0.0.1 is a private address",
+	// which reads as a product bug and is a missing flag.
+	HOME_ALLOW_LOCAL_INSTANCE: '1',
 };
 
 export default defineConfig({
@@ -60,10 +65,11 @@ export default defineConfig({
 		{
 			// The same handlers Cloud Run runs, against the same database.
 			command: `node --env-file=.env.local server/index.mjs`,
-			url: `http://127.0.0.1:${API_PORT}/api/home`,
-			// /api/home answers 401 to an anonymous GET, which is a perfectly good
-			// "the handler is mounted and the database is reachable" signal.
-			ignoreHTTPSErrors: true,
+			// /api/version, not /api/home: the home endpoint answers an anonymous GET
+			// with 401, and Playwright waits out the whole timeout rather than
+			// treating that as ready. /api/version returns 200 and proves the same
+			// thing, that the route table is loaded and handlers are mounted.
+			url: `http://127.0.0.1:${API_PORT}/api/version`,
 			timeout: 180_000,
 			reuseExistingServer: false,
 			stdout: 'pipe',

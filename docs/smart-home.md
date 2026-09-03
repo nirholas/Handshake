@@ -174,11 +174,26 @@ honest answers, in order of preference:
    Works today with a long-lived token, zero new code on their side. This is v1.
 2. **Browser-local direct connect.** For users who open three.ws from inside their own
    network, over a local HTTPS origin. Narrow, but zero-latency and fully private.
-3. **A three.ws HA add-on that dials out.** A small custom component that opens an outbound
-   WebSocket to three.ws and relays the two channels. This is the only option that works for
-   an untouched LAN-only install, it is the one that ships through HACS, and it is phase 2.
+3. **A three.ws integration that dials out.** A Home Assistant custom integration that opens
+   one outbound WebSocket to three.ws and carries the state and action channels over it. The
+   only option that works for an untouched LAN-only install, and the one that ships through
+   HACS.
 
-We will not pretend option 1 covers everyone, and we will not ship option 3 as a stub.
+**Option 3 is built and verified, not planned.** It is
+[`services/home-relay/`](../services/home-relay/README.md) plus
+[`home-assistant-integration/`](../home-assistant-integration), it is proven end to end against
+a real Home Assistant on a network the caller cannot route to, and a home connected that way
+stores no Home Assistant token at all: the integration authenticates locally and nothing
+crosses. See [home-relay.md](home-relay.md) and
+[home-relay-threat-model.md](home-relay-threat-model.md).
+
+A **custom integration rather than an add-on**, and the distinction is load-bearing: an add-on
+only runs on Home Assistant OS and Supervised, while an integration runs on all four install
+types including Container and Core, and HACS distributes integrations rather than add-ons.
+Since the whole point is reaching the installs a remote URL misses, the option with the wider
+reach wins.
+
+We will not pretend option 1 covers everyone, and we did not ship option 3 as a stub.
 
 ### Permission model
 
@@ -247,6 +262,58 @@ below exists, and anything that does not exist says so.
 | A real Home Assistant on demand, for every live test | [`scripts/home-test-instance.mjs`](../scripts/home-test-instance.mjs) |
 | The tutorial | [docs/tutorials/connect-your-home.md](tutorials/connect-your-home.md) |
 
+### The connect flow, state by state
+
+`/smart-home` ([`pages/smart-home.html`](../pages/smart-home.html) + [`src/home/connect.js`](../src/home/connect.js)
++ [`src/home/manage.js`](../src/home/manage.js)) is the front door. It is written as an explicit
+state machine rather than a happy path with error handling bolted on, because the interesting
+half of connecting a house is everything that is not the happy path. `STATE` in `connect.js` is
+the list; `render()` is the only place a state is entered, so "which state am I in" is always
+answerable from `#hm-root[data-state]`, which is also how the e2e suite drives it.
+
+| State | When | What it must do |
+|---|---|---|
+| `signed_out` | no session | Explain the feature and offer sign-in. Never a disabled form. |
+| `empty` | signed in, no homes | The connect card, with the token instructions one disclosure away. |
+| `private_host` | the address is LAN-only | Name the address class and give the two real routes out. |
+| `verifying` | the handshake is running | Named steps, cancellable. Never a bare spinner or a fake progress bar. |
+| `connected` / `many` | one or more homes | The measured summary per home, plus grants, log, health and household. |
+| `one_home` | `/smart-home/:id` | That home alone, with a way back up to the list. |
+| `not_found` | an id that is not this account's | Reveals nothing about whether the id exists. |
+| `auth_failed` | Home Assistant rejected the token | Say so, refocus the token field, keep the URL. |
+| `unreachable` | no answer | Separate "wrong address" from "house offline". |
+| `quota_reached` | the plan ceiling | Offer the upgrade and nothing that would fail again. |
+| `revoked` | the last home was disconnected | Say what happened to the stored credential. |
+| `pairing` | the relay is waiting for the house to dial out | Poll, and stop the animation when the poll stops. |
+
+Two invariants hold the surface together, and both are asserted in
+[`tests/e2e/home-connect.spec.js`](../tests/e2e/home-connect.spec.js) rather than left as prose.
+
+**The token goes to the server once and never comes back.** The field is `type="password"` with
+a reveal toggle and `autocomplete="off"`; the value is never written to `localStorage` or
+`sessionStorage`, never placed in a URL, never logged, and never echoed by any endpoint. It is
+gone from the DOM the moment a connect succeeds. Reconnecting a house that is already on the
+account prefills the label and the address, and deliberately does not prefill the token: there
+is nowhere it could be read back from.
+
+**Reachability is decided in the browser, before the network.** `checkReachable()` uses
+`normalizeBaseUrl` and `isPrivateHost` from `@three-ws/home-bridge/url`, the same functions the
+server validates with, so the two cannot disagree about what is reachable. The order of the
+checks is load-bearing: a private host is diagnosed **before** the scheme, because
+`http://192.168.1.10:8123` is the single most common thing a person pastes and it is both plain
+http and unroutable. Answering it with "use https" sends someone off to configure TLS on a
+machine three.ws still could not reach; "that address only exists on your home network" is the
+true answer and the actionable one. The refusal costs zero network requests, which the e2e suite
+asserts by counting requests across the submit.
+
+The subpath import matters for a third reason: `@three-ws/home-bridge/url` pulls in nothing but
+`errors.js`, while the package root pulls the Home Assistant WebSocket client and the MCP SDK.
+Importing the root here would have shipped both to every visitor for two pure string functions.
+
+Everything a house supplies (a label, an entity id, an area name) is rendered with
+`textContent`. These are strings a stranger or a compromised integration can influence, they
+flow into a page and into a model prompt, and there is a physical actuator on the other end.
+
 ### Not shipped
 
 - **Matter direct control.** Built as a throwaway kernel, measured, and deliberately not kept.
@@ -294,15 +361,53 @@ floor, four areas, 122 entities, two user scenes (Bedtime, Away Mode), four lock
 | A standing allowance stays per entity | Same call with `HOME_ALLOWED_ENTITIES=lock.kitchen_door` | Refused; door still `locked` |
 | The operator's own allowance does work | Same call with `HOME_ALLOWED_ENTITIES=lock.front_door` | Ran; door `unlocked`, then re-locked |
 | Locking up never prompts | `lock.lock` through the server with no allowance at all | Ran |
-| The relay allowlist has not drifted from the protocol | `npx vitest run tests/home-relay-protocol.test.js` | 11 passed |
+| The relay allowlist has not drifted from the protocol | `npx vitest run tests/home-relay-protocol.test.js` | 30 passed |
+| A house on a network the caller cannot route to is driven through the relay | `scripts/home-relay-e2e.mjs` from a container on a second Docker bridge, with no route to the house | 10/10, including a real light toggled, a real door unlocked through the gate, and four allowlist refusals |
 | The platform really will not dial a private address | Posted a loopback URL to `POST /api/home` on a local server against the live database | `unreachable`, with the LAN explanation, and nothing stored |
 
 The registry snapshot from that instance is checked in as the package's test fixture
 (`packages/home-bridge/tests/fixtures/home.json`, regenerated by
 `scripts/capture-home-fixture.mjs`), so a Home Assistant registry change shows up as a failing
 test rather than as a surprise in someone's house. The live checks above are also a test file
-(`packages/home-bridge/tests/live-home.test.js`), which skips itself unless
-`HOME_ASSISTANT_URL` and `HOME_ASSISTANT_TOKEN` are set.
+(`packages/home-bridge/tests/live-home.test.js`), which skips itself unless it is given a house:
+`HOME_LIVE=1` lets the harness build one, and `HOME_ASSISTANT_URL` plus `HOME_ASSISTANT_TOKEN`
+point it at one you already have.
+
+### The supported version range, measured
+
+Home Assistant ships a release every month, so the lane's correctness depends on a third party's
+release cadence. `npm run home:matrix` (`scripts/home-version-matrix.mjs`) runs the real client
+library against every release we claim to support and fills in this table from the runs. The
+release set is derived, never hardcoded: Home Assistant's own analytics
+(<https://analytics.home-assistant.io/data.json>, roughly 676,000 opted-in installs) carry the live install share
+per release, and the set is the current stable, the two releases before it, and the oldest
+release still in contiguous wide use at or above one percent of installs. The floor moves on its
+own as the world upgrades.
+
+Measured 2026-09-03:
+
+| Version | Share | Connect | Registries | State stream | Service call | Scenes | `mcp_server` | Notes |
+|---|---|---|---|---|---|---|---|---|
+| `2026.9` (current stable) | 4.17% | pass (2026.9.0) | pass (1f/4a/62d/92e) | pass (push) | pass (gated) | pass (scene) | pass (29 tools) | exposes via `homeassistant/expose_entity` |
+| `2026.8` (previous release) | 50.41% | pass (2026.8.3) | pass (1f/4a/62d/92e) | pass (push) | pass (gated) | pass (scene) | pass (29 tools) | exposes via `homeassistant/expose_entity` |
+| `2026.7` (previous release) | 13.21% | pass (2026.7.4) | pass (1f/4a/61d/87e) | pass (push) | pass (gated) | pass (scene) | pass (29 tools) | exposes via `homeassistant/expose_entity` |
+| `2025.10` (oldest in wide use) | 1.05% | pass (2025.10.4) | pass (1f/4a/52d/79e) | pass (push) | pass (gated) | pass (scene) | pass (22 tools) | exposes via `homeassistant/expose_entity` |
+
+**Supported range: 2025.10 and newer.** Every capability the platform depends on works across it.
+The floor is where install share falls below one percent, not where the code stops working;
+nothing was found that a 2025.10 house cannot do.
+
+One version difference was found, and it is handled by asking the house rather than by reading
+its version number:
+
+| Difference | Releases | How it is handled |
+|---|---|---|
+| The MCP endpoint moved. Through 2025.10 `mcp_server` served only the SSE transport at `/mcp_server/sse`; the Streamable HTTP endpoint at `/api/mcp` arrived later. | 2025.10 and older vs 2026.7 and newer | `connectHomeMcp` tries Streamable HTTP, and on a 404 falls back to SSE. It reports which transport answered (`transport`, `endpoint`). Before this, a 2025.10 house with a loaded `mcp_server` entry and 22 real tools was reported as having no MCP at all. |
+| The exposure command was renamed from `homeassistant/expose_entity/set` to `homeassistant/expose_entity`. | older releases vs the whole supported range | The test harness sends the current name and falls back on `unknown_command`. Every release in the supported range answers to the current name, so the fallback covers only houses below the floor. |
+| The `mcp_server` config flow's `llm_hass_api` field is a multi-select. | whole supported range | The harness reads the flow's own `data_schema` and sends the shape it asks for, rather than assuming a string. |
+
+Feature detection, never version sniffing: nothing in the client library branches on a version
+string. `HomeBridge.haVersion` exists to be reported to a person, not to be compared against.
 
 ---
 
