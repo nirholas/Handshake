@@ -992,6 +992,22 @@
 			}
 		},
 		{
+			"id": "audit-home-credential-health",
+			"script": "scripts/audit-home-credential-health.mjs",
+			"npm": "audit:home-credentials",
+			"title": "No connected home is sealed behind an unreadable key",
+			"protects": "Every stored Home Assistant long-lived token still decrypts under the current WALLET_ENCRYPTION_KEY, and names the homes that would go dark if one does not.",
+			"why": "home_connections.access_token_enc is the platform second class of at-rest ciphertext under the same key as the custodial wallet secrets, and a rotation that loses the outgoing value seals both. The two failures look nothing alike, which is why one reading cannot cover both: a sealed wallet strands SOL that can never be signed for again, while a sealed home token strands nothing and costs reach. Every connected house simply stops answering at once, with no balance anywhere to notice it by and no signal that says why, until each owner pastes a fresh token. Run it beside the wallet audit on every key rotation.",
+			"stages": [
+				"manual"
+			],
+			"needs": "credentials",
+			"proof": {
+				"kind": "live",
+				"reason": "It reads the production home_connections table and the live encryption key, then decrypts in memory to test each token against the current key. There is no offline fixture for \"this ciphertext no longer opens\" that would prove anything about the real fleet. Read-only: it never writes and never opens a socket to any house."
+			}
+		},
+		{
 			"id": "audit-play-failure-modes",
 			"script": "scripts/audit-play-failure-modes.mjs",
 			"npm": "audit:play-failures",

@@ -236,6 +236,7 @@
 		"check:cron-drift": "node scripts/check-cron-drift.mjs",
 		"check:cron-syntax": "node scripts/check-cron-drift.mjs --offline",
 		"audit:custodial-keys": "node scripts/audit-custodial-key-health.mjs",
+		"audit:home-credentials": "node scripts/audit-home-credential-health.mjs",
 		"audit:cron-liveness": "node scripts/audit-cron-liveness.mjs",
 		"audit:cron-liveness:static": "node scripts/audit-cron-liveness.mjs --static",
 		"check:erc7710": "node scripts/check-erc7710-addresses.js",
