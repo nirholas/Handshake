@@ -57,6 +57,37 @@ describe('forgeRequestHash', () => {
 		const b = forgeRequestHash({ path: 'image', tier: 'standard', backend: 'trellis', prompt: 'cat' });
 		expect(a).toBe(b);
 	});
+
+	// Two submits of one prompt at different seeds are two different models, so
+	// they must never coalesce onto one job. This is what makes `seed` usable at
+	// all, and it is what Refine depends on to replay a job one tier up.
+	it('distinguishes every output-affecting option', () => {
+		const base = { path: 'image', tier: 'standard', backend: 'trellis', prompt: 'cat' };
+		const h = forgeRequestHash(base);
+		expect(forgeRequestHash({ ...base, options: { seed: 1 } })).not.toBe(h);
+		expect(forgeRequestHash({ ...base, options: { seed: 1 } })).not.toBe(
+			forgeRequestHash({ ...base, options: { seed: 2 } }),
+		);
+		expect(forgeRequestHash({ ...base, options: { outputFormat: 'glb-draco' } })).not.toBe(h);
+		expect(forgeRequestHash({ ...base, options: { textureSize: 2048 } })).not.toBe(h);
+		expect(forgeRequestHash({ ...base, options: { targetPolycount: 50_000 } })).not.toBe(h);
+	});
+
+	// Adding the options to the basis must not invalidate the fingerprint for the
+	// callers that never send any: an absent options bag, an empty one, and one
+	// holding only the defaults all describe the same generation.
+	it('keeps the key stable for callers that send no options', () => {
+		const base = { path: 'image', tier: 'standard', backend: 'trellis', prompt: 'cat' };
+		const h = forgeRequestHash(base);
+		expect(forgeRequestHash({ ...base, options: {} })).toBe(h);
+		expect(forgeRequestHash({ ...base, options: null })).toBe(h);
+		expect(
+			forgeRequestHash({
+				...base,
+				options: { seed: null, outputFormat: 'glb', textureSize: null, targetPolycount: null },
+			}),
+		).toBe(h);
+	});
 });
 
 describe('fail-open behavior without Redis', () => {

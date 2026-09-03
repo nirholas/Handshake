@@ -1830,6 +1830,14 @@ async function startJob(req, res) {
 		// whole FLUX→reconstruct pipeline a second time. Collapses double-clicks and
 		// viral-prompt bursts to one generation that N clients poll. Skipped for high
 		// tier (paid/gated per caller) so a payment is never shared across users.
+		// `force_regenerate` has to skip the coalescing read as well as the result
+		// cache read above, or it does not mean what it says: the in-flight record
+		// outlives the generation it points at (TTL only, never cleared on success),
+		// so within that window a "force a fresh run" submit was still handed the
+		// previous job. That is what made the daily smoke test's force_regenerate
+		// leg unable to prove generation was alive, and what stopped a user's Retry
+		// from ever producing a different model. The hash is still COMPUTED so the
+		// fresh job registers under it and later callers can coalesce onto this one.
 		if (tier.id !== 'high') {
 			requestHash = forgeRequestHash({
 				path,
@@ -1837,8 +1845,9 @@ async function startJob(req, res) {
 				backend: backendId,
 				prompt,
 				images: isImageMode ? imageUrls : null,
+				options: opts,
 			});
-			const existing = await coalesceInFlight(requestHash);
+			const existing = forceRegenerate ? null : await coalesceInFlight(requestHash);
 			if (existing) {
 				return json(res, 200, {
 					job_id: existing,

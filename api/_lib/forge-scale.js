@@ -34,15 +34,31 @@ const INFLIGHT_TTL_S = 360; // ~ the longest a generation stays pollable end-to-
 // normalized (trim + lowercase) and image lists are order-independent so the same
 // multi-view set in any order collapses to one key. Truncated to 32 hex chars —
 // 128 bits of collision resistance is ample for a 6-minute dedup window.
-export function forgeRequestHash({ path, tier, backend, prompt, images }) {
+//
+// The output-affecting options belong in the fingerprint for the same reason they
+// belong in the result-cache key (forge-cache.js forgeResultCacheKey, which lists
+// exactly these four): two requests are interchangeable only when every input that
+// changes the mesh matches. Leaving them out made `seed` unusable, which is the
+// whole point of a seed. Two submits of one prompt with different seeds are two
+// DIFFERENT models by definition, and the second was being handed the first's job
+// for the rest of the 360s window (the record is not cleared on success), so it
+// came back byte-identical. That also silently defeated Refine, which replays a
+// job's seed one tier up. A null option keeps the key identical to a request that
+// never sent options, so existing callers coalesce exactly as before.
+export function forgeRequestHash({ path, tier, backend, prompt, images, options }) {
 	const tierId = typeof tier === 'string' ? tier : tier?.id || '';
 	const imgs = Array.isArray(images) ? images.filter(Boolean).slice().sort() : [];
+	const opt = options || {};
 	const basis = JSON.stringify([
 		path || '',
 		tierId,
 		backend || '',
 		String(prompt || '').trim().toLowerCase(),
 		imgs,
+		opt.seed ?? null,
+		opt.outputFormat || 'glb',
+		opt.textureSize ?? null,
+		opt.targetPolycount ?? null,
 	]);
 	return createHash('sha256').update(basis).digest('hex').slice(0, 32);
 }

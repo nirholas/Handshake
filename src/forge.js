@@ -154,7 +154,29 @@ let aspectRatio = '1:1';
 let elapsedTimer = null;
 let pollAbort = false;
 let mode = 'text'; // 'text' | 'image' | 'sketch' — input mode (prompt vs photos vs drawing)
-let lastJob = null; // { prompt, imageUrls } — for retry
+let lastJob = null; // { prompt, imageUrls, seed }: for retry and refine
+
+// Every user-initiated generation is stamped with a random seed, which then
+// rides along on every replay of that same job (Refine, Retry, an automatic
+// lane hop, "Generate anyway"). It is what makes Refine actually refine.
+//
+// Without it, bumping a draft to Standard re-ran the text lane from scratch: a
+// NEW reference image off the same prompt, and therefore a different object.
+// The user asked for "this model, better" and got "another model, better",
+// which is the one thing a refine must never do. /api/forge threads the seed
+// through the reference-image stage as well as reconstruction (api/forge.js
+// seedReferenceImage), so replaying it reproduces the same subject and the tier
+// bump is the only variable that moved.
+//
+// A fresh submit always mints a new one, so "Make another" on the same prompt
+// still explores instead of returning the identical model.
+const SEED_MAX = 2 ** 32 - 1;
+function mintSeed() {
+	if (globalThis.crypto?.getRandomValues) {
+		return globalThis.crypto.getRandomValues(new Uint32Array(1))[0];
+	}
+	return Math.floor(Math.random() * SEED_MAX);
+}
 // Automatic engine hops taken for the current submission (lane_failed → switch
 // to the first suggested backup and re-run). Budget of 1 per user submit; the
 // server's own poll-time failover already walked the async lanes before this.
@@ -1460,7 +1482,7 @@ function forgeHeaders(extra) {
 	return h;
 }
 
-async function startJob({ prompt, imageUrls, skipValidation, payment }) {
+async function startJob({ prompt, imageUrls, skipValidation, payment, seed }) {
 	const base = { path: selectedEngine.path, tier: selectedTier, backend: selectedEngine.backend };
 	const body =
 		Array.isArray(imageUrls) && imageUrls.length
@@ -1471,6 +1493,9 @@ async function startJob({ prompt, imageUrls, skipValidation, payment }) {
 			// only — the director rewrites a prompt, and an image submission has
 			// none to rewrite.
 			: { prompt, aspect_ratio: aspectRatio, director: true, ...base };
+	// Reproducibility: see mintSeed(). Absent on a job replayed from the gallery,
+	// where the original seed was never recorded, so that path stays as it was.
+	if (Number.isInteger(seed)) body.seed = seed;
 	// Caller already saw the vision warning and chose to proceed (Consumer 1).
 	if (skipValidation) body.skip_validation = true;
 	// Pay-per-use proof: a non-holder who paid $THREE for this High generation
@@ -2810,7 +2835,7 @@ function submit() {
 	// A fresh user-initiated generation resets the automatic lane-hop budget —
 	// the single silent hop belongs to one submission, never accumulates.
 	autoLaneHops = 0;
-	if (cfg) run(cfg);
+	if (cfg) run({ ...cfg, seed: mintSeed() });
 }
 
 // Options handed to the gate modal / in-place lock so their "Pay per generation"
@@ -2835,7 +2860,7 @@ async function payThenGenerate(pay) {
 	if (selectedTier !== 'high') selectTier('high');
 	const result = await payForHighGeneration({ usd });
 	if (!result?.ok) return; // cancelled or failed — the modal explained why
-	run({ ...cfg, payment: { paymentId: result.paymentId, refId: result.refId } });
+	run({ ...cfg, seed: mintSeed(), payment: { paymentId: result.paymentId, refId: result.refId } });
 }
 
 // Wiring ----------------------------------------------------------------------
