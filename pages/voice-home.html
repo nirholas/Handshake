@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>Hands-free voice for your home · three.ws</title>
+	<meta name="description" content="Talk to your house without finding a phone. A wake word matched on your own device, real barge-in, and a spoken confirmation that a background yes can never satisfy." />
+	<link rel="canonical" href="https://three.ws/voice/home" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<link rel="stylesheet" href="/home-voice.css" />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="Hands-free voice for your home · three.ws" />
+	<meta property="og:description" content="A wake word matched on your own device, real barge-in, and a spoken confirmation a background yes can never satisfy." />
+	<meta property="og:url" content="https://three.ws/voice/home" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="Hands-free voice for your home · three.ws" />
+	<meta name="twitter:description" content="Talk to your house without finding a phone. The wake word never leaves your device." />
+	<meta name="twitter:site" content="@trythreews" />
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+	<style>
+		* { box-sizing: border-box; }
+		html, body { margin: 0; background: var(--bg-0); color: var(--ink); }
+		body { font-family: var(--font-body, 'Inter', system-ui, sans-serif); min-height: 100vh; }
+		.site-header { position: sticky; top: 0; z-index: 50; background: color-mix(in srgb, var(--bg-0) 82%, transparent); backdrop-filter: blur(10px); }
+		.vh-wrap { max-width: 1080px; margin: 0 auto; padding: 0 18px 96px; }
+		.vh-hero { padding: 40px 0 20px; }
+		.vh-kicker {
+			display: inline-flex; align-items: center; gap: 7px;
+			font-size: var(--text-2xs); letter-spacing: 0.09em; text-transform: uppercase;
+			color: var(--ink-dim); border: 1px solid var(--stroke); border-radius: var(--radius-pill);
+			padding: 5px 11px; margin-bottom: 14px; background: var(--surface-1);
+		}
+		.vh-kicker::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+		.vh-hero h1 { font-size: clamp(1.9rem, 5vw, 2.9rem); line-height: 1.1; margin: 0 0 12px; letter-spacing: -0.025em; color: var(--ink-bright); }
+		.vh-hero p { margin: 0; max-width: 66ch; color: var(--ink-dim); line-height: 1.65; font-size: 1.02rem; }
+		.vh-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: var(--space-lg); margin-top: var(--space-lg); align-items: start; }
+		@media (max-width: 860px) { .vh-grid { grid-template-columns: 1fr; } }
+		.vh-aside { display: flex; flex-direction: column; gap: var(--space-md); }
+		.vh-card {
+			border: 1px solid var(--stroke); border-radius: var(--radius-lg);
+			background: var(--surface-1); padding: var(--space-lg);
+		}
+		.vh-card h2 { margin: 0 0 var(--space-sm); font: 600 var(--text-lg)/1.25 var(--font-display); color: var(--ink-bright); }
+		.vh-card p, .vh-card li { color: var(--ink-dim); line-height: 1.6; font-size: var(--text-ui); }
+		.vh-card p { margin: 0 0 var(--space-sm); max-width: 62ch; }
+		.vh-card ul { margin: 0; padding-left: 1.15em; display: flex; flex-direction: column; gap: var(--space-xs); }
+		.vh-pipe { font: var(--text-sm)/1.7 var(--font-mono); color: var(--ink-faint); white-space: pre; overflow-x: auto; margin: 0; }
+		.vh-budget { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+		.vh-budget th, .vh-budget td { text-align: left; padding: var(--space-xs) var(--space-sm); border-bottom: 1px solid var(--stroke); }
+		.vh-budget th { color: var(--ink-dim); font-weight: 500; }
+		.vh-budget td:last-child { font-family: var(--font-mono); color: var(--ink); text-align: right; }
+		.vh-scroll { overflow-x: auto; }
+		.vh-states { margin-top: var(--space-2xl); }
+		.vh-states > h2 { font: 600 var(--text-xl)/1.2 var(--font-display); color: var(--ink-bright); margin: 0 0 var(--space-xs); }
+		.vh-states > p { color: var(--ink-dim); max-width: 66ch; margin: 0 0 var(--space-lg); line-height: 1.6; }
+		.vh-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr)); gap: var(--space-lg); }
+		.vh-state { display: flex; flex-direction: column; gap: var(--space-sm); }
+		.vh-state > h3 { margin: 0; font: 500 var(--text-sm)/1.3 var(--font-mono); color: var(--ink-faint); letter-spacing: 0.04em; }
+		.vh-links { margin-top: var(--space-2xl); display: flex; gap: var(--space-md); flex-wrap: wrap; }
+		.vh-links a { color: var(--ink-dim); text-decoration: none; border-bottom: 1px solid var(--stroke-strong); padding-bottom: 2px; }
+		.vh-links a:hover, .vh-links a:focus-visible { color: var(--ink-bright); border-color: var(--accent); }
+	</style>
+</head>
+<body>
+	<header class="site-header"><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+
+	<main id="main-content" class="vh-wrap">
+		<section class="vh-hero">
+			<span class="vh-kicker">Hands-free</span>
+			<h1>Talk to your house without finding a phone</h1>
+			<p>
+				A wake word matched by a model running in this tab, an interruption that actually stops the agent
+				mid-sentence, and a spoken confirmation narrow enough that somebody agreeing with somebody else in the
+				same room can never unlock your front door.
+			</p>
+		</section>
+
+		<div class="vh-grid">
+			<div id="voice-panel"></div>
+
+			<aside class="vh-aside">
+				<section class="vh-card">
+					<h2>What leaves this device</h2>
+					<p>
+						The wake word runs on openWakeWord and the endpointing on silero, both downloaded from three.ws
+						and executed in this tab. That audio is never uploaded. Only the sentence after the wake word is
+						sent, and only to be transcribed.
+					</p>
+					<pre class="vh-pipe">mic
+ -> silero VAD          on device
+ -> openWakeWord        on device
+ -> /api/asr            the utterance only
+ -> agent turn
+ -> /api/tts/speak
+ -> the agent speaks</pre>
+				</section>
+
+				<section class="vh-card">
+					<h2>The latency budget</h2>
+					<div class="vh-scroll">
+						<table class="vh-budget">
+							<thead><tr><th scope="col">Leg</th><th scope="col">Budget</th></tr></thead>
+							<tbody>
+								<tr><td>Wake word detection</td><td>200 ms</td></tr>
+								<tr><td>End of speech</td><td>400 ms</td></tr>
+								<tr><td>Transcription round trip</td><td>900 ms</td></tr>
+								<tr><td>Agent turn</td><td>1200 ms</td></tr>
+								<tr><td>Action to device change</td><td>700 ms</td></tr>
+								<tr><td>First audible reply</td><td>1800 ms</td></tr>
+							</tbody>
+						</table>
+					</div>
+					<p>Measured live in the panel while you use it, not asserted here.</p>
+				</section>
+
+				<section class="vh-card">
+					<h2>Why a door is different</h2>
+					<p>
+						Turning a light off happens the moment you ask. Unlocking a door does not: the agent says the whole
+						sentence, the entity appears on screen, and only the word <strong>confirm</strong> goes through. A
+						general yes does not, and on a device with no screen a guarded action is refused outright.
+					</p>
+				</section>
+			</aside>
+		</div>
+
+		<section class="vh-states">
+			<h2>Every state</h2>
+			<p>
+				The same panel component, driven into each of the twelve states it can be in. Off is the default, and
+				nothing about listening is downloaded until you turn it on.
+			</p>
+			<div class="vh-gallery" id="state-gallery"></div>
+		</section>
+
+		<nav class="vh-links" aria-label="Related">
+			<a href="/docs/home-voice">Voice loop documentation</a>
+			<a href="/lipsync/mic">Audio-driven lipsync</a>
+			<a href="/voice">Voice and cloning</a>
+		</nav>
+	</main>
+
+	<div id="footer-container"></div>
+	<script src="/footer.js"></script>
+
+	<script type="module" src="/src/voice-home.js"></script>
+	<script type="module" src="/i18n.js"></script>
+</body>
+</html>

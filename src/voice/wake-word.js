@@ -31,6 +31,12 @@
 
 import { log } from '../shared/log.js';
 import { now } from './vad.js';
+import { WAKE_WORDS, DEFAULT_WAKE_WORD, wakeWordById } from './wake-words.js';
+
+// Re-exported so a caller that already needs the detector does not need a second
+// import for the catalog. The catalog itself lives in wake-words.js so the panel
+// can render its picker without pulling this module in.
+export { WAKE_WORDS, DEFAULT_WAKE_WORD, wakeWordById };
 
 /** Where the committed openWakeWord models are served from. */
 const MODEL_PATH = '/models/voice/wake-word/';
@@ -62,46 +68,6 @@ export const DEFAULT_THRESHOLD = 0.5;
  * was ignored can simply say it again.
  */
 const REFRACTORY_MS = 1500;
-
-/**
- * The wake words shipped with the product. Every one is a pre-trained upstream
- * model: we offer a choice among what exists rather than training a phrase of our
- * own, because a custom phrase trained on synthetic speech would be measurably
- * worse than these and the user would pay for it in false wakes.
- */
-export const WAKE_WORDS = [
-	{
-		id: 'hey_jarvis',
-		file: 'hey_jarvis_v0.1.onnx',
-		phrase: 'Hey Jarvis',
-		hint: 'Two syllables and an uncommon name, so it survives a noisy kitchen best.',
-	},
-	{
-		id: 'hey_mycroft',
-		file: 'hey_mycroft_v0.1.onnx',
-		phrase: 'Hey Mycroft',
-		hint: 'The Mycroft project phrase. Rare enough in conversation to rarely misfire.',
-	},
-	{
-		id: 'alexa',
-		file: 'alexa_v0.1.onnx',
-		phrase: 'Alexa',
-		hint: 'Pick this only if no Echo is in earshot: it will wake both.',
-	},
-	{
-		id: 'hey_rhasspy',
-		file: 'hey_rhasspy_v0.1.onnx',
-		phrase: 'Hey Rhasspy',
-		hint: 'The Rhasspy phrase, and the smallest model of the four.',
-	},
-];
-
-export const DEFAULT_WAKE_WORD = 'hey_jarvis';
-
-/** @param {string} id */
-export function wakeWordById(id) {
-	return WAKE_WORDS.find((w) => w.id === id) || WAKE_WORDS.find((w) => w.id === DEFAULT_WAKE_WORD);
-}
 
 let ortPromise = null;
 
@@ -154,6 +120,28 @@ class RowRing {
 		this.filled = 0;
 		this.data.fill(0);
 	}
+}
+
+/**
+ * Whether one score fires a wake. Pure, and separated from the inference so the
+ * security-relevant decision can be tested without a model:
+ *
+ *  - Suppressed never wakes. This is the self-trigger guard, and it is absolute:
+ *    while the agent is speaking, a perfect score changes nothing.
+ *  - Only a rising edge wakes. A score that stays above the threshold across
+ *    several chunks is one wake, not five.
+ *  - The refractory window keeps the trailing audio of the wake word itself,
+ *    which is still in the ring buffer, from scoring a second time.
+ *
+ * @param {{score:number, threshold:number, above:boolean, suppressed:boolean, sinceLastWakeMs:number, refractoryMs?:number}} input
+ * @returns {{wake: boolean, above: boolean}}
+ */
+export function decideWake({ score, threshold, above, suppressed, sinceLastWakeMs, refractoryMs = REFRACTORY_MS }) {
+	const nowAbove = score >= threshold;
+	if (suppressed) return { wake: false, above: nowAbove };
+	if (!nowAbove || above) return { wake: false, above: nowAbove };
+	if (sinceLastWakeMs < refractoryMs) return { wake: false, above: nowAbove };
+	return { wake: true, above: nowAbove };
 }
 
 export class WakeWordDetector {
@@ -365,21 +353,20 @@ export class WakeWordDetector {
 			this.lastScore = score;
 			this.onScore(score);
 
-			if (this.suppressed) {
-				this.suppressedPeak = Math.max(this.suppressedPeak, score);
-				this._above = score >= this.threshold;
-				return;
-			}
-
-			const crossed = score >= this.threshold && !this._above;
-			this._above = score >= this.threshold;
-			if (!crossed) return;
 			const t = now();
-			if (t - this._lastWakeAt < REFRACTORY_MS) return;
-			this._lastWakeAt = t;
-			// Measured from the frame that completed the chunk, so the number
-			// covers exactly what this module is responsible for: the inference,
-			// not the audio that had not arrived yet.
+			const decision = decideWake({
+				score,
+				threshold: this.threshold,
+				above: this._above,
+				suppressed: this.suppressed,
+				sinceLastWakeMs: t - this._lastWakeAt,
+			});
+			this._above = decision.above;
+			if (this.suppressed) this.suppressedPeak = Math.max(this.suppressedPeak, score);
+			if (!decision.wake) return;
+			// Measured from the frame that completed the chunk, so the number covers
+			// exactly what this module is responsible for: the inference, not the
+			// audio that had not arrived yet.
 			const latencyMs = t - chunkAt;
 			this.reset();
 			this._lastWakeAt = t;

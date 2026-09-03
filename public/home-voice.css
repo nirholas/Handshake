@@ -1,0 +1,371 @@
+/* The hands-free panel (src/voice/home-voice-ui.js).
+ *
+ * Every colour, space and radius here is a token from public/tokens.css. The one
+ * value that is NOT a token is the listening indicator's red: it deliberately
+ * refuses the monochrome palette, because a microphone that is live has to be
+ * legible as such at a glance across a kitchen, and a tasteful grey dot is not.
+ */
+
+.hv {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-md);
+	padding: var(--space-lg);
+	background: var(--surface-1);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-lg);
+	font: var(--text-md) / 1.55 var(--font-body);
+	color: var(--ink);
+	container-type: inline-size;
+}
+
+/* ── the indicator ─────────────────────────────────────────────────────────
+ * Always present, never conditional on a setting, and driven by the live
+ * MediaStreamTrack rather than by the state machine. */
+.hv-indicator {
+	display: flex;
+	align-items: center;
+	gap: var(--space-sm);
+	padding: var(--space-sm) var(--space-md);
+	border-radius: var(--radius-pill);
+	background: var(--surface-2);
+	border: 1px solid var(--stroke);
+	font-size: var(--text-sm);
+	color: var(--ink-dim);
+	align-self: flex-start;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+}
+.hv-indicator[data-live='true'] {
+	background: rgba(239, 68, 68, 0.14);
+	border-color: rgba(239, 68, 68, 0.5);
+	color: #fca5a5;
+}
+.hv-dot {
+	width: 9px;
+	height: 9px;
+	border-radius: var(--radius-pill);
+	background: var(--ink-dim);
+	flex: none;
+}
+.hv-indicator[data-live='true'] .hv-dot {
+	background: #ef4444;
+	animation: hv-pulse 1.6s var(--ease-standard) infinite;
+}
+@keyframes hv-pulse {
+	0%,
+	100% {
+		opacity: 1;
+		transform: scale(1);
+	}
+	50% {
+		opacity: 0.45;
+		transform: scale(0.82);
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.hv-indicator[data-live='true'] .hv-dot {
+		animation: none;
+	}
+}
+
+/* ── head ─────────────────────────────────────────────────────────────────── */
+.hv-head {
+	display: flex;
+	gap: var(--space-md);
+	justify-content: space-between;
+	align-items: flex-start;
+	flex-wrap: wrap;
+}
+.hv-badge {
+	display: inline-block;
+	font-size: var(--text-2xs);
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--ink-dim);
+	background: var(--surface-2);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-pill);
+	padding: var(--space-3xs) var(--space-sm);
+}
+.hv-badge[data-state='idle'],
+.hv-badge[data-state='capturing'] {
+	color: var(--success);
+	border-color: rgba(74, 222, 128, 0.35);
+}
+.hv-badge[data-state='confirm-pending'] {
+	color: var(--warn);
+	border-color: rgba(251, 191, 36, 0.4);
+}
+.hv-badge[data-state='error'],
+.hv-badge[data-state='permission-denied'] {
+	color: var(--danger);
+	border-color: rgba(248, 113, 113, 0.4);
+}
+.hv-title {
+	font: 600 var(--text-lg) / 1.25 var(--font-display);
+	margin: var(--space-xs) 0 var(--space-2xs);
+	color: var(--ink-bright);
+}
+.hv-body {
+	margin: 0;
+	color: var(--ink-dim);
+	max-width: 60ch;
+}
+
+/* ── controls ─────────────────────────────────────────────────────────────── */
+.hv-actions,
+.hv-consent-actions,
+.hv-confirm-actions {
+	display: flex;
+	gap: var(--space-sm);
+	flex-wrap: wrap;
+}
+.hv-btn {
+	font: 500 var(--text-ui) / 1 var(--font-body);
+	padding: var(--space-sm) var(--space-md);
+	border-radius: var(--radius-md);
+	border: 1px solid var(--stroke-strong);
+	background: var(--surface-2);
+	color: var(--ink);
+	cursor: pointer;
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-instant) var(--ease-standard);
+}
+.hv-btn:hover {
+	background: var(--surface-3);
+	border-color: var(--accent);
+}
+.hv-btn:active {
+	transform: translateY(1px);
+}
+.hv-btn:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+}
+.hv-btn-primary {
+	background: var(--ink-bright);
+	color: var(--bg-0);
+	border-color: var(--ink-bright);
+}
+.hv-btn-primary:hover {
+	background: var(--ink);
+}
+
+/* ── consent ──────────────────────────────────────────────────────────────── */
+.hv-consent {
+	background: var(--surface-2);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-md);
+	padding: var(--space-md);
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-sm);
+	animation: hv-rise var(--duration-base) var(--ease-emphasized);
+}
+.hv-consent h3 {
+	margin: 0;
+	font: 600 var(--text-ui) / 1.3 var(--font-display);
+	color: var(--ink-bright);
+}
+.hv-consent-list {
+	margin: 0;
+	padding-left: 1.15em;
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-xs);
+	color: var(--ink-dim);
+	max-width: 68ch;
+}
+@keyframes hv-rise {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.hv-consent {
+		animation: none;
+	}
+}
+
+.hv-recovery {
+	background: var(--surface-2);
+	border: 1px solid rgba(248, 113, 113, 0.35);
+	border-radius: var(--radius-md);
+	padding: var(--space-md);
+	color: var(--ink);
+	max-width: 68ch;
+}
+
+/* ── the confirmation card ────────────────────────────────────────────────── */
+.hv-confirm {
+	background: var(--surface-2);
+	border: 1px solid rgba(251, 191, 36, 0.45);
+	border-radius: var(--radius-md);
+	padding: var(--space-md);
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-sm);
+}
+.hv-confirm-sentence {
+	margin: 0;
+	font: 600 var(--text-base) / 1.4 var(--font-display);
+	color: var(--ink-bright);
+}
+.hv-confirm-entities {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	gap: var(--space-xs);
+	flex-wrap: wrap;
+}
+.hv-confirm-entities li {
+	font: var(--text-2xs) / 1.4 var(--font-mono);
+	background: var(--surface-3);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-sm);
+	padding: var(--space-3xs) var(--space-xs);
+	color: var(--ink-dim);
+	word-break: break-all;
+}
+.hv-confirm-hint {
+	margin: 0;
+	color: var(--ink-dim);
+	font-size: var(--text-sm);
+}
+.hv-confirm-hint strong {
+	color: var(--warn);
+}
+.hv-confirm-timer {
+	height: 3px;
+	border-radius: var(--radius-pill);
+	background: var(--surface-3);
+	overflow: hidden;
+}
+.hv-confirm-timer span {
+	display: block;
+	height: 100%;
+	background: var(--warn);
+	transform-origin: left center;
+	transform: scaleX(1);
+}
+
+/* ── wake-word meter ──────────────────────────────────────────────────────── */
+.hv-meter {
+	height: 4px;
+	border-radius: var(--radius-pill);
+	background: var(--surface-3);
+	overflow: hidden;
+}
+.hv-meter-fill {
+	display: block;
+	height: 100%;
+	background: var(--success);
+	transform-origin: left center;
+	transform: scaleX(0);
+	transition: transform var(--duration-instant) linear;
+}
+
+/* ── transcript ───────────────────────────────────────────────────────────── */
+.hv-transcript {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-xs);
+	max-height: 16rem;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+}
+.hv-transcript:empty {
+	display: none;
+}
+.hv-line {
+	padding: var(--space-xs) var(--space-sm);
+	border-radius: var(--radius-sm);
+	background: var(--surface-2);
+	max-width: 68ch;
+}
+.hv-line-you {
+	align-self: flex-end;
+	background: var(--surface-3);
+}
+.hv-line-system {
+	background: transparent;
+	color: var(--ink-dim);
+	font-size: var(--text-sm);
+	padding-left: 0;
+}
+
+/* ── settings and latency ─────────────────────────────────────────────────── */
+.hv-settings {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2xs);
+	border-top: 1px solid var(--stroke);
+	padding-top: var(--space-md);
+}
+.hv-field {
+	display: flex;
+	align-items: center;
+	gap: var(--space-sm);
+	font-size: var(--text-sm);
+	color: var(--ink-dim);
+}
+.hv-wake {
+	font: var(--text-md) / 1 var(--font-body);
+	background: var(--surface-2);
+	color: var(--ink);
+	border: 1px solid var(--stroke-strong);
+	border-radius: var(--radius-sm);
+	padding: var(--space-xs) var(--space-sm);
+}
+.hv-wake:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+}
+.hv-wake-hint {
+	margin: 0;
+	color: var(--ink-faint);
+	font-size: var(--text-sm);
+	max-width: 60ch;
+}
+
+.hv-latency {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+	gap: var(--space-xs) var(--space-md);
+	margin: 0;
+	font-size: var(--text-sm);
+}
+.hv-latency:empty {
+	display: none;
+}
+.hv-latency dt {
+	color: var(--ink-dim);
+}
+.hv-latency dd {
+	margin: 0 0 var(--space-sm);
+	font-family: var(--font-mono);
+	color: var(--success);
+}
+.hv-latency dd[data-over='true'] {
+	color: var(--warn);
+}
+
+@container (max-width: 30rem) {
+	.hv {
+		padding: var(--space-md);
+	}
+	.hv-head {
+		flex-direction: column;
+	}
+}

@@ -24,6 +24,16 @@
  *   const interim = mic.snapshotWav(); // Blob | null — audio so far, for a partial pass
  *   const final = await mic.stop();    // Blob | null — the full utterance as a 16 kHz WAV
  *   mic.dispose();                     // idempotent teardown
+ *
+ * Streaming, for callers that push audio somewhere live instead of recording it
+ * (the Home Assistant voice satellite, src/home/satellite.js):
+ *
+ *   const down = new PcmDownsampler(48000);
+ *   const mic = new MicCapture({ retain: false, onFrame: (f) => send(down.push(f)) });
+ *
+ * `retain: false` is what keeps an always-on microphone from growing without
+ * bound; `PcmDownsampler` is the streaming counterpart of the WAV builder's
+ * resample and carries its phase across frames so the output has no seams.
  */
 
 const TARGET_RATE = 16000;
@@ -42,7 +52,22 @@ registerProcessor('mic-capture', MicCaptureProcessor);
 `;
 
 export class MicCapture {
-	constructor() {
+	/**
+	 * @param {object} [options]
+	 * @param {(frame: Float32Array) => void} [options.onFrame]
+	 *        Live capture. Every frame the audio thread produces is handed over
+	 *        at the device's native rate, as it arrives. Used by anything that
+	 *        streams rather than records: the Home Assistant voice satellite
+	 *        (src/home/satellite.js) pushes these straight into a pipeline.
+	 * @param {boolean} [options.retain=true]
+	 *        Keep every frame so `stop()` and `snapshotWav()` can build a WAV.
+	 *        A streaming caller passes false: an always-on satellite that
+	 *        retained its microphone would grow by 5 MB an hour forever, and it
+	 *        never asks for the WAV.
+	 */
+	constructor({ onFrame = null, retain = true } = {}) {
+		this._onFrame = typeof onFrame === 'function' ? onFrame : null;
+		this._retain = retain !== false;
 		this._stream = null;
 		this._ctx = null;
 		this._source = null;
@@ -58,6 +83,15 @@ export class MicCapture {
 
 	get capturing() {
 		return this._started;
+	}
+
+	/**
+	 * The device's native capture rate, known once `start()` has built the audio
+	 * context. A streaming caller needs it to size its resampler, and guessing
+	 * it wrong produces a transcript at the wrong pitch rather than an error.
+	 */
+	get sampleRate() {
+		return this._sourceRate;
 	}
 
 	/** Whether the environment can capture at all (no mic UI on insecure origins). */
@@ -112,8 +146,20 @@ export class MicCapture {
 			if (!this._started) return;
 			// Copy — the worklet transfers a view backed by a reused buffer.
 			const copy = frame instanceof Float32Array ? frame : new Float32Array(frame);
-			this._chunks.push(copy.slice ? copy.slice(0) : new Float32Array(copy));
-			this._length += copy.length;
+			const owned = copy.slice ? copy.slice(0) : new Float32Array(copy);
+			if (this._retain) {
+				this._chunks.push(owned);
+				this._length += owned.length;
+			}
+			// A throw from a subscriber must not kill the capture graph: the
+			// microphone would go silent with no error anywhere near the cause.
+			if (this._onFrame) {
+				try {
+					this._onFrame(owned);
+				} catch {
+					/* a subscriber's failure is its own problem */
+				}
+			}
 		};
 
 		let usedWorklet = false;
@@ -197,6 +243,7 @@ export class MicCapture {
 		if (this._disposed) return;
 		this._disposed = true;
 		this._started = false;
+		this._onFrame = null;
 		try {
 			if (this._node) {
 				this._node.onaudioprocess = null;
@@ -247,16 +294,77 @@ export class MicCapture {
 	}
 }
 
+/**
+ * Streaming version of the conversion above.
+ *
+ * Resampling frame by frame with a stateless call is subtly wrong: 128 native
+ * samples at 48 kHz is 42.67 output samples, and a function that floors that on
+ * every frame drops two thirds of a sample 375 times a second. Over a sentence
+ * that is an audible click track and a transcript that quietly gets worse. This
+ * class carries the fractional read position and one sample of overlap across
+ * calls, so the output is a continuous resample of a continuous input.
+ */
+export class PcmDownsampler {
+	/** @param {number} sourceRate  The AudioContext's native sample rate. */
+	constructor(sourceRate) {
+		this.ratio = Math.max(0.01, sourceRate / TARGET_RATE);
+		this._phase = 0;
+		this._tail = new Float32Array(0);
+	}
+
+	/**
+	 * Convert one frame. Returns little-endian s16 at 16 kHz, mono, ready to be
+	 * put on a wire. An empty result is normal for very short frames.
+	 * @param {Float32Array} frame
+	 * @returns {Int16Array}
+	 */
+	push(frame) {
+		if (!frame?.length) return new Int16Array(0);
+		const src = new Float32Array(this._tail.length + frame.length);
+		src.set(this._tail, 0);
+		src.set(frame, this._tail.length);
+
+		const out = [];
+		let pos = this._phase;
+		// Stop one sample short of the end so the interpolation always has a
+		// right-hand neighbour; the remainder is carried into the next call.
+		while (pos < src.length - 1) {
+			const idx = Math.floor(pos);
+			const frac = pos - idx;
+			const s = src[idx] + (src[idx + 1] - src[idx]) * frac;
+			out.push(Math.max(-32768, Math.min(32767, Math.round(s * 32767))));
+			pos += this.ratio;
+		}
+
+		const consumed = Math.floor(pos);
+		this._phase = pos - consumed;
+		this._tail = src.slice(Math.min(consumed, src.length));
+		return Int16Array.from(out);
+	}
+
+	/** Forget the carried state, e.g. between two separate utterances. */
+	reset() {
+		this._phase = 0;
+		this._tail = new Float32Array(0);
+	}
+}
+
 function codedError(message, code) {
 	const err = new Error(message);
 	err.code = code;
 	return err;
 }
 
-// Linear-interpolating resample of mono Float32 from `inRate` to 16 kHz, then
-// quantize to little-endian s16. Linear interpolation is more than adequate for
-// speech recognition and avoids pulling in a filter library.
-function floatTo16kPcm(samples, inRate) {
+/**
+ * Linear-interpolating resample of mono Float32 from `inRate` to 16 kHz, then
+ * quantize to little-endian s16. Linear interpolation is more than adequate for
+ * speech recognition and avoids pulling in a filter library.
+ *
+ * Exported because streaming callers need the same conversion the WAV builder
+ * uses; see PcmDownsampler below, which is the one to reach for when the audio
+ * arrives in frames rather than all at once.
+ */
+export function floatTo16kPcm(samples, inRate) {
 	if (!samples.length) return new Int16Array(0);
 	const ratio = inRate / TARGET_RATE;
 	const outLen = ratio <= 1 ? samples.length : Math.floor(samples.length / ratio);
