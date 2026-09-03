@@ -76,7 +76,7 @@ new work while those sit unexecuted; they were sequenced deliberately.
 
 | Routine | Cadence | What it does | Backing |
 |---|---|---|---|
-| OSS scout | weekly | Scan npm and GitHub for movement in our dependency frontier (three.js releases, gltf-transform, meshoptimizer, gsplat, model-viewer, Metaplex tooling). Diff against the REUSE-MAP; open a dated addendum with license verdicts. | Manual. No script yet; this is the next routine worth automating. |
+| OSS scout | weekly | Scan npm and GitHub for movement in our dependency frontier (three.js releases, gltf-transform, meshoptimizer, gsplat, model-viewer, TalkingHead). Diff against the REUSE-MAP; open a dated addendum with license verdicts. | Manual. No script yet; this is the next routine worth automating. |
 | Docs drift | weekly | Cross-check `STRUCTURE.md`, `docs/`, and `data/pages.json` against the tree; fix stale rows in place. | `.claude/workflows/docs-drift.js`, `npm run audit:docs` |
 | Gate health | daily | Run the regression gate; on red, bisect and report. Never let the baseline rot. | `npm run gate` |
 | Production sweep | daily | Health, logs, TLS, fleet readiness, live pages, crons, migrations. | the `gcp-triage` skill, `npm run smoke:prod` |
