@@ -404,13 +404,22 @@ export class HomeVoicePanel {
 		};
 		this.el.latency.replaceChildren();
 		for (const [leg, stats] of Object.entries(summary)) {
+			// Each pair is wrapped so the label and its number stay together when the
+			// grid wraps. A bare dt/dd sequence in an auto-fit grid splits them across
+			// rows, which reads as the wrong number against the wrong leg.
+			const pair = document.createElement('div');
+			pair.className = 'hv-leg';
 			const dt = document.createElement('dt');
 			dt.textContent = labels[leg] || leg;
 			const dd = document.createElement('dd');
 			dd.textContent = `${stats.median} ms`;
 			const budget = budgets[leg];
-			if (budget) dd.dataset.over = String(stats.median > budget);
-			this.el.latency.append(dt, dd);
+			if (budget) {
+				dd.dataset.over = String(stats.median > budget);
+				dd.title = `Budget ${budget} ms, worst ${stats.worst} ms over ${stats.count}`;
+			}
+			pair.append(dt, dd);
+			this.el.latency.appendChild(pair);
 		}
 	}
 }

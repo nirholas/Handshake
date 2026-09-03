@@ -342,18 +342,24 @@
 .hv-latency {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
-	gap: var(--space-xs) var(--space-md);
+	gap: var(--space-sm) var(--space-md);
 	margin: 0;
 	font-size: var(--text-sm);
 }
 .hv-latency:empty {
 	display: none;
 }
+.hv-leg {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-3xs);
+	min-width: 0;
+}
 .hv-latency dt {
 	color: var(--ink-dim);
 }
 .hv-latency dd {
-	margin: 0 0 var(--space-sm);
+	margin: 0;
 	font-family: var(--font-mono);
 	color: var(--success);
 }
