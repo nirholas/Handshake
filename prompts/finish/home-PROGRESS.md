@@ -303,3 +303,34 @@ it go grey instead of watching their house vanish. `tests/home-runtime.test.js` 
 belongs to order 14 and landed alongside this work in the same worktree.
 
 **Commits:** this entry, the tests, the reconcile migration and the pool fix.
+
+**Deploy preflight, same session.** Run read-only against HEAD, which moved five times during it.
+Passing: the `build:gcp` chain matches CLAUDE.md byte for byte, `publish:lib` correctly follows the
+`emptyOutDir` frontend build, all 31 `cloudbuild*.yaml` carry a service-account pin (the one
+deviation, `workers/avatar-reconstruction`, pins its own dedicated SA and is safe), the CDN purge
+is still synchronous, and `npm run check:gcloudignore` is clean. Three findings, all verified
+independently before being recorded here:
+
+1. **`data/pages.json` is committed promising three routes whose files are not.** `/voice/home`,
+   `/docs/home-households` and `/docs/home-privacy` are declared, while `pages/voice-home.html`,
+   `docs/home-households.md` and `docs/home-privacy.md` are untracked. A deploy worktree is created
+   at HEAD, so it would not contain them and `check:pages` would fail the build at its last step.
+   `check:dist` would not catch it: it only validates the `criticalStaticPages` subset.
+2. **Two migrations are applied to the production database but untracked in git**
+   (`20260903160000_home_plan_overrides.sql`, `20260903200000_home_satellites.sql`). This is the
+   inverse of what `db:check` was built to catch, so it reports clean: the schema is ahead of
+   committed source, and rebuilding the database from git would not reproduce production.
+3. **Disk is at 90 percent with 13 GB free and nothing reclaimable.** `npm run clean:worktrees`
+   keeps all 8 worktrees because 7 hold uncommitted files. The 2026-08-04 failure mode (a
+   `git worktree add` dying mid-checkout on a full disk) is close enough to plan around.
+
+Corrected from the preflight report: `public/models/` is NOT a git-hygiene risk. The gitignore
+committed in `c2b663cfb` covers it, and a `git add -A` sweeps 0 files from it (measured with a
+throwaway index). Only `true/` is exposed, and only 2 files: it is shell-redirect debris in the
+repo root (`clips/`, `rejected/`, `checkpoint.json`) that its owning agent should delete.
+
+Also corrected: the `tests/api/healthz*.test.js` collection failures are not a production
+cold-start break. `api/_lib/db.js` exports `sql` as a Proxy whose tagged-template form returns a
+lazy fragment and never touches Neon, so `store.js`'s top-level `SAFE_COLUMNS` fragment is the
+house idiom. Those tests mock `db.js` with a `sql` that throws on any call, and the lane newly
+pulled `api/_lib/home/*` into the healthz import graph. Broken tests, working handler.
