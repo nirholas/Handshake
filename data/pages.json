@@ -2671,6 +2671,14 @@
 					"added": "2026-09-03"
 				},
 				{
+					"path": "/docs/home-security",
+					"title": "Docs \u00b7 Home security",
+					"description": "The threat model for a connected house, written about a building rather than a database: what each actor can do and what stops them, why the confirmation gate is the load-bearing control and prompt filtering is depth, the eleven checks that run with every build, the SSRF guard every server-side dial goes through and why a hostname check is not one, the prompt-injection proof that ends by asking a real lock whether it opened, and the residuals accepted on purpose.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-09-03"
+				},
+				{
 					"path": "/docs/home-privacy",
 					"title": "Docs · Home privacy and retention",
 					"description": "Everything three.ws stores about a home you connect, why, for how long, and what removes it: the full inventory, the promise that room names and device states are never persisted, the 90-day action-log window and the control that changes it, the export and deletion paths, the logging rules, and the disclosure text shown at connect and at the voice opt-in.",
