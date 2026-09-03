@@ -93,6 +93,18 @@ function fakeClock(start = 1_000_000) {
 	};
 }
 
+/**
+ * The address resolution seam.
+ *
+ * Since the SSRF guard landed, `createHomeRuntime` resolves a home's hostname
+ * before it dials it and refuses anything that lands on a private address. That
+ * is correct and it is not what these tests are about: `home.example.com` does
+ * not resolve at all, so every pool test in this file would fail on DNS rather
+ * than on the pool. The seam stands in for the guard here and ONLY here; the
+ * production default is asserted separately in tests/home-security.test.js.
+ */
+const resolveDial = async (baseUrl) => ({ host: new URL(baseUrl).hostname, addresses: [{ address: '203.0.113.10', family: 4 }], secure: baseUrl.startsWith('https:') });
+
 /** The store, reduced to the four reads the runtime actually performs. */
 function storeDeps(overrides = {}) {
 	const handshakes = [];
@@ -114,6 +126,7 @@ function storeDeps(overrides = {}) {
 			handshakes.push({ id, ...update });
 			return null;
 		}),
+		resolveDial,
 		...overrides,
 	};
 	deps.handshakes = handshakes;

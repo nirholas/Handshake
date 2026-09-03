@@ -48,6 +48,29 @@ export class HomeUrlError extends Error {
 /** Refusals that mean "your house is on a LAN", not "you are attacking us". */
 export const REACHABILITY_CODES = new Set(['private_address', 'unroutable_host']);
 
+/**
+ * The one way a private address is ever dialable, and it is off unless BOTH of
+ * these are true at once:
+ *
+ *   * this process is not production (`NODE_ENV !== 'production'`), and
+ *   * `HOME_ALLOW_LOCAL_INSTANCE=1` is set in the environment.
+ *
+ * It exists because the Home campaign's own instruction is "never mock Home
+ * Assistant, run one", and the way you run one is
+ * `docker run -p 8123:8123 ghcr.io/home-assistant/home-assistant:stable`, which
+ * lands on loopback. Without this seam no part of this surface could ever be
+ * exercised against a real instance on a developer machine, and the alternative
+ * people reach for (publishing their test Home Assistant, token and all, to the
+ * internet so it passes the guard) is far worse than the thing the guard
+ * prevents.
+ *
+ * Two properties keep it from being a hole: it is read once at module load, so
+ * a request cannot turn it on; and the production check is on NODE_ENV rather
+ * than on the flag alone, so setting the flag on the live service does nothing.
+ */
+const ALLOW_LOCAL_INSTANCE =
+	process.env.NODE_ENV !== 'production' && process.env.HOME_ALLOW_LOCAL_INSTANCE === '1';
+
 // The connect probe talks to a home that may be a residential uplink on the far
 // side of a reverse proxy. Ten seconds is long enough for that and short enough
 // that a black-holed address cannot pin a request for its whole lifetime.
@@ -70,7 +93,7 @@ export async function assertDialableHomeUrl(rawBaseUrl, { allowHttp = false } = 
 	// as a scheme complaint. The order matters for the operator reading the log,
 	// and for the caller branching on REACHABILITY_CODES.
 	const literalHost = literalHostOf(rawBaseUrl);
-	if (literalHost) {
+	if (literalHost && !ALLOW_LOCAL_INSTANCE) {
 		const family = literalHost.includes(':') ? 6 : 4;
 		if (isPrivateAddress(literalHost, family)) {
 			throw new HomeUrlError(
@@ -82,7 +105,7 @@ export async function assertDialableHomeUrl(rawBaseUrl, { allowHttp = false } = 
 
 	let normalized;
 	try {
-		normalized = normalizeBaseUrl(rawBaseUrl, { requireSecure: !allowHttp });
+		normalized = normalizeBaseUrl(rawBaseUrl, { requireSecure: !allowHttp && !ALLOW_LOCAL_INSTANCE });
 	} catch (err) {
 		throw new HomeUrlError('bad_url', err?.message || 'That is not a Home Assistant URL.');
 	}
@@ -91,7 +114,9 @@ export async function assertDialableHomeUrl(rawBaseUrl, { allowHttp = false } = 
 
 	let addresses;
 	try {
-		addresses = await resolvePublicHost(url.hostname);
+		addresses = ALLOW_LOCAL_INSTANCE
+			? await resolveAnyHost(url.hostname)
+			: await resolvePublicHost(url.hostname);
 	} catch (err) {
 		throw toHomeUrlError(err, url.hostname);
 	}
@@ -104,6 +129,18 @@ export async function assertDialableHomeUrl(rawBaseUrl, { allowHttp = false } = 
 		secure: normalized.secure,
 		addresses,
 	};
+}
+
+/**
+ * Resolve a host without the public-address requirement. Reached ONLY from the
+ * development seam above, and it still resolves and still pins: a local instance
+ * gets the same check-then-connect protection as a remote one, it is simply
+ * allowed to land on 127.0.0.1.
+ */
+async function resolveAnyHost(host) {
+	const { lookup } = await import('node:dns/promises');
+	const resolved = await lookup(host, { all: true });
+	return resolved.map((r) => ({ address: r.address, family: r.family }));
 }
 
 /**

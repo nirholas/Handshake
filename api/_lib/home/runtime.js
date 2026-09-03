@@ -85,6 +85,14 @@ const SWEEP_MS = 30_000;
  * @param {number} [deps.maxConnections]
  * @param {number} [deps.idleMs]
  * @param {number} [deps.connectTimeoutMs]
+ * @param {(baseUrl: string) => Promise<{host: string, addresses: object[], secure: boolean}>} [deps.resolveDial]
+ *   How a base URL becomes a pinned set of addresses. The default is the SSRF
+ *   guard and production must never be given anything else; it is a seam for the
+ *   same reason `getConnection` is one, so a harness can drive this runtime
+ *   against a container on 127.0.0.1 (which the guard correctly refuses) without
+ *   the alternative of not testing the runtime at all. `defaultResolveDial` below
+ *   is exported and asserted in tests/home-security.test.js, so the default
+ *   cannot be quietly swapped.
  */
 export function createHomeRuntime(deps = {}) {
 	const createBridge = deps.createBridge || ((input) => new HomeBridge(input));
@@ -96,6 +104,7 @@ export function createHomeRuntime(deps = {}) {
 	const maxConnections = deps.maxConnections ?? readMaxConnections();
 	const idleMs = deps.idleMs ?? IDLE_MS;
 	const connectTimeoutMs = deps.connectTimeoutMs ?? CONNECT_TIMEOUT_MS;
+	const resolveDial = deps.resolveDial || defaultResolveDial;
 	/**
 	 * How a relayed home is reached, injectable so a test can drive the relay
 	 * path without a relay. Most houses only exist on a LAN, so this is not the
@@ -506,13 +515,7 @@ export function createHomeRuntime(deps = {}) {
 	 * explain that one.
 	 */
 	async function resolveDialPin(baseUrl) {
-		try {
-			const dial = await assertDialableHomeUrl(baseUrl);
-			return { host: dial.host, addresses: dial.addresses, secure: dial.secure };
-		} catch (cause) {
-			if (!(cause instanceof HomeUrlError)) throw cause;
-			throw new HomeBridgeError(ERR.UNREACHABLE, cause.message, cause);
-		}
+		return resolveDial(baseUrl);
 	}
 
 	function openEntry({ homeId, userId, pooled }) {
@@ -731,6 +734,28 @@ export function createHomeRuntime(deps = {}) {
 	}
 
 	return { acquire, withHome, snapshot, subscribe, streamCount, evictIdle, stats, closeHome, closeAll, admitAction, withAction, readPlan, admission };
+}
+
+/**
+ * The only way a base URL is allowed to become an address in production.
+ *
+ * Exported so the security suite can assert that this, and nothing else, is
+ * what `createHomeRuntime` uses when no seam is supplied.
+ *
+ * A refusal is reported as UNREACHABLE rather than as a fault: from the owner's
+ * side, a house that has moved onto a LAN-only name looks exactly like a house
+ * that is offline, and the connect screen already knows how to explain that one.
+ *
+ * @param {string} baseUrl
+ */
+export async function defaultResolveDial(baseUrl) {
+	try {
+		const dial = await assertDialableHomeUrl(baseUrl);
+		return { host: dial.host, addresses: dial.addresses, secure: dial.secure };
+	} catch (cause) {
+		if (!(cause instanceof HomeUrlError)) throw cause;
+		throw new HomeBridgeError(ERR.UNREACHABLE, cause.message, cause);
+	}
 }
 
 function readMaxConnections() {

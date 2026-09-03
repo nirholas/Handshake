@@ -173,13 +173,17 @@ function wav16(samples, rate) {
 
 // ── browser plumbing ────────────────────────────────────────────────────────
 
-async function launch(audioPath) {
+async function launch(audioPath, { loopAudio = true } = {}) {
 	const chromiumArgs = [
 		'--use-fake-device-for-media-stream',
 		'--use-fake-ui-for-media-stream',
 		'--autoplay-policy=no-user-gesture-required',
 	];
-	if (audioPath) chromiumArgs.push(`--use-file-for-fake-audio-capture=${audioPath}%noloop`);
+	// The fake capture file starts the moment getUserMedia opens, and the models
+	// take a few seconds to arrive on a cold cache. Looping means the utterance
+	// comes round again rather than the whole scenario hinging on a guess about
+	// how long the download took.
+	if (audioPath) chromiumArgs.push(`--use-file-for-fake-audio-capture=${audioPath}${loopAudio ? '' : '%noloop'}`);
 	const browser = await chromium.launch({ headless: !HEADED, args: chromiumArgs });
 	const context = await browser.newContext({ permissions: ['microphone'] });
 	const page = await context.newPage();
@@ -241,8 +245,21 @@ async function optIn(page) {
 	});
 }
 
-const waitForEvent = (page, type, timeout = 45000) =>
-	page.waitForFunction((t) => window.__hv.events.some((e) => e.type === t), type, { timeout, polling: 50 });
+async function waitForEvent(page, type, timeout = 45000) {
+	try {
+		await page.waitForFunction((t) => window.__hv.events.some((e) => e.type === t), type, { timeout, polling: 50 });
+	} catch (err) {
+		const seen = await page.evaluate(() => ({
+			state: window.homeVoice.loop.state,
+			wakeReady: !!window.homeVoice.loop._wake?.ready,
+			vadRunning: !!window.homeVoice.loop._vad?.running,
+			peakScore: Math.max(0, ...window.__hv.events.filter((e) => e.type === 'wake-score').map((e) => e.score)),
+			scores: window.__hv.events.filter((e) => e.type === 'wake-score').length,
+			types: [...new Set(window.__hv.events.map((e) => e.type))],
+		}));
+		throw new Error(`waiting for "${type}" timed out. Loop state: ${JSON.stringify(seen)}`);
+	}
+}
 
 const events = (page) => page.evaluate(() => window.__hv.events);
 const legs = (page) => page.evaluate(() => window.homeVoice.loop.latencySummary());
@@ -451,7 +468,7 @@ async function scenarioGuarded({ clip, expectRedeemed, label }) {
 }
 
 async function scenarioMute() {
-	const { browser, page } = await launch(CLIPS.silence.path);
+	const { browser, page } = await launch(CLIPS.silence.path, { loopAudio: false });
 	try {
 		await bootPage(page);
 		await optIn(page);

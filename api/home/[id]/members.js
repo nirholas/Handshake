@@ -35,11 +35,18 @@ import { cors, error, json, method, rateLimited, readJson, wrap } from '../../_l
 import { limits } from '../../_lib/rate-limit.js';
 import { isUuid } from '../../_lib/validate.js';
 
-/** The invite link a new member follows. Absolute, because it is emailed. */
+/**
+ * The invite link a new member follows. Absolute, because it is emailed.
+ *
+ * `/smart-home/join` is a real route with a real page behind it (pages/
+ * smart-home-join.html): the link tells the holder what they were invited to
+ * before it asks them to sign in, and sends them through the existing register
+ * and login flow and back to the same link if they need an account.
+ */
 function inviteUrl(req, token) {
 	const host = req.headers['x-forwarded-host'] || req.headers.host || 'three.ws';
 	const proto = /^localhost|^127\./.test(String(host)) ? 'http' : 'https';
-	return `${proto}://${host}/home/join?invite=${encodeURIComponent(token)}`;
+	return `${proto}://${host}/smart-home/join?invite=${encodeURIComponent(token)}`;
 }
 
 /** "an admin" / "a member": role names are user-facing copy, not identifiers. */

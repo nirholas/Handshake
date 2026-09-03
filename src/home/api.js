@@ -91,6 +91,54 @@ export function grantEntity(id, { entityId, expiresAt = null }) {
 	return request(`/api/home/${encodeURIComponent(id)}/grants`, { method: 'POST', body: { entityId, expiresAt } });
 }
 
+// The household: roles, scopes and invitations.
+//
+// Every one of these answers 403 `role_forbidden` when the caller's role is not
+// allowed to do it, and 404 when they are not in the household at all, so the UI
+// renders what the server says rather than deciding for itself which buttons a
+// role should be shown.
+
+/** The roster, the outstanding invitations, and this caller's own role. */
+export function listHousehold(id, signal) {
+	return request(`/api/home/${encodeURIComponent(id)}/members`, { signal });
+}
+
+/**
+ * Invite an email address to a role.
+ *
+ * The response carries `invite_url` exactly once. The token behind it is stored
+ * as a hash, so a link that is not copied now cannot be recovered later, and the
+ * UI has to show it at this moment or not at all.
+ */
+export function inviteToHousehold(id, { email, role, scope = null }) {
+	return request(`/api/home/${encodeURIComponent(id)}/members`, { method: 'POST', body: { email, role, ...(scope ? { scope } : {}) } });
+}
+
+/** Change what somebody may do, and what they may see. */
+export function setHouseholdRole(id, { userId, role, scope = undefined }) {
+	return request(`/api/home/${encodeURIComponent(id)}/members`, { method: 'PATCH', body: { user_id: userId, role, ...(scope === undefined ? {} : { scope }) } });
+}
+
+/** Remove somebody, and every standing allowance they left behind with them. */
+export function removeFromHousehold(id, userId) {
+	return request(`/api/home/${encodeURIComponent(id)}/members`, { method: 'DELETE', body: { user_id: userId } });
+}
+
+/** Withdraw an invitation nobody has used yet. */
+export function revokeHouseholdInvite(id, inviteId) {
+	return request(`/api/home/${encodeURIComponent(id)}/members`, { method: 'DELETE', body: { invite_id: inviteId } });
+}
+
+/** What an invite link is for, without spending it. No account needed. */
+export function inspectInvite(token, signal) {
+	return request(`/api/home/invites/${encodeURIComponent(token)}`, { signal });
+}
+
+/** Spend it. Requires an account; answers 401 with the invite intact if there is none. */
+export function acceptInvite(token) {
+	return request(`/api/home/invites/${encodeURIComponent(token)}`, { method: 'POST' });
+}
+
 /**
  * The live stream.
  *

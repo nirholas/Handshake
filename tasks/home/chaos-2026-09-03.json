@@ -1,0 +1,56 @@
+{
+  "ranAt": "2026-09-03T03:51:37.310Z",
+  "fleetImage": "ghcr.io/home-assistant/home-assistant:stable",
+  "houses": 12,
+  "results": [
+    {
+      "scenario": 1,
+      "passed": false,
+      "error": "127.0.0.1 is a private address. A three.ws server on the public internet cannot route to it. Use your remote https URL, or connect the add-on so your house dials out to us instead.",
+      "stack": "HomeBridgeError: 127.0.0.1 is a private address. A three.ws server on the public internet cannot route to it. Use your remote https URL, or connect the add-on so your house dials out to us instead.\n    at resolveDialPin (file:///workspaces/three.ws/api/_lib/home/runtime.js:514:10)\n    at async file:///workspaces/three.ws/api/_lib/home/runtime.js:548:54\n    at async acquire (file:///workspaces/three.ws/api/_lib/home/runtime.js:192:4)\n    at async Object.subscribe (file:///workspaces/three.ws/api/_lib/home/runtime.js:275:15)\n    at async scenarioOfflineMidSession (file:///workspaces/three.ws/scripts/home-chaos.mjs:228:15)\n    at async main (file:///workspaces/three.ws/scripts/home-chaos.mjs:851:20)",
+      "durationMs": 3
+    },
+    {
+      "scenario": 2,
+      "passed": false,
+      "error": "127.0.0.1 is a private address. A three.ws server on the public internet cannot route to it. Use your remote https URL, or connect the add-on so your house dials out to us instead.",
+      "stack": "HomeBridgeError: 127.0.0.1 is a private address. A three.ws server on the public internet cannot route to it. Use your remote https URL, or connect the add-on so your house dials out to us instead.\n    at resolveDialPin (file:///workspaces/three.ws/api/_lib/home/runtime.js:514:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///workspaces/three.ws/api/_lib/home/runtime.js:548:54\n    at async Object.acquire (file:///workspaces/three.ws/api/_lib/home/runtime.js:192:4)\n    at async scenarioFlap (file:///workspaces/three.ws/scripts/home-chaos.mjs:281:10)\n    at async main (file:///workspaces/three.ws/scripts/home-chaos.mjs:851:20)",
+      "durationMs": 10
+    },
+    {
+      "scenario": 3,
+      "passed": false,
+      "error": "127.0.0.1 is a private address. A three.ws server on the public internet cannot route to it. Use your remote https URL, or connect the add-on so your house dials out to us instead.",
+      "stack": "HomeBridgeError: 127.0.0.1 is a private address. A three.ws server on the public internet cannot route to it. Use your remote https URL, or connect the add-on so your house dials out to us instead.\n    at resolveDialPin (file:///workspaces/three.ws/api/_lib/home/runtime.js:514:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///workspaces/three.ws/api/_lib/home/runtime.js:548:54\n    at async Object.acquire (file:///workspaces/three.ws/api/_lib/home/runtime.js:192:4)\n    at async scenarioTokenRevoked (file:///workspaces/three.ws/scripts/home-chaos.mjs:351:15)\n    at async main (file:///workspaces/three.ws/scripts/home-chaos.mjs:851:20)",
+      "durationMs": 1
+    },
+    {
+      "scenario": 4,
+      "passed": false,
+      "error": "timed out after 60000ms waiting for the child to report a live stream",
+      "stack": "Error: timed out after 60000ms waiting for the child to report a live stream\n    at until (file:///workspaces/three.ws/scripts/home-chaos.mjs:186:8)\n    at async scenarioInstanceRecycled (file:///workspaces/three.ws/scripts/home-chaos.mjs:459:2)\n    at async main (file:///workspaces/three.ws/scripts/home-chaos.mjs:851:20)",
+      "durationMs": 60450
+    },
+    {
+      "scenario": 5,
+      "passed": false,
+      "error": "127.0.0.1 is a private address. A three.ws server on the public internet cannot route to it. Use your remote https URL, or connect the add-on so your house dials out to us instead.",
+      "stack": "HomeBridgeError: 127.0.0.1 is a private address. A three.ws server on the public internet cannot route to it. Use your remote https URL, or connect the add-on so your house dials out to us instead.\n    at resolveDialPin (file:///workspaces/three.ws/api/_lib/home/runtime.js:514:10)\n    at async file:///workspaces/three.ws/api/_lib/home/runtime.js:548:54\n    at async Object.acquire (file:///workspaces/three.ws/api/_lib/home/runtime.js:192:4)\n    at async scenarioDatabaseDown (file:///workspaces/three.ws/scripts/home-chaos.mjs:542:15)\n    at async main (file:///workspaces/three.ws/scripts/home-chaos.mjs:851:20)",
+      "durationMs": 27
+    },
+    {
+      "scenario": 6,
+      "passed": false,
+      "error": "127.0.0.1 is a private address. A three.ws server on the public internet cannot route to it. Use your remote https URL, or connect the add-on so your house dials out to us instead.",
+      "stack": "HomeBridgeError: 127.0.0.1 is a private address. A three.ws server on the public internet cannot route to it. Use your remote https URL, or connect the add-on so your house dials out to us instead.\n    at resolveDialPin (file:///workspaces/three.ws/api/_lib/home/runtime.js:514:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///workspaces/three.ws/api/_lib/home/runtime.js:548:54\n    at async Object.acquire (file:///workspaces/three.ws/api/_lib/home/runtime.js:192:4)\n    at async scenarioSlowHouse (file:///workspaces/three.ws/scripts/home-chaos.mjs:629:20)\n    at async main (file:///workspaces/three.ws/scripts/home-chaos.mjs:851:20)",
+      "durationMs": 20
+    },
+    {
+      "scenario": 7,
+      "passed": false,
+      "error": "127.0.0.1 is a private address. A three.ws server on the public internet cannot route to it. Use your remote https URL, or connect the add-on so your house dials out to us instead.",
+      "stack": "HomeBridgeError: 127.0.0.1 is a private address. A three.ws server on the public internet cannot route to it. Use your remote https URL, or connect the add-on so your house dials out to us instead.\n    at resolveDialPin (file:///workspaces/three.ws/api/_lib/home/runtime.js:514:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///workspaces/three.ws/api/_lib/home/runtime.js:548:54\n    at async Object.acquire (file:///workspaces/three.ws/api/_lib/home/runtime.js:192:4)\n    at async scenarioLargeHouseUpdateRate (file:///workspaces/three.ws/scripts/home-chaos.mjs:713:15)\n    at async main (file:///workspaces/three.ws/scripts/home-chaos.mjs:851:20)",
+      "durationMs": 1
+    }
+  ]
+}

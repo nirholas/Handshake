@@ -63,12 +63,16 @@ function homeCard(home, { onDisconnect }) {
 	main.append(statusLine(home));
 
 	const actions = el('div', 'hm-card-actions');
+	// The live 3D house is the product, so it leads. "Open" beside it is the
+	// settings view for the same home: grants, the action log, disconnect.
+	const scene = el('a', 'hm-btn', 'Live 3D home');
+	scene.href = `/home/${encodeURIComponent(home.id)}`;
 	const open = el('a', 'hm-btn hm-btn-ghost', 'Open');
 	open.href = `/smart-home/${encodeURIComponent(home.id)}`;
 	const drop = el('button', 'hm-btn hm-btn-danger', 'Disconnect');
 	drop.type = 'button';
 	drop.addEventListener('click', () => confirmDisconnect(card, home, onDisconnect));
-	actions.append(open, drop);
+	actions.append(scene, open, drop);
 
 	card.append(main, actions);
 	li.append(card);
