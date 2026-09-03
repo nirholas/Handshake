@@ -46,7 +46,6 @@ observable health, so 01 to 03 come first.
 | 08 | [OKX chat bot: move off the codespace](backlog-08-okx-chat-bot-always-on.md) | nothing | one email OTP login |
 | 09 | [Telegram bots: durable hosting for both feeds](backlog-09-telegram-bots-durability.md) | **done**, verified live 2026-09-02 | clear the commit gate on its file update |
 | 10 | [x402scan listing: finish the last three steps](backlog-10-x402scan-listing.md) | the deploy (the facilitator listing itself is live) | approve the deploy, then one wallet signature to re-register the origin |
-| 11 | [Agent index: bring the on-chain crawl back from `down`](backlog-11-agent-index-lag.md) | one production deploy (all code, tests, docs and the migration landed 2026-09-02) | approve the deploy; the commands are in [PROGRESS.md](backlog-PROGRESS.md) |
 
 ---
 
@@ -112,7 +111,7 @@ Work orders 07, 08, 09, and 10 reference crypto projects other than `$THREE`
 (a second chain, a marketplace, a launchpad, a registry). Building and running
 them is fine. **Committing a diff that names any of them requires explicit owner
 approval first**, per CLAUDE.md. Each of those files repeats the warning at the
-top. The other six touch only platform infrastructure and `$THREE`.
+top. The other two touch only platform infrastructure and `$THREE`.
 
 ## The diagnosis reflex that keeps being right
 

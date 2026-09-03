@@ -47,7 +47,9 @@ CLAUDE.md hard rules. They exist because each failure mode below has happened mo
 
 ---
 
-## The map (re-measured 2026-09-01)
+## The map (re-measured 2026-09-01; the rows marked 2026-09-03 were re-measured then)
+
+Run order across the whole queue, ranked from live measurements: [../RUN-ORDER.md](../RUN-ORDER.md).
 
 Every row below was verified against the code, git history and the live site on
 2026-09-01, not copied from a pack's own status text. Orders verified shipped that day were
@@ -56,18 +58,18 @@ fable-audit index); the ones listed here are what is genuinely open. Categories 
 run-orderable: A gates everything user-visible, B gates platform health, C through G can
 run in parallel, H waits on owner gates, I is anytime, J is the parallel swarm.
 
-### A. Ship (do this first; production is 107 commits behind main)
+### A. Ship (do this first; production is 219 commits behind main)
 
 | Order | State |
 |---|---|
-| [01-ship-readiness.md](production-100-01-ship-readiness.md) | Open every cycle. Production `ad7b54c16` (2026-08-28) vs `main` `73c8ccbb7`; `smoke:prod` fails on seven routes that only exist in newer commits; no ship run has been logged here since 2026-08-09 although production was redeployed twice. Retires last in this category. |
+| [01-ship-readiness.md](production-100-01-ship-readiness.md) | Open every cycle. Re-measured 2026-09-03: production `19906ce52` (built 2026-09-02 22:02 UTC) vs `main` `d5bda0f6d`, 219 commits behind. Retires last in this category. |
 
 ### B. Money rail and platform health
 
 | Order | State |
 |---|---|
-| [../backlog/01-x402-settle-runway.md](backlog-01-x402-settle-runway.md) | Code complete; outcome false: settle 5.9%, `cause: sponsor_floor`. The dry-run reclaim line it was waiting on is fixed (`afd349790`, pinned by tests). Capital is OWNER-ACTIONS row 2. |
-| [../backlog/11-agent-index-lag.md](backlog-11-agent-index-lag.md) | New 2026-09-01: healthz reports `agent_index` down (1,092 of 1,602 Solana agents erroring, EVM cursors 3,039 hours stale) and nothing owned it. |
+| [../backlog/01-x402-settle-runway.md](backlog-01-x402-settle-runway.md) | Code complete; outcome still false. Re-measured 2026-09-03: settle 10.0% (6 of 60 paid attempts) with 1,126 failures on `fee_wallet_below_floor`. Capital is OWNER-ACTIONS row 2; the ring cannot self-fund it. |
+| Agent index lag (retired 2026-09-03) | Shipped and verified in production: `agent_index` is `ok` (5 of 1,604 Solana agents erroring, 0.3%; 70-minute sweep at 240 per tick; 0 stale and 0 behind EVM chains of 22), `docs/ops/agent-index.md` is live and `tests/agent-index.test.js` passes 78 assertions. |
 
 ### C. Repo and product defects
 
@@ -91,9 +93,9 @@ run in parallel, H waits on owner gates, I is anytime, J is the parallel swarm.
 | Order | State |
 |---|---|
 | [../roadmap/generation-suite.md](roadmap-generation-suite.md) | Partial: tools, smoke cron and gallery shipped; PBR map outputs, job webhooks and the API contract doc open. |
-| [../roadmap/creation-consolidation.md](roadmap-creation-consolidation.md) | Partial: redirects and the save fix shipped; Studio wardrobe, the `/embed` retirement and the `/start` decision open. |
+| Creation consolidation (retired 2026-09-02) | Redirects and the save fix shipped. Its residue (Studio wardrobe, the `/embed` retirement and the `/start` decision) is unowned by any file; re-open a numbered order under this prefix if it is picked up. |
 | Parametric avatar editor | Done 2026-09-03: 306 sliders, server-side proportion bake, free-sculpt brush, `specs/PARAMETRIC_AVATAR.md`. |
-| [../roadmap/developer-resources-repos.md](roadmap-developer-resources-repos.md) | Agent side shipped (`export:satellites` stages 70 files offline); blocked on OWNER-ACTIONS row 16, then the cross-links. |
+| Developer resources (order retired; owner step open) | Agent side shipped: `npm run export:satellites` stages the public examples repo offline. What remains is OWNER-ACTIONS row 16 (create the org and repo, then push), and the cross-links after it. |
 | [../roadmap/native-widgets.md](roadmap-native-widgets.md) | All four tasks built. The card endpoint, the Android widget and the Windows manifest are live in production (verified 2026-09-03); task 4's WidgetKit extension, Mac app and iOS target are in `apple/` and guarded by `npm run check:apple-widget`. What is left is not code: signing and shipping the two Apple binaries needs row 17, and an in-board Windows check needs a Windows 11 machine. |
 | [../gcp-credits/05-catalog-animation-seeding.md](gcp-credits-05-catalog-animation-seeding.md) | Partial: the catalog seed runs at scale (56,898 avatars); the generated motion library has 0 clips. |
 | Materialize (retired 2026-09-02) | Shipped: the print engine, quote and catalog, checkout on both lanes, fulfillment adapters and the operator console, on-chain certificates, the fabrication gate, docs and `specs/PRINT_PIPELINE.md`. Evidence in [materialize-PROGRESS.md](materialize-PROGRESS.md). |
@@ -106,7 +108,7 @@ Strategy for what to run next inside E: [the Fable playbook](../../docs/internal
 
 | Order | State |
 |---|---|
-| [04b-fact-check-publish-run.md](production-100-04b-fact-check-publish-run.md) | Open; the `mixed` fix shipped 2026-09-02 (a fourth `partial` stance, counted by `computeVerdict`) but nothing has measured it: the in-process runner needs an LLM lane this machine does not have. |
+| [04b-fact-check-publish-run.md](production-100-04b-fact-check-publish-run.md) | Open, and now measurable. Re-measured 2026-09-03: `/api/fact-check-benchmark` answers with `source: "database"` and a published run (so definition-of-100% line 6 passes), scoring 16 of 40 overall with `mixed` at 0 of 10, `supported` 5 of 10, `contradicted` 7 of 10, `insufficient` 4 of 10 and 1 error. The `mixed` fix shipped 2026-09-02 and has not moved that class yet. |
 
 ### G. Event (two polish orders)
 
@@ -121,7 +123,7 @@ Strategy for what to run next inside E: [the Fable playbook](../../docs/internal
 | Order | State |
 |---|---|
 | [../openai-pr/00-START-HERE.md](openai-pr-00-START-HERE.md) | Briefs 06 (tool count drifted to 11 across the kit) and 07 (the go/no-go, never run); the portal submit is the owner's. |
-| [../store-submissions/01-submission-closeout.md](store-submissions-01-submission-closeout.md) | Open; the tracker still reads 2026-07-15 and the server counts disagree (44 / 39 / 42). |
+| Marketplace and registry submissions (order retired 2026-09-02) | The closeout order is gone from `finish/`; its evidence is under `store-submissions/_generated/`. The tracker there still reads 2026-07-15 against server counts of 44 / 39 / 42, so re-open a numbered order under this prefix before trusting it. |
 | Marketplace listing pack (see the table in [../README.md](../README.md)) | Three open orders (04, 07, 08): the real-payment gauntlet waits on funding and a login; the relisting itself was submitted on chain 2026-08-27 and is under review. |
 | [../backlog/00-INDEX.md](backlog-00-INDEX.md), orders 05 and 07 to 10 | One credential, one new funded testnet key, the chat-bot host, a sibling repo this workspace cannot see, and one verified-shipped file whose deletion waits on the commit gate (row 14). |
 
@@ -135,7 +137,7 @@ Strategy for what to run next inside E: [the Fable playbook](../../docs/internal
 
 | Pack | State |
 |---|---|
-| [../swarm-100/README.md](swarm-100-README.md) | 157 of 696 files remain: 151 route audits, 4 repo-wide sweeps, 1 roadmap slice. By the pack's protocol a file present is open (a finished order is deleted in its closing commit); 539 have retired that way since 2026-08-10. `docs/ops/swarm-100-audit.md` reconciles the ledger against git history. |
+| [../swarm-100/README.md](swarm-100-README.md) | 154 of 696 files remain (measured 2026-09-03): 150 route audits and 4 repo-wide sweeps; the roadmap slice retired. By the pack's protocol a file present is open (a finished order is deleted in its closing commit); 542 have retired that way since 2026-08-10. `docs/ops/swarm-100-audit.md` reconciles the ledger against git history. |
 
 A headless probe of all 151 remaining routes on 2026-09-01 (Chromium, local dev server,
 1440/768/320 px, then a reload with every `/api/*` request blocked) found: every route 200

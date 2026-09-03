@@ -1,7 +1,7 @@
 # Run order: which work order to paste next
 
-Everything open lives in [finish/](finish/) as one flat folder of 198 work orders (150 route
-audits + 48 everything else). That folder tells you what is open; it does not tell you what
+Everything open lives in [finish/](finish/) as one flat folder of 197 work orders (150 route
+audits + 47 everything else). That folder tells you what is open; it does not tell you what
 matters. This file ranks it.
 
 **Measured 2026-09-03**, not copied from any pack's status text:
@@ -14,7 +14,7 @@ matters. This file ranks it.
 | `curl -s https://three.ws/api/healthz` | `subsystems.status: down` (10 ok, 2 down, 1 degraded) |
 | down | `x402_settle` (settle 10.0%, 6/60 paid attempts, 1126 `fee_wallet_below_floor`), the marketplace chat-bot subsystem (heartbeat 1193 min old) |
 | degraded | `sniper` (4 of 11 wallets starved) |
-| recovered since the last map | `agent_index` is now **ok** (2 of 1604 agents erroring, 34m median lag) |
+| recovered since the last map | `agent_index` is now **ok** (5 of 1,604 agents erroring, 35m median lag, 0 stale EVM chains), so its order was verified and retired on 2026-09-03 |
 
 Re-run those five commands before trusting this file. Ranking rule used throughout: a live
 production defect outranks an unshipped fix, an unshipped fix outranks a new feature, and
@@ -36,10 +36,9 @@ The tier is the priority. Inside a tier, the order of the rows is the order to r
 
 | Order | Why now (measured) | Gate |
 |---|---|---|
-| [finish/backlog-11-agent-index-lag.md](finish/backlog-11-agent-index-lag.md) | **Verify and retire, do not re-run.** Its premise (1,092 of 1,602 agents erroring) is gone: healthz reports `agent_index` ok with 2 erroring. Confirm against code, delete the file, log it. 10 minutes. | None. |
 | [finish/swarm-100-sweep-console.md](finish/swarm-100-sweep-console.md) | The console sweep still exits 1, and its root causes (`draco_decoder.wasm` 404 on every 3D page, `/fees` logging seven 404s) are the same defects that make ~29 of the 150 route audits fail. Fixing the shared causes once retires route orders in bulk. | None. |
 | [finish/fix-queue-03-cron-drift-garment-sweep.md](finish/fix-queue-03-cron-drift-garment-sweep.md) | P1 silent failure: a cron declared in `vercel.json` has never fired in production. Nothing errors, the job just never runs. | Needs a live `gcloud` read. The auth failure here is intermittent, not standing (row 15); retry before parking it. |
-| [finish/production-100-04b-fact-check-publish-run.md](finish/production-100-04b-fact-check-publish-run.md) | Line 6 of the campaign's own definition of 100% (`/api/fact-check-benchmark` serving a published run) is the only one nothing has attempted. The `mixed` fix shipped 2026-09-02 and has never been measured. | Needs an LLM lane; use Vertex (pre-approved) rather than waiting on row 5. |
+| [finish/production-100-04b-fact-check-publish-run.md](finish/production-100-04b-fact-check-publish-run.md) | Re-measured 2026-09-03: the benchmark now answers from `database` with a published run, so the campaign's definition-of-100% line 6 passes, but the run scores **16 of 40** and the `mixed` class the fix targeted is **0 of 10**. The order stands, with a sharper target than when it was written. | Needs an LLM lane; use Vertex (pre-approved) rather than waiting on row 5. |
 | [finish/swarm-100-sweep-authed-audit.md](finish/swarm-100-sweep-authed-audit.md) | 33 pages had error findings in the last authed report (2026-08-19) and the QA login now exists, so the order's own "blocked" premise is stale. Signed-in users see a different, worse site than the probes measure. | None (`npm run audit:web:login`). |
 
 ## P2. Quality bar, the visible half of the product

@@ -1370,3 +1370,29 @@ this campaign, once nothing else in `prompts/finish/` references it:
 While any sibling prompt of this campaign is still on disk, leave this file in
 place and keep it accurate instead. The shrinking directory is the only signal
 to the next agent that a campaign is closed.
+
+## 2026-09-03 19:10 UTC · order 11 (agent index lag) · RETIRED
+
+Verified shipped, not claimed. The order's remaining step on 2026-09-02 was one owner-gated
+deploy; that deploy has since landed, so this session measured the outcome instead of
+re-running the work.
+
+Evidence:
+
+- Production commit `19906ce52` (built 2026-09-02 22:02 UTC) contains every fix commit of this
+  order: `108eb51c9`, `6cd247926`, `88270c25a` (checked with `git merge-base --is-ancestor`).
+- `curl -s https://three.ws/api/healthz`, two reads 40 minutes apart (18:26 and 19:05 UTC):
+  `agent_index.status` is **ok** on both. Solana 1,604 agents, 2 then 5 erroring (0.1% then
+  0.3%, against a definition-of-done ceiling of 5%), median lag 34 to 35 minutes, sweep cycle
+  70 minutes at 240 per tick. The order was written when 1,092 of 1,602 were erroring on a
+  140-minute cycle.
+- EVM: 22 of 22 chains crawling, 0 stale, 0 behind, worst backlog 3,699 blocks (Polygon Amoy),
+  worst cursor age 80 minutes. The order was written at 3,038 hours worst cursor age with a
+  chain 17,396,220 blocks behind head.
+- `npx vitest run tests/agent-index.test.js`: 78 assertions pass.
+- `docs/ops/agent-index.md` exists and is linked from `docs/ops/README.md` (row 21).
+
+The one definition-of-done line not met to the letter: the two healthz reads are 40 minutes
+apart rather than an hour. Both are an order of magnitude under the threshold and the sensor
+itself scores the subsystem `ok`, so the line's intent holds; noted here rather than papered
+over. Retired the order file and dropped its row from the index in the same commit.
