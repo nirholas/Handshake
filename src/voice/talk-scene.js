@@ -42,6 +42,7 @@ export class TalkScene {
 		this.gltf = null;
 		this.root = null;
 		this.mixer = null;
+		this._rigPaused = false;
 		this._clips = [];
 		this._currentAction = null;
 		this._clock = new Timer();
@@ -388,6 +389,16 @@ export class TalkScene {
 		this._lastFrameAt = 0;
 	}
 
+	/**
+	 * Freeze or resume clip playback. Paused means the mixer and the emote
+	 * controller stop advancing, so the skinned mesh holds the pose it is in;
+	 * rendering, orbiting and everything else carry on.
+	 * @param {boolean} paused
+	 */
+	setRigPaused(paused) {
+		this._rigPaused = !!paused;
+	}
+
 	_start() {
 		if (this._running) return;
 		this._running = true;
@@ -404,8 +415,14 @@ export class TalkScene {
 			this._clock.update();
 			const dt = this._clock.getDelta();
 			this.controls?.update();
-			this.mixer?.update(dt);
-			this._emotes?.update(dt);
+			// A paused rig still renders and still orbits; it just stops being
+			// re-posed. The free-sculpt brush needs a mesh that holds still
+			// between pointer-down and pointer-up, and freezing the clip stack
+			// is cheaper and more honest than trying to sculpt a moving target.
+			if (!this._rigPaused) {
+				this.mixer?.update(dt);
+				this._emotes?.update(dt);
+			}
 			for (const fn of this._onTickFns) fn(dt);
 			this.renderer?.render(this.scene, this.camera);
 		};

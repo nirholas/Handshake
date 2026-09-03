@@ -150,6 +150,17 @@ export class IdleAnimation {
 	}
 
 	/**
+	 * The current channel flags, copied. Callers that need to silence the idle
+	 * for a while (the free-sculpt brush paints onto a frozen rig) snapshot this
+	 * first so they can put back exactly what they found instead of guessing at
+	 * a default that may not have been the state.
+	 * @returns {{breathing:boolean,saccade:boolean,blink:boolean,weightShift:boolean}}
+	 */
+	getChannels() {
+		return { ...this._channels };
+	}
+
+	/**
 	 * Pause or resume saccade micro-movements externally (e.g. while user is speaking).
 	 * @param {boolean} active — true = pause indefinitely, false = release immediately
 	 */

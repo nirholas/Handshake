@@ -13,9 +13,9 @@
 // so Vercel's NFT doesn't statically trace the chromium tree for every route
 // that transitively imports this module — that trace caused 45-min build hangs.
 import { env } from './env.js';
-import { DEFAULT_THREE_BASE, resolveThreeCdn, THREE_VERSION, threeImportMap } from './three-cdn.js';
 import { fetchModel } from './fetch-model.js';
 import { scriptJson, safeCssColor } from './render-safe.js';
+import { DEFAULT_THREE_BASE, resolveThreeCdn, THREE_VERSION, threeImportMap } from './three-cdn.js';
 
 // Cap on GLB bytes pulled into the renderer. Anything larger risks OOM /
 // blowing the render budget; callers may tighten this via `maxBytes`.
@@ -31,7 +31,6 @@ const DEFAULT_MAX_GLB_BYTES = 25 * 1024 * 1024;
 const DEFAULT_CHROMIUM_PACK =
 	'https://github.com/Sparticuz/chromium/releases/download/v148.0.0/chromium-v148.0.0-pack.x64.tar';
 const CHROMIUM_PACK = env.CHROMIUM_PACK_URL || DEFAULT_CHROMIUM_PACK;
-
 
 // Poster composition. A 26° yaw reads as a natural 3/4 portrait without hiding
 // the front of the model; 1.22 leaves enough margin that a T-pose's fingertips
@@ -140,8 +139,9 @@ function releaseRenderSlot() {
 }
 
 // Inline viewer HTML — bundled into the function so the renderer needs no
-// extra static assets. three.js + GLTFLoader load from unpkg pinned to the
-// installed version. window.__renderDone signals readiness to puppeteer.
+// extra static assets. three.js + GLTFLoader load from whichever CDN
+// resolveThreeCdn() found alive, pinned to THREE_VERSION.
+// window.__renderDone signals readiness to puppeteer.
 function viewerHtml({ glbBase64, width, height, background, backdrop, threeBase = DEFAULT_THREE_BASE }) {
 	// A gradient backdrop renders as page CSS behind a transparent canvas: the
 	// screenshot composites the two, so the scene itself stays background-free.

@@ -25,6 +25,8 @@ import { IdleAnimation } from './idle-animation.js';
 import { renderSculptPanel } from './avatar-sculpt.js';
 import { applyProportionsToRoot, captureProportionRest, normalizeProportions, proportionsEqual } from './avatar-proportions.js';
 import { canonicalBoneNodesFromObject } from './animation-retarget.js';
+import { sanitizeSculptDoc, sculptEqual } from './avatar-sculpt-doc.js';
+import { applySculptToRoot } from './avatar-sculpt-brush.js';
 import { renderWardrobePanel } from './avatar-wardrobe.js';
 import { GarmentCloset, renderClosetSection } from './garment-closet.js';
 import { renderRigPanel } from './avatar-rig.js';
@@ -983,6 +985,7 @@ function normalizeAppearance(a) {
 		// Skeleton-space build (src/avatar-proportions.js). Normalized on the way
 		// in so an out-of-range or hand-edited record can never drive the rig.
 		proportions: normalizeProportions(a.proportions),
+		sculpt: sanitizeSculptDoc(a.sculpt),
 	};
 }
 
@@ -998,6 +1001,8 @@ function collapseAppearance(a) {
 	if (a.garments?.length) out.garments = a.garments.map((g) => ({ slot: g.slot, id: g.id }));
 	const proportions = normalizeProportions(a.proportions);
 	if (Object.keys(proportions).length) out.proportions = proportions;
+	const sculpt = sanitizeSculptDoc(a.sculpt);
+	if (sculpt) out.sculpt = sculpt;
 	return Object.keys(out).length ? out : null;
 }
 
@@ -1028,5 +1033,6 @@ function appearanceEquals(a, b) {
 	if (ga.size !== gb.size) return false;
 	for (const v of ga) if (!gb.has(v)) return false;
 	if (!proportionsEqual(a?.proportions, b?.proportions)) return false;
+	if (!sculptEqual(a?.sculpt, b?.sculpt)) return false;
 	return true;
 }

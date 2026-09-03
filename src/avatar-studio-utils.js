@@ -4,6 +4,7 @@
  */
 
 import { normalizeProportions } from './avatar-proportions.js';
+import { sanitizeSculptDoc } from './avatar-sculpt-doc.js';
 
 export const DRAFT_KEY = 'avatar-studio-draft';
 export const DRAFT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -37,13 +38,21 @@ export function collapseAppearance(a) {
 	// hash stays stable across a slider that was dragged and put back.
 	const proportions = normalizeProportions(a.proportions);
 	if (Object.keys(proportions).length) out.proportions = proportions;
+	// Free-sculpt deltas (src/avatar-sculpt-brush.js). Sanitizing here is what
+	// keeps the record canonical: an undecodable or stale-version document
+	// collapses to nothing rather than riding along and failing at bake time.
+	const sculpt = sanitizeSculptDoc(a.sculpt);
+	if (sculpt) out.sculpt = sculpt;
 	return Object.keys(out).length ? out : null;
 }
 
 /** Hydrate a saved appearance record into a mutable working object. */
 export function hydrateAppearance(raw) {
 	if (!raw || typeof raw !== 'object') {
-		return { outfit: null, accessories: [], morphs: {}, colors: {}, hidden: [], garments: [], proportions: {} };
+		return {
+			outfit: null, accessories: [], morphs: {}, colors: {}, hidden: [],
+			garments: [], proportions: {}, sculpt: null,
+		};
 	}
 	return {
 		outfit: typeof raw.outfit === 'string' && raw.outfit ? raw.outfit : null,
@@ -53,6 +62,7 @@ export function hydrateAppearance(raw) {
 		hidden: Array.isArray(raw.hidden) ? [...raw.hidden] : [],
 		garments: copyGarments(raw.garments),
 		proportions: normalizeProportions(raw.proportions),
+		sculpt: sanitizeSculptDoc(raw.sculpt),
 	};
 }
 
@@ -66,6 +76,10 @@ export function cloneAppearance(a) {
 		hidden: [...a.hidden],
 		garments: copyGarments(a.garments),
 		proportions: { ...(a.proportions || {}) },
+		// The sculpt document is immutable once serialized: the brush replaces
+		// it wholesale rather than mutating in place, so sharing the reference
+		// is safe and a structural clone of tens of KB per history step is not.
+		sculpt: a.sculpt || null,
 	};
 }
 

@@ -66,6 +66,8 @@ export function isBakeable(appearance) {
 	// nothing else, and treating that as "no customisation" is what left the
 	// baked GLB at default height while the editor showed the edit.
 	if (appearance.proportions && Object.keys(appearance.proportions).length > 0) return true;
+	// Free-sculpt deltas (src/avatar-sculpt-brush.js, baked by bake-sculpt.js).
+	if (appearance.sculpt?.meshes && Object.keys(appearance.sculpt.meshes).length > 0) return true;
 	return false;
 }
 
@@ -73,7 +75,7 @@ export function isBakeable(appearance) {
  * Bake `appearance` into a copy of the base GLB. Returns Uint8Array of the GLB.
  *
  * @param {Uint8Array|Buffer} baseGlbBytes
- * @param {object} appearance — { outfit?, accessories?, morphs?, proportions?, garments? }
+ * @param {object} appearance — { outfit?, accessories?, morphs?, proportions?, sculpt?, garments? }
  * @returns {Promise<Uint8Array>}
  */
 export async function bakeAppearance(baseGlbBytes, appearance) {
@@ -98,6 +100,27 @@ export async function bakeAppearance(baseGlbBytes, appearance) {
 	if (appearance?.outfit && isValidPresetId(appearance.outfit)) presetIds.push(appearance.outfit);
 	for (const id of appearance?.accessories || []) {
 		if (isValidPresetId(id)) presetIds.push(id);
+	}
+
+	// 0) Free-sculpt deltas, first: they add a morph target, and the weight
+	//    bookkeeping below pads every node's weight array to the target count.
+	//    Running this after that padding would leave the new target unweighted
+	//    on any node that already carried an explicit list.
+	if (appearance?.sculpt) {
+		try {
+			const { applySculpt, hasSculpt } = await import('./bake-sculpt.js');
+			if (hasSculpt(appearance)) {
+				const { applied, skipped } = applySculpt(doc, appearance.sculpt);
+				if (applied.length) console.log(`[bake] free sculpt baked: ${applied.join(', ')}`);
+				if (skipped.length) {
+					console.warn(
+						`[bake] free sculpt skipped: ${skipped.map((s) => `${s.mesh} (${s.reason})`).join(', ')}`,
+					);
+				}
+			}
+		} catch (err) {
+			console.warn(`[bake] free-sculpt pass failed, baking without it: ${err.message}`);
+		}
 	}
 
 	// 1) Aggregate morph weights: outfit.morphBinding + appearance.morphs.

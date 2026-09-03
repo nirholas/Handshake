@@ -30,6 +30,16 @@ import {
 	wireProportionsGroup,
 } from './avatar-proportions.js';
 import { canonicalBoneNodesFromObject } from './animation-retarget.js';
+import {
+	SculptBrush,
+	BRUSH_DEFAULTS,
+	BRUSH_LIMITS,
+	SCULPT_TARGET_NAME,
+	serializeSculpt,
+	applySculptToRoot,
+	clearSculpt,
+} from './avatar-sculpt-brush.js';
+import { sculptVertexCount } from './avatar-sculpt-doc.js';
 import { log } from './shared/log.js';
 
 /* ────────────────────────────────────────────────────────────────────────── *
@@ -279,6 +289,11 @@ export function discoverMorphs(root) {
 		if (obj.isMesh && obj.morphTargetDictionary) {
 			for (const k of Object.keys(obj.morphTargetDictionary)) {
 				if (k === 'tongueOut') continue;
+				// The free-sculpt delta is a shape, not a slider: its weight is
+				// pinned at 1 and a control that could dial it back to 0.4 would
+				// mean "half of the edits I made", which is not a thing a user
+				// asks for. It is cleared from the Free Sculpt group instead.
+				if (k === SCULPT_TARGET_NAME) continue;
 				found.add(k);
 			}
 		}
@@ -315,10 +330,16 @@ export function applyMorphsToRoot(root, morphs) {
  * @param {() => void} [opts.onRigChanged]: called after a proportion edit settles,
  *   so the host can re-measure root motion (see AnimationManager.remeasureRigProportions)
  */
-export function renderSculptPanel({ container, root, working, onDirty, onRigChanged }) {
+export function renderSculptPanel({ container, root, working, onDirty, onRigChanged, viewport = null }) {
 	const all = discoverMorphs(root);
 	const boneMap = canonicalBoneNodesFromObject(root);
 	const proportionIds = availableProportionParams(root, { boneMap });
+
+	// A panel rebuild replaces the DOM the brush's controls live on, so the
+	// previous instance has to give up its canvas listeners and its ring before
+	// the new one claims them. Without this a few tab switches leave several
+	// brushes painting on the same stroke.
+	teardownBrush();
 
 	if (!all.length && !proportionIds.length) {
 		container.innerHTML = `
@@ -364,6 +385,8 @@ export function renderSculptPanel({ container, root, working, onDirty, onRigChan
 				   skeleton. Double-click any slider to reset it.`}
 		</p>
 
+		${freeSculptGroupHtml(viewport, working)}
+
 		${proportionsGroupHtml(proportionIds, working.proportions)}
 
 		${all.length ? blendWheelHtml() : ''}
@@ -374,6 +397,7 @@ export function renderSculptPanel({ container, root, working, onDirty, onRigChan
 	ensureProportionCss();
 	wireSliders(container, root, working, onDirty);
 	wireFilter(container);
+	wireFreeSculpt({ container, root, working, viewport, onDirty });
 	if (all.length) wireBlendWheel(container, root, working, available, onDirty);
 	wireProportionsGroup({ container, root, working, boneMap, onDirty, onRigChanged, rerender });
 
@@ -385,8 +409,10 @@ export function renderSculptPanel({ container, root, working, onDirty, onRigChan
 	container.querySelector('#ae-sculpt-reset')?.addEventListener('click', () => {
 		working.morphs = {};
 		working.proportions = {};
+		working.sculpt = null;
 		applyMorphsToRoot(root, clearAll(all));
 		applyProportionsToRoot(root, {}, { boneMap });
+		clearSculpt(root);
 		rerender();
 		onDirty?.();
 		onRigChanged?.();
