@@ -22,7 +22,7 @@ import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { atlasProblems, renderPublicAtlas } from '../scripts/build-tour-atlas.mjs';
+import { atlasProblems, renderPublicAtlas, summarizeStops } from '../scripts/build-tour-atlas.mjs';
 import { navigate, NAV_ATTEMPTS } from '../scripts/capture-tour-atlas.mjs';
 import {
 	TOUR_FALLBACK_SELECTORS,
@@ -172,10 +172,26 @@ describe('atlasProblems()', () => {
 			{ id: 'forge', path: '/forge' },
 		],
 	};
+	// A stop carries its curriculum position, and the manifest carries a summary
+	// derived from its stops: /tour/atlas prints both ("stop 12 of 263" on every
+	// card, the headline stats above the grid), so atlasProblems() checks both.
+	// A fixture missing them is not a healthy manifest, it is a stale one.
 	const healthy = {
+		summary: {
+			total: 2,
+			anchored: 2,
+			missingAnchor: 0,
+			curatedAnchor: 1,
+			fallbackAnchor: 1,
+			navScopedAnchor: 0,
+			unreachable: 0,
+			withConsoleErrors: 0,
+			captured: 2,
+		},
 		stops: [
 			{
 				id: 'home',
+				index: 0,
 				path: '/',
 				status: 200,
 				anchor: { state: 'resolved', source: 'curriculum' },
@@ -183,6 +199,7 @@ describe('atlasProblems()', () => {
 			},
 			{
 				id: 'forge',
+				index: 1,
 				path: '/forge',
 				status: 200,
 				anchor: { state: 'resolved', source: 'fallback' },
@@ -191,6 +208,10 @@ describe('atlasProblems()', () => {
 		],
 	};
 	const allMediaPresent = () => true;
+
+	// Mutating a stop changes what the summary should say. Re-derive it so a test
+	// about a rotted anchor reports one problem about that anchor, not two.
+	const resummarized = (manifest) => ({ ...manifest, summary: summarizeStops(manifest.stops) });
 
 	it('passes a manifest that covers the curriculum with live anchors', () => {
 		expect(atlasProblems(healthy, curriculum, allMediaPresent)).toEqual([]);
@@ -215,7 +236,7 @@ describe('atlasProblems()', () => {
 	it('flags a rotted spotlight anchor, which is the whole point of the guard', () => {
 		const rotted = JSON.parse(JSON.stringify(healthy));
 		rotted.stops[1].anchor = { state: 'missing', source: null };
-		const problems = atlasProblems(rotted, curriculum, allMediaPresent);
+		const problems = atlasProblems(resummarized(rotted), curriculum, allMediaPresent);
 		expect(problems).toHaveLength(1);
 		expect(problems[0]).toContain('no working spotlight anchor');
 	});
@@ -224,7 +245,7 @@ describe('atlasProblems()', () => {
 		const dead = JSON.parse(JSON.stringify(healthy));
 		dead.stops[1].status = 404;
 		dead.stops[1].anchor = { state: 'missing' };
-		const problems = atlasProblems(dead, curriculum, allMediaPresent);
+		const problems = atlasProblems(resummarized(dead), curriculum, allMediaPresent);
 		expect(problems).toHaveLength(1);
 		expect(problems[0]).toContain('answered 404');
 	});
@@ -232,6 +253,22 @@ describe('atlasProblems()', () => {
 	it('flags a screenshot the manifest promises but disk does not have', () => {
 		const problems = atlasProblems(healthy, curriculum, (url) => !url.endsWith('forge.webp'));
 		expect(problems.join('\n')).toContain('/media/tour/forge.webp');
+	});
+
+	it('flags a stop numbered against an older curriculum', () => {
+		const misnumbered = JSON.parse(JSON.stringify(healthy));
+		misnumbered.stops[1].index = 7;
+		const problems = atlasProblems(misnumbered, curriculum, allMediaPresent);
+		expect(problems).toHaveLength(1);
+		expect(problems[0]).toContain('stale index');
+	});
+
+	it('flags a summary that no longer describes its stops', () => {
+		const drifted = JSON.parse(JSON.stringify(healthy));
+		drifted.summary.total = 263;
+		const problems = atlasProblems(drifted, curriculum, allMediaPresent);
+		expect(problems).toHaveLength(1);
+		expect(problems[0]).toContain('total: 263 should be 2');
 	});
 
 	it('treats an empty manifest as a single actionable problem', () => {
