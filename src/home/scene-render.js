@@ -660,6 +660,14 @@ export function createHomeScene(container, options = {}) {
 		controls.update();
 	}
 
+	/**
+	 * Move the camera onto a room.
+	 *
+	 * Deliberately silent: this is the ANSWER to a focus request, not a new one.
+	 * Firing `onFocusRoom` from here meant the page's own handler called back
+	 * into it and the two recursed until the stack ran out, which is exactly what
+	 * clicking a room in the rail did.
+	 */
 	function focusRoom(roomId) {
 		const record = rooms.get(roomId);
 		if (!record || !model) return;
@@ -668,7 +676,6 @@ export function createHomeScene(container, options = {}) {
 		const distance = Math.max(room.w, room.d) * 1.9;
 		camera.position.set(room.x + distance * 0.55, room.y + distance * 0.72, room.z + distance);
 		controls.update();
-		options.onFocusRoom?.(roomId);
 	}
 
 	function makeLabel() {

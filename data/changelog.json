@@ -25875,6 +25875,15 @@
 				"improvement"
 			],
 			"link": "/status"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "Connect your house to your agent, and see every way it can go wrong",
+			"summary": "The /smart-home page now takes you from \"I have a Home Assistant somewhere\" to a connected house, and it is honest at every step. An address that only exists on your home network is refused the moment you type it, with the two real ways round it, instead of spinning for fifteen seconds. A rejected token says so and puts the cursor back in the token box. A house that stops answering keeps its rooms on screen, marked stale with how long ago it last replied, rather than blanking out. Your access token is sent once, encrypted at rest, and never comes back to the page: it is not in your browser storage, not in a URL, and not in any response. Disconnecting says plainly that the stored token is erased and reminds you to delete it in Home Assistant too.",
+			"tags": [
+				"feature"
+			],
+			"link": "/smart-home"
 		}
 	]
 }

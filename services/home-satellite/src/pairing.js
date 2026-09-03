@@ -50,7 +50,7 @@ export async function saveIdentity(stateDir, identity) {
  *
  * @param {object} options
  * @param {string} options.apiBase   e.g. https://three.ws
- * @param {string} options.code      The code from three.ws/home/satellite.
+ * @param {string} options.code      The code from three.ws/smart-home/satellite.
  * @param {string} options.name      What the satellite should be called.
  * @param {string} options.version   This service's version.
  * @param {string|null} [options.area]

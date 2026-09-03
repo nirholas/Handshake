@@ -23,7 +23,7 @@ if (argv.includes('--help') || argv.includes('-h')) {
 	process.stdout.write(`three.ws home satellite ${SERVICE_VERSION}
 
   node src/index.js satellite [flags]
-    --pairing-code <code>   redeem a code from three.ws/home/satellite (first run only)
+    --pairing-code <code>   redeem a code from three.ws/smart-home/satellite (first run only)
     --name <name>           what Home Assistant calls this satellite
     --area <area>           suggested area for the device
     --api-base <url>        three.ws base URL (default https://three.ws)

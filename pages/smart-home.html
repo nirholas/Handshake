@@ -65,5 +65,9 @@
 
 	<script src="/nav.js"></script>
 	<script type="module" src="/src/home/connect.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>.
+	     Without it the data-i18n attributes above are inert and the page renders
+	     English in all 87 locales, and the RTL locales never get their dir flip. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

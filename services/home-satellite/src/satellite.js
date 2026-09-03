@@ -151,7 +151,7 @@ export class WyomingSatellite extends EventEmitter {
 			// Refuse, but say why. Home Assistant logs the error text, so the
 			// person who set this up sees "this satellite has not been paired"
 			// rather than a bare connection reset.
-			socket.write(encodeEvent(errorEvent('This three.ws satellite has not been paired. Run it with a pairing code from three.ws/home/satellite.', 'unpaired')));
+			socket.write(encodeEvent(errorEvent('This three.ws satellite has not been paired. Run it with a pairing code from three.ws/smart-home/satellite.', 'unpaired')));
 			this.emit('log', { level: 'warn', event: 'wyoming.refused_unpaired', remote: socket.remoteAddress });
 			socket.end();
 			return;

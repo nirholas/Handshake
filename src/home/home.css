@@ -132,6 +132,22 @@
 .hm-reveal:hover { color: var(--ink); border-color: var(--hm-line-strong); }
 .hm-reveal:focus-visible { outline: none; border-color: var(--hm-focus); box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.22); }
 .hm-reveal:active { background: var(--hm-panel); }
+/*
+ * A finger is not a mouse pointer. At its text size this button renders 52x31,
+ * which is fine to click and too small to tap: WCAG 2.5.5 asks 44x44 of a touch
+ * target, and this one sits inside the token field, where a miss puts the
+ * caret in the middle of a pasted credential. Only coarse pointers pay the
+ * extra height, so the desktop layout of the field is untouched.
+ */
+@media (pointer: coarse) {
+	.hm-reveal {
+		min-width: 44px;
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+}
 
 /* ── Buttons ─────────────────────────────────────────────────────────────── */
 

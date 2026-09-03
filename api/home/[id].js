@@ -19,6 +19,7 @@ import { requireCsrf } from '../_lib/csrf.js';
 import { filterGraphForScope, publicHome, resolveHomeAccess } from '../_lib/home/access.js';
 import { homeError, toHomeFailure } from '../_lib/home/errors.js';
 import { revokeConnection } from '../_lib/home/store.js';
+import { revokeAtRelay } from '../_lib/home/relay.js';
 import { closeHome, snapshot } from '../_lib/home/runtime.js';
 import { cors, error, json, method, rateLimited, wrap } from '../_lib/http.js';
 import { limits } from '../_lib/rate-limit.js';
@@ -80,8 +81,22 @@ async function handleRevoke(req, res, { caller, home }) {
 	// opened earlier is already authenticated. Drop it so an open SSE stream stops
 	// now rather than at the end of the idle window.
 	closeHome(home.id);
+	// A relayed home has a second, longer-lived socket: the one the house itself
+	// opened outward to the relay. Revocation has to be both-ended or "I
+	// disconnected my home" would leave that tunnel standing until its next
+	// heartbeat. This is push, not poll, and it is deliberately not awaited into
+	// the failure path: the database row already gates every session, so a relay
+	// that is briefly unreachable must not make disconnecting fail.
+	const relayDrop = home.transport === 'relay' && home.relay_id ? await revokeAtRelay(home.relay_id) : null;
+	if (relayDrop && !relayDrop.ok) {
+		console.warn(`[home] relay revoke for ${home.relay_id} did not land: ${relayDrop.detail}`);
+	}
 	return json(res, 200, {
 		revoked: true,
+		// Whether the house's own outbound socket was dropped at the relay, so an
+		// operator reading a log can tell "revoked and the tunnel is down" from
+		// "revoked, and the relay did not answer when we told it".
+		...(relayDrop ? { relay_dropped: Boolean(relayDrop.ok) } : {}),
 		// True on the first call, false on every one after it. The client renders
 		// the same "disconnected" state either way; this is for a log.
 		changed: result.revoked,
