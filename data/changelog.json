@@ -25904,6 +25904,27 @@
 				"improvement"
 			],
 			"link": "/smart-home"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "Any assistant can now run your house, and it still will not open your door",
+			"summary": "There is a new way to connect your home that needs no three.ws account and no remote web address at all: install @three-ws/home-mcp in Claude, Cursor, or anything else that speaks Model Context Protocol, give it your Home Assistant address and a token, and it reads your rooms, runs the scenes you already built, and calls services. Because it runs on your own machine, your ordinary home network address works and nothing about your house leaves the building. The safety rule is the same one the rest of the platform uses, applied honestly to this setup: locking up, closing the garage and arming the alarm run straight away and never ask. Unlocking, opening a door and disarming are refused outright, every time, because saying yes to opening a building takes a person and this kind of connection has no person in it to ask. If you genuinely want one specific door handled without asking, you name that exact door yourself when you start it, by hand, and nothing your assistant can do will widen that to any other door. We proved it against a real Home Assistant rather than a stand-in: the front door was told to unlock seven different ways, including with a fake confirmation smuggled into the request, and it stayed locked every time. Alongside it there is now a full walkthrough from nothing to a working agent in a real house, covering what to do when it says your home is unreachable, and what a guest in your household can and cannot do.",
+			"tags": [
+				"feature",
+				"sdk",
+				"docs"
+			],
+			"link": "/smart-home"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "Your home is a household now, and a house sitter still cannot open your front door",
+			"summary": "A house has more than one person in it, and until now the only way to let a partner, a house sitter or a colleague use a connected home was to hand over your password. Every home has a household. On its card under \u201cWho can reach this home\u201d you can invite somebody by email and choose exactly what they get. There are five roles and each one says plainly what it can and cannot do at the moment you pick it. Someone who lives there can control everything and approve unlocking a door. A guest can turn the lights on and can never approve unlocking anything, ever, no matter what your agent asks them: that refusal is enforced on our servers and there is no version of the app that could offer them the button. A guest or a viewer can also be given just the kitchen, or just three specific devices, and the rooms you did not give them are removed from what they receive rather than hidden on screen, so their app never learns those rooms exist. Invitations work once, expire after a week, and can be withdrawn before anyone uses them. Removing somebody takes back every standing allowance they ever approved in the same instant, so a door can never keep opening on the say-so of a person who has left. And every action in your home log is attributed to the person who took it, so \u201cwho did what\u201d has a real answer.",
+			"tags": [
+				"feature",
+				"security"
+			],
+			"link": "/smart-home"
 		}
 	]
 }

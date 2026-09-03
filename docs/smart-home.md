@@ -241,6 +241,7 @@ below exists, and anything that does not exist says so.
 | Households: roles, per-member scopes, invites | [`api/_lib/home/members.js`](../api/_lib/home/members.js), [docs/home-households.md](home-households.md) |
 | Privacy, retention, export and deletion | [`api/_lib/home/privacy.js`](../api/_lib/home/privacy.js), [docs/home-privacy.md](home-privacy.md) |
 | The dial-out relay for LAN-only houses | [`services/home-relay/`](../services/home-relay/README.md) plus [`home-assistant-integration/`](../home-assistant-integration) |
+| The browser voice loop: wake word, barge-in, a confirmation grammar speech cannot satisfy | [`src/voice/home-voice.js`](../src/voice/home-voice.js), [`home-voice-ui.js`](../src/voice/home-voice-ui.js), surfaced at `/voice/home` |
 | The Wyoming voice satellite | [`services/home-satellite/`](../services/home-satellite/README.md) |
 | A standalone MCP server, so any assistant can run a house | [`packages/home-mcp/`](../packages/home-mcp/README.md) |
 | A real Home Assistant on demand, for every live test | [`scripts/home-test-instance.mjs`](../scripts/home-test-instance.mjs) |
@@ -253,8 +254,6 @@ below exists, and anything that does not exist says so.
   robots, and it is the same protocol either way. Nothing of it is in the tree.
 - **A floorplan editor.** The 3D scene derives its layout from the area graph. Authoring and
   persisting a hand-drawn floorplan is not built.
-- **Voice on the `/smart-home` page itself.** Voice today is the household's own Home Assistant
-  Assist pipeline, which the satellite gives a face to. The page is text.
 
 ## 6. What was actually verified
 

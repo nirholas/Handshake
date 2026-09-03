@@ -744,6 +744,12 @@ URL: https://three.ws/materialize
 
 Turn any 3D model into a real printed object. Live printability analysis and automatic repair, a true-scale AR preview on your own desk, an itemized price from the mesh's own measured volume, and USDC checkout on Solana.
 
+### Join a home
+
+URL: https://three.ws/smart-home/join
+
+Accept an invitation to somebody's connected home. The link says which home it is, exactly what your role would let you do there and what it would never let you do, before you sign in. It works once and it expires.
+
 ### Home plan
 
 URL: https://three.ws/smart-home/plan
@@ -1988,6 +1994,12 @@ How a three.ws agent connects to a real house: the open-source smart-home landsc
 URL: https://three.ws/docs/home-households
 
 Sharing a connected house without sharing a login: the five roles and what each one may do, per-member entity scopes that narrow the house a member can even see, how invitations are issued and accepted, what happens to somebody's access when they leave, and the rule everything hangs off, that a guest can never confirm an action that opens a building.
+
+### Docs · Home security
+
+URL: https://three.ws/docs/home-security
+
+The threat model for a connected house, written about a building rather than a database: what each actor can do and what stops them, why the confirmation gate is the load-bearing control and prompt filtering is depth, the eleven checks that run with every build, the SSRF guard every server-side dial goes through and why a hostname check is not one, the prompt-injection proof that ends by asking a real lock whether it opened, and the residuals accepted on purpose.
 
 ### Docs · Home privacy and retention
 

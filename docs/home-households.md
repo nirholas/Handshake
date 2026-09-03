@@ -186,6 +186,37 @@ one home and one role.
 - **Ownership is never invitable.** `createInvite` throws on `role: 'owner'` and the schema's check
   constraint refuses the row.
 
+## Using it
+
+The household lives on each home's card at [/smart-home](https://three.ws/smart-home), under **Who
+can reach this home**. It is collapsed until you open it, because a person with six houses should
+not pay six extra round trips to see a roster that in most homes is one line long.
+
+What it shows, in order: your own role and what it means, then everybody else with the same
+sentence under each of them, then any invitation still waiting, then the invite form if your role
+can send one. Every control comes from the server's answer, not from a rule the browser applies:
+the roster response carries your role, the roles you may hand out, and a per-member flag for
+whether you may administer that person, so a button that would be refused is never drawn.
+
+A member with no roster authority still sees the household. Hiding the fact that other people hold
+keys to the house you are in would be the wrong secret to keep.
+
+Sending an invitation shows the link once, at that moment, with a copy button. There is no way to
+see it again: the server keeps only a hash, so "check the invitations list for the link" would be a
+promise this system cannot keep, and the UI says so rather than letting somebody discover it.
+
+The link opens [/smart-home/join](https://three.ws/smart-home/join). That page inspects the
+invitation without spending it, so it can say which home, which role, what that role will let the
+holder do and what it will never let them do, all before anyone is asked to identify themselves. A
+visitor with no account is sent through the existing register flow with `next` pointing back at the
+same invitation, so they land on it again rather than on a dashboard wondering what happened to the
+email they clicked. Nothing is accepted on page load: a link preview fetcher must not be able to
+spend somebody's invitation.
+
+Its four dead ends are four different screens. "This expired", "somebody already used this", "this
+was withdrawn" and "this link is not valid" need different words and different next steps, and
+collapsing them into one error is how a person ends up mailing support to ask which one happened.
+
 ## Removing somebody
 
 `removeMember` deletes the membership row **and every standing allowance that member authorised, in
@@ -307,6 +338,9 @@ automatic today: an IdP deactivating a user stops them signing in and does not b
 | The role matrix, scope, invitations, deprovisioning | `api/_lib/home/members.js` |
 | The roster endpoint | `api/home/[id]/members.js` |
 | Invite redemption | `api/home/invites/[token].js` |
+| The household panel | `src/home/members.js`, mounted by `src/home/manage.js` |
+| The join page | `pages/smart-home-join.html`, `src/home/join.js` |
+| The browser half of the API | `src/home/api.js` |
 | The matrix as an executable test | `tests/home-roles.test.js` |
 
 The owner row is created by a database trigger on `home_connections`, not by the application. "A

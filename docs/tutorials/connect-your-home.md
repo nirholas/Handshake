@@ -208,16 +208,42 @@ That is deliberate. Firing the nearest scene is how a "good night" turns into an
 
 ## 5. Your first command, by voice
 
+There are two voice paths, and they are for different rooms.
+
+### In the browser, on three.ws
+
+Open [three.ws/voice/home](https://three.ws/voice/home), or the voice panel on your connected
+home, and turn listening on. Say your wake word, then say what you want. The loop is:
+
+```
+mic -> voice activity detection -> wake word -> capture -> transcription
+    -> the agent, with your home tools -> speech -> your agent's face, lip synced
+```
+
+Three things about it are worth knowing before you switch it on:
+
+1. **Nothing about listening runs until you opt in.** The detector, the wake-word matcher, the
+   runtime and every model byte are behind imports that are only reached when you enable it. A
+   page that has the panel on it and that you never enable downloads none of that.
+2. **Mute really is mute.** It stops the microphone tracks, so your browser's own recording
+   indicator goes out and the track reads `ended`. It is not a flag hiding a dot.
+3. **Speech cannot open your door on its own.** The confirmation is a narrow grammar against a
+   confirmation the server minted, and on a surface with no display a guarded action is refused
+   outright rather than confirmed by voice. Recognisers mishear, and the failure mode of
+   mishearing "confirm" is an open front door.
+
+### In the rest of the house, through Home Assistant
+
 Voice already works in your house, and it is Home Assistant's own: the **Assist** pipeline, with
-wake word, speech to text and text to speech all running on your own hardware. three.ws does not
-replace any of it. What it adds is a face.
+wake word, speech to text and text to speech all on your own hardware. three.ws does not replace
+any of it. What it adds is a face.
 
 [`services/home-satellite`](../../services/home-satellite/README.md) registers as a
-[Wyoming](https://github.com/rhasspy/wyoming) satellite, which is a thing Home Assistant already
-knows how to talk to. Run it beside your instance, point Home Assistant's **Wyoming Protocol**
-integration at `host:10700`, and assign it to a pipeline like any other satellite. It supplies a
-microphone (from a browser showing the agent) and a speaker (that browser's audio, with the
-agent's face moving in front of it). Say your wake word, and the agent looks at you and answers.
+[Wyoming](https://github.com/rhasspy/wyoming) satellite, which Home Assistant already knows how to
+talk to. Run it beside your instance, point Home Assistant's **Wyoming Protocol** integration at
+`host:10700`, and assign it to a pipeline like any other satellite. It supplies a microphone (from
+a browser showing the agent) and a speaker (that browser's audio, with the agent's face moving in
+front of it). Say your wake word, and the agent looks at you and answers.
 
 One rule shapes that whole service: **the pipeline never depends on the face.** Close the browser
 tab and Home Assistant keeps working exactly as it did before three.ws was installed. A satellite
