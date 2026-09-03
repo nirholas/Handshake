@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-03T07:36:51.546Z",
+	"generated_at": "2026-09-03T07:43:01.064Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,16 @@
 			"title": "Docs · Connect a home that is only on your network",
 			"summary": "Most Home Assistant installs cannot be reached from the internet, so the house dials three.ws instead: install one HACS integration, paste a ten-minute pairing code, and nothing listens on your network, no port is forwarded, and three.ws never receives a Home Assistant token. Includes the operator half: the relay service, its configuration and deploy, how the allowlist is changed, and how to prove the whole path against a real house on a network the server cannot route to.",
 			"link": "/docs/home-relay",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "launch",
+			"title": "Docs · Fork a trade",
+			"summary": "One tap on any coin across the Radar, the Live Trade Feed, the Smart Money Radar, or a ghost-copy replay opens the real pump.fun trade panel for it, pre-filled and signed by your own wallet. No custody, no delegated key, and a ?fork= link so a coin travels.",
+			"link": "/docs/fork-trade",
 			"tags": [
 				"launch"
 			]
@@ -169,6 +179,16 @@
 		{
 			"date": "2026-09-03",
 			"type": "launch",
+			"title": "Tutorial · Connect your home",
+			"summary": "Point your agent at a real Home Assistant and it runs your actual house: lights, thermostat, and the scenes you already built. Covers the three honest ways to reach a house that lives on a home network, and the rule that unlocking, opening and disarming always stop and ask, while locking up never...",
+			"link": "/tutorials/connect-your-home",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "launch",
 			"title": "Voice satellite",
 			"summary": "Give your existing Home Assistant voice assistant a face. Pair a three.ws satellite and the same pipeline you already use gains a 3D agent that lip-syncs its answers and reacts, on any screen in the house. Home Assistant keeps the wake word, the speech recognition and the answer; closing the page never stops the voice working.",
 			"link": "/smart-home/satellite",
@@ -265,6 +285,18 @@
 		{
 			"date": "2026-09-03",
 			"type": "update",
+			"title": "Copy trading now stops itself when a leader slides, and a trader has to earn the right to be copied",
+			"summary": "Three guards landed on the copy loop. You can set a drawdown limit when you start copying a trader: if their real closed trades fall that far below their best point, new copies stop automatically, you get told why, and exits on positions you already hold keep coming through so you are never frozen inside the leader that just tripped. Resuming while they are still down is refused with the actual numbers rather than a button that silently re-pauses. Second, a trader now has to have earned a record before anyone can put money behind them: five closed round-trips, a day of trading history, and real capital deployed, all measured on-chain. Fall short and the panel shows exactly what is still missing instead of a flat refusal, and a losing trader with a real record still qualifies, because this asks whether the record is real, not whether it is good. Third, you can no longer copy an agent you own, and follows between your own agents no longer count toward the follower score on the leaderboard. Along the way, starting or editing a copy from a trader profile was failing silently on every attempt; that is fixed.",
+			"link": "/dashboard/copy",
+			"tags": [
+				"feature",
+				"security",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
 			"title": "Daily Forge shows the day's theme again",
 			"summary": "Daily Forge is built around one thing: the challenge of the day. That headline was being wiped out a moment after the page loaded. The translation layer runs after the page fetches its language file, and it was overwriting the day's theme with the placeholder text baked into the HTML, so every visitor read \"Today's theme\" and \"Loading today's challenge\" forever while the starter prompt and the idea chips below quietly described a completely different subject. The theme, its emoji, its hint and the browser tab title now hold. Four more fixes landed with it: a failed generation says \"Could not reach the forge, check your connection\" instead of the browser's raw \"Failed to fetch\"; when a model finishes but the preview cannot show it, the Download button the message points at is now actually clickable instead of sitting underneath the message; every button and link has a visible focus outline for keyboard and screen-reader users, and the streak milestone popup takes focus, closes on Escape and hands focus back; and a browser without 3D support now still sees today's theme and a clear explanation instead of a permanent loading line. The community strip at the bottom also fills in properly rather than staying empty.",
 			"link": "/daily",
@@ -293,6 +325,16 @@
 			"tags": [
 				"docs",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Fork a trade: one tap from any coin on the site into the real pump.fun trade",
+			"summary": "The pages that tell you which coins are real and which wallets keep winning used to end in a link out to pump.fun, where you had to find the coin again and start over. Now every one of them carries Fork. One tap on a Coin Radar card, a Smart Money card or its drawer, the coin deep-dive on the Live Trade Feed, or a position a leader is still holding in a ghost-copy replay opens the real trade panel for that exact coin: live quote, the same safety firewall that guards every other trade surface (a coin it judges unsafe stays unbuyable), and your own browser wallet as the signer. Nothing is delegated, no key is handed over, and no balance is held. A fork on a ghost-copy row opens at the size your paper budget used, so the practice position and the real one match. Forks also travel: the Share button next to them builds a link that opens the trade panel on arrival, carrying your referral code when you are signed in, and a size a link suggests is capped and always editable before you sign.",
+			"link": "/radar",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -403,6 +445,17 @@
 			"tags": [
 				"feature",
 				"security"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "The parametric avatar goes from 122 sliders to 306, and a brush for everything they still cannot reach",
+			"summary": "Avatar Studio's Parametric base now carries 306 shape sliders instead of 122, curated from source data that was already vendored: eyelid heights and eye folds, nose bridge and septum, philtrum and cupid's bow, ear rotation and shape, temples, jaw bones, lats, navel, knee alignment, upper and lower leg length, and per-ethnicity phenotype anchors. Face regions keep separate left and right controls because facial asymmetry is part of a face; limbs get one symmetric slider. With that many controls the panel grew a filter box, collapsed body groups, and an \"N edited\" pill so you can see which closed group you have already touched. Above all of it sits Free Sculpt: turn the brush on and drag on the avatar to push or pull the surface anywhere, with a real-size on-screen ring, adjustable strength, and symmetry you can switch off. Playback pauses while you paint so the mesh holds still, dragging the background still orbits the camera, and Clear sculpt puts the body back exactly. Two things that used to be editor-only now reach everyone: a body edited in the avatar editor's Proportions panel and any free-sculpt stroke are both rendered into the GLB the server serves, so what you shaped is what viewers, embeds and AR downloads actually see.",
+			"link": "/create/studio",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{

@@ -4396,6 +4396,12 @@ URL: https://three.ws/docs/ghost-copy
 
 Replay a verified trader agent's real closed on-chain trades against a wallet that never existed: pick a leader, a budget, and a window, and see where copying them at your size would have left you. Nothing signed, nothing spent.
 
+### Docs · Fork a trade
+
+URL: https://three.ws/docs/fork-trade
+
+One tap on any coin across the Radar, the Live Trade Feed, the Smart Money Radar, or a ghost-copy replay opens the real pump.fun trade panel for it, pre-filled and signed by your own wallet. No custody, no delegated key, and a ?fork= link so a coin travels.
+
 ### Docs · Trader Passport
 
 URL: https://three.ws/docs/trader-passport
@@ -4449,6 +4455,12 @@ Every liveness check was green while ten of twelve autonomous agents had not act
 URL: https://three.ws/docs/tty
 
 curl three.ws/tty and a rigged 3D agent walks in your terminal. The hosted streaming endpoint and its parameters, plus @three-ws/tty-3d, the CLI and library that render any GLB in a terminal with a pure-CPU rasterizer: real skeletal animation, half-block pixels, no GPU and no browser.
+
+### Tutorial · Connect your home
+
+URL: https://three.ws/tutorials/connect-your-home
+
+Point your agent at a real Home Assistant and it runs your actual house: lights, thermostat, and the scenes you already built. Covers the three honest ways to reach a house that lives on a home network, and the rule that unlocking, opening and disarming always stop and ask, while locking up never...
 
 ## Blog
 

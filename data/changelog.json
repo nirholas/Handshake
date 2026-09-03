@@ -3,6 +3,46 @@
 	"entries": [
 		{
 			"date": "2026-09-03",
+			"title": "Every three.ws MCP server now shows up in the directories, and six more joined the list",
+			"summary": "The one file every MCP directory listing is written from was six servers short and thirty-five versions behind, because it was being kept by hand. It is generated from the server manifests again, so a listing can no longer drift from what we actually publish, and a build check fails when it does. Six servers that existed but were invisible to the directories are now in: Herald, Home, Knock, the Metaplex agent registry, on-chain agent wallets, and the Robinhood Chain server. Paid tools also answer more cleanly to a store reviewer: the discovery data they attached to a payment prompt declared a transport the spec does not allow, so an indexer threw the whole row away. That is fixed, and a new check drives every paid tool the way a reviewer's client does and fails if any of them answers with anything but a clear, priced payment prompt.",
+			"link": "/docs/mcp",
+			"tags": [
+				"improvement",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"title": "The parametric avatar goes from 122 sliders to 306, and a brush for everything they still cannot reach",
+			"summary": "Avatar Studio's Parametric base now carries 306 shape sliders instead of 122, curated from source data that was already vendored: eyelid heights and eye folds, nose bridge and septum, philtrum and cupid's bow, ear rotation and shape, temples, jaw bones, lats, navel, knee alignment, upper and lower leg length, and per-ethnicity phenotype anchors. Face regions keep separate left and right controls because facial asymmetry is part of a face; limbs get one symmetric slider. With that many controls the panel grew a filter box, collapsed body groups, and an \"N edited\" pill so you can see which closed group you have already touched. Above all of it sits Free Sculpt: turn the brush on and drag on the avatar to push or pull the surface anywhere, with a real-size on-screen ring, adjustable strength, and symmetry you can switch off. Playback pauses while you paint so the mesh holds still, dragging the background still orbits the camera, and Clear sculpt puts the body back exactly. Two things that used to be editor-only now reach everyone: a body edited in the avatar editor's Proportions panel and any free-sculpt stroke are both rendered into the GLB the server serves, so what you shaped is what viewers, embeds and AR downloads actually see.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/create/studio"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "Copy trading now stops itself when a leader slides, and a trader has to earn the right to be copied",
+			"summary": "Three guards landed on the copy loop. You can set a drawdown limit when you start copying a trader: if their real closed trades fall that far below their best point, new copies stop automatically, you get told why, and exits on positions you already hold keep coming through so you are never frozen inside the leader that just tripped. Resuming while they are still down is refused with the actual numbers rather than a button that silently re-pauses. Second, a trader now has to have earned a record before anyone can put money behind them: five closed round-trips, a day of trading history, and real capital deployed, all measured on-chain. Fall short and the panel shows exactly what is still missing instead of a flat refusal, and a losing trader with a real record still qualifies, because this asks whether the record is real, not whether it is good. Third, you can no longer copy an agent you own, and follows between your own agents no longer count toward the follower score on the leaderboard. Along the way, starting or editing a copy from a trader profile was failing silently on every attempt; that is fixed.",
+			"tags": [
+				"feature",
+				"security",
+				"improvement"
+			],
+			"link": "/dashboard/copy"
+		},
+		{
+			"date": "2026-09-03",
+			"title": "Fork a trade: one tap from any coin on the site into the real pump.fun trade",
+			"summary": "The pages that tell you which coins are real and which wallets keep winning used to end in a link out to pump.fun, where you had to find the coin again and start over. Now every one of them carries Fork. One tap on a Coin Radar card, a Smart Money card or its drawer, the coin deep-dive on the Live Trade Feed, or a position a leader is still holding in a ghost-copy replay opens the real trade panel for that exact coin: live quote, the same safety firewall that guards every other trade surface (a coin it judges unsafe stays unbuyable), and your own browser wallet as the signer. Nothing is delegated, no key is handed over, and no balance is held. A fork on a ghost-copy row opens at the size your paper budget used, so the practice position and the real one match. Forks also travel: the Share button next to them builds a link that opens the trade panel on arrival, carrying your referral code when you are signed in, and a size a link suggests is capped and always editable before you sign.",
+			"tags": [
+				"feature"
+			],
+			"link": "/radar"
+		},
+		{
+			"date": "2026-09-03",
 			"title": "Your agent on a Mac and an iPhone: the Agent glance widget comes to Apple",
 			"summary": "The widget that has been on Android home screens and the Windows 11 widgets board now runs on Apple platforms too, from one WidgetKit extension shared by both. On a Mac it lives in Notification Centre in small, medium or large, fed by a small menu bar app that shows the same card and carries Open my agent, Refresh now and Unlink this Mac. On iPhone and iPad it is a home screen widget inside the three.ws app. Linking is one press on three.ws/glance: the page hands the device its own token, and if nothing opens (a Mac whose browser is signed in elsewhere) it shows a code to paste instead. The widget refreshes about every half hour without you opening anything, follows light and dark mode because it fetches the card in both, keeps the last card it downloaded when you are offline and says when that was rather than showing a spinner, and opens your agent on a tap. Every linked device is listed on three.ws/glance with a revoke button, and each token can only ever read your glance card.",
 			"tags": [

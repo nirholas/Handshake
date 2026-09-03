@@ -15,6 +15,14 @@
 			<description>Most Home Assistant installs cannot be reached from the internet, so the house dials three.ws instead: install one HACS integration, paste a ten-minute pairing code, and nothing listens on your network, no port is forwarded, and three.ws never receives a Home Assistant token. Includes the operator half: the relay service, its configuration and deploy, how the allowlist is changed, and how to prove the whole path against a real house on a network the server cannot route to.</description>
 		</item>
 		<item>
+			<title>Docs · Fork a trade</title>
+			<link>https://three.ws/docs/fork-trade</link>
+			<guid isPermaLink="false">2026-09-03:Docs · Fork a trade</guid>
+			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>One tap on any coin across the Radar, the Live Trade Feed, the Smart Money Radar, or a ghost-copy replay opens the real pump.fun trade panel for it, pre-filled and signed by your own wallet. No custody, no delegated key, and a ?fork= link so a coin travels.</description>
+		</item>
+		<item>
 			<title>Docs · Give your voice assistant a face</title>
 			<link>https://three.ws/docs/home-satellite</link>
 			<guid isPermaLink="false">2026-09-03:Docs · Give your voice assistant a face</guid>
@@ -135,6 +143,14 @@
 			<description>Your 3D agent in the car: voice-first, glanceable, and built to the rules CarPlay and Android Auto enforce. Runs on a head unit, a phone in the cradle, or inside the native car shell.</description>
 		</item>
 		<item>
+			<title>Tutorial · Connect your home</title>
+			<link>https://three.ws/tutorials/connect-your-home</link>
+			<guid isPermaLink="false">2026-09-03:Tutorial · Connect your home</guid>
+			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Point your agent at a real Home Assistant and it runs your actual house: lights, thermostat, and the scenes you already built. Covers the three honest ways to reach a house that lives on a home network, and the rule that unlocking, opening and disarming always stop and ask, while locking up never...</description>
+		</item>
+		<item>
 			<title>Voice satellite</title>
 			<link>https://three.ws/smart-home/satellite</link>
 			<guid isPermaLink="false">2026-09-03:Voice satellite</guid>
@@ -207,6 +223,14 @@
 			<description>The /smart-home page now takes you from &quot;I have a Home Assistant somewhere&quot; to a connected house, and it is honest at every step. An address that only exists on your home network is refused the moment you type it, with the two real ways round it, instead of spinning for fifteen seconds. A rejected token says so and puts the cursor back in the token box. A house that stops answering keeps its rooms on screen, marked stale with how long ago it last replied, rather than blanking out. Your access token is sent once, encrypted at rest, and never comes back to the page: it is not in your browser storage, not in a URL, and not in any response. Disconnecting says plainly that the stored token is erased and reminds you to delete it in Home Assistant too.</description>
 		</item>
 		<item>
+			<title>Copy trading now stops itself when a leader slides, and a trader has to earn the right to be copied</title>
+			<link>https://three.ws/dashboard/copy</link>
+			<guid isPermaLink="false">2026-09-03:Copy trading now stops itself when a leader slides, and a trader has to earn the right to be copied</guid>
+			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Three guards landed on the copy loop. You can set a drawdown limit when you start copying a trader: if their real closed trades fall that far below their best point, new copies stop automatically, you get told why, and exits on positions you already hold keep coming through so you are never frozen inside the leader that just tripped. Resuming while they are still down is refused with the actual numbers rather than a button that silently re-pauses. Second, a trader now has to have earned a record before anyone can put money behind them: five closed round-trips, a day of trading history, and real capital deployed, all measured on-chain. Fall short and the panel shows exactly what is still missing instead of a flat refusal, and a losing trader with a real record still qualifies, because this asks whether the record is real, not whether it is good. Third, you can no longer copy an agent you own, and follows between your own agents no longer count toward the follower score on the leaderboard. Along the way, starting or editing a copy from a trader profile was failing silently on every attempt; that is fixed.</description>
+		</item>
+		<item>
 			<title>Daily Forge shows the day's theme again</title>
 			<link>https://three.ws/daily</link>
 			<guid isPermaLink="false">2026-09-03:Daily Forge shows the day's theme again</guid>
@@ -229,6 +253,14 @@
 			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>Eight developer docs pages described a capability without ever showing you a working project that uses it, so finding the runnable version meant guessing at folder names on GitHub. The SDK, MCP, embedding, authentication, create-an-agent, Solana, agent-payments and agent-wallets pages now each end with a Runnable example section linking straight to the project that backs them: a browser demo, a Node script that drives the free MCP server end to end, nine single-file HTML embeds you can open with no build step, the full wallet sign-in round trip, and a complete agent defined entirely as files. The machine-readable index that AI agents read to navigate the site now carries the examples location too, so an agent asked to build against three.ws can fetch working code instead of inferring it from prose. Every one of those examples is installed, run and link-checked before release, so a link on a docs page never points at something broken.</description>
+		</item>
+		<item>
+			<title>Fork a trade: one tap from any coin on the site into the real pump.fun trade</title>
+			<link>https://three.ws/radar</link>
+			<guid isPermaLink="false">2026-09-03:Fork a trade: one tap from any coin on the site into the real pump.fun trade</guid>
+			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The pages that tell you which coins are real and which wallets keep winning used to end in a link out to pump.fun, where you had to find the coin again and start over. Now every one of them carries Fork. One tap on a Coin Radar card, a Smart Money card or its drawer, the coin deep-dive on the Live Trade Feed, or a position a leader is still holding in a ghost-copy replay opens the real trade panel for that exact coin: live quote, the same safety firewall that guards every other trade surface (a coin it judges unsafe stays unbuyable), and your own browser wallet as the signer. Nothing is delegated, no key is handed over, and no balance is held. A fork on a ghost-copy row opens at the size your paper budget used, so the practice position and the real one match. Forks also travel: the Share button next to them builds a link that opens the trade panel on arrival, carrying your referral code when you are signed in, and a size a link suggests is capped and always editable before you sign.</description>
 		</item>
 		<item>
 			<title>Live Trading Theater: the tape opens full and the connection light tells the truth</title>
@@ -309,6 +341,14 @@
 			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Hands-free is here for connected homes. Turn it on at /voice/home, say the wake word, and ask for what you want: &quot;turn the kitchen light off&quot; works while you are carrying groceries. The wake word is matched by a model that runs inside your own browser tab, so that audio never leaves your device; only the sentence you say afterwards is sent, and only to be turned into text. While the microphone is live there is an indicator on the page that cannot be switched off, and Mute genuinely stops the microphone at the device rather than hiding a dot. Talk over the agent and it stops mid-sentence and listens, in about a tenth of a second, and it will not wake itself up when it happens to say its own wake word out loud. The part we spent the most care on is the door. Anything that opens your house is spoken back in full first, the exact device appears on screen while you decide, and only the word &quot;confirm&quot; goes through. A &quot;yeah&quot; or a &quot;sure&quot; overheard from a conversation on the other side of the room does not, and on a device with no screen the agent refuses to take an unlock by voice at all and offers your phone instead. Four wake phrases to choose from, twelve designed states including an honest one for deployments where speech recognition is not available, and every stage of the round trip timed live on screen so you can see where the seconds go.</description>
+		</item>
+		<item>
+			<title>The parametric avatar goes from 122 sliders to 306, and a brush for everything they still cannot reach</title>
+			<link>https://three.ws/create/studio</link>
+			<guid isPermaLink="false">2026-09-03:The parametric avatar goes from 122 sliders to 306, and a brush for everything they still cannot reach</guid>
+			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Avatar Studio's Parametric base now carries 306 shape sliders instead of 122, curated from source data that was already vendored: eyelid heights and eye folds, nose bridge and septum, philtrum and cupid's bow, ear rotation and shape, temples, jaw bones, lats, navel, knee alignment, upper and lower leg length, and per-ethnicity phenotype anchors. Face regions keep separate left and right controls because facial asymmetry is part of a face; limbs get one symmetric slider. With that many controls the panel grew a filter box, collapsed body groups, and an &quot;N edited&quot; pill so you can see which closed group you have already touched. Above all of it sits Free Sculpt: turn the brush on and drag on the avatar to push or pull the surface anywhere, with a real-size on-screen ring, adjustable strength, and symmetry you can switch off. Playback pauses while you paint so the mesh holds still, dragging the background still orbits the camera, and Clear sculpt puts the body back exactly. Two things that used to be editor-only now reach everyone: a body edited in the avatar editor's Proportions panel and any free-sculpt stroke are both rendered into the GLB the server serves, so what you shaped is what viewers, embeds and AR downloads actually see.</description>
 		</item>
 		<item>
 			<title>The payments feed now tells you which volume is ours and which is real demand</title>
