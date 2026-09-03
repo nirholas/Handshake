@@ -322,14 +322,23 @@ $('ar-btn').addEventListener('click', () => {
 	if (mv.canActivateAR) { try { mv.activateAR(); return; } catch {} }
 	window.open(arLink(), '_blank', 'noopener');
 });
-$('share').addEventListener('click', () => {
+$('share').addEventListener('click', async () => {
 	if (!current) return;
 	const url = `${location.origin}/viewer?src=${encodeURIComponent(current.glb)}&title=${encodeURIComponent((current.prompt || '').slice(0, 80))}`;
 	const payload = { title: `${theme.title} · Daily Forge`, text: `My take on today's Daily Forge theme: ${current.prompt}`, url };
-	if (navigator.share) { navigator.share(payload).catch(() => {}); return; }
-	navigator.clipboard?.writeText(url).then(() => {
-		const b = $('share'); const old = b.textContent; b.textContent = 'Link copied ✓'; setTimeout(() => { b.textContent = old; }, 1600);
-	}).catch(() => window.prompt('Copy this link:', url));
+	if (navigator.share) { try { await navigator.share(payload); } catch { /* the visitor dismissed the sheet */ } return; }
+	const b = $('share');
+	// navigator.clipboard is absent outside a secure context, so reading .writeText
+	// off it throws synchronously: the try has to wrap the property access, not
+	// just the promise, or Share dies with an uncaught TypeError.
+	try {
+		await navigator.clipboard.writeText(url);
+		const label = b.textContent;
+		b.textContent = 'Link copied ✓';
+		setTimeout(() => { b.textContent = label; }, 1600);
+	} catch {
+		window.prompt('Copy this link:', url);
+	}
 });
 $('retry').addEventListener('click', () => { overlay('idle'); if (input.value.trim().length >= 3) forge(input.value); else input.focus(); });
 
