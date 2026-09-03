@@ -265,6 +265,46 @@
 				font-weight: 500;
 			}
 			.link-row a.action:hover { color: #dddddd; }
+			/* Keyboard focus was invisible on every control here except the text
+			   inputs, so a tab-only user could not tell where they were. One ring,
+			   applied to every focusable thing, in the page's accent. */
+			a:focus-visible,
+			button:focus-visible,
+			input:focus-visible,
+			select:focus-visible,
+			textarea:focus-visible,
+			[tabindex]:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+				border-radius: 6px;
+			}
+			.visually-hidden {
+				position: absolute;
+				width: 1px;
+				height: 1px;
+				padding: 0;
+				margin: -1px;
+				overflow: hidden;
+				clip: rect(0 0 0 0);
+				white-space: nowrap;
+				border: 0;
+			}
+			.load-error {
+				border: 1px solid rgba(248,113,113,0.3);
+				background: rgba(248,113,113,0.06);
+				border-radius: 12px;
+				padding: 20px;
+				max-width: 520px;
+			}
+			.load-error h2 { font-size: 16px; margin: 0 0 6px; }
+			.load-error p { color: #999; font-size: 13.5px; margin: 0 0 14px; }
+			.verify-form { margin-top: 12px; }
+			.verify-form .row { margin-top: 10px; }
+			.verify-form input {
+				max-width: 180px;
+				letter-spacing: 0.28em;
+				font-variant-numeric: tabular-nums;
+			}
 			.social-card {
 				display: flex;
 				align-items: center;
@@ -422,11 +462,24 @@
 				<a href="/dashboard#mcp" data-i18n="settings_index.mcp">MCP ↗</a>
 				<a href="/dashboard#billing" data-i18n="settings_index.plan_billing">Plan &amp; Billing ↗</a>
 				<a href="/dashboard/account" data-i18n="settings_index.wallets">Wallets ↗</a>
+				<a href="/dashboard/settings" data-i18n="settings_index.notifications">Notifications ↗</a>
 				<div class="aside-section">More</div>
 				<a href="#danger" data-tab="danger" data-i18n="settings_index.danger_zone">Danger Zone</a>
 			</aside>
 
 			<main>
+				<!-- Shown instead of the tabs when the account itself could not be
+				     loaded. Every panel below is a projection of that one fetch, so a
+				     failure used to leave the whole page sitting on placeholder dashes
+				     with nothing to click. -->
+				<div class="load-error" id="settings-load-error" style="display:none" role="alert">
+					<h2 data-i18n="settings_index.couldnt_load_your_settings">Couldn't load your settings</h2>
+					<p id="settings-load-error-body" data-i18n="settings_index.we_could_not_reach_your_account">We could not reach your account just now. Your settings are safe; this is a connection problem.</p>
+					<div class="row">
+						<button class="btn" id="settings-retry-btn" data-i18n="settings_index.try_again">Try again</button>
+						<a class="btn sec" href="/dashboard" style="text-decoration:none" data-i18n="settings_index.go_to_dashboard">Go to dashboard</a>
+					</div>
+				</div>
 				<!-- ── Profile ───────────────────────────────────────────── -->
 				<div class="page active" id="tab-profile">
 					<h2 data-i18n="settings_index.profile_2">Profile</h2>
@@ -470,10 +523,23 @@
 						<div class="link-row">
 							<div>
 								<div class="label">Email address</div>
-								<div class="val" id="account-email">—</div>
+								<div class="val" id="account-email">Loading…</div>
 							</div>
-							<span id="email-verified-badge" class="tag">—</span>
+							<div class="row" style="gap:8px">
+								<span id="email-verified-badge" class="tag">Checking…</span>
+								<button class="btn sec" id="send-verify-btn" style="display:none;font-size:12px;padding:5px 12px" data-i18n="settings_index.verify_email">Verify email</button>
+							</div>
 						</div>
+						<div class="verify-form" id="verify-form" style="display:none">
+							<label for="inp-verify-code" data-i18n="settings_index.six_digit_code">Six-digit code we emailed you</label>
+							<input id="inp-verify-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" />
+							<div class="row">
+								<button class="btn" id="confirm-verify-btn" disabled data-i18n="settings_index.confirm_code">Confirm code</button>
+								<button class="btn sec" id="resend-verify-btn" data-i18n="settings_index.send_again">Send again</button>
+								<button class="btn sec" id="cancel-verify-btn" data-i18n="settings_index.cancel_2">Cancel</button>
+							</div>
+						</div>
+						<span class="inline-msg" id="verify-msg" style="display:none"></span>
 						<div class="link-row">
 							<div>
 								<div class="label">Password</div>
@@ -484,14 +550,21 @@
 						<div class="link-row">
 							<div>
 								<div class="label">Connected wallets</div>
-								<div class="val" id="wallet-count">—</div>
+								<div class="val" id="wallet-count">Loading…</div>
 							</div>
 							<a href="/dashboard/account" class="action" data-i18n="settings_index.manage">Manage ↗</a>
 						</div>
 						<div class="link-row">
 							<div>
+								<div class="label">Notifications</div>
+								<div class="val" data-i18n="settings_index.choose_which_channels_deliver_each_kind">Choose which channels deliver each kind of notification</div>
+							</div>
+							<a href="/dashboard/settings" class="action" data-i18n="settings_index.manage_3">Manage ↗</a>
+						</div>
+						<div class="link-row">
+							<div>
 								<div class="label">Plan</div>
-								<div class="val" id="account-plan">—</div>
+								<div class="val" id="account-plan">Loading…</div>
 							</div>
 							<a href="/dashboard#billing" class="action" data-i18n="settings_index.manage_2">Manage ↗</a>
 						</div>
@@ -626,8 +699,9 @@
 						<p data-i18n="settings_index.permanently_deletes_your_account_all_avatars">Permanently deletes your account, all avatars, agents, and API keys. This cannot be undone.</p>
 						<button class="btn danger" id="show-delete-btn" data-i18n="settings_index.delete_my_account">Delete my account…</button>
 						<div class="confirm-delete" id="confirm-delete-wrap">
-							<p data-i18n-html="settings_index.type_delete_my_account_to_confirm">Type <strong style="color:#eee">delete my account</strong> to confirm:</p>
-							<input id="delete-confirm-input" type="text" placeholder="delete my account" style="max-width:300px;margin-bottom:12px" />
+							<p id="delete-confirm-help" data-i18n-html="settings_index.type_delete_my_account_to_confirm">Type <strong style="color:#eee">delete my account</strong> to confirm:</p>
+							<label for="delete-confirm-input" class="visually-hidden" data-i18n="settings_index.confirmation_phrase">Confirmation phrase</label>
+							<input id="delete-confirm-input" type="text" placeholder="delete my account" aria-describedby="delete-confirm-help" style="max-width:300px;margin-bottom:12px" />
 							<div class="row">
 								<button class="btn danger" id="confirm-delete-btn" disabled data-i18n="settings_index.permanently_delete">Permanently delete</button>
 								<button class="btn sec" id="cancel-delete-btn" data-i18n="settings_index.cancel">Cancel</button>
@@ -686,16 +760,13 @@
 				document.getElementById('inp-username').value = user.username || '';
 				updateProfileUrlPreview();
 
-				document.getElementById('account-email').textContent = user.email || '—';
-				const badge = document.getElementById('email-verified-badge');
-				if (user.email_verified) {
-					badge.textContent = 'Verified';
-					badge.className = 'tag green';
-				} else {
-					badge.textContent = 'Unverified';
-					badge.className = 'tag yellow';
-				}
+				document.getElementById('account-email').textContent = user.email || 'No email on this account';
+				renderVerifiedBadge();
 				document.getElementById('account-plan').textContent = user.plan || 'free';
+				// The stored preference, not a local guess: /api/auth/me carries the
+				// column the avatar create paths read, so the control shows what the
+				// server will actually apply.
+				document.getElementById('sel-default-vis').value = user.default_avatar_visibility || 'private';
 
 				// /api/auth/me returns wallet_address, never `address`, so the old
 				// fallback never resolved and a wallet-only account got a button
@@ -722,6 +793,103 @@
 				preview.textContent = val ? `three.ws/u/${val}` : 'three.ws/u/yourhandle';
 			}
 			document.getElementById('inp-username').addEventListener('input', updateProfileUrlPreview);
+
+			// ── Email verification ───────────────────────────────────────
+			// /api/auth/verify-email and /api/auth/resend-verification have existed
+			// since registration shipped, but nothing in the product ever called
+			// them: the only place that even mentioned verification was the badge
+			// below, and it read a field /api/auth/me did not return, so every
+			// account read "Unverified" forever with no way to act on it. This is
+			// the flow that closes that loop.
+			function renderVerifiedBadge() {
+				const badge = document.getElementById('email-verified-badge');
+				const sendBtn = document.getElementById('send-verify-btn');
+				const verified = Boolean(user?.email_verified);
+				badge.textContent = verified ? 'Verified' : 'Unverified';
+				badge.className = verified ? 'tag green' : 'tag yellow';
+				// A wallet-only account has a synthetic address it cannot receive mail
+				// at, so offering to send a code there would be a dead end.
+				const mailable = Boolean(user?.email) && !/@users\.three\.ws\.local$/i.test(user.email);
+				sendBtn.style.display = !verified && mailable ? 'inline-flex' : 'none';
+				if (verified) {
+					document.getElementById('verify-form').style.display = 'none';
+				}
+			}
+
+			function showVerifyForm(open) {
+				document.getElementById('verify-form').style.display = open ? 'block' : 'none';
+				document.getElementById('send-verify-btn').style.display = open ? 'none' : 'inline-flex';
+				if (open) document.getElementById('inp-verify-code').focus();
+			}
+
+			async function sendVerificationCode(btn) {
+				const msg = document.getElementById('verify-msg');
+				const label = btn.textContent;
+				btn.disabled = true;
+				btn.textContent = 'Sending…';
+				try {
+					const data = await apiJson('/api/auth/resend-verification', { method: 'POST' });
+					if (data?.already_verified) {
+						if (user) user.email_verified = true;
+						renderVerifiedBadge();
+						showMsg(msg, 'ok', 'This address is already verified.');
+						return true;
+					}
+					showMsg(msg, 'ok', `Code sent to ${user.email}. It expires in 30 minutes.`);
+					return true;
+				} catch (e) {
+					showMsg(msg, 'err', e.data?.error_description || 'Could not send the code. Try again in a moment.');
+					return false;
+				} finally {
+					btn.disabled = false;
+					btn.textContent = label;
+				}
+			}
+
+			document.getElementById('send-verify-btn').addEventListener('click', async (e) => {
+				if (await sendVerificationCode(e.currentTarget) && !user?.email_verified) showVerifyForm(true);
+			});
+			document.getElementById('resend-verify-btn').addEventListener('click', (e) => sendVerificationCode(e.currentTarget));
+			document.getElementById('cancel-verify-btn').addEventListener('click', () => {
+				document.getElementById('inp-verify-code').value = '';
+				document.getElementById('confirm-verify-btn').disabled = true;
+				showVerifyForm(false);
+			});
+			document.getElementById('inp-verify-code').addEventListener('input', (e) => {
+				// The server hashes exactly six digits, so strip anything a paste drags in.
+				e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6);
+				document.getElementById('confirm-verify-btn').disabled = e.target.value.length !== 6;
+			});
+			document.getElementById('inp-verify-code').addEventListener('keydown', (e) => {
+				if (e.key === 'Enter' && e.target.value.length === 6) {
+					e.preventDefault();
+					document.getElementById('confirm-verify-btn').click();
+				}
+			});
+			document.getElementById('confirm-verify-btn').addEventListener('click', async () => {
+				const btn = document.getElementById('confirm-verify-btn');
+				const msg = document.getElementById('verify-msg');
+				const code = document.getElementById('inp-verify-code').value;
+				btn.disabled = true;
+				btn.textContent = 'Confirming…';
+				try {
+					await apiJson('/api/auth/verify-email', {
+						method: 'POST',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ code }),
+					});
+					if (user) user.email_verified = true;
+					renderVerifiedBadge();
+					showVerifyForm(false);
+					document.getElementById('inp-verify-code').value = '';
+					showMsg(msg, 'ok', 'Email verified.');
+				} catch (e) {
+					showMsg(msg, 'err', e.data?.error_description || 'That code did not work. Ask for a new one.');
+				} finally {
+					btn.textContent = 'Confirm code';
+					btn.disabled = document.getElementById('inp-verify-code').value.length !== 6;
+				}
+			});
 
 			// ── Wallets count ────────────────────────────────────────────
 			async function loadWallets() {
@@ -760,13 +928,30 @@
 				}
 			});
 
-			// ── Privacy (stored in localStorage until backend supports it) ──
-			const PRIV_KEY = '3dagent:default-vis';
-			document.getElementById('sel-default-vis').value = localStorage.getItem(PRIV_KEY) || 'public';
-			document.getElementById('save-privacy-btn').addEventListener('click', () => {
+			// ── Privacy ──────────────────────────────────────────────────
+			// The default visibility is stored on the account (users
+			// .default_avatar_visibility) and read back by every avatar create path
+			// that the caller did not give an explicit visibility. It used to live in
+			// localStorage, where nothing ever read it: the control said "saved" and
+			// new avatars kept whatever each endpoint hardcoded.
+			document.getElementById('save-privacy-btn').addEventListener('click', async () => {
+				const btn = document.getElementById('save-privacy-btn');
+				const msg = document.getElementById('privacy-msg');
 				const val = document.getElementById('sel-default-vis').value;
-				localStorage.setItem(PRIV_KEY, val);
-				showMsg(document.getElementById('privacy-msg'), 'ok', 'Saved preference.');
+				btn.disabled = true;
+				try {
+					await apiJson('/api/auth/profile', {
+						method: 'PATCH',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ default_avatar_visibility: val }),
+					});
+					if (user) user.default_avatar_visibility = val;
+					showMsg(msg, 'ok', 'Saved. New avatars will default to ' + val + '.');
+				} catch (e) {
+					showMsg(msg, 'err', e.data?.error_description || 'Could not save that preference.');
+				} finally {
+					btn.disabled = false;
+				}
 			});
 
 			// ── Sessions ─────────────────────────────────────────────────

@@ -2,7 +2,7 @@
 // POST /api/avatars       — create avatar metadata after upload
 
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
-import { listAvatars, createAvatar } from '../_lib/avatars.js';
+import { listAvatars, createAvatar, defaultAvatarVisibilityFor } from '../_lib/avatars.js';
 import { headObject, r2 } from '../_lib/r2.js';
 import { inspectStorageKeyRig } from '../_lib/rig-inspect.js';
 import { HeadObjectCommand } from '@aws-sdk/client-s3';
@@ -46,7 +46,16 @@ async function handleList(req, res) {
 async function handleCreate(req, res) {
 	const auth = await resolveAuth(req, 'avatars:write');
 	if (!auth) return error(res, 401, 'unauthorized', 'avatars:write scope required');
-	const body = parse(createWithStorage, await readJson(req));
+	const raw = await readJson(req);
+	const body = parse(createWithStorage, raw);
+
+	// A caller that names a visibility always wins. Only when the request is
+	// silent does the owner's "Default avatar visibility" preference from
+	// /settings apply; with no preference stored it resolves to the same
+	// 'private' the schema has always defaulted to.
+	if (raw?.visibility === undefined) {
+		body.visibility = await defaultAvatarVisibilityFor(auth.userId, 'private');
+	}
 
 	// Storage keys are scoped by userId (see storageKeyFor). Enforce that the
 	// caller can only register objects under their own prefix — otherwise a

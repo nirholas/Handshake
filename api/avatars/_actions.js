@@ -3,7 +3,7 @@
 
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
 import { presignUpload, headObject, r2, publicUrl, putObject } from '../_lib/r2.js';
-import { storageKeyFor, enforceQuotas, searchPublicAvatars, stripOwnerFor, assertAvatarSlotAvailable, isPlanLimitError } from '../_lib/avatars.js';
+import { storageKeyFor, enforceQuotas, searchPublicAvatars, stripOwnerFor, assertAvatarSlotAvailable, isPlanLimitError, defaultAvatarVisibilityFor } from '../_lib/avatars.js';
 import { listAvatars } from '../_lib/avatars.js';
 import { env } from '../_lib/env.js';
 import { sql } from '../_lib/db.js';
@@ -1272,7 +1272,9 @@ const handleReconstruct = wrap(async (req, res) => {
 		images: photos,
 		name: body.name,
 		description: body.description ?? null,
-		visibility: body.visibility ?? 'private',
+		// Same rule as POST /api/avatars: an explicit choice wins, silence falls
+		// back to the owner's default from /settings.
+		visibility: body.visibility ?? (await defaultAvatarVisibilityFor(userId, 'private')),
 		...(body.prompt
 			? { source: 'prompt', prompt: body.prompt, referenceImageUrl }
 			: {}),

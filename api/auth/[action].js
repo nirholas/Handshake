@@ -14,7 +14,7 @@ import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/
 import { requireCsrf } from '../_lib/csrf.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import captcha, { verifyBypassToken } from './captcha.js';
-import { parse, loginBody, registerBody, usernameRegisterBody, username as usernameValidator, displayName, email, password, bio as bioValidator, profileLocation, httpUrl } from '../_lib/validate.js';
+import { parse, loginBody, registerBody, usernameRegisterBody, username as usernameValidator, displayName, email, password, bio as bioValidator, profileLocation, httpUrl, avatarVisibility } from '../_lib/validate.js';
 import { sendPasswordResetEmail, sendVerificationEmail } from '../_lib/email.js';
 import { referralCodeCandidates, normalizeReferralCode } from '../_lib/referrals.js';
 import { seedDefaultAgent } from '../_lib/seed-default-agent.js';
@@ -233,7 +233,22 @@ async function handleMe(req, res) {
 		res.setHeader('Set-Cookie', sessionCookie('', { clear: true }));
 		return error(res, 401, 'invalid_session', 'session expired or revoked');
 	}
-	return json(res, 200, { user });
+	// getSessionUser runs on every authenticated request, so its projection stays
+	// minimal. These two columns are account settings rather than session state:
+	// read them here, where /settings is the caller that needs them. Without
+	// email_verified the settings badge could only ever render "Unverified", which
+	// is what it did for every verified account until this row was added.
+	const [account] = await sql`
+		select email_verified, default_avatar_visibility
+		from users where id = ${user.id} and deleted_at is null limit 1
+	`;
+	return json(res, 200, {
+		user: {
+			...user,
+			email_verified: Boolean(account?.email_verified),
+			default_avatar_visibility: account?.default_avatar_visibility || null,
+		},
+	});
 }
 
 // ── delete account (DELETE /api/auth/me) ──────────────────────────────────────
@@ -327,6 +342,10 @@ const profileSchema = z.object({
 	location: profileLocation.optional(),
 	avatar_url: httpUrl.optional(),
 	banner_url: httpUrl.optional(),
+	// Account preference rather than public profile copy, but it belongs to the
+	// same owner-writes-their-own-user-row contract this endpoint already covers.
+	// Read back by the avatar create paths via defaultAvatarVisibilityFor().
+	default_avatar_visibility: avatarVisibility.optional(),
 }).refine(
 	(b) => Object.keys(b).length > 0,
 	{ message: 'at least one field required' },
@@ -351,7 +370,8 @@ async function handleProfile(req, res) {
 	const body = parse(profileSchema, await readJson(req));
 
 	const [current] = await sql`
-		select username, display_name, bio, website, location, avatar_url, banner_url
+		select username, display_name, bio, website, location, avatar_url, banner_url,
+		       default_avatar_visibility
 		from users where id = ${user.id} and deleted_at is null limit 1
 	`;
 	if (!current) return error(res, 401, 'unauthenticated', 'not signed in');
@@ -370,6 +390,10 @@ async function handleProfile(req, res) {
 		location: profileField(body.location, current.location),
 		avatar_url: profileField(body.avatar_url, current.avatar_url),
 		banner_url: profileField(body.banner_url, current.banner_url),
+		default_avatar_visibility:
+			body.default_avatar_visibility !== undefined
+				? body.default_avatar_visibility
+				: current.default_avatar_visibility,
 	};
 
 	const [updated] = await sql`
@@ -381,9 +405,11 @@ async function handleProfile(req, res) {
 			location = ${next.location},
 			avatar_url = ${next.avatar_url},
 			banner_url = ${next.banner_url},
+			default_avatar_visibility = ${next.default_avatar_visibility},
 			updated_at = now()
 		where id = ${user.id} and deleted_at is null
-		returning id, username, display_name, bio, website, location, avatar_url, banner_url
+		returning id, username, display_name, bio, website, location, avatar_url, banner_url,
+		          default_avatar_visibility
 	`;
 	logAudit({
 		userId: user.id,

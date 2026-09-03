@@ -25,7 +25,7 @@
 
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
-import { storageKeyFor, createAvatar } from '../_lib/avatars.js';
+import { storageKeyFor, createAvatar, defaultAvatarVisibilityFor } from '../_lib/avatars.js';
 import { putObject } from '../_lib/r2.js';
 import { isValidGlbHeader, inspectGlb } from '../_lib/glb-inspect.js';
 import { fetchSafePublicUrl, SsrfBlockedError } from '../_lib/ssrf-guard.js';
@@ -78,7 +78,12 @@ export default wrap(async (req, res) => {
 	if (!glbUrl) return error(res, 400, 'invalid_request', 'glb_url is required');
 	if (!name) return error(res, 400, 'invalid_request', 'name is required (1–80 chars)');
 
-	const visibility = VISIBILITIES.has(body?.visibility) ? body.visibility : 'unlisted';
+	// An explicit visibility from the caller wins; otherwise the owner's
+	// "Default avatar visibility" preference from /settings decides, falling back
+	// to the unlisted default this endpoint has always used.
+	const visibility = VISIBILITIES.has(body?.visibility)
+		? body.visibility
+		: await defaultAvatarVisibilityFor(auth.userId, 'unlisted');
 	const sourcePrompt =
 		typeof body?.source_prompt === 'string' ? body.source_prompt.slice(0, 1000) : null;
 	const rigged = body?.rigged === true;

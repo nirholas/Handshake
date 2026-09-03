@@ -448,13 +448,16 @@ const DEFAULT_TOOL_SET = Object.freeze({ anthropic: ACTION_TOOLS, openai: OPENAI
 /**
  * Server-side home rounds per turn.
  *
- * Two, because the shape a person actually asks for is "check the house, then do
- * the thing": read the state, act on what it said. One round produced an agent
- * that answered "I don't have a tool for that" after reading the house, which is
- * both useless and untrue. The last round is offered no home tools at all, so
- * the ceiling is a hard stop rather than a heuristic.
+ * Three, measured rather than guessed. The shape a person actually asks for is
+ * "check the house, then do the thing", and the tool descriptions deliberately
+ * tell the model to look for an existing scene before composing its own call, so
+ * a single act costs up to three steps: read the state, list the macros, then
+ * act. At two rounds a real Claude turn on "unlock the front door" spent both on
+ * reads and answered without ever asking, which is a worse failure than a slow
+ * one. The last round is offered no home tools at all, so the ceiling is a hard
+ * stop rather than a hope.
  */
-const HOME_TOOL_ROUNDS = 2;
+const HOME_TOOL_ROUNDS = 3;
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
@@ -1255,6 +1258,25 @@ async function runHomeRound(calls, userId) {
 	return out;
 }
 
+/** How much of a house may ride back into one prompt. A big house is still a prompt. */
+const HOME_RESULT_MAX_CHARS = 12_000;
+
+function toolResultText(result) {
+	let data = '';
+	try {
+		data = JSON.stringify(result.structured ?? {});
+	} catch {
+		data = '{}';
+	}
+	if (data.length > HOME_RESULT_MAX_CHARS) {
+		// A house with thousands of entities must not be able to fill a context
+		// window. Truncating says so out loud rather than handing the model a
+		// silently partial view of somebody's home.
+		data = `${data.slice(0, HOME_RESULT_MAX_CHARS)}… (truncated; narrow the request, for example home_status with a room)`;
+	}
+	return `${result.text}\n\n${data}`;
+}
+
 /**
  * A second model pass carrying the tool results, so the agent can speak about
  * what the house actually said.
@@ -1276,11 +1298,19 @@ async function runHomeRound(calls, userId) {
 async function runFollowUpPass({ route, systemPrompt, sys, history, maxTokens, assistantText, toolCalls, homeResults, toolSet, sendSSE }) {
 	if (route.style === 'orchestrate') return null;
 
-	const resultText = new Map(homeResults.map((entry) => [entry.call.id, entry.result]));
+	const byId = new Map(homeResults.map((entry) => [entry.call.id, entry.result]));
 	const answerFor = (call) => {
-		const result = resultText.get(call.id);
-		if (result) return { text: result.text, isError: result.kind === 'error' };
-		return { text: 'Queued in the viewer; it is running there now.', isError: false };
+		const result = byId.get(call.id);
+		if (!result) return { text: 'Queued in the viewer; it is running there now.', isError: false };
+		// The summary AND the structured data. Neither wire format has a
+		// structuredContent field the way MCP does, and sending only the prose left
+		// the model unable to name a single entity: it read "67 entities" and then
+		// called home_status again looking for an id that was never in what it was
+		// given. The data goes in as a JSON value, which is the closest this
+		// transport gets to structured content, and it is the same content the MCP
+		// surface returns. It is untrusted either way, which is precisely why the
+		// gate sits downstream of this and not upstream.
+		return { text: toolResultText(result), isError: result.kind === 'error' };
 	};
 
 	const anthropic = route.style === 'anthropic';

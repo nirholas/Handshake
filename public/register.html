@@ -433,6 +433,11 @@
 			}
 			#privy-toggle-btn:hover { background: #161616; border-color: rgba(255,255,255,0.18); color: #fff; }
 			#privy-toggle-btn svg { flex-shrink: 0; }
+			.privy-toggle-chev { opacity: 0.55; transition: transform 0.18s ease; }
+			#privy-toggle-btn[aria-expanded='true'] .privy-toggle-chev { transform: rotate(180deg); }
+			@media (prefers-reduced-motion: reduce) {
+				.privy-toggle-chev { transition: none; }
+			}
 			#privy-expanded { margin-top: 8px; }
 			.privy-row { display: flex; gap: 8px; align-items: flex-start; }
 			.privy-row input { flex: 1; margin: 0; }
@@ -453,17 +458,17 @@
 				padding: 0; text-decoration: underline; text-underline-offset: 2px; width: auto;
 			}
 			.privy-back-link:hover { color: #888; }
-			.privy-wallet-divider { margin: 10px 0 8px; text-align: center; font-size: 11px; color: #999; letter-spacing: 0.04em; }
+			.privy-wallet-divider { margin: 10px 0 8px; text-align: center; font-size: 11px; color: #8a8a8a; letter-spacing: 0.04em; }
 			.privy-chain-btns { display: flex; gap: 8px; }
 			.privy-chain-btn {
 				flex: 1; margin: 0; padding: 10px 12px;
-				background: transparent; border: 1px solid rgba(0,0,0,0.12);
-				border-radius: 10px; color: #555; font-size: 13px; font-weight: 500;
+				background: transparent; border: 1px solid rgba(255,255,255,0.12);
+				border-radius: 10px; color: #ccc; font-size: 13px; font-weight: 500;
 				cursor: pointer; display: flex; align-items: center; justify-content: center;
 				gap: 7px; transition: background 0.12s, border-color 0.12s, color 0.12s;
 				white-space: nowrap;
 			}
-			.privy-chain-btn:hover:not(:disabled) { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.22); color: #000; }
+			.privy-chain-btn:hover:not(:disabled) { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.22); color: #fff; }
 			.privy-chain-btn:disabled { opacity: 0.4; cursor: default; }
 			#privy-wallet-status { margin: 6px 0 0; font-size: 12px; color: #888; }
 		</style>
@@ -499,21 +504,22 @@
 
 			<!-- Privy social / email-OTP login -->
 			<div id="privy-section">
-				<button type="button" id="privy-toggle-btn">
+				<button type="button" id="privy-toggle-btn" aria-expanded="false" aria-controls="privy-expanded">
 					<svg width="18" height="18" viewBox="0 0 36 36" fill="none" aria-hidden="true"><rect width="36" height="36" rx="8" fill="#2563EB"/><path d="M18 8C12.477 8 8 12.477 8 18s4.477 10 10 10 10-4.477 10-10S23.523 8 18 8zm0 3a7 7 0 110 14A7 7 0 0118 11zm0 2a5 5 0 100 10A5 5 0 0018 13zm0 2a3 3 0 110 6 3 3 0 010-6z" fill="#fff" opacity=".9"/></svg>
-					Continue with Privy
+					<span data-i18n="register.continue_with_privy">Continue with Privy</span>
+					<svg class="privy-toggle-chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
 				</button>
 				<div id="privy-expanded" hidden>
 					<div id="privy-step-email">
 						<div class="privy-row">
-							<input id="privy-email-input" type="email" inputmode="email" placeholder="Email address" autocomplete="email" autocapitalize="none" />
+							<input id="privy-email-input" type="email" inputmode="email" placeholder="Email address" aria-label="Email address" data-i18n-attr="placeholder:register.email_address_placeholder;aria-label:register.email_address_arialabel" autocomplete="email" autocapitalize="none" />
 							<button type="button" id="privy-send-btn" class="privy-row-btn" data-i18n="register.send_code">Send code</button>
 						</div>
 						<div id="privy-captcha-slot" aria-live="polite"></div>
 					</div>
 					<div id="privy-step-code" hidden>
 						<div class="privy-row">
-							<input id="privy-code-input" type="text" inputmode="numeric" placeholder="6-digit code" maxlength="6" autocomplete="one-time-code" />
+							<input id="privy-code-input" type="text" inputmode="numeric" placeholder="6-digit code" aria-label="6-digit code" data-i18n-attr="placeholder:register.6_digit_code_placeholder;aria-label:register.6_digit_code_arialabel" maxlength="6" autocomplete="one-time-code" />
 							<button type="button" id="privy-verify-btn" class="privy-row-btn" data-i18n="register.verify">Verify</button>
 						</div>
 					</div>
@@ -676,6 +682,47 @@
 						}
 					});
 				});
+			})();
+
+			// Privy disclosure.
+			// The passwordless / wallet block ships collapsed so the username +
+			// password form stays the visual default, but nothing ever opened it:
+			// #privy-expanded kept its `hidden` attribute for the life of the page,
+			// so email-OTP, EVM and Solana signup were all unreachable here.
+			(function () {
+				const btn = document.getElementById('privy-toggle-btn');
+				const panel = document.getElementById('privy-expanded');
+				const inlineErr = document.getElementById('privy-inline-err');
+				if (!btn || !panel) return;
+
+				function setOpen(open, moveFocus) {
+					panel.hidden = !open;
+					btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+					if (!moveFocus) return;
+					if (open) document.getElementById('privy-email-input')?.focus();
+					else btn.focus();
+				}
+
+				btn.addEventListener('click', () => setOpen(panel.hidden, true));
+
+				// "Back" steps out of code entry first: privy-login.js resets the form
+				// to the email step on this same click, and this handler runs before it
+				// (inline script beats the deferred module), so read the step that is
+				// still on screen. From the email step there is nowhere further back to
+				// go, so the disclosure closes.
+				document.getElementById('privy-back-btn')?.addEventListener('click', () => {
+					const codeStep = document.getElementById('privy-step-code');
+					if (!codeStep || codeStep.hidden) setOpen(false, true);
+				});
+
+				// privy-login.js reports a failed /api/config probe by unhiding this
+				// line, which lives inside the collapsed panel. Open the panel so the
+				// explanation is readable, without stealing focus from the form.
+				if (inlineErr) {
+					new MutationObserver(() => {
+						if (!inlineErr.hidden && panel.hidden) setOpen(true, false);
+					}).observe(inlineErr, { attributes: true, attributeFilter: ['hidden'] });
+				}
 			})();
 
 			// Password show/hide toggle

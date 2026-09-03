@@ -28,6 +28,11 @@
     <meta name="twitter:description" content="Talk to your agent: voice, text, and real tool use in one interface, with 3D generation inline in the thread." />
     <meta name="twitter:image" content="https://three.ws/api/page-og?s=agent-tools&amp;t=Chat&amp;d=Talk+to+your+agent.+Voice%2C+text%2C+and+tool-use+in+one+interface.&amp;p=%2Fchat" />
 
+    <!-- jsdelivr is on the critical path (the render-blocking KaTeX stylesheet
+         directly below, then three.js from the importmap). Starting the DNS +
+         TCP + TLS handshake here means the parser is not paying for it when it
+         reaches that <link>. -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/space-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="/fonts/fonts.css" />

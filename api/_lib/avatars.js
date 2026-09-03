@@ -149,6 +149,19 @@ export async function getAvatarBySlug({ ownerId, slug, requesterId = null }) {
 	return decorate(row);
 }
 
+// The owner's "Default avatar visibility" preference from /settings, or
+// `fallback` when they have never expressed one. Create paths call this only
+// when the request itself did not name a visibility, so an explicit choice by
+// the caller (a selfie that is deliberately private, an auto-rig sibling that
+// inherits its source) always wins over the account default.
+export async function defaultAvatarVisibilityFor(userId, fallback = 'private') {
+	if (!userId) return fallback;
+	const rows = await sql`
+		select default_avatar_visibility from users where id = ${userId} and deleted_at is null limit 1
+	`;
+	return rows[0]?.default_avatar_visibility || fallback;
+}
+
 export async function createAvatar({ userId, input, storageKey }) {
 	await enforceQuotas(userId, input.size_bytes);
 	const finalSlug = input.slug || (await generateSlug(userId, input.name));
