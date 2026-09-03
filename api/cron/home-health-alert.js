@@ -91,7 +91,7 @@ async function alertIntegrity(signals) {
 			"    and created_at > now() - interval '24 hours'",
 			'  order by created_at desc;',
 			'',
-			'Runbook: docs/home-operations.md, "Confirmation integrity violation".',
+			'Runbook: docs/ops/home-operations.md, "Confirmation integrity violation".',
 		].join('\n'),
 		{ severity: 'critical', signature: `home:integrity:${signals.integrity.lastAt}` },
 	);
@@ -139,7 +139,7 @@ async function alertCorrelatedUnreachability(signals) {
 			'  2. Egress: gcloud run services describe three-ws-api --region us-central1 --format="value(spec.template.metadata.annotations)" | tr "," "\\n" | grep vpc',
 			'  3. Logs: gcloud logging read \'resource.type="cloud_run_revision" resource.labels.service_name="three-ws-api" textPayload:"home-runtime"\' --freshness=30m',
 			'',
-			'Runbook: docs/home-operations.md, "Correlated unreachability".',
+			'Runbook: docs/ops/home-operations.md, "Correlated unreachability".',
 		].filter(Boolean).join('\n'),
 		{ severity: 'critical', signature: `home:unreachable:${next}` },
 	);
@@ -165,7 +165,7 @@ async function alertSubscriberLeak() {
 			'A subscription is being registered and never released, so the instance is holding sockets into houses nobody is watching.',
 			'It has no error signature; it ends as an out-of-memory restart.',
 			'',
-			'Runbook: docs/home-operations.md, "Subscriber leak".',
+			'Runbook: docs/ops/home-operations.md, "Subscriber leak".',
 		].join('\n'),
 		{ severity: 'critical', signature: `home:leak:${leaking.map((i) => i.instanceId).sort().join(',')}` },
 	);

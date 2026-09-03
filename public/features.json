@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-03T01:46:12.050Z",
+	"generated_at": "2026-09-03T03:42:01.129Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1143,6 +1143,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/voice/home",
+					"title": "Hands-free voice for your home",
+					"description": "Talk to your house without finding a phone: a wake word matched on your own device, real barge-in mid-sentence, and a spoken confirmation that a background yes can never satisfy.",
+					"added": "2026-09-03",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/voice",
 					"title": "Voice Lab",
 					"description": "Browse hundreds of voices across Microsoft Edge, Gemini, NVIDIA, OpenAI and ElevenLabs, preview any of them, or clone your own from a short recording, then give it to your agent.",
@@ -1207,6 +1217,16 @@
 					"title": "Materialize",
 					"description": "Turn any 3D model into a real printed object. Live printability analysis and automatic repair, a true-scale AR preview on your own desk, an itemized price from the mesh's own measured volume, and USDC checkout on Solana.",
 					"added": "2026-09-02",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/smart-home",
+					"title": "Smart home",
+					"description": "Connect a Home Assistant house to your three.ws agent. Your agent reads every room and device, runs the scenes you already built, and stops to ask before it unlocks, opens or disarms anything.",
+					"added": "2026-09-03",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -3212,6 +3232,26 @@
 					"title": "Docs · three.ws Home",
 					"description": "How a three.ws agent connects to a real house: the open-source smart-home landscape measured and shortlisted, why Home Assistant owns the device layer, the two channels the @three-ws/home-bridge package speaks, the physical-action gate that never lets an unlock through unasked, and the road from here to voice in every room.",
 					"added": "2026-09-02",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/home-households",
+					"title": "Docs · Home households and roles",
+					"description": "Sharing a connected house without sharing a login: the five roles and what each one may do, per-member entity scopes that narrow the house a member can even see, how invitations are issued and accepted, what happens to somebody's access when they leave, and the rule everything hangs off, that a guest can never confirm an action that opens a building.",
+					"added": "2026-09-03",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/home-privacy",
+					"title": "Docs · Home privacy and retention",
+					"description": "Everything three.ws stores about a home you connect, why, for how long, and what removes it: the full inventory, the promise that room names and device states are never persisted, the 90-day action-log window and the control that changes it, the export and deletion paths, the logging rules, and the disclosure text shown at connect and at the voice opt-in.",
+					"added": "2026-09-03",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

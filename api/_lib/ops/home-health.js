@@ -299,7 +299,7 @@ export function homeHealthVerdict(s) {
 		return {
 			status: 'down',
 			detail: `${s.integrity.violations} guarded physical action${s.integrity.violations === 1 ? '' : 's'} executed with no confirmation on record (most recent ${s.integrity.lastAt}). Confirmation integrity has no error budget.`,
-			hint: 'Sev 1. Read docs/home-operations.md, section "Confirmation integrity violation". Identify the rows, the homes and the actor before anything else, and treat every affected house as needing its owner told.',
+			hint: 'Sev 1. Read docs/ops/home-operations.md, section "Confirmation integrity violation". Identify the rows, the homes and the actor before anything else, and treat every affected house as needing its owner told.',
 		};
 	}
 
@@ -354,9 +354,9 @@ export function homeHealthVerdict(s) {
 	const hint = status === 'ok'
 		? undefined
 		: s.leak.leaking
-			? `The subscriber surplus over open streams grew across ${s.leak.margins.join(' then ')}. A stream is registering a subscriber and never releasing it. See docs/home-operations.md, "Subscriber leak".`
+			? `The subscriber surplus over open streams grew across ${s.leak.margins.join(' then ')}. A stream is registering a subscriber and never releasing it. See docs/ops/home-operations.md, "Subscriber leak".`
 			: handshakeStatus !== 'ok'
-				? 'Handshakes are failing across tenants, which is almost always us: a deploy, an egress change or a DNS fault. Run the correlation query in docs/home-operations.md before touching anything.'
+				? 'Handshakes are failing across tenants, which is almost always us: a deploy, an egress change or a DNS fault. Run the correlation query in docs/ops/home-operations.md before touching anything.'
 				: actionStatus !== 'ok'
 					? 'Actions are failing across homes. Group home_action_log by outcome and detail->>\'code\' to see whether this is one error or many.'
 					: expiryStatus !== 'ok'

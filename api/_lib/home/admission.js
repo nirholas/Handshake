@@ -55,7 +55,7 @@ export const READ_SOURCE = Object.freeze({
 
 /**
  * Defaults, every one of them derived from a measurement in
- * docs/home-operations.md rather than picked to look round. Change them there
+ * docs/ops/home-operations.md rather than picked to look round. Change them there
  * and here together, or the document stops being true.
  */
 export const ADMISSION_DEFAULTS = Object.freeze({
