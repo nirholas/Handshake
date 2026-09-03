@@ -101,7 +101,7 @@ export default wrap(async (req, res) => {
 			res,
 			502,
 			'upstream_error',
-			'market data is unavailable right now — retry shortly',
+			'market data is unavailable right now. Retry shortly',
 		);
 	}
 });

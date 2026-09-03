@@ -436,7 +436,7 @@ for (const vpKey of viewportKeys) {
 	const recycle = () => {
 		// One relaunch shared by every in-flight worker, never one browser each.
 		recycling ||= (async () => {
-			console.log(C.y('\n  headless browser died (machine, not page) — relaunching\n'));
+			console.log(C.y('\n  headless browser died (machine, not page), relaunching\n'));
 			try {
 				await browser.close();
 			} catch {

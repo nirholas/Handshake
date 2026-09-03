@@ -58,7 +58,7 @@ function withinFreshnessWindow(issuedAt) {
 }
 
 // The settlement assets THIS deployment actually pays in, read from the same
-// env config that builds the 402 accepts — so a client never has to keep its
+// env config that builds the 402 accepts, so a client never has to keep its
 // own copy of our asset addresses (which would silently drift the day an asset
 // is repointed). Every asset advertised in an accept is covered: USDC on
 // Solana/Base/BSC, USD₮0 on X Layer, and $THREE on the Solana rail.
