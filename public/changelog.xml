@@ -23,6 +23,14 @@
 			<description>Everything three.ws stores about a home you connect, why, for how long, and what removes it: the full inventory, the promise that room names and device states are never persisted, the 90-day action-log window and the control that changes it, the export and deletion paths, the logging rules, and the disclosure text shown at connect and at the voice opt-in.</description>
 		</item>
 		<item>
+			<title>Docs · Home relay threat model</title>
+			<link>https://three.ws/docs/home-relay-threat-model</link>
+			<guid isPermaLink="false">2026-09-03:Docs · Home relay threat model</guid>
+			<pubDate>Thu, 03 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>What an attacker gets at every position around the socket a LAN-only house dials out through, and what stops them: why the relay carries a fixed list of message types instead of proxying HTTP into a home network, what a stolen install token is and is not worth, why the allowlist is enforced again inside the house so a compromised relay widens nothing, and the residuals accepted on purpose.</description>
+		</item>
+		<item>
 			<title>Docs · Home security</title>
 			<link>https://three.ws/docs/home-security</link>
 			<guid isPermaLink="false">2026-09-03:Docs · Home security</guid>

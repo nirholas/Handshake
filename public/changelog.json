@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-03T03:59:18.737Z",
+	"generated_at": "2026-09-03T04:01:57.539Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -22,6 +22,16 @@
 			"title": "Docs · Home privacy and retention",
 			"summary": "Everything three.ws stores about a home you connect, why, for how long, and what removes it: the full inventory, the promise that room names and device states are never persisted, the 90-day action-log window and the control that changes it, the export and deletion paths, the logging rules, and the disclosure text shown at connect and at the voice opt-in.",
 			"link": "/docs/home-privacy",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "launch",
+			"title": "Docs · Home relay threat model",
+			"summary": "What an attacker gets at every position around the socket a LAN-only house dials out through, and what stops them: why the relay carries a fixed list of message types instead of proxying HTTP into a home network, what a stolen install token is and is not worth, why the allowlist is enforced again inside the house so a compromised relay widens nothing, and the residuals accepted on purpose.",
+			"link": "/docs/home-relay-threat-model",
 			"tags": [
 				"launch"
 			]

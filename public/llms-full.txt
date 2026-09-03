@@ -2001,6 +2001,12 @@ URL: https://three.ws/docs/home-security
 
 The threat model for a connected house, written about a building rather than a database: what each actor can do and what stops them, why the confirmation gate is the load-bearing control and prompt filtering is depth, the eleven checks that run with every build, the SSRF guard every server-side dial goes through and why a hostname check is not one, the prompt-injection proof that ends by asking a real lock whether it opened, and the residuals accepted on purpose.
 
+### Docs · Home relay threat model
+
+URL: https://three.ws/docs/home-relay-threat-model
+
+What an attacker gets at every position around the socket a LAN-only house dials out through, and what stops them: why the relay carries a fixed list of message types instead of proxying HTTP into a home network, what a stolen install token is and is not worth, why the allowlist is enforced again inside the house so a compromised relay widens nothing, and the residuals accepted on purpose.
+
 ### Docs · Home privacy and retention
 
 URL: https://three.ws/docs/home-privacy
