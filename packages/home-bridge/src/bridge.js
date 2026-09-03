@@ -58,6 +58,21 @@ export class HomeBridge {
 		return Boolean(this.#connection?.connected);
 	}
 
+	/**
+	 * The Home Assistant version this instance reported during the handshake, or
+	 * null before connect(). Measured from the socket, never guessed: the connect
+	 * screen and the capability record both have to state what the house actually
+	 * is, and a version is how a support conversation starts.
+	 */
+	get haVersion() {
+		return this.#connection?.haVersion || null;
+	}
+
+	/** The registries as loaded at connect: floors, areas, devices, entities. */
+	get registries() {
+		return this.#registries;
+	}
+
 	/** The room graph the 3D scene renders. Rebuilt on every state burst. */
 	get graph() {
 		return this.#graph;
