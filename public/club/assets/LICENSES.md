@@ -2,7 +2,8 @@
 
 This file records the source + license of every third-party asset bundled
 under `public/club/venue/`. Required by the project's commercial-use rules
-(see `/CLAUDE.md` and `prompts/club/01-venue-glb-and-environment.md`).
+(see `/CLAUDE.md` and the club campaign's venue work order, retired from
+`prompts/` once shipped; it is readable in git history).
 
 Each entry must include:
 

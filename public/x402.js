@@ -74,8 +74,9 @@ async function ensureRiskAckSafe(context) {
 // SIWX ("Sign-In-With-X" / CAIP-122) lets a wallet that has already paid for
 // an endpoint re-enter it by signing a challenge instead of paying again. The
 // server advertises support by including `extensions['sign-in-with-x']` in the
-// 402 body; clients submit signed proofs via the `SIGN-IN-WITH-X` header. See
-// prompts/siwx/PLAN.md for the full architecture.
+// 402 body; clients submit signed proofs via the `SIGN-IN-WITH-X` header. The
+// architecture came from the siwx campaign plan, retired from prompts/ once
+// shipped; see git history for the original.
 const SIWX_HEADER = 'SIGN-IN-WITH-X';
 const SIWX_EXTENSION_KEY = 'sign-in-with-x';
 

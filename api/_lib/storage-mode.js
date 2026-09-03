@@ -1,5 +1,6 @@
 // Per-avatar storage mode: one JSONB column on avatars tracking R2 / IPFS /
-// on-chain attestation state. See prompts/embed-hardening/05-storage-flags.md.
+// on-chain attestation state. Designed in the embed-hardening campaign, work
+// order 05 (storage flags), retired from prompts/ once shipped; see git history.
 
 import { z } from 'zod';
 import { sql } from './db.js';

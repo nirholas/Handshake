@@ -60,15 +60,15 @@ For quick integration testing, posting `{ type: 'handshake' }` from any origin r
 
 ## What this plugin does NOT yet support
 
-- **Host-auth / SIWE** — embedding a user-auth token so the iframe can call authed APIs on behalf of the LobeHub user (spec: `prompts/lobehub-embed/03-host-auth-handoff.md`).
-- **Tool-call relay** — structured LobeHub `tool_call` → action mapping; today the relay passes raw action objects (spec: `prompts/lobehub-embed/04-action-passthrough.md`).
-- **LobeHub marketplace submission** — the manifest is hosted in this repo; no registry entry exists yet (spec: `prompts/lobehub-embed/05-plugin-submission.md`).
+- **Host-auth / SIWE**: embedding a user-auth token so the iframe can call authed APIs on behalf of the LobeHub user (spec: the lobehub-embed campaign, host-auth handoff work order, in git history).
+- **Tool-call relay**: structured LobeHub `tool_call` → action mapping; today the relay passes raw action objects (spec: the lobehub-embed campaign, action-passthrough work order, in git history).
+- **LobeHub marketplace submission**: the manifest is hosted in this repo; no registry entry exists yet (spec: the lobehub-embed campaign, plugin-submission work order, in git history).
 - **MCP tool semantics** — the `api` entries point at `/api/mcp` but the `tool` dispatch mapping from LobeHub's tool-call format to MCP JSON-RPC is not wired.
 - **Emote public API** — `host:action` with `type: emote` dispatches a `CustomEvent` on the element but `<agent-3d>` has no public `emote()` method; internal routing depends on element.js wiring.
 
 ## Related specs
 
-- `prompts/lobehub-embed/01-plugin-manifest.md` — manifest design
-- `prompts/lobehub-embed/02-iframe-handshake.md` — full postMessage protocol
-- `prompts/lobehub-embed/03-host-auth-handoff.md` — auth handoff (not yet implemented)
-- `prompts/lobehub-embed/04-action-passthrough.md` — tool relay (not yet implemented)
+The five work orders of the lobehub-embed campaign (manifest design, the full postMessage
+protocol, auth handoff, tool relay, plugin submission) were retired from `prompts/` once the
+shipped half landed. They remain readable in git history; nothing outside history references
+them, so the paths above are names, not links.

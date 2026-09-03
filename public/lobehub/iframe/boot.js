@@ -2,7 +2,8 @@
 //
 // Primary protocol: v1 spec envelope
 //   { v: 1, source: 'agent-host'|'agent-3d', id, inReplyTo?, kind, op, payload }
-// See prompts/final-integration/01-embed-bridges.md for the canonical contract.
+// The canonical contract is the final-integration campaign's embed-bridges work
+// order, retired from prompts/ once shipped; see git history.
 //
 // Backward-compat layer also accepts the legacy format:
 //   { v: 1, ns: '3d-agent', type: 'host:xxx', id?, payload }
