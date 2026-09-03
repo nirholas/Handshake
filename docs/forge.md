@@ -127,8 +127,49 @@ stills; it never reports a recording that did not happen.
 3. For text, type a prompt like `a weathered brass diving helmet`. For photos, add one to six images of the same object from different angles (front, back, left, right, top, three-quarter); each uploads straight to object storage via a presigned URL and the public URLs are fused with multi-view conditioning.
 4. Optionally open the quality controls and pick a tier (Draft, Standard, High) and an engine. The default engine carries a **FREE** pill. Down lanes are disabled with the reason shown.
 5. Click Generate. A real elapsed-driven progress line runs against the catalog's ETA estimate for the chosen path, tier, and engine.
-6. When the model lands, orbit it in the viewer, view it in AR, download the GLB, or run the post-generation tools (stylize, optimize, Game-Ready retopology, split). Press `R` (or click **Reel**) to render a shareable video and stills of it without leaving the page.
+6. When the model lands, orbit it in the viewer, view it in AR, download it in any of seven formats (see [Download formats](#download-formats)), or run the post-generation tools (stylize, optimize, Game-Ready retopology, split). Press `R` (or click **Reel**) to render a shareable video and stills of it without leaving the page.
 7. Keep going on the same result: **Rig for animation** adds a humanoid skeleton (POST `/api/forge?action=rig`) and hands off to Pose Studio or IRL placement; **Restyle materials** re-skins the surface with a free-text instruction or a preset chip (chrome, wood, gold, neon, marble, rust) via `/api/material-studio`, keeping the mesh untouched; **Iterate** makes a shape-changing edit from a plain-language instruction ("make the helmet red", "add a backpack") via `/api/forge-iterate` (the same conversational core the `refine_model` MCP tool uses) and keeps every version in a branchable lineage strip; **Place IRL** opens `/irl?avatar=<glb_url>` to anchor the model in AR at a real-world location.
+
+## Download formats
+
+The Download button always hands back the source GLB immediately. The caret
+beside it opens a format menu with seven targets:
+
+| Format | Converted | Use it for |
+|---|---|---|
+| GLB | nothing to convert | The source. Textures embedded, works anywhere glTF does. |
+| OBJ | in your browser | Universal geometry + UVs for Blender, Maya, C4D. No materials. |
+| STL | in your browser | Solid geometry for 3D printing and CAD. Binary. |
+| PLY | in your browser | Vertex-level data for scanning and point-cloud tools. Binary. |
+| USDZ | in your browser | Textured AR asset. Opens directly on iPhone and Vision Pro. |
+| FBX | on the server | Rigged interchange for Unity, Unreal and Maya. Keeps the skeleton, skin weights and blendshapes. |
+| 3MF | on the server | Manufacturing package for slicers and print services. |
+
+The first five are converted by three.js exporters in the page: no upload, no
+queue, and the parsed scene is cached so switching formats does not re-download
+the model. FBX and 3MF have no browser exporter, so they are authored by the
+remesh worker from the source GLB. A server conversion is a real job: it shows
+progress while it runs, names the reason if it fails, and leaves a
+"download again" link for a minute in case the browser missed the download.
+
+Both server formats are the same conversion the API exposes directly, so an
+agent can ask for one without going through the page:
+
+```bash
+# Convert an existing GLB to FBX (geometry untouched, rig preserved).
+curl -sX POST https://three.ws/api/forge-remesh \
+  -H 'content-type: application/json' \
+  -d '{"mesh_url":"https://.../model.glb","operation":"convert","output_format":"fbx"}'
+# → 202 { "job_id": "...", "status": "queued" }
+
+# Poll it. Terminal states are "done" (with result_url) and "failed" (with error).
+curl -s 'https://three.ws/api/forge-remesh?job=<job_id>'
+```
+
+`output_format` accepts `glb`, `obj`, `stl`, `ply`, `usdz`, `3mf` and `fbx`.
+`operation: "convert"` re-containers the mesh without touching its geometry;
+drop it to remesh and convert in one pass (see
+[3d-asset-pipeline.md](3d-asset-pipeline.md)).
 
 ## Examples
 
