@@ -253,6 +253,25 @@ iframe. The viewer page itself is embeddable on any site: it is served with
 `frame-ancestors *`, so an `<iframe src="https://three.ws/viewer?src=...">` works
 anywhere.
 
+### Will it simulate? (free)
+
+`inspect` tells you what the mesh contains. It does not tell you whether a
+physics engine could use it, which is a different question with different
+answers: a mesh can be small, clean, and beautifully textured and still be an
+open shell that sinks through a floor.
+
+```bash
+curl "https://three.ws/api/sim-readiness?src=https://three.ws/avatars/cesium-man.glb"
+```
+
+Returns one of four verdicts (`simulation_ready`, `needs_scale`,
+`needs_repair`, `unusable`) with the measurements behind it: watertightness and
+winding, real-world extents in meters, exact volume, centroid and inertia tensor
+at unit density, and how well a single convex hull approximates the shape. Free,
+no account, cached by content hash, and available to agents as the
+`grade_sim_readiness` MCP tool. Full reference: [Simulation
+readiness](/docs/sim-readiness).
+
 ### Upgrade path
 
 | Need                                   | Endpoint                              |
@@ -541,3 +560,4 @@ mesh-optimization routes. See
 - [3D Studio MCP endpoint](/docs/mcp-studio) - the same free generation lane as MCP tools
 - [x402 Paid Endpoints](/docs/x402-endpoints) - the paid catalog Forge Pro belongs to
 - [Image to 3D](/docs/image-to-3d) - the photo-input reconstruction pipeline
+- [Simulation readiness](/docs/sim-readiness) - the free physics grade: whether a solver can consume the mesh you just made

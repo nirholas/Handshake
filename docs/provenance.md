@@ -7,6 +7,8 @@ Every model three.ws generates can carry a **signed content credential** — cre
 - **Free verify:** `GET /api/provenance?src=<glbUrl>` and the `verify_provenance` MCP tool
 - **Paid anchor:** the `anchor_provenance` MCP tool
 
+> **v2 credentials also carry a signed physics grade.** Alongside authorship, a credential can assert what a rigid-body solver would make of the mesh: watertight or not, real meters or a generator's unit box, its exact volume and inertia tensor. An unsigned grade is a claim anyone can forge; this one is not. See [Simulation readiness](./sim-readiness.md). Credentials signed under v1, before the field existed, keep verifying byte for byte, permanently.
+
 ## Verify a model (free, public)
 
 ```bash

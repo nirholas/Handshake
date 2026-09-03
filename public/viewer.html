@@ -586,11 +586,11 @@
         });
     }
     function offer() { el.ungraded({ onGrade: run }); }
-    // The element only exists once its module lands; until then it is inert and
-    // hidden, which is why nothing here runs before the import resolves.
-    import('/sim-readiness-panel.js').then(offer).catch(function () {
-      // No component, no badge. The model itself is unaffected.
-    });
+    // The element is inert until its definition lands, so wait for the upgrade
+    // before calling anything on it. A blocked script simply means no badge.
+    var deadline = new Promise(function (resolve) { setTimeout(function () { resolve(false); }, 10000); });
+    Promise.race([customElements.whenDefined('sim-readiness').then(function () { return true; }), deadline])
+      .then(function (ready) { if (ready) offer(); });
   })();
 
   // If model-viewer itself never upgrades (script blocked), don't spin forever.
@@ -612,6 +612,8 @@
   }, 90000);
 })();
 </script>
+	<!-- The <sim-readiness> element, shared verbatim with /m/:id. -->
+	<script type="module" src="/sim-readiness-panel.js"></script>
 	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>
 </body>

@@ -175,7 +175,7 @@ For tool calls there are two lanes:
 | `stylize_model`, `remesh_model`, `segment_model`         | $0.02                       |
 | `capture_scene`, `anchor_provenance`                    | $0.05                                     |
 | `remove_background`, `pose_model`, `apply_animation`, `direct_prompt`, `generate_material` | $0.01 |
-| `generation_status`, `preview_3d`, `list_animations`, `animation_signature`, `find_similar_animations`, `text_to_animation`, `inspect_model`, `optimize_model`, `save_avatar`, `export_ar`, `verify_provenance`, `x402_preflight`, the persona tools, `validate_spatial_response`, `getting_started` | free |
+| `generation_status`, `preview_3d`, `list_animations`, `animation_signature`, `find_similar_animations`, `text_to_animation`, `inspect_model`, `optimize_model`, `save_avatar`, `export_ar`, `verify_provenance`, `grade_sim_readiness`, `x402_preflight`, the persona tools, `validate_spatial_response`, `getting_started` | free |
 
 Payment settles only after the work succeeds — a wholesale failure costs
 nothing, and the same signed payment cannot be replayed.

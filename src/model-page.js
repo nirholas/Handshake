@@ -536,11 +536,16 @@ async function loadSimReadiness() {
 	const c = state.creation;
 	if (!host || !c?.glb_url) return;
 
-	try {
-		await import('/sim-readiness-panel.js');
-	} catch (err) {
-		// No component, no badge. Everything else on the page is unaffected.
-		log.warn('simulation-readiness panel unavailable', err);
+	// The element's definition is loaded by a <script src> in model.html (a
+	// module under public/ cannot be imported from src/). Race the upgrade
+	// against a deadline so a blocked script degrades to no badge rather than
+	// leaving this function pending forever.
+	const defined = await Promise.race([
+		customElements.whenDefined('sim-readiness').then(() => true),
+		new Promise((resolve) => setTimeout(() => resolve(false), 10000)),
+	]);
+	if (!defined) {
+		log.warn('simulation-readiness panel did not load');
 		return;
 	}
 

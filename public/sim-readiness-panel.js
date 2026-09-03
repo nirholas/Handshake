@@ -154,8 +154,15 @@ const CSS = `
 @media (prefers-color-scheme: light) {
 	.panel { background: #fff; color: #14161c; border-color: rgba(20, 22, 28, .16); box-shadow: 0 8px 28px rgba(20, 22, 28, .12); }
 }
-:host-context([data-theme="light"]) .panel { background: #fff; color: #14161c; border-color: rgba(20, 22, 28, .16); box-shadow: 0 8px 28px rgba(20, 22, 28, .12); }
-:host-context([data-theme="dark"]) .panel { background: #12141a; color: #e8eaf0; border-color: rgba(127, 140, 160, .28); }
+:host([data-theme="light"]) .panel { background: #fff; color: #14161c; border-color: rgba(20, 22, 28, .16); box-shadow: 0 8px 28px rgba(20, 22, 28, .12); }
+:host([data-theme="light"]) .badge { color: #5b6470; background: rgba(20, 22, 28, .06); border-color: rgba(20, 22, 28, .16); }
+:host([data-theme="light"]) .badge.good { color: #157f45; background: rgba(52, 199, 109, .14); border-color: rgba(52, 199, 109, .4); }
+:host([data-theme="light"]) .badge.near { color: #1f5fd0; background: rgba(110, 168, 254, .16); border-color: rgba(110, 168, 254, .45); }
+:host([data-theme="light"]) .badge.warn { color: #8a5d00; background: rgba(240, 180, 41, .18); border-color: rgba(240, 180, 41, .45); }
+:host([data-theme="light"]) .badge.bad { color: #b3231f; background: rgba(255, 86, 86, .14); border-color: rgba(255, 86, 86, .4); }
+:host([data-theme="light"]) { --sr-dim: #6b7280; --sr-warn: #8a5d00; }
+:host([data-theme="dark"]) .panel { background: #12141a; color: #e8eaf0; border-color: rgba(127, 140, 160, .28); box-shadow: 0 12px 34px rgba(0, 0, 0, .38); }
+:host([data-theme="dark"]) { --sr-dim: #9aa3b2; --sr-warn: #f0b429; }
 
 .lead { margin: 0 0 10px; }
 h3 { margin: 12px 0 5px; font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--sr-dim); }
@@ -233,7 +240,26 @@ class SimReadinessCard extends HTMLElement {
 	}
 
 	connectedCallback() {
+		this._followTheme();
 		if (!this._head.hasChildNodes()) this.loading();
+	}
+
+	// Both hosts let a visitor pin light or dark with data-theme on <html>, and
+	// :host-context (the obvious way to read that from a shadow root) is
+	// unimplemented in Firefox. Mirroring the attribute onto this element makes
+	// the same rule work in every engine, and the MutationObserver keeps it true
+	// when the visitor flips the theme with the panel open.
+	_followTheme() {
+		const root = document.documentElement;
+		const sync = () => {
+			const theme = root.getAttribute('data-theme');
+			if (theme === 'light' || theme === 'dark') this.setAttribute('data-theme', theme);
+			else this.removeAttribute('data-theme');
+		};
+		sync();
+		if (this._themeObserver) return;
+		this._themeObserver = new MutationObserver(sync);
+		this._themeObserver.observe(root, { attributes: true, attributeFilter: ['data-theme'] });
 	}
 
 	/** A grade is on the way. Occupies exactly the badge's footprint. */
@@ -328,6 +354,8 @@ class SimReadinessCard extends HTMLElement {
 
 	disconnectedCallback() {
 		this._unbind();
+		this._themeObserver?.disconnect();
+		this._themeObserver = null;
 	}
 
 	_bind() {
