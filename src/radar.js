@@ -152,6 +152,7 @@ const state = {
 	pollTimer: null,
 	inFlight: null,
 	pulse: null,           // market-pulse aggregate (or null until first load)
+	pulseStatus: 'loading', // loading | ready | error (drives the strip's own state)
 	pulseInFlight: null,
 };
 
@@ -252,10 +253,15 @@ async function fetchPulse() {
 		});
 		if (!r.ok) throw new Error(`pulse HTTP ${r.status}`);
 		state.pulse = await r.json();
+		state.pulseStatus = 'ready';
 		updatePulseStrip();
 	} catch (err) {
 		if (err.name === 'AbortError') return;
 		log.error('pulse fetch failed:', err.message || err);
+		// A later poll can still succeed, so keep the last good aggregate on
+		// screen. With nothing to keep, swap the skeleton for a designed
+		// "unavailable" cell instead of leaving a shimmer up forever.
+		if (!state.pulse) { state.pulseStatus = 'error'; updatePulseStrip(); }
 	} finally {
 		state.pulseInFlight = null;
 	}
@@ -291,13 +297,32 @@ function render() {
 	} else {
 		const visible = applyClientFilters(state.coins);
 		if (!visible.length) {
-			body.append(state.status === 'empty' ? renderEmptyState() : renderNoMatchState());
+			// Most of the filters (search, category, min quality, smart money,
+			// news) are applied server-side, so an over-tight filter comes back
+			// as an empty feed and used to render "radar is clear", blaming the
+			// market for the user's own filter and offering no way out. The
+			// filter state, not the response shape, decides which state is true.
+			body.append(activeFilters().length ? renderNoMatchState() : renderEmptyState());
 		} else {
 			body.append(state.view === 'list' ? renderList(visible) : renderGrid(visible));
 		}
 	}
 	root.append(body);
 	updateUpdatedLabel();
+}
+
+// Every filter currently narrowing the feed, each with the label the user sees
+// and the reset that drops just that one. Drives the no-match state's removable
+// chips, and (by being non-empty) the choice between "no match" and "no coins".
+function activeFilters() {
+	const out = [];
+	if (state.query) out.push({ label: `Search: ${state.query}`, clear: () => { state.query = ''; } });
+	if (state.category) out.push({ label: `Category: ${CATEGORY_LABEL[state.category] || state.category}`, clear: () => { state.category = null; } });
+	if (state.minQuality > 0) out.push({ label: `Min quality: ${state.minQuality}`, clear: () => { state.minQuality = 0; } });
+	if (state.smartOnly) out.push({ label: 'Smart money only', clear: () => { state.smartOnly = false; } });
+	if (state.newsOnly) out.push({ label: 'News-driven only', clear: () => { state.newsOnly = false; } });
+	if (state.hideRisky) out.push({ label: 'Flagged coins hidden', clear: () => { state.hideRisky = false; } });
+	return out;
 }
 
 function applyClientFilters(coins) {
@@ -326,7 +351,27 @@ function updatePulseStrip() {
 
 function fillPulseStrip(strip, p) {
 	strip.innerHTML = '';
+	strip.classList.remove('radar-pulse--unavailable');
 	if (!p) {
+		if (state.pulseStatus === 'error') {
+			// The aggregate is a summary of the same window the feed below
+			// already shows, so its failure is a note, not a page error. Say so
+			// and offer the retry rather than shimmering forever.
+			const cell = el('div', 'rp-cell rp-cell--unavailable');
+			cell.append(el('span', 'rp-label', 'Market pulse'));
+			cell.append(el('span', 'rp-sub', 'The 24h aggregate did not load. The live feed below is unaffected.'));
+			const retry = el('button', 'rp-retry', 'Retry');
+			retry.type = 'button';
+			retry.addEventListener('click', () => {
+				state.pulseStatus = 'loading';
+				updatePulseStrip();
+				fetchPulse();
+			});
+			cell.append(retry);
+			strip.classList.add('radar-pulse--unavailable');
+			strip.append(cell);
+			return;
+		}
 		// first paint, before the aggregate lands — quiet skeleton, no layout jump
 		for (let i = 0; i < 5; i++) {
 			const cell = el('div', 'rp-cell rp-cell--sk');
@@ -1055,12 +1100,35 @@ function renderEmptyState() {
 }
 
 function renderNoMatchState() {
+	const filters = activeFilters();
 	const box = el('div', 'radar-state radar-empty');
 	box.append(radarGlyph());
 	box.append(el('h2', 'radar-state-title', 'No coins match these filters'));
-	box.append(el('p', 'radar-state-text', 'The radar has live coins, but none pass your current category, quality, or risk filters. Loosen them to see more.'));
+	box.append(el('p', 'radar-state-text', 'The radar is live and scoring launches, but nothing in the current window passes every filter you have set. Drop one to widen the search.'));
+
+	// Removable chips: dropping the one filter that is too tight beats resetting
+	// everything and rebuilding the view from scratch.
+	if (filters.length) {
+		const chips = el('div', 'radar-active-filters');
+		chips.setAttribute('role', 'group');
+		chips.setAttribute('aria-label', 'Active filters');
+		for (const f of filters) {
+			const b = el('button', 'radar-active-filter');
+			b.type = 'button';
+			b.append(el('span', 'radar-active-filter-text', f.label));
+			const x = el('span', 'radar-active-filter-x', '\u00d7');
+			x.setAttribute('aria-hidden', 'true');
+			b.append(x);
+			b.title = `Remove filter: ${f.label}`;
+			b.setAttribute('aria-label', `Remove filter: ${f.label}`);
+			b.addEventListener('click', () => { f.clear(); onFilterChange(); });
+			chips.append(b);
+		}
+		box.append(chips);
+	}
+
 	const actions = el('div', 'radar-state-actions');
-	const reset = el('button', 'radar-btn', 'Reset filters');
+	const reset = el('button', 'radar-btn', 'Reset all filters');
 	reset.type = 'button';
 	reset.addEventListener('click', () => {
 		state.category = null; state.minQuality = 0; state.hideRisky = false;
@@ -1068,6 +1136,9 @@ function renderNoMatchState() {
 		onFilterChange();
 	});
 	actions.append(reset);
+	const live = el('a', 'radar-btn radar-btn--ghost', 'See raw launches \u2192');
+	live.href = '/pump-live';
+	actions.append(live);
 	box.append(actions);
 	return box;
 }
@@ -1490,8 +1561,9 @@ function renderDrawerContent(panel, coin) {
 	const copy = el('button', 'rd-copy', 'Copy');
 	copy.type = 'button';
 	copy.addEventListener('click', async () => {
-		try { await navigator.clipboard.writeText(coin.mint); copy.textContent = 'Copied'; setTimeout(() => copy.textContent = 'Copy', 1400); }
-		catch { copy.textContent = 'Copy failed'; setTimeout(() => copy.textContent = 'Copy', 1400); }
+		const ok = await writeClipboard(coin.mint);
+		copy.textContent = ok ? 'Copied' : 'Copy failed';
+		setTimeout(() => { copy.textContent = 'Copy'; }, 1400);
 	});
 	id.append(code, copy);
 	panel.append(id);
@@ -1499,6 +1571,35 @@ function renderDrawerContent(panel, coin) {
 	// focus close for keyboard users
 	const close = panel.querySelector('.rd-close');
 	if (close) close.focus();
+}
+
+// Clipboard API first; on a browser or context that refuses it (an insecure
+// origin, a denied permission) fall back to a scratch textarea so the mint
+// button still copies instead of only reporting failure. Mirrors the same
+// helper in src/converter.js.
+async function writeClipboard(text) {
+	if (navigator.clipboard?.writeText) {
+		try {
+			await navigator.clipboard.writeText(text);
+			return true;
+		} catch {
+			// Permission denied or an insecure context: try the fallback below.
+		}
+	}
+	const ta = document.createElement('textarea');
+	ta.value = text;
+	ta.setAttribute('readonly', '');
+	ta.style.cssText = 'position:fixed;top:0;left:-9999px;opacity:0';
+	document.body.appendChild(ta);
+	ta.select();
+	let ok = false;
+	try {
+		ok = document.execCommand('copy');
+	} catch {
+		ok = false;
+	}
+	ta.remove();
+	return ok;
 }
 
 function smChip(text) {

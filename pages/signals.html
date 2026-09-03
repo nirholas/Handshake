@@ -66,16 +66,16 @@
 			</section>
 
 			<section class="sm-controls" aria-label="Filters">
-				<div class="sm-seg" role="tablist" aria-label="Rank by" id="sm-sort">
-					<button class="sm-seg-btn is-active" data-sort="edge" role="tab" aria-selected="true" data-i18n="signals.proven_edge">Proven edge</button>
-					<button class="sm-seg-btn" data-sort="roi" role="tab" data-i18n="signals.avg_roi">Avg ROI</button>
-					<button class="sm-seg-btn" data-sort="hitrate" role="tab" data-i18n="signals.hit_rate">Hit rate</button>
-					<button class="sm-seg-btn" data-sort="subscribers" role="tab" data-i18n="signals.subscribers">Subscribers</button>
-					<button class="sm-seg-btn" data-sort="newest" role="tab" data-i18n="signals.newest">Newest</button>
+				<div class="sm-seg" role="group" aria-label="Rank by" id="sm-sort">
+					<button class="sm-seg-btn is-active" type="button" data-sort="edge" aria-pressed="true" aria-controls="sm-grid" data-i18n="signals.proven_edge">Proven edge</button>
+					<button class="sm-seg-btn" type="button" data-sort="roi" aria-pressed="false" aria-controls="sm-grid" data-i18n="signals.avg_roi">Avg ROI</button>
+					<button class="sm-seg-btn" type="button" data-sort="hitrate" aria-pressed="false" aria-controls="sm-grid" data-i18n="signals.hit_rate">Hit rate</button>
+					<button class="sm-seg-btn" type="button" data-sort="subscribers" aria-pressed="false" aria-controls="sm-grid" data-i18n="signals.subscribers">Subscribers</button>
+					<button class="sm-seg-btn" type="button" data-sort="newest" aria-pressed="false" aria-controls="sm-grid" data-i18n="signals.newest">Newest</button>
 				</div>
-				<div class="sm-seg sm-net" role="tablist" aria-label="Network" id="sm-net">
-					<button class="sm-seg-btn is-active" data-net="mainnet" role="tab" aria-selected="true" data-i18n="signals.mainnet">Mainnet</button>
-					<button class="sm-seg-btn" data-net="devnet" role="tab" data-i18n="signals.devnet">Devnet</button>
+				<div class="sm-seg sm-net" role="group" aria-label="Network" id="sm-net">
+					<button class="sm-seg-btn is-active" type="button" data-net="mainnet" aria-pressed="true" aria-controls="sm-grid" data-i18n="signals.mainnet">Mainnet</button>
+					<button class="sm-seg-btn" type="button" data-net="devnet" aria-pressed="false" aria-controls="sm-grid" data-i18n="signals.devnet">Devnet</button>
 				</div>
 			</section>
 

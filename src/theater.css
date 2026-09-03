@@ -36,6 +36,7 @@
 	transition: color var(--duration-fast, 140ms) var(--ease-standard, ease);
 }
 .th-back:hover { color: var(--ink-bright, #fff); }
+.th-back:focus-visible { outline: 2px solid var(--th-accent); outline-offset: 3px; border-radius: 6px; }
 .th-title-wrap { flex: 1; min-width: 0; }
 .th-title {
 	margin: 0;
@@ -227,6 +228,7 @@
 .th-rec-sub { font-family: var(--font-mono, monospace); font-size: var(--text-2xs, 0.69rem); color: var(--th-accent); }
 .th-rec-link { font-size: var(--text-2xs, 0.69rem); color: var(--ink-dim, #888); text-decoration: none; }
 .th-rec-link:hover { color: var(--ink-bright, #fff); }
+.th-rec-link:focus-visible { outline: 2px solid var(--th-accent); outline-offset: 2px; border-radius: 3px; }
 .th-rec-win { border-color: rgba(74, 222, 128, 0.45); }
 .th-rec-win .th-rec-sub { color: var(--success, #4ade80); }
 .th-rec-loss { border-color: rgba(248, 113, 113, 0.45); }
@@ -291,6 +293,10 @@
 	transition: background var(--duration-fast, 140ms) var(--ease-standard, ease);
 }
 .th-hl:hover { background: var(--surface-2, rgba(255, 255, 255, 0.05)); }
+.th-hl:focus-visible { outline: 2px solid var(--th-accent); outline-offset: 2px; }
+/* A highlight with no destination is not a link: no pointer, no hover lift. */
+.th-hl-static { cursor: default; }
+.th-hl-static:hover { background: var(--surface-1, rgba(255, 255, 255, 0.03)); }
 .th-hl-title { font-size: var(--text-sm, 0.78rem); font-weight: var(--weight-semibold, 600); }
 .th-hl-sub { font-family: var(--font-mono, monospace); font-size: var(--text-2xs, 0.69rem); color: var(--th-accent); }
 .th-hl .th-tick-time { margin-left: auto; }
@@ -326,6 +332,7 @@
 	cursor: pointer; font-size: 13px; line-height: 1;
 }
 .th-panel-close:hover { color: var(--ink-bright, #fff); }
+.th-panel-close:focus-visible { outline: 2px solid var(--th-accent); outline-offset: 2px; }
 .th-panel-head { display: flex; gap: var(--space-3, 12px); align-items: center; margin-bottom: var(--space-4, 16px); padding-right: 28px; }
 .th-panel-av { width: 52px; height: 52px; border-radius: var(--radius-md, 10px); object-fit: cover; background: var(--surface-2, rgba(255, 255, 255, 0.05)); flex: 0 0 auto; }
 .th-panel-av-fallback { display: flex; align-items: center; justify-content: center; font-family: var(--font-display, system-ui); font-weight: var(--weight-bold, 700); font-size: 22px; color: var(--th-accent); border: 1px solid var(--th-accent-stroke); }
@@ -349,6 +356,7 @@
 	color: var(--ink, #e8e8e8); text-decoration: none;
 }
 .th-addr:hover { border-color: var(--th-accent-stroke); }
+.th-addr:focus-visible { outline: 2px solid var(--th-accent); outline-offset: 2px; }
 .th-addr-ext { color: var(--ink-dim, #888); }
 
 .th-panel-actions { display: flex; flex-wrap: wrap; gap: var(--space-2, 8px); margin-bottom: var(--space-3, 12px); }
@@ -440,6 +448,14 @@
 	animation: th-slidein var(--duration-base, 220ms) var(--ease-emphasized, ease);
 }
 @keyframes th-slidein { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+/* Tape states: skeleton rows while the snapshot is in flight, designed copy when
+   the feed genuinely has nothing recent to show. */
+.th-tick-skel { animation: none; }
+.th-tick-skel .th-tick-dot { background: var(--surface-3, rgba(255, 255, 255, 0.09)); }
+.th-tick-skel .th-tick-body { gap: 5px; }
+.th-skel-title { width: 62%; height: 10px; }
+.th-skel-sub { width: 38%; height: 8px; }
+.th-tick-empty { padding: 10px 2px; font-size: var(--text-xs, 0.72rem); line-height: 1.5; }
 .th-tick-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-dim, #888); flex: 0 0 auto; }
 .th-tick-buy .th-tick-dot, .th-tick-win .th-tick-dot { background: var(--success, #4ade80); }
 .th-tick-loss .th-tick-dot { background: var(--danger, #f87171); }
@@ -451,6 +467,7 @@
 .th-tick-sub { font-family: var(--font-mono, monospace); font-size: var(--text-2xs, 0.69rem); color: var(--ink-dim, #888); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .th-tick-link { color: var(--ink-dim, #888); text-decoration: none; font-size: 13px; flex: 0 0 auto; }
 .th-tick-link:hover { color: var(--th-accent); }
+.th-tick-link:focus-visible { outline: 2px solid var(--th-accent); outline-offset: 2px; border-radius: 3px; }
 .th-tick-time { font-size: 0.6rem; color: var(--ink-faint, rgba(255, 255, 255, 0.45)); font-variant-numeric: tabular-nums; flex: 0 0 auto; }
 
 .th-replay-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
@@ -464,6 +481,7 @@
 	transition: transform var(--duration-fast, 140ms) var(--ease-standard, ease);
 }
 .th-replay-mark:hover { transform: scale(1.2); }
+.th-replay-mark:focus-visible { outline: 2px solid var(--th-accent); outline-offset: 2px; transform: scale(1.2); }
 .th-replay-mark.th-tick-buy, .th-replay-mark.th-tick-win { border-color: var(--success, #4ade80); background: rgba(74, 222, 128, 0.2); }
 .th-replay-mark.th-tick-loss { border-color: var(--danger, #f87171); background: rgba(248, 113, 113, 0.2); }
 .th-replay-mark.th-tick-launch, .th-replay-mark.th-tick-verify, .th-replay-mark.th-tick-pay { border-color: var(--th-accent-stroke); background: var(--th-accent-fill); }

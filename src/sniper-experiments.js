@@ -18,6 +18,16 @@ const WINDOWS = [
 
 let windowKey = '7d';
 let timer = null;
+// Monotonic request id. Switching windows fires a new fetch while the previous
+// one is still in flight, and the two can land out of order: without this the
+// slower 7d response overwrites the 24h board the user just asked for.
+let reqSeq = 0;
+// Whether a real board has ever rendered. A first-load failure gets the full
+// error card (there is nothing to keep); a failed refresh on top of good data
+// keeps the board and says the numbers are stale, because blanking a working
+// dashboard over one dropped poll is worse than showing it a minute old.
+let hasData = false;
+let lastGoodAt = null;
 
 async function getJson(url) {
 	const res = await fetch(url, { headers: { accept: 'application/json' } });
@@ -27,6 +37,41 @@ async function getJson(url) {
 		throw err;
 	}
 	return res.json();
+}
+
+// What actually went wrong, in a sentence the reader can act on. `fetch` throws a
+// bare "Failed to fetch" for every transport failure, which tells nobody
+// anything; an HTTP status tells us whether waiting will help.
+function describeFailure(err) {
+	const status = err && err.status;
+	if (status === 429) {
+		return {
+			headline: 'Rate limited',
+			detail: 'This scoreboard is public and rate limited per IP. It refreshes itself in a few seconds.',
+		};
+	}
+	if (status === 404) {
+		return {
+			headline: 'Scoreboard endpoint not found',
+			detail: 'The strategy feed moved or is not deployed on this host.',
+		};
+	}
+	if (typeof status === 'number' && status >= 500) {
+		return {
+			headline: 'The scoreboard service is down',
+			detail: `The fleet feed answered ${status}. The trading agents keep running; only this view is affected.`,
+		};
+	}
+	if (typeof status === 'number') {
+		return {
+			headline: "Couldn't load the scoreboard",
+			detail: `The fleet feed answered ${status}.`,
+		};
+	}
+	return {
+		headline: "Couldn't reach the fleet feed",
+		detail: 'Nothing answered at /api/sniper/experiments. Check your connection.',
+	};
 }
 
 function sol(n) {
@@ -128,6 +173,59 @@ function exitLine(x) {
 	return bits.join(' · ');
 }
 
+// First paint. The board's own fetch reads live SOL balances off an RPC, so the
+// gap between DOMContentLoaded and data is seconds, not milliseconds: without
+// this the page sits as a headline over a blank void long enough to read as
+// broken. Shape-matched to the real layout so nothing jumps when data lands.
+function renderSkeleton() {
+	const tile = `
+		<div class="cv-card xp-tile xp-skel-tile">
+			<span class="cv-skel xp-skel-line" style="width:64%"></span>
+			<b class="cv-skel xp-skel-line xp-skel-lg" style="width:46%"></b>
+			<i class="cv-skel xp-skel-line" style="width:78%"></i>
+		</div>`;
+	$('xp-summary').innerHTML = `<div class="xp-tiles">${tile.repeat(6)}</div>`;
+	const cell = (w) => `<td><span class="cv-skel xp-skel-line" style="width:${w}"></span></td>`;
+	const row = `<tr>${cell('82%')}${cell('90%')}${cell('60%')}${cell('50%')}${cell('62%')}${cell('50%')}${cell('55%')}${cell('45%')}${cell('58%')}</tr>`;
+	$('xp-board').innerHTML = `
+		<div class="cv-card" style="overflow-x:auto">
+			<table class="cv-table xp-table">
+				<thead>
+					<tr>
+						<th>Strategy</th><th>Entry conditions</th><th>Record</th><th>Win rate</th>
+						<th>Realized</th><th>ROI</th><th>Avg trade</th><th>Avg hold</th><th>Last trade</th>
+					</tr>
+				</thead>
+				<tbody>${row.repeat(5)}</tbody>
+			</table>
+		</div>`;
+	$('xp-board').setAttribute('aria-busy', 'true');
+	$('xp-updated').textContent = 'Loading the fleet record\u2026';
+}
+
+// A refresh that fails on top of a good board. The numbers stay (a minute-old
+// scoreboard beats a blank one) but they stop claiming to be current, and the
+// reader gets the same manual retry the error card offers.
+function renderStaleNotice(err) {
+	const el = $('xp-alert');
+	if (!el) return;
+	const { headline } = describeFailure(err);
+	const since = lastGoodAt ? ago(new Date(lastGoodAt).toISOString()) : 'a moment ago';
+	el.innerHTML = `
+		<span class="dot" aria-hidden="true"></span>
+		<span>${esc(headline)}. Showing the last good read from ${esc(since)}.</span>
+		<button type="button" class="cv-linkbtn" data-retry>Retry now</button>`;
+	el.hidden = false;
+	el.querySelector('[data-retry]').addEventListener('click', refresh);
+}
+
+function clearStaleNotice() {
+	const el = $('xp-alert');
+	if (!el) return;
+	el.hidden = true;
+	el.innerHTML = '';
+}
+
 function renderControls() {
 	$('xp-controls').innerHTML = `
 		<div class="xp-seg" role="group" aria-label="Time window">
@@ -207,9 +305,13 @@ function renderSummary(experiments, masterWallet) {
 function renderBoard(experiments) {
 	if (!experiments.length) {
 		$('xp-board').innerHTML = `
-			<div class="cv-card" style="text-align:center;padding:32px">
+			<div class="cv-empty">
 				<p style="margin:0 0 6px;font-weight:600">No strategies armed on this network yet</p>
-				<p style="margin:0;color:var(--cv-text-3)">Arm an agent on <a href="/arm">/arm</a> and its record shows up here automatically.</p>
+				<p style="margin:0">
+					Every arm on this board is a real agent trading its own wallet.
+					<a href="/arm">Arm an agent</a> and its record appears here on its first fill,
+					or read how the fleet is scored in the <a href="/trading">trading hub</a>.
+				</p>
 			</div>`;
 		return;
 	}
@@ -258,7 +360,18 @@ function renderJudgment(judgment) {
 	const el = $('xp-judgment');
 	if (!el) return;
 	if (!judgment || !judgment.length) {
-		el.innerHTML = '';
+		// The LLM arms are half of what this page is about, so "no verdicts in this
+		// window" is a fact worth stating rather than a section that quietly vanishes.
+		el.innerHTML = `
+			<h2 class="cv-h2">Judgment ledger</h2>
+			<div class="cv-empty">
+				<p style="margin:0 0 6px;font-weight:600">No LLM verdicts in this window</p>
+				<p style="margin:0">
+					The judge-driven arms record a verdict per launch they evaluate, buys and
+					skips alike. Widen the window above, or read how the arms are scored in the
+					<a href="/trading">trading hub</a>.
+				</p>
+			</div>`;
 		return;
 	}
 	const rows = judgment
@@ -293,66 +406,46 @@ function renderJudgment(judgment) {
 		</div>`;
 }
 
+function renderError(err) {
+	const { headline, detail } = describeFailure(err);
+	$('xp-summary').innerHTML = '';
+	$('xp-judgment').innerHTML = '';
+	$('xp-board').innerHTML = `
+		<div class="cv-empty">
+			<p style="margin:0 0 6px;font-weight:600">${esc(headline)}</p>
+			<p style="margin:0 0 14px">${esc(detail)} It retries on its own every ${REFRESH_MS / 1000}s.</p>
+			<button type="button" class="cv-linkbtn" data-retry>Try again now</button>
+		</div>`;
+	$('xp-board').querySelector('[data-retry]').addEventListener('click', refresh);
+	$('xp-updated').textContent = 'Not updated: the fleet feed is unreachable.';
+}
+
 async function refresh() {
+	const seq = ++reqSeq;
+	if (!hasData) $('xp-board').setAttribute('aria-busy', 'true');
 	try {
 		const data = await getJson(`/api/sniper/experiments?network=mainnet&window=${encodeURIComponent(windowKey)}`);
+		// A window switch fired while this was in flight: that newer answer owns the
+		// board now, and painting this one would silently show the wrong window.
+		if (seq !== reqSeq) return;
+		clearStaleNotice();
 		renderSummary(data.experiments, data.master_wallet);
 		renderBoard(data.experiments);
 		renderJudgment(data.judgment);
+		hasData = true;
+		lastGoodAt = Date.now();
 		$('xp-updated').textContent = `Updated ${new Date(data.t).toLocaleTimeString()} · real on-chain fills only`;
 	} catch (err) {
-		$('xp-board').innerHTML = `
-			<div class="cv-card" style="text-align:center;padding:32px">
-				<p style="margin:0 0 6px;font-weight:600">Couldn't load the scoreboard</p>
-				<p style="margin:0;color:var(--cv-text-3)">${esc(err.message)}. Retrying automatically.</p>
-			</div>`;
+		if (seq !== reqSeq) return;
+		if (hasData) renderStaleNotice(err);
+		else renderError(err);
+	} finally {
+		if (seq === reqSeq) $('xp-board').setAttribute('aria-busy', 'false');
 	}
 }
 
-function injectStyles() {
-	const css = `
-	.xp-seg{display:inline-flex;gap:4px;background:var(--cv-bg-2,rgba(255,255,255,.04));border:1px solid var(--cv-border,rgba(255,255,255,.08));border-radius:10px;padding:3px}
-	.xp-seg-btn{appearance:none;border:0;background:transparent;color:var(--cv-text-2,#aaa);font:inherit;font-size:12.5px;padding:5px 12px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s}
-	.xp-seg-btn:hover{color:var(--cv-text,#eee)}
-	.xp-seg-btn:focus-visible{outline:2px solid var(--cv-accent,#7c6cff);outline-offset:1px}
-	.xp-seg-btn.on{background:var(--cv-bg-3,rgba(255,255,255,.09));color:var(--cv-text,#fff)}
-	.xp-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
-	.xp-tile{display:flex;flex-direction:column;gap:2px;padding:14px 16px}
-	.xp-tile span{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--cv-text-3,#888)}
-	.xp-tile b{font-size:19px;font-weight:650}
-	.xp-tile i{font-style:normal;font-size:12px;color:var(--cv-text-3,#888)}
-	.xp-table{width:100%;border-collapse:collapse;font-size:13px;min-width:860px}
-	.xp-table th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--cv-text-3,#888);padding:8px 10px;border-bottom:1px solid var(--cv-border,rgba(255,255,255,.08))}
-	.xp-table td{padding:10px;border-bottom:1px solid var(--cv-border,rgba(255,255,255,.05));vertical-align:top}
-	.xp-table tr:last-child td{border-bottom:0}
-	.xp-table tr:hover td{background:var(--cv-bg-2,rgba(255,255,255,.03))}
-	.xp-label{font-weight:600}
-	.xp-agent{font-size:12px;color:var(--cv-text-3,#888);margin-top:2px}
-	.xp-agent a{color:inherit}
-	.xp-agent a:hover{color:var(--cv-text,#eee)}
-	.xp-wallet{font-size:11px;color:var(--cv-text-3,#888);margin-top:3px;display:flex;gap:6px;align-items:baseline;font-variant-numeric:tabular-nums}
-	.xp-wallet a{color:inherit;text-decoration:none;border-bottom:1px dotted var(--cv-border,rgba(255,255,255,.25))}
-	.xp-wallet a:hover{color:var(--cv-text,#eee)}
-	.xp-wallet-none{opacity:.6}
-	.xp-cond{max-width:300px;color:var(--cv-text-2,#bbb)}
-	.xp-cond-sub{font-size:11.5px;color:var(--cv-text-3,#888);margin-top:3px}
-	.xp-badge{display:inline-block;font-size:10.5px;padding:1px 7px;border-radius:99px;border:1px solid var(--cv-border,rgba(255,255,255,.12));vertical-align:1px}
-	.xp-badge-llm{color:#c9b8ff;border-color:rgba(150,120,255,.4)}
-	.xp-badge-rules{color:var(--cv-text-3,#999)}
-	.xp-pos{color:#4ade80}
-	.xp-neg{color:#f87171}
-	.xp-open{font-size:11px;color:#93c5fd}
-	.xp-paper{font-size:11px;color:var(--cv-text-3,#888);margin-top:3px}
-	.xp-paused{font-size:10.5px;color:var(--cv-text-3,#888);font-weight:400}
-	.xp-off td{opacity:.55}
-	`;
-	const el = document.createElement('style');
-	el.textContent = css;
-	document.head.appendChild(el);
-}
-
-injectStyles();
 renderControls();
+renderSkeleton();
 refresh();
 timer = setInterval(refresh, REFRESH_MS);
 document.addEventListener('visibilitychange', () => {

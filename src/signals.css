@@ -68,19 +68,34 @@
 /* ── Status (loading / empty / error) ─────────────────────────────────────── */
 .sm-status { margin: 0 0 16px; padding: 14px 16px; border-radius: 12px; font-size: 13.5px; line-height: 1.5; border: 1px solid var(--line, rgba(255,255,255,0.1)); background: var(--surface-1, rgba(255,255,255,0.03)); color: var(--ink-dim, #aab); }
 .sm-status.is-error { border-color: color-mix(in srgb, var(--sm-loss) 40%, transparent); background: color-mix(in srgb, var(--sm-loss) 8%, transparent); color: var(--sm-loss); }
-.sm-status .sm-retry { margin-left: 10px; appearance: none; cursor: pointer; border: 1px solid currentColor; background: transparent; color: inherit; border-radius: 8px; padding: 5px 11px; font: 600 12px/1 var(--body, sans-serif); }
+.sm-status .sm-retry { margin-left: 10px; appearance: none; cursor: pointer; border: 1px solid currentColor; background: transparent; color: inherit; border-radius: 8px; padding: 5px 11px; font: 600 12px/1 var(--body, sans-serif); transition: background 0.14s, transform 0.1s; }
+.sm-status .sm-retry:hover { background: color-mix(in srgb, currentColor 14%, transparent); }
+.sm-status .sm-retry:active { transform: translateY(1px); }
+.sm-status .sm-retry:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 .sm-empty { text-align: center; padding: 60px 20px; }
-.sm-empty h2 { margin: 0 0 8px; font: 600 20px/1.2 var(--display, sans-serif); color: var(--ink-bright, #fff); }
+/* .sd-error-title is the detail page's not-found heading: an h1, because the
+   shell's aria-labelledby points at it, sized like the empty-state h2 it sits
+   in rather than like a hero title. */
+.sm-empty h2, .sm-empty .sd-error-title { margin: 0 0 8px; font: 600 20px/1.2 var(--display, sans-serif); color: var(--ink-bright, #fff); letter-spacing: normal; }
 .sm-empty p { margin: 0 auto 18px; max-width: 460px; color: var(--ink-dim, #9aa); line-height: 1.6; font-size: 14px; }
-.sm-empty .sm-cta { display: inline-block; text-decoration: none; font: 600 13px/1 var(--body, sans-serif); color: #160d28; background: var(--sm-accent); padding: 11px 18px; border-radius: 10px; }
+.sm-empty-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.sm-empty .sm-cta { display: inline-block; text-decoration: none; font: 600 13px/1 var(--body, sans-serif); color: #160d28; background: var(--sm-accent); padding: 11px 18px; border-radius: 10px; border: 1px solid transparent; transition: background 0.14s, transform 0.1s, border-color 0.14s; }
 [data-theme='dark'] .sm-empty .sm-cta { color: #fff; background: color-mix(in srgb, var(--sm-accent) 72%, #000); }
+.sm-empty .sm-cta:hover { background: color-mix(in srgb, var(--sm-accent) 86%, #fff); }
+.sm-empty .sm-cta:active { transform: translateY(1px); }
+.sm-empty .sm-cta:focus-visible { outline: 2px solid var(--sm-accent); outline-offset: 3px; }
+/* Secondary action: the publisher's own path in, styled as an outline so the
+   reader's first move stays the leaderboard. */
+.sm-empty .sm-cta.is-ghost { color: var(--ink, #e8e8ee); background: transparent; border-color: var(--line, rgba(255, 255, 255, 0.16)); }
+[data-theme='dark'] .sm-empty .sm-cta.is-ghost { color: var(--ink, #e8e8ee); background: transparent; }
+.sm-empty .sm-cta.is-ghost:hover { background: var(--sm-accent-soft); border-color: var(--sm-stroke); color: var(--ink-bright, #fff); }
 
 /* ── Grid + cards ─────────────────────────────────────────────────────────── */
-.sm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 16px; }
+.sm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(330px, 100%), 1fr)); gap: 16px; }
 @media (max-width: 480px) { .sm-grid { grid-template-columns: 1fr; } }
 
 .sm-card {
-	position: relative; display: flex; flex-direction: column; gap: 14px;
+	position: relative; min-width: 0; display: flex; flex-direction: column; gap: 14px;
 	background: var(--surface-1, rgba(255,255,255,0.03)); border: 1px solid var(--line, rgba(255,255,255,0.08));
 	border-radius: 16px; padding: 18px; text-decoration: none; color: inherit;
 	transition: border-color 0.16s, transform 0.16s, box-shadow 0.16s;
@@ -99,8 +114,9 @@
 .sm-avatar { width: 44px; height: 44px; border-radius: 11px; flex: none; object-fit: cover; background: var(--surface-2, rgba(255,255,255,0.06)); border: 1px solid var(--line, rgba(255,255,255,0.1)); }
 .sm-card-head .sm-id { min-width: 0; }
 .sm-feed-title { margin: 0; font: 600 15px/1.25 var(--display, sans-serif); color: var(--ink-bright, #fff); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sm-pub { display: flex; align-items: center; gap: 6px; margin-top: 3px; font-size: 12px; color: var(--ink-dim, #9aa); }
-.sm-verified { display: inline-flex; align-items: center; gap: 3px; font: 600 10.5px/1 var(--mono, monospace); color: var(--sm-win); background: color-mix(in srgb, var(--sm-win) 12%, transparent); border: 1px solid color-mix(in srgb, var(--sm-win) 30%, transparent); border-radius: 6px; padding: 3px 6px; }
+.sm-pub { display: flex; align-items: center; gap: 6px; min-width: 0; margin-top: 3px; font-size: 12px; color: var(--ink-dim, #9aa); }
+.sm-pub-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sm-verified { flex: none; display: inline-flex; align-items: center; gap: 3px; font: 600 10.5px/1 var(--mono, monospace); color: var(--sm-win); background: color-mix(in srgb, var(--sm-win) 12%, transparent); border: 1px solid color-mix(in srgb, var(--sm-win) 30%, transparent); border-radius: 6px; padding: 3px 6px; }
 
 .sm-edge { display: flex; align-items: baseline; gap: 8px; }
 .sm-edge-score { font: 700 30px/1 var(--display, sans-serif); color: var(--ink-bright, #fff); }
@@ -116,10 +132,11 @@
 .sm-metric .v.loss { color: var(--sm-loss); }
 .sm-metric .v.muted { color: var(--ink-dim, #9aa); }
 
-.sm-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 4px; border-top: 1px solid var(--line, rgba(255,255,255,0.06)); }
-.sm-price { display: flex; flex-direction: column; gap: 2px; }
+.sm-card-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding-top: 4px; border-top: 1px solid var(--line, rgba(255,255,255,0.06)); }
+.sm-card-foot > * { min-width: 0; }
+.sm-price { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .sm-price .amt { font: 600 15px/1 var(--display, sans-serif); color: var(--ink-bright, #fff); }
-.sm-price .per { font: 500 11px/1 var(--mono, monospace); color: var(--ink-dim, #889); }
+.sm-price .per { font: 500 11px/1 var(--mono, monospace); color: var(--ink-dim, #889); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sm-thin { font: 600 10.5px/1 var(--mono, monospace); color: var(--sm-flat); background: var(--surface-2, rgba(255,255,255,0.05)); border-radius: 6px; padding: 4px 7px; }
 .sm-view { font: 600 12.5px/1 var(--body, sans-serif); color: var(--sm-accent); white-space: nowrap; }
 .sm-card:hover .sm-view { text-decoration: underline; }

@@ -35,7 +35,12 @@
 		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Sign Language Avatars","description":"three.ws avatars sign in American Sign Language: fingerspelling for any word or number, signed chat replies, and webcam sign-to-text recognition: the full loop, live in 3D.","url":"https://three.ws/sign-language","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
 		<style>
-			.sl-main { max-width: 1240px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px) 96px; }
+			/* `margin: 0 auto` is an auto cross-axis margin on a flex item of the
+			   column-flex body, which cancels the stretch: without a definite width the
+			   main box shrink-to-fits to its own min-content (456px with the API
+			   console populated) and mobile.css's overflow-x: clip then amputates the
+			   right side of every section on a 320px screen instead of scrolling. */
+			.sl-main { width: 100%; max-width: 1240px; min-width: 0; box-sizing: border-box; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px) 96px; }
 
 			/* Hero: live avatar left, pitch + input right */
 			.sl-hero {
@@ -60,9 +65,9 @@
 			/* Spell input */
 			.sl-try { margin-top: 26px; }
 			.sl-try-label { font-size: 13px; color: var(--ink-dim); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px; }
-			.sl-input-row { display: flex; gap: 8px; }
+			.sl-input-row { display: flex; flex-wrap: wrap; gap: 8px; }
 			.sl-input {
-				flex: 1 1 auto; min-width: 0; box-sizing: border-box;
+				flex: 1 1 0; min-width: 0; box-sizing: border-box;
 				background: rgba(167,139,250,.06); border: 1px solid rgba(167,139,250,.4);
 				color: var(--ink); font: inherit; font-size: 15px; padding: 12px 14px; border-radius: 12px;
 			}
@@ -115,7 +120,7 @@
 
 			/* Speed + dominant hand */
 			.sl-settings { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 16px; }
-			.sl-setting { display: flex; align-items: center; gap: 9px; }
+			.sl-setting { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; }
 			.sl-setting-label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim); }
 			.sl-opts { display: inline-flex; gap: 4px; padding: 3px; border: 1px solid var(--stroke); border-radius: 999px; background: var(--surface-2); }
 			.sl-opt {
@@ -219,7 +224,7 @@
 			.sl-api-code-h { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-dim); margin: 16px 0 6px; }
 			.sl-api-pre { margin: 0; padding: 14px; border: 1px solid var(--stroke); border-radius: 12px; background: var(--surface-2); overflow-x: auto; max-height: 340px; }
 			.sl-api-pre code { font-family: var(--font-mono); font-size: 12px; line-height: 1.6; color: var(--ink); white-space: pre; }
-			.sl-api-foot { margin: 22px 0 0; color: var(--ink-dim); font-size: 13px; line-height: 1.7; }
+			.sl-api-foot { margin: 22px 0 0; color: var(--ink-dim); font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
 			.sl-api-foot a { color: var(--ink); }
 			.sl-api-foot code { font-family: var(--font-mono); font-size: 12px; }
 
@@ -242,6 +247,11 @@
 				.sl-caps { grid-template-columns: 1fr; }
 				.sl-webcam-grid { grid-template-columns: 1fr; }
 				#sl-cam-preview { max-width: 360px; }
+			}
+			@media (max-width: 420px) {
+				/* A 380px floor on a 4:5 stage is wider than the screen: below this
+				   the aspect ratio alone frames the avatar. */
+				.sl-stage-wrap { min-height: 0; }
 			}
 		</style>
 	

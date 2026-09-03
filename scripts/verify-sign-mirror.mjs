@@ -50,7 +50,11 @@ page.on('pageerror', (e) => {
 console.log(`\nSign Mirror, ${BASE}/sign-mirror`);
 
 phase = 'first load';
+// The shared nav fetches its own markup on boot. Reloading on top of that
+// in-flight request aborts it, which surfaced as a console error that had
+// nothing to do with this page, so let the first load settle before reloading.
 await page.goto(`${BASE}/sign-mirror`, { waitUntil: 'domcontentloaded' });
+await page.waitForSelector('#nav-container nav, #nav-container a', { timeout: 30000 }).catch(() => {});
 await page.evaluate(() => localStorage.clear());
 await page.reload({ waitUntil: 'domcontentloaded' });
 
@@ -124,12 +128,47 @@ if (cameraRan) {
 	check('camera starts and reports no hand in frame', true);
 	await page.locator('#sm-camera').click();
 	check('camera stops cleanly', await page.evaluate(() => document.body.dataset.smCamera === 'off'));
+	const idleHint = await page.locator('#sm-hint').textContent();
+	check('stopping the camera restores an actionable hint', /camera on|copy the diagram/i.test(idleHint || ''), idleHint || 'empty');
+	check('stopping the camera hides the tracking note', await page.locator('#sm-camera-note').isHidden());
 } else {
 	// No network to the model CDN (or no fake device): the page must have said
 	// so in the status line rather than dying silently.
 	const st = await page.locator('#sm-status').textContent();
 	check('camera failure is explained to the user', /camera|tracker|diagram/i.test(st || ''), st || 'no status');
+	check('the camera panel is not left mid-flight', await page.evaluate(() => document.body.dataset.smCamera !== 'loading' && document.body.dataset.smCamera !== 'starting'), await page.evaluate(() => document.body.dataset.smCamera || 'unset'));
 }
+
+// Every letter square carries its best score: the state the grader keeps has to
+// be readable, and it has to survive a reload.
+phase = 'best score surfacing';
+await page.evaluate(() => {
+	localStorage.setItem('threews:sign-mirror-progress', JSON.stringify({ passed: { A: true }, best: { A: 91, B: 44 } }));
+});
+await page.waitForSelector('#nav-container nav, #nav-container a', { timeout: 30000 }).catch(() => {});
+await page.reload({ waitUntil: 'domcontentloaded' });
+await page.waitForSelector('.sm-letter[data-char="B"]');
+await page.waitForFunction(() => /best score 44/i.test(document.querySelector('.sm-letter[data-char="B"]')?.getAttribute('aria-label') || ''), { timeout: 30000 });
+check('a practised letter names its best score', true);
+check(
+	'an unpractised letter says so',
+	/not attempted/i.test((await page.locator('.sm-letter[data-char="X"]').getAttribute('aria-label')) || ''),
+	(await page.locator('.sm-letter[data-char="X"]').getAttribute('aria-label')) || '',
+);
+check('the best-score sliver is drawn', (await page.locator('.sm-letter[data-char="B"]').getAttribute('data-tried')) === 'true');
+await page.locator('#sm-reset').click();
+check('reset clears the sliver', (await page.locator('.sm-letter[data-char="B"]').getAttribute('data-tried')) === 'false');
+check('reset clears the passed marks', (await page.locator('.sm-letter[data-passed="true"]').count()) === 0);
+
+// Nothing may push the page sideways at a phone width.
+phase = 'responsive';
+for (const width of [320, 768, 1440]) {
+	await page.setViewportSize({ width, height: 900 });
+	await page.waitForTimeout(400);
+	const m = await page.evaluate(() => ({ scrollW: document.documentElement.scrollWidth, clientW: document.documentElement.clientWidth }));
+	check(`no horizontal scroll at ${width}px`, m.scrollW <= m.clientW + 1, `scrollWidth=${m.scrollW} clientWidth=${m.clientW}`);
+}
+await page.setViewportSize({ width: 1280, height: 900 });
 
 phase = 'teardown';
 check('no console errors', consoleErrors.length === 0, consoleErrors.slice(0, 5).join(' | '));

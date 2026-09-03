@@ -134,7 +134,8 @@
 			.sm-btn:hover:not(:disabled) { background: rgba(56,189,248,.3); border-color: rgba(56,189,248,.8); }
 			.sm-btn:active:not(:disabled) { transform: scale(.98); }
 			.sm-btn:focus-visible { outline: 2px solid rgba(56,189,248,.9); outline-offset: 1px; }
-			.sm-btn:disabled { opacity: .6; cursor: wait; }
+			.sm-btn:disabled { opacity: .55; cursor: not-allowed; }
+			.sm-btn[aria-busy='true']:disabled { cursor: wait; }
 			.sm-btn-quiet { background: transparent; border-color: var(--stroke); color: var(--ink-dim); font-weight: 500; }
 			.sm-btn-quiet:hover:not(:disabled) { color: var(--ink); border-color: rgba(56,189,248,.6); background: transparent; }
 			.sm-opts { display: inline-flex; gap: 4px; padding: 3px; border: 1px solid var(--stroke); border-radius: 999px; background: var(--surface-2); }
@@ -158,7 +159,22 @@
 			}
 			.sm-video-empty .sm-video-empty-inner { max-width: 40ch; }
 			.sm-video-empty strong { color: var(--ink); display: block; margin-bottom: 6px; font-size: 15px; }
+			.sm-video-empty .sm-video-inner { max-width: 40ch; display: none; }
+			.sm-video-empty .sm-video-inner strong { color: var(--ink); display: block; margin: 8px 0 6px; font-size: 15px; }
 			body[data-sm-camera='on'] .sm-video-empty { display: none; }
+			body[data-sm-camera='loading'] .sm-video-idle,
+			body[data-sm-camera='starting'] .sm-video-idle { display: none; }
+			body[data-sm-camera='loading'] .sm-video-loading,
+			body[data-sm-camera='starting'] .sm-video-starting { display: block; }
+			.sm-spinner {
+				display: inline-block; width: 22px; height: 22px; border-radius: 50%;
+				border: 2px solid var(--stroke); border-top-color: #38bdf8;
+				animation: sm-spin .8s linear infinite;
+			}
+			@keyframes sm-spin { to { transform: rotate(360deg); } }
+			@media (prefers-reduced-motion: reduce) {
+				.sm-spinner { animation-duration: 2.4s; }
+			}
 
 			.sm-grade { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
 			.sm-score-row { display: flex; align-items: center; gap: 14px; }
@@ -203,11 +219,21 @@
 			.sm-group p { margin: 0 0 12px; font-size: 13px; color: var(--ink-dim); line-height: 1.5; }
 			.sm-letters { display: flex; flex-wrap: wrap; gap: 8px; }
 			.sm-letter {
+				position: relative; overflow: hidden;
 				appearance: none; cursor: pointer; font: inherit; font-weight: 600; font-size: 16px;
 				width: 44px; height: 44px; border-radius: 12px; color: var(--ink-dim);
 				border: 1px solid var(--stroke); background: var(--surface-2);
 				transition: color .14s ease, border-color .14s ease, background .14s ease, transform .14s ease;
 			}
+			/* The best score this letter has reached, so 26 identical squares read
+			   as a map of where the practice actually is. */
+			.sm-letter::after {
+				content: ''; position: absolute; left: 0; bottom: 0; height: 3px;
+				width: var(--sm-best, 0%); background: rgba(56,189,248,.85);
+				transition: width .3s ease;
+			}
+			.sm-letter[data-tried='false']::after { display: none; }
+			.sm-letter[data-passed='true']::after { background: rgba(4,18,28,.45); }
 			.sm-letter:hover { color: var(--ink); border-color: rgba(56,189,248,.6); transform: translateY(-2px); }
 			.sm-letter:active { transform: translateY(0) scale(.96); }
 			.sm-letter:focus-visible { outline: 2px solid rgba(56,189,248,.9); outline-offset: 2px; }
@@ -300,21 +326,32 @@
 						<video id="sm-video" playsinline muted aria-label="Your camera, mirrored"></video>
 						<svg id="sm-overlay" viewBox="0 0 640 480" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
 						<div class="sm-video-empty">
-							<div class="sm-video-empty-inner">
+							<div class="sm-video-empty-inner sm-video-idle">
 								<strong>The camera is off.</strong>
 								Turn it on to be graded live. The video, the hand landmarks, and every score
 								stay in this tab: there is no network call in the practice loop. Or skip the
 								camera and copy the target diagram by eye.
+							</div>
+							<div class="sm-video-inner sm-video-loading" role="status">
+								<span class="sm-spinner" aria-hidden="true"></span>
+								<strong>Downloading the hand tracker.</strong>
+								About 8 MB, once per browser. It is cached after this, and it runs in this
+								tab from then on.
+							</div>
+							<div class="sm-video-inner sm-video-starting" role="status">
+								<span class="sm-spinner" aria-hidden="true"></span>
+								<strong>Waiting for the camera.</strong>
+								Allow the camera in your browser prompt and the grading starts.
 							</div>
 						</div>
 					</div>
 					<div class="sm-grade">
 						<div class="sm-score-row">
 							<span id="sm-score" aria-hidden="true">0</span>
-							<span class="sm-score-unit">/100</span>
+							<span class="sm-score-unit" aria-hidden="true">/100</span>
 							<div id="sm-score-bar" role="progressbar" aria-label="Handshape score" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
 						</div>
-						<div id="sm-hint">Turn the camera on to be graded, or just copy the diagram.</div>
+						<div id="sm-hint" role="status" aria-live="polite">Turn the camera on to be graded, or just copy the diagram.</div>
 						<div id="sm-fingers" role="group" aria-label="Per-finger score"></div>
 						<div class="sm-camera-row">
 							<button class="sm-btn" id="sm-camera" type="button" aria-pressed="false">Turn the camera on</button>

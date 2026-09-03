@@ -592,9 +592,15 @@
 	transition: opacity 0.3s ease;
 }
 
+/* Fading the status to zero opacity leaves "Building the scene" in the
+   accessibility tree forever, so a screen reader keeps reporting a load that
+   finished. `visibility` removes it for real, delayed by the fade so the
+   transition still plays. */
 .rd-stage[data-state='ready'] .rd-stage-status {
 	opacity: 0;
+	visibility: hidden;
 	pointer-events: none;
+	transition: opacity 0.3s ease, visibility 0s linear 0.3s;
 }
 
 .rd-spinner {

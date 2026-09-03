@@ -42,6 +42,18 @@
 		.pl-overlay { position: absolute; pointer-events: none; z-index: 10; }
 		.pl-overlay > * { pointer-events: auto; }
 
+		/* Wide layout keeps the hero and the trade feed in opposite corners, so the
+		   wrapper contributes no box at all and each child anchors to #pl-stage
+		   exactly as it did before. The narrow rules below turn it into the single
+		   stacked column that lets the feed survive on a phone. */
+		#pl-hud-top { display: contents; }
+
+		.pl-sr {
+			position: absolute; width: 1px; height: 1px; margin: -1px;
+			padding: 0; border: 0; overflow: hidden; white-space: nowrap;
+			clip: rect(0 0 0 0); clip-path: inset(50%);
+		}
+
 		/* ── Hero readout (top-left): price + sentiment ── */
 		.pl-hero {
 			top: calc(var(--header-h, 3.5rem) + 16px);
@@ -53,7 +65,7 @@
 			backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
 			min-width: 232px;
 		}
-		.pl-hero .sym { font-family: var(--pl-mono); font-size: 11px; letter-spacing: 0.16em; color: var(--pl-muted); text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+		.pl-hero .sym { font-family: var(--pl-mono); font-size: 11px; font-weight: 400; line-height: 1.4; margin: 0; letter-spacing: 0.16em; color: var(--pl-muted); text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
 		.pl-hero .sym .dot { width: 8px; height: 8px; border-radius: 50%; background: #555; }
 		.pl-hero[data-state="connecting"] .dot { background: #f5a623; animation: plPulse 1.2s ease-in-out infinite; }
 		.pl-hero[data-state="live"] .dot { background: var(--pl-green); box-shadow: 0 0 10px rgba(52,224,168,0.8); animation: plPulse 1.6s ease-in-out infinite; }
@@ -71,6 +83,27 @@
 		.pl-activity .bar { flex: 1; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.08); overflow: hidden; position: relative; }
 		.pl-activity .bar .fill { position: absolute; top: 0; bottom: 0; left: 0; width: 0; background: linear-gradient(90deg, var(--pl-accent), var(--pl-green)); transition: width 0.5s ease; border-radius: 3px; }
 		.pl-activity .reading { font-weight: 600; color: var(--pl-text); min-width: 64px; text-align: right; }
+
+		/* Failure notice: stays up for as long as the feed is actually down. */
+		.pl-fault {
+			display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+			margin: 12px 0 0; padding: 9px 11px;
+			background: rgba(255, 93, 115, 0.09);
+			border: 1px solid rgba(255, 93, 115, 0.32); border-radius: 10px;
+			font-family: var(--pl-mono); font-size: 11.5px; line-height: 1.5; color: #ffb8c2;
+		}
+		.pl-fault[hidden] { display: none; }
+		.pl-retry {
+			flex: none; margin-left: auto; cursor: pointer;
+			font-family: var(--pl-mono); font-size: 11px; letter-spacing: 0.05em;
+			color: var(--pl-text); background: rgba(255, 255, 255, 0.07);
+			border: 1px solid var(--pl-border); border-radius: 7px; padding: 5px 10px;
+			transition: background 0.18s ease, border-color 0.18s ease, transform 0.12s ease;
+		}
+		.pl-retry:hover { background: rgba(255, 255, 255, 0.14); border-color: rgba(255, 255, 255, 0.28); }
+		.pl-retry:active { transform: translateY(1px); }
+		.pl-retry:focus-visible { outline: 2px solid var(--pl-accent); outline-offset: 2px; }
+		.pl-retry[disabled] { opacity: 0.55; cursor: progress; }
 
 		/* ── Stat grid (bottom-left) ── */
 		.pl-stats {
@@ -165,12 +198,36 @@
 		.pl-toast.is-visible { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 		@media (max-width: 820px) {
-			.pl-ticker { display: none; }
 			.pl-hint { display: none; }
-			.pl-hero { min-width: 0; left: 12px; right: 12px; padding: 12px 14px; }
+			/* One column from the header down to the bottom HUD band. --pl-dock-h is
+			   measured from the live band height, so the feed grows into whatever
+			   room is left instead of being deleted from the small screen. */
+			#pl-hud-top {
+				display: flex; flex-direction: column; gap: 10px;
+				position: absolute; z-index: 10; pointer-events: none;
+				top: calc(var(--header-h, 3.5rem) + 16px);
+				left: 12px; right: 12px;
+				bottom: calc(var(--pl-dock-h, 210px) + 10px);
+			}
+			#pl-hud-top > * { position: static; pointer-events: none; }
+			.pl-hero { min-width: 0; padding: 12px 14px; flex: 0 0 auto; }
 			.pl-hero .price { font-size: 28px; }
-			.pl-stats { left: 12px; bottom: 84px; grid-template-columns: repeat(2, 1fr); max-width: calc(100% - 24px); }
-			.pl-flow { bottom: 12px; }
+			.pl-ticker { display: flex; flex-direction: column; width: auto; flex: 1 1 auto; min-height: 0; }
+			.pl-ticker ol { max-height: none; flex: 1 1 auto; overflow-y: auto; }
+			/* Under roughly two rows of trades the feed reads as a scrap of a panel
+			   rather than a feed, so the short-viewport case drops it and leaves the
+			   hero and the bottom band whole. */
+			#pl-hud-top.is-cramped .pl-ticker { display: none; }
+			/* --pl-band-base clears the flow row AND the shared corner stack, which
+			   spans the full width down here and would otherwise sit on the grid. */
+			.pl-stats {
+				left: 12px; right: 12px; bottom: calc(var(--pl-band-base, 80px) + 10px);
+				grid-template-columns: repeat(2, 1fr); max-width: none;
+			}
+			.pl-flow { bottom: 12px; left: 12px; right: 12px; transform: none; }
+			.pl-flow .seg { flex: 1; padding: 8px 10px; }
+			.pl-flow .label { font-size: 8.5px; white-space: nowrap; }
+			.pl-flow .num { font-size: 16px; }
 		}
 	</style>
 
@@ -197,15 +254,19 @@
 	<header><div id="nav-container"></div></header>
 	<script src="/nav.js"></script>
 
-	<div id="pl-stage">
+	<!-- data-corner-ignore: this page declares its own corner-stack clearance from
+	     measured HUD geometry (syncDock below). Without it the stack's automatic
+	     probe adds a second, overlapping lift on top of that reservation. -->
+	<div id="pl-stage" data-corner-ignore>
 		<div id="pl-canvas-host"></div>
 
 		<!-- Hero: price + sentiment gauge -->
+		<div id="pl-hud-top">
 		<section class="pl-overlay pl-hero" id="pl-hero" data-state="connecting" aria-live="polite">
-			<div class="sym"><span class="dot"></span> <span id="pl-status-text" data-i18n="three_live.three_connecting">$THREE · connecting…</span></div>
+			<h1 class="sym"><span class="dot" aria-hidden="true"></span> <span id="pl-status-text" data-i18n="three_live.three_connecting">$THREE · connecting…</span><span class="pl-sr">: Protocol Pulse, live on-chain $THREE activity rendered in 3D</span></h1>
 			<div class="price" id="pl-price">$—</div>
 			<div class="chg flat" id="pl-change">—</div>
-			<div class="pl-activity" title="On-chain trade throughput in the last 60s — activity, not a buy/sell signal">
+			<div class="pl-activity" title="On-chain trade throughput in the last 60s. Activity, not a buy/sell signal.">
 				<span data-i18n="three_live.quiet">QUIET</span>
 				<span class="bar"><span class="fill" id="pl-activity-fill"></span></span>
 				<span data-i18n="three_live.busy">BUSY</span>
@@ -216,15 +277,25 @@
 				<a href="/dashboard/holders" style="color:var(--pl-faint);text-decoration:none" data-i18n="three_live.holder_leaderboard">▸ Holder leaderboard</a>
 				<a href="https://pump.fun/coin/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump" target="_blank" rel="noopener" style="color:var(--pl-faint);text-decoration:none" data-i18n="three_live.buy_three">▸ Buy $THREE ↗</a>
 			</div>
+			<!-- Persistent, actionable failure notice. A toast alone disappears after a
+			     few seconds and leaves a HUD full of dashes with no explanation. -->
+			<p class="pl-fault" id="pl-fault" role="alert" hidden>
+				<span id="pl-fault-text"></span>
+				<button type="button" id="pl-fault-retry" class="pl-retry">Retry now</button>
+			</p>
 		</section>
 
 		<!-- Live trade ticker -->
 		<aside class="pl-overlay pl-ticker" id="pl-ticker">
 			<div class="head">Live trades <span class="live" data-i18n="three_live.live">live</span></div>
 			<ol id="pl-ticker-list" role="list">
-				<li class="empty" id="pl-ticker-empty" data-i18n="three_live.live_trades_will_appear_here">Live trades will appear here.</li>
+				<!-- The script swaps this for the shared state-kit empty state, so it is
+				     marked script-owned: the i18n catalog pass would otherwise reset it
+				     to a bare text node and wipe that markup. -->
+				<li class="empty" id="pl-ticker-empty" data-i18n-owned="1">Live trades will appear here.</li>
 			</ol>
 		</aside>
+		</div>
 
 		<!-- Stat grid -->
 		<section class="pl-overlay pl-stats" id="pl-stats">
@@ -290,11 +361,18 @@
 				live: true,
 				title: 'No trades yet',
 				body: 'Live trades will appear here.',
-				tip: 'Streaming live from the $THREE bonding curve on-chain — each trade shows up the moment it settles.',
+				tip: 'Streaming live from the $THREE bonding curve on-chain. Each trade shows up the moment it settles.',
 			});
 		}
 		const introEl = document.getElementById('pl-intro');
 		const toastEl = document.getElementById('pl-toast');
+		const hudTop = document.getElementById('pl-hud-top');
+		const statsPanel = document.getElementById('pl-stats');
+		const flowPanel = document.getElementById('pl-flow');
+		const hintPanel = document.querySelector('.pl-hint');
+		const faultEl = document.getElementById('pl-fault');
+		const faultText = document.getElementById('pl-fault-text');
+		const faultRetry = document.getElementById('pl-fault-retry');
 		const el = (id) => document.getElementById(id);
 		// Null-tolerant writers. Privacy/anti-popup browser extensions strip
 		// fixed-position overlays (our HUD is a set of `.pl-overlay` nodes), which
@@ -547,8 +625,56 @@
 			if (n >= 1e3) return (n/1e3).toFixed(1) + 'K';
 			return String(Math.round(n));
 		}
-		function setHero(state, text) { if (heroEl) heroEl.dataset.state = state; if (text) setText(statusText, text); }
-		const heroState = () => (heroEl ? heroEl.dataset.state : '');
+		// ── Status resolution ───────────────────────────────────────────────────
+		// The stream and the stats poll fail independently, so they each keep their
+		// own health flag and one resolver decides what the badge says. The old code
+		// let whichever handler fired last win, which is how a stats outage could be
+		// erased by the next SSE retry and leave a HUD of dashes with no explanation.
+		let streamState = 'connecting'; // connecting | live | quiet | reconnecting
+		let statsOk = null;             // null = not answered yet, true/false = last poll
+		const STREAM_LABEL = {
+			connecting: '$THREE · connecting…',
+			live: '$THREE · live',
+			quiet: '$THREE · market quiet',
+			reconnecting: '$THREE · reconnecting…',
+		};
+		function setHero(state, text) {
+			if (heroEl) heroEl.dataset.state = state;
+			if (text != null && statusText) {
+				// Claim the node from the i18n catalog pass. It lands after an async
+				// locale fetch and would otherwise revert a live badge to "connecting…"
+				// for the rest of the session.
+				statusText.setAttribute('data-i18n-owned', '1');
+				statusText.textContent = text;
+			}
+		}
+		function setStream(state) { streamState = state; renderStatus(); }
+		function renderStatus() {
+			const streamDown = streamState === 'connecting' || streamState === 'reconnecting';
+			// Until something has actually happened the markup already says
+			// "connecting…", and it says it in the visitor's language. Leave that
+			// first paint to the i18n catalog and only claim the node once the
+			// script has a status of its own to report.
+			const untouched = streamState === 'connecting' && statsOk !== false;
+			if (statsOk === false && streamDown) {
+				setHero('error', '$THREE · live data unavailable');
+			} else {
+				setHero(streamState === 'reconnecting' ? 'connecting' : streamState, untouched ? null : STREAM_LABEL[streamState]);
+			}
+			renderFault();
+		}
+		// One persistent line naming exactly what is down and offering the recovery.
+		function renderFault() {
+			if (!faultEl) return;
+			const streamDown = streamState === 'reconnecting';
+			let msg = '';
+			if (statsOk === false && streamDown) msg = 'Price, stats and the trade stream are all unreachable. Retrying automatically.';
+			else if (statsOk === false) msg = 'Price and protocol stats are unreachable. The trade stream is still running.';
+			else if (streamDown) msg = 'The live trade stream dropped. Reconnecting automatically.';
+			if (!msg) { faultEl.hidden = true; return; }
+			setText(faultText, msg);
+			faultEl.hidden = false;
+		}
 
 		function pushTicker(isBuy, usd, who) {
 			if (!tickerList) return;
@@ -572,11 +698,8 @@
 				const d = await r.json();
 				const tk = d.token || {}; const pr = d.protocol || {};
 				statsFailures = 0;
-				// Recover from a prior stats-error badge once figures load again. Don't stomp
-				// the live/quiet badge the trade stream owns — only clear the error state.
-				if (heroState() === 'error') {
-					setHero(recentTrades.length ? 'live' : 'connecting', recentTrades.length ? '$THREE · live' : '$THREE · connecting…');
-				}
+				statsOk = true;
+				renderStatus();
 				if (tk.price_usd != null) setText(priceEl, fmtUsd(tk.price_usd));
 				const chg = Number(tk.price_change_24h);
 				if (Number.isFinite(chg) && changeEl) {
@@ -597,12 +720,12 @@
 				}
 			} catch (err) {
 				statsFailures++;
-				// Badge the error on the FIRST failure for fast feedback: the hero dot turns
-				// red and the status line says so, then keep retrying on the poll interval.
-				// Only flip the badge if a live trade stream isn't already proving the chain
-				// is reachable; in that case the stats endpoint alone hiccupped.
-				if (heroState() !== 'live') setHero('error', '$THREE · stats unavailable');
-				showToast(statsFailures >= 2 ? 'Live stats still unavailable — retrying…' : 'Live stats unavailable — retrying…');
+				// Badge the error on the FIRST failure for fast feedback, then keep
+				// retrying on the poll interval. The persistent notice in the hero is
+				// what the visitor reads; the toast is only the arrival cue.
+				statsOk = false;
+				renderStatus();
+				if (statsFailures === 1) showToast('Live stats unavailable. Retrying.');
 			}
 		}
 
@@ -611,7 +734,7 @@
 		function connectTrades() {
 			try { es = new EventSource(TRADES_SSE); } catch { scheduleReconnect(); return; }
 			es.addEventListener('open', () => { /* server "open" event */ });
-			es.onopen = () => { sseRetry = 0; setHero('live', '$THREE · live'); };
+			es.onopen = () => { sseRetry = 0; setStream('live'); };
 			es.addEventListener('trade', (ev) => {
 				let d; try { d = JSON.parse(ev.data); } catch { return; }
 				const isBuy = d.is_buy === true || d.txType === 'buy' || d.tx_type === 'buy';
@@ -621,9 +744,9 @@
 				recentTrades.push({ t: now, isBuy, usd });
 				emitTrade(isBuy, usd);
 				pushTicker(isBuy, usd, d.trader || d.traderPublicKey);
-				setHero('live', '$THREE · live');
+				setStream('live');
 			});
-			es.onerror = () => { setHero(recentTrades.length ? 'live' : 'connecting', '$THREE · reconnecting…'); scheduleReconnect(); };
+			es.onerror = () => { setStream('reconnecting'); scheduleReconnect(); };
 		}
 		function scheduleReconnect() {
 			if (sseRetryTimer) return;
@@ -690,12 +813,103 @@
 			}
 
 			// idle/quiet state
-			if (lastTradeAt && now - lastTradeAt > 25_000 && heroState() === 'live') setHero('quiet', '$THREE · market quiet');
+			if (lastTradeAt && now - lastTradeAt > 25_000 && streamState === 'live') setStream('quiet');
 
 			updateFlowCounters(now);
 			controls.update();
 			composer.render();
 		}
+
+		// ── Recovery control ────────────────────────────────────────────────────
+		// The poll already retries on its own interval; this is the visitor's way to
+		// stop waiting for it. Both feeds are re-armed, because the notice can name
+		// either one.
+		if (faultRetry) {
+			faultRetry.addEventListener('click', async () => {
+				faultRetry.disabled = true;
+				faultRetry.textContent = 'Retrying…';
+				if (streamState === 'reconnecting') {
+					if (sseRetryTimer) { clearTimeout(sseRetryTimer); sseRetryTimer = null; }
+					sseRetry = 0;
+					if (es) { try { es.close(); } catch { /* already closed */ } es = null; }
+					connectTrades();
+				}
+				await pollStats();
+				faultRetry.disabled = false;
+				faultRetry.textContent = 'Retry now';
+			});
+		}
+
+		// ── Bottom-band measurement ─────────────────────────────────────────────
+		// Two consumers, one measure pass. The narrow layout needs to know how tall
+		// the bottom HUD band is so the trade feed can fill exactly the gap above it,
+		// and the shared corner stack (language control, Getting started) needs the
+		// same clearance so it stops landing on top of the page's own controls. The
+		// stack's own probe cannot see these: it walks up to the nearest fixed
+		// ancestor, which here is the full-viewport #pl-stage, and gives up.
+		const CORNER_KEY = 'three-live-hud';
+		const narrowLayout = window.matchMedia('(max-width: 820px)');
+		function clearanceOf(node) {
+			if (!node || getComputedStyle(node).display === 'none') return 0;
+			const r = node.getBoundingClientRect();
+			return r.height > 0 ? Math.max(0, window.innerHeight - r.top) : 0;
+		}
+		let stackRo = null, stackWatched = false;
+		function syncDock() {
+			const root = document.documentElement;
+			const stackEl = document.getElementById('tws-corner-stack');
+			// Wide layout parks the stack in the corner it shares with the orbit hint
+			// and nothing else. Narrow layout turns it into a full-width bar, where the
+			// bottom-most thing the page owns is the flow row. Reserving only that keeps
+			// the lift small; the stat grid then steps over the stack itself, so the
+			// whole bottom band stacks flow, stack, stats without ever double-counting.
+			const need = narrowLayout.matches ? clearanceOf(flowPanel) : clearanceOf(hintPanel);
+			const stack = window.twsCornerStack;
+			if (stack) {
+				if (need > 0) stack.reserve(CORNER_KEY, { height: Math.round(need) });
+				else stack.release(CORNER_KEY);
+			}
+			// observe() fires the callback immediately, so this attaches exactly once:
+			// re-observing on every pass would spin the observer against itself.
+			if (stackEl && stackRo && !stackWatched) { stackWatched = true; stackRo.observe(stackEl); }
+			// Narrow layout turns the stack into a full-width bar sitting right where
+			// the stat grid does, so the grid steps over whatever is actually parked
+			// there (the stack alone, or the stack lifted by the walk companion).
+			// Clamped at 40% of the viewport for two reasons: the stack's position is
+			// partly a function of the reservation written just above, so an unbounded
+			// read could walk the band a little further up on every pass, and a HUD
+			// that climbs off the top is worse than one a helper pill overlaps.
+			let base = clearanceOf(flowPanel);
+			if (narrowLayout.matches && stackEl) {
+				const r = stackEl.getBoundingClientRect();
+				if (r.height > 0) {
+					base = Math.max(base, Math.round(window.innerHeight - r.top) + 10);
+					base = Math.min(base, Math.round(window.innerHeight * 0.4));
+				}
+			}
+			root.style.setProperty('--pl-band-base', Math.round(base) + 'px');
+			const band = Math.max(clearanceOf(statsPanel), clearanceOf(flowPanel));
+			if (band > 0) root.style.setProperty('--pl-dock-h', Math.round(band) + 'px');
+			// Measured from the column and the hero, never from the feed itself: the
+			// feed's own height goes to zero the moment this class hides it, which
+			// would latch the page into the cramped layout for good.
+			if (hudTop && heroEl) {
+				const room = hudTop.getBoundingClientRect().height - heroEl.getBoundingClientRect().height - 10;
+				hudTop.classList.toggle('is-cramped', narrowLayout.matches && room < 112);
+			}
+		}
+		// The stack grows when its Getting started checklist opens, which moves the
+		// floor the stat grid sits on. Watched separately because the element is
+		// mounted by another module and may not exist on the first pass.
+		stackRo = new ResizeObserver(syncDock);
+		const dockRo = new ResizeObserver(syncDock);
+		if (statsPanel) dockRo.observe(statsPanel);
+		if (flowPanel) dockRo.observe(flowPanel);
+		if (heroEl) dockRo.observe(heroEl);
+		window.addEventListener('resize', syncDock);
+		window.addEventListener('tws-corner-stack:ready', syncDock);
+		narrowLayout.addEventListener('change', syncDock);
+		syncDock();
 
 		// ── Resize / lifecycle ───────────────────────────────────────────────────
 		function resize() {
@@ -715,12 +929,12 @@
 		window.addEventListener('beforeunload', () => { if (es) es.close(); if (statsTimer) clearInterval(statsTimer); });
 
 		// ── Boot ──────────────────────────────────────────────────────────────────
-		setHero('connecting', '$THREE · connecting…');
+		renderStatus();
 		// Seed the SOL price used for trades that only supply sol_amount.
 		// Same-origin call to the free /api/crypto/token snapshot (wrapped-SOL mint)
 		// — Jupiter's browser fetch is CORS-blocked, this reuses the platform's
 		// cached multi-provider SOL/USD read instead.
-		fetch('/api/crypto/token?address=So11111111111111111111111111111111111111112', { signal: AbortSignal.timeout(5000) })
+		fetch('/api/crypto/token?address=So11111111111111111111111111111111111111112', { signal: AbortSignal.timeout(9000) })
 			.then((r) => r.ok ? r.json() : null)
 			.then((d) => { const p = Number(d?.priceUsd); if (p > 0) _solUsd = p; })
 			.catch(() => {});

@@ -47,7 +47,11 @@ const state = {
 	repaired: null,
 	blobUrl: null,
 	stage: null,
-	busy: false,
+	// Monotonic token for the newest requested file. FileReader and fetch both
+	// resolve asynchronously, so a second drop landing mid-read must win rather
+	// than be dropped on the floor: every completion checks that it is still the
+	// newest before it touches the DOM.
+	seq: 0,
 };
 
 // ── Entry ────────────────────────────────────────────────────────────────────
@@ -136,27 +140,47 @@ function wireShortcut() {
 }
 
 function readFile(file) {
-	if (state.busy) return;
 	if (!/\.glb$/i.test(file.name)) {
 		showError(file.name, 'Only .glb files can be read here. Export as binary glTF, not .gltf, .fbx, or .vrm.');
 		return;
 	}
+	const seq = ++state.seq;
 	setDropState('reading', file.name);
 	const reader = new FileReader();
-	reader.onerror = () => showError(file.name, 'The browser could not read that file.');
-	reader.onload = () => diagnose(reader.result, file.name);
+	reader.onerror = () => {
+		if (seq !== state.seq) return;
+		showError(file.name, 'The browser could not read that file. It may have been moved or renamed since you picked it.');
+	};
+	reader.onload = () => {
+		if (seq !== state.seq) return;
+		diagnose(reader.result, file.name);
+	};
 	reader.readAsArrayBuffer(file);
 }
 
+// The samples are the only bytes this page fetches, so a failure here is a
+// network or hosting problem, not a malformed rig. Saying "could not be read as
+// a GLB" over a bare "Failed to fetch" would send the user to re-export a file
+// that is perfectly fine, so this path gets its own headline and its own way out.
 async function loadSample(url, name) {
-	if (state.busy) return;
+	const seq = ++state.seq;
 	setDropState('reading', name);
 	try {
 		const res = await fetch(url);
-		if (!res.ok) throw new Error(`sample unavailable (${res.status})`);
-		diagnose(await res.arrayBuffer(), name);
+		if (!res.ok) throw new Error(`the server answered ${res.status}`);
+		const buffer = await res.arrayBuffer();
+		if (seq !== state.seq) return;
+		diagnose(buffer, name);
 	} catch (err) {
-		showError(name, `Could not load the sample: ${err.message}`);
+		if (seq !== state.seq) return;
+		const reason = /failed to fetch|networkerror|load failed/i.test(err.message)
+			? 'the request never reached three.ws'
+			: err.message;
+		showError(
+			name,
+			`This sample rig could not be downloaded: ${reason}. Check your connection and try again, or drop one of your own .glb files instead: that path needs no network at all.`,
+			'That sample could not be downloaded.',
+		);
 	}
 }
 
@@ -173,12 +197,10 @@ function setDropState(name, label) {
 // ── Diagnosis ────────────────────────────────────────────────────────────────
 
 function diagnose(buffer, fileName) {
-	state.busy = true;
 	let report;
 	try {
 		report = analyzeGlb(buffer, { fileName });
 	} catch (err) {
-		state.busy = false;
 		showError(fileName, err.message);
 		return;
 	}
@@ -200,11 +222,10 @@ function diagnose(buffer, fileName) {
 	results.hidden = false;
 	results.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
 
-	state.busy = false;
 	mountStage(report);
 }
 
-function showError(fileName, message) {
+function showError(fileName, message, headline = 'That file could not be read as a GLB.') {
 	const results = $('rd-results');
 	teardownStage();
 	state.report = null;
@@ -212,7 +233,7 @@ function showError(fileName, message) {
 	$('rd-verdict').setAttribute('data-level', 'fail');
 	$('rd-verdict-mark').innerHTML = VERDICT_MARK.fail;
 	$('rd-verdict-file').textContent = fileName;
-	$('rd-verdict-headline').textContent = 'That file could not be read as a GLB.';
+	$('rd-verdict-headline').textContent = headline;
 	$('rd-verdict-detail').textContent = message;
 	$('rd-verdict-notes').innerHTML = '';
 	$('rd-verdict-actions').innerHTML = '';
@@ -227,6 +248,11 @@ function showError(fileName, message) {
 	for (const panel of document.querySelectorAll('.rd-col-report .rd-panel')) panel.hidden = true;
 	$('rd-stage').setAttribute('data-state', 'failed');
 	setStageStatus('Nothing to preview');
+	// The stage panel's own labels are set by mountStage, which never ran here.
+	// Left alone they read "Loading the scene" above a stage that has already
+	// given up, and promise a retargeting run on a file that was never parsed.
+	$('rd-stage-note').textContent = 'Preview unavailable';
+	$('rd-stage-foot').textContent = 'Once a file parses, its rig previews here with the real clip library.';
 	results.hidden = false;
 	results.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
 }

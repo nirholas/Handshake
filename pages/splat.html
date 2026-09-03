@@ -156,6 +156,14 @@
 				color: var(--text-2, #a8a8a8); font-size: 12.5px; transition: border-color 0.15s, color 0.15s;
 			}
 			.sp-sample:hover { border-color: var(--hairline-strong, #2a2a2a); color: var(--text, #f6f6f6); }
+			.sp-sample:active { border-color: var(--accent, #fff); }
+			.sp-sample:focus-visible { outline: 2px solid var(--accent, #fff); outline-offset: 2px; }
+			.sp-btn:active { border-color: var(--accent, #fff); }
+			.sp-icon-btn:active { color: var(--accent, #fff); }
+			.sp-sr-only {
+				position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+				overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+			}
 			.sp-sample-dot { width: 8px; height: 8px; border-radius: 50%; background: #c4b5fd; flex: 0 0 auto; }
 			.sp-note { font-size: 11.5px; color: var(--text-3, #8a8a8a); line-height: 1.55; }
 
@@ -196,6 +204,7 @@
 							</div>
 							<h3 data-i18n="splat.load_a_splat_to_begin">Load a splat to begin</h3>
 							<p data-i18n-html="splat.drop_a_here_paste_a_url_or">Drop a <code>.ply</code> / <code>.splat</code> / <code>.ksplat</code> here, paste a URL, or try a sample on the right.</p>
+							<button class="sp-btn" id="sp-idle-pick" type="button" style="width:auto">Choose a file</button>
 						</div>
 
 						<!-- Loading -->
@@ -235,6 +244,7 @@
 						<div class="sp-card">
 							<h2 data-i18n="splat.load_by_url">Load by URL</h2>
 							<div class="sp-field">
+								<label class="sp-sr-only" for="sp-url" data-i18n="splat.splat_scene_url">Splat scene URL</label>
 								<input class="sp-input" id="sp-url" type="url" placeholder="https://…/avatar.ply" autocomplete="off" />
 								<button class="sp-btn sp-btn--primary" id="sp-load-url" type="button">
 									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14 M13 5l7 7-7 7"/></svg>

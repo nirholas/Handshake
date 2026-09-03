@@ -232,6 +232,42 @@ a.sy-row-link:focus-visible { outline: 2px solid var(--sym-money); outline-offse
 }
 .sy-empty strong { color: var(--ink); }
 .sy-empty a { color: var(--sym-money); }
+.sy-empty p { margin: 0 0 8px; }
+.sy-empty p:last-child { margin-bottom: 0; }
+
+/* The feed is down: a red-edged block, not the same quiet-economy card, so the
+   two states are never mistaken for each other at a glance. */
+.sy-empty-error { border-color: var(--sym-alarm); border-style: solid; }
+.sy-empty-error strong { color: var(--sym-alarm); }
+.sy-retry {
+	padding: 8px 18px; border-radius: 999px;
+	background: transparent; color: var(--ink-bright);
+	border: 1px solid var(--stroke-strong); font: inherit; font-size: 13px; cursor: pointer;
+	transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.sy-retry:hover { color: var(--sym-money); border-color: var(--sym-money); background: rgba(67, 217, 163, 0.08); }
+.sy-retry:active { transform: translateY(1px); }
+.sy-retry:focus-visible { outline: 2px solid var(--sym-money); outline-offset: 2px; }
+.sy-retry[aria-busy="true"] { color: var(--ink-dim); cursor: progress; }
+
+/* Loading: the score's own shape, greyed out, rather than an empty strip that
+   reads as "nothing ever happens here". */
+.sy-skeleton { display: flex; flex-direction: column; }
+.sy-skel-row {
+	height: 47px; border-bottom: 1px solid var(--stroke);
+	background: linear-gradient(90deg, var(--surface-1) 25%, var(--surface-2) 50%, var(--surface-1) 75%);
+	background-size: 400% 100%;
+	animation: sy-shimmer 1.4s ease-in-out infinite;
+}
+.sy-skel-row:nth-child(2) { animation-delay: 0.08s; }
+.sy-skel-row:nth-child(3) { animation-delay: 0.16s; }
+.sy-skel-row:nth-child(4) { animation-delay: 0.24s; }
+.sy-skel-row:nth-child(5) { animation-delay: 0.32s; }
+.sy-skel-row:nth-child(6) { animation-delay: 0.4s; }
+@keyframes sy-shimmer {
+	from { background-position: 100% 0; }
+	to { background-position: 0 0; }
+}
 
 /* Visually hidden, still announced: the throttled live region that narrates
    one arrival at a time for screen readers. */
@@ -255,4 +291,6 @@ a.sy-row-link:focus-visible { outline: 2px solid var(--sym-money); outline-offse
 @media (prefers-reduced-motion: reduce) {
 	.sy-live-dot { animation: none; }
 	.sy-row { animation: none; }
+	.sy-solo-dot { animation: none; }
+	.sy-skel-row { animation: none; background: var(--surface-1); }
 }

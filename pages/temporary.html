@@ -32,7 +32,6 @@
 		<link rel="manifest" href="/manifest.webmanifest" />
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/footer.css" />
-		<link rel="stylesheet" href="/nav.css" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<link rel="stylesheet" href="/mobile.css" />
 
@@ -72,7 +71,6 @@
 				--text: #fafafa;
 				--text-2: #a1a1aa;
 				--accent: #ffffff;
-				--danger: var(--danger);
 			}
 
 			html, body {
@@ -307,6 +305,24 @@
 			}
 			#walk-status.is-error { color: var(--danger); border-color: rgba(248, 113, 113, 0.5); }
 			#walk-status.is-hidden { opacity: 0; }
+			/* The pill is pointer-transparent so it never eats an orbit drag, but
+			   the avatar-load failure writes a recovery link into it. A descendant
+			   can opt back in, so the link stays clickable without the pill
+			   blocking the canvas underneath it. */
+			#walk-status a {
+				pointer-events: auto;
+				color: var(--text);
+				text-decoration: underline;
+				text-underline-offset: 2px;
+				border-radius: 4px;
+			}
+			#walk-status a:hover { color: var(--accent); }
+			#walk-status a:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+			}
+			/* A faded-out pill is still hit-testable, so drop the link with it. */
+			#walk-status.is-hidden a { pointer-events: none; }
 
 			#walk-help {
 				position: fixed;
@@ -686,6 +702,14 @@
 					transform: translateX(-50%);
 					bottom: calc(180px + env(safe-area-inset-bottom, 0));
 					flex-direction: row;
+					/* Every gesture is a tap target, so the row must never run past
+					   the screen edge. Capped to the viewport it wraps upward
+					   instead of stranding the first and last emotes off-screen.
+					   Plain wrap keeps the visual order equal to the DOM order. */
+					flex-wrap: wrap;
+					justify-content: center;
+					align-items: center;
+					max-width: calc(100vw - 24px);
 					gap: 8px;
 				}
 				.walk-emote-btn { width: 40px; height: 40px; font-size: 18px; }
@@ -1274,7 +1298,7 @@
 		<link rel="stylesheet" href="/nav.css" />
 	
 	<link rel="canonical" href="https://three.ws/temporary">
-	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Walk","description":"Drive a 3D avatar around with a joystick or WASD — toggle the back camera for AR-style passthrough.","url":"https://three.ws/temporary","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Drive Your Avatar","description":"Drive a 3D avatar around with a joystick or WASD, then toggle the back camera for AR-style passthrough on your phone.","url":"https://three.ws/temporary","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:locale" content="en_US">
@@ -1284,6 +1308,15 @@
 	<body>
 		<header class="walk-site-header" id="walk-header"><div id="nav-container"></div></header>
 		<script src="/nav.js"></script>
+
+		<!--
+			The document heading. The whole page is a full-bleed 3D stage whose HUD
+			is deliberately chrome-free, so the heading is exposed to assistive tech
+			with the canonical .sr-only clip (tokens.css) rather than drawn over the
+			scene. Without it this route had no h1 at all once the coin lobby was
+			dismissed, and screen-reader users landed on an unnamed page.
+		-->
+		<h1 class="sr-only" data-i18n="temporary.page_heading">Drive your avatar</h1>
 
 		<!-- Loading overlay -->
 		<div id="walk-loading" class="walk-loading">

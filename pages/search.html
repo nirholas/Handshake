@@ -60,7 +60,7 @@
 				<div class="sr-controls">
 					<label class="sr-search" for="sr-q">
 						<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" d="M13.6 13.6 18 18M9 15.5a6.5 6.5 0 1 1 0-13 6.5 6.5 0 0 1 0 13Z"/></svg>
-						<input type="search" id="sr-q" placeholder="Search avatars, agents, models, worlds, coins…" autocomplete="off" maxlength="80" />
+						<input type="search" id="sr-q" aria-label="Search avatars, agents, models, worlds and coins" placeholder="Search avatars, agents, models, worlds, coins…" autocomplete="off" maxlength="80" />
 					</label>
 					<!-- role="group", not "tablist": the children are aria-pressed toggle buttons,
 				     not tabs, and tablist requires role="tab" children (axe aria-required-children). -->
@@ -75,7 +75,7 @@
 
 			<section id="sr-grid" class="sr-grid" aria-label="Search results"></section>
 
-			<div class="sr-quicklinks" id="sr-quicklinks">
+			<nav class="sr-quicklinks" id="sr-quicklinks" aria-label="Browse three.ws by type">
 				<a class="sr-quicklink" href="/creations" data-i18n-html="search.creator_gallery_browse_and_remix_the_live">
 					<span class="sr-quicklink-title">Creator Gallery →</span>
 					<span class="sr-quicklink-desc">Browse and remix the live 3D creation bazaar</span>
@@ -100,7 +100,7 @@
 					<span class="sr-quicklink-title">Trending →</span>
 					<span class="sr-quicklink-desc">Top agents and top conviction coins right now</span>
 				</a>
-			</div>
+			</nav>
 		</main>
 
 		<script type="module" src="/src/search-page.js"></script>

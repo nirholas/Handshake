@@ -259,7 +259,7 @@ function wireSubscribe() {
 function errorState(msg) {
 	const root = $('#sd-root');
 	root.setAttribute('aria-busy', 'false');
-	root.innerHTML = `<div class="sm-empty"><h2>${escapeHtml(msg)}</h2><p>This feed may have been paused or never existed.</p><a class="sm-cta" href="/signals">Browse all feeds →</a></div>`;
+	root.innerHTML = `<div class="sm-empty"><h1 id="sd-title" class="sd-error-title">${escapeHtml(msg)}</h1><p>This feed may have been paused, made unlisted, or never existed.</p><div class="sm-empty-actions"><a class="sm-cta" href="/signals">Browse all feeds →</a></div></div>`;
 }
 
 async function loadAgents() {

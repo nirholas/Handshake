@@ -279,10 +279,18 @@
    style.css and nav.css, so putting the reservation here reaches every
    surface, render-blocking, before the first paint. `:empty` stops matching as
    soon as the header is in, so the real header owns its height from then on.
-   Keep these two heights equal to the rendered `.nav` height in nav.css. */
-#nav-container:empty { min-height: 69px; }
+   Keep --nav-h equal to the rendered `.nav` height in nav.css.
+
+   --nav-h is the rendered height of that injected header, and it is NOT the
+   same number as --header-h (3.5rem / 56px), which sizes the older in-page
+   `<header>` element. A full-screen surface that pins itself under the shared
+   nav must offset by --nav-h: offsetting by --header-h leaves the top 13px of
+   the surface painted behind the nav, which is how Scene Studio's File/Edit/
+   Add menubar row shipped with its glyph tops sliced off. */
+:root { --nav-h: 69px; }
+#nav-container:empty { min-height: var(--nav-h); }
 @media (max-width: 880px) {
-	#nav-container:empty { min-height: 65px; }
+	:root { --nav-h: 65px; }
 }
 
 

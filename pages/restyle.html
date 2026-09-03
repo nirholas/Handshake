@@ -87,10 +87,13 @@
 			.rs-note { font-size: 12px; color: var(--text-3); margin-top: 8px; min-height: 16px; }
 			.rs-note.is-error { color: var(--danger, #e0645a); }
 			.rs-note.is-busy { color: var(--accent, #7aa2ff); }
+			.rs-note.is-done { color: var(--success, #4ade80); }
 			.rs-sources { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 			.rs-file { font-size: 12px; color: var(--text-2); }
 			.rs-hint { font-size: 12px; color: var(--text-3); margin-top: 8px; }
 			.rs-hint a { color: var(--accent, #7aa2ff); }
+			.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+			.rs-stage.is-dropping { border-color: var(--accent, #7aa2ff); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent, #7aa2ff) 45%, transparent); }
 		</style>
 	
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
@@ -121,11 +124,11 @@
 				<!-- Stage -->
 				<div class="rs-stage" id="stage">
 					<div class="rs-canvas" id="canvas-wrap"></div>
-					<div class="rs-overlay" id="status" hidden>
+					<div class="rs-overlay" id="status" role="status" aria-live="polite" hidden>
 						<div class="rs-spinner" aria-hidden="true"></div>
 						<div>Loading model…</div>
 					</div>
-					<div class="rs-overlay" id="error" hidden>
+					<div class="rs-overlay" id="error" role="alert" hidden>
 						<div id="error-msg">That model could not be loaded.</div>
 						<button class="rs-btn" id="retry" data-i18n="restyle.load_the_sample_model">Load the sample model</button>
 					</div>
@@ -137,10 +140,13 @@
 					<div class="rs-card">
 						<h2 data-i18n="restyle.load_a_model">Load a model</h2>
 						<div class="rs-sources">
-							<label class="rs-btn" for="file">Upload GLB<input id="file" type="file" accept=".glb,.gltf,model/gltf-binary" hidden /></label>
+							<button class="rs-btn" id="upload" data-i18n="restyle.upload_glb">Upload GLB</button>
+							<input id="file" type="file" accept=".glb,.gltf,model/gltf-binary" class="sr-only" tabindex="-1" aria-hidden="true" />
+							<label class="sr-only" for="url-input" data-i18n="restyle.model_url">Model URL</label>
 							<input class="rs-input" id="url-input" style="width: 150px" type="url" placeholder="https://…/model.glb" />
 							<button class="rs-btn" id="load-url" data-i18n="restyle.load_url">Load URL</button>
 						</div>
+						<div class="rs-note" id="load-note" aria-live="polite"></div>
 						<div class="rs-hint">No model? The platform's sample avatar loads by default. Make one in <a href="/forge" data-i18n="restyle.forge">Forge</a>.</div>
 					</div>
 
@@ -152,6 +158,7 @@
 					<div class="rs-card">
 						<h2 data-i18n="restyle.ai_restyle">AI restyle</h2>
 						<div class="rs-row">
+							<label class="sr-only" for="ai-instruction" data-i18n="restyle.describe_the_look">Describe the look</label>
 							<input class="rs-input" id="ai-instruction" style="width: 100%; flex: 1 1 auto" type="text"
 								placeholder="e.g. cyberpunk neon, worn copper, glossy ceramic" maxlength="300" />
 						</div>
@@ -159,7 +166,7 @@
 							<button class="rs-btn rs-btn--primary" id="ai-restyle" data-i18n="restyle.restyle">Restyle</button>
 							<label class="rs-color" style="font-size: 12px"><input id="ai-texture" type="checkbox" checked /> Generate texture too</label>
 						</div>
-						<div class="rs-note" id="ai-note"></div>
+						<div class="rs-note" id="ai-note" aria-live="polite"></div>
 						<div class="rs-hint">Describe a look in plain language — IBM Granite proposes real PBR values (base
 							color, metalness, roughness, emissive), applied live and checkpointed as a new version below.
 							For a full pixel-level UV repaint (not just flat PBR), use the
@@ -168,9 +175,9 @@
 
 					<div class="rs-card">
 						<h2 data-i18n="restyle.fine_tune">Fine-tune</h2>
-						<div class="rs-slider"><span data-i18n="restyle.metalness">Metalness</span><input id="metalness" type="range" min="0" max="1" step="0.01" /></div>
-						<div class="rs-slider"><span data-i18n="restyle.roughness">Roughness</span><input id="roughness" type="range" min="0" max="1" step="0.01" /></div>
-						<div class="rs-slider"><span data-i18n="restyle.emissive">Emissive</span><input id="emissive" type="range" min="0" max="4" step="0.05" /></div>
+						<div class="rs-slider"><label for="metalness" data-i18n="restyle.metalness">Metalness</label><input id="metalness" type="range" min="0" max="1" step="0.01" /></div>
+						<div class="rs-slider"><label for="roughness" data-i18n="restyle.roughness">Roughness</label><input id="roughness" type="range" min="0" max="1" step="0.01" /></div>
+						<div class="rs-slider"><label for="emissive" data-i18n="restyle.emissive">Emissive</label><input id="emissive" type="range" min="0" max="4" step="0.05" /></div>
 						<div class="rs-colors">
 							<label class="rs-color">Base <input id="basecolor" type="color" value="#888888" /></label>
 							<label class="rs-color">Glow <input id="emissivecolor" type="color" value="#000000" /></label>
@@ -189,7 +196,7 @@
 							<div class="rs-row" style="margin-top: 10px">
 								<button class="rs-btn" id="save-variants" data-i18n="restyle.save_all_as_versions">Save all as versions</button>
 							</div>
-							<div class="rs-note" id="variants-note"></div>
+							<div class="rs-note" id="variants-note" aria-live="polite"></div>
 						</div>
 						<div class="rs-hint">Same seed → same set, every time. Variants fan out from the last preset you applied.
 							Swatches preview instantly in-browser; "Save all as versions" mints each one as its own real,
@@ -203,7 +210,7 @@
 							<button class="rs-btn" id="reset" data-i18n="restyle.reset_to_original">Reset to original</button>
 							<button class="rs-btn rs-btn--primary" id="export" data-i18n="restyle.export_glb">Export GLB</button>
 						</div>
-						<div class="rs-note" id="export-note"></div>
+						<div class="rs-note" id="export-note" aria-live="polite"></div>
 					</div>
 
 					<div class="rs-card">
@@ -215,7 +222,7 @@
 						<div class="rs-row" style="margin-top: 12px">
 							<button class="rs-btn" id="save-version" data-i18n="restyle.save_version">Save version</button>
 						</div>
-						<div class="rs-note" id="lineage-note"></div>
+						<div class="rs-note" id="lineage-note" aria-live="polite"></div>
 					</div>
 				</div>
 			</div>

@@ -45,6 +45,51 @@ describe('symphony cross-links', () => {
 		expect(nav).toMatch(/Agent Symphony/);
 	});
 
+	it('a dead feed reads as a dead feed, never as a quiet economy', () => {
+		const js = read('src/symphony.js');
+		// Two different verdicts about the platform, so two different blocks: for
+		// a while an unreachable feed rendered "The economy is quiet right now",
+		// which is a claim about the platform made while we cannot see it.
+		expect(js).toMatch(/function offlineLedgerHTML/);
+		expect(js).toMatch(/function emptyLedgerHTML/);
+		expect(js).toMatch(/The live event feed is unreachable/);
+		// ...and it is actionable, not a dead end.
+		expect(js).toMatch(/class="sy-retry"/);
+		expect(js).toMatch(/async function retryFeed/);
+		// The status pill is derived from facts rather than assigned ad hoc,
+		// which is what let a page that had never reached the API say "live".
+		expect(js).toMatch(/function syncStatus/);
+		expect(js).toMatch(/if \(!state\.feedOk\)/);
+	});
+
+	it('the styles back every ledger state the script can render', () => {
+		const css = read('src/symphony.css');
+		for (const cls of ['.sy-empty-error', '.sy-retry', '.sy-skeleton', '.sy-skel-row']) {
+			expect(css).toContain(cls);
+		}
+	});
+
+	it('live nodes are held against the async i18n catalog pass', () => {
+		const js = read('src/symphony.js');
+		// src/i18n.js applies its catalog after an async /api/locale fetch and
+		// reverts every annotated node. data-i18n-owned is the documented opt-out.
+		expect(js).toMatch(/data-i18n-owned/);
+		// The soloing sentence is translated markup carrying its own EMPTY
+		// <strong id="sy-solo-label">, so the catalog replaces the element the
+		// participant's name lives in. The event alone is a race, so the bar is
+		// observed too.
+		expect(js).toMatch(/i18n:change/);
+		expect(js).toMatch(/new MutationObserver\([\s\S]{0,400}sy-solo-label/);
+	});
+
+	it('the solo sentence really does ship an empty label element per locale', () => {
+		// The bug above is only reachable because the catalog value contains the
+		// element. If a future extraction stops shipping the <strong>, the
+		// observer is dead weight and this test says so.
+		const en = JSON.parse(read('public/locales/en.json'));
+		expect(en.symphony.soloing_everything_else_is_muted).toMatch(/<strong id="sy-solo-label"><\/strong>/);
+	});
+
 	it('/symphony declares the solo affordance its own copy promises', () => {
 		const html = read('pages/symphony.html');
 		expect(html).toMatch(/id="sy-solo-bar"/);

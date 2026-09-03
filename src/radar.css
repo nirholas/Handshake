@@ -99,7 +99,11 @@
 	display: flex; flex-direction: column; gap: var(--space-sm);
 	padding: var(--space-sm) 0 var(--space-md);
 	margin-bottom: var(--space-md);
-	background: linear-gradient(180deg, var(--bg-0) 70%, transparent);
+	/* The fade is a fixed band at the bottom edge, not a percentage: the
+	   toolbar wraps to ~8 rows on a 320px phone, where a 30% transparent tail
+	   is tall enough that the first card scrolls through it and both become
+	   unreadable. A pixel band stays a hairline fade at every width. */
+	background: linear-gradient(180deg, var(--bg-0) calc(100% - 14px), transparent);
 	border-bottom: 1px solid var(--stroke);
 }
 .radar-chips { display: flex; gap: var(--space-2xs); flex-wrap: wrap; }
@@ -249,7 +253,7 @@
 
 /* ── card ─────────────────────────────────────────────────────────────────── */
 .radar-card {
-	display: flex; flex-direction: column; gap: var(--space-sm);
+	display: flex; flex-direction: column; gap: var(--space-sm); min-width: 0;
 	background: var(--card-bg, var(--surface-glass));
 	border: 1px solid var(--card-border, var(--stroke));
 	border-radius: var(--radius-lg); padding: var(--space-md);
@@ -333,7 +337,7 @@
 .rc-flag--clean { color: var(--success); background: rgba(74,222,128,0.1); border-color: rgba(74,222,128,0.24); }
 
 .rc-stats {
-	display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-xs) var(--space-sm);
+	display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-xs) var(--space-sm);
 	padding-top: var(--space-xs); border-top: 1px solid var(--stroke);
 }
 .rc-stat { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
@@ -409,6 +413,38 @@
 .radar-state-note { font-size: var(--text-sm); color: var(--ink-faint); margin: var(--space-xs) 0 0; }
 .radar-state-actions { display: flex; gap: var(--space-sm); flex-wrap: wrap; justify-content: center; margin-top: var(--space-xs); }
 .radar-error .radar-state-title { color: var(--danger); }
+
+/* removable filter chips (no-match state) */
+.radar-active-filters { display: flex; flex-wrap: wrap; gap: var(--space-xs); justify-content: center; margin-top: var(--space-2xs); }
+.radar-active-filter {
+	display: inline-flex; align-items: center; gap: var(--space-2xs); max-width: 100%;
+	font-family: var(--font-body); font-size: var(--text-sm); color: var(--ink);
+	background: var(--surface-2); border: 1px solid var(--stroke-strong);
+	border-radius: var(--radius-pill); padding: var(--space-2xs) var(--space-sm);
+	cursor: pointer;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
+}
+.radar-active-filter:hover { background: var(--surface-3); border-color: var(--danger); }
+.radar-active-filter:active { transform: translateY(1px); }
+.radar-active-filter:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: 2px; }
+.radar-active-filter-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.radar-active-filter-x { color: var(--ink-faint); font-size: var(--text-md); line-height: 1; }
+.radar-active-filter:hover .radar-active-filter-x { color: var(--danger); }
+
+/* market pulse: designed unavailable state (the aggregate failed and there is
+   no earlier value to keep showing) */
+.radar-pulse--unavailable { grid-template-columns: 1fr; }
+.rp-cell--unavailable { gap: var(--space-2xs); align-items: flex-start; }
+.rp-cell--unavailable .rp-sub { white-space: normal; }
+.rp-retry {
+	font-family: var(--font-body); font-size: var(--text-sm); font-weight: var(--weight-semibold);
+	color: var(--ink); background: var(--surface-2); border: 1px solid var(--stroke-strong);
+	border-radius: var(--radius-md); padding: var(--space-2xs) var(--space-sm);
+	cursor: pointer; margin-top: var(--space-2xs);
+	transition: background var(--duration-fast) var(--ease-standard);
+}
+.rp-retry:hover { background: var(--surface-3); }
+.rp-retry:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: 2px; }
 
 .radar-btn {
 	font-family: var(--font-body); font-size: var(--text-ui); font-weight: var(--weight-semibold);
@@ -616,7 +652,11 @@
 	.radar-controls { gap: var(--space-sm); }
 	.radar-search { max-width: none; flex-basis: 100%; }
 	.radar-updated { margin-left: 0; width: 100%; }
-	.radar-grid { grid-template-columns: 1fr; }
+	/* minmax(0, 1fr), not 1fr: a bare 1fr floors the track at the card's
+	   min-content width, which on a 320px phone resolved to 329px and pushed
+	   ~19px of every card under the mobile overflow-x: clip guard. */
+	.radar-grid { grid-template-columns: minmax(0, 1fr); }
+	.rc-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 	.rd-signals { grid-template-columns: 1fr; }
 	.radar-drawer-panel { width: 100%; border-left: none; }
 	.radar-pulse { grid-template-columns: repeat(2, 1fr); }

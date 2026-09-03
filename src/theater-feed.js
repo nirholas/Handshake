@@ -95,15 +95,22 @@ export function normalizeEvent(e) {
  * Fetch the recent feed snapshot for first paint (quiet-market highlights and
  * the replay seed). Returns normalised events newest-first.
  */
-export async function loadSnapshot(limit = 40) {
+export async function loadSnapshot(limit = 40, { timeout = 8000 } = {}) {
+	// Time-bounded like every other fetch on this page: a black-holed edge must
+	// resolve to the designed "no recent activity" copy, never leave the tape and
+	// the quiet card blank behind a promise that never settles.
+	const ctrl = new AbortController();
+	const timer = setTimeout(() => ctrl.abort(), timeout);
 	try {
-		const r = await fetch(`/api/feed?limit=${limit}`, { headers: { accept: 'application/json' } });
+		const r = await fetch(`/api/feed?limit=${limit}`, { headers: { accept: 'application/json' }, signal: ctrl.signal });
 		if (!r.ok) return [];
 		const body = await r.json();
 		const events = Array.isArray(body.events) ? body.events : [];
 		return events.map(normalizeEvent).filter(Boolean);
 	} catch {
 		return [];
+	} finally {
+		clearTimeout(timer);
 	}
 }
 
@@ -113,7 +120,7 @@ export async function loadSnapshot(limit = 40) {
  * EventSource reconnects automatically; we surface that as 'reconnecting' so the
  * UI never shows stale data as live. Returns { close }.
  */
-export function connectFeed({ onEvent, onStatus }) {
+export function connectFeed({ onEvent, onStatus, connectDeadline = 15000 }) {
 	if (typeof EventSource === 'undefined') {
 		onStatus?.('offline');
 		return { close() {} };
@@ -121,13 +128,21 @@ export function connectFeed({ onEvent, onStatus }) {
 	let es = null;
 	let closed = false;
 	let firstOpen = true;
+	// A stream that never opens (a buffering proxy, a middlebox that eats
+	// text/event-stream) fires no error and no open, so the pill would claim
+	// "Connecting" for the rest of the session. Bound the wait and tell the truth.
+	let deadline = null;
+	const clearDeadline = () => { if (deadline) { clearTimeout(deadline); deadline = null; } };
+	const goLive = () => { clearDeadline(); firstOpen = false; onStatus?.('live'); };
 
 	const open = () => {
 		if (closed) return;
 		onStatus?.(firstOpen ? 'connecting' : 'reconnecting');
+		clearDeadline();
+		deadline = setTimeout(() => { if (!closed) onStatus?.('reconnecting'); }, connectDeadline);
 		es = new EventSource('/api/feed-stream');
-		es.addEventListener('hello', () => { firstOpen = false; onStatus?.('live'); });
-		es.addEventListener('open', () => { onStatus?.('live'); });
+		es.addEventListener('hello', goLive);
+		es.addEventListener('open', goLive);
 		es.addEventListener('event', (ev) => {
 			let raw;
 			try { raw = JSON.parse(ev.data); } catch { return; }
@@ -137,6 +152,7 @@ export function connectFeed({ onEvent, onStatus }) {
 		es.onerror = () => {
 			// EventSource transitions to CLOSED only on fatal errors; for transient
 			// drops it retries on its own. Surface 'reconnecting' either way.
+			clearDeadline();
 			onStatus?.('reconnecting');
 			if (es && es.readyState === EventSource.CLOSED && !closed) {
 				try { es.close(); } catch {}
@@ -149,6 +165,7 @@ export function connectFeed({ onEvent, onStatus }) {
 	return {
 		close() {
 			closed = true;
+			clearDeadline();
 			try { es?.close(); } catch {}
 		},
 	};

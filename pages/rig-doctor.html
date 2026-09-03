@@ -129,11 +129,11 @@
 			</section>
 
 			<!-- Everything below is written by src/rig-doctor-page.js once a file is read. -->
-			<section class="rd-results" id="rd-results" hidden aria-live="polite" aria-labelledby="rd-results-title">
+			<section class="rd-results" id="rd-results" hidden aria-labelledby="rd-results-title">
 				<h2 class="rd-sr-only" id="rd-results-title">Diagnosis</h2>
 
 				<!-- Verdict banner -->
-				<div class="rd-verdict" id="rd-verdict" data-level="pass">
+				<div class="rd-verdict" id="rd-verdict" data-level="pass" role="status" aria-live="polite">
 					<div class="rd-verdict-mark" id="rd-verdict-mark" aria-hidden="true"></div>
 					<div class="rd-verdict-body">
 						<p class="rd-verdict-file" id="rd-verdict-file"></p>
@@ -198,8 +198,9 @@
 							</div>
 							<div class="rd-chips" id="rd-unmapped"></div>
 							<p class="rd-panel-foot">
-								If these are a standard rig, they belong in the canonicalizer.
-								<a href="https://github.com/nirholas/three.ws/blob/main/src/glb-canonicalize.js" rel="noopener">Open an issue with this list</a>
+								If these are a standard rig, they belong in
+								<a href="https://github.com/nirholas/three.ws/blob/main/src/glb-canonicalize.js" target="_blank" rel="noopener noreferrer">the canonicalizer</a>.
+								<a href="https://github.com/nirholas/three.ws/issues/new?title=Rig%20convention%20not%20recognised%20by%20Rig%20Doctor&amp;body=These%20joint%20names%20were%20not%20recognised%3A%0A%0A" target="_blank" rel="noopener noreferrer">Open an issue with this list</a>
 								and every future upload of that rig animates.
 							</p>
 						</div>

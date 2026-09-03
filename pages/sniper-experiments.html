@@ -81,15 +81,20 @@
 
 			<!-- Window switch + summary tiles. Hydrated by src/sniper-experiments.js. -->
 			<section id="xp-controls" class="cv-section" aria-label="Window"></section>
+
+			<!-- A refresh that failed on top of a good board says so here rather than
+			     letting stale numbers keep claiming to be live. -->
+			<div id="xp-alert" class="xp-alert cv-inline-note" role="status" hidden></div>
+
 			<section id="xp-summary" class="cv-section" aria-label="Summary"></section>
 
 			<!-- The comparison board. Hydrated by src/sniper-experiments.js. -->
-			<section id="xp-board" class="cv-section" aria-label="Strategy comparison"></section>
+			<section id="xp-board" class="cv-section" aria-label="Strategy comparison" aria-busy="true"></section>
 
 			<!-- LLM judgment ledger: verdicts scored against real coin outcomes. -->
 			<section id="xp-judgment" class="cv-section" aria-label="LLM judgment ledger"></section>
 
-			<p class="cv-updated" id="xp-updated"></p>
+			<p class="cv-updated" id="xp-updated" role="status" aria-live="polite"></p>
 		</main>
 
 		<script type="module" src="/src/sniper-experiments.js"></script>

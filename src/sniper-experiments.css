@@ -184,16 +184,22 @@
 
 .xp-stall-blocking b { color: var(--cv-red); }
 
-/* The record cell stacks up to four lines (W/L, open, moon bags, paper). Give it
- * a floor so none of them overflow into the conditions column beside it. */
-.xp-table td:nth-child(3) { min-width: 130px; }
-
 /* ── P&L ─────────────────────────────────────────────────────────────────── */
 .xp-pos { color: var(--cv-green); font-weight: 600; }
 .xp-neg { color: var(--cv-red); font-weight: 600; }
 
 /* ── table + rows ────────────────────────────────────────────────────────── */
-.xp-table { width: 100%; font-size: 0.875rem; }
+/* Nine columns, three of them prose. The shared .cv-table floor of 540px packs
+ * them tight enough that every entry-condition line wraps mid-phrase; this is
+ * the width the board actually needs before its own overflow-x container takes
+ * over on a narrow screen. */
+.xp-table { width: 100%; min-width: 860px; font-size: 0.875rem; }
+
+/* .cv-table is built for the sortable, row-clickable market tables and hands
+ * every header and row a pointer cursor. Nothing on this board sorts and no row
+ * navigates, so that cursor promises an interaction that does not exist. */
+.xp-table th,
+.xp-table tbody tr { cursor: default; }
 
 /* The shared .cv-table sets `white-space: nowrap` and right-aligns every cell,
  * which suits a grid of figures but not this board: the first three columns hold
@@ -279,7 +285,34 @@
 .xp-tile i { font-size: 0.75rem; font-style: normal; color: var(--cv-text-3); }
 
 @media (max-width: 640px) {
-	.xp-cond { max-width: none; }
+	.xp-cond { width: auto; }
 	.xp-table { font-size: 0.8125rem; }
 	.xp-table td { padding: 8px; }
 }
+
+/* ── first paint ─────────────────────────────────────────────────────────── */
+/* Skeleton lines share the shared .cv-skel shimmer (and its reduced-motion
+ * opt-out) and only add the geometry, so loading reads as the same system as
+ * every other crypto page. */
+.xp-skel-line {
+	display: block;
+	height: 0.75rem;
+	border-radius: var(--cv-radius-sm);
+}
+
+.xp-skel-lg { height: 1.25rem; }
+.xp-skel-tile { gap: 8px; }
+
+/* ── degraded refresh ────────────────────────────────────────────────────── */
+/* Shown only when a poll fails over a board that already has numbers on it. */
+.xp-alert {
+	margin: 0 0 12px;
+	padding: 8px 12px;
+	border: 1px solid color-mix(in srgb, var(--cv-red) 35%, var(--cv-border));
+	border-radius: var(--cv-radius-md);
+	background: var(--cv-red-soft);
+	color: var(--cv-text-2);
+	flex-wrap: wrap;
+}
+
+.xp-alert .dot { background: var(--cv-red); }

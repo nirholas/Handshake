@@ -21,8 +21,44 @@ import './ui-juice.css';
 import { enterRow } from './ui-juice.js';
 
 const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
+const ROSTER_TIMEOUT_MS = 8000;
+// A slow-but-alive edge must still produce the stage. The first attempt fails
+// fast so a genuinely dead endpoint reaches the error card quickly; the retry
+// gives a congested one the room it needs before we call the stage broken.
+const ROSTER_RETRY_TIMEOUT_MS = 20000;
 const WATCH_KEY = 'theater:watch:v1';
 const SOUND_KEY = 'theater:sound:v1';
+
+// -- i18n ownership -----------------------------------------------------------
+// The status pill, the quiet-market heartbeat and the sound button's aria-label
+// all ship with a data-i18n key (so the pre-render copy is translated) but hold
+// live state the moment this script runs. The catalog pass lands after the async
+// /api/locale fetch, which is routinely AFTER the feed has already connected, so
+// without an opt-out it reverted the pill to "Connecting" for the rest of the
+// session and told a screen reader the sound was off while it was on.
+// `data-i18n-owned="1"` is this codebase's documented opt-out; releasing an
+// element hands it back so a locale switch still localizes the declared copy.
+const i18nDefaults = new WeakMap();
+function claimI18nText(el, text) {
+	if (!el) return;
+	if (!i18nDefaults.has(el)) i18nDefaults.set(el, el.textContent);
+	el.setAttribute('data-i18n-owned', '1');
+	el.textContent = text;
+}
+function releaseI18nText(el) {
+	if (!el) return;
+	el.removeAttribute('data-i18n-owned');
+	const key = el.getAttribute('data-i18n');
+	const translated = key ? window.threewsI18n?.t?.(key) : '';
+	const restored = translated && translated !== key ? translated : i18nDefaults.get(el);
+	if (restored != null) el.textContent = restored;
+}
+// Translated copy for a key that exists in the catalog, falling back to the
+// English source when the catalog has not landed (or has no such key).
+const tr = (key, fallback) => {
+	const v = window.threewsI18n?.t?.(key);
+	return v && v !== key ? v : fallback;
+};
 
 // Fill magnitude (0..1) from a real event's numeric size — drives centerpiece
 // scale and stinger loudness so a whale buy lands harder than a dust trade.
@@ -238,16 +274,16 @@ async function fetchJson(url, { timeout = 8000, ...opts } = {}) {
 	}
 }
 
-async function fetchLeaderboard(limit) {
-	const body = await fetchJson(`/api/reputation/leaderboard?limit=${limit}`);
+async function fetchLeaderboard(limit, timeout = ROSTER_TIMEOUT_MS) {
+	const body = await fetchJson(`/api/reputation/leaderboard?limit=${limit}`, { timeout });
 	return (body.agents || []).map((a) => ({
 		id: a.id, name: a.name || 'Agent', solana_address: a.solana_address || null,
 		score: a.score, tier: a.tier, tierLabel: a.tier_label, totals: a.totals || {},
 		avatar_thumbnail: a.avatar_thumbnail_url || null,
 	}));
 }
-async function fetchNewLaunches(limit) {
-	const body = await fetchJson(`/api/agents/public?sort=newest&limit=${limit}`);
+async function fetchNewLaunches(limit, timeout = ROSTER_TIMEOUT_MS) {
+	const body = await fetchJson(`/api/agents/public?sort=newest&limit=${limit}`, { timeout });
 	return (body.agents || []).map((a) => ({
 		id: a.id, name: a.name || 'Agent', solana_address: null,
 		score: null, tier: null, tierLabel: null, totals: {},
@@ -329,7 +365,16 @@ export function initTheater(root) {
 		const paintSound = () => {
 			const on = stinger.enabled;
 			refs.sound.setAttribute('aria-pressed', on ? 'true' : 'false');
-			refs.sound.setAttribute('aria-label', on ? 'Sound on' : 'Sound off');
+			// "Sound off" is the button's declared copy; while sound is ON the label is
+			// live state and the catalog pass must not revert it to the wrong one.
+			if (on) {
+				refs.sound.setAttribute('data-i18n-owned', '1');
+				refs.sound.setAttribute('aria-label', 'Sound on');
+				refs.sound.setAttribute('title', tr('theater.toggle_fill_sounds_title', 'Toggle fill sounds'));
+			} else {
+				refs.sound.removeAttribute('data-i18n-owned');
+				refs.sound.setAttribute('aria-label', tr('theater.sound_off_arialabel', 'Sound off'));
+			}
 			refs.sound.classList.toggle('is-on', on);
 			refs.sound.querySelector('.th-sound-icon').textContent = on ? '🔊' : '🔇';
 		};
@@ -352,6 +397,8 @@ export function initTheater(root) {
 		liveCount: 0,
 		lastMoveTs: null, // ts of the newest real event seen (drives the quiet heartbeat)
 		selected: null,
+		loadSeq: 0, // guards against a superseded roster load painting the wrong room
+		seenIds: new Set(), // the tape is seeded from the snapshot, so dedupe by event id
 	};
 
 	// ── rooms ──────────────────────────────────────────────────────────────────
@@ -378,24 +425,51 @@ export function initTheater(root) {
 	}
 
 	// ── status pill ─────────────────────────────────────────────────────────────
+	// "Connecting" is the element's own declared copy, so the catalog owns it and a
+	// non-English visitor gets it translated. Every other state is live data this
+	// script owns, or the catalog pass would revert the pill to "Connecting" and
+	// leave it claiming a connection that opened long ago.
 	function setStatus(s) {
 		const map = {
-			connecting: ['Connecting', 'th-dot-amber'],
+			connecting: [null, 'th-dot-amber'],
 			live: ['Live', 'th-dot-green'],
 			reconnecting: ['Reconnecting…', 'th-dot-amber'],
 			offline: ['Offline', 'th-dot-red'],
 		};
 		const [label, dot] = map[s] || map.offline;
 		refs.status.className = `th-status ${dot}`;
-		refs.status.querySelector('.th-status-label').textContent = label;
+		const node = refs.status.querySelector('.th-status-label');
+		if (label === null) releaseI18nText(node);
+		else claimI18nText(node, label);
 	}
 
 	// ── roster load ──────────────────────────────────────────────────────────────
+	const fetchRoster = (limit, timeout) =>
+		(state.room.id === 'launches' ? fetchNewLaunches(limit, timeout) : fetchLeaderboard(limit, timeout));
+
+	// A congested edge answering just past the first budget used to land the whole
+	// room on the error card even though the endpoint was healthy. Try once more
+	// with a longer budget, and say so, before declaring the stage broken.
+	async function loadRosterRows(limit) {
+		try {
+			return await fetchRoster(limit, ROSTER_TIMEOUT_MS);
+		} catch (e) {
+			if (e?.name !== 'AbortError') throw e;
+			claimI18nText(refs.loading.querySelector('p'), 'Still assembling the cast…');
+			return await fetchRoster(limit, ROSTER_RETRY_TIMEOUT_MS);
+		}
+	}
+
 	async function loadRoom() {
+		// A room switch (or a Try-again) while a slow load is in flight must not let
+		// the superseded response paint over the room the viewer actually chose.
+		const seq = ++state.loadSeq;
+		const stale = () => seq !== state.loadSeq;
 		showState('loading');
 		try {
 			const limit = rosterBudget();
-			const rows = state.room.id === 'launches' ? await fetchNewLaunches(limit) : await fetchLeaderboard(limit);
+			const rows = await loadRosterRows(limit);
+			if (stale()) return;
 
 			// Empty roster is a designed state, not a bare stage: tell the viewer why
 			// the room is empty and what to do, instead of showing an unlit void.
@@ -408,6 +482,7 @@ export function initTheater(root) {
 			}
 
 			await pool(rows, 5, resolveBody);
+			if (stale()) return;
 			state.roster = rows;
 			state.byId = new Map(rows.map((a) => [a.id, a]));
 
@@ -427,6 +502,7 @@ export function initTheater(root) {
 			// Re-apply any watched highlight that belongs to this room.
 			for (const id of state.watch) if (state.byId.has(id)) stage.highlight(id);
 		} catch (err) {
+			if (stale()) return;
 			log.warn('[theater] room load failed', err?.message);
 			showState('error');
 		}
@@ -436,6 +512,9 @@ export function initTheater(root) {
 	// The quiet-market card is independent: it rides at the foot of the stage and
 	// only shows while no live event has arrived (the cast still stands on stage).
 	function showState(which) {
+		// The retry re-labels the loading card; hand it back to the catalog whenever
+		// a fresh load starts so a second attempt does not inherit the first's copy.
+		if (which === 'loading') releaseI18nText(refs.loading.querySelector('p'));
 		refs.loading.hidden = which !== 'loading';
 		refs.error.hidden = which !== 'error';
 		if (refs.empty) refs.empty.hidden = which !== 'empty';
@@ -454,7 +533,9 @@ export function initTheater(root) {
 	});
 
 	function routeEvent(n) {
-		pushTicker(n);
+		// A stream reconnect can replay events the tape already carries. Those are
+		// history, not a fresh fill, so they must not perform on stage again.
+		if (!pushTicker(n)) return;
 
 		// Safety refusals play as an at-desk "wave it off" on the actor's monitor
 		// (amber flash) — the guardrail made visible — but never a celebration.
@@ -510,23 +591,81 @@ export function initTheater(root) {
 	}
 
 	// ── ticker ───────────────────────────────────────────────────────────────────
-	function pushTicker(n) {
-		state.liveCount++;
-		state.lastMoveTs = n.ts;
+	// The rail is seeded with the real recent snapshot so the Live tape is never a
+	// blank column on a quiet market, then live events land on top. Seeded rows are
+	// history: they neither animate in, dismiss the quiet card, nor count as the
+	// stage lighting up. Dedupe by feed id so a snapshot event that also arrives on
+	// the stream is not listed twice.
+	// Returns false when the event was already on the tape, so a duplicate never
+	// re-triggers the on-stage spectacle for a fill the viewer already watched.
+	function pushTicker(n, { live = true } = {}) {
+		if (n.id) {
+			if (state.seenIds.has(n.id)) return false;
+			state.seenIds.add(n.id);
+			// bounded: the tape keeps 40 rows, the id set only has to outlive them
+			if (state.seenIds.size > 500) state.seenIds.delete(state.seenIds.values().next().value);
+		}
+		if (live) {
+			state.liveCount++;
+			state.lastMoveTs = n.ts;
+		}
+		refs.ticker.querySelectorAll('.th-tick-empty, .th-tick-skel').forEach((r) => r.remove());
+		const external = n.href ? /^https?:/i.test(n.href) : false;
 		const row = el('li', { class: `th-tick th-tick-${n.kind}` }, [
 			el('span', { class: 'th-tick-dot' }),
 			el('div', { class: 'th-tick-body' }, [
 				el('span', { class: 'th-tick-title', text: n.title }),
 				n.sub ? el('span', { class: 'th-tick-sub', text: n.sub }) : null,
 			]),
-			n.href ? el('a', { class: 'th-tick-link', href: n.href, target: '_blank', rel: 'noopener', 'aria-label': 'Open in explorer', text: '↗' }) : null,
+			n.href
+				? el('a', {
+					class: 'th-tick-link',
+					href: n.href,
+					target: external ? '_blank' : null,
+					rel: external ? 'noopener' : null,
+					'aria-label': external ? `Open ${n.title} in the explorer` : `Open ${n.title}`,
+					text: '↗',
+				})
+				: null,
 			el('time', { class: 'th-tick-time', text: timeAgo(n.ts), datetime: new Date(n.ts).toISOString() }),
 		]);
-		refs.ticker.prepend(row);
-		enterRow(row); // slide the freshly-landed live event in (reduced-motion safe)
+		if (live) {
+			refs.ticker.prepend(row);
+			enterRow(row); // slide the freshly-landed live event in (reduced-motion safe)
+		} else {
+			refs.ticker.append(row); // snapshot arrives newest-first, so append keeps that order
+		}
 		while (refs.ticker.children.length > 40) refs.ticker.lastElementChild.remove();
 		// a real event arrived → dismiss the quiet state
-		if (!refs.quiet.hidden) refs.quiet.hidden = true;
+		if (live && !refs.quiet.hidden) refs.quiet.hidden = true;
+		return true;
+	}
+
+	// The tape's loading state: three skeleton rows so the rail reads as "filling"
+	// rather than "empty" while the snapshot is in flight. aria-hidden because the
+	// rail is a live region and a skeleton has nothing to announce.
+	function renderTickerLoading() {
+		refs.ticker.replaceChildren(
+			...Array.from({ length: 3 }, () =>
+				el('li', { class: 'th-tick th-tick-skel', 'aria-hidden': 'true' }, [
+					el('span', { class: 'th-tick-dot' }),
+					el('div', { class: 'th-tick-body' }, [
+						el('span', { class: 'th-skel-inline th-skel-title' }),
+						el('span', { class: 'th-skel-inline th-skel-sub' }),
+					]),
+				]),
+			),
+		);
+	}
+
+	// The tape's designed empty state: a feed with nothing recent still has to say
+	// what the viewer is waiting for, not render an empty column.
+	function renderTickerEmpty() {
+		refs.ticker.querySelectorAll('.th-tick-skel').forEach((r) => r.remove());
+		if (refs.ticker.children.length) return;
+		refs.ticker.replaceChildren(el('li', { class: 'th-tick-empty th-muted' }, [
+			'Nothing on the tape yet. Every confirmed buy, launch and payment lands here the moment it clears.',
+		]));
 	}
 
 	// ── replay ────────────────────────────────────────────────────────────────────
@@ -672,33 +811,51 @@ export function initTheater(root) {
 	function updateBeat() {
 		const beat = refs.quiet.querySelector('[data-beat]');
 		if (!beat) return;
+		// The live variant is this script's data, so claim it against the catalog
+		// pass; the fallback IS the element's declared copy, so hand it back.
 		if (Number.isFinite(state.lastMoveTs)) {
-			beat.textContent = `Last on-chain move ${timeAgo(state.lastMoveTs)} ago — the stage lights up the instant the next buy fills.`;
+			claimI18nText(beat, `Last on-chain move ${timeAgo(state.lastMoveTs)} ago. The stage lights up the instant the next buy fills.`);
 		} else {
-			beat.textContent = 'The stage lights up the instant the next on-chain buy fills.';
+			releaseI18nText(beat);
 		}
+	}
+
+	// A highlight with a real destination (an explorer receipt or an agent profile)
+	// is a link; one without is plain text. A stub href="#" looks clickable and
+	// goes nowhere, which is worse than not offering the affordance at all.
+	function renderHighlight(e) {
+		const kids = [
+			el('span', { class: 'th-tick-dot' }),
+			el('span', { class: 'th-hl-title', text: e.title }),
+			e.sub ? el('span', { class: 'th-hl-sub', text: e.sub }) : null,
+			el('time', { class: 'th-tick-time', text: timeAgo(e.ts), datetime: new Date(e.ts).toISOString() }),
+		];
+		const cls = `th-hl th-tick-${e.kind}`;
+		if (!e.href) return el('div', { class: `${cls} th-hl-static` }, kids);
+		const external = /^https?:/i.test(e.href);
+		// Internal routes stay in this tab; only an explorer receipt leaves the page.
+		return el('a', { class: cls, href: e.href, target: external ? '_blank' : null, rel: external ? 'noopener' : null }, kids);
 	}
 
 	loadSnapshot(40).then((events) => {
 		if (events.length) state.lastMoveTs = Math.max(...events.map((e) => e.ts));
 		updateBeat();
-		const featured = events.filter((e) => ROOMS.some((r) => r.featured.has(e.kind)) && (e.href || e.sub));
+		// Seed the tape with real recent history before the first live event lands.
+		// The rail is an aria-live region, so drop the live semantics for the seed:
+		// this is existing history, not twenty events announcing themselves at once.
+		refs.ticker.removeAttribute('aria-live');
+		for (const e of events.slice(0, 20)) pushTicker(e, { live: false });
+		renderTickerEmpty();
+		requestAnimationFrame(() => refs.ticker.setAttribute('aria-live', 'polite'));
 		const host = refs.quiet.querySelector('[data-highlights]');
-		if (!host) return;
-		if (!featured.length) {
-			host.append(el('p', { class: 'th-muted', text: 'No recent activity to replay. The stage goes live the moment an agent moves.' }));
-			return;
+		if (host) {
+			const featured = events.filter((e) => ROOMS.some((r) => r.featured.has(e.kind)) && (e.href || e.sub));
+			host.replaceChildren(
+				...(featured.length
+					? featured.slice(0, 8).map(renderHighlight)
+					: [el('p', { class: 'th-muted', text: 'No recent activity to replay. The stage goes live the moment an agent moves.' })]),
+			);
 		}
-		host.replaceChildren(
-			...featured.slice(0, 8).map((e) =>
-				el('a', { class: `th-hl th-tick-${e.kind}`, href: e.href || '#', target: e.href ? '_blank' : null, rel: 'noopener' }, [
-					el('span', { class: 'th-tick-dot' }),
-					el('span', { class: 'th-hl-title', text: e.title }),
-					e.sub ? el('span', { class: 'th-hl-sub', text: e.sub }) : null,
-					el('time', { class: 'th-tick-time', text: timeAgo(e.ts) }),
-				]),
-			),
-		);
 		maybeShowQuiet();
 	});
 
@@ -717,6 +874,7 @@ export function initTheater(root) {
 	// keyboard: Esc closes panel
 	window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePanel(); });
 
+	renderTickerLoading();
 	renderReplay();
 	loadRoom();
 

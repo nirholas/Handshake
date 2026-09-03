@@ -77,8 +77,10 @@
 				white-space: nowrap;
 			}
 			.rk-seg-btn:hover { color: var(--color-text); }
+			.rk-seg-btn:active { transform: scale(0.97); }
 			.rk-seg-btn.is-active { background: var(--surface-3); color: var(--color-text-bright); }
 			.rk-seg-btn:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); }
+			@media (prefers-reduced-motion: reduce) { .rk-seg-btn:active { transform: none; } }
 
 			.rk-board { border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--surface-1); overflow: hidden; }
 			.rk-head, .rk-row {
@@ -100,7 +102,11 @@
 			.rk-avatar-fallback { display: flex; align-items: center; justify-content: center; font: var(--weight-semibold) var(--text-sm)/1 var(--font-body); color: var(--color-text-dim); }
 			.rk-handle { font: var(--weight-medium) var(--text-md)/1.2 var(--font-body); color: var(--color-text); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 			a.rk-handle:hover { color: var(--color-text-bright); text-decoration: underline; }
+			a.rk-handle:active { color: var(--accent); }
+			a.rk-handle:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); border-radius: var(--radius-sm); }
+			.rk-you { flex: none; padding: 2px 7px; border-radius: var(--radius-pill); background: color-mix(in srgb, var(--accent) 18%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); color: var(--color-text-bright); font: var(--weight-semibold) var(--text-2xs)/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; }
 			.rk-value { font: var(--weight-semibold) var(--text-md)/1 var(--font-mono); color: var(--color-text-bright); text-align: right; }
+			.rk-rank.is-unranked { font-size: var(--text-2xs); letter-spacing: 0.04em; color: var(--color-text-faint); }
 
 			.rk-me { position: sticky; bottom: 0; z-index: 5; margin-top: var(--space-md); border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--color-border)); border-radius: var(--radius-lg); background: var(--surface-3); backdrop-filter: blur(var(--blur-md)); -webkit-backdrop-filter: blur(var(--blur-md)); box-shadow: var(--shadow-2); }
 			.rk-me .rk-row { border-bottom: 0; }
@@ -108,14 +114,19 @@
 
 			.rk-loadmore { display: block; margin: var(--space-md) auto 0; appearance: none; cursor: pointer; padding: var(--space-sm) var(--space-lg); border-radius: var(--radius-md); border: 1px solid var(--color-border); background: var(--surface-1); color: var(--color-text); font: var(--weight-medium) var(--text-md)/1 var(--font-body); transition: background var(--duration-fast) var(--ease-standard); }
 			.rk-loadmore:hover { background: var(--surface-2); }
+			.rk-loadmore:active { background: var(--surface-3); }
 			.rk-loadmore:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); }
 			.rk-loadmore[disabled] { opacity: var(--disabled-opacity); cursor: var(--disabled-cursor); }
+			.rk-more-error { margin: var(--space-sm) auto 0; max-width: 46ch; text-align: center; font: var(--weight-regular) var(--text-sm)/var(--leading-normal) var(--font-body); color: var(--color-danger, var(--color-text-dim)); }
 
 			.rk-state { padding: var(--space-2xl) var(--space-md); text-align: center; }
 			.rk-state-title { font: var(--weight-semibold) var(--text-lg)/1.2 var(--font-display); color: var(--color-text-bright); margin: 0 0 var(--space-xs); }
 			.rk-state-msg { font: var(--weight-regular) var(--text-md)/var(--leading-normal) var(--font-body); color: var(--color-text-dim); margin: 0 auto var(--space-md); max-width: 46ch; }
 			.rk-state .rk-cta { display: inline-flex; align-items: center; gap: var(--space-xs); padding: var(--space-sm) var(--space-lg); border-radius: var(--radius-md); background: var(--accent); color: #0a0a0a; font: var(--weight-semibold) var(--text-md)/1 var(--font-body); text-decoration: none; transition: opacity var(--duration-fast) var(--ease-standard); }
 			.rk-state .rk-cta:hover { opacity: 0.85; }
+			.rk-state .rk-cta:active { opacity: 0.7; }
+			.rk-state .rk-cta:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); }
+			.rk-state-detail { font: var(--weight-regular) var(--text-2xs)/1.4 var(--font-mono); color: var(--color-text-faint); margin: var(--space-sm) 0 0; }
 
 			.rk-skel-row { display: grid; grid-template-columns: 56px 1fr 140px; gap: var(--space-sm); align-items: center; padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--color-border); }
 			.rk-skel { height: 14px; border-radius: var(--radius-sm); background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 37%, var(--surface-2) 63%); background-size: 400% 100%; animation: rk-shimmer 1.4s ease infinite; }
@@ -126,6 +137,8 @@
 			.rk-footer-links { display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-top: var(--space-lg); }
 			.rk-footer-links a { font: var(--weight-medium) var(--text-sm)/1 var(--font-body); color: var(--color-text-dim); text-decoration: none; padding: var(--space-xs) var(--space-md); border: 1px solid var(--color-border); border-radius: var(--radius-pill); transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard); }
 			.rk-footer-links a:hover { color: var(--color-text-bright); border-color: var(--color-text-dim); }
+			.rk-footer-links a:active { background: var(--surface-2); }
+			.rk-footer-links a:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); }
 
 			@media (max-width: 640px) {
 				.rk-head, .rk-row, .rk-skel-row { grid-template-columns: 40px 1fr 96px; }
@@ -160,16 +173,16 @@
 
 			<section class="rk-controls" aria-label="Leaderboard metric">
 				<div class="rk-seg" role="tablist" aria-label="Rank by" id="rk-metric">
-					<button class="rk-seg-btn is-active" data-metric="creations" role="tab" aria-selected="true" data-i18n="rankings.creations">Creations</button>
-					<button class="rk-seg-btn" data-metric="remixes_received" role="tab" aria-selected="false" data-i18n="rankings.remixes">Remixes</button>
-					<button class="rk-seg-btn" data-metric="launches" role="tab" aria-selected="false" data-i18n="rankings.launches">Launches</button>
-					<button class="rk-seg-btn" data-metric="followers" role="tab" aria-selected="false" data-i18n="rankings.followers">Followers</button>
-					<button class="rk-seg-btn" data-metric="walk_distance" role="tab" aria-selected="false" data-i18n="rankings.walk_distance">Walk Distance</button>
+					<button class="rk-seg-btn is-active" data-metric="creations" role="tab" aria-selected="true" aria-controls="rk-board" data-i18n="rankings.creations">Creations</button>
+					<button class="rk-seg-btn" data-metric="remixes_received" role="tab" aria-selected="false" aria-controls="rk-board" tabindex="-1" data-i18n="rankings.remixes">Remixes</button>
+					<button class="rk-seg-btn" data-metric="launches" role="tab" aria-selected="false" aria-controls="rk-board" tabindex="-1" data-i18n="rankings.launches">Launches</button>
+					<button class="rk-seg-btn" data-metric="followers" role="tab" aria-selected="false" aria-controls="rk-board" tabindex="-1" data-i18n="rankings.followers">Followers</button>
+					<button class="rk-seg-btn" data-metric="walk_distance" role="tab" aria-selected="false" aria-controls="rk-board" tabindex="-1" data-i18n="rankings.walk_distance">Walk Distance</button>
 				</div>
 			</section>
 
-			<section class="rk-board" aria-label="Ranked creators" aria-busy="true">
-				<div class="rk-head" role="row" aria-hidden="true">
+			<section class="rk-board" id="rk-board" role="tabpanel" tabindex="0" aria-label="Ranked creators" aria-busy="true">
+				<div class="rk-head" aria-hidden="true">
 					<span>#</span>
 					<span data-i18n="rankings.creator">Creator</span>
 					<span class="rk-col-num" id="rk-metric-label" data-i18n="rankings.creations_2">Creations</span>
@@ -178,9 +191,10 @@
 			</section>
 
 			<button type="button" id="rk-loadmore" class="rk-loadmore" hidden data-i18n="rankings.show_more">Show more</button>
+			<p id="rk-more-error" class="rk-more-error" role="status" hidden></p>
 
 			<div id="rk-me-wrap" class="rk-me" hidden>
-				<div class="rk-me-tag">Your rank</div>
+				<div class="rk-me-tag" data-i18n="rankings.your_rank" data-i18n-owned="1">Your rank</div>
 				<div id="rk-me-row"></div>
 			</div>
 
@@ -202,7 +216,9 @@
 			const loadMoreEl = document.getElementById('rk-loadmore');
 			const meWrap = document.getElementById('rk-me-wrap');
 			const meRow = document.getElementById('rk-me-row');
+			const meTag = meWrap.querySelector('.rk-me-tag');
 			const metricSeg = document.getElementById('rk-metric');
+			const moreErrorEl = document.getElementById('rk-more-error');
 			const streakCard = document.getElementById('rk-streak-card');
 			const streakNum = document.getElementById('rk-streak-num');
 			const streakLabel = document.getElementById('rk-streak-label');
@@ -224,6 +240,13 @@
 			};
 			const PAGE = 50;
 			let state = { metric: 'creations', offset: 0, total: 0, loading: false };
+			// Every fetch carries a sequence number and its own AbortController. A
+			// metric switch mid-flight aborts the old request and bumps the sequence,
+			// so a late response can never paint the wrong metric over the new one.
+			// The previous guard dropped the click outright, which left the selected
+			// tab and the rendered board permanently disagreeing.
+			let requestSeq = 0;
+			let inflight = null;
 
 			const esc = (s) => String(s).replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -245,16 +268,25 @@
 				return `<span class="rk-avatar rk-avatar-fallback" aria-hidden="true">${ch}</span>`;
 			}
 
-			function rowHtml(r, metric, isMe) {
+			function rowHtml(r, metric, isMe, { pinned = false } = {}) {
+				// The you-marker rides beside the handle rather than inside its text so
+				// it survives the linked case: a signed-in creator with a public profile
+				// gets an <a>, and inlining "(you)" there dropped it for exactly the
+				// users most likely to be looking for themselves.
 				const handle = r.profileUrl
 					? `<a class="rk-handle" href="${esc(r.profileUrl)}">${esc(r.handle)}</a>`
-					: `<span class="rk-handle">${esc(r.handle)}${isMe ? ' (you)' : ''}</span>`;
-				const rankCls = r.rank && r.rank <= 3 ? 'rk-rank is-top' : 'rk-rank';
-				const rankText = r.rank == null ? '—' : (medal(r.rank) || '#' + r.rank);
+					: `<span class="rk-handle">${esc(r.handle)}</span>`;
+				// Inside the pinned "Your rank" card the chip and a spelled-out rank are
+				// both redundant with the card's own label, and at 320px they crowded the
+				// handle down to a single character. The card carries that copy instead.
+				const you = isMe && !pinned ? '<span class="rk-you">You</span>' : '';
+				const unranked = r.rank == null;
+				const rankCls = unranked ? 'rk-rank is-unranked' : r.rank <= 3 ? 'rk-rank is-top' : 'rk-rank';
+				const rankText = unranked ? (pinned ? '' : 'Unranked') : (medal(r.rank) || '#' + r.rank);
 				return `
-					<div class="rk-row" role="row">
+					<div class="rk-row">
 						<span class="${rankCls}">${rankText}</span>
-						<span class="rk-creator">${avatarCell(r)} ${handle}</span>
+						<span class="rk-creator">${avatarCell(r)} ${handle}${you}</span>
 						<span class="rk-value">${fmtValue(metric, r.value)}</span>
 					</div>`;
 			}
@@ -271,30 +303,83 @@
 				rowsEl.innerHTML = `<div class="rk-state"><p class="rk-state-title">${esc(copy.title)}</p><p class="rk-state-msg">${esc(copy.msg)}</p>${copy.cta ? `<a class="rk-cta" href="${esc(copy.cta.href)}">${esc(copy.cta.label)}</a>` : ''}</div>`;
 			}
 
+			function showError(detail) {
+				const wrap = document.createElement('div');
+				wrap.className = 'rk-state';
+				wrap.innerHTML =
+					`<p class="rk-state-title">Couldn't load the leaderboard</p>` +
+					`<p class="rk-state-msg">The rankings service didn't answer. Check your connection and try again; every board is rebuilt from live data, so nothing is lost.</p>`;
+				const btn = document.createElement('button');
+				btn.className = 'rk-cta';
+				btn.type = 'button';
+				btn.textContent = 'Retry';
+				btn.addEventListener('click', () => load({ reset: true }));
+				wrap.appendChild(btn);
+				if (detail) {
+					const p = document.createElement('p');
+					p.className = 'rk-state-detail';
+					p.textContent = detail;
+					wrap.appendChild(p);
+				}
+				rowsEl.replaceChildren(wrap);
+			}
+
 			function renderMe(me, metric) {
 				if (!me) { meWrap.hidden = true; return; }
 				meWrap.hidden = false;
-				meRow.innerHTML = rowHtml(me, metric, true);
+				meTag.textContent = me.rank == null ? 'Your rank · not ranked yet' : 'Your rank';
+				meRow.innerHTML = rowHtml(me, metric, true, { pinned: true });
+			}
+
+			// The streak card needs no username and no second endpoint: /api/leaderboard/unified
+			// returns the viewer's streak and badges alongside the board.
+			function renderStreak(streak, badges) {
+				if (!streak) { streakCard.classList.remove('is-visible'); return; }
+				streakCard.classList.add('is-visible');
+				const days = streak.currentStreak || 0;
+				streakNum.textContent = days === 1 ? '1-day streak' : `${days}-day streak`;
+				streakLabel.textContent = days > 0
+					? `Come back tomorrow to keep it alive. Longest so far: ${streak.longestStreak || days} days.`
+					: 'Create, launch, or walk today to start one.';
+				const list = (badges || []).slice(0, 4);
+				streakBadges.innerHTML = list.length
+					? list.map((b) => `<span class="rk-badge-chip" title="${esc(b.description || '')}">${esc(b.icon || '\u2605')} ${esc(b.label || b.code)}</span>`).join('')
+					: '<span class="rk-badge-chip">\u2605 No badges yet</span>';
 			}
 
 			async function load({ reset = true } = {}) {
-				if (state.loading) return;
+				if (!reset && state.loading) return;
+				if (inflight) inflight.abort();
+				const ctrl = new AbortController();
+				inflight = ctrl;
+				const seq = ++requestSeq;
+				const isCurrent = () => seq === requestSeq;
+
 				state.loading = true;
-				if (reset) { state.offset = 0; skeleton(); meWrap.hidden = true; }
+				if (reset) {
+					state.offset = 0;
+					skeleton();
+					meWrap.hidden = true;
+					loadMoreEl.hidden = true;
+				}
+				moreErrorEl.hidden = true;
 				boardEl.setAttribute('aria-busy', 'true');
 				loadMoreEl.disabled = true;
 				const params = new URLSearchParams({ metric: state.metric, limit: String(PAGE), offset: String(state.offset) });
 				try {
-					const res = await fetch('/api/leaderboard/unified?' + params.toString(), { credentials: 'include' });
+					const res = await fetch('/api/leaderboard/unified?' + params.toString(), { credentials: 'include', signal: ctrl.signal });
 					if (!res.ok) throw new Error('HTTP ' + res.status);
 					const data = await res.json();
+					if (!isCurrent()) return;
 					state.total = data.total || 0;
 					const metric = data.metric || state.metric;
 					metricLabelEl.textContent = METRIC_HEAD[metric] || 'Value';
+					renderStreak(data.streak, data.badges);
 
 					if (reset && (!data.rows || !data.rows.length)) {
 						showState(EMPTY_COPY[metric] || { title: 'No one ranked yet', msg: 'Be the first.' });
-						renderMe(data.me && data.me.value > 0 ? data.me : null, metric);
+						loadMoreEl.hidden = true;
+						renderMe(data.me, metric);
 						return;
 					}
 
@@ -305,42 +390,58 @@
 					loadMoreEl.hidden = !data.hasMore;
 					renderMe(data.me, metric);
 				} catch (err) {
+					if (err?.name === 'AbortError' || !isCurrent()) return;
+					const detail = err?.message || 'Unknown error';
 					if (reset) {
-						const wrap = document.createElement('div');
-						wrap.className = 'rk-state';
-						wrap.innerHTML = `<p class="rk-state-title">Couldn't load the leaderboard</p><p class="rk-state-msg">${esc(err.message || 'Something went wrong.')}</p>`;
-						const btn = document.createElement('button');
-						btn.className = 'rk-cta';
-						btn.type = 'button';
-						btn.textContent = 'Retry';
-						btn.addEventListener('click', () => load({ reset: true }));
-						wrap.appendChild(btn);
-						rowsEl.replaceChildren(wrap);
+						loadMoreEl.hidden = true;
+						showError(detail);
+					} else {
+						// A silent no-op on "Show more" reads as a dead button. Say what
+						// happened and leave the already-loaded rows in place.
+						moreErrorEl.textContent = `Couldn't load more (${detail}). Tap Show more to try again.`;
+						moreErrorEl.hidden = false;
 					}
 				} finally {
-					state.loading = false;
-					boardEl.setAttribute('aria-busy', 'false');
-					loadMoreEl.disabled = false;
+					if (isCurrent()) {
+						state.loading = false;
+						inflight = null;
+						boardEl.setAttribute('aria-busy', 'false');
+						loadMoreEl.disabled = false;
+					}
 				}
 			}
 
 			function bindSeg(seg, key, onChange) {
-				seg.addEventListener('click', (e) => {
-					const btn = e.target.closest('.rk-seg-btn');
+				const buttons = () => [...seg.querySelectorAll('.rk-seg-btn')];
+				function select(btn) {
 					if (!btn || btn.classList.contains('is-active')) return;
-					seg.querySelectorAll('.rk-seg-btn').forEach((b) => { b.classList.remove('is-active'); b.setAttribute('aria-selected', 'false'); });
+					// Roving tabindex: exactly one tab is in the tab order, arrow keys
+					// move between them. Without it a keyboard user tabs through all
+					// five before reaching the board.
+					buttons().forEach((b) => {
+						b.classList.remove('is-active');
+						b.setAttribute('aria-selected', 'false');
+						b.tabIndex = -1;
+					});
 					btn.classList.add('is-active');
 					btn.setAttribute('aria-selected', 'true');
+					btn.tabIndex = 0;
 					state[key] = btn.dataset[key];
 					onChange();
-				});
+				}
+				seg.addEventListener('click', (e) => select(e.target.closest('.rk-seg-btn')));
 				seg.addEventListener('keydown', (e) => {
-					if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-					const btns = [...seg.querySelectorAll('.rk-seg-btn')];
-					const i = btns.findIndex((b) => b.classList.contains('is-active'));
-					const next = btns[(i + (e.key === 'ArrowRight' ? 1 : btns.length - 1)) % btns.length];
-					next.focus(); next.click();
+					const btns = buttons();
+					let next = null;
+					if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+						const i = btns.findIndex((b) => b.classList.contains('is-active'));
+						next = btns[(i + (e.key === 'ArrowRight' ? 1 : btns.length - 1)) % btns.length];
+					} else if (e.key === 'Home') next = btns[0];
+					else if (e.key === 'End') next = btns[btns.length - 1];
+					if (!next) return;
 					e.preventDefault();
+					next.focus();
+					select(next);
 				});
 			}
 
@@ -349,36 +450,6 @@
 
 			load({ reset: true });
 
-			// Streak card — only for a signed-in viewer with a resolvable username.
-			// Reuses GET /api/users/:username (already returns streak + badges) so
-			// this page adds zero new auth surface: it just needs to know who's
-			// signed in, which /api/auth/me already answers (same call profile.html
-			// uses to resolve the viewer).
-			(async () => {
-				try {
-					const meRes = await fetch('/api/auth/me', { credentials: 'include' });
-					if (!meRes.ok) return;
-					const me = await meRes.json();
-					const username = me?.user?.username;
-					if (!username) return;
-					const profRes = await fetch(`/api/users/${encodeURIComponent(username)}`);
-					if (!profRes.ok) return;
-					const prof = await profRes.json();
-					const streak = prof?.streak;
-					if (!streak) return;
-					streakCard.classList.add('is-visible');
-					streakNum.textContent = `${streak.currentStreak || 0}-day streak`;
-					streakLabel.textContent = streak.currentStreak > 0
-						? 'Come back tomorrow to keep it alive'
-						: 'Create, launch, or walk today to start one';
-					const badges = (prof.badges || []).slice(0, 4);
-					streakBadges.innerHTML = badges
-						.map((b) => `<span class="rk-badge-chip" title="${esc(b.description || '')}">${esc(b.icon || '★')} ${esc(b.label || b.code)}</span>`)
-						.join('');
-				} catch {
-					/* streak card is a bonus — never block the board */
-				}
-			})();
 		</script>
 		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>

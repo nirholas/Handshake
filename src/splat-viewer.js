@@ -29,12 +29,23 @@ async function teardown() {
 	if (!_viewer) return;
 	const v = _viewer;
 	_viewer = null;
+	// dispose() nulls viewer.renderer partway through, so grab it first.
+	const renderer = v.renderer;
 	try {
 		v.stop?.();
 		// dispose() tears down the renderer then tries body.removeChild(rootElement),
-		// which throws for our nested host — everything we care about is gone by then.
+		// which throws for our nested host. Everything we care about is gone by then.
 		await v.dispose?.();
 	} catch { /* harmless nested-root removeChild from the splat lib */ }
+	// renderer.dispose() frees the three.js caches but leaves the WebGL context
+	// alive, and the removeChild throw above aborts the lib's own final cleanup
+	// before it can finish. Without an explicit release, every scene swap leaks a
+	// live GL context, and a browser only grants a page a handful of those before
+	// it starts reclaiming the oldest ones out from under a running scene.
+	try {
+		renderer?.forceContextLoss?.();
+		renderer?.dispose?.();
+	} catch { /* context already lost */ }
 	if (_objectUrl) { URL.revokeObjectURL(_objectUrl); _objectUrl = null; }
 	const host = HOST();
 	if (host) host.innerHTML = '';
@@ -68,7 +79,7 @@ function setLive(label) {
 function setDownload(url, filename) {
 	const btn = $('#sp-download');
 	if (_downloadUrl && _downloadUrl !== url) URL.revokeObjectURL(_downloadUrl);
-	if (!url) { btn.hidden = true; _downloadUrl = null; return; }
+	if (!url) { btn.hidden = true; btn.removeAttribute('href'); _downloadUrl = null; return; }
 	_downloadUrl = url;
 	btn.href = url;
 	btn.download = filename || 'avatar.splat';
@@ -84,6 +95,9 @@ function formatFor(name, GS) {
 }
 
 // ── Core render ──────────────────────────────────────────────────────────────
+const CAMERA_START = [0, 0, 3.2];
+const CAMERA_TARGET = [0, 0, 0];
+
 async function renderBuffer(buffer, { label, format }) {
 	_lastRender = { buffer, format, label };
 	setLoading('Decoding radiance field…', `${(buffer.byteLength / 1024 / 1024).toFixed(1)} MB`);
@@ -100,8 +114,8 @@ async function renderBuffer(buffer, { label, format }) {
 		useBuiltInControls: true,
 		gpuAcceleratedSort: false,
 		cameraUp: [0, 1, 0],
-		initialCameraPosition: [0, 0, 3.2],
-		initialCameraLookAt: [0, 0, 0],
+		initialCameraPosition: CAMERA_START,
+		initialCameraLookAt: CAMERA_TARGET,
 	});
 	_viewer = viewer;
 	try {
@@ -111,17 +125,43 @@ async function renderBuffer(buffer, { label, format }) {
 			progressiveLoad: false,
 		});
 		viewer.start();
+		watchContextLoss(viewer);
 		setLive(label);
+		return true;
 	} catch (err) {
 		await teardown();
 		setError('That file isn’t a valid splat', 'Expected a .ply, .splat, or .ksplat Gaussian-splat scene. Check the file and try again.');
 		console.error('[splat] decode failed', err);
+		return false;
 	}
 }
 
-// Rebuilding the viewer from the cached buffer is the most reliable way to reset
-// the camera across splat-lib versions.
+// A GPU driver reset or a browser-reclaimed context leaves a live canvas painting
+// nothing. Say so instead of showing a frozen frame, and offer the way back.
+function watchContextLoss(viewer) {
+	const canvas = viewer.renderer?.domElement;
+	if (!canvas) return;
+	canvas.addEventListener('webglcontextlost', (e) => {
+		e.preventDefault();
+		if (_viewer !== viewer) return;
+		teardown();
+		setError('The 3D context was lost', 'Your browser released the WebGL context, usually after a GPU reset or heavy memory pressure. Load the scene again to restore it.');
+	}, { once: true });
+}
+
+// Reset the camera on the live viewer. Rebuilding from the cached buffer also
+// works, but it drops and recreates a WebGL context for what is a two-line
+// transform change, and the stage flashes through the loading overlay.
 function recenter() {
+	const v = _viewer;
+	if (v?.camera && v.controls) {
+		v.camera.position.set(...CAMERA_START);
+		v.controls.target.set(...CAMERA_TARGET);
+		v.camera.lookAt(v.controls.target);
+		v.controls.update();
+		v.forceRenderNextFrame?.();
+		return;
+	}
 	if (_lastRender) renderBuffer(_lastRender.buffer, _lastRender);
 }
 
@@ -170,9 +210,12 @@ async function loadFromUrl(url, label) {
 		console.error('[splat] fetch failed', err);
 		return;
 	}
-	const name = parsed.pathname.split('/').pop() || 'remote';
-	await renderBuffer(buffer, { label: label || name, format: formatFor(name, GS) });
-	setDownload(null);
+	const name = parsed.pathname.split('/').pop() || 'remote.splat';
+	const ok = await renderBuffer(buffer, { label: label || name, format: formatFor(name, GS) });
+	// The bytes are already in memory, so a remote scene is as saveable as an
+	// uploaded one. Handing back the fetched buffer also spares the user a second
+	// round trip to a host that may not allow one.
+	setDownload(ok ? URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' })) : null, name);
 }
 
 async function loadFromFile(file) {
@@ -181,8 +224,8 @@ async function loadFromFile(file) {
 	let buffer;
 	try { buffer = await file.arrayBuffer(); }
 	catch (err) { setError('Couldn’t read that file', err.message); return; }
-	await renderBuffer(buffer, { label: file.name, format: formatFor(file.name, GS) });
-	setDownload(URL.createObjectURL(new Blob([buffer])), file.name);
+	const ok = await renderBuffer(buffer, { label: file.name, format: formatFor(file.name, GS) });
+	setDownload(ok ? URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' })) : null, file.name);
 }
 
 // ── Procedural samples (antimatter15 .splat layout, 32 bytes/splat) ──────────
@@ -261,8 +304,8 @@ async function loadSample(kind) {
 	const isBust = kind === 'bust';
 	const buffer = isBust ? sampleBust() : sampleShell();
 	const label = isBust ? 'Synthetic head bust · 14,000 splats' : 'Radiance shell · 6,000 splats';
-	await renderBuffer(buffer, { label, format: GS.SceneFormat.Splat });
-	setDownload(URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' })), isBust ? 'sample-bust.splat' : 'sample-shell.splat');
+	const ok = await renderBuffer(buffer, { label, format: GS.SceneFormat.Splat });
+	setDownload(ok ? URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' })) : null, isBust ? 'sample-bust.splat' : 'sample-shell.splat');
 }
 
 // ── Wiring ───────────────────────────────────────────────────────────────────
@@ -278,6 +321,9 @@ function init() {
 	});
 
 	$('#sp-pick').addEventListener('click', () => $('#sp-file').click());
+	// The whole idle panel is a mouse target, and the button inside it is the
+	// keyboard one. Stop the button's click bubbling or the picker opens twice.
+	$('#sp-idle-pick').addEventListener('click', (e) => { e.stopPropagation(); $('#sp-file').click(); });
 	$('#sp-idle').addEventListener('click', () => $('#sp-file').click());
 	$('#sp-file').addEventListener('change', (e) => {
 		const file = e.target.files?.[0];
@@ -312,7 +358,10 @@ function init() {
 		loadFromUrl(src, p.get('name') || undefined);
 	}
 
-	window.addEventListener('beforeunload', () => { teardown(); setDownload(null); });
+	// pagehide, not beforeunload: an unconditional beforeunload listener opts the
+	// page out of the back/forward cache, so returning to it would cost a full
+	// reload of the splat engine.
+	window.addEventListener('pagehide', () => { teardown(); setDownload(null); });
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

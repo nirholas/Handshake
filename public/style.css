@@ -589,7 +589,8 @@ header:not([class]):not(:has(#nav-container)) {
 	-webkit-app-region: drag;
 }
 
-header h1 {
+header h1,
+header .site-wordmark {
 	color: #fff;
 	font-family: var(--font-display);
 	font-size: var(--text-lg);
@@ -602,7 +603,8 @@ header h1 {
 	gap: var(--space-xs);
 }
 
-header h1 > a {
+header h1 > a,
+header .site-wordmark > a {
 	color: inherit;
 	font-size: inherit;
 	text-decoration: inherit;
@@ -611,7 +613,8 @@ header h1 > a {
 	gap: 0.5rem;
 }
 
-header h1 .wordmark-dot {
+header h1 .wordmark-dot,
+header .site-wordmark .wordmark-dot {
 	width: 8px;
 	height: 8px;
 	border-radius: 50%;
@@ -620,7 +623,8 @@ header h1 .wordmark-dot {
 	display: inline-block;
 }
 
-header h1 .wordmark-logo {
+header h1 .wordmark-logo,
+header .site-wordmark .wordmark-logo {
 	width: 28px;
 	height: 28px;
 	display: inline-block;
@@ -1025,7 +1029,8 @@ header h1 .wordmark-logo {
 		line-height: 3rem;
 	}
 
-	header h1 {
+	header h1,
+	header .site-wordmark {
 		font-size: 1em;
 		line-height: 3rem;
 	}

@@ -11,7 +11,7 @@
 // in the practice loop at all.
 
 import { PoseStage } from './avatar-pose.js';
-import { buildFingerspellingClip, normalizeWord } from './fingerspelling.js';
+import { buildFingerspellingClip } from './fingerspelling.js';
 import { LETTERS, LETTER_NOTES } from './asl-alphabet-data.js';
 import { GradeSmoother, gradeHandshape, rankHandshapes } from './sign-grader.js';
 import { HAND_CONNECTIONS, handshapeLandmarks, projectHand } from './sign-hand-model.js';
@@ -54,28 +54,42 @@ function writeJSON(key, value) {
 	}
 }
 
-/** Draw a hand skeleton into an SVG element from 21 projected points. */
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+/**
+ * Draw a hand skeleton into an SVG element from 21 projected points.
+ *
+ * The overlay redraws on every camera frame, so the nodes are built once and
+ * then only their coordinates change: rebuilding 21 circles and 21 lines sixty
+ * times a second is enough layout churn to be felt on a laptop.
+ */
 function drawSkeleton(svg, points, { className = '' } = {}) {
-	const ns = 'http://www.w3.org/2000/svg';
-	svg.textContent = '';
-	const g = document.createElementNS(ns, 'g');
-	if (className) g.setAttribute('class', className);
-	for (const [a, b] of HAND_CONNECTIONS) {
-		const line = document.createElementNS(ns, 'line');
+	let g = svg.firstElementChild;
+	if (!g || g.childElementCount !== HAND_CONNECTIONS.length + points.length) {
+		svg.textContent = '';
+		g = document.createElementNS(SVG_NS, 'g');
+		for (let i = 0; i < HAND_CONNECTIONS.length; i++) g.append(document.createElementNS(SVG_NS, 'line'));
+		points.forEach((_, i) => {
+			const dot = document.createElementNS(SVG_NS, 'circle');
+			dot.setAttribute('r', i === 0 || i % 4 === 0 ? '3.6' : '2.4');
+			g.append(dot);
+		});
+		svg.append(g);
+	}
+	if (g.getAttribute('class') !== className) g.setAttribute('class', className);
+	const nodes = g.children;
+	HAND_CONNECTIONS.forEach(([a, b], i) => {
+		const line = nodes[i];
 		line.setAttribute('x1', points[a].x.toFixed(1));
 		line.setAttribute('y1', points[a].y.toFixed(1));
 		line.setAttribute('x2', points[b].x.toFixed(1));
 		line.setAttribute('y2', points[b].y.toFixed(1));
-		g.append(line);
-	}
+	});
 	points.forEach((p, i) => {
-		const dot = document.createElementNS(ns, 'circle');
+		const dot = nodes[HAND_CONNECTIONS.length + i];
 		dot.setAttribute('cx', p.x.toFixed(1));
 		dot.setAttribute('cy', p.y.toFixed(1));
-		dot.setAttribute('r', i === 0 || i % 4 === 0 ? '3.6' : '2.4');
-		g.append(dot);
 	});
-	svg.append(g);
 }
 
 async function boot() {
@@ -102,6 +116,13 @@ async function boot() {
 	};
 
 	// ── The avatar half ──────────────────────────────────────────────────────
+	const replayBtn = $('#sm-replay');
+	const setReplayable = (on) => {
+		if (!replayBtn) return;
+		replayBtn.disabled = !on;
+		replayBtn.title = on ? '' : 'This avatar cannot fingerspell, so there is nothing to replay. The target diagram still shows the shape.';
+	};
+
 	const mountStage = async () => {
 		stage?.dispose();
 		stage = new PoseStage(stageHost, { glbUrl: avatar.url, framing: 'portrait' });
@@ -110,10 +131,12 @@ async function boot() {
 			stage.start();
 			canSign = !!supported;
 			if (!supported) setStatus('This avatar has no finger bones. Practice still works: the target diagram and the scoring do not need it.', 'warn');
+			setReplayable(canSign);
 			return canSign;
 		} catch (err) {
 			log.warn('[sign-mirror] stage mount failed', err?.message);
 			canSign = false;
+			setReplayable(false);
 			setStatus('The 3D preview could not start. The target diagram and scoring still work.', 'warn');
 			return false;
 		}
@@ -165,6 +188,22 @@ async function boot() {
 	let lastVideoTime = -1;
 	const smoother = new GradeSmoother({ passScore: 78, holdMs: 800 });
 
+	const IDLE_HINT = 'Turn the camera on to be graded, or just copy the diagram.';
+
+	// The still letters: J and Z are excluded because they are defined by a path
+	// the hand traces, which a single-frame ranking cannot recognise.
+	const RANKABLE = LETTERS.filter((l) => !MOVING.has(l));
+	const RANK_INTERVAL_MS = 350;
+	let lastRankAt = 0;
+	let lookedLike = '';
+
+	// The hint is a live region, and it is written on every graded frame. Writing
+	// the same sentence again would make a screen reader read it again, so only a
+	// genuine change reaches the DOM.
+	const setHint = (text) => {
+		if (hintEl && hintEl.textContent !== text) hintEl.textContent = text;
+	};
+
 	const setScore = (value, holding, heldMs) => {
 		const pct = Math.max(0, Math.min(100, value));
 		if (scoreEl) scoreEl.textContent = `${Math.round(pct)}`;
@@ -181,22 +220,65 @@ async function boot() {
 		}
 	};
 
+	// One row per finger, built on the first graded frame and then updated in
+	// place. Same reason as the skeleton: this runs at camera frame rate.
+	const fingerRows = new Map();
 	const renderFingers = (grade) => {
 		if (!fingersEl) return;
-		fingersEl.textContent = '';
 		for (const f of grade.fingers) {
-			const row = document.createElement('div');
-			row.className = 'sm-finger';
-			row.dataset.state = f.score >= 0.8 ? 'good' : f.score >= 0.5 ? 'close' : 'far';
-			const name = document.createElement('span');
-			name.className = 'sm-finger-name';
-			name.textContent = f.finger;
-			const bar = document.createElement('span');
-			bar.className = 'sm-finger-bar';
-			bar.style.setProperty('--sm-fill', `${Math.round(f.score * 100)}%`);
-			row.append(name, bar);
-			fingersEl.append(row);
+			let row = fingerRows.get(f.finger);
+			if (!row) {
+				const el = document.createElement('div');
+				el.className = 'sm-finger';
+				const name = document.createElement('span');
+				name.className = 'sm-finger-name';
+				name.textContent = f.finger;
+				const bar = document.createElement('span');
+				bar.className = 'sm-finger-bar';
+				// A real progressbar rather than a bare div: a screen reader can
+				// read the number on demand, without every frame announcing itself.
+				bar.setAttribute('role', 'progressbar');
+				bar.setAttribute('aria-label', `${f.finger} finger`);
+				bar.setAttribute('aria-valuemin', '0');
+				bar.setAttribute('aria-valuemax', '100');
+				el.append(name, bar);
+				fingersEl.append(el);
+				row = { el, bar, pct: -1 };
+				fingerRows.set(f.finger, row);
+			}
+			const state = f.score >= 0.8 ? 'good' : f.score >= 0.5 ? 'close' : 'far';
+			if (row.el.dataset.state !== state) row.el.dataset.state = state;
+			const pct = Math.round(f.score * 100);
+			if (pct !== row.pct) {
+				row.pct = pct;
+				row.bar.style.setProperty('--sm-fill', `${pct}%`);
+				row.bar.setAttribute('aria-valuenow', String(pct));
+			}
 		}
+	};
+
+	const clearFingers = () => {
+		fingerRows.clear();
+		if (fingersEl) fingersEl.textContent = '';
+	};
+
+	// The best score per letter survives the session, but the grader beats it
+	// many times a second: batch the write instead of touching storage per frame.
+	let bestTimer = 0;
+	const flushProgress = () => {
+		if (!bestTimer) return;
+		window.clearTimeout(bestTimer);
+		bestTimer = 0;
+		writeJSON(PROGRESS_KEY, progress);
+		renderLetterBest();
+	};
+	const saveBestSoon = () => {
+		if (bestTimer) return;
+		bestTimer = window.setTimeout(() => {
+			bestTimer = 0;
+			writeJSON(PROGRESS_KEY, progress);
+			renderLetterBest();
+		}, 2000);
 	};
 
 	const markPassed = (letter) => {
@@ -209,18 +291,19 @@ async function boot() {
 	const onPassed = (letter) => {
 		markPassed(letter);
 		setStatus(`${letter} is right. Well held.`, 'good');
-		if (hintEl) hintEl.textContent = `${letter} passed. Next letter loaded.`;
 		const idx = ALL_COURSE_LETTERS.indexOf(letter);
 		const next = ALL_COURSE_LETTERS.slice(idx + 1).find((l) => !progress.passed[l]) || ALL_COURSE_LETTERS.find((l) => !progress.passed[l]);
+		setHint(next ? `${letter} passed. ${next} is next.` : `${letter} passed. That is every letter in the alphabet.`);
 		if (next) window.setTimeout(() => selectLetter(next), 900);
 		else setStatus('Every letter passed. You can read and make the whole manual alphabet.', 'good');
 	};
 
 	const gradeFrame = (landmarks, now) => {
-		const target = MOVING.has(current) ? current : current;
 		let grade;
 		try {
-			grade = gradeHandshape(landmarks, target);
+			// J and Z move, and only their handshape can be scored; the letter card
+			// says so outright, so every letter grades against its own shape.
+			grade = gradeHandshape(landmarks, current);
 		} catch (err) {
 			log.warn('[sign-mirror] grade failed', err?.message);
 			return;
@@ -228,25 +311,28 @@ async function boot() {
 		const state = smoother.push(grade, now);
 		setScore(state.score, state.holding, state.heldMs);
 		renderFingers(grade);
-		if (progress.best[current] == null || state.score > progress.best[current]) {
+		if (progress.best[current] == null || Math.round(state.score) > progress.best[current]) {
 			progress.best[current] = Math.round(state.score);
+			saveBestSoon();
 		}
 		if (state.passed) {
 			smoother.reset();
+			flushProgress();
 			onPassed(current);
 			return;
 		}
-		if (hintEl) {
-			// When the hand is a long way off, say what it DOES look like: a
-			// learner making a clean B while aiming for D is helped far more by
-			// "that is a B" than by "straighten your ring finger".
-			if (state.score < 45) {
-				const [best] = rankHandshapes(landmarks, LETTERS.filter((l) => !MOVING.has(l)));
-				hintEl.textContent = best && best.name !== current && best.score > 70 ? `That is a clean ${best.name}. For ${current}: ${grade.hint}` : grade.hint;
-			} else {
-				hintEl.textContent = grade.hint;
-			}
+		// When the hand is a long way off, say what it DOES look like: a learner
+		// making a clean B while aiming for D is helped far more by "that is a B"
+		// than by "straighten your ring finger". Ranking every letter costs a full
+		// grade per candidate, so it runs a few times a second, not per frame.
+		if (state.score < 45 && now - lastRankAt > RANK_INTERVAL_MS) {
+			lastRankAt = now;
+			const [best] = rankHandshapes(landmarks, RANKABLE);
+			lookedLike = best && best.name !== current && best.score > 70 ? best.name : '';
+		} else if (state.score >= 45) {
+			lookedLike = '';
 		}
+		setHint(lookedLike ? `That is a clean ${lookedLike}. For ${current}: ${grade.hint}` : grade.hint);
 	};
 
 	const stopCamera = () => {
@@ -264,20 +350,68 @@ async function boot() {
 		}
 		overlay?.replaceChildren();
 		setScore(0, false, 0);
-		if (fingersEl) fingersEl.textContent = '';
-		if (hintEl) hintEl.textContent = '';
+		clearFingers();
+		lookedLike = '';
+		lastRankAt = 0;
+		if (cameraNote) cameraNote.hidden = true;
+		// Back to the state the page opened in: the box says what to do next
+		// rather than sitting there empty.
+		setHint(IDLE_HINT);
+		flushProgress();
+	};
+
+	/**
+	 * What to tell the learner when the camera does not come up. The raw error is
+	 * a bundler URL or a DOM exception name, neither of which anyone can act on,
+	 * so each cause gets the sentence that says what to actually do next.
+	 *
+	 * @param {unknown} err   whatever was thrown
+	 * @param {'tracker'|'camera'} where  which half of the start failed
+	 * @returns {string}
+	 */
+	const cameraFailureMessage = (err, where) => {
+		const name = err?.name || '';
+		const text = err?.message || '';
+		if (where === 'tracker') {
+			return 'The hand tracker could not be downloaded. Check the connection and try again; the target diagram and the letter notes work without it.';
+		}
+		if (name === 'NotAllowedError' || /denied|not allowed|permission/i.test(text)) {
+			return 'Camera permission was refused. Allow it in your browser address bar, then try again.';
+		}
+		if (name === 'NotFoundError' || name === 'DevicesNotFoundError' || /not found|no device/i.test(text)) {
+			return 'No camera was found on this device. Copy the target diagram by eye instead: the letter notes still teach the shape.';
+		}
+		if (name === 'NotReadableError' || name === 'TrackStartError' || /in use|could not start video/i.test(text)) {
+			return 'The camera is busy in another app or tab. Close the other one and try again.';
+		}
+		if (name === 'SecurityError' || !window.isSecureContext) {
+			return 'Browsers only hand out the camera over HTTPS. Open this page on https://three.ws and try again.';
+		}
+		if (name === 'OverconstrainedError') {
+			return 'This camera cannot deliver the format the tracker needs. Try another camera, or copy the target diagram by eye.';
+		}
+		return 'The camera could not start. Try again, or copy the target diagram by eye: the letter notes still teach the shape.';
 	};
 
 	const startCamera = async () => {
 		if (running) return;
 		if (!navigator.mediaDevices?.getUserMedia) {
-			setStatus('This browser has no camera API. Practice with the target diagram instead.', 'warn');
+			setStatus(
+				window.isSecureContext
+					? 'This browser has no camera API. Practice with the target diagram instead.'
+					: 'Browsers only hand out the camera over HTTPS. Open this page on https://three.ws to be graded live.',
+				'warn',
+			);
 			return;
 		}
+		let failedAt = 'camera';
 		cameraBtn.disabled = true;
+		cameraBtn.setAttribute('aria-busy', 'true');
 		cameraBtn.textContent = 'Starting the camera...';
+		document.body.dataset.smCamera = landmarker ? 'starting' : 'loading';
 		try {
 			if (!landmarker) {
+				failedAt = 'tracker';
 				setStatus('Loading the hand tracker (about 8 MB, once per browser).');
 				const { FilesetResolver, HandLandmarker } = await import('@mediapipe/tasks-vision');
 				const { modelUrl, visionWasmBase } = await import('./shared/mediapipe-assets.js');
@@ -291,6 +425,8 @@ async function boot() {
 					numHands: 1,
 				});
 			}
+			failedAt = 'camera';
+			document.body.dataset.smCamera = 'starting';
 			stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: 'user' }, audio: false });
 			video.srcObject = stream;
 			await video.play();
@@ -302,17 +438,15 @@ async function boot() {
 			if (cameraNote) cameraNote.hidden = false;
 			loop();
 		} catch (err) {
-			log.warn('[sign-mirror] camera failed', err?.message);
-			const denied = /denied|not allowed/i.test(err?.message || '');
-			setStatus(
-				denied
-					? 'Camera permission was refused. Allow it in your browser address bar, then try again.'
-					: `The camera could not start: ${err?.message || 'unknown error'}. The target diagram still works.`,
-				'warn',
-			);
+			log.warn(`[sign-mirror] ${failedAt} failed`, err?.message);
+			// A tracker that half-loaded is not reusable: drop it so the next
+			// attempt downloads it again rather than throwing on a dead handle.
+			if (failedAt === 'tracker') landmarker = null;
 			stopCamera();
+			setStatus(cameraFailureMessage(err, failedAt), 'warn');
 		} finally {
 			cameraBtn.disabled = false;
+			cameraBtn.removeAttribute('aria-busy');
 		}
 	};
 
@@ -321,11 +455,23 @@ async function boot() {
 		raf = requestAnimationFrame(loop);
 		if (!video.videoWidth || video.currentTime === lastVideoTime) return;
 		lastVideoTime = video.currentTime;
-		const result = landmarker.detectForVideo(video, performance.now());
+		let result;
+		try {
+			result = landmarker.detectForVideo(video, performance.now());
+		} catch (err) {
+			// A tracker that throws mid-stream (a lost GPU context, a released
+			// WASM heap) would otherwise kill the frame loop silently and leave
+			// the page claiming the camera is on. Stop, and say why.
+			log.warn('[sign-mirror] tracker failed', err?.message);
+			landmarker = null;
+			stopCamera();
+			setStatus('The hand tracker stopped. Turn the camera on again to restart it.', 'warn');
+			return;
+		}
 		const hand = result?.landmarks?.[0];
 		if (!hand?.length) {
-			if (hintEl) hintEl.textContent = 'No hand in frame. Hold one hand up, palm toward the camera.';
-			overlay?.replaceChildren();
+			setHint('No hand in frame. Hold one hand up, palm toward the camera.');
+			if (overlay?.firstElementChild) overlay.replaceChildren();
 			setScore(0, false, 0);
 			return;
 		}
@@ -372,7 +518,12 @@ async function boot() {
 		});
 		drawTarget(letter);
 		showOnAvatar(letter);
-		if (hintEl && !running) hintEl.textContent = 'Turn the camera on to be graded, or just copy the diagram.';
+		lookedLike = '';
+		lastRankAt = 0;
+		if (!running) {
+			setHint(IDLE_HINT);
+			clearFingers();
+		}
 		const url = new URL(location.href);
 		url.searchParams.set('letter', letter);
 		history.replaceState(null, '', url);
@@ -399,7 +550,6 @@ async function boot() {
 				btn.dataset.char = letter;
 				btn.textContent = letter;
 				btn.setAttribute('aria-pressed', String(letter === current));
-				btn.setAttribute('aria-label', `Practise the letter ${letter}`);
 				if (progress.passed[letter]) btn.dataset.passed = 'true';
 				btn.addEventListener('click', () => selectLetter(letter));
 				row.append(btn);
@@ -407,7 +557,28 @@ async function boot() {
 			wrap.append(h, p, row);
 			railEl.append(wrap);
 		}
+		renderLetterBest();
 	};
+
+	// The best score a letter has reached is worth seeing: it turns 26 identical
+	// squares into a map of where the practice actually is. The sliver under the
+	// letter is the score, and the label says it out loud for a screen reader.
+	function renderLetterBest() {
+		for (const btn of document.querySelectorAll('.sm-letter')) {
+			const letter = btn.dataset.char;
+			const best = progress.best[letter];
+			const held = progress.passed[letter];
+			btn.style.setProperty('--sm-best', `${Math.max(0, Math.min(100, best ?? 0))}%`);
+			btn.dataset.tried = best == null ? 'false' : 'true';
+			const label = held
+				? `Practise the letter ${letter}, already held correctly`
+				: best == null
+					? `Practise the letter ${letter}, not attempted yet`
+					: `Practise the letter ${letter}, best score ${best} of 100`;
+			btn.setAttribute('aria-label', label);
+			btn.title = label;
+		}
+	}
 
 	const progressEl = $('#sm-progress');
 	const progressBar = $('#sm-progress-bar');
@@ -424,15 +595,16 @@ async function boot() {
 	// ── Controls ─────────────────────────────────────────────────────────────
 	cameraBtn?.addEventListener('click', () => (running ? stopCamera() : startCamera()));
 
-	$('#sm-replay')?.addEventListener('click', () => showOnAvatar(current));
+	replayBtn?.addEventListener('click', () => showOnAvatar(current));
 
 	$('#sm-reset')?.addEventListener('click', () => {
 		progress.passed = {};
 		progress.best = {};
 		writeJSON(PROGRESS_KEY, progress);
 		document.querySelectorAll('.sm-letter[data-passed]').forEach((el) => el.removeAttribute('data-passed'));
+		renderLetterBest();
 		renderProgress();
-		setStatus('Progress cleared.');
+		setStatus('Progress cleared. Every letter is back to unpractised.');
 	});
 
 	const handBtns = document.querySelectorAll('[data-hand]');
@@ -450,7 +622,7 @@ async function boot() {
 	document.addEventListener('keydown', (e) => {
 		if (e.metaKey || e.ctrlKey || e.altKey) return;
 		const tag = e.target?.tagName;
-		if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+		if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target?.isContentEditable) return;
 		const key = e.key.toUpperCase();
 		if (LETTER_NOTES[key]) {
 			selectLetter(key);
@@ -459,6 +631,7 @@ async function boot() {
 	});
 
 	// ── Boot ─────────────────────────────────────────────────────────────────
+	setReplayable(false);
 	buildRail();
 	renderProgress();
 	await mountStage();

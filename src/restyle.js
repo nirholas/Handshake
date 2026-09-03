@@ -76,7 +76,7 @@ function cache() {
 		'stage', 'canvas-wrap', 'presets', 'variants', 'variant-strip', 'history',
 		'metalness', 'roughness', 'emissive', 'basecolor', 'emissivecolor',
 		'seed', 'variant-count', 'gen-variants', 'reset', 'export', 'export-note',
-		'file', 'url-input', 'load-url', 'status', 'error', 'error-msg', 'retry',
+		'file', 'upload', 'url-input', 'load-url', 'load-note', 'status', 'error', 'error-msg', 'retry',
 		'ai-instruction', 'ai-restyle', 'ai-texture', 'ai-note',
 		'lineage-strip', 'save-version', 'lineage-note',
 		'save-variants', 'variants-note',
@@ -191,7 +191,12 @@ function mountModel(newRoot, label, opts = {}) {
 	syncSlidersFromModel();
 	markPresetActive(null);
 
-	if (!opts.preserveLineage) {
+	if (opts.preserveLineage) {
+		// Reverting to an existing version: the lineage thread stays, but every
+		// downstream operation (AI restyle, Save version, Save all as versions)
+		// must now read THIS version's bytes, not the newest checkpoint's.
+		if (opts.originUrl) state.sourceGlbUrl = opts.originUrl;
+	} else {
 		state.sourceUrlPending = null;
 		if (opts.originUrl) {
 			state.sourceGlbUrl = opts.originUrl;
@@ -414,6 +419,7 @@ function generateVariants() {
 	el['variant-strip'].innerHTML = '';
 	for (const v of variants) {
 		const b = document.createElement('button');
+		b.type = 'button';
 		b.className = 'rs-swatch';
 		b.style.background = v.config.color;
 		b.title = `${v.label} · seed ${v.seed}`;
@@ -593,7 +599,10 @@ function renderLineageStrip() {
 			const entry = state.realLineage.find((v) => v.index === idx);
 			if (!entry) return;
 			state.activeIndex = idx;
-			loadModel(entry.glbUrl, entry.label || `Version ${idx}`, { preserveLineage: true });
+			loadModel(entry.glbUrl, entry.label || `Version ${idx}`, {
+				preserveLineage: true,
+				originUrl: entry.glbUrl,
+			});
 		});
 	});
 }
@@ -631,8 +640,10 @@ function buildPresetButtons() {
 	for (const name of MATERIAL_PRESET_NAMES) {
 		const preset = MATERIAL_PRESETS[name];
 		const b = document.createElement('button');
+		b.type = 'button';
 		b.className = 'rs-preset';
 		b.dataset.preset = name;
+		b.setAttribute('aria-pressed', 'false');
 		b.innerHTML = `<span class="rs-preset__swatch" style="background:${swatchCss(preset)}"></span><span>${preset.label || name}</span>`;
 		b.addEventListener('click', () => applyPreset(name));
 		el.presets.appendChild(b);
@@ -649,35 +660,72 @@ function wireControls() {
 	el['save-variants'].addEventListener('click', persistVariants);
 	el.reset.addEventListener('click', resetModel);
 	el.export.addEventListener('click', exportModel);
-	el.retry.addEventListener('click', () => loadModel(DEFAULT_MODEL, 'sample', { originUrl: absoluteUrl(DEFAULT_MODEL) }));
+	el.retry.addEventListener('click', () => {
+		const next = new URL(location.href);
+		if (next.searchParams.has('url')) {
+			next.searchParams.delete('url');
+			history.replaceState(null, '', next.toString());
+		}
+		setNote(el['load-note'], '');
+		loadModel(DEFAULT_MODEL, 'sample', { originUrl: absoluteUrl(DEFAULT_MODEL) });
+	});
 	el['ai-restyle'].addEventListener('click', aiRestyle);
 	el['ai-instruction'].addEventListener('keydown', (e) => {
 		if (e.key === 'Enter') aiRestyle();
 	});
 	el['save-version'].addEventListener('click', saveVersion);
 
+	// The file input itself is off-screen (a bare styled <label> is not
+	// keyboard-focusable, so it left upload unreachable without a mouse).
+	el.upload.addEventListener('click', () => el.file.click());
 	el.file.addEventListener('change', (e) => {
 		const f = e.target.files?.[0];
-		if (f) loadModel(f, f.name);
+		if (f) acceptLocalFile(f);
+		// Clearing the value lets the same file be picked twice in a row; the
+		// browser fires no change event for an unchanged selection otherwise.
+		e.target.value = '';
 	});
 	el['load-url'].addEventListener('click', () => {
 		const u = (el['url-input'].value || '').trim();
-		if (!u) return;
+		if (!u) {
+			setNote(el['load-note'], 'Paste a public .glb or .gltf URL first.', 'error');
+			el['url-input'].focus();
+			return;
+		}
 		const next = new URL(location.href);
 		next.searchParams.set('url', u);
 		location.href = next.toString();
 	});
-	// Drag & drop onto the stage.
+	el['url-input'].addEventListener('keydown', (e) => {
+		if (e.key === 'Enter') el['load-url'].click();
+	});
+	// Drag & drop onto the stage, with a visible drop target and an honest
+	// rejection for anything that is not a glTF binary.
 	const stage = el.stage;
-	['dragover', 'drop'].forEach((ev) =>
-		stage.addEventListener(ev, (e) => {
-			e.preventDefault();
-			if (ev === 'drop') {
-				const f = e.dataTransfer?.files?.[0];
-				if (f && /\.(glb|gltf)$/i.test(f.name)) loadModel(f, f.name);
-			}
-		}),
-	);
+	stage.addEventListener('dragover', (e) => {
+		e.preventDefault();
+		stage.classList.add('is-dropping');
+	});
+	stage.addEventListener('dragleave', () => stage.classList.remove('is-dropping'));
+	stage.addEventListener('drop', (e) => {
+		e.preventDefault();
+		stage.classList.remove('is-dropping');
+		const f = e.dataTransfer?.files?.[0];
+		if (!f) return;
+		acceptLocalFile(f);
+	});
+}
+
+// A local file has no public URL yet, so mountModel checkpoints its bytes in
+// the background. Report both the accept and the reject honestly rather than
+// letting a wrong-format drop vanish silently.
+function acceptLocalFile(file) {
+	if (!/\.(glb|gltf)$/i.test(file.name)) {
+		setNote(el['load-note'], `"${file.name}" is not a .glb or .gltf model.`, 'error');
+		return;
+	}
+	setNote(el['load-note'], `Loaded ${file.name}.`, 'done');
+	loadModel(file, file.name);
 }
 
 function syncSlidersFromModel() {
@@ -697,7 +745,9 @@ function syncSlidersFromModel() {
 
 function markPresetActive(name) {
 	el.presets.querySelectorAll('.rs-preset').forEach((b) => {
-		b.classList.toggle('is-active', b.dataset.preset === name);
+		const on = b.dataset.preset === name;
+		b.classList.toggle('is-active', on);
+		b.setAttribute('aria-pressed', on ? 'true' : 'false');
 	});
 }
 
@@ -755,6 +805,7 @@ function setNote(node, text, kind) {
 	node.textContent = text;
 	node.classList.toggle('is-error', kind === 'error');
 	node.classList.toggle('is-busy', kind === 'busy');
+	node.classList.toggle('is-done', kind === 'done');
 }
 function fmtBytes(n) {
 	return n > 1e6 ? (n / 1e6).toFixed(1) + ' MB' : Math.round(n / 1024) + ' KB';

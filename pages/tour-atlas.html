@@ -5,7 +5,7 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 	<title>Tour Atlas · three.ws</title>
-	<meta name="description" content="Every stop on the three.ws guided tour, as a real screenshot of the live site with the feature circled. Search 185 stops, filter by chapter, read what the guide says, and drop the tour onto any feature in one click." />
+	<meta name="description" content="Every stop on the three.ws guided tour, as a real screenshot of the live site with the feature circled. Search 263 stops, filter by chapter, read what the guide says, and drop the tour onto any feature in one click." />
 	<link rel="canonical" href="https://three.ws/tour/atlas" />
 	<link rel="icon" href="/favicon.ico" sizes="any" />
 	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -16,13 +16,13 @@
 	<link rel="stylesheet" href="/mobile.css" />
 	<meta property="og:type" content="website" />
 	<meta property="og:title" content="Tour Atlas · three.ws" />
-	<meta property="og:description" content="Every feature on three.ws, photographed on the live site with the feature circled. 185 stops, searchable, one click from the guided tour." />
+	<meta property="og:description" content="Every feature on three.ws, photographed on the live site with the feature circled. 263 stops, searchable, one click from the guided tour." />
 	<meta property="og:url" content="https://three.ws/tour/atlas" />
-	<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Tour+Atlas&amp;d=Every+stop+on+the+guided+tour+as+a+real+screenshot+of+the+live+site%2C+with+the+feature+circled+by+the+tour%27s+own+spotlight.+Search+185+stops%2C+filter+by+chapter&amp;p=%2Ftour%2Fatlas" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Tour+Atlas&amp;d=Every+stop+on+the+guided+tour+as+a+real+screenshot+of+the+live+site%2C+with+the+feature+circled+by+the+tour%27s+own+spotlight.+Search+263+stops%2C+filter+by+chapter&amp;p=%2Ftour%2Fatlas" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content="Tour Atlas · three.ws" />
-	<meta name="twitter:description" content="185 stops of the three.ws guided tour, each one a real screenshot with the feature circled." />
-	<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Tour+Atlas&amp;d=Every+stop+on+the+guided+tour+as+a+real+screenshot+of+the+live+site%2C+with+the+feature+circled+by+the+tour%27s+own+spotlight.+Search+185+stops%2C+filter+by+chapter&amp;p=%2Ftour%2Fatlas" />
+	<meta name="twitter:description" content="263 stops of the three.ws guided tour, each one a real screenshot with the feature circled." />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Tour+Atlas&amp;d=Every+stop+on+the+guided+tour+as+a+real+screenshot+of+the+live+site%2C+with+the+feature+circled+by+the+tour%27s+own+spotlight.+Search+263+stops%2C+filter+by+chapter&amp;p=%2Ftour%2Fatlas" />
 	<style>
 		/* Thin alias layer over the canonical vocabulary in public/tokens.css —
 		   the sanctioned pattern (same as --nxt-* / --nv-*): every value resolves
@@ -252,6 +252,7 @@
 		}
 		.ta-empty h2 { font: 650 18px/1.3 var(--font-body); margin: 0 0 8px; }
 		.ta-empty p { font: 400 14px/1.6 var(--font-body); color: var(--ta-muted); margin: 0 auto 18px; max-width: 44ch; }
+		.ta-empty-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
 
 		.ta-btn {
 			display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
@@ -283,6 +284,15 @@
 		}
 		.ta-lb-figure { position: relative; background: var(--scrim-strong); flex-shrink: 0; }
 		.ta-lb-figure img { display: block; width: 100%; height: auto; max-height: 58vh; object-fit: contain; }
+		.ta-lb-figure img[hidden] { display: none; }
+		/* A stop with no capture still opens, so the figure says why instead of
+		   leaving an empty black band above the narration. */
+		.ta-lb-none[hidden] { display: none; }
+		.ta-lb-none {
+			margin: 0; min-height: 148px; display: grid; place-items: center;
+			padding: 28px 56px; text-align: center;
+			font: 500 13.5px/1.6 var(--font-body); color: var(--on-scrim-bright);
+		}
 		.ta-lb-x {
 			position: absolute; top: 10px; right: 10px; z-index: 3;
 			width: 34px; height: 34px; border-radius: var(--radius-md); cursor: pointer;
@@ -339,7 +349,7 @@
 	<meta property="og:locale" content="en_US">
 	<meta property="og:image:alt" content="Tour Atlas — three.ws">
 	<meta name="twitter:site" content="@trythreews">
-	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Tour Atlas","description":"Every stop on the guided tour as a real screenshot of the live site, with the feature circled by the tour's own spotlight. Search 185 stops, filter by chapter, read what the guide says about each one, and drop the tour onto any feature in a single click.","url":"https://three.ws/tour/atlas","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=main&t=Tour+Atlas&d=Every+stop+on+the+guided+tour+as+a+real+screenshot+of+the+live+site%2C+with+the+feature+circled+by+the+tour%27s+own+spotlight.+Search+185+stops%2C+filter+by+chapter&p=%2Ftour%2Fatlas"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Tour","item":"https://three.ws/tour"},{"@type":"ListItem","position":3,"name":"Atlas","item":"https://three.ws/tour/atlas"}]}]}</script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Tour Atlas","description":"Every stop on the guided tour as a real screenshot of the live site, with the feature circled by the tour's own spotlight. Search 263 stops, filter by chapter, read what the guide says about each one, and drop the tour onto any feature in a single click.","url":"https://three.ws/tour/atlas","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=main&t=Tour+Atlas&d=Every+stop+on+the+guided+tour+as+a+real+screenshot+of+the+live+site%2C+with+the+feature+circled+by+the+tour%27s+own+spotlight.+Search+263+stops%2C+filter+by+chapter&p=%2Ftour%2Fatlas"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Tour","item":"https://three.ws/tour"},{"@type":"ListItem","position":3,"name":"Atlas","item":"https://three.ws/tour/atlas"}]}]}</script>
 </head>
 <body>
 	<script src="/nav.js"></script>
@@ -386,6 +396,7 @@
 				<button class="ta-lb-nav" type="button" data-dir="prev" data-act="prev" aria-label="Previous stop">‹</button>
 				<button class="ta-lb-nav" type="button" data-dir="next" data-act="next" aria-label="Next stop">›</button>
 				<img id="ta-lb-img" alt="" />
+				<p class="ta-lb-none" id="ta-lb-none" hidden></p>
 			</div>
 			<div class="ta-lb-body">
 				<p class="ta-lb-kicker" id="ta-lb-kicker"></p>

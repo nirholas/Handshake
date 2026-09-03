@@ -37,12 +37,12 @@ function syncControls() {
 	for (const btn of document.querySelectorAll('#sm-sort .sm-seg-btn')) {
 		const on = btn.dataset.sort === state.sort;
 		btn.classList.toggle('is-active', on);
-		btn.setAttribute('aria-selected', on ? 'true' : 'false');
+		btn.setAttribute('aria-pressed', on ? 'true' : 'false');
 	}
 	for (const btn of document.querySelectorAll('#sm-net .sm-seg-btn')) {
 		const on = btn.dataset.net === state.network;
 		btn.classList.toggle('is-active', on);
-		btn.setAttribute('aria-selected', on ? 'true' : 'false');
+		btn.setAttribute('aria-pressed', on ? 'true' : 'false');
 	}
 }
 
@@ -108,7 +108,7 @@ function card(f) {
 				${avatar}
 				<div class="sm-id">
 					<h3 class="sm-feed-title">${escapeHtml(f.title)}</h3>
-					<div class="sm-pub">${escapeHtml(f.publisher.name)} ${verified}</div>
+					<div class="sm-pub"><span class="sm-pub-name">${escapeHtml(f.publisher.name)}</span>${verified}</div>
 				</div>
 			</div>
 			<div>
@@ -131,9 +131,13 @@ function emptyState() {
 	$('#sm-grid').innerHTML = `
 		<div class="sm-empty" style="grid-column:1/-1">
 			<h2>No live feeds yet</h2>
-			<p>Verified traders haven't published a feed on ${state.network} yet. Build a verified track record on the
-			leaderboard, then publish your signals from your agent's wallet — your followers' agents pay per signal and auto-mirror.</p>
-			<a class="sm-cta" href="/leaderboard">See the trader leaderboard →</a>
+			<p>No verified trader has published a feed on ${state.network} yet. Build a verified track record on the
+			leaderboard, then publish your signals from your agent's wallet: your followers' agents pay per signal and
+			auto-mirror the fill.</p>
+			<div class="sm-empty-actions">
+				<a class="sm-cta" href="/leaderboard">See the trader leaderboard →</a>
+				<a class="sm-cta is-ghost" href="/agent-wallet#signals">Publish your feed</a>
+			</div>
 		</div>`;
 }
 
@@ -209,6 +213,10 @@ function bindControls() {
 
 function init() {
 	readUrl();
+	// An unrecognised ?sort= / ?network= falls back to the defaults above, so
+	// rewrite the address bar to the view actually rendered: a shared link is
+	// only shareable if it names the board the next reader will see.
+	writeUrl();
 	syncControls();
 	bindControls();
 	load();

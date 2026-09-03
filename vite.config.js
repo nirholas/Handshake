@@ -343,6 +343,24 @@ const appConfig = {
 				rewrite: (path) =>
 					`/api/oracle-share?mint=${path.replace(/^\/oracle\/coin\//, '').replace(/\/$/, '')}`,
 			},
+			// /discover/a/<chain>/<id> and /discover/a/sol/<asset> are server-rendered
+			// detail pages too: vercel.json rewrites them to the api/discover-detail
+			// function, so no HTML file exists for the dev route map and the path 404s
+			// in dev while working in prod. Every on-chain agent card on /search and
+			// /discover links there, so without this rule a local audit reports those
+			// results dead. Mirror the production rewrite against the upstream.
+			'^/discover/a/(?:\\d+/\\d+|sol/[A-Za-z0-9]+)/?$': {
+				target: DEV_API_PROXY,
+				changeOrigin: true,
+				secure: true,
+				rewrite: (path) => {
+					const clean = path.replace(/\/$/, '');
+					const onchain = clean.match(/^\/discover\/a\/(\d+)\/(\d+)$/);
+					if (onchain) return `/api/discover-detail?kind=onchain&chain=${onchain[1]}&id=${onchain[2]}`;
+					const solana = clean.match(/^\/discover\/a\/sol\/([A-Za-z0-9]+)$/);
+					return `/api/discover-detail?kind=solana&asset=${solana[1]}`;
+				},
+			},
 			'/api': {
 				target: DEV_API_PROXY,
 				changeOrigin: true,
@@ -545,6 +563,7 @@ const appConfig = {
 				'smart-home': resolve(__dirname, 'pages/smart-home.html'),
 				'smart-home-join': resolve(__dirname, 'pages/smart-home-join.html'),
 				'smart-home-plan': resolve(__dirname, 'pages/smart-home-plan.html'),
+				'smart-home-privacy': resolve(__dirname, 'pages/smart-home-privacy.html'),
 				'smart-home-satellite': resolve(__dirname, 'pages/smart-home-satellite.html'),
 				'materialize-order': resolve(__dirname, 'pages/materialize-order.html'),
 				'materialize-ops': resolve(__dirname, 'pages/materialize-ops.html'),
@@ -1402,6 +1421,10 @@ const appConfig = {
 					'/smart-home/satellite/': resolve(root, 'pages/smart-home-satellite.html'),
 					'/smart-home/plan': resolve(root, 'pages/smart-home-plan.html'),
 					'/smart-home/plan/': resolve(root, 'pages/smart-home-plan.html'),
+					'/smart-home/privacy': resolve(root, 'pages/smart-home-privacy.html'),
+					'/smart-home/privacy/': resolve(root, 'pages/smart-home-privacy.html'),
+					'/smart-home/join': resolve(root, 'pages/smart-home-join.html'),
+					'/smart-home/join/': resolve(root, 'pages/smart-home-join.html'),
 					'/marketplace': resolve(root, 'pages/marketplace.html'),
 					'/marketplace/': resolve(root, 'pages/marketplace.html'),
 					'/marketplace-walk': resolve(root, 'pages/marketplace-walk.html'),
@@ -2187,9 +2210,13 @@ const appConfig = {
 					// /materialize/orders/:id  → one print order's timeline (uuid).
 					else if (!filePath && /^\/materialize\/orders\/[0-9a-fA-F-]{36}\/?$/.test(path))
 						filePath = resolve(root, 'pages/materialize-order.html');
-					// /home/:id  → the live 3D home (uuid). Mirrors vercel.json, which
-					// routes this ahead of the bare /home redirect.
-					else if (!filePath && /^\/home\/[0-9a-fA-F-]{36}\/?$/.test(path))
+					// The live 3D home (uuid), at both of its addresses. Mirrors
+					// vercel.json: /smart-home/:id is where the connect flow's "Open"
+					// lands, /smart-home/:id/settings is that home's settings card, and
+					// /home/:id is the campaign's own address for the scene.
+					else if (!filePath && /^\/smart-home\/[0-9a-fA-F-]{36}\/settings\/?$/.test(path))
+						filePath = resolve(root, 'pages/smart-home.html');
+					else if (!filePath && /^\/(?:smart-)?home\/[0-9a-fA-F-]{36}\/?$/.test(path))
 						filePath = resolve(root, 'pages/home-scene.html');
 					// /drops/:slug  → one generative 3D collection. Declared ahead of the
 					// /drop/:id rule below so the singular sealed-gift route and this
@@ -3334,6 +3361,15 @@ const appConfig = {
 		},
 		VitePWA({
 			registerType: 'autoUpdate',
+			// The default ('auto') injects a plain classic <script src="/registerSW.js">
+			// into <head>, which the parser must fetch and run before it paints:
+			// one render-blocking round trip on EVERY built page, measured on
+			// /, /create, /forge, /marketplace and /play. registerSW.js does its
+			// work inside a window 'load' listener, so deferring it changes nothing
+			// about when the service worker registers and removes the block.
+			// The strip-sw plugin above matches on the tag's id, which both modes
+			// emit, so embed entries still get the script removed.
+			injectRegister: 'script-defer',
 			includeAssets: ['favicon.ico', 'pwa-192x192.png', 'pwa-512x512.png', 'pwa-maskable-192x192.png', 'pwa-maskable-512x512.png', 'pwa-icon.svg'],
 			manifest: {
 				name: 'three.ws — Give Your AI a Body',

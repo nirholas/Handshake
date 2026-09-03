@@ -70,7 +70,10 @@
 			<div class="th-layout">
 				<section class="th-stage" id="th-stage" aria-label="3D trading stage">
 					<canvas id="th-canvas" class="th-canvas"></canvas>
-					<div id="th-overlay" class="th-overlay" aria-hidden="true"></div>
+					<!-- Projection layer for the nameplates and receipts. NOT aria-hidden: the
+					     nameplates are real focusable buttons and the only keyboard route into an
+					     agent's panel, so hiding this subtree strands them outside the a11y tree. -->
+					<div id="th-overlay" class="th-overlay"></div>
 
 					<!-- loading -->
 					<div class="th-state th-loading" id="th-loading">

@@ -29,6 +29,8 @@ const els = {
 	lbSay: document.getElementById('ta-lb-say'),
 	lbMeta: document.getElementById('ta-lb-meta'),
 	lbActions: document.getElementById('ta-lb-actions'),
+	lbNone: document.getElementById('ta-lb-none'),
+	main: document.querySelector('main'),
 };
 
 const state = {
@@ -40,6 +42,7 @@ const state = {
 	visible: [],
 	openIndex: -1,
 	lastFocus: null,
+	wired: false,
 };
 
 const esc = (s) =>
@@ -174,12 +177,24 @@ function altFor(stop) {
 	return `Screenshot of ${stop.path} on three.ws${where}`;
 }
 
+// Why a stop has no picture. There are two very different reasons and the page
+// used to print only the first one, which was a false statement about all 18 of
+// the stops that actually have it: every uncaptured stop in the committed atlas
+// answered HTTP 200 and then ran past the screenshot timeout, because it is a
+// live 3D or live-data page that never stops painting. Saying "did not respond"
+// about a page that answered fine sends the reader to debug the wrong thing.
+function noShotReason(stop) {
+	if (stop.status === 0) return 'No screenshot: this page did not answer when the atlas last ran.';
+	if (stop.status >= 400) return `No screenshot: this page answered HTTP ${stop.status} when the atlas last ran.`;
+	return 'No screenshot: this page was still painting when the atlas last ran. Open it to see it live.';
+}
+
 function cardHtml(stop, i) {
 	const shot = stop.media?.thumb;
 	const figure = shot
 		? `<img src="${esc(shot.url)}" alt="${esc(altFor(stop))}" loading="lazy" decoding="async"
 				width="${shot.width}" height="${shot.height}" />`
-		: `<div class="ta-shot-none">No screenshot: this page did not respond when the atlas last ran.</div>`;
+		: `<div class="ta-shot-none">${esc(noShotReason(stop))}</div>`;
 	const badges = badgesFor(stop)
 		.map((b) => `<span class="ta-badge" data-tone="${b.tone}">${esc(b.t)}</span>`)
 		.join('');
@@ -225,12 +240,36 @@ function renderSkeleton() {
 	els.count.textContent = 'Loading the atlas…';
 }
 
+// A visitor cannot act on "Failed to fetch" or on an instruction to run an npm
+// script, so every failure is translated into a sentence that says what happened
+// and what to do about it, next to a button that runs the same load again.
 function renderError(message) {
 	els.grid.innerHTML =
 		`<div class="ta-empty"><h2>The atlas could not load</h2>` +
 		`<p>${esc(message)}</p>` +
-		`<a class="ta-btn" data-variant="primary" href="/tour">Take the guided tour instead</a></div>`;
+		`<div class="ta-empty-actions">` +
+		`<button type="button" class="ta-btn" data-variant="primary" data-act="retry">Try again</button>` +
+		`<a class="ta-btn" href="/tour">Take the guided tour instead</a></div></div>`;
 	els.count.textContent = '';
+}
+
+class AtlasLoadError extends Error {
+	constructor(message, cause) {
+		super(message);
+		this.name = 'AtlasLoadError';
+		this.cause = cause;
+	}
+}
+
+// fetch() rejects with a TypeError for every transport-level failure (offline,
+// DNS, CORS, an aborted request), which is the only class we can name honestly
+// without guessing.
+function visitorMessage(err) {
+	if (err instanceof AtlasLoadError) return err.message;
+	if (err instanceof TypeError) {
+		return 'Your connection dropped before the atlas finished loading. Check it and try again.';
+	}
+	return 'Something went wrong while opening the atlas. Try again in a moment.';
 }
 
 // ── Lightbox ─────────────────────────────────────────────────────────────────
@@ -251,10 +290,17 @@ function openStop(i, { pushHash = true } = {}) {
 		els.lbImg.src = hero.url;
 		els.lbImg.alt = altFor(stop);
 		els.lbImg.hidden = false;
+		els.lbNone.hidden = true;
+		els.lbNone.textContent = '';
 	} else {
+		// Hiding the image on its own left a bare black band above the copy. The
+		// stop still has a page and a narration worth reading, so the figure says
+		// why there is no picture instead of showing an empty frame.
 		els.lbImg.removeAttribute('src');
 		els.lbImg.alt = '';
 		els.lbImg.hidden = true;
+		els.lbNone.textContent = noShotReason(stop);
+		els.lbNone.hidden = false;
 	}
 
 	const sectionTitle =
@@ -292,6 +338,9 @@ function openStop(i, { pushHash = true } = {}) {
 	const wasHidden = els.lb.hidden;
 	els.lb.hidden = false;
 	document.body.style.overflow = 'hidden';
+	// aria-modal alone leaves every card behind the dialog reachable to a screen
+	// reader's virtual cursor; inert takes them out of the tree too.
+	if (els.main) els.main.inert = true;
 	// Move focus into the dialog on open. While stepping through stops the
 	// visitor's focus is already on prev/next, so leave it there.
 	if (wasHidden) els.lb.querySelector('[data-act="close"]').focus();
@@ -302,9 +351,36 @@ function closeLightbox() {
 	if (els.lb.hidden) return;
 	els.lb.hidden = true;
 	document.body.style.overflow = '';
+	if (els.main) els.main.inert = false;
 	state.openIndex = -1;
 	history.replaceState(null, '', location.pathname + location.search);
 	state.lastFocus?.focus?.();
+}
+
+function resetFilters() {
+	state.query = '';
+	state.track = 'all';
+	state.health = 'all';
+	state.section = 'all';
+	els.search.value = '';
+	renderSegments();
+	renderSections();
+	renderGrid();
+}
+
+// A shared /tour/atlas#<id> link has to land on that stop even when it sits
+// outside the filters the visitor last had. Returns false for an id no stop
+// carries, which leaves the grid alone rather than blanking it.
+function openFromHash(id) {
+	let i = state.visible.findIndex((s) => s.id === id);
+	if (i < 0) {
+		if (!state.manifest.stops.some((s) => s.id === id)) return false;
+		resetFilters();
+		i = state.visible.findIndex((s) => s.id === id);
+		if (i < 0) return false;
+	}
+	openStop(i, { pushHash: false });
+	return true;
 }
 
 function step(delta) {
@@ -315,8 +391,11 @@ function step(delta) {
 
 // ── Events ───────────────────────────────────────────────────────────────────
 function wire() {
+	if (state.wired) return;
+	state.wired = true;
 	let timer;
 	els.search.addEventListener('input', (e) => {
+		if (!state.manifest) return;
 		const value = e.target.value.trim().toLowerCase();
 		clearTimeout(timer);
 		timer = setTimeout(() => {
@@ -327,7 +406,7 @@ function wire() {
 
 	const onSeg = (e) => {
 		const btn = e.target.closest('button[data-val]');
-		if (!btn) return;
+		if (!btn || !state.manifest) return;
 		state[btn.dataset.group] = btn.dataset.val;
 		renderSegments();
 		renderGrid();
@@ -337,32 +416,26 @@ function wire() {
 
 	els.sections.addEventListener('click', (e) => {
 		const btn = e.target.closest('button[data-section]');
-		if (!btn) return;
+		if (!btn || !state.manifest) return;
 		state.section = btn.dataset.section;
 		renderSections();
 		renderGrid();
 	});
 
-	const reset = () => {
-		state.query = '';
-		state.track = 'all';
-		state.health = 'all';
-		state.section = 'all';
-		els.search.value = '';
-		renderSegments();
-		renderSections();
-		renderGrid();
-	};
 	els.count.addEventListener('click', (e) => {
-		if (e.target.closest('.ta-reset')) reset();
+		if (e.target.closest('.ta-reset')) resetFilters();
 	});
 	els.grid.addEventListener('click', (e) => {
 		if (e.target.closest('[data-act="reset"]')) {
-			reset();
+			resetFilters();
+			return;
+		}
+		if (e.target.closest('[data-act="retry"]')) {
+			load();
 			return;
 		}
 		const card = e.target.closest('.ta-card');
-		if (card) openStop(Number(card.dataset.i));
+		if (card && state.manifest) openStop(Number(card.dataset.i));
 	});
 
 	els.lb.addEventListener('click', (e) => {
@@ -373,6 +446,17 @@ function wire() {
 		// A click on the scrim (never on the panel) closes, matching every other
 		// modal on the site.
 		else if (e.target === els.lb) closeLightbox();
+	});
+
+	window.addEventListener('hashchange', () => {
+		if (!state.manifest) return;
+		const id = decodeURIComponent(location.hash.slice(1));
+		if (!id) {
+			closeLightbox();
+			return;
+		}
+		if (state.visible[state.openIndex]?.id === id) return;
+		openFromHash(id);
 	});
 
 	document.addEventListener('keydown', (e) => {
@@ -407,13 +491,20 @@ function wire() {
 
 // ── Boot ─────────────────────────────────────────────────────────────────────
 async function load() {
+	state.manifest = null;
 	renderSkeleton();
 	try {
 		const res = await fetch(MANIFEST_URL, { cache: 'no-cache' });
-		if (!res.ok) throw new Error(`The atlas manifest returned HTTP ${res.status}.`);
-		const data = await res.json();
+		if (!res.ok) {
+			throw new AtlasLoadError(
+				`The atlas could not be reached (HTTP ${res.status}). It is usually back within a minute.`,
+			);
+		}
+		const data = await res.json().catch((cause) => {
+			throw new AtlasLoadError('The atlas came back in a form this page could not read.', cause);
+		});
 		if (!data || !Array.isArray(data.stops) || !data.stops.length) {
-			throw new Error('The atlas manifest is empty. Run `npm run tour:atlas` to rebuild it.');
+			throw new AtlasLoadError('The atlas has no stops recorded yet, so there is nothing to show.');
 		}
 		state.manifest = data;
 		renderStats();
@@ -421,17 +512,17 @@ async function load() {
 		renderSegments();
 		renderSections();
 		renderGrid();
-		wire();
 
 		// A shared /tour/atlas#<stop-id> link opens straight onto that card.
 		const wanted = decodeURIComponent(location.hash.slice(1));
-		if (wanted) {
-			const i = state.visible.findIndex((s) => s.id === wanted);
-			if (i >= 0) openStop(i, { pushHash: false });
-		}
+		if (wanted) openFromHash(wanted);
 	} catch (err) {
-		renderError(err instanceof Error ? err.message : 'Something went wrong.');
+		renderError(visitorMessage(err));
 	}
 }
 
+// Wired before the first fetch so the toolbar and the retry button are live even
+// on a load that never got a manifest; every handler returns early until one
+// arrives.
+wire();
 load();

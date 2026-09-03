@@ -20,8 +20,12 @@
  *   LOG_ALL=1 node scripts/audit-console.mjs        # stream every console line
  *   HEADFUL=1 node scripts/audit-console.mjs        # watch it run
  *   CONCURRENCY=6 node scripts/audit-console.mjs    # parallel tabs (default 5)
+ *   AUDIT_BASE=http://localhost:3211 node scripts/audit-console.mjs  # drive a server you own
  *
- * Reuses a dev server already on :3000, otherwise spawns an ephemeral Vite. The
+ * Reuses a dev server already on :3000, otherwise spawns an ephemeral Vite. Set
+ * AUDIT_BASE to drive a server you started yourself, which is what you want when
+ * other agents share the box: a :3000 owned by someone else can disappear
+ * mid-sweep and every remaining route then reads as a navigation failure. The
  * dev server proxies /api/* to https://three.ws, so API calls hit real
  * endpoints — auth/payment-gated 4xx are classified "expected", never failures.
  */
@@ -127,6 +131,25 @@ async function warmupDeps(base) {
 }
 
 async function startServer() {
+	// An explicit target wins over discovery: on a shared box the server on :3000
+	// may belong to another agent and vanish mid-sweep, which turns every
+	// remaining route into a bogus navigation failure.
+	if (process.env.AUDIT_BASE) {
+		const base = process.env.AUDIT_BASE.replace(/\/$/, '');
+		// Poll rather than probe once: a live Vite on a saturated box can take tens
+		// of seconds to answer, and a single miss would abort a sweep of a server
+		// that is in fact up.
+		const deadline = Date.now() + SERVER_BOOT_MS;
+		let up = 0;
+		while (!up && Date.now() < deadline) {
+			up = await probe(`${base}/`, REUSE_PROBE_MS);
+			if (!up) await new Promise((r) => setTimeout(r, 2000));
+		}
+		if (!up) throw new Error(`AUDIT_BASE ${base} is not answering`);
+		console.log(C.d(`  using AUDIT_BASE ${base}`));
+		await warmupDeps(base);
+		return { base, stop: async () => {} };
+	}
 	if (await probe(`${PROBE_BASE}/`, REUSE_PROBE_MS)) {
 		console.log(C.d('  reusing dev server on :3000'));
 		// localhost (not 127.0.0.1) — some CDN CORS configs allow it, fewer spurious errors.
@@ -365,27 +388,24 @@ console.log(C.b('╚════════════════════
 
 const { base, stop } = await startServer();
 
-const browser = await chromium.launch({
-	headless: !process.env.HEADFUL,
-	args: [
-		'--no-sandbox',
-		'--disable-dev-shm-usage',
-		'--disable-setuid-sandbox',
-		'--use-gl=angle',
-		'--use-angle=swiftshader',
-		'--enable-unsafe-swiftshader',
-		'--ignore-gpu-blocklist',
-		'--mute-audio',
-	],
-});
+function launchBrowser() {
+	return chromium.launch({
+		headless: !process.env.HEADFUL,
+		args: [
+			'--no-sandbox',
+			'--disable-dev-shm-usage',
+			'--disable-setuid-sandbox',
+			'--use-gl=angle',
+			'--use-angle=swiftshader',
+			'--enable-unsafe-swiftshader',
+			'--ignore-gpu-blocklist',
+			'--mute-audio',
+		],
+	});
+}
 
-// results[viewportKey] = array of per-route result objects
-const results = {};
-
-for (const vpKey of viewportKeys) {
-	const vp = VIEWPORTS[vpKey];
-	console.log(C.b(`\n▶ ${vp.label}\n`));
-	const context = await browser.newContext({
+function newContext(browser, vp) {
+	return browser.newContext({
 		viewport: { width: vp.width, height: vp.height },
 		isMobile: vp.isMobile,
 		hasTouch: vp.isMobile,
@@ -394,10 +414,52 @@ for (const vpKey of viewportKeys) {
 			? 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
 			: undefined,
 	});
+}
+
+// A headless Chromium driving dozens of WebGL routes can be killed outright on a
+// loaded or memory-tight box. That is the machine dying, not a page defect, and
+// it used to abort the whole sweep on whichever route happened to be next. Bring
+// a fresh browser up instead and re-run that route: a real defect still fails on
+// the retry, so nothing is excused, only re-measured.
+const BROWSER_GONE = /has been closed|Target closed|browser has (been )?disconnected|Browser closed/i;
+
+let browser = await launchBrowser();
+
+// results[viewportKey] = array of per-route result objects
+const results = {};
+
+for (const vpKey of viewportKeys) {
+	const vp = VIEWPORTS[vpKey];
+	console.log(C.b(`\n▶ ${vp.label}\n`));
+	let context = await newContext(browser, vp);
+	let recycling = null;
+	const recycle = () => {
+		// One relaunch shared by every in-flight worker, never one browser each.
+		recycling ||= (async () => {
+			console.log(C.y('\n  headless browser died (machine, not page) — relaunching\n'));
+			try {
+				await browser.close();
+			} catch {
+				/* already gone */
+			}
+			browser = await launchBrowser();
+			context = await newContext(browser, vp);
+		})().finally(() => {
+			recycling = null;
+		});
+		return recycling;
+	};
 
 	let done = 0;
 	const res = await runPool(routes, CONCURRENCY, async (route) => {
-		const r = await checkRoute(context, base, route);
+		let r;
+		try {
+			r = await checkRoute(context, base, route);
+		} catch (e) {
+			if (!BROWSER_GONE.test(e?.message || '')) throw e;
+			await recycle();
+			r = await checkRoute(context, base, route);
+		}
 		done++;
 		const errs = totalErrors(r);
 		const status = errs === 0 ? C.g('✓') : C.r(`✗ ${errs}`);

@@ -22,7 +22,13 @@ import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { atlasProblems, renderPublicAtlas, summarizeStops } from '../scripts/build-tour-atlas.mjs';
+import {
+	atlasProblems,
+	renderPublicAtlas,
+	stopCountClaims,
+	stopCountProblems,
+	summarizeStops,
+} from '../scripts/build-tour-atlas.mjs';
 import { navigate, NAV_ATTEMPTS } from '../scripts/capture-tour-atlas.mjs';
 import {
 	TOUR_FALLBACK_SELECTORS,
@@ -348,5 +354,58 @@ describe('the committed atlas', () => {
 		const atlas = JSON.parse(readFileSync(resolve(ROOT, 'data/tour-atlas.json'), 'utf8'));
 		const curriculum = JSON.parse(readFileSync(resolve(ROOT, 'public/tour/curriculum.json'), 'utf8'));
 		expect(atlas.stops.map((s) => s.id).sort()).toEqual(curriculum.stops.map((s) => s.id).sort());
+	});
+});
+
+describe('stopCountProblems()', () => {
+	it('reads a stop count out of prose and out of an encoded OG image URL', () => {
+		expect(stopCountClaims('Search 263 stops, filter by chapter.')).toEqual([263]);
+		expect(stopCountClaims('d=Search+263+stops%2C+filter')).toEqual([263]);
+		expect(stopCountClaims('263 stops of the guided tour, each a screenshot')).toEqual([263]);
+	});
+
+	it('ignores copy that never claims a count', () => {
+		expect(stopCountClaims('Every stop on the guided tour, photographed.')).toEqual([]);
+		expect(stopCountProblems(263, [{ label: 'x', text: 'no numbers here' }])).toEqual([]);
+	});
+
+	it('passes copy that agrees with the atlas', () => {
+		expect(
+			stopCountProblems(263, [
+				{ label: 'page', text: 'Search 263 stops. 263 stops of the tour.' },
+			]),
+		).toEqual([]);
+	});
+
+	it('names the file and both numbers when the copy drifts', () => {
+		const problems = stopCountProblems(263, [
+			{ label: 'pages/tour-atlas.html', text: 'Search 185 stops, filter by chapter.' },
+		]);
+		expect(problems).toHaveLength(1);
+		expect(problems[0]).toContain('pages/tour-atlas.html');
+		expect(problems[0]).toContain('185 stops');
+		expect(problems[0]).toContain('263');
+	});
+
+	it('reports one problem per wrong number, not one per occurrence', () => {
+		const problems = stopCountProblems(263, [
+			{ label: 'page', text: '185 stops. Search+185+stops. 185 stops again. 200 stops.' },
+		]);
+		expect(problems).toHaveLength(2);
+	});
+});
+
+describe('the committed copy that advertises the atlas', () => {
+	it('claims the number of stops the atlas actually has', () => {
+		const atlas = JSON.parse(readFileSync(resolve(ROOT, 'data/tour-atlas.json'), 'utf8'));
+		const entry = JSON.parse(readFileSync(resolve(ROOT, 'data/pages.json'), 'utf8'))
+			.sections.flatMap((section) => section.pages)
+			.find((page) => page.path === '/tour/atlas');
+		expect(
+			stopCountProblems(atlas.stops.length, [
+				{ label: 'data/pages.json', text: entry.description },
+				{ label: 'pages/tour-atlas.html', text: readFileSync(resolve(ROOT, 'pages/tour-atlas.html'), 'utf8') },
+			]),
+		).toEqual([]);
 	});
 });

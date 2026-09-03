@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title data-i18n="reputation_index.meta_title">Agent Reputation — three.ws</title>
+		<title data-i18n="reputation_index.meta_title">Reputation Explorer · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 		<meta name="description" content="View and submit on-chain reviews for any AI agent or Ethereum address."  data-i18n-attr="content:reputation_index.meta_description"/>
 		<meta name="theme-color" content="#090909" />
@@ -354,6 +354,36 @@
 			.rep-error-card p { color: rgba(252,165,165,0.7); margin: 0 0 1rem; }
 			.rep-back-link { font-size: 0.875rem; color: rgba(255,255,255,0.50); }
 
+			/* ── Section heading above the review tabs ── */
+			.rep-section-title {
+				font-size: 0.6875rem;
+				text-transform: uppercase;
+				letter-spacing: 1.1px;
+				color: rgba(232, 233, 240, 0.4);
+				font-weight: 700;
+				font-family: inherit;
+			}
+
+			/* ── Recovery actions on a failed attestation read ── */
+			.rep-error-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+			.rep-error-card .rep-action-btn { font-size: 0.8125rem; }
+			.rep-error-card p:last-child { margin-bottom: 0; }
+
+			/* ── Keyboard focus: every control on this page shows where it is ── */
+			.rep-page-wrap a:focus-visible,
+			.rep-page-wrap button:focus-visible,
+			.rep-page-wrap input:focus-visible,
+			.rep-page-wrap select:focus-visible,
+			.rep-page-wrap textarea:focus-visible {
+				outline: 2px solid #ffffff;
+				outline-offset: 2px;
+			}
+			.rep-search-btn:active,
+			.rep-submit-btn-primary:active:not(:disabled) { background: #cfcfcf; }
+			.rep-action-btn:active,
+			.rep-example-chip:active,
+			.rep-connect-btn:active { background: rgba(255, 255, 255, 0.16); }
+
 			/* ── Responsive ── */
 			@media (max-width: 680px) {
 				.rep-search-title { font-size: 1.875rem; }
@@ -385,7 +415,7 @@
 
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:image:alt" content="Reputation Explorer — three.ws">
+	<meta property="og:image:alt" content="Reputation Explorer · three.ws">
 	<meta name="twitter:site" content="@trythreews">
 	<script src="/model-viewer-meshopt.js"></script>
 </head>
@@ -393,7 +423,7 @@
 		<a href="#rep-content" class="h-skip-link" data-i18n="reputation_index.skip_to_content">Skip to content</a>
 
 		<header>
-			<h1 data-i18n-html="reputation_index.three_ws">
+			<div class="site-wordmark" data-i18n-html="reputation_index.three_ws">
 				<a href="/" aria-label="three.ws home"
 					><img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" /><span
 						class="wordmark-dot"
@@ -401,7 +431,7 @@
 					></span
 					>three.ws</a
 				>
-			</h1>
+			</div>
 			<div id="nav-container"></div>
 		</header>
 		<script src="/nav.js"></script>

@@ -526,7 +526,13 @@ function pickDiscovered(links, known) {
 // on, so every error-severity finding is re-checked SOLO before it is reported:
 // findings that reproduce stay errors, findings that do not are demoted to info
 // and labelled, never silently dropped.
-const REVERIFY_CAP = Number(opt('reverify-cap', 60)) || 60;
+// `|| 60` here silently rewrote an explicit `--reverify-cap 0` back to 60, so
+// the documented way to skip the solo re-check never skipped anything. Fall
+// back only when the value is absent or not a number.
+const REVERIFY_CAP = (() => {
+	const raw = Number(opt('reverify-cap', 60));
+	return Number.isFinite(raw) && raw >= 0 ? raw : 60;
+})();
 
 // Collapse the volatile parts of a finding so the same defect matches across
 // runs: blob/object URLs, uuids, base58 mints, query strings and bare numbers
@@ -579,22 +585,36 @@ async function reverify(browser, results, viewports, authed) {
 	}
 
 	let demoted = 0;
+	let checked = 0;
 	for (const suspect of budget) {
 		const viewport = suspect.viewport;
 		if (!viewports.includes(viewport)) continue;
-		const ctx = await browser.newContext({
-			...(viewport === 'mobile' ? devices['iPhone 13'] : { viewport: { width: 1440, height: 900 } }),
-			...(authed ? { storageState: AUTH_STATE } : {}),
-			ignoreHTTPSErrors: true,
-		});
+		let ctx;
+		try {
+			ctx = await browser.newContext({
+				...(viewport === 'mobile' ? devices['iPhone 13'] : { viewport: { width: 1440, height: 900 } }),
+				...(authed ? { storageState: AUTH_STATE } : {}),
+				ignoreHTTPSErrors: true,
+			});
+		} catch (err) {
+			// No browser to re-check with. Every remaining suspect keeps the
+			// severity the sweep gave it, and the report still gets written.
+			console.log(`  ⚠ re-verify stopped: ${err.message.split('\n')[0]}`);
+			return { checked, demoted, skipped: skipped + (budget.length - checked), aborted: true };
+		}
 		let solo;
 		try {
 			solo = await auditRoute(ctx, suspect.route, viewport);
 		} catch {
 			solo = null; // a crashed re-check proves nothing; leave the finding as-is
 		}
-		await ctx.close();
+		try {
+			await ctx.close();
+		} catch {
+			// The context went down with its browser; the session relaunches it.
+		}
 		if (!solo) continue;
+		checked++;
 
 		const reproduced = new Set(solo.findings.map(fingerprint));
 		let localDemotions = 0;
@@ -615,23 +635,44 @@ async function reverify(browser, results, viewports, authed) {
 			`  ${left ? '🔴' : '✓ '} ${suspect.route} [${viewport}] ${left} confirmed, ${localDemotions} demoted\n`,
 		);
 	}
-	return { checked: budget.length, demoted, skipped };
+	return { checked, demoted, skipped };
 }
 
 // ── Worker pool ───────────────────────────────────────────────────────────────
-async function runPool(ctx, routes, viewport, onResult) {
+// A dead browser or a context torn down with it is not a defect in the page
+// being audited: every route after it would otherwise be reported as an
+// `audit-crash` error against a page nobody ever loaded.
+const DEAD_SESSION = /Target (page, context or browser|closed)|browser has been closed|Browser closed|has been closed/i;
+
+async function runPool(pool, routes, viewport, onResult) {
 	const queue = [...routes];
 	const results = [];
 	const worker = async () => {
 		while (queue.length) {
 			const route = queue.shift();
-			const r = await auditRoute(ctx, route, viewport).catch((e) => ({
-				route,
-				viewport,
-				title: '',
-				navStatus: null,
-				findings: [{ type: 'audit-crash', severity: 'error', detail: e.message }],
-			}));
+			let r = null;
+			// One retry on a torn-down session, against a rebuilt context. A second
+			// failure is reported, so a route that genuinely crashes the renderer
+			// still surfaces instead of looping.
+			for (let attempt = 0; attempt < 2; attempt++) {
+				try {
+					r = await auditRoute(await pool.context(), route, viewport);
+					break;
+				} catch (e) {
+					if (attempt === 0 && DEAD_SESSION.test(e.message || '')) {
+						await pool.recycle();
+						continue;
+					}
+					r = {
+						route,
+						viewport,
+						title: '',
+						navStatus: null,
+						findings: [{ type: 'audit-crash', severity: 'error', detail: e.message }],
+					};
+					break;
+				}
+			}
 			results.push(r);
 			onResult(r);
 		}
@@ -710,6 +751,13 @@ function writeReport(allResults, meta) {
 				'. Errors below reproduced on a page loaded by itself, so they are real.',
 		);
 	}
+	if (meta.verification?.aborted) {
+		lines.push(
+			'- ⚠ The solo re-check did not finish (the browser session ended). Errors that were not' +
+				' re-checked are reported exactly as the parallel sweep saw them, so some may be' +
+				' contention artifacts. Re-run those routes with `--concurrency 1` before acting.',
+		);
+	}
 	lines.push('');
 	if (meta.discovered?.length) {
 		lines.push('## Crawl-discovered routes (linked on the site, missing from data/pages.json)');
@@ -763,6 +811,134 @@ function writeReport(allResults, meta) {
 	return { jsonPath, mdPath, totals, pages };
 }
 
+// ── Browser session ───────────────────────────────────────────────────────────
+// A full sweep drives hundreds of WebGL pages through one browser process for
+// well over an hour, on a box that is often running other agents' builds beside
+// it. When that process dies (the kernel reaps it, or a renderer takes the
+// browser down with it), every later `newContext` throws
+// "Target page, context or browser has been closed" and the run aborts with
+// hundreds of already-collected results still in memory and no report on disk.
+// The findings were never the problem, so a dead browser is replaced rather
+// than allowed to end the sweep.
+class BrowserSession {
+	constructor() {
+		this.browser = null;
+		this.relaunches = 0;
+	}
+
+	// The sandbox flags are chromium-only; webkit and firefox reject unknown args.
+	async #launch() {
+		this.browser = await ENGINE.launch(
+			ENGINE_NAME === 'chromium' ? { args: ['--no-sandbox', '--disable-dev-shm-usage'] } : {},
+		);
+		return this.browser;
+	}
+
+	async start() {
+		return this.#launch();
+	}
+
+	// Playwright reports a dead process through isConnected(), but a browser can
+	// also die between that check and the call, so the retry covers both.
+	async newContext(opts) {
+		for (let attempt = 0; ; attempt++) {
+			if (!this.browser || !this.browser.isConnected()) {
+				this.relaunches++;
+				console.log(`  ⚠ browser process gone; relaunching (#${this.relaunches})`);
+				await this.#launch();
+			}
+			try {
+				return await this.browser.newContext(opts);
+			} catch (err) {
+				if (attempt >= 2) throw err;
+				try {
+					await this.browser.close();
+				} catch {
+					// Already gone. Nothing to close, and nothing that changes the retry.
+				}
+				this.browser = null;
+			}
+		}
+	}
+
+	async close() {
+		if (!this.browser) return;
+		try {
+			await this.browser.close();
+		} catch {
+			// Closing a browser that already died is not a sweep failure.
+		}
+		this.browser = null;
+	}
+}
+
+// One shared context per viewport pass, rebuilt on demand. The pool exists so
+// the concurrent workers in runPool can agree on a single replacement instead
+// of each opening its own after the same crash.
+class ContextPool {
+	constructor(session, opts, init) {
+		this.session = session;
+		this.opts = opts;
+		this.init = init;
+		this.ctx = null;
+		this.pending = null;
+		this.recycling = null;
+	}
+
+	async context() {
+		if (this.ctx) return this.ctx;
+		if (!this.pending) {
+			this.pending = (async () => {
+				try {
+					const ctx = await this.session.newContext(this.opts);
+					if (this.init) await ctx.addInitScript(this.init);
+					this.ctx = ctx;
+					return ctx;
+				} finally {
+					// Cleared on failure too: a rejected promise left in `pending`
+					// would be handed to every remaining route, turning one bad
+					// launch into a sweep of identical phantom crashes.
+					this.pending = null;
+				}
+			})();
+		}
+		return this.pending;
+	}
+
+	// Drop the current context so the next `context()` builds a fresh one. Every
+	// worker that hit the same dead session calls this at once, so a recycle
+	// already in flight is awaited rather than started again: otherwise the
+	// second caller would throw away the replacement the first just built.
+	async recycle() {
+		if (this.recycling) return this.recycling;
+		this.recycling = (async () => {
+			const dead = this.ctx;
+			this.ctx = null;
+			this.pending = null;
+			if (dead) {
+				try {
+					await dead.close();
+				} catch {
+					// The context died with its browser; there is nothing left to close.
+				}
+			}
+			this.recycling = null;
+		})();
+		return this.recycling;
+	}
+
+	async close() {
+		const ctx = this.ctx;
+		this.ctx = null;
+		if (!ctx) return;
+		try {
+			await ctx.close();
+		} catch {
+			// Same as above: a context whose browser is gone needs no teardown.
+		}
+	}
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 async function main() {
 	if (DO_LOGIN) {
@@ -782,10 +958,8 @@ async function main() {
 	console.log(`  viewports: ${viewports.join(', ')}  ·  concurrency: ${CONCURRENCY}`);
 	console.log(`  engine: ${ENGINE_NAME}`);
 
-	// The sandbox flags are chromium-only; webkit and firefox reject unknown args.
-	const browser = await ENGINE.launch(
-		ENGINE_NAME === 'chromium' ? { args: ['--no-sandbox', '--disable-dev-shm-usage'] } : {},
-	);
+	const browser = new BrowserSession();
+	await browser.start();
 	const seedCtx = await browser.newContext(
 		authed ? { storageState: AUTH_STATE } : {},
 	);
@@ -806,8 +980,7 @@ async function main() {
 			// Codespaces hostnames aren't in the R2 CORS allowlist; ignore HTTPS errors.
 			ignoreHTTPSErrors: true,
 		};
-		const ctx = await browser.newContext(ctxOpts);
-		await ctx.addInitScript(trackClickListeners);
+		const pool = new ContextPool(browser, ctxOpts, trackClickListeners);
 		console.log(`── ${viewport} ──`);
 		const onResult = (r) => {
 			const e = r.findings.filter((f) => f.severity === 'error').length;
@@ -816,7 +989,7 @@ async function main() {
 			process.stdout.write(`  ${tag} ${r.route} (${e}e/${w}w)\n`);
 			allResults.push(r);
 		};
-		await runPool(ctx, routes, viewport, onResult);
+		await runPool(pool, routes, viewport, onResult);
 		// After the first pass, audit every crawl-discovered route the manifest
 		// missed. They join `routes` so later viewports cover them too.
 		if (firstViewport && !explicitRoutes.length) {
@@ -832,7 +1005,7 @@ async function main() {
 					knownRoutes.add(d);
 					discovered.push(d);
 				}
-				await runPool(ctx, picked.audit, viewport, onResult);
+				await runPool(pool, picked.audit, viewport, onResult);
 			}
 			if (picked.dropped.length) {
 				console.log(
@@ -841,11 +1014,19 @@ async function main() {
 			}
 			firstViewport = false;
 		}
-		await ctx.close();
+		await pool.close();
 	}
 
 	// Confirm every error against a solo re-check before reporting it.
-	const verification = await reverify(browser, allResults, viewports, authed);
+	let verification = { checked: 0, demoted: 0, skipped: 0 };
+	try {
+		verification = await reverify(browser, allResults, viewports, authed);
+	} catch (err) {
+		// Hundreds of collected results are worth more than a perfect re-check.
+		// Report what the sweep saw and say the pass did not finish.
+		console.log(`  ⚠ re-verify failed: ${err.message.split('\n')[0]}`);
+		verification.aborted = true;
+	}
 	await browser.close();
 
 	const { jsonPath, mdPath, totals, pages } = writeReport(allResults, {

@@ -1,8 +1,8 @@
 /**
- * Reputation page — view and submit on-chain attestations for any agent address.
+ * Reputation page: view and submit on-chain attestations for any agent address.
  *
- * Reading:  EAS (Ethereum Attestation Service) via EASScan GraphQL — no wallet required.
- * Writing:  EAS SDK — requires MetaMask/wallet + a small amount of gas.
+ * Reading:  EAS (Ethereum Attestation Service) via EASScan GraphQL, no wallet required.
+ * Writing:  EAS SDK, requires MetaMask/wallet plus a small amount of gas.
  *
  * URL params:
  *   ?address=0x...        attestations for an Ethereum address
@@ -339,6 +339,21 @@ function renderReviewCard(a, chainId) {
 		</div>`;
 }
 
+function renderLoadFailure(chain, address, err) {
+	const reason = err?.message ? String(err.message) : 'the request did not complete';
+	return `<div class="rep-error-card" role="alert">
+		<strong>Reviews could not be loaded</strong>
+		<p>
+			The EAS attestation index for ${esc(chain.name)} did not answer (${esc(reason)}), so this
+			address's review history is unknown. This says nothing about the address itself.
+		</p>
+		<div class="rep-error-actions">
+			<button class="rep-action-btn" id="rep-retry-load" type="button">Try again</button>
+			<a class="rep-action-btn" href="${esc(chain.easscan)}/address/${esc(address)}" target="_blank" rel="noopener">Open on EASScan ↗</a>
+		</div>
+	</div>`;
+}
+
 function renderEmpty(msg) {
 	return `<div class="rep-empty-state">
 		<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
@@ -355,11 +370,11 @@ function mountSubmitForm(container, { recipientAddress, chainId }) {
 		<div class="rep-submit-card">
 			<div class="rep-submit-header">
 				<div>
-					<h3 class="rep-submit-title">Write a review</h3>
+					<h2 class="rep-submit-title">Write a review</h2>
 					<p class="rep-submit-sub">Signed on-chain · permanently public · ${esc(writeChain.name)}${writeChain.testnet ? ' <span class="rep-testnet-tag">testnet</span>' : ''}</p>
 				</div>
 			</div>
-			${writeChain.testnet ? `<div class="rep-testnet-notice" role="note">Reviews are written to <strong>${esc(writeChain.name)}</strong> — a free test network. They're real, signed attestations for trying the flow, not mainnet reputation.</div>` : ''}
+			${writeChain.testnet ? `<div class="rep-testnet-notice" role="note">Reviews are written to <strong>${esc(writeChain.name)}</strong>, a free test network. They're real, signed attestations for trying the flow, not mainnet reputation.</div>` : ''}
 
 			<div id="rep-wallet-area">
 				<button class="rep-connect-btn" id="rep-connect-btn">
@@ -560,7 +575,7 @@ function showSearchForm(appEl) {
 		<div class="rep-search-wrap">
 			<div class="rep-search-hero">
 				<div class="rep-search-glow" aria-hidden="true"></div>
-				<h1 class="rep-search-title">Agent Reputation</h1>
+				<h1 class="rep-search-title">Reputation Explorer</h1>
 				<p class="rep-search-sub">Search on-chain reviews for any AI agent or Ethereum address.</p>
 
 				<form class="rep-search-form" id="rep-search-form" autocomplete="off" novalidate>
@@ -570,6 +585,7 @@ function showSearchForm(appEl) {
 							class="rep-search-input"
 							id="rep-search-input"
 							type="text"
+							aria-label="Ethereum address or ENS name"
 							placeholder="0x address or ENS name (vitalik.eth)…"
 							spellcheck="false"
 							autocorrect="off"
@@ -602,21 +618,21 @@ function showSearchForm(appEl) {
 					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
 					<div>
 						<strong>On-chain reviews</strong>
-						<p>Attestations are signed transactions — permanent, public, and tamper-proof.</p>
+						<p>Attestations are signed transactions: permanent, public, and tamper-proof.</p>
 					</div>
 				</div>
 				<div class="rep-info-card">
 					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3dc1ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
 					<div>
 						<strong>Any address</strong>
-						<p>Search any Ethereum address or ENS name — no registration required.</p>
+						<p>Search any Ethereum address or ENS name. No registration required.</p>
 					</div>
 				</div>
 				<div class="rep-info-card">
 					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22d17a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
 					<div>
 						<strong>EAS-powered</strong>
-						<p>Built on Ethereum Attestation Service — the open standard for on-chain trust.</p>
+						<p>Built on Ethereum Attestation Service, the open standard for on-chain trust.</p>
 					</div>
 				</div>
 			</div>
@@ -645,7 +661,7 @@ function showSearchForm(appEl) {
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
 
-function showSkeleton(appEl, address) {
+function showSkeleton(appEl) {
 	appEl.innerHTML = `
 		<div class="rep-loading-header">
 			<div class="rep-skel rep-skel-lg"></div>
@@ -665,7 +681,7 @@ function showSkeleton(appEl, address) {
 async function renderProfile(appEl, { address, chainId }) {
 	const chain = EAS_CHAINS[chainId];
 	if (!chain) {
-		appEl.innerHTML = `<div class="rep-error-card"><strong>Unsupported network</strong><p>EAS is not available on chain ${chainId}. Try Base (8453), Ethereum (1), or Optimism (10).</p></div>`;
+		appEl.innerHTML = `<div class="rep-error-card" role="alert"><strong>Unsupported network</strong><p>EAS is not available on chain ${chainId}. Try Base (8453), Ethereum (1), or Optimism (10).</p><a href="/reputation" class="rep-back-link">← Search again</a></div>`;
 		return;
 	}
 
@@ -698,11 +714,18 @@ async function renderProfile(appEl, { address, chainId }) {
 
 	resolvedAddress = getAddress(resolvedAddress);
 
-	// Parallel fetch: EAS attestations + ERC-8004 agent lookup
-	const [attestations, agentId] = await Promise.all([
-		fetchAttestations(resolvedAddress, chainId).catch(() => []),
+	// Parallel fetch: EAS attestations + ERC-8004 agent lookup. A failed
+	// attestation read is kept distinct from an empty one: reporting an
+	// unreachable index as "0 reviews" is a false statement about the address.
+	const [attestationResult, agentId] = await Promise.all([
+		fetchAttestations(resolvedAddress, chainId).then(
+			(rows) => ({ rows }),
+			(err) => ({ error: err })
+		),
 		findAgentIdForAddress(resolvedAddress, chainId).catch(() => null),
 	]);
+	const loadError = attestationResult.error || null;
+	const attestations = attestationResult.rows || [];
 
 	// ERC-8004 reputation (if agent is registered)
 	let erc8004Rep = null;
@@ -716,7 +739,7 @@ async function renderProfile(appEl, { address, chainId }) {
 	// Share URL
 	const shareUrl = `${window.location.origin}/reputation?address=${encodeURIComponent(resolvedAddress)}&chain=${chainId}`;
 	const tweetText = encodeURIComponent(
-		`On-chain reputation for ${displayName} on @trythreews — ${stats.count} review${stats.count !== 1 ? 's' : ''}${hasScores ? `, avg ${stats.avgStars}/5 stars` : ''}\n${shareUrl}`
+		`On-chain reputation for ${displayName} on @trythreews: ${stats.count} review${stats.count !== 1 ? 's' : ''}${hasScores ? `, avg ${stats.avgStars}/5 stars` : ''}\n${shareUrl}`
 	);
 	const tweetUrl = `https://x.com/intent/tweet?text=${tweetText}`;
 
@@ -734,10 +757,10 @@ async function renderProfile(appEl, { address, chainId }) {
 				<div class="rep-profile-identity">
 					${identiconHtml(resolvedAddress, 48)}
 					<div>
-						${isEns ? `<div class="rep-ens-name">${esc(displayName)}</div>` : ''}
+						<h1 class="rep-ens-name">${esc(isEns ? displayName : shortAddr(resolvedAddress))}</h1>
 						<div class="rep-address-display">
 							<code class="rep-address-code">${esc(resolvedAddress)}</code>
-							<button class="rep-copy-addr" data-copy="${esc(resolvedAddress)}" title="Copy address" type="button">
+							<button class="rep-copy-addr" data-copy="${esc(resolvedAddress)}" title="Copy address" aria-label="Copy address" type="button">
 								<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
 							</button>
 						</div>
@@ -748,10 +771,10 @@ async function renderProfile(appEl, { address, chainId }) {
 					</div>
 				</div>
 				<div class="rep-profile-actions">
-					<a href="${esc(tweetUrl)}" class="rep-action-btn" target="_blank" rel="noopener">
+					${loadError ? '' : `<a href="${esc(tweetUrl)}" class="rep-action-btn" target="_blank" rel="noopener">
 						<svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
 						Share
-					</a>
+					</a>`}
 					<button class="rep-action-btn" id="rep-copy-link" type="button">
 						<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="3" r="1.5"/><circle cx="12" cy="13" r="1.5"/><circle cx="3" cy="8" r="1.5"/><line x1="10.6" y1="3.9" x2="4.4" y2="7.1"/><line x1="10.6" y1="12.1" x2="4.4" y2="8.9"/></svg>
 						Copy link
@@ -760,10 +783,11 @@ async function renderProfile(appEl, { address, chainId }) {
 				</div>
 			</div>
 
+			${loadError ? renderLoadFailure(chain, resolvedAddress, loadError) : `
 			<div class="rep-stats-grid">
 				<div class="rep-stat-card">
 					<div class="rep-stat-label">Avg Rating</div>
-					<div class="rep-stat-value">${hasScores ? stats.avgStars : '—'}<span class="rep-stat-denom">${hasScores ? ' / 5' : ''}</span></div>
+					<div class="rep-stat-value">${hasScores ? stats.avgStars : 'n/a'}<span class="rep-stat-denom">${hasScores ? ' / 5' : ''}</span></div>
 					<div class="rep-stars-display">${hasScores ? starsHtml(stats.avgStars, 16) : '<span class="rep-no-data">No reviews yet</span>'}</div>
 				</div>
 				<div class="rep-stat-card">
@@ -774,7 +798,7 @@ async function renderProfile(appEl, { address, chainId }) {
 				<div class="rep-stat-card">
 					<div class="rep-stat-label">Score Distribution</div>
 					<div class="rep-dist-mini">
-						${hasScores ? renderStatBar(stats.scoreMap, stats.count) : '<span class="rep-no-data">—</span>'}
+						${hasScores ? renderStatBar(stats.scoreMap, stats.count) : '<span class="rep-no-data">No scores yet</span>'}
 					</div>
 				</div>
 			</div>
@@ -788,6 +812,7 @@ async function renderProfile(appEl, { address, chainId }) {
 			` : ''}
 
 			<div class="rep-reviews-section">
+				<h2 class="rep-section-title">Reviews</h2>
 				<div class="rep-tabs" role="tablist">
 					<button class="rep-tab active" data-filter="all" role="tab" aria-selected="true">
 						All <span class="rep-tab-badge">${all.length}</span>
@@ -805,10 +830,16 @@ async function renderProfile(appEl, { address, chainId }) {
 						: all.slice(0, 30).map((a) => renderReviewCard(a, chainId)).join('')}
 				</div>
 			</div>
+			`}
 
 			<div id="rep-submit-section"></div>
 		</div>
 	`;
+
+	// Retry the attestation read in place when the index was unreachable.
+	appEl.querySelector('#rep-retry-load')?.addEventListener('click', () => {
+		renderProfile(appEl, { address, chainId });
+	});
 
 	// Wire filter tabs
 	const filterData = { all, scored: attestations.filter((a) => a.decoded?.score !== undefined), commented: withComment };
@@ -837,7 +868,11 @@ async function renderProfile(appEl, { address, chainId }) {
 		const btn = e.currentTarget;
 		try { await navigator.clipboard.writeText(resolvedAddress); } catch { /* */ }
 		btn.title = 'Copied!';
-		setTimeout(() => { btn.title = 'Copy address'; }, 2000);
+		btn.setAttribute('aria-label', 'Address copied');
+		setTimeout(() => {
+			btn.title = 'Copy address';
+			btn.setAttribute('aria-label', 'Copy address');
+		}, 2000);
 	});
 
 	// Mount submit form

@@ -52,6 +52,8 @@ const state = {
 	source: null, // EventSource
 	pollTimer: null,
 	status: 'connecting',
+	loading: true, // a read is in flight and there is nothing on screen yet
+	feedOk: false, // the LAST feed read succeeded; gates "live" from ever being a lie
 	filter: {}, // solo mode: {} = the whole platform, else { agentId } | { actor }
 };
 
@@ -61,6 +63,36 @@ const burstGate = createBurstGate(1500);
 
 function loadJson(key, fallback) {
 	try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+}
+
+/* ── i18n ownership ────────────────────────────────────────────────────── */
+
+/*
+ * The page ships its copy as static HTML annotated with data-i18n, and the
+ * catalog pass lands AFTER an async /api/locale fetch. Anything this script
+ * writes into an annotated node before then is silently reverted: the status
+ * pill snaps back to "connecting" while the stream is live, and a pressed play
+ * button snaps back to "Play the economy" while audio is running.
+ * `data-i18n-owned="1"` is this codebase's documented opt-out (src/i18n.js):
+ * claim a node while the script owns its text, hand it back when it returns to
+ * its declared copy so a later locale switch still translates it.
+ */
+function i18nText(key, fallback) {
+	const v = window.threewsI18n?.t?.(key);
+	return typeof v === 'string' && v && v !== key ? v : fallback;
+}
+
+function claimI18n(el, text) {
+	if (!el) return;
+	el.setAttribute('data-i18n-owned', '1');
+	el.textContent = text;
+}
+
+function releaseI18n(el, text) {
+	if (!el) return;
+	el.textContent = text;
+	el.removeAttribute('data-i18n-owned');
+	window.threewsI18n?.apply?.(el); // the catalog may have landed while owned
 }
 
 /* ── Audio engine ──────────────────────────────────────────────────────── */
@@ -424,6 +456,26 @@ function ledgerRowHTML(evt) {
 	</div>`;
 }
 
+// First paint is in flight. A blank strip where the score belongs reads as
+// "nothing ever happens here"; six inert bars read as "the score is loading".
+function loadingLedgerHTML() {
+	return `<div class="sy-skeleton" aria-hidden="true">${'<div class="sy-skel-row"></div>'.repeat(6)}</div>`;
+}
+
+// The feed is unreachable. This must never borrow the quiet-economy copy
+// below: "the economy is quiet" is a claim about the platform, and claiming it
+// while we cannot see the platform at all is simply false.
+function offlineLedgerHTML() {
+	return `
+		<div class="sy-empty sy-empty-error" role="alert">
+			<p><strong>The live event feed is unreachable.</strong></p>
+			<p>Nothing can be scored without it, so the stage is silent. The page
+			keeps retrying by itself every ${Math.round(POLL_MS / 1000)} seconds.</p>
+			<p><button type="button" class="sy-retry" id="sy-retry">Try again now</button></p>
+			<p><a href="/pulse">Watch the Money Pulse</a> or <a href="/economy">see the economy dashboard</a>.</p>
+		</div>`;
+}
+
 function emptyLedgerHTML() {
 	const label = filterLabel(state.filter, state.events);
 	if (label) {
@@ -453,7 +505,18 @@ function emptyLedgerHTML() {
 function renderLedger() {
 	const el = $('sy-ledger');
 	if (!el) return;
-	el.innerHTML = state.events.length ? state.events.map(ledgerRowHTML).join('') : emptyLedgerHTML();
+	if (state.events.length) {
+		el.removeAttribute('aria-busy');
+		el.innerHTML = state.events.map(ledgerRowHTML).join('');
+		return;
+	}
+	if (state.loading) {
+		el.setAttribute('aria-busy', 'true');
+		el.innerHTML = loadingLedgerHTML();
+		return;
+	}
+	el.removeAttribute('aria-busy');
+	el.innerHTML = state.status === 'offline' ? offlineLedgerHTML() : emptyLedgerHTML();
 }
 
 // One newly-arrived event: insert a single node at the head and evict the tail.
@@ -483,6 +546,28 @@ function announceEvent(evt) {
 	el.textContent = d.detail ? `${d.title}, ${d.detail}` : d.title;
 }
 
+/*
+ * The status pill is derived, never assigned ad hoc. It used to be written from
+ * four call sites and they disagreed: a page that had never once reached the
+ * API showed "live (polling)", because the EventSource error handler set
+ * "polling" before the offline guard downstream could read it. Two facts decide
+ * it: whether the last feed read worked, and whether the SSE tail is open.
+ */
+function syncStatus() {
+	if (!state.feedOk) {
+		state.status = state.loading ? 'connecting' : 'offline';
+		return;
+	}
+	if (state.source && state.source.readyState === 1) {
+		state.status = 'live';
+		return;
+	}
+	// The data on screen is real, but the tail is not open. Only claim the
+	// polling fallback once it is genuinely running; otherwise we are still
+	// connecting it.
+	state.status = state.pollTimer ? 'polling' : 'connecting';
+}
+
 function renderStats() {
 	const set = (id, v) => { const el = $(id); if (el) el.textContent = v; };
 	set('sy-notes', String(state.notesPlayed));
@@ -491,9 +576,13 @@ function renderStats() {
 	const pill = $('sy-status');
 	if (pill) {
 		pill.dataset.status = state.status;
-		pill.textContent = state.status === 'live' ? 'live'
+		// "connecting" is the only one of the four that ships as declared copy,
+		// so it is the only one the catalog can translate; the pill is claimed
+		// either way so the catalog pass cannot revert a live status to it.
+		claimI18n(pill, state.status === 'live' ? 'live'
 			: state.status === 'polling' ? 'live (polling)'
-			: state.status === 'offline' ? 'offline' : 'connecting';
+			: state.status === 'offline' ? 'offline'
+			: i18nText('symphony.connecting', 'connecting'));
 	}
 }
 
@@ -509,6 +598,35 @@ function renderSoloChip() {
 	document.body.classList.toggle('sy-soloing', Boolean(name));
 }
 
+/*
+ * The soloing sentence is translated as MARKUP, and every locale's value
+ * carries its own EMPTY <strong id="sy-solo-label">. So the catalog pass does
+ * not merely overwrite the participant's name, it replaces the element holding
+ * it, and a deep link like /symphony?actor=Luna rendered "Soloing . Everything
+ * else is muted."
+ *
+ * The i18n:change event alone cannot fix it: the catalog lands on its own
+ * schedule and in testing it beat this module's own boot (event at 999ms,
+ * listener registered at 1089ms), so half the time there is nothing listening
+ * yet. Watching the bar covers both orders, and marking the sentence
+ * script-owned is not an option because that would freeze it in English.
+ */
+function wireI18nRepaint() {
+	window.addEventListener('i18n:change', () => {
+		renderSoloChip();
+		renderStats();
+	});
+	const bar = $('sy-solo-bar');
+	if (!bar || typeof MutationObserver === 'undefined') return;
+	// Writing the name back mutates the bar again; the equality guard makes that
+	// second pass a no-op, so the observer settles instead of looping.
+	new MutationObserver(() => {
+		const name = filterLabel(state.filter, state.events);
+		const label = $('sy-solo-label');
+		if (name && label && label.textContent !== name) label.textContent = name;
+	}).observe(bar, { childList: true, subtree: true });
+}
+
 /**
  * Switch the whole page to one participant (or back to everything) without a
  * reload: reset the accumulated stream, re-fetch under the new filter, and
@@ -519,6 +637,7 @@ async function setFilter(filter, { push = true } = {}) {
 	state.seen = new Set();
 	state.events = [];
 	state.lastEventTs = 0;
+	state.loading = true; // re-reading under the new filter, not an empty result
 	if (push && typeof history !== 'undefined' && history.replaceState) {
 		const qs = state.filter.agentId ? `?agent=${encodeURIComponent(state.filter.agentId)}`
 			: state.filter.actor ? `?actor=${encodeURIComponent(state.filter.actor)}`
@@ -534,6 +653,12 @@ async function setFilter(filter, { push = true } = {}) {
 
 function wireSolo() {
 	$('sy-ledger')?.addEventListener('click', (e) => {
+		const retry = e.target.closest('.sy-retry');
+		if (retry) {
+			e.preventDefault();
+			retryFeed(retry);
+			return;
+		}
 		const btn = e.target.closest('.sy-solo');
 		if (!btn) return;
 		e.preventDefault();
@@ -541,6 +666,33 @@ function wireSolo() {
 		setFilter(agentId ? { agentId } : { actor: btn.dataset.actor });
 	});
 	$('sy-solo-clear')?.addEventListener('click', () => setFilter({}));
+}
+
+/** Retry the feed by hand from the offline state, and re-open the SSE tail. */
+async function retryFeed(btn) {
+	btn.disabled = true;
+	btn.setAttribute('aria-busy', 'true');
+	btn.textContent = 'Reconnecting…';
+	state.loading = true;
+	syncStatus();
+	renderStats();
+	// A CLOSED EventSource never reconnects on its own; drop it so the reopen
+	// below is a real reconnection rather than a no-op.
+	if (state.source && state.source.readyState === 2) {
+		state.source.close();
+		state.source = null;
+	}
+	const ok = await fetchFirstPaint();
+	if (ok && !state.source) connectStream();
+	syncStatus();
+	renderStats();
+	// A failed retry repaints the offline block, which replaces this button
+	// outright; only a surviving node still needs its idle label back.
+	if (btn.isConnected) {
+		btn.disabled = false;
+		btn.removeAttribute('aria-busy');
+		btn.textContent = 'Try again now';
+	}
 }
 
 /* ── Event plumbing ────────────────────────────────────────────────────── */
@@ -584,12 +736,17 @@ async function fetchFirstPaint() {
 		const data = await res.json();
 		const events = Array.isArray(data.events) ? data.events : [];
 		for (const evt of events.slice().reverse()) acceptEvent(evt, { silent: true });
+		state.feedOk = true;
+		state.loading = false;
+		syncStatus();
 		renderLedger();
 		renderStats();
 		return true;
 	} catch (err) {
 		log.warn('first paint failed', err);
-		state.status = 'offline';
+		state.loading = false;
+		state.feedOk = false;
+		syncStatus();
 		renderStats();
 		renderLedger();
 		return false;
@@ -601,14 +758,14 @@ function connectStream() {
 	try {
 		const source = new EventSource(STREAM_URL);
 		state.source = source;
-		source.addEventListener('hello', () => { state.status = 'live'; stopPolling(); renderStats(); });
+		source.addEventListener('hello', () => { state.feedOk = true; syncStatus(); stopPolling(); renderStats(); });
 		source.addEventListener('event', (msg) => {
 			try { acceptEvent(JSON.parse(msg.data)); } catch { /* malformed frame */ }
 		});
 		source.onerror = () => {
 			// EventSource auto-reconnects; run the poll fallback while it is down.
-			state.status = 'polling';
 			startPolling();
+			syncStatus();
 			renderStats();
 		};
 	} catch (err) {
@@ -619,12 +776,15 @@ function connectStream() {
 
 function startPolling() {
 	if (state.pollTimer) return;
-	state.status = state.status === 'offline' ? 'offline' : 'polling';
 	state.pollTimer = setInterval(async () => {
-		const ok = await fetchFirstPaintDiff();
-		state.status = ok ? (state.source && state.source.readyState === 1 ? 'live' : 'polling') : 'offline';
+		state.feedOk = await fetchFirstPaintDiff();
+		syncStatus();
 		renderStats();
+		// The offline and quiet-economy blocks are different sentences; a poll
+		// that flips the verdict has to repaint the one on screen.
+		if (!state.events.length) renderLedger();
 	}, POLL_MS);
+	syncStatus(); // the timer exists now, so "polling" is finally true
 }
 
 function stopPolling() {
@@ -694,7 +854,7 @@ function toggleRecord() {
 		rec.start();
 		audio.recorder = rec;
 		btn.setAttribute('aria-pressed', 'true');
-		btn.textContent = 'Stop + save clip';
+		claimI18n(btn, 'Stop + save clip');
 		audio.recordTimer = setTimeout(stopRecord, RECORD_MAX_MS);
 	} catch (err) {
 		log.warn('recorder failed', err);
@@ -709,10 +869,33 @@ function stopRecord() {
 		try { audio.recorder.stop(); } catch { /* already stopped */ }
 		audio.recorder = null;
 	}
-	if (btn) { btn.setAttribute('aria-pressed', 'false'); btn.textContent = 'Record a video clip'; }
+	if (btn) {
+		btn.setAttribute('aria-pressed', 'false');
+		releaseI18n(btn, 'Record a video clip');
+	}
 }
 
 /* ── Controls ──────────────────────────────────────────────────────────── */
+
+/*
+ * The play button's declared copy is translated MARKUP (`<span>Play the
+ * economy</span>`), so its two states are handled as a claim/release pair: the
+ * script owns the node while it reads "Pause", and hands it back on stop so the
+ * catalog restores the visitor's own language rather than English.
+ */
+function setPlayLabel(btn, playing) {
+	if (!btn) return;
+	btn.setAttribute('aria-pressed', String(playing));
+	const span = btn.querySelector('span') || btn.appendChild(document.createElement('span'));
+	if (playing) {
+		btn.setAttribute('data-i18n-owned', '1');
+		span.textContent = 'Pause';
+		return;
+	}
+	span.textContent = 'Play the economy';
+	btn.removeAttribute('data-i18n-owned');
+	window.threewsI18n?.apply?.(btn);
+}
 
 let recapDone = false;
 
@@ -723,7 +906,11 @@ async function togglePlay() {
 		stopDrone();
 		stopRecord();
 		if (audio.ctx) await audio.ctx.suspend().catch(() => {});
-		if (btn) { btn.setAttribute('aria-pressed', 'false'); btn.querySelector('span').textContent = 'Play the economy'; }
+		setPlayLabel(btn, false);
+		// A clip cut while the context is suspended is a file full of silence.
+		// Take the affordance away with the sound rather than ship that.
+		const stoppedRec = $('sy-record');
+		if (stoppedRec) stoppedRec.hidden = true;
 		return;
 	}
 	const ctx = ensureAudio();
@@ -736,7 +923,7 @@ async function togglePlay() {
 	await ctx.resume().catch(() => {});
 	state.playing = true;
 	startDrone();
-	if (btn) { btn.setAttribute('aria-pressed', 'true'); btn.querySelector('span').textContent = 'Pause'; }
+	setPlayLabel(btn, true);
 	const recBtn = $('sy-record');
 	if (recBtn && audio.recordDest) recBtn.hidden = false;
 
@@ -807,8 +994,10 @@ async function main() {
 	wireControls();
 	wireLegend();
 	wireSolo();
+	wireI18nRepaint();
 	renderSoloChip();
 	renderStats();
+	renderLedger(); // skeleton while the first read is in flight
 	await fetchFirstPaint();
 	renderSoloChip(); // resolve an ?agent=<id> deep link to its display name
 	connectStream();
