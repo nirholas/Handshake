@@ -1302,6 +1302,34 @@ const appConfig = {
 				});
 			},
 		},
+		// Runtime ES modules that live in public/ (the /launch and /launch-studio
+		// coin launchers and their /studio/*-panel.js chain) are loaded by URL at
+		// runtime, never bundled. Production serves those files verbatim, but the
+		// dev server routes a module request through the transform pipeline, which
+		// refuses a publicDir file and answers 500 "should not be imported from
+		// source code". The page then renders its designed fallback while the
+		// console carries an error production never sees. Serve any existing
+		// publicDir .js raw, ahead of the transform middleware, so dev resolves
+		// these imports exactly the way the deployed site does. Serve-only; the
+		// build already copies public/ as-is.
+		{
+			name: 'dev-serve-public-esm',
+			apply: 'serve',
+			configureServer(server) {
+				const publicRoot = resolve(__dirname, 'public');
+				server.middlewares.use((req, res, next) => {
+					const path = (req.url || '').split('?')[0];
+					if (!path.endsWith('.js')) return next();
+					const file = resolve(publicRoot, '.' + path);
+					// Containment check: a crafted ../ path must never escape public/.
+					if (file !== publicRoot && !file.startsWith(publicRoot + sep)) return next();
+					if (!existsSync(file)) return next();
+					res.setHeader('content-type', 'text/javascript; charset=utf-8');
+					res.setHeader('cache-control', 'no-cache');
+					return res.end(readFileSync(file));
+				});
+			},
+		},
 		{
 			name: 'vercel-rewrites',
 			configureServer(server) {

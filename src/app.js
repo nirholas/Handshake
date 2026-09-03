@@ -2512,6 +2512,22 @@ class App {
 		`;
 	}
 
+	// The app shell carries the three.ws wordmark as the document's <h1>, which is
+	// right for the viewer route where nothing else names the page. A page mode
+	// (/showcase, /deploy) renders its own real heading, so the wordmark becomes a
+	// second <h1> and a screen reader is handed two competing page titles. Demote
+	// it to a plain element, preserving its markup, classes and i18n binding, so
+	// the page's own heading is the only <h1> in the document.
+	_demoteBrandHeadingForPageMode() {
+		const brand = document.querySelector('header h1');
+		if (!brand) return;
+		const div = document.createElement('div');
+		for (const attr of brand.attributes) div.setAttribute(attr.name, attr.value);
+		div.classList.add('brand-wordmark');
+		while (brand.firstChild) div.appendChild(brand.firstChild);
+		brand.replaceWith(div);
+	}
+
 	async _showShowcasePage() {
 		try {
 			const main = this.el.querySelector('main.wrap') || this.el;
@@ -2523,6 +2539,8 @@ class App {
 			if (authGate) authGate.style.display = 'none';
 			const presence = this.el.querySelector('.agent-presence-sidebar');
 			if (presence) presence.style.display = 'none';
+
+			this._demoteBrandHeadingForPageMode();
 
 			const page = document.createElement('section');
 			page.className = 'showcase-page';
@@ -2558,6 +2576,8 @@ class App {
 			// float over the deploy Live Preview panel — it has no purpose here.
 			const onboarding = this.el.querySelector('#agent-onboarding');
 			if (onboarding) onboarding.hidden = true;
+
+			this._demoteBrandHeadingForPageMode();
 
 			const page = document.createElement('section');
 			page.className = 'deploy-page';
