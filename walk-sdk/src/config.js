@@ -21,6 +21,10 @@ export const DEFAULT_EXCLUDED_PREFIXES = [
 	'/pose',
 	'/mocap-studio',
 	'/avatar-studio',
+	// The widget studio absorbed the /embed editor. It runs a full-bleed live
+	// preview iframe, so a corner mascot would sit on top of the thing the page
+	// exists to show, exactly as it would have on /embed.
+	'/studio',
 ];
 
 export function resolveConfig(opts = {}) {

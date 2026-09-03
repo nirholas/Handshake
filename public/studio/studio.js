@@ -70,7 +70,25 @@ const WIDGET_TYPES = {
 		status: 'ready',
 		icon: '🚶',
 	},
+	'agent-chat': {
+		label: 'Agent Chat',
+		desc: "An existing agent's chat page, embedded. Visitors talk to the agent you already published.",
+		status: 'ready',
+		icon: '💬',
+	},
 };
+
+// Types whose embed URL carries the entire configuration, so a copyable snippet
+// needs no database row behind it. These are the two the /embed editor used to
+// own, and they are what makes signed-out snippet generation possible: the
+// walking avatar bakes its config into /walk-embed?..., and agent chat is a
+// plain iframe to an agent's own public page.
+const URL_BAKED_TYPES = new Set(['walking-avatar', 'agent-chat']);
+
+// Widget types that do not display a picked avatar at all: agent chat renders
+// whatever avatar the agent itself owns, so the left-hand avatar column is not
+// a prerequisite for generating its snippet.
+const AVATARLESS_TYPES = new Set(['agent-chat']);
 
 // Mirrors WALK_SIZE_PRESETS in src/widget-types.js — inlined because /public is
 // served verbatim (no build transform), same as WIDGET_TYPES above.
@@ -185,6 +203,12 @@ const TYPE_DEFAULTS = {
 		badge: true,
 		responsive: false,
 	},
+	'agent-chat': {
+		agentId: '',
+		width: 400,
+		height: 600,
+		responsive: false,
+	},
 };
 
 function defaultConfig(type) {
@@ -242,6 +266,11 @@ const preAvatarId = params.get('avatar');
 if (pickType && WIDGET_TYPES[pickType]) state.type = pickType;
 if (preModel) state.preselectedModel = preModel;
 
+// An /embed-shaped query (mode=, avatar=, env=, controls=, …) configures the
+// studio directly. Old /embed links rewrite here, so this is what keeps every
+// saved /embed?… URL landing on the configuration it described.
+const embedSeed = editId ? null : hydrateFromEmbedParams(params);
+
 (async function boot() {
 	const me = await fetchMe();
 	state.user = me || null;
@@ -256,6 +285,7 @@ if (preModel) state.preselectedModel = preModel;
 
 	if (editId) await loadForEdit(editId);
 	else if (tplId) await cloneTemplate(tplId);
+	else if (embedSeed) await applyEmbedSeed(embedSeed);
 	else if (preAvatarId) await selectByAvatarId(preAvatarId);
 	else if (state.preselectedModel) selectByModelUrl(state.preselectedModel);
 	else if (!state.avatarId) selectAvatar(DEMO_AVATAR.id);
@@ -267,7 +297,32 @@ if (preModel) state.preselectedModel = preModel;
 	previewIfr.addEventListener('load', postConfigToPreview);
 
 	updatePreview(true);
+	reflectConfigUrl();
 })();
+
+// Land an /embed-shaped seed on real studio state. A chat seed needs nothing
+// resolved (the agent id IS the configuration); an avatar seed is either a
+// model URL, or an id we try to look up so the picker shows the right tile.
+async function applyEmbedSeed(seed) {
+	renderTypeGrid();
+	renderTypeFields();
+	hydrateForm();
+	if (seed.kind === 'agent') return;
+	if (!seed.ref) return selectAvatar(DEMO_AVATAR.id);
+	if (/^https?:\/\//i.test(seed.ref) || seed.ref.startsWith('/')) {
+		state.preselectedModel = seed.ref;
+		selectByModelUrl(seed.ref);
+		return;
+	}
+	await selectByAvatarId(seed.ref, { fallbackToDemo: false });
+	// An id the picker cannot illustrate still embeds: /walk-embed accepts an
+	// avatar id directly, so the snippet stays correct for the avatar the link
+	// named instead of quietly becoming a snippet for the demo agent.
+	if (!state.avatarId) {
+		state.preselectedModel = seed.ref;
+		updatePreview(true);
+	}
+}
 
 // ── user menu ────────────────────────────────────────────────────────────────
 function userDisplayName(u) {
@@ -619,7 +674,12 @@ function renderTypeFields() {
 	// The walking avatar has its own self-contained visual model (own background,
 	// environment, controls) and renders in /walk-embed, not the turntable viewer
 	// — so the generic 3D brand fields don't apply. Hide them for this type.
-	toggleBrandFields(state.type !== 'walking-avatar');
+	// The walking avatar and agent chat both render in their own runtime
+	// (/walk-embed and the agent's page), not the turntable viewer, so the
+	// generic 3D brand fields do not apply to either.
+	toggleBrandFields(state.type !== 'walking-avatar' && state.type !== 'agent-chat');
+	// Agent chat has no avatar of its own to pick: the agent already owns one.
+	toggleAvatarColumn(!AVATARLESS_TYPES.has(state.type));
 	const t = WIDGET_TYPES[state.type];
 	if (t.status === 'pending') {
 		const banner = document.createElement('div');
@@ -744,6 +804,58 @@ function renderTypeFields() {
 	if (state.type === 'walking-avatar') {
 		mountWalkingAvatarExtras(wrap);
 	}
+	if (state.type === 'agent-chat') {
+		mountAgentChatExtras(wrap);
+	}
+}
+
+// Agent chat points at an agent that already exists on three.ws, so its whole
+// configuration is one id plus the frame size. Everything else (the agent's
+// avatar, voice, brain and greeting) belongs to that agent, not to the embed.
+function mountAgentChatExtras(wrap) {
+	wrap.appendChild(
+		textField('agentId', 'Agent ID or handle', state.config.agentId || '', {
+			max: 120,
+			placeholder: 'e.g. ada, or the id from your agent page URL',
+		}),
+	);
+
+	const hint = document.createElement('p');
+	hint.className = 'muted';
+	hint.style.margin = '-4px 0 12px';
+	hint.innerHTML =
+		'This is the last part of your agent page URL: <code>three.ws/a/&lt;id&gt;</code>. ' +
+		'Browse published agents in the <a href="/marketplace">marketplace</a>.';
+	wrap.appendChild(hint);
+
+	const sizeWrap = document.createElement('div');
+	sizeWrap.className = 'field-group';
+	const sizeTitle = document.createElement('div');
+	sizeTitle.className = 'field-group-title';
+	sizeTitle.textContent = 'Embed size';
+	sizeWrap.appendChild(sizeTitle);
+	sizeWrap.appendChild(
+		numberField('width', 'Width (px)', state.config.width ?? 400, { min: 100, max: 3000, step: 10 }),
+	);
+	sizeWrap.appendChild(
+		numberField('height', 'Height (px)', state.config.height ?? 600, { min: 100, max: 3000, step: 10 }),
+	);
+	wrap.appendChild(sizeWrap);
+
+	wrap.appendChild(
+		boolField(
+			'responsive',
+			'Responsive width — fills its container instead of a fixed size',
+			state.config.responsive === true,
+		),
+	);
+}
+
+// Hide the whole "pick an avatar" column for types that do not use one, so the
+// studio never asks for an input it will ignore.
+function toggleAvatarColumn(show) {
+	const block = document.querySelector('.studio-col-left #avatar-list')?.closest('.panel');
+	if (block) block.hidden = !show;
 }
 
 // Show/hide the generic 3D brand fields (background, accent, caption, controls,
@@ -1384,6 +1496,58 @@ function selectAvatar(id) {
 	launchPanel?.avatarChanged();
 }
 
+// Raw model URL as the avatar. A .glb or .vrm the user hosts themselves is a
+// first-class input for the URL-baked embed types: /walk-embed loads it by URL,
+// so nothing has to be uploaded here and no account is involved. If the URL
+// happens to be one of the signed-in user's own stored models, selectByModelUrl
+// registers it as a real avatar instead, which is strictly better.
+function wireModelUrlInput() {
+	const input = $('#model-url-input');
+	const btn = $('#model-url-btn');
+	const status = $('#model-url-status');
+	if (!input || !btn) return;
+
+	const setStatus = (msg, kind) => {
+		if (!status) return;
+		status.hidden = !msg;
+		status.textContent = msg || '';
+		status.className = kind === 'error' ? 'public-search-status form-error' : 'muted public-search-status';
+	};
+
+	const apply = () => {
+		const raw = input.value.trim();
+		if (!raw) return setStatus('Paste a link to a .glb or .vrm file.', 'error');
+		let parsed;
+		try {
+			parsed = new URL(raw, location.origin);
+		} catch {
+			return setStatus('That is not a valid URL.', 'error');
+		}
+		if (!/^https?:$/.test(parsed.protocol)) {
+			return setStatus('Model URLs must be http or https.', 'error');
+		}
+		if (!/\.(glb|gltf|vrm)$/i.test(parsed.pathname)) {
+			return setStatus('The link must end in .glb, .gltf or .vrm.', 'error');
+		}
+		setStatus('Loading this model into the preview...');
+		state.preselectedModel = parsed.toString();
+		state.avatarId = null;
+		renderAvatarList();
+		renderPublicAvatarList();
+		updatePreview(true);
+		reflectConfigUrl();
+		setStatus('Previewing your hosted model. The snippet points straight at this URL.');
+		selectByModelUrl(parsed.toString());
+	};
+
+	btn.addEventListener('click', apply);
+	input.addEventListener('keydown', (e) => {
+		if (e.key !== 'Enter') return;
+		e.preventDefault();
+		apply();
+	});
+}
+
 function findAvatar(id) {
 	return (
 		state.avatars.find((a) => a.id === id) ||
@@ -1392,7 +1556,11 @@ function findAvatar(id) {
 	);
 }
 
-async function selectByAvatarId(id) {
+// `fallbackToDemo:false` is for callers that have a working plan B. An /embed
+// deep link carries an avatar id the /walk-embed runtime accepts directly, so
+// silently swapping in the demo avatar there would produce a snippet for the
+// wrong avatar rather than an honest one the picker just cannot illustrate.
+async function selectByAvatarId(id, { fallbackToDemo = true } = {}) {
 	const existing = findAvatar(id);
 	if (existing) return selectAvatar(existing.id);
 	try {
@@ -1422,6 +1590,7 @@ async function selectByAvatarId(id) {
 		selectAvatar(avatar.id);
 	} catch (err) {
 		console.warn('[studio] selectByAvatarId failed', err);
+		if (!fallbackToDemo) return;
 		toast('Pre-selected avatar not available', 'error');
 		if (!state.avatarId) selectAvatar(DEMO_AVATAR.id);
 	}
@@ -1462,10 +1631,17 @@ function selectByModelUrl(url) {
 		}
 	}
 
-	// Not registerable (e.g. a Forge creation handed off via ?model=…) — the
-	// preview still renders it through state.preselectedModel, so this is a
-	// working preview-only session, not a failure.
-	toast('Previewing this model — pick or save an avatar from your library to publish', 'info');
+	// Not registerable (a self-hosted GLB, or a Forge creation handed off via
+	// ?model=…). The preview renders it through state.preselectedModel, and the
+	// URL-baked types embed it by URL, so this is a complete session on its own,
+	// not a degraded one. Only the widget types that need a saved row have
+	// anything left to ask for.
+	toast(
+		URL_BAKED_TYPES.has(state.type)
+			? 'Using your hosted model — the embed snippet points straight at this URL'
+			: 'Previewing this model — pick or save an avatar from your library to publish',
+		'info',
+	);
 }
 
 // Returns the storage_key if url is an R2 object under this user's prefix,
@@ -1593,6 +1769,8 @@ function wireButtons() {
 	saveBtn.addEventListener('click', () => save({ generate: false }));
 	generateBtn.addEventListener('click', () => save({ generate: true }));
 
+	wireModelUrlInput();
+
 	const deletBtn = $('#delete-widget-btn');
 	if (deletBtn) {
 		deletBtn.addEventListener('click', deleteWidget);
@@ -1686,7 +1864,109 @@ let previewSrcKey = '';
 
 function schedulePreview() {
 	clearTimeout(previewTimer);
-	previewTimer = setTimeout(() => updatePreview(false), 200);
+	previewTimer = setTimeout(() => {
+		updatePreview(false);
+		reflectConfigUrl();
+	}, 200);
+}
+
+// ── Deep-linkable config ─────────────────────────────────────────────────────
+// Every control reflects into location.search, and boot reads the same names
+// back, so a configured studio URL is itself a shareable artifact: send someone
+// the link and they open your exact setup. The parameter names are deliberately
+// the ones the retired /embed editor used, which is what lets an old
+// /embed?mode=walking&avatar=… bookmark rewrite here and land on the same
+// configuration instead of a blank studio.
+//
+// Only URL-baked types reflect. A saved widget already has a canonical address
+// (?edit=<id>), and duplicating its config into the query would fight it.
+const EMBED_MODE_BY_CONTROLS = { none: 'idle', joystick: 'walking', keyboard: 'walking' };
+
+function embedModeFromState() {
+	if (state.type === 'agent-chat') return 'chat';
+	const c = state.config;
+	if (c.controls === 'none') return c.autoplay ? 'idle' : 'static';
+	return 'walking';
+}
+
+function reflectConfigUrl() {
+	if (!URL_BAKED_TYPES.has(state.type) || state.editingId) return;
+	const url = new URL(location.href);
+	const q = url.searchParams;
+	const c = state.config;
+	// Studio-native keys that must not survive a config change.
+	q.delete('template');
+
+	if (state.type === 'agent-chat') {
+		q.set('mode', 'chat');
+		const id = (c.agentId || '').trim();
+		if (id) q.set('avatar', id); else q.delete('avatar');
+		q.set('width', String(c.width ?? 400));
+		q.set('height', String(c.height ?? 600));
+		for (const k of ['env', 'bg', 'speed', 'ground', 'gestures', 'badge', 'controls', 'autoplay', 'model']) q.delete(k);
+	} else {
+		q.set('mode', embedModeFromState());
+		const avatarParam = walkAvatarParam();
+		if (avatarParam) q.set('avatar', avatarParam); else q.delete('avatar');
+		q.set('width', String(c.width ?? 480));
+		q.set('height', String(c.height ?? 420));
+		q.set('env', c.environment || 'studio');
+		q.set('bg', c.bg || 'transparent');
+		if (c.controls === 'none') { q.delete('controls'); q.delete('autoplay'); }
+		else { q.set('controls', c.controls || 'joystick'); q.set('autoplay', String(c.autoplay === true)); }
+		if (Number(c.walkSpeed) !== 1) q.set('speed', String(c.walkSpeed)); else q.delete('speed');
+		if (c.ground === false) q.set('ground', 'false'); else q.delete('ground');
+		if (c.gestures === true) q.set('gestures', 'true'); else q.delete('gestures');
+		if (c.badge === false) q.set('badge', 'false'); else q.delete('badge');
+	}
+	q.set('type', state.type);
+	history.replaceState(null, '', url);
+}
+
+// Read an /embed-shaped query into studio state. Returns the avatar/agent
+// reference the caller still has to resolve (an id, a handle, or a model URL),
+// or null when the URL carried no embed configuration at all.
+function hydrateFromEmbedParams(p) {
+	const mode = p.get('mode');
+	const avatar = (p.get('avatar') || p.get('id') || '').trim();
+	if (!mode && !avatar) return null;
+
+	const num = (key, fallback) => {
+		const n = parseInt(p.get(key), 10);
+		return Number.isFinite(n) ? Math.max(100, Math.min(3000, n)) : fallback;
+	};
+
+	if (mode === 'chat') {
+		state.type = 'agent-chat';
+		state.config = defaultConfig('agent-chat');
+		state.config.agentId = avatar;
+		state.config.width = num('width', 400);
+		state.config.height = num('height', 600);
+		return { kind: 'agent', ref: avatar };
+	}
+
+	state.type = 'walking-avatar';
+	state.config = defaultConfig('walking-avatar');
+	const c = state.config;
+	// static and idle are both "no controls"; only autoplay separates them.
+	if (mode === 'static') { c.controls = 'none'; c.autoplay = false; }
+	else if (mode === 'idle') { c.controls = 'none'; c.autoplay = true; }
+	else {
+		const controls = p.get('controls');
+		c.controls = ['joystick', 'keyboard', 'none'].includes(controls) ? controls : 'joystick';
+		if (p.get('autoplay') != null) c.autoplay = p.get('autoplay') === 'true' || p.get('autoplay') === '1';
+	}
+	if (p.get('env')) c.environment = p.get('env');
+	if (p.get('bg')) c.bg = p.get('bg');
+	const speed = Number(p.get('speed'));
+	if (Number.isFinite(speed) && speed > 0) c.walkSpeed = Math.min(2, Math.max(0.5, speed));
+	if (p.get('ground') === 'false') c.ground = false;
+	if (p.get('gestures') === 'true') c.gestures = true;
+	if (p.get('badge') === 'false') c.badge = false;
+	c.width = num('width', c.width);
+	c.height = num('height', c.height);
+	c.size = 'custom';
+	return { kind: 'avatar', ref: avatar };
 }
 
 const previewFrameEl = $('#preview-frame');
@@ -1786,8 +2066,41 @@ function postWalkConfigToPreview() {
 	send('walk:env', { env: state.config.environment || 'studio' });
 }
 
+// The agent chat embed is a plain iframe to the agent's own page, so the
+// preview loads exactly the URL the snippet ships. Nothing to postMessage: the
+// page owns its own config.
+function updateAgentChatPreview(forceReload) {
+	const id = (state.config.agentId || '').trim();
+	captureBtn.disabled = true;
+	if (!id) {
+		previewSt.className = 'muted';
+		previewSt.textContent = 'Enter an agent ID to preview the chat embed';
+		previewSrcKey = 'agent-chat|';
+		previewIfr.removeAttribute('src');
+		return;
+	}
+	const key = `agent-chat|${id}`;
+	if (forceReload || key !== previewSrcKey) {
+		previewSrcKey = key;
+		previewLoading = true;
+		previewFailed = false;
+		previewSt.className = 'muted';
+		previewSt.textContent = 'Loading preview…';
+		previewFrameEl?.classList.add('is-loading');
+		previewIfr.src = agentChatSrc(id, location.origin);
+	} else if (!previewFailed) {
+		previewSt.className = 'preview-status-live';
+		previewSt.textContent = 'Live preview';
+	}
+}
+
+function agentChatSrc(agentId, origin) {
+	return `${origin}/a/${encodeURIComponent(agentId)}?embed=1`;
+}
+
 function updatePreview(forceReload) {
 	if (state.type === 'walking-avatar') return updateWalkPreview(forceReload);
+	if (state.type === 'agent-chat') return updateAgentChatPreview(forceReload);
 	if (!state.avatarId && !state.preselectedModel) {
 		previewSt.className = 'muted';
 		previewSt.textContent = 'Pick an avatar to preview';
@@ -1853,6 +2166,8 @@ window.addEventListener('message', (event) => {
 function postConfigToPreview() {
 	if (!previewIfr.contentWindow) return;
 	if (state.type === 'walking-avatar') return postWalkConfigToPreview();
+	// Agent chat renders the agent's own page; it has no studio config channel.
+	if (state.type === 'agent-chat') return;
 	try {
 		previewIfr.contentWindow.postMessage(
 			{ type: 'widget:config', config: { ...state.config } },
@@ -1867,8 +2182,23 @@ function postConfigToPreview() {
 async function save({ generate }) {
 	errEl.hidden = true;
 
-	if (!state.avatarId) return showError('Pick an avatar first');
 	if (!WIDGET_TYPES[state.type]) return showError('Pick a widget type');
+	if (state.type === 'agent-chat' && !(state.config.agentId || '').trim()) {
+		return showError('Enter the ID of the agent whose chat page you want to embed');
+	}
+	if (!state.avatarId && !AVATARLESS_TYPES.has(state.type) && !state.preselectedModel) {
+		return showError('Pick an avatar first');
+	}
+
+	// Snippet-only generation. The URL-baked types put their whole configuration
+	// in the embed URL, so a copyable, working snippet needs no row in the
+	// database and therefore no account. This is what /embed did for years and
+	// what a redirect here would otherwise have taken away: configure, copy,
+	// leave. Signing in is an upgrade (a saved draft, a shareable /w/ link, edits
+	// that reach live sites), never a toll gate on the snippet itself.
+	if (generate && URL_BAKED_TYPES.has(state.type) && (!state.user || !state.name?.trim())) {
+		return openEmbedModal({ id: null, type: state.type, is_guest: true });
+	}
 
 	// Demo avatar: no DB row, just open the embed modal pointed at the
 	// canonical demo fixture for this widget type. Studio tweaks aren't
@@ -1890,6 +2220,11 @@ async function save({ generate }) {
 		return;
 	}
 	if (!state.name?.trim()) return showError('Name is required');
+	if (!state.avatarId) {
+		return showError(
+			'Saving a widget needs an avatar from your library. Pick one, or press Get embed code to copy a snippet for the model you pasted.',
+		);
+	}
 
 	const body = {
 		type: state.type,
@@ -2028,8 +2363,30 @@ function _refreshWalkSnippet() {
 	$('#embed-preview-iframe').src = _currentEmbedUrl;
 }
 
+// Agent chat: a plain iframe to the agent's page. Microphone is in the allow
+// list because that page offers voice input; referrerpolicy keeps the host
+// site's full URL out of our logs, only the origin is sent.
+function _refreshChatSnippet() {
+	const id = (state.config.agentId || '').trim();
+	const w = parseInt($('#embed-width').value) || 400;
+	const h = parseInt($('#embed-height').value) || 600;
+	const src = agentChatSrc(id, 'https://three.ws');
+	const allow = 'microphone; autoplay; clipboard-write';
+	const base = 'border:0;border-radius:16px';
+	$('#embed-iframe-snippet').value = id
+		? (state.config.responsive === true
+			? `<div style="position:relative;width:100%;max-width:${w}px;aspect-ratio:${w}/${h}">\n` +
+			  `  <iframe src="${src}" style="position:absolute;inset:0;width:100%;height:100%;${base}"` +
+			  ` allow="${allow}" referrerpolicy="strict-origin-when-cross-origin" loading="lazy"></iframe>\n</div>`
+			: `<iframe src="${src}" width="${w}" height="${h}" style="${base}"` +
+			  ` allow="${allow}" referrerpolicy="strict-origin-when-cross-origin" loading="lazy"></iframe>`)
+		: '<!-- Enter an agent ID to generate the chat embed snippet -->';
+	$('#embed-preview-iframe').src = id ? agentChatSrc(id, location.origin) : 'about:blank';
+}
+
 function _refreshEmbedSnippet() {
 	if (_currentWidgetType === 'walking-avatar') return _refreshWalkSnippet();
+	if (_currentWidgetType === 'agent-chat') return _refreshChatSnippet();
 	if (!_currentEmbedUrl) return;
 	const url = _buildEmbedUrl(_currentEmbedUrl);
 	const w = parseInt($('#embed-width').value) || 600;
@@ -2041,11 +2398,38 @@ function _refreshEmbedSnippet() {
 
 function openEmbedModal(widget) {
 	const origin = location.origin;
-	const shareUrl = `${origin}/w/${widget.id}`;
 	_currentWidgetType = widget.type || state.type;
+	// A guest (or an unnamed, unsaved) session has no /w/ page and no widget id
+	// to hang a script tag on, so those two rows are hidden rather than filled
+	// with something that would 404 on the user's site.
+	const hasRow = !!widget.id;
 
 	const demoNote = $('#embed-demo-note');
 	if (demoNote) demoNote.hidden = !widget.is_demo;
+	const guestNote = $('#embed-guest-note');
+	if (guestNote) guestNote.hidden = hasRow;
+	const shareField = $('#embed-share-field');
+	if (shareField) shareField.hidden = !hasRow;
+	const scriptField = $('#embed-script-field');
+	if (scriptField) scriptField.hidden = !hasRow;
+	if (hasRow) $('#embed-share-url').value = `${origin}/w/${widget.id}`;
+
+	if (_currentWidgetType === 'agent-chat') {
+		// The agent's own page, embed-chromed. Nothing here is stored: the agent
+		// is the record, and it already exists.
+		_currentEmbedUrl = agentChatSrc((state.config.agentId || '').trim(), origin);
+		$('#embed-options').hidden = true;
+		$('#embed-width').value = state.config.width || 400;
+		$('#embed-height').value = state.config.height || 600;
+		_refreshEmbedSnippet();
+		if (hasRow) {
+			$('#embed-script-snippet').value =
+				`<script async src="${origin}/embed.js" data-widget="${widget.id}"></` + 'script>';
+		}
+		renderPlatformInstructions();
+		$('#embed-modal').hidden = false;
+		return;
+	}
 
 	if (_currentWidgetType === 'walking-avatar') {
 		// The walking avatar embeds the /walk-embed runtime directly (config baked
@@ -2059,10 +2443,12 @@ function openEmbedModal(widget) {
 		// Prefill the W/H inputs from the chosen size preset.
 		$('#embed-width').value = state.config.width || 480;
 		$('#embed-height').value = state.config.height || 420;
-		$('#embed-share-url').value = shareUrl;
 		_refreshWalkSnippet();
-		$('#embed-script-snippet').value =
-			`<script async src="${origin}/widget-client.js" data-widget="${widget.id}"></` + 'script>';
+		if (hasRow) {
+			$('#embed-script-snippet').value =
+				`<script async src="${origin}/widget-client.js" data-widget="${widget.id}"></` + 'script>';
+		}
+		renderPlatformInstructions();
 		$('#embed-modal').hidden = false;
 		return;
 	}
@@ -2083,11 +2469,63 @@ function openEmbedModal(widget) {
 	$('#embed-include-chat').checked = true;
 	$('#embed-include-controls').checked = true;
 
-	$('#embed-share-url').value = shareUrl;
 	_refreshEmbedSnippet();
 	$('#embed-script-snippet').value =
 		`<script async src="${origin}/embed.js" data-widget="${widget.id}"></` + 'script>';
+	renderPlatformInstructions();
 	$('#embed-modal').hidden = false;
+}
+
+// ── Platform paste instructions ──────────────────────────────────────────────
+// Copying a snippet is only half the job: the next question is always "where
+// does this go in WordPress / Webflow / Shopify?". Ported from the /embed
+// editor, which is the only place these ever lived.
+const PLATFORMS = [
+	['html', 'HTML'],
+	['react', 'React'],
+	['wordpress', 'WordPress'],
+	['webflow', 'Webflow'],
+	['shopify', 'Shopify'],
+];
+
+const PLATFORM_INSTRUCTIONS = {
+	html: 'Paste the snippet anywhere in your page body, exactly as it is.',
+	react:
+		'Paste inside JSX and rename the HTML attributes React does not accept: ' +
+		'`class` becomes `className`, and a `style="..."` string becomes an object, ' +
+		'e.g. style={{ border: 0, borderRadius: 16 }}. Everything else is unchanged.',
+	wordpress:
+		'Block editor: add a "Custom HTML" block and paste. Classic editor: switch ' +
+		'to the "Text" tab first, or the editor will escape the tags.',
+	webflow:
+		'Drag an "Embed" element onto the canvas, paste inside it, then Save and ' +
+		'publish. Webflow only renders embeds on the published site, not in the designer.',
+	shopify:
+		'Online Store > Themes > Edit code, then paste into the template or section ' +
+		'you want it on. For a product page that is usually sections/main-product.liquid; ' +
+		'for a one-off, add a "Custom Liquid" block from the theme editor instead.',
+};
+
+let activePlatform = 'html';
+
+function renderPlatformInstructions() {
+	const tabs = $('#embed-platform-tabs');
+	const note = $('#embed-platform-note');
+	if (!tabs || !note) return;
+	tabs.innerHTML = '';
+	for (const [id, label] of PLATFORMS) {
+		const b = document.createElement('button');
+		b.type = 'button';
+		b.className = 'btn-ghost btn-sm' + (id === activePlatform ? ' is-active' : '');
+		b.setAttribute('aria-pressed', String(id === activePlatform));
+		b.textContent = label;
+		b.addEventListener('click', () => {
+			activePlatform = id;
+			renderPlatformInstructions();
+		});
+		tabs.appendChild(b);
+	}
+	note.textContent = PLATFORM_INSTRUCTIONS[activePlatform];
 }
 
 function copyFromSelector(sel, btn) {

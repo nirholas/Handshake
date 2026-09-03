@@ -142,6 +142,25 @@
 						<div class="avatar-list" id="public-avatar-list" hidden></div>
 						<div class="muted public-search-status" id="public-search-status" hidden></div>
 					</div>
+					<div class="browse-public model-url-row">
+						<label class="field">
+							<span data-i18n="studio_index.or_paste_a_model_url">Or paste a model URL</span>
+							<div class="browse-public-row">
+								<input
+									type="url"
+									id="model-url-input"
+									placeholder="https://example.com/avatar.glb"
+									aria-label="Model URL (.glb or .vrm)"
+									data-i18n-attr="aria-label:studio_index.model_url_arialabel"
+									autocomplete="off"
+									spellcheck="false"
+								/>
+								<button class="btn-ghost btn-sm" id="model-url-btn" type="button" data-i18n="studio_index.use">Use</button>
+							</div>
+						</label>
+						<p class="note" data-i18n="studio_index.host_your_own_glb_or_vrm">Host your own .glb or .vrm anywhere with permissive CORS and embed it without an account. The file is never uploaded to three.ws.</p>
+						<div class="muted public-search-status" id="model-url-status" hidden></div>
+					</div>
 				</div>
 				<div class="panel">
 					<h2 data-tooltip="Each widget type is a different layout — Turntable for hero banners, Talking Agent for chat, Passport for on-chain identity, etc. Click to switch and watch the preview update." data-i18n-html="studio_index.2_pick_widget_type">
@@ -340,6 +359,12 @@
 					<a href="/dashboard#upload">Upload your own avatar</a> to embed a customized
 					widget.
 				</p>
+				<p id="embed-guest-note" class="muted" hidden data-i18n-html="studio_index.this_snippet_works_with_no_account">
+					This snippet works right now, with no account: the whole configuration
+					lives in the URL. <a href="/login">Sign in</a> to save it as a widget,
+					get a shareable link, and change how it looks on live sites without
+					touching their code again.
+				</p>
 
 				<div class="embed-preview">
 					<iframe
@@ -349,7 +374,7 @@
 					></iframe>
 				</div>
 
-				<label class="field">
+				<label class="field" id="embed-share-field">
 					<span data-i18n="studio_index.shareable_url">Shareable URL</span>
 					<div class="copy-row">
 						<input type="text" id="embed-share-url" readonly />
@@ -400,7 +425,13 @@
 					</div>
 				</label>
 
-				<details>
+				<div class="embed-platforms">
+					<p class="embed-platforms-title" data-i18n="studio_index.where_does_this_go">Where does this go?</p>
+					<div class="embed-platform-tabs" id="embed-platform-tabs" role="group" aria-label="Platform"></div>
+					<p class="muted embed-platform-note" id="embed-platform-note"></p>
+				</div>
+
+				<details id="embed-script-field">
 					<summary data-i18n="studio_index.script_tag_embed">Script-tag embed</summary>
 					<div class="copy-row">
 						<textarea id="embed-script-snippet" rows="2" readonly aria-label="Script-tag embed snippet" data-i18n-attr="aria-label:studio_index.script_snippet_arialabel"></textarea>

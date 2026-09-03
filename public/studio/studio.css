@@ -640,6 +640,61 @@ a:hover {
 	padding-top: 0.3rem;
 }
 
+/* Raw model URL: same row treatment as the public-avatar search, so the two
+   ways of bringing in a model that is not already in your library read as one
+   control group. */
+.browse-public-row input[type='url'] {
+	flex: 1;
+	min-width: 0;
+	background: var(--panel-soft);
+	border: 1px solid var(--border);
+	color: var(--text);
+	border-radius: var(--radius-sm);
+	padding: 0.4rem 0.55rem;
+	font: inherit;
+}
+.browse-public-row input[type='url']:focus {
+	outline: none;
+	border-color: var(--accent);
+}
+.model-url-row .field > span {
+	display: block;
+	margin-bottom: 0.35rem;
+}
+.model-url-row .note {
+	margin: 0.1rem 0 0;
+}
+
+/* ── embed modal: platform paste instructions ──────────────────────────────── */
+.embed-platforms {
+	margin: 1rem 0 0.25rem;
+	padding-top: 0.85rem;
+	border-top: 1px dashed var(--border);
+}
+.embed-platforms-title {
+	margin: 0 0 0.5rem;
+	font-size: 0.82em;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	opacity: 0.5;
+}
+.embed-platform-tabs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+}
+.embed-platform-tabs button[aria-pressed='true'] {
+	border-color: var(--accent);
+	color: var(--text);
+	background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.embed-platform-note {
+	margin: 0.6rem 0 0;
+	font-size: 0.82rem;
+	line-height: 1.6;
+	min-height: 2.6em;
+}
+
 /* ── type grid ─────────────────────────────────────────────────────────────── */
 .type-grid {
 	display: grid;
