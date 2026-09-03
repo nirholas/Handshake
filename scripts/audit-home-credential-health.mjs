@@ -68,7 +68,7 @@ if (keyCount === 0) {
 }
 
 const rows = await sql`
-	select id, user_id, label, base_url, status, last_ok_at, access_token_enc
+	select id, user_id, label, base_url, transport, status, last_ok_at, access_token_enc
 	from home_connections
 	where revoked_at is null
 	order by created_at asc
@@ -76,10 +76,18 @@ const rows = await sql`
 
 const sealed = [];
 let readable = 0;
+let pairing = 0;
 for (const row of rows) {
-	// A revoked home is filtered above; an empty ciphertext on a LIVE row would be
-	// a bug in revokeConnection, so it counts as sealed rather than as fine.
 	if (!row.access_token_enc) {
+		// A relay home that has never handshaked holds an empty credential BY
+		// DESIGN: the row is created before the add-on inside the house dials out
+		// and there is nothing to encrypt yet (api/_lib/home/relay.js). Counting
+		// those as sealed would make a healthy pairing queue read as an incident.
+		if (row.transport === 'relay' && !row.last_ok_at) {
+			pairing++;
+			continue;
+		}
+		// Anywhere else an empty ciphertext on a LIVE row is a bug in revoke.
 		sealed.push({ id: row.id, label: row.label, base_url: row.base_url, reason: 'empty ciphertext on a live row' });
 		continue;
 	}
@@ -95,6 +103,7 @@ for (const row of rows) {
 const report = {
 	homes: rows.length,
 	readable,
+	awaiting_pairing: pairing,
 	sealed: sealed.length,
 	key_candidates: keyCount,
 	// Never the token, never a prefix of it: this report is safe to paste.
@@ -108,6 +117,7 @@ if (json) {
 	console.log('Home credential health');
 	console.log(`  live homes          ${report.homes}`);
 	console.log(`  openable            ${report.readable}`);
+	console.log(`  awaiting pairing    ${report.awaiting_pairing} (relay homes whose add-on has not dialled out yet)`);
 	console.log(`  sealed              ${report.sealed}`);
 	console.log(`  keys tried          ${report.key_candidates}`);
 	for (const home of report.sealed_homes) {
@@ -117,7 +127,7 @@ if (json) {
 	// failures. A live row with an empty ciphertext is a revoke bug, and telling an
 	// operator to go hunt a retired key over one of those wastes the incident.
 	const allDecryptFailures = sealed.length > 0 && sealed.every((h) => !h.reason.startsWith('empty ciphertext'));
-	if (report.sealed === report.homes && allDecryptFailures) {
+	if (report.sealed > 0 && report.sealed === report.homes && allDecryptFailures) {
 		console.log('');
 		console.log('EVERY home is sealed. That is one wrong key for this deployment, not a fleet of');
 		console.log('separately broken homes. Put the outgoing key in WALLET_ENCRYPTION_KEY_PREVIOUS');
