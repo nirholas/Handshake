@@ -73,6 +73,25 @@ async function establishedTo(port) {
  * a scenario is actually about the database (scenario 5) it swaps in the real
  * store module instead.
  */
+/**
+ * The address resolution the chaos runtimes use.
+ *
+ * Production resolves a home's hostname through the SSRF guard and refuses any
+ * private address, which is exactly right and which refuses every container in
+ * this fleet: they live on 127.0.0.1. The runtime exposes `resolveDial` as a
+ * seam for this reason. Nothing else about the runtime is stubbed here, the
+ * production default is `defaultResolveDial`, and
+ * tests/home-security.test.js asserts that a runtime built the way production
+ * builds it still refuses loopback.
+ */
+const resolveLoopbackDial = async (baseUrl) => {
+	const url = new URL(baseUrl);
+	if (url.hostname !== '127.0.0.1' && url.hostname !== 'localhost') {
+		throw new Error(`the chaos harness only ever dials its own containers, not ${url.hostname}`);
+	}
+	return { host: url.hostname, addresses: [{ address: '127.0.0.1', family: 4 }], secure: false };
+};
+
 function fleetStore(houses, { overrideUrl } = {}) {
 	const byId = new Map(houses.map((h) => [homeIdFor(h.index), h]));
 	const handshakes = [];
@@ -93,6 +112,7 @@ function fleetStore(houses, { overrideUrl } = {}) {
 			handshakes.push({ id, at: Date.now(), ...update });
 			return null;
 		},
+		resolveDial: resolveLoopbackDial,
 	};
 	return store;
 }
