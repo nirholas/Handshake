@@ -30,7 +30,7 @@ One section per finished order, newest at the bottom:
 | Order | State | Finished |
 |---|---|---|
 | 00 CONTEXT | shared facts | n/a |
-| 01 connection store | open | |
+| 01 connection store | done | 2026-09-03 |
 | 02 bridge runtime | open | |
 | 03 API surface | open | |
 | 04 agent tools | open | |
@@ -165,3 +165,82 @@ after this run, so two lines above are already stale and one is not:
   run (`tests/home-privacy.test.js`, `tests/home-runtime.test.js`, `tests/audit-guards.test.js`)
   and one in another; the first two pass in isolation. They read `api/_lib/migrations/` and the
   guard registry from disk, and peers mutate both mid-run. Re-run the suite when the lane is quiet.
+
+
+## 01. Connection store: schema, encrypted credentials, lifecycle (2026-09-03)
+
+**Shipped:** `home_connections`, `home_entity_grants` and `home_action_log` exist and are
+applied (`20260903030000_home_connections.sql`). A house is one row: the normalized base URL,
+the Home Assistant long-lived token sealed with the same AES-256-GCM primitive as a custodial
+wallet key, a sha256 fingerprint so a re-connect is idempotent and a rotation is detectable
+without decrypting, and capabilities MEASURED at connect. Grants are per entity with no
+`granted_domain` column, and the migration header records why: letting the agent open the
+office door is not letting it open the front door. `api/_lib/home/store.js` is the only module
+that reads the credential column and `getDecryptedToken` is the only function that returns
+plaintext. `api/_lib/home/verify.js` opens a real bridge and measures the instance.
+`tests/home-store.test.js` covers all of it in three tiers. Two schema constraints beyond the
+order's table caught real bugs in review: `home_connections_relay_chk` (a relay row must carry
+a relay id) and `home_action_log_risk_chk`. Connected homes are now named in the key-rotation
+runbook alongside custodial wallets, with `scripts/audit-home-credential-health.mjs` as their
+own reading, because a sealed home has no on-chain balance to notice it by.
+
+**Measured:**
+
+- `npm run db:status`: 1 pending before, `All migrations already applied` after. No other
+  agent's migration was pending at the time it ran.
+- `npx vitest run tests/home-store.test.js packages/home-bridge` against a real Neon database
+  and the lane's seeded Home Assistant (`node scripts/home-test-instance.mjs --up --onboard
+  --seed --name lane`, HA 2026.9.0, 120 entities, 3 areas, 1 floor): **65 passed, 0 skipped.**
+  Without live env: 37 passed, 28 skipped.
+- Credential round trip, live: created a connection from a typed URL with a trailing slash,
+  read the row back with no credential field on it and no token anywhere in its JSON, confirmed
+  the stored ciphertext starts `v2:`, decrypted it and opened a real `HomeBridge` that connected
+  and built a room graph.
+- Isolation: `listConnections(B)` returned `[]` against A's live home, `getConnection(A.home, B)`
+  and `getDecryptedToken(A.home, B)` both returned null, and B's revoke of A's home reported
+  `alreadyRevoked: false` rather than acting.
+- Grant scoping: with only `lock.kitchen_door` granted, a live bridge unlocked it with no prompt
+  and refused `lock.front_door` with `code: 'needs_confirmation'` in the same session;
+  `lock.front_door` read back `locked`.
+- Expiry: a grant with `expires_at` an hour in the past sits in the table and never appears in
+  `listGrants`, proved by counting both.
+- Revoke: twice in a row, `{revoked:true}` then `{revoked:false, alreadyRevoked:true}`,
+  `access_token_enc = ''`, `status = 'revoked'`, action log intact, and the same house
+  connectable again as a new row.
+- `grep -rn "access_token_enc" api/ --include=*.js`: the only READS are in
+  `api/_lib/home/store.js`. `grep -rn "getDecryptedToken" api/ --include=*.js`: the definition
+  plus `api/_lib/home/runtime.js`, which is order 02's pool.
+- `npm run check:rules` clean on every file touched. `npm run audit:docs`: one finding, and it
+  is `packages/home-mcp` missing a README (order 18's directory, not this one's).
+
+**Deviations:**
+
+- The order's `verifyConnection` sketch left the HA version to be read off entity attributes.
+  Measured against a real instance that returns an integration's `installed_version`, not the
+  core version. It reads `/api/config` instead, and the test asserts equality with what that
+  endpoint returns rather than merely that a version is present.
+- The order's index sketch was `(user_id) where revoked_at is null`. Shipped as
+  `(user_id, created_at desc) where revoked_at is null`, a superset, because the list view's only
+  read shape is one user's homes newest first.
+- The order's live round trip used `<base>/lovelace/` as a "messy" input. It is not messy:
+  `normalizeBaseUrl` deliberately KEEPS a path so an instance behind a reverse proxy prefix
+  works, so that input stores a different house. The package's own doc comment claimed the
+  opposite and has been corrected (`packages/home-bridge/src/url.js`).
+- Task 5's "credential inventory" does not exist as a list of ciphertext columns. What exists is
+  the rotation runbook plus a wallet-specific health module whose numbers are SOL totals, which
+  home tokens have none of. Wired as a new section in `docs/ops/wallet-key-migration.md` and a
+  real read-only audit rather than a row in a table that was not there.
+- The order's "Never blocked" row says `secret-box.js` falls back to `JWT_SECRET` locally. In
+  this workspace `.env.local` carries only `DATABASE_URL`, so neither key is set and
+  `encryptSecret` throws. Local runs need a `WALLET_ENCRYPTION_KEY` in the environment; nothing
+  in the code changed for it.
+
+**Left open:** nothing in this order. Two observations for whoever owns them: `api/_lib/home/relay.js`
+writes `access_token_enc` as an intentional empty string when it creates a pending relay row, which
+is correct but means the audit had to learn that a relay home awaiting pairing is not a sealed one;
+and there are leftover `home_connections` rows in the production database from other agents' local
+test runs, sealed under their local keys, which the audit reports honestly.
+
+**Commits:** the schema, store, verify, tests and audit script were swept into concurrent agents'
+`git add -A` commits as they landed (`c3132956a`, `858a2f86b` among them); this entry and the
+retirement of the order file are the final commit.
