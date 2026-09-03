@@ -12,7 +12,7 @@
  * dropped socket greys the scene and shows its age. It does not clear it.
  */
 
-import { HomeApiError, callService, getHome, grantEntity, openStream } from './api.js';
+import { HomeApiError, callService, getHome, getLayout, grantEntity, openStream } from './api.js';
 import { buildSceneModel } from './scene-model.js';
 import { createHomeFallback, webglAvailable } from './scene-fallback.js';
 
@@ -33,6 +33,8 @@ const el = {
 	live: document.getElementById('hs-live'),
 	view3d: document.getElementById('hs-view-3d'),
 	view2d: document.getElementById('hs-view-2d'),
+	viewPlan: document.getElementById('hs-view-plan'),
+	plan: document.getElementById('hs-plan'),
 	reconnect: document.getElementById('hs-reconnect'),
 };
 
@@ -41,6 +43,14 @@ const state = {
 	home: null,
 	graph: null,
 	model: null,
+	/**
+	 * The authored floorplan's room map, or null when nobody drew one. Null is
+	 * the ordinary state: the scene packs rooms into a default grid without it.
+	 */
+	layout: null,
+	layoutVersion: 0,
+	/** The mounted floorplan editor, when the plan view is showing. */
+	plan: null,
 	view: preferredView(),
 	renderer: null,
 	stream: null,
@@ -98,10 +108,65 @@ async function boot() {
 		state.viewChosen = true;
 		setView('2d', { remember: true });
 	});
+	el.viewPlan?.addEventListener('click', () => {
+		state.viewChosen = true;
+		setView('plan', { remember: true });
+	});
 	el.reconnect.addEventListener('click', () => reconnect());
 	document.addEventListener('keydown', onKeydown);
+	holdScreenAwake();
 
 	await load();
+}
+
+/**
+ * The decision, and why it is this one.
+ *
+ * The live house is the only surface in the lane a screen is meant to sit on:
+ * a kitchen tablet on a shelf showing which lights are on. A wall display that
+ * blanks every thirty seconds is not a display, and the user cannot fix it
+ * without turning off the device's screen timeout for everything else it does.
+ * So this page, and only this page, asks for a screen wake lock.
+ *
+ * The other half matters more. A phone must never be held awake by a tab it is
+ * not looking at, so the lock is dropped the moment the document is hidden and
+ * only re-taken when it comes back visible. That is also what the platform
+ * requires: a wake lock is released automatically on hide, and re-acquiring is
+ * the only way back, so the visibility handler is the feature, not a guard
+ * around it.
+ *
+ * Everything here is best-effort. Screen Wake Lock is absent on some browsers
+ * and the request is refused outright on a low battery, both of which are the
+ * device making a correct decision. The scene is unaffected either way, so a
+ * failure is never surfaced to the user.
+ */
+function holdScreenAwake() {
+	if (!('wakeLock' in navigator)) return;
+	let sentinel = null;
+
+	const acquire = async () => {
+		if (sentinel || document.visibilityState !== 'visible') return;
+		try {
+			sentinel = await navigator.wakeLock.request('screen');
+			sentinel.addEventListener('release', () => {
+				sentinel = null;
+			});
+		} catch {
+			sentinel = null;
+		}
+	};
+
+	const release = () => {
+		sentinel?.release?.().catch(() => {});
+		sentinel = null;
+	};
+
+	document.addEventListener('visibilitychange', () => {
+		if (document.visibilityState === 'visible') acquire();
+		else release();
+	});
+	window.addEventListener('pagehide', release);
+	acquire();
 }
 
 async function load() {
@@ -112,6 +177,10 @@ async function load() {
 		el.title.textContent = state.home?.label || 'Your home';
 		document.title = `${state.home?.label || 'Your home'} · three.ws`;
 		mountRenderer();
+		// The authored floorplan, if anyone drew one. Best effort on purpose: a
+		// layout that cannot be read must never stop the house from rendering,
+		// because the default grid is a complete experience on its own.
+		loadLayout();
 		if (payload.graph) {
 			applyGraph(payload.graph, { stale: Boolean(payload.stale) });
 			setStatusFromServer({ status: payload.live_status, stale: payload.stale, detail: payload.error?.message });
@@ -159,13 +228,24 @@ function reconnect() {
 	});
 }
 
+/**
+ * Turn what the server said into one of the four things the top bar can say.
+ *
+ * The distinction that matters: a house that dropped while the platform is
+ * still retrying is STALE, not disconnected. The data is old and the system is
+ * working on it, and there is nothing for the person to do but read the age.
+ * Disconnected is reserved for the cases where nobody is retrying: the token
+ * stopped working, or this browser's own stream is gone. That is the state that
+ * offers a button, because that is the state where pressing one helps.
+ */
 function setStatusFromServer(payload) {
 	const status = payload.status || 'live';
 	state.stale = Boolean(payload.stale);
-	if (status === 'disconnected' || status === 'unreachable' || status === 'auth_failed') {
-		setStatus('disconnected', status === 'auth_failed' ? 'Sign in again' : 'Disconnected', payload.detail || payload.statusDetail);
-	} else if (state.stale || status === 'reconnecting' || status === 'connecting') {
-		setStatus('stale', status === 'reconnecting' ? 'Reconnecting' : 'Stale', payload.detail || payload.statusDetail);
+	const detail = payload.detail || payload.statusDetail;
+	if (status === 'auth_failed' || status === 'revoked' || status === 'disconnected') {
+		setStatus('disconnected', status === 'auth_failed' ? 'Sign in again' : 'Disconnected', detail);
+	} else if (status === 'unreachable' || state.stale || status === 'reconnecting' || status === 'pending' || status === 'connecting') {
+		setStatus('stale', status === 'reconnecting' ? 'Reconnecting' : 'Stale', detail);
 	} else {
 		setStatus('live', 'Live');
 	}
@@ -176,7 +256,9 @@ function setStatus(kind, label, detail) {
 	el.status.dataset.status = kind;
 	el.status.textContent = label;
 	el.status.title = detail || '';
-	el.reconnect.hidden = kind !== 'disconnected';
+	// Offered whenever the house is not live: on a terminal disconnect it is the
+	// only way back, and on a long stale it is a person deciding not to wait.
+	el.reconnect.hidden = kind === 'live' || kind === 'connecting';
 	const stale = kind === 'stale' || kind === 'disconnected';
 	state.stale = stale;
 	state.renderer?.setStale?.(stale);
@@ -187,6 +269,26 @@ function setStatus(kind, label, detail) {
 	}
 }
 
+/**
+ * Read the authored floorplan and re-lay the scene with it.
+ *
+ * Deliberately not awaited by load(): the house paints on the default grid
+ * immediately and slides into the authored plan when it arrives, which is a
+ * better first frame than a blank canvas waiting on a second request. A failure
+ * leaves state.layout null, which is exactly the no-layout case the model
+ * already handles.
+ */
+async function loadLayout() {
+	try {
+		const res = await getLayout(state.homeId);
+		state.layout = res?.layout?.rooms || null;
+		state.layoutVersion = res?.version || 0;
+		if (state.graph) applyGraph(state.graph, { stale: state.stale });
+	} catch {
+		state.layout = null;
+	}
+}
+
 // ── the model ────────────────────────────────────────────────────────────────
 
 function applyGraph(graph, { stale = false, receivedAt = 0 } = {}) {
@@ -194,16 +296,20 @@ function applyGraph(graph, { stale = false, receivedAt = 0 } = {}) {
 	state.graph = graph;
 	state.lastGraphAt = Date.now();
 	state.stale = stale;
-	const model = buildSceneModel(graph, { focusRoomId: state.model?.focusRoomId });
+	const model = buildSceneModel(graph, { focusRoomId: state.model?.focusRoomId, layout: state.layout });
 	state.model = model;
 	renderRooms(model);
 	renderInspector();
+	// The designed nothings are the page's, not the renderer's. Gating them on a
+	// mounted renderer meant an empty house painted nothing at all while the 3D
+	// module was still being imported, which is the exact case the empty state
+	// exists for.
+	renderEmptyStates(model);
+	renderAge();
 	if (receivedAt) measureLatency(receivedAt);
 	if (!state.renderer) return;
 	state.renderer.setModel(model);
 	state.renderer.setStale?.(stale);
-	renderEmptyStates(model);
-	renderAge();
 	repositionConfirm();
 }
 
@@ -251,6 +357,7 @@ function setView(view, { remember = true, force = false } = {}) {
 	}
 	el.view3d.setAttribute('aria-pressed', String(view === '3d'));
 	el.view2d.setAttribute('aria-pressed', String(view === '2d'));
+	el.viewPlan?.setAttribute('aria-pressed', String(view === 'plan'));
 	el.view3d.disabled = !webglAvailable();
 	if (el.view3d.disabled) el.view3d.title = 'This browser cannot run WebGL.';
 
@@ -258,6 +365,18 @@ function setView(view, { remember = true, force = false } = {}) {
 	state.renderer = null;
 	clearStage();
 	el.stage.classList.toggle('is-flat', view === '2d');
+
+	// The plan is a workspace, not a renderer: it replaces the stage rather than
+	// drawing into it, and it keeps no live subscription of its own.
+	state.plan?.destroy();
+	state.plan = null;
+	if (el.plan) el.plan.hidden = view !== 'plan';
+	el.stage.hidden = view === 'plan';
+	if (view === 'plan') {
+		mountPlan();
+		renderAge();
+		return;
+	}
 
 	if (view === '2d') {
 		state.renderer = createHomeFallback(el.stage, { onAct: act, onFocusRoom: focusRoom });
@@ -271,6 +390,47 @@ function setView(view, { remember = true, force = false } = {}) {
 		renderEmptyStates(state.model);
 	}
 	renderAge();
+}
+
+/**
+ * The floorplan workspace.
+ *
+ * Loaded on demand: nobody who only wants to see their house should pay for the
+ * editor. Its saves feed straight back into the model, so the 3D view is already
+ * arranged when they switch back to it.
+ */
+async function mountPlan() {
+	if (!el.plan) return;
+	el.plan.textContent = '';
+	const { mountFloorplan } = await import('./floorplan.js');
+	if (state.view !== 'plan') return;
+	state.plan = mountFloorplan({
+		mount: el.plan,
+		homeId: state.homeId,
+		graph: state.graph,
+		// The layout capability. A guest sees the plan and cannot redraw somebody
+		// else's home; the server enforces it either way, this only hides controls
+		// that would fail.
+		canEdit: state.home?.capabilities?.layout !== false,
+		onChange(doc, opts) {
+			state.layout = doc?.rooms || null;
+			if (state.graph) applyGraph(state.graph, { stale: state.stale });
+			// Filing a device changed Home Assistant's own registry, so the room
+			// graph is stale in a way no state event will correct.
+			if (opts?.refreshGraph) refreshGraph();
+		},
+	});
+	el.plan.focus?.();
+}
+
+/** Re-read the house after we changed its registry rather than its state. */
+async function refreshGraph() {
+	try {
+		const payload = await getHome(state.homeId);
+		if (payload?.graph) applyGraph(payload.graph, { stale: Boolean(payload.stale) });
+	} catch {
+		// The plan is still correct locally; the graph refreshes on the next event.
+	}
 }
 
 async function mount3d() {
@@ -294,6 +454,7 @@ async function mount3d() {
 		if (state.model) {
 			state.renderer.setModel(state.model);
 			state.renderer.setStale?.(state.stale);
+			renderEmptyStates(state.model);
 		}
 	} catch (err) {
 		announce('The 3D house could not start, so the 2D house is on instead.');
@@ -626,30 +787,46 @@ function renderConfirm() {
 
 	el.stage.appendChild(card);
 	state.confirmCard = card;
+	// Measured after insertion: the clamp needs the card's real height.
 	repositionConfirm();
+	requestAnimationFrame(repositionConfirm);
 	yes.focus();
 }
 
+/**
+ * Pin the confirmation to the thing it would move.
+ *
+ * The card grows upward from its anchor, so both axes are clamped to what is
+ * actually on screen: an anchor near the top of the stage would otherwise put
+ * the question, and the word "unlock" in it, above the visible area.
+ */
 function repositionConfirm() {
 	const card = state.confirmCard;
 	if (!card || !state.pending) return;
-	const point = state.renderer?.project?.(state.pending.entityId);
 	const rect = el.stage.getBoundingClientRect();
+	const scroll = el.stage.scrollTop;
+	const height = card.offsetHeight || 190;
+	const halfWidth = card.offsetWidth ? card.offsetWidth / 2 : 160;
+	const minTop = scroll + height + 12;
+	const maxTop = scroll + rect.height - 12;
+
+	const point = state.renderer?.project?.(state.pending.entityId);
+	let left = rect.width / 2;
+	let top = scroll + rect.height / 2;
 	if (point && point.visible) {
-		card.style.left = `${clamp(point.x, 150, rect.width - 150)}px`;
-		card.style.top = `${clamp(point.y - 18, 130, rect.height - 20)}px`;
+		left = point.x;
+		top = point.y - 18;
 	} else {
 		// The 2D house and an off-screen object both anchor to the row instead.
 		const row = el.stage.querySelector(`[data-entity-id="${cssEscape(state.pending.entityId)}"]`);
 		if (row) {
 			const r = row.getBoundingClientRect();
-			card.style.left = `${clamp(r.left - rect.left + r.width / 2, 150, rect.width - 150)}px`;
-			card.style.top = `${clamp(r.top - rect.top + el.stage.scrollTop, 130, rect.height + el.stage.scrollTop)}px`;
-		} else {
-			card.style.left = '50%';
-			card.style.top = '50%';
+			left = r.left - rect.left + r.width / 2;
+			top = r.top - rect.top + scroll - 6;
 		}
 	}
+	card.style.left = `${clamp(left, halfWidth + 8, rect.width - halfWidth - 8)}px`;
+	card.style.top = `${clamp(top, minTop, Math.max(minTop, maxTop))}px`;
 }
 
 function dismissConfirm() {
@@ -845,7 +1022,9 @@ function announce(message) {
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 function homeIdFromPath() {
-	const match = location.pathname.match(/^\/home\/([0-9a-fA-F-]{36})/);
+	// Both routes serve this page: /smart-home/:id is where the connect flow's
+	// "Open" lands, and /home/:id is the campaign's own address for the scene.
+	const match = location.pathname.match(/^\/(?:smart-)?home\/([0-9a-fA-F-]{36})/);
 	if (match) return match[1];
 	const query = new URLSearchParams(location.search).get('home');
 	return query && /^[0-9a-fA-F-]{36}$/.test(query) ? query : null;

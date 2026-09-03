@@ -27,6 +27,7 @@
 			<span class="hs-spacer"></span>
 			<button type="button" class="hs-btn" id="hs-view-3d" aria-pressed="true" data-i18n-attr="aria-label:home_scene.view_3d_aria" aria-label="Show the 3D house">3D</button>
 			<button type="button" class="hs-btn" id="hs-view-2d" aria-pressed="false" data-i18n-attr="aria-label:home_scene.view_2d_aria" aria-label="Show the house as a room and device list">2D</button>
+			<button type="button" class="hs-btn" id="hs-view-plan" aria-pressed="false" data-i18n-attr="aria-label:home_scene.view_plan_aria" aria-label="Draw where the rooms are">Plan</button>
 			<button type="button" class="hs-btn" id="hs-reconnect" hidden data-i18n="home_scene.reconnect">Reconnect</button>
 		</div>
 
@@ -39,6 +40,7 @@
 			</nav>
 
 			<main class="hs-stage" id="hs-stage" tabindex="-1"></main>
+			<main class="hs-stage hs-stage-plan" id="hs-plan" tabindex="-1" hidden></main>
 
 			<aside class="hs-panel" id="hs-panel" aria-label="Selected device" data-i18n-attr="aria-label:home_scene.panel_aria">
 				<p class="hs-panel-empty" id="hs-panel-empty" data-i18n="home_scene.panel_empty">Pick a room on the left, or click anything in the house to see what it is and act on it.</p>

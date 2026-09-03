@@ -57,9 +57,54 @@ async function request(path, { method = 'GET', body = null, signal } = {}) {
 	if (!res.ok) {
 		const code = payload?.code || payload?.error || 'call_failed';
 		const message = payload?.error_description || payload?.message || (typeof payload?.error === 'string' && payload.code ? payload.error : null) || `Request failed (${res.status}).`;
-		throw new HomeApiError(code, message, { status: res.status, pending: payload?.pending || null });
+		throw new HomeApiError(code, message, {
+			status: res.status,
+			pending: payload?.pending || null,
+			// A 409 on the floorplan carries the document that won, so the editor
+			// can offer a real choice instead of a bare failure.
+			current: payload?.current || null,
+			field: payload?.field || null,
+		});
 	}
 	return payload;
+}
+
+/**
+ * The authored floorplan, its version, and what has drifted from the house.
+ *
+ * A house with no layout answers `{ version: 0, layout: null }`, which is the
+ * ordinary state and not an error: the scene falls back to its default grid.
+ */
+export function getLayout(id, signal) {
+	return request(`/api/home/${encodeURIComponent(id)}/layout`, { signal });
+}
+
+/**
+ * Save the floorplan.
+ *
+ * `version` is the one the editor loaded, or 0 to create the first layout. A
+ * stale version throws a HomeApiError with code `layout_conflict` carrying
+ * `current`, which is the document that won; the editor asks the user rather
+ * than discarding either side.
+ */
+export function saveLayout(id, { version, layout }) {
+	return request(`/api/home/${encodeURIComponent(id)}/layout`, { method: 'PUT', body: { version, layout } });
+}
+
+/** Drop the floorplan and return the scene to its default arrangement. */
+export function clearLayout(id) {
+	return request(`/api/home/${encodeURIComponent(id)}/layout`, { method: 'DELETE' });
+}
+
+/**
+ * File a device into a room, in Home Assistant itself.
+ *
+ * Pass `areaId: null` to take it out of every room. This writes the user's own
+ * registry, so the room shows up in their dashboards and their voice assistant
+ * too, not only here.
+ */
+export function assignEntityArea(id, { entityId, areaId }) {
+	return request(`/api/home/${encodeURIComponent(id)}/assign`, { method: 'POST', body: { entityId, areaId } });
 }
 
 /** The caller's homes, credential free. */
@@ -252,3 +297,61 @@ export function getPlan(signal) {
 export function changePlanState(action, homeId) {
 	return request('/api/home/plan', { method: 'POST', body: { action, home_id: homeId } });
 }
+
+// ── The privacy centre (/api/home/privacy) ───────────────────────────────────
+//
+// Everything three.ws stores about a person's homes: see it, set how long the
+// action log lives, download all of it, delete one home or every trace of them
+// all. The endpoint is the only place these rows can be read or removed from,
+// so this is the only client for it.
+
+/**
+ * What we hold about this account right now, plus the inventory that explains
+ * each number and the disclosure copy the connect and voice screens render.
+ * @param {AbortSignal} [signal]
+ */
+export function getPrivacy(signal) {
+	return request('/api/home/privacy', { signal });
+}
+
+/**
+ * How long this home keeps its action log.
+ *
+ * Shortening is always allowed and applies immediately: the response's `purged`
+ * count is the rows that went, so a caller can say "142 entries deleted" rather
+ * than "within 24 hours". Lengthening past 90 days needs a written reason
+ * (`reason_required`) and is capped by the plan (`retention_over_plan`), which
+ * are different failures and must be told apart in the UI.
+ *
+ * @param {string} homeId
+ * @param {number} retentionDays
+ * @param {string|null} [reason]
+ */
+export function setRetention(homeId, retentionDays, reason = null) {
+	return request('/api/home/privacy', {
+		method: 'PATCH',
+		body: { homeId, retentionDays, reason },
+	});
+}
+
+/**
+ * Delete one home and everything pointing at it, or every home this account has.
+ *
+ * This is NOT the disconnect on the manage screen. Disconnecting erases the
+ * credential and keeps the record, so an owner can still answer "what did my
+ * agent do in my house last Tuesday" about a house they have unplugged. This
+ * removes the record too, and there is nothing left to read afterwards.
+ *
+ * @param {{ scope: 'home'|'all', homeId?: string }} target
+ */
+export function deleteHomeData(target) {
+	return request('/api/home/privacy', { method: 'DELETE', body: target });
+}
+
+/**
+ * The export URL. Deliberately a plain link rather than a fetch: the response
+ * carries a Content-Disposition, so letting the browser navigate to it gives a
+ * real Save dialog with a sensible filename, where a fetch would need a blob
+ * and an object URL to end up somewhere worse.
+ */
+export const PRIVACY_EXPORT_URL = '/api/home/privacy?export=1';

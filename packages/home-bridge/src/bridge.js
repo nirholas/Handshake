@@ -35,6 +35,7 @@ export class HomeBridge {
 	#listeners = new Map();
 	#rebuildTimer = null;
 	#registryTimer = null;
+	#livenessTimer = null;
 	#closed = false;
 
 	/**
@@ -180,6 +181,7 @@ export class HomeBridge {
 			}),
 		);
 		await this.#watchRegistries();
+		this.#startLiveness();
 
 		await this.#waitForFirstStates();
 		this.#rebuild();
@@ -197,6 +199,57 @@ export class HomeBridge {
 				resolve();
 			});
 		});
+	}
+
+	/**
+	 * Notice a dead house in seconds rather than in a minute.
+	 *
+	 * A Home Assistant that is unplugged, crashes, or loses its network sends no
+	 * FIN, so the WebSocket stays "open" until TCP gives up. Measured against a
+	 * real instance killed mid-stream: 42 seconds before anything downstream knew,
+	 * during which a 3D home reads as live and is not. The library reconnects
+	 * well, it just has nothing to reconnect from until then.
+	 *
+	 * So we ask. Home Assistant answers `ping` with `pong` on the same socket; a
+	 * ping that does not come back inside the deadline means the socket is dead
+	 * whatever the OS believes, and reconnecting is the library's job from there.
+	 */
+	#startLiveness() {
+		// Ten seconds between pings, five to answer one: a worst case of fifteen
+		// seconds to notice a house that vanished without saying goodbye, against
+		// the forty-two the kernel took on its own. Six messages a minute is
+		// nothing on a residential uplink, and the alternative is a wall display
+		// showing a live-looking house that is not there.
+		const every = this.#options.livenessIntervalMs ?? 10_000;
+		const deadline = this.#options.livenessTimeoutMs ?? 5_000;
+		if (every <= 0) return;
+		this.#livenessTimer = setInterval(async () => {
+			if (this.#closed || !this.#connection) return;
+			if (!this.#connection.connected) return;
+			let timer;
+			try {
+				await Promise.race([
+					this.#connection.ping(),
+					new Promise((_, reject) => {
+						timer = setTimeout(() => reject(new Error('home did not answer a ping')), deadline);
+					}),
+				]);
+			} catch {
+				// Tell everyone watching FIRST: a subscriber marking the scene stale
+				// must not wait on the reconnect that follows.
+				this.#emit('disconnected', undefined);
+				try {
+					this.#connection.reconnect(true);
+				} catch {
+					// A socket already tearing itself down is the outcome we wanted.
+				}
+			} finally {
+				clearTimeout(timer);
+			}
+		}, every);
+		// Node keeps a process alive for a bare interval; a worker holding one open
+		// per connected house would never exit.
+		this.#livenessTimer.unref?.();
 	}
 
 	/**
@@ -247,6 +300,21 @@ export class HomeBridge {
 			}
 			this.#rebuild();
 		}, this.#options.registryReloadDelayMs ?? 400);
+	}
+
+	/**
+	 * Reload the four registries now and rebuild the graph.
+	 *
+	 * The registry-updated events already trigger a debounced reload, so this is
+	 * not needed for correctness. It exists so a caller that just changed the
+	 * registry itself can await the result instead of racing its own event, which
+	 * is what a UI needs to redraw without a flicker of stale membership.
+	 */
+	async refreshRegistries() {
+		this.#assertConnected();
+		this.#registries = await this.#loadRegistries();
+		this.#rebuild();
+		return this.#graph;
 	}
 
 	async #loadRegistries() {
@@ -332,6 +400,66 @@ export class HomeBridge {
 		}
 	}
 
+	/**
+	 * Move an entity into an area, or out of every area with a null areaId.
+	 *
+	 * This is the one write in this library that changes the house's own
+	 * organisation rather than its state, and it is here because it is what makes
+	 * the floorplan editor worth using: dragging a stray device into a room
+	 * improves the user's Home Assistant, not just our picture of it.
+	 *
+	 * It is deliberately NOT run through the physical-action gate. Nothing moves,
+	 * nothing opens, and the change is reversible in two clicks in the user's own
+	 * UI. It is still a write, so callers log it.
+	 *
+	 * An entity created in YAML never reaches the entity registry, and most demo
+	 * and template entities are exactly that. Home Assistant answers `not_found`
+	 * for those, which is an ordinary and common outcome rather than a fault, so
+	 * it comes back as a coded error a UI can explain instead of a raw throw.
+	 *
+	 * @param {string} entityId
+	 * @param {string|null} areaId a Home Assistant area id, or null to unfile it
+	 * @returns {Promise<{ entityId: string, areaId: string|null }>}
+	 */
+	async assignEntityArea(entityId, areaId) {
+		this.#assertConnected();
+		if (typeof entityId !== 'string' || !entityId.includes('.')) {
+			throw new HomeBridgeError(ERR.CALL_FAILED, `"${entityId}" is not an entity id.`);
+		}
+		try {
+			const result = await this.#connection.sendMessagePromise({
+				type: 'config/entity_registry/update',
+				entity_id: entityId,
+				area_id: areaId ?? null,
+			});
+			// The registry is the source of truth for area membership, and the
+			// graph is rebuilt from it, so refresh it rather than waiting for the
+			// registry-updated event to arrive on its own.
+			await this.refreshRegistries();
+			return { entityId, areaId: result?.entity_entry?.area_id ?? areaId ?? null };
+		} catch (err) {
+			const code = err?.code || err?.error?.code;
+			if (code === 'not_found') {
+				throw new HomeBridgeError(
+					ERR.CALL_FAILED,
+					`${entityId} is not in this home's entity registry, so it cannot be filed into a room. Entities defined in YAML have no registry entry; give it one in Home Assistant first.`,
+					err,
+				);
+			}
+			throw toBridgeError(err, this.#options.baseUrl, `Could not move ${entityId}.`);
+		}
+	}
+
+	/** Every area the house has, for a UI that files entities into them. */
+	areas() {
+		return (this.#registries.areas || []).map((a) => ({
+			id: a.area_id,
+			name: a.name,
+			floorId: a.floor_id || null,
+			icon: a.icon || null,
+		}));
+	}
+
 	/** Every scene and script in the house, as intent candidates. */
 	macros() {
 		const out = [];
@@ -376,6 +504,8 @@ export class HomeBridge {
 		this.#rebuildTimer = null;
 		if (this.#registryTimer) clearTimeout(this.#registryTimer);
 		this.#registryTimer = null;
+		if (this.#livenessTimer) clearInterval(this.#livenessTimer);
+		this.#livenessTimer = null;
 		for (const stop of this.#unsubscribers) {
 			try {
 				stop();

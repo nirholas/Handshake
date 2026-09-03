@@ -121,9 +121,9 @@
 /* The token field carries a reveal toggle inside its own bounds, so the layout
    does not shift when the button appears. */
 .hm-secret { position: relative; }
-.hm-secret .hm-input { padding-right: 5.2rem; }
+.hm-secret .hm-input { padding-inline-end: 5.2rem; }
 .hm-reveal {
-	position: absolute; top: 50%; right: 0.45rem; transform: translateY(-50%);
+	position: absolute; top: 50%; inset-inline-end: 0.45rem; transform: translateY(-50%);
 	background: var(--hm-panel-2); border: 1px solid var(--hm-line);
 	border-radius: var(--radius-sm); color: var(--hm-ink-2);
 	font: inherit; font-size: var(--text-sm); padding: 0.3rem 0.55rem;
@@ -186,7 +186,7 @@
 .hm-notice {
 	display: flex; gap: 0.7rem; align-items: flex-start;
 	border: 1px solid var(--hm-line);
-	border-left-width: 3px;
+	border-inline-start-width: 3px;
 	border-radius: var(--radius-md);
 	background: var(--hm-panel-2);
 	padding: 0.8rem 0.95rem;
@@ -198,13 +198,13 @@
 .hm-notice p + p { margin-top: 0.45rem; }
 .hm-notice-title { font-weight: var(--weight-semibold); }
 .hm-notice-body { color: var(--hm-ink-2); }
-.hm-notice ul { margin: 0.5rem 0 0; padding-left: 1.1rem; color: var(--hm-ink-2); }
+.hm-notice ul { margin: 0.5rem 0 0; padding-inline-start: 1.1rem; color: var(--hm-ink-2); }
 .hm-notice li + li { margin-top: 0.3rem; }
 
-.hm-notice-info { border-left-color: var(--hm-idle); }
-.hm-notice-warn { border-left-color: var(--hm-stale); }
-.hm-notice-error { border-left-color: var(--hm-down); }
-.hm-notice-ok { border-left-color: var(--hm-live); }
+.hm-notice-info { border-inline-start-color: var(--hm-idle); }
+.hm-notice-warn { border-inline-start-color: var(--hm-stale); }
+.hm-notice-error { border-inline-start-color: var(--hm-down); }
+.hm-notice-ok { border-inline-start-color: var(--hm-live); }
 
 .hm-notice-icon { flex: 0 0 auto; width: 1.05rem; height: 1.05rem; margin-top: 0.12rem; }
 .hm-notice-info .hm-notice-icon { color: var(--hm-idle); }
@@ -347,7 +347,7 @@
 	overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
 
-.hm-ol { list-style: decimal; margin: 0.5rem 0 0; padding-left: 1.2rem; color: var(--hm-ink-2); font-size: var(--text-md); line-height: var(--leading-normal); }
+.hm-ol { list-style: decimal; margin: 0.5rem 0 0; padding-inline-start: 1.2rem; color: var(--hm-ink-2); font-size: var(--text-md); line-height: var(--leading-normal); }
 .hm-ol li + li { margin-top: 0.3rem; }
 .hm-ol code, .hm-code {
 	font-family: var(--font-mono); font-size: 0.9em;
@@ -442,10 +442,339 @@
 
 @media (max-width: 380px) {
 	.hm-stats { grid-template-columns: 1fr 1fr; }
-	.hm-secret .hm-input { padding-right: 4.4rem; }
+	.hm-secret .hm-input { padding-inline-end: 4.4rem; }
 }
 
 /* The "is it us or your house" verdict, appended to a failing home's status
    line once the platform's own health is known. Muted on purpose: it explains,
    it does not compete with the status it is explaining. */
 .hm-status-verdict { color: var(--hm-ink-2); }
+
+/* ── The disclosure panel ────────────────────────────────────────────────────
+   What the token can do and what we keep, shown before the button that sends
+   it, and what happens to a voice before the microphone opens. Rendered by
+   src/home/disclosure-panel.js from the same strings the API serves.
+
+   Styled to be read, not to be dismissed. The body sits on --hm-ink-2 rather
+   than the --hm-ink-3 muted ink the hints use, and the first line (the one that
+   changes somebody's mind: "anyone holding it can unlock your doors") inherits
+   the page's full-contrast ink, because a promise rendered in grey is a promise
+   nobody read. The left rule marks it as a distinct kind of content without
+   boxing it into a callout the eye learns to skip. */
+.hm-disclosure {
+	margin: var(--space-md) 0 0;
+	padding-inline-start: var(--space-md);
+	border-inline-start: 2px solid var(--hm-line-strong);
+}
+.hm-disclosure-title {
+	font-size: var(--text-md);
+	font-weight: var(--weight-medium);
+	margin: 0;
+	line-height: var(--leading-snug, 1.3);
+}
+.hm-disclosure-list {
+	list-style: none;
+	margin: 0.5rem 0 0;
+	padding: 0;
+	color: var(--hm-ink-2);
+	font-size: var(--text-sm);
+	line-height: var(--leading-normal);
+}
+.hm-disclosure-list li + li { margin-top: 0.45rem; }
+.hm-disclosure-list li:first-child { color: inherit; }
+.hm-disclosure-more {
+	display: inline-block;
+	margin-top: 0.55rem;
+	font-size: var(--text-sm);
+	color: var(--hm-ink-2);
+	text-decoration: underline;
+	text-underline-offset: 2px;
+	border-radius: 3px;
+}
+.hm-disclosure-more:hover { color: inherit; }
+.hm-disclosure-more:focus-visible {
+	outline: 2px solid var(--hm-focus);
+	outline-offset: 2px;
+}
+@media (prefers-reduced-motion: no-preference) {
+	.hm-disclosure-more { transition: color 120ms ease; }
+}
+
+/* ── The privacy centre (/smart-home/privacy) ────────────────────────────────
+   Everything we store about somebody's homes, with the controls to change the
+   window, take a copy, or delete it. Most of the page reuses this surface's
+   existing panels, stats, notices and buttons; only the pieces below are new. */
+
+/* Breadcrumb. Small, quiet, and only ever one level: this page hangs off the
+   homes list and nothing hangs off it. */
+.hm-breadcrumb {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: var(--text-sm);
+	color: var(--hm-ink-3);
+	margin-bottom: var(--space-md);
+}
+.hm-breadcrumb a { color: var(--hm-ink-2); text-decoration: none; border-radius: 3px; }
+.hm-breadcrumb a:hover { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.hm-breadcrumb a:focus-visible { outline: 2px solid var(--hm-focus); outline-offset: 2px; }
+
+/* The "never stored" block. It goes ABOVE the table of what we do keep, and it
+   is tinted, because it is the part somebody came to check and it should not
+   read as a footnote to the list of things we hold. */
+.hm-promises {
+	border: 1px solid var(--hm-line);
+	border-radius: var(--radius-md);
+	background: var(--hm-panel);
+	padding: var(--space-md);
+	margin: var(--space-md) 0;
+}
+.hm-promises-title {
+	margin: 0 0 0.5rem;
+	font-size: var(--text-md);
+	font-weight: var(--weight-medium);
+}
+.hm-promises-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	font-size: var(--text-sm);
+	color: var(--hm-ink-2);
+	line-height: var(--leading-normal);
+}
+.hm-promises-list li + li { margin-top: 0.4rem; }
+.hm-promises-list strong { color: inherit; font-weight: var(--weight-medium); }
+
+/* The inventory table. Wide by nature (four columns of prose), so it scrolls
+   inside its own region rather than pushing the page sideways at 320px. */
+.hm-table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); min-width: 42rem; }
+.hm-table th {
+	text-align: left;
+	font-size: var(--text-2xs);
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: var(--hm-ink-3);
+	font-weight: var(--weight-medium);
+	padding: 0 var(--space-sm) 0.5rem 0;
+	border-bottom: 1px solid var(--hm-line);
+}
+.hm-table td {
+	padding: var(--space-sm) var(--space-sm) var(--space-sm) 0;
+	border-bottom: 1px solid var(--hm-line);
+	color: var(--hm-ink-2);
+	vertical-align: top;
+	line-height: var(--leading-normal);
+}
+.hm-table td:first-child { color: inherit; }
+.hm-table tr:last-child td { border-bottom: 0; }
+.hm-table .hm-tag { margin-left: 0.4rem; vertical-align: middle; }
+
+/* The retention control. One row per home: what it keeps now, and five windows
+   as one tap each. */
+.hm-retention { padding: var(--space-md) 0; border-top: 1px solid var(--hm-line); }
+.hm-retention:first-of-type { border-top: 0; padding-top: var(--space-sm); }
+.hm-retention-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.5rem;
+}
+.hm-retention-home { font-weight: var(--weight-medium); }
+.hm-retention-current { font-size: var(--text-sm); color: var(--hm-ink-2); }
+.hm-retention-choices { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.6rem; }
+.hm-chip {
+	appearance: none;
+	border: 1px solid var(--hm-line-strong);
+	background: transparent;
+	color: var(--hm-ink-2);
+	border-radius: 999px;
+	padding: 0.3rem 0.75rem;
+	font: inherit;
+	font-size: var(--text-sm);
+	cursor: pointer;
+}
+.hm-chip:hover:not(:disabled) { color: inherit; border-color: currentColor; }
+.hm-chip:disabled { opacity: 0.5; cursor: not-allowed; }
+.hm-chip:focus-visible { outline: 2px solid var(--hm-focus); outline-offset: 2px; }
+/* The current window, marked by more than colour: aria-pressed carries it for a
+   screen reader, and the filled treatment carries it for everyone else. */
+.hm-chip-on {
+	color: inherit;
+	border-color: currentColor;
+	background: var(--hm-panel-2);
+	font-weight: var(--weight-medium);
+}
+.hm-reason { margin-top: var(--space-sm); }
+.hm-reason .hm-actions { margin-top: var(--space-sm); }
+
+/* The delete panel. Tinted red at the edge only: a whole red card reads as an
+   error state, and this is a control somebody deliberately came to use. */
+.hm-panel-danger { border-color: rgba(224, 90, 74, 0.28); }
+.hm-danger-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-sm);
+	padding: var(--space-sm) 0;
+	border-top: 1px solid var(--hm-line);
+}
+.hm-danger-row:first-of-type { border-top: 0; }
+.hm-danger-row-all { border-top: 1px solid var(--hm-line-strong); margin-top: var(--space-sm); }
+.hm-danger-label { font-weight: var(--weight-medium); }
+/* The in-place confirm spans the row rather than sitting beside the button, so
+   the question and the thing it is about stay together. */
+.hm-danger-row [data-confirm] { flex-basis: 100%; }
+
+@media (max-width: 520px) {
+	.hm-danger-row { align-items: stretch; flex-direction: column; }
+	.hm-danger-row .hm-btn { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.hm-chip { transition: none; }
+}
+
+/* ── the floorplan editor (order 07) ─────────────────────────────────────────
+   A top-down plan, because nobody arranges a floorplan in perspective. The 3D
+   scene is the reward; this is the workspace. Every colour comes from the
+   lane's variables so light and dark both work without a second palette. */
+
+.hm-plan { display: grid; gap: var(--space-md); }
+
+.hm-plan-toolbar {
+	display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs);
+	padding: var(--space-sm); border: 1px solid var(--hm-line);
+	border-radius: var(--radius-md); background: var(--hm-panel);
+}
+.hm-plan-count { margin-left: auto; font-size: var(--text-sm); color: var(--hm-ink-3); }
+.hm-plan-readonly { margin: 0; font-size: var(--text-sm); color: var(--hm-ink-2); }
+
+.hm-plan-btn {
+	appearance: none; font: inherit; font-size: var(--text-sm);
+	padding: 0.45rem 0.8rem; border-radius: var(--radius-sm);
+	border: 1px solid var(--hm-line); background: var(--hm-panel-2); color: var(--ink);
+	cursor: pointer; transition: background 120ms ease, border-color 120ms ease, opacity 120ms ease;
+	/* A thumb needs 44px even when the label does not. */
+	min-height: 44px;
+}
+.hm-plan-btn:hover:not(:disabled) { background: var(--hm-panel); border-color: var(--hm-ink-3); }
+.hm-plan-btn:active:not(:disabled) { transform: translateY(1px); }
+.hm-plan-btn:focus-visible { outline: 2px solid var(--hm-live); outline-offset: 2px; }
+.hm-plan-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.hm-plan-btn.is-primary { background: var(--hm-live); border-color: var(--hm-live); color: #06110b; font-weight: var(--weight-semibold); }
+
+.hm-plan-canvas {
+	position: relative; overflow: auto;
+	min-height: 320px; max-height: 70vh;
+	border: 1px solid var(--hm-line); border-radius: var(--radius-md);
+	background:
+		linear-gradient(var(--hm-line) 1px, transparent 1px) 0 0 / 16.8px 16.8px,
+		linear-gradient(90deg, var(--hm-line) 1px, transparent 1px) 0 0 / 16.8px 16.8px,
+		var(--hm-panel);
+	padding: var(--space-sm);
+}
+.hm-plan-canvas:focus-visible { outline: 2px solid var(--hm-live); outline-offset: -2px; }
+.hm-plan-surface { position: relative; min-width: 100%; min-height: 280px; }
+
+.hm-plan-room {
+	position: absolute; box-sizing: border-box;
+	display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px;
+	padding: var(--space-2xs);
+	border: 1.5px solid var(--hm-ink-3); border-radius: var(--radius-sm);
+	background: var(--hm-panel-2); color: var(--ink);
+	cursor: grab; touch-action: none; text-align: center; overflow: hidden;
+	transition: border-color 120ms ease, background 120ms ease, box-shadow 120ms ease;
+}
+.hm-plan-room:hover { border-color: var(--ink); }
+.hm-plan-room:active { cursor: grabbing; }
+.hm-plan-room:focus-visible { outline: 2px solid var(--hm-live); outline-offset: 2px; }
+.hm-plan-room.is-selected { border-color: var(--hm-live); box-shadow: inset 0 0 0 1px var(--hm-live); }
+.hm-plan-room.is-drop { background: color-mix(in srgb, var(--hm-live) 18%, transparent); border-color: var(--hm-live); }
+/* An area deleted in Home Assistant. Shown, never silently discarded: the rest
+   of somebody's plan is still their work. */
+.hm-plan-room.is-orphan { border-style: dashed; opacity: 0.72; }
+
+.hm-plan-room-name { font-size: var(--text-sm); font-weight: var(--weight-medium); line-height: 1.15; }
+.hm-plan-room-size { font-size: var(--text-2xs); color: var(--hm-ink-3); font-variant-numeric: tabular-nums; }
+.hm-plan-room-tag {
+	font-size: var(--text-2xs); text-transform: uppercase; letter-spacing: 0.07em;
+	color: var(--hm-ink-3);
+}
+.hm-plan-room-drop {
+	appearance: none; font: inherit; font-size: var(--text-2xs); cursor: pointer;
+	border: 1px solid var(--hm-line); border-radius: var(--radius-sm);
+	background: transparent; color: var(--hm-ink-2); padding: 2px 8px; min-height: 28px;
+}
+.hm-plan-room-drop:hover { color: var(--ink); border-color: var(--hm-ink-3); }
+
+.hm-plan-handle {
+	appearance: none; position: absolute; right: -1px; bottom: -1px;
+	width: 22px; height: 22px; padding: 0; cursor: nwse-resize; touch-action: none;
+	border: 0; border-radius: 0 0 var(--radius-sm) 0;
+	background: linear-gradient(135deg, transparent 50%, var(--hm-ink-3) 50%);
+}
+.hm-plan-handle:focus-visible { outline: 2px solid var(--hm-live); outline-offset: 1px; }
+
+.hm-plan-tray { border: 1px solid var(--hm-line); border-radius: var(--radius-md); background: var(--hm-panel); padding: var(--space-sm); }
+.hm-plan-tray-title { font-size: var(--text-sm); font-weight: var(--weight-semibold); margin: 0 0 0.4rem; }
+.hm-plan-tray-title + .hm-plan-tray-title { margin-top: var(--space-md); }
+.hm-plan-tray-hint { font-size: var(--text-sm); color: var(--hm-ink-2); margin: 0 0 0.5rem; line-height: var(--leading-normal); }
+.hm-plan-tray-empty { font-size: var(--text-sm); color: var(--hm-ink-3); margin: 0; }
+.hm-plan-tray-rooms, .hm-plan-tray-entities { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-2xs); }
+
+.hm-plan-tray-room, .hm-plan-tray-file {
+	appearance: none; font: inherit; font-size: var(--text-sm); cursor: pointer;
+	min-height: 44px; padding: 0.35rem 0.7rem;
+	border: 1px dashed var(--hm-ink-3); border-radius: var(--radius-sm);
+	background: var(--hm-panel-2); color: var(--ink);
+}
+.hm-plan-tray-room:hover, .hm-plan-tray-file:hover { border-style: solid; }
+.hm-plan-tray-room:focus-visible, .hm-plan-tray-file:focus-visible { outline: 2px solid var(--hm-live); outline-offset: 2px; }
+.hm-plan-tray-room:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.hm-plan-tray-entity {
+	display: inline-flex; align-items: center; gap: 0.4rem;
+	font-size: var(--text-sm); padding: 0.25rem 0.3rem 0.25rem 0.6rem;
+	border: 1px solid var(--hm-line); border-radius: var(--radius-sm);
+	background: var(--hm-panel-2); cursor: grab; max-width: 100%;
+}
+.hm-plan-tray-entity:active { cursor: grabbing; }
+.hm-plan-tray-file { min-height: 32px; padding: 0.15rem 0.5rem; font-size: var(--text-2xs); border-style: solid; }
+
+.hm-plan-filemenu {
+	display: flex; flex-wrap: wrap; gap: var(--space-2xs);
+	padding: var(--space-sm); border: 1px solid var(--hm-live); border-radius: var(--radius-md);
+	background: var(--hm-panel-2);
+}
+.hm-plan-filemenu-item {
+	appearance: none; font: inherit; font-size: var(--text-sm); cursor: pointer; min-height: 44px;
+	padding: 0.35rem 0.7rem; border: 1px solid var(--hm-line); border-radius: var(--radius-sm);
+	background: var(--hm-panel); color: var(--ink);
+}
+.hm-plan-filemenu-item:focus-visible { outline: 2px solid var(--hm-live); outline-offset: 2px; }
+
+.hm-plan-conflict {
+	border: 1px solid var(--hm-warn, #d9a441); border-radius: var(--radius-md);
+	background: color-mix(in srgb, var(--hm-warn, #d9a441) 10%, transparent);
+	padding: var(--space-md);
+}
+.hm-plan-conflict h3 { margin: 0 0 0.35rem; font-size: var(--text-md); }
+.hm-plan-conflict p { margin: 0 0 var(--space-sm); font-size: var(--text-sm); line-height: var(--leading-normal); }
+.hm-plan-conflict-actions { display: flex; gap: var(--space-xs); flex-wrap: wrap; }
+
+.hm-plan-skeleton { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-sm); }
+.hm-plan-skeleton-room { height: 96px; border-radius: var(--radius-sm); background: var(--hm-panel-2); }
+
+@media (prefers-reduced-motion: no-preference) {
+	.hm-plan-skeleton-room { animation: hm-plan-pulse 1.6s ease-in-out infinite; }
+}
+@keyframes hm-plan-pulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 0.9; } }
+
+@media (max-width: 640px) {
+	.hm-plan-toolbar { gap: var(--space-2xs); }
+	.hm-plan-count { margin-left: 0; width: 100%; }
+	.hm-plan-canvas { max-height: 55vh; }
+	.hm-plan-skeleton { grid-template-columns: 1fr; }
+}
