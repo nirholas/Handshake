@@ -82,6 +82,10 @@ function injectStyles() {
 	.tk-why-link:hover { text-decoration:underline; }
 	.tk-grid { display:grid; grid-template-columns:1.1fr 0.9fr; gap:18px; }
 	@media (max-width:820px){ .tk-grid { grid-template-columns:1fr; } }
+	/* Grid/flex children default to min-width:auto, so a wide monospace row
+	   (a trade line, a buyback receipt) grows its track past the viewport and
+	   clips off-screen at 320px. Let every track shrink to its box instead. */
+	.tk-grid > *, .tk-card, .tk-trade, .tk-trade > *, .tk-bb-run, .tk-bb-run > *, .tk-bb-head > * { min-width:0; }
 	.tk-card { background:#111116; border:1px solid #1d1d24; border-radius:14px; padding:18px; }
 	.tk-card h2 { font-size:12px; text-transform:uppercase; letter-spacing:0.06em; color:#7d7d86; margin:0 0 12px; }
 	.tk-buy { display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
@@ -91,6 +95,7 @@ function injectStyles() {
 	.tk-btn.primary { background:linear-gradient(135deg,#fff,#cfcfd6); color:#000; border:none; }
 	.tk-btn.primary:hover { filter:brightness(0.95); }
 	.tk-btn:focus-visible { outline:2px solid #7CC4FF; outline-offset:2px; }
+	.tk-wrap a:focus-visible, .tk-ca:focus-visible { outline:2px solid #7CC4FF; outline-offset:2px; border-radius:6px; }
 	.tk-tape { display:flex; flex-direction:column; gap:2px; max-height:430px; overflow-y:auto; }
 	.tk-trade { display:grid; grid-template-columns:54px 1fr auto; gap:8px; align-items:center; padding:8px 10px; border-radius:8px; font-size:13px; }
 	.tk-trade.buy { background:rgba(74,222,128,0.07); }
@@ -99,7 +104,7 @@ function injectStyles() {
 	@keyframes tkIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:none; } }
 	.tk-side { font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:0.04em; }
 	.tk-side.buy { color:#4ade80; } .tk-side.sell { color:#f87171; }
-	.tk-trader { font-family:ui-monospace,Menlo,monospace; color:#b8b8c0; text-decoration:none; }
+	.tk-trader { font-family:ui-monospace,Menlo,monospace; color:#b8b8c0; text-decoration:none; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block; }
 	.tk-trader:hover { color:#fff; }
 	.tk-amt { font-family:ui-monospace,Menlo,monospace; text-align:right; }
 	.tk-amt small { color:#7d7d86; }
