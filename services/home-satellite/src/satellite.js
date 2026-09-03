@@ -61,6 +61,9 @@ const PLAYED_GRACE_MS = 2000;
 /** A socket that has said nothing for this long is not a Home Assistant. */
 const IDLE_SOCKET_MS = 60_000;
 
+/** More concurrent sockets than this is not Home Assistant either. */
+const MAX_SOCKETS = 8;
+
 export class WyomingSatellite extends EventEmitter {
 	/**
 	 * @param {object} options
@@ -85,8 +88,15 @@ export class WyomingSatellite extends EventEmitter {
 		this._hasViewer = hasViewer;
 
 		this._server = null;
-		this._socket = null;
-		this._decoder = null;
+		// Every open socket, not just one. Home Assistant's config entry runs an
+		// info coordinator that opens its OWN short-lived connection every 30
+		// seconds to re-read `describe`, alongside the satellite's long-lived one.
+		// A satellite that assumes a single connection kills the live socket every
+		// time that probe lands, and the result is a satellite that reconnects
+		// forever and never completes a pipeline. Found the hard way against
+		// Home Assistant 2026.9.
+		this._sessions = new Map();
+		this._active = null;
 		this._idleTimer = null;
 
 		this._state = paired ? STATE.DISCONNECTED : STATE.UNPAIRED;
@@ -105,7 +115,12 @@ export class WyomingSatellite extends EventEmitter {
 	}
 
 	get connected() {
-		return !!this._socket && !this._socket.destroyed;
+		return !!this._active && !this._active.destroyed;
+	}
+
+	/** Open sockets, including Home Assistant's periodic info probe. */
+	get openSockets() {
+		return this._sessions.size;
 	}
 
 	get micOpen() {
@@ -135,8 +150,9 @@ export class WyomingSatellite extends EventEmitter {
 		this._clearPlayedTimer();
 		if (this._idleTimer) clearTimeout(this._idleTimer);
 		this._idleTimer = null;
-		if (this._socket) this._socket.destroy();
-		this._socket = null;
+		for (const socket of this._sessions.keys()) socket.destroy();
+		this._sessions.clear();
+		this._active = null;
 		if (!this._server) return;
 		await new Promise((resolve) => this._server.close(resolve));
 		this._server = null;
@@ -157,31 +173,26 @@ export class WyomingSatellite extends EventEmitter {
 			return;
 		}
 
-		if (this._socket && !this._socket.destroyed) {
-			// Home Assistant opens exactly one socket per satellite and reconnects
-			// on failure. A second one is either a stale socket the far end has
-			// already forgotten or somebody else; the newest wins, because the
-			// stale case is the common one and leaving it in place would keep a
-			// reconnected Home Assistant permanently locked out.
-			this.emit('log', { level: 'warn', event: 'wyoming.replacing_socket', remote: socket.remoteAddress });
-			this._socket.destroy();
+		if (this._sessions.size >= MAX_SOCKETS) {
+			// Not Home Assistant. One instance holds a satellite socket and opens
+			// one probe at a time; anything past a handful is a peer that has
+			// stopped reading, or somebody port-scanning the LAN.
+			this.emit('log', { level: 'warn', event: 'wyoming.too_many_sockets', remote: socket.remoteAddress });
+			socket.destroy();
+			return;
 		}
 
 		socket.setNoDelay(true);
-		this._socket = socket;
-		this._decoder = new EventDecoder();
-		this._micOpen = false;
-		this._speaking = false;
-		this._bumpIdle();
-		this._setState(STATE.IDLE, 'Home Assistant connected');
-		this.emit('ha-connected', { remote: socket.remoteAddress });
-		this.emit('log', { level: 'info', event: 'wyoming.connected', remote: socket.remoteAddress });
+		this._sessions.set(socket, { decoder: new EventDecoder(), active: false });
+		this.emit('log', { level: 'debug', event: 'wyoming.socket_open', remote: socket.remoteAddress, sockets: this._sessions.size });
 
 		socket.on('data', (chunk) => {
+			const session = this._sessions.get(socket);
+			if (!session) return;
 			this._bumpIdle();
 			let events;
 			try {
-				events = this._decoder.push(chunk);
+				events = session.decoder.push(chunk);
 			} catch (err) {
 				this.emit('log', { level: 'error', event: 'wyoming.decode_failed', message: err.message });
 				socket.destroy();
@@ -190,7 +201,7 @@ export class WyomingSatellite extends EventEmitter {
 			for (const event of events) {
 				this.counters.eventsIn += 1;
 				try {
-					this._handle(event);
+					this._handle(event, socket);
 				} catch (err) {
 					this.emit('log', { level: 'error', event: 'wyoming.handler_failed', type: event.type, message: err.message });
 				}
@@ -198,9 +209,12 @@ export class WyomingSatellite extends EventEmitter {
 		});
 
 		const done = (reason) => {
-			if (this._socket !== socket) return;
-			this._socket = null;
-			this._decoder = null;
+			if (!this._sessions.delete(socket)) return;
+			if (this._active !== socket) {
+				this.emit('log', { level: 'debug', event: 'wyoming.socket_closed', reason, sockets: this._sessions.size });
+				return;
+			}
+			this._active = null;
 			this._micOpen = false;
 			this._speaking = false;
 			this._clearPlayedTimer();
@@ -218,17 +232,44 @@ export class WyomingSatellite extends EventEmitter {
 		});
 	}
 
+	/**
+	 * Promote a socket to the one that drives the satellite. Home Assistant
+	 * sends `run-satellite` on exactly that socket and on no other, which is what
+	 * separates it from the info probe.
+	 */
+	_activate(socket) {
+		if (this._active === socket) return;
+		if (this._active && !this._active.destroyed) {
+			// A previous satellite socket the far end has already forgotten. The
+			// newest one wins: the stale case is the common one, and leaving it in
+			// place locks a reconnected Home Assistant out for good.
+			this.emit('log', { level: 'warn', event: 'wyoming.replacing_active', remote: socket.remoteAddress });
+			const stale = this._active;
+			this._active = null;
+			stale.destroy();
+		}
+		this._active = socket;
+		const session = this._sessions.get(socket);
+		if (session) session.active = true;
+		this._micOpen = false;
+		this._speaking = false;
+		this._bumpIdle();
+		this._setState(STATE.IDLE, 'Home Assistant connected');
+		this.emit('ha-connected', { remote: socket.remoteAddress });
+		this.emit('log', { level: 'info', event: 'wyoming.connected', remote: socket.remoteAddress });
+	}
+
 	_bumpIdle() {
 		if (this._idleTimer) clearTimeout(this._idleTimer);
 		this._idleTimer = setTimeout(() => {
 			this.emit('log', { level: 'warn', event: 'wyoming.idle_timeout' });
-			this._socket?.destroy();
+			this._active?.destroy();
 		}, IDLE_SOCKET_MS);
 		this._idleTimer.unref?.();
 	}
 
-	_send(event) {
-		const socket = this._socket;
+	/** Write to the satellite socket, or to a specific one when answering it. */
+	_send(event, socket = this._active) {
 		if (!socket || socket.destroyed) return false;
 		socket.write(encodeEvent(event));
 		this.counters.eventsOut += 1;
@@ -237,7 +278,9 @@ export class WyomingSatellite extends EventEmitter {
 
 	/* --------------------------------------------------------------- inbound */
 
-	_handle(event) {
+	_handle(event, socket) {
+		// `describe` and `ping` are answered on the socket that asked, so the info
+		// probe gets its reply without touching the satellite session.
 		switch (event.type) {
 			case EVENT.DESCRIBE:
 				this._send(infoEvent({
@@ -245,21 +288,34 @@ export class WyomingSatellite extends EventEmitter {
 					description: this.description,
 					area: this.area,
 					version: this.version,
-				}));
+				}), socket);
 				return;
 
 			case EVENT.PING:
-				this._send(pongEvent(typeof event.data?.text === 'string' ? event.data.text : null));
+				this._send(pongEvent(typeof event.data?.text === 'string' ? event.data.text : null), socket);
 				return;
 
 			case EVENT.PONG:
 				return;
 
 			case EVENT.RUN_SATELLITE:
+				this._activate(socket);
 				this._setState(STATE.IDLE, 'Ready');
 				this.emit('log', { level: 'info', event: 'wyoming.run_satellite' });
 				return;
 
+			default:
+				break;
+		}
+
+		// A probe socket never drives the pipeline. Ignoring the rest there keeps
+		// a stray connection from moving the avatar or opening the microphone.
+		if (socket !== this._active) {
+			this.emit('log', { level: 'debug', event: 'wyoming.ignored_on_probe', type: event.type });
+			return;
+		}
+
+		switch (event.type) {
 			case EVENT.PAUSE_SATELLITE:
 				// Home Assistant muted or disabled the satellite. Stop streaming so
 				// we are not shipping somebody's kitchen audio to a pipeline that
