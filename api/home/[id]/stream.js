@@ -1,30 +1,30 @@
-// GET /api/home/:id/stream — the live home, as Server-Sent Events.
+// GET /api/home/:id/stream: the live home, as Server-Sent Events.
 //
 // Events:
 //   graph      the room graph, on open and on every coalesced rebuild
-//   status     { status, detail, stale } on connect, disconnect and reconnect
+//   status     { status, connected, stale, detail } on open, disconnect, reconnect
 //   heartbeat  every 25 s, because idle proxies close silent streams
 //
 // Four properties this handler exists to guarantee, each of which was a bug
 // somewhere before it was a rule:
 //
 //   1. The first `graph` is sent IMMEDIATELY on open, from whatever the pooled
-//      socket already holds. A 3D home that paints only after somebody happens
-//      to flip a light is not a live view, it is a blank screen with a promise.
+//      socket already holds. A 3D home that paints only once somebody happens to
+//      flip a light is not a live view, it is a blank screen with a promise.
 //   2. The graph is never emptied. When the house drops, the last good graph
-//      stays on screen and a `status` event marks it stale. The user watches
-//      their home go grey; they do not watch it vanish.
-//   3. `req.on('close')` unsubscribes and releases the pooled reference. A
-//      leaked reference here pins a stranger's house open forever, because the
-//      idle evictor only touches entries with a refcount of zero.
+//      stays and a `status` event marks it stale. The user watches their home go
+//      grey; they do not watch it vanish.
+//   3. `req.on('close')` unsubscribes and releases the pooled reference. A leaked
+//      reference pins a stranger's house open forever, because the idle evictor
+//      only touches entries whose refcount has reached zero.
 //   4. Two streams on the same home share ONE socket. The pool is keyed by home,
-//      so the second subscriber is a second listener on the first connection and
+//      so a second subscriber is a second listener on the first connection and
 //      never a second WebSocket into somebody's house.
 //
 // Buffering: `x-accel-buffering: no` and `cache-control: no-store` are load
 // bearing in front of a CDN and a reverse proxy. Without them the edge holds
 // frames until the response ends, which for a stream is never, and the page
-// looks hung while the server thinks it is delivering.
+// looks hung while the server believes it is delivering.
 
 import { resolveHomeAccess } from '../../_lib/home/access.js';
 import { toHomeFailure } from '../../_lib/home/errors.js';
@@ -48,14 +48,32 @@ export default wrap(async (req, res) => {
 	const rl = await limits.homeStream(caller.userId);
 	if (!rl.success) return rateLimited(res, rl, 'too many stream connections, slow down');
 
-	// Subscribe BEFORE writing the head. A house that cannot be reached should
-	// answer with a real coded status the client can render, not with a 200 that
-	// opens a stream and then immediately says nothing.
+	let closed = false;
+	let flowing = false;
+	/** The event `subscribe` delivers synchronously, before the head exists. */
+	let pending = null;
+
+	const emit = (event) => {
+		if (!flowing) {
+			// Held, not dropped. The runtime hands the current state to a new
+			// subscriber the instant it registers, which is BEFORE this handler knows
+			// the subscription succeeded and therefore before it may write a 200. The
+			// only correct thing to do with that first frame is keep it and flush it
+			// once the stream is open. Dropping it is what makes a page wait for a
+			// light to change before it paints.
+			pending = event;
+			return;
+		}
+		deliver(event);
+	};
+
 	let unsubscribe;
-	let onEvent = () => {};
 	try {
-		unsubscribe = await subscribe(home.id, caller.userId, (event) => onEvent(event));
+		unsubscribe = await subscribe(home.id, caller.userId, emit);
 	} catch (err) {
+		// Still a normal HTTP response: nothing has been written yet, so a house
+		// that is offline answers with a coded status the connect UI can render
+		// rather than a 200 that opens a stream and then says nothing.
 		const shaped = toHomeFailure(err);
 		if (shaped.unexpected) throw err;
 		return error(res, shaped.status, shaped.code, shaped.message, {
@@ -74,60 +92,81 @@ export default wrap(async (req, res) => {
 		'x-accel-buffering': 'no',
 	});
 
-	let closed = false;
-	const send = (event, data) => {
-		if (closed || res.writableEnded) return;
-		try {
-			res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
-		} catch {
-			// The client vanished between the check and the write. cleanup() runs
-			// from the close listener; there is nothing to report.
-			cleanup();
-		}
-	};
-
-	// The runtime hands one event shape for both kinds of change, so the split
-	// into `graph` and `status` happens here: a client that only cares about
-	// connectivity should not have to diff a whole room graph to find it, and a
-	// client redrawing the scene should not redraw it on a heartbeat.
-	let lastGraph = null;
-	let lastStatus = null;
-	onEvent = (event) => {
-		const statusKey = `${event.status}|${event.stale}|${event.connected}`;
-		if (statusKey !== lastStatus) {
-			lastStatus = statusKey;
-			send('status', {
-				status: event.status,
-				connected: event.connected,
-				stale: event.stale,
-				detail: event.stale ? 'Lost the connection to your home. The view below is the last state we saw.' : null,
-			});
-		}
-		if (event.graph && event.graph !== lastGraph) {
-			lastGraph = event.graph;
-			send('graph', { graph: event.graph, stale: event.stale, at: Date.now() });
-		}
-	};
-
-	// `subscribe` already fired once with the current state before it returned,
-	// but `onEvent` was still the no-op placeholder at that moment (it has to be:
-	// the head is not written yet). Replay it now, so the page paints from the
-	// pooled socket instead of waiting for a device in the house to change.
-	send('status', { status: home.status, connected: true, stale: false, detail: null });
-	onEvent({ ...(await currentEvent(unsubscribe)), });
+	flowing = true;
+	if (pending) {
+		const first = pending;
+		pending = null;
+		deliver(first);
+	}
 
 	const startedAt = Date.now();
 	const heartbeat = setInterval(() => {
 		if (closed || res.writableEnded) return;
 		if (Date.now() - startedAt > MAX_DURATION_MS) {
-			// Tell EventSource to come straight back rather than letting the platform
-			// cut the socket and leave the client guessing.
-			try { res.write('retry: 1000\n\n'); } catch { /* already gone */ }
+			// Tell EventSource to come straight back, rather than letting the platform
+			// cut the socket and leave the client guessing why.
+			write('retry: 1000\n\n');
 			cleanup();
 			return;
 		}
 		send('heartbeat', { at: Date.now() });
 	}, HEARTBEAT_MS);
+
+	req.on('close', cleanup);
+	req.on('error', cleanup);
+	res.on('close', cleanup);
+	res.on('error', cleanup);
+
+	// ── frame plumbing ───────────────────────────────────────────────────────
+
+	/**
+	 * One runtime event, split into the two events a client actually wants.
+	 *
+	 * The runtime reports connectivity and the room graph in one shape. A client
+	 * watching for a dropped house should not have to diff a whole graph to find
+	 * it, and a client redrawing a 3D scene should not redraw it because a
+	 * heartbeat arrived, so the split happens here and each half is sent only when
+	 * that half changed.
+	 */
+	let lastStatusKey = null;
+	let lastGraph = null;
+	function deliver(event) {
+		const statusKey = `${event.status}|${event.stale}|${event.connected}`;
+		if (statusKey !== lastStatusKey) {
+			lastStatusKey = statusKey;
+			send('status', {
+				status: event.status,
+				connected: Boolean(event.connected),
+				stale: Boolean(event.stale),
+				detail: event.stale
+					? 'Lost the connection to your home. This is the last state three.ws saw.'
+					: null,
+			});
+		}
+		// Identity comparison, not deep equality: the bridge rebuilds the graph into
+		// a new object on every coalesced burst, so a new reference IS the signal
+		// that something in the house changed. Comparing by value here would cost a
+		// full walk of every entity on every burst to learn what the reference
+		// already said.
+		if (event.graph && event.graph !== lastGraph) {
+			lastGraph = event.graph;
+			send('graph', { graph: event.graph, stale: Boolean(event.stale), at: Date.now() });
+		}
+	}
+
+	function send(name, data) {
+		write(`event: ${name}\ndata: ${JSON.stringify(data)}\n\n`);
+	}
+
+	function write(frame) {
+		if (closed || res.writableEnded) return;
+		try {
+			res.write(frame);
+		} catch {
+			// The client vanished between the check and the write.
+			cleanup();
+		}
+	}
 
 	function cleanup() {
 		if (closed) return;
@@ -135,29 +174,18 @@ export default wrap(async (req, res) => {
 		clearInterval(heartbeat);
 		// Releases the pooled reference. Without this the entry never reaches a
 		// refcount of zero and the idle evictor can never close it.
-		try { unsubscribe(); } catch { /* already torn down */ }
+		try {
+			unsubscribe();
+		} catch {
+			// Unsubscribing twice, or after the pool already dropped the entry, is
+			// the normal shape of a torn-down stream and not an error.
+		}
 		if (!res.writableEnded) {
-			try { res.end(); } catch { /* already torn down */ }
+			try {
+				res.end();
+			} catch {
+				// Already torn down by the transport.
+			}
 		}
 	}
-
-	req.on('close', cleanup);
-	req.on('error', cleanup);
-	res.on('close', cleanup);
-	res.on('error', cleanup);
 });
-
-/**
- * The state the subscription is already holding.
- *
- * `subscribe` returns only an unsubscribe function, and its one immediate call
- * landed on the placeholder listener before the head was written. Rather than
- * reach into the runtime's internals for the entry, the same information is
- * carried on the unsubscribe closure's own captured event by subscribing a
- * second, throwaway listener would cost a second reference. So instead the first
- * real frame is produced by asking the runtime for a snapshot-shaped object that
- * the next genuine event will immediately supersede.
- */
-async function currentEvent() {
-	return { graph: null, stale: false, connected: true, status: 'connected' };
-}
