@@ -2068,12 +2068,20 @@
 			"dest": "/smart-home-plan.html"
 		},
 		{
+			"src": "/smart-home/privacy/?",
+			"dest": "/smart-home-privacy.html"
+		},
+		{
 			"src": "/smart-home/join/?",
 			"dest": "/smart-home-join.html"
 		},
 		{
-			"src": "/smart-home/([0-9a-fA-F-]{36})/?",
+			"src": "/smart-home/([0-9a-fA-F-]{36})/settings/?",
 			"dest": "/smart-home.html"
+		},
+		{
+			"src": "/smart-home/([0-9a-fA-F-]{36})/?",
+			"dest": "/home-scene.html"
 		},
 		{
 			"src": "/smart-home/?",
@@ -6391,6 +6399,10 @@
 		{
 			"path": "/api/cron/home-health-alert",
 			"schedule": "*/5 * * * *"
+		},
+		{
+			"path": "/api/cron/home-relay-sweep",
+			"schedule": "17 * * * *"
 		}
 	]
 }
