@@ -40,6 +40,7 @@ import { laneHealthSnapshot } from '../../_lib/forge-lane-health.js';
 import { resolveProviderKey } from '../../_lib/forge-provider-key.js';
 import { encodeJobToken, decodeJobToken } from '../../_lib/forge-job-token.js';
 import { watsonxConfig, watsonxChatComplete } from '../../_lib/watsonx.js';
+import { llmComplete } from '../../_lib/llm.js';
 import { createAvatar, storageKeyFor } from '../../_lib/avatars.js';
 import { putObject } from '../../_lib/r2.js';
 import { isValidGlbHeader, inspectGlb } from '../../_lib/glb-inspect.js';
@@ -606,16 +607,49 @@ function pickPosePreset(prompt) {
 }
 const POSE_PREVIEW_BASE = process.env.MCP_POSE_PREVIEW_BASE || 'https://three.ws/pose';
 
-// ── IBM Granite (watsonx.ai) config guard for direct_prompt / generate_material ─
-function graniteConfigOrThrow() {
+// ── Authoring model for direct_prompt / generate_material ──────────────────────
+// Both tools ask a language model for a small strict-JSON document. IBM Granite
+// (watsonx.ai) leads where it is configured, and the shared free-first chain
+// (llmComplete, the same ladder forge-enhance and the prompt director ride)
+// backs it up. Previously both tools hard-threw when WATSONX_API_KEY was unset,
+// which made them permanently dead on any deployment without an IBM key even
+// though a healthy LLM chain was one call away. Only an exhausted chain errors.
+const GRANITE_TIMEOUT_MS = 20_000;
+
+async function graniteChatComplete({ system, user, maxTokens, temperature, tool }) {
+	let lastError = null;
 	const cfg = watsonxConfig();
-	if (!cfg.configured) {
-		throw rpcError(
-			-32000,
-			'IBM watsonx.ai is not configured on this server (set WATSONX_API_KEY and WATSONX_PROJECT_ID).',
-		);
+	if (cfg.configured) {
+		try {
+			const out = await watsonxChatComplete(cfg, {
+				messages: [
+					{ role: 'system', content: system },
+					{ role: 'user', content: user },
+				],
+				maxTokens,
+				temperature,
+			});
+			if (out?.text) return out;
+		} catch (err) {
+			lastError = err;
+		}
 	}
-	return cfg;
+	try {
+		const out = await llmComplete({
+			system,
+			user,
+			maxTokens,
+			timeoutMs: GRANITE_TIMEOUT_MS,
+			track: { tool },
+		});
+		if (out?.text) return out;
+	} catch (err) {
+		lastError = err;
+	}
+	throw rpcError(
+		-32000,
+		`No language model answered: ${lastError?.message || 'no provider is configured on this server'}.`,
+	);
 }
 function stripJsonFence(text) {
 	const raw = String(text || '').trim();
@@ -1840,23 +1874,21 @@ export const toolDefs = [
 		},
 		async handler(args, auth) {
 			await enforce(limits.mcp3dGenerate, auth);
-			const cfg = graniteConfigOrThrow();
 			const system =
 				'You are a 3D-generation prompt director. Given a rough idea, produce a prompt that yields a single, clearly-described object for image-to-3D reconstruction. Return ONLY valid JSON with keys: "prompt" (one concise sentence describing ONE subject), "subject", "style", "materials" (array), "colors" (array), "detail" (one of draft|standard|high), "notes". No markdown, no prose outside the JSON.';
 			const user = args.style ? `${args.idea}\n\nPreferred style: ${args.style}` : args.idea;
-			const result = await watsonxChatComplete(cfg, {
-				messages: [
-					{ role: 'system', content: system },
-					{ role: 'user', content: user },
-				],
+			const result = await graniteChatComplete({
+				system,
+				user,
 				maxTokens: 700,
 				temperature: 0.3,
+				tool: 'mcp3d-direct-prompt',
 			});
 			let parsed = null;
 			try {
 				parsed = JSON.parse(stripJsonFence(result.text));
 			} catch {
-				// Granite didn't return clean JSON — surface the raw text below.
+				// The model didn't return clean JSON: surface the raw text below.
 			}
 			if (!parsed || typeof parsed.prompt !== 'string') {
 				return {
@@ -1908,25 +1940,23 @@ export const toolDefs = [
 		},
 		async handler(args, auth) {
 			await enforce(limits.mcp3dGenerate, auth);
-			const cfg = graniteConfigOrThrow();
 			const system =
 				'You are a 3D material author. Given a description, return ONLY a valid glTF 2.0 material JSON object with keys: "name", "pbrMetallicRoughness" { "baseColorFactor": [r,g,b,a] (0-1), "metallicFactor" (0-1), "roughnessFactor" (0-1) }, "emissiveFactor": [r,g,b] (0-1), "doubleSided" (bool), and a "_notes" string. No markdown, no prose outside the JSON.';
 			const user = args.name
 				? `Name: ${args.name}\nMaterial: ${args.description}`
 				: args.description;
-			const result = await watsonxChatComplete(cfg, {
-				messages: [
-					{ role: 'system', content: system },
-					{ role: 'user', content: user },
-				],
+			const result = await graniteChatComplete({
+				system,
+				user,
 				maxTokens: 600,
 				temperature: 0.2,
+				tool: 'mcp3d-generate-material',
 			});
 			let material = null;
 			try {
 				material = JSON.parse(stripJsonFence(result.text));
 			} catch {
-				// Fall through to raw text when Granite returns non-JSON.
+				// Fall through to raw text when the model returns non-JSON.
 			}
 			if (!material || typeof material !== 'object') {
 				return {

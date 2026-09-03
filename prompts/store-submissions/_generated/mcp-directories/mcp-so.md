@@ -7,7 +7,7 @@
 **Contact:** support@three.ws
 **Icon:** https://three.ws/three-ws-mcp-icon.svg
 **Official MCP registry:** https://registry.modelcontextprotocol.io/?q=io.github.nirholas
-**Coverage:** 42 servers — 7 hosted remote (Streamable HTTP) + 35 install-and-run (npm/stdio).
+**Coverage:** 50 servers — 7 hosted remote (Streamable HTTP) + 43 install-and-run (npm/stdio).
 
 > Every field below is derived from `mcp-listing-source.json`. If a value looks stale, fix the manifest or the overlay and re-run the generators — never hand-edit this file.
 
@@ -262,7 +262,7 @@ Fields mcp.so expects per server: **name, GitHub repo, description, website, tra
 | `io.github.nirholas/threews-pumpfun` | three.ws pump.fun MCP | https://three.ws/api/pump-fun-mcp | market-data |
 | `io.github.nirholas/threews-x402-bazaar` | three.ws x402 Bazaar | https://three.ws/api/mcp-bazaar | agent-economy |
 
-### All 35 install-and-run servers (stdio — `npx`)
+### All 43 install-and-run servers (stdio — `npx`)
 
 | Name (registry) | Title | Connect | Category |
 |---|---|---|---|
@@ -275,20 +275,28 @@ Fields mcp.so expects per server: **name, GitHub repo, description, website, tra
 | `io.github.nirholas/agora-mcp` | three.ws Agora | `npx -y @three-ws/agora-mcp` | agent-economy |
 | `io.github.nirholas/alerts-mcp` | three.ws Alerts | `npx -y @three-ws/alerts-mcp` | market-data |
 | `io.github.nirholas/alibaba-cloud` | Alibaba Cloud DashScope — Qwen | `npx -y @three-ws/alibaba-cloud-mcp` | ai-models |
+| `io.github.nirholas/assistant-widget` | three.ws Assistant Widget | `npx -y @three-ws/assistant-mcp` | 3d |
 | `io.github.nirholas/audio-mcp` | three.ws Audio | `npx -y @three-ws/audio-mcp` | ai-models |
 | `io.github.nirholas/autopilot-mcp` | three.ws Autopilot | `npx -y @three-ws/autopilot-mcp` | agent-economy |
 | `io.github.nirholas/billing-mcp` | three.ws Billing | `npx -y @three-ws/billing-mcp` | account |
 | `io.github.nirholas/brain-mcp` | three.ws Brain | `npx -y @three-ws/brain-mcp` | ai-models |
 | `io.github.nirholas/clash-mcp` | three.ws Coin Clash | `npx -y @three-ws/clash-mcp` | gaming |
+| `io.github.nirholas/concierge-mcp` | three.ws Concierge | `npx -y @three-ws/concierge-mcp` | agents |
 | `io.github.nirholas/copy-mcp` | three.ws Copy Trading | `npx -y @three-ws/copy-mcp` | trading |
+| `io.github.nirholas/herald-mcp` | three.ws Herald | `npx -y @three-ws/herald-mcp` | avatars |
+| `io.github.nirholas/home-mcp` | three.ws Home | `npx -y @three-ws/home-mcp` | home |
+| `io.github.nirholas/hood-mcp` | Robinhood Chain | `npx -y hood-mcp` | market-data |
 | `io.github.nirholas/ibm-watsonx` | IBM watsonx.ai Granite | `npx -y @three-ws/ibm-watsonx-mcp` | ai-models |
 | `io.github.nirholas/ibm-x402-mcp` | IBM Granite via x402 | `npx -y @three-ws/ibm-x402-mcp` | ai-models |
 | `io.github.nirholas/intel-mcp` | three.ws Intel | `npx -y @three-ws/intel-mcp` | market-data |
+| `io.github.nirholas/knock-mcp` | three.ws Knock | `npx -y @three-ws/knock-mcp` | agent-economy |
 | `io.github.nirholas/kol-mcp` | three.ws KOL | `npx -y @three-ws/kol-mcp` | market-data |
 | `io.github.nirholas/loom-mcp` | three.ws Loom | `npx -y @three-ws/loom-mcp` | 3d |
 | `io.github.nirholas/marketplace-mcp` | three.ws Marketplace | `npx -y @three-ws/marketplace-mcp` | agent-economy |
+| `io.github.nirholas/metaplex-agent` | Metaplex Agent Registry | `npx -y @three-ws/metaplex-agent-mcp` | identity |
 | `io.github.nirholas/naming-mcp` | three.ws Naming | `npx -y @three-ws/naming-mcp` | identity |
 | `io.github.nirholas/notifications-mcp` | three.ws Notifications | `npx -y @three-ws/notifications-mcp` | account |
+| `io.github.nirholas/onchain-agent-wallets` | Onchain Agent Wallets | `npx -y @three-ws/onchain-agent-wallets` | payments |
 | `io.github.nirholas/portfolio-mcp` | three.ws Portfolio | `npx -y @three-ws/portfolio-mcp` | trading |
 | `io.github.nirholas/provenance-mcp` | three.ws Provenance | `npx -y @three-ws/provenance-mcp` | identity |
 | `io.github.nirholas/pumpfun-solana-mcp` | pump.fun Solana Data | `npx -y @three-ws/pumpfun-mcp` | market-data |

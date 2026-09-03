@@ -24,14 +24,33 @@ function cmp(a, b) {
 	return 0;
 }
 
+// The registry paginates. A single `limit=100` page returns 100 VERSION rows,
+// which covers only ~44 distinct server names, and hands back a `nextCursor`.
+// Reading one page silently marked every server alphabetically at or after the
+// cursor as NEW, which is how this batch came to stage 16 redundant publishes
+// for servers that were already current. Follow the cursor to the end.
 async function loadRegistry() {
 	if (process.env.REGISTRY_JSON) return JSON.parse(readFileSync(process.env.REGISTRY_JSON, 'utf8'));
-	const r = await fetch('https://registry.modelcontextprotocol.io/v0/servers?search=io.github.nirholas&limit=100');
-	return r.json();
+	const base = 'https://registry.modelcontextprotocol.io/v0/servers?search=io.github.nirholas&limit=100';
+	const servers = [];
+	const seen = new Set();
+	let cursor = '';
+	for (let page = 0; page < 50; page++) {
+		const r = await fetch(cursor ? `${base}&cursor=${encodeURIComponent(cursor)}` : base);
+		if (!r.ok) throw new Error(`registry query failed: HTTP ${r.status}`);
+		const j = await r.json();
+		const batch = j.servers || j.data || [];
+		servers.push(...batch);
+		cursor = (j.metadata || j.meta || {}).nextCursor || '';
+		if (!cursor || !batch.length || seen.has(cursor)) break;
+		seen.add(cursor);
+	}
+	return { servers };
 }
 
 const reg = await loadRegistry();
 const entries = (reg.servers || reg.data || []).map((x) => x.server || x);
+console.log(`Registry: read ${entries.length} version rows across ${new Set(entries.map((e) => e.name)).size} server names.`);
 const latest = {};
 for (const s of entries) if (!latest[s.name] || cmp(s.version, latest[s.name]) > 0) latest[s.name] = s.version;
 
@@ -50,8 +69,8 @@ const rows = files.map((f) => {
 const todo = rows.filter((r) => r.status !== 'OK');
 const ok = rows.filter((r) => r.status === 'OK').length;
 
-const verify = "curl -s 'https://registry.modelcontextprotocol.io/v0/servers?search=io.github.nirholas&limit=100' \\\n"
-	+ "  | jq -r '.servers[].server | .name + \" \" + .version'";
+// Paginated on purpose: one page covers only ~44 of the namespace's servers.
+const verify = "node scripts/publish-mcp-servers.mjs --dry-run";
 
 let sh = '#!/usr/bin/env bash\n';
 sh += `# Republish stale/new three.ws MCP servers to the official MCP registry.\n`;
