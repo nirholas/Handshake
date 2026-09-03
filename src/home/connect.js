@@ -455,25 +455,20 @@ export function checkReachable(input) {
 	const raw = String(input || '').trim();
 	if (!raw) return { ok: true, short: '' };
 
+	// Parse WITHOUT requireSecure first, then diagnose in order of usefulness.
+	// The order matters more than it looks: the single most common thing a person
+	// pastes is "http://192.168.1.10:8123", which is both plain http AND a LAN
+	// address. Checking the scheme first answers it with "use https", which sends
+	// them off to configure TLS on a machine we still would not be able to reach.
+	// The LAN diagnosis is the true one and the actionable one, so it goes first.
 	let parsed;
 	try {
-		// requireSecure is the same flag api/home/index.js passes, so the browser
-		// and the server agree on what is reachable instead of one of them
-		// accepting an address the other will refuse. It exempts loopback, which
-		// is how a developer running Home Assistant on this machine still works.
-		parsed = normalizeBaseUrl(raw, { requireSecure: true });
+		parsed = normalizeBaseUrl(raw);
 	} catch (err) {
-		const badScheme = /plain http/i.test(err?.message || '');
 		return {
 			ok: false,
-			short: badScheme ? 'A plain http address cannot be reached from this page.' : 'That is not a web address we can use.',
-			notice: badScheme
-				? {
-					tone: 'warn',
-					title: 'That is a plain http address.',
-					body: 'This page is served over https, and a browser will not open an unencrypted connection from it. Use the https address for your house.',
-				}
-				: { tone: 'error', title: 'That address does not look right.', body: err?.message || 'Use the full https URL of your Home Assistant.' },
+			short: 'That is not a web address we can use.',
+			notice: { tone: 'error', title: 'That address does not look right.', body: err?.message || 'Use the full https URL of your Home Assistant.' },
 		};
 	}
 
@@ -490,6 +485,21 @@ export function checkReachable(input) {
 					'Use your remote https address instead. Home Assistant Cloud gives you one, and so does your own reverse proxy. That works today, with the token you already have.',
 					'Or install the three.ws add-on inside your Home Assistant, which dials out to us so nothing has to be exposed to the internet.',
 				],
+			},
+		};
+	}
+
+	// Past the LAN check, the same rule the server applies with
+	// `requireSecure`: a page on https cannot open a plain-http connection, and
+	// loopback is exempt so a local instance still works in development.
+	if (!parsed.secure && !parsed.loopback) {
+		return {
+			ok: false,
+			short: 'A plain http address cannot be reached from this page.',
+			notice: {
+				tone: 'warn',
+				title: 'That is a plain http address.',
+				body: 'This page is served over https, and a browser will not open an unencrypted connection from it. Use the https address for your house.',
 			},
 		};
 	}

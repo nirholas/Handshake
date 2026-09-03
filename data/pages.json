@@ -1002,6 +1002,14 @@
 					"added": "2026-09-02"
 				},
 				{
+					"path": "/smart-home/join",
+					"title": "Join a home",
+					"description": "Accept an invitation to somebody's connected home. The link says which home it is, exactly what your role would let you do there and what it would never let you do, before you sign in. It works once and it expires.",
+					"priority": 0.4,
+					"changefreq": "yearly",
+					"added": "2026-09-03"
+				},
+				{
 					"path": "/smart-home/plan",
 					"title": "Home plan",
 					"description": "What your plan covers for connected homes: homes, household seats, live screens, voice minutes and agent turns, each with what you have used and when it resets. Pause and resume which homes are live without disconnecting any of them. Locking up, closing a garage and arming an alarm are never limited.",

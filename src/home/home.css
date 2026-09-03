@@ -160,6 +160,9 @@
 	background: var(--hm-panel-2);
 	color: var(--ink);
 	cursor: pointer;
+	/* An <a> styled as a button is a button: the browser's link underline reads as
+	   a second, competing affordance inside the same control. */
+	text-decoration: none;
 	transition: background 140ms ease, border-color 140ms ease, transform 90ms ease, opacity 140ms ease;
 }
 .hm-btn:hover:not(:disabled) { background: var(--hm-panel); border-color: var(--hm-focus); }

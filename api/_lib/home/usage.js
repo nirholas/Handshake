@@ -229,7 +229,11 @@ async function readGauges(userId) {
 		select
 			count(*) filter (where c.revoked_at is null and c.deactivated_at is null)::int as homes,
 			count(*) filter (where c.revoked_at is null and c.deactivated_at is null and c.transport = 'relay')::int as relay_connections,
-			coalesce(max(m.members), 0)::int as members
+			coalesce(max(m.members), 0)::int as members,
+			-- The longest retention any of this account's homes is set to. That is
+			-- the number the plan's ceiling is a ceiling on, and the one that would
+			-- be refused if the user raised it further.
+			coalesce(max(c.action_log_retention_days) filter (where c.revoked_at is null), 0)::int as log_retention_days
 		from home_connections c
 		left join lateral (
 			select count(*)::int as members from home_members hm where hm.home_id = c.id
@@ -244,7 +248,7 @@ async function readGauges(userId) {
 		// surface shows is the fullest household: that is the one that would be
 		// refused an invite, and therefore the one worth showing.
 		members: row.members ?? 0,
-		logRetentionDays: 0,
+		logRetentionDays: row.log_retention_days ?? 0,
 	};
 }
 

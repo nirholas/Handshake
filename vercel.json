@@ -2068,6 +2068,10 @@
 			"dest": "/smart-home-plan.html"
 		},
 		{
+			"src": "/smart-home/join/?",
+			"dest": "/smart-home-join.html"
+		},
+		{
 			"src": "/smart-home/([0-9a-fA-F-]{36})/?",
 			"dest": "/smart-home.html"
 		},

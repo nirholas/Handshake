@@ -13,6 +13,11 @@ than anything we would write. This package is the 200 lines in the middle that w
 Why this exists, what else was evaluated, and where it goes next:
 [docs/smart-home.md](../../docs/smart-home.md).
 
+**Pre-1.0.** An agent reaching a real building is new enough that the shape is not settled, and
+the export surface will move before 1.0. Pin an exact version if you are building on it. The one
+thing that will not move is the gate: reads free, safety moves unprompted, and anything that opens
+the house stops and asks.
+
 ## Install
 
 ```bash

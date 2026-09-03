@@ -39,13 +39,19 @@ export const VAD_SAMPLE_RATE = 16000;
 export const VAD_MS_PER_FRAME = (VAD_FRAME_SAMPLES / VAD_SAMPLE_RATE) * 1000;
 
 /**
- * Trailing silence before an utterance is called finished. The order's budget is
- * "under 400 ms": longer and the agent feels broken, shorter and it clips people
- * mid-sentence. 384 ms is 12 whole frames, the largest multiple of the frame
- * period that fits under the budget, so the real behaviour matches the number we
- * publish instead of rounding past it.
+ * Trailing silence before an utterance is called finished.
+ *
+ * The budget is "under 400 ms": longer and the agent feels broken, shorter and it
+ * clips people mid-sentence. 352 ms is 11 whole frames, and the frame count is
+ * what matters because the deadline is checked once per frame. It is not 12
+ * frames (384 ms) because the wall-clock gap a user actually experiences runs
+ * from the last frame silero rated as speech to the moment the utterance closes,
+ * and that is one frame period longer than the configured window: measured at
+ * 412 to 424 ms with 12 frames, which misses the budget. Eleven frames measures
+ * in the high 380s. Widening the budget was the alternative, and it was the wrong
+ * one.
  */
-export const DEFAULT_REDEMPTION_MS = 384;
+export const DEFAULT_REDEMPTION_MS = 352;
 
 /**
  * Audio kept from BEFORE speech was detected. Silero fires a frame or two into a
@@ -55,6 +61,16 @@ const PRE_SPEECH_PAD_MS = 480;
 
 /** Shorter than a syllable; anything under this is a cough, a door, a keyboard. */
 const MIN_SPEECH_MS = 250;
+
+/**
+ * Silero's own defaults, restated here rather than inherited invisibly, because
+ * the endpoint measurement depends on knowing which of the two governs the
+ * countdown. Speech is declared above the positive threshold and the redemption
+ * clock starts below the negative one; the band between them is hysteresis, and
+ * it is what stops a breath inside a word from ending the utterance.
+ */
+const POSITIVE_SPEECH_THRESHOLD = 0.3;
+const NEGATIVE_SPEECH_THRESHOLD = 0.25;
 
 let vadModulePromise = null;
 
@@ -138,10 +154,14 @@ export class VoiceActivityDetector {
 			minSpeechMs: MIN_SPEECH_MS,
 			// Silero's own defaults, restated so a future tuning pass has one place
 			// to argue with rather than an invisible import.
-			positiveSpeechThreshold: 0.3,
-			negativeSpeechThreshold: 0.25,
+			positiveSpeechThreshold: POSITIVE_SPEECH_THRESHOLD,
+			negativeSpeechThreshold: NEGATIVE_SPEECH_THRESHOLD,
 			onFrameProcessed: ({ isSpeech }, frame) => {
-				if (isSpeech >= 0.3) this.lastSpeechFrameAt = now();
+				// Marked at the NEGATIVE threshold, because that is the one the
+				// redemption countdown actually starts from. Marking at the positive
+				// threshold instead would count the frames between the two as part of
+				// the trailing silence and report a gap the user never waited through.
+				if (isSpeech >= NEGATIVE_SPEECH_THRESHOLD) this.lastSpeechFrameAt = now();
 				this.onFrame(frame, isSpeech);
 			},
 			onSpeechStart: () => this.onSpeechStart(),

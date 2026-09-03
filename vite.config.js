@@ -543,6 +543,7 @@ const appConfig = {
 				'home-scene': resolve(__dirname, 'pages/home-scene.html'),
 				materialize: resolve(__dirname, 'pages/materialize.html'),
 				'smart-home': resolve(__dirname, 'pages/smart-home.html'),
+				'smart-home-join': resolve(__dirname, 'pages/smart-home-join.html'),
 				'smart-home-plan': resolve(__dirname, 'pages/smart-home-plan.html'),
 				'smart-home-satellite': resolve(__dirname, 'pages/smart-home-satellite.html'),
 				'materialize-order': resolve(__dirname, 'pages/materialize-order.html'),

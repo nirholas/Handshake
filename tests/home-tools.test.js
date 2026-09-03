@@ -174,7 +174,13 @@ live('against a real Home Assistant', () => {
 		// a model reads them as values, not in the narrative line where it reads
 		// them as instruction.
 		const result = await asOwner('home_status', { home_id: home.id });
-		const names = result.structured.rooms.flatMap((r) => r.entities.map((e) => e.name));
+		// Rooms plus unassigned: a house where nobody has assigned entities to
+		// areas is an ordinary house, not a broken one, and its names are just as
+		// attacker-controlled.
+		const names = [
+			...result.structured.rooms.flatMap((r) => r.entities.map((e) => e.name)),
+			...result.structured.unassigned.map((e) => e.name),
+		];
 		expect(names.length).toBeGreaterThan(0);
 		for (const name of names) expect(result.text).not.toContain(name);
 	}, 60_000);

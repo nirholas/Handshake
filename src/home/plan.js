@@ -121,7 +121,9 @@ function quotaPanel(plan) {
 
 function quotaRow(d) {
 	const row = el('div', 'hm-quota');
-	if (d.exceeded) row.classList.add('is-over');
+	// At the ceiling and past it read the same, because they mean the same thing
+	// to the person looking: the next one is refused.
+	if (d.exceeded || (!d.unlimited && d.percent >= 100)) row.classList.add('is-over');
 	else if (!d.unlimited && d.percent >= WARN_AT) row.classList.add('is-warn');
 
 	const head = el('div', 'hm-quota-head');
@@ -136,7 +138,9 @@ function quotaRow(d) {
 	track.setAttribute('aria-valuenow', String(d.unlimited ? 0 : d.percent));
 	track.setAttribute('aria-label', `${d.label}: ${d.unlimited ? 'unlimited' : `${d.percent}% used`}`);
 	const fill = el('div', 'hm-quota-fill');
-	fill.style.width = d.unlimited ? '0%' : `${Math.max(2, d.percent)}%`;
+	// A floor of 2% so a single unit out of a thousand is still visible, but only
+	// once there IS one: a stub of colour on an untouched quota reads as usage.
+	fill.style.width = d.unlimited || d.used === 0 ? '0%' : `${Math.max(2, d.percent)}%`;
 	track.append(fill);
 	row.append(track);
 

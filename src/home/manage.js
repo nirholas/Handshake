@@ -12,6 +12,7 @@
  */
 
 import { clear, el, noticeEl } from './connect.js';
+import { householdPanel } from './members.js';
 
 /** Past this, "moments ago" stops being honest. */
 const STALE_AFTER_MS = 90_000;
@@ -80,6 +81,7 @@ function homeCard(home, { onDisconnect }) {
 	const detail = el('div');
 	detail.style.marginTop = 'var(--space-sm)';
 	detail.append(summary(home));
+	detail.append(householdPanel(home));
 	detail.append(grantsPanel(home));
 	detail.append(logPanel(home));
 	li.append(detail);

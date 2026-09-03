@@ -54,6 +54,41 @@ const AUDIO = join(OUT, 'audio');
 
 mkdirSync(AUDIO, { recursive: true });
 
+/**
+ * The QA account from .env, used only so the run is not throttled to the
+ * anonymous per-IP buckets (10 TTS and 15 ASR per hour, which one full run
+ * spends). The lanes themselves are the same lanes either way. Without the
+ * credentials the run still works; it just cannot repeat as often.
+ */
+let SESSION_COOKIE = null;
+
+async function signIn() {
+	const email = process.env.AUDIT_EMAIL;
+	const password = process.env.AUDIT_PASSWORD;
+	if (!email || !password) {
+		console.log('[auth] AUDIT_EMAIL / AUDIT_PASSWORD not set: running against the anonymous rate limits.');
+		return;
+	}
+	const upstream = process.env.DEV_API_PROXY || 'https://three.ws';
+	const res = await fetch(`${upstream}/api/auth/login`, {
+		method: 'POST',
+		headers: { 'content-type': 'application/json' },
+		body: JSON.stringify({ email, password }),
+	});
+	if (!res.ok) {
+		console.log(`[auth] login failed (${res.status}): running against the anonymous rate limits.`);
+		return;
+	}
+	const raw = res.headers.getSetCookie?.() ?? [res.headers.get('set-cookie')].filter(Boolean);
+	const sid = raw.map((c) => c.split(';')[0]).find((c) => c.startsWith('__Host-sid='));
+	if (!sid) {
+		console.log('[auth] no session cookie returned: running against the anonymous rate limits.');
+		return;
+	}
+	SESSION_COOKIE = sid;
+	console.log('[auth] signed in as the QA account.');
+}
+
 const results = [];
 function check(name, pass, detail) {
 	results.push({ name, pass: !!pass, detail });
@@ -97,7 +132,7 @@ async function ensureClips() {
 async function synthesize(text) {
 	const res = await fetch(`${BASE}/api/tts/speak`, {
 		method: 'POST',
-		headers: { 'content-type': 'application/json' },
+		headers: { 'content-type': 'application/json', ...(SESSION_COOKIE ? { cookie: SESSION_COOKIE } : {}) },
 		body: JSON.stringify({ text, format: 'wav' }),
 	});
 	if (!res.ok) throw new Error(`tts ${res.status}: ${await res.text()}`);
@@ -185,7 +220,13 @@ async function launch(audioPath, { loopAudio = true } = {}) {
 	// how long the download took.
 	if (audioPath) chromiumArgs.push(`--use-file-for-fake-audio-capture=${audioPath}${loopAudio ? '' : '%noloop'}`);
 	const browser = await chromium.launch({ headless: !HEADED, args: chromiumArgs });
-	const context = await browser.newContext({ permissions: ['microphone'] });
+	const context = await browser.newContext({
+		permissions: ['microphone'],
+		// The session travels as a header rather than a cookie because the cookie is
+		// __Host- prefixed and Secure, and the dev origin is plain http on localhost.
+		// The dev server forwards it upstream unchanged either way.
+		extraHTTPHeaders: SESSION_COOKIE ? { cookie: SESSION_COOKIE } : {},
+	});
 	const page = await context.newPage();
 	const requests = [];
 	page.on('request', (r) => requests.push({ url: r.url(), at: Date.now() }));
@@ -347,7 +388,14 @@ async function scenarioBargeIn() {
 					'the front door is locked, and the garage is closed. Nothing else has changed since this morning.',
 			);
 		});
-		await page.waitForFunction(() => window.homeVoice.loop.state === 'speaking', null, { timeout: 45000 });
+		await page
+			.waitForFunction(
+				() => window.homeVoice.loop.state === 'speaking' || window.__hv.events.some((e) => e.type === 'tts-failed'),
+				null,
+				{ timeout: 45000 },
+			);
+		const ttsFailure = (await events(page)).find((e) => e.type === 'tts-failed');
+		if (ttsFailure) throw new Error(`the agent could not speak, so barge-in cannot be measured: ${ttsFailure.message}`);
 		await waitForEvent(page, 'barge-in', 45000);
 		const all = await events(page);
 		const stop = all.find((e) => e.type === 'playback-stopped' && e.reason === 'barge-in');
@@ -590,6 +638,7 @@ async function main() {
 		console.error(`No dev server at ${BASE}. Start one with: npx vite --port ${PORT}`);
 		process.exit(2);
 	}
+	await signIn();
 	await ensureClips();
 
 	const measured = {};

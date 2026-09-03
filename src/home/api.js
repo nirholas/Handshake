@@ -73,6 +73,32 @@ export function getHome(id, signal) {
 }
 
 /**
+ * Start pairing a home that only exists on a LAN.
+ *
+ * Most Home Assistant installs cannot be reached from the public internet at
+ * all, so for those the house dials out to us instead. This mints the short
+ * code the owner types into the three.ws integration inside their Home
+ * Assistant; the connection row exists from this moment, in `pending`.
+ */
+export function startPairing({ label } = {}) {
+	return request('/api/home/pair', { method: 'POST', body: { label } });
+}
+
+/** A fresh code for a home already waiting, without creating a second home. */
+export function refreshPairing(homeId) {
+	return request('/api/home/pair', { method: 'POST', body: { homeId } });
+}
+
+/**
+ * The countdown and the link state. `relay.online` is read from the relay
+ * itself, so it answers "is the integration in my house running right now"
+ * rather than "did a connection work at some point".
+ */
+export function pairingStatus(homeId, signal) {
+	return request(`/api/home/pair?homeId=${encodeURIComponent(homeId)}`, { signal });
+}
+
+/**
  * A gated service call. A guarded action answers 409 with `pending`, which the
  * caller renders as a question next to the thing it would move. `confirmed` is
  * only ever set from a person clicking yes.

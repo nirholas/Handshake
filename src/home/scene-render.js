@@ -85,6 +85,43 @@ function sharedGeometry() {
 	};
 }
 
+/** A thin outline around a room's footprint, as one geometry. */
+function roomEdge(w, d) {
+	const parts = [];
+	for (const [sx, sz, px, pz] of [
+		[w + 0.12, 0.12, 0, -d / 2],
+		[w + 0.12, 0.12, 0, d / 2],
+		[0.12, d + 0.12, -w / 2, 0],
+		[0.12, d + 0.12, w / 2, 0],
+	]) {
+		const box = new BoxGeometry(sx, 0.05, sz);
+		box.translate(px, 0.02, pz);
+		parts.push(box);
+	}
+	const merged = mergeGeometries(parts, false);
+	for (const part of parts) part.dispose();
+	return merged;
+}
+
+/** A thin bright lip along the top of a room's four walls, as one geometry. */
+function roomRim(w, d) {
+	const h = 0.92;
+	const parts = [];
+	for (const [sx, sz, px, pz] of [
+		[w, 0.05, 0, -d / 2],
+		[w, 0.05, 0, d / 2],
+		[0.05, d, -w / 2, 0],
+		[0.05, d, w / 2, 0],
+	]) {
+		const box = new BoxGeometry(sx, 0.035, sz);
+		box.translate(px, h, pz);
+		parts.push(box);
+	}
+	const merged = mergeGeometries(parts, false);
+	for (const part of parts) part.dispose();
+	return merged;
+}
+
 /** The four waist-high walls of a room, as one geometry. */
 function roomShell(w, d) {
 	const h = 0.92;
@@ -150,11 +187,15 @@ export function createHomeScene(container, options = {}) {
 	const geo = sharedGeometry();
 	const world = new Group();
 	scene.add(world);
+	/** One slab per floor, under its rooms: the level a room is standing on. */
+	const slabs = new Group();
+	world.add(slabs);
 
 	/** @type {Map<string, object>} entityId to its live object record */
 	const objects = new Map();
 	/** @type {Map<string, object>} roomId to its live room record */
 	const rooms = new Map();
+	const slabMaterial = new MeshStandardMaterial({ color: 0x0c0d13, roughness: 1, metalness: 0 });
 	const spare = { color: new Color(), target: new Color(), v: new Vector3(), toward: new Vector3(), forward: new Vector3() };
 
 	let model = null;
@@ -174,6 +215,7 @@ export function createHomeScene(container, options = {}) {
 	// the update work is timed separately and both numbers are reported.
 	let updateMs = 0;
 	let renderMs = 0;
+	const lastCameraPosition = new Vector3();
 
 	const raycaster = new Raycaster();
 	const pointer = new Vector2();
@@ -192,6 +234,7 @@ export function createHomeScene(container, options = {}) {
 		if (!structural) return applyModel(next);
 		clearWorld();
 		model = next;
+		buildSlabs(next);
 		for (const room of next.rooms) rooms.set(room.id, buildRoom(room));
 		frameCamera(next);
 		placeAgent(next.agent);
@@ -252,6 +295,32 @@ export function createHomeScene(container, options = {}) {
 		return out;
 	}
 
+	/**
+	 * A dark slab under each floor's rooms. Two rooms floating at different
+	 * heights read as two rooms; two rooms on visible levels read as a house.
+	 */
+	function buildSlabs(m) {
+		for (const floor of m.floors) {
+			const boxes = m.rooms.filter((r) => r.floorId === floor.id);
+			if (!boxes.length) continue;
+			let minX = Infinity;
+			let maxX = -Infinity;
+			let minZ = Infinity;
+			let maxZ = -Infinity;
+			for (const room of boxes) {
+				minX = Math.min(minX, room.x - room.w / 2);
+				maxX = Math.max(maxX, room.x + room.w / 2);
+				minZ = Math.min(minZ, room.z - room.d / 2);
+				maxZ = Math.max(maxZ, room.z + room.d / 2);
+			}
+			const pad = 1.1;
+			const slab = new Mesh(geo.slab, slabMaterial);
+			slab.scale.set(maxX - minX + pad * 2, 0.22, maxZ - minZ + pad * 2);
+			slab.position.set((minX + maxX) / 2, floor.y - 0.24, (minZ + maxZ) / 2);
+			slabs.add(slab);
+		}
+	}
+
 	function buildRoom(room) {
 		const group = new Group();
 		group.position.set(room.x, room.y, room.z);
@@ -263,6 +332,13 @@ export function createHomeScene(container, options = {}) {
 		floor.position.y = -0.06;
 		floor.userData.roomId = room.id;
 		group.add(floor);
+
+		// A bright lip along the top of the walls. Without it a room reads as a
+		// coloured rectangle on a black field; with it, it reads as a room you are
+		// looking down into, which is the whole illusion.
+		const rimMat = new MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.1 });
+		const rim = new Mesh(roomRim(room.w, room.d), rimMat);
+		group.add(rim);
 
 		// Waist-high walls, translucent. Full-height walls would hide the room's
 		// contents from every angle an orbiting camera can reach, and a dollhouse
@@ -276,13 +352,16 @@ export function createHomeScene(container, options = {}) {
 		const walls = new Mesh(wallGeo, wallMat);
 		group.add(walls);
 
-		// The security tell: a line around the room's foot that goes amber the
+		// The security tell: a LINE around the room's foot that goes amber the
 		// moment something in it is unlocked or open. Readable from across the
 		// room without reading a single label, which is the whole point.
+		//
+		// It was a scaled box, which is a filled sheet over the whole floor, so
+		// every secure room in the house was carpeted in green and no light
+		// underneath it could be seen. An outline says the same thing and shows
+		// the room.
 		const edgeMat = new MeshBasicMaterial({ color: SECURE, transparent: true, opacity: 0 });
-		const edge = new Mesh(geo.slab, edgeMat);
-		edge.scale.set(room.w + 0.1, 0.05, room.d + 0.1);
-		edge.position.y = 0.02;
+		const edge = new Mesh(roomEdge(room.w, room.d), edgeMat);
 		group.add(edge);
 
 		const light = new PointLight(0xffffff, 0, room.w * 2.6, 1.7);
@@ -291,7 +370,7 @@ export function createHomeScene(container, options = {}) {
 		if (usesLight) group.add(light);
 
 		const label = makeLabel();
-		label.position.set(0, room.h + 0.5, 0);
+		label.position.set(0, room.h + 1.05, 0);
 		group.add(label);
 
 		const record = {
@@ -299,8 +378,11 @@ export function createHomeScene(container, options = {}) {
 			source: room,
 			group,
 			floorMat,
+			rimMat,
+			rimGeo: rim.geometry,
 			wallMat,
 			edgeMat,
+			edgeGeo: edge.geometry,
 			light: usesLight ? light : null,
 			label,
 			wallGeo,
@@ -476,16 +558,25 @@ export function createHomeScene(container, options = {}) {
 
 		if (record.light) {
 			record.light.color.copy(spare.color);
-			record.light.intensity = record.intensity * 3.4 * dim;
+			// The point light does the work. Emissive on the slab was doing it
+			// instead, which flattened every lit room into one saturated rectangle.
+			record.light.intensity = record.intensity * 6.5 * dim;
 		}
-		record.floorMat.emissive.copy(spare.color).multiplyScalar(record.intensity * 0.42 * dim);
-		record.floorMat.color.setHex(SURFACE).lerp(spare.color, Math.min(0.22, record.intensity * 0.2));
-		record.wallMat.opacity = 0.24 + record.intensity * 0.12 + record.highlight * 0.24;
+		record.floorMat.emissive.copy(spare.color).multiplyScalar(record.intensity * 0.09 * dim);
+		record.floorMat.color.setHex(SURFACE).lerp(spare.color, Math.min(0.1, record.intensity * 0.08));
+		record.wallMat.opacity = 0.3 + record.intensity * 0.1 + record.highlight * 0.24;
+		// A dark room still has to be a visible room, so the rim has a real floor.
+		record.rimMat.opacity = (0.17 + record.intensity * 0.13 + record.highlight * 0.35) * (1 - staleAmount * 0.5);
 
 		const alarmed = record.secure;
 		record.edgeMat.color.setHex(alarmed > 0.5 ? OPEN : SECURE);
-		record.edgeMat.opacity = (room.security ? 0.18 + alarmed * 0.5 : 0) + record.highlight * 0.4;
-		record.label.material.opacity = 0.92 * (1 - staleAmount * 0.4);
+		record.edgeMat.opacity = (room.security ? 0.3 + alarmed * 0.65 : 0) + record.highlight * 0.4;
+		// Faded by distance so a house seen from far away is a house, not a list
+		// of names. The focused room keeps its label at any range.
+		const far = record.group.position.distanceTo(camera.position);
+		const near = record.id === model?.focusRoomId ? 1 : clamp01(1.6 - far / 34);
+		record.label.material.opacity = 0.92 * near * (1 - staleAmount * 0.4);
+		record.label.visible = near > 0.02;
 	}
 
 	function commitObject(record) {
@@ -570,6 +661,10 @@ export function createHomeScene(container, options = {}) {
 
 	// ── loop ──────────────────────────────────────────────────────────────────
 
+	function clamp01(n) {
+		return Math.min(1, Math.max(0, n));
+	}
+
 	function damp(current, target, dt) {
 		// Framerate-independent exponential approach: the same visual speed at
 		// 30 fps and at 144.
@@ -591,6 +686,10 @@ export function createHomeScene(container, options = {}) {
 		last = now;
 
 		const updateStart = performance.now();
+		// Label opacity is a function of camera distance, so rooms recommit while
+		// the camera is moving and stay untouched the moment it settles.
+		const cameraMoved = !lastCameraPosition.equals(camera.position);
+		if (cameraMoved) lastCameraPosition.copy(camera.position);
 		const staleTarget = stale ? 1 : 0;
 		staleMoving = Math.abs(staleAmount - staleTarget) > 0.002;
 		staleAmount = damp(staleAmount, staleTarget, dt);
@@ -602,7 +701,10 @@ export function createHomeScene(container, options = {}) {
 			const before = record.intensity;
 			record.intensity = damp(record.intensity, record.targetIntensity, dt);
 			record.secure = damp(record.secure, record.targetSecure, dt);
-			const moved = Math.abs(before - record.intensity) > 0.0005 || Math.abs(wasHighlight - record.highlight) > 0.001;
+			const moved =
+				Math.abs(before - record.intensity) > 0.0005 ||
+				Math.abs(wasHighlight - record.highlight) > 0.001 ||
+				cameraMoved;
 			if (moved || !record.color.equals(record.targetColor) || staleMoving) {
 				record.color.lerp(record.targetColor, 1 - Math.exp(-dt / EASE));
 				commitRoom(record);
@@ -654,8 +756,8 @@ export function createHomeScene(container, options = {}) {
 		const cx = (b.minX + b.maxX) / 2;
 		const cz = (b.minZ + b.maxZ) / 2;
 		const span = Math.max(b.width, b.depth, 8);
-		controls.target.set(cx, Math.min(b.maxY * 0.35, 3), cz);
-		camera.position.set(cx + span * 0.62, span * 0.66 + 4, cz + span * 0.86);
+		controls.target.set(cx, b.maxY * 0.34, cz);
+		camera.position.set(cx + span * 0.58, b.maxY * 0.6 + span * 0.72, cz + span * 0.94);
 		camera.updateProjectionMatrix();
 		controls.update();
 	}
@@ -684,8 +786,11 @@ export function createHomeScene(container, options = {}) {
 		canvas.height = 128;
 		const texture = new CanvasTexture(canvas);
 		texture.minFilter = LinearFilter;
+		// Depth test off, distance fade on. Testing depth clipped a label wherever
+		// it crossed the room in front of it, which read as truncated text; the
+		// distance fade is what actually stops a dozen labels stacking up.
 		const sprite = new Sprite(new SpriteMaterial({ map: texture, transparent: true, depthWrite: false, depthTest: false }));
-		sprite.scale.set(4.4, 1.1, 1);
+		sprite.scale.set(3.4, 0.85, 1);
 		sprite.userData.canvas = canvas;
 		sprite.userData.texture = texture;
 		return sprite;
@@ -702,9 +807,17 @@ export function createHomeScene(container, options = {}) {
 		const canvas = record.label.userData.canvas;
 		const ctx = canvas.getContext('2d');
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
-		ctx.font = '600 46px "Inter", system-ui, sans-serif';
 		ctx.textAlign = 'center';
 		ctx.textBaseline = 'middle';
+		// Fit the text to the canvas rather than letting it run off the edge. A
+		// room called "Living Room" with a temperature and a light count is wider
+		// than 512px at 46px, and the overflow read as a truncated room name.
+		let size = 46;
+		ctx.font = `600 ${size}px "Inter", system-ui, sans-serif`;
+		while (size > 22 && ctx.measureText(record.labelText).width > canvas.width - 72) {
+			size -= 2;
+			ctx.font = `600 ${size}px "Inter", system-ui, sans-serif`;
+		}
 		ctx.fillStyle = 'rgba(8, 9, 14, 0.72)';
 		const width = Math.min(canvas.width - 8, ctx.measureText(record.labelText).width + 56);
 		roundRect(ctx, (canvas.width - width) / 2, 26, width, 76, 22);
@@ -780,6 +893,9 @@ export function createHomeScene(container, options = {}) {
 		objects.clear();
 		for (const record of rooms.values()) {
 			record.floorMat.dispose();
+			record.rimMat.dispose();
+			record.rimGeo.dispose();
+			record.edgeGeo.dispose();
 			record.wallMat.dispose();
 			record.wallGeo.dispose();
 			record.edgeMat.dispose();
@@ -787,7 +903,9 @@ export function createHomeScene(container, options = {}) {
 			record.label.material.dispose();
 		}
 		rooms.clear();
+		slabs.clear();
 		world.clear();
+		world.add(slabs);
 	}
 
 	return {
@@ -848,6 +966,7 @@ export function createHomeScene(container, options = {}) {
 			renderer.domElement.removeEventListener('pointerdown', onPointerDown);
 			clearWorld();
 			agent?.dispose();
+			slabMaterial.dispose();
 			for (const value of Object.values(geo)) value.dispose();
 			controls.dispose();
 			renderer.dispose();

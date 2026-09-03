@@ -28,6 +28,8 @@
 import { ERR_CANNOT_CONNECT, ERR_INVALID_AUTH } from 'home-assistant-js-websocket';
 
 import { normalizeBaseUrl } from '../../packages/home-bridge/src/url.js';
+import { Agent } from 'undici';
+
 import { isPrivateAddress, pinnedAgent, resolvePublicHost, SsrfError } from './ssrf.js';
 
 /**
@@ -150,7 +152,34 @@ async function resolveAnyHost(host) {
  * @param {{host: string, addresses: Array<{address: string, family: number}>}} pin
  */
 export function homeDispatcher(pin) {
+	// `pinnedAgent` re-checks every address against isPrivateAddress, which is
+	// right for every real deployment and wrong for the local-instance seam: the
+	// guard has already resolved and approved 127.0.0.1, and a second filter here
+	// would drop it and report "no public address to connect to". Under the seam
+	// the pin still applies (the lookup only ever yields the approved addresses
+	// for the approved host); it simply skips the public-address requirement it
+	// was already exempted from upstream.
+	if (ALLOW_LOCAL_INSTANCE) return localPinnedAgent(pin.host, pin.addresses);
 	return pinnedAgent(pin.host, pin.addresses);
+}
+
+/**
+ * The seam's dispatcher: identical to `pinnedAgent` minus the public-address
+ * filter. Development only, and unreachable unless ALLOW_LOCAL_INSTANCE is on,
+ * which requires a non-production NODE_ENV.
+ */
+function localPinnedAgent(expectedHost, addresses) {
+	return new Agent({
+		connect: {
+			lookup(hostname, _opts, cb) {
+				if (hostname !== expectedHost) {
+					cb(new HomeUrlError('host_pin_mismatch', `unexpected connect host: ${hostname}`));
+					return;
+				}
+				cb(null, addresses.map((a) => ({ address: a.address, family: a.family })));
+			},
+		},
+	});
 }
 
 /**

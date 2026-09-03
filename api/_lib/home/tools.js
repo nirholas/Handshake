@@ -582,7 +582,16 @@ async function performCall({ domain, service, data }, run, { toolName, extra = {
 	// Ungated: one call, no prompt. A product that nags on the safe direction is
 	// a product people turn off, so locking up and arming the alarm run here.
 	try {
-		await withHome(run.homeId, run.ownerId, (bridge) => bridge.call(domain, service, data, { confirmed: false }));
+		await withHome(run.homeId, run.ownerId, (bridge) => {
+			// The pooled bridge carries its own copy of the gate, and it built its
+			// allow list when the socket opened. Grants change while a socket is
+			// open, in both directions, so the live set is pushed in before every
+			// write: a standing allowance granted a minute ago must work now, and
+			// one revoked a minute ago must stop working now rather than when the
+			// connection happens to recycle.
+			syncAllowList(bridge, grants);
+			return bridge.call(domain, service, data, { confirmed: false });
+		});
 	} catch (error) {
 		// Logged and answered HERE rather than rethrown. A rethrow would reach
 		// `bridgeFailure` in the dispatcher, which logs a second row under the tool
@@ -714,6 +723,20 @@ function toList(value) {
 		.split(',')
 		.map((s) => s.trim())
 		.filter(Boolean);
+}
+
+/**
+ * Make the bridge's own allow list equal the home's live grants.
+ *
+ * `bridge.call` runs the gate a second time, independently of this module, which
+ * is deliberate: two gates on a front door is the right number. But the bridge's
+ * copy is only as fresh as the moment its socket opened, and a pooled socket
+ * lives for as long as somebody is watching the house.
+ */
+function syncAllowList(bridge, granted) {
+	const current = new Set(bridge.allowList.list());
+	for (const entityId of granted) if (!current.has(entityId)) bridge.allowList.add(entityId);
+	for (const entityId of current) if (!granted.has(entityId)) bridge.allowList.remove(entityId);
 }
 
 // ── Composition and shaping ──────────────────────────────────────────────────
