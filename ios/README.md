@@ -31,6 +31,25 @@ ios/
 └── docs/                   # SUBMISSION.md, REVIEW-RISK.md, ASSETS.md, CARPLAY.md
 ```
 
+The project carries a second target, **GlanceWidgetExtension** (`ws.three.app.glance`),
+which is the Agent glance home screen widget. Its sources are not in this
+directory: they live in [`../apple/`](../apple/README.md) and are compiled by
+both this project and the Mac app, byte for byte, so the two platforms cannot
+drift. It deploys to iOS 17 while the app stays on iOS 16, so an older phone
+simply never sees the widget in the gallery.
+
+## The home screen widget
+
+Long press the home screen, **Edit**, **Add Widget**, **three.ws**, and the
+agent's card is there in small, medium or large. It authenticates with a widget
+token the owner mints on [three.ws/glance](https://three.ws/glance), which
+arrives as `threews://glance/link?token=…` and is claimed in
+[`SceneDelegate`](native/App/App/SceneDelegate.swift) before Capacitor sees it,
+so a live credential never reaches the WebView. Everything about it, including
+how to build and verify it without a Mac, is in
+[`../apple/README.md`](../apple/README.md) and
+[`../docs/native-widgets.md`](../docs/native-widgets.md).
+
 ## CarPlay
 
 The app carries a second scene for **three.ws Drive**, the agent in the car. Apple's

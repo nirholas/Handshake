@@ -123,6 +123,15 @@ The PNG answer is always status `200` and carries the same facts in headers, so 
 | `x-glance-updated` | `updatedAt` |
 | `x-glance-width`, `x-glance-height` | bitmap pixels |
 
+`POST /api/glance/token` answers the plaintext once, along with the hand-off URL for each native shell. These are part of the contract rather than an implementation detail: a shipped app claims a fixed scheme and cannot be redeployed in step with the server.
+
+| Link | Value | Claimed by |
+| --- | --- | --- |
+| `links.android` | `intent://glance/link?token=<token>#Intent;scheme=threews;package=ws.three.app;S.browser_fallback_url=<install page>;end` | the `ws.three.app` package |
+| `links.apple` | `threews://glance/link?token=<token>` | the iOS app (`ws.three.app`) and the macOS app (`ws.three.glance`) |
+
+A consumer MUST validate the token against `glw_` plus 32 URL-safe characters before storing it: the scheme is an entry point any application can call.
+
 ## Versioning
 
 New optional fields are additive and do not bump `version`. Removing a field, changing a type, or changing the meaning of `metric` requires v2 served alongside v1; the `version` field is what lets a widget pinned a year ago keep rendering.

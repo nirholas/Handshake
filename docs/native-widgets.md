@@ -68,7 +68,8 @@ with no cookie jar, so it cannot use the session. Instead `/glance` mints a **wi
 (`POST /api/glance/token`), a random 32-character credential prefixed `glw_`. The server stores
 only its SHA-256; the plaintext travels once, inside a `threews://glance/link?token=…` deep
 link that only the `ws.three.app` package can claim, and then lives in the app's private
-storage. The token is accepted by exactly one endpoint, `GET /api/glance/mine`, and reads
+storage. The Apple apps claim the same URL through the `threews` scheme and put the token in a
+shared keychain group. The token is accepted by exactly one endpoint, `GET /api/glance/mine`, and reads
 exactly one thing: the owner's card.
 
 ### For developers
@@ -87,12 +88,47 @@ refreshes every 15 minutes. Details in [glance.md](glance.md#on-the-windows-11-w
 
 ## macOS and iOS
 
-Planned: a shared WidgetKit extension (a `TimelineProvider` that fetches
-`/api/glance/mine?format=png` with a widget token stored in the keychain) and a small SwiftUI
-host app that signs in and mints the token. macOS ships first because it can be distributed
-outside the App Store; the iOS build is the same extension target and waits on an Apple
-Developer account. The card, the token, and the endpoint are the ones above; nothing on the
-server changes for either.
+One WidgetKit extension serves both, in small, medium and large. It fetches the same
+`/api/glance/mine?format=png` with the same kind of widget token, kept in the keychain and
+shared with its host app.
+
+### On a Mac
+
+1. Install **three.ws Glance**, the small menu bar app that holds the token. It is a Developer
+   ID build, so it does not go through the App Store.
+2. Open [three.ws/glance](https://three.ws/glance) signed in, press **Link this device**, and
+   let the app claim the link. If the browser is signed in on a different machine, copy the
+   code the page shows and paste it into the app instead.
+3. Click the date in the menu bar to open Notification Centre, scroll to **Edit Widgets**, find
+   **three.ws Glance**, and drag **Agent glance** out.
+
+The menu bar item shows the same card, and carries **Open my agent**, **Refresh now** and
+**Unlink this Mac**.
+
+### On an iPhone or iPad
+
+Requires the three.ws iOS app on iOS 17 or later ([ios-app.md](ios-app.md)). Link it exactly
+the same way from [three.ws/glance](https://three.ws/glance), then long-press the home screen,
+tap **Edit**, tap **Add Widget**, and pick **three.ws**.
+
+### What it does
+
+The system refreshes it on its own timeline; the widget asks for about every half hour, and 15
+minutes after a refresh that failed. With no network it draws the last card it downloaded with
+"From 14:02 (offline)" under it, never a spinner and never a broken image. It follows the
+reader's appearance: each refresh fetches the card in both themes, so a Mac in light mode gets
+a light card. Tapping it opens the agent, on the phone in the app and on a Mac in the browser.
+
+The states are the ones in the Android table above, and they come from the same server. The two
+extra ones are local: a device with no token yet says "Add your agent", and a device that has a
+token but has not finished its first download says "Fetching your agent".
+
+### For developers
+
+The sources are in [apple/](../apple/README.md): `apple/GlanceKit/` is shared, the extension is
+`apple/GlanceWidget/`, the Mac app is generated from `apple/macos/project.yml` with XcodeGen,
+and the iOS extension is a target in the committed Capacitor project. `npm run check:apple-widget`
+verifies both projects and the wire contract without a Mac.
 
 ## The endpoints
 
@@ -100,7 +136,7 @@ server changes for either.
 | --- | --- |
 | `GET /api/glance/mine?format=png&size=small\|medium\|large&theme=dark\|light&scale=1\|2\|3` | The card bitmap for the caller (widget token as `Authorization: Bearer`, or the session cookie). Always `200`; the state is in `x-glance-state` and the tap target in `x-glance-url`. |
 | `GET /api/glance/mine` | The same as JSON: `{ signedIn, state, card, notice, agents, … }`. |
-| `POST /api/glance/token` | Mint a widget token (session, same-site). Returns the plaintext once plus `links.android`. |
+| `POST /api/glance/token` | Mint a widget token (session, same-site). Returns the plaintext once plus `links.android` and `links.apple`. |
 | `GET /api/glance/token` | List the caller's live tokens. |
 | `PATCH /api/glance/token` | Repoint a token at another owned agent. |
 | `DELETE /api/glance/token?id=…` | Revoke a token. |

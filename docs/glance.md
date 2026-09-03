@@ -93,7 +93,7 @@ Every state is a `200` with a designed card, never a `401`: a widget that render
 
 ### `POST | GET | PATCH | DELETE /api/glance/token`
 
-The widget tokens. Session and same-site only. `POST { label?, platform?, agent? }` mints one and answers the plaintext exactly once, plus `links.android`, the `intent://` URL that hands it to the Android app. `GET` lists the caller's live tokens (prefix, label, platform, last seen), `PATCH { id, agent }` repoints one, `DELETE ?id=` revokes one. The revoke list on [/glance](https://three.ws/glance#devices) is this endpoint.
+The widget tokens. Session and same-site only. `POST { label?, platform?, agent? }` mints one and answers the plaintext exactly once, plus `links.android`, the `intent://` URL that hands it to the Android app, and `links.apple`, the `threews://glance/link` URL the Mac and iPhone apps claim. `GET` lists the caller's live tokens (prefix, label, platform, last seen), `PATCH { id, agent }` repoints one, `DELETE ?id=` revokes one. The revoke list on [/glance](https://three.ws/glance#devices) is this endpoint.
 
 ### `GET /api/glance/template`
 

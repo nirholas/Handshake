@@ -7477,7 +7477,7 @@ data: {"id":"6a29...","text":"Deploy is green","importance":80,"tone":"alert"}
 
 ## Glance API
 
-One agent reduced to what fits in an operating-system widget slot: name, avatar, one live number (moves in the last 24 hours), and a link back. Powers the Windows 11 widget, the Android home screen widget, README badges and the `<agent-glance>` element. Spec: [specs/GLANCE_CARD.md](../specs/GLANCE_CARD.md). Guide: [glance.md](glance.md), [native-widgets.md](native-widgets.md).
+One agent reduced to what fits in an operating-system widget slot: name, avatar, one live number (moves in the last 24 hours), and a link back. Powers the Windows 11 widget, the Android home screen widget, the macOS and iOS WidgetKit widget, README badges and the `<agent-glance>` element. Spec: [specs/GLANCE_CARD.md](../specs/GLANCE_CARD.md). Guide: [glance.md](glance.md), [native-widgets.md](native-widgets.md).
 
 ### Public card
 
@@ -7505,7 +7505,7 @@ PATCH  /api/glance/token            { id, agent: uuid|null }
 DELETE /api/glance/token?id=<uuid>
 ```
 
-Session cookie required; writes must be same-site. `POST` answers `201` with `{ id, prefix, label, platform, agentId, createdAt, lastUsedAt, token, links: { android } }`. `token` is shown exactly once; `links.android` is the `intent://glance/link?token=…#Intent;scheme=threews;package=ws.three.app;…;end` URL that hands it to the Android app. At most 12 live tokens per account (`409 too_many_tokens`). `GET` answers `{ tokens: [...] }` without plaintexts. `DELETE` answers `{ revoked: true, id }`, or `404` for an id that is not the caller's live token.
+Session cookie required; writes must be same-site. `POST` answers `201` with `{ id, prefix, label, platform, agentId, createdAt, lastUsedAt, token, links: { android, apple } }`. `token` is shown exactly once; `links.android` is the `intent://glance/link?token=…#Intent;scheme=threews;package=ws.three.app;…;end` URL that hands it to the Android app, and `links.apple` is the `threews://glance/link?token=…` URL the macOS and iOS apps claim natively. At most 12 live tokens per account (`409 too_many_tokens`). `GET` answers `{ tokens: [...] }` without plaintexts. `DELETE` answers `{ revoked: true, id }`, or `404` for an id that is not the caller's live token.
 
 | Error | Status | Meaning |
 | --- | --- | --- |
