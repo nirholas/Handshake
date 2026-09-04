@@ -19,7 +19,7 @@ special case.
 | # | File | Owns | State |
 |---|------|------|-------|
 | 03 | [03-gpu-fleet-scaleout.md](quality-bar-03-gpu-fleet-scaleout.md) | Scale ceilings, cold-start honesty, keep-warm, load test | Partial. The TripoSG and text2motion deploys it opened with are shipped; scale, cold-start UX and the load test are open. |
-| 04 | [04-pbr-texture-material-realism.md](quality-bar-04-pbr-texture-material-realism.md) | Full PBR sets, measured presets, skin/eye/hair | Open |
+| 04 | [04-pbr-texture-material-realism.md](quality-bar-04-pbr-texture-material-realism.md) | Full PBR sets, measured presets, skin/eye/hair | Partial. The channel matrix is measured and published (`scripts/inspect-glb-materials.mjs`, `workers/texture/README.md`), the derive pass is wired, and the measured presets and skin/eye/hair classes are shipped; the in-viewer HDRI verification, the avatar screenshots and the quality-bench delta are open. |
 | 06 | [06-forge-ux-flow.md](quality-bar-06-forge-ux-flow.md) | The `/forge` flagship experience | Partial. History, compare mode and starters shipped; the result-moment click-through and the clean audit sweep are open. |
 | 07 | [07-design-system-sweep.md](quality-bar-07-design-system-sweep.md) | Tokens, states, microinteractions sitewide | Open |
 | 08 | [08-mobile-performance.md](quality-bar-08-mobile-performance.md) | Mobile excellence, GLB delivery | Partial. A measured baseline exists in `_generated/08/`; the fixes and the re-measure are open. |
