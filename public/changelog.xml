@@ -143,6 +143,14 @@
 			<description>Every wallet in the copy-trading Smart Money list carried a portrait link pointing at an outside image host that serves nobody but its own site. Browsers blocked all of them, so the list drew the trader initials it was designed to fall back on while quietly recording a failed request for each row on screen. That unusable link is no longer sent, so the directory looks exactly as it did with none of the wasted traffic behind it.</description>
 		</item>
 		<item>
+			<title>The Windows 11 widget now actually paints your agent on the widgets board</title>
+			<link>https://three.ws/glance</link>
+			<guid isPermaLink="false">2026-09-04:The Windows 11 widget now actually paints your agent on the widgets board</guid>
+			<pubDate>Fri, 04 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Windows renders the Agent glance widget from a card layout the site has to hand it, and we were handing it the address of that layout instead of the layout itself, so a pinned widget had nothing to draw. The worker now fetches the card, keeps a copy so a machine that wakes up offline still renders, re-paints slots that were pinned before it took over, and registers the 15 minute refresh the widget advertises, which was never actually being scheduled. Pin it with Win + W, Add widgets, Agent glance.</description>
+		</item>
+		<item>
 			<title>Two paid endpoints now quote a price to anyone who asks, instead of an error</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-09-04:Two paid endpoints now quote a price to anyone who asks, instead of an error</guid>

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-04T08:22:30.412Z",
+	"generated_at": "2026-09-04T08:24:33.688Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -187,6 +187,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "The Windows 11 widget now actually paints your agent on the widgets board",
+			"summary": "Windows renders the Agent glance widget from a card layout the site has to hand it, and we were handing it the address of that layout instead of the layout itself, so a pinned widget had nothing to draw. The worker now fetches the card, keeps a copy so a machine that wakes up offline still renders, re-paints slots that were pinned before it took over, and registers the 15 minute refresh the widget advertises, which was never actually being scheduled. Pin it with Win + W, Add widgets, Agent glance.",
+			"link": "/glance",
+			"tags": [
+				"fix"
 			]
 		},
 		{
