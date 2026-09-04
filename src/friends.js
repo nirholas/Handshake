@@ -145,6 +145,11 @@ export class FriendsClient {
 			const { data } = await res.json();
 			const sig = graphSignature(data);
 			const first = !this.loaded;
+			// Coming back from a failed read is a repaint even when the graph is
+			// byte-identical to the last good one: the panel is showing an error
+			// card, and the signature check alone would leave it there forever
+			// because nothing about the data changed. Recovery is a state change.
+			const recovered = this.loadError === 'network';
 			this.friends = data.friends || [];
 			this.incoming = data.incoming || [];
 			this.outgoing = data.outgoing || [];
@@ -153,7 +158,7 @@ export class FriendsClient {
 			// Only repaint when something actually changed — a 20s presence/unread
 			// poll that returns identical state must not rebuild the panel (and reset
 			// a half-typed search / DM caret).
-			if (first || sig !== this._graphSig) {
+			if (first || recovered || sig !== this._graphSig) {
 				this._graphSig = sig;
 				this._emit();
 			}

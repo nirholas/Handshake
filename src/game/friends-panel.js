@@ -146,11 +146,54 @@ export class FriendsPanel {
 			this.root.append(this._signedOut());
 			return;
 		}
+		// A graph we could not read is not a graph with nobody in it. Falling
+		// through here painted "No friends yet" whenever /api/friends was
+		// unreachable, which is the one thing this panel must never say: it reads
+		// as "your friends are gone" and sends the player off to re-add people who
+		// were never missing. Show the failure only when there is nothing to show;
+		// if an earlier read succeeded, keep that list up and mark it stale rather
+		// than throwing away a roster the player can still act on.
+		const offline = c.loadError === 'network';
+		if (offline && !c.friends.length && !c.incoming.length && !c.outgoing.length) {
+			this.root.append(this._offline());
+			return;
+		}
 		if (this.inThread) {
 			this.root.append(this._threadView());
 			return;
 		}
-		this.root.append(this._tabs(), this._error ? this._banner(this._error) : null, this._tabBody());
+		// Appended in steps rather than as one append(a, b, c) call: ParentNode
+		// .append() takes (Node or DOMString), so a null in the middle is not
+		// skipped, it is stringified. The old one-liner passed `null` whenever
+		// there was no error, which is the normal case, and printed a literal
+		// "null" between the tabs and the roster every time the panel opened.
+		const note = this._error || (offline ? 'Offline. Showing your last known list.' : null);
+		this.root.append(this._tabs());
+		if (note) this.root.append(this._banner(note));
+		this.root.append(this._tabBody());
+	}
+
+	// The honest dead end, in the shape every sibling panel on this surface uses
+	// (see _renderFriendsLoadError in coincommunities.js and EconPanel.loadError):
+	// what broke, that nothing was lost, and one button that actually retries.
+	_offline() {
+		return el('div', { class: 'kg-fr-empty' }, [
+			el('div', { class: 'kg-fr-empty-glyph', 'aria-hidden': 'true' }, '📡'),
+			el('p', { class: 'kg-fr-empty-title' }, 'Could not reach your friends list'),
+			el('p', { class: 'kg-fr-empty-sub' }, 'The connection dropped on the way. Nothing was lost, it just needs another go.'),
+			el('button', {
+				class: 'kg-fr-btn kg-fr-btn--primary', type: 'button',
+				onclick: (e) => {
+					const b = e.currentTarget;
+					b.disabled = true;
+					b.textContent = 'Retrying…';
+					// refresh() never rejects, and it re-emits on both outcomes, so the
+					// subscription repaints this panel either way: back to the roster on
+					// success, back to this card (button live again) on another failure.
+					this.client.refresh();
+				},
+			}, 'Try again'),
+		]);
 	}
 
 	_skeleton() {
