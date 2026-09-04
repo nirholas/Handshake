@@ -70,7 +70,14 @@ async function waitFor(pred, budgetMs, label) {
 		if (left <= 0) { console.log(at(), `${label}: timed out after ${Math.round(budgetMs / 1000)}s`); return false; }
 		const started = Date.now();
 		try {
-			await page.waitForFunction(pred, { timeout: left });
+			// The signature is waitForFunction(fn, arg, options). Passing the options
+			// object in the second slot makes it the predicate's ARGUMENT, so the
+			// timeout never applies and Playwright falls back to its 30s default,
+			// silently capping every budget this harness computes. That is not a small
+			// drift: it made the load scaling above inert, and on a box at load 66 it
+			// reported "LOADER NEVER CLEARED" after 30s of a budget the same line
+			// called 240s. The `undefined` is load-bearing.
+			await page.waitForFunction(pred, undefined, { timeout: left });
 			if (reloads) console.log(at(), `[note] ${label} survived ${reloads} hot-reload(s) from another agent's save`);
 			return true;
 		} catch (e) {
