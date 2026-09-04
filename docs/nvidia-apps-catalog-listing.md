@@ -35,7 +35,7 @@ Remove and leave unchecked:
 
 ### 2. Ask for the catalog listing
 
-The portal has no "publish to catalog" button, so the request goes to the program team. Send the email in [nvidia-apps-catalog-request.md](./nvidia-apps-catalog-request.md) to `inceptionprogram@nvidia.com` after the record corrections above are saved, and note the send date there.
+The portal has no "publish to catalog" button, so the request goes to the program team. Send the email in [nvidia-apps-catalog-request.md](./nvidia-apps-catalog-request.md) to `inceptionprogram@nvidia.com` after the record corrections above are saved, and note the send date there. **Sent 2026-09-04.** The ask is now with NVIDIA; nothing further to submit unless they ask for a form or assets.
 
 ---
 

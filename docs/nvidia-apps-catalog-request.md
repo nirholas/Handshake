@@ -7,7 +7,7 @@ The Inception portal has no "publish to the catalog" control. A product record m
 - **To:** inceptionprogram@nvidia.com
 - **Subject:** three.ws (Inception member): catalog listing, Showcase, and co-marketing
 - **From:** the address on the Inception portal account
-- **Sent:** not yet sent. Record the date here when it goes out.
+- **Sent:** 2026-09-04, 2:20 PM, from support@three.ws. Follow up on ask 1 only if there is no reply by **2026-09-25**, and use the "Maximize Your Membership" webinar Q&A to raise asks 2 and 3 live in the meantime.
 
 ---
 
@@ -192,7 +192,7 @@ Screenshots are deliberately not attached. The email offers them on request, whi
 
 ## After you send
 
-1. Record the send date in the **Sent** field at the top of this doc.
+1. Send date recorded in the **Sent** field at the top of this doc.
 2. File the second product record, the `<agent-3d>` digital-human embed. Copy is ready in [nvidia-apps-catalog-listing.md](./nvidia-apps-catalog-listing.md) under "Second product record". It targets the Digital Humans workload filter that the main record does not, and it is independent of the reply.
 3. Route each reply:
 

@@ -247,13 +247,19 @@ Recorded so the next person does not repeat the search.
 One thread, one address. Every ask in Tier 1 goes to the same inbox, so batch
 them into a single email rather than sending four.
 
-**Done: the batched email is written.** [nvidia-apps-catalog-request.md](./nvidia-apps-catalog-request.md)
-now carries all five asks (catalog listing, Showcase nomination, co-marketing kit,
-ACE redirect, GTC pavilion and event slots) in one thread. Do not start a second
-one. It is still gated on the portal record correction, which is step 1 of
-[nvidia-apps-catalog-listing.md](./nvidia-apps-catalog-listing.md): as filed the
-record reads as a CUDA consumer, which undercuts the first two asks. Correct the
-record, save it, then send and stamp the date in the request doc.
+**Sent 2026-09-04.** [nvidia-apps-catalog-request.md](./nvidia-apps-catalog-request.md)
+carries all five asks (catalog listing, Showcase nomination, co-marketing kit,
+ACE redirect, GTC pavilion and event slots) and went to the inbox in one thread
+from support@three.ws. **Do not start a second thread.** Tier 1 items 2 and 4
+above are now pending NVIDIA rather than pending us. Reply routing for each ask,
+and the 2026-09-25 follow-up date, live in the request doc.
+
+Still ours to finish regardless of the reply: the portal record correction (step 1
+of [nvidia-apps-catalog-listing.md](./nvidia-apps-catalog-listing.md)), because a
+curator who opens the record after reading the email should not find a CUDA
+consumer with DeepVariant checked, and the second product record for the
+`<agent-3d>` embed, which targets the Digital Humans workload filter the main
+record does not.
 
 ## Verification log
 
