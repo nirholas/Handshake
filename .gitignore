@@ -583,3 +583,10 @@ public/announce/img/activity-*
 # it on someone else's behalf. Regenerate any time with
 # `npm run announce:rank -- --write --probe`; delete this rule once approved.
 data/announcements.json
+
+# Product-demo capture scratch. `scripts/make-product-demo.mjs --smoke` writes
+# ~70 MB of intermediate wavs, per-track silence padding and rendered mp4s here
+# on every run. The finished demo is published, not committed, so this tree is
+# pure regenerable output; ignoring it keeps a concurrent `git add -A` sweep
+# from putting the binaries in the history.
+marketing/product-demo/.smoke/
