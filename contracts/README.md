@@ -1,7 +1,7 @@
 # three.ws on-chain contracts
 
 Every contract and program three.ws owns lives here: the Solidity set built with
-[Foundry](https://book.getfoundry.sh/), and the two Solana programs built with
+[Foundry](https://book.getfoundry.sh/), and the three Solana programs built with
 [Anchor](https://www.anchor-lang.com/). Solana is the home chain; the EVM
 contracts are additional surfaces.
 
@@ -30,6 +30,7 @@ contracts are additional surfaces.
 | `WorldMoves` | [`src/WorldMoves.sol`](./src/WorldMoves.sol) | Event-only move stream for the Agora world. No value, no admin | Not deployed to a public chain |
 | `skill_license` | [`skill-license/`](./skill-license) | Solana: a 1-of-1 NFT access key per purchased skill, revocable on refund | Not deployed. Program id reserved |
 | `agent_invocation` | [`agent-invocation/`](./agent-invocation) | Solana: verifiable agent-to-agent invocation events | Not deployed. Program id reserved |
+| `knock_escrow` | [`knock-escrow/`](./knock-escrow) | Solana: a priced message held in escrow that pays out only against a reply, and refunds in full otherwise | Not deployed. Program id reserved |
 
 Per-address provenance and every chain id: [`DEPLOYMENTS.md`](./DEPLOYMENTS.md).
 
@@ -72,8 +73,9 @@ The invariant suite in [`program-tests/`](./program-tests) runs the real compile
 SBF bytecode in LiteSVM, so the bytecode has to exist before the tests run:
 
 ```bash
-cd skill-license    && cargo-build-sbf
+cd skill-license       && cargo-build-sbf
 cd ../agent-invocation && cargo-build-sbf
+cd ../knock-escrow     && cargo-build-sbf
 cd ../program-tests    && cargo test
 ```
 
@@ -87,9 +89,10 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ```
 
 A cold SBF build takes minutes per program; the tests themselves run in seconds.
-Green is 32 tests, 21 for `skill_license` and 11 for `agent_invocation`. The
-harness, the invariant ids, and the reason the LiteSVM clock must be set are all
-documented in [`program-tests/README.md`](./program-tests/README.md).
+Green is 42 tests: 21 for `skill_license`, 11 for `agent_invocation`, and 10 for
+`knock_escrow`. The harness, the invariant ids, and the reason the LiteSVM clock
+must be set are all documented in
+[`program-tests/README.md`](./program-tests/README.md).
 
 ## Deploy the registries to Base Sepolia
 
@@ -215,6 +218,7 @@ contracts/
 ├── script/                      Foundry deploy scripts, one per contract
 ├── skill-license/               Anchor program + DEPLOYMENT.md
 ├── agent-invocation/            Anchor program
+├── knock-escrow/                Anchor program, escrowed pay-per-reply
 ├── program-tests/               LiteSVM invariant suite over the real bytecode
 ├── idl/                         vendored Anchor IDLs (ours plus the launchpad
 │                                interfaces the platform reads; see idl/pump/README.md)
