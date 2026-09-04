@@ -228,8 +228,8 @@ body {
 .ac-conviction-bar { flex: 1; height: 8px; border-radius: var(--radius-pill); background: var(--surface-2); overflow: hidden; }
 .ac-conviction-bar span { display: block; height: 100%; background: linear-gradient(90deg, var(--wallet-accent), var(--wallet-accent-strong)); border-radius: var(--radius-pill); transition: width var(--duration-slow) var(--ease-emphasized); }
 .ac-conviction.is-snipe .ac-conviction-bar span { background: linear-gradient(90deg, var(--success), #34d399); }
-.ac-conviction.is-pass .ac-conviction-bar span { background: linear-gradient(90deg, var(--danger), var(--danger)); }
-.ac-conviction.is-watch .ac-conviction-bar span { background: linear-gradient(90deg, var(--warn), var(--warn)); }
+.ac-conviction.is-pass .ac-conviction-bar span { background: var(--danger); }
+.ac-conviction.is-watch .ac-conviction-bar span { background: var(--warn); }
 .ac-conviction-val { font-family: var(--font-mono); font-size: var(--text-sm); color: var(--ink); white-space: nowrap; }
 .ac-conviction-val small { color: var(--ink-faint); font-size: var(--text-2xs); margin-left: 4px; }
 
