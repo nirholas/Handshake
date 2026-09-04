@@ -58,7 +58,7 @@ describe('parseReview', () => {
 		expect(parseReview('{"veto":true,"reasons":["top-10 hold 82%"]}').severity).toBe('block');
 		expect(parseReview('{"veto":false,"severity":"kinda","reasons":[]}').severity).toBe('none');
 	});
-	it('downgrades a block that cites nothing — a veto must name a fact', () => {
+	it('downgrades a block that cites nothing: a veto must name a fact', () => {
 		const r = parseReview('{"veto":true,"severity":"block","reasons":[]}');
 		expect(r.severity).toBe('caution');
 		expect(r.veto).toBe(false);
@@ -80,7 +80,7 @@ describe('applyReview', () => {
 	const cut = { veto: false, severity: 'caution', reasons: ['price impact eats the edge'], sizeAdjustmentSol: 0.05 };
 	const base = { perTradeLamports: SOL / 10n, minTradeLamports: 10_000n }; // 0.1 SOL proposed
 
-	it('is a no-op in shadow — the whole point of the default level', () => {
+	it('is a no-op in shadow: the whole point of the default level', () => {
 		const d = applyReview({ ...base, review: block, level: 'shadow' });
 		expect(d.blocked).toBe(false);
 		expect(d.resized).toBe(false);
@@ -107,7 +107,7 @@ describe('applyReview', () => {
 		expect(d.resized).toBe(true);
 		expect(d.sizeLamports).toBe(50_000_000n); // 0.05 SOL
 	});
-	it('REFUSES to upsize — an adversarial reviewer may only reduce risk', () => {
+	it('REFUSES to upsize: an adversarial reviewer may only reduce risk', () => {
 		const bigger = { ...cut, sizeAdjustmentSol: 5 };
 		const d = applyReview({ ...base, review: bigger, level: 'enforce' });
 		expect(d.resized).toBe(false);
