@@ -886,7 +886,7 @@ const PREVIEW_PROVIDERS = {
 	openrouter: {
 		envKey: 'OPENROUTER_API_KEY',
 		url: 'https://openrouter.ai/api/v1/chat/completions',
-		defaultModel: 'openai/gpt-oss-20b:free',
+		defaultModel: 'google/gemma-4-31b-it:free',
 		style: 'openai',
 		extraHeaders: {
 			'HTTP-Referer': 'https://three.ws',

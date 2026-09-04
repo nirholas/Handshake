@@ -1011,9 +1011,9 @@ const MODEL_OPTIONS = [
 	{ id: 'anthropic:sonnet', label: 'Claude Sonnet 4.6', provider: 'anthropic', model: 'claude-sonnet-4-6' },
 	{
 		id: 'openrouter:llama-70b',
-		label: 'GPT-OSS 20B (free)',
+		label: 'Gemma 4 31B (free)',
 		provider: 'openrouter',
-		model: 'openai/gpt-oss-20b:free',
+		model: 'google/gemma-4-31b-it:free',
 	},
 	{
 		id: 'openrouter:hermes',

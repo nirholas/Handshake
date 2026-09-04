@@ -66,17 +66,12 @@ const MODELS = {
 
 	// OpenRouter free tier (no per-token cost; daily rate cap shared across host).
 	// All are tool-call capable in OpenRouter's catalog.
-	'openai/gpt-oss-20b:free': {
+	'google/gemma-4-31b-it:free': {
 		kind: 'openai',
 		provider: 'openrouter',
 		envKey: 'OPENROUTER_API_KEY',
 	},
 	'nvidia/nemotron-3-super-120b-a12b:free': {
-		kind: 'openai',
-		provider: 'openrouter',
-		envKey: 'OPENROUTER_API_KEY',
-	},
-	'google/gemma-4-31b-it:free': {
 		kind: 'openai',
 		provider: 'openrouter',
 		envKey: 'OPENROUTER_API_KEY',
@@ -289,7 +284,7 @@ const PAID_HOST_KEY_MODELS = new Set(
 		.map(([id]) => id),
 );
 
-const FREE_DEFAULT_MODEL = 'openai/gpt-oss-20b:free';
+const FREE_DEFAULT_MODEL = 'google/gemma-4-31b-it:free';
 
 // Resolve the model to run: the caller's choice when it costs the host nothing
 // or matches what the owner configured, otherwise the policy's own model. The

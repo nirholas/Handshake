@@ -32,7 +32,7 @@ const MODES = ['inline', 'floating', 'section', 'fullscreen'];
 // (src/runtime/providers.js), which resolves this id to OpenRouter's free tier.
 // `brain="free"` gets any ad-hoc embed talking with no API key, no backend code,
 // and no per-token cost to the embedder.
-const FREE_BRAIN_MODEL = 'openai/gpt-oss-20b:free';
+const FREE_BRAIN_MODEL = 'google/gemma-4-31b-it:free';
 
 // ── WebGL context budget ────────────────────────────────────────────────
 // Browsers cap the number of simultaneous WebGL contexts (~16 in Chrome).

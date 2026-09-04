@@ -53,7 +53,7 @@ const PRESETS = {
 
 const MODELS = {
 	'claude-sonnet-4-6': { label: 'Claude Sonnet 4.6' },
-	'openai/gpt-oss-20b:free': { label: 'GPT-OSS 20B' },
+	'google/gemma-4-31b-it:free': { label: 'Gemma 4 31B' },
 	'llama-3.3-70b-versatile': { label: 'Llama 3.3 70B' },
 };
 const DEFAULT_MODEL = 'claude-sonnet-4-6';

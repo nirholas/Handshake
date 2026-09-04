@@ -54,7 +54,7 @@ export function defaultEmbedPolicy() {
 			proxy_url: null,
 			monthly_quota: 1000,
 			rate_limit_per_min: 10,
-			model: 'openai/gpt-oss-20b:free',
+			model: 'google/gemma-4-31b-it:free',
 		},
 		storage: { primary: 'r2', pinned_ipfs: false, onchain_attested: false },
 	};
