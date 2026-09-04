@@ -53,8 +53,8 @@ function injectStyles() {
 			width:18px;height:18px;border-radius:50%;background:var(--nxt-ink);
 			transition:transform .2s cubic-bezier(.4,0,.2,1),background .18s ease}
 		.set-switch[aria-checked="true"]::after{transform:translateY(-50%) translateX(16px);background:#000}
-		.set-switch:focus-visible{outline:none;box-shadow:0 0 0 3px var(--nxt-accent-soft)}
-		.set-theme-btn:focus-visible,.set-net-btn:focus-visible{outline:none;box-shadow:0 0 0 3px var(--nxt-accent-soft)}
+		.set-switch:focus-visible{box-shadow:0 0 0 3px var(--nxt-accent-soft)}
+		.set-theme-btn:focus-visible,.set-net-btn:focus-visible{box-shadow:0 0 0 3px var(--nxt-accent-soft)}
 		.set-store-row{display:flex;align-items:center;gap:12px;padding:12px 0;flex-wrap:wrap;
 			border-bottom:1px solid var(--nxt-stroke)}
 		.set-store-row:last-child{border-bottom:0}
@@ -73,7 +73,7 @@ function injectStyles() {
 		.set-seg-btn:hover:not([disabled]){background:rgba(255,255,255,.06);color:var(--nxt-ink)}
 		.set-seg-btn[aria-pressed="true"]{background:var(--nxt-accent);color:#000}
 		.set-seg-btn[disabled]{opacity:.4;cursor:not-allowed}
-		.set-seg-btn:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--nxt-accent-soft)}
+		.set-seg-btn:focus-visible{box-shadow:inset 0 0 0 2px var(--nxt-accent-soft)}
 		@media (prefers-reduced-motion:reduce){.set-switch,.set-switch::after{transition:none}}
 	`;
 	document.head.appendChild(s);

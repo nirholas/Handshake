@@ -229,12 +229,22 @@ function renderSkeletons(main) {
 
 // ── Hero strip ────────────────────────────────────────────────────────────
 
+/** Body copy for a failed load. An ApiError carries a real server message worth
+ *  showing; a dropped connection surfaces as the browser's bare "Failed to
+ *  fetch", which tells the user nothing they can act on, so it gets the
+ *  caller's sentence instead. */
+function loadErrorBody(err, fallback) {
+	const msg = err && typeof err.message === 'string' ? err.message.trim() : '';
+	if (!msg || /^(failed to fetch|network ?error|load failed)$/i.test(msg)) return fallback;
+	return msg;
+}
+
 function renderHero(host, avatars, err) {
 	if (err && !(err instanceof ApiError && err.status === 401)) {
 		ensureStateKitStyles();
 		host.innerHTML = `<div class="dn-panel" style="grid-column:1/-1;padding:0">${errorStateHTML({
 			title: "Couldn't load your avatars",
-			body: esc(err.message || "The avatars service didn't respond. Check your connection and try again."),
+			body: esc(loadErrorBody(err, "The avatars service didn't respond. Check your connection and try again.")),
 			scope: 'avatars',
 		})}</div>`;
 		attachRetry(host, async () => {
@@ -542,7 +552,7 @@ function renderAgentHealth(host, agents, widgets, loadErrors = {}) {
 		ensureStateKitStyles();
 		host.innerHTML = `<div class="dn-panel dnx-health-panel" style="padding:0">${errorStateHTML({
 			title: "Couldn't load agent health",
-			body: esc(loadErrors.agents.message || "The agents service didn't respond. Check your connection and try again."),
+			body: esc(loadErrorBody(loadErrors.agents, "The agents service didn't respond. Check your connection and try again.")),
 			scope: 'agent-health',
 		})}</div>`;
 		attachRetry(host, () => location.reload());
@@ -607,7 +617,7 @@ async function refreshActivity(host, ctx) {
 				<div class="dn-panel-title">Recent activity</div>
 				${errorStateHTML({
 					title: "Couldn't load activity",
-					body: esc(ctx.loadErrors.widgets.message || "Your widgets didn't load, so there's nothing to read activity from."),
+					body: esc(loadErrorBody(ctx.loadErrors.widgets, "Your widgets didn't load, so there's nothing to read activity from. Check your connection and try again.")),
 					scope: 'activity',
 				})}
 			</div>
