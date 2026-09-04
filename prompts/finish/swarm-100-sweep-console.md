@@ -85,6 +85,42 @@ that the route was therefore fine was not. A page that is same-origin on three.w
 and cross-origin everywhere else needs an audit that loads it from somewhere
 else, which is what `npm run audit:ibm-hosted` now does.
 
+### Production is broken right now, and the sweep is what found it
+
+`/monitor` failed the serial retry, which made it a real finding rather than
+contention. It calls `/api/status`, which answers `500` in production and `200`
+against this tree. The production log says why:
+
+    [api] GET /api/status failed: Error [ERR_MODULE_NOT_FOUND]:
+    Cannot find module '/app/services/home-relay/src/token.js'
+    imported from /app/api/_lib/home/relay.js
+
+That is the same cause as the `/smart-home` row: `.gcloudignore` never
+re-included `services/`, so two modules the API imports are absent from the
+image. It is not confined to Smart Home. Counting the last two hours of
+production error logs by endpoint:
+
+| Endpoint | 500s in 2h | What it is |
+|---|---|---|
+| `/api/healthz` | 38 | the health check itself |
+| `/api/wk` | 20 | |
+| `/api/mcp` | 14 | the MCP server every agent integration calls |
+| `/api/chat` | 6 | |
+| `/api/home`, `/api/home/satellite` | 9 | |
+| `/api/x402-pay`, `/api/x402-facilitator/[action]`, `/api/x402/mcp-tool-catalog` | 8 | the payment path |
+| `/api/status` | 4 | powers `/status` and `/monitor` |
+| `/api/cron/uptime-check` | 1 | which is why `/api/status` has no probe history to serve |
+
+Confirmed live: `/api/healthz`, `/api/mcp`, `/api/status`, `/api/x402-pay` and
+`/api/wk` all answer `500`.
+
+`d668ceece` fixes it (re-includes `services/` and adds a `check:gcloudignore`
+rule so the same omission fails before a build instead of in production) and is
+committed but unshipped. Production serves `c2148462e` from 2026-09-03 19:09;
+revision `00413` rebuilt the same commit, so it did not help. `npm run
+check:gcloudignore` passes on this tree and `npm run db:status` reports no
+pending migrations, so the deploy is one owner-approved command.
+
 **A raw parallel sweep on this box cannot be trusted, and that is fixed too.**
 The first re-run reported 550 of 780 routes broken. Every route sampled out of
 that list was clean when checked alone: the box was at load 100+ beside another

@@ -504,26 +504,27 @@ for (const vpKey of viewportKeys) {
 	};
 
 	// One reading of a route, transparently surviving a browser the machine killed.
+	//
+	// Relaunching is racy by nature: a worker can throw on a context that a
+	// relaunch already replaced, ask for another relaunch, and close the browser
+	// its neighbour was about to use. That cascade aborted a whole run on
+	// 2026-09-04. So keep trying while the error is the machine and not the page,
+	// bounded, rather than assuming one recycle is always enough.
+	const RECYCLE_ATTEMPTS = 4;
 	const recheck = async (route) => {
-		try {
-			return await checkRoute(context, base, route);
-		} catch (e) {
-			if (!BROWSER_GONE.test(e?.message || '')) throw e;
-			await recycle();
-			return checkRoute(context, base, route);
+		for (let attempt = 1; ; attempt++) {
+			try {
+				return await checkRoute(context, base, route);
+			} catch (e) {
+				if (!BROWSER_GONE.test(e?.message || '') || attempt >= RECYCLE_ATTEMPTS) throw e;
+				await recycle();
+			}
 		}
 	};
 
 	let done = 0;
 	const res = await runPool(routes, CONCURRENCY, async (route) => {
-		let r;
-		try {
-			r = await checkRoute(context, base, route);
-		} catch (e) {
-			if (!BROWSER_GONE.test(e?.message || '')) throw e;
-			await recycle();
-			r = await checkRoute(context, base, route);
-		}
+		const r = await recheck(route);
 		done++;
 		const errs = totalErrors(r);
 		const status = errs === 0 ? C.g('✓') : C.r(`✗ ${errs}`);
