@@ -43,9 +43,15 @@ const INTEGRITY_RE = /integrity=["'](sha\d{3}-[A-Za-z0-9+/=]+)["']/i;
 
 const SCANNED = /\.(js|mjs|cjs|jsx|ts|tsx|html|htm|md|json|svelte|vue|py|ipynb)$/;
 
-// Point-in-time captures of past runs (audit baselines, recorded MCP responses).
-// They are records of what shipped then, not references that should be bumped.
-const SKIPPED = [/\/_generated\//, /\.min\.js$/, /^node_modules\//];
+// Not real references, so not this guard's business:
+//   _generated/  point-in-time captures of past runs (audit baselines, recorded
+//                MCP responses). Records of what shipped then, not pins to bump.
+//   *.min.js     the vendored library itself, which names its own version.
+//   guards.json  the guard registry carries THIS guard's proof fixture inline
+//                (a deliberately wrong version the harness writes to a temp file
+//                and expects us to reject). Reading it back as a real reference
+//                would make the guard fail on its own proof, forever.
+const SKIPPED = [/\/_generated\//, /\.min\.js$/, /^node_modules\//, /(^|\/)guards\.json$/];
 
 function trackedFiles() {
 	const listed = (args) => execFileSync('git', args, { encoding: 'utf8', maxBuffer: 1 << 28 }).split('\n');
