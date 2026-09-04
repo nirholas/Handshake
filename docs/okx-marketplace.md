@@ -240,6 +240,13 @@ unit tests in [`tests/api/okx-forge.test.js`](../tests/api/okx-forge.test.js).
   `PAYMENT-REQUIRED`. Every paid row answers it that way. Unparseable bytes from a caller
   that is already past the paywall get the JSON-RPC parse error (`-32700`), and nothing
   settles because nothing ran.
+- **Both of those are checked against the live site on demand.**
+  `node scripts/okx-compliance-probe.mjs` walks all four paid rows through the reviewer's
+  probe shapes (the bodyless self-check, an empty JSON body, a plain business payload, and
+  a well-formed priced `tools/call`) and exits non-zero if any 402 goes missing, duplicates
+  a rail, or quotes anything but the row's registered list price. Point it elsewhere with
+  `--base`, and capture the run with `--out prompts/okx-ai/e2e-evidence/<file>.json`. Run it
+  before every listing resubmission.
 
 > **Not yet demonstrated end to end.** The X Layer rail reports `settleable: true` in
 > production, but no *funded* call has settled on-chain against these endpoints yet: the
