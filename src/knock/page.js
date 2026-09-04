@@ -529,9 +529,8 @@ async function onRefuse(knock) {
  */
 async function syncEscrowRow(escrowKnock) {
 	try {
-		const { state } = await knockApi.syncEscrow(escrowKnock);
-		state.escrowSyncedAt = Date.now();
-		const data = await knockApi.inbox({ limit: Math.max(20, state.knocks?.length || 20) });
+		await knockApi.syncEscrow(escrowKnock);
+		const data = await knockApi.inbox({ limit: Math.max(20, state.knocks.length || 20) });
 		state.knocks = data.knocks;
 		renderInbox();
 		if (data.totals) renderTotals(data.totals);
@@ -572,21 +571,48 @@ function openReply(li, knock) {
 		if (!reply) return;
 		send.disabled = true;
 		send.textContent = 'Sending…';
-		await act(knock.id, { status: 'replied', reply });
+		// The reply lands first, unconditionally. Only then is the payout
+		// collected, so a wallet the owner dismisses costs them the money and
+		// never the answer they already wrote.
+		const escrowed = knock.escrow?.state === 'pending' && !knock.escrow.expired;
+		const saved = await act(knock.id, { status: 'replied', reply }, { quiet: escrowed });
+		if (!escrowed || !saved) return;
+		try {
+			await collectEscrow({ ...knock, pendingReply: reply }, (status) => {
+				send.textContent = `${status}…`;
+			});
+		} catch (err) {
+			showSettingsError(
+				`Your reply was sent. The payout was not collected: ${err?.message || 'the wallet did not sign'} You can still collect it until the window closes.`,
+			);
+		} finally {
+			send.disabled = false;
+			send.textContent = 'Send reply';
+			renderInbox();
+		}
 	});
 	li.appendChild(form);
 	area.focus();
 }
 
-async function act(id, patch) {
+/**
+ * Apply one inbox action.
+ *
+ * `quiet` keeps the list on screen exactly as it is. The escrowed reply flow
+ * needs it: the reply is saved before the wallet opens, and re-rendering there
+ * would tear out the open form the payout status is being written into.
+ */
+async function act(id, patch, { quiet = false } = {}) {
 	try {
 		const { knock } = await knockApi.actOn(id, patch);
 		state.knocks = state.knocks.map((k) => (k.id === id ? { ...k, ...knock } : k));
-		renderInbox();
+		if (!quiet) renderInbox();
 		if (patch.block) applyOwner(await knockApi.settings());
 		else refreshTotals();
+		return true;
 	} catch (err) {
 		showSettingsError(err.message);
+		return false;
 	}
 }
 
