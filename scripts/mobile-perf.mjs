@@ -140,6 +140,8 @@ function parseArgs(argv) {
 		settle: 6000,
 		timeout: 60000,
 		loadWait: 25000,
+		// Ceiling on any single in-page evaluate; see evaluateBounded.
+		probeTimeout: 30000,
 		json: null,
 		md: null,
 		label: '',
@@ -159,6 +161,7 @@ function parseArgs(argv) {
 		else if (a === '--settle') out.settle = Math.max(0, Number(next()) || 0);
 		else if (a === '--timeout') out.timeout = Math.max(5000, Number(next()) || 5000);
 		else if (a === '--load-wait') out.loadWait = Math.max(0, Number(next()) || 0);
+		else if (a === '--probe-timeout') out.probeTimeout = Math.max(1000, Number(next()) || 1000);
 		else if (a === '--json') out.json = next();
 		else if (a === '--md') out.md = next();
 		else if (a === '--label') out.label = next();
@@ -185,6 +188,7 @@ ${C.b('mobile-perf')} - Playwright-measured mobile field metrics (NOT Lighthouse
   --cpu <rate>        CPU throttling multiplier (default 4)
   --settle <ms>       idle window after load before reading metrics (default 6000)
   --timeout <ms>      DOMContentLoaded navigation timeout (default 60000)
+  --probe-timeout <ms> ceiling on one in-page evaluate (default 30000)
   --load-wait <ms>    extra wait for window load after DCL (default 25000, non-fatal)
   --json <file>       write raw results JSON
   --md <file>         write a readable Markdown table
@@ -359,6 +363,33 @@ function sampleGl() {
 	return { created: S.webglCreated || 0, live, visible, lost: S.webglLost || 0, y: Math.round(window.scrollY) };
 }
 
+// `page.evaluate` has NO timeout in Playwright: it queues on the page's main
+// thread and waits forever. On a page whose bootstrap blocks the main thread for
+// tens of seconds (measured on /play: a single 19 s long task inside a 45 s
+// blocking-time proxy) the metrics read simply never returns, and a whole sweep
+// sits on one page indefinitely. Racing it against a deadline turns "the harness
+// hangs" into "this page reports a probe timeout", which is a measurement, not a
+// dead run. The losing evaluate is abandoned deliberately; the context is closed
+// a few lines later, which discards it.
+function evaluateBounded(page, fn, timeoutMs, arg) {
+	let timer;
+	// The abandoned evaluate WILL reject later, when the context is closed out
+	// from under it. Swallow that here: an unhandled rejection on a Node with the
+	// default `--unhandled-rejections=throw` takes the whole sweep down, which is
+	// a worse failure than the hang this function exists to prevent.
+	const evaluated = page.evaluate(fn, arg);
+	evaluated.catch(() => {});
+	return Promise.race([
+		evaluated,
+		new Promise((_resolve, reject) => {
+			timer = setTimeout(
+				() => reject(new Error(`evaluate exceeded ${timeoutMs} ms (page main thread blocked)`)),
+				timeoutMs,
+			);
+		}),
+	]).finally(() => clearTimeout(timer));
+}
+
 // ── One measurement run ──────────────────────────────────────────────────────
 async function measureOnce(browser, deviceDescriptor, url, opts) {
 	const context = await browser.newContext({
@@ -434,7 +465,7 @@ async function measureOnce(browser, deviceDescriptor, url, opts) {
 
 	let probe = null;
 	try {
-		probe = await page.evaluate(readProbe);
+		probe = await evaluateBounded(page, readProbe, opts.probeTimeout);
 	} catch (err) {
 		error = error || `probe failed: ${String(err.message).slice(0, 160)}`;
 	}
@@ -447,13 +478,13 @@ async function measureOnce(browser, deviceDescriptor, url, opts) {
 	if (opts.scroll && !error) {
 		try {
 			scroll = { steps: 0, glCreatedMax: 0, glLiveMax: 0, glVisibleMax: 0, samples: [] };
-			const height = await page.evaluate(() => document.documentElement.scrollHeight);
-			const vh = await page.evaluate(() => window.innerHeight);
+			const height = await evaluateBounded(page, () => document.documentElement.scrollHeight, opts.probeTimeout);
+			const vh = await evaluateBounded(page, () => window.innerHeight, opts.probeTimeout);
 			const steps = Math.min(30, Math.max(1, Math.ceil(height / vh)));
 			for (let i = 1; i <= steps; i++) {
-				await page.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), i * vh);
+				await evaluateBounded(page, (y) => window.scrollTo({ top: y, behavior: 'instant' }), opts.probeTimeout, i * vh);
 				await page.waitForTimeout(opts.scrollDwell);
-				const s = await page.evaluate(sampleGl);
+				const s = await evaluateBounded(page, sampleGl, opts.probeTimeout);
 				scroll.steps = i;
 				scroll.samples.push(s);
 				scroll.glCreatedMax = Math.max(scroll.glCreatedMax, s.created);
