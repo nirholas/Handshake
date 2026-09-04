@@ -30,7 +30,29 @@
 				"before": {
 					"id": "before",
 					"tierRequested": "standard",
-					"views": {}
+					"views": {
+						"front": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"three-quarter": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"side": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						},
+						"hands": {
+							"renderError": "Failed to launch the browser process:  Code: null\n\nstderr:\n\n\nTROUBLESHOOTING: https://pptr.dev/troubleshooting\n"
+						}
+					},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/a4403d52-2e60-461a-a58b-f532c98b1e91.glb",
+					"backend": "trellis_selfhost",
+					"tierServed": "standard",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/bfeb423b-232c-4184-99ed-97bcf44dab88.jpg",
+					"creationId": "a4403d52-2e60-461a-a58b-f532c98b1e91",
+					"generationMs": 321004,
+					"error": null,
+					"meanScore": null,
+					"dimMeans": null
 				}
 			},
 			"directed": null,
@@ -43,7 +65,13 @@
 			"prompt": "A clearly stylized cartoon toy character of a child: chunky vinyl-figure proportions, oversized round head, simple mitten-like hands, matte toy-plastic finish with visible seam lines, painted-on facial features, wearing dungarees and a striped shirt, standing upright with arms slightly away from the body. Deliberately non-photoreal: a collectible vinyl figure, never a photographic human child.",
 			"subjectClass": "person",
 			"stylized": true,
-			"variants": {},
+			"variants": {
+				"before": {
+					"id": "before",
+					"tierRequested": "standard",
+					"views": {}
+				}
+			},
 			"directed": null,
 			"directedVia": null,
 			"directorError": "vertex director 403: [{\"error\":{\"code\":403,\"message\":\"Lightning dunning decision is deny for project: projects/93741856042\",\"status\":\"PERMISSION_DENIED\"}}]"
