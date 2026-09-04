@@ -351,7 +351,14 @@ async function openFeesModal({ mint, network, creator, agentId, symbol, name }) 
 	head.querySelector('button').focus();
 	try {
 		const user = await getMe();
-		const { mountFeesPanel } = await import(/* @vite-ignore */ '/studio/fees-panel.js');
+		// The panel is a public/ asset loaded by URL, not a bundled module. Vite
+		// rejects a literal public path even behind @vite-ignore, because its
+		// public-dir guard reads the specifier before the comment is honored:
+		// the whole module then 500s in dev and this page renders blank. Holding
+		// the URL in a variable is what the other callers of this panel do, and
+		// it leaves the specifier unanalyzable, so dev and build agree.
+		const feesPanelUrl = '/studio/fees-panel.js';
+		const { mountFeesPanel } = await import(/* @vite-ignore */ feesPanelUrl);
 		mountFeesPanel(inner, {
 			mint, network: network || 'mainnet', creator: creator || null,
 			agentId: agentId || null, symbol: symbol || '', name: name || '',
